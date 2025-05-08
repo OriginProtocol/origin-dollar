@@ -136,6 +136,7 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
     error NotEnoughWethForSwap(uint256 wethBalance, uint256 requiredWeth); // 0x989e5ca8
     error NotEnoughWethLiquidity(uint256 wethBalance, uint256 requiredWeth); // 0xa6737d87
     error OutsideExpectedTickRange(); // 0xa6e1bad2
+    error SlippageCheck(uint256 tokenReceived); // 0x355cdb78
 
     /**
      * @dev Verifies that the caller is the Governor, or Strategist.
@@ -238,7 +239,9 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
             _tickSpacing,
             tickNumber
         );
-        sqrtPriceAtParity = _upperTickAtParity ? sqrtPriceTickHigher : sqrtPriceTickLower;
+        sqrtPriceAtParity = _upperTickAtParity
+            ? sqrtPriceTickHigher
+            : sqrtPriceTickLower;
 
         WETH = _wethAddress;
         OETHp = _oethpAddress;
@@ -361,8 +364,9 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
         // as to not break the mints
         (bool _isExpectedRange, ) = _checkForExpectedPoolPrice(false);
         if (_isExpectedRange) {
-            // deposit funds into the underlying pool
-            _rebalance(0, false, 0);
+            // deposit funds into the underlying pool. Because no swap is performed there is no
+            // need to remove any of the liquidity before hand.
+            _rebalance(0, false, 0, 0);
         }
     }
 
@@ -419,9 +423,10 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
     /**
      * @dev Approve the spending of all assets
      */
-    function _approveTokenAmounts(uint256 _wethAllowance, uint256 _oethBAllowance)
-        internal
-    {
+    function _approveTokenAmounts(
+        uint256 _wethAllowance,
+        uint256 _oethBAllowance
+    ) internal {
         IERC20(WETH).approve(address(liquidityManager), _wethAllowance);
         IERC20(OETHp).approve(address(liquidityManager), _oethBAllowance);
     }
@@ -469,8 +474,9 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
             bytes("")
         );
 
-        // todo: custom error with exact amount
-        require(amountOut < _minTokenReceived, "Not enough token received");
+        if (amountOut < _minTokenReceived) {
+            revert SlippageCheck(amountOut);
+        }
 
         /**
          * In the interest of each function in _rebalance to leave the contract state as
@@ -635,7 +641,7 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
                 tickDeltas
             ) = poolLens.getAddLiquidityParams(params);
             // if maxOETHp == 0 then max limit is not given and will let the pool calculate required amount
-            // of OETHp required depending on the tick weth share. Before this call the strategy contract needs to 
+            // of OETHp required depending on the tick weth share. Before this call the strategy contract needs to
             // verify that the pool price is in the expected range.
             if (tickDeltas[0].deltaBOut > maxOETHp && maxOETHp != 0) {
                 // we know the params didn't meet out max spec.  we are asking for more OETHp than we want to spend.
@@ -737,24 +743,37 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
      * @param _amountToSwap The amount of the token to swap
      * @param _swapWeth Swap using WETH when true, use OETHb when false
      * @param _minTokenReceived Slippage check -> minimum amount of token expected in return
+     * @param _liquidityToRemovePct Percentage of liquidity to remove -> the percentage amount of liquidity to
+     *        remove before performing the swap. 1e18 denominated
      */
     function rebalance(
         uint256 _amountToSwap,
         bool _swapWeth,
-        uint256 _minTokenReceived
+        uint256 _minTokenReceived,
+        uint256 _liquidityToRemovePct
     ) external nonReentrant onlyGovernorOrStrategist {
-        _rebalance(_amountToSwap, _swapWeth, _minTokenReceived);
+        _rebalance(
+            _amountToSwap,
+            _swapWeth,
+            _minTokenReceived,
+            _liquidityToRemovePct
+        );
     }
 
     function _rebalance(
         uint256 _amountToSwap,
         bool _swapWeth,
-        uint256 _minTokenReceived
+        uint256 _minTokenReceived,
+        uint256 _liquidityToRemovePct
     ) internal {
         /**
          * There will always be some throw-away donated liquidity in the pool facilitating the
          * possibility of swap when rebalancing
          */
+
+        if (_liquidityToRemovePct > 0) {
+            _removeLiquidity(_liquidityToRemovePct);
+        }
 
         /**
          * When rebalance is called for the first time there is no strategy
@@ -825,6 +844,10 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
         gaugeUnstakeAndRestake
     {
         require(_liquidityToDecrease > 0, "Must remove some liquidity");
+        require(
+            _liquidityToDecrease <= 1e18,
+            "Can not remove more than 100% of liquidity"
+        );
 
         IMaverickV2Pool.RemoveLiquidityParams memory params = maverickPosition
             .getRemoveParams(tokenId, 0, _liquidityToDecrease);
@@ -858,14 +881,14 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
          * given our liquidity.
          *
          * The least amount of tokens ex-tractable from the position is where the active trading price is
-         * at the edge between tick -1 & tick 0. There the pool is offering 1:1 trades between WETH & OETHp. 
+         * at the edge between tick -1 & tick 0. There the pool is offering 1:1 trades between WETH & OETHp.
          * At that moment the pool consists completely of WETH and no OETHp.
          *
          * The more swaps from OETHp -> WETH happen on the pool the more the price starts to move away from the tick 0
          * towards the middle of tick -1 making OETHp (priced in WETH) more expensive.
          *
          * An additional note: TODO: test what happens when liquidity is near zero or 0
-         * 
+         *
          * TODO: did we get this wrong with Aerodrome?
          */
 
@@ -907,10 +930,7 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
         uint256 oethpReserveUp = oethpReserve * 1e18;
 
         // 18 decimal number expressed weth tick share
-        return
-            wethReserveUp.divPrecisely(
-                wethReserveUp + oethpReserveUp
-            );
+        return wethReserveUp.divPrecisely(wethReserveUp + oethpReserveUp);
     }
 
     /**
@@ -971,17 +991,28 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
             return (0, 0);
         }
 
-        (_amountWeth, _amountOethp,) = _getPositionInformation();
+        (_amountWeth, _amountOethp, ) = _getPositionInformation();
     }
 
-    function _getPositionInformation() internal view returns(uint256 _amountWeth, uint256 _amountOethp, uint256 liquidity) {
+    function _getPositionInformation()
+        internal
+        view
+        returns (
+            uint256 _amountWeth,
+            uint256 _amountOethp,
+            uint256 liquidity
+        )
+    {
         IMaverickV2Position.PositionFullInformation
             memory positionInfo = maverickPosition.tokenIdPositionInformation(
                 tokenId,
                 0
             );
 
-        require(positionInfo.liquidities.length == 1, "Unexpected liquidities length");
+        require(
+            positionInfo.liquidities.length == 1,
+            "Unexpected liquidities length"
+        );
         require(positionInfo.ticks.length == 1, "Unexpected ticks length");
 
         _amountWeth = positionInfo.amountA;
@@ -1036,22 +1067,21 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
 
     /**
      * @notice Strategy reserves (which consist only of WETH in case of Rooster - Plume pool)
-     * when the tick price is closest to parity - assuring the lowest amount of tokens 
+     * when the tick price is closest to parity - assuring the lowest amount of tokens
      * returned for the current position liquidity.
      */
-     function _balanceInPosition()
-        internal
-        view
-        returns (uint256 _wethBalance)
-    {
+    function _balanceInPosition() internal view returns (uint256 _wethBalance) {
         (uint256 lowerSqrtPrice, uint256 upperSqrtPrice) = TickMath
             .tickSqrtPrices(mPool.tickSpacing(), tickNumber);
 
-        (,,uint256 liquidity) = _getPositionInformation();
+        (, , uint256 liquidity) = _getPositionInformation();
 
         uint256 _oethbBalance;
 
-        (_wethBalance, _oethbBalance) = _reservesInTickForGivenPriceAndLiquidity(
+        (
+            _wethBalance,
+            _oethbBalance
+        ) = _reservesInTickForGivenPriceAndLiquidity(
             lowerSqrtPrice,
             upperSqrtPrice,
             sqrtPriceAtParity,
@@ -1063,28 +1093,33 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
 
     /**
      * @notice Tick dominance denominated in 1e18
-     * 
+     *
      */
-    function tickDominance()
-        public
-        view
-        returns (uint256 _tickDominance) {
-            uint256 _currentPrice = getPoolSqrtPrice();
-            (
-            IMaverickV2Pool.TickState memory tickState,,
-            ) = reservesInTickForGivenPrice(mPool, tickNumber, _currentPrice);
+    function tickDominance() public view returns (uint256 _tickDominance) {
+        uint256 _currentPrice = getPoolSqrtPrice();
+        (
+            IMaverickV2Pool.TickState memory tickState,
+            ,
 
-            uint256 wethReserve = tickState.reserveA;
-            uint256 oethpReserve = tickState.reserveB;
+        ) = reservesInTickForGivenPrice(mPool, tickNumber, _currentPrice);
 
-            (uint256 _amountWeth, uint256 _amountOethp,) = _getPositionInformation();
+        uint256 wethReserve = tickState.reserveA;
+        uint256 oethpReserve = tickState.reserveB;
 
-            if ((wethReserve + oethpReserve) > 0) {
-                _tickDominance = (_amountWeth + _amountOethp).divPrecisely(wethReserve + oethpReserve);
-            } else {
-                return 0;
-            }
+        (
+            uint256 _amountWeth,
+            uint256 _amountOethp,
+
+        ) = _getPositionInformation();
+
+        if ((wethReserve + oethpReserve) > 0) {
+            _tickDominance = (_amountWeth + _amountOethp).divPrecisely(
+                wethReserve + oethpReserve
+            );
+        } else {
+            return 0;
         }
+    }
 
     /***************************************
             Hidden functions
@@ -1129,22 +1164,16 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
      * @notice Calculates deltaA = liquidity * (sqrt(upper) - sqrt(lower))
      *  Calculates deltaB = liquidity / sqrt(lower) - liquidity / sqrt(upper),
      *  i.e. liquidity * (sqrt(upper) - sqrt(lower)) / (sqrt(upper) * sqrt(lower))
-     * 
-     * @dev refactored from here: 
-     * https://github.com/rooster-protocol/rooster-contracts/blob/main/v2-supplemental/contracts/libraries/LiquidityUtilities.sol#L665-L695     
+     *
+     * @dev refactored from here:
+     * https://github.com/rooster-protocol/rooster-contracts/blob/main/v2-supplemental/contracts/libraries/LiquidityUtilities.sol#L665-L695
      */
     function _reservesInTickForGivenPriceAndLiquidity(
         uint256 lowerSqrtPrice,
         uint256 upperSqrtPrice,
         uint256 newSqrtPrice,
         uint256 liquidity
-    )
-        internal
-        view
-        returns (
-            uint128 reserveA, uint128 reserveB
-        )
-    {
+    ) internal view returns (uint128 reserveA, uint128 reserveB) {
         if (liquidity == 0) {
             (reserveA, reserveB) = (0, 0);
         } else {
@@ -1173,8 +1202,8 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
      * @notice Calculates deltaA = liquidity * (sqrt(upper) - sqrt(lower))
      *  Calculates deltaB = liquidity / sqrt(lower) - liquidity / sqrt(upper),
      *  i.e. liquidity * (sqrt(upper) - sqrt(lower)) / (sqrt(upper) * sqrt(lower))
-     * 
-     * @dev refactored from here: 
+     *
+     * @dev refactored from here:
      * https://github.com/rooster-protocol/rooster-contracts/blob/main/v2-supplemental/contracts/libraries/LiquidityUtilities.sol#L665-L695
      */
     function reservesInTickForGivenPrice(
@@ -1204,7 +1233,10 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
             upperSqrtPrice
         );
 
-        (tickState.reserveA, tickState.reserveB) = _reservesInTickForGivenPriceAndLiquidity(
+        (
+            tickState.reserveA,
+            tickState.reserveB
+        ) = _reservesInTickForGivenPriceAndLiquidity(
             lowerSqrtPrice,
             upperSqrtPrice,
             newSqrtPrice,

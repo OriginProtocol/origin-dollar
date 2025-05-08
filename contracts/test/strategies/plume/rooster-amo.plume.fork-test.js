@@ -1,13 +1,10 @@
 const hre = require("hardhat");
-const {
-  createFixtureLoader,
-  nodeRevert,
-  nodeSnapshot,
-} = require("../../_fixture");
+const { createFixtureLoader } = require("../../_fixture");
 
 const addresses = require("../../../utils/addresses");
 const {
   defaultPlumeFixture,
+  plumeFixtureWithMockedVaultAdmin,
 } = require("../../_fixture-plume");
 const { expect } = require("chai");
 const { oethUnits } = require("../../helpers");
@@ -16,9 +13,13 @@ const { impersonateAndFund } = require("../../../utils/signers");
 const { BigNumber } = ethers;
 
 const plumeFixture = createFixtureLoader(defaultPlumeFixture);
+const plumeFixtureWithMockedVault = createFixtureLoader(
+  plumeFixtureWithMockedVaultAdmin
+);
+
 const { setERC20TokenBalance } = require("../../_fund");
 
-describe.only("ForkTest: Rooster AMO Strategy (Plume)", async function () {
+describe("ForkTest: Rooster AMO Strategy (Plume)", async function () {
   let fixture,
     oethpVault,
     oethVaultSigner,
@@ -40,25 +41,19 @@ describe.only("ForkTest: Rooster AMO Strategy (Plume)", async function () {
     governor = fixture.governor;
     strategist = fixture.strategist;
     rafael = fixture.rafael;
-    oethpVaultSigner = await impersonateAndFund(oethpVault.address);
+    oethVaultSigner = await impersonateAndFund(oethpVault.address);
 
     await setup();
-    // await weth
-    //   .connect(rafael)
-    //   .approve(aeroSwapRouter.address, oethUnits("1000000000"));
-    // await oethb
-    //   .connect(rafael)
-    //   .approve(aeroSwapRouter.address, oethUnits("1000000000"));
   });
 
-  // const configureAutomaticDepositOnMint = async (vaultBuffer) => {
-  //   await oethpVault.connect(governor).setVaultBuffer(vaultBuffer);
+  const configureAutomaticDepositOnMint = async (vaultBuffer) => {
+    await oethpVault.connect(governor).setVaultBuffer(vaultBuffer);
 
-  //   const totalValue = await oethpVault.totalValue();
+    const totalValue = await oethpVault.totalValue();
 
-  //   // min mint to trigger deposits
-  //   return totalValue.mul(vaultBuffer).div(oethUnits("1"));
-  // };
+    // min mint to trigger deposits
+    return totalValue.mul(vaultBuffer).div(oethUnits("1"));
+  };
 
   describe("ForkTest: Initial state (Plume)", function () {
     it("Should have the correct initial state", async function () {
@@ -218,7 +213,6 @@ describe.only("ForkTest: Rooster AMO Strategy (Plume)", async function () {
       const [amountWETHBefore, amountOETHpBefore] =
         await roosterAmoStrategy.getPositionPrincipal();
 
-      console.log("OETHp in position before withdrawal", amountOETHpBefore.toString());
       // Try withdrawing an amount
       await roosterAmoStrategy.connect(impersonatedVaultSigner).withdrawAll();
 
@@ -243,8 +237,7 @@ describe.only("ForkTest: Rooster AMO Strategy (Plume)", async function () {
         oethUnits("0")
       );
 
-      // TODO: address this
-      // await assetLpNOTStakedInGauge();
+      await assetLpNOTStakedInGauge();
     });
 
     it("Should withdraw when there's little WETH in the pool", async () => {
@@ -301,7 +294,99 @@ describe.only("ForkTest: Rooster AMO Strategy (Plume)", async function () {
       await verifyEndConditions();
     });
 
-    it.only("Should withdrawAll when there's little WETH in the pool", async () => {
+    it("Should withdrawAll when there's little WETH in the pool", async () => {
+      const { oethpVault, roosterAmoStrategy, weth } = fixture;
+
+      const impersonatedVaultSigner = await impersonateAndFund(
+        oethpVault.address
+      );
+
+      // setup() moves the pool closer to 80:20
+
+      // Drain out most of WETH
+      await swap({
+        // Pool has 5 WETH
+        amount: oethUnits("3.5"),
+        swapWeth: false,
+      });
+
+      const balanceBefore = await weth.balanceOf(oethpVault.address);
+
+      const [amountWETH] = await roosterAmoStrategy.getPositionPrincipal();
+
+      // Try withdrawing an amount
+      await roosterAmoStrategy.connect(impersonatedVaultSigner).withdrawAll();
+
+      // And recipient has got it
+      expect(await weth.balanceOf(oethpVault.address)).to.approxEqualTolerance(
+        balanceBefore.add(amountWETH)
+      );
+
+      // There should be no WETH on the strategy contract
+      expect(await weth.balanceOf(roosterAmoStrategy.address)).to.eq(
+        oethUnits("0")
+      );
+
+      await verifyEndConditions(false);
+    });
+
+    it("Should withdraw when there's little OETHp in the pool", async () => {
+      const { oethpVault, roosterAmoStrategy, weth } = fixture;
+
+      const impersonatedVaultSigner = await impersonateAndFund(
+        oethpVault.address
+      );
+
+      // setup() moves the pool closer to 80:20
+
+      // Drain out most of OETHb
+      await swap({
+        // Pool has 5 OETHb
+        amount: oethUnits("3.5"),
+        swapWeth: true,
+      });
+
+      const balanceBefore = await weth.balanceOf(oethpVault.address);
+
+      const [amountWETH, amountOETHb] =
+        await roosterAmoStrategy.getPositionPrincipal();
+
+      // Try withdrawing an amount
+      await roosterAmoStrategy
+        .connect(impersonatedVaultSigner)
+        .withdraw(oethpVault.address, weth.address, oethUnits("1"));
+
+      // Make sure that 1 WETH was burned and pool composition remains the same
+      const [amountWETHAfter, amountOETHbAfter] =
+        await roosterAmoStrategy.getPositionPrincipal();
+      expect(amountWETHAfter).to.approxEqualTolerance(
+        amountWETH.sub(oethUnits("1"))
+      );
+      expect(amountOETHbAfter.div(amountWETHAfter)).to.approxEqualTolerance(
+        amountOETHb.div(amountWETH)
+      );
+
+      // And recipient has got it
+      expect(await weth.balanceOf(oethpVault.address)).to.approxEqualTolerance(
+        balanceBefore.add(oethUnits("1"))
+      );
+
+      // There may remain some WETH left on the strategy contract because:
+      // When calculating `shareOfWetToRemove` on `withdraw` function in `RoosterAMOStrategy.sol`, the result is rounded up.
+      // This leads to a maximum of 1wei error of the `shareOfWetToRemove` value.
+      // Then this value is multiplied by the `_getLiquidity()` value which multiplies the previous error.
+      // The value of `_getLiquidity()` is expressed in ethers, for example at block 19670000 it was approx 18_000_000 ethers.
+      // This leads to a maximum of 18_000_000 wei error in this situation (due to `mulTruncate()` function).
+      // At the end, the bigger the `_getLiquidity()` value the bigger the error.
+      // However, during test the error values remains most of the time below 1e6wei.
+      expect(await weth.balanceOf(roosterAmoStrategy.address)).to.lte(
+        BigNumber.from("1000000")
+      );
+
+      await verifyEndConditions();
+    });
+
+    it("Should withdrawAll when there's little OETHp in the pool", async () => {
       const { oethpVault, roosterAmoStrategy, weth } = fixture;
 
       const impersonatedVaultSigner = await impersonateAndFund(
@@ -337,7 +422,416 @@ describe.only("ForkTest: Rooster AMO Strategy (Plume)", async function () {
       await verifyEndConditions(false);
     });
   });
-  
+
+  describe("Deposit and rebalance", function () {
+    it("Should be able to deposit to the strategy", async () => {
+      await mintAndDepositToStrategy();
+
+      await verifyEndConditions();
+    });
+
+    it("Should revert when not depositing WETH or amount is 0", async () => {
+      await expect(
+        roosterAmoStrategy
+          .connect(oethVaultSigner)
+          .deposit(oethp.address, BigNumber.from("1"))
+      ).to.be.revertedWith("Unsupported asset");
+
+      await expect(
+        roosterAmoStrategy
+          .connect(oethVaultSigner)
+          .deposit(weth.address, BigNumber.from("0"))
+      ).to.be.revertedWith("Must deposit something");
+    });
+
+    it.skip("Should be able to deposit to the pool & rebalance", async () => {
+      // await mintAndDepositToStrategy({ amount: oethUnits("5") });
+      // const { value, direction } = await quoteAmountToSwapBeforeRebalance({
+      //   lowValue: oethUnits("0"),
+      //   highValue: oethUnits("0"),
+      // });
+      // const tx = await rebalance(value, direction, value.mul("99").div("100"));
+      // await expect(tx).to.emit(roosterAmoStrategy, "PoolRebalanced");
+      // await verifyEndConditions();
+    });
+
+    it.skip("Should be able to deposit to the pool & rebalance multiple times", async () => {
+      // await mintAndDepositToStrategy({ amount: oethUnits("5") });
+      // const { value, direction } = await quoteAmountToSwapBeforeRebalance({
+      //   lowValue: oethUnits("0"),
+      //   highValue: oethUnits("0"),
+      // });
+      // const tx = await rebalance(value, direction, value.mul("99").div("100"));
+      // await expect(tx).to.emit(roosterAmoStrategy, "PoolRebalanced");
+      // await verifyEndConditions();
+      // await mintAndDepositToStrategy({ amount: oethUnits("5") });
+      // // prettier-ignore
+      // const tx1 = await rebalance(
+      //   oethUnits("0"),
+      //   true, // _swapWETHs
+      //   oethUnits("0")
+      // );
+      // await expect(tx1).to.emit(roosterAmoStrategy, "PoolRebalanced");
+      // await verifyEndConditions();
+    });
+
+    it("Should check that add liquidity in difference cases leaves little weth on the contract", async () => {
+      const amount = oethUnits("5");
+
+      await weth.connect(rafael).approve(oethpVault.address, amount);
+      await oethpVault.connect(rafael).mint(weth.address, amount, amount);
+
+      const gov = await roosterAmoStrategy.governor();
+      await oethpVault
+        .connect(await impersonateAndFund(gov))
+        .depositToStrategy(
+          roosterAmoStrategy.address,
+          [weth.address],
+          [amount]
+        );
+
+      // Rooster LENS contracts have issues where they over-calculate the amount of tokens that need to be
+      // deposited
+      expect(await weth.balanceOf(roosterAmoStrategy.address)).to.lte(
+        oethUnits("10000000000")
+      );
+
+      await verifyEndConditions();
+    });
+
+    it("Should revert when there is not enough WETH to perform a swap", async () => {
+      await swap({
+        amount: oethUnits("5"),
+        swapWeth: false,
+      });
+
+      await expect(
+        rebalance(
+          oethUnits("1000000000"),
+          true, // _swapWETH
+          oethUnits("0.009")
+        )
+      ).to.be.revertedWithCustomError(
+        "NotEnoughWethLiquidity(uint256,uint256)"
+      );
+    });
+
+    it.skip("Should revert when pool rebalance is off target", async () => {
+      // const { value, direction } = await quoteAmountToSwapBeforeRebalance({
+      //   lowValue: oethUnits("0.90"),
+      //   highValue: oethUnits("0.92"),
+      // });
+      // await expect(
+      //   rebalance(value, direction, 0)
+      // ).to.be.revertedWithCustomError(
+      //   "PoolRebalanceOutOfBounds(uint256,uint256,uint256)"
+      // );
+    });
+
+    it.skip("Should be able to rebalance the pool when price pushed very close to 1:1", async () => {
+      // await depositLiquidityToPool();
+      // // supply some WETH for the rebalance
+      // await mintAndDepositToStrategy({ amount: oethUnits("1") });
+      // const priceAtTickLower = await roosterAmoStrategy.sqrtPriceTickLower();
+      // const priceAtTickHigher = await roosterAmoStrategy.sqrtPriceTickHigher();
+      // const pctTickerPrice = priceAtTickHigher.sub(priceAtTickLower).div(100);
+      // let { value: value0, direction: direction0 } =
+      //   await quoteAmountToSwapToReachPrice({
+      //     price: priceAtTickHigher.sub(pctTickerPrice),
+      //   });
+      // await swap({
+      //   amount: value0,
+      //   swapWeth: direction0,
+      // });
+      // const { value, direction } = await quoteAmountToSwapBeforeRebalance({
+      //   lowValue: oethUnits("0"),
+      //   highValue: oethUnits("0"),
+      // });
+      // await rebalance(value, direction, value.mul("99").div("100"));
+      // await verifyEndConditions();
+    });
+
+    it.skip("Should be able to rebalance the pool when price pushed to over the 1 OETHb costing 1.0001 WETH", async () => {
+      // const priceAtTickLower = await roosterAmoStrategy.sqrtPriceTickLower();
+      // const priceAtTickHigher = await roosterAmoStrategy.sqrtPriceTickHigher();
+      // // 5% of the price diff within a single ticker
+      // const twentyPctTickerPrice = priceAtTickHigher
+      //   .sub(priceAtTickLower)
+      //   .div(20);
+      // let { value: value0, direction: direction0 } =
+      //   await quoteAmountToSwapToReachPrice({
+      //     price: priceAtTickLower.add(twentyPctTickerPrice),
+      //   });
+      // await swap({
+      //   amount: value0,
+      //   swapWeth: direction0,
+      // });
+      // const { value, direction } = await quoteAmountToSwapBeforeRebalance({
+      //   lowValue: oethUnits("0"),
+      //   highValue: oethUnits("0"),
+      // });
+      // await rebalance(value, direction, value.mul("99").div("100"));
+      // await verifyEndConditions();
+    });
+
+    it.skip("Should be able to rebalance the pool when price pushed to close to the 1 OETHb costing 1.0001 WETH", async () => {
+      // const priceAtTickLower = await roosterAmoStrategy.sqrtPriceTickLower();
+      // const priceAtTickHigher = await roosterAmoStrategy.sqrtPriceTickHigher();
+      // // 5% of the price diff within a single ticker
+      // const fivePctTickerPrice = priceAtTickHigher
+      //   .sub(priceAtTickLower)
+      //   .div(20);
+      // let { value: value0, direction: direction0 } =
+      //   await quoteAmountToSwapToReachPrice({
+      //     price: priceAtTickLower.sub(fivePctTickerPrice),
+      //   });
+      // await swap({
+      //   amount: value0,
+      //   swapWeth: direction0,
+      // });
+      // const { value, direction } = await quoteAmountToSwapBeforeRebalance({
+      //   lowValue: oethUnits("0"),
+      //   highValue: oethUnits("0"),
+      // });
+      // await rebalance(value, direction, value.mul("99").div("100"));
+      // await verifyEndConditions();
+    });
+
+    it("Should have the correct balance within some tolerance", async () => {
+      const balance = await roosterAmoStrategy.checkBalance(weth.address);
+      await mintAndDepositToStrategy({ amount: oethUnits("6") });
+
+      // just add liquidity don't move the active trading position
+      await rebalance(BigNumber.from("0"), true, BigNumber.from("0"));
+
+      await expect(
+        await roosterAmoStrategy.checkBalance(weth.address)
+      ).to.approxEqualTolerance(balance.add(oethUnits("6").mul("5")), 1.5);
+
+      await verifyEndConditions();
+    });
+
+    it("Should revert on non WETH balance", async () => {
+      await expect(
+        roosterAmoStrategy.checkBalance(oethp.address)
+      ).to.be.revertedWith("Only WETH supported");
+    });
+
+    it("Should throw an exception if not enough WETH on rebalance to perform a swap", async () => {
+      // swap out most of the weth
+      await swap({
+        // Pool has 5 WETH
+        amount: oethUnits("4.99"),
+        swapWeth: false,
+      });
+
+      await expect(
+        rebalance(
+          (await weth.balanceOf(await roosterAmoStrategy.mPool())).mul("2"),
+          true,
+          oethUnits("4")
+        )
+      ).to.be.revertedWithCustomError(
+        "NotEnoughWethLiquidity(uint256,uint256)"
+      );
+
+      await verifyEndConditions();
+    });
+
+    it("Should not be able to rebalance when protocol is insolvent", async () => {
+      await mintAndDepositToStrategy({ amount: oethUnits("1000") });
+      await roosterAmoStrategy.connect(oethVaultSigner).withdrawAll();
+
+      // ensure there is a LP position
+      await mintAndDepositToStrategy({ amount: oethUnits("1") });
+
+      // transfer WETH out making the protocol insolvent
+      const swapBal = oethUnits("0.00001");
+      const addLiquidityBal = oethUnits("1");
+      const balRemaining = (await weth.balanceOf(oethpVault.address))
+        .sub(swapBal)
+        .sub(addLiquidityBal);
+
+      await weth
+        .connect(oethVaultSigner)
+        .transfer(roosterAmoStrategy.address, swapBal.add(addLiquidityBal));
+      await weth
+        .connect(oethVaultSigner)
+        .transfer(addresses.dead, balRemaining);
+
+      await expect(
+        rebalance(
+          swapBal,
+          true, // _swapWETHs
+          oethUnits("0.000009"),
+          "0"
+        )
+      ).to.be.revertedWith("Protocol insolvent");
+
+      await assetLpStakedInGauge();
+    });
+  });
+
+  describe("Perform multiple actions", function () {
+    it("LP token should stay staked with multiple deposit/withdraw actions", async () => {
+      // deposit into pool once
+      await mintAndDepositToStrategy({ amount: oethUnits("5") });
+      // prettier-ignore
+      const tx = await rebalance(
+        oethUnits("0.00001"),
+        true, // _swapWETHs
+        oethUnits("0.000009")
+      );
+      await expect(tx).to.emit(roosterAmoStrategy, "PoolRebalanced");
+      await verifyEndConditions();
+
+      // deposit into pool again
+      await mintAndDepositToStrategy({ amount: oethUnits("5") });
+      // prettier-ignore
+      const tx1 = await rebalance(
+        oethUnits("0"),
+        true, // _swapWETHs
+        oethUnits("0")
+      );
+      await expect(tx1).to.emit(roosterAmoStrategy, "PoolRebalanced");
+      await verifyEndConditions();
+
+      // Withdraw from the pool
+      await roosterAmoStrategy
+        .connect(oethVaultSigner)
+        .withdraw(oethpVault.address, weth.address, oethUnits("1"));
+      await verifyEndConditions();
+
+      // deposit into pool again
+      await mintAndDepositToStrategy({ amount: oethUnits("5") });
+      // prettier-ignore
+      const tx2 = await rebalance(
+        oethUnits("0"),
+        true, // _swapWETHs
+        oethUnits("0")
+      );
+      await expect(tx2).to.emit(roosterAmoStrategy, "PoolRebalanced");
+      await verifyEndConditions();
+
+      // Withdraw from the pool
+      await roosterAmoStrategy
+        .connect(oethVaultSigner)
+        .withdraw(oethpVault.address, weth.address, oethUnits("1"));
+      await verifyEndConditions();
+
+      // Withdraw from the pool
+      await roosterAmoStrategy.connect(oethVaultSigner).withdrawAll();
+      await assetLpNOTStakedInGauge();
+
+      // deposit into pool again
+      await mintAndDepositToStrategy({ amount: oethUnits("5") });
+      // prettier-ignore
+      const tx3 = await rebalance(
+        oethUnits("0"),
+        true, // _swapWETHs
+        oethUnits("0")
+      );
+      await expect(tx3).to.emit(roosterAmoStrategy, "PoolRebalanced");
+      await verifyEndConditions();
+    });
+  });
+
+  describe("Deposit and rebalance with mocked Vault", async () => {
+    let fixture, oethpVault, weth, roosterAmoStrategy;
+
+    beforeEach(async () => {
+      fixture = await plumeFixtureWithMockedVault();
+      weth = fixture.weth;
+      oethpVault = fixture.oethpVault;
+      roosterAmoStrategy = fixture.roosterAmoStrategy;
+      governor = fixture.governor;
+      strategist = fixture.strategist;
+
+      await setup();
+    });
+
+    const depositAllVaultWeth = async ({ returnTransaction } = {}) => {
+      const wethAvailable = await oethpVault.wethAvailable();
+      const gov = await oethpVault.governor();
+      const tx = await oethpVault
+        .connect(await impersonateAndFund(gov))
+        .depositToStrategy(
+          roosterAmoStrategy.address,
+          [weth.address],
+          [wethAvailable]
+        );
+
+      if (returnTransaction) {
+        return tx;
+      }
+
+      await expect(tx).to.emit(roosterAmoStrategy, "PoolRebalanced");
+    };
+
+    const depositAllWethAndConfigure1Bp = async () => {
+      // configure to leave no WETH on the vault
+      await configureAutomaticDepositOnMint(oethUnits("0"));
+      const outstandingWeth = await oethpVault.outstandingWithdrawalsAmount();
+
+      // send WETH to the vault that is outstanding to be claimed
+      await weth
+        .connect(fixture.clement)
+        .transfer(oethpVault.address, outstandingWeth);
+
+      await depositAllVaultWeth();
+
+      // configure to only keep 1bp of the Vault's totalValue in the Vault;
+      const minAmountReserved = await configureAutomaticDepositOnMint(
+        oethUnits("0.0001")
+      );
+
+      return minAmountReserved;
+    };
+
+    it("Should not automatically deposit to strategy when below vault buffer threshold", async () => {
+      const minAmountReserved = await depositAllWethAndConfigure1Bp();
+
+      const amountBelowThreshold = minAmountReserved.div(BigNumber.from("2"));
+
+      await mint({ amount: amountBelowThreshold });
+      // there is some WETH usually on the strategy contract because liquidity manager doesn't consume all
+      await expect(await weth.balanceOf(roosterAmoStrategy.address)).to.lte(
+        BigNumber.from("1000000")
+      );
+
+      await expect(await oethpVault.wethAvailable()).to.approxEqualTolerance(
+        amountBelowThreshold
+      );
+
+      await verifyEndConditions();
+    });
+
+    it.skip("Should leave WETH on the contract when pool price outside allowed limits", async () => {
+      // const minAmountReserved = await depositAllWethAndConfigure1Bp();
+      // const amountDoubleThreshold = minAmountReserved.mul(BigNumber.from("2"));
+      // const priceAtTickLower = await roosterAmoStrategy.sqrtRatioX96TickLower();
+      // let { value: value0, direction: direction0 } =
+      //   await quoteAmountToSwapToReachPrice({
+      //     price: priceAtTickLower,
+      //   });
+      // // push price so 1 OETHp costs 1.0001 WETH
+      // await swap({
+      //   amount: value0,
+      //   swapWeth: direction0,
+      // });
+      // await mint({ amount: amountDoubleThreshold });
+      // // roughly half of WETH should stay on the Aerodrome contract
+      // await expect(
+      //   await weth.balanceOf(roosterAmoStrategy.address)
+      // ).to.approxEqualTolerance(minAmountReserved);
+      // // roughly half of WETH should stay on the Vault
+      // await expect(await oethpVault.wethAvailable()).to.approxEqualTolerance(
+      //   minAmountReserved
+      // );
+      // await assetLpStakedInGauge();
+    });
+  });
+
   const swap = async ({ amount, swapWeth }) => {
     // Check if rafael as enough token to perform swap
     // If not, mint some
@@ -350,21 +844,21 @@ describe.only("ForkTest: Rooster AMO Strategy (Plume)", async function () {
     if (swapWeth) {
       await weth.connect(rafael).transfer(roosterOETHpWETHpool.address, amount);
     } else {
-      await oethp.connect(rafael).transfer(roosterOETHpWETHpool.address, amount);
+      await oethp
+        .connect(rafael)
+        .transfer(roosterOETHpWETHpool.address, amount);
     }
 
-    await roosterOETHpWETHpool
-      .connect(rafael)
-      .swap(
-        rafael.address,
-        {
-          amount: amount,
-          tokenAIn: swapWeth,
-          exactOutput: false,
-          tickLimit: swapWeth ? 2147483647 : -2147483648
-        },
-        "0x"
-      );
+    await roosterOETHpWETHpool.connect(rafael).swap(
+      rafael.address,
+      {
+        amount: amount,
+        tokenAIn: swapWeth,
+        exactOutput: false,
+        tickLimit: swapWeth ? 2147483647 : -2147483648,
+      },
+      "0x"
+    );
   };
 
   const setup = async () => {
@@ -375,25 +869,43 @@ describe.only("ForkTest: Rooster AMO Strategy (Plume)", async function () {
 
     await oethpVault.connect(rafael).rebase();
 
-    // TODO: figure out how to get a good quote for the amount swapped required in order 
+    // TODO: figure out how to get a good quote for the amount swapped required in order
     // to reach a targeted desired amount
     // const { value, direction } = await quoteAmountToSwapBeforeRebalance({
     //   lowValue: oethUnits("0"),
     //   highValue: oethUnits("0"),
     // });
-
-    // move the price close to pre-configured 20% value
-    await rebalance(
-      oethUnits("0"),
-      false, // _swapWETH
-      0
-    );
   };
 
-  const rebalance = async (amountToSwap, swapWETH, minTokenReceived) => {
+  const rebalance = async (
+    amountToSwap,
+    swapWETH,
+    minTokenReceived,
+    liquidityToRemove = "1"
+  ) => {
     return await roosterAmoStrategy
       .connect(strategist)
-      .rebalance(amountToSwap, swapWETH, minTokenReceived);
+      .rebalance(
+        amountToSwap,
+        swapWETH,
+        minTokenReceived,
+        oethUnits(liquidityToRemove)
+      );
+  };
+
+  const mint = async ({ userOverride, amount } = {}) => {
+    const user = userOverride || rafael;
+    amount = amount || oethUnits("5");
+
+    const balance = weth.balanceOf(user.address);
+    if (balance < amount) {
+      await setERC20TokenBalance(user.address, weth, amount + balance, hre);
+    }
+    await weth.connect(user).approve(oethpVault.address, amount);
+    const tx = await oethpVault
+      .connect(user)
+      .mint(weth.address, amount, amount);
+    return tx;
   };
 
   const mintAndDepositToStrategy = async ({
@@ -414,11 +926,7 @@ describe.only("ForkTest: Rooster AMO Strategy (Plume)", async function () {
     const gov = await oethpVault.governor();
     const tx = await oethpVault
       .connect(await impersonateAndFund(gov))
-      .depositToStrategy(
-        roosterAmoStrategy.address,
-        [weth.address],
-        [amount]
-      );
+      .depositToStrategy(roosterAmoStrategy.address, [weth.address], [amount]);
 
     if (returnTransaction) {
       return tx;
@@ -433,9 +941,9 @@ describe.only("ForkTest: Rooster AMO Strategy (Plume)", async function () {
    */
   const verifyEndConditions = async (lpStaked = true) => {
     if (lpStaked) {
-      //await assetLpStakedInGauge();
+      await assetLpStakedInGauge();
     } else {
-      //await assetLpNOTStakedInGauge();
+      await assetLpNOTStakedInGauge();
     }
 
     // await expect(await weth.balanceOf(roosterAmoStrategy.address)).to.lte(
@@ -444,5 +952,13 @@ describe.only("ForkTest: Rooster AMO Strategy (Plume)", async function () {
     // await expect(await oethb.balanceOf(roosterAmoStrategy.address)).to.equal(
     //   oethUnits("0")
     // );
+  };
+
+  const assetLpStakedInGauge = async () => {
+    // TODO implement
+  };
+
+  const assetLpNOTStakedInGauge = async () => {
+    // TODO implement
   };
 });

@@ -4,12 +4,36 @@ const mocha = require("mocha");
 const { isFork, isPlumeFork, oethUnits } = require("./helpers");
 const { impersonateAndFund } = require("../utils/signers");
 const { nodeRevert, nodeSnapshot } = require("./_fixture");
+const { deployWithConfirmation } = require("../utils/deploy");
 const addresses = require("../utils/addresses");
 const hhHelpers = require("@nomicfoundation/hardhat-network-helpers");
 const log = require("../utils/logger")("test:fixtures-plume");
 
 let snapshotId;
-const defaultPlumeFixture = deployments.createFixture(async () => {
+
+const baseFixtureWithMockedVaultAdminConfig = async () => {
+  const fixture = await defaultFixture();
+
+  const cOETHVaultProxy = await ethers.getContract("OETHPlumeVaultProxy");
+  const cOETHVaultAdmin = await ethers.getContractAt(
+    "IVault",
+    cOETHVaultProxy.address
+  );
+  await deployWithConfirmation("MockOETHVaultAdmin", [fixture.weth.address]);
+
+  const mockVaultAdmin = await ethers.getContract("MockOETHVaultAdmin");
+  await cOETHVaultAdmin
+    .connect(fixture.governor)
+    .setAdminImpl(mockVaultAdmin.address);
+
+  fixture.oethpVault = await ethers.getContractAt(
+    "IMockVault",
+    fixture.oethpVault.address
+  );
+  return fixture;
+};
+
+const defaultFixture = async () => {
   if (!snapshotId && !isFork) {
     snapshotId = await nodeSnapshot();
   }
@@ -150,7 +174,12 @@ const defaultPlumeFixture = deployments.createFixture(async () => {
     // Helpers
     _mintWETH,
   };
-});
+};
+
+const defaultPlumeFixture = deployments.createFixture(defaultFixture);
+const plumeFixtureWithMockedVaultAdmin = deployments.createFixture(
+  baseFixtureWithMockedVaultAdminConfig
+);
 
 mocha.after(async () => {
   if (snapshotId) {
@@ -160,4 +189,5 @@ mocha.after(async () => {
 
 module.exports = {
   defaultPlumeFixture,
+  plumeFixtureWithMockedVaultAdmin,
 };

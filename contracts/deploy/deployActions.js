@@ -1361,7 +1361,7 @@ const deployPlumeRoosterAMOStrategyImplementation = async (poolAddress) => {
     addresses.plume.MaverickV2PoolLens, // pool lens
     addresses.plume.MaverickV2Position, // position
     poolAddress, // superOETHp/WPLUME pool
-    true // uppperTickAtParity
+    true, // uppperTickAtParity
   ]);
 
   return await ethers.getContract("RoosterAMOStrategy");
