@@ -2,6 +2,8 @@
 pragma solidity ^0.8.0;
 
 import { AccessControlEnumerable } from "@openzeppelin/contracts/access/AccessControlEnumerable.sol";
+import { ICLGauge } from "../interfaces/aerodrome/ICLGauge.sol";
+import { ICLPool } from "../interfaces/aerodrome/ICLPool.sol";
 
 struct BribePoolInfo {
     address poolAddress;
@@ -9,7 +11,7 @@ struct BribePoolInfo {
     address[] rewardTokens;
 }
 
-interface IVoter {
+interface IAerodromeVoter {
     function claimBribes(
         address[] memory _bribes,
         address[][] memory _tokens,
@@ -30,14 +32,6 @@ interface ISafe {
     ) external returns (bool);
 }
 
-interface ICLPool {
-    function gauge() external view returns (address);
-}
-
-interface ICLGauge {
-    function feesVotingReward() external view returns (address);
-}
-
 interface ICLRewardContract {
     function rewards(uint256 index) external view returns (address);
 
@@ -46,7 +40,7 @@ interface ICLRewardContract {
 
 contract ClaimBribesSafeModule is AccessControlEnumerable {
     ISafe public immutable safeAddress;
-    IVoter public immutable voter;
+    IAerodromeVoter public immutable voter;
     address public immutable veNFT;
 
     uint256[] nftIds;
@@ -85,7 +79,7 @@ contract ClaimBribesSafeModule is AccessControlEnumerable {
         address _veNFT
     ) {
         safeAddress = ISafe(_safeAddress);
-        voter = IVoter(_voter);
+        voter = IAerodromeVoter(_voter);
         veNFT = _veNFT;
 
         // Safe is the admin
@@ -121,7 +115,7 @@ contract ClaimBribesSafeModule is AccessControlEnumerable {
                 address(voter),
                 0, // Value
                 abi.encodeWithSelector(
-                    IVoter.claimBribes.selector,
+                    IAerodromeVoter.claimBribes.selector,
                     rewardContractAddresses,
                     rewardTokens,
                     nftId

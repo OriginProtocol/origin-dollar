@@ -65,4 +65,6 @@ interface ICLGauge {
     // /// @param depositor The address of the user
     // /// @return The amount of positions staked in the gauge
     // function stakedLength(address depositor) external view returns (uint256);
+
+    function feesVotingReward() external view returns (address);
 }
