@@ -91,11 +91,13 @@ contract ClaimBribesSafeModule is AccessControlEnumerable {
      * @dev Claim bribes for a range of NFTs
      * @param nftIndexStart The start index of the NFTs
      * @param nftIndexEnd The end index of the NFTs
+     * @param silent Doesn't revert if the claim fails when true
      */
-    function claimBribes(uint256 nftIndexStart, uint256 nftIndexEnd)
-        external
-        onlyExecutor
-    {
+    function claimBribes(
+        uint256 nftIndexStart,
+        uint256 nftIndexEnd,
+        bool silent
+    ) external onlyExecutor {
         if (nftIndexEnd < nftIndexStart) {
             uint256 _nftIndexEnd = nftIndexStart;
             nftIndexStart = nftIndexEnd;
@@ -123,7 +125,7 @@ contract ClaimBribesSafeModule is AccessControlEnumerable {
                 0 // Call
             );
 
-            require(success, "ClaimBribes failed");
+            require(success || silent, "ClaimBribes failed");
         }
     }
 
@@ -254,9 +256,9 @@ contract ClaimBribesSafeModule is AccessControlEnumerable {
      * @dev Update the reward token addresses for all pools
      */
     function updateRewardTokenAddresses() external onlyExecutor {
-        BribePoolInfo[] memory _bribePools = bribePools;
+        BribePoolInfo[] storage _bribePools = bribePools;
         for (uint256 i = 0; i < _bribePools.length; i++) {
-            BribePoolInfo memory bribePool = _bribePools[i];
+            BribePoolInfo storage bribePool = _bribePools[i];
             bribePool.rewardTokens = _getRewardTokenAddresses(
                 bribePool.rewardContractAddress
             );

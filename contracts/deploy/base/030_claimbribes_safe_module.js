@@ -87,7 +87,9 @@ module.exports = deployOnBase(
       for (let i = 0; i < Math.ceil(nftIdsToTest.length / 9); i += 9) {
         console.log(i, i + 9);
         await withConfirmation(
-          cClaimBribesSafeModule.connect(safeSigner).claimBribes(i, i + 9)
+          cClaimBribesSafeModule
+            .connect(safeSigner)
+            .claimBribes(i, i + 9, false)
         );
       }
       console.log("Claimed bribes");
