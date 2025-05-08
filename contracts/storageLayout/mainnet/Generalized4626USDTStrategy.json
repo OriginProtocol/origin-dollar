@@ -1,5 +1,5 @@
 {
-  "solcVersion": "0.8.7",
+  "solcVersion": "0.8.28",
   "storage": [
     {
       "label": "initialized",
@@ -103,7 +103,7 @@
       "slot": "157",
       "type": "t_address",
       "contract": "Generalized4626Strategy",
-      "src": "contracts/strategies/Generalized4626Strategy.sol:16"
+      "src": "contracts/strategies/Generalized4626Strategy.sol:15"
     },
     {
       "label": "_deprecate_assetToken",
@@ -111,7 +111,7 @@
       "slot": "158",
       "type": "t_address",
       "contract": "Generalized4626Strategy",
-      "src": "contracts/strategies/Generalized4626Strategy.sol:19"
+      "src": "contracts/strategies/Generalized4626Strategy.sol:18"
     },
     {
       "label": "__gap",
@@ -119,7 +119,7 @@
       "slot": "159",
       "type": "t_array(t_uint256)50_storage",
       "contract": "Generalized4626Strategy",
-      "src": "contracts/strategies/Generalized4626Strategy.sol:25"
+      "src": "contracts/strategies/Generalized4626Strategy.sol:24"
     }
   ],
   "types": {
