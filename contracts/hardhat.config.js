@@ -423,8 +423,8 @@ module.exports = {
         network: "plume",
         chainId: 98866,
         urls: {
-          apiURL: "https://explorer-plume-mainnet-1.t.conduit.xyz/api",
-          browserURL: "https://phoenix-explorer.plumenetwork.xyz",
+          apiURL: "https://explorer.plume.org/api",
+          browserURL: "https://explorer.plume.org",
         },
       },
     ],
