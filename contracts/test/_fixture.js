@@ -699,6 +699,22 @@ const defaultFixture = deployments.createFixture(async () => {
     addresses.mainnet.curve.OUSD_USDC.gauge
   );
 
+  const OETHCurveAMOProxy = isFork
+    ? await ethers.getContract("OETHCurveAMOProxy")
+    : undefined;
+  const OETHCurveAMO = isFork
+    ? await ethers.getContractAt("CurveAMOStrategy", OETHCurveAMOProxy.address)
+    : undefined;
+
+  const curvePoolOETHWETH = await ethers.getContractAt(
+    curveStableSwapNGAbi,
+    addresses.mainnet.curve.OETH_WETH.pool
+  );
+  const curveGaugeOETHWETH = await ethers.getContractAt(
+    curveXChainLiquidityGaugeAbi,
+    addresses.mainnet.curve.OETH_WETH.gauge
+  );
+
   let usdt,
     usds,
     tusd,
@@ -1101,6 +1117,9 @@ const defaultFixture = deployments.createFixture(async () => {
     OUSDCurveAMO,
     curvePoolOusdUsdc,
     curveGaugeOusdUsdc,
+    OETHCurveAMO,
+    curvePoolOETHWETH,
+    curveGaugeOETHWETH,
 
     // OETH
     oethVaultValueChecker,
