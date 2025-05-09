@@ -99,9 +99,7 @@ contract ClaimBribesSafeModule is AccessControlEnumerable {
         bool silent
     ) external onlyExecutor {
         if (nftIndexEnd < nftIndexStart) {
-            uint256 _nftIndexEnd = nftIndexStart;
-            nftIndexStart = nftIndexEnd;
-            nftIndexEnd = _nftIndexEnd;
+            (nftIndexStart, nftIndexEnd) = (nftIndexEnd, nftIndexStart);
         }
         uint256 nftCount = nftIds.length;
         nftIndexEnd = nftCount < nftIndexEnd ? nftCount : nftIndexEnd;
@@ -222,6 +220,14 @@ contract ClaimBribesSafeModule is AccessControlEnumerable {
         return nftIds.length;
     }
 
+    /**
+     * @dev Get all NFT IDs
+     * @return The NFT IDs
+     */
+    function getAllNFTIds() external view returns (uint256[] memory) {
+        return nftIds;
+    }
+
     /***************************************
             Bribe Pool Management
     ****************************************/
@@ -313,11 +319,9 @@ contract ClaimBribesSafeModule is AccessControlEnumerable {
     function bribePoolExists(address bribePool) public view returns (bool) {
         BribePoolInfo[] memory _bribePools = bribePools;
         uint256 poolIndex = bribePoolIndex[bribePool];
-        if (poolIndex >= _bribePools.length) {
-            return false;
-        }
-
-        return _bribePools[poolIndex].poolAddress == bribePool;
+        return
+            poolIndex < _bribePools.length &&
+            _bribePools[poolIndex].poolAddress == bribePool;
     }
 
     /**
