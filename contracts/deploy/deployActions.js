@@ -1083,14 +1083,10 @@ const deployUniswapV3Pool = async () => {
 };
 
 const deployBuyback = async () => {
-  const { deployerAddr, governorAddr, strategistAddr } =
-    await getNamedAccounts();
+  const { deployerAddr, governorAddr } = await getNamedAccounts();
   const sDeployer = await ethers.provider.getSigner(deployerAddr);
   const sGovernor = await ethers.provider.getSigner(governorAddr);
 
-  const assetAddresses = await getAssetAddresses(deployments);
-  const ousd = await ethers.getContract("OUSDProxy");
-  const oeth = await ethers.getContract("OETHProxy");
   const cOUSDVault = await ethers.getContractAt(
     "VaultAdmin",
     (
@@ -1109,18 +1105,8 @@ const deployBuyback = async () => {
   const dOETHBuybackProxy = await deployWithConfirmation("OETHBuybackProxy");
   const ousdContractName = "OUSDBuyback";
   const oethContractName = "OETHBuyback";
-  const dOUSDBuybackImpl = await deployWithConfirmation(ousdContractName, [
-    ousd.address,
-    assetAddresses.OGN,
-    assetAddresses.CVX,
-    assetAddresses.CVXLocker,
-  ]);
-  const dOETHBuybackImpl = await deployWithConfirmation(oethContractName, [
-    oeth.address,
-    assetAddresses.OGN,
-    assetAddresses.CVX,
-    assetAddresses.CVXLocker,
-  ]);
+  const dOUSDBuybackImpl = await deployWithConfirmation(ousdContractName, []);
+  const dOETHBuybackImpl = await deployWithConfirmation(oethContractName, []);
 
   const cOUSDBuybackProxy = await ethers.getContractAt(
     "BuybackProxy",
@@ -1131,8 +1117,6 @@ const deployBuyback = async () => {
     "OETHBuybackProxy",
     dOETHBuybackProxy.address
   );
-
-  const mockSwapper = await ethers.getContract("MockSwapper");
 
   // Init proxy to implementation
   await withConfirmation(
@@ -1157,27 +1141,6 @@ const deployBuyback = async () => {
     cOETHBuybackProxy.address
   );
 
-  // Initialize implementation contract
-  const initFunction = "initialize(address,address,address,address,uint256)";
-  await withConfirmation(
-    cOUSDBuyback.connect(sDeployer)[initFunction](
-      mockSwapper.address,
-      strategistAddr,
-      strategistAddr, // Treasury manager
-      assetAddresses.RewardsSource,
-      5000 // 50%
-    )
-  );
-  await withConfirmation(
-    cOETHBuyback.connect(sDeployer)[initFunction](
-      mockSwapper.address,
-      strategistAddr,
-      strategistAddr, // Treasury manager
-      assetAddresses.RewardsSource,
-      5000 // 50%
-    )
-  );
-
   // Init proxy to implementation
   await withConfirmation(
     cOUSDBuyback.connect(sDeployer).transferGovernance(governorAddr)
@@ -1185,9 +1148,6 @@ const deployBuyback = async () => {
   await withConfirmation(
     cOETHBuyback.connect(sDeployer).transferGovernance(governorAddr)
   );
-
-  await cOUSDBuyback.connect(sDeployer).safeApproveAllTokens();
-  await cOETHBuyback.connect(sDeployer).safeApproveAllTokens();
 
   // On Mainnet the governance transfer gets executed separately, via the
   // multi-sig wallet. On other networks, this migration script can claim

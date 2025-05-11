@@ -2330,8 +2330,7 @@ async function rebornFixture() {
 async function buybackFixture() {
   const fixture = await defaultFixture();
 
-  const { ousd, oeth, oethVault, vault, weth, usds, josh, governor, timelock } =
-    fixture;
+  const { ousd, oeth, oethVault, vault, weth, usds, josh } = fixture;
 
   const ousdBuybackProxy = await ethers.getContract("BuybackProxy");
   const ousdBuyback = await ethers.getContractAt(
@@ -2358,8 +2357,8 @@ async function buybackFixture() {
   fixture.ousdBuyback = ousdBuyback;
   fixture.oethBuyback = oethBuyback;
 
-  const rewardsSourceAddress = await ousdBuyback.connect(josh).rewardsSource();
-  fixture.rewardsSource = await ethers.getContractAt([], rewardsSourceAddress);
+  // const rewardsSourceAddress = await ousdBuyback.connect(josh).rewardsSource();
+  // fixture.rewardsSource = await ethers.getContractAt([], rewardsSourceAddress);
 
   if (isFork) {
     fixture.cvxLocker = await ethers.getContractAt(
@@ -2385,10 +2384,10 @@ async function buybackFixture() {
     await ousd.connect(josh).transfer(ousdBuyback.address, oethUnits("1100"));
     await setERC20TokenBalance(armBuyback.address, weth, "100");
 
-    // Compute splits
-    await oethBuyback.connect(timelock).updateBuybackSplits();
-    await ousdBuyback.connect(timelock).updateBuybackSplits();
-    await armBuyback.connect(timelock).updateBuybackSplits();
+    // // Compute splits
+    // await oethBuyback.connect(timelock).updateBuybackSplits();
+    // await ousdBuyback.connect(timelock).updateBuybackSplits();
+    // await armBuyback.connect(timelock).updateBuybackSplits();
   } else {
     fixture.mockSwapper = await ethers.getContract("MockSwapper");
     fixture.cvxLocker = await ethers.getContract("MockCVXLocker");
@@ -2408,9 +2407,9 @@ async function buybackFixture() {
     await ousd.connect(josh).transfer(ousdBuyback.address, ousdUnits("3000"));
     //await weth.connect(josh).transfer(armBuyback.address, oethUnits("3"));
 
-    // Compute splits
-    await oethBuyback.connect(governor).updateBuybackSplits();
-    await ousdBuyback.connect(governor).updateBuybackSplits();
+    // // Compute splits
+    // await oethBuyback.connect(governor).updateBuybackSplits();
+    // await ousdBuyback.connect(governor).updateBuybackSplits();
     //await armBuyback.connect(governor).updateBuybackSplits();
   }
 
