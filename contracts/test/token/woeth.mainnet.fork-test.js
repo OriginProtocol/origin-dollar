@@ -276,7 +276,7 @@ describe("ForkTest: wOETH", function () {
         .mul(BigNumber.from("1000000000000000000"))
         .div(initialDeposit);
 
-      // 2 wei rounding error 
+      // 2 wei rounding error
       await expect(oethRateIncrease).to.withinRange(
         woethRateIncrease.sub(2),
         woethRateIncrease.add(2)
