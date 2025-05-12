@@ -88,6 +88,7 @@ sfrxeth = load_contract('ERC20', SFRXETH)
 oeth_vault_admin = load_contract('vault_admin', OETH_VAULT)
 oeth_vault_core = load_contract('vault_core', OETH_VAULT)
 oeth_metapool = load_contract('oeth_metapool', OETH_METAPOOL)
+oeth_curve_pool = load_contract('ousd_curve_pool', OETH_CURVE_POOL)
 
 woeth = load_contract('wrapped_ousd', WOETH)
 ccip_router = load_contract('ccip_router', CCIP_ROUTER)
