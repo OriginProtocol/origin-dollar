@@ -284,6 +284,11 @@ addresses.mainnet.curve.OUSD_USDC.pool =
   "0x6d18E1a7faeB1F0467A77C0d293872ab685426dc";
 addresses.mainnet.curve.OUSD_USDC.gauge =
   "0x1eF8B6Ea6434e722C916314caF8Bf16C81cAF2f9";
+addresses.mainnet.curve.OETH_WETH = {};
+addresses.mainnet.curve.OETH_WETH.pool =
+  "0xcc7d5785AD5755B6164e21495E07aDb0Ff11C2A8";
+addresses.mainnet.curve.OETH_WETH.gauge =
+  "0x36cC1d791704445A5b6b9c36a667e511d4702F3f";
 
 // SSV network
 addresses.mainnet.SSV = "0x9D65fF81a3c488d585bBfb0Bfe3c7707c7917f54";

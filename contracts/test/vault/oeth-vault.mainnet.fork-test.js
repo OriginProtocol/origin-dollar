@@ -170,7 +170,7 @@ describe("ForkTest: OETH Vault", function () {
       const { oethVault, strategist, matt, weth, oeth } = fixture;
 
       // Send a heap of WETH to the vault so it can be redeemed
-      await weth.connect(matt).transfer(oethVault.address, oethUnits("10000"));
+      await weth.connect(matt).transfer(oethVault.address, oethUnits("1000"));
 
       const amount = oethUnits("10");
 
@@ -196,7 +196,7 @@ describe("ForkTest: OETH Vault", function () {
       const { oethVault, josh, matt, weth, oeth } = fixture;
 
       // Send a heap of WETH to the vault so it can be redeemed
-      await weth.connect(matt).transfer(oethVault.address, oethUnits("10000"));
+      await weth.connect(matt).transfer(oethVault.address, oethUnits("1000"));
 
       const amount = oethUnits("10");
       const expectedWETH = amount.mul("9990").div("10000");
