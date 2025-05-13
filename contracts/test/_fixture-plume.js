@@ -5,9 +5,11 @@ const { isFork, isPlumeFork, oethUnits } = require("./helpers");
 const { impersonateAndFund } = require("../utils/signers");
 const { nodeRevert, nodeSnapshot } = require("./_fixture");
 const { deployWithConfirmation } = require("../utils/deploy");
+const { deployPlumeMockRoosterAMOStrategyImplementation } = require("../deploy/deployActions.js");
 const addresses = require("../utils/addresses");
 const hhHelpers = require("@nomicfoundation/hardhat-network-helpers");
 const log = require("../utils/logger")("test:fixtures-plume");
+
 
 let snapshotId;
 
@@ -30,6 +32,24 @@ const baseFixtureWithMockedVaultAdminConfig = async () => {
     "IMockVault",
     fixture.oethpVault.address
   );
+
+  const mockImplementation = await deployPlumeMockRoosterAMOStrategyImplementation(
+    addresses.plume.OethpWETHRoosterPool
+  );
+
+  const roosterAmoStrategyProxy = await ethers.getContract(
+      "RoosterAMOStrategyProxy"
+    );
+
+  await roosterAmoStrategyProxy
+    .connect(fixture.governor)
+    .upgradeTo(mockImplementation.address);
+
+  fixture.roosterAmoStrategy = await ethers.getContractAt(
+    "MockRoosterAMOStrategy",
+    roosterAmoStrategyProxy.address
+  );
+
   return fixture;
 };
 

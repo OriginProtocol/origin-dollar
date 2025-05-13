@@ -1374,7 +1374,7 @@ describe("ForkTest: Aerodrome AMO Strategy (Base)", async function () {
     // Quoter claim governance)
     await quoter.claimGovernance();
 
-    let txResponse;
+    let txResponse; 
     if (lowValue == 0 && highValue == 0) {
       txResponse = await quoter["quoteAmountToSwapBeforeRebalance()"]();
     } else {
