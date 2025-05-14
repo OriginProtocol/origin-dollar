@@ -524,6 +524,27 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
     /**
      * @dev Add liquidity into the pool in the pre-configured WETH to OETHp share ratios
      * defined by the allowedPoolWethShareStart|End interval.
+     *
+     * Rooster's PoolLens contract is can be slightly off when calculating the required WETH &
+     * OETHp the Pool will spend when adding the liquidity. In tests the error didn't exceed
+     * the `amount/1e12` where the `amount` is the limit/target value passed to the PoolLens
+     * when creating the addParams. Unfortunately the error can happen in any direction (it can
+     * go above the target amount as well as under).
+     *
+     * To mitigate this issue strategy corrects for a larger `amount / 1e9` portion of the amount
+     * intending to be deposited in the following manner:
+     *  - the WETH limit given to the PoolLens contract is adjusted down for the error. The
+     *    amount of WETH approved to be transferred is not adjusted - if Pool transfers out
+     *    more WETH than predicted.
+     *  - the amount of OETHp approved to be transferred is adjusted up for the error. As the
+     *    PoolLens can under-estimate the amount it reports back.
+     *
+     * This way the add liquidity transaction should succeed even in the worst case where the
+     * PoolLens underestimated the transferred WETH & transferred OETHp.
+     *
+     * As a more readable error reporting measure Rooster Quoter contract is used (which doesn't
+     * have calculation issues) to verify the WETH & OETHp amounts and throws an error when
+     * the pool would still transfer larger amount of tokens than approve by this contract.
      */
     function _addLiquidity() internal gaugeUnstakeAndRestake {
         uint256 _wethBalance = IERC20(WETH).balanceOf(address(this));
