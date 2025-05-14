@@ -213,7 +213,7 @@ from world import *
 def main():
   with TemporaryForkForReallocations() as txs:
     # Unwrap wOETH to OETH
-    woeth_amount = woeth.previewWithdraw((150 + 450) * 10**18)
+    woeth_amount = woeth.previewWithdraw(600 * 10**18)
     print("wOETH required", c18(woeth_amount), woeth_amount)
 
     # Redeem wOETH to OETH
@@ -224,7 +224,7 @@ def main():
     weth_before = weth.balanceOf(MULTICHAIN_STRATEGIST)
 
     # Swap OETH to WETH
-    arm_amount = 449 * 10**18
+    arm_amount = 450 * 10**18
     txs.append(
       oeth.approve(oeth_arm.address, arm_amount, {'from': MULTICHAIN_STRATEGIST})
     )
@@ -267,4 +267,3 @@ def main():
         {'value': weth_received, 'from': MULTICHAIN_STRATEGIST}
       )
     )
-    
