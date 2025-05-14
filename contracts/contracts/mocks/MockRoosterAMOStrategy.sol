@@ -17,6 +17,7 @@ contract MockRoosterAMOStrategy is RoosterAMOStrategy {
         address _liquidityManager,
         address _poolLens,
         address _maverickPosition,
+        address _maverickQuoter,
         address _mPool,
         bool _upperTickAtParity
     ) RoosterAMOStrategy(
@@ -26,6 +27,7 @@ contract MockRoosterAMOStrategy is RoosterAMOStrategy {
     	_liquidityManager,
     	_poolLens,
     	_maverickPosition,
+    	_maverickQuoter,
     	_mPool,
     	_upperTickAtParity
     ) {}

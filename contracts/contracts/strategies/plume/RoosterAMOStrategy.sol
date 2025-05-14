@@ -123,6 +123,7 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
     error NotEnoughWethLiquidity(uint256 wethBalance, uint256 requiredWeth); // 0xa6737d87
     error OutsideExpectedTickRange(); // 0xa6e1bad2
     error SlippageCheck(uint256 tokenReceived); // 0x355cdb78
+    error InsufficientTokenBalance(uint256 tokenOffered, uint256 tokenRequired, address token); // 0xe23d5ff7
 
     /**
      * @dev Verifies that the caller is the Governor, or Strategist.
@@ -533,23 +534,22 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
         }
 
         // TODO: check what happens when really close to upper / lower tick
+        uint256 _wethBalanceAdjustedDown = _adjustForRoosterMathError(_wethBalance, true);
         (
             bytes memory packedSqrtPriceBreaks,
             bytes[] memory packedArgs,
             IMaverickV2Pool.AddLiquidityParams[] memory addParams,
             IMaverickV2PoolLens.TickDeltas memory tickDelta
-        //) = _getAddLiquidityParams(_wethBalance - 1e10, 0);
-        ) = _getAddLiquidityParams(_wethBalance, 0);
+        ) = _getAddLiquidityParams(_wethBalanceAdjustedDown, 0);
 
         uint256 _oethRequired = tickDelta.deltaBOut;
-
-        if (_oethRequired > _oethBalance) {
-            IVault(vaultAddress).mintForStrategy(_oethRequired - _oethBalance);
+        uint256 _oethRequiredAdjustedUp = _adjustForRoosterMathError(_oethRequired, false);
+        if (_oethRequiredAdjustedUp > _oethBalance) {
+            IVault(vaultAddress).mintForStrategy(_oethRequiredAdjustedUp - _oethBalance);
         }
 
-        _approveTokenAmounts(_wethBalance, _oethRequired);
-
-        (uint256 wethQuoted, uint256 oethPQuoted, ) = quoter.calculateAddLiquidity(mPool, addParams[0]);
+        _approveTokenAmounts(_wethBalance, _oethRequiredAdjustedUp);
+        _verifyAddLiquidityAmountsRequired(_wethBalance, _oethRequiredAdjustedUp, addParams[0]);
 
         /* Adding of the liquidity removes less tokens than `tickDelta` returned
          * by the pools lens reports. For that reason some dust WETH and OETH will
@@ -566,8 +566,8 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
         _updateUnderlyingAssets();
 
         emit LiquidityAdded(
-            _wethBalance, // wethAmountDesired
-            _oethRequired, // oethbAmountDesired
+            _wethBalanceAdjustedDown, // wethAmountDesired
+            _oethRequired, // oethpAmountDesired
             _wethAmount, // wethAmountSupplied
             _oethAmount, // oethbAmountSupplied
             tokenId, // tokenId
@@ -578,6 +578,38 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
         // a little bit less tokens than lens contract calculates when creating
         // the add liquidity parameters
         _burnOethOnTheContract(true);
+    }
+
+    /**
+     * PoolLens contract isn't precise when calculating the token amounts required when adding
+     * liquidity. On the other hand the Quoter contract is. There is some buffer included in amounts
+     * passed to PoolLens contract. This function checks the quoter values and throws and error in 
+     * case the buffer isn't sufficient.
+     * 
+     */
+    function _verifyAddLiquidityAmountsRequired(
+        uint256 _wethRequiredAdjusted,
+        uint256 _oethRequiredAdjusted,
+        IMaverickV2Pool.AddLiquidityParams memory addParams
+    ) internal {
+        (uint256 _wethQuoted, uint256 _oethPQuoted, ) = quoter.calculateAddLiquidity(mPool, addParams);
+        if (_wethQuoted > _wethRequiredAdjusted) {
+            revert InsufficientTokenBalance(_wethRequiredAdjusted, _wethQuoted, WETH);
+        }
+        if (_oethPQuoted > _oethRequiredAdjusted) {
+            revert InsufficientTokenBalance(_oethRequiredAdjusted, _oethPQuoted, OETHp);
+        }
+    }
+
+    /**
+     * When rooster's PooLens contract is calculating the presumed WETH & OETHp amounts the pool
+     * contract will transfer considering given addLiquidity parameters it can make up to
+     * 1e6 error on a 1e18 amounts added.
+     * This function takes some extra buffer and corrects a 1e18 amount by 1e9. A 1e20 amount is
+     * corrected by 1e11.
+     */
+    function _adjustForRoosterMathError(uint256 amount, bool adjustDown) internal pure returns (uint256) {
+        return adjustDown ? amount - amount / 1e9 : amount + amount / 1e9;
     }
 
     // TODO: docs

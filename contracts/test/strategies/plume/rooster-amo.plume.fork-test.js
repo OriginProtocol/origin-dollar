@@ -19,7 +19,7 @@ const plumeFixtureWithMockedVault = createFixtureLoader(
 
 const { setERC20TokenBalance } = require("../../_fund");
 
-describe("ForkTest: Rooster AMO Strategy (Plume)", async function () {
+describe.only("ForkTest: Rooster AMO Strategy (Plume)", async function () {
   let fixture,
     oethpVault,
     oethVaultSigner,
@@ -680,9 +680,11 @@ describe("ForkTest: Rooster AMO Strategy (Plume)", async function () {
       const amountBelowThreshold = minAmountReserved.div(BigNumber.from("2"));
 
       await mint({ amount: amountBelowThreshold });
-      // there is some WETH usually on the strategy contract because liquidity manager doesn't consume all
+      // There is some WETH usually on the strategy contract because liquidity manager doesn't consume all.
+      // Also the strategy contract adjusts WETH supplied to pool down, to mitigate the PoolLens liquidity
+      // calculation.
       await expect(await weth.balanceOf(roosterAmoStrategy.address)).to.lte(
-        BigNumber.from("1000000")
+        BigNumber.from("10000000000")
       );
 
       await expect(await oethpVault.wethAvailable()).to.approxEqualTolerance(
@@ -754,9 +756,6 @@ describe("ForkTest: Rooster AMO Strategy (Plume)", async function () {
     it("Should be able to deposit to the pool & rebalance", async () => {
       await mintAndDepositToStrategy({ amount: oethUnits("5") });
       let { amount, swapWeth } = await estimateSwapAmountsToGetToConfiguredInterval();
-      //amount = amount.mul(BigNumber.from("2"));
-      console.log("amount", amount.toString());
-      console.log("swapWeth", swapWeth);
 
       const tx = await rebalance(amount, swapWeth, 0, "0", true);
 
@@ -856,11 +855,6 @@ describe("ForkTest: Rooster AMO Strategy (Plume)", async function () {
     const wethAmount = tickState.reserveA;
     const oethAmount = tickState.reserveB;
     const zero = BigNumber.from("0");
-
-    console.log("RESERVE amounts");
-    console.log("wethRatio", wethRatio.toString());
-    console.log("wethAmount", wethAmount.toString());
-    console.log("oethAmount", oethAmount.toString());
 
     if (wethAmount == zero || oethAmount == zero) {
       throw new Error("Not in the expected tick");
