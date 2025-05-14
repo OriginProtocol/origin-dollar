@@ -588,16 +588,16 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
      * 
      */
     function _verifyAddLiquidityAmountsRequired(
-        uint256 _wethRequiredAdjusted,
-        uint256 _oethRequiredAdjusted,
+        uint256 _wethAvailable,
+        uint256 _oethAvailable,
         IMaverickV2Pool.AddLiquidityParams memory addParams
     ) internal {
         (uint256 _wethQuoted, uint256 _oethPQuoted, ) = quoter.calculateAddLiquidity(mPool, addParams);
-        if (_wethQuoted > _wethRequiredAdjusted) {
-            revert InsufficientTokenBalance(_wethRequiredAdjusted, _wethQuoted, WETH);
+        if (_wethQuoted > _wethAvailable) {
+            revert InsufficientTokenBalance(_wethAvailable, _wethQuoted, WETH);
         }
-        if (_oethPQuoted > _oethRequiredAdjusted) {
-            revert InsufficientTokenBalance(_oethRequiredAdjusted, _oethPQuoted, OETHp);
+        if (_oethPQuoted > _oethAvailable) {
+            revert InsufficientTokenBalance(_oethAvailable, _oethPQuoted, OETHp);
         }
     }
 
