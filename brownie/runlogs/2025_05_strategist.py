@@ -202,3 +202,69 @@ def main():
     print("Pool OETH  ", "{:.6f}".format(oethPoolBalance / 10**18), oethPoolBalance * 100 / totalPool)
     print("Pool Total ", "{:.6f}".format(totalPool / 10**18), totalPool)
     print("Sell 10 OETH Curve prices before and after", "{:.6f}".format(weth_out_before / 10**18), "{:.6f}".format(weth_out_after / 10**18))
+
+
+
+# -------------------------------------
+# May 14, 2025 - Unwrap wOETH to OETH, redeem and swap to WETH, and bridge to Base
+# -------------------------------------
+from world import *
+
+def main():
+  with TemporaryForkForReallocations() as txs:
+    # Unwrap wOETH to OETH
+    woeth_amount = woeth.previewWithdraw((150 + 450) * 10**18)
+    print("wOETH required", c18(woeth_amount), woeth_amount)
+
+    # Redeem wOETH to OETH
+    txs.append(
+      woeth.redeem(woeth_amount, MULTICHAIN_STRATEGIST, MULTICHAIN_STRATEGIST, {'from': MULTICHAIN_STRATEGIST})
+    )
+
+    weth_before = weth.balanceOf(MULTICHAIN_STRATEGIST)
+
+    # Swap OETH to WETH
+    arm_amount = 449 * 10**18
+    txs.append(
+      oeth.approve(oeth_arm.address, arm_amount, {'from': MULTICHAIN_STRATEGIST})
+    )
+    txs.append(
+      oeth_arm.swapExactTokensForTokens['address,address,uint256,uint256,address'](oeth.address, weth.address, arm_amount, arm_amount, MULTICHAIN_STRATEGIST, {'from': MULTICHAIN_STRATEGIST})
+    )
+
+    # Redeem OETH to WETH
+    txs.append(
+      oeth_vault_core.redeem(
+        150 * 10**18,
+        0,
+        {'from': MULTICHAIN_STRATEGIST}
+      )
+    )
+
+    # Hack to make weth.withdraw work
+    brownie.network.web3.provider.make_request('hardhat_setCode', [MULTICHAIN_STRATEGIST, '0x'])
+    
+    weth_received = weth.balanceOf(MULTICHAIN_STRATEGIST) - weth_before
+
+    print("--------------")
+    print("WETH Received", c18(weth_received), weth_received)
+    print("--------------")
+
+    # Unwrap WETH
+    txs.append(
+      weth.withdraw(weth_received, {'from': MULTICHAIN_STRATEGIST})
+    )
+    
+    # hex-encoded string for "originprotocol"
+    extra_data = "0x6f726967696e70726f746f636f6c"
+
+    # Bridge it
+    txs.append(
+      superbridge.bridgeETHTo(
+        MULTICHAIN_STRATEGIST,
+        200000, # minGasLimit
+        extra_data, # extraData
+        {'value': weth_received, 'from': MULTICHAIN_STRATEGIST}
+      )
+    )
+    
