@@ -605,6 +605,6 @@ addresses.plume.MaverickV2Position =
 addresses.plume.MaverickV2LiquidityManager =
   "0x28d79eddBF5B215cAccBD809B967032C1E753af7";
 addresses.plume.OethpWETHRoosterPool =
-  "0xcA26a025eD16c5becD100C0165136aA1E34f7E58";
+  "0x3F86B564A9B530207876d2752948268b9Bf04F71";
 
 module.exports = addresses;
