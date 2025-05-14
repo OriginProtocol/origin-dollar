@@ -46,4 +46,10 @@ contract MockRoosterAMOStrategy is RoosterAMOStrategy {
     {
         return _reservesInTickForGivenPrice(tick, newSqrtPrice);
     }
+
+    function getCurrentWethShare() external view returns(uint256) {
+        uint256 _currentPrice = getPoolSqrtPrice();
+        
+        return _getWethShare(_currentPrice);
+    }
 }

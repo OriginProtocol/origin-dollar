@@ -164,7 +164,7 @@ const defaultFixture = async () => {
     await hhHelpers.setBalance(signer.address, oethUnits("100000000"));
 
     // And WETH
-    _mintWETH(signer, oethUnits("10000000"));
+    await _mintWETH(signer, oethUnits("10000000"));
 
     // Set allowance on the vault
     await weth
