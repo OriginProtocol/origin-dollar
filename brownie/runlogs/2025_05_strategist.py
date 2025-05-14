@@ -203,8 +203,6 @@ def main():
     print("Pool Total ", "{:.6f}".format(totalPool / 10**18), totalPool)
     print("Sell 10 OETH Curve prices before and after", "{:.6f}".format(weth_out_before / 10**18), "{:.6f}".format(weth_out_after / 10**18))
 
-
-
 # -------------------------------------
 # May 14, 2025 - Unwrap wOETH to OETH, redeem and swap to WETH, and bridge to Base
 # -------------------------------------
@@ -248,6 +246,144 @@ def main():
 
     print("--------------")
     print("WETH Received", c18(weth_received), weth_received)
+    print("--------------")
+
+    # Unwrap WETH
+    txs.append(
+      weth.withdraw(weth_received, {'from': MULTICHAIN_STRATEGIST})
+    )
+    
+    # hex-encoded string for "originprotocol"
+    extra_data = "0x6f726967696e70726f746f636f6c"
+
+    # Bridge it
+    txs.append(
+      superbridge.bridgeETHTo(
+        MULTICHAIN_STRATEGIST,
+        200000, # minGasLimit
+        extra_data, # extraData
+        {'value': weth_received, 'from': MULTICHAIN_STRATEGIST}
+      )
+    )
+
+# -------------------------------------
+# May 14, 2025 - Base mint superOETH using ETH, remove from bridged wOETH strategy
+# -------------------------------------
+from aerodrome_harvest import *
+from brownie import accounts
+import eth_abi
+
+def main():
+  with TemporaryForkForReallocations() as txs:
+    strategist = accounts.at(MULTICHAIN_STRATEGIST, force=True)
+    gas_buffer = 0.03 * 10**18
+    eth_amount = strategist.balance() - gas_buffer
+
+    existing_oethb_amount = 0
+
+    # Update oracle price
+    txs.append(woeth_strat.updateWOETHOraclePrice({ 'from': OETHB_MULTICHAIN_STRATEGIST }))
+
+    # Rebase
+    txs.append(vault_core.rebase({ 'from': OETHB_MULTICHAIN_STRATEGIST }))
+
+    # Take Vault snapshot 
+    txs.append(vault_value_checker.takeSnapshot({ 'from': OETHB_MULTICHAIN_STRATEGIST }))
+
+    # Mint OETHb with ETH
+    txs.append(zapper.deposit({'from': MULTICHAIN_STRATEGIST, 'value': eth_amount}))
+
+    woeth_amount_before = woeth.balanceOf(OETHB_MULTICHAIN_STRATEGIST)
+
+    # Withdraw wOETH from bridged wOETH strategy by burning superOETH
+    txs.append(woeth_strat.withdrawBridgedWOETH(eth_amount + existing_oethb_amount, { 'from': OETHB_MULTICHAIN_STRATEGIST }))
+
+    woeth_amount = woeth.balanceOf(OETHB_MULTICHAIN_STRATEGIST) - woeth_amount_before
+
+    # Check Vault Value against snapshot
+    vault_change = vault_core.totalValue() - vault_value_checker.snapshots(OETHB_MULTICHAIN_STRATEGIST)[0]
+    supply_change = oethb.totalSupply() - vault_value_checker.snapshots(OETHB_MULTICHAIN_STRATEGIST)[1]
+    profit = vault_change - supply_change
+
+    txs.append(vault_value_checker.checkDelta(profit, (0.3 * 10**18), vault_change, (1 * 10**18), {'from': OETHB_MULTICHAIN_STRATEGIST}))
+
+    print(to_gnosis_json(txs, OETHB_MULTICHAIN_STRATEGIST, "8453"))
+
+    print("--------------------")
+    print("Minted superOETHb    ", c18(eth_amount), eth_amount)
+    print("Redeemed superOETHb  ", c18(eth_amount + existing_oethb_amount), eth_amount + existing_oethb_amount)
+    print("Withdrawn wOETH      ", c18(woeth_amount), woeth_amount)
+    print("--------------------")
+    print("Profit               ", c18(profit), profit)
+    print("Vault Change         ", c18(vault_change), vault_change)
+    print("--------------------")
+
+    # Bridge wOETH to Ethereum using CCIP
+    txs.append(woeth.approve(BASE_CCIP_ROUTER, woeth_amount, { 'from': OETHB_MULTICHAIN_STRATEGIST }))
+
+    eth_chain_selector = 5009297550715157269
+
+    ccip_message = [
+      eth_abi.encode(['address'], [MULTICHAIN_STRATEGIST]),
+      '0x',
+      [(BRIDGED_WOETH_BASE, woeth_amount)],
+      ADDR_ZERO,
+      '0x97a657c9000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000'
+    ]
+
+    ccip_fee = ccip_router.getFee(eth_chain_selector, ccip_message)
+    print("--------------------")
+    print("CCIP fee             ", c18(ccip_fee), ccip_fee)
+    ccip_fee = int(ccip_fee * 1.2)
+    print("Premium              ", c18(0), pcts(20))
+    print("Net fee              ", c18(ccip_fee), ccip_fee)
+    print("--------------------")
+
+    txs.append(ccip_router.ccipSend(
+      eth_chain_selector,
+      ccip_message,
+      {'from': OETHB_MULTICHAIN_STRATEGIST, 'value': ccip_fee}
+    ))
+
+# -------------------------------------
+# May 15, 2025 - Unwrap wOETH to OETH, redeem to WETH, and bridge to Base
+# -------------------------------------
+from world import *
+
+def main():
+  with TemporaryForkForReallocations() as txs:
+    # Unwrap wOETH to OETH
+    woeth_amount = woeth.balanceOf(MULTICHAIN_STRATEGIST)
+
+    oeth_amount_before = oeth.balanceOf(MULTICHAIN_STRATEGIST)
+
+    # Redeem wOETH to OETH
+    txs.append(
+      woeth.redeem(woeth_amount, MULTICHAIN_STRATEGIST, MULTICHAIN_STRATEGIST, {'from': MULTICHAIN_STRATEGIST})
+    )
+
+    oeth_amount_to_redeem = oeth.balanceOf(MULTICHAIN_STRATEGIST) - oeth_amount_before
+
+    weth_before = weth.balanceOf(MULTICHAIN_STRATEGIST)
+
+    # Redeem OETH to WETH
+    txs.append(
+      oeth_vault_core.redeem(
+        oeth_amount_to_redeem,
+        0,
+        {'from': MULTICHAIN_STRATEGIST}
+      )
+    )
+    
+    # Hack to make weth.withdraw work
+    brownie.network.web3.provider.make_request('hardhat_setCode', [MULTICHAIN_STRATEGIST, '0x'])
+    
+    weth_received = weth.balanceOf(MULTICHAIN_STRATEGIST) - weth_before
+
+    print("--------------")
+    print("wOETH to redeem to OETH", c18(woeth_amount), woeth_amount)
+    print("OETH to redeem to WETH ", c18(woeth_amount), woeth_amount)
+    print("WETH Received          ", c18(weth_received), weth_received)
     print("--------------")
 
     # Unwrap WETH
