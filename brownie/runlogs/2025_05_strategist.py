@@ -1,3 +1,4 @@
+'''
 # -------------------------------------
 # May 2, 2025 - Deposit funds back to the Morpho Vaults
 # -------------------------------------
@@ -263,3 +264,126 @@ def main():
     print("Pool OETH  ", "{:.6f}".format(oethPoolBalance / 10**18), oethPoolBalance * 100 / totalPool)
     print("Pool Total ", "{:.6f}".format(totalPool / 10**18), totalPool)
     print("Sell 10 OETH Curve prices before and after", "{:.6f}".format(eth_out_before / 10**18), "{:.6f}".format(weth_out_after / 10**18))
+'''
+# -------------------------------------
+# May 15, 2025 - Base Withdraw from Curve AMO strategy
+# -------------------------------------
+from world_base import *
+
+def main():
+  with TemporaryForkForOETHbReallocations() as txs:
+    # Before
+    txs.append(vault_core.rebase({ 'from': OETHB_STRATEGIST }))
+    txs.append(vault_value_checker.takeSnapshot({ 'from': OETHB_STRATEGIST }))
+
+    print("----- Before rebalance -----")  
+    print()
+    amo_snapshot()  
+    swapWeth = False
+    swapAmount = 2_000e18
+    minAmount = swapAmount * 0.98
+    print("-----")
+    print("Swap amount  ", c18(swapAmount))
+    print("Min  amount  ", c18(minAmount))
+    print("-----")
+    txs.append(
+      amo_strat.rebalance(
+        swapAmount,
+        swapWeth,
+        minAmount,
+        {'from': OETHB_STRATEGIST}
+      )
+    )
+
+    print("----- After rebalance && Before 2k WETH withdraw-----")  
+    print()
+    amo_snapshot()  
+
+    
+    # Withdraw 2k WETH
+    wethWithdrawAmount = 2_025 * 10**18
+    txs.append(
+      vault_admin.withdrawFromStrategy(
+        OETHB_AERODROME_AMO_STRATEGY, 
+        [weth], 
+        [wethWithdrawAmount], 
+        {'from': OETHB_STRATEGIST}
+      )
+    )
+
+    print("----- After 2k WETH withdraw -----")
+    print()
+    amo_snapshot()
+    print("--------------------")
+    print("WETH Withdraw ", c18(wethWithdrawAmount))
+
+    # After
+    vault_change = vault_core.totalValue() - vault_value_checker.snapshots(OETHB_STRATEGIST)[0]
+    supply_change = oethb.totalSupply() - vault_value_checker.snapshots(OETHB_STRATEGIST)[1]
+    profit = vault_change - supply_change
+
+    txs.append(vault_value_checker.checkDelta(profit, (1 * 10**18), vault_change, (1 * 10**18), {'from': OETHB_STRATEGIST}))
+
+    #amo_snapshot()
+    print("--------------------")
+    print("Profit       ", c18(profit), profit)
+    print("Vault Change ", c18(vault_change), vault_change)
+
+# -------------------------------------
+# May 15, 2024 - Deposit 2025 WETH to BASE Curve AMO
+# -------------------------------------
+from aerodrome_harvest import *
+from brownie import accounts
+import eth_abi
+def main():
+  with TemporaryForkForReallocations() as txs:
+    # Rebase
+    txs.append(vault_core.rebase({ 'from': OETHB_MULTICHAIN_STRATEGIST }))
+
+    # Take Vault snapshot 
+    txs.append(vault_value_checker.takeSnapshot({ 'from': OETHB_MULTICHAIN_STRATEGIST }))
+
+    # AMO pool before
+    wethPoolBalance = weth.balanceOf(CURVE_POOL_BASE)
+    oethPoolBalance = oethb.balanceOf(CURVE_POOL_BASE)
+    totalPool = wethPoolBalance + oethPoolBalance
+    price_before = curve_pool.get_dy(1, 0, 10 * 10**18)
+
+    print("Curve SuperOETH/WETH Pool before")  
+    print("Pool WETH        ", "{:.6f}".format(wethPoolBalance / 10**18), wethPoolBalance * 100 / totalPool)
+    print("Pool SuperOETH   ", "{:.6f}".format(oethPoolBalance / 10**18), oethPoolBalance * 100 / totalPool)
+    print("Pool Total       ", "{:.6f}".format(totalPool / 10**18))
+    print("-----")
+
+    # Deposit 165 WETH to Curve AMO strategy
+    txs.append(
+      vault_admin.depositToStrategy(
+        OETHB_CURVE_AMO_STRATEGY, 
+        [weth],
+        [2140 * 10**18],
+        {'from': OETHB_MULTICHAIN_STRATEGIST}
+      )
+    )
+
+    # AMO pool after
+    wethPoolBalance = weth.balanceOf(CURVE_POOL_BASE)
+    oethPoolBalance = oethb.balanceOf(CURVE_POOL_BASE)
+    totalPool = wethPoolBalance + oethPoolBalance
+    price_after = curve_pool.get_dy(1, 0, 10 * 10**18)
+
+    print("Curve SuperOETH/WETH Pool after")  
+    print("Pool WETH        ", "{:.6f}".format(wethPoolBalance / 10**18), wethPoolBalance * 100 / totalPool)
+    print("Pool SuperOETH   ", "{:.6f}".format(oethPoolBalance / 10**18), oethPoolBalance * 100 / totalPool)
+    print("Pool Total       ", "{:.6f}".format(totalPool / 10**18))
+    print("SuperOETH/WETH Curve prices before and after", "{:.6f}".format(price_before / 10**19), "{:.6f}".format(price_after / 10**19))
+
+    # After
+    vault_change = vault_core.totalValue() - vault_value_checker.snapshots(OETHB_MULTICHAIN_STRATEGIST)[0]
+    supply_change = oethb.totalSupply() - vault_value_checker.snapshots(OETHB_MULTICHAIN_STRATEGIST)[1]
+    profit = vault_change - supply_change
+    txs.append(vault_value_checker.checkDelta(profit, (1 * 10**18), vault_change, (10 * 10**18), {'from': OETHB_MULTICHAIN_STRATEGIST}))
+    print("-----")
+    print("Profit", "{:.6f}".format(profit / 10**18), profit)
+    print("SuperOETH supply change", "{:.6f}".format(supply_change / 10**18), supply_change)
+    print("Vault Change", "{:.6f}".format(vault_change / 10**18), vault_change)
+    print("-----")
