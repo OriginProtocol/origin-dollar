@@ -923,10 +923,6 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
          *
          * The more swaps from OETHp -> WETH happen on the pool the more the price starts to move away from the tick 0
          * towards the middle of tick -1 making OETHp (priced in WETH) more expensive.
-         *
-         * An additional note: TODO: test what happens when liquidity is near zero or 0
-         *
-         * TODO: did we get this wrong with Aerodrome?
          */
 
         uint256 _wethAmount = _balanceInPosition();
@@ -990,16 +986,20 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
      * @notice Mint the initial NFT position
      */
     function mintInitialPosition() external onlyGovernor nonReentrant {
+        uint256 basicAmount = 1e18;
+        uint256 basicAmountRoundedUp = _adjustForRoosterMathError(basicAmount, false);
         (
             bytes memory packedSqrtPriceBreaks,
             bytes[] memory packedArgs,
             ,
             IMaverickV2PoolLens.TickDeltas memory tickDelta
-        ) = _getAddLiquidityParams(1e18, 1e18);
-        // Mint amount of OETH required
-        IVault(vaultAddress).mintForStrategy(tickDelta.deltaBOut);
+        ) = _getAddLiquidityParams(basicAmount, basicAmount);
 
-        _approveTokenAmounts(1e18, 1e18);
+
+        // Mint amount of OETH required
+        IVault(vaultAddress).mintForStrategy(basicAmountRoundedUp);
+        _approveTokenAmounts(basicAmountRoundedUp, basicAmountRoundedUp);
+        
         (, , , uint256 _tokenId) = liquidityManager.mintPositionNftToSender(
             mPool,
             packedSqrtPriceBreaks,
