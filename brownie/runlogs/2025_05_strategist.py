@@ -1,3 +1,4 @@
+'''
 # -------------------------------------
 # May 2, 2025 - Deposit funds back to the Morpho Vaults
 # -------------------------------------
@@ -263,7 +264,7 @@ def main():
     print("Pool OETH  ", "{:.6f}".format(oethPoolBalance / 10**18), oethPoolBalance * 100 / totalPool)
     print("Pool Total ", "{:.6f}".format(totalPool / 10**18), totalPool)
     print("Sell 10 OETH Curve prices before and after", "{:.6f}".format(eth_out_before / 10**18), "{:.6f}".format(weth_out_after / 10**18))
-
+'''
 # -------------------------------------
 # May 15, 2025 - Base Withdraw from Curve AMO strategy
 # -------------------------------------
@@ -380,7 +381,7 @@ def main():
     vault_change = vault_core.totalValue() - vault_value_checker.snapshots(OETHB_MULTICHAIN_STRATEGIST)[0]
     supply_change = oethb.totalSupply() - vault_value_checker.snapshots(OETHB_MULTICHAIN_STRATEGIST)[1]
     profit = vault_change - supply_change
-    txs.append(vault_value_checker.checkDelta(profit, (1 * 10**18), vault_change, (1 * 10**18), {'from': OETHB_MULTICHAIN_STRATEGIST}))
+    txs.append(vault_value_checker.checkDelta(profit, (1 * 10**18), vault_change, (10 * 10**18), {'from': OETHB_MULTICHAIN_STRATEGIST}))
     print("-----")
     print("Profit", "{:.6f}".format(profit / 10**18), profit)
     print("SuperOETH supply change", "{:.6f}".format(supply_change / 10**18), supply_change)
