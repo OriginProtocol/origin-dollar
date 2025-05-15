@@ -554,7 +554,6 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
             return;
         }
 
-        // TODO: check what happens when really close to upper / lower tick
         uint256 _wethBalanceAdjustedDown = _adjustForRoosterMathError(_wethBalance, true);
         (
             bytes memory packedSqrtPriceBreaks,
