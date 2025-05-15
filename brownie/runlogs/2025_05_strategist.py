@@ -1,4 +1,3 @@
-'''
 # -------------------------------------
 # May 2, 2025 - Deposit funds back to the Morpho Vaults
 # -------------------------------------
@@ -264,7 +263,6 @@ def main():
     print("Pool OETH  ", "{:.6f}".format(oethPoolBalance / 10**18), oethPoolBalance * 100 / totalPool)
     print("Pool Total ", "{:.6f}".format(totalPool / 10**18), totalPool)
     print("Sell 10 OETH Curve prices before and after", "{:.6f}".format(eth_out_before / 10**18), "{:.6f}".format(weth_out_after / 10**18))
-'''
 
 # -------------------------------------
 # May 15, 2025 - Base Withdraw from Curve AMO strategy
