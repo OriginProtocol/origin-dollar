@@ -903,9 +903,8 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
         _burnOethOnTheContract(false);
     }
 
-    /// @dev TODO: how are fees / tokens collected???
-    /// This function assumes there are no uncollected tokens in the clPool owned by the strategy contract.
-    ///      For that reason any liquidity withdrawals must also collect the tokens.
+    /// @dev This function updates the amount of underlying assets with the approach of the least possible 
+    ///      total tokens extracted for the current liquidity in the pool.
     function _updateUnderlyingAssets() internal {
         if (tokenId == 0) {
             underlyingAssets = 0;
@@ -996,10 +995,10 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
         ) = _getAddLiquidityParams(basicAmount, basicAmount);
 
 
-        // Mint amount of OETH required
+        // Mint rounded up OETH amount
         IVault(vaultAddress).mintForStrategy(basicAmountRoundedUp);
         _approveTokenAmounts(basicAmountRoundedUp, basicAmountRoundedUp);
-        
+
         (, , , uint256 _tokenId) = liquidityManager.mintPositionNftToSender(
             mPool,
             packedSqrtPriceBreaks,
@@ -1015,7 +1014,7 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
     }
 
     /**
-     * @dev Returns the balance of both tokens in a given position (TODO does it include fees?)
+     * @notice Returns the balance of tokens the strategy holds in the LP position
      * @return _amountWeth Amount of WETH in position
      * @return _amountOethp Amount of OETHp in position
      */
@@ -1031,6 +1030,12 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
         (_amountWeth, _amountOethp, ) = _getPositionInformation();
     }
 
+    /**
+     * @dev Returns the balance of tokens the strategy holds in the LP position
+     * @return _amountWeth Amount of WETH in position
+     * @return _amountOethp Amount of OETHp in position
+     * @return liquidity Amount of liquidity in the position
+     */
     function _getPositionInformation()
         internal
         view
@@ -1094,10 +1099,10 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
     {
         require(_asset == WETH, "Only WETH supported");
 
-        // just in case there is some WETH in the strategy contract
+        // because of PoolLens inaccuracy there is usually some dust WETH left on the contract
         uint256 _wethBalance = IERC20(WETH).balanceOf(address(this));
         // just paranoia check, in case there is OETHb in the strategy that for some reason hasn't
-        // been burned yet.
+        // been burned yet. This should always be 0.
         uint256 _oethpBalance = IERC20(OETHp).balanceOf(address(this));
         return underlyingAssets + _wethBalance + _oethpBalance;
     }
@@ -1233,6 +1238,9 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
     }
 
     /**
+     * @dev Returns the total reserves (balances) in a position of all the
+     *      participating LPs.
+     * 
      * @notice Calculates deltaA = liquidity * (sqrt(upper) - sqrt(lower))
      *  Calculates deltaB = liquidity / sqrt(lower) - liquidity / sqrt(upper),
      *  i.e. liquidity * (sqrt(upper) - sqrt(lower)) / (sqrt(upper) * sqrt(lower))
