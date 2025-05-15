@@ -632,7 +632,15 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
         return adjustDown ? amount - amount / 1e9 : amount + amount / 1e9;
     }
 
-    // TODO: docs
+    /**
+     * @dev The function creates liquidity parameters required to be able to add liquidity to the pool.
+     * The function needs to handle the 3 different cases of the way liquidity is added: 
+     *  - only WETH present in the tick
+     *  - only OETHp present in the tick
+     *  - both tokens present in the tick 
+     * 
+     * 
+     */
     // slither-disable-end reentrancy-no-eth
     function _getAddLiquidityParams(uint256 maxWETH, uint256 maxOETHp)
         internal
