@@ -217,7 +217,7 @@ const report = ({
     .div(BigNumber.from("1000000000000000000"))
     .div(BigNumber.from("1000000000000"));
 
-  const totalFeesEarnedInUSDC = (parseFloat(ethEarnedInUSDC.add(usdcFeeEarned)) / 1e6).toFixed(2);
+  const totalFeesEarnedInUSDC = parseFloat(ethEarnedInUSDC.add(usdcFeeEarned)) / 1e6;
 
   console.log("---------- REPORT -----------")
   console.log("Uniswap trades: \t\t", uniswapTradingLogs.length);
@@ -231,22 +231,25 @@ const report = ({
 
   console.log("usdcFeeEarned", usdcFeeEarned.toString());
   console.log("ethFeeEarned", ethFeeEarned.toString());
-
-  console.log("-----------------------------")
-  console.log("totalFeesEarnedInUSDC", totalFeesEarnedInUSDC);
   console.log(
     "lastEthPrice",
     (parseFloat(lastEthPrice) / 1e18).toFixed(4),
     "USDC"
   );
+  console.log("-----------------------------")
+  const usdcLiquidityEndFloat = parseFloat(usdcLiquidityEnd.toString()) / 1e6;
+  const profitLoss = usdcLiquidityEndFloat + totalFeesEarnedInUSDC - parseFloat(usdcLiquidityStart) / 1e6;
+
+  console.log("totalFeesEarnedInUSDC", totalFeesEarnedInUSDC);
+  console.log("usdcLiquidityEnd", usdcLiquidityEndFloat.toFixed(2));
+
+  console.log("Profit/loss", profitLoss.toFixed(2));
+
 };
 
 async function main() {
-  const fromBlock = blockData["1 hour"].stable.start;
-  const toBlock = blockData["1 hour"].stable.end;
-
-  // const fromBlock = 22507955;
-  // const toBlock = 22507959;
+  const fromBlock = blockData["1 hour"].increase.start;
+  const toBlock = blockData["1 hour"].increase.end;
 
   const ethLiquidity = ethers.utils.parseUnits("100", 18);
   const usdcLiquidity = ethers.utils.parseUnits("250000", 6);
