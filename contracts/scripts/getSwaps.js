@@ -123,7 +123,8 @@ const runSimpleSimulation = async (
   let ethLiquidity = ethLiquidityStart;
   let usdcLiquidity = usdcLiquidityStart;
   let lastEthPrice = -1;
-  let feesEarned = BigNumber.from("0");
+  let usdcFeeEarned = BigNumber.from("0");
+  let ethFeeEarned = BigNumber.from("0");
   let tradesExecuted = 0;
 
   const canTrade = (tradingLog) => {
@@ -137,7 +138,12 @@ const runSimpleSimulation = async (
   const trade = (tradingLog) => {
     tradesExecuted++;
 
-    feesEarned = feesEarned.add(tradingLog.fee);
+    if(tradingLog.amountInETH) {
+      ethFeeEarned = ethFeeEarned.add(tradingLog.fee);
+    } else {
+      usdcFeeEarned = usdcFeeEarned.add(tradingLog.fee);
+    }
+
     ethLiquidity = ethLiquidity.add(tradingLog.ethAmount);
     usdcLiquidity = usdcLiquidity.add(tradingLog.usdcAmount);
 
@@ -155,31 +161,34 @@ const runSimpleSimulation = async (
     }
   });
 
-  report(
+  report({
     ethLiquidityStart,
     usdcLiquidityStart,
-    ethLiquidity,
-    usdcLiquidity,
+    ethLiquidityEnd: ethLiquidity,
+    usdcLiquidityEnd: usdcLiquidity,
     lastEthPrice,
-    feesEarned,
+    usdcFeeEarned,
+    ethFeeEarned,
     uniswapTradingLogs,
     tradesExecuted
-  );
-};
+  });
+}
 
 // END SIMULATION PART
 
-const report = (
+
+const report = ({
   ethLiquidityStart,
   usdcLiquidityStart,
   ethLiquidityEnd,
   usdcLiquidityEnd,
   lastEthPrice,
-  feesEarned,
+  usdcFeeEarned,
+  ethFeeEarned,
   uniswapTradingLogs,
   tradesExecuted
-) => {
-  console.log("---------- REPORT -----------");
+}) => {
+  console.log("---------- REPORT -----------")
   console.log("Uniswap trades: \t\t", uniswapTradingLogs.length);
   console.log("Trades intercepted: \t\t", tradesExecuted);
 
@@ -189,7 +198,8 @@ const report = (
   console.log("usdcLiquidityStart", usdcLiquidityStart.toString());
   console.log("usdcLiquidityEnd", usdcLiquidityEnd.toString());
 
-  console.log("feesEarned", feesEarned.toString());
+  console.log("usdcFeeEarned", usdcFeeEarned.toString());
+  console.log("ethFeeEarned", ethFeeEarned.toString());
   console.log(
     "lastEthPrice",
     (parseFloat(lastEthPrice) / 1e18).toFixed(4),
@@ -198,7 +208,6 @@ const report = (
 };
 
 async function main() {
-  // stable 1 hour
   // const fromBlock = blockData["1 hour"].stable.start;
   // const toBlock = blockData["1 hour"].stable.end;
 
