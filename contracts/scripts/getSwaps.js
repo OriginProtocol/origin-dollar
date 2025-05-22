@@ -42,11 +42,11 @@ const fetchLogs = async (fromBlock, toBlock) => {
     toBlock
   });
 
-  console.log("fetched logs length:",fromBlock, toBlock, logs.length);
+  console.log(`Fetched ${logs.length} raw logs`);
   return logs;
 };
 
-// turn a swaplog into: {ethAmount: BigNumber, usdcAmount: BigNumber, blockNumber: Int}
+// turn a swaplog into: {ethAmount: BigNumber, usdcAmount: BigNumber, blockNumber: Int, amountInETH: bool}
 const simplifySwapLog = (rawLog, log) => {
   const swapFeeBp = 5;
   const returnData = {
@@ -68,7 +68,6 @@ const simplifySwapLog = (rawLog, log) => {
     returnData.amountInETH = false;
   }
 
-  console.log("simplifySwapLog AFTER", returnData);
   return returnData;
 };
 
@@ -98,30 +97,78 @@ const handleFee = (amountBn, swapFee, add = true) => {
 const fetchAndParseLogs = async (fromBlock, toBlock) => {
   const rawLogs = await fetchLogs(fromBlock, toBlock);
   const logsFull = rawLogs.map(log => decodeSwapLog(log));
-  const logs = [];
-
-  console.log("rawLogs.length", rawLogs.length)
+  const logs = []
   for(let i = 0; i < rawLogs.length; i++) {
     logs.push(simplifySwapLog(rawLogs[i], logsFull[i]));
   }
 
-  console.log("Full logs", logsFull.length)
-
   return logs;
 };
-  
-const runSimpleSimulation = async (ethLiquidity, usdcLiquidity, uniswapTradingLogs) => {
 
+// START SIMULATION PART
+
+const runSimpleSimulation = async (ethLiquidityStart, usdcLiquidityStart, uniswapTradingLogs) => {
+  let ethLiquidity = ethLiquidityStart;
+  let usdcLiquidity = usdcLiquidityStart;
+  let lastEthPrice = -1;
+  let feesEarned = BigNumber.from("0");
+  let tradesExecuted = 0;
+
+  const canTrade = (tradingLog) => {
+    if (tradingLog.amountInETH) {
+      return tradingLog.usdcAmount.abs().lt(usdcLiquidity);
+    } else {
+      return tradingLog.ethAmount.abs().lt(ethLiquidity);
+    }
+  };
+
+  const trade = (tradingLog) => {
+    tradesExecuted ++;
+
+    console.log("tradingLog.fee", tradingLog.fee);
+    feesEarned = feesEarned.add(tradingLog.fee);
+    ethLiquidity = ethLiquidity.add(tradingLog.ethAmount);
+    usdcLiquidity = usdcLiquidity.add(tradingLog.usdcAmount);
+
+    lastEthPrice; // calculate eth price
+  };
+
+  uniswapTradingLogs.forEach(tradingLog => {
+    if (canTrade(tradingLog)) {
+      trade(tradingLog);
+    }
+  });
+
+  report(ethLiquidityStart, usdcLiquidityStart, ethLiquidity, usdcLiquidity, lastEthPrice, feesEarned, uniswapTradingLogs, tradesExecuted);
 }
 
+// END SIMULATION PART
+
+
+const report = (ethLiquidityStart, usdcLiquidityStart, ethLiquidityEnd, usdcLiquidityEnd, lastEthPrice, feesEarned, uniswapTradingLogs, tradesExecuted) => {
+  console.log("---------- REPORT -----------")
+  console.log("Uniswap trades: \t\t", uniswapTradingLogs.length);
+  console.log("Trades intercepted: \t\t", tradesExecuted);
+
+
+
+
+  console.log("ethLiquidityStart", ethLiquidityStart.toString());
+  console.log("ethLiquidityEnd", ethLiquidityEnd.toString());
+  console.log("feesEarned", feesEarned.toString());
+  console.log("lastEthPrice", lastEthPrice.toString());
+};
+
 async function main() {
-  const toBlock = 22539008;
-  const fromBlock = toBlock - 5;
+  // stable 1 hour
+  //const toBlock = 22507959;
+  const toBlock = 22500845;
+  const fromBlock = 22500835;
   const ethLiquidity = ethers.utils.parseUnits("100", 18);
   const usdcLiquidity = ethers.utils.parseUnits("250000", 6);
 
   const logs = await fetchAndParseLogs(fromBlock, toBlock);
-  //await runSimpleSimulation(ethLiquidity, usdcLiquidity, logs);
+  await runSimpleSimulation(ethLiquidity, usdcLiquidity, logs);
 }
 
 
