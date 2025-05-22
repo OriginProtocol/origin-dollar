@@ -138,7 +138,7 @@ const runSimpleSimulation = async (
   const trade = (tradingLog) => {
     tradesExecuted++;
 
-    if(tradingLog.amountInETH) {
+    if (tradingLog.amountInETH) {
       ethFeeEarned = ethFeeEarned.add(tradingLog.fee);
     } else {
       usdcFeeEarned = usdcFeeEarned.add(tradingLog.fee);
@@ -160,6 +160,28 @@ const runSimpleSimulation = async (
       trade(tradingLog);
     }
   });
+
+  // After all trades, check what are we holding
+  // Target is to have as much ETH than at the beginning.
+  // 1. If we have more ETH than at the beginning -> Swap Surplus ETH to USDC
+  if (ethLiquidity.gt(ethLiquidityStart)) {
+    const surplusEth = ethLiquidity.sub(ethLiquidityStart);
+    ethLiquidity = ethLiquidity.sub(surplusEth);
+
+    // Convert surplus ETH to USDC
+    surplusUSDC = lastEthPrice.mul(surplusEth).div(BigNumber.from("1000000000000000000").mul(BigNumber.from("1000000000000"))); // div(1e18 * 1e12);
+    usdcLiquidity = usdcLiquidity.add(surplusUSDC);
+    console.log("Surplus ETH converted to USDC: ", surplusEth.toString(), "->", surplusUSDC.toString());
+  } else if (ethLiquidity.lt(ethLiquidityStart)) {
+    // 2. If we have less ETH than at the beginning -> Swap USDC to ETH
+    const deficitEth = ethLiquidityStart.sub(ethLiquidity);
+    ethLiquidity = ethLiquidity.add(deficitEth);
+
+    // Convert deficit USDC to ETH
+    deficitUSDC = lastEthPrice.mul(deficitEth).div(BigNumber.from("1000000000000000000").mul(BigNumber.from("1000000000000"))); // div(1e18 * 1e12)
+    usdcLiquidity = usdcLiquidity.sub(deficitUSDC);
+    console.log("Deficit USDC converted to ETH: ", deficitUSDC.toString(), "->", deficitEth.toString());
+  }
 
   report({
     ethLiquidityStart,
@@ -195,7 +217,7 @@ const report = ({
     .div(BigNumber.from("1000000000000000000"))
     .div(BigNumber.from("1000000000000"));
 
-  const totalFeesEarnedInUSDC = (parseFloat(ethEarnedInUSDC.add(usdcFeeEarned)) / 1e6).toFixed(2); 
+  const totalFeesEarnedInUSDC = (parseFloat(ethEarnedInUSDC.add(usdcFeeEarned)) / 1e6).toFixed(2);
 
   console.log("---------- REPORT -----------")
   console.log("Uniswap trades: \t\t", uniswapTradingLogs.length);
