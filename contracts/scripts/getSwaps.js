@@ -51,8 +51,8 @@ const simplifySwapLog = (rawLog, log) => {
   const swapFeeBp = 5;
   const returnData = {
     blockNumber: rawLog.blockNumber,
-    ethAmount: log.args.amount0,
-    usdcAmount: log.args.amount1,
+    ethAmount: log.args.amount1,
+    usdcAmount: log.args.amount0,
     amountInETH: false // modify later
   };
 
@@ -97,6 +97,7 @@ const handleFee = (amountBn, swapFee, add = true) => {
 const fetchAndParseLogs = async (fromBlock, toBlock) => {
   const rawLogs = await fetchLogs(fromBlock, toBlock);
   const logsFull = rawLogs.map(log => decodeSwapLog(log));
+
   const logs = []
   for(let i = 0; i < rawLogs.length; i++) {
     logs.push(simplifySwapLog(rawLogs[i], logsFull[i]));
@@ -125,7 +126,6 @@ const runSimpleSimulation = async (ethLiquidityStart, usdcLiquidityStart, uniswa
   const trade = (tradingLog) => {
     tradesExecuted ++;
 
-    console.log("tradingLog.fee", tradingLog.fee);
     feesEarned = feesEarned.add(tradingLog.fee);
     ethLiquidity = ethLiquidity.add(tradingLog.ethAmount);
     usdcLiquidity = usdcLiquidity.add(tradingLog.usdcAmount);
@@ -152,18 +152,24 @@ const report = (ethLiquidityStart, usdcLiquidityStart, ethLiquidityEnd, usdcLiqu
 
 
 
-
   console.log("ethLiquidityStart", ethLiquidityStart.toString());
   console.log("ethLiquidityEnd", ethLiquidityEnd.toString());
+
+  console.log("usdcLiquidityStart", usdcLiquidityStart.toString());
+  console.log("usdcLiquidityEnd", usdcLiquidityEnd.toString());
+
   console.log("feesEarned", feesEarned.toString());
   console.log("lastEthPrice", lastEthPrice.toString());
 };
 
 async function main() {
   // stable 1 hour
-  //const toBlock = 22507959;
-  const toBlock = 22500845;
-  const fromBlock = 22500835;
+  // const fromBlock = blockData["1 hour"].stable.start;
+  // const toBlock = blockData["1 hour"].stable.end;
+
+  const fromBlock = 22507955;
+  const toBlock = 22507959;
+
   const ethLiquidity = ethers.utils.parseUnits("100", 18);
   const usdcLiquidity = ethers.utils.parseUnits("250000", 6);
 
