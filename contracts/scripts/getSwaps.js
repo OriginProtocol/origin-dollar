@@ -7,6 +7,29 @@ const decodeSwapLog = (rawLog) => {
   return interface.parseLog(rawLog);
 };
 
+const blockData = {
+  "1 Day": {
+    increase: { start: 19165490, end: 19415286 },
+    decrease: { start: 21905311, end: 22227625 },
+    stable:   { start: 20673498, end: 21053237 },
+  },
+  "4 hours": {
+    increase: { start: 22428092, end: 22456401 },
+    decrease: { start: 21740793, end: 21762265 },
+    stable:   { start: 21805233, end: 21883856 },
+  },
+  "1 hour": {
+    increase: { start: 22472677, end: 22476827 },
+    decrease: { start: 22510921, end: 22515086 },
+    stable:   { start: 22500835, end: 22507959 },
+  },
+  "15 min": {
+    increase: { start: 22536782, end: 22537179 },
+    decrease: { start: 22532542, end: 22532739 },
+    stable:   { start: 22525326, end: 22525622 },
+  }
+};
+
 const fetchLogs = async (fromBlock, toBlock) => {
   const provider = new ethers.providers.JsonRpcProvider(process.env.PROVIDER_URL);
   const uniV3usdcETH = "0x88e6A0c2dDD26FEEb64F039a2c41296FcB3f5640";
