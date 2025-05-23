@@ -118,7 +118,8 @@ const fetchAndParseLogs = async (fromBlock, toBlock) => {
 const runSimpleSimulation = async (
   ethLiquidityStart,
   usdcLiquidityStart,
-  uniswapTradingLogs
+  uniswapTradingLogs,
+  description
 ) => {
   let ethLiquidity = ethLiquidityStart;
   let usdcLiquidity = usdcLiquidityStart;
@@ -132,6 +133,30 @@ const runSimpleSimulation = async (
       return tradingLog.usdcAmount.abs().lt(usdcLiquidity);
     } else {
       return tradingLog.ethAmount.abs().lt(ethLiquidity);
+    }
+  };
+
+  const doEndStateAccounting = () => {
+    // After all trades, check what are we holding
+    // Target is to have as much ETH than at the beginning.
+    // 1. If we have more ETH than at the beginning -> Swap Surplus ETH to USDC
+    if (ethLiquidity.gt(ethLiquidityStart)) {
+      const surplusEth = ethLiquidity.sub(ethLiquidityStart);
+      ethLiquidity = ethLiquidity.sub(surplusEth);
+
+      // Convert surplus ETH to USDC
+      surplusUSDC = lastEthPrice.mul(surplusEth).div(BigNumber.from("1000000000000000000").mul(BigNumber.from("1000000000000"))); // div(1e18 * 1e12);
+      usdcLiquidity = usdcLiquidity.add(surplusUSDC);
+      //console.log("Surplus ETH converted to USDC: ", surplusEth.toString(), "->", surplusUSDC.toString());
+    } else if (ethLiquidity.lt(ethLiquidityStart)) {
+      // 2. If we have less ETH than at the beginning -> Swap USDC to ETH
+      const deficitEth = ethLiquidityStart.sub(ethLiquidity);
+      ethLiquidity = ethLiquidity.add(deficitEth);
+
+      // Convert deficit USDC to ETH
+      deficitUSDC = lastEthPrice.mul(deficitEth).div(BigNumber.from("1000000000000000000").mul(BigNumber.from("1000000000000"))); // div(1e18 * 1e12)
+      usdcLiquidity = usdcLiquidity.sub(deficitUSDC);
+      //console.log("Deficit USDC converted to ETH: ", deficitUSDC.toString(), "->", deficitEth.toString());
     }
   };
 
@@ -161,27 +186,7 @@ const runSimpleSimulation = async (
     }
   });
 
-  // After all trades, check what are we holding
-  // Target is to have as much ETH than at the beginning.
-  // 1. If we have more ETH than at the beginning -> Swap Surplus ETH to USDC
-  if (ethLiquidity.gt(ethLiquidityStart)) {
-    const surplusEth = ethLiquidity.sub(ethLiquidityStart);
-    ethLiquidity = ethLiquidity.sub(surplusEth);
-
-    // Convert surplus ETH to USDC
-    surplusUSDC = lastEthPrice.mul(surplusEth).div(BigNumber.from("1000000000000000000").mul(BigNumber.from("1000000000000"))); // div(1e18 * 1e12);
-    usdcLiquidity = usdcLiquidity.add(surplusUSDC);
-    console.log("Surplus ETH converted to USDC: ", surplusEth.toString(), "->", surplusUSDC.toString());
-  } else if (ethLiquidity.lt(ethLiquidityStart)) {
-    // 2. If we have less ETH than at the beginning -> Swap USDC to ETH
-    const deficitEth = ethLiquidityStart.sub(ethLiquidity);
-    ethLiquidity = ethLiquidity.add(deficitEth);
-
-    // Convert deficit USDC to ETH
-    deficitUSDC = lastEthPrice.mul(deficitEth).div(BigNumber.from("1000000000000000000").mul(BigNumber.from("1000000000000"))); // div(1e18 * 1e12)
-    usdcLiquidity = usdcLiquidity.sub(deficitUSDC);
-    console.log("Deficit USDC converted to ETH: ", deficitUSDC.toString(), "->", deficitEth.toString());
-  }
+  doEndStateAccounting();
 
   report({
     ethLiquidityStart,
@@ -192,14 +197,16 @@ const runSimpleSimulation = async (
     usdcFeeEarned,
     ethFeeEarned,
     uniswapTradingLogs,
-    tradesExecuted
+    tradesExecuted,
+    description,
+    isSimple: true
   });
 }
 
 // END SIMULATION PART
 
-
 const report = ({
+  isSimple,
   ethLiquidityStart,
   usdcLiquidityStart,
   ethLiquidityEnd,
@@ -208,10 +215,9 @@ const report = ({
   usdcFeeEarned,
   ethFeeEarned,
   uniswapTradingLogs,
-  tradesExecuted
+  tradesExecuted,
+  description
 }) => {
-
-  console.log("ethFeeEarned", ethFeeEarned);
   const ethEarnedInUSDC = ethFeeEarned
     .mul(lastEthPrice)
     .div(BigNumber.from("1000000000000000000"))
@@ -219,7 +225,17 @@ const report = ({
 
   const totalFeesEarnedInUSDC = parseFloat(ethEarnedInUSDC.add(usdcFeeEarned)) / 1e6;
 
-  console.log("---------- REPORT -----------")
+  const usdcLiquidityEndFloat = parseFloat(usdcLiquidityEnd.toString()) / 1e6;
+  const profitLoss = usdcLiquidityEndFloat + totalFeesEarnedInUSDC - parseFloat(usdcLiquidityStart) / 1e6;
+
+  if (isSimple) {
+    console.log(`[${description}] profit/loss:\t${profitLoss.toFixed(2)} USDC`); 
+    return
+  }
+
+  console.log("ethFeeEarned", ethFeeEarned);
+
+  console.log(`---------- ${description} REPORT -----------`)
   console.log("Uniswap trades: \t\t", uniswapTradingLogs.length);
   console.log("Trades intercepted: \t\t", tradesExecuted);
 
@@ -236,9 +252,7 @@ const report = ({
     (parseFloat(lastEthPrice) / 1e18).toFixed(4),
     "USDC"
   );
-  console.log("-----------------------------")
-  const usdcLiquidityEndFloat = parseFloat(usdcLiquidityEnd.toString()) / 1e6;
-  const profitLoss = usdcLiquidityEndFloat + totalFeesEarnedInUSDC - parseFloat(usdcLiquidityStart) / 1e6;
+  console.log("---------------------------------------------")
 
   console.log("totalFeesEarnedInUSDC", totalFeesEarnedInUSDC);
   console.log("usdcLiquidityEnd", usdcLiquidityEndFloat.toFixed(2));
@@ -248,14 +262,24 @@ const report = ({
 };
 
 async function main() {
-  const fromBlock = blockData["1 hour"].increase.start;
-  const toBlock = blockData["1 hour"].increase.end;
-
   const ethLiquidity = ethers.utils.parseUnits("100", 18);
   const usdcLiquidity = ethers.utils.parseUnits("250000", 6);
 
+  for (const tp of Object.keys(blockData)) {
+    const timePeriod = blockData[tp];
+    for (const marketStyle of Object.keys(timePeriod)) {
+      const {start, end } = timePeriod[marketStyle];
+
+      // const logs = await fetchAndParseLogs(start, end);
+      // await runSimpleSimulation(ethLiquidity, usdcLiquidity, logs, `${tp} ${marketStyle}`);
+    }
+  }
+
+  const fromBlock = blockData["4 hours"].increase.start;
+  const toBlock = blockData["4 hours"].increase.end;
+
   const logs = await fetchAndParseLogs(fromBlock, toBlock);
-  await runSimpleSimulation(ethLiquidity, usdcLiquidity, logs);
+  await runSimpleSimulation(ethLiquidity, usdcLiquidity, logs, "15 min increase");
 }
 
 // Run the job.
