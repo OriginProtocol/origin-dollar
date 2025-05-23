@@ -171,18 +171,10 @@ const runSimpleSimulation = async (
 
   const canTrade = (tradingLog) => {
     if (tradingLog.amountInETH) {
-      return tradingLog.usdcAmount.abs().lt(usdcLiquidity);
+      return tradingLog.usdcAmount.abs().lt(usdcLiquidity) && tradingLog.usdcAmount.abs().lt(BigNumber.from("1000000000"));
     } else {
-      return tradingLog.ethAmount.abs().lt(ethLiquidity);
+      return tradingLog.ethAmount.abs().lt(ethLiquidity) && tradingLog.ethAmount.abs().lt(BigNumber.from("500000000000000000"));
     }
-
-    // let usdcThrehold = BigNumber.from("1000000000");
-    // let ethThrehold = BigNumber.from("500000000000000000");
-    // if (tradingLog.amountInETH) {
-    //   return tradingLog.usdcAmount.abs().lt(usdcThrehold);
-    // } else {
-    //   return tradingLog.ethAmount.abs().lt(ethThrehold);
-    // }
   };
 
   const doEndStateAccounting = () => {
@@ -315,7 +307,7 @@ const report = ({
   const { yearlyProfitLoss, apy, durationInDays } = calculateEarnings();
 
   if (isSimple) {
-    console.log(`[${durationInDays.toFixed(2)} days | ${description} trades stolen: ${tradePct.toFixed(2)}%]\t profit/loss:\t${profitLoss.toFixed(2)} USDC apy: ${(apy * 100).toFixed(2)}%`);
+    console.log(`[${durationInDays.toFixed(2)} days | ${description} trades stolen: ${tradePct}%]\t profit/loss:\t${profitLoss.toFixed(2)} USDC apy: ${(apy * 100).toFixed(2)}%`);
     return
   }
 
@@ -348,8 +340,8 @@ const report = ({
 };
 
 async function main() {
-  const ethUnits = 100;
-  const usdcUnits = 250000;
+  const ethUnits = 10;
+  const usdcUnits = 25000;
   const ethLiquidity = ethers.utils.parseUnits(`${ethUnits}`, 18);
   const usdcLiquidity = ethers.utils.parseUnits(`${usdcUnits}`, 6);
 
