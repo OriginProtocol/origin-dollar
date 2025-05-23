@@ -8,29 +8,33 @@ const decodeSwapLog = (rawLog) => {
 };
 
 const blockData = {
-  "1 Day": {
-    increase: { start: 19165490, end: 19415286 },
-    decrease: { start: 21905311, end: 22227625 },
-    stable: { start: 20673498, end: 21053237 },
-  },
-  "4 hours": {
-    increase: { start: 22428092, end: 22456401 },
-    decrease: { start: 21740793, end: 21762265 },
-    stable: { start: 21805233, end: 21883856 },
+  "15 min": {
+    increase: { start: 22536782, end: 22537179 },
+    decrease: { start: 22532542, end: 22532739 },
+    stable: { start: 22525326, end: 22525622 },
   },
   "1 hour": {
     increase: { start: 22472677, end: 22476827 },
     decrease: { start: 22510921, end: 22515086 },
     stable: { start: 22500835, end: 22507959 },
   },
-  "15 min": {
-    increase: { start: 22536782, end: 22537179 },
-    decrease: { start: 22532542, end: 22532739 },
-    stable: { start: 22525326, end: 22525622 },
+  "4 hours": {
+    increase: { start: 22428092, end: 22456401 },
+    decrease: { start: 21740793, end: 21762265 },
+    stable: { start: 21805233, end: 21883856 },
+  },
+  "1 Day": {
+    increase: { start: 19165490, end: 19415286 },
+    decrease: { start: 21905311, end: 22227625 },
+    stable: { start: 20673498, end: 21053237 },
   },
 };
 
 const fetchLogs = async (fromBlock, toBlock) => {
+  process.stdout.write("Fetching logs:");
+
+  // maximum amount of block delta fetched in a single request
+  const MAX_FETCH_BLOCK_RANGE = 4000;
   const provider = new ethers.providers.JsonRpcProvider(
     process.env.PROVIDER_URL
   );
@@ -38,14 +42,34 @@ const fetchLogs = async (fromBlock, toBlock) => {
   const swapTopic =
     "0xc42079f94a6350d7e6235f29174924f928cc2ac818eb64fed8004e115fbcca67";
 
-  const logs = await provider.getLogs({
-    address: uniV3usdcETH,
-    topics: [swapTopic],
-    fromBlock,
-    toBlock,
-  });
+  let logs = [];
+  let toBlockTemp = fromBlock;
+  while(true) {
+    if (fromBlock > toBlock) {
+      break;
+    }
+    if (fromBlock + MAX_FETCH_BLOCK_RANGE < toBlock) {
+      toBlockTemp = fromBlock + MAX_FETCH_BLOCK_RANGE;
+    } else {
+      toBlockTemp = toBlock;
+    }
 
-  console.log(`Fetched ${logs.length} raw logs`);
+    process.stdout.write(".");
+    //console.log("fetching logs: ", fromBlock, toBlockTemp);
+    const lastLogs = await provider.getLogs({
+      address: uniV3usdcETH,
+      topics: [swapTopic],
+      fromBlock,
+      toBlock: toBlockTemp,
+    });
+
+    fromBlock = toBlockTemp + 1;
+
+    logs = logs.concat(lastLogs);
+  }
+
+  //console.log(`Fetched ${logs.length} raw logs`);
+  process.stdout.write("\r\x1b[K")
   return logs;
 };
 
@@ -270,16 +294,16 @@ async function main() {
     for (const marketStyle of Object.keys(timePeriod)) {
       const {start, end } = timePeriod[marketStyle];
 
-      // const logs = await fetchAndParseLogs(start, end);
-      // await runSimpleSimulation(ethLiquidity, usdcLiquidity, logs, `${tp} ${marketStyle}`);
+      const logs = await fetchAndParseLogs(start, end);
+      await runSimpleSimulation(ethLiquidity, usdcLiquidity, logs, `${tp} ${marketStyle}`);
     }
   }
 
-  const fromBlock = blockData["4 hours"].increase.start;
-  const toBlock = blockData["4 hours"].increase.end;
+  // const fromBlock = blockData["4 hours"].increase.start;
+  // const toBlock = blockData["4 hours"].increase.end;
 
-  const logs = await fetchAndParseLogs(fromBlock, toBlock);
-  await runSimpleSimulation(ethLiquidity, usdcLiquidity, logs, "15 min increase");
+  // const logs = await fetchAndParseLogs(fromBlock, toBlock);
+  // await runSimpleSimulation(ethLiquidity, usdcLiquidity, logs, "4 hours");
 }
 
 // Run the job.
