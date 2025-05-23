@@ -207,12 +207,14 @@ const runSimpleSimulation = async (
     ethLiquidity = ethLiquidity.add(tradingLog.ethAmount);
     usdcLiquidity = usdcLiquidity.add(tradingLog.usdcAmount);
 
-    // Give a result with 18 decimals
-    lastEthPrice = tradingLog.usdcAmount
-      .abs()
-      .mul(BigNumber.from("1000000000000"))
-      .mul(BigNumber.from("1000000000000000000"))
-      .div(tradingLog.ethAmount.abs());
+    if (!tradingLog.ethAmount.isZero()) {
+      // Give a result with 18 decimals
+      lastEthPrice = tradingLog.usdcAmount
+        .abs()
+        .mul(BigNumber.from("1000000000000"))
+        .mul(BigNumber.from("1000000000000000000"))
+        .div(tradingLog.ethAmount.abs());
+    }
   };
 
   uniswapTradingLogs.forEach((tradingLog) => {
