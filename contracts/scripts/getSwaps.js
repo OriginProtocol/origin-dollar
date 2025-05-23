@@ -307,7 +307,7 @@ const report = ({
   const { yearlyProfitLoss, apy, durationInDays } = calculateEarnings();
 
   if (isSimple) {
-    console.log(`[${durationInDays.toFixed(2)} days | ${description} trades stolen: ${tradePct}%]\t profit/loss:\t${profitLoss.toFixed(2)} USDC apy: ${(apy * 100).toFixed(2)}%`);
+    console.log(`[${durationInDays.toFixed(2)} days | ${description} trades stolen: ${tradePct.toFixed(2)}%]\t profit/loss:\t${profitLoss.toFixed(2)} USDC apy: ${(apy * 100).toFixed(2)}%`);
     return
   }
 
