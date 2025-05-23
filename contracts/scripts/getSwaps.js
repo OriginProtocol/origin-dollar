@@ -146,7 +146,8 @@ const runSimpleSimulation = async (
   ethLiquidityStart,
   usdcLiquidityStart,
   uniswapTradingLogs,
-  description
+  description,
+  blocks
 ) => {
   let ethLiquidity = ethLiquidityStart;
   let usdcLiquidity = usdcLiquidityStart;
@@ -236,6 +237,7 @@ const runSimpleSimulation = async (
     uniswapTradingLogs,
     tradesExecuted,
     description,
+    blocks,
     isSimple: true
   });
 }
@@ -253,20 +255,41 @@ const report = ({
   ethFeeEarned,
   uniswapTradingLogs,
   tradesExecuted,
-  description
+  description,
+  blocks
 }) => {
-  const ethEarnedInUSDC = ethFeeEarned
-    .mul(lastEthPrice)
-    .div(BigNumber.from("1000000000000000000"))
-    .div(BigNumber.from("1000000000000"));
-
+  const ethToUSDC = (ethPrice) => {
+    return ethPrice
+      .mul(lastEthPrice)
+      .div(BigNumber.from("1000000000000000000"))
+      .div(BigNumber.from("1000000000000"));
+  };
+  const ethEarnedInUSDC = ethToUSDC(ethFeeEarned);
   const totalFeesEarnedInUSDC = parseFloat(ethEarnedInUSDC.add(usdcFeeEarned)) / 1e6;
 
   const usdcLiquidityEndFloat = parseFloat(usdcLiquidityEnd.toString()) / 1e6;
+
   const profitLoss = usdcLiquidityEndFloat + totalFeesEarnedInUSDC - parseFloat(usdcLiquidityStart) / 1e6;
+  const initialCapitalInUSDC = parseFloat(usdcLiquidityStart.add(ethToUSDC(ethLiquidityStart))) / 1e6;
+
+  const calculateEarnings = () => {
+    const SECONDS_IN_A_YEAR = 31556926;
+    const AVERAGE_BLOCK_TIME = 12.1;
+
+    const timeElapsed = AVERAGE_BLOCK_TIME * blocks;
+    const yearlyProfitLoss = profitLoss * SECONDS_IN_A_YEAR / timeElapsed;
+    const apy = (yearlyProfitLoss / initialCapitalInUSDC);
+
+    return {
+      yearlyProfitLoss,
+      apy
+    };
+  }
+
+  const {yearlyProfitLoss, apy } = calculateEarnings();
 
   if (isSimple) {
-    console.log(`[${description}] profit/loss:\t${profitLoss.toFixed(2)} USDC`); 
+    console.log(`[${description}] profit/loss:\t${profitLoss.toFixed(2)} USDC apy: ${(apy * 100).toFixed(2)}%`); 
     return
   }
 
@@ -308,15 +331,20 @@ async function main() {
       const {start, end } = timePeriod[marketStyle];
 
       const logs = await fetchAndParseLogs(start, end);
-      await runSimpleSimulation(ethLiquidity, usdcLiquidity, logs, `${tp} | ${marketStyle} | fee ${OUR_FEE_BP}bp`);
+      await runSimpleSimulation(
+        ethLiquidity,
+        usdcLiquidity,
+        logs, `${tp} | ${marketStyle} | fee ${OUR_FEE_BP}bp`,
+        end - start
+        );
     }
   }
 
-  // const fromBlock = blockData["4 hours"].increase.start;
-  // const toBlock = blockData["4 hours"].increase.end;
+  // const fromBlock = 22536782;
+  // const toBlock = 22536792;
 
   // const logs = await fetchAndParseLogs(fromBlock, toBlock);
-  // await runSimpleSimulation(ethLiquidity, usdcLiquidity, logs, "4 hours");
+  // await runSimpleSimulation(ethLiquidity, usdcLiquidity, logs, "small time", toBlock - fromBlock);
 }
 
 // Run the job.
