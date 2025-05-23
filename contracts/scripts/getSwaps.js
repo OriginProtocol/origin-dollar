@@ -271,6 +271,8 @@ const report = ({
   description,
   blocks
 }) => {
+  const allTrades = uniswapTradingLogs.length;
+  const tradePct = tradesExecuted / allTrades * 100;
   const ethToUSDC = (ethPrice) => {
     return ethPrice
       .mul(lastEthPrice)
@@ -305,14 +307,14 @@ const report = ({
   const { yearlyProfitLoss, apy, durationInDays } = calculateEarnings();
 
   if (isSimple) {
-    console.log(`[${durationInDays.toFixed(2)} days | ${description}]\t profit/loss:\t${profitLoss.toFixed(2)} USDC apy: ${(apy * 100).toFixed(2)}%`);
+    console.log(`[${durationInDays.toFixed(2)} days | ${description} trades stolen: ${tradePct}%]\t profit/loss:\t${profitLoss.toFixed(2)} USDC apy: ${(apy * 100).toFixed(2)}%`);
     return
   }
 
   console.log("ethFeeEarned", ethFeeEarned);
 
   console.log(`---------- ${description} REPORT -----------`)
-  console.log("Uniswap trades: \t\t", uniswapTradingLogs.length);
+  console.log("Uniswap trades: \t\t", allTrades);
   console.log("Trades intercepted: \t\t", tradesExecuted);
 
   console.log("ethLiquidityStart", ethLiquidityStart.toString());
@@ -338,8 +340,10 @@ const report = ({
 };
 
 async function main() {
-  const ethLiquidity = ethers.utils.parseUnits("100", 18);
-  const usdcLiquidity = ethers.utils.parseUnits("250000", 6);
+  const ethUnits = 10;
+  const usdcUnits = 25000;
+  const ethLiquidity = ethers.utils.parseUnits(`${ethUnits}`, 18);
+  const usdcLiquidity = ethers.utils.parseUnits(`${usdcUnits}`, 6);
 
   for (const tp of Object.keys(blockData)) {
     const timePeriod = blockData[tp];
@@ -350,7 +354,7 @@ async function main() {
       await runSimpleSimulation(
         ethLiquidity,
         usdcLiquidity,
-        logs, `fee ${OUR_FEE_BP}bp | ${marketStyle}`,
+        logs, `fee ${OUR_FEE_BP}bp | ${marketStyle} pool liq: ${ethUnits} ETH ${usdcUnits} USDC`,
         end - start
       );
     }
