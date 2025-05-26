@@ -575,13 +575,16 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
          * by the pools lens reports. For that reason some dust WETH and OETH will
          * remain on the contract after adding the liquidity
          */
-        (uint256 _wethAmount, uint256 _oethAmount, ) = liquidityManager
+        (uint256 _wethAmount, uint256 _oethAmount, uint32[] memory binIds) = liquidityManager
             .addPositionLiquidityToSenderByTokenIndex(
                 mPool,
                 0, // NFT token index
                 packedSqrtPriceBreaks,
                 packedArgs
             );
+
+        require(binIds.length == 1, "Unexpected binIds lenght");
+        require(binIds[0] == 1, "Unexpected binId[0] value");
 
         _updateUnderlyingAssets();
 
