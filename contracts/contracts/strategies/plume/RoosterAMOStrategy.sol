@@ -137,45 +137,6 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
         _;
     }
 
-    // TODO details of Rooster gauge system not yet clear
-    /**
-     * @dev Un-stakes the token from the gauge for the execution duration of
-     * the function and after that re-stakes it back in.
-     *
-     * It is important that the token is unstaked and owned by the strategy contract
-     * during any liquidity altering operations and that it is re-staked back into the
-     * gauge after liquidity changes. If the token fails to re-stake back to the
-     * gauge it is not earning incentives.
-     */
-    // all functions using this modifier are used by functions with reentrancy check
-    // slither-disable-start reentrancy-no-eth
-    modifier gaugeUnstakeAndRestake() {
-        // TODO: we might not need this here
-        //
-        // // because of solidity short-circuit _isLpTokenStakedInGauge doesn't get called
-        // // when tokenId == 0
-        // if (tokenId != 0 && _isLpTokenStakedInGauge()) {
-        //     clGauge.withdraw(tokenId);
-        // }
-        _;
-        // // because of solidity short-circuit _isLpTokenStakedInGauge doesn't get called
-        // // when tokenId == 0
-        // if (tokenId != 0 && !_isLpTokenStakedInGauge()) {
-        //     /**
-        //      * It can happen that a withdrawal (or a full withdrawal) transactions would
-        //      * remove all of the liquidity from the token with a NFT token still existing.
-        //      * In that case the token can not be staked into the gauge, as some liquidity
-        //      * needs to be added to it first.
-        //      */
-        //     if (_getLiquidity() > 0) {
-        //         // if token liquidity changes the positionManager requires re-approval.
-        //         // to any contract pre-approved to handle the token.
-        //         positionManager.approve(address(clGauge), tokenId);
-        //         clGauge.deposit(tokenId);
-        //     }
-        // }
-    }
-
     /// @notice the constructor
     /// @dev This contract is intended to be used as a proxy. To prevent the
     ///      potential confusion of having a functional implementation contract
@@ -546,7 +507,7 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
      * have calculation issues) to verify the WETH & OETHp amounts and throws an error when
      * the pool would still transfer larger amount of tokens than approve by this contract.
      */
-    function _addLiquidity() internal gaugeUnstakeAndRestake {
+    function _addLiquidity() internal {
         uint256 _wethBalance = IERC20(WETH).balanceOf(address(this));
         uint256 _oethBalance = IERC20(OETHp).balanceOf(address(this));
         // don't deposit small liquidity amounts
@@ -889,7 +850,6 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
      */
     function _removeLiquidity(uint256 _liquidityToDecrease)
         internal
-        gaugeUnstakeAndRestake
     {
         require(_liquidityToDecrease > 0, "Must remove some liquidity");
         require(
@@ -1091,6 +1051,18 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
         ) {
             revert("Protocol insolvent");
         }
+    }
+
+    /**
+     * @dev Collect stkAave, convert it to AAVE send to Vault.
+     */
+    function collectRewardTokens()
+        external
+        override
+        onlyHarvester
+        nonReentrant
+    {
+        // collect reward tokens
     }
 
     /***************************************
