@@ -444,3 +444,28 @@ def main():
     print("Pool OETH  ", "{:.6f}".format(oethPoolBalance / 10**18), oethPoolBalance * 100 / totalPool)
     print("Pool Total ", "{:.6f}".format(totalPool / 10**18), totalPool)
     print("Sell 10 OETH Curve prices before and after", "{:.6f}".format(eth_out_before / 10**18), "{:.6f}".format(weth_out_after / 10**18))
+
+
+# -------------------------------------------
+# May 27 2025 - Harvest CRV from OETH and OUSD AMO strategies
+# -------------------------------------------
+from world import *
+
+def main():
+  with TemporaryForkForReallocations() as txs:
+    # Collect CRV from OUSD Curve AMO strategy
+    txs.append(
+      ousd_curve_amo_strat.collectRewardTokens(
+        {'from': STRATEGIST}
+      )
+    )
+
+    # Collect CRV from OETH Curve AMO strategy
+    txs.append(
+      oeth_curve_amo_strat.collectRewardTokens(
+        {'from': STRATEGIST}
+      )
+    )
+
+
+
