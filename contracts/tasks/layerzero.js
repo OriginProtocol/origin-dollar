@@ -69,7 +69,18 @@ async function lzBridgeToken(taskArgs, hre) {
   console.log("--------------------------------");
   if (!taskArgs.dryrun) {
     const tx = await woeth.connect(signer).approve(...approveArgs);
-    if (process.env.FORK === "true") {
+    console.log(
+      "Balance:   ",
+      (await woeth.balanceOf(await signer.getAddress())).toString()
+    );
+    console.log(
+      "Allowance:  ",
+      (
+        await woeth.allowance(await signer.getAddress(), oftAdapter.address)
+      ).toString()
+    );
+    console.log("--------------------------------");
+    if (process.env.FORK != "true") {
       await hre.ethers.provider.waitForTransaction(
         tx.receipt ? tx.receipt.transactionHash : tx.hash,
         3 // Wait for 3 block confirmation
