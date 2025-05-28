@@ -29,11 +29,17 @@ async function lzBridgeToken(taskArgs, hre) {
     .addExecutorLzReceiveOption(taskArgs.gaslimit || 400000, 0)
     .toBytes();
 
+  const minAmountLD = amount.mul(999).div(1000); // 0.1% slippage
+  console.log("--------------------------------");
+  console.log("Amount: ", amount.toString());
+  console.log("Min Amount: ", minAmountLD.toString());
+  console.log("--------------------------------");
+
   const sendParam = {
     dstEid: endpointId,
     to: addressToBytes32(await signer.getAddress()),
     amountLD: amount,
-    minAmountLD: amount,
+    minAmountLD: minAmountLD,
     extraOptions: opts,
     composeMsg: ethers.utils.arrayify("0x"),
     oftCmd: ethers.utils.arrayify("0x"),
