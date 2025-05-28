@@ -21,6 +21,8 @@ const endpointAbi = [
 async function lzBridgeToken(taskArgs, hre) {
   const signer = await getSigner();
 
+  const recipient = taskArgs.recipient || (await signer.getAddress());
+
   const amount = hre.ethers.utils.parseEther(taskArgs.amount);
   const destNetwork = taskArgs.destnetwork.toLowerCase();
   const endpointId = endpointIds[destNetwork];
@@ -37,7 +39,7 @@ async function lzBridgeToken(taskArgs, hre) {
 
   const sendParam = {
     dstEid: endpointId,
-    to: addressToBytes32(await signer.getAddress()),
+    to: addressToBytes32(recipient),
     amountLD: amount,
     minAmountLD: minAmountLD,
     extraOptions: opts,
@@ -102,7 +104,7 @@ async function lzBridgeToken(taskArgs, hre) {
 
   const sendSig =
     "send((uint32,bytes32,uint256,uint256,bytes,bytes,bytes),(uint256,uint256),address)";
-  const sendArgs = [sendParam, [nativeFee, 0], await signer.getAddress()];
+  const sendArgs = [sendParam, [nativeFee, 0], recipient];
 
   console.log("Send tx...");
   console.log("--------------------------------");
