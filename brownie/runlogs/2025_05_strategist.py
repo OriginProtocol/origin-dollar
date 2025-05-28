@@ -526,3 +526,50 @@ def main():
     print("SuperOETH supply change", "{:.6f}".format(supply_change / 10**18), supply_change)
     print("Vault Change", "{:.6f}".format(vault_change / 10**18), vault_change)
     print("-----")
+
+
+# -----------------------------------------------------
+# May 28 2025 - wOETH Strategy Deposit Plume
+# -----------------------------------------------------
+from world_plume import *
+
+def main():
+  with TemporaryForkForReallocations() as txs:
+    # Hack to make weth.withdraw work
+    brownie.network.web3.provider.make_request('hardhat_setCode', [MULTICHAIN_STRATEGIST, '0x'])
+
+    amount = woeth.balanceOf(MULTICHAIN_STRATEGIST)
+
+    # Update oracle price
+    txs.append(woeth_strat.updateWOETHOraclePrice({ 'from': MULTICHAIN_STRATEGIST }))
+    
+    expected_oethp = woeth_strat.getBridgedWOETHValue(amount)
+
+    # Rebase
+    txs.append(vault_core.rebase({ 'from': MULTICHAIN_STRATEGIST }))
+
+    txs.append(woeth.approve(woeth_strat.address, "115792089237316195423570985008687907853269984665640564039457584007913129639935", { 'from': MULTICHAIN_STRATEGIST }))
+
+    # Take Vault snapshot 
+    txs.append(vault_value_checker.takeSnapshot({ 'from': MULTICHAIN_STRATEGIST }))
+
+    # Deposit to wOETH strategy
+    txs.append(woeth_strat.depositBridgedWOETH(amount, { 'from': MULTICHAIN_STRATEGIST }))
+
+    # Rebase so that any yields from price update and
+    # backing asset change from deposit are accounted for.
+    txs.append(vault_core.rebase({ 'from': MULTICHAIN_STRATEGIST }))
+
+    # Check Vault Value against snapshot
+    vault_change = vault_core.totalValue() - vault_value_checker.snapshots(MULTICHAIN_STRATEGIST)[0]
+    supply_change = oethp.totalSupply() - vault_value_checker.snapshots(MULTICHAIN_STRATEGIST)[1]
+    profit = vault_change - supply_change
+
+    txs.append(vault_value_checker.checkDelta(profit, (0.1 * 10**18), vault_change, (1 * 10**18), {'from': MULTICHAIN_STRATEGIST}))
+
+    print("--------------------")
+    print("Deposited wOETH     ", c18(amount), amount)
+    print("Expected superOETHp ", c18(expected_oethp), expected_oethp)
+    print("--------------------")
+    print("Profit       ", c18(profit), profit)
+    print("Vault Change ", c18(vault_change), vault_change)
