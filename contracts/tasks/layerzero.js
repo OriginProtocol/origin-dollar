@@ -21,6 +21,8 @@ const endpointAbi = [
 async function lzBridgeToken(taskArgs, hre) {
   const signer = await getSigner();
 
+  const recipient = taskArgs.recipient || (await signer.getAddress());
+
   const amount = hre.ethers.utils.parseEther(taskArgs.amount);
   const destNetwork = taskArgs.destnetwork.toLowerCase();
   const endpointId = endpointIds[destNetwork];
@@ -29,11 +31,17 @@ async function lzBridgeToken(taskArgs, hre) {
     .addExecutorLzReceiveOption(taskArgs.gaslimit || 400000, 0)
     .toBytes();
 
+  const minAmountLD = amount.mul(999).div(1000); // 0.1% slippage
+  console.log("--------------------------------");
+  console.log("Amount: ", amount.toString());
+  console.log("Min Amount: ", minAmountLD.toString());
+  console.log("--------------------------------");
+
   const sendParam = {
     dstEid: endpointId,
-    to: addressToBytes32(await signer.getAddress()),
+    to: addressToBytes32(recipient),
     amountLD: amount,
-    minAmountLD: amount,
+    minAmountLD: minAmountLD,
     extraOptions: opts,
     composeMsg: ethers.utils.arrayify("0x"),
     oftCmd: ethers.utils.arrayify("0x"),
@@ -51,26 +59,71 @@ async function lzBridgeToken(taskArgs, hre) {
       : addresses[srcNetwork].BridgedWOETH
   );
 
-  const tx = await woeth.connect(signer).approve(oftAdapter.address, amount);
-  await hre.ethers.provider.waitForTransaction(
-    tx.receipt ? tx.receipt.transactionHash : tx.hash,
-    3 // Wait for 3 block confirmation
-  );
+  console.log("Approving wOETH...");
+  const approveArgs = [oftAdapter.address, amount];
 
+  console.log("--------------------------------");
+  console.log("To:      ", woeth.address);
+  console.log(
+    "Payload: ",
+    woeth.interface.encodeFunctionData("approve(address,uint256)", approveArgs)
+  );
+  console.log("--------------------------------");
+  if (!taskArgs.dryrun) {
+    const tx = await woeth.connect(signer).approve(...approveArgs);
+    console.log(
+      "Balance:   ",
+      (await woeth.balanceOf(await signer.getAddress())).toString()
+    );
+    console.log(
+      "Allowance:  ",
+      (
+        await woeth.allowance(await signer.getAddress(), oftAdapter.address)
+      ).toString()
+    );
+    console.log("--------------------------------");
+    if (process.env.FORK != "true") {
+      await hre.ethers.provider.waitForTransaction(
+        tx.receipt ? tx.receipt.transactionHash : tx.hash,
+        3 // Wait for 3 block confirmation
+      );
+    }
+  }
+
+  console.log("Computing fees...");
   const [nativeFee, lzTokenFee] = await oftAdapter
     .connect(signer)
     .quoteSend(sendParam, false);
 
+  console.log("--------------------------------");
   console.log(`Native Fee: ${nativeFee}`);
   console.log(`LZ Token Fee: ${lzTokenFee}`);
 
   console.log(`OFT Fee: ${nativeFee}`);
+  console.log("--------------------------------");
 
-  await oftAdapter
-    .connect(signer)
-    .send(sendParam, [nativeFee, 0], await signer.getAddress(), {
+  const sendSig =
+    "send((uint32,bytes32,uint256,uint256,bytes,bytes,bytes),(uint256,uint256),address)";
+  const sendArgs = [sendParam, [nativeFee, 0], recipient];
+
+  console.log("Send tx...");
+  console.log("--------------------------------");
+  console.log("To:      ", oftAdapter.address);
+  console.log(
+    "Payload: ",
+    oftAdapter.interface.encodeFunctionData(sendSig, sendArgs)
+  );
+  console.log(
+    "Value:   ",
+    nativeFee.toString(),
+    `wei (${hre.ethers.utils.formatEther(nativeFee)} ETH)`
+  );
+  console.log("--------------------------------");
+  if (!taskArgs.dryrun) {
+    await oftAdapter.connect(signer).send(...sendArgs, {
       value: nativeFee,
     });
+  }
 }
 
 async function lzSetConfig(taskArgs, hre) {

@@ -95,6 +95,9 @@ woeth = load_contract('wrapped_ousd', WOETH)
 ccip_router = load_contract('ccip_router', CCIP_ROUTER)
 zapper = load_contract('oethzapper', OETH_ZAPPER)
 
+ethereum_woeth_omnichain_adapter = load_contract('omnichain_l2_adapter', ETHEREUM_WOETH_OMNICHAIN_ADAPTER)
+plume_woeth_omnichain_adapter = load_contract('omnichain_l2_adapter', PLUME_WOETH_OMNICHAIN_ADAPTER)
+
 cvx_locker = load_contract('cvx_locker', CVX_LOCKER)
 cvx = load_contract('ERC20', CVX)
 
