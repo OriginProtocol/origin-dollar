@@ -51,26 +51,59 @@ async function lzBridgeToken(taskArgs, hre) {
       : addresses[srcNetwork].BridgedWOETH
   );
 
-  const tx = await woeth.connect(signer).approve(oftAdapter.address, amount);
-  await hre.ethers.provider.waitForTransaction(
-    tx.receipt ? tx.receipt.transactionHash : tx.hash,
-    3 // Wait for 3 block confirmation
-  );
+  console.log("Approving wOETH...");
+  const approveArgs = [oftAdapter.address, amount];
 
+  if (taskArgs.dryrun) {
+    console.log("--------------------------------");
+    console.log("To:      ", woeth.address);
+    console.log(
+      "Payload: ",
+      woeth.interface.encodeFunctionData(
+        "approve(address,uint256)",
+        approveArgs
+      )
+    );
+    console.log("--------------------------------");
+  } else {
+    const tx = await woeth.connect(signer).approve(...approveArgs);
+    await hre.ethers.provider.waitForTransaction(
+      tx.receipt ? tx.receipt.transactionHash : tx.hash,
+      3 // Wait for 3 block confirmation
+    );
+  }
+
+  console.log("Computing fees...");
   const [nativeFee, lzTokenFee] = await oftAdapter
     .connect(signer)
     .quoteSend(sendParam, false);
 
+  console.log("--------------------------------");
   console.log(`Native Fee: ${nativeFee}`);
   console.log(`LZ Token Fee: ${lzTokenFee}`);
 
   console.log(`OFT Fee: ${nativeFee}`);
+  console.log("--------------------------------");
 
-  await oftAdapter
-    .connect(signer)
-    .send(sendParam, [nativeFee, 0], await signer.getAddress(), {
+  const sendSig =
+    "send((uint32,bytes32,uint256,uint256,bytes,bytes,bytes),(uint256,uint256),address)";
+  const sendArgs = [sendParam, [nativeFee, 0], await signer.getAddress()];
+
+  console.log("Send tx...");
+  if (taskArgs.dryrun) {
+    console.log("--------------------------------");
+    console.log("To:      ", oftAdapter.address);
+    console.log(
+      "Payload: ",
+      oftAdapter.interface.encodeFunctionData(sendSig, sendArgs)
+    );
+    console.log("Value:   ", nativeFee.toString());
+    console.log("--------------------------------");
+  } else {
+    await oftAdapter.connect(signer).send(...sendArgs, {
       value: nativeFee,
     });
+  }
 }
 
 async function lzSetConfig(taskArgs, hre) {

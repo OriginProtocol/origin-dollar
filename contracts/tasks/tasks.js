@@ -1831,6 +1831,7 @@ task("lzBridgeToken")
   .addParam("amount", "Amount to bridge")
   .addParam("destnetwork", "Destination network")
   .addOptionalParam("gaslimit", "Gas limit")
+  .addOptionalParam("dryrun", "Print tx data without sending")
   .setAction(async (taskArgs) => {
     await lzBridgeToken(taskArgs, hre);
   });
