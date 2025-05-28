@@ -60,23 +60,21 @@ async function lzBridgeToken(taskArgs, hre) {
   console.log("Approving wOETH...");
   const approveArgs = [oftAdapter.address, amount];
 
-  if (taskArgs.dryrun) {
-    console.log("--------------------------------");
-    console.log("To:      ", woeth.address);
-    console.log(
-      "Payload: ",
-      woeth.interface.encodeFunctionData(
-        "approve(address,uint256)",
-        approveArgs
-      )
-    );
-    console.log("--------------------------------");
-  } else {
+  console.log("--------------------------------");
+  console.log("To:      ", woeth.address);
+  console.log(
+    "Payload: ",
+    woeth.interface.encodeFunctionData("approve(address,uint256)", approveArgs)
+  );
+  console.log("--------------------------------");
+  if (!taskArgs.dryrun) {
     const tx = await woeth.connect(signer).approve(...approveArgs);
-    await hre.ethers.provider.waitForTransaction(
-      tx.receipt ? tx.receipt.transactionHash : tx.hash,
-      3 // Wait for 3 block confirmation
-    );
+    if (process.env.FORK === "true") {
+      await hre.ethers.provider.waitForTransaction(
+        tx.receipt ? tx.receipt.transactionHash : tx.hash,
+        3 // Wait for 3 block confirmation
+      );
+    }
   }
 
   console.log("Computing fees...");
@@ -96,16 +94,19 @@ async function lzBridgeToken(taskArgs, hre) {
   const sendArgs = [sendParam, [nativeFee, 0], await signer.getAddress()];
 
   console.log("Send tx...");
-  if (taskArgs.dryrun) {
-    console.log("--------------------------------");
-    console.log("To:      ", oftAdapter.address);
-    console.log(
-      "Payload: ",
-      oftAdapter.interface.encodeFunctionData(sendSig, sendArgs)
-    );
-    console.log("Value:   ", nativeFee.toString());
-    console.log("--------------------------------");
-  } else {
+  console.log("--------------------------------");
+  console.log("To:      ", oftAdapter.address);
+  console.log(
+    "Payload: ",
+    oftAdapter.interface.encodeFunctionData(sendSig, sendArgs)
+  );
+  console.log(
+    "Value:   ",
+    nativeFee.toString(),
+    `wei (${hre.ethers.utils.formatEther(nativeFee)} ETH)`
+  );
+  console.log("--------------------------------");
+  if (!taskArgs.dryrun) {
     await oftAdapter.connect(signer).send(...sendArgs, {
       value: nativeFee,
     });
