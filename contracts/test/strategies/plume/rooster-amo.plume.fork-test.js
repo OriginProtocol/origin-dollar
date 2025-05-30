@@ -15,7 +15,7 @@ const plumeFixtureWithMockedVault = createFixtureLoader(
 
 const { setERC20TokenBalance } = require("../../_fund");
 
-describe("ForkTest: Rooster AMO Strategy (Plume)", async function () {
+describe.only("ForkTest: Rooster AMO Strategy (Plume)", async function () {
   let fixture,
     oethpVault,
     oethVaultSigner,
@@ -232,8 +232,19 @@ describe("ForkTest: Rooster AMO Strategy (Plume)", async function () {
       expect(await weth.balanceOf(roosterAmoStrategy.address)).to.eq(
         oethUnits("0")
       );
+    });
 
-      await assetLpNOTStakedInGauge();
+    it("Should allow double withdrawAll", async () => {
+      const { oethpVault, roosterAmoStrategy, weth, oethp } = fixture;
+
+      const impersonatedVaultSigner = await impersonateAndFund(
+        oethpVault.address
+      );
+
+      // Try withdrawing an amount
+      await roosterAmoStrategy.connect(impersonatedVaultSigner).withdrawAll();
+      await roosterAmoStrategy.connect(impersonatedVaultSigner).withdrawAll();
+
     });
 
     it("Should withdraw when there's little WETH in the pool", async () => {
@@ -315,7 +326,7 @@ describe("ForkTest: Rooster AMO Strategy (Plume)", async function () {
         oethUnits("0")
       );
 
-      await verifyEndConditions(false);
+      await verifyEndConditions();
     });
 
     it("Should withdraw when there's little OETHp in the pool", async () => {
@@ -395,7 +406,7 @@ describe("ForkTest: Rooster AMO Strategy (Plume)", async function () {
         oethUnits("0")
       );
 
-      await verifyEndConditions(false);
+      await verifyEndConditions();
     });
   });
 
@@ -573,8 +584,6 @@ describe("ForkTest: Rooster AMO Strategy (Plume)", async function () {
           "0"
         )
       ).to.be.revertedWith("Protocol insolvent");
-
-      await assetLpStakedInGauge();
     });
   });
 
@@ -627,7 +636,6 @@ describe("ForkTest: Rooster AMO Strategy (Plume)", async function () {
 
       // Withdraw from the pool
       await roosterAmoStrategy.connect(oethVaultSigner).withdrawAll();
-      await assetLpNOTStakedInGauge();
 
       // deposit into pool again
       await mintAndDepositToStrategy({ amount: oethUnits("5") });
@@ -995,29 +1003,14 @@ describe("ForkTest: Rooster AMO Strategy (Plume)", async function () {
   };
 
   /** When tests finish:
-   * - nft LP token should remain staked
    * - there should be no substantial amount of WETH / OETHb left on the strategy contract
    */
   const verifyEndConditions = async (lpStaked = true) => {
-    if (lpStaked) {
-      await assetLpStakedInGauge();
-    } else {
-      await assetLpNOTStakedInGauge();
-    }
-
-    // await expect(await weth.balanceOf(roosterAmoStrategy.address)).to.lte(
-    //   oethUnits("0.00001")
-    // );
-    // await expect(await oethb.balanceOf(roosterAmoStrategy.address)).to.equal(
-    //   oethUnits("0")
-    // );
-  };
-
-  const assetLpStakedInGauge = async () => {
-    // TODO implement
-  };
-
-  const assetLpNOTStakedInGauge = async () => {
-    // TODO implement
+    await expect(await weth.balanceOf(roosterAmoStrategy.address)).to.lte(
+      oethUnits("0.00001")
+    );
+    await expect(await oethb.balanceOf(roosterAmoStrategy.address)).to.equal(
+      oethUnits("0")
+    );
   };
 });

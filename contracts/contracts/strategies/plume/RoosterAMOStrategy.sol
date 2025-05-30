@@ -267,21 +267,6 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
     }
 
     /***************************************
-                Periphery utils
-    ****************************************/
-
-    // function _isLpTokenStakedInGauge() internal view returns (bool) {
-    //     require(tokenId != 0, "Missing NFT LP token");
-
-    //     address owner = positionManager.ownerOf(tokenId);
-    //     require(
-    //         owner == address(clGauge) || owner == address(this),
-    //         "Unexpected token owner"
-    //     );
-    //     return owner == address(clGauge);
-    // }
-
-    /***************************************
                Strategy overrides 
     ****************************************/
 
