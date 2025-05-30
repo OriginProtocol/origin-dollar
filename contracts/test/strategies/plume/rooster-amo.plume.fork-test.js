@@ -180,16 +180,10 @@ describe("ForkTest: Rooster AMO Strategy (Plume)", async function () {
         balanceBefore.add(oethUnits("1"))
       );
 
-      // There may remain some WETH left on the strategy contract because:
-      // When calculating `shareOfWetToRemove` on `withdraw` function in `roosterAmoStrategy.sol`, the result is rounded up.
-      // This leads to a maximum of 1wei error of the `shareOfWetToRemove` value.
-      // Then this value is multiplied by the `_getLiquidity()` value which multiplies the previous error.
-      // The value of `_getLiquidity()` is expressed in ethers, for example at block 19670000 it was approx 18_000_000 ethers.
-      // This leads to a maximum of 18_000_000 wei error in this situation (due to `mulTruncate()` function).
-      // At the end, the bigger the `_getLiquidity()` value the bigger the error.
-      // However, during test the error values remains most of the time below 1e6wei.
+      // There may remain some WETH left on the strategy contract because of the rounding when 
+      // removing the liquidity
       expect(await weth.balanceOf(roosterAmoStrategy.address)).to.lte(
-        BigNumber.from("1000000")
+        BigNumber.from("1000")
       );
 
       await verifyEndConditions();
@@ -282,16 +276,10 @@ describe("ForkTest: Rooster AMO Strategy (Plume)", async function () {
         balanceBefore.add(oethUnits("0.01"))
       );
 
-      // There may remain some WETH left on the strategy contract because:
-      // When calculating `shareOfWetToRemove` on `withdraw` function in `roosterAmoStrategy.sol`, the result is rounded up.
-      // This leads to a maximum of 1wei error of the `shareOfWetToRemove` value.
-      // Then this value is multiplied by the `_getLiquidity()` value which multiplies the previous error.
-      // The value of `_getLiquidity()` is expressed in ethers, for example at block 19670000 it was approx 18_000_000 ethers.
-      // This leads to a maximum of 18_000_000 wei error in this situation (due to `mulTruncate()` function).
-      // At the end, the bigger the `_getLiquidity()` value the bigger the error.
-      // However, during test the error values remains most of the time below 1e6wei.
+      // There may remain some WETH left on the strategy contract because of the rounding
+      // when removing the liquidity
       expect(await weth.balanceOf(roosterAmoStrategy.address)).to.lte(
-        BigNumber.from("1000000")
+        BigNumber.from("1000")
       );
 
       await verifyEndConditions();
@@ -364,16 +352,10 @@ describe("ForkTest: Rooster AMO Strategy (Plume)", async function () {
         balanceBefore.add(oethUnits("1"))
       );
 
-      // There may remain some WETH left on the strategy contract because:
-      // When calculating `shareOfWetToRemove` on `withdraw` function in `RoosterAMOStrategy.sol`, the result is rounded up.
-      // This leads to a maximum of 1wei error of the `shareOfWetToRemove` value.
-      // Then this value is multiplied by the `_getLiquidity()` value which multiplies the previous error.
-      // The value of `_getLiquidity()` is expressed in ethers, for example at block 19670000 it was approx 18_000_000 ethers.
-      // This leads to a maximum of 18_000_000 wei error in this situation (due to `mulTruncate()` function).
-      // At the end, the bigger the `_getLiquidity()` value the bigger the error.
-      // However, during test the error values remains most of the time below 1e6wei.
+      // There may remain some WETH left on the strategy contract because of the rounding
+      // when removing the liquidity
       expect(await weth.balanceOf(roosterAmoStrategy.address)).to.lte(
-        BigNumber.from("1000000")
+        BigNumber.from("1000")
       );
 
       await verifyEndConditions();
@@ -710,7 +692,7 @@ describe("ForkTest: Rooster AMO Strategy (Plume)", async function () {
       // Also the strategy contract adjusts WETH supplied to pool down, to mitigate the PoolLens liquidity
       // calculation.
       await expect(await weth.balanceOf(roosterAmoStrategy.address)).to.lte(
-        BigNumber.from("10000000000")
+        BigNumber.from("1000")
       );
 
       await expect(await oethpVault.wethAvailable()).to.approxEqualTolerance(

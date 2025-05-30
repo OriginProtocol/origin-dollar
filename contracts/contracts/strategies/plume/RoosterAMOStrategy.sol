@@ -524,7 +524,7 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
         int32[] memory ticks = new int32[](1);
         uint128[] memory amounts = new uint128[](1);
         ticks[0] = tickNumber;
-        amounts[0] = 1e18;
+        amounts[0] = 1e24;
 
         // construct value for quoter with arbitrary LP amount
         IMaverickV2Pool.AddLiquidityParams memory addParam = IMaverickV2Pool
@@ -534,15 +534,12 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
                 amounts: amounts
             });
 
-        // splits 1e18 amount into wethQuoted and OETHpQuoted where wethQuoted + OETHpQuoted = ~1e18
-        // because of some rounding the value isn't an exact 1e18. The split reflects the underlying
-        // liquidity amounts in the tick.
         (WETHRequired, OETHpRequired, ) = quoter.calculateAddLiquidity(
             mPool,
             addParam
         );
 
-        // For muldiv see reference:
+        // For muldiv reference see:
         // https://github.com/OpenZeppelin/openzeppelin-contracts/blob/a7d38c7a3321e3832ca84f7ba1125dff9a91361e/contracts/utils/math/Math.sol#L280
 
         // tick has no WETH liquidity
