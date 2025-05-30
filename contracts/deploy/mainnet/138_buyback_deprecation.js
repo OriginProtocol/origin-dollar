@@ -47,7 +47,11 @@ module.exports = deploymentWithGovernanceProposal(
     );
 
     return {
-      name: "Deprecate Buyback",
+      name: `Update fee recipient and change ownership of buyback contracts
+
+- Sets the trustee address to the multichain Guardian for OUSD and OETH vaults
+- Changes the governor of existing buyback contracts to the multichain Guardian to enable updated buyback operations
+- Transfers leftover OGV from one of the legacy buyback contracts to the multichain Guardian`,
       actions: [
         {
           // Send all OUSD fees to the Multichain Strategist
