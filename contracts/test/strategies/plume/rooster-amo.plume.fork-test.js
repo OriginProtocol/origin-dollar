@@ -15,7 +15,7 @@ const plumeFixtureWithMockedVault = createFixtureLoader(
 
 const { setERC20TokenBalance } = require("../../_fund");
 
-describe.only("ForkTest: Rooster AMO Strategy (Plume)", async function () {
+describe("ForkTest: Rooster AMO Strategy (Plume)", async function () {
   let fixture,
     oethpVault,
     oethVaultSigner,
@@ -235,7 +235,7 @@ describe.only("ForkTest: Rooster AMO Strategy (Plume)", async function () {
     });
 
     it("Should allow double withdrawAll", async () => {
-      const { oethpVault, roosterAmoStrategy, weth, oethp } = fixture;
+      const { oethpVault, roosterAmoStrategy } = fixture;
 
       const impersonatedVaultSigner = await impersonateAndFund(
         oethpVault.address
@@ -1003,14 +1003,14 @@ describe.only("ForkTest: Rooster AMO Strategy (Plume)", async function () {
   };
 
   /** When tests finish:
-   * - there should be no substantial amount of WETH / OETHb left on the strategy contract
+   * - there should be no substantial amount of WETH / OETHp left on the strategy contract
    */
-  const verifyEndConditions = async (lpStaked = true) => {
+  const verifyEndConditions = async () => {
     await expect(await weth.balanceOf(roosterAmoStrategy.address)).to.lte(
       oethUnits("0.00001")
     );
-    await expect(await oethb.balanceOf(roosterAmoStrategy.address)).to.equal(
-      oethUnits("0")
+    await expect(await oethp.balanceOf(roosterAmoStrategy.address)).to.lte(
+      oethUnits("0.000001")
     );
   };
 });

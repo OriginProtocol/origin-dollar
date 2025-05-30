@@ -432,7 +432,7 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
          * dependence where `_swapToDesiredPosition` function relies on later functions
          * (`addLiquidity`) to burn the OETHp. Reducing the risk of error introduction.
          */
-        _burnOethOnTheContract(false);
+        _burnOethOnTheContract();
     }
 
     /***************************************
@@ -499,7 +499,7 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
         // burn remaining OETHp and skip check because liquidityManager takes
         // a little bit less tokens than lens contract calculates when creating
         // the add liquidity parameters
-        _burnOethOnTheContract(true);
+        _burnOethOnTheContract();
     }
 
     /**
@@ -820,7 +820,7 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
             underlyingAssets
         );
 
-        _burnOethOnTheContract(false);
+        _burnOethOnTheContract();
     }
 
     /// @dev This function updates the amount of underlying assets with the approach of the least possible
@@ -853,9 +853,9 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
     /**
      * Burns any OETHp tokens remaining on the strategy contract
      */
-    function _burnOethOnTheContract(bool skipCheck) internal {
+    function _burnOethOnTheContract() internal {
         uint256 _oethpBalance = IERC20(OETHp).balanceOf(address(this));
-        if (_oethpBalance > 1e12 || skipCheck) {
+        if (_oethpBalance > 1e12) {
             IVault(vaultAddress).burnForStrategy(_oethpBalance);
         }
     }
@@ -924,7 +924,7 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
             packedArgs
         );
         // burn remaining OETHp
-        _burnOethOnTheContract(true);
+        _burnOethOnTheContract();
         _updateUnderlyingAssets();
         _approveTokenAmounts(0, 0);
 
