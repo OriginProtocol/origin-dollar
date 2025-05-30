@@ -20,22 +20,21 @@ contract MockRoosterAMOStrategy is RoosterAMOStrategy {
         address _maverickQuoter,
         address _mPool,
         bool _upperTickAtParity
-    ) RoosterAMOStrategy(
-    	_stratConfig,
-    	_wethAddress,
-    	_oethpAddress,
-    	_liquidityManager,
-    	_poolLens,
-    	_maverickPosition,
-    	_maverickQuoter,
-    	_mPool,
-    	_upperTickAtParity
-    ) {}
-
-    function reservesInTickForGivenPrice(
-        int32 tick,
-        uint256 newSqrtPrice
     )
+        RoosterAMOStrategy(
+            _stratConfig,
+            _wethAddress,
+            _oethpAddress,
+            _liquidityManager,
+            _poolLens,
+            _maverickPosition,
+            _maverickQuoter,
+            _mPool,
+            _upperTickAtParity
+        )
+    {}
+
+    function reservesInTickForGivenPrice(int32 tick, uint256 newSqrtPrice)
         external
         view
         returns (
@@ -47,9 +46,9 @@ contract MockRoosterAMOStrategy is RoosterAMOStrategy {
         return _reservesInTickForGivenPrice(tick, newSqrtPrice);
     }
 
-    function getCurrentWethShare() external view returns(uint256) {
+    function getCurrentWethShare() external view returns (uint256) {
         uint256 _currentPrice = getPoolSqrtPrice();
-        
+
         return _getWethShare(_currentPrice);
     }
 }

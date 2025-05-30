@@ -2,9 +2,7 @@ const hre = require("hardhat");
 const { createFixtureLoader } = require("../../_fixture");
 
 const addresses = require("../../../utils/addresses");
-const {
-  plumeFixtureWithMockedVaultAdmin,
-} = require("../../_fixture-plume");
+const { plumeFixtureWithMockedVaultAdmin } = require("../../_fixture-plume");
 const { expect } = require("chai");
 const { oethUnits } = require("../../helpers");
 const ethers = require("ethers");
@@ -467,15 +465,14 @@ describe("ForkTest: Rooster AMO Strategy (Plume)", async function () {
       // just add liquidity don't move the active trading position
       await rebalance(BigNumber.from("0"), true, BigNumber.from("0"));
 
-      const wethShare = await roosterAmoStrategy
-        .getCurrentWethShare();
+      const wethShare = await roosterAmoStrategy.getCurrentWethShare();
 
       await expect(
         await roosterAmoStrategy.checkBalance(weth.address)
       ).to.approxEqualTolerance(
-        balance.add(
-          amountToDeposit.div(wethShare).mul(oethUnits("1"))
-        ), 1.5);
+        balance.add(amountToDeposit.div(wethShare).mul(oethUnits("1"))),
+        1.5
+      );
 
       await verifyEndConditions();
     });
@@ -488,15 +485,14 @@ describe("ForkTest: Rooster AMO Strategy (Plume)", async function () {
       // just add liquidity don't move the active trading position
       await rebalance(BigNumber.from("0"), true, BigNumber.from("0"), "0.5");
 
-      const wethShare = await roosterAmoStrategy
-        .getCurrentWethShare();
+      const wethShare = await roosterAmoStrategy.getCurrentWethShare();
 
       await expect(
         await roosterAmoStrategy.checkBalance(weth.address)
       ).to.approxEqualTolerance(
-        balance.add(
-          amountToDeposit.div(wethShare).mul(oethUnits("1"))
-        ), 1.5);
+        balance.add(amountToDeposit.div(wethShare).mul(oethUnits("1"))),
+        1.5
+      );
 
       await verifyEndConditions();
     });
@@ -509,15 +505,14 @@ describe("ForkTest: Rooster AMO Strategy (Plume)", async function () {
       // just add liquidity don't move the active trading position
       await rebalance(BigNumber.from("0"), true, BigNumber.from("0"), "1");
 
-      const wethShare = await roosterAmoStrategy
-        .getCurrentWethShare();
+      const wethShare = await roosterAmoStrategy.getCurrentWethShare();
 
       await expect(
         await roosterAmoStrategy.checkBalance(weth.address)
       ).to.approxEqualTolerance(
-        balance.add(
-          amountToDeposit.div(wethShare).mul(oethUnits("1"))
-        ), 1.5);
+        balance.add(amountToDeposit.div(wethShare).mul(oethUnits("1"))),
+        1.5
+      );
 
       await verifyEndConditions();
     });
@@ -677,7 +672,7 @@ describe("ForkTest: Rooster AMO Strategy (Plume)", async function () {
       await expect(tx).to.emit(roosterAmoStrategy, "PoolRebalanced");
     };
 
-    const depositAllWethAndConfigure1Bp = async () => {
+    const depositAllWethAndConfigure1pct = async () => {
       // configure to leave no WETH on the vault
       await configureAutomaticDepositOnMint(oethUnits("0"));
       const outstandingWeth = await oethpVault.outstandingWithdrawalsAmount();
@@ -691,14 +686,14 @@ describe("ForkTest: Rooster AMO Strategy (Plume)", async function () {
 
       // configure to only keep 1bp of the Vault's totalValue in the Vault;
       const minAmountReserved = await configureAutomaticDepositOnMint(
-        oethUnits("0.0001")
+        oethUnits("0.01")
       );
 
       return minAmountReserved;
     };
 
     it("Should not automatically deposit to strategy when below vault buffer threshold", async () => {
-      const minAmountReserved = await depositAllWethAndConfigure1Bp();
+      const minAmountReserved = await depositAllWethAndConfigure1pct();
 
       const amountBelowThreshold = minAmountReserved.div(BigNumber.from("2"));
 
@@ -718,10 +713,13 @@ describe("ForkTest: Rooster AMO Strategy (Plume)", async function () {
     });
 
     it("Should revert when pool rebalance is off target", async () => {
-      const { amount, swapWeth} = await estimateSwapAmountsToReachWethRatio(oethUnits("0.91"));
+      const { amount, swapWeth } = await estimateSwapAmountsToReachWethRatio(
+        oethUnits("0.91")
+      );
       await swap({ amount, swapWeth });
       await mintAndDepositToStrategy({ amount: oethUnits("1000") }, false);
-      const { amount: amount2, swapWeth: swapWeth2} = await estimateSwapAmountsToReachWethRatio(oethUnits("0.91"));
+      const { amount: amount2, swapWeth: swapWeth2 } =
+        await estimateSwapAmountsToReachWethRatio(oethUnits("0.91"));
       await expect(
         rebalance(amount2, swapWeth2, 0, "0")
       ).to.be.revertedWithCustomError(
@@ -730,26 +728,30 @@ describe("ForkTest: Rooster AMO Strategy (Plume)", async function () {
     });
 
     it("Should be able to rebalance the pool when price pushed very close to 1:1", async () => {
-      const { amount: amountToSwap, swapWeth: swapWethToSwap } = await estimateSwapAmountsToReachWethRatio(oethUnits("0.99"));
+      const { amount: amountToSwap, swapWeth: swapWethToSwap } =
+        await estimateSwapAmountsToReachWethRatio(oethUnits("0.99"));
       await swap({
         amount: amountToSwap,
-        swapWeth: swapWethToSwap
+        swapWeth: swapWethToSwap,
       });
 
-      const { amount, swapWeth } = await estimateSwapAmountsToGetToConfiguredInterval();
+      const { amount, swapWeth } =
+        await estimateSwapAmountsToGetToConfiguredInterval();
 
       await rebalance(amount, swapWeth, 0, "0");
       await verifyEndConditions();
     });
 
     it("Should be able to rebalance the pool when price pushed very close to OETHb costing 0.9999 WETH", async () => {
-      const { amount: amountToSwap, swapWeth: swapWethToSwap } = await estimateSwapAmountsToReachWethRatio(oethUnits("0.01"));
+      const { amount: amountToSwap, swapWeth: swapWethToSwap } =
+        await estimateSwapAmountsToReachWethRatio(oethUnits("0.01"));
       await swap({
         amount: amountToSwap,
-        swapWeth: swapWethToSwap
+        swapWeth: swapWethToSwap,
       });
 
-      const { amount, swapWeth } = await estimateSwapAmountsToGetToConfiguredInterval();
+      const { amount, swapWeth } =
+        await estimateSwapAmountsToGetToConfiguredInterval();
       await mintAndDepositToStrategy({ amount: oethUnits("1000") }, false);
 
       await rebalance(amount, swapWeth, 0, "0");
@@ -758,7 +760,8 @@ describe("ForkTest: Rooster AMO Strategy (Plume)", async function () {
 
     it("Should be able to deposit to the pool & rebalance", async () => {
       await mintAndDepositToStrategy({ amount: oethUnits("5") });
-      let { amount, swapWeth } = await estimateSwapAmountsToGetToConfiguredInterval();
+      let { amount, swapWeth } =
+        await estimateSwapAmountsToGetToConfiguredInterval();
 
       const tx = await rebalance(amount, swapWeth, 0, "0");
 
@@ -766,20 +769,71 @@ describe("ForkTest: Rooster AMO Strategy (Plume)", async function () {
       await verifyEndConditions();
     });
 
+    it("Should be able to rebalance when small amount of WETH needs to be removed as swap liquidity", async () => {
+      await mintAndDepositToStrategy({ amount: oethUnits("5") });
+
+      const { amount, swapWeth } =
+        await estimateSwapAmountsToGetToConfiguredInterval();
+      // rebalance to use up any WETH liquidity on the contract
+      await rebalance(amount, swapWeth, 0, "0");
+      // rebalance requiring small amount of WETH (increasing)
+      await rebalance(BigNumber.from("100"), true, 0, "0");
+      await rebalance(BigNumber.from("10000"), true, 0, "0");
+      await rebalance(BigNumber.from("1000000"), true, 0, "0");
+      await rebalance(BigNumber.from("100000000"), true, 0, "0");
+      await rebalance(BigNumber.from("10000000000"), true, 0, "0");
+      await rebalance(BigNumber.from("1000000000000"), true, 0, "0");
+
+      await verifyEndConditions();
+    });
+
     it("Should be able to deposit to the pool & rebalance multiple times", async () => {
       await mintAndDepositToStrategy({ amount: oethUnits("5") });
-      let { amount, swapWeth } = await estimateSwapAmountsToGetToConfiguredInterval();
-      const tx = await rebalance(amount, swapWeth, 0, "0");      
+      let { amount, swapWeth } =
+        await estimateSwapAmountsToGetToConfiguredInterval();
+      const tx = await rebalance(amount, swapWeth, 0, "0");
       await expect(tx).to.emit(roosterAmoStrategy, "PoolRebalanced");
       await verifyEndConditions();
 
       await mintAndDepositToStrategy({ amount: oethUnits("5") });
 
-      let { amount: amount1, swapWeth: swapWeth1 } = await estimateSwapAmountsToGetToConfiguredInterval();
-      const tx1 = await rebalance(amount1, swapWeth1, 0, "0");      
+      let { amount: amount1, swapWeth: swapWeth1 } =
+        await estimateSwapAmountsToGetToConfiguredInterval();
+      const tx1 = await rebalance(amount1, swapWeth1, 0, "0");
       await expect(tx1).to.emit(roosterAmoStrategy, "PoolRebalanced");
       await verifyEndConditions();
     });
+
+    const depositValues = [
+      "0.5",
+      "2.5",
+      "3.5",
+      "5",
+      "9",
+      "50",
+      "250",
+      "500",
+      "1500",
+      "2500",
+    ];
+    for (const depositValue of depositValues) {
+      it(`Should be able to deposit to the pool & rebalance multiple times with ${depositValue} deposit`, async () => {
+        await mintAndDepositToStrategy({ amount: oethUnits("5") });
+        let { amount, swapWeth } =
+          await estimateSwapAmountsToGetToConfiguredInterval();
+        const tx = await rebalance(amount, swapWeth, 0, "0");
+        await expect(tx).to.emit(roosterAmoStrategy, "PoolRebalanced");
+        await verifyEndConditions();
+
+        await mintAndDepositToStrategy({ amount: oethUnits("5") });
+
+        let { amount: amount1, swapWeth: swapWeth1 } =
+          await estimateSwapAmountsToGetToConfiguredInterval();
+        const tx1 = await rebalance(amount1, swapWeth1, 0, "0");
+        await expect(tx1).to.emit(roosterAmoStrategy, "PoolRebalanced");
+        await verifyEndConditions();
+      });
+    }
   });
 
   const setup = async () => {
@@ -790,7 +844,8 @@ describe("ForkTest: Rooster AMO Strategy (Plume)", async function () {
 
     await oethpVault.connect(rafael).rebase();
 
-    let { amount, swapWeth } = await estimateSwapAmountsToGetToConfiguredInterval();
+    let { amount, swapWeth } =
+      await estimateSwapAmountsToGetToConfiguredInterval();
     await rebalance(amount, swapWeth, 0, "0");
   };
 
@@ -825,16 +880,16 @@ describe("ForkTest: Rooster AMO Strategy (Plume)", async function () {
 
   // get the middle point of configured weth share interval
   const getConfiguredWethShare = async () => {
-    const wethShareStart = await roosterAmoStrategy
-      .allowedWethShareStart();
-    const wethShareEnd = await roosterAmoStrategy
-      .allowedWethShareEnd();
+    const wethShareStart = await roosterAmoStrategy.allowedWethShareStart();
+    const wethShareEnd = await roosterAmoStrategy.allowedWethShareEnd();
 
     return wethShareStart.add(wethShareEnd).div(BigNumber.from("2"));
-  }
+  };
 
   const rebalanceThePoolToWETHRatio = async (wethRatio) => {
-    const { amount, swapWeth } = await estimateSwapAmountsToReachWethRatio(oethUnits(wethRatio));
+    const { amount, swapWeth } = await estimateSwapAmountsToReachWethRatio(
+      oethUnits(wethRatio)
+    );
     await swap({ amount, swapWeth });
   };
 
@@ -848,8 +903,10 @@ describe("ForkTest: Rooster AMO Strategy (Plume)", async function () {
   // all the liquidity is deployed
   const estimateSwapAmountsToReachWethRatio = async (wethRatio) => {
     const currentPrice = await roosterAmoStrategy.getPoolSqrtPrice();
-    const { tickState } = await roosterAmoStrategy
-      .reservesInTickForGivenPrice(-1, currentPrice);
+    const { tickState } = await roosterAmoStrategy.reservesInTickForGivenPrice(
+      -1,
+      currentPrice
+    );
 
     const wethAmount = tickState.reserveA;
     const oethAmount = tickState.reserveB;
@@ -874,8 +931,8 @@ describe("ForkTest: Rooster AMO Strategy (Plume)", async function () {
 
     return {
       amount: diff.mul(total).div(oethUnits("1")),
-      swapWeth
-    }
+      swapWeth,
+    };
   };
 
   const rebalance = async (
@@ -909,11 +966,10 @@ describe("ForkTest: Rooster AMO Strategy (Plume)", async function () {
     return tx;
   };
 
-  const mintAndDepositToStrategy = async ({
-    userOverride,
-    amount,
-    returnTransaction
-  } = {}, expectPoolRebalanced = true) => {
+  const mintAndDepositToStrategy = async (
+    { userOverride, amount, returnTransaction } = {},
+    expectPoolRebalanced = true
+  ) => {
     const user = userOverride || rafael;
     amount = amount || oethUnits("5");
 

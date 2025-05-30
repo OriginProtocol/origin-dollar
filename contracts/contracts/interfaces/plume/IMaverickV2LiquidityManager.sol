@@ -84,4 +84,20 @@ interface IMaverickV2LiquidityManager {
         IMaverickV2Pool pool,
         IMaverickV2Pool.AddLiquidityParams memory args
     ) external payable;
+
+    /**
+     * @notice Packs sqrtPrice breaks array with this format: [length,
+     * array[0], array[1],..., array[length-1]] where length is 1 byte.
+     */
+    function packUint88Array(uint88[] memory fullArray)
+        external
+        pure
+        returns (bytes memory packedArray);
+
+    /**
+     * @notice Packs addLiquidity paramters array element-wise.
+     */
+    function packAddLiquidityArgsArray(
+        IMaverickV2Pool.AddLiquidityParams[] memory args
+    ) external pure returns (bytes[] memory argsPacked);
 }

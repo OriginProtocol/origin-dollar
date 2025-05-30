@@ -1348,14 +1348,23 @@ const deployBaseAerodromeAMOStrategyImplementation = async () => {
 };
 
 const deployPlumeRoosterAMOStrategyImplementation = async (poolAddress) => {
-  return _deployPlumeRoosterAMOImplementationConfigurable(poolAddress, "RoosterAMOStrategy");
+  return _deployPlumeRoosterAMOImplementationConfigurable(
+    poolAddress,
+    "RoosterAMOStrategy"
+  );
 };
 
 const deployPlumeMockRoosterAMOStrategyImplementation = async (poolAddress) => {
-  return _deployPlumeRoosterAMOImplementationConfigurable(poolAddress, "MockRoosterAMOStrategy");
+  return _deployPlumeRoosterAMOImplementationConfigurable(
+    poolAddress,
+    "MockRoosterAMOStrategy"
+  );
 };
 
-const _deployPlumeRoosterAMOImplementationConfigurable = async (poolAddress, stratContractName) => {
+const _deployPlumeRoosterAMOImplementationConfigurable = async (
+  poolAddress,
+  stratContractName
+) => {
   const cOETHpProxy = await ethers.getContract("OETHPlumeProxy");
   const cOETHpVaultProxy = await ethers.getContract("OETHPlumeVaultProxy");
 

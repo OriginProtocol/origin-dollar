@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 pragma solidity ^0.8.25;
 
-import {IMaverickV2Pool} from "./IMaverickV2Pool.sol";
+import { IMaverickV2Pool } from "./IMaverickV2Pool.sol";
 
 interface IMaverickV2Quoter {
     error QuoterInvalidSwap();
@@ -28,7 +28,13 @@ interface IMaverickV2Quoter {
         bool tokenAIn,
         bool exactOutput,
         int32 tickLimit
-    ) external returns (uint256 amountIn, uint256 amountOut, uint256 gasEstimate);
+    )
+        external
+        returns (
+            uint256 amountIn,
+            uint256 amountOut,
+            uint256 gasEstimate
+        );
 
     /**
      * @notice Calculates a multihop swap and returns the resulting amount and
@@ -54,10 +60,19 @@ interface IMaverickV2Quoter {
     function calculateAddLiquidity(
         IMaverickV2Pool pool,
         IMaverickV2Pool.AddLiquidityParams calldata params
-    ) external returns (uint256 amountA, uint256 amountB, uint256 gasEstimate);
+    )
+        external
+        returns (
+            uint256 amountA,
+            uint256 amountB,
+            uint256 gasEstimate
+        );
 
     /**
      * @notice Pool's sqrt price.
      */
-    function poolSqrtPrice(IMaverickV2Pool pool) external view returns (uint256 sqrtPrice);
+    function poolSqrtPrice(IMaverickV2Pool pool)
+        external
+        view
+        returns (uint256 sqrtPrice);
 }
