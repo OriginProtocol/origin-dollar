@@ -8,8 +8,7 @@ module.exports = deploymentWithGovernanceProposal(
     // forceSkip: true,
     // reduceQueueTime: true,
     deployerIsProposer: false,
-    proposalId:
-      "82684779292823865624163305100894964251242260336820147312852506014889047275271",
+    proposalId: "",
   },
   async () => {
     const cLegacyBuyback = await ethers.getContractAt(
@@ -52,8 +51,7 @@ module.exports = deploymentWithGovernanceProposal(
       name: `Update fee recipient and change ownership of buyback contracts
 
 - Sets the trustee address to the multichain Guardian for OUSD and OETH vaults
-- Changes the governor of existing buyback contracts to the multichain Guardian to enable updated buyback operations
-- Transfers leftover OGV from one of the legacy buyback contracts to the multichain Guardian`,
+- Changes the governor of existing and legacy buyback contracts to the multichain Guardian to enable updated buyback operations`,
       actions: [
         {
           // Send all OUSD fees to the Multichain Strategist
@@ -87,12 +85,6 @@ module.exports = deploymentWithGovernanceProposal(
           contract: cLegacyBuyback,
           signature: "transferGovernance(address)",
           args: [addresses.multichainStrategist],
-        },
-        // Drain OGV from Legacy Buyback contract
-        {
-          contract: cLegacyBuyback,
-          signature: "transferToken(address,uint256)",
-          args: [addresses.mainnet.OGV, ogvInLegacyBuyback],
         },
       ],
     };
