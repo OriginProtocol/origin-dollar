@@ -7,13 +7,12 @@ pragma solidity ^0.8.0;
  */
 import { Math as MathRooster } from "../../../lib/rooster/v2-common/libraries/Math.sol";
 import { Math as Math_v5 } from "../../../lib/rooster/openzeppelin-custom/contracts/utils/math/Math.sol";
+import { StableMath } from "../../utils/StableMath.sol";
 
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 
 import { IERC20, InitializableAbstractStrategy } from "../../utils/InitializableAbstractStrategy.sol";
-import { StableMath } from "../../utils/StableMath.sol";
-
 import { IVault } from "../../interfaces/IVault.sol";
 import { IMaverickV2Pool } from "../../interfaces/plume/IMaverickV2Pool.sol";
 import { IMaverickV2Quoter } from "../../interfaces/plume/IMaverickV2Quoter.sol";
@@ -60,29 +59,50 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
     address public immutable OETHp;
     /// @notice tick spacing of the pool (set to 1)
     int24 public immutable tickSpacing;
-    /// @notice the underlying AMO Maverick pool
+    /// @notice the underlying AMO Maverick (Rooster) pool
     IMaverickV2Pool public immutable mPool;
-    /// @notice the Liquidity manager used to add liquidity to the mPool
+    /// @notice the Liquidity manager used to add liquidity to the pool
     IMaverickV2LiquidityManager public immutable liquidityManager;
-    /// @notice the Maverick V2 pool lens
+    /// @notice the Maverick V2 poolLens
+    ///
+    /// @dev normally the poolLens is used to prepare the parameters to add
+    /// liquidity to the pool. But it has some calculation issues where the
+    /// amounts can be off by some small value. For that reason we use a much
+    /// more accurate and less versatile Maverick Quoter.
     IMaverickV2PoolLens public immutable poolLens;
     /// @notice the Maverick V2 position
+    ///
+    /// @dev provides details of the NFT LP position and offers functions to
+    /// remove the liquidity.
+    ///
     IMaverickV2Position public immutable maverickPosition;
     /// @notice the Maverick Quoter
     IMaverickV2Quoter public immutable quoter;
 
     /// @notice sqrtPriceTickLower
-    /// @dev tick lower represents the higher price of OETHp priced in WETH. Meaning the pool
-    /// offers less than 1 OETHp for 1 WETH. In other terms to get 1 OETHp the swap needs to offer 1.0001 WETH
-    /// this is where purchasing OETHp with WETH within the liquidity position is most expensive.
-    /// TODO: I THINK THIS IS THE OTHER WAY AROUND
+    /// @dev tick lower represents the lower price of OETHp priced in WETH. Meaning the pool
+    /// offers more than 1 OETHp for 1 WETH. In other terms to get 1 OETHp the swap needs to offer 0.9999 WETH
+    /// this is where purchasing OETHp with WETH within the liquidity position is the cheapest.
+    ///
+    ///            _____________________
+    ///            |      |            |
+    ///            | WETH |    OETHp   |
+    ///            |      |            |
+    ///            |      |            |
+    ///  --------- * -----*----------- * ---------
+    ///      sqrtPriceLower
+    ///                          sqrtPriceHigher
+    ///                            (1:1 parity)
+    ///               currentPrice
+    ///
     ///
     /// Price is defined as price of token1 in terms of token0. (token1 / token0)
+    /// @notice sqrtPriceTickLower - OETH is priced 0.9999 WETH
     uint256 public immutable sqrtPriceTickLower;
     /// @notice sqrtPriceTickHigher
     /// @dev tick higher represents 1:1 price parity of WETH to OETHp
     uint256 public immutable sqrtPriceTickHigher;
-    /// @dev price at parity
+    /// @dev price at parity (in OETHp this is equal to sqrtPriceTickHigher)
     uint256 public immutable sqrtPriceAtParity;
     /// @notice The tick where the strategy deploys the liquidity to
     int32 public immutable tickNumber;
@@ -154,7 +174,12 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
     /// @param _oethpAddress Address of the Erc20 OETHp Token contract
     /// @param _liquidityManager Address of liquidity manager to add
     ///         the liquidity
+    /// @param _poolLens Address of the pool lens contract
+    /// @param _maverickPosition Address of the Maverick's position contract
+    /// @param _maverickQuoter Address of the Maverick's Quoter contract
     /// @param _mPool Address of the Aerodrome concentrated liquidity pool
+    /// @param _upperTickAtParity Bool when true upperTick is the one where the
+    ///        price of OETHp and WETH are at parity
     constructor(
         BaseStrategyConfig memory _stratConfig,
         address _wethAddress,
@@ -190,7 +215,7 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
 
         uint256 _tickSpacing = IMaverickV2Pool(_mPool).tickSpacing();
         require(_tickSpacing == 1, "Unsupported tickSpacing");
-
+        // -1 is the tick where the contract deposits liquidity to
         tickNumber = -1;
 
         // tickSpacing == 1

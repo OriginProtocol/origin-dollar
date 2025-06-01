@@ -180,7 +180,7 @@ describe("ForkTest: Rooster AMO Strategy (Plume)", async function () {
         balanceBefore.add(oethUnits("1"))
       );
 
-      // There may remain some WETH left on the strategy contract because of the rounding when 
+      // There may remain some WETH left on the strategy contract because of the rounding when
       // removing the liquidity
       expect(await weth.balanceOf(roosterAmoStrategy.address)).to.lte(
         BigNumber.from("1000")
@@ -238,7 +238,6 @@ describe("ForkTest: Rooster AMO Strategy (Plume)", async function () {
       // Try withdrawing an amount
       await roosterAmoStrategy.connect(impersonatedVaultSigner).withdrawAll();
       await roosterAmoStrategy.connect(impersonatedVaultSigner).withdrawAll();
-
     });
 
     it("Should withdraw when there's little WETH in the pool", async () => {
