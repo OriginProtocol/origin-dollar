@@ -22,6 +22,7 @@
     "node:plume": "FORK_NETWORK_NAME=plume yarn run node:fork",
     "node:anvil": "anvil --fork-url $PROVIDER_URL --port 8545 --block-base-fee-per-gas 0 --auto-impersonate --disable-block-gas-limit",
     "node:anvil:base": "anvil --fork-url $BASE_PROVIDER_URL --port 8545 --block-base-fee-per-gas 0 --auto-impersonate --disable-block-gas-limit",
+    "node:anvil:plume": "anvil --fork-url $PLUME_PROVIDER_URL --port 8545 --block-base-fee-per-gas 0 --auto-impersonate --disable-block-gas-limit",
     "node:anvil:sonic": "anvil --fork-url $SONIC_PROVIDER_URL --port 8545 --block-base-fee-per-gas 0 --auto-impersonate --disable-block-gas-limit",
     "lint": "yarn run lint:js && yarn run lint:sol",
     "lint:js": "eslint \"test/**/*.js\" \"tasks/**/*.js\" \"deploy/**/*.js\"",

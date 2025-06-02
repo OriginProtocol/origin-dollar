@@ -142,7 +142,7 @@ contract Generalized4626Strategy is InitializableAbstractStrategy {
     }
 
     /**
-     * @dev Get the total asset value held in the platform
+     * @notice Get the total asset value held in the platform
      * @param _asset      Address of the asset
      * @return balance    Total value of the asset in the platform
      */
@@ -159,7 +159,8 @@ contract Generalized4626Strategy is InitializableAbstractStrategy {
          * should not result in assetToken being unused and owned by this strategy
          * contract.
          */
-        return IERC4626(platformAddress).maxWithdraw(address(this));
+        IERC4626 platform = IERC4626(platformAddress);
+        return platform.previewRedeem(platform.balanceOf(address(this)));
     }
 
     /**

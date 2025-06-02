@@ -284,6 +284,11 @@ addresses.mainnet.curve.OUSD_USDC.pool =
   "0x6d18E1a7faeB1F0467A77C0d293872ab685426dc";
 addresses.mainnet.curve.OUSD_USDC.gauge =
   "0x1eF8B6Ea6434e722C916314caF8Bf16C81cAF2f9";
+addresses.mainnet.curve.OETH_WETH = {};
+addresses.mainnet.curve.OETH_WETH.pool =
+  "0xcc7d5785AD5755B6164e21495E07aDb0Ff11C2A8";
+addresses.mainnet.curve.OETH_WETH.gauge =
+  "0x36cC1d791704445A5b6b9c36a667e511d4702F3f";
 
 // SSV network
 addresses.mainnet.SSV = "0x9D65fF81a3c488d585bBfb0Bfe3c7707c7917f54";
@@ -606,5 +611,11 @@ addresses.plume.MaverickV2LiquidityManager =
   "0x28d79eddBF5B215cAccBD809B967032C1E753af7";
 addresses.plume.OethpWETHRoosterPool =
   "0x3F86B564A9B530207876d2752948268b9Bf04F71";
+addresses.plume.strategist = addresses.multichainStrategist;
+addresses.plume.admin = "0x92A19381444A001d62cE67BaFF066fA1111d7202";
+
+// Ref: https://docs.eo.app/docs/eprice/feed-addresses/plume
+addresses.plume.BridgedWOETHOracleFeed =
+  "0x4915600Ed7d85De62011433eEf0BD5399f677e9b";
 
 module.exports = addresses;
