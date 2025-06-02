@@ -825,6 +825,38 @@ describe("ForkTest: Rooster AMO Strategy (Plume)", async function () {
     }
   });
 
+  describe("Rewards", function () {
+    it("Should be able to claim rewards when available", async () => {
+      // Make sure the strategy has something
+      await mintAndDepositToStrategy({ amount: oethUnits("5") });
+
+      const wPlume = await ethers.getContractAt(
+        "IWETH9",
+        addresses.plume.WPLUME
+      );
+      const balanceBefore = await wPlume.balanceOf(strategist.address);
+      await roosterAmoStrategy.connect(strategist).collectRewardTokens();
+      const balanceAfter = await wPlume.balanceOf(strategist.address);
+
+      const balanceDiff = balanceAfter.sub(balanceBefore);
+      expect(balanceDiff).to.eq(oethUnits("1"));
+    });
+
+    it("Should not revert when no NFT ID is available", async () => {
+      const wPlume = await ethers.getContractAt(
+        "IWETH9",
+        addresses.plume.WPLUME
+      );
+      const balanceBefore = await wPlume.balanceOf(strategist.address);
+
+      const tx = roosterAmoStrategy.connect(strategist).collectRewardTokens();
+      await expect(tx).to.not.be.reverted;
+
+      const balanceAfter = await wPlume.balanceOf(strategist.address);
+      expect(balanceAfter).to.eq(balanceBefore);
+    });
+  });
+
   const setup = async () => {
     await mintAndDepositToStrategy({
       amount: oethUnits("5"),

@@ -44,8 +44,42 @@ module.exports = deployOnPlume(
       "RoosterAMOStrategyProxy"
     );
 
+    if (isFork) {
+      // Just pretend wPlume is the reward token for testing
+      await deployWithConfirmation("MockMaverickDistributor", [
+        addresses.plume.WPLUME,
+      ]);
+      const cMockMaverickDistributor = await ethers.getContract(
+        "MockMaverickDistributor"
+      );
+
+      await withConfirmation(
+        cMockMaverickDistributor
+          .connect(sDeployer)
+          .setRewardTokenAmount(oethUnits("1"))
+      );
+
+      // Fund the mock contract
+      const wPlume = await ethers.getContractAt(
+        "IWETH9",
+        addresses.plume.WPLUME
+      );
+      await withConfirmation(
+        wPlume.connect(sDeployer).deposit({ value: oethUnits("10") })
+      );
+      await withConfirmation(
+        wPlume
+          .connect(sDeployer)
+          .transfer(cMockMaverickDistributor.address, oethUnits("10"))
+      );
+    }
+
     const cAMOStrategyImpl = await deployPlumeRoosterAMOStrategyImplementation(
       addresses.plume.OethpWETHRoosterPool
+    );
+    const strategyImplInitData = cAMOStrategyImpl.interface.encodeFunctionData(
+      "initialize()",
+      []
     );
 
     // prettier-ignore
@@ -54,7 +88,7 @@ module.exports = deployOnPlume(
         .connect(sDeployer)["initialize(address,address,bytes)"](
           cAMOStrategyImpl.address,
           addresses.plume.timelock,
-          "0x"
+          strategyImplInitData
         )
     );
 
@@ -101,6 +135,12 @@ module.exports = deployOnPlume(
           contract: cAMOStrategy,
           signature: "setAllowedPoolWethShareInterval(uint256,uint256)",
           args: [utils.parseUnits("0.10", 18), utils.parseUnits("0.25", 18)],
+        },
+        {
+          // Set Harvester address to the multisig
+          contract: cAMOStrategy,
+          signature: "setHarvesterAddress(address)",
+          args: [addresses.multichainStrategist],
         },
       ],
     };

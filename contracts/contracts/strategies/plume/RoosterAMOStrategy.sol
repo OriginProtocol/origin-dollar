@@ -19,6 +19,8 @@ import { IMaverickV2Quoter } from "../../interfaces/plume/IMaverickV2Quoter.sol"
 import { IMaverickV2LiquidityManager } from "../../interfaces/plume/IMaverickV2LiquidityManager.sol";
 import { IMaverickV2PoolLens } from "../../interfaces/plume/IMaverickV2PoolLens.sol";
 import { IMaverickV2Position } from "../../interfaces/plume/IMaverickV2Position.sol";
+import { IVotingDistributor } from "../../interfaces/plume/IVotingDistributor.sol";
+import { IPoolDistributor } from "../../interfaces/plume/IPoolDistributor.sol";
 // importing custom version of rooster TickMath because of dependency collision. Maverick uses
 // a newer OpenZepplin Math library with functionality that is not present in 4.4.2 (the one we use)
 import { TickMath } from "../../../lib/rooster/v2-common/libraries/TickMath.sol";
@@ -112,6 +114,9 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
     ///      protocol funds.
     uint256 public constant SOLVENCY_THRESHOLD = 0.998 ether;
 
+    IVotingDistributor public immutable votingDistributor;
+    IPoolDistributor public immutable poolDistributor;
+
     event PoolWethShareIntervalUpdated(
         uint256 allowedWethShareStart,
         uint256 allowedWethShareEnd
@@ -189,7 +194,9 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
         address _maverickPosition,
         address _maverickQuoter,
         address _mPool,
-        bool _upperTickAtParity
+        bool _upperTickAtParity,
+        address _votingDistributor,
+        address _poolDistributor
     ) initializer InitializableAbstractStrategy(_stratConfig) {
         require(
             address(IMaverickV2Pool(_mPool).tokenA()) == _wethAddress,
@@ -234,6 +241,8 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
         maverickPosition = IMaverickV2Position(_maverickPosition);
         quoter = IMaverickV2Quoter(_maverickQuoter);
         mPool = IMaverickV2Pool(_mPool);
+        votingDistributor = IVotingDistributor(_votingDistributor);
+        poolDistributor = IPoolDistributor(_poolDistributor);
 
         require(address(mPool.tokenA()) == WETH, "WETH not TokanA");
         require(address(mPool.tokenB()) == OETHp, "OETHp not TokanB");
@@ -244,15 +253,14 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
 
     /**
      * @notice initialize function, to set up initial internal state
-     * @param _rewardTokenAddresses Address of reward token for platform
      */
-    function initialize(address[] memory _rewardTokenAddresses)
-        external
-        onlyGovernor
-        initializer
-    {
+    function initialize() external onlyGovernor initializer {
+        // Read reward
+        address[] memory _rewardTokens = new address[](1);
+        _rewardTokens[0] = poolDistributor.rewardToken();
+
         InitializableAbstractStrategy._initialize(
-            _rewardTokenAddresses,
+            _rewardTokens,
             new address[](0),
             new address[](0)
         );
@@ -1032,7 +1040,25 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
         onlyHarvester
         nonReentrant
     {
-        // collect reward tokens
+        if (tokenId > 0) {
+            // Do nothing if there's no position minted
+
+            uint32[] memory binIds = new uint32[](1);
+            binIds[0] = 1;
+
+            uint256 lastEpoch = votingDistributor.lastEpoch();
+
+            poolDistributor.claimLp(
+                address(this),
+                tokenId,
+                mPool,
+                binIds,
+                lastEpoch
+            );
+        }
+
+        // Run the internal inherited function
+        _collectRewardTokens();
     }
 
     /***************************************

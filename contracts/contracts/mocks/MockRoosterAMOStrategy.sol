@@ -19,7 +19,9 @@ contract MockRoosterAMOStrategy is RoosterAMOStrategy {
         address _maverickPosition,
         address _maverickQuoter,
         address _mPool,
-        bool _upperTickAtParity
+        bool _upperTickAtParity,
+        address _votingDistributor,
+        address _poolDistributor
     )
         RoosterAMOStrategy(
             _stratConfig,
@@ -30,7 +32,9 @@ contract MockRoosterAMOStrategy is RoosterAMOStrategy {
             _maverickPosition,
             _maverickQuoter,
             _mPool,
-            _upperTickAtParity
+            _upperTickAtParity,
+            _votingDistributor,
+            _poolDistributor
         )
     {}
 
