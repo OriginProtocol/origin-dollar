@@ -57,13 +57,13 @@ module.exports = deploymentWithGovernanceProposal(
           // Send all OUSD fees to the Multichain Strategist
           contract: cOUSDVault,
           signature: "setTrusteeAddress(address)",
-          args: [addresses.multichainStrategist],
+          args: [addresses.multichainBuybackOperator],
         },
         {
           // Send all OETH fees to the Multichain Strategist
           contract: cOETHVault,
           signature: "setTrusteeAddress(address)",
-          args: [addresses.multichainStrategist],
+          args: [addresses.multichainBuybackOperator],
         },
         // Transfer governance from all buyback contracts to the Multichain Strategist
         {
