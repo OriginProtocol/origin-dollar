@@ -8,7 +8,8 @@ module.exports = deploymentWithGovernanceProposal(
     // forceSkip: true,
     // reduceQueueTime: true,
     deployerIsProposer: false,
-    proposalId: "",
+    proposalId:
+      "95818130106833559554842628131764707258168638288997879437261600658785882386480",
   },
   async () => {
     const cLegacyBuyback = await ethers.getContractAt(
