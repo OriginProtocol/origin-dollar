@@ -9,6 +9,8 @@ const {
   isHoleskyOrFork,
   isSonicOrFork,
   isTest,
+  isFork,
+  isPlume,
 } = require("../test/helpers.js");
 const { deployWithConfirmation, withConfirmation } = require("../utils/deploy");
 const { metapoolLPCRVPid } = require("../utils/constants");
@@ -1368,6 +1370,14 @@ const _deployPlumeRoosterAMOImplementationConfigurable = async (
   const cOETHpProxy = await ethers.getContract("OETHPlumeProxy");
   const cOETHpVaultProxy = await ethers.getContract("OETHPlumeVaultProxy");
 
+  if (!isFork && isPlume) {
+    throw new Error("You cannot deploy this strategy yet");
+  }
+
+  const cMockMaverickDistributor = await ethers.getContract(
+    "MockMaverickDistributor"
+  );
+
   await deployWithConfirmation(stratContractName, [
     /* Used first by the 002_rooster_amo_ deploy file
      */
@@ -1380,6 +1390,9 @@ const _deployPlumeRoosterAMOImplementationConfigurable = async (
     addresses.plume.MaverickV2Quoter, // quoter
     poolAddress, // superOETHp/WPLUME pool
     true, // uppperTickAtParity
+    // TODO: change these to actual addresses
+    cMockMaverickDistributor.address, // votingDistributor
+    cMockMaverickDistributor.address, // poolDistributor
   ]);
 
   return await ethers.getContract(stratContractName);
