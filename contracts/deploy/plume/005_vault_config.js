@@ -3,7 +3,7 @@ const { parseUnits } = require("ethers/lib/utils.js");
 
 module.exports = deployOnPlume(
   {
-    deployName: "004_vault_config",
+    deployName: "005_vault_config",
   },
   async () => {
     const { strategistAddr } = await getNamedAccounts();
