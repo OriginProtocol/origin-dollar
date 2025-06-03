@@ -7,7 +7,8 @@ module.exports = deploymentWithGovernanceProposal(
     deployName: "139_deprecate_ousd_harvester",
     forceDeploy: false,
     forceSkip: false,
-    proposalId: "",
+    proposalId:
+      "47645042373197517899120935227572898626533275576180817805400930508873896963074",
   },
   async ({ ethers }) => {
     const cHarvesterProxy = await ethers.getContract("HarvesterProxy");
