@@ -273,7 +273,7 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
         require(
             _rewardTokens[0] != address(0),
             "No reward token configured"
-        )
+        );
 
         InitializableAbstractStrategy._initialize(
             _rewardTokens,
