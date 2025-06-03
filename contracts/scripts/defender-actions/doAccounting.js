@@ -24,7 +24,7 @@ const handler = async (event) => {
   const networkName = network.chainId === 1 ? "mainnet" : "holesky";
   log(`Network: ${networkName} with chain id (${network.chainId})`);
 
-  await doAccounting("NativeStakingSSVStrategyProxy", networkName, signer);
+  // await doAccounting("NativeStakingSSVStrategyProxy", networkName, signer);
   await doAccounting("NativeStakingSSVStrategy2Proxy", networkName, signer);
   await doAccounting("NativeStakingSSVStrategy3Proxy", networkName, signer);
 };
