@@ -83,6 +83,10 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
     IMaverickV2Position public immutable maverickPosition;
     /// @notice the Maverick Quoter
     IMaverickV2Quoter public immutable quoter;
+    /// @notice the Maverick Voting Distributor
+    IVotingDistributor public immutable votingDistributor;
+    /// @notice the Maverick Pool Distributor
+    IPoolDistributor public immutable poolDistributor;
 
     /// @notice sqrtPriceTickLower
     /// @dev tick lower represents the lower price of OETHp priced in WETH. Meaning the pool
@@ -115,9 +119,6 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
     ///      against a strategist / guardian being taken over and with multiple transactions draining the
     ///      protocol funds.
     uint256 public constant SOLVENCY_THRESHOLD = 0.998 ether;
-
-    IVotingDistributor public immutable votingDistributor;
-    IPoolDistributor public immutable poolDistributor;
 
     event PoolWethShareIntervalUpdated(
         uint256 allowedWethShareStart,
@@ -221,6 +222,14 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
             _maverickPosition != address(0),
             "Position zero address not allowed"
         );
+        require(
+            _votingDistributor != address(0),
+            "Voting distributor zero address not allowed"
+        );
+        require(
+            _poolDistributor != address(0),
+            "Pool distributor zero address not allowed"
+        );
 
         uint256 _tickSpacing = IMaverickV2Pool(_mPool).tickSpacing();
         require(_tickSpacing == 1, "Unsupported tickSpacing");
@@ -260,6 +269,11 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
         // Read reward
         address[] memory _rewardTokens = new address[](1);
         _rewardTokens[0] = poolDistributor.rewardToken();
+
+        require(
+            _rewardTokens[0] != address(0),
+            "No rewards token configured"
+        )
 
         InitializableAbstractStrategy._initialize(
             _rewardTokens,
