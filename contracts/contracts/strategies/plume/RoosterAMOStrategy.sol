@@ -94,11 +94,10 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
     ///            | WETH |    OETHp   |
     ///            |      |            |
     ///            |      |            |
-    ///  --------- * -----*----------- * ---------
-    ///      sqrtPriceLower
-    ///                          sqrtPriceHigher
-    ///                            (1:1 parity)
+    ///  --------- * ---- * ---------- * ---------
     ///               currentPrice
+    ///                          sqrtPriceHigher-(1:1 parity)
+    ///      sqrtPriceLower
     ///
     ///
     /// Price is defined as price of token1 in terms of token0. (token1 / token0)
@@ -415,78 +414,18 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
         IERC20(OETHp).approve(address(liquidityManager), _oethBAllowance);
     }
 
-    /**
-     * @dev Perform a swap so that after the swap the tick has the desired WETH to OETHp token share.
-     */
-    function _swapToDesiredPosition(
-        uint256 _amountToSwap,
-        bool _swapWeth,
-        uint256 _minTokenReceived
-    ) internal {
-        IERC20 _tokenToSwap = IERC20(_swapWeth ? WETH : OETHp);
-        uint256 _balance = _tokenToSwap.balanceOf(address(this));
-
-        if (_balance < _amountToSwap) {
-            // This should never trigger since _ensureWETHBalance will already
-            // throw an error if there is not enough WETH
-            if (_swapWeth) {
-                revert NotEnoughWethForSwap(_balance, _amountToSwap);
-            }
-            // if swapping OETHp
-            uint256 mintForSwap = _amountToSwap - _balance;
-            IVault(vaultAddress).mintForStrategy(mintForSwap);
-        }
-
-        if (_swapWeth) {
-            IERC20(WETH).transfer(address(mPool), _amountToSwap);
-        } else {
-            IERC20(OETHp).transfer(address(mPool), _amountToSwap);
-        }
-
-        IMaverickV2Pool.SwapParams memory swapParams = IMaverickV2Pool
-            .SwapParams({
-                amount: _amountToSwap,
-                tokenAIn: _swapWeth,
-                exactOutput: false,
-                // The furthest tick a swap will execute in. If no limit
-                // is desired, value should be set to type(int32).max for a tokenAIn swap
-                // and type(int32).min for a swap where tokenB is the input
-                tickLimit: tickNumber
-            });
-
-        // swaps without a callback as the assets are already sent to the pool
-        (, uint256 amountOut) = mPool.swap(
-            address(this),
-            swapParams,
-            bytes("")
-        );
-
-        if (amountOut < _minTokenReceived) {
-            revert SlippageCheck(amountOut);
-        }
-
-        /**
-         * In the interest of each function in _rebalance to leave the contract state as
-         * clean as possible the OETHp tokens here are burned. This decreases the
-         * dependence where `_swapToDesiredPosition` function relies on later functions
-         * (`addLiquidity`) to burn the OETHp. Reducing the risk of error introduction.
-         */
-        _burnOethOnTheContract();
-    }
-
     /***************************************
               Liquidity management
     ****************************************/
-
     /**
      * @dev Add liquidity into the pool in the pre-configured WETH to OETHp share ratios
      * defined by the allowedPoolWethShareStart|End interval.
      *
      * Normally a PoolLens contract is used to prepare the parameters to add liquidity to the
-     * rooster pools. It has some errors when doing those calculation and for that reason a
+     * Rooster pools. It has some errors when doing those calculation and for that reason a
      * much more accurate Quoter contract is used. This is possible due to our requirement of
      * adding liquidity only to one tick - PoolLens supports adding liquidity into multiple ticks
-     * with different addition strategies.
+     * using different distribution ratios.
      */
     function _addLiquidity() internal {
         uint256 _wethBalance = IERC20(WETH).balanceOf(address(this));
@@ -498,11 +437,9 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
 
         (
             bytes memory packedSqrtPriceBreaks,
-            bytes[] memory packedArgs,
-            IMaverickV2Pool.AddLiquidityParams[] memory addParams,
-            uint256 wethRequired,
+            bytes[] memory packedArgs,,,
             uint256 OETHpRequired
-        ) = _getAddLiquidityParams(_wethBalance, type(uint256).max);
+        ) = _getAddLiquidityParams(_wethBalance, 1e30);
 
         if (OETHpRequired > _oethBalance) {
             IVault(vaultAddress).mintForStrategy(OETHpRequired - _oethBalance);
@@ -536,8 +473,8 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
         );
 
         // burn remaining OETHp and skip check because liquidityManager takes
-        // a little bit less tokens than lens contract calculates when creating
-        // the add liquidity parameters
+        // a little bit less tokens than the quoter contract calculates when
+        // creating the add liquidity parameters
         _burnOethOnTheContract();
     }
 
@@ -550,7 +487,7 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
      *
      */
     // slither-disable-end reentrancy-no-eth
-    function _getAddLiquidityParams(uint256 maxWETH, uint256 maxOETHp)
+    function _getAddLiquidityParams(uint256 _maxWETH, uint256 _maxOETHp)
         internal
         returns (
             bytes memory packedSqrtPriceBreaks,
@@ -565,7 +502,7 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
         ticks[0] = tickNumber;
         amounts[0] = 1e24;
 
-        // construct value for quoter with arbitrary LP amount
+        // construct value for Quoter with arbitrary LP amount
         IMaverickV2Pool.AddLiquidityParams memory addParam = IMaverickV2Pool
             .AddLiquidityParams({
                 kind: 0, // static kind
@@ -586,43 +523,37 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
             addParam.amounts[0] = Math_v5
                 .mulDiv(
                     amounts[0],
-                    maxOETHp - 1,
+                    _maxOETHp - 1,
                     OETHpRequired,
                     Math_v5.Rounding.Floor
                 )
                 .toUint128();
-            // tick has no OETHp liquidity
+        // tick has no OETHp liquidity
         } else if (OETHpRequired == 0) {
             addParam.amounts[0] = Math_v5
                 .mulDiv(
                     amounts[0],
-                    maxWETH - 1,
+                    _maxWETH - 1,
                     WETHRequired,
                     Math_v5.Rounding.Floor
                 )
                 .toUint128();
-            // tick has liquidity of both tokens
+        // tick has liquidity of both tokens
         } else {
             // scale the amounts to ensure we meet the requirement
             uint256 scaledOETHpAssumingWETHIsMax = Math_v5.mulDiv(
                 OETHpRequired,
-                maxWETH,
+                _maxWETH,
                 WETHRequired,
-                Math_v5.Rounding.Ceil
-            );
-            uint256 scaledWETHpAssumingOETHpIsMax = Math_v5.mulDiv(
-                WETHRequired,
-                maxOETHp,
-                OETHpRequired,
                 Math_v5.Rounding.Ceil
             );
 
             // scale the add param
-            if (scaledOETHpAssumingWETHIsMax <= maxOETHp) {
+            if (scaledOETHpAssumingWETHIsMax <= _maxOETHp) {
                 addParam.amounts[0] = Math_v5
                     .mulDiv(
                         amounts[0],
-                        maxWETH - 1,
+                        _maxWETH - 1,
                         WETHRequired,
                         Math_v5.Rounding.Floor
                     )
@@ -631,7 +562,7 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
                 addParam.amounts[0] = Math_v5
                     .mulDiv(
                         amounts[0],
-                        maxOETHp - 1,
+                        _maxOETHp - 1,
                         OETHpRequired,
                         Math_v5.Rounding.Floor
                     )
@@ -645,8 +576,8 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
             addParam
         );
 
-        require(maxWETH > WETHRequired, "More WETH required than specified");
-        require(maxOETHp > OETHpRequired, "More OETHp required than specified");
+        require(_maxWETH > WETHRequired, "More WETH required than specified");
+        require(_maxOETHp > OETHpRequired, "More OETHp required than specified");
 
         // organize values to be used by manager
         addParams = new IMaverickV2Pool.AddLiquidityParams[](1);
@@ -796,7 +727,78 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
     }
 
     /**
-     * @dev This function removes the appropriate amount of liquidity to assure that the required
+     * @dev Perform a swap so that after the swap the tick has the desired WETH to OETHp token share.
+     */
+    function _swapToDesiredPosition(
+        uint256 _amountToSwap,
+        bool _swapWeth,
+        uint256 _minTokenReceived
+    ) internal {
+        IERC20 _tokenToSwap = IERC20(_swapWeth ? WETH : OETHp);
+        uint256 _balance = _tokenToSwap.balanceOf(address(this));
+
+        if (_balance < _amountToSwap) {
+            // This should never trigger since _ensureWETHBalance will already
+            // throw an error if there is not enough WETH
+            if (_swapWeth) {
+                revert NotEnoughWethForSwap(_balance, _amountToSwap);
+            }
+            // if swapping OETHp
+            uint256 mintForSwap = _amountToSwap - _balance;
+            IVault(vaultAddress).mintForStrategy(mintForSwap);
+        }
+
+        if (_swapWeth) {
+            IERC20(WETH).transfer(address(mPool), _amountToSwap);
+        } else {
+            IERC20(OETHp).transfer(address(mPool), _amountToSwap);
+        }
+
+        IMaverickV2Pool.SwapParams memory swapParams = IMaverickV2Pool
+            .SwapParams({
+                amount: _amountToSwap,
+                tokenAIn: _swapWeth,
+                exactOutput: false,
+                // The furthest tick a swap will execute in. If no limit
+                // is desired, value should be set to type(int32).max for a tokenAIn (WETH) swap
+                // and type(int32).min for a swap where tokenB (OETHp) is the input
+                tickLimit: tickNumber
+            });
+
+        // swaps without a callback as the assets are already sent to the pool
+        (, uint256 amountOut) = mPool.swap(
+            address(this),
+            swapParams,
+            bytes("")
+        );
+
+        /**
+         * There could be additional checks here for validating minTokenReceived is within the
+         * expected range (e.g. 99% - 101% of the token sent in). Though that doesn't provide
+         * any additional security. After the swap the `_checkForExpectedPoolPrice` validates
+         * that the swap has moved the price into the expected tick (# -1).
+         * 
+         * If the guardian forgets to set a `_minTokenReceived` and a sandwich attack bends
+         * the pool before the swap the `_checkForExpectedPoolPrice` will fail the transaction.
+         * 
+         * A check would not prevent a compromised guardian from stealing funds as multiple
+         * transactions each loosing smaller amount of funds are still possible.
+         */
+        if (amountOut < _minTokenReceived) {
+            revert SlippageCheck(amountOut);
+        }
+
+        /**
+         * In the interest of each function in `_rebalance` to leave the contract state as
+         * clean as possible the OETHp tokens here are burned. This decreases the
+         * dependence where `_swapToDesiredPosition` function relies on later functions
+         * (`addLiquidity`) to burn the OETHp. Reducing the risk of error introduction.
+         */
+        _burnOethOnTheContract();
+    }
+
+    /**
+     * @dev This function removes the appropriate amount of liquidity to ensure that the required
      * amount of WETH is available on the contract
      *
      * @param _amount  WETH balance required on the contract
@@ -819,16 +821,16 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
         }
 
         uint256 shareOfWethToRemove = Math_v5.min(
-            _additionalWethRequired.divPrecisely(_wethInThePool),
+            /**
+             * After much testing with different remove values the + 1 correction sometimes isn't enough
+             * and will still remove 1 WEI of the liquidity too little. With + 2 WEI correction no cases
+             * removing too little WETH were detected.
+             */
+            _additionalWethRequired.divPrecisely(_wethInThePool) + 2,
             1e18
         );
 
-        /**
-         * After much testing with different remove values the + 1 correction sometime isn't enough
-         * and will still remove 1 WEI of the liquidity too little. With + 2 WEI correction no cases
-         * removing too little WETH were detected
-         */
-        _removeLiquidity(shareOfWethToRemove + 2);
+        _removeLiquidity(shareOfWethToRemove);
     }
 
     /**
