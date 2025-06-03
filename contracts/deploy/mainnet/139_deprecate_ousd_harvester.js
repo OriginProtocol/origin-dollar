@@ -28,7 +28,7 @@ module.exports = deploymentWithGovernanceProposal(
       "MorphoGauntletPrimeUSDCStrategyProxy"
     );
     const cMorphoGauntletPrimeUSDCStrategy = await ethers.getContractAt(
-      "Generalized4626USDTStrategy",
+      "Generalized4626Strategy",
       cMorphoGauntletPrimeUSDCStrategyProxy.address
     );
 
