@@ -216,7 +216,7 @@ describe("Curve AMO OUSD strategy", function () {
       const user = defaultDepositor;
       const attackerusdcBalanceBefore = await usdc.balanceOf(user.address);
       const attackerOusdBalanceBefore = await ousd.balanceOf(user.address);
-      const attackerusdcAmount = usdcUnits("1500000"); // 1.5M usdc
+      const attackerusdcAmount = usdcUnits("900000"); // 900k usdc
       const depositusdcAmount = usdcUnits("10000"); // 10k usdc
 
       const dataBeforeAttack = await snapData();
