@@ -6,7 +6,7 @@ module.exports = deploymentWithGovernanceProposal(
   {
     deployName: "139_deprecate_ousd_harvester",
     forceDeploy: false,
-    forceSkip: true,
+    forceSkip: false,
     proposalId: "",
   },
   async ({ ethers }) => {
