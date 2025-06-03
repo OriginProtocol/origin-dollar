@@ -3,7 +3,7 @@ const addresses = require("../../utils/addresses");
 
 module.exports = deploymentWithGovernanceProposal(
   {
-    deployName: "139_remove_1st_native_ssv_staking",
+    deployName: "140_remove_1st_native_ssv_staking",
     forceDeploy: false,
     //forceSkip: true,
     reduceQueueTime: true,
