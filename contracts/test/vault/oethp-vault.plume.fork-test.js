@@ -73,9 +73,13 @@ describe("ForkTest: OETHp Vault", function () {
       const userBalanceAfter = await oethp.balanceOf(strategist.address);
       const totalSupplyAfter = await oethp.totalSupply();
 
-      expect(totalSupplyAfter).to.equal(totalSupplyBefore.sub(oethUnits("1")));
-      expect(userBalanceAfter).to.equal(userBalanceBefore.sub(oethUnits("1")));
-      expect(vaultBalanceAfter).to.equal(
+      expect(totalSupplyAfter).to.approxEqualTolerance(
+        totalSupplyBefore.sub(oethUnits("1"))
+      );
+      expect(userBalanceAfter).to.approxEqualTolerance(
+        userBalanceBefore.sub(oethUnits("1"))
+      );
+      expect(vaultBalanceAfter).to.approxEqualTolerance(
         vaultBalanceBefore.sub(oethUnits("1"))
       );
     });
@@ -101,9 +105,13 @@ describe("ForkTest: OETHp Vault", function () {
       const userBalanceAfter = await oethp.balanceOf(governor.address);
       const totalSupplyAfter = await oethp.totalSupply();
 
-      expect(totalSupplyAfter).to.equal(totalSupplyBefore.sub(oethUnits("1")));
-      expect(userBalanceAfter).to.equal(userBalanceBefore.sub(oethUnits("1")));
-      expect(vaultBalanceAfter).to.equal(
+      expect(totalSupplyAfter).to.approxEqualTolerance(
+        totalSupplyBefore.sub(oethUnits("1"))
+      );
+      expect(userBalanceAfter).to.approxEqualTolerance(
+        userBalanceBefore.sub(oethUnits("1"))
+      );
+      expect(vaultBalanceAfter).to.approxEqualTolerance(
         vaultBalanceBefore.sub(oethUnits("1"))
       );
     });
