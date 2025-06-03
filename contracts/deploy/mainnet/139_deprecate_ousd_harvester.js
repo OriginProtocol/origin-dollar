@@ -12,7 +12,7 @@ module.exports = deploymentWithGovernanceProposal(
   async ({ ethers }) => {
     const cHarvesterProxy = await ethers.getContract("HarvesterProxy");
     const cHarvester = await ethers.getContractAt(
-      "OUSDHarvester",
+      "Harvester",
       cHarvesterProxy.address
     );
 
