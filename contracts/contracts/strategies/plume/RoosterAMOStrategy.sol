@@ -272,7 +272,7 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
 
         require(
             _rewardTokens[0] != address(0),
-            "No rewards token configured"
+            "No reward token configured"
         )
 
         InitializableAbstractStrategy._initialize(
@@ -1062,9 +1062,8 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
         onlyHarvester
         nonReentrant
     {
+        // Do nothing if there's no position minted
         if (tokenId > 0) {
-            // Do nothing if there's no position minted
-
             uint32[] memory binIds = new uint32[](1);
             binIds[0] = 1;
 
