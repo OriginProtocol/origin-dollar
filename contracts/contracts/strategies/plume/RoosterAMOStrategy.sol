@@ -38,6 +38,9 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
     ****************************************/
 
     /// @notice NFT tokenId of the liquidity position
+    ///
+    /// @dev starts with value of 1 and can not be 0
+    ///      https://github.com/rooster-protocol/rooster-contracts/blob/fbfecbc519e4495b12598024a42630b4a8ea4489/v2-common/contracts/base/Nft.sol#L14
     uint256 public tokenId;
     /// @dev Minimum amount of tokens the strategy would be able to withdraw from the pool.
     ///      minimum amount of tokens are withdrawn at a 1:1 price
@@ -344,7 +347,7 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
         emit Deposit(_asset, address(0), _amount);
 
         // if the pool price is not within the expected interval leave the WETH on the contract
-        // as to not break the mints
+        // as to not break the mints - in case it would be configured as a default asset strategy
         (bool _isExpectedRange, ) = _checkForExpectedPoolPrice(false);
         if (_isExpectedRange) {
             // deposit funds into the underlying pool. Because no swap is performed there is no
@@ -402,7 +405,7 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
     }
 
     /**
-     * @dev Approve the spending of all assets
+     * @dev Approve the spending amounts for the assets
      */
     function _approveTokenAmounts(
         uint256 _wethAllowance,
@@ -445,6 +448,9 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
                 amount: _amountToSwap,
                 tokenAIn: _swapWeth,
                 exactOutput: false,
+                // The furthest tick a swap will execute in. If no limit
+                // is desired, value should be set to type(int32).max for a tokenAIn swap
+                // and type(int32).min for a swap where tokenB is the input
                 tickLimit: tickNumber
             });
 

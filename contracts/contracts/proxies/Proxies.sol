@@ -304,3 +304,10 @@ contract MakerSSRStrategyProxy is InitializeGovernedUpgradeabilityProxy {
 contract OUSDCurveAMOProxy is InitializeGovernedUpgradeabilityProxy {
 
 }
+
+/**
+ * @notice OETHCurveAMOProxy delegates calls to a CurveAMOStrategy implementation
+ */
+contract OETHCurveAMOProxy is InitializeGovernedUpgradeabilityProxy {
+
+}

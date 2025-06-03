@@ -1830,7 +1830,9 @@ task("sonicStaking").setAction(async (_, __, runSuper) => {
 task("lzBridgeToken")
   .addParam("amount", "Amount to bridge")
   .addParam("destnetwork", "Destination network")
+  .addOptionalParam("recipient", "Recipient address")
   .addOptionalParam("gaslimit", "Gas limit")
+  .addOptionalParam("dryrun", "Print tx data without sending")
   .setAction(async (taskArgs) => {
     await lzBridgeToken(taskArgs, hre);
   });

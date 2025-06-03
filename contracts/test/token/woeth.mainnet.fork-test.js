@@ -264,24 +264,27 @@ describe("ForkTest: wOETH", function () {
 
       const txReceipt = await txResponse.wait();
       const burnedShares = txReceipt.events[2].args.shares; // 0. transfer oeth, 1. transfer woeth, 2. redeem
-      const assetTransfered = txReceipt.events[2].args.assets; // 0. transfer oeth, 1. transfer woeth, 2. redeem
+      const assetTransferred = txReceipt.events[2].args.assets; // 0. transfer oeth, 1. transfer woeth, 2. redeem
 
       // 1e18 denominated
       const oethRateIncrease = oethBalanceAfter
         .sub(initialOethBalance)
         .mul(BigNumber.from("1000000000000000000"))
         .div(initialOethBalance);
-      const woethRateIncrease = assetTransfered
+      const woethRateIncrease = assetTransferred
         .sub(initialDeposit)
         .mul(BigNumber.from("1000000000000000000"))
         .div(initialDeposit);
 
-      // 1-2 wei rounding error might be needed in the future here
-      await expect(oethRateIncrease).to.equal(woethRateIncrease);
+      // 2 wei rounding error
+      await expect(oethRateIncrease).to.withinRange(
+        woethRateIncrease.sub(2),
+        woethRateIncrease.add(2)
+      );
 
-      await expect(assetTransfered > initialDeposit);
+      await expect(assetTransferred > initialDeposit);
       await expect(burnedShares).to.be.approxEqual(
-        await woeth.convertToShares(assetTransfered)
+        await woeth.convertToShares(assetTransferred)
       );
       await expect(domen).to.have.a.balanceOf("0", woeth);
     });
