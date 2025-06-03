@@ -440,6 +440,9 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
                 amount: _amountToSwap,
                 tokenAIn: _swapWeth,
                 exactOutput: false,
+                // The furthest tick a swap will execute in. If no limit
+                // is desired, value should be set to type(int32).max for a tokenAIn swap
+                // and type(int32).min for a swap where tokenB is the input
                 tickLimit: tickNumber
             });
 
