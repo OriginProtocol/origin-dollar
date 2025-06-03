@@ -1854,11 +1854,7 @@ async function nativeStakingSSVStrategyFixture() {
   });
 
   if (isFork) {
-    const { oethVault, weth, nativeStakingSSVStrategy, ssv, timelock } =
-      fixture;
-    await oethVault
-      .connect(timelock)
-      .setAssetDefaultStrategy(weth.address, nativeStakingSSVStrategy.address);
+    const { nativeStakingSSVStrategy, ssv } = fixture;
 
     // The Defender Relayer
     fixture.validatorRegistrator = await impersonateAndFund(
