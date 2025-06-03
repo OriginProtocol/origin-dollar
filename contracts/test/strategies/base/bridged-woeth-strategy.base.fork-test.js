@@ -18,6 +18,7 @@ describe("Base Fork Test: Bridged WOETH Strategy", function () {
     const { woeth, oethb, oethbVault, weth, woethStrategy, governor } = fixture;
 
     await oethbVault.rebase();
+    await woethStrategy.updateWOETHOraclePrice();
 
     const supplyBefore = await oethb.totalSupply();
     const userOETHbBalanceBefore = await oethb.balanceOf(governor.address);
