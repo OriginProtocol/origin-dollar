@@ -790,7 +790,7 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
     }
 
     /**
-     * @dev This function removes the appropriate amount of liquidity to assure that the required
+     * @dev This function removes the appropriate amount of liquidity to ensure that the required
      * amount of WETH is available on the contract
      *
      * @param _amount  WETH balance required on the contract
@@ -813,16 +813,16 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
         }
 
         uint256 shareOfWethToRemove = Math_v5.min(
-            _additionalWethRequired.divPrecisely(_wethInThePool),
+            /**
+             * After much testing with different remove values the + 1 correction sometimes isn't enough
+             * and will still remove 1 WEI of the liquidity too little. With + 2 WEI correction no cases
+             * removing too little WETH were detected.
+             */
+            _additionalWethRequired.divPrecisely(_wethInThePool) + 2,
             1e18
         );
 
-        /**
-         * After much testing with different remove values the + 1 correction sometime isn't enough
-         * and will still remove 1 WEI of the liquidity too little. With + 2 WEI correction no cases
-         * removing too little WETH were detected
-         */
-        _removeLiquidity(shareOfWethToRemove + 2);
+        _removeLiquidity(shareOfWethToRemove);
     }
 
     /**
