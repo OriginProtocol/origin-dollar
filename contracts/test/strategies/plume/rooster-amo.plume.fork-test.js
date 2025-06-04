@@ -115,9 +115,7 @@ describe("ForkTest: Rooster AMO Strategy (Plume)", async function () {
       const { governor, roosterAmoStrategy } = fixture;
 
       await expect(
-        roosterAmoStrategy
-          .connect(governor)
-          .mintInitialPosition()
+        roosterAmoStrategy.connect(governor).mintInitialPosition()
       ).to.be.revertedWith("Initial position already minted");
     });
 
@@ -125,9 +123,7 @@ describe("ForkTest: Rooster AMO Strategy (Plume)", async function () {
       const { rafael, roosterAmoStrategy } = fixture;
 
       await expect(
-        roosterAmoStrategy
-          .connect(rafael)
-          .mintInitialPosition()
+        roosterAmoStrategy.connect(rafael).mintInitialPosition()
       ).to.be.revertedWith("Caller is not the Governor");
     });
 
