@@ -270,10 +270,7 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
         address[] memory _rewardTokens = new address[](1);
         _rewardTokens[0] = poolDistributor.rewardToken();
 
-        require(
-            _rewardTokens[0] != address(0),
-            "No reward token configured"
-        );
+        require(_rewardTokens[0] != address(0), "No reward token configured");
 
         InitializableAbstractStrategy._initialize(
             _rewardTokens,
@@ -451,7 +448,9 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
 
         (
             bytes memory packedSqrtPriceBreaks,
-            bytes[] memory packedArgs,,,
+            bytes[] memory packedArgs,
+            ,
+            ,
             uint256 OETHpRequired
         ) = _getAddLiquidityParams(_wethBalance, 1e30);
 
@@ -542,7 +541,7 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
                     Math_v5.Rounding.Floor
                 )
                 .toUint128();
-        // tick has no OETHp liquidity
+            // tick has no OETHp liquidity
         } else if (OETHpRequired == 0) {
             addParam.amounts[0] = Math_v5
                 .mulDiv(
@@ -552,7 +551,7 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
                     Math_v5.Rounding.Floor
                 )
                 .toUint128();
-        // tick has liquidity of both tokens
+            // tick has liquidity of both tokens
         } else {
             // scale the amounts to ensure we meet the requirement
             uint256 scaledOETHpAssumingWETHIsMax = Math_v5.mulDiv(
@@ -591,7 +590,10 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
         );
 
         require(_maxWETH > WETHRequired, "More WETH required than specified");
-        require(_maxOETHp > OETHpRequired, "More OETHp required than specified");
+        require(
+            _maxOETHp > OETHpRequired,
+            "More OETHp required than specified"
+        );
 
         // organize values to be used by manager
         addParams = new IMaverickV2Pool.AddLiquidityParams[](1);
@@ -768,14 +770,15 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
             IERC20(OETHp).transfer(address(mPool), _amountToSwap);
         }
 
+        // tickLimit: the furthest tick a swap will execute in. If no limit is desired,
+        // value should be set to type(int32).max for a tokenAIn (WETH) swap
+        // and type(int32).min for a swap where tokenB (OETHp) is the input
+
         IMaverickV2Pool.SwapParams memory swapParams = IMaverickV2Pool
             .SwapParams({
                 amount: _amountToSwap,
                 tokenAIn: _swapWeth,
                 exactOutput: false,
-                // The furthest tick a swap will execute in. If no limit
-                // is desired, value should be set to type(int32).max for a tokenAIn (WETH) swap
-                // and type(int32).min for a swap where tokenB (OETHp) is the input
                 tickLimit: tickNumber
             });
 
@@ -791,10 +794,10 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
          * expected range (e.g. 99% - 101% of the token sent in). Though that doesn't provide
          * any additional security. After the swap the `_checkForExpectedPoolPrice` validates
          * that the swap has moved the price into the expected tick (# -1).
-         * 
+         *
          * If the guardian forgets to set a `_minTokenReceived` and a sandwich attack bends
          * the pool before the swap the `_checkForExpectedPoolPrice` will fail the transaction.
-         * 
+         *
          * A check would not prevent a compromised guardian from stealing funds as multiple
          * transactions each loosing smaller amount of funds are still possible.
          */
@@ -961,7 +964,7 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
 
     /**
      * @notice Mint the initial NFT position
-     * 
+     *
      * @dev This amount is "gifted" to the strategy contract and will count as a yield
      *      surplus.
      */
@@ -969,7 +972,9 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
         require(tokenId == 0, "Initial position already minted");
         (
             bytes memory packedSqrtPriceBreaks,
-            bytes[] memory packedArgs,,,
+            bytes[] memory packedArgs,
+            ,
+            ,
             uint256 OETHpRequired
         ) = _getAddLiquidityParams(1e16, 1e16);
 
