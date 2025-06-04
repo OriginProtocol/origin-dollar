@@ -961,21 +961,24 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
 
     /**
      * @notice Mint the initial NFT position
+     * 
+     * @dev This amount is "gifted" to the strategy contract and will count as a yield
+     *      surplus.
      */
     function mintInitialPosition() external onlyGovernor nonReentrant {
         require(tokenId == 0, "Initial position already minted");
-        uint256 basicAmount = 1e18;
         (
             bytes memory packedSqrtPriceBreaks,
-            bytes[] memory packedArgs,
-            ,
-            ,
-
-        ) = _getAddLiquidityParams(basicAmount, basicAmount);
+            bytes[] memory packedArgs,,,
+            uint256 OETHpRequired
+        ) = _getAddLiquidityParams(1e16, 1e16);
 
         // Mint rounded up OETH amount
-        IVault(vaultAddress).mintForStrategy(basicAmount);
-        _approveTokenAmounts(basicAmount, basicAmount);
+        if (OETHpRequired > 0) {
+            IVault(vaultAddress).mintForStrategy(OETHpRequired);
+        }
+
+        _approveTokenAmounts(1e16, OETHpRequired);
 
         (, , , uint256 _tokenId) = liquidityManager.mintPositionNftToSender(
             mPool,

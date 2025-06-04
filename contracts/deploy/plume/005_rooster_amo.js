@@ -107,7 +107,7 @@ module.exports = deployOnPlume(
       // transfer 1e18 of WETH to the strategy to mint the initial position
       await weth
         .connect(sDeployer)
-        .transfer(cAMOStrategy.address, oethUnits("1"));
+        .transfer(cAMOStrategy.address, oethUnits("0.01"));
     }
 
     return {

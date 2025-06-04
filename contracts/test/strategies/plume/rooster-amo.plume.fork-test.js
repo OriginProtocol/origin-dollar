@@ -865,7 +865,7 @@ describe("ForkTest: Rooster AMO Strategy (Plume)", async function () {
 
   const setup = async () => {
     await mintAndDepositToStrategy({
-      amount: oethUnits("5"),
+      amount: oethUnits("100"),
       returnTransaction: true,
     });
 
@@ -873,6 +873,7 @@ describe("ForkTest: Rooster AMO Strategy (Plume)", async function () {
 
     let { amount, swapWeth } =
       await estimateSwapAmountsToGetToConfiguredInterval();
+
     await rebalance(amount, swapWeth, 0, "0");
   };
 
