@@ -893,7 +893,7 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
          * At that moment the pool consists completely of WETH and no OETHp.
          *
          * The more swaps from OETHp -> WETH happen on the pool the more the price starts to move away from the tick 0
-         * towards the middle of tick -1 making OETHp (priced in WETH) more expensive.
+         * towards the middle of tick -1 making OETHp (priced in WETH) cheaper.
          */
 
         uint256 _wethAmount = _balanceInPosition();
@@ -910,6 +910,16 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
         if (_oethpBalance > 1e12) {
             IVault(vaultAddress).burnForStrategy(_oethpBalance);
         }
+    }
+
+    /**
+     * @notice Returns the percentage of WETH liquidity in the configured ticker
+     *         owned by this strategy contract.
+     * @return uint256 1e18 denominated percentage expressing the share
+     */
+    function getWETHShare() external view returns (uint256) {
+        uint256 _currentPrice = getPoolSqrtPrice();
+        return _getWethShare(_currentPrice);
     }
 
     /**
@@ -930,11 +940,7 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
                 1e24
             );
 
-        // upscale to get 1e18 denomination after division
-        uint256 wethAmountUp = wethAmount * 1e18;
-        uint256 oethpAmountUp = oethpAmount * 1e18;
-
-        return wethAmountUp.divPrecisely(wethAmountUp + oethpAmountUp);
+        return wethAmount.divPrecisely(wethAmount + oethpAmount);
     }
 
     /**
@@ -957,6 +963,7 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
      * @notice Mint the initial NFT position
      */
     function mintInitialPosition() external onlyGovernor nonReentrant {
+        require(tokenId == 0, "Initial position already minted");
         uint256 basicAmount = 1e18;
         (
             bytes memory packedSqrtPriceBreaks,

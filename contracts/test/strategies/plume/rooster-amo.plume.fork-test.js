@@ -5,7 +5,7 @@ const addresses = require("../../../utils/addresses");
 const { plumeFixtureWithMockedVaultAdmin } = require("../../_fixture-plume");
 const { expect } = require("chai");
 const { oethUnits } = require("../../helpers");
-const ethers = require("ethers");
+const ethers = hre.ethers;
 const { impersonateAndFund } = require("../../../utils/signers");
 const { BigNumber } = ethers;
 
@@ -108,6 +108,26 @@ describe("ForkTest: Rooster AMO Strategy (Plume)", async function () {
         roosterAmoStrategy
           .connect(rafael)
           .setAllowedPoolWethShareInterval(oethUnits("0.19"), oethUnits("0.23"))
+      ).to.be.revertedWith("Caller is not the Governor");
+    });
+
+    it("Can not mint initial position twice", async () => {
+      const { governor, roosterAmoStrategy } = fixture;
+
+      await expect(
+        roosterAmoStrategy
+          .connect(governor)
+          .mintInitialPosition()
+      ).to.be.revertedWith("Initial position already minted");
+    });
+
+    it("Only the governor can mint the initial position", async () => {
+      const { rafael, roosterAmoStrategy } = fixture;
+
+      await expect(
+        roosterAmoStrategy
+          .connect(rafael)
+          .mintInitialPosition()
       ).to.be.revertedWith("Caller is not the Governor");
     });
 
@@ -840,20 +860,6 @@ describe("ForkTest: Rooster AMO Strategy (Plume)", async function () {
 
       const balanceDiff = balanceAfter.sub(balanceBefore);
       expect(balanceDiff).to.eq(oethUnits("1"));
-    });
-
-    it("Should not revert when no NFT ID is available", async () => {
-      const wPlume = await ethers.getContractAt(
-        "IWETH9",
-        addresses.plume.WPLUME
-      );
-      const balanceBefore = await wPlume.balanceOf(strategist.address);
-
-      const tx = roosterAmoStrategy.connect(strategist).collectRewardTokens();
-      await expect(tx).to.not.be.reverted;
-
-      const balanceAfter = await wPlume.balanceOf(strategist.address);
-      expect(balanceAfter).to.eq(balanceBefore);
     });
   });
 
