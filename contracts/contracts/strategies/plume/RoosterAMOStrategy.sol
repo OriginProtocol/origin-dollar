@@ -44,6 +44,8 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
     uint256 public tokenId;
     /// @dev Minimum amount of tokens the strategy would be able to withdraw from the pool.
     ///      minimum amount of tokens are withdrawn at a 1:1 price
+    ///      Important: Underlying assets contains only assets that are deposited in the underlying Rooster pool.
+    ///      WETH or OETHp held by this contract is not accounted for in underlying assets
     uint256 public underlyingAssets;
     /// @notice Marks the start of the interval that defines the allowed range of WETH share in
     /// the pre-configured pool's liquidity ticker
