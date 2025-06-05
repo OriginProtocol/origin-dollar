@@ -203,14 +203,8 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
         address _votingDistributor,
         address _poolDistributor
     ) initializer InitializableAbstractStrategy(_stratConfig) {
-        require(
-            address(IMaverickV2Pool(_mPool).tokenA()) == _wethAddress,
-            "Only WETH supported as tokenA"
-        );
-        require(
-            address(IMaverickV2Pool(_mPool).tokenB()) == _oethpAddress,
-            "Only OETHp supported as tokenB"
-        );
+        require(address(mPool.tokenA()) == WETH, "WETH not TokanA");
+        require(address(mPool.tokenB()) == OETHp, "OETHp not TokanB");
         require(
             _liquidityManager != address(0),
             "LiquidityManager zero address not allowed"
@@ -254,9 +248,6 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
         mPool = IMaverickV2Pool(_mPool);
         votingDistributor = IVotingDistributor(_votingDistributor);
         poolDistributor = IPoolDistributor(_poolDistributor);
-
-        require(address(mPool.tokenA()) == WETH, "WETH not TokanA");
-        require(address(mPool.tokenB()) == OETHp, "OETHp not TokanB");
 
         // prevent implementation contract to be governed
         _setGovernor(address(0));
