@@ -24,9 +24,6 @@ import { IPoolDistributor } from "../../interfaces/plume/IPoolDistributor.sol";
 // importing custom version of rooster TickMath because of dependency collision. Maverick uses
 // a newer OpenZepplin Math library with functionality that is not present in 4.4.2 (the one we use)
 import { TickMath } from "../../../lib/rooster/v2-common/libraries/TickMath.sol";
-import { ONE } from "../../../lib/rooster/v2-common/libraries/Constants.sol";
-
-import "hardhat/console.sol";
 
 contract RoosterAMOStrategy is InitializableAbstractStrategy {
     using StableMath for uint256;
