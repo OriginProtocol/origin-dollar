@@ -160,18 +160,6 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
         address token
     ); // 0xe23d5ff7
 
-    /**
-     * @dev Verifies that the caller is the Governor, or Strategist.
-     */
-    modifier onlyGovernorOrStrategist() {
-        require(
-            msg.sender == IVault(vaultAddress).strategistAddr() ||
-                msg.sender == governor(),
-            "Not the Governor or Strategist"
-        );
-        _;
-    }
-
     /// @notice the constructor
     /// @dev This contract is intended to be used as a proxy. To prevent the
     ///      potential confusion of having a functional implementation contract
@@ -203,8 +191,8 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
         address _votingDistributor,
         address _poolDistributor
     ) initializer InitializableAbstractStrategy(_stratConfig) {
-        require(address(mPool.tokenA()) == WETH, "WETH not TokanA");
-        require(address(mPool.tokenB()) == OETHp, "OETHp not TokanB");
+        require(address(IMaverickV2Pool(_mPool).tokenA()) == _wethAddress, "WETH not TokanA");
+        require(address(IMaverickV2Pool(_mPool).tokenB()) == _oethpAddress, "OETHp not TokanB");
         require(
             _liquidityManager != address(0),
             "LiquidityManager zero address not allowed"
