@@ -1236,7 +1236,7 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
             reserveB = MathRooster
                 .mulDivCeil(
                     liquidity,
-                    ONE * MathRooster.clip(upperSqrtPrice, lowerEdge),
+                    1e18 * MathRooster.clip(upperSqrtPrice, lowerEdge),
                     upperSqrtPrice * lowerEdge
                 )
                 .toUint128();
