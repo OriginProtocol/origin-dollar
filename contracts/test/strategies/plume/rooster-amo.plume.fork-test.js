@@ -485,6 +485,24 @@ describe("ForkTest: Rooster AMO Strategy (Plume)", async function () {
       await verifyEndConditions();
     });
 
+    it("Current trading price shouldn't affect checkBalance", async () => {
+      const amountToDeposit = oethUnits("6");
+      await mintAndDepositToStrategy({ amount: amountToDeposit });
+      const balanceBefore = await roosterAmoStrategy.checkBalance(weth.address);
+
+      // perform a swap
+      await swap({
+        amount: oethUnits("1"),
+        swapWeth: false,
+      });
+
+      expect(
+        await roosterAmoStrategy.checkBalance(weth.address)
+      ).to.equal(balanceBefore);
+
+      await verifyEndConditions();
+    });
+
     it("Should be able to rebalance removing half of liquidity", async () => {
       const balance = await roosterAmoStrategy.checkBalance(weth.address);
       const amountToDeposit = oethUnits("6");
