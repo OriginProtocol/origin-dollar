@@ -14,4 +14,6 @@ vault_value_checker = load_contract('vault_value_checker', OETHP_VAULT_VALUE_CHE
 
 woeth_strat = load_contract('woeth_strategy', OETHP_WOETH_STRATEGY)
 
+plume_woeth_omnichain_adapter = load_contract('omnichain_l2_adapter', PLUME_WOETH_OMNICHAIN_ADAPTER)
+
 oethp = load_contract('ERC20', OETHP)
