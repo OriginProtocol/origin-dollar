@@ -115,7 +115,7 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
     /// @dev price at parity (in OETHp this is equal to sqrtPriceTickHigher)
     uint256 public immutable sqrtPriceAtParity;
     /// @notice The tick where the strategy deploys the liquidity to
-    int32 public immutable tickNumber;
+    int32 public constant tickNumber = -1;
 
     /// @dev a threshold under which the contract no longer allows for the protocol to rebalance. Guarding
     ///      against a strategist / guardian being taken over and with multiple transactions draining the
@@ -235,8 +235,6 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
 
         uint256 _tickSpacing = IMaverickV2Pool(_mPool).tickSpacing();
         require(_tickSpacing == 1, "Unsupported tickSpacing");
-        // -1 is the tick where the contract deposits liquidity to
-        tickNumber = -1;
 
         // tickSpacing == 1
         (sqrtPriceTickLower, sqrtPriceTickHigher) = TickMath.tickSqrtPrices(
