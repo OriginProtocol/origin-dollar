@@ -1181,9 +1181,8 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
      */
     function safeApproveAllTokens()
         external
+        pure
         override
-        onlyGovernor
-        nonReentrant
     {
         // all the amounts are approved at the time required
         revert("Unsupported method");
