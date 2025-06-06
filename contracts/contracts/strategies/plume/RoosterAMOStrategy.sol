@@ -24,9 +24,6 @@ import { IPoolDistributor } from "../../interfaces/plume/IPoolDistributor.sol";
 // importing custom version of rooster TickMath because of dependency collision. Maverick uses
 // a newer OpenZepplin Math library with functionality that is not present in 4.4.2 (the one we use)
 import { TickMath } from "../../../lib/rooster/v2-common/libraries/TickMath.sol";
-import { ONE } from "../../../lib/rooster/v2-common/libraries/Constants.sol";
-
-import "hardhat/console.sol";
 
 contract RoosterAMOStrategy is InitializableAbstractStrategy {
     using StableMath for uint256;
@@ -589,13 +586,13 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
      *      This function works whether the strategy contract has liquidity
      *      position in the pool or not. The function returns _wethSharePct
      *      as a gas optimization measure.
-     * @param throwException  when set to true the function throws an exception
+     * @param _throwException  when set to true the function throws an exception
      *        when pool's price is not within expected range.
      * @return _isExpectedRange  Bool expressing price is within expected range
      * @return _wethSharePct  Share of WETH owned by this strategy contract in the
      *         configured ticker.
      */
-    function _checkForExpectedPoolPrice(bool throwException)
+    function _checkForExpectedPoolPrice(bool _throwException)
         internal
         view
         returns (bool _isExpectedRange, uint256 _wethSharePct)
@@ -617,7 +614,7 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
             _currentPrice <= sqrtPriceTickLower ||
             _currentPrice >= sqrtPriceTickHigher
         ) {
-            if (throwException) {
+            if (_throwException) {
                 revert OutsideExpectedTickRange();
             }
             return (false, 0);
@@ -630,7 +627,7 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
             _wethSharePct < allowedWethShareStart ||
             _wethSharePct > allowedWethShareEnd
         ) {
-            if (throwException) {
+            if (_throwException) {
                 revert PoolRebalanceOutOfBounds(
                     _wethSharePct,
                     allowedWethShareStart,
@@ -1181,9 +1178,8 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
      */
     function safeApproveAllTokens()
         external
+        pure
         override
-        onlyGovernor
-        nonReentrant
     {
         // all the amounts are approved at the time required
         revert("Unsupported method");
@@ -1202,30 +1198,30 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
      * https://github.com/rooster-protocol/rooster-contracts/blob/main/v2-supplemental/contracts/libraries/LiquidityUtilities.sol#L665-L695
      */
     function _reservesInTickForGivenPriceAndLiquidity(
-        uint256 lowerSqrtPrice,
-        uint256 upperSqrtPrice,
-        uint256 newSqrtPrice,
-        uint256 liquidity
+        uint256 _lowerSqrtPrice,
+        uint256 _upperSqrtPrice,
+        uint256 _newSqrtPrice,
+        uint256 _liquidity
     ) internal view returns (uint128 reserveA, uint128 reserveB) {
-        if (liquidity == 0) {
+        if (_liquidity == 0) {
             (reserveA, reserveB) = (0, 0);
         } else {
-            uint256 lowerEdge = MathRooster.max(lowerSqrtPrice, newSqrtPrice);
+            uint256 lowerEdge = MathRooster.max(_lowerSqrtPrice, _newSqrtPrice);
 
             reserveA = MathRooster
                 .mulCeil(
-                    liquidity,
+                    _liquidity,
                     MathRooster.clip(
-                        MathRooster.min(upperSqrtPrice, newSqrtPrice),
-                        lowerSqrtPrice
+                        MathRooster.min(_upperSqrtPrice, _newSqrtPrice),
+                        _lowerSqrtPrice
                     )
                 )
                 .toUint128();
             reserveB = MathRooster
                 .mulDivCeil(
-                    liquidity,
-                    1e18 * MathRooster.clip(upperSqrtPrice, lowerEdge),
-                    upperSqrtPrice * lowerEdge
+                    _liquidity,
+                    1e18 * MathRooster.clip(_upperSqrtPrice, lowerEdge),
+                    _upperSqrtPrice * lowerEdge
                 )
                 .toUint128();
         }
@@ -1242,7 +1238,7 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
      * @dev refactored from here:
      * https://github.com/rooster-protocol/rooster-contracts/blob/main/v2-supplemental/contracts/libraries/LiquidityUtilities.sol#L665-L695
      */
-    function _reservesInTickForGivenPrice(int32 tick, uint256 newSqrtPrice)
+    function _reservesInTickForGivenPrice(int32 _tick, uint256 _newSqrtPrice)
         internal
         view
         returns (
@@ -1251,12 +1247,12 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
             bool tickGtActive
         )
     {
-        tickState = mPool.getTick(tick);
+        tickState = mPool.getTick(_tick);
         (uint256 lowerSqrtPrice, uint256 upperSqrtPrice) = TickMath
-            .tickSqrtPrices(mPool.tickSpacing(), tick);
+            .tickSqrtPrices(mPool.tickSpacing(), _tick);
 
-        tickGtActive = newSqrtPrice < lowerSqrtPrice;
-        tickLtActive = newSqrtPrice >= upperSqrtPrice;
+        tickGtActive = _newSqrtPrice < lowerSqrtPrice;
+        tickLtActive = _newSqrtPrice >= upperSqrtPrice;
 
         uint256 liquidity = TickMath.getTickL(
             tickState.reserveA,
@@ -1271,7 +1267,7 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
         ) = _reservesInTickForGivenPriceAndLiquidity(
             lowerSqrtPrice,
             upperSqrtPrice,
-            newSqrtPrice,
+            _newSqrtPrice,
             liquidity
         );
     }
