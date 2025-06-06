@@ -138,18 +138,6 @@ contract AerodromeAMOStrategy is InitializableAbstractStrategy {
     event UnderlyingAssetsUpdated(uint256 underlyingAssets);
 
     /**
-     * @dev Verifies that the caller is the Governor, or Strategist.
-     */
-    modifier onlyGovernorOrStrategist() {
-        require(
-            msg.sender == IVault(vaultAddress).strategistAddr() ||
-                msg.sender == governor(),
-            "Not the Governor or Strategist"
-        );
-        _;
-    }
-
-    /**
      * @dev Un-stakes the token from the gauge for the execution duration of
      * the function and after that re-stakes it back in.
      *
