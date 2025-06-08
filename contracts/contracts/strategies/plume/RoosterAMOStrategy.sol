@@ -432,7 +432,6 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
             bytes memory packedSqrtPriceBreaks,
             bytes[] memory packedArgs,
             ,
-            ,
             uint256 OETHpRequired
         ) = _getAddLiquidityParams(_wethBalance, 1e30);
 
@@ -487,11 +486,11 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
         returns (
             bytes memory packedSqrtPriceBreaks,
             bytes[] memory packedArgs,
-            IMaverickV2Pool.AddLiquidityParams[] memory addParams,
             uint256 WETHRequired,
             uint256 OETHpRequired
         )
     {
+        IMaverickV2Pool.AddLiquidityParams[] memory addParams = new IMaverickV2Pool.AddLiquidityParams[](1);
         int32[] memory ticks = new int32[](1);
         uint128[] memory amounts = new uint128[](1);
         ticks[0] = TICK_NUMBER;
@@ -578,7 +577,6 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
         );
 
         // organize values to be used by manager
-        addParams = new IMaverickV2Pool.AddLiquidityParams[](1);
         addParams[0] = addParam;
         packedArgs = liquidityManager.packAddLiquidityArgsArray(addParams);
         // price can stay 0 if array only has one element
@@ -948,7 +946,6 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
         (
             bytes memory packedSqrtPriceBreaks,
             bytes[] memory packedArgs,
-            ,
             ,
             uint256 OETHpRequired
         ) = _getAddLiquidityParams(1e16, 1e16);
