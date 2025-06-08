@@ -1137,7 +1137,7 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
             IMaverickV2Pool.TickState memory tickState,
             ,
 
-        ) = _reservesInTickForGivenPrice(TICK_NUMBER, _currentPrice);
+        ) = reservesInTickForGivenPrice(TICK_NUMBER, _currentPrice);
 
         uint256 wethReserve = tickState.reserveA;
         uint256 oethpReserve = tickState.reserveB;
@@ -1234,8 +1234,8 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
     }
 
     /**
-     * @dev Returns the total reserves (balances) in a position of all the
-     *      participating LPs.
+     * @notice Returns the total reserves (balances) in a tick of all the
+     *         participating LPs.
      *
      * @notice Calculates deltaA = liquidity * (sqrt(upper) - sqrt(lower))
      *  Calculates deltaB = liquidity / sqrt(lower) - liquidity / sqrt(upper),
@@ -1244,8 +1244,8 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
      * @dev refactored from here:
      * https://github.com/rooster-protocol/rooster-contracts/blob/main/v2-supplemental/contracts/libraries/LiquidityUtilities.sol#L665-L695
      */
-    function _reservesInTickForGivenPrice(int32 _tick, uint256 _newSqrtPrice)
-        internal
+    function reservesInTickForGivenPrice(int32 _tick, uint256 _newSqrtPrice)
+        public
         view
         returns (
             IMaverickV2Pool.TickState memory tickState,

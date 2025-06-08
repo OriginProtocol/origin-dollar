@@ -38,18 +38,6 @@ contract MockRoosterAMOStrategy is RoosterAMOStrategy {
         )
     {}
 
-    function reservesInTickForGivenPrice(int32 tick, uint256 newSqrtPrice)
-        external
-        view
-        returns (
-            IMaverickV2Pool.TickState memory tickState,
-            bool tickLtActive,
-            bool tickGtActive
-        )
-    {
-        return _reservesInTickForGivenPrice(tick, newSqrtPrice);
-    }
-
     function getCurrentWethShare() external view returns (uint256) {
         uint256 _currentPrice = getPoolSqrtPrice();
 
