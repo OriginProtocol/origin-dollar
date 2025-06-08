@@ -112,7 +112,10 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
     /// @dev price at parity (in OETHp this is equal to sqrtPriceTickHigher)
     uint256 public immutable sqrtPriceAtParity;
     /// @notice The tick where the strategy deploys the liquidity to
-    int32 public constant tickNumber = -1;
+    int32 public constant TICK_NUMBER = -1;
+    /// @notice Minimum liquidity required to continue with the action
+    /// e.g. deposit, add liquidity, burn OETHp
+    uint256 public constant MIN_LIQUIDITY_THRESHOLD = 1e12;
 
     /// @dev a threshold under which the contract no longer allows for the protocol to rebalance. Guarding
     ///      against a strategist / guardian being taken over and with multiple transactions draining the
@@ -218,7 +221,7 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
         // tickSpacing == 1
         (sqrtPriceTickLower, sqrtPriceTickHigher) = TickMath.tickSqrtPrices(
             _tickSpacing,
-            tickNumber
+            TICK_NUMBER
         );
         sqrtPriceAtParity = _upperTickAtParity
             ? sqrtPriceTickHigher
@@ -313,7 +316,7 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
      */
     function depositAll() external override onlyVault nonReentrant {
         uint256 _wethBalance = IERC20(WETH).balanceOf(address(this));
-        if (_wethBalance > 1e12) {
+        if (_wethBalance > MIN_LIQUIDITY_THRESHOLD) {
             _deposit(WETH, _wethBalance);
         }
     }
@@ -418,7 +421,7 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
         uint256 _wethBalance = IERC20(WETH).balanceOf(address(this));
         uint256 _oethBalance = IERC20(OETHp).balanceOf(address(this));
         // don't deposit small liquidity amounts
-        if (_wethBalance <= 1e12) {
+        if (_wethBalance <= MIN_LIQUIDITY_THRESHOLD) {
             return;
         }
 
@@ -488,7 +491,7 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
     {
         int32[] memory ticks = new int32[](1);
         uint128[] memory amounts = new uint128[](1);
-        ticks[0] = tickNumber;
+        ticks[0] = TICK_NUMBER;
         amounts[0] = 1e24;
 
         // construct value for Quoter with arbitrary LP amount
@@ -755,7 +758,7 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
                 amount: _amountToSwap,
                 tokenAIn: _swapWeth,
                 exactOutput: false,
-                tickLimit: tickNumber
+                tickLimit: TICK_NUMBER
             });
 
         // swaps without a callback as the assets are already sent to the pool
@@ -886,7 +889,7 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
      */
     function _burnOethOnTheContract() internal {
         uint256 _oethpBalance = IERC20(OETHp).balanceOf(address(this));
-        if (_oethpBalance > 1e12) {
+        if (_oethpBalance > MIN_LIQUIDITY_THRESHOLD) {
             IVault(vaultAddress).burnForStrategy(_oethpBalance);
         }
     }
@@ -1131,7 +1134,7 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
             IMaverickV2Pool.TickState memory tickState,
             ,
 
-        ) = _reservesInTickForGivenPrice(tickNumber, _currentPrice);
+        ) = _reservesInTickForGivenPrice(TICK_NUMBER, _currentPrice);
 
         uint256 wethReserve = tickState.reserveA;
         uint256 oethpReserve = tickState.reserveB;
