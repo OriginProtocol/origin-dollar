@@ -729,6 +729,7 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
 
         emit PoolRebalanced(_wethSharePct);
     }
+
     // slither-disable-end reentrancy-no-eth
 
     /**
@@ -979,6 +980,7 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
         // Store the tokenId
         tokenId = _tokenId;
     }
+
     // slither-disable-end reentrancy-no-eth
 
     /**
