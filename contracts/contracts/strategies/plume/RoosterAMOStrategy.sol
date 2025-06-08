@@ -1208,7 +1208,7 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
         uint256 _upperSqrtPrice,
         uint256 _newSqrtPrice,
         uint256 _liquidity
-    ) internal view returns (uint128 reserveA, uint128 reserveB) {
+    ) internal pure returns (uint128 reserveA, uint128 reserveB) {
         if (_liquidity == 0) {
             (reserveA, reserveB) = (0, 0);
         } else {
