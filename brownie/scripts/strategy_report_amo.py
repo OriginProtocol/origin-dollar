@@ -60,6 +60,9 @@ class BalancerRethEth:
         balances = self._balancer_vault.getPoolTokens(self._pool_pid)[0:2]
         return dict(zip(balances[0], balances[1]))
 
+    def print_debug_data(self):
+        pass
+
     def tilt_pool(self, size):
         print("Tilt pool", size)
         amount = abs(size) * self.base_size * int(1e18)
@@ -112,6 +115,9 @@ class BalancerCompPoolSfrxEthWstETHrETH:
     def pool_balances(self):
         balances = self._balancer_vault.getPoolTokens(self._pool_pid)
         return dict(zip(balances[0][1:3], balances[1][1:3]))
+
+    def print_debug_data(self):
+        pass
 
     def tilt_pool(self, size):
         amount = abs(size) * self.base_size * int(1e18)
@@ -169,6 +175,9 @@ class CurveSuperOETHbWETH:
             oethb.address: self.pool.balances(1),
         }
 
+    def print_debug_data(self):
+        pass
+
     def tilt_pool(self, size):
         vault_core.mint(weth, 1000*10**18, 0, {"from": BASE_WETH_WHALE})
         amount = abs(size) * self.base_size * int(1e18)
@@ -224,6 +233,9 @@ class SwapxOsWS:
             "os": self.pool.reserve1(),
         }
 
+    def print_debug_data(self):
+        pass
+
     def tilt_pool(self, size):
         # 10m OS
         vault_core.mint(ws, 10 * 10**24, 0, {"from": SONIC_WS_WHALE})
@@ -268,10 +280,14 @@ class RoosterWETHOethp:
         self.base_size = int(50)
         self.STRATEGIST = vault_core.strategistAddr()
         self.amo_base = weth
+        self.deposit_debug_data = []
 
     def setup(self):
         weth.approve(self.vault_core, 1e70, {"from": PLUME_WETH_FISH})
-        vault_core.mint(weth, 200 * 10**18, 0, {"from": PLUME_WETH_FISH})
+        oethAmountNeeded = 200 * 10**18
+
+        if oethp.balanceOf(PLUME_WETH_FISH) < oethAmountNeeded:
+            vault_core.mint(weth, 200 * 10**18, 0, {"from": PLUME_WETH_FISH})
 
     def pool_balances(self):
         print("⚱︎ pool_balances")
@@ -280,6 +296,10 @@ class RoosterWETHOethp:
             "weth": self.pool.getState()[0], # reserveA
             "oethp": self.pool.getState()[0] # reserveB,
         }
+
+    def print_debug_data(self):
+        for data in self.deposit_debug_data:
+            print(data)
 
     def tilt_pool(self, size):
         amount = abs(size) * self.base_size * int(1e18)
@@ -313,6 +333,10 @@ class RoosterWETHOethp:
                 b'', 
                 {"from": PLUME_WETH_FISH}
             );
+
+        self.deposit_debug_data.append(
+            (round(size, 2),  self.strat.getCurrentTradingTick(), self.strat.getPoolSqrtPrice() - self.strat.sqrtPriceTickLower(), self.strat.sqrtPriceTickHigher() - self.strat.getPoolSqrtPrice())
+        )
 
     def pool_create_mix(self, tilt=0.5, size=1):
         print("⚱︎ pool_create_mix")
@@ -482,7 +506,7 @@ def run_simulations_amo(strategy_name):
 
                 deposit_stats.append(stat)
     pd.DataFrame.from_records(deposit_stats).to_csv(workspace + "deposit_stats.csv")
-    
+    harness.print_debug_data()    
 
     # # Test Withdraws
     # withdraw_stats = []
