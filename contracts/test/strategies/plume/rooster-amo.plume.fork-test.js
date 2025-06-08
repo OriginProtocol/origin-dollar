@@ -496,9 +496,9 @@ describe("ForkTest: Rooster AMO Strategy (Plume)", async function () {
         swapWeth: false,
       });
 
-      expect(
-        await roosterAmoStrategy.checkBalance(weth.address)
-      ).to.equal(balanceBefore);
+      expect(await roosterAmoStrategy.checkBalance(weth.address)).to.equal(
+        balanceBefore
+      );
 
       await verifyEndConditions();
     });

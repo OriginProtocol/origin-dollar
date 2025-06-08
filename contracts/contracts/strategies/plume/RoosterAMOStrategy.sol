@@ -194,8 +194,14 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
         address _votingDistributor,
         address _poolDistributor
     ) initializer InitializableAbstractStrategy(_stratConfig) {
-        require(address(IMaverickV2Pool(_mPool).tokenA()) == _wethAddress, "WETH not TokanA");
-        require(address(IMaverickV2Pool(_mPool).tokenB()) == _oethpAddress, "OETHp not TokanB");
+        require(
+            address(IMaverickV2Pool(_mPool).tokenA()) == _wethAddress,
+            "WETH not TokanA"
+        );
+        require(
+            address(IMaverickV2Pool(_mPool).tokenB()) == _oethpAddress,
+            "OETHp not TokanB"
+        );
         require(
             _liquidityManager != address(0),
             "LiquidityManager zero address not allowed"
@@ -490,7 +496,8 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
             uint256 OETHpRequired
         )
     {
-        IMaverickV2Pool.AddLiquidityParams[] memory addParams = new IMaverickV2Pool.AddLiquidityParams[](1);
+        IMaverickV2Pool.AddLiquidityParams[]
+            memory addParams = new IMaverickV2Pool.AddLiquidityParams[](1);
         int32[] memory ticks = new int32[](1);
         uint128[] memory amounts = new uint128[](1);
         ticks[0] = TICK_NUMBER;
@@ -580,7 +587,9 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
         addParams[0] = addParam;
         packedArgs = liquidityManager.packAddLiquidityArgsArray(addParams);
         // price can stay 0 if array only has one element
-        packedSqrtPriceBreaks = liquidityManager.packUint88Array(new uint88[](1));
+        packedSqrtPriceBreaks = liquidityManager.packUint88Array(
+            new uint88[](1)
+        );
     }
 
     /**
@@ -1163,11 +1172,7 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
     /**
      * @dev Approve the spending of all assets
      */
-    function safeApproveAllTokens()
-        external
-        pure
-        override
-    {
+    function safeApproveAllTokens() external pure override {
         // all the amounts are approved at the time required
         revert("Unsupported method");
     }
