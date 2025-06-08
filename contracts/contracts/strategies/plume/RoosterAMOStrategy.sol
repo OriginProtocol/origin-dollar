@@ -743,11 +743,7 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
             IVault(vaultAddress).mintForStrategy(mintForSwap);
         }
 
-        if (_swapWeth) {
-            IERC20(WETH).transfer(address(mPool), _amountToSwap);
-        } else {
-            IERC20(OETHp).transfer(address(mPool), _amountToSwap);
-        }
+        _tokenToSwap.transfer(address(mPool), _amountToSwap);
 
         // tickLimit: the furthest tick a swap will execute in. If no limit is desired,
         // value should be set to type(int32).max for a tokenAIn (WETH) swap
