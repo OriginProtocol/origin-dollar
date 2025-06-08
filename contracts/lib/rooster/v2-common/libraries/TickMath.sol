@@ -11,6 +11,7 @@ import {MAX_TICK, ONE} from "./Constants.sol";
 /**
  * @notice Math functions related to tick operations.
  */
+// slither-disable-start divide-before-multiply
 library TickMath {
     using Math for uint256;
 
@@ -207,3 +208,4 @@ library TickMath {
         sqrtPrice = getSqrtPrice(reserveA, reserveB, sqrtLowerTickPrice, sqrtUpperTickPrice, liquidity);
     }
 }
+// slither-disable-end divide-before-multiply

@@ -486,7 +486,6 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
      *  - both tokens present in the tick
      *
      */
-    // slither-disable-end reentrancy-no-eth
     function _getAddLiquidityParams(uint256 _maxWETH, uint256 _maxOETHp)
         internal
         returns (
@@ -691,6 +690,7 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
         );
     }
 
+    // slither-disable-start reentrancy-no-eth
     function _rebalance(
         uint256 _amountToSwap,
         bool _swapWeth,
@@ -729,6 +729,7 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
 
         emit PoolRebalanced(_wethSharePct);
     }
+    // slither-disable-end reentrancy-no-eth
 
     /**
      * @dev Perform a swap so that after the swap the tick has the desired WETH to OETHp token share.
@@ -752,6 +753,8 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
             IVault(vaultAddress).mintForStrategy(mintForSwap);
         }
 
+        // SafeERC20 is used for IERC20 transfers. Not sure why slither complains
+        // slither-disable-next-line unchecked-transfer
         _tokenToSwap.transfer(address(mPool), _amountToSwap);
 
         // tickLimit: the furthest tick a swap will execute in. If no limit is desired,
@@ -946,6 +949,7 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
      * @dev This amount is "gifted" to the strategy contract and will count as a yield
      *      surplus.
      */
+    // slither-disable-start reentrancy-no-eth
     function mintInitialPosition() external onlyGovernor nonReentrant {
         require(tokenId == 0, "Initial position already minted");
         (
@@ -975,6 +979,7 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
         // Store the tokenId
         tokenId = _tokenId;
     }
+    // slither-disable-end reentrancy-no-eth
 
     /**
      * @notice Returns the balance of tokens the strategy holds in the LP position
