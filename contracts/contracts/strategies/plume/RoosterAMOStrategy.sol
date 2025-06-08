@@ -884,7 +884,7 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
         uint256 _wethAmount = _balanceInPosition();
 
         underlyingAssets = _wethAmount;
-        emit UnderlyingAssetsUpdated(underlyingAssets);
+        emit UnderlyingAssetsUpdated(_wethAmount);
     }
 
     /**
