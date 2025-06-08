@@ -944,11 +944,7 @@ describe("ForkTest: Rooster AMO Strategy (Plume)", async function () {
   // Notice: this only works if the pools is already in the tick -1 where
   // all the liquidity is deployed
   const estimateSwapAmountsToReachWethRatio = async (wethRatio) => {
-    const currentPrice = await roosterAmoStrategy.getPoolSqrtPrice();
-    const { tickState } = await roosterAmoStrategy.reservesInTickForGivenPrice(
-      -1,
-      currentPrice
-    );
+    const tickState = await roosterOETHpWETHpool.getTick(-1);
 
     const wethAmount = tickState.reserveA;
     const oethAmount = tickState.reserveB;

@@ -1118,12 +1118,7 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
      *
      */
     function tickDominance() public view returns (uint256 _tickDominance) {
-        uint256 _currentPrice = getPoolSqrtPrice();
-        (
-            IMaverickV2Pool.TickState memory tickState,
-            ,
-
-        ) = reservesInTickForGivenPrice(TICK_NUMBER, _currentPrice);
+        IMaverickV2Pool.TickState memory tickState = mPool.getTick(TICK_NUMBER);
 
         uint256 wethReserve = tickState.reserveA;
         uint256 oethpReserve = tickState.reserveB;
@@ -1217,50 +1212,5 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
                 )
                 .toUint128();
         }
-    }
-
-    /**
-     * @notice Returns the total reserves (balances) in a tick of all the
-     *         participating LPs.
-     *
-     * @notice Calculates deltaA = liquidity * (sqrt(upper) - sqrt(lower))
-     *  Calculates deltaB = liquidity / sqrt(lower) - liquidity / sqrt(upper),
-     *  i.e. liquidity * (sqrt(upper) - sqrt(lower)) / (sqrt(upper) * sqrt(lower))
-     *
-     * @dev refactored from here:
-     * https://github.com/rooster-protocol/rooster-contracts/blob/main/v2-supplemental/contracts/libraries/LiquidityUtilities.sol#L665-L695
-     */
-    function reservesInTickForGivenPrice(int32 _tick, uint256 _newSqrtPrice)
-        public
-        view
-        returns (
-            IMaverickV2Pool.TickState memory tickState,
-            bool tickLtActive,
-            bool tickGtActive
-        )
-    {
-        tickState = mPool.getTick(_tick);
-        (uint256 lowerSqrtPrice, uint256 upperSqrtPrice) = TickMath
-            .tickSqrtPrices(mPool.tickSpacing(), _tick);
-
-        tickGtActive = _newSqrtPrice < lowerSqrtPrice;
-        tickLtActive = _newSqrtPrice >= upperSqrtPrice;
-
-        uint256 liquidity = TickMath.getTickL(
-            tickState.reserveA,
-            tickState.reserveB,
-            lowerSqrtPrice,
-            upperSqrtPrice
-        );
-
-        (
-            tickState.reserveA,
-            tickState.reserveB
-        ) = _reservesInTickForGivenPriceAndLiquidity(
-            lowerSqrtPrice,
-            upperSqrtPrice,
-            _newSqrtPrice,
-            liquidity
-        );
     }
 }
