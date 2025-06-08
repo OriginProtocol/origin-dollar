@@ -863,12 +863,6 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
     /// @dev This function updates the amount of underlying assets with the approach of the least possible
     ///      total tokens extracted for the current liquidity in the pool.
     function _updateUnderlyingAssets() internal {
-        if (tokenId == 0) {
-            underlyingAssets = 0;
-            emit UnderlyingAssetsUpdated(underlyingAssets);
-            return;
-        }
-
         /**
          * Our net value represent the smallest amount of tokens we are able to extract from the position
          * given our liquidity.
@@ -881,7 +875,7 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
          * towards the middle of tick -1 making OETHp (priced in WETH) cheaper.
          */
 
-        uint256 _wethAmount = _balanceInPosition();
+        uint256 _wethAmount = tokenId == 0 ? 0 : _balanceInPosition();
 
         underlyingAssets = _wethAmount;
         emit UnderlyingAssetsUpdated(_wethAmount);
