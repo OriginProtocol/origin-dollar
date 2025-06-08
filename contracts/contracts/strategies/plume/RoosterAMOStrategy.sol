@@ -117,6 +117,9 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
     /// e.g. deposit, add liquidity, burn OETHp
     uint256 public constant MIN_LIQUIDITY_THRESHOLD = 1e12;
 
+    /// @notice Maverick pool static liquidity bin type
+    uint8 public constant MAV_STATIC_BIN_KIND = 0;
+
     /// @dev a threshold under which the contract no longer allows for the protocol to rebalance. Guarding
     ///      against a strategist / guardian being taken over and with multiple transactions draining the
     ///      protocol funds.
@@ -497,7 +500,7 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
         // construct value for Quoter with arbitrary LP amount
         IMaverickV2Pool.AddLiquidityParams memory addParam = IMaverickV2Pool
             .AddLiquidityParams({
-                kind: 0, // static kind
+                kind: MAV_STATIC_BIN_KIND,
                 ticks: ticks,
                 amounts: amounts
             });
