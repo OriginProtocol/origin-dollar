@@ -581,9 +581,8 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
         addParams = new IMaverickV2Pool.AddLiquidityParams[](1);
         addParams[0] = addParam;
         packedArgs = liquidityManager.packAddLiquidityArgsArray(addParams);
-        uint88[] memory prices = new uint88[](1);
         // price can stay 0 if array only has one element
-        packedSqrtPriceBreaks = liquidityManager.packUint88Array(prices);
+        packedSqrtPriceBreaks = liquidityManager.packUint88Array(new uint88[](1));
     }
 
     /**
