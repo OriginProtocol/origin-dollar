@@ -3,12 +3,13 @@ const addresses = require("../../utils/addresses");
 
 module.exports = deploymentWithGovernanceProposal(
   {
-    deployName: "139_remove_1st_native_ssv_staking",
+    deployName: "140_remove_1st_native_ssv_staking",
     forceDeploy: false,
     //forceSkip: true,
     reduceQueueTime: true,
     deployerIsProposer: false,
-    // proposalId: "",
+    proposalId:
+      "58072692907258896292503342211403681374811708763269462372642180263959505348028",
   },
   async ({ deployWithConfirmation, ethers }) => {
     // Current contracts
@@ -47,7 +48,7 @@ module.exports = deploymentWithGovernanceProposal(
     // Governance Actions
     // ----------------
     return {
-      name: `Deploy a third OETH Native Staking Strategy.`,
+      name: `Remove the first native SSV staking strategy from the OETH Vault and claim the remaining SSV from the cluster`,
       actions: [
         // 1. Remove strategy from vault
         {
