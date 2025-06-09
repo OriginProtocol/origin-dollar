@@ -61,8 +61,6 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
     address public immutable WETH;
     /// @notice The address of the OETHp token contract
     address public immutable OETHp;
-    /// @notice tick spacing of the pool (set to 1)
-    int24 public immutable tickSpacing;
     /// @notice the underlying AMO Maverick (Rooster) pool
     IMaverickV2Pool public immutable mPool;
     /// @notice the Liquidity manager used to add liquidity to the pool
