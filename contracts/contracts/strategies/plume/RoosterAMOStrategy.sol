@@ -498,6 +498,7 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
         int32[] memory ticks = new int32[](1);
         uint128[] memory amounts = new uint128[](1);
         ticks[0] = TICK_NUMBER;
+        // arbitrary LP amount
         amounts[0] = 1e24;
 
         // construct value for Quoter with arbitrary LP amount
@@ -508,6 +509,8 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
                 amounts: amounts
             });
 
+        // get the WETH and OETHp required to get the proportion of tokens required
+        // given the arbitrary liquidity
         (WETHRequired, OETHpRequired, ) = quoter.calculateAddLiquidity(
             mPool,
             addParam
@@ -516,8 +519,9 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
         // For muldiv reference see:
         // https://github.com/OpenZeppelin/openzeppelin-contracts/blob/a7d38c7a3321e3832ca84f7ba1125dff9a91361e/contracts/utils/math/Math.sol#L280
 
-        // tick has no WETH liquidity
         if (WETHRequired == 0) {
+            // calculate required liquidity given no WETH in tick and consequently no WETH
+            // to be added
             addParam.amounts[0] = Math_v5
                 .mulDiv(
                     amounts[0],
@@ -528,6 +532,8 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
                 .toUint128();
             // tick has no OETHp liquidity
         } else if (OETHpRequired == 0) {
+            // calculate required liquidity given no OETHp in tick and consequently no OETHp
+            // to be added
             addParam.amounts[0] = Math_v5
                 .mulDiv(
                     amounts[0],
@@ -538,7 +544,10 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
                 .toUint128();
             // tick has liquidity of both tokens
         } else {
-            // scale the amounts to ensure we meet the requirement
+            // calculate required liquidity given OETHp & WETH liquidity in the tick
+
+            // scale the amount of corresponding OETHp added to the tick in
+            // case WETH amount would be maxWETH
             uint256 scaledOETHpAssumingWETHIsMax = Math_v5.mulDiv(
                 OETHpRequired,
                 _maxWETH,
@@ -546,7 +555,9 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
                 Math_v5.Rounding.Ceil
             );
 
-            // scale the add param
+            // If scaled OETHp does not surpass max OETHp, scale the liquidity
+            // amounts using maxWETH. In other words with maxOETHp & maxWETH and given
+            // the proportion of assets in the tick the maxWETH tick limit is reached first
             if (scaledOETHpAssumingWETHIsMax <= _maxOETHp) {
                 addParam.amounts[0] = Math_v5
                     .mulDiv(
