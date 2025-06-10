@@ -983,11 +983,13 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
         );
         // burn remaining OETHp
         _burnOethOnTheContract();
+
+        // Store the tokenId before calling updateUnderlyingAssets as it relies on the tokenId
+        // not being 0
+        tokenId = _tokenId;
         _updateUnderlyingAssets();
         _approveTokenAmounts(0, 0);
 
-        // Store the tokenId
-        tokenId = _tokenId;
     }
 
     // slither-disable-end reentrancy-no-eth
