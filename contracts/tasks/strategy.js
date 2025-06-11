@@ -1,4 +1,4 @@
-const { formatUnits } = require("ethers/lib/utils");
+const { formatUnits, parseUnits } = require("ethers/lib/utils");
 const { resolveContract, resolveAsset } = require("../utils/resolvers");
 const { getSigner } = require("../utils/signers");
 const { logTxDetails } = require("../utils/txLogger");
@@ -48,8 +48,34 @@ async function setRewardTokenAddresses({ proxy, symbol }) {
   await logTxDetails(tx, "setRewardTokenAddresses");
 }
 
+async function transferToken({ proxy, symbol, amount }) {
+  const signer = await getSigner();
+
+  const asset = await resolveAsset(symbol);
+  const strategy = await resolveContract(
+    proxy,
+    "InitializableAbstractStrategy"
+  );
+  const governor = await strategy.connect(signer).governor();
+
+  const amountBN = amount
+    ? parseUnits(amount.toString(), 18)
+    : await asset.balanceOf(strategy.address);
+
+  log(
+    `About to transfer ${formatUnits(
+      amountBN
+    )} ${symbol} tokens to governor ${governor}`
+  );
+  const tx = await strategy
+    .connect(signer)
+    .transferToken(asset.address, amountBN);
+  await logTxDetails(tx, "transferToken");
+}
+
 module.exports = {
   getRewardTokenAddresses,
   setRewardTokenAddresses,
   checkBalance,
+  transferToken,
 };

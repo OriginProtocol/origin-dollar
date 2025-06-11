@@ -27,5 +27,6 @@
   "026_harvester_v2": 1739547078,
   "027_base_curve_amo_upgrade": 1743570593,
   "028_vault_woeth_upgrade": 1744987946,
-  "030_claimbribes_safe_module": 1746891767
+  "030_claimbribes_safe_module": 1746891767,
+  "031_enable_buyback_operator": 1749060898
 }
