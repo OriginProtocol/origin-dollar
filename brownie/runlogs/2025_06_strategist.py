@@ -237,3 +237,54 @@ def main():
     print("Pool OETH  ", "{:.6f}".format(oethPoolBalance / 10**18), oethPoolBalance * 100 / totalPool)
     print("Pool Total ", "{:.6f}".format(totalPool / 10**18), totalPool)
     print("Sell 10 OETH Curve prices before and after", "{:.6f}".format(weth_out_before / 10**18), "{:.6f}".format(weth_out_after / 10**18))
+
+
+# -----------------------------------------------------
+# June 12, 2025 - Base deposit wOETH to Bridging Strategy and redeem superOETHb
+# -----------------------------------------------------
+from aerodrome_harvest import *
+
+def main():
+  with TemporaryForkForReallocations() as txs:
+    # Hack to make weth.withdraw work
+    brownie.network.web3.provider.make_request('hardhat_setCode', [OETHB_MULTICHAIN_STRATEGIST, '0x'])
+
+    woeth_amount = woeth.balanceOf(OETHB_MULTICHAIN_STRATEGIST)
+
+    # Update oracle price
+    txs.append(woeth_strat.updateWOETHOraclePrice({ 'from': OETHB_MULTICHAIN_STRATEGIST }))
+    
+    # expected_oethb = woeth_strat.getBridgedWOETHValue(woeth_amount)
+
+    # Rebase
+    txs.append(vault_core.rebase({ 'from': OETHB_MULTICHAIN_STRATEGIST }))
+
+    # Take Vault snapshot 
+    txs.append(vault_value_checker.takeSnapshot({ 'from': OETHB_MULTICHAIN_STRATEGIST }))
+
+    # Deposit to wOETH strategy
+    txs.append(woeth_strat.depositBridgedWOETH(woeth_amount, { 'from': OETHB_MULTICHAIN_STRATEGIST }))
+
+    # Get the amount of superOETHb now in the multisig
+    oethb_amount = oethb.balanceOf(OETHB_MULTICHAIN_STRATEGIST)
+
+    # Redeem the superOETHb for WETH
+    txs.append(vault_core.redeem(oethb_amount, oethb_amount, { 'from': MULTICHAIN_STRATEGIST }))
+
+    # Rebase so that any yields from price update and
+    # backing asset change from deposit are accounted for.
+    txs.append(vault_core.rebase({ 'from': OETHB_MULTICHAIN_STRATEGIST }))
+
+    # Check Vault Value against snapshot
+    vault_change = vault_core.totalValue() - vault_value_checker.snapshots(OETHB_MULTICHAIN_STRATEGIST)[0]
+    supply_change = oethb.totalSupply() - vault_value_checker.snapshots(OETHB_MULTICHAIN_STRATEGIST)[1]
+    profit = vault_change - supply_change
+
+    txs.append(vault_value_checker.checkDelta(profit, (0.1 * 10**18), vault_change, (1 * 10**18), {'from': OETHB_MULTICHAIN_STRATEGIST}))
+
+    print("--------------------")
+    print("Deposited wOETH     ", c18(woeth_amount), woeth_amount)
+    print("Redeemed superOETHb ", c18(oethb_amount), oethb_amount)
+    print("--------------------")
+    print("Profit       ", c18(profit), profit)
+    print("Vault Change ", c18(vault_change), vault_change)
