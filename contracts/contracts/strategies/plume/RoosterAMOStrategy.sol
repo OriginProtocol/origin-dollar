@@ -137,7 +137,7 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
         uint256 tokenId,
         uint256 underlyingAssets
     ); // 0x1530ec74
-    
+
     error PoolRebalanceOutOfBounds(
         uint256 currentPoolWethShare,
         uint256 allowedWethShareStart,
@@ -908,7 +908,7 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
         (
             bytes memory packedSqrtPriceBreaks,
             bytes[] memory packedArgs,
-            ,
+            uint256 WETHRequired,
             uint256 OETHpRequired
         ) = _getAddLiquidityParams(1e16, 1e16);
 
@@ -917,7 +917,7 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
             IVault(vaultAddress).mintForStrategy(OETHpRequired);
         }
 
-        _approveTokenAmounts(1e16, OETHpRequired);
+        _approveTokenAmounts(WETHRequired, OETHpRequired);
 
         (, , , uint256 _tokenId) = liquidityManager.mintPositionNftToSender(
             mPool,
@@ -931,7 +931,6 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
         // not being 0
         tokenId = _tokenId;
         _updateUnderlyingAssets();
-        _approveTokenAmounts(0, 0);
     }
 
     // slither-disable-end reentrancy-no-eth
