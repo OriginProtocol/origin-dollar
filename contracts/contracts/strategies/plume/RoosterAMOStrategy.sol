@@ -67,16 +67,12 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
     IMaverickV2LiquidityManager public immutable liquidityManager;
     /// @notice the Maverick V2 poolLens
     ///
-    /// @dev normally the poolLens is used to prepare the parameters to add
-    /// liquidity to the pool. But it has some calculation issues where the
-    /// amounts can be off by some small value. For that reason we use a much
-    /// more accurate and less versatile Maverick Quoter.
+    /// @dev only used to provider the pool's current sqrtPrice
     IMaverickV2PoolLens public immutable poolLens;
     /// @notice the Maverick V2 position
     ///
     /// @dev provides details of the NFT LP position and offers functions to
     /// remove the liquidity.
-    ///
     IMaverickV2Position public immutable maverickPosition;
     /// @notice the Maverick Quoter
     IMaverickV2Quoter public immutable quoter;
@@ -113,7 +109,7 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
     int32 public constant TICK_NUMBER = -1;
     /// @notice Minimum liquidity required to continue with the action
     /// e.g. deposit, add liquidity, burn OETHp
-    uint256 public constant MIN_LIQUIDITY_THRESHOLD = 1e12;
+    uint256 public constant MIN_BALANCE_THRESHOLD = 1e12;
 
     /// @notice Maverick pool static liquidity bin type
     uint8 public constant MAV_STATIC_BIN_KIND = 0;
@@ -323,7 +319,7 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
      */
     function depositAll() external override onlyVault nonReentrant {
         uint256 _wethBalance = IERC20(WETH).balanceOf(address(this));
-        if (_wethBalance > MIN_LIQUIDITY_THRESHOLD) {
+        if (_wethBalance > MIN_BALANCE_THRESHOLD) {
             _deposit(WETH, _wethBalance);
         }
     }
@@ -428,7 +424,7 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
         uint256 _wethBalance = IERC20(WETH).balanceOf(address(this));
         uint256 _oethBalance = IERC20(OETHp).balanceOf(address(this));
         // don't deposit small liquidity amounts
-        if (_wethBalance <= MIN_LIQUIDITY_THRESHOLD) {
+        if (_wethBalance <= MIN_BALANCE_THRESHOLD) {
             return;
         }
 
@@ -851,7 +847,7 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
      */
     function _burnOethOnTheContract() internal {
         uint256 _oethpBalance = IERC20(OETHp).balanceOf(address(this));
-        if (_oethpBalance > MIN_LIQUIDITY_THRESHOLD) {
+        if (_oethpBalance > MIN_BALANCE_THRESHOLD) {
             IVault(vaultAddress).burnForStrategy(_oethpBalance);
         }
     }
