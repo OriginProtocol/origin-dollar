@@ -1104,13 +1104,14 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
         // prettier-ignore
         (uint256 _amountWeth, uint256 _amountOethp, ) = _getPositionInformation();
 
-        if ((wethReserve + oethpReserve) > 0) {
-            _tickDominance = (_amountWeth + _amountOethp).divPrecisely(
-                wethReserve + oethpReserve
-            );
-        } else {
+
+        if (wethReserve + oethpReserve == 0) {
             return 0;
         }
+
+        _tickDominance = (_amountWeth + _amountOethp).divPrecisely(
+            wethReserve + oethpReserve
+        );
     }
 
     /***************************************
