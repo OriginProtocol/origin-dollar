@@ -456,8 +456,7 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
                 packedArgs
             );
 
-        require(binIds.length == 1, "Unexpected binIds lenght");
-        require(binIds[0] == 1, "Unexpected binId[0] value");
+        require(binIds.length == 1, "Unexpected binIds length");
 
         emit LiquidityAdded(
             _wethBalance, // wethAmountDesired
