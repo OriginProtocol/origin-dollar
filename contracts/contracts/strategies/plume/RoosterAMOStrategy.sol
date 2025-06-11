@@ -459,8 +459,6 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
         require(binIds.length == 1, "Unexpected binIds lenght");
         require(binIds[0] == 1, "Unexpected binId[0] value");
 
-        _updateUnderlyingAssets();
-
         emit LiquidityAdded(
             _wethBalance, // wethAmountDesired
             OETHpRequired, // oethpAmountDesired
@@ -474,6 +472,8 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
         // a little bit less tokens than the quoter contract calculates when
         // creating the add liquidity parameters
         _burnOethOnTheContract();
+
+        _updateUnderlyingAssets();
     }
 
     /**
@@ -815,8 +815,6 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
         (uint256 _amountWeth, uint256 _amountOethp) = maverickPosition
             .removeLiquidityToSender(tokenId, mPool, params);
 
-        _updateUnderlyingAssets();
-
         emit LiquidityRemoved(
             _liquidityToDecrease,
             _amountWeth,
@@ -825,6 +823,7 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
         );
 
         _burnOethOnTheContract();
+        _updateUnderlyingAssets();
     }
 
     /// @dev This function updates the amount of underlying assets with the approach of the least possible
