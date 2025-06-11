@@ -1016,7 +1016,11 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
         // Do nothing if there's no position minted
         if (tokenId > 0) {
             uint32[] memory binIds = new uint32[](1);
-            binIds[0] = 1;
+            IMaverickV2Pool.TickState memory tickState = mPool.getTick(
+                TICK_NUMBER
+            );
+            // get the binId for the MAV_STATIC_BIN_KIND in tick TICK_NUMBER (-1)
+            binIds[0] = tickState.binIdsByTick[0];
 
             uint256 lastEpoch = votingDistributor.lastEpoch();
 
@@ -1093,7 +1097,6 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
 
         // prettier-ignore
         (uint256 _amountWeth, uint256 _amountOethp, ) = _getPositionInformation();
-
 
         if (wethReserve + oethpReserve == 0) {
             return 0;
