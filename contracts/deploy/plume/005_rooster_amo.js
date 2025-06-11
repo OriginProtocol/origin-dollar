@@ -98,17 +98,14 @@ module.exports = deployOnPlume(
     );
 
     if (isFork) {
-      // 50 WETH
-      await setERC20TokenBalance(sDeployer.address, weth, "50", hre);
-      await weth
-        .connect(sDeployer)
-        .transfer(cAMOStrategy.address, oethUnits("1"));
-    } else {
-      // transfer 1e18 of WETH to the strategy to mint the initial position
-      await weth
-        .connect(sDeployer)
-        .transfer(cAMOStrategy.address, oethUnits("0.01"));
+      // 1 WETH
+      await setERC20TokenBalance(sDeployer.address, weth, "1", hre);
     }
+
+    // transfer 1e16 of WETH to the strategy to mint the initial position
+    await weth
+      .connect(sDeployer)
+      .transfer(cAMOStrategy.address, oethUnits("0.01"));
 
     return {
       actions: [
