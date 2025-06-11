@@ -1101,11 +1101,8 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
         uint256 wethReserve = tickState.reserveA;
         uint256 oethpReserve = tickState.reserveB;
 
-        (
-            uint256 _amountWeth,
-            uint256 _amountOethp,
-
-        ) = _getPositionInformation();
+        // prettier-ignore
+        (uint256 _amountWeth, uint256 _amountOethp, ) = _getPositionInformation();
 
         if ((wethReserve + oethpReserve) > 0) {
             _tickDominance = (_amountWeth + _amountOethp).divPrecisely(
