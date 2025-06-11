@@ -110,10 +110,8 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
     /// @notice Minimum liquidity required to continue with the action
     /// e.g. deposit, add liquidity, burn OETHp
     uint256 public constant MIN_BALANCE_THRESHOLD = 1e12;
-
     /// @notice Maverick pool static liquidity bin type
     uint8 public constant MAV_STATIC_BIN_KIND = 0;
-
     /// @dev a threshold under which the contract no longer allows for the protocol to rebalance. Guarding
     ///      against a strategist / guardian being taken over and with multiple transactions draining the
     ///      protocol funds.
@@ -131,13 +129,6 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
     );
     event PoolRebalanced(uint256 currentPoolWethShare);
     event UnderlyingAssetsUpdated(uint256 underlyingAssets);
-
-    error PoolRebalanceOutOfBounds(
-        uint256 currentPoolWethShare,
-        uint256 allowedWethShareStart,
-        uint256 allowedWethShareEnd
-    ); // 0x3681e8e0
-
     event LiquidityAdded(
         uint256 wethAmountDesired,
         uint256 oethbAmountDesired,
@@ -146,6 +137,12 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
         uint256 tokenId,
         uint256 underlyingAssets
     ); // 0x1530ec74
+    
+    error PoolRebalanceOutOfBounds(
+        uint256 currentPoolWethShare,
+        uint256 allowedWethShareStart,
+        uint256 allowedWethShareEnd
+    ); // 0x3681e8e0
 
     error NotEnoughWethForSwap(uint256 wethBalance, uint256 requiredWeth); // 0x989e5ca8
     error NotEnoughWethLiquidity(uint256 wethBalance, uint256 requiredWeth); // 0xa6737d87
