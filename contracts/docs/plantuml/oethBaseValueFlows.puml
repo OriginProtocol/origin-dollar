@@ -82,8 +82,8 @@ end
 
 group Strategist moves WETH from Base to Mainnet
 
-strategist -> mainStrategist : WETH
-note left : Bridge WETH to\nMainnet using Stargate
+strategist -> mainStrategist : ETH
+note left : Bridge WETH to\nMainnet using\nStargate or Jumper
 
 mainStrategist -> mainVault : WETH
 note left : mint OETH using WETH
@@ -109,6 +109,10 @@ strategist -> aeroPool : SuperOETH
 note left : swap SuperOETH for WETH\nusing Aerodrome Pool
 aeroPool -> strategist : WETH
 end
+
+strategist ->x weth : WETH
+note left : unwrap WETH for ETH
+weth -> strategist : ETH
 end
 
 
