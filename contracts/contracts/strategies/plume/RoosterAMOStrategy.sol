@@ -316,9 +316,7 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
      */
     function depositAll() external override onlyVault nonReentrant {
         uint256 _wethBalance = IERC20(WETH).balanceOf(address(this));
-        if (_wethBalance > ACTION_THRESHOLD) {
-            _deposit(WETH, _wethBalance);
-        }
+        _deposit(WETH, _wethBalance);
     }
 
     /**
