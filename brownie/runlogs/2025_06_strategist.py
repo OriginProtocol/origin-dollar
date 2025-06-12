@@ -271,6 +271,11 @@ def main():
     # Redeem the superOETHb for WETH
     txs.append(vault_core.redeem(oethb_amount, oethb_amount, { 'from': MULTICHAIN_STRATEGIST }))
 
+    # Unwrap WETH to ETH so it can be bridged to Ethereum
+    txs.append(
+        weth.withdraw(oethb_amount, {'from': OETHB_MULTICHAIN_STRATEGIST})
+    )
+
     # Rebase so that any yields from price update and
     # backing asset change from deposit are accounted for.
     txs.append(vault_core.rebase({ 'from': OETHB_MULTICHAIN_STRATEGIST }))
@@ -288,3 +293,108 @@ def main():
     print("--------------------")
     print("Profit       ", c18(profit), profit)
     print("Vault Change ", c18(vault_change), vault_change)
+
+# -------------------------------------
+# June 12, 2025 - Mint OETH, deposit wOETH and bridge wOETH to Base using CCIP
+# -------------------------------------
+from world import *
+import eth_abi
+
+def main():
+  with TemporaryForkForReallocations() as txs:
+    oeth_amount = 858 * 10**18  # 858 ETH
+
+    txs.append(
+        weth.approve(OETH_VAULT, oeth_amount, std)
+    )
+
+    # Mint OETH with WETH, 1:1
+    txs.append(
+        oeth_vault_core.mint(WETH, oeth_amount, oeth_amount, std)
+    )
+
+    txs.append(
+        woeth.deposit(oeth_amount, MULTICHAIN_STRATEGIST, std)
+    )
+
+    # Before
+    txs.append(vault_oeth_core.rebase(std))
+    txs.append(oeth_vault_value_checker.takeSnapshot(std))
+
+    # AMO pool before
+    ethPoolBalance = oeth_metapool.balance()
+    oethPoolBalance = oeth.balanceOf(OETH_METAPOOL)
+    totalPool = ethPoolBalance + oethPoolBalance
+    weth_out_before = oeth_metapool.get_dy(1, 0, 10**18)
+
+    print("Curve OETH/ETH Pool before")  
+    print("Pool ETH   ", "{:.6f}".format(ethPoolBalance / 10**18), ethPoolBalance * 100 / totalPool)
+    print("Pool OETH  ", "{:.6f}".format(oethPoolBalance / 10**18), oethPoolBalance * 100 / totalPool)
+    print("Pool Total ", "{:.6f}".format(totalPool / 10**18), totalPool)
+
+    # Deposit WETH to old Convex AMO
+    txs.append(
+      vault_oeth_admin.depositToStrategy(
+        OETH_CONVEX_OETH_ETH_STRAT, 
+        [WETH],
+        [oeth_amount],
+        {'from': STRATEGIST}
+      )
+    )
+
+    # AMO pool after
+    ethPoolBalance = oeth_metapool.balance()
+    oethPoolBalance = oeth.balanceOf(OETH_METAPOOL)
+    totalPool = ethPoolBalance + oethPoolBalance
+    weth_out_after = oeth_metapool.get_dy(1, 0, 10**18)
+
+    print("Curve OETH/ETH Pool after")  
+    print("Pool  ETH   ", "{:.6f}".format(ethPoolBalance / 10**18), ethPoolBalance * 100 / totalPool)
+    print("Pool OETH   ", "{:.6f}".format(oethPoolBalance / 10**18), oethPoolBalance * 100 / totalPool)
+    print("Pool Total ", "{:.6f}".format(totalPool / 10**18), totalPool)
+    print("Sell 10 OETH Curve prices before and after", "{:.6f}".format(weth_out_before / 10**18), "{:.6f}".format(weth_out_after / 10**18))
+
+    # After
+    vault_change = vault_oeth_core.totalValue() - oeth_vault_value_checker.snapshots(STRATEGIST)[0]
+    supply_change = oeth.totalSupply() - oeth_vault_value_checker.snapshots(STRATEGIST)[1]
+    profit = vault_change - supply_change
+
+    txs.append(oeth_vault_value_checker.checkDelta(profit, (1 * 10**18), vault_change, (1 * 10**18), std))
+
+    print("-----")
+    print("Profit", "{:.6f}".format(profit / 10**18), profit)
+    print("OETH supply change", "{:.6f}".format(supply_change / 10**18), supply_change)
+    print("Vault Change", "{:.6f}".format(vault_change / 10**18), vault_change)
+    print("-----")
+
+    # woeth_amount = woeth.balanceOf(MULTICHAIN_STRATEGIST)
+    woeth_amount = woeth_amount = 758.85 * 10**18  # 758.85 ETH
+
+    print("Minted  OETH ", "{:.6f}".format(oeth_amount / 10**18), oeth_amount)
+    print("Minted wOETH ", "{:.6f}".format(woeth_amount / 10**18), woeth_amount)
+
+    txs.append(
+      woeth.approve(CCIP_ROUTER, woeth_amount, std)
+    )
+
+    BASE_CHAIN_SELECTOR = 15971525489660198786
+
+    ccip_message = [
+          eth_abi.encode(['address'], [OETHB_MULTICHAIN_STRATEGIST]),
+          '0x',
+          [(WOETH, woeth_amount)],
+          ADDR_ZERO,
+          '0x97a657c900000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000'
+        ]
+    ccip_fee = ccip_router.getFee(BASE_CHAIN_SELECTOR, ccip_message)
+    ccip_fee = ccip_fee * 11 / 10  # Add 10% buffer
+
+    print("CCIP fee     ", ccip_fee)
+
+    txs.append(
+      ccip_router.ccipSend(
+        BASE_CHAIN_SELECTOR,
+        ccip_message,
+        { 'value': ccip_fee, 'from': MULTICHAIN_STRATEGIST }
+      )
+    )
