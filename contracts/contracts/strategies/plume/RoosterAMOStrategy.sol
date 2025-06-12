@@ -655,15 +655,15 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
             _removeLiquidity(_liquidityToRemovePct);
         }
 
-        // In case liquidity has been removed and there is still not enough WETH owned by the
-        // strategy contract remove additional required amount of WETH.
-        if (_swapWeth && _amountToSwap > 0) {
-            _ensureWETHBalance(_amountToSwap);
-        }
-
         // in some cases (e.g. deposits) we will just want to add liquidity and not
-        // issue a swap to move the active trading position within the pool
+        // issue a swap to move the active trading position within the pool. Before or after a
+        // deposit or as a standalone call the strategist might issue a rebalance to move the
+        // active trading price to a more desired position.
         if (_amountToSwap > 0) {
+            // In case liquidity has been removed and there is still not enough WETH owned by the
+            // strategy contract remove additional required amount of WETH.
+            if (_swapWeth) _ensureWETHBalance(_amountToSwap);
+
             _swapToDesiredPosition(_amountToSwap, _swapWeth, _minTokenReceived);
         }
 
