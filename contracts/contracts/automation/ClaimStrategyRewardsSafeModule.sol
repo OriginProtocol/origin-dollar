@@ -20,11 +20,15 @@ contract ClaimStrategyRewardsSafeModule is AccessControlEnumerable {
     event StrategyAdded(address strategy);
     event StrategyRemoved(address strategy);
 
+    event ClaimRewardsFailed(address strategy);
+
     constructor(address _safeAddress, address[] memory _strategies) {
         // Safe is the admin
         _setupRole(DEFAULT_ADMIN_ROLE, _safeAddress);
 
         _setupRole(OPERATOR_ROLE, _safeAddress);
+
+        safeAddress = ISafe(_safeAddress);
 
         // Whitelist all strategies
         for (uint256 i = 0; i < _strategies.length; i++) {
@@ -34,18 +38,26 @@ contract ClaimStrategyRewardsSafeModule is AccessControlEnumerable {
 
     /**
      * @dev Claim rewards from all whitelisted strategies
+     * @param silent Doesn't revert on error if set to true
      */
-    function claimRewards() external onlyRole(OPERATOR_ROLE) {
-        for (uint256 i = 0; i < strategies.length; i++) {
+    function claimRewards(bool silent) external onlyRole(OPERATOR_ROLE) {
+        uint256 strategiesLength = strategies.length;
+        for (uint256 i = 0; i < strategiesLength; i++) {
             address strategy = strategies[i];
 
             // Execute `collectRewardTokens` for all strategies
-            ISafe(safeAddress).execTransactionFromModule(
+            bool success = safeAddress.execTransactionFromModule(
                 strategy, // To
                 0, // Value
                 abi.encodeWithSelector(IStrategy.collectRewardTokens.selector),
                 0 // Call
             );
+
+            if (!success) {
+                emit ClaimRewardsFailed(strategy);
+            }
+
+            require(success || silent, "Failed to claim rewards");
         }
     }
 
