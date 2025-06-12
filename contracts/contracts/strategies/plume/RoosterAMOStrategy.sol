@@ -109,7 +109,7 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
     int32 public constant TICK_NUMBER = -1;
     /// @notice Minimum liquidity required to continue with the action
     /// e.g. deposit, add liquidity, burn OETHp
-    uint256 public constant MIN_BALANCE_THRESHOLD = 1e12;
+    uint256 public constant ACTION_THRESHOLD = 1e12;
     /// @notice Maverick pool static liquidity bin type
     uint8 public constant MAV_STATIC_BIN_KIND = 0;
     /// @dev a threshold under which the contract no longer allows for the protocol to rebalance. Guarding
@@ -316,7 +316,7 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
      */
     function depositAll() external override onlyVault nonReentrant {
         uint256 _wethBalance = IERC20(WETH).balanceOf(address(this));
-        if (_wethBalance > MIN_BALANCE_THRESHOLD) {
+        if (_wethBalance > ACTION_THRESHOLD) {
             _deposit(WETH, _wethBalance);
         }
     }
@@ -421,7 +421,7 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
         uint256 _wethBalance = IERC20(WETH).balanceOf(address(this));
         uint256 _oethBalance = IERC20(OETHp).balanceOf(address(this));
         // don't deposit small liquidity amounts
-        if (_wethBalance <= MIN_BALANCE_THRESHOLD) {
+        if (_wethBalance <= ACTION_THRESHOLD) {
             return;
         }
 
@@ -845,7 +845,7 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
      */
     function _burnOethOnTheContract() internal {
         uint256 _oethpBalance = IERC20(OETHp).balanceOf(address(this));
-        if (_oethpBalance > MIN_BALANCE_THRESHOLD) {
+        if (_oethpBalance > ACTION_THRESHOLD) {
             IVault(vaultAddress).burnForStrategy(_oethpBalance);
         }
     }
