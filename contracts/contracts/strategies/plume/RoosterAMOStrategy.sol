@@ -169,7 +169,7 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
     /// @param _poolLens Address of the pool lens contract
     /// @param _maverickPosition Address of the Maverick's position contract
     /// @param _maverickQuoter Address of the Maverick's Quoter contract
-    /// @param _mPool Address of the Aerodrome concentrated liquidity pool
+    /// @param _mPool Address of the Rooster concentrated liquidity pool
     /// @param _upperTickAtParity Bool when true upperTick is the one where the
     ///        price of OETHp and WETH are at parity
     constructor(
