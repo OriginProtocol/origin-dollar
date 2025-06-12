@@ -918,7 +918,9 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
 
         _approveTokenAmounts(WETHRequired, OETHpRequired);
 
-        (, , , uint256 _tokenId) = liquidityManager.mintPositionNftToSender(
+        // Store the tokenId before calling updateUnderlyingAssets as it relies on the tokenId
+        // not being 0
+        (, , , tokenId) = liquidityManager.mintPositionNftToSender(
             mPool,
             packedSqrtPriceBreaks,
             packedArgs
@@ -926,9 +928,6 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
         // burn remaining OETHp
         _burnOethOnTheContract();
 
-        // Store the tokenId before calling updateUnderlyingAssets as it relies on the tokenId
-        // not being 0
-        tokenId = _tokenId;
         _updateUnderlyingAssets();
     }
 
