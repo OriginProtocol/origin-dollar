@@ -451,9 +451,7 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
 
         require(binIds.length == 1, "Unexpected binIds length");
 
-        // burn remaining OETHp and skip check because liquidityManager takes
-        // a little bit less tokens than the quoter contract calculates when
-        // creating the add liquidity parameters
+        // burn remaining OETHp
         _burnOethOnTheContract();
         _updateUnderlyingAssets();
 
