@@ -368,7 +368,8 @@ def main():
     print("-----")
 
     # woeth_amount = woeth.balanceOf(MULTICHAIN_STRATEGIST)
-    woeth_amount = woeth_amount = 758.85 * 10**18  # 758.85 ETH
+    print("wOETH balance", "{:.6f}".format(woeth.balanceOf(MULTICHAIN_STRATEGIST) / 10**18))
+    woeth_amount = 758.8 * 10**18  # 758.8 ETH
 
     print("Minted  OETH ", "{:.6f}".format(oeth_amount / 10**18), oeth_amount)
     print("Minted wOETH ", "{:.6f}".format(woeth_amount / 10**18), woeth_amount)
@@ -398,3 +399,64 @@ def main():
         { 'value': ccip_fee, 'from': MULTICHAIN_STRATEGIST }
       )
     )
+
+# -----------------------------------------------------
+# June 12, 2025 - Base deposit wOETH to Bridging Strategy and redeem superOETHb
+# -----------------------------------------------------
+from aerodrome_harvest import *
+
+def main():
+  with TemporaryForkForReallocations() as txs:
+    # Hack to make weth.withdraw work
+    brownie.network.web3.provider.make_request('hardhat_setCode', [OETHB_MULTICHAIN_STRATEGIST, '0x'])
+
+    woeth_amount = woeth.balanceOf(OETHB_MULTICHAIN_STRATEGIST)
+
+    # Update oracle price
+    txs.append(woeth_strat.updateWOETHOraclePrice({ 'from': OETHB_MULTICHAIN_STRATEGIST }))
+    
+    # expected_oethb = woeth_strat.getBridgedWOETHValue(woeth_amount)
+
+    # Rebase
+    txs.append(vault_core.rebase({ 'from': OETHB_MULTICHAIN_STRATEGIST }))
+
+    # Take Vault snapshot 
+    txs.append(vault_value_checker.takeSnapshot({ 'from': OETHB_MULTICHAIN_STRATEGIST }))
+
+    # Deposit to wOETH strategy
+    txs.append(woeth_strat.depositBridgedWOETH(woeth_amount, { 'from': OETHB_MULTICHAIN_STRATEGIST }))
+
+    # Get the amount of superOETHb now in the multisig
+    oethb_minted = oethb.balanceOf(OETHB_MULTICHAIN_STRATEGIST)
+
+    oethb_redeemed = 492 * 10**18  # 492 ETH
+    oethb_remaining = oethb_minted - oethb_redeemed
+
+    # Redeem the superOETHb for WETH
+    txs.append(vault_core.redeem(oethb_redeemed, oethb_redeemed, { 'from': MULTICHAIN_STRATEGIST }))
+
+    # Unwrap WETH to ETH so it can be bridged to Ethereum
+    txs.append(
+        weth.withdraw(oethb_redeemed, {'from': OETHB_MULTICHAIN_STRATEGIST})
+    )
+
+    # Rebase so that any yields from price update and
+    # backing asset change from deposit are accounted for.
+    txs.append(vault_core.rebase({ 'from': OETHB_MULTICHAIN_STRATEGIST }))
+
+    # Check Vault Value against snapshot
+    vault_change = vault_core.totalValue() - vault_value_checker.snapshots(OETHB_MULTICHAIN_STRATEGIST)[0]
+    supply_change = oethb.totalSupply() - vault_value_checker.snapshots(OETHB_MULTICHAIN_STRATEGIST)[1]
+    profit = vault_change - supply_change
+
+    txs.append(vault_value_checker.checkDelta(profit, (0.1 * 10**18), vault_change, (1 * 10**18), {'from': OETHB_MULTICHAIN_STRATEGIST}))
+
+    print("--------------------")
+    print("Deposited wOETH     ", c18(woeth_amount), woeth_amount)
+    print("Minted superOETHb   ", c18(oethb_minted), oethb_minted)
+    print("Redeemed superOETHb ", c18(oethb_redeemed), oethb_redeemed)
+    print("Remaining superOETHb", c18(oethb_remaining), oethb_remaining)
+    print("ETH to bridged      ", c18(oethb_redeemed), oethb_redeemed)
+    print("--------------------")
+    print("Profit       ", c18(profit), profit)
+    print("Vault Change ", c18(vault_change), vault_change)
