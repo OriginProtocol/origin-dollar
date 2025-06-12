@@ -426,7 +426,7 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
         (
             bytes memory packedSqrtPriceBreaks,
             bytes[] memory packedArgs,
-            ,
+            uint256 WETHRequired,
             uint256 OETHpRequired
         ) = _getAddLiquidityParams(_wethBalance, 1e30);
 
@@ -434,7 +434,7 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
             IVault(vaultAddress).mintForStrategy(OETHpRequired - _oethBalance);
         }
 
-        _approveTokenAmounts(_wethBalance, OETHpRequired);
+        _approveTokenAmounts(WETHRequired, OETHpRequired);
 
         (
             uint256 _wethAmount,
