@@ -37,6 +37,7 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
     /// @notice NFT tokenId of the liquidity position
     ///
     /// @dev starts with value of 1 and can not be 0
+    //  solhint-disable-next-line max-line-length
     ///      https://github.com/rooster-protocol/rooster-contracts/blob/fbfecbc519e4495b12598024a42630b4a8ea4489/v2-common/contracts/base/Nft.sol#L14
     uint256 public tokenId;
     /// @dev Minimum amount of tokens the strategy would be able to withdraw from the pool.
@@ -1132,14 +1133,14 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
           Maverick liquidity utilities
     ****************************************/
 
-    /**
-     * @notice Calculates deltaA = liquidity * (sqrt(upper) - sqrt(lower))
-     *  Calculates deltaB = liquidity / sqrt(lower) - liquidity / sqrt(upper),
-     *  i.e. liquidity * (sqrt(upper) - sqrt(lower)) / (sqrt(upper) * sqrt(lower))
-     *
-     * @dev refactored from here:
-     * https://github.com/rooster-protocol/rooster-contracts/blob/main/v2-supplemental/contracts/libraries/LiquidityUtilities.sol#L665-L695
-     */
+
+    /// @notice Calculates deltaA = liquidity * (sqrt(upper) - sqrt(lower))
+    ///  Calculates deltaB = liquidity / sqrt(lower) - liquidity / sqrt(upper),
+    ///  i.e. liquidity * (sqrt(upper) - sqrt(lower)) / (sqrt(upper) * sqrt(lower))
+    ///
+    /// @dev refactored from here:
+    // solhint-disable-next-line max-line-length
+    /// https://github.com/rooster-protocol/rooster-contracts/blob/main/v2-supplemental/contracts/libraries/LiquidityUtilities.sol#L665-L69
     function _reservesInTickForGivenPriceAndLiquidity(
         uint256 _lowerSqrtPrice,
         uint256 _upperSqrtPrice,
