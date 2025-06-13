@@ -125,6 +125,7 @@
     "@layerzerolabs/lz-evm-protocol-v2": "^3.0.87",
     "@layerzerolabs/lz-v2-utilities": "^3.0.88",
     "@layerzerolabs/oapp-evm": "^0.3.2",
+    "ccxt": "^4.4.88",
     "ganache": "^7.9.2"
   },
   "resolutions": {

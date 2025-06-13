@@ -3974,6 +3974,13 @@ cbor@^8.0.0, cbor@^8.1.0:
   dependencies:
     nofilter "^3.1.0"
 
+ccxt@^4.4.88:
+  version "4.4.88"
+  resolved "https://registry.yarnpkg.com/ccxt/-/ccxt-4.4.88.tgz#ec6a7143a0768d7f77cdc9a6aca8fa95cc908e8d"
+  integrity sha512-ogg36pOSzQkUojS8EHlIBMpN1I2vMCF7haLt2E+doNXPJCIFjBXpjXkbcCrp+RGcgkzbmhO28oDC92TLXGUcqg==
+  dependencies:
+    ws "^8.8.1"
+
 chai@^4.3.4:
   version "4.3.7"
   resolved "https://registry.yarnpkg.com/chai/-/chai-4.3.7.tgz#ec63f6df01829088e8bf55fca839bcd464a8ec51"
@@ -10789,6 +10796,11 @@ ws@^7.4.6:
   version "7.5.9"
   resolved "https://registry.yarnpkg.com/ws/-/ws-7.5.9.tgz#54fa7db29f4c7cec68b1ddd3a89de099942bb591"
   integrity sha512-F+P9Jil7UiSKSkppIiD94dN07AwvFixvLIj1Og1Rl9GGMuNipJnV9JzjD6XuqmAeiswGvUmNLjr5cFuXwNS77Q==
+
+ws@^8.8.1:
+  version "8.18.2"
+  resolved "https://registry.yarnpkg.com/ws/-/ws-8.18.2.tgz#42738b2be57ced85f46154320aabb51ab003705a"
+  integrity sha512-DMricUmwGZUVr++AEAe2uiVM7UoO9MAVZMDu05UQOaUII0lp+zOzLLU4Xqh/JvTqklB1T4uELaaPBKyjE1r4fQ==
 
 xhr-request-promise@^0.1.2:
   version "0.1.3"

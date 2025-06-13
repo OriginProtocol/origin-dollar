@@ -115,6 +115,18 @@ const { sleep } = require("../utils/time");
 
 const { lzBridgeToken, lzSetConfig } = require("./layerzero");
 
+const {
+  fetchMarket,
+  fetchMarkets,
+  createOrder,
+  fetchFundingRates,
+  fetchPerpetualDetails,
+  createAveragedPosition,
+  createPerpetualPosition,
+  monitorPriceDeviations,
+  createTWAPOrder,
+} = require("./hyperliquid");
+
 const log = require("../utils/logger")("tasks");
 
 // Environment tasks.
@@ -1828,4 +1840,85 @@ task("lzSetConfig")
   .addParam("dvncount", "Number of required DVNs")
   .setAction(async (taskArgs) => {
     await lzSetConfig(taskArgs, hre);
+  });
+
+task("fetchMarkets", "Fetch all markets from Hyperliquid").setAction(
+  async (taskArgs) => {
+    await fetchMarkets(taskArgs, hre);
+  }
+);
+
+task("fetchMarket", "Fetch a market from Hyperliquid")
+  .addParam("market", "Market ID")
+  .setAction(async (taskArgs) => {
+    await fetchMarket(taskArgs, hre);
+  });
+
+task("createOrder", "Create an order on Hyperliquid")
+  .addParam("market", "Market ID")
+  .addParam("type", "Order type")
+  .addParam("side", "Order side")
+  .addParam("amount", "Order amount")
+  .addParam("price", "Order price")
+  .setAction(async (taskArgs) => {
+    await createOrder(taskArgs, hre);
+  });
+
+task("fetchFundingRates", "Fetch funding rates for a list of markets")
+  .addParam("markets", "Comma separated list of market IDs")
+  .setAction(async (taskArgs) => {
+    await fetchFundingRates(taskArgs, hre);
+  });
+
+task("fetchPerpetualDetails", "Fetch perpetual details for a market")
+  .addParam("market", "Market ID")
+  .setAction(async (taskArgs) => {
+    await fetchPerpetualDetails(taskArgs, hre);
+  });
+
+task("createTWAPOrder", "Create a TWAP order on Hyperliquid")
+  .addParam("market", "Market ID")
+  .addParam("type", "Order type")
+  .addParam("side", "Order side")
+  .addParam("amount", "Total order amount")
+  .addParam("price", "Order price")
+  .addOptionalParam("chunks", "Number of chunks to split the order into", "5")
+  .addOptionalParam("interval", "Interval between chunks in minutes", "5")
+  .addOptionalParam("leverage", "Leverage to use")
+  .setAction(async (taskArgs) => {
+    await createTWAPOrder(taskArgs, hre);
+  });
+
+task("createPerpetualPosition", "Create a perpetual swap position")
+  .addParam("market", "Market symbol (e.g., BTC/USDC:USDC)")
+  .addParam("type", "Order type (market, limit)")
+  .addParam("side", "Order side (buy, sell)")
+  .addParam("amount", "Position size in base currency")
+  .addOptionalParam("price", "Price for limit orders")
+  .addOptionalParam("leverage", "Leverage multiplier (default: 1)")
+  .setAction(async (taskArgs, hre) => {
+    await createPerpetualPosition(taskArgs, hre);
+  });
+
+task("createAveragedPosition", "Create a position with multiple entry prices")
+  .addParam("market", "Market symbol (e.g., BTC/USDC:USDC)")
+  .addParam("side", "Order side (buy, sell)")
+  .addParam("amount", "Total position size in base currency")
+  .addParam("prices", "Comma-separated list of entry prices")
+  .addOptionalParam(
+    "weights",
+    "Comma-separated list of weights for each price level (default: equal weights)"
+  )
+  .addOptionalParam("leverage", "Leverage multiplier (default: 1)")
+  .setAction(async (taskArgs, hre) => {
+    await createAveragedPosition(taskArgs, hre);
+  });
+
+task(
+  "monitorPriceDeviations",
+  "Monitor price deviations and funding rates for a market"
+)
+  .addParam("market", "Market symbol (e.g., BTC/USDC:USDC)")
+  .setAction(async (taskArgs, hre) => {
+    await monitorPriceDeviations(taskArgs, hre);
   });
