@@ -81,6 +81,35 @@ describe("ForkTest: Rooster AMO Strategy (Plume)", async function () {
         roosterAmoStrategy.connect(governor).removePToken(weth.address)
       ).to.be.revertedWith("Unsupported method");
     });
+
+    it("Should revert calling safe approve all tokens", async function () {
+      await expect(
+        roosterAmoStrategy.connect(governor).safeApproveAllTokens()
+      ).to.be.revertedWith("Unsupported method");
+    });
+
+    it("Should allow calling getWethShare", async function () {
+      await expect(
+        await roosterAmoStrategy.connect(governor).getWETHShare()
+      ).to.be.lte(oethUnits("1"))
+    });
+
+    it("Should support WETH", async function () {
+      await expect(
+        await roosterAmoStrategy.supportsAsset(weth.address)
+      ).to.equal(true)
+
+      await expect(
+        await roosterAmoStrategy.supportsAsset(oethp.address)
+      ).to.equal(false)
+    });
+
+    it("Should not revert calling public views", async function () {
+      await roosterAmoStrategy.getPoolSqrtPrice()
+      await roosterAmoStrategy.getCurrentTradingTick()
+      await roosterAmoStrategy.getPositionPrincipal()
+      await roosterAmoStrategy.tickDominance()
+    });
   });
 
   describe("Configuration", function () {
