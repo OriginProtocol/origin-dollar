@@ -188,11 +188,11 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
     ) initializer InitializableAbstractStrategy(_stratConfig) {
         require(
             address(IMaverickV2Pool(_mPool).tokenA()) == _wethAddress,
-            "WETH not TokanA"
+            "WETH not TokenA"
         );
         require(
             address(IMaverickV2Pool(_mPool).tokenB()) == _oethAddress,
-            "OETH not TokanB"
+            "OETH not TokenB"
         );
         require(
             _liquidityManager != address(0),
