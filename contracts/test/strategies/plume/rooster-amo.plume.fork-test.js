@@ -443,12 +443,30 @@ describe("ForkTest: Rooster AMO Strategy (Plume)", async function () {
       await verifyEndConditions();
     });
 
-    it("Should revert when not depositing WETH or amount is 0", async () => {
+    it("Should revert when not depositing WETH or amount is 0, or withdrawing WETH", async () => {
       await expect(
         roosterAmoStrategy
           .connect(oethVaultSigner)
           .deposit(oethp.address, BigNumber.from("1"))
       ).to.be.revertedWith("Unsupported asset");
+
+      await expect(
+        roosterAmoStrategy
+          .connect(oethVaultSigner)
+          .withdraw(oethpVault.address, oethp.address, oethUnits("1"))
+      ).to.be.revertedWith("Unsupported asset");
+
+      await expect(
+        roosterAmoStrategy
+          .connect(oethVaultSigner)
+          .withdraw(oethpVault.address, weth.address, 0)
+      ).to.be.revertedWith("Must withdraw something");
+
+      await expect(
+        roosterAmoStrategy
+          .connect(oethVaultSigner)
+          .withdraw(weth.address, weth.address, oethUnits("1"))
+      ).to.be.revertedWith("Only withdraw to vault allowed");
 
       await expect(
         roosterAmoStrategy
@@ -567,6 +585,23 @@ describe("ForkTest: Rooster AMO Strategy (Plume)", async function () {
       ).to.approxEqualTolerance(
         balance.add(amountToDeposit.div(wethShare).mul(oethUnits("1"))),
         1.5
+      );
+
+      await verifyEndConditions();
+    });
+
+    it("Should revert when it fails the slippage check", async () => {
+      const amountToDeposit = oethUnits("6");
+      await mintAndDepositToStrategy({ amount: amountToDeposit });
+
+      await expect(
+        rebalance(
+          oethUnits("1"),
+          true,
+          oethUnits("1.1")
+        )
+      ).to.be.revertedWithCustomError(
+        "SlippageCheck(uint256)"
       );
 
       await verifyEndConditions();
@@ -772,10 +807,17 @@ describe("ForkTest: Rooster AMO Strategy (Plume)", async function () {
       await mintAndDepositToStrategy({ amount: oethUnits("1000") }, false);
       const { amount: amount2, swapWeth: swapWeth2 } =
         await estimateSwapAmountsToReachWethRatio(oethUnits("0.91"));
+
       await expect(
         rebalance(amount2, swapWeth2, 0, "0")
       ).to.be.revertedWithCustomError(
         "PoolRebalanceOutOfBounds(uint256,uint256,uint256)"
+      );
+
+      await expect(
+        rebalance(amount.add(amount), swapWeth2, 0, "0")
+      ).to.be.revertedWithCustomError(
+        "OutsideExpectedTickRange()"
       );
     });
 
