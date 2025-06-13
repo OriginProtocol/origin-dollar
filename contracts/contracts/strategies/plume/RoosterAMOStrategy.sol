@@ -1140,7 +1140,7 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
     ///
     /// @dev refactored from here:
     // solhint-disable-next-line max-line-length
-    /// https://github.com/rooster-protocol/rooster-contracts/blob/main/v2-supplemental/contracts/libraries/LiquidityUtilities.sol#L665-L69
+    /// https://github.com/rooster-protocol/rooster-contracts/blob/main/v2-supplemental/contracts/libraries/LiquidityUtilities.sol#L665-L695
     function _reservesInTickForGivenPriceAndLiquidity(
         uint256 _lowerSqrtPrice,
         uint256 _upperSqrtPrice,
