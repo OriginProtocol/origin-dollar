@@ -714,6 +714,8 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
             .SwapParams({
                 amount: _amountToSwap,
                 tokenAIn: _swapWeth,
+                // if true the amount would represent the exactOutput amount instead
+                // of the input amount
                 exactOutput: false,
                 tickLimit: TICK_NUMBER
             });
@@ -797,6 +799,7 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
             "Can not remove more than 100% of liquidity"
         );
 
+        // 0 indicates the first (and only) bin in the NFT LP position.
         IMaverickV2Pool.RemoveLiquidityParams memory params = maverickPosition
             .getRemoveParams(tokenId, 0, _liquidityToDecrease);
         (uint256 _amountWeth, uint256 _amountOeth) = maverickPosition
@@ -815,29 +818,9 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
         );
     }
 
-    /// @dev This function updates the amount of underlying assets with the approach of the least possible
-    ///      total tokens extracted for the current liquidity in the pool.
-    function _updateUnderlyingAssets() internal {
-        /**
-         * Our net value represent the smallest amount of tokens we are able to extract from the position
-         * given our liquidity.
-         *
-         * The least amount of tokens ex-tractable from the position is where the active trading price is
-         * at the edge between tick -1 & tick 0. There the pool is offering 1:1 trades between WETH & OETH.
-         * At that moment the pool consists completely of WETH and no OETH.
-         *
-         * The more swaps from OETH -> WETH happen on the pool the more the price starts to move away from the tick 0
-         * towards the middle of tick -1 making OETH (priced in WETH) cheaper.
-         */
-
-        uint256 _wethAmount = tokenId == 0 ? 0 : _balanceInPosition();
-
-        underlyingAssets = _wethAmount;
-        emit UnderlyingAssetsUpdated(_wethAmount);
-    }
-
     /**
-     * Burns any OETH tokens remaining on the strategy contract
+     * @dev Burns any OETH tokens remaining on the strategy contract if the balance is
+     * above the action threshold.
      */
     function _burnOethOnTheContract() internal {
         uint256 _oethBalance = IERC20(OETH).balanceOf(address(this));
@@ -1057,8 +1040,29 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
         return underlyingAssets + _wethBalance + _oethBalance;
     }
 
+    /// @dev This function updates the amount of underlying assets with the approach of the least possible
+    ///      total tokens extracted for the current liquidity in the pool.
+    function _updateUnderlyingAssets() internal {
+        /**
+         * Our net value represent the smallest amount of tokens we are able to extract from the position
+         * given our liquidity.
+         *
+         * The least amount of tokens ex-tractable from the position is where the active trading price is
+         * at the edge between tick -1 & tick 0. There the pool is offering 1:1 trades between WETH & OETH.
+         * At that moment the pool consists completely of WETH and no OETH.
+         *
+         * The more swaps from OETH -> WETH happen on the pool the more the price starts to move away from the tick 0
+         * towards the middle of tick -1 making OETH (priced in WETH) cheaper.
+         */
+
+        uint256 _wethAmount = tokenId == 0 ? 0 : _balanceInPosition();
+
+        underlyingAssets = _wethAmount;
+        emit UnderlyingAssetsUpdated(_wethAmount);
+    }
+
     /**
-     * @notice Strategy reserves (which consist only of WETH in case of Rooster - Plume pool)
+     * @dev Strategy reserves (which consist only of WETH in case of Rooster - Plume pool)
      * when the tick price is closest to parity - assuring the lowest amount of tokens
      * returned for the current position liquidity.
      */
