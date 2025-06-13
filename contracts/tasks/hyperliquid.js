@@ -74,35 +74,35 @@ async function createTWAPOrder(taskArgs) {
     await hyperliquid.setLeverage(taskArgs.leverage, taskArgs.market);
   }
 
-  const totalAmount = parseFloat(taskArgs.amount);
-  const numChunks = parseInt(taskArgs.chunks) || 5;
-  const intervalMinutes = parseInt(taskArgs.interval) || 5;
+  // Create the request payload
+  const payload = {
+    action: {
+      type: "twapOrder",
+      twap: {
+        a: market.id, // asset number
+        b: taskArgs.side === "buy", // isBuy boolean
+        s: taskArgs.amount.toString(), // size as string
+        r: false, // reduceOnly
+        m: parseInt(taskArgs.interval) || 5, // minutes
+        t: false, // randomize
+      },
+    },
+    nonce: Date.now(),
+  };
 
-  const chunkSize = totalAmount / numChunks;
-
-  console.log(
-    `Executing TWAP order for ${totalAmount} ${market.base} over ${numChunks} chunks`
+  // Create the signature
+  const signature = await hyperliquid.sign(
+    JSON.stringify(payload),
+    hyperliquid.secret
   );
-  console.log(`Chunk size: ${chunkSize} ${market.base}`);
-  console.log(`Interval: ${intervalMinutes} minutes`);
 
-  for (let i = 0; i < numChunks; i++) {
-    const order = await hyperliquid.createOrder(
-      taskArgs.market,
-      taskArgs.type,
-      taskArgs.side,
-      chunkSize,
-      taskArgs.price
-    );
-    console.log(`Chunk ${i + 1}/${numChunks} executed:`, order);
+  // Add the signature to the payload
+  payload.signature = signature;
 
-    if (i < numChunks - 1) {
-      console.log(`Waiting ${intervalMinutes} minutes before next chunk...`);
-      await new Promise((resolve) =>
-        setTimeout(resolve, intervalMinutes * 60 * 1000)
-      );
-    }
-  }
+  // Make the API call
+  const response = await hyperliquid.privatePostExchange(payload);
+  console.log("TWAP Order Created:", response);
+  return response;
 }
 
 async function createPerpetualPosition(taskArgs) {
