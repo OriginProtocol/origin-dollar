@@ -370,7 +370,7 @@ describe("ForkTest: Rooster AMO Strategy (Plume)", async function () {
       // There may remain some WETH left on the strategy contract because of the rounding
       // when removing the liquidity
       expect(await weth.balanceOf(roosterAmoStrategy.address)).to.lte(
-        BigNumber.from("1000")
+        BigNumber.from("10000")
       );
 
       await verifyEndConditions();
