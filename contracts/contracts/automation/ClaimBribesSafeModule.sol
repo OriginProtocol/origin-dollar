@@ -4,6 +4,7 @@ pragma solidity ^0.8.0;
 import { AccessControlEnumerable } from "@openzeppelin/contracts/access/AccessControlEnumerable.sol";
 import { ICLGauge } from "../interfaces/aerodrome/ICLGauge.sol";
 import { ICLPool } from "../interfaces/aerodrome/ICLPool.sol";
+import { ISafe } from "../interfaces/ISafe.sol";
 
 struct BribePoolInfo {
     address poolAddress;
@@ -21,15 +22,6 @@ interface IAerodromeVoter {
 
 interface IVeNFT {
     function ownerOf(uint256 tokenId) external view returns (address);
-}
-
-interface ISafe {
-    function execTransactionFromModule(
-        address,
-        uint256,
-        bytes memory,
-        uint8
-    ) external returns (bool);
 }
 
 interface ICLRewardContract {

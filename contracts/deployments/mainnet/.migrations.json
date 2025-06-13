@@ -36,5 +36,6 @@
   "137_oeth_weth_curve_amo": 1746523151,
   "138_buyback_deprecation": 1748836826,
   "139_deprecate_ousd_harvester": 1748932016,
-  "140_remove_1st_native_ssv_staking": 1748943551
+  "140_remove_1st_native_ssv_staking": 1748943551,
+  "141_claimrewards_module": 1749711150
 }
