@@ -599,6 +599,8 @@ addresses.plume.LayerZeroEndpointV2 =
   "0xC1b15d3B262bEeC0e3565C11C9e0F6134BdaCB36";
 addresses.plume.WOETHOmnichainAdapter =
   "0x592CB6A596E7919930bF49a27AdAeCA7C055e4DB";
+addresses.plume.WETHOmnichainAdapter =
+  "0x4683CE822272CD66CEa73F5F1f9f5cBcaEF4F066";
 
 addresses.plume.timelock = "0x6C6f8F839A7648949873D3D2beEa936FC2932e5c";
 addresses.plume.strategist = addresses.multichainStrategist;
