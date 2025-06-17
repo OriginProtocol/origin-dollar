@@ -28,8 +28,8 @@ abstract contract AbstractLZBridgeHelperModule is AccessControlEnumerable {
 
     constructor(address _safeContract) {
         safeContract = ISafe(_safeContract);
-        _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
-        _grantRole(OPERATOR_ROLE, msg.sender);
+        _grantRole(DEFAULT_ADMIN_ROLE, address(safeContract));
+        _grantRole(OPERATOR_ROLE, address(safeContract));
     }
 
     /**

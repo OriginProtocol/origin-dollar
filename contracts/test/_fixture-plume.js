@@ -179,6 +179,23 @@ const defaultPlumeFixture = deployments.createFixture(async () => {
   };
 });
 
+const bridgeHelperModuleFixture = deployments.createFixture(async () => {
+  const fixture = await defaultPlumeFixture();
+
+  const safeSigner = await impersonateAndFund(addresses.multichainStrategist);
+  safeSigner.address = addresses.multichainStrategist;
+
+  const bridgeHelperModule = await ethers.getContract(
+    "PlumeBridgeHelperModule"
+  );
+
+  return {
+    ...fixture,
+    bridgeHelperModule,
+    safeSigner,
+  };
+});
+
 mocha.after(async () => {
   if (snapshotId) {
     await nodeRevert(snapshotId);
@@ -187,4 +204,5 @@ mocha.after(async () => {
 
 module.exports = {
   defaultPlumeFixture,
+  bridgeHelperModuleFixture,
 };
