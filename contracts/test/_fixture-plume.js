@@ -189,30 +189,10 @@ const bridgeHelperModuleFixture = deployments.createFixture(async () => {
     "PlumeBridgeHelperModule"
   );
 
-  const wethContract = await ethers.getContractAt(
-    [
-      "function addMinter(address) external",
-      "function mint(address to, uint256 amount) external",
-      "function owner() external view returns (address)",
-    ],
-    addresses.plume.WETH
-  );
-
-  const wethOwner = await impersonateAndFund(await wethContract.owner());
-
-  await wethContract.connect(wethOwner).addMinter(fixture.governor.address);
-
-  // // Mint some mock WETH
-  // await wethContract.connect(fixture.governor).mint(safeSigner.address, oethUnits("1"));
-
-  // // Mint some mock wOETH
-  // await woeth.connect(fixture.governor).mint(safeSigner.address, oethUnits("1"));
-
   return {
     ...fixture,
     bridgeHelperModule,
     safeSigner,
-    mintableWETHContract: wethContract,
   };
 });
 
