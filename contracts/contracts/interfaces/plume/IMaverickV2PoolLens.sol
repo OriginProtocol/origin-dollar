@@ -60,7 +60,7 @@ interface IMaverickV2PoolLens {
     }
 
     /**
-     * @notice Specification for deriving create pool parameters. Creating a 
+     * @notice Specification for deriving create pool parameters. Creating a
      * pool in the liquidity manager has several steps:
      *
      * - Deploy pool
