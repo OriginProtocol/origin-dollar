@@ -77,7 +77,7 @@ contract PlumeBridgeHelperModule is
         _bridgeTokenWithLz(
             LZ_ETHEREUM_ENDPOINT_ID,
             IERC20(address(weth)),
-            LZ_WOETH_OMNICHAIN_ADAPTER,
+            LZ_ETH_OMNICHAIN_ADAPTER,
             wethAmount,
             slippageBps,
             false

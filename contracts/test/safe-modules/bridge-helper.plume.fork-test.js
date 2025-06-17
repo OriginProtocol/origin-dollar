@@ -23,7 +23,21 @@ describe("ForkTest: Bridge Helper Safe Module", function () {
     );
   });
 
-  it("Should bridge WETH to Ethereum", async () => {});
+  it("Should bridge WETH to Ethereum", async () => {
+    const { mintableWETHContract, governor, safeSigner, bridgeHelperModule } =
+      fixture;
+
+    // Mint 1 WETH
+    await mintableWETHContract
+      .connect(governor)
+      .mint(safeSigner.address, oethUnits("1"));
+
+    // Bridge 1 WETH to Ethereum
+    await bridgeHelperModule.connect(safeSigner).bridgeWETHToEthereum(
+      oethUnits("1"),
+      100 // 1% slippage
+    );
+  });
 
   it("Should deposit wOETH for OETHp and redeem it for WETH", async () => {});
 
