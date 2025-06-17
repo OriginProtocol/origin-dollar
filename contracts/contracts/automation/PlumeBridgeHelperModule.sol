@@ -278,7 +278,7 @@ contract PlumeBridgeHelperModule is
             0, // Value
             abi.encodeWithSelector(
                 bridgedWOETHStrategy.withdrawBridgedWOETH.selector,
-                woethAmount
+                wethAmount
             ),
             0 // Call
         );

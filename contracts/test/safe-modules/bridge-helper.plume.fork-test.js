@@ -157,5 +157,72 @@ describe("ForkTest: Bridge Helper Safe Module", function () {
     );
   });
 
-  it("Should mint OETHp with WETH and redeem it for wOETH", async () => {});
+  it("Should mint OETHp with WETH and redeem it for wOETH", async () => {
+    const {
+      _mintWETH,
+      oethpVault,
+      woeth,
+      weth,
+      oethp,
+      safeSigner,
+      woethStrategy,
+      bridgeHelperModule,
+    } = fixture;
+
+    const wethAmount = oethUnits("1");
+
+    await _mintWETH(safeSigner, wethAmount);
+
+    // Update oracle price
+    await woethStrategy.updateWOETHOraclePrice();
+    await oethpVault.rebase();
+
+    const wethPerUnitWOETH = await woethStrategy.getBridgedWOETHValue(
+      oethUnits("1")
+    );
+    const expectedWOETHAmount = wethAmount
+      .mul(oethUnits("1"))
+      .div(wethPerUnitWOETH);
+
+    const supplyBefore = await oethp.totalSupply();
+    const wethBalanceBefore = await weth.balanceOf(safeSigner.address);
+    const woethBalanceBefore = await woeth.balanceOf(safeSigner.address);
+
+    const woethStrategyBalanceBefore = await woeth.balanceOf(
+      woethStrategy.address
+    );
+
+    const woethStrategyValueBefore = await woethStrategy.checkBalance(
+      weth.address
+    );
+
+    // Deposit 1 WETH for OETHp and redeem it for wOETH
+    await bridgeHelperModule
+      .connect(safeSigner)
+      .depositWETHAndRedeemWOETH(wethAmount);
+
+    const supplyAfter = await oethp.totalSupply();
+    const wethBalanceAfter = await weth.balanceOf(safeSigner.address);
+    const woethBalanceAfter = await woeth.balanceOf(safeSigner.address);
+    const woethStrategyBalanceAfter = await woeth.balanceOf(
+      woethStrategy.address
+    );
+    const woethStrategyValueAfter = await woethStrategy.checkBalance(
+      weth.address
+    );
+
+    expect(supplyAfter).to.approxEqualTolerance(
+      supplyBefore.sub(oethUnits("1"))
+    );
+    expect(wethBalanceAfter).to.eq(wethBalanceBefore.sub(wethAmount));
+    expect(woethBalanceAfter).to.eq(
+      woethBalanceBefore.add(expectedWOETHAmount)
+    );
+    expect(woethStrategyBalanceAfter).to.approxEqualTolerance(
+      woethStrategyBalanceBefore.sub(expectedWOETHAmount)
+    );
+    expect(woethStrategyValueAfter).to.approxEqualTolerance(
+      woethStrategyValueBefore.sub(expectedWOETHAmount)
+    );
+  });
 });
