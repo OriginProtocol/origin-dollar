@@ -711,11 +711,11 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
         // and type(int32).min for a swap where tokenB (OETH) is the input
 
         IMaverickV2Pool.SwapParams memory swapParams = IMaverickV2Pool
+        // exactOutput defines whether the amount specified is the output
+        // or the input amount of the swap
             .SwapParams({
                 amount: _amountToSwap,
                 tokenAIn: _swapWeth,
-                // if true the amount would represent the exactOutput amount instead
-                // of the input amount
                 exactOutput: false,
                 tickLimit: TICK_NUMBER
             });
@@ -775,15 +775,18 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
             );
         }
 
-        uint256 shareOfWethToRemove = Math_v5.min(
-            /**
-             * After much testing with different remove values the + 1 correction sometimes isn't enough
-             * and will still remove 1 WEI of the liquidity too little. With + 2 WEI correction no cases
-             * removing too little WETH were detected.
-             */
-            _additionalWethRequired.divPrecisely(_wethInThePool) + 2,
-            1e18
-        );
+        uint256 shareOfWethToRemove = _wethInThePool <= 1
+            ? 1e18
+            : Math_v5.min(
+                /**
+                 * When dealing with shares of liquidity to remove there is always some
+                 * rounding involved. After extensive fuzz testing the below approach
+                 * yielded the best results where the strategy overdraws the least and
+                 * never removes insufficient amount of WETH.
+                 */
+                (_additionalWethRequired + 2).divPrecisely(_wethInThePool - 1) + 2,
+                1e18
+            );
 
         _removeLiquidity(shareOfWethToRemove);
     }
@@ -1136,7 +1139,6 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
     /***************************************
           Maverick liquidity utilities
     ****************************************/
-
 
     /// @notice Calculates deltaA = liquidity * (sqrt(upper) - sqrt(lower))
     ///  Calculates deltaB = liquidity / sqrt(lower) - liquidity / sqrt(upper),
