@@ -118,37 +118,7 @@ describe("ForkTest: Vault", function () {
       expect(await vault.capitalPaused()).to.be.false;
     });
 
-    it("Should allow to mint and redeem w/ USDT & USDC & USDS", async () => {
-      const { ousd, vault, josh, usdt, usdc, usds } = fixture;
-      const balancePreMint = await ousd
-        .connect(josh)
-        .balanceOf(josh.getAddress());
-      // mint using all 3 tokens, giving vault enough liquidity to create a mixed
-      // bag of tokens on redeem
-      await vault.connect(josh).mint(usdt.address, usdtUnits("50000"), 0);
-      await vault.connect(josh).mint(usdc.address, usdcUnits("50000"), 0);
-      await vault.connect(josh).mint(usds.address, usdsUnits("50000"), 0);
-
-      const balancePostMint = await ousd
-        .connect(josh)
-        .balanceOf(josh.getAddress());
-
-      const balanceDiff = balancePostMint.sub(balancePreMint);
-      expect(balanceDiff).to.approxEqualTolerance(ousdUnits("150000"), 1);
-
-      // redeem only a third of the minted amount
-      await vault.connect(josh).redeem(ousdUnits("50000"), 0);
-
-      const balancePostRedeem = await ousd
-        .connect(josh)
-        .balanceOf(josh.getAddress());
-      expect(balancePreMint.add(ousdUnits("100000"))).to.approxEqualTolerance(
-        balancePostRedeem,
-        1
-      );
-    });
-
-    it.skip("Should allow to mint and redeem w/ USDT", async () => {
+    it("Should allow to mint and redeem w/ USDT", async () => {
       const { ousd, vault, josh, usdt } = fixture;
       const balancePreMint = await ousd
         .connect(josh)
@@ -170,7 +140,7 @@ describe("ForkTest: Vault", function () {
       expect(balancePreMint).to.approxEqualTolerance(balancePostRedeem, 1);
     });
 
-    it.skip("Should allow to mint and redeem w/ USDC", async () => {
+    it("Should allow to mint and redeem w/ USDC", async () => {
       const { ousd, vault, josh, usdc } = fixture;
       const balancePreMint = await ousd
         .connect(josh)
@@ -192,7 +162,7 @@ describe("ForkTest: Vault", function () {
       expect(balancePreMint).to.approxEqualTolerance(balancePostRedeem, 1);
     });
 
-    it.skip("Should allow to mint and redeem w/ USDS", async () => {
+    it("Should allow to mint and redeem w/ USDS", async () => {
       const { ousd, vault, josh, usds } = fixture;
       const balancePreMint = await ousd
         .connect(josh)
