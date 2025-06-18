@@ -136,7 +136,7 @@ contract PlumeBridgeHelperModule is
         // Rebase to account for any yields from price update
         vault.rebase();
 
-        uint256 oethpAmount = oethp.balanceOf(address(this));
+        uint256 oethpAmount = oethp.balanceOf(address(safeContract));
 
         // Approve bridgedWOETH strategy to move wOETH
         bool success = safeContract.execTransactionFromModule(
@@ -162,7 +162,7 @@ contract PlumeBridgeHelperModule is
         );
         require(success, "Failed to deposit bridged WOETH");
 
-        oethpAmount = oethp.balanceOf(address(this)) - oethpAmount;
+        oethpAmount = oethp.balanceOf(address(safeContract)) - oethpAmount;
 
         // Rebase to account for any yields from price update
         // and backing asset change from deposit
@@ -270,7 +270,7 @@ contract PlumeBridgeHelperModule is
         );
         require(success, "Failed to approve OETHp");
 
-        uint256 woethAmount = bridgedWOETH.balanceOf(address(this));
+        uint256 woethAmount = bridgedWOETH.balanceOf(address(safeContract));
 
         // Withdraw from bridgedWOETH strategy
         success = safeContract.execTransactionFromModule(
@@ -284,7 +284,9 @@ contract PlumeBridgeHelperModule is
         );
         require(success, "Failed to withdraw bridged WOETH");
 
-        woethAmount = bridgedWOETH.balanceOf(address(this)) - woethAmount;
+        woethAmount =
+            bridgedWOETH.balanceOf(address(safeContract)) -
+            woethAmount;
 
         return woethAmount;
     }

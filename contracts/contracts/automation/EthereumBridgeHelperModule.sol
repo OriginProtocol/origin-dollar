@@ -70,11 +70,17 @@ contract EthereumBridgeHelperModule is
         onlyOperator
     {
         // Unwrap into ETH
-        weth.withdraw(wethAmount);
+        safeContract.execTransactionFromModule(
+            address(weth),
+            0, // Value
+            abi.encodeWithSelector(weth.withdraw.selector, wethAmount),
+            0 // Call
+        );
+
         _bridgeTokenWithLz(
             LZ_PLUME_ENDPOINT_ID,
             IERC20(address(weth)),
-            LZ_WOETH_OMNICHAIN_ADAPTER,
+            LZ_ETH_OMNICHAIN_ADAPTER,
             wethAmount,
             slippageBps,
             true
@@ -140,7 +146,7 @@ contract EthereumBridgeHelperModule is
         );
         require(success, "Failed to approve OETH");
 
-        uint256 woethAmount = woeth.balanceOf(address(this));
+        uint256 woethAmount = woeth.balanceOf(address(safeContract));
 
         // Wrap OETH into wOETH
         success = safeContract.execTransactionFromModule(
@@ -149,14 +155,14 @@ contract EthereumBridgeHelperModule is
             abi.encodeWithSelector(
                 woeth.deposit.selector,
                 wethAmount,
-                address(this)
+                address(safeContract)
             ),
             0 // Call
         );
         require(success, "Failed to wrap OETH");
 
         // Compute amount of wOETH minted
-        return woeth.balanceOf(address(this)) - woethAmount;
+        return woeth.balanceOf(address(safeContract)) - woethAmount;
     }
 
     /**
@@ -199,7 +205,7 @@ contract EthereumBridgeHelperModule is
      * @return Amount of WETH received.
      */
     function _unwrapAndRedeem(uint256 woethAmount) internal returns (uint256) {
-        uint256 oethAmount = oeth.balanceOf(address(this));
+        uint256 oethAmount = oeth.balanceOf(address(safeContract));
 
         // Unwrap wOETH
         bool success = safeContract.execTransactionFromModule(
@@ -208,14 +214,14 @@ contract EthereumBridgeHelperModule is
             abi.encodeWithSelector(
                 woeth.redeem.selector,
                 woethAmount,
-                address(this),
-                address(this)
+                address(safeContract),
+                address(safeContract)
             ),
             0 // Call
         );
         require(success, "Failed to unwrap wOETH");
 
-        oethAmount = oeth.balanceOf(address(this)) - oethAmount;
+        oethAmount = oeth.balanceOf(address(safeContract)) - oethAmount;
 
         // Redeem OETH using Vault to get WETH
         success = safeContract.execTransactionFromModule(
@@ -244,7 +250,13 @@ contract EthereumBridgeHelperModule is
     ) external onlyOperator {
         uint256 wethAmount = _unwrapAndRedeem(woethAmount);
         // Unwrap into ETH
-        weth.withdraw(wethAmount);
+        safeContract.execTransactionFromModule(
+            address(weth),
+            0, // Value
+            abi.encodeWithSelector(weth.withdraw.selector, wethAmount),
+            0 // Call
+        );
+
         _bridgeTokenWithLz(
             LZ_PLUME_ENDPOINT_ID,
             IERC20(address(weth)),
