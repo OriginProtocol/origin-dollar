@@ -70,7 +70,13 @@ contract EthereumBridgeHelperModule is
         onlyOperator
     {
         // Unwrap into ETH
-        weth.withdraw(wethAmount);
+        safeContract.execTransactionFromModule(
+            address(weth),
+            0, // Value
+            abi.encodeWithSelector(weth.withdraw.selector, wethAmount),
+            0 // Call
+        );
+
         _bridgeTokenWithLz(
             LZ_PLUME_ENDPOINT_ID,
             IERC20(address(weth)),
@@ -244,7 +250,13 @@ contract EthereumBridgeHelperModule is
     ) external onlyOperator {
         uint256 wethAmount = _unwrapAndRedeem(woethAmount);
         // Unwrap into ETH
-        weth.withdraw(wethAmount);
+        safeContract.execTransactionFromModule(
+            address(weth),
+            0, // Value
+            abi.encodeWithSelector(weth.withdraw.selector, wethAmount),
+            0 // Call
+        );
+
         _bridgeTokenWithLz(
             LZ_PLUME_ENDPOINT_ID,
             IERC20(address(weth)),
