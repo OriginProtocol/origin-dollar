@@ -129,6 +129,7 @@ abstract contract AbstractLZBridgeHelperModule is AccessControlEnumerable {
         }
 
         // Transfer to Safe contract
+        // slither-disable-next-line unchecked-transfer unused-return
         IERC20(token).transfer(address(safeContract), amount);
     }
 
