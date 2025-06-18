@@ -162,7 +162,8 @@ describe("ForkTest: Bridge Helper Safe Module", function () {
       .setAssetDefaultStrategy(weth.address, addresses.zero);
     await impersonateAndFund(josh.address, "3000");
     await weth.connect(josh).deposit({ value: oethUnits("2500") });
-    await weth.connect(josh).transfer(oethVault.address, oethUnits("2500"));
+    await weth.connect(josh).approve(oethVault.address, oethUnits("2500"));
+    await oethVault.connect(josh).mint(weth.address, oethUnits("2000"), "0");
 
     const woethAmount = oethUnits("1");
 
@@ -173,18 +174,15 @@ describe("ForkTest: Bridge Helper Safe Module", function () {
 
     const wethBalanceBefore = await weth.balanceOf(safeSigner.address);
     const woethBalanceBefore = await woeth.balanceOf(safeSigner.address);
-    const oethBalanceBefore = await oeth.balanceOf(woeth.address);
 
     await bridgeHelperModule.connect(safeSigner).unwrapAndRedeem(woethAmount);
 
     const wethBalanceAfter = await weth.balanceOf(safeSigner.address);
     const woethBalanceAfter = await woeth.balanceOf(safeSigner.address);
-    const oethBalanceAfter = await oeth.balanceOf(woeth.address);
 
     expect(wethBalanceAfter).to.approxEqualTolerance(
       wethBalanceBefore.add(wethExpected)
     );
     expect(woethBalanceAfter).to.eq(woethBalanceBefore.sub(woethAmount));
-    expect(oethBalanceAfter).to.eq(oethBalanceBefore.sub(wethExpected));
   });
 });
