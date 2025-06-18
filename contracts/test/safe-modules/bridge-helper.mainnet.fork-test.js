@@ -5,6 +5,7 @@ const {
 const { oethUnits } = require("../helpers");
 const { expect } = require("chai");
 const addresses = require("../../utils/addresses");
+const { impersonateAndFund } = require("../../utils/signers");
 
 const mainnetFixture = createFixtureLoader(bridgeHelperModuleFixture);
 
@@ -102,7 +103,7 @@ describe("ForkTest: Bridge Helper Safe Module", function () {
     expect(minAmountLD).to.gt(oethUnits("0.99"));
   });
 
-  it("Should mint OETH wrap it to WOETH and bridge it to Plume", async () => {
+  it("Should mint OETH wrap it to WOETH", async () => {
     const {
       josh,
       oethVault,
@@ -125,10 +126,8 @@ describe("ForkTest: Bridge Helper Safe Module", function () {
     const wethBalanceBefore = await weth.balanceOf(safeSigner.address);
     const woethSupplyBefore = await woeth.totalSupply();
 
-    // Mint OETH using WETH and wrap it to WOETH and bridge it
-    await bridgeHelperModule
-      .connect(safeSigner)
-      .mintWrapAndBridgeToPlume(oethUnits("1"), 100);
+    // Mint OETH using WETH and wrap it to WOETH
+    await bridgeHelperModule.connect(safeSigner).mintAndWrap(oethUnits("1"));
 
     const supplyAfter = await oeth.totalSupply();
     const wethBalanceAfter = await weth.balanceOf(safeSigner.address);
@@ -145,17 +144,30 @@ describe("ForkTest: Bridge Helper Safe Module", function () {
   });
 
   it("Should unwrap WOETH and redeem it to WETH", async () => {
-    const { woeth, weth, josh, safeSigner, bridgeHelperModule, oethVault } =
-      fixture;
+    const {
+      woeth,
+      weth,
+      josh,
+      timelock,
+      safeSigner,
+      bridgeHelperModule,
+      oethVault,
+    } = fixture;
 
     await oethVault.connect(josh).rebase();
+
+    // Do a huge yield deposit to fund the Vault
+    await oethVault
+      .connect(timelock)
+      .setAssetDefaultStrategy(weth.address, addresses.zero);
+    await impersonateAndFund(josh.address, "3000");
+    await weth.connect(josh).deposit({ value: oethUnits("2500") });
+    await weth.connect(josh).transfer(oethVault.address, oethUnits("2500"));
 
     const woethAmount = oethUnits("1");
 
     // Make sure Safe has some wOETH
     await _mintWOETH(woethAmount, josh, safeSigner.address);
-    // and the Vault has some WETH
-    await weth.connect(josh).transfer(oethVault.address, oethUnits("1.1"));
 
     const wethExpected = await woeth.previewRedeem(woethAmount);
 
