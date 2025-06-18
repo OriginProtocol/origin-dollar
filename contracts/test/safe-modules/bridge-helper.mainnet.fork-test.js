@@ -143,4 +143,36 @@ describe("ForkTest: Bridge Helper Safe Module", function () {
       woethSupplyBefore.add(woethAmount)
     );
   });
+
+  it("Should unwrap WOETH and redeem it to WETH", async () => {
+    const { woeth, weth, josh, safeSigner, bridgeHelperModule, oethVault } =
+      fixture;
+
+    await oethVault.connect(josh).rebase();
+
+    const woethAmount = oethUnits("1");
+
+    // Make sure Safe has some wOETH
+    await _mintWOETH(woethAmount, josh, safeSigner.address);
+    // and the Vault has some WETH
+    await weth.connect(josh).mintTo(oethVault.address, oethUnits("1.1"));
+
+    const wethExpected = await woeth.previewRedeem(woethAmount);
+
+    const wethBalanceBefore = await weth.balanceOf(safeSigner.address);
+    const woethBalanceBefore = await woeth.balanceOf(safeSigner.address);
+    const oethBalanceBefore = await oeth.balanceOf(woeth.address);
+
+    await bridgeHelperModule.connect(safeSigner).unwrapAndRedeem(woethAmount);
+
+    const wethBalanceAfter = await weth.balanceOf(safeSigner.address);
+    const woethBalanceAfter = await woeth.balanceOf(safeSigner.address);
+    const oethBalanceAfter = await oeth.balanceOf(woeth.address);
+
+    expect(wethBalanceAfter).to.approxEqualTolerance(
+      wethBalanceBefore.add(wethExpected)
+    );
+    expect(woethBalanceAfter).to.eq(woethBalanceBefore.sub(woethAmount));
+    expect(oethBalanceAfter).to.eq(oethBalanceBefore.sub(wethExpected));
+  });
 });
