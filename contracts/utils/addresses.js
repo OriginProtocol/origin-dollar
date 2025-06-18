@@ -323,6 +323,8 @@ addresses.mainnet.LayerZeroEndpointV2 =
   "0x1a44076050125825900e736c501f859c50fE728c";
 addresses.mainnet.WOETHOmnichainAdapter =
   "0x7d1bea5807e6af125826d56ff477745bb89972b8";
+addresses.mainnet.ETHOmnichainAdapter =
+  "0x77b2043768d28E9C9aB44E1aBfC95944bcE57931";
 
 addresses.mainnet.passthrough = {};
 addresses.mainnet.passthrough.curve = {};

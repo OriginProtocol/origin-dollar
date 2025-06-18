@@ -1,4 +1,7 @@
-const { createFixtureLoader, bridgeHelperModuleFixture } = require("../_fixture");
+const {
+  createFixtureLoader,
+  bridgeHelperModuleFixture,
+} = require("../_fixture");
 const { oethUnits } = require("../helpers");
 const { expect } = require("chai");
 const addresses = require("../../utils/addresses");
@@ -6,11 +9,7 @@ const addresses = require("../../utils/addresses");
 const mainnetFixture = createFixtureLoader(bridgeHelperModuleFixture);
 
 describe("ForkTest: Bridge Helper Safe Module", function () {
-  let fixture,
-    oethVault,
-    weth,
-    woeth,
-    oeth;
+  let fixture, oethVault, weth, woeth, oeth;
   beforeEach(async () => {
     fixture = await mainnetFixture();
     oethVault = fixture.oethVault;
@@ -20,7 +19,7 @@ describe("ForkTest: Bridge Helper Safe Module", function () {
   });
 
   const _mintOETH = async (amount, user) => {
-    await oethVault.connect(user).mint(weth.address, amount, amount)
+    await oethVault.connect(user).mint(weth.address, amount, amount);
   };
 
   const _mintWOETH = async (amount, user, receiver) => {
@@ -40,12 +39,10 @@ describe("ForkTest: Bridge Helper Safe Module", function () {
     const balanceBefore = await woeth.balanceOf(safeSigner.address);
 
     // Bridge 1 wOETH to Ethereum
-    const tx = await bridgeHelperModule
-      .connect(safeSigner)
-      .bridgeWOETHToPlume(
-        oethUnits("1"),
-        50 // 0.5% slippage
-      );
+    const tx = await bridgeHelperModule.connect(safeSigner).bridgeWOETHToPlume(
+      oethUnits("1"),
+      50 // 0.5% slippage
+    );
 
     // Check balance
     const balanceAfter = await woeth.balanceOf(safeSigner.address);
@@ -79,19 +76,17 @@ describe("ForkTest: Bridge Helper Safe Module", function () {
     await weth.connect(josh).transfer(safeSigner.address, oethUnits("1.1"));
 
     // Bridge 1 WETH to Plume
-    const tx = await bridgeHelperModule
-      .connect(safeSigner)
-      .bridgeWETHToPlume(
-        oethUnits("1"),
-        100 // 1% slippage
-      );
+    const tx = await bridgeHelperModule.connect(safeSigner).bridgeWETHToPlume(
+      oethUnits("1"),
+      100 // 1% slippage
+    );
 
     const { events } = await tx.wait();
 
     const lzBridgeEvent = events.find(
       (e) =>
         e.address.toLowerCase() ===
-        addresses.mainnet.WETHOmnichainAdapter.toLowerCase()
+        addresses.mainnet.ETHOmnichainAdapter.toLowerCase()
     );
 
     expect(lzBridgeEvent.topics[2]).to.eq(
