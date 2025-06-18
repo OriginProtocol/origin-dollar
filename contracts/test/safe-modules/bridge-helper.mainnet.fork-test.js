@@ -155,7 +155,7 @@ describe("ForkTest: Bridge Helper Safe Module", function () {
     // Make sure Safe has some wOETH
     await _mintWOETH(woethAmount, josh, safeSigner.address);
     // and the Vault has some WETH
-    await weth.connect(josh).mintTo(oethVault.address, oethUnits("1.1"));
+    await weth.connect(josh).transfer(oethVault.address, oethUnits("1.1"));
 
     const wethExpected = await woeth.previewRedeem(woethAmount);
 
