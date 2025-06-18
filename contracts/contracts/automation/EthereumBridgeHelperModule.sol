@@ -4,12 +4,8 @@ pragma solidity ^0.8.0;
 import { AbstractLZBridgeHelperModule } from "./AbstractLZBridgeHelperModule.sol";
 
 import { AccessControlEnumerable } from "@openzeppelin/contracts/access/AccessControlEnumerable.sol";
-import { ISafe } from "../interfaces/ISafe.sol";
 
-import { SendParam } from "@layerzerolabs/oft-evm/contracts/interfaces/IOFT.sol";
-import { OptionsBuilder } from "@layerzerolabs/oapp-evm/contracts/oapp/libs/OptionsBuilder.sol";
 import { IOFT } from "@layerzerolabs/oft-evm/contracts/interfaces/IOFT.sol";
-import { MessagingReceipt, MessagingFee } from "@layerzerolabs/oapp-evm/contracts/oapp/OAppSender.sol";
 
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { IERC4626 } from "../../lib/openzeppelin/interfaces/IERC4626.sol";
@@ -45,7 +41,7 @@ contract EthereumBridgeHelperModule is
      * @param slippageBps Slippage in 10^4 basis points.
      */
     function bridgeWOETHToPlume(uint256 woethAmount, uint256 slippageBps)
-        external
+        public
         payable
         onlyOperator
     {
@@ -65,7 +61,7 @@ contract EthereumBridgeHelperModule is
      * @param slippageBps Slippage in 10^4 basis points.
      */
     function bridgeWETHToPlume(uint256 wethAmount, uint256 slippageBps)
-        external
+        public
         payable
         onlyOperator
     {
@@ -176,14 +172,7 @@ contract EthereumBridgeHelperModule is
         onlyOperator
     {
         uint256 woethAmount = _mintAndWrap(wethAmount);
-        _bridgeTokenWithLz(
-            LZ_PLUME_ENDPOINT_ID,
-            woeth,
-            LZ_WOETH_OMNICHAIN_ADAPTER,
-            woethAmount,
-            slippageBps,
-            false
-        );
+        bridgeWOETHToPlume(woethAmount, slippageBps);
     }
 
     /**
@@ -247,7 +236,7 @@ contract EthereumBridgeHelperModule is
     function unwrapRedeemAndBridgeToPlume(
         uint256 woethAmount,
         uint256 slippageBps
-    ) external onlyOperator {
+    ) external payable onlyOperator {
         uint256 wethAmount = _unwrapAndRedeem(woethAmount);
         // Unwrap into ETH
         safeContract.execTransactionFromModule(
@@ -257,13 +246,6 @@ contract EthereumBridgeHelperModule is
             0 // Call
         );
 
-        _bridgeTokenWithLz(
-            LZ_PLUME_ENDPOINT_ID,
-            IERC20(address(weth)),
-            LZ_ETH_OMNICHAIN_ADAPTER,
-            wethAmount,
-            slippageBps,
-            true
-        );
+        bridgeWETHToPlume(wethAmount, slippageBps);
     }
 }

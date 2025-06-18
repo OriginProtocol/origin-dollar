@@ -4,9 +4,8 @@ pragma solidity ^0.8.0;
 import { AccessControlEnumerable } from "@openzeppelin/contracts/access/AccessControlEnumerable.sol";
 import { ISafe } from "../interfaces/ISafe.sol";
 
-import { IOFT } from "@layerzerolabs/oft-evm/contracts/interfaces/IOFT.sol";
+import { IOFT, SendParam } from "@layerzerolabs/oft-evm/contracts/interfaces/IOFT.sol";
 import { MessagingFee } from "@layerzerolabs/oapp-evm/contracts/oapp/OAppSender.sol";
-import { SendParam } from "@layerzerolabs/oft-evm/contracts/interfaces/IOFT.sol";
 import { OptionsBuilder } from "@layerzerolabs/oapp-evm/contracts/oapp/libs/OptionsBuilder.sol";
 
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
@@ -123,10 +122,8 @@ abstract contract AbstractLZBridgeHelperModule is AccessControlEnumerable {
             return;
         }
 
-        if (amount == 0) {
-            // Move all balance if amount set to 0
-            amount = IERC20(token).balanceOf(address(this));
-        }
+        // Move all balance if amount set to 0
+        amount = amount > 0 ? amount : IERC20(token).balanceOf(address(this));
 
         // Transfer to Safe contract
         // slither-disable-next-line unchecked-transfer unused-return
