@@ -107,6 +107,7 @@
     "solc": "0.8.6",
     "solhint": "^3.4.1",
     "solidifier": "^2.2.3",
+    "solidity-bytes-utils": "^0.8.4",
     "solidity-coverage": "^0.8.14",
     "ssv-keys": "^1.1.0",
     "ssv-scanner": "github:bloxapp/ssv-scanner",
@@ -122,6 +123,7 @@
   "dependencies": {
     "@chainlink/contracts-ccip": "^1.2.1",
     "@layerzerolabs/devtools": "^0.4.10",
+    "@layerzerolabs/lz-evm-messagelib-v2": "^3.0.103",
     "@layerzerolabs/lz-evm-protocol-v2": "^3.0.87",
     "@layerzerolabs/lz-v2-utilities": "^3.0.88",
     "@layerzerolabs/oapp-evm": "^0.3.2",

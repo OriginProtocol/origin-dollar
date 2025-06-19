@@ -323,6 +323,8 @@ addresses.mainnet.LayerZeroEndpointV2 =
   "0x1a44076050125825900e736c501f859c50fE728c";
 addresses.mainnet.WOETHOmnichainAdapter =
   "0x7d1bea5807e6af125826d56ff477745bb89972b8";
+addresses.mainnet.ETHOmnichainAdapter =
+  "0x77b2043768d28E9C9aB44E1aBfC95944bcE57931";
 
 addresses.mainnet.passthrough = {};
 addresses.mainnet.passthrough.curve = {};
@@ -599,6 +601,8 @@ addresses.plume.LayerZeroEndpointV2 =
   "0xC1b15d3B262bEeC0e3565C11C9e0F6134BdaCB36";
 addresses.plume.WOETHOmnichainAdapter =
   "0x592CB6A596E7919930bF49a27AdAeCA7C055e4DB";
+addresses.plume.WETHOmnichainAdapter =
+  "0x4683CE822272CD66CEa73F5F1f9f5cBcaEF4F066";
 
 addresses.plume.timelock = "0x6C6f8F839A7648949873D3D2beEa936FC2932e5c";
 addresses.plume.strategist = addresses.multichainStrategist;

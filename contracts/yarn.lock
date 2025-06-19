@@ -1466,6 +1466,11 @@
     exponential-backoff "~3.1.1"
     js-yaml "~4.1.0"
 
+"@layerzerolabs/lz-evm-messagelib-v2@^3.0.103":
+  version "3.0.103"
+  resolved "https://registry.yarnpkg.com/@layerzerolabs/lz-evm-messagelib-v2/-/lz-evm-messagelib-v2-3.0.103.tgz#39d401c67ac231d8dfa517bf1c9e9d8722d91d24"
+  integrity sha512-MaIafjz/tAshITwCArFnlrYECJ/66wEzawV6Iw5/Wuxg1HalHa/xosv3V9KF+DOuR2DQYNJXnzVN3zyRfyfYtA==
+
 "@layerzerolabs/lz-evm-protocol-v2@^3.0.87":
   version "3.0.87"
   resolved "https://registry.yarnpkg.com/@layerzerolabs/lz-evm-protocol-v2/-/lz-evm-protocol-v2-3.0.87.tgz#5b6fa90910cf5733469338a259b8460207bf0f8a"
@@ -9296,6 +9301,11 @@ solidity-ast@^0.4.15:
   version "0.4.49"
   resolved "https://registry.yarnpkg.com/solidity-ast/-/solidity-ast-0.4.49.tgz#ecba89d10c0067845b7848c3a3e8cc61a4fc5b82"
   integrity sha512-Pr5sCAj1SFqzwFZw1HPKSq0PehlQNdM8GwKyAVYh2DOn7/cCK8LUKD1HeHnKtTgBW7hi9h4nnnan7hpAg5RhWQ==
+
+solidity-bytes-utils@^0.8.4:
+  version "0.8.4"
+  resolved "https://registry.yarnpkg.com/solidity-bytes-utils/-/solidity-bytes-utils-0.8.4.tgz#646588b7031153770350f982665b8c9033f7dc26"
+  integrity sha512-/bjac5YR12i0plOKvGlhE51F5IWGP6rI8DJetCQlXcnwKWz/Hgf/vr+Qlk1BWz56xVcwVhmhCaDkTMnx5xvt0g==
 
 solidity-comments-extractor@^0.0.7:
   version "0.0.7"
