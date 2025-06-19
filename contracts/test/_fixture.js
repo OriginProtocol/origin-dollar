@@ -699,6 +699,22 @@ const defaultFixture = deployments.createFixture(async () => {
     addresses.mainnet.curve.OUSD_USDC.gauge
   );
 
+  const OETHCurveAMOProxy = isFork
+    ? await ethers.getContract("OETHCurveAMOProxy")
+    : undefined;
+  const OETHCurveAMO = isFork
+    ? await ethers.getContractAt("CurveAMOStrategy", OETHCurveAMOProxy.address)
+    : undefined;
+
+  const curvePoolOETHWETH = await ethers.getContractAt(
+    curveStableSwapNGAbi,
+    addresses.mainnet.curve.OETH_WETH.pool
+  );
+  const curveGaugeOETHWETH = await ethers.getContractAt(
+    curveXChainLiquidityGaugeAbi,
+    addresses.mainnet.curve.OETH_WETH.gauge
+  );
+
   let usdt,
     usds,
     tusd,
@@ -1101,6 +1117,9 @@ const defaultFixture = deployments.createFixture(async () => {
     OUSDCurveAMO,
     curvePoolOusdUsdc,
     curveGaugeOusdUsdc,
+    OETHCurveAMO,
+    curvePoolOETHWETH,
+    curveGaugeOETHWETH,
 
     // OETH
     oethVaultValueChecker,
@@ -1282,6 +1301,23 @@ async function mockVaultFixture() {
   );
 
   return fixture;
+}
+
+async function bridgeHelperModuleFixture() {
+  const fixture = await oethDefaultFixture();
+
+  const safeSigner = await impersonateAndFund(addresses.multichainStrategist);
+  safeSigner.address = addresses.multichainStrategist;
+
+  const bridgeHelperModule = await ethers.getContract(
+    "EthereumBridgeHelperModule"
+  );
+
+  return {
+    ...fixture,
+    bridgeHelperModule,
+    safeSigner,
+  };
 }
 
 /**
@@ -1835,11 +1871,7 @@ async function nativeStakingSSVStrategyFixture() {
   });
 
   if (isFork) {
-    const { oethVault, weth, nativeStakingSSVStrategy, ssv, timelock } =
-      fixture;
-    await oethVault
-      .connect(timelock)
-      .setAssetDefaultStrategy(weth.address, nativeStakingSSVStrategy.address);
+    const { nativeStakingSSVStrategy, ssv } = fixture;
 
     // The Defender Relayer
     fixture.validatorRegistrator = await impersonateAndFund(
@@ -2560,4 +2592,5 @@ module.exports = {
   nodeSnapshot,
   nodeRevert,
   woethCcipZapperFixture,
+  bridgeHelperModuleFixture,
 };

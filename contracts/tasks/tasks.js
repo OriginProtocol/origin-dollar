@@ -68,6 +68,7 @@ const {
 const {
   calcDepositRoot,
   depositSSV,
+  withdrawSSV,
   printClusterInfo,
   removeValidator,
 } = require("./ssv");
@@ -87,6 +88,7 @@ const {
   getRewardTokenAddresses,
   setRewardTokenAddresses,
   checkBalance,
+  transferToken,
 } = require("./strategy");
 const {
   validatorOperationsConfig,
@@ -112,20 +114,6 @@ const { deployForceEtherSender, forceSend } = require("./simulation");
 const { sleep } = require("../utils/time");
 
 const { lzBridgeToken, lzSetConfig } = require("./layerzero");
-
-// can not import from utils/deploy since that imports hardhat globally
-const withConfirmation = async (deployOrTransactionPromise) => {
-  const hre = require("hardhat");
-
-  const result = await deployOrTransactionPromise;
-  const receipt = await hre.ethers.provider.waitForTransaction(
-    result.receipt ? result.receipt.transactionHash : result.hash,
-    3
-  );
-
-  result.receipt = receipt;
-  return result;
-};
 
 const log = require("../utils/logger")("tasks");
 
@@ -942,6 +930,7 @@ task(
     undefined,
     types.string
   )
+  .addParam("governor", "Address of the new governor", undefined, types.string)
   .setAction(transferGovernance);
 
 task(
@@ -955,6 +944,22 @@ task(
     types.string
   )
   .setAction(claimGovernance);
+
+task("transferToken", "Transfer tokens in a contract to the governor")
+  .addParam(
+    "proxy",
+    "Name of the proxy contract or contract name if no proxy. eg OETHVaultProxy or OETHZapper",
+    undefined,
+    types.string
+  )
+  .addParam("symbol", "Symbol of the token", undefined, types.string)
+  .addOptionalParam(
+    "amount",
+    "The amount of tokens to transfer. (default: balance)",
+    undefined,
+    types.float
+  )
+  .setAction(transferToken);
 
 // Strategy
 
@@ -1070,6 +1075,28 @@ task("depositSSV").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
 
+subtask(
+  "withdrawSSV",
+  "Withdraw SSV tokens from an SSV Cluster to the native staking strategy"
+)
+  .addParam("amount", "Amount of SSV tokens", undefined, types.float)
+  .addOptionalParam(
+    "index",
+    "The number of the Native Staking Contract deployed.",
+    undefined,
+    types.int
+  )
+  .addParam(
+    "operatorids",
+    "Comma separated operator ids. E.g. 342,343,344,345",
+    undefined,
+    types.string
+  )
+  .setAction(withdrawSSV);
+task("withdrawSSV").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
 /**
  * The native staking proxy needs to be deployed via the defender relayer because the SSV network
  * grants the SSV rewards to the deployer of the contract. And we want the Defender Relayer to be
@@ -1103,49 +1130,6 @@ subtask(
 task("deployNativeStakingProxy").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
-
-/**
- * Governance of the SSV strategy proxy needs to be transferred to the deployer address so that
- * the deployer is able to initialize the proxy
- */
-subtask(
-  "transferGovernanceNativeStakingProxy",
-  "Transfer governance of the proxy from the Defender Relayer"
-)
-  .addParam(
-    "deployer",
-    "Address of the deployer of NativeStakingSSVStrategy implementation",
-    undefined,
-    types.string
-  )
-  .addOptionalParam(
-    "index",
-    "The number of the Native Staking Contract deployed.",
-    undefined,
-    types.int
-  )
-  .setAction(async ({ deployer, index }) => {
-    const signer = await getSigner();
-
-    const nativeStakingProxy = await ethers.getContract(
-      `NativeStakingSSVStrategy${index}Proxy`
-    );
-    const oldGovernor = await nativeStakingProxy.governor();
-    log(
-      `About to transfer governance of NativeStakingSSVStrategy${index}Proxy (${nativeStakingProxy.address}) from ${oldGovernor} to ${deployer}`
-    );
-    await withConfirmation(
-      nativeStakingProxy.connect(signer).transferGovernance(deployer)
-    );
-    log(
-      `Transferred governance of NativeStakingSSVStrategy${index}Proxy from ${oldGovernor} to ${deployer}`
-    );
-  });
-task("transferGovernanceNativeStakingProxy").setAction(
-  async (_, __, runSuper) => {
-    return runSuper();
-  }
-);
 
 // Validator Operations
 
@@ -1830,7 +1814,9 @@ task("sonicStaking").setAction(async (_, __, runSuper) => {
 task("lzBridgeToken")
   .addParam("amount", "Amount to bridge")
   .addParam("destnetwork", "Destination network")
+  .addOptionalParam("recipient", "Recipient address")
   .addOptionalParam("gaslimit", "Gas limit")
+  .addOptionalParam("dryrun", "Print tx data without sending")
   .setAction(async (taskArgs) => {
     await lzBridgeToken(taskArgs, hre);
   });

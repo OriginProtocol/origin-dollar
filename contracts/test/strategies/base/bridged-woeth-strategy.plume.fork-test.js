@@ -18,6 +18,7 @@ describe("Plume Fork Test: Bridged WOETH Strategy", function () {
     const { woeth, oethp, oethpVault, weth, woethStrategy, governor } = fixture;
 
     await oethpVault.rebase();
+    await woethStrategy.updateWOETHOraclePrice();
 
     const supplyBefore = await oethp.totalSupply();
     const userOETHpBalanceBefore = await oethp.balanceOf(governor.address);

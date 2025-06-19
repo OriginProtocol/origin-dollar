@@ -73,10 +73,10 @@ describe("ForkTest: Sonic Vault", function () {
       );
     });
 
-    it("Should have strategist set as trustee", async () => {
+    it("Should trustee set to the multichain buyback operator", async () => {
       const { oSonicVault } = fixture;
       expect(await oSonicVault.trusteeAddress()).to.equal(
-        addresses.sonic.guardian
+        addresses.multichainBuybackOperator
       );
     });
 

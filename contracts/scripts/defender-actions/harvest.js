@@ -44,7 +44,7 @@ const handler = async (event) => {
   const strategiesToHarvest = [convexAMOProxyAddress];
 
   const nativeStakingStrategies = [
-    addresses[networkName].NativeStakingSSVStrategyProxy,
+    // addresses[networkName].NativeStakingSSVStrategyProxy,
     addresses[networkName].NativeStakingSSVStrategy2Proxy,
     addresses[networkName].NativeStakingSSVStrategy3Proxy,
   ];

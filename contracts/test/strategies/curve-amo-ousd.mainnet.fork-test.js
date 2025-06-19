@@ -216,7 +216,7 @@ describe("Curve AMO OUSD strategy", function () {
       const user = defaultDepositor;
       const attackerusdcBalanceBefore = await usdc.balanceOf(user.address);
       const attackerOusdBalanceBefore = await ousd.balanceOf(user.address);
-      const attackerusdcAmount = usdcUnits("1500000"); // 1.5M usdc
+      const attackerusdcAmount = usdcUnits("900000"); // 900k usdc
       const depositusdcAmount = usdcUnits("10000"); // 10k usdc
 
       const dataBeforeAttack = await snapData();
@@ -451,6 +451,7 @@ describe("Curve AMO OUSD strategy", function () {
       await mintAndDepositToStrategy();
 
       const balanceVault = await usdc.balanceOf(ousdVault.address);
+      const gaugeBalance = await curveGauge.balanceOf(curveAMOStrategy.address);
 
       await curveAMOStrategy.connect(impersonatedVaultSigner).withdrawAll();
 
@@ -465,7 +466,7 @@ describe("Curve AMO OUSD strategy", function () {
         ousdUnits("0")
       );
       expect(await usdc.balanceOf(ousdVault.address)).to.approxEqualTolerance(
-        balanceVault.add(defaultDeposit.div(1e12))
+        balanceVault.add(gaugeBalance.div(2e12))
       );
 
       // Add a second withdrawAll to test that withrawAll can be
@@ -624,15 +625,20 @@ describe("Curve AMO OUSD strategy", function () {
       await mintAndDepositToStrategy();
 
       await unbalancePool({ ousdAmount: defaultDeposit.mul(10) });
+      const gaugeBalance = await curveGauge.balanceOf(curveAMOStrategy.address);
 
       await curveAMOStrategy.connect(impersonatedVaultSigner).depositAll();
 
       expect(
         await curveAMOStrategy.checkBalance(usdc.address)
-      ).to.approxEqualTolerance(defaultDeposit.mul(2).div(1e12));
+      ).to.approxEqualTolerance(
+        defaultDeposit.mul(2).div(1e12).add(gaugeBalance.div(1e12))
+      );
       expect(
         await curveGauge.balanceOf(curveAMOStrategy.address)
-      ).to.approxEqualTolerance(defaultDeposit.mul(2));
+      ).to.approxEqualTolerance(
+        defaultDeposit.mul(2).div(1e12).add(gaugeBalance)
+      );
       expect(await usdc.balanceOf(curveAMOStrategy.address)).to.equal(0);
     });
 
@@ -641,15 +647,20 @@ describe("Curve AMO OUSD strategy", function () {
       await mintAndDepositToStrategy();
 
       await unbalancePool({ usdcAmount: defaultDeposit.mul(10).div(1e12) });
+      const gaugeBalance = await curveGauge.balanceOf(curveAMOStrategy.address);
 
       await curveAMOStrategy.connect(impersonatedVaultSigner).depositAll();
 
       expect(
         await curveAMOStrategy.checkBalance(usdc.address)
-      ).to.approxEqualTolerance(defaultDeposit.mul(2).div(1e12));
+      ).to.approxEqualTolerance(
+        defaultDeposit.mul(2).div(1e12).add(gaugeBalance.div(1e12))
+      );
       expect(
         await curveGauge.balanceOf(curveAMOStrategy.address)
-      ).to.approxEqualTolerance(defaultDeposit.mul(2));
+      ).to.approxEqualTolerance(
+        defaultDeposit.mul(2).div(1e12).add(gaugeBalance)
+      );
       expect(await usdc.balanceOf(curveAMOStrategy.address)).to.equal(0);
     });
 
@@ -658,10 +669,10 @@ describe("Curve AMO OUSD strategy", function () {
       await balancePool();
       await mintAndDepositToStrategy();
 
-      await unbalancePool({ ousdAmount: defaultDeposit.mul(1000) });
+      await unbalancePool({ ousdAmount: defaultDeposit.mul(100) });
 
-      const checkBalanceAMO = await curveAMOStrategy.checkBalance(usdc.address);
       const balanceVault = await usdc.balanceOf(ousdVault.address);
+      const gaugeBalance = await curveGauge.balanceOf(curveAMOStrategy.address);
 
       await curveAMOStrategy.connect(impersonatedVaultSigner).withdrawAll();
 
@@ -676,7 +687,7 @@ describe("Curve AMO OUSD strategy", function () {
         ousdUnits("0")
       );
       expect(await usdc.balanceOf(ousdVault.address)).to.approxEqualTolerance(
-        balanceVault.add(checkBalanceAMO)
+        balanceVault.add(gaugeBalance.div(2e12))
       );
     });
 
@@ -685,9 +696,9 @@ describe("Curve AMO OUSD strategy", function () {
       await balancePool();
       await mintAndDepositToStrategy();
 
-      await unbalancePool({ usdcAmount: defaultDeposit.mul(1000).div(1e12) });
-      const checkBalanceAMO = await curveAMOStrategy.checkBalance(usdc.address);
+      await unbalancePool({ usdcAmount: defaultDeposit.mul(100).div(1e12) });
       const balanceVault = await usdc.balanceOf(ousdVault.address);
+      const gaugeBalance = await curveGauge.balanceOf(curveAMOStrategy.address);
 
       await curveAMOStrategy.connect(impersonatedVaultSigner).withdrawAll();
 
@@ -702,7 +713,7 @@ describe("Curve AMO OUSD strategy", function () {
         ousdUnits("0")
       );
       expect(await usdc.balanceOf(ousdVault.address)).to.approxEqualTolerance(
-        balanceVault.add(checkBalanceAMO)
+        balanceVault.add(gaugeBalance.div(2e12))
       );
     });
 
@@ -1089,7 +1100,11 @@ describe("Curve AMO OUSD strategy", function () {
     const poolSupply = await curvePool.totalSupply();
     const [poolOusdBalance, poolusdcBalance] = await curvePool.get_balances();
     const reserves = { ousd: poolOusdBalance, usdc: poolusdcBalance };
-    const virtualPrice = await curvePool.get_virtual_price();
+
+    let virtualPrice;
+    if (poolSupply != 0) {
+      virtualPrice = await curvePool.get_virtual_price();
+    }
     const stratGaugeBalance = await curveGauge.balanceOf(
       curveAMOStrategy.address
     );

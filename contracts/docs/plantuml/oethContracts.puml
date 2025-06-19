@@ -61,6 +61,12 @@ object "ConvexEthMetaStrategy" as cvxStrat <<Origin>><<Proxy>> #$originColor {
     Rewards: CRV, CVX
 }
 
+object "CurveAMOStrategy" as amoStrat <<Origin>><<Proxy>> #$originColor {
+    asset: WETH
+    Curve pool: OETH/WETH
+    Rewards: CRV
+}
+
 object "NativeStakingStrategy" as nativeStrat <<Origin>><<Proxy>> #$originColor {
     assets: WETH, ETH
     Rewards: ETH, SSV
@@ -181,6 +187,11 @@ oeth <.> oethv
 harv <..> cvxStrat
 oethv <...> cvxStrat
 oeth <... cvxStrat
+
+' Curve AMO Strategy
+harv <..> amoStrat
+oethv <...> amoStrat
+oeth <... amoStrat
 
 harv <..> nativeStrat
 oethv <...> nativeStrat

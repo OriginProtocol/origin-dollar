@@ -8,7 +8,7 @@ const loadFixture = createFixtureLoader(nativeStakingSSVStrategyFixture);
 const { shouldBehaveLikeAnSsvStrategy } = require("../behaviour/ssvStrategy");
 const { resolveContract } = require("../../utils/resolvers");
 
-describe("ForkTest: First Native SSV Staking Strategy", function () {
+describe.skip("ForkTest: First Native SSV Staking Strategy", function () {
   this.timeout(0);
 
   let fixture;

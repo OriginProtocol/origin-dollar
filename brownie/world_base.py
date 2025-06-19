@@ -10,9 +10,11 @@ veaero = load_contract('veaero', VEAERO_BASE)
 
 base_old_strategist = brownie.accounts.at(OETHB_STRATEGIST, force=True)
 base_strategist = brownie.accounts.at(OETHB_MULTICHAIN_STRATEGIST, force=True)
+base_locker = brownie.accounts.at(BASE_LOCKER, force=True)
 from_old_strategist = {'from':OETHB_STRATEGIST}
 from_strategist = {'from':OETHB_MULTICHAIN_STRATEGIST}
 from_treasury = { 'from': OETHB_TREASURY }
+from_base_locker = { 'from': BASE_LOCKER }
 
 aero_router = load_contract('aerodrome_swap_router', AERODROME_SWAP_ROUTER_BASE)
 aero_router2 = load_contract('aerodrome_v2_router', AERODROME_ROUTER2_BASE)
@@ -21,6 +23,8 @@ aero_quoter = load_contract('aerodrome_quoter', AERODROME_QUOTER_BASE)
 aero_helper = load_contract('aerodrome_slipstream_sugar_helper', AERODROME_SUGAR_HELPER_BASE)
 amo_pool = load_contract('aerodrome_slipstream_pool', AERODROME_WETH_OETHB_POOL_BASE)
 curve_pool = load_contract('curve_pool_base', CURVE_POOL_BASE)
+
+aerodrome_voter = load_contract('aerodrome_voter', AERO_VOTER_BASE)
 
 ogn_pool = load_contract('aerodrome_ogn_pool', AERODROME_OGN_OETHB_POOL_BASE)
 oethb_weth_bribe = load_contract('aero_bribes', OETHB_WETH_BRIBE_CONTRACT)

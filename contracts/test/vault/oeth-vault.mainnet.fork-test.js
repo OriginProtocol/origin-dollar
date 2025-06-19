@@ -169,8 +169,12 @@ describe("ForkTest: OETH Vault", function () {
     it("should allow strategist to redeem without fee", async () => {
       const { oethVault, strategist, matt, weth, oeth } = fixture;
 
+      const sGovernor = await impersonateAndFund(addresses.mainnet.Timelock);
+      // make sure to not trigger rebase on redeem
+      await oethVault.connect(sGovernor).setRebaseThreshold(oethUnits("11"));
+
       // Send a heap of WETH to the vault so it can be redeemed
-      await weth.connect(matt).transfer(oethVault.address, oethUnits("10000"));
+      await weth.connect(matt).transfer(oethVault.address, oethUnits("1000"));
 
       const amount = oethUnits("10");
 
@@ -196,7 +200,7 @@ describe("ForkTest: OETH Vault", function () {
       const { oethVault, josh, matt, weth, oeth } = fixture;
 
       // Send a heap of WETH to the vault so it can be redeemed
-      await weth.connect(matt).transfer(oethVault.address, oethUnits("10000"));
+      await weth.connect(matt).transfer(oethVault.address, oethUnits("1000"));
 
       const amount = oethUnits("10");
       const expectedWETH = amount.mul("9990").div("10000");

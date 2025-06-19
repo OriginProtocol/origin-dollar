@@ -6,6 +6,8 @@ addresses.dead = "0x0000000000000000000000000000000000000001";
 addresses.ETH = "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE";
 addresses.createX = "0xba5Ed099633D3B313e4D5F7bdc1305d3c28ba5Ed";
 addresses.multichainStrategist = "0x4FF1b9D9ba8558F5EAfCec096318eA0d8b541971";
+addresses.multichainBuybackOperator =
+  "0xBB077E716A5f1F1B63ed5244eBFf5214E50fec8c";
 addresses.votemarket = "0x8c2c5A295450DDFf4CB360cA73FCCC12243D14D9";
 
 addresses.mainnet = {};
@@ -284,6 +286,11 @@ addresses.mainnet.curve.OUSD_USDC.pool =
   "0x6d18E1a7faeB1F0467A77C0d293872ab685426dc";
 addresses.mainnet.curve.OUSD_USDC.gauge =
   "0x1eF8B6Ea6434e722C916314caF8Bf16C81cAF2f9";
+addresses.mainnet.curve.OETH_WETH = {};
+addresses.mainnet.curve.OETH_WETH.pool =
+  "0xcc7d5785AD5755B6164e21495E07aDb0Ff11C2A8";
+addresses.mainnet.curve.OETH_WETH.gauge =
+  "0x36cC1d791704445A5b6b9c36a667e511d4702F3f";
 
 // SSV network
 addresses.mainnet.SSV = "0x9D65fF81a3c488d585bBfb0Bfe3c7707c7917f54";
@@ -316,6 +323,8 @@ addresses.mainnet.LayerZeroEndpointV2 =
   "0x1a44076050125825900e736c501f859c50fE728c";
 addresses.mainnet.WOETHOmnichainAdapter =
   "0x7d1bea5807e6af125826d56ff477745bb89972b8";
+addresses.mainnet.ETHOmnichainAdapter =
+  "0x77b2043768d28E9C9aB44E1aBfC95944bcE57931";
 
 addresses.mainnet.passthrough = {};
 addresses.mainnet.passthrough.curve = {};
@@ -592,6 +601,8 @@ addresses.plume.LayerZeroEndpointV2 =
   "0xC1b15d3B262bEeC0e3565C11C9e0F6134BdaCB36";
 addresses.plume.WOETHOmnichainAdapter =
   "0x592CB6A596E7919930bF49a27AdAeCA7C055e4DB";
+addresses.plume.WETHOmnichainAdapter =
+  "0x4683CE822272CD66CEa73F5F1f9f5cBcaEF4F066";
 
 addresses.plume.timelock = "0x6C6f8F839A7648949873D3D2beEa936FC2932e5c";
 addresses.plume.strategist = addresses.multichainStrategist;
