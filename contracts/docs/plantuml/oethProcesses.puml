@@ -24,7 +24,9 @@ participant "Fee\nAccumulator" as feeAccum <<Origin>>
 participant "SSV Network" as ssvNet <<SSV>>
 participant "Token" as ssv <<SSV>>
 participant "WETH" as weth <<Wrapped ETH>>
-participant "Deposit" as dep <<Beacon>>
+participant "Beacon\nOracle" as bo <<Origin>>
+participant "Beacon\nDeposit\nContract" as dep <<System>>
+participant "Beacon\nBlock\nRoots" as roots <<System>>
 end box
 
 box "Beacon chain"
@@ -87,13 +89,16 @@ end group
 
 group Registrator creates a new SSV validator
 
-reg -> api: POST\neth/staking/ssv/request/create\nuuid,\nvalidatorsCount,\ntype,\nwithdrawalAddress,\nfeeRecipientAddress,\nssvOwnerAddress,\noperationPeriodInDays
+reg -> api: POST\neth/staking/ssv/request/create\nuuid,\nvalidatorsCount,\ntype,\nwithdrawalAddress,\nfeeRecipientAddress,\nssvOwnerAddress,\noperationPeriodInDays,\namountPerValidator,\nwithdrawalCredentialsType
 activate api
 note right
 withdrawalAddress is Native Staking Strategy
 feeRecipientAddress is FeeAccumulator contract
 ssvOwnerAddress is Native Staking Strategy
 type is without-encrypt-key
+operationPeriodInDays is 0 if not the first validator in the cluster
+amountPerValidator needs to be multiple of 32 ETH
+withdrawalCredentialsType is 0x02
 end note
 api -> api: private key
 note right : generate a validator private key
@@ -127,16 +132,16 @@ return
 
 end group
 
-... 60 minutes ...
+... 20 minutes ...
 
-group Registrator stakes to a new SSV validator
+group Deposit to a new SSV validator
 
 reg -> api: GET\neth/staking/ssv/request/deposit-data/uuid
 activate api
 return status,\ndepositData
-note right : depositData contains the signature and depositDataRoot
+note right : depositData contains the signature and deposit root
 
-reg -> nativeStrat : stakeEth([\npubkey,\nsignature,\ndepositDataRoot])
+reg -> nativeStrat : stakeEth([\npubkey,\nsignature,\ndeposit root])
 activate nativeStrat
 nativeStrat -> nativeStrat
 note right : validate staked ETH under the threshold
@@ -147,7 +152,7 @@ return ETH
 
 loop for each validator
 
-nativeStrat -> dep : stake(\npubkey,\nwithdrawal_credentials,\nsignature,\ndepositDataRoot)
+nativeStrat -> dep : deposit(\npubkey,\nwithdrawal_credentials,\nsignature,\ndeposit root)
 activate dep
 note left
 32 ETH from Native Staking Strategy is sent to Beacon Deposit.
@@ -155,16 +160,56 @@ Withdrawal credential is the Native Staking Strategy
 end note
 return
 end
-return
+
+note over nativeStrat
+store deposit pubkey, amount and deposit root
+store updated total pending deposits
+end note
 
 note over val : Pending Deposit
+return
 
-... 1024 execution blocks (~4 hours) ...
-... 32 consensus epochs (~3.5 hours) ...
 
-dep -> val : 32 ETH
+... 13 minutes to many days depending on the deposit queue ...
 
-note over val : Pending Activation
+note over val
+Pending Activation
+  Validator registered
+  Validator balance created
+end note
+
+
+sender -> val : getBlockV2(slot)
+note left : slot the deposit was\ncreated on the execution layer
+activate val
+return beacon block
+
+sender -> val : getStateV2(slot)
+note left : slot the deposit was\ncreated on the execution layer
+activate val
+return beacon state
+
+sender -> sender : generateSlotProof(\nbeacon block)
+sender -> sender : generateBlockProof(\nbeacon block,\nbeacon state)
+
+' map block number to slot in Beacon Oracle
+sender -> bo : proveSlot(timestamp,\nslot number,\nblock number,\nslot proof,\nblock proof)
+activate bo
+bo -> roots : get(timestamp)
+note left
+timestamp of the block after the block we want to map to a slot.
+This is because the timestamp will get the parent block root.
+end note
+activate roots
+return parent block root
+note over bo
+construct the slot root
+verify slot root against the parent block root using the slot proof
+construct the block number root
+verify block root against the parent block root using the block proof
+store map of block to slot
+end note
+return
 
 ... four validators are activated each epoch from the Validator Queue (1-10 days) ...
 
@@ -172,6 +217,133 @@ note over val : Active
 
 end group
 
+group Prove deposit
+
+sender -> val : getBlockV2(slot)
+note left : slot on or after the deposit\nwas processed on the Beacon chain
+activate val
+return beacon block
+
+sender -> val : getStateV2(slot)
+note left : slot on or after the deposit\nwas processed on the Beacon chain
+activate val
+return beacon state
+
+sender -> sender : generateValidatorProof(\nvalidator index,\nbeacon block,\nbeacon state)
+sender -> sender : generateFirstPendingDepositProof(\nbeacon block,\nbeacon state)
+
+' prove a deposit has been processed on the Beacon chain
+sender -> nativeStrat : proveDeposit(\ndeposit root,\nvalidator index,\ntimestamp,\nvalidator details,\nvalidator details proof,\nfirst pending deposit\nfirst pending deposit proof)
+activate nativeStrat
+nativeStrat -> roots : get(block timestamp)
+note left: timestamp of the block after the block we are proving for
+activate roots
+return parent block root
+
+' verify the validator
+note over nativeStrat
+get pubkey of deposit using the deposit root
+construct validator root using the pubkey from the deposit and validator details
+verify validator proof against the parent block root using the validator root and index
+end note
+
+' verify first pending deposit 
+note over nativeStrat
+construct the root of the first pending deposit
+verify first pending deposit proof against the parent block root
+end note
+
+loop stored deposits
+    alt the deposit root matches
+        nativeStrat -> bo : mapBlock2Slot(deposit block)
+        activate bo
+        return slot
+
+        note over nativeStrat
+            if the deposit's slot equals the first pending deposit's slot
+                revert
+            else if the deposit's slot < the first pending deposit's slot
+                delete stored deposit
+                reduce total pending deposits by deposit amount
+                add validator index to active validators
+        end note
+    end
+end
+
+return
+
+end group
+
+group Update balances
+
+sender -> nativeStrat : snapBalances()
+activate nativeStrat
+nativeStrat -> roots : get(block timestamp)
+activate roots
+return parent block root
+note over nativeStrat
+store strategy WETH and ETH balances
+store parent block root
+end note
+return
+
+sender -> val : getBlockV2(slot)
+note left : slot after snapBeaconRoot was taken
+activate val
+return beacon block
+
+sender -> val : getStateV2(slot)
+note left : slot after snapBeaconRoot was taken
+activate val
+return beacon state
+
+sender -> sender : generateFirstPendingDepositProof(\nbeacon block,\nbeacon state)
+note left : proof against beacon block root
+sender -> sender : generateValidatorBalanceContainerProof(\nbeacon block,\nbeacon state)
+note left : proof against beacon block root
+loop active validator indexes
+sender -> sender : generateValidatorBalanceProof(\nvalidator index,\nbeacon block,\nbeacon state)
+note left: proof against root of\nbeaconBlock.state.balances
+end
+
+sender -> nativeStrat : proveBalances(\nfirst pending deposit\nfirst pending deposit proof,\nvalidator container proof,\nvalidator balance proofs)
+activate nativeStrat
+loop stored deposits
+    nativeStrat -> bo : mapBlock2Slot(deposit block)
+    activate bo
+    return slot
+
+    note over nativeStrat
+        revert if the stored deposit's slot is <= the first pending deposit's slot
+    end note
+
+    note over nativeStrat: total pending deposit amounts
+end
+
+note over nativeStrat
+    verify balances container proof against the snapped block root
+end note
+loop active validator indexes
+    note over nativeStrat
+        verify validator balance proof against the balances container root using the validator index
+    end note
+
+    note over nativeStrat
+        decode the validator balance from the balance root
+        total validator balances
+    end note
+end
+note over nativeStrat
+    store strategy balance =
+        ETH balance from snap +
+        WETH balance from snap +
+        total pending deposit amounts +
+        total validator balances
+end note
+
+return
+
+end group
 
 group Registrator deposits more SSV to SSV cluster
 
