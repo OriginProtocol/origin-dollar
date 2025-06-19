@@ -49,7 +49,7 @@ const shouldBehaveLikeASFCStakingStrategy = (context) => {
       );
 
       expect(await sonicStakingStrategy.supportedValidatorsLength()).to.equal(
-        4,
+        testValidatorIds.length,
         "Incorrect Supported validators length"
       );
 
