@@ -3,6 +3,9 @@ const { BigNumber } = require("ethers");
 const MAX_UINT256 = BigNumber.from(
   "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
 );
+
+const ONE = BigNumber.from("0xde0b6b3a7640000");
+
 const threeCRVPid = 9;
 const metapoolLPCRVPid = 56;
 const oethPoolLpPID = 174;
@@ -42,6 +45,7 @@ module.exports = {
   balancer_rETH_WETH_PID,
   ccip_arbChainSelector,
   p2pApiEncodedKey,
+  ONE
 };
 
 // These are all the metapool ids. For easier future reference
