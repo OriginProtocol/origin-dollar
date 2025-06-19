@@ -827,9 +827,7 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
      */
     function _burnOethOnTheContract() internal {
         uint256 _oethBalance = IERC20(OETH).balanceOf(address(this));
-        if (_oethBalance > ACTION_THRESHOLD) {
-            IVault(vaultAddress).burnForStrategy(_oethBalance);
-        }
+        IVault(vaultAddress).burnForStrategy(_oethBalance);
     }
 
     /**
