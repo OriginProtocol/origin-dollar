@@ -27,17 +27,6 @@ contract BridgedWOETHStrategy is InitializableAbstractStrategy {
     uint128 public lastOraclePrice;
     uint128 public maxPriceDiffBps;
 
-    /**
-     * @dev Verifies that the caller is the Governor or Strategist.
-     */
-    modifier onlyGovernorOrStrategist() {
-        require(
-            isGovernor() || msg.sender == IVault(vaultAddress).strategistAddr(),
-            "Caller is not the Strategist or Governor"
-        );
-        _;
-    }
-
     constructor(
         BaseStrategyConfig memory _stratConfig,
         address _weth,
