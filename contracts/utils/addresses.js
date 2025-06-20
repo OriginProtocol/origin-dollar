@@ -318,6 +318,10 @@ addresses.mainnet.LidoWithdrawalQueue =
 addresses.mainnet.DaiUsdsMigrationContract =
   "0x3225737a9bbb6473cb4a45b7244aca2befdb276a";
 
+// Safe Module
+addresses.mainnet.ClaimStrategyRewardsSafeModule =
+  "0xc3472011a60336E53e0968e822A4E80D5F0d3F41";
+
 // LayerZero
 addresses.mainnet.LayerZeroEndpointV2 =
   "0x1a44076050125825900e736c501f859c50fE728c";
