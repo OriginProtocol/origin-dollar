@@ -175,14 +175,9 @@ const deployStakingStrategy = async () => {
 const deployDripper = async () => {
   const { deployerAddr, governorAddr } = await getNamedAccounts();
   const sDeployer = await ethers.provider.getSigner(deployerAddr);
-  const sGovernor = await ethers.provider.getSigner(governorAddr);
 
   const cWS = await ethers.getContract("MockWS");
   const cOSonicVaultProxy = await ethers.getContract("OSonicVaultProxy");
-  const cOSonicVault = await ethers.getContractAt(
-    "IVault",
-    cOSonicVaultProxy.address
-  );
 
   await deployWithConfirmation("OSonicDripperProxy");
 
@@ -202,10 +197,6 @@ const deployDripper = async () => {
           "0x"
         )
     );
-
-  await withConfirmation(
-    cOSonicVault.connect(sGovernor).setDripper(cOSonicDripperProxy.address)
-  );
 };
 
 const main = async () => {
