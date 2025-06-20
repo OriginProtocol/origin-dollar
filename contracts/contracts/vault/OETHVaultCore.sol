@@ -8,7 +8,6 @@ import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import { StableMath } from "../utils/StableMath.sol";
 import { VaultCore } from "./VaultCore.sol";
 import { IStrategy } from "../interfaces/IStrategy.sol";
-import { IDripper } from "../interfaces/IDripper.sol";
 
 /**
  * @title OETH VaultCore Contract
@@ -104,9 +103,6 @@ contract OETHVaultCore is VaultCore {
 
         // Rebase must happen before any transfers occur.
         if (!rebasePaused && _amount >= rebaseThreshold) {
-            // Stream any harvested rewards (WETH) that are available to the Vault
-            IDripper(dripper).collect();
-
             _rebase();
         }
 
@@ -269,10 +265,7 @@ contract OETHVaultCore is VaultCore {
             withdrawalRequests[_requestId].queued >
             withdrawalQueueMetadata.claimable
         ) {
-            // Stream any harvested rewards (WETH) that are available to the Vault
-            IDripper(dripper).collect();
-
-            // Add any WETH from the Dripper to the withdrawal queue
+            // Add any WETH to the withdrawal queue
             _addWithdrawalQueueLiquidity();
         }
 
@@ -305,13 +298,7 @@ contract OETHVaultCore is VaultCore {
         nonReentrant
         returns (uint256[] memory amounts, uint256 totalAmount)
     {
-        // Just call the Dripper instead of looping through _requestIds to find the highest id
-        // and checking it's queued amount is > the queue's claimable amount.
-
-        // Stream any harvested rewards (WETH) that are available to the Vault
-        IDripper(dripper).collect();
-
-        // Add any WETH from the Dripper to the withdrawal queue
+        // Add any WETH to the withdrawal queue
         _addWithdrawalQueueLiquidity();
 
         amounts = new uint256[](_requestIds.length);
@@ -356,14 +343,10 @@ contract OETHVaultCore is VaultCore {
         return request.amount;
     }
 
-    /// @notice Collects harvested rewards from the Dripper as WETH then
-    /// adds WETH to the withdrawal queue if there is a funding shortfall.
+    /// @notice Adds WETH to the withdrawal queue if there is a funding shortfall.
     /// @dev is called from the Native Staking strategy when validator withdrawals are processed.
     /// It also called before any WETH is allocated to a strategy.
     function addWithdrawalQueueLiquidity() external {
-        // Stream any harvested rewards (WETH) that are available to the Vault
-        IDripper(dripper).collect();
-
         _addWithdrawalQueueLiquidity();
     }
 
