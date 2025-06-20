@@ -16,7 +16,6 @@ import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.s
 import { StableMath } from "../utils/StableMath.sol";
 import { IOracle } from "../interfaces/IOracle.sol";
 import { IGetExchangeRateToken } from "../interfaces/IGetExchangeRateToken.sol";
-import { IDripper } from "../interfaces/IDripper.sol";
 
 import "./VaultInitializer.sol";
 
@@ -96,10 +95,6 @@ contract VaultCore is VaultInitializer {
 
         // Rebase must happen before any transfers occur.
         if (priceAdjustedDeposit >= rebaseThreshold && !rebasePaused) {
-            if (dripper != address(0)) {
-                // Stream any harvested rewards that are available
-                IDripper(dripper).collect();
-            }
             _rebase();
         }
 
