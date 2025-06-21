@@ -3,7 +3,7 @@ const { formatUnits, parseUnits } = require("ethers/lib/utils");
 const { run } = require("hardhat");
 
 const addresses = require("../../utils/addresses");
-const { oethPoolLpPID } = require("../../utils/constants");
+const { oethPoolLpPID, ONE } = require("../../utils/constants");
 const { units, oethUnits, isCI } = require("../helpers");
 const {
   createFixtureLoader,
@@ -18,6 +18,11 @@ describe("ForkTest: OETH AMO Curve Metapool Strategy", function () {
   this.retries(isCI ? 3 : 0);
 
   let fixture;
+
+  const min = (bn1, bn2) => {
+    if (bn1.gt(bn2)) return bn2;
+    return bn1;
+  };
 
   describe("with mainnet data", () => {
     const loadFixture = createFixtureLoader(convexOETHMetaVaultFixture);
@@ -435,19 +440,34 @@ describe("ForkTest: OETH AMO Curve Metapool Strategy", function () {
     beforeEach(async () => {
       fixture = await loadFixture();
     });
+
     it("Strategist should remove a little OETH from the Metapool", async () => {
       await assertRemoveAndBurn(parseUnits("3"), fixture);
     });
-    it("Strategist should remove a lot of OETH from the Metapool", async () => {
-      const { cvxRewardPool, convexEthMetaStrategy } = fixture;
+
+    it("Strategist should remove as much OETH from the Metapool while still not crossing the 1:1 peg", async () => {
+      const { cvxRewardPool, convexEthMetaStrategy, oethMetaPool } = fixture;
       const lpBalance = await cvxRewardPool.balanceOf(
         convexEthMetaStrategy.address
       );
+      const virtualPrice = await oethMetaPool.get_virtual_price();
+      const [ethBalance, oethBalance] = await oethMetaPool.get_balances();
 
-      const lpAmount = lpBalance
-        // reduce by 1%
-        .mul(99)
+      // removing OETH tokens will only worsen the pool balance. Nothing to test here.
+      if (ethBalance > oethBalance) {
+        return;
+      }
+
+      const balanceDiff = oethBalance.sub(ethBalance);
+      const balanceDiffInLp = balanceDiff.mul(ONE).div(virtualPrice);
+
+      // Max amount removable on the pool while the price doesn't cross the peg
+      const balanceDiffInLpAdjusted = balanceDiffInLp
+        // reduce by 2%
+        .mul(98)
         .div(100);
+
+      const lpAmount = min(balanceDiffInLpAdjusted, lpBalance);
 
       await assertRemoveAndBurn(lpAmount, fixture);
     });
@@ -549,14 +569,28 @@ describe("ForkTest: OETH AMO Curve Metapool Strategy", function () {
       fixture = await loadFixture();
     });
     it("Strategist should remove ETH to balance the Metapool", async () => {
-      const { cvxRewardPool, convexEthMetaStrategy } = fixture;
+      const { cvxRewardPool, convexEthMetaStrategy, oethMetaPool } = fixture;
       const lpBalance = await cvxRewardPool.balanceOf(
         convexEthMetaStrategy.address
       );
-      const lpAmount = lpBalance
-        // reduce by 1%
-        .mul(99)
+      const virtualPrice = await oethMetaPool.get_virtual_price();
+      const [ethBalance, oethBalance] = await oethMetaPool.get_balances();
+
+      // removing WETH tokens will only worsen the pool balance. Nothing to test here.
+      if (oethBalance > ethBalance) {
+        return;
+      }
+
+      const balanceDiff = ethBalance.sub(oethBalance);
+      const balanceDiffInLp = balanceDiff.mul(ONE).div(virtualPrice);
+
+      // Max amount removable on the pool while the price doesn't cross the peg
+      const balanceDiffInLpAdjusted = balanceDiffInLp
+        // reduce by 2%
+        .mul(98)
         .div(100);
+
+      const lpAmount = min(balanceDiffInLpAdjusted, lpBalance);
 
       await assertRemoveOnlyAssets(lpAmount, fixture);
     });
