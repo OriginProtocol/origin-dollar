@@ -48,19 +48,22 @@ abstract contract ValidatorAccountant is ValidatorRegistrator {
     /// @param _beaconChainDepositContract Address of the beacon chain deposit contract
     /// @param _ssvNetwork Address of the SSV Network contract
     /// @param _maxValidators Maximum number of validators that can be registered in the strategy
+    /// @param _beaconOracle Address of the Beacon Oracle contract that maps block numbers to slots
     constructor(
         address _wethAddress,
         address _vaultAddress,
         address _beaconChainDepositContract,
         address _ssvNetwork,
-        uint256 _maxValidators
+        uint256 _maxValidators,
+        address _beaconOracle
     )
         ValidatorRegistrator(
             _wethAddress,
             _vaultAddress,
             _beaconChainDepositContract,
             _ssvNetwork,
-            _maxValidators
+            _maxValidators,
+            _beaconOracle
         )
     {}
 

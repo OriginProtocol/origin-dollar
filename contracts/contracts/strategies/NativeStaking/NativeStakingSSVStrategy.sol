@@ -76,6 +76,7 @@ contract NativeStakingSSVStrategy is
     /// @param _maxValidators Maximum number of validators that can be registered in the strategy
     /// @param _feeAccumulator Address of the fee accumulator receiving execution layer validator rewards
     /// @param _beaconChainDepositContract Address of the beacon chain deposit contract
+    /// @param _beaconOracle Address of the Beacon Oracle contract that maps block numbers to slots
     constructor(
         BaseStrategyConfig memory _baseConfig,
         address _wethAddress,
@@ -83,7 +84,8 @@ contract NativeStakingSSVStrategy is
         address _ssvNetwork,
         uint256 _maxValidators,
         address _feeAccumulator,
-        address _beaconChainDepositContract
+        address _beaconChainDepositContract,
+        address _beaconOracle
     )
         InitializableAbstractStrategy(_baseConfig)
         ValidatorAccountant(
@@ -91,7 +93,8 @@ contract NativeStakingSSVStrategy is
             _baseConfig.vaultAddress,
             _beaconChainDepositContract,
             _ssvNetwork,
-            _maxValidators
+            _maxValidators,
+            _beaconOracle
         )
     {
         SSV_TOKEN = _ssvToken;
