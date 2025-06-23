@@ -1,10 +1,10 @@
-const { BigNumber } = require("ethers");
+const ethers = require("ethers");
 
-const MAX_UINT256 = BigNumber.from(
+const MAX_UINT256 = ethers.BigNumber.from(
   "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
 );
 
-const ONE = BigNumber.from("0xde0b6b3a7640000");
+const ONE = ethers.utils.parseEther("1");
 
 const threeCRVPid = 9;
 const metapoolLPCRVPid = 56;
