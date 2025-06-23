@@ -80,21 +80,21 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
     uint256[] public provedValidators;
 
     struct Balances {
+        uint64 blockNumber;
+        uint64 timestamp; // timestamp of the snap
         // TODO squash into a single slot
-        uint256 blockNumber;
         uint256 wethBalance;
         uint256 ethBalance;
-        // TODO Is timestamp needed?
-        // uint256 timestamp;
     }
     // TODO is it more efficient to use the block root rather than hashing it?
     /// @notice Mapping of the block root to the balances at that slot
     mapping(bytes32 => Balances) public snappedBalances;
-
+    // TODO squash these into a single slot
+    uint256 public lastSnapTimestamp;
     uint256 public lastProvenBalance;
 
     // For future use
-    uint256[41] private __gap;
+    uint256[40] private __gap;
 
     enum VALIDATOR_STATE {
         NON_REGISTERED, // validator is not registered on the SSV network
@@ -519,6 +519,120 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
             // Add the new validator to the list of proved validators
             provedValidators.push(validatorIndex);
         }
+    }
+
+    function snapBalances() public {
+        bytes32 blockRoot = BeaconRoots.parentBlockRoot(
+            SafeCast.toUint64(block.timestamp)
+        );
+        // Get the current WETH balance
+        uint256 wethBalance = IWETH9(WETH).balanceOf(address(this));
+        // Get the current ETH balance
+        uint256 ethBalance = address(this).balance;
+
+        // Store the balances in the mapping
+        snappedBalances[blockRoot] = Balances({
+            blockNumber: SafeCast.toUint64(block.number),
+            timestamp: SafeCast.toUint64(block.timestamp),
+            wethBalance: wethBalance,
+            ethBalance: ethBalance
+        });
+
+        // Store the snapped timestamp
+        lastSnapTimestamp = block.timestamp;
+    }
+
+    function proveBalances(
+        bytes32 blockRoot,
+        uint64 firstPendingDepositSlot,
+        // BeaconBlock.BeaconBlockBody.deposits[0].slot
+        bytes calldata firstPendingDepositSlotProof,
+        bytes32 balancesContainerRoot,
+        // BeaconBlock.state.validators
+        bytes calldata validatorContainerProof,
+        bytes32[] calldata validatorBalanceRoots,
+        // BeaconBlock.state.validators[validatorIndex].balance
+        bytes[] calldata validatorBalanceProofs
+    ) external {
+        // Load the last snapped balances into memory
+        Balances memory balancesMem = snappedBalances[blockRoot];
+        require(balancesMem.blockNumber > 0, "No snapped balances");
+        require(balancesMem.timestamp == lastSnapTimestamp, "Stale snap");
+
+        // Break up the into blocks to avoid stack too deep
+        {
+            // convert the slot of the first pending deposit to a block number
+            uint64 firstPendingDepositBlockNumber = IBeaconOracle(BEACON_ORACLE)
+                .slotToBlock(firstPendingDepositSlot);
+
+            // Prove the first pending deposit slot to the beacon block root
+            BeaconProofs.verifyFirstPendingDepositSlot(
+                blockRoot,
+                firstPendingDepositSlot,
+                firstPendingDepositSlotProof
+            );
+
+            // For each native staking contract's deposits
+            uint256 pendingDepositsCount = pendingDepositsRoots.length;
+            for (uint256 i = 0; i < pendingDepositsCount; ++i) {
+                bytes32 depositDataRoot = pendingDepositsRoots[i];
+
+                // Check the stored deposit is still waiting to be processed on the beacon chain
+                // If it has it will need to be proven with `proveDeposit`
+                require(
+                    pendingDeposits[depositDataRoot].blockNumber >
+                        firstPendingDepositBlockNumber,
+                    "Deposit processed"
+                );
+            }
+        }
+
+        // prove beaconBlock.state.balances root to beacon block root
+        BeaconProofs.verifyBalancesContainer(
+            blockRoot,
+            balancesContainerRoot,
+            validatorContainerProof
+        );
+
+        uint256 totalValidatorBalance = 0;
+        uint256 provenValidatorsCount = provedValidators.length;
+        // for each validator
+        for (uint256 i = 0; i < provenValidatorsCount; ++i) {
+            // Load the validator index from storage
+            uint256 validatorIndex = provedValidators[i];
+
+            // prove validator's balance in beaconBlock.state.balances to the
+            // beaconBlock.state.balances container root
+
+            // Prove the validator's balance to the beacon block root
+            uint256 validatorBalance = BeaconProofs.verifyValidatorBalance(
+                balancesContainerRoot,
+                validatorIndex,
+                validatorBalanceRoots[i],
+                validatorBalanceProofs[i]
+            );
+
+            // total validator balances
+            totalValidatorBalance += validatorBalance;
+
+            // If the validator balance is zero
+            if (validatorBalance == 0) {
+                // remove it from the list of proved validators
+                // Move the last validator to the current index
+                provedValidators[i] = provedValidators[
+                    provenValidatorsCount - 1
+                ];
+                // Delete the last validator from the list
+                provedValidators.pop();
+            }
+        }
+
+        // store the proved balance in storage
+        lastProvenBalance =
+            totalPendingDeposits +
+            totalValidatorBalance +
+            balancesMem.wethBalance +
+            balancesMem.ethBalance;
     }
 
     /***************************************

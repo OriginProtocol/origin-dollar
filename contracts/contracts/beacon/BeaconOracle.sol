@@ -7,7 +7,16 @@ import { BeaconRoots } from "./BeaconRoots.sol";
 contract BeaconOracle {
     /// @notice Maps a block number to slot
     mapping(uint64 => uint64) public blockToSlot;
+    /// @notice Maps a slot to a number
+    mapping(uint64 => uint64) public slotToBlock;
 
+    /// @notice Uses merkle proofs against the Beacon Block Root to prove
+    /// that a block number corresponds to a slot.
+    /// @param parentTimestamp The timestamp of the slot after the one being proven.
+    /// @param blockNumber The block number to prove.
+    /// @param slot The slot to prove.
+    /// @param slotProof The merkle proof witnesses for the slot against the Beacon Block Root.
+    /// @param blockProof The merkle proof witnesses for the block number against the Beacon Block Root
     function proveSlot(
         uint64 parentTimestamp,
         uint64 blockNumber,
@@ -27,7 +36,8 @@ contract BeaconOracle {
         // Verify the slot to the Beacon Block Root root
         BeaconProofs.verifySlot(blockRoot, slot, slotProof);
 
-        // Store mapping
+        // Store mappings
         blockToSlot[blockNumber] = slot;
+        blockToSlot[slot] = blockNumber;
     }
 }
