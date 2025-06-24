@@ -465,7 +465,8 @@ contract OUSD is Governable {
      * @param _account Address of the account.
      */
     function _autoMigrate(address _account) internal {
-        bool isContract = _account.code.length > 0;
+        bool isContract = _account.code.length > 0 &&
+            bytes3(_account.code) != 0xef0100;
         // In previous code versions, contracts would not have had their
         // rebaseState[_account] set to RebaseOptions.NonRebasing when migrated
         // therefore we check the actual accounting used on the account instead.
