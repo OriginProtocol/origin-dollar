@@ -149,11 +149,6 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
     error NotEnoughWethLiquidity(uint256 wethBalance, uint256 requiredWeth); // 0xa6737d87
     error OutsideExpectedTickRange(); // 0xa6e1bad2
     error SlippageCheck(uint256 tokenReceived); // 0x355cdb78
-    error InsufficientTokenBalance(
-        uint256 tokenOffered,
-        uint256 tokenRequired,
-        address token
-    ); // 0xe23d5ff7
 
     /// @notice the constructor
     /// @dev This contract is intended to be used as a proxy. To prevent the
