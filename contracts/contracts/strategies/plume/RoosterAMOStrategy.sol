@@ -108,8 +108,8 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
     uint256 public immutable sqrtPriceAtParity;
     /// @notice The tick where the strategy deploys the liquidity to
     int32 public constant TICK_NUMBER = -1;
-    /// @notice Minimum liquidity required to continue with the action
-    /// e.g. deposit, add liquidity, burn OETH
+    /// @notice Minimum liquidity that must be exceeded to continue with the action
+    /// e.g. deposit, add liquidity
     uint256 public constant ACTION_THRESHOLD = 1e12;
     /// @notice Maverick pool static liquidity bin type
     uint8 public constant MAV_STATIC_BIN_KIND = 0;
@@ -527,8 +527,8 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
             addParam
         );
 
-        require(_maxWETH > WETHRequired, "More WETH required than specified");
-        require(_maxOETH > OETHRequired, "More OETH required than specified");
+        require(_maxWETH >= WETHRequired, "More WETH required than specified");
+        require(_maxOETH >= OETHRequired, "More OETH required than specified");
 
         // organize values to be used by manager
         addParams[0] = addParam;
