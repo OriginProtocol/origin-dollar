@@ -386,7 +386,8 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
 
     /**
      * @dev Retuns bool indicating whether asset is supported by strategy
-     * @param _asset Address of the asset
+     * @param _asset   Address of the asset
+     * @return bool    True when the _asset is WETH
      */
     function supportsAsset(address _asset) public view override returns (bool) {
         return _asset == WETH;
@@ -1083,8 +1084,9 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
     }
 
     /**
-     * @notice Tick dominance denominated in 1e18
-     *
+     * @notice Tick dominance   denominated in 1e18
+     * @return _tickDominance   The share of liquidity in TICK_NUMBER tick owned
+     * by the strategy contract denominated in 1e18
      */
     function tickDominance() public view returns (uint256 _tickDominance) {
         IMaverickV2Pool.TickState memory tickState = mPool.getTick(TICK_NUMBER);
