@@ -302,6 +302,27 @@ const baseFixtureWithMockedVaultAdmin = deployments.createFixture(
   baseFixtureWithMockedVaultAdminConfig
 );
 
+const bridgeHelperModuleFixture = deployments.createFixture(async () => {
+  const fixture = await defaultBaseFixture();
+
+  const safeSigner = await impersonateAndFund(addresses.multichainStrategist);
+  safeSigner.address = addresses.multichainStrategist;
+
+  const bridgeHelperModule = await ethers.getContract("BaseBridgeHelperModule");
+
+  const _mintWETH = async (user, amount) => {
+    await impersonateAndFund(user.address);
+    await fixture.weth.connect(user).deposit({ value: oethUnits(amount) });
+  };
+
+  return {
+    ...fixture,
+    bridgeHelperModule,
+    safeSigner,
+    _mintWETH,
+  };
+});
+
 mocha.after(async () => {
   if (snapshotId) {
     await nodeRevert(snapshotId);
@@ -313,4 +334,5 @@ module.exports = {
   baseFixtureWithMockedVaultAdmin,
   MINTER_ROLE,
   BURNER_ROLE,
+  bridgeHelperModuleFixture,
 };

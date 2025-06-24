@@ -6,7 +6,7 @@ const addresses = require("../../utils/addresses");
 
 const plumeFixture = createFixtureLoader(bridgeHelperModuleFixture);
 
-describe("ForkTest: Bridge Helper Safe Module", function () {
+describe("ForkTest: Bridge Helper Safe Module (Plume)", function () {
   let fixture;
   beforeEach(async () => {
     fixture = await plumeFixture();
