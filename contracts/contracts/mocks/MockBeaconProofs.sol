@@ -23,14 +23,14 @@ contract MockBeaconProofs {
     function verifyValidatorPubkey(
         bytes32 beaconBlockRoot,
         bytes32 pubKeyHash,
-        uint256 validatorIndex,
-        bytes calldata validatorPubKeyProof
+        bytes calldata validatorPubKeyProof,
+        uint256 validatorIndex
     ) external view {
         BeaconProofs.verifyValidatorPubkey(
             beaconBlockRoot,
             pubKeyHash,
-            validatorIndex,
-            validatorPubKeyProof
+            validatorPubKeyProof,
+            validatorIndex
         );
     }
 
@@ -48,16 +48,16 @@ contract MockBeaconProofs {
 
     function verifyValidatorBalance(
         bytes32 balancesContainerRoot,
-        uint256 validatorIndex,
         bytes32 validatorBalanceLeaf,
-        bytes calldata balanceProof
+        bytes calldata balanceProof,
+        uint256 validatorIndex
     ) external view returns (uint256 validatorBalance) {
         return
             BeaconProofs.verifyValidatorBalance(
                 balancesContainerRoot,
-                validatorIndex,
                 validatorBalanceLeaf,
-                balanceProof
+                balanceProof,
+                validatorIndex
             );
     }
 

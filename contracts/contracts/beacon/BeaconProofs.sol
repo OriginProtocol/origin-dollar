@@ -13,8 +13,8 @@ library BeaconProofs {
     uint256 internal constant BEACON_BLOCK_BODY_HEIGHT = 4;
     uint256 internal constant EXECUTION_PAYLOAD_HEIGHT = 5;
     uint256 internal constant PENDING_DEPOSIT_HEIGHT = 28;
-    uint256 internal constant BALANCES_HEIGHT = 38;
-    uint256 internal constant VALIDATORS_HEIGHT = 40;
+    uint256 internal constant BALANCES_HEIGHT = 39;
+    uint256 internal constant VALIDATORS_HEIGHT = 41;
     uint256 internal constant VALIDATOR_HEIGHT = 3;
 
     /// @notice Fields in the BeaconBlock container for phase 0
@@ -74,8 +74,8 @@ library BeaconProofs {
     function verifyValidatorPubkey(
         bytes32 beaconBlockRoot,
         bytes32 pubKeyHash,
-        uint256 validatorIndex,
-        bytes calldata validatorPubKeyProof
+        bytes calldata validatorPubKeyProof,
+        uint256 validatorIndex
     ) internal view {
         // BeaconBlock.state.validators[validatorIndex].pubkey
         TreeNode[] memory nodes = new TreeNode[](4);
@@ -98,6 +98,7 @@ library BeaconProofs {
             index: VALIDATOR_PUBKEY_INDEX
         });
         uint256 generalizedIndex = generalizeIndex(nodes);
+
         require(
             Merkle.verifyInclusionSha256({
                 proof: validatorPubKeyProof,
@@ -140,9 +141,9 @@ library BeaconProofs {
 
     function verifyValidatorBalance(
         bytes32 balancesContainerRoot,
-        uint256 validatorIndex,
         bytes32 validatorBalanceLeaf,
-        bytes calldata balanceProof
+        bytes calldata balanceProof,
+        uint256 validatorIndex
     ) internal view returns (uint256 validatorBalance) {
         // Four balances are stored in each leaf so the validator index is divided by 4
         uint256 balanceIndex = uint256(validatorIndex / 4);

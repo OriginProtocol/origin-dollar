@@ -469,22 +469,24 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
             ) < firstPendingDepositSlot,
             "Deposit not processed"
         );
-        // Check the validator public key matches the hashed deposit public key
-        // Hash using Beacon Chains SSZ BLSPubkey format
-        bytes32 pubKeyBeaconHash = sha256(
-            abi.encodePacked(validatorPubicKey, bytes16(0))
-        );
-        require(
-            pendingDeposit.pubKeyHash == pubKeyBeaconHash,
-            "Pubkey mismatch"
-        );
+        {
+            // Check the validator public key matches the hashed deposit public key
+            // Hash using Beacon Chains SSZ BLSPubkey format
+            bytes32 pubKeyBeaconHash = sha256(
+                abi.encodePacked(validatorPubicKey, bytes16(0))
+            );
+            require(
+                pendingDeposit.pubKeyHash == pubKeyBeaconHash,
+                "Pubkey mismatch"
+            );
+        }
 
         // Verify the validator index has the same public key as the deposit
         BeaconProofs.verifyValidatorPubkey(
             blockRoot,
             pendingDeposit.pubKeyHash,
-            validatorIndex,
-            validatorPubKeyProof
+            validatorPubKeyProof,
+            validatorIndex
         );
 
         // Verify the first pending deposit slot matches the beacon chain
@@ -607,9 +609,9 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
             // Prove the validator's balance to the beacon block root
             uint256 validatorBalance = BeaconProofs.verifyValidatorBalance(
                 balancesContainerRoot,
-                validatorIndex,
                 validatorBalanceRoots[i],
-                validatorBalanceProofs[i]
+                validatorBalanceProofs[i],
+                validatorIndex
             );
 
             // total validator balances
