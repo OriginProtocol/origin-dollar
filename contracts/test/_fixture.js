@@ -2506,6 +2506,14 @@ async function woethCcipZapperFixture() {
   return fixture;
 }
 
+async function beaconChainFixture() {
+  const fixture = await defaultFixture();
+
+  fixture.beaconProofs = await resolveContract("MockBeaconProofs");
+
+  return fixture;
+}
+
 /**
  * A fixture is a setup function that is run only the first time it's invoked. On subsequent invocations,
  * Hardhat will reset the state of the network to what it was at the point after the fixture was initially executed.
@@ -2593,4 +2601,5 @@ module.exports = {
   nodeRevert,
   woethCcipZapperFixture,
   bridgeHelperModuleFixture,
+  beaconChainFixture,
 };

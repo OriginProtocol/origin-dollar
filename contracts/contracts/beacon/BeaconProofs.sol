@@ -71,10 +71,7 @@ library BeaconProofs {
         pure
         returns (uint256 genIndex)
     {
-        // generalized index = 2 ^ tree height + node index
-        index = (index << height) | index;
-
-        // plus 2 ^ total height
+        // 2 ^ tree height + node index
         genIndex = (1 << height) | index;
     }
 
@@ -83,7 +80,7 @@ library BeaconProofs {
         bytes32 pubKeyHash,
         uint256 validatorIndex,
         bytes calldata validatorPubKeyProof
-    ) external view {
+    ) internal view {
         // BeaconBlock.state.validators[validatorIndex].pubkey
         TreeNode[] memory nodes = new TreeNode[](4);
         // TODO might be easier to read and more gas efficient for the static nodes to be constant
@@ -104,9 +101,7 @@ library BeaconProofs {
             height: BEACON_BLOCK_HEIGHT,
             index: BEACON_BLOCK_STATE_INDEX
         });
-
-        uint256 generalizedIndex = BeaconProofs.generalizeIndex(nodes);
-
+        uint256 generalizedIndex = generalizeIndex(nodes);
         require(
             Merkle.verifyInclusionSha256({
                 proof: validatorPubKeyProof,
@@ -122,7 +117,7 @@ library BeaconProofs {
         bytes32 beaconBlockRoot,
         bytes32 validatorContainerRoot,
         bytes calldata balancesContainerProof
-    ) external view {
+    ) internal view {
         // BeaconBlock.state.balances
         // TODO This the generalized index is a fixed so can replace with a constant
         TreeNode[] memory nodes = new TreeNode[](2);
@@ -138,8 +133,7 @@ library BeaconProofs {
             height: BEACON_BLOCK_HEIGHT,
             index: BEACON_BLOCK_STATE_INDEX
         });
-        uint256 generalizedIndex = BeaconProofs.generalizeIndex(nodes);
-
+        uint256 generalizedIndex = generalizeIndex(nodes);
         require(
             Merkle.verifyInclusionSha256({
                 proof: balancesContainerProof,
@@ -156,7 +150,7 @@ library BeaconProofs {
         uint256 validatorIndex,
         bytes32 validatorBalanceRoot,
         bytes calldata balanceProof
-    ) external view returns (uint256 validatorBalance) {
+    ) internal view returns (uint256 validatorBalance) {
         // Four balances are stored in each leaf so the validator index is divided by 4
         uint256 balanceIndex = uint256(validatorIndex / 4);
 
@@ -198,7 +192,7 @@ library BeaconProofs {
         bytes32 blockRoot,
         uint64 slot,
         bytes calldata firstPendingDepositSlotProof
-    ) external view {
+    ) internal view {
         // BeaconBlock.state.PendingDeposits[0].slot
         TreeNode[] memory nodes = new TreeNode[](4);
         nodes[0] = TreeNode({
@@ -215,12 +209,9 @@ library BeaconProofs {
             height: BEACON_BLOCK_HEIGHT,
             index: BEACON_BLOCK_STATE_INDEX
         });
-
-        uint256 generalizedIndex = BeaconProofs.generalizeIndex(nodes);
-
+        uint256 generalizedIndex = generalizeIndex(nodes);
         // Convert uint64 slot number to a little endian bytes32
         bytes32 slotRoot = Endian.toLittleEndianUint64(slot);
-
         require(
             Merkle.verifyInclusionSha256({
                 proof: firstPendingDepositSlotProof,
@@ -236,7 +227,7 @@ library BeaconProofs {
         bytes32 beaconBlockRoot,
         uint256 blockNumber,
         bytes calldata blockNumberProof
-    ) external view {
+    ) internal view {
         // BeaconBlock.body.executionPayload.blockNumber
         TreeNode[] memory nodes = new TreeNode[](3);
         // TODO might be easier to read and more gas efficient for the static nodes to be constant
@@ -252,9 +243,7 @@ library BeaconProofs {
             height: BEACON_BLOCK_HEIGHT,
             index: BEACON_BLOCK_BODY_INDEX
         });
-
-        uint256 generalizedIndex = BeaconProofs.generalizeIndex(nodes);
-
+        uint256 generalizedIndex = generalizeIndex(nodes);
         require(
             Merkle.verifyInclusionSha256({
                 proof: blockNumberProof,
@@ -270,7 +259,7 @@ library BeaconProofs {
         bytes32 beaconBlockRoot,
         uint256 slot,
         bytes calldata slotProof
-    ) external view {
+    ) internal view {
         require(
             Merkle.verifyInclusionSha256({
                 proof: slotProof,

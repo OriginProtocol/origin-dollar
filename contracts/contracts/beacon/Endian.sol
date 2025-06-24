@@ -29,7 +29,7 @@ library Endian {
     }
 
     function toLittleEndianUint64(uint64 benum)
-        public
+        internal
         pure
         returns (bytes32 n)
     {

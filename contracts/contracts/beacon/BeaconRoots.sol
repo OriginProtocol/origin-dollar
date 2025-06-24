@@ -11,7 +11,7 @@ library BeaconRoots {
     uint256 internal constant BEACON_ROOTS_HISTORY_BUFFER_LENGTH = 8191;
 
     function parentBlockRoot(uint64 timestamp)
-        public
+        internal
         view
         returns (bytes32 parentRoot)
     {
