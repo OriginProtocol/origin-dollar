@@ -695,7 +695,7 @@ contract OUSD is Governable {
     /*
      * @notice Stop sending the yield from one account to another account.
      */
-    function undelegateYield(address _from) external onlyGovernor {
+    function undelegateYield(address _from) external onlyGovernorOrStrategist {
         // Require a delegation, which will also ensure a valid delegation
         require(yieldTo[_from] != address(0), "Zero address not allowed");
 
