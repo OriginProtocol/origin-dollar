@@ -576,7 +576,9 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
             if (_throwException) {
                 revert OutsideExpectedTickRange();
             }
-            return (false, 0);
+            
+            if (_currentPrice <= sqrtPriceTickLower) return (false, 0);
+            else return (false, 1e18);
         }
 
         // 18 decimal number expressed WETH tick share
