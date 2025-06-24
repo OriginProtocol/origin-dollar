@@ -12,7 +12,8 @@ library BeaconProofs {
     uint256 internal constant BEACON_STATE_HEIGHT = 6;
     uint256 internal constant BEACON_BLOCK_BODY_HEIGHT = 4;
     uint256 internal constant EXECUTION_PAYLOAD_HEIGHT = 5;
-    uint256 internal constant PENDING_DEPOSIT_HEIGHT = 28;
+    uint256 internal constant PENDING_DEPOSITS_HEIGHT = 28;
+    uint256 internal constant PENDING_DEPOSIT_HEIGHT = 3;
     uint256 internal constant BALANCES_HEIGHT = 39;
     uint256 internal constant VALIDATORS_HEIGHT = 41;
     uint256 internal constant VALIDATOR_HEIGHT = 3;
@@ -198,7 +199,7 @@ library BeaconProofs {
             index: STATE_PENDING_DEPOSITS_INDEX
         });
         // We want the first pending deposit so index 0
-        nodes[2] = TreeNode({ height: PENDING_DEPOSIT_HEIGHT, index: 0 });
+        nodes[2] = TreeNode({ height: PENDING_DEPOSITS_HEIGHT, index: 0 });
         nodes[3] = TreeNode({
             height: PENDING_DEPOSIT_HEIGHT,
             index: PENDING_DEPOSIT_SLOT_INDEX
