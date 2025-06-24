@@ -7,6 +7,7 @@ pragma solidity ^0.8.0;
  * @dev Implements an elastic supply
  * @author Origin Protocol Inc
  */
+import { IVault } from "../interfaces/IVault.sol";
 import { Governable } from "../governance/Governable.sol";
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 
@@ -96,6 +97,15 @@ contract OUSD is Governable {
 
     uint256 private constant RESOLUTION_INCREASE = 1e9;
     uint256[34] private __gap; // including below gap totals up to 200
+
+    /// @dev Verifies that the caller is the Governor or Strategist.
+    modifier onlyGovernorOrStrategist() {
+        require(
+            isGovernor() || msg.sender == IVault(vaultAddress).strategistAddr(),
+            "Caller is not the Strategist or Governor"
+        );
+        _;
+    }
 
     /// @dev Initializes the contract and sets necessary variables.
     /// @param _vaultAddress Address of the vault contract
@@ -618,7 +628,10 @@ contract OUSD is Governable {
      * @notice Send the yield from one account to another account.
      *         Each account keeps its own balances.
      */
-    function delegateYield(address _from, address _to) external onlyGovernor {
+    function delegateYield(address _from, address _to)
+        external
+        onlyGovernorOrStrategist
+    {
         require(_from != address(0), "Zero from address not allowed");
         require(_to != address(0), "Zero to address not allowed");
 
