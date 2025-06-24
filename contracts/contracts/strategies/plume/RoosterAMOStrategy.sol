@@ -287,8 +287,8 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
         allowedWethShareStart = _allowedWethShareStart;
         allowedWethShareEnd = _allowedWethShareEnd;
         emit PoolWethShareIntervalUpdated(
-            allowedWethShareStart,
-            allowedWethShareEnd
+            _allowedWethShareStart,
+            _allowedWethShareEnd
         );
     }
 
