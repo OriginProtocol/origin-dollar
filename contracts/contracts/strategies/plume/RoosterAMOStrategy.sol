@@ -117,19 +117,43 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
     ///      against a strategist / guardian being taken over and with multiple transactions draining the
     ///      protocol funds.
     uint256 public constant SOLVENCY_THRESHOLD = 0.998 ether;
-
+    /// @notice Emitted when the allowed interval within which the strategy contract is allowed to deposit
+    /// liquidity to the underlying pool is updated.
+    /// @param allowedWethShareStart The start of the interval
+    /// @param allowedWethShareEnd The end of the interval
     event PoolWethShareIntervalUpdated(
         uint256 allowedWethShareStart,
         uint256 allowedWethShareEnd
     );
+    /// @notice Emitted when liquidity is removed from the underlying pool
+    /// @param withdrawLiquidityShare Share of strategy's liquidity that has been removed
+    /// @param removedWETHAmount The amount of WETH removed
+    /// @param removedOETHAmount The amount of OETH removed
+    /// @param underlyingAssets Updated amount of strategy's underlying assets
     event LiquidityRemoved(
         uint256 withdrawLiquidityShare,
         uint256 removedWETHAmount,
         uint256 removedOETHAmount,
         uint256 underlyingAssets
     );
+
+    /// @notice Emitted when the underlying pool is rebalanced
+    /// @param currentPoolWethShare The resulting share of strategy's liquidity
+    /// in the TICK_NUMBER
     event PoolRebalanced(uint256 currentPoolWethShare);
+
+    /// @notice Emitted when the amount of underlying assets the strategy hold as
+    /// liquidity in the pool is updated.
+    /// @param underlyingAssets Updated amount of strategy's underlying assets
     event UnderlyingAssetsUpdated(uint256 underlyingAssets);
+
+    /// @notice Emitted when liquidity is added to the underlying pool
+    /// @param wethAmountDesired Amount of WETH desired to be deposited
+    /// @param oethAmountDesired Amount of OETH desired to be deposited
+    /// @param wethAmountSupplied Amount of WETH deposited
+    /// @param oethAmountSupplied Amount of OETH deposited
+    /// @param tokenId NFT liquidity token id
+    /// @param underlyingAssets Updated amount of underlying assets
     event LiquidityAdded(
         uint256 wethAmountDesired,
         uint256 oethAmountDesired,
