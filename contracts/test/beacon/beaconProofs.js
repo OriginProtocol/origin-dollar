@@ -22,17 +22,93 @@ describe("Beacon chain proofs", async () => {
       expect(await beaconProofs.generalizeIndexSingle(3, 7)).eq(15);
       expect(await beaconProofs.generalizeIndexSingle(6, 12)).eq(76);
     });
-    it("balances container", async () => {
+    it("BeaconBlock.slot", async () => {
       const { beaconProofs } = fixture;
 
       expect(
         await await beaconProofs.generalizeIndex([
           {
+            height: 3,
+            index: 0,
+          },
+        ])
+      ).eq(8);
+    });
+    it("BeaconBlock.parentRoot", async () => {
+      const { beaconProofs } = fixture;
+
+      expect(
+        await await beaconProofs.generalizeIndex([
+          {
+            height: 3,
+            index: 2,
+          },
+        ])
+      ).eq(10);
+    });
+    it("BeaconBlock.body", async () => {
+      const { beaconProofs } = fixture;
+
+      expect(
+        await await beaconProofs.generalizeIndex([
+          {
+            height: 3,
+            index: 4,
+          },
+        ])
+      ).eq(12);
+    });
+    it("BeaconBlock.BeaconBlockBody.randaoReveal", async () => {
+      const { beaconProofs } = fixture;
+
+      expect(
+        await await beaconProofs.generalizeIndex([
+          {
+            height: 3,
+            index: 4,
+          },
+          {
+            height: 4,
+            index: 0,
+          },
+        ])
+      ).eq(192);
+    });
+    it("BeaconBlock.BeaconState.balances", async () => {
+      const { beaconProofs } = fixture;
+
+      expect(
+        await await beaconProofs.generalizeIndex([
+          {
+            height: 3,
+            index: 3,
+          },
+          {
             height: 6,
             index: 12,
           },
         ])
-      ).eq(76);
+      ).eq(716);
+    });
+    it("BeaconBlock.body.executionPayload.blockNumber", async () => {
+      const { beaconProofs } = fixture;
+
+      expect(
+        await await beaconProofs.generalizeIndex([
+          {
+            height: 3,
+            index: 4,
+          },
+          {
+            height: 4,
+            index: 9,
+          },
+          {
+            height: 5,
+            index: 6,
+          },
+        ])
+      ).eq(6438);
     });
   });
 });

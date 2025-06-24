@@ -55,15 +55,11 @@ library BeaconProofs {
         pure
         returns (uint256 index)
     {
-        uint256 height = 0;
+        index = 1;
         for (uint256 i; i < nodes.length; ++i) {
             // generalized index = 2 ^ tree height + node index
-            index = (nodes[i].index << height) | index;
-            height += nodes[i].height;
+            index = (index << nodes[i].height) | nodes[i].index;
         }
-
-        // plus 2 ^ total height
-        index = (1 << height) | index;
     }
 
     function generalizeIndex(uint256 height, uint256 index)
@@ -85,21 +81,21 @@ library BeaconProofs {
         TreeNode[] memory nodes = new TreeNode[](4);
         // TODO might be easier to read and more gas efficient for the static nodes to be constant
         nodes[0] = TreeNode({
-            height: VALIDATOR_HEIGHT,
-            index: VALIDATOR_PUBKEY_INDEX
+            height: BEACON_BLOCK_HEIGHT,
+            index: BEACON_BLOCK_STATE_INDEX
         });
-        // this is a dynamic generalized index
         nodes[1] = TreeNode({
-            height: VALIDATORS_HEIGHT,
-            index: validatorIndex
-        });
-        nodes[2] = TreeNode({
             height: BEACON_STATE_HEIGHT,
             index: STATE_VALIDATORS_INDEX
         });
+        // this is a dynamic generalized index
+        nodes[2] = TreeNode({
+            height: VALIDATORS_HEIGHT,
+            index: validatorIndex
+        });
         nodes[3] = TreeNode({
-            height: BEACON_BLOCK_HEIGHT,
-            index: BEACON_BLOCK_STATE_INDEX
+            height: VALIDATOR_HEIGHT,
+            index: VALIDATOR_PUBKEY_INDEX
         });
         uint256 generalizedIndex = generalizeIndex(nodes);
         require(
@@ -122,16 +118,12 @@ library BeaconProofs {
         // TODO This the generalized index is a fixed so can replace with a constant
         TreeNode[] memory nodes = new TreeNode[](2);
         nodes[0] = TreeNode({
-            height: BEACON_STATE_HEIGHT,
-            index: STATE_BALANCES_INDEX
-        });
-        nodes[0] = TreeNode({
-            height: BEACON_STATE_HEIGHT,
-            index: STATE_BALANCES_INDEX
-        });
-        nodes[1] = TreeNode({
             height: BEACON_BLOCK_HEIGHT,
             index: BEACON_BLOCK_STATE_INDEX
+        });
+        nodes[1] = TreeNode({
+            height: BEACON_STATE_HEIGHT,
+            index: STATE_BALANCES_INDEX
         });
         uint256 generalizedIndex = generalizeIndex(nodes);
         require(
@@ -196,18 +188,18 @@ library BeaconProofs {
         // BeaconBlock.state.PendingDeposits[0].slot
         TreeNode[] memory nodes = new TreeNode[](4);
         nodes[0] = TreeNode({
-            height: PENDING_DEPOSIT_HEIGHT,
-            index: PENDING_DEPOSIT_SLOT_INDEX
+            height: BEACON_BLOCK_HEIGHT,
+            index: BEACON_BLOCK_STATE_INDEX
         });
-        // We want the first pending deposit so index 0
-        nodes[1] = TreeNode({ height: PENDING_DEPOSIT_HEIGHT, index: 0 });
-        nodes[2] = TreeNode({
+        nodes[1] = TreeNode({
             height: BEACON_STATE_HEIGHT,
             index: STATE_PENDING_DEPOSITS_INDEX
         });
+        // We want the first pending deposit so index 0
+        nodes[2] = TreeNode({ height: PENDING_DEPOSIT_HEIGHT, index: 0 });
         nodes[3] = TreeNode({
-            height: BEACON_BLOCK_HEIGHT,
-            index: BEACON_BLOCK_STATE_INDEX
+            height: PENDING_DEPOSIT_HEIGHT,
+            index: PENDING_DEPOSIT_SLOT_INDEX
         });
         uint256 generalizedIndex = generalizeIndex(nodes);
         // Convert uint64 slot number to a little endian bytes32
@@ -229,19 +221,19 @@ library BeaconProofs {
         bytes calldata blockNumberProof
     ) internal view {
         // BeaconBlock.body.executionPayload.blockNumber
-        TreeNode[] memory nodes = new TreeNode[](3);
         // TODO might be easier to read and more gas efficient for the static nodes to be constant
+        TreeNode[] memory nodes = new TreeNode[](3);
         nodes[0] = TreeNode({
-            height: EXECUTION_PAYLOAD_HEIGHT,
-            index: EXECUTION_PAYLOAD_BLOCK_NUMBER_INDEX
+            height: BEACON_BLOCK_HEIGHT,
+            index: BEACON_BLOCK_BODY_INDEX
         });
         nodes[1] = TreeNode({
             height: BEACON_BLOCK_BODY_HEIGHT,
             index: BEACON_BLOCK_BODY_EXECUTION_PAYLOAD_INDEX
         });
-        nodes[3] = TreeNode({
-            height: BEACON_BLOCK_HEIGHT,
-            index: BEACON_BLOCK_BODY_INDEX
+        nodes[2] = TreeNode({
+            height: EXECUTION_PAYLOAD_HEIGHT,
+            index: EXECUTION_PAYLOAD_BLOCK_NUMBER_INDEX
         });
         uint256 generalizedIndex = generalizeIndex(nodes);
         require(
