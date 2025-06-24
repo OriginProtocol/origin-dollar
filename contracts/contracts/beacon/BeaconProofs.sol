@@ -111,7 +111,7 @@ library BeaconProofs {
 
     function verifyBalancesContainer(
         bytes32 beaconBlockRoot,
-        bytes32 validatorContainerRoot,
+        bytes32 balancesContainerLeaf,
         bytes calldata balancesContainerProof
     ) internal view {
         // BeaconBlock.state.balances
@@ -126,11 +126,12 @@ library BeaconProofs {
             index: STATE_BALANCES_INDEX
         });
         uint256 generalizedIndex = generalizeIndex(nodes);
+
         require(
             Merkle.verifyInclusionSha256({
                 proof: balancesContainerProof,
                 root: beaconBlockRoot,
-                leaf: validatorContainerRoot,
+                leaf: balancesContainerLeaf,
                 index: generalizedIndex
             }),
             "Invalid balance container proof"
@@ -140,7 +141,7 @@ library BeaconProofs {
     function verifyValidatorBalance(
         bytes32 balancesContainerRoot,
         uint256 validatorIndex,
-        bytes32 validatorBalanceRoot,
+        bytes32 validatorBalanceLeaf,
         bytes calldata balanceProof
     ) internal view returns (uint256 validatorBalance) {
         // Four balances are stored in each leaf so the validator index is divided by 4
@@ -156,19 +157,19 @@ library BeaconProofs {
             Merkle.verifyInclusionSha256({
                 proof: balanceProof,
                 root: balancesContainerRoot,
-                leaf: validatorBalanceRoot,
+                leaf: validatorBalanceLeaf,
                 index: generalizedIndex
             }),
             "Invalid balance container proof"
         );
 
         validatorBalance = balanceAtIndex(
-            validatorBalanceRoot,
+            validatorBalanceLeaf,
             uint40(validatorIndex)
         );
     }
 
-    function balanceAtIndex(bytes32 validatorBalanceRoot, uint40 validatorIndex)
+    function balanceAtIndex(bytes32 validatorBalanceLeaf, uint40 validatorIndex)
         internal
         pure
         returns (uint256)
@@ -176,7 +177,7 @@ library BeaconProofs {
         uint256 bitShiftAmount = (validatorIndex % 4) * 64;
         return
             Endian.fromLittleEndianUint64(
-                bytes32((uint256(validatorBalanceRoot) << bitShiftAmount))
+                bytes32((uint256(validatorBalanceLeaf) << bitShiftAmount))
             );
     }
 
@@ -202,13 +203,14 @@ library BeaconProofs {
             index: PENDING_DEPOSIT_SLOT_INDEX
         });
         uint256 generalizedIndex = generalizeIndex(nodes);
+
         // Convert uint64 slot number to a little endian bytes32
-        bytes32 slotRoot = Endian.toLittleEndianUint64(slot);
+        bytes32 slotLeaf = Endian.toLittleEndianUint64(slot);
         require(
             Merkle.verifyInclusionSha256({
                 proof: firstPendingDepositSlotProof,
                 root: blockRoot,
-                leaf: slotRoot,
+                leaf: slotLeaf,
                 index: generalizedIndex
             }),
             "Invalid pending deposit proof"
@@ -236,11 +238,16 @@ library BeaconProofs {
             index: EXECUTION_PAYLOAD_BLOCK_NUMBER_INDEX
         });
         uint256 generalizedIndex = generalizeIndex(nodes);
+
+        // Convert uint64 block number to a little endian bytes32
+        bytes32 blockNumberLeaf = Endian.toLittleEndianUint64(
+            uint64(blockNumber)
+        );
         require(
             Merkle.verifyInclusionSha256({
                 proof: blockNumberProof,
                 root: beaconBlockRoot,
-                leaf: Endian.toLittleEndianUint64(uint64(blockNumber)),
+                leaf: blockNumberLeaf,
                 index: generalizedIndex
             }),
             "Invalid block number proof"

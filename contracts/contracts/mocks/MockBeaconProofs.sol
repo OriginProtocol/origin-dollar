@@ -34,70 +34,71 @@ contract MockBeaconProofs {
         );
     }
 
-    // function verifyBalancesContainer(
-    //     bytes32 beaconBlockRoot,
-    //     bytes32 validatorContainerRoot,
-    //     bytes calldata balancesContainerProof
-    // ) external view {
-    //     BeaconProofs.verifyBalancesContainer(
-    //         beaconBlockRoot,
-    //         validatorContainerRoot,
-    //         balancesContainerProof
-    //     );
-    // }
+    function verifyBalancesContainer(
+        bytes32 beaconBlockRoot,
+        bytes32 balancesContainerLeaf,
+        bytes calldata balancesContainerProof
+    ) external view {
+        BeaconProofs.verifyBalancesContainer(
+            beaconBlockRoot,
+            balancesContainerLeaf,
+            balancesContainerProof
+        );
+    }
 
-    // function verifyValidatorBalance(
-    //     bytes32 balancesContainerRoot,
-    //     uint256 validatorIndex,
-    //     bytes32 validatorBalanceRoot,
-    //     bytes calldata balanceProof
-    // ) external view returns (uint256 validatorBalance) {
-    //     return
-    //         BeaconProofs.verifyValidatorBalance(
-    //             balancesContainerRoot,
-    //             validatorIndex,
-    //             validatorBalanceRoot,
-    //             balanceProof
-    //         );
-    // }
+    function verifyValidatorBalance(
+        bytes32 balancesContainerRoot,
+        uint256 validatorIndex,
+        bytes32 validatorBalanceLeaf,
+        bytes calldata balanceProof
+    ) external view returns (uint256 validatorBalance) {
+        return
+            BeaconProofs.verifyValidatorBalance(
+                balancesContainerRoot,
+                validatorIndex,
+                validatorBalanceLeaf,
+                balanceProof
+            );
+    }
 
-    // function balanceAtIndex(
-    //     bytes32 validatorBalanceRoot,
-    //     uint40 validatorIndex
-    // ) internal pure returns (uint256) {
-    //     return
-    //         BeaconProofs.balanceAtIndex(validatorBalanceRoot, validatorIndex);
-    // }
+    function balanceAtIndex(bytes32 validatorBalanceLeaf, uint40 validatorIndex)
+        internal
+        pure
+        returns (uint256)
+    {
+        return
+            BeaconProofs.balanceAtIndex(validatorBalanceLeaf, validatorIndex);
+    }
 
-    // function verifyFirstPendingDepositSlot(
-    //     bytes32 blockRoot,
-    //     uint64 slot,
-    //     bytes calldata firstPendingDepositSlotProof
-    // ) external view {
-    //     BeaconProofs.verifyFirstPendingDepositSlot(
-    //         blockRoot,
-    //         slot,
-    //         firstPendingDepositSlotProof
-    //     );
-    // }
+    function verifyFirstPendingDepositSlot(
+        bytes32 blockRoot,
+        uint64 slot,
+        bytes calldata firstPendingDepositSlotProof
+    ) external view {
+        BeaconProofs.verifyFirstPendingDepositSlot(
+            blockRoot,
+            slot,
+            firstPendingDepositSlotProof
+        );
+    }
 
-    // function verifyBlockNumber(
-    //     bytes32 beaconBlockRoot,
-    //     uint256 blockNumber,
-    //     bytes calldata blockNumberProof
-    // ) external view {
-    //     BeaconProofs.verifyBlockNumber(
-    //         beaconBlockRoot,
-    //         blockNumber,
-    //         blockNumberProof
-    //     );
-    // }
+    function verifyBlockNumber(
+        bytes32 beaconBlockRoot,
+        uint256 blockNumber,
+        bytes calldata blockNumberProof
+    ) external view {
+        BeaconProofs.verifyBlockNumber(
+            beaconBlockRoot,
+            blockNumber,
+            blockNumberProof
+        );
+    }
 
-    // function verifySlot(
-    //     bytes32 beaconBlockRoot,
-    //     uint256 slot,
-    //     bytes calldata slotProof
-    // ) external view {
-    //     BeaconProofs.verifySlot(beaconBlockRoot, slot, slotProof);
-    // }
+    function verifySlot(
+        bytes32 beaconBlockRoot,
+        uint256 slot,
+        bytes calldata slotProof
+    ) external view {
+        BeaconProofs.verifySlot(beaconBlockRoot, slot, slotProof);
+    }
 }

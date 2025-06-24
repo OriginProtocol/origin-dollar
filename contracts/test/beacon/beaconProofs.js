@@ -111,4 +111,22 @@ describe("Beacon chain proofs", async () => {
       ).eq(6438);
     });
   });
+  describe("verify", () => {
+    it("balances container to beacon root", async () => {
+      const { beaconProofs } = fixture;
+
+      const beaconRoot =
+        "0x5afbdb19dd02b8d6bf10ee1722753b4a687326f1e7c3a4515ec47be3599b0474";
+      const balancesContainerLeaf =
+        "0xa4181bd72c96848c06c64a28ce7c21563b6063f289ec27d2b5f05aae4dfdb57d";
+      const proof =
+        "0x4938a396a5a5651cdeab2dbc058f866ebcda5fd4fc85a152f22dba474c009791732bb29b9703de0515129d79481b879a3dd9123eeffe7bf8afd4aaff84378560ab5cfe225d99d908dd717ced212090862faf3d42ef6d49b90e5a3d53a13a187ba1ba6d4a2373a34ace4c3bdff56faaf6dc7e93b538bab62355581ae2b679cf30b9db93bd03ab076a7c7dce90b2fcd3162c71977e7e58a31e1ca4a0dded313be333f54b1fbc27a269a843a4d3838e0013984cc884b7a88e4d7f528a1c9a76c98c41dd7ebb8c56a217d6881589c4e09ce0055bea097be50e2dcaa07757da3df8bb1561936559cd736ba1d1802b048e118c414a17c48ff04189f0b8df768d599c9171c990856b4ce5cd0c635561d221a760c5be68a43c7a26b82c92800a16e05ddc";
+
+      await beaconProofs.verifyBalancesContainer(
+        beaconRoot,
+        balancesContainerLeaf,
+        proof
+      );
+    });
+  });
 });
