@@ -1,8 +1,11 @@
-const { BigNumber } = require("ethers");
+const ethers = require("ethers");
 
-const MAX_UINT256 = BigNumber.from(
+const MAX_UINT256 = ethers.BigNumber.from(
   "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
 );
+
+const ONE = ethers.utils.parseEther("1");
+
 const threeCRVPid = 9;
 const metapoolLPCRVPid = 56;
 const oethPoolLpPID = 174;
@@ -42,6 +45,7 @@ module.exports = {
   balancer_rETH_WETH_PID,
   ccip_arbChainSelector,
   p2pApiEncodedKey,
+  ONE,
 };
 
 // These are all the metapool ids. For easier future reference

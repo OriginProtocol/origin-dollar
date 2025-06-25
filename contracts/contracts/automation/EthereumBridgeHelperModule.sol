@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import { AbstractLZBridgeHelperModule } from "./AbstractLZBridgeHelperModule.sol";
+import { AbstractLZBridgeHelperModule, AbstractSafeModule } from "./AbstractLZBridgeHelperModule.sol";
+import { AbstractCCIPBridgeHelperModule, IRouterClient } from "./AbstractCCIPBridgeHelperModule.sol";
 
 import { AccessControlEnumerable } from "@openzeppelin/contracts/access/AccessControlEnumerable.sol";
 
@@ -14,7 +15,8 @@ import { IVault } from "../interfaces/IVault.sol";
 
 contract EthereumBridgeHelperModule is
     AccessControlEnumerable,
-    AbstractLZBridgeHelperModule
+    AbstractLZBridgeHelperModule,
+    AbstractCCIPBridgeHelperModule
 {
     IVault public constant vault =
         IVault(0x39254033945AA2E4809Cc2977E7087BEE48bd7Ab);
@@ -31,9 +33,12 @@ contract EthereumBridgeHelperModule is
     IOFT public constant LZ_ETH_OMNICHAIN_ADAPTER =
         IOFT(0x77b2043768d28E9C9aB44E1aBfC95944bcE57931);
 
-    constructor(address _safeContract)
-        AbstractLZBridgeHelperModule(_safeContract)
-    {}
+    IRouterClient public constant CCIP_ROUTER =
+        IRouterClient(0x80226fc0Ee2b096224EeAc085Bb9a8cba1146f7D);
+
+    uint64 public constant CCIP_BASE_CHAIN_SELECTOR = 15971525489660198786;
+
+    constructor(address _safeContract) AbstractSafeModule(_safeContract) {}
 
     /**
      * @dev Bridges wOETH to Plume.
@@ -52,6 +57,23 @@ contract EthereumBridgeHelperModule is
             woethAmount,
             slippageBps,
             false
+        );
+    }
+
+    /**
+     * @dev Bridges wOETH to Base using CCIP.
+     * @param woethAmount Amount of wOETH to bridge.
+     */
+    function bridgeWOETHToBase(uint256 woethAmount)
+        public
+        payable
+        onlyOperator
+    {
+        _bridgeTokenWithCCIP(
+            CCIP_ROUTER,
+            CCIP_BASE_CHAIN_SELECTOR,
+            woeth,
+            woethAmount
         );
     }
 
@@ -84,16 +106,44 @@ contract EthereumBridgeHelperModule is
     }
 
     /**
+     * @dev Bridges wETH to Base using CCIP.
+     * @param wethAmount Amount of wETH to bridge.
+     */
+    function bridgeWETHToBase(uint256 wethAmount) public payable onlyOperator {
+        _bridgeTokenWithCCIP(
+            CCIP_ROUTER,
+            CCIP_BASE_CHAIN_SELECTOR,
+            IERC20(address(weth)),
+            wethAmount
+        );
+    }
+
+    /**
      * @dev Mints OETH and wraps it into wOETH.
      * @param wethAmount Amount of WETH to mint.
+     * @param useNativeToken Whether to use native token to mint.
      * @return Amount of wOETH minted.
      */
-    function mintAndWrap(uint256 wethAmount)
+    function mintAndWrap(uint256 wethAmount, bool useNativeToken)
         external
         onlyOperator
         returns (uint256)
     {
+        if (useNativeToken) {
+            wrapETH(wethAmount);
+        }
+
         return _mintAndWrap(wethAmount);
+    }
+
+    function wrapETH(uint256 ethAmount) public payable onlyOperator {
+        // Deposit ETH into WETH
+        safeContract.execTransactionFromModule(
+            address(weth),
+            ethAmount, // Value
+            abi.encodeWithSelector(weth.deposit.selector),
+            0 // Call
+        );
     }
 
     /**
@@ -165,14 +215,37 @@ contract EthereumBridgeHelperModule is
      * @dev Mints OETH and wraps it into wOETH, then bridges it to Plume.
      * @param wethAmount Amount of WETH to mint.
      * @param slippageBps Bridge slippage in 10^4 basis points.
+     * @param useNativeToken Whether to use native token to mint.
      */
-    function mintWrapAndBridgeToPlume(uint256 wethAmount, uint256 slippageBps)
+    function mintWrapAndBridgeToPlume(
+        uint256 wethAmount,
+        uint256 slippageBps,
+        bool useNativeToken
+    ) external payable onlyOperator {
+        if (useNativeToken) {
+            wrapETH(wethAmount);
+        }
+
+        uint256 woethAmount = _mintAndWrap(wethAmount);
+        bridgeWOETHToPlume(woethAmount, slippageBps);
+    }
+
+    /**
+     * @dev Mints OETH and wraps it into wOETH, then bridges it to Base using CCIP.
+     * @param wethAmount Amount of WETH to mint.
+     * @param useNativeToken Whether to use native token to mint.
+     */
+    function mintWrapAndBridgeToBase(uint256 wethAmount, bool useNativeToken)
         external
         payable
         onlyOperator
     {
+        if (useNativeToken) {
+            wrapETH(wethAmount);
+        }
+
         uint256 woethAmount = _mintAndWrap(wethAmount);
-        bridgeWOETHToPlume(woethAmount, slippageBps);
+        bridgeWOETHToBase(woethAmount);
     }
 
     /**
@@ -247,5 +320,18 @@ contract EthereumBridgeHelperModule is
         );
 
         bridgeWETHToPlume(wethAmount, slippageBps);
+    }
+
+    /**
+     * @dev Unwraps wOETH and redeems it to get WETH, then bridges it to Base using CCIP.
+     * @param woethAmount Amount of wOETH to unwrap.
+     */
+    function unwrapRedeemAndBridgeToBase(uint256 woethAmount)
+        external
+        payable
+        onlyOperator
+    {
+        uint256 wethAmount = _unwrapAndRedeem(woethAmount);
+        bridgeWETHToBase(wethAmount);
     }
 }

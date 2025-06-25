@@ -9,7 +9,7 @@ const { impersonateAndFund } = require("../../utils/signers");
 
 const mainnetFixture = createFixtureLoader(bridgeHelperModuleFixture);
 
-describe("ForkTest: Bridge Helper Safe Module", function () {
+describe("ForkTest: Bridge Helper Safe Module (Ethereum)", function () {
   let fixture, oethVault, weth, woeth, oeth;
   beforeEach(async () => {
     fixture = await mainnetFixture();
@@ -103,6 +103,38 @@ describe("ForkTest: Bridge Helper Safe Module", function () {
     expect(minAmountLD).to.gt(oethUnits("0.99"));
   });
 
+  it("Should bridge wOETH to Base", async () => {
+    const { woeth, josh, safeSigner, bridgeHelperModule } = fixture;
+
+    await _mintWOETH(oethUnits("1"), josh, safeSigner.address);
+
+    const balanceBefore = await woeth.balanceOf(safeSigner.address);
+
+    await bridgeHelperModule
+      .connect(safeSigner)
+      .bridgeWOETHToBase(oethUnits("1"));
+
+    const balanceAfter = await woeth.balanceOf(safeSigner.address);
+
+    expect(balanceAfter).to.eq(balanceBefore.sub(oethUnits("1")));
+  });
+
+  it("Should bridge WETH to Base", async () => {
+    const { weth, josh, safeSigner, bridgeHelperModule } = fixture;
+
+    await weth.connect(josh).transfer(safeSigner.address, oethUnits("1.1"));
+
+    const balanceBefore = await weth.balanceOf(safeSigner.address);
+
+    await bridgeHelperModule
+      .connect(safeSigner)
+      .bridgeWETHToBase(oethUnits("1"));
+
+    const balanceAfter = await weth.balanceOf(safeSigner.address);
+
+    expect(balanceAfter).to.eq(balanceBefore.sub(oethUnits("1")));
+  });
+
   it("Should mint OETH wrap it to WOETH", async () => {
     const {
       josh,
@@ -127,7 +159,9 @@ describe("ForkTest: Bridge Helper Safe Module", function () {
     const woethSupplyBefore = await woeth.totalSupply();
 
     // Mint OETH using WETH and wrap it to WOETH
-    await bridgeHelperModule.connect(safeSigner).mintAndWrap(oethUnits("1"));
+    await bridgeHelperModule
+      .connect(safeSigner)
+      .mintAndWrap(oethUnits("1"), false);
 
     const supplyAfter = await oeth.totalSupply();
     const wethBalanceAfter = await weth.balanceOf(safeSigner.address);
