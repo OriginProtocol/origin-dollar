@@ -30,5 +30,6 @@
   "030_claimbribes_safe_module": 1746891767,
   "031_enable_buyback_operator": 1749060898,
   "032_vault_perf_fee": 1749471718,
-  "033_bridge_helper_module": 1750777962
+  "033_bridge_helper_module": 1750777962,
+  "034_claimbribes_module_v2": 1750850875
 }
