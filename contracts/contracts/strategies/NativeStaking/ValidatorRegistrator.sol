@@ -45,28 +45,28 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
     /// @notice The number of validators that have 32 (!) ETH actively deposited. When a new deposit
     /// to a validator happens this number increases, when a validator exit is detected this number
     /// decreases.
-    uint256 public activeDepositedValidators;
+    uint256 private deprecated_activeDepositedValidators;
     /// @notice State of the validators keccak256(pubKey) => state
     mapping(bytes32 => VALIDATOR_STATE) public validatorsStates;
     /// @notice The account that is allowed to modify stakeETHThreshold and reset stakeETHTally
     address public stakingMonitor;
     /// @notice Amount of ETH that can be staked before staking on the contract is suspended
     /// and the `stakingMonitor` needs to approve further staking by calling `resetStakeETHTally`
-    uint256 public stakeETHThreshold;
+    uint256 private deprecated_stakeETHThreshold;
     /// @notice Amount of ETH that has been staked since the `stakingMonitor` last called `resetStakeETHTally`.
     /// This can not go above `stakeETHThreshold`.
-    uint256 public stakeETHTally;
+    uint256 private deprecated_stakeETHTally;
 
     // Deposit data
-    struct PendingDeposit {
+    struct DepositData {
         bytes32 pubKeyHash;
-        uint128 amount; // in wei
-        uint64 blockNumber;
+        uint128 amountWei;
+        uint64 pastSlot;
+        uint32 rootsIndex;
         DepositStatus status;
-        uint256 rootsIndex;
     }
     /// @notice Mapping of the root of a deposit (depositDataRoot) to its data
-    mapping(bytes32 => PendingDeposit) public deposits;
+    mapping(bytes32 => DepositData) public deposits;
     /// @notice List of deposit roots that are still to be proven as processed on the beacon chain
     bytes32[] public depositsRoots;
     /// @notice Total amount in wei of deposits waiting to be processed on the beacon chain
@@ -188,103 +188,85 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
         emit StakingMonitorChanged(_address);
     }
 
-    /// @notice Set the amount of ETH that can be staked before staking monitor
-    // needs to a approve further staking by resetting the stake ETH tally
-    function setStakeETHThreshold(uint256 _amount) external onlyGovernor {
-        stakeETHThreshold = _amount;
-        emit StakeETHThresholdChanged(_amount);
-    }
-
-    /// @notice Reset the stakeETHTally
-    function resetStakeETHTally() external onlyStakingMonitor {
-        stakeETHTally = 0;
-        emit StakeETHTallyReset();
-    }
-
-    /// @notice Stakes WETH to the node validators
-    /// @param validators A list of validator data needed to stake.
+    /// @notice Stakes WETH to a validator
+    /// @param validator validator data needed to stake.
     /// The `ValidatorStakeData` struct contains the pubkey, signature and depositDataRoot.
     /// Only the registrator can call this function.
+    /// @param depositAmount The amount of WETH to stake to the validator in wei.
     // slither-disable-start reentrancy-eth
-    function stakeEth(ValidatorStakeData[] calldata validators)
-        external
-        onlyRegistrator
-        whenNotPaused
-        nonReentrant
-    {
-        uint256 requiredETH = validators.length * FULL_STAKE;
-
+    function stakeEth(
+        ValidatorStakeData calldata validator,
+        uint256 depositAmount,
+        uint64 pastSlot
+    ) external onlyRegistrator whenNotPaused nonReentrant {
         // Check there is enough WETH from the deposits sitting in this strategy contract
         require(
-            requiredETH <= IWETH9(WETH).balanceOf(address(this)),
+            depositAmount <= IWETH9(WETH).balanceOf(address(this)),
             "Insufficient WETH"
         );
-        require(
-            activeDepositedValidators + validators.length <= MAX_VALIDATORS,
-            "Max validators reached"
-        );
 
-        require(
-            stakeETHTally + requiredETH <= stakeETHThreshold,
-            "Staking ETH over threshold"
-        );
-        stakeETHTally += requiredETH;
+        // Check the past slot has been mapped to a block number
+        // No need to validate the mapped block number is before the current block.
+        // It must be in the past if the block number has been proven to exist on the beacon chain.
+        IBeaconOracle(BEACON_ORACLE).slotToBlock(pastSlot);
 
         // Convert required ETH from WETH
-        IWETH9(WETH).withdraw(requiredETH);
-        _wethWithdrawn(requiredETH);
+        IWETH9(WETH).withdraw(depositAmount);
+        _wethWithdrawn(depositAmount);
 
-        /* 0x01 to indicate that withdrawal credentials will contain an EOA address that the sweeping function
-         * can sweep funds to.
+        /* 0x02 to indicate that withdrawal credentials are for a compounding validator
+         * that was introduced with the Pectra upgrade.
          * bytes11(0) to fill up the required zeros
          * remaining bytes20 are for the address
          */
         bytes memory withdrawalCredentials = abi.encodePacked(
-            bytes1(0x01),
+            bytes1(0x02),
             bytes11(0),
             address(this)
         );
 
-        // For each validator
-        for (uint256 i = 0; i < validators.length; ++i) {
-            bytes32 pubKeyHash = keccak256(validators[i].pubkey);
+        // Unfortunately, the original implementation hashed the public key using keccak256
+        // Ideally, it would have used the Beacon Chain's hashing for BLSPubkey which is
+        // sha256(abi.encodePacked(validator.pubkey, bytes16(0)))
+        bytes32 pubKeyHash = keccak256(validator.pubkey);
 
-            // Post Pectra there can be multiple deposits to the same validator
-            require(
-                validatorsStates[pubKeyHash] == VALIDATOR_STATE.REGISTERED ||
-                    validatorsStates[pubKeyHash] == VALIDATOR_STATE.STAKED,
-                "Validator not registered"
-            );
+        VALIDATOR_STATE currentState = validatorsStates[pubKeyHash];
+        require(
+            currentState == VALIDATOR_STATE.REGISTERED ||
+                // Post Pectra there can be multiple deposits to the same validator
+                currentState == VALIDATOR_STATE.STAKED,
+            "Validator not registered"
+        );
 
-            IDepositContract(BEACON_CHAIN_DEPOSIT_CONTRACT).deposit{
-                value: FULL_STAKE
-            }(
-                validators[i].pubkey,
-                withdrawalCredentials,
-                validators[i].signature,
-                validators[i].depositDataRoot
-            );
+        // Deposit to the Beacon Chain deposit contract.
+        // This will create a deposit in the beacon chain's pending deposit queue.
+        IDepositContract(BEACON_CHAIN_DEPOSIT_CONTRACT).deposit{
+            value: depositAmount
+        }(
+            validator.pubkey,
+            withdrawalCredentials,
+            validator.signature,
+            validator.depositDataRoot
+        );
 
+        //// Update contract storage
+        // Store the validator state if needed
+        if (currentState == VALIDATOR_STATE.REGISTERED) {
             validatorsStates[pubKeyHash] = VALIDATOR_STATE.STAKED;
-
-            // Hash using Beacon Chains SSZ BLSPubkey format
-            bytes32 pubKeyBeaconHash = sha256(
-                abi.encodePacked(validators[i].pubkey, bytes16(0))
-            );
-            deposits[validators[i].depositDataRoot] = PendingDeposit({
-                pubKeyHash: pubKeyBeaconHash,
-                amount: SafeCast.toUint128(FULL_STAKE),
-                blockNumber: SafeCast.toUint64(block.number),
-                status: DepositStatus.PENDING,
-                rootsIndex: depositsRoots.length
-            });
-            depositsRoots.push(validators[i].depositDataRoot);
-            totalDeposits += FULL_STAKE;
-
-            emit ETHStaked(pubKeyHash, validators[i].pubkey, FULL_STAKE);
         }
-        // save gas by changing this storage variable only once rather each time in the loop.
-        activeDepositedValidators += validators.length;
+        // Store the deposit data for proveDeposit and proveBalances
+        // Hash using Beacon Chains SSZ BLSPubkey format
+        deposits[validator.depositDataRoot] = DepositData({
+            pubKeyHash: sha256(abi.encodePacked(validator.pubkey, bytes16(0))),
+            amountWei: SafeCast.toUint128(depositAmount),
+            pastSlot: pastSlot,
+            rootsIndex: SafeCast.toUint32(depositsRoots.length),
+            status: DepositStatus.PENDING
+        });
+        depositsRoots.push(validator.depositDataRoot);
+        totalDeposits += depositAmount;
+
+        emit ETHStaked(pubKeyHash, validator.pubkey, depositAmount);
     }
 
     // slither-disable-end reentrancy-eth
@@ -454,17 +436,9 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
         bytes32 blockRoot = BeaconRoots.parentBlockRoot(timestamp);
 
         // Load into memory the previously saved deposit data
-        PendingDeposit memory deposit = deposits[depositDataRoot];
+        DepositData memory deposit = deposits[depositDataRoot];
         require(deposit.status == DepositStatus.PENDING, "Deposit not pending");
-        // Convert the block number at the time the deposit was made to a slot
-        // and verify it before the next deposit to be processed by the beacon chain.
-        // If the slot of the deposit is the same as the next deposit to be processed by the beacon chain,
-        // then we can't be certain if the deposit was processed or not. Revert in this case.
-        require(
-            IBeaconOracle(BEACON_ORACLE).blockToSlot(deposit.blockNumber) <
-                firstPendingDepositSlot,
-            "Deposit not processed"
-        );
+
         {
             // Check the validator public key matches the hashed deposit public key
             // Hash using Beacon Chains SSZ BLSPubkey format
@@ -498,9 +472,10 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
         // Delete the last deposit from the list
         depositsRoots.pop();
         // Reduce the total pending deposits in wei
-        totalDeposits -= deposit.amount;
+        totalDeposits -= deposit.amountWei;
 
         // TODO need to check the state transitions for existing validators
+        // TODO it's be nice to use the Beacon chain hash of the public key to avoid passing in the full public key
         bytes32 pubKeyHash = keccak256(validatorPubicKey);
         if (validatorsStates[pubKeyHash] != VALIDATOR_STATE.PROVEN) {
             // Store the validator state as PROVEN
@@ -551,10 +526,6 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
 
         // Break up the into blocks to avoid stack too deep
         {
-            // convert the slot of the first pending deposit to a block number
-            uint64 firstPendingDepositBlockNumber = IBeaconOracle(BEACON_ORACLE)
-                .slotToBlock(firstPendingDepositSlot);
-
             // Prove the first pending deposit slot to the beacon block root
             BeaconProofs.verifyFirstPendingDepositSlot(
                 blockRoot,
@@ -570,9 +541,9 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
                 // Check the stored deposit is still waiting to be processed on the beacon chain
                 // If it has it will need to be proven with `proveDeposit`
                 require(
-                    deposits[depositDataRoot].blockNumber >
-                        firstPendingDepositBlockNumber,
-                    "Deposit processed"
+                    deposits[depositDataRoot].pastSlot >
+                        firstPendingDepositSlot,
+                    "Deposit not processed"
                 );
             }
         }

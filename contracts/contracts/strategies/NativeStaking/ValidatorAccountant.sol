@@ -114,65 +114,57 @@ abstract contract ValidatorAccountant is ValidatorRegistrator {
         internal
         returns (bool accountingValid)
     {
-        if (address(this).balance < consensusRewards) {
-            return _failAccounting(pauseOnFail);
-        }
-
-        // Calculate all the new ETH that has been swept to the contract since the last accounting
-        uint256 newSweptETH = address(this).balance - consensusRewards;
-        accountingValid = true;
-
-        // send the ETH that is from fully withdrawn validators to the Vault
-        if (newSweptETH >= FULL_STAKE) {
-            uint256 fullyWithdrawnValidators;
-            // explicitly cast to uint256 as we want to round to a whole number of validators
-            fullyWithdrawnValidators = uint256(newSweptETH / FULL_STAKE);
-            activeDepositedValidators -= fullyWithdrawnValidators;
-
-            uint256 wethToVault = FULL_STAKE * fullyWithdrawnValidators;
-            IWETH9(WETH).deposit{ value: wethToVault }();
-            // slither-disable-next-line unchecked-transfer
-            IWETH9(WETH).transfer(VAULT_ADDRESS, wethToVault);
-            _wethWithdrawnToVault(wethToVault);
-
-            emit AccountingFullyWithdrawnValidator(
-                fullyWithdrawnValidators,
-                activeDepositedValidators,
-                wethToVault
-            );
-        }
-
-        uint256 ethRemaining = address(this).balance - consensusRewards;
-        // should be less than a whole validator stake
-        require(ethRemaining < FULL_STAKE, "Unexpected accounting");
-
-        // If no Beacon chain consensus rewards swept
-        if (ethRemaining == 0) {
-            // do nothing
-            return accountingValid;
-        } else if (ethRemaining < fuseIntervalStart) {
-            // Beacon chain consensus rewards swept (partial validator withdrawals)
-            // solhint-disable-next-line reentrancy
-            consensusRewards += ethRemaining;
-            emit AccountingConsensusRewards(ethRemaining);
-        } else if (ethRemaining > fuseIntervalEnd) {
-            // Beacon chain consensus rewards swept but also a slashed validator fully exited
-            IWETH9(WETH).deposit{ value: ethRemaining }();
-            // slither-disable-next-line unchecked-transfer
-            IWETH9(WETH).transfer(VAULT_ADDRESS, ethRemaining);
-            activeDepositedValidators -= 1;
-
-            _wethWithdrawnToVault(ethRemaining);
-
-            emit AccountingValidatorSlashed(
-                activeDepositedValidators,
-                ethRemaining
-            );
-        }
-        // Oh no... Fuse is blown. The Strategist needs to adjust the accounting values.
-        else {
-            return _failAccounting(pauseOnFail);
-        }
+        // if (address(this).balance < consensusRewards) {
+        //     return _failAccounting(pauseOnFail);
+        // }
+        // // Calculate all the new ETH that has been swept to the contract since the last accounting
+        // uint256 newSweptETH = address(this).balance - consensusRewards;
+        // accountingValid = true;
+        // // send the ETH that is from fully withdrawn validators to the Vault
+        // if (newSweptETH >= FULL_STAKE) {
+        //     uint256 fullyWithdrawnValidators;
+        //     // explicitly cast to uint256 as we want to round to a whole number of validators
+        //     fullyWithdrawnValidators = uint256(newSweptETH / FULL_STAKE);
+        //     activeDepositedValidators -= fullyWithdrawnValidators;
+        //     uint256 wethToVault = FULL_STAKE * fullyWithdrawnValidators;
+        //     IWETH9(WETH).deposit{ value: wethToVault }();
+        //     // slither-disable-next-line unchecked-transfer
+        //     IWETH9(WETH).transfer(VAULT_ADDRESS, wethToVault);
+        //     _wethWithdrawnToVault(wethToVault);
+        //     emit AccountingFullyWithdrawnValidator(
+        //         fullyWithdrawnValidators,
+        //         activeDepositedValidators,
+        //         wethToVault
+        //     );
+        // }
+        // uint256 ethRemaining = address(this).balance - consensusRewards;
+        // // should be less than a whole validator stake
+        // require(ethRemaining < FULL_STAKE, "Unexpected accounting");
+        // // If no Beacon chain consensus rewards swept
+        // if (ethRemaining == 0) {
+        //     // do nothing
+        //     return accountingValid;
+        // } else if (ethRemaining < fuseIntervalStart) {
+        //     // Beacon chain consensus rewards swept (partial validator withdrawals)
+        //     // solhint-disable-next-line reentrancy
+        //     consensusRewards += ethRemaining;
+        //     emit AccountingConsensusRewards(ethRemaining);
+        // } else if (ethRemaining > fuseIntervalEnd) {
+        //     // Beacon chain consensus rewards swept but also a slashed validator fully exited
+        //     IWETH9(WETH).deposit{ value: ethRemaining }();
+        //     // slither-disable-next-line unchecked-transfer
+        //     IWETH9(WETH).transfer(VAULT_ADDRESS, ethRemaining);
+        //     activeDepositedValidators -= 1;
+        //     _wethWithdrawnToVault(ethRemaining);
+        //     emit AccountingValidatorSlashed(
+        //         activeDepositedValidators,
+        //         ethRemaining
+        //     );
+        // }
+        // // Oh no... Fuse is blown. The Strategist needs to adjust the accounting values.
+        // else {
+        //     return _failAccounting(pauseOnFail);
+        // }
     }
 
     // slither-disable-end reentrancy-eth
@@ -204,53 +196,49 @@ abstract contract ValidatorAccountant is ValidatorRegistrator {
         int256 _consensusRewardsDelta,
         uint256 _ethToVaultAmount
     ) external onlyStrategist whenPaused nonReentrant {
-        require(
-            lastFixAccountingBlockNumber + MIN_FIX_ACCOUNTING_CADENCE <
-                block.number,
-            "Fix accounting called too soon"
-        );
-        require(
-            _validatorsDelta >= -3 &&
-                _validatorsDelta <= 3 &&
-                // new value must be positive
-                int256(activeDepositedValidators) + _validatorsDelta >= 0,
-            "Invalid validatorsDelta"
-        );
-        require(
-            _consensusRewardsDelta >= -332 ether &&
-                _consensusRewardsDelta <= 332 ether &&
-                // new value must be positive
-                int256(consensusRewards) + _consensusRewardsDelta >= 0,
-            "Invalid consensusRewardsDelta"
-        );
-        require(_ethToVaultAmount <= 32 ether * 3, "Invalid wethToVaultAmount");
-
-        activeDepositedValidators = uint256(
-            int256(activeDepositedValidators) + _validatorsDelta
-        );
-        consensusRewards = uint256(
-            int256(consensusRewards) + _consensusRewardsDelta
-        );
-        lastFixAccountingBlockNumber = block.number;
-        if (_ethToVaultAmount > 0) {
-            IWETH9(WETH).deposit{ value: _ethToVaultAmount }();
-            // slither-disable-next-line unchecked-transfer
-            IWETH9(WETH).transfer(VAULT_ADDRESS, _ethToVaultAmount);
-            _wethWithdrawnToVault(_ethToVaultAmount);
-        }
-
-        emit AccountingManuallyFixed(
-            _validatorsDelta,
-            _consensusRewardsDelta,
-            _ethToVaultAmount
-        );
-
-        // rerun the accounting to see if it has now been fixed.
-        // Do not pause the accounting on failure as it is already paused
-        require(_doAccounting(false), "Fuse still blown");
-
-        // unpause since doAccounting was successful
-        _unpause();
+        // require(
+        //     lastFixAccountingBlockNumber + MIN_FIX_ACCOUNTING_CADENCE <
+        //         block.number,
+        //     "Fix accounting called too soon"
+        // );
+        // require(
+        //     _validatorsDelta >= -3 &&
+        //         _validatorsDelta <= 3 &&
+        //         // new value must be positive
+        //         int256(activeDepositedValidators) + _validatorsDelta >= 0,
+        //     "Invalid validatorsDelta"
+        // );
+        // require(
+        //     _consensusRewardsDelta >= -332 ether &&
+        //         _consensusRewardsDelta <= 332 ether &&
+        //         // new value must be positive
+        //         int256(consensusRewards) + _consensusRewardsDelta >= 0,
+        //     "Invalid consensusRewardsDelta"
+        // );
+        // require(_ethToVaultAmount <= 32 ether * 3, "Invalid wethToVaultAmount");
+        // activeDepositedValidators = uint256(
+        //     int256(activeDepositedValidators) + _validatorsDelta
+        // );
+        // consensusRewards = uint256(
+        //     int256(consensusRewards) + _consensusRewardsDelta
+        // );
+        // lastFixAccountingBlockNumber = block.number;
+        // if (_ethToVaultAmount > 0) {
+        //     IWETH9(WETH).deposit{ value: _ethToVaultAmount }();
+        //     // slither-disable-next-line unchecked-transfer
+        //     IWETH9(WETH).transfer(VAULT_ADDRESS, _ethToVaultAmount);
+        //     _wethWithdrawnToVault(_ethToVaultAmount);
+        // }
+        // emit AccountingManuallyFixed(
+        //     _validatorsDelta,
+        //     _consensusRewardsDelta,
+        //     _ethToVaultAmount
+        // );
+        // // rerun the accounting to see if it has now been fixed.
+        // // Do not pause the accounting on failure as it is already paused
+        // require(_doAccounting(false), "Fuse still blown");
+        // // unpause since doAccounting was successful
+        // _unpause();
     }
 
     /***************************************
