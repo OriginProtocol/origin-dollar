@@ -5,7 +5,10 @@ import { Merkle } from "./Merkle.sol";
 import { Endian } from "./Endian.sol";
 
 library BeaconProofs {
+    // BeaconBlock.slot
     uint256 internal constant SLOT_GENERALIZED_INDEX = 8;
+    // BeaconBlock.state.PendingDeposits[0].slot
+    uint256 internal constant FIRST_PENDING_DEPOSIT_SLOT_INDEX = 1584842932228;
 
     // Beacon Container Tree Heights
     uint256 internal constant BEACON_BLOCK_HEIGHT = 3;
@@ -155,6 +158,11 @@ library BeaconProofs {
             balanceIndex
         );
 
+        validatorBalance = balanceAtIndex(
+            validatorBalanceLeaf,
+            uint40(validatorIndex)
+        );
+
         require(
             Merkle.verifyInclusionSha256({
                 proof: balanceProof,
@@ -163,11 +171,6 @@ library BeaconProofs {
                 index: generalizedIndex
             }),
             "Invalid balance container proof"
-        );
-
-        validatorBalance = balanceAtIndex(
-            validatorBalanceLeaf,
-            uint40(validatorIndex)
         );
     }
 
@@ -183,37 +186,22 @@ library BeaconProofs {
             );
     }
 
+    /// @notice Verifies the slot of the first pending deposit against the Beacon Block Root
+    /// BeaconBlock.state.PendingDeposits[0].slot
     function verifyFirstPendingDepositSlot(
         bytes32 blockRoot,
         uint64 slot,
         bytes calldata firstPendingDepositSlotProof
     ) internal view {
-        // BeaconBlock.state.PendingDeposits[0].slot
-        TreeNode[] memory nodes = new TreeNode[](4);
-        nodes[0] = TreeNode({
-            height: BEACON_BLOCK_HEIGHT,
-            index: BEACON_BLOCK_STATE_INDEX
-        });
-        nodes[1] = TreeNode({
-            height: BEACON_STATE_HEIGHT,
-            index: STATE_PENDING_DEPOSITS_INDEX
-        });
-        // We want the first pending deposit so index 0
-        nodes[2] = TreeNode({ height: PENDING_DEPOSITS_HEIGHT, index: 0 });
-        nodes[3] = TreeNode({
-            height: PENDING_DEPOSIT_HEIGHT,
-            index: PENDING_DEPOSIT_SLOT_INDEX
-        });
-        uint256 generalizedIndex = generalizeIndex(nodes);
-
         // Convert uint64 slot number to a little endian bytes32
         bytes32 slotLeaf = Endian.toLittleEndianUint64(slot);
+
         require(
             Merkle.verifyInclusionSha256({
                 proof: firstPendingDepositSlotProof,
                 root: blockRoot,
                 leaf: slotLeaf,
-                index: generalizedIndex
+                index: FIRST_PENDING_DEPOSIT_SLOT_INDEX
             }),
             "Invalid pending deposit proof"
         );
