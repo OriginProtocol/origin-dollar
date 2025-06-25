@@ -1901,21 +1901,10 @@ async function nativeStakingSSVStrategyFixture() {
       .connect(sGovernor)
       .approveStrategy(nativeStakingSSVStrategy.address);
 
-    const fuseStartBn = ethers.utils.parseEther("21.6");
-    const fuseEndBn = ethers.utils.parseEther("25.6");
-
     // Set as default
     await oethVault
       .connect(sGovernor)
       .setAssetDefaultStrategy(weth.address, nativeStakingSSVStrategy.address);
-
-    await nativeStakingSSVStrategy
-      .connect(sGovernor)
-      .setFuseInterval(fuseStartBn, fuseEndBn);
-
-    await nativeStakingSSVStrategy
-      .connect(sGovernor)
-      .setRegistrator(governorAddr);
 
     fixture.validatorRegistrator = sGovernor;
   }
