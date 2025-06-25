@@ -62,16 +62,15 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
         bytes32 pubKeyHash;
         uint128 amount; // in wei
         uint64 blockNumber;
-        uint64 slot;
         DepositStatus status;
         uint256 rootsIndex;
     }
     /// @notice Mapping of the root of a deposit (depositDataRoot) to its data
-    mapping(bytes32 => PendingDeposit) public pendingDeposits;
+    mapping(bytes32 => PendingDeposit) public deposits;
     /// @notice List of deposit roots that are still to be proven as processed on the beacon chain
-    bytes32[] public pendingDepositsRoots;
+    bytes32[] public depositsRoots;
     /// @notice Total amount in wei of deposits waiting to be processed on the beacon chain
-    uint256 public totalPendingDeposits;
+    uint256 public totalDeposits;
 
     // Validator data
     /// @notice List of validators that have been proven to exist on the beacon chain.
@@ -272,16 +271,15 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
             bytes32 pubKeyBeaconHash = sha256(
                 abi.encodePacked(validators[i].pubkey, bytes16(0))
             );
-            pendingDeposits[validators[i].depositDataRoot] = PendingDeposit({
+            deposits[validators[i].depositDataRoot] = PendingDeposit({
                 pubKeyHash: pubKeyBeaconHash,
                 amount: SafeCast.toUint128(FULL_STAKE),
                 blockNumber: SafeCast.toUint64(block.number),
-                slot: 0, // slot is not known at this point
                 status: DepositStatus.PENDING,
-                rootsIndex: pendingDepositsRoots.length
+                rootsIndex: depositsRoots.length
             });
-            pendingDepositsRoots.push(validators[i].depositDataRoot);
-            totalPendingDeposits += FULL_STAKE;
+            depositsRoots.push(validators[i].depositDataRoot);
+            totalDeposits += FULL_STAKE;
 
             emit ETHStaked(pubKeyHash, validators[i].pubkey, FULL_STAKE);
         }
@@ -456,17 +454,15 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
         bytes32 blockRoot = BeaconRoots.parentBlockRoot(timestamp);
 
         // Load into memory the previously saved deposit data
-        PendingDeposit memory pendingDeposit = pendingDeposits[depositDataRoot];
-        require(
-            pendingDeposit.status == DepositStatus.PENDING,
-            "Deposit not pending"
-        );
+        PendingDeposit memory deposit = deposits[depositDataRoot];
+        require(deposit.status == DepositStatus.PENDING, "Deposit not pending");
         // Convert the block number at the time the deposit was made to a slot
-        // and verify it before the next pending deposit
+        // and verify it before the next deposit to be processed by the beacon chain.
+        // If the slot of the deposit is the same as the next deposit to be processed by the beacon chain,
+        // then we can't be certain if the deposit was processed or not. Revert in this case.
         require(
-            IBeaconOracle(BEACON_ORACLE).blockToSlot(
-                pendingDeposit.blockNumber
-            ) < firstPendingDepositSlot,
+            IBeaconOracle(BEACON_ORACLE).blockToSlot(deposit.blockNumber) <
+                firstPendingDepositSlot,
             "Deposit not processed"
         );
         {
@@ -475,16 +471,13 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
             bytes32 pubKeyBeaconHash = sha256(
                 abi.encodePacked(validatorPubicKey, bytes16(0))
             );
-            require(
-                pendingDeposit.pubKeyHash == pubKeyBeaconHash,
-                "Pubkey mismatch"
-            );
+            require(deposit.pubKeyHash == pubKeyBeaconHash, "Pubkey mismatch");
         }
 
         // Verify the validator index has the same public key as the deposit
         BeaconProofs.verifyValidatorPubkey(
             blockRoot,
-            pendingDeposit.pubKeyHash,
+            deposit.pubKeyHash,
             validatorPubKeyProof,
             validatorIndex
         );
@@ -496,21 +489,16 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
             firstPendingDepositSlotProof
         );
 
-        require(
-            pendingDeposit.slot < firstPendingDepositSlot,
-            "Deposit too old"
-        );
-
         // After verifying the proof
-        pendingDeposits[depositDataRoot].status = DepositStatus.PROVEN;
+        deposits[depositDataRoot].status = DepositStatus.PROVEN;
         // Move the last deposit to the index of the proven deposit
-        pendingDepositsRoots[pendingDeposit.rootsIndex] = pendingDepositsRoots[
-            pendingDepositsRoots.length - 1
+        depositsRoots[deposit.rootsIndex] = depositsRoots[
+            depositsRoots.length - 1
         ];
         // Delete the last deposit from the list
-        pendingDepositsRoots.pop();
+        depositsRoots.pop();
         // Reduce the total pending deposits in wei
-        totalPendingDeposits -= pendingDeposit.amount;
+        totalDeposits -= deposit.amount;
 
         // TODO need to check the state transitions for existing validators
         bytes32 pubKeyHash = keccak256(validatorPubicKey);
@@ -575,14 +563,14 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
             );
 
             // For each native staking contract's deposits
-            uint256 pendingDepositsCount = pendingDepositsRoots.length;
-            for (uint256 i = 0; i < pendingDepositsCount; ++i) {
-                bytes32 depositDataRoot = pendingDepositsRoots[i];
+            uint256 depositsCount = depositsRoots.length;
+            for (uint256 i = 0; i < depositsCount; ++i) {
+                bytes32 depositDataRoot = depositsRoots[i];
 
                 // Check the stored deposit is still waiting to be processed on the beacon chain
                 // If it has it will need to be proven with `proveDeposit`
                 require(
-                    pendingDeposits[depositDataRoot].blockNumber >
+                    deposits[depositDataRoot].blockNumber >
                         firstPendingDepositBlockNumber,
                     "Deposit processed"
                 );
@@ -631,7 +619,7 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
 
         // store the proved balance in storage
         lastProvenBalance =
-            totalPendingDeposits +
+            totalDeposits +
             totalValidatorBalance +
             balancesMem.wethBalance +
             balancesMem.ethBalance;
