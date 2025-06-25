@@ -17,3 +17,5 @@ woeth_strat = load_contract('woeth_strategy', OETHP_WOETH_STRATEGY)
 plume_woeth_omnichain_adapter = load_contract('omnichain_l2_adapter', PLUME_WOETH_OMNICHAIN_ADAPTER)
 
 oethp = load_contract('ERC20', OETHP)
+
+plume_bridge_helper_module = load_contract('bridge_helper_module', PLUME_BRIDGE_HELPER_MODULE)
