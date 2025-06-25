@@ -68,7 +68,7 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
     IMaverickV2LiquidityManager public immutable liquidityManager;
     /// @notice the Maverick V2 poolLens
     ///
-    /// @dev only used to provider the pool's current sqrtPrice
+    /// @dev only used to provide the pool's current sqrtPrice
     IMaverickV2PoolLens public immutable poolLens;
     /// @notice the Maverick V2 position
     ///
@@ -289,7 +289,7 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
 
     /**
      * @notice Set allowed pool weth share interval. After the rebalance happens
-     * the share of WETH token in the ticker needs to be withing the specifications
+     * the share of WETH token in the ticker needs to be within the specifications
      * of the interval.
      *
      * @param _allowedWethShareStart Start of WETH share interval expressed as 18 decimal amount
@@ -995,7 +995,7 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
      * keep rebalancing the pool in both directions making the protocol lose a tiny amount of
      * funds each time.
      *
-     * Protocol must be at least SOLVENCY_THRESHOLD (99,8 %) backed in order for the rebalances to
+     * Protocol must be at least SOLVENCY_THRESHOLD (99.8%) backed in order for the rebalances to
      * function.
      */
     function _solvencyAssert() internal view {
@@ -1010,7 +1010,7 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
     }
 
     /**
-     * @dev Collect stkAave, convert it to AAVE send to Vault.
+     * @dev Collect Rooster reward token, and send it to the harvesterAddress
      */
     function collectRewardTokens()
         external
@@ -1134,27 +1134,31 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
     /***************************************
             Hidden functions
     ****************************************/
-    /// @inheritdoc InitializableAbstractStrategy
+    /**
+     * @dev Unsupported
+     */
     function setPTokenAddress(address, address) external pure override {
         // The pool tokens can never change.
         revert("Unsupported method");
     }
 
-    /// @inheritdoc InitializableAbstractStrategy
+    /**
+     * @dev Unsupported
+     */
     function removePToken(uint256) external pure override {
         // The pool tokens can never change.
         revert("Unsupported method");
     }
 
     /**
-     * @dev Not supported
+     * @dev Unsupported
      */
     function _abstractSetPToken(address, address) internal pure override {
         revert("Unsupported method");
     }
 
     /**
-     * @dev Approve the spending of all assets
+     * @dev Unsupported
      */
     function safeApproveAllTokens() external pure override {
         // all the amounts are approved at the time required
