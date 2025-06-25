@@ -68,6 +68,66 @@ describe("ForkTest: Rooster AMO Strategy (Plume)", async function () {
       await verifyEndConditions();
     });
 
+    it.only("Should correctly handle OETH donations to the strategy", async function () {
+      const { formatUnits } = require("ethers/lib/utils");
+
+      const printValues = async () => {
+        const tokenTotalSupply = await oethp.totalSupply();
+        const vaultValue = await oethpVault.totalValue();
+        const checkBalance = await roosterAmoStrategy.checkBalance(weth.address);
+        const underlyingAssets = await roosterAmoStrategy.underlyingAssets();
+        const rcpt = await oethp.rebasingCreditsPerTokenHighres();
+
+        console.log(`Token total supply: \t ${Math.round(formatUnits(tokenTotalSupply) * 100) / 100}`)
+        console.log(`Vault value: \t\t ${Math.round(formatUnits(vaultValue) * 100) / 100}`)
+        console.log(`AMO checkBalance: \t ${Math.round(formatUnits(checkBalance) * 100) / 100}`)
+        console.log(`AMO underlyingAssets: \t ${Math.round(formatUnits(underlyingAssets) * 100) / 100}`)
+        console.log(`RebasingCredits/Token: \t ${Math.round(formatUnits(rcpt) * 100) / 100}`)
+        console.log(" ")
+      };
+
+      console.log("Initial state of the vault")
+      await printValues();
+
+      const amount = oethUnits("100");
+      await weth.connect(rafael).approve(oethpVault.address, amount);
+      await oethpVault.connect(rafael).mint(weth.address, amount, amount);
+
+      const gov = await roosterAmoStrategy.governor();
+      await oethpVault
+        .connect(await impersonateAndFund(gov))
+        .depositToStrategy(
+          roosterAmoStrategy.address,
+          [weth.address],
+          [amount]
+        );
+
+      console.log("User has minted 100 OETH & strategy has deposited it")
+      await printValues();
+
+
+      // await oethp.connect(rafael).transfer(roosterAmoStrategy.address, amount);
+      // console.log("User has donated 100 OETH to the AMO strategy")
+      // await printValues();
+
+      await weth.connect(rafael).transfer(roosterAmoStrategy.address, amount);
+      console.log("User has donated 100 WETH to the AMO strategy")
+      await printValues();
+
+      rebalance(
+          oethUnits("0"),
+          true, // _swapWETH
+          oethUnits("0")
+        )
+      console.log("Rebalance is called")
+      await printValues();
+
+
+      await oethpVault.connect(rafael).rebase();
+      console.log("Rebase is called")
+      await printValues();
+    });
+
     it("Should revert setting ptoken address", async function () {
       await expect(
         roosterAmoStrategy
