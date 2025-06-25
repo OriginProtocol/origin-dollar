@@ -593,5 +593,5 @@ def main():
     )
 
     txs.append(
-      base_bridge_helper_module.bridgeWETHToBase(350 * 10**18, {'from': MULTICHAIN_STRATEGIST})
+      base_bridge_helper_module.bridgeWETHToEthereum(350 * 10**18, {'from': MULTICHAIN_STRATEGIST})
     )

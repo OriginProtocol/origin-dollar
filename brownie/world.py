@@ -106,7 +106,7 @@ oeth_arm = load_contract('oeth_arm', OETH_ARM)
 
 superbridge = load_contract('superbridge', SUPERBRIDGE_ETH)
 
-eth_bridge_helper_module = load_contract('bridge_helper_module', ETHEREUM_BRIDGE_HELPER_MODULE)
+eth_bridge_helper_module = load_contract('ethereum_bridge_helper', ETHEREUM_BRIDGE_HELPER_MODULE)
 
 CONTRACT_ADDRESSES = {}
 CONTRACT_ADDRESSES[VAULT_PROXY_ADDRESS.lower()] = {'name': 'Vault'}

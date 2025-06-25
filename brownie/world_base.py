@@ -44,7 +44,7 @@ ccip_router = load_contract('ccip_router', BASE_CCIP_ROUTER)
 
 zapper = load_contract('oethb_zapper', OETHB_ZAPPER)
 
-base_bridge_helper_module = load_contract('bridge_helper_module', BASE_BRIDGE_HELPER_MODULE)
+base_bridge_helper_module = load_contract('base_bridge_helper', BASE_BRIDGE_HELPER_MODULE)
 
 decimalsMap = {
     AERO_BASE: 18,
