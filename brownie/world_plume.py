@@ -18,4 +18,4 @@ plume_woeth_omnichain_adapter = load_contract('omnichain_l2_adapter', PLUME_WOET
 
 oethp = load_contract('ERC20', OETHP)
 
-plume_bridge_helper_module = load_contract('bridge_helper_module', PLUME_BRIDGE_HELPER_MODULE)
+plume_bridge_helper_module = load_contract('plume_bridge_helper', PLUME_BRIDGE_HELPER_MODULE)
