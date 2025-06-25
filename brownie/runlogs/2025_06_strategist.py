@@ -520,3 +520,78 @@ def main():
     print("SuperOETH supply change", "{:.6f}".format(supply_change / 10**18), supply_change)
     print("Vault Change", "{:.6f}".format(vault_change / 10**18), vault_change)
     print("-----")
+
+# -------------------------------------
+# June 23, 2025 - Deposit wS to SwapX AMO on Sonic
+# -------------------------------------
+from world_sonic import *
+
+def main():
+  with TemporaryForkForReallocations() as txs:
+
+    amount = 212000 * 10**18
+
+    # Before
+    txs.append(vault_core.rebase({'from': SONIC_STRATEGIST}))
+    txs.append(vault_value_checker.takeSnapshot({'from': SONIC_STRATEGIST}))
+
+    # Deposit wS to SwapX AMO
+    txs.append(
+      vault_admin.depositToStrategy(
+        SWAPX_AMO_STRATEGY, 
+        [WS_SONIC],
+        [amount],
+        {'from': SONIC_STRATEGIST}
+      )
+    )
+
+    # After
+    vault_change = vault_core.totalValue() - vault_value_checker.snapshots(SONIC_STRATEGIST)[0]
+    supply_change = os.totalSupply() - vault_value_checker.snapshots(SONIC_STRATEGIST)[1]
+    profit = vault_change - supply_change
+
+    txs.append(vault_value_checker.checkDelta(profit, (1 * 10**18), vault_change, (1 * 10**18), {'from': SONIC_STRATEGIST}))
+
+    print("-----")
+    print("Profit", "{:.6f}".format(profit / 10**18), profit)
+    print("OETH supply change", "{:.6f}".format(supply_change / 10**18), supply_change)
+    print("Vault Change", "{:.6f}".format(vault_change / 10**18), vault_change)
+    print("-----")
+
+
+# -------------------------------------
+# June 25, 2025 - Bridge 350 WETH to Base
+# -------------------------------------
+
+from world_base import *
+
+def main():
+  with TemporaryForkForReallocations() as txs:
+    txs.append(
+      vault_core.rebase({'from': MULTICHAIN_STRATEGIST})
+    )
+
+    txs.append(
+      vault_value_checker.takeSnapshot({'from': MULTICHAIN_STRATEGIST})
+    )
+
+    txs.append(
+      vault_admin.withdrawFromStrategy(OETHB_CURVE_AMO_STRATEGY, [WETH_BASE], [350 * 10**18], {'from': MULTICHAIN_STRATEGIST})
+    )
+
+    vault_change = vault_core.totalValue() - vault_value_checker.snapshots(MULTICHAIN_STRATEGIST)[0]
+    supply_change = oethb.totalSupply() - vault_value_checker.snapshots(MULTICHAIN_STRATEGIST)[1]
+    profit = vault_change - supply_change
+
+    print("--------------------")
+    print("Profit               ", c18(profit), profit)
+    print("Vault Change         ", c18(vault_change), vault_change)
+    print("--------------------")
+
+    txs.append(
+      vault_value_checker.checkDelta(profit, (0.1 * 10**18), vault_change, (1 * 10**18), {'from': MULTICHAIN_STRATEGIST})
+    )
+
+    txs.append(
+      base_bridge_helper_module.bridgeWETHToEthereum(350 * 10**18, {'from': MULTICHAIN_STRATEGIST})
+    )
