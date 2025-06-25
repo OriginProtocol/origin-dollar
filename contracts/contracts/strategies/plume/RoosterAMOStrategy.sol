@@ -410,7 +410,8 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
 
     /**
      * @dev Retuns bool indicating whether asset is supported by strategy
-     * @param _asset Address of the asset
+     * @param _asset   Address of the asset
+     * @return bool    True when the _asset is WETH
      */
     function supportsAsset(address _asset) public view override returns (bool) {
         return _asset == WETH;
@@ -570,10 +571,10 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
      *      position in the pool or not. The function returns _wethSharePct
      *      as a gas optimization measure.
      * @param _throwException  when set to true the function throws an exception
-     *        when pool's price is not within expected range.
+     *                         when pool's price is not within expected range.
      * @return _isExpectedRange  Bool expressing price is within expected range
      * @return _wethSharePct  Share of WETH owned by this strategy contract in the
-     *         configured ticker.
+     *                        configured ticker.
      */
     function _checkForExpectedPoolPrice(bool _throwException)
         internal
@@ -1108,8 +1109,9 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
     }
 
     /**
-     * @notice Tick dominance denominated in 1e18
-     *
+     * @notice Tick dominance   denominated in 1e18
+     * @return _tickDominance   The share of liquidity in TICK_NUMBER tick owned
+     *                          by the strategy contract denominated in 1e18
      */
     function tickDominance() public view returns (uint256 _tickDominance) {
         IMaverickV2Pool.TickState memory tickState = mPool.getTick(TICK_NUMBER);
