@@ -4,6 +4,7 @@ pragma solidity ^0.8.0;
 /**
  * @title Rooster AMO strategy
  * @author Origin Protocol Inc
+ * @custom:security-contact security@originprotocol.com
  */
 import { Math as MathRooster } from "../../../lib/rooster/v2-common/libraries/Math.sol";
 import { Math as Math_v5 } from "../../../lib/rooster/openzeppelin-custom/contracts/utils/math/Math.sol";
