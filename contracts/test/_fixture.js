@@ -1314,11 +1314,12 @@ async function bridgeHelperModuleFixture() {
   );
 
   const cSafe = await ethers.getContractAt(
-    ["function enableModule(address module) external"],
-    ["function isModuleEnabled(address module) external view returns (bool)"],
+    [
+      "function enableModule(address module) external",
+      "function isModuleEnabled(address module) external view returns (bool)",
+    ],
     addresses.multichainStrategist
   );
-
   if (isFork && !(await cSafe.isModuleEnabled(bridgeHelperModule.address))) {
     await cSafe.connect(safeSigner).enableModule(bridgeHelperModule.address);
   }
