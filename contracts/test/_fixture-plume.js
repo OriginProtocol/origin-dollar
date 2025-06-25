@@ -190,8 +190,10 @@ const bridgeHelperModuleFixture = deployments.createFixture(async () => {
   );
 
   const cSafe = await ethers.getContractAt(
-    ["function enableModule(address module) external"],
-    ["function isModuleEnabled(address module) external view returns (bool)"],
+    [
+      "function enableModule(address module) external",
+      "function isModuleEnabled(address module) external view returns (bool)",
+    ],
     addresses.multichainStrategist
   );
 
