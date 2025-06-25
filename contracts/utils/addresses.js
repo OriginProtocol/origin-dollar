@@ -404,6 +404,8 @@ addresses.base.OETHb_WETH.gauge = "0x9da8420dbEEBDFc4902B356017610259ef7eeDD8";
 addresses.base.childLiquidityGaugeFactory =
   "0xe35A879E5EfB4F1Bb7F70dCF3250f2e19f096bd8";
 
+addresses.base.CCIPRouter = "0x881e3A65B4d4a04dD529061dd0071cf975F58bCD";
+
 // Sonic
 addresses.sonic = {};
 addresses.sonic.wS = "0x039e2fB66102314Ce7b64Ce5Ce3E5183bc94aD38";

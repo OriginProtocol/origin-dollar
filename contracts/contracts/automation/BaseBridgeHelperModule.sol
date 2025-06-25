@@ -1,12 +1,10 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import { AbstractSafeModule } from "./AbstractSafeModule.sol";
-import { AbstractLZBridgeHelperModule } from "./AbstractLZBridgeHelperModule.sol";
+// solhint-disable-next-line max-line-length
+import { AbstractCCIPBridgeHelperModule, AbstractSafeModule, IRouterClient } from "./AbstractCCIPBridgeHelperModule.sol";
 
 import { AccessControlEnumerable } from "@openzeppelin/contracts/access/AccessControlEnumerable.sol";
-
-import { IOFT } from "@layerzerolabs/oft-evm/contracts/interfaces/IOFT.sol";
 
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { IERC4626 } from "../../lib/openzeppelin/interfaces/IERC4626.sol";
@@ -15,75 +13,68 @@ import { IVault } from "../interfaces/IVault.sol";
 
 import { BridgedWOETHStrategy } from "../strategies/BridgedWOETHStrategy.sol";
 
-contract PlumeBridgeHelperModule is
+contract BaseBridgeHelperModule is
     AccessControlEnumerable,
-    AbstractLZBridgeHelperModule
+    AbstractCCIPBridgeHelperModule
 {
     IVault public constant vault =
-        IVault(0xc8c8F8bEA5631A8AF26440AF32a55002138cB76a);
+        IVault(0x98a0CbeF61bD2D21435f433bE4CD42B56B38CC93);
     IWETH9 public constant weth =
-        IWETH9(0xca59cA09E5602fAe8B629DeE83FfA819741f14be);
-    IERC20 public constant oethp =
-        IERC20(0xFCbe50DbE43bF7E5C88C6F6Fb9ef432D4165406E);
+        IWETH9(0x4200000000000000000000000000000000000006);
+    IERC20 public constant oethb =
+        IERC20(0xDBFeFD2e8460a6Ee4955A68582F85708BAEA60A3);
     IERC4626 public constant bridgedWOETH =
         IERC4626(0xD8724322f44E5c58D7A815F542036fb17DbbF839);
 
-    uint32 public constant LZ_ETHEREUM_ENDPOINT_ID = 30101;
-    IOFT public constant LZ_WOETH_OMNICHAIN_ADAPTER =
-        IOFT(0x592CB6A596E7919930bF49a27AdAeCA7C055e4DB);
-    IOFT public constant LZ_ETH_OMNICHAIN_ADAPTER =
-        IOFT(0x4683CE822272CD66CEa73F5F1f9f5cBcaEF4F066);
-
     BridgedWOETHStrategy public constant bridgedWOETHStrategy =
-        BridgedWOETHStrategy(0x1E3EdD5e019207D6355Ea77F724b1F1BF639B569);
+        BridgedWOETHStrategy(0x80c864704DD06C3693ed5179190786EE38ACf835);
+
+    IRouterClient public constant CCIP_ROUTER =
+        IRouterClient(0x881e3A65B4d4a04dD529061dd0071cf975F58bCD);
+
+    uint64 public constant CCIP_ETHEREUM_CHAIN_SELECTOR = 5009297550715157269;
 
     constructor(address _safeContract) AbstractSafeModule(_safeContract) {}
 
     /**
      * @dev Bridges wOETH to Ethereum.
      * @param woethAmount Amount of wOETH to bridge.
-     * @param slippageBps Slippage in 10^4 basis points.
      */
-    function bridgeWOETHToEthereum(uint256 woethAmount, uint256 slippageBps)
+    function bridgeWOETHToEthereum(uint256 woethAmount)
         public
         payable
         onlyOperator
     {
-        _bridgeTokenWithLz(
-            LZ_ETHEREUM_ENDPOINT_ID,
+        _bridgeTokenWithCCIP(
+            CCIP_ROUTER,
+            CCIP_ETHEREUM_CHAIN_SELECTOR,
             IERC20(address(bridgedWOETH)),
-            LZ_WOETH_OMNICHAIN_ADAPTER,
-            woethAmount,
-            slippageBps,
-            false
+            woethAmount
         );
     }
 
     /**
-     * @dev Bridges wETH to Ethereum.
-     * @param wethAmount Amount of wETH to bridge.
-     * @param slippageBps Slippage in 10^4 basis points.
+     * @dev Bridges WETH to Ethereum.
+     * @param wethAmount Amount of WETH to bridge.
      */
-    function bridgeWETHToEthereum(uint256 wethAmount, uint256 slippageBps)
+    function bridgeWETHToEthereum(uint256 wethAmount)
         public
         payable
         onlyOperator
     {
-        _bridgeTokenWithLz(
-            LZ_ETHEREUM_ENDPOINT_ID,
+        _bridgeTokenWithCCIP(
+            CCIP_ROUTER,
+            CCIP_ETHEREUM_CHAIN_SELECTOR,
             IERC20(address(weth)),
-            LZ_ETH_OMNICHAIN_ADAPTER,
-            wethAmount,
-            slippageBps,
-            false
+            wethAmount
         );
     }
 
     /**
      * @dev Deposits wOETH into the bridgedWOETH strategy.
      * @param woethAmount Amount of wOETH to deposit.
-     * @param redeemWithVault Whether to redeem with Vault.
-     * @return Amount of OETHp received.
+     * @param redeemWithVault Whether to redeem the wOETH for WETH using the Vault.
+     * @return Amount of WETH received.
      */
     function depositWOETH(uint256 woethAmount, bool redeemWithVault)
         external
@@ -96,25 +87,23 @@ contract PlumeBridgeHelperModule is
     /**
      * @dev Deposits wOETH into the bridgedWOETH strategy and bridges it to Ethereum.
      * @param woethAmount Amount of wOETH to deposit.
-     * @param slippageBps Slippage in 10^4 basis points.
      * @return Amount of WETH received.
      */
-    function depositWOETHAndBridgeWETH(uint256 woethAmount, uint256 slippageBps)
+    function depositWOETHAndBridgeWETH(uint256 woethAmount)
         external
-        payable
         onlyOperator
         returns (uint256)
     {
         uint256 wethAmount = _depositWOETH(woethAmount, true);
-        bridgeWETHToEthereum(wethAmount, slippageBps);
+        bridgeWETHToEthereum(wethAmount);
         return wethAmount;
     }
 
     /**
      * @dev Deposits wOETH into the bridgedWOETH strategy.
      * @param woethAmount Amount of wOETH to deposit.
-     * @param redeemWithVault Whether to redeem with Vault.
-     * @return Amount of OETHp received.
+     * @param redeemWithVault Whether to redeem the wOETH for WETH using the Vault.
+     * @return Amount of WETH received.
      */
     function _depositWOETH(uint256 woethAmount, bool redeemWithVault)
         internal
@@ -126,7 +115,7 @@ contract PlumeBridgeHelperModule is
         // Rebase to account for any yields from price update
         vault.rebase();
 
-        uint256 oethpAmount = oethp.balanceOf(address(safeContract));
+        uint256 oethbAmount = oethb.balanceOf(address(safeContract));
 
         // Approve bridgedWOETH strategy to move wOETH
         bool success = safeContract.execTransactionFromModule(
@@ -152,14 +141,14 @@ contract PlumeBridgeHelperModule is
         );
         require(success, "Failed to deposit bridged WOETH");
 
-        oethpAmount = oethp.balanceOf(address(safeContract)) - oethpAmount;
+        oethbAmount = oethb.balanceOf(address(safeContract)) - oethbAmount;
 
         // Rebase to account for any yields from price update
         // and backing asset change from deposit
         vault.rebase();
 
         if (!redeemWithVault) {
-            return oethpAmount;
+            return oethbAmount;
         }
 
         // Redeem for WETH using Vault
@@ -168,20 +157,20 @@ contract PlumeBridgeHelperModule is
             0, // Value
             abi.encodeWithSelector(
                 vault.redeem.selector,
-                oethpAmount,
-                oethpAmount
+                oethbAmount,
+                oethbAmount
             ),
             0 // Call
         );
-        require(success, "Failed to redeem OETHp");
+        require(success, "Failed to redeem OETHb");
 
-        return oethpAmount;
+        return oethbAmount;
     }
 
     /**
-     * @dev Deposits wETH into the vault.
-     * @param wethAmount Amount of wETH to deposit.
-     * @return Amount of OETHp received.
+     * @dev Deposits WETH into the Vault and redeems wOETH from the bridgedWOETH strategy.
+     * @param wethAmount Amount of WETH to deposit.
+     * @return Amount of wOETH received.
      */
     function depositWETHAndRedeemWOETH(uint256 wethAmount)
         external
@@ -191,20 +180,13 @@ contract PlumeBridgeHelperModule is
         return _withdrawWOETH(wethAmount);
     }
 
-    /**
-     * @dev Deposits wETH into the vault and bridges it to Ethereum.
-     * @param wethAmount Amount of wETH to deposit.
-     * @param slippageBps Slippage in 10^4 basis points.
-     * @return Amount of WOETH received.
-     */
-    function depositWETHAndBridgeWOETH(uint256 wethAmount, uint256 slippageBps)
+    function depositWETHAndBridgeWOETH(uint256 wethAmount)
         external
-        payable
         onlyOperator
         returns (uint256)
     {
         uint256 woethAmount = _withdrawWOETH(wethAmount);
-        bridgeWOETHToEthereum(woethAmount, slippageBps);
+        bridgeWOETHToEthereum(woethAmount);
         return woethAmount;
     }
 
@@ -227,7 +209,7 @@ contract PlumeBridgeHelperModule is
         );
         require(success, "Failed to approve WETH");
 
-        // Mint OETHp with WETH
+        // Mint OETHb with WETH
         success = safeContract.execTransactionFromModule(
             address(vault),
             0, // Value
@@ -239,20 +221,20 @@ contract PlumeBridgeHelperModule is
             ),
             0 // Call
         );
-        require(success, "Failed to mint OETHp");
+        require(success, "Failed to mint OETHb");
 
-        // Approve bridgedWOETH strategy to move OETHp
+        // Approve bridgedWOETH strategy to move OETHb
         success = safeContract.execTransactionFromModule(
-            address(oethp),
+            address(oethb),
             0, // Value
             abi.encodeWithSelector(
-                oethp.approve.selector,
+                oethb.approve.selector,
                 address(bridgedWOETHStrategy),
                 wethAmount
             ),
             0 // Call
         );
-        require(success, "Failed to approve OETHp");
+        require(success, "Failed to approve OETHb");
 
         uint256 woethAmount = bridgedWOETH.balanceOf(address(safeContract));
 
