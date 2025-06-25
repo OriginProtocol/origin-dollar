@@ -60,9 +60,11 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
     // Deposit data
     struct DepositData {
         bytes32 pubKeyHash;
-        uint128 amountWei;
-        uint64 pastSlot;
-        uint32 rootsIndex;
+        bytes32 pubKeyHashBeacon;
+        uint256 amountWei;
+        uint64 blockNumber;
+        uint64 slot;
+        uint64 rootsIndex;
         DepositStatus status;
     }
     /// @notice Mapping of the root of a deposit (depositDataRoot) to its data
@@ -104,7 +106,7 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
         PROVEN // validator has been proven to exist on the beacon chain
     }
     enum DepositStatus {
-        UNKNOWN,
+        UNKNOWN, // default value
         PENDING, // deposit is pending and waiting to be proven
         PROVEN // deposit has been proven and is ready to be staked
     }
@@ -196,19 +198,13 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
     // slither-disable-start reentrancy-eth
     function stakeEth(
         ValidatorStakeData calldata validator,
-        uint256 depositAmount,
-        uint64 pastSlot
+        uint256 depositAmount
     ) external onlyRegistrator whenNotPaused nonReentrant {
         // Check there is enough WETH from the deposits sitting in this strategy contract
         require(
             depositAmount <= IWETH9(WETH).balanceOf(address(this)),
             "Insufficient WETH"
         );
-
-        // Check the past slot has been mapped to a block number
-        // No need to validate the mapped block number is before the current block.
-        // It must be in the past if the block number has been proven to exist on the beacon chain.
-        IBeaconOracle(BEACON_ORACLE).slotToBlock(pastSlot);
 
         // Convert required ETH from WETH
         IWETH9(WETH).withdraw(depositAmount);
@@ -257,9 +253,13 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
         // Store the deposit data for proveDeposit and proveBalances
         // Hash using Beacon Chains SSZ BLSPubkey format
         deposits[validator.depositDataRoot] = DepositData({
-            pubKeyHash: sha256(abi.encodePacked(validator.pubkey, bytes16(0))),
-            amountWei: SafeCast.toUint128(depositAmount),
-            pastSlot: pastSlot,
+            pubKeyHash: keccak256(validator.pubkey),
+            pubKeyHashBeacon: sha256(
+                abi.encodePacked(validator.pubkey, bytes16(0))
+            ),
+            amountWei: depositAmount,
+            blockNumber: SafeCast.toUint64(block.number),
+            slot: type(uint64).max, // Set to max until proven
             rootsIndex: SafeCast.toUint32(depositsRoots.length),
             status: DepositStatus.PENDING
         });
@@ -420,38 +420,60 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
                 Beacon Chain Proofs
     ****************************************/
 
+    /// @notice Maps a deposit to a beacon chain slot that is on or after the deposit was made.
+    /// This uses the Beacon Oracle that uses merkle proofs to map blocks to slots.
+    /// Ideally, the mapped block number is close to the deposit block number as this can delay when
+    /// the deposit can be proven. It will also delay when the balances can be successfully proven.
+    /// @param depositDataRoot The root of the previous deposit data
+    /// @param mappedBlockNumber The block number that has been mapped in the Beacon Oracle.
+    /// The mapped block number must be on or after the block the deposit was made in.
+    function assignSlotToDeposit(
+        bytes32 depositDataRoot,
+        uint64 mappedBlockNumber
+    ) external nonReentrant {
+        require(
+            deposits[depositDataRoot].status == DepositStatus.PENDING,
+            "Deposit not pending"
+        );
+        // The deposit needs to be before or at the time as the mapped block number.
+        // The deposit can not be after the block number mapped to a slot.
+        require(
+            deposits[depositDataRoot].blockNumber <= mappedBlockNumber,
+            "block not on or after deposit"
+        );
+        //
+        // require(block.number - provenBlockNumber < 6000, "Block too old");
+
+        // Store the slot that is on or after the deposit was made
+        deposits[depositDataRoot].slot = IBeaconOracle(BEACON_ORACLE)
+            .slotToBlock(mappedBlockNumber);
+    }
+
     /// @notice Proves a previous deposit has been processed by the beacon chain
     /// which means the validator exists and has an increased balance.
     function proveDeposit(
         bytes32 depositDataRoot,
         uint256 validatorIndex,
-        bytes calldata validatorPubicKey,
         uint64 firstPendingDepositSlot,
-        uint64 timestamp,
+        uint64 parentBlockTimestamp,
         // BeaconBlock.state.validators[validatorIndex].pubkey
         bytes calldata validatorPubKeyProof,
         // BeaconBlock.BeaconBlockBody.deposits[0].slot
         bytes calldata firstPendingDepositSlotProof
-    ) external {
-        bytes32 blockRoot = BeaconRoots.parentBlockRoot(timestamp);
-
+    ) external nonReentrant {
         // Load into memory the previously saved deposit data
         DepositData memory deposit = deposits[depositDataRoot];
         require(deposit.status == DepositStatus.PENDING, "Deposit not pending");
+        require(
+            deposit.slot < firstPendingDepositSlot,
+            "Deposit not processed"
+        );
 
-        {
-            // Check the validator public key matches the hashed deposit public key
-            // Hash using Beacon Chains SSZ BLSPubkey format
-            bytes32 pubKeyBeaconHash = sha256(
-                abi.encodePacked(validatorPubicKey, bytes16(0))
-            );
-            require(deposit.pubKeyHash == pubKeyBeaconHash, "Pubkey mismatch");
-        }
-
+        bytes32 blockRoot = BeaconRoots.parentBlockRoot(parentBlockTimestamp);
         // Verify the validator index has the same public key as the deposit
         BeaconProofs.verifyValidatorPubkey(
             blockRoot,
-            deposit.pubKeyHash,
+            deposit.pubKeyHashBeacon,
             validatorPubKeyProof,
             validatorIndex
         );
@@ -463,7 +485,7 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
             firstPendingDepositSlotProof
         );
 
-        // After verifying the proof
+        // After verifying the proof, update the contract storage
         deposits[depositDataRoot].status = DepositStatus.PROVEN;
         // Move the last deposit to the index of the proven deposit
         depositsRoots[deposit.rootsIndex] = depositsRoots[
@@ -476,17 +498,16 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
 
         // TODO need to check the state transitions for existing validators
         // TODO it's be nice to use the Beacon chain hash of the public key to avoid passing in the full public key
-        bytes32 pubKeyHash = keccak256(validatorPubicKey);
-        if (validatorsStates[pubKeyHash] != VALIDATOR_STATE.PROVEN) {
+        if (validatorsStates[deposit.pubKeyHash] != VALIDATOR_STATE.PROVEN) {
             // Store the validator state as PROVEN
-            validatorsStates[pubKeyHash] = VALIDATOR_STATE.PROVEN;
+            validatorsStates[deposit.pubKeyHash] = VALIDATOR_STATE.PROVEN;
 
             // Add the new validator to the list of proved validators
             provedValidators.push(validatorIndex);
         }
     }
 
-    function snapBalances() public {
+    function snapBalances() public nonReentrant {
         bytes32 blockRoot = BeaconRoots.parentBlockRoot(
             SafeCast.toUint64(block.timestamp)
         );
@@ -518,7 +539,7 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
         bytes32[] calldata validatorBalanceRoots,
         // BeaconBlock.state.validators[validatorIndex].balance
         bytes[] calldata validatorBalanceProofs
-    ) external {
+    ) external nonReentrant {
         // Load the last snapped balances into memory
         Balances memory balancesMem = snappedBalances[blockRoot];
         require(balancesMem.blockNumber > 0, "No snapped balances");
@@ -541,8 +562,7 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
                 // Check the stored deposit is still waiting to be processed on the beacon chain
                 // If it has it will need to be proven with `proveDeposit`
                 require(
-                    deposits[depositDataRoot].pastSlot >
-                        firstPendingDepositSlot,
+                    deposits[depositDataRoot].slot > firstPendingDepositSlot,
                     "Deposit not processed"
                 );
             }
