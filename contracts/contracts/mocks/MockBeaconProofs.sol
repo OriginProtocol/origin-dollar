@@ -24,7 +24,7 @@ contract MockBeaconProofs {
         bytes32 beaconBlockRoot,
         bytes32 pubKeyHash,
         bytes calldata validatorPubKeyProof,
-        uint256 validatorIndex
+        uint64 validatorIndex
     ) external view {
         BeaconProofs.verifyValidatorPubkey(
             beaconBlockRoot,
@@ -46,22 +46,39 @@ contract MockBeaconProofs {
         );
     }
 
-    function verifyValidatorBalance(
+    function verifyValidatorBalanceInContainer(
         bytes32 balancesContainerRoot,
         bytes32 validatorBalanceLeaf,
         bytes calldata balanceProof,
-        uint256 validatorIndex
+        uint64 validatorIndex
     ) external view returns (uint256 validatorBalance) {
         return
             BeaconProofs.verifyValidatorBalance(
                 balancesContainerRoot,
                 validatorBalanceLeaf,
                 balanceProof,
-                validatorIndex
+                validatorIndex,
+                BeaconProofs.BalanceProofLevel.Container
             );
     }
 
-    function balanceAtIndex(bytes32 validatorBalanceLeaf, uint40 validatorIndex)
+    function verifyValidatorBalanceInBeaconBlock(
+        bytes32 beaconBlockRoot,
+        bytes32 validatorBalanceLeaf,
+        bytes calldata balanceProof,
+        uint64 validatorIndex
+    ) external view returns (uint256 validatorBalance) {
+        return
+            BeaconProofs.verifyValidatorBalance(
+                beaconBlockRoot,
+                validatorBalanceLeaf,
+                balanceProof,
+                validatorIndex,
+                BeaconProofs.BalanceProofLevel.BeaconBlock
+            );
+    }
+
+    function balanceAtIndex(bytes32 validatorBalanceLeaf, uint64 validatorIndex)
         internal
         pure
         returns (uint256)

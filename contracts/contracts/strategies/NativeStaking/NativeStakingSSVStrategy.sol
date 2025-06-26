@@ -4,12 +4,14 @@ pragma solidity ^0.8.0;
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/utils/math/Math.sol";
+import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 
 import { InitializableAbstractStrategy } from "../../utils/InitializableAbstractStrategy.sol";
 import { IWETH9 } from "../../interfaces/IWETH9.sol";
 import { FeeAccumulator } from "./FeeAccumulator.sol";
 import { ValidatorAccountant } from "./ValidatorAccountant.sol";
 import { ISSVNetwork } from "../../interfaces/ISSVNetwork.sol";
+import { BeaconRoots } from "../../beacon/BeaconRoots.sol";
 import { BeaconProofs } from "../../beacon/BeaconProofs.sol";
 
 struct ValidatorStakeData {
@@ -348,6 +350,27 @@ contract NativeStakingSSVStrategy is
         depositedWethAccountedFor -= deductAmount;
     }
 
+    function snapBalances() public nonReentrant whenNoConsolidations {
+        bytes32 blockRoot = BeaconRoots.parentBlockRoot(
+            SafeCast.toUint64(block.timestamp)
+        );
+        // Get the current WETH balance
+        uint256 wethBalance = IWETH9(WETH).balanceOf(address(this));
+        // Get the current ETH balance
+        uint256 ethBalance = address(this).balance;
+
+        // Store the balances in the mapping
+        snappedBalances[blockRoot] = Balances({
+            blockNumber: SafeCast.toUint64(block.number),
+            timestamp: SafeCast.toUint64(block.timestamp),
+            wethBalance: wethBalance,
+            ethBalance: ethBalance
+        });
+
+        // Store the snapped timestamp
+        lastSnapTimestamp = block.timestamp;
+    }
+
     function proveBalances(
         bytes32 blockRoot,
         uint64 firstPendingDepositSlot,
@@ -359,7 +382,7 @@ contract NativeStakingSSVStrategy is
         bytes32[] calldata validatorBalanceRoots,
         // BeaconBlock.state.validators[validatorIndex].balance
         bytes[] calldata validatorBalanceProofs
-    ) external nonReentrant {
+    ) external nonReentrant whenNoConsolidations {
         // Account for the legacy sweeping validators first
         _doAccounting(true);
 
@@ -403,17 +426,16 @@ contract NativeStakingSSVStrategy is
         // for each validator
         for (uint256 i = 0; i < provenValidatorsCount; ++i) {
             // Load the validator index from storage
-            uint256 validatorIndex = provedValidators[i];
+            uint64 validatorIndex = provedValidators[i];
 
             // prove validator's balance in beaconBlock.state.balances to the
             // beaconBlock.state.balances container root
-
-            // Prove the validator's balance to the beacon block root
             uint256 validatorBalance = BeaconProofs.verifyValidatorBalance(
                 balancesContainerRoot,
                 validatorBalanceRoots[i],
                 validatorBalanceProofs[i],
-                validatorIndex
+                validatorIndex,
+                BeaconProofs.BalanceProofLevel.Container
             );
 
             // total validator balances

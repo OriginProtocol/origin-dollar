@@ -10,6 +10,7 @@ import { IWETH9 } from "../../interfaces/IWETH9.sol";
 import { ISSVNetwork, Cluster } from "../../interfaces/ISSVNetwork.sol";
 import { BeaconRoots } from "../../beacon/BeaconRoots.sol";
 import { BeaconProofs } from "../../beacon/BeaconProofs.sol";
+import { Consolidation } from "../../beacon/Consolidation.sol";
 import { IBeaconOracle } from "../../interfaces/IBeaconOracle.sol";
 
 struct ValidatorStakeData {
@@ -58,6 +59,7 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
     uint256 private deprecated_stakeETHTally;
 
     /// Deposit data for new compounding validators.
+
     /// @param pubKeyHash Hash of validator's public key using the Beacon Chain's format
     /// @param amountWei Amount of ETH in wei that has been deposited to the beacon chain deposit contract
     /// @param blockNumber Block number when the deposit was made
@@ -81,10 +83,11 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
     uint256 public totalDeposits;
 
     // Validator data
-    /// @notice List of validators that have been proven to exist on the beacon chain.
+
+    /// @notice List of validator indexes that have been proven to exist on the beacon chain.
     /// These have had a deposit processed and the validator's balance increased.
     /// Validators will be removed from this list when its proven they have a zero balance.
-    uint256[] public provedValidators;
+    uint64[] public provedValidators;
     /// @notice State of the new compounding validators with a 0x02 withdrawal credential prefix.
     /// Uses the Beacon chain hashing for BLSPubkey which is
     /// sha256(abi.encodePacked(validator.pubkey, bytes16(0)))
@@ -104,8 +107,14 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
     uint256 public lastSnapTimestamp;
     uint256 public lastProvenBalance;
 
+    struct ConsolidationBatch {
+        uint64 numberOfValidators;
+        bytes32 lastPubKeyHash;
+    }
+    ConsolidationBatch consolidationBatch;
+
     // For future use
-    uint256[40] private __gap;
+    uint256[39] private __gap;
 
     enum VALIDATOR_STATE {
         NON_REGISTERED, // validator is not registered on the SSV network
@@ -113,7 +122,8 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
         STAKED, // validator has funds staked
         EXITING, // exit message has been posted and validator is in the process of exiting
         EXIT_COMPLETE, // validator has funds withdrawn to the EigenPod and is removed from the SSV
-        PROVEN // validator has been proven to exist on the beacon chain
+        PROVEN, // validator has been proven to exist on the beacon chain
+        CONSOLIDATED // validator has been consolidated to a new compounding validator
     }
     enum DepositStatus {
         UNKNOWN, // default value
@@ -166,6 +176,16 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
         _;
     }
 
+    modifier whenNoConsolidations() {
+        // Its too hard to account for the validators while they are being consolidated
+        // so its easier to just wait until after the consolidation is done
+        require(
+            consolidationBatch.numberOfValidators == 0,
+            "Consolidation in progress"
+        );
+        _;
+    }
+
     /// @param _wethAddress Address of the Erc20 WETH Token contract
     /// @param _vaultAddress Address of the Vault
     /// @param _beaconChainDepositContract Address of the beacon chain deposit contract
@@ -209,7 +229,13 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
     function stakeEth(
         ValidatorStakeData calldata validator,
         uint256 depositAmount
-    ) external onlyRegistrator whenNotPaused nonReentrant {
+    )
+        external
+        onlyRegistrator
+        whenNotPaused
+        nonReentrant
+        whenNoConsolidations
+    {
         // Check there is enough WETH from the deposits sitting in this strategy contract
         require(
             depositAmount <= IWETH9(WETH).balanceOf(address(this)),
@@ -297,7 +323,7 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
         bytes[] calldata sharesData,
         uint256 ssvAmount,
         Cluster calldata cluster
-    ) external onlyRegistrator whenNotPaused {
+    ) external onlyRegistrator whenNotPaused whenNoConsolidations {
         require(
             publicKeys.length == sharesData.length,
             "Pubkey sharesData mismatch"
@@ -348,7 +374,7 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
     function exitSsvValidator(
         bytes calldata publicKey,
         uint64[] calldata operatorIds
-    ) external onlyRegistrator whenNotPaused {
+    ) external onlyRegistrator whenNotPaused whenNoConsolidations {
         bytes32 pubKeyHash = keccak256(publicKey);
         VALIDATOR_STATE currentState = validatorsStates[pubKeyHash];
         require(currentState == VALIDATOR_STATE.STAKED, "Validator not staked");
@@ -374,13 +400,14 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
         bytes calldata publicKey,
         uint64[] calldata operatorIds,
         Cluster calldata cluster
-    ) external onlyRegistrator whenNotPaused {
+    ) external onlyRegistrator whenNotPaused whenNoConsolidations {
         bytes32 pubKeyHash = keccak256(publicKey);
         VALIDATOR_STATE currentState = validatorsStates[pubKeyHash];
         // Can remove SSV validators that were incorrectly registered and can not be deposited to.
         require(
             currentState == VALIDATOR_STATE.EXITING ||
-                currentState == VALIDATOR_STATE.REGISTERED,
+                currentState == VALIDATOR_STATE.REGISTERED ||
+                currentState == VALIDATOR_STATE.CONSOLIDATED,
             "Validator not regd or exiting"
         );
 
@@ -471,7 +498,7 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
     /// which means the validator exists and has an increased balance.
     function proveDeposit(
         bytes32 depositDataRoot,
-        uint256 validatorIndex,
+        uint64 validatorIndex,
         uint64 firstPendingDepositSlot,
         uint64 parentBlockTimestamp,
         // BeaconBlock.state.validators[validatorIndex].pubkey
@@ -528,25 +555,93 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
         }
     }
 
-    function snapBalances() public nonReentrant {
-        bytes32 blockRoot = BeaconRoots.parentBlockRoot(
-            SafeCast.toUint64(block.timestamp)
+    function requestConsolidation(
+        bytes[] calldata sourcePubKeys,
+        bytes calldata targetPubKey
+    ) external nonReentrant {
+        bytes32 targetBeaconPubKeyHash = sha256(
+            abi.encodePacked(targetPubKey, bytes16(0))
         );
-        // Get the current WETH balance
-        uint256 wethBalance = IWETH9(WETH).balanceOf(address(this));
-        // Get the current ETH balance
-        uint256 ethBalance = address(this).balance;
+        // The target validator must be a compounding validator that has been proven
+        require(
+            compoundingValidatorState[targetBeaconPubKeyHash] ==
+                VALIDATOR_STATE.PROVEN,
+            "Target validator not proven"
+        );
 
-        // Store the balances in the mapping
-        snappedBalances[blockRoot] = Balances({
-            blockNumber: SafeCast.toUint64(block.number),
-            timestamp: SafeCast.toUint64(block.timestamp),
-            wethBalance: wethBalance,
-            ethBalance: ethBalance
+        // Updates to validator balances has to be done after the consolidation has proven to have completed
+        lastSnapTimestamp = 0;
+
+        bytes32 sourceBeaconPubKeyHash;
+        for (uint256 i = 0; i < sourcePubKeys.length; ++i) {
+            bytes32 pubKeyHash = keccak256(sourcePubKeys[i]);
+            require(
+                validatorsStates[pubKeyHash] == VALIDATOR_STATE.STAKED,
+                "Validator not staked"
+            );
+            validatorsStates[pubKeyHash] = VALIDATOR_STATE.CONSOLIDATED;
+
+            // hash the source validator's public key using the Beacon Chain's format
+            sourceBeaconPubKeyHash = sha256(
+                abi.encodePacked(sourcePubKeys[i], bytes16(0))
+            );
+            require(
+                sourceBeaconPubKeyHash != targetBeaconPubKeyHash,
+                "Self consolidation"
+            );
+
+            // Request consolidation from source to target validator
+            Consolidation.request(sourcePubKeys[i], targetPubKey);
+        }
+
+        consolidationBatch = ConsolidationBatch({
+            numberOfValidators: SafeCast.toUint64(sourcePubKeys.length),
+            lastPubKeyHash: sourceBeaconPubKeyHash
         });
+    }
 
-        // Store the snapped timestamp
-        lastSnapTimestamp = block.timestamp;
+    // TODO what if the last validator was exited rather than consolidated?
+    function proveConsolidation(
+        uint64 parentBlockTimestamp,
+        uint64 lastValidatorIndex,
+        bytes calldata validatorPubKeyProof,
+        bytes32 balancesLeaf,
+        bytes calldata validatorBalanceProof
+    ) external {
+        require(
+            consolidationBatch.numberOfValidators > 0,
+            "No consolidation batch"
+        );
+
+        bytes32 blockRoot = BeaconRoots.parentBlockRoot(parentBlockTimestamp);
+        // Verify the validator index has the same public key
+        BeaconProofs.verifyValidatorPubkey(
+            blockRoot,
+            consolidationBatch.lastPubKeyHash,
+            validatorPubKeyProof,
+            lastValidatorIndex
+        );
+
+        // Verify the balance of the last validator in the consolidation batch
+        // is zero. If its not then the consolidation has not been completed.
+        // This proof is to the beacon block root, not the balances container root.
+        uint256 validatorBalance = BeaconProofs.verifyValidatorBalance(
+            blockRoot,
+            balancesLeaf,
+            validatorBalanceProof,
+            lastValidatorIndex,
+            BeaconProofs.BalanceProofLevel.BeaconBlock
+        );
+        require(validatorBalance == 0, "Validator balance not zero");
+
+        // Reduce the number of legacy sweeping validators
+        activeDepositedValidators -= consolidationBatch.numberOfValidators;
+
+        // Reset the consolidation batch
+        consolidationBatch = ConsolidationBatch({
+            numberOfValidators: 0,
+            lastPubKeyHash: bytes32(0)
+        });
     }
 
     /***************************************

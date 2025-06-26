@@ -54,6 +54,11 @@ library BeaconProofs {
         uint256 index;
     }
 
+    enum BalanceProofLevel {
+        Container,
+        BeaconBlock
+    }
+
     function generalizeIndex(TreeNode[] memory nodes)
         internal
         pure
@@ -79,7 +84,7 @@ library BeaconProofs {
         bytes32 beaconBlockRoot,
         bytes32 pubKeyHash,
         bytes calldata validatorPubKeyProof,
-        uint256 validatorIndex
+        uint64 validatorIndex
     ) internal view {
         // BeaconBlock.state.validators[validatorIndex].pubkey
         TreeNode[] memory nodes = new TreeNode[](4);
@@ -144,29 +149,48 @@ library BeaconProofs {
     }
 
     function verifyValidatorBalance(
-        bytes32 balancesContainerRoot,
+        bytes32 root,
         bytes32 validatorBalanceLeaf,
         bytes calldata balanceProof,
-        uint256 validatorIndex
+        uint64 validatorIndex,
+        BalanceProofLevel level
     ) internal view returns (uint256 validatorBalance) {
         // Four balances are stored in each leaf so the validator index is divided by 4
-        uint256 balanceIndex = uint256(validatorIndex / 4);
+        uint64 balanceIndex = validatorIndex / 4;
 
-        // BeaconBlock.state.balances[balanceIndex]
-        uint256 generalizedIndex = generalizeIndex(
-            BALANCES_HEIGHT,
-            balanceIndex
-        );
+        uint256 generalizedIndex;
+        if (level == BalanceProofLevel.Container) {
+            // Get the index within the balances container, not the Beacon Block
+            // BeaconBlock.state.balances[balanceIndex]
+            generalizedIndex = generalizeIndex(BALANCES_HEIGHT, balanceIndex);
+        }
 
-        validatorBalance = balanceAtIndex(
-            validatorBalanceLeaf,
-            uint40(validatorIndex)
-        );
+        if (level == BalanceProofLevel.BeaconBlock) {
+            // Get the generalized index to the beacon block
+            // TODO This the generalized index is a fixed so can replace with a constant
+            TreeNode[] memory nodes = new TreeNode[](3);
+            nodes[0] = TreeNode({
+                height: BEACON_BLOCK_HEIGHT,
+                index: BEACON_BLOCK_STATE_INDEX
+            });
+            nodes[1] = TreeNode({
+                height: BEACON_STATE_HEIGHT,
+                index: STATE_BALANCES_INDEX
+            });
+            nodes[2] = TreeNode({
+                height: BALANCES_HEIGHT,
+                index: balanceIndex
+            });
+
+            generalizedIndex = generalizeIndex(nodes);
+        }
+
+        validatorBalance = balanceAtIndex(validatorBalanceLeaf, validatorIndex);
 
         require(
             Merkle.verifyInclusionSha256({
                 proof: balanceProof,
-                root: balancesContainerRoot,
+                root: root,
                 leaf: validatorBalanceLeaf,
                 index: generalizedIndex
             }),
@@ -174,7 +198,7 @@ library BeaconProofs {
         );
     }
 
-    function balanceAtIndex(bytes32 validatorBalanceLeaf, uint40 validatorIndex)
+    function balanceAtIndex(bytes32 validatorBalanceLeaf, uint64 validatorIndex)
         internal
         pure
         returns (uint256)
