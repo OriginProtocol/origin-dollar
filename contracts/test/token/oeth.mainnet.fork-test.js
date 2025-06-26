@@ -1,5 +1,5 @@
 const { expect } = require("chai");
-
+const { impersonateAndFund } = require("../../utils/signers");
 const { loadDefaultFixture } = require("./../_fixture");
 const { isCI } = require("./../helpers");
 
@@ -36,6 +36,20 @@ describe("ForkTest: OETH", function () {
         "0xa4c637e0f704745d182e4d38cab7e7485321d059";
       // 2 equals OptIn
       expect(await oeth.rebaseState(eigenLayerStrategyContract)).to.be.equal(2);
+    });
+    it("Should delegate or undelegate yield with strategist", async () => {
+      const { oeth, strategist, matt, josh } = fixture;
+      const impersonatedStrategist = await impersonateAndFund(
+        strategist.address
+      );
+      expect(
+        await oeth
+          .connect(impersonatedStrategist)
+          .delegateYield(matt.address, josh.address)
+      ).to.not.be.reverted;
+      expect(
+        await oeth.connect(impersonatedStrategist).undelegateYield(matt.address)
+      ).to.not.be.reverted;
     });
   });
 });
