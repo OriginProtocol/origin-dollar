@@ -127,6 +127,9 @@
     "@layerzerolabs/lz-evm-protocol-v2": "^3.0.87",
     "@layerzerolabs/lz-v2-utilities": "^3.0.88",
     "@layerzerolabs/oapp-evm": "^0.3.2",
+    "@lodestar/api": "^1.31.0",
+    "@lodestar/config": "^1.31.0",
+    "@lodestar/types": "^1.31.0",
     "ganache": "^7.9.2"
   },
   "resolutions": {
