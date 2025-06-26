@@ -1,7 +1,8 @@
 const { expect } = require("chai");
 const { impersonateAndFund } = require("../../utils/signers");
 const { loadDefaultFixture } = require("./../_fixture");
-const { isCI } = require("./../helpers");
+const { isCI, ethUnits } = require("./../helpers");
+const hre = require("hardhat");
 
 /**
  * Regarding hardcoded addresses:
@@ -50,6 +51,44 @@ describe("ForkTest: OETH", function () {
       expect(
         await oeth.connect(impersonatedStrategist).undelegateYield(matt.address)
       ).to.not.be.reverted;
+    });
+    it("Should earn yield even if EIP7702 user", async () => {
+      const { oeth, oethVault, weth, usdc, josh } = fixture;
+      const eip770UserAddress = "0xD827eb2673D3Dc1a7F886413f6f0950Ec2fbBc98";
+      const eip770User = await impersonateAndFund(eip770UserAddress);
+
+      // Mint some OETH to the eip7702 user
+      await weth.connect(eip770User).deposit({ value: ethUnits("13") });
+      await weth.connect(eip770User).approve(oethVault.address, ethUnits("3"));
+      await oethVault
+        .connect(eip770User)
+        .mint(weth.address, ethUnits("3"), ethUnits("0"));
+
+      // EIP7702 keep 1 OETH and transfer 1 OETH to a smart contract (USDC in this case)
+      // and transfer 1 OETH to a wallet (josh in this case)
+      await oeth.connect(eip770User).transfer(usdc.address, ethUnits("1"));
+      await oeth.connect(eip770User).transfer(josh.address, ethUnits("1"));
+      const eip7702UserBalanceBefore = await oeth.balanceOf(eip770UserAddress);
+      const scBalanceBefore = await oeth.balanceOf(usdc.address);
+      const joshBalanceBefore = await oeth.balanceOf(josh.address);
+
+      // Simulate yield
+      await weth
+        .connect(eip770User)
+        .transfer(oethVault.address, ethUnits("10"));
+      // Simulate time jump
+      await hre.network.provider.send("evm_increaseTime", [60 * 60 * 24]); // 1 day
+      // Rebase the OETH vault
+      await oethVault.rebase();
+      const eip7702UserBalanceAfter = await oeth.balanceOf(eip770UserAddress);
+      const scBalanceAfter = await oeth.balanceOf(usdc.address);
+      const joshBalanceAfter = await oeth.balanceOf(josh.address);
+
+      // Ensure the balance has increased i.e. yield was earned for both eip7702 user and wallet (josh)
+      expect(joshBalanceAfter).to.be.gt(joshBalanceBefore);
+      expect(eip7702UserBalanceAfter).to.be.gt(eip7702UserBalanceBefore);
+      // Ensure the smart contract balance has not changed
+      expect(scBalanceAfter).to.be.eq(scBalanceBefore);
     });
   });
 });
