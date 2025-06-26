@@ -8,8 +8,9 @@ import "@openzeppelin/contracts/utils/math/Math.sol";
 import { InitializableAbstractStrategy } from "../../utils/InitializableAbstractStrategy.sol";
 import { IWETH9 } from "../../interfaces/IWETH9.sol";
 import { FeeAccumulator } from "./FeeAccumulator.sol";
-import { ValidatorRegistrator } from "./ValidatorRegistrator.sol";
+import { ValidatorAccountant } from "./ValidatorAccountant.sol";
 import { ISSVNetwork } from "../../interfaces/ISSVNetwork.sol";
+import { BeaconProofs } from "../../beacon/BeaconProofs.sol";
 
 struct ValidatorStakeData {
     bytes pubkey;
@@ -41,13 +42,10 @@ struct ValidatorStakeData {
 /// execution layer rewards are considered rewards and those are dripped to the Vault over a configurable time
 /// interval and not immediately.
 contract NativeStakingSSVStrategy is
-    ValidatorRegistrator,
+    ValidatorAccountant,
     InitializableAbstractStrategy
 {
     using SafeERC20 for IERC20;
-
-    // Slots previously used by ValidatorAccountant
-    uint256[54] private __gap;
 
     /// @notice SSV ERC20 token that serves as a payment for operating SSV validators
     address public immutable SSV_TOKEN;
@@ -69,7 +67,7 @@ contract NativeStakingSSVStrategy is
     uint256 public depositedWethAccountedFor;
 
     // For future use
-    uint256[49] private ___gap;
+    uint256[49] private __gap;
 
     /// @param _baseConfig Base strategy config with platformAddress (ERC-4626 Vault contract), eg sfrxETH or sDAI,
     /// and vaultAddress (OToken Vault contract), eg VaultProxy or OETHVaultProxy
@@ -91,7 +89,7 @@ contract NativeStakingSSVStrategy is
         address _beaconOracle
     )
         InitializableAbstractStrategy(_baseConfig)
-        ValidatorRegistrator(
+        ValidatorAccountant(
             _wethAddress,
             _baseConfig.vaultAddress,
             _beaconChainDepositContract,
@@ -309,24 +307,30 @@ contract NativeStakingSSVStrategy is
         uint256 executionRewards = FeeAccumulator(FEE_ACCUMULATOR_ADDRESS)
             .collect();
 
+        // total ETH rewards to be harvested = execution rewards + consensus rewards
+        uint256 ethRewards = executionRewards + consensusRewards;
+
         require(
-            address(this).balance >= executionRewards,
+            address(this).balance >= ethRewards,
             "Insufficient eth balance"
         );
 
-        if (executionRewards > 0) {
-            // Convert ETH rewards to WETH
-            IWETH9(WETH).deposit{ value: executionRewards }();
+        if (ethRewards > 0) {
+            // reset the counter keeping track of beacon chain consensus rewards
+            consensusRewards = 0;
 
-            IERC20(WETH).safeTransfer(harvesterAddress, executionRewards);
-            emit RewardTokenCollected(harvesterAddress, WETH, executionRewards);
+            // Convert ETH rewards to WETH
+            IWETH9(WETH).deposit{ value: ethRewards }();
+
+            IERC20(WETH).safeTransfer(harvesterAddress, ethRewards);
+            emit RewardTokenCollected(harvesterAddress, WETH, ethRewards);
         }
     }
 
-    // /// @dev emits Withdrawal event from NativeStakingSSVStrategy
-    // function _wethWithdrawnToVault(uint256 _amount) internal {
-    //     emit Withdrawal(WETH, address(0), _amount);
-    // }
+    /// @dev emits Withdrawal event from NativeStakingSSVStrategy
+    function _wethWithdrawnToVault(uint256 _amount) internal override {
+        emit Withdrawal(WETH, address(0), _amount);
+    }
 
     /// @dev Called when WETH is withdrawn from the strategy or staked to a validator so
     /// the strategy knows how much WETH it has on deposit.
@@ -342,5 +346,100 @@ contract NativeStakingSSVStrategy is
          */
         uint256 deductAmount = Math.min(_amount, depositedWethAccountedFor);
         depositedWethAccountedFor -= deductAmount;
+    }
+
+    function proveBalances(
+        bytes32 blockRoot,
+        uint64 firstPendingDepositSlot,
+        // BeaconBlock.BeaconBlockBody.deposits[0].slot
+        bytes calldata firstPendingDepositSlotProof,
+        bytes32 balancesContainerRoot,
+        // BeaconBlock.state.validators
+        bytes calldata validatorContainerProof,
+        bytes32[] calldata validatorBalanceRoots,
+        // BeaconBlock.state.validators[validatorIndex].balance
+        bytes[] calldata validatorBalanceProofs
+    ) external nonReentrant {
+        // Account for the legacy sweeping validators first
+        _doAccounting(true);
+
+        // Load the last snapped balances into memory
+        Balances memory balancesMem = snappedBalances[blockRoot];
+        require(balancesMem.blockNumber > 0, "No snapped balances");
+        require(balancesMem.timestamp == lastSnapTimestamp, "Stale snap");
+
+        // Break up the into blocks to avoid stack too deep
+        {
+            // Prove the first pending deposit slot to the beacon block root
+            BeaconProofs.verifyFirstPendingDepositSlot(
+                blockRoot,
+                firstPendingDepositSlot,
+                firstPendingDepositSlotProof
+            );
+
+            // For each native staking contract's deposits
+            uint256 depositsCount = depositsRoots.length;
+            for (uint256 i = 0; i < depositsCount; ++i) {
+                bytes32 depositDataRoot = depositsRoots[i];
+
+                // Check the stored deposit is still waiting to be processed on the beacon chain
+                // If it has it will need to be proven with `proveDeposit`
+                require(
+                    deposits[depositDataRoot].slot > firstPendingDepositSlot,
+                    "Deposit not processed"
+                );
+            }
+        }
+
+        // prove beaconBlock.state.balances root to beacon block root
+        BeaconProofs.verifyBalancesContainer(
+            blockRoot,
+            balancesContainerRoot,
+            validatorContainerProof
+        );
+
+        uint256 totalValidatorBalance = 0;
+        uint256 provenValidatorsCount = provedValidators.length;
+        // for each validator
+        for (uint256 i = 0; i < provenValidatorsCount; ++i) {
+            // Load the validator index from storage
+            uint256 validatorIndex = provedValidators[i];
+
+            // prove validator's balance in beaconBlock.state.balances to the
+            // beaconBlock.state.balances container root
+
+            // Prove the validator's balance to the beacon block root
+            uint256 validatorBalance = BeaconProofs.verifyValidatorBalance(
+                balancesContainerRoot,
+                validatorBalanceRoots[i],
+                validatorBalanceProofs[i],
+                validatorIndex
+            );
+
+            // total validator balances
+            totalValidatorBalance += validatorBalance;
+
+            // If the validator balance is zero
+            if (validatorBalance == 0) {
+                // remove it from the list of proved validators
+                // Move the last validator to the current index
+                provedValidators[i] = provedValidators[
+                    provenValidatorsCount - 1
+                ];
+                // Delete the last validator from the list
+                provedValidators.pop();
+            }
+        }
+
+        // store the proved balance in storage
+        lastProvenBalance =
+            // Legacy sweeping validators
+            activeDepositedValidators *
+            FULL_STAKE +
+            // New compounding validators
+            totalDeposits +
+            totalValidatorBalance +
+            balancesMem.wethBalance +
+            balancesMem.ethBalance;
     }
 }
