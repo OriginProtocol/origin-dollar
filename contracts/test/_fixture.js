@@ -2509,7 +2509,18 @@ async function woethCcipZapperFixture() {
 async function beaconChainFixture() {
   const fixture = await defaultFixture();
 
-  fixture.beaconProofs = await resolveContract("MockBeaconProofs");
+  if (isFork) {
+    const { deploy } = deployments;
+    const { governorAddr } = await getNamedAccounts();
+
+    await deploy("MockBeaconRoots", {
+      from: governorAddr,
+    });
+
+    fixture.beaconRoots = await resolveContract("MockBeaconRoots");
+  } else {
+    fixture.beaconProofs = await resolveContract("MockBeaconProofs");
+  }
 
   return fixture;
 }

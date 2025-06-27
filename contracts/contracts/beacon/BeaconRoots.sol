@@ -27,7 +27,7 @@ library BeaconRoots {
             abi.encode(timestamp)
         );
 
-        require(success && result.length > 0, "invalid beacon timestamp");
+        require(success && result.length > 0, "Invalid beacon timestamp");
         parentRoot = abi.decode(result, (bytes32));
     }
 }
