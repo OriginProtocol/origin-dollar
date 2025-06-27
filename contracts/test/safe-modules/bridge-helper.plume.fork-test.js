@@ -6,7 +6,7 @@ const addresses = require("../../utils/addresses");
 
 const plumeFixture = createFixtureLoader(bridgeHelperModuleFixture);
 
-describe("ForkTest: Bridge Helper Safe Module", function () {
+describe("ForkTest: Bridge Helper Safe Module (Plume)", function () {
   let fixture;
   beforeEach(async () => {
     fixture = await plumeFixture();
@@ -144,10 +144,81 @@ describe("ForkTest: Bridge Helper Safe Module", function () {
       weth.address
     );
 
-    expect(supplyAfter).to.gte(supplyBefore.add(oethUnits("1")));
+    // because we redeem with vault, the OETHp minted in the process also gets redeemed
+    expect(supplyAfter).to.gte(supplyBefore);
+    // weth has been gained as it was redeemed using the vault
     expect(wethBalanceAfter).to.approxEqualTolerance(
       wethBalanceBefore.add(expectedWETH)
     );
+    expect(woethBalanceAfter).to.eq(woethBalanceBefore.sub(woethAmount));
+    expect(woethStrategyBalanceAfter).to.eq(
+      woethStrategyBalanceBefore.add(woethAmount)
+    );
+    expect(woethStrategyValueAfter).to.approxEqualTolerance(
+      woethStrategyValueBefore.add(expectedWETH)
+    );
+  });
+
+  it("Should deposit wOETH for OETHp and not redeem it for WETH", async () => {
+    const {
+      nick,
+      _mintWETH,
+      oethpVault,
+      woeth,
+      weth,
+      oethp,
+      governor,
+      safeSigner,
+      woethStrategy,
+      bridgeHelperModule,
+    } = fixture;
+
+    // Make sure Vault has some WETH
+    _mintWETH(nick, oethUnits("1"));
+    await weth.connect(nick).approve(oethpVault.address, oethUnits("1.1"));
+
+    // Update oracle price
+    await oethpVault.rebase();
+    await woethStrategy.updateWOETHOraclePrice();
+
+    await oethpVault.connect(nick).mint(weth.address, oethUnits("1.1"), "0");
+    const woethAmount = oethUnits("1");
+    const expectedWETH = await woethStrategy.getBridgedWOETHValue(woethAmount);
+
+    // Mint 1 wOETH
+    await woeth.connect(governor).mint(safeSigner.address, woethAmount);
+
+    const supplyBefore = await oethp.totalSupply();
+    const wethBalanceBefore = await weth.balanceOf(safeSigner.address);
+    const woethBalanceBefore = await woeth.balanceOf(safeSigner.address);
+
+    const woethStrategyBalanceBefore = await woeth.balanceOf(
+      woethStrategy.address
+    );
+    const woethStrategyValueBefore = await woethStrategy.checkBalance(
+      weth.address
+    );
+
+    // Deposit 1 wOETH for OETHp and redeem it for WETH
+    await bridgeHelperModule
+      .connect(safeSigner)
+      .depositWOETH(oethUnits("1"), false);
+
+    const supplyAfter = await oethp.totalSupply();
+    const wethBalanceAfter = await weth.balanceOf(safeSigner.address);
+    const woethBalanceAfter = await woeth.balanceOf(safeSigner.address);
+    const woethStrategyBalanceAfter = await woeth.balanceOf(
+      woethStrategy.address
+    );
+    const woethStrategyValueAfter = await woethStrategy.checkBalance(
+      weth.address
+    );
+
+    // because we redeem with vault, the OETHp minted in the process also gets redeemed
+    expect(supplyAfter).to.gte(supplyBefore.add(oethUnits("1")));
+    // no weth has been gained because it was not redeemed with vault
+    expect(wethBalanceAfter).to.approxEqualTolerance(wethBalanceBefore);
+
     expect(woethBalanceAfter).to.eq(woethBalanceBefore.sub(woethAmount));
     expect(woethStrategyBalanceAfter).to.eq(
       woethStrategyBalanceBefore.add(woethAmount)

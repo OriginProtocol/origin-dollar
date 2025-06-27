@@ -318,6 +318,10 @@ addresses.mainnet.LidoWithdrawalQueue =
 addresses.mainnet.DaiUsdsMigrationContract =
   "0x3225737a9bbb6473cb4a45b7244aca2befdb276a";
 
+// Safe Module
+addresses.mainnet.ClaimStrategyRewardsSafeModule =
+  "0xc3472011a60336E53e0968e822A4E80D5F0d3F41";
+
 // LayerZero
 addresses.mainnet.LayerZeroEndpointV2 =
   "0x1a44076050125825900e736c501f859c50fE728c";
@@ -399,6 +403,8 @@ addresses.base.OETHb_WETH.pool = "0x302A94E3C28c290EAF2a4605FC52e11Eb915f378";
 addresses.base.OETHb_WETH.gauge = "0x9da8420dbEEBDFc4902B356017610259ef7eeDD8";
 addresses.base.childLiquidityGaugeFactory =
   "0xe35A879E5EfB4F1Bb7F70dCF3250f2e19f096bd8";
+
+addresses.base.CCIPRouter = "0x881e3A65B4d4a04dD529061dd0071cf975F58bCD";
 
 // Sonic
 addresses.sonic = {};

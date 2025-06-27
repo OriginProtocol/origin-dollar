@@ -18,7 +18,7 @@ describe("Sonic Fork Test: Sonic Staking Strategy", function () {
       addresses: addresses.sonic,
       sfc: await ethers.getContractAt("ISFC", addresses.sonic.SFC),
       // see validators here: https://explorer.soniclabs.com/staking
-      testValidatorIds: [15, 16, 17, 18],
+      testValidatorIds: [15, 16, 17, 18, 45],
       unsupportedValidators: [1, 2, 3],
     };
   });
