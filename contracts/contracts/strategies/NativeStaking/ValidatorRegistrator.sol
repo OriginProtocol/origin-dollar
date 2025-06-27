@@ -10,7 +10,7 @@ import { IWETH9 } from "../../interfaces/IWETH9.sol";
 import { ISSVNetwork, Cluster } from "../../interfaces/ISSVNetwork.sol";
 import { BeaconRoots } from "../../beacon/BeaconRoots.sol";
 import { BeaconProofs } from "../../beacon/BeaconProofs.sol";
-import { Consolidation } from "../../beacon/Consolidation.sol";
+import { BeaconConsolidation } from "../../beacon/BeaconConsolidation.sol";
 import { IBeaconOracle } from "../../interfaces/IBeaconOracle.sol";
 
 struct ValidatorStakeData {
@@ -585,7 +585,7 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
             );
 
             // Request consolidation from source to target validator
-            Consolidation.request(sourcePubKeys[i], targetPubKey);
+            BeaconConsolidation.request(sourcePubKeys[i], targetPubKey);
         }
 
         consolidationBatch = ConsolidationBatch({

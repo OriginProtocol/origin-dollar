@@ -10,11 +10,11 @@ contract BeaconOracle {
     /// @notice Maps a slot to a number
     mapping(uint64 => uint64) public slotToBlock;
 
-    /// @notice Uses merkle proofs against the Beacon Block Root to prove
-    /// that a block number corresponds to a slot.
+    /// @notice Uses merkle a proof against the Beacon Block Root to link
+    /// a block number to a beacon chain slot.
     /// @param parentTimestamp The timestamp of the slot after the one being proven.
-    /// @param blockNumber The block number to prove.
-    /// @param slot The slot to prove.
+    /// @param blockNumber The execution layer block number.
+    /// @param slot The beacon chain slot.
     /// @param slotProof The merkle proof witnesses for the slot against the Beacon Block Root.
     /// @param blockProof The merkle proof witnesses for the block number against the Beacon Block Root
     function proveSlot(

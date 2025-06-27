@@ -2517,7 +2517,14 @@ async function beaconChainFixture() {
       from: governorAddr,
     });
 
+    await deploy("MockBeaconConsolidation", {
+      from: governorAddr,
+    });
+
     fixture.beaconRoots = await resolveContract("MockBeaconRoots");
+    fixture.beaconConsolidation = await resolveContract(
+      "MockBeaconConsolidation"
+    );
   } else {
     fixture.beaconProofs = await resolveContract("MockBeaconProofs");
   }
