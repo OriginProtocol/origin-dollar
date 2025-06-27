@@ -689,3 +689,41 @@ def main():
     print("Pool Total ", "{:.6f}".format(totalPool / 10**18), totalPool)
     print("Sell 10 OETH Curve prices before and after", "{:.6f}".format(weth_out_before / 10**18), "{:.6f}".format(weth_out_after / 10**18))
   
+
+# -------------------------------------------
+# June 27 2025 - Withdraw WETH from Curve AMO and deposit wOETH to redeem it
+# -------------------------------------------
+from world_base import *
+def main():
+  with TemporaryForkForReallocations() as txs:
+    # Hack to make weth.withdraw work
+    brownie.network.web3.provider.make_request('hardhat_setCode', [MULTICHAIN_STRATEGIST, '0x'])
+
+    txs.append(vault_core.rebase(from_strategist))
+    txs.append(vault_value_checker.takeSnapshot(from_strategist))
+
+    txs.append(vault_admin.depositToStrategy(OETHB_CURVE_AMO_STRATEGY, [WETH_BASE], [420 * 10**18], from_strategist))
+
+    vault_change = vault_core.totalValue() - vault_value_checker.snapshots(MULTICHAIN_STRATEGIST)[0]
+    supply_change = oethb.totalSupply() - vault_value_checker.snapshots(MULTICHAIN_STRATEGIST)[1]
+    profit = vault_change - supply_change
+
+    txs.append(vault_value_checker.checkDelta(profit, (0.1 * 10**18), vault_change, (1 * 10**18), from_strategist))
+
+    print("--------------------")
+    print("Profit               ", c18(profit), profit)
+    print("Vault Change         ", c18(vault_change), vault_change)
+    print("--------------------")
+
+
+    woeth_balance = woeth.balanceOf(MULTICHAIN_STRATEGIST)
+    expected_oethb = woeth_strat.getBridgedWOETHValue(woeth_balance)
+
+    print("wOETH balance", c18(woeth_balance), woeth_balance)
+    print("Expected oETHb", c18(expected_oethb), expected_oethb)
+
+    # Deposit wOETH and Redeem for WETH using Vault
+    txs.append(base_bridge_helper_module.depositWOETH(woeth_balance, True, from_strategist))
+
+    # Unwrap WETH
+    txs.append(weth.withdraw(expected_oethb, from_strategist))
