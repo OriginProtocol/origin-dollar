@@ -7,21 +7,28 @@ library Consolidation {
     address internal constant CONSOLIDATION_REQUEST_ADDRESS =
         0x0000BBdDc7CE488642fb579F8B00f3a590007251;
 
-    function request(bytes calldata source, bytes calldata target) internal {
+    function request(bytes calldata source, bytes calldata target)
+        internal
+        returns (uint256 fee_)
+    {
+        fee_ = fee();
+
+        // Call the Consolidation Request contract with the public keys of the source and target
+        // validators packed together.
+        // This does not have a function signature, so we use a call
+        (bool success, ) = CONSOLIDATION_REQUEST_ADDRESS.call{ value: fee_ }(
+            abi.encodePacked(source, target)
+        );
+
+        require(success, "consolidation failed");
+    }
+
+    function fee() internal view returns (uint256) {
         // Get fee from the consolidation request contract
         (bool success, bytes memory result) = CONSOLIDATION_REQUEST_ADDRESS
             .staticcall("");
 
         require(success && result.length > 0, "failed to get fee");
-        uint256 fee = abi.decode(result, (uint256));
-
-        // Call the Consolidation Request contract with the public keys of the source and target
-        // validators packed together.
-        // This does not have a function signature, so we use a call
-        (success, ) = CONSOLIDATION_REQUEST_ADDRESS.call{ value: fee }(
-            abi.encodePacked(source, target)
-        );
-
-        require(success, "consolidation failed");
+        return abi.decode(result, (uint256));
     }
 }

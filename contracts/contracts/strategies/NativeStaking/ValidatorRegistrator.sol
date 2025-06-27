@@ -229,13 +229,7 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
     function stakeEth(
         ValidatorStakeData calldata validator,
         uint256 depositAmount
-    )
-        external
-        onlyRegistrator
-        whenNotPaused
-        nonReentrant
-        whenNoConsolidations
-    {
+    ) external onlyRegistrator whenNotPaused nonReentrant whenNoConsolidations {
         // Check there is enough WETH from the deposits sitting in this strategy contract
         require(
             depositAmount <= IWETH9(WETH).balanceOf(address(this)),
