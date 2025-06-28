@@ -77,12 +77,16 @@ describe("ForkTest: Rooster AMO Strategy (Plume)", async function () {
         const checkBalance = await roosterAmoStrategy.checkBalance(weth.address);
         const underlyingAssets = await roosterAmoStrategy.underlyingAssets();
         const rcpt = await oethp.rebasingCreditsPerTokenHighres();
+        const rebasingCredits = await oethp.rebasingCreditsHighres();
+        const nonRebasingSupply = await oethp.nonRebasingSupply();
 
         console.log(`Token total supply: \t ${Math.round(formatUnits(tokenTotalSupply) * 100) / 100}`)
         console.log(`Vault value: \t\t ${Math.round(formatUnits(vaultValue) * 100) / 100}`)
         console.log(`AMO checkBalance: \t ${Math.round(formatUnits(checkBalance) * 100) / 100}`)
         console.log(`AMO underlyingAssets: \t ${Math.round(formatUnits(underlyingAssets) * 100) / 100}`)
         console.log(`RebasingCredits/Token: \t ${Math.round(formatUnits(rcpt) * 100) / 100}`)
+        console.log(`Rebasing Credits: \t ${Math.round(formatUnits(rebasingCredits, 27) * 100) / 100}`)
+        console.log(`Non Rebasing Supply: \t ${Math.round(formatUnits(nonRebasingSupply) * 100) / 100}`)
         console.log(" ")
       };
 
@@ -101,18 +105,17 @@ describe("ForkTest: Rooster AMO Strategy (Plume)", async function () {
           [weth.address],
           [amount]
         );
-
       console.log("User has minted 100 OETH & strategy has deposited it")
       await printValues();
 
 
-      // await oethp.connect(rafael).transfer(roosterAmoStrategy.address, amount);
-      // console.log("User has donated 100 OETH to the AMO strategy")
-      // await printValues();
-
-      await weth.connect(rafael).transfer(roosterAmoStrategy.address, amount);
-      console.log("User has donated 100 WETH to the AMO strategy")
+      await oethp.connect(rafael).transfer(roosterAmoStrategy.address, amount);
+      console.log("User has donated 100 OETH to the AMO strategy")
       await printValues();
+
+      // await weth.connect(rafael).transfer(roosterAmoStrategy.address, amount);
+      // console.log("User has donated 100 WETH to the AMO strategy")
+      // await printValues();
 
       rebalance(
           oethUnits("0"),
