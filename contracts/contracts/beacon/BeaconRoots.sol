@@ -22,7 +22,7 @@ library BeaconRoots {
         require(
             block.timestamp - timestamp <
                 BEACON_ROOTS_HISTORY_BUFFER_LENGTH * 12,
-            "Timestamp out of range"
+            "Timestamp too old"
         );
 
         // Call the Beacon Block Root Oracle to get the parent block root

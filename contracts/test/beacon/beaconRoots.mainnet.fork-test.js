@@ -15,12 +15,12 @@ describe("ForkTest: Beacon Roots", function () {
   it("Fail to get beacon root from the current block", async () => {
     const { beaconRoots } = fixture;
 
-    // Get the current block number from the execution layer
-    const currentBlockNumber = await beaconRoots.provider.getBlockNumber();
+    // Get the current block from the execution layer
+    const currentBlock = await beaconRoots.provider.getBlock();
 
     await expect(
-      beaconRoots.parentBlockRoot(currentBlockNumber)
-    ).to.be.revertedWith("Timestamp out of range");
+      beaconRoots.parentBlockRoot(currentBlock.timestamp)
+    ).to.be.revertedWith("Timestamp not in the past");
   });
   it("Fail to get beacon root from the previous block", async () => {
     // This test passes as the fork has incremented blocks without updating the Beacon Roots contract.
@@ -68,6 +68,6 @@ describe("ForkTest: Beacon Roots", function () {
 
     await expect(
       beaconRoots.parentBlockRoot(previousTimestamp)
-    ).to.be.revertedWith("Timestamp out of range");
+    ).to.be.revertedWith("Timestamp too old");
   });
 });
