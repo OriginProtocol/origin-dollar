@@ -2525,6 +2525,7 @@ async function beaconChainFixture() {
     fixture.beaconConsolidation = await resolveContract(
       "MockBeaconConsolidation"
     );
+    fixture.beaconOracle = await resolveContract("BeaconOracle");
   } else {
     fixture.beaconProofs = await resolveContract("MockBeaconProofs");
   }
