@@ -42,7 +42,12 @@ const getBeaconBlock = async (slot) => {
   log(`Fetching block for slot ${slot} from the beacon node`);
   const blockRes = await client.beacon.getBlockV2({ blockId: slot });
   if (!blockRes.ok) {
-    throw blockRes.error;
+    throw new Error(
+      `Failed to get beacon block for slot ${slot}. Probably because it was missed`,
+      {
+        cause: blockRes.error,
+      }
+    );
   }
 
   const blockView = BeaconBlock.toView(blockRes.value().message);
@@ -57,7 +62,12 @@ const getBeaconBlock = async (slot) => {
     log(`Fetching state for slot ${slot} from the beacon node`);
     const stateRes = await client.debug.getStateV2({ stateId: slot }, "ssz");
     if (!stateRes.ok) {
-      throw stateRes.error;
+      throw new Error(
+        `Failed to get state for slot ${slot}. Probably because it was missed`,
+        {
+          cause: stateRes.error,
+        }
+      );
     }
 
     fs.writeFileSync(stateFilename, stateRes.ssz());

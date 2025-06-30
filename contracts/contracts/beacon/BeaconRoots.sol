@@ -20,10 +20,6 @@ library BeaconRoots {
         returns (bytes32 parentRoot)
     {
         require(
-            uint256(timestamp) < block.timestamp,
-            "Timestamp not in the past"
-        );
-        require(
             block.timestamp - timestamp <
                 BEACON_ROOTS_HISTORY_BUFFER_LENGTH * 12,
             "Timestamp too old"

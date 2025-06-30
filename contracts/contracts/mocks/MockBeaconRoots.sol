@@ -11,4 +11,13 @@ contract MockBeaconRoots {
     {
         return BeaconRoots.parentBlockRoot(timestamp);
     }
+
+    function latestBlockRoot()
+        external
+        view
+        returns (bytes32 parentRoot, uint64 timestamp)
+    {
+        timestamp = uint64(block.timestamp);
+        parentRoot = BeaconRoots.parentBlockRoot(timestamp);
+    }
 }

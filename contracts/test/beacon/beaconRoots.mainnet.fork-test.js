@@ -13,6 +13,7 @@ describe("ForkTest: Beacon Roots", function () {
   });
 
   it("Fail to get beacon root from the current block", async () => {
+    // This test passes as the fork has incremented blocks without updating the Beacon Roots contract.
     const { beaconRoots } = fixture;
 
     // Get the current block from the execution layer
@@ -20,7 +21,7 @@ describe("ForkTest: Beacon Roots", function () {
 
     await expect(
       beaconRoots.parentBlockRoot(currentBlock.timestamp)
-    ).to.be.revertedWith("Timestamp not in the past");
+    ).to.be.revertedWith("Invalid beacon timestamp");
   });
   it("Fail to get beacon root from the previous block", async () => {
     // This test passes as the fork has incremented blocks without updating the Beacon Roots contract.
