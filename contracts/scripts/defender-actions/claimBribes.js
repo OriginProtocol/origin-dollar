@@ -69,10 +69,7 @@ async function claimBribesFromModule(module, signer) {
     const end = Math.min(start + batchSize, nftIdsLength);
 
     const tx = await module.connect(signer).claimBribes(start, end, true);
-    await logTxDetails(
-      tx,
-      `claimBribes (batch ${i + 1} of ${batchCount})`
-    );
+    await logTxDetails(tx, `claimBribes (batch ${i + 1} of ${batchCount})`);
   }
 }
 
