@@ -82,13 +82,16 @@ describe("ForkTest: Beacon Oracle", function () {
     );
 
     log(`About to submit slot and block proofs`);
-    await beaconOracle.verifySlot(
+    const tx = await beaconOracle.verifySlot(
       parentTimestamp,
       pastBlockNumber,
       pastSlot,
       slotProofBytes,
       blockNumberProofBytes
     );
+    await expect(tx)
+      .to.emit(beaconOracle, "BlockToSlot")
+      .withArgs(toHex(blockView.hashTreeRoot()), pastBlockNumber, pastSlot);
 
     log(`Proofs have been verified`);
 
