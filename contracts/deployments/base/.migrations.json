@@ -28,5 +28,8 @@
   "027_base_curve_amo_upgrade": 1743570593,
   "028_vault_woeth_upgrade": 1744987946,
   "030_claimbribes_safe_module": 1746891767,
-  "031_enable_buyback_operator": 1749060898
+  "031_enable_buyback_operator": 1749060898,
+  "032_vault_perf_fee": 1749471718,
+  "033_bridge_helper_module": 1750777962,
+  "034_claimbribes_module_v2": 1750850875
 }

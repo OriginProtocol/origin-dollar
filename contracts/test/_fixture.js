@@ -1303,6 +1303,34 @@ async function mockVaultFixture() {
   return fixture;
 }
 
+async function bridgeHelperModuleFixture() {
+  const fixture = await oethDefaultFixture();
+
+  const safeSigner = await impersonateAndFund(addresses.multichainStrategist);
+  safeSigner.address = addresses.multichainStrategist;
+
+  const bridgeHelperModule = await ethers.getContract(
+    "EthereumBridgeHelperModule"
+  );
+
+  const cSafe = await ethers.getContractAt(
+    [
+      "function enableModule(address module) external",
+      "function isModuleEnabled(address module) external view returns (bool)",
+    ],
+    addresses.multichainStrategist
+  );
+  if (isFork && !(await cSafe.isModuleEnabled(bridgeHelperModule.address))) {
+    await cSafe.connect(safeSigner).enableModule(bridgeHelperModule.address);
+  }
+
+  return {
+    ...fixture,
+    bridgeHelperModule,
+    safeSigner,
+  };
+}
+
 /**
  * Configure a Vault with only the Compound strategy.
  */
@@ -2575,4 +2603,5 @@ module.exports = {
   nodeSnapshot,
   nodeRevert,
   woethCcipZapperFixture,
+  bridgeHelperModuleFixture,
 };

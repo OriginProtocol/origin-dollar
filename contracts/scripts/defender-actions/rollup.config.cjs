@@ -104,4 +104,13 @@ module.exports = [
       format: "cjs",
     },
   },
+  {
+    ...commonConfig,
+    input: "claimBribes.js",
+    output: {
+      file: "dist/claimBribes/index.js",
+      inlineDynamicImports: true,
+      format: "cjs",
+    },
+  },
 ];

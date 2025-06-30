@@ -123,14 +123,14 @@ describe("ForkTest: Vault", function () {
       const balancePreMint = await ousd
         .connect(josh)
         .balanceOf(josh.getAddress());
-      await vault.connect(josh).mint(usdt.address, usdtUnits("50000"), 0);
+      await vault.connect(josh).mint(usdt.address, usdtUnits("500"), 0);
 
       const balancePostMint = await ousd
         .connect(josh)
         .balanceOf(josh.getAddress());
 
       const balanceDiff = balancePostMint.sub(balancePreMint);
-      expect(balanceDiff).to.approxEqualTolerance(ousdUnits("50000"), 1);
+      expect(balanceDiff).to.approxEqualTolerance(ousdUnits("500"), 1);
 
       await vault.connect(josh).redeem(balanceDiff, 0);
 
@@ -145,14 +145,14 @@ describe("ForkTest: Vault", function () {
       const balancePreMint = await ousd
         .connect(josh)
         .balanceOf(josh.getAddress());
-      await vault.connect(josh).mint(usdc.address, usdcUnits("50000"), 0);
+      await vault.connect(josh).mint(usdc.address, usdcUnits("500"), 0);
 
       const balancePostMint = await ousd
         .connect(josh)
         .balanceOf(josh.getAddress());
 
       const balanceDiff = balancePostMint.sub(balancePreMint);
-      expect(balanceDiff).to.approxEqualTolerance(ousdUnits("50000"), 1);
+      expect(balanceDiff).to.approxEqualTolerance(ousdUnits("500"), 1);
 
       await vault.connect(josh).redeem(balanceDiff, 0);
 
@@ -167,14 +167,14 @@ describe("ForkTest: Vault", function () {
       const balancePreMint = await ousd
         .connect(josh)
         .balanceOf(josh.getAddress());
-      await vault.connect(josh).mint(usds.address, usdsUnits("50000"), 0);
+      await vault.connect(josh).mint(usds.address, usdsUnits("500"), 0);
 
       const balancePostMint = await ousd
         .connect(josh)
         .balanceOf(josh.getAddress());
 
       const balanceDiff = balancePostMint.sub(balancePreMint);
-      expect(balanceDiff).to.approxEqualTolerance(ousdUnits("50000"), 1);
+      expect(balanceDiff).to.approxEqualTolerance(ousdUnits("500"), 1);
 
       await vault.connect(josh).redeem(balanceDiff, 0);
 

@@ -1,0 +1,107 @@
+{
+  "solcVersion": "0.8.28",
+  "storage": [
+    {
+      "label": "_roles",
+      "offset": 0,
+      "slot": "0",
+      "type": "t_mapping(t_bytes32,t_struct(RoleData)127_storage)",
+      "contract": "AccessControl",
+      "src": "@openzeppelin/contracts/access/AccessControl.sol:55"
+    },
+    {
+      "label": "_roleMembers",
+      "offset": 0,
+      "slot": "1",
+      "type": "t_mapping(t_bytes32,t_struct(AddressSet)2541_storage)",
+      "contract": "AccessControlEnumerable",
+      "src": "@openzeppelin/contracts/access/AccessControlEnumerable.sol:16"
+    }
+  ],
+  "types": {
+    "t_address": {
+      "label": "address",
+      "numberOfBytes": "20"
+    },
+    "t_array(t_bytes32)dyn_storage": {
+      "label": "bytes32[]",
+      "numberOfBytes": "32"
+    },
+    "t_bool": {
+      "label": "bool",
+      "numberOfBytes": "1"
+    },
+    "t_bytes32": {
+      "label": "bytes32",
+      "numberOfBytes": "32"
+    },
+    "t_mapping(t_address,t_bool)": {
+      "label": "mapping(address => bool)",
+      "numberOfBytes": "32"
+    },
+    "t_mapping(t_bytes32,t_struct(AddressSet)2541_storage)": {
+      "label": "mapping(bytes32 => struct EnumerableSet.AddressSet)",
+      "numberOfBytes": "32"
+    },
+    "t_mapping(t_bytes32,t_struct(RoleData)127_storage)": {
+      "label": "mapping(bytes32 => struct AccessControl.RoleData)",
+      "numberOfBytes": "32"
+    },
+    "t_mapping(t_bytes32,t_uint256)": {
+      "label": "mapping(bytes32 => uint256)",
+      "numberOfBytes": "32"
+    },
+    "t_struct(AddressSet)2541_storage": {
+      "label": "struct EnumerableSet.AddressSet",
+      "members": [
+        {
+          "label": "_inner",
+          "type": "t_struct(Set)2240_storage",
+          "offset": 0,
+          "slot": "0"
+        }
+      ],
+      "numberOfBytes": "64"
+    },
+    "t_struct(RoleData)127_storage": {
+      "label": "struct AccessControl.RoleData",
+      "members": [
+        {
+          "label": "members",
+          "type": "t_mapping(t_address,t_bool)",
+          "offset": 0,
+          "slot": "0"
+        },
+        {
+          "label": "adminRole",
+          "type": "t_bytes32",
+          "offset": 0,
+          "slot": "1"
+        }
+      ],
+      "numberOfBytes": "64"
+    },
+    "t_struct(Set)2240_storage": {
+      "label": "struct EnumerableSet.Set",
+      "members": [
+        {
+          "label": "_values",
+          "type": "t_array(t_bytes32)dyn_storage",
+          "offset": 0,
+          "slot": "0"
+        },
+        {
+          "label": "_indexes",
+          "type": "t_mapping(t_bytes32,t_uint256)",
+          "offset": 0,
+          "slot": "1"
+        }
+      ],
+      "numberOfBytes": "64"
+    },
+    "t_uint256": {
+      "label": "uint256",
+      "numberOfBytes": "32"
+    }
+  }
+}

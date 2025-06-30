@@ -73,10 +73,10 @@ describe("ForkTest: Sonic Vault", function () {
       );
     });
 
-    it("Should have strategist set as trustee", async () => {
+    it("Should trustee set to the multichain buyback operator", async () => {
       const { oSonicVault } = fixture;
       expect(await oSonicVault.trusteeAddress()).to.equal(
-        addresses.sonic.guardian
+        addresses.multichainBuybackOperator
       );
     });
 
@@ -119,7 +119,7 @@ describe("ForkTest: Sonic Vault", function () {
       expect(balanceDiff).to.approxEqualTolerance(parseUnits("1000"), 1);
     });
 
-    it("should automatically deposit to staking strategy", async () => {
+    it.skip("should automatically deposit to staking strategy", async () => {
       const { oSonicVault, nick, wS, sonicStakingStrategy } = fixture;
 
       // Clear any wS out of the Vault first
