@@ -71,6 +71,17 @@ contract NativeStakingSSVStrategy is
     // For future use
     uint256[49] private __gap;
 
+    /// @param activeDepositedValidators The number of legacy sweeping validators with 32 ETH
+    event SnappedBalances(
+        bytes32 indexed blockRoot,
+        uint256 indexed blockNumber,
+        uint256 indexed timestamp,
+        uint256 totalDepositsWei,
+        uint256 wethBalance,
+        uint256 ethBalance,
+        uint256 activeDepositedValidators
+    );
+
     /// @param _baseConfig Base strategy config with platformAddress (ERC-4626 Vault contract), eg sfrxETH or sDAI,
     /// and vaultAddress (OToken Vault contract), eg VaultProxy or OETHVaultProxy
     /// @param _wethAddress Address of the Erc20 WETH Token contract
@@ -250,7 +261,7 @@ contract NativeStakingSSVStrategy is
         //     IERC20(WETH).balanceOf(address(this));
 
         // TODO need to handle the transition
-        balance = lastProvenBalance;
+        balance = lastVerifiedBalance;
     }
 
     function pause() external onlyStrategist {
@@ -358,20 +369,36 @@ contract NativeStakingSSVStrategy is
         uint256 wethBalance = IWETH9(WETH).balanceOf(address(this));
         // Get the current ETH balance
         uint256 ethBalance = address(this).balance;
+        // Load into memory to save reading from storage twice
+        uint64 totalDepositsGweiMem = totalDepositsGwei;
 
         // Store the balances in the mapping
         snappedBalances[blockRoot] = Balances({
             blockNumber: SafeCast.toUint64(block.number),
             timestamp: SafeCast.toUint64(block.timestamp),
-            wethBalance: wethBalance,
-            ethBalance: ethBalance
+            wethBalance: SafeCast.toUint128(wethBalance),
+            ethBalance: SafeCast.toUint128(ethBalance),
+            activeDepositedValidators: SafeCast.toUint64(
+                activeDepositedValidators
+            ),
+            totalDepositsGwei: totalDepositsGweiMem
         });
 
         // Store the snapped timestamp
         lastSnapTimestamp = block.timestamp;
+
+        emit SnappedBalances(
+            blockRoot,
+            block.number,
+            block.timestamp,
+            (totalDepositsGweiMem * 1 gwei),
+            wethBalance,
+            ethBalance,
+            activeDepositedValidators
+        );
     }
 
-    function proveBalances(
+    function verifyBalances(
         bytes32 blockRoot,
         uint64 firstPendingDepositSlot,
         // BeaconBlock.BeaconBlockBody.deposits[0].slot
@@ -393,7 +420,7 @@ contract NativeStakingSSVStrategy is
 
         // Break up the into blocks to avoid stack too deep
         {
-            // Prove the first pending deposit slot to the beacon block root
+            // Verify the first pending deposit slot to the beacon block root
             BeaconProofs.verifyFirstPendingDepositSlot(
                 blockRoot,
                 firstPendingDepositSlot,
@@ -406,7 +433,7 @@ contract NativeStakingSSVStrategy is
                 bytes32 depositDataRoot = depositsRoots[i];
 
                 // Check the stored deposit is still waiting to be processed on the beacon chain
-                // If it has it will need to be proven with `proveDeposit`
+                // If it has it will need to be verified with `verifyDeposit`
                 require(
                     deposits[depositDataRoot].slot > firstPendingDepositSlot,
                     "Deposit not processed"
@@ -414,7 +441,7 @@ contract NativeStakingSSVStrategy is
             }
         }
 
-        // prove beaconBlock.state.balances root to beacon block root
+        // verify beaconBlock.state.balances root to beacon block root
         BeaconProofs.verifyBalancesContainer(
             blockRoot,
             balancesContainerRoot,
@@ -422,13 +449,13 @@ contract NativeStakingSSVStrategy is
         );
 
         uint256 totalValidatorBalance = 0;
-        uint256 provenValidatorsCount = provedValidators.length;
+        uint256 verifiedValidatorsCount = verifiedValidators.length;
         // for each validator
-        for (uint256 i = 0; i < provenValidatorsCount; ++i) {
+        for (uint256 i = 0; i < verifiedValidatorsCount; ++i) {
             // Load the validator index from storage
-            uint64 validatorIndex = provedValidators[i];
+            uint64 validatorIndex = verifiedValidators[i];
 
-            // prove validator's balance in beaconBlock.state.balances to the
+            // verify validator's balance in beaconBlock.state.balances to the
             // beaconBlock.state.balances container root
             uint256 validatorBalance = BeaconProofs.verifyValidatorBalance(
                 balancesContainerRoot,
@@ -443,23 +470,22 @@ contract NativeStakingSSVStrategy is
 
             // If the validator balance is zero
             if (validatorBalance == 0) {
-                // remove it from the list of proved validators
+                // Remove the validator with a zero balance from the list of verified validators
                 // Move the last validator to the current index
-                provedValidators[i] = provedValidators[
-                    provenValidatorsCount - 1
+                verifiedValidators[i] = verifiedValidators[
+                    verifiedValidators.length - 1
                 ];
                 // Delete the last validator from the list
-                provedValidators.pop();
+                verifiedValidators.pop();
             }
         }
 
-        // store the proved balance in storage
-        lastProvenBalance =
+        // store the verified balance in storage
+        lastVerifiedBalance =
             // Legacy sweeping validators
-            activeDepositedValidators *
-            FULL_STAKE +
+            (balancesMem.activeDepositedValidators * FULL_STAKE) +
             // New compounding validators
-            totalDeposits +
+            (totalDepositsGwei * 1 gwei) +
             totalValidatorBalance +
             balancesMem.wethBalance +
             balancesMem.ethBalance;
