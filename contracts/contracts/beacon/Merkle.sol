@@ -58,6 +58,7 @@ library Merkle {
         for (uint256 i = 32; i <= proof.length; i += 32) {
             if (index % 2 == 0) {
                 // if ith bit of index is 0, then computedHash is a left sibling
+                // solhint-disable-next-line no-inline-assembly
                 assembly {
                     mstore(0x00, computedHash)
                     mstore(0x20, mload(add(proof, i)))
@@ -66,6 +67,7 @@ library Merkle {
                 }
             } else {
                 // if ith bit of index is 1, then computedHash is a right sibling
+                // solhint-disable-next-line no-inline-assembly
                 assembly {
                     mstore(0x00, mload(add(proof, i)))
                     mstore(0x20, computedHash)
@@ -117,6 +119,7 @@ library Merkle {
         for (uint256 i = 32; i <= proof.length; i += 32) {
             if (index % 2 == 0) {
                 // if ith bit of index is 0, then computedHash is a left sibling
+                // solhint-disable-next-line no-inline-assembly
                 assembly {
                     mstore(0x00, mload(computedHash))
                     mstore(0x20, mload(add(proof, i)))
@@ -136,6 +139,7 @@ library Merkle {
                 }
             } else {
                 // if ith bit of index is 1, then computedHash is a right sibling
+                // solhint-disable-next-line no-inline-assembly
                 assembly {
                     mstore(0x00, mload(add(proof, i)))
                     mstore(0x20, mload(computedHash))
@@ -159,10 +163,11 @@ library Merkle {
     }
 
     /**
-     * @notice this function returns the merkle root of a tree created from a set of leaves using sha256 as its hash function
+     * @notice returns the merkle root of a tree created from a set of leaves using sha256 as its hash function
      *  @param leaves the leaves of the merkle tree
      *  @return The computed Merkle root of the tree.
-     *  @dev A pre-condition to this function is that leaves.length is a power of two.  If not, the function will merkleize the inputs incorrectly.
+     *  @dev A pre-condition to this function is that leaves.length is a power of two.
+     * If not, the function will merkleize the inputs incorrectly.
      */
     function merkleizeSha256(bytes32[] memory leaves)
         internal
