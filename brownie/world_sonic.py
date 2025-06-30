@@ -9,3 +9,4 @@ vault_core = load_contract('vault_core', OS_VAULT_PROXY_ADDRESS)
 vault_value_checker = load_contract('vault_value_checker', OS_VAULT_VALUE_CHECKER)
 
 swapx_amo_strat = load_contract('swapx_amo_strat', SWAPX_AMO_STRATEGY)
+sonic_staking_strat = load_contract('sonic_staking_strat', SONIC_STAKING_STRATEGY)
