@@ -1,32 +1,32 @@
 const { expect } = require("chai");
-const { createFixtureLoader, beaconChainFixture } = require("../_fixture");
-const { bytes32 } = require("../../utils/regex");
 
-const loadFixture = createFixtureLoader(beaconChainFixture);
+const { bytes32 } = require("../../utils/regex");
 
 describe("ForkTest: Beacon Roots", function () {
   this.timeout(0);
 
-  let fixture;
+  let provider;
+  let beaconRoots;
   beforeEach(async () => {
-    fixture = await loadFixture();
+    // Get provider to mainnet and not a local fork
+    provider = new ethers.providers.JsonRpcProvider(process.env.PROVIDER_URL);
+    beaconRoots = await ethers.getContract("MockBeaconRoots", provider);
   });
 
-  it("Fail to get beacon root from the current block", async () => {
-    // This test passes as the fork has incremented blocks without updating the Beacon Roots contract.
-    const { beaconRoots } = fixture;
+  it("Should get the latest beacon root", async () => {
+    const results = await beaconRoots.latestBlockRoot();
 
+    expect(results.parentRoot).to.match(bytes32);
+  });
+  it("Should to get beacon root from the current block", async () => {
     // Get the current block from the execution layer
-    const currentBlock = await beaconRoots.provider.getBlock();
+    const currentBlock = await provider.getBlock();
 
-    await expect(
-      beaconRoots.parentBlockRoot(currentBlock.timestamp)
-    ).to.be.revertedWith("Invalid beacon timestamp");
+    expect(await beaconRoots.parentBlockRoot(currentBlock.timestamp)).to.match(
+      bytes32
+    );
   });
-  it("Fail to get beacon root from the previous block", async () => {
-    // This test passes as the fork has incremented blocks without updating the Beacon Roots contract.
-    const { beaconRoots } = fixture;
-
+  it("Should to get beacon root from the previous block", async () => {
     // Get the current block number from the execution layer
     const currentBlockNumber = await beaconRoots.provider.getBlockNumber();
 
@@ -34,15 +34,12 @@ describe("ForkTest: Beacon Roots", function () {
     const previousBlock = await beaconRoots.provider.getBlock(
       currentBlockNumber - 1
     );
-    const previousTimestamp = previousBlock.timestamp;
 
-    await expect(
-      beaconRoots.parentBlockRoot(previousTimestamp)
-    ).to.be.revertedWith("Invalid beacon timestamp");
+    expect(await beaconRoots.parentBlockRoot(previousBlock.timestamp)).to.match(
+      bytes32
+    );
   });
   it("Should get beacon root from old block", async () => {
-    const { beaconRoots } = fixture;
-
     // Get the current block number from the execution layer
     const currentBlockNumber = await beaconRoots.provider.getBlockNumber();
 
@@ -56,8 +53,6 @@ describe("ForkTest: Beacon Roots", function () {
     expect(root).to.match(bytes32);
   });
   it("Fail to get beacon root from block older than the buffer", async () => {
-    const { beaconRoots } = fixture;
-
     // Get the current block number from the execution layer
     const currentBlockNumber = await beaconRoots.provider.getBlockNumber();
 
