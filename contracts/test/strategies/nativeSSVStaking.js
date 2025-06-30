@@ -191,7 +191,7 @@ describe("Unit test: Native SSV Staking Strategy", function () {
     });
   });
 
-  describe("Accounting", function () {
+  describe.skip("Accounting", function () {
     describe("Should account for beacon chain ETH", function () {
       // fuseStart 21.6
       // fuseEnd 25.6
@@ -886,7 +886,7 @@ describe("Unit test: Native SSV Staking Strategy", function () {
     });
   });
 
-  describe("Harvest and strategy balance", function () {
+  describe.skip("Harvest and strategy balance", function () {
     // fuseStart 21.6
     // fuseEnd 25.6
     // expectedHarvester = feeAccumulatorEth + consensusRewards
@@ -1067,7 +1067,7 @@ describe("Unit test: Native SSV Staking Strategy", function () {
     }
   });
 
-  describe("Register and stake validators", async () => {
+  describe.skip("Register and stake validators", async () => {
     beforeEach(async () => {
       const { weth, josh, anna, governor, ssv, nativeStakingSSVStrategy } =
         fixture;

@@ -2,11 +2,16 @@
 pragma solidity ^0.8.0;
 
 import { Pausable } from "@openzeppelin/contracts/security/Pausable.sol";
+import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import { Governable } from "../../governance/Governable.sol";
 import { IDepositContract } from "../../interfaces/IDepositContract.sol";
 import { IVault } from "../../interfaces/IVault.sol";
 import { IWETH9 } from "../../interfaces/IWETH9.sol";
 import { ISSVNetwork, Cluster } from "../../interfaces/ISSVNetwork.sol";
+import { BeaconRoots } from "../../beacon/BeaconRoots.sol";
+import { BeaconProofs } from "../../beacon/BeaconProofs.sol";
+import { BeaconConsolidation } from "../../beacon/BeaconConsolidation.sol";
+import { IBeaconOracle } from "../../interfaces/IBeaconOracle.sol";
 
 struct ValidatorStakeData {
     bytes pubkey;
@@ -34,6 +39,7 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
     address public immutable VAULT_ADDRESS;
     /// @notice Maximum number of validators that can be registered in this strategy
     uint256 public immutable MAX_VALIDATORS;
+    address public immutable BEACON_ORACLE;
 
     /// @notice Address of the registrator - allowed to register, exit and remove validators
     address public validatorRegistrator;
@@ -47,19 +53,82 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
     address public stakingMonitor;
     /// @notice Amount of ETH that can be staked before staking on the contract is suspended
     /// and the `stakingMonitor` needs to approve further staking by calling `resetStakeETHTally`
-    uint256 public stakeETHThreshold;
+    uint256 private deprecated_stakeETHThreshold;
     /// @notice Amount of ETH that has been staked since the `stakingMonitor` last called `resetStakeETHTally`.
     /// This can not go above `stakeETHThreshold`.
-    uint256 public stakeETHTally;
+    uint256 private deprecated_stakeETHTally;
+
+    /// Deposit data for new compounding validators.
+
+    /// @param pubKeyHash Hash of validator's public key using the Beacon Chain's format
+    /// @param amountWei Amount of ETH in wei that has been deposited to the beacon chain deposit contract
+    /// @param blockNumber Block number when the deposit was made
+    /// @param slot The slot that is on or after when the deposit was made. This needs to be assigned
+    /// by the `assignSlotToDeposit` function.
+    /// @param rootsIndex The index of the deposit in the list of active deposits
+    /// @param status The status of the deposit, either PENDING or PROVEN
+    struct DepositData {
+        bytes32 pubKeyHash;
+        uint256 amountWei;
+        uint64 blockNumber;
+        uint64 slot;
+        uint64 rootsIndex;
+        DepositStatus status;
+    }
+    /// @notice Mapping of the root of a deposit (depositDataRoot) to its data
+    mapping(bytes32 => DepositData) public deposits;
+    /// @notice List of deposit roots that are still to be proven as processed on the beacon chain
+    bytes32[] public depositsRoots;
+    /// @notice Total amount in wei of deposits waiting to be processed on the beacon chain
+    uint256 public totalDeposits;
+
+    // Validator data
+
+    /// @notice List of validator indexes that have been proven to exist on the beacon chain.
+    /// These have had a deposit processed and the validator's balance increased.
+    /// Validators will be removed from this list when its proven they have a zero balance.
+    uint64[] public provedValidators;
+    /// @notice State of the new compounding validators with a 0x02 withdrawal credential prefix.
+    /// Uses the Beacon chain hashing for BLSPubkey which is
+    /// sha256(abi.encodePacked(validator.pubkey, bytes16(0)))
+    mapping(bytes32 => VALIDATOR_STATE) public compoundingValidatorState;
+
+    struct Balances {
+        uint64 blockNumber;
+        uint64 timestamp; // timestamp of the snap
+        // TODO squash into a single slot
+        uint256 wethBalance;
+        uint256 ethBalance;
+    }
+    // TODO is it more efficient to use the block root rather than hashing it?
+    /// @notice Mapping of the block root to the balances at that slot
+    mapping(bytes32 => Balances) public snappedBalances;
+    // TODO squash these into a single slot
+    uint256 public lastSnapTimestamp;
+    uint256 public lastProvenBalance;
+
+    struct ConsolidationBatch {
+        uint64 numberOfValidators;
+        bytes32 lastPubKeyHash;
+    }
+    ConsolidationBatch consolidationBatch;
+
     // For future use
-    uint256[47] private __gap;
+    uint256[39] private __gap;
 
     enum VALIDATOR_STATE {
         NON_REGISTERED, // validator is not registered on the SSV network
         REGISTERED, // validator is registered on the SSV network
         STAKED, // validator has funds staked
         EXITING, // exit message has been posted and validator is in the process of exiting
-        EXIT_COMPLETE // validator has funds withdrawn to the EigenPod and is removed from the SSV
+        EXIT_COMPLETE, // validator has funds withdrawn to the EigenPod and is removed from the SSV
+        PROVEN, // validator has been proven to exist on the beacon chain
+        CONSOLIDATED // validator has been consolidated to a new compounding validator
+    }
+    enum DepositStatus {
+        UNKNOWN, // default value
+        PENDING, // deposit is pending and waiting to be proven
+        PROVEN // deposit has been proven and is ready to be staked
     }
 
     event RegistratorChanged(address indexed newAddress);
@@ -107,23 +176,36 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
         _;
     }
 
+    modifier whenNoConsolidations() {
+        // Its too hard to account for the validators while they are being consolidated
+        // so its easier to just wait until after the consolidation is done
+        require(
+            consolidationBatch.numberOfValidators == 0,
+            "Consolidation in progress"
+        );
+        _;
+    }
+
     /// @param _wethAddress Address of the Erc20 WETH Token contract
     /// @param _vaultAddress Address of the Vault
     /// @param _beaconChainDepositContract Address of the beacon chain deposit contract
     /// @param _ssvNetwork Address of the SSV Network contract
     /// @param _maxValidators Maximum number of validators that can be registered in the strategy
+    /// @param _beaconOracle Address of the Beacon Oracle contract that maps block numbers to slots
     constructor(
         address _wethAddress,
         address _vaultAddress,
         address _beaconChainDepositContract,
         address _ssvNetwork,
-        uint256 _maxValidators
+        uint256 _maxValidators,
+        address _beaconOracle
     ) {
         WETH = _wethAddress;
         BEACON_CHAIN_DEPOSIT_CONTRACT = _beaconChainDepositContract;
         SSV_NETWORK = _ssvNetwork;
         VAULT_ADDRESS = _vaultAddress;
         MAX_VALIDATORS = _maxValidators;
+        BEACON_ORACLE = _beaconOracle;
     }
 
     /// @notice Set the address of the registrator which can register, exit and remove validators
@@ -138,92 +220,90 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
         emit StakingMonitorChanged(_address);
     }
 
-    /// @notice Set the amount of ETH that can be staked before staking monitor
-    // needs to a approve further staking by resetting the stake ETH tally
-    function setStakeETHThreshold(uint256 _amount) external onlyGovernor {
-        stakeETHThreshold = _amount;
-        emit StakeETHThresholdChanged(_amount);
-    }
-
-    /// @notice Reset the stakeETHTally
-    function resetStakeETHTally() external onlyStakingMonitor {
-        stakeETHTally = 0;
-        emit StakeETHTallyReset();
-    }
-
-    /// @notice Stakes WETH to the node validators
-    /// @param validators A list of validator data needed to stake.
+    /// @notice Stakes WETH to a compounding validator
+    /// @param validator validator data needed to stake.
     /// The `ValidatorStakeData` struct contains the pubkey, signature and depositDataRoot.
     /// Only the registrator can call this function.
+    /// @param depositAmount The amount of WETH to stake to the validator in wei.
     // slither-disable-start reentrancy-eth
-    function stakeEth(ValidatorStakeData[] calldata validators)
-        external
-        onlyRegistrator
-        whenNotPaused
-        nonReentrant
-    {
-        uint256 requiredETH = validators.length * FULL_STAKE;
-
+    function stakeEth(
+        ValidatorStakeData calldata validator,
+        uint256 depositAmount
+    ) external onlyRegistrator whenNotPaused nonReentrant whenNoConsolidations {
         // Check there is enough WETH from the deposits sitting in this strategy contract
         require(
-            requiredETH <= IWETH9(WETH).balanceOf(address(this)),
+            depositAmount <= IWETH9(WETH).balanceOf(address(this)),
             "Insufficient WETH"
         );
-        require(
-            activeDepositedValidators + validators.length <= MAX_VALIDATORS,
-            "Max validators reached"
-        );
-
-        require(
-            stakeETHTally + requiredETH <= stakeETHThreshold,
-            "Staking ETH over threshold"
-        );
-        stakeETHTally += requiredETH;
 
         // Convert required ETH from WETH
-        IWETH9(WETH).withdraw(requiredETH);
-        _wethWithdrawn(requiredETH);
+        IWETH9(WETH).withdraw(depositAmount);
+        _wethWithdrawn(depositAmount);
 
-        /* 0x01 to indicate that withdrawal credentials will contain an EOA address that the sweeping function
-         * can sweep funds to.
+        /* 0x02 to indicate that withdrawal credentials are for a compounding validator
+         * that was introduced with the Pectra upgrade.
          * bytes11(0) to fill up the required zeros
          * remaining bytes20 are for the address
          */
         bytes memory withdrawalCredentials = abi.encodePacked(
-            bytes1(0x01),
+            bytes1(0x02),
             bytes11(0),
             address(this)
         );
 
-        // For each validator
-        for (uint256 i = 0; i < validators.length; ++i) {
-            bytes32 pubKeyHash = keccak256(validators[i].pubkey);
+        VALIDATOR_STATE sweepingState = validatorsStates[
+            keccak256(validator.pubkey)
+        ];
+        // Hash the public key using the Beacon Chain's hashing for BLSPubkey
+        bytes32 pubKeyHash = sha256(
+            abi.encodePacked(validator.pubkey, bytes16(0))
+        );
+        VALIDATOR_STATE compoundingState = compoundingValidatorState[
+            pubKeyHash
+        ];
+        require(
+            sweepingState == VALIDATOR_STATE.NON_REGISTERED &&
+                (compoundingState == VALIDATOR_STATE.REGISTERED ||
+                    // Post Pectra there can be multiple deposits to the same validator
+                    compoundingState == VALIDATOR_STATE.STAKED),
+            "Validator not registered"
+        );
 
-            require(
-                validatorsStates[pubKeyHash] == VALIDATOR_STATE.REGISTERED,
-                "Validator not registered"
-            );
+        // Deposit to the Beacon Chain deposit contract.
+        // This will create a deposit in the beacon chain's pending deposit queue.
+        IDepositContract(BEACON_CHAIN_DEPOSIT_CONTRACT).deposit{
+            value: depositAmount
+        }(
+            validator.pubkey,
+            withdrawalCredentials,
+            validator.signature,
+            validator.depositDataRoot
+        );
 
-            IDepositContract(BEACON_CHAIN_DEPOSIT_CONTRACT).deposit{
-                value: FULL_STAKE
-            }(
-                validators[i].pubkey,
-                withdrawalCredentials,
-                validators[i].signature,
-                validators[i].depositDataRoot
-            );
-
+        //// Update contract storage
+        // Store the validator state if needed
+        if (compoundingState == VALIDATOR_STATE.REGISTERED) {
             validatorsStates[pubKeyHash] = VALIDATOR_STATE.STAKED;
-
-            emit ETHStaked(pubKeyHash, validators[i].pubkey, FULL_STAKE);
         }
-        // save gas by changing this storage variable only once rather each time in the loop.
-        activeDepositedValidators += validators.length;
+        // Store the deposit data for proveDeposit and proveBalances
+        // Hash using Beacon Chains SSZ BLSPubkey format
+        deposits[validator.depositDataRoot] = DepositData({
+            pubKeyHash: pubKeyHash,
+            amountWei: depositAmount,
+            blockNumber: SafeCast.toUint64(block.number),
+            slot: type(uint64).max, // Set to max until proven
+            rootsIndex: SafeCast.toUint32(depositsRoots.length),
+            status: DepositStatus.PENDING
+        });
+        depositsRoots.push(validator.depositDataRoot);
+        totalDeposits += depositAmount;
+
+        emit ETHStaked(pubKeyHash, validator.pubkey, depositAmount);
     }
 
     // slither-disable-end reentrancy-eth
 
-    /// @notice Registers a new validator in the SSV Cluster.
+    /// @notice Registers multiple validators in the SSV Cluster.
     /// Only the registrator can call this function.
     /// @param publicKeys The public keys of the validators
     /// @param operatorIds The operator IDs of the SSV Cluster
@@ -237,24 +317,34 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
         bytes[] calldata sharesData,
         uint256 ssvAmount,
         Cluster calldata cluster
-    ) external onlyRegistrator whenNotPaused {
+    ) external onlyRegistrator whenNotPaused whenNoConsolidations {
         require(
             publicKeys.length == sharesData.length,
             "Pubkey sharesData mismatch"
         );
         // Check each public key has not already been used
         bytes32 pubKeyHash;
-        VALIDATOR_STATE currentState;
         for (uint256 i = 0; i < publicKeys.length; ++i) {
+            // Check the old sweeping validators
             pubKeyHash = keccak256(publicKeys[i]);
-            currentState = validatorsStates[pubKeyHash];
             require(
-                currentState == VALIDATOR_STATE.NON_REGISTERED,
+                validatorsStates[pubKeyHash] == VALIDATOR_STATE.NON_REGISTERED,
                 "Validator already registered"
             );
 
-            validatorsStates[pubKeyHash] = VALIDATOR_STATE.REGISTERED;
+            // Check the new compounding validators
+            // Hash the public key using the Beacon Chain's format
+            pubKeyHash = sha256(abi.encodePacked(publicKeys[i], bytes16(0)));
+            require(
+                compoundingValidatorState[pubKeyHash] ==
+                    VALIDATOR_STATE.NON_REGISTERED,
+                "Validator already registered"
+            );
 
+            // We can only deposit to a new compounding validator
+            compoundingValidatorState[pubKeyHash] = VALIDATOR_STATE.REGISTERED;
+
+            // Emits using the Beacon chain hashing for BLSPubkey
             emit SSVValidatorRegistered(pubKeyHash, publicKeys[i], operatorIds);
         }
 
@@ -269,7 +359,7 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
 
     // slither-disable-end reentrancy-no-eth
 
-    /// @notice Exit a validator from the Beacon chain.
+    /// @notice Exit an old sweeping validator from the Beacon chain.
     /// The staked ETH will eventually swept to this native staking strategy.
     /// Only the registrator can call this function.
     /// @param publicKey The public key of the validator
@@ -278,7 +368,7 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
     function exitSsvValidator(
         bytes calldata publicKey,
         uint64[] calldata operatorIds
-    ) external onlyRegistrator whenNotPaused {
+    ) external onlyRegistrator whenNotPaused whenNoConsolidations {
         bytes32 pubKeyHash = keccak256(publicKey);
         VALIDATOR_STATE currentState = validatorsStates[pubKeyHash];
         require(currentState == VALIDATOR_STATE.STAKED, "Validator not staked");
@@ -292,7 +382,7 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
 
     // slither-disable-end reentrancy-no-eth
 
-    /// @notice Remove a validator from the SSV Cluster.
+    /// @notice Remove a sweeping validator from the SSV Cluster.
     /// Make sure `exitSsvValidator` is called before and the validate has exited the Beacon chain.
     /// If removed before the validator has exited the beacon chain will result in the validator being slashed.
     /// Only the registrator can call this function.
@@ -304,13 +394,14 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
         bytes calldata publicKey,
         uint64[] calldata operatorIds,
         Cluster calldata cluster
-    ) external onlyRegistrator whenNotPaused {
+    ) external onlyRegistrator whenNotPaused whenNoConsolidations {
         bytes32 pubKeyHash = keccak256(publicKey);
         VALIDATOR_STATE currentState = validatorsStates[pubKeyHash];
         // Can remove SSV validators that were incorrectly registered and can not be deposited to.
         require(
             currentState == VALIDATOR_STATE.EXITING ||
-                currentState == VALIDATOR_STATE.REGISTERED,
+                currentState == VALIDATOR_STATE.REGISTERED ||
+                currentState == VALIDATOR_STATE.CONSOLIDATED,
             "Validator not regd or exiting"
         );
 
@@ -324,6 +415,10 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
 
         emit SSVValidatorExitCompleted(pubKeyHash, publicKey, operatorIds);
     }
+
+    /***************************************
+                SSV Management
+    ****************************************/
 
     // slither-disable-end reentrancy-no-eth
 
@@ -358,6 +453,189 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
         Cluster memory cluster
     ) external onlyGovernor {
         ISSVNetwork(SSV_NETWORK).withdraw(operatorIds, ssvAmount, cluster);
+    }
+
+    /***************************************
+                Beacon Chain Proofs
+    ****************************************/
+
+    /// @notice Maps a deposit to a beacon chain slot that is on or after the deposit was made.
+    /// This uses the Beacon Oracle that uses merkle proofs to map blocks to slots.
+    /// Ideally, the mapped block number is close to the deposit block number as this can delay when
+    /// the deposit can be proven. It will also delay when the balances can be successfully proven.
+    /// @param depositDataRoot The root of the previous deposit data
+    /// @param mappedBlockNumber The block number that has been mapped in the Beacon Oracle.
+    /// The mapped block number must be on or after the block the deposit was made in.
+    function assignSlotToDeposit(
+        bytes32 depositDataRoot,
+        uint64 mappedBlockNumber
+    ) external nonReentrant {
+        require(
+            deposits[depositDataRoot].status == DepositStatus.PENDING,
+            "Deposit not pending"
+        );
+        // The deposit needs to be before or at the time as the mapped block number.
+        // The deposit can not be after the block number mapped to a slot.
+        require(
+            deposits[depositDataRoot].blockNumber <= mappedBlockNumber,
+            "block not on or after deposit"
+        );
+        //
+        // require(block.number - provenBlockNumber < 6000, "Block too old");
+
+        // Store the slot that is on or after the deposit was made
+        deposits[depositDataRoot].slot = IBeaconOracle(BEACON_ORACLE)
+            .slotToBlock(mappedBlockNumber);
+    }
+
+    /// @notice Proves a previous deposit has been processed by the beacon chain
+    /// which means the validator exists and has an increased balance.
+    function proveDeposit(
+        bytes32 depositDataRoot,
+        uint64 validatorIndex,
+        uint64 firstPendingDepositSlot,
+        uint64 parentBlockTimestamp,
+        // BeaconBlock.state.validators[validatorIndex].pubkey
+        bytes calldata validatorPubKeyProof,
+        // BeaconBlock.BeaconBlockBody.deposits[0].slot
+        bytes calldata firstPendingDepositSlotProof
+    ) external nonReentrant {
+        // Load into memory the previously saved deposit data
+        DepositData memory deposit = deposits[depositDataRoot];
+        require(deposit.status == DepositStatus.PENDING, "Deposit not pending");
+        require(
+            deposit.slot < firstPendingDepositSlot,
+            "Deposit not processed"
+        );
+
+        bytes32 blockRoot = BeaconRoots.parentBlockRoot(parentBlockTimestamp);
+        // Verify the validator index has the same public key as the deposit
+        BeaconProofs.verifyValidatorPubkey(
+            blockRoot,
+            deposit.pubKeyHash,
+            validatorPubKeyProof,
+            validatorIndex
+        );
+
+        // Verify the first pending deposit slot matches the beacon chain
+        BeaconProofs.verifyFirstPendingDepositSlot(
+            blockRoot,
+            firstPendingDepositSlot,
+            firstPendingDepositSlotProof
+        );
+
+        // After verifying the proof, update the contract storage
+        deposits[depositDataRoot].status = DepositStatus.PROVEN;
+        // Move the last deposit to the index of the proven deposit
+        depositsRoots[deposit.rootsIndex] = depositsRoots[
+            depositsRoots.length - 1
+        ];
+        // Delete the last deposit from the list
+        depositsRoots.pop();
+        // Reduce the total pending deposits in wei
+        totalDeposits -= deposit.amountWei;
+
+        // TODO need to check the state transitions for existing validators
+        if (
+            compoundingValidatorState[deposit.pubKeyHash] !=
+            VALIDATOR_STATE.PROVEN
+        ) {
+            // Store the validator state as PROVEN
+            compoundingValidatorState[deposit.pubKeyHash] = VALIDATOR_STATE
+                .PROVEN;
+
+            // Add the new validator to the list of proved validators
+            provedValidators.push(validatorIndex);
+        }
+    }
+
+    function requestConsolidation(
+        bytes[] calldata sourcePubKeys,
+        bytes calldata targetPubKey
+    ) external nonReentrant {
+        bytes32 targetBeaconPubKeyHash = sha256(
+            abi.encodePacked(targetPubKey, bytes16(0))
+        );
+        // The target validator must be a compounding validator that has been proven
+        require(
+            compoundingValidatorState[targetBeaconPubKeyHash] ==
+                VALIDATOR_STATE.PROVEN,
+            "Target validator not proven"
+        );
+
+        // Updates to validator balances has to be done after the consolidation has proven to have completed
+        lastSnapTimestamp = 0;
+
+        bytes32 sourceBeaconPubKeyHash;
+        for (uint256 i = 0; i < sourcePubKeys.length; ++i) {
+            bytes32 pubKeyHash = keccak256(sourcePubKeys[i]);
+            require(
+                validatorsStates[pubKeyHash] == VALIDATOR_STATE.STAKED,
+                "Validator not staked"
+            );
+            validatorsStates[pubKeyHash] = VALIDATOR_STATE.CONSOLIDATED;
+
+            // hash the source validator's public key using the Beacon Chain's format
+            sourceBeaconPubKeyHash = sha256(
+                abi.encodePacked(sourcePubKeys[i], bytes16(0))
+            );
+            require(
+                sourceBeaconPubKeyHash != targetBeaconPubKeyHash,
+                "Self consolidation"
+            );
+
+            // Request consolidation from source to target validator
+            BeaconConsolidation.request(sourcePubKeys[i], targetPubKey);
+        }
+
+        consolidationBatch = ConsolidationBatch({
+            numberOfValidators: SafeCast.toUint64(sourcePubKeys.length),
+            lastPubKeyHash: sourceBeaconPubKeyHash
+        });
+    }
+
+    // TODO what if the last validator was exited rather than consolidated?
+    function proveConsolidation(
+        uint64 parentBlockTimestamp,
+        uint64 lastValidatorIndex,
+        bytes calldata validatorPubKeyProof,
+        bytes32 balancesLeaf,
+        bytes calldata validatorBalanceProof
+    ) external {
+        require(
+            consolidationBatch.numberOfValidators > 0,
+            "No consolidation batch"
+        );
+
+        bytes32 blockRoot = BeaconRoots.parentBlockRoot(parentBlockTimestamp);
+        // Verify the validator index has the same public key
+        BeaconProofs.verifyValidatorPubkey(
+            blockRoot,
+            consolidationBatch.lastPubKeyHash,
+            validatorPubKeyProof,
+            lastValidatorIndex
+        );
+
+        // Verify the balance of the last validator in the consolidation batch
+        // is zero. If its not then the consolidation has not been completed.
+        // This proof is to the beacon block root, not the balances container root.
+        uint256 validatorBalance = BeaconProofs.verifyValidatorBalance(
+            blockRoot,
+            balancesLeaf,
+            validatorBalanceProof,
+            lastValidatorIndex,
+            BeaconProofs.BalanceProofLevel.BeaconBlock
+        );
+        require(validatorBalance == 0, "Validator balance not zero");
+
+        // Reduce the number of legacy sweeping validators
+        activeDepositedValidators -= consolidationBatch.numberOfValidators;
+
+        // Reset the consolidation batch
+        consolidationBatch = ConsolidationBatch({
+            numberOfValidators: 0,
+            lastPubKeyHash: bytes32(0)
+        });
     }
 
     /***************************************

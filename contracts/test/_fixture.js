@@ -1912,21 +1912,10 @@ async function nativeStakingSSVStrategyFixture() {
       .connect(sGovernor)
       .approveStrategy(nativeStakingSSVStrategy.address);
 
-    const fuseStartBn = ethers.utils.parseEther("21.6");
-    const fuseEndBn = ethers.utils.parseEther("25.6");
-
     // Set as default
     await oethVault
       .connect(sGovernor)
       .setAssetDefaultStrategy(weth.address, nativeStakingSSVStrategy.address);
-
-    await nativeStakingSSVStrategy
-      .connect(sGovernor)
-      .setFuseInterval(fuseStartBn, fuseEndBn);
-
-    await nativeStakingSSVStrategy
-      .connect(sGovernor)
-      .setRegistrator(governorAddr);
 
     fixture.validatorRegistrator = sGovernor;
   }
@@ -2517,6 +2506,33 @@ async function woethCcipZapperFixture() {
   return fixture;
 }
 
+async function beaconChainFixture() {
+  const fixture = await defaultFixture();
+
+  if (isFork) {
+    const { deploy } = deployments;
+    const { governorAddr } = await getNamedAccounts();
+
+    await deploy("MockBeaconRoots", {
+      from: governorAddr,
+    });
+
+    await deploy("MockBeaconConsolidation", {
+      from: governorAddr,
+    });
+
+    fixture.beaconRoots = await resolveContract("MockBeaconRoots");
+    fixture.beaconConsolidation = await resolveContract(
+      "MockBeaconConsolidation"
+    );
+    fixture.beaconOracle = await resolveContract("BeaconOracle");
+  } else {
+    fixture.beaconProofs = await resolveContract("MockBeaconProofs");
+  }
+
+  return fixture;
+}
+
 /**
  * A fixture is a setup function that is run only the first time it's invoked. On subsequent invocations,
  * Hardhat will reset the state of the network to what it was at the point after the fixture was initially executed.
@@ -2604,4 +2620,5 @@ module.exports = {
   nodeRevert,
   woethCcipZapperFixture,
   bridgeHelperModuleFixture,
+  beaconChainFixture,
 };
