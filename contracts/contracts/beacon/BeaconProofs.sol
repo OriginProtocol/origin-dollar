@@ -5,10 +5,14 @@ import { Merkle } from "./Merkle.sol";
 import { Endian } from "./Endian.sol";
 
 library BeaconProofs {
+    // Known generalized indices in the beacon block
     // BeaconBlock.slot
     uint256 internal constant SLOT_GENERALIZED_INDEX = 8;
     // BeaconBlock.state.PendingDeposits[0].slot
-    uint256 internal constant FIRST_PENDING_DEPOSIT_SLOT_INDEX = 1584842932228;
+    uint256 internal constant FIRST_PENDING_DEPOSIT_SLOT_GENERALIZED_INDEX =
+        1584842932228;
+    // BeaconBlock.body.executionPayload.blockNumber
+    uint256 internal constant BLOCK_NUMBER_GENERALIZED_INDEX = 6438;
 
     // Beacon Container Tree Heights
     uint256 internal constant BEACON_BLOCK_HEIGHT = 3;
@@ -59,27 +63,13 @@ library BeaconProofs {
         BeaconBlock
     }
 
-    function generalizeIndex(TreeNode[] memory nodes)
-        internal
-        pure
-        returns (uint256 index)
-    {
-        index = 1;
-        for (uint256 i; i < nodes.length; ++i) {
-            // generalized index = 2 ^ tree height + node index
-            index = (index << nodes[i].height) | nodes[i].index;
-        }
-    }
-
-    function generalizeIndex(uint256 height, uint256 index)
-        internal
-        pure
-        returns (uint256 genIndex)
-    {
-        // 2 ^ tree height + node index
-        genIndex = (1 << height) | index;
-    }
-
+    /// @notice Verifies the validator public key against the beacon block root
+    /// BeaconBlock.state.validators[validatorIndex].pubkey
+    /// @param beaconBlockRoot The root of the beacon block
+    /// @param pubKeyHash The beacon chain hash of the validator public key
+    /// @param validatorPubKeyProof The merkle proof for the validator public key to the beacon block root.
+    /// This is the witness hashes concatenated together starting from the leaf node.
+    /// @param validatorIndex The validator index
     function verifyValidatorPubkey(
         bytes32 beaconBlockRoot,
         bytes32 pubKeyHash,
@@ -119,6 +109,12 @@ library BeaconProofs {
         );
     }
 
+    /// @notice Verifies the balances container against the beacon block root
+    /// BeaconBlock.state.balances
+    /// @param beaconBlockRoot The root of the beacon block
+    /// @param balancesContainerLeaf The leaf node containing the balances container
+    /// @param balancesContainerProof The merkle proof for the balances container to the beacon block root.
+    /// This is the witness hashes concatenated together starting from the leaf node.
     function verifyBalancesContainer(
         bytes32 beaconBlockRoot,
         bytes32 balancesContainerLeaf,
@@ -148,6 +144,14 @@ library BeaconProofs {
         );
     }
 
+    /// @notice Verifies the validator balance against the root of the Balances container
+    /// or the beacon block root
+    /// @param root The root of the Balances container or the beacon block root
+    /// @param validatorBalanceLeaf The leaf node containing the validator balance with three other balances
+    /// @param balanceProof The merkle proof for the validator balance against the root.
+    /// This is the witness hashes concatenated together starting from the leaf node.
+    /// @param validatorIndex The validator index to verify the balance for
+    /// @param level The level of the balance proof, either Container or BeaconBlock
     function verifyValidatorBalance(
         bytes32 root,
         bytes32 validatorBalanceLeaf,
@@ -198,22 +202,15 @@ library BeaconProofs {
         );
     }
 
-    function balanceAtIndex(bytes32 validatorBalanceLeaf, uint64 validatorIndex)
-        internal
-        pure
-        returns (uint256)
-    {
-        uint256 bitShiftAmount = (validatorIndex % 4) * 64;
-        return
-            Endian.fromLittleEndianUint64(
-                bytes32((uint256(validatorBalanceLeaf) << bitShiftAmount))
-            );
-    }
-
-    /// @notice Verifies the slot of the first pending deposit against the Beacon Block Root
+    /// @notice Verifies the slot of the first pending deposit against the beacon block root
     /// BeaconBlock.state.PendingDeposits[0].slot
+    /// @param beaconBlockRoot The root of the beacon block
+    /// @param slot The beacon chain slot to verify
+    /// @param firstPendingDepositSlotProof The merkle proof for the first pending deposit's slot
+    /// against the beacon block root.
+    /// This is the witness hashes concatenated together starting from the leaf node.
     function verifyFirstPendingDepositSlot(
-        bytes32 blockRoot,
+        bytes32 beaconBlockRoot,
         uint64 slot,
         bytes calldata firstPendingDepositSlotProof
     ) internal view {
@@ -223,36 +220,25 @@ library BeaconProofs {
         require(
             Merkle.verifyInclusionSha256({
                 proof: firstPendingDepositSlotProof,
-                root: blockRoot,
+                root: beaconBlockRoot,
                 leaf: slotLeaf,
-                index: FIRST_PENDING_DEPOSIT_SLOT_INDEX
+                index: FIRST_PENDING_DEPOSIT_SLOT_GENERALIZED_INDEX
             }),
             "Invalid pending deposit proof"
         );
     }
 
+    /// @notice Verifies the block number to the the beacon block root
+    /// BeaconBlock.body.executionPayload.blockNumber
+    /// @param beaconBlockRoot The root of the beacon block
+    /// @param blockNumber The execution layer block number to verify
+    /// @param blockNumberProof The merkle proof for the block number against the beacon block
+    /// This is the witness hashes concatenated together starting from the leaf node.
     function verifyBlockNumber(
         bytes32 beaconBlockRoot,
         uint256 blockNumber,
         bytes calldata blockNumberProof
     ) internal view {
-        // BeaconBlock.body.executionPayload.blockNumber
-        // TODO might be easier to read and more gas efficient for the static nodes to be constant
-        TreeNode[] memory nodes = new TreeNode[](3);
-        nodes[0] = TreeNode({
-            height: BEACON_BLOCK_HEIGHT,
-            index: BEACON_BLOCK_BODY_INDEX
-        });
-        nodes[1] = TreeNode({
-            height: BEACON_BLOCK_BODY_HEIGHT,
-            index: BEACON_BLOCK_BODY_EXECUTION_PAYLOAD_INDEX
-        });
-        nodes[2] = TreeNode({
-            height: EXECUTION_PAYLOAD_HEIGHT,
-            index: EXECUTION_PAYLOAD_BLOCK_NUMBER_INDEX
-        });
-        uint256 generalizedIndex = generalizeIndex(nodes);
-
         // Convert uint64 block number to a little endian bytes32
         bytes32 blockNumberLeaf = Endian.toLittleEndianUint64(
             uint64(blockNumber)
@@ -262,12 +248,18 @@ library BeaconProofs {
                 proof: blockNumberProof,
                 root: beaconBlockRoot,
                 leaf: blockNumberLeaf,
-                index: generalizedIndex
+                index: BLOCK_NUMBER_GENERALIZED_INDEX
             }),
             "Invalid block number proof"
         );
     }
 
+    /// @notice Verifies the slot number against the beacon block root.
+    /// BeaconBlock.slot
+    /// @param beaconBlockRoot The root of the beacon block
+    /// @param slot The beacon chain slot to verify
+    /// @param slotProof The merkle proof for the slot against the beacon block root.
+    /// This is the witness hashes concatenated together starting from the leaf node.
     function verifySlot(
         bytes32 beaconBlockRoot,
         uint256 slot,
@@ -282,5 +274,42 @@ library BeaconProofs {
             }),
             "Invalid slot number proof"
         );
+    }
+
+    ////////////////////////////////////////////////////
+    ///       Internal Helper Functions
+    ////////////////////////////////////////////////////
+
+    function balanceAtIndex(bytes32 validatorBalanceLeaf, uint64 validatorIndex)
+        internal
+        pure
+        returns (uint256)
+    {
+        uint256 bitShiftAmount = (validatorIndex % 4) * 64;
+        return
+            Endian.fromLittleEndianUint64(
+                bytes32((uint256(validatorBalanceLeaf) << bitShiftAmount))
+            );
+    }
+
+    function generalizeIndex(TreeNode[] memory nodes)
+        internal
+        pure
+        returns (uint256 index)
+    {
+        index = 1;
+        for (uint256 i; i < nodes.length; ++i) {
+            // generalized index = 2 ^ tree height + node index
+            index = (index << nodes[i].height) | nodes[i].index;
+        }
+    }
+
+    function generalizeIndex(uint256 height, uint256 index)
+        internal
+        pure
+        returns (uint256 genIndex)
+    {
+        // 2 ^ tree height + node index
+        genIndex = (1 << height) | index;
     }
 }

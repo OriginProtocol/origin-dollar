@@ -23,7 +23,7 @@ contract BeaconOracle {
     /// @param slot The beacon chain slot.
     /// @param slotProof The merkle proof witnesses for the slot against the Beacon Block Root.
     /// @param blockProof The merkle proof witnesses for the block number against the Beacon Block Root
-    function proveSlot(
+    function verifySlot(
         uint64 nextBlockTimestamp,
         uint64 blockNumber,
         uint64 slot,
@@ -36,11 +36,11 @@ contract BeaconOracle {
         // This is the beacon block root of the previous slot.
         blockRoot = BeaconRoots.parentBlockRoot(nextBlockTimestamp);
 
-        // Verify the block number to the Beacon Block Root root
-        BeaconProofs.verifyBlockNumber(blockRoot, blockNumber, blockProof);
-
         // Verify the slot to the Beacon Block Root root
         BeaconProofs.verifySlot(blockRoot, slot, slotProof);
+
+        // Verify the block number to the Beacon Block Root root
+        BeaconProofs.verifyBlockNumber(blockRoot, blockNumber, blockProof);
 
         // Store mappings
         _blockToSlot[blockNumber] = slot;

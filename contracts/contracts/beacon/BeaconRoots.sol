@@ -10,6 +10,10 @@ library BeaconRoots {
     /// @notice The length of the beacon block root ring buffer
     uint256 internal constant BEACON_ROOTS_HISTORY_BUFFER_LENGTH = 8191;
 
+    /// @notice Returns the Beacon Block Root for the previous block.
+    /// This comes from the Beacon Roots contract defined in EIP-4788
+    /// @param timestamp The timestamp of the block for which to get the parent root.
+    /// @return parentRoot The parent block root for the given timestamp.
     function parentBlockRoot(uint64 timestamp)
         internal
         view
