@@ -38,7 +38,7 @@ describe("ForkTest: Rooster AMO Strategy (Plume)", async function () {
     strategist = fixture.strategist;
     rafael = fixture.rafael;
     oethVaultSigner = await impersonateAndFund(oethpVault.address);
-    
+
     await setup();
   });
 
@@ -1007,36 +1007,40 @@ describe("ForkTest: Rooster AMO Strategy (Plume)", async function () {
   // Notice: this only works if the pools is already in the tick -1 where
   // all the liquidity is deployed
   const estimateSwapAmountsToReachWethRatio = async (wethRatio) => {
-    let currentTradingTick = parseInt((await roosterAmoStrategy.getCurrentTradingTick()).toString());
+    let currentTradingTick = parseInt(
+      (await roosterAmoStrategy.getCurrentTradingTick()).toString()
+    );
     let totalAmount = BigNumber.from("0");
 
-    while(currentTradingTick < -1) {
+    while (currentTradingTick < -1) {
       totalAmount = totalAmount.add(await _getOETHInTick(currentTradingTick));
       currentTradingTick += 1;
     }
 
-    while(currentTradingTick > -1) {
+    while (currentTradingTick > -1) {
       totalAmount = totalAmount.add(await _getWETHInTick(currentTradingTick));
       currentTradingTick -= 1;
     }
 
-    let { amount, swapWeth } = await _estimateAmountsWithinTheAMOTick(wethRatio);
+    let { amount, swapWeth } = await _estimateAmountsWithinTheAMOTick(
+      wethRatio
+    );
     amount = amount.add(totalAmount);
     return {
       amount,
-      swapWeth
-    }
+      swapWeth,
+    };
   };
 
   const _getWETHInTick = async (tradingTick) => {
     const tickState = await roosterOETHpWETHpool.getTick(tradingTick);
     return tickState.reserveA;
-  }
+  };
 
   const _getOETHInTick = async (tradingTick) => {
     const tickState = await roosterOETHpWETHpool.getTick(tradingTick);
     return tickState.reserveB;
-  }
+  };
 
   const _estimateAmountsWithinTheAMOTick = async (wethRatio) => {
     const tickState = await roosterOETHpWETHpool.getTick(-1);
@@ -1061,7 +1065,7 @@ describe("ForkTest: Rooster AMO Strategy (Plume)", async function () {
       amount: diff.mul(total).div(oethUnits("1")),
       swapWeth,
     };
-  }
+  };
 
   const rebalance = async (
     amountToSwap,

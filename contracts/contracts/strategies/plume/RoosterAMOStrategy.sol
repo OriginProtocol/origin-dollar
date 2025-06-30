@@ -597,7 +597,7 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
             if (_throwException) {
                 revert OutsideExpectedTickRange();
             }
-            
+
             return (false, _currentPrice <= sqrtPriceTickLower ? 0 : 1e18);
         }
 
@@ -806,7 +806,8 @@ contract RoosterAMOStrategy is InitializableAbstractStrategy {
                  * yielded the best results where the strategy overdraws the least and
                  * never removes insufficient amount of WETH.
                  */
-                (_additionalWethRequired + 2).divPrecisely(_wethInThePool - 1) + 2,
+                (_additionalWethRequired + 2).divPrecisely(_wethInThePool - 1) +
+                    2,
                 1e18
             );
 
