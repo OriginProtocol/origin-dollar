@@ -1,0 +1,79 @@
+{
+  "address": "0xC033785181372379dB2BF9dD32178a7FDf495AcD",
+  "abi": [
+    {
+      "inputs": [],
+      "name": "latestBlockRoot",
+      "outputs": [
+        {
+          "internalType": "bytes32",
+          "name": "parentRoot",
+          "type": "bytes32"
+        },
+        {
+          "internalType": "uint64",
+          "name": "timestamp",
+          "type": "uint64"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint64",
+          "name": "timestamp",
+          "type": "uint64"
+        }
+      ],
+      "name": "parentBlockRoot",
+      "outputs": [
+        {
+          "internalType": "bytes32",
+          "name": "parentRoot",
+          "type": "bytes32"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    }
+  ],
+  "transactionHash": "0xb3e40319c3f02fe3cd586a386514c74ac9561733b02adcbb700c28884808f4a0",
+  "receipt": {
+    "to": null,
+    "from": "0x3Ba227D87c2A7aB89EAaCEFbeD9bfa0D15Ad249A",
+    "contractAddress": "0xC033785181372379dB2BF9dD32178a7FDf495AcD",
+    "transactionIndex": 46,
+    "gasUsed": "220274",
+    "logsBloom": "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+    "blockHash": "0x356d936adef850df0177843837e9fdce8840b1ce772ff7a8d0398f7bc84ca738",
+    "transactionHash": "0xb3e40319c3f02fe3cd586a386514c74ac9561733b02adcbb700c28884808f4a0",
+    "logs": [],
+    "blockNumber": 22816806,
+    "cumulativeGasUsed": "6701553",
+    "status": 1,
+    "byzantium": true
+  },
+  "args": [],
+  "numDeployments": 1,
+  "solcInputHash": "c59d428f039161f4fb50596eaf7cf65d",
+  "metadata": "{\"compiler\":{\"version\":\"0.8.28+commit.7893614a\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"inputs\":[],\"name\":\"latestBlockRoot\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"parentRoot\",\"type\":\"bytes32\"},{\"internalType\":\"uint64\",\"name\":\"timestamp\",\"type\":\"uint64\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint64\",\"name\":\"timestamp\",\"type\":\"uint64\"}],\"name\":\"parentBlockRoot\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"parentRoot\",\"type\":\"bytes32\"}],\"stateMutability\":\"view\",\"type\":\"function\"}],\"devdoc\":{\"kind\":\"dev\",\"methods\":{},\"version\":1},\"userdoc\":{\"kind\":\"user\",\"methods\":{},\"version\":1}},\"settings\":{\"compilationTarget\":{\"contracts/mocks/MockBeaconRoots.sol\":\"MockBeaconRoots\"},\"evmVersion\":\"paris\",\"libraries\":{},\"metadata\":{\"bytecodeHash\":\"ipfs\",\"useLiteralContent\":true},\"optimizer\":{\"enabled\":true,\"runs\":200},\"remappings\":[]},\"sources\":{\"contracts/beacon/BeaconRoots.sol\":{\"content\":\"// SPDX-License-Identifier: BUSL-1.1\\npragma solidity ^0.8.0;\\n\\nlibrary BeaconRoots {\\n    /// @notice The address of beacon block roots oracle\\n    /// See https://eips.ethereum.org/EIPS/eip-4788\\n    address internal constant BEACON_ROOTS_ADDRESS =\\n        0x000F3df6D732807Ef1319fB7B8bB8522d0Beac02;\\n\\n    /// @notice The length of the beacon block root ring buffer\\n    uint256 internal constant BEACON_ROOTS_HISTORY_BUFFER_LENGTH = 8191;\\n\\n    /// @notice Returns the Beacon Block Root for the previous block.\\n    /// This comes from the Beacon Roots contract defined in EIP-4788\\n    /// @param timestamp The timestamp of the block for which to get the parent root.\\n    /// @return parentRoot The parent block root for the given timestamp.\\n    function parentBlockRoot(uint64 timestamp)\\n        internal\\n        view\\n        returns (bytes32 parentRoot)\\n    {\\n        require(\\n            block.timestamp - timestamp <\\n                BEACON_ROOTS_HISTORY_BUFFER_LENGTH * 12,\\n            \\\"Timestamp too old\\\"\\n        );\\n\\n        // Call the Beacon Block Root Oracle to get the parent block root\\n        // This does not have a function signature, so we use a staticcall\\n        (bool success, bytes memory result) = BEACON_ROOTS_ADDRESS.staticcall(\\n            abi.encode(timestamp)\\n        );\\n\\n        require(success && result.length > 0, \\\"Invalid beacon timestamp\\\");\\n        parentRoot = abi.decode(result, (bytes32));\\n    }\\n}\\n\",\"keccak256\":\"0x64adc8f862ff2bc8c4223d879df832bdf9e91e92d3c70afa4a60997a20f620f8\",\"license\":\"BUSL-1.1\"},\"contracts/mocks/MockBeaconRoots.sol\":{\"content\":\"// SPDX-License-Identifier: BUSL-1.1\\npragma solidity ^0.8.0;\\n\\nimport { BeaconRoots } from \\\"../beacon/BeaconRoots.sol\\\";\\n\\ncontract MockBeaconRoots {\\n    function parentBlockRoot(uint64 timestamp)\\n        external\\n        view\\n        returns (bytes32 parentRoot)\\n    {\\n        return BeaconRoots.parentBlockRoot(timestamp);\\n    }\\n\\n    function latestBlockRoot()\\n        external\\n        view\\n        returns (bytes32 parentRoot, uint64 timestamp)\\n    {\\n        timestamp = uint64(block.timestamp);\\n        parentRoot = BeaconRoots.parentBlockRoot(timestamp);\\n    }\\n}\\n\",\"keccak256\":\"0x8a63a39beab815a532d850ea52b0f5825ce96b1fa102a3dc2dfe99b18f608065\",\"license\":\"BUSL-1.1\"}},\"version\":1}",
+  "bytecode": "0x6080604052348015600f57600080fd5b506103068061001f6000396000f3fe608060405234801561001057600080fd5b50600436106100365760003560e01c8063aa24b3c41461003b578063be7c629b14610061575b600080fd5b61004e610049366004610217565b610087565b6040519081526020015b60405180910390f35b610069610098565b6040805192835267ffffffffffffffff909116602083015201610058565b6000610092826100aa565b92915050565b6000426100a4816100aa565b91509091565b60006100b9611fff600c61025e565b6100cd67ffffffffffffffff841642610275565b106101135760405162461bcd60e51b8152602060048201526011602482015270151a5b595cdd185b5c081d1bdbc81bdb19607a1b60448201526064015b60405180910390fd5b6040805167ffffffffffffffff841660208201526000918291720f3df6d732807ef1319fb7b8bb8522d0beac02910160408051601f198184030181529082905261015c91610288565b600060405180830381855afa9150503d8060008114610197576040519150601f19603f3d011682016040523d82523d6000602084013e61019c565b606091505b50915091508180156101af575060008151115b6101fb5760405162461bcd60e51b815260206004820152601860248201527f496e76616c696420626561636f6e2074696d657374616d700000000000000000604482015260640161010a565b8080602001905181019061020f91906102b7565b949350505050565b60006020828403121561022957600080fd5b813567ffffffffffffffff8116811461024157600080fd5b9392505050565b634e487b7160e01b600052601160045260246000fd5b808202811582820484141761009257610092610248565b8181038181111561009257610092610248565b6000825160005b818110156102a9576020818601810151858301520161028f565b506000920191825250919050565b6000602082840312156102c957600080fd5b505191905056fea26469706673582212207a11786e77e163c908123ec990a787da176fb5ca3ed4860bde0a72a1a7a1611664736f6c634300081c0033",
+  "deployedBytecode": "0x608060405234801561001057600080fd5b50600436106100365760003560e01c8063aa24b3c41461003b578063be7c629b14610061575b600080fd5b61004e610049366004610217565b610087565b6040519081526020015b60405180910390f35b610069610098565b6040805192835267ffffffffffffffff909116602083015201610058565b6000610092826100aa565b92915050565b6000426100a4816100aa565b91509091565b60006100b9611fff600c61025e565b6100cd67ffffffffffffffff841642610275565b106101135760405162461bcd60e51b8152602060048201526011602482015270151a5b595cdd185b5c081d1bdbc81bdb19607a1b60448201526064015b60405180910390fd5b6040805167ffffffffffffffff841660208201526000918291720f3df6d732807ef1319fb7b8bb8522d0beac02910160408051601f198184030181529082905261015c91610288565b600060405180830381855afa9150503d8060008114610197576040519150601f19603f3d011682016040523d82523d6000602084013e61019c565b606091505b50915091508180156101af575060008151115b6101fb5760405162461bcd60e51b815260206004820152601860248201527f496e76616c696420626561636f6e2074696d657374616d700000000000000000604482015260640161010a565b8080602001905181019061020f91906102b7565b949350505050565b60006020828403121561022957600080fd5b813567ffffffffffffffff8116811461024157600080fd5b9392505050565b634e487b7160e01b600052601160045260246000fd5b808202811582820484141761009257610092610248565b8181038181111561009257610092610248565b6000825160005b818110156102a9576020818601810151858301520161028f565b506000920191825250919050565b6000602082840312156102c957600080fd5b505191905056fea26469706673582212207a11786e77e163c908123ec990a787da176fb5ca3ed4860bde0a72a1a7a1611664736f6c634300081c0033",
+  "libraries": {},
+  "devdoc": {
+    "kind": "dev",
+    "methods": {},
+    "version": 1
+  },
+  "userdoc": {
+    "kind": "user",
+    "methods": {},
+    "version": 1
+  },
+  "storageLayout": {
+    "storage": [],
+    "types": null
+  }
+}

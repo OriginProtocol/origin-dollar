@@ -1,0 +1,39 @@
+{
+  "language": "Solidity",
+  "sources": {
+    "contracts/beacon/BeaconRoots.sol": {
+      "content": "// SPDX-License-Identifier: BUSL-1.1\npragma solidity ^0.8.0;\n\nlibrary BeaconRoots {\n    /// @notice The address of beacon block roots oracle\n    /// See https://eips.ethereum.org/EIPS/eip-4788\n    address internal constant BEACON_ROOTS_ADDRESS =\n        0x000F3df6D732807Ef1319fB7B8bB8522d0Beac02;\n\n    /// @notice The length of the beacon block root ring buffer\n    uint256 internal constant BEACON_ROOTS_HISTORY_BUFFER_LENGTH = 8191;\n\n    /// @notice Returns the Beacon Block Root for the previous block.\n    /// This comes from the Beacon Roots contract defined in EIP-4788\n    /// @param timestamp The timestamp of the block for which to get the parent root.\n    /// @return parentRoot The parent block root for the given timestamp.\n    function parentBlockRoot(uint64 timestamp)\n        internal\n        view\n        returns (bytes32 parentRoot)\n    {\n        require(\n            block.timestamp - timestamp <\n                BEACON_ROOTS_HISTORY_BUFFER_LENGTH * 12,\n            \"Timestamp too old\"\n        );\n\n        // Call the Beacon Block Root Oracle to get the parent block root\n        // This does not have a function signature, so we use a staticcall\n        (bool success, bytes memory result) = BEACON_ROOTS_ADDRESS.staticcall(\n            abi.encode(timestamp)\n        );\n\n        require(success && result.length > 0, \"Invalid beacon timestamp\");\n        parentRoot = abi.decode(result, (bytes32));\n    }\n}\n"
+    },
+    "contracts/mocks/MockBeaconRoots.sol": {
+      "content": "// SPDX-License-Identifier: BUSL-1.1\npragma solidity ^0.8.0;\n\nimport { BeaconRoots } from \"../beacon/BeaconRoots.sol\";\n\ncontract MockBeaconRoots {\n    function parentBlockRoot(uint64 timestamp)\n        external\n        view\n        returns (bytes32 parentRoot)\n    {\n        return BeaconRoots.parentBlockRoot(timestamp);\n    }\n\n    function latestBlockRoot()\n        external\n        view\n        returns (bytes32 parentRoot, uint64 timestamp)\n    {\n        timestamp = uint64(block.timestamp);\n        parentRoot = BeaconRoots.parentBlockRoot(timestamp);\n    }\n}\n"
+    }
+  },
+  "settings": {
+    "optimizer": {
+      "enabled": true,
+      "runs": 200
+    },
+    "evmVersion": "paris",
+    "outputSelection": {
+      "*": {
+        "*": [
+          "abi",
+          "evm.bytecode",
+          "evm.deployedBytecode",
+          "evm.methodIdentifiers",
+          "metadata",
+          "devdoc",
+          "userdoc",
+          "storageLayout",
+          "evm.gasEstimates"
+        ],
+        "": [
+          "ast"
+        ]
+      }
+    },
+    "metadata": {
+      "useLiteralContent": true
+    }
+  }
+}
