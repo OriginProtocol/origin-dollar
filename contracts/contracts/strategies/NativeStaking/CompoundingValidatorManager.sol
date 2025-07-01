@@ -388,25 +388,8 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
 
     // slither-disable-end reentrancy-no-eth
 
-    /// @notice Deposits more SSV Tokens to the SSV Network contract which is used to pay the SSV Operators.
-    /// @dev A SSV cluster is defined by the SSVOwnerAddress and the set of operatorIds.
-    /// uses "onlyStrategist" modifier so continuous front-running can't DOS our maintenance service
-    /// that tries to top up SSV tokens.
-    /// @param operatorIds The operator IDs of the SSV Cluster
-    /// @param ssvAmount The amount of SSV tokens to be deposited to the SSV cluster
-    /// @param cluster The SSV cluster details including the validator count and SSV balance
-    function depositSSV(
-        uint64[] memory operatorIds,
-        uint256 ssvAmount,
-        Cluster memory cluster
-    ) external onlyStrategist {
-        ISSVNetwork(SSV_NETWORK).deposit(
-            address(this),
-            operatorIds,
-            ssvAmount,
-            cluster
-        );
-    }
+    /// `depositSSV` has been removed as `deposit` on the SSVNetwork contract can be called directly
+    /// by the Strategist which is already holding SSV tokens.
 
     /// @notice Withdraws excess SSV Tokens from the SSV Network contract which was used to pay the SSV Operators.
     /// @dev A SSV cluster is defined by the SSVOwnerAddress and the set of operatorIds.
