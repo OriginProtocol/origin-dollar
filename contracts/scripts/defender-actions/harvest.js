@@ -8,6 +8,7 @@ const addresses = require("../../utils/addresses");
 const { logTxDetails } = require("../../utils/txLogger");
 
 const harvesterAbi = require("../../abi/harvester.json");
+const claimRewardsSafeModuleAbi = require("../../abi/claim-rewards-module.json");
 const nativeStakingStrategyAbi = require("../../abi/native_staking_SSV_strategy.json");
 
 const log = require("../../utils/logger")("action:harvest");
@@ -67,6 +68,19 @@ const handler = async (event) => {
     .connect(signer)
     ["harvestAndTransfer(address[])"](strategiesToHarvest);
   await logTxDetails(tx, `harvestAndTransfer`);
+
+  if (networkName === "mainnet") {
+    log("Invoking claim from safe module");
+
+    const safeModule = new ethers.Contract(
+      addresses.mainnet.ClaimStrategyRewardsSafeModule,
+      claimRewardsSafeModuleAbi,
+      signer
+    );
+
+    const safeModuleTx = await safeModule.connect(signer).claimRewards(true);
+    await logTxDetails(safeModuleTx, `claimRewards`);
+  }
 };
 
 const shouldHarvestFromNativeStakingStrategy = async (strategy, signer) => {

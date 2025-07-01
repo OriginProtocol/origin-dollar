@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
+import { AbstractSafeModule } from "./AbstractSafeModule.sol";
 import { AbstractLZBridgeHelperModule } from "./AbstractLZBridgeHelperModule.sol";
 
 import { AccessControlEnumerable } from "@openzeppelin/contracts/access/AccessControlEnumerable.sol";
@@ -36,9 +37,7 @@ contract PlumeBridgeHelperModule is
     BridgedWOETHStrategy public constant bridgedWOETHStrategy =
         BridgedWOETHStrategy(0x1E3EdD5e019207D6355Ea77F724b1F1BF639B569);
 
-    constructor(address _safeContract)
-        AbstractLZBridgeHelperModule(_safeContract)
-    {}
+    constructor(address _safeContract) AbstractSafeModule(_safeContract) {}
 
     /**
      * @dev Bridges wOETH to Ethereum.

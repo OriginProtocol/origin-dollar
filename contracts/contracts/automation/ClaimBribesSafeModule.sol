@@ -1,10 +1,9 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import { AccessControlEnumerable } from "@openzeppelin/contracts/access/AccessControlEnumerable.sol";
+import { AbstractSafeModule } from "./AbstractSafeModule.sol";
 import { ICLGauge } from "../interfaces/aerodrome/ICLGauge.sol";
 import { ICLPool } from "../interfaces/aerodrome/ICLPool.sol";
-import { ISafe } from "../interfaces/ISafe.sol";
 
 struct BribePoolInfo {
     address poolAddress;
@@ -22,6 +21,11 @@ interface IAerodromeVoter {
 
 interface IVeNFT {
     function ownerOf(uint256 tokenId) external view returns (address);
+
+    function ownerToNFTokenIdList(address owner, uint256 index)
+        external
+        view
+        returns (uint256);
 }
 
 interface ICLRewardContract {
@@ -30,8 +34,7 @@ interface ICLRewardContract {
     function rewardsListLength() external view returns (uint256);
 }
 
-contract ClaimBribesSafeModule is AccessControlEnumerable {
-    ISafe public immutable safeAddress;
+contract ClaimBribesSafeModule is AbstractSafeModule {
     IAerodromeVoter public immutable voter;
     address public immutable veNFT;
 
@@ -47,36 +50,13 @@ contract ClaimBribesSafeModule is AccessControlEnumerable {
     event BribePoolAdded(address bribePool);
     event BribePoolRemoved(address bribePool);
 
-    bytes32 public constant EXECUTOR_ROLE = keccak256("EXECUTOR_ROLE");
-
-    modifier onlySafe() {
-        require(
-            msg.sender == address(safeAddress),
-            "Caller is not the Gnosis Safe"
-        );
-        _;
-    }
-
-    modifier onlyExecutor() {
-        require(
-            hasRole(EXECUTOR_ROLE, msg.sender),
-            "Caller is not the Executor"
-        );
-        _;
-    }
-
     constructor(
-        address _safeAddress,
+        address _safeContract,
         address _voter,
         address _veNFT
-    ) {
-        safeAddress = ISafe(_safeAddress);
+    ) AbstractSafeModule(_safeContract) {
         voter = IAerodromeVoter(_voter);
         veNFT = _veNFT;
-
-        // Safe is the admin
-        _setupRole(DEFAULT_ADMIN_ROLE, _safeAddress);
-        _setupRole(EXECUTOR_ROLE, _safeAddress);
     }
 
     /**
@@ -89,7 +69,7 @@ contract ClaimBribesSafeModule is AccessControlEnumerable {
         uint256 nftIndexStart,
         uint256 nftIndexEnd,
         bool silent
-    ) external onlyExecutor {
+    ) external onlyOperator {
         if (nftIndexEnd < nftIndexStart) {
             (nftIndexStart, nftIndexEnd) = (nftIndexEnd, nftIndexStart);
         }
@@ -103,7 +83,7 @@ contract ClaimBribesSafeModule is AccessControlEnumerable {
 
         for (uint256 i = nftIndexStart; i < nftIndexEnd; i++) {
             uint256 nftId = nftIds[i];
-            bool success = ISafe(safeAddress).execTransactionFromModule(
+            bool success = safeContract.execTransactionFromModule(
                 address(voter),
                 0, // Value
                 abi.encodeWithSelector(
@@ -150,7 +130,7 @@ contract ClaimBribesSafeModule is AccessControlEnumerable {
      * @dev Add NFT IDs to the list
      * @param _nftIds The NFT IDs to add
      */
-    function addNFTIds(uint256[] memory _nftIds) external onlySafe {
+    function addNFTIds(uint256[] memory _nftIds) external onlyOperator {
         for (uint256 i = 0; i < _nftIds.length; i++) {
             uint256 nftId = _nftIds[i];
             if (nftIdExists(nftId)) {
@@ -160,7 +140,7 @@ contract ClaimBribesSafeModule is AccessControlEnumerable {
 
             // Make sure the NFT is owned by the Safe
             require(
-                IVeNFT(veNFT).ownerOf(nftId) == address(safeAddress),
+                IVeNFT(veNFT).ownerOf(nftId) == address(safeContract),
                 "NFT not owned by safe"
             );
 
@@ -175,7 +155,7 @@ contract ClaimBribesSafeModule is AccessControlEnumerable {
      * @dev Remove NFT IDs from the list
      * @param _nftIds The NFT IDs to remove
      */
-    function removeNFTIds(uint256[] memory _nftIds) external onlySafe {
+    function removeNFTIds(uint256[] memory _nftIds) external onlyOperator {
         for (uint256 i = 0; i < _nftIds.length; i++) {
             uint256 nftId = _nftIds[i];
             if (!nftIdExists(nftId)) {
@@ -220,23 +200,76 @@ contract ClaimBribesSafeModule is AccessControlEnumerable {
         return nftIds;
     }
 
+    /**
+     * @dev Fetch all NFT IDs from the veNFT contract
+     * @notice This can revert if Safe owns too many NFTs since tx will be huge.
+     *         This function is public, anyone can call it, since it only fetches
+     *         the NFT IDs owned by the Safe. It shouldn't cause us any issues.
+     */
+    function fetchNFTIds() external {
+        // Purge the array
+        delete nftIds;
+
+        uint256 i = 0;
+        while (true) {
+            uint256 nftId = IVeNFT(veNFT).ownerToNFTokenIdList(
+                address(safeContract),
+                i
+            );
+            if (nftId == 0) {
+                break;
+            }
+
+            nftIdIndex[nftId] = nftIds.length;
+            nftIds.push(nftId);
+            i++;
+        }
+    }
+
+    /**
+     * @dev Remove all NFT IDs from the list
+     */
+    function removeAllNFTIds() external onlyOperator {
+        uint256 length = nftIds.length;
+        for (uint256 i = 0; i < length; i++) {
+            uint256 nftId = nftIds[i];
+            delete nftIdIndex[nftId];
+            emit NFTIdRemoved(nftId);
+        }
+
+        delete nftIds;
+    }
+
     /***************************************
             Bribe Pool Management
     ****************************************/
     // @dev Whitelist a pool to claim bribes from
     // @param _poolAddress The address of the pool to whitelist
-    function addBribePool(address _poolAddress) external onlySafe {
-        // Find the gauge address
-        address _gaugeAddress = ICLPool(_poolAddress).gauge();
-        // And the reward contract address
-        address _rewardContractAddress = ICLGauge(_gaugeAddress)
-            .feesVotingReward();
+    function addBribePool(address _poolAddress, bool _isVotingContract)
+        external
+        onlySafe
+    {
+        BribePoolInfo memory bribePool;
 
-        BribePoolInfo memory bribePool = BribePoolInfo({
-            poolAddress: _poolAddress,
-            rewardContractAddress: _rewardContractAddress,
-            rewardTokens: _getRewardTokenAddresses(_rewardContractAddress)
-        });
+        if (_isVotingContract) {
+            bribePool = BribePoolInfo({
+                poolAddress: _poolAddress,
+                rewardContractAddress: _poolAddress,
+                rewardTokens: _getRewardTokenAddresses(_poolAddress)
+            });
+        } else {
+            // Find the gauge address
+            address _gaugeAddress = ICLPool(_poolAddress).gauge();
+            // And the reward contract address
+            address _rewardContractAddress = ICLGauge(_gaugeAddress)
+                .feesVotingReward();
+
+            bribePool = BribePoolInfo({
+                poolAddress: _poolAddress,
+                rewardContractAddress: _rewardContractAddress,
+                rewardTokens: _getRewardTokenAddresses(_rewardContractAddress)
+            });
+        }
 
         if (bribePoolExists(_poolAddress)) {
             // Update if it already exists
@@ -253,12 +286,14 @@ contract ClaimBribesSafeModule is AccessControlEnumerable {
     /**
      * @dev Update the reward token addresses for all pools
      */
-    function updateRewardTokenAddresses() external onlyExecutor {
+    function updateRewardTokenAddresses() external onlyOperator {
         BribePoolInfo[] storage _bribePools = bribePools;
         for (uint256 i = 0; i < _bribePools.length; i++) {
             BribePoolInfo storage bribePool = _bribePools[i];
             bribePool.rewardTokens = _getRewardTokenAddresses(
-                bribePool.rewardContractAddress
+                bribePool.rewardContractAddress == bribePool.poolAddress
+                    ? bribePool.poolAddress
+                    : bribePool.rewardContractAddress
             );
         }
     }

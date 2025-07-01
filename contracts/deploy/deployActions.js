@@ -9,6 +9,8 @@ const {
   isHoleskyOrFork,
   isSonicOrFork,
   isTest,
+  isFork,
+  isPlume,
 } = require("../test/helpers.js");
 const { deployWithConfirmation, withConfirmation } = require("../utils/deploy");
 const { metapoolLPCRVPid } = require("../utils/constants");
@@ -1338,6 +1340,74 @@ const deployBaseAerodromeAMOStrategyImplementation = async () => {
   return await ethers.getContract("AerodromeAMOStrategy");
 };
 
+const deployPlumeRoosterAMOStrategyImplementation = async (poolAddress) => {
+  return _deployPlumeRoosterAMOImplementationConfigurable(
+    poolAddress,
+    "RoosterAMOStrategy"
+  );
+};
+
+const deployPlumeMockRoosterAMOStrategyImplementation = async (poolAddress) => {
+  return _deployPlumeRoosterAMOImplementationConfigurable(
+    poolAddress,
+    "MockRoosterAMOStrategy"
+  );
+};
+
+const _deployPlumeRoosterAMOImplementationConfigurable = async (
+  poolAddress,
+  stratContractName
+) => {
+  const cOETHpProxy = await ethers.getContract("OETHPlumeProxy");
+  const cOETHpVaultProxy = await ethers.getContract("OETHPlumeVaultProxy");
+
+  if (!isFork && isPlume) {
+    throw new Error("You cannot deploy this strategy yet");
+  }
+
+  const cMockMaverickDistributor = await ethers.getContract(
+    "MockMaverickDistributor"
+  );
+
+  await deployWithConfirmation(stratContractName, [
+    /* Used first by the 002_rooster_amo_ deploy file
+     */
+    [addresses.zero, cOETHpVaultProxy.address], // platformAddress, VaultAddress
+    addresses.plume.WETH, // weth address
+    cOETHpProxy.address, // OETHp address
+    addresses.plume.MaverickV2LiquidityManager, // liquidity mananger
+    addresses.plume.MaverickV2PoolLens, // pool lens
+    addresses.plume.MaverickV2Position, // position
+    addresses.plume.MaverickV2Quoter, // quoter
+    poolAddress, // superOETHp/WPLUME pool
+    true, // uppperTickAtParity
+    // TODO: change these to actual addresses
+    cMockMaverickDistributor.address, // votingDistributor
+    cMockMaverickDistributor.address, // poolDistributor
+  ]);
+
+  return await ethers.getContract(stratContractName);
+};
+
+const getPlumeContracts = async () => {
+  const maverickV2LiquidityManager = await ethers.getContractAt(
+    "IMaverickV2LiquidityManager",
+    addresses.plume.MaverickV2LiquidityManager
+  );
+  const maverickV2PoolLens = await ethers.getContractAt(
+    "IMaverickV2PoolLens",
+    addresses.plume.MaverickV2PoolLens
+  );
+  const cOETHpProxy = await ethers.getContract("OETHPlumeProxy");
+  const cOETHp = await ethers.getContractAt("OETHPlume", cOETHpProxy.address);
+
+  return {
+    maverickV2LiquidityManager,
+    maverickV2PoolLens,
+    cOETHp,
+  };
+};
+
 const deploySonicSwapXAMOStrategyImplementation = async () => {
   const { deployerAddr } = await getNamedAccounts();
   const sDeployer = await ethers.provider.getSigner(deployerAddr);
@@ -1412,5 +1482,8 @@ module.exports = {
   upgradeNativeStakingSSVStrategy,
   upgradeNativeStakingFeeAccumulator,
   deployBaseAerodromeAMOStrategyImplementation,
+  deployPlumeRoosterAMOStrategyImplementation,
+  deployPlumeMockRoosterAMOStrategyImplementation,
+  getPlumeContracts,
   deploySonicSwapXAMOStrategyImplementation,
 };

@@ -318,6 +318,10 @@ addresses.mainnet.LidoWithdrawalQueue =
 addresses.mainnet.DaiUsdsMigrationContract =
   "0x3225737a9bbb6473cb4a45b7244aca2befdb276a";
 
+// Safe Module
+addresses.mainnet.ClaimStrategyRewardsSafeModule =
+  "0xc3472011a60336E53e0968e822A4E80D5F0d3F41";
+
 // LayerZero
 addresses.mainnet.LayerZeroEndpointV2 =
   "0x1a44076050125825900e736c501f859c50fE728c";
@@ -399,6 +403,8 @@ addresses.base.OETHb_WETH.pool = "0x302A94E3C28c290EAF2a4605FC52e11Eb915f378";
 addresses.base.OETHb_WETH.gauge = "0x9da8420dbEEBDFc4902B356017610259ef7eeDD8";
 addresses.base.childLiquidityGaugeFactory =
   "0xe35A879E5EfB4F1Bb7F70dCF3250f2e19f096bd8";
+
+addresses.base.CCIPRouter = "0x881e3A65B4d4a04dD529061dd0071cf975F58bCD";
 
 // Sonic
 addresses.sonic = {};
@@ -605,6 +611,19 @@ addresses.plume.WETHOmnichainAdapter =
   "0x4683CE822272CD66CEa73F5F1f9f5cBcaEF4F066";
 
 addresses.plume.timelock = "0x6C6f8F839A7648949873D3D2beEa936FC2932e5c";
+addresses.plume.WPLUME = "0xEa237441c92CAe6FC17Caaf9a7acB3f953be4bd1";
+addresses.plume.MaverickV2Factory =
+  "0x056A588AfdC0cdaa4Cab50d8a4D2940C5D04172E";
+addresses.plume.MaverickV2PoolLens =
+  "0x15B4a8cc116313b50C19BCfcE4e5fc6EC8C65793";
+addresses.plume.MaverickV2Quoter = "0xf245948e9cf892C351361d298cc7c5b217C36D82";
+addresses.plume.MaverickV2Router = "0x35e44dc4702Fd51744001E248B49CBf9fcc51f0C";
+addresses.plume.MaverickV2Position =
+  "0x0b452E8378B65FD16C0281cfe48Ed9723b8A1950";
+addresses.plume.MaverickV2LiquidityManager =
+  "0x28d79eddBF5B215cAccBD809B967032C1E753af7";
+addresses.plume.OethpWETHRoosterPool =
+  "0x3F86B564A9B530207876d2752948268b9Bf04F71";
 addresses.plume.strategist = addresses.multichainStrategist;
 addresses.plume.admin = "0x92A19381444A001d62cE67BaFF066fA1111d7202";
 
