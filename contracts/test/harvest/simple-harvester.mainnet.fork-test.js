@@ -57,7 +57,7 @@ describe("ForkTest: SimpleHarvester", function () {
       nativeStakingSSVStrategy,
       weth,
       strategist,
-      oethFixedRateDripper,
+      oethVault,
       josh,
       nativeStakingFeeAccumulator,
     } = fixture;
@@ -69,13 +69,13 @@ describe("ForkTest: SimpleHarvester", function () {
     });
 
     const balanceBeforeWETH = await weth.balanceOf(
-      oethFixedRateDripper.address
+      oethVault.address
     );
     // prettier-ignore
     await simpleOETHHarvester
       .connect(strategist)["harvestAndTransfer(address)"](nativeStakingSSVStrategy.address);
 
-    const balanceAfterWETH = await weth.balanceOf(oethFixedRateDripper.address);
+    const balanceAfterWETH = await weth.balanceOf(oethVault.address);
     expect(balanceAfterWETH).to.be.gte(balanceBeforeWETH.add(oethUnits("1")));
   });
 
@@ -103,7 +103,7 @@ describe("ForkTest: SimpleHarvester", function () {
       nativeStakingSSVStrategy,
       weth,
       timelock,
-      oethFixedRateDripper,
+      oethVault,
       josh,
       nativeStakingFeeAccumulator,
     } = fixture;
@@ -115,13 +115,13 @@ describe("ForkTest: SimpleHarvester", function () {
     });
 
     const balanceBeforeWETH = await weth.balanceOf(
-      oethFixedRateDripper.address
+      oethVault.address
     );
     // prettier-ignore
     await simpleOETHHarvester
       .connect(timelock)["harvestAndTransfer(address)"](nativeStakingSSVStrategy.address);
 
-    const balanceAfterWETH = await weth.balanceOf(oethFixedRateDripper.address);
+    const balanceAfterWETH = await weth.balanceOf(oethVault.address);
     expect(balanceAfterWETH).to.be.gte(balanceBeforeWETH.add(oethUnits("1")));
   });
 
