@@ -24,7 +24,7 @@ struct ValidatorStakeData {
  * @notice This contract implements all the required functionality to register, deposit, exit and remove validators.
  * @author Origin Protocol Inc
  */
-abstract contract ValidatorRegistrator2 is Governable, Pausable {
+abstract contract CompoundingValidatorManager is Governable, Pausable {
     /// @notice The address of the Wrapped ETH (WETH) token contract
     address public immutable WETH;
     /// @notice The address of the beacon chain deposit contract
@@ -89,9 +89,8 @@ abstract contract ValidatorRegistrator2 is Governable, Pausable {
     // TODO is it more efficient to use the block root rather than hashing it?
     /// @notice Mapping of the block root to the balances at that slot
     mapping(bytes32 => Balances) public snappedBalances;
-    // TODO squash these into a single slot
-    uint256 public lastSnapTimestamp;
-    uint256 public lastVerifiedBalance;
+    uint64 public lastSnapTimestamp;
+    uint128 public lastVerifiedBalance;
 
     struct ConsolidationBatch {
         uint64 numberOfValidators;
@@ -606,7 +605,7 @@ abstract contract ValidatorRegistrator2 is Governable, Pausable {
         });
 
         // Store the snapped timestamp
-        lastSnapTimestamp = block.timestamp;
+        lastSnapTimestamp = SafeCast.toUint64(block.timestamp);
 
         emit SnappedBalances(
             blockRoot,
@@ -698,11 +697,13 @@ abstract contract ValidatorRegistrator2 is Governable, Pausable {
         }
 
         // store the verified balance in storage
-        lastVerifiedBalance =
+        lastVerifiedBalance = SafeCast.toUint128(
+            // Convert total deposits to wei
             (balancesMem.totalDepositsGwei * 1 gwei) +
-            totalValidatorBalance +
-            balancesMem.wethBalance +
-            balancesMem.ethBalance;
+                totalValidatorBalance +
+                balancesMem.wethBalance +
+                balancesMem.ethBalance
+        );
         lastSnapTimestamp = 0; // Reset the last snap timestamp
     }
 

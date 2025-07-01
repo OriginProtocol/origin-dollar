@@ -9,10 +9,10 @@ import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import { InitializableAbstractStrategy } from "../../utils/InitializableAbstractStrategy.sol";
 import { IWETH9 } from "../../interfaces/IWETH9.sol";
 import { FeeAccumulator } from "./FeeAccumulator.sol";
-import { ValidatorRegistrator2 } from "./ValidatorRegistrator2.sol";
+import { CompoundingValidatorManager } from "./CompoundingValidatorManager.sol";
 import { ISSVNetwork } from "../../interfaces/ISSVNetwork.sol";
 
-/// @title Native Staking SSV Strategy
+/// @title Compounding Staking SSV Strategy
 /// @notice Strategy to deploy funds into DVT validators powered by the SSV Network
 /// @author Origin Protocol Inc
 /// @dev This contract handles WETH and ETH and in some operations interchanges between the two. Any WETH that
@@ -35,8 +35,8 @@ import { ISSVNetwork } from "../../interfaces/ISSVNetwork.sol";
 /// Even though the strategy assets and rewards are a very similar asset the consensus layer rewards and the
 /// execution layer rewards are considered rewards and those are dripped to the Vault over a configurable time
 /// interval and not immediately.
-contract NativeStakingSSVStrategy2 is
-    ValidatorRegistrator2,
+contract CompoundingStakingSSVStrategy is
+    CompoundingValidatorManager,
     InitializableAbstractStrategy
 {
     using SafeERC20 for IERC20;
@@ -81,7 +81,7 @@ contract NativeStakingSSVStrategy2 is
         address _beaconOracle
     )
         InitializableAbstractStrategy(_baseConfig)
-        ValidatorRegistrator2(
+        CompoundingValidatorManager(
             _wethAddress,
             _baseConfig.vaultAddress,
             _beaconChainDepositContract,
