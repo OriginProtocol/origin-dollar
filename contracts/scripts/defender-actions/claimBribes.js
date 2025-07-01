@@ -9,9 +9,17 @@ const {
 const { logTxDetails } = require("../../utils/txLogger");
 const log = require("../../utils/logger")("action:claimBribes");
 
-// Claim Bribes module for Coinbase AERO Locker Safe
+// ClaimBribesSafeModule1 for Coinbase AERO Locker Safe
 const COINBASE_AERO_LOCKER_MODULE =
   "0x60D3D6eC213d84DEa193dbd79673340061178893";
+
+// ClaimBribesSafeModule3 for Old Guardian Safe
+const OLD_GUARDIAN_MODULE = "0x26179Ada0f7cb714c11A8190e1f517988c28E759";
+
+const moduleLabels = {
+  [COINBASE_AERO_LOCKER_MODULE]: "Coinbase AERO Locker Safe",
+  [OLD_GUARDIAN_MODULE]: "Old Guardian Safe",
+};
 
 const MODULE_ABI = [
   "function getNFTIdsLength() external view returns (uint256)",
@@ -29,15 +37,15 @@ const handler = async (event) => {
     throw new Error("Only supported on Base");
   }
 
-  const aeroLockerModule = new ethers.Contract(
-    COINBASE_AERO_LOCKER_MODULE,
-    MODULE_ABI,
-    signer
-  );
+  const modules = [COINBASE_AERO_LOCKER_MODULE, OLD_GUARDIAN_MODULE];
 
-  log(`Claiming bribes from Coinbase AERO Locker Safe`);
-  await manageNFTsOnModule(aeroLockerModule, signer);
-  await claimBribesFromModule(aeroLockerModule, signer);
+  for (const moduleAddr of modules) {
+    const module = new ethers.Contract(moduleAddr, MODULE_ABI, signer);
+
+    log(`Claiming bribes from ${moduleLabels[moduleAddr]}`);
+    await manageNFTsOnModule(module, signer);
+    await claimBribesFromModule(module, signer);
+  }
 };
 
 async function manageNFTsOnModule(module, signer) {
@@ -58,7 +66,7 @@ async function claimBribesFromModule(module, signer) {
   const nftIdsLength = (
     await module.connect(signer).getNFTIdsLength()
   ).toNumber();
-  const batchSize = 100;
+  const batchSize = 25;
   const batchCount = Math.ceil(nftIdsLength / batchSize);
 
   log(`Found ${nftIdsLength} NFTs on the module`);
