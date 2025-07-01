@@ -4,20 +4,12 @@ pragma solidity ^0.8.0;
 import { BeaconProofs } from "../beacon/BeaconProofs.sol";
 
 contract MockBeaconProofs {
-    function generalizeIndex(BeaconProofs.TreeNode[] memory nodes)
-        external
-        pure
-        returns (uint256 index)
-    {
-        return BeaconProofs.generalizeIndex(nodes);
-    }
-
-    function generalizeIndexSingle(uint256 height, uint256 index)
-        external
-        pure
-        returns (uint256 genIndex)
-    {
-        return BeaconProofs.generalizeIndex(height, index);
+    function generalizeIndex(
+        uint256 index1,
+        uint256 height2,
+        uint256 index2
+    ) external pure returns (uint256 genIndex) {
+        return BeaconProofs.generalizeIndex(index1, height2, index2);
     }
 
     function verifyValidatorPubkey(

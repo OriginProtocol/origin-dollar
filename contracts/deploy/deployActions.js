@@ -700,9 +700,6 @@ const deployNativeStakingSSVStrategy = async () => {
     dFeeAccumulatorProxy.address
   );
 
-  log("Deploy Beacon Oracle");
-  const dBeaconOracle = await deployWithConfirmation("BeaconOracle");
-
   log("Deploy NativeStakingSSVStrategy");
   const dStrategyImpl = await deployWithConfirmation(
     "NativeStakingSSVStrategy",
@@ -714,7 +711,6 @@ const deployNativeStakingSSVStrategy = async () => {
       500, // maxValidators
       dFeeAccumulatorProxy.address, // feeAccumulator
       assetAddresses.beaconChainDepositContract, // depositContractMock
-      dBeaconOracle.address, // beaconOracle
     ]
   );
   const cStrategyImpl = await ethers.getContractAt(

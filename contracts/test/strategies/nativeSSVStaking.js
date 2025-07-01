@@ -491,14 +491,6 @@ describe("Unit test: Native SSV Staking Strategy", function () {
             nativeStakingSSVStrategy
           );
 
-          console.log(`Governor: ${governor.address}`);
-          console.log(
-            `Staking governor address: ${await nativeStakingSSVStrategy.governor()}`
-          );
-          console.log(
-            `Staking registrator address: ${await nativeStakingSSVStrategy.validatorRegistrator()}`
-          );
-
           // check accounting values
           const tx = await nativeStakingSSVStrategy
             .connect(governor)
@@ -1065,30 +1057,17 @@ describe("Unit test: Native SSV Staking Strategy", function () {
         });
 
         it(`then the strategy should have a ${testCase.expectedBalance} balance`, async () => {
-          const { nativeStakingSSVStrategy } = fixture;
-
-          const tx = await nativeStakingSSVStrategy.snapBalances();
-          const receipt = await tx.wait();
-          const event = await receipt.events.find(
-            (e) => e.event === "SnappedBalances"
-          );
-          expect(event).to.not.be.undefined;
-
-          await expect(tx).to.emit(nativeStakingSSVStrategy, "SnappedBalances");
+          const { nativeStakingSSVStrategy, weth } = fixture;
 
           expect(
-            event.args.totalDepositsWei
-              .add(event.args.wethBalance)
-              .add(event.args.ethBalance)
-              .add(event.args.activeDepositedValidators.mul(parseEther("32")))
-              .sub(event.args.consensusRewards)
+            await nativeStakingSSVStrategy.checkBalance(weth.address)
           ).to.equal(expectedBalance);
         });
       });
     }
   });
 
-  describe.skip("Register and stake validators", async () => {
+  describe("Register and stake validators", async () => {
     beforeEach(async () => {
       const { weth, josh, anna, governor, ssv, nativeStakingSSVStrategy } =
         fixture;
@@ -1104,9 +1083,15 @@ describe("Unit test: Native SSV Staking Strategy", function () {
         .connect(josh)
         .transfer(nativeStakingSSVStrategy.address, ethUnits("256"));
 
+      const stakeThreshold = ethers.utils.parseEther("64");
+
       await nativeStakingSSVStrategy
         .connect(governor)
         .setStakingMonitor(anna.address);
+
+      await nativeStakingSSVStrategy
+        .connect(governor)
+        .setStakeETHThreshold(stakeThreshold);
     });
 
     const stakeValidatorsSingle = async (
@@ -1364,8 +1349,8 @@ const setConsensusRewards = async (
 ) => {
   await setStorageAt(nativeStakingSSVStrategy.address, 104, consensusRewards);
 
-  expect(
-    await nativeStakingSSVStrategy.consensusRewards(),
+  expect(await nativeStakingSSVStrategy.consensusRewards()).to.equal(
+    consensusRewards,
     "consensusRewards no set properly"
-  ).to.equal(consensusRewards);
+  );
 };

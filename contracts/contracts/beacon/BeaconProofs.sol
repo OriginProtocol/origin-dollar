@@ -13,45 +13,19 @@ library BeaconProofs {
         1584842932228;
     // BeaconBlock.body.executionPayload.blockNumber
     uint256 internal constant BLOCK_NUMBER_GENERALIZED_INDEX = 6438;
+    // BeaconBlock.state.validators
+    uint256 internal constant VALIDATORS_CONTAINER_GENERALIZED_INDEX = 715;
+    // BeaconBlock.state.balances
+    uint256 internal constant BALANCES_CONTAINER_GENERALIZED_INDEX = 716;
 
     // Beacon Container Tree Heights
-    uint256 internal constant BEACON_BLOCK_HEIGHT = 3;
-    uint256 internal constant BEACON_STATE_HEIGHT = 6;
-    uint256 internal constant BEACON_BLOCK_BODY_HEIGHT = 4;
-    uint256 internal constant EXECUTION_PAYLOAD_HEIGHT = 5;
-    uint256 internal constant PENDING_DEPOSITS_HEIGHT = 28;
-    uint256 internal constant PENDING_DEPOSIT_HEIGHT = 3;
     uint256 internal constant BALANCES_HEIGHT = 39;
     uint256 internal constant VALIDATORS_HEIGHT = 41;
     uint256 internal constant VALIDATOR_HEIGHT = 3;
 
-    /// @notice Fields in the BeaconBlock container for phase 0
-    /// https://ethereum.github.io/consensus-specs/specs/phase0/beacon-chain/#beaconblock
-    uint256 internal constant BEACON_BLOCK_SLOT_INDEX = 0;
-    uint256 internal constant BEACON_BLOCK_STATE_INDEX = 3;
-    uint256 internal constant BEACON_BLOCK_BODY_INDEX = 4;
-
-    /// @notice Fields in the BeaconState container for Electra
-    /// See https://ethereum.github.io/consensus-specs/specs/electra/beacon-chain/#beaconstate
-    uint256 internal constant STATE_VALIDATORS_INDEX = 11;
-    uint256 internal constant STATE_BALANCES_INDEX = 12;
-    uint256 internal constant STATE_PENDING_DEPOSITS_INDEX = 34;
-
     /// @notice Fields in the Validator container for phase 0
     /// See https://ethereum.github.io/consensus-specs/specs/phase0/beacon-chain/#validator
     uint256 internal constant VALIDATOR_PUBKEY_INDEX = 0;
-
-    /// @notice Fields in the PendingDeposit container for Electra
-    /// See https://ethereum.github.io/consensus-specs/specs/electra/beacon-chain/#pendingdeposit
-    uint256 internal constant PENDING_DEPOSIT_SLOT_INDEX = 4;
-
-    /// @notice Fields in the ExecutionPayload container for Electra
-    /// https://ethereum.github.io/consensus-specs/specs/electra/beacon-chain/#beaconblockbody
-    uint256 internal constant BEACON_BLOCK_BODY_EXECUTION_PAYLOAD_INDEX = 9;
-
-    /// @notice Fields in the ExecutionPayload container for Deneb
-    /// See https://ethereum.github.io/consensus-specs/specs/deneb/beacon-chain/#executionpayload
-    uint256 internal constant EXECUTION_PAYLOAD_BLOCK_NUMBER_INDEX = 6;
 
     struct TreeNode {
         uint256 height;
@@ -77,26 +51,16 @@ library BeaconProofs {
         uint64 validatorIndex
     ) internal view {
         // BeaconBlock.state.validators[validatorIndex].pubkey
-        TreeNode[] memory nodes = new TreeNode[](4);
-        // TODO might be easier to read and more gas efficient for the static nodes to be constant
-        nodes[0] = TreeNode({
-            height: BEACON_BLOCK_HEIGHT,
-            index: BEACON_BLOCK_STATE_INDEX
-        });
-        nodes[1] = TreeNode({
-            height: BEACON_STATE_HEIGHT,
-            index: STATE_VALIDATORS_INDEX
-        });
-        // this is a dynamic generalized index
-        nodes[2] = TreeNode({
-            height: VALIDATORS_HEIGHT,
-            index: validatorIndex
-        });
-        nodes[3] = TreeNode({
-            height: VALIDATOR_HEIGHT,
-            index: VALIDATOR_PUBKEY_INDEX
-        });
-        uint256 generalizedIndex = generalizeIndex(nodes);
+        uint256 generalizedIndex = generalizeIndex(
+            VALIDATORS_CONTAINER_GENERALIZED_INDEX,
+            VALIDATORS_HEIGHT,
+            validatorIndex
+        );
+        generalizedIndex = generalizeIndex(
+            generalizedIndex,
+            VALIDATOR_HEIGHT,
+            VALIDATOR_PUBKEY_INDEX
+        );
 
         require(
             Merkle.verifyInclusionSha256({
@@ -121,24 +85,12 @@ library BeaconProofs {
         bytes calldata balancesContainerProof
     ) internal view {
         // BeaconBlock.state.balances
-        // TODO This the generalized index is a fixed so can replace with a constant
-        TreeNode[] memory nodes = new TreeNode[](2);
-        nodes[0] = TreeNode({
-            height: BEACON_BLOCK_HEIGHT,
-            index: BEACON_BLOCK_STATE_INDEX
-        });
-        nodes[1] = TreeNode({
-            height: BEACON_STATE_HEIGHT,
-            index: STATE_BALANCES_INDEX
-        });
-        uint256 generalizedIndex = generalizeIndex(nodes);
-
         require(
             Merkle.verifyInclusionSha256({
                 proof: balancesContainerProof,
                 root: beaconBlockRoot,
                 leaf: balancesContainerLeaf,
-                index: generalizedIndex
+                index: BALANCES_CONTAINER_GENERALIZED_INDEX
             }),
             "Invalid balance container proof"
         );
@@ -166,27 +118,19 @@ library BeaconProofs {
         if (level == BalanceProofLevel.Container) {
             // Get the index within the balances container, not the Beacon Block
             // BeaconBlock.state.balances[balanceIndex]
-            generalizedIndex = generalizeIndex(BALANCES_HEIGHT, balanceIndex);
+            generalizedIndex = generalizeIndex(
+                1,
+                BALANCES_HEIGHT,
+                balanceIndex
+            );
         }
 
         if (level == BalanceProofLevel.BeaconBlock) {
-            // Get the generalized index to the beacon block
-            // TODO This the generalized index is a fixed so can replace with a constant
-            TreeNode[] memory nodes = new TreeNode[](3);
-            nodes[0] = TreeNode({
-                height: BEACON_BLOCK_HEIGHT,
-                index: BEACON_BLOCK_STATE_INDEX
-            });
-            nodes[1] = TreeNode({
-                height: BEACON_STATE_HEIGHT,
-                index: STATE_BALANCES_INDEX
-            });
-            nodes[2] = TreeNode({
-                height: BALANCES_HEIGHT,
-                index: balanceIndex
-            });
-
-            generalizedIndex = generalizeIndex(nodes);
+            generalizedIndex = generalizeIndex(
+                BALANCES_CONTAINER_GENERALIZED_INDEX,
+                BALANCES_HEIGHT,
+                balanceIndex
+            );
         }
 
         validatorBalance = balanceAtIndex(validatorBalanceLeaf, validatorIndex);
@@ -292,24 +236,12 @@ library BeaconProofs {
             );
     }
 
-    function generalizeIndex(TreeNode[] memory nodes)
-        internal
-        pure
-        returns (uint256 index)
-    {
-        index = 1;
-        for (uint256 i; i < nodes.length; ++i) {
-            // generalized index = 2 ^ tree height + node index
-            index = (index << nodes[i].height) | nodes[i].index;
-        }
-    }
-
-    function generalizeIndex(uint256 height, uint256 index)
-        internal
-        pure
-        returns (uint256 genIndex)
-    {
+    function generalizeIndex(
+        uint256 index1,
+        uint256 height2,
+        uint256 index2
+    ) internal pure returns (uint256 genIndex) {
         // 2 ^ tree height + node index
-        genIndex = (1 << height) | index;
+        genIndex = (index1 << height2) | index2;
     }
 }
