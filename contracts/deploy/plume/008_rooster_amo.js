@@ -27,9 +27,9 @@ module.exports = deployOnPlume(
 
     console.log("Deployer WETH balance", deployerWethBalance.toString());
     if (!isFork) {
-      if (deployerWethBalance.lt(oethUnits("1"))) {
+      if (deployerWethBalance.lt(oethUnits("0.01"))) {
         throw new Error(
-          "Deployer needs at least 1e18 of WETH to mint the initial balance"
+          "Deployer needs at least 1e16 of WETH to mint the initial balance"
         );
       }
     }
