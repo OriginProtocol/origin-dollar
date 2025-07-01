@@ -1,37 +1,9 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import { Merkle } from "./Merkle.sol";
-import { Endian } from "./Endian.sol";
+import { BeaconProofsLib } from "./BeaconProofsLib.sol";
 
-library BeaconProofs {
-    // Known generalized indices in the beacon block
-    // BeaconBlock.slot
-    uint256 internal constant SLOT_GENERALIZED_INDEX = 8;
-    // BeaconBlock.state.PendingDeposits[0].slot
-    uint256 internal constant FIRST_PENDING_DEPOSIT_SLOT_GENERALIZED_INDEX =
-        1584842932228;
-    // BeaconBlock.body.executionPayload.blockNumber
-    uint256 internal constant BLOCK_NUMBER_GENERALIZED_INDEX = 6438;
-    // BeaconBlock.state.validators
-    uint256 internal constant VALIDATORS_CONTAINER_GENERALIZED_INDEX = 715;
-    // BeaconBlock.state.balances
-    uint256 internal constant BALANCES_CONTAINER_GENERALIZED_INDEX = 716;
-
-    // Beacon Container Tree Heights
-    uint256 internal constant BALANCES_HEIGHT = 39;
-    uint256 internal constant VALIDATORS_HEIGHT = 41;
-    uint256 internal constant VALIDATOR_HEIGHT = 3;
-
-    /// @notice Fields in the Validator container for phase 0
-    /// See https://ethereum.github.io/consensus-specs/specs/phase0/beacon-chain/#validator
-    uint256 internal constant VALIDATOR_PUBKEY_INDEX = 0;
-
-    enum BalanceProofLevel {
-        Container,
-        BeaconBlock
-    }
-
+contract BeaconProofs {
     /// @notice Verifies the validator public key against the beacon block root
     /// BeaconBlock.state.validators[validatorIndex].pubkey
     /// @param beaconBlockRoot The root of the beacon block
@@ -44,27 +16,12 @@ library BeaconProofs {
         bytes32 pubKeyHash,
         bytes calldata validatorPubKeyProof,
         uint64 validatorIndex
-    ) internal view {
-        // BeaconBlock.state.validators[validatorIndex].pubkey
-        uint256 generalizedIndex = concatGenIndices(
-            VALIDATORS_CONTAINER_GENERALIZED_INDEX,
-            VALIDATORS_HEIGHT,
+    ) external view {
+        BeaconProofsLib.verifyValidatorPubkey(
+            beaconBlockRoot,
+            pubKeyHash,
+            validatorPubKeyProof,
             validatorIndex
-        );
-        generalizedIndex = concatGenIndices(
-            generalizedIndex,
-            VALIDATOR_HEIGHT,
-            VALIDATOR_PUBKEY_INDEX
-        );
-
-        require(
-            Merkle.verifyInclusionSha256({
-                proof: validatorPubKeyProof,
-                root: beaconBlockRoot,
-                leaf: pubKeyHash,
-                index: generalizedIndex
-            }),
-            "Invalid validator pubkey proof"
         );
     }
 
@@ -78,16 +35,11 @@ library BeaconProofs {
         bytes32 beaconBlockRoot,
         bytes32 balancesContainerLeaf,
         bytes calldata balancesContainerProof
-    ) internal view {
-        // BeaconBlock.state.balances
-        require(
-            Merkle.verifyInclusionSha256({
-                proof: balancesContainerProof,
-                root: beaconBlockRoot,
-                leaf: balancesContainerLeaf,
-                index: BALANCES_CONTAINER_GENERALIZED_INDEX
-            }),
-            "Invalid balance container proof"
+    ) external view {
+        BeaconProofsLib.verifyBalancesContainer(
+            beaconBlockRoot,
+            balancesContainerLeaf,
+            balancesContainerProof
         );
     }
 
@@ -104,40 +56,14 @@ library BeaconProofs {
         bytes32 validatorBalanceLeaf,
         bytes calldata balanceProof,
         uint64 validatorIndex,
-        BalanceProofLevel level
-    ) internal view returns (uint256 validatorBalance) {
-        // Four balances are stored in each leaf so the validator index is divided by 4
-        uint64 balanceIndex = validatorIndex / 4;
-
-        uint256 generalizedIndex;
-        if (level == BalanceProofLevel.Container) {
-            // Get the index within the balances container, not the Beacon Block
-            // BeaconBlock.state.balances[balanceIndex]
-            generalizedIndex = concatGenIndices(
-                1,
-                BALANCES_HEIGHT,
-                balanceIndex
-            );
-        }
-
-        if (level == BalanceProofLevel.BeaconBlock) {
-            generalizedIndex = concatGenIndices(
-                BALANCES_CONTAINER_GENERALIZED_INDEX,
-                BALANCES_HEIGHT,
-                balanceIndex
-            );
-        }
-
-        validatorBalance = balanceAtIndex(validatorBalanceLeaf, validatorIndex);
-
-        require(
-            Merkle.verifyInclusionSha256({
-                proof: balanceProof,
-                root: root,
-                leaf: validatorBalanceLeaf,
-                index: generalizedIndex
-            }),
-            "Invalid balance container proof"
+        BeaconProofsLib.BalanceProofLevel level
+    ) external view returns (uint256 validatorBalance) {
+        validatorBalance = BeaconProofsLib.verifyValidatorBalance(
+            root,
+            validatorBalanceLeaf,
+            balanceProof,
+            validatorIndex,
+            level
         );
     }
 
@@ -152,18 +78,11 @@ library BeaconProofs {
         bytes32 beaconBlockRoot,
         uint64 slot,
         bytes calldata firstPendingDepositSlotProof
-    ) internal view {
-        // Convert uint64 slot number to a little endian bytes32
-        bytes32 slotLeaf = Endian.toLittleEndianUint64(slot);
-
-        require(
-            Merkle.verifyInclusionSha256({
-                proof: firstPendingDepositSlotProof,
-                root: beaconBlockRoot,
-                leaf: slotLeaf,
-                index: FIRST_PENDING_DEPOSIT_SLOT_GENERALIZED_INDEX
-            }),
-            "Invalid pending deposit proof"
+    ) external view {
+        BeaconProofsLib.verifyFirstPendingDepositSlot(
+            beaconBlockRoot,
+            slot,
+            firstPendingDepositSlotProof
         );
     }
 
@@ -177,19 +96,11 @@ library BeaconProofs {
         bytes32 beaconBlockRoot,
         uint256 blockNumber,
         bytes calldata blockNumberProof
-    ) internal view {
-        // Convert uint64 block number to a little endian bytes32
-        bytes32 blockNumberLeaf = Endian.toLittleEndianUint64(
-            uint64(blockNumber)
-        );
-        require(
-            Merkle.verifyInclusionSha256({
-                proof: blockNumberProof,
-                root: beaconBlockRoot,
-                leaf: blockNumberLeaf,
-                index: BLOCK_NUMBER_GENERALIZED_INDEX
-            }),
-            "Invalid block number proof"
+    ) external view {
+        BeaconProofsLib.verifyBlockNumber(
+            beaconBlockRoot,
+            blockNumber,
+            blockNumberProof
         );
     }
 
@@ -203,44 +114,7 @@ library BeaconProofs {
         bytes32 beaconBlockRoot,
         uint256 slot,
         bytes calldata slotProof
-    ) internal view {
-        require(
-            Merkle.verifyInclusionSha256({
-                proof: slotProof,
-                root: beaconBlockRoot,
-                leaf: Endian.toLittleEndianUint64(uint64(slot)),
-                index: SLOT_GENERALIZED_INDEX
-            }),
-            "Invalid slot number proof"
-        );
-    }
-
-    ////////////////////////////////////////////////////
-    ///       Internal Helper Functions
-    ////////////////////////////////////////////////////
-
-    function balanceAtIndex(bytes32 validatorBalanceLeaf, uint64 validatorIndex)
-        internal
-        pure
-        returns (uint256)
-    {
-        uint256 bitShiftAmount = (validatorIndex % 4) * 64;
-        return
-            Endian.fromLittleEndianUint64(
-                bytes32((uint256(validatorBalanceLeaf) << bitShiftAmount))
-            );
-    }
-
-    /// @notice Concatenates two beacon chain generalized indices into one.
-    /// @param genIndex The first generalized index or 1 if calculating for a single container.
-    /// @param height The merkle tree height of the second container. eg 39 for balances, 41 for validators.
-    /// @param index The index within the second container. eg the validator index.
-    /// @return genIndex The concatenated generalized index.
-    function concatGenIndices(
-        uint256 genIndex,
-        uint256 height,
-        uint256 index
-    ) internal pure returns (uint256) {
-        return (genIndex << height) | index;
+    ) external view {
+        BeaconProofsLib.verifySlot(beaconBlockRoot, slot, slotProof);
     }
 }

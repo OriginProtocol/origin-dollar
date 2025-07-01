@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import { BeaconProofs } from "../beacon/BeaconProofs.sol";
+import { BeaconProofsLib } from "../beacon/BeaconProofsLib.sol";
 
 contract MockBeaconProofs {
     function concatGenIndices(
@@ -9,7 +9,7 @@ contract MockBeaconProofs {
         uint256 height2,
         uint256 index2
     ) external pure returns (uint256 genIndex) {
-        return BeaconProofs.concatGenIndices(index1, height2, index2);
+        return BeaconProofsLib.concatGenIndices(index1, height2, index2);
     }
 
     function verifyValidatorPubkey(
@@ -18,7 +18,7 @@ contract MockBeaconProofs {
         bytes calldata validatorPubKeyProof,
         uint64 validatorIndex
     ) external view {
-        BeaconProofs.verifyValidatorPubkey(
+        BeaconProofsLib.verifyValidatorPubkey(
             beaconBlockRoot,
             pubKeyHash,
             validatorPubKeyProof,
@@ -31,7 +31,7 @@ contract MockBeaconProofs {
         bytes32 balancesContainerLeaf,
         bytes calldata balancesContainerProof
     ) external view {
-        BeaconProofs.verifyBalancesContainer(
+        BeaconProofsLib.verifyBalancesContainer(
             beaconBlockRoot,
             balancesContainerLeaf,
             balancesContainerProof
@@ -45,12 +45,12 @@ contract MockBeaconProofs {
         uint64 validatorIndex
     ) external view returns (uint256 validatorBalance) {
         return
-            BeaconProofs.verifyValidatorBalance(
+            BeaconProofsLib.verifyValidatorBalance(
                 balancesContainerRoot,
                 validatorBalanceLeaf,
                 balanceProof,
                 validatorIndex,
-                BeaconProofs.BalanceProofLevel.Container
+                BeaconProofsLib.BalanceProofLevel.Container
             );
     }
 
@@ -61,12 +61,12 @@ contract MockBeaconProofs {
         uint64 validatorIndex
     ) external view returns (uint256 validatorBalance) {
         return
-            BeaconProofs.verifyValidatorBalance(
+            BeaconProofsLib.verifyValidatorBalance(
                 beaconBlockRoot,
                 validatorBalanceLeaf,
                 balanceProof,
                 validatorIndex,
-                BeaconProofs.BalanceProofLevel.BeaconBlock
+                BeaconProofsLib.BalanceProofLevel.BeaconBlock
             );
     }
 
@@ -76,7 +76,10 @@ contract MockBeaconProofs {
         returns (uint256)
     {
         return
-            BeaconProofs.balanceAtIndex(validatorBalanceLeaf, validatorIndex);
+            BeaconProofsLib.balanceAtIndex(
+                validatorBalanceLeaf,
+                validatorIndex
+            );
     }
 
     function verifyFirstPendingDepositSlot(
@@ -84,7 +87,7 @@ contract MockBeaconProofs {
         uint64 slot,
         bytes calldata firstPendingDepositSlotProof
     ) external view {
-        BeaconProofs.verifyFirstPendingDepositSlot(
+        BeaconProofsLib.verifyFirstPendingDepositSlot(
             blockRoot,
             slot,
             firstPendingDepositSlotProof
@@ -96,7 +99,7 @@ contract MockBeaconProofs {
         uint256 blockNumber,
         bytes calldata blockNumberProof
     ) external view {
-        BeaconProofs.verifyBlockNumber(
+        BeaconProofsLib.verifyBlockNumber(
             beaconBlockRoot,
             blockNumber,
             blockNumberProof
@@ -108,6 +111,6 @@ contract MockBeaconProofs {
         uint256 slot,
         bytes calldata slotProof
     ) external view {
-        BeaconProofs.verifySlot(beaconBlockRoot, slot, slotProof);
+        BeaconProofsLib.verifySlot(beaconBlockRoot, slot, slotProof);
     }
 }

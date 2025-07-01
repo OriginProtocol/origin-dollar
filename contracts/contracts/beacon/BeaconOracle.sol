@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import { BeaconProofs } from "./BeaconProofs.sol";
+import { BeaconProofsLib } from "./BeaconProofsLib.sol";
 import { BeaconRoots } from "./BeaconRoots.sol";
 
 contract BeaconOracle {
@@ -37,10 +37,10 @@ contract BeaconOracle {
         blockRoot = BeaconRoots.parentBlockRoot(nextBlockTimestamp);
 
         // Verify the slot to the Beacon Block Root root
-        BeaconProofs.verifySlot(blockRoot, slot, slotProof);
+        BeaconProofsLib.verifySlot(blockRoot, slot, slotProof);
 
         // Verify the block number to the Beacon Block Root root
-        BeaconProofs.verifyBlockNumber(blockRoot, blockNumber, blockProof);
+        BeaconProofsLib.verifyBlockNumber(blockRoot, blockNumber, blockProof);
 
         // Store mappings
         _blockToSlot[blockNumber] = slot;

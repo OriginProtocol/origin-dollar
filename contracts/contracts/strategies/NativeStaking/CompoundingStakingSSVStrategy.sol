@@ -71,6 +71,7 @@ contract CompoundingStakingSSVStrategy is
     /// @param _feeAccumulator Address of the fee accumulator receiving execution layer validator rewards
     /// @param _beaconChainDepositContract Address of the beacon chain deposit contract
     /// @param _beaconOracle Address of the Beacon Oracle contract that maps block numbers to slots
+    /// @param _beaconProofs Address of the Beacon Proofs contract that verifies beacon chain data
     constructor(
         BaseStrategyConfig memory _baseConfig,
         address _wethAddress,
@@ -78,7 +79,8 @@ contract CompoundingStakingSSVStrategy is
         address _ssvNetwork,
         address _feeAccumulator,
         address _beaconChainDepositContract,
-        address _beaconOracle
+        address _beaconOracle,
+        address _beaconProofs
     )
         InitializableAbstractStrategy(_baseConfig)
         CompoundingValidatorManager(
@@ -86,7 +88,8 @@ contract CompoundingStakingSSVStrategy is
             _baseConfig.vaultAddress,
             _beaconChainDepositContract,
             _ssvNetwork,
-            _beaconOracle
+            _beaconOracle,
+            _beaconProofs
         )
     {
         SSV_TOKEN = _ssvToken;

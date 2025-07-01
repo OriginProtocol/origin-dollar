@@ -9,7 +9,7 @@ import { IVault } from "../../interfaces/IVault.sol";
 import { IWETH9 } from "../../interfaces/IWETH9.sol";
 import { ISSVNetwork, Cluster } from "../../interfaces/ISSVNetwork.sol";
 import { BeaconRoots } from "../../beacon/BeaconRoots.sol";
-import { BeaconProofs } from "../../beacon/BeaconProofs.sol";
+import { IBeaconProofs } from "../../interfaces/IBeaconProofs.sol";
 import { BeaconConsolidation } from "../../beacon/BeaconConsolidation.sol";
 import { IBeaconOracle } from "../../interfaces/IBeaconOracle.sol";
 
@@ -34,6 +34,7 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
     /// @notice Address of the OETH Vault proxy contract
     address public immutable VAULT_ADDRESS;
     address public immutable BEACON_ORACLE;
+    address public immutable BEACON_PROOFS;
 
     /// @notice Address of the registrator - allowed to register, exit and remove validators
     address public validatorRegistrator;
@@ -99,7 +100,7 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
     ConsolidationBatch consolidationBatch;
 
     // For future use
-    uint256[40] private __gap;
+    uint256[42] private __gap;
 
     enum VALIDATOR_STATE {
         NON_REGISTERED, // validator is not registered on the SSV network
@@ -179,18 +180,21 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
     /// @param _beaconChainDepositContract Address of the beacon chain deposit contract
     /// @param _ssvNetwork Address of the SSV Network contract
     /// @param _beaconOracle Address of the Beacon Oracle contract that maps block numbers to slots
+    /// @param _beaconProofs Address of the Beacon Proofs contract that verifies beacon chain data
     constructor(
         address _wethAddress,
         address _vaultAddress,
         address _beaconChainDepositContract,
         address _ssvNetwork,
-        address _beaconOracle
+        address _beaconOracle,
+        address _beaconProofs
     ) {
         WETH = _wethAddress;
         BEACON_CHAIN_DEPOSIT_CONTRACT = _beaconChainDepositContract;
         SSV_NETWORK = _ssvNetwork;
         VAULT_ADDRESS = _vaultAddress;
         BEACON_ORACLE = _beaconOracle;
+        BEACON_PROOFS = _beaconProofs;
     }
 
     /// @notice Set the address of the registrator which can register, exit and remove validators
@@ -435,40 +439,47 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
             .slotToBlock(mappedBlockNumber);
     }
 
+    // Putting params into a struct to avoid stack too deep errors
+    struct DepositProofData {
+        uint64 parentBlockTimestamp;
+        uint64 validatorIndex;
+        uint64 firstPendingDepositSlot;
+        // BeaconBlock.state.validators[validatorIndex].pubkey
+        bytes validatorPubKeyProof;
+        // BeaconBlock.BeaconBlockBody.deposits[0].slot
+        bytes firstPendingDepositSlotProof;
+    }
+
     /// @notice Verifies a previous deposit has been processed by the beacon chain
     /// which means the validator exists and has an increased balance.
     function verifyDeposit(
         bytes32 depositDataRoot,
-        uint64 validatorIndex,
-        uint64 firstPendingDepositSlot,
-        uint64 parentBlockTimestamp,
-        // BeaconBlock.state.validators[validatorIndex].pubkey
-        bytes calldata validatorPubKeyProof,
-        // BeaconBlock.BeaconBlockBody.deposits[0].slot
-        bytes calldata firstPendingDepositSlotProof
+        DepositProofData calldata proofData
     ) external nonReentrant {
         // Load into memory the previously saved deposit data
         DepositData memory deposit = deposits[depositDataRoot];
         require(deposit.status == DepositStatus.PENDING, "Deposit not pending");
         require(
-            deposit.slot < firstPendingDepositSlot,
+            deposit.slot < proofData.firstPendingDepositSlot,
             "Deposit not processed"
         );
 
-        bytes32 blockRoot = BeaconRoots.parentBlockRoot(parentBlockTimestamp);
+        bytes32 blockRoot = BeaconRoots.parentBlockRoot(
+            proofData.parentBlockTimestamp
+        );
         // Verify the validator index has the same public key as the deposit
-        BeaconProofs.verifyValidatorPubkey(
+        IBeaconProofs(BEACON_PROOFS).verifyValidatorPubkey(
             blockRoot,
             deposit.pubKeyHash,
-            validatorPubKeyProof,
-            validatorIndex
+            proofData.validatorPubKeyProof,
+            proofData.validatorIndex
         );
 
         // Verify the first pending deposit slot matches the beacon chain
-        BeaconProofs.verifyFirstPendingDepositSlot(
+        IBeaconProofs(BEACON_PROOFS).verifyFirstPendingDepositSlot(
             blockRoot,
-            firstPendingDepositSlot,
-            firstPendingDepositSlotProof
+            proofData.firstPendingDepositSlot,
+            proofData.firstPendingDepositSlotProof
         );
 
         // After verifying the proof, update the contract storage
@@ -479,6 +490,7 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
         ];
         // Delete the last deposit from the list
         depositsRoots.pop();
+
         // Reduce the total pending deposits in Gwei
         totalDepositsGwei -= deposit.amountGwei;
 
@@ -488,7 +500,7 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
             validatorState[deposit.pubKeyHash] = VALIDATOR_STATE.VERIFIED;
 
             // Add the new validator to the list of verified validators
-            verifiedValidators.push(validatorIndex);
+            verifiedValidators.push(proofData.validatorIndex);
         }
     }
 
@@ -541,7 +553,7 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
 
         bytes32 blockRoot = BeaconRoots.parentBlockRoot(parentBlockTimestamp);
         // Verify the validator index has the same public key
-        BeaconProofs.verifyValidatorPubkey(
+        IBeaconProofs(BEACON_PROOFS).verifyValidatorPubkey(
             blockRoot,
             consolidationBatch.lastPubKeyHash,
             validatorPubKeyProof,
@@ -551,13 +563,14 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
         // Verify the balance of the last validator in the consolidation batch
         // is zero. If its not then the consolidation has not been completed.
         // This proof is to the beacon block root, not the balances container root.
-        uint256 validatorBalance = BeaconProofs.verifyValidatorBalance(
-            blockRoot,
-            balancesLeaf,
-            validatorBalanceProof,
-            lastValidatorIndex,
-            BeaconProofs.BalanceProofLevel.BeaconBlock
-        );
+        uint256 validatorBalance = IBeaconProofs(BEACON_PROOFS)
+            .verifyValidatorBalance(
+                blockRoot,
+                balancesLeaf,
+                validatorBalanceProof,
+                lastValidatorIndex,
+                IBeaconProofs.BalanceProofLevel.BeaconBlock
+            );
         require(validatorBalance == 0, "Validator balance not zero");
 
         // Reset the consolidation batch
@@ -620,7 +633,7 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
         // Break up the into blocks to avoid stack too deep
         {
             // Verify the first pending deposit slot to the beacon block root
-            BeaconProofs.verifyFirstPendingDepositSlot(
+            IBeaconProofs(BEACON_PROOFS).verifyFirstPendingDepositSlot(
                 blockRoot,
                 firstPendingDepositSlot,
                 firstPendingDepositSlotProof
@@ -641,7 +654,7 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
         }
 
         // verify beaconBlock.state.balances root to beacon block root
-        BeaconProofs.verifyBalancesContainer(
+        IBeaconProofs(BEACON_PROOFS).verifyBalancesContainer(
             blockRoot,
             balancesContainerRoot,
             validatorContainerProof
@@ -651,18 +664,16 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
         uint256 verifiedValidatorsCount = verifiedValidators.length;
         // for each validator
         for (uint256 i = 0; i < verifiedValidatorsCount; ++i) {
-            // Load the validator index from storage
-            uint64 validatorIndex = verifiedValidators[i];
-
             // verify validator's balance in beaconBlock.state.balances to the
             // beaconBlock.state.balances container root
-            uint256 validatorBalance = BeaconProofs.verifyValidatorBalance(
-                balancesContainerRoot,
-                validatorBalanceRoots[i],
-                validatorBalanceProofs[i],
-                validatorIndex,
-                BeaconProofs.BalanceProofLevel.Container
-            );
+            uint256 validatorBalance = IBeaconProofs(BEACON_PROOFS)
+                .verifyValidatorBalance(
+                    balancesContainerRoot,
+                    validatorBalanceRoots[i],
+                    validatorBalanceProofs[i],
+                    verifiedValidators[i],
+                    IBeaconProofs.BalanceProofLevel.Container
+                );
 
             // total validator balances
             totalValidatorBalance += validatorBalance;
