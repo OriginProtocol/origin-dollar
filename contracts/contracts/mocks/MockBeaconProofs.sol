@@ -4,12 +4,12 @@ pragma solidity ^0.8.0;
 import { BeaconProofs } from "../beacon/BeaconProofs.sol";
 
 contract MockBeaconProofs {
-    function generalizeIndex(
+    function concatGenIndices(
         uint256 index1,
         uint256 height2,
         uint256 index2
     ) external pure returns (uint256 genIndex) {
-        return BeaconProofs.generalizeIndex(index1, height2, index2);
+        return BeaconProofs.concatGenIndices(index1, height2, index2);
     }
 
     function verifyValidatorPubkey(

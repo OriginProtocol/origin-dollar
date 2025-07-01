@@ -27,11 +27,6 @@ library BeaconProofs {
     /// See https://ethereum.github.io/consensus-specs/specs/phase0/beacon-chain/#validator
     uint256 internal constant VALIDATOR_PUBKEY_INDEX = 0;
 
-    struct TreeNode {
-        uint256 height;
-        uint256 index;
-    }
-
     enum BalanceProofLevel {
         Container,
         BeaconBlock
@@ -51,12 +46,12 @@ library BeaconProofs {
         uint64 validatorIndex
     ) internal view {
         // BeaconBlock.state.validators[validatorIndex].pubkey
-        uint256 generalizedIndex = generalizeIndex(
+        uint256 generalizedIndex = concatGenIndices(
             VALIDATORS_CONTAINER_GENERALIZED_INDEX,
             VALIDATORS_HEIGHT,
             validatorIndex
         );
-        generalizedIndex = generalizeIndex(
+        generalizedIndex = concatGenIndices(
             generalizedIndex,
             VALIDATOR_HEIGHT,
             VALIDATOR_PUBKEY_INDEX
@@ -118,7 +113,7 @@ library BeaconProofs {
         if (level == BalanceProofLevel.Container) {
             // Get the index within the balances container, not the Beacon Block
             // BeaconBlock.state.balances[balanceIndex]
-            generalizedIndex = generalizeIndex(
+            generalizedIndex = concatGenIndices(
                 1,
                 BALANCES_HEIGHT,
                 balanceIndex
@@ -126,7 +121,7 @@ library BeaconProofs {
         }
 
         if (level == BalanceProofLevel.BeaconBlock) {
-            generalizedIndex = generalizeIndex(
+            generalizedIndex = concatGenIndices(
                 BALANCES_CONTAINER_GENERALIZED_INDEX,
                 BALANCES_HEIGHT,
                 balanceIndex
@@ -236,12 +231,16 @@ library BeaconProofs {
             );
     }
 
-    function generalizeIndex(
-        uint256 index1,
-        uint256 height2,
-        uint256 index2
-    ) internal pure returns (uint256 genIndex) {
-        // 2 ^ tree height + node index
-        genIndex = (index1 << height2) | index2;
+    /// @notice Concatenates two beacon chain generalized indices into one.
+    /// @param genIndex The first generalized index or 1 if calculating for a single container.
+    /// @param height The merkle tree height of the second container. eg 39 for balances, 41 for validators.
+    /// @param index The index within the second container. eg the validator index.
+    /// @return genIndex The concatenated generalized index.
+    function concatGenIndices(
+        uint256 genIndex,
+        uint256 height,
+        uint256 index
+    ) internal pure returns (uint256) {
+        return (genIndex << height) | index;
     }
 }

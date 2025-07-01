@@ -11,14 +11,6 @@ import { IWETH9 } from "../../interfaces/IWETH9.sol";
 import { FeeAccumulator } from "./FeeAccumulator.sol";
 import { ValidatorRegistrator2 } from "./ValidatorRegistrator2.sol";
 import { ISSVNetwork } from "../../interfaces/ISSVNetwork.sol";
-import { BeaconRoots } from "../../beacon/BeaconRoots.sol";
-import { BeaconProofs } from "../../beacon/BeaconProofs.sol";
-
-struct ValidatorStakeData {
-    bytes pubkey;
-    bytes signature;
-    bytes32 depositDataRoot;
-}
 
 /// @title Native Staking SSV Strategy
 /// @notice Strategy to deploy funds into DVT validators powered by the SSV Network
@@ -192,43 +184,45 @@ contract NativeStakingSSVStrategy2 is
         uint256 _amount
     ) external override onlyVault nonReentrant {
         require(_asset == WETH, "Unsupported asset");
-        _withdraw(_recipient, _asset, _amount);
+        _withdraw(_recipient, _asset, _amount, address(this).balance);
     }
 
     function _withdraw(
         address _recipient,
         address _asset,
-        uint256 _amount
+        uint256 _withdrawAmount,
+        uint256 _ethBalance
     ) internal {
-        require(_amount > 0, "Must withdraw something");
+        require(_withdrawAmount > 0, "Must withdraw something");
         require(_recipient != address(0), "Must specify recipient");
 
-        _wethWithdrawn(_amount);
+        // Convert any ETH from validator partial withdrawals or exits to WETH
+        if (_ethBalance > 0) {
+            IWETH9(WETH).deposit{ value: _ethBalance }();
+        }
 
-        IERC20(_asset).safeTransfer(_recipient, _amount);
-        emit Withdrawal(_asset, address(0), _amount);
+        _wethWithdrawn(_withdrawAmount);
+
+        IERC20(_asset).safeTransfer(_recipient, _withdrawAmount);
+        emit Withdrawal(_asset, address(0), _withdrawAmount);
     }
 
-    /// @notice transfer all WETH deposits back to the vault.
+    /// @notice transfer all WETH deposits and ETH from validator withdrawals to the vault.
     /// This does not withdraw from the validators. That has to be done separately with the
     /// `exitSsvValidator` and `removeSsvValidator` operations.
-    /// This does not withdraw any execution rewards from the FeeAccumulator or
-    /// consensus rewards in this strategy.
-    /// Any ETH in this strategy that was swept from a full validator withdrawal will not be withdrawn.
-    /// ETH from full validator withdrawals is sent to the Vault using `doAccounting`.
+    /// This does not withdraw any execution rewards from the FeeAccumulator.
     /// Will NOT revert if the strategy is paused from an accounting failure.
     function withdrawAll() external override onlyVaultOrGovernor nonReentrant {
-        uint256 wethBalance = IERC20(WETH).balanceOf(address(this));
-        if (wethBalance > 0) {
-            _withdraw(vaultAddress, WETH, wethBalance);
+        uint256 ethBalance = address(this).balance;
+        uint256 withdrawAmount = IERC20(WETH).balanceOf(address(this)) +
+            ethBalance;
+        if (withdrawAmount > 0) {
+            _withdraw(vaultAddress, WETH, withdrawAmount, ethBalance);
         }
     }
 
-    /// @notice Returns the total value of (W)ETH that is staked to the validators
-    /// and WETH deposits that are still to be staked.
-    /// This does not include ETH from consensus rewards sitting in this strategy
-    /// or ETH from MEV rewards in the FeeAccumulator. These rewards are harvested
-    /// and sent to the Dripper so will eventually be sent to the Vault as WETH.
+    /// @notice Returns the last verified balance of validator deposits, validator balance,
+    /// WETH and ETH in the strategy contract.
     /// @param _asset      Address of weth asset
     /// @return balance    Total value of (W)ETH
     function checkBalance(address _asset)
@@ -239,6 +233,7 @@ contract NativeStakingSSVStrategy2 is
     {
         require(_asset == WETH, "Unsupported asset");
 
+        // Load the last verified balance from the storage
         balance = lastVerifiedBalance;
     }
 
@@ -308,13 +303,9 @@ contract NativeStakingSSVStrategy2 is
             IWETH9(WETH).deposit{ value: executionRewards }();
 
             IERC20(WETH).safeTransfer(harvesterAddress, executionRewards);
+
             emit RewardTokenCollected(harvesterAddress, WETH, executionRewards);
         }
-    }
-
-    /// @dev emits Withdrawal event from NativeStakingSSVStrategy
-    function _wethWithdrawnToVault(uint256 _amount) internal {
-        emit Withdrawal(WETH, address(0), _amount);
     }
 
     /// @dev Called when WETH is withdrawn from the strategy or staked to a validator so

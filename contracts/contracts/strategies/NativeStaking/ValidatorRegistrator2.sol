@@ -20,8 +20,8 @@ struct ValidatorStakeData {
 }
 
 /**
- * @title Registrator of the validators
- * @notice This contract implements all the required functionality to register, exit and remove validators.
+ * @title Validator lifecycle management contract
+ * @notice This contract implements all the required functionality to register, deposit, exit and remove validators.
  * @author Origin Protocol Inc
  */
 abstract contract ValidatorRegistrator2 is Governable, Pausable {
@@ -222,9 +222,7 @@ abstract contract ValidatorRegistrator2 is Governable, Pausable {
         _wethWithdrawn(depositAmountWei);
 
         // Hash the public key using the Beacon Chain's hashing for BLSPubkey
-        bytes32 pubKeyHash = sha256(
-            abi.encodePacked(validator.pubkey, bytes16(0))
-        );
+        bytes32 pubKeyHash = _hashPubKey(validator.pubkey);
         VALIDATOR_STATE currentState = validatorState[pubKeyHash];
         // Can only stake to a new compounding validator that has been registered
         require(
@@ -303,7 +301,7 @@ abstract contract ValidatorRegistrator2 is Governable, Pausable {
         for (uint256 i = 0; i < publicKeys.length; ++i) {
             // Check the new compounding validators
             // Hash the public key using the Beacon Chain's format
-            pubKeyHash = sha256(abi.encodePacked(publicKeys[i], bytes16(0)));
+            pubKeyHash = _hashPubKey(publicKeys[i]);
             require(
                 validatorState[pubKeyHash] == VALIDATOR_STATE.NON_REGISTERED,
                 "Validator already registered"
@@ -338,7 +336,7 @@ abstract contract ValidatorRegistrator2 is Governable, Pausable {
         uint64[] calldata operatorIds
     ) external onlyRegistrator whenNotPaused whenNoConsolidations {
         // Hash the public key using the Beacon Chain's format
-        bytes32 pubKeyHash = sha256(abi.encodePacked(publicKey, bytes16(0)));
+        bytes32 pubKeyHash = _hashPubKey(publicKey);
         VALIDATOR_STATE currentState = validatorState[pubKeyHash];
         require(currentState == VALIDATOR_STATE.STAKED, "Validator not staked");
 
@@ -365,7 +363,7 @@ abstract contract ValidatorRegistrator2 is Governable, Pausable {
         Cluster calldata cluster
     ) external onlyRegistrator whenNotPaused whenNoConsolidations {
         // Hash the public key using the Beacon Chain's format
-        bytes32 pubKeyHash = sha256(abi.encodePacked(publicKey, bytes16(0)));
+        bytes32 pubKeyHash = _hashPubKey(publicKey);
         VALIDATOR_STATE currentState = validatorState[pubKeyHash];
         // Can remove SSV validators that were incorrectly registered and can not be deposited to.
         require(
@@ -517,9 +515,7 @@ abstract contract ValidatorRegistrator2 is Governable, Pausable {
         bytes[] calldata sourcePubKeys,
         bytes calldata targetPubKey
     ) external nonReentrant onlyRegistrator {
-        bytes32 targetBeaconPubKeyHash = sha256(
-            abi.encodePacked(targetPubKey, bytes16(0))
-        );
+        bytes32 targetBeaconPubKeyHash = _hashPubKey(targetPubKey);
         // The target validator must be a compounding validator that has been verified
         require(
             validatorState[targetBeaconPubKeyHash] == VALIDATOR_STATE.VERIFIED,
@@ -532,9 +528,7 @@ abstract contract ValidatorRegistrator2 is Governable, Pausable {
         bytes32 sourceBeaconPubKeyHash;
         for (uint256 i = 0; i < sourcePubKeys.length; ++i) {
             // hash the source validator's public key using the Beacon Chain's format
-            sourceBeaconPubKeyHash = sha256(
-                abi.encodePacked(sourcePubKeys[i], bytes16(0))
-            );
+            sourceBeaconPubKeyHash = _hashPubKey(sourcePubKeys[i]);
             require(
                 sourceBeaconPubKeyHash != targetBeaconPubKeyHash,
                 "Self consolidation"
@@ -709,6 +703,12 @@ abstract contract ValidatorRegistrator2 is Governable, Pausable {
             totalValidatorBalance +
             balancesMem.wethBalance +
             balancesMem.ethBalance;
+        lastSnapTimestamp = 0; // Reset the last snap timestamp
+    }
+
+    /// @notice Hash a validator public key using the Beacon Chain's format
+    function _hashPubKey(bytes memory pubKey) internal pure returns (bytes32) {
+        return sha256(abi.encodePacked(pubKey, bytes16(0)));
     }
 
     /***************************************
