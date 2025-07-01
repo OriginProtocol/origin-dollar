@@ -79,6 +79,7 @@ contract NativeStakingSSVStrategy is
         uint256 totalDepositsWei,
         uint256 wethBalance,
         uint256 ethBalance,
+        uint256 consensusRewards,
         uint256 activeDepositedValidators
     );
 
@@ -378,6 +379,7 @@ contract NativeStakingSSVStrategy is
             timestamp: SafeCast.toUint64(block.timestamp),
             wethBalance: SafeCast.toUint128(wethBalance),
             ethBalance: SafeCast.toUint128(ethBalance),
+            consensusRewards: SafeCast.toUint128(consensusRewards),
             activeDepositedValidators: SafeCast.toUint64(
                 activeDepositedValidators
             ),
@@ -394,6 +396,7 @@ contract NativeStakingSSVStrategy is
             (totalDepositsGweiMem * 1 gwei),
             wethBalance,
             ethBalance,
+            consensusRewards,
             activeDepositedValidators
         );
     }
@@ -488,6 +491,7 @@ contract NativeStakingSSVStrategy is
             (totalDepositsGwei * 1 gwei) +
             totalValidatorBalance +
             balancesMem.wethBalance +
-            balancesMem.ethBalance;
+            balancesMem.ethBalance -
+            balancesMem.consensusRewards;
     }
 }

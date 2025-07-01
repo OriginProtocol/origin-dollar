@@ -442,6 +442,12 @@ const deployMocks = async ({ getNamedAccounts, deployments }) => {
   });
 
   await deploy("MockBeaconProofs", { from: deployerAddr });
+  await deploy("MockBeaconRoots", { from: deployerAddr });
+  const mockBeaconRoots = await ethers.getContract("MockBeaconRoots");
+  await replaceContractAt(
+    "0x000F3df6D732807Ef1319fB7B8bB8522d0Beac02", // BEACON_ROOTS_ADDRESS
+    mockBeaconRoots
+  );
 
   console.log("000_mock deploy done.");
 

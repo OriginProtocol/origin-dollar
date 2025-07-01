@@ -894,7 +894,7 @@ describe("Unit test: Native SSV Staking Strategy", function () {
     });
   });
 
-  describe.skip("Harvest and strategy balance", function () {
+  describe("Harvest and strategy balance", function () {
     // fuseStart 21.6
     // fuseEnd 25.6
     // expectedHarvester = feeAccumulatorEth + consensusRewards
@@ -1072,18 +1072,16 @@ describe("Unit test: Native SSV Staking Strategy", function () {
           const event = await receipt.events.find(
             (e) => e.event === "SnappedBalances"
           );
+          expect(event).to.not.be.undefined;
 
-          await expect(tx)
-            .to.emit(nativeStakingSSVStrategy, "SnappedBalances")
-            .withNamedArgs({
-              wethBalance: expectedBalance,
-            });
+          await expect(tx).to.emit(nativeStakingSSVStrategy, "SnappedBalances");
 
           expect(
-            event.totalDepositsWei
-              .add(event.wethBalance)
-              .add(event.ethBalance)
-              .add(event.activeDepositedValidators.mul(parseEther("32")))
+            event.args.totalDepositsWei
+              .add(event.args.wethBalance)
+              .add(event.args.ethBalance)
+              .add(event.args.activeDepositedValidators.mul(parseEther("32")))
+              .sub(event.args.consensusRewards)
           ).to.equal(expectedBalance);
         });
       });

@@ -104,6 +104,7 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
         uint64 timestamp;
         uint128 wethBalance;
         uint128 ethBalance;
+        uint128 consensusRewards;
         uint64 activeDepositedValidators;
         uint64 totalDepositsGwei;
     }
@@ -559,7 +560,7 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
     function requestConsolidation(
         bytes[] calldata sourcePubKeys,
         bytes calldata targetPubKey
-    ) external nonReentrant {
+    ) external nonReentrant onlyRegistrator {
         bytes32 targetBeaconPubKeyHash = sha256(
             abi.encodePacked(targetPubKey, bytes16(0))
         );
@@ -608,7 +609,7 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
         bytes calldata validatorPubKeyProof,
         bytes32 balancesLeaf,
         bytes calldata validatorBalanceProof
-    ) external {
+    ) external onlyRegistrator {
         require(
             consolidationBatch.numberOfValidators > 0,
             "No consolidation batch"
