@@ -93,11 +93,7 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
     uint64 public lastSnapTimestamp;
     uint128 public lastVerifiedBalance;
 
-    struct ConsolidationBatch {
-        uint64 numberOfValidators;
-        bytes32 lastPubKeyHash;
-    }
-    ConsolidationBatch consolidationBatch;
+    bytes32 consolidationLastPubKeyHash;
 
     // For future use
     uint256[42] private __gap;
@@ -169,7 +165,7 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
         // Its too hard to account for the validators while they are being consolidated
         // so its easier to just wait until after the consolidation is done
         require(
-            consolidationBatch.numberOfValidators == 0,
+            consolidationLastPubKeyHash == bytes32(0),
             "Consolidation in progress"
         );
         _;
@@ -532,10 +528,7 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
             BeaconConsolidation.request(sourcePubKeys[i], targetPubKey);
         }
 
-        consolidationBatch = ConsolidationBatch({
-            numberOfValidators: SafeCast.toUint64(sourcePubKeys.length),
-            lastPubKeyHash: sourceBeaconPubKeyHash
-        });
+        consolidationLastPubKeyHash = sourceBeaconPubKeyHash;
     }
 
     // TODO what if the last validator was exited rather than consolidated?
@@ -547,7 +540,7 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
         bytes calldata validatorBalanceProof
     ) external onlyRegistrator {
         require(
-            consolidationBatch.numberOfValidators > 0,
+            consolidationLastPubKeyHash != bytes32(0),
             "No consolidation batch"
         );
 
@@ -555,7 +548,7 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
         // Verify the validator index has the same public key
         IBeaconProofs(BEACON_PROOFS).verifyValidatorPubkey(
             blockRoot,
-            consolidationBatch.lastPubKeyHash,
+            consolidationLastPubKeyHash,
             validatorPubKeyProof,
             lastValidatorIndex
         );
@@ -574,10 +567,7 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
         require(validatorBalance == 0, "Validator balance not zero");
 
         // Reset the consolidation batch
-        consolidationBatch = ConsolidationBatch({
-            numberOfValidators: 0,
-            lastPubKeyHash: bytes32(0)
-        });
+        consolidationLastPubKeyHash = bytes32(0);
     }
 
     function snapBalances() public nonReentrant whenNoConsolidations {
