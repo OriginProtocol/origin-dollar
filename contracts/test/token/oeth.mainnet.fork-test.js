@@ -57,8 +57,8 @@ describe("ForkTest: OETH", function () {
       const eip770UserAddress = josh.address;
       await hre.network.provider.send("hardhat_setCode", [
         eip770UserAddress,
-        "0xef0100",
-      ]); // 1 day
+        "0xef010063c0c19a282a1b52b07dd5a65b58948a07dae32b",
+      ]);
       const eip770User = await impersonateAndFund(eip770UserAddress);
 
       // Mint some OETH to the eip7702 user
