@@ -9,7 +9,7 @@ import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import { InitializableAbstractStrategy } from "../../utils/InitializableAbstractStrategy.sol";
 import { IWETH9 } from "../../interfaces/IWETH9.sol";
 import { FeeAccumulator } from "./FeeAccumulator.sol";
-import { ValidatorAccountant2 } from "./ValidatorAccountant2.sol";
+import { ValidatorRegistrator2 } from "./ValidatorRegistrator2.sol";
 import { ISSVNetwork } from "../../interfaces/ISSVNetwork.sol";
 import { BeaconRoots } from "../../beacon/BeaconRoots.sol";
 import { BeaconProofs } from "../../beacon/BeaconProofs.sol";
@@ -44,7 +44,7 @@ struct ValidatorStakeData {
 /// execution layer rewards are considered rewards and those are dripped to the Vault over a configurable time
 /// interval and not immediately.
 contract NativeStakingSSVStrategy2 is
-    ValidatorAccountant2,
+    ValidatorRegistrator2,
     InitializableAbstractStrategy
 {
     using SafeERC20 for IERC20;
@@ -71,16 +71,13 @@ contract NativeStakingSSVStrategy2 is
     // For future use
     uint256[49] private __gap;
 
-    /// @param activeDepositedValidators The number of legacy sweeping validators with 32 ETH
     event SnappedBalances(
         bytes32 indexed blockRoot,
         uint256 indexed blockNumber,
         uint256 indexed timestamp,
         uint256 totalDepositsWei,
         uint256 wethBalance,
-        uint256 ethBalance,
-        uint256 consensusRewards,
-        uint256 activeDepositedValidators
+        uint256 ethBalance
     );
 
     /// @param _baseConfig Base strategy config with platformAddress (ERC-4626 Vault contract), eg sfrxETH or sDAI,
@@ -103,7 +100,7 @@ contract NativeStakingSSVStrategy2 is
         address _beaconOracle
     )
         InitializableAbstractStrategy(_baseConfig)
-        ValidatorAccountant2(
+        ValidatorRegistrator2(
             _wethAddress,
             _baseConfig.vaultAddress,
             _beaconChainDepositContract,
@@ -254,14 +251,6 @@ contract NativeStakingSSVStrategy2 is
     {
         require(_asset == WETH, "Unsupported asset");
 
-        // balance =
-        //     // add the ETH that has been staked in validators
-        //     activeDepositedValidators *
-        //     FULL_STAKE +
-        //     // add the WETH in the strategy from deposits that are still to be staked
-        //     IERC20(WETH).balanceOf(address(this));
-
-        // TODO need to handle the transition
         balance = lastVerifiedBalance;
     }
 
@@ -321,28 +310,22 @@ contract NativeStakingSSVStrategy2 is
         uint256 executionRewards = FeeAccumulator(FEE_ACCUMULATOR_ADDRESS)
             .collect();
 
-        // total ETH rewards to be harvested = execution rewards + consensus rewards
-        uint256 ethRewards = executionRewards + consensusRewards;
-
         require(
-            address(this).balance >= ethRewards,
+            address(this).balance >= executionRewards,
             "Insufficient eth balance"
         );
 
-        if (ethRewards > 0) {
-            // reset the counter keeping track of beacon chain consensus rewards
-            consensusRewards = 0;
-
+        if (executionRewards > 0) {
             // Convert ETH rewards to WETH
-            IWETH9(WETH).deposit{ value: ethRewards }();
+            IWETH9(WETH).deposit{ value: executionRewards }();
 
-            IERC20(WETH).safeTransfer(harvesterAddress, ethRewards);
-            emit RewardTokenCollected(harvesterAddress, WETH, ethRewards);
+            IERC20(WETH).safeTransfer(harvesterAddress, executionRewards);
+            emit RewardTokenCollected(harvesterAddress, WETH, executionRewards);
         }
     }
 
     /// @dev emits Withdrawal event from NativeStakingSSVStrategy
-    function _wethWithdrawnToVault(uint256 _amount) internal override {
+    function _wethWithdrawnToVault(uint256 _amount) internal {
         emit Withdrawal(WETH, address(0), _amount);
     }
 
@@ -379,10 +362,6 @@ contract NativeStakingSSVStrategy2 is
             timestamp: SafeCast.toUint64(block.timestamp),
             wethBalance: SafeCast.toUint128(wethBalance),
             ethBalance: SafeCast.toUint128(ethBalance),
-            consensusRewards: SafeCast.toUint128(consensusRewards),
-            activeDepositedValidators: SafeCast.toUint64(
-                activeDepositedValidators
-            ),
             totalDepositsGwei: totalDepositsGweiMem
         });
 
@@ -395,9 +374,7 @@ contract NativeStakingSSVStrategy2 is
             block.timestamp,
             (totalDepositsGweiMem * 1 gwei),
             wethBalance,
-            ethBalance,
-            consensusRewards,
-            activeDepositedValidators
+            ethBalance
         );
     }
 
@@ -413,9 +390,6 @@ contract NativeStakingSSVStrategy2 is
         // BeaconBlock.state.validators[validatorIndex].balance
         bytes[] calldata validatorBalanceProofs
     ) external nonReentrant whenNoConsolidations {
-        // Account for the legacy sweeping validators first
-        _doAccounting(true);
-
         // Load the last snapped balances into memory
         Balances memory balancesMem = snappedBalances[blockRoot];
         require(balancesMem.blockNumber > 0, "No snapped balances");
@@ -485,13 +459,9 @@ contract NativeStakingSSVStrategy2 is
 
         // store the verified balance in storage
         lastVerifiedBalance =
-            // Legacy sweeping validators
-            (balancesMem.activeDepositedValidators * FULL_STAKE) +
-            // New compounding validators
-            (totalDepositsGwei * 1 gwei) +
+            (balancesMem.totalDepositsGwei * 1 gwei) +
             totalValidatorBalance +
             balancesMem.wethBalance +
-            balancesMem.ethBalance -
-            balancesMem.consensusRewards;
+            balancesMem.ethBalance;
     }
 }

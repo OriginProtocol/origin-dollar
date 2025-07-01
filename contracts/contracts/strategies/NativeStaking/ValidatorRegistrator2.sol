@@ -43,20 +43,6 @@ abstract contract ValidatorRegistrator2 is Governable, Pausable {
 
     /// @notice Address of the registrator - allowed to register, exit and remove validators
     address public validatorRegistrator;
-    /// @notice The number of validators that have 32 (!) ETH actively deposited. When a new deposit
-    /// to a validator happens this number increases, when a validator exit is detected this number
-    /// decreases.
-    uint256 public activeDepositedValidators;
-    /// @notice State of the validators keccak256(pubKey) => state
-    mapping(bytes32 => VALIDATOR_STATE) public validatorsStates;
-    /// @notice The account that is allowed to modify stakeETHThreshold and reset stakeETHTally
-    address public stakingMonitor;
-    /// @notice Amount of ETH that can be staked before staking on the contract is suspended
-    /// and the `stakingMonitor` needs to approve further staking by calling `resetStakeETHTally`
-    uint256 private deprecated_stakeETHThreshold;
-    /// @notice Amount of ETH that has been staked since the `stakingMonitor` last called `resetStakeETHTally`.
-    /// This can not go above `stakeETHThreshold`.
-    uint256 private deprecated_stakeETHTally;
 
     /// Deposit data for new compounding validators.
 
@@ -91,7 +77,7 @@ abstract contract ValidatorRegistrator2 is Governable, Pausable {
     /// @notice State of the new compounding validators with a 0x02 withdrawal credential prefix.
     /// Uses the Beacon chain hashing for BLSPubkey which is
     /// sha256(abi.encodePacked(validator.pubkey, bytes16(0)))
-    mapping(bytes32 => VALIDATOR_STATE) public compoundingValidatorState;
+    mapping(bytes32 => VALIDATOR_STATE) public validatorState;
 
     /// @param blockNumber Block number of the snapshot
     /// @param timestamp Timestamp of the snapshot
@@ -104,8 +90,6 @@ abstract contract ValidatorRegistrator2 is Governable, Pausable {
         uint64 timestamp;
         uint128 wethBalance;
         uint128 ethBalance;
-        uint128 consensusRewards;
-        uint64 activeDepositedValidators;
         uint64 totalDepositsGwei;
     }
     // TODO is it more efficient to use the block root rather than hashing it?
@@ -122,7 +106,7 @@ abstract contract ValidatorRegistrator2 is Governable, Pausable {
     ConsolidationBatch consolidationBatch;
 
     // For future use
-    uint256[37] private __gap;
+    uint256[40] private __gap;
 
     enum VALIDATOR_STATE {
         NON_REGISTERED, // validator is not registered on the SSV network
@@ -173,12 +157,6 @@ abstract contract ValidatorRegistrator2 is Governable, Pausable {
         _;
     }
 
-    /// @dev Throws if called by any account other than the Staking monitor
-    modifier onlyStakingMonitor() {
-        require(msg.sender == stakingMonitor, "Caller is not the Monitor");
-        _;
-    }
-
     /// @dev Throws if called by any account other than the Strategist
     modifier onlyStrategist() {
         require(
@@ -226,12 +204,6 @@ abstract contract ValidatorRegistrator2 is Governable, Pausable {
         emit RegistratorChanged(_address);
     }
 
-    /// @notice Set the address of the staking monitor that is allowed to reset stakeETHTally
-    function setStakingMonitor(address _address) external onlyGovernor {
-        stakingMonitor = _address;
-        emit StakingMonitorChanged(_address);
-    }
-
     /// @notice Stakes WETH to a compounding validator
     /// @param validator validator data needed to stake.
     /// The `ValidatorStakeData` struct contains the pubkey, signature and depositDataRoot.
@@ -257,14 +229,12 @@ abstract contract ValidatorRegistrator2 is Governable, Pausable {
         bytes32 pubKeyHash = sha256(
             abi.encodePacked(validator.pubkey, bytes16(0))
         );
-        VALIDATOR_STATE compoundingState = compoundingValidatorState[
-            pubKeyHash
-        ];
-        // Can only state to a new compounding validator that has been registered
+        VALIDATOR_STATE currentState = validatorState[pubKeyHash];
+        // Can only stake to a new compounding validator that has been registered
         require(
-            (compoundingState == VALIDATOR_STATE.REGISTERED ||
+            (currentState == VALIDATOR_STATE.REGISTERED ||
                 // Post Pectra there can be multiple deposits to the same validator
-                compoundingState == VALIDATOR_STATE.STAKED),
+                currentState == VALIDATOR_STATE.STAKED),
             "Validator not registered"
         );
 
@@ -292,8 +262,8 @@ abstract contract ValidatorRegistrator2 is Governable, Pausable {
 
         //// Update contract storage
         // Store the validator state if needed
-        if (compoundingState == VALIDATOR_STATE.REGISTERED) {
-            validatorsStates[pubKeyHash] = VALIDATOR_STATE.STAKED;
+        if (currentState == VALIDATOR_STATE.REGISTERED) {
+            validatorState[pubKeyHash] = VALIDATOR_STATE.STAKED;
         }
         // Store the deposit data for verifyDeposit and verifyBalances
         // Hash using Beacon Chains SSZ BLSPubkey format
@@ -335,24 +305,16 @@ abstract contract ValidatorRegistrator2 is Governable, Pausable {
         // Check each public key has not already been used
         bytes32 pubKeyHash;
         for (uint256 i = 0; i < publicKeys.length; ++i) {
-            // Check the old sweeping validators
-            pubKeyHash = keccak256(publicKeys[i]);
-            require(
-                validatorsStates[pubKeyHash] == VALIDATOR_STATE.NON_REGISTERED,
-                "Validator already registered"
-            );
-
             // Check the new compounding validators
             // Hash the public key using the Beacon Chain's format
             pubKeyHash = sha256(abi.encodePacked(publicKeys[i], bytes16(0)));
             require(
-                compoundingValidatorState[pubKeyHash] ==
-                    VALIDATOR_STATE.NON_REGISTERED,
+                validatorState[pubKeyHash] == VALIDATOR_STATE.NON_REGISTERED,
                 "Validator already registered"
             );
 
             // We can only deposit to a new compounding validator
-            compoundingValidatorState[pubKeyHash] = VALIDATOR_STATE.REGISTERED;
+            validatorState[pubKeyHash] = VALIDATOR_STATE.REGISTERED;
 
             // Emits using the Beacon chain hashing for BLSPubkey
             emit SSVValidatorRegistered(pubKeyHash, publicKeys[i], operatorIds);
@@ -379,13 +341,14 @@ abstract contract ValidatorRegistrator2 is Governable, Pausable {
         bytes calldata publicKey,
         uint64[] calldata operatorIds
     ) external onlyRegistrator whenNotPaused whenNoConsolidations {
-        bytes32 pubKeyHash = keccak256(publicKey);
-        VALIDATOR_STATE currentState = validatorsStates[pubKeyHash];
+        // Hash the public key using the Beacon Chain's format
+        bytes32 pubKeyHash = sha256(abi.encodePacked(publicKey, bytes16(0)));
+        VALIDATOR_STATE currentState = validatorState[pubKeyHash];
         require(currentState == VALIDATOR_STATE.STAKED, "Validator not staked");
 
         ISSVNetwork(SSV_NETWORK).exitValidator(publicKey, operatorIds);
 
-        validatorsStates[pubKeyHash] = VALIDATOR_STATE.EXITING;
+        validatorState[pubKeyHash] = VALIDATOR_STATE.EXITING;
 
         emit SSVValidatorExitInitiated(pubKeyHash, publicKey, operatorIds);
     }
@@ -405,8 +368,9 @@ abstract contract ValidatorRegistrator2 is Governable, Pausable {
         uint64[] calldata operatorIds,
         Cluster calldata cluster
     ) external onlyRegistrator whenNotPaused whenNoConsolidations {
-        bytes32 pubKeyHash = keccak256(publicKey);
-        VALIDATOR_STATE currentState = validatorsStates[pubKeyHash];
+        // Hash the public key using the Beacon Chain's format
+        bytes32 pubKeyHash = sha256(abi.encodePacked(publicKey, bytes16(0)));
+        VALIDATOR_STATE currentState = validatorState[pubKeyHash];
         // Can remove SSV validators that were incorrectly registered and can not be deposited to.
         require(
             currentState == VALIDATOR_STATE.EXITING ||
@@ -421,7 +385,7 @@ abstract contract ValidatorRegistrator2 is Governable, Pausable {
             cluster
         );
 
-        validatorsStates[pubKeyHash] = VALIDATOR_STATE.EXIT_COMPLETE;
+        validatorState[pubKeyHash] = VALIDATOR_STATE.EXIT_COMPLETE;
 
         emit SSVValidatorExitCompleted(pubKeyHash, publicKey, operatorIds);
     }
@@ -544,19 +508,16 @@ abstract contract ValidatorRegistrator2 is Governable, Pausable {
         totalDepositsGwei -= deposit.amountGwei;
 
         // TODO need to check the state transitions for existing validators
-        if (
-            compoundingValidatorState[deposit.pubKeyHash] !=
-            VALIDATOR_STATE.VERIFIED
-        ) {
+        if (validatorState[deposit.pubKeyHash] != VALIDATOR_STATE.VERIFIED) {
             // Store the validator state as verified
-            compoundingValidatorState[deposit.pubKeyHash] = VALIDATOR_STATE
-                .VERIFIED;
+            validatorState[deposit.pubKeyHash] = VALIDATOR_STATE.VERIFIED;
 
             // Add the new validator to the list of verified validators
             verifiedValidators.push(validatorIndex);
         }
     }
 
+    // TODO restrict so only called from legacy staking strategies
     function requestConsolidation(
         bytes[] calldata sourcePubKeys,
         bytes calldata targetPubKey
@@ -566,8 +527,7 @@ abstract contract ValidatorRegistrator2 is Governable, Pausable {
         );
         // The target validator must be a compounding validator that has been verified
         require(
-            compoundingValidatorState[targetBeaconPubKeyHash] ==
-                VALIDATOR_STATE.VERIFIED,
+            validatorState[targetBeaconPubKeyHash] == VALIDATOR_STATE.VERIFIED,
             "Target validator not verified"
         );
 
@@ -576,13 +536,6 @@ abstract contract ValidatorRegistrator2 is Governable, Pausable {
 
         bytes32 sourceBeaconPubKeyHash;
         for (uint256 i = 0; i < sourcePubKeys.length; ++i) {
-            bytes32 pubKeyHash = keccak256(sourcePubKeys[i]);
-            require(
-                validatorsStates[pubKeyHash] == VALIDATOR_STATE.STAKED,
-                "Validator not staked"
-            );
-            validatorsStates[pubKeyHash] = VALIDATOR_STATE.CONSOLIDATED;
-
             // hash the source validator's public key using the Beacon Chain's format
             sourceBeaconPubKeyHash = sha256(
                 abi.encodePacked(sourcePubKeys[i], bytes16(0))
@@ -635,9 +588,6 @@ abstract contract ValidatorRegistrator2 is Governable, Pausable {
             BeaconProofs.BalanceProofLevel.BeaconBlock
         );
         require(validatorBalance == 0, "Validator balance not zero");
-
-        // Reduce the number of legacy sweeping validators
-        activeDepositedValidators -= consolidationBatch.numberOfValidators;
 
         // Reset the consolidation batch
         consolidationBatch = ConsolidationBatch({
