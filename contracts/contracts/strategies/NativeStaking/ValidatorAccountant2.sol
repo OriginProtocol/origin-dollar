@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import { ValidatorRegistrator } from "./ValidatorRegistrator.sol";
+import { ValidatorRegistrator2 } from "./ValidatorRegistrator2.sol";
 import { IWETH9 } from "../../interfaces/IWETH9.sol";
 
 /// @title Validator Accountant
@@ -9,7 +9,7 @@ import { IWETH9 } from "../../interfaces/IWETH9.sol";
 /// as either full or partial withdrawals. Partial withdrawals being consensus rewards.
 /// Full withdrawals are from exited validators.
 /// @author Origin Protocol Inc
-abstract contract ValidatorAccountant is ValidatorRegistrator {
+abstract contract ValidatorAccountant2 is ValidatorRegistrator2 {
     /// @notice The minimum amount of blocks that need to pass between two calls to manuallyFixAccounting
     uint256 public constant MIN_FIX_ACCOUNTING_CADENCE = 7200; // 1 day
 
@@ -48,19 +48,22 @@ abstract contract ValidatorAccountant is ValidatorRegistrator {
     /// @param _beaconChainDepositContract Address of the beacon chain deposit contract
     /// @param _ssvNetwork Address of the SSV Network contract
     /// @param _maxValidators Maximum number of validators that can be registered in the strategy
+    /// @param _beaconOracle Address of the Beacon Oracle contract that maps block numbers to slots
     constructor(
         address _wethAddress,
         address _vaultAddress,
         address _beaconChainDepositContract,
         address _ssvNetwork,
-        uint256 _maxValidators
+        uint256 _maxValidators,
+        address _beaconOracle
     )
-        ValidatorRegistrator(
+        ValidatorRegistrator2(
             _wethAddress,
             _vaultAddress,
             _beaconChainDepositContract,
             _ssvNetwork,
-            _maxValidators
+            _maxValidators,
+            _beaconOracle
         )
     {}
 
