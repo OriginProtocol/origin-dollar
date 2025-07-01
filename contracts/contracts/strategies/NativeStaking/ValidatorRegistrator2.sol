@@ -25,10 +25,6 @@ struct ValidatorStakeData {
  * @author Origin Protocol Inc
  */
 abstract contract ValidatorRegistrator2 is Governable, Pausable {
-    /// @notice The maximum amount of ETH that can be staked by a validator
-    /// @dev this can change in the future with EIP-7251, Increase the MAX_EFFECTIVE_BALANCE
-    uint256 public constant FULL_STAKE = 32 ether;
-
     /// @notice The address of the Wrapped ETH (WETH) token contract
     address public immutable WETH;
     /// @notice The address of the beacon chain deposit contract
@@ -37,8 +33,6 @@ abstract contract ValidatorRegistrator2 is Governable, Pausable {
     address public immutable SSV_NETWORK;
     /// @notice Address of the OETH Vault proxy contract
     address public immutable VAULT_ADDRESS;
-    /// @notice Maximum number of validators that can be registered in this strategy
-    uint256 public immutable MAX_VALIDATORS;
     address public immutable BEACON_ORACLE;
 
     /// @notice Address of the registrator - allowed to register, exit and remove validators
@@ -114,8 +108,7 @@ abstract contract ValidatorRegistrator2 is Governable, Pausable {
         STAKED, // validator has funds staked
         EXITING, // exit message has been posted and validator is in the process of exiting
         EXIT_COMPLETE, // validator has funds withdrawn to the EigenPod and is removed from the SSV
-        VERIFIED, // validator has been verified to exist on the beacon chain
-        CONSOLIDATED // validator has been consolidated to a new compounding validator
+        VERIFIED // validator has been verified to exist on the beacon chain
     }
     enum DepositStatus {
         UNKNOWN, // default value
@@ -145,8 +138,14 @@ abstract contract ValidatorRegistrator2 is Governable, Pausable {
         bytes pubKey,
         uint64[] operatorIds
     );
-    event StakeETHThresholdChanged(uint256 amount);
-    event StakeETHTallyReset();
+    event SnappedBalances(
+        bytes32 indexed blockRoot,
+        uint256 indexed blockNumber,
+        uint256 indexed timestamp,
+        uint256 totalDepositsWei,
+        uint256 wethBalance,
+        uint256 ethBalance
+    );
 
     /// @dev Throws if called by any account other than the Registrator
     modifier onlyRegistrator() {
@@ -180,21 +179,18 @@ abstract contract ValidatorRegistrator2 is Governable, Pausable {
     /// @param _vaultAddress Address of the Vault
     /// @param _beaconChainDepositContract Address of the beacon chain deposit contract
     /// @param _ssvNetwork Address of the SSV Network contract
-    /// @param _maxValidators Maximum number of validators that can be registered in the strategy
     /// @param _beaconOracle Address of the Beacon Oracle contract that maps block numbers to slots
     constructor(
         address _wethAddress,
         address _vaultAddress,
         address _beaconChainDepositContract,
         address _ssvNetwork,
-        uint256 _maxValidators,
         address _beaconOracle
     ) {
         WETH = _wethAddress;
         BEACON_CHAIN_DEPOSIT_CONTRACT = _beaconChainDepositContract;
         SSV_NETWORK = _ssvNetwork;
         VAULT_ADDRESS = _vaultAddress;
-        MAX_VALIDATORS = _maxValidators;
         BEACON_ORACLE = _beaconOracle;
     }
 
@@ -374,8 +370,7 @@ abstract contract ValidatorRegistrator2 is Governable, Pausable {
         // Can remove SSV validators that were incorrectly registered and can not be deposited to.
         require(
             currentState == VALIDATOR_STATE.EXITING ||
-                currentState == VALIDATOR_STATE.REGISTERED ||
-                currentState == VALIDATOR_STATE.CONSOLIDATED,
+                currentState == VALIDATOR_STATE.REGISTERED,
             "Validator not regd or exiting"
         );
 
@@ -594,6 +589,126 @@ abstract contract ValidatorRegistrator2 is Governable, Pausable {
             numberOfValidators: 0,
             lastPubKeyHash: bytes32(0)
         });
+    }
+
+    function snapBalances() public nonReentrant whenNoConsolidations {
+        bytes32 blockRoot = BeaconRoots.parentBlockRoot(
+            SafeCast.toUint64(block.timestamp)
+        );
+        // Get the current WETH balance
+        uint256 wethBalance = IWETH9(WETH).balanceOf(address(this));
+        // Get the current ETH balance
+        uint256 ethBalance = address(this).balance;
+        // Load into memory to save reading from storage twice
+        uint64 totalDepositsGweiMem = totalDepositsGwei;
+
+        // Store the balances in the mapping
+        snappedBalances[blockRoot] = Balances({
+            blockNumber: SafeCast.toUint64(block.number),
+            timestamp: SafeCast.toUint64(block.timestamp),
+            wethBalance: SafeCast.toUint128(wethBalance),
+            ethBalance: SafeCast.toUint128(ethBalance),
+            totalDepositsGwei: totalDepositsGweiMem
+        });
+
+        // Store the snapped timestamp
+        lastSnapTimestamp = block.timestamp;
+
+        emit SnappedBalances(
+            blockRoot,
+            block.number,
+            block.timestamp,
+            (totalDepositsGweiMem * 1 gwei),
+            wethBalance,
+            ethBalance
+        );
+    }
+
+    function verifyBalances(
+        bytes32 blockRoot,
+        uint64 firstPendingDepositSlot,
+        // BeaconBlock.BeaconBlockBody.deposits[0].slot
+        bytes calldata firstPendingDepositSlotProof,
+        bytes32 balancesContainerRoot,
+        // BeaconBlock.state.validators
+        bytes calldata validatorContainerProof,
+        bytes32[] calldata validatorBalanceRoots,
+        // BeaconBlock.state.validators[validatorIndex].balance
+        bytes[] calldata validatorBalanceProofs
+    ) external nonReentrant whenNoConsolidations {
+        // Load the last snapped balances into memory
+        Balances memory balancesMem = snappedBalances[blockRoot];
+        require(balancesMem.blockNumber > 0, "No snapped balances");
+        require(balancesMem.timestamp == lastSnapTimestamp, "Stale snap");
+
+        // Break up the into blocks to avoid stack too deep
+        {
+            // Verify the first pending deposit slot to the beacon block root
+            BeaconProofs.verifyFirstPendingDepositSlot(
+                blockRoot,
+                firstPendingDepositSlot,
+                firstPendingDepositSlotProof
+            );
+
+            // For each native staking contract's deposits
+            uint256 depositsCount = depositsRoots.length;
+            for (uint256 i = 0; i < depositsCount; ++i) {
+                bytes32 depositDataRoot = depositsRoots[i];
+
+                // Check the stored deposit is still waiting to be processed on the beacon chain
+                // If it has it will need to be verified with `verifyDeposit`
+                require(
+                    deposits[depositDataRoot].slot > firstPendingDepositSlot,
+                    "Deposit not processed"
+                );
+            }
+        }
+
+        // verify beaconBlock.state.balances root to beacon block root
+        BeaconProofs.verifyBalancesContainer(
+            blockRoot,
+            balancesContainerRoot,
+            validatorContainerProof
+        );
+
+        uint256 totalValidatorBalance = 0;
+        uint256 verifiedValidatorsCount = verifiedValidators.length;
+        // for each validator
+        for (uint256 i = 0; i < verifiedValidatorsCount; ++i) {
+            // Load the validator index from storage
+            uint64 validatorIndex = verifiedValidators[i];
+
+            // verify validator's balance in beaconBlock.state.balances to the
+            // beaconBlock.state.balances container root
+            uint256 validatorBalance = BeaconProofs.verifyValidatorBalance(
+                balancesContainerRoot,
+                validatorBalanceRoots[i],
+                validatorBalanceProofs[i],
+                validatorIndex,
+                BeaconProofs.BalanceProofLevel.Container
+            );
+
+            // total validator balances
+            totalValidatorBalance += validatorBalance;
+
+            // If the validator balance is zero
+            if (validatorBalance == 0) {
+                // Remove the validator with a zero balance from the list of verified validators
+                // Move the last validator to the current index
+                verifiedValidators[i] = verifiedValidators[
+                    verifiedValidators.length - 1
+                ];
+                // Delete the last validator from the list
+                verifiedValidators.pop();
+            }
+        }
+
+        // store the verified balance in storage
+        lastVerifiedBalance =
+            (balancesMem.totalDepositsGwei * 1 gwei) +
+            totalValidatorBalance +
+            balancesMem.wethBalance +
+            balancesMem.ethBalance;
     }
 
     /***************************************
