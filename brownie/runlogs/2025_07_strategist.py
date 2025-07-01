@@ -21,14 +21,12 @@ def main():
     print("Pool OETH  ", "{:.6f}".format(oethPoolBalance / 10**18), oethPoolBalance * 100 / totalPool)
     print("Pool Total ", "{:.6f}".format(totalPool / 10**18), totalPool)
 
-    transfer_amount = 576 * 10**18  # 18 validator (576 ETH)
-
-    # Withdraw WETH from new Curve AMO
+    # Withdraw 576 + 324 = 900 WETH from new Curve AMO
     txs.append(
       vault_oeth_admin.withdrawFromStrategy(
         OETH_CURVE_AMO_STRAT,
         [WETH],
-        [580 * 10**18],
+        [900 * 10**18],
         {'from': STRATEGIST}
       )
     )
@@ -38,8 +36,8 @@ def main():
       vault_oeth_admin.depositToStrategy(
         OETH_NATIVE_STAKING_3_STRAT, 
         [WETH], 
-        # 8 validator
-        [256 * 10**18],
+        # 18 validator
+        [576 * 10**18],
         std
       )
     )
@@ -63,7 +61,7 @@ def main():
     totalPool = wethPoolBalance + oethPoolBalance
     weth_out_after = oeth_curve_pool.get_dy(0, 1, 10**18)
 
-    print("Curve OETH/ETH Pool after")  
+    print("Curve OETH/WETH Pool after")  
     print("Pool WETH  ", "{:.6f}".format(wethPoolBalance / 10**18), wethPoolBalance * 100 / totalPool)
     print("Pool OETH  ", "{:.6f}".format(oethPoolBalance / 10**18), oethPoolBalance * 100 / totalPool)
     print("Pool Total ", "{:.6f}".format(totalPool / 10**18), totalPool)
