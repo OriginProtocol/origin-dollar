@@ -7,6 +7,7 @@ import { IDepositContract } from "../../interfaces/IDepositContract.sol";
 import { IVault } from "../../interfaces/IVault.sol";
 import { IWETH9 } from "../../interfaces/IWETH9.sol";
 import { ISSVNetwork, Cluster } from "../../interfaces/ISSVNetwork.sol";
+import { BeaconConsolidation } from "../../beacon/BeaconConsolidation.sol";
 
 struct ValidatorStakeData {
     bytes pubkey;
@@ -51,8 +52,13 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
     /// @notice Amount of ETH that has been staked since the `stakingMonitor` last called `resetStakeETHTally`.
     /// This can not go above `stakeETHThreshold`.
     uint256 public stakeETHTally;
+
+    /// @notice Number of validators currently being consolidated
+    uint256 public consolidationCount;
+    address public targetConsolidationStakingStrategy;
+
     // For future use
-    uint256[47] private __gap;
+    uint256[45] private __gap;
 
     enum VALIDATOR_STATE {
         NON_REGISTERED, // validator is not registered on the SSV network
@@ -358,6 +364,78 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
         Cluster memory cluster
     ) external onlyGovernor {
         ISSVNetwork(SSV_NETWORK).withdraw(operatorIds, ssvAmount, cluster);
+    }
+
+    /***************************************
+                New Consolidation
+    ****************************************/
+
+    function requestConsolidation(
+        bytes[] calldata sourcePubKeys,
+        bytes calldata targetPubKey,
+        address targetStakingStrategy
+    ) external nonReentrant whenNotPaused onlyStrategist {
+        bytes32 targetPubKeyHash = keccak256(targetPubKey);
+        bytes32 sourcePubKeyHash;
+        for (uint256 i = 0; i < sourcePubKeys.length; ++i) {
+            // hash the source validator's public key using the Beacon Chain's format
+            sourcePubKeyHash = keccak256(sourcePubKeys[i]);
+            require(sourcePubKeyHash != targetPubKeyHash, "Self consolidation");
+            require(
+                validatorsStates[sourcePubKeyHash] == VALIDATOR_STATE.STAKED,
+                "Source validator not staked"
+            );
+
+            // Request consolidation from source to target validator
+            BeaconConsolidation.request(sourcePubKeys[i], targetPubKey);
+        }
+
+        bytes32 lastSourcePubKeyHash = _hashPubKey(
+            sourcePubKeys[sourcePubKeys.length - 1]
+        );
+        // Call the new Compounding staking validator to validate the target validator
+        // IConsolidations(targetStakingStrategy).requestConsolidation(
+        //     lastSourcePubKeyHash,
+        //     _hashPubKey(targetPubKey)
+        // );
+
+        // Store the consolidation state
+        consolidationCount = sourcePubKeys.length;
+        targetConsolidationStakingStrategy = targetStakingStrategy;
+
+        // Pause the strategy to prevent further consolidations or validator exits
+        _pause();
+
+        // TODO emit an event
+    }
+
+    function confirmConsolidation() external nonReentrant whenPaused {
+        // Check the caller is the target staking strategy
+        require(
+            msg.sender == targetConsolidationStakingStrategy,
+            "Not target strategy"
+        );
+
+        // Need to check this is from the new staking strategy
+        require(consolidationCount > 0, "No consolidation in progress");
+
+        // Store the reduced number of active deposited validators
+        // managed by this strategy
+        activeDepositedValidators -= consolidationCount;
+
+        // Reset the consolidation count
+        consolidationCount = 0;
+        targetConsolidationStakingStrategy = address(0);
+
+        // Unpause the strategy to allow further operations
+        _unpause();
+
+        // TODO emit an event
+    }
+
+    /// @notice Hash a validator public key using the Beacon Chain's format
+    function _hashPubKey(bytes memory pubKey) internal pure returns (bytes32) {
+        return sha256(abi.encodePacked(pubKey, bytes16(0)));
     }
 
     /***************************************
