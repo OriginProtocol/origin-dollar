@@ -21,12 +21,15 @@ module.exports = deploymentWithGovernanceProposal(
     for (const safeAddress of safeAddresses) {
       i++;
       const moduleName = `CollectXOGNRewardsModule${i}`;
-      await deployWithConfirmation("CollectXOGNRewardsModule", [
-        safeAddress,
-        // Defender Relayer
-        "0x4b91827516f79d6F6a1F292eD99671663b09169a",
+      await deployWithConfirmation(
         moduleName,
-      ]);
+        [
+          safeAddress,
+          // Defender Relayer
+          "0x4b91827516f79d6F6a1F292eD99671663b09169a",
+        ],
+        "CollectXOGNRewardsModule"
+      );
       const cCollectXOGNRewardsModule = await ethers.getContract(moduleName);
 
       console.log(
