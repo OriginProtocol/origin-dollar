@@ -44,16 +44,13 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
     /// @param pubKeyHash Hash of validator's public key using the Beacon Chain's format
     /// @param amountWei Amount of ETH in wei that has been deposited to the beacon chain deposit contract
     /// @param blockNumber Block number when the deposit was made
-    /// @param slot The slot that is on or after when the deposit was made. This needs to be assigned
-    /// by the `assignSlotToDeposit` function.
-    /// @param rootsIndex The index of the deposit in the list of active deposits
+    /// @param depositIndex The index of the deposit in the list of active deposits
     /// @param status The status of the deposit, either PENDING or PROVEN
     struct DepositData {
         bytes32 pubKeyHash;
         uint64 amountGwei;
         uint64 blockNumber;
-        uint64 slot;
-        uint32 rootsIndex;
+        uint32 depositIndex;
         DepositStatus status;
     }
     /// @notice Mapping of the root of a deposit (depositDataRoot) to its data
@@ -74,18 +71,15 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
     /// sha256(abi.encodePacked(validator.pubkey, bytes16(0)))
     mapping(bytes32 => VALIDATOR_STATE) public validatorState;
 
-    /// @param blockNumber Block number of the snapshot
     /// @param timestamp Timestamp of the snapshot
-    /// @param activeDepositedValidators Number of sweeping validators that have 32 ETH at the snapshot
+    /// @param totalDeposits Total amount of new compounding validator deposits in wei at the snapshot
     /// @param wethBalance The balance of WETH in the strategy contract at the snapshot
     /// @param ethBalance The balance of ETH in the strategy contract at the snapshot
-    /// @param totalDeposits Total amount of new compounding validator deposits in wei at the snapshot
     struct Balances {
-        uint64 blockNumber;
         uint64 timestamp;
+        uint64 totalDepositsGwei;
         uint128 wethBalance;
         uint128 ethBalance;
-        uint64 totalDepositsGwei;
     }
     // TODO is it more efficient to use the block root rather than hashing it?
     /// @notice Mapping of the block root to the balances at that slot
@@ -264,8 +258,7 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
             pubKeyHash: pubKeyHash,
             amountGwei: depositAmountGwei,
             blockNumber: SafeCast.toUint64(block.number),
-            slot: type(uint64).max, // Set to max until verified
-            rootsIndex: SafeCast.toUint32(depositsRoots.length),
+            depositIndex: SafeCast.toUint32(depositsRoots.length),
             status: DepositStatus.PENDING
         });
         depositsRoots.push(validator.depositDataRoot);
@@ -290,7 +283,7 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
         bytes[] calldata sharesData,
         uint256 ssvAmount,
         Cluster calldata cluster
-    ) external onlyRegistrator whenNotPaused whenNoConsolidations {
+    ) external onlyRegistrator whenNotPaused {
         require(
             publicKeys.length == sharesData.length,
             "Pubkey sharesData mismatch"
@@ -360,7 +353,7 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
         bytes calldata publicKey,
         uint64[] calldata operatorIds,
         Cluster calldata cluster
-    ) external onlyRegistrator whenNotPaused whenNoConsolidations {
+    ) external onlyRegistrator whenNotPaused {
         // Hash the public key using the Beacon Chain's format
         bytes32 pubKeyHash = _hashPubKey(publicKey);
         VALIDATOR_STATE currentState = validatorState[pubKeyHash];
@@ -408,36 +401,10 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
                 Beacon Chain Proofs
     ****************************************/
 
-    /// @notice Maps a deposit to a beacon chain slot that is on or after the deposit was made.
-    /// This uses the Beacon Oracle that uses merkle proofs to map blocks to slots.
-    /// Ideally, the mapped block number is close to the deposit block number as this can delay when
-    /// the deposit can be verified. It will also delay when the balances can be successfully verified.
-    /// @param depositDataRoot The root of the previous deposit data
-    /// @param mappedBlockNumber The block number that has been mapped in the Beacon Oracle.
-    /// The mapped block number must be on or after the block the deposit was made in.
-    function assignSlotToDeposit(
-        bytes32 depositDataRoot,
-        uint64 mappedBlockNumber
-    ) external nonReentrant {
-        require(
-            deposits[depositDataRoot].status == DepositStatus.PENDING,
-            "Deposit not pending"
-        );
-        // The deposit needs to be before or at the time as the mapped block number.
-        // The deposit can not be after the block number mapped to a slot.
-        require(
-            deposits[depositDataRoot].blockNumber <= mappedBlockNumber,
-            "block not on or after deposit"
-        );
-
-        // Store the slot that is on or after the deposit was made
-        deposits[depositDataRoot].slot = IBeaconOracle(BEACON_ORACLE)
-            .slotToBlock(mappedBlockNumber);
-    }
-
     // Putting params into a struct to avoid stack too deep errors
     struct DepositProofData {
         uint64 parentBlockTimestamp;
+        uint64 mappedBlockNumber;
         uint64 validatorIndex;
         uint64 firstPendingDepositSlot;
         // BeaconBlock.state.validators[validatorIndex].pubkey
@@ -455,8 +422,22 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
         // Load into memory the previously saved deposit data
         DepositData memory deposit = deposits[depositDataRoot];
         require(deposit.status == DepositStatus.PENDING, "Deposit not pending");
+
+        // The deposit needs to be before or at the time as the mapped block number.
+        // The deposit can not be after the block number mapped to a slot.
         require(
-            deposit.slot < proofData.firstPendingDepositSlot,
+            deposit.blockNumber <= proofData.mappedBlockNumber,
+            "block not on or after deposit"
+        );
+
+        // Get the slot that is on or after the deposit was made
+        uint64 mappedSlot = IBeaconOracle(BEACON_ORACLE).slotToBlock(
+            proofData.mappedBlockNumber
+        );
+
+        // Check the mapped slot is before the first pending deposit slot
+        require(
+            mappedSlot < proofData.firstPendingDepositSlot,
             "Deposit not processed"
         );
 
@@ -481,7 +462,7 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
         // After verifying the proof, update the contract storage
         deposits[depositDataRoot].status = DepositStatus.VERIFIED;
         // Move the last deposit to the index of the verified deposit
-        depositsRoots[deposit.rootsIndex] = depositsRoots[
+        depositsRoots[deposit.depositIndex] = depositsRoots[
             depositsRoots.length - 1
         ];
         // Delete the last deposit from the list
@@ -583,7 +564,6 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
 
         // Store the balances in the mapping
         snappedBalances[blockRoot] = Balances({
-            blockNumber: SafeCast.toUint64(block.number),
             timestamp: SafeCast.toUint64(block.timestamp),
             wethBalance: SafeCast.toUint128(wethBalance),
             ethBalance: SafeCast.toUint128(ethBalance),
@@ -603,51 +583,61 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
         );
     }
 
-    function verifyBalances(
-        bytes32 blockRoot,
-        uint64 firstPendingDepositSlot,
+    struct VerifyBalancesParams {
+        bytes32 blockRoot;
+        uint64 firstPendingDepositSlot;
         // BeaconBlock.BeaconBlockBody.deposits[0].slot
-        bytes calldata firstPendingDepositSlotProof,
-        bytes32 balancesContainerRoot,
+        bytes firstPendingDepositSlotProof;
+        bytes32 balancesContainerRoot;
         // BeaconBlock.state.validators
-        bytes calldata validatorContainerProof,
-        bytes32[] calldata validatorBalanceRoots,
+        bytes validatorContainerProof;
+        bytes32[] validatorBalanceLeaves;
         // BeaconBlock.state.validators[validatorIndex].balance
-        bytes[] calldata validatorBalanceProofs
-    ) external nonReentrant whenNoConsolidations {
-        // Load the last snapped balances into memory
-        Balances memory balancesMem = snappedBalances[blockRoot];
-        require(balancesMem.blockNumber > 0, "No snapped balances");
+        bytes[] validatorBalanceProofs;
+    }
+
+    function verifyBalances(VerifyBalancesParams calldata params)
+        external
+        nonReentrant
+        whenNoConsolidations
+    {
+        // Load previously snapped balances for the given block root
+        Balances memory balancesMem = snappedBalances[params.blockRoot];
+        // Check the balances are the latest
+        require(lastSnapTimestamp > 0, "No snapped balances");
         require(balancesMem.timestamp == lastSnapTimestamp, "Stale snap");
 
-        // Break up the into blocks to avoid stack too deep
-        {
-            // Verify the first pending deposit slot to the beacon block root
-            IBeaconProofs(BEACON_PROOFS).verifyFirstPendingDepositSlot(
-                blockRoot,
-                firstPendingDepositSlot,
-                firstPendingDepositSlotProof
+        // Verify the first pending deposit slot to the beacon block root
+        IBeaconProofs(BEACON_PROOFS).verifyFirstPendingDepositSlot(
+            params.blockRoot,
+            params.firstPendingDepositSlot,
+            params.firstPendingDepositSlotProof
+        );
+
+        uint64 firstPendingDepositBlockNumber = IBeaconOracle(BEACON_ORACLE)
+            .slotToBlock(params.firstPendingDepositSlot);
+
+        // For each native staking contract's deposits
+        uint256 depositsCount = depositsRoots.length;
+        for (uint256 i = 0; i < depositsCount; ++i) {
+            bytes32 depositDataRoot = depositsRoots[i];
+
+            // Check the stored deposit is still waiting to be processed on the beacon chain.
+            // That is, the first pending deposit block number is before the
+            // block number of the staking strategy's deposit.
+            // If it has it will need to be verified with `verifyDeposit`
+            require(
+                firstPendingDepositBlockNumber <
+                    deposits[depositDataRoot].blockNumber,
+                "Deposit has been processed"
             );
-
-            // For each native staking contract's deposits
-            uint256 depositsCount = depositsRoots.length;
-            for (uint256 i = 0; i < depositsCount; ++i) {
-                bytes32 depositDataRoot = depositsRoots[i];
-
-                // Check the stored deposit is still waiting to be processed on the beacon chain
-                // If it has it will need to be verified with `verifyDeposit`
-                require(
-                    deposits[depositDataRoot].slot > firstPendingDepositSlot,
-                    "Deposit not processed"
-                );
-            }
         }
 
         // verify beaconBlock.state.balances root to beacon block root
         IBeaconProofs(BEACON_PROOFS).verifyBalancesContainer(
-            blockRoot,
-            balancesContainerRoot,
-            validatorContainerProof
+            params.blockRoot,
+            params.balancesContainerRoot,
+            params.validatorContainerProof
         );
 
         uint256 totalValidatorBalance = 0;
@@ -658,9 +648,9 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
             // beaconBlock.state.balances container root
             uint256 validatorBalance = IBeaconProofs(BEACON_PROOFS)
                 .verifyValidatorBalance(
-                    balancesContainerRoot,
-                    validatorBalanceRoots[i],
-                    validatorBalanceProofs[i],
+                    params.balancesContainerRoot,
+                    params.validatorBalanceLeaves[i],
+                    params.validatorBalanceProofs[i],
                     verifiedValidators[i],
                     IBeaconProofs.BalanceProofLevel.Container
                 );
@@ -686,6 +676,7 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
 
         // store the verified balance in storage
         lastVerifiedBalance = SafeCast.toUint128(
+            // TODO need to account for consolidated validators
             // Convert total deposits to wei
             (balancesMem.totalDepositsGwei * 1 gwei) +
                 totalValidatorBalance +
