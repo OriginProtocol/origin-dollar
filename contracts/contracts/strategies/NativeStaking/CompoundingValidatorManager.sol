@@ -57,8 +57,6 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
     mapping(bytes32 => DepositData) public deposits;
     /// @notice List of deposit roots that are still to be verified as processed on the beacon chain
     bytes32[] public depositsRoots;
-    /// @notice Total amount in Gwei of deposits waiting to be processed on the beacon chain
-    uint64 public totalDepositsGwei;
 
     // Validator data
 
@@ -72,12 +70,10 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
     mapping(bytes32 => VALIDATOR_STATE) public validatorState;
 
     /// @param timestamp Timestamp of the snapshot
-    /// @param totalDeposits Total amount of new compounding validator deposits in wei at the snapshot
     /// @param wethBalance The balance of WETH in the strategy contract at the snapshot
     /// @param ethBalance The balance of ETH in the strategy contract at the snapshot
     struct Balances {
         uint64 timestamp;
-        uint64 totalDepositsGwei;
         uint128 wethBalance;
         uint128 ethBalance;
     }
@@ -132,7 +128,6 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
         bytes32 indexed blockRoot,
         uint256 indexed blockNumber,
         uint256 indexed timestamp,
-        uint256 totalDepositsWei,
         uint256 wethBalance,
         uint256 ethBalance
     );
@@ -262,7 +257,6 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
             status: DepositStatus.PENDING
         });
         depositsRoots.push(validator.depositDataRoot);
-        totalDepositsGwei += depositAmountGwei;
 
         emit ETHStaked(pubKeyHash, validator.pubkey, depositAmountWei);
     }
@@ -468,9 +462,6 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
         // Delete the last deposit from the list
         depositsRoots.pop();
 
-        // Reduce the total pending deposits in Gwei
-        totalDepositsGwei -= deposit.amountGwei;
-
         // TODO need to check the state transitions for existing validators
         if (validatorState[deposit.pubKeyHash] != VALIDATOR_STATE.VERIFIED) {
             // Store the validator state as verified
@@ -559,15 +550,12 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
         uint256 wethBalance = IWETH9(WETH).balanceOf(address(this));
         // Get the current ETH balance
         uint256 ethBalance = address(this).balance;
-        // Load into memory to save reading from storage twice
-        uint64 totalDepositsGweiMem = totalDepositsGwei;
 
         // Store the balances in the mapping
         snappedBalances[blockRoot] = Balances({
             timestamp: SafeCast.toUint64(block.timestamp),
             wethBalance: SafeCast.toUint128(wethBalance),
-            ethBalance: SafeCast.toUint128(ethBalance),
-            totalDepositsGwei: totalDepositsGweiMem
+            ethBalance: SafeCast.toUint128(ethBalance)
         });
 
         // Store the snapped timestamp
@@ -577,7 +565,6 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
             blockRoot,
             block.number,
             block.timestamp,
-            (totalDepositsGweiMem * 1 gwei),
             wethBalance,
             ethBalance
         );
@@ -596,11 +583,9 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
         bytes[] validatorBalanceProofs;
     }
 
-    function verifyBalances(VerifyBalancesParams calldata params)
-        external
-        nonReentrant
-        whenNoConsolidations
-    {
+    function verifyBalances(
+        VerifyBalancesParams calldata params
+    ) external nonReentrant whenNoConsolidations {
         // Load previously snapped balances for the given block root
         Balances memory balancesMem = snappedBalances[params.blockRoot];
         // Check the balances are the latest
@@ -619,6 +604,7 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
 
         // For each native staking contract's deposits
         uint256 depositsCount = depositsRoots.length;
+        uint64 totalDepositsGwei = 0;
         for (uint256 i = 0; i < depositsCount; ++i) {
             bytes32 depositDataRoot = depositsRoots[i];
 
@@ -631,6 +617,8 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
                     deposits[depositDataRoot].blockNumber,
                 "Deposit has been processed"
             );
+
+            totalDepositsGwei += deposits[depositDataRoot].amountGwei;
         }
 
         // verify beaconBlock.state.balances root to beacon block root
@@ -677,8 +665,7 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
         // store the verified balance in storage
         lastVerifiedBalance = SafeCast.toUint128(
             // TODO need to account for consolidated validators
-            // Convert total deposits to wei
-            (balancesMem.totalDepositsGwei * 1 gwei) +
+            (totalDepositsGwei * 1 gwei) +
                 totalValidatorBalance +
                 balancesMem.wethBalance +
                 balancesMem.ethBalance
