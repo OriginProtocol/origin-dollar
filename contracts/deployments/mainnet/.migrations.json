@@ -39,5 +39,6 @@
   "140_remove_1st_native_ssv_staking": 1748943551,
   "141_claimrewards_module": 1749711150,
   "142_bridge_helper_module": 1750259826,
-  "143_bridge_helper_module_upgrade": 1750778108
+  "143_bridge_helper_module_upgrade": 1750778108,
+  "144_beacon_root_testing": 1751281360
 }
