@@ -3,6 +3,7 @@ pragma solidity ^0.8.0;
 
 import { Pausable } from "@openzeppelin/contracts/security/Pausable.sol";
 import { Governable } from "../../governance/Governable.sol";
+import { IConsolidationTarget } from "../../interfaces/IConsolidation.sol";
 import { IDepositContract } from "../../interfaces/IDepositContract.sol";
 import { IVault } from "../../interfaces/IVault.sol";
 import { IWETH9 } from "../../interfaces/IWETH9.sol";
@@ -55,10 +56,12 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
 
     /// @notice Number of validators currently being consolidated
     uint256 public consolidationCount;
-    address public targetConsolidationStakingStrategy;
+    address public consolidationTargetStrategy;
+    /// @notice Mapping of support target staking strategies that can be used for consolidation
+    mapping(address => bool) public consolidationTargetStrategies;
 
     // For future use
-    uint256[45] private __gap;
+    uint256[44] private __gap;
 
     enum VALIDATOR_STATE {
         NON_REGISTERED, // validator is not registered on the SSV network
@@ -86,8 +89,16 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
         bytes pubKey,
         uint64[] operatorIds
     );
+    event ConsolidationRequested(
+        bytes[] sourcePubKeys,
+        bytes targetPubKey,
+        address targetStakingStrategy,
+        uint256 consolidationCount
+    );
+    event ConsolidationConfirmed(uint256 consolidationCount);
     event StakeETHThresholdChanged(uint256 amount);
     event StakeETHTallyReset();
+    event TargetStrategyAdded(address indexed strategy);
 
     /// @dev Throws if called by any account other than the Registrator
     modifier onlyRegistrator() {
@@ -155,6 +166,13 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
     function resetStakeETHTally() external onlyStakingMonitor {
         stakeETHTally = 0;
         emit StakeETHTallyReset();
+    }
+
+    /// @notice Adds support for a new staking strategy that can be used for consolidation.
+    function setTargetStrategy(address _strategy) external onlyGovernor {
+        consolidationTargetStrategies[_strategy] = true;
+
+        emit TargetStrategyAdded(_strategy);
     }
 
     /// @notice Stakes WETH to the node validators
@@ -374,7 +392,12 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
         bytes[] calldata sourcePubKeys,
         bytes calldata targetPubKey,
         address targetStakingStrategy
-    ) external nonReentrant whenNotPaused onlyStrategist {
+    ) external nonReentrant whenNotPaused onlyRegistrator {
+        require(
+            consolidationTargetStrategies[targetStakingStrategy],
+            "Invalid target strategy"
+        );
+
         bytes32 targetPubKeyHash = keccak256(targetPubKey);
         bytes32 sourcePubKeyHash;
         for (uint256 i = 0; i < sourcePubKeys.length; ++i) {
@@ -388,49 +411,61 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
 
             // Request consolidation from source to target validator
             BeaconConsolidation.request(sourcePubKeys[i], targetPubKey);
+
+            // Store the state of the source validator as exiting so it can be removed
+            // after the consolidation is confirmed
+            validatorsStates[sourcePubKeyHash] == VALIDATOR_STATE.EXITING;
         }
 
         bytes32 lastSourcePubKeyHash = _hashPubKey(
             sourcePubKeys[sourcePubKeys.length - 1]
         );
-        // Call the new Compounding staking validator to validate the target validator
-        // IConsolidations(targetStakingStrategy).requestConsolidation(
-        //     lastSourcePubKeyHash,
-        //     _hashPubKey(targetPubKey)
-        // );
+        // Call the new compounding staking strategy to validate the target validator
+        IConsolidationTarget(targetStakingStrategy).requestConsolidation(
+            lastSourcePubKeyHash,
+            targetPubKeyHash
+        );
 
         // Store the consolidation state
         consolidationCount = sourcePubKeys.length;
-        targetConsolidationStakingStrategy = targetStakingStrategy;
+        consolidationTargetStrategy = targetStakingStrategy;
 
         // Pause the strategy to prevent further consolidations or validator exits
         _pause();
 
-        // TODO emit an event
+        emit ConsolidationRequested(
+            sourcePubKeys,
+            targetPubKey,
+            targetStakingStrategy,
+            sourcePubKeys.length
+        );
     }
 
     function confirmConsolidation() external nonReentrant whenPaused {
         // Check the caller is the target staking strategy
         require(
-            msg.sender == targetConsolidationStakingStrategy,
+            msg.sender == consolidationTargetStrategy,
             "Not target strategy"
         );
 
+        // Load the number of validators being consolidated into memory
+        uint256 consolidationCountMem = consolidationCount;
+
         // Need to check this is from the new staking strategy
-        require(consolidationCount > 0, "No consolidation in progress");
+        require(consolidationCountMem > 0, "No consolidation in progress");
 
         // Store the reduced number of active deposited validators
         // managed by this strategy
-        activeDepositedValidators -= consolidationCount;
+        activeDepositedValidators -= consolidationCountMem;
 
         // Reset the consolidation count
         consolidationCount = 0;
-        targetConsolidationStakingStrategy = address(0);
+        consolidationTargetStrategy = address(0);
 
         // Unpause the strategy to allow further operations
         _unpause();
 
-        // TODO emit an event
+        emit ConsolidationConfirmed(consolidationCountMem);
     }
 
     /// @notice Hash a validator public key using the Beacon Chain's format
