@@ -8,7 +8,6 @@ title "Origin ETH processes"
 actor "Anyone" as sender
 actor "Block\nBuilder\n(MEV)" as mev
 actor "Registrator\n(Relayer)" as reg <<Origin>>
-actor "Admin\n(5/8 Safe)" as admin <<Origin>>
 actor "Strategist\n(2/8 Safe)" as strategist <<Origin>>
 actor "Governor\n(Timelock)" as gov <<Origin>>
 actor "Treasury" as treasury <<Origin>>
@@ -54,39 +53,6 @@ return
 
 end group
 
-group Governor setup of the Native Staking Strategy
-
-gov -> nativeStrat : setHarvesterAddress(\nharvester)
-activate nativeStrat
-return
-
-gov -> nativeStrat : setFuseInterval(\nstart, end)
-activate nativeStrat
-return
-
-gov -> nativeStrat : setRegistrator(\nregistrator)
-activate nativeStrat
-return
-
-gov -> nativeStrat : setStakingMonitor(\ngovernor)
-activate nativeStrat
-return
-
-gov -> nativeStrat : setStakeETHThreshold(\nmax)
-activate nativeStrat
-return
-
-end group
-
-group Staking monitor resets staked ETH
-
-admin -> nativeStrat : resetStakeETHTally()
-activate nativeStrat
-note right: resets the ETH that\ncan be staked going forward
-return
-
-end group
-
 group Registrator creates a new SSV validator
 
 reg -> api: POST\neth/staking/ssv/request/create\nuuid,\nvalidatorsCount,\ntype,\nwithdrawalAddress,\nfeeRecipientAddress,\nssvOwnerAddress,\noperationPeriodInDays,\namountPerValidator,\nwithdrawalCredentialsType
@@ -95,10 +61,11 @@ note right
 withdrawalAddress is Native Staking Strategy
 feeRecipientAddress is FeeAccumulator contract
 ssvOwnerAddress is Native Staking Strategy
-type is without-encrypt-key
+type is with-encrypt-key
+ecdhPublicKey public key for encrypting the validator keys
 operationPeriodInDays is 0 if not the first validator in the cluster
-amountPerValidator needs to be multiple of 32 ETH
-withdrawalCredentialsType is 0x02
+amountPerValidator 1 ETH in Gwei to limit front-run deposits
+withdrawalCredentialsType 0x02 for compounding validators
 end note
 api -> api: private key
 note right : generate a validator private key
@@ -111,7 +78,7 @@ activate api
 return status,\npubkey\nvalidatorRegistration,\nshareData
 note right : validatorRegistration contains the operatorIds and cluster details
 
-reg -> nativeStrat : registerSsvValidators(\npublicKeys[],\noperatorIds,\nsharesData[],\namount,\ncluster)
+reg -> nativeStrat : registerSsvValidators(\npublicKeys[],\noperatorIds,\nsharesData[],\nssvAmount,\ncluster)
 activate nativeStrat
 note right
 cluster data:
@@ -121,11 +88,11 @@ The last index calculated for the cluster
 Flag indicating whether the cluster is active
 The SSV balance of the cluster
 end note
-nativeStrat -> ssvNet : bulkRegisterValidator(\npublicKeys[],\noperatorIds,\nsharesData[],\namount,\ncluster)
+nativeStrat -> ssvNet : bulkRegisterValidator(\npublicKeys[],\noperatorIds,\nsharesData[],\nssvAmount,\ncluster)
 activate ssvNet
 ssvNet -> ssv : transferFrom(\nfrom\nto\namount)
 activate ssv
-note right: transfer SSV tokens\nfrom NodeDelegator\nto SSV Network
+note right: for the first validator\ntransfer SSV tokens\nfrom NodeDelegator\nto SSV Network
 return
 return
 return
@@ -141,43 +108,95 @@ activate api
 return status,\ndepositData
 note right : depositData contains the signature and deposit root
 
-reg -> nativeStrat : stakeEth([\npubkey,\nsignature,\ndeposit root])
+reg -> nativeStrat : stakeEth(\npubkey,\nsignature,\ndeposit root,\namountGwei)
 activate nativeStrat
-nativeStrat -> nativeStrat
-note right : validate staked ETH under the threshold
-nativeStrat -> weth : withdraw(32 ETH * number of validators)
+nativeStrat -> weth : withdraw(amountGwei * 1 Gwei)
 activate weth
 note right : WETH burned for ETH
 return ETH
 
-loop for each validator
-
 nativeStrat -> dep : deposit(\npubkey,\nwithdrawal_credentials,\nsignature,\ndeposit root)
 activate dep
 note left
-32 ETH from Native Staking Strategy is sent to Beacon Deposit.
+ETH from Native Staking Strategy is sent to Beacon Deposit.
 Withdrawal credential is the Native Staking Strategy
 end note
 return
-end
 
 note over nativeStrat
-store deposit pubkey, amount and deposit root
-store updated total pending deposits
+store deposit pubKeyHash, amountGwei, blockNumber and depositRoot
 end note
 
-note over val : Pending Deposit
 return
 
+... Beacon chain slot created for the block ...
+
+note over val : Pending deposit added\nBeaconBlock.state.PendingDeposits[index]
 
 ... 13 minutes to many days depending on the deposit queue ...
 
 note over val
-Pending Activation
-  Validator registered
-  Validator balance created
+Validator registered in
+BeaconBlock.state.validators[validatorIndex]
+Validator balance created in
+BeaconBlock.state.balances[balanceIndex]
 end note
 
+... four validators are activated each epoch from the Validator Queue (1-10 days) ...
+
+note over val
+Validator pending activation
+Will activate when another 31 ETH is deposited
+end note
+end group
+
+group Deposit more to existing validator
+
+reg -> api: POST\neth/staking/direct/increment-request/create\nuuid\npubkeys,amountPerValidator,withdrawalAddress
+activate api
+note right: amountPerValidator is in Gwei
+return 
+
+reg -> api: GET\neth/staking/eth/staking/increment-request/status/uuid
+activate api
+return status,\ndepositData
+note right : depositData contains the signature and deposit root
+
+reg -> nativeStrat : stakeEth(\npubkey,\nsignature,\ndeposit root,\namountGwei)
+activate nativeStrat
+nativeStrat -> weth : withdraw(amountGwei * 1 Gwei)
+activate weth
+note right : WETH burned for ETH
+return ETH
+
+nativeStrat -> dep : deposit(\npubkey,\nwithdrawal_credentials,\nsignature,\ndeposit root)
+activate dep
+note left
+ETH from Native Staking Strategy is sent to Beacon Deposit.
+Withdrawal credential is the Native Staking Strategy
+end note
+return
+
+note over nativeStrat
+store deposit pubKeyHash, amountGwei, blockNumber and depositRoot
+end note
+return
+
+... Beacon chain slot created for the block ...
+
+note over val : Pending deposit added\nBeaconBlock.state.PendingDeposits[index]
+
+... 13 minutes to many days depending on the deposit queue ...
+
+note over val: Validator balance updated\nBeaconBlock.state.balances[balanceIndex]
+
+... end of the epoch ...
+
+note over val: Validator activated if >= 32 ETH
+
+end group
+
+group Verify validator deposit
 
 sender -> val : getBlockV2(slot)
 note left : slot the deposit was\ncreated on the execution layer
@@ -189,88 +208,65 @@ note left : slot the deposit was\ncreated on the execution layer
 activate val
 return beacon state
 
-sender -> sender : generateSlotProof(\nbeacon block)
-sender -> sender : generateBlockProof(\nbeacon block,\nbeacon state)
+sender -> sender : generateSlotProof(\nslot,\nbeacon block)
+sender -> sender : generateBlockProof(\nblock number,\nbeacon block,\nbeacon state)
 
 ' map block number to slot in Beacon Oracle
-sender -> bo : proveSlot(timestamp,\nslot number,\nblock number,\nslot proof,\nblock proof)
+sender -> bo : verifySlot(\nnextBlockTimestamp,\nblockNumber,\nslot,\nslot proof,\nblock proof)
 activate bo
 bo -> roots : get(timestamp)
 note left
-timestamp of the block after the block we want to map to a slot.
+timestamp of the block after the block we want to map.
 This is because the timestamp will get the parent block root.
 end note
 activate roots
 return parent block root
 note over bo
-construct the slot root
-verify slot root against the parent block root using the slot proof
-construct the block number root
-verify block root against the parent block root using the block proof
+verify slot proof to block root
+verify block number proof to block root
 store map of block to slot
 end note
 return
 
-... four validators are activated each epoch from the Validator Queue (1-10 days) ...
-
-note over val : Active
-
-end group
-
-group Prove deposit
-
 sender -> val : getBlockV2(slot)
-note left : slot on or after the deposit\nwas processed on the Beacon chain
+note left : slot after the deposit was processed
 activate val
 return beacon block
 
 sender -> val : getStateV2(slot)
-note left : slot on or after the deposit\nwas processed on the Beacon chain
+note left : slot after the deposit was processed
 activate val
 return beacon state
 
-sender -> sender : generateValidatorProof(\nvalidator index,\nbeacon block,\nbeacon state)
-sender -> sender : generateFirstPendingDepositProof(\nbeacon block,\nbeacon state)
+sender -> sender : generateValidatorPubKeyProof(\nvalidator index,\nbeacon block,\nbeacon state)
+sender -> sender : generateFirstPendingDepositSlotProof(\nbeacon block,\nbeacon state)
 
-' prove a deposit has been processed on the Beacon chain
-sender -> nativeStrat : proveDeposit(\ndeposit root,\nvalidator index,\ntimestamp,\nvalidator details,\nvalidator details proof,\nfirst pending deposit\nfirst pending deposit proof)
+sender -> nativeStrat : verifyDeposit(\ndepositDataRoot,\nparentBlockTimestamp,\nmappedBlockNumber,\nvalidatorIndex,\nfirstPendingDepositSlot,\nvalidatorPubKeyProof,\nfirstPendingDepositSlotProof)
 activate nativeStrat
-nativeStrat -> roots : get(block timestamp)
-note left: timestamp of the block after the block we are proving for
+
+note over nativeStrat : deposit needs to be before\nor at the mapped block number
+
+nativeStrat -> bo : slotToBlock(\nmappedBlockNumber)
+note left : map the block number to a slot
+activate bo
+return slot
+
+note over nativeStrat : Check the mapped slot is\nbefore the first pending deposit slot
+
+nativeStrat -> roots : get(timestamp)
+note left
+timestamp of the block after the block we want to verify.
+This is because the timestamp will get the parent block root.
+end note
 activate roots
 return parent block root
 
-' verify the validator
 note over nativeStrat
-get pubkey of deposit using the deposit root
-construct validator root using the pubkey from the deposit and validator details
-verify validator proof against the parent block root using the validator root and index
+verify the pub key hash saved with the deposit is for the validator index
+verify the slot of the first pending deposit is after the deposit was processed
+remove the deposit
+add validator to active validators if not already
 end note
-
-' verify first pending deposit 
-note over nativeStrat
-construct the root of the first pending deposit
-verify first pending deposit proof against the parent block root
-end note
-
-loop stored deposits
-    alt the deposit root matches
-        nativeStrat -> bo : mapBlock2Slot(deposit block)
-        activate bo
-        return slot
-
-        note over nativeStrat
-            if the deposit's slot equals the first pending deposit's slot
-                revert
-            else if the deposit's slot < the first pending deposit's slot
-                delete stored deposit
-                reduce total pending deposits by deposit amount
-                add validator index to active validators
-        end note
-    end
-end
-
-return
 
 end group
 
@@ -282,18 +278,51 @@ nativeStrat -> roots : get(block timestamp)
 activate roots
 return parent block root
 note over nativeStrat
-store strategy WETH and ETH balances
-store parent block root
+store strategy deposits, WETH and ETH balances
+against the parent block root
+store timestamp of snap
 end note
 return
 
+
 sender -> val : getBlockV2(slot)
-note left : slot after snapBeaconRoot was taken
+note left : slot of the first pending deposit\nwhen the balance snap was taken
 activate val
 return beacon block
 
 sender -> val : getStateV2(slot)
-note left : slot after snapBeaconRoot was taken
+note left : slot of the first pending deposit\nwhen the balance snap was taken
+activate val
+return beacon state
+
+sender -> sender : generateSlotProof(\nfirst pending deposit slot,\nbeacon block)
+sender -> sender : generateBlockProof(\nfirst pending deposit block number,\nbeacon block,\nbeacon state)
+
+' map block number to slot in Beacon Oracle
+sender -> bo : verifySlot(\nnextBlockTimestamp,\nblockNumber,\nslot,\nslot proof,\nblock proof)
+note left : verify slot to block number\nof the first pending deposit\nwhen the balance snap was taken
+activate bo
+bo -> roots : get(timestamp)
+note left
+timestamp of the block after the block we want to map.
+This is because the timestamp will get the parent block root.
+end note
+activate roots
+return parent block root
+note over bo
+verify slot proof to block root
+verify block number proof to block root
+store map of block to slot
+end note
+return
+
+sender -> val : getBlockV2(slot)
+note left : slot before snapBalances was taken
+activate val
+return beacon block
+
+sender -> val : getStateV2(slot)
+note left : slot before snapBalances was taken
 activate val
 return beacon state
 
@@ -306,38 +335,46 @@ sender -> sender : generateValidatorBalanceProof(\nvalidator index,\nbeacon bloc
 note left: proof against root of\nbeaconBlock.state.balances
 end
 
-sender -> nativeStrat : proveBalances(\nfirst pending deposit\nfirst pending deposit proof,\nvalidator container proof,\nvalidator balance proofs)
+sender -> nativeStrat : verifyBalances(\nblockRoot,\nfirstPendingDepositSlot,\nfirstPendingDepositSlotProof,\nbalancesContainerRoot,\nvalidatorContainerProof,\nvalidatorBalanceLeaves[],\validatorBalanceProofs[])
 activate nativeStrat
-loop stored deposits
-    nativeStrat -> bo : mapBlock2Slot(deposit block)
-    activate bo
-    return slot
 
-    note over nativeStrat
-        revert if the stored deposit's slot is <= the first pending deposit's slot
-    end note
+note over nativeStrat
+    verify the first pending deposit slot proof against the block root
+end note
 
-    note over nativeStrat: total pending deposit amounts
+nativeStrat -> bo : slotToBlock(firstPendingDepositSlot)
+activate bo
+return block number of the first pending deposit
+
+loop strategy deposits
+note over nativeStrat
+Check the first pending deposit block number
+is before the block number of the deposit.
+add to total deposits
+end note
 end
 
 note over nativeStrat
     verify balances container proof against the snapped block root
 end note
+
 loop active validator indexes
     note over nativeStrat
         verify validator balance proof against the balances container root using the validator index
-    end note
-
-    note over nativeStrat
-        decode the validator balance from the balance root
+        decode the validator balance from the balance leaf
         total validator balances
     end note
+    alt if balance is zero
+        note over nativeStrat
+            remove from active validators
+        end note
+    end
 end
 note over nativeStrat
     store strategy balance =
         ETH balance from snap +
         WETH balance from snap +
-        total pending deposit amounts +
+        total deposits +
         total validator balances
 end note
 
