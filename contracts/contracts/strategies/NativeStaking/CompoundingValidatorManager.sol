@@ -670,10 +670,14 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
 
             // If the validator balance is zero
             if (validatorBalance == 0) {
+                // Remove the validator from the list of verified validators.
+
+                // Reduce the count of verified validators which is the last index before the pop removes it.
+                verifiedValidatorsCount -= 1;
                 // Remove the validator with a zero balance from the list of verified validators
                 // Move the last validator to the current index
                 verifiedValidators[i] = verifiedValidators[
-                    verifiedValidators.length - 1
+                    verifiedValidatorsCount
                 ];
                 // Delete the last validator from the list
                 verifiedValidators.pop();
