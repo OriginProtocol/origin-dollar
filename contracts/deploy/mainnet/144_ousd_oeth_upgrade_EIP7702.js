@@ -2,7 +2,7 @@ const { deploymentWithGovernanceProposal } = require("../../utils/deploy");
 
 module.exports = deploymentWithGovernanceProposal(
   {
-    deployName: "143_ousd_upgrade_EIP7702",
+    deployName: "144_ousd_oeth_upgrade_EIP7702.js",
     forceDeploy: false,
     //forceSkip: true,
     reduceQueueTime: true,
