@@ -4,6 +4,7 @@ const {
   deployCompoundingStakingSSVStrategy,
 } = require("../deployActions");
 const addresses = require("../../utils/addresses");
+const { resolveContract } = require("../../utils/resolvers");
 
 module.exports = deploymentWithGovernanceProposal(
   {
@@ -17,6 +18,14 @@ module.exports = deploymentWithGovernanceProposal(
   async ({ deployWithConfirmation, ethers }) => {
     // Current contracts
     const cVaultProxy = await ethers.getContract("OETHVaultProxy");
+    const cVaultAdmin = await ethers.getContractAt(
+      "OETHVaultAdmin",
+      cVaultProxy.address
+    );
+    const cHarvester = await resolveContract(
+      "OETHSimpleHarvesterProxy",
+      "OETHHarvesterSimple"
+    );
 
     // Deployer Actions
     // ----------------
@@ -25,17 +34,22 @@ module.exports = deploymentWithGovernanceProposal(
     const cNativeStakingStrategyProxy_2 = await ethers.getContract(
       "NativeStakingSSVStrategy2Proxy"
     );
-
+    const cNativeStakingStrategy2 = await ethers.getContractAt(
+      "NativeStakingSSVStrategy",
+      cNativeStakingStrategyProxy_2.address
+    );
     const cNativeStakingStrategyProxy_3 = await ethers.getContract(
       "NativeStakingSSVStrategy3Proxy"
     );
+    const cNativeStakingStrategy3 = await ethers.getContractAt(
+      "NativeStakingSSVStrategy",
+      cNativeStakingStrategyProxy_3.address
+    );
 
     // 2. Fetch the Fee Accumulator proxies
-
     const cFeeAccumulatorProxy_2 = await ethers.getContract(
       "NativeStakingFeeAccumulator2Proxy"
     );
-
     const cFeeAccumulatorProxy_3 = await ethers.getContract(
       "NativeStakingFeeAccumulator3Proxy"
     );
@@ -79,7 +93,8 @@ module.exports = deploymentWithGovernanceProposal(
     );
 
     // 5. Deploy the new Compounding Staking Strategy contracts
-    await deployCompoundingStakingSSVStrategy();
+    const cCompoundingStakingStrategy =
+      await deployCompoundingStakingSSVStrategy();
 
     // Governance Actions
     // ----------------
@@ -97,6 +112,55 @@ module.exports = deploymentWithGovernanceProposal(
           contract: cNativeStakingStrategyProxy_3,
           signature: "upgradeTo(address)",
           args: [dNativeStakingStrategyImpl_3.address],
+        },
+        // 3. Add the new compounding strategy as a consolidation target
+        {
+          contract: cNativeStakingStrategy2,
+          signature: "addTargetStrategy(address)",
+          args: [cCompoundingStakingStrategy.address],
+        },
+        // 4. Add the new compounding strategy as a consolidation target
+        {
+          contract: cNativeStakingStrategy3,
+          signature: "addTargetStrategy(address)",
+          args: [cCompoundingStakingStrategy.address],
+        },
+        // 5. Add new strategy to vault
+        {
+          contract: cVaultAdmin,
+          signature: "approveStrategy(address)",
+          args: [cCompoundingStakingStrategy.address],
+        },
+        // 6. configure Harvester to support the strategy
+        {
+          contract: cHarvester,
+          signature: "setSupportedStrategy(address,bool)",
+          args: [cCompoundingStakingStrategy.address, true],
+        },
+        // 7. set harvester to the strategy
+        {
+          contract: cCompoundingStakingStrategy,
+          signature: "setHarvesterAddress(address)",
+          args: [cHarvester.address],
+        },
+        // 8. set validator registrator to the Defender Relayer
+        {
+          contract: cCompoundingStakingStrategy,
+          signature: "setRegistrator(address)",
+          // The Defender Relayer
+          args: [addresses.mainnet.validatorRegistrator],
+        },
+        // 9. add the 2nd Native Staking Strategy as a source strategy
+        {
+          contract: cCompoundingStakingStrategy,
+          signature: "addSourceStrategy(address)",
+          args: [cNativeStakingStrategyProxy_2.address],
+        },
+        // 10. add the 3rd Native Staking Strategy as a source strategy
+        {
+          contract: cCompoundingStakingStrategy,
+          signature: "addSourceStrategy(address)",
+          args: [cNativeStakingStrategyProxy_3.address],
         },
       ],
     };

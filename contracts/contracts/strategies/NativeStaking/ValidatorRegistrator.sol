@@ -169,7 +169,7 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
     }
 
     /// @notice Adds support for a new staking strategy that can be used for consolidation.
-    function setTargetStrategy(address _strategy) external onlyGovernor {
+    function addTargetStrategy(address _strategy) external onlyGovernor {
         consolidationTargetStrategies[_strategy] = true;
 
         emit TargetStrategyAdded(_strategy);

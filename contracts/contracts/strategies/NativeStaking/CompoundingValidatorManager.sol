@@ -105,6 +105,7 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
     }
 
     event RegistratorChanged(address indexed newAddress);
+    event SourceStrategyAdded(address indexed strategy);
     event StakingMonitorChanged(address indexed newAddress);
     event ETHStaked(
         bytes32 indexed pubKeyHash,
@@ -189,7 +190,14 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
         emit RegistratorChanged(_address);
     }
 
-    /***************************************
+    /// @notice Adds support for a legacy staking strategy that can be used for consolidation.
+    function addSourceStrategy(address _strategy) external onlyGovernor {
+        consolidationSourceStrategies[_strategy] = true;
+
+        emit SourceStrategyAdded(_strategy);
+    }
+
+    /***************************************`
                 Validator Management
     ****************************************/
 
