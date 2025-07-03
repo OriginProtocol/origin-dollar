@@ -25,12 +25,14 @@ contract CollectXOGNRewardsModule is AbstractSafeModule {
     function collectRewards() external onlyOperator {
         uint256 balance = ogn.balanceOf(address(safeContract));
 
-        safeContract.execTransactionFromModule(
+        bool success = safeContract.execTransactionFromModule(
             address(xogn),
             0, // Value
             abi.encodeWithSelector(IXOGN.collectRewards.selector),
             0 // Call
         );
+
+        require(success, "Failed to collect rewards");
 
         balance = ogn.balanceOf(address(safeContract)) - balance;
 
@@ -38,7 +40,7 @@ contract CollectXOGNRewardsModule is AbstractSafeModule {
             return;
         }
 
-        safeContract.execTransactionFromModule(
+        success = safeContract.execTransactionFromModule(
             address(ogn),
             0, // Value
             abi.encodeWithSelector(
@@ -48,5 +50,7 @@ contract CollectXOGNRewardsModule is AbstractSafeModule {
             ),
             0 // Call
         );
+
+        require(success, "Failed to collect rewards");
     }
 }
