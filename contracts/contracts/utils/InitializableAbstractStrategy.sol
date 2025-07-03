@@ -79,6 +79,17 @@ abstract contract InitializableAbstractStrategy is Initializable, Governable {
     }
 
     /**
+     * @dev Verifies that the caller is the Governor or Strategist.
+     */
+    modifier onlyGovernorOrStrategist() {
+        require(
+            isGovernor() || msg.sender == IVault(vaultAddress).strategistAddr(),
+            "Caller is not the Strategist or Governor"
+        );
+        _;
+    }
+
+    /**
      * @param _config The platform and OToken vault addresses
      */
     constructor(BaseStrategyConfig memory _config) {

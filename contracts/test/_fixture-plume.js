@@ -4,6 +4,10 @@ const mocha = require("mocha");
 const { isFork, isPlumeFork, oethUnits } = require("./helpers");
 const { impersonateAndFund } = require("../utils/signers");
 const { nodeRevert, nodeSnapshot } = require("./_fixture");
+const { deployWithConfirmation } = require("../utils/deploy");
+const {
+  deployPlumeMockRoosterAMOStrategyImplementation,
+} = require("../deploy/deployActions.js");
 const addresses = require("../utils/addresses");
 const hhHelpers = require("@nomicfoundation/hardhat-network-helpers");
 const log = require("../utils/logger")("test:fixtures-plume");
@@ -14,7 +18,49 @@ const BURNER_ROLE =
   "0x3c11d16cbaffd01df69ce1c404f6340ee057498f5f00246190ea54220576a848";
 
 let snapshotId;
-const defaultPlumeFixture = deployments.createFixture(async () => {
+
+const baseFixtureWithMockedVaultAdminConfig = async () => {
+  const fixture = await defaultFixture();
+
+  const cOETHVaultProxy = await ethers.getContract("OETHPlumeVaultProxy");
+  const cOETHVaultAdmin = await ethers.getContractAt(
+    "IVault",
+    cOETHVaultProxy.address
+  );
+  await deployWithConfirmation("MockOETHVaultAdmin", [fixture.weth.address]);
+
+  const mockVaultAdmin = await ethers.getContract("MockOETHVaultAdmin");
+  await cOETHVaultAdmin
+    .connect(fixture.governor)
+    .setAdminImpl(mockVaultAdmin.address);
+
+  fixture.oethpVault = await ethers.getContractAt(
+    "IMockVault",
+    fixture.oethpVault.address
+  );
+
+  const mockImplementation =
+    await deployPlumeMockRoosterAMOStrategyImplementation(
+      addresses.plume.OethpWETHRoosterPool
+    );
+
+  const roosterAmoStrategyProxy = await ethers.getContract(
+    "RoosterAMOStrategyProxy"
+  );
+
+  await roosterAmoStrategyProxy
+    .connect(fixture.governor)
+    .upgradeTo(mockImplementation.address);
+
+  fixture.roosterAmoStrategy = await ethers.getContractAt(
+    "MockRoosterAMOStrategy",
+    roosterAmoStrategyProxy.address
+  );
+
+  return fixture;
+};
+
+const defaultFixture = async () => {
   if (!snapshotId && !isFork) {
     snapshotId = await nodeSnapshot();
   }
@@ -62,7 +108,6 @@ const defaultPlumeFixture = deployments.createFixture(async () => {
   const governor = isFork ? timelock : await ethers.getSigner(governorAddr);
   const strategist = await ethers.getSigner(strategistAddr);
 
-  // WETH
   const weth = await ethers.getContractAt("MockWETH", addresses.plume.WETH);
 
   // OETHp
@@ -130,11 +175,26 @@ const defaultPlumeFixture = deployments.createFixture(async () => {
     }
   };
 
+  let roosterAmoStrategy, roosterOETHpWETHpool;
   if (isFork) {
     // Allow governor to mint WETH
     const wethOwner = "0xb8ce2bE5c3c13712b4da61722EAd9d64bB57AbC9";
     const ownerSigner = await impersonateAndFund(wethOwner);
     await wethMintableContract.connect(ownerSigner).addMinter(governor.address);
+
+    // Aerodrome AMO Strategy
+    const roosterAmoStrategyProxy = await ethers.getContract(
+      "RoosterAMOStrategyProxy"
+    );
+    roosterAmoStrategy = await ethers.getContractAt(
+      "RoosterAMOStrategy",
+      roosterAmoStrategyProxy.address
+    );
+
+    roosterOETHpWETHpool = await ethers.getContractAt(
+      "IMaverickV2Pool",
+      addresses.plume.OethpWETHRoosterPool
+    );
   }
 
   for (const signer of [rafael, daniel, nick, domen, clement]) {
@@ -142,7 +202,7 @@ const defaultPlumeFixture = deployments.createFixture(async () => {
     await hhHelpers.setBalance(signer.address, oethUnits("100000000"));
 
     // And WETH
-    _mintWETH(signer, oethUnits("10000000"));
+    await _mintWETH(signer, oethUnits("10000000"));
 
     // Set allowance on the vault
     await weth
@@ -167,7 +227,8 @@ const defaultPlumeFixture = deployments.createFixture(async () => {
     oethp,
     wOETHp,
     oethpVault,
-
+    roosterAmoStrategy,
+    roosterOETHpWETHpool,
     // Bridged wOETH
     woeth,
     woethProxy,
@@ -177,7 +238,12 @@ const defaultPlumeFixture = deployments.createFixture(async () => {
     // Helpers
     _mintWETH,
   };
-});
+};
+
+const defaultPlumeFixture = deployments.createFixture(defaultFixture);
+const plumeFixtureWithMockedVaultAdmin = deployments.createFixture(
+  baseFixtureWithMockedVaultAdminConfig
+);
 
 const bridgeHelperModuleFixture = deployments.createFixture(async () => {
   const fixture = await defaultPlumeFixture();
@@ -215,5 +281,6 @@ mocha.after(async () => {
 
 module.exports = {
   defaultPlumeFixture,
+  plumeFixtureWithMockedVaultAdmin,
   bridgeHelperModuleFixture,
 };
