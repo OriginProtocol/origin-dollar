@@ -783,7 +783,7 @@ const deployNativeStakingSSVStrategy = async () => {
  */
 const deployCompoundingStakingSSVStrategy = async () => {
   const assetAddresses = await getAssetAddresses(deployments);
-  const { governorAddr, deployerAddr } = await getNamedAccounts();
+  const { deployerAddr } = await getNamedAccounts();
   const sDeployer = await ethers.provider.getSigner(deployerAddr);
   const cOETHVaultProxy = await ethers.getContract("OETHVaultProxy");
 
@@ -846,7 +846,7 @@ const deployCompoundingStakingSSVStrategy = async () => {
       "initialize(address,address,bytes)"
     ](
       cStrategyImpl.address, // implementation address
-      governorAddr, // governance
+      addresses.mainnet.Timelock, // Timelock
       initData // data for call to the initialize function on the strategy
     )
   );
@@ -875,10 +875,11 @@ const deployCompoundingStakingSSVStrategy = async () => {
       "initialize(address,address,bytes)"
     ](
       cFeeAccumulator.address, // implementation address
-      governorAddr, // governance
+      addresses.mainnet.Timelock, // Timelock
       "0x" // do not call any initialize functions
     )
   );
+
   return cStrategy;
 };
 

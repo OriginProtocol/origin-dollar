@@ -8,7 +8,7 @@ const { resolveContract } = require("../../utils/resolvers");
 
 module.exports = deploymentWithGovernanceProposal(
   {
-    deployName: "146_upgrade_native_staking",
+    deployName: "147_upgrade_native_staking",
     forceDeploy: false,
     //forceSkip: true,
     reduceQueueTime: true,
