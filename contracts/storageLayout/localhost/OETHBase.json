@@ -7,7 +7,7 @@
       "slot": "0",
       "type": "t_array(t_uint256)154_storage",
       "contract": "OUSD",
-      "src": "contracts/token/OUSD.sol:68"
+      "src": "contracts/token/OUSD.sol:69"
     },
     {
       "label": "totalSupply",
@@ -15,7 +15,7 @@
       "slot": "154",
       "type": "t_uint256",
       "contract": "OUSD",
-      "src": "contracts/token/OUSD.sol:71"
+      "src": "contracts/token/OUSD.sol:72"
     },
     {
       "label": "allowances",
@@ -23,7 +23,7 @@
       "slot": "155",
       "type": "t_mapping(t_address,t_mapping(t_address,t_uint256))",
       "contract": "OUSD",
-      "src": "contracts/token/OUSD.sol:72"
+      "src": "contracts/token/OUSD.sol:73"
     },
     {
       "label": "vaultAddress",
@@ -31,7 +31,7 @@
       "slot": "156",
       "type": "t_address",
       "contract": "OUSD",
-      "src": "contracts/token/OUSD.sol:75"
+      "src": "contracts/token/OUSD.sol:76"
     },
     {
       "label": "creditBalances",
@@ -39,7 +39,7 @@
       "slot": "157",
       "type": "t_mapping(t_address,t_uint256)",
       "contract": "OUSD",
-      "src": "contracts/token/OUSD.sol:76"
+      "src": "contracts/token/OUSD.sol:77"
     },
     {
       "label": "rebasingCredits_",
@@ -47,7 +47,7 @@
       "slot": "158",
       "type": "t_uint256",
       "contract": "OUSD",
-      "src": "contracts/token/OUSD.sol:78"
+      "src": "contracts/token/OUSD.sol:79"
     },
     {
       "label": "rebasingCreditsPerToken_",
@@ -55,7 +55,7 @@
       "slot": "159",
       "type": "t_uint256",
       "contract": "OUSD",
-      "src": "contracts/token/OUSD.sol:79"
+      "src": "contracts/token/OUSD.sol:80"
     },
     {
       "label": "nonRebasingSupply",
@@ -63,7 +63,7 @@
       "slot": "160",
       "type": "t_uint256",
       "contract": "OUSD",
-      "src": "contracts/token/OUSD.sol:81"
+      "src": "contracts/token/OUSD.sol:82"
     },
     {
       "label": "alternativeCreditsPerToken",
@@ -71,15 +71,15 @@
       "slot": "161",
       "type": "t_mapping(t_address,t_uint256)",
       "contract": "OUSD",
-      "src": "contracts/token/OUSD.sol:82"
+      "src": "contracts/token/OUSD.sol:83"
     },
     {
       "label": "rebaseState",
       "offset": 0,
       "slot": "162",
-      "type": "t_mapping(t_address,t_enum(RebaseOptions)5592)",
+      "type": "t_mapping(t_address,t_enum(RebaseOptions)46172)",
       "contract": "OUSD",
-      "src": "contracts/token/OUSD.sol:84"
+      "src": "contracts/token/OUSD.sol:85"
     },
     {
       "label": "__deprecated_isUpgraded",
@@ -87,7 +87,7 @@
       "slot": "163",
       "type": "t_mapping(t_address,t_uint256)",
       "contract": "OUSD",
-      "src": "contracts/token/OUSD.sol:85"
+      "src": "contracts/token/OUSD.sol:86"
     },
     {
       "label": "yieldTo",
@@ -95,7 +95,7 @@
       "slot": "164",
       "type": "t_mapping(t_address,t_address)",
       "contract": "OUSD",
-      "src": "contracts/token/OUSD.sol:90"
+      "src": "contracts/token/OUSD.sol:91"
     },
     {
       "label": "yieldFrom",
@@ -103,7 +103,7 @@
       "slot": "165",
       "type": "t_mapping(t_address,t_address)",
       "contract": "OUSD",
-      "src": "contracts/token/OUSD.sol:95"
+      "src": "contracts/token/OUSD.sol:96"
     },
     {
       "label": "__gap",
@@ -111,7 +111,7 @@
       "slot": "166",
       "type": "t_array(t_uint256)34_storage",
       "contract": "OUSD",
-      "src": "contracts/token/OUSD.sol:98"
+      "src": "contracts/token/OUSD.sol:99"
     }
   ],
   "types": {
@@ -127,7 +127,7 @@
       "label": "uint256[34]",
       "numberOfBytes": "1088"
     },
-    "t_enum(RebaseOptions)5592": {
+    "t_enum(RebaseOptions)46172": {
       "label": "enum OUSD.RebaseOptions",
       "members": [
         "NotSet",
@@ -142,7 +142,7 @@
       "label": "mapping(address => address)",
       "numberOfBytes": "32"
     },
-    "t_mapping(t_address,t_enum(RebaseOptions)5592)": {
+    "t_mapping(t_address,t_enum(RebaseOptions)46172)": {
       "label": "mapping(address => enum OUSD.RebaseOptions)",
       "numberOfBytes": "32"
     },
