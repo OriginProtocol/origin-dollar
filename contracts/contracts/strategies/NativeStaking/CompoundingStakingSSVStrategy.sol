@@ -305,7 +305,7 @@ contract CompoundingStakingSSVStrategy is
             // Convert ETH rewards to WETH
             IWETH9(WETH).deposit{ value: executionRewards }();
 
-            IERC20(WETH).safeTransfer(harvesterAddress, executionRewards);
+            IERC20(WETH).safeTransfer(VAULT_ADDRESS, executionRewards);
 
             emit RewardTokenCollected(harvesterAddress, WETH, executionRewards);
         }

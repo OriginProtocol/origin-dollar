@@ -4,7 +4,6 @@ const {
   deployCompoundingStakingSSVStrategy,
 } = require("../deployActions");
 const addresses = require("../../utils/addresses");
-const { resolveContract } = require("../../utils/resolvers");
 
 module.exports = deploymentWithGovernanceProposal(
   {
@@ -22,11 +21,6 @@ module.exports = deploymentWithGovernanceProposal(
       "OETHVaultAdmin",
       cVaultProxy.address
     );
-    const cHarvester = await resolveContract(
-      "OETHSimpleHarvesterProxy",
-      "OETHHarvesterSimple"
-    );
-
     // Deployer Actions
     // ----------------
 
@@ -131,32 +125,26 @@ module.exports = deploymentWithGovernanceProposal(
           signature: "approveStrategy(address)",
           args: [cCompoundingStakingStrategy.address],
         },
-        // 6. configure Harvester to support the strategy
-        {
-          contract: cHarvester,
-          signature: "setSupportedStrategy(address,bool)",
-          args: [cCompoundingStakingStrategy.address, true],
-        },
-        // 7. set harvester to the strategy
+        // 6. set harvester to the Defender Relayer
         {
           contract: cCompoundingStakingStrategy,
           signature: "setHarvesterAddress(address)",
-          args: [cHarvester.address],
+          args: [addresses.mainnet.validatorRegistrator],
         },
-        // 8. set validator registrator to the Defender Relayer
+        // 7. set validator registrator to the Defender Relayer
         {
           contract: cCompoundingStakingStrategy,
           signature: "setRegistrator(address)",
           // The Defender Relayer
           args: [addresses.mainnet.validatorRegistrator],
         },
-        // 9. add the 2nd Native Staking Strategy as a source strategy
+        // 8. add the 2nd Native Staking Strategy as a source strategy
         {
           contract: cCompoundingStakingStrategy,
           signature: "addSourceStrategy(address)",
           args: [cNativeStakingStrategyProxy_2.address],
         },
-        // 10. add the 3rd Native Staking Strategy as a source strategy
+        // 9. add the 3rd Native Staking Strategy as a source strategy
         {
           contract: cCompoundingStakingStrategy,
           signature: "addSourceStrategy(address)",
