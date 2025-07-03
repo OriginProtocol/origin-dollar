@@ -1,9 +1,12 @@
-// SPDX-License-Identifier: BUSL-1.1
+// SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
 import { BeaconProofsLib } from "./BeaconProofsLib.sol";
 import { BeaconRoots } from "./BeaconRoots.sol";
 
+/// @title Beacon Oracle
+/// @notice An Oracle for mapping execution layer block numbers to beacon chain slots.
+/// @author Origin Protocol Inc
 contract BeaconOracle {
     /// @notice Maps a block number to slot
     mapping(uint64 => uint64) private _blockToSlot;
@@ -49,6 +52,7 @@ contract BeaconOracle {
         emit BlockToSlot(blockRoot, blockNumber, slot);
     }
 
+    /// @notice Returns the beacon chain slot for a given execution layer block number.
     function blockToSlot(uint64 blockNumber)
         external
         view
@@ -59,6 +63,7 @@ contract BeaconOracle {
         require(slot != 0, "Block not mapped");
     }
 
+    /// @notice Returns the execution layer block number for a given beacon chain slot.
     function slotToBlock(uint64 slot)
         external
         view
