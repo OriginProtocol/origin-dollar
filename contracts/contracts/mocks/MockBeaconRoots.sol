@@ -11,6 +11,7 @@ contract MockBeaconRoots {
     event RootSet(uint256 indexed timestamp, bytes32 root);
 
     // Fallback function to handle raw 32-byte timestamp input
+    // solhint-disable no-complex-fallback
     fallback() external {
         // Ensure input is exactly 32 bytes (big-endian encoded timestamp)
         require(msg.data.length == 32, "Input must be 32 bytes");
@@ -36,6 +37,7 @@ contract MockBeaconRoots {
         }
 
         // Return the 32-byte root directly
+        // solhint-disable-next-line no-inline-assembly
         assembly {
             mstore(0, root)
             return(0, 32)
