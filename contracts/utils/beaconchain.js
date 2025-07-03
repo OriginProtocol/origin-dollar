@@ -1,6 +1,6 @@
 const fetch = require("node-fetch");
 const API_URL = "https://beaconcha.in/api/v1/";
-const log = require("../utils/logger")("task:p2p");
+const log = require("./logger")("task:p2p");
 
 const beaconchainRequest = async (endpoint) => {
   const apikey = process.env.BEACONCHAIN_API_KEY;

@@ -14,21 +14,24 @@ const getClient = async () => {
   return client;
 };
 
-const getCurrentSlot = async () => {
+const getSlot = async (blockId = "head") => {
   const client = await getClient();
 
   // Get the latest beacon block data using Lodestar
+  log(`Fetching block header for blockId ${blockId} from the beacon node`);
   const blockHeaderRes = await client.beacon.getBlockHeader({
-    blockId: "head",
+    blockId,
   });
   if (!blockHeaderRes.ok) {
+    console.error(`Failed to get block header for blockId ${blockId}`);
+    console.error(blockHeaderRes);
     throw blockHeaderRes.error;
   }
 
-  const currentSlot = blockHeaderRes.value().header.message.slot;
-  log(`Got slot ${currentSlot} at head`);
+  const slot = blockHeaderRes.value().header.message.slot;
+  log(`Got slot ${slot} at ${blockId}`);
 
-  return currentSlot;
+  return slot;
 };
 
 const getBeaconBlock = async (slot) => {
@@ -42,6 +45,7 @@ const getBeaconBlock = async (slot) => {
   log(`Fetching block for slot ${slot} from the beacon node`);
   const blockRes = await client.beacon.getBlockV2({ blockId: slot });
   if (!blockRes.ok) {
+    log(blockRes.error);
     throw new Error(
       `Failed to get beacon block for slot ${slot}. Probably because it was missed`,
       {
@@ -100,5 +104,5 @@ const concatProof = (proof) => {
 module.exports = {
   concatProof,
   getBeaconBlock,
-  getCurrentSlot,
+  getSlot,
 };

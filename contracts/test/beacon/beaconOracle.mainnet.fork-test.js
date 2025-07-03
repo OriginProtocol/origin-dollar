@@ -2,11 +2,7 @@ const { expect } = require("chai");
 
 const { createFixtureLoader, beaconChainFixture } = require("../_fixture");
 const { toHex } = require("../../utils/units");
-const {
-  concatProof,
-  getBeaconBlock,
-  getCurrentSlot,
-} = require("../../utils/beacon");
+const { concatProof, getBeaconBlock, getSlot } = require("../../utils/beacon");
 const { before } = require("mocha");
 
 const log = require("../../utils/logger")("test:fork:beacon:oracle");
@@ -25,7 +21,7 @@ describe("ForkTest: Beacon Oracle", function () {
       process.env.PROVIDER_URL
     );
 
-    const currentSlot = await getCurrentSlot();
+    const currentSlot = await getSlot();
 
     // Needs to be old enough so its before the local fork
     // But not too old that its before the beacon root oracle ring buffer

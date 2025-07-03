@@ -112,8 +112,8 @@ const { registerValidators, stakeValidators } = require("../utils/validator");
 const { harvestAndSwap } = require("./harvest");
 const { deployForceEtherSender, forceSend } = require("./simulation");
 const { sleep } = require("../utils/time");
-
 const { lzBridgeToken, lzSetConfig } = require("./layerzero");
+const { verifySlot } = require("./beacon");
 
 const log = require("../utils/logger")("tasks");
 
@@ -1829,3 +1829,14 @@ task("lzSetConfig")
   .setAction(async (taskArgs) => {
     await lzSetConfig(taskArgs, hre);
   });
+
+// Beacon Chain Operations
+subtask(
+  "verifySlot",
+  "Verify an execution layer block number to a beacon chain slot"
+)
+  .addParam("block", "Execution layer block number", undefined, types.int)
+  .setAction(verifySlot);
+task("verifySlot").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
