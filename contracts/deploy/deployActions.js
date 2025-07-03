@@ -725,7 +725,7 @@ const deployNativeStakingSSVStrategy = async () => {
     "initialize(address[],address[],address[])",
     [
       [assetAddresses.WETH], // reward token addresses
-      /* no need to specify WETH as an asset, since we have that overriden in the "supportsAsset"
+      /* no need to specify WETH as an asset, since we have that overridden in the "supportsAsset"
        * function on the strategy
        */
       [], // asset token addresses
@@ -774,6 +774,120 @@ const deployNativeStakingSSVStrategy = async () => {
     )
   );
   return cStrategy;
+};
+
+/**
+ * Deploy CompoundingStakingSSVStrategy
+ * Deploys a proxy, the actual strategy, initializes the proxy and initializes
+ * the strategy.
+ */
+const deployCompoundingStakingSSVStrategy = async () => {
+  const assetAddresses = await getAssetAddresses(deployments);
+  const { governorAddr, deployerAddr } = await getNamedAccounts();
+  const sDeployer = await ethers.provider.getSigner(deployerAddr);
+  const cOETHVaultProxy = await ethers.getContract("OETHVaultProxy");
+
+  log("Deploy CompoundingStakingSSVStrategyProxy");
+  const dCompoundingStakingSSVStrategyProxy = await deployWithConfirmation(
+    "CompoundingStakingSSVStrategyProxy"
+  );
+  const cCompoundingStakingSSVStrategyProxy = await ethers.getContract(
+    "CompoundingStakingSSVStrategyProxy"
+  );
+
+  log("Deploy FeeAccumulator proxy");
+  const dFeeAccumulatorProxy = await deployWithConfirmation(
+    "CompoundingStakingFeeAccumulatorProxy"
+  );
+  const cFeeAccumulatorProxy = await ethers.getContractAt(
+    "CompoundingStakingFeeAccumulatorProxy",
+    dFeeAccumulatorProxy.address
+  );
+
+  const cBeaconOracle = await ethers.getContract("BeaconOracle");
+  const cBeaconProofs = await ethers.getContract("BeaconProofs");
+
+  log("Deploy CompoundingStakingSSVStrategy");
+  const dStrategyImpl = await deployWithConfirmation(
+    "CompoundingStakingSSVStrategy",
+    [
+      [addresses.zero, cOETHVaultProxy.address], //_baseConfig
+      assetAddresses.WETH, // wethAddress
+      assetAddresses.SSV, // ssvToken
+      assetAddresses.SSVNetwork, // ssvNetwork
+      dFeeAccumulatorProxy.address, // feeAccumulator
+      assetAddresses.beaconChainDepositContract, // depositContractMock
+      cBeaconOracle.address, // BeaconOracle
+      cBeaconProofs.address, // BeaconProofs
+    ]
+  );
+  const cStrategyImpl = await ethers.getContractAt(
+    "CompoundingStakingSSVStrategy",
+    dStrategyImpl.address
+  );
+
+  log("Deploy encode initialize function of the strategy contract");
+  const initData = cStrategyImpl.interface.encodeFunctionData(
+    "initialize(address[],address[],address[])",
+    [
+      [assetAddresses.WETH], // reward token addresses
+      /* no need to specify WETH as an asset, since we have that overridden in the "supportsAsset"
+       * function on the strategy
+       */
+      [], // asset token addresses
+      [], // platform tokens addresses
+    ]
+  );
+
+  log("Initialize the proxy and execute the initialize strategy function");
+  await withConfirmation(
+    cCompoundingStakingSSVStrategyProxy.connect(sDeployer)[
+      // eslint-disable-next-line no-unexpected-multiline
+      "initialize(address,address,bytes)"
+    ](
+      cStrategyImpl.address, // implementation address
+      governorAddr, // governance
+      initData // data for call to the initialize function on the strategy
+    )
+  );
+
+  const cStrategy = await ethers.getContractAt(
+    "CompoundingStakingSSVStrategy",
+    dCompoundingStakingSSVStrategyProxy.address
+  );
+
+  log("Approve spending of the SSV token");
+  await withConfirmation(cStrategy.connect(sDeployer).safeApproveAllTokens());
+
+  log("Deploy fee accumulator implementation");
+  const dFeeAccumulator = await deployWithConfirmation("FeeAccumulator", [
+    cCompoundingStakingSSVStrategyProxy.address, // STRATEGY
+  ]);
+  const cFeeAccumulator = await ethers.getContractAt(
+    "FeeAccumulator",
+    dFeeAccumulator.address
+  );
+
+  log("Init fee accumulator proxy");
+  await withConfirmation(
+    cFeeAccumulatorProxy.connect(sDeployer)[
+      // eslint-disable-next-line no-unexpected-multiline
+      "initialize(address,address,bytes)"
+    ](
+      cFeeAccumulator.address, // implementation address
+      governorAddr, // governance
+      "0x" // do not call any initialize functions
+    )
+  );
+  return cStrategy;
+};
+
+const deployBeaconContracts = async () => {
+  log("Deploy Beacon Oracle that maps blocks and slots");
+  await deployWithConfirmation("BeaconOracle", []);
+
+  log("Deploy Beacon Proofs");
+  await deployWithConfirmation("BeaconProofs", []);
 };
 
 /**
@@ -1470,7 +1584,9 @@ module.exports = {
   deployAaveStrategy,
   deployConvexStrategy,
   deployConvexOUSDMetaStrategy,
+  deployBeaconContracts,
   deployNativeStakingSSVStrategy,
+  deployCompoundingStakingSSVStrategy,
   deployDrippers,
   deployOETHDripper,
   deployOUSDDripper,

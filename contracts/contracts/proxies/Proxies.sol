@@ -311,3 +311,21 @@ contract OUSDCurveAMOProxy is InitializeGovernedUpgradeabilityProxy {
 contract OETHCurveAMOProxy is InitializeGovernedUpgradeabilityProxy {
 
 }
+
+/**
+ * @notice CompoundingStakingSSVStrategyProxy delegates calls to a CompoundingStakingSSVStrategy implementation
+ */
+contract CompoundingStakingSSVStrategyProxy is
+    InitializeGovernedUpgradeabilityProxy
+{
+
+}
+
+/**
+ * @notice CompoundingStakingFeeAccumulatorProxy delegates calls to FeeAccumulator implementation
+ */
+contract CompoundingStakingFeeAccumulatorProxy is
+    InitializeGovernedUpgradeabilityProxy
+{
+
+}

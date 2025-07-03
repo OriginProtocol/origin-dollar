@@ -1,9 +1,13 @@
 const { deploymentWithGovernanceProposal } = require("../../utils/deploy");
+const {
+  deployBeaconContracts,
+  deployCompoundingStakingSSVStrategy,
+} = require("../deployActions");
 const addresses = require("../../utils/addresses");
 
 module.exports = deploymentWithGovernanceProposal(
   {
-    deployName: "145_upgrade_native_staking",
+    deployName: "146_upgrade_native_staking",
     forceDeploy: false,
     //forceSkip: true,
     reduceQueueTime: true,
@@ -36,9 +40,8 @@ module.exports = deploymentWithGovernanceProposal(
       "NativeStakingFeeAccumulator3Proxy"
     );
 
-    // 3. Deploy the BeaconOracle
-    const dBeaconOracle = await deployWithConfirmation("BeaconOracle");
-    console.log(`Deployed BeaconOracle ${dBeaconOracle.address}`);
+    // 3. Deploy the Beacon Oracle and Proofs contracts
+    await deployBeaconContracts();
 
     // 4. Deploy the new Native Staking Strategy implementation
     const dNativeStakingStrategyImpl_2 = await deployWithConfirmation(
@@ -51,10 +54,7 @@ module.exports = deploymentWithGovernanceProposal(
         500, // maxValidators
         cFeeAccumulatorProxy_2.address, // feeAccumulator
         addresses.mainnet.beaconChainDepositContract, // beacon chain deposit contract
-        dBeaconOracle.address, // beaconOracle
-      ],
-      undefined,
-      true // skipUpgradeSafety
+      ]
     );
     console.log(
       `Deployed 2nd NativeStakingSSVStrategy ${dNativeStakingStrategyImpl_2.address}`
@@ -70,7 +70,6 @@ module.exports = deploymentWithGovernanceProposal(
         500, // maxValidators
         cFeeAccumulatorProxy_3.address, // feeAccumulator
         addresses.mainnet.beaconChainDepositContract, // beacon chain deposit contract
-        dBeaconOracle.address, // beaconOracle
       ],
       undefined,
       true // skipUpgradeSafety
@@ -79,10 +78,13 @@ module.exports = deploymentWithGovernanceProposal(
       `Deployed 3rd NativeStakingSSVStrategy ${dNativeStakingStrategyImpl_3.address}`
     );
 
+    // 5. Deploy the new Compounding Staking Strategy contracts
+    await deployCompoundingStakingSSVStrategy();
+
     // Governance Actions
     // ----------------
     return {
-      name: `Upgrade the Native Staking Strategies to support Pectra features like compounding validators and consolidation`,
+      name: `Upgrade the existing Native Staking Strategies and deploy new strategy that supports compounding validators`,
       actions: [
         // 1. Upgrade the second Native Staking Strategy
         {
