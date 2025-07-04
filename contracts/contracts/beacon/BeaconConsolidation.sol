@@ -11,6 +11,9 @@ library BeaconConsolidation {
         internal
         returns (uint256 fee_)
     {
+        require(source.length == 48, "Invalid source byte length");
+        require(target.length == 48, "Invalid target byte length");
+
         fee_ = fee();
 
         // Call the Consolidation Request contract with the public keys of the source and target
