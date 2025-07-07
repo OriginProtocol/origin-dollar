@@ -18,13 +18,15 @@ box "Execution Chain"
 participant "Harvester" as harv <<Origin>>
 participant "Dripper" as drip <<Origin>>
 participant "Vault" as vault <<Origin>>
-participant "Native\nStaking SSV\nStrategy" as nativeStrat <<Origin>>
+participant "Native\nStaking\nStrategy" as nativeStrat <<Origin>>
+participant "Compound\nStaking\nStrategy" as compStrat <<Origin>>
 participant "Fee\nAccumulator" as feeAccum <<Origin>>
 participant "SSV Network" as ssvNet <<SSV>>
 participant "Token" as ssv <<SSV>>
 participant "WETH" as weth <<Wrapped ETH>>
 participant "Beacon\nOracle" as bo <<Origin>>
 participant "Beacon\nDeposit\nContract" as dep <<System>>
+participant "Beacon\nConsolidation\nRequests" as consol <<System>>
 participant "Beacon\nBlock\nRoots" as roots <<System>>
 end box
 
@@ -32,15 +34,79 @@ box "Beacon chain"
 participant "Validator" as val <<Beacon>>
 end box
 
+
+group Consolidate validators
+
+reg -> nativeStrat: requestConsolidation(\nsourcePubKeys,\ntargetPubKey,\ntargetStakingStrategy)
+activate nativeStrat
+
+loop for each sourcePubKey
+    nativeStrat -> consol : sourcePubKey, targetPubKey
+    activate consol
+    return
+    note over nativeStrat: Store source validator state as exiting
+end
+
+nativeStrat -> compStrat : requestConsolidation(\nlastSourcePubKeyHash,\ntargetPubKeyHash)
+activate compStrat
+note over compStrat: pause the strategy
+return
+
+note over nativeStrat
+store count of consolidated validators
+store target starting strategy
+pause the strategy
+end note
+
+return
+
+... wait 1-10 days for consolidation to be processed on the Beacon Chain ...
+
+reg -> val : getBlockV2(slot)
+note left : any slot after the last\nconsolidation request\nwas processed
+activate val
+return beacon block
+
+reg -> val : getStateV2(slot)
+note left : any slot after the last\nconsolidation request\nwas processed
+activate val
+return beacon state
+
+reg -> reg : generateValidatorPubKeyProof(\nlastValidatorIndex,\nbeacon block,\nbeacon state)
+reg -> reg : generateValidatorBalanceProof(\nlastValidatorIndex,\nbeacon block,\nbeacon state)
+
+reg -> compStrat : verifyConsolidation(parentBlockTimestamp,\nlastValidatorIndex,\nvalidatorPubKeyProof,\nbalancesLeaf,\nvalidatorBalanceProof)
+activate compStrat
+
+compStrat -> roots : get(parentBlockTimestamp)
+note left
+timestamp of the block after the block we want to map.
+This is because the timestamp will get the parent block root.
+end note
+activate roots
+return parent block root
+
+note over compStrat
+verify last validator pubkey to block root
+verify last validator balance to block root
+assert last validator balance is zero
+end note
+
+compStrat -> compStrat : snapBalances()
+note left : store WETH and ETH balances
+return
+
+end group
+
 group Governor initializes the Native Staking Strategy
 
-gov -> nativeStrat : initialize()
-activate nativeStrat
-nativeStrat -> ssv : approve(\nSSV Network,\namount)
+gov -> compStrat : initialize()
+activate compStrat
+compStrat -> ssv : approve(\nSSV Network,\namount)
 activate ssv
 note right : Native Staking Strategy approves\nSSV Network to spend\nSSV tokens
 return
-nativeStrat -> ssvNet : setFeeRecipientAddress(\nFeeAccumulator)
+compStrat -> ssvNet : setFeeRecipientAddress(\nFeeAccumulator)
 activate ssvNet
 note right : set FeeAccumulator\nto receive MEV rewards
 return
@@ -78,8 +144,8 @@ activate api
 return status,\npubkey\nvalidatorRegistration,\nshareData
 note right : validatorRegistration contains the operatorIds and cluster details
 
-reg -> nativeStrat : registerSsvValidators(\npublicKeys[],\noperatorIds,\nsharesData[],\nssvAmount,\ncluster)
-activate nativeStrat
+reg -> compStrat : registerSsvValidators(\npublicKeys[],\noperatorIds,\nsharesData[],\nssvAmount,\ncluster)
+activate compStrat
 note right
 cluster data:
 The number of validators in the cluster
@@ -88,7 +154,7 @@ The last index calculated for the cluster
 Flag indicating whether the cluster is active
 The SSV balance of the cluster
 end note
-nativeStrat -> ssvNet : bulkRegisterValidator(\npublicKeys[],\noperatorIds,\nsharesData[],\nssvAmount,\ncluster)
+compStrat -> ssvNet : bulkRegisterValidator(\npublicKeys[],\noperatorIds,\nsharesData[],\nssvAmount,\ncluster)
 activate ssvNet
 ssvNet -> ssv : transferFrom(\nfrom\nto\namount)
 activate ssv
@@ -108,14 +174,14 @@ activate api
 return status,\ndepositData
 note right : depositData contains the signature and deposit root
 
-reg -> nativeStrat : stakeEth(\npubkey,\nsignature,\ndeposit root,\namountGwei)
-activate nativeStrat
-nativeStrat -> weth : withdraw(amountGwei * 1 Gwei)
+reg -> compStrat : stakeEth(\npubkey,\nsignature,\ndeposit root,\namountGwei)
+activate compStrat
+compStrat -> weth : withdraw(amountGwei * 1 Gwei)
 activate weth
 note right : WETH burned for ETH
 return ETH
 
-nativeStrat -> dep : deposit(\npubkey,\nwithdrawal_credentials,\nsignature,\ndeposit root)
+compStrat -> dep : deposit(\npubkey,\nwithdrawal_credentials,\nsignature,\ndeposit root)
 activate dep
 note left
 ETH from Native Staking Strategy is sent to Beacon Deposit.
@@ -123,7 +189,7 @@ Withdrawal credential is the Native Staking Strategy
 end note
 return
 
-note over nativeStrat
+note over compStrat
 store deposit pubKeyHash, amountGwei, blockNumber and depositRoot
 end note
 
@@ -162,14 +228,14 @@ activate api
 return status,\ndepositData
 note right : depositData contains the signature and deposit root
 
-reg -> nativeStrat : stakeEth(\npubkey,\nsignature,\ndeposit root,\namountGwei)
-activate nativeStrat
-nativeStrat -> weth : withdraw(amountGwei * 1 Gwei)
+reg -> compStrat : stakeEth(\npubkey,\nsignature,\ndeposit root,\namountGwei)
+activate compStrat
+compStrat -> weth : withdraw(amountGwei * 1 Gwei)
 activate weth
 note right : WETH burned for ETH
 return ETH
 
-nativeStrat -> dep : deposit(\npubkey,\nwithdrawal_credentials,\nsignature,\ndeposit root)
+compStrat -> dep : deposit(\npubkey,\nwithdrawal_credentials,\nsignature,\ndeposit root)
 activate dep
 note left
 ETH from Native Staking Strategy is sent to Beacon Deposit.
@@ -177,7 +243,7 @@ Withdrawal credential is the Native Staking Strategy
 end note
 return
 
-note over nativeStrat
+note over compStrat
 store deposit pubKeyHash, amountGwei, blockNumber and depositRoot
 end note
 return
@@ -241,19 +307,19 @@ return beacon state
 sender -> sender : generateValidatorPubKeyProof(\nvalidator index,\nbeacon block,\nbeacon state)
 sender -> sender : generateFirstPendingDepositSlotProof(\nbeacon block,\nbeacon state)
 
-sender -> nativeStrat : verifyDeposit(\ndepositDataRoot,\nparentBlockTimestamp,\nmappedBlockNumber,\nvalidatorIndex,\nfirstPendingDepositSlot,\nvalidatorPubKeyProof,\nfirstPendingDepositSlotProof)
-activate nativeStrat
+sender -> compStrat : verifyDeposit(\ndepositDataRoot,\nparentBlockTimestamp,\nmappedBlockNumber,\nvalidatorIndex,\nfirstPendingDepositSlot,\nvalidatorPubKeyProof,\nfirstPendingDepositSlotProof)
+activate compStrat
 
-note over nativeStrat : deposit needs to be before\nor at the mapped block number
+note over compStrat : deposit needs to be before\nor at the mapped block number
 
-nativeStrat -> bo : slotToBlock(\nmappedBlockNumber)
+compStrat -> bo : slotToBlock(\nmappedBlockNumber)
 note left : map the block number to a slot
 activate bo
 return slot
 
-note over nativeStrat : Check the mapped slot is\nbefore the first pending deposit slot
+note over compStrat : Check the mapped slot is\nbefore the first pending deposit slot
 
-nativeStrat -> roots : get(timestamp)
+compStrat -> roots : get(timestamp)
 note left
 timestamp of the block after the block we want to verify.
 This is because the timestamp will get the parent block root.
@@ -261,7 +327,7 @@ end note
 activate roots
 return parent block root
 
-note over nativeStrat
+note over compStrat
 verify the pub key hash saved with the deposit is for the validator index
 verify the slot of the first pending deposit is after the deposit was processed
 remove the deposit
@@ -272,18 +338,17 @@ end group
 
 group Update balances
 
-sender -> nativeStrat : snapBalances()
-activate nativeStrat
-nativeStrat -> roots : get(block timestamp)
+sender -> compStrat : snapBalances()
+activate compStrat
+compStrat -> roots : get(block timestamp)
 activate roots
 return parent block root
-note over nativeStrat
-store strategy deposits, WETH and ETH balances
+note over compStrat
+store WETH and ETH balances
 against the parent block root
 store timestamp of snap
 end note
 return
-
 
 sender -> val : getBlockV2(slot)
 note left : slot of the first pending deposit\nwhen the balance snap was taken
@@ -335,48 +400,64 @@ sender -> sender : generateValidatorBalanceProof(\nvalidator index,\nbeacon bloc
 note left: proof against root of\nbeaconBlock.state.balances
 end
 
-sender -> nativeStrat : verifyBalances(\nblockRoot,\nfirstPendingDepositSlot,\nfirstPendingDepositSlotProof,\nbalancesContainerRoot,\nvalidatorContainerProof,\nvalidatorBalanceLeaves[],\validatorBalanceProofs[])
-activate nativeStrat
+sender -> compStrat : verifyBalances(\nblockRoot,\nfirstPendingDepositSlot,\nfirstPendingDepositSlotProof,\nbalancesContainerRoot,\nvalidatorContainerProof,\nvalidatorBalanceLeaves[],\validatorBalanceProofs[])
+activate compStrat
 
-note over nativeStrat
+note over compStrat
     verify the first pending deposit slot proof against the block root
 end note
 
-nativeStrat -> bo : slotToBlock(firstPendingDepositSlot)
+compStrat -> bo : slotToBlock(firstPendingDepositSlot)
 activate bo
 return block number of the first pending deposit
 
 loop strategy deposits
-note over nativeStrat
+note over compStrat
 Check the first pending deposit block number
 is before the block number of the deposit.
 add to total deposits
 end note
 end
 
-note over nativeStrat
+note over compStrat
     verify balances container proof against the snapped block root
 end note
 
 loop active validator indexes
-    note over nativeStrat
+    note over compStrat
         verify validator balance proof against the balances container root using the validator index
         decode the validator balance from the balance leaf
         total validator balances
     end note
     alt if balance is zero
-        note over nativeStrat
+        note over compStrat
             remove from active validators
         end note
     end
 end
-note over nativeStrat
+note over compStrat
     store strategy balance =
         ETH balance from snap +
         WETH balance from snap +
         total deposits +
         total validator balances
 end note
+
+alt validator consolidation
+        
+compStrat -> nativeStrat : confirmConsolidation()
+activate nativeStrat
+note over nativeStrat
+reduce active validators by consolidated validators
+reset consolidation state
+unpause the strategy
+end note
+return
+note over compStrat
+reset consolidation state
+unpause the strategy
+end note
+end
 
 return
 
@@ -406,9 +487,9 @@ cluster data:
 end note
 end group
 
-strategist -> nativeStrat : depositSSV(\noperatorIds,\namount,\ncluster)
-activate nativeStrat
-nativeStrat -> ssvNet : deposit(\nclusterOwner,\noperatorIds,\namount,\ncluster)
+strategist -> compStrat : depositSSV(\noperatorIds,\namount,\ncluster)
+activate compStrat
+compStrat -> ssvNet : deposit(\nclusterOwner,\noperatorIds,\namount,\ncluster)
 activate ssvNet
 note right
 clusterOwner is Native Staking Strategy
@@ -434,17 +515,17 @@ val -> val : ETH
 ... swept every 8-10 days ...
 
 note over val : partial withdraw of excess ETH\nfrom validator to the Native Staking Strategy
-val -> nativeStrat : ETH
+val -> compStrat : ETH
 
-note over nativeStrat : Native Staking Strategy's\nWETH balance does not change
+note over compStrat : Native Staking Strategy's\nWETH balance does not change
 
 end group
 
 group Registrator full withdraw from validator
 
-reg -> nativeStrat : exitSsvValidator(\npublicKey\noperatorIds)
-activate nativeStrat
-nativeStrat -> ssvNet : exitValidator(\npublicKey\noperatorIds)
+reg -> compStrat : exitSsvValidator(\npublicKey\noperatorIds)
+activate compStrat
+compStrat -> ssvNet : exitValidator(\npublicKey\noperatorIds)
 activate ssvNet
 return
 return
@@ -457,9 +538,9 @@ return
 
 ... wait until validator has exited.\nmin four epochs (~25 min), currently 1.5 hours but can take a number of days depending on the number of validators in the exit queue ...
 
-reg -> nativeStrat : removeSsvValidator(\npublicKey,\noperatorIds,\ncluster)
-activate nativeStrat
-nativeStrat -> ssvNet : removeValidator(\npublicKey\noperatorIds,\ncluster)
+reg -> compStrat : removeSsvValidator(\npublicKey,\noperatorIds,\ncluster)
+activate compStrat
+compStrat -> ssvNet : removeValidator(\npublicKey\noperatorIds,\ncluster)
 activate ssvNet
 note right : stop paying SSV to Operators\n and reduce required SSV collateral
 return
@@ -467,10 +548,10 @@ return
 
 ... wait for the validator to be swept on the Beacon chain\ncurrent time is every 8.5 days ...
 
-val -> nativeStrat : ETH
+val -> compStrat : ETH
 note left : transfer staked ETH and rewards\nfrom Beacon Deposit\nto Native Staking Strategy
 
-note over nativeStrat : Native Staking Strategy's\nWETH balance does not change
+note over compStrat : Native Staking Strategy's\nWETH balance does not change
 
 end group
 
@@ -479,34 +560,34 @@ group Execution Rewards
 mev -> feeAccum : ETH
 note right : MEV rewards
 
-sender -> nativeStrat : ETH
+sender -> compStrat : ETH
 note right : tx priority fees
 
-note over nativeStrat : Native Staking Strategy's WETH balance\ndoes not change from either
+note over compStrat : Native Staking Strategy's WETH balance\ndoes not change from either
 
 end group
 
 group Registrator does accounting of consensus rewards and validator withdrawals
 
-reg -> nativeStrat : doAccounting()
-activate nativeStrat
+reg -> compStrat : doAccounting()
+activate compStrat
 
-note over nativeStrat
+note over compStrat
 ETH received since last accounting = current ETH balance - previous consensus rewards
 validator withdrawals = ETH received / 32 ETH
 end note
 
-nativeStrat -> weth : deposit(\nwithdrawn ETH)
+compStrat -> weth : deposit(\nwithdrawn ETH)
 activate weth
 note left : convert ETH from full withdrawals to WETH
 return
 
-nativeStrat -> weth : transfer(\nvault,\nwithdrawn ETH)
+compStrat -> weth : transfer(\nvault,\nwithdrawn ETH)
 activate weth
 note left : transfer withdrawn WETH\nfrom Native Staking Strategy\nto OETH Vault
 return
 
-note over nativeStrat
+note over compStrat
 Add remaining ETH to consensus rewards.
 ETH from consensus rewards stays in the Native Staking Strategy.
 end note
@@ -519,25 +600,25 @@ group Harvester collects ETH rewards
 
 sender -> harv : harvestAndTransfer(\nstrategy)
 activate harv
-harv -> nativeStrat : collectRewardTokens()
-activate nativeStrat
+harv -> compStrat : collectRewardTokens()
+activate compStrat
 
-nativeStrat -> feeAccum : collect()
+compStrat -> feeAccum : collect()
 activate feeAccum
-feeAccum -> nativeStrat : ETH
+feeAccum -> compStrat : ETH
 note right : send all execution rewards in the FeeAccumulator\nto the Native Staking Stragegy
 return execution rewards
 
-note over nativeStrat : total rewards = execution rewards + consensus rewards
+note over compStrat : total rewards = execution rewards + consensus rewards
 
-note over nativeStrat : reset consensus rewards to zero
+note over compStrat : reset consensus rewards to zero
 
-nativeStrat -> weth : deposit(\ntotal rewards)
+compStrat -> weth : deposit(\ntotal rewards)
 activate weth
 note left : convert ETH rewards to WETH
 return
 
-nativeStrat -> weth : transfer(\nHarvester,\ntotal ETH rewards)
+compStrat -> weth : transfer(\nHarvester,\ntotal ETH rewards)
 activate weth
 note left : transfer rewards as WETH\nfrom Native Staking Strategy\nto Harvester
 return
@@ -574,18 +655,18 @@ end group
 
 group Strategist pauses Native Staking Strategy
 
-strategist -> nativeStrat : pause()
-activate nativeStrat
+strategist -> compStrat : pause()
+activate compStrat
 return
 
 end group
 
 group Strategist unpauses Native Staking Strategy
 
-strategist -> nativeStrat : manuallyFixAccounting(0, 0, 0)
-activate nativeStrat
+strategist -> compStrat : manuallyFixAccounting(0, 0, 0)
+activate compStrat
 note right : params _validatorsDelta, _consensusRewardsDelta\nand _ethToVaultAmount all set to zero
-nativeStrat -> nativeStrat
+compStrat -> compStrat
 note right : unpause
 return
 
