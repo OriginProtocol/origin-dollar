@@ -15,6 +15,7 @@ const {
   fundAccounts,
   fundAccountsForOETHUnitTests,
 } = require("../utils/funding");
+const { deployWithConfirmation } = require("../utils/deploy");
 
 const { replaceContractAt } = require("../utils/hardhat");
 const {
@@ -2524,24 +2525,132 @@ async function beaconChainFixture() {
     const { deploy } = deployments;
     const { governorAddr } = await getNamedAccounts();
 
-    await deploy("MockBeaconRoots", {
-      from: governorAddr,
-    });
+    const { beaconConsolidationReplaced, beaconWithdrawalReplaced } =
+      await enableExecutionLayerGeneralPurposeRequests();
 
     await deploy("MockBeaconConsolidation", {
       from: governorAddr,
     });
 
+    await deploy("MockPartialWithdrawal", {
+      from: governorAddr,
+    });
+
+    fixture.beaconConsolidationReplaced = beaconConsolidationReplaced;
+    fixture.beaconWithdrawalReplaced = beaconWithdrawalReplaced;
+
     fixture.beaconRoots = await resolveContract("MockBeaconRoots");
     fixture.beaconConsolidation = await resolveContract(
       "MockBeaconConsolidation"
     );
+    fixture.partialWithdrawal = await resolveContract("MockPartialWithdrawal");
+
+    // fund the beacon communication contracts so they can pay the fee
+    await hardhatSetBalance(fixture.beaconConsolidation.address, "1");
+    await hardhatSetBalance(fixture.partialWithdrawal.address, "1");
+
     fixture.beaconOracle = await resolveContract("BeaconOracle");
   } else {
     fixture.beaconProofs = await resolveContract("MockBeaconProofs");
   }
 
   return fixture;
+}
+
+/**
+ * Harhdat doesn't have a support for execution layer general purpose requests to the
+ * consensus layer. E.g. consolidation request and (partial) withdrawal request.
+ */
+async function enableExecutionLayerGeneralPurposeRequests() {
+  const executionLayerConsolidation = await deployWithConfirmation(
+    "ExecutionLayerConsolidation"
+  );
+  const executionLayerWithdrawal = await deployWithConfirmation(
+    "ExecutionLayerWithdrawal"
+  );
+
+  await replaceContractAt(
+    addresses.mainnet.toConsensus.consolidation,
+    executionLayerConsolidation
+  );
+
+  await replaceContractAt(
+    addresses.mainnet.toConsensus.withdrawals,
+    executionLayerWithdrawal
+  );
+
+  const withdrawalAbi = `[
+    {
+      "inputs": [],
+      "name": "lastAmount",
+      "outputs": [
+        {
+          "internalType": "uint64",
+          "name": "",
+          "type": "uint64"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "lastPublicKey",
+      "outputs": [
+        {
+          "internalType": "bytes",
+          "name": "",
+          "type": "bytes"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    }
+  ]`;
+
+  const consolidationAbi = `[
+    {
+      "inputs": [],
+      "name": "lastSource",
+      "outputs": [
+        {
+          "internalType": "bytes",
+          "name": "",
+          "type": "bytes"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "lastTarget",
+      "outputs": [
+        {
+          "internalType": "bytes",
+          "name": "",
+          "type": "bytes"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    }
+  ]`;
+
+  const beaconConsolidationReplaced = await ethers.getContractAt(
+    JSON.parse(consolidationAbi),
+    addresses.mainnet.toConsensus.consolidation
+  );
+
+  const beaconWithdrawalReplaced = await ethers.getContractAt(
+    JSON.parse(withdrawalAbi),
+    addresses.mainnet.toConsensus.withdrawals
+  );
+
+  return {
+    beaconConsolidationReplaced,
+    beaconWithdrawalReplaced,
+  };
 }
 
 /**

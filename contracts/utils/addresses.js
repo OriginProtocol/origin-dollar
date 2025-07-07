@@ -342,6 +342,13 @@ addresses.mainnet.passthrough.uniswap.OETH_OGN =
 addresses.mainnet.passthrough.uniswap.OETH_WETH =
   "0x216dEBBF25e5e67e6f5B2AD59c856Fc364478A6A";
 
+// General purpose execution to consensus layer communication
+addresses.mainnet.toConsensus = {};
+addresses.mainnet.toConsensus.consolidation =
+  "0x0000BBdDc7CE488642fb579F8B00f3a590007251";
+addresses.mainnet.toConsensus.withdrawals =
+  "0x00000961Ef480Eb55e80D19ad83579A64c007002";
+
 // Arbitrum One
 addresses.arbitrumOne = {};
 addresses.arbitrumOne.WOETHProxy = "0xD8724322f44E5c58D7A815F542036fb17DbbF839";
