@@ -25,7 +25,7 @@ module.exports = deploymentWithGovernanceProposal(
     await deployWithConfirmation("ClaimStrategyRewardsSafeModule", [
       addresses.multichainStrategist,
       // Defender Relayer
-      "0x4b91827516f79d6F6a1F292eD99671663b09169a",
+      addresses.mainnet.validatorRegistrator,
       [
         cOUSDCurveAMOProxy.address,
         cOETHCurveAMOProxy.address,

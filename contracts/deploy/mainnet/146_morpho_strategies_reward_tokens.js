@@ -37,7 +37,7 @@ module.exports = deploymentWithGovernanceProposal(
     );
 
     return {
-      name: "Re-deploy Morpho Strategies to add Morpho and Legacy Morpho as reward tokens",
+      name: "Change reward token addresses for Morpho Strategies",
       actions: [
         {
           contract: cGauntletUSDCStrategy,
