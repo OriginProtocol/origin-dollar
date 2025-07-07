@@ -58,4 +58,7 @@ interface IStrategy {
     function harvesterAddress() external view returns (address);
 
     function transferToken(address token, uint256 amount) external;
+
+    function setRewardTokenAddresses(address[] calldata _rewardTokenAddresses)
+        external;
 }

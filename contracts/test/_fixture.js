@@ -1317,7 +1317,7 @@ async function mockVaultFixture() {
 }
 
 async function bridgeHelperModuleFixture() {
-  const fixture = await oethDefaultFixture();
+  const fixture = await defaultFixture();
 
   const safeSigner = await impersonateAndFund(addresses.multichainStrategist);
   safeSigner.address = addresses.multichainStrategist;
@@ -1344,14 +1344,14 @@ async function bridgeHelperModuleFixture() {
   };
 }
 
-async function morphoCollectorModuleFixture() {
+async function claimRewardsModuleFixture() {
   const fixture = await defaultFixture();
 
   const safeSigner = await impersonateAndFund(addresses.multichainStrategist);
   safeSigner.address = addresses.multichainStrategist;
 
-  const morphoCollectorModule = await ethers.getContract(
-    "ClaimMorphoRewardsModule"
+  const claimRewardsModule = await ethers.getContract(
+    "ClaimStrategyRewardsSafeModule"
   );
 
   const cSafe = await ethers.getContractAt(
@@ -1361,41 +1361,15 @@ async function morphoCollectorModuleFixture() {
     ],
     addresses.multichainStrategist
   );
-
-  if (isFork) {
-    // Enable module if not already enabled
-    if (!(await cSafe.isModuleEnabled(morphoCollectorModule.address))) {
-      await cSafe
-        .connect(safeSigner)
-        .enableModule(morphoCollectorModule.address);
-    }
-
-    // Claim governance for Morpho Strategies
-    const cGauntletUSDCStrategyProxy = await ethers.getContract(
-      "MorphoGauntletPrimeUSDCStrategyProxy"
-    );
-    const cGauntletUSDTStrategyProxy = await ethers.getContract(
-      "MorphoGauntletPrimeUSDTStrategyProxy"
-    );
-    const cMetaMorphoStrategyProxy = await ethers.getContract(
-      "MetaMorphoStrategyProxy"
-    );
-
-    const currentGovernor = await cGauntletUSDCStrategyProxy.governor();
-    if (
-      currentGovernor.toLowerCase() !==
-      addresses.multichainStrategist.toLowerCase()
-    ) {
-      await cGauntletUSDCStrategyProxy.connect(safeSigner).claimGovernance();
-      await cGauntletUSDTStrategyProxy.connect(safeSigner).claimGovernance();
-      await cMetaMorphoStrategyProxy.connect(safeSigner).claimGovernance();
-    }
+  if (isFork && !(await cSafe.isModuleEnabled(claimRewardsModule.address))) {
+    await cSafe.connect(safeSigner).enableModule(claimRewardsModule.address);
   }
 
-  fixture.morphoCollectorModule = morphoCollectorModule;
-  fixture.safeSigner = safeSigner;
-
-  return fixture;
+  return {
+    ...fixture,
+    claimRewardsModule,
+    safeSigner,
+  };
 }
 
 /**
@@ -2671,5 +2645,5 @@ module.exports = {
   nodeRevert,
   woethCcipZapperFixture,
   bridgeHelperModuleFixture,
-  morphoCollectorModuleFixture,
+  claimRewardsModuleFixture,
 };

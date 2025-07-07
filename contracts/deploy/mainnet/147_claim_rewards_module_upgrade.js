@@ -3,12 +3,15 @@ const addresses = require("../../utils/addresses");
 
 module.exports = deploymentWithGovernanceProposal(
   {
-    deployName: "147_morpho_rewards_module",
+    deployName: "147_claim_rewards_module_upgrade",
     forceDeploy: false,
+    forceSkip: false,
     reduceQueueTime: true,
     proposalId: "",
   },
   async ({ deployWithConfirmation }) => {
+    const cOUSDCurveAMOProxy = await ethers.getContract("OUSDCurveAMOProxy");
+    const cOETHCurveAMOProxy = await ethers.getContract("OETHCurveAMOProxy");
     const cGauntletUSDCStrategyProxy = await ethers.getContract(
       "MorphoGauntletPrimeUSDCStrategyProxy"
     );
@@ -19,24 +22,26 @@ module.exports = deploymentWithGovernanceProposal(
       "MetaMorphoStrategyProxy"
     );
 
-    await deployWithConfirmation("ClaimMorphoRewardsModule", [
+    await deployWithConfirmation("ClaimStrategyRewardsSafeModule", [
       addresses.multichainStrategist,
       // Defender Relayer
       "0x4b91827516f79d6F6a1F292eD99671663b09169a",
       [
+        cOUSDCurveAMOProxy.address,
+        cOETHCurveAMOProxy.address,
         cGauntletUSDCStrategyProxy.address,
         cGauntletUSDTStrategyProxy.address,
         cMetaMorphoStrategyProxy.address,
       ],
     ]);
 
-    const cClaimMorphoRewardsModule = await ethers.getContract(
-      "ClaimMorphoRewardsModule"
+    const cClaimStrategyRewardsSafeModule = await ethers.getContract(
+      "ClaimStrategyRewardsSafeModule"
     );
 
     console.log(
-      "ClaimMorphoRewardsModule deployed to",
-      cClaimMorphoRewardsModule.address
+      "cClaimStrategyRewardsSafeModule deployed to",
+      cClaimStrategyRewardsSafeModule.address
     );
 
     return {
