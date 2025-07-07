@@ -5,9 +5,7 @@ const {
   DefenderRelayProvider,
 } = require("@openzeppelin/defender-relay-client/lib/ethers");
 
-// const addresses = require("../../utils/addresses");
 const { logTxDetails } = require("../../utils/txLogger");
-const log = require("../../utils/logger")("action:claimBribes");
 
 // ClaimBribesSafeModule1 for Coinbase AERO Locker Safe
 const COINBASE_AERO_LOCKER_MODULE =
@@ -47,7 +45,9 @@ const handler = async (event) => {
   for (const moduleAddr of modules) {
     const module = new ethers.Contract(moduleAddr, MODULE_ABI, signer);
 
-    log(`Claiming bribes from ${moduleLabels[moduleAddr.toLowerCase()]}`);
+    console.log(
+      `Claiming bribes from ${moduleLabels[moduleAddr.toLowerCase()]}`
+    );
     await manageNFTsOnModule(module, signer);
     await claimBribesFromModule(module, signer);
   }
@@ -55,16 +55,28 @@ const handler = async (event) => {
 
 async function manageNFTsOnModule(module, signer) {
   // Remove all NFTs from the module
+  console.log(
+    `Running removeAllNFTIds on module ${
+      moduleLabels[module.address.toLowerCase()]
+    }`
+  );
   let tx = await module.connect(signer).removeAllNFTIds({
-    gasLimit: 8000000,
+    gasLimit: 20000000,
   });
   logTxDetails(tx, `removeAllNFTIds`);
+  await tx.wait();
 
   // Fetch all NFTs from the veNFT contract
+  console.log(
+    `Running fetchNFTIds on module ${
+      moduleLabels[module.address.toLowerCase()]
+    }`
+  );
   tx = await module.connect(signer).fetchNFTIds({
-    gasLimit: 16000000,
+    gasLimit: 20000000,
   });
   logTxDetails(tx, `fetchNFTIds`);
+  await tx.wait();
 }
 
 async function claimBribesFromModule(module, signer) {
@@ -74,8 +86,8 @@ async function claimBribesFromModule(module, signer) {
   const batchSize = batchSizes[module.address.toLowerCase()] || 50;
   const batchCount = Math.ceil(nftIdsLength / batchSize);
 
-  log(`Found ${nftIdsLength} NFTs on the module`);
-  log(`Claiming bribes in ${batchCount} batches of ${batchSize}`);
+  console.log(`Found ${nftIdsLength} NFTs on the module`);
+  console.log(`Claiming bribes in ${batchCount} batches of ${batchSize}`);
 
   for (let i = 0; i < batchCount; i++) {
     const start = i * batchSize;
@@ -84,6 +96,7 @@ async function claimBribesFromModule(module, signer) {
     const tx = await module.connect(signer).claimBribes(start, end, true, {
       gasLimit: 20000000,
     });
+    console.log(`claimBribes (batch ${i + 1} of ${batchCount})`);
     await logTxDetails(tx, `claimBribes (batch ${i + 1} of ${batchCount})`);
   }
 }

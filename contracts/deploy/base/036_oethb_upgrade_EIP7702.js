@@ -3,7 +3,7 @@ const { deployWithConfirmation } = require("../../utils/deploy");
 
 module.exports = deployOnBase(
   {
-    deployName: "033_oeth_upgrade_EIP7702",
+    deployName: "036_oethb_upgrade_EIP7702",
     // forceSkip: true,
   },
   async ({ ethers }) => {
