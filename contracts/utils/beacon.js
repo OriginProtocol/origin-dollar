@@ -2,20 +2,21 @@ const fs = require("fs");
 
 const log = require("./logger")("utils:beacon");
 
-const getClient = async () => {
+const configClient = async () => {
   // Get the latest slot from the beacon chain API
   // Dynamically import the Lodestar API client as its an ESM module
   const { getClient } = await import("@lodestar/api");
   const { config } = await import("@lodestar/config/default");
 
   const baseUrl = process.env.PROVIDER_URL;
+
   const client = await getClient({ baseUrl, timeoutMs: 60000 }, { config });
 
   return client;
 };
 
 const getSlot = async (blockId = "head") => {
-  const client = await getClient();
+  const client = await configClient();
 
   // Get the latest beacon block data using Lodestar
   log(`Fetching block header for blockId ${blockId} from the beacon node`);
@@ -35,7 +36,7 @@ const getSlot = async (blockId = "head") => {
 };
 
 const getBeaconBlock = async (slot) => {
-  const client = await getClient();
+  const client = await configClient();
 
   const { ssz } = await import("@lodestar/types");
   const BeaconBlock = ssz.electra.BeaconBlock;

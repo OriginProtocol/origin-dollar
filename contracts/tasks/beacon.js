@@ -30,6 +30,7 @@ async function verifySlot({ block }) {
 
   const { blockView, blockTree } = await getBeaconBlock(slot);
 
+  // Have to dynamically import the Lodestar API client as its an ESM module
   const { createProof, ProofType } = await import(
     "@chainsafe/persistent-merkle-tree"
   );
