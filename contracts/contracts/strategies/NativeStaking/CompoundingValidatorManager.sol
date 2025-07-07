@@ -391,6 +391,10 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
         emit SSVValidatorExitCompleted(pubKeyHash, publicKey, operatorIds);
     }
 
+    /// @notice Receives requests from supported legacy strategies to consolidate sweeping validators to
+    /// a new compounding validator on this new strategy.
+    /// @param lastSourcePubKeyHash The last source validator to be consolidated hashed using the Beacon Chain's format.
+    /// @param targetPubKeyHash The target validator's public key hash using the Beacon Chain's format.
     function requestConsolidation(
         bytes32 lastSourcePubKeyHash,
         bytes32 targetPubKeyHash

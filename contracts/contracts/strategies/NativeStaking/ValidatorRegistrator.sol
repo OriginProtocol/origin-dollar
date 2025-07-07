@@ -417,6 +417,7 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
             validatorsStates[sourcePubKeyHash] == VALIDATOR_STATE.EXITING;
         }
 
+        // Hash using the Beacon Chain's format
         bytes32 lastSourcePubKeyHash = _hashPubKey(
             sourcePubKeys[sourcePubKeys.length - 1]
         );
