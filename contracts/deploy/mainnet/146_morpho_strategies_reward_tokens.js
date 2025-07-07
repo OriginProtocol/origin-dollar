@@ -3,7 +3,7 @@ const addresses = require("../../utils/addresses");
 
 module.exports = deploymentWithGovernanceProposal(
   {
-    deployName: "146_morpho_redeploy_strategies",
+    deployName: "146_morpho_strategies_reward_tokens",
     forceDeploy: false,
     reduceQueueTime: true,
     proposalId: "",
