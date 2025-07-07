@@ -5,7 +5,7 @@
       "label": "_roles",
       "offset": 0,
       "slot": "0",
-      "type": "t_mapping(t_bytes32,t_struct(RoleData)19_storage)",
+      "type": "t_mapping(t_bytes32,t_struct(RoleData)2867_storage)",
       "contract": "AccessControl",
       "src": "@openzeppelin/contracts/access/AccessControl.sol:55"
     },
@@ -13,7 +13,7 @@
       "label": "_roleMembers",
       "offset": 0,
       "slot": "1",
-      "type": "t_mapping(t_bytes32,t_struct(AddressSet)1703_storage)",
+      "type": "t_mapping(t_bytes32,t_struct(AddressSet)6112_storage)",
       "contract": "AccessControlEnumerable",
       "src": "@openzeppelin/contracts/access/AccessControlEnumerable.sol:16"
     },
@@ -23,7 +23,7 @@
       "slot": "2",
       "type": "t_mapping(t_address,t_bool)",
       "contract": "ClaimStrategyRewardsSafeModule",
-      "src": "contracts/automation/ClaimStrategyRewardsSafeModule.sol:17"
+      "src": "contracts/automation/ClaimStrategyRewardsSafeModule.sol:14"
     },
     {
       "label": "strategies",
@@ -31,7 +31,7 @@
       "slot": "3",
       "type": "t_array(t_address)dyn_storage",
       "contract": "ClaimStrategyRewardsSafeModule",
-      "src": "contracts/automation/ClaimStrategyRewardsSafeModule.sol:18"
+      "src": "contracts/automation/ClaimStrategyRewardsSafeModule.sol:15"
     }
   ],
   "types": {
@@ -59,11 +59,11 @@
       "label": "mapping(address => bool)",
       "numberOfBytes": "32"
     },
-    "t_mapping(t_bytes32,t_struct(AddressSet)1703_storage)": {
+    "t_mapping(t_bytes32,t_struct(AddressSet)6112_storage)": {
       "label": "mapping(bytes32 => struct EnumerableSet.AddressSet)",
       "numberOfBytes": "32"
     },
-    "t_mapping(t_bytes32,t_struct(RoleData)19_storage)": {
+    "t_mapping(t_bytes32,t_struct(RoleData)2867_storage)": {
       "label": "mapping(bytes32 => struct AccessControl.RoleData)",
       "numberOfBytes": "32"
     },
@@ -71,19 +71,19 @@
       "label": "mapping(bytes32 => uint256)",
       "numberOfBytes": "32"
     },
-    "t_struct(AddressSet)1703_storage": {
+    "t_struct(AddressSet)6112_storage": {
       "label": "struct EnumerableSet.AddressSet",
       "members": [
         {
           "label": "_inner",
-          "type": "t_struct(Set)1402_storage",
+          "type": "t_struct(Set)5811_storage",
           "offset": 0,
           "slot": "0"
         }
       ],
       "numberOfBytes": "64"
     },
-    "t_struct(RoleData)19_storage": {
+    "t_struct(RoleData)2867_storage": {
       "label": "struct AccessControl.RoleData",
       "members": [
         {
@@ -101,7 +101,7 @@
       ],
       "numberOfBytes": "64"
     },
-    "t_struct(Set)1402_storage": {
+    "t_struct(Set)5811_storage": {
       "label": "struct EnumerableSet.Set",
       "members": [
         {

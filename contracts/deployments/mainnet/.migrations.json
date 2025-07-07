@@ -42,5 +42,6 @@
   "143_bridge_helper_module_upgrade": 1750778108,
   "144_ousd_oeth_upgrade_EIP7702": 1751453912,
   "145_deploy_xogn_rewards_module": 1751535258,
-  "146_morpho_strategies_reward_tokens": 1751882972
+  "146_morpho_strategies_reward_tokens": 1751882972,
+  "147_claim_rewards_module_upgrade": 1751883056
 }
