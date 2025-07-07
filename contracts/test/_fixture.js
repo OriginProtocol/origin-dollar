@@ -2525,10 +2525,6 @@ async function beaconChainFixture() {
     const { deploy } = deployments;
     const { governorAddr } = await getNamedAccounts();
 
-    // await deploy("MockBeaconRoots", {
-    //   from: governorAddr,
-    // });
-
     const { 
       beaconConsolidationReplaced,
       beaconWithdrawalReplaced
