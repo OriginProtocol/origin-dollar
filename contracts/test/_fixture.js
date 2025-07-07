@@ -757,6 +757,8 @@ const defaultFixture = deployments.createFixture(async () => {
     threePoolToken,
     metapoolToken,
     morpho,
+    morphoToken,
+    legacyMorphoToken,
     morphoCompoundStrategy,
     balancerREthStrategy,
     makerSSRStrategy,
@@ -815,6 +817,14 @@ const defaultFixture = deployments.createFixture(async () => {
     morphoGauntletPrimeUSDTVault = await ethers.getContractAt(
       metamorphoAbi,
       addresses.mainnet.MorphoGauntletPrimeUSDTVault
+    );
+    morphoToken = await ethers.getContractAt(
+      erc20Abi,
+      addresses.mainnet.MorphoToken
+    );
+    legacyMorphoToken = await ethers.getContractAt(
+      erc20Abi,
+      addresses.mainnet.LegacyMorphoToken
     );
     aura = await ethers.getContractAt(erc20Abi, addresses.mainnet.AURA);
     bal = await ethers.getContractAt(erc20Abi, addresses.mainnet.BAL);
@@ -1139,6 +1149,9 @@ const defaultFixture = deployments.createFixture(async () => {
     mock1InchSwapRouter,
     aura,
     bal,
+
+    morphoToken,
+    legacyMorphoToken,
   };
 });
 
@@ -1329,6 +1342,60 @@ async function bridgeHelperModuleFixture() {
     bridgeHelperModule,
     safeSigner,
   };
+}
+
+async function morphoCollectorModuleFixture() {
+  const fixture = await defaultFixture();
+
+  const safeSigner = await impersonateAndFund(addresses.multichainStrategist);
+  safeSigner.address = addresses.multichainStrategist;
+
+  const morphoCollectorModule = await ethers.getContract(
+    "ClaimMorphoRewardsModule"
+  );
+
+  const cSafe = await ethers.getContractAt(
+    [
+      "function enableModule(address module) external",
+      "function isModuleEnabled(address module) external view returns (bool)",
+    ],
+    addresses.multichainStrategist
+  );
+
+  if (isFork) {
+    // Enable module if not already enabled
+    if (!(await cSafe.isModuleEnabled(morphoCollectorModule.address))) {
+      await cSafe
+        .connect(safeSigner)
+        .enableModule(morphoCollectorModule.address);
+    }
+
+    // Claim governance for Morpho Strategies
+    const cGauntletUSDCStrategyProxy = await ethers.getContract(
+      "MorphoGauntletPrimeUSDCStrategyProxy"
+    );
+    const cGauntletUSDTStrategyProxy = await ethers.getContract(
+      "MorphoGauntletPrimeUSDTStrategyProxy"
+    );
+    const cMetaMorphoStrategyProxy = await ethers.getContract(
+      "MetaMorphoStrategyProxy"
+    );
+
+    const currentGovernor = await cGauntletUSDCStrategyProxy.governor();
+    if (
+      currentGovernor.toLowerCase() !==
+      addresses.multichainStrategist.toLowerCase()
+    ) {
+      await cGauntletUSDCStrategyProxy.connect(safeSigner).claimGovernance();
+      await cGauntletUSDTStrategyProxy.connect(safeSigner).claimGovernance();
+      await cMetaMorphoStrategyProxy.connect(safeSigner).claimGovernance();
+    }
+  }
+
+  fixture.morphoCollectorModule = morphoCollectorModule;
+  fixture.safeSigner = safeSigner;
+
+  return fixture;
 }
 
 /**
@@ -2604,4 +2671,5 @@ module.exports = {
   nodeRevert,
   woethCcipZapperFixture,
   bridgeHelperModuleFixture,
+  morphoCollectorModuleFixture,
 };
