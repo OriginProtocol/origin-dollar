@@ -757,6 +757,8 @@ const defaultFixture = deployments.createFixture(async () => {
     threePoolToken,
     metapoolToken,
     morpho,
+    morphoToken,
+    legacyMorphoToken,
     morphoCompoundStrategy,
     balancerREthStrategy,
     makerSSRStrategy,
@@ -815,6 +817,14 @@ const defaultFixture = deployments.createFixture(async () => {
     morphoGauntletPrimeUSDTVault = await ethers.getContractAt(
       metamorphoAbi,
       addresses.mainnet.MorphoGauntletPrimeUSDTVault
+    );
+    morphoToken = await ethers.getContractAt(
+      erc20Abi,
+      addresses.mainnet.MorphoToken
+    );
+    legacyMorphoToken = await ethers.getContractAt(
+      erc20Abi,
+      addresses.mainnet.LegacyMorphoToken
     );
     aura = await ethers.getContractAt(erc20Abi, addresses.mainnet.AURA);
     bal = await ethers.getContractAt(erc20Abi, addresses.mainnet.BAL);
@@ -1139,6 +1149,9 @@ const defaultFixture = deployments.createFixture(async () => {
     mock1InchSwapRouter,
     aura,
     bal,
+
+    morphoToken,
+    legacyMorphoToken,
   };
 });
 
@@ -1304,7 +1317,7 @@ async function mockVaultFixture() {
 }
 
 async function bridgeHelperModuleFixture() {
-  const fixture = await oethDefaultFixture();
+  const fixture = await defaultFixture();
 
   const safeSigner = await impersonateAndFund(addresses.multichainStrategist);
   safeSigner.address = addresses.multichainStrategist;
@@ -1327,6 +1340,34 @@ async function bridgeHelperModuleFixture() {
   return {
     ...fixture,
     bridgeHelperModule,
+    safeSigner,
+  };
+}
+
+async function claimRewardsModuleFixture() {
+  const fixture = await defaultFixture();
+
+  const safeSigner = await impersonateAndFund(addresses.multichainStrategist);
+  safeSigner.address = addresses.multichainStrategist;
+
+  const claimRewardsModule = await ethers.getContract(
+    "ClaimStrategyRewardsSafeModule"
+  );
+
+  const cSafe = await ethers.getContractAt(
+    [
+      "function enableModule(address module) external",
+      "function isModuleEnabled(address module) external view returns (bool)",
+    ],
+    addresses.multichainStrategist
+  );
+  if (isFork && !(await cSafe.isModuleEnabled(claimRewardsModule.address))) {
+    await cSafe.connect(safeSigner).enableModule(claimRewardsModule.address);
+  }
+
+  return {
+    ...fixture,
+    claimRewardsModule,
     safeSigner,
   };
 }
@@ -2604,4 +2645,5 @@ module.exports = {
   nodeRevert,
   woethCcipZapperFixture,
   bridgeHelperModuleFixture,
+  claimRewardsModuleFixture,
 };

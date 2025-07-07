@@ -70,16 +70,7 @@ const handler = async (event) => {
   await logTxDetails(tx, `harvestAndTransfer`);
 
   if (networkName === "mainnet") {
-    log("Invoking claim from safe module");
-
-    const safeModule = new ethers.Contract(
-      addresses.mainnet.ClaimStrategyRewardsSafeModule,
-      claimRewardsSafeModuleAbi,
-      signer
-    );
-
-    const safeModuleTx = await safeModule.connect(signer).claimRewards(true);
-    await logTxDetails(safeModuleTx, `claimRewards`);
+    await harvestMorphoStrategies(signer);
   }
 };
 
@@ -112,6 +103,48 @@ const shouldHarvestFromNativeStakingStrategy = async (strategy, signer) => {
     consensusRewards.gt(parseEther("1")) ||
     executionRewards.gt(parseEther("0.5"))
   );
+};
+
+const harvestMorphoStrategies = async (signer) => {
+  const strategies = [
+    // Morpho Gauntlet Prime USDC
+    "0x2b8f37893ee713a4e9ff0ceb79f27539f20a32a1",
+    // Morpho Gauntlet Prime USDT
+    "0xe3ae7c80a1b02ccd3fb0227773553aeb14e32f26",
+    // Meta Morpho Vault
+    "0x603CDEAEC82A60E3C4A10dA6ab546459E5f64Fa0",
+  ];
+
+  log("Collecting Morpho Strategies rewards");
+  for (const strategy of strategies) {
+    const distributions = await fetch(
+      `https://rewards.morpho.org/v1/users/${strategy}/distributions`
+    );
+    const distributionsData = await distributions.json();
+    for (const data of distributionsData.data) {
+      const distributor = data.distributor.address;
+      log(`Distributor: ${distributor}`);
+      log(`txData: ${data.tx_data}`);
+
+      await signer.sendTransaction({
+        to: distributor,
+        data: data.tx_data,
+        value: 0,
+        gasLimit: 1000000,
+        speed: "fastest",
+      });
+    }
+  }
+
+  log("Invoking claim from safe module");
+  const safeModule = new ethers.Contract(
+    addresses.mainnet.ClaimStrategyRewardsSafeModule,
+    claimRewardsSafeModuleAbi,
+    signer
+  );
+
+  const safeModuleTx = await safeModule.connect(signer).claimRewards(true);
+  await logTxDetails(safeModuleTx, `claimRewards`);
 };
 
 module.exports = { handler };

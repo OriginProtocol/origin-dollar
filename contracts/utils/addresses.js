@@ -205,6 +205,9 @@ addresses.mainnet.Flipper = "0xcecaD69d7D4Ed6D52eFcFA028aF8732F27e08F70";
 // Morpho
 addresses.mainnet.Morpho = "0x8888882f8f843896699869179fB6E4f7e3B58888";
 addresses.mainnet.MorphoLens = "0x930f1b46e1d081ec1524efd95752be3ece51ef67";
+addresses.mainnet.MorphoToken = "0x58D97B57BB95320F9a05dC918Aef65434969c2B2";
+addresses.mainnet.LegacyMorphoToken =
+  "0x9994E35Db50125E0DF82e4c2dde62496CE330999";
 
 // Governance
 addresses.mainnet.Timelock = "0x35918cDE7233F2dD33fA41ae3Cb6aE0e42E0e69F";
