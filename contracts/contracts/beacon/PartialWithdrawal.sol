@@ -17,7 +17,7 @@ library PartialWithdrawal {
         // Call the Withdrawal Request contract with the validator public key
         // and amount to be withdrawn packed together
 
-        // This is a general purpose EL to CL request: 
+        // This is a general purpose EL to CL request:
         // https://eips.ethereum.org/EIPS/eip-7685
         (bool success, ) = WITHDRAWAL_REQUEST_ADDRESS.call{ value: fee_ }(
             abi.encodePacked(validatorPubKey, amount)

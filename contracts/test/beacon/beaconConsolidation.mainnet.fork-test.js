@@ -20,10 +20,7 @@ describe("ForkTest: Beacon Consolidation", function () {
   });
 
   it("Should request consolidation of validators", async () => {
-    const { 
-      beaconConsolidation,
-      beaconConsolidationReplaced
-    } = fixture;
+    const { beaconConsolidation, beaconConsolidationReplaced } = fixture;
 
     // These are two sweeping validators
     const source =

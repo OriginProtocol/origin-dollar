@@ -2525,10 +2525,8 @@ async function beaconChainFixture() {
     const { deploy } = deployments;
     const { governorAddr } = await getNamedAccounts();
 
-    const { 
-      beaconConsolidationReplaced,
-      beaconWithdrawalReplaced
-    } = await enableExecutionLayerGeneralPurposeRequests();
+    const { beaconConsolidationReplaced, beaconWithdrawalReplaced } =
+      await enableExecutionLayerGeneralPurposeRequests();
 
     await deploy("MockBeaconConsolidation", {
       from: governorAddr,
@@ -2545,9 +2543,7 @@ async function beaconChainFixture() {
     fixture.beaconConsolidation = await resolveContract(
       "MockBeaconConsolidation"
     );
-    fixture.partialWithdrawal = await resolveContract(
-      "MockPartialWithdrawal"
-    );
+    fixture.partialWithdrawal = await resolveContract("MockPartialWithdrawal");
 
     // fund the beacon communication contracts so they can pay the fee
     await hardhatSetBalance(fixture.beaconConsolidation.address, "1");
@@ -2560,14 +2556,18 @@ async function beaconChainFixture() {
 
   return fixture;
 }
-  
+
 /**
  * Harhdat doesn't have a support for execution layer general purpose requests to the
  * consensus layer. E.g. consolidation request and (partial) withdrawal request.
  */
 async function enableExecutionLayerGeneralPurposeRequests() {
-  const executionLayerConsolidation = await deployWithConfirmation("ExecutionLayerConsolidation");
-  const executionLayerWithdrawal = await deployWithConfirmation("ExecutionLayerWithdrawal");
+  const executionLayerConsolidation = await deployWithConfirmation(
+    "ExecutionLayerConsolidation"
+  );
+  const executionLayerWithdrawal = await deployWithConfirmation(
+    "ExecutionLayerWithdrawal"
+  );
 
   await replaceContractAt(
     addresses.mainnet.toConsensus.consolidation,
@@ -2637,7 +2637,6 @@ async function enableExecutionLayerGeneralPurposeRequests() {
     }
   ]`;
 
-
   const beaconConsolidationReplaced = await ethers.getContractAt(
     JSON.parse(consolidationAbi),
     addresses.mainnet.toConsensus.consolidation
@@ -2650,7 +2649,7 @@ async function enableExecutionLayerGeneralPurposeRequests() {
 
   return {
     beaconConsolidationReplaced,
-    beaconWithdrawalReplaced
+    beaconWithdrawalReplaced,
   };
 }
 

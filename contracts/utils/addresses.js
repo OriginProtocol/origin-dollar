@@ -344,8 +344,10 @@ addresses.mainnet.passthrough.uniswap.OETH_WETH =
 
 // General purpose execution to consensus layer communication
 addresses.mainnet.toConsensus = {};
-addresses.mainnet.toConsensus.consolidation = "0x0000BBdDc7CE488642fb579F8B00f3a590007251";
-addresses.mainnet.toConsensus.withdrawals = "0x00000961Ef480Eb55e80D19ad83579A64c007002";
+addresses.mainnet.toConsensus.consolidation =
+  "0x0000BBdDc7CE488642fb579F8B00f3a590007251";
+addresses.mainnet.toConsensus.withdrawals =
+  "0x00000961Ef480Eb55e80D19ad83579A64c007002";
 
 // Arbitrum One
 addresses.arbitrumOne = {};
