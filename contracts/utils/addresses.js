@@ -323,7 +323,7 @@ addresses.mainnet.DaiUsdsMigrationContract =
 
 // Safe Module
 addresses.mainnet.ClaimStrategyRewardsSafeModule =
-  "0xc3472011a60336E53e0968e822A4E80D5F0d3F41";
+  "0x1b84E64279D63f48DdD88B9B2A7871e817152A44";
 
 // LayerZero
 addresses.mainnet.LayerZeroEndpointV2 =
