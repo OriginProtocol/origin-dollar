@@ -4,13 +4,10 @@ pragma solidity ^0.8.0;
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/utils/math/Math.sol";
-import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 
 import { InitializableAbstractStrategy } from "../../utils/InitializableAbstractStrategy.sol";
 import { IWETH9 } from "../../interfaces/IWETH9.sol";
-import { FeeAccumulator } from "./FeeAccumulator.sol";
 import { CompoundingValidatorManager } from "./CompoundingValidatorManager.sol";
-import { ISSVNetwork } from "../../interfaces/ISSVNetwork.sol";
 
 /// @title Compounding Staking SSV Strategy
 /// @notice Strategy to deploy funds into DVT validators powered by the SSV Network
