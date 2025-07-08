@@ -263,7 +263,7 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
         ValidatorStakeData calldata validator,
         uint64 depositAmountGwei
     ) external onlyRegistrator whenNotPaused nonReentrant {
-        uint256 depositAmountWei = depositAmountGwei * 1 gwei;
+        uint256 depositAmountWei = uint256(depositAmountGwei) * 1 gwei;
         // Check there is enough WETH from the deposits sitting in this strategy contract
         // There could be ETH from withdrawals but we'll ignore that. If it's really needed
         // the ETH can be withdrawn and then deposited back to the strategy.
