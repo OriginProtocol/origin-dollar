@@ -1,6 +1,6 @@
 const { expect } = require("chai");
 const { BigNumber } = require("ethers");
-const { keccak256, parseEther } = require("ethers").utils;
+const { parseEther } = require("ethers").utils;
 const {
   setBalance,
   setStorageAt,
@@ -1111,12 +1111,7 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
 
   describe("Register and stake validators", async () => {
     beforeEach(async () => {
-      const {
-        weth,
-        josh,
-        /*anna, governor, */ ssv,
-        compoundingStakingSSVStrategy,
-      } = fixture;
+      const { weth, josh, ssv, compoundingStakingSSVStrategy } = fixture;
 
       await setERC20TokenBalance(
         compoundingStakingSSVStrategy.address,
@@ -1128,16 +1123,6 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
       await weth
         .connect(josh)
         .transfer(compoundingStakingSSVStrategy.address, ethUnits("256"));
-
-      //const stakeThreshold = ethers.utils.parseEther("64");
-
-      //await compoundingStakingSSVStrategy
-      //  .connect(governor)
-      //  .setStakingMonitor(anna.address);
-
-      //await compoundingStakingSSVStrategy
-      //  .connect(governor)
-      //  .setStakeETHThreshold(stakeThreshold);
     });
 
     const stakeValidatorsSingle = async (
@@ -1192,158 +1177,99 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
             amount
           );
 
-        if (stakeTresholdErrorTriggered && i == validators - 1) {
-          await expect(stakeTx).to.be.revertedWith(
-            "Staking ETH over threshold"
-          );
-        } else {
-          await stakeTx;
-
-          await expect(stakeTx)
-            .to.emit(compoundingStakingSSVStrategy, "ETHStaked")
-            .withArgs(
-              hashPubKey(testPublicKeys[i]),
-              testPublicKeys[i],
-              amount.mul(GweiInWei) // Convert Gwei to Wei
-            );
-
-          expect(
-            await compoundingStakingSSVStrategy.validatorState(
-              hashPubKey(testPublicKeys[i])
-            )
-          ).to.equal(2, "Validator state not 2 (STAKED)");
-        }
-      }
-    };
-
-    const stakeValidatorsBulk = async (
-      validators,
-      stakeTresholdErrorTriggered,
-      startingIndex = 0
-    ) => {
-      const { compoundingStakingSSVStrategy, validatorRegistrator } = fixture;
-
-      const publicKeys = testPublicKeys.slice(startingIndex, validators);
-      const sharesData = new Array(validators)
-        .fill()
-        .map(() => testValidator.sharesData);
-      const ssvAmount = ethUnits("2");
-
-      // Register a new validator with the SSV Network
-      const regTx = await compoundingStakingSSVStrategy
-        .connect(validatorRegistrator)
-        .registerSsvValidators(
-          publicKeys,
-          testValidator.operatorIds,
-          sharesData,
-          ssvAmount,
-          emptyCluster
-        );
-
-      for (const pubKey of publicKeys) {
-        await expect(regTx)
-          .to.emit(compoundingStakingSSVStrategy, "SSVValidatorRegistered")
-          .withArgs(keccak256(pubKey), pubKey, testValidator.operatorIds);
-
-        expect(
-          await compoundingStakingSSVStrategy.validatorState(keccak256(pubKey))
-        ).to.equal(1, "Validator state not 1 (REGISTERED)");
-      }
-      // Stake ETH to the new validator
-      const stakeValidators = publicKeys.map((pubKey) => ({
-        pubkey: pubKey,
-        signature: testValidator.signature,
-        depositDataRoot: testValidator.depositDataRoot,
-      }));
-      const stakeTx = compoundingStakingSSVStrategy
-        .connect(validatorRegistrator)
-        .stakeEth(stakeValidators);
-
-      if (stakeTresholdErrorTriggered) {
-        await expect(stakeTx).to.be.revertedWith("Staking ETH over threshold");
-      } else {
         await stakeTx;
 
-        for (const pubKey of publicKeys) {
-          await expect(stakeTx)
-            .to.emit(compoundingStakingSSVStrategy, "ETHStaked")
-            .withArgs(keccak256(pubKey), pubKey, parseEther("32"));
-          expect(
-            await compoundingStakingSSVStrategy.validatorState(
-              keccak256(pubKey)
-            )
-          ).to.equal(2, "Validator state not 2 (STAKED)");
-        }
+        await expect(stakeTx)
+          .to.emit(compoundingStakingSSVStrategy, "ETHStaked")
+          .withArgs(
+            hashPubKey(testPublicKeys[i]),
+            testPublicKeys[i],
+            amount.mul(GweiInWei) // Convert Gwei to Wei
+          );
+
+        expect(
+          await compoundingStakingSSVStrategy.validatorState(
+            hashPubKey(testPublicKeys[i])
+          )
+        ).to.equal(2, "Validator state not 2 (STAKED)");
       }
     };
 
-    it("Should stake to a validator", async () => {
+    it("Should stake to a validator: 1 ETH", async () => {
       await stakeValidatorsSingle(1, false, 0, ETHInGwei); // 1e9 Gwei = 1 ETH
     });
 
-    it("Should stake to 2 validators", async () => {
-      await stakeValidatorsSingle(2, false);
+    it("Should stake to a validator: 32 ETH", async () => {
+      await stakeValidatorsSingle(1, false); // 32e9 Gwei = 32 ETH
     });
 
-    it("Should not stake to 3 validators as stake threshold is triggered", async () => {
-      await stakeValidatorsSingle(3, true);
+    it("Should stake to 2 validators: 1 ETH", async () => {
+      await stakeValidatorsSingle(2, false, 0, ETHInGwei);
     });
 
-    it("Should register and stake 2 validators together", async () => {
-      await stakeValidatorsBulk(2, false);
-    });
-    it("Should register 3 but not stake 3 validators together", async () => {
-      await stakeValidatorsBulk(3, true);
-    });
-
-    it("Fail to stake a validator that hasn't been registered", async () => {
+    it("Should revert when registering a validator that is already registered", async () => {
       const { compoundingStakingSSVStrategy, validatorRegistrator } = fixture;
+      // Register a new validator with the SSV Network
+      await compoundingStakingSSVStrategy
+        .connect(validatorRegistrator)
+        .registerSsvValidator(
+          testPublicKeys[0],
+          testValidator.operatorIds,
+          testValidator.sharesData,
+          ethUnits("2"),
+          emptyCluster
+        );
 
+      // Try to register the same validator again
+      await expect(
+        compoundingStakingSSVStrategy
+          .connect(validatorRegistrator)
+          .registerSsvValidator(
+            testPublicKeys[0],
+            testValidator.operatorIds,
+            testValidator.sharesData,
+            ethUnits("2"),
+            emptyCluster
+          )
+      ).to.be.revertedWith("Validator already registered");
+    });
+
+    it("Should revert when staking because of insufficient ETH balance", async () => {
+      const { compoundingStakingSSVStrategy, validatorRegistrator, weth } =
+        fixture;
+      let balance = await weth.balanceOf(compoundingStakingSSVStrategy.address);
+      balance = balance.div(GweiInWei); // Convert from Wei to Gwei
       // Stake ETH to the unregistered validator
       const tx = compoundingStakingSSVStrategy
         .connect(validatorRegistrator)
-        .stakeEth([
+        .stakeEth(
           {
             pubkey: testValidator.publicKey,
             signature: testValidator.signature,
             depositDataRoot: testValidator.depositDataRoot,
           },
-        ]);
+          balance.add(1) // 1e9 Gwei = 1 ETH
+        );
 
-      await expect(tx).to.be.revertedWith("Validator not registered");
+      await expect(tx).to.be.revertedWith("Insufficient WETH");
     });
 
-    it("Should stake to 2 validators continually when threshold is reset", async () => {
-      const { anna, compoundingStakingSSVStrategy } = fixture;
+    it("Should revert when staking a validator that hasn't been registered", async () => {
+      const { compoundingStakingSSVStrategy, validatorRegistrator } = fixture;
 
-      const resetThreshold = async () => {
-        await compoundingStakingSSVStrategy.connect(anna).resetStakeETHTally();
-      };
+      // Stake ETH to the unregistered validator
+      const tx = compoundingStakingSSVStrategy
+        .connect(validatorRegistrator)
+        .stakeEth(
+          {
+            pubkey: testValidator.publicKey,
+            signature: testValidator.signature,
+            depositDataRoot: testValidator.depositDataRoot,
+          },
+          ETHInGwei // 1e9 Gwei = 1 ETH
+        );
 
-      await stakeValidatorsSingle(2, false, 0);
-      await resetThreshold();
-      await stakeValidatorsSingle(2, false, 2);
-      await resetThreshold();
-      await stakeValidatorsSingle(2, false, 4);
-      await resetThreshold();
-    });
-
-    it("Should not reset stake tally if not governor", async () => {
-      const { josh, compoundingStakingSSVStrategy } = fixture;
-
-      await expect(
-        compoundingStakingSSVStrategy.connect(josh).resetStakeETHTally()
-      ).to.be.revertedWith("Caller is not the Monitor");
-    });
-
-    it("Should not set stake threshold if not governor", async () => {
-      const { josh, compoundingStakingSSVStrategy } = fixture;
-
-      await expect(
-        compoundingStakingSSVStrategy
-          .connect(josh)
-          .setStakeETHThreshold(ethUnits("32"))
-      ).to.be.revertedWith("Caller is not the Governor");
+      await expect(tx).to.be.revertedWith("Not registered or verified");
     });
   });
 
