@@ -19,7 +19,7 @@ participant "Harvester" as harv <<Origin>>
 participant "Dripper" as drip <<Origin>>
 participant "Vault" as vault <<Origin>>
 participant "Native\nStaking\nStrategy" as nativeStrat <<Origin>>
-participant "Compound\nStaking\nStrategy" as compStrat <<Origin>>
+participant "Compounding\nStaking\nStrategy" as compStrat <<Origin>>
 participant "Fee\nAccumulator" as feeAccum <<Origin>>
 participant "SSV Network" as ssvNet <<SSV>>
 participant "Token" as ssv <<SSV>>
@@ -228,6 +228,7 @@ note over val
 Validator pending activation
 Will activate when another 31 ETH is deposited
 end note
+
 end group
 
 group Deposit more to existing validator
@@ -244,7 +245,7 @@ note right : depositData contains the signature and deposit root
 
 reg -> compStrat : stakeEth(\npubkey,\nsignature,\ndeposit root,\namountGwei)
 activate compStrat
-compStrat -> weth : withdraw(amountGwei * 1 Gwei)
+compStrat -> weth : withdraw(\namountGwei * 1 Gwei)
 activate weth
 note right : WETH burned for ETH
 return ETH
