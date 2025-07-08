@@ -2,7 +2,9 @@
 pragma solidity ^0.8.4;
 
 interface IConsolidationSource {
-    function confirmConsolidation() external;
+    function confirmConsolidation()
+        external
+        returns (uint256 consolidationCount);
 }
 
 interface IConsolidationTarget {

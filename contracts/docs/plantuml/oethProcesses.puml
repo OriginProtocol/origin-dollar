@@ -92,6 +92,20 @@ verify last validator balance to block root
 assert last validator balance is zero
 end note
 
+compStrat -> nativeStrat : confirmConsolidation()
+activate nativeStrat
+note over nativeStrat
+reduce active validators by consolidated validators
+reset consolidation state
+unpause the strategy
+end note
+return consolidated validators count
+note over compStrat
+increase last verified balance by consolidated validators count * 32 ETH
+reset consolidation state
+unpause the strategy
+end note
+
 compStrat -> compStrat : snapBalances()
 note left : store WETH and ETH balances
 return
@@ -442,22 +456,6 @@ note over compStrat
         total deposits +
         total validator balances
 end note
-
-alt validator consolidation
-        
-compStrat -> nativeStrat : confirmConsolidation()
-activate nativeStrat
-note over nativeStrat
-reduce active validators by consolidated validators
-reset consolidation state
-unpause the strategy
-end note
-return
-note over compStrat
-reset consolidation state
-unpause the strategy
-end note
-end
 
 return
 

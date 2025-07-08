@@ -106,7 +106,6 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
 
     event RegistratorChanged(address indexed newAddress);
     event SourceStrategyAdded(address indexed strategy);
-    event StakingMonitorChanged(address indexed newAddress);
     event ETHStaked(
         bytes32 indexed pubKeyHash,
         bytes pubKey,
@@ -127,21 +126,21 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
         bytes pubKey,
         uint64[] operatorIds
     );
-    event SnappedBalances(
-        bytes32 indexed blockRoot,
-        uint256 indexed blockNumber,
-        uint256 indexed timestamp,
-        uint256 wethBalance,
-        uint256 ethBalance
-    );
-    event VerifiedDeposit(
+    event DepositVerified(
         bytes32 indexed depositDataRoot,
         uint64 indexed validatorIndex,
         uint64 firstPendingDepositSlot,
         uint64 mappedSlot,
         bytes32 blockRoot
     );
-    event VerifiedBalances(
+    event BalancesSnapped(
+        uint256 indexed timestamp,
+        bytes32 indexed blockRoot,
+        uint256 indexed blockNumber,
+        uint256 wethBalance,
+        uint256 ethBalance
+    );
+    event BalancesVerified(
         uint64 indexed timestamp,
         bytes32 indexed blockRoot,
         uint256 totalDepositsWei,
@@ -154,21 +153,16 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
         bytes32 indexed targetPubKeyHash,
         address indexed sourceStrategy
     );
-    event VerifiedConsolidation(
-        uint64 indexed lastValidatorIndex,
-        bytes32 blockRoot
-    );
-    event CompletedConsolidation(
+    event ConsolidationVerified(
         bytes32 indexed lastSourcePubKeyHash,
-        address indexed sourceStrategy
+        uint64 indexed lastValidatorIndex,
+        bytes32 indexed blockRoot,
+        uint256 consolidationCount
     );
 
     /// @dev Throws if called by any account other than the Registrator
     modifier onlyRegistrator() {
-        require(
-            msg.sender == validatorRegistrator,
-            "Caller is not the Registrator"
-        );
+        require(msg.sender == validatorRegistrator, "Not Registrator");
         _;
     }
 
@@ -176,7 +170,7 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
     modifier onlyStrategist() {
         require(
             msg.sender == IVault(VAULT_ADDRESS).strategistAddr(),
-            "Caller is not the Strategist"
+            "Not Strategist"
         );
         _;
     }
@@ -555,7 +549,7 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
         // Take a snap of the balances so the new validator balances can be verified
         _snapBalances();
 
-        emit VerifiedDeposit(
+        emit DepositVerified(
             depositDataRoot,
             proofData.validatorIndex,
             proofData.firstPendingDepositSlot,
@@ -572,13 +566,17 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
         bytes32 balancesLeaf,
         bytes calldata validatorBalanceProof
     ) external onlyRegistrator {
-        require(consolidationLastPubKeyHash != bytes32(0), "No consolidations");
+        bytes32 consolidationLastPubKeyHashMem = consolidationLastPubKeyHash;
+        require(
+            consolidationLastPubKeyHashMem != bytes32(0),
+            "No consolidations"
+        );
 
         bytes32 blockRoot = BeaconRoots.parentBlockRoot(parentBlockTimestamp);
         // Verify the validator index has the same public key as the last source validator
         IBeaconProofs(BEACON_PROOFS).verifyValidatorPubkey(
             blockRoot,
-            consolidationLastPubKeyHash,
+            consolidationLastPubKeyHashMem,
             validatorPubKeyProof,
             lastValidatorIndex
         );
@@ -596,12 +594,34 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
             );
         require(validatorBalance == 0, "Last validator balance not zero");
 
-        // Take a snap of the balances so the new validator balances can be verified
+        // Call the old sweeping strategy to confirm the consolidation has been completed.
+        // This will decrease the balance of the source strategy by 32 ETH for each validator being consolidated.
+        uint256 consolidationCount = IConsolidationSource(
+            consolidationSourceStrategy
+        ).confirmConsolidation();
+
+        // Increase the balance of this strategy by 32 ETH for each validator being consolidated.
+        // This nets out the decrease in the source strategy's balance.
+        lastVerifiedBalance += SafeCast.toUint128(
+            consolidationCount * 32 ether
+        );
+
+        // Reset the stored consolidation state
+        consolidationLastPubKeyHash = bytes32(0);
+        consolidationSourceStrategy = address(0);
+
+        emit ConsolidationVerified(
+            consolidationLastPubKeyHashMem,
+            lastValidatorIndex,
+            blockRoot,
+            consolidationCount
+        );
+
+        // Unpause now the balance of the target validator has been verified
+        _unpause();
+
+        // Take a snap of the balances so the actual balances of the new validator balances can be verified
         _snapBalances();
-
-        // Do not unpause or reset the consolidation state until after the new validator balances have been verified
-
-        emit VerifiedConsolidation(lastValidatorIndex, blockRoot);
     }
 
     function snapBalances() public nonReentrant {
@@ -633,10 +653,10 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
         // Store the snapped timestamp
         lastSnapTimestamp = SafeCast.toUint64(block.timestamp);
 
-        emit SnappedBalances(
+        emit BalancesSnapped(
+            block.timestamp,
             blockRoot,
             block.number,
-            block.timestamp,
             wethBalance,
             ethBalance
         );
@@ -745,29 +765,7 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
         // Reset the last snap timestamp so a new snapBalances has to be made
         lastSnapTimestamp = 0;
 
-        // If there has been a consolidation
-        if (consolidationSourceStrategy != address(0)) {
-            // Call the old sweeping strategy to confirm the consolidation has been completed.
-            // This will decrease the balance of the source strategy at the same time
-            // the balance of this strategy has been increased with the consolidated validators.
-            IConsolidationSource(consolidationSourceStrategy)
-                .confirmConsolidation();
-
-            // Reset the stored consolidation state
-            consolidationLastPubKeyHash = bytes32(0);
-            consolidationSourceStrategy = address(0);
-
-            // Unpause now the balance of the target validator has been verified
-            _unpause();
-
-            // TODO emit Consolidation event
-            emit CompletedConsolidation(
-                consolidationLastPubKeyHash,
-                consolidationSourceStrategy
-            );
-        }
-
-        emit VerifiedBalances(
+        emit BalancesVerified(
             balancesMem.timestamp,
             params.blockRoot,
             totalDepositsGwei * 1 gwei,

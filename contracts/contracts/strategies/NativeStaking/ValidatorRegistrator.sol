@@ -95,7 +95,10 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
         address targetStakingStrategy,
         uint256 consolidationCount
     );
-    event ConsolidationConfirmed(uint256 consolidationCount);
+    event ConsolidationConfirmed(
+        uint256 consolidationCount,
+        uint256 activeDepositedValidators
+    );
     event StakeETHThresholdChanged(uint256 amount);
     event StakeETHTallyReset();
     event TargetStrategyAdded(address indexed strategy);
@@ -442,7 +445,12 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
         );
     }
 
-    function confirmConsolidation() external nonReentrant whenPaused {
+    function confirmConsolidation()
+        external
+        nonReentrant
+        whenPaused
+        returns (uint256 consolidationCount_)
+    {
         // Check the caller is the target staking strategy
         require(
             msg.sender == consolidationTargetStrategy,
@@ -450,14 +458,14 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
         );
 
         // Load the number of validators being consolidated into memory
-        uint256 consolidationCountMem = consolidationCount;
+        consolidationCount_ = consolidationCount;
 
         // Need to check this is from the new staking strategy
-        require(consolidationCountMem > 0, "No consolidation in progress");
+        require(consolidationCount_ > 0, "No consolidation in progress");
 
         // Store the reduced number of active deposited validators
         // managed by this strategy
-        activeDepositedValidators -= consolidationCountMem;
+        activeDepositedValidators -= consolidationCount_;
 
         // Reset the consolidation count
         consolidationCount = 0;
@@ -466,7 +474,10 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
         // Unpause the strategy to allow further operations
         _unpause();
 
-        emit ConsolidationConfirmed(consolidationCountMem);
+        emit ConsolidationConfirmed(
+            consolidationCount_,
+            activeDepositedValidators
+        );
     }
 
     /// @notice Hash a validator public key using the Beacon Chain's format
