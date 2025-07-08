@@ -1,18 +1,15 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import { AccessControlEnumerable } from "@openzeppelin/contracts/access/AccessControlEnumerable.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { AbstractSafeModule } from "./AbstractSafeModule.sol";
 
 import { ISafe } from "../interfaces/ISafe.sol";
 import { IStrategy } from "../interfaces/IStrategy.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
-contract ClaimStrategyRewardsSafeModule is AccessControlEnumerable {
+contract ClaimStrategyRewardsSafeModule is AbstractSafeModule {
     using SafeERC20 for IERC20;
-    ISafe public immutable safeAddress;
-
-    bytes32 public constant OPERATOR_ROLE = keccak256("OPERATOR_ROLE");
 
     mapping(address => bool) public isStrategyWhitelisted;
     address[] public strategies;
@@ -22,13 +19,12 @@ contract ClaimStrategyRewardsSafeModule is AccessControlEnumerable {
 
     event ClaimRewardsFailed(address strategy);
 
-    constructor(address _safeAddress, address[] memory _strategies) {
-        // Safe is the admin
-        _setupRole(DEFAULT_ADMIN_ROLE, _safeAddress);
-
-        _setupRole(OPERATOR_ROLE, _safeAddress);
-
-        safeAddress = ISafe(_safeAddress);
+    constructor(
+        address _safeAddress,
+        address operator,
+        address[] memory _strategies
+    ) AbstractSafeModule(_safeAddress) {
+        _grantRole(OPERATOR_ROLE, operator);
 
         // Whitelist all strategies
         for (uint256 i = 0; i < _strategies.length; i++) {
@@ -46,7 +42,7 @@ contract ClaimStrategyRewardsSafeModule is AccessControlEnumerable {
             address strategy = strategies[i];
 
             // Execute `collectRewardTokens` for all strategies
-            bool success = safeAddress.execTransactionFromModule(
+            bool success = safeContract.execTransactionFromModule(
                 strategy, // To
                 0, // Value
                 abi.encodeWithSelector(IStrategy.collectRewardTokens.selector),
