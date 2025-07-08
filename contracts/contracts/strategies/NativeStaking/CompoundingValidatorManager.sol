@@ -10,6 +10,7 @@ import { IVault } from "../../interfaces/IVault.sol";
 import { IWETH9 } from "../../interfaces/IWETH9.sol";
 import { ISSVNetwork, Cluster } from "../../interfaces/ISSVNetwork.sol";
 import { BeaconRoots } from "../../beacon/BeaconRoots.sol";
+import { PartialWithdrawal } from "../../beacon/PartialWithdrawal.sol";
 import { IBeaconProofs } from "../../interfaces/IBeaconProofs.sol";
 import { IBeaconOracle } from "../../interfaces/IBeaconOracle.sol";
 
@@ -96,7 +97,7 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
         STAKED, // validator has funds staked
         VERIFIED, // validator has been verified to exist on the beacon chain
         EXITING, // exit message has been posted and validator is in the process of exiting
-        EXIT_COMPLETE // validator has funds withdrawn to the EigenPod and is removed from the SSV
+        REMOVED // validator has funds withdrawn to the EigenPod and is removed from the SSV
     }
     enum DepositStatus {
         UNKNOWN, // default value
@@ -113,19 +114,10 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
     );
     event SSVValidatorRegistered(
         bytes32 indexed pubKeyHash,
-        bytes pubKey,
         uint64[] operatorIds
     );
-    event SSVValidatorExitInitiated(
-        bytes32 indexed pubKeyHash,
-        bytes pubKey,
-        uint64[] operatorIds
-    );
-    event SSVValidatorExitCompleted(
-        bytes32 indexed pubKeyHash,
-        bytes pubKey,
-        uint64[] operatorIds
-    );
+    event SSVValidatorRemoved(bytes32 indexed pubKeyHash, uint64[] operatorIds);
+    event ValidatorWithdraw(bytes32 indexed pubKeyHash, uint256 amountWei);
     event DepositVerified(
         bytes32 indexed depositDataRoot,
         uint64 indexed validatorIndex,
@@ -218,49 +210,41 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
                 Validator Management
     ****************************************/
 
-    /// @notice Registers multiple validators in the SSV Cluster.
-    /// Only the registrator can call this function.
-    /// @param publicKeys The public keys of the validators
+    /// @notice Registers a single validator in a SSV Cluster.
+    /// Only the Registrator can call this function.
+    /// @param publicKey The public key of the validator
     /// @param operatorIds The operator IDs of the SSV Cluster
-    /// @param sharesData The shares data for each validator
+    /// @param sharesData The shares data for the validator
     /// @param ssvAmount The amount of SSV tokens to be deposited to the SSV cluster
     /// @param cluster The SSV cluster details including the validator count and SSV balance
     // slither-disable-start reentrancy-no-eth
-    function registerSsvValidators(
-        bytes[] calldata publicKeys,
+    function registerSsvValidator(
+        bytes calldata publicKey,
         uint64[] calldata operatorIds,
-        bytes[] calldata sharesData,
+        bytes calldata sharesData,
         uint256 ssvAmount,
         Cluster calldata cluster
     ) external onlyRegistrator whenNotPaused {
-        require(
-            publicKeys.length == sharesData.length,
-            "Pubkey sharesData mismatch"
-        );
+        // Hash the public key using the Beacon Chain's format
+        bytes32 pubKeyHash = _hashPubKey(publicKey);
         // Check each public key has not already been used
-        bytes32 pubKeyHash;
-        for (uint256 i = 0; i < publicKeys.length; ++i) {
-            // Check the new compounding validators
-            // Hash the public key using the Beacon Chain's format
-            pubKeyHash = _hashPubKey(publicKeys[i]);
-            require(
-                validatorState[pubKeyHash] == VALIDATOR_STATE.NON_REGISTERED,
-                "Validator already registered"
-            );
+        require(
+            validatorState[pubKeyHash] == VALIDATOR_STATE.NON_REGISTERED,
+            "Validator already registered"
+        );
 
-            // Store the validator state as registered
-            validatorState[pubKeyHash] = VALIDATOR_STATE.REGISTERED;
+        // Store the validator state as registered
+        validatorState[pubKeyHash] = VALIDATOR_STATE.REGISTERED;
 
-            emit SSVValidatorRegistered(pubKeyHash, publicKeys[i], operatorIds);
-        }
-
-        ISSVNetwork(SSV_NETWORK).bulkRegisterValidator(
-            publicKeys,
+        ISSVNetwork(SSV_NETWORK).registerValidator(
+            publicKey,
             operatorIds,
             sharesData,
             ssvAmount,
             cluster
         );
+
+        emit SSVValidatorRegistered(pubKeyHash, operatorIds);
     }
 
     // slither-disable-end reentrancy-no-eth
@@ -344,16 +328,17 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
 
     // slither-disable-end reentrancy-eth
 
-    /// @notice Exit a validator from the Beacon chain.
+    /// @notice Request a full or partial withdrawal from a validator.
     /// The staked ETH will eventually be withdrawn to this staking strategy.
-    /// Only the registrator can call this function.
+    /// Only the Registrator can call this function.
     /// @param publicKey The public key of the validator
-    /// @param operatorIds The operator IDs of the SSV Cluster
+    /// @param amount The amount of ETH to be withdrawn from the validator in Gwei
     // slither-disable-start reentrancy-no-eth
-    function exitSsvValidator(
-        bytes calldata publicKey,
-        uint64[] calldata operatorIds
-    ) external onlyRegistrator whenNotPaused {
+    function partialValidatorWithdrawal(bytes calldata publicKey, uint64 amount)
+        external
+        onlyRegistrator
+        whenNotPaused
+    {
         // Hash the public key using the Beacon Chain's format
         bytes32 pubKeyHash = _hashPubKey(publicKey);
         VALIDATOR_STATE currentState = validatorState[pubKeyHash];
@@ -362,14 +347,14 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
             "Validator not verified"
         );
 
-        ISSVNetwork(SSV_NETWORK).exitValidator(publicKey, operatorIds);
+        PartialWithdrawal.request(publicKey, amount);
 
         validatorState[pubKeyHash] = VALIDATOR_STATE.EXITING;
 
         // Do not remove from the list of verified validators.
         // This is done in the verifyBalances function once the validator's balance has been verified to be zero.
 
-        emit SSVValidatorExitInitiated(pubKeyHash, publicKey, operatorIds);
+        emit ValidatorWithdraw(pubKeyHash, amount);
     }
 
     // slither-disable-end reentrancy-no-eth
@@ -403,9 +388,9 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
             cluster
         );
 
-        validatorState[pubKeyHash] = VALIDATOR_STATE.EXIT_COMPLETE;
+        validatorState[pubKeyHash] = VALIDATOR_STATE.REMOVED;
 
-        emit SSVValidatorExitCompleted(pubKeyHash, publicKey, operatorIds);
+        emit SSVValidatorRemoved(pubKeyHash, operatorIds);
     }
 
     /// @notice Receives requests from supported legacy strategies to consolidate sweeping validators to
