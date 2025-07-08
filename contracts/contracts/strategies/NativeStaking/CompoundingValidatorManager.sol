@@ -61,10 +61,14 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
 
     // Validator data
 
-    /// @notice List of validator indexes that have been verified to exist on the beacon chain.
+    struct ValidatorData {
+        bytes32 pubKeyHash; // Hash of the validator's public key using the Beacon Chain's format
+        uint64 index; // The index of the validator on the beacon chain
+    }
+    /// @notice List of validator public key hashes and indexes that have been verified to exist on the beacon chain.
     /// These have had a deposit processed and the validator's balance increased.
     /// Validators will be removed from this list when its verified they have a zero balance.
-    uint64[] public verifiedValidators;
+    ValidatorData[] public verifiedValidators;
     /// @notice State of the new compounding validators with a 0x02 withdrawal credential prefix.
     /// Uses the Beacon chain hashing for BLSPubkey which is
     /// sha256(abi.encodePacked(validator.pubkey, bytes16(0)))
@@ -96,7 +100,7 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
         REGISTERED, // validator is registered on the SSV network
         STAKED, // validator has funds staked
         VERIFIED, // validator has been verified to exist on the beacon chain
-        EXITING, // exit message has been posted and validator is in the process of exiting
+        EXITED, // The validator has been verified to have a zero balance
         REMOVED // validator has funds withdrawn to the EigenPod and is removed from the SSV
     }
     enum DepositStatus {
@@ -329,12 +333,14 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
     // slither-disable-end reentrancy-eth
 
     /// @notice Request a full or partial withdrawal from a validator.
+    /// If the remaining balance is < 32 ETH then the validator will be exited.
+    /// That can result in the ETH sent to the strategy being more than the requested amount.
     /// The staked ETH will eventually be withdrawn to this staking strategy.
     /// Only the Registrator can call this function.
     /// @param publicKey The public key of the validator
     /// @param amount The amount of ETH to be withdrawn from the validator in Gwei
     // slither-disable-start reentrancy-no-eth
-    function partialValidatorWithdrawal(bytes calldata publicKey, uint64 amount)
+    function validatorWithdrawal(bytes calldata publicKey, uint64 amount)
         external
         onlyRegistrator
         whenNotPaused
@@ -349,10 +355,9 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
 
         PartialWithdrawal.request(publicKey, amount);
 
-        validatorState[pubKeyHash] = VALIDATOR_STATE.EXITING;
-
         // Do not remove from the list of verified validators.
         // This is done in the verifyBalances function once the validator's balance has been verified to be zero.
+        // The validator state will be set to EXITED in the verifyBalances function.
 
         emit ValidatorWithdraw(pubKeyHash, amount);
     }
@@ -377,9 +382,9 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
         VALIDATOR_STATE currentState = validatorState[pubKeyHash];
         // Can remove SSV validators that were incorrectly registered and can not be deposited to.
         require(
-            currentState == VALIDATOR_STATE.EXITING ||
+            currentState == VALIDATOR_STATE.EXITED ||
                 currentState == VALIDATOR_STATE.REGISTERED,
-            "Validator not regd or exiting"
+            "Validator not regd or exited"
         );
 
         ISSVNetwork(SSV_NETWORK).removeValidator(
@@ -522,13 +527,18 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
         // Delete the last deposit from the list
         depositsRoots.pop();
 
-        // TODO need to check the state transitions for existing validators
-        if (validatorState[deposit.pubKeyHash] != VALIDATOR_STATE.VERIFIED) {
+        // If verifying a deposit to a new validator
+        if (validatorState[deposit.pubKeyHash] == VALIDATOR_STATE.STAKED) {
             // Store the validator state as verified
             validatorState[deposit.pubKeyHash] = VALIDATOR_STATE.VERIFIED;
 
             // Add the new validator to the list of verified validators
-            verifiedValidators.push(proofData.validatorIndex);
+            verifiedValidators.push(
+                ValidatorData({
+                    pubKeyHash: deposit.pubKeyHash,
+                    index: proofData.validatorIndex
+                })
+            );
         }
 
         // Take a snap of the balances so the new validator balances can be verified
@@ -717,7 +727,7 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
                     params.balancesContainerRoot,
                     params.validatorBalanceLeaves[i],
                     params.validatorBalanceProofs[i],
-                    verifiedValidators[i],
+                    verifiedValidators[i].index,
                     IBeaconProofs.BalanceProofLevel.Container
                 );
 
@@ -726,6 +736,11 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
 
             // If the validator balance is zero
             if (validatorBalance == 0) {
+                // Store the validator state as exited
+                validatorState[
+                    verifiedValidators[i].pubKeyHash
+                ] = VALIDATOR_STATE.EXITED;
+
                 // Remove the validator from the list of verified validators.
 
                 // Reduce the count of verified validators which is the last index before the pop removes it.
