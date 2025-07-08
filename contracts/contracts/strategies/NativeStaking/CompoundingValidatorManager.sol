@@ -127,17 +127,40 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
         bytes pubKey,
         uint64[] operatorIds
     );
-    event ConsolidationRequested(
-        bytes32 indexed lastSourcePubKeyHash,
-        bytes32 indexed targetPubKeyHash,
-        address indexed sourceStrategy
-    );
     event SnappedBalances(
         bytes32 indexed blockRoot,
         uint256 indexed blockNumber,
         uint256 indexed timestamp,
         uint256 wethBalance,
         uint256 ethBalance
+    );
+    event VerifiedDeposit(
+        bytes32 indexed depositDataRoot,
+        uint64 indexed validatorIndex,
+        uint64 firstPendingDepositSlot,
+        uint64 mappedSlot,
+        bytes32 blockRoot
+    );
+    event VerifiedBalances(
+        uint64 indexed timestamp,
+        bytes32 indexed blockRoot,
+        uint256 totalDepositsWei,
+        uint256 totalValidatorBalance,
+        uint256 wethBalance,
+        uint256 ethBalance
+    );
+    event ConsolidationRequested(
+        bytes32 indexed lastSourcePubKeyHash,
+        bytes32 indexed targetPubKeyHash,
+        address indexed sourceStrategy
+    );
+    event VerifiedConsolidation(
+        uint64 indexed lastValidatorIndex,
+        bytes32 blockRoot
+    );
+    event CompletedConsolidation(
+        bytes32 indexed lastSourcePubKeyHash,
+        address indexed sourceStrategy
     );
 
     /// @dev Throws if called by any account other than the Registrator
@@ -532,7 +555,13 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
         // Take a snap of the balances so the new validator balances can be verified
         _snapBalances();
 
-        // TODO emit an event
+        emit VerifiedDeposit(
+            depositDataRoot,
+            proofData.validatorIndex,
+            proofData.firstPendingDepositSlot,
+            mappedSlot,
+            blockRoot
+        );
     }
 
     // TODO what if the last validator was exited rather than consolidated?
@@ -567,15 +596,12 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
             );
         require(validatorBalance == 0, "Last validator balance not zero");
 
-        // Reset the consolidation batch
-        consolidationLastPubKeyHash = bytes32(0);
-
         // Take a snap of the balances so the new validator balances can be verified
         _snapBalances();
 
-        // Do not unpause until after the new validator balances have been verified
+        // Do not unpause or reset the consolidation state until after the new validator balances have been verified
 
-        // TODO emit an event
+        emit VerifiedConsolidation(lastValidatorIndex, blockRoot);
     }
 
     function snapBalances() public nonReentrant {
@@ -709,7 +735,7 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
             }
         }
 
-        // store the verified balance in storage
+        // Store the verified balance in storage
         lastVerifiedBalance = SafeCast.toUint128(
             (totalDepositsGwei * 1 gwei) +
                 totalValidatorBalance +
@@ -721,7 +747,9 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
 
         // If there has been a consolidation
         if (consolidationSourceStrategy != address(0)) {
-            // Call the old sweeping strategy to confirm the consolidation has been completed
+            // Call the old sweeping strategy to confirm the consolidation has been completed.
+            // This will decrease the balance of the source strategy at the same time
+            // the balance of this strategy has been increased with the consolidated validators.
             IConsolidationSource(consolidationSourceStrategy)
                 .confirmConsolidation();
 
@@ -731,7 +759,22 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
 
             // Unpause now the balance of the target validator has been verified
             _unpause();
+
+            // TODO emit Consolidation event
+            emit CompletedConsolidation(
+                consolidationLastPubKeyHash,
+                consolidationSourceStrategy
+            );
         }
+
+        emit VerifiedBalances(
+            balancesMem.timestamp,
+            params.blockRoot,
+            totalDepositsGwei * 1 gwei,
+            totalValidatorBalance,
+            balancesMem.wethBalance,
+            balancesMem.ethBalance
+        );
     }
 
     /// @notice Hash a validator public key using the Beacon Chain's format
