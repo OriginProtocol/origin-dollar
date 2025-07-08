@@ -264,24 +264,10 @@ contract CompoundingStakingSSVStrategy is
     }
 
     /**
-     * @notice Only accept ETH from the FeeAccumulator and the WETH contract - required when
-     * unwrapping WETH just before staking it to the validator.
-     * The strategy will also receive ETH from the priority fees of transactions when producing blocks
-     * as defined in EIP-1559.
-     * The tx fees come from the Beacon chain so do not need any EVM level permissions to receive ETH.
-     * The tx fees are paid with each block produced. They are not included in the consensus rewards
-     * which are periodically swept from the validators to this strategy.
-     * For accounting purposes, the priority fees of transactions will be considered consensus rewards
-     * and will be included in the AccountingConsensusRewards event.
-     * @dev don't want to receive donations from anyone else as donations over the fuse limits will
-     * mess with the accounting of the consensus rewards and validator full withdrawals.
+     * @notice We can accept ETH directly to this contract from anyone as it does not impact our accounting
+     * like it did in the legacy NativeStakingStrategy.
      */
-    receive() external payable {
-        require(
-            msg.sender == FEE_ACCUMULATOR_ADDRESS || msg.sender == WETH,
-            "Eth not from allowed contracts"
-        );
-    }
+    receive() external payable {}
 
     /***************************************
                 Internal functions
@@ -292,22 +278,19 @@ contract CompoundingStakingSSVStrategy is
     /// @dev Convert accumulated ETH to WETH and send to the Harvester.
     /// Will revert if the strategy is paused for accounting.
     function _collectRewardTokens() internal override whenNotPaused {
-        // collect ETH from execution rewards from the fee accumulator
-        uint256 executionRewards = FeeAccumulator(FEE_ACCUMULATOR_ADDRESS)
-            .collect();
+        // Collect ETH from execution rewards from the fee accumulator to this strategy.
+        FeeAccumulator(FEE_ACCUMULATOR_ADDRESS).collect();
 
-        require(
-            address(this).balance >= executionRewards,
-            "Insufficient eth balance"
-        );
+        // There can the ETH rewards in this strategy from tx priority fees
+        uint256 ethRewards = address(this).balance;
 
-        if (executionRewards > 0) {
+        if (ethRewards > 0) {
             // Convert ETH rewards to WETH
-            IWETH9(WETH).deposit{ value: executionRewards }();
+            IWETH9(WETH).deposit{ value: ethRewards }();
 
-            IERC20(WETH).safeTransfer(VAULT_ADDRESS, executionRewards);
+            IERC20(WETH).safeTransfer(VAULT_ADDRESS, ethRewards);
 
-            emit RewardTokenCollected(harvesterAddress, WETH, executionRewards);
+            emit RewardTokenCollected(harvesterAddress, WETH, ethRewards);
         }
     }
 
