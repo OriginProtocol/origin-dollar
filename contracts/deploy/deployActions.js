@@ -447,10 +447,10 @@ const deployOETHHarvester = async (oethDripper) => {
   await withConfirmation(
     // prettier-ignore
     cOETHHarvesterProxy["initialize(address,address,bytes)"](
-        dOETHHarvester.address,
-        governorAddr,
-        []
-      )
+      dOETHHarvester.address,
+      governorAddr,
+      []
+    )
   );
 
   log("Initialized OETHHarvesterProxy");
@@ -1534,11 +1534,11 @@ const deploySonicSwapXAMOStrategyImplementation = async () => {
   await withConfirmation(
     // prettier-ignore
     cSonicSwapXAMOStrategyProxy
-          .connect(sDeployer)["initialize(address,address,bytes)"](
-            dSonicSwapXAMOStrategy.address,
-            addresses.sonic.timelock,
-            initData
-          )
+      .connect(sDeployer)["initialize(address,address,bytes)"](
+        dSonicSwapXAMOStrategy.address,
+        addresses.sonic.timelock,
+        initData
+      )
   );
 
   return cSonicSwapXAMOStrategy;
