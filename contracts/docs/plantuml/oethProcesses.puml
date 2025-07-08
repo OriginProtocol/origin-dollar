@@ -12,21 +12,19 @@ actor "Strategist\n(2/8 Safe)" as strategist <<Origin>>
 actor "Governor\n(Timelock)" as gov <<Origin>>
 actor "Treasury" as treasury <<Origin>>
 participant "API" as api <<P2P>>
-actor "Operators" as ssvOp <<SSV>>
 
 box "Execution Chain"
 participant "Harvester" as harv <<Origin>>
-participant "Dripper" as drip <<Origin>>
 participant "Vault" as vault <<Origin>>
 participant "Native\nStaking\nStrategy" as nativeStrat <<Origin>>
 participant "Compounding\nStaking\nStrategy" as compStrat <<Origin>>
-participant "Fee\nAccumulator" as feeAccum <<Origin>>
 participant "SSV Network" as ssvNet <<SSV>>
 participant "Token" as ssv <<SSV>>
 participant "WETH" as weth <<Wrapped ETH>>
 participant "Beacon\nOracle" as bo <<Origin>>
 participant "Beacon\nDeposit\nContract" as dep <<System>>
 participant "Beacon\nConsolidation\nRequests" as consol <<System>>
+participant "Beacon\nWithdrawal\nRequests" as withdraw <<System>>
 participant "Beacon\nBlock\nRoots" as roots <<System>>
 end box
 
@@ -112,23 +110,19 @@ return
 
 end group
 
-group Governor initializes the Native Staking Strategy
+group Governor initializes the Staking Strategy
 
 gov -> compStrat : initialize()
 activate compStrat
 compStrat -> ssv : approve(\nSSV Network,\namount)
 activate ssv
-note right : Native Staking Strategy approves\nSSV Network to spend\nSSV tokens
-return
-compStrat -> ssvNet : setFeeRecipientAddress(\nFeeAccumulator)
-activate ssvNet
-note right : set FeeAccumulator\nto receive MEV rewards
+note right : Staking Strategy approves\nSSV Network to spend\nSSV tokens
 return
 return
 
 gov -> ssv : transfer(\nfrom\nto\namount)
 activate ssv
-note right : transfer SSV tokens\nfrom Governor\nto Native Staking Strategy
+note right : transfer SSV tokens\nfrom Governor\nto Staking Strategy
 return
 
 end group
@@ -138,9 +132,9 @@ group Registrator creates a new SSV validator
 reg -> api: POST\neth/staking/ssv/request/create\nuuid,\nvalidatorsCount,\ntype,\nwithdrawalAddress,\nfeeRecipientAddress,\nssvOwnerAddress,\noperationPeriodInDays,\namountPerValidator,\nwithdrawalCredentialsType
 activate api
 note right
-withdrawalAddress is Native Staking Strategy
-feeRecipientAddress is FeeAccumulator contract
-ssvOwnerAddress is Native Staking Strategy
+withdrawalAddress is Staking Strategy
+feeRecipientAddress is Staking Strategy
+ssvOwnerAddress is Staking Strategy
 type is with-encrypt-key
 ecdhPublicKey public key for encrypting the validator keys
 operationPeriodInDays is 0 if not the first validator in the cluster
@@ -158,7 +152,7 @@ activate api
 return status,\npubkey\nvalidatorRegistration,\nshareData
 note right : validatorRegistration contains the operatorIds and cluster details
 
-reg -> compStrat : registerSsvValidators(\npublicKeys[],\noperatorIds,\nsharesData[],\nssvAmount,\ncluster)
+reg -> compStrat : registerSsvValidator(\npublicKey,\noperatorIds,\nsharesData,\nssvAmount,\ncluster)
 activate compStrat
 note right
 cluster data:
@@ -168,7 +162,7 @@ The last index calculated for the cluster
 Flag indicating whether the cluster is active
 The SSV balance of the cluster
 end note
-compStrat -> ssvNet : bulkRegisterValidator(\npublicKeys[],\noperatorIds,\nsharesData[],\nssvAmount,\ncluster)
+compStrat -> ssvNet : registerValidator(\npublicKey,\noperatorIds,\nsharesData,\nssvAmount,\ncluster)
 activate ssvNet
 ssvNet -> ssv : transferFrom(\nfrom\nto\namount)
 activate ssv
@@ -198,8 +192,8 @@ return ETH
 compStrat -> dep : deposit(\npubkey,\nwithdrawal_credentials,\nsignature,\ndeposit root)
 activate dep
 note left
-ETH from Native Staking Strategy is sent to Beacon Deposit.
-Withdrawal credential is the Native Staking Strategy
+ETH from Staking Strategy is sent to Beacon Deposit.
+Withdrawal credential is the Staking Strategy
 end note
 return
 
@@ -253,8 +247,8 @@ return ETH
 compStrat -> dep : deposit(\npubkey,\nwithdrawal_credentials,\nsignature,\ndeposit root)
 activate dep
 note left
-ETH from Native Staking Strategy is sent to Beacon Deposit.
-Withdrawal credential is the Native Staking Strategy
+ETH from Staking Strategy is sent to Beacon Deposit.
+Withdrawal credential is the Staking Strategy
 end note
 return
 
@@ -466,13 +460,13 @@ group Registrator deposits more SSV to SSV cluster
 
 strategist -> ssv : transfer(\nto\namount)
 activate ssv
-note right : transfer SSV tokens\nfrom Treasury\nto Native Staking Strategy
+note right : transfer SSV tokens\nfrom Treasury\nto Staking Strategy
 return
 
 group SSV ClusterScanner
 reg -> ssvNet : getPastEvents(filter)
 activate ssvNet
-note right : get all events where the ownerAddress\nis the Native Staking Strategy
+note right : get all events where the ownerAddress\nis the Staking Strategy
 return events
 
 reg -> reg : getCluster(events):\n cluster
@@ -491,13 +485,13 @@ activate compStrat
 compStrat -> ssvNet : deposit(\nclusterOwner,\noperatorIds,\namount,\ncluster)
 activate ssvNet
 note right
-clusterOwner is Native Staking Strategy
+clusterOwner is Staking Strategy
 operatorIds are the SSV Operators
 amount of SSV tokens
 end note
 ssvNet -> ssv : transferFrom(\nfrom\nto\namount)
 activate ssv
-note right: transfer SSV tokens\nfrom Native Staking Strategy\nto SSV Network
+note right: transfer SSV tokens\nfrom Staking Strategy\nto SSV Network
 return
 return
 return
@@ -513,29 +507,60 @@ val -> val : ETH
 
 ... swept every 8-10 days ...
 
-note over val : partial withdraw of excess ETH\nfrom validator to the Native Staking Strategy
+note over val : partial withdraw of excess ETH\nfrom validator to the Staking Strategy
 val -> compStrat : ETH
 
-note over compStrat : Native Staking Strategy's\nWETH balance does not change
+note over compStrat : Staking Strategy's\nWETH balance does not change
 
 end group
 
-group Registrator full withdraw from validator
+group Registrator full or partial withdraw from validator
 
-reg -> compStrat : exitSsvValidator(\npublicKey\noperatorIds)
+reg -> compStrat : validatorWithdrawal(\npublicKey\namount)
 activate compStrat
-compStrat -> ssvNet : exitValidator(\npublicKey\noperatorIds)
-activate ssvNet
+compStrat -> withdraw : publicKey, amount
+activate withdraw
 return
 return
 
-ssvOp -> ssvOp : sign(\npk,\nexit message)
-note right : voluntary exit message signed by the validator private key
-ssvOp -> val : signed voluntary exit message
-activate val
+... wait until withdrawal request have been processed.\nmin four epochs (~25 min), currently 1 day but can take a number of days depending on the number of validators in the exit queue ...
+
+note over val
+If the remaining balance is less than
+32 ETH, the validator is exited
+end note
+ 
+val -> compStrat : ETH
+note left : transfer withdrawn ETH\nfrom validator\nto Staking Strategy
+
+strategist -> vault : withdrawFromStrategy(\nstrategy,\nasset,\namount)
+activate vault
+vault -> compStrat : withdraw(\nasset,\namount)
+activate compStrat
+compStrat -> weth : deposit(amount)
+activate weth
+note left : convert all ETH to WETH
+return
+compStrat -> weth : transfer(\nvault,\namount)
+activate weth
+note left : transfer WETH\nfrom Staking Strategy\nto OETH Vault
+return
+return
 return
 
-... wait until validator has exited.\nmin four epochs (~25 min), currently 1.5 hours but can take a number of days depending on the number of validators in the exit queue ...
+
+reg -> compStrat : snapBalance()
+activate compStrat
+return
+
+reg -> compStrat : verifyBalances(\nblockRoot,\nfirstPendingDepositSlot,\nfirstPendingDepositSlotProof,\nbalancesContainerRoot,\nvalidatorContainerProof,\nvalidatorBalanceLeaves[],\validatorBalanceProofs[])
+activate compStrat
+note over compStrat
+if validator balance is zero,
+remove validator from active validators
+and store as exited
+end note
+return
 
 reg -> compStrat : removeSsvValidator(\npublicKey,\noperatorIds,\ncluster)
 activate compStrat
@@ -547,51 +572,27 @@ return
 
 ... wait for the validator to be swept on the Beacon chain\ncurrent time is every 8.5 days ...
 
-val -> compStrat : ETH
-note left : transfer staked ETH and rewards\nfrom Beacon Deposit\nto Native Staking Strategy
 
-note over compStrat : Native Staking Strategy's\nWETH balance does not change
+end group
+
+group Consensus Rewards
+
+note over val
+Consensus layer rewards are
+compounded to the validator's balance.
+end note
 
 end group
 
 group Execution Rewards
 
-mev -> feeAccum : ETH
+mev -> compStrat : ETH
 note right : MEV rewards
 
 sender -> compStrat : ETH
 note right : tx priority fees
 
-note over compStrat : Native Staking Strategy's WETH balance\ndoes not change from either
-
-end group
-
-group Registrator does accounting of consensus rewards and validator withdrawals
-
-reg -> compStrat : doAccounting()
-activate compStrat
-
-note over compStrat
-ETH received since last accounting = current ETH balance - previous consensus rewards
-validator withdrawals = ETH received / 32 ETH
-end note
-
-compStrat -> weth : deposit(\nwithdrawn ETH)
-activate weth
-note left : convert ETH from full withdrawals to WETH
-return
-
-compStrat -> weth : transfer(\nvault,\nwithdrawn ETH)
-activate weth
-note left : transfer withdrawn WETH\nfrom Native Staking Strategy\nto OETH Vault
-return
-
-note over compStrat
-Add remaining ETH to consensus rewards.
-ETH from consensus rewards stays in the Native Staking Strategy.
-end note
-
-return accounting valid flag
+note over compStrat : Staking Strategy's WETH balance\ndoes not change from either
 
 end group
 
@@ -602,73 +603,44 @@ activate harv
 harv -> compStrat : collectRewardTokens()
 activate compStrat
 
-compStrat -> feeAccum : collect()
-activate feeAccum
-feeAccum -> compStrat : ETH
-note right : send all execution rewards in the FeeAccumulator\nto the Native Staking Stragegy
-return execution rewards
-
-note over compStrat : total rewards = execution rewards + consensus rewards
-
-note over compStrat : reset consensus rewards to zero
-
-compStrat -> weth : deposit(\ntotal rewards)
+compStrat -> weth : deposit(\nexecution rewards)
 activate weth
 note left : convert ETH rewards to WETH
 return
 
-compStrat -> weth : transfer(\nHarvester,\ntotal ETH rewards)
+compStrat -> weth : transfer(\nHarvester,\nrewards)
 activate weth
-note left : transfer rewards as WETH\nfrom Native Staking Strategy\nto Harvester
+note left : transfer rewards as WETH\nfrom Staking Strategy\nto Harvester
 return
 
 return
 
-harv -> weth : transfer(\nDripper,\nETH rewards)
+harv -> weth : transfer(\nVault,\nETH rewards)
 activate weth
-note left : transfer WETH rewards\nfrom Harvester\nto Dripper
+note left : transfer WETH rewards\nfrom Harvester\nto Vault
 return
 
 return
 
 end group
 
-group Collect and rebase
+' group Strategist pauses Staking Strategy
 
-sender -> drip : collectAndRebase()
-activate drip
+' strategist -> compStrat : pause()
+' activate compStrat
+' return
 
-drip -> weth : transfer(\nvault,\nstreamed ETH)
-note left : Stream ETH from last collect to now
-activate weth
-note over drip : Recalculate 7 day drip rate\nbased on WETH balance
-return
+' end group
 
-drip -> vault : rebase()
-activate vault
-return
+' group Strategist unpauses Staking Strategy
 
-return
+' strategist -> compStrat : manuallyFixAccounting(0, 0, 0)
+' activate compStrat
+' note right : params _validatorsDelta, _consensusRewardsDelta\nand _ethToVaultAmount all set to zero
+' compStrat -> compStrat
+' note right : unpause
+' return
 
-end group
-
-group Strategist pauses Native Staking Strategy
-
-strategist -> compStrat : pause()
-activate compStrat
-return
-
-end group
-
-group Strategist unpauses Native Staking Strategy
-
-strategist -> compStrat : manuallyFixAccounting(0, 0, 0)
-activate compStrat
-note right : params _validatorsDelta, _consensusRewardsDelta\nand _ethToVaultAmount all set to zero
-compStrat -> compStrat
-note right : unpause
-return
-
-end group
+' end group
 
 @enduml

@@ -795,15 +795,6 @@ const deployCompoundingStakingSSVStrategy = async () => {
     "CompoundingStakingSSVStrategyProxy"
   );
 
-  log("Deploy FeeAccumulator proxy");
-  const dFeeAccumulatorProxy = await deployWithConfirmation(
-    "CompoundingStakingFeeAccumulatorProxy"
-  );
-  const cFeeAccumulatorProxy = await ethers.getContractAt(
-    "CompoundingStakingFeeAccumulatorProxy",
-    dFeeAccumulatorProxy.address
-  );
-
   const cBeaconOracle = await ethers.getContract("BeaconOracle");
   const cBeaconProofs = await ethers.getContract("BeaconProofs");
 
@@ -815,7 +806,6 @@ const deployCompoundingStakingSSVStrategy = async () => {
       assetAddresses.WETH, // wethAddress
       assetAddresses.SSV, // ssvToken
       assetAddresses.SSVNetwork, // ssvNetwork
-      dFeeAccumulatorProxy.address, // feeAccumulator
       assetAddresses.beaconChainDepositContract, // depositContractMock
       cBeaconOracle.address, // BeaconOracle
       cBeaconProofs.address, // BeaconProofs
@@ -858,27 +848,6 @@ const deployCompoundingStakingSSVStrategy = async () => {
 
   log("Approve spending of the SSV token");
   await withConfirmation(cStrategy.connect(sDeployer).safeApproveAllTokens());
-
-  log("Deploy fee accumulator implementation");
-  const dFeeAccumulator = await deployWithConfirmation("FeeAccumulator", [
-    cCompoundingStakingSSVStrategyProxy.address, // STRATEGY
-  ]);
-  const cFeeAccumulator = await ethers.getContractAt(
-    "FeeAccumulator",
-    dFeeAccumulator.address
-  );
-
-  log("Init fee accumulator proxy");
-  await withConfirmation(
-    cFeeAccumulatorProxy.connect(sDeployer)[
-      // eslint-disable-next-line no-unexpected-multiline
-      "initialize(address,address,bytes)"
-    ](
-      cFeeAccumulator.address, // implementation address
-      addresses.mainnet.Timelock, // Timelock
-      "0x" // do not call any initialize functions
-    )
-  );
 
   return cStrategy;
 };

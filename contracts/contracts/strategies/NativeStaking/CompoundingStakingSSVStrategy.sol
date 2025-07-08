@@ -43,10 +43,6 @@ contract CompoundingStakingSSVStrategy is
 
     /// @notice SSV ERC20 token that serves as a payment for operating SSV validators
     address public immutable SSV_TOKEN;
-    /// @notice Fee collector address
-    /// @dev this address will receive maximal extractable value (MEV) rewards. These are
-    /// rewards for arranging transactions in a way that benefits the validator.
-    address payable public immutable FEE_ACCUMULATOR_ADDRESS;
 
     /// @dev This contract receives WETH as the deposit asset, but unlike other strategies doesn't immediately
     /// deposit it to an underlying platform. Rather a special privilege account stakes it to the validators.
@@ -68,7 +64,6 @@ contract CompoundingStakingSSVStrategy is
     /// @param _wethAddress Address of the Erc20 WETH Token contract
     /// @param _ssvToken Address of the Erc20 SSV Token contract
     /// @param _ssvNetwork Address of the SSV Network contract
-    /// @param _feeAccumulator Address of the fee accumulator receiving execution layer validator rewards
     /// @param _beaconChainDepositContract Address of the beacon chain deposit contract
     /// @param _beaconOracle Address of the Beacon Oracle contract that maps block numbers to slots
     /// @param _beaconProofs Address of the Beacon Proofs contract that verifies beacon chain data
@@ -77,7 +72,6 @@ contract CompoundingStakingSSVStrategy is
         address _wethAddress,
         address _ssvToken,
         address _ssvNetwork,
-        address _feeAccumulator,
         address _beaconChainDepositContract,
         address _beaconOracle,
         address _beaconProofs
@@ -93,7 +87,6 @@ contract CompoundingStakingSSVStrategy is
         )
     {
         SSV_TOKEN = _ssvToken;
-        FEE_ACCUMULATOR_ADDRESS = payable(_feeAccumulator);
     }
 
     /// @notice Set up initial internal state including
@@ -115,11 +108,6 @@ contract CompoundingStakingSSVStrategy is
 
         // Approves the SSV Network contract to transfer SSV tokens for deposits
         IERC20(SSV_TOKEN).approve(SSV_NETWORK, type(uint256).max);
-
-        // Set the FeeAccumulator as the address for SSV validators to send MEV rewards to
-        ISSVNetwork(SSV_NETWORK).setFeeRecipientAddress(
-            FEE_ACCUMULATOR_ADDRESS
-        );
     }
 
     /// @notice Unlike other strategies, this does not deposit assets into the underlying platform.
@@ -256,13 +244,6 @@ contract CompoundingStakingSSVStrategy is
         IERC20(SSV_TOKEN).approve(SSV_NETWORK, type(uint256).max);
     }
 
-    /// @notice Set the FeeAccumulator as the address for SSV validators to send MEV rewards to
-    function setFeeRecipient() external {
-        ISSVNetwork(SSV_NETWORK).setFeeRecipientAddress(
-            FEE_ACCUMULATOR_ADDRESS
-        );
-    }
-
     /**
      * @notice We can accept ETH directly to this contract from anyone as it does not impact our accounting
      * like it did in the legacy NativeStakingStrategy.
@@ -276,12 +257,8 @@ contract CompoundingStakingSSVStrategy is
     function _abstractSetPToken(address _asset, address) internal override {}
 
     /// @dev Convert accumulated ETH to WETH and send to the Harvester.
-    /// Will revert if the strategy is paused for accounting.
-    function _collectRewardTokens() internal override whenNotPaused {
-        // Collect ETH from execution rewards from the fee accumulator to this strategy.
-        FeeAccumulator(FEE_ACCUMULATOR_ADDRESS).collect();
-
-        // There can the ETH rewards in this strategy from tx priority fees
+    function _collectRewardTokens() internal override {
+        // All ETH is from MEV or tx priority fees
         uint256 ethRewards = address(this).balance;
 
         if (ethRewards > 0) {
