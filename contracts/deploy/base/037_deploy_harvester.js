@@ -58,12 +58,6 @@ module.exports = deployOnBase(
     return {
       actions: [
         {
-          // Upgrade the harvester
-          contract: cHarvesterProxy,
-          signature: "upgradeTo(address)",
-          args: [dHarvester.address],
-        },
-        {
           // Set Vault as Dripper
           contract: cHarvester,
           signature: "setDripper(address)",
