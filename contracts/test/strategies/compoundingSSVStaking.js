@@ -63,9 +63,14 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
 
   // Retry up to 3 times on CI
   this.retries(isCI ? 3 : 0);
+  let sGov;
   let fixture;
   beforeEach(async () => {
     fixture = await loadFixture();
+    const { compoundingStakingSSVStrategy } = fixture;
+    sGov = await impersonateAndFund(
+      await compoundingStakingSSVStrategy.governor()
+    );
   });
 
   shouldBehaveLikeGovernable(() => ({
@@ -119,10 +124,10 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
 
   describe("Configuring the strategy", function () {
     it("Governor should be able to change the registrator address", async () => {
-      const { compoundingStakingSSVStrategy, governor, strategist } = fixture;
+      const { compoundingStakingSSVStrategy, strategist } = fixture;
 
       const tx = await compoundingStakingSSVStrategy
-        .connect(governor)
+        .connect(sGov)
         .setRegistrator(strategist.address);
 
       await expect(tx)
@@ -140,59 +145,27 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
       ).to.be.revertedWith("Caller is not the Governor");
     });
 
-    it("Non governor should not be able to update the fuse intervals", async () => {
+    it("Should add source strategy", async () => {
+      const { compoundingStakingSSVStrategy, strategist } = fixture;
+
+      const tx = await compoundingStakingSSVStrategy
+        .connect(sGov)
+        .addSourceStrategy(strategist.address);
+      // Using a placeholder address for the source strategy
+
+      await expect(tx)
+        .to.emit(compoundingStakingSSVStrategy, "SourceStrategyAdded")
+        .withArgs(strategist.address);
+    });
+
+    it("Non governor should not be able to add source strategy", async () => {
       const { compoundingStakingSSVStrategy, strategist } = fixture;
 
       await expect(
         compoundingStakingSSVStrategy
           .connect(strategist)
-          .setFuseInterval(parseEther("21.6"), parseEther("25.6"))
+          .addSourceStrategy(strategist.address)
       ).to.be.revertedWith("Caller is not the Governor");
-    });
-
-    it("Fuse interval start needs to be larger than fuse end", async () => {
-      const { compoundingStakingSSVStrategy, governor } = fixture;
-
-      await expect(
-        compoundingStakingSSVStrategy
-          .connect(governor)
-          .setFuseInterval(parseEther("25.6"), parseEther("21.6"))
-      ).to.be.revertedWith("Incorrect fuse interval");
-    });
-
-    it("There should be at least 4 ETH between interval start and interval end", async () => {
-      const { compoundingStakingSSVStrategy, governor } = fixture;
-
-      await expect(
-        compoundingStakingSSVStrategy
-          .connect(governor)
-          .setFuseInterval(parseEther("21.6"), parseEther("25.5"))
-      ).to.be.revertedWith("Incorrect fuse interval");
-    });
-
-    it("Revert when fuse intervals are larger than 32 ether", async () => {
-      const { compoundingStakingSSVStrategy, governor } = fixture;
-
-      await expect(
-        compoundingStakingSSVStrategy
-          .connect(governor)
-          .setFuseInterval(parseEther("32.1"), parseEther("32.1"))
-      ).to.be.revertedWith("Incorrect fuse interval");
-    });
-
-    it("Governor should be able to change fuse interval", async () => {
-      const { compoundingStakingSSVStrategy, governor } = fixture;
-
-      const fuseStartBn = parseEther("22.6");
-      const fuseEndBn = parseEther("26.6");
-
-      const tx = await compoundingStakingSSVStrategy
-        .connect(governor)
-        .setFuseInterval(fuseStartBn, fuseEndBn);
-
-      await expect(tx)
-        .to.emit(compoundingStakingSSVStrategy, "FuseIntervalUpdated")
-        .withArgs(fuseStartBn, fuseEndBn);
     });
   });
 
