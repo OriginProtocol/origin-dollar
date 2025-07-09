@@ -89,7 +89,7 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
   }));
 
   describe("Initial setup", function () {
-    it("Should not allow ETH to be sent to the strategy if not FeeAccumulator or WETH", async () => {
+    it("Should anyone to send ETH", async () => {
       const { compoundingStakingSSVStrategy, strategist } = fixture;
 
       const signer = compoundingStakingSSVStrategy.provider.getSigner(
@@ -100,9 +100,7 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
         value: parseEther("2"),
       };
 
-      await expect(signer.sendTransaction(tx)).to.be.revertedWith(
-        "Eth not from allowed contracts"
-      );
+      await expect(signer.sendTransaction(tx)).to.not.be.reverted;
     });
 
     it("SSV network should have allowance to spend SSV tokens of the strategy", async () => {
