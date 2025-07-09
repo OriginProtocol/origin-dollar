@@ -1242,6 +1242,73 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
 
       await expect(tx).to.be.revertedWith("Not registered or verified");
     });
+
+    // Remove validator
+    it("Should remove a validator", async () => {
+      const { compoundingStakingSSVStrategy, validatorRegistrator } = fixture;
+
+      // Register a new validator with the SSV Network
+      await compoundingStakingSSVStrategy
+        .connect(validatorRegistrator)
+        .registerSsvValidator(
+          testPublicKeys[0],
+          testValidator.operatorIds,
+          testValidator.sharesData,
+          ethUnits("2"),
+          emptyCluster
+        );
+
+      expect(
+        await compoundingStakingSSVStrategy.validatorState(
+          hashPubKey(testPublicKeys[0])
+        )
+      ).to.equal(1, "Validator state not 1 (REGISTERED)");
+
+      // Withdraw from the validator
+      const removeTx = compoundingStakingSSVStrategy
+        .connect(validatorRegistrator)
+        .removeSsvValidator(
+          testPublicKeys[0],
+          testValidator.operatorIds,
+          emptyCluster
+        );
+
+      await expect(removeTx)
+        .to.emit(compoundingStakingSSVStrategy, "SSVValidatorRemoved")
+        .withArgs(hashPubKey(testPublicKeys[0]), testValidator.operatorIds);
+    });
+
+    it("Should revert when removing a validator that is not registered", async () => {
+      const { compoundingStakingSSVStrategy, validatorRegistrator } = fixture;
+      expect(
+        await compoundingStakingSSVStrategy.validatorState(
+          hashPubKey(testPublicKeys[0])
+        )
+      ).to.equal(0, "Validator state not 0 (NON_REGISTERED)");
+
+      // Try to remove a validator that is not registered
+      const removeTx = compoundingStakingSSVStrategy
+        .connect(validatorRegistrator)
+        .removeSsvValidator(
+          testPublicKeys[0],
+          testValidator.operatorIds,
+          emptyCluster
+        );
+
+      await expect(removeTx).to.be.revertedWith("Validator not regd or exited");
+    });
+
+    it("Should revert when removing a validator that as found", async () => {
+      await stakeValidatorsSingle(1, false, 0, ETHInGwei); // 1e9 Gwei = 1 ETH
+
+      const { compoundingStakingSSVStrategy } = fixture;
+
+      expect(
+        await compoundingStakingSSVStrategy.validatorState(
+          hashPubKey(testPublicKeys[0])
+        )
+      ).to.equal(2, "Validator state not 2 (STAKED)");
+    });
   });
 
   /*
