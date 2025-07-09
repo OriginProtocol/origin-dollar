@@ -65,6 +65,7 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
   this.retries(isCI ? 3 : 0);
   let sGov;
   let sVault;
+  let sHarvester;
   let fixture;
   beforeEach(async () => {
     fixture = await loadFixture();
@@ -74,6 +75,9 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
     );
     sVault = await impersonateAndFund(
       await compoundingStakingSSVStrategy.vaultAddress()
+    );
+    sHarvester = await impersonateAndFund(
+      await compoundingStakingSSVStrategy.harvesterAddress()
     );
     await weth
       .connect(josh)
@@ -1608,6 +1612,35 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
       expect(
         await compoundingStakingSSVStrategy.depositedWethAccountedFor()
       ).to.equal(0, "Withdraw amount not set properly");
+    });
+  });
+
+  describe("Collect rewards", async () => {
+    it("Should collect rewards from the strategy", async () => {
+      const { compoundingStakingSSVStrategy, weth } = fixture;
+
+      const harvesterAddress =
+        await compoundingStakingSSVStrategy.harvesterAddress();
+      const vaultAddress = await compoundingStakingSSVStrategy.VAULT_ADDRESS();
+
+      const balanceBefore = await weth.balanceOf(vaultAddress);
+
+      const rewardAmount = parseEther("10");
+      // Send raw ETH to the strategy
+      await setBalance(compoundingStakingSSVStrategy.address, rewardAmount);
+
+      const collectTx = compoundingStakingSSVStrategy
+        .connect(sHarvester)
+        .collectRewardTokens();
+
+      await expect(collectTx)
+        .to.emit(compoundingStakingSSVStrategy, "RewardTokenCollected")
+        .withArgs(harvesterAddress, weth.address, rewardAmount);
+
+      expect(await weth.balanceOf(vaultAddress)).to.equal(
+        balanceBefore.add(rewardAmount),
+        "Rewards not collected properly"
+      );
     });
   });
 
