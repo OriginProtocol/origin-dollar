@@ -12,6 +12,8 @@ const {
   isTest,
   isFork,
   isPlume,
+  isHoodi,
+  isHoodiOrFork,
 } = require("../test/helpers.js");
 const { deployWithConfirmation, withConfirmation } = require("../utils/deploy");
 const { metapoolLPCRVPid } = require("../utils/constants");
@@ -399,7 +401,9 @@ const deployOUSDHarvester = async (ousdDripper) => {
     cHarvester
       .connect(sGovernor)
       .setRewardProceedsAddress(
-        isMainnet || isHolesky ? ousdDripper.address : cVaultProxy.address
+        isMainnet || isHolesky || isHoodi
+          ? ousdDripper.address
+          : cVaultProxy.address
       )
   );
 
@@ -460,7 +464,9 @@ const deployOETHHarvester = async (oethDripper) => {
     cOETHHarvester
       .connect(sGovernor)
       .setRewardProceedsAddress(
-        isMainnet || isHolesky ? oethDripper.address : cOETHVaultProxy.address
+        isMainnet || isHolesky || isHoodi
+          ? oethDripper.address
+          : cOETHVaultProxy.address
       )
   );
 
@@ -901,10 +907,10 @@ const deployOracles = async () => {
   let args = [];
   if (isMainnet) {
     oracleContract = "OracleRouter";
-  } else if (isHoleskyOrFork) {
+  } else if (isHoleskyOrFork || isHoodiOrFork) {
     oracleContract = "OETHFixedOracle";
     contractName = "OETHOracleRouter";
-    args = [addresses.zero];
+    args = [];
   } else if (isSonicOrFork) {
     oracleContract = "OSonicOracleRouter";
     contractName = "OSonicOracleRouter";
@@ -912,7 +918,7 @@ const deployOracles = async () => {
   }
 
   await deployWithConfirmation(contractName, args, oracleContract);
-  if (isHoleskyOrFork || isSonicOrFork) {
+  if (isHoleskyOrFork || isHoodiOrFork || isSonicOrFork) {
     // no need to configure any feeds since they are hardcoded to a fixed feed
     // TODO: further deployments will require more intelligent separation of different
     // chains / environment oracle deployments
@@ -963,12 +969,13 @@ const deployOracles = async () => {
 };
 
 const deployOETHCore = async () => {
-  const { governorAddr } = await hre.getNamedAccounts();
+  const { governorAddr, deployerAddr } = await hre.getNamedAccounts();
   const assetAddresses = await getAssetAddresses(deployments);
   log(`Using asset addresses: ${JSON.stringify(assetAddresses, null, 2)}`);
 
   // Signers
   const sGovernor = await ethers.provider.getSigner(governorAddr);
+  const sDeployer = await ethers.provider.getSigner(deployerAddr);
 
   // Proxies
   await deployWithConfirmation("OETHProxy");
@@ -988,18 +995,18 @@ const deployOETHCore = async () => {
   const cOETHProxy = await ethers.getContract("OETHProxy");
   const cOETHVaultProxy = await ethers.getContract("OETHVaultProxy");
   const cOETH = await ethers.getContractAt("OETH", cOETHProxy.address);
-  const cOracleRouter = await ethers.getContract("OracleRouter");
 
-  const cOETHOracleRouter = isMainnet
-    ? await ethers.getContract("OETHOracleRouter")
-    : cOracleRouter;
+  const oracleRouterContractName =
+    isMainnet || isHoodiOrFork ? "OETHOracleRouter" : "OracleRouter";
+  const cOETHOracleRouter = await ethers.getContract(oracleRouterContractName);
   const cOETHVault = await ethers.getContractAt(
     "IVault",
     cOETHVaultProxy.address
   );
 
+  // prettier-ignore
   await withConfirmation(
-    cOETHProxy["initialize(address,address,bytes)"](
+    cOETHProxy.connect(sDeployer)["initialize(address,address,bytes)"](
       dOETH.address,
       governorAddr,
       []
@@ -1007,8 +1014,9 @@ const deployOETHCore = async () => {
   );
   log("Initialized OETHProxy");
 
+  // prettier-ignore
   await withConfirmation(
-    cOETHVaultProxy["initialize(address,address,bytes)"](
+    cOETHVaultProxy.connect(sDeployer)["initialize(address,address,bytes)"](
       dOETHVault.address,
       governorAddr,
       []
