@@ -174,6 +174,27 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
           .addSourceStrategy(strategist.address)
       ).to.be.revertedWith("Caller is not the Governor");
     });
+
+    it("Should be able to pause/unpause the strategy", async () => {
+      const { compoundingStakingSSVStrategy, strategist } = fixture;
+
+      const tx = await compoundingStakingSSVStrategy
+        .connect(strategist)
+        .pause();
+
+      await expect(tx)
+        .to.emit(compoundingStakingSSVStrategy, "Paused")
+        .withArgs(strategist.address);
+    });
+
+    it("Should support WETH as the only asset", async () => {
+      const { compoundingStakingSSVStrategy, weth } = fixture;
+
+      const assets = await compoundingStakingSSVStrategy.supportsAsset(
+        weth.address
+      );
+      expect(assets).to.equal(true);
+    });
   });
 
   describe("Accounting", function () {
@@ -1497,6 +1518,92 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
       await expect(withdrawTx)
         .to.emit(compoundingStakingSSVStrategy, "Withdrawal")
         .withArgs(weth.address, zero, depositAmount);
+
+      expect(
+        await compoundingStakingSSVStrategy.depositedWethAccountedFor()
+      ).to.equal(0, "Withdraw amount not set properly");
+    });
+
+    it("Should revert when withdrawing other than WETH", async () => {
+      const { compoundingStakingSSVStrategy, josh } = fixture;
+
+      // Try to withdraw USDC instead of WETH
+      await expect(
+        compoundingStakingSSVStrategy
+          .connect(sVault)
+          .withdraw(josh.address, josh.address, parseEther("10"))
+      ).to.be.revertedWith("Unsupported asset");
+    });
+
+    it("Should revert when withdrawing 0 ETH from the strategy", async () => {
+      const { compoundingStakingSSVStrategy, weth, josh } = fixture;
+
+      await expect(
+        compoundingStakingSSVStrategy.connect(sVault).withdraw(
+          josh.address,
+          weth.address, // 0 ETH
+          0 // 0 amount
+        )
+      ).to.be.revertedWith("Must withdraw something");
+    });
+
+    it("Should revert when withdrawing to the zero address", async () => {
+      const { compoundingStakingSSVStrategy, weth } = fixture;
+
+      await expect(
+        compoundingStakingSSVStrategy.connect(sVault).withdraw(
+          zero, // zero address
+          weth.address,
+          parseEther("10")
+        )
+      ).to.be.revertedWith("Must specify recipient");
+    });
+
+    it("Should withdrawAll ETH from the strategy, no ETH", async () => {
+      const { compoundingStakingSSVStrategy, weth, josh } = fixture;
+
+      const depositAmount = parseEther("10");
+      await weth
+        .connect(josh)
+        .transfer(compoundingStakingSSVStrategy.address, depositAmount);
+      await compoundingStakingSSVStrategy
+        .connect(sVault)
+        .deposit(weth.address, depositAmount);
+
+      const withdrawTx = compoundingStakingSSVStrategy
+        .connect(sVault)
+        .withdrawAll();
+
+      await expect(withdrawTx)
+        .to.emit(compoundingStakingSSVStrategy, "Withdrawal")
+        .withArgs(weth.address, zero, depositAmount);
+
+      expect(
+        await compoundingStakingSSVStrategy.depositedWethAccountedFor()
+      ).to.equal(0, "Withdraw amount not set properly");
+    });
+
+    it("Should withdrawAll ETH from the strategy, withdraw some ETH", async () => {
+      const { compoundingStakingSSVStrategy, weth, josh } = fixture;
+
+      const depositAmount = parseEther("10");
+      await weth
+        .connect(josh)
+        .transfer(compoundingStakingSSVStrategy.address, depositAmount);
+      await compoundingStakingSSVStrategy
+        .connect(sVault)
+        .deposit(weth.address, depositAmount);
+
+      // Donate raw ETH to the strategy
+      await setBalance(compoundingStakingSSVStrategy.address, parseEther("5"));
+
+      const withdrawTx = compoundingStakingSSVStrategy
+        .connect(sVault)
+        .withdrawAll();
+
+      await expect(withdrawTx)
+        .to.emit(compoundingStakingSSVStrategy, "Withdrawal")
+        .withArgs(weth.address, zero, depositAmount.add(parseEther("5")));
 
       expect(
         await compoundingStakingSSVStrategy.depositedWethAccountedFor()
