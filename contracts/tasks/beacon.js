@@ -1,3 +1,4 @@
+const addresses = require("../utils/addresses");
 const { getBeaconBlock, getSlot } = require("../utils/beacon");
 const { getSigner } = require("../utils/signers");
 const { toHex } = require("../utils/units");
@@ -6,6 +7,33 @@ const { resolveContract } = require("../utils/resolvers");
 const { logTxDetails } = require("../utils/txLogger");
 
 const log = require("../utils/logger")("task:beacon");
+
+async function depositValidator({
+  pubkey,
+  withdrawalCredentials,
+  signature,
+  depositDataRoot,
+  amount,
+}) {
+  const signer = await getSigner();
+
+  const depositContract = await ethers.getContractAt(
+    "IDepositContract",
+    addresses.mainnet.beaconChainDepositContract,
+    signer
+  );
+
+  const tx = await depositContract.deposit(
+    pubkey,
+    withdrawalCredentials,
+    signature,
+    depositDataRoot,
+    {
+      value: ethers.utils.parseEther(amount),
+    }
+  );
+  await logTxDetails(tx, "deposit to validator");
+}
 
 async function verifySlot({ block }) {
   const signer = await getSigner();
@@ -93,6 +121,29 @@ function getProvider() {
   return new ethers.providers.JsonRpcProvider(process.env.PROVIDER_URL);
 }
 
+async function blockToSlot({ block }) {
+  const oracle = await resolveContract("BeaconOracle");
+
+  const slot = await oracle.blockToSlot(block);
+
+  console.log(`Block ${block} maps to slot ${slot}`);
+
+  return slot;
+}
+
+async function slotToBlock({ slot }) {
+  const oracle = await resolveContract("BeaconOracle");
+
+  const block = await oracle.slotToBlock(slot);
+
+  console.log(`Slot ${slot} maps to block ${block}`);
+
+  return block;
+}
+
 module.exports = {
+  depositValidator,
   verifySlot,
+  blockToSlot,
+  slotToBlock,
 };

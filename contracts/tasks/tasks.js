@@ -113,7 +113,12 @@ const { harvestAndSwap } = require("./harvest");
 const { deployForceEtherSender, forceSend } = require("./simulation");
 const { sleep } = require("../utils/time");
 const { lzBridgeToken, lzSetConfig } = require("./layerzero");
-const { verifySlot } = require("./beacon");
+const {
+  depositValidator,
+  blockToSlot,
+  slotToBlock,
+  verifySlot,
+} = require("./beacon");
 
 const log = require("../utils/logger")("tasks");
 
@@ -1820,6 +1825,23 @@ task("lzSetConfig")
   });
 
 // Beacon Chain Operations
+subtask("depositValidator", "Deposits ETH to a validator on the Beacon chain")
+  .addParam("pubkey", "Validator public key in hex format with a 0x prefix")
+  .addParam("signature", "Validator signature in hex format with a 0x prefix")
+  .addParam(
+    "withdrawalCredentials",
+    "Validator withdrawal credentials in hex format with a 0x prefix"
+  )
+  .addParam(
+    "depositDataRoot",
+    "Beacon chain deposit data root in hex format with a 0x prefix"
+  )
+  .addOptionalParam("amount", "Amount to deposit", 32, types.float)
+  .setAction(depositValidator);
+task("depositValidator").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
 subtask(
   "verifySlot",
   "Verify an execution layer block number to a beacon chain slot"
@@ -1827,5 +1849,19 @@ subtask(
   .addParam("block", "Execution layer block number", undefined, types.int)
   .setAction(verifySlot);
 task("verifySlot").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+subtask("blockToSlot", "Map a block to a beacon chain slot")
+  .addParam("block", "Execution layer block number", undefined, types.int)
+  .setAction(blockToSlot);
+task("blockToSlot").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+subtask("slotToBlock", "Map a beacon chain slot to a block")
+  .addParam("slot", "Beacon chain slot", undefined, types.int)
+  .setAction(slotToBlock);
+task("slotToBlock").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
