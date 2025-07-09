@@ -320,12 +320,3 @@ contract CompoundingStakingSSVStrategyProxy is
 {
 
 }
-
-/**
- * @notice CompoundingStakingFeeAccumulatorProxy delegates calls to FeeAccumulator implementation
- */
-contract CompoundingStakingFeeAccumulatorProxy is
-    InitializeGovernedUpgradeabilityProxy
-{
-
-}

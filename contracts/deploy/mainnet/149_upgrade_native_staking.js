@@ -93,7 +93,7 @@ module.exports = deploymentWithGovernanceProposal(
     // Governance Actions
     // ----------------
     return {
-      name: `Upgrade the existing Native Staking Strategies and deploy new strategy that supports compounding validators`,
+      name: `Upgrade the existing Native Staking Strategies and deploy new Compounding Staking Strategy`,
       actions: [
         // 1. Upgrade the second Native Staking Strategy
         {

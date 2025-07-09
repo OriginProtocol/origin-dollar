@@ -1098,36 +1098,25 @@ task("withdrawSSV").setAction(async (_, __, runSuper) => {
 });
 
 /**
- * The native staking proxy needs to be deployed via the defender relayer because the SSV network
+ * The compounding staking proxy needs to be deployed via the defender relayer because the SSV network
  * grants the SSV rewards to the deployer of the contract. And we want the Defender Relayer to be
  * the recipient
  */
 subtask(
-  "deployNativeStakingProxy",
-  "Deploy the native staking proxy via the Defender Relayer"
-)
-  .addOptionalParam(
-    "index",
-    "The number of the Native Staking Contract deployed.",
-    undefined,
-    types.int
-  )
-  .setAction(async ({ index }) => {
-    const signer = await getSigner();
+  "deployStakingProxy",
+  "Deploy the compounding staking proxy via the Defender Relayer"
+).setAction(async () => {
+  const signer = await getSigner();
 
-    if (!index) {
-      throw new Error("Index is required and must be a positive integer");
-    }
-
-    log(`Deploy NativeStakingSSVStrategy${index}Proxy`);
-    const nativeStakingProxyFactory = await ethers.getContractFactory(
-      `NativeStakingSSVStrategy${index}Proxy`
-    );
-    const contract = await nativeStakingProxyFactory.connect(signer).deploy();
-    await contract.deployed();
-    log(`Address of deployed contract is: ${contract.address}`);
-  });
-task("deployNativeStakingProxy").setAction(async (_, __, runSuper) => {
+  log(`Deploy CompoundingStakingSSVStrategyProxy`);
+  const stakingProxyFactory = await ethers.getContractFactory(
+    `CompoundingStakingSSVStrategyProxy`
+  );
+  const contract = await stakingProxyFactory.connect(signer).deploy();
+  await contract.deployed();
+  log(`Address of deployed staking contract is: ${contract.address}`);
+});
+task("deployStakingProxy").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
 
