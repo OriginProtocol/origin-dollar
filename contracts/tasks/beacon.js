@@ -8,13 +8,7 @@ const { logTxDetails } = require("../utils/txLogger");
 
 const log = require("../utils/logger")("task:beacon");
 
-async function depositValidator({
-  pubkey,
-  withdrawalCredentials,
-  signature,
-  depositDataRoot,
-  amount,
-}) {
+async function depositValidator({ pubkey, cred, sig, root, amount }) {
   const signer = await getSigner();
 
   const depositContract = await ethers.getContractAt(
@@ -23,15 +17,9 @@ async function depositValidator({
     signer
   );
 
-  const tx = await depositContract.deposit(
-    pubkey,
-    withdrawalCredentials,
-    signature,
-    depositDataRoot,
-    {
-      value: ethers.utils.parseEther(amount),
-    }
-  );
+  const tx = await depositContract.deposit(pubkey, cred, sig, root, {
+    value: ethers.utils.parseEther(amount.toString()),
+  });
   await logTxDetails(tx, "deposit to validator");
 }
 

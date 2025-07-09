@@ -1827,13 +1827,13 @@ task("lzSetConfig")
 // Beacon Chain Operations
 subtask("depositValidator", "Deposits ETH to a validator on the Beacon chain")
   .addParam("pubkey", "Validator public key in hex format with a 0x prefix")
-  .addParam("signature", "Validator signature in hex format with a 0x prefix")
+  .addParam("sig", "Validator signature in hex format with a 0x prefix")
   .addParam(
-    "withdrawalCredentials",
+    "cred",
     "Validator withdrawal credentials in hex format with a 0x prefix"
   )
   .addParam(
-    "depositDataRoot",
+    "root",
     "Beacon chain deposit data root in hex format with a 0x prefix"
   )
   .addOptionalParam("amount", "Amount to deposit", 32, types.float)
