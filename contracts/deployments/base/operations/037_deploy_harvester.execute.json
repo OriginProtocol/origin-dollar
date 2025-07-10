@@ -1,0 +1,52 @@
+{
+  "version": "1.0",
+  "chainId": "8453",
+  "createdAt": 1752034150,
+  "meta": {
+    "name": "Transaction Batch",
+    "description": "",
+    "txBuilderVersion": "1.16.1",
+    "createdFromSafeAddress": "0x92A19381444A001d62cE67BaFF066fA1111d7202",
+    "createdFromOwnerAddress": ""
+  },
+  "transactions": [
+    {
+      "to": "0xf817cb3092179083c48c014688D98B72fB61464f",
+      "value": "0",
+      "data": null,
+      "contractMethod": {
+        "inputs": [
+          {
+            "type": "address[]",
+            "name": "targets"
+          },
+          {
+            "type": "uint256[]",
+            "name": "values"
+          },
+          {
+            "type": "bytes[]",
+            "name": "payloads"
+          },
+          {
+            "type": "bytes32",
+            "name": "predecessor"
+          },
+          {
+            "type": "bytes32",
+            "name": "salt"
+          }
+        ],
+        "name": "executeBatch",
+        "payable": true
+      },
+      "contractInputsValues": {
+        "targets": "[\"0x0CbEAcf86232fC04050cD679d860516F7254c22E\",\"0x0CbEAcf86232fC04050cD679d860516F7254c22E\",\"0x0CbEAcf86232fC04050cD679d860516F7254c22E\",\"0x0CbEAcf86232fC04050cD679d860516F7254c22E\",\"0xF611cC500eEE7E4e4763A05FE623E2363c86d2Af\",\"0x9cfcAF81600155e01c63e4D2993A8A81A8205829\"]",
+        "values": "[\"0\",\"0\",\"0\",\"0\",\"0\",\"0\"]",
+        "payloads": "[\"0x2e9958ab00000000000000000000000098a0cbef61bd2d21435f433be4cd42b56b38cc93\",\"0x773540b30000000000000000000000004ff1b9d9ba8558f5eafcec096318ea0d8b541971\",\"0x65f6fa94000000000000000000000000f611cc500eee7e4e4763a05fe623e2363c86d2af0000000000000000000000000000000000000000000000000000000000000001\",\"0x65f6fa940000000000000000000000009cfcaf81600155e01c63e4d2993a8a81a82058290000000000000000000000000000000000000000000000000000000000000001\",\"0xc2e1e3f40000000000000000000000000cbeacf86232fc04050cd679d860516f7254c22e\",\"0xc2e1e3f40000000000000000000000000cbeacf86232fc04050cd679d860516f7254c22e\"]",
+        "predecessor": "0x0000000000000000000000000000000000000000000000000000000000000000",
+        "salt": "0x3b948b4f023a154867a537ca9e6820c36ef818e9a6e4e9bc6d0f05f013c72f1d"
+      }
+    }
+  ]
+}
