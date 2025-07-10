@@ -618,6 +618,15 @@ const defaultFixture = deployments.createFixture(async () => {
     nativeStakingStrategyProxy.address
   );
 
+  const compoundingStakingStrategyProxy = await ethers.getContract(
+    "CompoundingStakingSSVStrategyProxy"
+  );
+
+  const compoundingStakingSSVStrategy = await ethers.getContractAt(
+    "CompoundingStakingSSVStrategy",
+    compoundingStakingStrategyProxy.address
+  );
+
   const nativeStakingFeeAccumulatorProxy = await ethers.getContract(
     "NativeStakingFeeAccumulatorProxy"
   );
@@ -1137,6 +1146,7 @@ const defaultFixture = deployments.createFixture(async () => {
     frxETH,
     sfrxETH,
     nativeStakingSSVStrategy,
+    compoundingStakingSSVStrategy,
     nativeStakingFeeAccumulator,
     balancerREthStrategy,
     oethMorphoAaveStrategy,
@@ -1977,6 +1987,67 @@ async function nativeStakingSSVStrategyFixture() {
 }
 
 /**
+ * CompoundingStakingSSVStrategy fixture
+ */
+async function compoundingStakingSSVStrategyFixture() {
+  const fixture = await oethDefaultFixture();
+  await hotDeployOption(fixture, "compoundingStakingSSVStrategyFixture", {
+    isOethFixture: true,
+  });
+
+  if (isFork) {
+    /*
+    const { compoundingStakingSSVStrategy, ssv } = fixture;
+
+    // The Defender Relayer
+    fixture.validatorRegistrator = await impersonateAndFund(
+      addresses.mainnet.validatorRegistrator
+    );
+
+    // Fund some SSV to the compounding staking strategy
+    const ssvWhale = await impersonateAndFund(
+      "0xf977814e90da44bfa03b6295a0616a897441acec" // Binance 8
+    );
+    await ssv
+      .connect(ssvWhale)
+      .transfer(compoundingStakingSSVStrategy.address, oethUnits("100"));
+
+    fixture.ssvNetwork = await ethers.getContractAt(
+      "ISSVNetwork",
+      addresses.mainnet.SSVNetwork
+    );
+    */
+  } else {
+    fixture.ssvNetwork = await ethers.getContract("MockSSVNetwork");
+    const { governorAddr } = await getNamedAccounts();
+    const { oethVault, weth, compoundingStakingSSVStrategy } = fixture;
+    const sGovernor = await ethers.provider.getSigner(governorAddr);
+    const sTimelock = await impersonateAndFund(addresses.mainnet.Timelock);
+
+    // Approve Strategy
+    await oethVault
+      .connect(sGovernor)
+      .approveStrategy(compoundingStakingSSVStrategy.address);
+
+    // Set as default
+    await oethVault
+      .connect(sGovernor)
+      .setAssetDefaultStrategy(
+        weth.address,
+        compoundingStakingSSVStrategy.address
+      );
+
+    await compoundingStakingSSVStrategy
+      .connect(sTimelock)
+      .setRegistrator(governorAddr);
+
+    fixture.validatorRegistrator = sGovernor;
+  }
+
+  return fixture;
+}
+
+/**
  * Generalized strategy fixture that works only in forked environment
  *
  * @param metapoolAddress -> the address of the metapool
@@ -2771,6 +2842,7 @@ module.exports = {
   rebornFixture,
   balancerREthFixture,
   nativeStakingSSVStrategyFixture,
+  compoundingStakingSSVStrategyFixture,
   oethMorphoAaveFixture,
   oeth1InchSwapperFixture,
   oethCollateralSwapFixture,
