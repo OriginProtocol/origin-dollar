@@ -1,9 +1,8 @@
 const addresses = require("../utils/addresses");
 const { getBeaconBlock, getSlot } = require("../utils/beacon");
 const { getSigner } = require("../utils/signers");
-const { toHex } = require("../utils/units");
-const { concatProof } = require("../utils/beacon");
 const { resolveContract } = require("../utils/resolvers");
+const { generateSlotProof, generateBlockProof } = require("../utils/proofs");
 const { logTxDetails } = require("../utils/txLogger");
 
 const log = require("../utils/logger")("task:beacon");
@@ -46,48 +45,15 @@ async function verifySlot({ block }) {
 
   const { blockView, blockTree } = await getBeaconBlock(slot);
 
-  // Have to dynamically import the Lodestar API client as its an ESM module
-  const { createProof, ProofType } = await import(
-    "@chainsafe/persistent-merkle-tree"
-  );
-
-  // BeaconBlock.slot
-  log(`Generating slot proof to beacon block root`);
-  const slotGenIndex = blockView.type.getPathInfo(["slot"]).gindex;
-  const slotProof = createProof(blockTree.rootNode, {
-    type: ProofType.single,
-    gindex: slotGenIndex,
+  const slotProofBytes = await generateSlotProof({
+    blockView,
+    blockTree,
   });
-  log(`Slot leaf: ${toHex(slotProof.leaf)}`);
-  // console.log(
-  //   `Proof of slot to block root ${
-  //     slotProof.witnesses.length
-  //   }: ${slotProof.witnesses.map(toHex)}`
-  // );
-  const slotProofBytes = toHex(concatProof(slotProof));
-  log(`Slot proof in bytes:\n${slotProofBytes}`);
 
-  // BeaconBlock.body.executionPayload.blockNumber
-  log(`Generating block number proof to beacon block root`);
-  const blockNumberGenIndex = blockView.type.getPathInfo([
-    "body",
-    "executionPayload",
-    "blockNumber",
-  ]).gindex;
-  log(`Generalized index for block number: ${blockNumberGenIndex}`);
-  log(`Block number: ${blockView.body.executionPayload.blockNumber}`);
-  const blockNumberProof = createProof(blockTree.rootNode, {
-    type: ProofType.single,
-    gindex: blockNumberGenIndex,
+  const blockNumberProofBytes = await generateBlockProof({
+    blockView,
+    blockTree,
   });
-  log(`Block number leaf: ${toHex(blockNumberProof.leaf)}`);
-  // log(
-  //   `Proof of block number to block root ${
-  //     blockNumberProof.witnesses.length
-  //   }: ${blockNumberProof.witnesses.map(toHex)}`
-  // );
-  const blockNumberProofBytes = toHex(concatProof(blockNumberProof));
-  log(`Block number proof in bytes:\n${blockNumberProofBytes}`);
 
   const oracle = await resolveContract("BeaconOracle");
 
