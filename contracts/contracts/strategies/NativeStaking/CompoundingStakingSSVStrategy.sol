@@ -202,7 +202,7 @@ contract CompoundingStakingSSVStrategy is
             IWETH9(WETH).balanceOf(address(this));
     }
 
-    function pause() external onlyStrategist {
+    function pause() external onlyGovernorOrStrategist {
         _pause();
     }
 

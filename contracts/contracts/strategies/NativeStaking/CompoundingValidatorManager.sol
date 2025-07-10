@@ -176,15 +176,6 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
         _;
     }
 
-    /// @dev Throws if called by any account other than the Strategist
-    modifier onlyStrategist() {
-        require(
-            msg.sender == IVault(VAULT_ADDRESS).strategistAddr(),
-            "Not Strategist"
-        );
-        _;
-    }
-
     /// @param _wethAddress Address of the Erc20 WETH Token contract
     /// @param _vaultAddress Address of the Vault
     /// @param _beaconChainDepositContract Address of the beacon chain deposit contract
