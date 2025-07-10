@@ -18,7 +18,7 @@ async function generateSlotProof({ blockView, blockTree }) {
     gindex: slotGenIndex,
   });
   log(`Slot leaf: ${toHex(slotProof.leaf)}`);
-  // console.log(
+  // log(
   //   `Proof of slot to block root ${
   //     slotProof.witnesses.length
   //   }: ${slotProof.witnesses.map(toHex)}`
@@ -26,7 +26,7 @@ async function generateSlotProof({ blockView, blockTree }) {
   const slotProofBytes = toHex(concatProof(slotProof));
   log(`Slot proof in bytes:\n${slotProofBytes}`);
 
-  return slotProofBytes;
+  return { proof: slotProofBytes, leaf: slotProof.leaf, slot: blockView.slot };
 }
 
 // BeaconBlock.body.executionPayload.blockNumber
@@ -58,7 +58,11 @@ async function generateBlockProof({ blockView, blockTree }) {
   const blockNumberProofBytes = toHex(concatProof(blockNumberProof));
   log(`Block number proof in bytes:\n${blockNumberProofBytes}`);
 
-  return blockNumberProofBytes;
+  return {
+    proof: blockNumberProofBytes,
+    leaf: blockNumberProof.leaf,
+    blockNumber: blockView.body.executionPayload.blockNumber,
+  };
 }
 
 // BeaconBlock.state.PendingDeposits[0].slot
@@ -73,17 +77,17 @@ async function generateFirstPendingDepositSlotProof({
   );
 
   // BeaconBlock.state.PendingDeposits[0].slot
-  console.log(`\nGenerating proof for the slot of the first pending deposit`);
+  log(`\nGenerating proof for the slot of the first pending deposit`);
   const genIndex = concatGindices([
     blockView.type.getPathInfo(["stateRoot"]).gindex,
     stateView.type.getPathInfo(["pendingDeposits", 0]).gindex,
     toGindex(3, 4n), // depth 3, index 4 for slot = 11
   ]);
-  console.log(
+  log(
     `gen index for the slot in the first pending deposit in the beacon block: ${genIndex}`
   );
   const firstPendingDeposit = stateView.pendingDeposits.get(0);
-  console.log(`slot of the first pending deposit ${firstPendingDeposit.slot}`);
+  log(`slot of the first pending deposit ${firstPendingDeposit.slot}`);
   const firstDepositSlotProof = createProof(blockTree.rootNode, {
     type: ProofType.single,
     gindex: genIndex,
@@ -91,11 +95,60 @@ async function generateFirstPendingDepositSlotProof({
   const firstDepositSlotProofBytes = toHex(concatProof(firstDepositSlotProof));
   log(`First deposit slot proof in bytes:\n${firstDepositSlotProofBytes}`);
 
-  return { proof: firstDepositSlotProofBytes, slot: firstPendingDeposit.slot };
+  return {
+    proof: firstDepositSlotProofBytes,
+    leaf: firstDepositSlotProof.leaf,
+    slot: firstPendingDeposit.slot,
+  };
+}
+
+// BeaconBlock.state.validators[validatorIndex].pubkey
+async function generateValidatorPubKeyProof({
+  validatorIndex,
+  blockView,
+  blockTree,
+  stateView,
+}) {
+  // Have to dynamically import the Lodestar API client as its an ESM module
+  const { concatGindices, createProof, ProofType, toGindex } = await import(
+    "@chainsafe/persistent-merkle-tree"
+  );
+
+  log(`\nGenerating validator pubkey proof`);
+  const generalizedIndex = concatGindices([
+    blockView.type.getPathInfo(["stateRoot"]).gindex,
+    stateView.type.getPathInfo(["validators", validatorIndex]).gindex,
+    toGindex(3, 0n), // depth 3, index 0 for pubkey = 8
+  ]);
+  log(
+    `gen index for pubkey of validator ${validatorIndex} in beacon block: ${generalizedIndex}`
+  );
+  const validatorPubkeyProof = createProof(blockTree.rootNode, {
+    type: ProofType.single,
+    gindex: generalizedIndex,
+  });
+  const validatorDetails = stateView.validators.get(validatorIndex);
+  log(`Validator public key: ${toHex(validatorDetails.pubkey)}`);
+  log(`Validator public key leaf (hash): ${toHex(validatorPubkeyProof.leaf)}`);
+  log(
+    `Public key proof for validator ${validatorIndex} to beacon block root:\n${toHex(
+      concatProof(validatorPubkeyProof)
+    )}`
+  );
+
+  const validatorPubkeyProofBytes = toHex(concatProof(validatorPubkeyProof));
+  log(`Public key proof in bytes:\n${validatorPubkeyProofBytes}`);
+
+  return {
+    proof: validatorPubkeyProofBytes,
+    leaf: validatorPubkeyProof.leaf,
+    pubkey: validatorDetails.pubkey,
+  };
 }
 
 module.exports = {
   generateSlotProof,
   generateBlockProof,
   generateFirstPendingDepositSlotProof,
+  generateValidatorPubKeyProof,
 };

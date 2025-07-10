@@ -12,7 +12,7 @@ const { impersonateAndFund } = require("../../utils/signers");
 const { isFork } = require("../../test/helpers");
 
 const mainExport = async () => {
-  console.log("Running 001_core deployment on Holesky...");
+  console.log("Running 001_core deployment on Hoodi...");
   const { governorAddr, deployerAddr } = await getNamedAccounts();
   const sGovernor = await ethers.provider.getSigner(governorAddr);
   console.log("governorAddr", sGovernor.address);

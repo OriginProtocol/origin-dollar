@@ -45,12 +45,12 @@ async function verifySlot({ block }) {
 
   const { blockView, blockTree } = await getBeaconBlock(slot);
 
-  const slotProofBytes = await generateSlotProof({
+  const { proof: slotProofBytes } = await generateSlotProof({
     blockView,
     blockTree,
   });
 
-  const blockNumberProofBytes = await generateBlockProof({
+  const { proof: blockNumberProofBytes } = await generateBlockProof({
     blockView,
     blockTree,
   });
