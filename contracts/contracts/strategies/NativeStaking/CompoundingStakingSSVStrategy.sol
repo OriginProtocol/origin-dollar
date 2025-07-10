@@ -2,8 +2,6 @@
 pragma solidity ^0.8.0;
 
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import "@openzeppelin/contracts/utils/math/Math.sol";
 
 import { InitializableAbstractStrategy } from "../../utils/InitializableAbstractStrategy.sol";
 import { IWETH9 } from "../../interfaces/IWETH9.sol";
@@ -36,25 +34,11 @@ contract CompoundingStakingSSVStrategy is
     CompoundingValidatorManager,
     InitializableAbstractStrategy
 {
-    using SafeERC20 for IERC20;
-
     /// @notice SSV ERC20 token that serves as a payment for operating SSV validators
     address public immutable SSV_TOKEN;
 
-    /// @dev This contract receives WETH as the deposit asset, but unlike other strategies doesn't immediately
-    /// deposit it to an underlying platform. Rather a special privilege account stakes it to the validators.
-    /// For that reason calling WETH.balanceOf(this) in a deposit function can contain WETH that has just been
-    /// deposited and also WETH that has previously been deposited. To keep a correct count we need to keep track
-    /// of WETH that has already been accounted for.
-    /// This value represents the amount of WETH balance of this contract that has already been accounted for by the
-    /// deposit events.
-    /// It is important to note that this variable is not concerned with WETH that is a result of full/partial
-    /// withdrawal of the validators. It is strictly concerned with WETH that has been deposited and is waiting to
-    /// be staked.
-    uint256 public depositedWethAccountedFor;
-
     // For future use
-    uint256[49] private __gap;
+    uint256[50] private __gap;
 
     /// @param _baseConfig Base strategy config with platformAddress (ERC-4626 Vault contract), eg sfrxETH or sDAI,
     /// and vaultAddress (OToken Vault contract), eg VaultProxy or OETHVaultProxy
@@ -110,7 +94,7 @@ contract CompoundingStakingSSVStrategy is
     /// @notice Unlike other strategies, this does not deposit assets into the underlying platform.
     /// It just checks the asset is WETH and emits the Deposit event.
     /// To deposit WETH into validators `registerSsvValidator` and `stakeEth` must be used.
-    /// Will NOT revert if the strategy is paused from an accounting failure.
+    /// Will NOT revert if the strategy is paused for validator consolidation.
     /// @param _asset Address of asset to deposit. Has to be WETH.
     /// @param _amount Amount of assets that were transferred to the strategy by the vault.
     function deposit(address _asset, uint256 _amount)
@@ -120,49 +104,32 @@ contract CompoundingStakingSSVStrategy is
         nonReentrant
     {
         require(_asset == WETH, "Unsupported asset");
-        depositedWethAccountedFor += _amount;
-        _deposit(_asset, _amount);
-    }
-
-    /// @dev Deposit WETH to this strategy so it can later be staked into a validator.
-    /// @param _asset Address of WETH
-    /// @param _amount Amount of WETH to deposit
-    function _deposit(address _asset, uint256 _amount) internal {
         require(_amount > 0, "Must deposit something");
-        /*
-         * We could do a check here that would revert when "_amount % 32 ether != 0". With the idea of
-         * not allowing deposits that will result in WETH sitting on the strategy after all the possible batches
-         * of 32ETH have been staked.
-         * But someone could mess with our strategy by sending some WETH to it. And we might want to deposit just
-         * enough WETH to add it up to 32 so it can be staked. For that reason the check is left out.
-         *
-         * WETH sitting on the strategy won't interfere with the accounting since accounting only operates on ETH.
-         */
+
+        // Account for the new WETH
+        depositedWethAccountedFor += _amount;
+
         emit Deposit(_asset, address(0), _amount);
     }
 
     /// @notice Unlike other strategies, this does not deposit assets into the underlying platform.
     /// It just emits the Deposit event.
     /// To deposit WETH into validators `registerSsvValidator` and `stakeEth` must be used.
-    /// Will NOT revert if the strategy is paused from an accounting failure.
+    /// Will NOT revert if the strategy is paused for validator consolidation.
     function depositAll() external override onlyVault nonReentrant {
         uint256 wethBalance = IERC20(WETH).balanceOf(address(this));
         uint256 newWeth = wethBalance - depositedWethAccountedFor;
 
         if (newWeth > 0) {
+            // Account for the new WETH
             depositedWethAccountedFor = wethBalance;
 
-            _deposit(WETH, newWeth);
+            emit Deposit(WETH, address(0), newWeth);
         }
     }
 
-    /// @notice Withdraw WETH from this contract. Used only if some WETH for is lingering on the contract.
-    /// That can happen when:
-    ///   - after mints if the strategy is the default
-    ///   - time between depositToStrategy and stakeEth
-    ///   - the deposit was not a multiple of 32 WETH
-    ///   - someone sent WETH directly to this contract
-    /// Will NOT revert if the strategy is paused from an accounting failure.
+    /// @notice Withdraw ETH and WETH from this strategy contract.
+    /// Will revert if the strategy is paused for validator consolidation.
     /// @param _recipient Address to receive withdrawn assets
     /// @param _asset WETH to withdraw
     /// @param _amount Amount of WETH to withdraw
@@ -170,8 +137,9 @@ contract CompoundingStakingSSVStrategy is
         address _recipient,
         address _asset,
         uint256 _amount
-    ) external override onlyVault nonReentrant {
+    ) external override onlyVault nonReentrant whenNotPaused {
         require(_asset == WETH, "Unsupported asset");
+
         _withdraw(_recipient, _asset, _amount, address(this).balance);
     }
 
@@ -184,26 +152,32 @@ contract CompoundingStakingSSVStrategy is
         require(_withdrawAmount > 0, "Must withdraw something");
         require(_recipient != address(0), "Must specify recipient");
 
-        // Convert any ETH from validator partial withdrawals or exits to WETH
-        if (_ethBalance > 0) {
-            IWETH9(WETH).deposit{ value: _ethBalance }();
-        }
+        // Convert any ETH from validator partial withdrawals, exits
+        // or execution rewards to WETH and do the necessary accounting.
+        if (_ethBalance > 0) _convertWethToEth(_ethBalance);
 
-        _wethWithdrawn(_withdrawAmount);
+        // Transfer WETH to the recipient and do the necessary accounting.
+        _transferWeth(_withdrawAmount, _recipient);
 
-        IERC20(_asset).safeTransfer(_recipient, _withdrawAmount);
         emit Withdrawal(_asset, address(0), _withdrawAmount);
     }
 
-    /// @notice transfer all WETH deposits and ETH from validator withdrawals to the vault.
+    /// @notice Transfer all WETH deposits, ETH from validator withdrawals and ETH from
+    /// execution rewards in this strategy to the vault.
     /// This does not withdraw from the validators. That has to be done separately with the
-    /// `exitSsvValidator` and `removeSsvValidator` operations.
-    /// This does not withdraw any execution rewards from the FeeAccumulator.
-    /// Will NOT revert if the strategy is paused from an accounting failure.
-    function withdrawAll() external override onlyVaultOrGovernor nonReentrant {
+    /// `validatorWithdrawal` operation.
+    /// Will revert if the strategy is paused for validator consolidation.
+    function withdrawAll()
+        external
+        override
+        onlyVaultOrGovernor
+        nonReentrant
+        whenNotPaused
+    {
         uint256 ethBalance = address(this).balance;
         uint256 withdrawAmount = IERC20(WETH).balanceOf(address(this)) +
             ethBalance;
+
         if (withdrawAmount > 0) {
             _withdraw(vaultAddress, WETH, withdrawAmount, ethBalance);
         }
@@ -222,7 +196,10 @@ contract CompoundingStakingSSVStrategy is
         require(_asset == WETH, "Unsupported asset");
 
         // Load the last verified balance from the storage
-        balance = lastVerifiedBalance;
+        // and add to the latest WETH balance of this strategy.
+        balance =
+            lastVerifiedEthBalance +
+            IWETH9(WETH).balanceOf(address(this));
     }
 
     function pause() external onlyStrategist {
@@ -253,34 +230,14 @@ contract CompoundingStakingSSVStrategy is
 
     function _abstractSetPToken(address _asset, address) internal override {}
 
-    /// @dev Convert accumulated ETH to WETH and send to the Harvester.
-    function _collectRewardTokens() internal override {
-        // All ETH is from MEV or tx priority fees
-        uint256 ethRewards = address(this).balance;
-
-        if (ethRewards > 0) {
-            // Convert ETH rewards to WETH
-            IWETH9(WETH).deposit{ value: ethRewards }();
-
-            IERC20(WETH).safeTransfer(VAULT_ADDRESS, ethRewards);
-
-            emit RewardTokenCollected(harvesterAddress, WETH, ethRewards);
-        }
-    }
-
-    /// @dev Called when WETH is withdrawn from the strategy or staked to a validator so
-    /// the strategy knows how much WETH it has on deposit.
-    /// This is so it can emit the correct amount in the Deposit event in depositAll().
-    function _wethWithdrawn(uint256 _amount) internal override {
-        /* In an ideal world we wouldn't need to reduce the deduction amount when the
-         * depositedWethAccountedFor is smaller than the _amount.
-         *
-         * The reason this is required is that a malicious actor could sent WETH directly
-         * to this contract and that would circumvent the increase of depositedWethAccountedFor
-         * property. When the ETH would be staked the depositedWethAccountedFor amount could
-         * be deducted so much that it would be negative.
-         */
-        uint256 deductAmount = Math.min(_amount, depositedWethAccountedFor);
-        depositedWethAccountedFor -= deductAmount;
+    /// @dev Consensus rewards are compounded to the validator's balance instread of being
+    /// swept to this strategy contract.
+    /// Execution rewards from MEV and tx priority accumulate as ETH in this strategy contract,
+    /// but so does withdrawals from validators. It's too complex to separate the two
+    /// so this function is not implemented.
+    /// Besides, ETH rewards are not sent to the Dripper any more. The Vault can regulate
+    /// the increase in assets.
+    function _collectRewardTokens() internal pure override {
+        revert("Unsupported function");
     }
 }

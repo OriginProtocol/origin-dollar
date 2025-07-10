@@ -2,7 +2,10 @@
 pragma solidity ^0.8.0;
 
 import { Pausable } from "@openzeppelin/contracts/security/Pausable.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
+import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { Governable } from "../../governance/Governable.sol";
 import { IConsolidationSource } from "../../interfaces/IConsolidation.sol";
 import { IDepositContract } from "../../interfaces/IDepositContract.sol";
@@ -26,6 +29,8 @@ struct ValidatorStakeData {
  * @author Origin Protocol Inc
  */
 abstract contract CompoundingValidatorManager is Governable, Pausable {
+    using SafeERC20 for IERC20;
+
     /// @notice The address of the Wrapped ETH (WETH) token contract
     address public immutable WETH;
     /// @notice The address of the beacon chain deposit contract
@@ -75,25 +80,35 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
     mapping(bytes32 => VALIDATOR_STATE) public validatorState;
 
     /// @param timestamp Timestamp of the snapshot
-    /// @param wethBalance The balance of WETH in the strategy contract at the snapshot
     /// @param ethBalance The balance of ETH in the strategy contract at the snapshot
     struct Balances {
         uint64 timestamp;
-        uint128 wethBalance;
         uint128 ethBalance;
     }
     // TODO is it more efficient to use the block root rather than hashing it?
     /// @notice Mapping of the block root to the balances at that slot
     mapping(bytes32 => Balances) public snappedBalances;
     uint64 public lastSnapTimestamp;
-    uint128 public lastVerifiedBalance;
+    uint128 public lastVerifiedEthBalance;
+
+    /// @dev This contract receives WETH as the deposit asset, but unlike other strategies doesn't immediately
+    /// deposit it to an underlying platform. Rather a special privilege account stakes it to the validators.
+    /// For that reason calling WETH.balanceOf(this) in a deposit function can contain WETH that has just been
+    /// deposited and also WETH that has previously been deposited. To keep a correct count we need to keep track
+    /// of WETH that has already been accounted for.
+    /// This value represents the amount of WETH balance of this contract that has already been accounted for by the
+    /// deposit events.
+    /// It is important to note that this variable is not concerned with WETH that is a result of full/partial
+    /// withdrawal of the validators. It is strictly concerned with WETH that has been deposited and is waiting to
+    /// be staked.
+    uint256 public depositedWethAccountedFor;
 
     bytes32 public consolidationLastPubKeyHash;
     address public consolidationSourceStrategy;
     mapping(address => bool) public consolidationSourceStrategies;
 
     // For future use
-    uint256[40] private __gap;
+    uint256[50] private __gap;
 
     enum VALIDATOR_STATE {
         NON_REGISTERED, // validator is not registered on the SSV network
@@ -133,7 +148,6 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
         uint256 indexed timestamp,
         bytes32 indexed blockRoot,
         uint256 indexed blockNumber,
-        uint256 wethBalance,
         uint256 ethBalance
     );
     event BalancesVerified(
@@ -253,7 +267,8 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
 
     // slither-disable-end reentrancy-no-eth
 
-    /// @notice Stakes WETH to a compounding validator
+    /// @notice Stakes WETH in this strategy to a compounding validator.
+    /// Does not convert any ETH sitting in this strategy to WETH.
     /// @param validator validator data needed to stake.
     /// The `ValidatorStakeData` struct contains the pubkey, signature and depositDataRoot.
     /// Only the registrator can call this function.
@@ -272,9 +287,8 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
             "Insufficient WETH"
         );
 
-        // Convert required ETH from WETH
-        IWETH9(WETH).withdraw(depositAmountWei);
-        _wethWithdrawn(depositAmountWei);
+        // Convert required ETH from WETH and do the necessary accounting
+        _convertEthToWeth(depositAmountWei);
 
         // Hash the public key using the Beacon Chain's hashing for BLSPubkey
         bytes32 pubKeyHash = _hashPubKey(validator.pubkey);
@@ -323,9 +337,6 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
             status: DepositStatus.PENDING
         });
         depositsRoots.push(validator.depositDataRoot);
-
-        // Take a new snap of the balances so the new deposits have to be included in the balances verification
-        _snapBalances();
 
         emit ETHStaked(pubKeyHash, validator.pubkey, depositAmountWei);
     }
@@ -597,7 +608,7 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
 
         // Increase the balance of this strategy by 32 ETH for each validator being consolidated.
         // This nets out the decrease in the source strategy's balance.
-        lastVerifiedBalance += SafeCast.toUint128(
+        lastVerifiedEthBalance += SafeCast.toUint128(
             consolidationCount * 32 ether
         );
 
@@ -633,15 +644,12 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
         bytes32 blockRoot = BeaconRoots.parentBlockRoot(
             SafeCast.toUint64(block.timestamp)
         );
-        // Get the current WETH balance
-        uint256 wethBalance = IWETH9(WETH).balanceOf(address(this));
         // Get the current ETH balance
         uint256 ethBalance = address(this).balance;
 
         // Store the balances in the mapping
         snappedBalances[blockRoot] = Balances({
             timestamp: SafeCast.toUint64(block.timestamp),
-            wethBalance: SafeCast.toUint128(wethBalance),
             ethBalance: SafeCast.toUint128(ethBalance)
         });
 
@@ -652,7 +660,6 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
             block.timestamp,
             blockRoot,
             block.number,
-            wethBalance,
             ethBalance
         );
     }
@@ -755,11 +762,13 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
             }
         }
 
+        uint256 wethBalance = IWETH9(WETH).balanceOf(address(this));
+
         // Store the verified balance in storage
-        lastVerifiedBalance = SafeCast.toUint128(
+        lastVerifiedEthBalance = SafeCast.toUint128(
             (totalDepositsGwei * 1 gwei) +
                 totalValidatorBalance +
-                balancesMem.wethBalance +
+                wethBalance +
                 balancesMem.ethBalance
         );
         // Reset the last snap timestamp so a new snapBalances has to be made
@@ -770,7 +779,7 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
             params.blockRoot,
             totalDepositsGwei * 1 gwei,
             totalValidatorBalance,
-            balancesMem.wethBalance,
+            wethBalance,
             balancesMem.ethBalance
         );
     }
@@ -781,11 +790,50 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
     }
 
     /***************************************
-                 Abstract
+            WETH and ETH Accounting
     ****************************************/
 
-    /// @dev Called when WETH is withdrawn from the strategy or staked to a validator so
+    /// @dev Called when WETH is transferred out of the strategy so
     /// the strategy knows how much WETH it has on deposit.
     /// This is so it can emit the correct amount in the Deposit event in depositAll().
-    function _wethWithdrawn(uint256 _amount) internal virtual;
+    function _transferWeth(uint256 _amount, address _recipient) internal {
+        IERC20(WETH).safeTransfer(_recipient, _amount);
+
+        uint256 deductAmount = Math.min(_amount, depositedWethAccountedFor);
+        depositedWethAccountedFor -= deductAmount;
+
+        // No change in ETH balance so no need to snapshot the balances
+    }
+
+    function _convertWethToEth(uint256 _ethAmount) internal {
+        IWETH9(WETH).deposit{ value: _ethAmount }();
+
+        depositedWethAccountedFor += _ethAmount;
+
+        // Store the reduced ETH balance
+        if (lastVerifiedEthBalance > _ethAmount) {
+            lastVerifiedEthBalance -= SafeCast.toUint128(_ethAmount);
+        } else {
+            // This can happen if all ETH in the validators was withdrawn
+            // and there was more consensus rewards since the last balance verification.
+            // Or it can happen if ETH is donated to this strategy.
+            lastVerifiedEthBalance = 0;
+        }
+
+        // Reset the last snap timestamp so a new snapBalances has to be made
+        lastSnapTimestamp = 0;
+    }
+
+    function _convertEthToWeth(uint256 _wethAmount) internal {
+        IWETH9(WETH).withdraw(_wethAmount);
+
+        uint256 deductAmount = Math.min(_wethAmount, depositedWethAccountedFor);
+        depositedWethAccountedFor -= deductAmount;
+
+        // Store the increased ETH balance
+        lastVerifiedEthBalance += SafeCast.toUint128(_wethAmount);
+
+        // Reset the last snap timestamp so a new snapBalances has to be made
+        lastSnapTimestamp = 0;
+    }
 }
