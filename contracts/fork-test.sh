@@ -51,6 +51,9 @@ main()
     elif [[ $FORK_NETWORK_NAME == "plume" ]]; then
       PROVIDER_URL=$PLUME_PROVIDER_URL;
       BLOCK_NUMBER=$PLUME_BLOCK_NUMBER;
+    elif [[ $FORK_NETWORK_NAME == "hoodi" ]]; then
+      PROVIDER_URL=$HOODI_PROVIDER_URL;
+      BLOCK_NUMBER=$HOODI_BLOCK_NUMBER;
     fi
 
     if $is_local; then

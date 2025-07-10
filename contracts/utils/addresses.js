@@ -641,4 +641,7 @@ addresses.plume.admin = "0x92A19381444A001d62cE67BaFF066fA1111d7202";
 addresses.plume.BridgedWOETHOracleFeed =
   "0x4915600Ed7d85De62011433eEf0BD5399f677e9b";
 
+addresses.hoodi = {};
+addresses.hoodi.WETH = "0x56fb9b754a21eb45fa8e1ae98be0525e9fee9540";
+
 module.exports = addresses;
