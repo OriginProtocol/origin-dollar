@@ -202,10 +202,6 @@ contract CompoundingStakingSSVStrategy is
             IWETH9(WETH).balanceOf(address(this));
     }
 
-    function pause() external onlyGovernorOrStrategist {
-        _pause();
-    }
-
     /// @notice Returns bool indicating whether asset is supported by strategy.
     /// @param _asset The address of the asset token.
     function supportsAsset(address _asset) public view override returns (bool) {
