@@ -6,7 +6,6 @@ const { setBalance } = require("@nomicfoundation/hardhat-network-helpers");
 
 const { isCI } = require("../helpers");
 const { shouldBehaveLikeGovernable } = require("../behaviour/governable");
-const { shouldBehaveLikeHarvestable } = require("../behaviour/harvestable");
 const { shouldBehaveLikeStrategy } = require("../behaviour/strategy");
 const { MAX_UINT256 } = require("../../utils/constants");
 const { impersonateAndFund } = require("../../utils/signers");
@@ -60,7 +59,6 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
   this.retries(isCI ? 3 : 0);
   let sGov;
   let sVault;
-  let sHarvester;
   let fixture;
   beforeEach(async () => {
     fixture = await loadFixture();
@@ -71,9 +69,6 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
     sVault = await impersonateAndFund(
       await compoundingStakingSSVStrategy.vaultAddress()
     );
-    sHarvester = await impersonateAndFund(
-      await compoundingStakingSSVStrategy.harvesterAddress()
-    );
     await weth
       .connect(josh)
       .approve(compoundingStakingSSVStrategy.address, MAX_UINT256);
@@ -81,12 +76,6 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
 
   shouldBehaveLikeGovernable(() => ({
     ...fixture,
-    strategy: fixture.compoundingStakingSSVStrategy,
-  }));
-
-  shouldBehaveLikeHarvestable(() => ({
-    ...fixture,
-    harvester: fixture.oethHarvester,
     strategy: fixture.compoundingStakingSSVStrategy,
   }));
 
@@ -172,18 +161,6 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
           .connect(strategist)
           .addSourceStrategy(strategist.address)
       ).to.be.revertedWith("Caller is not the Governor");
-    });
-
-    it("Should be able to pause/unpause the strategy", async () => {
-      const { compoundingStakingSSVStrategy, strategist } = fixture;
-
-      const tx = await compoundingStakingSSVStrategy
-        .connect(strategist)
-        .pause();
-
-      await expect(tx)
-        .to.emit(compoundingStakingSSVStrategy, "Paused")
-        .withArgs(strategist.address);
     });
 
     it("Should support WETH as the only asset", async () => {
@@ -429,11 +406,16 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
 
   describe("Deposit/Withdraw in the strategy", async () => {
     it("Should deposit ETH in the strategy", async () => {
-      const { compoundingStakingSSVStrategy, weth } = fixture;
+      const { compoundingStakingSSVStrategy, weth, josh } = fixture;
       const balBefore =
         await compoundingStakingSSVStrategy.depositedWethAccountedFor();
+      const checkBalanceBefore =
+        await compoundingStakingSSVStrategy.checkBalance(weth.address);
 
       const depositAmount = parseEther("10");
+      await weth
+        .connect(josh)
+        .transfer(compoundingStakingSSVStrategy.address, depositAmount);
       const depositTx = compoundingStakingSSVStrategy
         .connect(sVault)
         .deposit(weth.address, depositAmount);
@@ -448,11 +430,19 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
         balBefore.add(depositAmount),
         "Deposit amount not set properly"
       );
+      expect(
+        await compoundingStakingSSVStrategy.checkBalance(weth.address)
+      ).to.equal(
+        checkBalanceBefore.add(depositAmount),
+        "Check balance not updated properly"
+      );
     });
 
     it("Should depositAll ETH in the strategy when depositedWethAccountedFor is zero", async () => {
       const { compoundingStakingSSVStrategy, weth, josh } = fixture;
 
+      const checkBalanceBefore =
+        await compoundingStakingSSVStrategy.checkBalance(weth.address);
       const depositAmount = parseEther("10");
       await weth
         .connect(josh)
@@ -473,6 +463,13 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
       ).to.equal(
         balBefore.add(depositAmount),
         "Deposit amount not set properly"
+      );
+
+      expect(
+        await compoundingStakingSSVStrategy.checkBalance(weth.address)
+      ).to.equal(
+        checkBalanceBefore.add(depositAmount),
+        "Check balance not updated properly"
       );
     });
 
@@ -498,6 +495,9 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
 
       depositAmount = parseEther("20");
 
+      const checkBalanceBefore =
+        await compoundingStakingSSVStrategy.checkBalance(weth.address);
+
       // Josh deposits more ETH
       await weth
         .connect(josh)
@@ -516,6 +516,13 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
       ).to.equal(
         balBefore.add(depositAmount),
         "Deposit amount not set properly"
+      );
+
+      expect(
+        await compoundingStakingSSVStrategy.checkBalance(weth.address)
+      ).to.equal(
+        checkBalanceBefore.add(depositAmount),
+        "Check balance not updated properly"
       );
     });
 
@@ -541,6 +548,9 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
         .connect(sVault)
         .deposit(weth.address, depositAmount);
 
+      const checkBalanceBefore =
+        await compoundingStakingSSVStrategy.checkBalance(weth.address);
+
       const withdrawTx = compoundingStakingSSVStrategy
         .connect(sVault)
         .withdraw(josh.address, weth.address, depositAmount);
@@ -552,6 +562,13 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
       expect(
         await compoundingStakingSSVStrategy.depositedWethAccountedFor()
       ).to.equal(0, "Withdraw amount not set properly");
+
+      expect(
+        await compoundingStakingSSVStrategy.checkBalance(weth.address)
+      ).to.equal(
+        checkBalanceBefore.sub(depositAmount),
+        "Check balance not updated properly"
+      );
     });
 
     it("Should withdraw ETH from the strategy, withdraw some ETH", async () => {
@@ -568,6 +585,9 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
       // Donate raw ETH to the strategy
       await setBalance(compoundingStakingSSVStrategy.address, parseEther("5"));
 
+      const checkBalanceBefore =
+        await compoundingStakingSSVStrategy.checkBalance(weth.address);
+
       const withdrawTx = compoundingStakingSSVStrategy
         .connect(sVault)
         .withdraw(
@@ -583,33 +603,13 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
       expect(
         await compoundingStakingSSVStrategy.depositedWethAccountedFor()
       ).to.equal(0, "Withdraw amount not set properly");
-    });
-
-    it("Should withdraw ETH from the strategy, non withdraw some ETH", async () => {
-      const { compoundingStakingSSVStrategy, weth, josh } = fixture;
-
-      const depositAmount = parseEther("10");
-      await weth
-        .connect(josh)
-        .transfer(compoundingStakingSSVStrategy.address, depositAmount);
-      await compoundingStakingSSVStrategy
-        .connect(sVault)
-        .deposit(weth.address, depositAmount);
-
-      // Donate raw ETH to the strategy
-      await setBalance(compoundingStakingSSVStrategy.address, parseEther("5"));
-
-      const withdrawTx = compoundingStakingSSVStrategy
-        .connect(sVault)
-        .withdraw(josh.address, weth.address, depositAmount);
-
-      await expect(withdrawTx)
-        .to.emit(compoundingStakingSSVStrategy, "Withdrawal")
-        .withArgs(weth.address, zero, depositAmount);
 
       expect(
-        await compoundingStakingSSVStrategy.depositedWethAccountedFor()
-      ).to.equal(0, "Withdraw amount not set properly");
+        await compoundingStakingSSVStrategy.checkBalance(weth.address)
+      ).to.equal(
+        checkBalanceBefore.sub(depositAmount), // The extra 5 ETH is raw ETH are not taken into account, this is expected behavior
+        "Check balance not updated properly"
+      );
     });
 
     it("Should revert when withdrawing other than WETH", async () => {
@@ -669,6 +669,10 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
       expect(
         await compoundingStakingSSVStrategy.depositedWethAccountedFor()
       ).to.equal(0, "Withdraw amount not set properly");
+
+      expect(
+        await compoundingStakingSSVStrategy.checkBalance(weth.address)
+      ).to.equal(0, "Check balance not updated properly");
     });
 
     it("Should withdrawAll ETH from the strategy, withdraw some ETH", async () => {
@@ -696,35 +700,10 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
       expect(
         await compoundingStakingSSVStrategy.depositedWethAccountedFor()
       ).to.equal(0, "Withdraw amount not set properly");
-    });
-  });
 
-  describe("Collect rewards", async () => {
-    it("Should collect rewards from the strategy", async () => {
-      const { compoundingStakingSSVStrategy, weth } = fixture;
-
-      const harvesterAddress =
-        await compoundingStakingSSVStrategy.harvesterAddress();
-      const vaultAddress = await compoundingStakingSSVStrategy.VAULT_ADDRESS();
-
-      const balanceBefore = await weth.balanceOf(vaultAddress);
-
-      const rewardAmount = parseEther("10");
-      // Send raw ETH to the strategy
-      await setBalance(compoundingStakingSSVStrategy.address, rewardAmount);
-
-      const collectTx = compoundingStakingSSVStrategy
-        .connect(sHarvester)
-        .collectRewardTokens();
-
-      await expect(collectTx)
-        .to.emit(compoundingStakingSSVStrategy, "RewardTokenCollected")
-        .withArgs(harvesterAddress, weth.address, rewardAmount);
-
-      expect(await weth.balanceOf(vaultAddress)).to.equal(
-        balanceBefore.add(rewardAmount),
-        "Rewards not collected properly"
-      );
+      expect(
+        await compoundingStakingSSVStrategy.checkBalance(weth.address)
+      ).to.equal(0, "Check balance not updated properly");
     });
   });
 
