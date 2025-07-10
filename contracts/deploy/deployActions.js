@@ -784,18 +784,59 @@ const deployNativeStakingSSVStrategy = async () => {
  */
 const deployCompoundingStakingSSVStrategy = async () => {
   const assetAddresses = await getAssetAddresses(deployments);
-  const { deployerAddr } = await getNamedAccounts();
+  const { governorAddr, deployerAddr } = await getNamedAccounts();
   const sDeployer = await ethers.provider.getSigner(deployerAddr);
   const cOETHVaultProxy = await ethers.getContract("OETHVaultProxy");
 
+  const cBeaconOracle = await ethers.getContract("BeaconOracle");
+  const cBeaconProofs = await ethers.getContract("BeaconProofs");
+
+  let governorAddress;
+  if (isTest && !isFork) {
+    // For unit tests, use the Governor contract
+    governorAddress = governorAddr;
+
+    log("Deploy CompoundingStakingSSVStrategyProxy");
+    await deployWithConfirmation("CompoundingStakingSSVStrategyProxy");
+  } else {
+    // For fork tests and mainnet deployments, use the Timelock contract
+    governorAddress = addresses.mainnet.Timelock;
+  }
   // Should have already been deployed by the Defender Relayer as SSV rewards are sent to the deployer.
   // Use the deployStakingProxy Hardhat task to deploy
   const cCompoundingStakingSSVStrategyProxy = await ethers.getContract(
     "CompoundingStakingSSVStrategyProxy"
   );
 
-  const cBeaconOracle = await ethers.getContract("BeaconOracle");
-  const cBeaconProofs = await ethers.getContract("BeaconProofs");
+  const proxyGovernor = await cCompoundingStakingSSVStrategyProxy.governor();
+  if (isFork && proxyGovernor != deployerAddr) {
+    // For fork tests, transfer the governance to the deployer account
+    const currentSigner = await impersonateAccount(
+      "0x3Ba227D87c2A7aB89EAaCEFbeD9bfa0D15Ad249A"
+    );
+    await withConfirmation(
+      cCompoundingStakingSSVStrategyProxy
+        .connect(currentSigner)
+        .transferGovernance(deployerAddr)
+    );
+
+    await withConfirmation(
+      cCompoundingStakingSSVStrategyProxy.connect(sDeployer).claimGovernance()
+    );
+  } else {
+    /* Before kicking off the deploy script make sure the Defender relayer transfers the governance
+     * of the proxy to the deployer account that shall be deploying this script so it will be able
+     * to initialize the proxy contract
+     *
+     * Run the following to make it happen, and comment this error block out:
+     * yarn run hardhat transferGovernance --proxy CompoundingStakingSSVStrategyProxy --governor 0xdeployerAddress  --network mainnet
+     */
+    if (proxyGovernor != deployerAddr) {
+      throw new Error(
+        `Compounding Staking Strategy proxy's governor: ${proxyGovernor} does not match current deployer ${deployerAddr}`
+      );
+    }
+  }
 
   log("Deploy CompoundingStakingSSVStrategy");
   const dStrategyImpl = await deployWithConfirmation(
@@ -828,35 +869,6 @@ const deployCompoundingStakingSSVStrategy = async () => {
     ]
   );
 
-  const proxyGovernor = await cCompoundingStakingSSVStrategyProxy.governor();
-  if (isFork && proxyGovernor != deployerAddr) {
-    const currentSigner = await impersonateAccount(
-      "0x3Ba227D87c2A7aB89EAaCEFbeD9bfa0D15Ad249A"
-    );
-    await withConfirmation(
-      cCompoundingStakingSSVStrategyProxy
-        .connect(currentSigner)
-        .transferGovernance(deployerAddr)
-    );
-
-    await withConfirmation(
-      cCompoundingStakingSSVStrategyProxy.connect(sDeployer).claimGovernance()
-    );
-  } else {
-    /* Before kicking off the deploy script make sure the Defender relayer transfers the governance
-     * of the proxy to the deployer account that shall be deploying this script so it will be able
-     * to initialize the proxy contract
-     *
-     * Run the following to make it happen, and comment this error block out:
-     * yarn run hardhat transferGovernance --proxy CompoundingStakingSSVStrategyProxy --governor 0xdeployerAddress  --network mainnet
-     */
-    if (proxyGovernor != deployerAddr) {
-      throw new Error(
-        `Compounding Staking Strategy proxy's governor: ${proxyGovernor} does not match current deployer ${deployerAddr}`
-      );
-    }
-  }
-
   log("Initialize the proxy and execute the initialize strategy function");
   await withConfirmation(
     cCompoundingStakingSSVStrategyProxy.connect(sDeployer)[
@@ -864,7 +876,7 @@ const deployCompoundingStakingSSVStrategy = async () => {
       "initialize(address,address,bytes)"
     ](
       cStrategyImpl.address, // implementation address
-      addresses.mainnet.Timelock, // Timelock
+      governorAddress,
       initData // data for call to the initialize function on the strategy
     )
   );

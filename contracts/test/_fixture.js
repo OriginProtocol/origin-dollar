@@ -2022,7 +2022,6 @@ async function compoundingStakingSSVStrategyFixture() {
     const { governorAddr } = await getNamedAccounts();
     const { oethVault, weth, compoundingStakingSSVStrategy } = fixture;
     const sGovernor = await ethers.provider.getSigner(governorAddr);
-    const sTimelock = await impersonateAndFund(addresses.mainnet.Timelock);
 
     // Approve Strategy
     await oethVault
@@ -2038,8 +2037,12 @@ async function compoundingStakingSSVStrategyFixture() {
       );
 
     await compoundingStakingSSVStrategy
-      .connect(sTimelock)
+      .connect(sGovernor)
       .setRegistrator(governorAddr);
+
+    await compoundingStakingSSVStrategy
+      .connect(sGovernor)
+      .setHarvesterAddress(fixture.oethHarvester.address);
 
     fixture.validatorRegistrator = sGovernor;
   }
