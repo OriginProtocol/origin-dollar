@@ -1,16 +1,16 @@
 const { expect } = require("chai");
+const { before } = require("mocha");
 
 const { createFixtureLoader, beaconChainFixture } = require("../_fixture");
 const { toHex } = require("../../utils/units");
 const { getBeaconBlock, getSlot } = require("../../utils/beacon");
-const { before } = require("mocha");
 const { generateSlotProof, generateBlockProof } = require("../../utils/proofs");
 
 const log = require("../../utils/logger")("test:fork:beacon:oracle");
 
 const loadFixture = createFixtureLoader(beaconChainFixture);
 
-describe.only("ForkTest: Beacon Oracle", function () {
+describe("ForkTest: Beacon Oracle", function () {
   this.timeout(0);
 
   let remoteProvider;

@@ -2660,9 +2660,11 @@ async function beaconChainFixture() {
     );
     fixture.partialWithdrawal = await resolveContract("MockPartialWithdrawal");
 
+    fixture.beaconProofs = await resolveContract("BeaconProofs");
+
     // fund the beacon communication contracts so they can pay the fee
-    await hardhatSetBalance(fixture.beaconConsolidation.address, "1");
-    await hardhatSetBalance(fixture.partialWithdrawal.address, "1");
+    await hardhatSetBalance(fixture.beaconConsolidation.address, "100");
+    await hardhatSetBalance(fixture.partialWithdrawal.address, "100");
 
     fixture.beaconOracle = await resolveContract("BeaconOracle");
   } else {

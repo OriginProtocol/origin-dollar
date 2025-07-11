@@ -90,7 +90,7 @@ const getBeaconBlock = async (slot) => {
   // Patching the tree by attaching the state in the `stateRoot` field of the block.
   blockTree.setNode(stateRootGIndex, stateView.node);
 
-  return { blockTree, blockView };
+  return { blockTree, blockView, stateView };
 };
 
 const concatProof = (proof) => {
@@ -102,8 +102,23 @@ const concatProof = (proof) => {
   return witnessBytes;
 };
 
+const hashPubKey = (pubKey) => {
+  // Ensure pubKey is a hex string or Buffer
+  const pubKeyBytes = ethers.utils.arrayify(pubKey);
+
+  // Create 16 bytes of zeros
+  const zeroBytes = ethers.utils.hexZeroPad("0x0", 16);
+
+  // Concatenate pubKey and zero bytes
+  const concatenated = ethers.utils.concat([pubKeyBytes, zeroBytes]);
+
+  // Compute SHA256 hash
+  return ethers.utils.sha256(concatenated);
+};
+
 module.exports = {
   concatProof,
   getBeaconBlock,
   getSlot,
+  hashPubKey,
 };

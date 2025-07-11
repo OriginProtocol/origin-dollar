@@ -139,11 +139,6 @@ async function generateValidatorPubKeyProof({
     gindex: generalizedIndex,
   });
   log(`Validator public key leaf (hash): ${toHex(proofObj.leaf)}`);
-  log(
-    `Public key proof for validator ${validatorIndex} to beacon block root:\n${toHex(
-      concatProof(proofObj)
-    )}`
-  );
   const proofBytes = toHex(concatProof(proofObj));
   log(`Public key proof in bytes:\n${proofBytes}`);
 
@@ -151,7 +146,7 @@ async function generateValidatorPubKeyProof({
     proof: proofBytes,
     generalizedIndex,
     leaf: proofObj.leaf,
-    pubkey: validatorDetails.pubkey,
+    pubKey: validatorDetails.pubkey,
   };
 }
 
@@ -179,7 +174,7 @@ async function generateBalancesContainerProof({
   });
   log(`Balances container leaf: ${toHex(proofObj.leaf)}`);
 
-  const proofBytes = toHex(concatProof(proofBytes));
+  const proofBytes = toHex(concatProof(proofObj));
   log(`Balances container proof in bytes:\n${proofBytes}`);
 
   return {
