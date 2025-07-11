@@ -185,6 +185,7 @@ async function generateBalancesContainerProof({
 }
 
 // BeaconBlock.state.balances[validatorIndex]
+// Generates a proof in the Balances container rather than the whole beacon block
 async function generateBalanceProof({
   blockView,
   blockTree,
@@ -216,8 +217,7 @@ async function generateBalanceProof({
   log(`Balance index in the balances container: ${balanceIndex}`);
   const genIndexBalanceContainer = toGindex(
     stateView.balances.type.depth,
-    balanceIndex
-    // BigInt(balanceIndex)
+    BigInt(balanceIndex)
   );
   log(`index for balance in balances container: ${genIndexBalanceContainer}`);
 
@@ -230,7 +230,7 @@ async function generateBalanceProof({
   });
   log(`Balances container leaf: ${toHex(proofObj.leaf)}`);
 
-  const proofBytes = toHex(concatProof(proofBytes));
+  const proofBytes = toHex(concatProof(proofObj));
   log(
     `Validator ${validatorIndex} balance proof in Balances container in bytes:\n${proofBytes}`
   );

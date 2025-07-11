@@ -5,6 +5,7 @@ const { createFixtureLoader, beaconChainFixture } = require("../_fixture");
 const { getBeaconBlock, getSlot, hashPubKey } = require("../../utils/beacon");
 const {
   generateBalancesContainerProof,
+  generateBalanceProof,
   generateBlockProof,
   generateSlotProof,
   generateValidatorPubKeyProof,
@@ -104,6 +105,28 @@ describe("ForkTest: Beacon Proofs", function () {
       pubKeyHash,
       proof,
       validatorIndex
+    );
+  });
+
+  it("Should verify validator balance in balances container", async () => {
+    const { beaconProofs } = fixture;
+
+    const validatorIndex = 1804300;
+
+    const { proof, leaf, root } = await generateBalanceProof({
+      blockView,
+      blockTree,
+      stateView,
+      validatorIndex,
+    });
+
+    log(`About to verify validator balance in balances container`);
+    await beaconProofs.verifyValidatorBalance(
+      root,
+      leaf,
+      proof,
+      validatorIndex,
+      0 // In container
     );
   });
 });
