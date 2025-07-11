@@ -9,7 +9,6 @@ import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { Governable } from "../../governance/Governable.sol";
 import { IConsolidationSource } from "../../interfaces/IConsolidation.sol";
 import { IDepositContract } from "../../interfaces/IDepositContract.sol";
-import { IVault } from "../../interfaces/IVault.sol";
 import { IWETH9 } from "../../interfaces/IWETH9.sol";
 import { ISSVNetwork, Cluster } from "../../interfaces/ISSVNetwork.sol";
 import { BeaconRoots } from "../../beacon/BeaconRoots.sol";
@@ -25,7 +24,8 @@ struct ValidatorStakeData {
 
 /**
  * @title Validator lifecycle management contract
- * @notice This contract implements all the required functionality to register, deposit, exit and remove validators.
+ * @notice This contract implements all the required functionality to
+ * register, deposit, withdraw, exit, remove and consolidate validators.
  * @author Origin Protocol Inc
  */
 abstract contract CompoundingValidatorManager is Governable, Pausable {
@@ -39,10 +39,12 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
     address public immutable SSV_NETWORK;
     /// @notice Address of the OETH Vault proxy contract
     address public immutable VAULT_ADDRESS;
+    /// @notice Address of the Beacon Oracle contract that maps block numbers to slots
     address public immutable BEACON_ORACLE;
+    /// @notice Address of the Beacon Proofs contract that verifies beacon chain data
     address public immutable BEACON_PROOFS;
 
-    /// @notice Address of the registrator - allowed to register, exit and remove validators
+    /// @notice Address of the registrator - allowed to register, withdraw, exit and remove validators
     address public validatorRegistrator;
 
     /// Deposit data for new compounding validators.
@@ -293,9 +295,10 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
         );
         require(
             currentState == VALIDATOR_STATE.VERIFIED ||
-                depositAmountGwei == 1 gwei,
+                depositAmountWei == 1 ether,
             "First deposit not 1 ETH"
         );
+        require(depositAmountWei >= 1 ether, "Deposit too small");
 
         /* 0x02 to indicate that withdrawal credentials are for a compounding validator
          * that was introduced with the Pectra upgrade.
