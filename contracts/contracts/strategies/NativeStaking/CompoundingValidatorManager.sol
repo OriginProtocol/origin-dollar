@@ -291,6 +291,11 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
                 currentState == VALIDATOR_STATE.VERIFIED),
             "Not registered or verified"
         );
+        require(
+            currentState == VALIDATOR_STATE.VERIFIED ||
+                depositAmountGwei == 1 gwei,
+            "First deposit not 1 ETH"
+        );
 
         /* 0x02 to indicate that withdrawal credentials are for a compounding validator
          * that was introduced with the Pectra upgrade.
