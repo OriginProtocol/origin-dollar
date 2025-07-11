@@ -1,0 +1,49 @@
+@startuml
+
+Title Deposit to a Validator Timeline
+
+scale 5 as 50 pixels
+
+robust "Strategy contract" as strat
+robust "Deposit contract" as con
+robust "Validator deposit on Beacon Chain" as beacon
+robust "Slot of first pending deposit" as queue
+robust "Mapped block for proof" as mb
+robust "Slot of first pending deposit for proof" as fpd
+
+@0
+strat is UNKNOWN
+con is UNKNOWN
+beacon is UNKNOWN
+queue is "Before Deposit"
+mb is "Verify Fail"
+fpd is "Verify Fail"
+
+@+10
+strat is PENDING
+con is DEPOSITED
+beacon is PENDING
+mb is "Verify Success"
+
+note top of strat : stakeETH
+
+@+30
+beacon is PROCESSED
+
+@+10
+strat is VERIFIED
+
+@35
+queue is "Same as Deposit"
+@45
+queue is "After Deposit"
+@46
+fpd is "Verify Success"
+
+' queue@15 -> strat@50 : Mapped block
+' queue@45 -> strat@50 : Slot of First Pending Deposit
+
+' highlight 10 to 20 : mapped\nblocks
+highlight 35 to 45 : deposits from\nsame block\nprocessed
+
+@enduml
