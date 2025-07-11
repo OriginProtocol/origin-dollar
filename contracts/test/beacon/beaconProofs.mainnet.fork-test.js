@@ -2,15 +2,14 @@ const { expect } = require("chai");
 
 const { createFixtureLoader, beaconChainFixture } = require("../_fixture");
 const { toHex } = require("../../utils/units");
-const { getBeaconBlock, getSlot } = require("../../utils/beacon");
+const { concatProof, getBeaconBlock, getSlot } = require("../../utils/beacon");
 const { before } = require("mocha");
-const { generateSlotProof, generateBlockProof } = require("../../utils/proofs");
 
 const log = require("../../utils/logger")("test:fork:beacon:oracle");
 
 const loadFixture = createFixtureLoader(beaconChainFixture);
 
-describe.only("ForkTest: Beacon Oracle", function () {
+describe("ForkTest: Beacon Proofs", function () {
   this.timeout(0);
 
   let remoteProvider;
@@ -38,32 +37,53 @@ describe.only("ForkTest: Beacon Oracle", function () {
   it("Should verify a block to a slot", async () => {
     const { beaconOracle } = fixture;
 
+    const { createProof, ProofType } = await import(
+      "@chainsafe/persistent-merkle-tree"
+    );
+
+    // BeaconBlock.slot
+    const slotGenIndex = blockView.type.getPathInfo(["slot"]).gindex;
+    log(`Slot gindex: ${slotGenIndex}`);
+    const slotProof = createProof(blockTree.rootNode, {
+      type: ProofType.single,
+      gindex: slotGenIndex,
+    });
+    const slotProofBytes = concatProof(slotProof);
+    log(`Slot proof: ${toHex(slotProofBytes)}`);
+
+    // BeaconBlock.body.executionPayload.blockNumber
+    const blockNumberGenIndex = blockView.type.getPathInfo([
+      "body",
+      "executionPayload",
+      "blockNumber",
+    ]).gindex;
+    const blockNumberProof = createProof(blockTree.rootNode, {
+      type: ProofType.single,
+      gindex: blockNumberGenIndex,
+    });
+    log(`Block number gindex: ${blockNumberGenIndex}`);
+    const blockNumberProofBytes = concatProof(blockNumberProof);
+    log(`Block number proof in bytes:\n${toHex(blockNumberProofBytes)}`);
+
+    log(`Beacon block root: ${toHex(blockView.hashTreeRoot())}`);
+
     const pastBlockNumber = blockView.body.executionPayload.blockNumber;
     log(`Beacon block number: ${pastBlockNumber}`);
 
     const nextBlockNumber = pastBlockNumber + 1;
     const nextBlock = await remoteProvider.getBlock(nextBlockNumber);
+    const parentTimestamp = nextBlock.timestamp;
     log(
-      `Parent block timestamp ${nextBlock.timestamp} for next block ${nextBlock.number}`
+      `Parent block timestamp ${parentTimestamp} for next block ${nextBlock.number}`
     );
-
-    const { proof: slotProof } = await generateSlotProof({
-      blockView,
-      blockTree,
-    });
-
-    const { proof: blokProof } = await generateBlockProof({
-      blockView,
-      blockTree,
-    });
 
     log(`About to submit slot and block proofs`);
     const tx = await beaconOracle.verifySlot(
-      nextBlock.timestamp,
+      parentTimestamp,
       pastBlockNumber,
       pastSlot,
-      slotProof,
-      blokProof
+      slotProofBytes,
+      blockNumberProofBytes
     );
     await expect(tx)
       .to.emit(beaconOracle, "BlockToSlot")
@@ -76,11 +96,11 @@ describe.only("ForkTest: Beacon Oracle", function () {
 
     await expect(
       beaconOracle.verifySlot(
-        nextBlock.timestamp,
+        parentTimestamp,
         pastBlockNumber,
         pastSlot,
-        slotProof,
-        blokProof
+        slotProofBytes,
+        blockNumberProofBytes
       )
     ).to.revertedWith("Block already mapped");
   });
@@ -88,26 +108,43 @@ describe.only("ForkTest: Beacon Oracle", function () {
     // This will use the beacon block root of the previous block hence the verification of the proofs will fail.
     const { beaconOracle } = fixture;
 
+    const { createProof, ProofType } = await import(
+      "@chainsafe/persistent-merkle-tree"
+    );
+
+    // BeaconBlock.slot
+    const slotGenIndex = blockView.type.getPathInfo(["slot"]).gindex;
+    log(`Slot gindex: ${slotGenIndex}`);
+    const slotProof = createProof(blockTree.rootNode, {
+      type: ProofType.single,
+      gindex: slotGenIndex,
+    });
+    const slotProofBytes = concatProof(slotProof);
+    log(`Slot proof: ${toHex(slotProofBytes)}`);
+
+    // BeaconBlock.body.executionPayload.blockNumber
+    const blockNumberGenIndex = blockView.type.getPathInfo([
+      "body",
+      "executionPayload",
+      "blockNumber",
+    ]).gindex;
+    const blockNumberProof = createProof(blockTree.rootNode, {
+      type: ProofType.single,
+      gindex: blockNumberGenIndex,
+    });
+    const blockNumberProofBytes = concatProof(blockNumberProof);
+    log(`Block number proof in bytes:\n${toHex(blockNumberProofBytes)}`);
+
     const pastBlockNumber = blockView.body.executionPayload.blockNumber;
     const pastBlock = await remoteProvider.getBlock(pastBlockNumber);
-
-    const { proof: slotProof } = await generateSlotProof({
-      blockView,
-      blockTree,
-    });
-
-    const { proof: blokProof } = await generateBlockProof({
-      blockView,
-      blockTree,
-    });
 
     await expect(
       beaconOracle.verifySlot(
         pastBlock.timestamp,
         pastBlockNumber,
         pastSlot,
-        slotProof,
-        blokProof
+        slotProofBytes,
+        blockNumberProofBytes
       )
     ).to.revertedWith("Invalid slot number proof");
   });
