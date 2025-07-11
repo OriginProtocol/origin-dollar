@@ -345,6 +345,13 @@ addresses.mainnet.passthrough.uniswap.OETH_OGN =
 addresses.mainnet.passthrough.uniswap.OETH_WETH =
   "0x216dEBBF25e5e67e6f5B2AD59c856Fc364478A6A";
 
+// General purpose execution to consensus layer communication
+addresses.mainnet.toConsensus = {};
+addresses.mainnet.toConsensus.consolidation =
+  "0x0000BBdDc7CE488642fb579F8B00f3a590007251";
+addresses.mainnet.toConsensus.withdrawals =
+  "0x00000961Ef480Eb55e80D19ad83579A64c007002";
+
 // Arbitrum One
 addresses.arbitrumOne = {};
 addresses.arbitrumOne.WOETHProxy = "0xD8724322f44E5c58D7A815F542036fb17DbbF839";
@@ -633,5 +640,8 @@ addresses.plume.admin = "0x92A19381444A001d62cE67BaFF066fA1111d7202";
 // Ref: https://docs.eo.app/docs/eprice/feed-addresses/plume
 addresses.plume.BridgedWOETHOracleFeed =
   "0x4915600Ed7d85De62011433eEf0BD5399f677e9b";
+
+addresses.hoodi = {};
+addresses.hoodi.WETH = "0x56fb9b754a21eb45fa8e1ae98be0525e9fee9540";
 
 module.exports = addresses;

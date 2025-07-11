@@ -1,0 +1,76 @@
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.0;
+
+import { BeaconProofsLib } from "./BeaconProofsLib.sol";
+import { BeaconRoots } from "./BeaconRoots.sol";
+
+/// @title Beacon Oracle
+/// @notice An Oracle for mapping execution layer block numbers to beacon chain slots.
+/// @author Origin Protocol Inc
+contract BeaconOracle {
+    /// @notice Maps a block number to slot
+    mapping(uint64 => uint64) private _blockToSlot;
+    /// @notice Maps a slot to a number
+    mapping(uint64 => uint64) private _slotToBlock;
+
+    event BlockToSlot(
+        bytes32 indexed blockRoot,
+        uint64 indexed blockNumber,
+        uint64 indexed slot
+    );
+
+    /// @notice Uses merkle a proof against the Beacon Block Root to link
+    /// a block number to a beacon chain slot.
+    /// @param nextBlockTimestamp The timestamp of the slot after the one being proven.
+    /// @param blockNumber The execution layer block number.
+    /// @param slot The beacon chain slot.
+    /// @param slotProof The merkle proof witnesses for the slot against the Beacon Block Root.
+    /// @param blockProof The merkle proof witnesses for the block number against the Beacon Block Root
+    function verifySlot(
+        uint64 nextBlockTimestamp,
+        uint64 blockNumber,
+        uint64 slot,
+        bytes calldata slotProof,
+        bytes calldata blockProof
+    ) external returns (bytes32 blockRoot) {
+        require(_blockToSlot[blockNumber] == 0, "Block already mapped");
+
+        // Get the parent beacon block root for the given timestamp.
+        // This is the beacon block root of the previous slot.
+        blockRoot = BeaconRoots.parentBlockRoot(nextBlockTimestamp);
+
+        // Verify the slot to the Beacon Block Root root
+        BeaconProofsLib.verifySlot(blockRoot, slot, slotProof);
+
+        // Verify the block number to the Beacon Block Root root
+        BeaconProofsLib.verifyBlockNumber(blockRoot, blockNumber, blockProof);
+
+        // Store mappings
+        _blockToSlot[blockNumber] = slot;
+        _slotToBlock[slot] = blockNumber;
+
+        emit BlockToSlot(blockRoot, blockNumber, slot);
+    }
+
+    /// @notice Returns the beacon chain slot for a given execution layer block number.
+    function blockToSlot(uint64 blockNumber)
+        external
+        view
+        returns (uint64 slot)
+    {
+        slot = _blockToSlot[blockNumber];
+
+        require(slot != 0, "Block not mapped");
+    }
+
+    /// @notice Returns the execution layer block number for a given beacon chain slot.
+    function slotToBlock(uint64 slot)
+        external
+        view
+        returns (uint64 blockNumber)
+    {
+        blockNumber = _slotToBlock[slot];
+
+        require(blockNumber != 0, "Slot not mapped");
+    }
+}

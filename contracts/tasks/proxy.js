@@ -24,7 +24,7 @@ async function proxyUpgrades({ contract, from, to }, hre) {
 
   logs.forEach((eventLog) => {
     console.log(
-      `Upgraded at block ${eventLog.blockNumber} to ${eventLog.args.implementation} in tx ${eventLog.blockHash}`
+      `Upgraded at block ${eventLog.blockNumber} to ${eventLog.args.implementation} in tx ${eventLog.transactionHash}`
     );
   });
 }
