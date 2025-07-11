@@ -39,4 +39,10 @@ contract MockSSVNetwork {
     ) external {}
 
     function setFeeRecipientAddress(address recipient) external {}
+
+    function withdraw(
+        uint64[] calldata operatorIds,
+        uint256 ssvAmount,
+        Cluster memory cluster
+    ) external {}
 }

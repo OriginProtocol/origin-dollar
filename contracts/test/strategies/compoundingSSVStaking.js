@@ -171,6 +171,20 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
       );
       expect(assets).to.equal(true);
     });
+
+    it("Only governor can withdrawSSV", async () => {
+      const { compoundingStakingSSVStrategy, strategist } = fixture;
+
+      await compoundingStakingSSVStrategy
+        .connect(sGov)
+        .withdrawSSV(testValidator.operatorIds, ethUnits("1"), emptyCluster);
+
+      await expect(
+        compoundingStakingSSVStrategy
+          .connect(strategist)
+          .withdrawSSV(testValidator.operatorIds, ethUnits("1"), emptyCluster)
+      ).to.be.revertedWith("Caller is not the Governor");
+    });
   });
 
   describe("Register and stake validators", async () => {
