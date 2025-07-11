@@ -217,7 +217,6 @@ async function generateBalanceProof({
   log(`Balance index in the balances container: ${balanceIndex}`);
   const genIndexBalanceContainer = toGindex(
     stateView.balances.type.depth,
-    // eslint-disable-next-line no-undef
     BigInt(balanceIndex)
   );
   log(`index for balance in balances container: ${genIndexBalanceContainer}`);
