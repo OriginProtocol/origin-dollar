@@ -263,12 +263,87 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
       await stakeValidatorsSingle(1, false, 0, ETHInGwei); // 1e9 Gwei = 1 ETH
     });
 
-    it("Should stake to a validator: 32 ETH", async () => {
-      await stakeValidatorsSingle(1, false); // 32e9 Gwei = 32 ETH
-    });
-
     it("Should stake to 2 validators: 1 ETH", async () => {
       await stakeValidatorsSingle(2, false, 0, ETHInGwei);
+    });
+
+    it("Should stake 1 ETH then 32 ETH to a validator", async () => {
+      const { compoundingStakingSSVStrategy, validatorRegistrator } = fixture;
+
+      // Register a new validator with the SSV Network
+      await compoundingStakingSSVStrategy
+        .connect(validatorRegistrator)
+        .registerSsvValidator(
+          testPublicKeys[0],
+          testValidator.operatorIds,
+          testValidator.sharesData,
+          ethUnits("2"),
+          emptyCluster
+        );
+
+      // Stake 1 ETH to the new validator
+      await compoundingStakingSSVStrategy
+        .connect(validatorRegistrator)
+        .stakeEth(
+          {
+            pubkey: testPublicKeys[0],
+            signature: testValidator.signature,
+            depositDataRoot: testValidator.depositDataRoot,
+          },
+          ETHInGwei // 1e9 Gwei = 1 ETH
+        );
+
+      /*
+      // Need to have it verifier first!
+      // Stake 32 ETH to the new validator
+      const stakeTx = compoundingStakingSSVStrategy
+        .connect(validatorRegistrator)
+        .stakeEth(
+          {
+            pubkey: testPublicKeys[0],
+            signature: testValidator.signature,
+            depositDataRoot: testValidator.depositDataRoot,
+          },
+          BigNumber.from("32").mul(GweiInWei) // 32 ETH
+        );
+
+      await expect(stakeTx)
+        .to.emit(compoundingStakingSSVStrategy, "ETHStaked")
+        .withArgs(
+          hashPubKey(testPublicKeys[0]),
+          testPublicKeys[0],
+          BigNumber.from("32").mul(GweiInWei) // Convert Gwei to Wei
+        );
+        */
+    });
+
+    it("Should revert when first stake amount is not exactly 1 ETH", async () => {
+      const { compoundingStakingSSVStrategy, validatorRegistrator } = fixture;
+
+      // Register a new validator with the SSV Network
+      await compoundingStakingSSVStrategy
+        .connect(validatorRegistrator)
+        .registerSsvValidator(
+          testPublicKeys[0],
+          testValidator.operatorIds,
+          testValidator.sharesData,
+          ethUnits("2"),
+          emptyCluster
+        );
+
+      // Try to stake 32 ETH to the new validator
+      const stakeTx = compoundingStakingSSVStrategy
+        .connect(validatorRegistrator)
+        .stakeEth(
+          {
+            pubkey: testPublicKeys[0],
+            signature: testValidator.signature,
+            depositDataRoot: testValidator.depositDataRoot,
+          },
+          BigNumber.from("32").mul(GweiInWei) // 32 ETH
+        );
+
+      await expect(stakeTx).to.be.revertedWith("First deposit not 1 ETH");
     });
 
     it("Should revert when registering a validator that is already registered", async () => {
