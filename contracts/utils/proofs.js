@@ -26,7 +26,7 @@ async function generateSlotProof({ blockView, blockTree }) {
   return {
     proof: proofBytes,
     generalizedIndex,
-    leaf: proofObj.leaf,
+    leaf: toHex(proofObj.leaf),
     slot: blockView.slot,
   };
 }
@@ -61,7 +61,7 @@ async function generateBlockProof({ blockView, blockTree }) {
   return {
     proof: proofBytes,
     generalizedIndex,
-    leaf: proofObj.leaf,
+    leaf: toHex(proofObj.leaf),
     blockNumber: blockView.body.executionPayload.blockNumber,
   };
 }
@@ -99,7 +99,7 @@ async function generateFirstPendingDepositSlotProof({
   return {
     proof: proofBytes,
     generalizedIndex,
-    leaf: proofObj.leaf,
+    leaf: toHex(proofObj.leaf),
     slot: firstPendingDeposit.slot,
     firstPendingDeposit,
   };
@@ -145,7 +145,7 @@ async function generateValidatorPubKeyProof({
   return {
     proof: proofBytes,
     generalizedIndex,
-    leaf: proofObj.leaf,
+    leaf: toHex(proofObj.leaf),
     pubKey: validatorDetails.pubkey,
   };
 }
@@ -180,7 +180,7 @@ async function generateBalancesContainerProof({
   return {
     proof: proofBytes,
     generalizedIndex,
-    leaf: proofObj.leaf,
+    leaf: toHex(proofObj.leaf),
   };
 }
 
@@ -239,7 +239,7 @@ async function generateBalanceProof({
     proof: proofBytes,
     generalizedIndex: genIndexBalancesContainer,
     root: toHex(balancesTree.root),
-    leaf: proofObj.leaf,
+    leaf: toHex(proofObj.leaf),
     validatorBalance,
   };
 }
