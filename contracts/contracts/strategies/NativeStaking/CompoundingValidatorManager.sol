@@ -143,7 +143,7 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
         bytes32 indexed depositDataRoot,
         uint64 indexed validatorIndex,
         uint64 firstPendingDepositSlot,
-        uint64 mappedSlot,
+        uint64 depositSlot,
         bytes32 blockRoot
     );
     event BalancesSnapped(
@@ -471,9 +471,17 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
     ****************************************/
 
     // Putting params into a struct to avoid stack too deep errors
+    /// @param parentBlockTimestamp The timestamp of the block after the mapped block number.
+    /// This is because the beacon block root returned from the BeaconOracle is for the previous block
+    /// as it returns the parent beacon block root.
+    /// @param depositBlockNumber A block number that is on or after the block the deposit was made.
+    /// @param validatorIndex The validator index of the validator that was deposited to.
+    /// @param firstPendingDepositSlot The slot of the first pending deposit in the beacon chain
+    /// @param validatorPubKeyProof The merkle proof that the validator index has the same public key as the deposit.
+    /// @param firstPendingDepositSlotProof The merkle proof that the slot of the first pending deposit matches the beacon chain.
     struct DepositProofData {
         uint64 parentBlockTimestamp;
-        uint64 mappedBlockNumber;
+        uint64 depositBlockNumber;
         uint64 validatorIndex;
         uint64 firstPendingDepositSlot;
         // BeaconBlock.state.validators[validatorIndex].pubkey
@@ -484,6 +492,8 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
 
     /// @notice Verifies a previous deposit has been processed by the beacon chain
     /// which means the validator exists and has an increased balance.
+    /// @param depositDataRoot The root of the deposit data that was stored when the deposit was made to the validator.
+    /// @param proofData The data needed to verify the deposit has been processed by the beacon chain. See `DepositProofData`.
     function verifyDeposit(
         bytes32 depositDataRoot,
         DepositProofData calldata proofData
@@ -492,21 +502,21 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
         DepositData memory deposit = deposits[depositDataRoot];
         require(deposit.status == DepositStatus.PENDING, "Deposit not pending");
 
-        // The deposit needs to be before or at the time as the mapped block number.
+        // The deposit needs to be before or at the same time as the mapped block number.
         // The deposit can not be after the block number mapped to a slot.
         require(
-            deposit.blockNumber <= proofData.mappedBlockNumber,
+            deposit.blockNumber <= proofData.depositBlockNumber,
             "block not on or after deposit"
         );
 
         // Get the slot that is on or after the deposit was made
-        uint64 mappedSlot = IBeaconOracle(BEACON_ORACLE).slotToBlock(
-            proofData.mappedBlockNumber
+        uint64 depositSlot = IBeaconOracle(BEACON_ORACLE).slotToBlock(
+            proofData.depositBlockNumber
         );
 
-        // Check the mapped slot is before the first pending deposit slot
+        // Check the deposit slot is before the first pending deposit slot.
         require(
-            mappedSlot < proofData.firstPendingDepositSlot,
+            depositSlot < proofData.firstPendingDepositSlot,
             "Deposit not processed"
         );
 
@@ -558,7 +568,7 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
             depositDataRoot,
             proofData.validatorIndex,
             proofData.firstPendingDepositSlot,
-            mappedSlot,
+            depositSlot,
             blockRoot
         );
     }
