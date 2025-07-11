@@ -71,19 +71,6 @@ describe("ForkTest: Beacon Proofs", function () {
     await beaconProofs.verifySlot(beaconBlockRoot, pastSlot, proof);
   });
 
-  it("Should verify balances container", async () => {
-    const { beaconProofs } = fixture;
-
-    const { proof, leaf } = await generateBalancesContainerProof({
-      blockView,
-      blockTree,
-      stateView,
-    });
-
-    log(`About to verify balances container`);
-    await beaconProofs.verifyBalancesContainer(beaconBlockRoot, leaf, proof);
-  });
-
   it("Should verify validator public key", async () => {
     const { beaconProofs } = fixture;
 
@@ -106,6 +93,19 @@ describe("ForkTest: Beacon Proofs", function () {
       proof,
       validatorIndex
     );
+  });
+
+  it("Should verify balances container", async () => {
+    const { beaconProofs } = fixture;
+
+    const { proof, leaf } = await generateBalancesContainerProof({
+      blockView,
+      blockTree,
+      stateView,
+    });
+
+    log(`About to verify balances container`);
+    await beaconProofs.verifyBalancesContainer(beaconBlockRoot, leaf, proof);
   });
 
   it("Should verify validator balance in balances container", async () => {
