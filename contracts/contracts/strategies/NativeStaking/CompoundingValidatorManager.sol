@@ -139,9 +139,13 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
     );
     event SSVValidatorRemoved(bytes32 indexed pubKeyHash, uint64[] operatorIds);
     event ValidatorWithdraw(bytes32 indexed pubKeyHash, uint256 amountWei);
+    event ValidatorVerified(
+        bytes32 indexed pubKeyHash,
+        uint64 indexed validatorIndex,
+        bytes32 blockRoot
+    );
     event DepositVerified(
         bytes32 indexed depositDataRoot,
-        uint64 indexed validatorIndex,
         uint64 firstPendingDepositSlot,
         uint64 depositSlot,
         bytes32 blockRoot
@@ -470,72 +474,90 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
                 Beacon Chain Proofs
     ****************************************/
 
-    // Putting params into a struct to avoid stack too deep errors
-    /// @param parentBlockTimestamp The timestamp of the block after the mapped block number.
-    /// This is because the beacon block root returned from the BeaconOracle is for the previous block
-    /// as it returns the parent beacon block root.
-    /// @param depositBlockNumber A block number that is on or after the block the deposit was made.
-    /// @param validatorIndex The validator index of the validator that was deposited to.
-    /// @param firstPendingDepositSlot The slot of the first pending deposit in the beacon chain
-    /// @param validatorPubKeyProof The merkle proof that the validator index has the same public key as the deposit.
-    /// @param firstPendingDepositSlotProof The merkle proof that the slot of the first pending deposit matches the beacon chain.
-    struct DepositProofData {
-        uint64 parentBlockTimestamp;
-        uint64 depositBlockNumber;
-        uint64 validatorIndex;
-        uint64 firstPendingDepositSlot;
+    function verifyValidator(
+        uint64 parentBlockTimestamp,
+        uint64 validatorIndex,
+        bytes32 pubKeyHash,
         // BeaconBlock.state.validators[validatorIndex].pubkey
-        bytes validatorPubKeyProof;
-        // BeaconBlock.BeaconBlockBody.deposits[0].slot
-        bytes firstPendingDepositSlotProof;
+        bytes calldata validatorPubKeyProof
+    ) external nonReentrant {
+        require(
+            validatorState[pubKeyHash] == VALIDATOR_STATE.STAKED,
+            "Validator not staked"
+        );
+        bytes32 blockRoot = BeaconRoots.parentBlockRoot(parentBlockTimestamp);
+
+        // Verify the validator index is for the validator with the given public key
+        IBeaconProofs(BEACON_PROOFS).verifyValidatorPubkey(
+            blockRoot,
+            pubKeyHash,
+            validatorPubKeyProof,
+            validatorIndex
+        );
+
+        // TODO verify the validator's withdrawal credential points to this strategy
+
+        // Store the validator state as verified
+        validatorState[pubKeyHash] = VALIDATOR_STATE.VERIFIED;
+
+        // Add the new validator to the list of verified validators
+        verifiedValidators.push(
+            ValidatorData({ pubKeyHash: pubKeyHash, index: validatorIndex })
+        );
+
+        emit ValidatorVerified(pubKeyHash, validatorIndex, blockRoot);
     }
 
     /// @notice Verifies a previous deposit has been processed by the beacon chain
     /// which means the validator exists and has an increased balance.
     /// @param depositDataRoot The root of the deposit data that was stored when the deposit was made to the validator.
-    /// @param proofData The data needed to verify the deposit has been processed by the beacon chain. See `DepositProofData`.
+    /// @param depositBlockNumber A block number that is on or after the block the deposit was made.
+    /// @param parentBlockTimestamp The timestamp of the block after the block to verify the deposit was processed.
+    /// This is because the beacon block root returned from the BeaconOracle is for the previous block
+    /// as it returns the parent beacon block root.
+    /// @param firstPendingDepositSlot The slot of the first pending deposit in the beacon chain
+    /// @param firstPendingDepositSlotProof The merkle proof that the slot of the first pending deposit matches the beacon chain.
     function verifyDeposit(
         bytes32 depositDataRoot,
-        DepositProofData calldata proofData
+        uint64 depositBlockNumber,
+        uint64 parentBlockTimestamp,
+        uint64 firstPendingDepositSlot,
+        // BeaconBlock.BeaconBlockBody.deposits[0].slot
+        bytes calldata firstPendingDepositSlotProof
     ) external nonReentrant {
         // Load into memory the previously saved deposit data
         DepositData memory deposit = deposits[depositDataRoot];
         require(deposit.status == DepositStatus.PENDING, "Deposit not pending");
-
-        // The deposit needs to be before or at the same time as the mapped block number.
-        // The deposit can not be after the block number mapped to a slot.
         require(
-            deposit.blockNumber <= proofData.depositBlockNumber,
-            "block not on or after deposit"
+            validatorState[deposit.pubKeyHash] == VALIDATOR_STATE.VERIFIED,
+            "Validator not verified"
         );
 
-        // Get the slot that is on or after the deposit was made
+        // The block number mapped to a slot needs to be the same block or after the deposit was created on the execution layer.
+        require(
+            deposit.blockNumber <= depositBlockNumber,
+            "block before deposit"
+        );
+
+        // Get the slot that is on or after the deposit was made on the execution layer.
         uint64 depositSlot = IBeaconOracle(BEACON_ORACLE).slotToBlock(
-            proofData.depositBlockNumber
+            depositBlockNumber
         );
 
-        // Check the deposit slot is before the first pending deposit slot.
-        require(
-            depositSlot < proofData.firstPendingDepositSlot,
-            "Deposit not processed"
-        );
+        // Check the deposit slot is before the first pending deposit slot on the beacon chain.
+        // If this is not true then we can't guarantee the deposit has been processed by the beacon chain.
+        // The deposit's slot can not be the same slot as the first pending deposit as there could be many deposits
+        // in the same block. Our deposit may be after the first pending deposit which means
+        // it has not been processed by the beacon chain.
+        require(depositSlot < firstPendingDepositSlot, "Deposit not processed");
 
-        bytes32 blockRoot = BeaconRoots.parentBlockRoot(
-            proofData.parentBlockTimestamp
-        );
-        // Verify the validator index has the same public key as the deposit
-        IBeaconProofs(BEACON_PROOFS).verifyValidatorPubkey(
-            blockRoot,
-            deposit.pubKeyHash,
-            proofData.validatorPubKeyProof,
-            proofData.validatorIndex
-        );
+        bytes32 blockRoot = BeaconRoots.parentBlockRoot(parentBlockTimestamp);
 
         // Verify the first pending deposit slot matches the beacon chain
         IBeaconProofs(BEACON_PROOFS).verifyFirstPendingDepositSlot(
             blockRoot,
-            proofData.firstPendingDepositSlot,
-            proofData.firstPendingDepositSlotProof
+            firstPendingDepositSlot,
+            firstPendingDepositSlotProof
         );
 
         // After verifying the proof, update the contract storage
@@ -547,27 +569,9 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
         // Delete the last deposit from the list
         depositsRoots.pop();
 
-        // If verifying a deposit to a new validator
-        if (validatorState[deposit.pubKeyHash] == VALIDATOR_STATE.STAKED) {
-            // Store the validator state as verified
-            validatorState[deposit.pubKeyHash] = VALIDATOR_STATE.VERIFIED;
-
-            // Add the new validator to the list of verified validators
-            verifiedValidators.push(
-                ValidatorData({
-                    pubKeyHash: deposit.pubKeyHash,
-                    index: proofData.validatorIndex
-                })
-            );
-        }
-
-        // Take a snap of the balances so the new validator balances can be verified
-        _snapBalances();
-
         emit DepositVerified(
             depositDataRoot,
-            proofData.validatorIndex,
-            proofData.firstPendingDepositSlot,
+            firstPendingDepositSlot,
             depositSlot,
             blockRoot
         );
