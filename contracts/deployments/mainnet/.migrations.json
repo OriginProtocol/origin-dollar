@@ -43,5 +43,7 @@
   "144_ousd_oeth_upgrade_EIP7702": 1751453912,
   "145_deploy_xogn_rewards_module": 1751535258,
   "146_morpho_strategies_reward_tokens": 1751882972,
-  "147_claim_rewards_module_upgrade": 1751883056
+  "147_claim_rewards_module_upgrade": 1751883056,
+  "148_xogn_module_for_5_of_8_multisig": 1752085269,
+  "149_xogn_module_7": 1752215483
 }
