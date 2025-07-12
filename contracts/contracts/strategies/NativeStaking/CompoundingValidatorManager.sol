@@ -141,24 +141,20 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
     event ValidatorWithdraw(bytes32 indexed pubKeyHash, uint256 amountWei);
     event ValidatorVerified(
         bytes32 indexed pubKeyHash,
-        uint64 indexed validatorIndex,
-        bytes32 blockRoot
+        uint64 indexed validatorIndex
     );
     event DepositVerified(
         bytes32 indexed depositDataRoot,
         uint64 firstPendingDepositSlot,
-        uint64 depositSlot,
-        bytes32 blockRoot
+        uint64 depositSlot
     );
     event BalancesSnapped(
         uint256 indexed timestamp,
-        bytes32 indexed blockRoot,
         uint256 indexed blockNumber,
         uint256 ethBalance
     );
     event BalancesVerified(
         uint64 indexed timestamp,
-        bytes32 indexed blockRoot,
         uint256 totalDepositsWei,
         uint256 totalValidatorBalance,
         uint256 wethBalance,
@@ -172,7 +168,6 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
     event ConsolidationVerified(
         bytes32 indexed lastSourcePubKeyHash,
         uint64 indexed lastValidatorIndex,
-        bytes32 indexed blockRoot,
         uint256 consolidationCount
     );
 
@@ -505,7 +500,7 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
             ValidatorData({ pubKeyHash: pubKeyHash, index: validatorIndex })
         );
 
-        emit ValidatorVerified(pubKeyHash, validatorIndex, blockRoot);
+        emit ValidatorVerified(pubKeyHash, validatorIndex);
     }
 
     /// @notice Verifies a previous deposit has been processed by the beacon chain
@@ -572,8 +567,7 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
         emit DepositVerified(
             depositDataRoot,
             firstPendingDepositSlot,
-            depositSlot,
-            blockRoot
+            depositSlot
         );
     }
 
@@ -632,7 +626,6 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
         emit ConsolidationVerified(
             consolidationLastPubKeyHashMem,
             lastValidatorIndex,
-            blockRoot,
             consolidationCount
         );
 
@@ -669,12 +662,7 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
         // Store the snapped timestamp
         lastSnapTimestamp = SafeCast.toUint64(block.timestamp);
 
-        emit BalancesSnapped(
-            block.timestamp,
-            blockRoot,
-            block.number,
-            ethBalance
-        );
+        emit BalancesSnapped(block.timestamp, block.number, ethBalance);
     }
 
     struct VerifyBalancesParams {
@@ -789,7 +777,6 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
 
         emit BalancesVerified(
             balancesMem.timestamp,
-            params.blockRoot,
             totalDepositsGwei * 1 gwei,
             totalValidatorBalance,
             wethBalance,
