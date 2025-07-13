@@ -240,7 +240,7 @@ async function generateBalanceProof({
     generalizedIndex: genIndexBalancesContainer,
     root: toHex(balancesTree.root),
     leaf: toHex(proofObj.leaf),
-    validatorBalance,
+    balance: validatorBalance,
   };
 }
 

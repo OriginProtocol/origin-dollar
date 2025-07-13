@@ -120,6 +120,7 @@ const {
   verifySlot,
   verifyValidator,
   verifyDeposit,
+  verifyBalances,
 } = require("./beacon");
 
 const log = require("../utils/logger")("tasks");
@@ -1907,5 +1908,17 @@ subtask("verifyDeposit", "Verify a deposit on the Beacon chain")
   )
   .setAction(verifyDeposit);
 task("verifyDeposit").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+subtask("verifyBalances", "Verify validator balances on the Beacon chain")
+  .addOptionalParam(
+    "root",
+    "The beacon block root to verify balances to in hex format with a 0x prefix. Default: last balances snapshot",
+    undefined,
+    types.string
+  )
+  .setAction(verifyBalances);
+task("verifyBalances").setAction(async (_, __, runSuper) => {
   return runSuper();
 });

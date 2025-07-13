@@ -7,6 +7,7 @@ const {
   generateBlockProof,
   generateValidatorPubKeyProof,
   generateFirstPendingDepositSlotProof,
+  generateBalancesContainerProof,
 } = require("../utils/proofs");
 const { logTxDetails } = require("../utils/txLogger");
 
@@ -128,6 +129,7 @@ async function verifyDeposit({ block, slot, root }) {
     await verifySlot({ block });
   }
 
+  // Uses the latest slot if the slot is undefined
   const { blockView, blockTree, stateView } = await getBeaconBlock(slot);
 
   const processedSlot = blockView.slot;
@@ -148,6 +150,70 @@ async function verifyDeposit({ block, slot, root }) {
     .connect(signer)
     .verifyDeposit(root, block, processedSlot, firstPendingDepositSlot, proof);
   await logTxDetails(tx, "verifyDeposit");
+}
+
+async function verifyBalances({ root }) {
+  const signer = await getSigner();
+
+  // TODO If no beacon block root, then get from the blockRoot from the last BalancesSnapped event
+  // Revert for now
+  if (!root)
+    throw Error("Beacon block root is currently required for verifyBalances");
+
+  // Uses the beacon chain data for the beacon block root
+  const { blockView, blockTree, stateView } = await getBeaconBlock(root);
+
+  const verificationSlot = blockView.slot;
+
+  const strategy = await resolveContract("CompoundingStakingSSVStrategy");
+
+  const { proof: firstPendingDepositSlotProof, slot: firstPendingDepositSlot } =
+    await generateFirstPendingDepositSlotProof({
+      blockView,
+      blockTree,
+      stateView,
+    });
+
+  const { leaf: balancesContainerRoot, proof: balancesContainerProof } =
+    await generateBalancesContainerProof({
+      blockView,
+      blockTree,
+      stateView,
+    });
+
+  const verifiedValidators = await strategy.verifiedValidators();
+
+  const validatorBalanceLeaves = [];
+  const validatorBalanceProofs = [];
+  for (const validator of verifiedValidators) {
+    const { proof, leaf, balance } = await generateBalanceProof({
+      validatorIndex: validator.index,
+      blockView,
+      blockTree,
+      stateView,
+    });
+    validatorBalanceLeaves.push(leaf);
+    validatorBalanceProofs.push(proof);
+
+    log(
+      `Validator ${validator.index} has balance: ${formatUnits(balance)} ETH`
+    );
+  }
+
+  log(
+    `About verify ${verifiedValidators.length} validator balances for slot ${verificationSlot} with beacon block root ${root}`
+  );
+  const tx = await strategy.connect(signer).verifyBalances({
+    blockRoot: root,
+    verificationSlot,
+    firstPendingDepositSlot,
+    firstPendingDepositSlotProof,
+    balancesContainerRoot,
+    balancesContainerProof,
+    validatorBalanceLeaves,
+    validatorBalanceProofs,
+  });
+  await logTxDetails(tx, "verifyBalances");
 }
 
 async function blockToSlot({ block }) {
@@ -177,4 +243,5 @@ module.exports = {
   slotToBlock,
   verifyValidator,
   verifyDeposit,
+  verifyBalances,
 };

@@ -147,7 +147,7 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
     event DepositVerified(bytes32 indexed depositDataRoot, uint256 amountWei);
     event BalancesSnapped(
         uint256 indexed timestamp,
-        uint256 indexed blockNumber,
+        bytes32 indexed blockRoot,
         uint256 ethBalance
     );
     event BalancesVerified(
@@ -472,7 +472,8 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
     ****************************************/
 
     /// @notice Verifies a validator's index to its public key.
-    /// @param nextBlockTimestamp The timestamp of the execution layer block after the beacon chain slot we are verifying.
+    /// @param nextBlockTimestamp The timestamp of the execution layer block after the beacon chain slot
+    /// we are verifying.
     /// The next one is needed as the Beacon Oracle returns the parent beacon block root for a block timestamp,
     /// which is the beacon block root of the previous block.
     /// @param validatorIndex The index of the validator on the beacon chain.
@@ -687,7 +688,7 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
         // Store the snapped timestamp
         lastSnapTimestamp = SafeCast.toUint64(block.timestamp);
 
-        emit BalancesSnapped(block.timestamp, block.number, ethBalance);
+        emit BalancesSnapped(block.timestamp, blockRoot, ethBalance);
     }
 
     // A struct is used to avoid stack too deep errors
@@ -713,7 +714,7 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
         require(lastSnapTimestamp > 0, "No snapped balances");
         require(balancesMem.timestamp == lastSnapTimestamp, "Stale snap");
 
-        // Verify the first pending deposit slot to the beacon block root
+        // Verify the slot of the first pending deposit to the beacon block root
         IBeaconProofs(BEACON_PROOFS).verifyFirstPendingDepositSlot(
             params.blockRoot,
             params.firstPendingDepositSlot,
