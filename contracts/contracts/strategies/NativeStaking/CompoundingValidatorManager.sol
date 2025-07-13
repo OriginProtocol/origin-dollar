@@ -414,7 +414,7 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
     function requestConsolidation(
         bytes32 lastSourcePubKeyHash,
         bytes32 targetPubKeyHash
-    ) external nonReentrant whenNotPaused {
+    ) external whenNotPaused {
         require(
             consolidationSourceStrategies[msg.sender],
             "Not a source strategy"
@@ -475,7 +475,7 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
         bytes32 pubKeyHash,
         // BeaconBlock.state.validators[validatorIndex].pubkey
         bytes calldata validatorPubKeyProof
-    ) external nonReentrant {
+    ) external {
         require(
             validatorState[pubKeyHash] == VALIDATOR_STATE.STAKED,
             "Validator not staked"
@@ -519,7 +519,7 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
         uint64 firstPendingDepositSlot,
         // BeaconBlock.BeaconBlockBody.deposits[0].slot
         bytes calldata firstPendingDepositSlotProof
-    ) external nonReentrant {
+    ) external {
         // Load into memory the previously saved deposit data
         DepositData memory deposit = deposits[depositDataRoot];
         require(deposit.status == DepositStatus.PENDING, "Deposit not pending");
@@ -636,7 +636,7 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
         _snapBalances();
     }
 
-    function snapBalances() public nonReentrant {
+    function snapBalances() public {
         _snapBalances();
     }
 
@@ -678,10 +678,7 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
         bytes[] validatorBalanceProofs;
     }
 
-    function verifyBalances(VerifyBalancesParams calldata params)
-        external
-        nonReentrant
-    {
+    function verifyBalances(VerifyBalancesParams calldata params) external {
         // Load previously snapped balances for the given block root
         Balances memory balancesMem = snappedBalances[params.blockRoot];
         // Check the balances are the latest
