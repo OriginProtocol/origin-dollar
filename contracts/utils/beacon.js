@@ -35,7 +35,7 @@ const getSlot = async (blockId = "head") => {
   return slot;
 };
 
-const getBeaconBlock = async (slot) => {
+const getBeaconBlock = async (slot = "head") => {
   const client = await configClient();
 
   const { ssz } = await import("@lodestar/types");

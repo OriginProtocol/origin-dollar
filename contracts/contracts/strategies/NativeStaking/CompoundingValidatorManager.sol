@@ -130,6 +130,7 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
     event SourceStrategyAdded(address indexed strategy);
     event ETHStaked(
         bytes32 indexed pubKeyHash,
+        bytes32 indexed depositDataRoot,
         bytes pubKey,
         uint256 amountWei
     );
@@ -143,11 +144,7 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
         bytes32 indexed pubKeyHash,
         uint64 indexed validatorIndex
     );
-    event DepositVerified(
-        bytes32 indexed depositDataRoot,
-        uint64 firstPendingDepositSlot,
-        uint64 depositSlot
-    );
+    event DepositVerified(bytes32 indexed depositDataRoot, uint256 amountWei);
     event BalancesSnapped(
         uint256 indexed timestamp,
         uint256 indexed blockNumber,
@@ -269,7 +266,7 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
     function stakeEth(
         ValidatorStakeData calldata validator,
         uint64 depositAmountGwei
-    ) external onlyRegistrator whenNotPaused nonReentrant {
+    ) external onlyRegistrator whenNotPaused {
         uint256 depositAmountWei = uint256(depositAmountGwei) * 1 gwei;
         // Check there is enough WETH from the deposits sitting in this strategy contract
         // There could be ETH from withdrawals but we'll ignore that. If it's really needed
@@ -336,7 +333,12 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
         });
         depositsRoots.push(validator.depositDataRoot);
 
-        emit ETHStaked(pubKeyHash, validator.pubkey, depositAmountWei);
+        emit ETHStaked(
+            pubKeyHash,
+            validator.depositDataRoot,
+            validator.pubkey,
+            depositAmountWei
+        );
     }
 
     // slither-disable-end reentrancy-eth
@@ -469,18 +471,28 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
                 Beacon Chain Proofs
     ****************************************/
 
+    /// @notice Verifies a validator's index to its public key.
+    /// @param nextBlockTimestamp The timestamp of the execution layer block after the beacon chain slot we are verifying.
+    /// The next one is needed as the Beacon Oracle returns the parent beacon block root for a block timestamp,
+    /// which is the beacon block root of the previous block.
+    /// @param validatorIndex The index of the validator on the beacon chain.
+    /// @param pubKeyHash The hash of the validator's public key using the Beacon Chain's format
+    /// @param validatorPubKeyProof The merkle proof that the validator's index matches its public key
+    /// on the beacon chain.
+    /// BeaconBlock.state.validators[validatorIndex].pubkey
     function verifyValidator(
-        uint64 parentBlockTimestamp,
+        uint64 nextBlockTimestamp,
         uint64 validatorIndex,
         bytes32 pubKeyHash,
-        // BeaconBlock.state.validators[validatorIndex].pubkey
         bytes calldata validatorPubKeyProof
     ) external {
         require(
             validatorState[pubKeyHash] == VALIDATOR_STATE.STAKED,
             "Validator not staked"
         );
-        bytes32 blockRoot = BeaconRoots.parentBlockRoot(parentBlockTimestamp);
+        // Get the beacon block root of the slot we are verifying the validator in.
+        // The parent beacon block root of the next block is the beacon block root of the slot we are verifying.
+        bytes32 blockRoot = BeaconRoots.parentBlockRoot(nextBlockTimestamp);
 
         // Verify the validator index is for the validator with the given public key
         IBeaconProofs(BEACON_PROOFS).verifyValidatorPubkey(
@@ -503,21 +515,23 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
         emit ValidatorVerified(pubKeyHash, validatorIndex);
     }
 
-    /// @notice Verifies a previous deposit has been processed by the beacon chain
-    /// which means the validator exists and has an increased balance.
-    /// @param depositDataRoot The root of the deposit data that was stored when the deposit was made to the validator.
-    /// @param depositBlockNumber A block number that is on or after the block the deposit was made.
-    /// @param parentBlockTimestamp The timestamp of the block after the block to verify the deposit was processed.
-    /// This is because the beacon block root returned from the BeaconOracle is for the previous block
-    /// as it returns the parent beacon block root.
+    /// @notice Verifies a deposit on the execution layer has been processed by the beacon chain.
+    /// This means the accounting of the strategy's ETH moves from a pending deposit to a validator balance.
+    /// @param depositDataRoot The root of the deposit data that was stored when
+    /// the deposit was made on the execution layer.
+    /// @param depositBlockNumber A block number that is on or after the block the deposit
+    /// was made on the execution layer.
+    /// @param processedSlot Any slot on or after the deposit was processed on the beacon chain.
+    /// Can not be a slot with pending deposits with the same slot as the deposit being verified.
     /// @param firstPendingDepositSlot The slot of the first pending deposit in the beacon chain
-    /// @param firstPendingDepositSlotProof The merkle proof that the slot of the first pending deposit matches the beacon chain.
+    /// @param firstPendingDepositSlotProof The merkle proof that the slot of the first pending deposit
+    /// matches the beacon chain.
+    /// BeaconBlock.BeaconBlockBody.deposits[0].slot
     function verifyDeposit(
         bytes32 depositDataRoot,
         uint64 depositBlockNumber,
-        uint64 parentBlockTimestamp,
+        uint64 processedSlot,
         uint64 firstPendingDepositSlot,
-        // BeaconBlock.BeaconBlockBody.deposits[0].slot
         bytes calldata firstPendingDepositSlotProof
     ) external {
         // Load into memory the previously saved deposit data
@@ -527,11 +541,11 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
             validatorState[deposit.pubKeyHash] == VALIDATOR_STATE.VERIFIED,
             "Validator not verified"
         );
-
-        // The block number mapped to a slot needs to be the same block or after the deposit was created on the execution layer.
+        // The block number mapped to a slot needs to be the same block or after the deposit
+        // was created on the execution layer.
         require(
             deposit.blockNumber <= depositBlockNumber,
-            "block before deposit"
+            "Deposit block before deposit"
         );
 
         // Get the slot that is on or after the deposit was made on the execution layer.
@@ -539,16 +553,28 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
             depositBlockNumber
         );
 
-        // Check the deposit slot is before the first pending deposit slot on the beacon chain.
+        // Check the deposit slot is before the first pending deposit's slot on the beacon chain.
         // If this is not true then we can't guarantee the deposit has been processed by the beacon chain.
-        // The deposit's slot can not be the same slot as the first pending deposit as there could be many deposits
-        // in the same block. Our deposit may be after the first pending deposit which means
-        // it has not been processed by the beacon chain.
-        require(depositSlot < firstPendingDepositSlot, "Deposit not processed");
+        // The deposit's slot can not be the same slot as the first pending deposit as there could be
+        // many deposits in the same block, hence have the same pending deposit slot.
+        // If the first pending deposit's slot is 0 then there are no pending deposits so
+        // our deposit must have been processed on the beacon chain.
+        require(
+            depositSlot < firstPendingDepositSlot ||
+                firstPendingDepositSlot == 0,
+            "Deposit not processed"
+        );
 
-        bytes32 blockRoot = BeaconRoots.parentBlockRoot(parentBlockTimestamp);
+        // The slot of the execution layer deposit must be before
+        // the slot that the deposit was processed on the beacon chain.
+        require(depositSlot < processedSlot, "Slot not after deposit");
 
-        // Verify the first pending deposit slot matches the beacon chain
+        // Get the beacon block root for the slot that is on or after the deposit was processed on the beacon chain.
+        bytes32 blockRoot = IBeaconOracle(BEACON_ORACLE).slotToRoot(
+            processedSlot
+        );
+
+        // Verify the slot of the first pending deposit matches the beacon chain
         IBeaconProofs(BEACON_PROOFS).verifyFirstPendingDepositSlot(
             blockRoot,
             firstPendingDepositSlot,
@@ -564,11 +590,7 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
         // Delete the last deposit from the list
         depositsRoots.pop();
 
-        emit DepositVerified(
-            depositDataRoot,
-            firstPendingDepositSlot,
-            depositSlot
-        );
+        emit DepositVerified(depositDataRoot, deposit.amountGwei * 1 gwei);
     }
 
     // TODO what if the last validator was exited rather than consolidated?
@@ -636,7 +658,10 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
         _snapBalances();
     }
 
-    function snapBalances() public {
+    /// @notice Stores the current ETH balance at the current block.
+    /// The validator balances on the beacon chain can then be proved with `verifyBalances`.
+    /// Can not be called while a consolidation is in progress.
+    function snapBalances() public whenNotPaused {
         _snapBalances();
     }
 
@@ -665,6 +690,7 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
         emit BalancesSnapped(block.timestamp, block.number, ethBalance);
     }
 
+    // A struct is used to avoid stack too deep errors
     struct VerifyBalancesParams {
         bytes32 blockRoot;
         uint64 firstPendingDepositSlot;
@@ -678,6 +704,8 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
         bytes[] validatorBalanceProofs;
     }
 
+    /// @notice Verifies the balances of all active validators on the beacon chain
+    /// and checks no pending deposits have been processed by the beacon chain.
     function verifyBalances(VerifyBalancesParams calldata params) external {
         // Load previously snapped balances for the given block root
         Balances memory balancesMem = snappedBalances[params.blockRoot];
@@ -817,7 +845,7 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
             lastVerifiedEthBalance = 0;
         }
 
-        // Reset the last snap timestamp so a new snapBalances has to be made
+        // The ETH balance was increased from WETH so we need to invalidate the last balances snap.
         lastSnapTimestamp = 0;
     }
 
@@ -830,7 +858,7 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
         // Store the increased ETH balance
         lastVerifiedEthBalance += SafeCast.toUint128(_wethAmount);
 
-        // Reset the last snap timestamp so a new snapBalances has to be made
+        // The ETH balance was decreased to WETH so we need to invalidate the last balances snap.
         lastSnapTimestamp = 0;
     }
 }

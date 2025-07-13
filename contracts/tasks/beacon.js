@@ -2,10 +2,20 @@ const addresses = require("../utils/addresses");
 const { getBeaconBlock, getSlot } = require("../utils/beacon");
 const { getSigner } = require("../utils/signers");
 const { resolveContract } = require("../utils/resolvers");
-const { generateSlotProof, generateBlockProof } = require("../utils/proofs");
+const {
+  generateSlotProof,
+  generateBlockProof,
+  generateValidatorPubKeyProof,
+  generateFirstPendingDepositSlotProof,
+} = require("../utils/proofs");
 const { logTxDetails } = require("../utils/txLogger");
 
 const log = require("../utils/logger")("task:beacon");
+
+function getProvider() {
+  // Get provider to Ethereum mainnet and not a local fork
+  return new ethers.providers.JsonRpcProvider(process.env.PROVIDER_URL);
+}
 
 async function depositValidator({ pubkey, cred, sig, root, amount }) {
   const signer = await getSigner();
@@ -35,12 +45,10 @@ async function verifySlot({ block }) {
 
   // Get the parent block root from the beacon roots contract
   const mockBeaconRoots = await ethers.getContract("MockBeaconRoots");
-  const parentBlockRoot = await mockBeaconRoots.parentBlockRoot(
-    nextBlockTimestamp
-  );
-  log(`Parent block root for block ${nextBlock} is ${parentBlockRoot}`);
+  const blockRoot = await mockBeaconRoots.parentBlockRoot(nextBlockTimestamp);
+  log(`Beacon block root for block ${block} is ${blockRoot}`);
 
-  const slot = await getSlot(parentBlockRoot);
+  const slot = await getSlot(blockRoot);
   log(`Slot for block ${block} is:`, slot);
 
   const { blockView, blockTree } = await getBeaconBlock(slot);
@@ -70,9 +78,76 @@ async function verifySlot({ block }) {
   await logTxDetails(tx, "verifySlot");
 }
 
-function getProvider() {
-  // Get provider to Ethereum mainnet and not a local fork
-  return new ethers.providers.JsonRpcProvider(process.env.PROVIDER_URL);
+async function verifyValidator({ slot, index }) {
+  const signer = await getSigner();
+
+  const { blockView, blockTree, stateView } = await getBeaconBlock(slot);
+
+  // Get provider to mainnet and not a local fork
+  const provider = getProvider();
+
+  const nextBlock = blockView.body.executionPayload.blockNumber + 1;
+  const { timestamp: nextBlockTimestamp } = await provider.getBlock(nextBlock);
+  log(
+    `Next execution layer block ${nextBlock} has timestamp ${nextBlockTimestamp}`
+  );
+
+  const {
+    proof,
+    leaf: pubKeyHash,
+    pubKey,
+  } = await generateValidatorPubKeyProof({
+    validatorIndex: index,
+    blockView,
+    blockTree,
+    stateView,
+  });
+
+  const strategy = await resolveContract("CompoundingStakingSSVStrategy");
+
+  log(
+    `About verify validator ${index} with pub key ${pubKey} using slot ${slot}`
+  );
+  const tx = await strategy
+    .connect(signer)
+    .verifyValidator(nextBlockTimestamp, index, pubKeyHash, proof);
+  await logTxDetails(tx, "verifyValidator");
+}
+
+async function verifyDeposit({ block, slot, root }) {
+  const signer = await getSigner();
+
+  // TODO If no block then get the block from the stakeETH event
+  // For now we'll throw an error
+  if (!block) throw Error("Block is currently required for verifyDeposit");
+
+  // Check the deposit block has been mapped in the Beacon Oracle
+  const oracle = await resolveContract("BeaconOracle");
+  const isMapped = await oracle.isBlockMapped(block);
+  if (!isMapped) {
+    await verifySlot({ block });
+  }
+
+  const { blockView, blockTree, stateView } = await getBeaconBlock(slot);
+
+  const processedSlot = blockView.slot;
+
+  const strategy = await resolveContract("CompoundingStakingSSVStrategy");
+
+  const { proof, slot: firstPendingDepositSlot } =
+    await generateFirstPendingDepositSlotProof({
+      blockView,
+      blockTree,
+      stateView,
+    });
+
+  log(
+    `About verify deposit for block ${block} and slot ${slot} with deposit data root ${root}`
+  );
+  const tx = await strategy
+    .connect(signer)
+    .verifyDeposit(root, block, processedSlot, firstPendingDepositSlot, proof);
+  await logTxDetails(tx, "verifyDeposit");
 }
 
 async function blockToSlot({ block }) {
@@ -100,4 +175,6 @@ module.exports = {
   verifySlot,
   blockToSlot,
   slotToBlock,
+  verifyValidator,
+  verifyDeposit,
 };

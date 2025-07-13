@@ -118,6 +118,8 @@ const {
   blockToSlot,
   slotToBlock,
   verifySlot,
+  verifyValidator,
+  verifyDeposit,
 } = require("./beacon");
 
 const log = require("../utils/logger")("tasks");
@@ -1863,5 +1865,47 @@ subtask("slotToBlock", "Map a beacon chain slot to a block")
   .addParam("slot", "Beacon chain slot", undefined, types.int)
   .setAction(slotToBlock);
 task("slotToBlock").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+subtask("verifyValidator", "Verify a validator on the Beacon chain")
+  .addParam(
+    "index",
+    "Index of the validator on the Beacon chain",
+    undefined,
+    types.int
+  )
+  .addOptionalParam(
+    "slot",
+    "Any slot after the validator was registered on the Beacon chain. Default latest",
+    undefined,
+    types.int
+  )
+  .setAction(verifyValidator);
+task("verifyValidator").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+subtask("verifyDeposit", "Verify a deposit on the Beacon chain")
+  .addParam(
+    "root",
+    "Root of the deposit data sent to the Beacon deposit contract in hex format with a 0x prefix",
+    undefined,
+    types.string
+  )
+  .addOptionalParam(
+    "block",
+    "Block number on or after the deposit was made on the execution layer. Default deposit block",
+    undefined,
+    types.int
+  )
+  .addOptionalParam(
+    "slot",
+    "The slot on or after the deposit was process on the beacon chain. Default deposit processed slot",
+    undefined,
+    types.int
+  )
+  .setAction(verifyDeposit);
+task("verifyDeposit").setAction(async (_, __, runSuper) => {
   return runSuper();
 });

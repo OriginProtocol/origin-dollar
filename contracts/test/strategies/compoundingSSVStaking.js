@@ -247,6 +247,7 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
           .to.emit(compoundingStakingSSVStrategy, "ETHStaked")
           .withArgs(
             hashPubKey(testPublicKeys[i]),
+            testValidator.depositDataRoot,
             testPublicKeys[i],
             amount.mul(GweiInWei) // Convert Gwei to Wei
           );
