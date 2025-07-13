@@ -1,3 +1,5 @@
+const { formatUnits } = require("ethers/lib/utils");
+
 const addresses = require("../utils/addresses");
 const { getBeaconBlock, getSlot } = require("../utils/beacon");
 const { getSigner } = require("../utils/signers");
@@ -8,6 +10,7 @@ const {
   generateValidatorPubKeyProof,
   generateFirstPendingDepositSlotProof,
   generateBalancesContainerProof,
+  generateBalanceProof,
 } = require("../utils/proofs");
 const { logTxDetails } = require("../utils/txLogger");
 
