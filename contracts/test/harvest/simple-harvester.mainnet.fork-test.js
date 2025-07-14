@@ -68,9 +68,7 @@ describe("ForkTest: SimpleHarvester", function () {
       value: oethUnits("1"),
     });
 
-    const balanceBeforeWETH = await weth.balanceOf(
-      oethVault.address
-    );
+    const balanceBeforeWETH = await weth.balanceOf(oethVault.address);
     // prettier-ignore
     await simpleOETHHarvester
       .connect(strategist)["harvestAndTransfer(address)"](nativeStakingSSVStrategy.address);
@@ -114,9 +112,7 @@ describe("ForkTest: SimpleHarvester", function () {
       value: oethUnits("1"),
     });
 
-    const balanceBeforeWETH = await weth.balanceOf(
-      oethVault.address
-    );
+    const balanceBeforeWETH = await weth.balanceOf(oethVault.address);
     // prettier-ignore
     await simpleOETHHarvester
       .connect(timelock)["harvestAndTransfer(address)"](nativeStakingSSVStrategy.address);

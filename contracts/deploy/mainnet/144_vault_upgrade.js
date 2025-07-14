@@ -20,13 +20,14 @@ module.exports = deploymentWithGovernanceProposal(
       cOETHHarvesterSimpleProxy.address
     );
 
-    // Deploy new implementation without storage slot checks because of the: 
+    // Deploy new implementation without storage slot checks because of the:
     // - Renamed `dripper` to `_deprecated_dripper`
-    const dOETHVaultCore = await deployWithConfirmation("OETHVaultCore", [
-      addresses.mainnet.WETH
-    ], "OETHVaultCore", true);
-
-
+    const dOETHVaultCore = await deployWithConfirmation(
+      "OETHVaultCore",
+      [addresses.mainnet.WETH],
+      "OETHVaultCore",
+      true
+    );
 
     // ----------------
     // Governance Actions
@@ -45,7 +46,7 @@ module.exports = deploymentWithGovernanceProposal(
           contract: cOETHHarvesterSimple,
           signature: "setDripper(address)",
           args: [cOETHVaultProxy.address],
-        }
+        },
       ],
     };
   }
