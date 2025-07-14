@@ -1,6 +1,7 @@
 const addresses = require("../utils/addresses");
 const { parseUnits } = require("ethers/lib/utils");
 
+const { calcDepositRoot } = require("./beacon");
 const { getSigner } = require("../utils/signers");
 const { resolveContract } = require("../utils/resolvers");
 const { getClusterInfo } = require("../utils/ssv");
@@ -38,7 +39,7 @@ async function registerValidator({ pubkey, shares, operatorids, ssv }) {
   await logTxDetails(tx, "registerValidator");
 }
 
-async function stakeValidator({ pubkey, sig, root, amount }) {
+async function stakeValidator({ pubkey, sig, amount }) {
   const signer = await getSigner();
 
   const strategy = await resolveContract(
@@ -46,12 +47,22 @@ async function stakeValidator({ pubkey, sig, root, amount }) {
     "CompoundingStakingSSVStrategy"
   );
 
+  const depositDataRoot = calcDepositRoot(
+    strategy.address,
+    "0x02",
+    pubkey,
+    sig,
+    amount
+  );
+
   const amountGwei = parseUnits(amount.toString(), 9);
 
-  log(`About to stake ${amount} ETH to validator with pubkey ${pubkey}`);
+  log(
+    `About to stake ${amount} ETH to validator with pubkey ${pubkey} and deposit root ${depositDataRoot}`
+  );
   const tx = await strategy
     .connect(signer)
-    .stakeEth({ pubkey, signature: sig, depositDataRoot: root }, amountGwei);
+    .stakeEth({ pubkey, signature: sig, depositDataRoot }, amountGwei);
   await logTxDetails(tx, "stakeETH");
 }
 

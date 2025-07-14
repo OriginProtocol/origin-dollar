@@ -1969,12 +1969,6 @@ subtask(
     types.string
   )
   .addParam(
-    "root",
-    "The validator's deposit root in hex format with a 0x prefix",
-    0,
-    types.string
-  )
-  .addParam(
     "amount",
     "Amount of ETH to deposit to the validator.",
     undefined,

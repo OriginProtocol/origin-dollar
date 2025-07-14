@@ -1,7 +1,7 @@
-const { formatUnits } = require("ethers/lib/utils");
+const { formatUnits, solidityPack } = require("ethers/lib/utils");
 
 const addresses = require("../utils/addresses");
-const { getBeaconBlock, getSlot } = require("../utils/beacon");
+const { getBeaconBlock, getSlot, hashPubKey } = require("../utils/beacon");
 const { getSigner } = require("../utils/signers");
 const { resolveContract } = require("../utils/resolvers");
 
@@ -21,6 +21,45 @@ function getProvider() {
   // Get provider to Ethereum mainnet and not a local fork
   return new ethers.providers.JsonRpcProvider(process.env.PROVIDER_URL);
 }
+
+const calcDepositRoot = async (owner, type, pubkey, sig, amount) => {
+  // Dynamically import the Lodestar as its an ESM module
+  const { ssz } = await import("@lodestar/types");
+  const { fromHex } = await import("@lodestar/utils");
+
+  const validTypes = ["0x00", "0x01", "0x02"];
+  if (!validTypes.includes(type)) {
+    throw new Error("type must be one of: 0x00, 0x01, 0x02");
+  }
+
+  const withdrawalCredential = solidityPack(
+    ["bytes1", "bytes11", "address"],
+    [type, "0x0000000000000000000000", owner]
+  );
+  log(`Withdrawal Credentials: ${withdrawalCredential}`);
+
+  // amount in Gwei
+  const amountGwei = BigInt(amount) * BigInt(1e9);
+
+  // Define the DepositData object
+  const depositData = {
+    pubkey: fromHex(pubkey), // 48-byte public key
+    withdrawalCredentials: fromHex(withdrawalCredential), // 32-byte withdrawal credentials
+    amount: amountGwei.toString(),
+    signature: fromHex(sig), // 96-byte signature
+  };
+
+  // Compute the SSZ hash tree root
+  const depositDataRoot = ssz.electra.DepositData.hashTreeRoot(depositData);
+
+  // Return as a hex string with 0x prefix
+  const depositDataRootHex =
+    "0x" + Buffer.from(depositDataRoot).toString("hex");
+
+  log(`Deposit Root Data: ${depositDataRootHex}`);
+
+  return depositDataRootHex;
+};
 
 async function depositValidator({ pubkey, cred, sig, root, amount }) {
   const signer = await getSigner();
@@ -111,6 +150,12 @@ async function verifyValidator({ slot, index }) {
   const strategy = await resolveContract(
     "CompoundingStakingSSVStrategyProxy",
     "CompoundingStakingSSVStrategy"
+  );
+
+  const hash = hashPubKey(pubKey);
+  log(`Checking hash of public key ${hash}`);
+  log(
+    `Validator state in staking contract ${await strategy.validatorState(hash)}`
   );
 
   log(
@@ -250,6 +295,7 @@ async function slotToBlock({ slot }) {
 }
 
 module.exports = {
+  calcDepositRoot,
   depositValidator,
   verifySlot,
   blockToSlot,
