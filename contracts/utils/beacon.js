@@ -59,7 +59,7 @@ const getBeaconBlock = async (slot = "head") => {
 
   // Read the state from a local file or fetch it from the beacon node.
   let stateSsz;
-  const stateFilename = `./cache/state_${slot}.ssz`;
+  const stateFilename = `./cache/state_${blockView.slot}.ssz`;
   if (fs.existsSync(stateFilename)) {
     log(`Loading state from file ${stateFilename}`);
     stateSsz = fs.readFileSync(stateFilename);
@@ -75,6 +75,7 @@ const getBeaconBlock = async (slot = "head") => {
       );
     }
 
+    log(`Writing state to file ${stateFilename}`);
     fs.writeFileSync(stateFilename, stateRes.ssz());
     stateSsz = stateRes.ssz();
   }

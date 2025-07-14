@@ -4,6 +4,7 @@ const addresses = require("../utils/addresses");
 const { getBeaconBlock, getSlot } = require("../utils/beacon");
 const { getSigner } = require("../utils/signers");
 const { resolveContract } = require("../utils/resolvers");
+
 const {
   generateSlotProof,
   generateBlockProof,
@@ -113,7 +114,7 @@ async function verifyValidator({ slot, index }) {
   );
 
   log(
-    `About verify validator ${index} with pub key ${pubKey} using slot ${slot}`
+    `About verify validator ${index} with pub key ${pubKey}, pub key hash ${pubKeyHash} at slot ${blockView.slot}`
   );
   const tx = await strategy
     .connect(signer)

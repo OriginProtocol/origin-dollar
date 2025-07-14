@@ -146,7 +146,7 @@ async function generateValidatorPubKeyProof({
     proof: proofBytes,
     generalizedIndex,
     leaf: toHex(proofObj.leaf),
-    pubKey: validatorDetails.pubkey,
+    pubKey: toHex(validatorDetails.pubkey),
   };
 }
 
