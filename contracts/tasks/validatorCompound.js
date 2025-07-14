@@ -31,9 +31,6 @@ async function registerValidator({ pubkey, shares, operatorids, ssv }) {
     "CompoundingStakingSSVStrategy"
   );
 
-  const reg = await strategy.validatorRegistrator();
-  console.log(`Validator registrator for compounding strategy is ${reg}`);
-
   log(`About to register validator with pubkey ${pubkey}`);
   const tx = await strategy
     .connect(signer)
@@ -41,4 +38,21 @@ async function registerValidator({ pubkey, shares, operatorids, ssv }) {
   await logTxDetails(tx, "registerValidator");
 }
 
-module.exports = { registerValidator };
+async function stakeValidator({ pubkey, sig, root, amount }) {
+  const signer = await getSigner();
+
+  const strategy = await resolveContract(
+    "CompoundingStakingSSVStrategyProxy",
+    "CompoundingStakingSSVStrategy"
+  );
+
+  const amountGwei = parseUnits(amount.toString(), 9);
+
+  log(`About to stake ${amount} ETH to validator with pubkey ${pubkey}`);
+  const tx = await strategy
+    .connect(signer)
+    .stakeEth({ pubkey, signature: sig, depositDataRoot: root }, amountGwei);
+  await logTxDetails(tx, "stakeETH");
+}
+
+module.exports = { registerValidator, stakeValidator };

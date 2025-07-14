@@ -103,7 +103,7 @@ const {
   resolveNativeStakingStrategyProxy,
   snapValidators,
 } = require("./validator");
-const { registerValidator } = require("./validatorCompound");
+const { registerValidator, stakeValidator } = require("./validatorCompound");
 const { setDefaultValidator, snapSonicStaking } = require("../utils/sonic");
 const {
   undelegateValidator,
@@ -1940,14 +1940,47 @@ subtask(
     undefined,
     types.string
   )
+  .addParam("shares", "SSV shares data", undefined, types.string)
   .addOptionalParam(
     "ssv",
     "Amount of SSV to deposit to the cluster.",
     0,
     types.int
   )
-  .addParam("shares", "SSV shares data", undefined, types.string)
   .setAction(registerValidator);
 task("registerValidator").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+subtask(
+  "stakeValidator",
+  "Converts WETH to ETH and deposits to a validator from the Compounding Staking Strategy"
+)
+  .addParam(
+    "pubkey",
+    "The validator's public key in hex format with a 0x prefix",
+    undefined,
+    types.string
+  )
+  .addParam(
+    "sig",
+    "The validator's deposit signature in hex format with a 0x prefix",
+    undefined,
+    types.string
+  )
+  .addParam(
+    "root",
+    "The validator's deposit root in hex format with a 0x prefix",
+    0,
+    types.string
+  )
+  .addParam(
+    "amount",
+    "Amount of ETH to deposit to the validator.",
+    undefined,
+    types.int
+  )
+  .setAction(stakeValidator);
+task("stakeValidator").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
