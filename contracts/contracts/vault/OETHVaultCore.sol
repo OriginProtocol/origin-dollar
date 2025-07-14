@@ -266,6 +266,11 @@ contract OETHVaultCore is VaultCore {
             withdrawalQueueMetadata.claimable
         ) {
             // Add any WETH to the withdrawal queue
+            // this needs to remain here as:
+            //  - Vault can be funded and `addWithdrawalQueueLiquidity` is not externally called
+            //  - funds can be withdrawn from a strategy
+            //
+            // Those funds need to be added to withdrawal queue liquidity
             _addWithdrawalQueueLiquidity();
         }
 
@@ -299,6 +304,11 @@ contract OETHVaultCore is VaultCore {
         returns (uint256[] memory amounts, uint256 totalAmount)
     {
         // Add any WETH to the withdrawal queue
+        // this needs to remain here as:
+        //  - Vault can be funded and `addWithdrawalQueueLiquidity` is not externally called
+        //  - funds can be withdrawn from a strategy
+        //
+        // Those funds need to be added to withdrawal queue liquidity
         _addWithdrawalQueueLiquidity();
 
         amounts = new uint256[](_requestIds.length);
