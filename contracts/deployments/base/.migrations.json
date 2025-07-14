@@ -31,5 +31,8 @@
   "031_enable_buyback_operator": 1749060898,
   "032_vault_perf_fee": 1749471718,
   "033_bridge_helper_module": 1750777962,
-  "034_claimbribes_module_v2": 1750850875
+  "034_claimbribes_module_v2": 1750850875,
+  "035_claimbribes_module_old_guardian": 1751363893,
+  "036_oethb_upgrade_EIP7702": 1751453912,
+  "037_deploy_harvester": 1752034150
 }
