@@ -6,7 +6,7 @@ const addresses = require("../../utils/addresses");
 
 module.exports = deploymentWithGovernanceProposal(
   {
-    deployName: "144_vault_upgrade",
+    deployName: "150_vault_upgrade",
     //proposalId: "",
   },
   async ({ ethers }) => {
