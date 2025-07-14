@@ -107,7 +107,10 @@ async function verifyValidator({ slot, index }) {
     stateView,
   });
 
-  const strategy = await resolveContract("CompoundingStakingSSVStrategy");
+  const strategy = await resolveContract(
+    "CompoundingStakingSSVStrategyProxy",
+    "CompoundingStakingSSVStrategy"
+  );
 
   log(
     `About verify validator ${index} with pub key ${pubKey} using slot ${slot}`
@@ -137,7 +140,10 @@ async function verifyDeposit({ block, slot, root }) {
 
   const processedSlot = blockView.slot;
 
-  const strategy = await resolveContract("CompoundingStakingSSVStrategy");
+  const strategy = await resolveContract(
+    "CompoundingStakingSSVStrategyProxy",
+    "CompoundingStakingSSVStrategy"
+  );
 
   const { proof, slot: firstPendingDepositSlot } =
     await generateFirstPendingDepositSlotProof({
@@ -168,7 +174,10 @@ async function verifyBalances({ root }) {
 
   const verificationSlot = blockView.slot;
 
-  const strategy = await resolveContract("CompoundingStakingSSVStrategy");
+  const strategy = await resolveContract(
+    "CompoundingStakingSSVStrategyProxy",
+    "CompoundingStakingSSVStrategy"
+  );
 
   const { proof: firstPendingDepositSlotProof, slot: firstPendingDepositSlot } =
     await generateFirstPendingDepositSlotProof({

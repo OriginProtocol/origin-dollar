@@ -103,6 +103,7 @@ const {
   resolveNativeStakingStrategyProxy,
   snapValidators,
 } = require("./validator");
+const { registerValidator } = require("./validatorCompound");
 const { setDefaultValidator, snapSonicStaking } = require("../utils/sonic");
 const {
   undelegateValidator,
@@ -1920,5 +1921,33 @@ subtask("verifyBalances", "Verify validator balances on the Beacon chain")
   )
   .setAction(verifyBalances);
 task("verifyBalances").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+subtask(
+  "registerValidator",
+  "Registers a new compounding validator in a SSV cluster"
+)
+  .addParam(
+    "pubkey",
+    "The validator's public key in hex format with a 0x prefix",
+    undefined,
+    types.string
+  )
+  .addParam(
+    "operatorids",
+    "Comma separated operator ids. E.g. 342,343,344,345",
+    undefined,
+    types.string
+  )
+  .addOptionalParam(
+    "ssv",
+    "Amount of SSV to deposit to the cluster.",
+    0,
+    types.int
+  )
+  .addParam("shares", "SSV shares data", undefined, types.string)
+  .setAction(registerValidator);
+task("registerValidator").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
