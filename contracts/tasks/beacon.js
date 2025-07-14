@@ -1,7 +1,7 @@
 const { formatUnits, solidityPack } = require("ethers/lib/utils");
 
 const addresses = require("../utils/addresses");
-const { getBeaconBlock, getSlot, hashPubKey } = require("../utils/beacon");
+const { getBeaconBlock, getSlot } = require("../utils/beacon");
 const { getSigner } = require("../utils/signers");
 const { resolveContract } = require("../utils/resolvers");
 
@@ -152,12 +152,6 @@ async function verifyValidator({ slot, index }) {
     "CompoundingStakingSSVStrategy"
   );
 
-  const hash = hashPubKey(pubKey);
-  log(`Checking hash of public key ${hash}`);
-  log(
-    `Validator state in staking contract ${await strategy.validatorState(hash)}`
-  );
-
   log(
     `About verify validator ${index} with pub key ${pubKey}, pub key hash ${pubKeyHash} at slot ${blockView.slot}`
   );
@@ -294,12 +288,45 @@ async function slotToBlock({ slot }) {
   return block;
 }
 
+async function mockRoot({ block }) {
+  // Need to get the slot for the block
+
+  // Get provider to mainnet and not a local fork
+  const provider = getProvider();
+
+  const signerMainnet = await getSigner(undefined, provider);
+
+  // Get the timestamp of the block
+  const { timestamp } = await provider.getBlock(block);
+  log(`block ${block} has timestamp ${timestamp}`);
+
+  // Get the parent block root from the mainnet beacon roots contract
+  const beaconRoots = await ethers.getContractAt(
+    "MockBeaconRoots",
+    "0xFdf9C9c9b747decFf1cfB161bc4203615E04241F",
+    signerMainnet
+  );
+  const parentBlockRoot = await beaconRoots.parentBlockRoot(timestamp);
+  log(`Parent beacon block root for block ${block} is ${parentBlockRoot}`);
+
+  // Now set on the mock contract on the local test network
+  const mockBeaconRoots = await ethers.getContract("MockBeaconRoots");
+  await mockBeaconRoots.setBeaconRoot(timestamp, parentBlockRoot);
+
+  // Now get the slot of the beacon block root
+  const slot = await getSlot(parentBlockRoot);
+  log(`Slot for beacon block root ${parentBlockRoot} is:`, slot);
+
+  return parentBlockRoot;
+}
+
 module.exports = {
   calcDepositRoot,
   depositValidator,
   verifySlot,
   blockToSlot,
   slotToBlock,
+  mockRoot,
   verifyValidator,
   verifyDeposit,
   verifyBalances,

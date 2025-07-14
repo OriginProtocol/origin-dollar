@@ -118,6 +118,7 @@ const {
   depositValidator,
   blockToSlot,
   slotToBlock,
+  mockRoot,
   verifySlot,
   verifyValidator,
   verifyDeposit,
@@ -1867,6 +1868,21 @@ subtask("slotToBlock", "Map a beacon chain slot to a block")
   .addParam("slot", "Beacon chain slot", undefined, types.int)
   .setAction(slotToBlock);
 task("slotToBlock").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+subtask(
+  "mockRoot",
+  "Adds parent beacon block root to a local mocked BeaconRoot contract from mainnet"
+)
+  .addParam(
+    "block",
+    "Execution layer block number to set the parent root for",
+    undefined,
+    types.int
+  )
+  .setAction(mockRoot);
+task("mockRoot").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
 
