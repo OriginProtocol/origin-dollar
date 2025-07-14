@@ -7,6 +7,7 @@ const addresses = require("../../utils/addresses");
 module.exports = deploymentWithGovernanceProposal(
   {
     deployName: "150_vault_upgrade",
+    forceSkip: true, // un-comment once this is to be deployed
     //proposalId: "",
   },
   async ({ ethers }) => {
@@ -35,7 +36,7 @@ module.exports = deploymentWithGovernanceProposal(
     return {
       name: "Upgrade VaultCore and set Vault as the recipient of the WETH rewards on the Simple harvester",
       actions: [
-        // 1. Upgrade Vault proxy to VaultCore
+        // 1. Upgrade VaultCore implementation
         {
           contract: cOETHVaultProxy,
           signature: "upgradeTo(address)",

@@ -1,23 +1,22 @@
-const { deployOnPlume } = require("../../utils/deploy-l2");
+const { deployOnBase } = require("../../utils/deploy-l2");
 const {
   deployWithConfirmation,
 } = require("../../utils/deploy");
 const addresses = require("../../utils/addresses");
 
-module.exports = deployOnPlume(
+module.exports = deployOnBase(
   {
-    deployName: "009_vault_upgrade",
-    forceSkip: true
+    deployName: "038_vault_upgrade",
     //proposalId: "",
   },
   async ({ ethers }) => {
-    const cOETHpVaultProxy = await ethers.getContract("OETHPlumeVaultProxy");
+    const cOETHbVaultProxy = await ethers.getContract("OETHBaseVaultProxy");
 
     // Deploy new implementation without storage slot checks because of the:
     // - Renamed `dripper` to `_deprecated_dripper`
-    const dOETHpVaultCore = await deployWithConfirmation(
+    const dOETHbVaultCore = await deployWithConfirmation(
       "OETHBaseVaultCore",
-      [addresses.plume.WETH],
+      [addresses.base.WETH],
       "OETHBaseVaultCore",
       true
     );
@@ -30,9 +29,9 @@ module.exports = deployOnPlume(
       actions: [
         // 1. Upgrade VaultCore implementation
         {
-          contract: cOETHpVaultProxy,
+          contract: cOETHbVaultProxy,
           signature: "upgradeTo(address)",
-          args: [dOETHpVaultCore.address],
+          args: [dOETHbVaultCore.address],
         }
       ],
     };
