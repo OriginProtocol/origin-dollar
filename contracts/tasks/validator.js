@@ -5,11 +5,7 @@ const {
 
 const { getBlock } = require("./block");
 const { checkPubkeyFormat } = require("./taskUtils");
-const {
-  getValidator,
-  getValidators,
-  getEpoch,
-} = require("../utils/beaconchain");
+const { getValidator, getValidators, getEpoch } = require("../utils/beacon");
 const addresses = require("../utils/addresses");
 const { resolveContract } = require("../utils/resolvers");
 const { logTxDetails } = require("../utils/txLogger");

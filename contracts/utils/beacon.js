@@ -1,18 +1,22 @@
 const fs = require("fs");
+const fetch = require("node-fetch");
 
 const log = require("./logger")("utils:beacon");
 
-const configClient = async () => {
-  // Get the latest slot from the beacon chain API
-  // Dynamically import the Lodestar API client as its an ESM module
-  const { getClient } = await import("@lodestar/api");
-  const { config } = await import("@lodestar/config/default");
+const getValidator = async (pubkey) => {
+  return await beaconchainRequest(`validator/${pubkey}`);
+};
 
-  const baseUrl = process.env.PROVIDER_URL;
+const getValidators = async (pubkeys, beaconChainApiKey) => {
+  const encodedPubkeys = encodeURIComponent(pubkeys);
+  return await beaconchainRequest(
+    `validator/${encodedPubkeys}`,
+    beaconChainApiKey
+  );
+};
 
-  const client = await getClient({ baseUrl, timeoutMs: 60000 }, { config });
-
-  return client;
+const getEpoch = async (epochId = "latest") => {
+  return await beaconchainRequest(`epoch/${epochId}`);
 };
 
 const getSlot = async (blockId = "head") => {
@@ -30,9 +34,30 @@ const getSlot = async (blockId = "head") => {
   }
 
   const slot = blockHeaderRes.value().header.message.slot;
-  log(`Got slot ${slot} at ${blockId}`);
+  log(`Got slot ${slot} for block id ${blockId}`);
 
   return slot;
+};
+
+const getBeaconBlockRoot = async (blockId = "head") => {
+  const client = await configClient();
+
+  log(
+    `Fetching beacon block root for block id ${blockId} from the beacon node`
+  );
+  const blockHeaderRes = await client.beacon.getBlockRoot({
+    blockId,
+  });
+  if (!blockHeaderRes.ok) {
+    console.error(`Failed to get beacon block root for block id ${blockId}`);
+    console.error(blockHeaderRes);
+    throw blockHeaderRes.error;
+  }
+
+  const root = blockHeaderRes.root;
+  log(`Got beacon block root ${root} for block id ${blockId}`);
+
+  return root;
 };
 
 const getBeaconBlock = async (slot = "head") => {
@@ -117,9 +142,64 @@ const hashPubKey = (pubKey) => {
   return ethers.utils.sha256(concatenated);
 };
 
+const configClient = async () => {
+  // Get the latest slot from the beacon chain API
+  // Dynamically import the Lodestar API client as its an ESM module
+  const { getClient } = await import("@lodestar/api");
+  const { config } = await import("@lodestar/config/default");
+
+  const baseUrl = process.env.PROVIDER_URL;
+
+  const client = await getClient({ baseUrl, timeoutMs: 60000 }, { config });
+
+  return client;
+};
+
+const beaconchainRequest = async (endpoint) => {
+  const API_URL =
+    process.env.BEACON_PROVIDER_URL || "https://beaconcha.in/api/v1/";
+  const apikey = process.env.BEACONCHAIN_API_KEY;
+  const url = `${API_URL}${endpoint}`;
+  if (!apikey) {
+    throw new Error(
+      "Set BEACONCHAIN_API_KEY in order to be able to query the API"
+    );
+  }
+
+  const headers = {
+    Accept: "application/json",
+    "Content-Type": "application/json",
+    apikey,
+  };
+
+  log(`About to call Beacon API: ${url} `);
+
+  const rawResponse = await fetch(url, {
+    method: "GET",
+    headers,
+  });
+
+  const response = await rawResponse.json();
+  if (response.status != "OK") {
+    log(`Call to Beacon API failed: ${url}`);
+    log(`response: `, response);
+    throw new Error(
+      `Call to Beacon API failed. Error: ${JSON.stringify(response.status)}`
+    );
+  } else {
+    log(`GET request to Beacon API succeeded. Response: `, response);
+  }
+
+  return response.data;
+};
+
 module.exports = {
   concatProof,
   getBeaconBlock,
   getSlot,
+  getBeaconBlockRoot,
+  getValidator,
+  getValidators,
+  getEpoch,
   hashPubKey,
 };
