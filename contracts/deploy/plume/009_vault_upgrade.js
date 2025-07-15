@@ -5,7 +5,6 @@ const addresses = require("../../utils/addresses");
 module.exports = deployOnPlume(
   {
     deployName: "009_vault_upgrade",
-    forceSkip: true,
     //proposalId: "",
   },
   async ({ ethers }) => {
