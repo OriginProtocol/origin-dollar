@@ -14,7 +14,7 @@ async function generateSlotProof({ blockView, blockTree }) {
   const generalizedIndex = blockView.type.getPathInfo(["slot"]).gindex;
   log(`Generalized index for slot: ${generalizedIndex}`);
 
-  log(`Generating slot proof to beacon block root`);
+  log(`Generating slot ${blockView.slot} proof to beacon block root`);
   const proofObj = createProof(blockTree.rootNode, {
     type: ProofType.single,
     gindex: generalizedIndex,

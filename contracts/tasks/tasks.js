@@ -118,6 +118,8 @@ const {
   depositValidator,
   blockToSlot,
   slotToBlock,
+  slotToRoot,
+  blockRoot,
   mockRoot,
   verifySlot,
   verifyValidator,
@@ -1868,6 +1870,28 @@ subtask("slotToBlock", "Map a beacon chain slot to a block")
   .addParam("slot", "Beacon chain slot", undefined, types.int)
   .setAction(slotToBlock);
 task("slotToBlock").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+subtask("slotToRoot", "Map a beacon chain slot to a chain block root")
+  .addParam("slot", "Beacon chain slot", undefined, types.int)
+  .setAction(slotToRoot);
+task("slotToRoot").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+subtask(
+  "blockRoot",
+  "Gets the parent beacon block root for an execution layer block from the BeaconRoot contract"
+)
+  .addParam(
+    "block",
+    "Execution layer block number to get the parent beacon block root for",
+    undefined,
+    types.int
+  )
+  .setAction(blockRoot);
+task("blockRoot").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
 

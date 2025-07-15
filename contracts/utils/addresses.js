@@ -298,8 +298,13 @@ addresses.mainnet.curve.OETH_WETH.gauge =
 // SSV network
 addresses.mainnet.SSV = "0x9D65fF81a3c488d585bBfb0Bfe3c7707c7917f54";
 addresses.mainnet.SSVNetwork = "0xDD9BC35aE942eF0cFa76930954a156B3fF30a4E1";
+
+// Beacon chain contracts
 addresses.mainnet.beaconChainDepositContract =
   "0x00000000219ab540356cBB839Cbe05303d7705Fa";
+addresses.mainnet.mockBeaconRoots =
+  "0xC033785181372379dB2BF9dD32178a7FDf495AcD";
+addresses.mainnet.beaconRoots = "0x000f3df6d732807ef1319fb7b8bb8522d0beac02";
 
 // Native Staking Strategy
 addresses.mainnet.NativeStakingSSVStrategyProxy =

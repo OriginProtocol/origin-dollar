@@ -1,4 +1,9 @@
-const { formatUnits, solidityPack } = require("ethers/lib/utils");
+const { Wallet } = require("ethers");
+const {
+  formatUnits,
+  solidityPack,
+  defaultAbiCoder,
+} = require("ethers/lib/utils");
 
 const addresses = require("../utils/addresses");
 const { getBeaconBlock, getSlot } = require("../utils/beacon");
@@ -80,16 +85,29 @@ async function verifySlot({ block }) {
   const signer = await getSigner();
 
   // Get provider to mainnet and not a local fork
-  const provider = getProvider();
+  const providerMainnet = getProvider();
+  const signerMainnet = new Wallet.createRandom().connect(providerMainnet);
 
   // Get the timestamp of the next block
   const nextBlock = block + 1;
-  const { timestamp: nextBlockTimestamp } = await provider.getBlock(nextBlock);
-  log(`next block ${nextBlock} has timestamp ${nextBlockTimestamp}`);
+  const { timestamp: nextBlockTimestamp } = await providerMainnet.getBlock(
+    nextBlock
+  );
+  log(`Next mainnet block ${nextBlock} has timestamp ${nextBlockTimestamp}`);
 
-  // Get the parent block root from the beacon roots contract
-  const mockBeaconRoots = await ethers.getContract("MockBeaconRoots");
-  const blockRoot = await mockBeaconRoots.parentBlockRoot(nextBlockTimestamp);
+  // Get the parent block root from the beacon roots contract from mainnet
+  const mainnetBeaconRoots = await ethers.getContractAt(
+    "MockBeaconRoots",
+    // Need to use mainnet address and not local deployed address
+    addresses.mainnet.mockBeaconRoots,
+    signerMainnet
+  );
+  log(
+    `Using mainnet MockBeaconRoots contract at ${mainnetBeaconRoots.address}`
+  );
+  const blockRoot = await mainnetBeaconRoots.parentBlockRoot(
+    nextBlockTimestamp
+  );
   log(`Beacon block root for block ${block} is ${blockRoot}`);
 
   const slot = await getSlot(blockRoot);
@@ -193,7 +211,7 @@ async function verifyDeposit({ block, slot, root }) {
     });
 
   log(
-    `About verify deposit for block ${block} and slot ${slot} with deposit data root ${root}`
+    `About verify deposit for block ${block} and slot ${processedSlot} with deposit data root ${root}`
   );
   const tx = await strategy
     .connect(signer)
@@ -288,34 +306,62 @@ async function slotToBlock({ slot }) {
   return block;
 }
 
+async function slotToRoot({ slot }) {
+  const oracle = await resolveContract("BeaconOracle");
+
+  const root = await oracle.slotToRoot(slot);
+
+  console.log(`Slot ${slot} maps to beacon block root ${root}`);
+
+  return root;
+}
+
+async function blockRoot({ block }) {
+  // Get timestamp of the block
+  const fetchedBlock = await ethers.provider.getBlock(block);
+  if (fetchedBlock == null) throw Error(`Block ${block} not found`);
+
+  const { timestamp } = fetchedBlock;
+  log(`Block ${block} has timestamp ${timestamp}`);
+
+  // const encodedData = hexZeroPad(timestamp, 32);
+  const data = defaultAbiCoder.encode(["uint256"], [timestamp]);
+  log(`Encoded timestamp data: ${data}`);
+
+  const root = await ethers.provider.call({
+    to: addresses.mainnet.beaconRoots,
+    data,
+  });
+
+  console.log(`Block ${block} has parent beacon block root ${root}`);
+
+  return root;
+}
+
 async function mockRoot({ block }) {
-  // Need to get the slot for the block
-
   // Get provider to mainnet and not a local fork
-  const provider = getProvider();
-
-  const signerMainnet = await getSigner(undefined, provider);
+  const providerMainnet = getProvider();
+  const signerMainnet = new Wallet.createRandom().connect(providerMainnet);
 
   // Get the timestamp of the block
-  const { timestamp } = await provider.getBlock(block);
+  const { timestamp } = await providerMainnet.getBlock(block);
   log(`block ${block} has timestamp ${timestamp}`);
 
   // Get the parent block root from the mainnet beacon roots contract
-  const beaconRoots = await ethers.getContractAt(
+  const mainnetBeaconRoots = await ethers.getContractAt(
     "MockBeaconRoots",
-    "0xFdf9C9c9b747decFf1cfB161bc4203615E04241F",
+    addresses.mainnet.mockBeaconRoots,
     signerMainnet
   );
-  const parentBlockRoot = await beaconRoots.parentBlockRoot(timestamp);
+  const parentBlockRoot = await mainnetBeaconRoots.parentBlockRoot(timestamp);
   log(`Parent beacon block root for block ${block} is ${parentBlockRoot}`);
 
   // Now set on the mock contract on the local test network
-  const mockBeaconRoots = await ethers.getContract("MockBeaconRoots");
-  await mockBeaconRoots.setBeaconRoot(timestamp, parentBlockRoot);
-
-  // Now get the slot of the beacon block root
-  const slot = await getSlot(parentBlockRoot);
-  log(`Slot for beacon block root ${parentBlockRoot} is:`, slot);
+  const localBeaconRoots = await ethers.getContract("MockBeaconRoots");
+  log(
+    `About to set parent beacon block root ${parentBlockRoot} for timestamp ${timestamp} on local MockBeaconRoots contract`
+  );
+  await localBeaconRoots.setBeaconRoot(timestamp, parentBlockRoot);
 
   return parentBlockRoot;
 }
@@ -326,6 +372,8 @@ module.exports = {
   verifySlot,
   blockToSlot,
   slotToBlock,
+  slotToRoot,
+  blockRoot,
   mockRoot,
   verifyValidator,
   verifyDeposit,
