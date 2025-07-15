@@ -1,6 +1,6 @@
 const { expect } = require("chai");
 const hre = require("hardhat");
-const { utils, Wallet } = require("ethers");
+const { utils } = require("ethers");
 
 const { loadDefaultFixture } = require("../_fixture");
 const {
@@ -353,26 +353,6 @@ describe("Vault", function () {
     expect(vault.setRebaseThreshold(ousdUnits("400"))).to.be.revertedWith(
       "Caller is not the Governor"
     );
-  });
-
-  it("Should allow governor to change the dripper", async () => {
-    const { vault, governor } = fixture;
-
-    const newDripper = Wallet.createRandom().address;
-
-    const tx = await vault.connect(governor).setDripper(newDripper);
-
-    await expect(tx).to.emit(vault, "DripperChanged").withArgs(newDripper);
-  });
-
-  it("Should not allow non-governor to change the dripper", async () => {
-    const { vault } = fixture;
-
-    const newDripper = Wallet.createRandom().address;
-
-    const tx = vault.setDripper(newDripper);
-
-    await expect(tx).to.be.revertedWith("Caller is not the Governor");
   });
 
   it("Should allow governor to change Strategist address", async () => {

@@ -25,9 +25,9 @@ describe("ForkTest: OETHb Harvester", function () {
       .true;
   });
 
-  it("should have configured the right dripper", async () => {
-    const { harvester, dripper } = fixture;
-    expect(await harvester.dripper()).to.eq(dripper.address);
+  it("should have vault configured as the dripper", async () => {
+    const { harvester, oethbVault } = fixture;
+    expect(await harvester.dripper()).to.eq(oethbVault.address);
   });
 
   it("Should harvest from Aerodrome AMO strategy", async () => {
