@@ -54,17 +54,9 @@ contract OETHHarvesterSimple is Initializable, Strategizable {
     }
 
     /// @notice Initialize the contract
-    /// @param _governor Address of the governor
-    /// @param _strategist Address of the strategist
-    /// @param _dripper Address of the dripper
-    function initialize(
-        address _governor,
-        address _strategist,
-        address _dripper
-    ) external initializer {
-        _setStrategistAddr(_strategist);
-        _changeGovernor(_governor);
-        _setDripper(_dripper);
+    function initialize() external onlyGovernor initializer {
+        // Call it to set `initialized` to true and to prevent the implementation
+        // from getting initialized in future through the proxy
     }
 
     ////////////////////////////////////////////////////

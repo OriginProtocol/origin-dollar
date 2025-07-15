@@ -3,7 +3,7 @@ const { deployWithConfirmation } = require("../../utils/deploy.js");
 
 module.exports = deployOnSonic(
   {
-    deployName: "022_os_upgrade_EIP7702 copy",
+    deployName: "022_os_upgrade_EIP7702",
     forceSkip: false,
   },
   async ({ ethers }) => {
