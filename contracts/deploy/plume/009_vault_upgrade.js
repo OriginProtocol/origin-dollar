@@ -1,13 +1,11 @@
 const { deployOnPlume } = require("../../utils/deploy-l2");
-const {
-  deployWithConfirmation,
-} = require("../../utils/deploy");
+const { deployWithConfirmation } = require("../../utils/deploy");
 const addresses = require("../../utils/addresses");
 
 module.exports = deployOnPlume(
   {
     deployName: "009_vault_upgrade",
-    forceSkip: true
+    forceSkip: true,
     //proposalId: "",
   },
   async ({ ethers }) => {
@@ -33,7 +31,7 @@ module.exports = deployOnPlume(
           contract: cOETHpVaultProxy,
           signature: "upgradeTo(address)",
           args: [dOETHpVaultCore.address],
-        }
+        },
       ],
     };
   }

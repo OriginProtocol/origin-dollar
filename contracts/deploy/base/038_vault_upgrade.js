@@ -1,7 +1,5 @@
 const { deployOnBase } = require("../../utils/deploy-l2");
-const {
-  deployWithConfirmation,
-} = require("../../utils/deploy");
+const { deployWithConfirmation } = require("../../utils/deploy");
 const addresses = require("../../utils/addresses");
 
 module.exports = deployOnBase(
@@ -32,7 +30,7 @@ module.exports = deployOnBase(
           contract: cOETHbVaultProxy,
           signature: "upgradeTo(address)",
           args: [dOETHbVaultCore.address],
-        }
+        },
       ],
     };
   }
