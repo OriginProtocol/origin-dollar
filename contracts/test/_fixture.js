@@ -787,6 +787,7 @@ const defaultFixture = deployments.createFixture(async () => {
     mockSwapper,
     swapper1Inch,
     mock1InchSwapRouter,
+    beaconRoots,
     convexEthMetaStrategy,
     vaultValueChecker,
     oethVaultValueChecker;
@@ -1048,6 +1049,12 @@ const defaultFixture = deployments.createFixture(async () => {
         .approve(vaultAndTokenConracts.oethVault.address, oethUnits("100"));
     }
   }
+
+  beaconRoots = await ethers.getContractAt(
+    "MockBeaconRoots",
+    addresses.mainnet.beaconRoots
+  );
+
   return {
     ...vaultAndTokenConracts,
     // Accounts
@@ -1163,6 +1170,8 @@ const defaultFixture = deployments.createFixture(async () => {
 
     morphoToken,
     legacyMorphoToken,
+
+    beaconRoots,
   };
 });
 
@@ -2654,7 +2663,6 @@ async function beaconChainFixture() {
     fixture.beaconConsolidationReplaced = beaconConsolidationReplaced;
     fixture.beaconWithdrawalReplaced = beaconWithdrawalReplaced;
 
-    fixture.beaconRoots = await resolveContract("MockBeaconRoots");
     fixture.beaconConsolidation = await resolveContract(
       "MockBeaconConsolidation"
     );
