@@ -9,11 +9,11 @@ import { BeaconRoots } from "./BeaconRoots.sol";
 /// @author Origin Protocol Inc
 contract BeaconOracle {
     /// @notice Maps a block number to slot
-    mapping(uint64 => uint64) private _blockToSlot;
+    mapping(uint64 => uint64) internal _blockToSlot;
     /// @notice Maps a slot to a number
-    mapping(uint64 => uint64) private _slotToBlock;
+    mapping(uint64 => uint64) internal _slotToBlock;
     /// @notice Maps a slot to a beacon block root
-    mapping(uint64 => bytes32) private _slotToRoot;
+    mapping(uint64 => bytes32) internal _slotToRoot;
 
     event BlockToSlot(
         bytes32 indexed blockRoot,

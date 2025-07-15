@@ -900,7 +900,12 @@ const deployCompoundingStakingSSVStrategy = async () => {
 
 const deployBeaconContracts = async () => {
   log("Deploy Beacon Oracle that maps blocks and slots");
-  await deployWithConfirmation("BeaconOracle", []);
+  if (isTest) {
+    // For unit tests, use the Governor contract
+    await deployWithConfirmation("BeaconOracle", [], "MockBeaconOracle");
+  } else {
+    await deployWithConfirmation("BeaconOracle", []);
+  }
 
   log("Deploy Beacon Proofs");
   await deployWithConfirmation("BeaconProofs", []);

@@ -788,6 +788,7 @@ const defaultFixture = deployments.createFixture(async () => {
     swapper1Inch,
     mock1InchSwapRouter,
     beaconRoots,
+    beaconOracle,
     convexEthMetaStrategy,
     vaultValueChecker,
     oethVaultValueChecker;
@@ -1054,6 +1055,7 @@ const defaultFixture = deployments.createFixture(async () => {
     "MockBeaconRoots",
     addresses.mainnet.beaconRoots
   );
+  beaconOracle = await ethers.getContract("BeaconOracle");
 
   return {
     ...vaultAndTokenConracts,
@@ -1172,6 +1174,7 @@ const defaultFixture = deployments.createFixture(async () => {
     legacyMorphoToken,
 
     beaconRoots,
+    beaconOracle,
   };
 });
 
