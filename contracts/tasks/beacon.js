@@ -7,6 +7,7 @@ const {
 
 const addresses = require("../utils/addresses");
 const { getBeaconBlock, getSlot } = require("../utils/beacon");
+const { replaceContractAt } = require("../utils/hardhat");
 const { getSigner } = require("../utils/signers");
 const { resolveContract } = require("../utils/resolvers");
 
@@ -338,7 +339,7 @@ async function blockRoot({ block }) {
   return root;
 }
 
-async function mockRoot({ block }) {
+async function copyBeaconRoot({ block }) {
   // Get provider to mainnet and not a local fork
   const providerMainnet = getProvider();
   const signerMainnet = new Wallet.createRandom().connect(providerMainnet);
@@ -357,13 +358,29 @@ async function mockRoot({ block }) {
   log(`Parent beacon block root for block ${block} is ${parentBlockRoot}`);
 
   // Now set on the mock contract on the local test network
-  const localBeaconRoots = await ethers.getContract("MockBeaconRoots");
+  const localBeaconRoots = await ethers.getContractAt(
+    "MockBeaconRoots",
+    addresses.mainnet.beaconRoots
+  );
   log(
-    `About to set parent beacon block root ${parentBlockRoot} for timestamp ${timestamp} on local MockBeaconRoots contract`
+    `About to set parent beacon block root ${parentBlockRoot} for timestamp ${timestamp} on local BeaconRoots contract at ${localBeaconRoots.address}`
   );
   await localBeaconRoots.setBeaconRoot(timestamp, parentBlockRoot);
 
   return parentBlockRoot;
+}
+
+async function mockBeaconRoot() {
+  if (hre.network.name == "mainnet") {
+    throw new Error(
+      "This task can only be run against a hardhat or a local forked network"
+    );
+  }
+
+  const factory = await ethers.getContractFactory("MockBeaconRoots");
+  const mockBeaconRoots = await factory.deploy();
+
+  await replaceContractAt(addresses.mainnet.beaconRoots, mockBeaconRoots);
 }
 
 module.exports = {
@@ -374,7 +391,8 @@ module.exports = {
   slotToBlock,
   slotToRoot,
   blockRoot,
-  mockRoot,
+  copyBeaconRoot,
+  mockBeaconRoot,
   verifyValidator,
   verifyDeposit,
   verifyBalances,

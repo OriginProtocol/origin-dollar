@@ -19,22 +19,10 @@ contract MockBeaconRoots {
         // Decode the 32-byte input as a uint256 timestamp (big-endian)
         uint256 timestamp = abi.decode(msg.data, (uint256));
 
-        // Validate timestamp
-        require(timestamp <= block.timestamp, "Timestamp is in the future");
-        require(
-            timestamp >=
-                block.timestamp -
-                    BeaconRoots.BEACON_ROOTS_HISTORY_BUFFER_LENGTH *
-                    12,
-            "Timestamp too old"
-        );
+        // Don't do any validation of timestamp so we can test any block
 
-        // Retrieve the root
+        // Retrieve the root. Will return bytes32(0) if not set.
         bytes32 root = _beaconRoots[timestamp];
-        // If no root just return the keccak256 hash of the input data
-        if (root == bytes32(0)) {
-            root = keccak256(msg.data);
-        }
 
         // Return the 32-byte root directly
         // solhint-disable-next-line no-inline-assembly
@@ -55,11 +43,9 @@ contract MockBeaconRoots {
         emit RootSet(timestamp, root);
     }
 
-    function parentBlockRoot(uint64 timestamp)
-        external
-        view
-        returns (bytes32 parentRoot)
-    {
+    function parentBlockRoot(
+        uint64 timestamp
+    ) external view returns (bytes32 parentRoot) {
         return BeaconRoots.parentBlockRoot(timestamp);
     }
 

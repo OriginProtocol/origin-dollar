@@ -120,7 +120,8 @@ const {
   slotToBlock,
   slotToRoot,
   blockRoot,
-  mockRoot,
+  copyBeaconRoot,
+  mockBeaconRoot,
   verifySlot,
   verifyValidator,
   verifyDeposit,
@@ -1896,8 +1897,8 @@ task("blockRoot").setAction(async (_, __, runSuper) => {
 });
 
 subtask(
-  "mockRoot",
-  "Adds parent beacon block root to a local mocked BeaconRoot contract from mainnet"
+  "copyBeaconRoot",
+  "Copies a parent beacon block root from mainnet to a local BeaconRoot contract (EIP-4788)"
 )
   .addParam(
     "block",
@@ -1905,8 +1906,16 @@ subtask(
     undefined,
     types.int
   )
-  .setAction(mockRoot);
-task("mockRoot").setAction(async (_, __, runSuper) => {
+  .setAction(copyBeaconRoot);
+task("copyBeaconRoot").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+subtask(
+  "mockBeaconRoot",
+  "Replaces the BeaconRoot contract (EIP-4788) with a mocked one for testing purposes"
+).setAction(mockBeaconRoot);
+task("mockBeaconRoot").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
 
