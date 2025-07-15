@@ -116,10 +116,11 @@ async function verifySlot({ block }) {
 
   const { blockView, blockTree } = await getBeaconBlock(slot);
 
-  const { proof: slotProofBytes } = await generateSlotProof({
-    blockView,
-    blockTree,
-  });
+  const { proof: slotProofBytes, root: beaconBlockRoot } =
+    await generateSlotProof({
+      blockView,
+      blockTree,
+    });
 
   const { proof: blockNumberProofBytes } = await generateBlockProof({
     blockView,
@@ -128,7 +129,9 @@ async function verifySlot({ block }) {
 
   const oracle = await resolveContract("BeaconOracle");
 
-  log(`About map ${block} to ${slot}`);
+  log(
+    `About to verify block ${block} and slot ${slot} to beacon chain root ${beaconBlockRoot}`
+  );
   const tx = await oracle
     .connect(signer)
     .verifySlot(
@@ -158,6 +161,7 @@ async function verifyValidator({ slot, index }) {
   const {
     proof,
     leaf: pubKeyHash,
+    root: beaconBlockRoot,
     pubKey,
   } = await generateValidatorPubKeyProof({
     validatorIndex: index,
@@ -172,7 +176,7 @@ async function verifyValidator({ slot, index }) {
   );
 
   log(
-    `About verify validator ${index} with pub key ${pubKey}, pub key hash ${pubKeyHash} at slot ${blockView.slot}`
+    `About verify validator ${index} with pub key ${pubKey}, pub key hash ${pubKeyHash} at slot ${blockView.slot} to beacon chain root ${beaconBlockRoot}`
   );
   const tx = await strategy
     .connect(signer)
@@ -180,7 +184,7 @@ async function verifyValidator({ slot, index }) {
   await logTxDetails(tx, "verifyValidator");
 }
 
-async function verifyDeposit({ block, slot, root }) {
+async function verifyDeposit({ block, slot, root: depositDataRoot }) {
   const signer = await getSigner();
 
   // TODO If no block then get the block from the stakeETH event
@@ -191,6 +195,7 @@ async function verifyDeposit({ block, slot, root }) {
   const oracle = await resolveContract("BeaconOracle");
   const isMapped = await oracle.isBlockMapped(block);
   if (!isMapped) {
+    log(`Block ${block} is not mapped in the Beacon Oracle`);
     await verifySlot({ block });
   }
 
@@ -204,32 +209,43 @@ async function verifyDeposit({ block, slot, root }) {
     "CompoundingStakingSSVStrategy"
   );
 
-  const { proof, slot: firstPendingDepositSlot } =
-    await generateFirstPendingDepositSlotProof({
-      blockView,
-      blockTree,
-      stateView,
-    });
+  const {
+    proof,
+    slot: firstPendingDepositSlot,
+    root: beaconBlockRoot,
+  } = await generateFirstPendingDepositSlotProof({
+    blockView,
+    blockTree,
+    stateView,
+  });
 
   log(
-    `About verify deposit for block ${block} and slot ${processedSlot} with deposit data root ${root}`
+    `About to verify deposit for deposit block ${block}, processing slot ${processedSlot}, deposit data root ${depositDataRoot}, slot of first pending deposit ${firstPendingDepositSlot} to beacon chain root ${beaconBlockRoot}`
   );
   const tx = await strategy
     .connect(signer)
-    .verifyDeposit(root, block, processedSlot, firstPendingDepositSlot, proof);
+    .verifyDeposit(
+      depositDataRoot,
+      block,
+      processedSlot,
+      firstPendingDepositSlot,
+      proof
+    );
   await logTxDetails(tx, "verifyDeposit");
 }
 
-async function verifyBalances({ root }) {
+async function verifyBalances({ root: beaconBlockRoot }) {
   const signer = await getSigner();
 
   // TODO If no beacon block root, then get from the blockRoot from the last BalancesSnapped event
   // Revert for now
-  if (!root)
+  if (!beaconBlockRoot)
     throw Error("Beacon block root is currently required for verifyBalances");
 
   // Uses the beacon chain data for the beacon block root
-  const { blockView, blockTree, stateView } = await getBeaconBlock(root);
+  const { blockView, blockTree, stateView } = await getBeaconBlock(
+    beaconBlockRoot
+  );
 
   const verificationSlot = blockView.slot;
 
@@ -272,10 +288,10 @@ async function verifyBalances({ root }) {
   }
 
   log(
-    `About verify ${verifiedValidators.length} validator balances for slot ${verificationSlot} with beacon block root ${root}`
+    `About verify ${verifiedValidators.length} validator balances for slot ${verificationSlot} to beacon block root ${beaconBlockRoot}`
   );
   const tx = await strategy.connect(signer).verifyBalances({
-    blockRoot: root,
+    blockRoot: beaconBlockRoot,
     verificationSlot,
     firstPendingDepositSlot,
     firstPendingDepositSlotProof,
@@ -317,9 +333,12 @@ async function slotToRoot({ slot }) {
   return root;
 }
 
-async function blockRoot({ block }) {
+async function beaconRoot({ block, mainnet }) {
+  // Either use mainnet or local fork to get the block timestamp
+  const provider = mainnet ? getProvider() : ethers.provider;
+
   // Get timestamp of the block
-  const fetchedBlock = await ethers.provider.getBlock(block);
+  const fetchedBlock = await provider.getBlock(block);
   if (fetchedBlock == null) throw Error(`Block ${block} not found`);
 
   const { timestamp } = fetchedBlock;
@@ -390,7 +409,7 @@ module.exports = {
   blockToSlot,
   slotToBlock,
   slotToRoot,
-  blockRoot,
+  beaconRoot,
   copyBeaconRoot,
   mockBeaconRoot,
   verifyValidator,

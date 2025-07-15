@@ -19,6 +19,7 @@ library BeaconRoots {
         view
         returns (bytes32 parentRoot)
     {
+        require(block.timestamp >= timestamp, "Timestamp in future");
         require(
             block.timestamp - timestamp <
                 BEACON_ROOTS_HISTORY_BUFFER_LENGTH * 12,

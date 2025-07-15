@@ -43,9 +43,11 @@ contract MockBeaconRoots {
         emit RootSet(timestamp, root);
     }
 
-    function parentBlockRoot(
-        uint64 timestamp
-    ) external view returns (bytes32 parentRoot) {
+    function parentBlockRoot(uint64 timestamp)
+        external
+        view
+        returns (bytes32 parentRoot)
+    {
         return BeaconRoots.parentBlockRoot(timestamp);
     }
 

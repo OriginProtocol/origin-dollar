@@ -119,7 +119,7 @@ const {
   blockToSlot,
   slotToBlock,
   slotToRoot,
-  blockRoot,
+  beaconRoot,
   copyBeaconRoot,
   mockBeaconRoot,
   verifySlot,
@@ -1882,7 +1882,7 @@ task("slotToRoot").setAction(async (_, __, runSuper) => {
 });
 
 subtask(
-  "blockRoot",
+  "beaconRoot",
   "Gets the parent beacon block root for an execution layer block from the BeaconRoot contract"
 )
   .addParam(
@@ -1891,8 +1891,14 @@ subtask(
     undefined,
     types.int
   )
-  .setAction(blockRoot);
-task("blockRoot").setAction(async (_, __, runSuper) => {
+  .addOptionalParam(
+    "mainnet",
+    "Use mainnet block timestamp",
+    true,
+    types.boolean
+  )
+  .setAction(beaconRoot);
+task("beaconRoot").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
 

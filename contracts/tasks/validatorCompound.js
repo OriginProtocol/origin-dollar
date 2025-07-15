@@ -47,7 +47,7 @@ async function stakeValidator({ pubkey, sig, amount }) {
     "CompoundingStakingSSVStrategy"
   );
 
-  const depositDataRoot = calcDepositRoot(
+  const depositDataRoot = await calcDepositRoot(
     strategy.address,
     "0x02",
     pubkey,
