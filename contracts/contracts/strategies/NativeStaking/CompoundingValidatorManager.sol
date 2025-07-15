@@ -550,7 +550,7 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
         );
 
         // Get the slot that is on or after the deposit was made on the execution layer.
-        uint64 depositSlot = IBeaconOracle(BEACON_ORACLE).slotToBlock(
+        uint64 depositSlot = IBeaconOracle(BEACON_ORACLE).blockToSlot(
             depositBlockNumber
         );
 

@@ -88,7 +88,7 @@ async function generateFirstPendingDepositSlotProof({
     `gen index for the slot in the first pending deposit in the beacon block: ${generalizedIndex}`
   );
   const firstPendingDeposit = stateView.pendingDeposits.get(0);
-  log(`slot of the first pending deposit ${firstPendingDeposit.slot}`);
+  log(`Slot of the first pending deposit ${firstPendingDeposit.slot}`);
 
   log(`Generating proof for the slot of the first pending deposit`);
   const proofObj = createProof(blockTree.rootNode, {

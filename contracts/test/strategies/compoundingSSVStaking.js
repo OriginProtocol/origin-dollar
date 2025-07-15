@@ -45,6 +45,26 @@ const validatorProof = {
   nextBlockTimestamp: 1752571487,
 };
 
+// Proof from beacon chain data
+const depositProof = {
+  depositDataRoot:
+    "0x9de115e290009d56d89d8d72d7ed1528aa2c2586609f879cbb4ba215f92f5d27",
+  // Deposit on the execution layer
+  depositBlockNumber: 22879304,
+  depositSlot: 12101000,
+  depositRoot:
+    "0xb3bfff031af1d856d5a369cdc72290f058ebaef6e3f61669f54927471f16eb1d",
+  // Processed on the beacon chain
+  processedSlot: 12145621,
+  processedBlockNumber: 22923668,
+  processedRoot:
+    "0x52296912a63fba5a44ae4fb98542b917d41be7fd1955330caaa2c513e35b2a3b",
+  // First pending deposit slot
+  firstPendingDepositSlot: 12101421,
+  proof:
+    "0x0000000000000000000000000000000000000000000000000000000000000000f5a5fd42d16a20302798ef6ed309979b43003d2320d9f0e8ea9831a92759fb4b372eac1fcacaea3b2a9ca4e2ee0ef79578a9e0fda8157d9f0b3f55f7f1553f0fe4e8c0ef8320ac0c2b17178ef42dbd863b66d785c792db48a7026aef9ed345e7bc99457fd3895ecf2352c4ecd4b276cae33dc56a221ebca8e81e1e641d9ea930d233dc8f10150bd915442735875aba35a62b17bb3895bceb0a6769fbd911fc541c08f1bcdc7a9ec5127c57a1f8f5369e5e09cf0231e939269143cd42273e1f91592dcd8328c2e3eb9eddd7c6d2c91419c7ad0da0e56961b80f979eeaeab4237d474a594b09bcebc3eeeafc09819a8373b04fd726d53916f1d4f4344c64583dd1553345ff65640cd53bbe718dda4a3a7473fe2b6d6d4e878bba144c2f793633bf221939cf2f70bf3ce89e507f001f79b5f916d7f4111c5d57b1ac8bcc7ce761e8d2b0a10136797f6c8be69140bbe3a8662a2b45b5b11a74bc3ad3733a5dfb8408edfbc18fff0a09125b2331e025f156d506ef966a9466263dd2e66571f3999aadbb95de69beb5aece9c550f0550b1ea99fc07406ae40b609ddc6910be82cab56cfa91e33e8f986cff5901a989cde531dd30005bb48686d18c7a964aea551e3903be08f495df2d84eb6630acdd60edbb66c563dc1009c3a90727b3cdaf910fdfed5f4a87f5a9ba4be8fa61ea3a0d581e920fdef2cfb01198481c3c50de16e7f66fb58d900f5e182e3c50ef74969ea16c7726c549757cc23523c369587da7293784d49a7502ffcfb0340b1d7885688500ca308161a7f96b62df9d083b71fcc8f2bb8fe6b1689256c0d385f42f5bbe2027a22c1996e110ba97c171d3e5948de92beb8d0d63c39ebade8509e0ae3c9c3876fb5fa112be18f905ecacfecb92057603ab95eec8b2e541cad4e91de38385f2e046619f54496c2382cb6cacd5b98c26f5a4f893e908917775b62bff23294dbbe3a1cd8e6cc1c35b4801887b646a6f81f17fcddba7b592e3133393c16194fac7431abf2f5485ed711db282183c819e08ebaa8a8d7fe3af8caa085a7639a832001457dfb9128a8061142ad0335629ff23ff9cfeb3c337d7a51a6fbf00b9e34c52e1c9195c969bd4e7a0bfd51d5c5bed9c1167e71f0aa83cc32edfbefa9f4d3e0174ca85182eec9f3a09f6a6c0df6377a510d731206fa80a50bb6abe29085058f16212212a60eec8f049fecb92d8c8e0a84bc021352bfecbeddde993839f614c3dac0a3ee37543f9b412b16199dc158e23b544619e312724bb6d7c3153ed9de791d764a366b389af13c58bf8a8d90481a46765a82b000000000000000000000000000000000000000000000000000000000000cfdbf745317e33f9cb06a5453901324f153a36cde3691bb269ca7a7844dfbce9e9cbebfbae6f4ae452bc80e7dda7fbc569c43bbc3d57cccaf383106ac65e07d04f0c7d8e82072582769b96078f962500c3f96a3628b779bcfee30986db2cb119c78009fdf07fc56a11f122370658a353aaa542ed63e44c4bc15ff4cd105ab33c536d98837f2dd165a55d5eeae91485954472d56f246df256bf3cae19352a123c86374ad219762f056e7b4dd3d65ec897a65754d43ff29c0c9c15fbfc5fe0aa61d7241487ac6f78de4129bad248c82e219d89f3a22db57f1a5f7863ac78f67ecf8f2c61d63f9dd4a198f0de5ce9e1a7e2e38b57be9a716bbbbb4b545286b0268993a054be6fab494c904fa579e6333e89892bd616f8eaae4d23b03b984e1a1a5a",
+};
+
 const testPublicKeys = [
   "0xb3aad1f5a7b6bfbcd81b75f8a60e6e54cc64fbf09cb05a46f92bab8c6c017106d643d1de70027b5d30fa943b9207c543",
   "0xa8adaec39a6738b09053a3ed9d44e481d5b2dfafefe0059da48756db951adf4f2956c1149f3bd0634e4cde009a770afb",
@@ -296,6 +316,7 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
         compoundingStakingSSVStrategy,
         validatorRegistrator,
         beaconRoots,
+        beaconOracle,
       } = fixture;
 
       // Register a new validator with the SSV Network
@@ -346,16 +367,45 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
         validatorProof.proof
       );
 
-      /*
-      // Need to have it verifier first!
+      // Mock the deposit on the execution layer
+      await beaconOracle.mapSlot(
+        depositProof.depositBlockNumber,
+        depositProof.depositSlot,
+        depositProof.depositRoot
+      );
+
+      // Mock the processing on the beacon chain
+      await beaconOracle.mapSlot(
+        depositProof.processedBlockNumber,
+        depositProof.processedSlot,
+        depositProof.processedRoot
+      );
+
+      await compoundingStakingSSVStrategy.verifyDeposit(
+        depositDataRoot,
+        depositProof.depositBlockNumber,
+        depositProof.processedSlot,
+        depositProof.firstPendingDepositSlot,
+        depositProof.proof
+      );
+
       // Stake 32 ETH to the new validator
+
+      const depositDataRoot2 = await calcDepositRoot(
+        compoundingStakingSSVStrategy.address,
+        "0x02",
+        testPublicKeys[0],
+        testValidator.signature,
+        32
+      );
+
       const stakeTx = compoundingStakingSSVStrategy
         .connect(validatorRegistrator)
         .stakeEth(
           {
             pubkey: testPublicKeys[0],
             signature: testValidator.signature,
-            depositDataRoot: testValidator.depositDataRoot,
+            depositDataRoot: depositDataRoot2,
           },
           BigNumber.from("32").mul(GweiInWei) // 32 ETH
         );
@@ -364,10 +414,10 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
         .to.emit(compoundingStakingSSVStrategy, "ETHStaked")
         .withArgs(
           hashPubKey(testPublicKeys[0]),
+          depositDataRoot2,
           testPublicKeys[0],
-          BigNumber.from("32").mul(GweiInWei) // Convert Gwei to Wei
+          parseEther("32") // 32 ETH in Wei
         );
-        */
     });
 
     it("Should revert when first stake amount is not exactly 1 ETH", async () => {
