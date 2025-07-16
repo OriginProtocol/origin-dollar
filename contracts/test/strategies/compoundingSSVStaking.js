@@ -1373,10 +1373,11 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
       });
     });
     describe("When pending deposit and active validators", () => {
+      let beforeDepositsBlock;
       beforeEach(async () => {
         const { beaconOracle, compoundingStakingSSVStrategy } = fixture;
 
-        const beforeDepositsBlock = await ethers.provider.getBlockNumber();
+        beforeDepositsBlock = await ethers.provider.getBlockNumber();
 
         // register, stake, verify validator and verify deposit
         await processValidator(testValidators[0], "VERIFIED_DEPOSIT");
@@ -1410,7 +1411,23 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
         );
       });
       it("consensus rewards are earned by the validators", async () => {
-        await snapBalances();
+        const { beaconOracle, compoundingStakingSSVStrategy } = fixture;
+
+        await snapBalances(testBalancesProofs[1].blockRoot);
+
+        await beaconOracle.mapSlot(
+          beforeDepositsBlock,
+          testBalancesProofs[1].firstPendingDeposit.slot,
+          testBalancesProofs[1].firstPendingDeposit.blockRoot
+        );
+
+        // Verify balances with pending deposits and active validators
+        await compoundingStakingSSVStrategy.verifyBalances(
+          testBalancesProofs[1]
+        );
+
+        // TODO check balances in BalancesVerified
+        // Check lastVerifiedEthBalance has increased
       });
     });
   });
