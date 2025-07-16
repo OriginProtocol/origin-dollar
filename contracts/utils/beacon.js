@@ -89,11 +89,14 @@ const getBeaconBlock = async (slot = "head") => {
     log(`Loading state from file ${stateFilename}`);
     stateSsz = fs.readFileSync(stateFilename);
   } else {
-    log(`Fetching state for slot ${slot} from the beacon node`);
-    const stateRes = await client.debug.getStateV2({ stateId: slot }, "ssz");
+    log(`Fetching state for slot ${blockView.slot} from the beacon node`);
+    const stateRes = await client.debug.getStateV2(
+      { stateId: blockView.slot },
+      "ssz"
+    );
     if (!stateRes.ok) {
       throw new Error(
-        `Failed to get state for slot ${slot}. Probably because it was missed`,
+        `Failed to get state for slot ${blockView.slot}. Probably because it was missed`,
         {
           cause: stateRes.error,
         }

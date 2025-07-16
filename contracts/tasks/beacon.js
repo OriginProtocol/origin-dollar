@@ -83,7 +83,7 @@ async function depositValidator({ pubkey, cred, sig, root, amount }) {
   await logTxDetails(tx, "deposit to validator");
 }
 
-async function verifySlot({ block }) {
+async function verifySlot({ block, dryrun }) {
   const signer = await getSigner();
 
   // Get provider to mainnet and not a local fork
@@ -130,6 +130,16 @@ async function verifySlot({ block }) {
 
   const oracle = await resolveContract("BeaconOracle");
 
+  if (dryrun) {
+    console.log(`beaconBlockRoot: ${beaconBlockRoot}`);
+    console.log(`nextBlockTimestamp: ${nextBlockTimestamp}`);
+    console.log(`block: ${block}`);
+    console.log(`slot: ${slot}`);
+    console.log(`slotProofBytes: ${slotProofBytes}`);
+    console.log(`blockNumberProofBytes: ${blockNumberProofBytes}`);
+    return;
+  }
+
   log(
     `About to verify block ${block} and slot ${slot} to beacon chain root ${beaconBlockRoot}`
   );
@@ -145,7 +155,7 @@ async function verifySlot({ block }) {
   await logTxDetails(tx, "verifySlot");
 }
 
-async function verifyValidator({ slot, index }) {
+async function verifyValidator({ slot, index, dryrun }) {
   const signer = await getSigner();
 
   const { blockView, blockTree, stateView } = await getBeaconBlock(slot);
@@ -176,6 +186,15 @@ async function verifyValidator({ slot, index }) {
     "CompoundingStakingSSVStrategy"
   );
 
+  if (dryrun) {
+    console.log(`beaconBlockRoot: ${beaconBlockRoot}`);
+    console.log(`nextBlockTimestamp: ${nextBlockTimestamp}`);
+    console.log(`validator index: ${index}`);
+    console.log(`pubKeyHash: ${pubKeyHash}`);
+    console.log(`proof: ${proof}`);
+    return;
+  }
+
   log(
     `About verify validator ${index} with pub key ${pubKey}, pub key hash ${pubKeyHash} at slot ${blockView.slot} to beacon chain root ${beaconBlockRoot}`
   );
@@ -197,7 +216,7 @@ async function verifyDeposit({ block, slot, root: depositDataRoot, dryrun }) {
   const isMapped = await oracle.isBlockMapped(block);
   if (!isMapped) {
     log(`Block ${block} is not mapped in the Beacon Oracle`);
-    await verifySlot({ block });
+    await verifySlot({ block, dryrun });
   }
 
   // Uses the latest slot if the slot is undefined

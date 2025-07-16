@@ -1859,6 +1859,12 @@ subtask(
   "Verify an execution layer block number to a beacon chain slot"
 )
   .addParam("block", "Execution layer block number", undefined, types.int)
+  .addOptionalParam(
+    "dryrun",
+    "Do not call verifyBalances on the strategy contract. Just log the params including the proofs",
+    false,
+    types.boolean
+  )
   .setAction(verifySlot);
 task("verifySlot").setAction(async (_, __, runSuper) => {
   return runSuper();
@@ -1941,6 +1947,12 @@ subtask("verifyValidator", "Verify a validator on the Beacon chain")
     "Any slot after the validator was registered on the Beacon chain. Default latest",
     undefined,
     types.int
+  )
+  .addOptionalParam(
+    "dryrun",
+    "Do not call verifyBalances on the strategy contract. Just log the params including the proofs",
+    false,
+    types.boolean
   )
   .setAction(verifyValidator);
 task("verifyValidator").setAction(async (_, __, runSuper) => {
