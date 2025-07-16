@@ -974,57 +974,142 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
       // Enable auto-mining
       await network.provider.send("evm_setAutomine", [true]);
 
-      return beaconBlockRoot;
+      const lastBlock = await ethers.provider.getBlock("latest");
+
+      return { beaconBlockRoot, timestamp: lastBlock.timestamp };
     };
 
-    it("Should verify balances with no WETH, no deposits and no validators", async () => {
-      const { compoundingStakingSSVStrategy } = fixture;
-      const beaconBlockRoot = await snapBalances();
+    describe("When no pending deposits and no active validators", () => {
+      const verifyBalancesNoDepositsOrValidators = async (beaconBlockRoot) => {
+        const { compoundingStakingSSVStrategy } = fixture;
 
-      await compoundingStakingSSVStrategy.verifyBalances({
-        blockRoot: beaconBlockRoot,
-        firstPendingDepositSlot: 0,
-        firstPendingDepositSlotProof: "0x",
-        balancesContainerRoot: ethers.utils.hexZeroPad("0x0", 32),
-        validatorContainerProof: "0x",
-        validatorBalanceLeaves: [],
-        validatorBalanceProofs: [],
+        const tx = await compoundingStakingSSVStrategy.verifyBalances({
+          blockRoot: beaconBlockRoot,
+          firstPendingDepositSlot: 0,
+          firstPendingDepositSlotProof: "0x",
+          balancesContainerRoot: ethers.utils.hexZeroPad("0x0", 32),
+          validatorContainerProof: "0x",
+          validatorBalanceLeaves: [],
+          validatorBalanceProofs: [],
+        });
+
+        return tx;
+      };
+      it("Should verify balances with no WETH", async () => {
+        const { compoundingStakingSSVStrategy } = fixture;
+
+        const { beaconBlockRoot, timestamp } = await snapBalances();
+
+        const tx = await verifyBalancesNoDepositsOrValidators(beaconBlockRoot);
+
+        await expect(tx)
+          .to.emit(compoundingStakingSSVStrategy, "BalancesVerified")
+          .withArgs(
+            timestamp,
+            0, // totalDepositsWei
+            0, // totalValidatorBalance
+            0, // wethBalance
+            0 // ethBalance
+          );
+
+        expect(
+          await compoundingStakingSSVStrategy.lastVerifiedEthBalance(),
+          "Last verified ETH balance"
+        ).to.equal(0);
       });
 
-      expect(
-        await compoundingStakingSSVStrategy.lastVerifiedEthBalance(),
-        "Last verified ETH balance"
-      ).to.equal(0);
-    });
+      it("Should verify balances with some WETH transferred before snap", async () => {
+        const { compoundingStakingSSVStrategy, josh, weth } = fixture;
 
-    it("Should verify balances with some WETH, no deposits and no validators", async () => {
-      const { compoundingStakingSSVStrategy, josh, weth } = fixture;
-      const beaconBlockRoot = await snapBalances();
+        // Send some WETH to the strategy before the snap
+        const wethAmountBefore = parseEther("1.23");
+        await weth
+          .connect(josh)
+          .transfer(compoundingStakingSSVStrategy.address, wethAmountBefore);
 
-      expect(
-        await compoundingStakingSSVStrategy.lastVerifiedEthBalance()
-      ).to.equal(0);
+        const { beaconBlockRoot, timestamp } = await snapBalances();
 
-      const wethAmount = parseEther("1.23");
-      // Send some WETH to the strategy
-      await weth
-        .connect(josh)
-        .transfer(compoundingStakingSSVStrategy.address, wethAmount);
+        const tx = await verifyBalancesNoDepositsOrValidators(beaconBlockRoot);
 
-      await compoundingStakingSSVStrategy.verifyBalances({
-        blockRoot: beaconBlockRoot,
-        firstPendingDepositSlot: 0,
-        firstPendingDepositSlotProof: "0x",
-        balancesContainerRoot: ethers.utils.hexZeroPad("0x0", 32),
-        validatorContainerProof: "0x",
-        validatorBalanceLeaves: [],
-        validatorBalanceProofs: [],
+        await expect(tx)
+          .to.emit(compoundingStakingSSVStrategy, "BalancesVerified")
+          .withArgs(
+            timestamp,
+            0, // totalDepositsWei
+            0, // totalValidatorBalance
+            wethAmountBefore, // wethBalance
+            0 // ethBalance
+          );
+
+        expect(
+          await compoundingStakingSSVStrategy.lastVerifiedEthBalance(),
+          "Last verified ETH balance"
+        ).to.equal(wethAmountBefore);
       });
 
-      expect(
-        await compoundingStakingSSVStrategy.lastVerifiedEthBalance(),
-        "Last verified ETH balance"
-      ).to.equal(wethAmount);
+      it("Should verify balances with some WETH transferred after snap", async () => {
+        const { compoundingStakingSSVStrategy, josh, weth } = fixture;
+
+        const { beaconBlockRoot, timestamp } = await snapBalances();
+
+        // Send some WETH to the strategy after the snap
+        const wethAmountAfter = parseEther("5.67");
+        await weth
+          .connect(josh)
+          .transfer(compoundingStakingSSVStrategy.address, wethAmountAfter);
+
+        const tx = await verifyBalancesNoDepositsOrValidators(beaconBlockRoot);
+
+        await expect(tx)
+          .to.emit(compoundingStakingSSVStrategy, "BalancesVerified")
+          .withArgs(
+            timestamp,
+            0, // totalDepositsWei
+            0, // totalValidatorBalance
+            wethAmountAfter, // wethBalance
+            0 // ethBalance
+          );
+
+        expect(
+          await compoundingStakingSSVStrategy.lastVerifiedEthBalance(),
+          "Last verified ETH balance"
+        ).to.equal(wethAmountAfter);
+      });
+
+      it("Should verify balances with some WETH transferred before and after snap", async () => {
+        const { compoundingStakingSSVStrategy, josh, weth } = fixture;
+
+        // Send some WETH to the strategy before the snap
+        const wethAmountBefore = parseEther("1.23");
+        await weth
+          .connect(josh)
+          .transfer(compoundingStakingSSVStrategy.address, wethAmountBefore);
+
+        const { beaconBlockRoot, timestamp } = await snapBalances();
+
+        // Send some WETH to the strategy after the snap
+        const wethAmountAfter = parseEther("5.67");
+        await weth
+          .connect(josh)
+          .transfer(compoundingStakingSSVStrategy.address, wethAmountAfter);
+
+        const tx = await verifyBalancesNoDepositsOrValidators(beaconBlockRoot);
+
+        await expect(tx)
+          .to.emit(compoundingStakingSSVStrategy, "BalancesVerified")
+          .withArgs(
+            timestamp,
+            0, // totalDepositsWei
+            0, // totalValidatorBalance
+            wethAmountBefore.add(wethAmountAfter), // wethBalance
+            0 // ethBalance
+          );
+
+        expect(
+          await compoundingStakingSSVStrategy.lastVerifiedEthBalance(),
+          "Last verified ETH balance"
+        ).to.equal(wethAmountBefore.add(wethAmountAfter));
+      });
     });
     describe("Should not change verified balance when", () => {
       it("register validator", async () => {
