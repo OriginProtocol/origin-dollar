@@ -591,7 +591,10 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
         // Delete the last deposit from the list
         depositsRoots.pop();
 
-        emit DepositVerified(depositDataRoot, deposit.amountGwei * 1 gwei);
+        emit DepositVerified(
+            depositDataRoot,
+            uint256(deposit.amountGwei) * 1 gwei
+        );
     }
 
     // TODO what if the last validator was exited rather than consolidated?
@@ -726,7 +729,7 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
 
         // For each native staking contract's deposits
         uint256 depositsCount = depositsRoots.length;
-        uint64 totalDepositsGwei = 0;
+        uint256 totalDepositsWei = 0;
         for (uint256 i = 0; i < depositsCount; ++i) {
             bytes32 depositDataRoot = depositsRoots[i];
 
@@ -740,7 +743,10 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
                 "Deposit has been processed"
             );
 
-            totalDepositsGwei += deposits[depositDataRoot].amountGwei;
+            // Convert the deposit amount from Gwei to Wei and add to the total
+            totalDepositsWei +=
+                uint256(deposits[depositDataRoot].amountGwei) *
+                1 gwei;
         }
 
         // verify beaconBlock.state.balances root to beacon block root
@@ -793,7 +799,7 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
 
         // Store the verified balance in storage
         lastVerifiedEthBalance = SafeCast.toUint128(
-            (totalDepositsGwei * 1 gwei) +
+            totalDepositsWei +
                 totalValidatorBalance +
                 wethBalance +
                 balancesMem.ethBalance
@@ -803,7 +809,7 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
 
         emit BalancesVerified(
             balancesMem.timestamp,
-            totalDepositsGwei * 1 gwei,
+            totalDepositsWei,
             totalValidatorBalance,
             wethBalance,
             balancesMem.ethBalance
