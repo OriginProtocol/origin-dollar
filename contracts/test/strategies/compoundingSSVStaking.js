@@ -217,9 +217,10 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
         hre
       );
 
+      // Fund the strategy with WETH
       await weth
         .connect(josh)
-        .transfer(compoundingStakingSSVStrategy.address, ethUnits("256"));
+        .transfer(compoundingStakingSSVStrategy.address, ethUnits("5000"));
     });
 
     const stakeValidatorsSingle = async (
@@ -311,7 +312,7 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
       await stakeValidatorsSingle(2, false, 0, 1);
     });
 
-    it("Should stake 1 ETH then 32 ETH to a validator", async () => {
+    it("Should stake 1 ETH then 2047 ETH to a validator", async () => {
       const {
         compoundingStakingSSVStrategy,
         validatorRegistrator,
@@ -389,14 +390,15 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
         depositProof.proof
       );
 
-      // Stake 32 ETH to the new validator
+      // Stake 2047 ETH to the new validator
 
+      const secondDepositAmount = 2047;
       const depositDataRoot2 = await calcDepositRoot(
         compoundingStakingSSVStrategy.address,
         "0x02",
         testPublicKeys[0],
         testValidator.signature,
-        32
+        secondDepositAmount
       );
 
       const stakeTx = compoundingStakingSSVStrategy
@@ -407,7 +409,7 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
             signature: testValidator.signature,
             depositDataRoot: depositDataRoot2,
           },
-          BigNumber.from("32").mul(GweiInWei) // 32 ETH
+          BigNumber.from(secondDepositAmount.toString()).mul(GweiInWei)
         );
 
       await expect(stakeTx)
@@ -416,8 +418,18 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
           hashPubKey(testPublicKeys[0]),
           depositDataRoot2,
           testPublicKeys[0],
-          parseEther("32") // 32 ETH in Wei
+          parseEther(secondDepositAmount.toString())
         );
+
+      // Cheating here by using the same proof as before
+      // it works as the deposit block is after the second deposit on the execution layer
+      await compoundingStakingSSVStrategy.verifyDeposit(
+        depositDataRoot2,
+        depositProof.depositBlockNumber,
+        depositProof.processedSlot,
+        depositProof.firstPendingDepositSlot,
+        depositProof.proof
+      );
     });
 
     it("Should revert when first stake amount is not exactly 1 ETH", async () => {

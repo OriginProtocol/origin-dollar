@@ -787,8 +787,6 @@ const defaultFixture = deployments.createFixture(async () => {
     mockSwapper,
     swapper1Inch,
     mock1InchSwapRouter,
-    beaconRoots,
-    beaconOracle,
     convexEthMetaStrategy,
     vaultValueChecker,
     oethVaultValueChecker;
@@ -1043,19 +1041,13 @@ const defaultFixture = deployments.createFixture(async () => {
         .mint(usds.address, usdsUnits("100"), 0);
 
       // Fund WETH contract
-      await hardhatSetBalance(user.address, "500");
-      await weth.connect(user).deposit({ value: oethUnits("100") });
+      await hardhatSetBalance(user.address, "50000");
+      await weth.connect(user).deposit({ value: oethUnits("10000") });
       await weth
         .connect(user)
         .approve(vaultAndTokenConracts.oethVault.address, oethUnits("100"));
     }
   }
-
-  beaconRoots = await ethers.getContractAt(
-    "MockBeaconRoots",
-    addresses.mainnet.beaconRoots
-  );
-  beaconOracle = await ethers.getContract("BeaconOracle");
 
   return {
     ...vaultAndTokenConracts,
@@ -1172,9 +1164,6 @@ const defaultFixture = deployments.createFixture(async () => {
 
     morphoToken,
     legacyMorphoToken,
-
-    beaconRoots,
-    beaconOracle,
   };
 });
 
@@ -2002,7 +1991,7 @@ async function nativeStakingSSVStrategyFixture() {
  * CompoundingStakingSSVStrategy fixture
  */
 async function compoundingStakingSSVStrategyFixture() {
-  const fixture = await oethDefaultFixture();
+  const fixture = await beaconChainFixture();
   await hotDeployOption(fixture, "compoundingStakingSSVStrategyFixture", {
     isOethFixture: true,
   });
@@ -2647,6 +2636,12 @@ async function woethCcipZapperFixture() {
 
 async function beaconChainFixture() {
   const fixture = await defaultFixture();
+
+  fixture.beaconRoots = await ethers.getContractAt(
+    "MockBeaconRoots",
+    addresses.mainnet.beaconRoots
+  );
+  fixture.beaconOracle = await ethers.getContract("BeaconOracle");
 
   if (isFork) {
     const { deploy } = deployments;
