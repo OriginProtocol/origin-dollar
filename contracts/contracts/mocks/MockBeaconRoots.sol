@@ -43,6 +43,15 @@ contract MockBeaconRoots {
         emit RootSet(timestamp, root);
     }
 
+    function setBeaconRoot(bytes32 root) external {
+        require(root != bytes32(0), "Invalid root");
+
+        // Store the root at the given timestamp
+        _beaconRoots[block.timestamp] = root;
+
+        emit RootSet(block.timestamp, root);
+    }
+
     function parentBlockRoot(uint64 timestamp)
         external
         view

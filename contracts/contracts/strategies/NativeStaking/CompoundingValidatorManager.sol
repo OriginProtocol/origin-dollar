@@ -711,81 +711,89 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
         require(lastSnapTimestamp > 0, "No snapped balances");
         require(balancesMem.timestamp == lastSnapTimestamp, "Stale snap");
 
-        // Verify the slot of the first pending deposit to the beacon block root
-        IBeaconProofs(BEACON_PROOFS).verifyFirstPendingDepositSlot(
-            params.blockRoot,
-            params.firstPendingDepositSlot,
-            params.firstPendingDepositSlotProof
-        );
-
-        uint64 firstPendingDepositBlockNumber = IBeaconOracle(BEACON_ORACLE)
-            .slotToBlock(params.firstPendingDepositSlot);
-
-        // For each native staking contract's deposits
         uint256 depositsCount = depositsRoots.length;
         uint256 totalDepositsWei = 0;
-        for (uint256 i = 0; i < depositsCount; ++i) {
-            bytes32 depositDataRoot = depositsRoots[i];
 
-            // Check the stored deposit is still waiting to be processed on the beacon chain.
-            // That is, the first pending deposit block number is before the
-            // block number of the staking strategy's deposit.
-            // If it has it will need to be verified with `verifyDeposit`
-            require(
-                firstPendingDepositBlockNumber <
-                    deposits[depositDataRoot].blockNumber,
-                "Deposit has been processed"
+        // If there are no deposits then we can skip the deposit verification
+        if (depositsCount > 0) {
+            // Verify the slot of the first pending deposit to the beacon block root
+            IBeaconProofs(BEACON_PROOFS).verifyFirstPendingDepositSlot(
+                params.blockRoot,
+                params.firstPendingDepositSlot,
+                params.firstPendingDepositSlotProof
             );
 
-            // Convert the deposit amount from Gwei to Wei and add to the total
-            totalDepositsWei +=
-                uint256(deposits[depositDataRoot].amountGwei) *
-                1 gwei;
-        }
+            uint64 firstPendingDepositBlockNumber = IBeaconOracle(BEACON_ORACLE)
+                .slotToBlock(params.firstPendingDepositSlot);
 
-        // verify beaconBlock.state.balances root to beacon block root
-        IBeaconProofs(BEACON_PROOFS).verifyBalancesContainer(
-            params.blockRoot,
-            params.balancesContainerRoot,
-            params.validatorContainerProof
-        );
+            // For each native staking contract's deposits
+            for (uint256 i = 0; i < depositsCount; ++i) {
+                bytes32 depositDataRoot = depositsRoots[i];
 
-        uint256 totalValidatorBalance = 0;
-        uint256 verifiedValidatorsCount = verifiedValidators.length;
-        // for each validator
-        for (uint256 i = 0; i < verifiedValidatorsCount; ++i) {
-            // verify validator's balance in beaconBlock.state.balances to the
-            // beaconBlock.state.balances container root
-            uint256 validatorBalance = IBeaconProofs(BEACON_PROOFS)
-                .verifyValidatorBalance(
-                    params.balancesContainerRoot,
-                    params.validatorBalanceLeaves[i],
-                    params.validatorBalanceProofs[i],
-                    verifiedValidators[i].index,
-                    IBeaconProofs.BalanceProofLevel.Container
+                // Check the stored deposit is still waiting to be processed on the beacon chain.
+                // That is, the first pending deposit block number is before the
+                // block number of the staking strategy's deposit.
+                // If it has it will need to be verified with `verifyDeposit`
+                require(
+                    firstPendingDepositBlockNumber <
+                        deposits[depositDataRoot].blockNumber,
+                    "Deposit has been processed"
                 );
 
-            // total validator balances
-            totalValidatorBalance += validatorBalance;
+                // Convert the deposit amount from Gwei to Wei and add to the total
+                totalDepositsWei +=
+                    uint256(deposits[depositDataRoot].amountGwei) *
+                    1 gwei;
+            }
+        }
 
-            // If the validator balance is zero
-            if (validatorBalance == 0) {
-                // Store the validator state as exited
-                validatorState[
-                    verifiedValidators[i].pubKeyHash
-                ] = VALIDATOR_STATE.EXITED;
+        uint256 verifiedValidatorsCount = verifiedValidators.length;
+        uint256 totalValidatorBalance = 0;
 
-                // Remove the validator from the list of verified validators.
+        // If there are no verified validators then we can skip the balance verification
+        if (verifiedValidatorsCount > 0) {
+            // verify beaconBlock.state.balances root to beacon block root
+            IBeaconProofs(BEACON_PROOFS).verifyBalancesContainer(
+                params.blockRoot,
+                params.balancesContainerRoot,
+                params.validatorContainerProof
+            );
 
-                // Reduce the count of verified validators which is the last index before the pop removes it.
-                verifiedValidatorsCount -= 1;
-                // Remove the validator with a zero balance from the list of verified validators
-                // Move the last validator to the current index
-                verifiedValidators[i] = verifiedValidators[
-                    verifiedValidatorsCount
-                ];
-                // Delete the last validator from the list
-                verifiedValidators.pop();
+            // for each validator
+            for (uint256 i = 0; i < verifiedValidatorsCount; ++i) {
+                // verify validator's balance in beaconBlock.state.balances to the
+                // beaconBlock.state.balances container root
+                uint256 validatorBalance = IBeaconProofs(BEACON_PROOFS)
+                    .verifyValidatorBalance(
+                        params.balancesContainerRoot,
+                        params.validatorBalanceLeaves[i],
+                        params.validatorBalanceProofs[i],
+                        verifiedValidators[i].index,
+                        IBeaconProofs.BalanceProofLevel.Container
+                    );
+
+                // total validator balances
+                totalValidatorBalance += validatorBalance;
+
+                // If the validator balance is zero
+                if (validatorBalance == 0) {
+                    // Store the validator state as exited
+                    validatorState[
+                        verifiedValidators[i].pubKeyHash
+                    ] = VALIDATOR_STATE.EXITED;
+
+                    // Remove the validator from the list of verified validators.
+
+                    // Reduce the count of verified validators which is the last index before the pop removes it.
+                    verifiedValidatorsCount -= 1;
+                    // Remove the validator with a zero balance from the list of verified validators
+                    // Move the last validator to the current index
+                    verifiedValidators[i] = verifiedValidators[
+                        verifiedValidatorsCount
+                    ];
+                    // Delete the last validator from the list
+                    verifiedValidators.pop();
+                }
             }
         }
 

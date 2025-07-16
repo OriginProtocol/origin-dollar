@@ -260,7 +260,7 @@ async function verifyBalances({ root, indexes, dryrun }) {
 
   // Uses the beacon chain data for the beacon block root
   const { blockView, blockTree, stateView } = await getBeaconBlock(root);
-  
+
   const beaconBlockRoot = toHex(blockView.hashTreeRoot());
   const verificationSlot = blockView.slot;
 
@@ -377,7 +377,6 @@ async function beaconRoot({ block, mainnet }) {
   const { timestamp } = fetchedBlock;
   log(`Block ${block} has timestamp ${timestamp}`);
 
-  // const encodedData = hexZeroPad(timestamp, 32);
   const data = defaultAbiCoder.encode(["uint256"], [timestamp]);
   log(`Encoded timestamp data: ${data}`);
 
