@@ -2,7 +2,6 @@ const { expect } = require("chai");
 const { BigNumber } = require("ethers");
 const { parseEther } = require("ethers").utils;
 const { setBalance } = require("@nomicfoundation/hardhat-network-helpers");
-//const { solidityPack } = require("ethers/lib/utils");
 
 const { isCI } = require("../helpers");
 const { shouldBehaveLikeGovernable } = require("../behaviour/governable");
@@ -13,7 +12,7 @@ const { ethUnits } = require("../helpers");
 const { setERC20TokenBalance } = require("../_fund");
 const { zero } = require("../../utils/addresses");
 const { calcDepositRoot } = require("../../tasks/beacon");
-const crypto = require("crypto");
+const { hashPubKey } = require("../../utils/beacon");
 
 const {
   createFixtureLoader,
@@ -318,7 +317,11 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
         validatorRegistrator,
         beaconRoots,
         beaconOracle,
+        weth,
       } = fixture;
+
+      const stratbalanceBefore =
+        await compoundingStakingSSVStrategy.checkBalance(weth.address);
 
       // Register a new validator with the SSV Network
       await compoundingStakingSSVStrategy
@@ -430,6 +433,10 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
         depositProof.firstPendingDepositSlot,
         depositProof.proof
       );
+
+      expect(
+        await compoundingStakingSSVStrategy.checkBalance(weth.address)
+      ).to.equal(stratbalanceBefore);
     });
 
     it("Should revert when first stake amount is not exactly 1 ETH", async () => {
@@ -929,16 +936,3 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
   });
   */
 });
-
-/**
- * Hashes a validator public key using the Beacon Chain's format.
- * @param {Buffer} pubKey - The public key of the validator.
- * @returns {string} - The hashed public key as a hex string.
- */
-function hashPubKey(pubKeyHex) {
-  // Convert hex string to Buffer
-  const pubKey = Buffer.from(pubKeyHex.slice(2), "hex");
-  const zeroBytes = Buffer.alloc(16, 0); // 16 bytes of zeros
-  const data = Buffer.concat([pubKey, zeroBytes]);
-  return "0x" + crypto.createHash("sha256").update(data).digest("hex");
-}
