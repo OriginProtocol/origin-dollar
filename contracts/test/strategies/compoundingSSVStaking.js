@@ -1376,6 +1376,8 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
       beforeEach(async () => {
         const { beaconOracle, compoundingStakingSSVStrategy } = fixture;
 
+        const beforeDepositsBlock = await ethers.provider.getBlockNumber();
+
         // register, stake, verify validator and verify deposit
         await processValidator(testValidators[0], "VERIFIED_DEPOSIT");
         await topupValidator(
@@ -1397,7 +1399,7 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
         await snapBalances(testBalancesProofs[0].blockRoot);
 
         await beaconOracle.mapSlot(
-          testBalancesProofs[0].firstPendingDeposit.block,
+          beforeDepositsBlock,
           testBalancesProofs[0].firstPendingDeposit.slot,
           testBalancesProofs[0].firstPendingDeposit.blockRoot
         );
