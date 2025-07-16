@@ -9,6 +9,19 @@ const { logTxDetails } = require("../utils/txLogger");
 
 const log = require("../utils/logger")("task:validator:compounding");
 
+async function snapBalances() {
+  const signer = await getSigner();
+
+  const strategy = await resolveContract(
+    "CompoundingStakingSSVStrategyProxy",
+    "CompoundingStakingSSVStrategy"
+  );
+
+  log(`About to snap balances for strategy ${strategy.address}`);
+  const tx = await strategy.connect(signer).snapBalances();
+  await logTxDetails(tx, "snapBalances");
+}
+
 async function registerValidator({ pubkey, shares, operatorids, ssv }) {
   const signer = await getSigner();
 
@@ -66,4 +79,4 @@ async function stakeValidator({ pubkey, sig, amount }) {
   await logTxDetails(tx, "stakeETH");
 }
 
-module.exports = { registerValidator, stakeValidator };
+module.exports = { snapBalances, registerValidator, stakeValidator };

@@ -21,7 +21,8 @@ async function generateSlotProof({ blockView, blockTree }) {
   });
   log(`Slot leaf: ${toHex(proofObj.leaf)}`);
   const proofBytes = toHex(concatProof(proofObj));
-  log(`Slot proof in bytes:\n${proofBytes}`);
+  const depth = proofObj.witnesses.length;
+  log(`Slot proof of depth ${depth} in bytes:\n${proofBytes}`);
 
   return {
     proof: proofBytes,
@@ -57,7 +58,8 @@ async function generateBlockProof({ blockView, blockTree }) {
   log(`Block number leaf: ${toHex(proofObj.leaf)}`);
 
   const proofBytes = toHex(concatProof(proofObj));
-  log(`Block number proof in bytes:\n${proofBytes}`);
+  const depth = proofObj.witnesses.length;
+  log(`Block number proof of depth ${depth} in bytes:\n${proofBytes}`);
 
   return {
     proof: proofBytes,
@@ -96,7 +98,8 @@ async function generateFirstPendingDepositSlotProof({
     gindex: generalizedIndex,
   });
   const proofBytes = toHex(concatProof(proofObj));
-  log(`First deposit slot proof in bytes:\n${proofBytes}`);
+  const depth = proofObj.witnesses.length;
+  log(`First deposit slot proof of depth ${depth} in bytes:\n${proofBytes}`);
 
   return {
     proof: proofBytes,
@@ -143,7 +146,8 @@ async function generateValidatorPubKeyProof({
   });
   log(`Validator public key leaf (hash): ${toHex(proofObj.leaf)}`);
   const proofBytes = toHex(concatProof(proofObj));
-  log(`Public key proof in bytes:\n${proofBytes}`);
+  const depth = proofObj.witnesses.length;
+  log(`Public key proof of depth ${depth} in bytes:\n${proofBytes}`);
 
   return {
     proof: proofBytes,
@@ -179,7 +183,8 @@ async function generateBalancesContainerProof({
   log(`Balances container leaf: ${toHex(proofObj.leaf)}`);
 
   const proofBytes = toHex(concatProof(proofObj));
-  log(`Balances container proof in bytes:\n${proofBytes}`);
+  const depth = proofObj.witnesses.length;
+  log(`Balances container proof of depth ${depth} in bytes:\n${proofBytes}`);
 
   return {
     proof: proofBytes,
@@ -204,7 +209,9 @@ async function generateBalanceProof({
 
   // Read the validator's balance from the state
   const validatorBalance = stateView.balances.get(validatorIndex);
-  log(`Validator ${validatorIndex} balance: ${formatUnits(validatorBalance)}`);
+  log(
+    `Validator ${validatorIndex} balance: ${formatUnits(validatorBalance, 9)}`
+  );
 
   // BeaconBlock.state.balances
   const genIndexBalancesContainer = concatGindices([
@@ -236,8 +243,9 @@ async function generateBalanceProof({
   log(`Balances container leaf: ${toHex(proofObj.leaf)}`);
 
   const proofBytes = toHex(concatProof(proofObj));
+  const depth = proofObj.witnesses.length;
   log(
-    `Validator ${validatorIndex} balance proof in Balances container in bytes:\n${proofBytes}`
+    `Validator ${validatorIndex} balance proof of depth ${depth} in Balances container in bytes:\n${proofBytes}`
   );
 
   return {
@@ -245,6 +253,7 @@ async function generateBalanceProof({
     generalizedIndex: genIndexBalancesContainer,
     root: toHex(balancesTree.root),
     leaf: toHex(proofObj.leaf),
+    depth,
     balance: validatorBalance,
   };
 }

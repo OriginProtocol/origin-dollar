@@ -19,6 +19,7 @@ const {
   generateBalancesContainerProof,
   generateBalanceProof,
 } = require("../utils/proofs");
+const { toHex } = require("../utils/units");
 const { logTxDetails } = require("../utils/txLogger");
 
 const log = require("../utils/logger")("task:beacon");
@@ -184,7 +185,7 @@ async function verifyValidator({ slot, index }) {
   await logTxDetails(tx, "verifyValidator");
 }
 
-async function verifyDeposit({ block, slot, root: depositDataRoot }) {
+async function verifyDeposit({ block, slot, root: depositDataRoot, dryrun }) {
   const signer = await getSigner();
 
   // TODO If no block then get the block from the stakeETH event
@@ -219,6 +220,16 @@ async function verifyDeposit({ block, slot, root: depositDataRoot }) {
     stateView,
   });
 
+  if (dryrun) {
+    console.log(`depositDataRoot: ${depositDataRoot}`);
+    console.log(`beaconBlockRoot: ${beaconBlockRoot}`);
+    console.log(`block: ${block}`);
+    console.log(`processedSlot: ${processedSlot}`);
+    console.log(`firstPendingDepositSlot: ${firstPendingDepositSlot}`);
+    console.log(`proof: ${proof}`);
+    return;
+  }
+
   log(
     `About to verify deposit for deposit block ${block}, processing slot ${processedSlot}, deposit data root ${depositDataRoot}, slot of first pending deposit ${firstPendingDepositSlot} to beacon chain root ${beaconBlockRoot}`
   );
@@ -234,19 +245,23 @@ async function verifyDeposit({ block, slot, root: depositDataRoot }) {
   await logTxDetails(tx, "verifyDeposit");
 }
 
-async function verifyBalances({ root: beaconBlockRoot }) {
+async function verifyBalances({ root, indexes, dryrun }) {
   const signer = await getSigner();
 
-  // TODO If no beacon block root, then get from the blockRoot from the last BalancesSnapped event
-  // Revert for now
-  if (!beaconBlockRoot)
-    throw Error("Beacon block root is currently required for verifyBalances");
+  if (!root) {
+    if (!dryrun) {
+      // TODO If no beacon block root, then get from the blockRoot from the last BalancesSnapped event
+      // Revert for now
+      throw Error("Beacon block root is currently required for verifyBalances");
+    }
+
+    root = "head";
+  }
 
   // Uses the beacon chain data for the beacon block root
-  const { blockView, blockTree, stateView } = await getBeaconBlock(
-    beaconBlockRoot
-  );
-
+  const { blockView, blockTree, stateView } = await getBeaconBlock(root);
+  
+  const beaconBlockRoot = toHex(blockView.hashTreeRoot());
   const verificationSlot = blockView.slot;
 
   const strategy = await resolveContract(
@@ -268,7 +283,11 @@ async function verifyBalances({ root: beaconBlockRoot }) {
       stateView,
     });
 
-  const verifiedValidators = await strategy.verifiedValidators();
+  const verifiedValidators = indexes
+    ? indexes.split(",").map((index) => ({
+        index,
+      }))
+    : await strategy.verifiedValidators();
 
   const validatorBalanceLeaves = [];
   const validatorBalanceProofs = [];
@@ -283,8 +302,22 @@ async function verifyBalances({ root: beaconBlockRoot }) {
     validatorBalanceProofs.push(proof);
 
     log(
-      `Validator ${validator.index} has balance: ${formatUnits(balance)} ETH`
+      `Validator ${validator.index} has balance: ${formatUnits(balance, 9)} ETH`
     );
+  }
+
+  if (dryrun) {
+    console.log(`beaconBlockRoot: ${beaconBlockRoot}`);
+    console.log(`verificationSlot: ${verificationSlot}`);
+    console.log(`firstPendingDepositSlot: ${firstPendingDepositSlot}`);
+    console.log(
+      `firstPendingDepositSlotProof: ${firstPendingDepositSlotProof}`
+    );
+    console.log(`balancesContainerRoot: ${balancesContainerRoot}`);
+    console.log(`balancesContainerProof: ${balancesContainerProof}`);
+    console.log(`validatorBalanceLeaves: ${validatorBalanceLeaves}`);
+    console.log(`validatorBalanceProofs: ${validatorBalanceProofs}`);
+    return;
   }
 
   log(

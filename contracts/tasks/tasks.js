@@ -103,7 +103,11 @@ const {
   resolveNativeStakingStrategyProxy,
   snapValidators,
 } = require("./validator");
-const { registerValidator, stakeValidator } = require("./validatorCompound");
+const {
+  snapBalances,
+  registerValidator,
+  stakeValidator,
+} = require("./validatorCompound");
 const { setDefaultValidator, snapSonicStaking } = require("../utils/sonic");
 const {
   undelegateValidator,
@@ -1962,6 +1966,12 @@ subtask("verifyDeposit", "Verify a deposit on the Beacon chain")
     undefined,
     types.int
   )
+  .addOptionalParam(
+    "dryrun",
+    "Do not call verifyBalances on the strategy contract. Just log the params including the proofs",
+    false,
+    types.boolean
+  )
   .setAction(verifyDeposit);
 task("verifyDeposit").setAction(async (_, __, runSuper) => {
   return runSuper();
@@ -1973,6 +1983,18 @@ subtask("verifyBalances", "Verify validator balances on the Beacon chain")
     "The beacon block root to verify balances to in hex format with a 0x prefix. Default: last balances snapshot",
     undefined,
     types.string
+  )
+  .addOptionalParam(
+    "indexes",
+    "Comma separated list of validator indexes. Default: strategy's active validators",
+    undefined,
+    types.string
+  )
+  .addOptionalParam(
+    "dryrun",
+    "Do not call verifyBalances on the strategy contract. Just log the params including the proofs",
+    false,
+    types.boolean
   )
   .setAction(verifyBalances);
 task("verifyBalances").setAction(async (_, __, runSuper) => {
@@ -2031,5 +2053,13 @@ subtask(
   )
   .setAction(stakeValidator);
 task("stakeValidator").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+subtask(
+  "snapBalances",
+  "Takes a snapshot of the staking strategy's balance"
+).setAction(snapBalances);
+task("snapBalances").setAction(async (_, __, runSuper) => {
   return runSuper();
 });

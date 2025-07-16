@@ -104,10 +104,6 @@ const getBeaconBlock = async (slot = "head") => {
     fs.writeFileSync(stateFilename, stateRes.ssz());
     stateSsz = stateRes.ssz();
   }
-  const stateRes = await client.debug.getStateV2({ stateId: slot }, "ssz");
-  if (!stateRes.ok) {
-    throw stateRes.error;
-  }
 
   const stateView = BeaconState.deserializeToView(stateSsz);
 
