@@ -670,12 +670,6 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
     }
 
     function _snapBalances() internal {
-        // Check no consolidation is waiting to be verified
-        require(
-            consolidationLastPubKeyHash == bytes32(0),
-            "Consolidation in progress"
-        );
-
         bytes32 blockRoot = BeaconRoots.parentBlockRoot(
             SafeCast.toUint64(block.timestamp)
         );
