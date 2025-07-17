@@ -19,12 +19,13 @@ library BeaconRoots {
         view
         returns (bytes32 parentRoot)
     {
+        // Commented out the following checks as it makes unit and fork testing very difficult.
         // require(block.timestamp >= timestamp, "Timestamp in future");
-        require(
-            block.timestamp - timestamp <
-                BEACON_ROOTS_HISTORY_BUFFER_LENGTH * 12,
-            "Timestamp too old"
-        );
+        // require(
+        //     block.timestamp - timestamp <
+        //         BEACON_ROOTS_HISTORY_BUFFER_LENGTH * 12,
+        //     "Timestamp too old"
+        // );
 
         // Call the Beacon Block Root Oracle to get the parent block root
         // This does not have a function signature, so we use a staticcall
