@@ -648,5 +648,9 @@ addresses.plume.BridgedWOETHOracleFeed =
 
 addresses.hoodi = {};
 addresses.hoodi.WETH = "0x56fb9b754a21eb45fa8e1ae98be0525e9fee9540";
+addresses.hoodi.SSV = "0x9F5d4Ec84fC4785788aB44F9de973cF34F7A038e";
+addresses.hoodi.SSVNetwork = "0x58410Bef803ECd7E63B23664C586A6DB72DAf59c";
+addresses.hoodi.beaconChainDepositContract =
+  "0x00000000219ab540356cBB839Cbe05303d7705Fa";
 
 module.exports = addresses;
