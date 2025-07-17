@@ -349,9 +349,9 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
     /// The staked ETH will eventually be withdrawn to this staking strategy.
     /// Only the Registrator can call this function.
     /// @param publicKey The public key of the validator
-    /// @param amount The amount of ETH to be withdrawn from the validator in Gwei
+    /// @param amountGwei The amount of ETH to be withdrawn from the validator in Gwei
     // slither-disable-start reentrancy-no-eth
-    function validatorWithdrawal(bytes calldata publicKey, uint64 amount)
+    function validatorWithdrawal(bytes calldata publicKey, uint64 amountGwei)
         external
         onlyRegistrator
         whenNotPaused
@@ -364,13 +364,13 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
             "Validator not verified"
         );
 
-        PartialWithdrawal.request(publicKey, amount);
+        PartialWithdrawal.request(publicKey, amountGwei);
 
         // Do not remove from the list of verified validators.
         // This is done in the verifyBalances function once the validator's balance has been verified to be zero.
         // The validator state will be set to EXITED in the verifyBalances function.
 
-        emit ValidatorWithdraw(pubKeyHash, amount);
+        emit ValidatorWithdraw(pubKeyHash, uint256(amountGwei) * 1 gwei);
     }
 
     // slither-disable-end reentrancy-no-eth
