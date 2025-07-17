@@ -137,10 +137,11 @@ const testValidators = [
 
 const testBalancesProofs = [
   {
-    description: "Second validator still pending deposit",
+    description: "Only the first validator has a balance",
     // Slot 12021100
     blockRoot:
       "0x3fd4bec58e89729b7d6a17f425671356c598c92c379ffa3905b696a545362076",
+    validators: [1930685, 1998611],
     firstPendingDepositSlot: 11971119,
     firstPendingDeposit: {
       slot: 11971119,
@@ -165,10 +166,11 @@ const testBalancesProofs = [
     validatorBalances: [137.28519386, 0],
   },
   {
-    description: "All depoits have been processed",
+    description: "Both validators have a balance",
     // Slot 12153439
     blockRoot:
       "0x2fef147728f441c0c1b19f894bb5b5afc3e1a42baa233f29976e36a9e1a6310f",
+    validators: [1930685, 1998611],
     firstPendingDepositSlot: 12102975,
     firstPendingDeposit: {
       slot: 12102975,
@@ -191,6 +193,35 @@ const testBalancesProofs = [
       "0x8b5f81740700000080eca3730700000087e2a37307000000f7dba373070000003c9b315b036f4b138cba7297c1e6e53c80583b71e141698542848658ef4a3e3838dd29d62bc62309409b788d55d101e520d41ea8e3f72386fd569b08eadb627ddd962e9e4c8c2600e06a63122153ae2db660530572b133594a9f214dcaa7ead83ec0450e7c693a9754cf852ab1cf691258245f919d7137cdc13094fbd53538aa2a2f75fae7038ab4b74ecb6e1eff9970b0c48f5caa1d93f215b33c6bddc150dfda81c88fe313f4cb9cf1e5441ebea9670a8613d629cc1c9967811e4c049ed937632d1cecfacda3fa3e1641150a4657f8544a9fdce6286d30b41f0ffa25206181806b5f9ba807a1b19f83100b65296326631108872b13a3f7c2689e3c1063726ae9b71564f851519f3f0cdc8d65c659a306f92f7e774de0a3f8c183a862410c443e701cdc49280b903ce10af5948b67e13970be1b7f8f4db9594345677e12e22f4d50a2e2df55ceb7481fc18b8432af32e170cd28703b632a3aed51e94767a75b96071faed1905908d2b9dd7f6ae359f7e2e93173845e5e7e3a5f1d82d9c4994e6066f1749f111aec44d60b50b1ca4cb6d45dbc580b4657c27a0376afeffcf10db58d900f5e182e3c50ef74969ea16c7726c549757cc23523c369587da7293784891cfbd6e3470b128536365717433a0baf2f5d38f664da6bb66cf93b625d8e123d9f97c705470565a9c019c6860626e5d0b512aae876d9d7e68bae4df2967547cb1be68faeb645c9d0bc5c1963ed10aa6b36de7d7cad1103f6988b77451bddb33d2cc08806c92076bd539bc0e0af349c53306b2312cb052f9befd4e3bf6aabb5f893e908917775b62bff23294dbbe3a1cd8e6cc1c35b4801887b646a6f81f17fcddba7b592e3133393c16194fac7431abf2f5485ed711db282183c819e08ebaa8a8d7fe3af8caa085a7639a832001457dfb9128a8061142ad0335629ff23ff9cfeb3c337d7a51a6fbf00b9e34c52e1c9195c969bd4e7a0bfd51d5c5bed9c1167e71f0aa83cc32edfbefa9f4d3e0174ca85182eec9f3a09f6a6c0df6377a510d731206fa80a50bb6abe29085058f16212212a60eec8f049fecb92d8c8e0a84bc021352bfecbeddde993839f614c3dac0a3ee37543f9b412b16199dc158e23b544619e312724bb6d7c3153ed9de791d764a366b389af13c58bf8a8d90481a467657cdd2986268250628d0c10e385c58c6191e6fbe05191bcc04f133f2cea72c1c4848930bd7ba8cac54661072113fb278869e07bb8587f91392933374d017bcbe18869ff2c22b28cc10510d9853292803328be4fb0e80495e8bb8d271f5b889636b5fe28e79f1b850f8658246ce9b6a1e7b49fc06db7143e8fe0b4f2b0c5523a5c985e929f70af28d0bdd1a90a808f977f597c7c778c489e98d3bd8910d31ac0f7c6f67e02e6e4e1bdefb994c6098953f34636ba2b6ca20a4721d2b26a886722ff1c9a7e5ff1cf48b4ad1582d3f4e4a1004f3b20d8c5a2b71387a4254ad933ebc52f075ae229646b6f6aed19a5e372cf295081401eb893ff599b3f9acc0c0d3e7d328921deb59612076801e8cd61592107b5c67c79b846595cc6320c395b46362cbfb909fdb236ad2411b4e4883810a074b840464689986c3f8a8091827e17c32755d8fb3687ba3ba49f342c77f5a1f89bec83d811446e1a467139213d640b6a7424ba1e0000000000000000000000000000000000000000000000000000000000",
     ],
     validatorBalances: [137.492073144, 64.03884023],
+  },
+  {
+    description: "Both validators have earned from consensus rewards",
+    // Slot 12157779
+    blockRoot:
+      "0xc89da37b667e62431891cdf55a4c6e9ba9ec1d8202f4f1836a701272e6a9f6c2",
+    validators: [1930685, 1998611],
+    firstPendingDepositSlot: 12108371,
+    firstPendingDeposit: {
+      slot: 12108371,
+      block: 22886624,
+      blockRoot:
+        "0xd4311b2dacf225ce3c6334ba236798da3a19a070fffd9732f3f3cc839b8b6f1f",
+    },
+    firstPendingDepositSlotProof:
+      "0x0000000000000000000000000000000000000000000000000000000000000000f5a5fd42d16a20302798ef6ed309979b43003d2320d9f0e8ea9831a92759fb4b45c3ef2a654fcc872e44abb7289d4cca2dff5ec0234434f20e7a19301e39082c3814bdb0c9dbe7bf4e5e9a9d4bfbd6cec3fafe293ab383e97ba02b6d82756943d048cb439fd145acdd1daa1cb7e78914649a4215fe68cedb85344d6776af0de51f1d576d950a66f2f42856502e336733afda95e0870915c6c6720a88c338b1e4bf59da495c5c8546d9c2e9d55cb2df148436e80a90c3aa77a23e5e019ea1ff2ea448abb2e668b3ae34c48fce9fe5b443eac9a863cfb1500b5b7b9fb2e9fb7e474b2086557fa211bb1e14c3b1d95eecae980740a68af1e16515141ad0823afe434adf0303428b1d8ef5b9399289981d39c6db2e3b2482dbe5c18eaef38754d8d3c96e041ecbac3f314ca332ef1ed7e0a822de7d8d3166b68c6f95b3a5bc62ac8f58ac3aa4fd7e49d2d9d40b61377096cf0285992a311da90032024434810700dfb42da151845cf7906035deb3aac4f8e798d2c07f7c3a66684285790ec921fab00caeff6de16bffd580548d75df90b51749254de73f371ee5373092d0d46e5501d631e011495ca08a7bb9197e93590eaaf45a8251d1577d71807da7f237316e42131c6df72b043d54dcc0001a1bb3c6723c40897c1265b75391c805f80d225d05750a2b141b8659fde4e1ca4da5053eeb26083cb6632c96ebc165f0e84ce795cab58d900f5e182e3c50ef74969ea16c7726c549757cc23523c369587da7293784d49a7502ffcfb0340b1d7885688500ca308161a7f96b62df9d083b71fcc8f2bb8fe6b1689256c0d385f42f5bbe2027a22c1996e110ba97c171d3e5948de92beb8d0d63c39ebade8509e0ae3c9c3876fb5fa112be18f905ecacfecb92057603ab95eec8b2e541cad4e91de38385f2e046619f54496c2382cb6cacd5b98c26f5a4f893e908917775b62bff23294dbbe3a1cd8e6cc1c35b4801887b646a6f81f17fcddba7b592e3133393c16194fac7431abf2f5485ed711db282183c819e08ebaa8a8d7fe3af8caa085a7639a832001457dfb9128a8061142ad0335629ff23ff9cfeb3c337d7a51a6fbf00b9e34c52e1c9195c969bd4e7a0bfd51d5c5bed9c1167e71f0aa83cc32edfbefa9f4d3e0174ca85182eec9f3a09f6a6c0df6377a510d731206fa80a50bb6abe29085058f16212212a60eec8f049fecb92d8c8e0a84bc021352bfecbeddde993839f614c3dac0a3ee37543f9b412b16199dc158e23b544619e312724bb6d7c3153ed9de791d764a366b389af13c58bf8a8d90481a467654c3100000000000000000000000000000000000000000000000000000000000016cef8a9b89bb43b5083deaa0256d929441637e7f3d9665ab5baf241d3a9bf2ca905124b9d1608612ed56452ac79940b2c34ee1e42fd63ba2f0b684d6bcce2abc145378404877b3350e692372912be480b0d9674156f9d673ec8747247dfa629c78009fdf07fc56a11f122370658a353aaa542ed63e44c4bc15ff4cd105ab33c536d98837f2dd165a55d5eeae91485954472d56f246df256bf3cae19352a123cab377f5dfd70fe4f288db18831762fb896617f0dafae6a0c538b056091de510563514282d1ff5d555bef25f9e20829ee06f77ded97c4a813edd5a5e8e46d29c9b554c335b1c056a586bf62cb30549a2f79403604cd68a337c262c49593a3eca9ad461af32dd665e0682aa8b99ee20c4059d607e2abe7144525b026ccaccac334",
+    balancesContainerRoot:
+      "0x916a1eb4e0c346e87025e6dac37ec3a4cf42a9151ecd7fc33beb3498177ad570",
+    validatorContainerProof:
+      "0xed1943a53890b9301dabfbcc836e0d6abac3ff1366892781490631f938d84984093609ae83e3d14053cef57658d603fb5cefc11b2a4da54cb74a41dac4d51368e9caa48d343334c81f24a1a2e095575fa7156cb722dea496e011bc8ac09ff37bb5053bef3dcae7e54906fe52aecb5e96858fe46f9cc17f0990810cf5acbab83535423aa755d710f11c8a98b437693c6372834a2f91098e3e36168e96f6b5331619310b146b011abaacbd0eb472fb58a7d829ce6f0fa3d073b4df6f60cdd3479763514282d1ff5d555bef25f9e20829ee06f77ded97c4a813edd5a5e8e46d29c9b554c335b1c056a586bf62cb30549a2f79403604cd68a337c262c49593a3eca9ad461af32dd665e0682aa8b99ee20c4059d607e2abe7144525b026ccaccac334",
+    validatorBalanceLeaves: [
+      "0x08c0c8730700000003297a032000000068d0c873070000005e15c97307000000",
+      "0x4299d975070000005a74b673070000003b717c27080000003c9c28e90e000000",
+    ],
+    validatorBalanceProofs: [
+      "0xc315c973070000002d05c973070000007d21c87307000000fb1ec973070000009c63543bc9a30dc5cd7d84a15f4436e52f64e6e13e7becf227ca2c4b647d6f18c17abe1a8eaf29f99c2fb4f71eb7b775b6677508088c6c6c0df3fcd3fb131fceb0aaaa7b94c2dea4451f3e9ff3e0e22e411e60de3be4e21f0dd680c8175b37aac51476cea0ce892f545aef746f671b0631e3d256c27b3e33d53008fd538da5233532c2d961b3546de59377a2790216e2006ec9efd9ce1c3abf78c1e4975cbaa220a513034a6bf36a591c583d1b21fb3b7dab107c13f7c04a0e096a4668c593069a596b6cece8ab6abca72a6f21ab60b1d4435b1554fd59638e22d6f9b09b6dfe31dee10ac6f79320b26feddab5b65ae2218657cb54a952411470fc6dd965ba8100aefe97d0473b44c5f52d21f747831f5836f09fdca33b3290983640f22c9d2a6fc574fad7e412bcdab5c6b9a7ac09132450c47a9c1726c37fe5e4d79bf2db220cabe39d6d1fd3ff23a6f9e2039f5334637b968c78f98f8a8815a6f266a1da859a9f4c85f627e05f969aa764307ac226f8b89d39456eff2fc28f440f99a4ad5d0243c7dd9605b3b6d33c9d9853faea32d1146ed2161d7a84e5db895ed02211233bffc520354d986aee7850a96464a023a0306e68f5f6c43c4d9273ed61a6e31f3b397d632647fc7ebd56d8ebad6f33fef1598bcc25862bf470042e14d788828314c5b57712546918630b31a683e69c370511e6810ae81f4de80b8926453ea500db852159999612ca027445128d2310aab7da82d9d095e3e3715a3da466c8d6a8ad4f19dde4ebb4c10fd009264376f04723c53777862e887e2069ef5142f1f5ecf893e908917775b62bff23294dbbe3a1cd8e6cc1c35b4801887b646a6f81f17fcddba7b592e3133393c16194fac7431abf2f5485ed711db282183c819e08ebaa8a8d7fe3af8caa085a7639a832001457dfb9128a8061142ad0335629ff23ff9cfeb3c337d7a51a6fbf00b9e34c52e1c9195c969bd4e7a0bfd51d5c5bed9c1167e71f0aa83cc32edfbefa9f4d3e0174ca85182eec9f3a09f6a6c0df6377a510d731206fa80a50bb6abe29085058f16212212a60eec8f049fecb92d8c8e0a84bc021352bfecbeddde993839f614c3dac0a3ee37543f9b412b16199dc158e23b544619e312724bb6d7c3153ed9de791d764a366b389af13c58bf8a8d90481a467657cdd2986268250628d0c10e385c58c6191e6fbe05191bcc04f133f2cea72c1c4848930bd7ba8cac54661072113fb278869e07bb8587f91392933374d017bcbe18869ff2c22b28cc10510d9853292803328be4fb0e80495e8bb8d271f5b889636b5fe28e79f1b850f8658246ce9b6a1e7b49fc06db7143e8fe0b4f2b0c5523a5c985e929f70af28d0bdd1a90a808f977f597c7c778c489e98d3bd8910d31ac0f7c6f67e02e6e4e1bdefb994c6098953f34636ba2b6ca20a4721d2b26a886722ff1c9a7e5ff1cf48b4ad1582d3f4e4a1004f3b20d8c5a2b71387a4254ad933ebc52f075ae229646b6f6aed19a5e372cf295081401eb893ff599b3f9acc0c0d3e7d328921deb59612076801e8cd61592107b5c67c79b846595cc6320c395b46362cbfb909fdb236ad2411b4e4883810a074b840464689986c3f8a8091827e17c32755d8fb3687ba3ba49f342c77f5a1f89bec83d811446e1a467139213d640b6a7417be1e0000000000000000000000000000000000000000000000000000000000",
+      "0x18f69374070000000674b673070000004eaeb67307000000d29eb67307000000d5b197d28f7edc0f9e79ff2db8e425f6551290d8689168acd853b41a5b9af96dcd0288729d92537a0c80f0e9de1687b14d9992637d58486993152f93e5fea1cb36d7908abf6cfd852cda172ec7a4dda3d9d5ba2e7087aedd055f2feab3d45bfce33396c4bd3402e2190f3e65cff6e20d0ddfc7f6c4a65c6c693f139029437a4a9be9b1b49f759daddbbc3a36b05db544daf9750674d3e25afd683f4c56bd4bba7b2deacc0eddb6f0f9c9dc16c6c1fcb9f58787563ff596e5924656f00641456c9cc77230f7f6b9a04bd8cf29245264ff0e482a0ab33b4eaabd348e787f6dc2258e84632ec5110bd27177397af4dacf25e8a7d09fcb23b397911f2acbf9d66ccd81da646c80b12846687ab8cb5ccdf85182214087fa4eeb59585d2b0357cf21669c1b49f2ce4552d1cf7d22b51eb4c8031dc0ed6f3f35b4825a14be94b2243c5c561e59b318c65127415c8e8ff0e91909e693b2747a5a35c585feba2df10f8fa4bfaabe4564d3c44f4d60cbdc32898004c551814b6c68d3ebad1297b25e9ff1057024f829cd2163f6fe484e7ec6b2b1655454541c826b8f38327678c24bd43e6cb58d900f5e182e3c50ef74969ea16c7726c549757cc23523c369587da72937845080e2a965d075349c56d6771b7041356541ec8a37b6b72040a2a212006e912114c5b57712546918630b31a683e69c370511e6810ae81f4de80b8926453ea500db852159999612ca027445128d2310aab7da82d9d095e3e3715a3da466c8d6a8ad4f19dde4ebb4c10fd009264376f04723c53777862e887e2069ef5142f1f5ecf893e908917775b62bff23294dbbe3a1cd8e6cc1c35b4801887b646a6f81f17fcddba7b592e3133393c16194fac7431abf2f5485ed711db282183c819e08ebaa8a8d7fe3af8caa085a7639a832001457dfb9128a8061142ad0335629ff23ff9cfeb3c337d7a51a6fbf00b9e34c52e1c9195c969bd4e7a0bfd51d5c5bed9c1167e71f0aa83cc32edfbefa9f4d3e0174ca85182eec9f3a09f6a6c0df6377a510d731206fa80a50bb6abe29085058f16212212a60eec8f049fecb92d8c8e0a84bc021352bfecbeddde993839f614c3dac0a3ee37543f9b412b16199dc158e23b544619e312724bb6d7c3153ed9de791d764a366b389af13c58bf8a8d90481a467657cdd2986268250628d0c10e385c58c6191e6fbe05191bcc04f133f2cea72c1c4848930bd7ba8cac54661072113fb278869e07bb8587f91392933374d017bcbe18869ff2c22b28cc10510d9853292803328be4fb0e80495e8bb8d271f5b889636b5fe28e79f1b850f8658246ce9b6a1e7b49fc06db7143e8fe0b4f2b0c5523a5c985e929f70af28d0bdd1a90a808f977f597c7c778c489e98d3bd8910d31ac0f7c6f67e02e6e4e1bdefb994c6098953f34636ba2b6ca20a4721d2b26a886722ff1c9a7e5ff1cf48b4ad1582d3f4e4a1004f3b20d8c5a2b71387a4254ad933ebc52f075ae229646b6f6aed19a5e372cf295081401eb893ff599b3f9acc0c0d3e7d328921deb59612076801e8cd61592107b5c67c79b846595cc6320c395b46362cbfb909fdb236ad2411b4e4883810a074b840464689986c3f8a8091827e17c32755d8fb3687ba3ba49f342c77f5a1f89bec83d811446e1a467139213d640b6a7417be1e0000000000000000000000000000000000000000000000000000000000",
+    ],
+    validatorBalances: [137.497291011, 64.041294908],
   },
 ];
 
@@ -1242,7 +1273,86 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
       return { beaconBlockRoot, timestamp: lastBlock.timestamp };
     };
 
-    describe("When no pending deposits and no active validators", () => {
+    const assertBalances = async ({
+      firstPendingDepositBlockNumber,
+      wethAmount,
+      ethAmount,
+      balancesProof,
+      pendingDepositAmount,
+    }) => {
+      const { beaconOracle, compoundingStakingSSVStrategy, weth } = fixture;
+
+      // If the block number of the first pending deposit is not overridden
+      if (!firstPendingDepositBlockNumber) {
+        firstPendingDepositBlockNumber =
+          balancesProof.firstPendingDeposit.block;
+      }
+
+      if (wethAmount > 0) {
+        // Set some WETH in the strategy
+        await setERC20TokenBalance(
+          compoundingStakingSSVStrategy.address,
+          weth,
+          wethAmount.toString()
+        );
+      }
+
+      if (ethAmount > 0) {
+        // Set some execution rewards
+        await setBalance(
+          compoundingStakingSSVStrategy.address,
+          parseEther(ethAmount.toString())
+        );
+      }
+
+      await snapBalances(balancesProof.blockRoot);
+
+      await beaconOracle.mapSlot(
+        firstPendingDepositBlockNumber,
+        balancesProof.firstPendingDeposit.slot,
+        balancesProof.firstPendingDeposit.blockRoot
+      );
+
+      // Verify balances with pending deposits and active validators
+      const tx = await compoundingStakingSSVStrategy.verifyBalances(
+        balancesProof
+      );
+
+      const totalDepositsWei = parseEther(pendingDepositAmount.toString());
+      const wethBalance = parseEther(wethAmount.toString());
+      const totalValidatorBalance = balancesProof.validatorBalances
+        .map((balance) => parseEther(balance.toString()))
+        .reduce((sum, balance) => sum.add(balance), parseEther("0"));
+      const ethBalance = parseEther(ethAmount.toString());
+      const totalBalance = totalDepositsWei
+        .add(wethBalance)
+        .add(totalValidatorBalance)
+        .add(ethBalance);
+
+      await expect(tx)
+        .to.emit(compoundingStakingSSVStrategy, "BalancesVerified")
+        .withNamedArgs({
+          totalDepositsWei,
+          totalValidatorBalance,
+          wethBalance,
+          ethBalance,
+        });
+
+      const verifiedBalance =
+        await compoundingStakingSSVStrategy.lastVerifiedEthBalance();
+
+      expect(verifiedBalance).to.equal(totalBalance);
+
+      return {
+        totalDepositsWei,
+        wethBalance,
+        totalValidatorBalance,
+        ethBalance,
+        totalBalance,
+      };
+    };
+
+    describe("When no execution rewards (ETH), no pending deposits and no active validators", () => {
       const verifyBalancesNoDepositsOrValidators = async (beaconBlockRoot) => {
         const { compoundingStakingSSVStrategy } = fixture;
 
@@ -1380,13 +1490,37 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
         await snapBalances();
       });
     });
-    describe("When pending deposit and active validators", () => {
-      let beforeDepositsBlock;
+    describe("When WETH, ETH, one pending deposit and 2 active validators", () => {
+      let depositsBlockBefore;
       beforeEach(async () => {
-        const { beaconOracle, compoundingStakingSSVStrategy } = fixture;
+        depositsBlockBefore = await ethers.provider.getBlockNumber();
 
-        beforeDepositsBlock = await ethers.provider.getBlockNumber();
+        // register, stake, verify validator and verify deposit
+        await processValidator(testValidators[0], "VERIFIED_DEPOSIT");
+        await topupValidator(
+          testValidators[0],
+          testValidators[0].depositProof.depositAmount - 1,
+          "VERIFIED_DEPOSIT"
+        );
 
+        await processValidator(testValidators[1], "VERIFIED_DEPOSIT");
+        const pendingDepositAmount =
+          testValidators[1].depositProof.depositAmount - 1;
+        await topupValidator(testValidators[1], pendingDepositAmount, "STAKED");
+
+        await assertBalances({
+          firstPendingDepositBlockNumber: depositsBlockBefore,
+          pendingDepositAmount,
+          wethAmount: 10,
+          ethAmount: 0.987,
+          balancesProof: testBalancesProofs[0],
+        });
+      });
+      it("should account for pending deposit", async () => {});
+    });
+    describe("When WETH, ETH, no pending deposits and 2 active validators", () => {
+      let balancesBefore;
+      beforeEach(async () => {
         // register, stake, verify validator and verify deposit
         await processValidator(testValidators[0], "VERIFIED_DEPOSIT");
         await topupValidator(
@@ -1399,47 +1533,52 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
         await topupValidator(
           testValidators[1],
           testValidators[1].depositProof.depositAmount - 1,
-          "STAKED"
+          "VERIFIED_DEPOSIT"
         );
 
-        // Leave some WETH in the strategy
-        await depositToStrategy(10);
-
-        await snapBalances(testBalancesProofs[0].blockRoot);
-
-        await beaconOracle.mapSlot(
-          beforeDepositsBlock,
-          testBalancesProofs[0].firstPendingDeposit.slot,
-          testBalancesProofs[0].firstPendingDeposit.blockRoot
-        );
-
-        // Verify balances with pending deposits and active validators
-        await compoundingStakingSSVStrategy.verifyBalances(
-          testBalancesProofs[0]
-        );
+        balancesBefore = await assertBalances({
+          pendingDepositAmount: 0,
+          wethAmount: 10,
+          ethAmount: 0.987,
+          balancesProof: testBalancesProofs[1],
+        });
       });
       it("consensus rewards are earned by the validators", async () => {
-        const { beaconOracle, compoundingStakingSSVStrategy } = fixture;
+        const balancesAfter = await assertBalances({
+          pendingDepositAmount: 0,
+          wethAmount: 10,
+          ethAmount: 0.987,
+          balancesProof: testBalancesProofs[2],
+        });
 
-        await snapBalances(testBalancesProofs[1].blockRoot);
-
-        await beaconOracle.mapSlot(
-          beforeDepositsBlock,
-          testBalancesProofs[1].firstPendingDeposit.slot,
-          testBalancesProofs[1].firstPendingDeposit.blockRoot
+        // Check the increase in consensus rewards
+        const consensusRewards = parseEther("0.007672545");
+        expect(balancesAfter.totalValidatorBalance).to.equal(
+          balancesBefore.totalValidatorBalance.add(consensusRewards)
         );
-
-        // Verify balances with pending deposits and active validators
-        await compoundingStakingSSVStrategy.verifyBalances(
-          testBalancesProofs[1]
+        expect(balancesAfter.totalBalance).to.equal(
+          balancesBefore.totalBalance.add(consensusRewards)
         );
+      });
+      it("execution rewards are earned as ETH in the strategy", async () => {
+        const balancesAfter = await assertBalances({
+          pendingDepositAmount: 0,
+          wethAmount: 10,
+          ethAmount: 1,
+          balancesProof: testBalancesProofs[1],
+        });
 
-        // TODO check balances in BalancesVerified
-        // Check lastVerifiedEthBalance has increased
+        // Check the increase in execution rewards
+        const executionRewards = parseEther("0.013");
+        expect(balancesAfter.ethBalance).to.equal(
+          balancesBefore.ethBalance.add(executionRewards)
+        );
+        expect(balancesAfter.totalBalance).to.equal(
+          balancesBefore.totalBalance.add(executionRewards)
+        );
       });
     });
   });
-
   /*
   it("Deposit alternate deposit_data_root ", async () => {
     const { depositContractUtils } = fixture;

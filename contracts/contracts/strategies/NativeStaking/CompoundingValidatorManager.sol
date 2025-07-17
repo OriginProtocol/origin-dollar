@@ -763,7 +763,7 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
             for (uint256 i = 0; i < verifiedValidatorsCount; ++i) {
                 // verify validator's balance in beaconBlock.state.balances to the
                 // beaconBlock.state.balances container root
-                uint256 validatorBalance = IBeaconProofs(BEACON_PROOFS)
+                uint256 validatorBalanceGwei = IBeaconProofs(BEACON_PROOFS)
                     .verifyValidatorBalance(
                         params.balancesContainerRoot,
                         params.validatorBalanceLeaves[i],
@@ -772,11 +772,11 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
                         IBeaconProofs.BalanceProofLevel.Container
                     );
 
-                // total validator balances
-                totalValidatorBalance += validatorBalance;
+                // convert Gwei balance to Wei and add to the total validator balance
+                totalValidatorBalance += uint256(validatorBalanceGwei) * 1 gwei;
 
                 // If the validator balance is zero
-                if (validatorBalance == 0) {
+                if (validatorBalanceGwei == 0) {
                     // Store the validator state as exited
                     validatorState[
                         verifiedValidators[i].pubKeyHash

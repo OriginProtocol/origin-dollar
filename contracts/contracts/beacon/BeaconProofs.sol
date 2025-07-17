@@ -51,14 +51,15 @@ contract BeaconProofs {
     /// This is the witness hashes concatenated together starting from the leaf node.
     /// @param validatorIndex The validator index to verify the balance for
     /// @param level The level of the balance proof, either Container or BeaconBlock
+    /// @return validatorBalanceGwei The balance in Gwei of the validator at the given index
     function verifyValidatorBalance(
         bytes32 root,
         bytes32 validatorBalanceLeaf,
         bytes calldata balanceProof,
         uint64 validatorIndex,
         BeaconProofsLib.BalanceProofLevel level
-    ) external view returns (uint256 validatorBalance) {
-        validatorBalance = BeaconProofsLib.verifyValidatorBalance(
+    ) external view returns (uint256 validatorBalanceGwei) {
+        validatorBalanceGwei = BeaconProofsLib.verifyValidatorBalance(
             root,
             validatorBalanceLeaf,
             balanceProof,
