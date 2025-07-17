@@ -6,6 +6,7 @@ const {
   deployBeaconContracts,
   configureOETHVault,
 } = require("../deployActions");
+const addresses = require("../../utils/addresses.js");
 
 const { withConfirmation } = require("../../utils/deploy");
 const { impersonateAndFund } = require("../../utils/signers");
@@ -67,8 +68,8 @@ const mainExport = async () => {
   );
 
   await withConfirmation(
-    nativeStakingSSVStrategy.connect(sGovernor).setRegistrator(governorAddr)
-  );
+    nativeStakingSSVStrategy.connect(sGovernor).setRegistrator(addresses.hoodi.defenderRelayer)
+  );  
   await withConfirmation(
     nativeStakingSSVStrategy.connect(sGovernor).addTargetStrategy(compoundingSsvStrategy.address)
   );
@@ -78,7 +79,7 @@ const mainExport = async () => {
     compoundingSsvStrategy.connect(sGovernor).addSourceStrategy(nativeStakingSSVStrategy.address)
   );
   await withConfirmation(
-    compoundingSsvStrategy.connect(sGovernor).setRegistrator(governorAddr)
+    compoundingSsvStrategy.connect(sGovernor).setRegistrator(addresses.hoodi.defenderRelayer)
   );
 
   await withConfirmation(
