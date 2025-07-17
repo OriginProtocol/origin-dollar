@@ -183,7 +183,38 @@ const testValidators = [
 
 const testBalancesProofs = [
   {
-    description: "Only the first validator has a balance",
+    description: "Before any had a balance",
+    // Slot 11787326
+    blockRoot:
+      "0x2632705c197d5448f6d386a40f145b6d9ee769755b6ecf712f79fc44944570f3",
+    validators: [1930685, 1998611, 1897126],
+    firstPendingDepositSlot: 11780284,
+    firstPendingDeposit: {
+      slot: 11780284,
+      block: 22560770,
+      blockRoot:
+        "0xf7ef2f8e9cac0216c0f04521571a9335f0f25dde08c5ef46df7825933248e08e",
+    },
+    firstPendingDepositSlotProof:
+      "0x0000000000000000000000000000000000000000000000000000000000000000f5a5fd42d16a20302798ef6ed309979b43003d2320d9f0e8ea9831a92759fb4b1c132e82844719f0721c3a0d79ac7f3a547f9b73c8597532ab5d28f76d6ac13fcdc2284512f62aa94961dbec84440bf7fc4580c699c6a7cc2beaa43b8b19660d270c1c9e6ade4ba231b6d025c07ba39980bf2b27679122d14eb663f9ef3436f54e4f68acaa184332565e6743b37f1a969b19a5821528fecc9a1baca011b1981e5efb30323874109b9730b156d536f8ebdb59f0645dd3953ac5c937204f79156cd2735b9e437a9809ac224e1f7c3f6a3f9d8189ed243d242b26bb84996672093b17014c6312d1eb5f670adedc3c69eb0e0b94f977a416173eb3ea3c2a0b0d6e1b434448d0999c0f6b0d4c7f292a88120c54351748a057951be833f625b43664da8db91f42868797f3adc6af452383c7fca8f1fff57af1d862cdbfb52cbca4d9a142de1f2f17fe0923f28edb3adedf42c72aa220eac59ede312a9275eeabcf5a7e06eddfcd3592815bc85ff4c935b08fafaf127e85d40c0430bec6898ed239e97cffff0ad7e659772f9534c195c815efc4014ef1e1daed4404c06385d11192e92b6cf04127db05441cd833107a52be852868890e4317e6a02ab47683aa75964220b7d05f875f140027ef5118a2247bbb84ce8f2f0f1123623085daf7960c329f5fdf6af5f5bbdb6be9ef8aa618e4bf8073960867171e29676f8b284dea6a08a85eb58d900f5e182e3c50ef74969ea16c7726c549757cc23523c369587da7293784d49a7502ffcfb0340b1d7885688500ca308161a7f96b62df9d083b71fcc8f2bb8fe6b1689256c0d385f42f5bbe2027a22c1996e110ba97c171d3e5948de92beb8d0d63c39ebade8509e0ae3c9c3876fb5fa112be18f905ecacfecb92057603ab95eec8b2e541cad4e91de38385f2e046619f54496c2382cb6cacd5b98c26f5a4f893e908917775b62bff23294dbbe3a1cd8e6cc1c35b4801887b646a6f81f17fcddba7b592e3133393c16194fac7431abf2f5485ed711db282183c819e08ebaa8a8d7fe3af8caa085a7639a832001457dfb9128a8061142ad0335629ff23ff9cfeb3c337d7a51a6fbf00b9e34c52e1c9195c969bd4e7a0bfd51d5c5bed9c1167e71f0aa83cc32edfbefa9f4d3e0174ca85182eec9f3a09f6a6c0df6377a510d731206fa80a50bb6abe29085058f16212212a60eec8f049fecb92d8c8e0a84bc021352bfecbeddde993839f614c3dac0a3ee37543f9b412b16199dc158e23b544619e312724bb6d7c3153ed9de791d764a366b389af13c58bf8a8d90481a46765be030000000000000000000000000000000000000000000000000000000000002a3777ca27bf5deda8106113e75209be1bdedd27498b83d8c81519263d3793cb21c31acb067ec9840693a9258cb460696dda1452cc8e096b3d2c830fea9242e6f3513a61a01b7dddd72bb498711fa6bb524d82ec98bab47e63bf44006482507bc78009fdf07fc56a11f122370658a353aaa542ed63e44c4bc15ff4cd105ab33c536d98837f2dd165a55d5eeae91485954472d56f246df256bf3cae19352a123ca6c5b795997b9cd992a9dab87dd0d7805ecbada7a8be0478f46f1096454588be6c86c5fb4261abc9b4d7e992cffc63bb34a4116fcecb7aaed26a0d0b9945fa94b0615e0bfdcfc886bf0155b1caef376a62b7c976b88414f3ad624054c9f892ff3596bd8236c5a1f31b92a52ce81f575507a28b34c40e1039dee1351747b038fa",
+    balancesContainerRoot:
+      "0xd23e0a1aba7d695800ec194fb3ef631efd007e3c800afae28e196ec7cd3a4f04",
+    validatorContainerProof:
+      "0x840c7b6b8e4d5c622a512742a78eaf87421a82469216b211157d9329bb3d26164a5389a221f4bddf742dd667cdb872ec0c8063bd171d35c530b255344e4a90ab50a6f8b54bf6ea8e89ca4cc2a0366e1f00ea86afa9fdb6a4cbe0f5d9b8d054e3973f6a817349f52706bcf5829558ee1a79ff0b888355ad0a6bd3b30affbdc60e9563af66db5fca48caf71a77e2ef381cd67ac0824b221d8d55cf9ff8fe0ad69e29d34bd172d8d333b7f839f5e8b5b73bb8bcf998cfad0ac8e95b073a18e4f1396c86c5fb4261abc9b4d7e992cffc63bb34a4116fcecb7aaed26a0d0b9945fa94b0615e0bfdcfc886bf0155b1caef376a62b7c976b88414f3ad624054c9f892ff3596bd8236c5a1f31b92a52ce81f575507a28b34c40e1039dee1351747b038fa",
+    validatorBalanceLeaves: [
+      "0x0000000000000000000000000000000000000000000000000000000000000000",
+      "0x0000000000000000000000000000000000000000000000000000000000000000",
+      "0x0000000000000000000000000000000000000000000000000000000000000000",
+    ],
+    validatorBalanceProofs: [
+      "0x00405973070000000040597307000000004059730700000000405973070000006b22e4c31c927e650119b5663965f7eb42e95192fe363caeb7531cbb0f94fcb0df5629268ede2323ab7cb7196a7146a72373961f5bb96be7d9c2e1af3fd0fabfd77ad2e238c5087ceec41f87465eb35684dfad8094c69ebe5f167017e930ba89536d98837f2dd165a55d5eeae91485954472d56f246df256bf3cae19352a123c61c9a747d8e05e63cebfcba1f205fd80224613d1f2c60e7e1cfc0d8f6f3c4e13336d7f8815e9eeeb4f945973d091a9a0ec784123981cd6abade1fca86b330c4187eb0ddba57e35f6d286673802a4af5975e22506c7cf4c64bb6be5ee11527f2ca89857d266f5c5768ee796658b771c69cca41ecacd5563dc7b686897563c2e25506d86582d252405b840018792cad2bf1259f1ef5aa5f887e13cb2f0094f51e189decf2fc19d0188f06217e4c445fac4f964dab386b94cb935e0c8dc57e7a7b03b732350111182a3f68497e70f344684e1bff5bdf9edaf46fcc578ee576537757fa2c0a377185c1925cf22f403f3b68522683ebb3db0fcb7dc5813744032b0a2df6af5f5bbdb6be9ef8aa618e4bf8073960867171e29676f8b284dea6a08a85e69bff4ae09b54cfa7992351b91770e9fb793154ccc9f2c937bc2052d6bdd089cd49a7502ffcfb0340b1d7885688500ca308161a7f96b62df9d083b71fcc8f2bb46ec3096a79839470ed5a4f469ca0450fa631b440b25dad09e48d834bbc86c3759a1010b5db53cc78037a6e7dc3a4e0e69079ace3c787a3d5fd6e5d1ef82836900e595b3dae1e07369bedee5707172cce49ee0dafa3fcd61de27267142c8452df893e908917775b62bff23294dbbe3a1cd8e6cc1c35b4801887b646a6f81f17fcddba7b592e3133393c16194fac7431abf2f5485ed711db282183c819e08ebaa8a8d7fe3af8caa085a7639a832001457dfb9128a8061142ad0335629ff23ff9cfeb3c337d7a51a6fbf00b9e34c52e1c9195c969bd4e7a0bfd51d5c5bed9c1167e71f0aa83cc32edfbefa9f4d3e0174ca85182eec9f3a09f6a6c0df6377a510d731206fa80a50bb6abe29085058f16212212a60eec8f049fecb92d8c8e0a84bc021352bfecbeddde993839f614c3dac0a3ee37543f9b412b16199dc158e23b544619e312724bb6d7c3153ed9de791d764a366b389af13c58bf8a8d90481a467657cdd2986268250628d0c10e385c58c6191e6fbe05191bcc04f133f2cea72c1c4848930bd7ba8cac54661072113fb278869e07bb8587f91392933374d017bcbe18869ff2c22b28cc10510d9853292803328be4fb0e80495e8bb8d271f5b889636b5fe28e79f1b850f8658246ce9b6a1e7b49fc06db7143e8fe0b4f2b0c5523a5c985e929f70af28d0bdd1a90a808f977f597c7c778c489e98d3bd8910d31ac0f7c6f67e02e6e4e1bdefb994c6098953f34636ba2b6ca20a4721d2b26a886722ff1c9a7e5ff1cf48b4ad1582d3f4e4a1004f3b20d8c5a2b71387a4254ad933ebc52f075ae229646b6f6aed19a5e372cf295081401eb893ff599b3f9acc0c0d3e7d328921deb59612076801e8cd61592107b5c67c79b846595cc6320c395b46362cbfb909fdb236ad2411b4e4883810a074b840464689986c3f8a8091827e17c32755d8fb3687ba3ba49f342c77f5a1f89bec83d811446e1a467139213d640b6a74bc751d0000000000000000000000000000000000000000000000000000000000",
+      "0x0000000000000000000000000000000000000000000000000000000000000000f5a5fd42d16a20302798ef6ed309979b43003d2320d9f0e8ea9831a92759fb4bdb56114e00fdd4c1f85c892bf35ac9a89289aaecb1ebd0a96cde606a748b5d71c78009fdf07fc56a11f122370658a353aaa542ed63e44c4bc15ff4cd105ab33c536d98837f2dd165a55d5eeae91485954472d56f246df256bf3cae19352a123c9efde052aa15429fae05bad4d0b1d7c64da64d03d7a1854a588c2cb8430c0d30d88ddfeed400a8755596b21942c1497e114c302e6118290f91e6772976041fa187eb0ddba57e35f6d286673802a4af5975e22506c7cf4c64bb6be5ee11527f2c26846476fd5fc54a5d43385167c95144f2643f533cc85bb9d16b782f8d7db193506d86582d252405b840018792cad2bf1259f1ef5aa5f887e13cb2f0094f51e1ffff0ad7e659772f9534c195c815efc4014ef1e1daed4404c06385d11192e92b6cf04127db05441cd833107a52be852868890e4317e6a02ab47683aa75964220b7d05f875f140027ef5118a2247bbb84ce8f2f0f1123623085daf7960c329f5fdf6af5f5bbdb6be9ef8aa618e4bf8073960867171e29676f8b284dea6a08a85eb58d900f5e182e3c50ef74969ea16c7726c549757cc23523c369587da72937845de4fb73a003937f4486b0a3ecc3f6409cf94e83333e8d7dbf08b408a6eba74d46ec3096a79839470ed5a4f469ca0450fa631b440b25dad09e48d834bbc86c3759a1010b5db53cc78037a6e7dc3a4e0e69079ace3c787a3d5fd6e5d1ef82836900e595b3dae1e07369bedee5707172cce49ee0dafa3fcd61de27267142c8452df893e908917775b62bff23294dbbe3a1cd8e6cc1c35b4801887b646a6f81f17fcddba7b592e3133393c16194fac7431abf2f5485ed711db282183c819e08ebaa8a8d7fe3af8caa085a7639a832001457dfb9128a8061142ad0335629ff23ff9cfeb3c337d7a51a6fbf00b9e34c52e1c9195c969bd4e7a0bfd51d5c5bed9c1167e71f0aa83cc32edfbefa9f4d3e0174ca85182eec9f3a09f6a6c0df6377a510d731206fa80a50bb6abe29085058f16212212a60eec8f049fecb92d8c8e0a84bc021352bfecbeddde993839f614c3dac0a3ee37543f9b412b16199dc158e23b544619e312724bb6d7c3153ed9de791d764a366b389af13c58bf8a8d90481a467657cdd2986268250628d0c10e385c58c6191e6fbe05191bcc04f133f2cea72c1c4848930bd7ba8cac54661072113fb278869e07bb8587f91392933374d017bcbe18869ff2c22b28cc10510d9853292803328be4fb0e80495e8bb8d271f5b889636b5fe28e79f1b850f8658246ce9b6a1e7b49fc06db7143e8fe0b4f2b0c5523a5c985e929f70af28d0bdd1a90a808f977f597c7c778c489e98d3bd8910d31ac0f7c6f67e02e6e4e1bdefb994c6098953f34636ba2b6ca20a4721d2b26a886722ff1c9a7e5ff1cf48b4ad1582d3f4e4a1004f3b20d8c5a2b71387a4254ad933ebc52f075ae229646b6f6aed19a5e372cf295081401eb893ff599b3f9acc0c0d3e7d328921deb59612076801e8cd61592107b5c67c79b846595cc6320c395b46362cbfb909fdb236ad2411b4e4883810a074b840464689986c3f8a8091827e17c32755d8fb3687ba3ba49f342c77f5a1f89bec83d811446e1a467139213d640b6a74bc751d0000000000000000000000000000000000000000000000000000000000",
+      "0x0000000000000000000000000000000000000000000000000000000000000000fd8187f25c25387543c0508add503dcfdffd5a1e5e41544e6829f7f431adf888db56114e00fdd4c1f85c892bf35ac9a89289aaecb1ebd0a96cde606a748b5d71ae1d28fec0eea7e663d3b9a2aa32ada4cd1357cdbe1f472073ffcd00de8943e797bbf49c70da197ef5be99efc5493d2f8457d3bb9605072922e345d037155ba5231d4ae883a37f72a275fb7abb2e1b41582019d992cf48d82f6fc81cc47b034c82fc57fe62be70b7dab4c1d5c850554ea0d0fcea196fdbc7cb0892d41a28b9047f479ed29592eba8e58e127b33fe5b5c74f86cee60fc91917dadbfc933b65cea04e643fbec5501ef7bab115dd068f7f2c941f705fa63eb2d753e1638c5a278777aa744bad98a1bc1d32b2f7706b1165b5b7ccb73d14bdce00a43bf1395318028299dfa0cccded0c481b40ce3c013f4bf56c86b2e7863b852d9e416fbe5dd70b9a5e62e4beb222f67209414ed88c753409bf8b9e5cdfe87d22c930a2d229f81d06177723a2f35321d8fcabc594d5b1cfc210676e20d3dea5777e97948f90bdc047b0e1b3743d261394059d081fa913309aa8d05f19af471d1d9f2595689c89aea5f20f5ce9a9b555211f6c149aaabd7b1d37346f1e979ef57bd53f2ff63daade1d49a7502ffcfb0340b1d7885688500ca308161a7f96b62df9d083b71fcc8f2bb46ec3096a79839470ed5a4f469ca0450fa631b440b25dad09e48d834bbc86c3759a1010b5db53cc78037a6e7dc3a4e0e69079ace3c787a3d5fd6e5d1ef82836900e595b3dae1e07369bedee5707172cce49ee0dafa3fcd61de27267142c8452df893e908917775b62bff23294dbbe3a1cd8e6cc1c35b4801887b646a6f81f17fcddba7b592e3133393c16194fac7431abf2f5485ed711db282183c819e08ebaa8a8d7fe3af8caa085a7639a832001457dfb9128a8061142ad0335629ff23ff9cfeb3c337d7a51a6fbf00b9e34c52e1c9195c969bd4e7a0bfd51d5c5bed9c1167e71f0aa83cc32edfbefa9f4d3e0174ca85182eec9f3a09f6a6c0df6377a510d731206fa80a50bb6abe29085058f16212212a60eec8f049fecb92d8c8e0a84bc021352bfecbeddde993839f614c3dac0a3ee37543f9b412b16199dc158e23b544619e312724bb6d7c3153ed9de791d764a366b389af13c58bf8a8d90481a467657cdd2986268250628d0c10e385c58c6191e6fbe05191bcc04f133f2cea72c1c4848930bd7ba8cac54661072113fb278869e07bb8587f91392933374d017bcbe18869ff2c22b28cc10510d9853292803328be4fb0e80495e8bb8d271f5b889636b5fe28e79f1b850f8658246ce9b6a1e7b49fc06db7143e8fe0b4f2b0c5523a5c985e929f70af28d0bdd1a90a808f977f597c7c778c489e98d3bd8910d31ac0f7c6f67e02e6e4e1bdefb994c6098953f34636ba2b6ca20a4721d2b26a886722ff1c9a7e5ff1cf48b4ad1582d3f4e4a1004f3b20d8c5a2b71387a4254ad933ebc52f075ae229646b6f6aed19a5e372cf295081401eb893ff599b3f9acc0c0d3e7d328921deb59612076801e8cd61592107b5c67c79b846595cc6320c395b46362cbfb909fdb236ad2411b4e4883810a074b840464689986c3f8a8091827e17c32755d8fb3687ba3ba49f342c77f5a1f89bec83d811446e1a467139213d640b6a74bc751d0000000000000000000000000000000000000000000000000000000000",
+    ],
+    validatorBalances: [0, 0, 0],
+  },
+  {
+    description: "Only the first validator had a balance",
     // Slot 12021100
     blockRoot:
       "0x3fd4bec58e89729b7d6a17f425671356c598c92c379ffa3905b696a545362076",
@@ -214,7 +245,7 @@ const testBalancesProofs = [
     validatorBalances: [137.28519386, 0, 0],
   },
   {
-    description: "Both validators have a balance",
+    description: "The first and second validators had a balance",
     // Slot 12153439
     blockRoot:
       "0x2fef147728f441c0c1b19f894bb5b5afc3e1a42baa233f29976e36a9e1a6310f",
@@ -1406,7 +1437,13 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
       const verifiedEthBalance =
         await compoundingStakingSSVStrategy.lastVerifiedEthBalance();
 
-      expect(verifiedEthBalance).to.equal(totalBalance.sub(wethBalance));
+      expect(verifiedEthBalance).to.equal(
+        totalDepositsWei.add(totalValidatorBalance).add(ethBalance)
+      );
+
+      const stratBalance = await compoundingStakingSSVStrategy.checkBalance(
+        weth.address
+      );
 
       return {
         totalDepositsWei,
@@ -1414,6 +1451,8 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
         totalValidatorBalance,
         ethBalance,
         totalBalance,
+        verifiedEthBalance,
+        stratBalance,
       };
     };
 
@@ -1558,29 +1597,80 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
           await compoundingStakingSSVStrategy.checkBalance(weth.address)
         ).to.equal(wethAmountBefore.add(wethAmountAdded));
       });
-      it("Should verify balances with registered validator", async () => {
-        const { compoundingStakingSSVStrategy, weth } = fixture;
-
+      it("Should verify balances with one registered validator", async () => {
         await processValidator(testValidators[0], "REGISTERED");
 
         const balancesAfter = await assertBalances({
           pendingDepositAmount: 0,
           wethAmount: 10,
           ethAmount: 0,
-          balancesProof: testBalancesProofs[0],
+          balancesProof: testBalancesProofs[1],
           activeValidators: [], // no active validators
         });
 
         expect(balancesAfter.wethBalance).to.equal(parseEther("10"));
-        expect(
-          await compoundingStakingSSVStrategy.lastVerifiedEthBalance()
-        ).to.equal(0);
-        expect(
-          await compoundingStakingSSVStrategy.checkBalance(weth.address)
-        ).to.equal(parseEther("10"));
+        expect(balancesAfter.verifiedEthBalance).to.equal(0);
+        expect(balancesAfter.stratBalance).to.equal(parseEther("10"));
+      });
+      it("Should verify balances with one staked validator", async () => {
+        const blockNumberBefore = await ethers.provider.getBlockNumber();
+        await processValidator(testValidators[0], "STAKED");
+
+        const balancesAfter = await assertBalances({
+          firstPendingDepositBlockNumber: blockNumberBefore,
+          pendingDepositAmount: 1,
+          wethAmount: 0,
+          ethAmount: 0,
+          balancesProof: testBalancesProofs[1],
+          activeValidators: [], // no active validators
+        });
+
+        expect(balancesAfter.totalDepositsWei).to.equal(parseEther("1"));
+        expect(balancesAfter.verifiedEthBalance).to.equal(parseEther("1"));
+        expect(balancesAfter.stratBalance).to.equal(parseEther("1"));
+      });
+      it("Should verify balances with one verified validator", async () => {
+        const blockNumberBefore = await ethers.provider.getBlockNumber();
+        await processValidator(testValidators[0], "VERIFIED_VALIDATOR");
+
+        const balancesAfter = await assertBalances({
+          firstPendingDepositBlockNumber: blockNumberBefore,
+          pendingDepositAmount: 1,
+          wethAmount: 0,
+          ethAmount: 0,
+          balancesProof: testBalancesProofs[0],
+          activeValidators: [0],
+        });
+
+        expect(balancesAfter.totalDepositsWei).to.equal(parseEther("1"));
+        expect(balancesAfter.verifiedEthBalance).to.equal(parseEther("1"));
+        expect(balancesAfter.stratBalance).to.equal(parseEther("1"));
+      });
+      it("Should verify balances with one verified deposit", async () => {
+        await processValidator(testValidators[0], "VERIFIED_DEPOSIT");
+
+        const balancesAfter = await assertBalances({
+          pendingDepositAmount: 0,
+          wethAmount: 0,
+          ethAmount: 0,
+          balancesProof: testBalancesProofs[1],
+          activeValidators: [0],
+        });
+
+        const expectedValidatorBalance = parseEther(
+          testBalancesProofs[1].validatorBalances[0].toString()
+        );
+        expect(balancesAfter.totalDepositsWei).to.equal(0);
+        expect(balancesAfter.totalValidatorBalance).to.equal(
+          expectedValidatorBalance
+        );
+        expect(balancesAfter.verifiedEthBalance).to.equal(
+          expectedValidatorBalance
+        );
+        expect(balancesAfter.stratBalance).to.equal(expectedValidatorBalance);
       });
     });
-    describe("When WETH, ETH, one pending deposit and 2 active validators", () => {
+    describe("When WETH, ETH, one pending deposit and 3 active validators", () => {
       let depositsBlockBefore;
       beforeEach(async () => {
         depositsBlockBefore = await ethers.provider.getBlockNumber();
@@ -1600,20 +1690,20 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
         await topupValidator(testValidators[1], pendingDepositAmount, "STAKED");
 
         // Third validator is later withdrawn later
-        // await processValidator(testValidators[3], "VERIFIED_DEPOSIT");
-        // await topupValidator(
-        //   testValidators[3],
-        //   testValidators[3].depositProof.depositAmount - 1,
-        //   "VERIFIED_DEPOSIT"
-        // );
+        await processValidator(testValidators[3], "VERIFIED_DEPOSIT");
+        await topupValidator(
+          testValidators[3],
+          testValidators[3].depositProof.depositAmount - 1,
+          "VERIFIED_DEPOSIT"
+        );
 
         await assertBalances({
           firstPendingDepositBlockNumber: depositsBlockBefore,
           pendingDepositAmount,
           wethAmount: 10,
           ethAmount: 0.987,
-          balancesProof: testBalancesProofs[0],
-          activeValidators: [0, 1],
+          balancesProof: testBalancesProofs[1],
+          activeValidators: [0, 1, 2],
         });
       });
       it("register validator", async () => {
@@ -1644,7 +1734,7 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
           pendingDepositAmount: 0,
           wethAmount: 10,
           ethAmount: 0.987,
-          balancesProof: testBalancesProofs[1],
+          balancesProof: testBalancesProofs[2],
           activeValidators: [0, 1],
         });
       });
@@ -1653,7 +1743,7 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
           pendingDepositAmount: 0,
           wethAmount: 10,
           ethAmount: 0.987,
-          balancesProof: testBalancesProofs[2],
+          balancesProof: testBalancesProofs[3],
           activeValidators: [0, 1],
         });
 
@@ -1671,7 +1761,7 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
           pendingDepositAmount: 0,
           wethAmount: 10,
           ethAmount: 1,
-          balancesProof: testBalancesProofs[1],
+          balancesProof: testBalancesProofs[2],
           activeValidators: [0, 1],
         });
 
