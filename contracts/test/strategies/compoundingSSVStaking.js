@@ -187,7 +187,7 @@ const testBalancesProofs = [
     // Slot 12021100
     blockRoot:
       "0x3fd4bec58e89729b7d6a17f425671356c598c92c379ffa3905b696a545362076",
-    validators: [1930685, 1998611],
+    validators: [1930685, 1998611, 1897126],
     firstPendingDepositSlot: 11971119,
     firstPendingDeposit: {
       slot: 11971119,
@@ -204,19 +204,21 @@ const testBalancesProofs = [
     validatorBalanceLeaves: [
       "0xa314c2730700000084d0d5f61f000000a50bc27307000000c2dfc17307000000",
       "0x0000000000000000000000000000000000000000000000000000000000000000",
+      "0x0000000000000000000000000000000000000000000000000000000000000000",
     ],
     validatorBalanceProofs: [
       "0x790bc27307000000880bc27307000000378ec1730700000035f9c17307000000cd3766fbbfc7c53c9a34b68a5cdd0a63e232495bc7328f6c545306d1204c17526d990b7361f6f7aa725fe0a95ae17a8b500a0be6cb10f567f03e9def30f70e1941c02204adc0fbe57974040fb37d9f1d709f2be60923954c2c87ee62d3d707a33a9f992f59bf03251b9163a73e473c56abfaa6988fbf14db481306e331f6af71ae8e551ef2680b1ea4e8e9ac2029af55685c1b0c57f89c12a045d5173e79dbe8c949f45a7ad993a9b5b28d6fd9bcec81748ff9c13a5b62599b8b37ba1cce0f113d092c5a55edb9077191fc8437eda8555dfadba7a5fed45789ca8f9aa2fd93b0cb868637225374a9b6f79acbf8843db2f00b17d9e687a387b8663c0e293c4536762c1f2ad21cf3bb509abe0acaec2f88d6140088af323ee0ba2ce58daee3caface1bf04fc14976cdb8351aed15bb7c466086255b53cfe49dcd0838d3a103809b241b650136c319536c06d684a391ddecd4c80037509d1d6dda3f579d8dcbb5342998b38d75db432cadd65f7790fb3d88166e330aa79e3edeac2227f807a72c56e4dd4f3e01d3243bdbe65c8d1b925a775bcb046e4ef14353b018ccb69ac37862f4c80979ac5e93e6ac12de7d23fd16afd43c07d7e6978e9eb5ae94a4731c6325b8dc90c641c368c566300d17bda2aa2b79ccd9d3d4796b878ad08787841f07bb3582bcc9f568223ad87aa3eef87b8db21d52202dbdd188e3fc5a05848f6779e4dc7ed11a0c65341b9faa4de38595fec48a0d4940e147b46048512094d35e3d23050dd060bfeb87461ab550829ee044efeddff8360622ca0c2c8f51d594345801f893e908917775b62bff23294dbbe3a1cd8e6cc1c35b4801887b646a6f81f17fcddba7b592e3133393c16194fac7431abf2f5485ed711db282183c819e08ebaa8a8d7fe3af8caa085a7639a832001457dfb9128a8061142ad0335629ff23ff9cfeb3c337d7a51a6fbf00b9e34c52e1c9195c969bd4e7a0bfd51d5c5bed9c1167e71f0aa83cc32edfbefa9f4d3e0174ca85182eec9f3a09f6a6c0df6377a510d731206fa80a50bb6abe29085058f16212212a60eec8f049fecb92d8c8e0a84bc021352bfecbeddde993839f614c3dac0a3ee37543f9b412b16199dc158e23b544619e312724bb6d7c3153ed9de791d764a366b389af13c58bf8a8d90481a467657cdd2986268250628d0c10e385c58c6191e6fbe05191bcc04f133f2cea72c1c4848930bd7ba8cac54661072113fb278869e07bb8587f91392933374d017bcbe18869ff2c22b28cc10510d9853292803328be4fb0e80495e8bb8d271f5b889636b5fe28e79f1b850f8658246ce9b6a1e7b49fc06db7143e8fe0b4f2b0c5523a5c985e929f70af28d0bdd1a90a808f977f597c7c778c489e98d3bd8910d31ac0f7c6f67e02e6e4e1bdefb994c6098953f34636ba2b6ca20a4721d2b26a886722ff1c9a7e5ff1cf48b4ad1582d3f4e4a1004f3b20d8c5a2b71387a4254ad933ebc52f075ae229646b6f6aed19a5e372cf295081401eb893ff599b3f9acc0c0d3e7d328921deb59612076801e8cd61592107b5c67c79b846595cc6320c395b46362cbfb909fdb236ad2411b4e4883810a074b840464689986c3f8a8091827e17c32755d8fb3687ba3ba49f342c77f5a1f89bec83d811446e1a467139213d640b6a7426451e0000000000000000000000000000000000000000000000000000000000",
       "0x0000000000000000000000000000000000000000000000000000000000000000f5a5fd42d16a20302798ef6ed309979b43003d2320d9f0e8ea9831a92759fb4bdb56114e00fdd4c1f85c892bf35ac9a89289aaecb1ebd0a96cde606a748b5d71c78009fdf07fc56a11f122370658a353aaa542ed63e44c4bc15ff4cd105ab33c536d98837f2dd165a55d5eeae91485954472d56f246df256bf3cae19352a123c9efde052aa15429fae05bad4d0b1d7c64da64d03d7a1854a588c2cb8430c0d30d88ddfeed400a8755596b21942c1497e114c302e6118290f91e6772976041fa187eb0ddba57e35f6d286673802a4af5975e22506c7cf4c64bb6be5ee11527f2c26846476fd5fc54a5d43385167c95144f2643f533cc85bb9d16b782f8d7db193506d86582d252405b840018792cad2bf1259f1ef5aa5f887e13cb2f0094f51e1ffff0ad7e659772f9534c195c815efc4014ef1e1daed4404c06385d11192e92be6364cb24300098162d7453ca909ee4f6bcc1e08c8ef4ff9191672582e00c725bec3e563c894f479acd0d5ad6891ad6efd16a550007ca6b80f672c0c12b778bfdf6af5f5bbdb6be9ef8aa618e4bf8073960867171e29676f8b284dea6a08a85eb58d900f5e182e3c50ef74969ea16c7726c549757cc23523c369587da729378400745c0464b8cf751eec571df5152e8304e326058dc713fa8df9077bce87f0513582bcc9f568223ad87aa3eef87b8db21d52202dbdd188e3fc5a05848f6779e4dc7ed11a0c65341b9faa4de38595fec48a0d4940e147b46048512094d35e3d23050dd060bfeb87461ab550829ee044efeddff8360622ca0c2c8f51d594345801f893e908917775b62bff23294dbbe3a1cd8e6cc1c35b4801887b646a6f81f17fcddba7b592e3133393c16194fac7431abf2f5485ed711db282183c819e08ebaa8a8d7fe3af8caa085a7639a832001457dfb9128a8061142ad0335629ff23ff9cfeb3c337d7a51a6fbf00b9e34c52e1c9195c969bd4e7a0bfd51d5c5bed9c1167e71f0aa83cc32edfbefa9f4d3e0174ca85182eec9f3a09f6a6c0df6377a510d731206fa80a50bb6abe29085058f16212212a60eec8f049fecb92d8c8e0a84bc021352bfecbeddde993839f614c3dac0a3ee37543f9b412b16199dc158e23b544619e312724bb6d7c3153ed9de791d764a366b389af13c58bf8a8d90481a467657cdd2986268250628d0c10e385c58c6191e6fbe05191bcc04f133f2cea72c1c4848930bd7ba8cac54661072113fb278869e07bb8587f91392933374d017bcbe18869ff2c22b28cc10510d9853292803328be4fb0e80495e8bb8d271f5b889636b5fe28e79f1b850f8658246ce9b6a1e7b49fc06db7143e8fe0b4f2b0c5523a5c985e929f70af28d0bdd1a90a808f977f597c7c778c489e98d3bd8910d31ac0f7c6f67e02e6e4e1bdefb994c6098953f34636ba2b6ca20a4721d2b26a886722ff1c9a7e5ff1cf48b4ad1582d3f4e4a1004f3b20d8c5a2b71387a4254ad933ebc52f075ae229646b6f6aed19a5e372cf295081401eb893ff599b3f9acc0c0d3e7d328921deb59612076801e8cd61592107b5c67c79b846595cc6320c395b46362cbfb909fdb236ad2411b4e4883810a074b840464689986c3f8a8091827e17c32755d8fb3687ba3ba49f342c77f5a1f89bec83d811446e1a467139213d640b6a7426451e0000000000000000000000000000000000000000000000000000000000",
+      "0x0000000000000000000000000000000000000000000000000000000000000000f5a5fd42d16a20302798ef6ed309979b43003d2320d9f0e8ea9831a92759fb4bdb56114e00fdd4c1f85c892bf35ac9a89289aaecb1ebd0a96cde606a748b5d7154116558b11c7b0a4db53eda85ccf0cdbca0c5391a5eb24df2b39b7b9e398f6f7f05bdd21b9030d37c5910313cb29428abd94b7ad5da198b39f90d8ec365796450e7a4da373f23cd784f162c1298ffa3a76d495cb96d93e718bd699cc99436d3e3f5349a438b8ba0199e979d91f7c5749748414a26f0c68463cf6a143f33a14ab6b174f995e60463b3b2d174db53b54dc95c145ccc544a533f302b6ff2492a74fa25e9bc7e20b52f6a7933c6e2d506bddc12a945e65a673dce609c8f982c7d9156b52894dc0097a5a5a163a8aa6dd2e2dfb6d502c80b1b4a513cbe52b8b51dc21a37df7878b946ba812e58db2d40f7255ec6fba3e17032b979cca7643749cd6f457e49ec0767cf4fad351277cf21f9ffd5e35ddf05845432556783efe14427bdfe98c0a5b7e7563ee59ee56a935ade5628f0faf0e38394f14a20bc21936660c61ac2057028bb5711cb8e9fbb8ef3ace4a86f8b15e86b020edf878300ff85b5338bdb6f47a7e2c0756a6ab37547ca6ccd6e9b4adc4aee088a77f2939f6a373269b8dc90c641c368c566300d17bda2aa2b79ccd9d3d4796b878ad08787841f07bb3582bcc9f568223ad87aa3eef87b8db21d52202dbdd188e3fc5a05848f6779e4dc7ed11a0c65341b9faa4de38595fec48a0d4940e147b46048512094d35e3d23050dd060bfeb87461ab550829ee044efeddff8360622ca0c2c8f51d594345801f893e908917775b62bff23294dbbe3a1cd8e6cc1c35b4801887b646a6f81f17fcddba7b592e3133393c16194fac7431abf2f5485ed711db282183c819e08ebaa8a8d7fe3af8caa085a7639a832001457dfb9128a8061142ad0335629ff23ff9cfeb3c337d7a51a6fbf00b9e34c52e1c9195c969bd4e7a0bfd51d5c5bed9c1167e71f0aa83cc32edfbefa9f4d3e0174ca85182eec9f3a09f6a6c0df6377a510d731206fa80a50bb6abe29085058f16212212a60eec8f049fecb92d8c8e0a84bc021352bfecbeddde993839f614c3dac0a3ee37543f9b412b16199dc158e23b544619e312724bb6d7c3153ed9de791d764a366b389af13c58bf8a8d90481a467657cdd2986268250628d0c10e385c58c6191e6fbe05191bcc04f133f2cea72c1c4848930bd7ba8cac54661072113fb278869e07bb8587f91392933374d017bcbe18869ff2c22b28cc10510d9853292803328be4fb0e80495e8bb8d271f5b889636b5fe28e79f1b850f8658246ce9b6a1e7b49fc06db7143e8fe0b4f2b0c5523a5c985e929f70af28d0bdd1a90a808f977f597c7c778c489e98d3bd8910d31ac0f7c6f67e02e6e4e1bdefb994c6098953f34636ba2b6ca20a4721d2b26a886722ff1c9a7e5ff1cf48b4ad1582d3f4e4a1004f3b20d8c5a2b71387a4254ad933ebc52f075ae229646b6f6aed19a5e372cf295081401eb893ff599b3f9acc0c0d3e7d328921deb59612076801e8cd61592107b5c67c79b846595cc6320c395b46362cbfb909fdb236ad2411b4e4883810a074b840464689986c3f8a8091827e17c32755d8fb3687ba3ba49f342c77f5a1f89bec83d811446e1a467139213d640b6a7426451e0000000000000000000000000000000000000000000000000000000000",
     ],
-    validatorBalances: [137.28519386, 0],
+    validatorBalances: [137.28519386, 0, 0],
   },
   {
     description: "Both validators have a balance",
     // Slot 12153439
     blockRoot:
       "0x2fef147728f441c0c1b19f894bb5b5afc3e1a42baa233f29976e36a9e1a6310f",
-    validators: [1930685, 1998611],
+    validators: [1930685, 1998611, 1897126],
     firstPendingDepositSlot: 12102975,
     firstPendingDeposit: {
       slot: 12102975,
@@ -233,19 +235,21 @@ const testBalancesProofs = [
     validatorBalanceLeaves: [
       "0x41f4b57307000000b88a2a0320000000c915b673070000009749b67307000000",
       "0x7bcdc6750700000066dca37307000000faeb672708000000a62703e90e000000",
+      "0x0000000000000000000000000000000000000000000000000000000000000000",
     ],
     validatorBalanceProofs: [
       "0xd552b673070000006639b673070000005889b573070000003453b67307000000b3099a8a826cb1ba94ca652e0a1740a10bbc4fb0a7ded5da81299828a5752733f1912d7507e8b6cadf1dd3e7aafb9438ced1a35606ba923010bd89d8264a9a56264732b1cabbbeb5838e4e806eee6561fd45d2d654920d509b16fe1c6a45eb51a64dfcb871407cf2f43cbcef26ee644fbc0e9332ddc2f09616108b52093e29cdbabfa17f57f089dada86a0c787afb0eda6b6a9cf5f3a19d318623193a2e6eb5397b00d2287b4c872dfa16c742d7ad3a89ad0695db3871c54aaf0b89101a2b480bb48d7f1beb3c041909540f5e3cbcd899cb00fc87c89714100a74aba97732150f6a8418f331db0b8eb033d0d78c32219d01ee7464b76e59c3e32cdd92da0113a1f5ef6d4bda1af2fbde0cf92eaa0b16c4d91ea6539eafddd57880bb107cd548c59205390839355571ca9a68550ac946ebe9ee9c3d8b5b5360023ddc4a8631912a95b39ed85238f2815e8101811a957c408f2c2a8d8f37f78c6ab8f13d7e206271c616ca9ffb44ed10d70997e4c6ce8ccfd7c5b164431bf0272f97ca4f4713878c291b04518a16a02f230255e89a330a63a293c72ad930c5853b2ce7acba1c7193595e04cd630ce8e4b72e35ec89d6f8c1bef429ccd322590e6b07dcbe12be3325182e631d8259e30b75a96e15cb057b8ae5940e6db188fce3b88445d5256bd1e3d9f97c705470565a9c019c6860626e5d0b512aae876d9d7e68bae4df2967547cb1be68faeb645c9d0bc5c1963ed10aa6b36de7d7cad1103f6988b77451bddb33d2cc08806c92076bd539bc0e0af349c53306b2312cb052f9befd4e3bf6aabb5f893e908917775b62bff23294dbbe3a1cd8e6cc1c35b4801887b646a6f81f17fcddba7b592e3133393c16194fac7431abf2f5485ed711db282183c819e08ebaa8a8d7fe3af8caa085a7639a832001457dfb9128a8061142ad0335629ff23ff9cfeb3c337d7a51a6fbf00b9e34c52e1c9195c969bd4e7a0bfd51d5c5bed9c1167e71f0aa83cc32edfbefa9f4d3e0174ca85182eec9f3a09f6a6c0df6377a510d731206fa80a50bb6abe29085058f16212212a60eec8f049fecb92d8c8e0a84bc021352bfecbeddde993839f614c3dac0a3ee37543f9b412b16199dc158e23b544619e312724bb6d7c3153ed9de791d764a366b389af13c58bf8a8d90481a467657cdd2986268250628d0c10e385c58c6191e6fbe05191bcc04f133f2cea72c1c4848930bd7ba8cac54661072113fb278869e07bb8587f91392933374d017bcbe18869ff2c22b28cc10510d9853292803328be4fb0e80495e8bb8d271f5b889636b5fe28e79f1b850f8658246ce9b6a1e7b49fc06db7143e8fe0b4f2b0c5523a5c985e929f70af28d0bdd1a90a808f977f597c7c778c489e98d3bd8910d31ac0f7c6f67e02e6e4e1bdefb994c6098953f34636ba2b6ca20a4721d2b26a886722ff1c9a7e5ff1cf48b4ad1582d3f4e4a1004f3b20d8c5a2b71387a4254ad933ebc52f075ae229646b6f6aed19a5e372cf295081401eb893ff599b3f9acc0c0d3e7d328921deb59612076801e8cd61592107b5c67c79b846595cc6320c395b46362cbfb909fdb236ad2411b4e4883810a074b840464689986c3f8a8091827e17c32755d8fb3687ba3ba49f342c77f5a1f89bec83d811446e1a467139213d640b6a7424ba1e0000000000000000000000000000000000000000000000000000000000",
       "0x8b5f81740700000080eca3730700000087e2a37307000000f7dba373070000003c9b315b036f4b138cba7297c1e6e53c80583b71e141698542848658ef4a3e3838dd29d62bc62309409b788d55d101e520d41ea8e3f72386fd569b08eadb627ddd962e9e4c8c2600e06a63122153ae2db660530572b133594a9f214dcaa7ead83ec0450e7c693a9754cf852ab1cf691258245f919d7137cdc13094fbd53538aa2a2f75fae7038ab4b74ecb6e1eff9970b0c48f5caa1d93f215b33c6bddc150dfda81c88fe313f4cb9cf1e5441ebea9670a8613d629cc1c9967811e4c049ed937632d1cecfacda3fa3e1641150a4657f8544a9fdce6286d30b41f0ffa25206181806b5f9ba807a1b19f83100b65296326631108872b13a3f7c2689e3c1063726ae9b71564f851519f3f0cdc8d65c659a306f92f7e774de0a3f8c183a862410c443e701cdc49280b903ce10af5948b67e13970be1b7f8f4db9594345677e12e22f4d50a2e2df55ceb7481fc18b8432af32e170cd28703b632a3aed51e94767a75b96071faed1905908d2b9dd7f6ae359f7e2e93173845e5e7e3a5f1d82d9c4994e6066f1749f111aec44d60b50b1ca4cb6d45dbc580b4657c27a0376afeffcf10db58d900f5e182e3c50ef74969ea16c7726c549757cc23523c369587da7293784891cfbd6e3470b128536365717433a0baf2f5d38f664da6bb66cf93b625d8e123d9f97c705470565a9c019c6860626e5d0b512aae876d9d7e68bae4df2967547cb1be68faeb645c9d0bc5c1963ed10aa6b36de7d7cad1103f6988b77451bddb33d2cc08806c92076bd539bc0e0af349c53306b2312cb052f9befd4e3bf6aabb5f893e908917775b62bff23294dbbe3a1cd8e6cc1c35b4801887b646a6f81f17fcddba7b592e3133393c16194fac7431abf2f5485ed711db282183c819e08ebaa8a8d7fe3af8caa085a7639a832001457dfb9128a8061142ad0335629ff23ff9cfeb3c337d7a51a6fbf00b9e34c52e1c9195c969bd4e7a0bfd51d5c5bed9c1167e71f0aa83cc32edfbefa9f4d3e0174ca85182eec9f3a09f6a6c0df6377a510d731206fa80a50bb6abe29085058f16212212a60eec8f049fecb92d8c8e0a84bc021352bfecbeddde993839f614c3dac0a3ee37543f9b412b16199dc158e23b544619e312724bb6d7c3153ed9de791d764a366b389af13c58bf8a8d90481a467657cdd2986268250628d0c10e385c58c6191e6fbe05191bcc04f133f2cea72c1c4848930bd7ba8cac54661072113fb278869e07bb8587f91392933374d017bcbe18869ff2c22b28cc10510d9853292803328be4fb0e80495e8bb8d271f5b889636b5fe28e79f1b850f8658246ce9b6a1e7b49fc06db7143e8fe0b4f2b0c5523a5c985e929f70af28d0bdd1a90a808f977f597c7c778c489e98d3bd8910d31ac0f7c6f67e02e6e4e1bdefb994c6098953f34636ba2b6ca20a4721d2b26a886722ff1c9a7e5ff1cf48b4ad1582d3f4e4a1004f3b20d8c5a2b71387a4254ad933ebc52f075ae229646b6f6aed19a5e372cf295081401eb893ff599b3f9acc0c0d3e7d328921deb59612076801e8cd61592107b5c67c79b846595cc6320c395b46362cbfb909fdb236ad2411b4e4883810a074b840464689986c3f8a8091827e17c32755d8fb3687ba3ba49f342c77f5a1f89bec83d811446e1a467139213d640b6a7424ba1e0000000000000000000000000000000000000000000000000000000000",
+      "0x0000000000000000000000000000000000000000000000000000000000000000f5a5fd42d16a20302798ef6ed309979b43003d2320d9f0e8ea9831a92759fb4bdb56114e00fdd4c1f85c892bf35ac9a89289aaecb1ebd0a96cde606a748b5d71b36d1ac22a4fb1e5c6d2d670d2b0b0e29111a1a9a1cbdb1bbfac05e09a35f24cd3e5d619750845a647104476f92bc28f77e45ba616ef16dc537923522828bde66a92ed6476527d0a43f8fa96cc0ec7a3ca046cb5d3e2c2601d1d058ba4d0205a305ea26f4d67565efc36958b19a7252fe6debcccb91cc31ea446f4a3348fba7c9a3bfae90845a9bb26e1ac898fb328a55b23dd3e757b91f94358c3e31a8a9ccc5452116d6348b210a30f9f9fc4cae3148995869fda1db15154683968807d88a19c7b9d9e9db7d82ef53b451a46c2b298ca126f5039d5af58ad9e959b4710ba98b1719ba47d271458e21e509ed6dedbed1ab3acd3613408267d325eca6e9f3887500b602d69ef2311256163807f7e3be3d38f3b066eb0dc809fb5ad3bd786b5d4f3d297af66b23e7258915269e073eac5ea3cc7c8848a305096c8d1614ba78d128e15fb2d799fdfd7c3276424a23b5f250a68ee34730f4b6fff960ed9eab1cfb53c8044bfb21d8b97816a0559df8f4c32756241a9c212fefab25022599cf93e5b5182e631d8259e30b75a96e15cb057b8ae5940e6db188fce3b88445d5256bd1e3d9f97c705470565a9c019c6860626e5d0b512aae876d9d7e68bae4df2967547cb1be68faeb645c9d0bc5c1963ed10aa6b36de7d7cad1103f6988b77451bddb33d2cc08806c92076bd539bc0e0af349c53306b2312cb052f9befd4e3bf6aabb5f893e908917775b62bff23294dbbe3a1cd8e6cc1c35b4801887b646a6f81f17fcddba7b592e3133393c16194fac7431abf2f5485ed711db282183c819e08ebaa8a8d7fe3af8caa085a7639a832001457dfb9128a8061142ad0335629ff23ff9cfeb3c337d7a51a6fbf00b9e34c52e1c9195c969bd4e7a0bfd51d5c5bed9c1167e71f0aa83cc32edfbefa9f4d3e0174ca85182eec9f3a09f6a6c0df6377a510d731206fa80a50bb6abe29085058f16212212a60eec8f049fecb92d8c8e0a84bc021352bfecbeddde993839f614c3dac0a3ee37543f9b412b16199dc158e23b544619e312724bb6d7c3153ed9de791d764a366b389af13c58bf8a8d90481a467657cdd2986268250628d0c10e385c58c6191e6fbe05191bcc04f133f2cea72c1c4848930bd7ba8cac54661072113fb278869e07bb8587f91392933374d017bcbe18869ff2c22b28cc10510d9853292803328be4fb0e80495e8bb8d271f5b889636b5fe28e79f1b850f8658246ce9b6a1e7b49fc06db7143e8fe0b4f2b0c5523a5c985e929f70af28d0bdd1a90a808f977f597c7c778c489e98d3bd8910d31ac0f7c6f67e02e6e4e1bdefb994c6098953f34636ba2b6ca20a4721d2b26a886722ff1c9a7e5ff1cf48b4ad1582d3f4e4a1004f3b20d8c5a2b71387a4254ad933ebc52f075ae229646b6f6aed19a5e372cf295081401eb893ff599b3f9acc0c0d3e7d328921deb59612076801e8cd61592107b5c67c79b846595cc6320c395b46362cbfb909fdb236ad2411b4e4883810a074b840464689986c3f8a8091827e17c32755d8fb3687ba3ba49f342c77f5a1f89bec83d811446e1a467139213d640b6a7424ba1e0000000000000000000000000000000000000000000000000000000000",
     ],
-    validatorBalances: [137.492073144, 64.03884023],
+    validatorBalances: [137.492073144, 64.03884023, 0],
   },
   {
     description: "Both validators have earned from consensus rewards",
     // Slot 12157779
     blockRoot:
       "0xc89da37b667e62431891cdf55a4c6e9ba9ec1d8202f4f1836a701272e6a9f6c2",
-    validators: [1930685, 1998611],
+    validators: [1930685, 1998611, 1897126],
     firstPendingDepositSlot: 12108371,
     firstPendingDeposit: {
       slot: 12108371,
@@ -262,12 +266,14 @@ const testBalancesProofs = [
     validatorBalanceLeaves: [
       "0x08c0c8730700000003297a032000000068d0c873070000005e15c97307000000",
       "0x4299d975070000005a74b673070000003b717c27080000003c9c28e90e000000",
+      "0x0000000000000000000000000000000000000000000000000000000000000000",
     ],
     validatorBalanceProofs: [
       "0xc315c973070000002d05c973070000007d21c87307000000fb1ec973070000009c63543bc9a30dc5cd7d84a15f4436e52f64e6e13e7becf227ca2c4b647d6f18c17abe1a8eaf29f99c2fb4f71eb7b775b6677508088c6c6c0df3fcd3fb131fceb0aaaa7b94c2dea4451f3e9ff3e0e22e411e60de3be4e21f0dd680c8175b37aac51476cea0ce892f545aef746f671b0631e3d256c27b3e33d53008fd538da5233532c2d961b3546de59377a2790216e2006ec9efd9ce1c3abf78c1e4975cbaa220a513034a6bf36a591c583d1b21fb3b7dab107c13f7c04a0e096a4668c593069a596b6cece8ab6abca72a6f21ab60b1d4435b1554fd59638e22d6f9b09b6dfe31dee10ac6f79320b26feddab5b65ae2218657cb54a952411470fc6dd965ba8100aefe97d0473b44c5f52d21f747831f5836f09fdca33b3290983640f22c9d2a6fc574fad7e412bcdab5c6b9a7ac09132450c47a9c1726c37fe5e4d79bf2db220cabe39d6d1fd3ff23a6f9e2039f5334637b968c78f98f8a8815a6f266a1da859a9f4c85f627e05f969aa764307ac226f8b89d39456eff2fc28f440f99a4ad5d0243c7dd9605b3b6d33c9d9853faea32d1146ed2161d7a84e5db895ed02211233bffc520354d986aee7850a96464a023a0306e68f5f6c43c4d9273ed61a6e31f3b397d632647fc7ebd56d8ebad6f33fef1598bcc25862bf470042e14d788828314c5b57712546918630b31a683e69c370511e6810ae81f4de80b8926453ea500db852159999612ca027445128d2310aab7da82d9d095e3e3715a3da466c8d6a8ad4f19dde4ebb4c10fd009264376f04723c53777862e887e2069ef5142f1f5ecf893e908917775b62bff23294dbbe3a1cd8e6cc1c35b4801887b646a6f81f17fcddba7b592e3133393c16194fac7431abf2f5485ed711db282183c819e08ebaa8a8d7fe3af8caa085a7639a832001457dfb9128a8061142ad0335629ff23ff9cfeb3c337d7a51a6fbf00b9e34c52e1c9195c969bd4e7a0bfd51d5c5bed9c1167e71f0aa83cc32edfbefa9f4d3e0174ca85182eec9f3a09f6a6c0df6377a510d731206fa80a50bb6abe29085058f16212212a60eec8f049fecb92d8c8e0a84bc021352bfecbeddde993839f614c3dac0a3ee37543f9b412b16199dc158e23b544619e312724bb6d7c3153ed9de791d764a366b389af13c58bf8a8d90481a467657cdd2986268250628d0c10e385c58c6191e6fbe05191bcc04f133f2cea72c1c4848930bd7ba8cac54661072113fb278869e07bb8587f91392933374d017bcbe18869ff2c22b28cc10510d9853292803328be4fb0e80495e8bb8d271f5b889636b5fe28e79f1b850f8658246ce9b6a1e7b49fc06db7143e8fe0b4f2b0c5523a5c985e929f70af28d0bdd1a90a808f977f597c7c778c489e98d3bd8910d31ac0f7c6f67e02e6e4e1bdefb994c6098953f34636ba2b6ca20a4721d2b26a886722ff1c9a7e5ff1cf48b4ad1582d3f4e4a1004f3b20d8c5a2b71387a4254ad933ebc52f075ae229646b6f6aed19a5e372cf295081401eb893ff599b3f9acc0c0d3e7d328921deb59612076801e8cd61592107b5c67c79b846595cc6320c395b46362cbfb909fdb236ad2411b4e4883810a074b840464689986c3f8a8091827e17c32755d8fb3687ba3ba49f342c77f5a1f89bec83d811446e1a467139213d640b6a7417be1e0000000000000000000000000000000000000000000000000000000000",
       "0x18f69374070000000674b673070000004eaeb67307000000d29eb67307000000d5b197d28f7edc0f9e79ff2db8e425f6551290d8689168acd853b41a5b9af96dcd0288729d92537a0c80f0e9de1687b14d9992637d58486993152f93e5fea1cb36d7908abf6cfd852cda172ec7a4dda3d9d5ba2e7087aedd055f2feab3d45bfce33396c4bd3402e2190f3e65cff6e20d0ddfc7f6c4a65c6c693f139029437a4a9be9b1b49f759daddbbc3a36b05db544daf9750674d3e25afd683f4c56bd4bba7b2deacc0eddb6f0f9c9dc16c6c1fcb9f58787563ff596e5924656f00641456c9cc77230f7f6b9a04bd8cf29245264ff0e482a0ab33b4eaabd348e787f6dc2258e84632ec5110bd27177397af4dacf25e8a7d09fcb23b397911f2acbf9d66ccd81da646c80b12846687ab8cb5ccdf85182214087fa4eeb59585d2b0357cf21669c1b49f2ce4552d1cf7d22b51eb4c8031dc0ed6f3f35b4825a14be94b2243c5c561e59b318c65127415c8e8ff0e91909e693b2747a5a35c585feba2df10f8fa4bfaabe4564d3c44f4d60cbdc32898004c551814b6c68d3ebad1297b25e9ff1057024f829cd2163f6fe484e7ec6b2b1655454541c826b8f38327678c24bd43e6cb58d900f5e182e3c50ef74969ea16c7726c549757cc23523c369587da72937845080e2a965d075349c56d6771b7041356541ec8a37b6b72040a2a212006e912114c5b57712546918630b31a683e69c370511e6810ae81f4de80b8926453ea500db852159999612ca027445128d2310aab7da82d9d095e3e3715a3da466c8d6a8ad4f19dde4ebb4c10fd009264376f04723c53777862e887e2069ef5142f1f5ecf893e908917775b62bff23294dbbe3a1cd8e6cc1c35b4801887b646a6f81f17fcddba7b592e3133393c16194fac7431abf2f5485ed711db282183c819e08ebaa8a8d7fe3af8caa085a7639a832001457dfb9128a8061142ad0335629ff23ff9cfeb3c337d7a51a6fbf00b9e34c52e1c9195c969bd4e7a0bfd51d5c5bed9c1167e71f0aa83cc32edfbefa9f4d3e0174ca85182eec9f3a09f6a6c0df6377a510d731206fa80a50bb6abe29085058f16212212a60eec8f049fecb92d8c8e0a84bc021352bfecbeddde993839f614c3dac0a3ee37543f9b412b16199dc158e23b544619e312724bb6d7c3153ed9de791d764a366b389af13c58bf8a8d90481a467657cdd2986268250628d0c10e385c58c6191e6fbe05191bcc04f133f2cea72c1c4848930bd7ba8cac54661072113fb278869e07bb8587f91392933374d017bcbe18869ff2c22b28cc10510d9853292803328be4fb0e80495e8bb8d271f5b889636b5fe28e79f1b850f8658246ce9b6a1e7b49fc06db7143e8fe0b4f2b0c5523a5c985e929f70af28d0bdd1a90a808f977f597c7c778c489e98d3bd8910d31ac0f7c6f67e02e6e4e1bdefb994c6098953f34636ba2b6ca20a4721d2b26a886722ff1c9a7e5ff1cf48b4ad1582d3f4e4a1004f3b20d8c5a2b71387a4254ad933ebc52f075ae229646b6f6aed19a5e372cf295081401eb893ff599b3f9acc0c0d3e7d328921deb59612076801e8cd61592107b5c67c79b846595cc6320c395b46362cbfb909fdb236ad2411b4e4883810a074b840464689986c3f8a8091827e17c32755d8fb3687ba3ba49f342c77f5a1f89bec83d811446e1a467139213d640b6a7417be1e0000000000000000000000000000000000000000000000000000000000",
+      "0x0000000000000000000000000000000000000000000000000000000000000000f5a5fd42d16a20302798ef6ed309979b43003d2320d9f0e8ea9831a92759fb4bdb56114e00fdd4c1f85c892bf35ac9a89289aaecb1ebd0a96cde606a748b5d719879ecb47c5adba6f21b3a2a06406509c5d8b9fbe1e6c28c76b609258888dc7ded3ca53de3733a93a4097ea4d3e2229682149fbd5883307470a6fb3261b271a4aa7b618db40b868cb343318d8e75c471fcfac3f9edb2816f5c4b391c747e62f49e60fc7a6d3a22a886d0e6d9efe690816f5a65b2dbbd1e13f7e1779b8ad6cba9fdf4d22072a7777ae65a4f8b02c6bc56af73ebc81f7f584d08087ac8b920ab0d01a3badf968131196a94f668225e80fe53344e9e13f4f72344794319a1e4e768976901b92c9899fb88013f0608f118ec4643d4844cb6fa45edd7bb26e5e3976ec9d2ddee39a6ed81ccf0e3cc522bad265e139982f7f3fa57a2aa69bdc11a2816ef30ae19ce77fb72c1f547b0902d7ce7d976d07e063077e376778f02e7a4e4ebacd66743e2f06c94017688fba3f58b6d966df6f0da08ea1f8d9352430f456bfd45fd8dfa9524a6725348a5e3af194881be82292b234592264cd36111d4e44b27ff1c935be528cdc3ca8ca0046adfe94c043d369d1a26216daaeacb115afaebe93b397d632647fc7ebd56d8ebad6f33fef1598bcc25862bf470042e14d788828314c5b57712546918630b31a683e69c370511e6810ae81f4de80b8926453ea500db852159999612ca027445128d2310aab7da82d9d095e3e3715a3da466c8d6a8ad4f19dde4ebb4c10fd009264376f04723c53777862e887e2069ef5142f1f5ecf893e908917775b62bff23294dbbe3a1cd8e6cc1c35b4801887b646a6f81f17fcddba7b592e3133393c16194fac7431abf2f5485ed711db282183c819e08ebaa8a8d7fe3af8caa085a7639a832001457dfb9128a8061142ad0335629ff23ff9cfeb3c337d7a51a6fbf00b9e34c52e1c9195c969bd4e7a0bfd51d5c5bed9c1167e71f0aa83cc32edfbefa9f4d3e0174ca85182eec9f3a09f6a6c0df6377a510d731206fa80a50bb6abe29085058f16212212a60eec8f049fecb92d8c8e0a84bc021352bfecbeddde993839f614c3dac0a3ee37543f9b412b16199dc158e23b544619e312724bb6d7c3153ed9de791d764a366b389af13c58bf8a8d90481a467657cdd2986268250628d0c10e385c58c6191e6fbe05191bcc04f133f2cea72c1c4848930bd7ba8cac54661072113fb278869e07bb8587f91392933374d017bcbe18869ff2c22b28cc10510d9853292803328be4fb0e80495e8bb8d271f5b889636b5fe28e79f1b850f8658246ce9b6a1e7b49fc06db7143e8fe0b4f2b0c5523a5c985e929f70af28d0bdd1a90a808f977f597c7c778c489e98d3bd8910d31ac0f7c6f67e02e6e4e1bdefb994c6098953f34636ba2b6ca20a4721d2b26a886722ff1c9a7e5ff1cf48b4ad1582d3f4e4a1004f3b20d8c5a2b71387a4254ad933ebc52f075ae229646b6f6aed19a5e372cf295081401eb893ff599b3f9acc0c0d3e7d328921deb59612076801e8cd61592107b5c67c79b846595cc6320c395b46362cbfb909fdb236ad2411b4e4883810a074b840464689986c3f8a8091827e17c32755d8fb3687ba3ba49f342c77f5a1f89bec83d811446e1a467139213d640b6a7417be1e0000000000000000000000000000000000000000000000000000000000",
     ],
-    validatorBalances: [137.497291011, 64.041294908],
+    validatorBalances: [137.497291011, 64.041294908, 0],
   },
 ];
 
@@ -1325,6 +1331,7 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
       ethAmount,
       balancesProof,
       pendingDepositAmount,
+      activeValidators,
     }) => {
       const { beaconOracle, compoundingStakingSSVStrategy, weth } = fixture;
 
@@ -1339,7 +1346,7 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
         await setERC20TokenBalance(
           compoundingStakingSSVStrategy.address,
           weth,
-          wethAmount.toString()
+          parseEther(wethAmount.toString())
         );
       }
 
@@ -1359,14 +1366,26 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
         balancesProof.firstPendingDeposit.blockRoot
       );
 
-      // Verify balances with pending deposits and active validators
-      const tx = await compoundingStakingSSVStrategy.verifyBalances(
-        balancesProof
+      const filteredLeaves = balancesProof.validatorBalanceLeaves.filter(
+        (_, index) => activeValidators.includes(index)
       );
+      const filteredProofs = balancesProof.validatorBalanceProofs.filter(
+        (_, index) => activeValidators.includes(index)
+      );
+      const filteredBalances = balancesProof.validatorBalances.filter(
+        (_, index) => activeValidators.includes(index)
+      );
+
+      // Verify balances with pending deposits and active validators
+      const tx = await compoundingStakingSSVStrategy.verifyBalances({
+        ...balancesProof,
+        validatorBalanceLeaves: filteredLeaves,
+        validatorBalanceProofs: filteredProofs,
+      });
 
       const totalDepositsWei = parseEther(pendingDepositAmount.toString());
       const wethBalance = parseEther(wethAmount.toString());
-      const totalValidatorBalance = balancesProof.validatorBalances
+      const totalValidatorBalance = filteredBalances
         .map((balance) => parseEther(balance.toString()))
         .reduce((sum, balance) => sum.add(balance), parseEther("0"));
       const ethBalance = parseEther(ethAmount.toString());
@@ -1384,10 +1403,10 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
           ethBalance,
         });
 
-      const verifiedBalance =
+      const verifiedEthBalance =
         await compoundingStakingSSVStrategy.lastVerifiedEthBalance();
 
-      expect(verifiedBalance).to.equal(totalBalance);
+      expect(verifiedEthBalance).to.equal(totalBalance.sub(wethBalance));
 
       return {
         totalDepositsWei,
@@ -1415,7 +1434,7 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
         return tx;
       };
       it("Should verify balances with no WETH", async () => {
-        const { compoundingStakingSSVStrategy } = fixture;
+        const { compoundingStakingSSVStrategy, weth } = fixture;
 
         const { beaconBlockRoot, timestamp } = await snapBalances();
 
@@ -1435,16 +1454,18 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
           await compoundingStakingSSVStrategy.lastVerifiedEthBalance(),
           "Last verified ETH balance"
         ).to.equal(0);
+        expect(
+          await compoundingStakingSSVStrategy.checkBalance(weth.address)
+        ).to.equal(0);
       });
-
       it("Should verify balances with some WETH transferred before snap", async () => {
         const { compoundingStakingSSVStrategy, josh, weth } = fixture;
 
         // Send some WETH to the strategy before the snap
-        const wethAmountBefore = parseEther("1.23");
+        const wethAmountAdded = parseEther("1.23");
         await weth
           .connect(josh)
-          .transfer(compoundingStakingSSVStrategy.address, wethAmountBefore);
+          .transfer(compoundingStakingSSVStrategy.address, wethAmountAdded);
         await compoundingStakingSSVStrategy.connect(sVault).depositAll();
 
         const { beaconBlockRoot, timestamp } = await snapBalances();
@@ -1457,26 +1478,28 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
             timestamp,
             0, // totalDepositsWei
             0, // totalValidatorBalance
-            wethAmountBefore, // wethBalance
+            wethAmountAdded, // wethBalance
             0 // ethBalance
           );
 
         expect(
           await compoundingStakingSSVStrategy.lastVerifiedEthBalance(),
           "Last verified ETH balance"
-        ).to.equal(wethAmountBefore);
+        ).to.equal(0);
+        expect(
+          await compoundingStakingSSVStrategy.checkBalance(weth.address)
+        ).to.equal(wethAmountAdded);
       });
-
       it("Should verify balances with some WETH transferred after snap", async () => {
         const { compoundingStakingSSVStrategy, josh, weth } = fixture;
 
         const { beaconBlockRoot, timestamp } = await snapBalances();
 
         // Send some WETH to the strategy after the snap
-        const wethAmountAfter = parseEther("5.67");
+        const wethAmountAdded = parseEther("5.67");
         await weth
           .connect(josh)
-          .transfer(compoundingStakingSSVStrategy.address, wethAmountAfter);
+          .transfer(compoundingStakingSSVStrategy.address, wethAmountAdded);
 
         const tx = await verifyBalancesNoDepositsOrValidators(beaconBlockRoot);
 
@@ -1486,16 +1509,18 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
             timestamp,
             0, // totalDepositsWei
             0, // totalValidatorBalance
-            wethAmountAfter, // wethBalance
+            wethAmountAdded, // wethBalance
             0 // ethBalance
           );
 
         expect(
           await compoundingStakingSSVStrategy.lastVerifiedEthBalance(),
           "Last verified ETH balance"
-        ).to.equal(wethAmountAfter);
+        ).to.equal(0);
+        expect(
+          await compoundingStakingSSVStrategy.checkBalance(weth.address)
+        ).to.equal(wethAmountAdded);
       });
-
       it("Should verify balances with some WETH transferred before and after snap", async () => {
         const { compoundingStakingSSVStrategy, josh, weth } = fixture;
 
@@ -1508,10 +1533,10 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
         const { beaconBlockRoot, timestamp } = await snapBalances();
 
         // Send some WETH to the strategy after the snap
-        const wethAmountAfter = parseEther("5.67");
+        const wethAmountAdded = parseEther("5.67");
         await weth
           .connect(josh)
-          .transfer(compoundingStakingSSVStrategy.address, wethAmountAfter);
+          .transfer(compoundingStakingSSVStrategy.address, wethAmountAdded);
 
         const tx = await verifyBalancesNoDepositsOrValidators(beaconBlockRoot);
 
@@ -1521,27 +1546,46 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
             timestamp,
             0, // totalDepositsWei
             0, // totalValidatorBalance
-            wethAmountBefore.add(wethAmountAfter), // wethBalance
+            wethAmountBefore.add(wethAmountAdded), // wethBalance
             0 // ethBalance
           );
 
         expect(
           await compoundingStakingSSVStrategy.lastVerifiedEthBalance(),
           "Last verified ETH balance"
-        ).to.equal(wethAmountBefore.add(wethAmountAfter));
+        ).to.equal(0);
+        expect(
+          await compoundingStakingSSVStrategy.checkBalance(weth.address)
+        ).to.equal(wethAmountBefore.add(wethAmountAdded));
+      });
+      it("Should verify balances with registered validator", async () => {
+        const { compoundingStakingSSVStrategy, weth } = fixture;
+
+        await processValidator(testValidators[0], "REGISTERED");
+
+        const balancesAfter = await assertBalances({
+          pendingDepositAmount: 0,
+          wethAmount: 10,
+          ethAmount: 0,
+          balancesProof: testBalancesProofs[0],
+          activeValidators: [], // no active validators
+        });
+
+        expect(balancesAfter.wethBalance).to.equal(parseEther("10"));
+        expect(
+          await compoundingStakingSSVStrategy.lastVerifiedEthBalance()
+        ).to.equal(0);
+        expect(
+          await compoundingStakingSSVStrategy.checkBalance(weth.address)
+        ).to.equal(parseEther("10"));
       });
     });
-    describe("Should not change verified balance when", () => {
-      it("register validator", async () => {
-        await snapBalances();
-      });
-    });
-    describe("When WETH, ETH, one pending deposit and 3 active validators", () => {
+    describe("When WETH, ETH, one pending deposit and 2 active validators", () => {
       let depositsBlockBefore;
       beforeEach(async () => {
         depositsBlockBefore = await ethers.provider.getBlockNumber();
 
-        // register, stake, verify validator and verify deposit
+        // First validator: register, stake, verify validator and verify deposit
         await processValidator(testValidators[0], "VERIFIED_DEPOSIT");
         await topupValidator(
           testValidators[0],
@@ -1549,18 +1593,19 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
           "VERIFIED_DEPOSIT"
         );
 
+        // Second validator: leave second deposit pending
         await processValidator(testValidators[1], "VERIFIED_DEPOSIT");
         const pendingDepositAmount =
           testValidators[1].depositProof.depositAmount - 1;
         await topupValidator(testValidators[1], pendingDepositAmount, "STAKED");
 
-        // Validator that is later withdrawn
-        await processValidator(testValidators[3], "VERIFIED_DEPOSIT");
-        await topupValidator(
-          testValidators[3],
-          testValidators[3].depositProof.depositAmount - 1,
-          "VERIFIED_DEPOSIT"
-        );
+        // Third validator is later withdrawn later
+        // await processValidator(testValidators[3], "VERIFIED_DEPOSIT");
+        // await topupValidator(
+        //   testValidators[3],
+        //   testValidators[3].depositProof.depositAmount - 1,
+        //   "VERIFIED_DEPOSIT"
+        // );
 
         await assertBalances({
           firstPendingDepositBlockNumber: depositsBlockBefore,
@@ -1568,9 +1613,12 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
           wethAmount: 10,
           ethAmount: 0.987,
           balancesProof: testBalancesProofs[0],
+          activeValidators: [0, 1],
         });
       });
-      it("should account for pending deposit", async () => {});
+      it("register validator", async () => {
+        await snapBalances();
+      });
       it("should account for partial withdrawal", async () => {});
       it("should account for full withdrawal", async () => {});
     });
@@ -1597,6 +1645,7 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
           wethAmount: 10,
           ethAmount: 0.987,
           balancesProof: testBalancesProofs[1],
+          activeValidators: [0, 1],
         });
       });
       it("consensus rewards are earned by the validators", async () => {
@@ -1605,6 +1654,7 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
           wethAmount: 10,
           ethAmount: 0.987,
           balancesProof: testBalancesProofs[2],
+          activeValidators: [0, 1],
         });
 
         // Check the increase in consensus rewards
@@ -1622,6 +1672,7 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
           wethAmount: 10,
           ethAmount: 1,
           balancesProof: testBalancesProofs[1],
+          activeValidators: [0, 1],
         });
 
         // Check the increase in execution rewards

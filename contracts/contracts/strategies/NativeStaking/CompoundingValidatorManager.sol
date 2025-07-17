@@ -801,10 +801,7 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
 
         // Store the verified balance in storage
         lastVerifiedEthBalance = SafeCast.toUint128(
-            totalDepositsWei +
-                totalValidatorBalance +
-                wethBalance +
-                balancesMem.ethBalance
+            totalDepositsWei + totalValidatorBalance + balancesMem.ethBalance
         );
         // Reset the last snap timestamp so a new snapBalances has to be made
         lastSnapTimestamp = 0;
