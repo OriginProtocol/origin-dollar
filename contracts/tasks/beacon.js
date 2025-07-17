@@ -1,8 +1,9 @@
 const { Wallet } = require("ethers");
 const {
+  defaultAbiCoder,
   formatUnits,
   solidityPack,
-  defaultAbiCoder,
+  parseUnits,
 } = require("ethers/lib/utils");
 
 const addresses = require("../utils/addresses");
@@ -46,7 +47,7 @@ const calcDepositRoot = async (owner, type, pubkey, sig, amount) => {
   log(`Withdrawal Credentials: ${withdrawalCredential}`);
 
   // amount in Gwei
-  const amountGwei = BigInt(amount) * BigInt(1e9);
+  const amountGwei = parseUnits(amount.toString(), 9);
 
   // Define the DepositData object
   const depositData = {
