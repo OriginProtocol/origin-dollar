@@ -525,6 +525,9 @@ const getAssetAddresses = async (deployments) => {
   } else if (isHoodiOrFork) {
     return {
       WETH: addresses.hoodi.WETH,
+      SSV: addresses.hoodi.SSV,
+      SSVNetwork: addresses.hoodi.SSVNetwork,
+      beaconChainDepositContract: addresses.hoodi.beaconChainDepositContract,
     };
   } else {
     const addressMap = {

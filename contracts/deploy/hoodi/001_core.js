@@ -1,13 +1,13 @@
 const {
   deployOracles,
   deployOETHCore,
-  // deployNativeStakingSSVStrategy,
+  deployNativeStakingSSVStrategy,
   // deployOETHDripper,
   // deployOETHHarvester,
-  // configureOETHVault,
+  configureOETHVault,
 } = require("../deployActions");
 
-// const { withConfirmation } = require("../../utils/deploy");
+const { withConfirmation } = require("../../utils/deploy");
 const { impersonateAndFund } = require("../../utils/signers");
 const { isFork } = require("../../test/helpers");
 
@@ -26,50 +26,45 @@ const mainExport = async () => {
   await deployOracles();
   console.log("Deploying Core");
   await deployOETHCore();
-  //   console.log("Deploying Native Staking");
-  //   await deployNativeStakingSSVStrategy();
+
+  console.log("Deploying Native Staking");
+  await deployNativeStakingSSVStrategy();
 
   //   const cOETHDripper = await deployOETHDripper();
   //   const cOETHHarvester = await deployOETHHarvester(cOETHDripper);
-  //   await configureOETHVault(true);
+  await configureOETHVault(true);
 
-  //   const cVault = await ethers.getContractAt(
-  //     "IVault",
-  //     (
-  //       await ethers.getContract("OETHVaultProxy")
-  //     ).address
-  //   );
+  const cVault = await ethers.getContractAt(
+    "IVault",
+    (
+      await ethers.getContract("OETHVaultProxy")
+    ).address
+  );
 
-  //   const nativeStakingSSVStrategyProxy = await ethers.getContract(
-  //     "NativeStakingSSVStrategyProxy"
-  //   );
+  const nativeStakingSSVStrategyProxy = await ethers.getContract(
+    "NativeStakingSSVStrategyProxy"
+  );
 
-  //   const nativeStakingSSVStrategy = await ethers.getContractAt(
-  //     "NativeStakingSSVStrategy",
-  //     nativeStakingSSVStrategyProxy.address
-  //   );
+  const nativeStakingSSVStrategy = await ethers.getContractAt(
+    "NativeStakingSSVStrategy",
+    nativeStakingSSVStrategyProxy.address
+  );
 
-  //   await withConfirmation(
-  //     nativeStakingSSVStrategy
-  //       .connect(sGovernor)
-  //       .setHarvesterAddress(cOETHHarvester.address)
-  //   );
+  // await withConfirmation(
+  //   nativeStakingSSVStrategy
+  //     .connect(sGovernor)
+  //     .setHarvesterAddress(cOETHHarvester.address)
+  // );
 
-  //   await withConfirmation(
-  //     cVault
-  //       .connect(sGovernor)
-  //       .approveStrategy(nativeStakingSSVStrategyProxy.address)
-  //   );
+  await withConfirmation(
+    cVault
+      .connect(sGovernor)
+      .approveStrategy(nativeStakingSSVStrategyProxy.address)
+  );
 
-  //   await withConfirmation(
-  //     nativeStakingSSVStrategy.connect(sGovernor).setRegistrator(governorAddr)
-  //   );
-
-  //   await withConfirmation(
-  //     nativeStakingSSVStrategy
-  //       .connect(sGovernor)
-  //       .setAccountingGovernor(governorAddr)
-  //   );
+  await withConfirmation(
+    nativeStakingSSVStrategy.connect(sGovernor).setRegistrator(governorAddr)
+  );
 
   console.log("001_core deploy done.");
   return true;
