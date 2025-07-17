@@ -798,7 +798,9 @@ const deployCompoundingStakingSSVStrategy = async () => {
   const cBeaconProofs = await ethers.getContract("BeaconProofs");
 
   let governorAddress;
-  if (isTest && !isFork) {
+  // deploy the proxy on Hoodi fork not as defender relayer since we will not
+  // test SSV token claiming on that testnet
+  if ((isTest && !isFork) || isHoodiOrFork) {
     // For unit tests, use the Governor contract
     governorAddress = governorAddr;
 

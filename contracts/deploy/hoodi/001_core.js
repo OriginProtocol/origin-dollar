@@ -2,8 +2,8 @@ const {
   deployOracles,
   deployOETHCore,
   deployNativeStakingSSVStrategy,
-  // deployOETHDripper,
-  // deployOETHHarvester,
+  deployCompoundingStakingSSVStrategy,
+  deployBeaconContracts,
   configureOETHVault,
 } = require("../deployActions");
 
@@ -30,8 +30,12 @@ const mainExport = async () => {
   console.log("Deploying Native Staking");
   await deployNativeStakingSSVStrategy();
 
-  //   const cOETHDripper = await deployOETHDripper();
-  //   const cOETHHarvester = await deployOETHHarvester(cOETHDripper);
+  console.log("Deploy beacon contracts");
+  await deployBeaconContracts();
+
+  console.log("Deploy compounding ssv strategy")
+  const compoundingSsvStrategy = await deployCompoundingStakingSSVStrategy();
+
   await configureOETHVault(true);
 
   const cVault = await ethers.getContractAt(
@@ -64,6 +68,21 @@ const mainExport = async () => {
 
   await withConfirmation(
     nativeStakingSSVStrategy.connect(sGovernor).setRegistrator(governorAddr)
+  );
+  await withConfirmation(
+    nativeStakingSSVStrategy.connect(sGovernor).addTargetStrategy(compoundingSsvStrategy.address)
+  );
+
+
+  await withConfirmation(
+    compoundingSsvStrategy.connect(sGovernor).addSourceStrategy(nativeStakingSSVStrategy.address)
+  );
+  await withConfirmation(
+    compoundingSsvStrategy.connect(sGovernor).setRegistrator(governorAddr)
+  );
+
+  await withConfirmation(
+    cVault.connect(sGovernor).approveStrategy(compoundingSsvStrategy.address)
   );
 
   console.log("001_core deploy done.");
