@@ -2643,36 +2643,34 @@ async function beaconChainFixture() {
   );
   fixture.beaconOracle = await ethers.getContract("BeaconOracle");
 
+  const { deploy } = deployments;
+  const { governorAddr } = await getNamedAccounts();
+
+  const { beaconConsolidationReplaced, beaconWithdrawalReplaced } =
+    await enableExecutionLayerGeneralPurposeRequests();
+
+  await deploy("MockBeaconConsolidation", {
+    from: governorAddr,
+  });
+
+  await deploy("MockPartialWithdrawal", {
+    from: governorAddr,
+  });
+
+  fixture.beaconConsolidationReplaced = beaconConsolidationReplaced;
+  fixture.beaconWithdrawalReplaced = beaconWithdrawalReplaced;
+
+  fixture.beaconConsolidation = await resolveContract(
+    "MockBeaconConsolidation"
+  );
+  fixture.partialWithdrawal = await resolveContract("MockPartialWithdrawal");
+
+  // fund the beacon communication contracts so they can pay the fee
+  await hardhatSetBalance(fixture.beaconConsolidation.address, "100");
+  await hardhatSetBalance(fixture.partialWithdrawal.address, "100");
+
   if (isFork) {
-    const { deploy } = deployments;
-    const { governorAddr } = await getNamedAccounts();
-
-    const { beaconConsolidationReplaced, beaconWithdrawalReplaced } =
-      await enableExecutionLayerGeneralPurposeRequests();
-
-    await deploy("MockBeaconConsolidation", {
-      from: governorAddr,
-    });
-
-    await deploy("MockPartialWithdrawal", {
-      from: governorAddr,
-    });
-
-    fixture.beaconConsolidationReplaced = beaconConsolidationReplaced;
-    fixture.beaconWithdrawalReplaced = beaconWithdrawalReplaced;
-
-    fixture.beaconConsolidation = await resolveContract(
-      "MockBeaconConsolidation"
-    );
-    fixture.partialWithdrawal = await resolveContract("MockPartialWithdrawal");
-
     fixture.beaconProofs = await resolveContract("BeaconProofs");
-
-    // fund the beacon communication contracts so they can pay the fee
-    await hardhatSetBalance(fixture.beaconConsolidation.address, "100");
-    await hardhatSetBalance(fixture.partialWithdrawal.address, "100");
-
-    fixture.beaconOracle = await resolveContract("BeaconOracle");
   } else {
     fixture.beaconProofs = await resolveContract("MockBeaconProofs");
   }

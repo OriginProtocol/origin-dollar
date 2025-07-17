@@ -34,7 +34,7 @@ const mainExport = async () => {
   console.log("Deploy beacon contracts");
   await deployBeaconContracts();
 
-  console.log("Deploy compounding ssv strategy")
+  console.log("Deploy compounding ssv strategy");
   const compoundingSsvStrategy = await deployCompoundingStakingSSVStrategy();
 
   await configureOETHVault(true);
@@ -68,18 +68,25 @@ const mainExport = async () => {
   );
 
   await withConfirmation(
-    nativeStakingSSVStrategy.connect(sGovernor).setRegistrator(addresses.hoodi.defenderRelayer)
-  );  
-  await withConfirmation(
-    nativeStakingSSVStrategy.connect(sGovernor).addTargetStrategy(compoundingSsvStrategy.address)
-  );
-
-
-  await withConfirmation(
-    compoundingSsvStrategy.connect(sGovernor).addSourceStrategy(nativeStakingSSVStrategy.address)
+    nativeStakingSSVStrategy
+      .connect(sGovernor)
+      .setRegistrator(addresses.hoodi.defenderRelayer)
   );
   await withConfirmation(
-    compoundingSsvStrategy.connect(sGovernor).setRegistrator(addresses.hoodi.defenderRelayer)
+    nativeStakingSSVStrategy
+      .connect(sGovernor)
+      .addTargetStrategy(compoundingSsvStrategy.address)
+  );
+
+  await withConfirmation(
+    compoundingSsvStrategy
+      .connect(sGovernor)
+      .addSourceStrategy(nativeStakingSSVStrategy.address)
+  );
+  await withConfirmation(
+    compoundingSsvStrategy
+      .connect(sGovernor)
+      .setRegistrator(addresses.hoodi.defenderRelayer)
   );
 
   await withConfirmation(

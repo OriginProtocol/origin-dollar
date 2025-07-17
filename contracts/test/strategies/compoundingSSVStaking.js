@@ -3,7 +3,6 @@ const { network } = require("hardhat");
 const { BigNumber } = require("ethers");
 const { parseEther, parseUnits } = require("ethers").utils;
 const { setBalance } = require("@nomicfoundation/hardhat-network-helpers");
-
 const { isCI } = require("../helpers");
 const { shouldBehaveLikeGovernable } = require("../behaviour/governable");
 const { shouldBehaveLikeStrategy } = require("../behaviour/strategy");
@@ -1723,6 +1722,8 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
         const { compoundingStakingSSVStrategy, validatorRegistrator } = fixture;
 
         const withdrawalAmount = 640;
+        // fund 1 WEI for the withdrawal request
+        await setBalance(compoundingStakingSSVStrategy.address, "0x1");
         const tx = await compoundingStakingSSVStrategy
           .connect(validatorRegistrator)
           .validatorWithdrawal(
