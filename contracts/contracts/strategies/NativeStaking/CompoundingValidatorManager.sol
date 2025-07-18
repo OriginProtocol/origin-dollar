@@ -704,7 +704,11 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
 
     /// @notice Verifies the balances of all active validators on the beacon chain
     /// and checks no pending deposits have been processed by the beacon chain.
-    function verifyBalances(VerifyBalancesParams calldata params) external {
+    /// Can only be called by the registrator.
+    function verifyBalances(VerifyBalancesParams calldata params)
+        external
+        onlyRegistrator
+    {
         // Load previously snapped balances for the given block root
         Balances memory balancesMem = snappedBalances[params.blockRoot];
         // Check the balances are the latest

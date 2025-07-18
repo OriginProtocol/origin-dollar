@@ -1394,7 +1394,12 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
       pendingDepositAmount,
       activeValidators,
     }) => {
-      const { beaconOracle, compoundingStakingSSVStrategy, weth } = fixture;
+      const {
+        beaconOracle,
+        compoundingStakingSSVStrategy,
+        weth,
+        validatorRegistrator,
+      } = fixture;
 
       // If the block number of the first pending deposit is not overridden
       if (!firstPendingDepositBlockNumber) {
@@ -1438,11 +1443,13 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
       );
 
       // Verify balances with pending deposits and active validators
-      const tx = await compoundingStakingSSVStrategy.verifyBalances({
-        ...balancesProof,
-        validatorBalanceLeaves: filteredLeaves,
-        validatorBalanceProofs: filteredProofs,
-      });
+      const tx = await compoundingStakingSSVStrategy
+        .connect(validatorRegistrator)
+        .verifyBalances({
+          ...balancesProof,
+          validatorBalanceLeaves: filteredLeaves,
+          validatorBalanceProofs: filteredProofs,
+        });
 
       const totalDepositsWei = parseEther(pendingDepositAmount.toString());
       const wethBalance = parseEther(wethAmount.toString());
@@ -1488,17 +1495,19 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
 
     describe("When no execution rewards (ETH), no pending deposits and no active validators", () => {
       const verifyBalancesNoDepositsOrValidators = async (beaconBlockRoot) => {
-        const { compoundingStakingSSVStrategy } = fixture;
+        const { compoundingStakingSSVStrategy, validatorRegistrator } = fixture;
 
-        const tx = await compoundingStakingSSVStrategy.verifyBalances({
-          blockRoot: beaconBlockRoot,
-          firstPendingDepositSlot: 0,
-          firstPendingDepositSlotProof: "0x",
-          balancesContainerRoot: ethers.utils.hexZeroPad("0x0", 32),
-          validatorContainerProof: "0x",
-          validatorBalanceLeaves: [],
-          validatorBalanceProofs: [],
-        });
+        const tx = await compoundingStakingSSVStrategy
+          .connect(validatorRegistrator)
+          .verifyBalances({
+            blockRoot: beaconBlockRoot,
+            firstPendingDepositSlot: 0,
+            firstPendingDepositSlotProof: "0x",
+            balancesContainerRoot: ethers.utils.hexZeroPad("0x0", 32),
+            validatorContainerProof: "0x",
+            validatorBalanceLeaves: [],
+            validatorBalanceProofs: [],
+          });
 
         return tx;
       };
