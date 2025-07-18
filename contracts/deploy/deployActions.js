@@ -18,6 +18,7 @@ const {
 const { deployWithConfirmation, withConfirmation } = require("../utils/deploy");
 const { metapoolLPCRVPid } = require("../utils/constants");
 const { impersonateAccount } = require("../utils/signers");
+const { getTxOpts } = require("../utils/tx");
 
 const log = require("../utils/logger")("deploy:core");
 
@@ -311,9 +312,10 @@ const configureVault = async () => {
  */
 const configureOETHVault = async (isSimpleOETH) => {
   const assetAddresses = await getAssetAddresses(deployments);
-  const { governorAddr, strategistAddr } = await getNamedAccounts();
+  let { governorAddr, deployerAddr, strategistAddr } = await getNamedAccounts();
   // Signers
-  const sGovernor = await ethers.provider.getSigner(governorAddr);
+  let sGovernor = await ethers.provider.getSigner(governorAddr);
+  const sDeployer = await ethers.provider.getSigner(deployerAddr);
 
   const cVault = await ethers.getContractAt(
     "IVault",
@@ -321,6 +323,12 @@ const configureOETHVault = async (isSimpleOETH) => {
       await ethers.getContract("OETHVaultProxy")
     ).address
   );
+
+  if (isHoodiOrFork) {
+    governorAddr = deployerAddr;
+    sGovernor = sDeployer;
+  }
+
   // Set up supported assets for Vault
   const { WETH, RETH, stETH, frxETH } = assetAddresses;
   const assets = isSimpleOETH ? [WETH] : [WETH, RETH, stETH, frxETH];
@@ -688,9 +696,13 @@ const upgradeNativeStakingSSVStrategy = async () => {
  */
 const deployNativeStakingSSVStrategy = async () => {
   const assetAddresses = await getAssetAddresses(deployments);
-  const { governorAddr, deployerAddr } = await getNamedAccounts();
+  let { governorAddr, deployerAddr } = await getNamedAccounts();
   const sDeployer = await ethers.provider.getSigner(deployerAddr);
   const cOETHVaultProxy = await ethers.getContract("OETHVaultProxy");
+
+  if (isHoodiOrFork) {
+    governorAddr = deployerAddr;
+  }
 
   log("Deploy NativeStakingSSVStrategyProxy");
   const dNativeStakingSSVStrategyProxy = await deployWithConfirmation(
@@ -988,13 +1000,20 @@ const deployOracles = async () => {
 };
 
 const deployOETHCore = async () => {
-  const { governorAddr, deployerAddr } = await hre.getNamedAccounts();
+  let { governorAddr, deployerAddr } = await hre.getNamedAccounts();
   const assetAddresses = await getAssetAddresses(deployments);
   log(`Using asset addresses: ${JSON.stringify(assetAddresses, null, 2)}`);
 
   // Signers
-  const sGovernor = await ethers.provider.getSigner(governorAddr);
+  let sGovernor = await ethers.provider.getSigner(governorAddr);
   const sDeployer = await ethers.provider.getSigner(deployerAddr);
+
+  // In case of Hoodie let the deployer be govenor.
+  if (isHoodiOrFork) {
+    console.log("isHoodiOrFork", "YES");
+    governorAddr = deployerAddr;
+    sGovernor = sDeployer;
+  }
 
   // Proxies
   await deployWithConfirmation("OETHProxy");
@@ -1028,17 +1047,18 @@ const deployOETHCore = async () => {
     cOETHProxy.connect(sDeployer)["initialize(address,address,bytes)"](
       dOETH.address,
       governorAddr,
-      []
+      [],
+      await getTxOpts()
     )
   );
   log("Initialized OETHProxy");
-
   // prettier-ignore
   await withConfirmation(
     cOETHVaultProxy.connect(sDeployer)["initialize(address,address,bytes)"](
       dOETHVault.address,
       governorAddr,
-      []
+      [],
+      await getTxOpts()
     )
   );
   log("Initialized OETHVaultProxy");
@@ -1046,7 +1066,7 @@ const deployOETHCore = async () => {
   await withConfirmation(
     cOETHVault
       .connect(sGovernor)
-      .initialize(cOETHOracleRouter.address, cOETHProxy.address)
+      .initialize(cOETHOracleRouter.address, cOETHProxy.address, await getTxOpts())
   );
   log("Initialized OETHVault");
 
@@ -1078,7 +1098,7 @@ const deployOETHCore = async () => {
    */
   const resolution = ethers.utils.parseUnits("1", 27);
   await withConfirmation(
-    cOETH.connect(sGovernor).initialize(cOETHVaultProxy.address, resolution)
+    cOETH.connect(sDeployer).initialize(cOETHVaultProxy.address, resolution)
   );
   log("Initialized OETH");
 };

@@ -14,9 +14,9 @@ const { isFork } = require("../../test/helpers");
 
 const mainExport = async () => {
   console.log("Running 001_core deployment on Hoodi...");
-  const { governorAddr, deployerAddr } = await getNamedAccounts();
-  const sGovernor = await ethers.provider.getSigner(governorAddr);
-  console.log("governorAddr", sGovernor.address);
+  const { deployerAddr } = await getNamedAccounts();
+  // deployer is govenor
+  const sDeployer = await ethers.provider.getSigner(deployerAddr);
 
   if (isFork) {
     // Fund the deployer on fork
@@ -57,41 +57,42 @@ const mainExport = async () => {
 
   // await withConfirmation(
   //   nativeStakingSSVStrategy
-  //     .connect(sGovernor)
+  //     .connect(sDeployer)
   //     .setHarvesterAddress(cOETHHarvester.address)
   // );
 
   await withConfirmation(
     cVault
-      .connect(sGovernor)
+      .connect(sDeployer)
       .approveStrategy(nativeStakingSSVStrategyProxy.address)
   );
 
   await withConfirmation(
+    cVault.connect(sDeployer).approveStrategy(compoundingSsvStrategy.address)
+  );
+
+  await withConfirmation(
     nativeStakingSSVStrategy
-      .connect(sGovernor)
+      .connect(sDeployer)
       .setRegistrator(addresses.hoodi.defenderRelayer)
   );
   await withConfirmation(
     nativeStakingSSVStrategy
-      .connect(sGovernor)
+      .connect(sDeployer)
       .addTargetStrategy(compoundingSsvStrategy.address)
   );
 
   await withConfirmation(
     compoundingSsvStrategy
-      .connect(sGovernor)
+      .connect(sDeployer)
       .addSourceStrategy(nativeStakingSSVStrategy.address)
   );
   await withConfirmation(
     compoundingSsvStrategy
-      .connect(sGovernor)
+      .connect(sDeployer)
       .setRegistrator(addresses.hoodi.defenderRelayer)
   );
 
-  await withConfirmation(
-    cVault.connect(sGovernor).approveStrategy(compoundingSsvStrategy.address)
-  );
 
   console.log("001_core deploy done.");
   return true;
