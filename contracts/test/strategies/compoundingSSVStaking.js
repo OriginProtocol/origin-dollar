@@ -634,6 +634,136 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
     throw Error(`Invalid state: ${state}`);
   };
 
+  const snapBalances = async (beaconBlockRoot) => {
+    const { compoundingStakingSSVStrategy, beaconRoots } = fixture;
+
+    if (!beaconBlockRoot) {
+      beaconBlockRoot = "0x" + randomBytes(32).toString("hex");
+    }
+
+    // Disable auto-mining dynamically
+    await network.provider.send("evm_setAutomine", [false]);
+
+    await beaconRoots["setBeaconRoot(bytes32)"](beaconBlockRoot);
+
+    await compoundingStakingSSVStrategy.snapBalances();
+
+    // Mine both txs
+    await ethers.provider.send("evm_mine", []);
+    // Enable auto-mining
+    await network.provider.send("evm_setAutomine", [true]);
+
+    const lastBlock = await ethers.provider.getBlock("latest");
+
+    return { beaconBlockRoot, timestamp: lastBlock.timestamp };
+  };
+
+  const assertBalances = async ({
+    firstPendingDepositBlockNumber,
+    wethAmount,
+    ethAmount,
+    balancesProof,
+    pendingDepositAmount,
+    activeValidators,
+  }) => {
+    const {
+      beaconOracle,
+      compoundingStakingSSVStrategy,
+      weth,
+      validatorRegistrator,
+    } = fixture;
+
+    // If the block number of the first pending deposit is not overridden
+    if (!firstPendingDepositBlockNumber) {
+      firstPendingDepositBlockNumber = balancesProof.firstPendingDeposit.block;
+    }
+
+    if (wethAmount > 0) {
+      // Set some WETH in the strategy
+      await setERC20TokenBalance(
+        compoundingStakingSSVStrategy.address,
+        weth,
+        parseEther(wethAmount.toString())
+      );
+    }
+
+    if (ethAmount > 0) {
+      // Set some execution rewards
+      await setBalance(
+        compoundingStakingSSVStrategy.address,
+        parseEther(ethAmount.toString())
+      );
+    }
+
+    await snapBalances(balancesProof.blockRoot);
+
+    await beaconOracle.mapSlot(
+      firstPendingDepositBlockNumber,
+      balancesProof.firstPendingDeposit.slot,
+      balancesProof.firstPendingDeposit.blockRoot
+    );
+
+    const filteredLeaves = balancesProof.validatorBalanceLeaves.filter(
+      (_, index) => activeValidators.includes(index)
+    );
+    const filteredProofs = balancesProof.validatorBalanceProofs.filter(
+      (_, index) => activeValidators.includes(index)
+    );
+    const filteredBalances = balancesProof.validatorBalances.filter(
+      (_, index) => activeValidators.includes(index)
+    );
+
+    // Verify balances with pending deposits and active validators
+    const tx = await compoundingStakingSSVStrategy
+      .connect(validatorRegistrator)
+      .verifyBalances({
+        ...balancesProof,
+        validatorBalanceLeaves: filteredLeaves,
+        validatorBalanceProofs: filteredProofs,
+      });
+
+    const totalDepositsWei = parseEther(pendingDepositAmount.toString());
+    const wethBalance = parseEther(wethAmount.toString());
+    const totalValidatorBalance = filteredBalances
+      .map((balance) => parseEther(balance.toString()))
+      .reduce((sum, balance) => sum.add(balance), parseEther("0"));
+    const ethBalance = parseEther(ethAmount.toString());
+    const totalBalance = totalDepositsWei
+      .add(wethBalance)
+      .add(totalValidatorBalance)
+      .add(ethBalance);
+
+    await expect(tx)
+      .to.emit(compoundingStakingSSVStrategy, "BalancesVerified")
+      .withNamedArgs({
+        totalDepositsWei,
+        totalValidatorBalance,
+        wethBalance,
+        ethBalance,
+      });
+
+    const verifiedEthBalance =
+      await compoundingStakingSSVStrategy.lastVerifiedEthBalance();
+
+    expect(verifiedEthBalance).to.equal(
+      totalDepositsWei.add(totalValidatorBalance).add(ethBalance)
+    );
+
+    const stratBalance = await compoundingStakingSSVStrategy.checkBalance(
+      weth.address
+    );
+
+    return {
+      totalDepositsWei,
+      wethBalance,
+      totalValidatorBalance,
+      ethBalance,
+      totalBalance,
+      verifiedEthBalance,
+      stratBalance,
+    };
+  };
+
   // Deposits WETH into the staking strategy
   const depositToStrategy = async (amount) => {
     const { compoundingStakingSSVStrategy, weth, josh } = fixture;
@@ -1043,6 +1173,79 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
       await expect(removeTx).to.be.revertedWith("Validator not regd or exited");
     });
 
+    it("Should revert when removing a validator that exited", async () => {
+      const { weth, validatorRegistrator, compoundingStakingSSVStrategy } =
+        fixture;
+
+      await setERC20TokenBalance(
+        compoundingStakingSSVStrategy.address,
+        weth,
+        parseEther("0")
+      );
+      // Third validator is later withdrawn later
+      await processValidator(testValidators[3], "VERIFIED_DEPOSIT");
+      await topupValidator(
+        testValidators[3],
+        testValidators[3].depositProof.depositAmount - 1,
+        "VERIFIED_DEPOSIT"
+      );
+
+      await assertBalances({
+        pendingDepositAmount: 0,
+        wethAmount: 0,
+        ethAmount: 0,
+        balancesProof: testBalancesProofs[1],
+        activeValidators: [2],
+      });
+
+      // Validator has 1588.918094377 ETH
+      const withdrawalAmount = testBalancesProofs[1].validatorBalances[2];
+
+      // Stake before balance are verified
+      const activeValidatorsBefore =
+        await compoundingStakingSSVStrategy.getVerifiedValidators();
+      expect(activeValidatorsBefore.length).to.eq(1);
+      expect(
+        await compoundingStakingSSVStrategy.validatorState(
+          testValidators[3].publicKeyHash
+        )
+      ).to.equal(3); // VERIFIED
+
+      // fund 1 WEI for the withdrawal request
+      await setBalance(compoundingStakingSSVStrategy.address, "0x1");
+      const tx = await compoundingStakingSSVStrategy
+        .connect(validatorRegistrator)
+        .validatorWithdrawal(
+          testValidators[3].publicKey,
+          parseUnits(withdrawalAmount.toString(), 9)
+        );
+
+      await expect(tx)
+        .to.emit(compoundingStakingSSVStrategy, "ValidatorWithdraw")
+        .withArgs(
+          testValidators[3].publicKeyHash,
+          parseEther(withdrawalAmount.toString())
+        );
+
+      await assertBalances({
+        pendingDepositAmount: 0,
+        wethAmount: 0,
+        ethAmount: withdrawalAmount,
+        balancesProof: testBalancesProofs[2],
+        activeValidators: [2],
+      });
+
+      const removeTx = compoundingStakingSSVStrategy
+        .connect(validatorRegistrator)
+        .removeSsvValidator(
+          testValidators[2].publicKey,
+          testValidators[2].operatorIds,
+          emptyCluster
+        );
+
+      await expect(removeTx).to.be.revertedWith("Validator not regd or exited");
+    });
+
     it("Should revert when removing a validator that has been found", async () => {
       await stakeValidators(1, 1);
 
@@ -1362,137 +1565,6 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
   });
 
   describe("Strategy balances", () => {
-    const snapBalances = async (beaconBlockRoot) => {
-      const { compoundingStakingSSVStrategy, beaconRoots } = fixture;
-
-      if (!beaconBlockRoot) {
-        beaconBlockRoot = "0x" + randomBytes(32).toString("hex");
-      }
-
-      // Disable auto-mining dynamically
-      await network.provider.send("evm_setAutomine", [false]);
-
-      await beaconRoots["setBeaconRoot(bytes32)"](beaconBlockRoot);
-
-      await compoundingStakingSSVStrategy.snapBalances();
-
-      // Mine both txs
-      await ethers.provider.send("evm_mine", []);
-      // Enable auto-mining
-      await network.provider.send("evm_setAutomine", [true]);
-
-      const lastBlock = await ethers.provider.getBlock("latest");
-
-      return { beaconBlockRoot, timestamp: lastBlock.timestamp };
-    };
-
-    const assertBalances = async ({
-      firstPendingDepositBlockNumber,
-      wethAmount,
-      ethAmount,
-      balancesProof,
-      pendingDepositAmount,
-      activeValidators,
-    }) => {
-      const {
-        beaconOracle,
-        compoundingStakingSSVStrategy,
-        weth,
-        validatorRegistrator,
-      } = fixture;
-
-      // If the block number of the first pending deposit is not overridden
-      if (!firstPendingDepositBlockNumber) {
-        firstPendingDepositBlockNumber =
-          balancesProof.firstPendingDeposit.block;
-      }
-
-      if (wethAmount > 0) {
-        // Set some WETH in the strategy
-        await setERC20TokenBalance(
-          compoundingStakingSSVStrategy.address,
-          weth,
-          parseEther(wethAmount.toString())
-        );
-      }
-
-      if (ethAmount > 0) {
-        // Set some execution rewards
-        await setBalance(
-          compoundingStakingSSVStrategy.address,
-          parseEther(ethAmount.toString())
-        );
-      }
-
-      await snapBalances(balancesProof.blockRoot);
-
-      await beaconOracle.mapSlot(
-        firstPendingDepositBlockNumber,
-        balancesProof.firstPendingDeposit.slot,
-        balancesProof.firstPendingDeposit.blockRoot
-      );
-
-      const filteredLeaves = balancesProof.validatorBalanceLeaves.filter(
-        (_, index) => activeValidators.includes(index)
-      );
-      const filteredProofs = balancesProof.validatorBalanceProofs.filter(
-        (_, index) => activeValidators.includes(index)
-      );
-      const filteredBalances = balancesProof.validatorBalances.filter(
-        (_, index) => activeValidators.includes(index)
-      );
-
-      // Verify balances with pending deposits and active validators
-      const tx = await compoundingStakingSSVStrategy
-        .connect(validatorRegistrator)
-        .verifyBalances({
-          ...balancesProof,
-          validatorBalanceLeaves: filteredLeaves,
-          validatorBalanceProofs: filteredProofs,
-        });
-
-      const totalDepositsWei = parseEther(pendingDepositAmount.toString());
-      const wethBalance = parseEther(wethAmount.toString());
-      const totalValidatorBalance = filteredBalances
-        .map((balance) => parseEther(balance.toString()))
-        .reduce((sum, balance) => sum.add(balance), parseEther("0"));
-      const ethBalance = parseEther(ethAmount.toString());
-      const totalBalance = totalDepositsWei
-        .add(wethBalance)
-        .add(totalValidatorBalance)
-        .add(ethBalance);
-
-      await expect(tx)
-        .to.emit(compoundingStakingSSVStrategy, "BalancesVerified")
-        .withNamedArgs({
-          totalDepositsWei,
-          totalValidatorBalance,
-          wethBalance,
-          ethBalance,
-        });
-
-      const verifiedEthBalance =
-        await compoundingStakingSSVStrategy.lastVerifiedEthBalance();
-
-      expect(verifiedEthBalance).to.equal(
-        totalDepositsWei.add(totalValidatorBalance).add(ethBalance)
-      );
-
-      const stratBalance = await compoundingStakingSSVStrategy.checkBalance(
-        weth.address
-      );
-
-      return {
-        totalDepositsWei,
-        wethBalance,
-        totalValidatorBalance,
-        ethBalance,
-        totalBalance,
-        verifiedEthBalance,
-        stratBalance,
-      };
-    };
-
     describe("When no execution rewards (ETH), no pending deposits and no active validators", () => {
       const verifyBalancesNoDepositsOrValidators = async (beaconBlockRoot) => {
         const { compoundingStakingSSVStrategy, validatorRegistrator } = fixture;
