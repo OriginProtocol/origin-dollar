@@ -406,7 +406,7 @@ contract VaultCore is VaultInitializer {
     }
 
     /**
-     * @notice Calculates the amount that would rebase at at next rebase.
+     * @notice Calculates the amount that would rebase at next rebase.
      * This is before any fees.
      * @return yield amount of expected yield
      */

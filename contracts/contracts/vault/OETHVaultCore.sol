@@ -236,7 +236,7 @@ contract OETHVaultCore is VaultCore {
         // Burn the user's OETH
         oUSD.burn(msg.sender, _amount);
 
-        // Prevent withdrawal if the vault is solvent by more than the the allowed percentage
+        // Prevent withdrawal if the vault is solvent by more than the allowed percentage
         _postRedeem(_amount);
 
         emit WithdrawalRequested(msg.sender, requestId, _amount, queued);
