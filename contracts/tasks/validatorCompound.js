@@ -1,7 +1,8 @@
 const addresses = require("../utils/addresses");
-const { parseUnits } = require("ethers/lib/utils");
+const { formatUnits, parseUnits } = require("ethers/lib/utils");
 
 const { calcDepositRoot } = require("./beacon");
+const { getValidatorBalance } = require("../utils/beacon");
 const { getSigner } = require("../utils/signers");
 const { resolveContract } = require("../utils/resolvers");
 const { getClusterInfo } = require("../utils/ssv");
@@ -79,4 +80,36 @@ async function stakeValidator({ pubkey, sig, amount }) {
   await logTxDetails(tx, "stakeETH");
 }
 
-module.exports = { snapBalances, registerValidator, stakeValidator };
+async function withdrawValidator({ pubkey, amount }) {
+  const signer = await getSigner();
+
+  const strategy = await resolveContract(
+    "CompoundingStakingSSVStrategyProxy",
+    "CompoundingStakingSSVStrategy"
+  );
+
+  /// Get the validator's balance
+  const balance = await getValidatorBalance(pubkey);
+
+  const amountGwei = amount ? parseUnits(amount.toString(), 9) : balance;
+  log(
+    `About to withdraw ${formatUnits(
+      amountGwei,
+      9
+    )} ETH from balance ${formatUnits(
+      balance,
+      9
+    )} ETH from validator with pubkey ${pubkey}`
+  );
+  const tx = await strategy
+    .connect(signer)
+    .validatorWithdrawal(pubkey, amountGwei);
+  await logTxDetails(tx, "validatorWithdrawal");
+}
+
+module.exports = {
+  snapBalances,
+  registerValidator,
+  stakeValidator,
+  withdrawValidator,
+};

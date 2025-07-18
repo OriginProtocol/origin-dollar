@@ -3,20 +3,30 @@ const fetch = require("node-fetch");
 
 const log = require("./logger")("utils:beacon");
 
-const getValidator = async (pubkey) => {
-  return await beaconchainRequest(`validator/${pubkey}`);
-};
+/// They following use Lodestar API calls
 
-const getValidators = async (pubkeys, beaconChainApiKey) => {
-  const encodedPubkeys = encodeURIComponent(pubkeys);
-  return await beaconchainRequest(
-    `validator/${encodedPubkeys}`,
-    beaconChainApiKey
-  );
-};
+const getValidatorBalance = async (pubkey) => {
+  const client = await configClient();
 
-const getEpoch = async (epochId = "latest") => {
-  return await beaconchainRequest(`epoch/${epochId}`);
+  log(`Fetching validator details for ${pubkey} from the beacon node`);
+  const validatorRes = await client.beacon.getStateValidator({
+    stateId: "head",
+    validatorId: pubkey,
+  });
+  if (!validatorRes.ok) {
+    console.error(validatorRes);
+    throw Error(
+      `Failed to get validator details for ${pubkey}. Status ${validatorRes.status} ${validatorRes.statusText}`,
+      {
+        cause: validatorRes.error,
+      }
+    );
+  }
+
+  const values = validatorRes.value();
+  log(validatorRes.value());
+  log(`Got balance ${values.balance} for validator ${values.index}`);
+  return values.balance;
 };
 
 const getSlot = async (blockId = "head") => {
@@ -154,6 +164,25 @@ const configClient = async () => {
   return client;
 };
 
+/// The following connect directly to the BeaconChain API
+/// They could be replaced with Lodestar API calls in the future.
+
+const getValidator = async (pubkey) => {
+  return await beaconchainRequest(`validator/${pubkey}`);
+};
+
+const getValidators = async (pubkeys, beaconChainApiKey) => {
+  const encodedPubkeys = encodeURIComponent(pubkeys);
+  return await beaconchainRequest(
+    `validator/${encodedPubkeys}`,
+    beaconChainApiKey
+  );
+};
+
+const getEpoch = async (epochId = "latest") => {
+  return await beaconchainRequest(`epoch/${epochId}`);
+};
+
 const beaconchainRequest = async (endpoint) => {
   const API_URL =
     process.env.BEACON_PROVIDER_URL || "https://beaconcha.in/api/v1/";
@@ -199,6 +228,7 @@ module.exports = {
   getBeaconBlockRoot,
   getValidator,
   getValidators,
+  getValidatorBalance,
   getEpoch,
   hashPubKey,
 };

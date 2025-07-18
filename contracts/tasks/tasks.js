@@ -107,6 +107,7 @@ const {
   snapBalances,
   registerValidator,
   stakeValidator,
+  withdrawValidator,
 } = require("./validatorCompound");
 const { setDefaultValidator, snapSonicStaking } = require("../utils/sonic");
 const {
@@ -2038,6 +2039,27 @@ subtask(
   )
   .setAction(registerValidator);
 task("registerValidator").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+subtask(
+  "withdrawValidator",
+  "Requests a partial or full full withdrawal from a compounding validator"
+)
+  .addParam(
+    "pubkey",
+    "The validator's public key in hex format with a 0x prefix",
+    undefined,
+    types.string
+  )
+  .addOptionalParam(
+    "amount",
+    "Amount of ETH to withdraw from the validator. Default full exit",
+    undefined,
+    types.int
+  )
+  .setAction(withdrawValidator);
+task("withdrawValidator").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
 
