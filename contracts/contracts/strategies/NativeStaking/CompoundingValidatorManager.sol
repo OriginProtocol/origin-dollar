@@ -867,4 +867,16 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
         // The ETH balance was decreased to WETH so we need to invalidate the last balances snap.
         lastSnapTimestamp = 0;
     }
+
+    /***************************************
+                View Functions
+    ****************************************/
+
+    function getVerifiedValidators()
+        external
+        view
+        returns (ValidatorData[] memory)
+    {
+        return verifiedValidators;
+    }
 }
