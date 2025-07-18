@@ -1115,7 +1115,7 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
     });
 
     // Remove validator
-    it("Should remove a validator", async () => {
+    it("Should remove a validator when validator is registered", async () => {
       const { compoundingStakingSSVStrategy, validatorRegistrator } = fixture;
 
       const testValidator = testValidators[0];
@@ -1173,7 +1173,7 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
       await expect(removeTx).to.be.revertedWith("Validator not regd or exited");
     });
 
-    it("Should revert when removing a validator that exited", async () => {
+    it("Should remove a validator when validator is exited", async () => {
       const { weth, validatorRegistrator, compoundingStakingSSVStrategy } =
         fixture;
 
@@ -1238,12 +1238,17 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
       const removeTx = compoundingStakingSSVStrategy
         .connect(validatorRegistrator)
         .removeSsvValidator(
-          testValidators[2].publicKey,
-          testValidators[2].operatorIds,
+          testValidators[3].publicKey,
+          testValidators[3].operatorIds,
           emptyCluster
         );
 
-      await expect(removeTx).to.be.revertedWith("Validator not regd or exited");
+      await expect(removeTx)
+        .to.emit(compoundingStakingSSVStrategy, "SSVValidatorRemoved")
+        .withArgs(
+          testValidators[3].publicKeyHash,
+          testValidators[3].operatorIds
+        );
     });
 
     it("Should revert when removing a validator that has been found", async () => {
