@@ -307,7 +307,7 @@ async function verifyBalances({ root, indexes, dryrun }) {
     ? indexes.split(",").map((index) => ({
         index,
       }))
-    : await strategy.verifiedValidators();
+    : await strategy.getVerifiedValidators();
 
   const validatorBalanceLeaves = [];
   const validatorBalanceProofs = [];

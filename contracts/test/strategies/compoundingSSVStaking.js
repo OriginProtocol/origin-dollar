@@ -1700,7 +1700,8 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
         expect(balancesAfter.stratBalance).to.equal(expectedValidatorBalance);
       });
     });
-    describe("When a validator does partial and full withdrawals", () => {
+    describe("When an active validator does a", () => {
+      let balancesBefore;
       beforeEach(async () => {
         // Third validator is later withdrawn later
         await processValidator(testValidators[3], "VERIFIED_DEPOSIT");
@@ -1709,44 +1710,152 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
           testValidators[3].depositProof.depositAmount - 1,
           "VERIFIED_DEPOSIT"
         );
+      });
+      describe("partial withdrawal", () => {
+        beforeEach(async () => {
+          balancesBefore = await assertBalances({
+            pendingDepositAmount: 0,
+            wethAmount: 0,
+            ethAmount: 0,
+            balancesProof: testBalancesProofs[0],
+            activeValidators: [2],
+          });
+        });
+        it("Should account for a pending partial withdrawal", async () => {
+          const { compoundingStakingSSVStrategy, validatorRegistrator } =
+            fixture;
 
-        await assertBalances({
-          pendingDepositAmount: 0,
-          wethAmount: 0,
-          ethAmount: 0,
-          balancesProof: testBalancesProofs[0],
-          activeValidators: [2],
+          const withdrawalAmount = 640;
+          // fund 1 WEI for the withdrawal request
+          await setBalance(compoundingStakingSSVStrategy.address, "0x1");
+          const tx = await compoundingStakingSSVStrategy
+            .connect(validatorRegistrator)
+            .validatorWithdrawal(
+              testValidators[3].publicKey,
+              parseUnits(withdrawalAmount.toString(), 9)
+            );
+
+          await expect(tx)
+            .to.emit(compoundingStakingSSVStrategy, "ValidatorWithdraw")
+            .withArgs(
+              testValidators[3].publicKeyHash,
+              parseEther(withdrawalAmount.toString())
+            );
+
+          const balancesAfter = await assertBalances({
+            pendingDepositAmount: 0,
+            wethAmount: 0,
+            ethAmount: 0,
+            balancesProof: testBalancesProofs[0],
+            activeValidators: [2],
+          });
+          expect(balancesAfter.stratBalance).to.equal(
+            balancesBefore.stratBalance
+          );
+        });
+        it("Should account for a processed partial withdrawal", async () => {
+          const { compoundingStakingSSVStrategy, validatorRegistrator } =
+            fixture;
+
+          const withdrawalAmount = 640;
+          // fund 1 WEI for the withdrawal request
+          await setBalance(compoundingStakingSSVStrategy.address, "0x1");
+          const tx = await compoundingStakingSSVStrategy
+            .connect(validatorRegistrator)
+            .validatorWithdrawal(
+              testValidators[3].publicKey,
+              parseUnits(withdrawalAmount.toString(), 9)
+            );
+
+          await expect(tx)
+            .to.emit(compoundingStakingSSVStrategy, "ValidatorWithdraw")
+            .withArgs(
+              testValidators[3].publicKeyHash,
+              parseEther(withdrawalAmount.toString())
+            );
+
+          const concensusRewards =
+            testBalancesProofs[0].validatorBalances[2] -
+            testBalancesProofs[1].validatorBalances[2] -
+            withdrawalAmount;
+
+          const balancesAfter = await assertBalances({
+            pendingDepositAmount: 0,
+            wethAmount: 0,
+            ethAmount: withdrawalAmount + concensusRewards,
+            balancesProof: testBalancesProofs[1],
+            activeValidators: [2],
+          });
+          expect(balancesAfter.stratBalance).to.equal(
+            balancesBefore.stratBalance
+          );
         });
       });
-      it("Should account for partial withdrawal", async () => {
-        const { compoundingStakingSSVStrategy, validatorRegistrator } = fixture;
+      describe("full withdrawal", () => {
+        beforeEach(async () => {
+          balancesBefore = await assertBalances({
+            pendingDepositAmount: 0,
+            wethAmount: 0,
+            ethAmount: 0,
+            balancesProof: testBalancesProofs[1],
+            activeValidators: [2],
+          });
+        });
+        it("Should account for full withdrawal", async () => {
+          const { compoundingStakingSSVStrategy, validatorRegistrator } =
+            fixture;
 
-        const withdrawalAmount = 640;
-        // fund 1 WEI for the withdrawal request
-        await setBalance(compoundingStakingSSVStrategy.address, "0x1");
-        const tx = await compoundingStakingSSVStrategy
-          .connect(validatorRegistrator)
-          .validatorWithdrawal(
-            testValidators[3].publicKey,
-            parseUnits(withdrawalAmount.toString(), 9)
+          // Validator has 1588.918094377 ETH
+          const withdrawalAmount = testBalancesProofs[1].validatorBalances[2];
+
+          // Stake before balance are verified
+          const activeValidatorsBefore =
+            await compoundingStakingSSVStrategy.getVerifiedValidators();
+          expect(activeValidatorsBefore.length).to.eq(1);
+          expect(
+            await compoundingStakingSSVStrategy.validatorState(
+              testValidators[3].publicKeyHash
+            )
+          ).to.equal(3); // VERIFIED
+
+          // fund 1 WEI for the withdrawal request
+          await setBalance(compoundingStakingSSVStrategy.address, "0x1");
+          const tx = await compoundingStakingSSVStrategy
+            .connect(validatorRegistrator)
+            .validatorWithdrawal(
+              testValidators[3].publicKey,
+              parseUnits(withdrawalAmount.toString(), 9)
+            );
+
+          await expect(tx)
+            .to.emit(compoundingStakingSSVStrategy, "ValidatorWithdraw")
+            .withArgs(
+              testValidators[3].publicKeyHash,
+              parseEther(withdrawalAmount.toString())
+            );
+
+          const balancesAfter = await assertBalances({
+            pendingDepositAmount: 0,
+            wethAmount: 0,
+            ethAmount: withdrawalAmount,
+            balancesProof: testBalancesProofs[2],
+            activeValidators: [2],
+          });
+
+          // Check state after the balances are verified
+          expect(balancesAfter.stratBalance).to.equal(
+            balancesBefore.stratBalance
           );
-
-        await expect(tx)
-          .to.emit(compoundingStakingSSVStrategy, "ValidatorWithdraw")
-          .withArgs(
-            testValidators[3].publicKeyHash,
-            parseEther(withdrawalAmount.toString())
-          );
-
-        await assertBalances({
-          pendingDepositAmount: 0,
-          wethAmount: 0,
-          ethAmount: 0,
-          balancesProof: testBalancesProofs[0],
-          activeValidators: [2],
+          const activeValidatorsAfter =
+            await compoundingStakingSSVStrategy.getVerifiedValidators();
+          expect(activeValidatorsAfter.length).to.eq(0);
+          expect(
+            await compoundingStakingSSVStrategy.validatorState(
+              testValidators[3].publicKeyHash
+            )
+          ).to.equal(4); // EXITED
         });
       });
-      it("should account for full withdrawal", async () => {});
     });
     describe("When WETH, ETH, no pending deposits and 2 active validators", () => {
       let balancesBefore;
