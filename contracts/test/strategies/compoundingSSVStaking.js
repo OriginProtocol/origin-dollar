@@ -1474,6 +1474,31 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
       );
     });
 
+    it("Should withdraw ETH from the strategy, when lastVerifiedEthBalance > ethAmount", async () => {
+      await processValidator(testValidators[0]);
+      await topupValidator(testValidators[0], 32, "VERIFIED_DEPOSIT");
+      await assertBalances({
+        pendingDepositAmount: 0,
+        wethAmount: 0,
+        ethAmount: 32,
+        balancesProof: testBalancesProofs[0],
+        activeValidators: [0],
+      });
+      // Give 5 raw eth to the strategy
+      await setBalance(
+        fixture.compoundingStakingSSVStrategy.address,
+        parseEther("5")
+      );
+
+      const withdrawTx = fixture.compoundingStakingSSVStrategy
+        .connect(sVault)
+        .withdraw(fixture.josh.address, fixture.weth.address, parseEther("5"));
+
+      await expect(withdrawTx)
+        .to.emit(fixture.compoundingStakingSSVStrategy, "Withdrawal")
+        .withArgs(fixture.weth.address, zero, parseEther("5"));
+    });
+
     it("Should revert when withdrawing other than WETH", async () => {
       const { compoundingStakingSSVStrategy, josh } = fixture;
 
