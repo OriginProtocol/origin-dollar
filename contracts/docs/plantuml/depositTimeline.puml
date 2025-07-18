@@ -5,45 +5,59 @@ Title Deposit to a Validator Timeline
 scale 5 as 50 pixels
 
 robust "Strategy contract" as strat
+' note top of strat : stakeETH
 robust "Deposit contract" as con
 robust "Validator deposit on Beacon Chain" as beacon
+@10 <-> @20 : pending deposit
 robust "Slot of first pending deposit" as queue
-robust "Mapped block for proof" as mb
-robust "Slot of first pending deposit for proof" as fpd
+robust "Deposit block" as mb
+robust "Earliest proof" as fpd
+@10 <-> @25 : min gap for proof
+robust "Later proof" as fpd2
+@15 <-> @30 : min gap for proof
+robust "Later proof" as fpd3
+@25 <-> @40 : min gap for proof
+
 
 @0
 strat is UNKNOWN
 con is UNKNOWN
 beacon is UNKNOWN
-queue is "Before Deposit"
+queue is "Before Deposit < 10"
 mb is "Verify Fail"
 fpd is "Verify Fail"
+fpd2 is "Verify Fail"
+fpd3 is "Verify Fail"
 
-@+10
+@10
 strat is PENDING
 con is DEPOSITED
 beacon is PENDING
 mb is "Verify Success"
 
-note top of strat : stakeETH
+@15
+queue is "Same as Deposit = 10"
 
-@+30
+@20
 beacon is PROCESSED
 
-@+10
-strat is VERIFIED
-
-@35
-queue is "Same as Deposit"
-@45
-queue is "After Deposit"
-@46
+@25
+queue is "After Deposit > 10"
+' @46
 fpd is "Verify Success"
+
+@30
+strat is VERIFIED
+fpd2 is "Verify Success"
+
+@40
+fpd3 is "Verify Success"
+
 
 ' queue@15 -> strat@50 : Mapped block
 ' queue@45 -> strat@50 : Slot of First Pending Deposit
 
 ' highlight 10 to 20 : mapped\nblocks
-highlight 35 to 45 : deposits from\nsame block\nprocessed
+highlight 15 to 25 : deposits from\nsame block\nprocessed
 
 @enduml

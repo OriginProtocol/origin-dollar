@@ -32,7 +32,6 @@ box "Beacon chain"
 participant "Validator" as val <<Beacon>>
 end box
 
-
 group Consolidate validators
 
 reg -> nativeStrat: requestConsolidation(\nsourcePubKeys,\ntargetPubKey,\ntargetStakingStrategy)
@@ -271,15 +270,79 @@ note over val: Validator activated if >= 32 ETH
 
 end group
 
-group Verify validator deposit
+group Verify validator
 
 sender -> val : getBlockV2(slot)
-note left : slot the deposit was\ncreated on the execution layer
+note left : slot after the\nvalidator was processed
 activate val
 return beacon block
 
 sender -> val : getStateV2(slot)
-note left : slot the deposit was\ncreated on the execution layer
+note left : slot after the\nvalidator was processed
+activate val
+return beacon state
+
+sender -> sender : generateValidatorPubKeyProof(\nvalidator index,\nbeacon block,\nbeacon state)
+
+sender -> compStrat : verifyValidator(\nnextBlockTimestamp,\nvalidatorIndex,\npubKeyHash,\nvalidatorPubKeyProof)
+activate compStrat
+
+note over compStrat : check the validator is STAKED 
+
+compStrat -> roots : get(nextBlockTimestamp)
+note left
+timestamp of the block after the block we want to verify.
+This is because the timestamp will get the parent block root.
+end note
+activate roots
+return parent block root
+
+note over compStrat
+Verify the pub key hash is for the validator index.
+Add the validator to the active validators.
+end note
+
+end group
+
+group Verify validator deposit
+
+sender -> val : getBlockV2(slot)
+note left : slot the on or after the deposit\nwas created the execution layer
+activate val
+return beacon block
+
+sender -> val : getStateV2(slot)
+note left : slot the on or after the deposit\nwas created the execution layer
+activate val
+return beacon state
+
+sender -> sender : generateSlotProof(\nslot,\nbeacon block)
+sender -> sender : generateBlockProof(\nblock number,\nbeacon block,\nbeacon state)
+
+' map block number to slot in Beacon Oracle
+sender -> bo : verifySlot(\nnextBlockTimestamp,\ndepositBlockNumber,\nslot,\nslot proof,\nblock proof)
+activate bo
+bo -> roots : get(timestamp)
+note left
+timestamp of the block after the block we want to map.
+This is because the timestamp will get the parent block root.
+end note
+activate roots
+return parent block root
+note over bo
+verify slot proof to block root
+verify block number proof to block root
+store map of block to slot
+end note
+return
+
+sender -> val : getBlockV2(slot)
+note left : slot after the deposit was\nprocessed on the beacon chain
+activate val
+return beacon block
+
+sender -> val : getStateV2(slot)
+note left : slot after the deposit was\nprocessed on the beacon chain
 activate val
 return beacon state
 
@@ -299,48 +362,31 @@ return parent block root
 note over bo
 verify slot proof to block root
 verify block number proof to block root
-store map of block to slot
+store map of slot to beacon chain root
 end note
 return
 
-sender -> val : getBlockV2(slot)
-note left : slot after the deposit was processed
-activate val
-return beacon block
-
-sender -> val : getStateV2(slot)
-note left : slot after the deposit was processed
-activate val
-return beacon state
-
-sender -> sender : generateValidatorPubKeyProof(\nvalidator index,\nbeacon block,\nbeacon state)
 sender -> sender : generateFirstPendingDepositSlotProof(\nbeacon block,\nbeacon state)
 
-sender -> compStrat : verifyDeposit(\ndepositDataRoot,\nparentBlockTimestamp,\nmappedBlockNumber,\nvalidatorIndex,\nfirstPendingDepositSlot,\nvalidatorPubKeyProof,\nfirstPendingDepositSlotProof)
+sender -> compStrat : verifyDeposit(\ndepositDataRoot,\ndepositBlockNumber,\nprocessedSlot,\nfirstPendingDepositSlot,\nfirstPendingDepositSlotProof)
 activate compStrat
 
-note over compStrat : deposit needs to be before\nor at the mapped block number
+note over compStrat : stored deposit needs to be before\nor at the depositBlockNumber
 
 compStrat -> bo : slotToBlock(\nmappedBlockNumber)
-note left : map the block number to a slot
+note left : map the deposit block number to a deposit slot
 activate bo
 return slot
 
-note over compStrat : Check the mapped slot is\nbefore the first pending deposit slot
+note over compStrat : Check the deposit slot is\nbefore the first pending deposit slot
 
-compStrat -> roots : get(timestamp)
-note left
-timestamp of the block after the block we want to verify.
-This is because the timestamp will get the parent block root.
-end note
-activate roots
-return parent block root
+compStrat -> bo : slotToRoot(\nprocessedSlot)
+activate bo
+return beacon block root after the deposit was processed
 
 note over compStrat
-verify the pub key hash saved with the deposit is for the validator index
-verify the slot of the first pending deposit is after the deposit was processed
+verify the slot of the first pending deposit is after when the deposit was processed
 remove the deposit
-add validator to active validators if not already
 end note
 
 end group
@@ -623,24 +669,5 @@ return
 return
 
 end group
-
-' group Strategist pauses Staking Strategy
-
-' strategist -> compStrat : pause()
-' activate compStrat
-' return
-
-' end group
-
-' group Strategist unpauses Staking Strategy
-
-' strategist -> compStrat : manuallyFixAccounting(0, 0, 0)
-' activate compStrat
-' note right : params _validatorsDelta, _consensusRewardsDelta\nand _ethToVaultAmount all set to zero
-' compStrat -> compStrat
-' note right : unpause
-' return
-
-' end group
 
 @enduml
