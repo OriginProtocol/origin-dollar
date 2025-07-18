@@ -8,6 +8,8 @@ const {
   deployAaveStrategy,
   deployConvexStrategy,
   deployNativeStakingSSVStrategy,
+  deployCompoundingStakingSSVStrategy,
+  deployBeaconContracts,
   deployDrippers,
   deployHarvesters,
   configureVault,
@@ -30,7 +32,9 @@ const main = async () => {
   await deployCompoundStrategy();
   await deployAaveStrategy();
   await deployConvexStrategy();
+  await deployBeaconContracts();
   await deployNativeStakingSSVStrategy();
+  await deployCompoundingStakingSSVStrategy();
   const [ousdDripper, oethDripper] = await deployDrippers();
   const [harvesterProxy, oethHarvesterProxy] = await deployHarvesters(
     ousdDripper,

@@ -1,4 +1,5 @@
 const hre = require("hardhat");
+const { parseUnits } = require("ethers/lib/utils.js");
 
 const addresses = require("../utils/addresses");
 const {
@@ -11,10 +12,13 @@ const {
   isTest,
   isFork,
   isPlume,
+  isHoodi,
+  isHoodiOrFork,
 } = require("../test/helpers.js");
 const { deployWithConfirmation, withConfirmation } = require("../utils/deploy");
 const { metapoolLPCRVPid } = require("../utils/constants");
-const { parseUnits } = require("ethers/lib/utils.js");
+const { impersonateAccount } = require("../utils/signers");
+const { getTxOpts } = require("../utils/tx");
 
 const log = require("../utils/logger")("deploy:core");
 
@@ -308,9 +312,10 @@ const configureVault = async () => {
  */
 const configureOETHVault = async (isSimpleOETH) => {
   const assetAddresses = await getAssetAddresses(deployments);
-  const { governorAddr, strategistAddr } = await getNamedAccounts();
+  let { governorAddr, deployerAddr, strategistAddr } = await getNamedAccounts();
   // Signers
-  const sGovernor = await ethers.provider.getSigner(governorAddr);
+  let sGovernor = await ethers.provider.getSigner(governorAddr);
+  const sDeployer = await ethers.provider.getSigner(deployerAddr);
 
   const cVault = await ethers.getContractAt(
     "IVault",
@@ -318,6 +323,12 @@ const configureOETHVault = async (isSimpleOETH) => {
       await ethers.getContract("OETHVaultProxy")
     ).address
   );
+
+  if (isHoodiOrFork) {
+    governorAddr = deployerAddr;
+    sGovernor = sDeployer;
+  }
+
   // Set up supported assets for Vault
   const { WETH, RETH, stETH, frxETH } = assetAddresses;
   const assets = isSimpleOETH ? [WETH] : [WETH, RETH, stETH, frxETH];
@@ -398,7 +409,9 @@ const deployOUSDHarvester = async (ousdDripper) => {
     cHarvester
       .connect(sGovernor)
       .setRewardProceedsAddress(
-        isMainnet || isHolesky ? ousdDripper.address : cVaultProxy.address
+        isMainnet || isHolesky || isHoodi
+          ? ousdDripper.address
+          : cVaultProxy.address
       )
   );
 
@@ -447,10 +460,10 @@ const deployOETHHarvester = async (oethDripper) => {
   await withConfirmation(
     // prettier-ignore
     cOETHHarvesterProxy["initialize(address,address,bytes)"](
-        dOETHHarvester.address,
-        governorAddr,
-        []
-      )
+      dOETHHarvester.address,
+      governorAddr,
+      []
+    )
   );
 
   log("Initialized OETHHarvesterProxy");
@@ -459,7 +472,9 @@ const deployOETHHarvester = async (oethDripper) => {
     cOETHHarvester
       .connect(sGovernor)
       .setRewardProceedsAddress(
-        isMainnet || isHolesky ? oethDripper.address : cOETHVaultProxy.address
+        isMainnet || isHolesky || isHoodi
+          ? oethDripper.address
+          : cOETHVaultProxy.address
       )
   );
 
@@ -672,9 +687,13 @@ const upgradeNativeStakingSSVStrategy = async () => {
  */
 const deployNativeStakingSSVStrategy = async () => {
   const assetAddresses = await getAssetAddresses(deployments);
-  const { governorAddr, deployerAddr } = await getNamedAccounts();
+  let { governorAddr, deployerAddr } = await getNamedAccounts();
   const sDeployer = await ethers.provider.getSigner(deployerAddr);
   const cOETHVaultProxy = await ethers.getContract("OETHVaultProxy");
+
+  if (isHoodiOrFork) {
+    governorAddr = deployerAddr;
+  }
 
   log("Deploy NativeStakingSSVStrategyProxy");
   const dNativeStakingSSVStrategyProxy = await deployWithConfirmation(
@@ -716,7 +735,7 @@ const deployNativeStakingSSVStrategy = async () => {
     "initialize(address[],address[],address[])",
     [
       [assetAddresses.WETH], // reward token addresses
-      /* no need to specify WETH as an asset, since we have that overriden in the "supportsAsset"
+      /* no need to specify WETH as an asset, since we have that overridden in the "supportsAsset"
        * function on the strategy
        */
       [], // asset token addresses
@@ -768,6 +787,136 @@ const deployNativeStakingSSVStrategy = async () => {
 };
 
 /**
+ * Deploy CompoundingStakingSSVStrategy
+ * Deploys a proxy, the actual strategy, initializes the proxy and initializes
+ * the strategy.
+ */
+const deployCompoundingStakingSSVStrategy = async () => {
+  const assetAddresses = await getAssetAddresses(deployments);
+  const { governorAddr, deployerAddr } = await getNamedAccounts();
+  const sDeployer = await ethers.provider.getSigner(deployerAddr);
+  const cOETHVaultProxy = await ethers.getContract("OETHVaultProxy");
+
+  const cBeaconOracle = await ethers.getContract("BeaconOracle");
+  const cBeaconProofs = await ethers.getContract("BeaconProofs");
+
+  let governorAddress;
+  // deploy the proxy on Hoodi fork not as defender relayer since we will not
+  // test SSV token claiming on that testnet
+  if ((isTest && !isFork) || isHoodiOrFork) {
+    // For unit tests, use the Governor contract
+    governorAddress = governorAddr;
+
+    log("Deploy CompoundingStakingSSVStrategyProxy");
+    await deployWithConfirmation("CompoundingStakingSSVStrategyProxy");
+  } else {
+    // For fork tests and mainnet deployments, use the Timelock contract
+    governorAddress = addresses.mainnet.Timelock;
+  }
+  // Should have already been deployed by the Defender Relayer as SSV rewards are sent to the deployer.
+  // Use the deployStakingProxy Hardhat task to deploy
+  const cCompoundingStakingSSVStrategyProxy = await ethers.getContract(
+    "CompoundingStakingSSVStrategyProxy"
+  );
+
+  const proxyGovernor = await cCompoundingStakingSSVStrategyProxy.governor();
+  if (isFork && proxyGovernor != deployerAddr) {
+    // For fork tests, transfer the governance to the deployer account
+    const currentSigner = await impersonateAccount(
+      "0x3Ba227D87c2A7aB89EAaCEFbeD9bfa0D15Ad249A"
+    );
+    await withConfirmation(
+      cCompoundingStakingSSVStrategyProxy
+        .connect(currentSigner)
+        .transferGovernance(deployerAddr)
+    );
+
+    await withConfirmation(
+      cCompoundingStakingSSVStrategyProxy.connect(sDeployer).claimGovernance()
+    );
+  } else {
+    /* Before kicking off the deploy script make sure the Defender relayer transfers the governance
+     * of the proxy to the deployer account that shall be deploying this script so it will be able
+     * to initialize the proxy contract
+     *
+     * Run the following to make it happen, and comment this error block out:
+     * yarn run hardhat transferGovernance --proxy CompoundingStakingSSVStrategyProxy --governor 0xdeployerAddress  --network mainnet
+     */
+    if (proxyGovernor != deployerAddr) {
+      throw new Error(
+        `Compounding Staking Strategy proxy's governor: ${proxyGovernor} does not match current deployer ${deployerAddr}`
+      );
+    }
+  }
+
+  log("Deploy CompoundingStakingSSVStrategy");
+  const dStrategyImpl = await deployWithConfirmation(
+    "CompoundingStakingSSVStrategy",
+    [
+      [addresses.zero, cOETHVaultProxy.address], //_baseConfig
+      assetAddresses.WETH, // wethAddress
+      assetAddresses.SSV, // ssvToken
+      assetAddresses.SSVNetwork, // ssvNetwork
+      assetAddresses.beaconChainDepositContract, // depositContractMock
+      cBeaconOracle.address, // BeaconOracle
+      cBeaconProofs.address, // BeaconProofs
+    ]
+  );
+  const cStrategyImpl = await ethers.getContractAt(
+    "CompoundingStakingSSVStrategy",
+    dStrategyImpl.address
+  );
+
+  log("Deploy encode initialize function of the strategy contract");
+  const initData = cStrategyImpl.interface.encodeFunctionData(
+    "initialize(address[],address[],address[])",
+    [
+      [assetAddresses.WETH], // reward token addresses
+      /* no need to specify WETH as an asset, since we have that overridden in the "supportsAsset"
+       * function on the strategy
+       */
+      [], // asset token addresses
+      [], // platform tokens addresses
+    ]
+  );
+
+  log("Initialize the proxy and execute the initialize strategy function");
+  await withConfirmation(
+    cCompoundingStakingSSVStrategyProxy.connect(sDeployer)[
+      // eslint-disable-next-line no-unexpected-multiline
+      "initialize(address,address,bytes)"
+    ](
+      cStrategyImpl.address, // implementation address
+      governorAddress,
+      initData // data for call to the initialize function on the strategy
+    )
+  );
+
+  const cStrategy = await ethers.getContractAt(
+    "CompoundingStakingSSVStrategy",
+    cCompoundingStakingSSVStrategyProxy.address
+  );
+
+  log("Approve spending of the SSV token");
+  await withConfirmation(cStrategy.connect(sDeployer).safeApproveAllTokens());
+
+  return cStrategy;
+};
+
+const deployBeaconContracts = async () => {
+  log("Deploy Beacon Oracle that maps blocks and slots");
+  if (isTest) {
+    // For unit tests, use the Governor contract
+    await deployWithConfirmation("BeaconOracle", [], "MockBeaconOracle");
+  } else {
+    await deployWithConfirmation("BeaconOracle", []);
+  }
+
+  log("Deploy Beacon Proofs");
+  await deployWithConfirmation("BeaconProofs", []);
+};
+
+/**
  * Deploy the OracleRouter and initialise it with Chainlink sources.
  */
 const deployOracles = async () => {
@@ -780,10 +929,10 @@ const deployOracles = async () => {
   let args = [];
   if (isMainnet) {
     oracleContract = "OracleRouter";
-  } else if (isHoleskyOrFork) {
+  } else if (isHoleskyOrFork || isHoodiOrFork) {
     oracleContract = "OETHFixedOracle";
     contractName = "OETHOracleRouter";
-    args = [addresses.zero];
+    args = [];
   } else if (isSonicOrFork) {
     oracleContract = "OSonicOracleRouter";
     contractName = "OSonicOracleRouter";
@@ -791,7 +940,7 @@ const deployOracles = async () => {
   }
 
   await deployWithConfirmation(contractName, args, oracleContract);
-  if (isHoleskyOrFork || isSonicOrFork) {
+  if (isHoleskyOrFork || isHoodiOrFork || isSonicOrFork) {
     // no need to configure any feeds since they are hardcoded to a fixed feed
     // TODO: further deployments will require more intelligent separation of different
     // chains / environment oracle deployments
@@ -842,12 +991,20 @@ const deployOracles = async () => {
 };
 
 const deployOETHCore = async () => {
-  const { governorAddr } = await hre.getNamedAccounts();
+  let { governorAddr, deployerAddr } = await hre.getNamedAccounts();
   const assetAddresses = await getAssetAddresses(deployments);
   log(`Using asset addresses: ${JSON.stringify(assetAddresses, null, 2)}`);
 
   // Signers
-  const sGovernor = await ethers.provider.getSigner(governorAddr);
+  let sGovernor = await ethers.provider.getSigner(governorAddr);
+  const sDeployer = await ethers.provider.getSigner(deployerAddr);
+
+  // In case of Hoodie let the deployer be govenor.
+  if (isHoodiOrFork) {
+    console.log("isHoodiOrFork", "YES");
+    governorAddr = deployerAddr;
+    sGovernor = sDeployer;
+  }
 
   // Proxies
   await deployWithConfirmation("OETHProxy");
@@ -867,30 +1024,32 @@ const deployOETHCore = async () => {
   const cOETHProxy = await ethers.getContract("OETHProxy");
   const cOETHVaultProxy = await ethers.getContract("OETHVaultProxy");
   const cOETH = await ethers.getContractAt("OETH", cOETHProxy.address);
-  const cOracleRouter = await ethers.getContract("OracleRouter");
 
-  const cOETHOracleRouter = isMainnet
-    ? await ethers.getContract("OETHOracleRouter")
-    : cOracleRouter;
+  const oracleRouterContractName =
+    isMainnet || isHoodiOrFork ? "OETHOracleRouter" : "OracleRouter";
+  const cOETHOracleRouter = await ethers.getContract(oracleRouterContractName);
   const cOETHVault = await ethers.getContractAt(
     "IVault",
     cOETHVaultProxy.address
   );
 
+  // prettier-ignore
   await withConfirmation(
-    cOETHProxy["initialize(address,address,bytes)"](
+    cOETHProxy.connect(sDeployer)["initialize(address,address,bytes)"](
       dOETH.address,
       governorAddr,
-      []
+      [],
+      await getTxOpts()
     )
   );
   log("Initialized OETHProxy");
-
+  // prettier-ignore
   await withConfirmation(
-    cOETHVaultProxy["initialize(address,address,bytes)"](
+    cOETHVaultProxy.connect(sDeployer)["initialize(address,address,bytes)"](
       dOETHVault.address,
       governorAddr,
-      []
+      [],
+      await getTxOpts()
     )
   );
   log("Initialized OETHVaultProxy");
@@ -898,7 +1057,7 @@ const deployOETHCore = async () => {
   await withConfirmation(
     cOETHVault
       .connect(sGovernor)
-      .initialize(cOETHOracleRouter.address, cOETHProxy.address)
+      .initialize(cOETHOracleRouter.address, cOETHProxy.address, await getTxOpts())
   );
   log("Initialized OETHVault");
 
@@ -930,7 +1089,7 @@ const deployOETHCore = async () => {
    */
   const resolution = ethers.utils.parseUnits("1", 27);
   await withConfirmation(
-    cOETH.connect(sGovernor).initialize(cOETHVaultProxy.address, resolution)
+    cOETH.connect(sDeployer).initialize(cOETHVaultProxy.address, resolution)
   );
   log("Initialized OETH");
 };
@@ -1441,11 +1600,11 @@ const deploySonicSwapXAMOStrategyImplementation = async () => {
   await withConfirmation(
     // prettier-ignore
     cSonicSwapXAMOStrategyProxy
-          .connect(sDeployer)["initialize(address,address,bytes)"](
-            dSonicSwapXAMOStrategy.address,
-            addresses.sonic.timelock,
-            initData
-          )
+      .connect(sDeployer)["initialize(address,address,bytes)"](
+        dSonicSwapXAMOStrategy.address,
+        addresses.sonic.timelock,
+        initData
+      )
   );
 
   return cSonicSwapXAMOStrategy;
@@ -1461,7 +1620,9 @@ module.exports = {
   deployAaveStrategy,
   deployConvexStrategy,
   deployConvexOUSDMetaStrategy,
+  deployBeaconContracts,
   deployNativeStakingSSVStrategy,
+  deployCompoundingStakingSSVStrategy,
   deployDrippers,
   deployOETHDripper,
   deployOUSDDripper,

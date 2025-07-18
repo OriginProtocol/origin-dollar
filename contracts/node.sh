@@ -45,6 +45,9 @@ main()
           PROVIDER_URL=$PLUME_PROVIDER_URL;
           BLOCK_NUMBER=$PLUME_BLOCK_NUMBER;
           params+=" --tags plume";
+        elif [[ $FORK_NETWORK_NAME == "hoodi" ]]; then
+          PROVIDER_URL=$HOODI_PROVIDER_URL;
+          BLOCK_NUMBER=$HOODI_BLOCK_NUMBER;
         fi
         
         echo "Fork Network: $FORK_NETWORK_NAME"

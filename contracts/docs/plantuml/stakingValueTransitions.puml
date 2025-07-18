@@ -1,0 +1,44 @@
+@startuml
+
+title Native Staking Value Transitions
+
+package "Execution Layer" {
+    object "Vault" as vault
+    vault : WETH
+    object "Native\nStaking\nContract" as nsc
+    nsc : WETH\nETH
+    object "Fee Accumulator" as fa
+    fa : ETH
+    object "Beacon\nDeposit\nContract" as bdc
+    bdc : ETH
+    object "MEV" as mev
+    mev : ETH
+    object "malicious\ncontract" as mal
+    mal : ETH\nWETH
+    object "malicious\nactor" as malActor
+    malActor : ETH
+}
+
+package "Consensus Layer" {
+    object "Validator" as val
+    val : ETH
+    object "Consensus" as cr
+    cr : ETH
+}
+
+vault  --> nsc : deposit\ndepositAll
+nsc --> vault : withdraw\nwithdrawAll\ndoAccounting
+vault <-- fa : harvest
+fa <-- mev : rewards
+nsc <-- mal : donate
+
+malActor --> bdc : deposit
+
+nsc  --> bdc : deposit
+
+bdc --> val : create\ntop-up
+val --> nsc : partial withdraw (on-chain)\nfull withdrawal (on-chain)\nexit (off-chain)
+
+val <- cr : rewards
+
+@enduml
