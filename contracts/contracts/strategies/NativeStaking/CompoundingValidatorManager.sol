@@ -319,11 +319,27 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
             validatorState[pubKeyHash] = VALIDATOR_STATE.STAKED;
         }
         // Store the deposit data in contract storage for verifyDeposit and verifyBalances
-        _pushLatestDeposit(pubKeyHash, depositAmountGwei);
+        // Load the deposit pointers into memory
+        DepositPointers memory depositPointersMem = depositPointers;
+
+        // Increment the latest first pending deposit pointer and reduce the total deposits
+        depositPointersMem.latest += 1;
+        depositPointersMem.totalDepositsWei -=
+            SafeCast.toUint128(depositAmountGwei) *
+            1 gwei;
+        // Store the updated latest deposit pointer and total deposits to contract storage
+        depositPointers = depositPointersMem;
+
+        // Store the new deposit data to contract storage
+        deposits[depositPointersMem.latest] = DepositData({
+            pubKeyHash: pubKeyHash,
+            amountGwei: depositAmountGwei,
+            blockNumber: SafeCast.toUint64(block.number)
+        });
 
         emit ETHStaked(
             pubKeyHash,
-            depositPointers.latest,
+            depositPointersMem.latest,
             validator.pubkey,
             depositAmountWei
         );
@@ -572,8 +588,15 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
         );
 
         // After verifying the proof, update the contract storage
-        // Increment the first pending deposit pointer and reduce the total deposits
-        _popOldestDeposit(depositPointersMem, deposit.amountGwei);
+        // Increment the oldest first pending deposit pointer
+        depositPointersMem.oldest += 1;
+        // Reduce the total deposits
+        depositPointersMem.totalDepositsWei -=
+            SafeCast.toUint128(deposit.amountGwei) *
+            1 gwei;
+
+        // Store the updated deposit pointers
+        depositPointers = depositPointersMem;
 
         emit DepositVerified(
             depositPointersMem.oldest,
@@ -857,42 +880,5 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
         returns (ValidatorData[] memory)
     {
         return verifiedValidators;
-    }
-
-    /// @notice Adds a new deposit to the list of ordered pending deposits.
-    function _pushLatestDeposit(bytes32 pubKeyHash, uint64 depositAmountGwei)
-        internal
-    {
-        DepositPointers memory depositPointersMem = depositPointers;
-
-        // Increment the latest first pending deposit pointer and reduce the total deposits
-        depositPointersMem.latest += 1;
-        depositPointersMem.totalDepositsWei -=
-            SafeCast.toUint128(depositAmountGwei) *
-            1 gwei;
-        // Store the updated latest deposit pointer and total deposits to contract storage
-        depositPointers = depositPointersMem;
-
-        // Store the new deposit data to contract storage
-        deposits[depositPointersMem.latest] = DepositData({
-            pubKeyHash: pubKeyHash,
-            amountGwei: depositAmountGwei,
-            blockNumber: SafeCast.toUint64(block.number)
-        });
-    }
-
-    function _popOldestDeposit(
-        DepositPointers memory depositPointersMem,
-        uint64 depositAmountGwei
-    ) internal {
-        // Increment the oldest first pending deposit pointer
-        depositPointersMem.oldest += 1;
-        // Reduce the total deposits
-        depositPointersMem.totalDepositsWei -=
-            SafeCast.toUint128(depositAmountGwei) *
-            1 gwei;
-
-        // Store the updated deposit pointers
-        depositPointers = depositPointersMem;
     }
 }
