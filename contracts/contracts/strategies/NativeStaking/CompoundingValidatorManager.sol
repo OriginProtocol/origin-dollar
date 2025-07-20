@@ -542,8 +542,8 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
             validatorState[deposit.pubKeyHash] == VALIDATOR_STATE.VERIFIED,
             "Validator not verified"
         );
-        // The block number mapped to a slot needs to be the same block or after the deposit
-        // was created on the execution layer.
+        // The deposit block number mapped to a slot needs to be the same block or after
+        // the deposit in `stakeETH` was created on the execution layer.
         require(
             deposit.blockNumber <= depositBlockNumber,
             "Deposit block before deposit"
@@ -585,9 +585,9 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
         // After verifying the proof, update the contract storage
         deposits[depositDataRoot].status = DepositStatus.VERIFIED;
         // Move the last deposit to the index of the verified deposit
-        depositsRoots[deposit.depositIndex] = depositsRoots[
-            depositsRoots.length - 1
-        ];
+        bytes32 lastDepositDataRoot = depositsRoots[depositsRoots.length - 1];
+        depositsRoots[deposit.depositIndex] = lastDepositDataRoot;
+        deposits[lastDepositDataRoot].depositIndex = deposit.depositIndex;
         // Delete the last deposit from the list
         depositsRoots.pop();
 
