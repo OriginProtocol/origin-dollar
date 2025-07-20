@@ -1066,7 +1066,11 @@ const deployOETHCore = async () => {
   await withConfirmation(
     cOETHVault
       .connect(sGovernor)
-      .initialize(cOETHOracleRouter.address, cOETHProxy.address, await getTxOpts())
+      .initialize(
+        cOETHOracleRouter.address,
+        cOETHProxy.address,
+        await getTxOpts()
+      )
   );
   log("Initialized OETHVault");
 
