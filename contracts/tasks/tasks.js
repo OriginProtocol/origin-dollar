@@ -1960,13 +1960,7 @@ task("verifyValidator").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
 
-subtask("verifyDeposit", "Verify a deposit on the Beacon chain")
-  .addParam(
-    "root",
-    "Root of the deposit data sent to the Beacon deposit contract in hex format with a 0x prefix",
-    undefined,
-    types.string
-  )
+subtask("verifyDeposit", "Verify a oldest pending deposit on the Beacon chain")
   .addOptionalParam(
     "block",
     "Block number on or after the deposit was made on the execution layer. Default deposit block",

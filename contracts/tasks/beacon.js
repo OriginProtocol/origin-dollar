@@ -205,7 +205,7 @@ async function verifyValidator({ slot, index, dryrun }) {
   await logTxDetails(tx, "verifyValidator");
 }
 
-async function verifyDeposit({ block, slot, root: depositDataRoot, dryrun }) {
+async function verifyDeposit({ block, slot, dryrun }) {
   const signer = await getSigner();
 
   // TODO If no block then get the block from the stakeETH event
@@ -241,7 +241,6 @@ async function verifyDeposit({ block, slot, root: depositDataRoot, dryrun }) {
   });
 
   if (dryrun) {
-    console.log(`depositDataRoot: ${depositDataRoot}`);
     console.log(`beaconBlockRoot: ${beaconBlockRoot}`);
     console.log(`block: ${block}`);
     console.log(`processedSlot: ${processedSlot}`);
@@ -251,12 +250,11 @@ async function verifyDeposit({ block, slot, root: depositDataRoot, dryrun }) {
   }
 
   log(
-    `About to verify deposit for deposit block ${block}, processing slot ${processedSlot}, deposit data root ${depositDataRoot}, slot of first pending deposit ${firstPendingDepositSlot} to beacon chain root ${beaconBlockRoot}`
+    `About to verify deposit for deposit block ${block}, processing slot ${processedSlot}, slot of first pending deposit ${firstPendingDepositSlot} to beacon chain root ${beaconBlockRoot}`
   );
   const tx = await strategy
     .connect(signer)
     .verifyDeposit(
-      depositDataRoot,
       block,
       processedSlot,
       firstPendingDepositSlot,

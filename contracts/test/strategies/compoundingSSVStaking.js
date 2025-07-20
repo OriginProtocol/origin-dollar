@@ -557,7 +557,6 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
     );
 
     const verifiedDepositTx = await compoundingStakingSSVStrategy.verifyDeposit(
-      depositDataRoot,
       testValidator.depositProof.depositBlockNumber,
       testValidator.depositProof.processedSlot,
       testValidator.depositProof.firstPendingDepositSlot,
@@ -622,7 +621,6 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
     );
 
     const verifiedDepositTx = await compoundingStakingSSVStrategy.verifyDeposit(
-      depositDataRoot,
       testValidator.depositProof.depositBlockNumber,
       testValidator.depositProof.processedSlot,
       testValidator.depositProof.firstPendingDepositSlot,
@@ -829,7 +827,6 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
       );
 
       await compoundingStakingSSVStrategy.verifyDeposit(
-        depositDataRoot,
         testValidator.depositProof.depositBlockNumber,
         testValidator.depositProof.processedSlot,
         testValidator.depositProof.firstPendingDepositSlot,
@@ -870,7 +867,6 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
       // Cheating here by using the same proof as before
       // it works as the deposit block is after the second deposit on the execution layer
       await compoundingStakingSSVStrategy.verifyDeposit(
-        depositDataRoot2,
         testValidator.depositProof.depositBlockNumber,
         testValidator.depositProof.processedSlot,
         testValidator.depositProof.firstPendingDepositSlot,
