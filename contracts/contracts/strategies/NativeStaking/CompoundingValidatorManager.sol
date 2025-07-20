@@ -48,23 +48,23 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
     address public validatorRegistrator;
 
     /// Deposit data for new compounding validators.
-
     /// @param pubKeyHash Hash of validator's public key using the Beacon Chain's format
     /// @param amountWei Amount of ETH in wei that has been deposited to the beacon chain deposit contract
     /// @param blockNumber Block number when the deposit was made
-    /// @param depositIndex The index of the deposit in the list of active deposits
-    /// @param status The status of the deposit, either PENDING or PROVEN
     struct DepositData {
         bytes32 pubKeyHash;
         uint64 amountGwei;
         uint64 blockNumber;
-        uint32 depositIndex;
-        DepositStatus status;
     }
-    /// @notice Mapping of the root of a deposit (depositDataRoot) to its data
-    mapping(bytes32 => DepositData) public deposits;
-    /// @notice List of deposit roots that are still to be verified as processed on the beacon chain
-    bytes32[] public depositsRoots;
+    /// @notice Fixes sized array to store an ordered list of pending deposits
+    DepositData[] public deposits;
+    struct DepositPointers {
+        uint64 oldest;
+        uint64 latest;
+        uint128 totalDepositsWei;
+    }
+    /// @notice Pointers to the oldest and latest pending deposits and the total amount of pending deposits.
+    DepositPointers public depositPointers;
 
     // Validator data
 
@@ -120,17 +120,12 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
         EXITED, // The validator has been verified to have a zero balance
         REMOVED // validator has funds withdrawn to the EigenPod and is removed from the SSV
     }
-    enum DepositStatus {
-        UNKNOWN, // default value
-        PENDING, // deposit is pending and waiting to be  verified
-        VERIFIED // deposit has been verified and is ready to be staked
-    }
 
     event RegistratorChanged(address indexed newAddress);
     event SourceStrategyAdded(address indexed strategy);
     event ETHStaked(
         bytes32 indexed pubKeyHash,
-        bytes32 indexed depositDataRoot,
+        uint256 indexed depositIndex,
         bytes pubKey,
         uint256 amountWei
     );
@@ -144,7 +139,7 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
         bytes32 indexed pubKeyHash,
         uint64 indexed validatorIndex
     );
-    event DepositVerified(bytes32 indexed depositDataRoot, uint256 amountWei);
+    event DepositVerified(uint256 indexed depositIndex, uint256 amountWei);
     event BalancesSnapped(
         uint256 indexed timestamp,
         bytes32 indexed blockRoot,
@@ -323,19 +318,12 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
         if (currentState == VALIDATOR_STATE.REGISTERED) {
             validatorState[pubKeyHash] = VALIDATOR_STATE.STAKED;
         }
-        // Store the deposit data for verifyDeposit and verifyBalances
-        deposits[validator.depositDataRoot] = DepositData({
-            pubKeyHash: pubKeyHash,
-            amountGwei: depositAmountGwei,
-            blockNumber: SafeCast.toUint64(block.number),
-            depositIndex: SafeCast.toUint32(depositsRoots.length),
-            status: DepositStatus.PENDING
-        });
-        depositsRoots.push(validator.depositDataRoot);
+        // Store the deposit data in contract storage for verifyDeposit and verifyBalances
+        _pushLatestDeposit(pubKeyHash, depositAmountGwei);
 
         emit ETHStaked(
             pubKeyHash,
-            validator.depositDataRoot,
+            depositPointers.latest,
             validator.pubkey,
             depositAmountWei
         );
@@ -516,10 +504,8 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
         emit ValidatorVerified(pubKeyHash, validatorIndex);
     }
 
-    /// @notice Verifies a deposit on the execution layer has been processed by the beacon chain.
+    /// @notice Verifies the oldest pending deposit on the execution layer has been processed by the beacon chain.
     /// This means the accounting of the strategy's ETH moves from a pending deposit to a validator balance.
-    /// @param depositDataRoot The root of the deposit data that was stored when
-    /// the deposit was made on the execution layer.
     /// @param depositBlockNumber A block number that is on or after the block the deposit
     /// was made on the execution layer.
     /// @param processedSlot Any slot on or after the deposit was processed on the beacon chain.
@@ -529,15 +515,18 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
     /// matches the beacon chain.
     /// BeaconBlock.BeaconBlockBody.deposits[0].slot
     function verifyDeposit(
-        bytes32 depositDataRoot,
         uint64 depositBlockNumber,
         uint64 processedSlot,
         uint64 firstPendingDepositSlot,
         bytes calldata firstPendingDepositSlotProof
     ) external {
         // Load into memory the previously saved deposit data
-        DepositData memory deposit = deposits[depositDataRoot];
-        require(deposit.status == DepositStatus.PENDING, "Deposit not pending");
+        DepositPointers memory depositPointersMem = depositPointers;
+        require(
+            depositPointersMem.oldest < depositPointersMem.latest,
+            "No pending deposits"
+        );
+        DepositData memory deposit = deposits[depositPointersMem.oldest];
         require(
             validatorState[deposit.pubKeyHash] == VALIDATOR_STATE.VERIFIED,
             "Validator not verified"
@@ -583,16 +572,11 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
         );
 
         // After verifying the proof, update the contract storage
-        deposits[depositDataRoot].status = DepositStatus.VERIFIED;
-        // Move the last deposit to the index of the verified deposit
-        bytes32 lastDepositDataRoot = depositsRoots[depositsRoots.length - 1];
-        depositsRoots[deposit.depositIndex] = lastDepositDataRoot;
-        deposits[lastDepositDataRoot].depositIndex = deposit.depositIndex;
-        // Delete the last deposit from the list
-        depositsRoots.pop();
+        // Increment the first pending deposit pointer and reduce the total deposits
+        _popOldestDeposit(depositPointersMem, deposit.amountGwei);
 
         emit DepositVerified(
-            depositDataRoot,
+            depositPointersMem.oldest,
             uint256(deposit.amountGwei) * 1 gwei
         );
     }
@@ -715,11 +699,10 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
         require(lastSnapTimestamp > 0, "No snapped balances");
         require(balancesMem.timestamp == lastSnapTimestamp, "Stale snap");
 
-        uint256 depositsCount = depositsRoots.length;
-        uint256 totalDepositsWei = 0;
+        DepositPointers memory depositPointersMem = depositPointers;
 
         // If there are no deposits then we can skip the deposit verification
-        if (depositsCount > 0) {
+        if (depositPointersMem.oldest < depositPointersMem.latest) {
             // Verify the slot of the first pending deposit to the beacon block root
             IBeaconProofs(BEACON_PROOFS).verifyFirstPendingDepositSlot(
                 params.blockRoot,
@@ -730,25 +713,15 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
             uint64 firstPendingDepositBlockNumber = IBeaconOracle(BEACON_ORACLE)
                 .slotToBlock(params.firstPendingDepositSlot);
 
-            // For each native staking contract's deposits
-            for (uint256 i = 0; i < depositsCount; ++i) {
-                bytes32 depositDataRoot = depositsRoots[i];
-
-                // Check the stored deposit is still waiting to be processed on the beacon chain.
-                // That is, the first pending deposit block number is before the
-                // block number of the staking strategy's deposit.
-                // If it has it will need to be verified with `verifyDeposit`
-                require(
-                    firstPendingDepositBlockNumber <
-                        deposits[depositDataRoot].blockNumber,
-                    "Deposit has been processed"
-                );
-
-                // Convert the deposit amount from Gwei to Wei and add to the total
-                totalDepositsWei +=
-                    uint256(deposits[depositDataRoot].amountGwei) *
-                    1 gwei;
-            }
+            // Check the oldest stored deposit is still waiting to be processed on the beacon chain.
+            // That is, the first pending deposit block number is before the
+            // block number of the staking strategy's deposit.
+            // If it has it will need to be verified with `verifyDeposit`
+            require(
+                firstPendingDepositBlockNumber <
+                    deposits[depositPointersMem.oldest].blockNumber,
+                "Deposit has been processed"
+            );
         }
 
         uint256 verifiedValidatorsCount = verifiedValidators.length;
@@ -805,14 +778,16 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
 
         // Store the verified balance in storage
         lastVerifiedEthBalance = SafeCast.toUint128(
-            totalDepositsWei + totalValidatorBalance + balancesMem.ethBalance
+            depositPointersMem.totalDepositsWei +
+                totalValidatorBalance +
+                balancesMem.ethBalance
         );
         // Reset the last snap timestamp so a new snapBalances has to be made
         lastSnapTimestamp = 0;
 
         emit BalancesVerified(
             balancesMem.timestamp,
-            totalDepositsWei,
+            depositPointersMem.totalDepositsWei,
             totalValidatorBalance,
             wethBalance,
             balancesMem.ethBalance
@@ -882,5 +857,42 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
         returns (ValidatorData[] memory)
     {
         return verifiedValidators;
+    }
+
+    /// @notice Adds a new deposit to the list of ordered pending deposits.
+    function _pushLatestDeposit(bytes32 pubKeyHash, uint64 depositAmountGwei)
+        internal
+    {
+        DepositPointers memory depositPointersMem = depositPointers;
+
+        // Increment the latest first pending deposit pointer and reduce the total deposits
+        depositPointersMem.latest += 1;
+        depositPointersMem.totalDepositsWei -=
+            SafeCast.toUint128(depositAmountGwei) *
+            1 gwei;
+        // Store the updated latest deposit pointer and total deposits to contract storage
+        depositPointers = depositPointersMem;
+
+        // Store the new deposit data to contract storage
+        deposits[depositPointersMem.latest] = DepositData({
+            pubKeyHash: pubKeyHash,
+            amountGwei: depositAmountGwei,
+            blockNumber: SafeCast.toUint64(block.number)
+        });
+    }
+
+    function _popOldestDeposit(
+        DepositPointers memory depositPointersMem,
+        uint64 depositAmountGwei
+    ) internal {
+        // Increment the oldest first pending deposit pointer
+        depositPointersMem.oldest += 1;
+        // Reduce the total deposits
+        depositPointersMem.totalDepositsWei -=
+            SafeCast.toUint128(depositAmountGwei) *
+            1 gwei;
+
+        // Store the updated deposit pointers
+        depositPointers = depositPointersMem;
     }
 }
