@@ -1102,7 +1102,7 @@ const deployOETHCore = async () => {
    */
   const resolution = ethers.utils.parseUnits("1", 27);
   await withConfirmation(
-    cOETH.connect(sDeployer).initialize(cOETHVaultProxy.address, resolution)
+    cOETH.connect(sGovernor).initialize(cOETHVaultProxy.address, resolution)
   );
   log("Initialized OETH");
 };
