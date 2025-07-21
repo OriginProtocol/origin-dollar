@@ -2173,7 +2173,7 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
           testValidators[0].publicKeyHash
         );
 
-      await compoundingStakingSSVStrategy
+      await expect(compoundingStakingSSVStrategy
         .connect(validatorRegistrator)
         .verifyConsolidation(
           testValidators[1].validatorProof.nextBlockTimestamp,
@@ -2181,7 +2181,7 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
           testValidators[1].validatorProof.bytes,
           testBalancesProofs[0].validatorBalanceLeaves[0],
           testBalancesProofs[0].validatorBalanceProofs[0]
-        );
+        )).to.be.revertedWith("Invalid balance container proof");
     });
 
     it("Should revert when verifying consolidation because last validator balance not zero", async () => {
@@ -2197,15 +2197,15 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
         );
 
       // WIP
-      await compoundingStakingSSVStrategy
+      await expect(compoundingStakingSSVStrategy
         .connect(validatorRegistrator)
         .verifyConsolidation(
           testValidators[0].validatorProof.nextBlockTimestamp,
           testValidators[0].index,
           testValidators[0].validatorProof.bytes,
-          testBalancesProofs[0].validatorBalanceLeaves[0],
-          testBalancesProofs[0].validatorBalanceProofs[0]
-        );
+          testBalancesProofs[0].validatorBalanceLeaves[2],
+          testBalancesProofs[0].validatorBalanceProofs[2]
+        )).to.be.revertedWith("Last validator balance not zero");
     });
   });
   /*
