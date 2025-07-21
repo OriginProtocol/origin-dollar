@@ -75,7 +75,7 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
     /// @notice List of validator public key hashes and indexes that have been verified to exist on the beacon chain.
     /// These have had a deposit processed and the validator's balance increased.
     /// Validators will be removed from this list when its verified they have a zero balance.
-    ValidatorData[] public verifiedValidators;
+    ValidatorData[] internal verifiedValidators;
     /// @notice State of the new compounding validators with a 0x02 withdrawal credential prefix.
     /// Uses the Beacon chain hashing for BLSPubkey which is
     /// sha256(abi.encodePacked(validator.pubkey, bytes16(0)))

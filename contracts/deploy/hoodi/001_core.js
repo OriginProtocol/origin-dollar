@@ -93,7 +93,6 @@ const mainExport = async () => {
       .setRegistrator(addresses.hoodi.defenderRelayer)
   );
 
-
   console.log("001_core deploy done.");
   return true;
 };
