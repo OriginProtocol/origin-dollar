@@ -2032,6 +2032,105 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
       });
     });
   });
+
+  describe("Consolidation", () => {
+    beforeEach(async () => {
+      // It should add josh as a source strategy
+      const { compoundingStakingSSVStrategy, josh } = fixture;
+      await compoundingStakingSSVStrategy
+        .connect(sGov)
+        .addSourceStrategy(josh.address);
+    });
+    it("Should request consolidation", async () => {
+      const { compoundingStakingSSVStrategy, josh } = fixture;
+
+      await processValidator(testValidators[0], "VERIFIED_DEPOSIT");
+
+      expect(await compoundingStakingSSVStrategy.paused()).to.be.false;
+
+      const consolidation = await compoundingStakingSSVStrategy
+        .connect(josh)
+        .requestConsolidation(
+          testValidators[1].publicKeyHash,
+          testValidators[0].publicKeyHash
+        );
+
+      expect(consolidation)
+        .to.emit(compoundingStakingSSVStrategy, "Paused")
+        .withArgs(josh.address);
+      expect(consolidation)
+        .to.emit(compoundingStakingSSVStrategy, "ConsolidationRequested")
+        .withArgs(
+          testValidators[1].publicKeyHash,
+          testValidators[0].publicKeyHash,
+          josh.address
+        );
+
+      expect(await compoundingStakingSSVStrategy.paused()).to.be.true;
+
+      expect(await compoundingStakingSSVStrategy.lastSnapTimestamp()).to.equal(
+        0,
+        "Last snap timestamp should be 0 before consolidation"
+      );
+      expect(
+        await compoundingStakingSSVStrategy.consolidationLastPubKeyHash()
+      ).to.equal(
+        testValidators[1].publicKeyHash,
+        "Consolidation last pubkey hash should be set"
+      );
+      expect(
+        await compoundingStakingSSVStrategy.consolidationSourceStrategy()
+      ).to.equal(
+        josh.address,
+        "Consolidation last source pubkey hash should be set"
+      );
+    });
+
+    it("Should revert when requesting consolidation because not a source strategy", async () => {
+      const { compoundingStakingSSVStrategy, matt } = fixture;
+      await expect(
+        compoundingStakingSSVStrategy
+          .connect(matt)
+          .requestConsolidation(
+            testValidators[1].publicKeyHash,
+            testValidators[0].publicKeyHash
+          )
+      ).to.be.revertedWith("Not a source strategy");
+    });
+
+    it("Should revert when requesting consolidation because already paused", async () => {
+      const { compoundingStakingSSVStrategy, josh } = fixture;
+      await processValidator(testValidators[0], "VERIFIED_DEPOSIT");
+
+      await compoundingStakingSSVStrategy
+        .connect(josh)
+        .requestConsolidation(
+          testValidators[1].publicKeyHash,
+          testValidators[0].publicKeyHash
+        );
+
+      await expect(
+        compoundingStakingSSVStrategy
+          .connect(josh)
+          .requestConsolidation(
+            testValidators[1].publicKeyHash,
+            testValidators[0].publicKeyHash
+          )
+      ).to.be.revertedWith("Pausable: paused");
+    });
+
+    it("Should revert when requesting consolidation because no active validators", async () => {
+      const { compoundingStakingSSVStrategy, josh } = fixture;
+      await expect(
+        compoundingStakingSSVStrategy
+          .connect(josh)
+          .requestConsolidation(
+            testValidators[1].publicKeyHash,
+            testValidators[0].publicKeyHash
+          )
+      ).to.be.revertedWith("Target validator not verified");
+    });
+  });
   /*
   it("Deposit alternate deposit_data_root ", async () => {
     const { depositContractUtils } = fixture;
