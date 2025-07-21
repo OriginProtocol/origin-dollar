@@ -828,6 +828,9 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
 
         // Stake ETH to the new validator
 
+        const { next: nextDepositIndex } =
+          await compoundingStakingSSVStrategy.depositPointers();
+
         const depositDataRoot = await calcDepositRoot(
           compoundingStakingSSVStrategy.address,
           "0x02",
@@ -836,7 +839,7 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
           amount
         );
 
-        const stakeTx = compoundingStakingSSVStrategy
+        const stakeTx = await compoundingStakingSSVStrategy
           .connect(validatorRegistrator)
           .stakeEth(
             {
@@ -847,14 +850,11 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
             amountGwei
           );
 
-        await stakeTx;
-
         await expect(stakeTx)
           .to.emit(compoundingStakingSSVStrategy, "ETHStaked")
           .withArgs(
             testValidator.publicKeyHash,
-            depositDataRoot,
-            testValidator.publicKey,
+            nextDepositIndex,
             amountGwei.mul(GweiInWei) // Convert Gwei to Wei
           );
 
@@ -965,6 +965,10 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
 
       // Stake 2047 ETH to the new validator
 
+      const { next: nextDepositIndex } =
+
+        await compoundingStakingSSVStrategy.depositPointers();
+
       const secondDepositAmount = 2047;
       const depositDataRoot2 = await calcDepositRoot(
         compoundingStakingSSVStrategy.address,
@@ -989,8 +993,7 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
         .to.emit(compoundingStakingSSVStrategy, "ETHStaked")
         .withArgs(
           testValidator.publicKeyHash,
-          depositDataRoot2,
-          testValidator.publicKey,
+          nextDepositIndex,
           parseEther(secondDepositAmount.toString())
         );
 
