@@ -2130,6 +2130,83 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
           )
       ).to.be.revertedWith("Target validator not verified");
     });
+
+    it("Should revert when verifying consolidation because not registrator", async () => {
+      const { compoundingStakingSSVStrategy, matt } = fixture;
+      await expect(
+        compoundingStakingSSVStrategy
+          .connect(matt)
+          .verifyConsolidation(
+            0,
+            0,
+            testValidators[0].publicKey,
+            testBalancesProofs[0].validatorBalanceLeaves[0],
+            testBalancesProofs[0].validatorBalanceProofs[0]
+          )
+      ).to.be.revertedWith("Not Registrator");
+    });
+
+    it("Should revert when verifying consolidation because no consolidation", async () => {
+      const { compoundingStakingSSVStrategy, validatorRegistrator } = fixture;
+      await expect(
+        compoundingStakingSSVStrategy
+          .connect(validatorRegistrator)
+          .verifyConsolidation(
+            0,
+            0,
+            testValidators[0].publicKey,
+            testBalancesProofs[0].validatorBalanceLeaves[0],
+            testBalancesProofs[0].validatorBalanceProofs[0]
+          )
+      ).to.be.revertedWith("No consolidations");
+    });
+
+    it("Should revert when verifying consolidation because invalid balance container proof", async () => {
+      const { compoundingStakingSSVStrategy, validatorRegistrator, josh } =
+        fixture;
+      await processValidator(testValidators[0], "VERIFIED_DEPOSIT");
+      await processValidator(testValidators[1], "VERIFIED_DEPOSIT");
+      await compoundingStakingSSVStrategy
+        .connect(josh)
+        .requestConsolidation(
+          testValidators[1].publicKeyHash,
+          testValidators[0].publicKeyHash
+        );
+
+      await compoundingStakingSSVStrategy
+        .connect(validatorRegistrator)
+        .verifyConsolidation(
+          testValidators[1].validatorProof.nextBlockTimestamp,
+          testValidators[1].index,
+          testValidators[1].validatorProof.bytes,
+          testBalancesProofs[0].validatorBalanceLeaves[0],
+          testBalancesProofs[0].validatorBalanceProofs[0]
+        );
+    });
+
+    it("Should revert when verifying consolidation because last validator balance not zero", async () => {
+      const { compoundingStakingSSVStrategy, validatorRegistrator, josh } =
+        fixture;
+      await processValidator(testValidators[0], "VERIFIED_DEPOSIT");
+      await processValidator(testValidators[1], "VERIFIED_DEPOSIT");
+      await compoundingStakingSSVStrategy
+        .connect(josh)
+        .requestConsolidation(
+          testValidators[0].publicKeyHash,
+          testValidators[1].publicKeyHash
+        );
+
+      // WIP
+      await compoundingStakingSSVStrategy
+        .connect(validatorRegistrator)
+        .verifyConsolidation(
+          testValidators[0].validatorProof.nextBlockTimestamp,
+          testValidators[0].index,
+          testValidators[0].validatorProof.bytes,
+          testBalancesProofs[0].validatorBalanceLeaves[0],
+          testBalancesProofs[0].validatorBalanceProofs[0]
+        );
+    });
   });
   /*
   it("Deposit alternate deposit_data_root ", async () => {
