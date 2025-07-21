@@ -128,23 +128,23 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
 
     event RegistratorChanged(address indexed newAddress);
     event SourceStrategyAdded(address indexed strategy);
+    event SSVValidatorRegistered(
+        bytes32 indexed pubKeyHash,
+        uint64[] operatorIds
+    );
+    event SSVValidatorRemoved(bytes32 indexed pubKeyHash, uint64[] operatorIds);
     event ETHStaked(
         bytes32 indexed pubKeyHash,
         bytes32 indexed depositDataRoot,
         bytes pubKey,
         uint256 amountWei
     );
-    event SSVValidatorRegistered(
-        bytes32 indexed pubKeyHash,
-        uint64[] operatorIds
-    );
-    event SSVValidatorRemoved(bytes32 indexed pubKeyHash, uint64[] operatorIds);
-    event ValidatorWithdraw(bytes32 indexed pubKeyHash, uint256 amountWei);
     event ValidatorVerified(
         bytes32 indexed pubKeyHash,
         uint64 indexed validatorIndex
     );
     event DepositVerified(bytes32 indexed depositDataRoot, uint256 amountWei);
+    event ValidatorWithdraw(bytes32 indexed pubKeyHash, uint256 amountWei);
     event BalancesSnapped(
         uint256 indexed timestamp,
         bytes32 indexed blockRoot,
