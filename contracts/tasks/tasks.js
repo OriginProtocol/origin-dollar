@@ -1955,6 +1955,12 @@ subtask("verifyValidator", "Verify a validator on the Beacon chain")
     false,
     types.boolean
   )
+  .addOptionalParam(
+    "withdrawal",
+    "Override the withdrawal address in the withdrawal credentials. Used when generating proofs for unit tests.",
+    undefined,
+    types.string
+  )
   .setAction(verifyValidator);
 task("verifyValidator").setAction(async (_, __, runSuper) => {
   return runSuper();

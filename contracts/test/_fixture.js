@@ -25,6 +25,7 @@ const {
   oethUnits,
   ousdUnits,
   units,
+  isTest,
   isFork,
   isHolesky,
   isHoleskyFork,
@@ -618,15 +619,6 @@ const defaultFixture = deployments.createFixture(async () => {
     nativeStakingStrategyProxy.address
   );
 
-  const compoundingStakingStrategyProxy = await ethers.getContract(
-    "CompoundingStakingSSVStrategyProxy"
-  );
-
-  const compoundingStakingSSVStrategy = await ethers.getContractAt(
-    "CompoundingStakingSSVStrategy",
-    compoundingStakingStrategyProxy.address
-  );
-
   const nativeStakingFeeAccumulatorProxy = await ethers.getContract(
     "NativeStakingFeeAccumulatorProxy"
   );
@@ -1147,7 +1139,6 @@ const defaultFixture = deployments.createFixture(async () => {
     frxETH,
     sfrxETH,
     nativeStakingSSVStrategy,
-    compoundingStakingSSVStrategy,
     nativeStakingFeeAccumulator,
     balancerREthStrategy,
     oethMorphoAaveStrategy,
@@ -1996,6 +1987,25 @@ async function compoundingStakingSSVStrategyFixture() {
     isOethFixture: true,
   });
 
+  let compoundingStakingStrategyProxy;
+  if (isTest && !isFork) {
+    // For unit tests, the proxy is pinned to a fixed address
+    compoundingStakingStrategyProxy = await ethers.getContractAt(
+      "CompoundingStakingSSVStrategyProxy",
+      addresses.mainnet.CompoundingStakingStrategyProxy
+    );
+  } else {
+    compoundingStakingStrategyProxy = await ethers.getContract(
+      "CompoundingStakingSSVStrategyProxy"
+    );
+  }
+
+  const compoundingStakingSSVStrategy = await ethers.getContractAt(
+    "CompoundingStakingSSVStrategy",
+    compoundingStakingStrategyProxy.address
+  );
+  fixture.compoundingStakingSSVStrategy = compoundingStakingSSVStrategy;
+
   if (isFork) {
     /*
     const { compoundingStakingSSVStrategy, ssv } = fixture;
@@ -2021,7 +2031,7 @@ async function compoundingStakingSSVStrategyFixture() {
   } else {
     fixture.ssvNetwork = await ethers.getContract("MockSSVNetwork");
     const { governorAddr } = await getNamedAccounts();
-    const { oethVault, weth, compoundingStakingSSVStrategy } = fixture;
+    const { oethVault, weth } = fixture;
     const sGovernor = await ethers.provider.getSigner(governorAddr);
 
     // Approve Strategy

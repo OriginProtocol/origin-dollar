@@ -500,7 +500,8 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
             blockRoot,
             pubKeyHash,
             validatorPubKeyProof,
-            validatorIndex
+            validatorIndex,
+            address(this) // Withdrawal address is this strategy
         );
 
         // TODO verify the validator's withdrawal credential points to this strategy
@@ -617,7 +618,8 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
             blockRoot,
             consolidationLastPubKeyHashMem,
             validatorPubKeyProof,
-            lastValidatorIndex
+            lastValidatorIndex,
+            address(this) // Withdrawal address is this strategy
         );
 
         // Verify the balance of the last validator in the consolidation batch

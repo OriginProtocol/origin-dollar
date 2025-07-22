@@ -11,7 +11,8 @@ interface IBeaconProofs {
         bytes32 beaconBlockRoot,
         bytes32 pubKeyHash,
         bytes calldata validatorPubKeyProof,
-        uint64 validatorIndex
+        uint64 validatorIndex,
+        address withdrawalAddress
     ) external view;
 
     function verifyBalancesContainer(

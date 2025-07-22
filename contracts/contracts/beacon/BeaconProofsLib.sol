@@ -39,11 +39,13 @@ library BeaconProofsLib {
     /// @param validatorPubKeyProof The merkle proof for the validator public key to the beacon block root.
     /// This is the witness hashes concatenated together starting from the leaf node.
     /// @param validatorIndex The validator index
+    /// @param withdrawalAddress The withdrawal address used in the validator's withdrawal credentials
     function verifyValidatorPubkey(
         bytes32 beaconBlockRoot,
         bytes32 pubKeyHash,
         bytes calldata validatorPubKeyProof,
-        uint64 validatorIndex
+        uint64 validatorIndex,
+        address withdrawalAddress
     ) internal view {
         // BeaconBlock.state.validators[validatorIndex].pubkey
         uint256 generalizedIndex = concatGenIndices(
@@ -55,6 +57,20 @@ library BeaconProofsLib {
             generalizedIndex,
             VALIDATOR_HEIGHT,
             VALIDATOR_PUBKEY_INDEX
+        );
+
+        // Get the withdrawal address from the first witness in the pubkey merkle proof.
+        address withdrawalAddressFromProof;
+        // solhint-disable-next-line no-inline-assembly
+        assembly {
+            // The first 32 bytes of the proof is the withdrawal credential so load it into memory.
+            calldatacopy(0, validatorPubKeyProof.offset, 32)
+            // Cast the 32 bytes in memory to an address which is the last 20 bytes.
+            withdrawalAddressFromProof := mload(0)
+        }
+        require(
+            withdrawalAddressFromProof == withdrawalAddress,
+            "Invalid withdrawal address"
         );
 
         require(

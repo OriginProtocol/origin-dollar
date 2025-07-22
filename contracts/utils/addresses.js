@@ -180,6 +180,9 @@ addresses.mainnet.CurveOETHGauge = "0xd03BE91b1932715709e18021734fcB91BB431715";
 addresses.mainnet.CVXETHRewardsPool =
   "0x24b65DC1cf053A8D96872c323d29e86ec43eB33A";
 
+addresses.mainnet.CompoundingStakingStrategyProxy =
+  "0x840081c97256d553A8F234D469D797B9535a3B49";
+
 // Votemarket - StakeDAO
 addresses.mainnet.CampaignRemoteManager =
   "0x53aD4Cd1F1e52DD02aa9FC4A8250A1b74F351CA2";
