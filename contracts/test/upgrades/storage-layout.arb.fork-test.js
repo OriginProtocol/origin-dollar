@@ -1,5 +1,5 @@
 const { createFixtureLoader } = require("../_fixture");
-const { defaultArbitrumFixture } = require("../_fixture-arbitrum");
+const { defaultArbitrumFixture } = require("../_fixture-arb");
 const {
   assertStorageLayoutForAllProxies,
 } = require("../../tasks/storageSlots");
