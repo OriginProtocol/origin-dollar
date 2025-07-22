@@ -107,6 +107,8 @@ const {
   resolveNativeStakingStrategyProxy,
   snapValidators,
 } = require("./validator");
+
+const { tenderlySync } = require("./tenderly");
 const { setDefaultValidator, snapSonicStaking } = require("../utils/sonic");
 const {
   undelegateValidator,
@@ -1833,6 +1835,14 @@ task("lzSetConfig")
   .setAction(async (taskArgs) => {
     await lzSetConfig(taskArgs, hre);
   });
+
+subtask(
+  "tenderlySync",
+  "Fetches all contracts from deployment descriptors and uploads them to Tenderly if they are not there yet."
+).setAction(tenderlySync);
+task("tenderlySync").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
 
 task("storeStorageLayoutForProxy")
   .addParam("proxy", "Name of the proxy contract")
