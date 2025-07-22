@@ -1,4 +1,5 @@
 const hre = require("hardhat");
+const { setStorageAt } = require("@nomicfoundation/hardhat-network-helpers");
 const { parseUnits } = require("ethers/lib/utils.js");
 
 const addresses = require("../utils/addresses");
@@ -17,6 +18,7 @@ const {
 } = require("../test/helpers.js");
 const { deployWithConfirmation, withConfirmation } = require("../utils/deploy");
 const { metapoolLPCRVPid } = require("../utils/constants");
+const { replaceContractAt } = require("../utils/hardhat");
 const { impersonateAccount } = require("../utils/signers");
 const { getTxOpts } = require("../utils/tx");
 
@@ -812,7 +814,7 @@ const deployCompoundingStakingSSVStrategy = async () => {
   let governorAddress;
   // deploy the proxy on Hoodi fork not as defender relayer since we will not
   // test SSV token claiming on that testnet
-  if ((isTest && !isFork) || isHoodiOrFork) {
+  if ((isTest && !isFork) || isHoodi) {
     // For unit tests, use the Governor contract
     governorAddress = governorAddr;
 
@@ -822,11 +824,33 @@ const deployCompoundingStakingSSVStrategy = async () => {
     // For fork tests and mainnet deployments, use the Timelock contract
     governorAddress = addresses.mainnet.Timelock;
   }
-  // Should have already been deployed by the Defender Relayer as SSV rewards are sent to the deployer.
-  // Use the deployStakingProxy Hardhat task to deploy
-  const cCompoundingStakingSSVStrategyProxy = await ethers.getContract(
-    "CompoundingStakingSSVStrategyProxy"
-  );
+
+  let cCompoundingStakingSSVStrategyProxy;
+  if (isTest) {
+    // For unit tests, fix the address of compoundingStakingSSVStrategy so the withdrawal credentials
+    // are fixed for the validator public key proofs
+    await replaceContractAt(
+      addresses.mainnet.CompoundingStakingStrategyProxy,
+      await ethers.getContract("CompoundingStakingSSVStrategyProxy")
+    );
+    // Set the governor in storage of the proxy to the deployer
+    await setStorageAt(
+      addresses.mainnet.CompoundingStakingStrategyProxy,
+      "0x7bea13895fa79d2831e0a9e28edede30099005a50d652d8957cf8a607ee6ca4a", // governor storage slot
+      deployerAddr
+    );
+    cCompoundingStakingSSVStrategyProxy = await ethers.getContractAt(
+      "CompoundingStakingSSVStrategyProxy",
+      addresses.mainnet.CompoundingStakingStrategyProxy
+    );
+  } else {
+    // For fork tests, mainnet and Hoodie deployments.
+    // Should have already been deployed by the Defender Relayer as SSV rewards are sent to the deployer.
+    // Use the deployStakingProxy Hardhat task to deploy
+    cCompoundingStakingSSVStrategyProxy = await ethers.getContract(
+      "CompoundingStakingSSVStrategyProxy"
+    );
+  }
 
   const proxyGovernor = await cCompoundingStakingSSVStrategyProxy.governor();
   if (isFork && proxyGovernor != deployerAddr) {

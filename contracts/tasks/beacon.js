@@ -4,6 +4,7 @@ const {
   formatUnits,
   solidityPack,
   parseUnits,
+  arrayify,
 } = require("ethers/lib/utils");
 
 const addresses = require("../utils/addresses");
@@ -156,10 +157,36 @@ async function verifySlot({ block, dryrun }) {
   await logTxDetails(tx, "verifySlot");
 }
 
-async function verifyValidator({ slot, index, dryrun }) {
+async function verifyValidator({ slot, index, dryrun, withdrawal }) {
   const signer = await getSigner();
 
   const { blockView, blockTree, stateView } = await getBeaconBlock(slot);
+
+  if (withdrawal) {
+    log(`Overriding withdrawal address to ${withdrawal}`);
+
+    // Update the validator's withdrawalCredentials in stateView
+    const validator = stateView.validators.get(index);
+    if (!validator) {
+      throw new Error(`Validator at index ${index} not found`);
+    }
+
+    log(
+      `Original withdrawal credentials: ${toHex(
+        validator.withdrawalCredentials
+      )}`
+    );
+
+    // Override the address in the withdrawal credentials
+    validator.withdrawalCredentials = arrayify(
+      `0x020000000000000000000000${withdrawal.slice(2)}`
+    );
+    stateView.validators.set(index, validator); // Update validator in state
+
+    // Update blockTree with new stateRoot
+    const stateRootGindex = blockView.type.getPathInfo(["stateRoot"]).gindex;
+    blockTree.setNode(stateRootGindex, stateView.node);
+  }
 
   // Get provider to mainnet and not a local fork
   const provider = getProvider();
