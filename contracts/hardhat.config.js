@@ -392,7 +392,7 @@ module.exports = {
       holesky: process.env.ETHERSCAN_API_KEY,
       base: process.env.BASESCAN_API_KEY,
       sonic: process.env.SONICSCAN_API_KEY,
-      plume: 'empty', // this works for: npx hardhat verify...
+      plume: "empty", // this works for: npx hardhat verify...
     },
     customChains: [
       {
