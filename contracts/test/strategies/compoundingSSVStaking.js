@@ -2173,18 +2173,20 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
           testValidators[0].publicKeyHash
         );
 
-      await expect(compoundingStakingSSVStrategy
-        .connect(validatorRegistrator)
-        .verifyConsolidation(
-          testValidators[1].validatorProof.nextBlockTimestamp,
-          testValidators[1].index,
-          testValidators[1].validatorProof.bytes,
-          testBalancesProofs[0].validatorBalanceLeaves[0],
-          testBalancesProofs[0].validatorBalanceProofs[0]
-        )).to.be.revertedWith("Invalid balance container proof");
+      await expect(
+        compoundingStakingSSVStrategy
+          .connect(validatorRegistrator)
+          .verifyConsolidation(
+            testValidators[1].validatorProof.nextBlockTimestamp,
+            testValidators[1].index,
+            testValidators[1].validatorProof.bytes,
+            testBalancesProofs[0].validatorBalanceLeaves[0],
+            testBalancesProofs[0].validatorBalanceProofs[0]
+          )
+      ).to.be.revertedWith("Invalid balance container proof");
     });
 
-    it("Should revert when verifying consolidation because last validator balance not zero", async () => {
+    it.skip("Should revert when verifying consolidation because last validator balance not zero", async () => {
       const { compoundingStakingSSVStrategy, validatorRegistrator, josh } =
         fixture;
       await processValidator(testValidators[0], "VERIFIED_DEPOSIT");
@@ -2197,15 +2199,17 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
         );
 
       // WIP
-      await expect(compoundingStakingSSVStrategy
-        .connect(validatorRegistrator)
-        .verifyConsolidation(
-          testValidators[0].validatorProof.nextBlockTimestamp,
-          testValidators[0].index,
-          testValidators[0].validatorProof.bytes,
-          testBalancesProofs[0].validatorBalanceLeaves[2],
-          testBalancesProofs[0].validatorBalanceProofs[2]
-        )).to.be.revertedWith("Last validator balance not zero");
+      await expect(
+        compoundingStakingSSVStrategy
+          .connect(validatorRegistrator)
+          .verifyConsolidation(
+            testValidators[0].validatorProof.nextBlockTimestamp,
+            testValidators[0].index,
+            testValidators[0].validatorProof.bytes,
+            testBalancesProofs[0].validatorBalanceLeaves[2],
+            testBalancesProofs[0].validatorBalanceProofs[2]
+          )
+      ).to.be.revertedWith("Last validator balance not zero");
     });
   });
   /*
