@@ -520,8 +520,8 @@ const assertStorageLayoutForProxy = async (hre, proxyName) => {
     true
   );
   if (!oldLayout) {
-    console.log(
-      `Previous storage layout for ${proxyName} not found. Treating ${proxyName} as a new contract.`
+    throw new Error(
+      `Cannot find storage layout for ${proxyName}. Run "npx hardhat storeStorageLayoutForProxy --network ${hre.network.name} --proxy ${proxyName}"`
     );
   } else {
     // 3rd param is opts.unsafeAllowCustomTypes
