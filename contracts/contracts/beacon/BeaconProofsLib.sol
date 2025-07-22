@@ -61,6 +61,7 @@ library BeaconProofsLib {
 
         // Get the withdrawal address from the first witness in the pubkey merkle proof.
         address withdrawalAddressFromProof;
+        // solhint-disable-next-line no-inline-assembly
         assembly {
             // The first 32 bytes of the proof is the withdrawal credential so load it into memory.
             calldatacopy(0, validatorPubKeyProof.offset, 32)
