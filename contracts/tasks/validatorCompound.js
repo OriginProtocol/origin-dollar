@@ -35,7 +35,6 @@ async function registerValidator({ pubkey, shares, operatorids, ssv }) {
   // Cluster details
   const { cluster } = await getClusterInfo({
     chainId,
-    ssvNetwork: hre.network.name.toUpperCase(),
     operatorids,
     // Hard code to the old 3rd native staking strategy for now
     ownerAddress: addresses.mainnet.NativeStakingSSVStrategy3Proxy,
