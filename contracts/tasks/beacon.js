@@ -167,8 +167,8 @@ async function verifyValidator({ slot, index, dryrun, withdrawal }) {
 
     // Update the validator's withdrawalCredentials in stateView
     const validator = stateView.validators.get(index);
-    if (!validator) {
-      throw new Error(`Validator at index ${index} not found`);
+    if (!validator || toHex(validator.node.root) == "0x0000000000000000000000000000000000000000000000000000000000000000") {
+      throw new Error(`Validator at index ${index} not found for slot ${slot}`);
     }
 
     log(

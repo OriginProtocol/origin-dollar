@@ -16,10 +16,7 @@ const getValidatorBalance = async (pubkey) => {
   if (!validatorRes.ok) {
     console.error(validatorRes);
     throw Error(
-      `Failed to get validator details for ${pubkey}. Status ${validatorRes.status} ${validatorRes.statusText}`,
-      {
-        cause: validatorRes.error,
-      }
+      `Failed to get validator details for ${pubkey}. Status ${validatorRes.status} ${validatorRes.statusText}`
     );
   }
 
@@ -38,9 +35,10 @@ const getSlot = async (blockId = "head") => {
     blockId,
   });
   if (!blockHeaderRes.ok) {
-    console.error(`Failed to get block header for blockId ${blockId}`);
     console.error(blockHeaderRes);
-    throw blockHeaderRes.error;
+    throw Error(
+      `Failed to get block header for blockId ${blockId}. Status ${blockHeaderRes.status} ${blockHeaderRes.statusText}`
+    );
   }
 
   const slot = blockHeaderRes.value().header.message.slot;
@@ -59,9 +57,10 @@ const getBeaconBlockRoot = async (blockId = "head") => {
     blockId,
   });
   if (!blockHeaderRes.ok) {
-    console.error(`Failed to get beacon block root for block id ${blockId}`);
     console.error(blockHeaderRes);
-    throw blockHeaderRes.error;
+    throw Error(
+      `Failed to get beacon block root for block id ${blockId}. Status ${blockHeaderRes.status} ${blockHeaderRes.statusText}`
+    );
   }
 
   const root = blockHeaderRes.root;
@@ -81,12 +80,9 @@ const getBeaconBlock = async (slot = "head") => {
   log(`Fetching block for slot ${slot} from the beacon node`);
   const blockRes = await client.beacon.getBlockV2({ blockId: slot });
   if (!blockRes.ok) {
-    log(blockRes.error);
+    console.error(blockRes);
     throw new Error(
-      `Failed to get beacon block for slot ${slot}. Probably because it was missed`,
-      {
-        cause: blockRes.error,
-      }
+      `Failed to get beacon block for slot ${slot}. It could be because the slot was missed or the provider URL does not support beacon chain API. Error: ${blockRes.status} ${blockRes.statusText}`
     );
   }
 
@@ -105,11 +101,9 @@ const getBeaconBlock = async (slot = "head") => {
       "ssz"
     );
     if (!stateRes.ok) {
+      console.error(stateRes);
       throw new Error(
-        `Failed to get state for slot ${blockView.slot}. Probably because it was missed`,
-        {
-          cause: stateRes.error,
-        }
+        `Failed to get state for slot ${blockView.slot}. Probably because it was missed. Error: ${stateRes.status} ${stateRes.statusText}`
       );
     }
 
