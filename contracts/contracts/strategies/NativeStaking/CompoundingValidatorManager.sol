@@ -529,6 +529,7 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
     /// @param firstPendingDepositSlotProof The merkle proof that the slot of the first pending deposit
     /// matches the beacon chain.
     /// BeaconBlock.BeaconBlockBody.deposits[0].slot
+    // slither-disable-start reentrancy-no-eth
     function verifyDeposit(
         bytes32 depositDataRoot,
         uint64 depositBlockNumber,
@@ -598,7 +599,10 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
         );
     }
 
+    // slither-disable-end reentrancy-no-eth
+
     // TODO what if the last validator was exited rather than consolidated?
+    // slither-disable-start reentrancy-no-eth
     function verifyConsolidation(
         uint64 parentBlockTimestamp,
         uint64 lastValidatorIndex,
@@ -664,6 +668,8 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
         _snapBalances();
     }
 
+    // slither-disable-end reentrancy-no-eth
+
     /// @notice Stores the current ETH balance at the current block.
     /// The validator balances on the beacon chain can then be proved with `verifyBalances`.
     /// Can not be called while a consolidation is in progress.
@@ -707,6 +713,7 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
     /// @notice Verifies the balances of all active validators on the beacon chain
     /// and checks no pending deposits have been processed by the beacon chain.
     /// Can only be called by the registrator.
+    // slither-disable-start reentrancy-no-eth
     function verifyBalances(VerifyBalancesParams calldata params)
         external
         onlyRegistrator
@@ -821,6 +828,8 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
         );
     }
 
+    // slither-disable-end reentrancy-no-eth
+
     /// @notice Hash a validator public key using the Beacon Chain's format
     function _hashPubKey(bytes memory pubKey) internal pure returns (bytes32) {
         return sha256(abi.encodePacked(pubKey, bytes16(0)));
@@ -843,6 +852,7 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
     }
 
     function _convertWethToEth(uint256 _ethAmount) internal {
+        // slither-disable-next-line arbitrary-send-eth
         IWETH9(WETH).deposit{ value: _ethAmount }();
 
         depositedWethAccountedFor += _ethAmount;

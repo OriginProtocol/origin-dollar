@@ -126,6 +126,7 @@ library BeaconProofsLib {
         // Four balances are stored in each leaf so the validator index is divided by 4
         uint64 balanceIndex = validatorIndex / 4;
 
+        // slither-disable-next-line uninitialized-local
         uint256 generalizedIndex;
         if (level == BalanceProofLevel.Container) {
             // Get the index within the balances container, not the Beacon Block
