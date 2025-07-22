@@ -235,6 +235,11 @@ module.exports = {
     mainnet: {
       url: `${process.env.PROVIDER_URL}`,
       accounts: defaultAccounts,
+      verify: {
+        etherscan: {
+          apiKey: process.env.ETHERSCAN_API_KEY,
+        },
+      },
     },
     holesky: {
       url: holeskyProviderUrl,
@@ -252,6 +257,12 @@ module.exports = {
       // Fails if gas limit is anything less than 20M on Arbitrum One
       gas: 20000000,
       // initialBaseFeePerGas: 0,
+      verify: {
+        etherscan: {
+          apiKey: process.env.ARBISCAN_API_KEY,
+          apiUrl: "https://api.arbiscan.io",
+        },
+      },
     },
     base: {
       url: baseProviderUrl,
@@ -260,6 +271,12 @@ module.exports = {
       tags: ["base"],
       live: true,
       saveDeployments: true,
+      verify: {
+        etherscan: {
+          apiKey: process.env.BASESCAN_API_KEY,
+          apiUrl: "https://api.basescan.org",
+        },
+      },
     },
     sonic: {
       url: sonicProviderUrl,
@@ -268,6 +285,12 @@ module.exports = {
       tags: ["sonic"],
       live: true,
       saveDeployments: true,
+      verify: {
+        etherscan: {
+          apiKey: process.env.SONICSCAN_API_KEY,
+          apiUrl: "https://api.sonicscan.org",
+        },
+      },
     },
     plume: {
       url: plumeProviderUrl,
@@ -276,6 +299,12 @@ module.exports = {
       tags: ["plume"],
       live: true,
       saveDeployments: true,
+      verify: {
+        etherscan: {
+          apiKey: "",
+          apiUrl: "https://explorer.plume.org",
+        },
+      },
     },
   },
   mocha: {
@@ -384,50 +413,6 @@ module.exports = {
   contractSizer: {
     alphaSort: true,
     runOnCompile: process.env.CONTRACT_SIZE ? true : false,
-  },
-  etherscan: {
-    apiKey: {
-      mainnet: process.env.ETHERSCAN_API_KEY,
-      arbitrumOne: process.env.ARBISCAN_API_KEY,
-      holesky: process.env.ETHERSCAN_API_KEY,
-      base: process.env.BASESCAN_API_KEY,
-      sonic: process.env.SONICSCAN_API_KEY,
-      plume: 'empty', // this works for: npx hardhat verify...
-    },
-    customChains: [
-      {
-        network: "holesky",
-        chainId: 17000,
-        urls: {
-          apiURL: "https://api-holesky.etherscan.io/api",
-          browserURL: "https://holesky.etherscan.io",
-        },
-      },
-      {
-        network: "base",
-        chainId: 8453,
-        urls: {
-          apiURL: "https://api.basescan.org/api",
-          browserURL: "https://basescan.org",
-        },
-      },
-      {
-        network: "sonic",
-        chainId: 146,
-        urls: {
-          apiURL: "https://api.sonicscan.org/api",
-          browserURL: "https://sonicscan.org",
-        },
-      },
-      {
-        network: "plume",
-        chainId: 98866,
-        urls: {
-          apiURL: "https://explorer.plume.org/api",
-          browserURL: "https://explorer.plume.org",
-        },
-      },
-    ],
   },
   gasReporter: {
     enabled: process.env.REPORT_GAS ? true : false,

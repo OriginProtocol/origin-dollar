@@ -1,0 +1,189 @@
+{
+  "solcVersion": "0.8.28",
+  "storage": [
+    {
+      "label": "rewardTokenConfigs",
+      "offset": 0,
+      "slot": "0",
+      "type": "t_mapping(t_address,t_struct(RewardTokenConfig)12457_storage)",
+      "contract": "AbstractHarvester",
+      "src": "contracts/harvest/AbstractHarvester.sol:95"
+    },
+    {
+      "label": "supportedStrategies",
+      "offset": 0,
+      "slot": "1",
+      "type": "t_mapping(t_address,t_bool)",
+      "contract": "AbstractHarvester",
+      "src": "contracts/harvest/AbstractHarvester.sol:96"
+    },
+    {
+      "label": "rewardProceedsAddress",
+      "offset": 0,
+      "slot": "2",
+      "type": "t_address",
+      "contract": "AbstractHarvester",
+      "src": "contracts/harvest/AbstractHarvester.sol:104"
+    },
+    {
+      "label": "uniswapV2Path",
+      "offset": 0,
+      "slot": "3",
+      "type": "t_mapping(t_address,t_array(t_address)dyn_storage)",
+      "contract": "AbstractHarvester",
+      "src": "contracts/harvest/AbstractHarvester.sol:115"
+    },
+    {
+      "label": "uniswapV3Path",
+      "offset": 0,
+      "slot": "4",
+      "type": "t_mapping(t_address,t_bytes_storage)",
+      "contract": "AbstractHarvester",
+      "src": "contracts/harvest/AbstractHarvester.sol:117"
+    },
+    {
+      "label": "balancerPoolId",
+      "offset": 0,
+      "slot": "5",
+      "type": "t_mapping(t_address,t_bytes32)",
+      "contract": "AbstractHarvester",
+      "src": "contracts/harvest/AbstractHarvester.sol:119"
+    },
+    {
+      "label": "curvePoolIndices",
+      "offset": 0,
+      "slot": "6",
+      "type": "t_mapping(t_address,t_struct(CurvePoolIndices)12494_storage)",
+      "contract": "AbstractHarvester",
+      "src": "contracts/harvest/AbstractHarvester.sol:127"
+    }
+  ],
+  "types": {
+    "t_address": {
+      "label": "address",
+      "numberOfBytes": "20"
+    },
+    "t_array(t_address)dyn_storage": {
+      "label": "address[]",
+      "numberOfBytes": "32"
+    },
+    "t_bool": {
+      "label": "bool",
+      "numberOfBytes": "1"
+    },
+    "t_bytes32": {
+      "label": "bytes32",
+      "numberOfBytes": "32"
+    },
+    "t_bytes_storage": {
+      "label": "bytes",
+      "numberOfBytes": "32"
+    },
+    "t_enum(SwapPlatform)12352": {
+      "label": "enum AbstractHarvester.SwapPlatform",
+      "members": [
+        "UniswapV2Compatible",
+        "UniswapV3",
+        "Balancer",
+        "Curve"
+      ],
+      "numberOfBytes": "1"
+    },
+    "t_mapping(t_address,t_array(t_address)dyn_storage)": {
+      "label": "mapping(address => address[])",
+      "numberOfBytes": "32"
+    },
+    "t_mapping(t_address,t_bool)": {
+      "label": "mapping(address => bool)",
+      "numberOfBytes": "32"
+    },
+    "t_mapping(t_address,t_bytes32)": {
+      "label": "mapping(address => bytes32)",
+      "numberOfBytes": "32"
+    },
+    "t_mapping(t_address,t_bytes_storage)": {
+      "label": "mapping(address => bytes)",
+      "numberOfBytes": "32"
+    },
+    "t_mapping(t_address,t_struct(CurvePoolIndices)12494_storage)": {
+      "label": "mapping(address => struct AbstractHarvester.CurvePoolIndices)",
+      "numberOfBytes": "32"
+    },
+    "t_mapping(t_address,t_struct(RewardTokenConfig)12457_storage)": {
+      "label": "mapping(address => struct AbstractHarvester.RewardTokenConfig)",
+      "numberOfBytes": "32"
+    },
+    "t_struct(CurvePoolIndices)12494_storage": {
+      "label": "struct AbstractHarvester.CurvePoolIndices",
+      "members": [
+        {
+          "label": "rewardTokenIndex",
+          "type": "t_uint128",
+          "offset": 0,
+          "slot": "0"
+        },
+        {
+          "label": "baseTokenIndex",
+          "type": "t_uint128",
+          "offset": 16,
+          "slot": "0"
+        }
+      ],
+      "numberOfBytes": "32"
+    },
+    "t_struct(RewardTokenConfig)12457_storage": {
+      "label": "struct AbstractHarvester.RewardTokenConfig",
+      "members": [
+        {
+          "label": "allowedSlippageBps",
+          "type": "t_uint16",
+          "offset": 0,
+          "slot": "0"
+        },
+        {
+          "label": "harvestRewardBps",
+          "type": "t_uint16",
+          "offset": 2,
+          "slot": "0"
+        },
+        {
+          "label": "swapPlatformAddr",
+          "type": "t_address",
+          "offset": 4,
+          "slot": "0"
+        },
+        {
+          "label": "doSwapRewardToken",
+          "type": "t_bool",
+          "offset": 24,
+          "slot": "0"
+        },
+        {
+          "label": "swapPlatform",
+          "type": "t_enum(SwapPlatform)12352",
+          "offset": 25,
+          "slot": "0"
+        },
+        {
+          "label": "liquidationLimit",
+          "type": "t_uint256",
+          "offset": 0,
+          "slot": "1"
+        }
+      ],
+      "numberOfBytes": "64"
+    },
+    "t_uint128": {
+      "label": "uint128",
+      "numberOfBytes": "16"
+    },
+    "t_uint16": {
+      "label": "uint16",
+      "numberOfBytes": "2"
+    },
+    "t_uint256": {
+      "label": "uint256",
+      "numberOfBytes": "32"
+    }
+  }
+}
