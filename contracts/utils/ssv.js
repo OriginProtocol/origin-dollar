@@ -103,7 +103,7 @@ const getClusterInfo = async ({ ownerAddress, operatorids, chainId }) => {
   // HTTP encode the operator IDs
   // the .toString() will convert the array to a comma-separated string if not already a string
   const encodedOperatorIds = encodeURIComponent(operatorids.toString());
-  const network = chainId === 1 ? "mainnet" : "holesky";
+  const network = chainId === 1 ? "mainnet" : "hoodi";
   const url = `${SSV_API_ENDPOINT}/${network}/clusters/owner/${ownerAddress}/operators/${encodedOperatorIds}`;
   log(`SSV url: ${url}`);
 
