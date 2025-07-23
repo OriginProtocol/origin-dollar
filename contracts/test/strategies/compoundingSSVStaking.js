@@ -19,6 +19,10 @@ const {
   testBalancesProofs,
 } = require("./compoundingSSVStaking-validatorsData.json");
 
+const log = require("../../utils/logger")(
+  "test:unit:strategy:compoundingSSVStaking"
+);
+
 const {
   createFixtureLoader,
   compoundingStakingSSVStrategyFixture,
@@ -1719,15 +1723,13 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
         );
       });
     });
-    describe.skip("When some WETH, ETH, 3 pending deposits and 16 active validators", () => {
+    describe("When some WETH, ETH, 3 pending deposits and 16 active validators", () => {
       let balancesBefore;
       beforeEach(async () => {
         // register, stake, verify validator and verify deposit
-        for (let i = 0; i < 6; i++) {
-          // if (i === 4) continue; // Skip the 5th validator for this test
-          console.log(`Processing validator ${i}`);
+        for (let i = 0; i < 7; i++) {
+          if (i === 3) continue; // Skip the 4th validator for this test
           await processValidator(testValidators[i], "VERIFIED_DEPOSIT");
-          console.log(`Toping up validator ${i}`);
           // Top up the validator to ensure it has enough balance
           await topupValidator(
             testValidators[i],
@@ -1736,29 +1738,35 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
           );
         }
 
+        const activeValidators =
+          await fixture.compoundingStakingSSVStrategy.getVerifiedValidators();
+        log(
+          `Active validators: ${activeValidators.map((v) => v.index).join(",")}`
+        );
+
         balancesBefore = await assertBalances({
           pendingDepositAmount: 0,
           wethAmount: 123.456,
-          ethAmount: 12.345,
+          ethAmount: 0.345,
           balancesProof: testBalancesProofs[5],
-          activeValidators: [0, 1, 2, 3, 4],
+          activeValidators: [0, 1, 2, 3, 4, 5],
         });
       });
       it("consensus rewards are earned by the validators", async () => {
         const balancesAfter = await assertBalances({
           pendingDepositAmount: 0,
           wethAmount: 123.456,
-          ethAmount: 13.345,
-          balancesProof: testBalancesProofs[4],
-          activeValidators: [0, 1],
+          ethAmount: 1.345,
+          balancesProof: testBalancesProofs[5],
+          activeValidators: [0, 1, 2, 3, 4, 5],
         });
         // Check the increase in consensus rewards
-        const consensusRewards = parseEther("1");
-        expect(balancesAfter.totalValidatorBalance).to.equal(
-          balancesBefore.totalValidatorBalance.add(consensusRewards)
+        const executionRewards = parseEther("1");
+        expect(balancesAfter.verifiedEthBalance).to.equal(
+          balancesBefore.verifiedEthBalance.add(executionRewards)
         );
         expect(balancesAfter.totalBalance).to.equal(
-          balancesBefore.totalBalance.add(consensusRewards)
+          balancesBefore.totalBalance.add(executionRewards)
         );
       });
     });

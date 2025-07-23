@@ -158,7 +158,7 @@ library BeaconProofsLib {
                 leaf: validatorBalanceLeaf,
                 index: generalizedIndex
             }),
-            "Invalid balance container proof"
+            "Invalid balance proof"
         );
     }
 
