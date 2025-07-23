@@ -151,7 +151,7 @@ const configClient = async () => {
   const { getClient } = await import("@lodestar/api");
   const { config } = await import("@lodestar/config/default");
 
-  const baseUrl = process.env.PROVIDER_URL;
+  const baseUrl = process.env.BEACON_PROVIDER_URL;
 
   const client = await getClient({ baseUrl, timeoutMs: 60000 }, { config });
 
