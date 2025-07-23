@@ -223,7 +223,7 @@ async function verifyValidator({ slot, index, dryrun, withdrawal }) {
     console.log(`nextBlockTimestamp: ${nextBlockTimestamp}`);
     console.log(`validator index: ${index}`);
     console.log(`pubKeyHash: ${pubKeyHash}`);
-    console.log(`proof: ${proof}`);
+    console.log(`proof:\n${proof}`);
     return;
   }
 
@@ -344,6 +344,7 @@ async function verifyBalances({ root, indexes, dryrun }) {
 
   const validatorBalanceLeaves = [];
   const validatorBalanceProofs = [];
+  const validatorBalances = [];
   for (const validator of verifiedValidators) {
     const { proof, leaf, balance } = await generateBalanceProof({
       validatorIndex: validator.index,
@@ -353,6 +354,7 @@ async function verifyBalances({ root, indexes, dryrun }) {
     });
     validatorBalanceLeaves.push(leaf);
     validatorBalanceProofs.push(proof);
+    validatorBalances.push(balance);
 
     log(
       `Validator ${validator.index} has balance: ${formatUnits(balance, 9)} ETH`
@@ -364,12 +366,21 @@ async function verifyBalances({ root, indexes, dryrun }) {
     console.log(`verificationSlot: ${verificationSlot}`);
     console.log(`firstPendingDepositSlot: ${firstPendingDepositSlot}`);
     console.log(
-      `firstPendingDepositSlotProof: ${firstPendingDepositSlotProof}`
+      `firstPendingDepositSlotProof:\n${firstPendingDepositSlotProof}`
     );
-    console.log(`balancesContainerRoot: ${balancesContainerRoot}`);
-    console.log(`balancesContainerProof: ${balancesContainerProof}`);
-    console.log(`validatorBalanceLeaves: ${validatorBalanceLeaves}`);
-    console.log(`validatorBalanceProofs: ${validatorBalanceProofs}`);
+    console.log(`\nbalancesContainerRoot: ${balancesContainerRoot}`);
+    console.log(`\nbalancesContainerProof:\n${balancesContainerProof}`);
+    console.log(
+      `\nvalidatorBalanceLeaves:\n${validatorBalanceLeaves
+        .map((leaf) => `"${leaf}"`)
+        .join(",\n")}`
+    );
+    console.log(
+      `\nvalidatorBalanceProofs:\n${validatorBalanceProofs
+        .map((proof) => `"${proof}"`)
+        .join(",\n")}`
+    );
+    console.log(`validatorBalances: ${validatorBalances.join(", ")}`);
     return;
   }
 

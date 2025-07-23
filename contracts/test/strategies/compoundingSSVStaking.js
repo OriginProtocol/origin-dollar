@@ -1719,6 +1719,49 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
         );
       });
     });
+    describe.skip("When some WETH, ETH, 3 pending deposits and 16 active validators", () => {
+      let balancesBefore;
+      beforeEach(async () => {
+        // register, stake, verify validator and verify deposit
+        for (let i = 0; i < 6; i++) {
+          // if (i === 4) continue; // Skip the 5th validator for this test
+          console.log(`Processing validator ${i}`);
+          await processValidator(testValidators[i], "VERIFIED_DEPOSIT");
+          console.log(`Toping up validator ${i}`);
+          // Top up the validator to ensure it has enough balance
+          await topupValidator(
+            testValidators[i],
+            testValidators[i].depositProof.depositAmount - 1,
+            "VERIFIED_DEPOSIT"
+          );
+        }
+
+        balancesBefore = await assertBalances({
+          pendingDepositAmount: 0,
+          wethAmount: 123.456,
+          ethAmount: 12.345,
+          balancesProof: testBalancesProofs[5],
+          activeValidators: [0, 1, 2, 3, 4],
+        });
+      });
+      it("consensus rewards are earned by the validators", async () => {
+        const balancesAfter = await assertBalances({
+          pendingDepositAmount: 0,
+          wethAmount: 123.456,
+          ethAmount: 13.345,
+          balancesProof: testBalancesProofs[4],
+          activeValidators: [0, 1],
+        });
+        // Check the increase in consensus rewards
+        const consensusRewards = parseEther("1");
+        expect(balancesAfter.totalValidatorBalance).to.equal(
+          balancesBefore.totalValidatorBalance.add(consensusRewards)
+        );
+        expect(balancesAfter.totalBalance).to.equal(
+          balancesBefore.totalBalance.add(consensusRewards)
+        );
+      });
+    });
   });
 
   describe("Consolidation", () => {
@@ -1849,7 +1892,7 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
       ).to.be.revertedWith("No consolidations");
     });
 
-    it("Should revert when verifying consolidation because invalid balance container proof", async () => {
+    it("Should revert when verifying consolidation because invalid balance proof", async () => {
       const { compoundingStakingSSVStrategy, validatorRegistrator, josh } =
         fixture;
       await processValidator(testValidators[0], "VERIFIED_DEPOSIT");
@@ -1871,7 +1914,7 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
             testBalancesProofs[0].validatorBalanceLeaves[0],
             testBalancesProofs[0].validatorBalanceProofs[0]
           )
-      ).to.be.revertedWith("Invalid balance container proof");
+      ).to.be.revertedWith("Invalid balance proof");
     });
 
     it.skip("Should revert when verifying consolidation because last validator balance not zero", async () => {
