@@ -380,7 +380,11 @@ async function verifyBalances({ root, indexes, dryrun }) {
         .map((proof) => `"${proof}"`)
         .join(",\n")}`
     );
-    console.log(`validatorBalances: ${validatorBalances.join(", ")}`);
+    console.log(
+      `validatorBalances: ${validatorBalances
+        .map((bal) => formatUnits(bal, 9))
+        .join(", ")}`
+    );
     return;
   }
 
