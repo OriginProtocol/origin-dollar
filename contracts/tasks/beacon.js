@@ -119,11 +119,16 @@ async function verifySlot({ block, dryrun }) {
   );
   log(`Next mainnet block ${nextBlock} has timestamp ${nextBlockTimestamp}`);
 
+  let beaconRootsAddress = addresses.mainnet.mockBeaconRoots;
+  if (hre.network.name == "hoodi") {
+    beaconRootsAddress = addresses.hoodi.mockBeaconRoots;
+  }
+
   // Get the parent block root from the beacon roots contract from mainnet
   const mainnetBeaconRoots = await ethers.getContractAt(
     "MockBeaconRoots",
     // Need to use mainnet address and not local deployed address
-    addresses.mainnet.mockBeaconRoots,
+    beaconRootsAddress,
     signerMainnet
   );
   log(
