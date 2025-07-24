@@ -875,10 +875,10 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
         parseEther("0")
       );
       // Third validator is later withdrawn later
-      await processValidator(testValidators[3], "VERIFIED_DEPOSIT");
+      await processValidator(testValidators[14], "VERIFIED_DEPOSIT");
       await topupValidator(
-        testValidators[3],
-        testValidators[3].depositProof.depositAmount - 1,
+        testValidators[14],
+        testValidators[14].depositProof.depositAmount - 1,
         "VERIFIED_DEPOSIT"
       );
 
@@ -899,7 +899,7 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
       expect(activeValidatorsBefore.length).to.eq(1);
       expect(
         await compoundingStakingSSVStrategy.validatorState(
-          testValidators[3].publicKeyHash
+          testValidators[14].publicKeyHash
         )
       ).to.equal(3); // VERIFIED
 
@@ -908,14 +908,14 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
       const tx = await compoundingStakingSSVStrategy
         .connect(validatorRegistrator)
         .validatorWithdrawal(
-          testValidators[3].publicKey,
+          testValidators[14].publicKey,
           parseUnits(withdrawalAmount.toString(), 9)
         );
 
       await expect(tx)
         .to.emit(compoundingStakingSSVStrategy, "ValidatorWithdraw")
         .withArgs(
-          testValidators[3].publicKeyHash,
+          testValidators[14].publicKeyHash,
           parseEther(withdrawalAmount.toString())
         );
 
@@ -930,16 +930,16 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
       const removeTx = compoundingStakingSSVStrategy
         .connect(validatorRegistrator)
         .removeSsvValidator(
-          testValidators[3].publicKey,
-          testValidators[3].operatorIds,
+          testValidators[14].publicKey,
+          testValidators[14].operatorIds,
           emptyCluster
         );
 
       await expect(removeTx)
         .to.emit(compoundingStakingSSVStrategy, "SSVValidatorRemoved")
         .withArgs(
-          testValidators[3].publicKeyHash,
-          testValidators[3].operatorIds
+          testValidators[14].publicKeyHash,
+          testValidators[14].operatorIds
         );
     });
 
@@ -1507,10 +1507,10 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
       let balancesBefore;
       beforeEach(async () => {
         // Third validator is later withdrawn later
-        await processValidator(testValidators[3], "VERIFIED_DEPOSIT");
+        await processValidator(testValidators[14], "VERIFIED_DEPOSIT");
         await topupValidator(
-          testValidators[3],
-          testValidators[3].depositProof.depositAmount - 1,
+          testValidators[14],
+          testValidators[14].depositProof.depositAmount - 1,
           "VERIFIED_DEPOSIT"
         );
       });
@@ -1534,14 +1534,14 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
           const tx = await compoundingStakingSSVStrategy
             .connect(validatorRegistrator)
             .validatorWithdrawal(
-              testValidators[3].publicKey,
+              testValidators[14].publicKey,
               parseUnits(withdrawalAmount.toString(), 9)
             );
 
           await expect(tx)
             .to.emit(compoundingStakingSSVStrategy, "ValidatorWithdraw")
             .withArgs(
-              testValidators[3].publicKeyHash,
+              testValidators[14].publicKeyHash,
               parseEther(withdrawalAmount.toString())
             );
 
@@ -1566,14 +1566,14 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
           const tx = await compoundingStakingSSVStrategy
             .connect(validatorRegistrator)
             .validatorWithdrawal(
-              testValidators[3].publicKey,
+              testValidators[14].publicKey,
               parseUnits(withdrawalAmount.toString(), 9)
             );
 
           await expect(tx)
             .to.emit(compoundingStakingSSVStrategy, "ValidatorWithdraw")
             .withArgs(
-              testValidators[3].publicKeyHash,
+              testValidators[14].publicKeyHash,
               parseEther(withdrawalAmount.toString())
             );
 
@@ -1617,7 +1617,7 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
           expect(activeValidatorsBefore.length).to.eq(1);
           expect(
             await compoundingStakingSSVStrategy.validatorState(
-              testValidators[3].publicKeyHash
+              testValidators[14].publicKeyHash
             )
           ).to.equal(3); // VERIFIED
 
@@ -1626,14 +1626,14 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
           const tx = await compoundingStakingSSVStrategy
             .connect(validatorRegistrator)
             .validatorWithdrawal(
-              testValidators[3].publicKey,
+              testValidators[14].publicKey,
               parseUnits(withdrawalAmount.toString(), 9)
             );
 
           await expect(tx)
             .to.emit(compoundingStakingSSVStrategy, "ValidatorWithdraw")
             .withArgs(
-              testValidators[3].publicKeyHash,
+              testValidators[14].publicKeyHash,
               parseEther(withdrawalAmount.toString())
             );
 
@@ -1654,7 +1654,7 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
           expect(activeValidatorsAfter.length).to.eq(0);
           expect(
             await compoundingStakingSSVStrategy.validatorState(
-              testValidators[3].publicKeyHash
+              testValidators[14].publicKeyHash
             )
           ).to.equal(4); // EXITED
         });
@@ -1725,10 +1725,18 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
     });
     describe("When some WETH, ETH, 3 pending deposits and 16 active validators", () => {
       let balancesBefore;
+      const testValidatorCount = 11;
+      const testValidatorProofs = [...Array(testValidatorCount).keys()];
       beforeEach(async () => {
         // register, stake, verify validator and verify deposit
-        for (let i = 0; i < 7; i++) {
-          if (i === 3) continue; // Skip the 4th validator for this test
+        for (let i = 0; i < testValidatorCount; i++) {
+          log(
+            `Processing testValidators[${i}] with index ${testValidators[i].index}`
+          );
+          expect(hashPubKey(testValidators[i].publicKey)).to.equal(
+            testValidators[i].publicKeyHash,
+            `testValidators[${i}] public key hash mismatch with validator index ${testValidators[i].index}`
+          );
           await processValidator(testValidators[i], "VERIFIED_DEPOSIT");
           // Top up the validator to ensure it has enough balance
           await topupValidator(
@@ -1749,7 +1757,7 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
           wethAmount: 123.456,
           ethAmount: 0.345,
           balancesProof: testBalancesProofs[5],
-          activeValidators: [0, 1, 2, 3, 4, 5],
+          activeValidators: testValidatorProofs,
         });
       });
       it("consensus rewards are earned by the validators", async () => {
@@ -1758,7 +1766,7 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
           wethAmount: 123.456,
           ethAmount: 1.345,
           balancesProof: testBalancesProofs[5],
-          activeValidators: [0, 1, 2, 3, 4, 5],
+          activeValidators: testValidatorProofs,
         });
         // Check the increase in consensus rewards
         const executionRewards = parseEther("1");
