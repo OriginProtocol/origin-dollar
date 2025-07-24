@@ -308,6 +308,8 @@ addresses.mainnet.beaconChainDepositContract =
 addresses.mainnet.mockBeaconRoots =
   "0xC033785181372379dB2BF9dD32178a7FDf495AcD";
 addresses.mainnet.beaconRoots = "0x000f3df6d732807ef1319fb7b8bb8522d0beac02";
+addresses.mainnet.beaconChainWithdrawRequest =
+  "0x00000961Ef480Eb55e80D19ad83579A64c007002";
 
 // Native Staking Strategy
 addresses.mainnet.NativeStakingSSVStrategyProxy =

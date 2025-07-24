@@ -85,6 +85,26 @@ async function depositValidator({ pubkey, cred, sig, root, amount }) {
   await logTxDetails(tx, "deposit to validator");
 }
 
+async function requestValidatorWithdraw({ pubkey, amount }) {
+  const signer = await getSigner();
+
+  const amountGwei = parseUnits(amount.toString(), 9);
+
+  const data = solidityPack(
+    ["bytes", "uint64"],
+    [pubkey, amountGwei]
+  );
+  log(`Encoded partial withdrawal data: ${data}`);
+
+  const tx = await signer.sendTransaction({
+    to: addresses.mainnet.beaconChainWithdrawRequest,
+    data,
+    value: 1, // 1 wei for the fee
+  });
+
+  await logTxDetails(tx, "requestWithdraw");
+}
+
 async function verifySlot({ block, dryrun }) {
   const signer = await getSigner();
 
@@ -506,6 +526,7 @@ async function mockBeaconRoot() {
 module.exports = {
   calcDepositRoot,
   depositValidator,
+  requestValidatorWithdraw,
   verifySlot,
   blockToSlot,
   slotToBlock,

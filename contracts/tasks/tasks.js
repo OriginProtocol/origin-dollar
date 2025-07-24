@@ -121,6 +121,7 @@ const { sleep } = require("../utils/time");
 const { lzBridgeToken, lzSetConfig } = require("./layerzero");
 const {
   depositValidator,
+  requestValidatorWithdraw,
   blockToSlot,
   slotToBlock,
   slotToRoot,
@@ -1856,6 +1857,17 @@ task("depositValidator").setAction(async (_, __, runSuper) => {
 });
 
 subtask(
+  "withdrawValidator",
+  "Partial or full withdrawal from a validator on the Beacon chain"
+)
+  .addParam("pubkey", "Validator public key in hex format with a 0x prefix")
+  .addParam("amount", "Amount to withdraw in ether", undefined, types.float)
+  .setAction(withdrawValidator);
+task("withdrawValidator").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+subtask(
   "verifySlot",
   "Verify an execution layer block number to a beacon chain slot"
 )
@@ -2049,8 +2061,8 @@ task("registerValidator").setAction(async (_, __, runSuper) => {
 });
 
 subtask(
-  "withdrawValidator",
-  "Requests a partial or full full withdrawal from a compounding validator"
+  "requestValidatorWithdraw",
+  "Requests a partial or full withdrawal from a compounding validator"
 )
   .addParam(
     "pubkey",
@@ -2064,8 +2076,8 @@ subtask(
     undefined,
     types.int
   )
-  .setAction(withdrawValidator);
-task("withdrawValidator").setAction(async (_, __, runSuper) => {
+  .setAction(requestValidatorWithdraw);
+task("requestValidatorWithdraw").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
 
