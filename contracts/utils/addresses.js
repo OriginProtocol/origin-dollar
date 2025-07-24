@@ -547,6 +547,16 @@ addresses.sonic.SwapX.OsBRNx.gaugeOther =
   "0xaE519dE817775E394Fc854d966065a97Facfc934";
 addresses.sonic.SwapX.OsBRNx.extBribeOther =
   "0xC9FA26E55e92e1D9c63A6FDF9b91FaC794523203";
+addresses.sonic.SwapX.OsWs = {};
+addresses.sonic.SwapX.OsWs.pool = "0xa76Beaf111BaD5dD866fa4835D66b9aA2Eb1FdEc";
+addresses.sonic.SwapX.OsWs.gaugeOS =
+  "0x3a4a0040475575638beb4051d8950ea21686ce27";
+addresses.sonic.SwapX.OsWs.extBribeOS =
+  "0xD2bbcf5D4108787675C22A1d1146Afd955A3434E";
+addresses.sonic.SwapX.OsWs.gaugeOther =
+  "0x7fcd694e0c24bf12dcbd471df38601059f2b8093";
+addresses.sonic.SwapX.OsWs.extBribeOther =
+  "0x1c2667e7a6E1983A10D3A7f532e27AF525155372";
 
 // Sonic Shadow
 addresses.sonic.Shadow = {};
