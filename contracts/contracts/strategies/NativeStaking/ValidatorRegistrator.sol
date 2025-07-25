@@ -395,7 +395,7 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
         bytes[] calldata sourcePubKeys,
         bytes calldata targetPubKey,
         address targetStakingStrategy
-    ) external nonReentrant whenNotPaused onlyRegistrator {
+    ) external nonReentrant whenNotPaused onlyGovernor() {
         require(
             consolidationTargetStrategies[targetStakingStrategy],
             "Invalid target strategy"
