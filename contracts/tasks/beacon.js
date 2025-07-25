@@ -525,6 +525,36 @@ async function mockBeaconRoot() {
   await replaceContractAt(addresses.mainnet.beaconRoots, mockBeaconRoots);
 }
 
+async function getValidator({ slot, index }) {
+  // Uses the latest slot if the slot is undefined
+  const { stateView } = await getBeaconBlock(slot);
+
+  const validator = stateView.validators.get(index);
+  if (
+    !validator ||
+    toHex(validator.node.root) ==
+      "0x0000000000000000000000000000000000000000000000000000000000000000"
+  ) {
+    throw new Error(`Validator at index ${index} not found for slot ${slot}`);
+  }
+
+  console.log(`Validator at index ${index} for slot ${slot}:`);
+  console.log(`Public Key: ${toHex(validator.pubkey)}`);
+  console.log(
+    `Withdrawal Credentials: ${toHex(validator.withdrawalCredentials)}`
+  );
+  console.log(
+    `Effective Balance: ${formatUnits(validator.effectiveBalance, 9)} ETH`
+  );
+  console.log(`Slashed: ${validator.slashed}`);
+  console.log(`Activation Epoch: ${validator.activationEpoch}`);
+  console.log(`Exit Epoch: ${validator.exitEpoch}`);
+  console.log(`Withdrawable Epoch: ${validator.withdrawableEpoch}`);
+  console.log(
+    `Activation Eligibility Epoch: ${validator.activationEligibilityEpoch}`
+  );
+}
+
 module.exports = {
   calcDepositRoot,
   depositValidator,
@@ -536,6 +566,7 @@ module.exports = {
   beaconRoot,
   copyBeaconRoot,
   mockBeaconRoot,
+  getValidator,
   verifyValidator,
   verifyDeposit,
   verifyBalances,

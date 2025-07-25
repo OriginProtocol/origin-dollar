@@ -129,6 +129,7 @@ const {
   beaconRoot,
   copyBeaconRoot,
   mockBeaconRoot,
+  getValidator,
   verifySlot,
   verifyValidator,
   verifyDeposit,
@@ -1957,6 +1958,24 @@ subtask(
   "Replaces the BeaconRoot contract (EIP-4788) with a mocked one for testing purposes"
 ).setAction(mockBeaconRoot);
 task("mockBeaconRoot").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+subtask("getValidator", "Gets the details of a validator")
+  .addParam(
+    "index",
+    "Index of the validator on the Beacon chain",
+    undefined,
+    types.int
+  )
+  .addOptionalParam(
+    "slot",
+    "Beacon chain slot. Default head",
+    undefined,
+    types.int
+  )
+  .setAction(getValidator);
+task("getValidator").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
 
