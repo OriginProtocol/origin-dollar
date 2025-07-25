@@ -35,14 +35,19 @@ async function registerValidator({ pubkey, shares, operatorids, ssv }) {
   let ownerAddress = "";
   if (chainId == 1) {
     // Hard code to the old 3rd native staking strategy for now
-    ownerAddress = addresses.mainnet.NativeStakingSSVStrategy3Proxy
-    console.log("Using Mainnet NativeStakingSSVStrategy3Proxy to fetch cluster Info")
+    ownerAddress = addresses.mainnet.NativeStakingSSVStrategy3Proxy;
+    console.log(
+      "Using Mainnet NativeStakingSSVStrategy3Proxy to fetch cluster Info"
+    );
   } else if (chainId == 560048) {
-
     ownerAddress = "0x840081c97256d553A8F234D469D797B9535a3B49";
-    console.log("Using Hoodie CompoundingStakingSSVStrategy to fetch cluster Info")
+    console.log(
+      "Using Hoodie CompoundingStakingSSVStrategy to fetch cluster Info"
+    );
   } else {
-    throw new Error("Don't know what ownerAddress to use for fetching of cluster info")
+    throw new Error(
+      "Don't know what ownerAddress to use for fetching of cluster info"
+    );
   }
 
   // Cluster details

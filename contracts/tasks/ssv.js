@@ -157,7 +157,7 @@ const sortOperatorIds = (operatorIdsString) => {
   const operatorIds = operatorIdsString.split(",").map((id) => parseInt(id));
   operatorIds.sort((a, b) => a - b);
 
-  return operatorIds.join(',')
+  return operatorIds.join(",");
 };
 
 module.exports = {
