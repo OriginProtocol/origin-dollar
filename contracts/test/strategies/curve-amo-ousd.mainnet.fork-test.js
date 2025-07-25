@@ -91,7 +91,7 @@ describe("Curve AMO OUSD strategy", function () {
       .connect(nick)["add_liquidity(uint256[],uint256)"]([ousdUnits("10000"), usdcUnits("10000")], 0);
   });
 
-  describe("Initial paramaters", () => {
+  describe("Initial parameters", () => {
     it("Should have correct parameters after deployment", async () => {
       //const { curveAMOStrategy, ousdVault, ousd, usdc } = fixture;
       expect(await curveAMOStrategy.platformAddress()).to.equal(

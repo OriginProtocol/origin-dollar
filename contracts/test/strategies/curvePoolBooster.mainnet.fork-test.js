@@ -172,7 +172,7 @@ describe("ForkTest: CurvePoolBooster", function () {
       .manageRewardPerVote(100, parseUnits("0.1"), 0);
   });
 
-  it("Should close a campaing", async () => {
+  it("Should close a campaign", async () => {
     await dealOETHAndCreateCampaign();
 
     await curvePoolBooster
