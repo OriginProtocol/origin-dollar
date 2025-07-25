@@ -1,6 +1,4 @@
-const {
-  deployWithConfirmation
-} = require("../../utils/deploy");
+const { deployWithConfirmation } = require("../../utils/deploy");
 
 const mainExport = async () => {
   const dMockBeaconRoots = await deployWithConfirmation("MockBeaconRoots");

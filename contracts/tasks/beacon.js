@@ -90,10 +90,7 @@ async function requestValidatorWithdraw({ pubkey, amount }) {
 
   const amountGwei = parseUnits(amount.toString(), 9);
 
-  const data = solidityPack(
-    ["bytes", "uint64"],
-    [pubkey, amountGwei]
-  );
+  const data = solidityPack(["bytes", "uint64"], [pubkey, amountGwei]);
   log(`Encoded partial withdrawal data: ${data}`);
 
   const tx = await signer.sendTransaction({
