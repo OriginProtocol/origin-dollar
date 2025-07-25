@@ -71,7 +71,7 @@ const {
   withdrawSSV,
   printClusterInfo,
   removeValidator,
-  validateOperatorIds,
+  sortOperatorIds,
 } = require("./ssv");
 const {
   amoStrategyTask,
@@ -1062,7 +1062,7 @@ subtask("getClusterInfo", "Print out information regarding SSV cluster")
     log(
       `Fetching cluster info for cluster owner ${taskArgs.owner} with operator ids: ${taskArgs.operatorids} from the ${network} network using ssvNetworkContract ${ssvNetwork}`
     );
-    await validateOperatorIds(taskArgs.operatorids)
+    taskArgs.operatorids = await sortOperatorIds(taskArgs.operatorids)
     await printClusterInfo({
       ...taskArgs,
       ownerAddress: taskArgs.owner,
@@ -1092,7 +1092,7 @@ subtask(
     types.string
   )
   .setAction(async (taskArgs) => {
-    await validateOperatorIds(taskArgs.operatorids)
+    taskArgs.operatorids = await sortOperatorIds(taskArgs.operatorids)
     await depositSSV(taskArgs);
   });
 task("depositSSV").setAction(async (_, __, runSuper) => {
@@ -1117,7 +1117,7 @@ subtask(
     types.string
   )
   .setAction(async (taskArgs) => {
-    await validateOperatorIds(taskArgs.operatorids)
+    taskArgs.operatorids = await sortOperatorIds(taskArgs.operatorids)
     await withdrawSSV(taskArgs);
   });
 task("withdrawSSV").setAction(async (_, __, runSuper) => {
@@ -1239,7 +1239,7 @@ subtask("exitValidator", "Starts the exit process from a validator")
   )
   .setAction(async (taskArgs) => {
     const signer = await getSigner();
-    await validateOperatorIds(taskArgs.operatorids)
+    taskArgs.operatorids = await sortOperatorIds(taskArgs.operatorids)
     await exitValidator({ ...taskArgs, signer });
   });
 task("exitValidator").setAction(async (_, __, runSuper) => {
@@ -1274,7 +1274,7 @@ subtask("exitValidators", "Starts the exit process from a list of validators")
   .setAction(async (taskArgs) => {
     const signer = await getSigner();
 
-    await validateOperatorIds(taskArgs.operatorids)
+    taskArgs.operatorids = await sortOperatorIds(taskArgs.operatorids)
     // Split the comma separated list of public keys
     const pubKeys = taskArgs.pubkeys.split(",");
     // For each public key
@@ -1314,7 +1314,7 @@ subtask(
   )
   .setAction(async (taskArgs) => {
     const signer = await getSigner();
-    await validateOperatorIds(taskArgs.operatorids)
+    taskArgs.operatorids = await sortOperatorIds(taskArgs.operatorids)
     await removeValidator({ ...taskArgs, signer });
   });
 task("removeValidator").setAction(async (_, __, runSuper) => {
@@ -1355,7 +1355,7 @@ subtask(
     // Split the comma separated list of public keys
     const pubKeys = taskArgs.pubkeys.split(",");
     // For each public key
-    await validateOperatorIds(taskArgs.operatorids)
+    taskArgs.operatorids = await sortOperatorIds(taskArgs.operatorids)
     for (const pubkey of pubKeys) {
       log(`About to remove validator with pubkey: ${pubkey}`);
       await removeValidator({ ...taskArgs, pubkey, signer });
@@ -2068,7 +2068,7 @@ subtask(
     types.int
   )
   .setAction(async (taskArgs) => {
-    await validateOperatorIds(taskArgs.operatorids)
+    taskArgs.operatorids = await sortOperatorIds(taskArgs.operatorids)
     await registerValidator(taskArgs);
   });
 task("registerValidator").setAction(async (_, __, runSuper) => {

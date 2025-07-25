@@ -153,19 +153,15 @@ const calcDepositRoot = async ({ index, pubkey, sig }, hre) => {
   console.log(`Deposit Root Data: ${depositDataRoot}`);
 };
 
-const validateOperatorIds = (operatorIdsString) => {
+const sortOperatorIds = (operatorIdsString) => {
   const operatorIds = operatorIdsString.split(",").map((id) => parseInt(id));
-  let currentId = -1;
-  for (let i = 0; i < operatorIds.length; i++) {
-    if (currentId >= operatorIds[i]) {
-      throw new Error("operatorids need to be in ascending order")
-    }
-    currentId = operatorIds[i];
-  }
+  operatorIds.sort((a, b) => a - b);
+
+  return operatorIds.join(',')
 };
 
 module.exports = {
-  validateOperatorIds,
+  sortOperatorIds,
   printClusterInfo,
   depositSSV,
   withdrawSSV,
