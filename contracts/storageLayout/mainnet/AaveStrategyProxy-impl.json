@@ -1,0 +1,159 @@
+{
+  "solcVersion": "0.8.28",
+  "storage": [
+    {
+      "label": "initialized",
+      "offset": 0,
+      "slot": "0",
+      "type": "t_bool",
+      "contract": "Initializable",
+      "src": "contracts/utils/Initializable.sol:12"
+    },
+    {
+      "label": "initializing",
+      "offset": 1,
+      "slot": "0",
+      "type": "t_bool",
+      "contract": "Initializable",
+      "src": "contracts/utils/Initializable.sol:17"
+    },
+    {
+      "label": "______gap",
+      "offset": 0,
+      "slot": "1",
+      "type": "t_array(t_uint256)50_storage",
+      "contract": "Initializable",
+      "src": "contracts/utils/Initializable.sol:41"
+    },
+    {
+      "label": "_deprecated_platformAddress",
+      "offset": 0,
+      "slot": "51",
+      "type": "t_address",
+      "contract": "InitializableAbstractStrategy",
+      "src": "contracts/utils/InitializableAbstractStrategy.sol:43"
+    },
+    {
+      "label": "_deprecated_vaultAddress",
+      "offset": 0,
+      "slot": "52",
+      "type": "t_address",
+      "contract": "InitializableAbstractStrategy",
+      "src": "contracts/utils/InitializableAbstractStrategy.sol:47"
+    },
+    {
+      "label": "assetToPToken",
+      "offset": 0,
+      "slot": "53",
+      "type": "t_mapping(t_address,t_address)",
+      "contract": "InitializableAbstractStrategy",
+      "src": "contracts/utils/InitializableAbstractStrategy.sol:50"
+    },
+    {
+      "label": "assetsMapped",
+      "offset": 0,
+      "slot": "54",
+      "type": "t_array(t_address)dyn_storage",
+      "contract": "InitializableAbstractStrategy",
+      "src": "contracts/utils/InitializableAbstractStrategy.sol:53"
+    },
+    {
+      "label": "_deprecated_rewardTokenAddress",
+      "offset": 0,
+      "slot": "55",
+      "type": "t_address",
+      "contract": "InitializableAbstractStrategy",
+      "src": "contracts/utils/InitializableAbstractStrategy.sol:57"
+    },
+    {
+      "label": "_deprecated_rewardLiquidationThreshold",
+      "offset": 0,
+      "slot": "56",
+      "type": "t_uint256",
+      "contract": "InitializableAbstractStrategy",
+      "src": "contracts/utils/InitializableAbstractStrategy.sol:61"
+    },
+    {
+      "label": "harvesterAddress",
+      "offset": 0,
+      "slot": "57",
+      "type": "t_address",
+      "contract": "InitializableAbstractStrategy",
+      "src": "contracts/utils/InitializableAbstractStrategy.sol:64"
+    },
+    {
+      "label": "rewardTokenAddresses",
+      "offset": 0,
+      "slot": "58",
+      "type": "t_array(t_address)dyn_storage",
+      "contract": "InitializableAbstractStrategy",
+      "src": "contracts/utils/InitializableAbstractStrategy.sol:67"
+    },
+    {
+      "label": "_reserved",
+      "offset": 0,
+      "slot": "59",
+      "type": "t_array(t_int256)98_storage",
+      "contract": "InitializableAbstractStrategy",
+      "src": "contracts/utils/InitializableAbstractStrategy.sol:74"
+    },
+    {
+      "label": "incentivesController",
+      "offset": 0,
+      "slot": "157",
+      "type": "t_contract(IAaveIncentivesController)34067",
+      "contract": "AaveStrategy",
+      "src": "contracts/strategies/AaveStrategy.sol:22"
+    },
+    {
+      "label": "stkAave",
+      "offset": 0,
+      "slot": "158",
+      "type": "t_contract(IAaveStakedToken)34104",
+      "contract": "AaveStrategy",
+      "src": "contracts/strategies/AaveStrategy.sol:23"
+    }
+  ],
+  "types": {
+    "t_address": {
+      "label": "address",
+      "numberOfBytes": "20"
+    },
+    "t_array(t_address)dyn_storage": {
+      "label": "address[]",
+      "numberOfBytes": "32"
+    },
+    "t_array(t_int256)98_storage": {
+      "label": "int256[98]",
+      "numberOfBytes": "3136"
+    },
+    "t_array(t_uint256)50_storage": {
+      "label": "uint256[50]",
+      "numberOfBytes": "1600"
+    },
+    "t_bool": {
+      "label": "bool",
+      "numberOfBytes": "1"
+    },
+    "t_contract(IAaveIncentivesController)34067": {
+      "label": "contract IAaveIncentivesController",
+      "numberOfBytes": "20"
+    },
+    "t_contract(IAaveStakedToken)34104": {
+      "label": "contract IAaveStakedToken",
+      "numberOfBytes": "20"
+    },
+    "t_int256": {
+      "label": "int256",
+      "numberOfBytes": "32"
+    },
+    "t_mapping(t_address,t_address)": {
+      "label": "mapping(address => address)",
+      "numberOfBytes": "32"
+    },
+    "t_uint256": {
+      "label": "uint256",
+      "numberOfBytes": "32"
+    }
+  }
+}

@@ -14,7 +14,7 @@ const log = require("../utils/logger")("task:storage");
 
 const isFork = process.env.FORK === "true";
 
-const getStorageFileLocation = (hre, contractName) => {
+const getStorageFileLocation = (hre, contractName, isUpgradeableProxy) => {
   const isMainnet = hre.network.name === "mainnet";
   const isArbitrum = hre.network.name === "arbitrumOne";
   const isSonic = hre.network.name === "sonic";
@@ -24,6 +24,8 @@ const getStorageFileLocation = (hre, contractName) => {
   const isMainnetFork = isFork && forkNetworkName == "mainnet";
   const isPlume = hre.network.name == "plume";
   const isPlumeFork = isFork && forkNetworkName == "plume";
+  const isBase = hre.network.name == "base";
+  const isBaseFork = isFork && forkNetworkName == "base";
 
   let folder = "localhost";
   if (isMainnetFork || isMainnet) {
@@ -34,6 +36,8 @@ const getStorageFileLocation = (hre, contractName) => {
     folder = "sonic";
   } else if (isPlumeFork || isPlume) {
     folder = "plume";
+  } else if (isBaseFork || isBase) {
+    folder = "base";
   }
 
   const layoutFolder = `./storageLayout/${folder}/`;
@@ -41,7 +45,9 @@ const getStorageFileLocation = (hre, contractName) => {
     mkdirSync(layoutFolder);
   }
 
-  return `${layoutFolder}${contractName}.json`;
+  return `${layoutFolder}${contractName}${
+    isUpgradeableProxy ? "-impl" : ""
+  }.json`;
 };
 
 const getStorageLayoutForContract = async (hre, contractName, contract) => {
@@ -59,8 +65,16 @@ const getStorageLayoutForContract = async (hre, contractName, contract) => {
   return getStorageLayout(validations, version);
 };
 
-const loadPreviousStorageLayoutForContract = async (hre, contractName) => {
-  const location = getStorageFileLocation(hre, contractName);
+const loadPreviousStorageLayoutForContract = async (
+  hre,
+  contractName,
+  isUpgradeableProxy
+) => {
+  const location = getStorageFileLocation(
+    hre,
+    contractName,
+    isUpgradeableProxy
+  );
 
   // new contract
   if (!existsSync(location)) {
@@ -76,9 +90,18 @@ const loadPreviousStorageLayoutForContract = async (hre, contractName) => {
 // @param contract the name of the contract as is in the source code of the contract
 // @param contractName a potential override of the contract as is to be stored in the
 //        deployment descriptors
-const storeStorageLayoutForContract = async (hre, contractName, contract) => {
+const storeStorageLayoutForContract = async (
+  hre,
+  contractName,
+  contract,
+  isUpgradeableProxy
+) => {
   const layout = await getStorageLayoutForContract(hre, contractName, contract);
-  const storageLayoutFile = getStorageFileLocation(hre, contractName);
+  const storageLayoutFile = getStorageFileLocation(
+    hre,
+    contractName,
+    isUpgradeableProxy
+  );
 
   // pretty print storage layout for the contract
   await promises.writeFile(storageLayoutFile, JSON.stringify(layout, null, 2));
@@ -102,6 +125,9 @@ const isContractEligible = (contractName) => {
     "MinuteTimelock",
     "OpenUniswapOracle",
     "RebaseHooks",
+    "LidoWithdrawalStrategy",
+    "SingleAssetStaking",
+    "ThreePoolStrategy",
   ];
 
   // Need to exclude proxies as well since they are not upgradeable
@@ -364,6 +390,153 @@ const readValidations = async (hre) => {
   }
 };
 
+const getStorageLayoutForProxy = async (hre, proxyName) => {
+  if (proxyName.startsWith("Mock")) {
+    console.error(
+      `Skipping storage slot validation for mock contract: ${proxyName}.`
+    );
+    return false;
+  }
+
+  const deployments = await hre.deployments.all();
+  const dProxy = deployments[proxyName];
+
+  if (!dProxy) {
+    throw new Error(`Proxy contract ${proxyName} not found`);
+  }
+
+  const cProxy = await hre.ethers.getContractAt(
+    ["function implementation() view returns (address)"],
+    dProxy.address
+  );
+  const implAddr = await cProxy.implementation();
+
+  if (implAddr == "0x0000000000000000000000000000000000000000") {
+    console.error(
+      `Skipping storage slot validation for proxy with no implementation: ${proxyName}.`
+    );
+    return false;
+  }
+
+  // We used the same artifact name for different contracts. This is a mapping of
+  // implementation addresses to the contract name to resolve any conflicts.
+  const implementationNamesForDuplicateArtifacts = {
+    // SSR Strategy
+    "0xb3155b7eb46e75ae20c9562af697c144f34c2509": "Generalized4626Strategy",
+    // DSR Strategy
+    "0x8a3b6d3739461137d20825c36ed6016803d3104f": "Generalized4626Strategy",
+    // MetaMorpho Strategy:
+    "0x41bd943923c31d277aa1becbc702b825f2bb8639": "Generalized4626Strategy",
+    // FeeAccumulator for second Native Staking Strategy
+    "0x9178a430b0fc78adec0ae1686557a53ebb382361": "FeeAccumulator",
+    // FeeAccumulator for third Native Staking Strategy
+    "0xebb078722b231a889351e13e05f1a694d89ce8a9": "FeeAccumulator",
+    // Second NativeStakingStrategy
+    "0x0643b19f9f978322b4f2f13b091a13e60ecbbce3": "NativeStakingSSVStrategy",
+    // Third NativeStakingStrategy
+    "0x492500a6cfb1248b5b6b7c674fd66c66ca57b905": "NativeStakingSSVStrategy",
+    // OUSDCurveAMO
+    "0xd7e36afe9dac8424b180b850616ba34be57277f9": "CurveAMOStrategy",
+  };
+
+  const implName =
+    Object.keys(deployments).find(
+      (x) => deployments[x].address.toLowerCase() == implAddr.toLowerCase()
+    ) || implementationNamesForDuplicateArtifacts[implAddr.toLowerCase()];
+  if (!implName) {
+    throw new Error(
+      `Implementation not found in artifacts for Proxy: ${proxyName} -> ${implAddr}`
+    );
+  }
+
+  if (!isContractEligible(implName)) {
+    console.error(
+      `Skipping storage slot validation for deprecated contract: ${proxyName} -> ${implName}.`
+    );
+    return false;
+  }
+
+  return await getStorageLayoutForContract(hre, implName);
+};
+
+const storeStorageLayoutForProxy = async (hre, proxyName) => {
+  const layout = await getStorageLayoutForProxy(hre, proxyName);
+  if (!layout) {
+    return;
+  }
+
+  const storageLayoutFile = getStorageFileLocation(hre, proxyName, true);
+  await promises.writeFile(storageLayoutFile, JSON.stringify(layout, null, 2));
+  console.log(
+    `Storage slots layout for ${proxyName} saved to ${storageLayoutFile} `
+  );
+};
+
+const getAllEligibleProxyNames = async (hre) => {
+  const deployments = await hre.deployments.all();
+  const proxyNames = [];
+  for (const deploymentName of Object.keys(deployments)) {
+    if (await isProxyContractEligible(hre, deploymentName)) {
+      proxyNames.push(deploymentName);
+    }
+  }
+  return proxyNames;
+};
+
+const isProxyContractEligible = async (hre, proxyName) => {
+  // These contracts have been deprecated and we no longer have the
+  // source code of implementation in our repo.
+  const excludeContracts = [
+    "LidoWithdrawalStrategyProxy",
+    "MakerDsrStrategyProxy",
+    "CurveUSDTStrategyProxy",
+    "CurveUSDCStrategyProxy",
+  ];
+
+  if (excludeContracts.includes(proxyName) || !proxyName.endsWith("Proxy")) {
+    return false;
+  }
+
+  const deployments = await hre.deployments.all();
+  return Boolean(deployments[proxyName]);
+};
+
+const storeStorageLayoutForAllProxies = async (hre) => {
+  const proxyNames = await getAllEligibleProxyNames(hre);
+  for (const proxyName of proxyNames) {
+    await storeStorageLayoutForProxy(hre, proxyName);
+  }
+};
+
+const assertStorageLayoutForProxy = async (hre, proxyName) => {
+  const storageLayout = await getStorageLayoutForProxy(hre, proxyName);
+  if (!storageLayout) {
+    return;
+  }
+
+  const oldLayout = await loadPreviousStorageLayoutForContract(
+    hre,
+    proxyName,
+    true
+  );
+  if (!oldLayout) {
+    throw new Error(
+      `Cannot find storage layout for ${proxyName}. Run "npx hardhat storeStorageLayoutForProxy --network ${hre.network.name} --proxy ${proxyName}"`
+    );
+  } else {
+    // 3rd param is opts.unsafeAllowCustomTypes
+    assertStorageUpgradeSafe(oldLayout, storageLayout, false);
+    console.log(`[storage-slots] Contract ${proxyName} is safe for upgrade`);
+  }
+};
+
+const assertStorageLayoutForAllProxies = async (hre) => {
+  const proxyNames = await getAllEligibleProxyNames(hre);
+  for (const proxyName of proxyNames) {
+    await assertStorageLayoutForProxy(hre, proxyName);
+  }
+};
+
 module.exports = {
   storeStorageLayoutForAllContracts,
   assertStorageLayoutChangeSafe,
@@ -371,4 +544,9 @@ module.exports = {
   assertUpgradeIsSafe,
   storeStorageLayoutForContract,
   showStorageLayout,
+  getStorageLayoutForProxy,
+  storeStorageLayoutForProxy,
+  storeStorageLayoutForAllProxies,
+  assertStorageLayoutForProxy,
+  assertStorageLayoutForAllProxies,
 };

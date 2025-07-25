@@ -25,6 +25,10 @@ const {
   assertStorageLayoutChangeSafe,
   assertStorageLayoutChangeSafeForAll,
   showStorageLayout,
+  storeStorageLayoutForProxy,
+  storeStorageLayoutForAllProxies,
+  assertStorageLayoutForProxy,
+  assertStorageLayoutForAllProxies,
 } = require("./storageSlots");
 const {
   isAdjusterLocked,
@@ -1838,4 +1842,24 @@ subtask(
 ).setAction(tenderlySync);
 task("tenderlySync").setAction(async (_, __, runSuper) => {
   return runSuper();
+});
+
+task("storeStorageLayoutForProxy")
+  .addParam("proxy", "Name of the proxy contract")
+  .setAction(async (taskArgs) => {
+    await storeStorageLayoutForProxy(hre, taskArgs.proxy);
+  });
+
+task("storeStorageLayoutForAllProxies").setAction(async () => {
+  await storeStorageLayoutForAllProxies(hre);
+});
+
+task("assertStorageLayoutForProxy")
+  .addParam("proxy", "Name of the proxy contract")
+  .setAction(async (taskArgs) => {
+    await assertStorageLayoutForProxy(hre, taskArgs.proxy);
+  });
+
+task("assertStorageLayoutForAllProxies").setAction(async () => {
+  await assertStorageLayoutForAllProxies(hre);
 });

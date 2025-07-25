@@ -1,0 +1,235 @@
+{
+  "solcVersion": "0.8.28",
+  "storage": [
+    {
+      "label": "initialized",
+      "offset": 0,
+      "slot": "0",
+      "type": "t_bool",
+      "contract": "Initializable",
+      "src": "contracts/utils/Initializable.sol:12"
+    },
+    {
+      "label": "initializing",
+      "offset": 1,
+      "slot": "0",
+      "type": "t_bool",
+      "contract": "Initializable",
+      "src": "contracts/utils/Initializable.sol:17"
+    },
+    {
+      "label": "______gap",
+      "offset": 0,
+      "slot": "1",
+      "type": "t_array(t_uint256)50_storage",
+      "contract": "Initializable",
+      "src": "contracts/utils/Initializable.sol:41"
+    },
+    {
+      "label": "_deprecated_platformAddress",
+      "offset": 0,
+      "slot": "51",
+      "type": "t_address",
+      "contract": "InitializableAbstractStrategy",
+      "src": "contracts/utils/InitializableAbstractStrategy.sol:43"
+    },
+    {
+      "label": "_deprecated_vaultAddress",
+      "offset": 0,
+      "slot": "52",
+      "type": "t_address",
+      "contract": "InitializableAbstractStrategy",
+      "src": "contracts/utils/InitializableAbstractStrategy.sol:47"
+    },
+    {
+      "label": "assetToPToken",
+      "offset": 0,
+      "slot": "53",
+      "type": "t_mapping(t_address,t_address)",
+      "contract": "InitializableAbstractStrategy",
+      "src": "contracts/utils/InitializableAbstractStrategy.sol:50"
+    },
+    {
+      "label": "assetsMapped",
+      "offset": 0,
+      "slot": "54",
+      "type": "t_array(t_address)dyn_storage",
+      "contract": "InitializableAbstractStrategy",
+      "src": "contracts/utils/InitializableAbstractStrategy.sol:53"
+    },
+    {
+      "label": "_deprecated_rewardTokenAddress",
+      "offset": 0,
+      "slot": "55",
+      "type": "t_address",
+      "contract": "InitializableAbstractStrategy",
+      "src": "contracts/utils/InitializableAbstractStrategy.sol:57"
+    },
+    {
+      "label": "_deprecated_rewardLiquidationThreshold",
+      "offset": 0,
+      "slot": "56",
+      "type": "t_uint256",
+      "contract": "InitializableAbstractStrategy",
+      "src": "contracts/utils/InitializableAbstractStrategy.sol:61"
+    },
+    {
+      "label": "harvesterAddress",
+      "offset": 0,
+      "slot": "57",
+      "type": "t_address",
+      "contract": "InitializableAbstractStrategy",
+      "src": "contracts/utils/InitializableAbstractStrategy.sol:64"
+    },
+    {
+      "label": "rewardTokenAddresses",
+      "offset": 0,
+      "slot": "58",
+      "type": "t_array(t_address)dyn_storage",
+      "contract": "InitializableAbstractStrategy",
+      "src": "contracts/utils/InitializableAbstractStrategy.sol:67"
+    },
+    {
+      "label": "_reserved",
+      "offset": 0,
+      "slot": "59",
+      "type": "t_array(t_int256)98_storage",
+      "contract": "InitializableAbstractStrategy",
+      "src": "contracts/utils/InitializableAbstractStrategy.sol:74"
+    },
+    {
+      "label": "nextWithdrawId",
+      "offset": 0,
+      "slot": "157",
+      "type": "t_uint256",
+      "contract": "SonicValidatorDelegator",
+      "src": "contracts/strategies/sonic/SonicValidatorDelegator.sol:22"
+    },
+    {
+      "label": "pendingWithdrawals",
+      "offset": 0,
+      "slot": "158",
+      "type": "t_uint256",
+      "contract": "SonicValidatorDelegator",
+      "src": "contracts/strategies/sonic/SonicValidatorDelegator.sol:24"
+    },
+    {
+      "label": "supportedValidators",
+      "offset": 0,
+      "slot": "159",
+      "type": "t_array(t_uint256)dyn_storage",
+      "contract": "SonicValidatorDelegator",
+      "src": "contracts/strategies/sonic/SonicValidatorDelegator.sol:27"
+    },
+    {
+      "label": "defaultValidatorId",
+      "offset": 0,
+      "slot": "160",
+      "type": "t_uint256",
+      "contract": "SonicValidatorDelegator",
+      "src": "contracts/strategies/sonic/SonicValidatorDelegator.sol:30"
+    },
+    {
+      "label": "withdrawals",
+      "offset": 0,
+      "slot": "161",
+      "type": "t_mapping(t_uint256,t_struct(WithdrawRequest)46212_storage)",
+      "contract": "SonicValidatorDelegator",
+      "src": "contracts/strategies/sonic/SonicValidatorDelegator.sol:38"
+    },
+    {
+      "label": "validatorRegistrator",
+      "offset": 0,
+      "slot": "162",
+      "type": "t_address",
+      "contract": "SonicValidatorDelegator",
+      "src": "contracts/strategies/sonic/SonicValidatorDelegator.sol:41"
+    },
+    {
+      "label": "__gap",
+      "offset": 0,
+      "slot": "163",
+      "type": "t_array(t_uint256)44_storage",
+      "contract": "SonicValidatorDelegator",
+      "src": "contracts/strategies/sonic/SonicValidatorDelegator.sol:44"
+    },
+    {
+      "label": "__gap",
+      "offset": 0,
+      "slot": "207",
+      "type": "t_array(t_uint256)50_storage",
+      "contract": "SonicStakingStrategy",
+      "src": "contracts/strategies/sonic/SonicStakingStrategy.sol:15"
+    }
+  ],
+  "types": {
+    "t_address": {
+      "label": "address",
+      "numberOfBytes": "20"
+    },
+    "t_array(t_address)dyn_storage": {
+      "label": "address[]",
+      "numberOfBytes": "32"
+    },
+    "t_array(t_int256)98_storage": {
+      "label": "int256[98]",
+      "numberOfBytes": "3136"
+    },
+    "t_array(t_uint256)44_storage": {
+      "label": "uint256[44]",
+      "numberOfBytes": "1408"
+    },
+    "t_array(t_uint256)50_storage": {
+      "label": "uint256[50]",
+      "numberOfBytes": "1600"
+    },
+    "t_array(t_uint256)dyn_storage": {
+      "label": "uint256[]",
+      "numberOfBytes": "32"
+    },
+    "t_bool": {
+      "label": "bool",
+      "numberOfBytes": "1"
+    },
+    "t_int256": {
+      "label": "int256",
+      "numberOfBytes": "32"
+    },
+    "t_mapping(t_address,t_address)": {
+      "label": "mapping(address => address)",
+      "numberOfBytes": "32"
+    },
+    "t_mapping(t_uint256,t_struct(WithdrawRequest)46212_storage)": {
+      "label": "mapping(uint256 => struct SonicValidatorDelegator.WithdrawRequest)",
+      "numberOfBytes": "32"
+    },
+    "t_struct(WithdrawRequest)46212_storage": {
+      "label": "struct SonicValidatorDelegator.WithdrawRequest",
+      "members": [
+        {
+          "label": "validatorId",
+          "type": "t_uint256",
+          "offset": 0,
+          "slot": "0"
+        },
+        {
+          "label": "undelegatedAmount",
+          "type": "t_uint256",
+          "offset": 0,
+          "slot": "1"
+        },
+        {
+          "label": "timestamp",
+          "type": "t_uint256",
+          "offset": 0,
+          "slot": "2"
+        }
+      ],
+      "numberOfBytes": "96"
+    },
+    "t_uint256": {
+      "label": "uint256",
+      "numberOfBytes": "32"
+    }
+  }
+}

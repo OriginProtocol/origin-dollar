@@ -1,0 +1,259 @@
+{
+  "solcVersion": "0.8.28",
+  "storage": [
+    {
+      "label": "initialized",
+      "offset": 0,
+      "slot": "0",
+      "type": "t_bool",
+      "contract": "Initializable",
+      "src": "contracts/utils/Initializable.sol:12"
+    },
+    {
+      "label": "initializing",
+      "offset": 1,
+      "slot": "0",
+      "type": "t_bool",
+      "contract": "Initializable",
+      "src": "contracts/utils/Initializable.sol:17"
+    },
+    {
+      "label": "______gap",
+      "offset": 0,
+      "slot": "1",
+      "type": "t_array(t_uint256)50_storage",
+      "contract": "Initializable",
+      "src": "contracts/utils/Initializable.sol:41"
+    },
+    {
+      "label": "_deprecated_platformAddress",
+      "offset": 0,
+      "slot": "51",
+      "type": "t_address",
+      "contract": "InitializableAbstractStrategy",
+      "src": "contracts/utils/InitializableAbstractStrategy.sol:43"
+    },
+    {
+      "label": "_deprecated_vaultAddress",
+      "offset": 0,
+      "slot": "52",
+      "type": "t_address",
+      "contract": "InitializableAbstractStrategy",
+      "src": "contracts/utils/InitializableAbstractStrategy.sol:47"
+    },
+    {
+      "label": "assetToPToken",
+      "offset": 0,
+      "slot": "53",
+      "type": "t_mapping(t_address,t_address)",
+      "contract": "InitializableAbstractStrategy",
+      "src": "contracts/utils/InitializableAbstractStrategy.sol:50"
+    },
+    {
+      "label": "assetsMapped",
+      "offset": 0,
+      "slot": "54",
+      "type": "t_array(t_address)dyn_storage",
+      "contract": "InitializableAbstractStrategy",
+      "src": "contracts/utils/InitializableAbstractStrategy.sol:53"
+    },
+    {
+      "label": "_deprecated_rewardTokenAddress",
+      "offset": 0,
+      "slot": "55",
+      "type": "t_address",
+      "contract": "InitializableAbstractStrategy",
+      "src": "contracts/utils/InitializableAbstractStrategy.sol:57"
+    },
+    {
+      "label": "_deprecated_rewardLiquidationThreshold",
+      "offset": 0,
+      "slot": "56",
+      "type": "t_uint256",
+      "contract": "InitializableAbstractStrategy",
+      "src": "contracts/utils/InitializableAbstractStrategy.sol:61"
+    },
+    {
+      "label": "harvesterAddress",
+      "offset": 0,
+      "slot": "57",
+      "type": "t_address",
+      "contract": "InitializableAbstractStrategy",
+      "src": "contracts/utils/InitializableAbstractStrategy.sol:64"
+    },
+    {
+      "label": "rewardTokenAddresses",
+      "offset": 0,
+      "slot": "58",
+      "type": "t_array(t_address)dyn_storage",
+      "contract": "InitializableAbstractStrategy",
+      "src": "contracts/utils/InitializableAbstractStrategy.sol:67"
+    },
+    {
+      "label": "_reserved",
+      "offset": 0,
+      "slot": "59",
+      "type": "t_array(t_int256)98_storage",
+      "contract": "InitializableAbstractStrategy",
+      "src": "contracts/utils/InitializableAbstractStrategy.sol:74"
+    },
+    {
+      "label": "pTokenAddress",
+      "offset": 0,
+      "slot": "157",
+      "type": "t_address",
+      "contract": "AbstractCurveStrategy",
+      "src": "contracts/strategies/AbstractCurveStrategy.sol:23"
+    },
+    {
+      "label": "__reserved",
+      "offset": 0,
+      "slot": "158",
+      "type": "t_array(t_int256)49_storage",
+      "contract": "AbstractCurveStrategy",
+      "src": "contracts/strategies/AbstractCurveStrategy.sol:25"
+    },
+    {
+      "label": "cvxDepositorAddress",
+      "offset": 0,
+      "slot": "207",
+      "type": "t_address",
+      "contract": "AbstractConvexMetaStrategy",
+      "src": "contracts/strategies/AbstractConvexMetaStrategy.sol:37"
+    },
+    {
+      "label": "cvxRewardStakerAddress",
+      "offset": 0,
+      "slot": "208",
+      "type": "t_address",
+      "contract": "AbstractConvexMetaStrategy",
+      "src": "contracts/strategies/AbstractConvexMetaStrategy.sol:38"
+    },
+    {
+      "label": "cvxDepositorPTokenId",
+      "offset": 0,
+      "slot": "209",
+      "type": "t_uint256",
+      "contract": "AbstractConvexMetaStrategy",
+      "src": "contracts/strategies/AbstractConvexMetaStrategy.sol:39"
+    },
+    {
+      "label": "metapool",
+      "offset": 0,
+      "slot": "210",
+      "type": "t_contract(ICurveMetaPool)34840",
+      "contract": "AbstractConvexMetaStrategy",
+      "src": "contracts/strategies/AbstractConvexMetaStrategy.sol:40"
+    },
+    {
+      "label": "metapoolMainToken",
+      "offset": 0,
+      "slot": "211",
+      "type": "t_contract(IERC20)4200",
+      "contract": "AbstractConvexMetaStrategy",
+      "src": "contracts/strategies/AbstractConvexMetaStrategy.sol:41"
+    },
+    {
+      "label": "metapoolLPToken",
+      "offset": 0,
+      "slot": "212",
+      "type": "t_contract(IERC20)4200",
+      "contract": "AbstractConvexMetaStrategy",
+      "src": "contracts/strategies/AbstractConvexMetaStrategy.sol:42"
+    },
+    {
+      "label": "metapoolAssets",
+      "offset": 0,
+      "slot": "213",
+      "type": "t_array(t_address)dyn_storage",
+      "contract": "AbstractConvexMetaStrategy",
+      "src": "contracts/strategies/AbstractConvexMetaStrategy.sol:44"
+    },
+    {
+      "label": "maxWithdrawalSlippage",
+      "offset": 0,
+      "slot": "214",
+      "type": "t_uint256",
+      "contract": "AbstractConvexMetaStrategy",
+      "src": "contracts/strategies/AbstractConvexMetaStrategy.sol:46"
+    },
+    {
+      "label": "crvCoinIndex",
+      "offset": 0,
+      "slot": "215",
+      "type": "t_uint128",
+      "contract": "AbstractConvexMetaStrategy",
+      "src": "contracts/strategies/AbstractConvexMetaStrategy.sol:47"
+    },
+    {
+      "label": "mainCoinIndex",
+      "offset": 16,
+      "slot": "215",
+      "type": "t_uint128",
+      "contract": "AbstractConvexMetaStrategy",
+      "src": "contracts/strategies/AbstractConvexMetaStrategy.sol:48"
+    },
+    {
+      "label": "___reserved",
+      "offset": 0,
+      "slot": "216",
+      "type": "t_array(t_int256)41_storage",
+      "contract": "AbstractConvexMetaStrategy",
+      "src": "contracts/strategies/AbstractConvexMetaStrategy.sol:50"
+    }
+  ],
+  "types": {
+    "t_address": {
+      "label": "address",
+      "numberOfBytes": "20"
+    },
+    "t_array(t_address)dyn_storage": {
+      "label": "address[]",
+      "numberOfBytes": "32"
+    },
+    "t_array(t_int256)41_storage": {
+      "label": "int256[41]",
+      "numberOfBytes": "1312"
+    },
+    "t_array(t_int256)49_storage": {
+      "label": "int256[49]",
+      "numberOfBytes": "1568"
+    },
+    "t_array(t_int256)98_storage": {
+      "label": "int256[98]",
+      "numberOfBytes": "3136"
+    },
+    "t_array(t_uint256)50_storage": {
+      "label": "uint256[50]",
+      "numberOfBytes": "1600"
+    },
+    "t_bool": {
+      "label": "bool",
+      "numberOfBytes": "1"
+    },
+    "t_contract(ICurveMetaPool)34840": {
+      "label": "contract ICurveMetaPool",
+      "numberOfBytes": "20"
+    },
+    "t_contract(IERC20)4200": {
+      "label": "contract IERC20",
+      "numberOfBytes": "20"
+    },
+    "t_int256": {
+      "label": "int256",
+      "numberOfBytes": "32"
+    },
+    "t_mapping(t_address,t_address)": {
+      "label": "mapping(address => address)",
+      "numberOfBytes": "32"
+    },
+    "t_uint128": {
+      "label": "uint128",
+      "numberOfBytes": "16"
+    },
+    "t_uint256": {
+      "label": "uint256",
+      "numberOfBytes": "32"
+    }
+  }
+}
