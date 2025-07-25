@@ -772,8 +772,9 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
                 params.validatorContainerProof
             );
 
-            // for each validator
-            for (uint256 i = 0; i < verifiedValidatorsCount; ++i) {
+            // for each validator in reserve order so we can pop off exited validators at the end
+            for (uint256 i = verifiedValidatorsCount; i > 0; ) {
+                --i;
                 // verify validator's balance in beaconBlock.state.balances to the
                 // beaconBlock.state.balances container root
                 uint256 validatorBalanceGwei = IBeaconProofs(BEACON_PROOFS)
@@ -785,9 +786,6 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
                         IBeaconProofs.BalanceProofLevel.Container
                     );
 
-                // convert Gwei balance to Wei and add to the total validator balance
-                totalValidatorBalance += uint256(validatorBalanceGwei) * 1 gwei;
-
                 // If the validator balance is zero
                 if (validatorBalanceGwei == 0) {
                     // Store the validator state as exited
@@ -795,18 +793,26 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
                         verifiedValidators[i].pubKeyHash
                     ] = VALIDATOR_STATE.EXITED;
 
-                    // Remove the validator from the list of verified validators.
+                    // Remove the validator with a zero balance from the list of verified validators
 
                     // Reduce the count of verified validators which is the last index before the pop removes it.
                     verifiedValidatorsCount -= 1;
-                    // Remove the validator with a zero balance from the list of verified validators
-                    // Move the last validator to the current index
+
+                    // Move the last validator that has already been verified to the current index.
+                    // There's an extra SSTORE if i is the last active validator but that's fine,
+                    // It's not a common case and the code is simpler this way.
                     verifiedValidators[i] = verifiedValidators[
                         verifiedValidatorsCount
                     ];
                     // Delete the last validator from the list
                     verifiedValidators.pop();
+
+                    // The validator balance is zero so not need to add to totalValidatorBalance
+                    continue;
                 }
+
+                // convert Gwei balance to Wei and add to the total validator balance
+                totalValidatorBalance += uint256(validatorBalanceGwei) * 1 gwei;
             }
         }
 
