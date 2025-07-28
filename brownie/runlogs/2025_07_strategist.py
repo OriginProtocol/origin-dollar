@@ -646,7 +646,7 @@ def main():
     )
 
 # -------------------------------------
-# July 28, 2025 - Withdraw 1,000 WETH from BASE Curve AMO
+# July 28, 2025 - Get WETH use base bridge helper module to deposit WETH and bridge WOETH
 # -------------------------------------
 from world_base import *
 def main():
@@ -660,10 +660,10 @@ def main():
     txs.append(weth.deposit({'from': MULTICHAIN_STRATEGIST, 'value': eth_balance}))
 
     txs.append(base_bridge_helper_module.depositWETHAndBridgeWOETH(eth_balance, {'from': MULTICHAIN_STRATEGIST}))
-"""
+
 
 # -------------------------------------
-# July 28, 2024 - Withdraw 440 WETH from BASE Curve AMO
+# July 28, 2025 - Withdraw 440 WETH from BASE Curve AMO
 # -------------------------------------
 from aerodrome_harvest import *
 from brownie import accounts
