@@ -7,7 +7,7 @@ import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { Governable } from "../../governance/Governable.sol";
-import { IConsolidationSource, IConsolidationStrategy } from "../../interfaces/IConsolidation.sol";
+import { IConsolidationSource, IConsolidationStrategy, IConsolidationTarget } from "../../interfaces/IConsolidation.sol";
 import { IDepositContract } from "../../interfaces/IDepositContract.sol";
 import { IWETH9 } from "../../interfaces/IWETH9.sol";
 import { ISSVNetwork, Cluster } from "../../interfaces/ISSVNetwork.sol";
@@ -28,7 +28,7 @@ struct ValidatorStakeData {
  * register, deposit and consolidate validators.
  * @author Origin Protocol Inc
  */
-abstract contract ConsolidateValidator is Governable, Pausable, IConsolidationStrategy {
+abstract contract ConsolidateValidator is Governable, Pausable, IConsolidationStrategy, IConsolidationTarget {
     using SafeERC20 for IERC20;
 
     /// @notice The address of the Wrapped ETH (WETH) token contract
@@ -107,6 +107,7 @@ abstract contract ConsolidateValidator is Governable, Pausable, IConsolidationSt
     bytes32 public consolidationLastPubKeyHash;
     address public consolidationSourceStrategy;
     mapping(address => bool) public consolidationSourceStrategies;
+    mapping(address => bool) public consolidationTargetStrategies;
 
     // For future use
     uint256[50] private __gap;
@@ -127,6 +128,7 @@ abstract contract ConsolidateValidator is Governable, Pausable, IConsolidationSt
 
     event RegistratorChanged(address indexed newAddress);
     event SourceStrategyAdded(address indexed strategy);
+    event TargetStrategyAdded(address indexed strategy);
     event SSVValidatorRegistered(
         bytes32 indexed pubKeyHash,
         uint64[] operatorIds
@@ -207,6 +209,14 @@ abstract contract ConsolidateValidator is Governable, Pausable, IConsolidationSt
     /// @notice Adds support for a legacy staking strategy that can be used for consolidation.
     function addSourceStrategy(address _strategy) external onlyGovernor {
         consolidationSourceStrategies[_strategy] = true;
+
+        emit SourceStrategyAdded(_strategy);
+    }
+
+    /// @notice Adds support for a compounding staking strategy that will be the receiver of the
+    /// consolidated validator
+    function addTargetStrategy(address _strategy) external onlyGovernor {
+        consolidationTargetStrategies[_strategy] = true;
 
         emit SourceStrategyAdded(_strategy);
     }
@@ -504,14 +514,17 @@ abstract contract ConsolidateValidator is Governable, Pausable, IConsolidationSt
     /// @param targetValidatorIndex The index of the target validator
     /// @param validatorPubKeyProof The merkle proof that the validator's index matches its public key
     /// @param validatorBalanceProof The merkle proof of the target's validator balance
+    /// @param targetStakingStrategy The target compounding SSV staking strategy
     // slither-disable-start reentrancy-no-eth
     function verifyConsolidation(
         uint64 parentBlockTimestamp,
         uint64 targetValidatorIndex,
         bytes calldata validatorPubKeyProof,
         bytes32 balancesLeaf,
-        bytes calldata validatorBalanceProof
+        bytes calldata validatorBalanceProof,
+        address targetStakingStrategy
     ) external onlyRegistrator {
+        require(consolidationTargetStrategies[targetStakingStrategy], "Not an allowed target strat");
         bytes32 consolidationLastPubKeyHashMem = consolidationLastPubKeyHash;
         require(
             consolidationLastPubKeyHashMem != bytes32(0),
@@ -567,6 +580,9 @@ abstract contract ConsolidateValidator is Governable, Pausable, IConsolidationSt
 
         // Unpause now the balance of the target validator has been verified
         _unpause();
+
+        IConsolidationTarget(targetStakingStrategy)
+            .receiveConsolidatedValidator(consolidationLastPubKeyHashMem, validatorBalance);
     }
 
     /// @notice Hash a validator public key using the Beacon Chain's format
