@@ -538,18 +538,24 @@ async function getValidator({ slot, index }) {
     throw new Error(`Validator at index ${index} not found for slot ${slot}`);
   }
 
-  console.log(`Validator at index ${index} for slot ${slot}:`);
-  console.log(`Public Key: ${toHex(validator.pubkey)}`);
+  const balance = stateView.balances.get(index);
+
+  console.log(`Validator at index ${index} for slot ${stateView.slot}:`);
+  console.log(`Public Key                  : ${toHex(validator.pubkey)}`);
   console.log(
-    `Withdrawal Credentials: ${toHex(validator.withdrawalCredentials)}`
+    `Withdrawal Credentials      : ${toHex(validator.withdrawalCredentials)}`
   );
+  console.log(`Actual Balance              : ${formatUnits(balance, 9)} ETH`);
   console.log(
-    `Effective Balance: ${formatUnits(validator.effectiveBalance, 9)} ETH`
+    `Effective Balance           : ${formatUnits(
+      validator.effectiveBalance,
+      9
+    )} ETH`
   );
-  console.log(`Slashed: ${validator.slashed}`);
-  console.log(`Activation Epoch: ${validator.activationEpoch}`);
-  console.log(`Exit Epoch: ${validator.exitEpoch}`);
-  console.log(`Withdrawable Epoch: ${validator.withdrawableEpoch}`);
+  console.log(`Slashed                     : ${validator.slashed}`);
+  console.log(`Activation Epoch            : ${validator.activationEpoch}`);
+  console.log(`Exit Epoch                  : ${validator.exitEpoch}`);
+  console.log(`Withdrawable Epoch          : ${validator.withdrawableEpoch}`);
   console.log(
     `Activation Eligibility Epoch: ${validator.activationEligibilityEpoch}`
   );
