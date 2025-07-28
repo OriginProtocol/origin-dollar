@@ -1,4 +1,4 @@
-
+"""
 # -------------------------------------
 # July 1, 2025 - Withdraw from new Curve AMO and deposit to staking strategy
 # -------------------------------------
@@ -612,3 +612,36 @@ def main():
     print("SuperOETH supply change", "{:.6f}".format(supply_change / 10**18), supply_change)
     print("Vault Change", "{:.6f}".format(vault_change / 10**18), vault_change)
     print("-----")
+"""
+
+# -------------------------------------------
+# July 28 2025 - Unwrap WETH into ETH and bridge it to base
+# -------------------------------------------
+from world import *
+from brownie import accounts
+import brownie
+def main():
+  with TemporaryForkForReallocations() as txs:
+    # Hack to make weth.withdraw work
+    brownie.network.web3.provider.make_request('hardhat_setCode', [MULTICHAIN_STRATEGIST, '0x'])
+
+    weth_amount = 822 * 10**18
+    
+    # Unwrap WETH
+    txs.append(
+      weth.withdraw(weth_amount, {'from': MULTICHAIN_STRATEGIST})
+    )
+
+    
+    # hex-encoded string for "originprotocol"
+    extra_data = "0x6f726967696e70726f746f636f6c"
+
+    # Bridge it
+    txs.append(
+      superbridge.bridgeETHTo(
+        MULTICHAIN_STRATEGIST,
+        200000, # minGasLimit
+        extra_data, # extraData
+        {'value': weth_amount, 'from': MULTICHAIN_STRATEGIST}
+      )
+    )
