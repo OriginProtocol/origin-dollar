@@ -31,6 +31,11 @@ struct ValidatorStakeData {
 abstract contract CompoundingValidatorManager is Governable, Pausable {
     using SafeERC20 for IERC20;
 
+    /// @notice The amount of ETH in wei that is required for a deposit to a new validator.
+    /// Initially this is 32 ETH, but will be increased to 1 ETH after P2P's APIs have been updated
+    /// to support deposits of 1 ETH.
+    uint256 public constant DEPOSIT_AMOUNT_WEI = 32 ether;
+
     /// @notice The address of the Wrapped ETH (WETH) token contract
     address public immutable WETH;
     /// @notice The address of the beacon chain deposit contract
@@ -291,8 +296,8 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
         );
         require(
             currentState == VALIDATOR_STATE.VERIFIED ||
-                depositAmountWei == 1 ether,
-            "First deposit not 1 ETH"
+                depositAmountWei == DEPOSIT_AMOUNT_WEI,
+            "Invalid first deposit amount"
         );
         require(depositAmountWei >= 1 ether, "Deposit too small");
 
