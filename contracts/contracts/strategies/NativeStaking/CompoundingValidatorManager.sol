@@ -15,6 +15,7 @@ import { PartialWithdrawal } from "../../beacon/PartialWithdrawal.sol";
 import { IBeaconProofs } from "../../interfaces/IBeaconProofs.sol";
 import { IBeaconOracle } from "../../interfaces/IBeaconOracle.sol";
 import { IConsolidationTarget } from "../../interfaces/IConsolidation.sol";
+import { ICompoundingValidatorManager } from "../../interfaces/ICompoundingValidatorManager.sol";
 
 struct ValidatorStakeData {
     bytes pubkey;
@@ -28,7 +29,7 @@ struct ValidatorStakeData {
  * register, deposit, withdraw, exit, remove and consolidate validators.
  * @author Origin Protocol Inc
  */
-abstract contract CompoundingValidatorManager is Governable, Pausable, IConsolidationTarget {
+abstract contract CompoundingValidatorManager is Governable, Pausable, IConsolidationTarget, ICompoundingValidatorManager {
     using SafeERC20 for IERC20;
 
     /// @notice The address of the Wrapped ETH (WETH) token contract
@@ -109,14 +110,6 @@ abstract contract CompoundingValidatorManager is Governable, Pausable, IConsolid
     // For future use
     uint256[50] private __gap;
 
-    enum VALIDATOR_STATE {
-        NON_REGISTERED, // validator is not registered on the SSV network
-        REGISTERED, // validator is registered on the SSV network
-        STAKED, // validator has funds staked
-        VERIFIED, // validator has been verified to exist on the beacon chain
-        EXITED, // The validator has been verified to have a zero balance
-        REMOVED // validator has funds withdrawn to the EigenPod and is removed from the SSV
-    }
     enum DepositStatus {
         UNKNOWN, // default value
         PENDING, // deposit is pending and waiting to be  verified
