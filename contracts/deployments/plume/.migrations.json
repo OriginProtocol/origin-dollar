@@ -5,5 +5,6 @@
   "004_vault_value_checker": 1746429293,
   "005_vault_config": 1748449561,
   "006_enable_buyback_operator": 1749060781,
-  "007_bridge_helper_module": 1750259976
+  "007_bridge_helper_module": 1750259976,
+  "009_vault_upgrade": 1752595639
 }

@@ -15,6 +15,7 @@ const { utils } = require("ethers");
 module.exports = deployOnPlume(
   {
     deployName: "008_rooster_amo",
+    forceSkip: true,
   },
   async () => {
     const { deployerAddr } = await getNamedAccounts();
