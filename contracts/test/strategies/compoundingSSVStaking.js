@@ -361,12 +361,7 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
     pendingDepositAmount,
     activeValidators,
   }) => {
-    const {
-      beaconOracle,
-      compoundingStakingSSVStrategy,
-      weth,
-      validatorRegistrator,
-    } = fixture;
+    const { beaconOracle, compoundingStakingSSVStrategy, weth } = fixture;
 
     // If the block number of the first pending deposit is not overridden
     if (!firstPendingDepositBlockNumber) {
@@ -409,13 +404,11 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
     );
 
     // Verify balances with pending deposits and active validators
-    const tx = await compoundingStakingSSVStrategy
-      .connect(validatorRegistrator)
-      .verifyBalances({
-        ...balancesProof,
-        validatorBalanceLeaves: filteredLeaves,
-        validatorBalanceProofs: filteredProofs,
-      });
+    const tx = await compoundingStakingSSVStrategy.verifyBalances({
+      ...balancesProof,
+      validatorBalanceLeaves: filteredLeaves,
+      validatorBalanceProofs: filteredProofs,
+    });
 
     const totalDepositsWei = parseEther(pendingDepositAmount.toString());
     const wethBalance = parseEther(wethAmount.toString());
@@ -1292,19 +1285,17 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
   describe("Strategy balances", () => {
     describe("When no execution rewards (ETH), no pending deposits and no active validators", () => {
       const verifyBalancesNoDepositsOrValidators = async (beaconBlockRoot) => {
-        const { compoundingStakingSSVStrategy, validatorRegistrator } = fixture;
+        const { compoundingStakingSSVStrategy } = fixture;
 
-        const tx = await compoundingStakingSSVStrategy
-          .connect(validatorRegistrator)
-          .verifyBalances({
-            blockRoot: beaconBlockRoot,
-            firstPendingDepositSlot: 0,
-            firstPendingDepositSlotProof: "0x",
-            balancesContainerRoot: ethers.utils.hexZeroPad("0x0", 32),
-            validatorContainerProof: "0x",
-            validatorBalanceLeaves: [],
-            validatorBalanceProofs: [],
-          });
+        const tx = await compoundingStakingSSVStrategy.verifyBalances({
+          blockRoot: beaconBlockRoot,
+          firstPendingDepositSlot: 0,
+          firstPendingDepositSlotProof: "0x",
+          balancesContainerRoot: ethers.utils.hexZeroPad("0x0", 32),
+          validatorContainerProof: "0x",
+          validatorBalanceLeaves: [],
+          validatorBalanceProofs: [],
+        });
 
         return tx;
       };
@@ -1724,6 +1715,84 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
         expect(balancesAfter.totalBalance).to.equal(
           balancesBefore.totalBalance.add(executionRewards)
         );
+      });
+      describe("when balances have been snapped", () => {
+        const balancesProof = testBalancesProofs[3];
+        beforeEach(async () => {
+          const { beaconOracle } = fixture;
+
+          await snapBalances(balancesProof.blockRoot);
+
+          await beaconOracle.mapSlot(
+            balancesProof.firstPendingDeposit.block,
+            balancesProof.firstPendingDeposit.slot,
+            balancesProof.firstPendingDeposit.blockRoot
+          );
+        });
+        it("Fail to verify balances with not enough validator leaves", async () => {
+          const { compoundingStakingSSVStrategy } = fixture;
+
+          // Verify balances with pending deposits and active validators
+          const tx = compoundingStakingSSVStrategy.verifyBalances({
+            ...balancesProof,
+            // Only one when there is two active validators
+            validatorBalanceLeaves: [balancesProof.validatorBalanceLeaves[0]],
+            validatorBalanceProofs: [
+              balancesProof.validatorBalanceProofs[0],
+              balancesProof.validatorBalanceProofs[1],
+            ],
+          });
+
+          await expect(tx).to.be.revertedWith("Invalid balance leaves");
+        });
+        it("Fail to verify balances with too many validator leaves", async () => {
+          const { compoundingStakingSSVStrategy } = fixture;
+
+          // Verify balances with pending deposits and active validators
+          const tx = compoundingStakingSSVStrategy.verifyBalances({
+            ...balancesProof,
+            // Three when there is two active validators
+            validatorBalanceLeaves: balancesProof.validatorBalanceLeaves,
+            validatorBalanceProofs: [
+              balancesProof.validatorBalanceProofs[0],
+              balancesProof.validatorBalanceProofs[1],
+            ],
+          });
+
+          await expect(tx).to.be.revertedWith("Invalid balance leaves");
+        });
+        it("Fail to verify balances with not enough validator proofs", async () => {
+          const { compoundingStakingSSVStrategy } = fixture;
+
+          // Verify balances with pending deposits and active validators
+          const tx = compoundingStakingSSVStrategy.verifyBalances({
+            ...balancesProof,
+            validatorBalanceLeaves: [
+              balancesProof.validatorBalanceLeaves[0],
+              balancesProof.validatorBalanceLeaves[1],
+            ],
+            // Only one when there is two active validators
+            validatorBalanceProofs: [balancesProof.validatorBalanceProofs[0]],
+          });
+
+          await expect(tx).to.be.revertedWith("Invalid balance proofs");
+        });
+        it("Fail to verify balances with too many proofs", async () => {
+          const { compoundingStakingSSVStrategy } = fixture;
+
+          // Verify balances with pending deposits and active validators
+          const tx = compoundingStakingSSVStrategy.verifyBalances({
+            ...balancesProof,
+            validatorBalanceLeaves: [
+              balancesProof.validatorBalanceLeaves[0],
+              balancesProof.validatorBalanceLeaves[1],
+            ],
+            // Three when there is two active validators
+            validatorBalanceProofs: balancesProof.validatorBalanceProofs,
+          });
+
+          await expect(tx).to.be.revertedWith("Invalid balance proofs");
+        });
       });
     });
     describe("When some WETH, ETH, 3 pending deposits and 16 active validators", () => {

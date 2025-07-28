@@ -762,6 +762,14 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
 
         // If there are no verified validators then we can skip the balance verification
         if (verifiedValidatorsCount > 0) {
+            require(
+                params.validatorBalanceProofs.length == verifiedValidatorsCount,
+                "Invalid balance proofs"
+            );
+            require(
+                params.validatorBalanceLeaves.length == verifiedValidatorsCount,
+                "Invalid balance leaves"
+            );
             // verify beaconBlock.state.balances root to beacon block root
             IBeaconProofs(BEACON_PROOFS).verifyBalancesContainer(
                 params.blockRoot,
