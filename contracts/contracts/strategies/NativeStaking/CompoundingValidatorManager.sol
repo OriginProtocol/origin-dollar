@@ -673,7 +673,7 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
     /// @notice Stores the current ETH balance at the current block.
     /// The validator balances on the beacon chain can then be proved with `verifyBalances`.
     /// Can not be called while a consolidation is in progress.
-    function snapBalances() external whenNotPaused {
+    function snapBalances() external whenNotPaused onlyRegistrator {
         _snapBalances();
     }
 

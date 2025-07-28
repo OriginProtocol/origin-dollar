@@ -327,7 +327,8 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
   };
 
   const snapBalances = async (beaconBlockRoot) => {
-    const { compoundingStakingSSVStrategy, beaconRoots } = fixture;
+    const { compoundingStakingSSVStrategy, beaconRoots, validatorRegistrator } =
+      fixture;
 
     if (!beaconBlockRoot) {
       beaconBlockRoot = "0x" + randomBytes(32).toString("hex");
@@ -338,7 +339,9 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
 
     await beaconRoots["setBeaconRoot(bytes32)"](beaconBlockRoot);
 
-    await compoundingStakingSSVStrategy.snapBalances();
+    await compoundingStakingSSVStrategy
+      .connect(validatorRegistrator)
+      .snapBalances();
 
     // Mine both txs
     await ethers.provider.send("evm_mine", []);
