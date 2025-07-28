@@ -164,7 +164,7 @@ contract Generalized4626Strategy is InitializableAbstractStrategy {
     }
 
     /**
-     * @notice Governor approves the the ERC-4626 Tokenized Vault to spend the asset.
+     * @notice Governor approves the ERC-4626 Tokenized Vault to spend the asset.
      */
     function safeApproveAllTokens() external override onlyGovernor {
         _approveBase();

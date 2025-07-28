@@ -110,6 +110,7 @@ const {
   stakeValidator,
   withdrawValidator,
 } = require("./validatorCompound");
+const { tenderlySync } = require("./tenderly");
 const { setDefaultValidator, snapSonicStaking } = require("../utils/sonic");
 const {
   undelegateValidator,
@@ -2171,5 +2172,13 @@ subtask(
   "Takes a snapshot of the staking strategy's balance"
 ).setAction(snapBalances);
 task("snapBalances").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+subtask(
+  "tenderlySync",
+  "Fetches all contracts from deployment descriptors and uploads them to Tenderly if they are not there yet."
+).setAction(tenderlySync);
+task("tenderlySync").setAction(async (_, __, runSuper) => {
   return runSuper();
 });

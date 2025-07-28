@@ -59,7 +59,7 @@ contract EchidnaConfig {
 
     // Mint limit
     //
-    // Set a limit the the amount minted per mint, which can be useful to
+    // Set a limit the amount minted per mint, which can be useful to
     // ignore certain edge cases.
     //
     //  True => limit the amount of minted tokens

@@ -55,7 +55,6 @@ contract VaultStorage is Initializable, Governable {
     );
     event StrategyAddedToMintWhitelist(address indexed strategy);
     event StrategyRemovedFromMintWhitelist(address indexed strategy);
-    event DripperChanged(address indexed _dripper);
     event RebasePerSecondMaxChanged(uint256 rebaseRatePerSecond);
     event DripDurationChanged(uint256 dripDuration);
     event WithdrawalRequested(
@@ -191,7 +190,7 @@ contract VaultStorage is Initializable, Governable {
 
     /// @notice Address of the Dripper contract that streams harvested rewards to the Vault
     /// @dev The vault is proxied so needs to be set with setDripper against the proxy contract.
-    address public dripper;
+    address private _deprecated_dripper;
 
     /// Withdrawal Queue Storage /////
 

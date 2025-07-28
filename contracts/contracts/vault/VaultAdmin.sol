@@ -157,15 +157,6 @@ contract VaultAdmin is VaultStorage {
     }
 
     /**
-     * @notice Set the Dripper contract that streams harvested rewards to the vault.
-     * @param _dripper Address of the Dripper contract.
-     */
-    function setDripper(address _dripper) external onlyGovernor {
-        dripper = _dripper;
-        emit DripperChanged(_dripper);
-    }
-
-    /**
      * @notice Changes the async withdrawal claim period for OETH & superOETHb
      * @param _delay Delay period (should be between 10 mins to 7 days).
      *          Set to 0 to disable async withdrawals
