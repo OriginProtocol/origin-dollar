@@ -3,7 +3,7 @@ pragma solidity ^0.8.0;
 
 import { Pausable } from "@openzeppelin/contracts/security/Pausable.sol";
 import { Governable } from "../../governance/Governable.sol";
-import { IConsolidationTarget } from "../../interfaces/IConsolidation.sol";
+import { IConsolidationStrategy, IConsolidationSource } from "../../interfaces/IConsolidation.sol";
 import { IDepositContract } from "../../interfaces/IDepositContract.sol";
 import { IVault } from "../../interfaces/IVault.sol";
 import { IWETH9 } from "../../interfaces/IWETH9.sol";
@@ -21,7 +21,7 @@ struct ValidatorStakeData {
  * @notice This contract implements all the required functionality to register, exit and remove validators.
  * @author Origin Protocol Inc
  */
-abstract contract ValidatorRegistrator is Governable, Pausable {
+abstract contract ValidatorRegistrator is Governable, Pausable, IConsolidationSource {
     /// @notice The maximum amount of ETH that can be staked by a validator
     /// @dev this can change in the future with EIP-7251, Increase the MAX_EFFECTIVE_BALANCE
     uint256 public constant FULL_STAKE = 32 ether;
@@ -400,6 +400,7 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
             consolidationTargetStrategies[targetStakingStrategy],
             "Invalid target strategy"
         );
+        require(consolidationCount == 0, "Cons. already in progress");
 
         bytes32 targetPubKeyHash = keccak256(targetPubKey);
         bytes32 sourcePubKeyHash;
@@ -420,13 +421,8 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
             validatorsStates[sourcePubKeyHash] == VALIDATOR_STATE.EXITING;
         }
 
-        // Hash using the Beacon Chain's format
-        bytes32 lastSourcePubKeyHash = _hashPubKey(
-            sourcePubKeys[sourcePubKeys.length - 1]
-        );
         // Call the new compounding staking strategy to validate the target validator
-        IConsolidationTarget(targetStakingStrategy).requestConsolidation(
-            lastSourcePubKeyHash,
+        IConsolidationStrategy(targetStakingStrategy).requestConsolidation(
             targetPubKeyHash
         );
 

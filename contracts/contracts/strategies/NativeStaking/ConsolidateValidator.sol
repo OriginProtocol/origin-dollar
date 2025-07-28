@@ -7,6 +7,7 @@ import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { Governable } from "../../governance/Governable.sol";
+import { IConsolidationSource, IConsolidationStrategy } from "../../interfaces/IConsolidation.sol";
 import { IDepositContract } from "../../interfaces/IDepositContract.sol";
 import { IWETH9 } from "../../interfaces/IWETH9.sol";
 import { ISSVNetwork, Cluster } from "../../interfaces/ISSVNetwork.sol";
@@ -14,7 +15,6 @@ import { BeaconRoots } from "../../beacon/BeaconRoots.sol";
 import { PartialWithdrawal } from "../../beacon/PartialWithdrawal.sol";
 import { IBeaconProofs } from "../../interfaces/IBeaconProofs.sol";
 import { IBeaconOracle } from "../../interfaces/IBeaconOracle.sol";
-import { IConsolidationTarget } from "../../interfaces/IConsolidation.sol";
 
 struct ValidatorStakeData {
     bytes pubkey;
@@ -23,12 +23,12 @@ struct ValidatorStakeData {
 }
 
 /**
- * @title Validator lifecycle management contract
- * @notice This contract implements all the required functionality to
- * register, deposit, withdraw, exit, remove and consolidate validators.
+ * @title Contract for managing consolidation of 0x01 validators to 0x02 validator
+ * @notice This contract implements the required functionality to
+ * register, deposit and consolidate validators.
  * @author Origin Protocol Inc
  */
-abstract contract CompoundingValidatorManager is Governable, Pausable, IConsolidationTarget {
+abstract contract ConsolidateValidator is Governable, Pausable, IConsolidationStrategy {
     using SafeERC20 for IERC20;
 
     /// @notice The address of the Wrapped ETH (WETH) token contract
@@ -67,7 +67,6 @@ abstract contract CompoundingValidatorManager is Governable, Pausable, IConsolid
     bytes32[] public depositsRoots;
 
     // Validator data
-
     struct ValidatorData {
         bytes32 pubKeyHash; // Hash of the validator's public key using the Beacon Chain's format
         uint64 index; // The index of the validator on the beacon chain
@@ -83,14 +82,14 @@ abstract contract CompoundingValidatorManager is Governable, Pausable, IConsolid
 
     /// @param timestamp Timestamp of the snapshot
     /// @param ethBalance The balance of ETH in the strategy contract at the snapshot
-    struct Balances {
-        uint64 timestamp;
-        uint128 ethBalance;
-    }
+    // struct Balances {
+    //     uint64 timestamp;
+    //     uint128 ethBalance;
+    // }
     // TODO is it more efficient to use the block root rather than hashing it?
     /// @notice Mapping of the block root to the balances at that slot
-    mapping(bytes32 => Balances) public snappedBalances;
-    uint64 public lastSnapTimestamp;
+    //mapping(bytes32 => Balances) public snappedBalances;
+    // uint64 public lastSnapTimestamp;
     uint128 public lastVerifiedEthBalance;
 
     /// @dev This contract receives WETH as the deposit asset, but unlike other strategies doesn't immediately
@@ -104,6 +103,9 @@ abstract contract CompoundingValidatorManager is Governable, Pausable, IConsolid
     /// withdrawal of the validators. It is strictly concerned with WETH that has been deposited and is waiting to
     /// be staked.
     uint256 public depositedWethAccountedFor;
+    // @notice last target consolidation validator public key
+    bytes32 public consolidationLastPubKeyHash;
+    address public consolidationSourceStrategy;
     mapping(address => bool) public consolidationSourceStrategies;
 
     // For future use
@@ -154,10 +156,14 @@ abstract contract CompoundingValidatorManager is Governable, Pausable, IConsolid
         uint256 wethBalance,
         uint256 ethBalance
     );
-    event ConsolidatedValidatorReceived(
-        bytes32 indexed pubKeyHash,
-        uint256 ethBalance,
+    event ConsolidationRequested(
+        bytes32 indexed targetPubKeyHash,
         address indexed sourceStrategy
+    );
+    event ConsolidationVerified(
+        bytes32 indexed lastSourcePubKeyHash,
+        uint64 indexed lastValidatorIndex,
+        uint256 consolidationCount
     );
 
     /// @dev Throws if called by any account other than the Registrator
@@ -277,16 +283,12 @@ abstract contract CompoundingValidatorManager is Governable, Pausable, IConsolid
         // Can only stake to a validator has have been registered or verified.
         // Can not stake to a validator that has been staked but not yet verified.
         require(
-            (currentState == VALIDATOR_STATE.REGISTERED ||
-                currentState == VALIDATOR_STATE.VERIFIED),
-            "Not registered or verified"
+            (currentState == VALIDATOR_STATE.REGISTERED),
+            "Not registered"
         );
-        require(
-            currentState == VALIDATOR_STATE.VERIFIED ||
-                depositAmountWei == 1 ether,
-            "First deposit not 1 ETH"
+        require(depositAmountWei == 32 ether,
+            "Must stake 32 ETH"
         );
-        require(depositAmountWei >= 1 ether, "Deposit too small");
 
         /* 0x02 to indicate that withdrawal credentials are for a compounding validator
          * that was introduced with the Pectra upgrade.
@@ -311,10 +313,7 @@ abstract contract CompoundingValidatorManager is Governable, Pausable, IConsolid
         );
 
         //// Update contract storage
-        // Store the validator state if needed
-        if (currentState == VALIDATOR_STATE.REGISTERED) {
-            validatorState[pubKeyHash] = VALIDATOR_STATE.STAKED;
-        }
+        validatorState[pubKeyHash] = VALIDATOR_STATE.STAKED;
         // Store the deposit data for verifyDeposit and verifyBalances
         deposits[validator.depositDataRoot] = DepositData({
             pubKeyHash: pubKeyHash,
@@ -333,116 +332,34 @@ abstract contract CompoundingValidatorManager is Governable, Pausable, IConsolid
         );
     }
 
-    // slither-disable-end reentrancy-eth
-
-    /// @notice Request a full or partial withdrawal from a validator.
-    /// If the remaining balance is < 32 ETH then the validator will be exited.
-    /// That can result in the ETH sent to the strategy being more than the requested amount.
-    /// The staked ETH will eventually be withdrawn to this staking strategy.
-    /// Only the Registrator can call this function.
-    /// @param publicKey The public key of the validator
-    /// @param amountGwei The amount of ETH to be withdrawn from the validator in Gwei
-    // slither-disable-start reentrancy-no-eth
-    function validatorWithdrawal(bytes calldata publicKey, uint64 amountGwei)
-        external
-        onlyRegistrator
-        whenNotPaused
-    {
-        // Hash the public key using the Beacon Chain's format
-        bytes32 pubKeyHash = _hashPubKey(publicKey);
-        VALIDATOR_STATE currentState = validatorState[pubKeyHash];
-        require(
-            currentState == VALIDATOR_STATE.VERIFIED,
-            "Validator not verified"
-        );
-
-        PartialWithdrawal.request(publicKey, amountGwei);
-
-        // Do not remove from the list of verified validators.
-        // This is done in the verifyBalances function once the validator's balance has been verified to be zero.
-        // The validator state will be set to EXITED in the verifyBalances function.
-
-        emit ValidatorWithdraw(pubKeyHash, uint256(amountGwei) * 1 gwei);
-    }
-
-    // slither-disable-end reentrancy-no-eth
-
-    /// @notice Remove a sweeping validator from the SSV Cluster.
-    /// Make sure `exitSsvValidator` is called before and the validate has exited the Beacon chain.
-    /// If removed before the validator has exited the beacon chain will result in the validator being slashed.
-    /// Only the registrator can call this function.
-    /// @param publicKey The public key of the validator
-    /// @param operatorIds The operator IDs of the SSV Cluster
-    /// @param cluster The SSV cluster details including the validator count and SSV balance
-    // slither-disable-start reentrancy-no-eth
-    function removeSsvValidator(
-        bytes calldata publicKey,
-        uint64[] calldata operatorIds,
-        Cluster calldata cluster
-    ) external onlyRegistrator whenNotPaused {
-        // Hash the public key using the Beacon Chain's format
-        bytes32 pubKeyHash = _hashPubKey(publicKey);
-        VALIDATOR_STATE currentState = validatorState[pubKeyHash];
-        // Can remove SSV validators that were incorrectly registered and can not be deposited to.
-        require(
-            currentState == VALIDATOR_STATE.EXITED ||
-                currentState == VALIDATOR_STATE.REGISTERED,
-            "Validator not regd or exited"
-        );
-
-        ISSVNetwork(SSV_NETWORK).removeValidator(
-            publicKey,
-            operatorIds,
-            cluster
-        );
-
-        validatorState[pubKeyHash] = VALIDATOR_STATE.REMOVED;
-
-        emit SSVValidatorRemoved(pubKeyHash, operatorIds);
-    }
-
-    /// @notice Receives a validator from a Consolidation strategy with confirmed amount of ETH staked
-    /// @param pubKeyHash The validator's public key hash using the Beacon Chain's format.
-    function receiveConsolidatedValidator(
-        bytes32 pubKeyHash,
-        uint256 ethStaked
+    /// @notice Receives requests from supported legacy strategies to consolidate sweeping validators to
+    /// a new compounding validator on this new strategy.
+    /// @param targetPubKeyHash The target validator's public key hash using the Beacon Chain's format.
+    function requestConsolidation(
+        bytes32 targetPubKeyHash
     ) external whenNotPaused {
         require(
             consolidationSourceStrategies[msg.sender],
             "Not a source strategy"
         );
 
-        validatorState[pubKeyHash] = VALIDATOR_STATE.VERIFIED;
-
-        emit ConsolidatedValidatorReceived(
-            pubKeyHash,
-            ethStaked,
-            msg.sender
+        // The target validator must be a compounding validator that has been verified
+        require(
+            validatorState[targetPubKeyHash] == VALIDATOR_STATE.VERIFIED,
+            "Target validator not verified"
         );
 
-        lastVerifiedEthBalance += SafeCast.toUint128(ethStaked);
-    }
+        // Store consolidation state
+        consolidationLastPubKeyHash = targetPubKeyHash;
+        consolidationSourceStrategy = msg.sender;
 
-    /***************************************
-                SSV Management
-    ****************************************/
+        // Pause the strategy while the consolidation is in progress
+        _pause();
 
-    // slither-disable-end reentrancy-no-eth
-
-    /// `depositSSV` has been removed as `deposit` on the SSVNetwork contract can be called directly
-    /// by the Strategist which is already holding SSV tokens.
-
-    /// @notice Withdraws excess SSV Tokens from the SSV Network contract which was used to pay the SSV Operators.
-    /// @dev A SSV cluster is defined by the SSVOwnerAddress and the set of operatorIds.
-    /// @param operatorIds The operator IDs of the SSV Cluster
-    /// @param ssvAmount The amount of SSV tokens to be deposited to the SSV cluster
-    /// @param cluster The SSV cluster details including the validator count and SSV balance
-    function withdrawSSV(
-        uint64[] memory operatorIds,
-        uint256 ssvAmount,
-        Cluster memory cluster
-    ) external onlyGovernor {
-        ISSVNetwork(SSV_NETWORK).withdraw(operatorIds, ssvAmount, cluster);
+        emit ConsolidationRequested(
+            targetPubKeyHash,
+            msg.sender
+        );
     }
 
     /***************************************
@@ -575,175 +492,82 @@ abstract contract CompoundingValidatorManager is Governable, Pausable, IConsolid
             depositDataRoot,
             uint256(deposit.amountGwei) * 1 gwei
         );
+
+        lastVerifiedEthBalance += deposit.amountGwei * 1 gwei;
     }
 
     // slither-disable-end reentrancy-no-eth
 
-
-    /// @notice Stores the current ETH balance at the current block.
-    /// The validator balances on the beacon chain can then be proved with `verifyBalances`.
-    function snapBalances() public whenNotPaused {
-        _snapBalances();
-    }
-
-    function _snapBalances() internal {
-        bytes32 blockRoot = BeaconRoots.parentBlockRoot(
-            SafeCast.toUint64(block.timestamp)
-        );
-        // Get the current ETH balance
-        uint256 ethBalance = address(this).balance;
-
-        // Store the balances in the mapping
-        snappedBalances[blockRoot] = Balances({
-            timestamp: SafeCast.toUint64(block.timestamp),
-            ethBalance: SafeCast.toUint128(ethBalance)
-        });
-
-        // Store the snapped timestamp
-        lastSnapTimestamp = SafeCast.toUint64(block.timestamp);
-
-        emit BalancesSnapped(block.timestamp, blockRoot, ethBalance);
-    }
-
-    // A struct is used to avoid stack too deep errors
-    struct VerifyBalancesParams {
-        bytes32 blockRoot;
-        uint64 firstPendingDepositSlot;
-        // BeaconBlock.BeaconBlockBody.deposits[0].slot
-        bytes firstPendingDepositSlotProof;
-        bytes32 balancesContainerRoot;
-        // BeaconBlock.state.validators
-        bytes validatorContainerProof;
-        bytes32[] validatorBalanceLeaves;
-        // BeaconBlock.state.validators[validatorIndex].balance
-        bytes[] validatorBalanceProofs;
-    }
-
-    /// @notice Verifies the balances of all active validators on the beacon chain
-    /// and checks no pending deposits have been processed by the beacon chain.
-    /// Can only be called by the registrator.
+    /// @notice Verifies that the consolidation has completed by verifying the 0x02 target validator
+    /// balance is of the expected minimum value. Which is 32 ETH (the target validator owned before 
+    /// starting the consolidation) + 32 ETH * number_of_source_validators
+    /// @param targetValidatorIndex The index of the target validator
+    /// @param validatorPubKeyProof The merkle proof that the validator's index matches its public key
+    /// @param validatorBalanceProof The merkle proof of the target's validator balance
     // slither-disable-start reentrancy-no-eth
-    function verifyBalances(VerifyBalancesParams calldata params)
-        external
-        onlyRegistrator
-    {
-        // Load previously snapped balances for the given block root
-        Balances memory balancesMem = snappedBalances[params.blockRoot];
-        // Check the balances are the latest
-        require(lastSnapTimestamp > 0, "No snapped balances");
-        require(balancesMem.timestamp == lastSnapTimestamp, "Stale snap");
+    function verifyConsolidation(
+        uint64 parentBlockTimestamp,
+        uint64 targetValidatorIndex,
+        bytes calldata validatorPubKeyProof,
+        bytes32 balancesLeaf,
+        bytes calldata validatorBalanceProof
+    ) external onlyRegistrator {
+        bytes32 consolidationLastPubKeyHashMem = consolidationLastPubKeyHash;
+        require(
+            consolidationLastPubKeyHashMem != bytes32(0),
+            "No consolidations"
+        );
 
-        uint256 depositsCount = depositsRoots.length;
-        uint256 totalDepositsWei = 0;
+        bytes32 blockRoot = BeaconRoots.parentBlockRoot(parentBlockTimestamp);
+        // Verify the validator index has the same public key as the last target validator
+        IBeaconProofs(BEACON_PROOFS).verifyValidatorPubkey(
+            blockRoot,
+            consolidationLastPubKeyHashMem,
+            validatorPubKeyProof,
+            targetValidatorIndex,
+            address(this) // Withdrawal address is this strategy
+        );
 
-        // If there are no deposits then we can skip the deposit verification
-        if (depositsCount > 0) {
-            // Verify the slot of the first pending deposit to the beacon block root
-            IBeaconProofs(BEACON_PROOFS).verifyFirstPendingDepositSlot(
-                params.blockRoot,
-                params.firstPendingDepositSlot,
-                params.firstPendingDepositSlotProof
+        // Verify that the target validator has the expected ETH staked to it. This
+        // confirms that all the source validators have successfully consolidated to it.
+        uint256 validatorBalance = IBeaconProofs(BEACON_PROOFS)
+            .verifyValidatorBalance(
+                blockRoot,
+                balancesLeaf,
+                validatorBalanceProof,
+                targetValidatorIndex,
+                IBeaconProofs.BalanceProofLevel.BeaconBlock
             );
 
-            uint64 firstPendingDepositBlockNumber = IBeaconOracle(BEACON_ORACLE)
-                .slotToBlock(params.firstPendingDepositSlot);
+        // Call the old sweeping strategy to confirm the consolidation has been completed.
+        // This will decrease the balance of the source strategy by 32 ETH for each validator being consolidated.
+        uint256 consolidationCount = IConsolidationSource(
+            consolidationSourceStrategy
+        ).confirmConsolidation();
 
-            // For each native staking contract's deposits
-            for (uint256 i = 0; i < depositsCount; ++i) {
-                bytes32 depositDataRoot = depositsRoots[i];
+        // the target validator should have the balance of: 
+        // - 32 ether of its own plus
+        // - number of consolidated validators * 32 ether
+        require(32 ether + consolidationCount * 32 ether <= validatorBalance, "Validators not consolidated");
 
-                // Check the stored deposit is still waiting to be processed on the beacon chain.
-                // That is, the first pending deposit block number is before the
-                // block number of the staking strategy's deposit.
-                // If it has it will need to be verified with `verifyDeposit`
-                require(
-                    firstPendingDepositBlockNumber <
-                        deposits[depositDataRoot].blockNumber,
-                    "Deposit has been processed"
-                );
 
-                // Convert the deposit amount from Gwei to Wei and add to the total
-                totalDepositsWei +=
-                    uint256(deposits[depositDataRoot].amountGwei) *
-                    1 gwei;
-            }
-        }
+        // Decrease the lastVerifiedEthBalance for the target's non consolidated balance since the whole validator
+        // is going to be handed off to the Compounding SSV strategy
+        lastVerifiedEthBalance -= SafeCast.toUint128(32 ether);
 
-        uint256 verifiedValidatorsCount = verifiedValidators.length;
-        uint256 totalValidatorBalance = 0;
+        // Reset the stored consolidation state
+        consolidationLastPubKeyHash = bytes32(0);
+        consolidationSourceStrategy = address(0);
 
-        // If there are no verified validators then we can skip the balance verification
-        if (verifiedValidatorsCount > 0) {
-            // verify beaconBlock.state.balances root to beacon block root
-            IBeaconProofs(BEACON_PROOFS).verifyBalancesContainer(
-                params.blockRoot,
-                params.balancesContainerRoot,
-                params.validatorContainerProof
-            );
-
-            // for each validator in reserve order so we can pop off exited validators at the end
-            for (uint256 i = verifiedValidatorsCount; i > 0; ) {
-                --i;
-                // verify validator's balance in beaconBlock.state.balances to the
-                // beaconBlock.state.balances container root
-                uint256 validatorBalanceGwei = IBeaconProofs(BEACON_PROOFS)
-                    .verifyValidatorBalance(
-                        params.balancesContainerRoot,
-                        params.validatorBalanceLeaves[i],
-                        params.validatorBalanceProofs[i],
-                        verifiedValidators[i].index,
-                        IBeaconProofs.BalanceProofLevel.Container
-                    );
-
-                // If the validator balance is zero
-                if (validatorBalanceGwei == 0) {
-                    // Store the validator state as exited
-                    validatorState[
-                        verifiedValidators[i].pubKeyHash
-                    ] = VALIDATOR_STATE.EXITED;
-
-                    // Remove the validator with a zero balance from the list of verified validators
-
-                    // Reduce the count of verified validators which is the last index before the pop removes it.
-                    verifiedValidatorsCount -= 1;
-
-                    // Move the last validator that has already been verified to the current index.
-                    // There's an extra SSTORE if i is the last active validator but that's fine,
-                    // It's not a common case and the code is simpler this way.
-                    verifiedValidators[i] = verifiedValidators[
-                        verifiedValidatorsCount
-                    ];
-                    // Delete the last validator from the list
-                    verifiedValidators.pop();
-
-                    // The validator balance is zero so not need to add to totalValidatorBalance
-                    continue;
-                }
-
-                // convert Gwei balance to Wei and add to the total validator balance
-                totalValidatorBalance += uint256(validatorBalanceGwei) * 1 gwei;
-            }
-        }
-
-        uint256 wethBalance = IWETH9(WETH).balanceOf(address(this));
-
-        // Store the verified balance in storage
-        lastVerifiedEthBalance = SafeCast.toUint128(
-            totalDepositsWei + totalValidatorBalance + balancesMem.ethBalance
+        emit ConsolidationVerified(
+            consolidationLastPubKeyHashMem,
+            targetValidatorIndex,
+            consolidationCount
         );
-        // Reset the last snap timestamp so a new snapBalances has to be made
-        lastSnapTimestamp = 0;
 
-        emit BalancesVerified(
-            balancesMem.timestamp,
-            totalDepositsWei,
-            totalValidatorBalance,
-            wethBalance,
-            balancesMem.ethBalance
-        );
+        // Unpause now the balance of the target validator has been verified
+        _unpause();
     }
-
-    // slither-disable-end reentrancy-no-eth
 
     /// @notice Hash a validator public key using the Beacon Chain's format
     function _hashPubKey(bytes memory pubKey) internal pure returns (bytes32) {
@@ -754,38 +578,6 @@ abstract contract CompoundingValidatorManager is Governable, Pausable, IConsolid
             WETH and ETH Accounting
     ****************************************/
 
-    /// @dev Called when WETH is transferred out of the strategy so
-    /// the strategy knows how much WETH it has on deposit.
-    /// This is so it can emit the correct amount in the Deposit event in depositAll().
-    function _transferWeth(uint256 _amount, address _recipient) internal {
-        IERC20(WETH).safeTransfer(_recipient, _amount);
-
-        uint256 deductAmount = Math.min(_amount, depositedWethAccountedFor);
-        depositedWethAccountedFor -= deductAmount;
-
-        // No change in ETH balance so no need to snapshot the balances
-    }
-
-    function _convertWethToEth(uint256 _ethAmount) internal {
-        // slither-disable-next-line arbitrary-send-eth
-        IWETH9(WETH).deposit{ value: _ethAmount }();
-
-        depositedWethAccountedFor += _ethAmount;
-
-        // Store the reduced ETH balance
-        if (lastVerifiedEthBalance > _ethAmount) {
-            lastVerifiedEthBalance -= SafeCast.toUint128(_ethAmount);
-        } else {
-            // This can happen if all ETH in the validators was withdrawn
-            // and there was more consensus rewards since the last balance verification.
-            // Or it can happen if ETH is donated to this strategy.
-            lastVerifiedEthBalance = 0;
-        }
-
-        // The ETH balance was increased from WETH so we need to invalidate the last balances snap.
-        lastSnapTimestamp = 0;
-    }
-
     function _convertEthToWeth(uint256 _wethAmount) internal {
         IWETH9(WETH).withdraw(_wethAmount);
 
@@ -794,20 +586,5 @@ abstract contract CompoundingValidatorManager is Governable, Pausable, IConsolid
 
         // Store the increased ETH balance
         lastVerifiedEthBalance += SafeCast.toUint128(_wethAmount);
-
-        // The ETH balance was decreased to WETH so we need to invalidate the last balances snap.
-        lastSnapTimestamp = 0;
-    }
-
-    /***************************************
-                View Functions
-    ****************************************/
-
-    function getVerifiedValidators()
-        external
-        view
-        returns (ValidatorData[] memory)
-    {
-        return verifiedValidators;
     }
 }
