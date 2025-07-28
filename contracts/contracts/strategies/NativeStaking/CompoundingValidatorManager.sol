@@ -672,6 +672,7 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
 
     /// @notice Stores the current ETH balance at the current block.
     /// The validator balances on the beacon chain can then be proved with `verifyBalances`.
+    /// Can only be called by the registrator.
     /// Can not be called while a consolidation is in progress.
     function snapBalances() external whenNotPaused onlyRegistrator {
         _snapBalances();
@@ -712,12 +713,8 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
 
     /// @notice Verifies the balances of all active validators on the beacon chain
     /// and checks no pending deposits have been processed by the beacon chain.
-    /// Can only be called by the registrator.
     // slither-disable-start reentrancy-no-eth
-    function verifyBalances(VerifyBalancesParams calldata params)
-        external
-        onlyRegistrator
-    {
+    function verifyBalances(VerifyBalancesParams calldata params) external {
         // Load previously snapped balances for the given block root
         Balances memory balancesMem = snappedBalances[params.blockRoot];
         // Check the balances are the latest
