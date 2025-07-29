@@ -23,6 +23,7 @@ abstract contract ConsolidateValidator is Governable, IConsolidationStrategy, IC
     // @notice last target consolidation validator public key
     bytes32 public consolidationLastPubKeyHash;
     address public consolidationSourceStrategy;
+    address public consolidationTargetStrategy;
     mapping(address => bool) public consolidationSourceStrategies;
     mapping(address => bool) public consolidationTargetStrategies;
 
@@ -95,9 +96,9 @@ abstract contract ConsolidateValidator is Governable, IConsolidationStrategy, IC
 
     /// @notice Receives requests from supported legacy strategies to consolidate sweeping validators to
     /// a new compounding validator on this new strategy.
-    /// @param targetPubKey The target validator's public key - non hashed
+    /// @param targetPubKeyHash The target validator's hashed public key
     function requestConsolidation(
-        bytes memory targetPubKey,
+        bytes32 targetPubKeyHash,
         address _targetConsolidationStrategy
     ) external {
         require(
@@ -110,10 +111,13 @@ abstract contract ConsolidateValidator is Governable, IConsolidationStrategy, IC
         //     validatorState[targetPubKeyHash] == VALIDATOR_STATE.VERIFIED,
         //     "Target validator not verified"
         // );
-        bytes32 targetPubKeyHash = _hashPubKey(targetPubKey);
+        IConsolidationTarget(_targetConsolidationStrategy)
+            .initiateConsolidation(targetPubKeyHash);
+
         // Store consolidation state
         consolidationLastPubKeyHash = targetPubKeyHash;
         consolidationSourceStrategy = msg.sender;
+        consolidationTargetStrategy = _targetConsolidationStrategy;
 
         emit ConsolidationRequested(
             targetPubKeyHash,
@@ -187,7 +191,7 @@ abstract contract ConsolidateValidator is Governable, IConsolidationStrategy, IC
         );
 
         IConsolidationTarget(targetStakingStrategy)
-            .receiveConsolidatedValidator(consolidationLastPubKeyHashMem, validatorBalance);
+            .consolidationCompleted(consolidationLastPubKeyHashMem, validatorBalance);
     }
 
     /// @notice Hash a validator public key using the Beacon Chain's format

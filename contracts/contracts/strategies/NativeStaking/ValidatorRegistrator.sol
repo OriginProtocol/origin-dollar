@@ -411,7 +411,7 @@ abstract contract ValidatorRegistrator is Governable, Pausable, IConsolidationSo
 
         // Call the new compounding staking strategy to validate the target validator
         IConsolidationStrategy(_intermediateConsolidationStrategy).requestConsolidation(
-            _targetPubKey,
+            _targetPubKeyHash,
             _targetConsolidationStrategy
         );
 

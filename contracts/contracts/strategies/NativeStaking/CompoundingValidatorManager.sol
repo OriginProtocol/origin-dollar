@@ -112,8 +112,13 @@ abstract contract CompoundingValidatorManager is Governable, Pausable, IConsolid
     uint256 public depositedWethAccountedFor;
     mapping(address => bool) public consolidationSourceStrategies;
 
+    /// @notice Mapping of the validator hashed keys to balances at last verification.
+    /// Once all the Validators have been consolidated from the old strategy contract this field can be
+    /// deprecated
+    mapping(bytes32 => uint256) public validatorBalances;
+
     // For future use
-    uint256[50] private __gap;
+    uint256[49] private __gap;
 
     enum DepositStatus {
         UNKNOWN, // default value
@@ -152,13 +157,14 @@ abstract contract CompoundingValidatorManager is Governable, Pausable, IConsolid
         uint256 wethBalance,
         uint256 ethBalance
     );
-    event ConsolidatedInitiated(
+    event ConsolidationInitiated(
         bytes32 indexed pubKeyHash,
+        uint256 validatorBalance,
         address indexed sourceStrategy
     );
-    event ConsolidatedValidatorReceived(
+    event ConsolidationCompeted(
         bytes32 indexed pubKeyHash,
-        uint256 ethBalance,
+        uint256 validatorBalance,
         address indexed sourceStrategy
     );
 
@@ -405,38 +411,66 @@ abstract contract CompoundingValidatorManager is Governable, Pausable, IConsolid
 
     /// @notice Initiates consolidation where it is important to pause the strategy so it is not possible to 
     /// snap balances and falsely attribute consolidated validator values to normal balance verifications.
-    /// @param targetPubKey target public key of the validator where the funds are consolidated to
+    /// @param pubKeyHash The validator's public key hash using the Beacon Chain's format of the validator 
+    ///        where the funds are consolidated to
+    ///
+    /// The intermediate ConsolidateValidator contract makes sure that they validator key passed to this function
+    /// matches the one passed consolidationCompleted. Due to contract size concerns this contract doesn't
+    /// store the key and perform validation
     function initiateConsolidation(
-        bytes32 targetPubKey
+        bytes32 pubKeyHash
     ) external whenNotPaused {
-        
-        emit ConsolidatedInitiated(
-            targetPubKey,
+        /**
+         * This is a semi involved check that the validator public key passed to this function indeed exists
+         * has been STAKED to and is VERIFIED. Which means that this validator's balance has already been 
+         * accounted for in `verifyBalances`.
+         * 
+         */
+        require(
+            validatorState[pubKeyHash] == VALIDATOR_STATE.VERIFIED,
+            "Validator not verified"
+        );
+        require(
+            depositsRoots.length == 0,
+            "Not all deposits verified"
+        );
+
+        uint256 validatorBalanceMem = validatorBalances[pubKeyHash];
+        require(
+            validatorBalanceMem >= 32 ether &&
+            validatorBalanceMem <= 33 ether,
+            "Unexpected validator balance"
+        );
+
+        emit ConsolidationInitiated(
+            pubKeyHash,
+            validatorBalanceMem,
             msg.sender
         );
+
         _pause();
     }
 
     /// @notice Receives a validator from a Consolidation strategy with confirmed amount of ETH staked
     /// @param pubKeyHash The validator's public key hash using the Beacon Chain's format.
-    function receiveConsolidatedValidator(
+    function consolidationCompleted(
         bytes32 pubKeyHash,
-        uint256 ethStaked
+        uint256 validatorBalance
     ) external {
         require(
             consolidationSourceStrategies[msg.sender],
             "Not a source strategy"
         );
 
-        validatorState[pubKeyHash] = VALIDATOR_STATE.VERIFIED;
-
-        emit ConsolidatedValidatorReceived(
+        emit ConsolidationCompeted(
             pubKeyHash,
-            ethStaked,
+            validatorBalance,
             msg.sender
         );
 
-        lastVerifiedEthBalance += SafeCast.toUint128(ethStaked);
+        // deduct the existing validator balance
+        lastVerifiedEthBalance += SafeCast.toUint128(validatorBalance - validatorBalances[pubKeyHash]);
+        validatorBalances[pubKeyHash] = validatorBalance;
     }
 
     /***************************************
@@ -716,6 +750,9 @@ abstract contract CompoundingValidatorManager is Governable, Pausable, IConsolid
                         verifiedValidators[i].index,
                         IBeaconProofs.BalanceProofLevel.Container
                     );
+
+                // deprecate once we have consolidated all of the validators
+                validatorBalances[verifiedValidators[i].pubKeyHash] = uint256(validatorBalanceGwei) * 1 gwei;
 
                 // If the validator balance is zero
                 if (validatorBalanceGwei == 0) {

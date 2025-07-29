@@ -9,13 +9,18 @@ interface IConsolidationSource {
 
 interface IConsolidationStrategy {
     function requestConsolidation(
-        bytes32 targetPubKeyHash
+        bytes32 targetPubKeyHash,
+        address _targetConsolidationStrategy
     ) external;
 }
 
 interface IConsolidationTarget {
-    function receiveConsolidatedValidator(
+    function consolidationCompleted(
         bytes32 pubKeyHash,
-        uint256 ethStaked
-    )external ;
+        uint256 validatorBalance
+    ) external;
+
+    function initiateConsolidation(
+        bytes32 pubKeyHash
+    ) external;
 }
