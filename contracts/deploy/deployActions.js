@@ -19,6 +19,7 @@ const {
 const { deployWithConfirmation, withConfirmation } = require("../utils/deploy");
 const { metapoolLPCRVPid } = require("../utils/constants");
 const { replaceContractAt } = require("../utils/hardhat");
+const { resolveContract } = require("../utils/resolvers");
 const { impersonateAccount } = require("../utils/signers");
 const { getTxOpts } = require("../utils/tx");
 
@@ -679,6 +680,41 @@ const upgradeNativeStakingSSVStrategy = async () => {
 
   await withConfirmation(
     strategyProxy.connect(sDeployer).upgradeTo(dStrategyImpl.address)
+  );
+};
+
+const upgradeCompoundingStakingSSVStrategy = async () => {
+  const assetAddresses = await getAssetAddresses(deployments);
+  const { deployerAddr } = await getNamedAccounts();
+  const sDeployer = await ethers.provider.getSigner(deployerAddr);
+
+  const cOETHVaultProxy = await resolveContract("OETHVaultProxy");
+  const cBeaconOracle = await resolveContract("BeaconOracle");
+  const cBeaconProofs = await resolveContract("BeaconProofs");
+  const strategyProxy = await resolveContract(
+    "CompoundingStakingSSVStrategyProxy"
+  );
+
+  log("Deploy CompoundingStakingSSVStrategy implementation");
+  const dStrategyImpl = await deployWithConfirmation(
+    "CompoundingStakingSSVStrategy",
+    [
+      [addresses.zero, cOETHVaultProxy.address], //_baseConfig
+      assetAddresses.WETH, // wethAddress
+      assetAddresses.SSV, // ssvToken
+      assetAddresses.SSVNetwork, // ssvNetwork
+      assetAddresses.beaconChainDepositContract, // depositContractMock
+      cBeaconOracle.address, // BeaconOracle
+      cBeaconProofs.address, // BeaconProofs
+    ]
+  );
+
+  await withConfirmation(
+    strategyProxy.connect(sDeployer).upgradeTo(dStrategyImpl.address)
+  );
+
+  console.log(
+    `Upgraded CompoundingStakingSSVStrategyProxy to implementation at ${dStrategyImpl.address}`
   );
 };
 
@@ -1670,6 +1706,7 @@ module.exports = {
   deployOUSDSwapper,
   upgradeNativeStakingSSVStrategy,
   upgradeNativeStakingFeeAccumulator,
+  upgradeCompoundingStakingSSVStrategy,
   deployBaseAerodromeAMOStrategyImplementation,
   deployPlumeRoosterAMOStrategyImplementation,
   deployPlumeMockRoosterAMOStrategyImplementation,
