@@ -338,12 +338,12 @@ abstract contract CompoundingValidatorManager is Governable, Pausable, IConsolid
     // slither-disable-end reentrancy-eth
 
     /// @notice Request a full or partial withdrawal from a validator.
-    /// If the remaining balance is < 32 ETH then the validator will be exited.
-    /// That can result in the ETH sent to the strategy being more than the requested amount.
-    /// The staked ETH will eventually be withdrawn to this staking strategy.
+    /// A zero amount will trigger a full withdrawal.
+    /// If the remaining balance is < 32 ETH then the request will fail.
     /// Only the Registrator can call this function.
     /// @param publicKey The public key of the validator
-    /// @param amountGwei The amount of ETH to be withdrawn from the validator in Gwei
+    /// @param amountGwei The amount of ETH to be withdrawn from the validator in Gwei.
+    /// A zero amount will trigger a full withdrawal.
     // slither-disable-start reentrancy-no-eth
     function validatorWithdrawal(bytes calldata publicKey, uint64 amountGwei)
         external

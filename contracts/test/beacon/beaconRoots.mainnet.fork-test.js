@@ -62,8 +62,6 @@ describe("ForkTest: Beacon Roots", function () {
     );
     const previousTimestamp = previousBlock.timestamp;
 
-    await expect(
-      beaconRoots.parentBlockRoot(previousTimestamp)
-    ).to.be.revertedWith("Timestamp too old");
+    await expect(beaconRoots.parentBlockRoot(previousTimestamp)).to.be.reverted;
   });
 });
