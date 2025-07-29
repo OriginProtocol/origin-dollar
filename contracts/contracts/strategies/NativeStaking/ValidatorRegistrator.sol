@@ -56,9 +56,7 @@ abstract contract ValidatorRegistrator is Governable, Pausable, IConsolidationSo
 
     /// @notice Number of validators currently being consolidated
     uint256 public consolidationCount;
-    address public consolidationTargetStrategy;
-    /// @notice Mapping of support target staking strategies that can be used for consolidation
-    mapping(address => bool) public consolidationTargetStrategies;
+    address public intermediateConsolidationStrategy;
 
     // For future use
     uint256[44] private __gap;
@@ -169,13 +167,6 @@ abstract contract ValidatorRegistrator is Governable, Pausable, IConsolidationSo
     function resetStakeETHTally() external onlyStakingMonitor {
         stakeETHTally = 0;
         emit StakeETHTallyReset();
-    }
-
-    /// @notice Adds support for a new staking strategy that can be used for consolidation.
-    function addTargetStrategy(address _strategy) external onlyGovernor {
-        consolidationTargetStrategies[_strategy] = true;
-
-        emit TargetStrategyAdded(_strategy);
     }
 
     /// @notice Stakes WETH to the node validators
@@ -392,29 +383,26 @@ abstract contract ValidatorRegistrator is Governable, Pausable, IConsolidationSo
     ****************************************/
 
     function requestConsolidation(
-        bytes[] calldata sourcePubKeys,
-        bytes calldata targetPubKey,
-        address targetStakingStrategy
+        bytes[] calldata _sourcePubKeys,
+        bytes calldata _targetPubKey,
+        address _intermediateConsolidationStrategy,
+        address _targetConsolidationStrategy
     ) external nonReentrant whenNotPaused onlyGovernor {
-        require(
-            consolidationTargetStrategies[targetStakingStrategy],
-            "Invalid target strategy"
-        );
         require(consolidationCount == 0, "Cons. already in progress");
-
-        bytes32 targetPubKeyHash = keccak256(targetPubKey);
+        bytes32 _targetPubKeyHash = keccak256(_targetPubKey);
         bytes32 sourcePubKeyHash;
-        for (uint256 i = 0; i < sourcePubKeys.length; ++i) {
+        for (uint256 i = 0; i < _sourcePubKeys.length; ++i) {
             // hash the source validator's public key using the Beacon Chain's format
-            sourcePubKeyHash = keccak256(sourcePubKeys[i]);
-            require(sourcePubKeyHash != targetPubKeyHash, "Self consolidation");
+            sourcePubKeyHash = keccak256(_sourcePubKeys[i]);
+            // TODO: Why compare hashed amounts and not the non hashed pubkeys?
+            require(sourcePubKeyHash != _targetPubKeyHash, "Self consolidation");
             require(
                 validatorsStates[sourcePubKeyHash] == VALIDATOR_STATE.STAKED,
                 "Source validator not staked"
             );
 
             // Request consolidation from source to target validator
-            BeaconConsolidation.request(sourcePubKeys[i], targetPubKey);
+            BeaconConsolidation.request(_sourcePubKeys[i], _targetPubKey);
 
             // Store the state of the source validator as exiting so it can be removed
             // after the consolidation is confirmed
@@ -422,22 +410,23 @@ abstract contract ValidatorRegistrator is Governable, Pausable, IConsolidationSo
         }
 
         // Call the new compounding staking strategy to validate the target validator
-        IConsolidationStrategy(targetStakingStrategy).requestConsolidation(
-            targetPubKeyHash
+        IConsolidationStrategy(_intermediateConsolidationStrategy).requestConsolidation(
+            _targetPubKey,
+            _targetConsolidationStrategy
         );
 
         // Store the consolidation state
-        consolidationCount = sourcePubKeys.length;
-        consolidationTargetStrategy = targetStakingStrategy;
+        consolidationCount = _sourcePubKeys.length;
+        intermediateConsolidationStrategy = _intermediateConsolidationStrategy;
 
         // Pause the strategy to prevent further consolidations or validator exits
         _pause();
 
         emit ConsolidationRequested(
-            sourcePubKeys,
-            targetPubKey,
-            targetStakingStrategy,
-            sourcePubKeys.length
+            _sourcePubKeys,
+            _targetPubKey,
+            _intermediateConsolidationStrategy,
+            _sourcePubKeys.length
         );
     }
 
@@ -449,7 +438,7 @@ abstract contract ValidatorRegistrator is Governable, Pausable, IConsolidationSo
     {
         // Check the caller is the target staking strategy
         require(
-            msg.sender == consolidationTargetStrategy,
+            msg.sender == intermediateConsolidationStrategy,
             "Not target strategy"
         );
 
@@ -465,7 +454,7 @@ abstract contract ValidatorRegistrator is Governable, Pausable, IConsolidationSo
 
         // Reset the consolidation count
         consolidationCount = 0;
-        consolidationTargetStrategy = address(0);
+        intermediateConsolidationStrategy = address(0);
 
         // Unpause the strategy to allow further operations
         _unpause();

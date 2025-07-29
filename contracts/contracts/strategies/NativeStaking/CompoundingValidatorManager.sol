@@ -152,6 +152,10 @@ abstract contract CompoundingValidatorManager is Governable, Pausable, IConsolid
         uint256 wethBalance,
         uint256 ethBalance
     );
+    event ConsolidatedInitiated(
+        bytes32 indexed pubKeyHash,
+        address indexed sourceStrategy
+    );
     event ConsolidatedValidatorReceived(
         bytes32 indexed pubKeyHash,
         uint256 ethBalance,
@@ -399,12 +403,26 @@ abstract contract CompoundingValidatorManager is Governable, Pausable, IConsolid
         emit SSVValidatorRemoved(pubKeyHash, operatorIds);
     }
 
+    /// @notice Initiates consolidation where it is important to pause the strategy so it is not possible to 
+    /// snap balances and falsely attribute consolidated validator values to normal balance verifications.
+    /// @param targetPubKey target public key of the validator where the funds are consolidated to
+    function initiateConsolidation(
+        bytes32 targetPubKey
+    ) external whenNotPaused {
+        
+        emit ConsolidatedInitiated(
+            targetPubKey,
+            msg.sender
+        );
+        _pause();
+    }
+
     /// @notice Receives a validator from a Consolidation strategy with confirmed amount of ETH staked
     /// @param pubKeyHash The validator's public key hash using the Beacon Chain's format.
     function receiveConsolidatedValidator(
         bytes32 pubKeyHash,
         uint256 ethStaked
-    ) external whenNotPaused {
+    ) external {
         require(
             consolidationSourceStrategies[msg.sender],
             "Not a source strategy"

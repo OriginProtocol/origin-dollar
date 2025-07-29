@@ -95,9 +95,10 @@ abstract contract ConsolidateValidator is Governable, IConsolidationStrategy, IC
 
     /// @notice Receives requests from supported legacy strategies to consolidate sweeping validators to
     /// a new compounding validator on this new strategy.
-    /// @param targetPubKeyHash The target validator's public key hash using the Beacon Chain's format.
+    /// @param targetPubKey The target validator's public key - non hashed
     function requestConsolidation(
-        bytes32 targetPubKeyHash
+        bytes memory targetPubKey,
+        address _targetConsolidationStrategy
     ) external {
         require(
             consolidationSourceStrategies[msg.sender],
@@ -109,7 +110,7 @@ abstract contract ConsolidateValidator is Governable, IConsolidationStrategy, IC
         //     validatorState[targetPubKeyHash] == VALIDATOR_STATE.VERIFIED,
         //     "Target validator not verified"
         // );
-
+        bytes32 targetPubKeyHash = _hashPubKey(targetPubKey);
         // Store consolidation state
         consolidationLastPubKeyHash = targetPubKeyHash;
         consolidationSourceStrategy = msg.sender;
@@ -187,5 +188,10 @@ abstract contract ConsolidateValidator is Governable, IConsolidationStrategy, IC
 
         IConsolidationTarget(targetStakingStrategy)
             .receiveConsolidatedValidator(consolidationLastPubKeyHashMem, validatorBalance);
+    }
+
+    /// @notice Hash a validator public key using the Beacon Chain's format
+    function _hashPubKey(bytes memory pubKey) internal pure returns (bytes32) {
+        return sha256(abi.encodePacked(pubKey, bytes16(0)));
     }
 }
