@@ -7,11 +7,10 @@ library BeaconRoots {
     address internal constant BEACON_ROOTS_ADDRESS =
         0x000F3df6D732807Ef1319fB7B8bB8522d0Beac02;
 
-    /// @notice The length of the beacon block root ring buffer
-    uint256 internal constant BEACON_ROOTS_HISTORY_BUFFER_LENGTH = 8191;
-
     /// @notice Returns the Beacon Block Root for the previous block.
-    /// This comes from the Beacon Roots contract defined in EIP-4788
+    /// This comes from the Beacon Roots contract defined in EIP-4788.
+    /// This will revert if the block is more than 8,191 blocks old as
+    /// that is the size of the beacon root's ring buffer.
     /// @param timestamp The timestamp of the block for which to get the parent root.
     /// @return parentRoot The parent block root for the given timestamp.
     function parentBlockRoot(uint64 timestamp)
@@ -19,16 +18,8 @@ library BeaconRoots {
         view
         returns (bytes32 parentRoot)
     {
-        // Commented out the following checks as it makes unit and fork testing very difficult.
-        // require(block.timestamp >= timestamp, "Timestamp in future");
-        // require(
-        //     block.timestamp - timestamp <
-        //         BEACON_ROOTS_HISTORY_BUFFER_LENGTH * 12,
-        //     "Timestamp too old"
-        // );
-
         // Call the Beacon Block Root Oracle to get the parent block root
-        // This does not have a function signature, so we use a staticcall
+        // This does not have a function signature, so we use a staticcall.
         (bool success, bytes memory result) = BEACON_ROOTS_ADDRESS.staticcall(
             abi.encode(timestamp)
         );
