@@ -93,7 +93,7 @@ describe("Base Fork Test: Curve AMO strategy", function () {
     await curveAMOStrategy.connect(impersonatedVaultSigner).withdrawAll();
   });
 
-  describe("Initial paramaters", () => {
+  describe("Initial parameters", () => {
     it("Should have correct parameters after deployment", async () => {
       const { curveAMOStrategy, oethbVault, oethb, weth } = fixture;
       expect(await curveAMOStrategy.platformAddress()).to.equal(
