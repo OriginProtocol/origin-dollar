@@ -12,7 +12,8 @@ module.exports = deployOnSonic(
     );
 
     const cPoolBoostCentralRegistry = await ethers.getContractAt(
-      "PoolBoostCentralRegistry", cPoolBoostCentralRegistryProxy.address
+      "PoolBoostCentralRegistry",
+      cPoolBoostCentralRegistryProxy.address
     );
 
     const factories = await cPoolBoostCentralRegistry.getAllFactories();
@@ -20,7 +21,10 @@ module.exports = deployOnSonic(
     const actions = [];
     for (const factory of factories) {
       actions.push({
-        contract: await ethers.getContractAt("AbstractPoolBoosterFactory", factory),
+        contract: await ethers.getContractAt(
+          "AbstractPoolBoosterFactory",
+          factory
+        ),
         signature: "transferGovernance(address)",
         args: [addresses.multichainStrategist],
       });
