@@ -105,6 +105,12 @@ const deployWithConfirmation = async (
   // if upgrade happened on the mainnet save the new storage slot layout to the repo
   if (isMainnet || isArbitrumOne || isBase || isSonic || isPlume) {
     await storeStorageLayoutForContract(hre, contractName, contract);
+
+    // Verify the contract
+    await hre.run("etherscan-verify", {
+      network: hre.network.name,
+      contractName: contractName,
+    });
   }
 
   log(`Deployed ${contractName}`, result);
