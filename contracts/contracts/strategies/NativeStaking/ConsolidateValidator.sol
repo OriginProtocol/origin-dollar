@@ -30,15 +30,6 @@ abstract contract ConsolidateValidator is Governable, IConsolidationStrategy, IC
     // For future use
     uint256[50] private __gap;
 
-    enum VALIDATOR_STATE {
-        NON_REGISTERED, // validator is not registered on the SSV network
-        REGISTERED, // validator is registered on the SSV network
-        STAKED, // validator has funds staked
-        VERIFIED, // validator has been verified to exist on the beacon chain
-        EXITED, // The validator has been verified to have a zero balance
-        REMOVED // validator has funds withdrawn to the EigenPod and is removed from the SSV
-    }
-
     event RegistratorChanged(address indexed newAddress);
     event SourceStrategyAdded(address indexed strategy);
     event TargetStrategyAdded(address indexed strategy);
@@ -106,11 +97,6 @@ abstract contract ConsolidateValidator is Governable, IConsolidationStrategy, IC
             "Not a source strategy"
         );
 
-        // The target validator must be a compounding validator that has been verified
-        // require(
-        //     validatorState[targetPubKeyHash] == VALIDATOR_STATE.VERIFIED,
-        //     "Target validator not verified"
-        // );
         IConsolidationTarget(_targetConsolidationStrategy)
             .initiateConsolidation(targetPubKeyHash);
 

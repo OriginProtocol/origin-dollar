@@ -15,7 +15,6 @@ import { PartialWithdrawal } from "../../beacon/PartialWithdrawal.sol";
 import { IBeaconProofs } from "../../interfaces/IBeaconProofs.sol";
 import { IBeaconOracle } from "../../interfaces/IBeaconOracle.sol";
 import { IConsolidationTarget } from "../../interfaces/IConsolidation.sol";
-import { ICompoundingValidatorManager } from "../../interfaces/ICompoundingValidatorManager.sol";
 
 struct ValidatorStakeData {
     bytes pubkey;
@@ -29,7 +28,7 @@ struct ValidatorStakeData {
  * register, deposit, withdraw, exit, remove and consolidate validators.
  * @author Origin Protocol Inc
  */
-abstract contract CompoundingValidatorManager is Governable, Pausable, IConsolidationTarget, ICompoundingValidatorManager {
+abstract contract CompoundingValidatorManager is Governable, Pausable, IConsolidationTarget {
     using SafeERC20 for IERC20;
 
     /// @notice The amount of ETH in wei that is required for a deposit to a new validator.
@@ -116,6 +115,15 @@ abstract contract CompoundingValidatorManager is Governable, Pausable, IConsolid
     /// Once all the Validators have been consolidated from the old strategy contract this field can be
     /// deprecated
     mapping(bytes32 => uint256) public validatorBalances;
+
+    enum VALIDATOR_STATE {
+        NON_REGISTERED, // validator is not registered on the SSV network
+        REGISTERED, // validator is registered on the SSV network
+        STAKED, // validator has funds staked
+        VERIFIED, // validator has been verified to exist on the beacon chain
+        EXITED, // The validator has been verified to have a zero balance
+        REMOVED // validator has funds withdrawn to the EigenPod and is removed from the SSV
+    }
 
     // For future use
     uint256[49] private __gap;
