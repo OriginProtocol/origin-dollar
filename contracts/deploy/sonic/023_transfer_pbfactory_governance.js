@@ -29,14 +29,9 @@ module.exports = deployOnSonic(
         args: [addresses.multichainStrategist],
       });
     }
-    actions.push({
-      contract: cPoolBoostCentralRegistry,
-      signature: "transferGovernance(address)",
-      args: [addresses.multichainStrategist],
-    });
 
     return {
-      name: "Transfer PoolBoost Registry/Factories governance",
+      name: "Transfer PoolBoost Factories governance",
       actions,
     };
   }
