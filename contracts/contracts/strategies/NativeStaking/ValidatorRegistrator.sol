@@ -389,6 +389,14 @@ abstract contract ValidatorRegistrator is Governable, Pausable, IConsolidationSo
         address _targetConsolidationStrategy
     ) external nonReentrant whenNotPaused onlyGovernor {
         require(consolidationCount == 0, "Cons. already in progress");
+        /**
+         * With the target validator already having 32 ETH balance and maximum 61 (times 32 ETH)
+         * validators consolidating there is still 64 ETH buffer available for the validator to 
+         * earn ETH. At a ~3% APY that ETH should be compounding for at least a year before it 
+         * needs to be fully/partially withdrawn.
+         */
+        require(_sourcePubKeys.length <= 61, "Too many source public keys");
+
         bytes32 _targetPubKeyHash = keccak256(_targetPubKey);
         bytes32 sourcePubKeyHash;
         for (uint256 i = 0; i < _sourcePubKeys.length; ++i) {

@@ -178,11 +178,12 @@ abstract contract ConsolidateValidator is Governable, IConsolidationStrategy, IC
         // the target validator should have the balance of: 
         // - 32 ether of its own plus
         // - number of consolidated validators * 32 ether
-        require(32 ether + consolidationCount * 32 ether <= validatorBalance, "Validators not consolidated");
+        require(validatorBalance >= 32 ether + consolidationCount * 32 ether, "Validators not consolidated");
 
         // Reset the stored consolidation state
         consolidationLastPubKeyHash = bytes32(0);
         consolidationSourceStrategy = address(0);
+        consolidationTargetStrategy = address(0);
 
         emit ConsolidationVerified(
             consolidationLastPubKeyHashMem,
