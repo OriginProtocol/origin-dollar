@@ -41,17 +41,17 @@ async function getContracts(hre, symbol, assetSymbol) {
   log(`Resolved ${network} ${symbol} OToken to address ${oToken.address}`);
 
   // Resolve the wrapped OToken. eg wOETH, wOSonic
-  const wOTokenProxy = await ethers.getContract(
-    `W${symbol}${networkPrefix}Proxy`
-  );
-  const wOToken = await ethers.getContractAt(
-    `W${symbol}`,
-    wOTokenProxy.address
-  );
+  let wOToken;
+  if (networkMap[chainId] !== "hoodi") {
+    const wOTokenProxy = await ethers.getContract(
+      `W${symbol}${networkPrefix}Proxy`
+    );
+    wOToken = await ethers.getContractAt(`W${symbol}`, wOTokenProxy.address);
+  }
 
   // Resolve the Asset. eg WETH or wS
   // This won't work for OUSD if the assetSymbol has not been set as it has three assets
-  assetSymbol = assetSymbol || network === "sonic" ? "wS" : "WETH";
+  assetSymbol = assetSymbol || (network === "sonic" ? "wS" : "WETH");
   const asset = await resolveAsset(assetSymbol);
   log(
     `Resolved ${network} ${symbol} Vault asset to ${assetSymbol} with address ${asset.address}`

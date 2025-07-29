@@ -2144,30 +2144,6 @@ task("stakeValidator").setAction(async (_, __, runSuper) => {
 });
 
 subtask(
-  "initialStakeValidator",
-  "Converts 1 WETH to ETH and does the initial deposit to a validator from the Compounding Staking Strategy"
-)
-  .addParam(
-    "pubkey",
-    "The validator's public key in hex format with a 0x prefix",
-    undefined,
-    types.string
-  )
-  .addParam(
-    "sig",
-    "The validator's deposit signature in hex format with a 0x prefix",
-    undefined,
-    types.string
-  )
-  .setAction(async (taskArgs) => {
-    taskArgs.amount = "1000000000";
-    await stakeValidator(taskArgs);
-  });
-task("initialStakeValidator").setAction(async (_, __, runSuper) => {
-  return runSuper();
-});
-
-subtask(
   "snapBalances",
   "Takes a snapshot of the staking strategy's balance"
 ).setAction(snapBalances);
