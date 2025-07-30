@@ -83,9 +83,8 @@ const PLUME_ADMIN = "0x92A19381444A001d62cE67BaFF066fA1111d7202";
 const PLUME_STRATEGIST = MULTICHAIN_STRATEGIST;
 
 const HOODI_DEPLOYER = MAINNET_DEPLOYER;
-// No multisig deployed on Hoodi
-const HOODI_ADMIN = HOODI_DEPLOYER;
-const HOODI_STRATEGIST = HOODI_DEPLOYER;
+// Hoodi Relayer
+const HOODI_RELAYER = "0x419B6BdAE482f41b8B194515749F3A2Da26d583b";
 
 const mnemonic =
   "replace hover unaware super where filter stone fine garlic address matrix basic";
@@ -174,7 +173,7 @@ const localEnvGovernor =
       : isPlumeFork
       ? PLUME_ADMIN
       : isHoodiFork
-      ? HOODI_ADMIN
+      ? HOODI_RELAYER
       : MAINNET_GOVERNOR
     : 1; // signer at index 1
 
@@ -198,7 +197,7 @@ const localEnvStrategist =
       ? SONIC_STRATEGIST
       : // Base, Plume and Eth use Multichain Strategist
       isHoodiFork
-      ? HOODI_STRATEGIST
+      ? HOODI_RELAYER
       : MULTICHAIN_STRATEGIST
     : 0;
 
@@ -330,7 +329,7 @@ module.exports = {
       base: BASE_GOVERNOR,
       sonic: SONIC_ADMIN,
       plume: PLUME_ADMIN,
-      hoodi: HOODI_ADMIN,
+      hoodi: HOODI_RELAYER,
     },
     /* Local node environment currently has no access to Decentralized governance
      * address, since the contract is in another repo. Once we merge the ousd-governance
@@ -386,7 +385,7 @@ module.exports = {
       base: BASE_GOVERNOR,
       sonic: SONIC_ADMIN,
       plume: PLUME_STRATEGIST,
-      hoodi: HOODI_STRATEGIST,
+      hoodi: HOODI_RELAYER,
     },
     adjusterAddr: {
       default: 0,
@@ -403,7 +402,7 @@ module.exports = {
       base: MULTICHAIN_STRATEGIST,
       sonic: SONIC_STRATEGIST,
       plume: PLUME_STRATEGIST,
-      hoodi: HOODI_STRATEGIST,
+      hoodi: HOODI_RELAYER,
     },
     multichainStrategistAddr: {
       default: MULTICHAIN_STRATEGIST,
