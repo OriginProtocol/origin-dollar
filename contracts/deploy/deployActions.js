@@ -1,5 +1,6 @@
 const hre = require("hardhat");
 const { setStorageAt } = require("@nomicfoundation/hardhat-network-helpers");
+const { networkMap } = require("../utils/hardhat-helpers");
 const { parseUnits } = require("ethers/lib/utils.js");
 
 const addresses = require("../utils/addresses");
@@ -653,12 +654,10 @@ const upgradeNativeStakingFeeAccumulator = async () => {
  */
 const upgradeNativeStakingSSVStrategy = async () => {
   const assetAddresses = await getAssetAddresses(deployments);
-  const { deployerAddr } = await getNamedAccounts();
   const cOETHVaultProxy = await ethers.getContract("OETHVaultProxy");
   const strategyProxy = await ethers.getContract(
     "NativeStakingSSVStrategyProxy"
   );
-  const sDeployer = await ethers.provider.getSigner(deployerAddr);
 
   const cFeeAccumulatorProxy = await ethers.getContract(
     "NativeStakingFeeAccumulatorProxy"
@@ -679,9 +678,14 @@ const upgradeNativeStakingSSVStrategy = async () => {
   );
   log(`New NativeStakingSSVStrategy implementation: ${dStrategyImpl.address}`);
 
-  await withConfirmation(
-    strategyProxy.connect(sDeployer).upgradeTo(dStrategyImpl.address)
-  );
+  const { chainId } = await ethers.provider.getNetwork();
+  const network = networkMap[chainId];
+  if (network == "hoodi") {
+    const sGovernor = await getDefenderSigner();
+    await withConfirmation(
+      strategyProxy.connect(sGovernor).upgradeTo(dStrategyImpl.address)
+    );
+  }
 };
 
 const upgradeCompoundingStakingSSVStrategy = async () => {
