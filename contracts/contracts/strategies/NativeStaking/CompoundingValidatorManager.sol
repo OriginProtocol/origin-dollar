@@ -708,11 +708,11 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
         uint64 firstPendingDepositSlot;
         // BeaconBlock.BeaconBlockBody.deposits[0].slot
         bytes firstPendingDepositSlotProof;
+        // BeaconBlock.state.balances
         bytes32 balancesContainerRoot;
-        // BeaconBlock.state.validators
-        bytes validatorContainerProof;
+        bytes balancesContainerProof;
+        // BeaconBlock.state.balances[validatorIndex]
         bytes32[] validatorBalanceLeaves;
-        // BeaconBlock.state.validators[validatorIndex].balance
         bytes[] validatorBalanceProofs;
     }
 
@@ -779,7 +779,7 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
             IBeaconProofs(BEACON_PROOFS).verifyBalancesContainer(
                 params.blockRoot,
                 params.balancesContainerRoot,
-                params.validatorContainerProof
+                params.balancesContainerProof
             );
 
             // for each validator in reserve order so we can pop off exited validators at the end

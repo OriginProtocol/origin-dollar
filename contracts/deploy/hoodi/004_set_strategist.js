@@ -16,9 +16,7 @@ const mainExport = async () => {
   );
 
   await withConfirmation(
-    cVault
-      .connect(sDeployer)
-      .setStrategistAddr(addresses.hoodi.defenderRelayer)
+    cVault.connect(sDeployer).setStrategistAddr(addresses.hoodi.defenderRelayer)
   );
 
   console.log("004_set_strategist deploy done.");

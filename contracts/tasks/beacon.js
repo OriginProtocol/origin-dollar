@@ -373,7 +373,7 @@ async function verifyBalances({ root, indexes, dryrun }) {
       stateView,
     });
 
-  const { leaf: balancesContainerRoot, proof: validatorContainerProof } =
+  const { leaf: balancesContainerRoot, proof: balancesContainerProof } =
     await generateBalancesContainerProof({
       blockView,
       blockTree,
@@ -413,7 +413,7 @@ async function verifyBalances({ root, indexes, dryrun }) {
       `firstPendingDepositSlotProof:\n${firstPendingDepositSlotProof}`
     );
     console.log(`\nbalancesContainerRoot: ${balancesContainerRoot}`);
-    console.log(`\nbalancesContainerProof:\n${validatorContainerProof}`);
+    console.log(`\nbalancesContainerProof:\n${balancesContainerProof}`);
     console.log(
       `\nvalidatorBalanceLeaves:\n[${validatorBalanceLeaves
         .map((leaf) => `"${leaf}"`)
@@ -448,7 +448,7 @@ async function verifyBalances({ root, indexes, dryrun }) {
     firstPendingDepositSlot,
     firstPendingDepositSlotProof,
     balancesContainerRoot,
-    validatorContainerProof,
+    balancesContainerProof,
     validatorBalanceLeaves,
     validatorBalanceProofs,
   });

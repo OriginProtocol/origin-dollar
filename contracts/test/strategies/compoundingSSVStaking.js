@@ -1292,7 +1292,7 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
           firstPendingDepositSlot: 0,
           firstPendingDepositSlotProof: "0x",
           balancesContainerRoot: ethers.utils.hexZeroPad("0x0", 32),
-          validatorContainerProof: "0x",
+          balancesContainerProof: "0x",
           validatorBalanceLeaves: [],
           validatorBalanceProofs: [],
         });
