@@ -16,6 +16,7 @@ import { IBeaconProofs } from "../../interfaces/IBeaconProofs.sol";
 abstract contract ConsolidateValidator is Governable, IConsolidationStrategy, IConsolidationTarget {
     /// @notice Address of the Beacon Proofs contract that verifies beacon chain data
     address public immutable BEACON_PROOFS;
+    uint256 public constant FULL_STAKE = 32 ether;
 
     /// @notice Address of the registrator - allowed to register, withdraw, exit and remove validators
     address public validatorRegistrator;
@@ -23,16 +24,15 @@ abstract contract ConsolidateValidator is Governable, IConsolidationStrategy, IC
     // @notice last target consolidation validator public key
     bytes32 public consolidationLastPubKeyHash;
     address public consolidationSourceStrategy;
-    address public consolidationTargetStrategy;
     mapping(address => bool) public consolidationSourceStrategies;
-    mapping(address => bool) public consolidationTargetStrategies;
+    address public consolidationTargetStrategy;
 
     // For future use
     uint256[50] private __gap;
 
     event RegistratorChanged(address indexed newAddress);
     event SourceStrategyAdded(address indexed strategy);
-    event TargetStrategyAdded(address indexed strategy);
+    event TargetStrategyChanged(address indexed strategy);
     event ConsolidationRequested(
         bytes32 indexed targetPubKeyHash,
         address indexed sourceStrategy
@@ -73,12 +73,11 @@ abstract contract ConsolidateValidator is Governable, IConsolidationStrategy, IC
         emit SourceStrategyAdded(_strategy);
     }
 
-    /// @notice Adds support for a compounding staking strategy that will be the receiver of the
-    /// consolidated validator
-    function addTargetStrategy(address _strategy) external onlyGovernor {
-        consolidationTargetStrategies[_strategy] = true;
+    /// @notice Sets the consolidation target strategy
+    function setTargetStrategy(address _strategy) external onlyGovernor {
+        consolidationTargetStrategy = _strategy;
 
-        emit TargetStrategyAdded(_strategy);
+        emit TargetStrategyChanged(_strategy);
     }
 
     /***************************************
@@ -89,21 +88,24 @@ abstract contract ConsolidateValidator is Governable, IConsolidationStrategy, IC
     /// a new compounding validator on this new strategy.
     /// @param targetPubKeyHash The target validator's hashed public key
     function requestConsolidation(
-        bytes32 targetPubKeyHash,
-        address _targetConsolidationStrategy
+        bytes32 targetPubKeyHash
     ) external {
+        require(
+            consolidationTargetStrategy != address(0),
+            "Target strat not set"
+        );
         require(
             consolidationSourceStrategies[msg.sender],
             "Not a source strategy"
         );
+        // PREVENT 2 different contracts form starting.
 
-        IConsolidationTarget(_targetConsolidationStrategy)
+        IConsolidationTarget(consolidationTargetStrategy)
             .initiateConsolidation(targetPubKeyHash);
 
         // Store consolidation state
         consolidationLastPubKeyHash = targetPubKeyHash;
         consolidationSourceStrategy = msg.sender;
-        consolidationTargetStrategy = _targetConsolidationStrategy;
 
         emit ConsolidationRequested(
             targetPubKeyHash,
@@ -117,18 +119,19 @@ abstract contract ConsolidateValidator is Governable, IConsolidationStrategy, IC
     /// @param targetValidatorIndex The index of the target validator
     /// @param validatorPubKeyProof The merkle proof that the validator's index matches its public key
     /// @param validatorBalanceProof The merkle proof of the target's validator balance
-    /// @param targetStakingStrategy The target compounding SSV staking strategy
     // slither-disable-start reentrancy-no-eth
     function verifyConsolidation(
         uint64 parentBlockTimestamp,
         uint64 targetValidatorIndex,
         bytes calldata validatorPubKeyProof,
         bytes32 balancesLeaf,
-        bytes calldata validatorBalanceProof,
-        address targetStakingStrategy
+        bytes calldata validatorBalanceProof
     ) external onlyRegistrator {
-        require(consolidationTargetStrategies[targetStakingStrategy], "Not an allowed target strat");
         bytes32 consolidationLastPubKeyHashMem = consolidationLastPubKeyHash;
+        require(
+            consolidationTargetStrategy != address(0),
+            "Target strat not set"
+        );
         require(
             consolidationLastPubKeyHashMem != bytes32(0),
             "No consolidations"
@@ -164,12 +167,14 @@ abstract contract ConsolidateValidator is Governable, IConsolidationStrategy, IC
         // the target validator should have the balance of: 
         // - 32 ether of its own plus
         // - number of consolidated validators * 32 ether
-        require(validatorBalance >= 32 ether + consolidationCount * 32 ether, "Validators not consolidated");
+        require(
+            validatorBalance >= FULL_STAKE + consolidationCount * FULL_STAKE,
+            "Validators not consolidated"
+        );
 
         // Reset the stored consolidation state
         consolidationLastPubKeyHash = bytes32(0);
         consolidationSourceStrategy = address(0);
-        consolidationTargetStrategy = address(0);
 
         emit ConsolidationVerified(
             consolidationLastPubKeyHashMem,
@@ -177,7 +182,7 @@ abstract contract ConsolidateValidator is Governable, IConsolidationStrategy, IC
             consolidationCount
         );
 
-        IConsolidationTarget(targetStakingStrategy)
+        IConsolidationTarget(consolidationTargetStrategy)
             .consolidationCompleted(consolidationLastPubKeyHashMem, validatorBalance);
     }
 

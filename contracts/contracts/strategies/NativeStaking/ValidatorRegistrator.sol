@@ -385,8 +385,7 @@ abstract contract ValidatorRegistrator is Governable, Pausable, IConsolidationSo
     function requestConsolidation(
         bytes[] calldata _sourcePubKeys,
         bytes calldata _targetPubKey,
-        address _intermediateConsolidationStrategy,
-        address _targetConsolidationStrategy
+        address _intermediateConsolidationStrategy
     ) external nonReentrant whenNotPaused onlyGovernor {
         require(consolidationCount == 0, "Cons. already in progress");
         /**
@@ -419,8 +418,7 @@ abstract contract ValidatorRegistrator is Governable, Pausable, IConsolidationSo
 
         // Call the new compounding staking strategy to validate the target validator
         IConsolidationStrategy(_intermediateConsolidationStrategy).requestConsolidation(
-            _targetPubKeyHash,
-            _targetConsolidationStrategy
+            _targetPubKeyHash
         );
 
         // Store the consolidation state

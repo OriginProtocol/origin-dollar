@@ -9,8 +9,7 @@ interface IConsolidationSource {
 
 interface IConsolidationStrategy {
     function requestConsolidation(
-        bytes32 targetPubKeyHash,
-        address _targetConsolidationStrategy
+        bytes32 targetPubKeyHash
     ) external;
 }
 
