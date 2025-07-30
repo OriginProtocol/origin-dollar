@@ -105,6 +105,7 @@ const {
   snapValidators,
 } = require("./validator");
 const {
+  snapStakingStrategy,
   snapBalances,
   registerValidator,
   stakeValidator,
@@ -1885,7 +1886,13 @@ subtask(
   "verifySlot",
   "Verify an execution layer block number to a beacon chain slot"
 )
-  .addParam("block", "Execution layer block number", undefined, types.int)
+  .addOptionalParam(
+    "block",
+    "Execution layer block number",
+    undefined,
+    types.int
+  )
+  .addOptionalParam("slot", "Beacon chain slot number", undefined, types.int)
   .addOptionalParam(
     "dryrun",
     "Do not call verifyBalances on the strategy contract. Just log the params including the proofs",
@@ -2148,6 +2155,18 @@ subtask(
   "Takes a snapshot of the staking strategy's balance"
 ).setAction(snapBalances);
 task("snapBalances").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+subtask("snapStakingStrat", "Dumps the staking strategy's data")
+  .addOptionalParam(
+    "block",
+    "Block number. (default: latest)",
+    undefined,
+    types.int
+  )
+  .setAction(snapStakingStrategy);
+task("snapStakingStrat").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
 

@@ -26,6 +26,7 @@ const getValidatorBalance = async (pubkey) => {
   return values.balance;
 };
 
+/// @param {string} blockId - is "head", slot number or the beacon block root.
 const getSlot = async (blockId = "head") => {
   const client = await configClient();
 

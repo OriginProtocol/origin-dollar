@@ -1,8 +1,10 @@
 const addresses = require("../utils/addresses");
 const { formatUnits, parseUnits } = require("ethers/lib/utils");
 
+const { getBlock } = require("../tasks/block");
 const { calcDepositRoot } = require("./beacon");
 const { getValidatorBalance } = require("../utils/beacon");
+const { networkMap } = require("../utils/hardhat-helpers");
 const { getSigner } = require("../utils/signers");
 const { resolveContract } = require("../utils/resolvers");
 const { getClusterInfo } = require("../utils/ssv");
@@ -124,9 +126,53 @@ async function withdrawValidator({ pubkey, amount }) {
   await logTxDetails(tx, "validatorWithdrawal");
 }
 
+async function snapStakingStrategy({ block }) {
+  const blockTag = await getBlock(block);
+
+  const { chainId } = await ethers.provider.getNetwork();
+
+  const wethAddress = addresses[networkMap[chainId]].WETH;
+  const weth = await ethers.getContractAt("IERC20", wethAddress);
+  const ssvAddress = addresses[networkMap[chainId]].SSV;
+  const ssv = await ethers.getContractAt("IERC20", ssvAddress);
+
+  const strategy = await resolveContract(
+    "CompoundingStakingSSVStrategyProxy",
+    "CompoundingStakingSSVStrategy"
+  );
+
+  const stratWethBalance = await weth.balanceOf(strategy.address, { blockTag });
+  const stratEthBalance = await ethers.provider.getBalance(
+    strategy.address,
+    blockTag
+  );
+  const stratSsvBalance = await ssv.balanceOf(strategy.address, { blockTag });
+  const stratBalance = await strategy.checkBalance(wethAddress, {
+    blockTag,
+  });
+  const lastSnapTimestamp = await strategy.lastSnapTimestamp({
+    blockTag,
+  });
+
+  console.log(`WETH balance       : ${formatUnits(stratWethBalance, 18)}`);
+  console.log(`ETH balance        : ${formatUnits(stratEthBalance, 18)}`);
+  console.log(`SSV balance        : ${formatUnits(stratSsvBalance, 18)}`);
+  console.log(`Strategy balance.  : ${formatUnits(stratBalance, 18)}`);
+  console.log(
+    `Last snap timestamp: ${lastSnapTimestamp} ${new Date(
+      lastSnapTimestamp * 1000
+    ).toISOString()} `
+  );
+
+  // TODO active validators
+
+  // TODO pending deposits
+}
+
 module.exports = {
   snapBalances,
   registerValidator,
   stakeValidator,
   withdrawValidator,
+  snapStakingStrategy,
 };
