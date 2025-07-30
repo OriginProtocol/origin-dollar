@@ -3,5 +3,6 @@
   "002_beacon_root_testing": 1753281051,
   "003_upgrade_compounding_staking_strategy": 1753792336,
   "004_set_strategist": 1753796746,
-  "005_upgrade_vault": 1753836739
+  "005_upgrade_vault": 1753836739,
+  "006_upgrade_compounding_staking_strategy": 1753837350
 }
