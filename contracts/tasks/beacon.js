@@ -23,10 +23,16 @@ const {
 } = require("../utils/proofs");
 const { toHex } = require("../utils/units");
 const { logTxDetails } = require("../utils/txLogger");
+const { networkMap } = require("../utils/hardhat-helpers");
 
 const log = require("../utils/logger")("task:beacon");
 
-function getProvider() {
+async function getProvider() {
+  const { chainId } = await ethers.provider.getNetwork();
+  const network = networkMap[chainId];
+  if (network == "hoodi") {
+    return new ethers.providers.JsonRpcProvider(process.env.HOODI_PROVIDER_URL);
+  }
   // Get provider to Ethereum mainnet and not a local fork
   return new ethers.providers.JsonRpcProvider(process.env.PROVIDER_URL);
 }
@@ -102,44 +108,60 @@ async function requestValidatorWithdraw({ pubkey, amount }) {
   await logTxDetails(tx, "requestWithdraw");
 }
 
-async function verifySlot({ block, dryrun }) {
+async function verifySlot({ block, slot, dryrun }) {
   const signer = await getSigner();
 
   // Get provider to mainnet and not a local fork
-  const providerMainnet = getProvider();
+  const providerMainnet = await getProvider();
   const signerMainnet = new Wallet.createRandom().connect(providerMainnet);
 
-  // Get the timestamp of the next block
-  const nextBlock = block + 1;
-  const { timestamp: nextBlockTimestamp } = await providerMainnet.getBlock(
-    nextBlock
-  );
-  log(`Next mainnet block ${nextBlock} has timestamp ${nextBlockTimestamp}`);
+  if (!block && !slot)
+    throw new Error("Either block or slot must be provided to verifySlot");
 
-  let beaconRootsAddress = addresses.mainnet.mockBeaconRoots;
-  if (hre.network.name == "hoodi") {
-    beaconRootsAddress = addresses.hoodi.mockBeaconRoots;
+  let nextBlockTimestamp;
+  // If a block was supplied, we need to work out the slot
+  if (block) {
+    // Get the timestamp of the next block
+    const nextBlock = block + 1;
+    const { timestamp } = await providerMainnet.getBlock(nextBlock);
+    nextBlockTimestamp = timestamp;
+    log(`Next mainnet block ${nextBlock} has timestamp ${nextBlockTimestamp}`);
+
+    const { chainId } = await ethers.provider.getNetwork();
+    const network = networkMap[chainId];
+    const beaconRootsAddress = addresses[network].mockBeaconRoots;
+
+    // Get the parent block root from the beacon roots contract from mainnet
+    const mainnetBeaconRoots = await ethers.getContractAt(
+      "MockBeaconRoots",
+      // Need to use mainnet address and not local deployed address
+      beaconRootsAddress,
+      signerMainnet
+    );
+    log(
+      `Using mainnet MockBeaconRoots contract at ${mainnetBeaconRoots.address}`
+    );
+    const blockRoot = await mainnetBeaconRoots.parentBlockRoot(
+      nextBlockTimestamp
+    );
+    log(`Beacon block root for block ${block} is ${blockRoot}`);
+
+    slot = await getSlot(blockRoot);
+    log(`Slot for block ${block} is:`, slot);
   }
 
-  // Get the parent block root from the beacon roots contract from mainnet
-  const mainnetBeaconRoots = await ethers.getContractAt(
-    "MockBeaconRoots",
-    // Need to use mainnet address and not local deployed address
-    beaconRootsAddress,
-    signerMainnet
-  );
-  log(
-    `Using mainnet MockBeaconRoots contract at ${mainnetBeaconRoots.address}`
-  );
-  const blockRoot = await mainnetBeaconRoots.parentBlockRoot(
-    nextBlockTimestamp
-  );
-  log(`Beacon block root for block ${block} is ${blockRoot}`);
-
-  const slot = await getSlot(blockRoot);
-  log(`Slot for block ${block} is:`, slot);
-
   const { blockView, blockTree } = await getBeaconBlock(slot);
+
+  // If a slot was supplied we need to work out the next block
+  if (!block) {
+    block = blockView.body.executionPayload.blockNumber;
+    log(`Using block ${block} for slot ${slot}`);
+
+    const nextBlock = block + 1;
+    const { timestamp } = await providerMainnet.getBlock(nextBlock);
+    nextBlockTimestamp = timestamp;
+    log(`Next mainnet block ${nextBlock} has timestamp ${nextBlockTimestamp}`);
+  }
 
   const { proof: slotProofBytes, root: beaconBlockRoot } =
     await generateSlotProof({
@@ -215,7 +237,7 @@ async function verifyValidator({ slot, index, dryrun, withdrawal }) {
   }
 
   // Get provider to mainnet and not a local fork
-  const provider = getProvider();
+  const provider = await getProvider();
 
   const nextBlock = blockView.body.executionPayload.blockNumber + 1;
   const { timestamp: nextBlockTimestamp } = await provider.getBlock(nextBlock);
@@ -393,14 +415,14 @@ async function verifyBalances({ root, indexes, dryrun }) {
     console.log(`\nbalancesContainerRoot: ${balancesContainerRoot}`);
     console.log(`\nbalancesContainerProof:\n${balancesContainerProof}`);
     console.log(
-      `\nvalidatorBalanceLeaves:\n${validatorBalanceLeaves
+      `\nvalidatorBalanceLeaves:\n[${validatorBalanceLeaves
         .map((leaf) => `"${leaf}"`)
-        .join(",\n")}`
+        .join(",\n")}]`
     );
     console.log(
-      `\nvalidatorBalanceProofs:\n${validatorBalanceProofs
+      `\nvalidatorBalanceProofs:\n[${validatorBalanceProofs
         .map((proof) => `"${proof}"`)
-        .join(",\n")}`
+        .join(",\n")}]`
     );
     console.log(
       `validatorBalances: ${validatorBalances
@@ -408,6 +430,13 @@ async function verifyBalances({ root, indexes, dryrun }) {
         .join(", ")}`
     );
     return;
+  }
+
+  const oracle = await resolveContract("BeaconOracle");
+  const isMapped = await oracle.isSlotMapped(firstPendingDepositSlot);
+  if (!isMapped) {
+    log(`Slot ${firstPendingDepositSlot} is not mapped in the Beacon Oracle`);
+    await verifySlot({ slot: firstPendingDepositSlot });
   }
 
   log(
@@ -458,7 +487,7 @@ async function slotToRoot({ slot }) {
 
 async function beaconRoot({ block, mainnet }) {
   // Either use mainnet or local fork to get the block timestamp
-  const provider = mainnet ? getProvider() : ethers.provider;
+  const provider = mainnet ? await getProvider() : ethers.provider;
 
   // Get timestamp of the block
   const fetchedBlock = await provider.getBlock(block);

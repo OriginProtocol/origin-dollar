@@ -1060,7 +1060,7 @@ const deployOETHCore = async () => {
   let sGovernor = await ethers.provider.getSigner(governorAddr);
   const sDeployer = await ethers.provider.getSigner(deployerAddr);
 
-  // In case of Hoodie let the deployer be govenor.
+  // In case of Hoodie let the deployer be governor.
   if (isHoodiOrFork) {
     console.log("isHoodiOrFork", "YES");
     governorAddr = deployerAddr;

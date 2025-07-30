@@ -105,12 +105,13 @@ const {
   snapValidators,
 } = require("./validator");
 const {
+  snapStakingStrategy,
   snapBalances,
   registerValidator,
   stakeValidator,
   withdrawValidator,
 } = require("./validatorCompound");
-const { tenderlySync } = require("./tenderly");
+const { tenderlySync, tenderlyUpload } = require("./tenderly");
 const { setDefaultValidator, snapSonicStaking } = require("../utils/sonic");
 const {
   undelegateValidator,
@@ -1885,7 +1886,13 @@ subtask(
   "verifySlot",
   "Verify an execution layer block number to a beacon chain slot"
 )
-  .addParam("block", "Execution layer block number", undefined, types.int)
+  .addOptionalParam(
+    "block",
+    "Execution layer block number",
+    undefined,
+    types.int
+  )
+  .addOptionalParam("slot", "Beacon chain slot number", undefined, types.int)
   .addOptionalParam(
     "dryrun",
     "Do not call verifyBalances on the strategy contract. Just log the params including the proofs",
@@ -2151,10 +2158,29 @@ task("snapBalances").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
 
+subtask("snapStakingStrat", "Dumps the staking strategy's data")
+  .addOptionalParam(
+    "block",
+    "Block number. (default: latest)",
+    undefined,
+    types.int
+  )
+  .setAction(snapStakingStrategy);
+task("snapStakingStrat").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
 subtask(
   "tenderlySync",
   "Fetches all contracts from deployment descriptors and uploads them to Tenderly if they are not there yet."
 ).setAction(tenderlySync);
 task("tenderlySync").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+subtask("tenderlyUpload", "Uploads a contract to Tenderly.")
+  .addParam("name", "The contract's name", undefined, types.string)
+  .setAction(tenderlyUpload);
+task("tenderlyUpload").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
