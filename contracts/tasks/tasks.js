@@ -110,7 +110,7 @@ const {
   stakeValidator,
   withdrawValidator,
 } = require("./validatorCompound");
-const { tenderlySync } = require("./tenderly");
+const { tenderlySync, tenderlyUpload } = require("./tenderly");
 const { setDefaultValidator, snapSonicStaking } = require("../utils/sonic");
 const {
   undelegateValidator,
@@ -2156,5 +2156,12 @@ subtask(
   "Fetches all contracts from deployment descriptors and uploads them to Tenderly if they are not there yet."
 ).setAction(tenderlySync);
 task("tenderlySync").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+subtask("tenderlyUpload", "Uploads a contract to Tenderly.")
+  .addParam("name", "The contract's name", undefined, types.string)
+  .setAction(tenderlyUpload);
+task("tenderlyUpload").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
