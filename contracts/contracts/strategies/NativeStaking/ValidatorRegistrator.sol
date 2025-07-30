@@ -447,7 +447,7 @@ abstract contract ValidatorRegistrator is Governable, Pausable, IConsolidationSo
         // Check the caller is the target staking strategy
         require(
             msg.sender == intermediateConsolidationStrategy,
-            "Not target strategy"
+            "Not consolidation contract"
         );
 
         // Load the number of validators being consolidated into memory

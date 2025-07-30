@@ -109,7 +109,7 @@ abstract contract CompoundingValidatorManager is Governable, Pausable, IConsolid
     /// withdrawal of the validators. It is strictly concerned with WETH that has been deposited and is waiting to
     /// be staked.
     uint256 public depositedWethAccountedFor;
-    mapping(address => bool) public consolidationSourceStrategies;
+    mapping(address => bool) public consolidationContracts;
 
     /// @notice Mapping of the validator hashed keys to balances at last verification.
     /// Once all the Validators have been consolidated from the old strategy contract this field can be
@@ -135,7 +135,7 @@ abstract contract CompoundingValidatorManager is Governable, Pausable, IConsolid
     }
 
     event RegistratorChanged(address indexed newAddress);
-    event SourceStrategyAdded(address indexed strategy);
+    event ConsolidationContractAdded(address indexed strategy);
     event SSVValidatorRegistered(
         bytes32 indexed pubKeyHash,
         uint64[] operatorIds
@@ -215,10 +215,10 @@ abstract contract CompoundingValidatorManager is Governable, Pausable, IConsolid
     }
 
     /// @notice Adds support for a legacy staking strategy that can be used for consolidation.
-    function addSourceStrategy(address _strategy) external onlyGovernor {
-        consolidationSourceStrategies[_strategy] = true;
+    function addConsolidationContract(address _strategy) external onlyGovernor {
+        consolidationContracts[_strategy] = true;
 
-        emit SourceStrategyAdded(_strategy);
+        emit ConsolidationContractAdded(_strategy);
     }
 
     /***************************************`
@@ -442,6 +442,10 @@ abstract contract CompoundingValidatorManager is Governable, Pausable, IConsolid
             depositsRoots.length == 0,
             "Not all deposits verified"
         );
+        require(
+            consolidationContracts[msg.sender],
+            "Not consolidation contract"
+        );
 
         uint256 validatorBalanceMem = validatorBalances[pubKeyHash];
         require(
@@ -466,8 +470,8 @@ abstract contract CompoundingValidatorManager is Governable, Pausable, IConsolid
         uint256 validatorBalance
     ) external {
         require(
-            consolidationSourceStrategies[msg.sender],
-            "Not a source strategy"
+            consolidationContracts[msg.sender],
+            "Not consolidation contract"
         );
 
         emit ConsolidationCompeted(
