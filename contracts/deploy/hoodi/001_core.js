@@ -15,7 +15,7 @@ const { isFork } = require("../../test/helpers");
 const mainExport = async () => {
   console.log("Running 001_core deployment on Hoodi...");
   const { deployerAddr } = await getNamedAccounts();
-  // deployer is govenor
+  // deployer is governor
   const sDeployer = await ethers.provider.getSigner(deployerAddr);
 
   if (isFork) {
