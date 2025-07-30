@@ -117,9 +117,10 @@ async function withdrawValidator({ pubkey, amount }) {
       9
     )} ETH from validator with pubkey ${pubkey}`
   );
+  // Send 1 wei of value to cover the request withdrawal fee
   const tx = await strategy
     .connect(signer)
-    .validatorWithdrawal(pubkey, amountGwei);
+    .validatorWithdrawal(pubkey, amountGwei, { value: 1 });
   await logTxDetails(tx, "validatorWithdrawal");
 }
 
