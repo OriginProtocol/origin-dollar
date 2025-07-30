@@ -23,10 +23,16 @@ const {
 } = require("../utils/proofs");
 const { toHex } = require("../utils/units");
 const { logTxDetails } = require("../utils/txLogger");
+const { networkMap } = require("../utils/hardhat-helpers");
 
 const log = require("../utils/logger")("task:beacon");
 
-function getProvider() {
+async function getProvider() {
+  const { chainId } = await ethers.provider.getNetwork();
+  const network = networkMap[chainId];
+  if (network == "hoodi") {
+    return new ethers.providers.JsonRpcProvider(process.env.HOODI_PROVIDER_URL);
+  }
   // Get provider to Ethereum mainnet and not a local fork
   return new ethers.providers.JsonRpcProvider(process.env.PROVIDER_URL);
 }
@@ -106,7 +112,7 @@ async function verifySlot({ block, dryrun }) {
   const signer = await getSigner();
 
   // Get provider to mainnet and not a local fork
-  const providerMainnet = getProvider();
+  const providerMainnet = await getProvider();
   const signerMainnet = new Wallet.createRandom().connect(providerMainnet);
 
   // Get the timestamp of the next block
@@ -215,7 +221,7 @@ async function verifyValidator({ slot, index, dryrun, withdrawal }) {
   }
 
   // Get provider to mainnet and not a local fork
-  const provider = getProvider();
+  const provider = await getProvider();
 
   const nextBlock = blockView.body.executionPayload.blockNumber + 1;
   const { timestamp: nextBlockTimestamp } = await provider.getBlock(nextBlock);
@@ -458,7 +464,7 @@ async function slotToRoot({ slot }) {
 
 async function beaconRoot({ block, mainnet }) {
   // Either use mainnet or local fork to get the block timestamp
-  const provider = mainnet ? getProvider() : ethers.provider;
+  const provider = mainnet ? await getProvider() : ethers.provider;
 
   // Get timestamp of the block
   const fetchedBlock = await provider.getBlock(block);
