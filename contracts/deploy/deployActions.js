@@ -16,7 +16,7 @@ const {
   isPlume,
   isHoodi,
   isHoodiOrFork,
-} = require("../test/helpers.js");
+} = require("../test/helpers");
 const { deployWithConfirmation, withConfirmation } = require("../utils/deploy");
 const { metapoolLPCRVPid } = require("../utils/constants");
 const { replaceContractAt } = require("../utils/hardhat");
@@ -968,6 +968,50 @@ const deployCompoundingStakingSSVStrategy = async () => {
   return cStrategy;
 };
 
+const deployConsolidationManager = async () => {
+  log("Deploy ConsolidationManager that facilitates merge");
+  const { deployerAddr } = await getNamedAccounts();
+  let sDeployer = await ethers.provider.getSigner(deployerAddr);
+
+  // In case of Hoodie let the deployer be governor.
+  if (isHoodiOrFork) {
+    sDeployer = await getDefenderSigner();
+  }
+
+  await deployWithConfirmation("ConsolidationManagerProxy");
+  const cConsolidationManagerProxy = await ethers.getContract("ConsolidationManagerProxy");
+
+  const beaconProofs = await ethers.getContract("BeaconProofs");
+  const dConsolidationManagerImpl = await deployWithConfirmation("ConsolidationManager", [
+    beaconProofs.address,
+  ]);
+
+
+  // prettier-ignore
+  await withConfirmation(
+    cConsolidationManagerProxy.connect(sDeployer)["initialize(address,address,bytes)"](
+      dConsolidationManagerImpl.address,
+      sDeployer.address,
+      [],
+      await getTxOpts()
+    )
+  );
+
+  const cConsolidationManager = await ethers.getContractAt("ConsolidationManager", cConsolidationManagerProxy.address);
+  let validatorRegistrator
+  if (isMainnet) {
+    validatorRegistrator = addresses.mainnet.validatorRegistrator;
+  } else if (isHoodiOrFork) {
+    validatorRegistrator = addresses.hoodi.defenderRelayer;
+  }
+
+  await withConfirmation(
+    cConsolidationManager
+      .connect(sDeployer)
+      .setRegistrator(validatorRegistrator)
+  );
+};
+
 const deployBeaconContracts = async () => {
   log("Deploy Beacon Oracle that maps blocks and slots");
   if (isTest) {
@@ -1066,7 +1110,6 @@ const deployOETHCore = async () => {
 
   // In case of Hoodie let the deployer be governor.
   if (isHoodiOrFork) {
-    console.log("isHoodiOrFork", "YES");
     governorAddr = deployerAddr;
     sGovernor = sDeployer;
   }
@@ -1692,6 +1735,7 @@ module.exports = {
   deployBeaconContracts,
   deployNativeStakingSSVStrategy,
   deployCompoundingStakingSSVStrategy,
+  deployConsolidationManager,
   deployDrippers,
   deployOETHDripper,
   deployOUSDDripper,

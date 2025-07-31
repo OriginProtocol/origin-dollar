@@ -13,7 +13,7 @@ import { IBeaconProofs } from "../../interfaces/IBeaconProofs.sol";
  * register, deposit and consolidate validators.
  * @author Origin Protocol Inc
  */
-abstract contract ConsolidateValidator is Governable, IConsolidationStrategy, IConsolidationTarget {
+contract ConsolidationManager is Governable, IConsolidationStrategy {
     /// @notice Address of the Beacon Proofs contract that verifies beacon chain data
     address public immutable BEACON_PROOFS;
     uint256 public constant FULL_STAKE = 32 ether;
