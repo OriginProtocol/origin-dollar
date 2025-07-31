@@ -26,7 +26,7 @@ abstract contract ConsolidateValidator is Governable, IConsolidationStrategy, IC
     uint256 public maximumConsolidationCorrection;
 
     // @notice last target consolidation validator public key
-    bytes32 public consolidationLastPubKeyHash;
+    bytes32 public consolidationTargetPubKeyHash;
     address public consolidationSourceStrategy;
     mapping(address => bool) public consolidationSourceStrategies;
     address public consolidationTargetStrategy;
@@ -120,7 +120,7 @@ abstract contract ConsolidateValidator is Governable, IConsolidationStrategy, IC
             .initiateConsolidation(targetPubKeyHash);
 
         // Store consolidation state
-        consolidationLastPubKeyHash = targetPubKeyHash;
+        consolidationTargetPubKeyHash = targetPubKeyHash;
         consolidationSourceStrategy = msg.sender;
 
         emit ConsolidationRequested(
@@ -149,13 +149,13 @@ abstract contract ConsolidateValidator is Governable, IConsolidationStrategy, IC
         bytes32 balancesLeafAfter,
         bytes calldata validatorBalanceProofAfter
     ) external onlyRegistrator {
-        bytes32 consolidationLastPubKeyHashMem = consolidationLastPubKeyHash;
+        bytes32 consolidationTargetPubKeyHashMem = consolidationTargetPubKeyHash;
         require(
             consolidationTargetStrategy != address(0),
             "Target strat not set"
         );
         require(
-            consolidationLastPubKeyHashMem != bytes32(0),
+            consolidationTargetPubKeyHashMem != bytes32(0),
             "No consolidations"
         );
 
@@ -166,7 +166,7 @@ abstract contract ConsolidateValidator is Governable, IConsolidationStrategy, IC
          */
         uint256 targetValidatorBalanceBefore = _validatorBalanceProof(
             consolidationStartBlockTimestamp,
-            consolidationLastPubKeyHashMem,
+            consolidationTargetPubKeyHashMem,
             targetValidatorIndex,
             validatorPubKeyProof,
             balancesLeafBefore,
@@ -181,7 +181,7 @@ abstract contract ConsolidateValidator is Governable, IConsolidationStrategy, IC
          */
         uint256 targetValidatorBalanceAfter = _validatorBalanceProof(
             parentBlockTimestamp,
-            consolidationLastPubKeyHashMem,
+            consolidationTargetPubKeyHashMem,
             targetValidatorIndex,
             validatorPubKeyProof,
             balancesLeafAfter,
@@ -204,19 +204,19 @@ abstract contract ConsolidateValidator is Governable, IConsolidationStrategy, IC
         );
 
         // Reset the stored consolidation state
-        consolidationLastPubKeyHash = bytes32(0);
+        consolidationTargetPubKeyHash = bytes32(0);
         consolidationStartBlockTimestamp = 0;
         consolidationSourceStrategy = address(0);
 
         emit ConsolidationVerified(
-            consolidationLastPubKeyHashMem,
+            consolidationTargetPubKeyHashMem,
             targetValidatorIndex,
             consolidationCount,
             consolidatedAmount
         );
 
         IConsolidationTarget(consolidationTargetStrategy)
-            .consolidationCompleted(consolidationLastPubKeyHashMem, consolidatedAmount);
+            .consolidationCompleted(consolidationTargetPubKeyHashMem, consolidatedAmount);
     }
 
     function _validatorBalanceProof(
