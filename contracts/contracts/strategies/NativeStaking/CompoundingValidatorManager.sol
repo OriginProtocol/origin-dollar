@@ -739,10 +739,11 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
                 params.firstPendingDepositSlotProof
             );
 
-            // As the probably don't have the slot of the first pending deposit mapped to a block in the BeaconOracle,
-            // we use any slot that is on or before the slot of the first pending deposit.
+            // As the BeaconOracle probably doesn't have the slot of the first pending deposit mapped to a block,
+            // use any slot that is on or after the slot of the first pending deposit. That is,
+            // firstPendingDepositSlot <= mappedDepositSlot < deposits[depositDataRoot].blockNumber
             require(
-                params.mappedDepositSlot <= params.firstPendingDepositSlot,
+                params.firstPendingDepositSlot <= params.mappedDepositSlot,
                 "Invalid deposit slot"
             );
             uint64 firstPendingDepositBlockNumber = IBeaconOracle(BEACON_ORACLE)
