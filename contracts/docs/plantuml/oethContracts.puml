@@ -22,12 +22,12 @@ object "OETHZapper" as zap <<Origin>> #$originColor {
 ' object "ARM Router" as router <<Origin>><<Proxy>> #$newColor {
 ' }
 
-object "OETH ARM" as arm <<Origin>><<Proxy>> #$newColor {
+object "OETH ARM" as arm <<Origin>><<Proxy>> #$originColor {
     assets: WETH, OETH
 }
 
 
-object "OETHDripper" as drip <<Origin>><<Proxy>> #$originColor {
+object "OETHFixedRateDripper" as drip <<Origin>><<Proxy>> #$originColor {
     asset: WETH
 }
 
@@ -49,8 +49,8 @@ object "OETH Vault" as oethv <<Origin>><<Proxy>> #$originColor {
 asset: WETH
 }
 
-object "OETHHarvester" as harv <<Origin>><<Proxy>> #$originColor {
-    rewards: CRV, CVX
+object "OETHHarvesterSimple" as harv <<Origin>><<Proxy>> #$originColor {
+    rewards: WETH, CRV, CVX
 }
 
 ' Strategies
@@ -59,6 +59,12 @@ object "ConvexEthMetaStrategy" as cvxStrat <<Origin>><<Proxy>> #$originColor {
     Curve metapool: OETHCRV-f
     Convex pool: cvxOETHCRV-f
     Rewards: CRV, CVX
+}
+
+object "CurveAMOStrategy" as amoStrat <<Origin>><<Proxy>> #$originColor {
+    asset: WETH
+    Curve pool: OETH/WETH
+    Rewards: CRV
 }
 
 object "NativeStakingStrategy" as nativeStrat <<Origin>><<Proxy>> #$originColor {
@@ -76,6 +82,15 @@ object "NativeStakingStrategy2" as nativeStrat2 <<Origin>><<Proxy>> #$originColo
 }
 
 object "FeeAccumulator2" as feeAcc2 <<Origin>><<Proxy>> #$originColor {
+    assets: ETH
+}
+
+object "NativeStakingStrategy3" as nativeStrat3 <<Origin>><<Proxy>> #$originColor {
+    assets: WETH, ETH
+    Rewards: ETH, SSV
+}
+
+object "FeeAccumulator3" as feeAcc3 <<Origin>><<Proxy>> #$originColor {
     assets: ETH
 }
 
@@ -173,6 +188,11 @@ harv <..> cvxStrat
 oethv <...> cvxStrat
 oeth <... cvxStrat
 
+' Curve AMO Strategy
+harv <..> amoStrat
+oethv <...> amoStrat
+oeth <... amoStrat
+
 harv <..> nativeStrat
 oethv <...> nativeStrat
 nativeStrat <..> feeAcc
@@ -182,6 +202,13 @@ nativeStrat <..> feeAcc
 harv <..> nativeStrat2
 oethv <...> nativeStrat2
 nativeStrat2 <..> feeAcc2
+' nativeStrat2 ...> ssvNet
+' nativeStrat2 ...> bDep
+
+
+harv <..> nativeStrat3
+oethv <...> nativeStrat3
+nativeStrat3 <..> feeAcc3
 ' nativeStrat2 ...> ssvNet
 ' nativeStrat2 ...> bDep
 

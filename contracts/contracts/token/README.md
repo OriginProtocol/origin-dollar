@@ -101,3 +101,37 @@
 ### Storage
 
 ![Base Wrapped Origin Ether Storage](../../docs/WOETHBaseStorage.svg)
+
+## Origin Sonic (OS)
+
+- Symbol `OS`
+- Name `Origin Sonic`
+
+### Hierarchy
+
+![Origin Sonic Hierarchy](../../docs/OSonicHierarchy.svg)
+
+### Squashed
+
+![Origin Sonic Squashed](../../docs/OSonicSquashed.svg)
+
+### Storage
+
+![Origin Sonic Storage](../../docs/OSonicStorage.svg)
+
+## Wrapped Origin Sonic (wOS)
+
+- Symbol `wOS`
+- Name `Wrapped Origin Sonic`
+
+### Hierarchy
+
+![Wrapped Origin Sonic Hierarchy](../../docs/WOSonicHierarchy.svg)
+
+### Squashed
+
+![Wrapped Origin Sonic Squashed](../../docs/WOSonicSquashed.svg)
+
+### Storage
+
+![Wrapped Origin Sonic Storage](../../docs/WOSonicStorage.svg)

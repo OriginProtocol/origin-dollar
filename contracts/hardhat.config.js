@@ -1,7 +1,9 @@
 const ethers = require("ethers");
 const { task } = require("hardhat/config");
 const {
+  isArbitrum,
   isArbitrumFork,
+  isArbForkTest,
   isHoleskyFork,
   isHolesky,
   isForkTest,
@@ -9,15 +11,25 @@ const {
   isBase,
   isBaseFork,
   isBaseForkTest,
+  isBaseUnitTest,
+  isSonic,
+  isSonicFork,
+  isSonicForkTest,
+  isSonicUnitTest,
+  isPlume,
+  isPlumeFork,
+  isPlumeForkTest,
+  isPlumeUnitTest,
   baseProviderUrl,
+  sonicProviderUrl,
   arbitrumProviderUrl,
   holeskyProviderUrl,
+  plumeProviderUrl,
   adjustTheForkBlockNumber,
   getHardhatNetworkProperties,
-  isBaseUnitTest,
 } = require("./utils/hardhat-helpers.js");
 
-require("@nomiclabs/hardhat-etherscan");
+require("@nomicfoundation/hardhat-verify");
 require("@nomiclabs/hardhat-waffle");
 require("@nomiclabs/hardhat-solhint");
 require("hardhat-deploy");
@@ -32,7 +44,6 @@ require("./tasks/tasks");
 const { accounts } = require("./tasks/account");
 
 const addresses = require("./utils/addresses.js");
-
 const MAINNET_DEPLOYER =
   process.env.MAINNET_DEPLOYER_OVERRIDE ||
   "0x3Ba227D87c2A7aB89EAaCEFbeD9bfa0D15Ad249A";
@@ -42,14 +53,30 @@ const MAINNET_GOVERNOR_FIVE = "0x3cdd07c16614059e66344a7b579dab4f9516c0b6";
 const MAINNET_TIMELOCK = "0x35918cDE7233F2dD33fA41ae3Cb6aE0e42E0e69F";
 // Mainnet contracts are governed by the Governor contract (which derives off Timelock).
 const MAINNET_GOVERNOR = "0x72426ba137dec62657306b12b1e869d43fec6ec7";
-// Multi-sig that controls the Governor. Aka "Guardian".
+// 5/8 multi-sig that controls the Governor. Aka "Admin".
 const MAINNET_MULTISIG = "0xbe2AB3d3d8F6a32b96414ebbd865dBD276d3d899";
 const MAINNET_CLAIM_ADJUSTER = MAINNET_DEPLOYER;
+// 2/8 multi-sig that controls fund allocations. Aka "Guardian".
 const MAINNET_STRATEGIST = "0xf14bbdf064e3f67f51cd9bd646ae3716ad938fdc";
 const HOLESKY_DEPLOYER = "0x1b94CA50D3Ad9f8368851F8526132272d1a5028C";
 const BASE_DEPLOYER = MAINNET_DEPLOYER;
+// 5/8 multi-sig that controls the Timelock. Aka "Admin".
 const BASE_GOVERNOR = "0x92A19381444A001d62cE67BaFF066fA1111d7202";
+// 2/8 multi-sig that controls fund allocations. Aka "Guardian".
 const BASE_STRATEGIST = "0x28bce2eE5775B652D92bB7c2891A89F036619703";
+const SONIC_DEPLOYER = MAINNET_DEPLOYER;
+// 5/8 multi-sig that controls the Timelock. Aka "Admin".
+const SONIC_ADMIN = "0xAdDEA7933Db7d83855786EB43a238111C69B00b6";
+// 2/8 multi-sig that controls fund allocations. Aka "Guardian".
+const SONIC_STRATEGIST = "0x63cdd3072F25664eeC6FAEFf6dAeB668Ea4de94a";
+
+const MULTICHAIN_STRATEGIST = "0x4FF1b9D9ba8558F5EAfCec096318eA0d8b541971";
+
+const PLUME_DEPLOYER = MAINNET_DEPLOYER;
+// Plume 5/8 multisig
+const PLUME_ADMIN = "0x92A19381444A001d62cE67BaFF066fA1111d7202";
+// Plume 2/8 multisig
+const PLUME_STRATEGIST = MULTICHAIN_STRATEGIST;
 
 const mnemonic =
   "replace hover unaware super where filter stone fine garlic address matrix basic";
@@ -75,6 +102,12 @@ if (isHolesky || isHoleskyForkTest || isHoleskyFork) {
   paths.deploy = "deploy/holesky";
 } else if (isBase || isBaseFork || isBaseForkTest || isBaseUnitTest) {
   paths.deploy = "deploy/base";
+} else if (isSonic || isSonicFork || isSonicForkTest || isSonicUnitTest) {
+  paths.deploy = "deploy/sonic";
+} else if (isArbitrum || isArbitrumFork || isArbForkTest) {
+  paths.deploy = "deploy/arbitrumOne";
+} else if (isPlume || isPlumeFork || isPlumeForkTest || isPlumeUnitTest) {
+  paths.deploy = "deploy/plume";
 } else {
   // holesky deployment files are in contracts/deploy/mainnet
   paths.deploy = "deploy/mainnet";
@@ -84,9 +117,77 @@ if (process.env.HARDHAT_CACHE_DIR) {
 }
 const { provider, chainId } = getHardhatNetworkProperties();
 
+const defaultAccounts = [
+  process.env.DEPLOYER_PK || privateKeys[0],
+  process.env.GOVERNOR_PK || privateKeys[0],
+];
+
+const getDeployTags = () => {
+  if (isArbitrumFork) {
+    return ["arbitrumOne"];
+  } else if (isBaseFork) {
+    return ["base"];
+  } else if (isSonicFork) {
+    return ["sonic"];
+  } else if (isPlumeFork) {
+    return ["plume"];
+  }
+
+  return undefined;
+};
+
+/// Config for Fork and unit test environments
+const localEnvDeployer =
+  process.env.FORK === "true"
+    ? isHoleskyFork
+      ? HOLESKY_DEPLOYER
+      : isBaseFork
+      ? BASE_DEPLOYER
+      : isSonicFork
+      ? SONIC_DEPLOYER
+      : isPlumeFork
+      ? PLUME_DEPLOYER
+      : MAINNET_DEPLOYER
+    : 0; // 0th signer fallback
+
+const localEnvGovernor =
+  process.env.FORK === "true"
+    ? isHoleskyFork
+      ? HOLESKY_DEPLOYER
+      : isBaseFork
+      ? BASE_GOVERNOR
+      : isSonicFork
+      ? SONIC_ADMIN
+      : isPlumeFork
+      ? PLUME_ADMIN
+      : MAINNET_GOVERNOR
+    : 1; // signer at index 1
+
+const localEnvTimelock =
+  process.env.FORK_NETWORK_NAME == "base"
+    ? addresses.base.timelock
+    : process.env.FORK_NETWORK_NAME == "sonic"
+    ? addresses.sonic.timelock
+    : process.env.FORK_NETWORK_NAME == "plume"
+    ? addresses.plume.timelock
+    : process.env.FORK_NETWORK_NAME == "mainnet" ||
+      (!process.env.FORK_NETWORK_NAME && process.env.FORK == "true")
+    ? MAINNET_TIMELOCK
+    : ethers.constants.AddressZero;
+
+const localEnvStrategist =
+  process.env.FORK === "true"
+    ? isHoleskyFork
+      ? HOLESKY_DEPLOYER
+      : isSonicFork
+      ? SONIC_STRATEGIST
+      : // Base, Plume and Eth use Multichain Strategist
+        MULTICHAIN_STRATEGIST
+    : 0;
+
 module.exports = {
   solidity: {
-    version: "0.8.7",
+    version: "0.8.28",
     settings: {
       optimizer: {
         enabled: true,
@@ -104,12 +205,10 @@ module.exports = {
       accounts: {
         mnemonic,
       },
+      blockGasLimit: 1000000000,
+      allowUnlimitedContractSize: true,
       chainId,
-      ...(isArbitrumFork
-        ? { tags: ["arbitrumOne"] }
-        : isBaseFork
-        ? { tags: ["base"] }
-        : {}),
+      tags: getDeployTags(),
       ...(isForkTest
         ? {
             timeout: 0,
@@ -131,34 +230,21 @@ module.exports = {
     },
     localhost: {
       timeout: 0,
-      ...(isArbitrumFork
-        ? { tags: ["arbitrumOne"] }
-        : isBaseFork
-        ? { tags: ["base"] }
-        : {}),
+      tags: getDeployTags(),
     },
     mainnet: {
       url: `${process.env.PROVIDER_URL}`,
-      accounts: [
-        process.env.DEPLOYER_PK || privateKeys[0],
-        process.env.GOVERNOR_PK || privateKeys[0],
-      ],
+      accounts: defaultAccounts,
     },
     holesky: {
       url: holeskyProviderUrl,
-      accounts: [
-        process.env.DEPLOYER_PK || privateKeys[0],
-        process.env.GOVERNOR_PK || privateKeys[0],
-      ],
+      accounts: defaultAccounts,
       chainId: 17000,
       live: true,
     },
     arbitrumOne: {
       url: arbitrumProviderUrl,
-      accounts: [
-        process.env.DEPLOYER_PK || privateKeys[0],
-        process.env.GOVERNOR_PK || privateKeys[0],
-      ],
+      accounts: defaultAccounts,
       chainId: 42161,
       tags: ["arbitrumOne"],
       live: true,
@@ -169,12 +255,25 @@ module.exports = {
     },
     base: {
       url: baseProviderUrl,
-      accounts: [
-        process.env.DEPLOYER_PK || privateKeys[0],
-        process.env.GOVERNOR_PK || privateKeys[0],
-      ],
+      accounts: defaultAccounts,
       chainId: 8453,
       tags: ["base"],
+      live: true,
+      saveDeployments: true,
+    },
+    sonic: {
+      url: sonicProviderUrl,
+      accounts: defaultAccounts,
+      chainId: 146,
+      tags: ["sonic"],
+      live: true,
+      saveDeployments: true,
+    },
+    plume: {
+      url: plumeProviderUrl,
+      accounts: defaultAccounts,
+      chainId: 98866,
+      tags: ["plume"],
       live: true,
       saveDeployments: true,
     },
@@ -187,45 +286,25 @@ module.exports = {
   namedAccounts: {
     deployerAddr: {
       default: 0,
-      localhost:
-        process.env.FORK === "true"
-          ? isHoleskyFork
-            ? HOLESKY_DEPLOYER
-            : MAINNET_DEPLOYER
-          : 0,
-      hardhat:
-        process.env.FORK === "true"
-          ? isHoleskyFork
-            ? HOLESKY_DEPLOYER
-            : MAINNET_DEPLOYER
-          : 0,
+      localhost: localEnvDeployer,
+      hardhat: localEnvDeployer,
       mainnet: MAINNET_DEPLOYER,
       arbitrumOne: MAINNET_DEPLOYER,
       holesky: HOLESKY_DEPLOYER,
-      base: MAINNET_DEPLOYER,
+      base: BASE_DEPLOYER,
+      sonic: SONIC_DEPLOYER,
+      plume: MAINNET_DEPLOYER,
     },
     governorAddr: {
       default: 1,
       // On Mainnet and fork, the governor is the Governor contract.
-      localhost:
-        process.env.FORK === "true"
-          ? isHoleskyFork
-            ? HOLESKY_DEPLOYER
-            : isBaseFork
-            ? BASE_GOVERNOR
-            : MAINNET_GOVERNOR
-          : 1,
-      hardhat:
-        process.env.FORK === "true"
-          ? isHoleskyFork
-            ? HOLESKY_DEPLOYER
-            : isBaseFork
-            ? BASE_GOVERNOR
-            : MAINNET_GOVERNOR
-          : 1,
+      localhost: localEnvGovernor,
+      hardhat: localEnvGovernor,
       mainnet: MAINNET_GOVERNOR,
       holesky: HOLESKY_DEPLOYER, // on Holesky the deployer is also the governor
       base: BASE_GOVERNOR,
+      sonic: SONIC_ADMIN,
+      plume: PLUME_ADMIN,
     },
     /* Local node environment currently has no access to Decentralized governance
      * address, since the contract is in another repo. Once we merge the ousd-governance
@@ -265,23 +344,22 @@ module.exports = {
     timelockAddr: {
       default: ethers.constants.AddressZero,
       // On Mainnet and fork, the governor is the Governor contract.
-      localhost:
-        process.env.FORK === "true"
-          ? MAINNET_TIMELOCK
-          : ethers.constants.AddressZero,
-      hardhat:
-        process.env.FORK === "true"
-          ? MAINNET_TIMELOCK
-          : ethers.constants.AddressZero,
+      localhost: localEnvTimelock,
+      hardhat: localEnvTimelock,
       mainnet: MAINNET_TIMELOCK,
-      // Base has no timelock
+      base: addresses.base.timelock,
+      sonic: addresses.sonic.timelock,
+      plume: addresses.plume.timelock,
     },
     guardianAddr: {
       default: 1,
       // On mainnet and fork, the guardian is the multi-sig.
-      localhost: process.env.FORK === "true" ? MAINNET_MULTISIG : 1,
-      hardhat: process.env.FORK === "true" ? MAINNET_MULTISIG : 1,
+      localhost: localEnvGovernor,
+      hardhat: localEnvGovernor,
       mainnet: MAINNET_MULTISIG,
+      base: BASE_GOVERNOR,
+      sonic: SONIC_ADMIN,
+      plume: PLUME_STRATEGIST,
     },
     adjusterAddr: {
       default: 0,
@@ -291,21 +369,16 @@ module.exports = {
     },
     strategistAddr: {
       default: 0,
-      localhost:
-        process.env.FORK === "true"
-          ? isHoleskyFork
-            ? HOLESKY_DEPLOYER
-            : MAINNET_STRATEGIST
-          : 0,
-      hardhat:
-        process.env.FORK === "true"
-          ? isHoleskyFork
-            ? HOLESKY_DEPLOYER
-            : MAINNET_STRATEGIST
-          : 0,
-      mainnet: MAINNET_STRATEGIST,
+      localhost: localEnvStrategist,
+      hardhat: localEnvStrategist,
+      mainnet: MULTICHAIN_STRATEGIST,
       holesky: HOLESKY_DEPLOYER, // on Holesky the deployer is also the strategist
-      base: BASE_STRATEGIST,
+      base: MULTICHAIN_STRATEGIST,
+      sonic: SONIC_STRATEGIST,
+      plume: PLUME_STRATEGIST,
+    },
+    multichainStrategistAddr: {
+      default: MULTICHAIN_STRATEGIST,
     },
   },
   contractSizer: {
@@ -318,6 +391,8 @@ module.exports = {
       arbitrumOne: process.env.ARBISCAN_API_KEY,
       holesky: process.env.ETHERSCAN_API_KEY,
       base: process.env.BASESCAN_API_KEY,
+      sonic: process.env.SONICSCAN_API_KEY,
+      plume: "empty", // this works for: npx hardhat verify...
     },
     customChains: [
       {
@@ -330,16 +405,35 @@ module.exports = {
       },
       {
         network: "base",
-        chainId: 8543,
+        chainId: 8453,
         urls: {
           apiURL: "https://api.basescan.org/api",
           browserURL: "https://basescan.org",
+        },
+      },
+      {
+        network: "sonic",
+        chainId: 146,
+        urls: {
+          apiURL: "https://api.sonicscan.org/api",
+          browserURL: "https://sonicscan.org",
+        },
+      },
+      {
+        network: "plume",
+        chainId: 98866,
+        urls: {
+          apiURL: "https://explorer.plume.org/api",
+          browserURL: "https://explorer.plume.org",
         },
       },
     ],
   },
   gasReporter: {
     enabled: process.env.REPORT_GAS ? true : false,
+  },
+  sourcify: {
+    enabled: true,
   },
   paths,
 };

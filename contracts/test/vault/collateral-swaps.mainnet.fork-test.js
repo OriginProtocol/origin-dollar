@@ -4,8 +4,6 @@ const { parseUnits, formatUnits } = require("ethers/lib/utils");
 const {
   createFixtureLoader,
   defaultFixture,
-  oethDefaultFixture,
-  oethCollateralSwapFixture,
   ousdCollateralSwapFixture,
 } = require("../_fixture");
 const { getIInchSwapData, recodeSwapData } = require("../../utils/1Inch");
@@ -13,96 +11,6 @@ const { decimalsFor, isCI } = require("../helpers");
 const { resolveAsset } = require("../../utils/resolvers");
 
 const log = require("../../utils/logger")("test:fork:swaps");
-
-// Skipping as the OETH vault should now only contain WETH so no more swaps
-describe.skip("ForkTest: OETH Vault", function () {
-  this.timeout(0);
-
-  // Retry up to 3 times on CI
-  this.retries(isCI ? 3 : 0);
-
-  let fixture;
-
-  describe("post swap deployment", () => {
-    const loadFixture = createFixtureLoader(oethDefaultFixture);
-    beforeEach(async () => {
-      fixture = await loadFixture();
-    });
-    it("should have swapper set", async () => {
-      const { oethVault, swapper } = fixture;
-
-      expect(await oethVault.swapper()).to.equal(swapper.address);
-    });
-    it("assets should have allowed slippage", async () => {
-      const { oethVault, weth, reth, stETH } = fixture;
-
-      const assets = [weth, stETH, reth];
-      const expectedConversions = [0, 0, 1];
-      const expectedSlippage = [20, 70, 200];
-
-      for (let i = 0; i < assets.length; i++) {
-        const config = await oethVault.getAssetConfig(assets[i].address);
-
-        expect(config.decimals, `decimals ${i}`).to.equal(18);
-        expect(config.isSupported, `isSupported ${i}`).to.be.true;
-        expect(config.unitConversion, `unitConversion ${i}`).to.be.equal(
-          expectedConversions[i]
-        );
-        expect(
-          config.allowedOracleSlippageBps,
-          `allowedOracleSlippageBps ${i}`
-        ).to.equal(expectedSlippage[i]);
-      }
-    });
-  });
-
-  describe("Collateral swaps (Happy paths)", async () => {
-    const loadFixture = createFixtureLoader(oethCollateralSwapFixture);
-    beforeEach(async () => {
-      fixture = await loadFixture();
-    });
-
-    const tests = [
-      {
-        from: "rETH",
-        to: "WETH",
-        fromAmount: 10,
-        minToAssetAmount: "10.7",
-        slippage: 0.3,
-      },
-
-      // Skipping since this keeps failing and we are already
-      // in the process getting rid of all LSTs from the Vault
-
-      // {
-      //   from: "stETH",
-      //   to: "WETH",
-      //   fromAmount: 1,
-      //   minToAssetAmount: 0.99,
-      //   approxFromBalance: true,
-      //   protocols: ['UNISWAP_V3']
-      // },
-    ];
-    for (const test of tests) {
-      it(`should be able to swap ${test.fromAmount} ${test.from} for a min of ${
-        test.minToAssetAmount
-      } ${test.to} using ${test.protocols || "all"} protocols`, async () => {
-        const fromAsset = await resolveAsset(test.from);
-        const toAsset = await resolveAsset(test.to);
-
-        await assertSwap(
-          {
-            ...test,
-            fromAsset,
-            toAsset,
-            vault: fixture.oethVault,
-          },
-          fixture
-        );
-      });
-    }
-  });
-});
 
 describe.skip("ForkTest: OUSD Vault", function () {
   this.timeout(0);
@@ -124,9 +32,9 @@ describe.skip("ForkTest: OUSD Vault", function () {
       expect(await vault.swapper()).to.equal(swapper.address);
     });
     it("assets should have allowed slippage", async () => {
-      const { vault, dai, usdc, usdt } = fixture;
+      const { vault, usds, usdc, usdt } = fixture;
 
-      const assets = [dai, usdc, usdt];
+      const assets = [usds, usdc, usdt];
       const expectedDecimals = [18, 6, 6];
       const expectedConversions = [0, 0, 0];
       const expectedSlippage = [25, 25, 25];
@@ -155,13 +63,13 @@ describe.skip("ForkTest: OUSD Vault", function () {
 
     const tests = [
       {
-        from: "DAI",
+        from: "USDS",
         to: "USDT",
         fromAmount: 1000000,
         minToAssetAmount: 990000,
       },
       {
-        from: "DAI",
+        from: "USDS",
         to: "USDC",
         fromAmount: 1000000,
         minToAssetAmount: 999900,
@@ -169,7 +77,7 @@ describe.skip("ForkTest: OUSD Vault", function () {
       },
       {
         from: "USDT",
-        to: "DAI",
+        to: "USDS",
         fromAmount: 1000000,
         minToAssetAmount: 998000,
       },
@@ -181,7 +89,7 @@ describe.skip("ForkTest: OUSD Vault", function () {
       },
       {
         from: "USDC",
-        to: "DAI",
+        to: "USDS",
         fromAmount: 1000000,
         minToAssetAmount: 999900,
         slippage: 0.05, // Max 1Inch slippage
@@ -223,7 +131,7 @@ describe.skip("ForkTest: OUSD Vault", function () {
     const tests = [
       {
         error: "",
-        from: "DAI",
+        from: "USDS",
         to: "USDC",
         fromAmount: 100,
         minToAssetAmount: 105,
@@ -237,14 +145,14 @@ describe.skip("ForkTest: OUSD Vault", function () {
       },
       {
         error: "To asset is not supported",
-        from: "DAI",
+        from: "USDS",
         to: "WETH",
         fromAmount: 20,
         minToAssetAmount: 1,
       },
       {
-        error: "Dai/insufficient-balance",
-        from: "DAI",
+        error: "Usds/insufficient-balance",
+        from: "USDS",
         to: "USDC",
         fromAmount: 30000000,
         minToAssetAmount: 29000000,
@@ -259,7 +167,7 @@ describe.skip("ForkTest: OUSD Vault", function () {
       {
         error: "ERC20: transfer amount exceeds balance",
         from: "USDC",
-        to: "DAI",
+        to: "USDS",
         fromAmount: 30000000,
         minToAssetAmount: 29900000,
       },

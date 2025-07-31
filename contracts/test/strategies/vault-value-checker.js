@@ -4,14 +4,14 @@ const { loadDefaultFixture } = require("../_fixture");
 const { impersonateAndFund } = require("../../utils/signers");
 
 describe("Check vault value", () => {
-  let vault, ousd, matt, dai, checker, vaultSigner;
+  let vault, ousd, matt, usds, checker, vaultSigner;
 
   beforeEach(async () => {
     const fixture = await loadDefaultFixture();
     vault = fixture.vault;
     ousd = fixture.ousd;
     matt = fixture.matt;
-    dai = fixture.dai;
+    usds = fixture.usds;
     checker = await ethers.getContract("VaultValueChecker");
     vaultSigner = await ethers.getSigner(vault.address);
     await impersonateAndFund(vaultSigner.address);
@@ -26,10 +26,10 @@ describe("Check vault value", () => {
 
     // Alter value
     if (vaultChange > 0) {
-      await dai.mintTo(vault.address, vaultChange);
+      await usds.mintTo(vault.address, vaultChange);
     } else if (vaultChange < 0) {
       // transfer amount out of the vault
-      await dai
+      await usds
         .connect(vaultSigner)
         .transfer(matt.address, vaultChange * -1, { gasPrice: 0 });
     }

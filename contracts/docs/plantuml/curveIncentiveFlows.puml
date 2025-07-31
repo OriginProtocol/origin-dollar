@@ -1,0 +1,87 @@
+@startuml
+
+title "Current Curve Incentives Flows"
+
+actor "Treasury" as treasury <<Origin>>
+participant "Vote Maket" as vm
+participant "Rewards" as cr <<Curve>>
+participant "Gauge" as cg <<Curve>>
+participant "Pool" as cp <<Convex>>
+participant "AMO Strategy" as strat <<Origin>>
+participant "Harvester" as harv <<Origin>>
+participant "Swapper" as swap <<Origin>>
+participant "Dripper" as drip <<Origin>>
+participant "OETH Vault" as vault <<Origin>>
+actor "Voters" as voters
+actor "Staked DAO" as sd
+actor "Convex" as cvx
+
+treasury -> vm: $19.3k OGN
+note left : bribe
+vm -> voters: $17k OGN
+note left: claim
+
+vm -> sd : 1.7k OGN
+note left: 10% fee
+
+voters -> treasury: $5k OGN
+note right: treasury portion
+
+cr -> cg : $22.6k CRV
+note left: rewards
+
+cg -> cp : $22.6k CRV
+note left: rewards
+
+cp -> cvx : $3.955 CRV
+note left: 17.5% fee
+
+cp -> strat: $16.8k CRV
+note left: collect
+
+strat -> harv: $16.8k CRV
+note left: harvest
+harv -> swap: $16.8k CRV
+note left: swap
+swap -> harv: $16.8k WETH
+harv -> drip: $16.8k WETH
+drip -> vault: $16.8k WETH
+note left: stream over 7 days
+
+' title "Directly fund the Dripper"
+
+' actor "Treasury" as treasury <<Origin>>
+' participant "Rewards" as cr <<Curve>>
+' participant "Gauge" as cg <<Curve>>
+' participant "Pool" as cp <<Convex>>
+' participant "AMO Strategy" as strat <<Origin>>
+' participant "Harvester" as harv <<Origin>>
+' participant "Swapper" as swap <<Origin>>
+' participant "Dripper" as drip <<Origin>>
+' participant "OETH Vault" as vault <<Origin>>
+' actor "Convex" as cvx
+
+' treasury -> drip: $19.3k WETH
+
+' cr -> cg : $5.5k CRV
+' note left: Curve rewards from\nTreasury's locked CVX
+
+' cg -> cp : $5.5k CRV
+' note left: rewards
+
+' cp -> cvx : $0.96k CRV
+' note left: 17.5% fee
+
+' cp -> strat: $4.5k CRV
+' note left: collect
+
+' strat -> harv: $4.5k CRV
+' note left: harvest
+' harv -> swap: $4.5k CRV
+' note left: swap
+' swap -> harv: $4.5k WETH
+' harv -> drip: $4.5k WETH
+' drip -> vault: $4.5k WETH
+' note left: stream over 7 days
+
+@enduml

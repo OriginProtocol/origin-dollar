@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
 import { Address } from "@openzeppelin/contracts/utils/Address.sol";
@@ -18,6 +18,10 @@ contract InitializeGovernedUpgradeabilityProxy is Governable {
      * @param implementation Address of the new implementation.
      */
     event Upgraded(address indexed implementation);
+
+    constructor() {
+        _setGovernor(msg.sender);
+    }
 
     /**
      * @dev Contract initializer with Governor enforcement

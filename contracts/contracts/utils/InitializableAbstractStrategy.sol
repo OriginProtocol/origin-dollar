@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
 /**
@@ -76,6 +76,17 @@ abstract contract InitializableAbstractStrategy is Initializable, Governable {
     struct BaseStrategyConfig {
         address platformAddress; // Address of the underlying platform
         address vaultAddress; // Address of the OToken's Vault
+    }
+
+    /**
+     * @dev Verifies that the caller is the Governor or Strategist.
+     */
+    modifier onlyGovernorOrStrategist() {
+        require(
+            isGovernor() || msg.sender == IVault(vaultAddress).strategistAddr(),
+            "Caller is not the Strategist or Governor"
+        );
+        _;
     }
 
     /**
@@ -271,6 +282,7 @@ abstract contract InitializableAbstractStrategy is Initializable, Governable {
      */
     function transferToken(address _asset, uint256 _amount)
         public
+        virtual
         onlyGovernor
     {
         require(!supportsAsset(_asset), "Cannot transfer supported asset");

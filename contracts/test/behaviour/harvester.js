@@ -3,7 +3,7 @@ const { expect } = require("chai");
 const {
   changeInMultipleBalances,
   setOracleTokenPriceUsd,
-  daiUnits,
+  usdsUnits,
   ousdUnits,
   usdtUnits,
   oethUnits,
@@ -950,19 +950,19 @@ const shouldBehaveLikeHarvester = (context) => {
     });
 
     it("Should allow governor to transfer any token", async () => {
-      const { governor, strategist, dai, harvester } = context();
+      const { governor, strategist, usds, harvester } = context();
 
-      await dai.connect(governor).mintTo(harvester.address, daiUnits("1000"));
+      await usds.connect(governor).mintTo(harvester.address, usdsUnits("1000"));
 
       await expect(
-        harvester.connect(strategist).transferToken(dai.address, "1")
+        harvester.connect(strategist).transferToken(usds.address, "1")
       ).to.be.revertedWith("Caller is not the Governor");
 
       await harvester
         .connect(governor)
-        .transferToken(dai.address, daiUnits("1000"));
+        .transferToken(usds.address, usdsUnits("1000"));
 
-      expect(await dai.balanceOf(harvester.address)).to.eq("0");
+      expect(await usds.balanceOf(harvester.address)).to.eq("0");
     });
   });
 };

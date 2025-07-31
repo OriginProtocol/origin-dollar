@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
 import "../interfaces/chainlink/AggregatorV3Interface.sol";
@@ -9,11 +9,7 @@ import { StableMath } from "../utils/StableMath.sol";
 contract OETHOracleRouter is AbstractOracleRouter {
     using StableMath for uint256;
 
-    address public immutable auraPriceFeed;
-
-    constructor(address _auraPriceFeed) {
-        auraPriceFeed = _auraPriceFeed;
-    }
+    constructor() {}
 
     /**
      * @notice Returns the total price in 18 digit units for a given asset.
@@ -101,10 +97,6 @@ contract OETHOracleRouter is AbstractOracleRouter {
             // Chainlink: BAL/ETH
             feedAddress = 0xC1438AA3823A6Ba0C159CfA8D98dF5A994bA120b;
             maxStaleness = 1 days + STALENESS_BUFFER;
-        } else if (asset == 0xC0c293ce456fF0ED870ADd98a0828Dd4d2903DBF) {
-            // AURA/ETH
-            feedAddress = auraPriceFeed;
-            maxStaleness = 0;
         } else {
             revert("Asset not available");
         }

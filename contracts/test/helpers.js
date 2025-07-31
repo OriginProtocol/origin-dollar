@@ -1,10 +1,22 @@
 const hre = require("hardhat");
 const chai = require("chai");
-const { parseUnits, formatUnits } = require("ethers").utils;
+const { parseUnits, formatUnits, keccak256, toUtf8Bytes } =
+  require("ethers").utils;
 const { BigNumber } = require("ethers");
 
 const addresses = require("../utils/addresses");
 const { decimalsFor, units } = require("../utils/units");
+
+/**
+ * Checks if the actual value is inclusively within a min and max range of values.
+ */
+chai.Assertion.addMethod("withinRange", function (min, max, message) {
+  const actual = this._obj;
+  min = BigNumber.from(min);
+
+  chai.expect(actual, message).gte(min);
+  chai.expect(actual, message).lte(max);
+});
 
 /**
  * Checks if the actual value is approximately equal to the expected value
@@ -118,6 +130,15 @@ chai.Assertion.addMethod(
   }
 );
 
+chai.Assertion.addMethod("totalSupply", async function (expected, message) {
+  const contract = this._obj;
+  const actual = await contract.totalSupply();
+  if (!BigNumber.isBigNumber(expected)) {
+    expected = parseUnits(expected, await decimalsFor(contract));
+  }
+  chai.expect(actual).to.equal(expected, message);
+});
+
 chai.Assertion.addMethod(
   "assetBalanceOf",
   async function (expected, asset, message) {
@@ -135,21 +156,53 @@ chai.Assertion.addMethod("emittedEvent", async function (eventName, args) {
   const tx = this._obj;
   const { events } = await tx.wait();
   const log = events.find((e) => e.event == eventName);
-  chai.expect(log).to.not.be.undefined;
+  chai.expect(log, `Failed to find event "${eventName}" on the tx`).to.exist;
 
   if (Array.isArray(args)) {
     chai
       .expect(log.args.length)
-      .to.equal(args.length, "Invalid event arg count");
+      .to.equal(args.length, `Invalid arg count of event ${eventName}`);
     for (let i = 0; i < args.length; i++) {
       if (typeof args[i] == "function") {
         args[i](log.args[i]);
       } else {
-        chai.expect(log.args[i]).to.equal(args[i]);
+        chai
+          .expect(log.args[i], `Failed to match arg ${i} of event ${eventName}`)
+          .to.equal(args[i]);
       }
     }
   }
 });
+
+chai.Assertion.addMethod(
+  "revertedWithCustomError",
+  async function (errorSignature) {
+    let txSucceeded = false;
+    try {
+      await this._obj;
+      txSucceeded = true;
+    } catch (e) {
+      const errorHash = keccak256(toUtf8Bytes(errorSignature)).substr(0, 10);
+      const errorName = errorSignature.substring(
+        0,
+        errorSignature.indexOf("(")
+      );
+
+      const containsError =
+        e.message.includes(errorHash) || e.message.includes(errorName);
+
+      if (!containsError) {
+        chai.expect.fail(
+          `Expected error message with signature ${errorSignature} but another was thrown: ${e.message}`
+        );
+      }
+    }
+
+    if (txSucceeded) {
+      chai.expect.fail(`Expected ${errorSignature} error but none was thrown`);
+    }
+  }
+);
 
 function ognUnits(amount) {
   return parseUnits(amount, 18);
@@ -199,11 +252,11 @@ function tusdUnits(amount) {
   return parseUnits(amount, 18);
 }
 
-function daiUnits(amount) {
+function usdsUnits(amount) {
   return parseUnits(amount, 18);
 }
 
-function daiUnitsFormat(amount) {
+function usdsUnitsFormat(amount) {
   return formatUnits(amount, 18);
 }
 
@@ -274,6 +327,14 @@ const isBase = hre.network.name == "base";
 const isBaseFork = isFork && process.env.FORK_NETWORK_NAME == "base";
 const isBaseOrFork = isBase || isBaseFork;
 const isBaseUnitTest = process.env.UNIT_TESTS_NETWORK === "base";
+const isSonic = hre.network.name == "sonic";
+const isSonicFork = isFork && process.env.FORK_NETWORK_NAME == "sonic";
+const isSonicOrFork = isSonic || isSonicFork;
+const isSonicUnitTest = process.env.UNIT_TESTS_NETWORK === "sonic";
+const isPlume = hre.network.name == "plume";
+const isPlumeFork = isFork && process.env.FORK_NETWORK_NAME == "plume";
+const isPlumeOrFork = isPlume || isPlumeFork;
+const isPlumeUnitTest = process.env.UNIT_TESTS_NETWORK === "plume";
 
 /// Advances the EVM time by the given number of seconds
 const advanceTime = async (seconds) => {
@@ -316,6 +377,7 @@ const setOracleTokenPriceUsd = async (tokenSymbol, usdPrice) => {
     USDC: 6,
     USDT: 6,
     DAI: 6,
+    USDS: 18,
     COMP: 6,
     CVX: 6,
     CRV: 6,
@@ -345,6 +407,8 @@ const getOracleAddresses = async (deployments) => {
       chainlink: {
         ETH_USD: addresses.mainnet.chainlinkETH_USD,
         DAI_USD: addresses.mainnet.chainlinkDAI_USD,
+        // Use same Oracle as DAI for USDS
+        USDS_USD: addresses.mainnet.chainlinkDAI_USD,
         USDC_USD: addresses.mainnet.chainlinkUSDC_USD,
         USDT_USD: addresses.mainnet.chainlinkUSDT_USD,
         COMP_USD: addresses.mainnet.chainlinkCOMP_USD,
@@ -366,6 +430,8 @@ const getOracleAddresses = async (deployments) => {
       chainlink: {
         ETH_USD: (await deployments.get("MockChainlinkOracleFeedETH")).address,
         DAI_USD: (await deployments.get("MockChainlinkOracleFeedDAI")).address,
+        USDS_USD: (await deployments.get("MockChainlinkOracleFeedUSDS"))
+          .address,
         USDC_USD: (await deployments.get("MockChainlinkOracleFeedUSDC"))
           .address,
         USDT_USD: (await deployments.get("MockChainlinkOracleFeedUSDT"))
@@ -405,7 +471,7 @@ const getAssetAddresses = async (deployments) => {
       USDC: addresses.mainnet.USDC,
       TUSD: addresses.mainnet.TUSD,
       DAI: addresses.mainnet.DAI,
-      cDAI: addresses.mainnet.cDAI,
+      USDS: addresses.mainnet.USDS,
       cUSDC: addresses.mainnet.cUSDC,
       cUSDT: addresses.mainnet.cUSDT,
       WETH: addresses.mainnet.WETH,
@@ -422,6 +488,7 @@ const getAssetAddresses = async (deployments) => {
       aUSDC: addresses.mainnet.aUSDC,
       aUSDT: addresses.mainnet.aUSDT,
       aWETH: addresses.mainnet.aWETH,
+      cDAI: addresses.mainnet.cDAI,
       AAVE: addresses.mainnet.Aave,
       AAVE_TOKEN: addresses.mainnet.Aave,
       AAVE_ADDRESS_PROVIDER: addresses.mainnet.AAVE_ADDRESS_PROVIDER,
@@ -457,10 +524,11 @@ const getAssetAddresses = async (deployments) => {
       USDT: (await deployments.get("MockUSDT")).address,
       USDC: (await deployments.get("MockUSDC")).address,
       TUSD: (await deployments.get("MockTUSD")).address,
-      DAI: (await deployments.get("MockDAI")).address,
-      cDAI: (await deployments.get("MockCDAI")).address,
+      USDS: (await deployments.get("MockUSDS")).address,
       cUSDC: (await deployments.get("MockCUSDC")).address,
       cUSDT: (await deployments.get("MockCUSDT")).address,
+      cDAI: (await deployments.get("MockCDAI")).address,
+      cUSDS: (await deployments.get("MockCUSDS")).address,
       NonStandardToken: (await deployments.get("MockNonStandardToken")).address,
       WETH: addresses.mainnet.WETH,
       COMP: (await deployments.get("MockCOMP")).address,
@@ -501,38 +569,6 @@ const getAssetAddresses = async (deployments) => {
       beaconChainDepositContract: (await deployments.get("MockDepositContract"))
         .address,
     };
-
-    try {
-      /* Metapool gets deployed in 001_core instead of 000_mocks and is requested even when
-       * metapool is not yet deployed. Just return without metapool info if it is not
-       * yet available.
-       */
-      addressMap.ThreePoolOUSDMetapool = (
-        await deployments.get("MockCurveMetapool")
-      ).address;
-      // token is implemented by the same contract as the metapool
-      addressMap.metapoolToken = (
-        await deployments.get("MockCurveMetapool")
-      ).address;
-    } catch (e) {
-      // do nothing
-    }
-
-    try {
-      /* Metapool gets deployed in 001_core instead of 000_mocks and is requested even when
-       * metapool is not yet deployed. Just return without metapool info if it is not
-       * yet available.
-       */
-      addressMap.ThreePoolLUSDMetapool = (
-        await deployments.get("MockCurveLUSDMetapool")
-      ).address;
-      // token is implemented by the same contract as the metapool
-      addressMap.LUSDMetapoolToken = (
-        await deployments.get("MockCurveLUSDMetapool")
-      ).address;
-    } catch (e) {
-      // do nothing
-    }
 
     return addressMap;
   }
@@ -741,26 +777,6 @@ async function proposeArgs(governorArgsArray) {
   return [targets, sigs, datas];
 }
 
-async function propose(fixture, governorArgsArray, description) {
-  const { governorContract, governor } = fixture;
-  const lastProposalId = await governorContract.proposalCount();
-  await governorContract
-    .connect(governor)
-    .propose(...(await proposeArgs(governorArgsArray)), description);
-  const proposalId = await governorContract.proposalCount();
-  chai.expect(proposalId).not.to.be.equal(lastProposalId);
-  return proposalId;
-}
-
-async function proposeAndExecute(fixture, governorArgsArray, description) {
-  const { governorContract, governor } = fixture;
-  const proposalId = await propose(fixture, governorArgsArray, description);
-  await governorContract.connect(governor).queue(proposalId);
-  // go forward 3 days
-  await advanceTime(3 * 24 * 60 * 60);
-  await governorContract.connect(governor).execute(proposalId);
-}
-
 module.exports = {
   decimalsFor,
   ousdUnits,
@@ -768,7 +784,7 @@ module.exports = {
   usdtUnits,
   usdcUnits,
   tusdUnits,
-  daiUnits,
+  usdsUnits,
   ognUnits,
   ethUnits,
   fraxUnits,
@@ -777,10 +793,10 @@ module.exports = {
   cUsdcUnits,
   frxETHUnits,
   units,
-  daiUnitsFormat,
   ousdUnitsFormat,
   usdcUnitsFormat,
   usdtUnitsFormat,
+  usdsUnitsFormat,
   humanBalance,
   expectApproxSupply,
   advanceTime,
@@ -807,14 +823,20 @@ module.exports = {
   isBaseFork,
   isBaseOrFork,
   isBaseUnitTest,
+  isSonic,
+  isSonicFork,
+  isSonicOrFork,
+  isSonicUnitTest,
+  isPlume,
+  isPlumeFork,
+  isPlumeOrFork,
+  isPlumeUnitTest,
   getOracleAddress,
   setOracleTokenPriceUsd,
   getOracleAddresses,
   getAssetAddresses,
   governorArgs,
   proposeArgs,
-  propose,
-  proposeAndExecute,
   advanceBlocks,
   isWithinTolerance,
   changeInBalance,

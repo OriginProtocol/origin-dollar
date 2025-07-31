@@ -42,6 +42,15 @@ main()
     elif [[ $FORK_NETWORK_NAME == "holesky" ]]; then
       PROVIDER_URL=$HOLESKY_PROVIDER_URL;
       BLOCK_NUMBER=$HOLESKY_BLOCK_NUMBER;
+    elif [[ $FORK_NETWORK_NAME == "base" ]]; then
+      PROVIDER_URL=$BASE_PROVIDER_URL;
+      BLOCK_NUMBER=$BASE_BLOCK_NUMBER;
+    elif [[ $FORK_NETWORK_NAME == "sonic" ]]; then
+      PROVIDER_URL=$SONIC_PROVIDER_URL;
+      BLOCK_NUMBER=$SONIC_BLOCK_NUMBER;
+    elif [[ $FORK_NETWORK_NAME == "plume" ]]; then
+      PROVIDER_URL=$PLUME_PROVIDER_URL;
+      BLOCK_NUMBER=$PLUME_BLOCK_NUMBER;
     fi
 
     if $is_local; then
@@ -69,21 +78,16 @@ main()
         cp -r deployments/localhost deployments/hardhat
     fi
 
-    if [ -z "$1" ]; then
-        if [[ $FORK_NETWORK_NAME == "holesky" ]]; then
-            # Run all files with `.holesky.fork-test.js` suffix when no file name param is given
-            # pass all other params along
-            params+="test/**/*.holesky.fork-test.js"
+    # Run specific files when a param is given
+    if [[ ! -z "$1" ]]; then
+        if [[ $is_coverage == "true" ]]; then
+            params+="--testfiles $@"
         else
-            # Run all files with `.fork-test.js` suffix when no file name param is given
-            # pass all other params along
-            params+="test/**/*.fork-test.js"
+            params+="$@"
         fi
-    else
-        # Run specifc files when a param is given
-        params+="$@"
     fi
 
+    # Add trace flag if enabled
     if [[ $is_trace == "true" ]]; then
         params+=" --trace"
     fi
@@ -92,7 +96,7 @@ main()
 
     if [[ $is_coverage == "true" ]]; then
         echo "Running tests and generating coverage reports..."
-        FORK=true IS_TEST=true npx --no-install hardhat coverage --testfiles "${params[@]}"
+        FORK=true IS_TEST=true npx --no-install hardhat coverage "${params[@]}"
     else
         echo "Running fork tests..."
         FORK=true IS_TEST=true npx --no-install hardhat test ${params[@]}

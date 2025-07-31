@@ -4,7 +4,8 @@ const { units, ousdUnits, isCI } = require("../helpers");
 const { createFixtureLoader } = require("../_fixture");
 const { withCRV3TitledOUSDMetapool } = require("../_metastrategies-fixtures");
 
-describe("ForkTest: Convex 3pool/OUSD Meta Strategy - Titled to 3CRV", function () {
+// The OUSD AMO has been removed
+describe.skip("ForkTest: Convex 3pool/OUSD Meta Strategy - Titled to 3CRV", function () {
   this.timeout(0);
 
   // Retry up to 3 times on CI

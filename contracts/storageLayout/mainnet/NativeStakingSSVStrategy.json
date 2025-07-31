@@ -1,5 +1,5 @@
 {
-  "solcVersion": "0.8.7",
+  "solcVersion": "0.8.28",
   "storage": [
     {
       "label": "initialized",
@@ -53,7 +53,7 @@
       "label": "validatorsStates",
       "offset": 0,
       "slot": "53",
-      "type": "t_mapping(t_bytes32,t_enum(VALIDATOR_STATE)36384)",
+      "type": "t_mapping(t_bytes32,t_enum(VALIDATOR_STATE)4055)",
       "contract": "ValidatorRegistrator",
       "src": "contracts/strategies/NativeStaking/ValidatorRegistrator.sol:45"
     },
@@ -251,7 +251,7 @@
       "label": "bytes32",
       "numberOfBytes": "32"
     },
-    "t_enum(VALIDATOR_STATE)36384": {
+    "t_enum(VALIDATOR_STATE)4055": {
       "label": "enum ValidatorRegistrator.VALIDATOR_STATE",
       "members": [
         "NON_REGISTERED",
@@ -270,7 +270,7 @@
       "label": "mapping(address => address)",
       "numberOfBytes": "32"
     },
-    "t_mapping(t_bytes32,t_enum(VALIDATOR_STATE)36384)": {
+    "t_mapping(t_bytes32,t_enum(VALIDATOR_STATE)4055)": {
       "label": "mapping(bytes32 => enum ValidatorRegistrator.VALIDATOR_STATE)",
       "numberOfBytes": "32"
     },

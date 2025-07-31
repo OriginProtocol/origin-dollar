@@ -1,0 +1,52 @@
+{
+  "version": "1.0",
+  "chainId": "98866",
+  "createdAt": 1744991961,
+  "meta": {
+    "name": "Transaction Batch",
+    "description": "",
+    "txBuilderVersion": "1.16.1",
+    "createdFromSafeAddress": "0x4FF1b9D9ba8558F5EAfCec096318eA0d8b541971",
+    "createdFromOwnerAddress": ""
+  },
+  "transactions": [
+    {
+      "to": "0x6C6f8F839A7648949873D3D2beEa936FC2932e5c",
+      "value": "0",
+      "data": null,
+      "contractMethod": {
+        "inputs": [
+          {
+            "type": "address[]",
+            "name": "targets"
+          },
+          {
+            "type": "uint256[]",
+            "name": "values"
+          },
+          {
+            "type": "bytes[]",
+            "name": "payloads"
+          },
+          {
+            "type": "bytes32",
+            "name": "predecessor"
+          },
+          {
+            "type": "bytes32",
+            "name": "salt"
+          }
+        ],
+        "name": "executeBatch",
+        "payable": true
+      },
+      "contractInputsValues": {
+        "targets": "[\"0xFCbe50DbE43bF7E5C88C6F6Fb9ef432D4165406E\",\"0xc8c8F8bEA5631A8AF26440AF32a55002138cB76a\",\"0xc8c8F8bEA5631A8AF26440AF32a55002138cB76a\",\"0xc8c8F8bEA5631A8AF26440AF32a55002138cB76a\",\"0xc8c8F8bEA5631A8AF26440AF32a55002138cB76a\",\"0xc8c8F8bEA5631A8AF26440AF32a55002138cB76a\",\"0xc8c8F8bEA5631A8AF26440AF32a55002138cB76a\",\"0xc8c8F8bEA5631A8AF26440AF32a55002138cB76a\",\"0xc8c8F8bEA5631A8AF26440AF32a55002138cB76a\",\"0xc8c8F8bEA5631A8AF26440AF32a55002138cB76a\",\"0xc8c8F8bEA5631A8AF26440AF32a55002138cB76a\",\"0xc8c8F8bEA5631A8AF26440AF32a55002138cB76a\",\"0xc8c8F8bEA5631A8AF26440AF32a55002138cB76a\"]",
+        "values": "[\"0\",\"0\",\"0\",\"0\",\"0\",\"0\",\"0\",\"0\",\"0\",\"0\",\"0\",\"0\",\"0\"]",
+        "payloads": "[\"0x5d36b190\",\"0x5d36b190\",\"0x3659cfe600000000000000000000000032fa246d8c4ed75ae8ef753aff565a4bd108b76b\",\"0xfc0cfeee000000000000000000000000f2d049c59b463b996baa85f2e11b395d9dc33104\",\"0x6c7561e8000000000000000000000000ca59ca09e5602fae8b629dee83ffa819741f14be0000000000000000000000000000000000000000000000000000000000000000\",\"0x94828ffd\",\"0x1cfbe7bc0000000000000000000000000000000000000000000000000000000000015180\",\"0xb890ebf600000000000000000000000000000000000000000000021e19e0c9bab2400000\",\"0x773540b30000000000000000000000004ff1b9d9ba8558f5eafcec096318ea0d8b541971\",\"0x663e64ce0000000000000000000000000000000000000000000000000de0b6b3a7640000\",\"0x2e9958ab0000000000000000000000003b56c09543d3068f8488ed34e6f383c3854d2bc1\",\"0x0493a0fa0000000000000000000000000000000000000000000000000000000000093a80\",\"0xb4925a200000000000000000000000000000000000000000000000008ac7230489e80000\"]",
+        "predecessor": "0x0000000000000000000000000000000000000000000000000000000000000000",
+        "salt": "0x4fa4aae487e312f150752803eeaeb33133eb010a1181029b7031c2d5680451d7"
+      }
+    }
+  ]
+}

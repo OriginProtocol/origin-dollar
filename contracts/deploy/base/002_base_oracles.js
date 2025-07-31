@@ -1,11 +1,11 @@
-const { deployOnBaseWithGuardian } = require("../../utils/deploy-l2");
+const { deployOnBase } = require("../../utils/deploy-l2");
 const {
   deployWithConfirmation,
   withConfirmation,
 } = require("../../utils/deploy");
 const addresses = require("../../utils/addresses");
 
-module.exports = deployOnBaseWithGuardian(
+module.exports = deployOnBase(
   {
     deployName: "002_base_oracles",
   },

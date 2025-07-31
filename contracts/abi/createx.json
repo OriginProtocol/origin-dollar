@@ -1,0 +1,77 @@
+[
+    {
+        "inputs": [
+            {
+                "internalType": "bytes32",
+                "name": "salt",
+                "type": "bytes32"
+            },
+            {
+                "internalType": "bytes",
+                "name": "initCode",
+                "type": "bytes"
+            }
+        ],
+        "name": "deployCreate2",
+        "outputs": [
+            {
+                "internalType": "address",
+                "name": "newContract",
+                "type": "address"
+            }
+        ],
+        "stateMutability": "payable",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "bytes32",
+                "name": "salt",
+                "type": "bytes32"
+            },
+            {
+                "internalType": "bytes",
+                "name": "initCode",
+                "type": "bytes"
+            },
+            {
+                "internalType": "bytes",
+                "name": "data",
+                "type": "bytes"
+            },
+            {
+                "components": [
+                    {
+                        "internalType": "uint256",
+                        "name": "constructorAmount",
+                        "type": "uint256"
+                    },
+                    {
+                        "internalType": "uint256",
+                        "name": "initCallAmount",
+                        "type": "uint256"
+                    }
+                ],
+                "internalType": "struct CreateX.Values",
+                "name": "values",
+                "type": "tuple"
+            },
+            {
+                "internalType": "address",
+                "name": "refundAddress",
+                "type": "address"
+            }
+        ],
+        "name": "deployCreate2AndInit",
+        "outputs": [
+            {
+                "internalType": "address",
+                "name": "newContract",
+                "type": "address"
+            }
+        ],
+        "stateMutability": "payable",
+        "type": "function"
+    }
+]

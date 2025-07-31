@@ -17,15 +17,27 @@ const isFork = process.env.FORK === "true";
 const getStorageFileLocation = (hre, contractName) => {
   const isMainnet = hre.network.name === "mainnet";
   const isArbitrum = hre.network.name === "arbitrumOne";
+  const isSonic = hre.network.name === "sonic";
+  const isPlume = hre.network.name == "plume";
+  const isBase = hre.network.name == "base";
   const forkNetworkName = process.env.FORK_NETWORK_NAME;
   const isArbitrumFork = isFork && forkNetworkName == "arbitrumOne";
+  const isSonicFork = isFork && forkNetworkName == "sonic";
   const isMainnetFork = isFork && forkNetworkName == "mainnet";
+  const isPlumeFork = isFork && forkNetworkName == "plume";
+  const isBaseFork = isFork && forkNetworkName == "base";
 
   let folder = "localhost";
   if (isMainnetFork || isMainnet) {
     folder = "mainnet";
   } else if (isArbitrumFork || isArbitrum) {
     folder = "arbitrumOne";
+  } else if (isSonicFork || isSonic) {
+    folder = "sonic";
+  } else if (isPlumeFork || isPlume) {
+    folder = "plume";
+  } else if (isBaseFork || isBase) {
+    folder = "base";
   }
 
   const layoutFolder = `./storageLayout/${folder}/`;
@@ -36,9 +48,12 @@ const getStorageFileLocation = (hre, contractName) => {
   return `${layoutFolder}${contractName}.json`;
 };
 
-const getStorageLayoutForContract = async (hre, contractName) => {
+const getStorageLayoutForContract = async (hre, contractName, contract) => {
+  if (!contract) {
+    contract = contractName;
+  }
   const validations = await readValidations(hre);
-  const implFactory = await hre.ethers.getContractFactory(contractName);
+  const implFactory = await hre.ethers.getContractFactory(contract);
   const unlinkedBytecode = getUnlinkedBytecode(
     validations,
     implFactory.bytecode
@@ -59,8 +74,14 @@ const loadPreviousStorageLayoutForContract = async (hre, contractName) => {
   return JSON.parse(await promises.readFile(location, "utf8"));
 };
 
-const storeStorageLayoutForContract = async (hre, contractName) => {
-  const layout = await getStorageLayoutForContract(hre, contractName);
+// @dev   contractName and contract can be different when the deploy procedure wants to
+//        store a certain contract deployment under a different name as is the name of
+//        the contract in the source code.
+// @param contract the name of the contract as is in the source code of the contract
+// @param contractName a potential override of the contract as is to be stored in the
+//        deployment descriptors
+const storeStorageLayoutForContract = async (hre, contractName, contract) => {
+  const layout = await getStorageLayoutForContract(hre, contractName, contract);
   const storageLayoutFile = getStorageFileLocation(hre, contractName);
 
   // pretty print storage layout for the contract

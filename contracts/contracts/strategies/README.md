@@ -42,34 +42,6 @@
 
 ![Convex OUSD AMO Strategy Storage](../../docs/ConvexOUSDMetaStrategyStorage.svg) -->
 
-## Flux Strategy
-
-### Hierarchy
-
-![Flux Strategy Hierarchy](../../docs/FluxStrategyHierarchy.svg)
-
-### Squashed
-
-![Flux Strategy Squashed](../../docs/FluxStrategySquashed.svg)
-
-### Storage
-
-![Flux Strategy Storage](../../docs/FluxStrategyStorage.svg)
-
-## Frax ETH Strategy
-
-### Hierarchy
-
-![Frax ETH Strategy Hierarchy](../../docs/FraxETHStrategyHierarchy.svg)
-
-### Squashed
-
-![Frax ETH Strategy Squashed](../../docs/FraxETHStrategySquashed.svg)
-
-<!-- ### Storage
-
-![Frax ETH Strategy Storage](../../docs/FraxETHStrategyStorage.svg) -->
-
 ## Generalized ERC-4626 Strategy
 
 ### Hierarchy

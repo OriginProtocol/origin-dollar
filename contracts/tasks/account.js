@@ -1,6 +1,6 @@
 // USDT has its own ABI because of non standard returns
 const usdtAbi = require("../test/abi/usdt.json").abi;
-const daiAbi = require("../test/abi/erc20.json");
+const usdsAbi = require("../test/abi/erc20.json");
 const tusdAbi = require("../test/abi/erc20.json");
 const usdcAbi = require("../test/abi/erc20.json");
 const { hardhatSetBalance, setERC20TokenBalance } = require("../test/_fund");
@@ -41,7 +41,7 @@ async function accounts(taskArguments, hre, privateKeys) {
 }
 
 /**
- * Funds test accounts on local or fork with DAI, USDT, USDC and TUSD.
+ * Funds test accounts on local or fork with USDS, USDT, USDC and TUSD.
  */
 async function fund(taskArguments, hre) {
   const addresses = require("../utils/addresses");
@@ -61,15 +61,15 @@ async function fund(taskArguments, hre) {
     return;
   }
 
-  let usdt, dai, tusd, usdc;
+  let usdt, usds, tusd, usdc;
   if (isFork) {
     usdt = await hre.ethers.getContractAt(usdtAbi, addresses.mainnet.USDT);
-    dai = await hre.ethers.getContractAt(daiAbi, addresses.mainnet.DAI);
+    usds = await hre.ethers.getContractAt(usdsAbi, addresses.mainnet.USDS);
     tusd = await hre.ethers.getContractAt(tusdAbi, addresses.mainnet.TUSD);
     usdc = await hre.ethers.getContractAt(usdcAbi, addresses.mainnet.USDC);
   } else {
     usdt = await hre.ethers.getContract("MockUSDT");
-    dai = await hre.ethers.getContract("MockDAI");
+    usds = await hre.ethers.getContract("MockUSDS");
     tusd = await hre.ethers.getContract("MockTUSD");
     usdc = await hre.ethers.getContract("MockUSDC");
   }
@@ -94,7 +94,7 @@ async function fund(taskArguments, hre) {
 
   const fundAmount = taskArguments.amount || defaultFundAmount;
 
-  console.log(`DAI: ${dai.address}`);
+  console.log(`USDS: ${usds.address}`);
   console.log(`USDC: ${usdc.address}`);
   console.log(`USDT: ${usdt.address}`);
   console.log(`TUSD: ${tusd.address}`);
@@ -105,8 +105,8 @@ async function fund(taskArguments, hre) {
       token: null,
     },
     {
-      name: "dai",
-      token: dai,
+      name: "usds",
+      token: usds,
     },
     {
       name: "usdc",

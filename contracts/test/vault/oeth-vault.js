@@ -412,8 +412,8 @@ describe("OETH Vault", function () {
     });
 
     it("Fail to remove asset if asset is not supported", async () => {
-      const { oethVault, dai, governor } = fixture;
-      const tx = oethVault.connect(governor).removeAsset(dai.address);
+      const { oethVault, usds, governor } = fixture;
+      const tx = oethVault.connect(governor).removeAsset(usds.address);
 
       await expect(tx).to.be.revertedWith("Asset not supported");
     });
@@ -441,7 +441,10 @@ describe("OETH Vault", function () {
     it("Should allow strategy to burnForStrategy", async () => {
       const { oethVault, oeth, weth, governor, daniel } = fixture;
 
-      await oethVault.connect(governor).setOusdMetaStrategy(daniel.address);
+      await oethVault.connect(governor).approveStrategy(daniel.address);
+      await oethVault
+        .connect(governor)
+        .addStrategyToMintWhitelist(daniel.address);
 
       // First increase netOusdMintForStrategyThreshold
       await oethVault
@@ -463,26 +466,44 @@ describe("OETH Vault", function () {
       );
     });
 
-    it("Fail when burnForStrategy because Amoount too high", async () => {
+    it("Fail when burnForStrategy because amount > int256 ", async () => {
       const { oethVault, governor, daniel } = fixture;
 
-      await oethVault.connect(governor).setOusdMetaStrategy(daniel.address);
+      await oethVault.connect(governor).approveStrategy(daniel.address);
+      await oethVault
+        .connect(governor)
+        .addStrategyToMintWhitelist(daniel.address);
+
       const tx = oethVault
         .connect(daniel)
         .burnForStrategy(parseUnits("10", 76));
 
-      await expect(tx).to.be.revertedWith("Amount too high");
+      await expect(tx).to.be.revertedWith(
+        "SafeCast: value doesn't fit in an int256"
+      );
     });
 
-    it("Fail when burnForStrategy because Attempting to burn too much OUSD.", async () => {
+    it("Governor should remove strategy from mint whitelist", async () => {
       const { oethVault, governor, daniel } = fixture;
 
-      await oethVault.connect(governor).setOusdMetaStrategy(daniel.address);
+      await oethVault.connect(governor).approveStrategy(daniel.address);
+      await oethVault
+        .connect(governor)
+        .addStrategyToMintWhitelist(daniel.address);
 
-      // Then try to burn more than authorized
-      const tx = oethVault.connect(daniel).burnForStrategy(oethUnits("0"));
+      expect(await oethVault.isMintWhitelistedStrategy(daniel.address)).to.be
+        .true;
 
-      await expect(tx).to.be.revertedWith("Attempting to burn too much OUSD.");
+      const tx = await oethVault
+        .connect(governor)
+        .removeStrategyFromMintWhitelist(daniel.address);
+
+      expect(tx)
+        .to.emit(oethVault, "StrategyRemovedFromMintWhitelist")
+        .withArgs(daniel.address);
+
+      expect(await oethVault.isMintWhitelistedStrategy(daniel.address)).to.be
+        .false;
     });
   });
 
@@ -1428,7 +1449,7 @@ describe("OETH Vault", function () {
             .connect(josh)
             .requestWithdrawal(dataBefore.userOeth.add(1));
 
-          await expect(tx).to.revertedWith("Remove exceeds balance");
+          await expect(tx).to.revertedWith("Transfer amount exceeds balance");
         });
         it("capital is paused", async () => {
           const { oethVault, governor, josh } = fixture;

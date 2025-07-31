@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
 /**
@@ -7,12 +7,9 @@ pragma solidity ^0.8.0;
  * @author Origin Protocol Inc
  */
 import { IERC4626 } from "../../lib/openzeppelin/interfaces/IERC4626.sol";
-import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { IERC20, InitializableAbstractStrategy } from "../utils/InitializableAbstractStrategy.sol";
 
 contract Generalized4626Strategy is InitializableAbstractStrategy {
-    using SafeERC20 for IERC20;
-
     /// @dev Replaced with an immutable variable
     // slither-disable-next-line constable-states
     address private _deprecate_shareToken;
@@ -145,7 +142,7 @@ contract Generalized4626Strategy is InitializableAbstractStrategy {
     }
 
     /**
-     * @dev Get the total asset value held in the platform
+     * @notice Get the total asset value held in the platform
      * @param _asset      Address of the asset
      * @return balance    Total value of the asset in the platform
      */
@@ -162,25 +159,26 @@ contract Generalized4626Strategy is InitializableAbstractStrategy {
          * should not result in assetToken being unused and owned by this strategy
          * contract.
          */
-        return IERC4626(platformAddress).maxWithdraw(address(this));
+        IERC4626 platform = IERC4626(platformAddress);
+        return platform.previewRedeem(platform.balanceOf(address(this)));
     }
 
     /**
-     * @notice Governor approves the the ERC-4626 Tokenized Vault to spend the asset.
+     * @notice Governor approves the ERC-4626 Tokenized Vault to spend the asset.
      */
     function safeApproveAllTokens() external override onlyGovernor {
         _approveBase();
     }
 
     function _approveBase() internal virtual {
-        // Approval the asset to be trasferred to the ERC-4626 Tokenized Vualt.
+        // Approval the asset to be transferred to the ERC-4626 Tokenized Vault.
         // Used by the ERC-4626 deposit() and mint() functions
         // slither-disable-next-line unused-return
         assetToken.approve(platformAddress, type(uint256).max);
     }
 
     /**
-     * @dev Retuns bool indicating whether asset is supported by strategy
+     * @dev Returns bool indicating whether asset is supported by strategy
      * @param _asset Address of the asset
      */
     function supportsAsset(address _asset)

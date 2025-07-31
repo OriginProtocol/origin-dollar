@@ -2,7 +2,7 @@ const { expect } = require("chai");
 
 const { createFixtureLoader, convexVaultFixture } = require("../_fixture");
 const {
-  daiUnits,
+  usdsUnits,
   ousdUnits,
   units,
   expectApproxSupply,
@@ -24,7 +24,7 @@ describe("Convex Strategy", function () {
     cvxBooster,
     usdt,
     usdc,
-    dai;
+    usds;
 
   const mint = async (amount, asset) => {
     await asset.connect(anna).mint(await units(amount, asset));
@@ -49,7 +49,7 @@ describe("Convex Strategy", function () {
     cvxBooster = fixture.cvxBooster;
     usdt = fixture.usdt;
     usdc = fixture.usdc;
-    dai = fixture.dai;
+    usds = fixture.usds;
   });
 
   describe("Mint", function () {
@@ -85,7 +85,7 @@ describe("Convex Strategy", function () {
   describe("Redeem", function () {
     it("Should be able to unstake from gauge and return USDT", async function () {
       await expectApproxSupply(ousd, ousdUnits("200"));
-      await mint("10000.00", dai);
+      await mint("10000.00", usds);
       await mint("10000.00", usdc);
       await mint("10000.00", usdt);
       await vault.connect(anna).redeem(ousdUnits("20000"), 0);
@@ -95,8 +95,8 @@ describe("Convex Strategy", function () {
 
   describe("Utilities", function () {
     it("Should allow transfer of arbitrary token by Governor", async () => {
-      await dai.connect(anna).approve(vault.address, daiUnits("8.0"));
-      await vault.connect(anna).mint(dai.address, daiUnits("8.0"), 0);
+      await usds.connect(anna).approve(vault.address, usdsUnits("8.0"));
+      await vault.connect(anna).mint(usds.address, usdsUnits("8.0"), 0);
       // Anna sends her OUSD directly to Strategy
       await ousd
         .connect(anna)

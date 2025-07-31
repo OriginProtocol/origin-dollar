@@ -9,7 +9,7 @@ actor "Anyone" as sender
 actor "Block\nBuilder\n(MEV)" as mev
 actor "Registrator\n(Relayer)" as reg <<Origin>>
 actor "Admin\n(5/8 Safe)" as admin <<Origin>>
-actor "Strategist\n(2/9 Safe)" as strategist <<Origin>>
+actor "Strategist\n(2/8 Safe)" as strategist <<Origin>>
 actor "Governor\n(Timelock)" as gov <<Origin>>
 actor "Treasury" as treasury <<Origin>>
 participant "API" as api <<P2P>>
@@ -17,6 +17,8 @@ actor "Operators" as ssvOp <<SSV>>
 
 box "Execution Chain"
 participant "Harvester" as harv <<Origin>>
+participant "Dripper" as drip <<Origin>>
+participant "Vault" as vault <<Origin>>
 participant "Native\nStaking SSV\nStrategy" as nativeStrat <<Origin>>
 participant "Fee\nAccumulator" as feeAccum <<Origin>>
 participant "SSV Network" as ssvNet <<SSV>>
@@ -173,7 +175,7 @@ end group
 
 group Registrator deposits more SSV to SSV cluster
 
-treasury -> ssv : transfer(\nto\namount)
+strategist -> ssv : transfer(\nto\namount)
 activate ssv
 note right : transfer SSV tokens\nfrom Treasury\nto Native Staking Strategy
 return
@@ -195,7 +197,7 @@ cluster data:
 end note
 end group
 
-reg -> nativeStrat : depositSSV(\noperatorIds,\namount,\ncluster)
+strategist -> nativeStrat : depositSSV(\noperatorIds,\namount,\ncluster)
 activate nativeStrat
 nativeStrat -> ssvNet : deposit(\nclusterOwner,\noperatorIds,\namount,\ncluster)
 activate ssvNet
@@ -263,6 +265,18 @@ note over nativeStrat : Native Staking Strategy's\nWETH balance does not change
 
 end group
 
+group Execution Rewards
+
+mev -> feeAccum : ETH
+note right : MEV rewards
+
+sender -> nativeStrat : ETH
+note right : tx priority fees
+
+note over nativeStrat : Native Staking Strategy's WETH balance\ndoes not change from either
+
+end group
+
 group Registrator does accounting of consensus rewards and validator withdrawals
 
 reg -> nativeStrat : doAccounting()
@@ -292,21 +306,9 @@ return accounting valid flag
 
 end group
 
-group Execution Rewards
-
-mev -> feeAccum : ETH
-note right : MEV rewards
-
-sender -> nativeStrat : ETH
-note right : tx priority fees
-
-note over nativeStrat : Native Staking Strategy's WETH balance\ndoes not change from either
-
-end group
-
 group Harvester collects ETH rewards
 
-sender -> harv : harvestAndSwap(\nstrtaegy)
+sender -> harv : harvestAndTransfer(\nstrategy)
 activate harv
 harv -> nativeStrat : collectRewardTokens()
 activate nativeStrat
@@ -332,6 +334,31 @@ note left : transfer rewards as WETH\nfrom Native Staking Strategy\nto Harvester
 return
 
 return
+
+harv -> weth : transfer(\nDripper,\nETH rewards)
+activate weth
+note left : transfer WETH rewards\nfrom Harvester\nto Dripper
+return
+
+return
+
+end group
+
+group Collect and rebase
+
+sender -> drip : collectAndRebase()
+activate drip
+
+drip -> weth : transfer(\nvault,\nstreamed ETH)
+note left : Stream ETH from last collect to now
+activate weth
+note over drip : Recalculate 7 day drip rate\nbased on WETH balance
+return
+
+drip -> vault : rebase()
+activate vault
+return
+
 return
 
 end group

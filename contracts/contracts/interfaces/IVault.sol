@@ -1,9 +1,11 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
 import { VaultStorage } from "../vault/VaultStorage.sol";
 
 interface IVault {
+    // slither-disable-start constable-states
+
     event AssetSupported(address _asset);
     event AssetDefaultStrategyUpdated(address _asset, address _strategy);
     event AssetAllocated(address _asset, address _strategy, uint256 _amount);
@@ -57,6 +59,8 @@ interface IVault {
 
     function governor() external view returns (address);
 
+    function ADMIN_IMPLEMENTATION() external view returns (address);
+
     // VaultAdmin.sol
     function setPriceProvider(address _priceProvider) external;
 
@@ -103,7 +107,7 @@ interface IVault {
     function setOracleSlippage(address _asset, uint16 _allowedOracleSlippageBps)
         external;
 
-    function supportAsset(address _asset, uint8 _supportsAsset) external;
+    function supportAsset(address _asset, uint8 _unitConversion) external;
 
     function approveStrategy(address _addr) external;
 
@@ -164,8 +168,6 @@ interface IVault {
 
     function burnForStrategy(uint256 _amount) external;
 
-    function redeemAll(uint256 _minimumUnitAmount) external;
-
     function allocate() external;
 
     function rebase() external;
@@ -216,6 +218,8 @@ interface IVault {
 
     function setDripper(address _dripper) external;
 
+    function dripper() external view returns (address);
+
     function weth() external view returns (address);
 
     function cacheWETHAssetIndex() external;
@@ -227,15 +231,6 @@ interface IVault {
     function setAdminImpl(address) external;
 
     function removeAsset(address _asset) external;
-
-    function addStrategyToMintWhitelist(address strategyAddr) external;
-
-    function removeStrategyFromMintWhitelist(address strategyAddr) external;
-
-    function isMintWhitelistedStrategy(address strategyAddr)
-        external
-        view
-        returns (bool);
 
     // These are OETH specific functions
     function addWithdrawalQueueLiquidity() external;
@@ -261,4 +256,34 @@ interface IVault {
         external
         view
         returns (VaultStorage.WithdrawalRequest memory);
+
+    // OETHb specific functions
+    function addStrategyToMintWhitelist(address strategyAddr) external;
+
+    function removeStrategyFromMintWhitelist(address strategyAddr) external;
+
+    function isMintWhitelistedStrategy(address strategyAddr)
+        external
+        view
+        returns (bool);
+
+    function withdrawalClaimDelay() external view returns (uint256);
+
+    function setWithdrawalClaimDelay(uint256 newDelay) external;
+
+    function lastRebase() external view returns (uint64);
+
+    function dripDuration() external view returns (uint64);
+
+    function setDripDuration(uint256 _dripDuration) external;
+
+    function rebasePerSecondMax() external view returns (uint64);
+
+    function setRebaseRateMax(uint256 yearlyApr) external;
+
+    function rebasePerSecondTarget() external view returns (uint64);
+
+    function previewYield() external view returns (uint256 yield);
+
+    // slither-disable-end constable-states
 }

@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
 /**
@@ -16,18 +16,14 @@ import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.s
 import { StableMath } from "../utils/StableMath.sol";
 import { IOracle } from "../interfaces/IOracle.sol";
 import { IGetExchangeRateToken } from "../interfaces/IGetExchangeRateToken.sol";
-import { IDripper } from "../interfaces/IDripper.sol";
 
 import "./VaultInitializer.sol";
 
 contract VaultCore is VaultInitializer {
     using SafeERC20 for IERC20;
     using StableMath for uint256;
-    // max signed int
-    uint256 internal constant MAX_INT = 2**255 - 1;
-    // max un-signed int
-    uint256 internal constant MAX_UINT =
-        0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff;
+    /// @dev max signed int
+    uint256 internal constant MAX_INT = uint256(type(int256).max);
 
     /**
      * @dev Verifies that the rebasing is not paused.
@@ -45,6 +41,9 @@ contract VaultCore is VaultInitializer {
         _;
     }
 
+    /**
+     * @dev Verifies that the caller is the AMO strategy.
+     */
     modifier onlyOusdMetaStrategy() {
         require(
             msg.sender == ousdMetaStrategy,
@@ -67,6 +66,12 @@ contract VaultCore is VaultInitializer {
         _mint(_asset, _amount, _minimumOusdAmount);
     }
 
+    /**
+     * @dev Deposit a supported asset and mint OTokens.
+     * @param _asset Address of the asset being deposited
+     * @param _amount Amount of the asset being deposited
+     * @param _minimumOusdAmount Minimum OTokens to mint
+     */
     function _mint(
         address _asset,
         uint256 _amount,
@@ -90,10 +95,6 @@ contract VaultCore is VaultInitializer {
 
         // Rebase must happen before any transfers occur.
         if (priceAdjustedDeposit >= rebaseThreshold && !rebasePaused) {
-            if (dripper != address(0)) {
-                // Stream any harvested rewards that are available
-                IDripper(dripper).collect();
-            }
             _rebase();
         }
 
@@ -277,18 +278,6 @@ contract VaultCore is VaultInitializer {
     }
 
     /**
-     * @notice Withdraw a supported asset and burn all OTokens.
-     * @param _minimumUnitAmount Minimum stablecoin units to receive in return
-     */
-    function redeemAll(uint256 _minimumUnitAmount)
-        external
-        whenNotCapitalPaused
-        nonReentrant
-    {
-        _redeem(oUSD.balanceOf(msg.sender), _minimumUnitAmount);
-    }
-
-    /**
      * @notice Allocate unallocated funds on Vault to strategies.
      **/
     function allocate() external virtual whenNotCapitalPaused nonReentrant {
@@ -378,30 +367,97 @@ contract VaultCore is VaultInitializer {
      * @return totalUnits Total balance of Vault in units
      */
     function _rebase() internal whenNotRebasePaused returns (uint256) {
-        uint256 ousdSupply = oUSD.totalSupply();
+        uint256 supply = oUSD.totalSupply();
         uint256 vaultValue = _totalValue();
-        if (ousdSupply == 0) {
+        // If no supply yet, do not rebase
+        if (supply == 0) {
             return vaultValue;
         }
 
-        // Yield fee collection
-        address _trusteeAddress = trusteeAddress; // gas savings
-        if (_trusteeAddress != address(0) && (vaultValue > ousdSupply)) {
-            uint256 yield = vaultValue - ousdSupply;
-            uint256 fee = yield.mulTruncateScale(trusteeFeeBps, 1e4);
-            require(yield > fee, "Fee must not be greater than yield");
-            if (fee > 0) {
-                oUSD.mint(_trusteeAddress, fee);
-            }
-            emit YieldDistribution(_trusteeAddress, yield, fee);
+        // Calculate yield and new supply
+        (uint256 yield, uint256 targetRate) = _nextYield(supply, vaultValue);
+        uint256 newSupply = supply + yield;
+        // Only rebase upwards and if we have enough backing funds
+        if (newSupply <= supply || newSupply > vaultValue) {
+            return vaultValue;
         }
 
-        // Only rachet OToken supply upwards
-        ousdSupply = oUSD.totalSupply(); // Final check should use latest value
-        if (vaultValue > ousdSupply) {
-            oUSD.changeSupply(vaultValue);
+        rebasePerSecondTarget = uint64(_min(targetRate, type(uint64).max));
+        lastRebase = uint64(block.timestamp); // Intentional cast
+
+        // Fee collection on yield
+        address _trusteeAddress = trusteeAddress; // gas savings
+        uint256 fee = 0;
+        if (_trusteeAddress != address(0)) {
+            fee = (yield * trusteeFeeBps) / 1e4;
+            if (fee > 0) {
+                require(fee < yield, "Fee must not be greater than yield");
+                oUSD.mint(_trusteeAddress, fee);
+            }
+        }
+        emit YieldDistribution(_trusteeAddress, yield, fee);
+
+        // Only ratchet OToken supply upwards
+        // Final check uses latest totalSupply
+        if (newSupply > oUSD.totalSupply()) {
+            oUSD.changeSupply(newSupply);
         }
         return vaultValue;
+    }
+
+    /**
+     * @notice Calculates the amount that would rebase at next rebase.
+     * This is before any fees.
+     * @return yield amount of expected yield
+     */
+    function previewYield() external view returns (uint256 yield) {
+        (yield, ) = _nextYield(oUSD.totalSupply(), _totalValue());
+        return yield;
+    }
+
+    function _nextYield(uint256 supply, uint256 vaultValue)
+        internal
+        view
+        virtual
+        returns (uint256 yield, uint256 targetRate)
+    {
+        uint256 nonRebasing = oUSD.nonRebasingSupply();
+        uint256 rebasing = supply - nonRebasing;
+        uint256 elapsed = block.timestamp - lastRebase;
+        targetRate = rebasePerSecondTarget;
+
+        if (
+            elapsed == 0 || // Yield only once per block.
+            rebasing == 0 || // No yield if there are no rebasing tokens to give it to.
+            supply > vaultValue || // No yield if we do not have yield to give.
+            block.timestamp >= type(uint64).max // No yield if we are too far in the future to calculate it correctly.
+        ) {
+            return (0, targetRate);
+        }
+
+        // Start with the full difference available
+        yield = vaultValue - supply;
+
+        // Cap via optional automatic duration smoothing
+        uint256 _dripDuration = dripDuration;
+        if (_dripDuration > 1) {
+            // If we are able to sustain an increased drip rate for
+            // double the duration, then increase the target drip rate
+            targetRate = _max(targetRate, yield / (_dripDuration * 2));
+            // If we cannot sustain the target rate any more,
+            // then rebase what we can, and reduce the target
+            targetRate = _min(targetRate, yield / _dripDuration);
+            // drip at the new target rate
+            yield = _min(yield, targetRate * elapsed);
+        }
+
+        // Cap per second. elapsed is not 1e18 denominated
+        yield = _min(yield, (rebasing * elapsed * rebasePerSecondMax) / 1e18);
+
+        // Cap at a hard max per rebase, to avoid long durations resulting in huge rebases
+        yield = _min(yield, (rebasing * MAX_REBASE) / 1e18);
+
+        return (yield, targetRate);
     }
 
     /**
@@ -433,7 +489,7 @@ contract VaultCore is VaultInitializer {
         returns (uint256 value)
     {
         uint256 assetCount = allAssets.length;
-        for (uint256 y = 0; y < assetCount; ++y) {
+        for (uint256 y; y < assetCount; ++y) {
             address assetAddr = allAssets[y];
             uint256 balance = IERC20(assetAddr).balanceOf(address(this));
             if (balance > 0) {
@@ -465,7 +521,7 @@ contract VaultCore is VaultInitializer {
     {
         IStrategy strategy = IStrategy(_strategyAddr);
         uint256 assetCount = allAssets.length;
-        for (uint256 y = 0; y < assetCount; ++y) {
+        for (uint256 y; y < assetCount; ++y) {
             address assetAddr = allAssets[y];
             if (strategy.supportsAsset(assetAddr)) {
                 uint256 balance = strategy.checkBalance(assetAddr);
@@ -733,6 +789,11 @@ contract VaultCore is VaultInitializer {
         }
     }
 
+    /**
+     * @dev Get the number of decimals of a token asset
+     * @param _asset Address of the asset
+     * @return decimals number of decimals
+     */
     function _getDecimals(address _asset)
         internal
         view
@@ -751,6 +812,7 @@ contract VaultCore is VaultInitializer {
 
     /**
      * @notice Gets the vault configuration of a supported asset.
+     * @param _asset Address of the token asset
      */
     function getAssetConfig(address _asset)
         public
@@ -788,6 +850,14 @@ contract VaultCore is VaultInitializer {
      */
     function isSupportedAsset(address _asset) external view returns (bool) {
         return assets[_asset].isSupported;
+    }
+
+    function ADMIN_IMPLEMENTATION() external view returns (address adminImpl) {
+        bytes32 slot = adminImplPosition;
+        // solhint-disable-next-line no-inline-assembly
+        assembly {
+            adminImpl := sload(slot)
+        }
     }
 
     /**
@@ -832,5 +902,13 @@ contract VaultCore is VaultInitializer {
     function abs(int256 x) private pure returns (uint256) {
         require(x < int256(MAX_INT), "Amount too high");
         return x >= 0 ? uint256(x) : uint256(-x);
+    }
+
+    function _min(uint256 a, uint256 b) internal pure returns (uint256) {
+        return a < b ? a : b;
+    }
+
+    function _max(uint256 a, uint256 b) internal pure returns (uint256) {
+        return a > b ? a : b;
     }
 }

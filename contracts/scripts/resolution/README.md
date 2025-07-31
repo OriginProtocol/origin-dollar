@@ -75,4 +75,4 @@ Then, you can run the approximately 1,000 transfers as tests against a fork. Eac
     node scripts/resolution/testSequenceRun.js \
     --testFile=scripts/resolution/test.json
 
-You can run this same command on both a local fork before the update, and a seperate local fork after the upgrade has run.
+You can run this same command on both a local fork before the update, and a separate local fork after the upgrade has run.

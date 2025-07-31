@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
 import { IVault } from "../interfaces/IVault.sol";
@@ -11,6 +11,8 @@ contract Sanctum {
     address public vault;
     address public reborner;
     bool public shouldAttack = false;
+    // should selfdestruct in the constructor
+    bool public shouldDestruct = false;
     uint256 public targetMethod;
     address public ousdContract;
 
@@ -51,6 +53,11 @@ contract Sanctum {
         shouldAttack = _shouldAttack;
     }
 
+    // should call selfdestruct in the constructor
+    function setShouldDesctruct(bool _shouldDestruct) public {
+        shouldDestruct = _shouldDestruct;
+    }
+
     function setTargetMethod(uint256 target) public {
         targetMethod = target;
     }
@@ -79,6 +86,10 @@ contract Reborner {
             } else {
                 mint();
             }
+        }
+
+        if (sanctum.shouldDestruct()) {
+            bye();
         }
     }
 

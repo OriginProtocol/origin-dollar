@@ -1,146 +1,162 @@
 {
+  "solcVersion": "0.8.28",
   "storage": [
     {
-      "contract": "Initializable",
-      "label": "initialized",
-      "type": "t_bool",
-      "src": "contracts/utils/Initializable.sol:8"
-    },
-    {
-      "contract": "Initializable",
-      "label": "initializing",
-      "type": "t_bool",
-      "src": "contracts/utils/Initializable.sol:13"
-    },
-    {
-      "contract": "Initializable",
-      "label": "______gap",
-      "type": "t_array(t_uint256)50_storage",
-      "src": "contracts/utils/Initializable.sol:37"
-    },
-    {
-      "contract": "InitializableERC20Detailed",
-      "label": "_____gap",
-      "type": "t_array(t_uint256)100_storage",
-      "src": "contracts/utils/InitializableERC20Detailed.sol:12"
-    },
-    {
-      "contract": "InitializableERC20Detailed",
-      "label": "_name",
-      "type": "t_string_storage",
-      "src": "contracts/utils/InitializableERC20Detailed.sol:14"
-    },
-    {
-      "contract": "InitializableERC20Detailed",
-      "label": "_symbol",
-      "type": "t_string_storage",
-      "src": "contracts/utils/InitializableERC20Detailed.sol:15"
-    },
-    {
-      "contract": "InitializableERC20Detailed",
-      "label": "_decimals",
-      "type": "t_uint8",
-      "src": "contracts/utils/InitializableERC20Detailed.sol:16"
-    },
-    {
+      "label": "_gap",
+      "offset": 0,
+      "slot": "0",
+      "type": "t_array(t_uint256)154_storage",
       "contract": "OUSD",
-      "label": "_totalSupply",
+      "src": "contracts/token/OUSD.sol:69"
+    },
+    {
+      "label": "totalSupply",
+      "offset": 0,
+      "slot": "154",
       "type": "t_uint256",
-      "src": "contracts/token/OUSD.sol:41"
+      "contract": "OUSD",
+      "src": "contracts/token/OUSD.sol:72"
     },
     {
-      "contract": "OUSD",
-      "label": "_allowances",
+      "label": "allowances",
+      "offset": 0,
+      "slot": "155",
       "type": "t_mapping(t_address,t_mapping(t_address,t_uint256))",
-      "src": "contracts/token/OUSD.sol:42"
+      "contract": "OUSD",
+      "src": "contracts/token/OUSD.sol:73"
     },
     {
-      "contract": "OUSD",
       "label": "vaultAddress",
+      "offset": 0,
+      "slot": "156",
       "type": "t_address",
-      "src": "contracts/token/OUSD.sol:43"
+      "contract": "OUSD",
+      "src": "contracts/token/OUSD.sol:76"
     },
     {
-      "contract": "OUSD",
-      "label": "_creditBalances",
+      "label": "creditBalances",
+      "offset": 0,
+      "slot": "157",
       "type": "t_mapping(t_address,t_uint256)",
-      "src": "contracts/token/OUSD.sol:44"
+      "contract": "OUSD",
+      "src": "contracts/token/OUSD.sol:77"
     },
     {
-      "contract": "OUSD",
-      "label": "_rebasingCredits",
+      "label": "rebasingCredits_",
+      "offset": 0,
+      "slot": "158",
       "type": "t_uint256",
-      "src": "contracts/token/OUSD.sol:45"
+      "contract": "OUSD",
+      "src": "contracts/token/OUSD.sol:79"
     },
     {
-      "contract": "OUSD",
-      "label": "_rebasingCreditsPerToken",
+      "label": "rebasingCreditsPerToken_",
+      "offset": 0,
+      "slot": "159",
       "type": "t_uint256",
-      "src": "contracts/token/OUSD.sol:46"
+      "contract": "OUSD",
+      "src": "contracts/token/OUSD.sol:80"
     },
     {
-      "contract": "OUSD",
       "label": "nonRebasingSupply",
+      "offset": 0,
+      "slot": "160",
       "type": "t_uint256",
-      "src": "contracts/token/OUSD.sol:49"
+      "contract": "OUSD",
+      "src": "contracts/token/OUSD.sol:82"
     },
     {
-      "contract": "OUSD",
-      "label": "nonRebasingCreditsPerToken",
+      "label": "alternativeCreditsPerToken",
+      "offset": 0,
+      "slot": "161",
       "type": "t_mapping(t_address,t_uint256)",
-      "src": "contracts/token/OUSD.sol:50"
+      "contract": "OUSD",
+      "src": "contracts/token/OUSD.sol:83"
     },
     {
-      "contract": "OUSD",
       "label": "rebaseState",
-      "type": "t_mapping(t_address,t_enum(RebaseOptions)15695)",
-      "src": "contracts/token/OUSD.sol:51"
+      "offset": 0,
+      "slot": "162",
+      "type": "t_mapping(t_address,t_enum(RebaseOptions)46172)",
+      "contract": "OUSD",
+      "src": "contracts/token/OUSD.sol:85"
     },
     {
-      "contract": "OUSD",
-      "label": "isUpgraded",
+      "label": "__deprecated_isUpgraded",
+      "offset": 0,
+      "slot": "163",
       "type": "t_mapping(t_address,t_uint256)",
-      "src": "contracts/token/OUSD.sol:52"
+      "contract": "OUSD",
+      "src": "contracts/token/OUSD.sol:86"
+    },
+    {
+      "label": "yieldTo",
+      "offset": 0,
+      "slot": "164",
+      "type": "t_mapping(t_address,t_address)",
+      "contract": "OUSD",
+      "src": "contracts/token/OUSD.sol:91"
+    },
+    {
+      "label": "yieldFrom",
+      "offset": 0,
+      "slot": "165",
+      "type": "t_mapping(t_address,t_address)",
+      "contract": "OUSD",
+      "src": "contracts/token/OUSD.sol:96"
+    },
+    {
+      "label": "__gap",
+      "offset": 0,
+      "slot": "166",
+      "type": "t_array(t_uint256)34_storage",
+      "contract": "OUSD",
+      "src": "contracts/token/OUSD.sol:99"
     }
   ],
   "types": {
-    "t_uint256": {
-      "label": "uint256"
-    },
-    "t_mapping(t_address,t_mapping(t_address,t_uint256))": {
-      "label": "mapping(address => mapping(address => uint256))"
-    },
     "t_address": {
-      "label": "address"
+      "label": "address",
+      "numberOfBytes": "20"
     },
-    "t_mapping(t_address,t_uint256)": {
-      "label": "mapping(address => uint256)"
+    "t_array(t_uint256)154_storage": {
+      "label": "uint256[154]",
+      "numberOfBytes": "4928"
     },
-    "t_mapping(t_address,t_enum(RebaseOptions)15695)": {
-      "label": "mapping(address => enum OUSD.RebaseOptions)"
+    "t_array(t_uint256)34_storage": {
+      "label": "uint256[34]",
+      "numberOfBytes": "1088"
     },
-    "t_enum(RebaseOptions)15695": {
+    "t_enum(RebaseOptions)46172": {
       "label": "enum OUSD.RebaseOptions",
       "members": [
         "NotSet",
-        "OptOut",
-        "OptIn"
-      ]
+        "StdNonRebasing",
+        "StdRebasing",
+        "YieldDelegationSource",
+        "YieldDelegationTarget"
+      ],
+      "numberOfBytes": "1"
     },
-    "t_array(t_uint256)100_storage": {
-      "label": "uint256[100]"
+    "t_mapping(t_address,t_address)": {
+      "label": "mapping(address => address)",
+      "numberOfBytes": "32"
     },
-    "t_string_storage": {
-      "label": "string"
+    "t_mapping(t_address,t_enum(RebaseOptions)46172)": {
+      "label": "mapping(address => enum OUSD.RebaseOptions)",
+      "numberOfBytes": "32"
     },
-    "t_uint8": {
-      "label": "uint8"
+    "t_mapping(t_address,t_mapping(t_address,t_uint256))": {
+      "label": "mapping(address => mapping(address => uint256))",
+      "numberOfBytes": "32"
     },
-    "t_bool": {
-      "label": "bool"
+    "t_mapping(t_address,t_uint256)": {
+      "label": "mapping(address => uint256)",
+      "numberOfBytes": "32"
     },
-    "t_array(t_uint256)50_storage": {
-      "label": "uint256[50]"
+    "t_uint256": {
+      "label": "uint256",
+      "numberOfBytes": "32"
     }
   }
 }

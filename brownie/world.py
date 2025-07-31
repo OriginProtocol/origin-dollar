@@ -1,13 +1,6 @@
-import brownie
-import json
-import time
-import re
-from eth_abi import abi
-from addresses import *
-import addresses # We want to be able to get to addresses as a dict
-from contextlib import redirect_stdout, contextmanager
+from world_abstract import *
 
-std = {'from': STRATEGIST}
+std = {'from': MULTICHAIN_STRATEGIST}
 
 # ousd = Contract.from_explorer(OUSD, as_proxy_for=OUSD_IMPL)
 # usdt = Contract.from_explorer(USDT)
@@ -21,20 +14,12 @@ std = {'from': STRATEGIST}
 # ousd_usdt = Contract.from_explorer(OUSD_USDT)
 # v2router = Contract.from_explorer(UNISWAP_V2_ROUTER)
 
-def abi_to_disk(name, contract):
-    with open("abi/%s.json" % name, 'w') as f:
-        json.dump(contract.abi, f)
-
-def load_contract(name, address):
-    with open("abi/%s.json" % name, 'r') as f:
-        abi = json.load(f)
-        return brownie.Contract.from_abi(name, address, abi)
-
 frax = load_contract('ERC20', FRAX)
 busd = load_contract('ERC20', BUSD)
 weth = load_contract('ERC20', WETH)
 ousd = load_contract('ousd', OUSD)
 oeth = load_contract('ousd', OETH)
+woeth = load_contract('erc4626', WOETH)
 usdt = load_contract('usdt', USDT)
 usdc = load_contract('usdc', USDC)
 dai = load_contract('dai', DAI)
@@ -43,6 +28,7 @@ wsteth = load_contract('wsteth', WSTETH)
 sfrxeth = load_contract('ERC20', SFRXETH)
 frxeth = load_contract('ERC20', FRXETH)
 reth = load_contract('ERC20', RETH)
+ssv = load_contract('ERC20', SSV)
 
 flipper = load_contract('flipper', FLIPPER)
 ousd_buyback = load_contract('buyback', OUSD_BUYBACK)
@@ -65,18 +51,22 @@ aave_strat = load_contract('aave_strat', AAVE_STRAT)
 comp_strat = load_contract('comp_strat', COMP_STRAT)
 convex_strat = load_contract('convex_strat', CONVEX_STRAT)
 ousd_meta_strat = load_contract('ousd_metastrat', OUSD_METASTRAT)
+ousd_curve_amo_strat = load_contract('ousd_curve_amo_strat', OUSD_CURVE_AMO_STRAT)
 morpho_comp_strat = load_contract('morpho_comp_strat', MORPHO_COMP_STRAT)
 morpho_aave_strat = load_contract('morpho_aave_strat', MORPHO_AAVE_STRAT)
 lusd_3pool_strat = load_contract('lusd_3pool_strat', LUSD_3POOL_STRAT)
 oeth_morpho_aave_strat = load_contract('morpho_aave_strat', OETH_MORPHO_AAVE_STRAT)
 oeth_meta_strat = load_contract('oeth_meta_strat', OETH_CONVEX_OETH_ETH_STRAT)
+oeth_curve_amo_strat = load_contract('ousd_curve_amo_strat', OETH_CURVE_AMO_STRAT)
 flux_strat = load_contract('comp_strat', FLUX_STRAT)
 frxeth_redeem_strat = load_contract('frxeth_redeem_strat', OETH_FRAX_ETH_REDEEM_STRAT)
 native_staking_strat = load_contract('native_staking_strat', OETH_NATIVE_STAKING_STRAT)
+native_staking_2_strat = load_contract('native_staking_strat', OETH_NATIVE_STAKING_2_STRAT)
 lido_withdrawal_strat = load_contract('lido_withdrawal_strat', OETH_LIDO_WITHDRAWAL_STRAT)
 
 ousd_metapool = load_contract("ousd_metapool", OUSD_METAPOOL)
 threepool = load_contract("threepool_swap", THREEPOOL)
+ousd_curve_pool = load_contract("ousd_curve_pool", OUSD_CURVE_POOL)
 
 aave_incentives_controller = load_contract('aave_incentives_controller', '0xd784927Ff2f95ba542BfC824c8a8a98F3495f6b5')
 stkaave = load_contract('stkaave', '0x4da27a545c0c5B758a6BA100e3a049001de870f5')
@@ -86,11 +76,12 @@ timelock = brownie.accounts.at(TIMELOCK, force=True)
 gova = brownie.accounts.at(GOVERNOR, force=True)
 governor = load_contract('governor', GOVERNOR)
 governor_five = load_contract('governor_five', GOVERNOR_FIVE)
+governor_six = load_contract('governor_five', '0x1D3Fbd4d129Ddd2372EA85c5Fa00b2682081c9EC')
 timelock_contract = load_contract('timelock', TIMELOCK)
 rewards_source = load_contract('rewards_source', REWARDS_SOURCE)
 
 
-weth = load_contract('ERC20', WETH)
+weth = load_contract('weth', WETH)
 reth = load_contract('ERC20', RETH)
 steth = load_contract('ERC20', STETH)
 frxeth = load_contract('ERC20', FRXETH)
@@ -98,11 +89,24 @@ sfrxeth = load_contract('ERC20', SFRXETH)
 oeth_vault_admin = load_contract('vault_admin', OETH_VAULT)
 oeth_vault_core = load_contract('vault_core', OETH_VAULT)
 oeth_metapool = load_contract('oeth_metapool', OETH_METAPOOL)
+oeth_curve_pool = load_contract('ousd_curve_pool', OETH_CURVE_POOL)
+
+woeth = load_contract('wrapped_ousd', WOETH)
+ccip_router = load_contract('ccip_router', CCIP_ROUTER)
+zapper = load_contract('oethzapper', OETH_ZAPPER)
+
+ethereum_woeth_omnichain_adapter = load_contract('omnichain_l2_adapter', ETHEREUM_WOETH_OMNICHAIN_ADAPTER)
 
 cvx_locker = load_contract('cvx_locker', CVX_LOCKER)
 cvx = load_contract('ERC20', CVX)
 
 uniswap_v3_quoter = load_contract('uniswap_v3_quoter', UNISWAP_V3_QUOTER)
+
+oeth_arm = load_contract('oeth_arm', OETH_ARM)
+
+superbridge = load_contract('superbridge', SUPERBRIDGE_ETH)
+
+eth_bridge_helper_module = load_contract('ethereum_bridge_helper', ETHEREUM_BRIDGE_HELPER_MODULE)
 
 CONTRACT_ADDRESSES = {}
 CONTRACT_ADDRESSES[VAULT_PROXY_ADDRESS.lower()] = {'name': 'Vault'}
@@ -161,56 +165,6 @@ def show_transfers(tx):
                 amount
                 ]))
 
-# unlock an address to issue transactions as that address
-def unlock(address):
-    brownie.network.web3.provider.make_request('hardhat_impersonateAccount', [address])
-
-def fund_eth(address, balance):
-    brownie.network.web3.provider.make_request('hardhat_setBalance', [address, balance])
-
-
-
-def mine_block():
-    brownie.network.web3.provider.make_request('evm_mine', [])
-
-def leading_whitespace(s, desired = 16):
-    return ' ' * (desired-len(s)) + s
-
-def commas(v, decimals = 18, truncate=True):
-    """Pretty format token amounts as floored, fixed size dollars"""
-
-    if not truncate:
-        v = int(10**4 * v / 10**decimals) / 10**4
-        s = f'{v:,.2f}'
-    else:
-        v = int(v / 10**decimals)
-        s = f'{v:,}'
-
-    return leading_whitespace(s, 16)
-
-# format BigNumber represented in 24 decimals
-def c24(v):
-    return commas(v, 24)
-
-# format BigNumber represented in 18 decimals
-def c18(v, truncate):
-    return commas(v, 18, truncate)
-
-# format BigNumber represented in 12 decimals
-def c12(v):
-    return commas(v, 12)
-
-# format BigNumber represented in 6 decimals
-def c6(v):
-    return commas(v, 6)
-
-def prices(p, decimals = 18):
-    p = float(p / 10**decimals)
-    return leading_whitespace('{:0.4f}'.format(p), 16)
-
-def pcts (p):
-    return leading_whitespace('{:0.4f}%'.format(p), 16)
-
 # show complete vault holdings: stable coins & strategies
 def show_vault_holdings():
     total = vault_core.totalValue()
@@ -257,12 +211,13 @@ def show_aave_rewards():
 
 
 def create_gov_proposal(title, txs):
-    tx = governor.propose(
+    tx = governor_six.propose(
         [x.receiver for x in txs],
+        [0 for x in txs],
         [x.sig_string for x in txs],
         ['0x'+x.input[10:] for x in txs],
         title,
-        {'from': STRATEGIST}
+        {'from': GOV_MULTISIG}
     )
     tx.info()
     print("---------------------")
@@ -270,6 +225,7 @@ def create_gov_proposal(title, txs):
     print("TO: "+tx.receiver)
     print("DATA: "+tx.input)
     print("---------------------")
+    return tx.events['ProposalCreated']['proposalId']
 
 def sim_governor_execute(id):
     governor.queue(id, {'from': GOV_MULTISIG})
@@ -347,14 +303,6 @@ def show_ousd_metastrat_underlying_balance():
         scaled_balance = commas(total_3crv_lp_value * underlying_pct, 18)
         print("{} ({:.2f}%): {}".format(asset.symbol(), underlying_pct * 100 / 2, scaled_balance))
     print("---------------------")
-
-# crate a temporary fork of a node that cleans up ethereum state when exiting code block
-class TemporaryFork:
-    def __enter__(self):
-        brownie.chain.snapshot()
-
-    def __exit__(self, *args, **kwargs):
-        brownie.chain.revert()
 
 # show changes in Vault's & OUSD's supply once the code block exits 
 class SupplyChanges:
@@ -456,57 +404,12 @@ def show_governance_action(i, to, sig, data):
         else:
             print(" >> ", ORANGE+str(v)+ENDC)
 
-def to_gnosis_json(txs):
-    main = {
-        "version": "1.0",
-        "chainId": "1",
-        "createdAt": int(time.time()),
-        "meta": {
-            "name": "Transactions Batch",
-            "description": "",
-            "txBuilderVersion": "1.16.1",
-            "createdFromSafeAddress": "0xF14BBdf064E3F67f51cd9BD646aE3716aD938FDC",
-            "createdFromOwnerAddress": "",
-            # "checksum": "0x"
-        },
-        "transactions": [],
-    }
-    for tx in txs:
-        main["transactions"].append(
-            {
-                "to": tx.receiver,
-                "value": "0",
-                "data": tx.input,
-                "contractMethod": None,
-                "contractInputsValues": None,
-            }
-        )
-    return json.dumps(main)
-
-
 def show_txs_data(txs):
     print("Schedule the following transactions on Gnosis Safe")
     for idx, item in enumerate(txs):
         print("Transaction ", idx)
         print("To: ", item.receiver)
         print("Data (Hex encoded): ", item.input, "\n")
-
-
-class TemporaryForkForReallocations:
-    def __enter__(self):
-        self.txs = []
-        brownie.chain.snapshot()
-
-        return self.txs
-
-    def __exit__(self, *args, **kwargs):
-        brownie.chain.revert()
-        print("----")
-        print("Gnosis json:")
-        print(to_gnosis_json(self.txs))
-        print("----")
-        print("Est Gas Max: {:,}".format(1.10 * sum([x.gas_used for x in self.txs])))
-
 
 class TemporaryForkForOUSD:
     def __enter__(self, profit_variance, vault_value_variance):
@@ -611,6 +514,25 @@ def sim_execute_governor_five(proposal_id):
     This skips the governance process time and block delays.
     """
     actions = governor_five.getActions(proposal_id)
+    timelock = brownie.accounts.at(TIMELOCK, force=True)
+    for i in range(0, len(actions[0])):
+        show_governance_action(
+            i=i, to=actions[0][i], sig=actions[2][i], data=actions[3][i]
+        )
+        # Build actual data
+        sighash = brownie.web3.keccak(text=actions[2][i]).hex()[:10]
+        data = sighash + str(actions[3][i])[2:]
+        # Send it
+        timelock.transfer(to=actions[0][i], data=data, amount=actions[1][i])
+
+def sim_execute_governor_six(proposal_id):
+    """
+    Bypasses the actual timelock/voting and just calls each governance action
+    as if the timelock sent the transaction individually.
+
+    This skips the governance process time and block delays.
+    """
+    actions = governor_six.getActions(proposal_id)
     timelock = brownie.accounts.at(TIMELOCK, force=True)
     for i in range(0, len(actions[0])):
         show_governance_action(

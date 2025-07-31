@@ -13,11 +13,12 @@ const {
   displayPortion,
   displayRatio,
 } = require("./curve");
+const { logTxDetails } = require("../utils/txLogger");
 
 const log = require("../utils/logger")("task:curve");
 
 /**
- * hardhat task that dumps the current state of a AMO Strategy
+ * Hardhat task that dumps the current state of an AMO strategy
  */
 async function amoStrategyTask(taskArguments) {
   const poolOTokenSymbol = taskArguments.pool;
@@ -28,28 +29,34 @@ async function amoStrategyTask(taskArguments) {
     taskArguments
   );
 
-  const { totalLPsBefore, totalLPs, poolBalancesBefore, poolBalances } =
-    await curvePool({
-      poolOTokenSymbol,
-      diffBlocks,
-      blockTag,
-      fromBlockTag,
-      output,
-    });
+  const {
+    totalLPsBefore,
+    totalLPs,
+    assetBalanceBefore,
+    oTokenBalanceBefore,
+    assetBalance,
+    oTokenBalance,
+  } = await curvePool({
+    poolOTokenSymbol,
+    diffBlocks,
+    blockTag,
+    fromBlockTag,
+    output,
+  });
 
   // Get symbols and contracts
   const {
     oTokenSymbol,
     assetSymbol,
     poolLPSymbol,
-    assets,
+    asset,
     oToken,
     cvxRewardPool,
     amoStrategy,
     vault,
   } = await curveContracts(poolOTokenSymbol);
 
-  // Strategy's Metapool LPs in the Convex pool
+  // Strategy's Curve LPs in the Convex pool
   const vaultLPsBefore =
     diffBlocks &&
     (await cvxRewardPool.balanceOf(amoStrategy.address, {
@@ -68,12 +75,12 @@ async function amoStrategyTask(taskArguments) {
   const oTokenSupply = await oToken.totalSupply({ blockTag });
   // Assets in the pool
   const strategyAssetsInPoolBefore =
-    diffBlocks && poolBalancesBefore[0].mul(vaultLPsBefore).div(totalLPsBefore);
-  const strategyAssetsInPool = poolBalances[0].mul(vaultLPs).div(totalLPs);
+    diffBlocks && assetBalanceBefore.mul(vaultLPsBefore).div(totalLPsBefore);
+  const strategyAssetsInPool = assetBalance.mul(vaultLPs).div(totalLPs);
   // OTokens in the pool
   const strategyOTokensInPoolBefore =
-    diffBlocks && poolBalancesBefore[1].mul(vaultLPsBefore).div(totalLPsBefore);
-  const strategyOTokensInPool = poolBalances[1].mul(vaultLPs).div(totalLPs);
+    diffBlocks && oTokenBalanceBefore.mul(vaultLPsBefore).div(totalLPsBefore);
+  const strategyOTokensInPool = oTokenBalance.mul(vaultLPs).div(totalLPs);
   // Adjusted total vault value
   const vaultAdjustedTotalValueBefore =
     diffBlocks && vaultTotalValueBefore.sub(strategyOTokensInPoolBefore);
@@ -83,9 +90,9 @@ async function amoStrategyTask(taskArguments) {
     diffBlocks && oTokenSupplyBefore.sub(strategyOTokensInPoolBefore);
   const vaultAdjustedTotalSupply = oTokenSupply.sub(strategyOTokensInPool);
 
-  // Strategy's Metapool LPs in the Convex pool
+  // Strategy's LPs in the Convex pool
   output(
-    `\nvault Metapool LPs       : ${displayPortion(
+    `\nStrategy's Curve LPs     : ${displayPortion(
       vaultLPs,
       totalLPs,
       poolLPSymbol,
@@ -94,7 +101,7 @@ async function amoStrategyTask(taskArguments) {
   );
   // Strategy's share of the assets in the pool
   output(
-    `assets owned by strategy : ${displayPortion(
+    `Assets owned by strategy : ${displayPortion(
       strategyAssetsInPool,
       vaultAdjustedTotalValue,
       assetSymbol,
@@ -112,7 +119,7 @@ async function amoStrategyTask(taskArguments) {
       strategyOTokensInPool,
       vaultAdjustedTotalValue,
       oTokenSymbol,
-      "OToken supply"
+      "adjusted vault value"
     )} ${displayDiff(
       diffBlocks,
       strategyOTokensInPool,
@@ -120,51 +127,49 @@ async function amoStrategyTask(taskArguments) {
     )}`
   );
   const stratTotalInPool = strategyAssetsInPool.add(strategyOTokensInPool);
-  output(`both owned by strategy   : ${formatUnits(stratTotalInPool)}`);
+  output(`Both owned by strategy   : ${formatUnits(stratTotalInPool)}`);
 
   // Strategy asset values
   let totalStrategyAssetsValueBefore = BigNumber.from(0);
   let totalStrategyAssetsValue = BigNumber.from(0);
-  for (const asset of assets) {
-    const symbol = await asset.symbol();
-    const strategyAssetsValueBefore =
-      diffBlocks &&
-      (await amoStrategy["checkBalance(address)"](asset.address, {
-        blockTag: fromBlockTag,
-      }));
-    const strategyAssetsValueBeforeScaled =
-      diffBlocks && (await scaleAmount(strategyAssetsValueBefore, asset));
-    totalStrategyAssetsValueBefore =
-      diffBlocks &&
-      totalStrategyAssetsValueBefore.add(strategyAssetsValueBeforeScaled);
-    const strategyAssetsValue = await amoStrategy["checkBalance(address)"](
-      asset.address,
-      {
-        blockTag,
-      }
-    );
-    const strategyAssetsValueScaled = await scaleAmount(
-      strategyAssetsValue,
-      asset
-    );
-    totalStrategyAssetsValue = totalStrategyAssetsValue.add(
-      strategyAssetsValueScaled
-    );
-    output(
-      `strategy ${symbol.padEnd(4)} value      : ${displayPortion(
-        strategyAssetsValueScaled,
-        vaultTotalValue,
-        symbol,
-        "vault value"
-      )} ${displayDiff(
-        diffBlocks,
-        strategyAssetsValueScaled,
-        strategyAssetsValueBeforeScaled
-      )}`
-    );
-  }
+  const symbol = await asset.symbol();
+  const strategyAssetsValueBefore =
+    diffBlocks &&
+    (await amoStrategy["checkBalance(address)"](asset.address, {
+      blockTag: fromBlockTag,
+    }));
+  const strategyAssetsValueBeforeScaled =
+    diffBlocks && (await scaleAmount(strategyAssetsValueBefore, asset));
+  totalStrategyAssetsValueBefore =
+    diffBlocks &&
+    totalStrategyAssetsValueBefore.add(strategyAssetsValueBeforeScaled);
+  const strategyAssetsValue = await amoStrategy["checkBalance(address)"](
+    asset.address,
+    {
+      blockTag,
+    }
+  );
+  const strategyAssetsValueScaled = await scaleAmount(
+    strategyAssetsValue,
+    asset
+  );
+  totalStrategyAssetsValue = totalStrategyAssetsValue.add(
+    strategyAssetsValueScaled
+  );
   output(
-    `strategy total value     : ${displayPortion(
+    `Strategy ${symbol.padEnd(4)} value      : ${displayPortion(
+      strategyAssetsValueScaled,
+      vaultTotalValue,
+      symbol,
+      "vault value"
+    )} ${displayDiff(
+      diffBlocks,
+      strategyAssetsValueScaled,
+      strategyAssetsValueBeforeScaled
+    )}`
+  );
+  output(
+    `Strategy total value     : ${displayPortion(
       totalStrategyAssetsValue,
       vaultTotalValue,
       assetSymbol,
@@ -186,7 +191,7 @@ async function amoStrategyTask(taskArguments) {
     strategyOTokensInPool
   );
   output(
-    `strategy adjusted value  : ${displayPortion(
+    `Strategy adjusted value  : ${displayPortion(
       strategyAdjustedValue,
       vaultAdjustedTotalValue,
       assetSymbol,
@@ -206,30 +211,29 @@ async function amoStrategyTask(taskArguments) {
     )}`
   );
 
-  for (const asset of assets) {
-    const assetsInVaultBefore =
-      diffBlocks &&
-      (await asset.balanceOf(vault.address, {
-        blockTag: fromBlockTag,
-      }));
-    const assetsInVaultBeforeScaled =
-      diffBlocks && (await scaleAmount(assetsInVaultBefore, asset));
-    const assetsInVault = await asset.balanceOf(vault.address, { blockTag });
-    const assetsInVaultScaled = await scaleAmount(assetsInVault, asset);
-    const symbol = await asset.symbol();
-    output(
-      displayProperty(
-        `${symbol.padEnd(4)} in vault`,
-        symbol,
-        assetsInVaultScaled,
-        assetsInVaultBeforeScaled
-      )
-    );
-  }
+  console.log("");
+  const assetsInVaultBefore =
+    diffBlocks &&
+    (await asset.balanceOf(vault.address, {
+      blockTag: fromBlockTag,
+    }));
+  const assetsInVaultBeforeScaled =
+    diffBlocks && (await scaleAmount(assetsInVaultBefore, asset));
+  const assetsInVault = await asset.balanceOf(vault.address, { blockTag });
+  const assetsInVaultScaled = await scaleAmount(assetsInVault, asset);
+  output(
+    displayProperty(
+      `${symbol.padEnd(4)} in vault`,
+      symbol,
+      assetsInVaultScaled,
+      assetsInVaultBeforeScaled
+    )
+  );
+
   // Vault's total value v total supply
   output(
     displayProperty(
-      "\nOToken total supply",
+      "\nOToken total supply      ",
       oTokenSymbol,
       oTokenSupply,
       oTokenSupplyBefore
@@ -237,17 +241,17 @@ async function amoStrategyTask(taskArguments) {
   );
   output(
     displayProperty(
-      "vault assets value",
+      "Vault assets value",
       assetSymbol,
-      totalStrategyAssetsValue,
-      totalStrategyAssetsValueBefore
+      vaultTotalValue,
+      vaultTotalValueBefore
     )
   );
   output(
-    `total value - supply     : ${displayRatio(
-      totalStrategyAssetsValue,
+    `Total value - supply     : ${displayRatio(
+      vaultTotalValue,
       oTokenSupply,
-      totalStrategyAssetsValueBefore,
+      vaultTotalValueBefore,
       oTokenSupplyBefore
     )}`
   );
@@ -262,14 +266,14 @@ async function amoStrategyTask(taskArguments) {
   );
   output(
     displayProperty(
-      "vault adjusted value",
+      "Vault adjusted value",
       assetSymbol,
       vaultAdjustedTotalValue,
       vaultAdjustedTotalValueBefore
     )
   );
   output(
-    `adjusted value - supply  : ${displayRatio(
+    `Adjusted value - supply  : ${displayRatio(
       vaultAdjustedTotalValue,
       vaultAdjustedTotalSupply,
       vaultAdjustedTotalValueBefore,
@@ -288,7 +292,7 @@ async function amoStrategyTask(taskArguments) {
 
   output(
     displayProperty(
-      "\nNet minted for strategy",
+      "\nNet minted for strategy  ",
       assetSymbol,
       netMintedForStrategy
     )
@@ -329,9 +333,10 @@ async function mintAndAddOTokensTask(taskArguments) {
   const signer = await getSigner();
 
   const amountUnits = parseUnits(amount.toString());
-  log(`Minting ${formatUnits(amountUnits)} ${symbol} and adding to Metapool`);
+  log(`Minting ${formatUnits(amountUnits)} ${symbol} and adding to Curve pool`);
 
-  await amoStrategy.connect(signer).mintAndAddOTokens(amountUnits);
+  const tx = await amoStrategy.connect(signer).mintAndAddOTokens(amountUnits);
+  await logTxDetails(tx, "mintAndAddOTokens");
 }
 
 async function removeAndBurnOTokensTask(taskArguments) {
@@ -353,10 +358,13 @@ async function removeAndBurnOTokensTask(taskArguments) {
   log(
     `Remove OTokens using ${formatUnits(
       amountUnits
-    )} ${symbol} Metapool LP tokens and burn the OTokens`
+    )} ${symbol} Curve LP tokens and burn the OTokens`
   );
 
-  await amoStrategy.connect(signer).removeAndBurnOTokens(amountUnits);
+  const tx = await amoStrategy
+    .connect(signer)
+    .removeAndBurnOTokens(amountUnits);
+  await logTxDetails(tx, "removeAndBurnOTokens");
 }
 
 async function removeOnlyAssetsTask(taskArguments) {
@@ -378,10 +386,11 @@ async function removeOnlyAssetsTask(taskArguments) {
   log(
     `Remove ETH using ${formatUnits(
       amountUnits
-    )} ${symbol} Metapool LP tokens and add to ${symbol} Vault`
+    )} ${symbol} Curve LP tokens and add to ${symbol} Vault`
   );
 
-  await amoStrategy.connect(signer).removeOnlyAssets(amountUnits);
+  const tx = await amoStrategy.connect(signer).removeOnlyAssets(amountUnits);
+  await logTxDetails(tx, "removeOnlyAssets");
 }
 
 module.exports = {

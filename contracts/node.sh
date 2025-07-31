@@ -37,6 +37,14 @@ main()
           PROVIDER_URL=$BASE_PROVIDER_URL;
           BLOCK_NUMBER=$BASE_BLOCK_NUMBER;
           params+=" --tags base";
+        elif [[ $FORK_NETWORK_NAME == "sonic" ]]; then
+          PROVIDER_URL=$SONIC_PROVIDER_URL;
+          BLOCK_NUMBER=$SONIC_BLOCK_NUMBER;
+          params+=" --tags sonic";
+        elif [[ $FORK_NETWORK_NAME == "plume" ]]; then
+          PROVIDER_URL=$PLUME_PROVIDER_URL;
+          BLOCK_NUMBER=$PLUME_BLOCK_NUMBER;
+          params+=" --tags plume";
         fi
         
         echo "Fork Network: $FORK_NETWORK_NAME"

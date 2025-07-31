@@ -1,7 +1,7 @@
 const { expect } = require("chai");
 
 const { createFixtureLoader, buybackFixture } = require("../_fixture");
-const { ousdUnits, usdcUnits, oethUnits } = require("../helpers");
+const { ousdUnits, usdcUnits, oethUnits, isCI } = require("../helpers");
 const addresses = require("../../utils/addresses");
 const { impersonateAndFund } = require("../../utils/signers");
 const { setERC20TokenBalance } = require("../_fund");
@@ -11,6 +11,10 @@ const loadFixture = createFixtureLoader(buybackFixture);
 
 describe("Buyback", function () {
   let fixture;
+
+  // Retry up to 3 times on CI
+  this.retries(isCI ? 3 : 0);
+
   beforeEach(async () => {
     fixture = await loadFixture();
   });

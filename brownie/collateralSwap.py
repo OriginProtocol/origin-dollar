@@ -90,7 +90,7 @@ def get_1inch_swap(
 def get_oracle_router_quote(from_token, to_token, from_amount):
     router = oracle_router if from_token in OUSD_ASSET_ADDRESSES else oeth_oracle_router
     
-    # Oracles communicate the price of token to ETH so to derive the the price
+    # Oracles communicate the price of token to ETH so to derive the price
     # of one token to another we should multiply 2 oracle prices: 
     # X_TOKEN/ETH * ETH/Y_TOKEN to get the X_TOKEN/Y_TOKEN oracle price.
     # 

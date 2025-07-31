@@ -31,26 +31,4 @@ describe("ForkTest: OETH Oracle Routers", function () {
       .populateTransaction.price(weth.address);
     await josh.sendTransaction(tx);
   });
-
-  it.skip("should get rETH price", async () => {
-    const { reth } = fixture;
-
-    const price = await oethOracleRouter.price(reth.address);
-    expect(price).to.gte(parseUnits("1083", 15));
-    expect(price).to.lt(parseUnits("112", 16));
-  });
-
-  it.skip("should get frxETH price", async () => {
-    const { frxETH } = fixture;
-
-    const price = await oethOracleRouter.price(frxETH.address);
-    expect(price).to.lt(parseUnits("1", 18));
-  });
-
-  it.skip("should get stETH price", async () => {
-    const { stETH } = fixture;
-
-    const price = await oethOracleRouter.price(stETH.address);
-    expect(price).to.approxEqualTolerance(parseUnits("1", 18), 1);
-  });
 });

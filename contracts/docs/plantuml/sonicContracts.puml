@@ -1,0 +1,97 @@
+@startuml
+
+!$originColor = DeepSkyBlue
+!$phase2 = Yellow
+' !$originColor = WhiteSmoke
+!$newColor = LightGreen
+!$changedColor = Orange
+!$thirdPartyColor = WhiteSmoke
+
+legend
+blue - Origin
+' green - new
+' orange - changed
+' yellow - phase2
+white - 3rd Party
+end legend
+
+title "Sonic Contract Dependencies"
+
+object "OSonicZapper" as zap <<Origin>> #$originColor {
+    assets: S, wS
+}
+
+object "WOSonic" as wos <<Origin>><<Proxy>> #$originColor {
+    asset: OS
+    symbol: wOS
+    name: Wrapped Origin Sonic
+}
+
+object "OSonicDripper" as drip <<Origin>><<Proxy>> #$originColor {
+    asset: wS
+}
+
+object "VaultValueChecker" as checker <<Origin>> #$originColor {
+}
+
+object "OSonic" as os <<Origin>><<Proxy>> #$originColor {
+    symbol: OS
+    name: Origin Sonic
+}
+
+object "OSonicVault" as vault <<Origin>><<Proxy>> #$originColor {
+    asset: wS
+}
+
+object "OSonicHarvester" as harv <<Origin>><<Proxy>> #$originColor {
+    rewards: SWPx
+}
+
+' Oracle
+object "OSonicOracleRouter" as router <<Origin>> #DeepSkyBlue {
+}
+
+object "SonicStakingStrategy" as stakeStrat <<Origin>><<Proxy>> #$originColor {
+    asset: wS
+}
+
+object "Special Fee Contract" as sfc <<Sonic>><<Proxy>> {
+    asset: S
+}
+
+object "SwapX AMO Strategy" as swapXAmoStrat <<Origin>><<Proxy>> #$originColor {
+    asset: wS
+    reward: SWPx
+}
+
+object "SwapX OS/wS\nPool" as swapXPool <<SwapX>> {
+    assets: OS, wS
+    lp: OSwS
+}
+
+object "SwapX OS/wS\nGauge" as swapXGauge <<SwapX>> {
+    asset: OSwS
+    lp: OSwS-gauge
+}
+
+wos <. zap
+zap ..> os
+zap ..> vault
+
+checker ..> vault
+
+wos ..> os
+os <.> vault
+vault <.> drip
+vault <...> stakeStrat
+stakeStrat ..> sfc
+vault .> router
+
+vault <.. harv 
+drip <.. harv 
+
+harv <..> swapXAmoStrat
+swapXAmoStrat ..> swapXPool
+swapXAmoStrat ..> swapXGauge
+
+@enduml

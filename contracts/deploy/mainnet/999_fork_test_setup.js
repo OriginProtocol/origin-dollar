@@ -6,7 +6,7 @@ const { replaceContractAt } = require("../../utils/hardhat");
 const { impersonateAndFund } = require("../../utils/signers");
 const { hardhatSetBalance } = require("../../test/_fund");
 
-const daiAbi = require("../../test/abi/dai.json").abi;
+const usdsAbi = require("../../test/abi/usds.json").abi;
 
 const log = require("../../utils/logger")("deploy:999_fork_test_setup");
 
@@ -23,10 +23,15 @@ const main = async (hre) => {
     await tokenContract.connect(signer).approve(toAddress, allowance);
   }
 
-  const { deployerAddr, timelockAddr, governorAddr, strategistAddr } =
-    await getNamedAccounts();
+  const {
+    deployerAddr,
+    timelockAddr,
+    governorAddr,
+    strategistAddr,
+    multichainStrategistAddr,
+  } = await getNamedAccounts();
 
-  hardhatSetBalance(deployerAddr, "1000000");
+  await hardhatSetBalance(deployerAddr, "1000000");
 
   const oracleRouter = await ethers.getContract("OracleRouter");
   const oethOracleRouter = await ethers.getContract(
@@ -37,10 +42,8 @@ const main = async (hre) => {
   const dMockOracleRouterNoStale = await deployWithConfirmation(
     "MockOracleRouterNoStale"
   );
-  const dAuraPriceFeed = await ethers.getContract("AuraWETHPriceFeed");
   const dMockOETHOracleRouterNoStale = await deployWithConfirmation(
-    "MockOETHOracleRouterNoStale",
-    [dAuraPriceFeed.address]
+    "MockOETHOracleRouterNoStale"
   );
   log("Deployed MockOracleRouterNoStale and MockOETHOracleRouterNoStale");
   await replaceContractAt(oracleRouter.address, dMockOracleRouterNoStale);
@@ -60,6 +63,7 @@ const main = async (hre) => {
   await impersonateAndFund(deployerAddr);
   await impersonateAndFund(governorAddr);
   await impersonateAndFund(strategistAddr);
+  await impersonateAndFund(multichainStrategistAddr);
   await impersonateAndFund(addresses.mainnet.OldTimelock);
   log("Unlocked and funded named accounts with ETH");
 
@@ -81,19 +85,19 @@ const main = async (hre) => {
   const oethProxy = await ethers.getContract("OETHProxy");
   const oeth = await ethers.getContractAt("OETH", oethProxy.address);
 
-  const usdt = await ethers.getContractAt(daiAbi, addresses.mainnet.USDT);
-  const dai = await ethers.getContractAt(daiAbi, addresses.mainnet.DAI);
-  const usdc = await ethers.getContractAt(daiAbi, addresses.mainnet.USDC);
-  const frxETH = await ethers.getContractAt(daiAbi, addresses.mainnet.frxETH);
+  const usdt = await ethers.getContractAt(usdsAbi, addresses.mainnet.USDT);
+  const usds = await ethers.getContractAt(usdsAbi, addresses.mainnet.USDS);
+  const usdc = await ethers.getContractAt(usdsAbi, addresses.mainnet.USDC);
+  // const frxETH = await ethers.getContractAt(usdsAbi, addresses.mainnet.frxETH);
 
   const [matt, josh, anna, domen, daniel, franck] = signers.slice(4);
   for (const user of [josh, matt, anna, domen, daniel, franck]) {
     // Approve Vault to move funds
-    for (const asset of [ousd, usdt, usdc, dai]) {
+    for (const asset of [ousd, usdt, usdc, usds]) {
       await resetAllowance(asset, user, vault.address);
     }
 
-    for (const asset of [oeth, frxETH]) {
+    for (const asset of [oeth]) {
       await resetAllowance(asset, user, oethVault.address);
     }
   }

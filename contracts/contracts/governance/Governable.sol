@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
 /**
@@ -8,7 +8,7 @@ pragma solidity ^0.8.0;
  *      Context.sol like Ownable.sol does for simplification.
  * @author Origin Protocol Inc
  */
-contract Governable {
+abstract contract Governable {
     // Storage position of the owner and pendingOwner of the contract
     // keccak256("OUSD.governor");
     bytes32 private constant governorPosition =
@@ -35,14 +35,6 @@ contract Governable {
         address indexed previousGovernor,
         address indexed newGovernor
     );
-
-    /**
-     * @dev Initializes the contract setting the deployer as the initial Governor.
-     */
-    constructor() {
-        _setGovernor(msg.sender);
-        emit GovernorshipTransferred(address(0), _governor());
-    }
 
     /**
      * @notice Returns the address of the current Governor.
@@ -93,6 +85,8 @@ contract Governable {
     }
 
     function _setGovernor(address newGovernor) internal {
+        emit GovernorshipTransferred(_governor(), newGovernor);
+
         bytes32 position = governorPosition;
         // solhint-disable-next-line no-inline-assembly
         assembly {
@@ -170,7 +164,6 @@ contract Governable {
      */
     function _changeGovernor(address _newGovernor) internal {
         require(_newGovernor != address(0), "New Governor is address(0)");
-        emit GovernorshipTransferred(_governor(), _newGovernor);
         _setGovernor(_newGovernor);
     }
 }

@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
 /**
@@ -13,12 +13,14 @@ import { IOracle } from "../interfaces/IOracle.sol";
 import { ISwapper } from "../interfaces/ISwapper.sol";
 import { IVault } from "../interfaces/IVault.sol";
 import { StableMath } from "../utils/StableMath.sol";
+import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 
 import "./VaultStorage.sol";
 
 contract VaultAdmin is VaultStorage {
     using SafeERC20 for IERC20;
     using StableMath for uint256;
+    using SafeCast for uint256;
 
     /**
      * @dev Verifies that the caller is the Governor or Strategist.
@@ -155,12 +157,49 @@ contract VaultAdmin is VaultStorage {
     }
 
     /**
-     * @notice Set the Dripper contract that streams harvested rewards to the vault.
-     * @param _dripper Address of the Dripper contract.
+     * @notice Changes the async withdrawal claim period for OETH & superOETHb
+     * @param _delay Delay period (should be between 10 mins to 7 days).
+     *          Set to 0 to disable async withdrawals
      */
-    function setDripper(address _dripper) external onlyGovernor {
-        dripper = _dripper;
-        emit DripperChanged(_dripper);
+    function setWithdrawalClaimDelay(uint256 _delay) external onlyGovernor {
+        require(
+            _delay == 0 || (_delay >= 10 minutes && _delay <= 15 days),
+            "Invalid claim delay period"
+        );
+        withdrawalClaimDelay = _delay;
+        emit WithdrawalClaimDelayUpdated(_delay);
+    }
+
+    /**
+     * @notice Set a yield streaming max rate. This spreads yield over
+     * time if it is above the max rate.
+     * @param yearlyApr in 1e18 notation. 3 * 1e18 = 3% APR
+     */
+    function setRebaseRateMax(uint256 yearlyApr)
+        external
+        onlyGovernorOrStrategist
+    {
+        // The old yield will be at the old rate
+        IVault(address(this)).rebase();
+        // Change the rate
+        uint256 newPerSecond = yearlyApr / 100 / 365 days;
+        require(newPerSecond <= MAX_REBASE_PER_SECOND, "Rate too high");
+        rebasePerSecondMax = newPerSecond.toUint64();
+        emit RebasePerSecondMaxChanged(newPerSecond);
+    }
+
+    /**
+     * @notice Set the drip duration period
+     * @param _dripDuration Time in seconds to target a constant yield rate
+     */
+    function setDripDuration(uint256 _dripDuration)
+        external
+        onlyGovernorOrStrategist
+    {
+        // The old yield will be at the old rate
+        IVault(address(this)).rebase();
+        dripDuration = _dripDuration.toUint64();
+        emit DripDurationChanged(_dripDuration);
     }
 
     /***************************************
@@ -205,7 +244,7 @@ contract VaultAdmin is VaultStorage {
         bytes calldata _data
     ) internal virtual returns (uint256 toAssetAmount) {
         // Check fromAsset and toAsset are valid
-        Asset memory fromAssetConfig = assets[address(_fromAsset)];
+        Asset memory fromAssetConfig = assets[_fromAsset];
         Asset memory toAssetConfig = assets[_toAsset];
         require(fromAssetConfig.isSupported, "From asset is not supported");
         require(toAssetConfig.isSupported, "To asset is not supported");
@@ -347,6 +386,7 @@ contract VaultAdmin is VaultStorage {
      */
     function supportAsset(address _asset, uint8 _unitConversion)
         external
+        virtual
         onlyGovernor
     {
         require(!assets[_asset].isSupported, "Asset already supported");
@@ -374,13 +414,20 @@ contract VaultAdmin is VaultStorage {
      */
     function removeAsset(address _asset) external onlyGovernor {
         require(assets[_asset].isSupported, "Asset not supported");
+
+        // 1e13 for 18 decimals. And 10 for 6 decimals
+        uint256 maxDustBalance = uint256(1e13).scaleBy(
+            assets[_asset].decimals,
+            18
+        );
+
         require(
-            IVault(address(this)).checkBalance(_asset) <= 1e13,
+            IVault(address(this)).checkBalance(_asset) <= maxDustBalance,
             "Vault still holds asset"
         );
 
         uint256 assetsCount = allAssets.length;
-        uint256 assetIndex = assetsCount; // initialize at invaid index
+        uint256 assetIndex = assetsCount; // initialize at invalid index
         for (uint256 i = 0; i < assetsCount; ++i) {
             if (allAssets[i] == _asset) {
                 assetIndex = i;

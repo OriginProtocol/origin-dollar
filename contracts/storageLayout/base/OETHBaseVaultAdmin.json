@@ -1,0 +1,515 @@
+{
+  "solcVersion": "0.8.28",
+  "storage": [
+    {
+      "label": "initialized",
+      "offset": 0,
+      "slot": "0",
+      "type": "t_bool",
+      "contract": "Initializable",
+      "src": "contracts/utils/Initializable.sol:12"
+    },
+    {
+      "label": "initializing",
+      "offset": 1,
+      "slot": "0",
+      "type": "t_bool",
+      "contract": "Initializable",
+      "src": "contracts/utils/Initializable.sol:17"
+    },
+    {
+      "label": "______gap",
+      "offset": 0,
+      "slot": "1",
+      "type": "t_array(t_uint256)50_storage",
+      "contract": "Initializable",
+      "src": "contracts/utils/Initializable.sol:41"
+    },
+    {
+      "label": "assets",
+      "offset": 0,
+      "slot": "51",
+      "type": "t_mapping(t_address,t_struct(Asset)62137_storage)",
+      "contract": "VaultStorage",
+      "src": "contracts/vault/VaultStorage.sol:99"
+    },
+    {
+      "label": "allAssets",
+      "offset": 0,
+      "slot": "52",
+      "type": "t_array(t_address)dyn_storage",
+      "contract": "VaultStorage",
+      "src": "contracts/vault/VaultStorage.sol:101"
+    },
+    {
+      "label": "strategies",
+      "offset": 0,
+      "slot": "53",
+      "type": "t_mapping(t_address,t_struct(Strategy)62152_storage)",
+      "contract": "VaultStorage",
+      "src": "contracts/vault/VaultStorage.sol:109"
+    },
+    {
+      "label": "allStrategies",
+      "offset": 0,
+      "slot": "54",
+      "type": "t_array(t_address)dyn_storage",
+      "contract": "VaultStorage",
+      "src": "contracts/vault/VaultStorage.sol:111"
+    },
+    {
+      "label": "priceProvider",
+      "offset": 0,
+      "slot": "55",
+      "type": "t_address",
+      "contract": "VaultStorage",
+      "src": "contracts/vault/VaultStorage.sol:114"
+    },
+    {
+      "label": "rebasePaused",
+      "offset": 20,
+      "slot": "55",
+      "type": "t_bool",
+      "contract": "VaultStorage",
+      "src": "contracts/vault/VaultStorage.sol:116"
+    },
+    {
+      "label": "capitalPaused",
+      "offset": 21,
+      "slot": "55",
+      "type": "t_bool",
+      "contract": "VaultStorage",
+      "src": "contracts/vault/VaultStorage.sol:119"
+    },
+    {
+      "label": "redeemFeeBps",
+      "offset": 0,
+      "slot": "56",
+      "type": "t_uint256",
+      "contract": "VaultStorage",
+      "src": "contracts/vault/VaultStorage.sol:121"
+    },
+    {
+      "label": "vaultBuffer",
+      "offset": 0,
+      "slot": "57",
+      "type": "t_uint256",
+      "contract": "VaultStorage",
+      "src": "contracts/vault/VaultStorage.sol:123"
+    },
+    {
+      "label": "autoAllocateThreshold",
+      "offset": 0,
+      "slot": "58",
+      "type": "t_uint256",
+      "contract": "VaultStorage",
+      "src": "contracts/vault/VaultStorage.sol:125"
+    },
+    {
+      "label": "rebaseThreshold",
+      "offset": 0,
+      "slot": "59",
+      "type": "t_uint256",
+      "contract": "VaultStorage",
+      "src": "contracts/vault/VaultStorage.sol:127"
+    },
+    {
+      "label": "oUSD",
+      "offset": 0,
+      "slot": "60",
+      "type": "t_contract(OUSD)52290",
+      "contract": "VaultStorage",
+      "src": "contracts/vault/VaultStorage.sol:130"
+    },
+    {
+      "label": "_deprecated_rebaseHooksAddr",
+      "offset": 0,
+      "slot": "61",
+      "type": "t_address",
+      "contract": "VaultStorage",
+      "src": "contracts/vault/VaultStorage.sol:138"
+    },
+    {
+      "label": "_deprecated_uniswapAddr",
+      "offset": 0,
+      "slot": "62",
+      "type": "t_address",
+      "contract": "VaultStorage",
+      "src": "contracts/vault/VaultStorage.sol:141"
+    },
+    {
+      "label": "strategistAddr",
+      "offset": 0,
+      "slot": "63",
+      "type": "t_address",
+      "contract": "VaultStorage",
+      "src": "contracts/vault/VaultStorage.sol:144"
+    },
+    {
+      "label": "assetDefaultStrategies",
+      "offset": 0,
+      "slot": "64",
+      "type": "t_mapping(t_address,t_address)",
+      "contract": "VaultStorage",
+      "src": "contracts/vault/VaultStorage.sol:148"
+    },
+    {
+      "label": "maxSupplyDiff",
+      "offset": 0,
+      "slot": "65",
+      "type": "t_uint256",
+      "contract": "VaultStorage",
+      "src": "contracts/vault/VaultStorage.sol:151"
+    },
+    {
+      "label": "trusteeAddress",
+      "offset": 0,
+      "slot": "66",
+      "type": "t_address",
+      "contract": "VaultStorage",
+      "src": "contracts/vault/VaultStorage.sol:154"
+    },
+    {
+      "label": "trusteeFeeBps",
+      "offset": 0,
+      "slot": "67",
+      "type": "t_uint256",
+      "contract": "VaultStorage",
+      "src": "contracts/vault/VaultStorage.sol:157"
+    },
+    {
+      "label": "_deprecated_swapTokens",
+      "offset": 0,
+      "slot": "68",
+      "type": "t_array(t_address)dyn_storage",
+      "contract": "VaultStorage",
+      "src": "contracts/vault/VaultStorage.sol:160"
+    },
+    {
+      "label": "ousdMetaStrategy",
+      "offset": 0,
+      "slot": "69",
+      "type": "t_address",
+      "contract": "VaultStorage",
+      "src": "contracts/vault/VaultStorage.sol:166"
+    },
+    {
+      "label": "netOusdMintedForStrategy",
+      "offset": 0,
+      "slot": "70",
+      "type": "t_int256",
+      "contract": "VaultStorage",
+      "src": "contracts/vault/VaultStorage.sol:169"
+    },
+    {
+      "label": "netOusdMintForStrategyThreshold",
+      "offset": 0,
+      "slot": "71",
+      "type": "t_uint256",
+      "contract": "VaultStorage",
+      "src": "contracts/vault/VaultStorage.sol:172"
+    },
+    {
+      "label": "swapConfig",
+      "offset": 0,
+      "slot": "72",
+      "type": "t_struct(SwapConfig)62254_storage",
+      "contract": "VaultStorage",
+      "src": "contracts/vault/VaultStorage.sol:186"
+    },
+    {
+      "label": "isMintWhitelistedStrategy",
+      "offset": 0,
+      "slot": "73",
+      "type": "t_mapping(t_address,t_bool)",
+      "contract": "VaultStorage",
+      "src": "contracts/vault/VaultStorage.sol:190"
+    },
+    {
+      "label": "dripper",
+      "offset": 0,
+      "slot": "74",
+      "type": "t_address",
+      "contract": "VaultStorage",
+      "src": "contracts/vault/VaultStorage.sol:194"
+    },
+    {
+      "label": "withdrawalQueueMetadata",
+      "offset": 0,
+      "slot": "75",
+      "type": "t_struct(WithdrawalQueueMetadata)62281_storage",
+      "contract": "VaultStorage",
+      "src": "contracts/vault/VaultStorage.sol:214"
+    },
+    {
+      "label": "withdrawalRequests",
+      "offset": 0,
+      "slot": "77",
+      "type": "t_mapping(t_uint256,t_struct(WithdrawalRequest)62296_storage)",
+      "contract": "VaultStorage",
+      "src": "contracts/vault/VaultStorage.sol:228"
+    },
+    {
+      "label": "withdrawalClaimDelay",
+      "offset": 0,
+      "slot": "78",
+      "type": "t_uint256",
+      "contract": "VaultStorage",
+      "src": "contracts/vault/VaultStorage.sol:233"
+    },
+    {
+      "label": "lastRebase",
+      "offset": 0,
+      "slot": "79",
+      "type": "t_uint64",
+      "contract": "VaultStorage",
+      "src": "contracts/vault/VaultStorage.sol:236"
+    },
+    {
+      "label": "dripDuration",
+      "offset": 8,
+      "slot": "79",
+      "type": "t_uint64",
+      "contract": "VaultStorage",
+      "src": "contracts/vault/VaultStorage.sol:239"
+    },
+    {
+      "label": "rebasePerSecondMax",
+      "offset": 16,
+      "slot": "79",
+      "type": "t_uint64",
+      "contract": "VaultStorage",
+      "src": "contracts/vault/VaultStorage.sol:244"
+    },
+    {
+      "label": "rebasePerSecondTarget",
+      "offset": 24,
+      "slot": "79",
+      "type": "t_uint64",
+      "contract": "VaultStorage",
+      "src": "contracts/vault/VaultStorage.sol:247"
+    },
+    {
+      "label": "__gap",
+      "offset": 0,
+      "slot": "80",
+      "type": "t_array(t_uint256)43_storage",
+      "contract": "VaultStorage",
+      "src": "contracts/vault/VaultStorage.sol:254"
+    }
+  ],
+  "types": {
+    "t_address": {
+      "label": "address",
+      "numberOfBytes": "20"
+    },
+    "t_array(t_address)dyn_storage": {
+      "label": "address[]",
+      "numberOfBytes": "32"
+    },
+    "t_array(t_uint256)43_storage": {
+      "label": "uint256[43]",
+      "numberOfBytes": "1376"
+    },
+    "t_array(t_uint256)50_storage": {
+      "label": "uint256[50]",
+      "numberOfBytes": "1600"
+    },
+    "t_bool": {
+      "label": "bool",
+      "numberOfBytes": "1"
+    },
+    "t_contract(OUSD)52290": {
+      "label": "contract OUSD",
+      "numberOfBytes": "20"
+    },
+    "t_enum(UnitConversion)62127": {
+      "label": "enum VaultStorage.UnitConversion",
+      "members": [
+        "DECIMALS",
+        "GETEXCHANGERATE"
+      ],
+      "numberOfBytes": "1"
+    },
+    "t_int256": {
+      "label": "int256",
+      "numberOfBytes": "32"
+    },
+    "t_mapping(t_address,t_address)": {
+      "label": "mapping(address => address)",
+      "numberOfBytes": "32"
+    },
+    "t_mapping(t_address,t_bool)": {
+      "label": "mapping(address => bool)",
+      "numberOfBytes": "32"
+    },
+    "t_mapping(t_address,t_struct(Asset)62137_storage)": {
+      "label": "mapping(address => struct VaultStorage.Asset)",
+      "numberOfBytes": "32"
+    },
+    "t_mapping(t_address,t_struct(Strategy)62152_storage)": {
+      "label": "mapping(address => struct VaultStorage.Strategy)",
+      "numberOfBytes": "32"
+    },
+    "t_mapping(t_uint256,t_struct(WithdrawalRequest)62296_storage)": {
+      "label": "mapping(uint256 => struct VaultStorage.WithdrawalRequest)",
+      "numberOfBytes": "32"
+    },
+    "t_struct(Asset)62137_storage": {
+      "label": "struct VaultStorage.Asset",
+      "members": [
+        {
+          "label": "isSupported",
+          "type": "t_bool",
+          "offset": 0,
+          "slot": "0"
+        },
+        {
+          "label": "unitConversion",
+          "type": "t_enum(UnitConversion)62127",
+          "offset": 1,
+          "slot": "0"
+        },
+        {
+          "label": "decimals",
+          "type": "t_uint8",
+          "offset": 2,
+          "slot": "0"
+        },
+        {
+          "label": "allowedOracleSlippageBps",
+          "type": "t_uint16",
+          "offset": 3,
+          "slot": "0"
+        }
+      ],
+      "numberOfBytes": "32"
+    },
+    "t_struct(Strategy)62152_storage": {
+      "label": "struct VaultStorage.Strategy",
+      "members": [
+        {
+          "label": "isSupported",
+          "type": "t_bool",
+          "offset": 0,
+          "slot": "0"
+        },
+        {
+          "label": "_deprecated",
+          "type": "t_uint256",
+          "offset": 0,
+          "slot": "1"
+        }
+      ],
+      "numberOfBytes": "64"
+    },
+    "t_struct(SwapConfig)62254_storage": {
+      "label": "struct VaultStorage.SwapConfig",
+      "members": [
+        {
+          "label": "swapper",
+          "type": "t_address",
+          "offset": 0,
+          "slot": "0"
+        },
+        {
+          "label": "allowedUndervalueBps",
+          "type": "t_uint16",
+          "offset": 20,
+          "slot": "0"
+        }
+      ],
+      "numberOfBytes": "32"
+    },
+    "t_struct(WithdrawalQueueMetadata)62281_storage": {
+      "label": "struct VaultStorage.WithdrawalQueueMetadata",
+      "members": [
+        {
+          "label": "queued",
+          "type": "t_uint128",
+          "offset": 0,
+          "slot": "0"
+        },
+        {
+          "label": "claimable",
+          "type": "t_uint128",
+          "offset": 16,
+          "slot": "0"
+        },
+        {
+          "label": "claimed",
+          "type": "t_uint128",
+          "offset": 0,
+          "slot": "1"
+        },
+        {
+          "label": "nextWithdrawalIndex",
+          "type": "t_uint128",
+          "offset": 16,
+          "slot": "1"
+        }
+      ],
+      "numberOfBytes": "64"
+    },
+    "t_struct(WithdrawalRequest)62296_storage": {
+      "label": "struct VaultStorage.WithdrawalRequest",
+      "members": [
+        {
+          "label": "withdrawer",
+          "type": "t_address",
+          "offset": 0,
+          "slot": "0"
+        },
+        {
+          "label": "claimed",
+          "type": "t_bool",
+          "offset": 20,
+          "slot": "0"
+        },
+        {
+          "label": "timestamp",
+          "type": "t_uint40",
+          "offset": 21,
+          "slot": "0"
+        },
+        {
+          "label": "amount",
+          "type": "t_uint128",
+          "offset": 0,
+          "slot": "1"
+        },
+        {
+          "label": "queued",
+          "type": "t_uint128",
+          "offset": 16,
+          "slot": "1"
+        }
+      ],
+      "numberOfBytes": "64"
+    },
+    "t_uint128": {
+      "label": "uint128",
+      "numberOfBytes": "16"
+    },
+    "t_uint16": {
+      "label": "uint16",
+      "numberOfBytes": "2"
+    },
+    "t_uint256": {
+      "label": "uint256",
+      "numberOfBytes": "32"
+    },
+    "t_uint40": {
+      "label": "uint40",
+      "numberOfBytes": "5"
+    },
+    "t_uint64": {
+      "label": "uint64",
+      "numberOfBytes": "8"
+    },
+    "t_uint8": {
+      "label": "uint8",
+      "numberOfBytes": "1"
+    }
+  }
+}

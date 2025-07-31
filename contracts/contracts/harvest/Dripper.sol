@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
@@ -19,10 +19,10 @@ import { IVault } from "../interfaces/IVault.sol";
  *
  * Design notes
  * - USDT has a smaller resolution than the number of seconds
- * in a week, which can make per block payouts have a rounding error. However
+ * in a week, which can make per second payouts have a rounding error. However
  * the total effect is not large - cents per day, and this money is
  * not lost, just distributed in the future. While we could use a higher
- * decimal precision for the drip perBlock, we chose simpler code.
+ * decimal precision for the drip perSecond, we chose simpler code.
  * - By calculating the changing drip rates on collects only, harvests and yield
  * events don't have to call anything on this contract or pay any extra gas.
  * Collect() is already be paying for a single write, since it has to reset
@@ -49,7 +49,7 @@ contract Dripper is Governable {
 
     struct Drip {
         uint64 lastCollect; // overflows 262 billion years after the sun dies
-        uint192 perBlock; // drip rate per block
+        uint192 perSecond; // drip rate per second
     }
 
     address immutable vault; // OUSD vault
@@ -86,7 +86,11 @@ contract Dripper is Governable {
     /// @dev Change the drip duration. Governor only.
     /// @param _durationSeconds the number of seconds to drip out the entire
     ///  balance over if no collects were called during that time.
-    function setDripDuration(uint256 _durationSeconds) external onlyGovernor {
+    function setDripDuration(uint256 _durationSeconds)
+        external
+        virtual
+        onlyGovernor
+    {
         require(_durationSeconds > 0, "duration must be non-zero");
         dripDuration = _durationSeconds;
         _collect(); // duration change take immediate effect
@@ -113,24 +117,36 @@ contract Dripper is Governable {
         returns (uint256)
     {
         uint256 elapsed = block.timestamp - _drip.lastCollect;
-        uint256 allowed = (elapsed * _drip.perBlock);
+        uint256 allowed = (elapsed * _drip.perSecond);
         return (allowed > _balance) ? _balance : allowed;
     }
 
     /// @dev Sends the currently dripped funds to be vault, and sets
     ///  the new drip rate based on the new balance.
-    function _collect() internal {
+    function _collect() internal virtual {
         // Calculate send
         uint256 balance = IERC20(token).balanceOf(address(this));
         uint256 amountToSend = _availableFunds(balance, drip);
         uint256 remaining = balance - amountToSend;
-        // Calculate new drip perBlock
+        // Calculate new drip perSecond
         //   Gas savings by setting entire struct at one time
         drip = Drip({
-            perBlock: uint192(remaining / dripDuration),
+            perSecond: uint192(remaining / dripDuration),
             lastCollect: uint64(block.timestamp)
         });
         // Send funds
         IERC20(token).safeTransfer(vault, amountToSend);
+    }
+
+    /// @dev Transfer out all ERC20 held by the contract. Governor only.
+    /// @param _asset ERC20 token address
+    function transferAllToken(address _asset, address _receiver)
+        external
+        onlyGovernor
+    {
+        IERC20(_asset).safeTransfer(
+            _receiver,
+            IERC20(_asset).balanceOf(address(this))
+        );
     }
 }

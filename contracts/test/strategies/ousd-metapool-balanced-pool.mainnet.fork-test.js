@@ -7,7 +7,8 @@ const { withBalancedOUSDMetaPool } = require("../_metastrategies-fixtures");
 
 const log = require("../../utils/logger")("test:fork:ousd:metapool");
 
-describe("ForkTest: Convex 3pool/OUSD Meta Strategy - Balanced Metapool", function () {
+// The OUSD AMO has been removed
+describe.skip("ForkTest: Convex 3pool/OUSD Meta Strategy - Balanced Metapool", function () {
   this.timeout(0);
 
   // Retry up to 3 times on CI
@@ -30,15 +31,15 @@ describe("ForkTest: Convex 3pool/OUSD Meta Strategy - Balanced Metapool", functi
       await mintTest(fixture, matt, usdc, "120000");
     });
 
-    it("Should stake DAI in Curve gauge via metapool", async function () {
-      const { anna, dai } = fixture;
-      await mintTest(fixture, anna, dai, "110000");
+    it("Should stake USDS in Curve gauge via metapool", async function () {
+      const { anna, usds } = fixture;
+      await mintTest(fixture, anna, usds, "110000");
     });
   });
 
   describe("Redeem", function () {
     it("Should redeem", async () => {
-      const { vault, ousd, usdt, usdc, dai, anna, OUSDmetaStrategy } = fixture;
+      const { vault, ousd, usdt, usdc, usds, anna, OUSDmetaStrategy } = fixture;
 
       await vault.connect(anna).allocate();
 
@@ -49,7 +50,7 @@ describe("ForkTest: Convex 3pool/OUSD Meta Strategy - Balanced Metapool", functi
       const beforeMintBlock = await ethers.provider.getBlockNumber();
 
       // Mint with all three assets
-      for (const asset of [usdt, usdc, dai]) {
+      for (const asset of [usdt, usdc, usds]) {
         await vault
           .connect(anna)
           .mint(asset.address, await units(amount, asset), 0);
@@ -66,7 +67,7 @@ describe("ForkTest: Convex 3pool/OUSD Meta Strategy - Balanced Metapool", functi
 
       // we multiply it by 3 because 1/3 of balance is represented by each of the assets
       const strategyBalance = (
-        await OUSDmetaStrategy.checkBalance(dai.address)
+        await OUSDmetaStrategy.checkBalance(usds.address)
       ).mul(3);
 
       // 3x 10k assets + 3x 10k OUSD = 60k

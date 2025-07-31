@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
 import "./EchidnaTestMintBurn.sol";
@@ -93,47 +93,5 @@ contract EchidnaTestApproval is EchidnaTestMintBurn {
         uint256 allowanceAfter2 = ousd.allowance(owner, spender);
 
         assert(allowanceAfter2 == amount / 2);
-    }
-
-    /**
-     * @notice Increasing the allowance should raise it by the amount provided
-     * @param ownerAcc The account that is approving
-     * @param spenderAcc The account that is being approved
-     * @param amount The amount to approve
-     */
-    function testIncreaseAllowance(
-        uint8 ownerAcc,
-        uint8 spenderAcc,
-        uint256 amount
-    ) public {
-        address owner = getAccount(ownerAcc);
-        address spender = getAccount(spenderAcc);
-
-        uint256 allowanceBefore = ousd.allowance(owner, spender);
-        increaseAllowance(ownerAcc, spenderAcc, amount);
-        uint256 allowanceAfter = ousd.allowance(owner, spender);
-
-        assert(allowanceAfter == allowanceBefore + amount);
-    }
-
-    /**
-     * @notice Decreasing the allowance should lower it by the amount provided
-     * @param ownerAcc The account that is approving
-     * @param spenderAcc The account that is being approved
-     * @param amount The amount to approve
-     */
-    function testDecreaseAllowance(
-        uint8 ownerAcc,
-        uint8 spenderAcc,
-        uint256 amount
-    ) public {
-        address owner = getAccount(ownerAcc);
-        address spender = getAccount(spenderAcc);
-
-        uint256 allowanceBefore = ousd.allowance(owner, spender);
-        decreaseAllowance(ownerAcc, spenderAcc, amount);
-        uint256 allowanceAfter = ousd.allowance(owner, spender);
-
-        assert(allowanceAfter == allowanceBefore - amount);
     }
 }

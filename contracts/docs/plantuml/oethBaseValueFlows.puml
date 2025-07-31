@@ -1,0 +1,157 @@
+@startuml
+
+title "SuperOETH Flow of Value"
+
+actor "User" as user
+
+box Base
+participant "Strategist" as strategist <<Origin>> #DeepSkyBlue
+participant "Zapper" as zap <<Origin>> #DeepSkyBlue
+participant "Super OETH\nVault" as vault <<Origin>> #DeepSkyBlue
+participant "Bridged WOETH\nStrategy" as woethStrat <<Origin>> #DeepSkyBlue
+
+participant "Bridged\nWrapped ETH" as weth <<WETH>>
+participant "Harvester" as harv <<Origin>> #DeepSkyBlue
+participant "Dripper" as drip <<Origin>> #DeepSkyBlue
+
+participant "SuperOETH /\nWETH" as aeroPool <<Aerodrome>>
+end box
+
+box Mainnet
+participant "Strategist" as mainStrategist <<Origin>> #DeepSkyBlue
+participant "OETH\nVault" as mainVault <<Origin>> #DeepSkyBlue
+participant "Wrapper OETH" as woeth <<Origin>><<WOETH>> #DeepSkyBlue
+end box
+
+' Deposit ETH via Zapper
+group User deposit ETH [> 10 OETH]
+user -> zap : ETH
+note left : ETH in user tx
+
+zap -> weth : ETH
+note left : swap ETH for WETH
+weth o-> zap : WETH
+
+' vault o-> strategist : SuperOETH
+' note left : 20% performance\nfee from rebase
+
+zap -> vault : WETH
+note left : mint SuperOETH
+
+vault o-> user : SuperOETH
+note right : SuperOETH matches ETH
+end
+
+' Mint
+group User mint
+' vault o-> strategist : OETH
+' note left : 20% performance\nfee from rebase
+
+user -> vault : WETH
+note left : mint SuperOETH
+vault o-> user : SuperOETH
+note right : SuperOETH matches WETH
+end
+
+' Redeem
+group User redeem SuperOETH
+' vault o-> strategist : SuperOETH
+' note left : 20% performance\nfee from rebase
+
+user -x vault : SuperOETH
+note left : burn User's SuperOETH
+
+vault -> user : WETH
+' note right : 0.1% fee applied to redeemed assets.\nThis adds to the yield in the next rebase.
+end
+
+' Withdraw
+group User withdrawal of SuperOETH
+' vault o-> strategist : SuperOETH
+' note left : 20% performance\nfee from rebase
+
+user -x vault : SuperOETH
+note left : user requests withdrawal
+
+... 10 minute minimum ...
+
+vault -> user : WETH
+note left : user claims WETH
+end
+
+
+group Strategist moves WETH from Base to Mainnet
+
+strategist -> mainStrategist : ETH
+note left : Bridge WETH to\nMainnet using\nStargate or Jumper
+
+mainStrategist -> mainVault : WETH
+note left : mint OETH using WETH
+mainVault o-> mainStrategist : OETH
+
+mainStrategist -> woeth : OETH
+note left : deposit OETH into Wrapper
+woeth o-> mainStrategist : WOETH
+
+mainStrategist -> strategist : WOETH
+note left : bridge WOETH to\nBase using CCIP
+
+strategist -> woethStrat : WOETH
+note left : deposit bridged WOETH
+woethStrat o-> strategist : SuperOETH
+
+alt redeem from vault
+strategist ->x vault : SuperOETH
+note left : redeem
+vault -> strategist : WETH
+else swap using Aero pool
+strategist -> aeroPool : SuperOETH
+note left : swap SuperOETH for WETH\nusing Aerodrome Pool
+aeroPool -> strategist : WETH
+end
+
+strategist ->x weth : WETH
+note left : unwrap WETH for ETH
+weth -> strategist : ETH
+end
+
+
+group Strategist moves WETH from Mainnet to Base
+
+strategist -> vault : WETH
+note left : mint SuperOETH\nusing WETH
+vault o-> strategist : SuperOETH
+
+strategist ->x woethStrat : SuperOETH
+note left : withdraw bridged WOETH
+woethStrat -> strategist : WOETH
+
+strategist -> mainStrategist : WOETH
+note left : bridge WOETH to\nMainnet using CCIP
+
+mainStrategist -> woeth : WOETH
+note left : unwrap WOETH for OETH
+woeth -> mainStrategist : OETH
+
+mainStrategist ->x mainVault : OETH
+note left : redeem OETH for WETH
+mainVault -> mainStrategist : WETH
+
+mainStrategist -> strategist : WETH
+note left : bridge WETH to Base\nusing Superbridge
+
+end
+
+' Collect and Rebase
+group Collect and Rebase
+
+drip -> vault : WETH
+note left : stream harvested WETH\nto Vault over 14 days
+
+group Rebase [increase in underlying assets]
+vault o-> vault : SuperOETH
+note left : 100% of value\nto SuperOETH holders
+end 
+end
+
+@enduml

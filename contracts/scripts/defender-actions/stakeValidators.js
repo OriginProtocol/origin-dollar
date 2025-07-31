@@ -31,7 +31,7 @@ const handler = async (event) => {
   log(`Network: ${networkName} with chain id (${network.chainId})`);
 
   const nativeStakingProxyAddress =
-    addresses[networkName].NativeStakingSSVStrategy2Proxy;
+    addresses[networkName].NativeStakingSSVStrategy3Proxy;
   log(
     `Resolved Native Staking Strategy address to ${nativeStakingProxyAddress}`
   );

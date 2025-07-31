@@ -27,7 +27,8 @@ describe("ForkTest: Harvester", function () {
     });
   });
 
-  describe("with Curve", () => {
+  // Skipping this since we switched to simple harvester
+  describe.skip("with Curve", () => {
     it("Should swap CRV for WETH", async () => {
       const {
         oethHarvester,
@@ -73,7 +74,7 @@ describe("ForkTest: Harvester", function () {
   //   });
   // });
 
-  describe("with Balancer", () => {
+  describe.skip("with Balancer", () => {
     it("Should swap BAL and AURA for WETH", async () => {
       const {
         oethHarvester,

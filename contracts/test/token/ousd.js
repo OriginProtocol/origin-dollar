@@ -1,16 +1,24 @@
 const { expect } = require("chai");
-const { loadDefaultFixture } = require("../_fixture");
-const { utils } = require("ethers");
+const {
+  loadTokenTransferFixture,
+  createFixtureLoader,
+  instantRebaseVaultFixture,
+} = require("../_fixture");
+const { utils, BigNumber } = require("ethers");
 
-const { daiUnits, ousdUnits, usdcUnits, isFork } = require("../helpers");
+const { usdsUnits, ousdUnits, usdcUnits, isFork } = require("../helpers");
+
+const zeroAddress = "0x0000000000000000000000000000000000000000";
 
 describe("Token", function () {
   if (isFork) {
     this.timeout(0);
   }
   let fixture;
+  const loadFixture = createFixtureLoader(instantRebaseVaultFixture);
+
   beforeEach(async () => {
-    fixture = await loadDefaultFixture();
+    fixture = await loadFixture();
   });
 
   it("Should return the token name and symbol", async () => {
@@ -26,9 +34,7 @@ describe("Token", function () {
 
   it("Should return 0 balance for the zero address", async () => {
     const { ousd } = fixture;
-    expect(
-      await ousd.balanceOf("0x0000000000000000000000000000000000000000")
-    ).to.equal(0);
+    expect(await ousd.balanceOf(zeroAddress)).to.equal(0);
   });
 
   it("Should not allow anyone to mint OUSD directly", async () => {
@@ -94,8 +100,12 @@ describe("Token", function () {
     await vault.rebase();
 
     // Credits per token should be the same for the contract
-    contractCreditsPerToken ===
-      (await ousd.creditsBalanceOf(mockNonRebasing.address));
+    const contractCreditsPerTokenAfter = await ousd.creditsBalanceOf(
+      mockNonRebasing.address
+    );
+    await expect(contractCreditsPerToken[1]).to.equal(
+      contractCreditsPerTokenAfter[1]
+    );
 
     // Validate rebasing and non rebasing credit accounting by calculating'
     // total supply manually
@@ -103,8 +113,15 @@ describe("Token", function () {
       .mul(utils.parseUnits("1", 18))
       .div(await ousd.rebasingCreditsPerTokenHighres())
       .add(await ousd.nonRebasingSupply());
+
     await expect(calculatedTotalSupply).to.approxEqual(
       await ousd.totalSupply()
+    );
+    await expect(
+      await ousd.rebasingCreditsPerTokenHighres()
+    ).to.approxEqualTolerance(
+      (await ousd.rebasingCreditsPerToken()).mul(BigNumber.from("1000000000")),
+      0.01 // maxTolerancePct
     );
   });
 
@@ -248,9 +265,8 @@ describe("Token", function () {
     let { ousd, vault, matt, usdc, josh, mockNonRebasing } = fixture;
 
     // Give Josh an allowance to move Matt's OUSD
-    await ousd
-      .connect(matt)
-      .increaseAllowance(await josh.getAddress(), ousdUnits("100"));
+    await ousd.connect(matt).approve(await josh.getAddress(), ousdUnits("100"));
+
     // Give contract 100 OUSD from Matt via Josh
     await ousd
       .connect(josh)
@@ -268,8 +284,12 @@ describe("Token", function () {
     await usdc.connect(matt).transfer(vault.address, usdcUnits("200"));
     await vault.rebase();
     // Credits per token should be the same for the contract
-    contractCreditsPerToken ===
-      (await ousd.creditsBalanceOf(mockNonRebasing.address));
+    const contractCreditsPerTokenAfter = await ousd.creditsBalanceOf(
+      mockNonRebasing.address
+    );
+    expect(contractCreditsPerToken[1]).to.equal(
+      contractCreditsPerTokenAfter[1]
+    );
 
     // Validate rebasing and non rebasing credit accounting by calculating'
     // total supply manually
@@ -286,9 +306,7 @@ describe("Token", function () {
     let { ousd, vault, matt, usdc, josh, mockNonRebasing } = fixture;
 
     // Give Josh an allowance to move Matt's OUSD
-    await ousd
-      .connect(matt)
-      .increaseAllowance(await josh.getAddress(), ousdUnits("150"));
+    await ousd.connect(matt).approve(await josh.getAddress(), ousdUnits("150"));
     // Give contract 100 OUSD from Matt via Josh
     await ousd
       .connect(josh)
@@ -333,10 +351,7 @@ describe("Token", function () {
     await expect(matt).has.an.approxBalanceOf("100.00", ousd);
     await expect(josh).has.an.approxBalanceOf("0", ousd);
     await expect(mockNonRebasing).has.an.approxBalanceOf("100.00", ousd);
-    await mockNonRebasing.increaseAllowance(
-      await matt.getAddress(),
-      ousdUnits("100")
-    );
+    await mockNonRebasing.approve(await matt.getAddress(), ousdUnits("100"));
 
     await ousd
       .connect(matt)
@@ -380,10 +395,7 @@ describe("Token", function () {
     await expect(matt).has.an.approxBalanceOf("250", ousd);
     await expect(mockNonRebasing).has.an.approxBalanceOf("150.00", ousd);
     // Transfer contract balance to Josh
-    await mockNonRebasing.increaseAllowance(
-      await matt.getAddress(),
-      ousdUnits("150")
-    );
+    await mockNonRebasing.approve(await matt.getAddress(), ousdUnits("150"));
 
     await ousd
       .connect(matt)
@@ -406,6 +418,18 @@ describe("Token", function () {
     await expect(calculatedTotalSupply).to.approxEqual(
       await ousd.totalSupply()
     );
+  });
+
+  it("Should allow a governanceRebaseOptIn call", async () => {
+    let { ousd, governor, mockNonRebasing } = fixture;
+    await ousd.connect(governor).governanceRebaseOptIn(mockNonRebasing.address);
+  });
+
+  it("Should not allow a governanceRebaseOptIn of a zero address", async () => {
+    let { ousd, governor } = fixture;
+    await expect(
+      ousd.connect(governor).governanceRebaseOptIn(zeroAddress)
+    ).to.be.revertedWith("Zero address not allowed");
   });
 
   it("Should maintain the correct balances when rebaseOptIn is called from non-rebasing contract", async () => {
@@ -442,11 +466,13 @@ describe("Token", function () {
 
     const creditsAdded = ousdUnits("99.50")
       .mul(rebasingCreditsPerTokenHighres)
-      .div(utils.parseUnits("1", 18));
+      .div(utils.parseUnits("1", 18))
+      .add(1);
 
-    await expect(rebasingCredits).to.equal(
-      initialRebasingCredits.add(creditsAdded)
-    );
+    const resultingCredits = initialRebasingCredits.add(creditsAdded);
+    // when calling changeSupply(rebase) OUSD contract can round down by 1 WEI.
+    expect(rebasingCredits).to.gte(resultingCredits.sub(BigNumber.from("1")));
+    expect(rebasingCredits).to.lte(resultingCredits);
 
     expect(await ousd.totalSupply()).to.approxEqual(
       initialTotalSupply.add(utils.parseUnits("200", 18))
@@ -490,25 +516,60 @@ describe("Token", function () {
       .mul(initialrebasingCreditsPerTokenHighres)
       .div(utils.parseUnits("1", 18));
 
-    await expect(rebasingCredits).to.equal(
+    expect(rebasingCredits).to.equal(
       initialRebasingCredits.sub(creditsDeducted)
     );
 
     expect(await ousd.totalSupply()).to.equal(totalSupplyBefore);
   });
 
+  it("Calling rebaseOptIn / optOut in loop shouldn't keep increasing account's balance", async () => {
+    let { ousd, vault, matt, usdc, josh } = fixture;
+
+    // Transfer USDC into the Vault to simulate yield
+    await usdc.connect(matt).transfer(vault.address, usdcUnits("200"));
+    await vault.rebase();
+
+    await ousd.connect(josh).rebaseOptOut();
+    await ousd.connect(josh).rebaseOptIn();
+
+    const balanceBefore = await ousd.balanceOf(josh.address);
+
+    for (let i = 0; i < 10; i++) {
+      await ousd.connect(josh).rebaseOptOut();
+      await ousd.connect(josh).rebaseOptIn();
+    }
+
+    expect(await ousd.balanceOf(josh.address)).to.equal(balanceBefore);
+  });
+
   it("Should not allow EOA to call rebaseOptIn when already opted in to rebasing", async () => {
-    let { ousd, matt } = fixture;
+    let { ousd, matt, usdc } = fixture;
+    await usdc.connect(matt).mint(usdcUnits("2"));
+
     await expect(ousd.connect(matt).rebaseOptIn()).to.be.revertedWith(
-      "Account has not opted out"
+      "Account must be non-rebasing"
     );
+  });
+
+  it("Should allow an EOA to call rebaseOptIn when already opted in to rebasing", async () => {
+    let { ousd, matt, usdc, josh } = fixture;
+    await usdc.connect(matt).mint(usdcUnits("2"));
+    // transfer all OUSD out
+    await ousd
+      .connect(matt)
+      .transfer(josh.address, await ousd.balanceOf(matt.address));
+
+    // user is allowed to override its NotSet rebasing state to Rebasing without negatively affecting
+    // any of the token contract's invariants
+    await ousd.connect(matt).rebaseOptIn();
   });
 
   it("Should not allow EOA to call rebaseOptOut when already opted out of rebasing", async () => {
     let { ousd, matt } = fixture;
     await ousd.connect(matt).rebaseOptOut();
     await expect(ousd.connect(matt).rebaseOptOut()).to.be.revertedWith(
-      "Account has not opted in"
+      "Account must be rebasing"
     );
   });
 
@@ -516,15 +577,24 @@ describe("Token", function () {
     let { mockNonRebasing } = fixture;
     await mockNonRebasing.rebaseOptIn();
     await expect(mockNonRebasing.rebaseOptIn()).to.be.revertedWith(
-      "Account has not opted out"
+      "Only standard non-rebasing accounts can opt in"
     );
   });
 
   it("Should not allow contract to call rebaseOptOut when already opted out of rebasing", async () => {
-    let { mockNonRebasing } = fixture;
+    let { mockNonRebasing, ousd, matt } = fixture;
+    // send some OUSD to trigger the automatic "migration" of mockNonRebasing account to nonRebasing
+    await ousd.connect(matt).transfer(mockNonRebasing.address, ousdUnits("1"));
+
     await expect(mockNonRebasing.rebaseOptOut()).to.be.revertedWith(
-      "Account has not opted in"
+      "Account must be rebasing"
     );
+  });
+
+  it("Should allow a contract to call rebaseOptOut if no other action causing auto-converting has happened", async () => {
+    let { mockNonRebasing } = fixture;
+
+    await mockNonRebasing.rebaseOptOut();
   });
 
   it("Should maintain the correct balance on a partial transfer for a non-rebasing account without previously set creditsPerToken", async () => {
@@ -593,7 +663,7 @@ describe("Token", function () {
             );
         }
 
-        await expect(await ousd.totalSupply()).to.equal(initialTotalSupply);
+        expect(await ousd.totalSupply()).to.equal(initialTotalSupply);
       }
     }
   });
@@ -615,40 +685,7 @@ describe("Token", function () {
           await anna.getAddress(),
           ousdUnits("100")
         )
-    ).to.be.revertedWith("panic code 0x11");
-  });
-
-  it("Should allow to increase/decrease allowance", async () => {
-    const { ousd, anna, matt } = fixture;
-    // Approve OUSD
-    await ousd.connect(matt).approve(anna.getAddress(), ousdUnits("1000"));
-    expect(
-      await ousd.allowance(await matt.getAddress(), await anna.getAddress())
-    ).to.equal(ousdUnits("1000"));
-
-    // Decrease allowance
-    await ousd
-      .connect(matt)
-      .decreaseAllowance(await anna.getAddress(), ousdUnits("100"));
-    expect(
-      await ousd.allowance(await matt.getAddress(), await anna.getAddress())
-    ).to.equal(ousdUnits("900"));
-
-    // Increase allowance
-    await ousd
-      .connect(matt)
-      .increaseAllowance(await anna.getAddress(), ousdUnits("20"));
-    expect(
-      await ousd.allowance(await matt.getAddress(), await anna.getAddress())
-    ).to.equal(ousdUnits("920"));
-
-    // Decrease allowance more than what's there
-    await ousd
-      .connect(matt)
-      .decreaseAllowance(await anna.getAddress(), ousdUnits("950"));
-    expect(
-      await ousd.allowance(await matt.getAddress(), await anna.getAddress())
-    ).to.equal(ousdUnits("0"));
+    ).to.be.revertedWith("Allowance exceeded");
   });
 
   it("Should increase users balance on supply increase", async () => {
@@ -665,27 +702,39 @@ describe("Token", function () {
 
     // Contract originally contained $200, now has $202.
     // Matt should have (99/200) * 202 OUSD
-    await expect(matt).has.a.balanceOf("99.99", ousd);
+    // because rebase rounds down in protocol's favour resulting user balances can be off by 1 WEI
+    const mattExpectedBalance = ousdUnits("99.99");
+    expect(await ousd.balanceOf(matt.address)).to.be.gte(
+      mattExpectedBalance.sub(BigNumber.from("1"))
+    );
+    expect(await ousd.balanceOf(matt.address)).to.be.lte(mattExpectedBalance);
+
+    const annaExpectedBalance = ousdUnits("1.01");
     // Anna should have (1/200) * 202 OUSD
-    await expect(anna).has.a.balanceOf("1.01", ousd);
+    expect(await ousd.balanceOf(anna.address)).to.be.gte(
+      annaExpectedBalance.sub(BigNumber.from("1"))
+    );
+    expect(await ousd.balanceOf(anna.address)).to.be.lte(annaExpectedBalance);
   });
 
   it("Should mint correct amounts on non-rebasing account without previously set creditsPerToken", async () => {
-    let { ousd, dai, vault, josh, mockNonRebasing } = fixture;
+    let { ousd, usds, vault, josh, mockNonRebasing } = fixture;
 
-    // Give contract 100 DAI from Josh
-    await dai.connect(josh).transfer(mockNonRebasing.address, daiUnits("100"));
+    // Give contract 100 USDS from Josh
+    await usds
+      .connect(josh)
+      .transfer(mockNonRebasing.address, usdsUnits("100"));
     await expect(mockNonRebasing).has.a.balanceOf("0", ousd);
     const totalSupplyBefore = await ousd.totalSupply();
     await mockNonRebasing.approveFor(
-      dai.address,
+      usds.address,
       vault.address,
-      daiUnits("100")
+      usdsUnits("100")
     );
     const tx = await mockNonRebasing.mintOusd(
       vault.address,
-      dai.address,
-      daiUnits("50")
+      usds.address,
+      usdsUnits("50")
     );
     await expect(tx)
       .to.emit(ousd, "AccountRebasingDisabled")
@@ -710,18 +759,24 @@ describe("Token", function () {
   });
 
   it("Should mint correct amounts on non-rebasing account with previously set creditsPerToken", async () => {
-    let { ousd, dai, vault, matt, usdc, josh, mockNonRebasing } = fixture;
-    // Give contract 100 DAI from Josh
-    await dai.connect(josh).transfer(mockNonRebasing.address, daiUnits("100"));
+    let { ousd, usds, vault, matt, usdc, josh, mockNonRebasing } = fixture;
+    // Give contract 100 USDS from Josh
+    await usds
+      .connect(josh)
+      .transfer(mockNonRebasing.address, usdsUnits("100"));
     await expect(mockNonRebasing).has.a.balanceOf("0", ousd);
     const totalSupplyBefore = await ousd.totalSupply();
     await mockNonRebasing.approveFor(
-      dai.address,
+      usds.address,
       vault.address,
-      daiUnits("100")
+      usdsUnits("100")
     );
-    await mockNonRebasing.mintOusd(vault.address, dai.address, daiUnits("50"));
-    await expect(await ousd.totalSupply()).to.equal(
+    await mockNonRebasing.mintOusd(
+      vault.address,
+      usds.address,
+      usdsUnits("50")
+    );
+    expect(await ousd.totalSupply()).to.equal(
       totalSupplyBefore.add(ousdUnits("50"))
     );
     const contractCreditsBalanceOf = await ousd.creditsBalanceOf(
@@ -736,8 +791,12 @@ describe("Token", function () {
       (await ousd.creditsBalanceOf(await josh.getAddress()))[1]
     ).to.not.equal(contractCreditsBalanceOf[1]);
     // Mint again
-    await mockNonRebasing.mintOusd(vault.address, dai.address, daiUnits("50"));
-    await expect(await ousd.totalSupply()).to.equal(
+    await mockNonRebasing.mintOusd(
+      vault.address,
+      usds.address,
+      usdsUnits("50")
+    );
+    expect(await ousd.totalSupply()).to.equal(
       // Note 200 additional from simulated yield
       totalSupplyBefore.add(ousdUnits("100")).add(ousdUnits("200"))
     );
@@ -758,17 +817,23 @@ describe("Token", function () {
   });
 
   it("Should burn the correct amount for non-rebasing account", async () => {
-    let { ousd, dai, vault, matt, usdc, josh, mockNonRebasing } = fixture;
-    // Give contract 100 DAI from Josh
-    await dai.connect(josh).transfer(mockNonRebasing.address, daiUnits("100"));
+    let { ousd, usds, vault, matt, usdc, josh, mockNonRebasing } = fixture;
+    // Give contract 100 USDS from Josh
+    await usds
+      .connect(josh)
+      .transfer(mockNonRebasing.address, usdsUnits("100"));
     await expect(mockNonRebasing).has.a.balanceOf("0", ousd);
     const totalSupplyBefore = await ousd.totalSupply();
     await mockNonRebasing.approveFor(
-      dai.address,
+      usds.address,
       vault.address,
-      daiUnits("100")
+      usdsUnits("100")
     );
-    await mockNonRebasing.mintOusd(vault.address, dai.address, daiUnits("50"));
+    await mockNonRebasing.mintOusd(
+      vault.address,
+      usds.address,
+      usdsUnits("50")
+    );
     await expect(await ousd.totalSupply()).to.equal(
       totalSupplyBefore.add(ousdUnits("50"))
     );
@@ -785,7 +850,7 @@ describe("Token", function () {
     ).to.not.equal(contractCreditsBalanceOf[1]);
     // Burn OUSD
     await mockNonRebasing.redeemOusd(vault.address, ousdUnits("25"));
-    await expect(await ousd.totalSupply()).to.equal(
+    expect(await ousd.totalSupply()).to.equal(
       // Note 200 from simulated yield
       totalSupplyBefore.add(ousdUnits("225"))
     );
@@ -826,7 +891,7 @@ describe("Token", function () {
       const beforeReceiver = await ousd.balanceOf(mockNonRebasing.address);
       await mockNonRebasing.transfer(matt.address, amount);
       const afterReceiver = await ousd.balanceOf(mockNonRebasing.address);
-      expect(beforeReceiver.sub(amount)).to.equal(afterReceiver);
+      await expect(beforeReceiver.sub(amount)).to.equal(afterReceiver);
     };
 
     // In
@@ -848,5 +913,207 @@ describe("Token", function () {
     await checkTransferOut(2);
     await checkTransferOut(5);
     await checkTransferOut(9);
+  });
+
+  describe("Delegating yield", function () {
+    it("Should delegate rebase to another account", async () => {
+      let { ousd, vault, matt, josh, anna, usdc, governor } = fixture;
+
+      await ousd.connect(matt).transfer(anna.address, ousdUnits("10"));
+      await ousd.connect(matt).transfer(josh.address, ousdUnits("10"));
+
+      await expect(josh).has.an.approxBalanceOf("110.00", ousd);
+      await expect(matt).has.an.approxBalanceOf("80.00", ousd);
+      await expect(anna).has.an.approxBalanceOf("10", ousd);
+
+      await ousd
+        .connect(governor)
+        // matt delegates yield to anna
+        .delegateYield(matt.address, anna.address);
+
+      // Transfer USDC into the Vault to simulate yield
+      await usdc.connect(matt).transfer(vault.address, usdcUnits("200"));
+      await vault.rebase();
+
+      await expect(josh).has.an.approxBalanceOf("220.00", ousd);
+      await expect(matt).has.an.approxBalanceOf("80.00", ousd);
+      // 10 of own rebase + 80 from matt + 10 existing balance
+      await expect(anna).has.an.balanceOf("100", ousd);
+
+      await ousd.connect(anna).transfer(josh.address, ousdUnits("10"));
+
+      await expect(josh).has.an.approxBalanceOf("230.00", ousd);
+      await expect(matt).has.an.approxBalanceOf("80.00", ousd);
+      await expect(anna).has.an.balanceOf("90", ousd);
+
+      await ousd.connect(matt).transfer(josh.address, ousdUnits("80"));
+      await ousd.connect(anna).transfer(josh.address, ousdUnits("90"));
+
+      await expect(josh).has.an.approxBalanceOf("400", ousd);
+      await expect(matt).has.an.approxBalanceOf("0", ousd);
+      await expect(anna).has.an.balanceOf("0", ousd);
+    });
+
+    it("Should delegate rebase to another account initially having 0 balance", async () => {
+      let { ousd, vault, matt, josh, anna, usdc, governor } = fixture;
+
+      await expect(josh).has.an.approxBalanceOf("100.00", ousd);
+      await expect(matt).has.an.approxBalanceOf("100.00", ousd);
+      await expect(anna).has.an.balanceOf("0", ousd);
+
+      // TODO: delete rebase opt out later
+      await ousd.connect(matt).rebaseOptOut();
+      await ousd
+        .connect(governor)
+        // matt delegates yield to anna
+        .delegateYield(matt.address, anna.address);
+
+      // Transfer USDC into the Vault to simulate yield
+      await usdc.connect(matt).transfer(vault.address, usdcUnits("200"));
+      await vault.rebase();
+
+      await expect(josh).has.an.approxBalanceOf("200.00", ousd);
+      await expect(matt).has.an.approxBalanceOf("100.00", ousd);
+      await expect(anna).has.an.balanceOf("100", ousd);
+
+      await ousd.connect(anna).transfer(josh.address, ousdUnits("10"));
+
+      await expect(josh).has.an.approxBalanceOf("210.00", ousd);
+      await expect(matt).has.an.approxBalanceOf("100.00", ousd);
+      await expect(anna).has.an.balanceOf("90", ousd);
+    });
+
+    it("Should not delegate yield from a zero address", async () => {
+      let { ousd, governor, matt } = fixture;
+
+      await expect(
+        ousd.connect(governor).delegateYield(zeroAddress, matt.address)
+      ).to.be.revertedWith("Zero from address not allowed");
+    });
+
+    it("Should not delegate yield to a zero address", async () => {
+      let { ousd, governor, matt } = fixture;
+
+      await expect(
+        ousd.connect(governor).delegateYield(matt.address, zeroAddress)
+      ).to.be.revertedWith("Zero to address not allowed");
+    });
+
+    it("Should not delegate yield to self", async () => {
+      let { ousd, governor, matt } = fixture;
+
+      await expect(
+        ousd.connect(governor).delegateYield(matt.address, matt.address)
+      ).to.be.revertedWith("Cannot delegate to self");
+    });
+  });
+
+  describe("Old code migrated contract accounts", function () {
+    beforeEach(async () => {
+      fixture = await loadTokenTransferFixture();
+    });
+
+    it("Old code auto migrated contract when calling rebase OptIn shouldn't affect invariables", async () => {
+      const { nonrebase_cotract_notSet_altcpt_gt_0: contract_account, ousd } =
+        fixture;
+
+      const nonRebasingSupply = await ousd.nonRebasingSupply();
+      await contract_account.rebaseOptIn();
+
+      await expect(
+        nonRebasingSupply.sub(await ousd.balanceOf(contract_account.address))
+      ).to.equal(await ousd.nonRebasingSupply());
+    });
+
+    it("Non rebasing accounts with cpt set to 1e27 should return value non corrected for resolution increase", async () => {
+      let { ousd, ousdUnlocked, rebase_eoa_notset_0, mockNonRebasing } =
+        fixture;
+
+      await ousd
+        .connect(rebase_eoa_notset_0)
+        .transfer(mockNonRebasing.address, ousdUnits("10"));
+      // 10 * 1e27
+      const _10_1e27 = BigNumber.from("100000000000000000000000000000");
+      const _1e27 = BigNumber.from("1000000000000000000000000000");
+      await ousdUnlocked
+        .connect(rebase_eoa_notset_0)
+        .overwriteCreditBalances(mockNonRebasing.address, _10_1e27);
+      // 1e27
+      await ousdUnlocked
+        .connect(rebase_eoa_notset_0)
+        .overwriteAlternativeCPT(mockNonRebasing.address, _1e27);
+
+      const contractCreditsPerToken = await ousd.creditsBalanceOf(
+        mockNonRebasing.address
+      );
+      await expect(contractCreditsPerToken[0]).to.equal(_10_1e27);
+      await expect(contractCreditsPerToken[1]).to.equal(_1e27);
+    });
+
+    it("Should report correct creditBalanceOf and creditsBalanceOfHighres", async () => {
+      let { ousd, ousdUnlocked, rebase_eoa_notset_0, mockNonRebasing } =
+        fixture;
+
+      await ousd
+        .connect(rebase_eoa_notset_0)
+        .transfer(mockNonRebasing.address, ousdUnits("10"));
+      const _5_1e26 = BigNumber.from("500000000000000000000000000");
+      const _5_1e17 = BigNumber.from("500000000000000000"); // 5 * 1e26 / RESOLUTION_INCREASE
+      await ousdUnlocked
+        .connect(rebase_eoa_notset_0)
+        .overwriteCreditBalances(mockNonRebasing.address, _5_1e26);
+      // 1e27
+      await ousdUnlocked
+        .connect(rebase_eoa_notset_0)
+        .overwriteAlternativeCPT(mockNonRebasing.address, _5_1e26);
+
+      const contractCreditsPerTokenHighres = await ousd.creditsBalanceOfHighres(
+        mockNonRebasing.address
+      );
+      await expect(contractCreditsPerTokenHighres[0]).to.equal(_5_1e26);
+      await expect(contractCreditsPerTokenHighres[1]).to.equal(_5_1e26);
+      await expect(
+        await ousd.nonRebasingCreditsPerToken(mockNonRebasing.address)
+      ).to.equal(_5_1e26);
+
+      const contractCreditsPerToken = await ousd.creditsBalanceOf(
+        mockNonRebasing.address
+      );
+      await expect(contractCreditsPerToken[0]).to.equal(_5_1e17);
+      await expect(contractCreditsPerToken[1]).to.equal(_5_1e17);
+    });
+
+    it("Contract should auto migrate to StdNonRebasing", async () => {
+      let { ousd, nonrebase_cotract_notSet_0, rebase_eoa_notset_0 } = fixture;
+
+      await expect(
+        await ousd.rebaseState(nonrebase_cotract_notSet_0.address)
+      ).to.equal(0); // NotSet
+      await ousd
+        .connect(rebase_eoa_notset_0)
+        .transfer(nonrebase_cotract_notSet_0.address, ousdUnits("10"));
+      await expect(
+        await ousd.rebaseState(nonrebase_cotract_notSet_0.address)
+      ).to.equal(1); // StdNonRebasing
+    });
+
+    it("Yield delegating account should not rebase opt out", async () => {
+      let { ousd, rebase_delegate_target_0 } = fixture;
+      await expect(
+        ousd.connect(rebase_delegate_target_0).rebaseOptOut()
+      ).to.be.revertedWith("Only standard rebasing accounts can opt out");
+    });
+
+    it("Should not un-delegate yield from a zero address or address not part of yield delegation", async () => {
+      let { ousd, rebase_eoa_notset_0, governor } = fixture;
+
+      await expect(
+        ousd.connect(governor).undelegateYield(zeroAddress)
+      ).to.be.revertedWith("Zero address not allowed");
+
+      await expect(
+        ousd.connect(governor).undelegateYield(rebase_eoa_notset_0.address)
+      ).to.be.revertedWith("Zero address not allowed");
+    });
   });
 });

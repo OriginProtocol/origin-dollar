@@ -10,7 +10,7 @@ const {
 const { createFixtureLoader, aaveFixture } = require("../_fixture");
 const { impersonateAndFund } = require("../../utils/signers");
 
-describe("ForkTest: Aave Strategy", function () {
+describe.skip("ForkTest: Aave Strategy", function () {
   this.timeout(0);
 
   // Retry up to 3 times on CI

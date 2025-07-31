@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
 import "../token/OUSD.sol";
@@ -10,6 +10,7 @@ contract OUSDEchidna is OUSD {
         public
         returns (bool)
     {
-        return _isNonRebasingAccount(_account);
+        _autoMigrate(_account);
+        return alternativeCreditsPerToken[_account] > 0;
     }
 }

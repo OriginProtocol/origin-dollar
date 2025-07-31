@@ -12,13 +12,14 @@ const {
   decryptValidatorKey,
   decryptValidatorKeyWithMasterKey,
 } = require("./crypto");
+const { advanceBlocks } = require("./block");
 const {
   encryptMasterPrivateKey,
   decryptMasterPrivateKey,
 } = require("./amazon");
 const { collect, setDripDuration } = require("./dripper");
 const { getSigner } = require("../utils/signers");
-
+const { snapAero } = require("./aero");
 const {
   storeStorageLayoutForAllContracts,
   assertStorageLayoutChangeSafe,
@@ -49,7 +50,6 @@ const {
   mint,
   rebase,
   redeem,
-  redeemAll,
   requestWithdrawal,
   claimWithdrawal,
   snapVault,
@@ -68,6 +68,7 @@ const {
 const {
   calcDepositRoot,
   depositSSV,
+  withdrawSSV,
   printClusterInfo,
   removeValidators,
 } = require("./ssv");
@@ -87,34 +88,33 @@ const {
   getRewardTokenAddresses,
   setRewardTokenAddresses,
   checkBalance,
+  transferToken,
 } = require("./strategy");
 const {
   validatorOperationsConfig,
   exitValidators,
   doAccounting,
+  manuallyFixAccounting,
   resetStakeETHTally,
   setStakeETHThreshold,
   fixAccounting,
   pauseStaking,
   snapStaking,
   resolveNativeStakingStrategyProxy,
+  snapValidators,
 } = require("./validator");
+
+const { tenderlySync } = require("./tenderly");
+const { setDefaultValidator, snapSonicStaking } = require("../utils/sonic");
+const {
+  undelegateValidator,
+  withdrawFromSFC,
+} = require("../utils/sonicActions");
 const { registerValidators, stakeValidators } = require("../utils/validator");
 const { harvestAndSwap } = require("./harvest");
+const { deployForceEtherSender, forceSend } = require("./simulation");
 
-// can not import from utils/deploy since that imports hardhat globally
-const withConfirmation = async (deployOrTransactionPromise) => {
-  const hre = require("hardhat");
-
-  const result = await deployOrTransactionPromise;
-  const receipt = await hre.ethers.provider.waitForTransaction(
-    result.receipt ? result.receipt.transactionHash : result.hash,
-    3
-  );
-
-  result.receipt = receipt;
-  return result;
-};
+const { lzBridgeToken, lzSetConfig } = require("./layerzero");
 
 const log = require("../utils/logger")("tasks");
 
@@ -249,7 +249,8 @@ subtask("depositWETH", "Deposit ETH into WETH")
     const signer = await getSigner();
 
     const { chainId } = await ethers.provider.getNetwork();
-    const wethAddress = addresses[networkMap[chainId]].WETH;
+    const symbol = chainId == 146 ? "wS" : "WETH";
+    const wethAddress = addresses[networkMap[chainId]][symbol];
     const weth = await ethers.getContractAt("IWETH9", wethAddress);
 
     await depositWETH({ ...taskArgs, weth, signer });
@@ -286,8 +287,8 @@ task("queueLiquidity").setAction(async (_, __, runSuper) => {
 task("allocate", "Call allocate() on the Vault")
   .addOptionalParam(
     "symbol",
-    "Symbol of the OToken. eg OETH or OUSD",
-    "OETH",
+    "Symbol of the OToken. eg OETH, OUSD or OS",
+    undefined,
     types.string
   )
   .setAction(allocate);
@@ -298,14 +299,14 @@ task("allocate").setAction(async (_, __, runSuper) => {
 task("capital", "Set the Vault's pauseCapital flag")
   .addOptionalParam(
     "symbol",
-    "Symbol of the OToken. eg OETH or OUSD",
-    "OETH",
+    "Symbol of the OToken. eg OETH, OUSD or OS",
+    undefined,
     types.string
   )
   .addParam(
     "pause",
     "Whether to pause or unpause the capital allocation",
-    "true",
+    true,
     types.boolean
   )
   .setAction(capital);
@@ -316,8 +317,8 @@ task("capital").setAction(async (_, __, runSuper) => {
 task("rebase", "Call rebase() on the Vault")
   .addOptionalParam(
     "symbol",
-    "Symbol of the OToken. eg OETH or OUSD",
-    "OETH",
+    "Symbol of the OToken. eg OETH, OUSD or OS",
+    undefined,
     types.string
   )
   .setAction(rebase);
@@ -328,9 +329,9 @@ task("rebase").setAction(async (_, __, runSuper) => {
 task("yield", "Artificially generate yield on the OUSD Vault", yieldTask);
 
 subtask("mint", "Mint OTokens from the Vault using collateral assets")
-  .addParam(
+  .addOptionalParam(
     "asset",
-    "Symbol of the collateral asset to deposit. eg WETH, frxETH, USDT, DAI",
+    "Symbol of the collateral asset to deposit. eg WETH, wS, USDT, DAI or USDC",
     undefined,
     types.string
   )
@@ -342,8 +343,8 @@ subtask("mint", "Mint OTokens from the Vault using collateral assets")
   )
   .addOptionalParam(
     "symbol",
-    "Symbol of the OToken. eg OETH or OUSD",
-    "OETH",
+    "Symbol of the OToken. eg OETH, OUSD or OS",
+    undefined,
     types.string
   )
   .addOptionalParam("min", "Minimum amount of OTokens to mint", 0, types.float)
@@ -374,24 +375,6 @@ subtask("redeem", "Redeem OTokens for collateral assets from the Vault")
   )
   .setAction(redeem);
 task("redeem").setAction(async (_, __, runSuper) => {
-  return runSuper();
-});
-
-subtask("redeemAll", "Redeem all OTokens for collateral assets from the Vault")
-  .addOptionalParam(
-    "symbol",
-    "Symbol of the OToken. eg OETH or OUSD",
-    "OETH",
-    types.string
-  )
-  .addOptionalParam(
-    "min",
-    "Minimum amount of collateral to receive",
-    0,
-    types.float
-  )
-  .setAction(redeemAll);
-task("redeemAll").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
 
@@ -500,8 +483,8 @@ subtask("requestWithdrawal", "Request a withdrawal from a vault")
   )
   .addOptionalParam(
     "symbol",
-    "Symbol of the OToken. eg OETH or OUSD",
-    "OETH",
+    "Symbol of the OToken. eg OETH, OUSD or OS",
+    undefined,
     types.string
   )
   .setAction(requestWithdrawal);
@@ -521,8 +504,8 @@ subtask(
   )
   .addOptionalParam(
     "symbol",
-    "Symbol of the OToken. eg OETH or OUSD",
-    "OETH",
+    "Symbol of the OToken. eg OETH, OUSD or OS",
+    undefined,
     types.string
   )
   .setAction(claimWithdrawal);
@@ -693,7 +676,7 @@ task("curvePool").setAction(async (_, __, runSuper) => {
 });
 
 // Curve Pools
-subtask("amoStrat", "Dumps the current state of a AMO strategy")
+subtask("amoStrat", "Dumps the current state of an AMO strategy")
   .addParam("pool", "Symbol of the curve Metapool. OUSD or OETH")
   .addOptionalParam(
     "block",
@@ -712,6 +695,12 @@ subtask("amoStrat", "Dumps the current state of a AMO strategy")
     "true will output to the console. false will use debug logs.",
     true,
     types.boolean
+  )
+  .addOptionalParam(
+    "amm",
+    "Type of pool. eg curve, balancer or swapx",
+    "curve",
+    types.string
   )
   .setAction(amoStrategyTask);
 task("amoStrat").setAction(async (_, __, runSuper) => {
@@ -813,7 +802,7 @@ subtask(
   )
   .addParam(
     "amount",
-    "Amount of Metapool LP tokens to burn for removed OTokens",
+    "Amount of Curve LP tokens to burn for removed OTokens",
     0,
     types.float
   )
@@ -942,6 +931,7 @@ task(
     undefined,
     types.string
   )
+  .addParam("governor", "Address of the new governor", undefined, types.string)
   .setAction(transferGovernance);
 
 task(
@@ -955,6 +945,22 @@ task(
     types.string
   )
   .setAction(claimGovernance);
+
+task("transferToken", "Transfer tokens in a contract to the governor")
+  .addParam(
+    "proxy",
+    "Name of the proxy contract or contract name if no proxy. eg OETHVaultProxy or OETHZapper",
+    undefined,
+    types.string
+  )
+  .addParam("symbol", "Symbol of the token", undefined, types.string)
+  .addOptionalParam(
+    "amount",
+    "The amount of tokens to transfer. (default: balance)",
+    undefined,
+    types.float
+  )
+  .setAction(transferToken);
 
 // Strategy
 
@@ -1070,6 +1076,28 @@ task("depositSSV").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
 
+subtask(
+  "withdrawSSV",
+  "Withdraw SSV tokens from an SSV Cluster to the native staking strategy"
+)
+  .addParam("amount", "Amount of SSV tokens", undefined, types.float)
+  .addOptionalParam(
+    "index",
+    "The number of the Native Staking Contract deployed.",
+    undefined,
+    types.int
+  )
+  .addParam(
+    "operatorids",
+    "Comma separated operator ids. E.g. 342,343,344,345",
+    undefined,
+    types.string
+  )
+  .setAction(withdrawSSV);
+task("withdrawSSV").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
 /**
  * The native staking proxy needs to be deployed via the defender relayer because the SSV network
  * grants the SSV rewards to the deployer of the contract. And we want the Defender Relayer to be
@@ -1103,49 +1131,6 @@ subtask(
 task("deployNativeStakingProxy").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
-
-/**
- * Governance of the SSV strategy proxy needs to be transferred to the deployer address so that
- * the deployer is able to initialize the proxy
- */
-subtask(
-  "transferGovernanceNativeStakingProxy",
-  "Transfer governance of the proxy from the Defender Relayer"
-)
-  .addParam(
-    "deployer",
-    "Address of the deployer of NativeStakingSSVStrategy implementation",
-    undefined,
-    types.string
-  )
-  .addOptionalParam(
-    "index",
-    "The number of the Native Staking Contract deployed.",
-    undefined,
-    types.int
-  )
-  .setAction(async ({ deployer, index }) => {
-    const signer = await getSigner();
-
-    const nativeStakingProxy = await ethers.getContract(
-      `NativeStakingSSVStrategy${index}Proxy`
-    );
-    const oldGovernor = await nativeStakingProxy.governor();
-    log(
-      `About to transfer governance of NativeStakingSSVStrategy${index}Proxy (${nativeStakingProxy.address}) from ${oldGovernor} to ${deployer}`
-    );
-    await withConfirmation(
-      nativeStakingProxy.connect(signer).transferGovernance(deployer)
-    );
-    log(
-      `Transferred governance of NativeStakingSSVStrategy${index}Proxy from ${oldGovernor} to ${deployer}`
-    );
-  });
-task("transferGovernanceNativeStakingProxy").setAction(
-  async (_, __, runSuper) => {
-    return runSuper();
-  }
-);
 
 // Validator Operations
 
@@ -1245,6 +1230,39 @@ task("exitValidators").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
 
+subtask("exitValidators", "Starts the exit process from a list of validators")
+  .addParam(
+    "pubkeys",
+    "Comma separated list of validator public keys",
+    undefined,
+    types.string
+  )
+  .addParam(
+    "operatorids",
+    "Comma separated operator ids. E.g. 342,343,344,345",
+    undefined,
+    types.string
+  )
+  .addOptionalParam(
+    "index",
+    "The number of the Native Staking Contract deployed.",
+    undefined,
+    types.int
+  )
+  .addOptionalParam(
+    "sleep",
+    "Seconds between each tx so the SSV API can be updated before getting the cluster data.",
+    30,
+    types.int
+  )
+  .setAction(async (taskArgs) => {
+    const signer = await getSigner();
+    await exitValidators({ ...taskArgs, signer });
+  });
+task("exitValidators").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
 subtask(
   "removeValidators",
   "Removes validators from the SSV cluster after they have exited the beacon chain"
@@ -1266,6 +1284,42 @@ subtask(
     "Comma separated operator ids. E.g. 342,343,344,345",
     undefined,
     types.string
+  )
+  .setAction(async (taskArgs) => {
+    const signer = await getSigner();
+    await removeValidators({ ...taskArgs, signer });
+  });
+task("removeValidators").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+subtask(
+  "removeValidators",
+  "Removes validators from the SSV cluster after they have exited the beacon chain"
+)
+  .addParam(
+    "pubkeys",
+    "Comma separated list of validator public keys",
+    undefined,
+    types.string
+  )
+  .addParam(
+    "operatorids",
+    "Comma separated operator ids. E.g. 342,343,344,345",
+    undefined,
+    types.string
+  )
+  .addOptionalParam(
+    "index",
+    "The number of the Native Staking Contract deployed.",
+    undefined,
+    types.int
+  )
+  .addOptionalParam(
+    "sleep",
+    "Seconds between each tx so the SSV API can be updated before getting the cluster data.",
+    30,
+    types.int
   )
   .setAction(async (taskArgs) => {
     const signer = await getSigner();
@@ -1298,6 +1352,53 @@ subtask(
     });
   });
 task("doAccounting").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+subtask(
+  "manuallyFixAccounting",
+  "Fix an accounting failure in a Native Staking Strategy"
+)
+  .addOptionalParam(
+    "index",
+    "The number of the Native Staking Contract deployed.",
+    undefined,
+    types.int
+  )
+  .addOptionalParam(
+    "validators",
+    "The delta of validators. Can be positive or negative.",
+    0,
+    types.int
+  )
+  .addOptionalParam(
+    "rewards",
+    "The delta of consensus rewards. Can be positive or negative.",
+    "0",
+    types.string
+  )
+  .addOptionalParam(
+    "vault",
+    "The amount of Ether to convert to WETH and send to the Vault.",
+    "0",
+    types.string
+  )
+  .setAction(async ({ index, rewards, validators, vault }) => {
+    const signer = await getSigner();
+
+    const nativeStakingStrategy = await resolveNativeStakingStrategyProxy(
+      index
+    );
+
+    await manuallyFixAccounting({
+      signer,
+      nativeStakingStrategy,
+      validatorsDelta: validators,
+      consensusRewardsDelta: rewards,
+      ethToVaultAmount: vault,
+    });
+  });
+task("manuallyFixAccounting").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
 
@@ -1423,6 +1524,18 @@ task("snapStaking").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
 
+subtask("snapAero", "Takes a snapshot of the Aerodrome Strategy at a block")
+  .addOptionalParam(
+    "block",
+    "Block number. (default: latest)",
+    undefined,
+    types.int
+  )
+  .setAction(snapAero);
+task("snapAero").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
 subtask("snapVault", "Takes a snapshot of a OETH Vault")
   .addOptionalParam(
     "block",
@@ -1432,6 +1545,24 @@ subtask("snapVault", "Takes a snapshot of a OETH Vault")
   )
   .setAction(snapVault);
 task("snapVault").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+subtask("snapValidators", "Takes a snapshot of a validator")
+  .addOptionalParam(
+    "block",
+    "Block number. (default: latest)",
+    undefined,
+    types.int
+  )
+  .addParam(
+    "pubkeys",
+    "Comma separated list of validator public keys",
+    undefined,
+    types.string
+  )
+  .setAction(snapValidators);
+task("snapValidators").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
 
@@ -1565,5 +1696,125 @@ subtask(
   .addParam("id", "Identifier of the Defender Actions", undefined, types.string)
   .setAction(setActionVars);
 task("setActionVars").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+// Simulations
+subtask(
+  "deployForceEtherSender",
+  "Deploy a ForceEtherSender contract for simulating hacks"
+).setAction(deployForceEtherSender);
+task("deployForceEtherSender").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+subtask("forceSend", "Force send ETH to a recipient using self destruct")
+  .addParam(
+    "sender",
+    "Address of the deployed ForceEtherSender contract",
+    undefined,
+    types.string
+  )
+  .addParam(
+    "recipient",
+    "Address of the contract to receive the Ether",
+    undefined,
+    types.string
+  )
+  .setAction(forceSend);
+task("forceSend").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+subtask("mine", "Mines a number of blocks")
+  .addOptionalParam("blocks", "The number of blocks to mine", 1, types.int)
+  .setAction(async ({ blocks }) => {
+    await advanceBlocks(blocks);
+  });
+task("mine").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+// Sonic Staking Operations
+subtask(
+  "sonicDefaultValidator",
+  "Set the default validator for the Sonic Staking Strategy"
+)
+  .addParam("id", "Validator identifier. eg 18", undefined, types.int)
+  .setAction(setDefaultValidator);
+task("sonicDefaultValidator").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+subtask("sonicUndelegate", "Remove liquidity from a Sonic validator")
+  .addOptionalParam(
+    "id",
+    "Validator identifier. 15, 16, 17 or 18",
+    undefined,
+    types.int
+  )
+  .addOptionalParam(
+    "amount",
+    "Amount of liquidity to remove",
+    undefined,
+    types.float
+  )
+  .setAction(async (taskArgs) => {
+    const signer = await getSigner();
+
+    await undelegateValidator({ ...taskArgs, signer });
+  });
+task("sonicUndelegate").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+subtask(
+  "sonicWithdraw",
+  "Withdraw native S from a previously undelegated validator"
+).setAction(async () => {
+  const signer = await getSigner();
+
+  await withdrawFromSFC({ signer });
+});
+task("sonicWithdraw").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+subtask("sonicStaking", "Snap of the Sonic Staking Strategy")
+  .addOptionalParam(
+    "block",
+    "Block number. (default: latest)",
+    undefined,
+    types.int
+  )
+  .setAction(snapSonicStaking);
+task("sonicStaking").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+task("lzBridgeToken")
+  .addParam("amount", "Amount to bridge")
+  .addParam("destnetwork", "Destination network")
+  .addOptionalParam("recipient", "Recipient address")
+  .addOptionalParam("gaslimit", "Gas limit")
+  .addOptionalParam("dryrun", "Print tx data without sending")
+  .setAction(async (taskArgs) => {
+    await lzBridgeToken(taskArgs, hre);
+  });
+
+task("lzSetConfig")
+  .addParam("destnetwork", "Destination network")
+  .addParam("dvns", "Comma separated list of DVN addresses")
+  .addParam("confirmations", "Number of confirmations")
+  .addParam("dvncount", "Number of required DVNs")
+  .setAction(async (taskArgs) => {
+    await lzSetConfig(taskArgs, hre);
+  });
+
+subtask(
+  "tenderlySync",
+  "Fetches all contracts from deployment descriptors and uploads them to Tenderly if they are not there yet."
+).setAction(tenderlySync);
+task("tenderlySync").setAction(async (_, __, runSuper) => {
   return runSuper();
 });

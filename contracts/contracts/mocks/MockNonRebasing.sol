@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
@@ -34,8 +34,8 @@ contract MockNonRebasing {
         oUSD.transferFrom(_from, _to, _value);
     }
 
-    function increaseAllowance(address _spender, uint256 _addedValue) public {
-        oUSD.increaseAllowance(_spender, _addedValue);
+    function approve(address _spender, uint256 _addedValue) public {
+        oUSD.approve(_spender, _addedValue);
     }
 
     function mintOusd(

@@ -67,11 +67,6 @@ async function constructNewContract(
           addresses.mainnet.VaultProxy,
         ],
       ];
-    } else if (implContractName === "FraxETHStrategy") {
-      return [
-        [addresses.mainnet.sfrxETH, addresses.mainnet.OETHVaultProxy],
-        addresses.mainnet.frxETH,
-      ];
     } else if (implContractName === "ConvexEthMetaStrategy") {
       return [
         [addresses.mainnet.CurveOETHMetaPool, addresses.mainnet.OETHVaultProxy],
@@ -151,12 +146,6 @@ async function hotDeployOption(
         fixture, // fixture
         "morphoCompoundStrategy", // fixtureStrategyVarName
         "MorphoCompoundStrategy" // implContractName
-      );
-    } else if (fixtureName === "fraxETHStrategyFixture") {
-      await hotDeployFixture(
-        fixture, // fixture
-        "fraxEthStrategy", // fixtureStrategyVarName
-        "FraxETHStrategy" // implContractName
       );
     } else if (fixtureName === "convexOETHMetaVaultFixture") {
       await hotDeployFixture(

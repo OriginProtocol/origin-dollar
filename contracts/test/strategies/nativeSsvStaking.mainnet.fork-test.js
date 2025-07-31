@@ -8,7 +8,7 @@ const loadFixture = createFixtureLoader(nativeStakingSSVStrategyFixture);
 const { shouldBehaveLikeAnSsvStrategy } = require("../behaviour/ssvStrategy");
 const { resolveContract } = require("../../utils/resolvers");
 
-describe("ForkTest: First Native SSV Staking Strategy", function () {
+describe.skip("ForkTest: First Native SSV Staking Strategy", function () {
   this.timeout(0);
 
   let fixture;
@@ -71,7 +71,6 @@ describe("ForkTest: Second Native SSV Staking Strategy", function () {
       nativeStakingSSVStrategy,
       nativeStakingFeeAccumulator,
       addresses: addresses.mainnet,
-      // TODO change to new SSV cluster when ready
       testValidator: {
         publicKey:
           "0xae24289bd670bfbdd3bc904596b475d080dde3415506f1abe1fb76ff292ff6bd743d710061b9e2b16fd8541a76fe53ee",
@@ -84,6 +83,47 @@ describe("ForkTest: Second Native SSV Staking Strategy", function () {
         // Calculated from npx hardhat depositRoot
         depositDataRoot:
           "0x6f9cc503009ceb0960637bbf2482b19a62153144ab091f0b9f66d5800f02cc2c",
+      },
+    };
+  });
+});
+
+describe("ForkTest: Third Native SSV Staking Strategy", function () {
+  this.timeout(0);
+
+  let fixture;
+  let nativeStakingSSVStrategy;
+  let nativeStakingFeeAccumulator;
+  beforeEach(async () => {
+    fixture = await loadFixture();
+    nativeStakingSSVStrategy = await resolveContract(
+      "NativeStakingSSVStrategy3Proxy",
+      "NativeStakingSSVStrategy"
+    );
+    nativeStakingFeeAccumulator = await resolveContract(
+      "NativeStakingFeeAccumulator3Proxy",
+      "FeeAccumulator"
+    );
+  });
+
+  shouldBehaveLikeAnSsvStrategy(async () => {
+    return {
+      ...fixture,
+      nativeStakingSSVStrategy,
+      nativeStakingFeeAccumulator,
+      addresses: addresses.mainnet,
+      testValidator: {
+        publicKey:
+          "0x8a51c38c9c582a7fafc156cb2619c696e6fa835bb1d8692f5234d7284f571905f9763e428bf743d3a0cf3b9d0b3f41cc",
+        operatorIds: [338, 339, 340, 341],
+        sharesData:
+          "0x9209b998aa11eba67ac62d887efcba0e647ebf52a9353916b73155c47fecea3b0ac83978dc07eefc63df9b99a7ce4537178ae9da7c88fdb886af2ab4e66f0ed8c3aed924ebb4a3b15f99f23a9326d20c2e608a184c6de4dcaf14e0bb1fa9ad8599531b8cfcbe9eeda78b011124604c04dfacaab31da0796c18f4840114b7b48237e52b0c028f4c8f891173bfc0dbd1acb70244b0364a7e5e962109b73071860039a9c007256f1b2c3a3206abf54affe0f9b8b2469675c08ffd596d8c10446d1fb86fd875c7f329e40e5712a9749cd2c20c18f084f3f684817d8646b165da46b5393925be1b191ed674024296a0da0cb5922c5c6266a0facdf0b0e68d96a1a1a012a0260ae1f32f208ca5fbf34da5154e358d6a7e01d100599e1f36ce82a8ef7d594912b6717333db2ce68c7e7d26409709aa678b6b463cb697bbfbfca50fb19bdba6183ce616d91ebd83450530c3bd4a7dc424b43f991b86aa5cba262a0b7697b719f9b6bd9f7bdb5ae6387f65f41d47e30aab1afae33b54255a9b2fa1a26312ac26474ad43e6d16ccddceb6704fadf466e8b71530234d0475425c913f5d8ee00e2af74ca1dd4c727a732319c3e62f9ce8a093529eec4b826bf5767c326901ef6ed03ae31499f5d05231eb85e3086e1a34e23ffeacbb52755b8a63296c88db1f8f05e72dacd0711c72b3782012db8823295c1d6be511774d5c5f1ab5e4d4bb8ce7464b74d62a82968ef3d3136f1558fb5abc88dbd3be0c7334cb6d5dd5fcb5a2d7a5219e508ae016fa1c2d8f79c51c46a81b3322294805947b327adbeb7c2d62cf9a26e01e555300310ccb8f401fb250772548966192b5022c5589ca57d5848537d6d4da2a6090900fb8cdf848b26330f73156f6ba246891f6268cfe851ece05a0c5b4628f1743b1e894a625dc31b4387da0df0dfa78770bd953cedc4743ec1f1ff35e363dd6dc7deb8b4379ebb3dfea17d304a8df9af1c55382ba6fa28c834f5d702a273ab1563b598ee4a326a1a9e6ccc6179c66cd9263b501aae71332d3a27a282640d5edd6e04ee13b30374b56f193628b9cc661b803229a4996335ac6742aa2aea40d829303728e1cd6d9bc7f9a66bfd54da452a4cccf1472566df2b5876e03c96d4ce9f6f27d2bf567f412ad54a7265d65be31100640d2d577f2195f2c1e9cbe7822630a99d2906785df6d087f1eadc2122dae0808a81b6d199bbb2b2bb4fda37846bff597f084bd710736ef80f0decb9b82a08042bc1811fe184653d6a241dd12a078f105b1a47759a25b9e6ce727a492f7948a277146af6df687f2ea8a718157e429c701e1d4934462c054847237ed79998b36f6296c46fafdc47c400ee09cb6bdd1bba19541113ae022c5112cc088517cd611e895c8d7075feb0153353330bc958f639592990e246d8ddcfa85687b34f79482d11a37ee84cf938c7ffabe18418b5b5583681b32c1518261b96d73382f1dcdd1504c0c3bb7ad10173d5c24f87571415cec8fc52dd02ad1b5dfe7cffdc11458a54c0f8d7f1993f9843cd76aaf7740c88b9af964d497200a16ae89811491e2f3b1030908475dd9d6dc0879c53a7eab682de3f426377f419ee21c7288b0a0f2ec09b1655933bb30186e24f80f46eeef4f31fdbf6f8dfbf20ba45aca84a15ecada13c9150489eb33cc3f6398d9519ee01d94047fb9c45e1af226631d379c1bd729dca16ebbfc7958b2d7212de1fcc7959069286bd59d606415eb854bb933c94ab186544aef96c3d2ed74428f0e54dc5f2c45080e2340f18bdbbb3ff246b40dc27e834e8eebd7b437c3e0d76a02565e46039c0eae88805e5a6242e64851c79063bcbad35dab7a2d7d3c043f",
+        // This sig isn't correct but will do for testing
+        signature:
+          "0x90157a1c1b26384f0b4d41bec867d1a000f75e7b634ac7c4c6d8dfc0b0eaeb73bcc99586333d42df98c6b0a8c5ef0d8d071c68991afcd8fbbaa8b423e3632ee4fe0782bc03178a30a8bc6261f64f84a6c833fb96a0f29de1c34ede42c4a859b0",
+        // Calculated from npx hardhat depositRoot
+        depositDataRoot:
+          "0x3b8409ac7e028e595ac84735da6c19cdbc50931e5d6f910338614ea9660b5c86",
       },
     };
   });

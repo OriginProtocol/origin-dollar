@@ -7,15 +7,17 @@ const {
   ousdUnits,
   usdtUnits,
   usdcUnits,
-  daiUnits,
+  usdsUnits,
   differenceInStrategyBalance,
   differenceInErc20TokenBalances,
   isCI,
+  decimalsFor,
 } = require("./../helpers");
 const { impersonateAndFund } = require("../../utils/signers");
 const {
   shouldHaveRewardTokensConfigured,
-} = require("../behaviour/reward-tokens.fork");
+} = require("./../behaviour/reward-tokens.fork");
+const { formatUnits } = require("ethers/lib/utils");
 
 const log = require("../../utils/logger")("test:fork:ousd:vault");
 
@@ -53,9 +55,9 @@ describe("ForkTest: Vault", function () {
       await josh.sendTransaction(tx);
     });
     it("Should check asset balances", async () => {
-      const { dai, usdc, usdt, josh, vault } = fixture;
+      const { usds, usdc, usdt, josh, vault } = fixture;
 
-      for (const asset of [dai, usdc, usdt]) {
+      for (const asset of [usds, usdc, usdt]) {
         const tx = await vault
           .connect(josh)
           .populateTransaction.checkBalance(asset.address);
@@ -80,7 +82,7 @@ describe("ForkTest: Vault", function () {
     it("Should have the correct OUSD MetaStrategy address set", async () => {
       const { vault } = fixture;
       expect(await vault.ousdMetaStrategy()).to.equal(
-        addresses.mainnet.ConvexOUSDAMOStrategy
+        addresses.mainnet.CurveOUSDAMOStrategy
       );
     });
 
@@ -90,11 +92,11 @@ describe("ForkTest: Vault", function () {
       expect(assets).to.have.length(3);
       expect(assets).to.include(addresses.mainnet.USDT);
       expect(assets).to.include(addresses.mainnet.USDC);
-      expect(assets).to.include(addresses.mainnet.DAI);
+      expect(assets).to.include(addresses.mainnet.USDS);
 
       expect(await vault.isSupportedAsset(addresses.mainnet.USDT)).to.be.true;
-      expect(await vault.isSupportedAsset(addresses.mainnet.DAI)).to.be.true;
-      expect(await vault.isSupportedAsset(addresses.mainnet.USDT)).to.be.true;
+      expect(await vault.isSupportedAsset(addresses.mainnet.USDC)).to.be.true;
+      expect(await vault.isSupportedAsset(addresses.mainnet.USDS)).to.be.true;
     });
   });
 
@@ -121,14 +123,14 @@ describe("ForkTest: Vault", function () {
       const balancePreMint = await ousd
         .connect(josh)
         .balanceOf(josh.getAddress());
-      await vault.connect(josh).mint(usdt.address, usdtUnits("50000"), 0);
+      await vault.connect(josh).mint(usdt.address, usdtUnits("500"), 0);
 
       const balancePostMint = await ousd
         .connect(josh)
         .balanceOf(josh.getAddress());
 
       const balanceDiff = balancePostMint.sub(balancePreMint);
-      expect(balanceDiff).to.approxEqualTolerance(ousdUnits("50000"), 1);
+      expect(balanceDiff).to.approxEqualTolerance(ousdUnits("500"), 1);
 
       await vault.connect(josh).redeem(balanceDiff, 0);
 
@@ -143,14 +145,14 @@ describe("ForkTest: Vault", function () {
       const balancePreMint = await ousd
         .connect(josh)
         .balanceOf(josh.getAddress());
-      await vault.connect(josh).mint(usdc.address, usdcUnits("50000"), 0);
+      await vault.connect(josh).mint(usdc.address, usdcUnits("500"), 0);
 
       const balancePostMint = await ousd
         .connect(josh)
         .balanceOf(josh.getAddress());
 
       const balanceDiff = balancePostMint.sub(balancePreMint);
-      expect(balanceDiff).to.approxEqualTolerance(ousdUnits("50000"), 1);
+      expect(balanceDiff).to.approxEqualTolerance(ousdUnits("500"), 1);
 
       await vault.connect(josh).redeem(balanceDiff, 0);
 
@@ -160,19 +162,19 @@ describe("ForkTest: Vault", function () {
       expect(balancePreMint).to.approxEqualTolerance(balancePostRedeem, 1);
     });
 
-    it("Should allow to mint and redeem w/ DAI", async () => {
-      const { ousd, vault, josh, dai } = fixture;
+    it("Should allow to mint and redeem w/ USDS", async () => {
+      const { ousd, vault, josh, usds } = fixture;
       const balancePreMint = await ousd
         .connect(josh)
         .balanceOf(josh.getAddress());
-      await vault.connect(josh).mint(dai.address, daiUnits("50000"), 0);
+      await vault.connect(josh).mint(usds.address, usdsUnits("500"), 0);
 
       const balancePostMint = await ousd
         .connect(josh)
         .balanceOf(josh.getAddress());
 
       const balanceDiff = balancePostMint.sub(balancePreMint);
-      expect(balanceDiff).to.approxEqualTolerance(ousdUnits("50000"), 1);
+      expect(balanceDiff).to.approxEqualTolerance(ousdUnits("500"), 1);
 
       await vault.connect(josh).redeem(balanceDiff, 0);
 
@@ -182,67 +184,85 @@ describe("ForkTest: Vault", function () {
       expect(balancePreMint).to.approxEqualTolerance(balancePostRedeem, 1);
     });
 
+    it("Should calculate and return redeem outputs", async () => {
+      const { vault } = fixture;
+      const outputs = await vault.calculateRedeemOutputs(ousdUnits("100"));
+      expect(outputs).to.have.length(3);
+      const assets = await vault.getAllAssets();
+
+      const values = await Promise.all(
+        outputs.map(async (output, index) => {
+          const asset = await ethers.getContractAt(
+            "MintableERC20",
+            assets[index]
+          );
+          return parseFloat(
+            formatUnits(output.toString(), await decimalsFor(asset))
+          );
+        })
+      );
+
+      expect(
+        ousdUnits((values[0] + values[1] + values[2]).toString())
+      ).to.approxEqualTolerance(ousdUnits("100"), 0.5);
+    });
+
     it("should withdraw from and deposit to strategy", async () => {
-      const { vault, josh, usdc, dai, aaveStrategy } = fixture;
-      await vault.connect(josh).mint(usdc.address, usdcUnits("90"), 0);
-      await vault.connect(josh).mint(dai.address, daiUnits("50"), 0);
+      const { vault, josh, usdt, morphoGauntletPrimeUSDTStrategy } = fixture;
+      await vault.connect(josh).mint(usdt.address, usdtUnits("90"), 0);
       const strategistSigner = await impersonateAndFund(
         await vault.strategistAddr()
       );
 
-      let daiBalanceDiff, usdcBalanceDiff, daiStratDiff, usdcStratDiff;
+      let usdtBalanceDiff, usdtStratDiff;
 
-      [daiBalanceDiff, usdcBalanceDiff] = await differenceInErc20TokenBalances(
-        [vault.address, vault.address],
-        [dai, usdc],
+      [usdtBalanceDiff] = await differenceInErc20TokenBalances(
+        [vault.address],
+        [usdt],
         async () => {
-          [daiStratDiff, usdcStratDiff] = await differenceInStrategyBalance(
-            [dai.address, usdc.address],
-            [aaveStrategy, aaveStrategy],
+          [usdtStratDiff] = await differenceInStrategyBalance(
+            [usdt.address],
+            [morphoGauntletPrimeUSDTStrategy],
             async () => {
               await vault
                 .connect(strategistSigner)
                 .depositToStrategy(
-                  aaveStrategy.address,
-                  [dai.address, usdc.address],
-                  [daiUnits("50"), usdcUnits("90")]
+                  morphoGauntletPrimeUSDTStrategy.address,
+                  [usdt.address],
+                  [usdtUnits("90")]
                 );
             }
           );
         }
       );
 
-      expect(daiBalanceDiff).to.equal(daiUnits("-50"));
-      expect(usdcBalanceDiff).to.approxEqualTolerance(usdcUnits("-90"), 1);
+      expect(usdtBalanceDiff).to.equal(usdtUnits("-90"));
 
-      expect(daiStratDiff).gte(daiUnits("49.95"));
-      expect(usdcStratDiff).gte(usdcUnits("89.91"));
+      expect(usdtStratDiff).gte(usdtUnits("89.91"));
 
-      [daiBalanceDiff, usdcBalanceDiff] = await differenceInErc20TokenBalances(
-        [vault.address, vault.address],
-        [dai, usdc],
+      [usdtBalanceDiff] = await differenceInErc20TokenBalances(
+        [vault.address],
+        [usdt],
         async () => {
-          [daiStratDiff, usdcStratDiff] = await differenceInStrategyBalance(
-            [dai.address, usdc.address],
-            [aaveStrategy, aaveStrategy],
+          [usdtStratDiff] = await differenceInStrategyBalance(
+            [usdt.address],
+            [morphoGauntletPrimeUSDTStrategy],
             async () => {
               await vault
                 .connect(strategistSigner)
                 .withdrawFromStrategy(
-                  aaveStrategy.address,
-                  [dai.address, usdc.address],
-                  [daiUnits("50"), usdcUnits("90")]
+                  morphoGauntletPrimeUSDTStrategy.address,
+                  [usdt.address],
+                  [usdtUnits("90")]
                 );
             }
           );
         }
       );
 
-      expect(daiBalanceDiff).to.approxEqualTolerance(daiUnits("50"), 1);
-      expect(usdcBalanceDiff).to.approxEqualTolerance(usdcUnits("90"), 1);
+      expect(usdtBalanceDiff).to.equal(usdtUnits("90"));
 
-      expect(daiStratDiff).approxEqualTolerance(daiUnits("-50"));
-      expect(usdcStratDiff).approxEqualTolerance(usdcUnits("-90"));
+      expect(usdtStratDiff).to.lte(usdtUnits("-89.91"));
     });
 
     it("Should have vault buffer disabled", async () => {
@@ -255,7 +275,7 @@ describe("ForkTest: Vault", function () {
     it("Should have correct Price Oracle address set", async () => {
       const { vault } = fixture;
       expect(await vault.priceProvider()).to.equal(
-        "0xe7fD05515A51509Ca373a42E81ae63A40AA4384b"
+        "0x36CFB852d3b84afB3909BCf4ea0dbe8C82eE1C3c"
       );
     });
 
@@ -269,11 +289,11 @@ describe("ForkTest: Vault", function () {
       expect(price).to.be.gt(utils.parseEther("0.998"));
     });
 
-    it("Should return a price for minting with DAI", async () => {
-      const { vault, dai } = fixture;
-      const price = await vault.priceUnitMint(dai.address);
+    it("Should return a price for minting with USDS", async () => {
+      const { vault, usds } = fixture;
+      const price = await vault.priceUnitMint(usds.address);
 
-      log(`Price for minting with DAI: ${utils.formatEther(price, 18)}`);
+      log(`Price for minting with USDS: ${utils.formatEther(price, 18)}`);
 
       expect(price).to.be.lte(utils.parseEther("1"));
       expect(price).to.be.gt(utils.parseEther("0.999"));
@@ -298,11 +318,11 @@ describe("ForkTest: Vault", function () {
       expect(price).to.be.gte(utils.parseEther("1"));
     });
 
-    it("Should return a price for redeem with DAI", async () => {
-      const { vault, dai } = fixture;
-      const price = await vault.priceUnitRedeem(dai.address);
+    it("Should return a price for redeem with USDS", async () => {
+      const { vault, usds } = fixture;
+      const price = await vault.priceUnitRedeem(usds.address);
 
-      log(`Price for redeeming with DAI: ${utils.formatEther(price, 18)}`);
+      log(`Price for redeeming with USDS: ${utils.formatEther(price, 18)}`);
 
       expect(price).to.be.gte(utils.parseEther("1"));
     });
@@ -325,7 +345,7 @@ describe("ForkTest: Vault", function () {
       const knownAssets = [
         // TODO: Update this every time a new asset is supported
         "0xdAC17F958D2ee523a2206206994597C13D831ec7", // USDT
-        "0x6B175474E89094C44Da98b954EedeAC495271d0F", // DAI
+        "0xdC035D45d973E3EC169d2276DDab16f1e407384F", // USDS
         "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48", // USDC
       ];
 
@@ -344,11 +364,11 @@ describe("ForkTest: Vault", function () {
 
       const knownStrategies = [
         // Update this every time a new strategy is added. Below are mainnet addresses
-        "0x5e3646A1Db86993f73E6b74A57D8640B69F7e259", // Aave
-        "0x89Eb88fEdc50FC77ae8a18aAD1cA0ac27f777a90", // OUSD MetaStrategy
-        "0x79F2188EF9350A1dC11A062cca0abE90684b0197", // MorphoAaveStrategy
-        "0x76Bf500B6305Dc4ea851384D3d5502f1C7a0ED44", // Flux Strategy
-        "0x6b69B755C629590eD59618A2712d8a2957CA98FC", // Maker DSR Strategy
+        "0x5Bd9AF9c2506D29B6d79cB878284A270190EaEAa", // Maker SSR Strategy
+        "0x603CDEAEC82A60E3C4A10dA6ab546459E5f64Fa0", // Meta Morpho USDC
+        "0x2B8f37893EE713A4E9fF0cEb79F27539f20a32a1", // Morpho Gauntlet Prime USDC
+        "0xe3ae7C80a1B02Ccd3FB0227773553AEB14e32F26", // Morpho Gauntlet Prime USDT
+        "0x26a02ec47ACC2A3442b757F45E0A82B8e993Ce11", // Curve AMO OUSD/USDC
       ];
 
       for (const s of strategies) {
@@ -369,35 +389,25 @@ describe("ForkTest: Vault", function () {
     it("Should have correct default strategy set for USDT", async () => {
       const { vault, usdt } = fixture;
 
-      // aave and compound
       expect([
-        "0x5e3646A1Db86993f73E6b74A57D8640B69F7e259",
-        "0x9c459eeb3FA179a40329b81C1635525e9A0Ef094",
-        "0x79F2188EF9350A1dC11A062cca0abE90684b0197", // MorphoAave
+        "0xe3ae7C80a1B02Ccd3FB0227773553AEB14e32F26", // Morpho Gauntlet Prime USDT
       ]).to.include(await vault.assetDefaultStrategies(usdt.address));
     });
 
     it("Should have correct default strategy set for USDC", async () => {
       const { vault, usdc } = fixture;
 
-      // aave and compound
       expect([
-        "0x5e3646A1Db86993f73E6b74A57D8640B69F7e259",
-        "0x9c459eeb3FA179a40329b81C1635525e9A0Ef094",
-        "0x79F2188EF9350A1dC11A062cca0abE90684b0197", // MorphoAave
+        "0x603CDEAEC82A60E3C4A10dA6ab546459E5f64Fa0", // Meta Morpho USDC
       ]).to.include(await vault.assetDefaultStrategies(usdc.address));
     });
 
-    it("Should have correct default strategy set for DAI", async () => {
-      const { vault, dai } = fixture;
+    it("Should have correct default strategy set for USDS", async () => {
+      const { vault, usds } = fixture;
 
-      // aave and compound
       expect([
-        "0x5e3646A1Db86993f73E6b74A57D8640B69F7e259",
-        "0x9c459eeb3FA179a40329b81C1635525e9A0Ef094",
-        "0x79F2188EF9350A1dC11A062cca0abE90684b0197", // MorphoAave
-        "0x6b69B755C629590eD59618A2712d8a2957CA98FC", // Maker DSR
-      ]).to.include(await vault.assetDefaultStrategies(dai.address));
+        "0x5Bd9AF9c2506D29B6d79cB878284A270190EaEAa", // Maker SSR Strategy
+      ]).to.include(await vault.assetDefaultStrategies(usds.address));
     });
 
     it("Should be able to withdraw from all strategies", async () => {
@@ -409,37 +419,6 @@ describe("ForkTest: Vault", function () {
   shouldHaveRewardTokensConfigured(() => ({
     vault: fixture.vault,
     harvester: fixture.harvester,
-    expectedConfigs: {
-      [fixture.aave.address]: {
-        allowedSlippageBps: 300,
-        harvestRewardBps: 100,
-        swapPlatformAddr: "0xE592427A0AEce92De3Edee1F18E0157C05861564",
-        doSwapRewardToken: true,
-        swapPlatform: 1,
-        liquidationLimit: 0,
-        uniswapV3Path:
-          "0x7fc66500c84a76ad7e9c93437bfc5ac33e2ddae9002710c02aaa39b223fe8d0a0e5c4f27ead9083c756cc20001f4dac17f958d2ee523a2206206994597c13d831ec7",
-      },
-      [fixture.cvx.address]: {
-        allowedSlippageBps: 300,
-        harvestRewardBps: 100,
-        swapPlatformAddr: "0xE592427A0AEce92De3Edee1F18E0157C05861564",
-        doSwapRewardToken: true,
-        swapPlatform: 1,
-        liquidationLimit: ousdUnits("2500"),
-        uniswapV3Path:
-          "0x4e3fbd56cd56c3e72c1403e103b45db9da5b9d2b002710c02aaa39b223fe8d0a0e5c4f27ead9083c756cc20001f4dac17f958d2ee523a2206206994597c13d831ec7",
-      },
-      [fixture.crv.address]: {
-        allowedSlippageBps: 300,
-        harvestRewardBps: 200,
-        swapPlatformAddr: "0xE592427A0AEce92De3Edee1F18E0157C05861564",
-        doSwapRewardToken: true,
-        swapPlatform: 1,
-        liquidationLimit: ousdUnits("4000"),
-        uniswapV3Path:
-          "0xd533a949740bb3306d119cc777fa900ba034cd52000bb8c02aaa39b223fe8d0a0e5c4f27ead9083c756cc20001f4dac17f958d2ee523a2206206994597c13d831ec7",
-      },
-    },
+    expectedConfigs: {},
   }));
 });

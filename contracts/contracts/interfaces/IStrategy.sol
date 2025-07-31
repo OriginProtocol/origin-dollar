@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
 /**
@@ -54,4 +54,11 @@ interface IStrategy {
      * @dev The address array of the reward tokens for the Strategy.
      */
     function getRewardTokenAddresses() external view returns (address[] memory);
+
+    function harvesterAddress() external view returns (address);
+
+    function transferToken(address token, uint256 amount) external;
+
+    function setRewardTokenAddresses(address[] calldata _rewardTokenAddresses)
+        external;
 }

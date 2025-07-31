@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
 import "./EchidnaSetup.sol";
@@ -129,42 +129,6 @@ contract EchidnaHelper is EchidnaSetup {
         hevm.prank(owner);
         // slither-disable-next-line unused-return
         ousd.approve(spender, amount);
-    }
-
-    /**
-     * @notice Increase the allowance of an account to spend OUSD
-     * @param ownerAcc Account that owns the OUSD
-     * @param spenderAcc Account that is approved to spend the OUSD
-     * @param amount Amount to increase the allowance by
-     */
-    function increaseAllowance(
-        uint8 ownerAcc,
-        uint8 spenderAcc,
-        uint256 amount
-    ) public {
-        address owner = getAccount(ownerAcc);
-        address spender = getAccount(spenderAcc);
-        hevm.prank(owner);
-        // slither-disable-next-line unused-return
-        ousd.increaseAllowance(spender, amount);
-    }
-
-    /**
-     * @notice Decrease the allowance of an account to spend OUSD
-     * @param ownerAcc Account that owns the OUSD
-     * @param spenderAcc Account that is approved to spend the OUSD
-     * @param amount Amount to decrease the allowance by
-     */
-    function decreaseAllowance(
-        uint8 ownerAcc,
-        uint8 spenderAcc,
-        uint256 amount
-    ) public {
-        address owner = getAccount(ownerAcc);
-        address spender = getAccount(spenderAcc);
-        hevm.prank(owner);
-        // slither-disable-next-line unused-return
-        ousd.decreaseAllowance(spender, amount);
     }
 
     /**

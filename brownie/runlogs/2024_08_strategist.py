@@ -185,3 +185,157 @@ def main():
     )
 
     print(to_gnosis_json(txs))
+
+# -------------------------------
+# Aug 22, 2024 - OUSD Allocation
+# -------------------------------
+from world import *
+
+def main():
+  with TemporaryForkForReallocations() as txs:
+    # Before
+    txs.append(vault_core.rebase({'from':STRATEGIST}))
+    txs.append(vault_value_checker.takeSnapshot({'from':STRATEGIST}))
+
+    # Withdraw 792k USDT from Morpho Aave
+    txs.append(
+      vault_admin.withdrawFromStrategy(
+        MORPHO_AAVE_STRAT, 
+        [usdt], 
+        [316_000 * 10**6], 
+        {'from': STRATEGIST}
+      )
+    )
+
+    # Put everything in Aave
+    txs.append(
+      vault_admin.depositToStrategy(
+        AAVE_STRAT, 
+        [usdt], 
+        [316_000*10**6], 
+        {'from': STRATEGIST}
+      )
+    )
+
+    # After
+    vault_change = vault_core.totalValue() - vault_value_checker.snapshots(STRATEGIST)[0]
+    supply_change = ousd.totalSupply() - vault_value_checker.snapshots(STRATEGIST)[1]
+    profit = vault_change - supply_change
+
+    txs.append(vault_value_checker.checkDelta(profit, (500 * 10**18), vault_change, (500 * 10**18), {'from': STRATEGIST}))
+    print("-----")
+    print("Profit", "{:.6f}".format(profit / 10**18), profit)
+    print("Vault Change", "{:.6f}".format(vault_change / 10**18), vault_change)
+
+
+# -------------------------------------------
+# Aug 29 2024 - OETHb allocation & rebalance
+# -------------------------------------------
+from world_base import *
+
+def main():
+  with TemporaryForkForOETHbReallocations() as txs:
+    # Before
+    txs.append(vault_core.rebase({'from':OETHB_STRATEGIST}))
+    txs.append(vault_value_checker.takeSnapshot({'from':OETHB_STRATEGIST}))
+
+    # Deposit 100 WETH
+    txs.append(
+      vault_admin.depositToStrategy(
+        OETHB_AERODROME_AMO_STRATEGY, 
+        [weth], 
+        [100 * 10**18], 
+        {'from': OETHB_STRATEGIST}
+      )
+    )
+
+    txs.append(
+      amo_strat.rebalance(
+        3.8 * 10**18, 
+        False,
+        0 * 10**18,
+        {'from': OETHB_STRATEGIST}
+      )
+    )
+
+    # After
+    vault_change = vault_core.totalValue() - vault_value_checker.snapshots(OETHB_STRATEGIST)[0]
+    supply_change = oethb.totalSupply() - vault_value_checker.snapshots(OETHB_STRATEGIST)[1]
+    profit = vault_change - supply_change
+
+    txs.append(vault_value_checker.checkDelta(profit, (500 * 10**18), vault_change, (500 * 10**18), {'from': OETHB_STRATEGIST}))
+    print("-----")
+    print("Profit", "{:.6f}".format(profit / 10**18), profit)
+    print("Vault Change", "{:.6f}".format(vault_change / 10**18), vault_change)
+
+# -------------------------------------
+# Aug 30, 2024 - OETH Buyback
+# -------------------------------------
+from buyback import *
+def main():
+  txs = []
+
+  oeth_for_ogn, oeth_for_cvx = get_balance_splits(OETH)
+
+  with TemporaryFork():
+    txs.append(
+      build_1inch_buyback_tx(
+        OETH,
+        OGN,
+        oeth_for_ogn,
+        3.5
+      )
+    )
+
+    txs.append(
+      build_1inch_buyback_tx(
+        OETH,
+        CVX,
+        oeth_for_cvx,
+        2
+      )
+    )
+
+    txs.append(
+      cvx_locker.processExpiredLocks(True, std)
+    )
+
+    print(to_gnosis_json(txs))
+
+# -------------------------------------
+# Aug 30, 2024 - OUSD Buyback
+# -------------------------------------
+from buyback import *
+def main():
+  txs = []
+
+  ousd_for_ogn, ousd_for_cvx = get_balance_splits(OUSD)
+
+  with TemporaryFork():
+    txs.append(
+      build_1inch_buyback_tx(
+        OUSD,
+        OGN,
+        ousd_for_ogn,
+        3
+      )
+    )
+
+    txs.append(
+      build_1inch_buyback_tx(
+        OUSD,
+        CVX,
+        ousd_for_cvx,
+        2
+      )
+    )
+
+    print(to_gnosis_json(txs))
+
+
+# -------------------------------------
+# Aug 30, 2024 - OUSD Buyback
+# -------------------------------------
+from aerodrome_harvest import *
+def main():
+    harvest_and_swap()

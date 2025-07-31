@@ -34,15 +34,15 @@ describe.skip("ForkTest: Morpho Compound Strategy", function () {
       await mintTest(fixture, josh, usdt, "200000");
     });
 
-    it("Should deploy DAI in Morpho Compound", async function () {
-      const { anna, dai } = fixture;
-      await mintTest(fixture, anna, dai, "110000");
+    it("Should deploy USDS in Morpho Compound", async function () {
+      const { anna, usds } = fixture;
+      await mintTest(fixture, anna, usds, "110000");
     });
   });
 
   describe("Redeem", function () {
     it("Should redeem from Morpho", async () => {
-      const { vault, ousd, usdt, usdc, dai, domen } = fixture;
+      const { vault, ousd, usdt, usdc, usds, domen } = fixture;
 
       await vault.connect(domen).rebase();
 
@@ -51,7 +51,7 @@ describe.skip("ForkTest: Morpho Compound Strategy", function () {
       const amount = "20020";
 
       // Mint with all three assets
-      for (const asset of [usdt, usdc, dai]) {
+      for (const asset of [usdt, usdc, usds]) {
         await vault
           .connect(domen)
           .mint(asset.address, await units(amount, asset), 0);

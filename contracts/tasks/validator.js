@@ -4,12 +4,14 @@ const {
 } = require("@openzeppelin/defender-kvstore-client");
 
 const { getBlock } = require("./block");
-const { getValidator, getEpoch } = require("./beaconchain");
+const { getValidator, getValidators, getEpoch } = require("./beaconchain");
 const addresses = require("../utils/addresses");
 const { resolveContract } = require("../utils/resolvers");
 const { logTxDetails } = require("../utils/txLogger");
 const { networkMap } = require("../utils/hardhat-helpers");
+const { convertToBigNumber } = require("../utils/units");
 const { validatorsThatCanBeStaked } = require("../utils/validator");
+const { validatorKeys } = require("../utils/regex");
 
 const log = require("../utils/logger")("task:p2p");
 
@@ -116,6 +118,37 @@ async function verifyMinActivationTimes({ pubkeys }) {
   }
 }
 
+async function getValidatorBalances({ pubkeys }) {
+  const validator = await getValidators(pubkeys);
+
+  // for
+  log(
+    `Validator balance of ${formatUnits(
+      validator.balance
+    )} for pub keys ${pubkeys}`
+  );
+  return validator.balance;
+}
+
+async function snapValidators({ pubkeys }) {
+  if (!pubkeys.match(validatorKeys)) {
+    throw Error(
+      `Public keys not a comma-separated list of public keys with 0x prefixes`
+    );
+  }
+  const validators = await getValidators(pubkeys);
+
+  console.log(`Validators details`);
+  console.log(`pubkey, balance, status, withdrawalcredentials`);
+  for (const validator of validators) {
+    console.log(
+      `${validator.pubkey}, ${formatUnits(validator.balance, 9)}, ${
+        validator.status
+      }, ${validator.withdrawalcredentials}`
+    );
+  }
+}
+
 async function exitValidators({ index, pubkeys, operatorids, signer }) {
   await verifyMinActivationTimes({ pubkeys });
 
@@ -130,13 +163,39 @@ async function exitValidators({ index, pubkeys, operatorids, signer }) {
   const tx = await strategy
     .connect(signer)
     .exitSsvValidators(pubKeys, operatorIds);
-  await logTxDetails(tx, "exitSsvValidator");
+  await logTxDetails(tx, "exitSsvValidators");
 }
 
 async function doAccounting({ signer, nativeStakingStrategy }) {
   log(`About to doAccounting`);
   const tx = await nativeStakingStrategy.connect(signer).doAccounting();
   await logTxDetails(tx, "doAccounting");
+}
+
+async function manuallyFixAccounting({
+  signer,
+  nativeStakingStrategy,
+  validatorsDelta,
+  consensusRewardsDelta,
+  ethToVaultAmount,
+}) {
+  const consensusRewardsDeltaBN = convertToBigNumber(consensusRewardsDelta);
+  const ethToVaultAmountBN = convertToBigNumber(ethToVaultAmount);
+
+  log(
+    `About to manuallyFixAccounting with details ${validatorsDelta} validators, ${formatUnits(
+      consensusRewardsDeltaBN
+    )} consensus rewards, ${formatUnits(ethToVaultAmountBN)} ETH to vault`
+  );
+
+  const tx = await nativeStakingStrategy
+    .connect(signer)
+    .manuallyFixAccounting(
+      validatorsDelta,
+      consensusRewardsDeltaBN,
+      ethToVaultAmountBN
+    );
+  await logTxDetails(tx, "manuallyFixAccounting");
 }
 
 async function resetStakeETHTally({ index, signer }) {
@@ -213,6 +272,7 @@ async function snapStaking({ block, admin, index }) {
     .mul(10)
     .div(parseEther("32"));
   const idleWethRequestsBN = idleWethValidatorsBN.div(16);
+  const paused = await strategy.paused({ blockTag });
 
   console.log(
     `Active validators        : ${await strategy.activeDepositedValidators({
@@ -262,6 +322,7 @@ async function snapStaking({ block, admin, index }) {
       1
     )} (${formatUnits(idleWethRequestsBN, 1)} requests)`
   );
+  console.log(`Strategy paused          : ${paused}`);
 
   if (admin) {
     console.log(
@@ -307,8 +368,11 @@ module.exports = {
   resetStakeETHTally,
   setStakeETHThreshold,
   fixAccounting,
+  manuallyFixAccounting,
   pauseStaking,
   snapStaking,
   resolveNativeStakingStrategyProxy,
   resolveFeeAccumulatorProxy,
+  getValidatorBalances,
+  snapValidators,
 };

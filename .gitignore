@@ -65,6 +65,8 @@ contracts/.localKeyValueStorage.mainnet
 contracts/.localKeyValueStorage.holesky
 contracts/scripts/defender-actions/dist/
 
+contracts/lib/defender-actions/dist/
+
 todo.txt
 brownie/env-brownie/
 
@@ -84,3 +86,6 @@ fork-coverage
 unit-coverage
 
 .VSCodeCounter
+
+# Certora #
+.certora_internal

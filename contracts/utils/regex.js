@@ -8,6 +8,9 @@ const transactionHash = bytes32;
 
 const privateKey = /^[A-Fa-f0-9]{1,64}$/;
 
+const validatorKey = /^0x[0-9a-fA-F]{96}$/;
+const validatorKeys = /^0x[0-9a-fA-F]{96}(,0x[0-9a-fA-F]{96})*$/;
+
 module.exports = {
   bytes,
   bytesFixed,
@@ -15,4 +18,6 @@ module.exports = {
   ethereumAddress,
   transactionHash,
   privateKey,
+  validatorKey,
+  validatorKeys,
 };

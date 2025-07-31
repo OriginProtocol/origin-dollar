@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
 import "./IHevm.sol";
@@ -19,7 +19,7 @@ contract EchidnaSetup is EchidnaConfig {
      * @notice Deploy the OUSD contract and set up initial state
      */
     constructor() {
-        ousd.initialize("Origin Dollar", "OUSD", ADDRESS_VAULT, 1e18);
+        ousd.initialize(ADDRESS_VAULT, 1e18);
 
         // Deploy dummny contracts as users
         Dummy outsider = new Dummy();

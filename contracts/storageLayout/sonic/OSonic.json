@@ -1,0 +1,162 @@
+{
+  "solcVersion": "0.8.28",
+  "storage": [
+    {
+      "label": "_gap",
+      "offset": 0,
+      "slot": "0",
+      "type": "t_array(t_uint256)154_storage",
+      "contract": "OUSD",
+      "src": "contracts/token/OUSD.sol:69"
+    },
+    {
+      "label": "totalSupply",
+      "offset": 0,
+      "slot": "154",
+      "type": "t_uint256",
+      "contract": "OUSD",
+      "src": "contracts/token/OUSD.sol:72"
+    },
+    {
+      "label": "allowances",
+      "offset": 0,
+      "slot": "155",
+      "type": "t_mapping(t_address,t_mapping(t_address,t_uint256))",
+      "contract": "OUSD",
+      "src": "contracts/token/OUSD.sol:73"
+    },
+    {
+      "label": "vaultAddress",
+      "offset": 0,
+      "slot": "156",
+      "type": "t_address",
+      "contract": "OUSD",
+      "src": "contracts/token/OUSD.sol:76"
+    },
+    {
+      "label": "creditBalances",
+      "offset": 0,
+      "slot": "157",
+      "type": "t_mapping(t_address,t_uint256)",
+      "contract": "OUSD",
+      "src": "contracts/token/OUSD.sol:77"
+    },
+    {
+      "label": "rebasingCredits_",
+      "offset": 0,
+      "slot": "158",
+      "type": "t_uint256",
+      "contract": "OUSD",
+      "src": "contracts/token/OUSD.sol:79"
+    },
+    {
+      "label": "rebasingCreditsPerToken_",
+      "offset": 0,
+      "slot": "159",
+      "type": "t_uint256",
+      "contract": "OUSD",
+      "src": "contracts/token/OUSD.sol:80"
+    },
+    {
+      "label": "nonRebasingSupply",
+      "offset": 0,
+      "slot": "160",
+      "type": "t_uint256",
+      "contract": "OUSD",
+      "src": "contracts/token/OUSD.sol:82"
+    },
+    {
+      "label": "alternativeCreditsPerToken",
+      "offset": 0,
+      "slot": "161",
+      "type": "t_mapping(t_address,t_uint256)",
+      "contract": "OUSD",
+      "src": "contracts/token/OUSD.sol:83"
+    },
+    {
+      "label": "rebaseState",
+      "offset": 0,
+      "slot": "162",
+      "type": "t_mapping(t_address,t_enum(RebaseOptions)46633)",
+      "contract": "OUSD",
+      "src": "contracts/token/OUSD.sol:85"
+    },
+    {
+      "label": "__deprecated_isUpgraded",
+      "offset": 0,
+      "slot": "163",
+      "type": "t_mapping(t_address,t_uint256)",
+      "contract": "OUSD",
+      "src": "contracts/token/OUSD.sol:86"
+    },
+    {
+      "label": "yieldTo",
+      "offset": 0,
+      "slot": "164",
+      "type": "t_mapping(t_address,t_address)",
+      "contract": "OUSD",
+      "src": "contracts/token/OUSD.sol:91"
+    },
+    {
+      "label": "yieldFrom",
+      "offset": 0,
+      "slot": "165",
+      "type": "t_mapping(t_address,t_address)",
+      "contract": "OUSD",
+      "src": "contracts/token/OUSD.sol:96"
+    },
+    {
+      "label": "__gap",
+      "offset": 0,
+      "slot": "166",
+      "type": "t_array(t_uint256)34_storage",
+      "contract": "OUSD",
+      "src": "contracts/token/OUSD.sol:99"
+    }
+  ],
+  "types": {
+    "t_address": {
+      "label": "address",
+      "numberOfBytes": "20"
+    },
+    "t_array(t_uint256)154_storage": {
+      "label": "uint256[154]",
+      "numberOfBytes": "4928"
+    },
+    "t_array(t_uint256)34_storage": {
+      "label": "uint256[34]",
+      "numberOfBytes": "1088"
+    },
+    "t_enum(RebaseOptions)46633": {
+      "label": "enum OUSD.RebaseOptions",
+      "members": [
+        "NotSet",
+        "StdNonRebasing",
+        "StdRebasing",
+        "YieldDelegationSource",
+        "YieldDelegationTarget"
+      ],
+      "numberOfBytes": "1"
+    },
+    "t_mapping(t_address,t_address)": {
+      "label": "mapping(address => address)",
+      "numberOfBytes": "32"
+    },
+    "t_mapping(t_address,t_enum(RebaseOptions)46633)": {
+      "label": "mapping(address => enum OUSD.RebaseOptions)",
+      "numberOfBytes": "32"
+    },
+    "t_mapping(t_address,t_mapping(t_address,t_uint256))": {
+      "label": "mapping(address => mapping(address => uint256))",
+      "numberOfBytes": "32"
+    },
+    "t_mapping(t_address,t_uint256)": {
+      "label": "mapping(address => uint256)",
+      "numberOfBytes": "32"
+    },
+    "t_uint256": {
+      "label": "uint256",
+      "numberOfBytes": "32"
+    }
+  }
+}

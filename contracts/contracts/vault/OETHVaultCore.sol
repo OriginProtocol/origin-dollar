@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
@@ -8,7 +8,6 @@ import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import { StableMath } from "../utils/StableMath.sol";
 import { VaultCore } from "./VaultCore.sol";
 import { IStrategy } from "../interfaces/IStrategy.sol";
-import { IDripper } from "../interfaces/IDripper.sol";
 
 /**
  * @title OETH VaultCore Contract
@@ -18,7 +17,6 @@ contract OETHVaultCore is VaultCore {
     using SafeERC20 for IERC20;
     using StableMath for uint256;
 
-    uint256 public constant CLAIM_DELAY = 10 minutes;
     address public immutable weth;
     uint256 public wethAssetIndex;
 
@@ -35,7 +33,7 @@ contract OETHVaultCore is VaultCore {
      */
     function cacheWETHAssetIndex() external onlyGovernor {
         uint256 assetCount = allAssets.length;
-        for (uint256 i = 0; i < assetCount; ++i) {
+        for (uint256 i; i < assetCount; ++i) {
             if (allAssets[i] == weth) {
                 wethAssetIndex = i;
                 break;
@@ -43,6 +41,48 @@ contract OETHVaultCore is VaultCore {
         }
 
         require(allAssets[wethAssetIndex] == weth, "Invalid WETH Asset Index");
+    }
+
+    // @inheritdoc VaultCore
+    function mintForStrategy(uint256 amount)
+        external
+        override
+        whenNotCapitalPaused
+    {
+        require(
+            strategies[msg.sender].isSupported == true,
+            "Unsupported strategy"
+        );
+        require(
+            isMintWhitelistedStrategy[msg.sender] == true,
+            "Not whitelisted strategy"
+        );
+
+        emit Mint(msg.sender, amount);
+
+        // Mint matching amount of OTokens
+        oUSD.mint(msg.sender, amount);
+    }
+
+    // @inheritdoc VaultCore
+    function burnForStrategy(uint256 amount)
+        external
+        override
+        whenNotCapitalPaused
+    {
+        require(
+            strategies[msg.sender].isSupported == true,
+            "Unsupported strategy"
+        );
+        require(
+            isMintWhitelistedStrategy[msg.sender] == true,
+            "Not whitelisted strategy"
+        );
+
+        emit Redeem(msg.sender, amount);
+
+        // Burn OTokens
+        oUSD.burn(msg.sender, amount);
     }
 
     // @inheritdoc VaultCore
@@ -63,9 +103,6 @@ contract OETHVaultCore is VaultCore {
 
         // Rebase must happen before any transfers occur.
         if (!rebasePaused && _amount >= rebaseThreshold) {
-            // Stream any harvested rewards (WETH) that are available to the Vault
-            IDripper(dripper).collect();
-
             _rebase();
         }
 
@@ -131,9 +168,10 @@ contract OETHVaultCore is VaultCore {
         }
 
         // Amount excluding fees
-        uint256 amountMinusFee = _calculateRedeemOutputs(_amount)[
-            wethAssetIndex
-        ];
+        // No fee for the strategist or the governor, makes it easier to do operations
+        uint256 amountMinusFee = (msg.sender == strategistAddr || isGovernor())
+            ? _amount
+            : _calculateRedeemOutputs(_amount)[wethAssetIndex];
 
         require(
             amountMinusFee >= _minimumUnitAmount,
@@ -158,19 +196,22 @@ contract OETHVaultCore is VaultCore {
      * The OETH is burned on request and the WETH is transferred to the withdrawer on claim.
      * This request can be claimed once the withdrawal queue's `claimable` amount
      * is greater than or equal this request's `queued` amount.
-     * There is no minimum time or block number before a request can be claimed. It just needs
+     * There is a minimum of 10 minutes before a request can be claimed. After that, the request just needs
      * enough WETH liquidity in the Vault to satisfy all the outstanding requests to that point in the queue.
      * OETH is converted to WETH at 1:1.
      * @param _amount Amount of OETH to burn.
-     * @param requestId Unique ID for the withdrawal request
-     * @param queued Cumulative total of all WETH queued including already claimed requests.
+     * @return requestId Unique ID for the withdrawal request
+     * @return queued Cumulative total of all WETH queued including already claimed requests.
      */
     function requestWithdrawal(uint256 _amount)
         external
+        virtual
         whenNotCapitalPaused
         nonReentrant
         returns (uint256 requestId, uint256 queued)
     {
+        require(withdrawalClaimDelay > 0, "Async withdrawals not enabled");
+
         // The check that the requester has enough OETH is done in to later burn call
 
         requestId = withdrawalQueueMetadata.nextWithdrawalIndex;
@@ -195,7 +236,7 @@ contract OETHVaultCore is VaultCore {
         // Burn the user's OETH
         oUSD.burn(msg.sender, _amount);
 
-        // Prevent withdrawal if the vault is solvent by more than the the allowed percentage
+        // Prevent withdrawal if the vault is solvent by more than the allowed percentage
         _postRedeem(_amount);
 
         emit WithdrawalRequested(msg.sender, requestId, _amount, queued);
@@ -214,6 +255,7 @@ contract OETHVaultCore is VaultCore {
      */
     function claimWithdrawal(uint256 _requestId)
         external
+        virtual
         whenNotCapitalPaused
         nonReentrant
         returns (uint256 amount)
@@ -223,10 +265,12 @@ contract OETHVaultCore is VaultCore {
             withdrawalRequests[_requestId].queued >
             withdrawalQueueMetadata.claimable
         ) {
-            // Stream any harvested rewards (WETH) that are available to the Vault
-            IDripper(dripper).collect();
-
-            // Add any WETH from the Dripper to the withdrawal queue
+            // Add any WETH to the withdrawal queue
+            // this needs to remain here as:
+            //  - Vault can be funded and `addWithdrawalQueueLiquidity` is not externally called
+            //  - funds can be withdrawn from a strategy
+            //
+            // Those funds need to be added to withdrawal queue liquidity
             _addWithdrawalQueueLiquidity();
         }
 
@@ -252,23 +296,23 @@ contract OETHVaultCore is VaultCore {
      * @return amounts Amount of WETH received for each request
      * @return totalAmount Total amount of WETH transferred to the withdrawer
      */
-    function claimWithdrawals(uint256[] memory _requestIds)
+    function claimWithdrawals(uint256[] calldata _requestIds)
         external
+        virtual
         whenNotCapitalPaused
         nonReentrant
         returns (uint256[] memory amounts, uint256 totalAmount)
     {
-        // Just call the Dripper instead of looping through _requestIds to find the highest id
-        // and checking it's queued amount is > the queue's claimable amount.
-
-        // Stream any harvested rewards (WETH) that are available to the Vault
-        IDripper(dripper).collect();
-
-        // Add any WETH from the Dripper to the withdrawal queue
+        // Add any WETH to the withdrawal queue
+        // this needs to remain here as:
+        //  - Vault can be funded and `addWithdrawalQueueLiquidity` is not externally called
+        //  - funds can be withdrawn from a strategy
+        //
+        // Those funds need to be added to withdrawal queue liquidity
         _addWithdrawalQueueLiquidity();
 
         amounts = new uint256[](_requestIds.length);
-        for (uint256 i = 0; i < _requestIds.length; ++i) {
+        for (uint256 i; i < _requestIds.length; ++i) {
             amounts[i] = _claimWithdrawal(_requestIds[i]);
             totalAmount += amounts[i];
         }
@@ -284,12 +328,14 @@ contract OETHVaultCore is VaultCore {
         internal
         returns (uint256 amount)
     {
+        require(withdrawalClaimDelay > 0, "Async withdrawals not enabled");
+
         // Load the structs from storage into memory
         WithdrawalRequest memory request = withdrawalRequests[requestId];
         WithdrawalQueueMetadata memory queue = withdrawalQueueMetadata;
 
         require(
-            request.timestamp + CLAIM_DELAY <= block.timestamp,
+            request.timestamp + withdrawalClaimDelay <= block.timestamp,
             "Claim delay not met"
         );
         // If there isn't enough reserved liquidity in the queue to claim
@@ -307,14 +353,10 @@ contract OETHVaultCore is VaultCore {
         return request.amount;
     }
 
-    /// @notice Collects harvested rewards from the Dripper as WETH then
-    /// adds WETH to the withdrawal queue if there is a funding shortfall.
+    /// @notice Adds WETH to the withdrawal queue if there is a funding shortfall.
     /// @dev is called from the Native Staking strategy when validator withdrawals are processed.
     /// It also called before any WETH is allocated to a strategy.
     function addWithdrawalQueueLiquidity() external {
-        // Stream any harvested rewards (WETH) that are available to the Vault
-        IDripper(dripper).collect();
-
         _addWithdrawalQueueLiquidity();
     }
 
@@ -385,7 +427,7 @@ contract OETHVaultCore is VaultCore {
 
     /// @dev Get the balance of an asset held in Vault and all strategies
     /// less any WETH that is reserved for the withdrawal queue.
-    /// This will only return a non-zero balance for WETH.
+    /// WETH is the only asset that can return a non-zero balance.
     /// All other assets will return 0 even if there is some dust amounts left in the Vault.
     /// For example, there is 1 wei left of stETH in the OETH Vault but will return 0 in this function.
     ///

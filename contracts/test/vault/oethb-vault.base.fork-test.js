@@ -3,7 +3,7 @@ const { defaultBaseFixture } = require("../_fixture-base");
 const { expect } = require("chai");
 const addresses = require("../../utils/addresses");
 const { impersonateAndFund } = require("../../utils/signers");
-const { oethUnits } = require("../helpers");
+const { oethUnits, advanceTime } = require("../helpers");
 const { deployWithConfirmation } = require("../../utils/deploy");
 
 const baseFixture = createFixtureLoader(defaultBaseFixture);
@@ -12,6 +12,230 @@ describe("ForkTest: OETHb Vault", function () {
   let fixture;
   beforeEach(async () => {
     fixture = await baseFixture();
+  });
+
+  async function _mint(signer) {
+    const { weth, oethbVault } = fixture;
+    await weth.connect(signer).deposit({ value: oethUnits("1") });
+    await weth.connect(signer).approve(oethbVault.address, oethUnits("1"));
+    await oethbVault.connect(signer).mint(weth.address, oethUnits("1"), "0");
+  }
+
+  describe("Mint & Permissioned redeems", function () {
+    it("Should allow anyone to mint", async () => {
+      const { nick, weth, oethb, oethbVault } = fixture;
+
+      // issue a pre-mint so that Dripper collect gets called so next mint
+      // doesn't include dripper funds
+      await _mint(nick);
+      await oethbVault.rebase();
+
+      const vaultBalanceBefore = await weth.balanceOf(oethbVault.address);
+      const userBalanceBefore = await oethb.balanceOf(nick.address);
+      const totalSupplyBefore = await oethb.totalSupply();
+
+      await _mint(nick);
+
+      const vaultBalanceAfter = await weth.balanceOf(oethbVault.address);
+      const userBalanceAfter = await oethb.balanceOf(nick.address);
+      const totalSupplyAfter = await oethb.totalSupply();
+
+      expect(totalSupplyAfter).to.approxEqual(
+        totalSupplyBefore.add(oethUnits("1"))
+      );
+      expect(userBalanceAfter).to.approxEqual(
+        userBalanceBefore.add(oethUnits("1"))
+      );
+      expect(vaultBalanceAfter).to.approxEqualTolerance(
+        vaultBalanceBefore.add(oethUnits("1")),
+        0.1
+      );
+    });
+
+    it("Should allow only Strategist to redeem", async () => {
+      const { strategist, oethbVault, oethb, weth, rafael } = fixture;
+
+      // Add WETH liquidity to allow redeem
+      await weth
+        .connect(rafael)
+        .transfer(oethbVault.address, oethUnits("3000"));
+
+      await oethbVault.rebase();
+      await _mint(strategist);
+
+      const vaultBalanceBefore = await weth.balanceOf(oethbVault.address);
+      const userBalanceBefore = await oethb.balanceOf(strategist.address);
+      const totalSupplyBefore = await oethb.totalSupply();
+
+      await oethbVault.connect(strategist).redeem(oethUnits("1"), "0");
+
+      const vaultBalanceAfter = await weth.balanceOf(oethbVault.address);
+      const userBalanceAfter = await oethb.balanceOf(strategist.address);
+      const totalSupplyAfter = await oethb.totalSupply();
+
+      expect(totalSupplyAfter).to.approxEqualTolerance(
+        totalSupplyBefore.sub(oethUnits("1"))
+      );
+      expect(userBalanceAfter).to.approxEqualTolerance(
+        userBalanceBefore.sub(oethUnits("1"))
+      );
+      expect(vaultBalanceAfter).to.approxEqualTolerance(
+        vaultBalanceBefore.sub(oethUnits("1"))
+      );
+    });
+
+    it("Should allow only Governor to redeem", async () => {
+      const { governor, oethbVault, oethb, weth, rafael } = fixture;
+
+      // Add WETH liquidity to allow redeem
+      await weth
+        .connect(rafael)
+        .transfer(oethbVault.address, oethUnits("3000"));
+
+      await oethbVault.rebase();
+      await _mint(governor);
+
+      const vaultBalanceBefore = await weth.balanceOf(oethbVault.address);
+      const userBalanceBefore = await oethb.balanceOf(governor.address);
+      const totalSupplyBefore = await oethb.totalSupply();
+
+      await oethbVault.connect(governor).redeem(oethUnits("1"), "0");
+
+      const vaultBalanceAfter = await weth.balanceOf(oethbVault.address);
+      const userBalanceAfter = await oethb.balanceOf(governor.address);
+      const totalSupplyAfter = await oethb.totalSupply();
+
+      expect(totalSupplyAfter).to.approxEqualTolerance(
+        totalSupplyBefore.sub(oethUnits("1"))
+      );
+      expect(userBalanceAfter).to.approxEqualTolerance(
+        userBalanceBefore.sub(oethUnits("1"))
+      );
+      expect(vaultBalanceAfter).to.approxEqualTolerance(
+        vaultBalanceBefore.sub(oethUnits("1"))
+      );
+    });
+
+    it("No one else can redeem", async () => {
+      const { rafael, nick, oethbVault } = fixture;
+
+      await oethbVault.rebase();
+
+      for (const signer of [rafael, nick]) {
+        await _mint(signer);
+        await expect(
+          oethbVault.connect(signer).redeem(oethUnits("1"), "0")
+        ).to.be.revertedWith("Caller is not the Strategist or Governor");
+      }
+    });
+  });
+
+  describe("Async withdrawals", function () {
+    it("Should allow 1:1 async withdrawals", async () => {
+      const { rafael, governor, oethbVault, weth } = fixture;
+
+      // Add WETH liquidity to allow withdrawal
+      await weth
+        .connect(rafael)
+        .transfer(oethbVault.address, oethUnits("3000"));
+
+      const delayPeriod = await oethbVault.withdrawalClaimDelay();
+
+      if (delayPeriod == 0) {
+        // Temporarily set to 10m if disabled
+        await oethbVault.connect(governor).setWithdrawalClaimDelay(
+          10 * 60 // 10 mins
+        );
+      }
+
+      const { nextWithdrawalIndex: requestId } =
+        await oethbVault.withdrawalQueueMetadata();
+
+      // Rafael mints 1 superOETHb
+      await _mint(rafael);
+
+      // Rafael places an async withdrawal request
+      await oethbVault.connect(rafael).requestWithdrawal(oethUnits("1"));
+
+      // ... and tries to claim it after 1d
+      await advanceTime(delayPeriod);
+      await oethbVault.connect(rafael).claimWithdrawal(requestId);
+    });
+
+    it("Should not allow withdraw before claim delay", async () => {
+      const { rafael, governor, oethbVault } = fixture;
+
+      const delayPeriod = await oethbVault.withdrawalClaimDelay();
+
+      if (delayPeriod == 0) {
+        // Temporarily set to 10m if disabled
+        await oethbVault.connect(governor).setWithdrawalClaimDelay(
+          10 * 60 // 10 mins
+        );
+      }
+
+      const { nextWithdrawalIndex: requestId } =
+        await oethbVault.withdrawalQueueMetadata();
+
+      // Rafael mints 1 superOETHb
+      await _mint(rafael);
+
+      // Rafael places an async withdrawal request
+      await oethbVault.connect(rafael).requestWithdrawal(oethUnits("1"));
+
+      // ... and tries to claim before the withdraw period
+      const tx = oethbVault.connect(rafael).claimWithdrawal(requestId);
+      await expect(tx).to.be.revertedWith("Claim delay not met");
+    });
+
+    it("Should enforce claim delay limits", async () => {
+      const { governor, oethbVault } = fixture;
+
+      // lower bound
+      await oethbVault.connect(governor).setWithdrawalClaimDelay(
+        10 * 60 // 10 mins
+      );
+      expect(await oethbVault.withdrawalClaimDelay()).to.eq(10 * 60);
+
+      // upper bound
+      await oethbVault.connect(governor).setWithdrawalClaimDelay(
+        15 * 24 * 60 * 60 // 7d
+      );
+      expect(await oethbVault.withdrawalClaimDelay()).to.eq(15 * 24 * 60 * 60);
+
+      // below lower bound
+      let tx = oethbVault.connect(governor).setWithdrawalClaimDelay(
+        9 * 60 + 59 // 9 mins 59 sec
+      );
+      await expect(tx).to.be.revertedWith("Invalid claim delay period");
+
+      // above upper bound
+      tx = oethbVault.connect(governor).setWithdrawalClaimDelay(
+        15 * 24 * 60 * 60 + 1 // 7d + 1s
+      );
+      await expect(tx).to.be.revertedWith("Invalid claim delay period");
+    });
+
+    it("Should allow governor to disable withdrawals", async () => {
+      const { governor, oethbVault, rafael } = fixture;
+
+      // Disable it
+      await oethbVault.connect(governor).setWithdrawalClaimDelay(0);
+      expect(await oethbVault.withdrawalClaimDelay()).to.eq(0);
+
+      // No one can make requests
+      const tx = oethbVault.connect(rafael).requestWithdrawal(oethUnits("1"));
+      await expect(tx).to.be.revertedWith("Async withdrawals not enabled");
+    });
+
+    it("Should not allow anyone else to disable withdrawals", async () => {
+      const { oethbVault, rafael, strategist } = fixture;
+
+      for (const signer of [rafael, strategist]) {
+        const tx = oethbVault.connect(signer).setWithdrawalClaimDelay(0);
+        await expect(tx).to.be.revertedWith("Caller is not the Governor");
+      }
+    });
   });
 
   describe("Mint Whitelist", function () {

@@ -6,7 +6,7 @@ const { createFixtureLoader, compoundVaultFixture } = require("../_fixture");
 const {
   advanceTime,
   ousdUnits,
-  daiUnits,
+  usdsUnits,
   usdcUnits,
   usdtUnits,
   tusdUnits,
@@ -35,17 +35,17 @@ describe("Vault with Compound strategy", function () {
     const { governor, compoundStrategy } = fixture;
 
     const tx = await compoundStrategy.connect(governor).removePToken(0);
-    const receipt = await tx.wait();
 
-    const event = receipt.events.find((e) => e.event === "PTokenRemoved");
-    expect(event).to.not.be.undefined;
+    await expect(tx).to.emit(compoundStrategy, "PTokenRemoved");
   });
 
   it("Governor can call setPTokenAddress", async () => {
-    const { dai, ousd, matt, compoundStrategy } = fixture;
+    const { usds, ousd, matt, compoundStrategy } = fixture;
 
     await expect(
-      compoundStrategy.connect(matt).setPTokenAddress(ousd.address, dai.address)
+      compoundStrategy
+        .connect(matt)
+        .setPTokenAddress(ousd.address, usds.address)
     ).to.be.revertedWith("Caller is not the Governor");
   });
 
@@ -58,17 +58,19 @@ describe("Vault with Compound strategy", function () {
   });
 
   it("Should allocate unallocated assets", async () => {
-    const { anna, governor, dai, usdc, usdt, tusd, vault, compoundStrategy } =
+    const { anna, governor, usds, usdc, usdt, tusd, vault, compoundStrategy } =
       fixture;
 
-    await dai.connect(anna).transfer(vault.address, daiUnits("100"));
+    await usds.connect(anna).transfer(vault.address, usdsUnits("100"));
     await usdc.connect(anna).transfer(vault.address, usdcUnits("200"));
     await usdt.connect(anna).transfer(vault.address, usdtUnits("300"));
+
+    await tusd.connect(anna).mint(ousdUnits("1000.0"));
     await tusd.connect(anna).transfer(vault.address, tusdUnits("400"));
 
     await expect(vault.connect(governor).allocate())
       .to.emit(vault, "AssetAllocated")
-      .withArgs(dai.address, compoundStrategy.address, daiUnits("300"))
+      .withArgs(usds.address, compoundStrategy.address, usdsUnits("300"))
       .to.emit(vault, "AssetAllocated")
       .withArgs(usdc.address, compoundStrategy.address, usdcUnits("200"))
       .to.emit(vault, "AssetAllocated")
@@ -80,11 +82,11 @@ describe("Vault with Compound strategy", function () {
       .withoutArgs(usdt.address, compoundStrategy.address, tusdUnits("400"));
     */
 
-    // Note compoundVaultFixture sets up with 200 DAI already in the Strategy
+    // Note compoundVaultFixture sets up with 200 USDS already in the Strategy
     // 200 + 100 = 300
     await expect(
-      await compoundStrategy.checkBalance(dai.address)
-    ).to.approxEqual(daiUnits("300"));
+      await compoundStrategy.checkBalance(usds.address)
+    ).to.approxEqual(usdsUnits("300"));
     await expect(
       await compoundStrategy.checkBalance(usdc.address)
     ).to.approxEqual(usdcUnits("200"));
@@ -94,9 +96,7 @@ describe("Vault with Compound strategy", function () {
 
     // Strategy doesn't support TUSD
     // Vault balance for TUSD should remain unchanged
-    await expect(await tusd.balanceOf(vault.address)).to.equal(
-      tusdUnits("400")
-    );
+    expect(await tusd.balanceOf(vault.address)).to.equal(tusdUnits("400"));
   });
 
   it("Should correctly handle a deposit of USDC (6 decimals)", async function () {
@@ -131,29 +131,29 @@ describe("Vault with Compound strategy", function () {
     await vault.connect(anna).redeem(ousdUnits("40.0"), 0);
 
     await expect(anna).has.an.approxBalanceOf("10", ousd);
-    // Vault has 200 DAI and 50 USDC, 50/250 * 40 USDC will come back
+    // Vault has 200 USDS and 50 USDC, 50/250 * 40 USDC will come back
     await expect(anna).has.an.approxBalanceOf("958", usdc);
   });
 
-  it("Should calculate the balance correctly with DAI in strategy", async () => {
-    const { dai, vault, josh, compoundStrategy, governor } = fixture;
+  it("Should calculate the balance correctly with USDS in strategy", async () => {
+    const { usds, vault, josh, compoundStrategy, governor } = fixture;
 
     expect(await vault.totalValue()).to.approxEqual(
       utils.parseUnits("200", 18)
     );
 
-    // Josh deposits DAI, 18 decimals
-    await dai.connect(josh).approve(vault.address, daiUnits("22.0"));
-    await vault.connect(josh).mint(dai.address, daiUnits("22.0"), 0);
+    // Josh deposits USDS, 18 decimals
+    await usds.connect(josh).approve(vault.address, usdsUnits("22.0"));
+    await vault.connect(josh).mint(usds.address, usdsUnits("22.0"), 0);
 
     await vault.connect(governor).allocate();
 
-    // Josh had 1000 DAI but used 100 DAI to mint OUSD in the fixture
-    await expect(josh).has.an.approxBalanceOf("878.0", dai, "Josh has less");
+    // Josh had 1000 USDS but used 100 USDS to mint OUSD in the fixture
+    await expect(josh).has.an.approxBalanceOf("878.0", usds, "Josh has less");
 
     // Verify the deposit went to Compound (as well as existing Vault assets)
-    expect(await compoundStrategy.checkBalance(dai.address)).to.approxEqual(
-      daiUnits("222")
+    expect(await compoundStrategy.checkBalance(usds.address)).to.approxEqual(
+      usdsUnits("222")
     );
 
     expect(await vault.totalValue()).to.approxEqual(
@@ -186,11 +186,11 @@ describe("Vault with Compound strategy", function () {
     );
   });
 
-  it("Should calculate the balance correct with TUSD in Vault and DAI, USDC, USDT in Compound strategy", async () => {
+  it("Should calculate the balance correct with TUSD in Vault and USDS, USDC, USDT in Compound strategy", async () => {
     const {
       tusd,
       usdc,
-      dai,
+      usds,
       usdt,
       vault,
       matt,
@@ -204,13 +204,13 @@ describe("Vault with Compound strategy", function () {
       utils.parseUnits("200", 18)
     );
 
-    // Josh deposits DAI, 18 decimals
-    await dai.connect(josh).approve(vault.address, daiUnits("22.0"));
-    await vault.connect(josh).mint(dai.address, daiUnits("22.0"), 0);
+    // Josh deposits USDS, 18 decimals
+    await usds.connect(josh).approve(vault.address, usdsUnits("22.0"));
+    await vault.connect(josh).mint(usds.address, usdsUnits("22.0"), 0);
     await vault.connect(governor).allocate();
     // Existing 200 also ends up in strategy due to allocate call
-    expect(await compoundStrategy.checkBalance(dai.address)).to.approxEqual(
-      daiUnits("222")
+    expect(await compoundStrategy.checkBalance(usds.address)).to.approxEqual(
+      usdsUnits("222")
     );
     // Matt deposits USDC, 6 decimals
     await usdc.connect(matt).approve(vault.address, usdcUnits("8.0"));
@@ -227,6 +227,7 @@ describe("Vault with Compound strategy", function () {
       usdtUnits("10.0")
     );
     // Matt deposits TUSD, 18 decimals
+    await tusd.connect(matt).mint(ousdUnits("100.0"));
     await tusd.connect(matt).approve(vault.address, tusdUnits("9.0"));
     await vault.connect(matt).mint(tusd.address, tusdUnits("9.0"), 0);
 
@@ -239,13 +240,13 @@ describe("Vault with Compound strategy", function () {
     // Mocks can't handle increasing time
     if (!isFork) return;
 
-    const { vault, matt, dai, governor } = fixture;
+    const { vault, matt, usds, governor } = fixture;
 
     await expect(await vault.totalValue()).to.equal(
       utils.parseUnits("200", 18)
     );
-    await dai.connect(matt).approve(vault.address, daiUnits("100"));
-    await vault.connect(matt).mint(dai.address, daiUnits("100"), 0);
+    await usds.connect(matt).approve(vault.address, usdsUnits("100"));
+    await vault.connect(matt).mint(usds.address, usdsUnits("100"), 0);
 
     await vault.connect(governor).allocate();
 
@@ -264,7 +265,7 @@ describe("Vault with Compound strategy", function () {
   });
 
   it("Should correctly withdrawAll all assets in Compound strategy", async () => {
-    const { usdc, vault, matt, josh, dai, compoundStrategy, governor } =
+    const { usdc, vault, matt, josh, usds, compoundStrategy, governor } =
       fixture;
 
     expect(await vault.totalValue()).to.approxEqual(
@@ -285,13 +286,13 @@ describe("Vault with Compound strategy", function () {
       utils.parseUnits("208", 18)
     );
 
-    await dai.connect(josh).approve(vault.address, daiUnits("22.0"));
-    await vault.connect(josh).mint(dai.address, daiUnits("22.0"), 0);
+    await usds.connect(josh).approve(vault.address, usdsUnits("22.0"));
+    await vault.connect(josh).mint(usds.address, usdsUnits("22.0"), 0);
 
     await vault.connect(governor).allocate();
 
-    expect(await compoundStrategy.checkBalance(dai.address)).to.approxEqual(
-      daiUnits("222")
+    expect(await compoundStrategy.checkBalance(usds.address)).to.approxEqual(
+      usdsUnits("222")
     );
 
     expect(await vault.totalValue()).to.approxEqual(
@@ -300,9 +301,9 @@ describe("Vault with Compound strategy", function () {
 
     await compoundStrategy.connect(governor).withdrawAll();
 
-    // There should be no DAI or USDC left in compound strategy
+    // There should be no USDS or USDC left in compound strategy
     expect(await compoundStrategy.checkBalance(usdc.address)).to.equal(0);
-    expect(await compoundStrategy.checkBalance(dai.address)).to.equal(0);
+    expect(await compoundStrategy.checkBalance(usds.address)).to.equal(0);
 
     // Vault value should remain the same because the liquidattion sent the
     // assets back to the vault
@@ -319,7 +320,7 @@ describe("Vault with Compound strategy", function () {
       vault,
       matt,
       josh,
-      dai,
+      usds,
       harvester,
       compoundStrategy,
       governor,
@@ -355,8 +356,8 @@ describe("Vault with Compound strategy", function () {
     expect(await compoundStrategy.checkBalance(usdc.address)).to.approxEqual(
       usdcUnits("8.0")
     );
-    await dai.connect(josh).approve(vault.address, daiUnits("22.0"));
-    await vault.connect(josh).mint(dai.address, daiUnits("22.0"), 0);
+    await usds.connect(josh).approve(vault.address, usdsUnits("22.0"));
+    await vault.connect(josh).mint(usds.address, usdsUnits("22.0"), 0);
 
     expect(await vault.totalValue()).to.approxEqual(
       utils.parseUnits("230", 18)
@@ -372,7 +373,7 @@ describe("Vault with Compound strategy", function () {
       .setAssetDefaultStrategy(usdc.address, addresses.zero);
     await vault
       .connect(governor)
-      .setAssetDefaultStrategy(dai.address, addresses.zero);
+      .setAssetDefaultStrategy(usds.address, addresses.zero);
     await vault.connect(governor).removeStrategy(compoundStrategy.address);
 
     await expect(await vault.getStrategyCount()).to.equal(0);
@@ -389,12 +390,12 @@ describe("Vault with Compound strategy", function () {
   });
 
   it("Should not alter balances after an asset price change", async () => {
-    let { ousd, vault, matt, usdc, dai } = fixture;
+    let { ousd, vault, matt, usdc, usds } = fixture;
 
     await usdc.connect(matt).approve(vault.address, usdcUnits("200"));
     await vault.connect(matt).mint(usdc.address, usdcUnits("200"), 0);
-    await dai.connect(matt).approve(vault.address, daiUnits("200"));
-    await vault.connect(matt).mint(dai.address, daiUnits("200"), 0);
+    await usds.connect(matt).approve(vault.address, usdsUnits("200"));
+    await vault.connect(matt).mint(usds.address, usdsUnits("200"), 0);
 
     // 200 OUSD was already minted in the fixture, 100 each for Matt and Josh
     await expectApproxSupply(ousd, ousdUnits("600.0"));
@@ -477,7 +478,7 @@ describe("Vault with Compound strategy", function () {
   });
 
   it("Should never allocate anything when Vault buffer is 1e18 (100%)", async () => {
-    const { dai, vault, governor, compoundStrategy } = fixture;
+    const { usds, vault, governor, compoundStrategy } = fixture;
 
     await expect(await vault.getStrategyCount()).to.equal(1);
 
@@ -486,11 +487,11 @@ describe("Vault with Compound strategy", function () {
     await vault.allocate();
 
     // Verify that nothing went to compound
-    await expect(await compoundStrategy.checkBalance(dai.address)).to.equal(0);
+    await expect(await compoundStrategy.checkBalance(usds.address)).to.equal(0);
   });
 
-  it("Should allocate correctly with DAI when Vault buffer is 1e17 (10%)", async () => {
-    const { dai, vault, governor, compoundStrategy } = await loadFixture(
+  it("Should allocate correctly with USDS when Vault buffer is 1e17 (10%)", async () => {
+    const { usds, vault, governor, compoundStrategy } = await loadFixture(
       compoundVaultFixture
     );
 
@@ -502,15 +503,15 @@ describe("Vault with Compound strategy", function () {
 
     // Verify 80% went to Compound
     await expect(
-      await compoundStrategy.checkBalance(dai.address)
+      await compoundStrategy.checkBalance(usds.address)
     ).to.approxEqual(ousdUnits("180"));
     // Remaining 20 should be in Vault
     await expect(await vault.totalValue()).to.approxEqual(ousdUnits("200"));
   });
 
-  it("Should allocate correctly with DAI, USDT, USDC when Vault Buffer is 1e17 (10%)", async () => {
+  it("Should allocate correctly with USDS, USDT, USDC when Vault Buffer is 1e17 (10%)", async () => {
     const {
-      dai,
+      usds,
       usdc,
       usdt,
       matt,
@@ -525,9 +526,9 @@ describe("Vault with Compound strategy", function () {
       utils.parseUnits("200", 18)
     );
 
-    // Josh deposits DAI, 18 decimals
-    await dai.connect(josh).approve(vault.address, daiUnits("22.0"));
-    await vault.connect(josh).mint(dai.address, daiUnits("22.0"), 0);
+    // Josh deposits USDS, 18 decimals
+    await usds.connect(josh).approve(vault.address, usdsUnits("22.0"));
+    await vault.connect(josh).mint(usds.address, usdsUnits("22.0"), 0);
     // Matt deposits USDC, 6 decimals
     await usdc.connect(matt).approve(vault.address, usdcUnits("8.0"));
     await vault.connect(matt).mint(usdc.address, usdcUnits("8.0"), 0);
@@ -541,8 +542,8 @@ describe("Vault with Compound strategy", function () {
 
     // Verify 80% went to Compound
     await expect(
-      await compoundStrategy.checkBalance(dai.address)
-    ).to.approxEqual(daiUnits("199.8"));
+      await compoundStrategy.checkBalance(usds.address)
+    ).to.approxEqual(usdsUnits("199.8"));
 
     await expect(
       await compoundStrategy.checkBalance(usdc.address)
@@ -586,7 +587,7 @@ describe("Vault with Compound strategy", function () {
   });
 
   it("Should have correct balances on consecutive mint and redeem", async () => {
-    const { ousd, vault, usdc, dai, anna, matt, josh } = fixture;
+    const { ousd, vault, usdc, usds, anna, matt, josh } = fixture;
 
     const usersWithBalances = [
       [anna, 0],
@@ -595,7 +596,7 @@ describe("Vault with Compound strategy", function () {
     ];
 
     const assetsWithUnits = [
-      [dai, daiUnits],
+      [usds, usdsUnits],
       [usdc, usdcUnits],
     ];
 
@@ -742,7 +743,7 @@ describe("Vault with Compound strategy", function () {
   });
 
   it("Alloc with both threshold and buffer", async () => {
-    const { anna, vault, usdc, dai, governor } = fixture;
+    const { anna, vault, usdc, usds, governor } = fixture;
 
     await vault.allocate();
     await vault.connect(governor).setVaultBuffer(utils.parseUnits("1", 17));
@@ -760,8 +761,8 @@ describe("Vault with Compound strategy", function () {
     await expect(await usdc.balanceOf(vault.address)).to.equal(
       usdcUnits(amount)
     );
-    // DAI was allocated before the vault buffer was set
-    await expect(await dai.balanceOf(vault.address)).to.equal(daiUnits("0"));
+    // USDS was allocated before the vault buffer was set
+    await expect(await usds.balanceOf(vault.address)).to.equal(usdsUnits("0"));
 
     // Use an amount above the vault buffer size that will trigger an allocate
     const allocAmount = "5000";

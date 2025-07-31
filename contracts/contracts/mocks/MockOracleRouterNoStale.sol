@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
 import "../interfaces/chainlink/AggregatorV3Interface.sol";
@@ -25,7 +25,7 @@ contract MockOracleRouterNoStale is OracleRouter {
 
 // @notice Oracle Router used to bypass staleness
 contract MockOETHOracleRouterNoStale is OETHOracleRouter {
-    constructor(address auraPriceFeed) OETHOracleRouter(auraPriceFeed) {}
+    constructor() OETHOracleRouter() {}
 
     function feedMetadata(address asset)
         internal

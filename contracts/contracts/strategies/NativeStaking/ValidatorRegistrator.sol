@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
 import { Pausable } from "@openzeppelin/contracts/security/Pausable.sol";
@@ -363,6 +363,19 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
             ssvAmount,
             cluster
         );
+    }
+
+    /// @notice Withdraws excess SSV Tokens from the SSV Network contract which was used to pay the SSV Operators.
+    /// @dev A SSV cluster is defined by the SSVOwnerAddress and the set of operatorIds.
+    /// @param operatorIds The operator IDs of the SSV Cluster
+    /// @param ssvAmount The amount of SSV tokens to be deposited to the SSV cluster
+    /// @param cluster The SSV cluster details including the validator count and SSV balance
+    function withdrawSSV(
+        uint64[] memory operatorIds,
+        uint256 ssvAmount,
+        Cluster memory cluster
+    ) external onlyGovernor {
+        ISSVNetwork(SSV_NETWORK).withdraw(operatorIds, ssvAmount, cluster);
     }
 
     /***************************************

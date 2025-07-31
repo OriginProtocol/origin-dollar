@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
 interface ITimelockController {
@@ -45,4 +45,8 @@ interface ITimelockController {
     function isOperation(bytes32 opHash) external view returns (bool);
 
     function getMinDelay() external view returns (uint256);
+
+    function updateDelay(uint256 newDelay) external;
+
+    function CANCELLER_ROLE() external view returns (bytes32);
 }

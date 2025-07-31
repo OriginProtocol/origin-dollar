@@ -68,4 +68,49 @@ module.exports = [
       format: "cjs",
     },
   },
+  {
+    ...commonConfig,
+    input: "manageBribeOnSonic.js",
+    output: {
+      file: "dist/manageBribeOnSonic/index.js",
+      inlineDynamicImports: true,
+      format: "cjs",
+    },
+  },
+  {
+    ...commonConfig,
+    input: "managePassThrough.js",
+    output: {
+      file: "dist/managePassThrough/index.js",
+      inlineDynamicImports: true,
+      format: "cjs",
+    },
+  },
+  {
+    ...commonConfig,
+    input: "sonicRequestWithdrawal.js",
+    output: {
+      file: "dist/sonicRequestWithdrawal/index.js",
+      inlineDynamicImports: true,
+      format: "cjs",
+    },
+  },
+  {
+    ...commonConfig,
+    input: "sonicClaimWithdrawals.js",
+    output: {
+      file: "dist/sonicClaimWithdrawals/index.js",
+      inlineDynamicImports: true,
+      format: "cjs",
+    },
+  },
+  {
+    ...commonConfig,
+    input: "claimBribes.js",
+    output: {
+      file: "dist/claimBribes/index.js",
+      inlineDynamicImports: true,
+      format: "cjs",
+    },
+  },
 ];

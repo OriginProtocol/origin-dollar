@@ -6,17 +6,20 @@ const {
   getOracleAddresses,
   isMainnet,
   isHolesky,
+  isHoleskyOrFork,
+  isSonicOrFork,
+  isTest,
+  isFork,
+  isPlume,
 } = require("../test/helpers.js");
 const { deployWithConfirmation, withConfirmation } = require("../utils/deploy");
-const {
-  metapoolLPCRVPid,
-  lusdMetapoolLPCRVPid,
-} = require("../utils/constants");
+const { metapoolLPCRVPid } = require("../utils/constants");
+const { parseUnits } = require("ethers/lib/utils.js");
 
 const log = require("../utils/logger")("deploy:core");
 
 /**
- * Deploy AAVE Strategy which only supports DAI.
+ * Deploy AAVE Strategy which only supports USDC.
  * Deploys a proxy, the actual strategy, initializes the proxy and initializes
  * the strategy.
  */
@@ -48,8 +51,8 @@ const deployAaveStrategy = async () => {
     "initialize(address[],address[],address[],address,address)",
     [
       [assetAddresses.AAVE_TOKEN],
-      [assetAddresses.DAI],
-      [assetAddresses.aDAI],
+      [assetAddresses.USDC],
+      [assetAddresses.aUSDC],
       cAaveIncentivesController.address,
       assetAddresses.STKAAVE,
     ]
@@ -69,7 +72,7 @@ const deployAaveStrategy = async () => {
 };
 
 /**
- * Deploy Compound Strategy which only supports DAI.
+ * Deploy Compound Strategy which only supports USDS.
  * Deploys a proxy, the actual strategy, initializes the proxy and initializes
  * the strategy.
  */
@@ -95,7 +98,7 @@ const deployCompoundStrategy = async () => {
 
   const initData = cCompoundStrategy.interface.encodeFunctionData(
     "initialize(address[],address[],address[])",
-    [[assetAddresses.COMP], [assetAddresses.DAI], [assetAddresses.cDAI]]
+    [[assetAddresses.COMP], [assetAddresses.USDS], [assetAddresses.cUSDS]]
   );
 
   await withConfirmation(
@@ -110,70 +113,7 @@ const deployCompoundStrategy = async () => {
 };
 
 /**
- * Deploys a 3pool Strategy which supports USDC, USDT and DAI.
- * Deploys a proxy, the actual strategy, initializes the proxy and initializes
- */
-const deployThreePoolStrategy = async () => {
-  const assetAddresses = await getAssetAddresses(deployments);
-  const { deployerAddr, governorAddr } = await getNamedAccounts();
-  // Signers
-  const sDeployer = await ethers.provider.getSigner(deployerAddr);
-  const sGovernor = await ethers.provider.getSigner(governorAddr);
-
-  // Initialize Strategies
-  const cVaultProxy = await ethers.getContract("VaultProxy");
-
-  await deployWithConfirmation("ThreePoolStrategyProxy");
-  const cThreePoolStrategyProxy = await ethers.getContract(
-    "ThreePoolStrategyProxy"
-  );
-
-  const dThreePoolStrategy = await deployWithConfirmation("ThreePoolStrategy", [
-    [assetAddresses.ThreePool, cVaultProxy.address],
-  ]);
-  const cThreePoolStrategy = await ethers.getContractAt(
-    "ThreePoolStrategy",
-    cThreePoolStrategyProxy.address
-  );
-
-  await withConfirmation(
-    cThreePoolStrategyProxy["initialize(address,address,bytes)"](
-      dThreePoolStrategy.address,
-      deployerAddr,
-      []
-    )
-  );
-  log("Initialized ThreePoolStrategyProxy");
-
-  await withConfirmation(
-    cThreePoolStrategy.connect(sDeployer)[
-      // eslint-disable-next-line no-unexpected-multiline
-      "initialize(address[],address[],address[],address,address)"
-    ]([assetAddresses.CRV], [assetAddresses.DAI, assetAddresses.USDC, assetAddresses.USDT], [assetAddresses.ThreePoolToken, assetAddresses.ThreePoolToken, assetAddresses.ThreePoolToken], assetAddresses.ThreePoolGauge, assetAddresses.CRVMinter)
-  );
-  log("Initialized ThreePoolStrategy");
-
-  await withConfirmation(
-    cThreePoolStrategy.connect(sDeployer).transferGovernance(governorAddr)
-  );
-  log(`ThreePoolStrategy transferGovernance(${governorAddr}) called`);
-  // On Mainnet the governance transfer gets executed separately, via the
-  // multi-sig wallet. On other networks, this migration script can claim
-  // governance by the governor.
-  if (!isMainnet) {
-    await withConfirmation(
-      cThreePoolStrategy
-        .connect(sGovernor) // Claim governance with governor
-        .claimGovernance()
-    );
-    log("Claimed governance for ThreePoolStrategy");
-  }
-
-  return cThreePoolStrategy;
-};
-
-/**
- * Deploys a Convex Strategy which supports USDC, USDT and DAI.
+ * Deploys a Convex Strategy which supports USDC, USDT and USDS.
  */
 const deployConvexStrategy = async () => {
   const assetAddresses = await getAssetAddresses(deployments);
@@ -213,7 +153,7 @@ const deployConvexStrategy = async () => {
       "initialize(address[],address[],address[],address,address,uint256)"
     ](
       [assetAddresses.CRV, assetAddresses.CVX],
-      [assetAddresses.DAI, assetAddresses.USDC, assetAddresses.USDT],
+      [assetAddresses.USDS, assetAddresses.USDC, assetAddresses.USDT],
       [
         assetAddresses.ThreePoolToken,
         assetAddresses.ThreePoolToken,
@@ -242,88 +182,6 @@ const deployConvexStrategy = async () => {
     log("Claimed governance for ConvexStrategy");
   }
   return cConvexStrategy;
-};
-
-/**
- * Deploys a Convex Generalized Meta Strategy with LUSD token configuration
- */
-const deployConvexLUSDMetaStrategy = async () => {
-  const assetAddresses = await getAssetAddresses(deployments);
-  const { deployerAddr, governorAddr } = await getNamedAccounts();
-  // Signers
-  const sDeployer = await ethers.provider.getSigner(deployerAddr);
-  const sGovernor = await ethers.provider.getSigner(governorAddr);
-
-  const cVaultProxy = await ethers.getContract("VaultProxy");
-
-  await deployWithConfirmation("ConvexLUSDMetaStrategyProxy");
-  const cConvexLUSDMetaStrategyProxy = await ethers.getContract(
-    "ConvexLUSDMetaStrategyProxy"
-  );
-
-  const dConvexLUSDMetaStrategy = await deployWithConfirmation(
-    "ConvexGeneralizedMetaStrategy",
-    [[assetAddresses.ThreePool, cVaultProxy.address]]
-  );
-  const cConvexLUSDMetaStrategy = await ethers.getContractAt(
-    "ConvexGeneralizedMetaStrategy",
-    cConvexLUSDMetaStrategyProxy.address
-  );
-
-  await withConfirmation(
-    cConvexLUSDMetaStrategyProxy["initialize(address,address,bytes)"](
-      dConvexLUSDMetaStrategy.address,
-      deployerAddr,
-      []
-    )
-  );
-  log("Initialized ConvexLUSDMetaStrategyProxy");
-
-  // Initialize Strategies
-  const mockBooster = await ethers.getContract("MockBooster");
-  const mockRewardPool = await ethers.getContract("MockRewardPool");
-
-  const LUSD = await ethers.getContract("MockLUSD");
-  await withConfirmation(
-    cConvexLUSDMetaStrategy.connect(sDeployer)[
-      // eslint-disable-next-line no-unexpected-multiline
-      "initialize(address[],address[],address[],(address,address,address,address,address,uint256))"
-    ](
-      [assetAddresses.CVX, assetAddresses.CRV],
-      [assetAddresses.DAI, assetAddresses.USDC, assetAddresses.USDT],
-      [
-        assetAddresses.ThreePoolToken,
-        assetAddresses.ThreePoolToken,
-        assetAddresses.ThreePoolToken,
-      ],
-      [
-        mockBooster.address, // _cvxDepositorAddress,
-        assetAddresses.ThreePoolLUSDMetapool, // metapool address,
-        LUSD.address, // LUSD
-        mockRewardPool.address, // _cvxRewardStakerAddress,
-        assetAddresses.LUSDMetapoolToken, // metapoolLpToken
-        lusdMetapoolLPCRVPid, // _cvxDepositorPTokenId
-      ]
-    )
-  );
-  log("Initialized ConvexLUSDMetaStrategy");
-
-  await withConfirmation(
-    cConvexLUSDMetaStrategy.connect(sDeployer).transferGovernance(governorAddr)
-  );
-  log(`ConvexLUSDMetaStrategy transferGovernance(${governorAddr}) called`);
-  // On Mainnet the governance transfer gets executed separately, via the
-  // multi-sig wallet. On other networks, this migration script can claim
-  // governance by the governor.
-  if (!isMainnet) {
-    await withConfirmation(
-      cConvexLUSDMetaStrategy
-        .connect(sGovernor) // Claim governance with governor
-        .claimGovernance()
-    );
-    log("Claimed governance for ConvexLUSDMetaStrategy");
-  }
-  return cConvexLUSDMetaStrategy;
 };
 
 /**
@@ -372,7 +230,7 @@ const deployConvexOUSDMetaStrategy = async () => {
       "initialize(address[],address[],address[],(address,address,address,address,address,uint256))"
     ](
       [assetAddresses.CVX, assetAddresses.CRV],
-      [assetAddresses.DAI, assetAddresses.USDC, assetAddresses.USDT],
+      [assetAddresses.USDS, assetAddresses.USDC, assetAddresses.USDT],
       [
         assetAddresses.ThreePoolToken,
         assetAddresses.ThreePoolToken,
@@ -425,9 +283,9 @@ const configureVault = async () => {
   );
   // Set up supported assets for Vault
   await withConfirmation(
-    cVault.connect(sGovernor).supportAsset(assetAddresses.DAI, 0)
+    cVault.connect(sGovernor).supportAsset(assetAddresses.USDS, 0)
   );
-  log("Added DAI asset to Vault");
+  log("Added USDS asset to Vault");
   await withConfirmation(
     cVault.connect(sGovernor).supportAsset(assetAddresses.USDT, 0)
   );
@@ -494,6 +352,11 @@ const configureOETHVault = async (isSimpleOETH) => {
     cVault
       .connect(sGovernor)
       .setAutoAllocateThreshold(ethers.utils.parseUnits("5", 18))
+  );
+
+  // Set withdrawal claim delay to 10m
+  await withConfirmation(
+    cVault.connect(sGovernor).setWithdrawalClaimDelay(10 * 60)
   );
 };
 
@@ -645,51 +508,6 @@ const configureStrategies = async (harvesterProxy, oethHarvesterProxy) => {
     convex.connect(sGovernor).setHarvesterAddress(harvesterProxy.address)
   );
 
-  const OUSDmetaStrategyProxy = await ethers.getContract(
-    "ConvexOUSDMetaStrategyProxy"
-  );
-  const metaStrategy = await ethers.getContractAt(
-    "ConvexOUSDMetaStrategy",
-    OUSDmetaStrategyProxy.address
-  );
-  await withConfirmation(
-    metaStrategy.connect(sGovernor).setHarvesterAddress(harvesterProxy.address)
-  );
-
-  const LUSDMetaStrategyProxy = await ethers.getContract(
-    "ConvexLUSDMetaStrategyProxy"
-  );
-  const LUSDMetaStrategy = await ethers.getContractAt(
-    "ConvexGeneralizedMetaStrategy",
-    LUSDMetaStrategyProxy.address
-  );
-  await withConfirmation(
-    LUSDMetaStrategy.connect(sGovernor).setHarvesterAddress(
-      harvesterProxy.address
-    )
-  );
-
-  const threePoolProxy = await ethers.getContract("ThreePoolStrategyProxy");
-  const threePool = await ethers.getContractAt(
-    "ThreePoolStrategy",
-    threePoolProxy.address
-  );
-  await withConfirmation(
-    threePool.connect(sGovernor).setHarvesterAddress(harvesterProxy.address)
-  );
-
-  // OETH Strategies
-  const fraxEthStrategyProxy = await ethers.getContract("FraxETHStrategyProxy");
-  const fraxEthStrategy = await ethers.getContractAt(
-    "FraxETHStrategy",
-    fraxEthStrategyProxy.address
-  );
-  await withConfirmation(
-    fraxEthStrategy
-      .connect(sGovernor)
-      .setHarvesterAddress(oethHarvesterProxy.address)
-  );
-
   const nativeStakingSSVStrategyProxy = await ethers.getContract(
     "NativeStakingSSVStrategyProxy"
   );
@@ -710,7 +528,6 @@ const deployOUSDDripper = async () => {
 
   const assetAddresses = await getAssetAddresses(deployments);
   const cVaultProxy = await ethers.getContract("VaultProxy");
-  const cVault = await ethers.getContractAt("IVault", cVaultProxy.address);
 
   // Deploy Dripper Impl
   const dDripper = await deployWithConfirmation("Dripper", [
@@ -737,9 +554,6 @@ const deployOUSDDripper = async () => {
   await withConfirmation(
     cDripper.connect(sGovernor).setDripDuration(14 * 24 * 60 * 60)
   );
-  await withConfirmation(
-    cVault.connect(sGovernor).setDripper(cDripperProxy.address)
-  );
 
   return cDripper;
 };
@@ -749,7 +563,6 @@ const deployOETHDripper = async () => {
 
   const assetAddresses = await getAssetAddresses(deployments);
   const cVaultProxy = await ethers.getContract("OETHVaultProxy");
-  const cVault = await ethers.getContractAt("IVault", cVaultProxy.address);
 
   // Deploy Dripper Impl
   const dDripper = await deployWithConfirmation("OETHDripper", [
@@ -779,10 +592,6 @@ const deployOETHDripper = async () => {
     cDripper.connect(sGovernor).setDripDuration(14 * 24 * 60 * 60)
   );
 
-  await withConfirmation(
-    cVault.connect(sGovernor).setDripper(cDripperProxy.address)
-  );
-
   return cDripper;
 };
 
@@ -791,48 +600,6 @@ const deployDrippers = async () => {
   const oethDripper = await deployOETHDripper();
 
   return [ousdDripper, oethDripper];
-};
-
-/**
- * Deploy FraxETHStrategy
- * Deploys a proxy, the actual strategy, initializes the proxy and initializes
- * the strategy.
- */
-const deployFraxEthStrategy = async () => {
-  const assetAddresses = await getAssetAddresses(deployments);
-  const { governorAddr } = await getNamedAccounts();
-
-  const cOETHVaultProxy = await ethers.getContract("OETHVaultProxy");
-
-  log("Deploy FraxETHStrategyProxy");
-  const dFraxETHStrategyProxy = await deployWithConfirmation(
-    "FraxETHStrategyProxy"
-  );
-  const cFraxETHStrategyProxy = await ethers.getContract(
-    "FraxETHStrategyProxy"
-  );
-  log("Deploy FraxETHStrategy");
-  const dFraxETHStrategy = await deployWithConfirmation("FraxETHStrategy", [
-    [assetAddresses.sfrxETH, cOETHVaultProxy.address],
-    assetAddresses.frxETH,
-  ]);
-  const cFraxETHStrategy = await ethers.getContractAt(
-    "FraxETHStrategy",
-    dFraxETHStrategyProxy.address
-  );
-  log("Initialize FraxETHStrategyProxy");
-  const initData = cFraxETHStrategy.interface.encodeFunctionData(
-    "initialize()",
-    []
-  );
-  await withConfirmation(
-    cFraxETHStrategyProxy["initialize(address,address,bytes)"](
-      dFraxETHStrategy.address,
-      governorAddr,
-      initData
-    )
-  );
-  return cFraxETHStrategy;
 };
 
 /**
@@ -1004,7 +771,7 @@ const deployNativeStakingSSVStrategy = async () => {
  * Deploy the OracleRouter and initialise it with Chainlink sources.
  */
 const deployOracles = async () => {
-  const { deployerAddr, governorAddr } = await getNamedAccounts();
+  const { deployerAddr } = await getNamedAccounts();
   // Signers
   const sDeployer = await ethers.provider.getSigner(deployerAddr);
 
@@ -1013,30 +780,28 @@ const deployOracles = async () => {
   let args = [];
   if (isMainnet) {
     oracleContract = "OracleRouter";
-  } else if (isHolesky) {
+  } else if (isHoleskyOrFork) {
     oracleContract = "OETHFixedOracle";
     contractName = "OETHOracleRouter";
+    args = [addresses.zero];
+  } else if (isSonicOrFork) {
+    oracleContract = "OSonicOracleRouter";
+    contractName = "OSonicOracleRouter";
     args = [addresses.zero];
   }
 
   await deployWithConfirmation(contractName, args, oracleContract);
-  const oracleRouter = await ethers.getContract("OracleRouter");
-  log("Deployed OracleRouter");
-
-  if (isHolesky) {
+  if (isHoleskyOrFork || isSonicOrFork) {
     // no need to configure any feeds since they are hardcoded to a fixed feed
     // TODO: further deployments will require more intelligent separation of different
     // chains / environment oracle deployments
     return;
   }
 
+  const oracleRouter = await ethers.getContract("OracleRouter");
+  log("Deployed OracleRouter");
+
   const assetAddresses = await getAssetAddresses(deployments);
-  await deployWithConfirmation("AuraWETHPriceFeed", [
-    assetAddresses.auraWeightedOraclePool,
-    governorAddr,
-  ]);
-  const auraWethPriceFeed = await ethers.getContract("AuraWETHPriceFeed");
-  log("Deployed AuraWETHPriceFeed");
 
   // Register feeds
   // Not needed in production
@@ -1048,9 +813,9 @@ const deployOracles = async () => {
   const maxStaleness = 24 * 60 * 60 * 365 * 100;
 
   const oracleFeeds = [
-    [assetAddresses.DAI, oracleAddresses.chainlink.DAI_USD],
-    [assetAddresses.USDC, oracleAddresses.chainlink.USDC_USD],
+    [assetAddresses.USDS, oracleAddresses.chainlink.USDS_USD],
     [assetAddresses.USDT, oracleAddresses.chainlink.USDT_USD],
+    [assetAddresses.USDC, oracleAddresses.chainlink.USDC_USD],
     [assetAddresses.TUSD, oracleAddresses.chainlink.TUSD_USD],
     [assetAddresses.COMP, oracleAddresses.chainlink.COMP_USD],
     [assetAddresses.AAVE, oracleAddresses.chainlink.AAVE_USD],
@@ -1066,7 +831,6 @@ const deployOracles = async () => {
       assetAddresses.NonStandardToken,
       oracleAddresses.chainlink.NonStandardToken_USD,
     ],
-    [assetAddresses.AURA, auraWethPriceFeed.address],
     [assetAddresses.BAL, oracleAddresses.chainlink.BAL_ETH],
   ];
 
@@ -1075,7 +839,6 @@ const deployOracles = async () => {
       oracleRouter.connect(sDeployer).setFeed(asset, oracle, maxStaleness)
     );
   }
-  log("Initialized AuraWETHPriceFeed");
 };
 
 const deployOETHCore = async () => {
@@ -1167,9 +930,7 @@ const deployOETHCore = async () => {
    */
   const resolution = ethers.utils.parseUnits("1", 27);
   await withConfirmation(
-    cOETH
-      .connect(sGovernor)
-      .initialize("Origin Ether", "OETH", cOETHVaultProxy.address, resolution)
+    cOETH.connect(sGovernor).initialize(cOETHVaultProxy.address, resolution)
   );
   log("Initialized OETH");
 };
@@ -1187,12 +948,15 @@ const deployOUSDCore = async () => {
   await deployWithConfirmation("VaultProxy");
 
   // Main contracts
-  const dOUSD = await deployWithConfirmation("OUSD");
+  let dOUSD;
+  if (isTest) {
+    dOUSD = await deployWithConfirmation("TestUpgradedOUSD");
+  } else {
+    dOUSD = await deployWithConfirmation("OUSD");
+  }
   const dVault = await deployWithConfirmation("Vault");
   const dVaultCore = await deployWithConfirmation("VaultCore");
   const dVaultAdmin = await deployWithConfirmation("VaultAdmin");
-
-  await deployWithConfirmation("Governor", [governorAddr, 60]);
 
   // Get contract instances
   const cOUSDProxy = await ethers.getContract("OUSDProxy");
@@ -1255,11 +1019,15 @@ const deployOUSDCore = async () => {
    */
   const resolution = ethers.utils.parseUnits("1", 27);
   await withConfirmation(
-    cOUSD
-      .connect(sGovernor)
-      .initialize("Origin Dollar", "OUSD", cVaultProxy.address, resolution)
+    cOUSD.connect(sGovernor).initialize(cVaultProxy.address, resolution)
   );
   log("Initialized OUSD");
+
+  await withConfirmation(
+    cVault
+      .connect(sGovernor)
+      .setRebaseRateMax(ethers.utils.parseUnits("200", 18))
+  );
 };
 
 /**
@@ -1286,41 +1054,6 @@ const deployCurveMetapoolMocks = async () => {
   await mockBooster.setPool(metapoolLPCRVPid, metapoolToken.address);
 };
 
-// deploy curve metapool mocks
-const deployCurveLUSDMetapoolMocks = async () => {
-  const { deployerAddr } = await hre.getNamedAccounts();
-  const assetAddresses = await getAssetAddresses(deployments);
-
-  const LUSD = await ethers.getContract("MockLUSD");
-
-  await hre.deployments.deploy("MockCurveLUSDMetapool", {
-    from: deployerAddr,
-    args: [[LUSD.address, assetAddresses.ThreePoolToken]],
-  });
-
-  const LUSDMetapoolToken = await ethers.getContract("MockCurveLUSDMetapool");
-  const mockBooster = await ethers.getContract("MockBooster");
-  await mockBooster.setPool(lusdMetapoolLPCRVPid, LUSDMetapoolToken.address);
-};
-
-// Deploy the Flipper trading contract
-const deployFlipper = async () => {
-  const assetAddresses = await getAssetAddresses(deployments);
-  const { governorAddr } = await hre.getNamedAccounts();
-  const sGovernor = await ethers.provider.getSigner(governorAddr);
-  const ousd = await ethers.getContract("OUSDProxy");
-
-  await deployWithConfirmation("Flipper", [
-    assetAddresses.DAI,
-    ousd.address,
-    assetAddresses.USDC,
-    assetAddresses.USDT,
-  ]);
-  const flipper = await ethers.getContract("Flipper");
-  await withConfirmation(flipper.transferGovernance(governorAddr));
-  await withConfirmation(flipper.connect(sGovernor).claimGovernance());
-};
-
 // create Uniswap V3 OUSD - USDT pool
 const deployUniswapV3Pool = async () => {
   const ousd = await ethers.getContract("OUSDProxy");
@@ -1331,7 +1064,7 @@ const deployUniswapV3Pool = async () => {
 
   await MockUniswapV3Factory.createPool(
     assetAddresses.USDT,
-    assetAddresses.DAI,
+    assetAddresses.USDS,
     500
   );
 
@@ -1488,8 +1221,6 @@ const deployWOusd = async () => {
   const ousd = await ethers.getContract("OUSDProxy");
   const dWrappedOusdImpl = await deployWithConfirmation("WrappedOusd", [
     ousd.address,
-    "Wrapped OUSD IMPL",
-    "WOUSD IMPL",
   ]);
   await deployWithConfirmation("WrappedOUSDProxy");
   const wousdProxy = await ethers.getContract("WrappedOUSDProxy");
@@ -1501,6 +1232,26 @@ const deployWOusd = async () => {
     // eslint-disable-next-line no-unexpected-multiline
     "initialize(address,address,bytes)"
   ](dWrappedOusdImpl.address, governorAddr, initData);
+};
+
+const deployWOeth = async () => {
+  const { deployerAddr, governorAddr } = await getNamedAccounts();
+  const sDeployer = await ethers.provider.getSigner(deployerAddr);
+
+  const oeth = await ethers.getContract("OETHProxy");
+  const dWrappedOethImpl = await deployWithConfirmation("WOETH", [
+    oeth.address,
+  ]);
+  await deployWithConfirmation("WOETHProxy");
+  const woethProxy = await ethers.getContract("WOETHProxy");
+  const woeth = await ethers.getContractAt("WOETH", woethProxy.address);
+
+  const initData = woeth.interface.encodeFunctionData("initialize()", []);
+
+  await woethProxy.connect(sDeployer)[
+    // eslint-disable-next-line no-unexpected-multiline
+    "initialize(address,address,bytes)"
+  ](dWrappedOethImpl.address, governorAddr, initData);
 };
 
 const deployOETHSwapper = async () => {
@@ -1553,7 +1304,7 @@ const deployOUSDSwapper = async () => {
   cSwapper
     .connect(sDeployer)
     .approveAssets([
-      assetAddresses.DAI,
+      assetAddresses.USDS,
       assetAddresses.USDC,
       assetAddresses.USDT,
     ]);
@@ -1561,9 +1312,143 @@ const deployOUSDSwapper = async () => {
   await vault.connect(sGovernor).setSwapper(mockSwapper.address);
   await vault.connect(sGovernor).setSwapAllowedUndervalue(100);
 
-  await vault.connect(sGovernor).setOracleSlippage(assetAddresses.DAI, 50);
+  await vault.connect(sGovernor).setOracleSlippage(assetAddresses.USDS, 50);
   await vault.connect(sGovernor).setOracleSlippage(assetAddresses.USDC, 50);
   await vault.connect(sGovernor).setOracleSlippage(assetAddresses.USDT, 50);
+};
+
+const deployBaseAerodromeAMOStrategyImplementation = async () => {
+  const cOETHbProxy = await ethers.getContract("OETHBaseProxy");
+  const cOETHbVaultProxy = await ethers.getContract("OETHBaseVaultProxy");
+
+  await deployWithConfirmation("AerodromeAMOStrategy", [
+    /* Check all these values match 006_base_amo_strategy deploy file
+     */
+    [addresses.zero, cOETHbVaultProxy.address], // platformAddress, VaultAddress
+    addresses.base.WETH, // weth address
+    cOETHbProxy.address, // OETHb address
+    addresses.base.swapRouter, // swapRouter
+    addresses.base.nonFungiblePositionManager, // nonfungiblePositionManager
+    addresses.base.aerodromeOETHbWETHClPool, // clOETHbWethPool
+    addresses.base.aerodromeOETHbWETHClGauge, // gauge address
+    addresses.base.sugarHelper, // sugarHelper
+    -1, // lowerBoundingTick
+    0, // upperBoundingTick
+    0, // tickClosestToParity
+  ]);
+
+  return await ethers.getContract("AerodromeAMOStrategy");
+};
+
+const deployPlumeRoosterAMOStrategyImplementation = async (poolAddress) => {
+  return _deployPlumeRoosterAMOImplementationConfigurable(
+    poolAddress,
+    "RoosterAMOStrategy"
+  );
+};
+
+const deployPlumeMockRoosterAMOStrategyImplementation = async (poolAddress) => {
+  return _deployPlumeRoosterAMOImplementationConfigurable(
+    poolAddress,
+    "MockRoosterAMOStrategy"
+  );
+};
+
+const _deployPlumeRoosterAMOImplementationConfigurable = async (
+  poolAddress,
+  stratContractName
+) => {
+  const cOETHpProxy = await ethers.getContract("OETHPlumeProxy");
+  const cOETHpVaultProxy = await ethers.getContract("OETHPlumeVaultProxy");
+
+  if (!isFork && isPlume) {
+    throw new Error("You cannot deploy this strategy yet");
+  }
+
+  const cMockMaverickDistributor = await ethers.getContract(
+    "MockMaverickDistributor"
+  );
+
+  await deployWithConfirmation(stratContractName, [
+    /* Used first by the 002_rooster_amo_ deploy file
+     */
+    [addresses.zero, cOETHpVaultProxy.address], // platformAddress, VaultAddress
+    addresses.plume.WETH, // weth address
+    cOETHpProxy.address, // OETHp address
+    addresses.plume.MaverickV2LiquidityManager, // liquidity manager
+    addresses.plume.MaverickV2PoolLens, // pool lens
+    addresses.plume.MaverickV2Position, // position
+    addresses.plume.MaverickV2Quoter, // quoter
+    poolAddress, // superOETHp/WPLUME pool
+    true, // uppperTickAtParity
+    // TODO: change these to actual addresses
+    cMockMaverickDistributor.address, // votingDistributor
+    cMockMaverickDistributor.address, // poolDistributor
+  ]);
+
+  return await ethers.getContract(stratContractName);
+};
+
+const getPlumeContracts = async () => {
+  const maverickV2LiquidityManager = await ethers.getContractAt(
+    "IMaverickV2LiquidityManager",
+    addresses.plume.MaverickV2LiquidityManager
+  );
+  const maverickV2PoolLens = await ethers.getContractAt(
+    "IMaverickV2PoolLens",
+    addresses.plume.MaverickV2PoolLens
+  );
+  const cOETHpProxy = await ethers.getContract("OETHPlumeProxy");
+  const cOETHp = await ethers.getContractAt("OETHPlume", cOETHpProxy.address);
+
+  return {
+    maverickV2LiquidityManager,
+    maverickV2PoolLens,
+    cOETHp,
+  };
+};
+
+const deploySonicSwapXAMOStrategyImplementation = async () => {
+  const { deployerAddr } = await getNamedAccounts();
+  const sDeployer = await ethers.provider.getSigner(deployerAddr);
+
+  const cSonicSwapXAMOStrategyProxy = await ethers.getContract(
+    "SonicSwapXAMOStrategyProxy"
+  );
+  const cOSonicProxy = await ethers.getContract("OSonicProxy");
+  const cOSonicVaultProxy = await ethers.getContract("OSonicVaultProxy");
+
+  // Deploy Sonic SwapX AMO Strategy implementation
+  const dSonicSwapXAMOStrategy = await deployWithConfirmation(
+    "SonicSwapXAMOStrategy",
+    [
+      [addresses.sonic.SwapXWSOS.pool, cOSonicVaultProxy.address],
+      cOSonicProxy.address,
+      addresses.sonic.wS,
+      addresses.sonic.SwapXWSOS.gauge,
+    ]
+  );
+  const cSonicSwapXAMOStrategy = await ethers.getContractAt(
+    "SonicSwapXAMOStrategy",
+    cSonicSwapXAMOStrategyProxy.address
+  );
+  // Initialize Sonic Curve AMO Strategy implementation
+  const depositPriceRange = parseUnits("0.01", 18); // 1% or 100 basis points
+  const initData = cSonicSwapXAMOStrategy.interface.encodeFunctionData(
+    "initialize(address[],uint256)",
+    [[addresses.sonic.SWPx], depositPriceRange]
+  );
+  await withConfirmation(
+    // prettier-ignore
+    cSonicSwapXAMOStrategyProxy
+          .connect(sDeployer)["initialize(address,address,bytes)"](
+            dSonicSwapXAMOStrategy.address,
+            addresses.sonic.timelock,
+            initData
+          )
+  );
+
+  return cSonicSwapXAMOStrategy;
 };
 
 module.exports = {
@@ -1572,15 +1457,11 @@ module.exports = {
   deployOETHCore,
   deployOUSDCore,
   deployCurveMetapoolMocks,
-  deployCurveLUSDMetapoolMocks,
   deployCompoundStrategy,
   deployAaveStrategy,
-  deployThreePoolStrategy,
   deployConvexStrategy,
   deployConvexOUSDMetaStrategy,
-  deployConvexLUSDMetaStrategy,
   deployNativeStakingSSVStrategy,
-  deployFraxEthStrategy,
   deployDrippers,
   deployOETHDripper,
   deployOUSDDripper,
@@ -1591,13 +1472,18 @@ module.exports = {
   configureVault,
   configureOETHVault,
   configureStrategies,
-  deployFlipper,
   deployBuyback,
   deployUniswapV3Pool,
   deployVaultValueChecker,
   deployWOusd,
+  deployWOeth,
   deployOETHSwapper,
   deployOUSDSwapper,
   upgradeNativeStakingSSVStrategy,
   upgradeNativeStakingFeeAccumulator,
+  deployBaseAerodromeAMOStrategyImplementation,
+  deployPlumeRoosterAMOStrategyImplementation,
+  deployPlumeMockRoosterAMOStrategyImplementation,
+  getPlumeContracts,
+  deploySonicSwapXAMOStrategyImplementation,
 };

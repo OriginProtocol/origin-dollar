@@ -15,9 +15,11 @@
 
 title "Base Origin Ether Contract Dependencies"
 
+object "OETHBaseZapper" as zap <<Origin>> #$originColor {
+    assets: ETH, WETH
+}
 
 object "BridgedBaseWOETH" as bridged <<Origin>><<Proxy>> #$originColor {
-    asset: WOETH
     symbol: wOETH
     name: Wrapped OETH
 }
@@ -28,22 +30,73 @@ object "WOETHBase" as woeth <<Origin>><<Proxy>> #$originColor {
     name: Wrapped Super OETH
 }
 
+object "OETHDripper" as drip <<Origin>><<Proxy>> #$originColor {
+    asset: WETH
+}
+
+object "OETHVaultValueChecker" as checker <<Origin>> #$originColor {
+}
+
 object "OETHBase" as oeth <<Origin>><<Proxy>> #$originColor {
     symbol: superOETHb
     name: Super OETH
 }
 
 object "OETHBaseVault" as oethv <<Origin>><<Proxy>> #$originColor {
-asset: superOETHb
+    asset: WETH
 }
 
 ' Oracle
 object "OETHBaseOracleRouter" as oracle <<Origin>> #$originColor {
+pairs:
+    Bridged wOETH/ETH
 }
+
+object "BridgedWOETHStrategy" as bridgeStrat <<Origin>><<Proxy>> #$originColor {
+    asset: WETH
+}
+
+object "AerodromeAMOStrategy" as aeroStrat <<Origin>><<Proxy>> #$originColor {
+    asset: WETH
+    reward: AERO
+}
+
+object "NonfungiblePositionManager" as pm <<Aerodrome>><<Proxy>> {
+    name: Slipstream Position NFT v1
+    symbol: AERO-CL-POS
+}
+
+object "CLPool" as clPool <<Aerodrome>><<Proxy>> {
+    name: Slipstream pool
+    assets: superOETHb, WETH
+}
+
+object "CLGauge" as clGauge <<Aerodrome>><<Proxy>> {
+    rewards: AERO
+}
+
+' object "SwapRouter" as swapRouter <<Aerodrome>> {
+'     rewards: AERO
+' }
+
+
+woeth <. zap
+zap ..> oeth
+zap ..> oethv
 
 woeth ..> oeth
 oeth <.> oethv
+oethv <.> drip
 oethv ..> oracle
+oethv <...> bridgeStrat
+oethv <...> aeroStrat
+bridgeStrat ..> bridged
 
+aeroStrat ...> pm
+pm .> clPool
+aeroStrat ...> clPool
+aeroStrat ...> clGauge
+clPool <. clGauge
+' aeroStrat ...> swapRouter
 
 @enduml

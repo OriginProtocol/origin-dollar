@@ -1,7 +1,7 @@
 const { BigNumber } = require("ethers");
 const { formatUnits, parseUnits } = require("ethers/lib/utils");
 
-const ousdPoolAbi = require("../test/abi/ousdMetapool.json");
+const curveNGPoolAbi = require("../test/abi/curveStableSwapNG.json");
 const oethPoolAbi = require("../test/abi/oethMetapool.json");
 const addresses = require("../utils/addresses");
 const { resolveAsset } = require("../utils/resolvers");
@@ -45,7 +45,7 @@ async function curvePool({
   const { oTokenSymbol, assetSymbol, poolLPSymbol, pool } =
     await curveContracts(poolOTokenSymbol);
 
-  // Get Metapool data
+  // Get pool data
   const totalLPsBefore =
     diffBlocks && (await pool.totalSupply({ blockTag: fromBlockTag }));
   const totalLPs = await pool.totalSupply({ blockTag });
@@ -82,29 +82,60 @@ async function curvePool({
   );
 
   // Pool balances
-  const poolBalancesBefore =
+  let poolBalancesBefore =
     diffBlocks &&
     (await pool.get_balances({
       blockTag: fromBlockTag,
     }));
-  const poolBalances = await pool.get_balances({ blockTag });
+  // let poolBalances = await pool.get_balances({ blockTag });
+  let poolBalances = await pool.get_balances();
+  if (oTokenSymbol === "OUSD") {
+    // scale up the USDC balance to 18 decimals
+    poolBalancesBefore = poolBalancesBefore
+      ? [poolBalancesBefore[0], poolBalancesBefore[1].mul(parseUnits("1", 12))]
+      : [];
+    poolBalances = [poolBalances[0], poolBalances[1].mul(parseUnits("1", 12))];
+  }
+  const assetBalanceBefore =
+    diffBlocks &&
+    (oTokenSymbol === "OETH" ? poolBalancesBefore[0] : poolBalancesBefore[1]);
+  const oTokenBalanceBefore =
+    diffBlocks &&
+    (oTokenSymbol === "OETH" ? poolBalancesBefore[1] : poolBalancesBefore[0]);
+  const assetBalance =
+    oTokenSymbol === "OETH" ? poolBalances[0] : poolBalances[1];
+  const oTokenBalance =
+    oTokenSymbol === "OETH" ? poolBalances[1] : poolBalances[0];
 
-  // swap 1 OETH for ETH (OETH/ETH)
   const price1Before =
     diffBlocks &&
-    (await pool["get_dy(int128,int128,uint256)"](1, 0, parseUnits("1"), {
-      blockTag: fromBlockTag,
-    }));
-  const price1 = await pool["get_dy(int128,int128,uint256)"](
-    1,
-    0,
-    parseUnits("1"),
-    { blockTag }
-  );
+    (oTokenSymbol === "OETH"
+      ? // swap 1 OETH for ETH (OETH/ETH)
+        await pool["get_dy(int128,int128,uint256)"](1, 0, parseUnits("1"), {
+          blockTag: fromBlockTag,
+        })
+      : // swap 1 OUSD for USDC (OUSD/USDC) scaled to 18 decimals
+        (
+          await pool["get_dy(int128,int128,uint256)"](0, 1, parseUnits("1"), {
+            blockTag,
+          })
+        ).mul(parseUnits("1", 12)));
+  const price1 =
+    oTokenSymbol === "OETH"
+      ? // swap 1 OETH for ETH (OETH/ETH)
+        await pool["get_dy(int128,int128,uint256)"](1, 0, parseUnits("1"), {
+          blockTag,
+        })
+      : // swap 1 OUSD for USDC (OUSD/USDC) scaled to 18 decimals
+        (
+          await pool["get_dy(int128,int128,uint256)"](0, 1, parseUnits("1"), {
+            blockTag,
+          })
+        ).mul(parseUnits("1", 12));
 
   output(
     displayProperty(
-      `${oTokenSymbol} price`,
+      `${oTokenSymbol} sell price`,
       `${oTokenSymbol}/${assetSymbol}`,
       price1,
       price1Before,
@@ -115,52 +146,86 @@ async function curvePool({
   // swap 1 ETH for OETH (ETH/OETH)
   const price2Before =
     diffBlocks &&
-    (await pool["get_dy(int128,int128,uint256)"](0, 1, parseUnits("1"), {
-      blockTag: fromBlockTag,
-    }));
-  const price2 = await pool["get_dy(int128,int128,uint256)"](
-    0,
-    1,
-    parseUnits("1"),
-    { blockTag }
-  );
+    (oTokenSymbol === "OETH"
+      ? await pool["get_dy(int128,int128,uint256)"](0, 1, parseUnits("1"), {
+          blockTag: fromBlockTag,
+        })
+      : // swap 1 USDC for OUSD (USDC/OUSD)
+        await pool["get_dy(int128,int128,uint256)"](1, 0, parseUnits("1", 6), {
+          blockTag: fromBlockTag,
+        }));
+  const price2 =
+    oTokenSymbol === "OETH"
+      ? await pool["get_dy(int128,int128,uint256)"](0, 1, parseUnits("1"), {
+          blockTag,
+        })
+      : // swap 1 USDC for OUSD (USDC/OUSD)
+        await pool["get_dy(int128,int128,uint256)"](1, 0, parseUnits("1", 6), {
+          blockTag,
+        });
+  const buyPriceBefore = diffBlocks && parseUnits("1", 36).div(price2Before);
+  const buyPrice = parseUnits("1", 36).div(price2);
 
   output(
     displayProperty(
-      `${assetSymbol} price`,
-      `${assetSymbol}/${oTokenSymbol}`,
-      price2,
-      price2Before,
+      `${oTokenSymbol} buy price`,
+      `${oTokenSymbol}/${assetSymbol}`,
+      buyPrice,
+      buyPriceBefore,
       6
     )
   );
 
-  // Total Metapool assets
-  const totalBalances = poolBalances[0].add(poolBalances[1]);
+  // Total pool assets
+  const totalBalances = assetBalance.add(oTokenBalance);
+  const excessAssetsBefore =
+    diffBlocks &&
+    (oTokenBalanceBefore.gt(assetBalanceBefore)
+      ? oTokenBalanceBefore.sub(assetBalanceBefore)
+      : assetBalanceBefore.sub(oTokenBalanceBefore));
+  const excessAssets = oTokenBalance.gt(assetBalance)
+    ? oTokenBalance.sub(assetBalance)
+    : assetBalance.sub(oTokenBalance);
+  const excessAssetsSymbol = oTokenBalance.gt(assetBalance)
+    ? oTokenSymbol
+    : assetSymbol;
   output(
-    `total assets in pool     : ${displayPortion(
-      poolBalances[0],
+    `Total assets in pool     : ${displayPortion(
+      assetBalance,
       totalBalances,
       assetSymbol,
       "pool",
       4
-    )} ${displayDiff(diffBlocks, poolBalances[0], poolBalancesBefore[0])}`
+    )} ${displayDiff(diffBlocks, poolBalances[0], assetBalanceBefore)}`
   );
   output(
-    `total OTokens in pool    : ${displayPortion(
-      poolBalances[1],
+    `Total OTokens in pool    : ${displayPortion(
+      oTokenBalance,
       totalBalances,
       oTokenSymbol,
       "pool",
       4
-    )} ${displayDiff(diffBlocks, poolBalances[1], poolBalancesBefore[1])}`
+    )} ${displayDiff(diffBlocks, oTokenBalance, oTokenBalanceBefore)}`
+  );
+  output(
+    displayProperty(
+      `Excess assets`,
+      `${excessAssetsSymbol}`,
+      excessAssets,
+      excessAssetsBefore,
+      4
+    )
   );
 
   return {
     totalLPsBefore,
     totalLPs,
     poolBalancesBefore,
+    assetBalanceBefore,
+    oTokenBalanceBefore,
     poolBalances,
+    assetBalance,
+    oTokenBalance,
     totalBalances,
   };
 }
@@ -280,17 +345,22 @@ async function curveSwapTask(taskArguments) {
 
   const signer = await getSigner();
 
-  const fromAmount = parseUnits(from.toString());
+  const fromAmount = parseUnits(amount.toString());
   const minAmount = parseUnits(min.toString());
-  log(`Swapping ${formatUnits(fromAmount)} ${from}`);
 
   const fromIndex = from === "ETH" || from === "3CRV" ? 0 : 1;
   const toIndex = from === "ETH" || from === "3CRV" ? 1 : 0;
 
   const override = from === "ETH" ? { value: amount } : {};
+
+  log(
+    `Swapping ${formatUnits(
+      fromAmount
+    )} ${from} from index ${fromIndex} to index ${toIndex}`
+  );
   // prettier-ignore
   await pool
-    .connect(signer).exchange(
+    .connect(signer)["exchange(int128,int128,uint256,uint256)"](
           fromIndex,
           toIndex,
           fromAmount,
@@ -303,22 +373,23 @@ async function curveSwapTask(taskArguments) {
 
 async function curveContracts(oTokenSymbol) {
   // Get symbols of tokens in the pool
-  const assetSymbol = oTokenSymbol === "OETH" ? "ETH " : "USD";
+  const assetSymbol = oTokenSymbol === "OETH" ? "ETH " : "USDC";
 
   // Get the contract addresses
   const poolAddr =
     oTokenSymbol === "OETH"
       ? addresses.mainnet.CurveOETHMetaPool
-      : addresses.mainnet.CurveOUSDMetaPool;
+      : addresses.mainnet.curve.OUSD_USDC.pool;
+  log(`Resolved ${oTokenSymbol} Curve pool to ${poolAddr}`);
   const strategyAddr =
     oTokenSymbol === "OETH"
       ? addresses.mainnet.ConvexOETHAMOStrategy
-      : addresses.mainnet.ConvexOUSDAMOStrategy;
+      : addresses.mainnet.CurveOUSDAMOStrategy;
   const convexRewardsPoolAddr =
     oTokenSymbol === "OETH"
       ? addresses.mainnet.CVXETHRewardsPool
-      : addresses.mainnet.CVXRewardsPool;
-  const poolLPSymbol = oTokenSymbol === "OETH" ? "OETHCRV-f" : "OUSD3CRV-f";
+      : addresses.mainnet.curve.OUSD_USDC.gauge;
+  const poolLPSymbol = oTokenSymbol === "OETH" ? "OETHCRV-f" : "OUSD/USDC";
   const vaultAddr =
     oTokenSymbol === "OETH"
       ? addresses.mainnet.OETHVaultProxy
@@ -329,18 +400,14 @@ async function curveContracts(oTokenSymbol) {
       : addresses.mainnet.OUSDProxy;
 
   // Load all the contracts
-  const assets =
+  const asset =
     oTokenSymbol === "OETH"
-      ? [await resolveAsset("WETH")]
-      : [
-          await resolveAsset("DAI"),
-          await resolveAsset("USDC"),
-          await resolveAsset("USDT"),
-        ];
+      ? await resolveAsset("WETH")
+      : await resolveAsset("USDC");
   const pool =
     oTokenSymbol === "OETH"
       ? await hre.ethers.getContractAt(oethPoolAbi, poolAddr)
-      : await hre.ethers.getContractAt(ousdPoolAbi, poolAddr);
+      : await hre.ethers.getContractAt(curveNGPoolAbi, poolAddr);
   const cvxRewardPool = await ethers.getContractAt(
     "IRewardStaking",
     convexRewardsPoolAddr
@@ -357,7 +424,7 @@ async function curveContracts(oTokenSymbol) {
     cvxRewardPool,
     amoStrategy,
     oToken,
-    assets,
+    asset,
     vault,
   };
 }
@@ -366,7 +433,7 @@ function displayDiff(diffBlocks, newValue, oldValue, precision = 2) {
   if (!diffBlocks) return "";
   // Calculate the difference between the new and old value
   const diff = newValue.sub(oldValue);
-  // Calculate the percentage difference if the old value is not zerp
+  // Calculate the percentage difference if the old value is not zero
   const diffPercentage =
     oldValue.gt(0) &&
     diff.mul(BigNumber.from(10).pow(2 + precision)).div(oldValue);

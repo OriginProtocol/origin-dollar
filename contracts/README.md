@@ -347,6 +347,9 @@ npx hardhat setActionVars --id 191d9631-70b9-43c5-9db4-1dd985fde05c
 npx hardhat setActionVars --id e2929f53-db56-49b2-b054-35f7df7fc4fb
 npx hardhat setActionVars --id 12c153c8-c5ca-420b-9696-e80c827996d1
 npx hardhat setActionVars --id 6e4f764d-4126-45a5-b7d9-1ab90cd3ffd6
+npx hardhat setActionVars --id 84988850-6816-4074-8e7b-c11cb2b32e7e
+npx hardhat setActionVars --id f92ea662-fc34-433b-8beb-b34e9ab74685
+npx hardhat setActionVars --id b1d831f1-29d4-4943-bb2e-8e625b76e82c
 
 # The Defender autotask client uses generic env var names so we'll set them first from the values in the .env file
 export API_KEY=${DEFENDER_TEAM_KEY}
@@ -359,6 +362,9 @@ npx defender-autotask update-code f4b5b8d4-82ff-483f-bfae-9fef015790ca ./dist/re
 npx defender-autotask update-code 12c153c8-c5ca-420b-9696-e80c827996d1 ./dist/stakeValidators
 npx defender-autotask update-code e2929f53-db56-49b2-b054-35f7df7fc4fb ./dist/doAccounting
 npx defender-autotask update-code 6e4f764d-4126-45a5-b7d9-1ab90cd3ffd6 ./dist/harvest
+npx defender-autotask update-code 84988850-6816-4074-8e7b-c11cb2b32e7e ./dist/sonicRequestWithdrawal
+npx defender-autotask update-code f92ea662-fc34-433b-8beb-b34e9ab74685 ./dist/sonicClaimWithdrawals
+npx defender-autotask update-code b1d831f1-29d4-4943-bb2e-8e625b76e82c ./dist/claimBribes
 ```
 
 `rollup` and `defender-autotask-client` can be installed globally to avoid the `npx` prefix.
@@ -456,3 +462,23 @@ yarn test:fork:coverage
 ```
 
 The CI will upload the coverage reports to Codecov if they complete successfully.
+
+## Active yield forwards
+
+Here is the list of active yield forwards (which shall be removed once Monitoring shall be able to display it):
+| Chain | From | To |
+|-------|------------------------------------|-------------------------------------------|
+| sonic | addresses.sonic.Shadow.OsEco.pool | addresses.sonic.Shadow.OsEco.yf_treasury |
+| sonic | addresses.sonic.SwapX.OsHedgy.pool | addresses.sonic.SwapX.OsHedgy.yf_treasury |
+| sonic | 0x51caf8b6d184e46aeb606472258242aacee3e23b (SwapX: MOON/OS ) | 0xa9d3b1408353d05064d47daf0dc98e104eb9c98a |
+| sonic | 0x0666b11a59f02781854e778687ce312d6b306ce4 (SwapX: BOL/OS) | 0x3ef000Bae3e8105be55F76FDa784fD7d69CFf30e |
+| sonic | 0x6feae13b486a225fb2247ccfda40bf8f1dd9d4b1 (SwapX: OS/EGGS) | 0x98Fc4CE3dFf1d0D7c9dF94f7d9b4E6E6468D5EfF |
+| sonic | 0xbb9e9f35e5eda1eeed3d811366501d940866268f (Metropolis: BRUSH/OS) | 0x3b99636439FBA6314C0F52D35FEd2fF442191407 |
+| sonic | 0x2e585b96a2ef1661508110e41c005be86b63fc34 (HOG Genesis reward pool) | 0xF0E3E07e11bFA26AEB0C0693824Eb0BF1653AE77 |
+| sonic | SwapX.OsSfrxUSD.pool | address t.b.a (PB) |
+| sonic | SwapX.OsScUSD.pool | address t.b.a (PB) |
+| sonic | SwapX.OsSilo.pool | address t.b.a (PB) |
+| sonic | SwapX.OsFiery.pool | address t.b.a (PB) |
+| sonic | Equalizer.WsOs.pool | address t.b.a (PB) |
+| sonic | Equalizer.ThcOs.pool | address t.b.a (PB) |
+| | | |
