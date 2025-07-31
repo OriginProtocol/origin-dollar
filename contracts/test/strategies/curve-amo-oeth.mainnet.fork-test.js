@@ -95,7 +95,7 @@ describe("Curve AMO OETH strategy", function () {
       .connect(nick)["add_liquidity(uint256[],uint256)"]([ousdUnits("1000"), ousdUnits("1000")], 0);
   });
 
-  describe("Initial paramaters", () => {
+  describe("Initial parameters", () => {
     it("Should have correct parameters after deployment", async () => {
       //const { curveAMOStrategy, oethVault, oeth, weth } = fixture;
       expect(await curveAMOStrategy.platformAddress()).to.equal(

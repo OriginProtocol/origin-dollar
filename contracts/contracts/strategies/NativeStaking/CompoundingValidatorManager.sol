@@ -285,7 +285,7 @@ abstract contract CompoundingValidatorManager is Governable, Pausable, IConsolid
         );
 
         // Convert required ETH from WETH and do the necessary accounting
-        _convertEthToWeth(depositAmountWei);
+        _convertWethToEth(depositAmountWei);
 
         // Hash the public key using the Beacon Chain's hashing for BLSPubkey
         bytes32 pubKeyHash = _hashPubKey(validator.pubkey);
@@ -837,7 +837,9 @@ abstract contract CompoundingValidatorManager is Governable, Pausable, IConsolid
         // No change in ETH balance so no need to snapshot the balances
     }
 
-    function _convertWethToEth(uint256 _ethAmount) internal {
+    /// @dev Converts ETH to WETH and updates the accounting.
+    /// @param _ethAmount The amount of ETH in wei.
+    function _convertEthToWeth(uint256 _ethAmount) internal {
         // slither-disable-next-line arbitrary-send-eth
         IWETH9(WETH).deposit{ value: _ethAmount }();
 
@@ -857,7 +859,9 @@ abstract contract CompoundingValidatorManager is Governable, Pausable, IConsolid
         lastSnapTimestamp = 0;
     }
 
-    function _convertEthToWeth(uint256 _wethAmount) internal {
+    /// @dev Converts WETH to ETH and updates the accounting.
+    /// @param _wethAmount The amount of WETH in wei.
+    function _convertWethToEth(uint256 _wethAmount) internal {
         IWETH9(WETH).withdraw(_wethAmount);
 
         uint256 deductAmount = Math.min(_wethAmount, depositedWethAccountedFor);
@@ -874,6 +878,9 @@ abstract contract CompoundingValidatorManager is Governable, Pausable, IConsolid
                 View Functions
     ****************************************/
 
+    /// @notice Returns the strategy's active validators.
+    /// These are the ones that have been verified and have a non-zero balance.
+    /// @return An array of `ValidatorData` containing the public key hash and validator index.
     function getVerifiedValidators()
         external
         view

@@ -154,7 +154,7 @@ contract CompoundingStakingSSVStrategy is
 
         // Convert any ETH from validator partial withdrawals, exits
         // or execution rewards to WETH and do the necessary accounting.
-        if (_ethBalance > 0) _convertWethToEth(_ethBalance);
+        if (_ethBalance > 0) _convertEthToWeth(_ethBalance);
 
         // Transfer WETH to the recipient and do the necessary accounting.
         _transferWeth(_withdrawAmount, _recipient);

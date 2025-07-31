@@ -947,7 +947,7 @@ const defaultFixture = deployments.createFixture(async () => {
     adai = await ethers.getContract("MockADAI");
     aaveToken = await ethers.getContract("MockAAVEToken");
     aave = await ethers.getContract("MockAave");
-    // currently in test the mockAave is itself the address provder
+    // currently in test the mockAave is itself the address provider
     aaveAddressProvider = await ethers.getContractAt(
       "ILendingPoolAddressesProvider",
       aave.address

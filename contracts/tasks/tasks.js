@@ -70,8 +70,7 @@ const {
   depositSSV,
   withdrawSSV,
   printClusterInfo,
-  removeValidator,
-  sortOperatorIds,
+  removeValidators,
 } = require("./ssv");
 const {
   amoStrategyTask,
@@ -93,7 +92,7 @@ const {
 } = require("./strategy");
 const {
   validatorOperationsConfig,
-  exitValidator,
+  exitValidators,
   doAccounting,
   manuallyFixAccounting,
   resetStakeETHTally,
@@ -120,7 +119,6 @@ const {
 const { registerValidators, stakeValidators } = require("../utils/validator");
 const { harvestAndSwap } = require("./harvest");
 const { deployForceEtherSender, forceSend } = require("./simulation");
-const { sleep } = require("../utils/time");
 const { lzBridgeToken, lzSetConfig } = require("./layerzero");
 const {
   depositValidator,
@@ -1065,7 +1063,6 @@ subtask("getClusterInfo", "Print out information regarding SSV cluster")
     log(
       `Fetching cluster info for cluster owner ${taskArgs.owner} with operator ids: ${taskArgs.operatorids} from the ${network} network using ssvNetworkContract ${ssvNetwork}`
     );
-    taskArgs.operatorids = await sortOperatorIds(taskArgs.operatorids);
     await printClusterInfo({
       ...taskArgs,
       ownerAddress: taskArgs.owner,
@@ -1094,10 +1091,7 @@ subtask(
     undefined,
     types.string
   )
-  .setAction(async (taskArgs) => {
-    taskArgs.operatorids = await sortOperatorIds(taskArgs.operatorids);
-    await depositSSV(taskArgs);
-  });
+  .setAction(depositSSV);
 task("depositSSV").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
@@ -1119,10 +1113,7 @@ subtask(
     undefined,
     types.string
   )
-  .setAction(async (taskArgs) => {
-    taskArgs.operatorids = await sortOperatorIds(taskArgs.operatorids);
-    await withdrawSSV(taskArgs);
-  });
+  .setAction(withdrawSSV);
 task("withdrawSSV").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
@@ -1221,38 +1212,10 @@ task("stakeValidators").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
 
-subtask("exitValidator", "Starts the exit process from a validator")
-  .addParam(
-    "pubkey",
-    "Public key of the validator to exit",
-    undefined,
-    types.string
-  )
-  .addParam(
-    "operatorids",
-    "Comma separated operator ids. E.g. 342,343,344,345",
-    undefined,
-    types.string
-  )
-  .addOptionalParam(
-    "index",
-    "The number of the Native Staking Contract deployed.",
-    undefined,
-    types.int
-  )
-  .setAction(async (taskArgs) => {
-    const signer = await getSigner();
-    taskArgs.operatorids = await sortOperatorIds(taskArgs.operatorids);
-    await exitValidator({ ...taskArgs, signer });
-  });
-task("exitValidator").setAction(async (_, __, runSuper) => {
-  return runSuper();
-});
-
-subtask("exitValidators", "Starts the exit process from a list of validators")
+subtask("exitValidators", "Starts the exit process from validators")
   .addParam(
     "pubkeys",
-    "Comma separated list of validator public keys",
+    "Comma separated validator public keys",
     undefined,
     types.string
   )
@@ -1268,59 +1231,11 @@ subtask("exitValidators", "Starts the exit process from a list of validators")
     undefined,
     types.int
   )
-  .addOptionalParam(
-    "sleep",
-    "Seconds between each tx so the SSV API can be updated before getting the cluster data.",
-    30,
-    types.int
-  )
   .setAction(async (taskArgs) => {
     const signer = await getSigner();
-
-    taskArgs.operatorids = await sortOperatorIds(taskArgs.operatorids);
-    // Split the comma separated list of public keys
-    const pubKeys = taskArgs.pubkeys.split(",");
-    // For each public key
-    for (const pubkey of pubKeys) {
-      log(`About to exit validator with pubkey: ${pubkey}`);
-      await exitValidator({ ...taskArgs, pubkey, signer });
-
-      // wait for the SSV API can be updated
-      await sleep(taskArgs.sleep * 1000);
-    }
+    await exitValidators({ ...taskArgs, signer });
   });
 task("exitValidators").setAction(async (_, __, runSuper) => {
-  return runSuper();
-});
-
-subtask(
-  "removeValidator",
-  "Removes a validator from the SSV cluster after it has exited the beacon chain"
-)
-  .addOptionalParam(
-    "index",
-    "The number of the Native Staking Contract deployed.",
-    undefined,
-    types.int
-  )
-  .addParam(
-    "pubkey",
-    "Public key of the validator to exit",
-    undefined,
-    types.string
-  )
-  .addParam(
-    "operatorids",
-    "Comma separated operator ids. E.g. 342,343,344,345",
-    undefined,
-    types.string
-  )
-  .setAction(async (taskArgs) => {
-    const signer = await getSigner();
-    taskArgs.operatorids = await sortOperatorIds(taskArgs.operatorids);
-    await removeValidator({ ...taskArgs, signer });
-  });
-task("removeValidator").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
 
@@ -1328,9 +1243,15 @@ subtask(
   "removeValidators",
   "Removes validators from the SSV cluster after they have exited the beacon chain"
 )
+  .addOptionalParam(
+    "index",
+    "The number of the Native Staking Contract deployed.",
+    undefined,
+    types.int
+  )
   .addParam(
     "pubkeys",
-    "Comma separated list of validator public keys",
+    "Comma separated validator public keys",
     undefined,
     types.string
   )
@@ -1340,32 +1261,9 @@ subtask(
     undefined,
     types.string
   )
-  .addOptionalParam(
-    "index",
-    "The number of the Native Staking Contract deployed.",
-    undefined,
-    types.int
-  )
-  .addOptionalParam(
-    "sleep",
-    "Seconds between each tx so the SSV API can be updated before getting the cluster data.",
-    30,
-    types.int
-  )
   .setAction(async (taskArgs) => {
     const signer = await getSigner();
-
-    // Split the comma separated list of public keys
-    const pubKeys = taskArgs.pubkeys.split(",");
-    // For each public key
-    taskArgs.operatorids = await sortOperatorIds(taskArgs.operatorids);
-    for (const pubkey of pubKeys) {
-      log(`About to remove validator with pubkey: ${pubkey}`);
-      await removeValidator({ ...taskArgs, pubkey, signer });
-
-      // wait for the SSV API can be updated
-      await sleep(taskArgs.sleep * 1000);
-    }
+    await removeValidators({ ...taskArgs, signer });
   });
 task("removeValidators").setAction(async (_, __, runSuper) => {
   return runSuper();
@@ -1888,11 +1786,16 @@ subtask(
 )
   .addOptionalParam(
     "block",
-    "Execution layer block number",
+    "Execution layer block number. Uses slot if no block, if not block or slot, the latest block is used.",
     undefined,
     types.int
   )
-  .addOptionalParam("slot", "Beacon chain slot number", undefined, types.int)
+  .addOptionalParam(
+    "slot",
+    "Beacon chain slot number. Used if not block",
+    undefined,
+    types.int
+  )
   .addOptionalParam(
     "dryrun",
     "Do not call verifyBalances on the strategy contract. Just log the params including the proofs",
@@ -2095,7 +1998,6 @@ subtask(
     types.int
   )
   .setAction(async (taskArgs) => {
-    taskArgs.operatorids = await sortOperatorIds(taskArgs.operatorids);
     await registerValidator(taskArgs);
   });
 task("registerValidator").setAction(async (_, __, runSuper) => {
