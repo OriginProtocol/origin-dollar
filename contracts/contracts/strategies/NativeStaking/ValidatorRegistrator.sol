@@ -294,65 +294,86 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
         );
     }
 
-    // slither-disable-end reentrancy-no-eth
-
-    /// @notice Exit a validator from the Beacon chain.
+    /// @notice Exit validators from the Beacon chain.
     /// The staked ETH will eventually swept to this native staking strategy.
     /// Only the registrator can call this function.
-    /// @param publicKey The public key of the validator
+    /// @param publicKeys List of SSV validator public keys
     /// @param operatorIds The operator IDs of the SSV Cluster
     // slither-disable-start reentrancy-no-eth
-    function exitSsvValidator(
-        bytes calldata publicKey,
+    function exitSsvValidators(
+        bytes[] calldata publicKeys,
         uint64[] calldata operatorIds
-    ) external onlyRegistrator whenNotPaused {
-        bytes32 pubKeyHash = keccak256(publicKey);
-        VALIDATOR_STATE currentState = validatorsStates[pubKeyHash];
-        require(currentState == VALIDATOR_STATE.STAKED, "Validator not staked");
+    ) external onlyRegistrator whenNotPaused nonReentrant {
+        ISSVNetwork(SSV_NETWORK).bulkExitValidator(publicKeys, operatorIds);
 
-        ISSVNetwork(SSV_NETWORK).exitValidator(publicKey, operatorIds);
+        bytes32 pubKeyHash;
+        VALIDATOR_STATE currentState;
+        for (uint256 i = 0; i < publicKeys.length; ++i) {
+            pubKeyHash = keccak256(publicKeys[i]);
+            currentState = validatorsStates[pubKeyHash];
 
-        validatorsStates[pubKeyHash] = VALIDATOR_STATE.EXITING;
+            // Check each validator has not already been staked.
+            // This would normally be done before the external call but is after
+            // so only one for loop of the validators is needed.
+            require(
+                currentState == VALIDATOR_STATE.STAKED,
+                "Validator not staked"
+            );
 
-        emit SSVValidatorExitInitiated(pubKeyHash, publicKey, operatorIds);
+            // Store the new validator state
+            validatorsStates[pubKeyHash] = VALIDATOR_STATE.EXITING;
+
+            emit SSVValidatorExitInitiated(
+                pubKeyHash,
+                publicKeys[i],
+                operatorIds
+            );
+        }
     }
 
-    // slither-disable-end reentrancy-no-eth
-
-    /// @notice Remove a validator from the SSV Cluster.
+    /// @notice Remove validators from the SSV Cluster.
     /// Make sure `exitSsvValidator` is called before and the validate has exited the Beacon chain.
     /// If removed before the validator has exited the beacon chain will result in the validator being slashed.
     /// Only the registrator can call this function.
-    /// @param publicKey The public key of the validator
+    /// @param publicKeys List of SSV validator public keys
     /// @param operatorIds The operator IDs of the SSV Cluster
     /// @param cluster The SSV cluster details including the validator count and SSV balance
-    // slither-disable-start reentrancy-no-eth
-    function removeSsvValidator(
-        bytes calldata publicKey,
+    function removeSsvValidators(
+        bytes[] calldata publicKeys,
         uint64[] calldata operatorIds,
         Cluster calldata cluster
-    ) external onlyRegistrator whenNotPaused {
-        bytes32 pubKeyHash = keccak256(publicKey);
-        VALIDATOR_STATE currentState = validatorsStates[pubKeyHash];
-        // Can remove SSV validators that were incorrectly registered and can not be deposited to.
-        require(
-            currentState == VALIDATOR_STATE.EXITING ||
-                currentState == VALIDATOR_STATE.REGISTERED,
-            "Validator not regd or exiting"
-        );
-
-        ISSVNetwork(SSV_NETWORK).removeValidator(
-            publicKey,
+    ) external onlyRegistrator whenNotPaused nonReentrant {
+        ISSVNetwork(SSV_NETWORK).bulkRemoveValidator(
+            publicKeys,
             operatorIds,
             cluster
         );
 
-        validatorsStates[pubKeyHash] = VALIDATOR_STATE.EXIT_COMPLETE;
+        bytes32 pubKeyHash;
+        VALIDATOR_STATE currentState;
+        for (uint256 i = 0; i < publicKeys.length; ++i) {
+            pubKeyHash = keccak256(publicKeys[i]);
+            currentState = validatorsStates[pubKeyHash];
 
-        emit SSVValidatorExitCompleted(pubKeyHash, publicKey, operatorIds);
+            // Check each validator is either registered or exited.
+            // This would normally be done before the external call but is after
+            // so only one for loop of the validators is needed.
+            require(
+                currentState == VALIDATOR_STATE.EXITING ||
+                    currentState == VALIDATOR_STATE.REGISTERED,
+                "Validator not regd or exiting"
+            );
+
+            // Store the new validator state
+            validatorsStates[pubKeyHash] = VALIDATOR_STATE.EXIT_COMPLETE;
+
+            emit SSVValidatorExitCompleted(
+                pubKeyHash,
+                publicKeys[i],
+                operatorIds
+            );
+        }
     }
-
-    // slither-disable-end reentrancy-no-eth
 
     /// @notice Deposits more SSV Tokens to the SSV Network contract which is used to pay the SSV Operators.
     /// @dev A SSV cluster is defined by the SSVOwnerAddress and the set of operatorIds.

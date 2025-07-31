@@ -1,4 +1,9 @@
-const { parseUnits, formatUnits, solidityPack } = require("ethers/lib/utils");
+const {
+  parseUnits,
+  formatUnits,
+  solidityPack,
+  hexlify,
+} = require("ethers/lib/utils");
 
 const addresses = require("../utils/addresses");
 const { resolveContract } = require("../utils/resolvers");
@@ -7,15 +12,14 @@ const { getClusterInfo } = require("../utils/ssv");
 const { networkMap } = require("../utils/hardhat-helpers");
 const { logTxDetails } = require("../utils/txLogger");
 const { resolveNativeStakingStrategyProxy } = require("./validator");
-const { checkPubkeyFormat } = require("./taskUtils");
 
 const log = require("../utils/logger")("task:ssv");
 
-async function removeValidator({ index, pubkey, operatorids }) {
+async function removeValidators({ index, pubkeys, operatorids }) {
   const signer = await getSigner();
 
   log(`Splitting operator IDs ${operatorids}`);
-  const operatorIds = operatorids.split(",").map((id) => parseInt(id));
+  const operatorIds = await sortOperatorIds(operatorids);
 
   const strategy = await resolveNativeStakingStrategyProxy(index);
 
@@ -29,15 +33,18 @@ async function removeValidator({ index, pubkey, operatorids }) {
     ownerAddress: strategy.address,
   });
 
-  log(`About to remove validator`);
-  pubkey = checkPubkeyFormat(pubkey);
+  log(`Splitting public keys ${pubkeys}`);
+  const pubKeys = pubkeys.split(",").map((pubkey) => hexlify(pubkey));
+
+  log(`About to remove validators: ${pubKeys}`);
   const tx = await strategy
     .connect(signer)
-    .removeSsvValidator(pubkey, operatorIds, cluster);
-  await logTxDetails(tx, "removeSsvValidator");
+    .removeSsvValidators(pubKeys, operatorIds, cluster);
+  await logTxDetails(tx, "removeSsvValidators");
 }
 
 const printClusterInfo = async (options) => {
+  options.operatorids = await sortOperatorIds(options.operatorids);
   const cluster = await getClusterInfo(options);
   console.log(`block ${cluster.block}`);
   console.log(`Cluster: ${JSON.stringify(cluster.cluster, null, "  ")}`);
@@ -46,7 +53,7 @@ const printClusterInfo = async (options) => {
 const depositSSV = async ({ amount, index, operatorids }) => {
   const amountBN = parseUnits(amount.toString(), 18);
   log(`Splitting operator IDs ${operatorids}`);
-  const operatorIds = operatorids.split(",").map((id) => parseInt(id));
+  const operatorIds = await sortOperatorIds(operatorids);
 
   const signer = await getSigner();
 
@@ -82,7 +89,7 @@ const depositSSV = async ({ amount, index, operatorids }) => {
 const withdrawSSV = async ({ amount, index, operatorids }) => {
   const amountBN = parseUnits(amount.toString(), 18);
   log(`Splitting operator IDs ${operatorids}`);
-  const operatorIds = operatorids.split(",").map((id) => parseInt(id));
+  const operatorIds = await sortOperatorIds(operatorids);
 
   const signer = await getSigner();
 
@@ -166,5 +173,5 @@ module.exports = {
   depositSSV,
   withdrawSSV,
   calcDepositRoot,
-  removeValidator,
+  removeValidators,
 };
