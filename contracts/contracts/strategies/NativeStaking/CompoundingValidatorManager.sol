@@ -446,6 +446,7 @@ abstract contract CompoundingValidatorManager is Governable, Pausable, IConsolid
             msg.sender
         );
 
+        // Pause the strategy while the consolidation is in progress
         _pause();
     }
 

@@ -38,6 +38,7 @@ abstract contract ConsolidateValidator is Governable, IConsolidationStrategy, IC
     event RegistratorChanged(address indexed newAddress);
     event SourceStrategyAdded(address indexed strategy);
     event TargetStrategyChanged(address indexed strategy);
+    event MaximumConsolidationCorrectionChanged(uint256 newValue);
     event ConsolidationRequested(
         bytes32 indexed targetPubKeyHash,
         address indexed sourceStrategy,
@@ -87,6 +88,13 @@ abstract contract ConsolidateValidator is Governable, IConsolidationStrategy, IC
         emit TargetStrategyChanged(_strategy);
     }
 
+    /// @notice Sets the maximum consolidation correction
+    function setMaximumConsolidationCorrection(uint256 _correction) external onlyGovernor {
+        maximumConsolidationCorrection = _correction;
+
+        emit MaximumConsolidationCorrectionChanged(_correction);
+    }
+
     /***************************************
                 Consolidation
     ****************************************/
@@ -131,14 +139,20 @@ abstract contract ConsolidateValidator is Governable, IConsolidationStrategy, IC
     }
 
     /// @notice Verifies that the consolidation has completed by verifying the 0x02 target validator
-    /// balance is of the expected minimum value. Which is 32 ETH (the target validator owned before 
-    /// starting the consolidation) + 32 ETH * number_of_source_validators
+    /// balance is of the expected minimum value. Which is the balance the validator had before consolidation
+    /// which is verified using the merkle proof. And the additional 32 ETH * number_of_source_validators. 
+    /// There is a `maximumConsolidationCorrection` which allows for the governor to set a lower consolidated
+    /// ETH amount of the target validator in case a slashing has occurred.
+    /// @param parentBlockTimestamp The block timestamp of a block after the consolidation at which all the 
+    ///        the "after" validator balance proof are supplied
     /// @param targetValidatorIndex The index of the target validator
     /// @param validatorPubKeyProof The merkle proof that the validator's index matches its public key
     /// @param validatorBalanceProofBefore The merkle proof of the target's validator balance before
     ///        the consolidation
+    /// @param balancesLeafBefore The merkle proof leaf balance before the consolidation
     /// @param validatorBalanceProofAfter The merkle proof of the target's validator balance after
     ///        the consolidation
+    /// @param balancesLeafAfter The merkle proof leaf balance after the consolidation
     // slither-disable-start reentrancy-no-eth
     function verifyConsolidation(
         uint64 parentBlockTimestamp,
