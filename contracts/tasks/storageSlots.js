@@ -20,12 +20,12 @@ const getStorageFileLocation = (hre, contractName) => {
   const isSonic = hre.network.name === "sonic";
   const isPlume = hre.network.name == "plume";
   const isBase = hre.network.name == "base";
-  const isBaseFork = isFork && forkNetworkName == "base";
   const forkNetworkName = process.env.FORK_NETWORK_NAME;
   const isArbitrumFork = isFork && forkNetworkName == "arbitrumOne";
   const isSonicFork = isFork && forkNetworkName == "sonic";
   const isMainnetFork = isFork && forkNetworkName == "mainnet";
   const isPlumeFork = isFork && forkNetworkName == "plume";
+  const isBaseFork = isFork && forkNetworkName == "base";
   const isHoodi = hre.network.name == "hoodi";
   const isHoodiFork = isFork && forkNetworkName == "hoodi";
 
