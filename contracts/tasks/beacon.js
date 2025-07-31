@@ -344,7 +344,7 @@ async function verifyDeposit({ block, slot, root: depositDataRoot, dryrun }) {
   await logTxDetails(tx, "verifyDeposit");
 }
 
-async function verifyBalances({ root, indexes, dryrun }) {
+async function verifyBalances({ root, indexes, depositSlot, dryrun }) {
   const signer = await getSigner();
 
   if (!root) {
@@ -408,8 +408,8 @@ async function verifyBalances({ root, indexes, dryrun }) {
   }
 
   if (dryrun) {
-    console.log(`beaconBlockRoot: ${beaconBlockRoot}`);
     console.log(`verificationSlot: ${verificationSlot}`);
+    console.log(`beaconBlockRoot: ${beaconBlockRoot}`);
     console.log(`firstPendingDepositSlot: ${firstPendingDepositSlot}`);
     console.log(
       `firstPendingDepositSlotProof:\n${firstPendingDepositSlotProof}`
@@ -435,18 +435,26 @@ async function verifyBalances({ root, indexes, dryrun }) {
   }
 
   const oracle = await resolveContract("BeaconOracle");
-  const isMapped = await oracle.isSlotMapped(firstPendingDepositSlot);
+  depositSlot = depositSlot || firstPendingDepositSlot;
+  if (depositSlot > firstPendingDepositSlot)
+    throw Error(
+      "Deposit slot can not be greater than first pending deposit slot"
+    );
+
+  const isMapped = await oracle.isSlotMapped(depositSlot);
   if (!isMapped) {
-    log(`Slot ${firstPendingDepositSlot} is not mapped in the Beacon Oracle`);
-    await verifySlot({ slot: firstPendingDepositSlot });
+    log(`Slot ${depositSlot} is not mapped in the Beacon Oracle`);
+    // TODO need to check if depositSlot can be mapped
+    await verifySlot({ slot: depositSlot });
+    // TODO if it's too old, we find a block we have mapped that is before it.
   }
 
   log(
-    `About verify ${verifiedValidators.length} validator balances for slot ${verificationSlot} to beacon block root ${beaconBlockRoot}`
+    `About verify ${verifiedValidators.length} validator balances for slot ${verificationSlot} to beacon block root ${beaconBlockRoot} with mapped deposit slot ${depositSlot}`
   );
   const tx = await strategy.connect(signer).verifyBalances({
     blockRoot: beaconBlockRoot,
-    verificationSlot,
+    mappedDepositSlot: depositSlot,
     firstPendingDepositSlot,
     firstPendingDepositSlotProof,
     balancesContainerRoot,

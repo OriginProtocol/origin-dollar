@@ -406,6 +406,7 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
     // Verify balances with pending deposits and active validators
     const tx = await compoundingStakingSSVStrategy.verifyBalances({
       ...balancesProof,
+      mappedDepositSlot: balancesProof.firstPendingDeposit.slot,
       validatorBalanceLeaves: filteredLeaves,
       validatorBalanceProofs: filteredProofs,
     });
@@ -1289,6 +1290,7 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
 
         const tx = await compoundingStakingSSVStrategy.verifyBalances({
           blockRoot: beaconBlockRoot,
+          mappedDepositSlot: 0,
           firstPendingDepositSlot: 0,
           firstPendingDepositSlotProof: "0x",
           balancesContainerRoot: ethers.utils.hexZeroPad("0x0", 32),
@@ -1737,6 +1739,7 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
           // Verify balances with pending deposits and active validators
           const tx = compoundingStakingSSVStrategy.verifyBalances({
             ...balancesProof,
+            mappedDepositSlot: balancesProof.firstPendingDeposit.slot,
             // Only one when there is two active validators
             validatorBalanceLeaves: [balancesProof.validatorBalanceLeaves[0]],
             validatorBalanceProofs: [
@@ -1753,6 +1756,7 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
           // Verify balances with pending deposits and active validators
           const tx = compoundingStakingSSVStrategy.verifyBalances({
             ...balancesProof,
+            mappedDepositSlot: balancesProof.firstPendingDeposit.slot,
             // Three when there is two active validators
             validatorBalanceLeaves: balancesProof.validatorBalanceLeaves,
             validatorBalanceProofs: [
@@ -1769,6 +1773,7 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
           // Verify balances with pending deposits and active validators
           const tx = compoundingStakingSSVStrategy.verifyBalances({
             ...balancesProof,
+            mappedDepositSlot: balancesProof.firstPendingDeposit.slot,
             validatorBalanceLeaves: [
               balancesProof.validatorBalanceLeaves[0],
               balancesProof.validatorBalanceLeaves[1],
@@ -1785,6 +1790,7 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
           // Verify balances with pending deposits and active validators
           const tx = compoundingStakingSSVStrategy.verifyBalances({
             ...balancesProof,
+            mappedDepositSlot: balancesProof.firstPendingDeposit.slot,
             validatorBalanceLeaves: [
               balancesProof.validatorBalanceLeaves[0],
               balancesProof.validatorBalanceLeaves[1],

@@ -705,6 +705,7 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
     // A struct is used to avoid stack too deep errors
     struct VerifyBalancesParams {
         bytes32 blockRoot;
+        uint64 mappedDepositSlot;
         uint64 firstPendingDepositSlot;
         // BeaconBlock.BeaconBlockBody.deposits[0].slot
         bytes firstPendingDepositSlotProof;
@@ -738,8 +739,14 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
                 params.firstPendingDepositSlotProof
             );
 
+            // As the probably don't have the slot of the first pending deposit mapped to a block in the BeaconOracle,
+            // we use any slot that is on or before the slot of the first pending deposit.
+            require(
+                params.mappedDepositSlot <= params.firstPendingDepositSlot,
+                "Invalid deposit slot"
+            );
             uint64 firstPendingDepositBlockNumber = IBeaconOracle(BEACON_ORACLE)
-                .slotToBlock(params.firstPendingDepositSlot);
+                .slotToBlock(params.mappedDepositSlot);
 
             // For each native staking contract's deposits
             for (uint256 i = 0; i < depositsCount; ++i) {

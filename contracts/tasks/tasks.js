@@ -1964,6 +1964,12 @@ subtask("verifyBalances", "Verify validator balances on the Beacon chain")
     types.string
   )
   .addOptionalParam(
+    "depositSlot",
+    "Use a slot that is before the slot of first pending deposit.",
+    undefined,
+    types.int
+  )
+  .addOptionalParam(
     "dryrun",
     "Do not call verifyBalances on the strategy contract. Just log the params including the proofs",
     false,

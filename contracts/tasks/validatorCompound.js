@@ -24,6 +24,21 @@ async function snapBalances() {
   log(`About to snap balances for strategy ${strategy.address}`);
   const tx = await strategy.connect(signer).snapBalances();
   await logTxDetails(tx, "snapBalances");
+
+  const receipt = await tx.wait();
+  const event = receipt.events.find(
+    (event) => event.event === "BalancesSnapped"
+  );
+  if (!event) {
+    throw new Error("BalancesSnapped event not found in transaction receipt");
+  }
+  console.log(
+    `Balances snapped successfully. Beacon block root ${
+      event.args.blockRoot
+    }, timestamp ${event.args.timestamp}, ETH balance ${formatUnits(
+      event.args.ethBalance
+    )}`
+  );
 }
 
 async function registerValidator({ pubkey, shares, operatorids, ssv }) {
