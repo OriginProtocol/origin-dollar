@@ -4,7 +4,7 @@ const {
 } = require("@openzeppelin/defender-kvstore-client");
 
 const { getBlock } = require("./block");
-const { getValidator, getValidators, getEpoch } = require("./beaconchain");
+const { getValidator, getValidators, getEpoch } = require("../utils/beacon");
 const addresses = require("../utils/addresses");
 const { resolveContract } = require("../utils/resolvers");
 const { logTxDetails } = require("../utils/txLogger");
@@ -53,7 +53,7 @@ const validatorOperationsConfig = async (taskArgs) => {
       "P2P API key environment variable is not set. P2P_MAINNET_API_KEY or P2P_HOLESKY_API_KEY"
     );
   }
-  const p2p_base_url = isMainnet ? "api.p2p.org" : "api-test-holesky.p2p.org";
+  const p2p_base_url = isMainnet ? "api.p2p.org" : "api-test.p2p.org";
 
   const awsS3AccessKeyId = process.env.AWS_ACCESS_S3_KEY_ID;
   const awsS3SexcretAccessKeyId = process.env.AWS_SECRET_S3_ACCESS_KEY;

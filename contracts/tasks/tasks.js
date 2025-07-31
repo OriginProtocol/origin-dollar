@@ -103,8 +103,14 @@ const {
   resolveNativeStakingStrategyProxy,
   snapValidators,
 } = require("./validator");
-
-const { tenderlySync } = require("./tenderly");
+const {
+  snapStakingStrategy,
+  snapBalances,
+  registerValidator,
+  stakeValidator,
+  withdrawValidator,
+} = require("./validatorCompound");
+const { tenderlySync, tenderlyUpload } = require("./tenderly");
 const { setDefaultValidator, snapSonicStaking } = require("../utils/sonic");
 const {
   undelegateValidator,
@@ -113,8 +119,22 @@ const {
 const { registerValidators, stakeValidators } = require("../utils/validator");
 const { harvestAndSwap } = require("./harvest");
 const { deployForceEtherSender, forceSend } = require("./simulation");
-
 const { lzBridgeToken, lzSetConfig } = require("./layerzero");
+const {
+  depositValidator,
+  requestValidatorWithdraw,
+  blockToSlot,
+  slotToBlock,
+  slotToRoot,
+  beaconRoot,
+  copyBeaconRoot,
+  mockBeaconRoot,
+  getValidator,
+  verifySlot,
+  verifyValidator,
+  verifyDeposit,
+  verifyBalances,
+} = require("./beacon");
 
 const log = require("../utils/logger")("tasks");
 
@@ -1099,36 +1119,25 @@ task("withdrawSSV").setAction(async (_, __, runSuper) => {
 });
 
 /**
- * The native staking proxy needs to be deployed via the defender relayer because the SSV network
+ * The compounding staking proxy needs to be deployed via the defender relayer because the SSV network
  * grants the SSV rewards to the deployer of the contract. And we want the Defender Relayer to be
  * the recipient
  */
 subtask(
-  "deployNativeStakingProxy",
-  "Deploy the native staking proxy via the Defender Relayer"
-)
-  .addOptionalParam(
-    "index",
-    "The number of the Native Staking Contract deployed.",
-    undefined,
-    types.int
-  )
-  .setAction(async ({ index }) => {
-    const signer = await getSigner();
+  "deployStakingProxy",
+  "Deploy the compounding staking proxy via the Defender Relayer"
+).setAction(async () => {
+  const signer = await getSigner();
 
-    if (!index) {
-      throw new Error("Index is required and must be a positive integer");
-    }
-
-    log(`Deploy NativeStakingSSVStrategy${index}Proxy`);
-    const nativeStakingProxyFactory = await ethers.getContractFactory(
-      `NativeStakingSSVStrategy${index}Proxy`
-    );
-    const contract = await nativeStakingProxyFactory.connect(signer).deploy();
-    await contract.deployed();
-    log(`Address of deployed contract is: ${contract.address}`);
-  });
-task("deployNativeStakingProxy").setAction(async (_, __, runSuper) => {
+  log(`Deploy CompoundingStakingSSVStrategyProxy`);
+  const stakingProxyFactory = await ethers.getContractFactory(
+    `CompoundingStakingSSVStrategyProxy`
+  );
+  const contract = await stakingProxyFactory.connect(signer).deploy();
+  await contract.deployed();
+  log(`Address of deployed staking contract is: ${contract.address}`);
+});
+task("deployStakingProxy").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
 
@@ -1230,39 +1239,6 @@ task("exitValidators").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
 
-subtask("exitValidators", "Starts the exit process from a list of validators")
-  .addParam(
-    "pubkeys",
-    "Comma separated list of validator public keys",
-    undefined,
-    types.string
-  )
-  .addParam(
-    "operatorids",
-    "Comma separated operator ids. E.g. 342,343,344,345",
-    undefined,
-    types.string
-  )
-  .addOptionalParam(
-    "index",
-    "The number of the Native Staking Contract deployed.",
-    undefined,
-    types.int
-  )
-  .addOptionalParam(
-    "sleep",
-    "Seconds between each tx so the SSV API can be updated before getting the cluster data.",
-    30,
-    types.int
-  )
-  .setAction(async (taskArgs) => {
-    const signer = await getSigner();
-    await exitValidators({ ...taskArgs, signer });
-  });
-task("exitValidators").setAction(async (_, __, runSuper) => {
-  return runSuper();
-});
-
 subtask(
   "removeValidators",
   "Removes validators from the SSV cluster after they have exited the beacon chain"
@@ -1284,42 +1260,6 @@ subtask(
     "Comma separated operator ids. E.g. 342,343,344,345",
     undefined,
     types.string
-  )
-  .setAction(async (taskArgs) => {
-    const signer = await getSigner();
-    await removeValidators({ ...taskArgs, signer });
-  });
-task("removeValidators").setAction(async (_, __, runSuper) => {
-  return runSuper();
-});
-
-subtask(
-  "removeValidators",
-  "Removes validators from the SSV cluster after they have exited the beacon chain"
-)
-  .addParam(
-    "pubkeys",
-    "Comma separated list of validator public keys",
-    undefined,
-    types.string
-  )
-  .addParam(
-    "operatorids",
-    "Comma separated operator ids. E.g. 342,343,344,345",
-    undefined,
-    types.string
-  )
-  .addOptionalParam(
-    "index",
-    "The number of the Native Staking Contract deployed.",
-    undefined,
-    types.int
-  )
-  .addOptionalParam(
-    "sleep",
-    "Seconds between each tx so the SSV API can be updated before getting the cluster data.",
-    30,
-    types.int
   )
   .setAction(async (taskArgs) => {
     const signer = await getSigner();
@@ -1811,10 +1751,333 @@ task("lzSetConfig")
     await lzSetConfig(taskArgs, hre);
   });
 
+// Beacon Chain Operations
+subtask("depositValidator", "Deposits ETH to a validator on the Beacon chain")
+  .addParam("pubkey", "Validator public key in hex format with a 0x prefix")
+  .addParam("sig", "Validator signature in hex format with a 0x prefix")
+  .addParam(
+    "cred",
+    "Validator withdrawal credentials in hex format with a 0x prefix"
+  )
+  .addParam(
+    "root",
+    "Beacon chain deposit data root in hex format with a 0x prefix"
+  )
+  .addOptionalParam("amount", "Amount to deposit", 32, types.float)
+  .setAction(depositValidator);
+task("depositValidator").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+subtask(
+  "withdrawValidator",
+  "Partial or full withdrawal from a validator on the Beacon chain"
+)
+  .addParam("pubkey", "Validator public key in hex format with a 0x prefix")
+  .addParam("amount", "Amount to withdraw in ether", undefined, types.float)
+  .setAction(withdrawValidator);
+task("withdrawValidator").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+subtask(
+  "verifySlot",
+  "Verify an execution layer block number to a beacon chain slot"
+)
+  .addOptionalParam(
+    "block",
+    "Execution layer block number",
+    undefined,
+    types.int
+  )
+  .addOptionalParam("slot", "Beacon chain slot number", undefined, types.int)
+  .addOptionalParam(
+    "dryrun",
+    "Do not call verifyBalances on the strategy contract. Just log the params including the proofs",
+    false,
+    types.boolean
+  )
+  .setAction(verifySlot);
+task("verifySlot").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+subtask("blockToSlot", "Map a block to a beacon chain slot")
+  .addParam("block", "Execution layer block number", undefined, types.int)
+  .setAction(blockToSlot);
+task("blockToSlot").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+subtask("slotToBlock", "Map a beacon chain slot to a block")
+  .addParam("slot", "Beacon chain slot", undefined, types.int)
+  .setAction(slotToBlock);
+task("slotToBlock").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+subtask("slotToRoot", "Map a beacon chain slot to a chain block root")
+  .addParam("slot", "Beacon chain slot", undefined, types.int)
+  .setAction(slotToRoot);
+task("slotToRoot").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+subtask(
+  "beaconRoot",
+  "Gets the parent beacon block root for an execution layer block from the BeaconRoot contract"
+)
+  .addParam(
+    "block",
+    "Execution layer block number to get the parent beacon block root for",
+    undefined,
+    types.int
+  )
+  .addOptionalParam(
+    "mainnet",
+    "Use mainnet block timestamp",
+    true,
+    types.boolean
+  )
+  .setAction(beaconRoot);
+task("beaconRoot").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+subtask(
+  "copyBeaconRoot",
+  "Copies a parent beacon block root from mainnet to a local BeaconRoot contract (EIP-4788)"
+)
+  .addParam(
+    "block",
+    "Execution layer block number to set the parent root for",
+    undefined,
+    types.int
+  )
+  .setAction(copyBeaconRoot);
+task("copyBeaconRoot").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+subtask(
+  "mockBeaconRoot",
+  "Replaces the BeaconRoot contract (EIP-4788) with a mocked one for testing purposes"
+).setAction(mockBeaconRoot);
+task("mockBeaconRoot").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+subtask("getValidator", "Gets the details of a validator")
+  .addParam(
+    "index",
+    "Index of the validator on the Beacon chain",
+    undefined,
+    types.int
+  )
+  .addOptionalParam(
+    "slot",
+    "Beacon chain slot. Default head",
+    undefined,
+    types.int
+  )
+  .setAction(getValidator);
+task("getValidator").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+subtask("verifyValidator", "Verify a validator on the Beacon chain")
+  .addParam(
+    "index",
+    "Index of the validator on the Beacon chain",
+    undefined,
+    types.int
+  )
+  .addOptionalParam(
+    "slot",
+    "Any slot after the validator was registered on the Beacon chain. Default latest",
+    undefined,
+    types.int
+  )
+  .addOptionalParam(
+    "dryrun",
+    "Do not call verifyBalances on the strategy contract. Just log the params including the proofs",
+    false,
+    types.boolean
+  )
+  .addOptionalParam(
+    "withdrawal",
+    "Override the withdrawal address in the withdrawal credentials. Used when generating proofs for unit tests.",
+    undefined,
+    types.string
+  )
+  .setAction(verifyValidator);
+task("verifyValidator").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+subtask("verifyDeposit", "Verify a deposit on the Beacon chain")
+  .addParam(
+    "root",
+    "Root of the deposit data sent to the Beacon deposit contract in hex format with a 0x prefix",
+    undefined,
+    types.string
+  )
+  .addOptionalParam(
+    "block",
+    "Block number on or after the deposit was made on the execution layer. Default deposit block",
+    undefined,
+    types.int
+  )
+  .addOptionalParam(
+    "slot",
+    "The slot on or after the deposit was process on the beacon chain. Default deposit processed slot",
+    undefined,
+    types.int
+  )
+  .addOptionalParam(
+    "dryrun",
+    "Do not call verifyBalances on the strategy contract. Just log the params including the proofs",
+    false,
+    types.boolean
+  )
+  .setAction(verifyDeposit);
+task("verifyDeposit").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+subtask("verifyBalances", "Verify validator balances on the Beacon chain")
+  .addOptionalParam(
+    "root",
+    "The beacon block root to verify balances to in hex format with a 0x prefix. Default: last balances snapshot",
+    undefined,
+    types.string
+  )
+  .addOptionalParam(
+    "indexes",
+    "Comma separated list of validator indexes. Default: strategy's active validators",
+    undefined,
+    types.string
+  )
+  .addOptionalParam(
+    "dryrun",
+    "Do not call verifyBalances on the strategy contract. Just log the params including the proofs",
+    false,
+    types.boolean
+  )
+  .setAction(verifyBalances);
+task("verifyBalances").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+subtask(
+  "registerValidator",
+  "Registers a new compounding validator in a SSV cluster"
+)
+  .addParam(
+    "pubkey",
+    "The validator's public key in hex format with a 0x prefix",
+    undefined,
+    types.string
+  )
+  .addParam(
+    "operatorids",
+    "Comma separated operator ids. E.g. 342,343,344,345",
+    undefined,
+    types.string
+  )
+  .addParam("shares", "SSV shares data", undefined, types.string)
+  .addOptionalParam(
+    "ssv",
+    "Amount of SSV to deposit to the cluster.",
+    0,
+    types.int
+  )
+  .setAction(async (taskArgs) => {
+    await registerValidator(taskArgs);
+  });
+task("registerValidator").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+subtask(
+  "requestValidatorWithdraw",
+  "Requests a partial or full withdrawal from a compounding validator"
+)
+  .addParam(
+    "pubkey",
+    "The validator's public key in hex format with a 0x prefix",
+    undefined,
+    types.string
+  )
+  .addOptionalParam(
+    "amount",
+    "Amount of ETH to withdraw from the validator. Default full exit",
+    undefined,
+    types.int
+  )
+  .setAction(requestValidatorWithdraw);
+task("requestValidatorWithdraw").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+subtask(
+  "stakeValidator",
+  "Converts WETH to ETH and deposits to a validator from the Compounding Staking Strategy"
+)
+  .addParam(
+    "pubkey",
+    "The validator's public key in hex format with a 0x prefix",
+    undefined,
+    types.string
+  )
+  .addParam(
+    "sig",
+    "The validator's deposit signature in hex format with a 0x prefix",
+    undefined,
+    types.string
+  )
+  .addParam(
+    "amount",
+    "Amount of ETH to deposit to the validator.",
+    undefined,
+    types.int
+  )
+  .setAction(stakeValidator);
+task("stakeValidator").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+subtask(
+  "snapBalances",
+  "Takes a snapshot of the staking strategy's balance"
+).setAction(snapBalances);
+task("snapBalances").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+subtask("snapStakingStrat", "Dumps the staking strategy's data")
+  .addOptionalParam(
+    "block",
+    "Block number. (default: latest)",
+    undefined,
+    types.int
+  )
+  .setAction(snapStakingStrategy);
+task("snapStakingStrat").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
 subtask(
   "tenderlySync",
   "Fetches all contracts from deployment descriptors and uploads them to Tenderly if they are not there yet."
 ).setAction(tenderlySync);
 task("tenderlySync").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+subtask("tenderlyUpload", "Uploads a contract to Tenderly.")
+  .addParam("name", "The contract's name", undefined, types.string)
+  .setAction(tenderlyUpload);
+task("tenderlyUpload").setAction(async (_, __, runSuper) => {
   return runSuper();
 });

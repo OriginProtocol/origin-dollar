@@ -180,6 +180,9 @@ addresses.mainnet.CurveOETHGauge = "0xd03BE91b1932715709e18021734fcB91BB431715";
 addresses.mainnet.CVXETHRewardsPool =
   "0x24b65DC1cf053A8D96872c323d29e86ec43eB33A";
 
+addresses.mainnet.CompoundingStakingStrategyProxy =
+  "0x840081c97256d553A8F234D469D797B9535a3B49";
+
 // Votemarket - StakeDAO
 addresses.mainnet.CampaignRemoteManager =
   "0x53aD4Cd1F1e52DD02aa9FC4A8250A1b74F351CA2";
@@ -298,8 +301,15 @@ addresses.mainnet.curve.OETH_WETH.gauge =
 // SSV network
 addresses.mainnet.SSV = "0x9D65fF81a3c488d585bBfb0Bfe3c7707c7917f54";
 addresses.mainnet.SSVNetwork = "0xDD9BC35aE942eF0cFa76930954a156B3fF30a4E1";
+
+// Beacon chain contracts
 addresses.mainnet.beaconChainDepositContract =
   "0x00000000219ab540356cBB839Cbe05303d7705Fa";
+addresses.mainnet.mockBeaconRoots =
+  "0xC033785181372379dB2BF9dD32178a7FDf495AcD";
+addresses.mainnet.beaconRoots = "0x000f3df6d732807ef1319fb7b8bb8522d0beac02";
+addresses.mainnet.beaconChainWithdrawRequest =
+  "0x00000961Ef480Eb55e80D19ad83579A64c007002";
 
 // Native Staking Strategy
 addresses.mainnet.NativeStakingSSVStrategyProxy =
@@ -344,6 +354,13 @@ addresses.mainnet.passthrough.uniswap.OETH_OGN =
   "0x2D3007d07aF522988A0Bf3C57Ee1074fA1B27CF1";
 addresses.mainnet.passthrough.uniswap.OETH_WETH =
   "0x216dEBBF25e5e67e6f5B2AD59c856Fc364478A6A";
+
+// General purpose execution to consensus layer communication
+addresses.mainnet.toConsensus = {};
+addresses.mainnet.toConsensus.consolidation =
+  "0x0000BBdDc7CE488642fb579F8B00f3a590007251";
+addresses.mainnet.toConsensus.withdrawals =
+  "0x00000961Ef480Eb55e80D19ad83579A64c007002";
 
 // Arbitrum One
 addresses.arbitrumOne = {};
@@ -633,5 +650,14 @@ addresses.plume.admin = "0x92A19381444A001d62cE67BaFF066fA1111d7202";
 // Ref: https://docs.eo.app/docs/eprice/feed-addresses/plume
 addresses.plume.BridgedWOETHOracleFeed =
   "0x4915600Ed7d85De62011433eEf0BD5399f677e9b";
+
+addresses.hoodi = {};
+addresses.hoodi.WETH = "0x2387fD72C1DA19f6486B843F5da562679FbB4057";
+addresses.hoodi.SSV = "0x9F5d4Ec84fC4785788aB44F9de973cF34F7A038e";
+addresses.hoodi.SSVNetwork = "0x58410Bef803ECd7E63B23664C586A6DB72DAf59c";
+addresses.hoodi.beaconChainDepositContract =
+  "0x00000000219ab540356cBB839Cbe05303d7705Fa";
+addresses.hoodi.defenderRelayer = "0x419B6BdAE482f41b8B194515749F3A2Da26d583b";
+addresses.hoodi.mockBeaconRoots = "0xdCfcAE4A084AA843eE446f400B23aA7B6340484b";
 
 module.exports = addresses;

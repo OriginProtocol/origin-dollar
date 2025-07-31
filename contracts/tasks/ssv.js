@@ -19,7 +19,7 @@ async function removeValidators({ index, pubkeys, operatorids }) {
   const signer = await getSigner();
 
   log(`Splitting operator IDs ${operatorids}`);
-  const operatorIds = operatorids.split(",").map((id) => parseInt(id));
+  const operatorIds = await sortOperatorIds(operatorids);
 
   const strategy = await resolveNativeStakingStrategyProxy(index);
 
@@ -44,6 +44,7 @@ async function removeValidators({ index, pubkeys, operatorids }) {
 }
 
 const printClusterInfo = async (options) => {
+  options.operatorids = await sortOperatorIds(options.operatorids);
   const cluster = await getClusterInfo(options);
   console.log(`block ${cluster.block}`);
   console.log(`Cluster: ${JSON.stringify(cluster.cluster, null, "  ")}`);
@@ -52,7 +53,7 @@ const printClusterInfo = async (options) => {
 const depositSSV = async ({ amount, index, operatorids }) => {
   const amountBN = parseUnits(amount.toString(), 18);
   log(`Splitting operator IDs ${operatorids}`);
-  const operatorIds = operatorids.split(",").map((id) => parseInt(id));
+  const operatorIds = await sortOperatorIds(operatorids);
 
   const signer = await getSigner();
 
@@ -88,7 +89,7 @@ const depositSSV = async ({ amount, index, operatorids }) => {
 const withdrawSSV = async ({ amount, index, operatorids }) => {
   const amountBN = parseUnits(amount.toString(), 18);
   log(`Splitting operator IDs ${operatorids}`);
-  const operatorIds = operatorids.split(",").map((id) => parseInt(id));
+  const operatorIds = await sortOperatorIds(operatorids);
 
   const signer = await getSigner();
 
@@ -159,7 +160,15 @@ const calcDepositRoot = async ({ index, pubkey, sig }, hre) => {
   console.log(`Deposit Root Data: ${depositDataRoot}`);
 };
 
+const sortOperatorIds = (operatorIdsString) => {
+  const operatorIds = operatorIdsString.split(",").map((id) => parseInt(id));
+  operatorIds.sort((a, b) => a - b);
+
+  return operatorIds.join(",");
+};
+
 module.exports = {
+  sortOperatorIds,
   printClusterInfo,
   depositSSV,
   withdrawSSV,
