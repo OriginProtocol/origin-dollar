@@ -109,12 +109,7 @@ abstract contract CompoundingValidatorManager is Governable, Pausable, IConsolid
     /// withdrawal of the validators. It is strictly concerned with WETH that has been deposited and is waiting to
     /// be staked.
     uint256 public depositedWethAccountedFor;
-    mapping(address => bool) public consolidationContracts;
-
-    /// @notice Mapping of the validator hashed keys to balances at last verification.
-    /// Once all the Validators have been consolidated from the old strategy contract this field can be
-    /// deprecated
-    mapping(bytes32 => uint256) public validatorBalances;
+    address public consolidationContract;
 
     enum VALIDATOR_STATE {
         NON_REGISTERED, // validator is not registered on the SSV network
@@ -135,7 +130,7 @@ abstract contract CompoundingValidatorManager is Governable, Pausable, IConsolid
     }
 
     event RegistratorChanged(address indexed newAddress);
-    event ConsolidationContractAdded(address indexed strategy);
+    event ConsolidationContractSet(address indexed contractAddr);
     event SSVValidatorRegistered(
         bytes32 indexed pubKeyHash,
         uint64[] operatorIds
@@ -167,12 +162,11 @@ abstract contract CompoundingValidatorManager is Governable, Pausable, IConsolid
     );
     event ConsolidationInitiated(
         bytes32 indexed pubKeyHash,
-        uint256 validatorBalance,
         address indexed sourceStrategy
     );
     event ConsolidationCompeted(
         bytes32 indexed pubKeyHash,
-        uint256 validatorBalance,
+        uint256 consolidatedAmount,
         address indexed sourceStrategy
     );
 
@@ -214,11 +208,11 @@ abstract contract CompoundingValidatorManager is Governable, Pausable, IConsolid
         emit RegistratorChanged(_address);
     }
 
-    /// @notice Adds support for a legacy staking strategy that can be used for consolidation.
-    function addConsolidationContract(address _strategy) external onlyGovernor {
-        consolidationContracts[_strategy] = true;
+    /// @notice Adds support for a consolidation contract to orchestrate the consolidation
+    function setConsolidationContract(address _contract) external onlyGovernor {
+        consolidationContract = _contract;
 
-        emit ConsolidationContractAdded(_strategy);
+        emit ConsolidationContractSet(_contract);
     }
 
     /***************************************`
@@ -443,20 +437,12 @@ abstract contract CompoundingValidatorManager is Governable, Pausable, IConsolid
             "Not all deposits verified"
         );
         require(
-            consolidationContracts[msg.sender],
+            consolidationContract == msg.sender,
             "Not consolidation contract"
-        );
-
-        uint256 validatorBalanceMem = validatorBalances[pubKeyHash];
-        require(
-            validatorBalanceMem >= 32 ether &&
-            validatorBalanceMem <= 33 ether,
-            "Unexpected validator balance"
         );
 
         emit ConsolidationInitiated(
             pubKeyHash,
-            validatorBalanceMem,
             msg.sender
         );
 
@@ -467,22 +453,21 @@ abstract contract CompoundingValidatorManager is Governable, Pausable, IConsolid
     /// @param pubKeyHash The validator's public key hash using the Beacon Chain's format.
     function consolidationCompleted(
         bytes32 pubKeyHash,
-        uint256 validatorBalance
+        uint256 consolidatedAmount
     ) external {
         require(
-            consolidationContracts[msg.sender],
+            consolidationContract == msg.sender,
             "Not consolidation contract"
         );
 
         emit ConsolidationCompeted(
             pubKeyHash,
-            validatorBalance,
+            consolidatedAmount,
             msg.sender
         );
 
         // deduct the existing validator balance
-        lastVerifiedEthBalance += SafeCast.toUint128(validatorBalance - validatorBalances[pubKeyHash]);
-        validatorBalances[pubKeyHash] = validatorBalance;
+        lastVerifiedEthBalance += SafeCast.toUint128(consolidatedAmount);
     }
 
     /***************************************
@@ -762,9 +747,6 @@ abstract contract CompoundingValidatorManager is Governable, Pausable, IConsolid
                         verifiedValidators[i].index,
                         IBeaconProofs.BalanceProofLevel.Container
                     );
-
-                // deprecate once we have consolidated all of the validators
-                validatorBalances[verifiedValidators[i].pubKeyHash] = uint256(validatorBalanceGwei) * 1 gwei;
 
                 // If the validator balance is zero
                 if (validatorBalanceGwei == 0) {

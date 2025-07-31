@@ -21,26 +21,33 @@ abstract contract ConsolidateValidator is Governable, IConsolidationStrategy, IC
     /// @notice Address of the registrator - allowed to register, withdraw, exit and remove validators
     address public validatorRegistrator;
 
+    /// @notice Specifies maximum shortfall of ETH allowed after consolidation. Unless a slashing
+    ///         happens in the middle of consolidation this amount should remain at 0.
+    uint256 public maximumConsolidationCorrection;
+
     // @notice last target consolidation validator public key
     bytes32 public consolidationLastPubKeyHash;
     address public consolidationSourceStrategy;
     mapping(address => bool) public consolidationSourceStrategies;
     address public consolidationTargetStrategy;
+    uint64 public consolidationStartBlockTimestamp;
 
     // For future use
-    uint256[50] private __gap;
+    uint256[43] private __gap;
 
     event RegistratorChanged(address indexed newAddress);
     event SourceStrategyAdded(address indexed strategy);
     event TargetStrategyChanged(address indexed strategy);
     event ConsolidationRequested(
         bytes32 indexed targetPubKeyHash,
-        address indexed sourceStrategy
+        address indexed sourceStrategy,
+        uint256 timestamp
     );
     event ConsolidationVerified(
         bytes32 indexed lastSourcePubKeyHash,
         uint64 indexed lastValidatorIndex,
-        uint256 consolidationCount
+        uint256 consolidationCount,
+        uint256 consolidatedAmount
     );
 
     /// @dev Throws if called by any account other than the Registrator
@@ -98,7 +105,16 @@ abstract contract ConsolidateValidator is Governable, IConsolidationStrategy, IC
             consolidationSourceStrategies[msg.sender],
             "Not a source strategy"
         );
-        // PREVENT 2 different contracts form starting.
+        require(
+            consolidationSourceStrategy == address(0),
+            "Another consolidation in progress"
+        );
+
+        /**
+         * Record the timestamp of the consolidation start. This is later used to fetch the beacon 
+         * chain Merkle hash tree root which is used to verify the target validator balance.
+         */
+        consolidationStartBlockTimestamp = SafeCast.toUint64(block.timestamp);
 
         IConsolidationTarget(consolidationTargetStrategy)
             .initiateConsolidation(targetPubKeyHash);
@@ -109,7 +125,8 @@ abstract contract ConsolidateValidator is Governable, IConsolidationStrategy, IC
 
         emit ConsolidationRequested(
             targetPubKeyHash,
-            msg.sender
+            msg.sender,
+            block.timestamp
         );
     }
 
@@ -118,14 +135,19 @@ abstract contract ConsolidateValidator is Governable, IConsolidationStrategy, IC
     /// starting the consolidation) + 32 ETH * number_of_source_validators
     /// @param targetValidatorIndex The index of the target validator
     /// @param validatorPubKeyProof The merkle proof that the validator's index matches its public key
-    /// @param validatorBalanceProof The merkle proof of the target's validator balance
+    /// @param validatorBalanceProofBefore The merkle proof of the target's validator balance before
+    ///        the consolidation
+    /// @param validatorBalanceProofAfter The merkle proof of the target's validator balance after
+    ///        the consolidation
     // slither-disable-start reentrancy-no-eth
     function verifyConsolidation(
         uint64 parentBlockTimestamp,
         uint64 targetValidatorIndex,
         bytes calldata validatorPubKeyProof,
-        bytes32 balancesLeaf,
-        bytes calldata validatorBalanceProof
+        bytes32 balancesLeafBefore,
+        bytes calldata validatorBalanceProofBefore,
+        bytes32 balancesLeafAfter,
+        bytes calldata validatorBalanceProofAfter
     ) external onlyRegistrator {
         bytes32 consolidationLastPubKeyHashMem = consolidationLastPubKeyHash;
         require(
@@ -137,26 +159,35 @@ abstract contract ConsolidateValidator is Governable, IConsolidationStrategy, IC
             "No consolidations"
         );
 
-        bytes32 blockRoot = BeaconRoots.parentBlockRoot(parentBlockTimestamp);
-        // Verify the validator index has the same public key as the last target validator
-        IBeaconProofs(BEACON_PROOFS).verifyValidatorPubkey(
-            blockRoot,
+        /**
+         * @param consolidationStartBlockTimestamp is recorded at the time consolidation has been 
+         *        initialized. Assuring that the resulting balance can not include any of the
+         *        consolidated validator balances.
+         */
+        uint256 targetValidatorBalanceBefore = _validatorBalanceProof(
+            consolidationStartBlockTimestamp,
             consolidationLastPubKeyHashMem,
-            validatorPubKeyProof,
             targetValidatorIndex,
-            address(this) // Withdrawal address is this strategy
+            validatorPubKeyProof,
+            balancesLeafBefore,
+            validatorBalanceProofBefore,
+            consolidationTargetStrategy
         );
 
-        // Verify that the target validator has the expected ETH staked to it. This
-        // confirms that all the source validators have successfully consolidated to it.
-        uint256 validatorBalance = IBeaconProofs(BEACON_PROOFS)
-            .verifyValidatorBalance(
-                blockRoot,
-                balancesLeaf,
-                validatorBalanceProof,
-                targetValidatorIndex,
-                IBeaconProofs.BalanceProofLevel.BeaconBlock
-            );
+        /**
+         * @param parentBlockTimestamp can be arbitrary and supplied from the governor. This contract isn't
+         *        particularly concerned when the timestamp is from, as long as it contains sufficient
+         *        balance - meaning that the validators have already consolidated.
+         */
+        uint256 targetValidatorBalanceAfter = _validatorBalanceProof(
+            parentBlockTimestamp,
+            consolidationLastPubKeyHashMem,
+            targetValidatorIndex,
+            validatorPubKeyProof,
+            balancesLeafAfter,
+            validatorBalanceProofAfter,
+            consolidationTargetStrategy
+        );
 
         // Call the old sweeping strategy to confirm the consolidation has been completed.
         // This will decrease the balance of the source strategy by 32 ETH for each validator being consolidated.
@@ -164,26 +195,59 @@ abstract contract ConsolidateValidator is Governable, IConsolidationStrategy, IC
             consolidationSourceStrategy
         ).confirmConsolidation();
 
-        // the target validator should have the balance of: 
-        // - 32 ether of its own plus
-        // - number of consolidated validators * 32 ether
+        // amount that has been gained due to consolidation
+        uint256 consolidatedAmount = targetValidatorBalanceAfter - targetValidatorBalanceBefore;
+
         require(
-            validatorBalance >= FULL_STAKE + consolidationCount * FULL_STAKE,
-            "Validators not consolidated"
+            consolidatedAmount - maximumConsolidationCorrection >= FULL_STAKE * consolidationCount,
+            "Not all validators consolidated"
         );
 
         // Reset the stored consolidation state
         consolidationLastPubKeyHash = bytes32(0);
+        consolidationStartBlockTimestamp = 0;
         consolidationSourceStrategy = address(0);
 
         emit ConsolidationVerified(
             consolidationLastPubKeyHashMem,
             targetValidatorIndex,
-            consolidationCount
+            consolidationCount,
+            consolidatedAmount
         );
 
         IConsolidationTarget(consolidationTargetStrategy)
-            .consolidationCompleted(consolidationLastPubKeyHashMem, validatorBalance);
+            .consolidationCompleted(consolidationLastPubKeyHashMem, consolidatedAmount);
+    }
+
+    function _validatorBalanceProof(
+        uint64 blockTimestamp,
+        bytes32 validatorPubKeyHash,
+        uint64 validatorIndex,
+        bytes calldata validatorPubKeyProof,
+        bytes32 balancesLeaf,
+        bytes calldata validatorBalanceProof,
+        address withdrawalAddress
+    ) internal returns (uint256 balance) {
+        bytes32 blockRoot = BeaconRoots.parentBlockRoot(blockTimestamp);
+        // Verify the validator index has the same public key as the last target validator
+        IBeaconProofs(BEACON_PROOFS).verifyValidatorPubkey(
+            blockRoot,
+            validatorPubKeyHash,
+            validatorPubKeyProof,
+            validatorIndex,
+            withdrawalAddress
+        );
+
+        // Verify that the target validator has the expected ETH staked to it. This
+        // confirms that all the source validators have successfully consolidated to it.
+        balance = IBeaconProofs(BEACON_PROOFS)
+            .verifyValidatorBalance(
+                blockRoot,
+                balancesLeaf,
+                validatorBalanceProof,
+                validatorIndex,
+                IBeaconProofs.BalanceProofLevel.BeaconBlock
+            );
     }
 
     /// @notice Hash a validator public key using the Beacon Chain's format
