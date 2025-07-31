@@ -84,6 +84,11 @@ describe("ForkTest: Second Native SSV Staking Strategy", function () {
         depositDataRoot:
           "0x6f9cc503009ceb0960637bbf2482b19a62153144ab091f0b9f66d5800f02cc2c",
       },
+      activeValidator: {
+        publicKey:
+          "0x80555037820e8afe44a45ed6d43fd4184f14f2ebcac2beaad382ed7e3dac52f87241d5ed8683a8101d8f49b0dbb6bc0e",
+        operatorIds: [752, 753, 754, 755],
+      },
     };
   });
 });
@@ -124,6 +129,11 @@ describe("ForkTest: Third Native SSV Staking Strategy", function () {
         // Calculated from npx hardhat depositRoot
         depositDataRoot:
           "0x3b8409ac7e028e595ac84735da6c19cdbc50931e5d6f910338614ea9660b5c86",
+      },
+      activeValidator: {
+        publicKey:
+          "0x81ff6c3dab37f0dd49856687bad2ca5406229223e2ac7efcf409aff7b8b55e0f21563adf6a6c23bbe3a8afe8c599ad23",
+        operatorIds: [338, 339, 340, 341],
       },
     };
   });
