@@ -422,7 +422,6 @@ abstract contract ValidatorRegistrator is Governable, Pausable, IConsolidationSo
         for (uint256 i = 0; i < _sourcePubKeys.length; ++i) {
             // hash the source validator's public key using the Beacon Chain's format
             sourcePubKeyHash = keccak256(_sourcePubKeys[i]);
-            // TODO: Why compare hashed amounts and not the non hashed pubkeys?
             require(sourcePubKeyHash != _targetPubKeyHash, "Self consolidation");
             require(
                 validatorsStates[sourcePubKeyHash] == VALIDATOR_STATE.STAKED,
