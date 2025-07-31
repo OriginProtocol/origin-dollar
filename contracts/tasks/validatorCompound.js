@@ -3,12 +3,13 @@ const { formatUnits, parseUnits } = require("ethers/lib/utils");
 
 const { getBlock } = require("../tasks/block");
 const { calcDepositRoot } = require("./beacon");
-const { getValidatorBalance } = require("../utils/beacon");
+const { getValidatorBalance, getBeaconBlock } = require("../utils/beacon");
 const { networkMap } = require("../utils/hardhat-helpers");
 const { getSigner } = require("../utils/signers");
 const { resolveContract } = require("../utils/resolvers");
 const { getClusterInfo } = require("../utils/ssv");
 const { logTxDetails } = require("../utils/txLogger");
+const { BigNumber } = require("ethers");
 
 const log = require("../utils/logger")("task:validator:compounding");
 
@@ -141,6 +142,26 @@ async function snapStakingStrategy({ block }) {
     "CompoundingStakingSSVStrategy"
   );
 
+  // TODO verified validators
+  const verifiedValidators = await strategy.getVerifiedValidators({
+    blockTag,
+  });
+  const { stateView } = await getBeaconBlock();
+  console.log(`${verifiedValidators.length} verified validator balances:`);
+  let totalValidatorBalance = BigNumber.from(0);
+  for (const validator of verifiedValidators) {
+    const balance = stateView.balances.get(validator.index);
+    console.log(
+      `. ${validator.index} ${validator.pubKeyHash}: ${formatUnits(balance, 9)} ETH`
+    );
+    totalValidatorBalance = totalValidatorBalance.add(balance);
+  }
+  console.log(
+    `Total verified validator balance: ${formatUnits(totalValidatorBalance, 9)} ETH\n`
+  );
+
+  // TODO pending deposits
+
   const stratWethBalance = await weth.balanceOf(strategy.address, { blockTag });
   const stratEthBalance = await ethers.provider.getBalance(
     strategy.address,
@@ -163,10 +184,6 @@ async function snapStakingStrategy({ block }) {
       lastSnapTimestamp * 1000
     ).toISOString()} `
   );
-
-  // TODO active validators
-
-  // TODO pending deposits
 }
 
 module.exports = {
