@@ -1603,7 +1603,7 @@ const _deployPlumeRoosterAMOImplementationConfigurable = async (
     [addresses.zero, cOETHpVaultProxy.address], // platformAddress, VaultAddress
     addresses.plume.WETH, // weth address
     cOETHpProxy.address, // OETHp address
-    addresses.plume.MaverickV2LiquidityManager, // liquidity mananger
+    addresses.plume.MaverickV2LiquidityManager, // liquidity manager
     addresses.plume.MaverickV2PoolLens, // pool lens
     addresses.plume.MaverickV2Position, // position
     addresses.plume.MaverickV2Quoter, // quoter
