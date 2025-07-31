@@ -121,7 +121,7 @@ abstract contract CompoundingValidatorManager is Governable, Pausable, IConsolid
     }
 
     // For future use
-    uint256[49] private __gap;
+    uint256[50] private __gap;
 
     enum DepositStatus {
         UNKNOWN, // default value

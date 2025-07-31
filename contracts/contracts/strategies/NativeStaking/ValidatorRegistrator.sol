@@ -59,7 +59,7 @@ abstract contract ValidatorRegistrator is Governable, Pausable, IConsolidationSo
     address public intermediateConsolidationStrategy;
 
     // For future use
-    uint256[44] private __gap;
+    uint256[45] private __gap;
 
     enum VALIDATOR_STATE {
         NON_REGISTERED, // validator is not registered on the SSV network
