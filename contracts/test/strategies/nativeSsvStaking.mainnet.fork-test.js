@@ -137,7 +137,7 @@ describe("ForkTest: Third Native SSV Staking Strategy", function () {
         publicKeys: [
           "0x81ff6c3dab37f0dd49856687bad2ca5406229223e2ac7efcf409aff7b8b55e0f21563adf6a6c23bbe3a8afe8c599ad23",
           "0x8b7bdc261a7cbf96cbdfedd0250cef5de212ec497b7100a9a95ca030791e2080bf639ed6e1c8ebed152b17d101fe20cf",
-          "0xb8ee2f3a4520d9f96988ea57f216b16dd87ecf6e49a8ceb8d0b21a82fb420928c9e3a4b06e73f3ab55a50d61acc39906"
+          "0xb8ee2f3a4520d9f96988ea57f216b16dd87ecf6e49a8ceb8d0b21a82fb420928c9e3a4b06e73f3ab55a50d61acc39906",
         ],
         operatorIds: [338, 339, 340, 341],
       },
