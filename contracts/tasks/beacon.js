@@ -111,19 +111,21 @@ async function requestValidatorWithdraw({ pubkey, amount }) {
 async function verifySlot({ block, slot, dryrun }) {
   const signer = await getSigner();
 
-  // Get provider to mainnet and not a local fork
-  const providerMainnet = await getProvider();
-  const signerMainnet = new Wallet.createRandom().connect(providerMainnet);
+  // Get provider from the live chain and not a local fork. eg mainnet or hoodi
+  const providerLive = await getProvider();
+  const signerMainnet = new Wallet.createRandom().connect(providerLive);
 
-  if (!block && !slot)
-    throw new Error("Either block or slot must be provided to verifySlot");
+  if (!block && !slot) {
+    block = await providerLive.getBlockNumber();
+    block -= 1; // Use the previous block
+  }
 
   let nextBlockTimestamp;
   // If a block was supplied, we need to work out the slot
   if (block) {
     // Get the timestamp of the next block
     const nextBlock = block + 1;
-    const { timestamp } = await providerMainnet.getBlock(nextBlock);
+    const { timestamp } = await providerLive.getBlock(nextBlock);
     nextBlockTimestamp = timestamp;
     log(`Next mainnet block ${nextBlock} has timestamp ${nextBlockTimestamp}`);
 
@@ -158,7 +160,7 @@ async function verifySlot({ block, slot, dryrun }) {
     log(`Using block ${block} for slot ${slot}`);
 
     const nextBlock = block + 1;
-    const { timestamp } = await providerMainnet.getBlock(nextBlock);
+    const { timestamp } = await providerLive.getBlock(nextBlock);
     nextBlockTimestamp = timestamp;
     log(`Next mainnet block ${nextBlock} has timestamp ${nextBlockTimestamp}`);
   }

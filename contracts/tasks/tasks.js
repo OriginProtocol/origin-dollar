@@ -1786,11 +1786,16 @@ subtask(
 )
   .addOptionalParam(
     "block",
-    "Execution layer block number",
+    "Execution layer block number. Uses slot if no block, if not block or slot, the latest block is used.",
     undefined,
     types.int
   )
-  .addOptionalParam("slot", "Beacon chain slot number", undefined, types.int)
+  .addOptionalParam(
+    "slot",
+    "Beacon chain slot number. Used if not block",
+    undefined,
+    types.int
+  )
   .addOptionalParam(
     "dryrun",
     "Do not call verifyBalances on the strategy contract. Just log the params including the proofs",

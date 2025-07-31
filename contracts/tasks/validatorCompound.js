@@ -152,12 +152,18 @@ async function snapStakingStrategy({ block }) {
   for (const validator of verifiedValidators) {
     const balance = stateView.balances.get(validator.index);
     console.log(
-      `. ${validator.index} ${validator.pubKeyHash}: ${formatUnits(balance, 9)} ETH`
+      `  ${validator.index} ${validator.pubKeyHash}: ${formatUnits(
+        balance,
+        9
+      )} ETH`
     );
     totalValidatorBalance = totalValidatorBalance.add(balance);
   }
   console.log(
-    `Total verified validator balance: ${formatUnits(totalValidatorBalance, 9)} ETH\n`
+    `Total verified validator balance: ${formatUnits(
+      totalValidatorBalance,
+      9
+    )} ETH\n`
   );
 
   // TODO pending deposits
