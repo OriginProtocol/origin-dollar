@@ -1,6 +1,6 @@
 const hre = require("hardhat");
 const { setStorageAt } = require("@nomicfoundation/hardhat-network-helpers");
-const { networkMap } = require("../utils/hardhat-helpers");
+const { getNetworkName } = require("../utils/hardhat-helpers");
 const { parseUnits } = require("ethers/lib/utils.js");
 
 const addresses = require("../utils/addresses");
@@ -678,9 +678,8 @@ const upgradeNativeStakingSSVStrategy = async () => {
   );
   log(`New NativeStakingSSVStrategy implementation: ${dStrategyImpl.address}`);
 
-  const { chainId } = await ethers.provider.getNetwork();
-  const network = networkMap[chainId];
-  if (network == "hoodi") {
+  const networkName = await getNetworkName();
+  if (networkName == "hoodi") {
     const sGovernor = await getDefenderSigner();
     await withConfirmation(
       strategyProxy.connect(sGovernor).upgradeTo(dStrategyImpl.address)

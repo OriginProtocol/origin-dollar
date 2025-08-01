@@ -177,12 +177,31 @@ const networkMap = {
   560048: "hoodi",
 };
 
+/**
+ * Returns the network name based on the chain ID of the connected network.
+ * @param {ethers.Provider} [provider] - Optional ethers provider. Defaults to the Hardhat provider if not supplied.
+ * The provider is required for Defender Actions as Hardhat is too big to load as a dependency.
+ * @returns {Promise<string>} The network name. e.g. `mainnet`, `sonic`, `base`
+ */
+const getNetworkName = async (provider) => {
+  // use the provider if passed, otherwise use the Hardhat provider
+  const localProvider = provider ?? hre.ethers.provider;
+  const { chainId } = await localProvider.getNetwork();
+  const network = networkMap[chainId];
+  if (!network) {
+    throw Error(`Failed to resolve network with chain Id "${chainId}"`);
+  }
+
+  return network;
+};
+
 module.exports = {
   isFork,
   isArbitrum,
   isArbitrumFork,
   isBase,
   isBaseFork,
+  getNetworkName,
   isBaseForkTest,
   isBaseUnitTest,
   isSonic,
@@ -210,5 +229,4 @@ module.exports = {
   hoodiProviderUrl,
   adjustTheForkBlockNumber,
   getHardhatNetworkProperties,
-  networkMap,
 };

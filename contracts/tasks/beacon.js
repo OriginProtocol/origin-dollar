@@ -9,6 +9,7 @@ const {
 
 const addresses = require("../utils/addresses");
 const { getBeaconBlock, getSlot } = require("../utils/beacon");
+const { bytes32 } = require("../utils/regex");
 const { resolveContract } = require("../utils/resolvers");
 
 const {
@@ -21,14 +22,15 @@ const {
 } = require("../utils/proofs");
 const { toHex } = require("../utils/units");
 const { logTxDetails } = require("../utils/txLogger");
-const { networkMap } = require("../utils/hardhat-helpers");
+const { getNetworkName } = require("../utils/hardhat-helpers");
 
 const log = require("../utils/logger")("task:beacon");
 
-async function getLiveProvider(signer) {
-  const { chainId } = await signer.provider.getNetwork();
-  const network = networkMap[chainId];
-  if (network == "hoodi") {
+/// Returns an ethers provider connected to the Ethereum mainnet or Hoodi.
+/// @param {Provider} [provider] - Optional ethers provider connected to local fork or live chain. Uses Hardhat provider if not supplied.
+async function getLiveProvider(provider) {
+  const networkName = await getNetworkName(provider);
+  if (networkName == "hoodi") {
     return new ethers.providers.JsonRpcProvider(process.env.HOODI_PROVIDER_URL);
   }
   // Get provider to Ethereum mainnet and not a local fork
@@ -50,14 +52,16 @@ async function requestValidatorWithdraw({ pubkey, amount, signer }) {
   await logTxDetails(tx, "requestWithdraw");
 }
 
-async function verifySlot({ block, slot, dryrun, signer, live }) {
+async function verifySlot({ block, slot, dryrun, oracle, signer, live }) {
   // Either use live chain or local fork
-  const providerLive = live ? await getLiveProvider(signer) : signer.provider;
+  const providerLive = live
+    ? await getLiveProvider(signer.provider)
+    : signer.provider;
 
   if (!block && !slot) {
     block = await providerLive.getBlockNumber();
-    block -= 1; // Use the previous block
-    log(`Using the second last block ${block} for verification`);
+    block -= 2; // Use the third last block
+    log(`Using the third last block ${block} for verification`);
   }
 
   let nextBlockTimestamp;
@@ -100,8 +104,6 @@ async function verifySlot({ block, slot, dryrun, signer, live }) {
     blockTree,
   });
 
-  const oracle = await resolveContract("BeaconOracle");
-
   if (dryrun) {
     console.log(`beaconBlockRoot: ${beaconBlockRoot}`);
     console.log(`nextBlockTimestamp: ${nextBlockTimestamp}`);
@@ -129,7 +131,7 @@ async function verifySlot({ block, slot, dryrun, signer, live }) {
 
 async function verifyValidator({ slot, index, dryrun, withdrawal, signer }) {
   // Get provider to mainnet or testnet and not a local fork
-  const provider = await getLiveProvider(signer);
+  const provider = await getLiveProvider(signer.provider);
 
   const { blockView, blockTree, stateView } = await getBeaconBlock(slot);
 
@@ -421,7 +423,9 @@ async function slotToRoot({ slot }) {
 
 async function beaconRoot({ block, live, signer }) {
   // Either use live chain or local fork to get the block timestamp
-  const provider = live ? await getLiveProvider(signer) : signer.provider;
+  const provider = live
+    ? await getLiveProvider(signer.provider)
+    : signer.provider;
 
   // Get timestamp of the block
   const fetchedBlock = await provider.getBlock(block);
@@ -433,14 +437,21 @@ async function beaconRoot({ block, live, signer }) {
   const data = defaultAbiCoder.encode(["uint256"], [timestamp]);
   log(`Encoded timestamp data: ${data}`);
 
+  // The Beacon Roots contract is the same on mainnet and Hoodi
+  const beaconRootsAddress = addresses.mainnet.beaconRoots;
   const root = await provider.call(
     {
-      // The Beacon Roots contract is the same on mainnet and Hoodi
-      to: addresses.mainnet.beaconRoots,
+      to: beaconRootsAddress,
       data,
     },
     block // blockTag
   );
+
+  if (!root.match(bytes32)) {
+    throw Error(
+      `Could not find parent beacon block root for block ${block} with timestamp ${timestamp} in ${beaconRootsAddress}.`
+    );
+  }
 
   console.log(`Block ${block} has parent beacon block root ${root}`);
 

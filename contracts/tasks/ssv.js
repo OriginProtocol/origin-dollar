@@ -4,7 +4,7 @@ const addresses = require("../utils/addresses");
 const { resolveContract } = require("../utils/resolvers");
 const { getSigner } = require("../utils/signers");
 const { getClusterInfo } = require("../utils/ssv");
-const { networkMap } = require("../utils/hardhat-helpers");
+const { getNetworkName } = require("../utils/hardhat-helpers");
 const { logTxDetails } = require("../utils/txLogger");
 const { resolveNativeStakingStrategyProxy } = require("./validator");
 
@@ -55,8 +55,8 @@ const depositSSV = async ({ amount, index, operatorids }) => {
   const strategy = await resolveNativeStakingStrategyProxy(index);
 
   const { chainId } = await ethers.provider.getNetwork();
-  const network = networkMap[chainId];
-  const ssvNetworkAddress = addresses[network].SSVNetwork;
+  const networkName = await getNetworkName();
+  const ssvNetworkAddress = addresses[networkName].SSVNetwork;
   const ssvNetwork = await resolveContract(ssvNetworkAddress, "ISSVNetwork");
 
   // Cluster details
@@ -91,8 +91,8 @@ const withdrawSSV = async ({ amount, index, operatorids }) => {
   const strategy = await resolveNativeStakingStrategyProxy(index);
 
   const { chainId } = await ethers.provider.getNetwork();
-  const network = networkMap[chainId];
-  const ssvNetworkAddress = addresses[network].SSVNetwork;
+  const networkName = await getNetworkName();
+  const ssvNetworkAddress = addresses[networkName].SSVNetwork;
   const ssvNetwork = await resolveContract(ssvNetworkAddress, "ISSVNetwork");
 
   // Cluster details

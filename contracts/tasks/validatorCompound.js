@@ -4,7 +4,7 @@ const { formatUnits, parseUnits } = require("ethers/lib/utils");
 const { getBlock } = require("../tasks/block");
 const { calcDepositRoot } = require("./beaconTesting");
 const { getValidatorBalance, getBeaconBlock } = require("../utils/beacon");
-const { networkMap } = require("../utils/hardhat-helpers");
+const { getNetworkName } = require("../utils/hardhat-helpers");
 const { getSigner } = require("../utils/signers");
 const { resolveContract } = require("../utils/resolvers");
 const { getClusterInfo } = require("../utils/ssv");
@@ -145,11 +145,11 @@ async function withdrawValidator({ pubkey, amount }) {
 async function snapStakingStrategy({ block }) {
   const blockTag = await getBlock(block);
 
-  const { chainId } = await ethers.provider.getNetwork();
+  const networkName = await getNetworkName();
 
-  const wethAddress = addresses[networkMap[chainId]].WETH;
+  const wethAddress = addresses[networkName].WETH;
   const weth = await ethers.getContractAt("IERC20", wethAddress);
-  const ssvAddress = addresses[networkMap[chainId]].SSV;
+  const ssvAddress = addresses[networkName].SSV;
   const ssv = await ethers.getContractAt("IERC20", ssvAddress);
 
   const strategy = await resolveContract(

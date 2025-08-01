@@ -1,5 +1,6 @@
 const fs = require("fs");
 const fetch = require("node-fetch");
+const ethers = require("ethers");
 
 const log = require("./logger")("utils:beacon");
 
@@ -26,7 +27,10 @@ const getValidatorBalance = async (pubkey) => {
   return values.balance;
 };
 
-/// @param {string} blockId - is "head", slot number or the beacon block root.
+/**
+ * Get the slot for a given block identifier.
+ * @param {string} [blockId=head] - is "head", slot number or the beacon block root.
+ */
 const getSlot = async (blockId = "head") => {
   const client = await configClient();
 
@@ -70,6 +74,10 @@ const getBeaconBlockRoot = async (blockId = "head") => {
   return root;
 };
 
+/**
+ * Gets the full beacon chain data for a given slot, root or "head".
+ * @param {string|number} [slot=head] - The slot to get the beacon block for. Can be "head", a slot number or a beacon block root.
+ */
 const getBeaconBlock = async (slot = "head") => {
   const client = await configClient();
 
@@ -146,6 +154,10 @@ const hashPubKey = (pubKey) => {
   return ethers.utils.sha256(concatenated);
 };
 
+/**
+ * Gets a Lodestar API client.
+ * @returns {Promise<Client>} - The Lodestar API client.
+ */
 const configClient = async () => {
   // Get the latest slot from the beacon chain API
   // Dynamically import the Lodestar API client as its an ESM module
