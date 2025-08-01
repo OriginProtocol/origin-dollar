@@ -1,4 +1,4 @@
-const { Wallet } = require("ethers");
+const ethers = require("ethers");
 const {
   defaultAbiCoder,
   formatUnits,
@@ -9,8 +9,6 @@ const {
 
 const addresses = require("../utils/addresses");
 const { getBeaconBlock, getSlot } = require("../utils/beacon");
-const { replaceContractAt } = require("../utils/hardhat");
-const { getSigner } = require("../utils/signers");
 const { resolveContract } = require("../utils/resolvers");
 
 const {
@@ -27,8 +25,8 @@ const { networkMap } = require("../utils/hardhat-helpers");
 
 const log = require("../utils/logger")("task:beacon");
 
-async function getProvider() {
-  const { chainId } = await ethers.provider.getNetwork();
+async function getLiveProvider(signer) {
+  const { chainId } = await signer.provider.getNetwork();
   const network = networkMap[chainId];
   if (network == "hoodi") {
     return new ethers.providers.JsonRpcProvider(process.env.HOODI_PROVIDER_URL);
@@ -37,63 +35,7 @@ async function getProvider() {
   return new ethers.providers.JsonRpcProvider(process.env.PROVIDER_URL);
 }
 
-const calcDepositRoot = async (owner, type, pubkey, sig, amount) => {
-  // Dynamically import the Lodestar as its an ESM module
-  const { ssz } = await import("@lodestar/types");
-  const { fromHex } = await import("@lodestar/utils");
-
-  const validTypes = ["0x00", "0x01", "0x02"];
-  if (!validTypes.includes(type)) {
-    throw new Error("type must be one of: 0x00, 0x01, 0x02");
-  }
-
-  const withdrawalCredential = solidityPack(
-    ["bytes1", "bytes11", "address"],
-    [type, "0x0000000000000000000000", owner]
-  );
-  log(`Withdrawal Credentials: ${withdrawalCredential}`);
-
-  // amount in Gwei
-  const amountGwei = parseUnits(amount.toString(), 9);
-
-  // Define the DepositData object
-  const depositData = {
-    pubkey: fromHex(pubkey), // 48-byte public key
-    withdrawalCredentials: fromHex(withdrawalCredential), // 32-byte withdrawal credentials
-    amount: amountGwei.toString(),
-    signature: fromHex(sig), // 96-byte signature
-  };
-
-  // Compute the SSZ hash tree root
-  const depositDataRoot = ssz.electra.DepositData.hashTreeRoot(depositData);
-
-  // Return as a hex string with 0x prefix
-  const depositDataRootHex =
-    "0x" + Buffer.from(depositDataRoot).toString("hex");
-
-  log(`Deposit Root Data: ${depositDataRootHex}`);
-
-  return depositDataRootHex;
-};
-
-async function depositValidator({ pubkey, cred, sig, root, amount }) {
-  const signer = await getSigner();
-
-  const depositContract = await ethers.getContractAt(
-    "IDepositContract",
-    addresses.mainnet.beaconChainDepositContract,
-    signer
-  );
-
-  const tx = await depositContract.deposit(pubkey, cred, sig, root, {
-    value: ethers.utils.parseEther(amount.toString()),
-  });
-  await logTxDetails(tx, "deposit to validator");
-}
-
-async function requestValidatorWithdraw({ pubkey, amount }) {
-  const signer = await getSigner();
-
+async function requestValidatorWithdraw({ pubkey, amount, signer }) {
   const amountGwei = parseUnits(amount.toString(), 9);
 
   const data = solidityPack(["bytes", "uint64"], [pubkey, amountGwei]);
@@ -108,16 +50,14 @@ async function requestValidatorWithdraw({ pubkey, amount }) {
   await logTxDetails(tx, "requestWithdraw");
 }
 
-async function verifySlot({ block, slot, dryrun }) {
-  const signer = await getSigner();
-
-  // Get provider from the live chain and not a local fork. eg mainnet or hoodi
-  const providerLive = await getProvider();
-  const signerMainnet = new Wallet.createRandom().connect(providerLive);
+async function verifySlot({ block, slot, dryrun, signer, live }) {
+  // Either use live chain or local fork
+  const providerLive = live ? await getLiveProvider(signer) : signer.provider;
 
   if (!block && !slot) {
     block = await providerLive.getBlockNumber();
     block -= 1; // Use the previous block
+    log(`Using the second last block ${block} for verification`);
   }
 
   let nextBlockTimestamp;
@@ -125,28 +65,12 @@ async function verifySlot({ block, slot, dryrun }) {
   if (block) {
     // Get the timestamp of the next block
     const nextBlock = block + 1;
-    const { timestamp } = await providerLive.getBlock(nextBlock);
+    const { root: blockRoot, timestamp } = await beaconRoot({
+      live,
+      block: nextBlock,
+      signer,
+    });
     nextBlockTimestamp = timestamp;
-    log(`Next mainnet block ${nextBlock} has timestamp ${nextBlockTimestamp}`);
-
-    const { chainId } = await ethers.provider.getNetwork();
-    const network = networkMap[chainId];
-    const beaconRootsAddress = addresses[network].mockBeaconRoots;
-
-    // Get the parent block root from the beacon roots contract from mainnet
-    const mainnetBeaconRoots = await ethers.getContractAt(
-      "MockBeaconRoots",
-      // Need to use mainnet address and not local deployed address
-      beaconRootsAddress,
-      signerMainnet
-    );
-    log(
-      `Using mainnet MockBeaconRoots contract at ${mainnetBeaconRoots.address}`
-    );
-    const blockRoot = await mainnetBeaconRoots.parentBlockRoot(
-      nextBlockTimestamp
-    );
-    log(`Beacon block root for block ${block} is ${blockRoot}`);
 
     slot = await getSlot(blockRoot);
     log(`Slot for block ${block} is:`, slot);
@@ -203,8 +127,9 @@ async function verifySlot({ block, slot, dryrun }) {
   await logTxDetails(tx, "verifySlot");
 }
 
-async function verifyValidator({ slot, index, dryrun, withdrawal }) {
-  const signer = await getSigner();
+async function verifyValidator({ slot, index, dryrun, withdrawal, signer }) {
+  // Get provider to mainnet or testnet and not a local fork
+  const provider = await getLiveProvider(signer);
 
   const { blockView, blockTree, stateView } = await getBeaconBlock(slot);
 
@@ -237,9 +162,6 @@ async function verifyValidator({ slot, index, dryrun, withdrawal }) {
     const stateRootGindex = blockView.type.getPathInfo(["stateRoot"]).gindex;
     blockTree.setNode(stateRootGindex, stateView.node);
   }
-
-  // Get provider to mainnet and not a local fork
-  const provider = await getProvider();
 
   const nextBlock = blockView.body.executionPayload.blockNumber + 1;
   const { timestamp: nextBlockTimestamp } = await provider.getBlock(nextBlock);
@@ -282,9 +204,13 @@ async function verifyValidator({ slot, index, dryrun, withdrawal }) {
   await logTxDetails(tx, "verifyValidator");
 }
 
-async function verifyDeposit({ block, slot, root: depositDataRoot, dryrun }) {
-  const signer = await getSigner();
-
+async function verifyDeposit({
+  block,
+  slot,
+  root: depositDataRoot,
+  dryrun,
+  signer,
+}) {
   // TODO If no block then get the block from the stakeETH event
   // For now we'll throw an error
   if (!block) throw Error("Block is currently required for verifyDeposit");
@@ -344,9 +270,7 @@ async function verifyDeposit({ block, slot, root: depositDataRoot, dryrun }) {
   await logTxDetails(tx, "verifyDeposit");
 }
 
-async function verifyBalances({ root, indexes, depositSlot, dryrun }) {
-  const signer = await getSigner();
-
+async function verifyBalances({ root, indexes, depositSlot, dryrun, signer }) {
   if (!root) {
     if (!dryrun) {
       // TODO If no beacon block root, then get from the blockRoot from the last BalancesSnapped event
@@ -495,9 +419,9 @@ async function slotToRoot({ slot }) {
   return root;
 }
 
-async function beaconRoot({ block, mainnet }) {
-  // Either use mainnet or local fork to get the block timestamp
-  const provider = mainnet ? await getProvider() : ethers.provider;
+async function beaconRoot({ block, live, signer }) {
+  // Either use live chain or local fork to get the block timestamp
+  const provider = live ? await getLiveProvider(signer) : signer.provider;
 
   // Get timestamp of the block
   const fetchedBlock = await provider.getBlock(block);
@@ -511,57 +435,16 @@ async function beaconRoot({ block, mainnet }) {
 
   const root = await provider.call(
     {
+      // The Beacon Roots contract is the same on mainnet and Hoodi
       to: addresses.mainnet.beaconRoots,
       data,
     },
-    block + 1 // blockTag
+    block // blockTag
   );
 
   console.log(`Block ${block} has parent beacon block root ${root}`);
 
   return { root, timestamp };
-}
-
-async function copyBeaconRoot({ block }) {
-  // Get the parent beacon block root from the mainnet BeaconRoots contract
-  const { root: parentBlockRoot, timestamp } = await beaconRoot({
-    block,
-    mainnet: true,
-  });
-
-  if (parentBlockRoot === "0x") {
-    throw new Error(
-      `No parent beacon block root found for block ${block} on mainnet in the BeaconRoots contract ${addresses.mainnet.beaconRoots}`
-    );
-  }
-
-  // Now set on the mock contract on the local test network
-  const localBeaconRoots = await ethers.getContractAt(
-    "MockBeaconRoots",
-    addresses.mainnet.beaconRoots
-  );
-  log(
-    `About to set parent beacon block root ${parentBlockRoot} for timestamp ${timestamp} on local BeaconRoots contract at ${localBeaconRoots.address}`
-  );
-  await localBeaconRoots["setBeaconRoot(uint256,bytes32)"](
-    timestamp,
-    parentBlockRoot
-  );
-
-  return parentBlockRoot;
-}
-
-async function mockBeaconRoot() {
-  if (hre.network.name == "mainnet") {
-    throw new Error(
-      "This task can only be run against a hardhat or a local forked network"
-    );
-  }
-
-  const factory = await ethers.getContractFactory("MockBeaconRoots");
-  const mockBeaconRoots = await factory.deploy();
-
-  await replaceContractAt(addresses.mainnet.beaconRoots, mockBeaconRoots);
 }
 
 async function getValidator({ slot, index }) {
@@ -720,16 +603,12 @@ async function getValidator({ slot, index }) {
 }
 
 module.exports = {
-  calcDepositRoot,
-  depositValidator,
   requestValidatorWithdraw,
   verifySlot,
   blockToSlot,
   slotToBlock,
   slotToRoot,
   beaconRoot,
-  copyBeaconRoot,
-  mockBeaconRoot,
   getValidator,
   verifyValidator,
   verifyDeposit,

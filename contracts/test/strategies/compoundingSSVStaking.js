@@ -11,7 +11,7 @@ const { impersonateAndFund } = require("../../utils/signers");
 const { ethUnits } = require("../helpers");
 const { setERC20TokenBalance } = require("../_fund");
 const { zero } = require("../../utils/addresses");
-const { calcDepositRoot } = require("../../tasks/beacon");
+const { calcDepositRoot } = require("../../tasks/beaconTesting");
 const { hashPubKey } = require("../../utils/beacon");
 const { randomBytes } = require("crypto");
 const {

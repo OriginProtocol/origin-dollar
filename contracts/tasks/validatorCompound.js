@@ -2,7 +2,7 @@ const addresses = require("../utils/addresses");
 const { formatUnits, parseUnits } = require("ethers/lib/utils");
 
 const { getBlock } = require("../tasks/block");
-const { calcDepositRoot } = require("./beacon");
+const { calcDepositRoot } = require("./beaconTesting");
 const { getValidatorBalance, getBeaconBlock } = require("../utils/beacon");
 const { networkMap } = require("../utils/hardhat-helpers");
 const { getSigner } = require("../utils/signers");

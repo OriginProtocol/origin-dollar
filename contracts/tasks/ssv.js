@@ -1,9 +1,4 @@
-const {
-  parseUnits,
-  formatUnits,
-  solidityPack,
-  hexlify,
-} = require("ethers/lib/utils");
+const { parseUnits, formatUnits, hexlify } = require("ethers/lib/utils");
 
 const addresses = require("../utils/addresses");
 const { resolveContract } = require("../utils/resolvers");
@@ -122,44 +117,6 @@ const withdrawSSV = async ({ amount, index, operatorids }) => {
   await logTxDetails(tx, "withdrawSSV");
 };
 
-const calcDepositRoot = async ({ index, pubkey, sig }, hre) => {
-  if (hre.network.name !== "hardhat") {
-    throw new Error("This task can only be run in hardhat network");
-  }
-
-  const factory = await ethers.getContractFactory("DepositContractUtils");
-  const depositContractUtils = await factory.deploy();
-
-  const proxyNumber =
-    index === undefined || index === 1 ? "" : index.toString();
-  const strategyAddress =
-    addresses.mainnet[`NativeStakingSSVStrategy${proxyNumber}Proxy`];
-  log(
-    `Resolved Native Staking Strategy with index ${index} to address to ${strategyAddress}`
-  );
-
-  const withdrawalCredentials = solidityPack(
-    ["bytes1", "bytes11", "address"],
-    [
-      "0x01",
-      "0x0000000000000000000000",
-      addresses.mainnet[`NativeStakingSSVStrategy${proxyNumber}Proxy`],
-    ]
-  );
-  log(`Withdrawal Credentials: ${withdrawalCredentials}`);
-
-  log(
-    `About to calculate deposit data root for pubkey ${pubkey} and sig ${sig}`
-  );
-  const depositDataRoot = await depositContractUtils.calculateDepositDataRoot(
-    pubkey,
-    withdrawalCredentials,
-    sig
-  );
-
-  console.log(`Deposit Root Data: ${depositDataRoot}`);
-};
-
 const sortOperatorIds = (operatorIdsString) => {
   const operatorIds = operatorIdsString.split(",").map((id) => parseInt(id));
   operatorIds.sort((a, b) => a - b);
@@ -172,6 +129,5 @@ module.exports = {
   printClusterInfo,
   depositSSV,
   withdrawSSV,
-  calcDepositRoot,
   removeValidators,
 };

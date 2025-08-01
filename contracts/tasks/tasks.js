@@ -66,7 +66,6 @@ const {
   curvePoolTask,
 } = require("./curve");
 const {
-  calcDepositRoot,
   depositSSV,
   withdrawSSV,
   printClusterInfo,
@@ -121,20 +120,23 @@ const { harvestAndSwap } = require("./harvest");
 const { deployForceEtherSender, forceSend } = require("./simulation");
 const { lzBridgeToken, lzSetConfig } = require("./layerzero");
 const {
-  depositValidator,
   requestValidatorWithdraw,
   blockToSlot,
   slotToBlock,
   slotToRoot,
   beaconRoot,
-  copyBeaconRoot,
-  mockBeaconRoot,
   getValidator,
   verifySlot,
   verifyValidator,
   verifyDeposit,
   verifyBalances,
 } = require("./beacon");
+const {
+  calcDepositRoot,
+  depositValidator,
+  mockBeaconRoot,
+  copyBeaconRoot,
+} = require("./beaconTesting");
 
 const log = require("../utils/logger")("tasks");
 
@@ -1522,13 +1524,35 @@ subtask(
     undefined,
     types.string
   )
+  .addParam(
+    "owner",
+    "The withdrawal address of the validator in hex format",
+    undefined,
+    types.string
+  )
   .addOptionalParam(
     "index",
     "The number of the Native Staking Contract deployed.",
     undefined,
     types.int
   )
-  .setAction(calcDepositRoot);
+  .addOptionalParam(
+    "type",
+    "Validator type. 0x00, 0x01 or 0x02",
+    "0x02",
+    types.string
+  )
+  .addOptionalParam("amount", "The deposit amount.", 32, types.int)
+  .setAction(async (taskArgs) => {
+    const root = await calcDepositRoot(
+      taskArgs.owner,
+      taskArgs.type,
+      taskArgs.pubkey,
+      taskArgs.sig,
+      taskArgs.amount
+    );
+    console.log(`Deposit data root: ${root}`);
+  });
 task("depositRoot").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
@@ -1764,7 +1788,10 @@ subtask("depositValidator", "Deposits ETH to a validator on the Beacon chain")
     "Beacon chain deposit data root in hex format with a 0x prefix"
   )
   .addOptionalParam("amount", "Amount to deposit", 32, types.float)
-  .setAction(depositValidator);
+  .setAction(async (taskArgs) => {
+    const signer = await getSigner();
+    await depositValidator({ ...taskArgs, signer });
+  });
 task("depositValidator").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
@@ -1802,7 +1829,16 @@ subtask(
     false,
     types.boolean
   )
-  .setAction(verifySlot);
+  .addOptionalParam(
+    "live",
+    "Use live chain (mainnet or testnet) to get the beacon block root. Not the local fork",
+    true,
+    types.boolean
+  )
+  .setAction(async (taskArgs) => {
+    const signer = await getSigner();
+    await verifySlot({ ...taskArgs, signer });
+  });
 task("verifySlot").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
@@ -1839,12 +1875,15 @@ subtask(
     types.int
   )
   .addOptionalParam(
-    "mainnet",
-    "Use mainnet block timestamp",
+    "live",
+    "Use live chain (mainnet or testnet) to get block timestamp. Not the local fork",
     true,
     types.boolean
   )
-  .setAction(beaconRoot);
+  .setAction(async (taskArgs) => {
+    const signer = await getSigner();
+    await beaconRoot({ ...taskArgs, signer });
+  });
 task("beaconRoot").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
@@ -1859,7 +1898,10 @@ subtask(
     undefined,
     types.int
   )
-  .setAction(copyBeaconRoot);
+  .setAction(async (taskArgs) => {
+    const signer = await getSigner();
+    await copyBeaconRoot({ ...taskArgs, signer });
+  });
 task("copyBeaconRoot").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
@@ -1915,7 +1957,10 @@ subtask("verifyValidator", "Verify a validator on the Beacon chain")
     undefined,
     types.string
   )
-  .setAction(verifyValidator);
+  .setAction(async (taskArgs) => {
+    const signer = await getSigner();
+    await verifyValidator({ ...taskArgs, signer });
+  });
 task("verifyValidator").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
@@ -1945,7 +1990,10 @@ subtask("verifyDeposit", "Verify a deposit on the Beacon chain")
     false,
     types.boolean
   )
-  .setAction(verifyDeposit);
+  .setAction(async (taskArgs) => {
+    const signer = await getSigner();
+    await verifyDeposit({ ...taskArgs, signer });
+  });
 task("verifyDeposit").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
@@ -1975,7 +2023,10 @@ subtask("verifyBalances", "Verify validator balances on the Beacon chain")
     false,
     types.boolean
   )
-  .setAction(verifyBalances);
+  .setAction(async (taskArgs) => {
+    const signer = await getSigner();
+    await verifyBalances({ ...taskArgs, signer });
+  });
 task("verifyBalances").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
@@ -2026,7 +2077,10 @@ subtask(
     undefined,
     types.int
   )
-  .setAction(requestValidatorWithdraw);
+  .setAction(async (taskArgs) => {
+    const signer = await getSigner();
+    await requestValidatorWithdraw({ ...taskArgs, signer });
+  });
 task("requestValidatorWithdraw").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
