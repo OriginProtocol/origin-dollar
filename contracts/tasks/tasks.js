@@ -2021,7 +2021,7 @@ subtask("verifyBalances", "Verify validator balances on the Beacon chain")
   )
   .addOptionalParam(
     "depositSlot",
-    "Use a slot that is before the slot of first pending deposit.",
+    "A slot that is after the slot of first pending deposit but before all the strategy's pending deposits.",
     undefined,
     types.int
   )

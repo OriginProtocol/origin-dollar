@@ -162,7 +162,7 @@ async function snapStakingStrategy({ block }) {
     blockTag,
   });
   const { stateView } = await getBeaconBlock();
-  console.log(`${verifiedValidators.length} verified validator balances:`);
+  console.log(`\n${verifiedValidators.length} verified validator balances:`);
   let totalValidatorBalance = BigNumber.from(0);
   for (const validator of verifiedValidators) {
     const balance = stateView.balances.get(validator.index);
@@ -174,14 +174,19 @@ async function snapStakingStrategy({ block }) {
     );
     totalValidatorBalance = totalValidatorBalance.add(balance);
   }
-  console.log(
-    `Total verified validator balance: ${formatUnits(
-      totalValidatorBalance,
-      9
-    )} ETH\n`
-  );
 
-  // TODO pending deposits
+  // Pending deposits
+  const deposits = await strategy.getPendingDeposits({ blockTag });
+  let totalDeposits = BigNumber.from(0);
+  console.log(`\n${deposits.length} pending deposits:`);
+  for (const deposit of deposits) {
+    console.log(
+      `  ${formatUnits(deposit.amountGwei, 9)} ETH ${deposit.blockNumber} ${
+        deposit.pubKeyHash
+      }: `
+    );
+    totalDeposits = totalDeposits.add(deposit.amountGwei);
+  }
 
   const stratWethBalance = await weth.balanceOf(strategy.address, { blockTag });
   const stratEthBalance = await ethers.provider.getBalance(
@@ -196,10 +201,14 @@ async function snapStakingStrategy({ block }) {
     blockTag,
   });
 
+  console.log(`\nTotal deposits     : ${formatUnits(totalDeposits, 9)} ETH`);
+  console.log(
+    `Total validators   : ${formatUnits(totalValidatorBalance, 9)} ETH`
+  );
   console.log(`WETH balance       : ${formatUnits(stratWethBalance, 18)}`);
   console.log(`ETH balance        : ${formatUnits(stratEthBalance, 18)}`);
+  console.log(`Strategy balance   : ${formatUnits(stratBalance, 18)}`);
   console.log(`SSV balance        : ${formatUnits(stratSsvBalance, 18)}`);
-  console.log(`Strategy balance.  : ${formatUnits(stratBalance, 18)}`);
   console.log(
     `Last snap timestamp: ${lastSnapTimestamp} ${new Date(
       lastSnapTimestamp * 1000

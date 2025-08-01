@@ -54,9 +54,8 @@ async function requestValidatorWithdraw({ pubkey, amount, signer }) {
 
 async function verifySlot({ block, slot, dryrun, oracle, signer, live }) {
   // Either use live chain or local fork
-  const providerLive = live
-    ? await getLiveProvider(signer.provider)
-    : signer.provider;
+  const providerLive =
+    live || !signer ? await getLiveProvider(signer?.provider) : signer.provider;
 
   if (!block && !slot) {
     block = await providerLive.getBlockNumber();
@@ -223,7 +222,9 @@ async function verifyDeposit({
     const isMapped = await oracle.isBlockMapped(block);
     if (!isMapped) {
       log(`Block ${block} is not mapped in the Beacon Oracle`);
-      await verifySlot({ block });
+      await verifySlot({ block, signer });
+    } else {
+      log(`Block ${block} is already mapped in the Beacon Oracle`);
     }
   }
 
@@ -246,6 +247,14 @@ async function verifyDeposit({
     blockTree,
     stateView,
   });
+
+  if (firstPendingDepositSlot < processedSlot) {
+    throw Error(
+      `The deposit has not been processed. The slot of first deposit in the deposit queue ${firstPendingDepositSlot} < processed slot ${processedSlot}. Need to wait another ${
+        processedSlot - firstPendingDepositSlot
+      } slots.`
+    );
+  }
 
   if (dryrun) {
     console.log(`depositDataRoot: ${depositDataRoot}`);
@@ -370,8 +379,9 @@ async function verifyBalances({ root, indexes, depositSlot, dryrun, signer }) {
   const isMapped = await oracle.isSlotMapped(depositSlot);
   if (!isMapped) {
     log(`Slot ${depositSlot} is not mapped in the Beacon Oracle`);
-    // TODO need to check if depositSlot can be mapped
-    await verifySlot({ slot: depositSlot });
+    const beaconOracle = await resolveContract("BeaconOracle");
+    // TODO need to check if depositSlot can be mapped. That is, its not too old.
+    await verifySlot({ slot: depositSlot, signer, oracle: beaconOracle });
     // TODO if it's too old, we find a block we have mapped that is before it.
   }
 

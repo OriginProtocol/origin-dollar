@@ -926,4 +926,17 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
     {
         return verifiedValidators;
     }
+
+    /// @notice Returns the deposits that are still to be verified.
+    /// These may or may not have been processed by the beacon chain.
+    function getPendingDeposits()
+        external
+        view
+        returns (DepositData[] memory pendingDeposits)
+    {
+        pendingDeposits = new DepositData[](depositsRoots.length);
+        for (uint256 i = 0; i < depositsRoots.length; ++i) {
+            pendingDeposits[i] = deposits[depositsRoots[i]];
+        }
+    }
 }
