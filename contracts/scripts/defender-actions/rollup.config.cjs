@@ -113,4 +113,13 @@ module.exports = [
       format: "cjs",
     },
   },
+  {
+    ...commonConfig,
+    input: "verifySlots.js",
+    output: {
+      file: "dist/verifySlots/index.js",
+      inlineDynamicImports: true,
+      format: "cjs",
+    },
+  },
 ];

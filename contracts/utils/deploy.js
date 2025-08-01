@@ -23,6 +23,7 @@ const {
   isPlume,
   isPlumeFork,
   isTest,
+  isHoodi,
 } = require("../test/helpers.js");
 
 const {
@@ -32,6 +33,7 @@ const {
 
 const addresses = require("../utils/addresses.js");
 const { getTxOpts } = require("../utils/tx");
+const { sleep } = require("../utils/time");
 const {
   proposeGovernanceArgs,
   accountCanCreateProposal,
@@ -125,11 +127,19 @@ const withConfirmation = async (
     ? process.env.HOLESKY_PROVIDER_URL
     : isPlume
     ? process.env.PLUME_PROVIDER_URL
+    : isHoodi
+    ? process.env.HOODI_PROVIDER_URL
     : process.env.PROVIDER_URL;
+
   if (providerUrl?.includes("rpc.tenderly.co") || (isTest && !isForkTest)) {
     // console.log("Skipping confirmation on Tenderly or for unit tests");
     // Skip on Tenderly and for unit tests
     return result;
+  }
+
+  // without waiting the receipt below returns null even though the has is passed to it
+  if (isHoodi) {
+    await sleep(10000);
   }
 
   const receipt = await hre.ethers.provider.waitForTransaction(

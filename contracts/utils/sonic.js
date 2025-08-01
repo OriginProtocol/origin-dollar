@@ -1,4 +1,4 @@
-const { formatUnits, parseUnits } = require("ethers/lib/utils");
+const { formatUnits } = require("ethers/lib/utils");
 
 const { getBlock } = require("../tasks/block");
 const addresses = require("../utils/addresses");
