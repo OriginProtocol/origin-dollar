@@ -157,28 +157,12 @@ async function snapStakingStrategy({ block }) {
     "CompoundingStakingSSVStrategy"
   );
 
-  // TODO verified validators
-  const verifiedValidators = await strategy.getVerifiedValidators({
-    blockTag,
-  });
-  const { stateView } = await getBeaconBlock();
-  console.log(`\n${verifiedValidators.length} verified validator balances:`);
-  let totalValidatorBalance = BigNumber.from(0);
-  for (const validator of verifiedValidators) {
-    const balance = stateView.balances.get(validator.index);
-    console.log(
-      `  ${validator.index} ${validator.pubKeyHash}: ${formatUnits(
-        balance,
-        9
-      )} ETH`
-    );
-    totalValidatorBalance = totalValidatorBalance.add(balance);
-  }
-
   // Pending deposits
   const deposits = await strategy.getPendingDeposits({ blockTag });
   let totalDeposits = BigNumber.from(0);
-  console.log(`\n${deposits.length} pending deposits:`);
+  console.log(
+    `\n${deposits.length} pending deposits:\n  amount, block number, public key hash`
+  );
   for (const deposit of deposits) {
     console.log(
       `  ${formatUnits(deposit.amountGwei, 9)} ETH ${deposit.blockNumber} ${
@@ -186,6 +170,25 @@ async function snapStakingStrategy({ block }) {
       }: `
     );
     totalDeposits = totalDeposits.add(deposit.amountGwei);
+  }
+
+  // Verified validators
+  const verifiedValidators = await strategy.getVerifiedValidators({
+    blockTag,
+  });
+  const { stateView } = await getBeaconBlock();
+  console.log(
+    `\n${verifiedValidators.length} verified validators:\n  amount, validator index, public key hash`
+  );
+  let totalValidators = BigNumber.from(0);
+  for (const validator of verifiedValidators) {
+    const balance = stateView.balances.get(validator.index);
+    console.log(
+      `  ${formatUnits(balance, 9)} ETH ${validator.index} ${
+        validator.pubKeyHash
+      }`
+    );
+    totalValidators = totalValidators.add(balance);
   }
 
   const stratWethBalance = await weth.balanceOf(strategy.address, { blockTag });
@@ -197,17 +200,26 @@ async function snapStakingStrategy({ block }) {
   const stratBalance = await strategy.checkBalance(wethAddress, {
     blockTag,
   });
+  const totalAssets = parseUnits(totalDeposits.toString(), 9)
+    .add(parseUnits(totalValidators.toString(), 9))
+    .add(stratWethBalance)
+    .add(stratEthBalance);
+  const assetDiff = totalAssets.sub(stratBalance);
   const lastSnapTimestamp = await strategy.lastSnapTimestamp({
     blockTag,
   });
 
-  console.log(`\nTotal deposits     : ${formatUnits(totalDeposits, 9)} ETH`);
-  console.log(
-    `Total validators   : ${formatUnits(totalValidatorBalance, 9)} ETH`
-  );
+  console.log(`\nTotal deposits     : ${formatUnits(totalDeposits, 9)}`);
+  console.log(`Total validators   : ${formatUnits(totalValidators, 9)}`);
   console.log(`WETH balance       : ${formatUnits(stratWethBalance, 18)}`);
   console.log(`ETH balance        : ${formatUnits(stratEthBalance, 18)}`);
-  console.log(`Strategy balance   : ${formatUnits(stratBalance, 18)}`);
+  console.log(`Strategy assets    : ${formatUnits(totalAssets, 18)}`);
+  console.log(
+    `Strategy balance   : ${formatUnits(stratBalance, 18)} diff ${formatUnits(
+      assetDiff,
+      18
+    )}`
+  );
   console.log(`SSV balance        : ${formatUnits(stratSsvBalance, 18)}`);
   console.log(
     `Last snap timestamp: ${lastSnapTimestamp} ${new Date(
