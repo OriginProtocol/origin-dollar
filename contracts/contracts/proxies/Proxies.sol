@@ -320,3 +320,12 @@ contract CompoundingStakingSSVStrategyProxy is
 {
 
 }
+
+/**
+ * @notice ConsolidationManagerProxy delegates calls to a ConsolidationManager implementation
+ */
+contract ConsolidationManagerProxy is
+    InitializeGovernedUpgradeabilityProxy
+{
+
+}

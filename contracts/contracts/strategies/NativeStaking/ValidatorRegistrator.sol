@@ -3,7 +3,7 @@ pragma solidity ^0.8.0;
 
 import { Pausable } from "@openzeppelin/contracts/security/Pausable.sol";
 import { Governable } from "../../governance/Governable.sol";
-import { IConsolidationTarget } from "../../interfaces/IConsolidation.sol";
+import { IConsolidationStrategy, IConsolidationSource } from "../../interfaces/IConsolidation.sol";
 import { IDepositContract } from "../../interfaces/IDepositContract.sol";
 import { IVault } from "../../interfaces/IVault.sol";
 import { IWETH9 } from "../../interfaces/IWETH9.sol";
@@ -21,7 +21,7 @@ struct ValidatorStakeData {
  * @notice This contract implements all the required functionality to register, exit and remove validators.
  * @author Origin Protocol Inc
  */
-abstract contract ValidatorRegistrator is Governable, Pausable {
+abstract contract ValidatorRegistrator is Governable, Pausable, IConsolidationSource {
     /// @notice The maximum amount of ETH that can be staked by a validator
     /// @dev this can change in the future with EIP-7251, Increase the MAX_EFFECTIVE_BALANCE
     uint256 public constant FULL_STAKE = 32 ether;
@@ -56,12 +56,10 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
 
     /// @notice Number of validators currently being consolidated
     uint256 public consolidationCount;
-    address public consolidationTargetStrategy;
-    /// @notice Mapping of support target staking strategies that can be used for consolidation
-    mapping(address => bool) public consolidationTargetStrategies;
+    address public intermediateConsolidationStrategy;
 
     // For future use
-    uint256[44] private __gap;
+    uint256[45] private __gap;
 
     enum VALIDATOR_STATE {
         NON_REGISTERED, // validator is not registered on the SSV network
@@ -169,13 +167,6 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
     function resetStakeETHTally() external onlyStakingMonitor {
         stakeETHTally = 0;
         emit StakeETHTallyReset();
-    }
-
-    /// @notice Adds support for a new staking strategy that can be used for consolidation.
-    function addTargetStrategy(address _strategy) external onlyGovernor {
-        consolidationTargetStrategies[_strategy] = true;
-
-        emit TargetStrategyAdded(_strategy);
     }
 
     /// @notice Stakes WETH to the node validators
@@ -413,56 +404,55 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
     ****************************************/
 
     function requestConsolidation(
-        bytes[] calldata sourcePubKeys,
-        bytes calldata targetPubKey,
-        address targetStakingStrategy
+        bytes[] calldata _sourcePubKeys,
+        bytes calldata _targetPubKey,
+        address _intermediateConsolidationStrategy
     ) external nonReentrant whenNotPaused onlyGovernor {
-        require(
-            consolidationTargetStrategies[targetStakingStrategy],
-            "Invalid target strategy"
-        );
+        require(consolidationCount == 0, "Cons. already in progress");
+        /**
+         * With the target validator already having 32 ETH balance and maximum 61 (times 32 ETH)
+         * validators consolidating there is still 64 ETH buffer available for the validator to 
+         * earn ETH. At a ~3% APY that ETH should be compounding for at least a year before it 
+         * needs to be fully/partially withdrawn.
+         */
+        require(_sourcePubKeys.length <= 61, "Too many source public keys");
 
-        bytes32 targetPubKeyHash = keccak256(targetPubKey);
+        bytes32 _targetPubKeyHash = keccak256(_targetPubKey);
         bytes32 sourcePubKeyHash;
-        for (uint256 i = 0; i < sourcePubKeys.length; ++i) {
+        for (uint256 i = 0; i < _sourcePubKeys.length; ++i) {
             // hash the source validator's public key using the Beacon Chain's format
-            sourcePubKeyHash = keccak256(sourcePubKeys[i]);
-            require(sourcePubKeyHash != targetPubKeyHash, "Self consolidation");
+            sourcePubKeyHash = keccak256(_sourcePubKeys[i]);
+            require(sourcePubKeyHash != _targetPubKeyHash, "Self consolidation");
             require(
                 validatorsStates[sourcePubKeyHash] == VALIDATOR_STATE.STAKED,
                 "Source validator not staked"
             );
 
             // Request consolidation from source to target validator
-            BeaconConsolidation.request(sourcePubKeys[i], targetPubKey);
+            BeaconConsolidation.request(_sourcePubKeys[i], _targetPubKey);
 
             // Store the state of the source validator as exiting so it can be removed
             // after the consolidation is confirmed
             validatorsStates[sourcePubKeyHash] == VALIDATOR_STATE.EXITING;
         }
 
-        // Hash using the Beacon Chain's format
-        bytes32 lastSourcePubKeyHash = _hashPubKey(
-            sourcePubKeys[sourcePubKeys.length - 1]
-        );
         // Call the new compounding staking strategy to validate the target validator
-        IConsolidationTarget(targetStakingStrategy).requestConsolidation(
-            lastSourcePubKeyHash,
-            targetPubKeyHash
+        IConsolidationStrategy(_intermediateConsolidationStrategy).requestConsolidation(
+            _targetPubKeyHash
         );
 
         // Store the consolidation state
-        consolidationCount = sourcePubKeys.length;
-        consolidationTargetStrategy = targetStakingStrategy;
+        consolidationCount = _sourcePubKeys.length;
+        intermediateConsolidationStrategy = _intermediateConsolidationStrategy;
 
         // Pause the strategy to prevent further consolidations or validator exits
         _pause();
 
         emit ConsolidationRequested(
-            sourcePubKeys,
-            targetPubKey,
-            targetStakingStrategy,
-            sourcePubKeys.length
+            _sourcePubKeys,
+            _targetPubKey,
+            _intermediateConsolidationStrategy,
+            _sourcePubKeys.length
         );
     }
 
@@ -474,8 +464,8 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
     {
         // Check the caller is the target staking strategy
         require(
-            msg.sender == consolidationTargetStrategy,
-            "Not target strategy"
+            msg.sender == intermediateConsolidationStrategy,
+            "Not consolidation contract"
         );
 
         // Load the number of validators being consolidated into memory
@@ -490,7 +480,7 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
 
         // Reset the consolidation count
         consolidationCount = 0;
-        consolidationTargetStrategy = address(0);
+        intermediateConsolidationStrategy = address(0);
 
         // Unpause the strategy to allow further operations
         _unpause();

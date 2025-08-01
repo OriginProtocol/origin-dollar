@@ -7,9 +7,19 @@ interface IConsolidationSource {
         returns (uint256 consolidationCount);
 }
 
-interface IConsolidationTarget {
+interface IConsolidationStrategy {
     function requestConsolidation(
-        bytes32 lastSourcePubKeyHash,
         bytes32 targetPubKeyHash
+    ) external;
+}
+
+interface IConsolidationTarget {
+    function consolidationCompleted(
+        bytes32 pubKeyHash,
+        uint256 validatorBalance
+    ) external;
+
+    function initiateConsolidation(
+        bytes32 pubKeyHash
     ) external;
 }
