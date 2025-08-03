@@ -373,7 +373,7 @@ async function verifyBalances({ root, indexes, depositSlot, dryrun, signer }) {
   depositSlot = depositSlot || firstPendingDepositSlot;
   if (depositSlot > firstPendingDepositSlot)
     throw Error(
-      "Deposit slot can not be greater than first pending deposit slot"
+      "Deposit slot can not be greater than the slot of the first deposit in the queue.\nfirst pending deposit slot <= mapped deposit slot < pending staking deposits"
     );
 
   const isMapped = await oracle.isSlotMapped(depositSlot);
