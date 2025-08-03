@@ -36,6 +36,9 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
     /// to support deposits of 1 ETH.
     uint256 public constant DEPOSIT_AMOUNT_WEI = 32 ether;
 
+    /// @notice Genesis time of the Pectra upgrade
+    uint64 public constant GENESIS_TIME = 1606824023; 
+
     /// @notice The address of the Wrapped ETH (WETH) token contract
     address public immutable WETH;
     /// @notice The address of the beacon chain deposit contract
@@ -63,6 +66,7 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
         bytes32 pubKeyHash;
         uint64 amountGwei;
         uint64 blockNumber;
+        uint64 slotNumber;
         uint32 depositIndex;
         DepositStatus status;
     }
@@ -332,6 +336,12 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
         deposits[validator.depositDataRoot] = DepositData({
             pubKeyHash: pubKeyHash,
             amountGwei: depositAmountGwei,
+            /// After the Pectra upgrade the validators have a new restriction when proposing 
+            /// blocks. The timestamps are at strict intervals of 12 seconds from the genesis block
+            /// forward. Each slot is created at strict 12 second intervals and those slots can
+            /// either have blocks attached to them or not. This way using the block.timestamp
+            /// the slot number can easily be calculated. 
+            slotNumber: SafeCast.toUint64((block.timestamp - GENESIS_TIME) / 12),
             blockNumber: SafeCast.toUint64(block.number),
             depositIndex: SafeCast.toUint32(depositsRoots.length),
             status: DepositStatus.PENDING
@@ -705,7 +715,6 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
     // A struct is used to avoid stack too deep errors
     struct VerifyBalancesParams {
         bytes32 blockRoot;
-        uint64 mappedDepositSlot;
         uint64 firstPendingDepositSlot;
         // BeaconBlock.BeaconBlockBody.deposits[0].slot
         bytes firstPendingDepositSlotProof;
@@ -739,16 +748,6 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
                 params.firstPendingDepositSlotProof
             );
 
-            // As the BeaconOracle probably doesn't have the slot of the first pending deposit mapped to a block,
-            // use any slot that is on or after the slot of the first pending deposit. That is,
-            // firstPendingDepositSlot <= mappedDepositSlot < deposits[depositDataRoot].blockNumber
-            require(
-                params.firstPendingDepositSlot <= params.mappedDepositSlot,
-                "Invalid deposit slot"
-            );
-            uint64 firstPendingDepositBlockNumber = IBeaconOracle(BEACON_ORACLE)
-                .slotToBlock(params.mappedDepositSlot);
-
             // For each native staking contract's deposits
             for (uint256 i = 0; i < depositsCount; ++i) {
                 bytes32 depositDataRoot = depositsRoots[i];
@@ -758,8 +757,8 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
                 // block number of the staking strategy's deposit.
                 // If it has it will need to be verified with `verifyDeposit`
                 require(
-                    firstPendingDepositBlockNumber <
-                        deposits[depositDataRoot].blockNumber,
+                    params.firstPendingDepositSlot <
+                        deposits[depositDataRoot].slotNumber,
                     "Deposit has been processed"
                 );
 
