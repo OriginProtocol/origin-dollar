@@ -128,6 +128,7 @@ const {
   beaconRoot,
   getValidator,
   verifySlot,
+  verifyOldSlot,
   verifyValidator,
   verifyDeposit,
   verifyBalances,
@@ -1848,6 +1849,49 @@ subtask(
     await verifySlot({ ...taskArgs, oracle, signer });
   });
 task("verifySlot").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+subtask(
+  "verifyOldSlot",
+  "Verify an execution layer block number to a beacon chain slot that is older than 8192 slots (about 27 hours)"
+)
+  .addOptionalParam(
+    "proofBlock",
+    "The execution layer block number to verify the proof against.",
+    undefined,
+    types.int
+  )
+  .addOptionalParam(
+    "block",
+    "Execution layer block number. Uses slot if no block, if not block or slot, the latest block is used.",
+    undefined,
+    types.int
+  )
+  .addOptionalParam(
+    "slot",
+    "Beacon chain slot number. Used if not block",
+    undefined,
+    types.int
+  )
+  .addOptionalParam(
+    "dryrun",
+    "Do not call verifyBalances on the strategy contract. Just log the params including the proofs",
+    false,
+    types.boolean
+  )
+  .addOptionalParam(
+    "live",
+    "Use live chain (mainnet or testnet) to get the beacon block root. Not the local fork",
+    true,
+    types.boolean
+  )
+  .setAction(async (taskArgs) => {
+    const signer = await getSigner();
+    const oracle = await resolveContract("BeaconOracle");
+    await verifyOldSlot({ ...taskArgs, oracle, signer });
+  });
+task("verifyOldSlot").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
 

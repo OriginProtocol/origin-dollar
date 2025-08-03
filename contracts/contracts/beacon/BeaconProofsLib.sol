@@ -17,15 +17,26 @@ library BeaconProofsLib {
     uint256 internal constant VALIDATORS_CONTAINER_GENERALIZED_INDEX = 715;
     // BeaconBlock.state.balances
     uint256 internal constant BALANCES_CONTAINER_GENERALIZED_INDEX = 716;
+    // BeaconBlock.state.historicalSummaries
+    uint256 internal constant HISTORICAL_SUMMARIES_CONTAINER_GENERALIZED_INDEX =
+        731;
 
     // Beacon Container Tree Heights
     uint256 internal constant BALANCES_HEIGHT = 39;
     uint256 internal constant VALIDATORS_HEIGHT = 41;
     uint256 internal constant VALIDATOR_HEIGHT = 3;
+    uint256 internal constant HISTORICAL_SUMMARIES_HEIGHT = 25;
+    uint256 internal constant HISTORICAL_SUMMARY_HEIGHT = 1;
+    uint256 internal constant BLOCK_ROOTS_HEIGHT = 13;
 
     /// @notice Fields in the Validator container for phase 0
     /// See https://ethereum.github.io/consensus-specs/specs/phase0/beacon-chain/#validator
     uint256 internal constant VALIDATOR_PUBKEY_INDEX = 0;
+    uint256 internal constant HISTORICAL_SUMMARY_BLOCK_SUMMARY_ROOT_INDEX = 0;
+
+    // First historical summary slot
+    uint256 internal constant FIRST_HISTORICAL_SUMMARY_SLOT = 6217728;
+    uint256 internal constant SLOTS_PER_HISTORICAL_ROOT = 8192;
 
     enum BalanceProofLevel {
         Container,
@@ -234,6 +245,69 @@ library BeaconProofsLib {
             }),
             "Invalid slot number proof"
         );
+    }
+
+    /// @notice Uses multiple merkle proofs against the beacon block root to link
+    /// a historical execution layer block number to a beacon chain slot.
+    /// The slot being verified must be older than 8192 slots so it's beacon block root
+    /// has been aggregated into the historical summaries.
+    /// @param proofBlockRoot The top root of beacon block.
+    /// @param historicalBlockRoot The historical beacon block root of the slot and block being verified.
+    /// @param blockNumber The historical execution layer block number.
+    /// @param slot The historical beacon chain slot.
+    /// @param historicalBlockRootProof The merkle proof witnesses for the historicalSummaries against the block root.
+    /// @param slotProof The merkle proof witnesses for the slot against the historical block root.
+    /// @param blockProof The merkle proof witnesses for the block number against the historical block root.
+    function verifyHistoricalSlot(
+        bytes32 proofBlockRoot,
+        bytes32 historicalBlockRoot,
+        uint256 slot,
+        uint256 blockNumber,
+        bytes calldata historicalBlockRootProof,
+        bytes calldata slotProof,
+        bytes calldata blockProof
+    ) internal view {
+        uint256 historicalSummariesIndex = (slot -
+            FIRST_HISTORICAL_SUMMARY_SLOT) /
+            SLOTS_PER_HISTORICAL_ROOT +
+            1;
+        uint256 blockRootsIndex = slot % SLOTS_PER_HISTORICAL_ROOT;
+
+        uint256 generalizedIndex = concatGenIndices(
+            HISTORICAL_SUMMARIES_CONTAINER_GENERALIZED_INDEX,
+            HISTORICAL_SUMMARIES_HEIGHT,
+            historicalSummariesIndex
+        );
+        // Shift the index by 1 as the next container has a depth of 1
+        // and the block_summary_root is at index 0.
+        generalizedIndex <<= BLOCK_ROOTS_HEIGHT;
+        // generalizedIndex = concatGenIndices(
+        //     generalizedIndex,
+        //     HISTORICAL_SUMMARY_HEIGHT,
+        //     HISTORICAL_SUMMARY_BLOCK_SUMMARY_ROOT_INDEX
+        // );
+        generalizedIndex = concatGenIndices(
+            generalizedIndex,
+            BLOCK_ROOTS_HEIGHT,
+            blockRootsIndex
+        );
+
+        // Verify the historical block root against the proof beacon block root
+        require(
+            Merkle.verifyInclusionSha256({
+                proof: historicalBlockRootProof,
+                root: proofBlockRoot,
+                leaf: historicalBlockRoot,
+                index: generalizedIndex
+            }),
+            "Invalid historical block root proof"
+        );
+
+        // Verify the slot to the historical block root
+        verifySlot(historicalBlockRoot, slot, slotProof);
+
+        // Verify the block number to the historical block root
+        verifyBlockNumber(historicalBlockRoot, blockNumber, blockProof);
     }
 
     ////////////////////////////////////////////////////

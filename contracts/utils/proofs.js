@@ -4,6 +4,9 @@ const { formatUnits } = require("ethers/lib/utils");
 
 const log = require("../utils/logger")("task:proof");
 
+const firstSummarySlot = 6217728n;
+const slotsPerHistoricalRoot = 8192n;
+
 // BeaconBlock.slot
 async function generateSlotProof({ blockView, blockTree }) {
   // Have to dynamically import the Lodestar API client as its an ESM module
@@ -67,6 +70,87 @@ async function generateBlockProof({ blockView, blockTree }) {
     root: toHex(blockTree.root),
     leaf: toHex(proofObj.leaf),
     blockNumber: blockView.body.executionPayload.blockNumber,
+  };
+}
+
+function calcIndexesForHistoricalSummary(slot) {
+  const slotBI = BigInt(slot);
+  const historicalSummariesIndex =
+    (slotBI - firstSummarySlot) / slotsPerHistoricalRoot + 1n;
+  // Take one off as that is the parent block root
+  const blockRootsIndex = slotBI % slotsPerHistoricalRoot;
+  const historicalSummaryFirstSlot =
+    historicalSummariesIndex * slotsPerHistoricalRoot + firstSummarySlot;
+  log(
+    `Slot ${slot} has historicalSummaries index ${historicalSummariesIndex}, blockRoots index ${blockRootsIndex} and first slot of historical summary ${historicalSummaryFirstSlot}`
+  );
+  return {
+    historicalSummariesIndex,
+    blockRootsIndex,
+    historicalSummaryFirstSlot,
+  };
+}
+
+// BeaconBlock.state.historicalSummaries[index].blockSummaryRoot.blockRoot[index]
+async function generateOldSlotProof({
+  blockView,
+  blockTree,
+  stateView,
+  blockRoots,
+  slot,
+}) {
+  // Have to dynamically import the Lodestar API client as its an ESM module
+  const { concatGindices, createProof, ProofType, toGindex } = await import(
+    "@chainsafe/persistent-merkle-tree"
+  );
+
+  const { historicalSummariesIndex, blockRootsIndex } =
+    calcIndexesForHistoricalSummary(slot);
+  log(`${stateView.historicalSummaries.length} historical summaries`);
+
+  log(
+    `historical summaries container index: ${
+      stateView.type.getPathInfo(["historicalSummaries"]).gindex
+    }`
+  );
+  const gIndexHistoricalBlockRootsContainer = concatGindices([
+    blockView.type.getPathInfo(["stateRoot"]).gindex,
+    stateView.type.getPathInfo(["historicalSummaries"]).gindex,
+    toGindex(25, historicalSummariesIndex),
+    toGindex(1, 0n), // depth 1, index 0 for blockSummaryRoot
+  ]);
+  log(
+    `Generalized index for historical block root container ${gIndexHistoricalBlockRootsContainer}`
+  );
+
+  blockTree.setNode(gIndexHistoricalBlockRootsContainer, blockRoots);
+
+  const gIndexHistoricalBlockRoot = concatGindices([
+    gIndexHistoricalBlockRootsContainer,
+    toGindex(13, blockRootsIndex),
+  ]);
+
+  log(`Generating historical summaries proof to beacon block root`);
+  const proofObj = createProof(blockTree.rootNode, {
+    type: ProofType.single,
+    gindex: gIndexHistoricalBlockRoot,
+  });
+
+  log(
+    `Historical block root which is the leaf of the proof: ${toHex(
+      proofObj.leaf
+    )}`
+  );
+
+  const proofBytes = toHex(concatProof(proofObj));
+  const depth = proofObj.witnesses.length;
+  log(`Historical block root proof of depth ${depth} in bytes:\n${proofBytes}`);
+
+  return {
+    proof: proofBytes,
+    generalizedIndex: gIndexHistoricalBlockRoot,
+    root: toHex(blockTree.root),
+    leaf: toHex(proofObj.leaf),
   };
 }
 
@@ -261,8 +345,10 @@ async function generateBalanceProof({
 module.exports = {
   generateSlotProof,
   generateBlockProof,
+  generateOldSlotProof,
   generateFirstPendingDepositSlotProof,
   generateValidatorPubKeyProof,
   generateBalancesContainerProof,
   generateBalanceProof,
+  calcIndexesForHistoricalSummary,
 };

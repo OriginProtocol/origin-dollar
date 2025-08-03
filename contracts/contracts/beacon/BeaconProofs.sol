@@ -120,4 +120,24 @@ contract BeaconProofs {
     ) external view {
         BeaconProofsLib.verifySlot(beaconBlockRoot, slot, slotProof);
     }
+
+    function verifyHistoricalSlot(
+        bytes32 proofBlockRoot,
+        bytes32 historicalBlockRoot,
+        uint64 blockNumber,
+        uint64 slot,
+        bytes calldata historicalBlockRootProof,
+        bytes calldata slotProof,
+        bytes calldata blockProof
+    ) external view {
+        BeaconProofsLib.verifyHistoricalSlot(
+            proofBlockRoot,
+            historicalBlockRoot,
+            slot,
+            blockNumber,
+            historicalBlockRootProof,
+            slotProof,
+            blockProof
+        );
+    }
 }

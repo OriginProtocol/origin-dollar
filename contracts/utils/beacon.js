@@ -131,6 +131,38 @@ const getBeaconBlock = async (slot = "head") => {
   return { blockTree, blockView, stateView };
 };
 
+const getBeaconState = async (slot = "head") => {
+  const client = await configClient();
+
+  const { ssz } = await import("@lodestar/types");
+  const BeaconState = ssz.electra.BeaconState;
+
+  // Read the state from a local file or fetch it from the beacon node.
+  let stateSsz;
+  const stateFilename = `./cache/state_${slot}.ssz`;
+  if (fs.existsSync(stateFilename)) {
+    log(`Loading state from file ${stateFilename}`);
+    stateSsz = fs.readFileSync(stateFilename);
+  } else {
+    log(`Fetching state for slot ${slot} from the beacon node`);
+    const stateRes = await client.debug.getStateV2({ stateId: slot }, "ssz");
+    if (!stateRes.ok) {
+      console.error(stateRes);
+      throw new Error(
+        `Failed to get state for slot ${slot}. Probably because it was missed. Error: ${stateRes.status} ${stateRes.statusText}`
+      );
+    }
+
+    log(`Writing state to file ${stateFilename}`);
+    fs.writeFileSync(stateFilename, stateRes.ssz());
+    stateSsz = stateRes.ssz();
+  }
+
+  const stateView = BeaconState.deserializeToView(stateSsz);
+
+  return stateView;
+};
+
 const concatProof = (proof) => {
   const witnessLength = proof.witnesses.length;
   const witnessBytes = new Uint8Array(witnessLength * 32);
@@ -231,6 +263,7 @@ const beaconchainRequest = async (endpoint) => {
 module.exports = {
   concatProof,
   getBeaconBlock,
+  getBeaconState,
   getSlot,
   getBeaconBlockRoot,
   getValidator,

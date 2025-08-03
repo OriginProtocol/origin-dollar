@@ -8,13 +8,15 @@ const {
 } = require("ethers/lib/utils");
 
 const addresses = require("../utils/addresses");
-const { getBeaconBlock, getSlot } = require("../utils/beacon");
+const { getBeaconBlock, getBeaconState, getSlot } = require("../utils/beacon");
 const { bytes32 } = require("../utils/regex");
 const { resolveContract } = require("../utils/resolvers");
 
 const {
+  calcIndexesForHistoricalSummary,
   generateSlotProof,
   generateBlockProof,
+  generateOldSlotProof,
   generateValidatorPubKeyProof,
   generateFirstPendingDepositSlotProof,
   generateBalancesContainerProof,
@@ -126,6 +128,130 @@ async function verifySlot({ block, slot, dryrun, oracle, signer, live }) {
       blockNumberProofBytes
     );
   await logTxDetails(tx, "verifySlot");
+}
+
+async function verifyOldSlot({
+  proofBlock,
+  block,
+  slot,
+  dryrun,
+  oracle,
+  signer,
+  live,
+}) {
+  // Either use live chain or local fork
+  const providerLive =
+    live || !signer ? await getLiveProvider(signer?.provider) : signer.provider;
+
+  let nextBlockTimestamp;
+  let proofSlot;
+  if (!proofBlock) {
+    proofBlock = await providerLive.getBlockNumber();
+    proofBlock -= 2; // Use the third last block
+    log(`Using the third last block ${proofBlock} for verification`);
+  }
+
+  if (!block && !slot) {
+    throw Error("Must pass a block or slot older than 8192 slots");
+  }
+
+  // If a block was supplied, we need to work out the slot
+  if (block) {
+    // Get the timestamp of the next block
+    const nextBlock = block + 1;
+    const { root: blockRoot } = await beaconRoot({
+      live,
+      block: nextBlock,
+      signer,
+    });
+
+    slot = await getSlot(blockRoot);
+    log(`Slot for block ${block} is:`, slot);
+  }
+
+  // Get the historical beacon block and state for the historical block and slot proofs
+  const { blockView, blockTree } = await getBeaconBlock(slot);
+
+  // If a slot was supplied, we need to work out the block from the state
+  if (!block) {
+    block = blockView.body.executionPayload.blockNumber;
+    log(`Using block ${block} for slot ${slot}`);
+  }
+
+  const { root: blockRoot, timestamp } = await beaconRoot({
+    live,
+    block: proofBlock + 1,
+    signer,
+  });
+  nextBlockTimestamp = timestamp;
+  proofSlot = await getSlot(blockRoot);
+  log(
+    `Using proof block ${proofBlock} with timestamp ${nextBlockTimestamp} and block root ${blockRoot}`
+  );
+  const {
+    blockView: proofBlockView,
+    blockTree: proofBlockTree,
+    stateView: proofStateView,
+  } = await getBeaconBlock(proofSlot);
+
+  // Patch in the blockRoots to the historical summary
+  const { historicalSummaryFirstSlot } = calcIndexesForHistoricalSummary(slot);
+  const blockRootsStateView = await getBeaconState(historicalSummaryFirstSlot);
+
+  // Generate proof for the historical block root
+  const { proof: historicalBlockRootProofBytes, leaf: historicalBlockRoot } =
+    await generateOldSlotProof({
+      blockView: proofBlockView,
+      blockTree: proofBlockTree,
+      stateView: proofStateView,
+      blockRoots: blockRootsStateView.blockRoots.node,
+      slot,
+    });
+
+  /// Now generate the slot and block proofs to the historical block root
+
+  const { proof: slotProofBytes, root: beaconBlockRoot } =
+    await generateSlotProof({
+      blockView,
+      blockTree,
+    });
+
+  const { proof: blockNumberProofBytes } = await generateBlockProof({
+    blockView,
+    blockTree,
+  });
+
+  if (dryrun) {
+    console.log(`proofBlock: ${proofBlock}`);
+    console.log(`proofSlot: ${proofSlot}`);
+    console.log(`beaconBlockRoot: ${beaconBlockRoot}`);
+    console.log(`nextBlockTimestamp: ${nextBlockTimestamp}`);
+    console.log(`block: ${block}`);
+    console.log(`slot: ${slot}`);
+    console.log(`historicalBlockRoot: ${historicalBlockRoot}`);
+    console.log(
+      `historicalBlockRootProofBytes: ${historicalBlockRootProofBytes}`
+    );
+    console.log(`slotProofBytes: ${slotProofBytes}`);
+    console.log(`blockNumberProofBytes: ${blockNumberProofBytes}`);
+    return;
+  }
+
+  log(
+    `About to verify historical block ${block} and slot ${slot} to beacon chain root ${beaconBlockRoot} with historical block root ${historicalBlockRoot}`
+  );
+  const tx = await oracle
+    .connect(signer)
+    .verifyHistoricalSlot(
+      nextBlockTimestamp,
+      historicalBlockRoot,
+      block,
+      slot,
+      historicalBlockRootProofBytes,
+      slotProofBytes,
+      blockNumberProofBytes
+    );
+  await logTxDetails(tx, "verifyHistoricalSlot");
 }
 
 async function verifyValidator({ slot, index, dryrun, withdrawal, signer }) {
@@ -626,6 +752,7 @@ async function getValidator({ slot, index }) {
 module.exports = {
   requestValidatorWithdraw,
   verifySlot,
+  verifyOldSlot,
   blockToSlot,
   slotToBlock,
   slotToRoot,
