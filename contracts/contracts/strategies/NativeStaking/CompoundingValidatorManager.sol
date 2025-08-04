@@ -558,7 +558,102 @@ abstract contract CompoundingValidatorManager is Governable {
 
     // slither-disable-end reentrancy-no-eth
 
-    /// @notice Stores the current ETH balance at the current block.
+    /// @notice Stores the current ETH balance at the current block and beacon block root
+    ///         of the slot that is associated with the previous block.
+    ///
+    /// When snapping / verifying balance it is of a high importance that there is no
+    /// miss-match in respect to ETH that is held by the contract and balances that are
+    /// verified on the validators.
+    /// 
+    /// First some context on the beacon-chain block building behaviour. Relevant parts of
+    /// constructing a block on the beacon chain consist of:
+    ///  - process_withdrawals: ETH is deducted from the validator's balance
+    ///  - process_execution_payload: immediately after the previous step executing all the
+    ///    transactions
+    ///  - apply the withdrawals: adding ETH to the recipient which is the withdrawal address
+    ///    contained in the withdrawal credentials of the exited validators
+    ///  
+    /// That means that balance increases which are part of the post-block execution state are
+    /// done within the block, but the transaction that are contained within that block can not
+    /// see / interact with the balance from the exited validators. Only transactions in the
+    /// next block can do that.
+    ///
+    /// When snap balances is performed the state of the chain is snapped across 2 separate
+    /// chain states:
+    ///  - ETH balance of the contract is recorded on block X -> and corresponding slot Y
+    ///  - beacon chain block root is recorded of block X - 1 -> and corresponding slot Y - 1
+    ///    given there were no missed slots. It could also be Y - 2, Y - 3 depending on how 
+    ///    many slots have not managed to propose a block. For the sake of simplicity this slot
+    ///    will be referred to as Y - 1 as it makes no difference in the argument
+    ///
+    /// Given these 2 separate chain states it is paramount that verify balances can not experience
+    /// miss-counting ETH or much more dangerous double counting of the ETH.
+    /// 
+    /// When verifyBalances is called it is performed on the current block Z where Z > X. Verify
+    /// balances adds up all the ETH (omitting WETH) controlled by this contract:
+    ///  - ETH balance in the contract on block X
+    ///  - ETH balance in Deposits on block Z that haven't been yet processed in slot Y - 1
+    ///  - ETH balance in validators that are active in slot Y - 1
+    ///  - skips the ETH balance in validators that have withdrawn in slot Y - 1 (or sooner)
+    ///    and have their balance visible to transactions in slot Y and corresponding block X
+    ///    (or sooner)
+    ///
+    /// Lets verify the correctness of ETH accounting given the above described behaviour.
+    /// 
+    /// *ETH balance in the contract on block X*
+    ///
+    /// This is an ETH balance of the contract on a non current X block. Any ETH leaving the 
+    /// contract as a result of a withdrawal subtracts from the ETH accounted for on block X 
+    /// if `verifyBalances` has already been called. It also invalidates a `snapBalances` in 
+    /// case `verifyBalances` has not been called yet. Not performing this would result in not 
+    /// accounting for the withdrawn ETH that has happened anywhere in the block interval [X + 1, Z].
+    /// 
+    /// Similarly to withdrawals any `stakeEth` deposits to the deposit contract adds to the ETH
+    /// accounted for since the last `verifyBalances` has been called. And it invalidates the
+    /// `snapBalances` in case `verifyBalances` hasn't been yet called. Not performing this 
+    /// would result in double counting the `stakedEth` since it would be present once in the 
+    /// snapped contract balance and the second time in deposit storage variables.
+    /// 
+    /// This behaviour is correct.
+    /// 
+    /// *ETH balance in Deposits on block Z that haven't been yet processed in slot Y - 1*
+    /// 
+    /// The contract sums up all the ETH that has been deposited to the Beacon chain deposit
+    /// contract at block Z. The execution layer doesn't have direct access to the state of 
+    /// deposits on the beacon chain. And if it is to sum up all the ETH that is marked to be
+    /// deposited it needs to be sure to not double count ETH that is in deposits (storage vars)
+    /// and could also be part of the validator balances. It does that by verifying that at
+    /// slot Y - 1 none of the deposits visible on block Z have been processed. Meaning since
+    /// the last snap till now all are still in queue. Which ensures they can not be part of 
+    /// the validator balances in later steps.
+    ///
+    /// This behaviour is correct.
+    ///
+    /// *ETH balance in validators that are active in slot Y - 1*
+    /// 
+    /// The contract is verifying none of the deposits on Y - 1 slot have been processed and
+    /// for that reason it checks the validator balances in the same slot. Ensuring accounting
+    /// correctness.
+    ///
+    /// This behaviour is correct.
+    ///
+    /// *The withdrawn validators*
+    ///
+    /// The withdrawn validators could have their balances deducted in any slot before slot
+    /// Y - 1 and the execution layer sees the balance increase in the subsequent slot. Lets
+    /// look at the "worst case scenario" where the validator withdrawal is processed in the
+    /// slot Y - 1 (snapped slot) and see their balance increase (in execution layer) in slot
+    /// Y -> block X. The ETH balance on the contract is snapped at block X meaning that 
+    /// even if the validator exits at the latest possible time it is paramount that the ETH
+    /// balance on the execution layer is recorded in the next block. Correctly accounting
+    /// for the withdrawn ETH. 
+    ///
+    /// Worth mentioning if the validator exit is processed by the slot Y and balance increase
+    /// seen on the execution layer on block X + 1 the withdrawal is ignored by both the 
+    /// validator balance verification as well as execution layer contract balance snap. 
+    ///
+    /// This behaviour is correct.
+    ///
     /// The validator balances on the beacon chain can then be proved with `verifyBalances`.
     /// Can only be called by the registrator.
     function snapBalances() external onlyRegistrator {
