@@ -22,11 +22,10 @@ interface IBeaconProofs {
     ) external view;
 
     function verifyValidatorBalance(
-        bytes32 root,
+        bytes32 balancesContainerRoot,
         bytes32 validatorBalanceLeaf,
         bytes calldata balanceProof,
-        uint64 validatorIndex,
-        BalanceProofLevel level
+        uint64 validatorIndex
     ) external view returns (uint256 validatorBalance);
 
     function verifyFirstPendingDepositSlot(

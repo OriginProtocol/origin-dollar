@@ -93,8 +93,7 @@ describe("ForkTest: Beacon Proofs", function () {
       root,
       leaf,
       proof,
-      validatorIndex,
-      0 // In container
+      validatorIndex
     );
   });
 });

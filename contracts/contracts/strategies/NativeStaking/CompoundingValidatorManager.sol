@@ -348,10 +348,10 @@ abstract contract CompoundingValidatorManager is Governable {
     /// @param amountGwei The amount of ETH to be withdrawn from the validator in Gwei.
     /// A zero amount will trigger a full withdrawal.
     // slither-disable-start reentrancy-no-eth
-    function validatorWithdrawal(bytes calldata publicKey, uint64 amountGwei)
-        external
-        onlyRegistrator
-    {
+    function validatorWithdrawal(
+        bytes calldata publicKey,
+        uint64 amountGwei
+    ) external onlyRegistrator {
         // Hash the public key using the Beacon Chain's format
         bytes32 pubKeyHash = _hashPubKey(publicKey);
         VALIDATOR_STATE currentState = validatorState[pubKeyHash];
@@ -671,8 +671,7 @@ abstract contract CompoundingValidatorManager is Governable {
                         params.balancesContainerRoot,
                         params.validatorBalanceLeaves[i],
                         params.validatorBalanceProofs[i],
-                        verifiedValidators[i].index,
-                        IBeaconProofs.BalanceProofLevel.Container
+                        verifiedValidators[i].index
                     );
 
                 // If the validator balance is zero

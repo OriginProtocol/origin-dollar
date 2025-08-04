@@ -45,28 +45,24 @@ contract BeaconProofs {
         );
     }
 
-    /// @notice Verifies the validator balance against the root of the Balances container
-    /// or the beacon block root
-    /// @param root The root of the Balances container or the beacon block root
+    /// @notice Verifies the validator balance against the root of the Balances container.
+    /// @param balancesContainerRoot The merkle root of the Balances container.
     /// @param validatorBalanceLeaf The leaf node containing the validator balance with three other balances
     /// @param balanceProof The merkle proof for the validator balance against the root.
     /// This is the witness hashes concatenated together starting from the leaf node.
     /// @param validatorIndex The validator index to verify the balance for
-    /// @param level The level of the balance proof, either Container or BeaconBlock
     /// @return validatorBalanceGwei The balance in Gwei of the validator at the given index
     function verifyValidatorBalance(
-        bytes32 root,
+        bytes32 balancesContainerRoot,
         bytes32 validatorBalanceLeaf,
         bytes calldata balanceProof,
-        uint64 validatorIndex,
-        BeaconProofsLib.BalanceProofLevel level
+        uint64 validatorIndex
     ) external view returns (uint256 validatorBalanceGwei) {
         validatorBalanceGwei = BeaconProofsLib.verifyValidatorBalance(
-            root,
+            balancesContainerRoot,
             validatorBalanceLeaf,
             balanceProof,
-            validatorIndex,
-            level
+            validatorIndex
         );
     }
 

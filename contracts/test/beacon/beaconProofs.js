@@ -108,8 +108,7 @@ describe("Beacon chain proofs", async () => {
           balancesContainerRoot,
           balanceLeaf,
           proof,
-          validatorIndex,
-          0 // Container level
+          validatorIndex
         );
         expect(balance).to.eq("32001800437");
       });
@@ -128,8 +127,7 @@ describe("Beacon chain proofs", async () => {
           balancesContainerRoot,
           balanceLeaf,
           proof,
-          validatorIndex,
-          0 // Container level
+          validatorIndex
         );
         expect(balance).to.eq("0");
       });

@@ -27,11 +27,6 @@ library BeaconProofsLib {
     /// See https://ethereum.github.io/consensus-specs/specs/phase0/beacon-chain/#validator
     uint256 internal constant VALIDATOR_PUBKEY_INDEX = 0;
 
-    enum BalanceProofLevel {
-        Container,
-        BeaconBlock
-    }
-
     /// @notice Verifies the validator public key against the beacon block root
     /// BeaconBlock.state.validators[validatorIndex].pubkey
     /// @param beaconBlockRoot The root of the beacon block
@@ -107,44 +102,29 @@ library BeaconProofsLib {
         );
     }
 
-    /// @notice Verifies the validator balance against the root of the Balances container
-    /// or the beacon block root.
-    /// @param root The root of the Balances container or the beacon block root.
+    /// @notice Verifies the validator balance against the root of the Balances container.
+    /// @param balancesContainerRoot The merkle root of the Balances container.
     /// @param validatorBalanceLeaf The leaf node containing the validator balance with three other balances.
     /// @param balanceProof The merkle proof for the validator balance against the root.
     /// This is the witness hashes concatenated together starting from the leaf node.
     /// @param validatorIndex The validator index to verify the balance for
-    /// @param level The level of the balance proof, either Container or BeaconBlock
     /// @return validatorBalanceGwei The balance in Gwei of the validator at the given index
     function verifyValidatorBalance(
-        bytes32 root,
+        bytes32 balancesContainerRoot,
         bytes32 validatorBalanceLeaf,
         bytes calldata balanceProof,
-        uint64 validatorIndex,
-        BalanceProofLevel level
+        uint64 validatorIndex
     ) internal view returns (uint256 validatorBalanceGwei) {
         // Four balances are stored in each leaf so the validator index is divided by 4
         uint64 balanceIndex = validatorIndex / 4;
 
-        // slither-disable-next-line uninitialized-local
-        uint256 generalizedIndex;
-        if (level == BalanceProofLevel.Container) {
-            // Get the index within the balances container, not the Beacon Block
-            // BeaconBlock.state.balances[balanceIndex]
-            generalizedIndex = concatGenIndices(
-                1,
-                BALANCES_HEIGHT,
-                balanceIndex
-            );
-        }
-
-        if (level == BalanceProofLevel.BeaconBlock) {
-            generalizedIndex = concatGenIndices(
-                BALANCES_CONTAINER_GENERALIZED_INDEX,
-                BALANCES_HEIGHT,
-                balanceIndex
-            );
-        }
+        // Get the index within the balances container, not the Beacon Block
+        // BeaconBlock.state.balances[balanceIndex]
+        uint256 generalizedIndex = concatGenIndices(
+            1,
+            BALANCES_HEIGHT,
+            balanceIndex
+        );
 
         validatorBalanceGwei = balanceAtIndex(
             validatorBalanceLeaf,
@@ -154,7 +134,7 @@ library BeaconProofsLib {
         require(
             Merkle.verifyInclusionSha256({
                 proof: balanceProof,
-                root: root,
+                root: balancesContainerRoot,
                 leaf: validatorBalanceLeaf,
                 index: generalizedIndex
             }),
@@ -192,11 +172,10 @@ library BeaconProofsLib {
     ///       Internal Helper Functions
     ////////////////////////////////////////////////////
 
-    function balanceAtIndex(bytes32 validatorBalanceLeaf, uint64 validatorIndex)
-        internal
-        pure
-        returns (uint256)
-    {
+    function balanceAtIndex(
+        bytes32 validatorBalanceLeaf,
+        uint64 validatorIndex
+    ) internal pure returns (uint256) {
         uint256 bitShiftAmount = (validatorIndex % 4) * 64;
         return
             Endian.fromLittleEndianUint64(
