@@ -8,14 +8,20 @@ const { shouldBehaveLikeGovernable } = require("../behaviour/governable");
 const { shouldBehaveLikeStrategy } = require("../behaviour/strategy");
 const {
   MAX_UINT256,
-  beaconChainGenesisTimeMainnet,
+  gIndexFirstPendingDepositSlot,
 } = require("../../utils/constants");
 const { impersonateAndFund } = require("../../utils/signers");
 const { ethUnits } = require("../helpers");
 const { setERC20TokenBalance } = require("../_fund");
 const { zero } = require("../../utils/addresses");
 const { calcDepositRoot } = require("../../tasks/beaconTesting");
-const { hashPubKey, calcBeaconBlockRoot } = require("../../utils/beacon");
+const {
+  hashPubKey,
+  calcBeaconBlockRoot,
+  serializeUint64,
+  calcSlot,
+  calcBlockTimestamp,
+} = require("../../utils/beacon");
 const { randomBytes } = require("crypto");
 const {
   testValidators,
@@ -211,6 +217,11 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
         },
         depositGwei
       );
+    const stakeReceipt = await stakeTx.wait();
+    const depositBlock = await ethers.provider.getBlock(
+      stakeReceipt.blockNumber
+    );
+    const depositSlot = calcSlot(depositBlock.timestamp);
 
     if (state === "STAKED") return stakeTx;
 
@@ -233,10 +244,28 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
 
     if (state === "VERIFIED_VALIDATOR") return verifiedValidatorTx;
 
+    // Recalculate the beacon block root of the first pending deposit proof
+    // as we need to change the slot number to being after the deposit's slot
+    const firstPendingDepositSlot = depositSlot + 100n;
+    const leafHex = await serializeUint64(firstPendingDepositSlot);
+    const beaconBlockRoot = await calcBeaconBlockRoot(
+      leafHex,
+      testValidator.depositProof.proof,
+      gIndexFirstPendingDepositSlot
+    );
+
+    // Set parent beacon root for the block after the verification slot
+    const processSlot = depositSlot + 10000n;
+    const nextBlockTimestamp = calcBlockTimestamp(processSlot) + 12n;
+    await beaconRoots["setBeaconRoot(uint256,bytes32)"](
+      nextBlockTimestamp,
+      beaconBlockRoot
+    );
+
     const verifiedDepositTx = await compoundingStakingSSVStrategy.verifyDeposit(
       depositDataRoot,
-      testValidator.depositProof.processedSlot,
-      testValidator.depositProof.firstPendingDepositSlot,
+      processSlot,
+      firstPendingDepositSlot,
       testValidator.depositProof.proof
     );
 
@@ -250,7 +279,8 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
     depositAmount,
     state = "VERIFIED_DEPOSIT"
   ) => {
-    const { compoundingStakingSSVStrategy, validatorRegistrator } = fixture;
+    const { beaconRoots, compoundingStakingSSVStrategy, validatorRegistrator } =
+      fixture;
 
     // Stake ETH to the new validator
 
@@ -276,13 +306,36 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
         },
         depositGwei
       );
+    const stakeReceipt = await stakeTx.wait();
+    const depositBlock = await ethers.provider.getBlock(
+      stakeReceipt.blockNumber
+    );
+    const depositSlot = calcSlot(depositBlock.timestamp);
 
     if (state === "STAKED") return stakeTx;
 
+    // Recalculate the beacon block root of the first pending deposit proof
+    // as we need to change the slot number to being after the deposit's slot
+    const firstPendingDepositSlot = depositSlot + 100n;
+    const leafHex = await serializeUint64(firstPendingDepositSlot);
+    const beaconBlockRoot = await calcBeaconBlockRoot(
+      leafHex,
+      testValidator.depositProof.proof,
+      gIndexFirstPendingDepositSlot
+    );
+
+    // Set parent beacon root for the block after the verification slot
+    const processSlot = depositSlot + 10000n;
+    const nextBlockTimestamp = calcBlockTimestamp(processSlot) + 12n;
+    await beaconRoots["setBeaconRoot(uint256,bytes32)"](
+      nextBlockTimestamp,
+      beaconBlockRoot
+    );
+
     const verifiedDepositTx = await compoundingStakingSSVStrategy.verifyDeposit(
       depositDataRoot,
-      testValidator.depositProof.processedSlot,
-      testValidator.depositProof.firstPendingDepositSlot,
+      processSlot,
+      firstPendingDepositSlot,
       testValidator.depositProof.proof
     );
 
@@ -575,8 +628,7 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
       const depositBlock = await ethers.provider.getBlock(
         stakeReceipt.blockNumber
       );
-      const depositSlot =
-        BigInt(depositBlock.timestamp - beaconChainGenesisTimeMainnet) / 12n;
+      const depositSlot = calcSlot(depositBlock.timestamp);
 
       // The hash of the public key should match the leaf in the proof
       expect(hashPubKey(testValidator.publicKey)).to.equal(
@@ -597,38 +649,19 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
         testValidator.validatorProof.bytes
       );
 
-      // TODO move into the beacon utils
-
       // Recalculate the beacon block root of the first pending deposit proof
       // as we need to change the slot number to being after the deposit's slot
-      const { ssz } = await import("@lodestar/types");
-
-      const testFirstPendingDepositSlot = depositSlot + 1000n;
-      // const testFirstPendingDepositSlot = 12289474n;
-      log(`First pending deposit slot: ${testFirstPendingDepositSlot}`);
-      // Need to convert to little-endian Uint8Array
-      const slotLittleEndian = ssz.Slot.serialize(
-        Number(testFirstPendingDepositSlot)
-      );
-      // Pad to 32 bytes
-      const leafBuf = Buffer.concat([
-        slotLittleEndian,
-        Buffer.alloc(32 - slotLittleEndian.length),
-      ]);
-      const leafHex = "0x" + Buffer.from(leafBuf).toString("hex");
-      const gIndex = 1584842932228n;
-
-      const beaconBlockRoot = calcBeaconBlockRoot(
+      const firstPendingDepositSlot = depositSlot + 100n;
+      const leafHex = await serializeUint64(firstPendingDepositSlot);
+      const beaconBlockRoot = await calcBeaconBlockRoot(
         leafHex,
         testValidator.depositProof.proof,
-        gIndex
+        gIndexFirstPendingDepositSlot
       );
 
       // Set parent beacon root for the block after the verification slot
-      const nextBlockTimestamp =
-        12n * testFirstPendingDepositSlot +
-        BigInt(beaconChainGenesisTimeMainnet) +
-        12n;
+      const processSlot = depositSlot + 10000n;
+      const nextBlockTimestamp = calcBlockTimestamp(processSlot) + 12n;
       await beaconRoots["setBeaconRoot(uint256,bytes32)"](
         nextBlockTimestamp,
         beaconBlockRoot
@@ -636,8 +669,8 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
 
       await compoundingStakingSSVStrategy.verifyDeposit(
         depositDataRoot,
-        testFirstPendingDepositSlot,
-        testFirstPendingDepositSlot,
+        processSlot,
+        firstPendingDepositSlot,
         testValidator.depositProof.proof
       );
 
@@ -676,8 +709,8 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
       // it works as the deposit block is after the second deposit on the execution layer
       await compoundingStakingSSVStrategy.verifyDeposit(
         depositDataRoot2,
-        testFirstPendingDepositSlot,
-        testFirstPendingDepositSlot,
+        processSlot,
+        firstPendingDepositSlot,
         testValidator.depositProof.proof
       );
 
