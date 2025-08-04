@@ -136,7 +136,7 @@ contract CompoundingStakingSSVStrategy is
         address _recipient,
         address _asset,
         uint256 _amount
-    ) external override onlyVault nonReentrant whenNotPaused {
+    ) external override onlyVault nonReentrant {
         require(_asset == WETH, "Unsupported asset");
 
         _withdraw(_recipient, _asset, _amount, address(this).balance);
@@ -166,13 +166,7 @@ contract CompoundingStakingSSVStrategy is
     /// This does not withdraw from the validators. That has to be done separately with the
     /// `validatorWithdrawal` operation.
     /// Will revert if the strategy is paused for validator consolidation.
-    function withdrawAll()
-        external
-        override
-        onlyVaultOrGovernor
-        nonReentrant
-        whenNotPaused
-    {
+    function withdrawAll() external override onlyVaultOrGovernor nonReentrant {
         uint256 ethBalance = address(this).balance;
         uint256 withdrawAmount = IERC20(WETH).balanceOf(address(this)) +
             ethBalance;

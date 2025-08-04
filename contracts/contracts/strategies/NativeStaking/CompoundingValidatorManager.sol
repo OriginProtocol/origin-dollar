@@ -1,13 +1,11 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import { Pausable } from "@openzeppelin/contracts/security/Pausable.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { Governable } from "../../governance/Governable.sol";
-import { IConsolidationSource } from "../../interfaces/IConsolidation.sol";
 import { IDepositContract } from "../../interfaces/IDepositContract.sol";
 import { IWETH9 } from "../../interfaces/IWETH9.sol";
 import { ISSVNetwork, Cluster } from "../../interfaces/ISSVNetwork.sol";
@@ -25,10 +23,10 @@ struct ValidatorStakeData {
 /**
  * @title Validator lifecycle management contract
  * @notice This contract implements all the required functionality to
- * register, deposit, withdraw, exit, remove and consolidate validators.
+ * register, deposit, withdraw, exit and remove validators.
  * @author Origin Protocol Inc
  */
-abstract contract CompoundingValidatorManager is Governable, Pausable {
+abstract contract CompoundingValidatorManager is Governable {
     using SafeERC20 for IERC20;
 
     /// @notice The amount of ETH in wei that is required for a deposit to a new validator.
@@ -111,10 +109,6 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
     /// be staked.
     uint256 public depositedWethAccountedFor;
 
-    bytes32 public consolidationLastPubKeyHash;
-    address public consolidationSourceStrategy;
-    mapping(address => bool) public consolidationSourceStrategies;
-
     // For future use
     uint256[50] private __gap;
 
@@ -163,16 +157,6 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
         uint256 wethBalance,
         uint256 ethBalance
     );
-    event ConsolidationRequested(
-        bytes32 indexed lastSourcePubKeyHash,
-        bytes32 indexed targetPubKeyHash,
-        address indexed sourceStrategy
-    );
-    event ConsolidationVerified(
-        bytes32 indexed lastSourcePubKeyHash,
-        uint64 indexed lastValidatorIndex,
-        uint256 consolidationCount
-    );
 
     /// @dev Throws if called by any account other than the Registrator
     modifier onlyRegistrator() {
@@ -217,13 +201,6 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
         emit RegistratorChanged(_address);
     }
 
-    /// @notice Adds support for a legacy staking strategy that can be used for consolidation.
-    function addSourceStrategy(address _strategy) external onlyGovernor {
-        consolidationSourceStrategies[_strategy] = true;
-
-        emit SourceStrategyAdded(_strategy);
-    }
-
     /***************************************`
                 Validator Management
     ****************************************/
@@ -242,7 +219,7 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
         bytes calldata sharesData,
         uint256 ssvAmount,
         Cluster calldata cluster
-    ) external onlyRegistrator whenNotPaused {
+    ) external onlyRegistrator {
         // Hash the public key using the Beacon Chain's format
         bytes32 pubKeyHash = _hashPubKey(publicKey);
         // Check each public key has not already been used
@@ -277,7 +254,7 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
     function stakeEth(
         ValidatorStakeData calldata validator,
         uint64 depositAmountGwei
-    ) external onlyRegistrator whenNotPaused {
+    ) external onlyRegistrator {
         uint256 depositAmountWei = uint256(depositAmountGwei) * 1 gwei;
         // Check there is enough WETH from the deposits sitting in this strategy contract
         // There could be ETH from withdrawals but we'll ignore that. If it's really needed
@@ -374,7 +351,6 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
     function validatorWithdrawal(bytes calldata publicKey, uint64 amountGwei)
         external
         onlyRegistrator
-        whenNotPaused
     {
         // Hash the public key using the Beacon Chain's format
         bytes32 pubKeyHash = _hashPubKey(publicKey);
@@ -407,7 +383,7 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
         bytes calldata publicKey,
         uint64[] calldata operatorIds,
         Cluster calldata cluster
-    ) external onlyRegistrator whenNotPaused {
+    ) external onlyRegistrator {
         // Hash the public key using the Beacon Chain's format
         bytes32 pubKeyHash = _hashPubKey(publicKey);
         VALIDATOR_STATE currentState = validatorState[pubKeyHash];
@@ -427,42 +403,6 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
         validatorState[pubKeyHash] = VALIDATOR_STATE.REMOVED;
 
         emit SSVValidatorRemoved(pubKeyHash, operatorIds);
-    }
-
-    /// @notice Receives requests from supported legacy strategies to consolidate sweeping validators to
-    /// a new compounding validator on this new strategy.
-    /// @param lastSourcePubKeyHash The last source validator to be consolidated hashed using the Beacon Chain's format.
-    /// @param targetPubKeyHash The target validator's public key hash using the Beacon Chain's format.
-    function requestConsolidation(
-        bytes32 lastSourcePubKeyHash,
-        bytes32 targetPubKeyHash
-    ) external whenNotPaused {
-        require(
-            consolidationSourceStrategies[msg.sender],
-            "Not a source strategy"
-        );
-
-        // The target validator must be a compounding validator that has been verified
-        require(
-            validatorState[targetPubKeyHash] == VALIDATOR_STATE.VERIFIED,
-            "Target validator not verified"
-        );
-
-        // Ensure balances can not be verified until after the consolidation has been verified.
-        lastSnapTimestamp = 0;
-
-        // Store consolidation state
-        consolidationLastPubKeyHash = lastSourcePubKeyHash;
-        consolidationSourceStrategy = msg.sender;
-
-        // Pause the strategy while the consolidation is in progress
-        _pause();
-
-        emit ConsolidationRequested(
-            lastSourcePubKeyHash,
-            targetPubKeyHash,
-            msg.sender
-        );
     }
 
     /***************************************
@@ -613,80 +553,10 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
 
     // slither-disable-end reentrancy-no-eth
 
-    // TODO what if the last validator was exited rather than consolidated?
-    // slither-disable-start reentrancy-no-eth
-    function verifyConsolidation(
-        uint64 parentBlockTimestamp,
-        uint64 lastValidatorIndex,
-        bytes calldata validatorPubKeyProof,
-        bytes32 balancesLeaf,
-        bytes calldata validatorBalanceProof
-    ) external onlyRegistrator {
-        bytes32 consolidationLastPubKeyHashMem = consolidationLastPubKeyHash;
-        require(
-            consolidationLastPubKeyHashMem != bytes32(0),
-            "No consolidations"
-        );
-
-        bytes32 blockRoot = BeaconRoots.parentBlockRoot(parentBlockTimestamp);
-        // Verify the validator index has the same public key as the last source validator
-        IBeaconProofs(BEACON_PROOFS).verifyValidatorPubkey(
-            blockRoot,
-            consolidationLastPubKeyHashMem,
-            validatorPubKeyProof,
-            lastValidatorIndex,
-            address(this) // Withdrawal address is this strategy
-        );
-
-        // Verify the balance of the last validator in the consolidation batch
-        // is zero. If its not then the consolidation has not been completed.
-        // This proof is to the beacon block root, not the balances container root.
-        uint256 validatorBalance = IBeaconProofs(BEACON_PROOFS)
-            .verifyValidatorBalance(
-                blockRoot,
-                balancesLeaf,
-                validatorBalanceProof,
-                lastValidatorIndex,
-                IBeaconProofs.BalanceProofLevel.BeaconBlock
-            );
-        require(validatorBalance == 0, "Last validator balance not zero");
-
-        // Call the old sweeping strategy to confirm the consolidation has been completed.
-        // This will decrease the balance of the source strategy by 32 ETH for each validator being consolidated.
-        uint256 consolidationCount = IConsolidationSource(
-            consolidationSourceStrategy
-        ).confirmConsolidation();
-
-        // Increase the balance of this strategy by 32 ETH for each validator being consolidated.
-        // This nets out the decrease in the source strategy's balance.
-        lastVerifiedEthBalance += SafeCast.toUint128(
-            consolidationCount * 32 ether
-        );
-
-        // Reset the stored consolidation state
-        consolidationLastPubKeyHash = bytes32(0);
-        consolidationSourceStrategy = address(0);
-
-        emit ConsolidationVerified(
-            consolidationLastPubKeyHashMem,
-            lastValidatorIndex,
-            consolidationCount
-        );
-
-        // Unpause now the balance of the target validator has been verified
-        _unpause();
-
-        // Take a snap of the balances so the actual balances of the new validator balances can be verified
-        _snapBalances();
-    }
-
-    // slither-disable-end reentrancy-no-eth
-
     /// @notice Stores the current ETH balance at the current block.
     /// The validator balances on the beacon chain can then be proved with `verifyBalances`.
     /// Can only be called by the registrator.
-    /// Can not be called while a consolidation is in progress.
-    function snapBalances() external whenNotPaused onlyRegistrator {
+    function snapBalances() external onlyRegistrator {
         _snapBalances();
     }
 

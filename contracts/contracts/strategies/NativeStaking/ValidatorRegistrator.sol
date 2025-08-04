@@ -3,12 +3,10 @@ pragma solidity ^0.8.0;
 
 import { Pausable } from "@openzeppelin/contracts/security/Pausable.sol";
 import { Governable } from "../../governance/Governable.sol";
-import { IConsolidationTarget } from "../../interfaces/IConsolidation.sol";
 import { IDepositContract } from "../../interfaces/IDepositContract.sol";
 import { IVault } from "../../interfaces/IVault.sol";
 import { IWETH9 } from "../../interfaces/IWETH9.sol";
 import { ISSVNetwork, Cluster } from "../../interfaces/ISSVNetwork.sol";
-import { BeaconConsolidation } from "../../beacon/BeaconConsolidation.sol";
 
 struct ValidatorStakeData {
     bytes pubkey;
@@ -54,14 +52,8 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
     /// This can not go above `stakeETHThreshold`.
     uint256 public stakeETHTally;
 
-    /// @notice Number of validators currently being consolidated
-    uint256 public consolidationCount;
-    address public consolidationTargetStrategy;
-    /// @notice Mapping of support target staking strategies that can be used for consolidation
-    mapping(address => bool) public consolidationTargetStrategies;
-
     // For future use
-    uint256[44] private __gap;
+    uint256[47] private __gap;
 
     enum VALIDATOR_STATE {
         NON_REGISTERED, // validator is not registered on the SSV network
@@ -88,16 +80,6 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
         bytes32 indexed pubKeyHash,
         bytes pubKey,
         uint64[] operatorIds
-    );
-    event ConsolidationRequested(
-        bytes[] sourcePubKeys,
-        bytes targetPubKey,
-        address targetStakingStrategy,
-        uint256 consolidationCount
-    );
-    event ConsolidationConfirmed(
-        uint256 consolidationCount,
-        uint256 activeDepositedValidators
     );
     event StakeETHThresholdChanged(uint256 amount);
     event StakeETHTallyReset();
@@ -169,13 +151,6 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
     function resetStakeETHTally() external onlyStakingMonitor {
         stakeETHTally = 0;
         emit StakeETHTallyReset();
-    }
-
-    /// @notice Adds support for a new staking strategy that can be used for consolidation.
-    function addTargetStrategy(address _strategy) external onlyGovernor {
-        consolidationTargetStrategies[_strategy] = true;
-
-        emit TargetStrategyAdded(_strategy);
     }
 
     /// @notice Stakes WETH to the node validators
@@ -406,104 +381,6 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
         Cluster memory cluster
     ) external onlyGovernor {
         ISSVNetwork(SSV_NETWORK).withdraw(operatorIds, ssvAmount, cluster);
-    }
-
-    /***************************************
-                New Consolidation
-    ****************************************/
-
-    function requestConsolidation(
-        bytes[] calldata sourcePubKeys,
-        bytes calldata targetPubKey,
-        address targetStakingStrategy
-    ) external nonReentrant whenNotPaused onlyGovernor {
-        require(
-            consolidationTargetStrategies[targetStakingStrategy],
-            "Invalid target strategy"
-        );
-
-        bytes32 targetPubKeyHash = keccak256(targetPubKey);
-        bytes32 sourcePubKeyHash;
-        for (uint256 i = 0; i < sourcePubKeys.length; ++i) {
-            // hash the source validator's public key using the Beacon Chain's format
-            sourcePubKeyHash = keccak256(sourcePubKeys[i]);
-            require(sourcePubKeyHash != targetPubKeyHash, "Self consolidation");
-            require(
-                validatorsStates[sourcePubKeyHash] == VALIDATOR_STATE.STAKED,
-                "Source validator not staked"
-            );
-
-            // Request consolidation from source to target validator
-            BeaconConsolidation.request(sourcePubKeys[i], targetPubKey);
-
-            // Store the state of the source validator as exiting so it can be removed
-            // after the consolidation is confirmed
-            validatorsStates[sourcePubKeyHash] == VALIDATOR_STATE.EXITING;
-        }
-
-        // Hash using the Beacon Chain's format
-        bytes32 lastSourcePubKeyHash = _hashPubKey(
-            sourcePubKeys[sourcePubKeys.length - 1]
-        );
-        // Call the new compounding staking strategy to validate the target validator
-        IConsolidationTarget(targetStakingStrategy).requestConsolidation(
-            lastSourcePubKeyHash,
-            targetPubKeyHash
-        );
-
-        // Store the consolidation state
-        consolidationCount = sourcePubKeys.length;
-        consolidationTargetStrategy = targetStakingStrategy;
-
-        // Pause the strategy to prevent further consolidations or validator exits
-        _pause();
-
-        emit ConsolidationRequested(
-            sourcePubKeys,
-            targetPubKey,
-            targetStakingStrategy,
-            sourcePubKeys.length
-        );
-    }
-
-    function confirmConsolidation()
-        external
-        nonReentrant
-        whenPaused
-        returns (uint256 consolidationCount_)
-    {
-        // Check the caller is the target staking strategy
-        require(
-            msg.sender == consolidationTargetStrategy,
-            "Not target strategy"
-        );
-
-        // Load the number of validators being consolidated into memory
-        consolidationCount_ = consolidationCount;
-
-        // Need to check this is from the new staking strategy
-        require(consolidationCount_ > 0, "No consolidation in progress");
-
-        // Store the reduced number of active deposited validators
-        // managed by this strategy
-        activeDepositedValidators -= consolidationCount_;
-
-        // Reset the consolidation count
-        consolidationCount = 0;
-        consolidationTargetStrategy = address(0);
-
-        // Unpause the strategy to allow further operations
-        _unpause();
-
-        emit ConsolidationConfirmed(
-            consolidationCount_,
-            activeDepositedValidators
-        );
-    }
-
-    /// @notice Hash a validator public key using the Beacon Chain's format
-    function _hashPubKey(bytes memory pubKey) internal pure returns (bytes32) {
-        return sha256(abi.encodePacked(pubKey, bytes16(0)));
     }
 
     /***************************************
