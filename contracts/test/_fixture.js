@@ -2651,7 +2651,6 @@ async function beaconChainFixture() {
     "MockBeaconRoots",
     addresses.mainnet.beaconRoots
   );
-  fixture.beaconOracle = await ethers.getContract("BeaconOracle");
 
   const { deploy } = deployments;
   const { governorAddr } = await getNamedAccounts();

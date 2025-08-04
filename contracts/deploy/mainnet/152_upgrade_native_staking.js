@@ -1,8 +1,5 @@
 const { deploymentWithGovernanceProposal } = require("../../utils/deploy");
-const {
-  deployBeaconContracts,
-  deployCompoundingStakingSSVStrategy,
-} = require("../deployActions");
+const { deployCompoundingStakingSSVStrategy } = require("../deployActions");
 const addresses = require("../../utils/addresses");
 
 module.exports = deploymentWithGovernanceProposal(
@@ -48,10 +45,7 @@ module.exports = deploymentWithGovernanceProposal(
       "NativeStakingFeeAccumulator3Proxy"
     );
 
-    // 3. Deploy the Beacon Oracle and Proofs contracts
-    await deployBeaconContracts();
-
-    // 4. Deploy the new Native Staking Strategy implementation
+    // 3. Deploy the new Native Staking Strategy implementation
     const dNativeStakingStrategyImpl_2 = await deployWithConfirmation(
       "NativeStakingSSVStrategy",
       [
@@ -86,7 +80,7 @@ module.exports = deploymentWithGovernanceProposal(
       `Deployed 3rd NativeStakingSSVStrategy ${dNativeStakingStrategyImpl_3.address}`
     );
 
-    // 5. Deploy the new Compounding Staking Strategy contracts
+    // 4. Deploy the new Compounding Staking Strategy contracts
     const cCompoundingStakingStrategy =
       await deployCompoundingStakingSSVStrategy();
 

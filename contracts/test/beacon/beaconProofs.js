@@ -76,28 +76,6 @@ describe("Beacon chain proofs", async () => {
     });
   });
   describe("verify proofs", () => {
-    it("slot to beacon root", async () => {
-      const { beaconProofs } = fixture;
-
-      const beaconRoot =
-        "0x5afbdb19dd02b8d6bf10ee1722753b4a687326f1e7c3a4515ec47be3599b0474";
-      const slot = 11952064;
-      const proof =
-        "0x664c1200000000000000000000000000000000000000000000000000000000002246ef8566d87c91d34795476ac71bfe163b817b6217767107a9179056d8f3bf71c990856b4ce5cd0c635561d221a760c5be68a43c7a26b82c92800a16e05ddc";
-
-      await beaconProofs.verifySlot(beaconRoot, slot, proof);
-    });
-    it("block number to beacon root", async () => {
-      const { beaconProofs } = fixture;
-
-      const beaconRoot =
-        "0x5afbdb19dd02b8d6bf10ee1722753b4a687326f1e7c3a4515ec47be3599b0474";
-      const block = 22731293;
-      const proof =
-        "0x005125020000000000000000000000000000000000000000000000000000000014fd5ec25073d92da921cef1c89fbacd22808b2a86b1f7900b3d47e3678fd5fbbfa78c355af9439fdf85a40ac6c0d4c590f5632d79524bd86c1cbe32131b437ce683834cdb8308a714a5bdb210af255c4addfd2a95164b72e4ba6e2197cd50e6536d98837f2dd165a55d5eeae91485954472d56f246df256bf3cae19352a123c3fd84ada359bf655da35554801a25e17b9936836d096553deff04d8365104f76b9cfda6b647d5a680e98b9739378a44744bfe3b3ed6d1a8808d35e67b5aa59e76dd3b9955d892d92338b19976fd07084bfe88a76c3063482b7f30ee60feb2a587c53c4343aa11f1f09eb7b6d3c2c9f9c126d02e8fb13540acf5cbfd231514a460000000000000000000000000000000000000000000000000000000000000000f5a5fd42d16a20302798ef6ed309979b43003d2320d9f0e8ea9831a92759fb4b7b21c6bd63f6d1c4ebf029cc52bc5519811d5017f54679a303230b9b6ab18b80";
-
-      await beaconProofs.verifyBlockNumber(beaconRoot, block, proof);
-    });
     it("balances container to beacon root", async () => {
       const { beaconProofs } = fixture;
 
