@@ -25,20 +25,20 @@ contract CurvePoolBoosterBribesModule is AbstractSafeModule {
     constructor(
         address _safeContract,
         address _operator,
-        address[] calldata _pools
+        address[] memory _pools
     ) AbstractSafeModule(_safeContract) {
         _grantRole(OPERATOR_ROLE, _operator);
         _addPoolBoosterAddress(_pools);
     }
 
-    function addPoolBoosterAddress(address[] calldata pools)
+    function addPoolBoosterAddress(address[] memory pools)
         external
         onlyOperator
     {
         _addPoolBoosterAddress(pools);
     }
 
-    function _addPoolBoosterAddress(address[] calldata pools) internal {
+    function _addPoolBoosterAddress(address[] memory pools) internal {
         for (uint256 i = 0; i < pools.length; i++) {
             POOLS.push(pools[i]);
             emit PoolBoosterAddressAdded(pools[i]);
