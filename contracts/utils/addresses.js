@@ -659,6 +659,5 @@ addresses.hoodi.beaconChainDepositContract =
   "0x00000000219ab540356cBB839Cbe05303d7705Fa";
 addresses.hoodi.defenderRelayer = "0x419B6BdAE482f41b8B194515749F3A2Da26d583b";
 addresses.hoodi.mockBeaconRoots = "0xdCfcAE4A084AA843eE446f400B23aA7B6340484b";
-addresses.hoodi.beaconOracle = "0x6dD9Fde25eDdD7a7adc9F6A3DBB04AF059c40d2b";
 
 module.exports = addresses;

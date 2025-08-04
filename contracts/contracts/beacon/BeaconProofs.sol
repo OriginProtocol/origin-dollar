@@ -88,36 +88,4 @@ contract BeaconProofs {
             firstPendingDepositSlotProof
         );
     }
-
-    /// @notice Verifies the block number to the the beacon block root
-    /// BeaconBlock.body.executionPayload.blockNumber
-    /// @param beaconBlockRoot The root of the beacon block
-    /// @param blockNumber The execution layer block number to verify
-    /// @param blockNumberProof The merkle proof for the block number against the beacon block
-    /// This is the witness hashes concatenated together starting from the leaf node.
-    function verifyBlockNumber(
-        bytes32 beaconBlockRoot,
-        uint256 blockNumber,
-        bytes calldata blockNumberProof
-    ) external view {
-        BeaconProofsLib.verifyBlockNumber(
-            beaconBlockRoot,
-            blockNumber,
-            blockNumberProof
-        );
-    }
-
-    /// @notice Verifies the slot number against the beacon block root.
-    /// BeaconBlock.slot
-    /// @param beaconBlockRoot The root of the beacon block
-    /// @param slot The beacon chain slot to verify
-    /// @param slotProof The merkle proof for the slot against the beacon block root.
-    /// This is the witness hashes concatenated together starting from the leaf node.
-    function verifySlot(
-        bytes32 beaconBlockRoot,
-        uint256 slot,
-        bytes calldata slotProof
-    ) external view {
-        BeaconProofsLib.verifySlot(beaconBlockRoot, slot, slotProof);
-    }
 }

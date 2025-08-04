@@ -14,14 +14,13 @@ actor "Treasury" as treasury <<Origin>>
 participant "API" as api <<P2P>>
 
 box "Execution Chain"
-participant "Harvester" as harv <<Origin>>
 participant "Vault" as vault <<Origin>>
 participant "Native\nStaking\nStrategy" as nativeStrat <<Origin>>
 participant "Compounding\nStaking\nStrategy" as compStrat <<Origin>>
 participant "SSV Network" as ssvNet <<SSV>>
 participant "Token" as ssv <<SSV>>
 participant "WETH" as weth <<Wrapped ETH>>
-participant "Beacon\nOracle" as bo <<Origin>>
+participant "BeaconProofs" as proofs <<Origin>>
 participant "Beacon\nDeposit\nContract" as dep <<System>>
 participant "Beacon\nConsolidation\nRequests" as consol <<System>>
 participant "Beacon\nWithdrawal\nRequests" as withdraw <<System>>
@@ -109,23 +108,6 @@ return
 
 end group
 
-group Governor initializes the Staking Strategy
-
-gov -> compStrat : initialize()
-activate compStrat
-compStrat -> ssv : approve(\nSSV Network,\namount)
-activate ssv
-note right : Staking Strategy approves\nSSV Network to spend\nSSV tokens
-return
-return
-
-gov -> ssv : transfer(\nfrom\nto\namount)
-activate ssv
-note right : transfer SSV tokens\nfrom Governor\nto Staking Strategy
-return
-
-end group
-
 group Registrator creates a new SSV validator
 
 reg -> api: POST\neth/staking/ssv/request/create\nuuid,\nvalidatorsCount,\ntype,\nwithdrawalAddress,\nfeeRecipientAddress,\nssvOwnerAddress,\noperationPeriodInDays,\namountPerValidator,\nwithdrawalCredentialsType
@@ -137,7 +119,7 @@ ssvOwnerAddress is Staking Strategy
 type is with-encrypt-key
 ecdhPublicKey public key for encrypting the validator keys
 operationPeriodInDays is 0 if not the first validator in the cluster
-amountPerValidator 1 ETH in Gwei to limit front-run deposits
+amountPerValidator 32 ETH in Gwei to limit front-run deposits
 withdrawalCredentialsType 0x02 for compounding validators
 end note
 api -> api: private key
@@ -191,13 +173,14 @@ return ETH
 compStrat -> dep : deposit(\npubkey,\nwithdrawal_credentials,\nsignature,\ndeposit root)
 activate dep
 note left
-ETH from Staking Strategy is sent to Beacon Deposit.
-Withdrawal credential is the Staking Strategy
+32 ETH from Staking Strategy is sent to Beacon Deposit.
+Withdrawal credential is the Staking Strategy.
 end note
 return
 
 note over compStrat
-store deposit pubKeyHash, amountGwei, blockNumber and depositRoot
+Calculate deposit slot from block timestamp.
+Store deposit pubKeyHash, amountGwei, slot and depositRoot.
 end note
 
 return
@@ -247,12 +230,13 @@ compStrat -> dep : deposit(\npubkey,\nwithdrawal_credentials,\nsignature,\ndepos
 activate dep
 note left
 ETH from Staking Strategy is sent to Beacon Deposit.
-Withdrawal credential is the Staking Strategy
+Withdrawal credential is the Staking Strategy.
 end note
 return
 
 note over compStrat
-store deposit pubKeyHash, amountGwei, blockNumber and depositRoot
+Calculate deposit slot from block timestamp.
+Store deposit pubKeyHash, amountGwei, slot and depositRoot.
 end note
 return
 
@@ -264,7 +248,7 @@ note over val : Pending deposit added\nBeaconBlock.state.PendingDeposits[index]
 
 note over val: Validator balance updated\nBeaconBlock.state.balances[balanceIndex]
 
-... end of the epoch ...
+... Start of the epoch ...
 
 note over val: Validator activated if >= 32 ETH
 
@@ -273,12 +257,12 @@ end group
 group Verify validator
 
 sender -> val : getBlockV2(slot)
-note left : slot after the\nvalidator was processed
+note left : Any slot after the\nvalidator was processed
 activate val
 return beacon block
 
 sender -> val : getStateV2(slot)
-note left : slot after the\nvalidator was processed
+note left : Any slot after the\nvalidator was processed
 activate val
 return beacon state
 
@@ -291,14 +275,23 @@ note over compStrat : check the validator is STAKED
 
 compStrat -> roots : get(nextBlockTimestamp)
 note left
-timestamp of the block after the block we want to verify.
+Timestamp of any block after the block we want to verify.
 This is because the timestamp will get the parent block root.
 end note
 activate roots
 return parent block root
 
+compStrat -> proofs : verifyValidatorPubkey(\n beacon block root,\n pubKeyHash,\n validatorPubKeyProof,\n validatorIndex,\n withdrawalAddress)
+activate proofs
+note over proofs
+Index BeaconBlock.state.validators[validatorIndex].pubkey
+Verify merkle proof of pubKeyHash against the beacon block root.
+Verify first witness of the proof, which is the withdrawal credential,
+contains the Staking Strategy address.
+end note
+return
+
 note over compStrat
-Verify the pub key hash is for the validator index.
 Add the validator to the active validators.
 end note
 
@@ -307,87 +300,48 @@ end group
 group Verify validator deposit
 
 sender -> val : getBlockV2(slot)
-note left : slot the on or after the deposit\nwas created the execution layer
+note left : Any slot after the deposit was\nprocessed on the beacon chain
 activate val
 return beacon block
 
 sender -> val : getStateV2(slot)
-note left : slot the on or after the deposit\nwas created the execution layer
+note left : Any slot after the deposit was\nprocessed on the beacon chain
 activate val
 return beacon state
 
-sender -> sender : generateSlotProof(\nslot,\nbeacon block)
-sender -> sender : generateBlockProof(\nblock number,\nbeacon block,\nbeacon state)
+sender -> sender : generateFirstPendingDepositSlotProof(\n beacon block,\n beacon state)
 
-' map block number to slot in Beacon Oracle
-sender -> bo : verifySlot(\nnextBlockTimestamp,\ndepositBlockNumber,\nslot,\nslot proof,\nblock proof)
-activate bo
-bo -> roots : get(timestamp)
-note left
-timestamp of the block after the block we want to map.
-This is because the timestamp will get the parent block root.
-end note
-activate roots
-return parent block root
-note over bo
-verify slot proof to block root
-verify block number proof to block root
-store map of block to slot
-end note
-return
-
-sender -> val : getBlockV2(slot)
-note left : slot after the deposit was\nprocessed on the beacon chain
-activate val
-return beacon block
-
-sender -> val : getStateV2(slot)
-note left : slot after the deposit was\nprocessed on the beacon chain
-activate val
-return beacon state
-
-sender -> sender : generateSlotProof(\nslot,\nbeacon block)
-sender -> sender : generateBlockProof(\nblock number,\nbeacon block,\nbeacon state)
-
-' map block number to slot in Beacon Oracle
-sender -> bo : verifySlot(\nnextBlockTimestamp,\nblockNumber,\nslot,\nslot proof,\nblock proof)
-activate bo
-bo -> roots : get(timestamp)
-note left
-timestamp of the block after the block we want to map.
-This is because the timestamp will get the parent block root.
-end note
-activate roots
-return parent block root
-note over bo
-verify slot proof to block root
-verify block number proof to block root
-store map of slot to beacon chain root
-end note
-return
-
-sender -> sender : generateFirstPendingDepositSlotProof(\nbeacon block,\nbeacon state)
-
-sender -> compStrat : verifyDeposit(\ndepositDataRoot,\ndepositBlockNumber,\nprocessedSlot,\nfirstPendingDepositSlot,\nfirstPendingDepositSlotProof)
+sender -> compStrat : verifyDeposit(\ndepositDataRoot,\n verificationSlot,\n firstPendingDepositSlot,\n firstPendingDepositSlotProof)
 activate compStrat
 
-note over compStrat : stored deposit needs to be before\nor at the depositBlockNumber
+note over compStrat
+Check stored deposit slot is\nbefore the first pending deposit slot.
+Check the verification slot is after the stored deposit slot.
+Calculate next block timestamp from the verification slot.
+end note
 
-compStrat -> bo : slotToBlock(\nmappedBlockNumber)
-note left : map the deposit block number to a deposit slot
-activate bo
-return slot
+compStrat -> roots : get(nextBlockTimestamp)
+note left
+Timestamp of block after the verification slot.
+This is because the timestamp will get the parent block root.
+end note
+activate roots
+return beacon block root of the verification slot
 
-note over compStrat : Check the deposit slot is\nbefore the first pending deposit slot
-
-compStrat -> bo : slotToRoot(\nprocessedSlot)
-activate bo
-return beacon block root after the deposit was processed
+compStrat -> proofs : verifyFirstPendingDepositSlot(\n beacon block root,\n firstPendingDepositSlot,\n firstPendingDepositSlotProof)
+activate proofs
+note over proofs
+Encode slot to little endian padded to 32 bytes.
+Index BeaconBlock.state.PendingDeposits[0].slot
+Verify merkle proof of slot against the beacon block root.
+end note
+return
 
 note over compStrat
-verify the slot of the first pending deposit is after when the deposit was processed
-remove the deposit
+Remove deposit from storage.
 end note
+
+return
 
 end group
 
@@ -399,101 +353,87 @@ compStrat -> roots : get(block timestamp)
 activate roots
 return parent block root
 note over compStrat
-store WETH and ETH balances
-against the parent block root
-store timestamp of snap
+Store ETH balance against the parent block root.
+Store block timestamp of snap.
 end note
 return
 
 sender -> val : getBlockV2(slot)
-note left : slot of the first pending deposit\nwhen the balance snap was taken
+note left : slot before\nsnapBalances
 activate val
 return beacon block
 
 sender -> val : getStateV2(slot)
-note left : slot of the first pending deposit\nwhen the balance snap was taken
+note left : slot before\nsnapBalances
 activate val
 return beacon state
 
-sender -> sender : generateSlotProof(\nfirst pending deposit slot,\nbeacon block)
-sender -> sender : generateBlockProof(\nfirst pending deposit block number,\nbeacon block,\nbeacon state)
-
-' map block number to slot in Beacon Oracle
-sender -> bo : verifySlot(\nnextBlockTimestamp,\nblockNumber,\nslot,\nslot proof,\nblock proof)
-note left : verify slot to block number\nof the first pending deposit\nwhen the balance snap was taken
-activate bo
-bo -> roots : get(timestamp)
-note left
-timestamp of the block after the block we want to map.
-This is because the timestamp will get the parent block root.
-end note
-activate roots
-return parent block root
-note over bo
-verify slot proof to block root
-verify block number proof to block root
-store map of block to slot
-end note
-return
-
-sender -> val : getBlockV2(slot)
-note left : slot before snapBalances was taken
-activate val
-return beacon block
-
-sender -> val : getStateV2(slot)
-note left : slot before snapBalances was taken
-activate val
-return beacon state
-
-sender -> sender : generateFirstPendingDepositProof(\nbeacon block,\nbeacon state)
-note left : proof against beacon block root
-sender -> sender : generateValidatorBalanceContainerProof(\nbeacon block,\nbeacon state)
-note left : proof against beacon block root
+sender -> sender : generateFirstPendingDepositProof(\n beacon block,\n beacon state)
+note right : proof against beacon block root
+sender -> sender : generateValidatorBalanceContainerProof(\n beacon block,\n beacon state)
+note right : proof against beacon block root
 loop active validator indexes
-sender -> sender : generateValidatorBalanceProof(\nvalidator index,\nbeacon block,\nbeacon state)
-note left: proof against root of\nbeaconBlock.state.balances
+sender -> sender : generateValidatorBalanceProof(\n validator index,\n beacon block,\n beacon state)
+note right: proof against root of\nbeaconBlock.state.balances
 end
 
-sender -> compStrat : verifyBalances(\nblockRoot,\nfirstPendingDepositSlot,\nfirstPendingDepositSlotProof,\nbalancesContainerRoot,\nvalidatorContainerProof,\nvalidatorBalanceLeaves[],\validatorBalanceProofs[])
+sender -> compStrat : verifyBalances(\n blockRoot,\n firstPendingDepositSlot,\n firstPendingDepositSlotProof,\n balancesContainerRoot,\n validatorContainerProof,\n validatorBalanceLeaves[],\n validatorBalanceProofs[])
 activate compStrat
 
-note over compStrat
-    verify the first pending deposit slot proof against the block root
-end note
+alt if any deposits
+    compStrat -> proofs : verifyFirstPendingDepositSlot(\n beacon block root,\n firstPendingDepositSlot,\n firstPendingDepositSlotProof)
+    activate proofs
+    note over proofs
+    Encode slot to little endian padded to 32 bytes.
+    Index BeaconBlock.state.PendingDeposits[0].slot
+    Verify merkle proof of slot against the beacon block root.
+    end note
+    return
 
-compStrat -> bo : slotToBlock(firstPendingDepositSlot)
-activate bo
-return block number of the first pending deposit
-
-loop strategy deposits
-note over compStrat
-Check the first pending deposit block number
-is before the block number of the deposit.
-add to total deposits
-end note
+    loop strategy deposits
+    note over compStrat
+    Check the first pending deposit slot is before the stored deposit slot.
+    Add deposit amount to total deposits.
+    end note
+    end
 end
 
-note over compStrat
-    verify balances container proof against the snapped block root
-end note
-
-loop active validator indexes
-    note over compStrat
-        verify validator balance proof against the balances container root using the validator index
-        decode the validator balance from the balance leaf
-        total validator balances
+alt if active validators
+    compStrat -> proofs : verifyBalancesContainer(\n beacon block root,\n balancesContainerRoot,\n balancesContainerProof)
+    activate proofs
+    note over proofs
+    Index BeaconBlock.state.balances
+    Verify merkle proof of balance container root against the beacon block root.
     end note
-    alt if balance is zero
+    return
+
+    loop active validator indexes
+
+        compStrat -> proofs : verifyValidatorBalance(\n beacon block root,\n balancesContainerRoot,\n balanceProof,\n validatorIndex)
+        activate proofs
+        note over proofs
+        Index is validatorIndex / 4 as there are four balances per leaf.
+        Verify validator balance against the balances container root.
+        Decode the validator balance from the balance leaf.
+        end note
+        return balance
+
+        alt if balance is zero
+            note over compStrat
+                Remove from active validators.
+            end note
+        end
+
         note over compStrat
-            remove from active validators
+            Add balance to total
         end note
     end
 end
+
 note over compStrat
     store strategy balance =
         ETH balance from snap +
-        WETH balance from snap +
+        WETH balance +
         total deposits +
         total validator balances
 end note
@@ -504,18 +444,13 @@ end group
 
 group Registrator deposits more SSV to SSV cluster
 
-strategist -> ssv : transfer(\nto\namount)
-activate ssv
-note right : transfer SSV tokens\nfrom Treasury\nto Staking Strategy
-return
-
 group SSV ClusterScanner
-reg -> ssvNet : getPastEvents(filter)
+strategist -> ssvNet : getPastEvents(filter)
 activate ssvNet
 note right : get all events where the ownerAddress\nis the Staking Strategy
 return events
 
-reg -> reg : getCluster(events):\n cluster
+strategist -> strategist : getCluster(events):\n cluster
 note right
 cluster data:
   validatorCount
@@ -526,9 +461,7 @@ cluster data:
 end note
 end group
 
-strategist -> compStrat : depositSSV(\noperatorIds,\namount,\ncluster)
-activate compStrat
-compStrat -> ssvNet : deposit(\nclusterOwner,\noperatorIds,\namount,\ncluster)
+strategist -> ssvNet : deposit(\nclusterOwner,\noperatorIds,\namount,\ncluster)
 activate ssvNet
 note right
 clusterOwner is Staking Strategy
@@ -538,7 +471,6 @@ end note
 ssvNet -> ssv : transferFrom(\nfrom\nto\namount)
 activate ssv
 note right: transfer SSV tokens\nfrom Staking Strategy\nto SSV Network
-return
 return
 return
 end group
@@ -564,17 +496,13 @@ group Registrator full or partial withdraw from validator
 
 reg -> compStrat : validatorWithdrawal(\npublicKey\namount)
 activate compStrat
+note right: zero amount means full withdraw
 compStrat -> withdraw : publicKey, amount
 activate withdraw
 return
 return
 
-... wait until withdrawal request have been processed.\nmin four epochs (~25 min), currently 1 day but can take a number of days depending on the number of validators in the exit queue ...
-
-note over val
-If the remaining balance is less than
-32 ETH, the validator is exited
-end note
+... wait until withdrawal request have been processed.\nmin four epochs (~25 min), currently many days but can take a number of days depending on the number of validators in the exit queue ...
  
 val -> compStrat : ETH
 note left : transfer withdrawn ETH\nfrom validator\nto Staking Strategy
@@ -616,57 +544,7 @@ note right : stop paying SSV to Operators\n and reduce required SSV collateral
 return
 return
 
-... wait for the validator to be swept on the Beacon chain\ncurrent time is every 8.5 days ...
-
-
-end group
-
-group Consensus Rewards
-
-note over val
-Consensus layer rewards are
-compounded to the validator's balance.
-end note
-
-end group
-
-group Execution Rewards
-
-mev -> compStrat : ETH
-note right : MEV rewards
-
-sender -> compStrat : ETH
-note right : tx priority fees
-
-note over compStrat : Staking Strategy's WETH balance\ndoes not change from either
-
-end group
-
-group Harvester collects ETH rewards
-
-sender -> harv : harvestAndTransfer(\nstrategy)
-activate harv
-harv -> compStrat : collectRewardTokens()
-activate compStrat
-
-compStrat -> weth : deposit(\nexecution rewards)
-activate weth
-note left : convert ETH rewards to WETH
-return
-
-compStrat -> weth : transfer(\nHarvester,\nrewards)
-activate weth
-note left : transfer rewards as WETH\nfrom Staking Strategy\nto Harvester
-return
-
-return
-
-harv -> weth : transfer(\nVault,\nETH rewards)
-activate weth
-note left : transfer WETH rewards\nfrom Harvester\nto Vault
-return
-
-return
+... wait for the validator to be swept on the Beacon chain\ncurrent time is every 9.5 days ...
 
 end group
 

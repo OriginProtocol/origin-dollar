@@ -4,72 +4,6 @@ const { formatUnits } = require("ethers/lib/utils");
 
 const log = require("../utils/logger")("task:proof");
 
-// BeaconBlock.slot
-async function generateSlotProof({ blockView, blockTree }) {
-  // Have to dynamically import the Lodestar API client as its an ESM module
-  const { createProof, ProofType } = await import(
-    "@chainsafe/persistent-merkle-tree"
-  );
-
-  const generalizedIndex = blockView.type.getPathInfo(["slot"]).gindex;
-  log(`Generalized index for slot: ${generalizedIndex}`);
-
-  log(`Generating slot ${blockView.slot} proof to beacon block root`);
-  const proofObj = createProof(blockTree.rootNode, {
-    type: ProofType.single,
-    gindex: generalizedIndex,
-  });
-  log(`Slot leaf: ${toHex(proofObj.leaf)}`);
-  const proofBytes = toHex(concatProof(proofObj));
-  const depth = proofObj.witnesses.length;
-  log(`Slot proof of depth ${depth} in bytes:\n${proofBytes}`);
-
-  return {
-    proof: proofBytes,
-    generalizedIndex,
-    root: toHex(blockTree.root),
-    leaf: toHex(proofObj.leaf),
-    slot: blockView.slot,
-  };
-}
-
-// BeaconBlock.body.executionPayload.blockNumber
-async function generateBlockProof({ blockView, blockTree }) {
-  // Have to dynamically import the Lodestar API client as its an ESM module
-  const { createProof, ProofType } = await import(
-    "@chainsafe/persistent-merkle-tree"
-  );
-
-  log(`Block number: ${blockView.body.executionPayload.blockNumber}`);
-
-  const generalizedIndex = blockView.type.getPathInfo([
-    "body",
-    "executionPayload",
-    "blockNumber",
-  ]).gindex;
-  log(`Generalized index for block number: ${generalizedIndex}`);
-
-  log(`Generating block number proof to beacon block root`);
-  const proofObj = createProof(blockTree.rootNode, {
-    type: ProofType.single,
-    gindex: generalizedIndex,
-  });
-
-  log(`Block number leaf: ${toHex(proofObj.leaf)}`);
-
-  const proofBytes = toHex(concatProof(proofObj));
-  const depth = proofObj.witnesses.length;
-  log(`Block number proof of depth ${depth} in bytes:\n${proofBytes}`);
-
-  return {
-    proof: proofBytes,
-    generalizedIndex,
-    root: toHex(blockTree.root),
-    leaf: toHex(proofObj.leaf),
-    blockNumber: blockView.body.executionPayload.blockNumber,
-  };
-}
-
 // BeaconBlock.state.PendingDeposits[0].slot
 async function generateFirstPendingDepositSlotProof({
   blockView,
@@ -259,8 +193,6 @@ async function generateBalanceProof({
 }
 
 module.exports = {
-  generateSlotProof,
-  generateBlockProof,
   generateFirstPendingDepositSlotProof,
   generateValidatorPubKeyProof,
   generateBalancesContainerProof,

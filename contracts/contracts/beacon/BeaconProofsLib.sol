@@ -87,12 +87,12 @@ library BeaconProofsLib {
     /// @notice Verifies the balances container against the beacon block root
     /// BeaconBlock.state.balances
     /// @param beaconBlockRoot The root of the beacon block
-    /// @param balancesContainerLeaf The leaf node containing the balances container
+    /// @param balancesContainerRoot The merkle root of the the balances container
     /// @param balancesContainerProof The merkle proof for the balances container to the beacon block root.
     /// This is the witness hashes concatenated together starting from the leaf node.
     function verifyBalancesContainer(
         bytes32 beaconBlockRoot,
-        bytes32 balancesContainerLeaf,
+        bytes32 balancesContainerRoot,
         bytes calldata balancesContainerProof
     ) internal view {
         // BeaconBlock.state.balances
@@ -100,7 +100,7 @@ library BeaconProofsLib {
             Merkle.verifyInclusionSha256({
                 proof: balancesContainerProof,
                 root: beaconBlockRoot,
-                leaf: balancesContainerLeaf,
+                leaf: balancesContainerRoot,
                 index: BALANCES_CONTAINER_GENERALIZED_INDEX
             }),
             "Invalid balance container proof"
@@ -108,9 +108,9 @@ library BeaconProofsLib {
     }
 
     /// @notice Verifies the validator balance against the root of the Balances container
-    /// or the beacon block root
-    /// @param root The root of the Balances container or the beacon block root
-    /// @param validatorBalanceLeaf The leaf node containing the validator balance with three other balances
+    /// or the beacon block root.
+    /// @param root The root of the Balances container or the beacon block root.
+    /// @param validatorBalanceLeaf The leaf node containing the validator balance with three other balances.
     /// @param balanceProof The merkle proof for the validator balance against the root.
     /// This is the witness hashes concatenated together starting from the leaf node.
     /// @param validatorIndex The validator index to verify the balance for
@@ -185,54 +185,6 @@ library BeaconProofsLib {
                 index: FIRST_PENDING_DEPOSIT_SLOT_GENERALIZED_INDEX
             }),
             "Invalid pending deposit proof"
-        );
-    }
-
-    /// @notice Verifies the block number to the the beacon block root
-    /// BeaconBlock.body.executionPayload.blockNumber
-    /// @param beaconBlockRoot The root of the beacon block
-    /// @param blockNumber The execution layer block number to verify
-    /// @param blockNumberProof The merkle proof for the block number against the beacon block
-    /// This is the witness hashes concatenated together starting from the leaf node.
-    function verifyBlockNumber(
-        bytes32 beaconBlockRoot,
-        uint256 blockNumber,
-        bytes calldata blockNumberProof
-    ) internal view {
-        // Convert uint64 block number to a little endian bytes32
-        bytes32 blockNumberLeaf = Endian.toLittleEndianUint64(
-            uint64(blockNumber)
-        );
-        require(
-            Merkle.verifyInclusionSha256({
-                proof: blockNumberProof,
-                root: beaconBlockRoot,
-                leaf: blockNumberLeaf,
-                index: BLOCK_NUMBER_GENERALIZED_INDEX
-            }),
-            "Invalid block number proof"
-        );
-    }
-
-    /// @notice Verifies the slot number against the beacon block root.
-    /// BeaconBlock.slot
-    /// @param beaconBlockRoot The root of the beacon block
-    /// @param slot The beacon chain slot to verify
-    /// @param slotProof The merkle proof for the slot against the beacon block root.
-    /// This is the witness hashes concatenated together starting from the leaf node.
-    function verifySlot(
-        bytes32 beaconBlockRoot,
-        uint256 slot,
-        bytes calldata slotProof
-    ) internal view {
-        require(
-            Merkle.verifyInclusionSha256({
-                proof: slotProof,
-                root: beaconBlockRoot,
-                leaf: Endian.toLittleEndianUint64(uint64(slot)),
-                index: SLOT_GENERALIZED_INDEX
-            }),
-            "Invalid slot number proof"
         );
     }
 
