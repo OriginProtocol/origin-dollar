@@ -4,7 +4,7 @@ const addresses = require("../../utils/addresses");
 
 module.exports = deploymentWithGovernanceProposal(
   {
-    deployName: "152_upgrade_native_staking",
+    deployName: "153_upgrade_native_staking",
     forceDeploy: false,
     //forceSkip: true,
     reduceQueueTime: true,
