@@ -83,7 +83,6 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
     );
     event StakeETHThresholdChanged(uint256 amount);
     event StakeETHTallyReset();
-    event TargetStrategyAdded(address indexed strategy);
 
     /// @dev Throws if called by any account other than the Registrator
     modifier onlyRegistrator() {
