@@ -70,27 +70,40 @@ contract CurvePoolBoosterBribesModule is AbstractSafeModule {
         for (uint256 i = 0; i < length; i++) {
             address poolBoosterAddress = POOLS[i];
 
-            safeContract.execTransactionFromModule(
-                poolBoosterAddress,
-                0, // Value
-                abi.encodeWithSelector(
-                    ICurvePoolBooster.manageNumberOfPeriods.selector,
-                    1, // extraNumberOfPeriods
-                    1000000000000000, // bridgeFee
-                    1000000 // additionalGasLimit
-                ),
-                0
+            // PoolBooster need to have a balance of at least 0.002 ether to operate
+            // 0.001 ether are used for the bridge fee
+            require(
+                poolBoosterAddress.balance > 0.002 ether,
+                "Insufficient balance for bribes"
             );
 
-            safeContract.execTransactionFromModule(
-                poolBoosterAddress,
-                0, // Value
-                abi.encodeWithSelector(
-                    ICurvePoolBooster.manageTotalRewardAmount.selector,
-                    1000000000000000, // bridgeFee
-                    1000000 // additionalGasLimit
+            require(
+                safeContract.execTransactionFromModule(
+                    poolBoosterAddress,
+                    0, // Value
+                    abi.encodeWithSelector(
+                        ICurvePoolBooster.manageNumberOfPeriods.selector,
+                        1, // extraNumberOfPeriods
+                        0.001 ether, // bridgeFee
+                        1000000 // additionalGasLimit
+                    ),
+                    0
                 ),
-                0
+                "Manage number of periods failed"
+            );
+
+            require(
+                safeContract.execTransactionFromModule(
+                    poolBoosterAddress,
+                    0, // Value
+                    abi.encodeWithSelector(
+                        ICurvePoolBooster.manageTotalRewardAmount.selector,
+                        0.001 ether, // bridgeFee
+                        1000000 // additionalGasLimit
+                    ),
+                    0
+                ),
+                "Manage total reward failed"
             );
         }
     }
