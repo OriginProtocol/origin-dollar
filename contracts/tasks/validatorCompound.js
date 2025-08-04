@@ -228,10 +228,23 @@ async function snapStakingStrategy({ block }) {
   );
 }
 
+async function setRegistrator({ account }) {
+  const signer = await getSigner();
+
+  const strategy = await resolveContract(
+    "CompoundingStakingSSVStrategyProxy",
+    "CompoundingStakingSSVStrategy"
+  );
+
+  const tx = await strategy.connect(signer).setRegistrator(account);
+  await logTxDetails(tx, "setRegistrator");
+}
+
 module.exports = {
   snapBalances,
   registerValidator,
   stakeValidator,
   withdrawValidator,
   snapStakingStrategy,
+  setRegistrator,
 };

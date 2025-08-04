@@ -108,6 +108,7 @@ const {
   registerValidator,
   stakeValidator,
   withdrawValidator,
+  setRegistrator,
 } = require("./validatorCompound");
 const { tenderlySync, tenderlyUpload } = require("./tenderly");
 const { setDefaultValidator, snapSonicStaking } = require("../utils/sonic");
@@ -1806,6 +1807,16 @@ subtask(
   .addParam("amount", "Amount to withdraw in ether", undefined, types.float)
   .setAction(withdrawValidator);
 task("withdrawValidator").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+subtask(
+  "setRegistrator",
+  "Set the registrator of the compounding staking strategy"
+)
+  .addParam("account", "Address of the registrator", undefined, types.string)
+  .setAction(setRegistrator);
+task("setRegistrator").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
 
