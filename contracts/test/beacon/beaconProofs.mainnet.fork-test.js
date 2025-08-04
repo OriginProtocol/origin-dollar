@@ -6,8 +6,6 @@ const { getBeaconBlock, getSlot, hashPubKey } = require("../../utils/beacon");
 const {
   generateBalancesContainerProof,
   generateBalanceProof,
-  generateBlockProof,
-  generateSlotProof,
   generateValidatorPubKeyProof,
 } = require("../../utils/proofs");
 
@@ -38,39 +36,6 @@ describe("ForkTest: Beacon Proofs", function () {
     fixture = await loadFixture();
   });
 
-  it("Should verify a block", async () => {
-    const { beaconProofs } = fixture;
-
-    const pastBlockNumber = blockView.body.executionPayload.blockNumber;
-    log(`Beacon block number: ${pastBlockNumber}`);
-
-    const { proof } = await generateBlockProof({
-      blockView,
-      blockTree,
-    });
-
-    log(`About to verify block`);
-    await beaconProofs.verifyBlockNumber(
-      beaconBlockRoot,
-      pastBlockNumber,
-      proof
-    );
-  });
-
-  it("Should verify a slot", async () => {
-    const { beaconProofs } = fixture;
-
-    log(`Beacon slot: ${blockView.slot}`);
-
-    const { proof } = await generateSlotProof({
-      blockView,
-      blockTree,
-    });
-
-    log(`About to verify slot`);
-    await beaconProofs.verifySlot(beaconBlockRoot, pastSlot, proof);
-  });
-
   it("Should verify validator public key", async () => {
     const { beaconProofs } = fixture;
 
@@ -86,12 +51,15 @@ describe("ForkTest: Beacon Proofs", function () {
     const pubKeyHash = hashPubKey(pubKey);
     expect(pubKeyHash).to.eq(leaf);
 
+    const withdrawalAddress = "0xf80432285c9d2055449330bbd7686a5ecf2a7247";
+
     log(`About to verify validator public key`);
     await beaconProofs.verifyValidatorPubkey(
       beaconBlockRoot,
       pubKeyHash,
       proof,
-      validatorIndex
+      validatorIndex,
+      withdrawalAddress
     );
   });
 

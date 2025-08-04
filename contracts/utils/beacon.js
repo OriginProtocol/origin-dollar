@@ -1,6 +1,7 @@
 const fs = require("fs");
 const fetch = require("node-fetch");
 const ethers = require("ethers");
+const { createHash } = require("crypto");
 
 const log = require("./logger")("utils:beacon");
 
@@ -228,6 +229,55 @@ const beaconchainRequest = async (endpoint) => {
   return response.data;
 };
 
+/**
+ * Calculates the Merkle root (as hex string) from a leaf and flat Merkle proof.
+ *
+ * @param {string} leafHex - 0x-prefixed 32-byte hex string
+ * @param {string} proofHex - 0x-prefixed hex string containing N × 32-byte proof (concatenated)
+ * @param {bigint} gindex - Generalized index of the leaf in the Merkle tree
+ * @returns {string} - 0x-prefixed hex string of the calculated Merkle root
+ */
+const calcBeaconBlockRoot = (leafHex, proofHex, gindex) => {
+  const valueBytes = Buffer.from(leafHex.slice(2), "hex");
+  const proofBytes = Buffer.from(proofHex.slice(2), "hex");
+
+  if (proofBytes.length % 32 !== 0) {
+    throw new Error("proofHex must be a multiple of 32 bytes");
+  }
+
+  const proofCount = proofBytes.length / 32;
+  let value = valueBytes;
+  let index = gindex;
+
+  for (let i = 0; i < proofCount; i++) {
+    const sibling = proofBytes.slice(i * 32, (i + 1) * 32);
+    const hasher = createHash("sha256");
+
+    if (index % 2n === 0n) {
+      hasher.update(value);
+      hasher.update(sibling);
+    } else {
+      hasher.update(sibling);
+      hasher.update(value);
+    }
+
+    value = hasher.digest();
+    index >>= 1n;
+
+    if (index === 0n) throw new Error("proof has extra item");
+  }
+
+  if (index !== 1n) throw new Error("proof is missing items");
+
+  const rootHex = "0x" + value.toString("hex");
+
+  log(
+    `Calculated beacon block root: ${rootHex} from leaf: ${leafHex} and gindex: ${gindex}`
+  );
+
+  return rootHex;
+};
+
 module.exports = {
   concatProof,
   getBeaconBlock,
@@ -238,4 +288,5 @@ module.exports = {
   getValidatorBalance,
   getEpoch,
   hashPubKey,
+  calcBeaconBlockRoot,
 };

@@ -24,6 +24,10 @@ const { resolveContract } = require("../utils/resolvers");
 const { impersonateAccount } = require("../utils/signers");
 const { getDefenderSigner } = require("../utils/signersNoHardhat");
 const { getTxOpts } = require("../utils/tx");
+const {
+  beaconChainGenesisTimeHoodi,
+  beaconChainGenesisTimeMainnet,
+} = require("../utils/constants");
 
 const log = require("../utils/logger")("deploy:core");
 
@@ -691,7 +695,6 @@ const upgradeCompoundingStakingSSVStrategy = async () => {
   const assetAddresses = await getAssetAddresses(deployments);
 
   const cOETHVaultProxy = await resolveContract("OETHVaultProxy");
-  const cBeaconOracle = await resolveContract("BeaconOracle");
   const cBeaconProofs = await resolveContract("BeaconProofs");
   const strategyProxy = await resolveContract(
     "CompoundingStakingSSVStrategyProxy"
@@ -699,6 +702,9 @@ const upgradeCompoundingStakingSSVStrategy = async () => {
 
   log("Deploy CompoundingStakingSSVStrategy implementation");
 
+  const genesisTimestamp = isHoodiOrFork
+    ? beaconChainGenesisTimeHoodi
+    : beaconChainGenesisTimeMainnet;
   const dStrategyImpl = await deployWithConfirmation(
     "CompoundingStakingSSVStrategy",
     [
@@ -707,8 +713,8 @@ const upgradeCompoundingStakingSSVStrategy = async () => {
       assetAddresses.SSV, // ssvToken
       assetAddresses.SSVNetwork, // ssvNetwork
       assetAddresses.beaconChainDepositContract, // depositContractMock
-      cBeaconOracle.address, // BeaconOracle
       cBeaconProofs.address, // BeaconProofs
+      genesisTimestamp,
     ]
   );
 
@@ -839,7 +845,8 @@ const deployCompoundingStakingSSVStrategy = async () => {
   const sDeployer = await ethers.provider.getSigner(deployerAddr);
   const cOETHVaultProxy = await ethers.getContract("OETHVaultProxy");
 
-  const cBeaconOracle = await ethers.getContract("BeaconOracle");
+  log("Deploy Beacon Proofs");
+  await deployWithConfirmation("BeaconProofs", []);
   const cBeaconProofs = await ethers.getContract("BeaconProofs");
 
   let governorAddress;
@@ -914,6 +921,9 @@ const deployCompoundingStakingSSVStrategy = async () => {
   }
 
   log("Deploy CompoundingStakingSSVStrategy");
+  const genesisTimestamp = isHoodiOrFork
+    ? beaconChainGenesisTimeHoodi
+    : beaconChainGenesisTimeMainnet;
   const dStrategyImpl = await deployWithConfirmation(
     "CompoundingStakingSSVStrategy",
     [
@@ -922,8 +932,8 @@ const deployCompoundingStakingSSVStrategy = async () => {
       assetAddresses.SSV, // ssvToken
       assetAddresses.SSVNetwork, // ssvNetwork
       assetAddresses.beaconChainDepositContract, // depositContractMock
-      cBeaconOracle.address, // BeaconOracle
       cBeaconProofs.address, // BeaconProofs
+      genesisTimestamp,
     ]
   );
   const cStrategyImpl = await ethers.getContractAt(
@@ -965,19 +975,6 @@ const deployCompoundingStakingSSVStrategy = async () => {
   await withConfirmation(cStrategy.connect(sDeployer).safeApproveAllTokens());
 
   return cStrategy;
-};
-
-const deployBeaconContracts = async () => {
-  log("Deploy Beacon Oracle that maps blocks and slots");
-  if (isTest) {
-    // For unit tests, use the Governor contract
-    await deployWithConfirmation("BeaconOracle", [], "MockBeaconOracle");
-  } else {
-    await deployWithConfirmation("BeaconOracle", []);
-  }
-
-  log("Deploy Beacon Proofs");
-  await deployWithConfirmation("BeaconProofs", []);
 };
 
 /**
@@ -1688,7 +1685,6 @@ module.exports = {
   deployAaveStrategy,
   deployConvexStrategy,
   deployConvexOUSDMetaStrategy,
-  deployBeaconContracts,
   deployNativeStakingSSVStrategy,
   deployCompoundingStakingSSVStrategy,
   deployDrippers,

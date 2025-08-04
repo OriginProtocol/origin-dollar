@@ -52,82 +52,6 @@ async function requestValidatorWithdraw({ pubkey, amount, signer }) {
   await logTxDetails(tx, "requestWithdraw");
 }
 
-async function verifySlot({ block, slot, dryrun, oracle, signer, live }) {
-  // Either use live chain or local fork
-  const providerLive =
-    live || !signer ? await getLiveProvider(signer?.provider) : signer.provider;
-
-  if (!block && !slot) {
-    block = await providerLive.getBlockNumber();
-    block -= 2; // Use the third last block
-    log(`Using the third last block ${block} for verification`);
-  }
-
-  let nextBlockTimestamp;
-  // If a block was supplied, we need to work out the slot
-  if (block) {
-    // Get the timestamp of the next block
-    const nextBlock = block + 1;
-    const { root: blockRoot, timestamp } = await beaconRoot({
-      live,
-      block: nextBlock,
-      signer,
-    });
-    nextBlockTimestamp = timestamp;
-
-    slot = await getSlot(blockRoot);
-    log(`Slot for block ${block} is:`, slot);
-  }
-
-  const { blockView, blockTree } = await getBeaconBlock(slot);
-
-  // If a slot was supplied we need to work out the next block
-  if (!block) {
-    block = blockView.body.executionPayload.blockNumber;
-    log(`Using block ${block} for slot ${slot}`);
-
-    const nextBlock = block + 1;
-    const { timestamp } = await providerLive.getBlock(nextBlock);
-    nextBlockTimestamp = timestamp;
-    log(`Next mainnet block ${nextBlock} has timestamp ${nextBlockTimestamp}`);
-  }
-
-  const { proof: slotProofBytes, root: beaconBlockRoot } =
-    await generateSlotProof({
-      blockView,
-      blockTree,
-    });
-
-  const { proof: blockNumberProofBytes } = await generateBlockProof({
-    blockView,
-    blockTree,
-  });
-
-  if (dryrun) {
-    console.log(`beaconBlockRoot: ${beaconBlockRoot}`);
-    console.log(`nextBlockTimestamp: ${nextBlockTimestamp}`);
-    console.log(`block: ${block}`);
-    console.log(`slot: ${slot}`);
-    console.log(`slotProofBytes: ${slotProofBytes}`);
-    console.log(`blockNumberProofBytes: ${blockNumberProofBytes}`);
-    return;
-  }
-
-  log(
-    `About to verify block ${block} and slot ${slot} to beacon chain root ${beaconBlockRoot}`
-  );
-  const tx = await oracle
-    .connect(signer)
-    .verifySlot(
-      nextBlockTimestamp,
-      block,
-      slot,
-      slotProofBytes,
-      blockNumberProofBytes
-    );
-  await logTxDetails(tx, "verifySlot");
-}
-
 async function verifyValidator({ slot, index, dryrun, withdrawal, signer }) {
   // Get provider to mainnet or testnet and not a local fork
   const provider = await getLiveProvider(signer.provider);
@@ -215,18 +139,6 @@ async function verifyDeposit({
   // TODO If no block then get the block from the stakeETH event
   // For now we'll throw an error
   if (!block) throw Error("Block is currently required for verifyDeposit");
-
-  if (!dryrun) {
-    // Check the deposit block has been mapped in the Beacon Oracle
-    const oracle = await resolveContract("BeaconOracle");
-    const isMapped = await oracle.isBlockMapped(block);
-    if (!isMapped) {
-      log(`Block ${block} is not mapped in the Beacon Oracle`);
-      await verifySlot({ block, signer });
-    } else {
-      log(`Block ${block} is already mapped in the Beacon Oracle`);
-    }
-  }
 
   // Uses the latest slot if the slot is undefined
   const { blockView, blockTree, stateView } = await getBeaconBlock(slot);
@@ -369,28 +281,11 @@ async function verifyBalances({ root, indexes, depositSlot, dryrun, signer }) {
     return;
   }
 
-  const oracle = await resolveContract("BeaconOracle");
-  depositSlot = depositSlot || firstPendingDepositSlot;
-  if (depositSlot > firstPendingDepositSlot)
-    throw Error(
-      "Deposit slot can not be greater than the slot of the first deposit in the queue.\nfirst pending deposit slot <= mapped deposit slot < pending staking deposits"
-    );
-
-  const isMapped = await oracle.isSlotMapped(depositSlot);
-  if (!isMapped) {
-    log(`Slot ${depositSlot} is not mapped in the Beacon Oracle`);
-    const beaconOracle = await resolveContract("BeaconOracle");
-    // TODO need to check if depositSlot can be mapped. That is, its not too old.
-    await verifySlot({ slot: depositSlot, signer, oracle: beaconOracle });
-    // TODO if it's too old, we find a block we have mapped that is before it.
-  }
-
   log(
     `About verify ${verifiedValidators.length} validator balances for slot ${verificationSlot} to beacon block root ${beaconBlockRoot} with mapped deposit slot ${depositSlot}`
   );
   const tx = await strategy.connect(signer).verifyBalances({
     blockRoot: beaconBlockRoot,
-    mappedDepositSlot: depositSlot,
     firstPendingDepositSlot,
     firstPendingDepositSlotProof,
     balancesContainerRoot,
@@ -399,36 +294,6 @@ async function verifyBalances({ root, indexes, depositSlot, dryrun, signer }) {
     validatorBalanceProofs,
   });
   await logTxDetails(tx, "verifyBalances");
-}
-
-async function blockToSlot({ block }) {
-  const oracle = await resolveContract("BeaconOracle");
-
-  const slot = await oracle.blockToSlot(block);
-
-  console.log(`Block ${block} maps to slot ${slot}`);
-
-  return slot;
-}
-
-async function slotToBlock({ slot }) {
-  const oracle = await resolveContract("BeaconOracle");
-
-  const block = await oracle.slotToBlock(slot);
-
-  console.log(`Slot ${slot} maps to block ${block}`);
-
-  return block;
-}
-
-async function slotToRoot({ slot }) {
-  const oracle = await resolveContract("BeaconOracle");
-
-  const root = await oracle.slotToRoot(slot);
-
-  console.log(`Slot ${slot} maps to beacon block root ${root}`);
-
-  return root;
 }
 
 async function beaconRoot({ block, live, signer }) {
@@ -625,10 +490,6 @@ async function getValidator({ slot, index }) {
 
 module.exports = {
   requestValidatorWithdraw,
-  verifySlot,
-  blockToSlot,
-  slotToBlock,
-  slotToRoot,
   beaconRoot,
   getValidator,
   verifyValidator,

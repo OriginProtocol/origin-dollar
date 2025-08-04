@@ -44,10 +44,11 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
     address public immutable SSV_NETWORK;
     /// @notice Address of the OETH Vault proxy contract
     address public immutable VAULT_ADDRESS;
-    /// @notice Address of the Beacon Oracle contract that maps block numbers to slots
-    address public immutable BEACON_ORACLE;
     /// @notice Address of the Beacon Proofs contract that verifies beacon chain data
     address public immutable BEACON_PROOFS;
+    /// @notice The timestamp of the Beacon chain genesis.
+    /// @dev this is different on Testnets like Hoodi so is set at deployment time.
+    uint64 public immutable BEACON_GENESIS_TIMESTAMP;
 
     /// @notice Address of the registrator - allowed to register, withdraw, exit and remove validators
     address public validatorRegistrator;
@@ -62,7 +63,7 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
     struct DepositData {
         bytes32 pubKeyHash;
         uint64 amountGwei;
-        uint64 blockNumber;
+        uint64 slot;
         uint32 depositIndex;
         DepositStatus status;
     }
@@ -183,22 +184,27 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
     /// @param _vaultAddress Address of the Vault
     /// @param _beaconChainDepositContract Address of the beacon chain deposit contract
     /// @param _ssvNetwork Address of the SSV Network contract
-    /// @param _beaconOracle Address of the Beacon Oracle contract that maps block numbers to slots
     /// @param _beaconProofs Address of the Beacon Proofs contract that verifies beacon chain data
+    /// @param _beaconGenesisTimestamp The timestamp of the Beacon chain's genesis.
     constructor(
         address _wethAddress,
         address _vaultAddress,
         address _beaconChainDepositContract,
         address _ssvNetwork,
-        address _beaconOracle,
-        address _beaconProofs
+        address _beaconProofs,
+        uint64 _beaconGenesisTimestamp
     ) {
         WETH = _wethAddress;
         BEACON_CHAIN_DEPOSIT_CONTRACT = _beaconChainDepositContract;
         SSV_NETWORK = _ssvNetwork;
         VAULT_ADDRESS = _vaultAddress;
-        BEACON_ORACLE = _beaconOracle;
         BEACON_PROOFS = _beaconProofs;
+        BEACON_GENESIS_TIMESTAMP = _beaconGenesisTimestamp;
+
+        require(
+            block.timestamp > _beaconGenesisTimestamp,
+            "Invalid genesis timestamp"
+        );
     }
 
     /***************************************
@@ -328,11 +334,20 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
         if (currentState == VALIDATOR_STATE.REGISTERED) {
             validatorState[pubKeyHash] = VALIDATOR_STATE.STAKED;
         }
+
+        /// After the Pectra upgrade the validators have a new restriction when proposing
+        /// blocks. The timestamps are at strict intervals of 12 seconds from the genesis block
+        /// forward. Each slot is created at strict 12 second intervals and those slots can
+        /// either have blocks attached to them or not. This way using the block.timestamp
+        /// the slot number can easily be calculated.
+        uint64 depositSlot = (SafeCast.toUint64(block.timestamp) -
+            BEACON_GENESIS_TIMESTAMP) / 12;
+
         // Store the deposit data for verifyDeposit and verifyBalances
         deposits[validator.depositDataRoot] = DepositData({
             pubKeyHash: pubKeyHash,
             amountGwei: depositAmountGwei,
-            blockNumber: SafeCast.toUint64(block.number),
+            slot: depositSlot,
             depositIndex: SafeCast.toUint32(depositsRoots.length),
             status: DepositStatus.PENDING
         });
@@ -500,7 +515,8 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
         // The parent beacon block root of the next block is the beacon block root of the slot we are verifying.
         bytes32 blockRoot = BeaconRoots.parentBlockRoot(nextBlockTimestamp);
 
-        // Verify the validator index is for the validator with the given public key
+        // Verify the validator index is for the validator with the given public key.
+        // Also verify the validator's withdrawal credential points to this strategy.
         IBeaconProofs(BEACON_PROOFS).verifyValidatorPubkey(
             blockRoot,
             pubKeyHash,
@@ -508,8 +524,6 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
             validatorIndex,
             address(this) // Withdrawal address is this strategy
         );
-
-        // TODO verify the validator's withdrawal credential points to this strategy
 
         // Store the validator state as verified
         validatorState[pubKeyHash] = VALIDATOR_STATE.VERIFIED;
@@ -526,10 +540,10 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
     /// This means the accounting of the strategy's ETH moves from a pending deposit to a validator balance.
     /// @param depositDataRoot The root of the deposit data that was stored when
     /// the deposit was made on the execution layer.
-    /// @param depositBlockNumber A block number that is on or after the block the deposit
-    /// was made on the execution layer.
-    /// @param processedSlot Any slot on or after the deposit was processed on the beacon chain.
+    /// @param verificationSlot Any slot on or after the deposit was processed on the beacon chain.
     /// Can not be a slot with pending deposits with the same slot as the deposit being verified.
+    /// Can not be a slot before a missed slot as the Beacon Root contract will have the parent block root
+    /// set for the next block timestamp in 12 seconds time.
     /// @param firstPendingDepositSlot The slot of the first pending deposit in the beacon chain
     /// @param firstPendingDepositSlotProof The merkle proof that the slot of the first pending deposit
     /// matches the beacon chain.
@@ -537,8 +551,7 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
     // slither-disable-start reentrancy-no-eth
     function verifyDeposit(
         bytes32 depositDataRoot,
-        uint64 depositBlockNumber,
-        uint64 processedSlot,
+        uint64 verificationSlot,
         uint64 firstPendingDepositSlot,
         bytes calldata firstPendingDepositSlotProof
     ) external {
@@ -549,17 +562,6 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
             validatorState[deposit.pubKeyHash] == VALIDATOR_STATE.VERIFIED,
             "Validator not verified"
         );
-        // The deposit block number mapped to a slot needs to be the same block or after
-        // the deposit in `stakeETH` was created on the execution layer.
-        require(
-            deposit.blockNumber <= depositBlockNumber,
-            "Deposit block before deposit"
-        );
-
-        // Get the slot that is on or after the deposit was made on the execution layer.
-        uint64 depositSlot = IBeaconOracle(BEACON_ORACLE).blockToSlot(
-            depositBlockNumber
-        );
 
         // Check the deposit slot is before the first pending deposit's slot on the beacon chain.
         // If this is not true then we can't guarantee the deposit has been processed by the beacon chain.
@@ -568,19 +570,24 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
         // If the first pending deposit's slot is 0 then there are no pending deposits so
         // our deposit must have been processed on the beacon chain.
         require(
-            depositSlot < firstPendingDepositSlot ||
+            deposit.slot < firstPendingDepositSlot ||
                 firstPendingDepositSlot == 0,
             "Deposit not processed"
         );
 
-        // The slot of the execution layer deposit must be before
-        // the slot that the deposit was processed on the beacon chain.
-        require(depositSlot < processedSlot, "Slot not after deposit");
+        // The verification slot must be after the deposit's slot.
+        // This is needed for when the deposit queue is empty. That is, firstPendingDepositSlot is 0.
+        require(deposit.slot < verificationSlot, "Slot not after deposit");
 
-        // Get the beacon block root for the slot that is on or after the deposit was processed on the beacon chain.
-        bytes32 blockRoot = IBeaconOracle(BEACON_ORACLE).slotToRoot(
-            processedSlot
-        );
+        // Calculate the next block timestamp from the verification slot.
+        uint64 nextBlockTimestamp = 12 *
+            verificationSlot +
+            BEACON_GENESIS_TIMESTAMP +
+            // Add 12 seconds for the next block
+            12;
+        // Get the parent beacon block root of the next block which is the block root of the verification slot.
+        // This will revert if the slot after the verification slot was missed.
+        bytes32 blockRoot = BeaconRoots.parentBlockRoot(nextBlockTimestamp);
 
         // Verify the slot of the first pending deposit matches the beacon chain
         IBeaconProofs(BEACON_PROOFS).verifyFirstPendingDepositSlot(
@@ -705,7 +712,6 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
     // A struct is used to avoid stack too deep errors
     struct VerifyBalancesParams {
         bytes32 blockRoot;
-        uint64 mappedDepositSlot;
         uint64 firstPendingDepositSlot;
         // BeaconBlock.BeaconBlockBody.deposits[0].slot
         bytes firstPendingDepositSlotProof;
@@ -739,27 +745,17 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
                 params.firstPendingDepositSlotProof
             );
 
-            // As the BeaconOracle probably doesn't have the slot of the first pending deposit mapped to a block,
-            // use any slot that is on or after the slot of the first pending deposit. That is,
-            // firstPendingDepositSlot <= mappedDepositSlot < deposits[depositDataRoot].blockNumber
-            require(
-                params.firstPendingDepositSlot <= params.mappedDepositSlot,
-                "Invalid deposit slot"
-            );
-            uint64 firstPendingDepositBlockNumber = IBeaconOracle(BEACON_ORACLE)
-                .slotToBlock(params.mappedDepositSlot);
-
             // For each native staking contract's deposits
             for (uint256 i = 0; i < depositsCount; ++i) {
                 bytes32 depositDataRoot = depositsRoots[i];
 
                 // Check the stored deposit is still waiting to be processed on the beacon chain.
-                // That is, the first pending deposit block number is before the
-                // block number of the staking strategy's deposit.
-                // If it has it will need to be verified with `verifyDeposit`
+                // That is, the first pending deposit slot is before the
+                // slot of the staking strategy's deposit.
+                // If the deposit has been processed, it will need to be verified with `verifyDeposit`
                 require(
-                    firstPendingDepositBlockNumber <
-                        deposits[depositDataRoot].blockNumber,
+                    params.firstPendingDepositSlot <
+                        deposits[depositDataRoot].slot,
                     "Deposit has been processed"
                 );
 

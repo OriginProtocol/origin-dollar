@@ -7,7 +7,6 @@ const { execute, executeOnFork, proposal, governors } = require("./governance");
 const { smokeTest, smokeTestCheck } = require("./smokeTest");
 const addresses = require("../utils/addresses");
 const { getNetworkName } = require("../utils/hardhat-helpers");
-const { resolveContract } = require("../utils/resolvers");
 const {
   genECDHKey,
   decryptValidatorKey,
@@ -122,12 +121,8 @@ const { deployForceEtherSender, forceSend } = require("./simulation");
 const { lzBridgeToken, lzSetConfig } = require("./layerzero");
 const {
   requestValidatorWithdraw,
-  blockToSlot,
-  slotToBlock,
-  slotToRoot,
   beaconRoot,
   getValidator,
-  verifySlot,
   verifyValidator,
   verifyDeposit,
   verifyBalances,
@@ -1811,64 +1806,6 @@ subtask(
   .addParam("amount", "Amount to withdraw in ether", undefined, types.float)
   .setAction(withdrawValidator);
 task("withdrawValidator").setAction(async (_, __, runSuper) => {
-  return runSuper();
-});
-
-subtask(
-  "verifySlot",
-  "Verify an execution layer block number to a beacon chain slot"
-)
-  .addOptionalParam(
-    "block",
-    "Execution layer block number. Uses slot if no block, if not block or slot, the latest block is used.",
-    undefined,
-    types.int
-  )
-  .addOptionalParam(
-    "slot",
-    "Beacon chain slot number. Used if not block",
-    undefined,
-    types.int
-  )
-  .addOptionalParam(
-    "dryrun",
-    "Do not call verifyBalances on the strategy contract. Just log the params including the proofs",
-    false,
-    types.boolean
-  )
-  .addOptionalParam(
-    "live",
-    "Use live chain (mainnet or testnet) to get the beacon block root. Not the local fork",
-    true,
-    types.boolean
-  )
-  .setAction(async (taskArgs) => {
-    const signer = await getSigner();
-    const oracle = await resolveContract("BeaconOracle");
-    await verifySlot({ ...taskArgs, oracle, signer });
-  });
-task("verifySlot").setAction(async (_, __, runSuper) => {
-  return runSuper();
-});
-
-subtask("blockToSlot", "Map a block to a beacon chain slot")
-  .addParam("block", "Execution layer block number", undefined, types.int)
-  .setAction(blockToSlot);
-task("blockToSlot").setAction(async (_, __, runSuper) => {
-  return runSuper();
-});
-
-subtask("slotToBlock", "Map a beacon chain slot to a block")
-  .addParam("slot", "Beacon chain slot", undefined, types.int)
-  .setAction(slotToBlock);
-task("slotToBlock").setAction(async (_, __, runSuper) => {
-  return runSuper();
-});
-
-subtask("slotToRoot", "Map a beacon chain slot to a chain block root")
-  .addParam("slot", "Beacon chain slot", undefined, types.int)
-  .setAction(slotToRoot);
-task("slotToRoot").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
 

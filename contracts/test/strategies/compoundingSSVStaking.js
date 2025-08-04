@@ -6,13 +6,16 @@ const { setBalance } = require("@nomicfoundation/hardhat-network-helpers");
 const { isCI } = require("../helpers");
 const { shouldBehaveLikeGovernable } = require("../behaviour/governable");
 const { shouldBehaveLikeStrategy } = require("../behaviour/strategy");
-const { MAX_UINT256 } = require("../../utils/constants");
+const {
+  MAX_UINT256,
+  beaconChainGenesisTimeMainnet,
+} = require("../../utils/constants");
 const { impersonateAndFund } = require("../../utils/signers");
 const { ethUnits } = require("../helpers");
 const { setERC20TokenBalance } = require("../_fund");
 const { zero } = require("../../utils/addresses");
 const { calcDepositRoot } = require("../../tasks/beaconTesting");
-const { hashPubKey } = require("../../utils/beacon");
+const { hashPubKey, calcBeaconBlockRoot } = require("../../utils/beacon");
 const { randomBytes } = require("crypto");
 const {
   testValidators,
@@ -166,12 +169,8 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
     testValidator,
     state = "VERIFIED_DEPOSIT"
   ) => {
-    const {
-      beaconRoots,
-      beaconOracle,
-      compoundingStakingSSVStrategy,
-      validatorRegistrator,
-    } = fixture;
+    const { beaconRoots, compoundingStakingSSVStrategy, validatorRegistrator } =
+      fixture;
 
     const depositAmount = 32;
 
@@ -234,23 +233,8 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
 
     if (state === "VERIFIED_VALIDATOR") return verifiedValidatorTx;
 
-    // Mock the deposit on the execution layer
-    await beaconOracle.mapSlot(
-      testValidator.depositProof.depositBlockNumber,
-      testValidator.depositProof.depositSlot,
-      testValidator.depositProof.depositRoot
-    );
-
-    // Mock the processing on the beacon chain
-    await beaconOracle.mapSlot(
-      testValidator.depositProof.processedBlockNumber,
-      testValidator.depositProof.processedSlot,
-      testValidator.depositProof.processedRoot
-    );
-
     const verifiedDepositTx = await compoundingStakingSSVStrategy.verifyDeposit(
       depositDataRoot,
-      testValidator.depositProof.depositBlockNumber,
       testValidator.depositProof.processedSlot,
       testValidator.depositProof.firstPendingDepositSlot,
       testValidator.depositProof.proof
@@ -266,11 +250,7 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
     depositAmount,
     state = "VERIFIED_DEPOSIT"
   ) => {
-    const {
-      beaconOracle,
-      compoundingStakingSSVStrategy,
-      validatorRegistrator,
-    } = fixture;
+    const { compoundingStakingSSVStrategy, validatorRegistrator } = fixture;
 
     // Stake ETH to the new validator
 
@@ -299,23 +279,8 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
 
     if (state === "STAKED") return stakeTx;
 
-    // Mock the deposit on the execution layer
-    await beaconOracle.mapSlot(
-      testValidator.depositProof.depositBlockNumber,
-      testValidator.depositProof.depositSlot,
-      testValidator.depositProof.depositRoot
-    );
-
-    // Mock the processing on the beacon chain
-    await beaconOracle.mapSlot(
-      testValidator.depositProof.processedBlockNumber,
-      testValidator.depositProof.processedSlot,
-      testValidator.depositProof.processedRoot
-    );
-
     const verifiedDepositTx = await compoundingStakingSSVStrategy.verifyDeposit(
       depositDataRoot,
-      testValidator.depositProof.depositBlockNumber,
       testValidator.depositProof.processedSlot,
       testValidator.depositProof.firstPendingDepositSlot,
       testValidator.depositProof.proof
@@ -361,7 +326,7 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
     pendingDepositAmount,
     activeValidators,
   }) => {
-    const { beaconOracle, compoundingStakingSSVStrategy, weth } = fixture;
+    const { compoundingStakingSSVStrategy, weth } = fixture;
 
     // If the block number of the first pending deposit is not overridden
     if (!firstPendingDepositBlockNumber) {
@@ -386,12 +351,6 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
     }
 
     await snapBalances(balancesProof.blockRoot);
-
-    await beaconOracle.mapSlot(
-      firstPendingDepositBlockNumber,
-      balancesProof.firstPendingDeposit.slot,
-      balancesProof.firstPendingDeposit.blockRoot
-    );
 
     const filteredLeaves = balancesProof.validatorBalanceLeaves.filter(
       (_, index) => activeValidators.includes(index)
@@ -574,7 +533,6 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
         compoundingStakingSSVStrategy,
         validatorRegistrator,
         beaconRoots,
-        beaconOracle,
         weth,
       } = fixture;
 
@@ -603,7 +561,7 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
       );
 
       // Stake 1 ETH to the new validator
-      await compoundingStakingSSVStrategy
+      let stakeTx = await compoundingStakingSSVStrategy
         .connect(validatorRegistrator)
         .stakeEth(
           {
@@ -613,6 +571,12 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
           },
           ETHInGwei.mul(32) // 32 ETH
         );
+      const stakeReceipt = await stakeTx.wait();
+      const depositBlock = await ethers.provider.getBlock(
+        stakeReceipt.blockNumber
+      );
+      const depositSlot =
+        BigInt(depositBlock.timestamp - beaconChainGenesisTimeMainnet) / 12n;
 
       // The hash of the public key should match the leaf in the proof
       expect(hashPubKey(testValidator.publicKey)).to.equal(
@@ -633,25 +597,47 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
         testValidator.validatorProof.bytes
       );
 
-      // Mock the deposit on the execution layer
-      await beaconOracle.mapSlot(
-        testValidator.depositProof.depositBlockNumber,
-        testValidator.depositProof.depositSlot,
-        testValidator.depositProof.depositRoot
+      // TODO move into the beacon utils
+
+      // Recalculate the beacon block root of the first pending deposit proof
+      // as we need to change the slot number to being after the deposit's slot
+      const { ssz } = await import("@lodestar/types");
+
+      const testFirstPendingDepositSlot = depositSlot + 1000n;
+      // const testFirstPendingDepositSlot = 12289474n;
+      log(`First pending deposit slot: ${testFirstPendingDepositSlot}`);
+      // Need to convert to little-endian Uint8Array
+      const slotLittleEndian = ssz.Slot.serialize(
+        Number(testFirstPendingDepositSlot)
+      );
+      // Pad to 32 bytes
+      const leafBuf = Buffer.concat([
+        slotLittleEndian,
+        Buffer.alloc(32 - slotLittleEndian.length),
+      ]);
+      const leafHex = "0x" + Buffer.from(leafBuf).toString("hex");
+      const gIndex = 1584842932228n;
+
+      const beaconBlockRoot = calcBeaconBlockRoot(
+        leafHex,
+        testValidator.depositProof.proof,
+        gIndex
       );
 
-      // Mock the processing on the beacon chain
-      await beaconOracle.mapSlot(
-        testValidator.depositProof.processedBlockNumber,
-        testValidator.depositProof.processedSlot,
-        testValidator.depositProof.processedRoot
+      // Set parent beacon root for the block after the verification slot
+      const nextBlockTimestamp =
+        12n * testFirstPendingDepositSlot +
+        BigInt(beaconChainGenesisTimeMainnet) +
+        12n;
+      await beaconRoots["setBeaconRoot(uint256,bytes32)"](
+        nextBlockTimestamp,
+        beaconBlockRoot
       );
 
       await compoundingStakingSSVStrategy.verifyDeposit(
         depositDataRoot,
-        testValidator.depositProof.depositBlockNumber,
-        testValidator.depositProof.processedSlot,
-        testValidator.depositProof.firstPendingDepositSlot,
+        testFirstPendingDepositSlot,
+        testFirstPendingDepositSlot,
         testValidator.depositProof.proof
       );
 
@@ -666,7 +652,7 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
         secondDepositAmount
       );
 
-      const stakeTx = compoundingStakingSSVStrategy
+      stakeTx = compoundingStakingSSVStrategy
         .connect(validatorRegistrator)
         .stakeEth(
           {
@@ -690,9 +676,8 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
       // it works as the deposit block is after the second deposit on the execution layer
       await compoundingStakingSSVStrategy.verifyDeposit(
         depositDataRoot2,
-        testValidator.depositProof.depositBlockNumber,
-        testValidator.depositProof.processedSlot,
-        testValidator.depositProof.firstPendingDepositSlot,
+        testFirstPendingDepositSlot,
+        testFirstPendingDepositSlot,
         testValidator.depositProof.proof
       );
 
@@ -1723,15 +1708,7 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
       describe("when balances have been snapped", () => {
         const balancesProof = testBalancesProofs[3];
         beforeEach(async () => {
-          const { beaconOracle } = fixture;
-
           await snapBalances(balancesProof.blockRoot);
-
-          await beaconOracle.mapSlot(
-            balancesProof.firstPendingDeposit.block,
-            balancesProof.firstPendingDeposit.slot,
-            balancesProof.firstPendingDeposit.blockRoot
-          );
         });
         it("Fail to verify balances with not enough validator leaves", async () => {
           const { compoundingStakingSSVStrategy } = fixture;

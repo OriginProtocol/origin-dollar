@@ -188,54 +188,6 @@ library BeaconProofsLib {
         );
     }
 
-    /// @notice Verifies the block number to the the beacon block root
-    /// BeaconBlock.body.executionPayload.blockNumber
-    /// @param beaconBlockRoot The root of the beacon block
-    /// @param blockNumber The execution layer block number to verify
-    /// @param blockNumberProof The merkle proof for the block number against the beacon block
-    /// This is the witness hashes concatenated together starting from the leaf node.
-    function verifyBlockNumber(
-        bytes32 beaconBlockRoot,
-        uint256 blockNumber,
-        bytes calldata blockNumberProof
-    ) internal view {
-        // Convert uint64 block number to a little endian bytes32
-        bytes32 blockNumberLeaf = Endian.toLittleEndianUint64(
-            uint64(blockNumber)
-        );
-        require(
-            Merkle.verifyInclusionSha256({
-                proof: blockNumberProof,
-                root: beaconBlockRoot,
-                leaf: blockNumberLeaf,
-                index: BLOCK_NUMBER_GENERALIZED_INDEX
-            }),
-            "Invalid block number proof"
-        );
-    }
-
-    /// @notice Verifies the slot number against the beacon block root.
-    /// BeaconBlock.slot
-    /// @param beaconBlockRoot The root of the beacon block
-    /// @param slot The beacon chain slot to verify
-    /// @param slotProof The merkle proof for the slot against the beacon block root.
-    /// This is the witness hashes concatenated together starting from the leaf node.
-    function verifySlot(
-        bytes32 beaconBlockRoot,
-        uint256 slot,
-        bytes calldata slotProof
-    ) internal view {
-        require(
-            Merkle.verifyInclusionSha256({
-                proof: slotProof,
-                root: beaconBlockRoot,
-                leaf: Endian.toLittleEndianUint64(uint64(slot)),
-                index: SLOT_GENERALIZED_INDEX
-            }),
-            "Invalid slot number proof"
-        );
-    }
-
     ////////////////////////////////////////////////////
     ///       Internal Helper Functions
     ////////////////////////////////////////////////////

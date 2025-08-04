@@ -46,7 +46,6 @@ contract CompoundingStakingSSVStrategy is
     /// @param _ssvToken Address of the Erc20 SSV Token contract
     /// @param _ssvNetwork Address of the SSV Network contract
     /// @param _beaconChainDepositContract Address of the beacon chain deposit contract
-    /// @param _beaconOracle Address of the Beacon Oracle contract that maps block numbers to slots
     /// @param _beaconProofs Address of the Beacon Proofs contract that verifies beacon chain data
     constructor(
         BaseStrategyConfig memory _baseConfig,
@@ -54,8 +53,8 @@ contract CompoundingStakingSSVStrategy is
         address _ssvToken,
         address _ssvNetwork,
         address _beaconChainDepositContract,
-        address _beaconOracle,
-        address _beaconProofs
+        address _beaconProofs,
+        uint64 _pectraForkTimestamp
     )
         InitializableAbstractStrategy(_baseConfig)
         CompoundingValidatorManager(
@@ -63,8 +62,8 @@ contract CompoundingStakingSSVStrategy is
             _baseConfig.vaultAddress,
             _beaconChainDepositContract,
             _ssvNetwork,
-            _beaconOracle,
-            _beaconProofs
+            _beaconProofs,
+            _pectraForkTimestamp
         )
     {
         SSV_TOKEN = _ssvToken;
