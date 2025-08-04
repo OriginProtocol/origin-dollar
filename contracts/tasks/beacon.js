@@ -8,13 +8,11 @@ const {
 } = require("ethers/lib/utils");
 
 const addresses = require("../utils/addresses");
-const { getBeaconBlock, getSlot } = require("../utils/beacon");
+const { getBeaconBlock } = require("../utils/beacon");
 const { bytes32 } = require("../utils/regex");
 const { resolveContract } = require("../utils/resolvers");
 
 const {
-  generateSlotProof,
-  generateBlockProof,
   generateValidatorPubKeyProof,
   generateFirstPendingDepositSlotProof,
   generateBalancesContainerProof,

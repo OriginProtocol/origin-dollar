@@ -1,8 +1,5 @@
 const { deploymentWithGovernanceProposal } = require("../../utils/deploy");
-const {
-  deployBeaconContracts,
-  deployCompoundingStakingSSVStrategy,
-} = require("../deployActions");
+const { deployCompoundingStakingSSVStrategy } = require("../deployActions");
 const addresses = require("../../utils/addresses");
 
 module.exports = deploymentWithGovernanceProposal(
