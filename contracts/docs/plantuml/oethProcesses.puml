@@ -15,7 +15,6 @@ participant "API" as api <<P2P>>
 
 box "Execution Chain"
 participant "Vault" as vault <<Origin>>
-participant "Native\nStaking\nStrategy" as nativeStrat <<Origin>>
 participant "Compounding\nStaking\nStrategy" as compStrat <<Origin>>
 participant "SSV Network" as ssvNet <<SSV>>
 participant "Token" as ssv <<SSV>>
@@ -30,83 +29,6 @@ end box
 box "Beacon chain"
 participant "Validator" as val <<Beacon>>
 end box
-
-group Consolidate validators
-
-reg -> nativeStrat: requestConsolidation(\nsourcePubKeys,\ntargetPubKey,\ntargetStakingStrategy)
-activate nativeStrat
-
-loop for each sourcePubKey
-    nativeStrat -> consol : sourcePubKey, targetPubKey
-    activate consol
-    return
-    note over nativeStrat: Store source validator state as exiting
-end
-
-nativeStrat -> compStrat : requestConsolidation(\nlastSourcePubKeyHash,\ntargetPubKeyHash)
-activate compStrat
-note over compStrat: pause the strategy
-return
-
-note over nativeStrat
-store count of consolidated validators
-store target starting strategy
-pause the strategy
-end note
-
-return
-
-... wait 1-10 days for consolidation to be processed on the Beacon Chain ...
-
-reg -> val : getBlockV2(slot)
-note left : any slot after the last\nconsolidation request\nwas processed
-activate val
-return beacon block
-
-reg -> val : getStateV2(slot)
-note left : any slot after the last\nconsolidation request\nwas processed
-activate val
-return beacon state
-
-reg -> reg : generateValidatorPubKeyProof(\nlastValidatorIndex,\nbeacon block,\nbeacon state)
-reg -> reg : generateValidatorBalanceProof(\nlastValidatorIndex,\nbeacon block,\nbeacon state)
-
-reg -> compStrat : verifyConsolidation(parentBlockTimestamp,\nlastValidatorIndex,\nvalidatorPubKeyProof,\nbalancesLeaf,\nvalidatorBalanceProof)
-activate compStrat
-
-compStrat -> roots : get(parentBlockTimestamp)
-note left
-timestamp of the block after the block we want to map.
-This is because the timestamp will get the parent block root.
-end note
-activate roots
-return parent block root
-
-note over compStrat
-verify last validator pubkey to block root
-verify last validator balance to block root
-assert last validator balance is zero
-end note
-
-compStrat -> nativeStrat : confirmConsolidation()
-activate nativeStrat
-note over nativeStrat
-reduce active validators by consolidated validators
-reset consolidation state
-unpause the strategy
-end note
-return consolidated validators count
-note over compStrat
-increase last verified balance by consolidated validators count * 32 ETH
-reset consolidation state
-unpause the strategy
-end note
-
-compStrat -> compStrat : snapBalances()
-note left : store WETH and ETH balances
-return
-
-end group
 
 group Registrator creates a new SSV validator
 
