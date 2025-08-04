@@ -25,16 +25,8 @@ module.exports = deploymentWithGovernanceProposal(
     const cNativeStakingStrategyProxy_2 = await ethers.getContract(
       "NativeStakingSSVStrategy2Proxy"
     );
-    const cNativeStakingStrategy2 = await ethers.getContractAt(
-      "NativeStakingSSVStrategy",
-      cNativeStakingStrategyProxy_2.address
-    );
     const cNativeStakingStrategyProxy_3 = await ethers.getContract(
       "NativeStakingSSVStrategy3Proxy"
-    );
-    const cNativeStakingStrategy3 = await ethers.getContractAt(
-      "NativeStakingSSVStrategy",
-      cNativeStakingStrategyProxy_3.address
     );
 
     // 2. Fetch the Fee Accumulator proxies
@@ -101,48 +93,24 @@ module.exports = deploymentWithGovernanceProposal(
           signature: "upgradeTo(address)",
           args: [dNativeStakingStrategyImpl_3.address],
         },
-        // 3. Add the new compounding strategy as a consolidation target
-        {
-          contract: cNativeStakingStrategy2,
-          signature: "addTargetStrategy(address)",
-          args: [cCompoundingStakingStrategy.address],
-        },
-        // 4. Add the new compounding strategy as a consolidation target
-        {
-          contract: cNativeStakingStrategy3,
-          signature: "addTargetStrategy(address)",
-          args: [cCompoundingStakingStrategy.address],
-        },
-        // 5. Add new strategy to vault
+        // 3. Add new strategy to vault
         {
           contract: cVaultAdmin,
           signature: "approveStrategy(address)",
           args: [cCompoundingStakingStrategy.address],
         },
-        // 6. set harvester to the Defender Relayer
+        // 4. set harvester to the Defender Relayer
         {
           contract: cCompoundingStakingStrategy,
           signature: "setHarvesterAddress(address)",
           args: [addresses.mainnet.validatorRegistrator],
         },
-        // 7. set validator registrator to the Defender Relayer
+        // 5. set validator registrator to the Defender Relayer
         {
           contract: cCompoundingStakingStrategy,
           signature: "setRegistrator(address)",
           // The Defender Relayer
           args: [addresses.mainnet.validatorRegistrator],
-        },
-        // 8. add the 2nd Native Staking Strategy as a source strategy
-        {
-          contract: cCompoundingStakingStrategy,
-          signature: "addSourceStrategy(address)",
-          args: [cNativeStakingStrategyProxy_2.address],
-        },
-        // 9. add the 3rd Native Staking Strategy as a source strategy
-        {
-          contract: cCompoundingStakingStrategy,
-          signature: "addSourceStrategy(address)",
-          args: [cNativeStakingStrategyProxy_3.address],
         },
       ],
     };
