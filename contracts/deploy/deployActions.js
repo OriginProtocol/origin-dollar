@@ -945,7 +945,7 @@ const deployCompoundingStakingSSVStrategy = async () => {
   const initData = cStrategyImpl.interface.encodeFunctionData(
     "initialize(address[],address[],address[])",
     [
-      [assetAddresses.WETH], // reward token addresses
+      [], // reward token addresses
       /* no need to specify WETH as an asset, since we have that overridden in the "supportsAsset"
        * function on the strategy
        */

@@ -12,7 +12,6 @@ import { ISSVNetwork, Cluster } from "../../interfaces/ISSVNetwork.sol";
 import { BeaconRoots } from "../../beacon/BeaconRoots.sol";
 import { PartialWithdrawal } from "../../beacon/PartialWithdrawal.sol";
 import { IBeaconProofs } from "../../interfaces/IBeaconProofs.sol";
-import { IBeaconOracle } from "../../interfaces/IBeaconOracle.sol";
 
 struct ValidatorStakeData {
     bytes pubkey;
@@ -348,10 +347,10 @@ abstract contract CompoundingValidatorManager is Governable {
     /// @param amountGwei The amount of ETH to be withdrawn from the validator in Gwei.
     /// A zero amount will trigger a full withdrawal.
     // slither-disable-start reentrancy-no-eth
-    function validatorWithdrawal(
-        bytes calldata publicKey,
-        uint64 amountGwei
-    ) external onlyRegistrator {
+    function validatorWithdrawal(bytes calldata publicKey, uint64 amountGwei)
+        external
+        onlyRegistrator
+    {
         // Hash the public key using the Beacon Chain's format
         bytes32 pubKeyHash = _hashPubKey(publicKey);
         VALIDATOR_STATE currentState = validatorState[pubKeyHash];

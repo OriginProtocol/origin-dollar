@@ -47,6 +47,7 @@ contract CompoundingStakingSSVStrategy is
     /// @param _ssvNetwork Address of the SSV Network contract
     /// @param _beaconChainDepositContract Address of the beacon chain deposit contract
     /// @param _beaconProofs Address of the Beacon Proofs contract that verifies beacon chain data
+    /// @param _beaconGenesisTimestamp The timestamp of the Beacon chain's genesis.
     constructor(
         BaseStrategyConfig memory _baseConfig,
         address _wethAddress,
@@ -54,7 +55,7 @@ contract CompoundingStakingSSVStrategy is
         address _ssvNetwork,
         address _beaconChainDepositContract,
         address _beaconProofs,
-        uint64 _pectraForkTimestamp
+        uint64 _beaconGenesisTimestamp
     )
         InitializableAbstractStrategy(_baseConfig)
         CompoundingValidatorManager(
@@ -63,7 +64,7 @@ contract CompoundingStakingSSVStrategy is
             _beaconChainDepositContract,
             _ssvNetwork,
             _beaconProofs,
-            _pectraForkTimestamp
+            _beaconGenesisTimestamp
         )
     {
         SSV_TOKEN = _ssvToken;
@@ -71,10 +72,9 @@ contract CompoundingStakingSSVStrategy is
 
     /// @notice Set up initial internal state including
     /// 1. approving the SSVNetwork to transfer SSV tokens from this strategy contract
-    /// 2. setting the recipient of SSV validator MEV rewards to the FeeAccumulator contract.
-    /// @param _rewardTokenAddresses Address of reward token for platform
-    /// @param _assets Addresses of initial supported assets
-    /// @param _pTokens Platform Token corresponding addresses
+    /// @param _rewardTokenAddresses Not used so empty array
+    /// @param _assets Not used so empty array
+    /// @param _pTokens Not used so empty array
     function initialize(
         address[] memory _rewardTokenAddresses,
         address[] memory _assets,
@@ -92,10 +92,9 @@ contract CompoundingStakingSSVStrategy is
 
     /// @notice Unlike other strategies, this does not deposit assets into the underlying platform.
     /// It just checks the asset is WETH and emits the Deposit event.
-    /// To deposit WETH into validators `registerSsvValidator` and `stakeEth` must be used.
-    /// Will NOT revert if the strategy is paused for validator consolidation.
-    /// @param _asset Address of asset to deposit. Has to be WETH.
-    /// @param _amount Amount of assets that were transferred to the strategy by the vault.
+    /// To deposit WETH into validators, `registerSsvValidator` and `stakeEth` must be used.
+    /// @param _asset Address of the WETH token.
+    /// @param _amount Amount of WETH that was transferred to the strategy by the vault.
     function deposit(address _asset, uint256 _amount)
         external
         override
@@ -114,7 +113,6 @@ contract CompoundingStakingSSVStrategy is
     /// @notice Unlike other strategies, this does not deposit assets into the underlying platform.
     /// It just emits the Deposit event.
     /// To deposit WETH into validators `registerSsvValidator` and `stakeEth` must be used.
-    /// Will NOT revert if the strategy is paused for validator consolidation.
     function depositAll() external override onlyVault nonReentrant {
         uint256 wethBalance = IERC20(WETH).balanceOf(address(this));
         uint256 newWeth = wethBalance - depositedWethAccountedFor;
@@ -128,7 +126,6 @@ contract CompoundingStakingSSVStrategy is
     }
 
     /// @notice Withdraw ETH and WETH from this strategy contract.
-    /// Will revert if the strategy is paused for validator consolidation.
     /// @param _recipient Address to receive withdrawn assets
     /// @param _asset WETH to withdraw
     /// @param _amount Amount of WETH to withdraw
@@ -165,7 +162,6 @@ contract CompoundingStakingSSVStrategy is
     /// execution rewards in this strategy to the vault.
     /// This does not withdraw from the validators. That has to be done separately with the
     /// `validatorWithdrawal` operation.
-    /// Will revert if the strategy is paused for validator consolidation.
     function withdrawAll() external override onlyVaultOrGovernor nonReentrant {
         uint256 ethBalance = address(this).balance;
         uint256 withdrawAmount = IERC20(WETH).balanceOf(address(this)) +
@@ -176,10 +172,11 @@ contract CompoundingStakingSSVStrategy is
         }
     }
 
-    /// @notice Returns the last verified balance of validator deposits, validator balance,
-    /// WETH and ETH in the strategy contract.
-    /// @param _asset      Address of weth asset
-    /// @return balance    Total value of (W)ETH
+    /// @notice Accounts for all the assets managed by this strategy which includes:
+    /// 1. The current WETH in this strategy contract
+    /// 2. The last verified ETH balance, total deposits and total validator balances
+    /// @param _asset      Address of WETH asset.
+    /// @return balance    Total value in ETH
     function checkBalance(address _asset)
         external
         view
@@ -195,21 +192,22 @@ contract CompoundingStakingSSVStrategy is
             IWETH9(WETH).balanceOf(address(this));
     }
 
-    /// @notice Returns bool indicating whether asset is supported by strategy.
-    /// @param _asset The address of the asset token.
+    /// @notice Returns bool indicating whether asset is supported by the strategy.
+    /// @param _asset The address of the WETH token.
     function supportsAsset(address _asset) public view override returns (bool) {
         return _asset == WETH;
     }
 
-    /// @notice Approves the SSV Network contract to transfer SSV tokens for deposits
+    /// @notice Approves the SSV Network contract to transfer SSV tokens for validator registration.
     function safeApproveAllTokens() external override {
-        // Approves the SSV Network contract to transfer SSV tokens for deposits
+        // Approves the SSV Network contract to transfer SSV tokens when validators are registered
         IERC20(SSV_TOKEN).approve(SSV_NETWORK, type(uint256).max);
     }
 
     /**
      * @notice We can accept ETH directly to this contract from anyone as it does not impact our accounting
      * like it did in the legacy NativeStakingStrategy.
+     * The new ETH will be accounted for in `checkBalance` after the next snapBalances and verifyBalances txs.
      */
     receive() external payable {}
 
@@ -217,14 +215,15 @@ contract CompoundingStakingSSVStrategy is
                 Internal functions
     ****************************************/
 
+    /// @dev This strategy does not use a platform token like the old Aave and Compound strategies.
     function _abstractSetPToken(address _asset, address) internal override {}
 
-    /// @dev Consensus rewards are compounded to the validator's balance instread of being
+    /// @dev Consensus rewards are compounded to the validator's balance instead of being
     /// swept to this strategy contract.
-    /// Execution rewards from MEV and tx priority accumulate as ETH in this strategy contract,
-    /// but so does withdrawals from validators. It's too complex to separate the two
-    /// so this function is not implemented.
-    /// Besides, ETH rewards are not sent to the Dripper any more. The Vault can regulate
+    /// Execution rewards from MEV and tx priority accumulate as ETH in this strategy contract.
+    /// Withdrawals from validators also accumulate as ETH in this strategy contract.
+    /// It's too complex to separate the rewards from withdrawals so this function is not implemented.
+    /// Besides, ETH rewards are not sent to the Dripper any more. The Vault can now regulate
     /// the increase in assets.
     function _collectRewardTokens() internal pure override {
         revert("Unsupported function");

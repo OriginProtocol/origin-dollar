@@ -172,10 +172,11 @@ library BeaconProofsLib {
     ///       Internal Helper Functions
     ////////////////////////////////////////////////////
 
-    function balanceAtIndex(
-        bytes32 validatorBalanceLeaf,
-        uint64 validatorIndex
-    ) internal pure returns (uint256) {
+    function balanceAtIndex(bytes32 validatorBalanceLeaf, uint64 validatorIndex)
+        internal
+        pure
+        returns (uint256)
+    {
         uint256 bitShiftAmount = (validatorIndex % 4) * 64;
         return
             Endian.fromLittleEndianUint64(
