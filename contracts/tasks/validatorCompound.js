@@ -141,13 +141,13 @@ async function snapStakingStrategy({ block }) {
   const deposits = await strategy.getPendingDeposits({ blockTag });
   let totalDeposits = BigNumber.from(0);
   console.log(
-    `\n${deposits.length} pending deposits:\n  amount, block number, public key hash`
+    `\n${deposits.length} pending deposits:\n  amount   slot    public key hash                                                    deposit root`
   );
   for (const deposit of deposits) {
     console.log(
-      `  ${formatUnits(deposit.amountGwei, 9)} ETH ${deposit.blockNumber} ${
+      `  ${formatUnits(deposit.amountGwei, 9)} ETH ${deposit.slot} ${
         deposit.pubKeyHash
-      }: `
+      } ${deposit.root}`
     );
     totalDeposits = totalDeposits.add(deposit.amountGwei);
   }
@@ -158,15 +158,18 @@ async function snapStakingStrategy({ block }) {
   });
   const { stateView } = await getBeaconBlock();
   console.log(
-    `\n${verifiedValidators.length} verified validators:\n  amount, validator index, public key hash`
+    `\n${verifiedValidators.length} verified validators:\n  amount           index   status   public key hash`
   );
   let totalValidators = BigNumber.from(0);
   for (const validator of verifiedValidators) {
     const balance = stateView.balances.get(validator.index);
+    const status = await strategy.validatorState(validator.pubKeyHash, {
+      blockTag,
+    });
     console.log(
-      `  ${formatUnits(balance, 9)} ETH ${validator.index} ${
-        validator.pubKeyHash
-      }`
+      `  ${formatUnits(balance, 9).padEnd(12)} ETH ${
+        validator.index
+      } ${validatorStatus(status).padEnd(8)} ${validator.pubKeyHash}`
     );
     totalValidators = totalValidators.add(balance);
   }
@@ -208,6 +211,24 @@ async function snapStakingStrategy({ block }) {
     ).toISOString()} `
   );
 }
+
+const validatorStatus = (status) => {
+  if (status === 0) {
+    return "NON_REGISTERED";
+  } else if (status === 1) {
+    return "REGISTERED";
+  } else if (status === 2) {
+    return "STAKED";
+  } else if (status === 3) {
+    return "VERIFIED";
+  } else if (status === 4) {
+    return "EXITED";
+  } else if (status === 5) {
+    return "REMOVED";
+  } else {
+    return "UNKNOWN";
+  }
+};
 
 async function setRegistrator({ account }) {
   const signer = await getSigner();

@@ -93,7 +93,7 @@ const getBeaconBlock = async (slot = "head") => {
   if (!blockRes.ok) {
     console.error(blockRes);
     throw new Error(
-      `Failed to get beacon block for slot ${slot}. It could be because the slot was missed or the provider URL does not support beacon chain API. Error: ${blockRes.status} ${blockRes.statusText}`
+      `Failed to get beacon block for id ${slot}. It could be because the slot was missed or the provider URL does not support beacon chain API. Error: ${blockRes.status} ${blockRes.statusText}`
     );
   }
 

@@ -895,16 +895,31 @@ abstract contract CompoundingValidatorManager is Governable {
         return verifiedValidators;
     }
 
+    struct DepositView {
+        bytes32 root;
+        bytes32 pubKeyHash;
+        uint64 amountGwei;
+        uint64 slot;
+    }
+
     /// @notice Returns the deposits that are still to be verified.
     /// These may or may not have been processed by the beacon chain.
+    /// @return pendingDeposits An array of `DepositView` containing the deposit root, public key hash,
+    /// amount in Gwei and the slot of the deposit.
     function getPendingDeposits()
         external
         view
-        returns (DepositData[] memory pendingDeposits)
+        returns (DepositView[] memory pendingDeposits)
     {
-        pendingDeposits = new DepositData[](depositsRoots.length);
+        pendingDeposits = new DepositView[](depositsRoots.length);
         for (uint256 i = 0; i < depositsRoots.length; ++i) {
-            pendingDeposits[i] = deposits[depositsRoots[i]];
+            DepositData memory deposit = deposits[depositsRoots[i]];
+            pendingDeposits[i] = DepositView({
+                root: depositsRoots[i],
+                pubKeyHash: deposit.pubKeyHash,
+                amountGwei: deposit.amountGwei,
+                slot: deposit.slot
+            });
         }
     }
 }

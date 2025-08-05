@@ -134,7 +134,7 @@ async function snapValidators({ pubkeys }) {
   const validators = await getValidators(pubkeys);
 
   console.log(`Validators details`);
-  console.log(`pubkey, balance, status, withdrawalcredentials`);
+  console.log(`pubkey, balance, status, withdrawal credentials`);
   for (const validator of validators) {
     console.log(
       `${validator.pubkey}, ${formatUnits(validator.balance, 9)}, ${
