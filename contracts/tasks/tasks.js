@@ -2071,6 +2071,21 @@ task("withdrawValidator").setAction(async (_, __, runSuper) => {
 });
 
 subtask(
+  "stakeValidatorUuid",
+  "Converts WETH to ETH and deposits to a validator from the Compounding Staking Strategy"
+)
+  .addParam(
+    "uuid",
+    "The P2P uuid used to create the Create SSV validators request",
+    undefined,
+    types.string
+  )
+  .setAction(stakeValidator);
+task("stakeValidatorUuid").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+subtask(
   "stakeValidator",
   "Converts WETH to ETH and deposits to a validator from the Compounding Staking Strategy"
 )

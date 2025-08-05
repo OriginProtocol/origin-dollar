@@ -13,6 +13,7 @@ const { BigNumber } = require("ethers");
 const {
   createValidatorRequest,
   getValidatorRequestStatus,
+  getValidatorRequestDepositData,
 } = require("../utils/p2pValidatorCompound");
 
 const log = require("../utils/logger")("task:validator:compounding");
@@ -95,8 +96,23 @@ async function registerValidator({ pubkey, shares, operatorids, ssv, uuid }) {
   await logTxDetails(tx, "registerValidator");
 }
 
-async function stakeValidator({ pubkey, sig, amount }) {
+/**
+ * If the UUID is passed to this function then pubkey, sig, amount are
+ * ignored and fetched from the P2P
+ */
+async function stakeValidator({ pubkey, sig, amount, uuid }) {
   const signer = await getSigner();
+
+  if (uuid) {
+    const {
+      pubkey: _pubkey,
+      sig: _sig,
+      amount: _amount,
+    } = await getValidatorRequestDepositData({ uuid });
+    pubkey = _pubkey;
+    sig = _sig;
+    amount = _amount;
+  }
 
   const strategy = await resolveContract(
     "CompoundingStakingSSVStrategyProxy",

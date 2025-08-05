@@ -70,6 +70,9 @@ const getValidatorRequestStatus = async ({ uuid }) => {
 
   if (response.result.status == "processing") {
     throw new Error("The create request is still processing");
+  } else if (response.result.status == "validator-ready") {
+    log(`Response`, response);
+    throw new Error(`Validator has already been registered on SSV.`);
   } else if (response.result.status != "ready") {
     log(`Response`, response);
     throw new Error(`Unexpected request status: ${response.result.status}`);
@@ -81,6 +84,27 @@ const getValidatorRequestStatus = async ({ uuid }) => {
     pubkey: validatorShare.publicKey,
     shares: validatorShare.sharesData,
     operatorids: operators.join(","),
+  };
+};
+
+const getValidatorRequestDepositData = async ({ uuid }) => {
+  log(`Fetching the p2p status of SSV validator deposit data request: ${uuid}`);
+
+  const response = await _p2pRequest(
+    `/api/v1/eth/staking/ssv/request/deposit-data/${uuid}`,
+    "GET"
+  );
+
+  if (response.result.status != "validator-ready") {
+    log(`Response`, response);
+    throw new Error(`Unexpected validator status: ${response.result.status}`);
+  }
+
+  const depositData = response.result.depositData[0];
+  return {
+    pubkey: depositData.pubkey,
+    sig: depositData.signature,
+    amount: depositData.amount / 1e9,
   };
 };
 
@@ -110,4 +134,5 @@ const createValidatorRequest = async ({
 module.exports = {
   createValidatorRequest,
   getValidatorRequestStatus,
+  getValidatorRequestDepositData,
 };
