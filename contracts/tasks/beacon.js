@@ -8,7 +8,10 @@ const {
 } = require("ethers/lib/utils");
 
 const addresses = require("../utils/addresses");
-const { getBeaconBlock, getValidator:getValidatorBeacon } = require("../utils/beacon");
+const {
+  getBeaconBlock,
+  getValidator: getValidatorBeacon,
+} = require("../utils/beacon");
 const { bytes32 } = require("../utils/regex");
 const { resolveContract } = require("../utils/resolvers");
 
@@ -345,8 +348,8 @@ async function getValidator({ slot, index, pubkey }) {
   }
 
   if (pubkey) {
-    const apiValidator = await getValidatorBeacon(pubkey)
-    index = apiValidator.validatorindex
+    const apiValidator = await getValidatorBeacon(pubkey);
+    index = apiValidator.validatorindex;
   }
 
   // Uses the latest slot if the slot is undefined
