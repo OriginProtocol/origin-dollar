@@ -15,6 +15,7 @@ async function generateFirstPendingDepositSlotProof({
     "@chainsafe/persistent-merkle-tree"
   );
 
+  log(`There are ${stateView.pendingDeposits.length} pending deposits`);
   const generalizedIndex =
     stateView.pendingDeposits.length > 0
       ? concatGindices([
@@ -34,8 +35,15 @@ async function generateFirstPendingDepositSlotProof({
     log("No deposits in the deposit queue");
   } else {
     const firstPendingDeposit = stateView.pendingDeposits.get(0);
+    // log(firstPendingDeposit);
     firstPendingDepositSlot = firstPendingDeposit.slot;
-    log(`Slot of the first pending deposit ${firstPendingDepositSlot}`);
+    log(
+      `First pending deposit slot ${
+        firstPendingDeposit.slot
+      }, withdrawal credential ${toHex(
+        firstPendingDeposit.withdrawalCredentials
+      )} and public key ${toHex(firstPendingDeposit.pubkey)}`
+    );
   }
 
   log(`Generating proof for the slot of the first pending deposit`);

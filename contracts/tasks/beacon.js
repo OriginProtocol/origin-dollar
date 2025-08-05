@@ -288,7 +288,7 @@ async function verifyBalances({ root, indexes, dryrun, signer }) {
   }
 
   log(
-    `About to verify ${verifiedValidators.length} validator balances for slot ${verificationSlot} to beacon block root ${beaconBlockRoot}`
+    `About to verify ${verifiedValidators.length} validator balances for slot ${verificationSlot} with first pending deposit slot ${firstPendingDepositSlot} to beacon block root ${beaconBlockRoot}`
   );
   const tx = await strategy.connect(signer).verifyBalances({
     blockRoot: beaconBlockRoot,
@@ -375,21 +375,27 @@ async function getValidator({ slot, index }) {
   );
 
   let depositsFound = 0;
+  let totalDeposits = 0;
   for (let i = 0; i < stateView.pendingDeposits.length; i++) {
     const deposit = stateView.pendingDeposits.get(i);
     if (Buffer.from(deposit.pubkey).equals(validator.pubkey)) {
-      console.log(`Found pending deposit at position ${i}`);
-      console.log(`amount : ${formatUnits(deposit.amount, 9)}`);
-      console.log(`slot   : ${deposit.slot}`);
       console.log(
-        `withdrawal credentials : ${toHex(deposit.withdrawalCredentials)}`
+        `  pending deposit for ${formatUnits(deposit.amount, 9)}, slot ${
+          deposit.slot
+        }, withdrawal credential ${toHex(
+          deposit.withdrawalCredentials
+        )} at position ${i}`
       );
       // console.log(`signature ${toHex(deposit.signature)}`);
       depositsFound++;
+      totalDeposits += deposit.amount;
     }
   }
   console.log(
-    `${depositsFound} pending deposits found for validator in ${stateView.pendingDeposits.length} pending deposits`
+    `${depositsFound} pending deposits worth ${formatUnits(
+      totalDeposits,
+      9
+    )} for validator in ${stateView.pendingDeposits.length} pending deposits`
   );
 
   let partialWithdrawalsFound = 0;
@@ -420,7 +426,7 @@ async function getValidator({ slot, index }) {
     `${partialWithdrawalsFound} pending partial withdrawals worth ${formatUnits(
       totalPartialWithdrawals,
       9
-    )} ETH found for validator in ${
+    )} ETH for validator in ${
       stateView.pendingPartialWithdrawals.length
     } pending withdrawals`
   );
@@ -443,7 +449,7 @@ async function getValidator({ slot, index }) {
     }
   }
   console.log(
-    `${withdrawals} withdrawals found for validator in ${blockView.body.executionPayload.withdrawals.length} withdrawals`
+    `${withdrawals} withdrawals for validator in ${blockView.body.executionPayload.withdrawals.length} withdrawals`
   );
 
   let withdrawalRequests = 0;
