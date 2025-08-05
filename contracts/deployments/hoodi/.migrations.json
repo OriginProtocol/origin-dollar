@@ -10,5 +10,6 @@
   "009_upgrade_staking_contract": 1753961442,
   "010_upgrade_compounding_staking_strategy": 1754030898,
   "011_upgrade_compounding_staking_strategy": 1754034570,
-  "012_upgrade_compounding_staking_strategy": 1754346065
+  "012_upgrade_compounding_staking_strategy": 1754346065,
+  "013_upgrade_staking_contract": 1754370520
 }

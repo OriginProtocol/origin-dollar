@@ -25,7 +25,6 @@ const getValidatorBalance = async (pubkey) => {
   }
 
   const values = validatorRes.value();
-  log(validatorRes.value());
   log(`Got balance ${values.balance} for validator ${values.index}`);
   return values.balance;
 };

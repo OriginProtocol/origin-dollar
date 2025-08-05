@@ -352,6 +352,7 @@ abstract contract CompoundingValidatorManager is Governable {
     // slither-disable-start reentrancy-no-eth
     function validatorWithdrawal(bytes calldata publicKey, uint64 amountGwei)
         external
+        payable
         onlyRegistrator
     {
         // Hash the public key using the Beacon Chain's format

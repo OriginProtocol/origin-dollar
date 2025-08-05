@@ -96,9 +96,7 @@ async function stakeValidator({ pubkey, sig, amount }) {
   await logTxDetails(tx, "stakeETH");
 }
 
-async function withdrawValidator({ pubkey, amount }) {
-  const signer = await getSigner();
-
+async function withdrawValidator({ pubkey, amount, signer }) {
   const strategy = await resolveContract(
     "CompoundingStakingSSVStrategyProxy",
     "CompoundingStakingSSVStrategy"

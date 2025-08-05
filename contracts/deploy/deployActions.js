@@ -21,7 +21,7 @@ const { deployWithConfirmation, withConfirmation } = require("../utils/deploy");
 const { metapoolLPCRVPid } = require("../utils/constants");
 const { replaceContractAt } = require("../utils/hardhat");
 const { resolveContract } = require("../utils/resolvers");
-const { impersonateAccount } = require("../utils/signers");
+const { impersonateAccount, getSigner } = require("../utils/signers");
 const { getDefenderSigner } = require("../utils/signersNoHardhat");
 const { getTxOpts } = require("../utils/tx");
 const {
@@ -684,7 +684,7 @@ const upgradeNativeStakingSSVStrategy = async () => {
 
   const networkName = await getNetworkName();
   if (networkName == "hoodi") {
-    const sGovernor = await getDefenderSigner();
+    const sGovernor = isFork ? await getSigner() : await getDefenderSigner();
     await withConfirmation(
       strategyProxy.connect(sGovernor).upgradeTo(dStrategyImpl.address)
     );
@@ -718,7 +718,7 @@ const upgradeCompoundingStakingSSVStrategy = async () => {
     ]
   );
 
-  const sDeployer = await getDefenderSigner();
+  const sDeployer = isFork ? await getSigner() : await getDefenderSigner();
   await withConfirmation(
     strategyProxy.connect(sDeployer).upgradeTo(dStrategyImpl.address)
   );

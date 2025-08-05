@@ -1800,17 +1800,6 @@ task("depositValidator").setAction(async (_, __, runSuper) => {
 });
 
 subtask(
-  "withdrawValidator",
-  "Partial or full withdrawal from a validator on the Beacon chain"
-)
-  .addParam("pubkey", "Validator public key in hex format with a 0x prefix")
-  .addParam("amount", "Amount to withdraw in ether", undefined, types.float)
-  .setAction(withdrawValidator);
-task("withdrawValidator").setAction(async (_, __, runSuper) => {
-  return runSuper();
-});
-
-subtask(
   "setRegistrator",
   "Set the registrator of the compounding staking strategy"
 )
@@ -2006,7 +1995,7 @@ task("registerValidator").setAction(async (_, __, runSuper) => {
 });
 
 subtask(
-  "requestValidatorWithdraw",
+  "withdrawValidator",
   "Requests a partial or full withdrawal from a compounding validator"
 )
   .addParam(
@@ -2017,15 +2006,25 @@ subtask(
   )
   .addOptionalParam(
     "amount",
-    "Amount of ETH to withdraw from the validator. Default full exit",
-    undefined,
+    "Amount of ETH to withdraw from the validator. A zero amount is a full exit.",
+    0,
     types.int
+  )
+  .addOptionalParam(
+    "direct",
+    "Withdraw via the staking contract or directly to the request withdrawal contract",
+    false,
+    types.boolean
   )
   .setAction(async (taskArgs) => {
     const signer = await getSigner();
-    await requestValidatorWithdraw({ ...taskArgs, signer });
+    if (taskArgs.direct) {
+      await requestValidatorWithdraw({ ...taskArgs, signer });
+    } else {
+      await withdrawValidator({ ...taskArgs, signer });
+    }
   });
-task("requestValidatorWithdraw").setAction(async (_, __, runSuper) => {
+task("withdrawValidator").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
 
