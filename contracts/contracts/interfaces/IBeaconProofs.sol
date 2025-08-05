@@ -32,7 +32,7 @@ interface IBeaconProofs {
         bytes32 beaconBlockRoot,
         uint64 slot,
         bytes calldata firstPendingDepositSlotProof
-    ) external view;
+    ) external view returns (bool isEmptyDepositQueue);
 
     function verifyBlockNumber(
         bytes32 beaconBlockRoot,

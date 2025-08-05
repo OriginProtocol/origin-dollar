@@ -441,8 +441,8 @@ abstract contract CompoundingValidatorManager is Governable {
     /// which is the beacon block root of the previous block.
     /// @param validatorIndex The index of the validator on the beacon chain.
     /// @param pubKeyHash The hash of the validator's public key using the Beacon Chain's format
-    /// @param validatorPubKeyProof The merkle proof that the validator's index matches its public key
-    /// on the beacon chain.
+    /// @param validatorPubKeyProof The merkle proof for the validator public key to the beacon block root.
+    /// This is 53 witness hashes of 32 bytes each concatenated together starting from the leaf node.
     /// BeaconBlock.state.validators[validatorIndex].pubkey
     function verifyValidator(
         uint64 nextBlockTimestamp,
@@ -492,10 +492,12 @@ abstract contract CompoundingValidatorManager is Governable {
     /// Can not be a slot with pending deposits with the same slot as the deposit being verified.
     /// Can not be a slot before a missed slot as the Beacon Root contract will have the parent block root
     /// set for the next block timestamp in 12 seconds time.
-    /// @param firstPendingDepositSlot The slot of the first pending deposit in the beacon chain
-    /// @param firstPendingDepositSlotProof The merkle proof that the slot of the first pending deposit
-    /// matches the beacon chain.
-    /// BeaconBlock.BeaconBlockBody.deposits[0].slot
+    /// @param firstPendingDepositSlot The slot of the first pending deposit in the beacon chain.
+    /// Can be anything if the deposit queue is empty, but zero is a good choice.
+    /// @param firstPendingDepositSlotProof The merkle proof to the beacon block root. Can be either:
+    /// - 40 witness hashes for BeaconBlock.state.PendingDeposits[0].slot when the deposit queue is not empty.
+    /// - 37 witness hashes for BeaconBlock.state.PendingDeposits[0] when the deposit queue is empty.
+    /// The 32 byte witness hashes are concatenated together starting from the leaf node.
     // slither-disable-start reentrancy-no-eth
     function verifyDeposit(
         bytes32 depositDataRoot,
@@ -510,21 +512,8 @@ abstract contract CompoundingValidatorManager is Governable {
             validatorState[deposit.pubKeyHash] == VALIDATOR_STATE.VERIFIED,
             "Validator not verified"
         );
-
-        // Check the deposit slot is before the first pending deposit's slot on the beacon chain.
-        // If this is not true then we can't guarantee the deposit has been processed by the beacon chain.
-        // The deposit's slot can not be the same slot as the first pending deposit as there could be
-        // many deposits in the same block, hence have the same pending deposit slot.
-        // If the first pending deposit's slot is 0 then there are no pending deposits so
-        // our deposit must have been processed on the beacon chain.
-        require(
-            deposit.slot < firstPendingDepositSlot ||
-                firstPendingDepositSlot == 0,
-            "Deposit not processed"
-        );
-
         // The verification slot must be after the deposit's slot.
-        // This is needed for when the deposit queue is empty. That is, firstPendingDepositSlot is 0.
+        // This is needed for when the deposit queue is empty.
         require(deposit.slot < verificationSlot, "Slot not after deposit");
 
         // Calculate the next block timestamp from the verification slot.
@@ -538,10 +527,21 @@ abstract contract CompoundingValidatorManager is Governable {
         bytes32 blockRoot = BeaconRoots.parentBlockRoot(nextBlockTimestamp);
 
         // Verify the slot of the first pending deposit matches the beacon chain
-        IBeaconProofs(BEACON_PROOFS).verifyFirstPendingDepositSlot(
-            blockRoot,
-            firstPendingDepositSlot,
-            firstPendingDepositSlotProof
+        bool isDepositQueueEmpty = IBeaconProofs(BEACON_PROOFS)
+            .verifyFirstPendingDepositSlot(
+                blockRoot,
+                firstPendingDepositSlot,
+                firstPendingDepositSlotProof
+            );
+
+        // Check the deposit slot is before the first pending deposit's slot on the beacon chain.
+        // If this is not true then we can't guarantee the deposit has been processed by the beacon chain.
+        // The deposit's slot can not be the same slot as the first pending deposit as there could be
+        // many deposits in the same block, hence have the same pending deposit slot.
+        // If the deposit queue is empty then our deposit must have been processed on the beacon chain.
+        require(
+            deposit.slot < firstPendingDepositSlot || isDepositQueueEmpty,
+            "Deposit not processed"
         );
 
         // After verifying the proof, update the contract storage
@@ -698,6 +698,20 @@ abstract contract CompoundingValidatorManager is Governable {
 
     /// @notice Verifies the balances of all active validators on the beacon chain
     /// and checks no pending deposits have been processed by the beacon chain.
+    /// @param params a `VerifyBalancesParams` struct containing the following:
+    /// blockRoot - the beacon block root emitted from `snapBalance` in `BalancesSnapped`
+    /// firstPendingDepositSlot - The beacon chain slot of the first deposit in the beacon chain's deposit queue.
+    ///   Can be anything if the deposit queue is empty, but zero would be a good choice.
+    /// firstPendingDepositSlotProof - The merkle proof to the beacon block root. Can be either:
+    ///   - 40 witness hashes for BeaconBlock.state.PendingDeposits[0].slot when the deposit queue is not empty.
+    ///   - 37 witness hashes for BeaconBlock.state.PendingDeposits[0] when the deposit queue is empty.
+    ///   The 32 byte witness hashes are concatenated together starting from the leaf node.
+    /// balancesContainerRoot - the merkle root of the balances container
+    /// balancesContainerProof - The merkle proof for the balances container to the beacon block root.
+    ///   This is 9 witness hashes of 32 bytes each concatenated together starting from the leaf node.
+    /// validatorBalanceLeaves - Array of leaf nodes containing the validator balance with three other balances.
+    /// validatorBalanceProofs -  Array of merkle proofs for the validator balance to the Balances container root.
+    ///   This is 39 witness hashes of 32 bytes each concatenated together starting from the leaf node.
     // slither-disable-start reentrancy-no-eth
     function verifyBalances(VerifyBalancesParams calldata params) external {
         // Load previously snapped balances for the given block root
@@ -712,13 +726,18 @@ abstract contract CompoundingValidatorManager is Governable {
         // If there are no deposits then we can skip the deposit verification
         if (depositsCount > 0) {
             // Verify the slot of the first pending deposit to the beacon block root
-            IBeaconProofs(BEACON_PROOFS).verifyFirstPendingDepositSlot(
-                params.blockRoot,
-                params.firstPendingDepositSlot,
-                params.firstPendingDepositSlotProof
-            );
+            bool isEmptyDepositQueue = IBeaconProofs(BEACON_PROOFS)
+                .verifyFirstPendingDepositSlot(
+                    params.blockRoot,
+                    params.firstPendingDepositSlot,
+                    params.firstPendingDepositSlotProof
+                );
 
-            // For each native staking contract's deposits
+            // If there are no deposits in the beacon chain queue then our deposits must have been processed.
+            // If the deposits have been processed, each deposit will need to be verified with `verifyDeposit`
+            require(!isEmptyDepositQueue, "Deposits have been processed");
+
+            // For each staking strategy's deposits
             for (uint256 i = 0; i < depositsCount; ++i) {
                 bytes32 depositDataRoot = depositsRoots[i];
 

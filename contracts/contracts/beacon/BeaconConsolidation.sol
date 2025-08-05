@@ -1,6 +1,10 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
+/**
+ * @title Library to request validator consolidation on the beacon chain.
+ * @author Origin Protocol Inc
+ */
 library BeaconConsolidation {
     /// @notice The address the validator consolidation requests are sent
     /// See https://eips.ethereum.org/EIPS/eip-7251

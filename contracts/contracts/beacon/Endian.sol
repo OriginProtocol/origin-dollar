@@ -1,6 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
+/**
+ * @title Library to handle conversion between little-endian and big-endian formats.
+ * @author Origin Protocol Inc
+ */
 library Endian {
     /**
      * @notice Converts a little endian-formatted uint64 to a big endian-formatted uint64

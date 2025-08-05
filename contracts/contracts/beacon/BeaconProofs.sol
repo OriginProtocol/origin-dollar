@@ -3,14 +3,19 @@ pragma solidity ^0.8.0;
 
 import { BeaconProofsLib } from "./BeaconProofsLib.sol";
 
+/**
+ * @title Verifies merkle proofs of beacon chain data.
+ * @author Origin Protocol Inc
+ */
 contract BeaconProofs {
-    /// @notice Verifies the validator public key against the beacon block root
+    /// @notice Verifies the validator public key to the beacon block root
     /// BeaconBlock.state.validators[validatorIndex].pubkey
     /// @param beaconBlockRoot The root of the beacon block
-    /// @param pubKeyHash The beacon chain hash of the validator public key
+    /// @param pubKeyHash Hash of validator's public key using the Beacon Chain's format
     /// @param validatorPubKeyProof The merkle proof for the validator public key to the beacon block root.
-    /// This is the witness hashes concatenated together starting from the leaf node.
+    /// This is 53 witness hashes of 32 bytes each concatenated together starting from the leaf node.
     /// @param validatorIndex The validator index
+    /// @param withdrawalAddress The withdrawal address used in the validator's withdrawal credentials
     function verifyValidatorPubkey(
         bytes32 beaconBlockRoot,
         bytes32 pubKeyHash,
@@ -27,29 +32,29 @@ contract BeaconProofs {
         );
     }
 
-    /// @notice Verifies the balances container against the beacon block root
+    /// @notice Verifies the balances container to the beacon block root
     /// BeaconBlock.state.balances
     /// @param beaconBlockRoot The root of the beacon block
-    /// @param balancesContainerLeaf The leaf node containing the balances container
+    /// @param balancesContainerRoot The merkle root of the the balances container
     /// @param balancesContainerProof The merkle proof for the balances container to the beacon block root.
-    /// This is the witness hashes concatenated together starting from the leaf node.
+    /// This is 9 witness hashes of 32 bytes each concatenated together starting from the leaf node.
     function verifyBalancesContainer(
         bytes32 beaconBlockRoot,
-        bytes32 balancesContainerLeaf,
+        bytes32 balancesContainerRoot,
         bytes calldata balancesContainerProof
     ) external view {
         BeaconProofsLib.verifyBalancesContainer(
             beaconBlockRoot,
-            balancesContainerLeaf,
+            balancesContainerRoot,
             balancesContainerProof
         );
     }
 
-    /// @notice Verifies the validator balance against the root of the Balances container.
+    /// @notice Verifies the validator balance to the root of the Balances container.
     /// @param balancesContainerRoot The merkle root of the Balances container.
-    /// @param validatorBalanceLeaf The leaf node containing the validator balance with three other balances
-    /// @param balanceProof The merkle proof for the validator balance against the root.
-    /// This is the witness hashes concatenated together starting from the leaf node.
+    /// @param validatorBalanceLeaf The leaf node containing the validator balance with three other balances.
+    /// @param balanceProof The merkle proof for the validator balance to the Balances container root.
+    /// This is 39 witness hashes of 32 bytes each concatenated together starting from the leaf node.
     /// @param validatorIndex The validator index to verify the balance for
     /// @return validatorBalanceGwei The balance in Gwei of the validator at the given index
     function verifyValidatorBalance(
@@ -66,19 +71,25 @@ contract BeaconProofs {
         );
     }
 
-    /// @notice Verifies the slot of the first pending deposit against the beacon block root
+    /// @notice If the deposit queue is not empty,
+    /// verify the slot of the first pending deposit to the beacon block root
     /// BeaconBlock.state.PendingDeposits[0].slot
+    /// If the deposit queue is empty, verify the root of the first pending deposit is empty
+    /// BeaconBlock.state.PendingDeposits[0]
     /// @param beaconBlockRoot The root of the beacon block
-    /// @param slot The beacon chain slot to verify
-    /// @param firstPendingDepositSlotProof The merkle proof for the first pending deposit's slot
-    /// against the beacon block root.
-    /// This is the witness hashes concatenated together starting from the leaf node.
+    /// @param slot The beacon chain slot of the first deposit in the beacon chain's deposit queue.
+    /// Can be anything if the deposit queue is empty, but zero would be a good choice.
+    /// @param firstPendingDepositSlotProof The merkle proof to the beacon block root. Can be either:
+    /// - 40 witness hashes for BeaconBlock.state.PendingDeposits[0].slot when the deposit queue is not empty.
+    /// - 37 witness hashes for BeaconBlock.state.PendingDeposits[0] when the deposit queue is empty.
+    /// The 32 byte witness hashes are concatenated together starting from the leaf node.
+    /// @return isEmptyDepositQueue True if the deposit queue is empty, false otherwise
     function verifyFirstPendingDepositSlot(
         bytes32 beaconBlockRoot,
         uint64 slot,
         bytes calldata firstPendingDepositSlotProof
-    ) external view {
-        BeaconProofsLib.verifyFirstPendingDepositSlot(
+    ) external view returns (bool isEmptyDepositQueue) {
+        isEmptyDepositQueue = BeaconProofsLib.verifyFirstPendingDepositSlot(
             beaconBlockRoot,
             slot,
             firstPendingDepositSlotProof

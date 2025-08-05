@@ -4,38 +4,56 @@ pragma solidity ^0.8.0;
 import { Merkle } from "./Merkle.sol";
 import { Endian } from "./Endian.sol";
 
+/**
+ * @title Library to verify merkle proofs of beacon chain data.
+ * @author Origin Protocol Inc
+ */
 library BeaconProofsLib {
     // Known generalized indices in the beacon block
-    // BeaconBlock.slot
+    /// @dev BeaconBlock.slot
     uint256 internal constant SLOT_GENERALIZED_INDEX = 8;
-    // BeaconBlock.state.PendingDeposits[0]
+    /// @dev BeaconBlock.state.PendingDeposits[0]
     uint256 internal constant FIRST_PENDING_DEPOSIT_GENERALIZED_INDEX =
         198105366528;
-    // BeaconBlock.state.PendingDeposits[0].slot
+    /// @dev BeaconBlock.state.PendingDeposits[0].slot
     uint256 internal constant FIRST_PENDING_DEPOSIT_SLOT_GENERALIZED_INDEX =
         1584842932228;
-    // BeaconBlock.body.executionPayload.blockNumber
+    /// @dev BeaconBlock.body.executionPayload.blockNumber
     uint256 internal constant BLOCK_NUMBER_GENERALIZED_INDEX = 6438;
-    // BeaconBlock.state.validators
+    /// @dev BeaconBlock.state.validators
     uint256 internal constant VALIDATORS_CONTAINER_GENERALIZED_INDEX = 715;
-    // BeaconBlock.state.balances
+    /// @dev BeaconBlock.state.balances
     uint256 internal constant BALANCES_CONTAINER_GENERALIZED_INDEX = 716;
 
-    // Beacon Container Tree Heights
+    /// @dev Number of bytes in the proof to the first pending deposit.
+    /// 37 witness hashes of 32 bytes each concatenated together.
+    /// BeaconBlock.state.PendingDeposits[0]
+    uint256 internal constant FIRST_PENDING_DEPOSIT_PROOF_LENGTH = 37 * 32;
+    /// @dev Number of bytes in the proof to the slot of the first pending deposit.
+    /// 40 witness hashes of 32 bytes each concatenated together.
+    /// BeaconBlock.state.PendingDeposits[0].slot
+    uint256 internal constant FIRST_PENDING_DEPOSIT_SLOT_PROOF_LENGTH = 40 * 32;
+
+    /// @dev Merkle height of the Balances container
+    /// BeaconBlock.state.balances
     uint256 internal constant BALANCES_HEIGHT = 39;
+    /// @dev Merkle height of the Validators container
+    /// BeaconBlock.state.validators
     uint256 internal constant VALIDATORS_HEIGHT = 41;
+    /// @dev Merkle height of the Validator container
+    /// BeaconBlock.state.validators[validatorIndex]
     uint256 internal constant VALIDATOR_HEIGHT = 3;
 
-    /// @notice Fields in the Validator container for phase 0
-    /// See https://ethereum.github.io/consensus-specs/specs/phase0/beacon-chain/#validator
+    /// @dev Position of the pubkey field in the Validator container.
+    /// BeaconBlock.state.validators[validatorIndex].pubkey
     uint256 internal constant VALIDATOR_PUBKEY_INDEX = 0;
 
-    /// @notice Verifies the validator public key against the beacon block root
+    /// @notice Verifies the validator public key to the beacon block root
     /// BeaconBlock.state.validators[validatorIndex].pubkey
     /// @param beaconBlockRoot The root of the beacon block
-    /// @param pubKeyHash The beacon chain hash of the validator public key
+    /// @param pubKeyHash Hash of validator's public key using the Beacon Chain's format
     /// @param validatorPubKeyProof The merkle proof for the validator public key to the beacon block root.
-    /// This is the witness hashes concatenated together starting from the leaf node.
+    /// This is 53 witness hashes of 32 bytes each concatenated together starting from the leaf node.
     /// @param validatorIndex The validator index
     /// @param withdrawalAddress The withdrawal address used in the validator's withdrawal credentials
     function verifyValidatorPubkey(
@@ -82,12 +100,12 @@ library BeaconProofsLib {
         );
     }
 
-    /// @notice Verifies the balances container against the beacon block root
+    /// @notice Verifies the balances container to the beacon block root.
     /// BeaconBlock.state.balances
-    /// @param beaconBlockRoot The root of the beacon block
-    /// @param balancesContainerRoot The merkle root of the the balances container
+    /// @param beaconBlockRoot The root of the beacon block.
+    /// @param balancesContainerRoot The merkle root of the the balances container.
     /// @param balancesContainerProof The merkle proof for the balances container to the beacon block root.
-    /// This is the witness hashes concatenated together starting from the leaf node.
+    /// This is 9 witness hashes of 32 bytes each concatenated together starting from the leaf node.
     function verifyBalancesContainer(
         bytes32 beaconBlockRoot,
         bytes32 balancesContainerRoot,
@@ -105,13 +123,13 @@ library BeaconProofsLib {
         );
     }
 
-    /// @notice Verifies the validator balance against the root of the Balances container.
+    /// @notice Verifies the validator balance to the root of the Balances container.
     /// @param balancesContainerRoot The merkle root of the Balances container.
     /// @param validatorBalanceLeaf The leaf node containing the validator balance with three other balances.
-    /// @param balanceProof The merkle proof for the validator balance against the root.
-    /// This is the witness hashes concatenated together starting from the leaf node.
-    /// @param validatorIndex The validator index to verify the balance for
-    /// @return validatorBalanceGwei The balance in Gwei of the validator at the given index
+    /// @param balanceProof The merkle proof for the validator balance to the Balances container root.
+    /// This is 39 witness hashes of 32 bytes each concatenated together starting from the leaf node.
+    /// @param validatorIndex The validator index to verify the balance for.
+    /// @return validatorBalanceGwei The balance in Gwei of the validator at the given index.
     function verifyValidatorBalance(
         bytes32 balancesContainerRoot,
         bytes32 validatorBalanceLeaf,
@@ -146,32 +164,47 @@ library BeaconProofsLib {
     }
 
     /// @notice If the deposit queue is not empty,
-    /// verify the slot of the first pending deposit against the beacon block root
+    /// verify the slot of the first pending deposit to the beacon block root
     /// BeaconBlock.state.PendingDeposits[0].slot
     /// If the deposit queue is empty, verify the root of the first pending deposit is empty
     /// BeaconBlock.state.PendingDeposits[0]
-    /// @param beaconBlockRoot The root of the beacon block
-    /// @param slot The beacon chain slot to verify
-    /// @param firstPendingDepositSlotProof The merkle proof for the first pending deposit's slot
-    /// against the beacon block root.
-    /// This is the witness hashes concatenated together starting from the leaf node.
+    /// @param beaconBlockRoot The root of the beacon block.
+    /// @param slot The beacon chain slot of the first deposit in the beacon chain's deposit queue.
+    /// Can be anything if the deposit queue is empty, but zero would be a good choice.
+    /// @param firstPendingDepositSlotProof The merkle proof to the beacon block root. Can be either:
+    /// - 40 witness hashes for BeaconBlock.state.PendingDeposits[0].slot when the deposit queue is not empty.
+    /// - 37 witness hashes for BeaconBlock.state.PendingDeposits[0] when the deposit queue is empty.
+    /// The 32 byte witness hashes are concatenated together starting from the leaf node.
+    /// @return isEmptyDepositQueue True if the deposit queue is empty, false otherwise.
     function verifyFirstPendingDepositSlot(
         bytes32 beaconBlockRoot,
         uint64 slot,
         bytes calldata firstPendingDepositSlotProof
-    ) internal view {
-        // If the deposit queue is
-        bytes32 leaf = slot == 0
-            ? bytes32(0) // empty, use an empty leaf node
-            : Endian.toLittleEndianUint64(slot); // not empty, convert uint64 slot number to a little endian bytes32
-
-        // If the deposit queue is empty, use the root of the first pending deposit
-        // BeaconBlock.state.PendingDeposits[0]
-        /// If not empty, use the slot in the first pending deposit
-        /// BeaconBlock.state.PendingDeposits[0].slot
-        uint256 generalizedIndex = slot == 0
-            ? FIRST_PENDING_DEPOSIT_GENERALIZED_INDEX
-            : FIRST_PENDING_DEPOSIT_SLOT_GENERALIZED_INDEX;
+    ) internal view returns (bool isEmptyDepositQueue) {
+        uint256 generalizedIndex;
+        bytes32 leaf;
+        // If the deposit queue is empty
+        if (
+            firstPendingDepositSlotProof.length ==
+            FIRST_PENDING_DEPOSIT_PROOF_LENGTH
+        ) {
+            isEmptyDepositQueue = true;
+            // use an empty leaf node as the root of the first pending deposit
+            // when the deposit queue is empty
+            leaf = bytes32(0);
+            // BeaconBlock.state.PendingDeposits[0]
+            generalizedIndex = FIRST_PENDING_DEPOSIT_GENERALIZED_INDEX;
+        } else if (
+            firstPendingDepositSlotProof.length ==
+            FIRST_PENDING_DEPOSIT_SLOT_PROOF_LENGTH
+        ) {
+            // Convert uint64 slot number to a little endian bytes32
+            leaf = Endian.toLittleEndianUint64(slot);
+            // BeaconBlock.state.PendingDeposits[0].slot
+            generalizedIndex = FIRST_PENDING_DEPOSIT_SLOT_GENERALIZED_INDEX;
+        } else {
+            revert("Invalid proof length");
+        }
 
         require(
             Merkle.verifyInclusionSha256({

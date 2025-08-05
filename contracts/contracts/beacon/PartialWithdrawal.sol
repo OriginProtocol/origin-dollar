@@ -1,6 +1,10 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
+/**
+ * @title Library to request full or partial withdrawals from validators on the beacon chain.
+ * @author Origin Protocol Inc
+ */
 library PartialWithdrawal {
     /// @notice The address where the withdrawal request is sent to
     /// See https://eips.ethereum.org/EIPS/eip-7002
