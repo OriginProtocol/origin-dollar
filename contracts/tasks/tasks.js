@@ -105,6 +105,7 @@ const {
 const {
   snapStakingStrategy,
   snapBalances,
+  registerValidatorCreateRequest,
   registerValidator,
   stakeValidator,
   withdrawValidator,
@@ -1860,11 +1861,15 @@ task("mockBeaconRoot").setAction(async (_, __, runSuper) => {
 });
 
 subtask("getValidator", "Gets the details of a validator")
-  .addParam(
+  .addOptionalParam(
     "index",
     "Index of the validator on the Beacon chain",
     undefined,
     types.int
+  )
+  .addOptionalParam(
+    "pubkey",
+    "Validator public key in hex format with a 0x prefix"
   )
   .addOptionalParam(
     "slot",
@@ -1965,6 +1970,47 @@ task("verifyBalances").setAction(async (_, __, runSuper) => {
 });
 
 subtask(
+  "compoundingValidatorCreateRequest",
+  "Crates the request to prepare a compounding validator"
+)
+  .addOptionalParam(
+    "days",
+    "SSV Cluster operational time in days",
+    10,
+    types.int
+  )
+  .setAction(async (taskArgs) => {
+    await registerValidatorCreateRequest(taskArgs);
+    console.log("Once the validator is created run: registerValidatorUuid");
+  });
+task("compoundingValidatorCreateRequest").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+subtask(
+  "registerValidatorUuid",
+  "Registers a new compounding validator in a SSV cluster using P2P Uuid"
+)
+  .addParam(
+    "uuid",
+    "The Uuid that has been used to create the request using compoundingValidatorCreateRequest",
+    undefined,
+    types.string
+  )
+  .addOptionalParam(
+    "ssv",
+    "Amount of SSV to deposit to the cluster.",
+    0,
+    types.int
+  )
+  .setAction(async (taskArgs) => {
+    await registerValidator(taskArgs);
+  });
+task("registerValidatorUuid").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+subtask(
   "registerValidator",
   "Registers a new compounding validator in a SSV cluster"
 )
@@ -2025,6 +2071,21 @@ subtask(
     }
   });
 task("withdrawValidator").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+subtask(
+  "stakeValidatorUuid",
+  "Converts WETH to ETH and deposits to a validator from the Compounding Staking Strategy"
+)
+  .addParam(
+    "uuid",
+    "The P2P uuid used to create the Create SSV validators request",
+    undefined,
+    types.string
+  )
+  .setAction(stakeValidator);
+task("stakeValidatorUuid").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
 

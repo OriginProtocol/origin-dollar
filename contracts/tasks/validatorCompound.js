@@ -10,6 +10,11 @@ const { resolveContract } = require("../utils/resolvers");
 const { getClusterInfo, splitOperatorIds } = require("../utils/ssv");
 const { logTxDetails } = require("../utils/txLogger");
 const { BigNumber } = require("ethers");
+const {
+  createValidatorRequest,
+  getValidatorRequestStatus,
+  getValidatorRequestDepositData,
+} = require("../utils/p2pValidatorCompound");
 
 const log = require("../utils/logger")("task:validator:compounding");
 
@@ -41,8 +46,30 @@ async function snapBalances() {
   );
 }
 
-async function registerValidator({ pubkey, shares, operatorids, ssv }) {
+async function registerValidatorCreateRequest({ days }) {
+  await createValidatorRequest({
+    validatorSpawnOperationalPeriodInDays: days,
+  });
+}
+
+/**
+ * If the UUID is passed to this function then pubkey, shares, operatorIds are
+ * ignored and fetched from the P2P
+ */
+async function registerValidator({ pubkey, shares, operatorids, ssv, uuid }) {
   const signer = await getSigner();
+
+  if (uuid) {
+    const {
+      pubkey: _pubkey,
+      shares: _shares,
+      operatorids: _operatorids,
+    } = await getValidatorRequestStatus({ uuid });
+    pubkey = _pubkey;
+    shares = _shares;
+    // unsorted string of operators
+    operatorids = _operatorids;
+  }
 
   log(`Splitting operator IDs ${operatorids}`);
   const operatorIds = splitOperatorIds(operatorids);
@@ -69,8 +96,23 @@ async function registerValidator({ pubkey, shares, operatorids, ssv }) {
   await logTxDetails(tx, "registerValidator");
 }
 
-async function stakeValidator({ pubkey, sig, amount }) {
+/**
+ * If the UUID is passed to this function then pubkey, sig, amount are
+ * ignored and fetched from the P2P
+ */
+async function stakeValidator({ pubkey, sig, amount, uuid }) {
   const signer = await getSigner();
+
+  if (uuid) {
+    const {
+      pubkey: _pubkey,
+      sig: _sig,
+      amount: _amount,
+    } = await getValidatorRequestDepositData({ uuid });
+    pubkey = _pubkey;
+    sig = _sig;
+    amount = _amount;
+  }
 
   const strategy = await resolveContract(
     "CompoundingStakingSSVStrategyProxy",
@@ -244,6 +286,7 @@ async function setRegistrator({ account }) {
 
 module.exports = {
   snapBalances,
+  registerValidatorCreateRequest,
   registerValidator,
   stakeValidator,
   withdrawValidator,
