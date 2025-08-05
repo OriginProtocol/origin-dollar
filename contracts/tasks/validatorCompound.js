@@ -7,7 +7,7 @@ const { getValidatorBalance, getBeaconBlock } = require("../utils/beacon");
 const { getNetworkName } = require("../utils/hardhat-helpers");
 const { getSigner } = require("../utils/signers");
 const { resolveContract } = require("../utils/resolvers");
-const { getClusterInfo } = require("../utils/ssv");
+const { getClusterInfo, splitOperatorIds } = require("../utils/ssv");
 const { logTxDetails } = require("../utils/txLogger");
 const { BigNumber } = require("ethers");
 
@@ -44,43 +44,25 @@ async function snapBalances() {
 async function registerValidator({ pubkey, shares, operatorids, ssv }) {
   const signer = await getSigner();
 
-  log(`Splitting operator IDs ${(operatorids, ssv)}`);
-  const operatorIds = operatorids.split(",").map((id) => parseInt(id));
+  log(`Splitting operator IDs ${operatorids}`);
+  const operatorIds = splitOperatorIds(operatorids);
 
   const ssvAmount = parseUnits(ssv.toString(), 18);
-  const { chainId } = await ethers.provider.getNetwork();
-
-  let ownerAddress = "";
-  if (chainId == 1) {
-    // Hard code to the old 3rd native staking strategy for now
-    ownerAddress = addresses.mainnet.NativeStakingSSVStrategy3Proxy;
-    console.log(
-      "Using Mainnet NativeStakingSSVStrategy3Proxy to fetch cluster Info"
-    );
-  } else if (chainId == 560048) {
-    ownerAddress = "0x840081c97256d553A8F234D469D797B9535a3B49";
-    console.log(
-      "Using Hoodie CompoundingStakingSSVStrategy to fetch cluster Info"
-    );
-  } else {
-    throw new Error(
-      "Don't know what ownerAddress to use for fetching of cluster info"
-    );
-  }
-
-  // Cluster details
-  const { cluster } = await getClusterInfo({
-    chainId,
-    operatorids,
-    ownerAddress: ownerAddress,
-  });
 
   const strategy = await resolveContract(
     "CompoundingStakingSSVStrategyProxy",
     "CompoundingStakingSSVStrategy"
   );
 
-  log(`About to register validator with pubkey ${pubkey}`);
+  // Cluster details
+  const { chainId } = await ethers.provider.getNetwork();
+  const { cluster } = await getClusterInfo({
+    chainId,
+    operatorids,
+    ownerAddress: strategy.address,
+  });
+
+  log(`About to register compounding validator with pubkey ${pubkey}`);
   const tx = await strategy
     .connect(signer)
     .registerSsvValidator(pubkey, operatorIds, shares, ssvAmount, cluster);
@@ -209,11 +191,12 @@ async function snapStakingStrategy({ block }) {
     blockTag,
   });
 
-  console.log(`\nTotal deposits     : ${formatUnits(totalDeposits, 9)}`);
-  console.log(`Total validators   : ${formatUnits(totalValidators, 9)}`);
-  console.log(`WETH balance       : ${formatUnits(stratWethBalance, 18)}`);
-  console.log(`ETH balance        : ${formatUnits(stratEthBalance, 18)}`);
-  console.log(`Strategy assets    : ${formatUnits(totalAssets, 18)}`);
+  console.log(`\nBalances at block ${blockTag}:`);
+  console.log(`Deposits           : ${formatUnits(totalDeposits, 9)}`);
+  console.log(`Validator balances : ${formatUnits(totalValidators, 9)}`);
+  console.log(`WETH in strategy   : ${formatUnits(stratWethBalance, 18)}`);
+  console.log(`ETH in strategy    : ${formatUnits(stratEthBalance, 18)}`);
+  console.log(`Total assets       : ${formatUnits(totalAssets, 18)}`);
   console.log(
     `Strategy balance   : ${formatUnits(stratBalance, 18)} diff ${formatUnits(
       assetDiff,

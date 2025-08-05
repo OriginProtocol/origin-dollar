@@ -3,7 +3,7 @@ const { parseUnits, formatUnits, hexlify } = require("ethers/lib/utils");
 const addresses = require("../utils/addresses");
 const { resolveContract } = require("../utils/resolvers");
 const { getSigner } = require("../utils/signers");
-const { getClusterInfo } = require("../utils/ssv");
+const { getClusterInfo, sortOperatorIds } = require("../utils/ssv");
 const { getNetworkName } = require("../utils/hardhat-helpers");
 const { logTxDetails } = require("../utils/txLogger");
 const { resolveNativeStakingStrategyProxy } = require("./validator");
@@ -117,15 +117,7 @@ const withdrawSSV = async ({ amount, index, operatorids }) => {
   await logTxDetails(tx, "withdrawSSV");
 };
 
-const sortOperatorIds = (operatorIdsString) => {
-  const operatorIds = operatorIdsString.split(",").map((id) => parseInt(id));
-  operatorIds.sort((a, b) => a - b);
-
-  return operatorIds.join(",");
-};
-
 module.exports = {
-  sortOperatorIds,
   printClusterInfo,
   depositSSV,
   withdrawSSV,

@@ -127,26 +127,37 @@ async function verifyValidator({ slot, index, dryrun, withdrawal, signer }) {
   await logTxDetails(tx, "verifyValidator");
 }
 
-async function verifyDeposit({
-  block,
-  slot,
-  root: depositDataRoot,
-  dryrun,
-  signer,
-}) {
-  // TODO If no block then get the block from the stakeETH event
-  // For now we'll throw an error
-  if (!block) throw Error("Block is currently required for verifyDeposit");
+async function verifyDeposit({ slot, root: depositDataRoot, dryrun, signer }) {
+  const strategy = await resolveContract(
+    "CompoundingStakingSSVStrategyProxy",
+    "CompoundingStakingSSVStrategy"
+  );
+
+  const {
+    slot: depositSlot,
+    amountGwei,
+    pubKeyHash,
+    status,
+  } = await strategy.deposits(depositDataRoot);
+  if (depositSlot == 0) {
+    throw Error(`Failed to find deposit with root ${depositDataRoot}`);
+  }
+  log(
+    `Verifying deposit of ${formatUnits(
+      amountGwei,
+      9
+    )} ETH at slot ${depositSlot} with public key hash ${pubKeyHash}`
+  );
+  if (status !== 1) {
+    throw Error(
+      `Deposit with root ${depositDataRoot} is not Pending. Status: ${status}`
+    );
+  }
 
   // Uses the latest slot if the slot is undefined
   const { blockView, blockTree, stateView } = await getBeaconBlock(slot);
 
   const processedSlot = blockView.slot;
-
-  const strategy = await resolveContract(
-    "CompoundingStakingSSVStrategyProxy",
-    "CompoundingStakingSSVStrategy"
-  );
 
   const {
     proof,
@@ -158,32 +169,29 @@ async function verifyDeposit({
     stateView,
   });
 
-  if (firstPendingDepositSlot < processedSlot) {
+  if (depositSlot > firstPendingDepositSlot) {
     throw Error(
-      `The deposit has not been processed. The slot of first deposit in the deposit queue ${firstPendingDepositSlot} < processed slot ${processedSlot}. Need to wait another ${
-        processedSlot - firstPendingDepositSlot
-      } slots.`
+      `Deposit at slot ${depositSlot} has not been processed at slot ${processedSlot}. Next deposit in the queue is from slot ${firstPendingDepositSlot}.`
     );
   }
 
   if (dryrun) {
-    console.log(`depositDataRoot: ${depositDataRoot}`);
-    console.log(`beaconBlockRoot: ${beaconBlockRoot}`);
-    console.log(`block: ${block}`);
-    console.log(`processedSlot: ${processedSlot}`);
-    console.log(`firstPendingDepositSlot: ${firstPendingDepositSlot}`);
+    console.log(`deposit slot                 : ${depositSlot}`);
+    console.log(`deposit data root            : ${depositDataRoot}`);
+    console.log(`beacon block root            : ${beaconBlockRoot}`);
+    console.log(`processed slot               : ${processedSlot}`);
+    console.log(`slot of first pending deposit: ${firstPendingDepositSlot}`);
     console.log(`proof: ${proof}`);
     return;
   }
 
   log(
-    `About to verify deposit for deposit block ${block}, processing slot ${processedSlot}, deposit data root ${depositDataRoot}, slot of first pending deposit ${firstPendingDepositSlot} to beacon chain root ${beaconBlockRoot}`
+    `About to verify deposit from slot ${depositSlot} with processing slot ${processedSlot}, deposit data root ${depositDataRoot}, slot of first pending deposit ${firstPendingDepositSlot} to beacon chain root ${beaconBlockRoot}`
   );
   const tx = await strategy
     .connect(signer)
     .verifyDeposit(
       depositDataRoot,
-      block,
       processedSlot,
       firstPendingDepositSlot,
       proof
@@ -191,7 +199,7 @@ async function verifyDeposit({
   await logTxDetails(tx, "verifyDeposit");
 }
 
-async function verifyBalances({ root, indexes, depositSlot, dryrun, signer }) {
+async function verifyBalances({ root, indexes, dryrun, signer }) {
   if (!root) {
     if (!dryrun) {
       // TODO If no beacon block root, then get from the blockRoot from the last BalancesSnapped event
@@ -280,7 +288,7 @@ async function verifyBalances({ root, indexes, depositSlot, dryrun, signer }) {
   }
 
   log(
-    `About verify ${verifiedValidators.length} validator balances for slot ${verificationSlot} to beacon block root ${beaconBlockRoot} with mapped deposit slot ${depositSlot}`
+    `About to verify ${verifiedValidators.length} validator balances for slot ${verificationSlot} to beacon block root ${beaconBlockRoot}`
   );
   const tx = await strategy.connect(signer).verifyBalances({
     blockRoot: beaconBlockRoot,

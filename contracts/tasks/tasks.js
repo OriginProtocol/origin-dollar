@@ -1929,12 +1929,6 @@ subtask("verifyDeposit", "Verify a deposit on the Beacon chain")
     types.string
   )
   .addOptionalParam(
-    "block",
-    "Block number on or after the deposit was made on the execution layer. Default deposit block",
-    undefined,
-    types.int
-  )
-  .addOptionalParam(
     "slot",
     "The slot on or after the deposit was process on the beacon chain. Default deposit processed slot",
     undefined,
@@ -1966,12 +1960,6 @@ subtask("verifyBalances", "Verify validator balances on the Beacon chain")
     "Comma separated list of validator indexes. Default: strategy's active validators",
     undefined,
     types.string
-  )
-  .addOptionalParam(
-    "depositSlot",
-    "A slot that is after the slot of first pending deposit but before all the strategy's pending deposits.",
-    undefined,
-    types.int
   )
   .addOptionalParam(
     "dryrun",

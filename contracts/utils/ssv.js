@@ -176,9 +176,27 @@ const printClusterInfo = async (options) => {
   console.log("Next Nonce:", nextNonce);
 };
 
+/// @returns {string} Returns a string of sorted, comma-separated, operator IDs
+const sortOperatorIds = (operatorIdsString) => {
+  const operatorIds = splitOperatorIds(operatorIdsString);
+
+  return operatorIds.join(",");
+};
+
+/// @returns {number[]} Returns an array of sorted operator IDs
+const splitOperatorIds = (operatorIdsString) => {
+  log(`Splitting and sorting operator IDs ${operatorIdsString}`);
+  const operatorIds = operatorIdsString.split(",").map((id) => parseInt(id));
+  operatorIds.sort((a, b) => a - b);
+
+  return operatorIds;
+};
+
 module.exports = {
   printClusterInfo,
   getClusterInfo,
   getClusterNonce,
+  sortOperatorIds,
+  splitOperatorIds,
   splitValidatorKey,
 };
