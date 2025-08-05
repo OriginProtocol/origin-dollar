@@ -7,6 +7,7 @@ const {
   generateBalancesContainerProof,
   generateBalanceProof,
   generateValidatorPubKeyProof,
+  generateFirstPendingDepositSlotProof,
 } = require("../../utils/proofs");
 
 const log = require("../../utils/logger")("test:fork:beacon:oracle");
@@ -95,5 +96,20 @@ describe("ForkTest: Beacon Proofs", function () {
       proof,
       validatorIndex
     );
+  });
+
+  it("Should verify the slot of the first pending deposit in the beacon block", async () => {
+    const { beaconProofs } = fixture;
+
+    const { proof, slot, root } = await generateFirstPendingDepositSlotProof({
+      blockView,
+      blockTree,
+      stateView,
+    });
+
+    log(
+      `About to verify the slot of the first pending deposit in the beacon block`
+    );
+    await beaconProofs.verifyFirstPendingDepositSlot(root, slot, proof);
   });
 });

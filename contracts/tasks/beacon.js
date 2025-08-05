@@ -169,7 +169,7 @@ async function verifyDeposit({ slot, root: depositDataRoot, dryrun, signer }) {
     stateView,
   });
 
-  if (depositSlot > firstPendingDepositSlot) {
+  if (depositSlot > firstPendingDepositSlot && firstPendingDepositSlot != 0) {
     throw Error(
       `Deposit at slot ${depositSlot} has not been processed at slot ${processedSlot}. Next deposit in the queue is from slot ${firstPendingDepositSlot}.`
     );

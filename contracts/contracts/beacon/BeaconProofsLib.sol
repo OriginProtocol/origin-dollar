@@ -8,6 +8,9 @@ library BeaconProofsLib {
     // Known generalized indices in the beacon block
     // BeaconBlock.slot
     uint256 internal constant SLOT_GENERALIZED_INDEX = 8;
+    // BeaconBlock.state.PendingDeposits[0]
+    uint256 internal constant FIRST_PENDING_DEPOSIT_GENERALIZED_INDEX =
+        198105366528;
     // BeaconBlock.state.PendingDeposits[0].slot
     uint256 internal constant FIRST_PENDING_DEPOSIT_SLOT_GENERALIZED_INDEX =
         1584842932228;
@@ -142,8 +145,11 @@ library BeaconProofsLib {
         );
     }
 
-    /// @notice Verifies the slot of the first pending deposit against the beacon block root
+    /// @notice If the deposit queue is not empty,
+    /// verify the slot of the first pending deposit against the beacon block root
     /// BeaconBlock.state.PendingDeposits[0].slot
+    /// If the deposit queue is empty, verify the root of the first pending deposit is empty
+    /// BeaconBlock.state.PendingDeposits[0]
     /// @param beaconBlockRoot The root of the beacon block
     /// @param slot The beacon chain slot to verify
     /// @param firstPendingDepositSlotProof The merkle proof for the first pending deposit's slot
@@ -154,15 +160,25 @@ library BeaconProofsLib {
         uint64 slot,
         bytes calldata firstPendingDepositSlotProof
     ) internal view {
-        // Convert uint64 slot number to a little endian bytes32
-        bytes32 slotLeaf = Endian.toLittleEndianUint64(slot);
+        // If the deposit queue is
+        bytes32 leaf = slot == 0
+            ? bytes32(0) // empty, use an empty leaf node
+            : Endian.toLittleEndianUint64(slot); // not empty, convert uint64 slot number to a little endian bytes32
+
+        // If the deposit queue is empty, use the root of the first pending deposit
+        // BeaconBlock.state.PendingDeposits[0]
+        /// If not empty, use the slot in the first pending deposit
+        /// BeaconBlock.state.PendingDeposits[0].slot
+        uint256 generalizedIndex = slot == 0
+            ? FIRST_PENDING_DEPOSIT_GENERALIZED_INDEX
+            : FIRST_PENDING_DEPOSIT_SLOT_GENERALIZED_INDEX;
 
         require(
             Merkle.verifyInclusionSha256({
                 proof: firstPendingDepositSlotProof,
                 root: beaconBlockRoot,
-                leaf: slotLeaf,
-                index: FIRST_PENDING_DEPOSIT_SLOT_GENERALIZED_INDEX
+                leaf: leaf,
+                index: generalizedIndex
             }),
             "Invalid pending deposit proof"
         );
