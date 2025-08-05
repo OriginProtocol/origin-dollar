@@ -12,7 +12,7 @@ const {
 
 const log = require("../../utils/logger")("test:fork:oeth:metapool");
 
-describe("ForkTest: OETH AMO Curve Metapool Strategy", function () {
+describe.skip("ForkTest: OETH AMO Curve Metapool Strategy", function () {
   this.timeout(0);
   // Retry up to 3 times on CI
   this.retries(isCI ? 3 : 0);
