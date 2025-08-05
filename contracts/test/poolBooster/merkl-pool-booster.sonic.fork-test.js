@@ -27,7 +27,7 @@ describe("ForkTest: Merkl Pool Booster", function () {
     oSonicVault = fixture.oSonicVault;
     oSonic = fixture.oSonic;
     poolBoosterMerklFactory = fixture.poolBoosterMerklFactory;
-    governor = fixture.governor;
+    governor = await impersonateAndFund(addresses.multichainStrategist);
     merklDistributor = fixture.merklDistributor;
 
     await ensureTokenIsApproved(oSonic);

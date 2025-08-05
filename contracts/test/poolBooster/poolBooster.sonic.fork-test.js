@@ -9,11 +9,12 @@ const addresses = require("../../utils/addresses");
 const { deployWithConfirmation } = require("../../utils/deploy.js");
 const { ethers } = hre;
 const { oethUnits } = require("../helpers");
+const { impersonateAndFund } = require("../../utils/signers.js");
 
 const sonicFixture = createFixtureLoader(defaultSonicFixture);
 
 describe("ForkTest: Pool Booster", function () {
-  let fixture;
+  let fixture, strategist;
   beforeEach(async () => {
     fixture = await sonicFixture();
     const { wS, oSonicVault, nick } = fixture;
@@ -21,6 +22,7 @@ describe("ForkTest: Pool Booster", function () {
     await oSonicVault
       .connect(nick)
       .mint(wS.address, oethUnits("1000"), oethUnits("0"));
+    strategist = await impersonateAndFund(addresses.multichainStrategist);
   });
 
   it("Should have the correct initial state", async () => {
@@ -28,7 +30,7 @@ describe("ForkTest: Pool Booster", function () {
 
     expect(await poolBoosterDoubleFactoryV1.oSonic()).to.equal(oSonic.address);
     expect(await poolBoosterDoubleFactoryV1.governor()).to.equal(
-      addresses.sonic.timelock
+      addresses.multichainStrategist
     );
   });
 
@@ -177,13 +179,12 @@ describe("ForkTest: Pool Booster", function () {
   });
 
   it("Should be able to remove a pool booster", async () => {
-    const { poolBoosterDoubleFactoryV1, governor, poolBoosterCentralRegistry } =
-      fixture;
+    const { poolBoosterDoubleFactoryV1, poolBoosterCentralRegistry } = fixture;
 
     // create another pool booster (which is placed as the last entry in
     // the poolBoosters array in poolBoosterDoubleFactoryV1)
     await poolBoosterDoubleFactoryV1
-      .connect(governor)
+      .connect(strategist)
       .createPoolBoosterSwapxDouble(
         addresses.sonic.SwapXOsUSDCeMultisigBooster, //_bribeAddress
         addresses.sonic.SwapXOsUSDCeMultisigBooster, //_bribeAddressOther
@@ -201,7 +202,7 @@ describe("ForkTest: Pool Booster", function () {
     // remove the pool booster. This step should also copy last entry in the pool
     // booster list over the deleted one
     const tx = await poolBoosterDoubleFactoryV1
-      .connect(governor)
+      .connect(strategist)
       .removePoolBooster(osUsdcePoolBooster.boosterAddress);
 
     await expect(tx)
@@ -231,15 +232,11 @@ describe("ForkTest: Pool Booster", function () {
   });
 
   it("Should be able to create an Ichi pool booster", async () => {
-    const {
-      oSonic,
-      poolBoosterDoubleFactoryV1,
-      governor,
-      poolBoosterCentralRegistry,
-    } = fixture;
+    const { oSonic, poolBoosterDoubleFactoryV1, poolBoosterCentralRegistry } =
+      fixture;
 
     const tx = await poolBoosterDoubleFactoryV1
-      .connect(governor)
+      .connect(strategist)
       // the addresses below are not suitable for pool boosting. Still they will serve the
       // purpose of confirming correct setup.
       .createPoolBoosterSwapxDouble(
@@ -275,7 +272,7 @@ describe("ForkTest: Pool Booster", function () {
   });
 
   it("When creating Double pool booster the computed and actual deployed address should match", async () => {
-    const { poolBoosterDoubleFactoryV1, governor } = fixture;
+    const { poolBoosterDoubleFactoryV1 } = fixture;
 
     const creationParams = [
       addresses.sonic.SwapXOsUSDCe.extBribeOS, //_bribeAddressOS
@@ -286,7 +283,7 @@ describe("ForkTest: Pool Booster", function () {
     ];
 
     await poolBoosterDoubleFactoryV1
-      .connect(governor)
+      .connect(strategist)
       // the addresses below are not suitable for pool boosting. Still they will serve the
       // purpose of confirming correct setup.
       .createPoolBoosterSwapxDouble(...creationParams);
@@ -373,12 +370,12 @@ describe("ForkTest: Pool Booster", function () {
       const {
         poolBoosterSingleFactoryV1,
         poolBoosterDoubleFactoryV1,
-        governor,
+        timelock,
       } = fixture;
 
       await expect(
         poolBoosterSingleFactoryV1
-          .connect(governor)
+          .connect(timelock)
           .createPoolBoosterSwapxSingle(
             addresses.zero, //_bribeAddress
             addresses.sonic.SwapXOsGEMSx.pool, //_ammPoolAddress
@@ -389,7 +386,7 @@ describe("ForkTest: Pool Booster", function () {
 
       await expect(
         poolBoosterSingleFactoryV1
-          .connect(governor)
+          .connect(timelock)
           .createPoolBoosterSwapxSingle(
             addresses.sonic.SwapXOsUSDCe.extBribeOS, //_bribeAddress
             addresses.zero, //_ammPoolAddress
@@ -399,7 +396,7 @@ describe("ForkTest: Pool Booster", function () {
 
       await expect(
         poolBoosterSingleFactoryV1
-          .connect(governor)
+          .connect(timelock)
           .createPoolBoosterSwapxSingle(
             addresses.sonic.SwapXOsUSDCe.extBribeOS, //_bribeAddress
             addresses.sonic.SwapXOsGEMSx.pool, //_ammPoolAddress
@@ -409,7 +406,7 @@ describe("ForkTest: Pool Booster", function () {
 
       await expect(
         poolBoosterDoubleFactoryV1
-          .connect(governor)
+          .connect(strategist)
           .createPoolBoosterSwapxDouble(
             addresses.sonic.SwapXOsUSDCe.extBribeOS, //_bribeAddressOS
             addresses.sonic.SwapXOsUSDCe.extBribeOS, //_bribeAddressOther
@@ -421,7 +418,7 @@ describe("ForkTest: Pool Booster", function () {
 
       await expect(
         poolBoosterDoubleFactoryV1
-          .connect(governor)
+          .connect(strategist)
           .createPoolBoosterSwapxDouble(
             addresses.zero, //_bribeAddressOS
             addresses.sonic.SwapXOsUSDCe.extBribeOS, //_bribeAddressOther
@@ -434,7 +431,7 @@ describe("ForkTest: Pool Booster", function () {
 
       await expect(
         poolBoosterDoubleFactoryV1
-          .connect(governor)
+          .connect(strategist)
           .createPoolBoosterSwapxDouble(
             addresses.sonic.SwapXOsUSDCe.extBribeOS, //_bribeAddressOS
             addresses.zero, //_bribeAddressOther
@@ -447,7 +444,7 @@ describe("ForkTest: Pool Booster", function () {
 
       await expect(
         poolBoosterDoubleFactoryV1
-          .connect(governor)
+          .connect(strategist)
           .createPoolBoosterSwapxDouble(
             addresses.sonic.SwapXOsUSDCe.extBribeOS, //_bribeAddressOS
             addresses.sonic.SwapXOsUSDCe.extBribeOS, //_bribeAddressOther
@@ -460,7 +457,7 @@ describe("ForkTest: Pool Booster", function () {
 
       await expect(
         poolBoosterDoubleFactoryV1
-          .connect(governor)
+          .connect(strategist)
           .createPoolBoosterSwapxDouble(
             addresses.sonic.SwapXOsUSDCe.extBribeOS, //_bribeAddressOS
             addresses.sonic.SwapXOsUSDCe.extBribeOS, //_bribeAddressOther
@@ -473,7 +470,7 @@ describe("ForkTest: Pool Booster", function () {
 
       await expect(
         poolBoosterDoubleFactoryV1
-          .connect(governor)
+          .connect(strategist)
           .createPoolBoosterSwapxDouble(
             addresses.sonic.SwapXOsUSDCe.extBribeOS, //_bribeAddressOS
             addresses.sonic.SwapXOsUSDCe.extBribeOS, //_bribeAddressOther
