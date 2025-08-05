@@ -393,6 +393,7 @@ async function getValidator({ slot, index }) {
   );
 
   let partialWithdrawalsFound = 0;
+  let totalPartialWithdrawals = 0n;
   for (let i = 0; i < stateView.pendingPartialWithdrawals.length; i++) {
     const withdrawal = stateView.pendingPartialWithdrawals.get(i);
     log(
@@ -402,15 +403,26 @@ async function getValidator({ slot, index }) {
         withdrawal.withdrawableEpoch
       }`
     );
-    if (withdrawal.index == index) {
-      console.log(`Found pending partial withdrawal at position ${i}`);
-      console.log(`amount : ${formatUnits(withdrawal.amount, 9)}`);
-      console.log(`withdrawable epoch : ${withdrawal.withdrawableEpoch}`);
+    if (withdrawal.validatorIndex == index) {
+      console.log(
+        `  pending partial withdrawal for ${formatUnits(
+          withdrawal.amount,
+          9
+        )} ETH at position ${i} with withdrawable epoch ${
+          withdrawal.withdrawableEpoch
+        }`
+      );
       partialWithdrawalsFound++;
+      totalPartialWithdrawals = totalPartialWithdrawals + withdrawal.amount;
     }
   }
   console.log(
-    `${partialWithdrawalsFound} pending partial withdrawals found for validator in ${stateView.pendingPartialWithdrawals.length} pending withdrawals`
+    `${partialWithdrawalsFound} pending partial withdrawals worth ${formatUnits(
+      totalPartialWithdrawals,
+      9
+    )} ETH found for validator in ${
+      stateView.pendingPartialWithdrawals.length
+    } pending withdrawals`
   );
 
   let withdrawals = 0;
