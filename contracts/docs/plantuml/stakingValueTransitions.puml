@@ -5,17 +5,13 @@ title Native Staking Value Transitions
 package "Execution Layer" {
     object "Vault" as vault
     vault : WETH
-    object "Native\nStaking\nContract" as nsc
-    nsc : WETH\nETH
-    object "Fee Accumulator" as fa
-    fa : ETH
+    object "Compounding\nStaking\nContract" as csc
+    csc : WETH, ETH
     object "Beacon\nDeposit\nContract" as bdc
     bdc : ETH
     object "MEV" as mev
     mev : ETH
-    object "malicious\ncontract" as mal
-    mal : ETH\nWETH
-    object "malicious\nactor" as malActor
+    object "Malicious\nActor" as malActor
     malActor : ETH
 }
 
@@ -26,18 +22,17 @@ package "Consensus Layer" {
     cr : ETH
 }
 
-vault  --> nsc : deposit\ndepositAll
-nsc --> vault : withdraw\nwithdrawAll\ndoAccounting
-vault <-- fa : harvest
-fa <-- mev : rewards
-nsc <-- mal : donate
+vault --> csc : deposit\ndepositAll
+csc --> vault : withdraw\nwithdrawAll
+csc <-- mev : rewards
+csc <-- malActor : donate
 
 malActor --> bdc : deposit
 
-nsc  --> bdc : deposit
+csc  --> bdc : deposit
 
 bdc --> val : create\ntop-up
-val --> nsc : partial withdraw (on-chain)\nfull withdrawal (on-chain)\nexit (off-chain)
+val --> csc : partial withdraw (on-chain)\nfull withdrawal (on-chain)\nexit (off-chain)
 
 val <- cr : rewards
 

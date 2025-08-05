@@ -8,8 +8,8 @@
 
 ' legend
 ' blue - Origin
-' ' green - new
-' ' orange - changed
+' green - New
+' ' orange - Changed
 ' white - 3rd Party
 ' end legend
 
@@ -67,14 +67,14 @@ object "CurveAMOStrategy" as amoStrat <<Origin>><<Proxy>> #$originColor {
     Rewards: CRV
 }
 
-object "NativeStakingStrategy" as nativeStrat <<Origin>><<Proxy>> #$originColor {
-    assets: WETH, ETH
-    Rewards: ETH, SSV
-}
+' object "NativeStakingStrategy" as nativeStrat <<Origin>><<Proxy>> #$originColor {
+'     assets: WETH, ETH
+'     Rewards: ETH, SSV
+' }
 
-object "FeeAccumulator" as feeAcc <<Origin>><<Proxy>> #$originColor {
-    assets: ETH
-}
+' object "FeeAccumulator" as feeAcc <<Origin>><<Proxy>> #$originColor {
+'     assets: ETH
+' }
 
 object "NativeStakingStrategy2" as nativeStrat2 <<Origin>><<Proxy>> #$originColor {
     assets: WETH, ETH
@@ -92,6 +92,15 @@ object "NativeStakingStrategy3" as nativeStrat3 <<Origin>><<Proxy>> #$originColo
 
 object "FeeAccumulator3" as feeAcc3 <<Origin>><<Proxy>> #$originColor {
     assets: ETH
+}
+
+object "CompoundingStakingStrategy" as compStrat <<Origin>><<Proxy>> #$originColor {
+    assets: WETH, ETH
+    Rewards: SSV
+}
+
+object "BeaconProofs" as proofs <<Origin>> #$originColor {
+
 }
 
 ' ' Oracle
@@ -193,9 +202,9 @@ harv <..> amoStrat
 oethv <...> amoStrat
 oeth <... amoStrat
 
-harv <..> nativeStrat
-oethv <...> nativeStrat
-nativeStrat <..> feeAcc
+' harv <..> nativeStrat
+' oethv <...> nativeStrat
+' nativeStrat <..> feeAcc
 ' nativeStrat ..> ssvNet
 ' nativeStrat ..> bDep
 
@@ -205,12 +214,14 @@ nativeStrat2 <..> feeAcc2
 ' nativeStrat2 ...> ssvNet
 ' nativeStrat2 ...> bDep
 
-
 harv <..> nativeStrat3
 oethv <...> nativeStrat3
 nativeStrat3 <..> feeAcc3
 ' nativeStrat2 ...> ssvNet
 ' nativeStrat2 ...> bDep
+
+oethv <...> compStrat
+compStrat <..> proofs
 
 ' cvxStrat ...> crvPool
 ' cvxStrat ....> cvxPool
