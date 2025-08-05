@@ -4,6 +4,7 @@ const ethers = require("ethers");
 const { createHash } = require("crypto");
 
 const { beaconChainGenesisTimeMainnet } = require("./constants");
+const { getNetworkName } = require("./hardhat-helpers");
 
 const log = require("./logger")("utils:beacon");
 
@@ -177,7 +178,11 @@ const configClient = async () => {
 /// They could be replaced with Lodestar API calls in the future.
 
 const getValidator = async (pubkey) => {
-  return await beaconchainRequest(`validator/${pubkey}`);
+  const networkName = await getNetworkName();
+  // some other beacon providers don't support fetching of the validator by pubkey
+  const beaconProvider = `https://${networkName == "hoodi" ? "hoodi." : ""}beaconcha.in/api/v1/`;
+
+  return await beaconchainRequest(`validator/${pubkey}`, beaconProvider);
 };
 
 const getValidators = async (pubkeys, beaconChainApiKey) => {
@@ -192,9 +197,13 @@ const getEpoch = async (epochId = "latest") => {
   return await beaconchainRequest(`epoch/${epochId}`);
 };
 
-const beaconchainRequest = async (endpoint) => {
-  const API_URL =
-    process.env.BEACON_PROVIDER_URL || "https://beaconcha.in/api/v1/";
+const beaconchainRequest = async (endpoint, overrideProvider) => {
+  const networkName = await getNetworkName();
+
+  const API_URL = overrideProvider || 
+    process.env.BEACON_PROVIDER_URL || 
+    `https://${networkName == "hoodi" ? "hoodi." : ""}beaconcha.in/api/v1/`;
+    
   const apikey = process.env.BEACONCHAIN_API_KEY;
   const url = `${API_URL}${endpoint}`;
   if (!apikey) {

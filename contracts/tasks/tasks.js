@@ -1861,11 +1861,15 @@ task("mockBeaconRoot").setAction(async (_, __, runSuper) => {
 });
 
 subtask("getValidator", "Gets the details of a validator")
-  .addParam(
+  .addOptionalParam(
     "index",
     "Index of the validator on the Beacon chain",
     undefined,
     types.int
+  )
+  .addOptionalParam(
+    "pubkey",
+    "Validator public key in hex format with a 0x prefix"
   )
   .addOptionalParam(
     "slot",
