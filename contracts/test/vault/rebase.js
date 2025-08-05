@@ -233,7 +233,7 @@ describe("Vault rebase", () => {
         const { matt, governor, ousd, usdt, vault, mockNonRebasing } = fixture;
         const trustee = mockNonRebasing;
 
-        // Setup trustee trustee on vault
+        // Setup trustee on vault
         await vault.connect(governor).setTrusteeAddress(trustee.address);
         await vault.connect(governor).setTrusteeFeeBps(basis);
         await expect(trustee).has.a.balanceOf("0", ousd);

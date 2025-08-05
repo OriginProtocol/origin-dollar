@@ -47,7 +47,7 @@ for x in contracts:
 
 # --------------------------------
 # Oct 12, 2022 Governance Transfers
-# Migrate from old old time lock
+# Migrate from old time lock
 # 
 
 from world import * 
