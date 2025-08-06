@@ -149,20 +149,21 @@ async function withdrawValidator({ pubkey, amount, signer }) {
   /// Get the validator's balance
   const balance = await getValidatorBalance(pubkey);
 
-  const amountGwei = amount == undefined ? 0 : balance;
-  if (amount) {
+  const isFullExit = amount === undefined || amount === 0;
+  const amountGwei = isFullExit ? 0 : balance;
+  if (isFullExit) {
     log(
-      `About to partially withdraw ${formatUnits(
-        amountGwei,
-        9
-      )} ETH from validator with balance ${formatUnits(
+      `About to fully exit validator with balance ${formatUnits(
         balance,
         9
       )} ETH and pubkey ${pubkey}`
     );
   } else {
     log(
-      `About to fully exit validator with balance ${formatUnits(
+      `About to partially withdraw ${formatUnits(
+        amountGwei,
+        9
+      )} ETH from validator with balance ${formatUnits(
         balance,
         9
       )} ETH and pubkey ${pubkey}`
