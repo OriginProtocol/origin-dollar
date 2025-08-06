@@ -172,7 +172,12 @@ async function verifyDeposit({ slot, root: depositDataRoot, dryrun, signer }) {
     stateView,
   });
 
-  if (depositSlot > firstPendingDepositSlot && firstPendingDepositSlot != 0) {
+  if (firstPendingDepositSlot == 0) {
+    throw Error(
+      `Can not verify when the first pending deposits has a zero slot. This is from a validator consolidating to a compounding validator.\nExecute again when the first pending deposit slot is not zero.`
+    );
+  }
+  if (depositSlot > firstPendingDepositSlot) {
     throw Error(
       `Deposit at slot ${depositSlot} has not been processed at slot ${processedSlot}. Next deposit in the queue is from slot ${firstPendingDepositSlot}.`
     );
@@ -230,6 +235,12 @@ async function verifyBalances({ root, indexes, dryrun, signer }) {
       blockTree,
       stateView,
     });
+
+  if (firstPendingDepositSlot == 0) {
+    throw Error(
+      `Can not verify when the first pending deposits has a zero slot. This is from a validator consolidating to a compounding validator.\nExecute another snapBalances when the first pending deposit slot is not zero.`
+    );
+  }
 
   const { leaf: balancesContainerRoot, proof: balancesContainerProof } =
     await generateBalancesContainerProof({

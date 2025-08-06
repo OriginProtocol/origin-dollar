@@ -21,6 +21,8 @@ const log = require("../utils/logger")("task:validator:compounding");
 async function snapBalances() {
   const signer = await getSigner();
 
+  // TODO check the slot of the first pending deposit is not zero
+
   const strategy = await resolveContract(
     "CompoundingStakingSSVStrategyProxy",
     "CompoundingStakingSSVStrategy"
@@ -40,9 +42,9 @@ async function snapBalances() {
   console.log(
     `Balances snapped successfully. Beacon block root ${
       event.args.blockRoot
-    }, timestamp ${event.args.timestamp}, ETH balance ${formatUnits(
-      event.args.ethBalance
-    )}`
+    }, block ${receipt.blockNumber} timestamp ${
+      event.args.timestamp
+    }, ETH balance ${formatUnits(event.args.ethBalance)}`
   );
 }
 
