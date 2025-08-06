@@ -740,7 +740,7 @@ abstract contract CompoundingValidatorManager is Governable {
             require(!isEmptyDepositQueue, "Deposits have been processed");
             // If a validator is converted from a sweeping validator to a compounding validator, any balance in excess
             // of the min 32 ETH is put in the pending deposit queue. This will have a slot value of zero unfortunately.
-            // We can not prove the strategy's deposits are still pending with a zero slot value so revert the verification.
+            // We can not prove the strategy's deposits are still pending with a zero slot value so revert the tx.
             // Another snapBalances will need to be taken that does not have consolidation deposits at the front of the
             // beacon chain deposit queue.
             require(
