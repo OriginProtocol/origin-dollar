@@ -14,7 +14,6 @@ const {
 } = require("../utils/beacon");
 const { bytes32 } = require("../utils/regex");
 const { resolveContract } = require("../utils/resolvers");
-
 const {
   generateValidatorPubKeyProof,
   generateFirstPendingDepositSlotProof,
@@ -112,11 +111,21 @@ async function verifyValidator({ slot, index, dryrun, withdrawal, signer }) {
     "CompoundingStakingSSVStrategy"
   );
 
+  // Check the validator is in STAKED state
+  const stateEnum = await strategy.validatorState(pubKeyHash);
+  log(`Validator with pub key hash ${pubKeyHash} has state: ${stateEnum}`);
+  if (stateEnum !== 2)
+    // STAKED
+    throw Error(
+      `Validator ${index} with pub key hash ${pubKeyHash} is not STAKED. Status: ${stateEnum}`
+    );
+
   if (dryrun) {
-    console.log(`beaconBlockRoot: ${beaconBlockRoot}`);
+    console.log(`beaconBlockRoot   : ${beaconBlockRoot}`);
     console.log(`nextBlockTimestamp: ${nextBlockTimestamp}`);
-    console.log(`validator index: ${index}`);
-    console.log(`pubKeyHash: ${pubKeyHash}`);
+    console.log(`validator index   : ${index}`);
+    console.log(`pubKeyHash        : ${pubKeyHash}`);
+    console.log(`Validator status  : ${stateEnum}`);
     console.log(`proof:\n${proof}`);
     return;
   }
@@ -135,6 +144,21 @@ async function verifyDeposit({ slot, root: depositDataRoot, dryrun, signer }) {
     "CompoundingStakingSSVStrategyProxy",
     "CompoundingStakingSSVStrategy"
   );
+
+  const depositData = await strategy.deposits(depositDataRoot);
+  log(
+    `Found deposit for ${formatUnits(
+      depositData.amountGwei,
+      9
+    )} ETH, from slot ${depositData.slot} with public key hash ${
+      depositData.pubKeyHash
+    } and deposit index ${depositData.depositIndex}`
+  );
+  const validatorStatus = await strategy.validatorState(depositData.pubKeyHash);
+  if (validatorStatus !== 3)
+    throw Error(
+      `Validator with pub key hash ${depositData.pubKeyHash} is not VERIFIED. Status: ${validatorStatus}`
+    );
 
   const {
     slot: depositSlot,

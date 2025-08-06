@@ -149,16 +149,25 @@ async function withdrawValidator({ pubkey, amount, signer }) {
   /// Get the validator's balance
   const balance = await getValidatorBalance(pubkey);
 
-  const amountGwei = amount ? parseUnits(amount.toString(), 9) : balance;
-  log(
-    `About to withdraw ${formatUnits(
-      amountGwei,
-      9
-    )} ETH from balance ${formatUnits(
-      balance,
-      9
-    )} ETH from validator with pubkey ${pubkey}`
-  );
+  const amountGwei = amount == undefined ? 0 : balance;
+  if (amount) {
+    log(
+      `About to partially withdraw ${formatUnits(
+        amountGwei,
+        9
+      )} ETH from validator with balance ${formatUnits(
+        balance,
+        9
+      )} ETH and pubkey ${pubkey}`
+    );
+  } else {
+    log(
+      `About to fully exit validator with balance ${formatUnits(
+        balance,
+        9
+      )} ETH and pubkey ${pubkey}`
+    );
+  }
   // Send 1 wei of value to cover the request withdrawal fee
   const tx = await strategy
     .connect(signer)
@@ -256,7 +265,7 @@ async function snapStakingStrategy({ block }) {
   );
 }
 
-const validatorStatus = (status) => {
+function validatorStatus(status) {
   if (status === 0) {
     return "NON_REGISTERED";
   } else if (status === 1) {
@@ -272,7 +281,7 @@ const validatorStatus = (status) => {
   } else {
     return "UNKNOWN";
   }
-};
+}
 
 async function setRegistrator({ account }) {
   const signer = await getSigner();
@@ -294,4 +303,5 @@ module.exports = {
   withdrawValidator,
   snapStakingStrategy,
   setRegistrator,
+  validatorStatus,
 };
