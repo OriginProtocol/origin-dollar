@@ -539,9 +539,11 @@ abstract contract CompoundingValidatorManager is Governable {
         // The deposit's slot can not be the same slot as the first pending deposit as there could be
         // many deposits in the same block, hence have the same pending deposit slot.
         // If the deposit queue is empty then our deposit must have been processed on the beacon chain.
+        // The deposit slot can be zero for validators consolidating to a compounding validator. We can
+        // not guarantee that the deposit has been processed in that case.
         require(
             deposit.slot < firstPendingDepositSlot || isDepositQueueEmpty,
-            "Deposit not processed"
+            "Deposit likely not processed"
         );
 
         // After verifying the proof, update the contract storage
@@ -736,6 +738,15 @@ abstract contract CompoundingValidatorManager is Governable {
             // If there are no deposits in the beacon chain queue then our deposits must have been processed.
             // If the deposits have been processed, each deposit will need to be verified with `verifyDeposit`
             require(!isEmptyDepositQueue, "Deposits have been processed");
+            // If a validator is converted from a sweeping validator to a compounding validator, any balance in excess
+            // of the min 32 ETH is put in the pending deposit queue. This will have a slot value of zero unfortunately.
+            // We can not prove the strategy's deposits are still pending with a zero slot value so revert the verification.
+            // Another snapBalances will need to be taken that does not have consolidation deposits at the front of the
+            // beacon chain deposit queue.
+            require(
+                params.firstPendingDepositSlot > 0,
+                "Invalid first pending deposit"
+            );
 
             // For each staking strategy's deposits
             for (uint256 i = 0; i < depositsCount; ++i) {
