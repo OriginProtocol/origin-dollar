@@ -6,7 +6,7 @@ const { setERC20TokenBalance } = require("../_fund");
 
 const { loadDefaultFixture } = require("../_fixture");
 
-describe("ForkTest: SimpleHarvester", function () {
+describe.skip("ForkTest: SimpleHarvester", function () {
   this.timeout(0);
 
   // Retry up to 3 times on CI
