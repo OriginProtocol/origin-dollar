@@ -245,6 +245,12 @@ async function snapStakingStrategy({ block }) {
   const lastSnapTimestamp = await strategy.lastSnapTimestamp({
     blockTag,
   });
+  const lastVerifiedEthBalance = await strategy.lastVerifiedEthBalance({
+    blockTag,
+  });
+  const depositedWethAccountedFor = await strategy.depositedWethAccountedFor({
+    blockTag,
+  });
 
   console.log(`\nBalances at block ${blockTag}:`);
   console.log(`Deposits           : ${formatUnits(totalDeposits, 9)}`);
@@ -258,11 +264,17 @@ async function snapStakingStrategy({ block }) {
       18
     )}`
   );
-  console.log(`SSV balance        : ${formatUnits(stratSsvBalance, 18)}`);
+  console.log(
+    `Last verified ETH  : ${formatUnits(lastVerifiedEthBalance, 18)}`
+  );
   console.log(
     `Last snap timestamp: ${lastSnapTimestamp} ${new Date(
       lastSnapTimestamp * 1000
     ).toISOString()} `
+  );
+  console.log(`SSV balance        : ${formatUnits(stratSsvBalance, 18)}`);
+  console.log(
+    `WETH Deposits      : ${formatUnits(depositedWethAccountedFor, 18)}`
   );
 }
 
