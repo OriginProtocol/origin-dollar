@@ -63,12 +63,20 @@ library BeaconProofsLib {
         uint64 validatorIndex,
         address withdrawalAddress
     ) internal view {
-        // BeaconBlock.state.validators[validatorIndex].pubkey
+        require(beaconBlockRoot != bytes32(0), "Invalid block root");
+        require(
+            // 53 * 32 bytes = 1696 bytes
+            validatorPubKeyProof.length == 1696,
+            "Invalid proof length"
+        );
+
+        // BeaconBlock.state.validators[validatorIndex]
         uint256 generalizedIndex = concatGenIndices(
             VALIDATORS_CONTAINER_GENERALIZED_INDEX,
             VALIDATORS_HEIGHT,
             validatorIndex
         );
+        // BeaconBlock.state.validators[validatorIndex].pubkey
         generalizedIndex = concatGenIndices(
             generalizedIndex,
             VALIDATOR_HEIGHT,
@@ -111,6 +119,13 @@ library BeaconProofsLib {
         bytes32 balancesContainerRoot,
         bytes calldata balancesContainerProof
     ) internal view {
+        require(beaconBlockRoot != bytes32(0), "Invalid block root");
+        require(
+            // 9 * 32 bytes = 288 bytes
+            balancesContainerProof.length == 288,
+            "Invalid proof length"
+        );
+
         // BeaconBlock.state.balances
         require(
             Merkle.verifyInclusionSha256({
@@ -136,6 +151,13 @@ library BeaconProofsLib {
         bytes calldata balanceProof,
         uint64 validatorIndex
     ) internal view returns (uint256 validatorBalanceGwei) {
+        require(balancesContainerRoot != bytes32(0), "Invalid container root");
+        require(
+            // 39 * 32 bytes = 1248 bytes
+            balanceProof.length == 1248,
+            "Invalid proof length"
+        );
+
         // Four balances are stored in each leaf so the validator index is divided by 4
         uint64 balanceIndex = validatorIndex / 4;
 
@@ -181,6 +203,15 @@ library BeaconProofsLib {
         uint64 slot,
         bytes calldata firstPendingDepositSlotProof
     ) internal view returns (bool isEmptyDepositQueue) {
+        require(beaconBlockRoot != bytes32(0), "Invalid block root");
+        require(
+            // 40 * 32 bytes = 1280 bytes
+            firstPendingDepositSlotProof.length == 1280 ||
+                // 37 * 32 bytes = 1184 bytes
+                firstPendingDepositSlotProof.length == 1184,
+            "Invalid proof length"
+        );
+
         uint256 generalizedIndex;
         bytes32 leaf;
         // If the deposit queue is empty
