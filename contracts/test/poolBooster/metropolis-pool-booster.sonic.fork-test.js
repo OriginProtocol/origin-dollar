@@ -3,6 +3,7 @@ const { defaultSonicFixture } = require("../_fixture-sonic");
 const { expect } = require("chai");
 const { oethUnits } = require("../helpers");
 const addresses = require("../../utils/addresses");
+const { impersonateAndFund } = require("../../utils/signers.js");
 
 const sonicFixture = createFixtureLoader(defaultSonicFixture);
 
@@ -13,7 +14,7 @@ describe("ForkTest: Metropolis Pool Booster", function () {
     wS,
     oSonicVault,
     oSonic,
-    governor;
+    strategist;
   beforeEach(async () => {
     fixture = await sonicFixture();
     nick = fixture.nick;
@@ -21,7 +22,7 @@ describe("ForkTest: Metropolis Pool Booster", function () {
     oSonicVault = fixture.oSonicVault;
     oSonic = fixture.oSonic;
     poolBoosterFactoryMetropolis = fixture.poolBoosterFactoryMetropolis;
-    governor = fixture.governor;
+    strategist = await impersonateAndFund(addresses.multichainStrategist);
 
     // mint some OS to Nick
     await oSonicVault
@@ -94,7 +95,7 @@ describe("ForkTest: Metropolis Pool Booster", function () {
 
   async function createPB(poolAddress, salt) {
     await poolBoosterFactoryMetropolis
-      .connect(governor)
+      .connect(strategist)
       .createPoolBoosterMetropolis(poolAddress, salt);
     const boostersCount =
       await poolBoosterFactoryMetropolis.poolBoosterLength();

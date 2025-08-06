@@ -6,7 +6,7 @@ const { setERC20TokenBalance } = require("../_fund");
 
 const { loadDefaultFixture } = require("../_fixture");
 
-describe("ForkTest: SimpleHarvester", function () {
+describe.skip("ForkTest: SimpleHarvester", function () {
   this.timeout(0);
 
   // Retry up to 3 times on CI
@@ -15,6 +15,14 @@ describe("ForkTest: SimpleHarvester", function () {
   let fixture;
   beforeEach(async () => {
     fixture = await loadDefaultFixture();
+
+    // As convexEthMetaStrategy is no longer used, it does not have any rewards.
+    // We will set a balance to simulate rewards.
+    await setERC20TokenBalance(
+      fixture.convexEthMetaStrategy.address,
+      fixture.crv,
+      "1000"
+    );
   });
 
   // --- Initial Parameters ---

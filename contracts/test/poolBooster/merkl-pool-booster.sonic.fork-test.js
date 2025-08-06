@@ -18,7 +18,7 @@ describe("ForkTest: Merkl Pool Booster", function () {
     wS,
     oSonicVault,
     oSonic,
-    governor,
+    strategist,
     merklDistributor;
   beforeEach(async () => {
     fixture = await sonicFixture();
@@ -27,7 +27,7 @@ describe("ForkTest: Merkl Pool Booster", function () {
     oSonicVault = fixture.oSonicVault;
     oSonic = fixture.oSonic;
     poolBoosterMerklFactory = fixture.poolBoosterMerklFactory;
-    governor = fixture.governor;
+    strategist = await impersonateAndFund(addresses.multichainStrategist);
     merklDistributor = fixture.merklDistributor;
 
     await ensureTokenIsApproved(oSonic);
@@ -55,7 +55,7 @@ describe("ForkTest: Merkl Pool Booster", function () {
     // Invalid ammPoolAddress address
     await expect(
       poolBoosterMerklFactory
-        .connect(governor)
+        .connect(strategist)
         .createPoolBoosterMerkl(
           DEFAULT_CAMPAIGN_ID,
           addresses.zero,
@@ -68,7 +68,7 @@ describe("ForkTest: Merkl Pool Booster", function () {
     // Invalid salt
     await expect(
       poolBoosterMerklFactory
-        .connect(governor)
+        .connect(strategist)
         .createPoolBoosterMerkl(
           DEFAULT_CAMPAIGN_ID,
           DEFAULT_AMM_ADDRESS,
@@ -81,7 +81,7 @@ describe("ForkTest: Merkl Pool Booster", function () {
     // Invalid campaign duration
     await expect(
       poolBoosterMerklFactory
-        .connect(governor)
+        .connect(strategist)
         .createPoolBoosterMerkl(
           DEFAULT_CAMPAIGN_ID,
           DEFAULT_AMM_ADDRESS,
@@ -94,7 +94,7 @@ describe("ForkTest: Merkl Pool Booster", function () {
     // Invalid campaign data
     await expect(
       poolBoosterMerklFactory
-        .connect(governor)
+        .connect(strategist)
         .createPoolBoosterMerkl(
           DEFAULT_CAMPAIGN_ID,
           DEFAULT_AMM_ADDRESS,
@@ -163,7 +163,7 @@ describe("ForkTest: Merkl Pool Booster", function () {
 
   async function createPB(salt) {
     await poolBoosterMerklFactory
-      .connect(governor)
+      .connect(strategist)
       .createPoolBoosterMerkl(
         DEFAULT_CAMPAIGN_ID,
         DEFAULT_AMM_ADDRESS,
