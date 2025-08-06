@@ -2054,7 +2054,7 @@ subtask(
     "amount",
     "Amount of ETH to withdraw from the validator. A zero amount is a full exit.",
     0,
-    types.int
+    types.float
   )
   .addOptionalParam(
     "direct",

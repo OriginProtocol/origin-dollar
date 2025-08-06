@@ -150,7 +150,7 @@ async function withdrawValidator({ pubkey, amount, signer }) {
   const balance = await getValidatorBalance(pubkey);
 
   const isFullExit = amount === undefined || amount === 0;
-  const amountGwei = isFullExit ? 0 : balance;
+  const amountGwei = isFullExit ? 0 : parseUnits(amount.toString(), 9);
   if (isFullExit) {
     log(
       `About to fully exit validator with balance ${formatUnits(
