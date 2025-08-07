@@ -219,6 +219,8 @@ abstract contract CompoundingValidatorManager is Governable {
         uint256 ssvAmount,
         Cluster calldata cluster
     ) external onlyRegistrator {
+        require(publicKey.length == 48, "Invalid public key length");
+
         // Hash the public key using the Beacon Chain's format
         bytes32 pubKeyHash = _hashPubKey(publicKey);
         // Check each public key has not already been used
