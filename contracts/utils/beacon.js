@@ -3,7 +3,10 @@ const fetch = require("node-fetch");
 const ethers = require("ethers");
 const { createHash } = require("crypto");
 
-const { beaconChainGenesisTimeMainnet } = require("./constants");
+const {
+  beaconChainGenesisTimeMainnet,
+  beaconChainGenesisTimeHoodi,
+} = require("./constants");
 const { getNetworkName } = require("./hardhat-helpers");
 
 const log = require("./logger")("utils:beacon");
@@ -308,8 +311,12 @@ const calcBlockTimestamp = (slot) => {
   return 12n * slot + BigInt(beaconChainGenesisTimeMainnet);
 };
 
-const calcSlot = (blockTimesamp) => {
-  return (BigInt(blockTimesamp) - BigInt(beaconChainGenesisTimeMainnet)) / 12n;
+const calcSlot = (blockTimesamp, networkName = "mainnet") => {
+  const genesisTime =
+    networkName == "hoodi"
+      ? beaconChainGenesisTimeHoodi
+      : beaconChainGenesisTimeMainnet;
+  return (BigInt(blockTimesamp) - BigInt(genesisTime)) / 12n;
 };
 
 module.exports = {

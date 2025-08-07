@@ -3,7 +3,11 @@ const { formatUnits, parseUnits } = require("ethers/lib/utils");
 
 const { getBlock } = require("../tasks/block");
 const { calcDepositRoot } = require("./beaconTesting");
-const { getValidatorBalance, getBeaconBlock } = require("../utils/beacon");
+const {
+  calcSlot,
+  getValidatorBalance,
+  getBeaconBlock,
+} = require("../utils/beacon");
 const { getNetworkName } = require("../utils/hardhat-helpers");
 const { getSigner } = require("../utils/signers");
 const { resolveContract } = require("../utils/resolvers");
@@ -177,9 +181,14 @@ async function withdrawValidator({ pubkey, amount, signer }) {
 }
 
 async function snapStakingStrategy({ block }) {
-  const blockTag = await getBlock(block);
+  let blockTag = await getBlock(block);
+  // Don't use the latest block as the slot probably won't be available yet
+  if (!block) blockTag -= 1;
 
+  const { timestamp } = await ethers.provider.getBlock(blockTag);
   const networkName = await getNetworkName();
+  const slot = calcSlot(timestamp, networkName);
+  log(`Snapping block ${blockTag} at slot ${slot}`);
 
   const wethAddress = addresses[networkName].WETH;
   const weth = await ethers.getContractAt("IERC20", wethAddress);
@@ -210,7 +219,7 @@ async function snapStakingStrategy({ block }) {
   const verifiedValidators = await strategy.getVerifiedValidators({
     blockTag,
   });
-  const { stateView } = await getBeaconBlock();
+  const { stateView } = await getBeaconBlock(slot);
   console.log(
     `\n${verifiedValidators.length} verified validators:\n  amount           index   status   public key hash`
   );
