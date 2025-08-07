@@ -143,7 +143,9 @@ const harvestMorphoStrategies = async (signer) => {
     signer
   );
 
-  const safeModuleTx = await safeModule.connect(signer).claimRewards(true);
+  const safeModuleTx = await safeModule.connect(signer).claimRewards(true, {
+    gasLimit: 2500000,
+  });
   await logTxDetails(safeModuleTx, `claimRewards`);
 };
 
