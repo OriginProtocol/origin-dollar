@@ -67,8 +67,7 @@ contract CompoundingStakingSSVStrategy is
             _pTokens
         );
 
-        // Approves the SSV Network contract to transfer SSV tokens for deposits
-        IERC20(SSV_TOKEN).approve(SSV_NETWORK, type(uint256).max);
+        safeApproveAllTokens();
     }
 
     /// @notice Unlike other strategies, this does not deposit assets into the underlying platform.
@@ -180,7 +179,7 @@ contract CompoundingStakingSSVStrategy is
     }
 
     /// @notice Approves the SSV Network contract to transfer SSV tokens for validator registration.
-    function safeApproveAllTokens() external override {
+    function safeApproveAllTokens() public override {
         // Approves the SSV Network contract to transfer SSV tokens when validators are registered
         IERC20(SSV_TOKEN).approve(SSV_NETWORK, type(uint256).max);
     }
