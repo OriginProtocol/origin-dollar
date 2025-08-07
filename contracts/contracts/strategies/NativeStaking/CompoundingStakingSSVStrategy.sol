@@ -10,26 +10,6 @@ import { CompoundingValidatorManager } from "./CompoundingValidatorManager.sol";
 /// @title Compounding Staking SSV Strategy
 /// @notice Strategy to deploy funds into DVT validators powered by the SSV Network
 /// @author Origin Protocol Inc
-/// @dev This contract handles WETH and ETH and in some operations interchanges between the two. Any WETH that
-/// is on the contract across multiple blocks (and not just transitory within a transaction) is considered an
-/// asset. Meaning deposits increase the balance of the asset and withdrawal decrease it. As opposed to all
-/// our other strategies the WETH doesn't immediately get deposited into an underlying strategy and can be present
-/// across multiple blocks waiting to be unwrapped to ETH and staked to validators. This separation of WETH and ETH is
-/// required since the rewards (reward token) is also in ETH.
-///
-/// To simplify the accounting of WETH there is another difference in behavior compared to the other strategies.
-/// To withdraw WETH asset - exit message is posted to validators and the ETH hits this contract with multiple days
-/// delay. In order to simplify the WETH accounting upon detection of such an event the ValidatorAccountant
-/// immediately wraps ETH to WETH and sends it to the Vault.
-///
-/// On the other hand any ETH on the contract (across multiple blocks) is there either:
-///  - as a result of already accounted for consensus rewards
-///  - as a result of not yet accounted for consensus rewards
-///  - as a results of not yet accounted for full validator withdrawals (or validator slashes)
-///
-/// Even though the strategy assets and rewards are a very similar asset the consensus layer rewards and the
-/// execution layer rewards are considered rewards and those are dripped to the Vault over a configurable time
-/// interval and not immediately.
 contract CompoundingStakingSSVStrategy is
     CompoundingValidatorManager,
     InitializableAbstractStrategy
@@ -40,10 +20,11 @@ contract CompoundingStakingSSVStrategy is
     // For future use
     uint256[50] private __gap;
 
-    /// @param _baseConfig Base strategy config with platformAddress (ERC-4626 Vault contract), eg sfrxETH or sDAI,
-    /// and vaultAddress (OToken Vault contract), eg VaultProxy or OETHVaultProxy
-    /// @param _wethAddress Address of the Erc20 WETH Token contract
-    /// @param _ssvToken Address of the Erc20 SSV Token contract
+    /// @param _baseConfig Base strategy config with
+    ///   `platformAddress` not used so empty address
+    ///   `vaultAddress` the address of the OETH Vault contract
+    /// @param _wethAddress Address of the WETH Token contract
+    /// @param _ssvToken Address of the SSV Token contract
     /// @param _ssvNetwork Address of the SSV Network contract
     /// @param _beaconChainDepositContract Address of the beacon chain deposit contract
     /// @param _beaconProofs Address of the Beacon Proofs contract that verifies beacon chain data
