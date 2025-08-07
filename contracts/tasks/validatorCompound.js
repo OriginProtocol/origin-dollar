@@ -208,7 +208,7 @@ async function snapStakingStrategy({ block }) {
   console.log(`\n${deposits.length || "No"} pending strategy deposits:`);
   if (deposits.length > 0) {
     console.log(
-      `\n  amount   slot    public key hash                                                    deposit root`
+      `  amount   slot    public key hash                                                    deposit root`
     );
   }
   for (const deposit of deposits) {
@@ -233,22 +233,33 @@ async function snapStakingStrategy({ block }) {
   const verifiedValidators = await strategy.getVerifiedValidators({
     blockTag,
   });
-  console.log(
-    `\n${verifiedValidators.length} verified validators:\n  amount           index   status   public key hash`
-  );
+  console.log(`\n${verifiedValidators.length || "No"} verified validators:`);
+  if (verifiedValidators.length > 0) {
+    console.log(
+      `  amount           index   status   public key hash                                                    Withdrawable Exit epoch`
+    );
+  }
   let totalValidators = BigNumber.from(0);
   for (const validator of verifiedValidators) {
     const balance = stateView.balances.get(validator.index);
     const status = await strategy.validatorState(validator.pubKeyHash, {
       blockTag,
     });
+    const beaconValidator = stateView.validators.get(validator.index);
     console.log(
       `  ${formatUnits(balance, 9).padEnd(12)} ETH ${
         validator.index
-      } ${validatorStatus(status).padEnd(8)} ${validator.pubKeyHash}`
+      } ${validatorStatus(status).padEnd(8)} ${validator.pubKeyHash} ${
+        beaconValidator.withdrawableEpoch || "\t\t"
+      }     ${beaconValidator.exitEpoch || ""}`
     );
     totalValidators = totalValidators.add(balance);
   }
+  console.log(
+    `${
+      stateView.pendingPartialWithdrawals.length || "No"
+    } pending beacon chain withdrawals`
+  );
 
   const stratWethBalance = await weth.balanceOf(strategy.address, { blockTag });
   const stratEthBalance = await ethers.provider.getBalance(
