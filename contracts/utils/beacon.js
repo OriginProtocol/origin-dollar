@@ -311,12 +311,12 @@ const calcBlockTimestamp = (slot) => {
   return 12n * slot + BigInt(beaconChainGenesisTimeMainnet);
 };
 
-const calcSlot = (blockTimesamp, networkName = "mainnet") => {
+const calcSlot = (blockTimestamp, networkName = "mainnet") => {
   const genesisTime =
     networkName == "hoodi"
       ? beaconChainGenesisTimeHoodi
       : beaconChainGenesisTimeMainnet;
-  return (BigInt(blockTimesamp) - BigInt(genesisTime)) / 12n;
+  return (BigInt(blockTimestamp) - BigInt(genesisTime)) / 12n;
 };
 
 module.exports = {

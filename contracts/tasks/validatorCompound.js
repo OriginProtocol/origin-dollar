@@ -190,6 +190,8 @@ async function snapStakingStrategy({ block }) {
   const slot = calcSlot(timestamp, networkName);
   log(`Snapping block ${blockTag} at slot ${slot}`);
 
+  const { stateView } = await getBeaconBlock(slot);
+
   const wethAddress = addresses[networkName].WETH;
   const weth = await ethers.getContractAt("IERC20", wethAddress);
   const ssvAddress = addresses[networkName].SSV;
@@ -203,9 +205,12 @@ async function snapStakingStrategy({ block }) {
   // Pending deposits
   const deposits = await strategy.getPendingDeposits({ blockTag });
   let totalDeposits = BigNumber.from(0);
-  console.log(
-    `\n${deposits.length} pending deposits:\n  amount   slot    public key hash                                                    deposit root`
-  );
+  console.log(`\n${deposits.length || "No"} pending strategy deposits:`);
+  if (deposits.length > 0) {
+    console.log(
+      `\n  amount   slot    public key hash                                                    deposit root`
+    );
+  }
   for (const deposit of deposits) {
     console.log(
       `  ${formatUnits(deposit.amountGwei, 9)} ETH ${deposit.slot} ${
@@ -215,11 +220,19 @@ async function snapStakingStrategy({ block }) {
     totalDeposits = totalDeposits.add(deposit.amountGwei);
   }
 
+  if (stateView.pendingDeposits.length === 0) {
+    console.log("No pending beacon chain deposits");
+  } else {
+    const firstBeaconDeposit = stateView.pendingDeposits.get(0);
+    console.log(
+      `${stateView.pendingDeposits.length} beacon chain deposits. The first has slot ${firstBeaconDeposit.slot}`
+    );
+  }
+
   // Verified validators
   const verifiedValidators = await strategy.getVerifiedValidators({
     blockTag,
   });
-  const { stateView } = await getBeaconBlock(slot);
   console.log(
     `\n${verifiedValidators.length} verified validators:\n  amount           index   status   public key hash`
   );
