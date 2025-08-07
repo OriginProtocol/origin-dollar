@@ -867,6 +867,8 @@ abstract contract CompoundingValidatorManager is Governable {
     function _transferWeth(uint256 _amount, address _recipient) internal {
         IERC20(WETH).safeTransfer(_recipient, _amount);
 
+        // The min is required as more WETH can be withdrawn than deposited
+        // as the strategy earns consensus and execution rewards.
         uint256 deductAmount = Math.min(_amount, depositedWethAccountedFor);
         depositedWethAccountedFor -= deductAmount;
 
