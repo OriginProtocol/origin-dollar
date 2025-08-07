@@ -29,7 +29,7 @@ abstract contract CompoundingValidatorManager is Governable {
     using SafeERC20 for IERC20;
 
     /// @notice The amount of ETH in wei that is required for a deposit to a new validator.
-    /// Initially this is 32 ETH, but will be increased to 1 ETH after P2P's APIs have been updated
+    /// Initially this is 32 ETH, but will be reduced to 1 ETH after P2P's APIs have been updated
     /// to support deposits of 1 ETH.
     uint256 public constant DEPOSIT_AMOUNT_WEI = 32 ether;
 
