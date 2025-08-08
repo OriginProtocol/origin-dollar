@@ -1,0 +1,160 @@
+{
+  "address": "0x4A50Bb6153965B94eB59882D80BCC7Db146212E6",
+  "abi": [
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "uint256",
+          "name": "timestamp",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "bytes32",
+          "name": "root",
+          "type": "bytes32"
+        }
+      ],
+      "name": "RootSet",
+      "type": "event"
+    },
+    {
+      "stateMutability": "nonpayable",
+      "type": "fallback"
+    },
+    {
+      "inputs": [],
+      "name": "latestBlockRoot",
+      "outputs": [
+        {
+          "internalType": "bytes32",
+          "name": "parentRoot",
+          "type": "bytes32"
+        },
+        {
+          "internalType": "uint64",
+          "name": "timestamp",
+          "type": "uint64"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint64",
+          "name": "timestamp",
+          "type": "uint64"
+        }
+      ],
+      "name": "parentBlockRoot",
+      "outputs": [
+        {
+          "internalType": "bytes32",
+          "name": "parentRoot",
+          "type": "bytes32"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "timestamp",
+          "type": "uint256"
+        },
+        {
+          "internalType": "bytes32",
+          "name": "root",
+          "type": "bytes32"
+        }
+      ],
+      "name": "setBeaconRoot",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes32",
+          "name": "root",
+          "type": "bytes32"
+        }
+      ],
+      "name": "setBeaconRoot",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    }
+  ],
+  "transactionHash": "0xd6ffd26c5f2d8b590e0fa47d4fb9a6c151d9b74264e1bfe8c76148baaca1b2d4",
+  "receipt": {
+    "to": null,
+    "from": "0x3Ba227D87c2A7aB89EAaCEFbeD9bfa0D15Ad249A",
+    "contractAddress": "0x4A50Bb6153965B94eB59882D80BCC7Db146212E6",
+    "transactionIndex": 62,
+    "gasUsed": "305655",
+    "logsBloom": "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+    "blockHash": "0x27b28d6cfd11aa680480a6d89d9422f26643979f717fadad6af8fa3f656a0fe2",
+    "transactionHash": "0xd6ffd26c5f2d8b590e0fa47d4fb9a6c151d9b74264e1bfe8c76148baaca1b2d4",
+    "logs": [],
+    "blockNumber": 23023887,
+    "cumulativeGasUsed": "3165149",
+    "status": 1,
+    "byzantium": true
+  },
+  "args": [],
+  "numDeployments": 1,
+  "solcInputHash": "3de98f56666780054699342674f08b14",
+  "metadata": "{\"compiler\":{\"version\":\"0.8.28+commit.7893614a\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"uint256\",\"name\":\"timestamp\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"bytes32\",\"name\":\"root\",\"type\":\"bytes32\"}],\"name\":\"RootSet\",\"type\":\"event\"},{\"stateMutability\":\"nonpayable\",\"type\":\"fallback\"},{\"inputs\":[],\"name\":\"latestBlockRoot\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"parentRoot\",\"type\":\"bytes32\"},{\"internalType\":\"uint64\",\"name\":\"timestamp\",\"type\":\"uint64\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint64\",\"name\":\"timestamp\",\"type\":\"uint64\"}],\"name\":\"parentBlockRoot\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"parentRoot\",\"type\":\"bytes32\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"timestamp\",\"type\":\"uint256\"},{\"internalType\":\"bytes32\",\"name\":\"root\",\"type\":\"bytes32\"}],\"name\":\"setBeaconRoot\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"root\",\"type\":\"bytes32\"}],\"name\":\"setBeaconRoot\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"}],\"devdoc\":{\"kind\":\"dev\",\"methods\":{},\"version\":1},\"userdoc\":{\"kind\":\"user\",\"methods\":{},\"version\":1}},\"settings\":{\"compilationTarget\":{\"contracts/mocks/MockBeaconRoots.sol\":\"MockBeaconRoots\"},\"evmVersion\":\"paris\",\"libraries\":{},\"metadata\":{\"bytecodeHash\":\"ipfs\",\"useLiteralContent\":true},\"optimizer\":{\"enabled\":true,\"runs\":200},\"remappings\":[]},\"sources\":{\"contracts/beacon/BeaconRoots.sol\":{\"content\":\"// SPDX-License-Identifier: BUSL-1.1\\npragma solidity ^0.8.0;\\n\\nlibrary BeaconRoots {\\n    /// @notice The address of beacon block roots oracle\\n    /// See https://eips.ethereum.org/EIPS/eip-4788\\n    address internal constant BEACON_ROOTS_ADDRESS =\\n        0x000F3df6D732807Ef1319fB7B8bB8522d0Beac02;\\n\\n    /// @notice Returns the Beacon Block Root for the previous block.\\n    /// This comes from the Beacon Roots contract defined in EIP-4788.\\n    /// This will revert if the block is more than 8,191 blocks old as\\n    /// that is the size of the beacon root's ring buffer.\\n    /// @param timestamp The timestamp of the block for which to get the parent root.\\n    /// @return parentRoot The parent block root for the given timestamp.\\n    function parentBlockRoot(uint64 timestamp)\\n        internal\\n        view\\n        returns (bytes32 parentRoot)\\n    {\\n        // Call the Beacon Block Root Oracle to get the parent block root\\n        // This does not have a function signature, so we use a staticcall.\\n        (bool success, bytes memory result) = BEACON_ROOTS_ADDRESS.staticcall(\\n            abi.encode(timestamp)\\n        );\\n\\n        require(success && result.length > 0, \\\"Invalid beacon timestamp\\\");\\n        parentRoot = abi.decode(result, (bytes32));\\n    }\\n}\\n\",\"keccak256\":\"0x8b678da4c214faae35a2a5dd99b32e2a12f68676ddc2620f0f684bc7c4bb517c\",\"license\":\"BUSL-1.1\"},\"contracts/mocks/MockBeaconRoots.sol\":{\"content\":\"// SPDX-License-Identifier: BUSL-1.1\\npragma solidity ^0.8.0;\\n\\nimport { BeaconRoots } from \\\"../beacon/BeaconRoots.sol\\\";\\n\\ncontract MockBeaconRoots {\\n    // Mapping to simulate the ring buffer: timestamp => beacon block root\\n    mapping(uint256 => bytes32) internal _beaconRoots;\\n\\n    // Event to log when a new root is set (for testing)\\n    event RootSet(uint256 indexed timestamp, bytes32 root);\\n\\n    // Fallback function to handle raw 32-byte timestamp input\\n    // solhint-disable no-complex-fallback\\n    fallback() external {\\n        // Ensure input is exactly 32 bytes (big-endian encoded timestamp)\\n        require(msg.data.length == 32, \\\"Input must be 32 bytes\\\");\\n\\n        // Decode the 32-byte input as a uint256 timestamp (big-endian)\\n        uint256 timestamp = abi.decode(msg.data, (uint256));\\n\\n        // Don't do any validation of timestamp so we can test any block\\n\\n        // Retrieve the root. Will return bytes32(0) if not set.\\n        bytes32 root = _beaconRoots[timestamp];\\n\\n        // Return the 32-byte root directly\\n        // solhint-disable-next-line no-inline-assembly\\n        assembly {\\n            mstore(0, root)\\n            return(0, 32)\\n        }\\n    }\\n\\n    // Mock function to set a beacon block root (for testing)\\n    function setBeaconRoot(uint256 timestamp, bytes32 root) external {\\n        require(timestamp > 0, \\\"Invalid timestamp\\\");\\n        require(root != bytes32(0), \\\"Invalid root\\\");\\n\\n        // Store the root at the given timestamp\\n        _beaconRoots[timestamp] = root;\\n\\n        emit RootSet(timestamp, root);\\n    }\\n\\n    function setBeaconRoot(bytes32 root) external {\\n        require(root != bytes32(0), \\\"Invalid root\\\");\\n\\n        // Store the root at the given timestamp\\n        _beaconRoots[block.timestamp] = root;\\n\\n        emit RootSet(block.timestamp, root);\\n    }\\n\\n    function parentBlockRoot(uint64 timestamp)\\n        external\\n        view\\n        returns (bytes32 parentRoot)\\n    {\\n        return BeaconRoots.parentBlockRoot(timestamp);\\n    }\\n\\n    function latestBlockRoot()\\n        external\\n        view\\n        returns (bytes32 parentRoot, uint64 timestamp)\\n    {\\n        timestamp = uint64(block.timestamp);\\n        parentRoot = BeaconRoots.parentBlockRoot(timestamp);\\n    }\\n}\\n\",\"keccak256\":\"0xbef3bd6e254e9f3ac8174ad1c62610d137c08589c3b57846ecc8c31b0eadb96c\",\"license\":\"BUSL-1.1\"}},\"version\":1}",
+  "bytecode": "0x6080604052348015600f57600080fd5b506104918061001f6000396000f3fe608060405234801561001057600080fd5b506004361061004c5760003560e01c80636370dd3b146100be57806365190fad146100d3578063aa24b3c4146100e6578063be7c629b1461010c575b6020361461009a5760405162461bcd60e51b8152602060048201526016602482015275496e707574206d75737420626520333220627974657360501b60448201526064015b60405180910390fd5b60006100a636826103a7565b60008181526020818152604082205480835292935090f35b6100d16100cc3660046103c0565b610132565b005b6100d16100e13660046103a7565b6101fb565b6100f96100f43660046103e2565b61027e565b6040519081526020015b60405180910390f35b61011461028f565b6040805192835267ffffffffffffffff909116602083015201610103565b600082116101765760405162461bcd60e51b81526020600482015260116024820152700496e76616c69642074696d657374616d7607c1b6044820152606401610091565b806101b25760405162461bcd60e51b815260206004820152600c60248201526b125b9d985b1a59081c9bdbdd60a21b6044820152606401610091565b60008281526020818152604091829020839055905182815283917f1287e38cf3268df2db9ff3d0625e53548664e304cae1349b9575b02418226a0b910160405180910390a25050565b806102375760405162461bcd60e51b815260206004820152600c60248201526b125b9d985b1a59081c9bdbdd60a21b6044820152606401610091565b426000818152602081815260409182902084905590518381527f1287e38cf3268df2db9ff3d0625e53548664e304cae1349b9575b02418226a0b910160405180910390a250565b6000610289826102a1565b92915050565b60004261029b816102a1565b91509091565b6040805167ffffffffffffffff8316602082015260009182918291720f3df6d732807ef1319fb7b8bb8522d0beac02910160408051601f19818403018152908290526102ec91610413565b600060405180830381855afa9150503d8060008114610327576040519150601f19603f3d011682016040523d82523d6000602084013e61032c565b606091505b509150915081801561033f575060008151115b61038b5760405162461bcd60e51b815260206004820152601860248201527f496e76616c696420626561636f6e2074696d657374616d7000000000000000006044820152606401610091565b8080602001905181019061039f9190610442565b949350505050565b6000602082840312156103b957600080fd5b5035919050565b600080604083850312156103d357600080fd5b50508035926020909101359150565b6000602082840312156103f457600080fd5b813567ffffffffffffffff8116811461040c57600080fd5b9392505050565b6000825160005b81811015610434576020818601810151858301520161041a565b506000920191825250919050565b60006020828403121561045457600080fd5b505191905056fea2646970667358221220572e6bf12c9522ed92ef5a570bf0951c3ab805843607a7d5b686f11f825c794c64736f6c634300081c0033",
+  "deployedBytecode": "0x608060405234801561001057600080fd5b506004361061004c5760003560e01c80636370dd3b146100be57806365190fad146100d3578063aa24b3c4146100e6578063be7c629b1461010c575b6020361461009a5760405162461bcd60e51b8152602060048201526016602482015275496e707574206d75737420626520333220627974657360501b60448201526064015b60405180910390fd5b60006100a636826103a7565b60008181526020818152604082205480835292935090f35b6100d16100cc3660046103c0565b610132565b005b6100d16100e13660046103a7565b6101fb565b6100f96100f43660046103e2565b61027e565b6040519081526020015b60405180910390f35b61011461028f565b6040805192835267ffffffffffffffff909116602083015201610103565b600082116101765760405162461bcd60e51b81526020600482015260116024820152700496e76616c69642074696d657374616d7607c1b6044820152606401610091565b806101b25760405162461bcd60e51b815260206004820152600c60248201526b125b9d985b1a59081c9bdbdd60a21b6044820152606401610091565b60008281526020818152604091829020839055905182815283917f1287e38cf3268df2db9ff3d0625e53548664e304cae1349b9575b02418226a0b910160405180910390a25050565b806102375760405162461bcd60e51b815260206004820152600c60248201526b125b9d985b1a59081c9bdbdd60a21b6044820152606401610091565b426000818152602081815260409182902084905590518381527f1287e38cf3268df2db9ff3d0625e53548664e304cae1349b9575b02418226a0b910160405180910390a250565b6000610289826102a1565b92915050565b60004261029b816102a1565b91509091565b6040805167ffffffffffffffff8316602082015260009182918291720f3df6d732807ef1319fb7b8bb8522d0beac02910160408051601f19818403018152908290526102ec91610413565b600060405180830381855afa9150503d8060008114610327576040519150601f19603f3d011682016040523d82523d6000602084013e61032c565b606091505b509150915081801561033f575060008151115b61038b5760405162461bcd60e51b815260206004820152601860248201527f496e76616c696420626561636f6e2074696d657374616d7000000000000000006044820152606401610091565b8080602001905181019061039f9190610442565b949350505050565b6000602082840312156103b957600080fd5b5035919050565b600080604083850312156103d357600080fd5b50508035926020909101359150565b6000602082840312156103f457600080fd5b813567ffffffffffffffff8116811461040c57600080fd5b9392505050565b6000825160005b81811015610434576020818601810151858301520161041a565b506000920191825250919050565b60006020828403121561045457600080fd5b505191905056fea2646970667358221220572e6bf12c9522ed92ef5a570bf0951c3ab805843607a7d5b686f11f825c794c64736f6c634300081c0033",
+  "libraries": {},
+  "devdoc": {
+    "kind": "dev",
+    "methods": {},
+    "version": 1
+  },
+  "userdoc": {
+    "kind": "user",
+    "methods": {},
+    "version": 1
+  },
+  "storageLayout": {
+    "storage": [
+      {
+        "astId": 31043,
+        "contract": "contracts/mocks/MockBeaconRoots.sol:MockBeaconRoots",
+        "label": "_beaconRoots",
+        "offset": 0,
+        "slot": "0",
+        "type": "t_mapping(t_uint256,t_bytes32)"
+      }
+    ],
+    "types": {
+      "t_bytes32": {
+        "encoding": "inplace",
+        "label": "bytes32",
+        "numberOfBytes": "32"
+      },
+      "t_mapping(t_uint256,t_bytes32)": {
+        "encoding": "mapping",
+        "key": "t_uint256",
+        "label": "mapping(uint256 => bytes32)",
+        "numberOfBytes": "32",
+        "value": "t_bytes32"
+      },
+      "t_uint256": {
+        "encoding": "inplace",
+        "label": "uint256",
+        "numberOfBytes": "32"
+      }
+    }
+  }
+}

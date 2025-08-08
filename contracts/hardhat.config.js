@@ -20,11 +20,15 @@ const {
   isPlumeFork,
   isPlumeForkTest,
   isPlumeUnitTest,
+  isHoodi,
+  isHoodiFork,
+  isHoodiForkTest,
   baseProviderUrl,
   sonicProviderUrl,
   arbitrumProviderUrl,
   holeskyProviderUrl,
   plumeProviderUrl,
+  hoodiProviderUrl,
   adjustTheForkBlockNumber,
   getHardhatNetworkProperties,
 } = require("./utils/hardhat-helpers.js");
@@ -78,6 +82,10 @@ const PLUME_ADMIN = "0x92A19381444A001d62cE67BaFF066fA1111d7202";
 // Plume 2/8 multisig
 const PLUME_STRATEGIST = MULTICHAIN_STRATEGIST;
 
+const HOODI_DEPLOYER = MAINNET_DEPLOYER;
+// Hoodi Relayer
+const HOODI_RELAYER = "0x419B6BdAE482f41b8B194515749F3A2Da26d583b";
+
 const mnemonic =
   "replace hover unaware super where filter stone fine garlic address matrix basic";
 
@@ -108,6 +116,8 @@ if (isHolesky || isHoleskyForkTest || isHoleskyFork) {
   paths.deploy = "deploy/arbitrumOne";
 } else if (isPlume || isPlumeFork || isPlumeForkTest || isPlumeUnitTest) {
   paths.deploy = "deploy/plume";
+} else if (isHoodi || isHoodiFork || isHoodiForkTest) {
+  paths.deploy = "deploy/hoodi";
 } else {
   // holesky deployment files are in contracts/deploy/mainnet
   paths.deploy = "deploy/mainnet";
@@ -147,6 +157,8 @@ const localEnvDeployer =
       ? SONIC_DEPLOYER
       : isPlumeFork
       ? PLUME_DEPLOYER
+      : isHoodiFork
+      ? HOODI_DEPLOYER
       : MAINNET_DEPLOYER
     : 0; // 0th signer fallback
 
@@ -160,6 +172,8 @@ const localEnvGovernor =
       ? SONIC_ADMIN
       : isPlumeFork
       ? PLUME_ADMIN
+      : isHoodiFork
+      ? HOODI_RELAYER
       : MAINNET_GOVERNOR
     : 1; // signer at index 1
 
@@ -182,7 +196,9 @@ const localEnvStrategist =
       : isSonicFork
       ? SONIC_STRATEGIST
       : // Base, Plume and Eth use Multichain Strategist
-        MULTICHAIN_STRATEGIST
+      isHoodiFork
+      ? HOODI_RELAYER
+      : MULTICHAIN_STRATEGIST
     : 0;
 
 module.exports = {
@@ -277,6 +293,13 @@ module.exports = {
       live: true,
       saveDeployments: true,
     },
+    hoodi: {
+      url: hoodiProviderUrl,
+      accounts: defaultAccounts,
+      chainId: 560048,
+      live: true,
+      saveDeployments: true,
+    },
   },
   mocha: {
     bail: process.env.BAIL === "true",
@@ -294,6 +317,7 @@ module.exports = {
       base: BASE_DEPLOYER,
       sonic: SONIC_DEPLOYER,
       plume: MAINNET_DEPLOYER,
+      hoodi: HOODI_DEPLOYER,
     },
     governorAddr: {
       default: 1,
@@ -305,6 +329,7 @@ module.exports = {
       base: BASE_GOVERNOR,
       sonic: SONIC_ADMIN,
       plume: PLUME_ADMIN,
+      hoodi: HOODI_RELAYER,
     },
     /* Local node environment currently has no access to Decentralized governance
      * address, since the contract is in another repo. Once we merge the ousd-governance
@@ -360,6 +385,7 @@ module.exports = {
       base: BASE_GOVERNOR,
       sonic: SONIC_ADMIN,
       plume: PLUME_STRATEGIST,
+      hoodi: HOODI_RELAYER,
     },
     adjusterAddr: {
       default: 0,
@@ -376,6 +402,7 @@ module.exports = {
       base: MULTICHAIN_STRATEGIST,
       sonic: SONIC_STRATEGIST,
       plume: PLUME_STRATEGIST,
+      hoodi: HOODI_RELAYER,
     },
     multichainStrategistAddr: {
       default: MULTICHAIN_STRATEGIST,
@@ -392,6 +419,7 @@ module.exports = {
       holesky: process.env.ETHERSCAN_API_KEY,
       base: process.env.BASESCAN_API_KEY,
       sonic: process.env.SONICSCAN_API_KEY,
+      hoodi: process.env.HOODISCAN_API_KEY,
       plume: "empty", // this works for: npx hardhat verify...
     },
     customChains: [
@@ -427,10 +455,19 @@ module.exports = {
           browserURL: "https://explorer.plume.org",
         },
       },
+      {
+        network: "hoodi",
+        chainId: 560048,
+        urls: {
+          apiURL: "https://hoodi.etherscan.io/api",
+          browserURL: "https://hoodi.etherscan.io",
+        },
+      },
     ],
   },
   gasReporter: {
     enabled: process.env.REPORT_GAS ? true : false,
+    reportPureAndViewMethods: true,
   },
   sourcify: {
     enabled: true,
