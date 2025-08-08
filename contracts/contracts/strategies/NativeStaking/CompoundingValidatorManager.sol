@@ -945,8 +945,9 @@ abstract contract CompoundingValidatorManager is Governable {
         view
         returns (DepositView[] memory pendingDeposits)
     {
-        pendingDeposits = new DepositView[](depositsRoots.length);
-        for (uint256 i = 0; i < depositsRoots.length; ++i) {
+        uint256 depositsCount = depositsRoots.length;
+        pendingDeposits = new DepositView[](depositsCount);
+        for (uint256 i = 0; i < depositsCount; ++i) {
             DepositData memory deposit = deposits[depositsRoots[i]];
             pendingDeposits[i] = DepositView({
                 root: depositsRoots[i],
