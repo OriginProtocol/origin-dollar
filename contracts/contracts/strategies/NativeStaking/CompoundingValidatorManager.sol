@@ -376,8 +376,8 @@ abstract contract CompoundingValidatorManager is Governable {
 
     // slither-disable-end reentrancy-no-eth
 
-    /// @notice Remove a sweeping validator from the SSV Cluster.
-    /// Make sure `exitSsvValidator` is called before and the validate has exited the Beacon chain.
+    /// @notice Remove the validator from the SSV Cluster after it has exited.
+    /// Make sure `validatorWithdrawal` is called with a zero amount and the validator has exited the Beacon chain.
     /// If removed before the validator has exited the beacon chain will result in the validator being slashed.
     /// Only the registrator can call this function.
     /// @param publicKey The public key of the validator
