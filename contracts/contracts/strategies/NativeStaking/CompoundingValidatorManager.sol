@@ -343,7 +343,7 @@ abstract contract CompoundingValidatorManager is Governable {
 
     /// @notice Request a full or partial withdrawal from a validator.
     /// A zero amount will trigger a full withdrawal.
-    /// If the remaining balance is < 32 ETH then the request will fail.
+    /// If the remaining balance is < 32 ETH then only the amount in excess of 32 ETH will be withdrawn.
     /// Only the Registrator can call this function.
     /// 1 wei of value should be sent with the tx to pay for the withdrawal request fee.
     /// If no value sent, 1 wei will be taken from the strategy's ETH balance if it has any.
