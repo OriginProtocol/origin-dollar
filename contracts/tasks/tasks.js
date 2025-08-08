@@ -1970,43 +1970,20 @@ task("verifyBalances").setAction(async (_, __, runSuper) => {
 });
 
 subtask(
-  "compoundingValidatorCreateRequest",
-  "Crates the request to prepare a compounding validator"
+  "requestNewValidator",
+  "Calls P2P's Create SSV Request to prepare a new SSV compounding (0x02) validator"
 )
   .addOptionalParam(
     "days",
     "SSV Cluster operational time in days",
-    10,
+    1,
     types.int
   )
   .setAction(async (taskArgs) => {
     await registerValidatorCreateRequest(taskArgs);
     console.log("Once the validator is created run: registerValidatorUuid");
   });
-task("compoundingValidatorCreateRequest").setAction(async (_, __, runSuper) => {
-  return runSuper();
-});
-
-subtask(
-  "registerValidatorUuid",
-  "Registers a new compounding validator in a SSV cluster using P2P Uuid"
-)
-  .addParam(
-    "uuid",
-    "The Uuid that has been used to create the request using compoundingValidatorCreateRequest",
-    undefined,
-    types.string
-  )
-  .addOptionalParam(
-    "ssv",
-    "Amount of SSV to deposit to the cluster.",
-    0,
-    types.int
-  )
-  .setAction(async (taskArgs) => {
-    await registerValidator(taskArgs);
-  });
-task("registerValidatorUuid").setAction(async (_, __, runSuper) => {
+task("requestNewValidator").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
 
@@ -2015,18 +1992,24 @@ subtask(
   "Registers a new compounding validator in a SSV cluster"
 )
   .addParam(
-    "pubkey",
-    "The validator's public key in hex format with a 0x prefix",
-    undefined,
-    types.string
-  )
-  .addParam(
     "operatorids",
     "Comma separated operator ids. E.g. 342,343,344,345",
     undefined,
     types.string
   )
-  .addParam("shares", "SSV shares data", undefined, types.string)
+  .addOptionalParam(
+    "uuid",
+    "The uuid that has been used to create the request using requestNewValidator",
+    undefined,
+    types.string
+  )
+  .addOptionalParam(
+    "pubkey",
+    "If no uuid, the validator's public key in hex format with a 0x prefix",
+    undefined,
+    types.string
+  )
+  .addOptionalParam("shares", "If no uuid, SSV shares data", undefined, types.string)
   .addOptionalParam(
     "ssv",
     "Amount of SSV to deposit to the cluster.",

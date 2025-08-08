@@ -3,9 +3,9 @@ const { v4: uuidv4 } = require("uuid");
 const { getNetworkName } = require("./hardhat-helpers");
 const log = require("./logger")("task:validator:compounding");
 
-P2P_URL_MAINNET = "https://api.p2p.org";
-P2P_URL_HOODI = "https://api-test.p2p.org";
-INITIAL_DEPOSIT_SIZE = "32000000000"; // 32 ETH
+const P2P_URL_MAINNET = "https://api.p2p.org";
+const P2P_URL_TESTNET = "https://api-test.p2p.org";
+const INITIAL_DEPOSIT_SIZE = "32000000000"; // 32 ETH
 
 const _p2pRequest = async (uri, method, body) => {
   const networkName = await getNetworkName();
@@ -15,8 +15,8 @@ const _p2pRequest = async (uri, method, body) => {
     baseUrl = P2P_URL_MAINNET;
     api_key = process.env.P2P_MAINNET_API_KEY;
   } else if (networkName == "hoodi") {
-    baseUrl = P2P_URL_HOODI;
-    api_key = process.env.P2P_HOODIE_API_KEY;
+    baseUrl = P2P_URL_TESTNET;
+    api_key = process.env.P2P_HOODI_API_KEY;
   } else {
     throw new Error(`Unsupported network: ${networkName}`);
   }
