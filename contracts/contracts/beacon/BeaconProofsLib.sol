@@ -212,7 +212,9 @@ library BeaconProofsLib {
             "Invalid proof length"
         );
 
+        // slither-disable-next-line uninitialized-local
         uint256 generalizedIndex;
+        // slither-disable-next-line uninitialized-local
         bytes32 leaf;
         // If the deposit queue is empty
         if (

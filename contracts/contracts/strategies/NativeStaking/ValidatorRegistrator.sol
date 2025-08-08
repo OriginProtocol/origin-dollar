@@ -231,7 +231,6 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
     /// @param sharesData The shares data for each validator
     /// @param ssvAmount The amount of SSV tokens to be deposited to the SSV cluster
     /// @param cluster The SSV cluster details including the validator count and SSV balance
-    // slither-disable-start reentrancy-no-eth
     function registerSsvValidators(
         bytes[] calldata publicKeys,
         uint64[] calldata operatorIds,
@@ -273,7 +272,6 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
     /// Only the registrator can call this function.
     /// @param publicKeys List of SSV validator public keys
     /// @param operatorIds The operator IDs of the SSV Cluster
-    // slither-disable-start reentrancy-no-eth
     function exitSsvValidators(
         bytes[] calldata publicKeys,
         uint64[] calldata operatorIds
