@@ -36,6 +36,7 @@ const {
   createFixtureLoader,
   compoundingStakingSSVStrategyFixture,
 } = require("./../_fixture");
+const { bytes32 } = require("../../utils/regex");
 
 const loadFixture = createFixtureLoader(compoundingStakingSSVStrategyFixture);
 
@@ -555,7 +556,28 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
     });
 
     it("Should stake to 3 validators: 32 ETH", async () => {
+      const { compoundingStakingSSVStrategy } = fixture;
       await stakeValidators(3, 32);
+
+      const pendingDeposits =
+        await compoundingStakingSSVStrategy.getPendingDeposits();
+      expect(pendingDeposits.length).to.equal(
+        3,
+        "Pending deposits count mismatch"
+      );
+      let i = 0;
+      for (const deposit of pendingDeposits) {
+        expect(deposit.amountGwei).to.gte(
+          parseUnits("32", 9),
+          "Deposit amount in Gwei"
+        );
+        expect(deposit.slot).to.gt(0);
+        expect(deposit.root).to.match(bytes32);
+        expect(deposit.pubKeyHash).to.equal(
+          hashPubKey(testValidators[i++].publicKey),
+          "Validator public key"
+        );
+      }
     });
 
     it("Should stake 32 ETH then 2047 ETH to a validator", async () => {
