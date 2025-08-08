@@ -147,6 +147,18 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
       );
       expect(assets).to.equal(true);
     });
+    it("Should not collect rewards", async () => {
+      const { compoundingStakingSSVStrategy, governor } = fixture;
+
+      await compoundingStakingSSVStrategy
+        .connect(governor)
+        .setHarvesterAddress(governor.address);
+
+      const collectRewards = compoundingStakingSSVStrategy
+        .connect(governor)
+        .collectRewardTokens();
+      await expect(collectRewards).to.revertedWith("Unsupported function");
+    });
   });
 
   const processValidator = async (
