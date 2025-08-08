@@ -885,15 +885,12 @@ abstract contract CompoundingValidatorManager is Governable {
 
         depositedWethAccountedFor += _ethAmount;
 
-        // Store the reduced ETH balance
-        if (lastVerifiedEthBalance > _ethAmount) {
-            lastVerifiedEthBalance -= SafeCast.toUint128(_ethAmount);
-        } else {
-            // This can happen if all ETH in the validators was withdrawn
-            // and there was more consensus rewards since the last balance verification.
-            // Or it can happen if ETH is donated to this strategy.
-            lastVerifiedEthBalance = 0;
-        }
+        // It can happen if all ETH in the validators was withdrawn
+        // and there was more consensus rewards since the last balance verification.
+        // Or it can happen if ETH is donated to this strategy.
+        lastVerifiedEthBalance -= SafeCast.toUint128(
+            Math.min(uint256(lastVerifiedEthBalance), _ethAmount)
+        );
 
         // The ETH balance was increased from WETH so we need to invalidate the last balances snap.
         lastSnapTimestamp = 0;
