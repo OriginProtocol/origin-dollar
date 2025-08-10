@@ -62,6 +62,7 @@ async function generateFirstPendingDepositSlotProof({
     root: toHex(blockTree.root),
     leaf: toHex(proofObj.leaf),
     slot: firstPendingDepositSlot,
+    isEmpty: stateView.pendingDeposits.length === 0,
   };
 }
 

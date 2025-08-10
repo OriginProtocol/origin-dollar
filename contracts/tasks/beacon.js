@@ -253,14 +253,18 @@ async function verifyBalances({ root, indexes, dryrun, signer }) {
     "CompoundingStakingSSVStrategy"
   );
 
-  const { proof: firstPendingDepositSlotProof, slot: firstPendingDepositSlot } =
-    await generateFirstPendingDepositSlotProof({
-      blockView,
-      blockTree,
-      stateView,
-    });
+  const {
+    proof: firstPendingDepositSlotProof,
+    slot: firstPendingDepositSlot,
+    isEmpty,
+  } = await generateFirstPendingDepositSlotProof({
+    blockView,
+    blockTree,
+    stateView,
+  });
 
-  if (firstPendingDepositSlot == 0) {
+  // If the deposit queue is not empty and the first pending deposit slot is zero
+  if (!isEmpty && firstPendingDepositSlot == 0) {
     throw Error(
       `Can not verify when the first pending deposits has a zero slot. This is from a validator consolidating to a compounding validator.\nExecute another snapBalances when the first pending deposit slot is not zero.`
     );
