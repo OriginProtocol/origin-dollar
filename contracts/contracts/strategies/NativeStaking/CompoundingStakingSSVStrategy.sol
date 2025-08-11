@@ -194,6 +194,16 @@ contract CompoundingStakingSSVStrategy is
                 Internal functions
     ****************************************/
 
+    /// @notice is not supported for this strategy as there is no platform token.
+    function setPTokenAddress(address, address) external pure override {
+        revert("Unsupported function");
+    }
+
+    /// @notice is not supported for this strategy as there is no platform token.
+    function removePToken(uint256) external pure override {
+        revert("Unsupported function");
+    }
+
     /// @dev This strategy does not use a platform token like the old Aave and Compound strategies.
     function _abstractSetPToken(address _asset, address) internal override {}
 
