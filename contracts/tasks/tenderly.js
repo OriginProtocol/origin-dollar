@@ -1,4 +1,12 @@
 const fetch = require("node-fetch");
+const { resolveContract } = require("../utils/resolvers");
+
+async function tenderlyUpload({ name }) {
+  const contract = await resolveContract(name);
+
+  const { chainId } = await ethers.provider.getNetwork();
+  await uploadContractToTenderly(contract.address, name, chainId);
+}
 
 async function tenderlySync(taskArguments, hre) {
   const allDeployments = await hre.deployments.all();
@@ -8,9 +16,7 @@ async function tenderlySync(taskArguments, hre) {
       address: deployment.address,
     })
   );
-  const chainId = parseInt(
-    (await hre.network.provider.send("eth_chainId")).toString()
-  );
+  const { chainId } = await hre.ethers.provider.getNetwork();
   const allTenderlyContracts = await fetchAllContractsFromTenderly(chainId);
 
   for (let i = 0; i < deployedContracts.length; i++) {
@@ -110,4 +116,5 @@ async function fetchAllContractsFromTenderly() {
 
 module.exports = {
   tenderlySync,
+  tenderlyUpload,
 };
