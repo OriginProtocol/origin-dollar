@@ -106,9 +106,9 @@ contract CompoundingStakingSSVStrategy is
     }
 
     /// @notice Withdraw ETH and WETH from this strategy contract.
-    /// @param _recipient Address to receive withdrawn assets
-    /// @param _asset WETH to withdraw
-    /// @param _amount Amount of WETH to withdraw
+    /// @param _recipient Address to receive withdrawn assets.
+    /// @param _asset Address of the WETH token.
+    /// @param _amount Amount of WETH to withdraw.
     function withdraw(
         address _recipient,
         address _asset,
@@ -116,12 +116,11 @@ contract CompoundingStakingSSVStrategy is
     ) external override onlyVault nonReentrant {
         require(_asset == WETH, "Unsupported asset");
 
-        _withdraw(_recipient, _asset, _amount, address(this).balance);
+        _withdraw(_recipient, _amount, address(this).balance);
     }
 
     function _withdraw(
         address _recipient,
-        address _asset,
         uint256 _withdrawAmount,
         uint256 _ethBalance
     ) internal {
@@ -135,7 +134,7 @@ contract CompoundingStakingSSVStrategy is
         // Transfer WETH to the recipient and do the necessary accounting.
         _transferWeth(_withdrawAmount, _recipient);
 
-        emit Withdrawal(_asset, address(0), _withdrawAmount);
+        emit Withdrawal(WETH, address(0), _withdrawAmount);
     }
 
     /// @notice Transfer all WETH deposits, ETH from validator withdrawals and ETH from
@@ -148,7 +147,7 @@ contract CompoundingStakingSSVStrategy is
             ethBalance;
 
         if (withdrawAmount > 0) {
-            _withdraw(vaultAddress, WETH, withdrawAmount, ethBalance);
+            _withdraw(vaultAddress, withdrawAmount, ethBalance);
         }
     }
 
