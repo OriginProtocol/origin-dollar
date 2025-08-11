@@ -35,7 +35,7 @@ def main():
     supply_change = os.totalSupply() - vault_value_checker.snapshots(SONIC_STRATEGIST)[1]
     profit = vault_change - supply_change
 
-    txs.append(vault_value_checker.checkDelta(profit, (10 * 10**18), vault_change, (10 * 10**18), {'from': SONIC_STRATEGIST}))
+    txs.append(vault_value_checker.checkDelta(profit, (10 * 10**18), vault_change, (100 * 10**18), {'from': SONIC_STRATEGIST}))
 
     print("-----")
     print("Profit in wS", "{:.6f}".format(profit / 10**18), profit)
