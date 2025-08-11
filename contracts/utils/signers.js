@@ -15,20 +15,19 @@ const log = require("./logger")("utils:signers");
  * @param {*} address optional address of the signer
  * @returns
  */
-async function getSigner(address = undefined, provider = undefined) {
-  provider = provider || hre.ethers.provider;
+async function getSigner(address = undefined) {
   if (address) {
     if (!address.match(ethereumAddress)) {
       throw Error(`Invalid format of address`);
     }
-    return await provider.getSigner(address);
+    return await hre.ethers.provider.getSigner(address);
   }
   const pk = process.env.DEPLOYER_PK || process.env.GOVERNOR_PK;
   if (pk) {
     if (!pk.match(privateKey)) {
       throw Error(`Invalid format of private key`);
     }
-    const wallet = new Wallet(pk, provider);
+    const wallet = new Wallet(pk, hre.ethers.provider);
     log(`Using signer ${await wallet.getAddress()} from private key`);
     return wallet;
   }
