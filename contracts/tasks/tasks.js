@@ -2009,7 +2009,12 @@ subtask(
     undefined,
     types.string
   )
-  .addOptionalParam("shares", "If no uuid, SSV shares data", undefined, types.string)
+  .addOptionalParam(
+    "shares",
+    "If no uuid, SSV shares data",
+    undefined,
+    types.string
+  )
   .addOptionalParam(
     "ssv",
     "Amount of SSV to deposit to the cluster.",
