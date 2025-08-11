@@ -25,7 +25,7 @@
     "node:anvil:plume": "anvil --fork-url $PLUME_PROVIDER_URL --port 8545 --block-base-fee-per-gas 0 --auto-impersonate --disable-block-gas-limit",
     "node:anvil:sonic": "anvil --fork-url $SONIC_PROVIDER_URL --port 8545 --block-base-fee-per-gas 0 --auto-impersonate --disable-block-gas-limit",
     "lint": "yarn run lint:js && yarn run lint:sol",
-    "lint:js": "eslint \"test/**/*.js\" \"tasks/**/*.js\" \"deploy/**/*.js\"",
+    "lint:js": "eslint \"test/**/*.js\" \"tasks/**/*.js\" \"deploy/**/*.js\" \"utils/**/*.js\"",
     "lint:sol": "solhint \"contracts/**/*.sol\"",
     "prettier": "yarn run prettier:js && yarn run prettier:sol",
     "prettier:check": "prettier -c \"*.js\" \"deploy/**/*.js\"  \"scripts/**/*.js\" \"smoke/**/*.js\" \"scripts/**/*.js\" \"tasks/**/*.js\" \"test/**/*.js\" \"utils/**/*.js\"",
