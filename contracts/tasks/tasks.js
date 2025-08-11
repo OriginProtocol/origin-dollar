@@ -6,7 +6,7 @@ const { setActionVars } = require("./defender");
 const { execute, executeOnFork, proposal, governors } = require("./governance");
 const { smokeTest, smokeTestCheck } = require("./smokeTest");
 const addresses = require("../utils/addresses");
-const { networkMap } = require("../utils/hardhat-helpers");
+const { getNetworkName } = require("../utils/hardhat-helpers");
 const {
   genECDHKey,
   decryptValidatorKey,
@@ -249,9 +249,9 @@ subtask("depositWETH", "Deposit ETH into WETH")
   .setAction(async (taskArgs) => {
     const signer = await getSigner();
 
-    const { chainId } = await ethers.provider.getNetwork();
-    const symbol = chainId == 146 ? "wS" : "WETH";
-    const wethAddress = addresses[networkMap[chainId]][symbol];
+    const networkName = await getNetworkName();
+    const symbol = networkName == "sonic" ? "wS" : "WETH";
+    const wethAddress = addresses[networkName][symbol];
     const weth = await ethers.getContractAt("IWETH9", wethAddress);
 
     await depositWETH({ ...taskArgs, weth, signer });
@@ -265,8 +265,8 @@ subtask("withdrawWETH", "Withdraw ETH from WETH")
   .setAction(async (taskArgs) => {
     const signer = await getSigner();
 
-    const { chainId } = await ethers.provider.getNetwork();
-    const wethAddress = addresses[networkMap[chainId]].WETH;
+    const networkName = await getNetworkName();
+    const wethAddress = addresses[networkName].WETH;
     const weth = await ethers.getContractAt("IWETH9", wethAddress);
 
     await withdrawWETH({ ...taskArgs, weth, signer });
@@ -1038,11 +1038,11 @@ subtask("getClusterInfo", "Print out information regarding SSV cluster")
   )
   .setAction(async (taskArgs) => {
     const { chainId } = await ethers.provider.getNetwork();
-    const network = networkMap[chainId];
-    const ssvNetwork = addresses[network].SSVNetwork;
+    const networkName = await getNetworkName();
+    const ssvNetwork = addresses[networkName].SSVNetwork;
 
     log(
-      `Fetching cluster info for cluster owner ${taskArgs.owner} with operator ids: ${taskArgs.operatorids} from the ${network} network using ssvNetworkContract ${ssvNetwork}`
+      `Fetching cluster info for cluster owner ${taskArgs.owner} with operator ids: ${taskArgs.operatorids} from the ${networkName} network using ssvNetworkContract ${ssvNetwork}`
     );
     await printClusterInfo({
       ...taskArgs,

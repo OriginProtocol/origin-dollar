@@ -1,6 +1,6 @@
 const addresses = require("./addresses");
 const { ethereumAddress } = require("./regex");
-const { networkMap } = require("./hardhat-helpers");
+const { getNetworkName } = require("./hardhat-helpers");
 
 const log = require("./logger")("task:assets");
 
@@ -10,24 +10,19 @@ const log = require("./logger")("task:assets");
  * @param {string} symbol token symbol of the asset. eg OUSD, USDT, stETH, CRV...
  */
 const resolveAsset = async (symbol) => {
-  // This uses the Hardhat Runtime Environment (HRE)
-  const { chainId } = await hre.ethers.provider.getNetwork();
+  const networkName = await getNetworkName();
 
   // If not a unit test or task running against the hardhat network
-  if (chainId != networkMap.hardhat) {
-    const network = networkMap[chainId];
-    if (!network) {
-      throw Error(`Failed to resolve network with chain Id "${chainId}"`);
-    }
-
+  if (networkName != "hardhat") {
     const assetAddr =
-      addresses[network][symbol + "Proxy"] || addresses[network][symbol];
+      addresses[networkName][symbol + "Proxy"] ||
+      addresses[networkName][symbol];
     if (!assetAddr) {
       throw Error(
-        `Failed to resolve symbol "${symbol}" to an address on the "${network}" network`
+        `Failed to resolve symbol "${symbol}" to an address on the "${networkName}" network`
       );
     }
-    log(`Resolved ${symbol} to ${assetAddr} on the ${network} network`);
+    log(`Resolved ${symbol} to ${assetAddr} on the ${networkName} network`);
     const asset = await ethers.getContractAt("IERC20Metadata", assetAddr);
     return asset;
   }
@@ -46,9 +41,7 @@ const resolveAsset = async (symbol) => {
  * @returns
  */
 const resolveContract = async (proxy, abiName) => {
-  // This uses the Hardhat Runtime Environment (HRE)
-  const { chainId } = await hre.ethers.provider.getNetwork();
-  const networkName = networkMap[chainId];
+  const networkName = await getNetworkName();
 
   // If proxy is an address
   if (proxy.match(ethereumAddress)) {
