@@ -884,17 +884,15 @@ abstract contract CompoundingValidatorManager is Governable {
 
         depositedWethAccountedFor += _ethAmount;
 
-        // Store the reduced ETH balance
-        if (lastVerifiedEthBalance > _ethAmount) {
-            lastVerifiedEthBalance -= SafeCast.toUint128(_ethAmount);
-        } else {
-            // This can happen if all ETH in the validators was withdrawn
-            // and there was more consensus rewards since the last balance verification.
-            // Or it can happen if ETH is donated to this strategy.
-            lastVerifiedEthBalance = 0;
-        }
+        // Store the reduced ETH balance.
+        // The ETH balance in this strategy contract can be more than the last verified ETH balance
+        // due to partial withdrawals or full exits being processed by the beacon chain since the last snapBalances.
+        // It can also happen from execution rewards (MEV) or ETH donations.
+        lastVerifiedEthBalance -= SafeCast.toUint128(
+            Math.min(uint256(lastVerifiedEthBalance), _ethAmount)
+        );
 
-        // The ETH balance was increased from WETH so we need to invalidate the last balances snap.
+        // The ETH balance was decreased to WETH so we need to invalidate the last balances snap.
         lastSnapTimestamp = 0;
     }
 
@@ -909,7 +907,7 @@ abstract contract CompoundingValidatorManager is Governable {
         // Store the increased ETH balance
         lastVerifiedEthBalance += SafeCast.toUint128(_wethAmount);
 
-        // The ETH balance was decreased to WETH so we need to invalidate the last balances snap.
+        // The ETH balance was increased from WETH so we need to invalidate the last balances snap.
         lastSnapTimestamp = 0;
     }
 
