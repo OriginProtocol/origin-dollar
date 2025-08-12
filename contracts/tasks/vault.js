@@ -6,55 +6,50 @@ const { resolveAsset } = require("../utils/resolvers");
 const { getSigner } = require("../utils/signers");
 const { logTxDetails } = require("../utils/txLogger");
 const { ethereumAddress } = require("../utils/regex");
-const { networkMap } = require("../utils/hardhat-helpers");
+const { getNetworkName } = require("../utils/hardhat-helpers");
 
 const log = require("../utils/logger")("task:vault");
 
 async function getContracts(hre, symbol, assetSymbol) {
-  const { chainId } = await hre.ethers.provider.getNetwork();
+  const networkName = await getNetworkName();
 
   // If no symbol is provided, set to OSonic if Sonic network, else default to OETH
-  symbol = symbol
-    ? symbol
-    : networkMap[chainId] === "sonic"
-    ? "OSonic"
-    : "OETH";
+  symbol = symbol ? symbol : networkName === "sonic" ? "OSonic" : "OETH";
   // Convert OS to OSonic
   symbol = symbol === "OS" ? "OSonic" : symbol;
   const contractPrefix = symbol === "OUSD" ? "" : symbol;
 
-  const network = networkMap[chainId];
-  const networkPrefix = network === "base" ? "Base" : "";
+  const networkPrefix = networkName === "base" ? "Base" : "";
 
   // Resolve the vault
   const vaultProxy = await hre.ethers.getContract(
     `${contractPrefix}${networkPrefix}VaultProxy`
   );
   const vault = await hre.ethers.getContractAt("IVault", vaultProxy.address);
-  log(`Resolved ${network} ${symbol} Vault to address ${vault.address}`);
+  log(`Resolved ${networkName} ${symbol} Vault to address ${vault.address}`);
 
   // Resolve the OToken. eg OUSD, OETH or OSonic
   const oTokenProxy = await ethers.getContract(
     `${symbol}${networkPrefix}Proxy`
   );
   const oToken = await ethers.getContractAt(symbol, oTokenProxy.address);
-  log(`Resolved ${network} ${symbol} OToken to address ${oToken.address}`);
+  log(`Resolved ${networkName} ${symbol} OToken to address ${oToken.address}`);
 
   // Resolve the wrapped OToken. eg wOETH, wOSonic
-  const wOTokenProxy = await ethers.getContract(
-    `W${symbol}${networkPrefix}Proxy`
-  );
-  const wOToken = await ethers.getContractAt(
-    `W${symbol}`,
-    wOTokenProxy.address
-  );
+  let wOToken;
+  if (networkName !== "hoodi") {
+    const wOTokenProxy = await ethers.getContract(
+      `W${symbol}${networkPrefix}Proxy`
+    );
+    wOToken = await ethers.getContractAt(`W${symbol}`, wOTokenProxy.address);
+  }
 
   // Resolve the Asset. eg WETH or wS
   // This won't work for OUSD if the assetSymbol has not been set as it has three assets
-  assetSymbol = assetSymbol || network === "sonic" ? "wS" : "WETH";
+  assetSymbol = assetSymbol || (networkName === "sonic" ? "wS" : "WETH");
   const asset = await resolveAsset(assetSymbol);
   log(
-    `Resolved ${network} ${symbol} Vault asset to ${assetSymbol} with address ${asset.address}`
+    `Resolved ${networkName} ${symbol} Vault asset to ${assetSymbol} with address ${asset.address}`
   );
 
   return {

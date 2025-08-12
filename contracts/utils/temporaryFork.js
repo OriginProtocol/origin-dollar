@@ -1,4 +1,3 @@
-const hre = require("hardhat");
 const { nodeSnapshot, nodeRevert } = require("../test/_fixture");
 /* Executes a (test) function in a temporary fork that is after the function executes reverted.
  * Useful for when preview of actions need to be executed and changes in oToken supply and vault

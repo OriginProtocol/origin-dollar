@@ -87,10 +87,6 @@ const verifyMerkleSignature = (
     throw new Error("Proof length is not the same as merkle tree depth");
   }
 
-  const nodeHash = (node1, node2) => {
-    return utils.solidityKeccak256(["bytes", "bytes"], [node1, node2]);
-  };
-
   let node = hash(
     index,
     stakeType,

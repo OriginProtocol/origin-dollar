@@ -10,9 +10,10 @@ const isBase = process.env.NETWORK_NAME === "base";
 const isBaseFork = process.env.FORK_NETWORK_NAME === "base";
 const isSonic = process.env.NETWORK_NAME === "sonic";
 const isSonicFork = process.env.FORK_NETWORK_NAME === "sonic";
-
 const isPlume = process.env.NETWORK_NAME === "plume";
 const isPlumeFork = process.env.FORK_NETWORK_NAME === "plume";
+const isHoodi = process.env.NETWORK_NAME === "hoodi";
+const isHoodiFork = process.env.FORK_NETWORK_NAME === "hoodi";
 
 const isForkTest = isFork && process.env.IS_TEST === "true";
 const isArbForkTest = isForkTest && isArbitrumFork;
@@ -23,6 +24,7 @@ const isSonicForkTest = isForkTest && isSonicFork;
 const isSonicUnitTest = process.env.UNIT_TESTS_NETWORK === "sonic";
 const isPlumeForkTest = isForkTest && isPlumeFork;
 const isPlumeUnitTest = process.env.UNIT_TESTS_NETWORK === "plume";
+const isHoodiForkTest = isForkTest && isHoodiFork;
 
 const providerUrl = `${
   process.env.LOCAL_PROVIDER_URL || process.env.PROVIDER_URL
@@ -32,6 +34,7 @@ const holeskyProviderUrl = `${process.env.HOLESKY_PROVIDER_URL}`;
 const baseProviderUrl = `${process.env.BASE_PROVIDER_URL}`;
 const sonicProviderUrl = `${process.env.SONIC_PROVIDER_URL}`;
 const plumeProviderUrl = `${process.env.PLUME_PROVIDER_URL}`;
+const hoodiProviderUrl = `${process.env.HOODI_PROVIDER_URL}`;
 const standaloneLocalNodeRunning = !!process.env.LOCAL_PROVIDER_URL;
 
 /**
@@ -63,6 +66,10 @@ const adjustTheForkBlockNumber = () => {
     } else if (isPlumeForkTest) {
       forkBlockNumber = process.env.PLUME_BLOCK_NUMBER
         ? process.env.PLUME_BLOCK_NUMBER
+        : undefined;
+    } else if (isHoodiForkTest) {
+      forkBlockNumber = process.env.HOODI_BLOCK_NUMBER
+        ? Number(process.env.HOODI_BLOCK_NUMBER)
         : undefined;
     } else {
       forkBlockNumber = process.env.BLOCK_NUMBER
@@ -132,6 +139,8 @@ const getHardhatNetworkProperties = () => {
     chainId = 146;
   } else if (isPlumeFork && isFork) {
     chainId = 98866;
+  } else if (isHoodiFork && isFork) {
+    chainId = 560048;
   } else if (isFork) {
     // is mainnet fork
     chainId = 1;
@@ -149,6 +158,8 @@ const getHardhatNetworkProperties = () => {
       provider = sonicProviderUrl;
     } else if (isPlumeForkTest) {
       provider = plumeProviderUrl;
+    } else if (isHoodiForkTest) {
+      provider = hoodiProviderUrl;
     }
   }
 
@@ -163,6 +174,25 @@ const networkMap = {
   8453: "base",
   146: "sonic",
   98866: "plume",
+  560048: "hoodi",
+};
+
+/**
+ * Returns the network name based on the chain ID of the connected network.
+ * @param {ethers.Provider} [provider] - Optional ethers provider. Defaults to the Hardhat provider if not supplied.
+ * The provider is required for Defender Actions as Hardhat is too big to load as a dependency.
+ * @returns {Promise<string>} The network name. e.g. `mainnet`, `sonic`, `base`
+ */
+const getNetworkName = async (provider) => {
+  // use the provider if passed, otherwise use the Hardhat provider
+  const localProvider = provider ?? hre.ethers.provider;
+  const { chainId } = await localProvider.getNetwork();
+  const network = networkMap[chainId];
+  if (!network) {
+    throw Error(`Failed to resolve network with chain Id "${chainId}"`);
+  }
+
+  return network;
 };
 
 module.exports = {
@@ -171,6 +201,7 @@ module.exports = {
   isArbitrumFork,
   isBase,
   isBaseFork,
+  getNetworkName,
   isBaseForkTest,
   isBaseUnitTest,
   isSonic,
@@ -186,15 +217,16 @@ module.exports = {
   isPlumeFork,
   isPlumeForkTest,
   isPlumeUnitTest,
-
+  isHoodi,
+  isHoodiFork,
+  isHoodiForkTest,
   providerUrl,
   arbitrumProviderUrl,
   holeskyProviderUrl,
   baseProviderUrl,
   sonicProviderUrl,
   plumeProviderUrl,
-
+  hoodiProviderUrl,
   adjustTheForkBlockNumber,
   getHardhatNetworkProperties,
-  networkMap,
 };
