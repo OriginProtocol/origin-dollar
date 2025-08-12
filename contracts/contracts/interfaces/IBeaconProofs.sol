@@ -7,7 +7,13 @@ interface IBeaconProofs {
         BeaconBlock
     }
 
-    function verifyValidatorPubkey(
+    function verifyState(
+        bytes32 beaconBlockRoot,
+        bytes32 stateRoot,
+        bytes calldata stateProof
+    ) external view;
+
+    function verifyValidator(
         bytes32 beaconBlockRoot,
         bytes32 pubKeyHash,
         bytes calldata validatorPubKeyProof,
@@ -15,8 +21,8 @@ interface IBeaconProofs {
         address withdrawalAddress
     ) external view;
 
-    function verifyBalancesContainer(
-        bytes32 beaconBlockRoot,
+    function verifyBalancesContainerInState(
+        bytes32 stateRoot,
         bytes32 balancesContainerLeaf,
         bytes calldata balancesContainerProof
     ) external view;
@@ -28,10 +34,23 @@ interface IBeaconProofs {
         uint64 validatorIndex
     ) external view returns (uint256 validatorBalance);
 
-    function verifyFirstPendingDepositSlot(
-        bytes32 beaconBlockRoot,
-        uint64 slot,
-        bytes calldata firstPendingDepositSlotProof
+    struct VerifyFirstPendingDeposit {
+        bytes32 stateRoot;
+        bytes32 pubKeyHash;
+        uint64 validatorIndex;
+        uint64 slot;
+        bytes32 firstPendingDepositRoot;
+        bytes firstPendingDepositProof;
+        bytes pendingDepositSlotProof;
+        bytes pendingDepositPubKeyProof;
+        bytes32 validatorsRoot;
+        bytes validatorsProof;
+        bytes validatorPubKeyProof;
+        bytes validatorExitProof;
+    }
+
+    function verifyFirstPendingDepositInState(
+        VerifyFirstPendingDeposit calldata params
     ) external view returns (bool isEmptyDepositQueue);
 
     function verifyBlockNumber(
@@ -46,10 +65,10 @@ interface IBeaconProofs {
         bytes calldata slotProof
     ) external view;
 
-    function balanceAtIndex(bytes32 validatorBalanceLeaf, uint64 validatorIndex)
-        external
-        pure
-        returns (uint256);
+    function balanceAtIndex(
+        bytes32 validatorBalanceLeaf,
+        uint64 validatorIndex
+    ) external pure returns (uint256);
 
     function concatGenIndices(
         uint256 genIndex,
