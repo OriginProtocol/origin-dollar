@@ -20,6 +20,11 @@ def parse_arguments():
         default='safe',
         help='Suffix to add to filename (default: safe)'
     )
+    parser.add_argument(
+        '--display', '-d',
+        default=False,
+        help='Display the output JSON in the console'
+    )
     return parser.parse_args()
 
 def load_input_json(file_path):
@@ -92,7 +97,11 @@ def main():
     
     # Transform JSON
     result = transform_json(input_data)
-    
+
+    # Print the output JSON
+    if args.display:
+        print(json.dumps(result, indent=2))
+
     # Generate output path and save
     output_path = get_output_path(args.input, args.suffix, args.output)
     try:

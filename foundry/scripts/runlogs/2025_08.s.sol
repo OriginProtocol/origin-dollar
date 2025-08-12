@@ -12,6 +12,9 @@ contract Runlogs_2025_08 is SetupMainnet {
     _2025_08_04();
   }
 
+  // ------------------------------------------------------------------
+  // July 28, 2025 - Withdraw 2335 WETH from new Curve AMO
+  // ------------------------------------------------------------------
   function _2025_08_04() internal {
     vm.startBroadcast(strategist);
     // Before
