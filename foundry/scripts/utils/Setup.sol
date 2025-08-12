@@ -47,9 +47,7 @@ abstract contract SetupMainnet is JsonWriter, Test, Script {
   ICurveStableSwapNG public oethWethCurvePool = ICurveStableSwapNG(Mainnet.OETH_WETH_CURVE_POOL);
 
   function setUp() public {
-    // Todo: fetch url and block number dynamically
-    vm.createSelectFork(
-      "url", 23073300
-    );
+    // Note: to ensure perfect simulation, don't fix block number, it will be automatically set to the latest block
+    vm.createSelectFork(vm.envString("MAINNET_PROVIDER_URL"));
   }
 }

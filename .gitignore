@@ -67,6 +67,8 @@ contracts/scripts/defender-actions/dist/
 cache/
 foundry/broadcast/
 foundry/out/
+dependencies/
+.env
 
 contracts/lib/defender-actions/dist/
 

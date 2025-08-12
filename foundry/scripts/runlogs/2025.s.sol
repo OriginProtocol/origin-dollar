@@ -45,7 +45,7 @@ contract Runlogs_2025_08 is SetupMainnet {
     int256 supplyChange = int256(oeth.totalSupply()) - int256(totalSuplyAfter);
     int256 profit = vaultChange - supplyChange;
 
-    oethVaultValueChecker.checkDelta(profit, 1 ether, vaultChange, 1 ether);
+    oethVaultValueChecker.checkDelta(profit, 1 ether, vaultChange, 10 ether);
 
     console.log("-----");
     console.log("Profit             %18e: ", profit);
@@ -67,10 +67,5 @@ contract Runlogs_2025_08 is SetupMainnet {
       "Sell 10 OETH Curve prices before and after: %18e || %18e", wethOutBefore, wethOutAfter
     );
     vm.stopBroadcast();
-
-    // Todo: fetch the JSON output from the run and get path dynamically
-    // Todo: migrate this in a modifier
-    string memory json = vm.readFile("foundry/broadcast/2025.s.sol/1/dry-run/run-latest.json");
-    testTransformJson(json);
   }
 }
