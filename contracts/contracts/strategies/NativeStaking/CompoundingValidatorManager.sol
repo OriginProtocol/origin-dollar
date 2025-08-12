@@ -539,8 +539,12 @@ abstract contract CompoundingValidatorManager is Governable {
         // The deposit's slot can not be the same slot as the first pending deposit as there could be
         // many deposits in the same block, hence have the same pending deposit slot.
         // If the deposit queue is empty then our deposit must have been processed on the beacon chain.
-        // The deposit slot can be zero for validators consolidating to a compounding validator. We can
-        // not guarantee that the deposit has been processed in that case.
+        // The deposit slot can be zero for validators consolidating to a compounding validator or 0x01 validator
+        // being promoted to a compounding one. Reference:
+        // - [switch_to_compounding_validator](https://ethereum.github.io/consensus-specs/specs/electra/beacon-chain/#new-switch_to_compounding_validator
+        // - [queue_excess_active_balance](https://ethereum.github.io/consensus-specs/specs/electra/beacon-chain/#new-queue_excess_active_balance)
+        // - [process_consolidation_request](https://ethereum.github.io/consensus-specs/specs/electra/beacon-chain/#new-process_consolidation_request)
+        // We can not guarantee that the deposit has been processed in that case.
         require(
             deposit.slot < firstPendingDepositSlot || isDepositQueueEmpty,
             "Deposit likely not processed"
@@ -739,7 +743,11 @@ abstract contract CompoundingValidatorManager is Governable {
             // If the deposits have been processed, each deposit will need to be verified with `verifyDeposit`
             require(!isEmptyDepositQueue, "Deposits have been processed");
             // If a validator is converted from a sweeping validator to a compounding validator, any balance in excess
-            // of the min 32 ETH is put in the pending deposit queue. This will have a slot value of zero unfortunately.
+            // of the min 32 ETH is put in the pending deposit queue. Reference:
+            // - [switch_to_compounding_validator](https://ethereum.github.io/consensus-specs/specs/electra/beacon-chain/#new-switch_to_compounding_validator
+            // - [queue_excess_active_balance](https://ethereum.github.io/consensus-specs/specs/electra/beacon-chain/#new-queue_excess_active_balance)
+            // - [process_consolidation_request](https://ethereum.github.io/consensus-specs/specs/electra/beacon-chain/#new-process_consolidation_request)
+            // This will have a slot value of zero unfortunately.
             // We can not prove the strategy's deposits are still pending with a zero slot value so revert the tx.
             // Another snapBalances will need to be taken that does not have consolidation deposits at the front of the
             // beacon chain deposit queue.
