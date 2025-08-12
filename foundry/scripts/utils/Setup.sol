@@ -20,13 +20,12 @@ import { ICurveStableSwapNG } from "contracts/contracts/interfaces/ICurveStableS
 
 // Helpers
 import { Mainnet } from "./Addresses.sol";
-import { JsonWriter } from "../utils/JsonWriter.sol";
 import { Script } from "forge-std/Script.sol";
 import { Test } from "forge-std/Test.sol";
 
 // Foundry
 
-abstract contract SetupMainnet is JsonWriter, Test, Script {
+abstract contract SetupMainnet is Test, Script {
   // Governance
   address public strategist = Mainnet.MULTICHAIN_STRATEGIST;
 
