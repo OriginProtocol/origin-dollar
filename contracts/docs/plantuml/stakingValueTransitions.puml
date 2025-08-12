@@ -1,0 +1,39 @@
+@startuml
+
+title Native Staking Value Transitions
+
+package "Execution Layer" {
+    object "Vault" as vault
+    vault : WETH
+    object "Compounding\nStaking\nContract" as csc
+    csc : WETH, ETH
+    object "Beacon\nDeposit\nContract" as bdc
+    bdc : ETH
+    object "MEV" as mev
+    mev : ETH
+    object "Malicious\nActor" as malActor
+    malActor : ETH
+}
+
+package "Consensus Layer" {
+    object "Validator" as val
+    val : ETH
+    object "Consensus" as cr
+    cr : ETH
+}
+
+vault --> csc : deposit\ndepositAll
+csc --> vault : withdraw\nwithdrawAll
+csc <-- mev : rewards
+csc <-- malActor : donate
+
+malActor --> bdc : deposit
+
+csc  --> bdc : deposit
+
+bdc --> val : create\ntop-up
+val --> csc : partial withdraw (on-chain)\nfull withdrawal (on-chain)\nexit (off-chain)
+
+val <- cr : rewards
+
+@enduml

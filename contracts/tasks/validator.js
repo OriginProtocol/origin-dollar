@@ -1,15 +1,14 @@
-const { formatUnits, parseEther } = require("ethers").utils;
+const { formatUnits, hexlify, parseEther } = require("ethers").utils;
 const {
   KeyValueStoreClient,
 } = require("@openzeppelin/defender-kvstore-client");
 
 const { getBlock } = require("./block");
-const { checkPubkeyFormat } = require("./taskUtils");
-const { getValidator, getValidators, getEpoch } = require("./beaconchain");
+const { getValidator, getValidators, getEpoch } = require("../utils/beacon");
 const addresses = require("../utils/addresses");
 const { resolveContract } = require("../utils/resolvers");
 const { logTxDetails } = require("../utils/txLogger");
-const { networkMap } = require("../utils/hardhat-helpers");
+const { getNetworkName } = require("../utils/hardhat-helpers");
 const { convertToBigNumber } = require("../utils/units");
 const { validatorsThatCanBeStaked } = require("../utils/validator");
 const { validatorKeys } = require("../utils/regex");
@@ -21,21 +20,16 @@ const log = require("../utils/logger")("task:p2p");
 // as they are using in Defender Actions.
 // This is only used by Hardhat tasks registerValidators and stakeValidators
 const validatorOperationsConfig = async (taskArgs) => {
-  const { chainId } = await ethers.provider.getNetwork();
-  const network = networkMap[chainId];
+  // const { chainId } = await ethers.provider.getNetwork();
+  const networkName = await getNetworkName();
 
-  if (!network) {
-    throw new Error(
-      `registerValidators does not support chain with id ${chainId}`
-    );
-  }
-  const addressesSet = addresses[network];
-  const isMainnet = network === "mainnet";
+  const addressesSet = addresses[networkName];
+  const isMainnet = networkName === "mainnet";
 
   const storeFilePath = require("path").join(
     __dirname,
     "..",
-    `.localKeyValueStorage.${network}`
+    `.localKeyValueStorage.${networkName}`
   );
 
   const WETH = await ethers.getContractAt("IWETH9", addressesSet.WETH);
@@ -54,7 +48,7 @@ const validatorOperationsConfig = async (taskArgs) => {
       "P2P API key environment variable is not set. P2P_MAINNET_API_KEY or P2P_HOLESKY_API_KEY"
     );
   }
-  const p2p_base_url = isMainnet ? "api.p2p.org" : "api-test-holesky.p2p.org";
+  const p2p_base_url = isMainnet ? "api.p2p.org" : "api-test.p2p.org";
 
   const awsS3AccessKeyId = process.env.AWS_ACCESS_S3_KEY_ID;
   const awsS3SexcretAccessKeyId = process.env.AWS_SECRET_S3_ACCESS_KEY;
@@ -99,17 +93,23 @@ const validatorOperationsConfig = async (taskArgs) => {
 
 // @dev check validator is eligible for exit -
 // has been active for at least 256 epochs
-async function verifyMinActivationTime({ pubkey }) {
+async function verifyMinActivationTimes({ pubkeys }) {
   const latestEpoch = await getEpoch("latest");
-  const validator = await getValidator(pubkey);
 
-  const epochDiff = latestEpoch.epoch - validator.activationepoch;
+  log(`Splitting public keys ${pubkeys}`);
+  const pubKeys = pubkeys.split(",").map((id) => hexlify(id));
 
-  if (epochDiff < 256) {
-    throw new Error(
-      `Can not exit validator. Validator needs to be ` +
-        `active for 256 epoch. Current one active for ${epochDiff}`
-    );
+  for (const pubkey of pubKeys) {
+    const validator = await getValidator(pubkey);
+
+    const epochDiff = latestEpoch.epoch - validator.activationepoch;
+
+    if (epochDiff < 256) {
+      throw new Error(
+        `Can not exit validator. Validator needs to be ` +
+          `active for 256 epoch. ${pubkey} has only been active for ${epochDiff}`
+      );
+    }
   }
 }
 
@@ -134,7 +134,7 @@ async function snapValidators({ pubkeys }) {
   const validators = await getValidators(pubkeys);
 
   console.log(`Validators details`);
-  console.log(`pubkey, balance, status, withdrawalcredentials`);
+  console.log(`pubkey, balance, status, withdrawal credentials`);
   for (const validator of validators) {
     console.log(
       `${validator.pubkey}, ${formatUnits(validator.balance, 9)}, ${
@@ -144,21 +144,21 @@ async function snapValidators({ pubkeys }) {
   }
 }
 
-async function exitValidator({ index, pubkey, operatorids, signer }) {
-  await verifyMinActivationTime({ pubkey });
+async function exitValidators({ index, pubkeys, operatorids, signer }) {
+  await verifyMinActivationTimes({ pubkeys });
 
   log(`Splitting operator IDs ${operatorids}`);
   const operatorIds = operatorids.split(",").map((id) => parseInt(id));
 
   const strategy = await resolveNativeStakingStrategyProxy(index);
 
-  log(`About to exit validator`);
-  pubkey = checkPubkeyFormat(pubkey);
+  const pubKeys = pubkeys.split(",").map((pubkey) => hexlify(pubkey));
 
+  log(`About to exit validators: ${pubKeys}`);
   const tx = await strategy
     .connect(signer)
-    .exitSsvValidator(pubkey, operatorIds);
-  await logTxDetails(tx, "exitSsvValidator");
+    .exitSsvValidators(pubKeys, operatorIds);
+  await logTxDetails(tx, "exitSsvValidators");
 }
 
 async function doAccounting({ signer, nativeStakingStrategy }) {
@@ -236,11 +236,11 @@ async function snapStaking({ block, admin, index }) {
   const feeAccumulator = await resolveFeeAccumulatorProxy(index);
   const vault = await resolveContract("OETHVaultProxy", "IVault");
 
-  const { chainId } = await ethers.provider.getNetwork();
+  const networkName = await getNetworkName();
 
-  const wethAddress = addresses[networkMap[chainId]].WETH;
+  const wethAddress = addresses[networkName].WETH;
   const weth = await ethers.getContractAt("IERC20", wethAddress);
-  const ssvAddress = addresses[networkMap[chainId]].SSV;
+  const ssvAddress = addresses[networkName].SSV;
   const ssv = await ethers.getContractAt("IERC20", ssvAddress);
 
   const checkBalance = await strategy.checkBalance(wethAddress, { blockTag });
@@ -358,7 +358,7 @@ const resolveFeeAccumulatorProxy = async (index) => {
 
 module.exports = {
   validatorOperationsConfig,
-  exitValidator,
+  exitValidators,
   doAccounting,
   resetStakeETHTally,
   setStakeETHThreshold,

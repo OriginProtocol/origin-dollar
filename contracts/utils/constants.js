@@ -32,6 +32,12 @@ const ccip_arbChainSelector = "4949039107694359620";
 const p2pApiEncodedKey =
   "LS0tLS1CRUdJTiBQVUJMSUMgS0VZLS0tLS0KTUZrd0V3WUhLb1pJemowQ0FRWUlLb1pJemowREFRY0RRZ0FFVEcydGNwUWxHaEpQdlF3K2prZ1NmU2N3RjBDTgpUNEUva1ZXaWFWeVdLWkRFRXgvOWVWenNIc2FRQU5tbEJNV1pMbHhXQVhRWno2Qy9YQWN0bU56Y1BRPT0KLS0tLS1FTkQgUFVCTElDIEtFWS0tLS0tCg==";
 
+const beaconChainGenesisTimeMainnet = 1606824023; // Tue Dec 01 2020 12:00:23 GMT+0000
+// TODO get genesis time for hoodi
+const beaconChainGenesisTimeHoodi = 1742213400; //	Mon Mar 17 2025 12:10:00 GMT+0000
+
+const gIndexFirstPendingDepositSlot = 1584842932228n;
+
 module.exports = {
   threeCRVPid,
   metapoolLPCRVPid,
@@ -46,6 +52,9 @@ module.exports = {
   ccip_arbChainSelector,
   p2pApiEncodedKey,
   ONE,
+  beaconChainGenesisTimeMainnet,
+  beaconChainGenesisTimeHoodi,
+  gIndexFirstPendingDepositSlot,
 };
 
 // These are all the metapool ids. For easier future reference

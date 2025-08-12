@@ -50,9 +50,14 @@ const convertToBigNumber = (amount, decimals = 18) => {
     : parseUnits(amountStr, decimals);
 };
 
+const toHex = (buff) => {
+  return "0x" + Buffer.from(buff).toString("hex");
+};
+
 module.exports = {
   decimalsFor,
   scaleAmount,
   units,
   convertToBigNumber,
+  toHex,
 };
