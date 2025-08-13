@@ -48,12 +48,12 @@ contract BeaconProofs {
     /// @param balancesContainerRoot The merkle root of the the balances container.
     /// @param balancesContainerProof The merkle proof for the balances container to the beacon state root.
     /// This is 6 witness hashes of 32 bytes each concatenated together starting from the leaf node.
-    function verifyBalancesContainerInState(
+    function verifyBalancesContainer(
         bytes32 stateRoot,
         bytes32 balancesContainerRoot,
         bytes calldata balancesContainerProof
     ) external view {
-        BeaconProofsLib.verifyBalancesContainerInState(
+        BeaconProofsLib.verifyBalancesContainer(
             stateRoot,
             balancesContainerRoot,
             balancesContainerProof
@@ -86,11 +86,9 @@ contract BeaconProofs {
     /// BeaconBlock.state.PendingDeposits[0].slot
     /// If the deposit queue is empty, verify the root of the first pending deposit is empty
     /// BeaconBlock.state.PendingDeposits[0]
-    function verifyFirstPendingDepositInState(
+    function verifyFirstPendingDeposit(
         BeaconProofsLib.VerifyFirstPendingDeposit calldata params
     ) external view returns (bool isEmptyDepositQueue) {
-        isEmptyDepositQueue = BeaconProofsLib.verifyFirstPendingDepositInState(
-            params
-        );
+        isEmptyDepositQueue = BeaconProofsLib.verifyFirstPendingDeposit(params);
     }
 }

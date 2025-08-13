@@ -350,10 +350,11 @@ abstract contract CompoundingValidatorManager is Governable {
     /// @param amountGwei The amount of ETH to be withdrawn from the validator in Gwei.
     /// A zero amount will trigger a full withdrawal.
     // slither-disable-start reentrancy-no-eth
-    function validatorWithdrawal(
-        bytes calldata publicKey,
-        uint64 amountGwei
-    ) external payable onlyRegistrator {
+    function validatorWithdrawal(bytes calldata publicKey, uint64 amountGwei)
+        external
+        payable
+        onlyRegistrator
+    {
         // Hash the public key using the Beacon Chain's format
         bytes32 pubKeyHash = _hashPubKey(publicKey);
         VALIDATOR_STATE currentState = validatorState[pubKeyHash];
@@ -492,7 +493,7 @@ abstract contract CompoundingValidatorManager is Governable {
     /// Can not be a slot before a missed slot as the Beacon Root contract will have the parent block root
     /// set for the next block timestamp in 12 seconds time.
     /// @param depositParams The parameters needed to verify the first pending deposit in the beacon chain.
-    /// `firstPendingDepositSlot` The slot of the first pending deposit in the beacon chain.
+    /// `slot` The slot of the first pending deposit in the beacon chain.
     /// Can be anything if the deposit queue is empty, but zero is a good choice.
     /// `firstPendingDepositSlotProof` The merkle proof to the beacon block root. Can be either:
     /// - 40 witness hashes for BeaconBlock.state.PendingDeposits[0].slot when the deposit queue is not empty.
@@ -501,6 +502,7 @@ abstract contract CompoundingValidatorManager is Governable {
     // slither-disable-start reentrancy-no-eth
     function verifyDeposit(
         bytes32 depositDataRoot,
+        bytes calldata stateProof,
         uint64 verificationSlot,
         IBeaconProofs.VerifyFirstPendingDeposit calldata depositParams
     ) external {
@@ -523,11 +525,20 @@ abstract contract CompoundingValidatorManager is Governable {
             12;
         // Get the parent beacon block root of the next block which is the block root of the verification slot.
         // This will revert if the slot after the verification slot was missed.
-        bytes32 blockRoot = BeaconRoots.parentBlockRoot(nextBlockTimestamp);
+        bytes32 beaconBlockRoot = BeaconRoots.parentBlockRoot(
+            nextBlockTimestamp
+        );
 
-        // Verify the slot of the first pending deposit matches the beacon chain
+        // Verify the state root to the beacon block root.
+        IBeaconProofs(BEACON_PROOFS).verifyState(
+            beaconBlockRoot,
+            depositParams.stateRoot,
+            stateProof
+        );
+
+        // Verify the first pending deposit to the state root
         bool isDepositQueueEmpty = IBeaconProofs(BEACON_PROOFS)
-            .verifyFirstPendingDepositInState(depositParams);
+            .verifyFirstPendingDeposit(depositParams);
 
         // Check the deposit slot is before the first pending deposit's slot on the beacon chain.
         // If this is not true then we can't guarantee the deposit has been processed by the beacon chain.
@@ -735,9 +746,9 @@ abstract contract CompoundingValidatorManager is Governable {
 
         // If there are no deposits then we can skip the deposit verification
         if (depositsCount > 0) {
-            // Verify the slot of the first pending deposit to the beacon block root
+            // Verify the first pending deposit to the state root
             bool isEmptyDepositQueue = IBeaconProofs(BEACON_PROOFS)
-                .verifyFirstPendingDepositInState(depositParams);
+                .verifyFirstPendingDeposit(depositParams);
 
             // If there are no deposits in the beacon chain queue then our deposits must have been processed.
             // If the deposits have been processed, each deposit will need to be verified with `verifyDeposit`
@@ -782,7 +793,7 @@ abstract contract CompoundingValidatorManager is Governable {
                 "Invalid balance leaves"
             );
             // verify State.balances root to beacon block root
-            IBeaconProofs(BEACON_PROOFS).verifyBalancesContainerInState(
+            IBeaconProofs(BEACON_PROOFS).verifyBalancesContainer(
                 depositParams.stateRoot,
                 balancesParams.balancesContainerRoot,
                 balancesParams.balancesContainerProof

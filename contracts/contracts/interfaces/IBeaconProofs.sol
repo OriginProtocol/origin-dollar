@@ -21,7 +21,7 @@ interface IBeaconProofs {
         address withdrawalAddress
     ) external view;
 
-    function verifyBalancesContainerInState(
+    function verifyBalancesContainer(
         bytes32 stateRoot,
         bytes32 balancesContainerLeaf,
         bytes calldata balancesContainerProof
@@ -49,7 +49,7 @@ interface IBeaconProofs {
         bytes validatorExitProof;
     }
 
-    function verifyFirstPendingDepositInState(
+    function verifyFirstPendingDeposit(
         VerifyFirstPendingDeposit calldata params
     ) external view returns (bool isEmptyDepositQueue);
 
@@ -65,10 +65,10 @@ interface IBeaconProofs {
         bytes calldata slotProof
     ) external view;
 
-    function balanceAtIndex(
-        bytes32 validatorBalanceLeaf,
-        uint64 validatorIndex
-    ) external pure returns (uint256);
+    function balanceAtIndex(bytes32 validatorBalanceLeaf, uint64 validatorIndex)
+        external
+        pure
+        returns (uint256);
 
     function concatGenIndices(
         uint256 genIndex,
