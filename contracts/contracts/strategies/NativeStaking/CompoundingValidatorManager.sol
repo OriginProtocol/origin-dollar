@@ -108,6 +108,9 @@ abstract contract CompoundingValidatorManager is Governable {
     /// be staked.
     uint256 public depositedWethAccountedFor;
 
+    /// @notice The account that is allowed to verify balances when there are pending deposits
+    address public stakingMonitor;
+
     // For future use
     uint256[50] private __gap;
 
@@ -126,6 +129,7 @@ abstract contract CompoundingValidatorManager is Governable {
     }
 
     event RegistratorChanged(address indexed newAddress);
+    event StakingMonitorChanged(address indexed newAddress);
     event SourceStrategyAdded(address indexed strategy);
     event SSVValidatorRegistered(
         bytes32 indexed pubKeyHash,
@@ -200,7 +204,13 @@ abstract contract CompoundingValidatorManager is Governable {
         emit RegistratorChanged(_address);
     }
 
-    /***************************************`
+    /// @notice Set the address of the staking monitor that is allowed verify balances with pending deposits.
+    function setStakingMonitor(address _address) external onlyGovernor {
+        stakingMonitor = _address;
+        emit StakingMonitorChanged(_address);
+    }
+
+    /***************************************
                 Validator Management
     ****************************************/
 
@@ -691,9 +701,6 @@ abstract contract CompoundingValidatorManager is Governable {
     // A struct is used to avoid stack too deep errors
     struct VerifyBalancesParams {
         bytes32 blockRoot;
-        uint64 firstPendingDepositSlot;
-        // BeaconBlock.BeaconBlockBody.deposits[0].slot
-        bytes firstPendingDepositSlotProof;
         // BeaconBlock.state.balances
         bytes32 balancesContainerRoot;
         bytes balancesContainerProof;
@@ -703,15 +710,9 @@ abstract contract CompoundingValidatorManager is Governable {
     }
 
     /// @notice Verifies the balances of all active validators on the beacon chain
-    /// and checks no pending deposits have been processed by the beacon chain.
+    /// if there are no pending deposits.
     /// @param params a `VerifyBalancesParams` struct containing the following:
     /// blockRoot - the beacon block root emitted from `snapBalance` in `BalancesSnapped`
-    /// firstPendingDepositSlot - The beacon chain slot of the first deposit in the beacon chain's deposit queue.
-    ///   Can be anything if the deposit queue is empty, but zero would be a good choice.
-    /// firstPendingDepositSlotProof - The merkle proof to the beacon block root. Can be either:
-    ///   - 40 witness hashes for BeaconBlock.state.PendingDeposits[0].slot when the deposit queue is not empty.
-    ///   - 37 witness hashes for BeaconBlock.state.PendingDeposits[0] when the deposit queue is empty.
-    ///   The 32 byte witness hashes are concatenated together starting from the leaf node.
     /// balancesContainerRoot - the merkle root of the balances container
     /// balancesContainerProof - The merkle proof for the balances container to the beacon block root.
     ///   This is 9 witness hashes of 32 bytes each concatenated together starting from the leaf node.
@@ -720,6 +721,33 @@ abstract contract CompoundingValidatorManager is Governable {
     ///   This is 39 witness hashes of 32 bytes each concatenated together starting from the leaf node.
     // slither-disable-start reentrancy-no-eth
     function verifyBalances(VerifyBalancesParams calldata params) external {
+        _verifyBalances(params, false);
+    }
+
+    /// @notice Verifies the balances of all active validators on the beacon chain
+    /// if there are no pending deposits.
+    /// Can only be called by the staking monitor who is attesting that no pending strategy deposits
+    /// have been processed by the beacon chain at the time (slot) of the snapBalances.
+    /// @param params a `VerifyBalancesParams` struct containing the following:
+    /// blockRoot - the beacon block root emitted from `snapBalance` in `BalancesSnapped`
+    /// balancesContainerRoot - the merkle root of the balances container
+    /// balancesContainerProof - The merkle proof for the balances container to the beacon block root.
+    ///   This is 9 witness hashes of 32 bytes each concatenated together starting from the leaf node.
+    /// validatorBalanceLeaves - Array of leaf nodes containing the validator balance with three other balances.
+    /// validatorBalanceProofs -  Array of merkle proofs for the validator balance to the Balances container root.
+    ///   This is 39 witness hashes of 32 bytes each concatenated together starting from the leaf node.
+    function verifyBalancesWithDeposits(VerifyBalancesParams calldata params)
+        external
+    {
+        require(msg.sender == stakingMonitor, "Caller is not the Monitor");
+        _verifyBalances(params, true);
+    }
+
+    /// @param allowDeposits If true, then allow the strategy to have pending deposits
+    function _verifyBalances(
+        VerifyBalancesParams calldata params,
+        bool allowDeposits
+    ) internal {
         // Load previously snapped balances for the given block root
         Balances memory balancesMem = snappedBalances[params.blockRoot];
         // Check the balances are the latest
@@ -727,54 +755,17 @@ abstract contract CompoundingValidatorManager is Governable {
         require(balancesMem.timestamp == lastSnapTimestamp, "Stale snap");
 
         uint256 depositsCount = depositsRoots.length;
+        require(allowDeposits || depositsCount == 0, "Pending deposits");
+
         uint256 totalDepositsWei = 0;
+        // For each staking strategy's deposits
+        for (uint256 i = 0; i < depositsCount; ++i) {
+            bytes32 depositDataRoot = depositsRoots[i];
 
-        // If there are no deposits then we can skip the deposit verification
-        if (depositsCount > 0) {
-            // Verify the slot of the first pending deposit to the beacon block root
-            bool isEmptyDepositQueue = IBeaconProofs(BEACON_PROOFS)
-                .verifyFirstPendingDepositSlot(
-                    params.blockRoot,
-                    params.firstPendingDepositSlot,
-                    params.firstPendingDepositSlotProof
-                );
-
-            // If there are no deposits in the beacon chain queue then our deposits must have been processed.
-            // If the deposits have been processed, each deposit will need to be verified with `verifyDeposit`
-            require(!isEmptyDepositQueue, "Deposits have been processed");
-            // If a validator is converted from a sweeping validator to a compounding validator, any balance in excess
-            // of the min 32 ETH is put in the pending deposit queue. Reference:
-            // - [switch_to_compounding_validator](https://ethereum.github.io/consensus-specs/specs/electra/beacon-chain/#new-switch_to_compounding_validator
-            // - [queue_excess_active_balance](https://ethereum.github.io/consensus-specs/specs/electra/beacon-chain/#new-queue_excess_active_balance)
-            // - [process_consolidation_request](https://ethereum.github.io/consensus-specs/specs/electra/beacon-chain/#new-process_consolidation_request)
-            // This will have a slot value of zero unfortunately.
-            // We can not prove the strategy's deposits are still pending with a zero slot value so revert the tx.
-            // Another snapBalances will need to be taken that does not have consolidation deposits at the front of the
-            // beacon chain deposit queue.
-            require(
-                params.firstPendingDepositSlot > 0,
-                "Invalid first pending deposit"
-            );
-
-            // For each staking strategy's deposits
-            for (uint256 i = 0; i < depositsCount; ++i) {
-                bytes32 depositDataRoot = depositsRoots[i];
-
-                // Check the stored deposit is still waiting to be processed on the beacon chain.
-                // That is, the first pending deposit slot is before the
-                // slot of the staking strategy's deposit.
-                // If the deposit has been processed, it will need to be verified with `verifyDeposit`
-                require(
-                    params.firstPendingDepositSlot <
-                        deposits[depositDataRoot].slot,
-                    "Deposit has been processed"
-                );
-
-                // Convert the deposit amount from Gwei to Wei and add to the total
-                totalDepositsWei +=
-                    uint256(deposits[depositDataRoot].amountGwei) *
-                    1 gwei;
-            }
+            // Convert the deposit amount from Gwei to Wei and add to the total
+            totalDepositsWei +=
+                uint256(deposits[depositDataRoot].amountGwei) *
+                1 gwei;
         }
 
         uint256 verifiedValidatorsCount = verifiedValidators.length;
