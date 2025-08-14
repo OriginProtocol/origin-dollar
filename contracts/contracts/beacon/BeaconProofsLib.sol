@@ -4,6 +4,23 @@ pragma solidity ^0.8.0;
 import { Merkle } from "./Merkle.sol";
 import { Endian } from "./Endian.sol";
 
+struct FirstPendingDeposit {
+    bytes32 root;
+    uint64 slot;
+    bytes32 pubKeyHash;
+    bytes containerProof;
+    bytes slotProof;
+    bytes pubKeyProof;
+}
+
+struct FirstPendingDepositValidator {
+    uint64 index;
+    bytes32 root;
+    bytes containerProof;
+    bytes pubKeyProof;
+    bytes exitProof;
+}
+
 /**
  * @title Library to verify merkle proofs of beacon chain data.
  * @author Origin Protocol Inc
@@ -47,8 +64,8 @@ library BeaconProofsLib {
     /// @dev Index of the balances container in the beacon state container.
     /// State.balances
     /// Beacon state container: height 6, balances at index 12
-    /// 2 ^ 6 + 12 = 64
-    uint256 internal constant STATE__BALANCES_INDEX = 64;
+    /// 2 ^ 6 + 12 = 76
+    uint256 internal constant STATE__BALANCES_INDEX = 76;
 
     /// @dev Index of the first pending deposit in the state container.
     /// State.PendingDeposits[0]
@@ -111,14 +128,14 @@ library BeaconProofsLib {
     /// BeaconBlock.state.validators[validatorIndex].withdrawalCredentials
     /// @param beaconBlockRoot The root of the beacon block
     /// @param pubKeyHash Hash of validator's public key using the Beacon Chain's format
-    /// @param validatorPubKeyProof The merkle proof for the validator public key to the beacon block root.
+    /// @param proof The merkle proof for the validator public key to the beacon block root.
     /// This is 53 witness hashes of 32 bytes each concatenated together starting from the leaf node.
     /// @param validatorIndex The validator index
     /// @param withdrawalAddress The withdrawal address used in the validator's withdrawal credentials
     function verifyValidator(
         bytes32 beaconBlockRoot,
         bytes32 pubKeyHash,
-        bytes calldata validatorPubKeyProof,
+        bytes calldata proof,
         uint64 validatorIndex,
         address withdrawalAddress
     ) internal view {
@@ -142,7 +159,7 @@ library BeaconProofsLib {
         // solhint-disable-next-line no-inline-assembly
         assembly {
             // The first 32 bytes of the proof is the withdrawal credential so load it into memory.
-            calldatacopy(0, validatorPubKeyProof.offset, 32)
+            calldatacopy(0, proof.offset, 32)
             // Cast the 32 bytes in memory to an address which is the last 20 bytes.
             withdrawalAddressFromProof := mload(0)
         }
@@ -152,9 +169,9 @@ library BeaconProofsLib {
         );
 
         require(
-            validatorPubKeyProof.length == VALIDATOR_PUBKEY_PROOF_LEN &&
+            proof.length == VALIDATOR_PUBKEY_PROOF_LEN &&
                 Merkle.verifyInclusionSha256({
-                    proof: validatorPubKeyProof,
+                    proof: proof,
                     root: beaconBlockRoot,
                     leaf: pubKeyHash,
                     index: generalizedIndex
@@ -183,30 +200,15 @@ library BeaconProofsLib {
         );
     }
 
-    struct VerifyFirstPendingDeposit {
-        bytes32 stateRoot;
-        bytes32 pubKeyHash;
-        uint64 validatorIndex;
-        uint64 slot;
-        bytes32 firstPendingDepositRoot;
-        bytes firstPendingDepositProof;
-        bytes pendingDepositSlotProof;
-        bytes pendingDepositPubKeyProof;
-        bytes32 validatorsRoot;
-        bytes validatorsProof;
-        bytes validatorPubKeyProof;
-        bytes validatorExitProof;
-    }
-
     /// @notice If the deposit queue is not empty,
     /// verify the slot of the first pending deposit to the beacon block root
     /// BeaconBlock.state.PendingDeposits[0].slot
     /// If the deposit queue is empty, verify the root of the first pending deposit is empty
     /// BeaconBlock.state.PendingDeposits[0]
     /// Also verify the validator that the deposit is for is not exiting.
-    /// @param params `VerifyFirstPendingDeposit` struct containing:
-    ///   `stateRoot` The root of the beacon state.
-    ///   `slot` The beacon chain slot of the first deposit in the beacon chain's deposit queue.
+    /// @param stateRoot The root of the beacon state.
+    /// @param firstPendingDeposit `FirstPendingDeposit` struct containing:
+    ///   `firstPendingDepositSlot` The beacon chain slot of the first deposit in the beacon chain's deposit queue.
     ///          Can be anything if the deposit queue is empty, but zero would be a good choice.
     ///   `firstPendingDepositSlotProof` The merkle proof to the beacon block root. Can be either:
     ///      - 40 witness hashes for BeaconBlock.state.PendingDeposits[0].slot when the deposit queue is not empty.
@@ -214,37 +216,38 @@ library BeaconProofsLib {
     ///      The 32 byte witness hashes are concatenated together starting from the leaf node.
     /// @return isEmptyDepositQueue True if the deposit queue is empty, false otherwise.
     function verifyFirstPendingDeposit(
-        VerifyFirstPendingDeposit calldata params
+        bytes32 stateRoot,
+        FirstPendingDeposit calldata firstPendingDeposit,
+        FirstPendingDepositValidator calldata firstPendingDepositValidator
     ) internal view returns (bool isEmptyDepositQueue) {
-        require(params.stateRoot != bytes32(0), "Invalid state root");
+        require(stateRoot != bytes32(0), "Invalid state root");
 
         // Verify the first pending deposit container root to the state root
         require(
-            params.firstPendingDepositProof.length ==
+            firstPendingDeposit.containerProof.length ==
                 FIRST_PENDING_DEPOSIT_PROOF_LEN &&
                 Merkle.verifyInclusionSha256({
-                    proof: params.firstPendingDepositProof,
-                    root: params.stateRoot,
-                    leaf: params.firstPendingDepositRoot,
+                    proof: firstPendingDeposit.containerProof,
+                    root: stateRoot,
+                    leaf: firstPendingDeposit.root,
                     index: STATE__FIRST_PENDING_DEPOSIT_INDEX
                 }),
             "Invalid first deposit proof"
         );
 
         // If the pending deposit queue is empty
-        if (params.firstPendingDepositRoot == bytes32(0)) {
+        if (firstPendingDeposit.root == bytes32(0)) {
             // The deposit queue is empty so we can use an empty leaf node
             return true;
         }
 
         // Verify the slot in the first pending deposit
         require(
-            params.pendingDepositSlotProof.length ==
-                PENDING_DEPOSIT_PROOF_LEN &&
+            firstPendingDeposit.slotProof.length == PENDING_DEPOSIT_PROOF_LEN &&
                 Merkle.verifyInclusionSha256({
-                    proof: params.pendingDepositSlotProof,
-                    root: params.firstPendingDepositRoot,
-                    leaf: Endian.toLittleEndianUint64(params.slot),
+                    proof: firstPendingDeposit.slotProof,
+                    root: firstPendingDeposit.root,
+                    leaf: Endian.toLittleEndianUint64(firstPendingDeposit.slot),
                     index: PENDING_DEPOSIT__SLOT_INDEX
                 }),
             "Invalid deposit slot proof"
@@ -252,30 +255,36 @@ library BeaconProofsLib {
 
         // Verify the public key of the first pending deposit
         require(
-            params.pendingDepositPubKeyProof.length ==
+            firstPendingDeposit.pubKeyProof.length ==
                 PENDING_DEPOSIT_PROOF_LEN &&
                 Merkle.verifyInclusionSha256({
-                    proof: params.pendingDepositPubKeyProof,
-                    root: params.firstPendingDepositRoot,
-                    leaf: params.pubKeyHash,
+                    proof: firstPendingDeposit.pubKeyProof,
+                    root: firstPendingDeposit.root,
+                    leaf: firstPendingDeposit.pubKeyHash,
                     index: PENDING_DEPOSIT__PUBKEY_INDEX
                 }),
             "Invalid deposit pub key proof"
         );
+
+        if (firstPendingDepositValidator.root == bytes32(0)) {
+            // The deposit is to a new validator so no need to verify if it is exiting.
+            return true;
+        }
 
         // Verify the validator container root to the state root
         // State.validators[validatorIndex]
         uint256 validatorIndexInState = concatGenIndices(
             STATE__VALIDATORS_INDEX,
             VALIDATORS_HEIGHT,
-            params.validatorIndex
+            firstPendingDepositValidator.index
         );
         require(
-            params.validatorsProof.length == VALIDATORS_PROOF_LEN &&
+            firstPendingDepositValidator.containerProof.length ==
+                VALIDATORS_PROOF_LEN &&
                 Merkle.verifyInclusionSha256({
-                    proof: params.validatorsProof,
-                    root: params.stateRoot,
-                    leaf: params.validatorsRoot,
+                    proof: firstPendingDepositValidator.containerProof,
+                    root: stateRoot,
+                    leaf: firstPendingDepositValidator.root,
                     index: validatorIndexInState
                 }),
             "Invalid validators proof"
@@ -284,11 +293,12 @@ library BeaconProofsLib {
         // Verify the validator public key to the validators container root
         // This verifies the validator index is correct for the first pending deposit
         require(
-            params.validatorPubKeyProof.length == VALIDATOR_PROOF_LEN &&
+            firstPendingDepositValidator.pubKeyProof.length ==
+                VALIDATOR_PROOF_LEN &&
                 Merkle.verifyInclusionSha256({
-                    proof: params.validatorPubKeyProof,
-                    root: params.validatorsRoot,
-                    leaf: params.pubKeyHash,
+                    proof: firstPendingDepositValidator.pubKeyProof,
+                    root: firstPendingDepositValidator.root,
+                    leaf: firstPendingDeposit.pubKeyHash,
                     index: VALIDATOR__PUBKEY_INDEX
                 }),
             "Invalid validator pubkey proof"
@@ -297,10 +307,11 @@ library BeaconProofsLib {
         // Verify the validator exit epoch to the validator container root
         // A max epoch means the validator is not exiting.
         require(
-            params.validatorExitProof.length == VALIDATOR_PROOF_LEN &&
+            firstPendingDepositValidator.exitProof.length ==
+                VALIDATOR_PROOF_LEN &&
                 Merkle.verifyInclusionSha256({
-                    proof: params.validatorExitProof,
-                    root: params.validatorsRoot,
+                    proof: firstPendingDepositValidator.exitProof,
+                    root: firstPendingDepositValidator.root,
                     leaf: Endian.toLittleEndianUint64(type(uint64).max),
                     index: VALIDATOR__EXIT_INDEX
                 }),
@@ -312,20 +323,20 @@ library BeaconProofsLib {
     /// State.balances
     /// @param stateRoot The root of the beacon state.
     /// @param balancesContainerRoot The merkle root of the the balances container.
-    /// @param balancesContainerProof The merkle proof for the balances container to the beacon state root.
+    /// @param proof The merkle proof for the balances container to the beacon state root.
     /// This is 6 witness hashes of 32 bytes each concatenated together starting from the leaf node.
     function verifyBalancesContainer(
         bytes32 stateRoot,
         bytes32 balancesContainerRoot,
-        bytes calldata balancesContainerProof
+        bytes calldata proof
     ) internal view {
         require(stateRoot != bytes32(0), "Invalid state root");
 
         // State.balances
         require(
-            balancesContainerProof.length == BALANCES_PROOF_LEN &&
+            proof.length == BALANCES_PROOF_LEN &&
                 Merkle.verifyInclusionSha256({
-                    proof: balancesContainerProof,
+                    proof: proof,
                     root: stateRoot,
                     leaf: balancesContainerRoot,
                     index: STATE__BALANCES_INDEX

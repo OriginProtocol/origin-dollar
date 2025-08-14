@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
+import { FirstPendingDeposit, FirstPendingDepositValidator } from "../beacon/BeaconProofsLib.sol";
+
 interface IBeaconProofs {
     enum BalanceProofLevel {
         Container,
@@ -16,7 +18,7 @@ interface IBeaconProofs {
     function verifyValidator(
         bytes32 beaconBlockRoot,
         bytes32 pubKeyHash,
-        bytes calldata validatorPubKeyProof,
+        bytes calldata proof,
         uint64 validatorIndex,
         address withdrawalAddress
     ) external view;
@@ -24,7 +26,7 @@ interface IBeaconProofs {
     function verifyBalancesContainer(
         bytes32 stateRoot,
         bytes32 balancesContainerLeaf,
-        bytes calldata balancesContainerProof
+        bytes calldata proof
     ) external view;
 
     function verifyValidatorBalance(
@@ -34,23 +36,10 @@ interface IBeaconProofs {
         uint64 validatorIndex
     ) external view returns (uint256 validatorBalance);
 
-    struct VerifyFirstPendingDeposit {
-        bytes32 stateRoot;
-        bytes32 pubKeyHash;
-        uint64 validatorIndex;
-        uint64 slot;
-        bytes32 firstPendingDepositRoot;
-        bytes firstPendingDepositProof;
-        bytes pendingDepositSlotProof;
-        bytes pendingDepositPubKeyProof;
-        bytes32 validatorsRoot;
-        bytes validatorsProof;
-        bytes validatorPubKeyProof;
-        bytes validatorExitProof;
-    }
-
     function verifyFirstPendingDeposit(
-        VerifyFirstPendingDeposit calldata params
+        bytes32 stateRoot,
+        FirstPendingDeposit calldata firstPendingDeposit,
+        FirstPendingDepositValidator calldata firstPendingDepositValidator
     ) external view returns (bool isEmptyDepositQueue);
 
     function verifyBlockNumber(

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import { BeaconProofsLib } from "./BeaconProofsLib.sol";
+import { BeaconProofsLib, FirstPendingDeposit, FirstPendingDepositValidator } from "./BeaconProofsLib.sol";
 
 /**
  * @title Verifies merkle proofs of beacon chain data.
@@ -12,7 +12,7 @@ contract BeaconProofs {
         bytes32 beaconBlockRoot,
         bytes32 stateRoot,
         bytes calldata stateProof
-    ) internal view {
+    ) external view {
         BeaconProofsLib.verifyState(beaconBlockRoot, stateRoot, stateProof);
     }
 
@@ -22,21 +22,21 @@ contract BeaconProofs {
     /// BeaconBlock.state.validators[validatorIndex].withdrawalCredentials
     /// @param beaconBlockRoot The root of the beacon block
     /// @param pubKeyHash Hash of validator's public key using the Beacon Chain's format
-    /// @param validatorPubKeyProof The merkle proof for the validator public key to the beacon block root.
+    /// @param proof The merkle proof for the validator public key to the beacon block root.
     /// This is 53 witness hashes of 32 bytes each concatenated together starting from the leaf node.
     /// @param validatorIndex The validator index
     /// @param withdrawalAddress The withdrawal address used in the validator's withdrawal credentials
     function verifyValidator(
         bytes32 beaconBlockRoot,
         bytes32 pubKeyHash,
-        bytes calldata validatorPubKeyProof,
+        bytes calldata proof,
         uint64 validatorIndex,
         address withdrawalAddress
     ) external view {
         BeaconProofsLib.verifyValidator(
             beaconBlockRoot,
             pubKeyHash,
-            validatorPubKeyProof,
+            proof,
             validatorIndex,
             withdrawalAddress
         );
@@ -46,17 +46,17 @@ contract BeaconProofs {
     /// State.balances
     /// @param stateRoot The root of the beacon state.
     /// @param balancesContainerRoot The merkle root of the the balances container.
-    /// @param balancesContainerProof The merkle proof for the balances container to the beacon state root.
+    /// @param proof The merkle proof for the balances container to the beacon state root.
     /// This is 6 witness hashes of 32 bytes each concatenated together starting from the leaf node.
     function verifyBalancesContainer(
         bytes32 stateRoot,
         bytes32 balancesContainerRoot,
-        bytes calldata balancesContainerProof
+        bytes calldata proof
     ) external view {
         BeaconProofsLib.verifyBalancesContainer(
             stateRoot,
             balancesContainerRoot,
-            balancesContainerProof
+            proof
         );
     }
 
@@ -87,8 +87,14 @@ contract BeaconProofs {
     /// If the deposit queue is empty, verify the root of the first pending deposit is empty
     /// BeaconBlock.state.PendingDeposits[0]
     function verifyFirstPendingDeposit(
-        BeaconProofsLib.VerifyFirstPendingDeposit calldata params
+        bytes32 stateRoot,
+        FirstPendingDeposit calldata firstPendingDeposit,
+        FirstPendingDepositValidator calldata firstPendingDepositValidator
     ) external view returns (bool isEmptyDepositQueue) {
-        isEmptyDepositQueue = BeaconProofsLib.verifyFirstPendingDeposit(params);
+        isEmptyDepositQueue = BeaconProofsLib.verifyFirstPendingDeposit(
+            stateRoot,
+            firstPendingDeposit,
+            firstPendingDepositValidator
+        );
     }
 }

@@ -1929,6 +1929,12 @@ subtask("verifyDeposit", "Verify a deposit on the Beacon chain")
     types.int
   )
   .addOptionalParam(
+    "block",
+    "Block number. (default: latest)",
+    undefined,
+    types.int
+  )
+  .addOptionalParam(
     "dryrun",
     "Do not call verifyBalances on the strategy contract. Just log the params including the proofs",
     false,

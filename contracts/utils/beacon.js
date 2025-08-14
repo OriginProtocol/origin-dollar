@@ -129,12 +129,14 @@ const getBeaconBlock = async (slot = "head") => {
 
   const stateView = BeaconState.deserializeToView(stateSsz);
 
-  const blockTree = blockView.tree.clone();
+  const blockTree = blockView.tree;
   const stateRootGIndex = blockView.type.getPropertyGindex("stateRoot");
   // Patching the tree by attaching the state in the `stateRoot` field of the block.
   blockTree.setNode(stateRootGIndex, stateView.node);
 
-  return { blockTree, blockView, stateView };
+  const stateTree = stateView.tree;
+
+  return { blockTree, blockView, stateView, stateTree };
 };
 
 const concatProof = (proof) => {

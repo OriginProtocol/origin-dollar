@@ -15,14 +15,16 @@ const {
 const { bytes32 } = require("../utils/regex");
 const { resolveContract } = require("../utils/resolvers");
 const {
+  generateStateProof,
   generateValidatorPubKeyProof,
-  generateFirstPendingDepositSlotProof,
+  generateFirstPendingDepositProofs,
   generateBalancesContainerProof,
   generateBalanceProof,
 } = require("../utils/proofs");
 const { toHex } = require("../utils/units");
 const { logTxDetails } = require("../utils/txLogger");
 const { getNetworkName } = require("../utils/hardhat-helpers");
+const { getBlock } = require("./block");
 
 const log = require("../utils/logger")("task:beacon");
 
@@ -139,13 +141,20 @@ async function verifyValidator({ slot, index, dryrun, withdrawal, signer }) {
   await logTxDetails(tx, "verifyValidator");
 }
 
-async function verifyDeposit({ slot, root: depositDataRoot, dryrun, signer }) {
+async function verifyDeposit({
+  block,
+  slot,
+  root: depositDataRoot,
+  dryrun,
+  signer,
+}) {
   const strategy = await resolveContract(
     "CompoundingStakingSSVStrategyProxy",
     "CompoundingStakingSSVStrategy"
   );
 
-  const depositData = await strategy.deposits(depositDataRoot);
+  const blockTag = await getBlock(block);
+  const depositData = await strategy.deposits(depositDataRoot, { blockTag });
   log(
     `Found deposit for ${formatUnits(
       depositData.amountGwei,
@@ -154,7 +163,12 @@ async function verifyDeposit({ slot, root: depositDataRoot, dryrun, signer }) {
       depositData.pubKeyHash
     } and deposit index ${depositData.depositIndex}`
   );
-  const validatorStatus = await strategy.validatorState(depositData.pubKeyHash);
+  const validatorStatus = await strategy.validatorState(
+    depositData.pubKeyHash,
+    {
+      blockTag,
+    }
+  );
   if (validatorStatus !== 3)
     throw Error(
       `Validator with pub key hash ${depositData.pubKeyHash} is not VERIFIED. Status: ${validatorStatus}`
@@ -165,7 +179,9 @@ async function verifyDeposit({ slot, root: depositDataRoot, dryrun, signer }) {
     amountGwei,
     pubKeyHash,
     status,
-  } = await strategy.deposits(depositDataRoot);
+  } = await strategy.deposits(depositDataRoot, {
+    blockTag,
+  });
   if (depositSlot == 0) {
     throw Error(`Failed to find deposit with root ${depositDataRoot}`);
   }
@@ -182,51 +198,89 @@ async function verifyDeposit({ slot, root: depositDataRoot, dryrun, signer }) {
   }
 
   // Uses the latest slot if the slot is undefined
-  const { blockView, blockTree, stateView } = await getBeaconBlock(slot);
+  const { blockView, blockTree, stateView, stateTree } = await getBeaconBlock(
+    slot
+  );
 
-  const processedSlot = blockView.slot;
+  const verificationSlot = blockView.slot;
 
   const {
-    proof,
-    slot: firstPendingDepositSlot,
-    root: beaconBlockRoot,
-  } = await generateFirstPendingDepositSlotProof({
+    proof: stateProof,
+    leaf: stateRoot,
+    root: beaconRoot,
+  } = await generateStateProof({
     blockView,
     blockTree,
-    stateView,
   });
 
-  if (firstPendingDepositSlot == 0) {
+  const { firstPendingDeposit, firstPendingDepositValidator, isEmpty } =
+    await generateFirstPendingDepositProofs({
+      stateView,
+      stateTree,
+    });
+
+  if (dryrun) {
+    console.log(`beacon block root            : ${beaconRoot}`);
+    console.log(`state root                   : ${stateRoot}`);
+    console.log(`state proof                  : ${stateProof}`);
+    console.log(`deposit slot                 : ${depositSlot}`);
+    console.log(`deposit data root            : ${depositDataRoot}`);
+    console.log(`verification slot            : ${verificationSlot}`);
+    console.log(`slot of first pending deposit: ${firstPendingDeposit.slot}`);
+    console.log(`first pending deposit root   : ${firstPendingDeposit.root}`);
+    console.log(
+      `first pending deposit proof  : ${firstPendingDeposit.containerProof}`
+    );
+    console.log(
+      `pending deposit slot proof   : ${firstPendingDeposit.slotProof}`
+    );
+    console.log(
+      `pending deposit pub key proof: ${firstPendingDeposit.pubKeyProof}`
+    );
+    console.log(
+      `validator index              : ${firstPendingDepositValidator.index}`
+    );
+    console.log(
+      `validator root               : ${firstPendingDepositValidator.root}`
+    );
+    console.log(
+      `validator exit epoch         : ${firstPendingDepositValidator.exitEpoch}`
+    );
+    console.log(
+      `validator container proof    : ${firstPendingDepositValidator.containerProof}`
+    );
+    console.log(
+      `validator pub key proof      : ${firstPendingDepositValidator.pubKeyProof}`
+    );
+    console.log(
+      `validator exit proof         : ${firstPendingDepositValidator.exitProof}`
+    );
+    return;
+  }
+
+  if (!isEmpty && firstPendingDeposit.slot == 0) {
     throw Error(
       `Can not verify when the first pending deposits has a zero slot. This is from a validator consolidating to a compounding validator.\nExecute again when the first pending deposit slot is not zero.`
     );
   }
-  if (depositSlot > firstPendingDepositSlot) {
+  if (depositSlot > firstPendingDeposit.slot) {
     throw Error(
-      `Deposit at slot ${depositSlot} has not been processed at slot ${processedSlot}. Next deposit in the queue is from slot ${firstPendingDepositSlot}.`
+      `Deposit at slot ${depositSlot} has not been processed at slot ${verificationSlot}. Next deposit in the queue is from slot ${firstPendingDeposit.slot}.`
     );
   }
 
-  if (dryrun) {
-    console.log(`deposit slot                 : ${depositSlot}`);
-    console.log(`deposit data root            : ${depositDataRoot}`);
-    console.log(`beacon block root            : ${beaconBlockRoot}`);
-    console.log(`processed slot               : ${processedSlot}`);
-    console.log(`slot of first pending deposit: ${firstPendingDepositSlot}`);
-    console.log(`proof: ${proof}`);
-    return;
-  }
-
   log(
-    `About to verify deposit from slot ${depositSlot} with processing slot ${processedSlot}, deposit data root ${depositDataRoot}, slot of first pending deposit ${firstPendingDepositSlot} to beacon chain root ${beaconBlockRoot}`
+    `About to verify deposit from slot ${depositSlot} with verification slot ${verificationSlot}, deposit data root ${depositDataRoot}, slot of first pending deposit ${firstPendingDeposit.slot} to state root ${stateRoot}`
   );
   const tx = await strategy
     .connect(signer)
     .verifyDeposit(
       depositDataRoot,
-      processedSlot,
-      firstPendingDepositSlot,
-      proof
+      stateRoot,
+      stateProof,
+      verificationSlot,
+      firstPendingDeposit,
+      firstPendingDepositValidator
     );
   await logTxDetails(tx, "verifyDeposit");
 }
@@ -253,11 +307,16 @@ async function verifyBalances({ root, indexes, dryrun, signer }) {
     "CompoundingStakingSSVStrategy"
   );
 
+  // const { proof: stateProof, leaf: stateRoot } = await generateStateProof({
+  //   blockView,
+  //   blockTree,
+  // });
+
   const {
     proof: firstPendingDepositSlotProof,
     slot: firstPendingDepositSlot,
     isEmpty,
-  } = await generateFirstPendingDepositSlotProof({
+  } = await generateFirstPendingDepositProofs({
     blockView,
     blockTree,
     stateView,

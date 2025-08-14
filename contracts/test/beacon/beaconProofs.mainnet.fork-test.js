@@ -4,10 +4,11 @@ const { before } = require("mocha");
 const { createFixtureLoader, beaconChainFixture } = require("../_fixture");
 const { getBeaconBlock, getSlot, hashPubKey } = require("../../utils/beacon");
 const {
+  generateStateProof,
   generateBalancesContainerProof,
   generateBalanceProof,
   generateValidatorPubKeyProof,
-  generateFirstPendingDepositSlotProof,
+  generateFirstPendingDepositProofs,
 } = require("../../utils/proofs");
 
 const log = require("../../utils/logger")("test:fork:beacon:oracle");
@@ -18,9 +19,10 @@ describe("ForkTest: Beacon Proofs", function () {
   this.timeout(0);
 
   let blockView, blockTree;
-  let stateView;
+  let stateView, stateTree;
   let pastSlot;
   let beaconBlockRoot;
+  let stateRoot;
   before(async () => {
     const currentSlot = await getSlot();
 
@@ -28,13 +30,28 @@ describe("ForkTest: Beacon Proofs", function () {
     // But not too old that its before the beacon root oracle ring buffer
     pastSlot = Math.floor((currentSlot - 1000) / 1000) * 1000;
 
-    ({ blockView, blockTree, stateView } = await getBeaconBlock(pastSlot));
+    ({ blockView, blockTree, stateView, stateTree } = await getBeaconBlock(
+      pastSlot
+    ));
 
     beaconBlockRoot = blockView.hashTreeRoot();
+    stateRoot = stateView.hashTreeRoot();
   });
   let fixture;
   beforeEach(async () => {
     fixture = await loadFixture();
+  });
+
+  it("Should verify state in beacon block", async () => {
+    const { beaconProofs } = fixture;
+
+    const { proof } = await generateStateProof({
+      blockView,
+      blockTree,
+    });
+
+    log(`About to verify state in beacon block`);
+    await beaconProofs.verifyState(beaconBlockRoot, stateRoot, proof);
   });
 
   it("Should verify validator public key", async () => {
@@ -55,7 +72,7 @@ describe("ForkTest: Beacon Proofs", function () {
     const withdrawalAddress = "0xf80432285c9d2055449330bbd7686a5ecf2a7247";
 
     log(`About to verify validator public key`);
-    await beaconProofs.verifyValidatorPubkey(
+    await beaconProofs.verifyValidator(
       beaconBlockRoot,
       pubKeyHash,
       proof,
@@ -68,13 +85,12 @@ describe("ForkTest: Beacon Proofs", function () {
     const { beaconProofs } = fixture;
 
     const { proof, leaf } = await generateBalancesContainerProof({
-      blockView,
-      blockTree,
       stateView,
+      stateTree,
     });
 
     log(`About to verify balances container`);
-    await beaconProofs.verifyBalancesContainer(beaconBlockRoot, leaf, proof);
+    await beaconProofs.verifyBalancesContainer(stateRoot, leaf, proof);
   });
 
   it("Should verify validator balance in balances container", async () => {
@@ -101,15 +117,19 @@ describe("ForkTest: Beacon Proofs", function () {
   it("Should verify the slot of the first pending deposit in the beacon block", async () => {
     const { beaconProofs } = fixture;
 
-    const { proof, slot, root } = await generateFirstPendingDepositSlotProof({
-      blockView,
-      blockTree,
-      stateView,
-    });
+    const { stateRoot, firstPendingDeposit, firstPendingDepositValidator } =
+      await generateFirstPendingDepositProofs({
+        stateView,
+        stateTree,
+      });
 
     log(
       `About to verify the slot of the first pending deposit in the beacon block`
     );
-    await beaconProofs.verifyFirstPendingDepositSlot(root, slot, proof);
+    await beaconProofs.verifyFirstPendingDeposit(
+      stateRoot,
+      firstPendingDeposit,
+      firstPendingDepositValidator
+    );
   });
 });

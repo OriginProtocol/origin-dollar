@@ -11,7 +11,7 @@ import { IWETH9 } from "../../interfaces/IWETH9.sol";
 import { ISSVNetwork, Cluster } from "../../interfaces/ISSVNetwork.sol";
 import { BeaconRoots } from "../../beacon/BeaconRoots.sol";
 import { PartialWithdrawal } from "../../beacon/PartialWithdrawal.sol";
-import { IBeaconProofs } from "../../interfaces/IBeaconProofs.sol";
+import { IBeaconProofs, FirstPendingDeposit, FirstPendingDepositValidator } from "../../interfaces/IBeaconProofs.sol";
 
 struct ValidatorStakeData {
     bytes pubkey;
@@ -492,7 +492,7 @@ abstract contract CompoundingValidatorManager is Governable {
     /// Can not be a slot with pending deposits with the same slot as the deposit being verified.
     /// Can not be a slot before a missed slot as the Beacon Root contract will have the parent block root
     /// set for the next block timestamp in 12 seconds time.
-    /// @param depositParams The parameters needed to verify the first pending deposit in the beacon chain.
+    /// @param firstPendingDeposit The parameters needed to verify the first pending deposit in the beacon chain.
     /// `slot` The slot of the first pending deposit in the beacon chain.
     /// Can be anything if the deposit queue is empty, but zero is a good choice.
     /// `firstPendingDepositSlotProof` The merkle proof to the beacon block root. Can be either:
@@ -502,9 +502,11 @@ abstract contract CompoundingValidatorManager is Governable {
     // slither-disable-start reentrancy-no-eth
     function verifyDeposit(
         bytes32 depositDataRoot,
+        bytes32 stateRoot,
         bytes calldata stateProof,
         uint64 verificationSlot,
-        IBeaconProofs.VerifyFirstPendingDeposit calldata depositParams
+        FirstPendingDeposit calldata firstPendingDeposit,
+        FirstPendingDepositValidator calldata firstPendingDepositValidator
     ) external {
         // Load into memory the previously saved deposit data
         DepositData memory deposit = deposits[depositDataRoot];
@@ -532,13 +534,17 @@ abstract contract CompoundingValidatorManager is Governable {
         // Verify the state root to the beacon block root.
         IBeaconProofs(BEACON_PROOFS).verifyState(
             beaconBlockRoot,
-            depositParams.stateRoot,
+            stateRoot,
             stateProof
         );
 
         // Verify the first pending deposit to the state root
         bool isDepositQueueEmpty = IBeaconProofs(BEACON_PROOFS)
-            .verifyFirstPendingDeposit(depositParams);
+            .verifyFirstPendingDeposit(
+                stateRoot,
+                firstPendingDeposit,
+                firstPendingDepositValidator
+            );
 
         // Check the deposit slot is before the first pending deposit's slot on the beacon chain.
         // If this is not true then we can't guarantee the deposit has been processed by the beacon chain.
@@ -548,7 +554,7 @@ abstract contract CompoundingValidatorManager is Governable {
         // The deposit slot can be zero for validators consolidating to a compounding validator. We can
         // not guarantee that the deposit has been processed in that case.
         require(
-            deposit.slot < depositParams.slot || isDepositQueueEmpty,
+            deposit.slot < firstPendingDeposit.slot || isDepositQueueEmpty,
             "Deposit likely not processed"
         );
 
@@ -704,7 +710,7 @@ abstract contract CompoundingValidatorManager is Governable {
     /// and checks no pending deposits have been processed by the beacon chain.
     /// @param beaconBlockRoot The beacon block root emitted from `snapBalance` in `BalancesSnapped`
     /// @param stateProof The merkle proof of the state root to the beacon block root.
-    /// @param depositParams a `VerifyFirstPendingDeposit` struct containing the following:
+    /// @param firstPendingDeposit a `VerifyFirstPendingDeposit` struct containing the following:
     /// @param balancesParams a `VerifyBalancesParams` struct containing the following:
     /// firstPendingDepositSlot - The beacon chain slot of the first deposit in the beacon chain's deposit queue.
     ///   Can be anything if the deposit queue is empty, but zero would be a good choice.
@@ -721,8 +727,10 @@ abstract contract CompoundingValidatorManager is Governable {
     // slither-disable-start reentrancy-no-eth
     function verifyBalances(
         bytes32 beaconBlockRoot,
+        bytes32 stateRoot,
         bytes calldata stateProof,
-        IBeaconProofs.VerifyFirstPendingDeposit calldata depositParams,
+        FirstPendingDeposit calldata firstPendingDeposit,
+        FirstPendingDepositValidator calldata firstPendingDepositValidator,
         VerifyBalancesParams calldata balancesParams
     ) external {
         // Load previously snapped balances for the given block root
@@ -739,7 +747,7 @@ abstract contract CompoundingValidatorManager is Governable {
         if (depositsCount > 0 || verifiedValidatorsCount > 0) {
             IBeaconProofs(BEACON_PROOFS).verifyState(
                 beaconBlockRoot,
-                depositParams.stateRoot,
+                stateRoot,
                 stateProof
             );
         }
@@ -748,7 +756,11 @@ abstract contract CompoundingValidatorManager is Governable {
         if (depositsCount > 0) {
             // Verify the first pending deposit to the state root
             bool isEmptyDepositQueue = IBeaconProofs(BEACON_PROOFS)
-                .verifyFirstPendingDeposit(depositParams);
+                .verifyFirstPendingDeposit(
+                    stateRoot,
+                    firstPendingDeposit,
+                    firstPendingDepositValidator
+                );
 
             // If there are no deposits in the beacon chain queue then our deposits must have been processed.
             // If the deposits have been processed, each deposit will need to be verified with `verifyDeposit`
@@ -758,7 +770,10 @@ abstract contract CompoundingValidatorManager is Governable {
             // We can not prove the strategy's deposits are still pending with a zero slot value so revert the tx.
             // Another snapBalances will need to be taken that does not have consolidation deposits at the front of the
             // beacon chain deposit queue.
-            require(depositParams.slot > 0, "Invalid first pending deposit");
+            require(
+                firstPendingDeposit.slot > 0,
+                "Invalid first pending deposit"
+            );
 
             // For each staking strategy's deposits
             for (uint256 i = 0; i < depositsCount; ++i) {
@@ -769,7 +784,7 @@ abstract contract CompoundingValidatorManager is Governable {
                 // slot of the staking strategy's deposit.
                 // If the deposit has been processed, it will need to be verified with `verifyDeposit`
                 require(
-                    depositParams.slot < deposits[depositDataRoot].slot,
+                    firstPendingDeposit.slot < deposits[depositDataRoot].slot,
                     "Deposit has been processed"
                 );
 
@@ -794,7 +809,7 @@ abstract contract CompoundingValidatorManager is Governable {
             );
             // verify State.balances root to beacon block root
             IBeaconProofs(BEACON_PROOFS).verifyBalancesContainer(
-                depositParams.stateRoot,
+                stateRoot,
                 balancesParams.balancesContainerRoot,
                 balancesParams.balancesContainerProof
             );

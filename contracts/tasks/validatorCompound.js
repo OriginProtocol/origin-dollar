@@ -203,6 +203,7 @@ async function snapStakingStrategy({ block }) {
   );
 
   // Pending deposits
+  log(`About to get pending deposits from strategy with blockTag ${blockTag}`);
   const deposits = await strategy.getPendingDeposits({ blockTag });
   let totalDeposits = BigNumber.from(0);
   console.log(`\n${deposits.length || "No"} pending strategy deposits:`);
