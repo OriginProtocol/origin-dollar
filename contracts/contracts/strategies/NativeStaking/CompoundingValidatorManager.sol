@@ -538,7 +538,7 @@ abstract contract CompoundingValidatorManager is Governable {
 
         // Verify the slot of the first pending deposit matches the beacon chain
         bool isDepositQueueEmpty = IBeaconProofs(BEACON_PROOFS)
-            .verifyFirstPendingDepositSlot(
+            .verifyFirstPendingDeposit(
                 blockRoot,
                 firstPendingDepositSlot,
                 firstPendingDepositSlotProof

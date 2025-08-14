@@ -110,6 +110,6 @@ describe("ForkTest: Beacon Proofs", function () {
     log(
       `About to verify the slot of the first pending deposit in the beacon block`
     );
-    await beaconProofs.verifyFirstPendingDepositSlot(root, slot, proof);
+    await beaconProofs.verifyFirstPendingDeposit(root, slot, proof);
   });
 });

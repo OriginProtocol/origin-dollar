@@ -196,7 +196,7 @@ library BeaconProofsLib {
     /// - 37 witness hashes for BeaconBlock.state.PendingDeposits[0] when the deposit queue is empty.
     /// The 32 byte witness hashes are concatenated together starting from the leaf node.
     /// @return isEmptyDepositQueue True if the deposit queue is empty, false otherwise.
-    function verifyFirstPendingDepositSlot(
+    function verifyFirstPendingDeposit(
         bytes32 beaconBlockRoot,
         uint64 slot,
         bytes calldata firstPendingDepositSlotProof

@@ -28,7 +28,7 @@ interface IBeaconProofs {
         uint64 validatorIndex
     ) external view returns (uint256 validatorBalance);
 
-    function verifyFirstPendingDepositSlot(
+    function verifyFirstPendingDeposit(
         bytes32 beaconBlockRoot,
         uint64 slot,
         bytes calldata firstPendingDepositSlotProof
