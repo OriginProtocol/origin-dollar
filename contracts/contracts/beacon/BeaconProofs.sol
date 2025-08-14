@@ -16,14 +16,14 @@ contract BeaconProofs {
     /// This is 53 witness hashes of 32 bytes each concatenated together starting from the leaf node.
     /// @param validatorIndex The validator index
     /// @param withdrawalAddress The withdrawal address used in the validator's withdrawal credentials
-    function verifyValidatorPubkey(
+    function verifyValidator(
         bytes32 beaconBlockRoot,
         bytes32 pubKeyHash,
         bytes calldata validatorPubKeyProof,
         uint64 validatorIndex,
         address withdrawalAddress
     ) external view {
-        BeaconProofsLib.verifyValidatorPubkey(
+        BeaconProofsLib.verifyValidator(
             beaconBlockRoot,
             pubKeyHash,
             validatorPubKeyProof,

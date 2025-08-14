@@ -7,7 +7,7 @@ interface IBeaconProofs {
         BeaconBlock
     }
 
-    function verifyValidatorPubkey(
+    function verifyValidator(
         bytes32 beaconBlockRoot,
         bytes32 pubKeyHash,
         bytes calldata validatorPubKeyProof,

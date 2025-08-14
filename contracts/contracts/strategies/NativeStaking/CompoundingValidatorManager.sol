@@ -470,7 +470,7 @@ abstract contract CompoundingValidatorManager is Governable {
 
         // Verify the validator index is for the validator with the given public key.
         // Also verify the validator's withdrawal credential points to this strategy.
-        IBeaconProofs(BEACON_PROOFS).verifyValidatorPubkey(
+        IBeaconProofs(BEACON_PROOFS).verifyValidator(
             blockRoot,
             pubKeyHash,
             validatorPubKeyProof,

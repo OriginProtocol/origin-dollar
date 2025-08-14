@@ -48,27 +48,23 @@ library BeaconProofsLib {
     /// BeaconBlock.state.validators[validatorIndex].pubkey
     uint256 internal constant VALIDATOR_PUBKEY_INDEX = 0;
 
-    /// @notice Verifies the validator public key to the beacon block root
+    /// @notice Verifies the validator index is for the given validator public key.
+    /// Also verify the validator's withdrawal credential points to the withdrawal address.
     /// BeaconBlock.state.validators[validatorIndex].pubkey
     /// @param beaconBlockRoot The root of the beacon block
     /// @param pubKeyHash Hash of validator's public key using the Beacon Chain's format
-    /// @param validatorPubKeyProof The merkle proof for the validator public key to the beacon block root.
+    /// @param proof The merkle proof for the validator public key to the beacon block root.
     /// This is 53 witness hashes of 32 bytes each concatenated together starting from the leaf node.
     /// @param validatorIndex The validator index
     /// @param withdrawalAddress The withdrawal address used in the validator's withdrawal credentials
-    function verifyValidatorPubkey(
+    function verifyValidator(
         bytes32 beaconBlockRoot,
         bytes32 pubKeyHash,
-        bytes calldata validatorPubKeyProof,
+        bytes calldata proof,
         uint64 validatorIndex,
         address withdrawalAddress
     ) internal view {
         require(beaconBlockRoot != bytes32(0), "Invalid block root");
-        require(
-            // 53 * 32 bytes = 1696 bytes
-            validatorPubKeyProof.length == 1696,
-            "Invalid proof length"
-        );
 
         // BeaconBlock.state.validators[validatorIndex]
         uint256 generalizedIndex = concatGenIndices(
@@ -88,7 +84,7 @@ library BeaconProofsLib {
         // solhint-disable-next-line no-inline-assembly
         assembly {
             // The first 32 bytes of the proof is the withdrawal credential so load it into memory.
-            calldatacopy(0, validatorPubKeyProof.offset, 32)
+            calldatacopy(0, proof.offset, 32)
             // Cast the 32 bytes in memory to an address which is the last 20 bytes.
             withdrawalAddressFromProof := mload(0)
         }
@@ -98,13 +94,15 @@ library BeaconProofsLib {
         );
 
         require(
-            Merkle.verifyInclusionSha256({
-                proof: validatorPubKeyProof,
-                root: beaconBlockRoot,
-                leaf: pubKeyHash,
-                index: generalizedIndex
-            }),
-            "Invalid validator pubkey proof"
+            // 53 * 32 bytes = 1696 bytes
+            proof.length == 1696 &&
+                Merkle.verifyInclusionSha256({
+                    proof: proof,
+                    root: beaconBlockRoot,
+                    leaf: pubKeyHash,
+                    index: generalizedIndex
+                }),
+            "Invalid validator proof"
         );
     }
 

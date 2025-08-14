@@ -55,7 +55,7 @@ describe("ForkTest: Beacon Proofs", function () {
     const withdrawalAddress = "0xf80432285c9d2055449330bbd7686a5ecf2a7247";
 
     log(`About to verify validator public key`);
-    await beaconProofs.verifyValidatorPubkey(
+    await beaconProofs.verifyValidator(
       beaconBlockRoot,
       pubKeyHash,
       proof,
