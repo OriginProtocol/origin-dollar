@@ -961,6 +961,27 @@ abstract contract CompoundingValidatorManager is Governable {
                 totalDepositsWei +=
                     uint256(deposits[depositDataRoot].amountGwei) *
                     1 gwei;
+
+                // Remove the deposit if the validator has exited.
+                if (
+                    validatorState[depositData.pubKeyHash] ==
+                    VALIDATOR_STATE.EXITED
+                ) {
+                    // TODO move this into an internal function
+                    // After verifying the proof, update the contract storage
+                    deposits[depositDataRoot].status = DepositStatus.VERIFIED;
+                    // Move the last deposit to the index of the verified deposit
+                    bytes32 lastDepositDataRoot = depositsRoots[
+                        depositsRoots.length - 1
+                    ];
+                    depositsRoots[
+                        depositData.depositIndex
+                    ] = lastDepositDataRoot;
+                    deposits[lastDepositDataRoot].depositIndex = depositData
+                        .depositIndex;
+                    // Delete the last deposit from the list
+                    depositsRoots.pop();
+                }
             }
         }
 
