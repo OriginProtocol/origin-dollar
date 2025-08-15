@@ -45,9 +45,11 @@ library BeaconProofsLib {
     uint256 internal constant FIRST_PENDING_DEPOSIT_PUBKEY_PROOF_LENGTH = 1280;
     /// The slot is at index 4 in the Pending Deposits container.
     /// The sub tree from the right node from the root is a tree of height 2.
-    /// The first 32 bytes witness is an empty bytes32 as there is not item after the slot in the Pending Deposits container.
+    /// The first 32 bytes witness is an empty bytes32 as there are
+    /// no items after the slot in the Pending Deposits container.
     /// The second 32 bytes witness is a hash or two empty bytes32.
     bytes internal constant PENDING_DEPOSIT_SLOT_PROOF =
+        // solhint-disable-next-line max-line-length
         hex"000000000000000000000000000000000000000000000000000000000000000066687aadf862bd776c8fc18b8e9f8e20089714856ee233b3902a591d0d5f2925";
 
     /// @dev Merkle height of the Balances container

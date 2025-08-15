@@ -560,7 +560,8 @@ abstract contract CompoundingValidatorManager is Governable {
 
         // If the deposit queue is not empty
         if (!isDepositQueueEmpty) {
-            // Get the parent beacon block root of the next block which is the block root of the validator verification slot.
+            // Get the parent beacon block root of the next block which is
+            // the block root of the validator verification slot.
             // This will revert if the slot after the verification slot was missed.
             bytes32 validatorBlockRoot = BeaconRoots.parentBlockRoot(
                 _calcNextBlockTimestamp(validatorVerificationSlot)
@@ -603,6 +604,7 @@ abstract contract CompoundingValidatorManager is Governable {
             return;
         }
 
+        // solhint-disable max-line-length
         // Check the deposit slot is before the first pending deposit's slot on the beacon chain.
         // If this is not true then we can't guarantee the deposit has been processed by the beacon chain.
         // The deposit's slot can not be the same slot as the first pending deposit as there could be
@@ -614,6 +616,7 @@ abstract contract CompoundingValidatorManager is Governable {
         // - [queue_excess_active_balance](https://ethereum.github.io/consensus-specs/specs/electra/beacon-chain/#new-queue_excess_active_balance)
         // - [process_consolidation_request](https://ethereum.github.io/consensus-specs/specs/electra/beacon-chain/#new-process_consolidation_request)
         // We can not guarantee that the deposit has been processed in that case.
+        // solhint-enable max-line-length
         require(
             deposit.slot < firstPendingDeposit.slot || isDepositQueueEmpty,
             "Deposit likely not processed"
@@ -892,7 +895,8 @@ abstract contract CompoundingValidatorManager is Governable {
                 "Invalid validator timestamp"
             );
 
-            // Get the parent beacon block root of the next block which is the block root of the validator verification slot.
+            // Get the parent beacon block root of the next block which is
+            // the block root of the validator verification slot.
             // This will revert if the slot after the verification slot was missed.
             bytes32 validatorBlockRoot = BeaconRoots.parentBlockRoot(
                 validatorVerificationBlockTimestamp
@@ -910,6 +914,7 @@ abstract contract CompoundingValidatorManager is Governable {
                 firstPendingDeposit.pubKeyProof
             );
 
+            // solhint-disable max-line-length
             // If a validator is converted from a sweeping validator to a compounding validator, any balance in excess
             // of the min 32 ETH is put in the pending deposit queue. Reference:
             // - [switch_to_compounding_validator](https://ethereum.github.io/consensus-specs/specs/electra/beacon-chain/#new-switch_to_compounding_validator
@@ -919,6 +924,7 @@ abstract contract CompoundingValidatorManager is Governable {
             // We can not prove the strategy's deposits are still pending with a zero slot value so revert the tx.
             // Another snapBalances will need to be taken that does not have consolidation deposits at the front of the
             // beacon chain deposit queue.
+            // solhint-enable max-line-length
             require(
                 firstPendingDeposit.slot > 0,
                 "Invalid first pending deposit"
