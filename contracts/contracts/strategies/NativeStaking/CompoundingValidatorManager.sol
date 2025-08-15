@@ -149,7 +149,12 @@ abstract contract CompoundingValidatorManager is Governable {
     event DepositVerified(bytes32 indexed depositDataRoot, uint256 amountWei);
     event DepositValidatorExiting(
         bytes32 indexed depositDataRoot,
-        uint64 exitEpoch
+        uint256 amountWei,
+        uint64 withdrawableEpoch
+    );
+    event DepositValidatorExited(
+        bytes32 indexed depositDataRoot,
+        uint256 amountWei
     );
     event ValidatorWithdraw(bytes32 indexed pubKeyHash, uint256 amountWei);
     event BalancesSnapped(
@@ -493,7 +498,7 @@ abstract contract CompoundingValidatorManager is Governable {
         uint64 validatorIndex;
         bytes32 pubKeyHash;
         bytes pubKeyProof;
-        bytes validatorExitEpochProof;
+        bytes validatorWithdrawableEpochProof;
         bytes validatorPubKeyProof;
     }
 
@@ -575,7 +580,7 @@ abstract contract CompoundingValidatorManager is Governable {
                 firstPendingDeposit.validatorIndex,
                 firstPendingDeposit.pubKeyHash,
                 FAR_FUTURE_EPOCH,
-                firstPendingDeposit.validatorExitEpochProof,
+                firstPendingDeposit.validatorWithdrawableEpochProof,
                 firstPendingDeposit.pubKeyProof
             );
         }
@@ -597,6 +602,7 @@ abstract contract CompoundingValidatorManager is Governable {
 
             emit DepositValidatorExiting(
                 depositDataRoot,
+                uint256(deposit.amountGwei) * 1 gwei,
                 validatorData.withdrawableEpoch
             );
 
@@ -919,7 +925,7 @@ abstract contract CompoundingValidatorManager is Governable {
                 firstPendingDeposit.validatorIndex,
                 firstPendingDeposit.pubKeyHash,
                 FAR_FUTURE_EPOCH,
-                firstPendingDeposit.validatorExitEpochProof,
+                firstPendingDeposit.validatorWithdrawableEpochProof,
                 firstPendingDeposit.pubKeyProof
             );
 
@@ -976,7 +982,7 @@ abstract contract CompoundingValidatorManager is Governable {
                 ) {
                     _removeDeposit(depositDataRoot, depositData);
 
-                    emit DepositVerified(
+                    emit DepositValidatorExited(
                         depositDataRoot,
                         uint256(depositData.amountGwei) * 1 gwei
                     );
