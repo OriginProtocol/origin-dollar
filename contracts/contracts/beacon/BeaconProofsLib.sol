@@ -10,25 +10,34 @@ import { Endian } from "./Endian.sol";
  */
 library BeaconProofsLib {
     // Known generalized indices in the beacon block
-    /// @dev BeaconBlock.slot
-    uint256 internal constant SLOT_GENERALIZED_INDEX = 8;
     /// @dev BeaconBlock.state.PendingDeposits[0]
+    /// Beacon block container: height 3, state at at index 3
+    /// Beacon state container: height 6, pending deposits at index 34
+    /// Pending deposits container: height 28, first deposit at index 0
+    /// ((2 ^ 3 + 3) * 2 ^ 6 + 34) * 2 ^ 28 + 0 = 198105366528
     uint256 internal constant FIRST_PENDING_DEPOSIT_GENERALIZED_INDEX =
         198105366528;
     /// @dev BeaconBlock.state.PendingDeposits[0].pubkey
+    /// Pending Deposit container: height 3, pubkey at index 0
+    /// (((2 ^ 3 + 3) * 2 ^ 6 + 34) * 2 ^ 28 + 0) * 2 ^ 3 + 0  = 1584842932224
     uint256 internal constant FIRST_PENDING_DEPOSIT_PUBKEY_GENERALIZED_INDEX =
         1584842932224;
-    /// @dev BeaconBlock.body.executionPayload.blockNumber
-    uint256 internal constant BLOCK_NUMBER_GENERALIZED_INDEX = 6438;
     /// @dev BeaconBlock.state.validators
+    /// Beacon block container: height 3, state at at index 3
+    /// Beacon state container: height 6, validators at index 11
+    /// (2 ^ 3 + 3) * 2 ^ 6 + 11 = 715
     uint256 internal constant VALIDATORS_CONTAINER_GENERALIZED_INDEX = 715;
     /// @dev BeaconBlock.state.balances
+    /// Beacon block container: height 3, state at at index 3
+    /// Beacon state container: height 6, balances at index 13
+    /// (2 ^ 3 + 3) * 2 ^ 6 + 13 = 716
     uint256 internal constant BALANCES_CONTAINER_GENERALIZED_INDEX = 716;
 
     /// @dev Number of bytes in the proof to the first pending deposit.
     /// 37 witness hashes of 32 bytes each concatenated together.
     /// BeaconBlock.state.PendingDeposits[0]
-    uint256 internal constant FIRST_PENDING_DEPOSIT_PROOF_LENGTH = 37 * 32;
+    /// 37 * 32 bytes = 1184 bytes
+    uint256 internal constant FIRST_PENDING_DEPOSIT_PROOF_LENGTH = 1184;
     /// @dev Number of bytes in the proof from the pubKey of the first pending deposit to the beacon block root.
     /// 40 witness hashes of 32 bytes each concatenated together.
     /// BeaconBlock.state.PendingDeposits[0].pubKey
