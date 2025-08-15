@@ -772,7 +772,7 @@ abstract contract CompoundingValidatorManager is Governable {
     }
 
     // A struct is used to avoid stack too deep errors
-    struct VerifyBalancesParams {
+    struct ValidatorProofs {
         // BeaconBlock.state.balances
         bytes32 balancesContainerRoot;
         bytes balancesContainerProof;
@@ -782,9 +782,9 @@ abstract contract CompoundingValidatorManager is Governable {
     }
 
     /// @notice Verifies the balances of all active validators on the beacon chain
-    /// if there are no pending deposits.
-    /// @param params a `VerifyBalancesParams` struct containing the following:
-    /// blockRoot - the beacon block root emitted from `snapBalance` in `BalancesSnapped`
+    /// and checks no pending deposits have been processed by the beacon chain.
+    /// @param blockRoot The beacon block root emitted from `snapBalance` in `BalancesSnapped`.
+    /// @param validatorProofs a `ValidatorProofs` struct containing the following:
     /// balancesContainerRoot - the merkle root of the balances container
     /// balancesContainerProof - The merkle proof for the balances container to the beacon block root.
     ///   This is 9 witness hashes of 32 bytes each concatenated together starting from the leaf node.
@@ -796,7 +796,7 @@ abstract contract CompoundingValidatorManager is Governable {
         bytes32 blockRoot,
         uint64 validatorVerificationBlockTimestamp,
         FirstPendingDepositData calldata firstPendingDeposit,
-        VerifyBalancesParams calldata params
+        ValidatorProofs calldata validatorProofs
     ) external {
         // Load previously snapped balances for the given block root
         Balances memory balancesMem = snappedBalances[blockRoot];
@@ -810,18 +810,20 @@ abstract contract CompoundingValidatorManager is Governable {
         // If there are no verified validators then we can skip the balance verification
         if (verifiedValidatorsCount > 0) {
             require(
-                params.validatorBalanceProofs.length == verifiedValidatorsCount,
+                validatorProofs.validatorBalanceProofs.length ==
+                    verifiedValidatorsCount,
                 "Invalid balance proofs"
             );
             require(
-                params.validatorBalanceLeaves.length == verifiedValidatorsCount,
+                validatorProofs.validatorBalanceLeaves.length ==
+                    verifiedValidatorsCount,
                 "Invalid balance leaves"
             );
             // verify beaconBlock.state.balances root to beacon block root
             IBeaconProofs(BEACON_PROOFS).verifyBalancesContainer(
                 blockRoot,
-                params.balancesContainerRoot,
-                params.balancesContainerProof
+                validatorProofs.balancesContainerRoot,
+                validatorProofs.balancesContainerProof
             );
 
             // for each validator in reserve order so we can pop off exited validators at the end
@@ -831,9 +833,9 @@ abstract contract CompoundingValidatorManager is Governable {
                 // beaconBlock.state.balances container root
                 uint256 validatorBalanceGwei = IBeaconProofs(BEACON_PROOFS)
                     .verifyValidatorBalance(
-                        params.balancesContainerRoot,
-                        params.validatorBalanceLeaves[i],
-                        params.validatorBalanceProofs[i],
+                        validatorProofs.balancesContainerRoot,
+                        validatorProofs.validatorBalanceLeaves[i],
+                        validatorProofs.validatorBalanceProofs[i],
                         verifiedValidators[i].index
                     );
 
