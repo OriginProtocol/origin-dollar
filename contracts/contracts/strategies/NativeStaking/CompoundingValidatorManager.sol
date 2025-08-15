@@ -622,6 +622,18 @@ abstract contract CompoundingValidatorManager is Governable {
             "Deposit likely not processed"
         );
 
+        // Remove the deposit now it has been verified as processed on the beacon chain.
+        _removeDeposit(depositDataRoot, deposit);
+
+        emit DepositVerified(
+            depositDataRoot,
+            uint256(deposit.amountGwei) * 1 gwei
+        );
+    }
+
+    function _removeDeposit(bytes32 depositDataRoot, DepositData memory deposit)
+        internal
+    {
         // After verifying the proof, update the contract storage
         deposits[depositDataRoot].status = DepositStatus.VERIFIED;
         // Move the last deposit to the index of the verified deposit
@@ -630,11 +642,6 @@ abstract contract CompoundingValidatorManager is Governable {
         deposits[lastDepositDataRoot].depositIndex = deposit.depositIndex;
         // Delete the last deposit from the list
         depositsRoots.pop();
-
-        emit DepositVerified(
-            depositDataRoot,
-            uint256(deposit.amountGwei) * 1 gwei
-        );
     }
 
     /// @dev Calculates the timestamp of the next execution block from the given slot.
@@ -967,20 +974,12 @@ abstract contract CompoundingValidatorManager is Governable {
                     validatorState[depositData.pubKeyHash] ==
                     VALIDATOR_STATE.EXITED
                 ) {
-                    // TODO move this into an internal function
-                    // After verifying the proof, update the contract storage
-                    deposits[depositDataRoot].status = DepositStatus.VERIFIED;
-                    // Move the last deposit to the index of the verified deposit
-                    bytes32 lastDepositDataRoot = depositsRoots[
-                        depositsRoots.length - 1
-                    ];
-                    depositsRoots[
-                        depositData.depositIndex
-                    ] = lastDepositDataRoot;
-                    deposits[lastDepositDataRoot].depositIndex = depositData
-                        .depositIndex;
-                    // Delete the last deposit from the list
-                    depositsRoots.pop();
+                    _removeDeposit(depositDataRoot, depositData);
+
+                    emit DepositVerified(
+                        depositDataRoot,
+                        uint256(depositData.amountGwei) * 1 gwei
+                    );
                 }
             }
         }
