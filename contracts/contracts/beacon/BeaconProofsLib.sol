@@ -127,11 +127,19 @@ library BeaconProofsLib {
         );
     }
 
+    /// @notice Verifies a validator's withdrawable epoch to the beacon block root
+    /// for a given validator index.
+    /// BeaconBlock.state.validators[validatorIndex].withdrawableEpoch
+    /// @param beaconBlockRoot The root of the beacon block
+    /// @param validatorIndex The validator index to verify the withdrawable epoch for.
+    /// @param withdrawableEpoch The withdrawable epoch to verify in big endian uint64 format
+    /// @param proof The merkle proof for the validator's withdrawable epoch to the beacon block root.
+    /// This is 53 witness hashes of 32 bytes each concatenated together starting from the leaf node.
     function verifyValidatorWithdrawableEpoch(
         bytes32 beaconBlockRoot,
         uint64 validatorIndex,
         uint64 withdrawableEpoch,
-        bytes calldata withdrawableEpochProof
+        bytes calldata proof
     ) internal view {
         require(beaconBlockRoot != bytes32(0), "Invalid block root");
 
@@ -150,9 +158,9 @@ library BeaconProofsLib {
 
         require(
             // 53 * 32 bytes = 1696 bytes
-            withdrawableEpochProof.length == 1696 &&
+            proof.length == 1696 &&
                 Merkle.verifyInclusionSha256({
-                    proof: withdrawableEpochProof,
+                    proof: proof,
                     root: beaconBlockRoot,
                     leaf: Endian.toLittleEndianUint64(withdrawableEpoch),
                     index: exitEpochGenIndex
@@ -162,18 +170,21 @@ library BeaconProofsLib {
     }
 
     /// @param subTreeRoot The third 32 byte witness from the withdrawable epoch proof
+    /// @param pubKeyHash Hash of validator's public key using the Beacon Chain's format
+    /// @param proof The merkle proof for the validator public key in a sub tree of height two.
+    /// This is 2 witness hashes of 32 bytes each concatenated together starting from the leaf node.
     function verifyValidatorPubKeySubTree(
         bytes32 subTreeRoot,
         bytes32 pubKeyHash,
-        bytes calldata pubKeyProof
+        bytes calldata proof
     ) internal view {
         // Tree height 2 and pub key is at index 0
         // index = 2 ^ 2 + 0 = 4
         require(
             // 2 * 32 bytes = 64 bytes
-            pubKeyProof.length == 64 &&
+            proof.length == 64 &&
                 Merkle.verifyInclusionSha256({
-                    proof: pubKeyProof,
+                    proof: proof,
                     root: subTreeRoot,
                     leaf: pubKeyHash,
                     index: 4
@@ -186,24 +197,24 @@ library BeaconProofsLib {
     /// BeaconBlock.state.balances
     /// @param beaconBlockRoot The root of the beacon block.
     /// @param balancesContainerRoot The merkle root of the the balances container.
-    /// @param balancesContainerProof The merkle proof for the balances container to the beacon block root.
+    /// @param proof The merkle proof for the balances container to the beacon block root.
     /// This is 9 witness hashes of 32 bytes each concatenated together starting from the leaf node.
     function verifyBalancesContainer(
         bytes32 beaconBlockRoot,
         bytes32 balancesContainerRoot,
-        bytes calldata balancesContainerProof
+        bytes calldata proof
     ) internal view {
         require(beaconBlockRoot != bytes32(0), "Invalid block root");
         require(
             // 9 * 32 bytes = 288 bytes
-            balancesContainerProof.length == 288,
+            proof.length == 288,
             "Invalid proof length"
         );
 
         // BeaconBlock.state.balances
         require(
             Merkle.verifyInclusionSha256({
-                proof: balancesContainerProof,
+                proof: proof,
                 root: beaconBlockRoot,
                 leaf: balancesContainerRoot,
                 index: BALANCES_CONTAINER_GENERALIZED_INDEX
@@ -215,20 +226,20 @@ library BeaconProofsLib {
     /// @notice Verifies the validator balance to the root of the Balances container.
     /// @param balancesContainerRoot The merkle root of the Balances container.
     /// @param validatorBalanceLeaf The leaf node containing the validator balance with three other balances.
-    /// @param balanceProof The merkle proof for the validator balance to the Balances container root.
+    /// @param proof The merkle proof for the validator balance to the Balances container root.
     /// This is 39 witness hashes of 32 bytes each concatenated together starting from the leaf node.
     /// @param validatorIndex The validator index to verify the balance for.
     /// @return validatorBalanceGwei The balance in Gwei of the validator at the given index.
     function verifyValidatorBalance(
         bytes32 balancesContainerRoot,
         bytes32 validatorBalanceLeaf,
-        bytes calldata balanceProof,
+        bytes calldata proof,
         uint64 validatorIndex
     ) internal view returns (uint256 validatorBalanceGwei) {
         require(balancesContainerRoot != bytes32(0), "Invalid container root");
         require(
             // 39 * 32 bytes = 1248 bytes
-            balanceProof.length == 1248,
+            proof.length == 1248,
             "Invalid proof length"
         );
 
@@ -250,7 +261,7 @@ library BeaconProofsLib {
 
         require(
             Merkle.verifyInclusionSha256({
-                proof: balanceProof,
+                proof: proof,
                 root: balancesContainerRoot,
                 leaf: validatorBalanceLeaf,
                 index: generalizedIndex
@@ -260,8 +271,8 @@ library BeaconProofsLib {
     }
 
     /// @notice If the deposit queue is not empty,
-    /// Verify the pubkey of the first pending deposit to the beacon block root
-    /// BeaconBlock.state.PendingDeposits[0].pubkey
+    /// verify the pubKey and slot of the first pending deposit to the beacon block root.
+    /// BeaconBlock.state.pendingDeposits[0].pubKey
     /// If the deposit queue is empty, verify the root of the first pending deposit is empty
     /// BeaconBlock.state.PendingDeposits[0]
     /// @param beaconBlockRoot The root of the beacon block.
@@ -269,8 +280,8 @@ library BeaconProofsLib {
     /// Can be anything if the deposit queue is empty, but zero would be a good choice.
     /// @param pubKeyHash The hash of the validator public key for the first pending deposit.
     /// Use zero bytes if the deposit queue is empty.
-    /// @param firstPendingDepositProof The merkle proof to the beacon block root. Can be either:
-    /// - 40 witness hashes for BeaconBlock.state.PendingDeposits[0].pubkey when the deposit queue is not empty.
+    /// @param proof The merkle proof to the beacon block root. Can be either:
+    /// - 40 witness hashes for BeaconBlock.state.PendingDeposits[0].pubKey when the deposit queue is not empty.
     /// - 37 witness hashes for BeaconBlock.state.PendingDeposits[0] when the deposit queue is empty.
     /// The 32 byte witness hashes are concatenated together starting from the leaf node.
     /// @return isEmptyDepositQueue True if the deposit queue is empty, false otherwise.
@@ -278,18 +289,15 @@ library BeaconProofsLib {
         bytes32 beaconBlockRoot,
         uint64 slot,
         bytes32 pubKeyHash,
-        bytes calldata firstPendingDepositProof
+        bytes calldata proof
     ) internal view returns (bool isEmptyDepositQueue) {
         require(beaconBlockRoot != bytes32(0), "Invalid block root");
 
         // If the deposit queue is empty
-        if (
-            firstPendingDepositProof.length ==
-            FIRST_PENDING_DEPOSIT_PROOF_LENGTH
-        ) {
+        if (proof.length == FIRST_PENDING_DEPOSIT_PROOF_LENGTH) {
             require(
                 Merkle.verifyInclusionSha256({
-                    proof: firstPendingDepositProof,
+                    proof: proof,
                     root: beaconBlockRoot,
                     leaf: bytes32(0),
                     index: FIRST_PENDING_DEPOSIT_GENERALIZED_INDEX
@@ -302,10 +310,9 @@ library BeaconProofsLib {
         // Verify the public key of the first pending deposit
         // BeaconBlock.state.PendingDeposits[0].pubKey
         require(
-            firstPendingDepositProof.length ==
-                FIRST_PENDING_DEPOSIT_PUBKEY_PROOF_LENGTH &&
+            proof.length == FIRST_PENDING_DEPOSIT_PUBKEY_PROOF_LENGTH &&
                 Merkle.verifyInclusionSha256({
-                    proof: firstPendingDepositProof,
+                    proof: proof,
                     root: beaconBlockRoot,
                     leaf: pubKeyHash,
                     index: FIRST_PENDING_DEPOSIT_PUBKEY_GENERALIZED_INDEX
@@ -315,9 +322,9 @@ library BeaconProofsLib {
 
         // Now verify the slot of the first pending deposit
 
-        // Get the third 32 bytes witness from the first pending deposit pubkey proof
+        // Get the third 32 bytes witness from the first pending deposit pubKey proof
         // 2 * 32 bytes = 64 bytes offset
-        bytes32 slotRoot = bytes32(firstPendingDepositProof[64:96]);
+        bytes32 slotRoot = bytes32(proof[64:96]);
 
         // Sub tree height 2 and slot is at index 0 in the sub tree
         // index = 2 ^ 2 + 0 = 4
