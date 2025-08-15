@@ -15,9 +15,9 @@ library BeaconProofsLib {
     /// @dev BeaconBlock.state.PendingDeposits[0]
     uint256 internal constant FIRST_PENDING_DEPOSIT_GENERALIZED_INDEX =
         198105366528;
-    /// @dev BeaconBlock.state.PendingDeposits[0].slot
-    uint256 internal constant FIRST_PENDING_DEPOSIT_SLOT_GENERALIZED_INDEX =
-        1584842932228;
+    /// @dev BeaconBlock.state.PendingDeposits[0].pubkey
+    uint256 internal constant FIRST_PENDING_DEPOSIT_PUBKEY_GENERALIZED_INDEX =
+        1584842932224;
     /// @dev BeaconBlock.body.executionPayload.blockNumber
     uint256 internal constant BLOCK_NUMBER_GENERALIZED_INDEX = 6438;
     /// @dev BeaconBlock.state.validators
@@ -29,10 +29,17 @@ library BeaconProofsLib {
     /// 37 witness hashes of 32 bytes each concatenated together.
     /// BeaconBlock.state.PendingDeposits[0]
     uint256 internal constant FIRST_PENDING_DEPOSIT_PROOF_LENGTH = 37 * 32;
-    /// @dev Number of bytes in the proof to the slot of the first pending deposit.
+    /// @dev Number of bytes in the proof from the pubKey of the first pending deposit to the beacon block root.
     /// 40 witness hashes of 32 bytes each concatenated together.
-    /// BeaconBlock.state.PendingDeposits[0].slot
-    uint256 internal constant FIRST_PENDING_DEPOSIT_SLOT_PROOF_LENGTH = 40 * 32;
+    /// BeaconBlock.state.PendingDeposits[0].pubKey
+    /// 40 * 32 bytes = 1280 bytes
+    uint256 internal constant FIRST_PENDING_DEPOSIT_PUBKEY_PROOF_LENGTH = 1280;
+    /// The slot is at index 4 in the Pending Deposits container.
+    /// The sub tree from the right node from the root is a tree of height 2.
+    /// The first 32 bytes witness is an empty bytes32 as there is not item after the slot in the Pending Deposits container.
+    /// The second 32 bytes witness is a hash or two empty bytes32.
+    bytes internal constant PENDING_DEPOSIT_SLOT_PROOF =
+        hex"000000000000000000000000000000000000000000000000000000000000000066687aadf862bd776c8fc18b8e9f8e20089714856ee233b3902a591d0d5f2925";
 
     /// @dev Merkle height of the Balances container
     /// BeaconBlock.state.balances
@@ -47,6 +54,9 @@ library BeaconProofsLib {
     /// @dev Position of the pubkey field in the Validator container.
     /// BeaconBlock.state.validators[validatorIndex].pubkey
     uint256 internal constant VALIDATOR_PUBKEY_INDEX = 0;
+    /// @dev Position of the withdrawable epoch field in the Validator container.
+    /// BeaconBlock.state.validators[validatorIndex].withdrawableEpoch
+    uint256 internal constant VALIDATOR_WITHDRAWABLE_EPOCH_INDEX = 7;
 
     /// @notice Verifies the validator index is for the given validator public key.
     /// Also verify the validator's withdrawal credential points to the withdrawal address.
@@ -103,6 +113,61 @@ library BeaconProofsLib {
                     index: generalizedIndex
                 }),
             "Invalid validator proof"
+        );
+    }
+
+    function verifyValidatorWithdrawableEpoch(
+        bytes32 beaconBlockRoot,
+        uint64 validatorIndex,
+        uint64 withdrawableEpoch,
+        bytes calldata withdrawableEpochProof
+    ) internal view {
+        require(beaconBlockRoot != bytes32(0), "Invalid block root");
+
+        // BeaconBlock.state.validators[validatorIndex]
+        uint256 exitEpochGenIndex = concatGenIndices(
+            VALIDATORS_CONTAINER_GENERALIZED_INDEX,
+            VALIDATORS_HEIGHT,
+            validatorIndex
+        );
+        // BeaconBlock.state.validators[validatorIndex].withdrawableEpoch
+        exitEpochGenIndex = concatGenIndices(
+            exitEpochGenIndex,
+            VALIDATOR_HEIGHT,
+            VALIDATOR_WITHDRAWABLE_EPOCH_INDEX
+        );
+
+        require(
+            // 53 * 32 bytes = 1696 bytes
+            withdrawableEpochProof.length == 1696 &&
+                Merkle.verifyInclusionSha256({
+                    proof: withdrawableEpochProof,
+                    root: beaconBlockRoot,
+                    leaf: Endian.toLittleEndianUint64(withdrawableEpoch),
+                    index: exitEpochGenIndex
+                }),
+            "Invalid withdrawable proof"
+        );
+    }
+
+    /// @param subTreeRoot The third 32 byte witness from the withdrawable epoch proof
+    function verifyValidatorPubKeySubTree(
+        bytes32 subTreeRoot,
+        bytes32 pubKeyHash,
+        bytes calldata pubKeyProof
+    ) internal view {
+        // Tree height 2 and pub key is at index 0
+        // index = 2 ^ 2 + 0 = 4
+        require(
+            // 2 * 32 bytes = 64 bytes
+            pubKeyProof.length == 64 &&
+                Merkle.verifyInclusionSha256({
+                    proof: pubKeyProof,
+                    root: subTreeRoot,
+                    leaf: pubKeyHash,
+                    index: 4
+                }),
+            "Invalid pub key proof"
         );
     }
 
@@ -184,67 +249,75 @@ library BeaconProofsLib {
     }
 
     /// @notice If the deposit queue is not empty,
-    /// verify the slot of the first pending deposit to the beacon block root
-    /// BeaconBlock.state.PendingDeposits[0].slot
+    /// Verify the pubkey of the first pending deposit to the beacon block root
+    /// BeaconBlock.state.PendingDeposits[0].pubkey
     /// If the deposit queue is empty, verify the root of the first pending deposit is empty
     /// BeaconBlock.state.PendingDeposits[0]
     /// @param beaconBlockRoot The root of the beacon block.
     /// @param slot The beacon chain slot of the first deposit in the beacon chain's deposit queue.
     /// Can be anything if the deposit queue is empty, but zero would be a good choice.
-    /// @param firstPendingDepositSlotProof The merkle proof to the beacon block root. Can be either:
-    /// - 40 witness hashes for BeaconBlock.state.PendingDeposits[0].slot when the deposit queue is not empty.
+    /// @param pubKeyHash The hash of the validator public key for the first pending deposit.
+    /// Use zero bytes if the deposit queue is empty.
+    /// @param firstPendingDepositProof The merkle proof to the beacon block root. Can be either:
+    /// - 40 witness hashes for BeaconBlock.state.PendingDeposits[0].pubkey when the deposit queue is not empty.
     /// - 37 witness hashes for BeaconBlock.state.PendingDeposits[0] when the deposit queue is empty.
     /// The 32 byte witness hashes are concatenated together starting from the leaf node.
     /// @return isEmptyDepositQueue True if the deposit queue is empty, false otherwise.
     function verifyFirstPendingDeposit(
         bytes32 beaconBlockRoot,
         uint64 slot,
-        bytes calldata firstPendingDepositSlotProof
+        bytes32 pubKeyHash,
+        bytes calldata firstPendingDepositProof
     ) internal view returns (bool isEmptyDepositQueue) {
         require(beaconBlockRoot != bytes32(0), "Invalid block root");
-        require(
-            // 40 * 32 bytes = 1280 bytes
-            firstPendingDepositSlotProof.length == 1280 ||
-                // 37 * 32 bytes = 1184 bytes
-                firstPendingDepositSlotProof.length == 1184,
-            "Invalid proof length"
-        );
 
-        // slither-disable-next-line uninitialized-local
-        uint256 generalizedIndex;
-        // slither-disable-next-line uninitialized-local
-        bytes32 leaf;
         // If the deposit queue is empty
         if (
-            firstPendingDepositSlotProof.length ==
+            firstPendingDepositProof.length ==
             FIRST_PENDING_DEPOSIT_PROOF_LENGTH
         ) {
-            isEmptyDepositQueue = true;
-            // use an empty leaf node as the root of the first pending deposit
-            // when the deposit queue is empty
-            leaf = bytes32(0);
-            // BeaconBlock.state.PendingDeposits[0]
-            generalizedIndex = FIRST_PENDING_DEPOSIT_GENERALIZED_INDEX;
-        } else if (
-            firstPendingDepositSlotProof.length ==
-            FIRST_PENDING_DEPOSIT_SLOT_PROOF_LENGTH
-        ) {
-            // Convert uint64 slot number to a little endian bytes32
-            leaf = Endian.toLittleEndianUint64(slot);
-            // BeaconBlock.state.PendingDeposits[0].slot
-            generalizedIndex = FIRST_PENDING_DEPOSIT_SLOT_GENERALIZED_INDEX;
-        } else {
-            revert("Invalid proof length");
+            require(
+                Merkle.verifyInclusionSha256({
+                    proof: firstPendingDepositProof,
+                    root: beaconBlockRoot,
+                    leaf: bytes32(0),
+                    index: FIRST_PENDING_DEPOSIT_GENERALIZED_INDEX
+                }),
+                "Invalid empty deposits proof"
+            );
+            return true;
         }
 
+        // Verify the public key of the first pending deposit
+        // BeaconBlock.state.PendingDeposits[0].pubKey
+        require(
+            firstPendingDepositProof.length ==
+                FIRST_PENDING_DEPOSIT_PUBKEY_PROOF_LENGTH &&
+                Merkle.verifyInclusionSha256({
+                    proof: firstPendingDepositProof,
+                    root: beaconBlockRoot,
+                    leaf: pubKeyHash,
+                    index: FIRST_PENDING_DEPOSIT_PUBKEY_GENERALIZED_INDEX
+                }),
+            "Invalid deposit pub key proof"
+        );
+
+        // Now verify the slot of the first pending deposit
+
+        // Get the third 32 bytes witness from the first pending deposit pubkey proof
+        // 2 * 32 bytes = 64 bytes offset
+        bytes32 slotRoot = bytes32(firstPendingDepositProof[64:96]);
+
+        // Sub tree height 2 and slot is at index 0 in the sub tree
+        // index = 2 ^ 2 + 0 = 4
         require(
             Merkle.verifyInclusionSha256({
-                proof: firstPendingDepositSlotProof,
-                root: beaconBlockRoot,
-                leaf: leaf,
-                index: generalizedIndex
+                proof: PENDING_DEPOSIT_SLOT_PROOF,
+                root: slotRoot,
+                leaf: Endian.toLittleEndianUint64(slot),
+                index: 4
             }),
-            "Invalid pending deposit proof"
+            "Invalid deposit slot"
         );
     }
 

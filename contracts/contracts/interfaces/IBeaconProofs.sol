@@ -2,17 +2,21 @@
 pragma solidity ^0.8.0;
 
 interface IBeaconProofs {
-    enum BalanceProofLevel {
-        Container,
-        BeaconBlock
-    }
-
     function verifyValidator(
         bytes32 beaconBlockRoot,
         bytes32 pubKeyHash,
         bytes calldata validatorPubKeyProof,
         uint64 validatorIndex,
         address withdrawalAddress
+    ) external view;
+
+    function verifyValidatorWithdrawable(
+        bytes32 beaconBlockRoot,
+        uint64 validatorIndex,
+        bytes32 pubKeyHash,
+        uint64 withdrawableEpoch,
+        bytes calldata withdrawableEpochProof,
+        bytes calldata validatorPubKeyProof
     ) external view;
 
     function verifyBalancesContainer(
@@ -31,29 +35,7 @@ interface IBeaconProofs {
     function verifyFirstPendingDeposit(
         bytes32 beaconBlockRoot,
         uint64 slot,
-        bytes calldata firstPendingDepositSlotProof
+        bytes32 pubKeyHash,
+        bytes calldata firstPendingDepositProof
     ) external view returns (bool isEmptyDepositQueue);
-
-    function verifyBlockNumber(
-        bytes32 beaconBlockRoot,
-        uint256 blockNumber,
-        bytes calldata blockNumberProof
-    ) external view;
-
-    function verifySlot(
-        bytes32 beaconBlockRoot,
-        uint256 slot,
-        bytes calldata slotProof
-    ) external view;
-
-    function balanceAtIndex(bytes32 validatorBalanceLeaf, uint64 validatorIndex)
-        external
-        pure
-        returns (uint256);
-
-    function concatGenIndices(
-        uint256 genIndex,
-        uint256 height,
-        uint256 index
-    ) external pure returns (uint256);
 }

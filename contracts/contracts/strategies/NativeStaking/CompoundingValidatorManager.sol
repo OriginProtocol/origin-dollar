@@ -32,6 +32,7 @@ abstract contract CompoundingValidatorManager is Governable {
     /// Initially this is 32 ETH, but will be reduced to 1 ETH after P2P's APIs have been updated
     /// to support deposits of 1 ETH.
     uint256 public constant DEPOSIT_AMOUNT_WEI = 32 ether;
+    uint64 public constant FAR_FUTURE_EPOCH = type(uint64).max;
 
     /// @notice The address of the Wrapped ETH (WETH) token contract
     address public immutable WETH;
@@ -63,6 +64,7 @@ abstract contract CompoundingValidatorManager is Governable {
         uint64 slot;
         uint32 depositIndex;
         DepositStatus status;
+        uint64 withdrawableEpoch;
     }
     /// @notice Mapping of the root of a deposit (depositDataRoot) to its data
     mapping(bytes32 => DepositData) public deposits;
@@ -147,6 +149,10 @@ abstract contract CompoundingValidatorManager is Governable {
         uint64 indexed validatorIndex
     );
     event DepositVerified(bytes32 indexed depositDataRoot, uint256 amountWei);
+    event DepositValidatorExiting(
+        bytes32 indexed depositDataRoot,
+        uint64 exitEpoch
+    );
     event ValidatorWithdraw(bytes32 indexed pubKeyHash, uint256 amountWei);
     event BalancesSnapped(
         uint256 indexed timestamp,
@@ -335,7 +341,8 @@ abstract contract CompoundingValidatorManager is Governable {
             amountGwei: depositAmountGwei,
             slot: depositSlot,
             depositIndex: SafeCast.toUint32(depositsRoots.length),
-            status: DepositStatus.PENDING
+            status: DepositStatus.PENDING,
+            withdrawableEpoch: FAR_FUTURE_EPOCH
         });
         depositsRoots.push(validator.depositDataRoot);
 
@@ -489,6 +496,22 @@ abstract contract CompoundingValidatorManager is Governable {
         emit ValidatorVerified(pubKeyHash, validatorIndex);
     }
 
+    struct FirstPendingDepositData {
+        uint64 slot;
+        uint64 validatorIndex;
+        bytes32 pubKeyHash;
+        bytes pubKeyProof;
+        bytes validatorExitEpochProof;
+        bytes validatorPubKeyProof;
+    }
+
+    struct DepositValidatorData {
+        uint64 index;
+        uint64 withdrawableEpoch;
+        bytes withdrawableEpochProof;
+        bytes pubKeyProof;
+    }
+
     /// @notice Verifies a deposit on the execution layer has been processed by the beacon chain.
     /// This means the accounting of the strategy's ETH moves from a pending deposit to a validator balance.
     ///
@@ -498,22 +521,17 @@ abstract contract CompoundingValidatorManager is Governable {
     /// don't propose a block.
     /// @param depositDataRoot The root of the deposit data that was stored when
     /// the deposit was made on the execution layer.
-    /// @param verificationSlot Any slot on or after the deposit was processed on the beacon chain.
+    /// @param depositVerificationSlot Any slot on or after the deposit was processed on the beacon chain.
     /// Can not be a slot with pending deposits with the same slot as the deposit being verified.
     /// Can not be a slot before a missed slot as the Beacon Root contract will have the parent block root
     /// set for the next block timestamp in 12 seconds time.
-    /// @param firstPendingDepositSlot The slot of the first pending deposit in the beacon chain.
-    /// Can be anything if the deposit queue is empty, but zero is a good choice.
-    /// @param firstPendingDepositSlotProof The merkle proof to the beacon block root. Can be either:
-    /// - 40 witness hashes for BeaconBlock.state.PendingDeposits[0].slot when the deposit queue is not empty.
-    /// - 37 witness hashes for BeaconBlock.state.PendingDeposits[0] when the deposit queue is empty.
-    /// The 32 byte witness hashes are concatenated together starting from the leaf node.
     // slither-disable-start reentrancy-no-eth
     function verifyDeposit(
         bytes32 depositDataRoot,
-        uint64 verificationSlot,
-        uint64 firstPendingDepositSlot,
-        bytes calldata firstPendingDepositSlotProof
+        uint64 depositVerificationSlot,
+        uint64 validatorVerificationSlot,
+        FirstPendingDepositData calldata firstPendingDeposit,
+        DepositValidatorData calldata validatorData
     ) external {
         // Load into memory the previously saved deposit data
         DepositData memory deposit = deposits[depositDataRoot];
@@ -524,25 +542,74 @@ abstract contract CompoundingValidatorManager is Governable {
         );
         // The verification slot must be after the deposit's slot.
         // This is needed for when the deposit queue is empty.
-        require(deposit.slot < verificationSlot, "Slot not after deposit");
+        require(
+            deposit.slot < depositVerificationSlot,
+            "Slot not after deposit"
+        );
+        require(
+            depositVerificationSlot <= validatorVerificationSlot,
+            "Invalid verification slots"
+        );
 
-        // Calculate the next block timestamp from the verification slot.
-        uint64 nextBlockTimestamp = 12 *
-            verificationSlot +
-            BEACON_GENESIS_TIMESTAMP +
-            // Add 12 seconds for the next block
-            12;
-        // Get the parent beacon block root of the next block which is the block root of the verification slot.
+        // Get the parent beacon block root of the next block which is the block root of the deposit verification slot.
         // This will revert if the slot after the verification slot was missed.
-        bytes32 blockRoot = BeaconRoots.parentBlockRoot(nextBlockTimestamp);
+        bytes32 depositBlockRoot = BeaconRoots.parentBlockRoot(
+            _calcNextBlockTimestamp(depositVerificationSlot)
+        );
 
         // Verify the slot of the first pending deposit matches the beacon chain
         bool isDepositQueueEmpty = IBeaconProofs(BEACON_PROOFS)
             .verifyFirstPendingDeposit(
-                blockRoot,
-                firstPendingDepositSlot,
-                firstPendingDepositSlotProof
+                depositBlockRoot,
+                firstPendingDeposit.slot,
+                firstPendingDeposit.pubKeyHash,
+                firstPendingDeposit.pubKeyProof
             );
+
+        // If the deposit queue is not empty
+        if (!isDepositQueueEmpty) {
+            // Get the parent beacon block root of the next block which is the block root of the validator verification slot.
+            // This will revert if the slot after the verification slot was missed.
+            bytes32 validatorBlockRoot = BeaconRoots.parentBlockRoot(
+                _calcNextBlockTimestamp(validatorVerificationSlot)
+            );
+
+            // Verify the validator of the first pending deposit is not exiting
+            // If it is exiting we can't be sure this deposit has not been postponed in the deposit queue.
+            // Hence we can not verify if the strategy's deposit has been processed or not.
+            IBeaconProofs(BEACON_PROOFS).verifyValidatorWithdrawable(
+                validatorBlockRoot,
+                firstPendingDeposit.validatorIndex,
+                firstPendingDeposit.pubKeyHash,
+                FAR_FUTURE_EPOCH,
+                firstPendingDeposit.validatorExitEpochProof,
+                firstPendingDeposit.pubKeyProof
+            );
+        }
+
+        // Verify the withdrawableEpoch on the validator of the strategy's deposit
+        IBeaconProofs(BEACON_PROOFS).verifyValidatorWithdrawable(
+            depositBlockRoot,
+            validatorData.index,
+            deposit.pubKeyHash,
+            validatorData.withdrawableEpoch,
+            validatorData.withdrawableEpochProof,
+            validatorData.pubKeyProof
+        );
+
+        // If the validator is exiting
+        if (validatorData.withdrawableEpoch != FAR_FUTURE_EPOCH) {
+            // Store the exit epoch in the deposit data
+            deposit.withdrawableEpoch = validatorData.withdrawableEpoch;
+
+            emit DepositValidatorExiting(
+                depositDataRoot,
+                validatorData.withdrawableEpoch
+            );
+
+            // Leave the deposit status as PENDING
+            return;
+        }
 
         // Check the deposit slot is before the first pending deposit's slot on the beacon chain.
         // If this is not true then we can't guarantee the deposit has been processed by the beacon chain.
@@ -556,7 +623,7 @@ abstract contract CompoundingValidatorManager is Governable {
         // - [process_consolidation_request](https://ethereum.github.io/consensus-specs/specs/electra/beacon-chain/#new-process_consolidation_request)
         // We can not guarantee that the deposit has been processed in that case.
         require(
-            deposit.slot < firstPendingDepositSlot || isDepositQueueEmpty,
+            deposit.slot < firstPendingDeposit.slot || isDepositQueueEmpty,
             "Deposit likely not processed"
         );
 
@@ -573,6 +640,17 @@ abstract contract CompoundingValidatorManager is Governable {
             depositDataRoot,
             uint256(deposit.amountGwei) * 1 gwei
         );
+    }
+
+    /// @dev Calculates the timestamp of the next execution block from the given slot.
+    /// @param slot The beacon chain slot number used for merkle proof verification.
+    function _calcNextBlockTimestamp(uint64 slot)
+        internal
+        view
+        returns (uint64)
+    {
+        // Calculate the next block timestamp from the slot.
+        return 12 * slot + BEACON_GENESIS_TIMESTAMP + 12;
     }
 
     // slither-disable-end reentrancy-no-eth
@@ -930,6 +1008,7 @@ abstract contract CompoundingValidatorManager is Governable {
         bytes32 pubKeyHash;
         uint64 amountGwei;
         uint64 slot;
+        uint256 withdrawableEpoch;
     }
 
     /// @notice Returns the deposits that are still to be verified.
@@ -949,7 +1028,8 @@ abstract contract CompoundingValidatorManager is Governable {
                 root: depositsRoots[i],
                 pubKeyHash: deposit.pubKeyHash,
                 amountGwei: deposit.amountGwei,
-                slot: deposit.slot
+                slot: deposit.slot,
+                withdrawableEpoch: deposit.withdrawableEpoch
             });
         }
     }
