@@ -64,11 +64,10 @@ contracts/.localKeyValueStorage
 contracts/.localKeyValueStorage.mainnet
 contracts/.localKeyValueStorage.holesky
 contracts/scripts/defender-actions/dist/
+contracts/broadcast/
+contracts/out/
 cache/
-foundry/broadcast/
-foundry/out/
 dependencies/
-.env
 
 contracts/lib/defender-actions/dist/
 

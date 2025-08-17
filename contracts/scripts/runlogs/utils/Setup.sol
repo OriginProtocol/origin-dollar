@@ -1,6 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.0;
-
 // Contracts - OUSD
 import { OUSD } from "contracts/contracts/token/OUSD.sol";
 
@@ -47,6 +46,6 @@ abstract contract SetupMainnet is Test, Script {
 
   function setUp() public {
     // Note: to ensure perfect simulation, don't fix block number, it will be automatically set to the latest block
-    vm.createSelectFork(vm.envString("MAINNET_PROVIDER_URL"));
+    vm.createSelectFork(vm.envString("PROVIDER_URL"));
   }
 }

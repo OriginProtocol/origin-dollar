@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 // Helpers
-import { SetupMainnet } from "../utils/Setup.sol";
+import { SetupMainnet } from "./utils/Setup.sol";
 
 // Foundry
 import { console } from "forge-std/console.sol";

@@ -1,9 +1,9 @@
 [profile.default]
 src = "contracts/contracts"
-out = "foundry/out"
-script = "foundry/scripts"
-libs = ["dependencies"]
-broadcast = "foundry/broadcast"
+out = "contracts/out"
+script = "contracts/scripts"
+libs = ["dependencies", "contracts/node_modules"]
+broadcast = "contracts/broadcast"
 verbosity = 3
 auto_detect_remappings = false
 viaIR = true
