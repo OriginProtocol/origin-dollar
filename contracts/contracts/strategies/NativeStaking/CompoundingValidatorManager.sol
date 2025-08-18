@@ -161,7 +161,6 @@ abstract contract CompoundingValidatorManager is Governable {
         uint64 indexed timestamp,
         uint256 totalDepositsWei,
         uint256 totalValidatorBalance,
-        uint256 wethBalance,
         uint256 ethBalance
     );
 
@@ -1015,8 +1014,6 @@ abstract contract CompoundingValidatorManager is Governable {
             }
         }
 
-        uint256 wethBalance = IWETH9(WETH).balanceOf(address(this));
-
         // Store the verified balance in storage
         lastVerifiedEthBalance = SafeCast.toUint128(
             totalDepositsWei + totalValidatorBalance + balancesMem.ethBalance
@@ -1028,7 +1025,6 @@ abstract contract CompoundingValidatorManager is Governable {
             balancesMem.timestamp,
             totalDepositsWei,
             totalValidatorBalance,
-            wethBalance,
             balancesMem.ethBalance
         );
     }
