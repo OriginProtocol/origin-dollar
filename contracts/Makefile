@@ -22,7 +22,7 @@ $(if $(filter Sonic,$(CHAIN)),$(SONIC_ID),\
 $(if $(filter Plume,$(CHAIN)),$(PLUME_ID),\
 $(if $(filter Arbitrum,$(CHAIN)),$(ARBITRUM_ID),\
 $(HOLESKY_ID)))))),\
-$(error CHAIN "$(CHAIN)" invalide. Chaînes valides: $(VALID_CHAINS)))
+$(error CHAIN "$(CHAIN)" is not valid. Valid chains are: $(VALID_CHAINS)))
 endef
 
 script:
