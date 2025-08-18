@@ -121,7 +121,8 @@ abstract contract CompoundingValidatorManager is Governable {
         STAKED, // validator has funds staked
         VERIFIED, // validator has been verified to exist on the beacon chain
         EXITED, // The validator has been verified to have a zero balance
-        REMOVED // validator has funds withdrawn to the EigenPod and is removed from the SSV
+        REMOVED, // validator has funds withdrawn to the EigenPod and is removed from the SSV
+        INVALID // The validator has been front-run and the withdrawal address is not this strategy
     }
     enum DepositStatus {
         UNKNOWN, // default value
@@ -147,6 +148,7 @@ abstract contract CompoundingValidatorManager is Governable {
         bytes32 indexed pubKeyHash,
         uint64 indexed validatorIndex
     );
+    event ValidatorInvalid(bytes32 indexed pubKeyHash);
     event DepositVerified(bytes32 indexed depositDataRoot, uint256 amountWei);
     event DepositToValidatorExiting(
         bytes32 indexed depositDataRoot,
@@ -389,7 +391,10 @@ abstract contract CompoundingValidatorManager is Governable {
 
     // slither-disable-end reentrancy-no-eth
 
-    /// @notice Remove the validator from the SSV Cluster after it has exited.
+    /// @notice Remove the validator from the SSV Cluster after:
+    /// - the validator has been exited from `validatorWithdrawal` or slashed
+    /// - the validator has incorrectly registered and can not be staked to
+    /// - the initial deposit was front-run and the withdrawal address is not this strategy's address.
     /// Make sure `validatorWithdrawal` is called with a zero amount and the validator has exited the Beacon chain.
     /// If removed before the validator has exited the beacon chain will result in the validator being slashed.
     /// Only the registrator can call this function.
@@ -407,8 +412,9 @@ abstract contract CompoundingValidatorManager is Governable {
         VALIDATOR_STATE currentState = validatorState[pubKeyHash];
         // Can remove SSV validators that were incorrectly registered and can not be deposited to.
         require(
-            currentState == VALIDATOR_STATE.EXITED ||
-                currentState == VALIDATOR_STATE.REGISTERED,
+            currentState == VALIDATOR_STATE.REGISTERED ||
+                currentState == VALIDATOR_STATE.EXITED ||
+                currentState == VALIDATOR_STATE.INVALID,
             "Validator not regd or exited"
         );
 
@@ -450,12 +456,17 @@ abstract contract CompoundingValidatorManager is Governable {
     ****************************************/
 
     /// @notice Verifies a validator's index to its public key.
+    /// Adds to the list of verified validators if the validator's withdrawal address is this strategy's address.
+    /// Marks the validator as invalid and removes the deposit if the withdrawal address is not this strategy's address.
     /// @param nextBlockTimestamp The timestamp of the execution layer block after the beacon chain slot
     /// we are verifying.
     /// The next one is needed as the Beacon Oracle returns the parent beacon block root for a block timestamp,
     /// which is the beacon block root of the previous block.
     /// @param validatorIndex The index of the validator on the beacon chain.
     /// @param pubKeyHash The hash of the validator's public key using the Beacon Chain's format
+    /// @param withdrawalAddress The withdrawal address of the validator which should be this strategy's address.
+    /// If the withdrawal address is not this strategy's address, the initial deposit was front-run
+    /// and the validator is marked as invalid.
     /// @param validatorPubKeyProof The merkle proof for the validator public key to the beacon block root.
     /// This is 53 witness hashes of 32 bytes each concatenated together starting from the leaf node.
     /// BeaconBlock.state.validators[validatorIndex].pubkey
@@ -463,6 +474,7 @@ abstract contract CompoundingValidatorManager is Governable {
         uint64 nextBlockTimestamp,
         uint64 validatorIndex,
         bytes32 pubKeyHash,
+        address withdrawalAddress,
         bytes calldata validatorPubKeyProof
     ) external {
         require(
@@ -474,14 +486,31 @@ abstract contract CompoundingValidatorManager is Governable {
         bytes32 blockRoot = BeaconRoots.parentBlockRoot(nextBlockTimestamp);
 
         // Verify the validator index is for the validator with the given public key.
-        // Also verify the validator's withdrawal credential points to this strategy.
+        // Also verify the validator's withdrawal credential points to the `withdrawalAddress`.
         IBeaconProofs(BEACON_PROOFS).verifyValidator(
             blockRoot,
             pubKeyHash,
             validatorPubKeyProof,
             validatorIndex,
-            address(this) // Withdrawal address is this strategy
+            withdrawalAddress
         );
+
+        // If the initial deposit was front-run and the withdrawal address is not this strategy
+        if (withdrawalAddress != address(this)) {
+            validatorState[pubKeyHash] = VALIDATOR_STATE.INVALID;
+
+            // Find and remove the deposit as the funds can not be recovered
+            uint256 depositCount = depositsRoots.length;
+            for (uint256 i = 0; i < depositCount; i++) {
+                DepositData memory deposit = deposits[depositsRoots[i]];
+                if (deposit.pubKeyHash == pubKeyHash) {
+                    _removeDeposit(depositsRoots[i], deposit);
+                }
+            }
+
+            emit ValidatorInvalid(pubKeyHash);
+            return;
+        }
 
         // Store the validator state as verified
         validatorState[pubKeyHash] = VALIDATOR_STATE.VERIFIED;
