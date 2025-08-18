@@ -32,8 +32,9 @@ abstract contract CompoundingValidatorManager is Governable {
     /// Initially this is 32 ETH, but will be reduced to 1 ETH after P2P's APIs have been updated
     /// to support deposits of 1 ETH.
     uint256 public constant DEPOSIT_AMOUNT_WEI = 32 ether;
-    uint64 public constant FAR_FUTURE_EPOCH = type(uint64).max;
-    uint64 public constant SLOT_DURATION = 12;
+    uint64 internal constant FAR_FUTURE_EPOCH = type(uint64).max;
+    uint64 internal constant SLOT_DURATION = 12;
+    uint64 internal constant SLOTS_PER_EPOCH = 32;
 
     /// @notice The address of the Wrapped ETH (WETH) token contract
     address public immutable WETH;
@@ -946,7 +947,7 @@ abstract contract CompoundingValidatorManager is Governable {
             // Calculate the epoch at the time of the snapBalances
             uint64 verificationEpoch = (SafeCast.toUint64(
                 balancesMem.timestamp
-            ) - BEACON_GENESIS_TIMESTAMP) / (SLOT_DURATION * 32);
+            ) - BEACON_GENESIS_TIMESTAMP) / (SLOT_DURATION * SLOTS_PER_EPOCH);
 
             // For each staking strategy's deposits
             for (uint256 i = 0; i < depositsCount; ++i) {
@@ -956,15 +957,15 @@ abstract contract CompoundingValidatorManager is Governable {
                 // Check the stored deposit is still waiting to be processed on the beacon chain.
                 // That is, the first pending deposit slot is before the slot of the staking strategy's deposit.
                 // If the deposit has been processed, it will need to be verified with `verifyDeposit`.
-                // Or the deposit is to an exiting validator so check it is still not withdrawable.
+                // OR the deposit is to an exiting validator so check it is still not withdrawable.
                 // If the validator is not withdrawable, then the deposit can not have been processed yet.
                 // If the validator is now withdrawable, then the deposit may have been processed. The strategy
                 // now has to wait until the validator's balance is verified to be zero.
                 require(
                     firstPendingDeposit.slot < depositData.slot ||
-                        verificationEpoch < depositData.withdrawableEpoch ||
-                        validatorState[depositData.pubKeyHash] ==
-                        VALIDATOR_STATE.EXITED,
+                        (validatorState[depositData.pubKeyHash] ==
+                            VALIDATOR_STATE.EXITED &&
+                            verificationEpoch < depositData.withdrawableEpoch),
                     "Deposit likely processed"
                 );
 
