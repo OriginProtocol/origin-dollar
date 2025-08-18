@@ -7,7 +7,7 @@ import { SetupMainnet } from "./utils/Setup.sol";
 // Foundry
 import { console } from "forge-std/console.sol";
 
-contract Runlogs_2025_08 is SetupMainnet {
+contract Runlogs_2025_08_Mainnet is SetupMainnet {
   function run() public {
     _2025_08_04();
   }
