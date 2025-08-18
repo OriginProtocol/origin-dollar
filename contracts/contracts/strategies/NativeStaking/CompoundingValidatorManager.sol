@@ -493,7 +493,7 @@ abstract contract CompoundingValidatorManager is Governable {
         emit ValidatorVerified(pubKeyHash, validatorIndex);
     }
 
-    struct FirstPendingDepositData {
+    struct FirstPendingDepositProofData {
         uint64 slot;
         uint64 validatorIndex;
         bytes32 pubKeyHash;
@@ -502,7 +502,7 @@ abstract contract CompoundingValidatorManager is Governable {
         bytes validatorPubKeyProof;
     }
 
-    struct DepositValidatorData {
+    struct DepositValidatorProofData {
         uint64 index;
         uint64 withdrawableEpoch;
         bytes withdrawableEpochProof;
@@ -527,8 +527,8 @@ abstract contract CompoundingValidatorManager is Governable {
         bytes32 depositDataRoot,
         uint64 depositVerificationSlot,
         uint64 validatorVerificationSlot,
-        FirstPendingDepositData calldata firstPendingDeposit,
-        DepositValidatorData calldata strategyValidatorData
+        FirstPendingDepositProofData calldata firstPendingDeposit,
+        DepositValidatorProofData calldata strategyValidatorData
     ) external {
         // Load into memory the previously saved deposit data
         DepositData memory deposit = deposits[depositDataRoot];
@@ -808,7 +808,7 @@ abstract contract CompoundingValidatorManager is Governable {
     function verifyBalances(
         bytes32 blockRoot,
         uint64 validatorVerificationBlockTimestamp,
-        FirstPendingDepositData calldata firstPendingDeposit,
+        FirstPendingDepositProofData calldata firstPendingDeposit,
         BalanceProofs calldata balanceProofs
     ) external {
         // Load previously snapped balances for the given block root
