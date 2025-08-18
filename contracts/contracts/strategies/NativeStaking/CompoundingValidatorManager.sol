@@ -147,7 +147,7 @@ abstract contract CompoundingValidatorManager is Governable {
         uint64 indexed validatorIndex
     );
     event DepositVerified(bytes32 indexed depositDataRoot, uint256 amountWei);
-    event DepositValidatorExiting(
+    event DepositToValidatorExiting(
         bytes32 indexed depositDataRoot,
         uint256 amountWei,
         uint64 withdrawableEpoch
@@ -600,7 +600,7 @@ abstract contract CompoundingValidatorManager is Governable {
             // Store the exit epoch in the deposit data
             deposit.withdrawableEpoch = validatorData.withdrawableEpoch;
 
-            emit DepositValidatorExiting(
+            emit DepositToValidatorExiting(
                 depositDataRoot,
                 uint256(deposit.amountGwei) * 1 gwei,
                 validatorData.withdrawableEpoch
