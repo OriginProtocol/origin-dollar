@@ -910,18 +910,16 @@ abstract contract CompoundingValidatorManager is Governable {
                 "Invalid validator timestamp"
             );
 
-            // Get the parent beacon block root of the next block which is
-            // the block root of the validator verification slot.
-            // This will revert if the slot after the verification slot was missed.
-            bytes32 validatorBlockRoot = BeaconRoots.parentBlockRoot(
-                validatorVerificationBlockTimestamp
-            );
-
             // Verify the validator of the first pending deposit is not exiting.
             // If it is exiting we can't be sure this deposit has not been postponed in the deposit queue.
             // Hence we can not verify if the strategy's deposit has been processed or not.
             IBeaconProofs(BEACON_PROOFS).verifyValidatorWithdrawable(
-                validatorBlockRoot,
+                // Get the parent beacon block root of the next block which is
+                // the block root of the validator verification slot.
+                // This will revert if the slot after the verification slot was missed.
+                BeaconRoots.parentBlockRoot(
+                    validatorVerificationBlockTimestamp
+                ),
                 firstPendingDeposit.validatorIndex,
                 firstPendingDeposit.pubKeyHash,
                 FAR_FUTURE_EPOCH,
