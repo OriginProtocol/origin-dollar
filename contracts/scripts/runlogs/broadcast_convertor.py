@@ -100,6 +100,7 @@ def main():
 
     # Print the output JSON
     if args.display:
+        print("\nJSON for Safe:")
         print(json.dumps(result, indent=2))
 
     # Generate output path and save
