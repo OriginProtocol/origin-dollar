@@ -548,15 +548,17 @@ abstract contract CompoundingValidatorManager is Governable {
     /// don't propose a block.
     /// @param depositDataRoot The root of the deposit data that was stored when
     /// the deposit was made on the execution layer.
-    /// @param depositVerificationSlot Any slot on or after the deposit was processed on the beacon chain.
+    /// @param depositProcessedSlot Any slot on or after the strategy's deposit was processed on the beacon chain.
     /// Can not be a slot with pending deposits with the same slot as the deposit being verified.
     /// Can not be a slot before a missed slot as the Beacon Root contract will have the parent block root
     /// set for the next block timestamp in 12 seconds time.
+    /// @param firstDepositValidatorCreatedSlot The slot on or after when the validator of the first pending deposit
+    /// was created on the beacon chain. This is used to verify the validator has not exited.
     // slither-disable-start reentrancy-no-eth
     function verifyDeposit(
         bytes32 depositDataRoot,
-        uint64 depositVerificationSlot,
-        uint64 validatorVerificationSlot,
+        uint64 depositProcessedSlot,
+        uint64 firstDepositValidatorCreatedSlot,
         FirstPendingDepositProofData calldata firstPendingDeposit,
         DepositValidatorProofData calldata strategyValidatorData
     ) external {
@@ -569,19 +571,16 @@ abstract contract CompoundingValidatorManager is Governable {
         );
         // The verification slot must be after the deposit's slot.
         // This is needed for when the deposit queue is empty.
+        require(deposit.slot < depositProcessedSlot, "Slot not after deposit");
         require(
-            deposit.slot < depositVerificationSlot,
-            "Slot not after deposit"
-        );
-        require(
-            depositVerificationSlot <= validatorVerificationSlot,
+            depositProcessedSlot <= firstDepositValidatorCreatedSlot,
             "Invalid verification slots"
         );
 
         // Get the parent beacon block root of the next block which is the block root of the deposit verification slot.
         // This will revert if the slot after the verification slot was missed.
         bytes32 depositBlockRoot = BeaconRoots.parentBlockRoot(
-            _calcNextBlockTimestamp(depositVerificationSlot)
+            _calcNextBlockTimestamp(depositProcessedSlot)
         );
 
         // Verify the slot of the first pending deposit matches the beacon chain
@@ -599,7 +598,7 @@ abstract contract CompoundingValidatorManager is Governable {
             // the block root of the validator verification slot.
             // This will revert if the slot after the verification slot was missed.
             bytes32 validatorBlockRoot = BeaconRoots.parentBlockRoot(
-                _calcNextBlockTimestamp(validatorVerificationSlot)
+                _calcNextBlockTimestamp(firstDepositValidatorCreatedSlot)
             );
 
             // Verify the validator of the first pending deposit is not exiting.
