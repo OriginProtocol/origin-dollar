@@ -41,3 +41,15 @@ This creates, by default, a file named `run-latest-safe.json` in the same locati
   --suffix SUFFIX       Suffix to add to filename (default: safe)
   --display, -d DISPLAY Display the output JSON in the console
 ```
+
+## 5. How generates Safe JSON in just one command?
+In the `contracts` folder:
+```makefile
+make script
+or
+make script CHAIN=Mainnet
+or
+make script DATE=2025_08 CHAIN=Mainnet
+```
+
+By default it take the current year+month to fetch which runlogs to run. The default chain is Mainnet.
