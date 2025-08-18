@@ -19,6 +19,13 @@ interface IBeaconProofs {
         bytes calldata validatorPubKeyProof
     ) external view;
 
+    function verifyValidatorWithdrawable(
+        bytes32 beaconBlockRoot,
+        uint64 validatorIndex,
+        uint64 withdrawableEpoch,
+        bytes calldata withdrawableEpochProof
+    ) external view;
+
     function verifyBalancesContainer(
         bytes32 beaconBlockRoot,
         bytes32 balancesContainerLeaf,

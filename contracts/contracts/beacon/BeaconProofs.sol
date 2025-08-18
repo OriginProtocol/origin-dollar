@@ -71,6 +71,20 @@ contract BeaconProofs is IBeaconProofs {
         );
     }
 
+    function verifyValidatorWithdrawable(
+        bytes32 beaconBlockRoot,
+        uint64 validatorIndex,
+        uint64 withdrawableEpoch,
+        bytes calldata withdrawableEpochProof
+    ) external view {
+        BeaconProofsLib.verifyValidatorWithdrawableEpoch(
+            beaconBlockRoot,
+            validatorIndex,
+            withdrawableEpoch,
+            withdrawableEpochProof
+        );
+    }
+
     /// @notice Verifies the balances container to the beacon block root
     /// BeaconBlock.state.balances
     /// @param beaconBlockRoot The root of the beacon block

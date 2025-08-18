@@ -273,6 +273,7 @@ library BeaconProofsLib {
     /// @notice If the deposit queue is not empty,
     /// verify the pubKey and slot of the first pending deposit to the beacon block root.
     /// BeaconBlock.state.pendingDeposits[0].pubKey
+    /// BeaconBlock.state.pendingDeposits[0].slot
     /// If the deposit queue is empty, verify the root of the first pending deposit is empty
     /// BeaconBlock.state.PendingDeposits[0]
     /// @param beaconBlockRoot The root of the beacon block.
