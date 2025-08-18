@@ -497,8 +497,8 @@ abstract contract CompoundingValidatorManager is Governable {
         uint64 slot;
         uint64 validatorIndex;
         bytes32 pubKeyHash;
-        bytes pubKeyProof;
-        bytes validatorWithdrawableEpochProof;
+        bytes pendingDepositPubKeyProof;
+        bytes withdrawableEpochProof;
         bytes validatorPubKeyProof;
     }
 
@@ -528,7 +528,7 @@ abstract contract CompoundingValidatorManager is Governable {
         uint64 depositVerificationSlot,
         uint64 validatorVerificationSlot,
         FirstPendingDepositData calldata firstPendingDeposit,
-        DepositValidatorData calldata validatorData
+        DepositValidatorData calldata strategyValidatorData
     ) external {
         // Load into memory the previously saved deposit data
         DepositData memory deposit = deposits[depositDataRoot];
@@ -560,7 +560,7 @@ abstract contract CompoundingValidatorManager is Governable {
                 depositBlockRoot,
                 firstPendingDeposit.slot,
                 firstPendingDeposit.pubKeyHash,
-                firstPendingDeposit.pubKeyProof
+                firstPendingDeposit.pendingDepositPubKeyProof
             );
 
         // If the deposit queue is not empty
@@ -580,30 +580,30 @@ abstract contract CompoundingValidatorManager is Governable {
                 firstPendingDeposit.validatorIndex,
                 firstPendingDeposit.pubKeyHash,
                 FAR_FUTURE_EPOCH,
-                firstPendingDeposit.validatorWithdrawableEpochProof,
-                firstPendingDeposit.pubKeyProof
+                firstPendingDeposit.withdrawableEpochProof,
+                firstPendingDeposit.validatorPubKeyProof
             );
         }
 
         // Verify the withdrawableEpoch on the validator of the strategy's deposit
         IBeaconProofs(BEACON_PROOFS).verifyValidatorWithdrawable(
             depositBlockRoot,
-            validatorData.index,
+            strategyValidatorData.index,
             deposit.pubKeyHash,
-            validatorData.withdrawableEpoch,
-            validatorData.withdrawableEpochProof,
-            validatorData.pubKeyProof
+            strategyValidatorData.withdrawableEpoch,
+            strategyValidatorData.withdrawableEpochProof,
+            strategyValidatorData.pubKeyProof
         );
 
         // If the validator is exiting
-        if (validatorData.withdrawableEpoch != FAR_FUTURE_EPOCH) {
+        if (strategyValidatorData.withdrawableEpoch != FAR_FUTURE_EPOCH) {
             // Store the exit epoch in the deposit data
-            deposit.withdrawableEpoch = validatorData.withdrawableEpoch;
+            deposit.withdrawableEpoch = strategyValidatorData.withdrawableEpoch;
 
             emit DepositToValidatorExiting(
                 depositDataRoot,
                 uint256(deposit.amountGwei) * 1 gwei,
-                validatorData.withdrawableEpoch
+                strategyValidatorData.withdrawableEpoch
             );
 
             // Leave the deposit status as PENDING
@@ -785,7 +785,7 @@ abstract contract CompoundingValidatorManager is Governable {
     }
 
     // A struct is used to avoid stack too deep errors
-    struct ValidatorProofs {
+    struct BalanceProofs {
         // BeaconBlock.state.balances
         bytes32 balancesContainerRoot;
         bytes balancesContainerProof;
@@ -797,7 +797,7 @@ abstract contract CompoundingValidatorManager is Governable {
     /// @notice Verifies the balances of all active validators on the beacon chain
     /// and checks no pending deposits have been processed by the beacon chain.
     /// @param blockRoot The beacon block root emitted from `snapBalance` in `BalancesSnapped`.
-    /// @param validatorProofs a `ValidatorProofs` struct containing the following:
+    /// @param balanceProofs a `BalanceProofs` struct containing the following:
     /// balancesContainerRoot - the merkle root of the balances container
     /// balancesContainerProof - The merkle proof for the balances container to the beacon block root.
     ///   This is 9 witness hashes of 32 bytes each concatenated together starting from the leaf node.
@@ -809,7 +809,7 @@ abstract contract CompoundingValidatorManager is Governable {
         bytes32 blockRoot,
         uint64 validatorVerificationBlockTimestamp,
         FirstPendingDepositData calldata firstPendingDeposit,
-        ValidatorProofs calldata validatorProofs
+        BalanceProofs calldata balanceProofs
     ) external {
         // Load previously snapped balances for the given block root
         Balances memory balancesMem = snappedBalances[blockRoot];
@@ -823,20 +823,20 @@ abstract contract CompoundingValidatorManager is Governable {
         // If there are no verified validators then we can skip the balance verification
         if (verifiedValidatorsCount > 0) {
             require(
-                validatorProofs.validatorBalanceProofs.length ==
+                balanceProofs.validatorBalanceProofs.length ==
                     verifiedValidatorsCount,
                 "Invalid balance proofs"
             );
             require(
-                validatorProofs.validatorBalanceLeaves.length ==
+                balanceProofs.validatorBalanceLeaves.length ==
                     verifiedValidatorsCount,
                 "Invalid balance leaves"
             );
             // verify beaconBlock.state.balances root to beacon block root
             IBeaconProofs(BEACON_PROOFS).verifyBalancesContainer(
                 blockRoot,
-                validatorProofs.balancesContainerRoot,
-                validatorProofs.balancesContainerProof
+                balanceProofs.balancesContainerRoot,
+                balanceProofs.balancesContainerProof
             );
 
             // for each validator in reserve order so we can pop off exited validators at the end
@@ -846,9 +846,9 @@ abstract contract CompoundingValidatorManager is Governable {
                 // beaconBlock.state.balances container root
                 uint256 validatorBalanceGwei = IBeaconProofs(BEACON_PROOFS)
                     .verifyValidatorBalance(
-                        validatorProofs.balancesContainerRoot,
-                        validatorProofs.validatorBalanceLeaves[i],
-                        validatorProofs.validatorBalanceProofs[i],
+                        balanceProofs.balancesContainerRoot,
+                        balanceProofs.validatorBalanceLeaves[i],
+                        balanceProofs.validatorBalanceProofs[i],
                         verifiedValidators[i].index
                     );
 
@@ -896,7 +896,7 @@ abstract contract CompoundingValidatorManager is Governable {
                     blockRoot,
                     firstPendingDeposit.slot,
                     firstPendingDeposit.pubKeyHash,
-                    firstPendingDeposit.pubKeyProof
+                    firstPendingDeposit.pendingDepositPubKeyProof
                 );
 
             // If there are no deposits in the beacon chain queue then our deposits must have been processed.
@@ -923,8 +923,8 @@ abstract contract CompoundingValidatorManager is Governable {
                 firstPendingDeposit.validatorIndex,
                 firstPendingDeposit.pubKeyHash,
                 FAR_FUTURE_EPOCH,
-                firstPendingDeposit.validatorWithdrawableEpochProof,
-                firstPendingDeposit.pubKeyProof
+                firstPendingDeposit.withdrawableEpochProof,
+                firstPendingDeposit.validatorPubKeyProof
             );
 
             // solhint-disable max-line-length
