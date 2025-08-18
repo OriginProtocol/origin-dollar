@@ -595,7 +595,7 @@ abstract contract CompoundingValidatorManager is Governable {
             strategyValidatorData.pubKeyProof
         );
 
-        // If the validator is exiting
+        // If the validator is exiting because it has been slashed
         if (strategyValidatorData.withdrawableEpoch != FAR_FUTURE_EPOCH) {
             // Store the exit epoch in the deposit data
             deposit.withdrawableEpoch = strategyValidatorData.withdrawableEpoch;
