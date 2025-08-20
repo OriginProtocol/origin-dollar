@@ -3,6 +3,8 @@ const ethers = require("ethers");
 const MAX_UINT256 = ethers.BigNumber.from(
   "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
 );
+const MAX_UINT64 = ethers.BigNumber.from("0xffffffffffffffff");
+const ZERO_BYTES32 = ethers.utils.hexZeroPad("0x", 32);
 
 const ONE = ethers.utils.parseEther("1");
 
@@ -43,6 +45,8 @@ module.exports = {
   metapoolLPCRVPid,
   oethPoolLpPID,
   MAX_UINT256,
+  MAX_UINT64,
+  ZERO_BYTES32,
   aura_stETH_WETH_PID,
   balancer_stETH_WETH_PID,
   aura_wstETH_sfrxETH_rETH_PID,

@@ -50,7 +50,7 @@ library BeaconProofsLib {
     /// The second 32 bytes witness is a hash or two empty bytes32.
     bytes internal constant PENDING_DEPOSIT_SLOT_PROOF =
         // solhint-disable-next-line max-line-length
-        hex"000000000000000000000000000000000000000000000000000000000000000066687aadf862bd776c8fc18b8e9f8e20089714856ee233b3902a591d0d5f2925";
+        hex"0000000000000000000000000000000000000000000000000000000000000000f5a5fd42d16a20302798ef6ed309979b43003d2320d9f0e8ea9831a92759fb4b";
 
     /// @dev Merkle height of the Balances container
     /// BeaconBlock.state.balances
@@ -205,20 +205,17 @@ library BeaconProofsLib {
         bytes calldata proof
     ) internal view {
         require(beaconBlockRoot != bytes32(0), "Invalid block root");
-        require(
-            // 9 * 32 bytes = 288 bytes
-            proof.length == 288,
-            "Invalid proof length"
-        );
 
         // BeaconBlock.state.balances
         require(
-            Merkle.verifyInclusionSha256({
-                proof: proof,
-                root: beaconBlockRoot,
-                leaf: balancesContainerRoot,
-                index: BALANCES_CONTAINER_GENERALIZED_INDEX
-            }),
+            // 9 * 32 bytes = 288 bytes
+            proof.length == 288 &&
+                Merkle.verifyInclusionSha256({
+                    proof: proof,
+                    root: beaconBlockRoot,
+                    leaf: balancesContainerRoot,
+                    index: BALANCES_CONTAINER_GENERALIZED_INDEX
+                }),
             "Invalid balance container proof"
         );
     }
@@ -237,11 +234,6 @@ library BeaconProofsLib {
         uint64 validatorIndex
     ) internal view returns (uint256 validatorBalanceGwei) {
         require(balancesContainerRoot != bytes32(0), "Invalid container root");
-        require(
-            // 39 * 32 bytes = 1248 bytes
-            proof.length == 1248,
-            "Invalid proof length"
-        );
 
         // Four balances are stored in each leaf so the validator index is divided by 4
         uint64 balanceIndex = validatorIndex / 4;
@@ -260,12 +252,14 @@ library BeaconProofsLib {
         );
 
         require(
-            Merkle.verifyInclusionSha256({
-                proof: proof,
-                root: balancesContainerRoot,
-                leaf: validatorBalanceLeaf,
-                index: generalizedIndex
-            }),
+            // 39 * 32 bytes = 1248 bytes
+            proof.length == 1248 &&
+                Merkle.verifyInclusionSha256({
+                    proof: proof,
+                    root: balancesContainerRoot,
+                    leaf: validatorBalanceLeaf,
+                    index: generalizedIndex
+                }),
             "Invalid balance proof"
         );
     }
