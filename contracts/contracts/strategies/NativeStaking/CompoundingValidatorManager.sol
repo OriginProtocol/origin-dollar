@@ -25,7 +25,7 @@ abstract contract CompoundingValidatorManager is Governable {
     /// @notice The amount of ETH in wei that is required for a deposit to a new validator.
     /// Initially this is 32 ETH, but will be reduced to 1 ETH after P2P's APIs have been updated
     /// to support deposits of 1 ETH.
-    uint256 public constant DEPOSIT_AMOUNT_WEI = 32 ether;
+    uint256 internal constant DEPOSIT_AMOUNT_WEI = 32 ether;
     uint64 internal constant FAR_FUTURE_EPOCH = type(uint64).max;
     uint64 internal constant SLOT_DURATION = 12;
     uint64 internal constant SLOTS_PER_EPOCH = 32;
@@ -68,7 +68,7 @@ abstract contract CompoundingValidatorManager is Governable {
         uint64 withdrawableEpoch;
     }
     /// @notice Mapping of the root of a deposit (depositDataRoot) to its data
-    mapping(bytes32 => DepositData) internal deposits;
+    mapping(bytes32 => DepositData) public deposits;
     /// @notice List of deposit roots that are still to be verified as processed on the beacon chain
     bytes32[] internal depositsRoots;
 
@@ -93,7 +93,7 @@ abstract contract CompoundingValidatorManager is Governable {
     bytes32[] internal verifiedValidators;
     /// @notice Mapping of the hash of the validator's public key to the validator state and index.
     /// Uses the Beacon chain hashing for BLSPubkey which is sha256(abi.encodePacked(validator.pubkey, bytes16(0)))
-    mapping(bytes32 => ValidatorData) internal validator;
+    mapping(bytes32 => ValidatorData) public validator;
 
     /// @param timestamp Timestamp of the snapshot
     /// @param ethBalance The balance of ETH in the strategy contract at the snapshot
@@ -103,7 +103,7 @@ abstract contract CompoundingValidatorManager is Governable {
     }
     // TODO is it more efficient to use the block root rather than hashing it?
     /// @notice Mapping of the block root to the balances at that slot
-    mapping(bytes32 => Balances) public snappedBalances;
+    mapping(bytes32 => Balances) internal snappedBalances;
     uint64 public lastSnapTimestamp;
     uint128 public lastVerifiedEthBalance;
 
