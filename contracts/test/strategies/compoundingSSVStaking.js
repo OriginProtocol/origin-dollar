@@ -1881,8 +1881,8 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
         });
       });
     });
-    describe("When some WETH, ETH, 3 pending deposits and 16 active validators", () => {
-      const testValidatorCount = 16;
+    describe("When some WETH, ETH, 3 pending deposits and 21 active validators", () => {
+      const testValidatorCount = 21;
       const testValidatorProofs = [...Array(testValidatorCount).keys()];
       beforeEach(async () => {
         // register, stake, verify validator and verify deposit
