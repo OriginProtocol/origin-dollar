@@ -1930,7 +1930,7 @@ subtask("verifyDeposit", "Verify a deposit on the Beacon chain")
   )
   .addOptionalParam(
     "valSlot",
-    "The slot on or after the validator of first pending deposit deposit was created on the beacon chain. Default deposit processed slot",
+    "The slot on or after the validator of first pending deposit deposit was created on the beacon chain. Default to the epoch after the deposit processed slot",
     undefined,
     types.int
   )
@@ -1962,10 +1962,22 @@ task("verifyDeposit").setAction(async (_, __, runSuper) => {
 
 subtask("verifyBalances", "Verify validator balances on the Beacon chain")
   .addOptionalParam(
+    "slot",
+    "The slot snapBalances was executed. Default: last balances snapshot",
+    undefined,
+    types.int
+  )
+  .addOptionalParam(
     "root",
     "The beacon block root to verify balances to in hex format with a 0x prefix. Default: last balances snapshot",
     undefined,
     types.string
+  )
+  .addOptionalParam(
+    "valSlot",
+    "The slot on or after the validator of first pending deposit deposit was created on the beacon chain. Default to the next epoch from the balances snapshot",
+    undefined,
+    types.int
   )
   .addOptionalParam(
     "indexes",
@@ -1976,6 +1988,12 @@ subtask("verifyBalances", "Verify validator balances on the Beacon chain")
   .addOptionalParam(
     "dryrun",
     "Do not call verifyBalances on the strategy contract. Just log the params including the proofs",
+    false,
+    types.boolean
+  )
+  .addOptionalParam(
+    "test",
+    "Used for generating unit test data.",
     false,
     types.boolean
   )

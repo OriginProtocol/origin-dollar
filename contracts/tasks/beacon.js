@@ -11,6 +11,7 @@ const addresses = require("../utils/addresses");
 const {
   getBeaconBlock,
   getValidator: getValidatorBeacon,
+  calcBlockTimestamp,
 } = require("../utils/beacon");
 const { bytes32 } = require("../utils/regex");
 const { resolveContract } = require("../utils/resolvers");
@@ -242,7 +243,7 @@ async function verifyDeposit({
   // Generate a proof that the validator of the first pending deposit is not exiting
   let depositValidatorBeaconData = depositProcessedBeaconData;
   if (!firstDepositValidatorCreatedSlot) {
-    firstDepositValidatorCreatedSlot = depositProcessedSlot;
+    firstDepositValidatorCreatedSlot = depositProcessedSlot + 32;
   } else {
     depositValidatorBeaconData = await getBeaconBlock(
       firstDepositValidatorCreatedSlot
@@ -371,9 +372,17 @@ async function verifyDeposit({
   await logTxDetails(tx, "verifyDeposit");
 }
 
-async function verifyBalances({ root, indexes, dryrun, test, signer }) {
-  if (!root) {
-    if (!dryrun) {
+async function verifyBalances({
+  root,
+  indexes,
+  dryrun,
+  test,
+  signer,
+  slot,
+  valSlot: firstDepositValidatorCreatedSlot,
+}) {
+  if (!root && !slot) {
+    if (!dryrun && !test) {
       // TODO If no beacon block root, then get from the blockRoot from the last BalancesSnapped event
       // Revert for now
       throw Error("Beacon block root is currently required for verifyBalances");
@@ -383,10 +392,16 @@ async function verifyBalances({ root, indexes, dryrun, test, signer }) {
   }
 
   // Uses the beacon chain data for the beacon block root
-  const { blockView, blockTree, stateView } = await getBeaconBlock(root);
-
-  const beaconBlockRoot = toHex(blockView.hashTreeRoot());
+  const { blockView, blockTree, stateView } = await getBeaconBlock(
+    root || slot
+  );
   const verificationSlot = blockView.slot;
+  // Set the slot when the validator of the first pending deposit was created
+  firstDepositValidatorCreatedSlot =
+    firstDepositValidatorCreatedSlot || verificationSlot + 32;
+  const validatorVerificationBlockTimestamp = calcBlockTimestamp(
+    firstDepositValidatorCreatedSlot
+  );
 
   const strategy = await resolveContract(
     "CompoundingStakingSSVStrategyProxy",
@@ -394,8 +409,11 @@ async function verifyBalances({ root, indexes, dryrun, test, signer }) {
   );
 
   const {
-    proof: firstPendingDepositSlotProof,
+    proof: pendingDepositPubKeyProof,
     slot: firstPendingDepositSlot,
+    validatorIndex: firstPendingDepositValidatorIndex,
+    pubkeyHash: firstPendingDepositPubKeyHash,
+    root: beaconBlockRoot,
     isEmpty,
   } = await generateFirstPendingDepositProof({
     blockView,
@@ -405,11 +423,25 @@ async function verifyBalances({ root, indexes, dryrun, test, signer }) {
   });
 
   // If the deposit queue is not empty and the first pending deposit slot is zero
-  if (!isEmpty && firstPendingDepositSlot == 0) {
+  if (!isEmpty && firstPendingDepositSlot == 0 && !test) {
     throw Error(
       `Can not verify when the first pending deposits has a zero slot. This is from a validator consolidating to a compounding validator.\nExecute another snapBalances when the first pending deposit slot is not zero.`
     );
   }
+
+  const depositValidatorBeaconData =
+    firstDepositValidatorCreatedSlot == verificationSlot
+      ? { blockView, blockTree, stateView }
+      : await getBeaconBlock(firstDepositValidatorCreatedSlot);
+
+  const {
+    proof: firstDepositValidatorWithdrawableEpochProof,
+    validatorPubKeyProof: firstDepositValidatorValidatorPubKeyProof,
+  } = await generateValidatorWithdrawableEpochProof({
+    ...depositValidatorBeaconData,
+    validatorIndex: firstPendingDepositValidatorIndex,
+    includePubKeyProof: true,
+  });
 
   const { leaf: balancesContainerRoot, proof: balancesContainerProof } =
     await generateBalancesContainerProof({
@@ -442,15 +474,18 @@ async function verifyBalances({ root, indexes, dryrun, test, signer }) {
       `Validator ${validator.index} has balance: ${formatUnits(balance, 9)} ETH`
     );
   }
+  const validatorBalancesFormatted = validatorBalances.map((bal) =>
+    formatUnits(bal, 9)
+  );
 
   if (dryrun) {
-    console.log(`verificationSlot: ${verificationSlot}`);
-    console.log(`beaconBlockRoot: ${beaconBlockRoot}`);
-    console.log(`firstPendingDepositSlot: ${firstPendingDepositSlot}`);
+    console.log(`verification slot.         : ${verificationSlot}`);
+    console.log(`beaconBlockRoot            : ${beaconBlockRoot}`);
+    console.log(`first pending deposit slot : ${firstPendingDepositSlot}`);
     console.log(
-      `firstPendingDepositSlotProof:\n${firstPendingDepositSlotProof}`
+      `firstPendingDepositPubKeyProof:\n${pendingDepositPubKeyProof}`
     );
-    console.log(`\nbalancesContainerRoot: ${balancesContainerRoot}`);
+    console.log(`\nbalancesContainerRoot    : ${balancesContainerRoot}`);
     console.log(`\nbalancesContainerProof:\n${balancesContainerProof}`);
     console.log(
       `\nvalidatorBalanceLeaves:\n[${validatorBalanceLeaves
@@ -462,10 +497,39 @@ async function verifyBalances({ root, indexes, dryrun, test, signer }) {
         .map((proof) => `"${proof}"`)
         .join(",\n")}]`
     );
+    console.log(`validatorBalances: ${validatorBalancesFormatted.join(", ")}`);
+    return;
+  }
+
+  const firstPendingDeposit = {
+    slot: firstPendingDepositSlot,
+    validatorIndex: firstPendingDepositValidatorIndex,
+    pubKeyHash: firstPendingDepositPubKeyHash,
+    pendingDepositPubKeyProof,
+    withdrawableEpochProof: firstDepositValidatorWithdrawableEpochProof,
+    validatorPubKeyProof: firstDepositValidatorValidatorPubKeyProof,
+  };
+  const balanceProofs = {
+    balancesContainerRoot,
+    balancesContainerProof,
+    validatorBalanceLeaves,
+    validatorBalanceProofs,
+  };
+
+  if (test) {
     console.log(
-      `validatorBalances: ${validatorBalances
-        .map((bal) => formatUnits(bal, 9))
-        .join(", ")}`
+      JSON.stringify(
+        {
+          blockRoot: beaconBlockRoot,
+          validatorVerificationBlockTimestamp:
+            validatorVerificationBlockTimestamp.toString(),
+          firstPendingDeposit,
+          balanceProofs,
+          validatorBalances: validatorBalancesFormatted,
+        },
+        null,
+        2
+      )
     );
     return;
   }
@@ -473,15 +537,14 @@ async function verifyBalances({ root, indexes, dryrun, test, signer }) {
   log(
     `About to verify ${verifiedValidators.length} validator balances for slot ${verificationSlot} with first pending deposit slot ${firstPendingDepositSlot} to beacon block root ${beaconBlockRoot}`
   );
-  const tx = await strategy.connect(signer).verifyBalances({
-    blockRoot: beaconBlockRoot,
-    firstPendingDepositSlot,
-    firstPendingDepositSlotProof,
-    balancesContainerRoot,
-    balancesContainerProof,
-    validatorBalanceLeaves,
-    validatorBalanceProofs,
-  });
+  const tx = await strategy
+    .connect(signer)
+    .verifyBalances(
+      beaconBlockRoot,
+      validatorVerificationBlockTimestamp,
+      firstPendingDeposit,
+      balanceProofs
+    );
   await logTxDetails(tx, "verifyBalances");
 }
 
