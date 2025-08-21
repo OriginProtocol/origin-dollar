@@ -241,14 +241,15 @@ async function verifyDeposit({
   });
 
   // Generate a proof that the validator of the first pending deposit is not exiting
-  let depositValidatorBeaconData = depositProcessedBeaconData;
   if (!firstDepositValidatorCreatedSlot) {
     firstDepositValidatorCreatedSlot = depositProcessedSlot + 32;
-  } else {
-    depositValidatorBeaconData = await getBeaconBlock(
-      firstDepositValidatorCreatedSlot
+    log(
+      `Using slot ${firstDepositValidatorCreatedSlot} to see if the first pending deposit validator is exiting`
     );
   }
+  const depositValidatorBeaconData = await getBeaconBlock(
+    firstDepositValidatorCreatedSlot
+  );
 
   const {
     root: validatorBeaconBlockRoot,
@@ -399,7 +400,7 @@ async function verifyBalances({
   // Set the slot when the validator of the first pending deposit was created
   firstDepositValidatorCreatedSlot =
     firstDepositValidatorCreatedSlot || verificationSlot + 32;
-  const validatorVerificationBlockTimestamp = calcBlockTimestamp(
+  const firstDepositValidatorBlockTimestamp = calcBlockTimestamp(
     firstDepositValidatorCreatedSlot
   );
 
@@ -413,7 +414,7 @@ async function verifyBalances({
     slot: firstPendingDepositSlot,
     validatorIndex: firstPendingDepositValidatorIndex,
     pubkeyHash: firstPendingDepositPubKeyHash,
-    root: beaconBlockRoot,
+    root: snapBalancesBlockRoot,
     isEmpty,
   } = await generateFirstPendingDepositProof({
     blockView,
@@ -429,6 +430,7 @@ async function verifyBalances({
     );
   }
 
+  // Verify the first pending deposit is not exiting
   const depositValidatorBeaconData =
     firstDepositValidatorCreatedSlot == verificationSlot
       ? { blockView, blockTree, stateView }
@@ -437,6 +439,7 @@ async function verifyBalances({
   const {
     proof: firstDepositValidatorWithdrawableEpochProof,
     validatorPubKeyProof: firstDepositValidatorValidatorPubKeyProof,
+    root: firstDepositValidatorBlockRoot,
   } = await generateValidatorWithdrawableEpochProof({
     ...depositValidatorBeaconData,
     validatorIndex: firstPendingDepositValidatorIndex,
@@ -479,13 +482,18 @@ async function verifyBalances({
   );
 
   if (dryrun) {
-    console.log(`verification slot.         : ${verificationSlot}`);
-    console.log(`beaconBlockRoot            : ${beaconBlockRoot}`);
-    console.log(`first pending deposit slot : ${firstPendingDepositSlot}`);
+    console.log(`verification slot                 : ${verificationSlot}`);
+    console.log(`snap balances block root          : ${snapBalancesBlockRoot}`);
     console.log(
-      `firstPendingDepositPubKeyProof:\n${pendingDepositPubKeyProof}`
+      `first deposit validator block root: ${firstDepositValidatorBlockRoot}`
     );
-    console.log(`\nbalancesContainerRoot    : ${balancesContainerRoot}`);
+    console.log(
+      `first pending deposit slot.       : ${firstPendingDepositSlot}`
+    );
+    console.log(
+      `firstPendingDepositPubKeyProof.   :\n${pendingDepositPubKeyProof}`
+    );
+    console.log(`\nbalancesContainerRoot           : ${balancesContainerRoot}`);
     console.log(`\nbalancesContainerProof:\n${balancesContainerProof}`);
     console.log(
       `\nvalidatorBalanceLeaves:\n[${validatorBalanceLeaves
@@ -520,9 +528,10 @@ async function verifyBalances({
     console.log(
       JSON.stringify(
         {
-          blockRoot: beaconBlockRoot,
-          validatorVerificationBlockTimestamp:
-            validatorVerificationBlockTimestamp.toString(),
+          snapBalancesBlockRoot,
+          firstDepositValidatorBlockRoot,
+          firstDepositValidatorBlockTimestamp:
+            firstDepositValidatorBlockTimestamp.toString(),
           firstPendingDeposit,
           balanceProofs,
           validatorBalances: validatorBalancesFormatted,
@@ -535,13 +544,13 @@ async function verifyBalances({
   }
 
   log(
-    `About to verify ${verifiedValidators.length} validator balances for slot ${verificationSlot} with first pending deposit slot ${firstPendingDepositSlot} to beacon block root ${beaconBlockRoot}`
+    `About to verify ${verifiedValidators.length} validator balances for slot ${verificationSlot} with first pending deposit slot ${firstPendingDepositSlot} to beacon block root ${snapBalancesBlockRoot}`
   );
   const tx = await strategy
     .connect(signer)
     .verifyBalances(
-      beaconBlockRoot,
-      validatorVerificationBlockTimestamp,
+      snapBalancesBlockRoot,
+      firstDepositValidatorBlockTimestamp,
       firstPendingDeposit,
       balanceProofs
     );
