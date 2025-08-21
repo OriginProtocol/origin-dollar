@@ -823,7 +823,7 @@ abstract contract CompoundingValidatorManager is Governable {
 
     /// @notice Verifies the balances of all active validators on the beacon chain
     /// and checks no pending deposits have been processed by the beacon chain.
-    /// @param blockRoot The beacon block root emitted from `snapBalance` in `BalancesSnapped`.
+    /// @param snapBlockRoot The beacon block root emitted from `snapBalance` in `BalancesSnapped`.
     /// @param balanceProofs a `BalanceProofs` struct containing the following:
     /// balancesContainerRoot - the merkle root of the balances container
     /// balancesContainerProof - The merkle proof for the balances container to the beacon block root.
@@ -833,13 +833,13 @@ abstract contract CompoundingValidatorManager is Governable {
     ///   This is 39 witness hashes of 32 bytes each concatenated together starting from the leaf node.
     // slither-disable-start reentrancy-no-eth
     function verifyBalances(
-        bytes32 blockRoot,
+        bytes32 snapBlockRoot,
         uint64 validatorVerificationBlockTimestamp,
         FirstPendingDepositProofData calldata firstPendingDeposit,
         BalanceProofs calldata balanceProofs
     ) external {
         // Load previously snapped balances for the given block root
-        Balances memory balancesMem = snappedBalances[blockRoot];
+        Balances memory balancesMem = snappedBalances[snapBlockRoot];
         // Check the balances are the latest
         require(lastSnapTimestamp > 0, "No snapped balances");
         require(balancesMem.timestamp == lastSnapTimestamp, "Stale snap");
@@ -861,7 +861,7 @@ abstract contract CompoundingValidatorManager is Governable {
             );
             // verify beaconBlock.state.balances root to beacon block root
             IBeaconProofs(BEACON_PROOFS).verifyBalancesContainer(
-                blockRoot,
+                snapBlockRoot,
                 balanceProofs.balancesContainerRoot,
                 balanceProofs.balancesContainerProof
             );
@@ -919,7 +919,7 @@ abstract contract CompoundingValidatorManager is Governable {
             // Verify the slot of the first pending deposit matches the beacon chain
             bool isDepositQueueEmpty = IBeaconProofs(BEACON_PROOFS)
                 .verifyFirstPendingDeposit(
-                    blockRoot,
+                    snapBlockRoot,
                     firstPendingDeposit.slot,
                     firstPendingDeposit.pubKeyHash,
                     firstPendingDeposit.pendingDepositPubKeyProof

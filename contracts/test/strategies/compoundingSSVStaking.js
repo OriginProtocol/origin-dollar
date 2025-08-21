@@ -358,7 +358,7 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
     pendingDepositAmount,
     activeValidators,
   }) => {
-    const { compoundingStakingSSVStrategy, weth } = fixture;
+    const { beaconRoots, compoundingStakingSSVStrategy, weth } = fixture;
 
     if (wethAmount > 0) {
       // Set some WETH in the strategy
@@ -377,7 +377,9 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
       );
     }
 
-    await snapBalances(balancesProof.blockRoot);
+    const { timestamp: snapBalancesTimestamp } = await snapBalances(
+      balancesProof.snapBalancesBlockRoot
+    );
 
     const filteredLeaves =
       balancesProof.balanceProofs.validatorBalanceLeaves.filter((_, index) =>
@@ -391,10 +393,18 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
       (_, index) => activeValidators.includes(index)
     );
 
+    // Put the slot the validator of the first pending deposit was created one epoch later
+    const validatorVerificationBlockTimestamp = snapBalancesTimestamp + 12 * 32;
+
+    await beaconRoots["setBeaconRoot(uint256,bytes32)"](
+      validatorVerificationBlockTimestamp,
+      balancesProof.firstDepositValidatorBlockRoot
+    );
+
     // Verify balances with pending deposits and active validators
     const tx = await compoundingStakingSSVStrategy.verifyBalances(
-      balancesProof.blockRoot,
-      balancesProof.validatorVerificationBlockTimestamp,
+      balancesProof.snapBalancesBlockRoot,
+      validatorVerificationBlockTimestamp,
       balancesProof.firstPendingDeposit,
       {
         ...balancesProof.balanceProofs,
@@ -1777,22 +1787,28 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
       describe("when balances have been snapped", () => {
         const balancesProof = testBalancesProofs[3];
         beforeEach(async () => {
-          await snapBalances(balancesProof.blockRoot);
+          await snapBalances(balancesProof.snapBalancesBlockRoot);
         });
         it("Fail to verify balances with not enough validator leaves", async () => {
           const { compoundingStakingSSVStrategy } = fixture;
 
           // Verify balances with pending deposits and active validators
-          const tx = compoundingStakingSSVStrategy.verifyBalances({
-            ...balancesProof,
-            mappedDepositSlot: balancesProof.firstPendingDeposit.slot,
-            // Only one when there is two active validators
-            validatorBalanceLeaves: [balancesProof.validatorBalanceLeaves[0]],
-            validatorBalanceProofs: [
-              balancesProof.validatorBalanceProofs[0],
-              balancesProof.validatorBalanceProofs[1],
-            ],
-          });
+          const tx = compoundingStakingSSVStrategy.verifyBalances(
+            balancesProof.snapBalancesBlockRoot,
+            balancesProof.firstDepositValidatorBlockTimestamp,
+            balancesProof.firstPendingDeposit,
+            {
+              ...balancesProof.balanceProofs,
+              // Only one when there is three active validators
+              validatorBalanceLeaves: [
+                balancesProof.balanceProofs.validatorBalanceLeaves[0],
+              ],
+              validatorBalanceProofs: [
+                balancesProof.balanceProofs.validatorBalanceProofs[0],
+                balancesProof.balanceProofs.validatorBalanceProofs[1],
+              ],
+            }
+          );
 
           await expect(tx).to.be.revertedWith("Invalid balance leaves");
         });
@@ -1800,16 +1816,21 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
           const { compoundingStakingSSVStrategy } = fixture;
 
           // Verify balances with pending deposits and active validators
-          const tx = compoundingStakingSSVStrategy.verifyBalances({
-            ...balancesProof,
-            mappedDepositSlot: balancesProof.firstPendingDeposit.slot,
-            // Three when there is two active validators
-            validatorBalanceLeaves: balancesProof.validatorBalanceLeaves,
-            validatorBalanceProofs: [
-              balancesProof.validatorBalanceProofs[0],
-              balancesProof.validatorBalanceProofs[1],
-            ],
-          });
+          const tx = compoundingStakingSSVStrategy.verifyBalances(
+            balancesProof.snapBalancesBlockRoot,
+            balancesProof.firstDepositValidatorBlockTimestamp,
+            balancesProof.firstPendingDeposit,
+            {
+              ...balancesProof.balanceProofs,
+              // Three when there is two active validators
+              validatorBalanceLeaves:
+                balancesProof.balanceProofs.validatorBalanceLeaves,
+              validatorBalanceProofs: [
+                balancesProof.balanceProofs.validatorBalanceProofs[0],
+                balancesProof.balanceProofs.validatorBalanceProofs[1],
+              ],
+            }
+          );
 
           await expect(tx).to.be.revertedWith("Invalid balance leaves");
         });
@@ -1817,16 +1838,22 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
           const { compoundingStakingSSVStrategy } = fixture;
 
           // Verify balances with pending deposits and active validators
-          const tx = compoundingStakingSSVStrategy.verifyBalances({
-            ...balancesProof,
-            mappedDepositSlot: balancesProof.firstPendingDeposit.slot,
-            validatorBalanceLeaves: [
-              balancesProof.validatorBalanceLeaves[0],
-              balancesProof.validatorBalanceLeaves[1],
-            ],
-            // Only one when there is two active validators
-            validatorBalanceProofs: [balancesProof.validatorBalanceProofs[0]],
-          });
+          const tx = compoundingStakingSSVStrategy.verifyBalances(
+            balancesProof.snapBalancesBlockRoot,
+            balancesProof.firstDepositValidatorBlockTimestamp,
+            balancesProof.firstPendingDeposit,
+            {
+              ...balancesProof.balanceProofs,
+              validatorBalanceLeaves: [
+                balancesProof.balanceProofs.validatorBalanceLeaves[0],
+                balancesProof.balanceProofs.validatorBalanceLeaves[1],
+              ],
+              // Only one when there is two active validators
+              validatorBalanceProofs: [
+                balancesProof.balanceProofs.validatorBalanceProofs[0],
+              ],
+            }
+          );
 
           await expect(tx).to.be.revertedWith("Invalid balance proofs");
         });
@@ -1834,16 +1861,21 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
           const { compoundingStakingSSVStrategy } = fixture;
 
           // Verify balances with pending deposits and active validators
-          const tx = compoundingStakingSSVStrategy.verifyBalances({
-            ...balancesProof,
-            mappedDepositSlot: balancesProof.firstPendingDeposit.slot,
-            validatorBalanceLeaves: [
-              balancesProof.validatorBalanceLeaves[0],
-              balancesProof.validatorBalanceLeaves[1],
-            ],
-            // Three when there is two active validators
-            validatorBalanceProofs: balancesProof.validatorBalanceProofs,
-          });
+          const tx = compoundingStakingSSVStrategy.verifyBalances(
+            balancesProof.snapBalancesBlockRoot,
+            balancesProof.firstDepositValidatorBlockTimestamp,
+            balancesProof.firstPendingDeposit,
+            {
+              ...balancesProof.balanceProofs,
+              validatorBalanceLeaves: [
+                balancesProof.balanceProofs.validatorBalanceLeaves[0],
+                balancesProof.balanceProofs.validatorBalanceLeaves[1],
+              ],
+              // Three when there is two active validators
+              validatorBalanceProofs:
+                balancesProof.balanceProofs.validatorBalanceProofs,
+            }
+          );
 
           await expect(tx).to.be.revertedWith("Invalid balance proofs");
         });
