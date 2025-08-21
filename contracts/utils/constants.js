@@ -38,6 +38,7 @@ const beaconChainGenesisTimeMainnet = 1606824023; // Tue Dec 01 2020 12:00:23 GM
 // TODO get genesis time for hoodi
 const beaconChainGenesisTimeHoodi = 1742213400; //	Mon Mar 17 2025 12:10:00 GMT+0000
 
+const gIndexFirstPendingDepositPubKey = 1584842932224n;
 const gIndexFirstPendingDepositSlot = 1584842932228n;
 
 module.exports = {
@@ -58,6 +59,7 @@ module.exports = {
   ONE,
   beaconChainGenesisTimeMainnet,
   beaconChainGenesisTimeHoodi,
+  gIndexFirstPendingDepositPubKey,
   gIndexFirstPendingDepositSlot,
 };
 

@@ -1903,7 +1903,7 @@ subtask("verifyValidator", "Verify a validator on the Beacon chain")
   )
   .addOptionalParam(
     "withdrawal",
-    "Override the withdrawal address in the withdrawal credentials. Used when generating proofs for unit tests.",
+    "Override the withdrawal address in the withdrawal credentials. Used when generating proofs for unit tests or the deposit was front-run.",
     undefined,
     types.string
   )
@@ -1929,10 +1929,28 @@ subtask("verifyDeposit", "Verify a deposit on the Beacon chain")
     types.int
   )
   .addOptionalParam(
+    "valSlot",
+    "The slot on or after the validator of first pending deposit deposit was created on the beacon chain. Default deposit processed slot",
+    undefined,
+    types.int
+  )
+  .addOptionalParam(
     "dryrun",
     "Do not call verifyBalances on the strategy contract. Just log the params including the proofs",
     false,
     types.boolean
+  )
+  .addOptionalParam(
+    "test",
+    "Used for generating unit test data.",
+    false,
+    types.boolean
+  )
+  .addOptionalParam(
+    "index",
+    "Override the validator with the index of a test validator. Used when generating proofs for unit tests.",
+    undefined,
+    types.int
   )
   .setAction(async (taskArgs) => {
     const signer = await getSigner();

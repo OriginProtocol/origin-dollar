@@ -1,6 +1,7 @@
 const { toHex } = require("../utils/units");
 const { concatProof, hashPubKey, getValidator } = require("../utils/beacon");
 const { formatUnits } = require("ethers/lib/utils");
+const { MAX_UINT64 } = require("./constants");
 
 const log = require("../utils/logger")("task:proof");
 
@@ -9,6 +10,7 @@ async function generateFirstPendingDepositProof({
   blockView,
   blockTree,
   stateView,
+  test,
 }) {
   // Have to dynamically import the Lodestar API client as its an ESM module
   const { concatGindices, createProof, ProofType, toGindex } = await import(
@@ -38,13 +40,12 @@ async function generateFirstPendingDepositProof({
     log("No deposits in the deposit queue");
   } else {
     const firstPendingDeposit = stateView.pendingDeposits.get(0);
-    // log(firstPendingDeposit);
     firstPendingDepositSlot = firstPendingDeposit.slot;
     firstPendingDepositPubKey = toHex(firstPendingDeposit.pubkey);
     firstPendingDepositPubKeyHash = hashPubKey(firstPendingDeposit.pubkey);
     firstPendingDepositValidatorIndex = firstPendingDeposit.validatorIndex;
     log(
-      `First pending deposit slot ${
+      `First pending deposit has slot ${
         firstPendingDeposit.slot
       }, withdrawal credential ${toHex(
         firstPendingDeposit.withdrawalCredentials
@@ -67,11 +68,37 @@ async function generateFirstPendingDepositProof({
     type: ProofType.single,
     gindex: generalizedIndex,
   });
-  log(`First deposit slot leaf: ${toHex(proofObj.leaf)}`);
+  log(`First pending deposit pub key leaf: ${toHex(proofObj.leaf)}`);
   const proofBytes = toHex(concatProof(proofObj));
   log(
-    `First deposit slot proof of depth ${proofObj.witnesses.length} in bytes:\n${proofBytes}`
+    `First pending deposit pub key proof of depth ${proofObj.witnesses.length} in bytes:\n${proofBytes}`
   );
+
+  if (test) {
+    // Generate the proof of the slot within the first pending deposit
+    const subTreeGeneralizedIndex = concatGindices([
+      blockView.type.getPathInfo(["stateRoot"]).gindex,
+      stateView.type.getPathInfo(["pendingDeposits", 0]).gindex,
+      toGindex(1, 1n), // depth 1, index 1 for slot = 3
+    ]);
+    // Generate the slot proof in the first pending deposit
+    const subTree = blockTree.getSubtree(subTreeGeneralizedIndex);
+    log(`Sub tree root: ${toHex(subTree.root)}`);
+    const subTreeProofObj = createProof(subTree.rootNode, {
+      type: ProofType.single,
+      // depth 2, index 0 for slot = 4
+      gindex: toGindex(2, 0n),
+    });
+    log(
+      `First pending deposit slot ${firstPendingDepositSlot} has leaf: ${toHex(
+        subTreeProofObj.leaf
+      )}`
+    );
+    const subTreeProofBytes = toHex(concatProof(subTreeProofObj));
+    log(
+      `First pending deposit slot proof of depth ${subTreeProofObj.witnesses.length} in bytes:\n${subTreeProofBytes}`
+    );
+  }
 
   return {
     proof: proofBytes,
@@ -107,10 +134,14 @@ async function generateValidatorWithdrawableEpochProof({
       `Validator with index ${validatorIndex} not found in the state at slot ${blockView.slot}.`
     );
   }
+  const withdrawableEpoch =
+    validator.withdrawableEpoch == Infinity
+      ? MAX_UINT64
+      : validator.withdrawableEpoch;
   log(
-    `Validator ${validatorIndex} has withdrawable epoch ${
-      validator.withdrawableEpoch
-    } and public key ${toHex(validator.pubkey)}`
+    `Validator ${validatorIndex} has withdrawable epoch ${withdrawableEpoch} and public key ${toHex(
+      validator.pubkey
+    )}`
   );
   log(`${stateView.validators.length} validators at slot ${blockView.slot}.`);
 
@@ -149,7 +180,7 @@ async function generateValidatorWithdrawableEpochProof({
       generalizedIndexWithdrawableEpoch,
       root: toHex(blockTree.root),
       leaf: toHex(proofObj.leaf),
-      withdrawableEpoch: validator.withdrawableEpoch,
+      withdrawableEpoch,
     };
   }
 
@@ -167,7 +198,9 @@ async function generateValidatorWithdrawableEpochProof({
     gindex: 4, // depth 2, index 0 = 2 ^ 2 + 0 = 4
   });
 
-  log(`Validator public key leaf (hash): ${toHex(pubKeySubProofObj.leaf)}`);
+  log(
+    `Validator public key hash leaf (hash): ${toHex(pubKeySubProofObj.leaf)}`
+  );
   const pubKeySubTreeProofBytes = toHex(concatProof(pubKeySubProofObj));
   log(
     `Pub key sub tree proof of depth ${pubKeySubProofObj.witnesses.length} in bytes:\n${pubKeySubTreeProofBytes}`
@@ -178,7 +211,7 @@ async function generateValidatorWithdrawableEpochProof({
     generalizedIndex: generalizedIndexWithdrawableEpoch,
     root: toHex(blockTree.root),
     leaf: toHex(proofObj.leaf),
-    withdrawableEpoch: validator.withdrawableEpoch,
+    withdrawableEpoch,
     validatorPubKeyProof: pubKeySubTreeProofBytes,
   };
 }
