@@ -509,6 +509,7 @@ abstract contract CompoundingValidatorManager is Governable {
                 DepositData memory deposit = deposits[depositList[i]];
                 if (deposit.pubKeyHash == pubKeyHash) {
                     _removeDeposit(depositList[i], deposit);
+                    break;
                 }
             }
 
