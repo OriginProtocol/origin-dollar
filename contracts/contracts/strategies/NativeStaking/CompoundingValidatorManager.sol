@@ -130,7 +130,6 @@ abstract contract CompoundingValidatorManager is Governable {
 
     event RegistratorChanged(address indexed newAddress);
     event StakingMonitorChanged(address indexed newAddress);
-    event SourceStrategyAdded(address indexed strategy);
     event SSVValidatorRegistered(
         bytes32 indexed pubKeyHash,
         uint64[] operatorIds
