@@ -75,8 +75,11 @@ abstract contract CompoundingValidatorManager is Governable {
         DepositStatus status;
         uint64 withdrawableEpoch;
     }
+    /// @notice Restricts to only one deposit to an unverified validator at a time.
+    /// This is to limit front-running attacks of deposits to the beacon chain contract.
+    bool public firstDeposit;
     /// @notice Unique identifier of the next validator deposit.
-    uint256 public nextDepositID;
+    uint128 public nextDepositID;
     /// @notice Mapping of the deposit ID to the deposit data
     mapping(uint256 => DepositData) public deposits;
     /// @notice List of strategy deposit IDs to a validator.
@@ -139,6 +142,7 @@ abstract contract CompoundingValidatorManager is Governable {
 
     event RegistratorChanged(address indexed newAddress);
     event StakingMonitorChanged(address indexed newAddress);
+    event FirstDepositReset();
     event SSVValidatorRegistered(
         bytes32 indexed pubKeyHash,
         uint64[] operatorIds
@@ -216,6 +220,15 @@ abstract contract CompoundingValidatorManager is Governable {
     function setRegistrator(address _address) external onlyGovernor {
         validatorRegistrator = _address;
         emit RegistratorChanged(_address);
+    }
+
+    /// @notice Reset the `firstDeposit` flag to false so deposits to unverified validators can be made again.
+    function setFirstDeposit() external onlyGovernor {
+        require(firstDeposit, "No first deposit");
+
+        firstDeposit = false;
+
+        emit FirstDepositReset();
     }
 
     /***************************************
@@ -301,12 +314,21 @@ abstract contract CompoundingValidatorManager is Governable {
                 currentState == VALIDATOR_STATE.VERIFIED),
             "Not registered or verified"
         );
-        require(
-            currentState == VALIDATOR_STATE.VERIFIED ||
-                depositAmountWei == DEPOSIT_AMOUNT_WEI,
-            "Invalid first deposit amount"
-        );
         require(depositAmountWei >= 1 ether, "Deposit too small");
+        if (currentState == VALIDATOR_STATE.REGISTERED) {
+            // Can only deposit to a new, unverified validator once.
+            // This is to prevent front-running deposit attacks.
+            // The exiting deposit needs to be verified before another deposit can be made.
+            require(!firstDeposit, "Existing first deposit");
+            require(
+                depositAmountWei == DEPOSIT_AMOUNT_WEI,
+                "Invalid first deposit amount"
+            );
+
+            // Flag a deposit to an unverified validator so only no other deposits can be made
+            // to an unverified validator.
+            firstDeposit = true;
+        }
 
         /* 0x02 to indicate that withdrawal credentials are for a compounding validator
          * that was introduced with the Pectra upgrade.
@@ -533,6 +555,11 @@ abstract contract CompoundingValidatorManager is Governable {
                 }
             }
 
+            // Leave the `firstDeposit` flag as true so no more deposits to unverified validators can be made.
+            // The Governor has to reset the `firstDeposit` to false before another deposit to
+            // an unverified validator can be made.
+            // The Governor can set a new `validatorRegistrator` if they suspect it has been compromised.
+
             emit ValidatorInvalid(pubKeyHash);
             return;
         }
@@ -545,6 +572,9 @@ abstract contract CompoundingValidatorManager is Governable {
 
         // Add the new validator to the list of verified validators
         verifiedValidators.push(pubKeyHash);
+
+        // Reset the firstDeposit flag as the first deposit to an unverified validator has been verified.
+        firstDeposit = false;
 
         emit ValidatorVerified(pubKeyHash, validatorIndex);
     }
