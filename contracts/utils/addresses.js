@@ -11,7 +11,11 @@ addresses.multichainBuybackOperator =
 addresses.votemarket = "0x8c2c5A295450DDFf4CB360cA73FCCC12243D14D9";
 
 addresses.mainnet = {};
+addresses.base = {};
+addresses.sonic = {};
 addresses.holesky = {};
+addresses.hoodi = {};
+addresses.plume = {};
 
 addresses.mainnet.ORIGINTEAM = "0x449e0b5564e0d141b3bc3829e74ffa0ea8c08ad5";
 
@@ -368,7 +372,6 @@ addresses.arbitrumOne.WOETHProxy = "0xD8724322f44E5c58D7A815F542036fb17DbbF839";
 addresses.arbitrumOne.admin = "0xfD1383fb4eE74ED9D83F2cbC67507bA6Eac2896a";
 
 // Base
-addresses.base = {};
 addresses.base.HarvesterProxy = "0x247872f58f2fF11f9E8f89C1C48e460CfF0c6b29";
 addresses.base.BridgedWOETH = "0xD8724322f44E5c58D7A815F542036fb17DbbF839";
 addresses.base.AERO = "0x940181a94A35A4569E4529A3CDfB74e38FD98631";
@@ -427,7 +430,6 @@ addresses.base.childLiquidityGaugeFactory =
 addresses.base.CCIPRouter = "0x881e3A65B4d4a04dD529061dd0071cf975F58bCD";
 
 // Sonic
-addresses.sonic = {};
 addresses.sonic.wS = "0x039e2fB66102314Ce7b64Ce5Ce3E5183bc94aD38";
 addresses.sonic.WETH = "0x309C92261178fA0CF748A855e90Ae73FDb79EBc7";
 addresses.sonic.SFC = "0xFC00FACE00000000000000000000000000000000";
@@ -620,7 +622,6 @@ addresses.holesky.validatorRegistrator =
 // Address of the Holesky defender relayer
 addresses.holesky.Guardian = "0x3C6B0c7835a2E2E0A45889F64DcE4ee14c1D5CB4";
 
-addresses.plume = {};
 addresses.plume.WETH = "0xca59cA09E5602fAe8B629DeE83FfA819741f14be";
 addresses.plume.BridgedWOETH = "0xD8724322f44E5c58D7A815F542036fb17DbbF839";
 addresses.plume.LayerZeroEndpointV2 =

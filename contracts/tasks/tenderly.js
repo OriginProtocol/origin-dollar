@@ -16,7 +16,7 @@ async function tenderlySync(taskArguments, hre) {
       address: deployment.address,
     })
   );
-  const { chainId } = await ethers.provider.getNetwork();
+  const { chainId } = await hre.ethers.provider.getNetwork();
   const allTenderlyContracts = await fetchAllContractsFromTenderly(chainId);
 
   for (let i = 0; i < deployedContracts.length; i++) {

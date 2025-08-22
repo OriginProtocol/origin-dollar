@@ -20,7 +20,6 @@ const log = require("../utils/logger")("task:p2p");
 // as they are using in Defender Actions.
 // This is only used by Hardhat tasks registerValidators and stakeValidators
 const validatorOperationsConfig = async (taskArgs) => {
-  // const { chainId } = await ethers.provider.getNetwork();
   const networkName = await getNetworkName();
 
   const addressesSet = addresses[networkName];
