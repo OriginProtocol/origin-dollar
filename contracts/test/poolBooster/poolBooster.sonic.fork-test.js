@@ -482,7 +482,7 @@ describe("ForkTest: Pool Booster", function () {
       ).to.be.revertedWith("Invalid salt");
     });
 
-    it("Should throw an error when non govenor is trying to create a pool booster", async () => {
+    it("Should throw an error when non governor is trying to create a pool booster", async () => {
       const { poolBoosterSingleFactoryV1, poolBoosterDoubleFactoryV1, nick } =
         fixture;
 

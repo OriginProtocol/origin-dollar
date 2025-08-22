@@ -3,8 +3,6 @@ const { ethers } = hre;
 const addresses = require("./addresses");
 const { replaceContractAt } = require("./hardhat");
 
-const log = require("./logger")("utils:fork:mockOracle");
-
 const feedConfig = {
   [addresses.mainnet.rETH]: {
     feed: "0x536218f9E9Eb48863970252233c8F271f554C2d0",
