@@ -11,6 +11,9 @@ library PartialWithdrawal {
     address internal constant WITHDRAWAL_REQUEST_ADDRESS =
         0x00000961Ef480Eb55e80D19ad83579A64c007002;
 
+    /// @notice Requests a partial withdrawal for a given validator public key and amount.
+    /// @param validatorPubKey The public key of the validator to withdraw from
+    /// @param amount The amount of ETH to withdraw
     function request(bytes calldata validatorPubKey, uint64 amount)
         internal
         returns (uint256 fee_)
@@ -30,6 +33,7 @@ library PartialWithdrawal {
         require(success, "Withdrawal request failed");
     }
 
+    /// @notice Gets fee for withdrawal requests contract on Beacon chain
     function fee() internal view returns (uint256) {
         // Get fee from the withdrawal request contract
         (bool success, bytes memory result) = WITHDRAWAL_REQUEST_ADDRESS
