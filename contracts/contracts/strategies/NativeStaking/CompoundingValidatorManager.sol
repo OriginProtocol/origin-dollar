@@ -1049,11 +1049,14 @@ abstract contract CompoundingValidatorManager is Governable {
                 // If the validator is not withdrawable, then the deposit can not have been processed yet.
                 // If the validator is now withdrawable, then the deposit may have been processed. The strategy
                 // now has to wait until the validator's balance is verified to be zero.
+                // OR the validator has exited and the deposit is now verified as processed.
                 require(
                     firstPendingDeposit.slot < depositData.slot ||
-                        (validator[depositData.pubKeyHash].state ==
-                            VALIDATOR_STATE.EXITED &&
-                            verificationEpoch < depositData.withdrawableEpoch),
+                        (verificationEpoch < depositData.withdrawableEpoch &&
+                            depositData.withdrawableEpoch !=
+                            FAR_FUTURE_EPOCH) ||
+                        validator[depositData.pubKeyHash].state ==
+                        VALIDATOR_STATE.EXITED,
                     "Deposit likely processed"
                 );
 
