@@ -226,7 +226,7 @@ abstract contract CompoundingValidatorManager is Governable {
     }
 
     /// @notice Reset the `firstDeposit` flag to false so deposits to unverified validators can be made again.
-    function setFirstDeposit() external onlyGovernor {
+    function resetFirstDeposit() external onlyGovernor {
         require(firstDeposit, "No first deposit");
 
         firstDeposit = false;
@@ -302,10 +302,6 @@ abstract contract CompoundingValidatorManager is Governable {
             depositAmountWei <= IWETH9(WETH).balanceOf(address(this)),
             "Insufficient WETH"
         );
-        require(
-            verifiedValidators.length + 1 < MAX_VERIFIED_VALIDATORS,
-            "Max validators"
-        );
         require(depositList.length < MAX_DEPOSITS, "Max deposits");
 
         // Convert required ETH from WETH and do the necessary accounting
@@ -323,13 +319,21 @@ abstract contract CompoundingValidatorManager is Governable {
         );
         require(depositAmountWei >= 1 ether, "Deposit too small");
         if (currentState == VALIDATOR_STATE.REGISTERED) {
-            // Can only deposit to a new, unverified validator once.
-            // This is to prevent front-running deposit attacks.
+            // Can only have one pending deposit to an unverified validator at a time.
+            // This is to limit front-running deposit attacks to a single deposit.
             // The exiting deposit needs to be verified before another deposit can be made.
+            // If there was a front-running attack, the validator needs to be verified as invalid
+            // and the Governor calls `resetFirstDeposit` to set `firstDeposit` to false.
             require(!firstDeposit, "Existing first deposit");
+            // Limits the amount of ETH that can be at risk from a front-running deposit attack.
             require(
                 depositAmountWei == DEPOSIT_AMOUNT_WEI,
                 "Invalid first deposit amount"
+            );
+            // Limits the number of validator balance proofs to verifyBalances
+            require(
+                verifiedValidators.length + 1 < MAX_VERIFIED_VALIDATORS,
+                "Max validators"
             );
 
             // Flag a deposit to an unverified validator so only no other deposits can be made
