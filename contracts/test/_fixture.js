@@ -2006,6 +2006,10 @@ async function compoundingStakingSSVStrategyFixture() {
   );
   fixture.compoundingStakingSSVStrategy = compoundingStakingSSVStrategy;
 
+  fixture.compoundingStakingStrategyView = await ethers.getContract(
+    "CompoundingStakingStrategyView"
+  );
+
   if (isFork) {
     /*
     const { compoundingStakingSSVStrategy, ssv } = fixture;

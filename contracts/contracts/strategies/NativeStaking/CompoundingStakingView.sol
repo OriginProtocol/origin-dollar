@@ -5,11 +5,9 @@ import { CompoundingValidatorManager } from "./CompoundingValidatorManager.sol";
 
 /**
  * @title Viewing contract for the Compounding Staking Strategy.
- * @notice This contract implements all the required functionality to
- * register, deposit, withdraw, exit and remove validators.
  * @author Origin Protocol Inc
  */
-abstract contract CompoundingStakingStrategyView {
+contract CompoundingStakingStrategyView {
     /// @notice The address of the Compounding Staking Strategy contract
     CompoundingValidatorManager public immutable stakingStrategy;
 

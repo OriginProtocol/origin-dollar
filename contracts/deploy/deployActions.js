@@ -890,6 +890,11 @@ const deployCompoundingStakingSSVStrategy = async () => {
     );
   }
 
+  log("Deploy CompoundingStakingStrategyView");
+  await deployWithConfirmation("CompoundingStakingStrategyView", [
+    cCompoundingStakingSSVStrategyProxy.address,
+  ]);
+
   const proxyGovernor = await cCompoundingStakingSSVStrategyProxy.governor();
   if (isFork && proxyGovernor != deployerAddr) {
     // For fork tests, transfer the governance to the deployer account
