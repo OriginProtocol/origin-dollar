@@ -694,6 +694,8 @@ abstract contract CompoundingValidatorManager is Governable {
                 strategyValidatorData.withdrawableEpoch
             );
 
+            validator[deposit.pubKeyHash].state = VALIDATOR_STATE.EXITING;
+
             // Leave the deposit status as PENDING
             return;
         }
