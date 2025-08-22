@@ -146,7 +146,7 @@ async function verifyValidator({ slot, index, dryrun, withdrawal, signer }) {
 
 async function verifyDeposit({
   slot,
-  root: depositDataRoot,
+  id: depositID,
   valSlot: firstDepositValidatorCreatedSlot,
   dryrun,
   test,
@@ -160,7 +160,7 @@ async function verifyDeposit({
 
   let strategyDepositSlot = 0;
   if (!test) {
-    const depositData = await strategy.deposits(depositDataRoot);
+    const depositData = await strategy.deposits(depositID);
     log(
       `Found deposit for ${formatUnits(
         depositData.amountGwei,
@@ -177,11 +177,11 @@ async function verifyDeposit({
       );
 
     const { slot, amountGwei, pubKeyHash, status } = await strategy.deposits(
-      depositDataRoot
+      depositID
     );
     strategyDepositSlot = slot;
     if (strategyDepositSlot == 0) {
-      throw Error(`Failed to find deposit with root ${depositDataRoot}`);
+      throw Error(`Failed to find deposit with ID ${depositID}`);
     }
     log(
       `Verifying deposit of ${formatUnits(
@@ -191,7 +191,7 @@ async function verifyDeposit({
     );
     if (status !== 1) {
       throw Error(
-        `Deposit with root ${depositDataRoot} is not Pending. Status: ${status}`
+        `Deposit with ID ${depositID} is not Pending. Status: ${status}`
       );
     }
 
@@ -300,9 +300,7 @@ async function verifyDeposit({
     console.log(
       `deposit slot                              : ${strategyDepositSlot}`
     );
-    console.log(
-      `deposit data root                         : ${depositDataRoot}`
-    );
+    console.log(`deposit ID                                : ${depositID}`);
     console.log(
       `beacon block root                         : ${processedBeaconBlockRoot}`
     );
@@ -359,12 +357,12 @@ async function verifyDeposit({
   }
 
   log(
-    `About to verify deposit from slot ${strategyDepositSlot} with processing slot ${depositProcessedSlot}, deposit data root ${depositDataRoot}, slot of first pending deposit ${firstPendingDepositSlot} to beacon chain root ${depositDataRoot}`
+    `About to verify deposit from slot ${strategyDepositSlot} with processing slot ${depositProcessedSlot}, deposit ID ${depositID}, slot of first pending deposit ${firstPendingDepositSlot} to beacon block root ${processedBeaconBlockRoot}`
   );
   const tx = await strategy
     .connect(signer)
     .verifyDeposit(
-      depositDataRoot,
+      depositID,
       depositProcessedSlot,
       firstDepositValidatorCreatedSlot,
       firstPendingDeposit,

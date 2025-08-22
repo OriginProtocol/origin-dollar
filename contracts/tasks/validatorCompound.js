@@ -141,7 +141,13 @@ async function stakeValidator({ pubkey, sig, amount, uuid }) {
   const tx = await strategy
     .connect(signer)
     .stakeEth({ pubkey, signature: sig, depositDataRoot }, amountGwei);
-  await logTxDetails(tx, "stakeETH");
+  const receipt = await logTxDetails(tx, "stakeETH");
+
+  const event = receipt.events.find((event) => event.event === "ETHStaked");
+  if (!event) {
+    throw new Error("ETHStaked event not found in transaction receipt");
+  }
+  console.log(`Deposit ID: ${event.args.depositId}`);
 }
 
 async function withdrawValidator({ pubkey, amount, signer }) {

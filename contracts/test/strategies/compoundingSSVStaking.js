@@ -31,7 +31,6 @@ const {
   createFixtureLoader,
   compoundingStakingSSVStrategyFixture,
 } = require("./../_fixture");
-const { bytes32 } = require("../../utils/regex");
 
 const loadFixture = createFixtureLoader(compoundingStakingSSVStrategyFixture);
 
@@ -191,6 +190,7 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
     );
 
     const depositGwei = BigNumber.from(depositAmount).mul(ETHInGwei); // Convert ETH to Gwei
+    const depositID = await compoundingStakingSSVStrategy.nextDepositID();
 
     const stakeTx = await compoundingStakingSSVStrategy
       .connect(validatorRegistrator)
@@ -245,7 +245,7 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
     );
 
     const verifiedDepositTx = await compoundingStakingSSVStrategy.verifyDeposit(
-      depositDataRoot,
+      depositID,
       depositProcessedSlot,
       firstDepositValidatorCreatedSlot,
       testValidator.depositProof.firstPendingDeposit,
@@ -278,6 +278,7 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
     );
 
     const depositGwei = parseUnits(depositAmount.toString(), 9);
+    const depositID = await compoundingStakingSSVStrategy.nextDepositID();
 
     const stakeTx = await compoundingStakingSSVStrategy
       .connect(validatorRegistrator)
@@ -312,7 +313,7 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
     );
 
     const verifiedDepositTx = await compoundingStakingSSVStrategy.verifyDeposit(
-      depositDataRoot,
+      depositID,
       depositProcessedSlot,
       firstDepositValidatorCreatedSlot,
       testValidator.depositProof.firstPendingDeposit,
@@ -532,6 +533,9 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
           amount
         );
 
+        const expectedDepositId =
+          await compoundingStakingSSVStrategy.nextDepositID();
+
         const stakeTx = compoundingStakingSSVStrategy
           .connect(validatorRegistrator)
           .stakeEth(
@@ -549,7 +553,7 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
           .to.emit(compoundingStakingSSVStrategy, "ETHStaked")
           .withArgs(
             testValidator.publicKeyHash,
-            depositDataRoot,
+            expectedDepositId,
             testValidator.publicKey,
             amountGwei.mul(GweiInWei) // Convert Gwei to Wei
           );
@@ -561,6 +565,9 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
             )
           ).state
         ).to.equal(2, "Validator state not 2 (STAKED)");
+        expect(await compoundingStakingSSVStrategy.nextDepositID()).to.equal(
+          expectedDepositId.add(1)
+        );
       }
     };
 
@@ -589,7 +596,6 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
           "Deposit amount in Gwei"
         );
         expect(deposit.slot).to.gt(0);
-        expect(deposit.root).to.match(bytes32);
         expect(deposit.pubKeyHash).to.equal(
           hashPubKey(testValidators[i++].publicKey),
           "Validator public key"
@@ -628,6 +634,7 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
         testValidator.signature,
         1
       );
+      let depositID = await compoundingStakingSSVStrategy.nextDepositID();
 
       // Stake 1 ETH to the new validator
       let stakeTx = await compoundingStakingSSVStrategy
@@ -681,7 +688,7 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
       );
 
       await compoundingStakingSSVStrategy.verifyDeposit(
-        depositDataRoot,
+        depositID,
         depositProcessedSlot,
         firstDepositValidatorCreatedSlot,
         testValidator.depositProof.firstPendingDeposit,
@@ -714,7 +721,7 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
         .to.emit(compoundingStakingSSVStrategy, "ETHStaked")
         .withArgs(
           testValidator.publicKeyHash,
-          depositDataRoot2,
+          ++depositID,
           testValidator.publicKey,
           parseEther(secondDepositAmount.toString())
         );
@@ -722,7 +729,7 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
       // Cheating here by using the same proof as before
       // it works as the deposit block is after the second deposit on the execution layer
       await compoundingStakingSSVStrategy.verifyDeposit(
-        depositDataRoot2,
+        depositID,
         depositProcessedSlot,
         firstDepositValidatorCreatedSlot,
         testValidator.depositProof.firstPendingDeposit,
