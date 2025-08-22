@@ -22,12 +22,20 @@ import { IBeaconProofs } from "../../interfaces/IBeaconProofs.sol";
 abstract contract CompoundingValidatorManager is Governable {
     using SafeERC20 for IERC20;
 
-    /// @notice The amount of ETH in wei that is required for a deposit to a new validator.
+    /// @dev The amount of ETH in wei that is required for a deposit to a new validator.
     /// Initially this is 32 ETH, but will be reduced to 1 ETH after P2P's APIs have been updated
     /// to support deposits of 1 ETH.
     uint256 internal constant DEPOSIT_AMOUNT_WEI = 32 ether;
+    /// @dev The maximum number of deposits that can waiting to be verified.
+    uint256 internal constant MAX_DEPOSITS = 12;
+    /// @dev The maximum number of validators that can be verified.
+    uint256 internal constant MAX_VERIFIED_VALIDATORS = 48;
+    /// @dev The default withdrawable epoch value on the Beacon chain.
+    /// A value in the far future means the validator is not exiting.
     uint64 internal constant FAR_FUTURE_EPOCH = type(uint64).max;
+    /// @dev The number of seconds between each beacon chain slot.
     uint64 internal constant SLOT_DURATION = 12;
+    /// @dev The number of slots in each beacon chain epoch.
     uint64 internal constant SLOTS_PER_EPOCH = 32;
 
     /// @notice The address of the Wrapped ETH (WETH) token contract
@@ -77,7 +85,7 @@ abstract contract CompoundingValidatorManager is Governable {
     /// validator's balance to be swept.
     /// The list may not be ordered by time of deposit.
     /// Removed deposits will move the last deposit to the removed index.
-    uint256[] internal depositList;
+    uint256[] public depositList;
 
     // Validator data
 
@@ -98,7 +106,7 @@ abstract contract CompoundingValidatorManager is Governable {
     /// @notice List of validator public key hashes that have been verified to exist on the beacon chain.
     /// These have had a deposit processed and the validator's balance increased.
     /// Validators will be removed from this list when its verified they have a zero balance.
-    bytes32[] internal verifiedValidators;
+    bytes32[] public verifiedValidators;
     /// @notice Mapping of the hash of the validator's public key to the validator state and index.
     /// Uses the Beacon chain hashing for BLSPubkey which is sha256(abi.encodePacked(validator.pubkey, bytes16(0)))
     mapping(bytes32 => ValidatorData) public validator;
@@ -110,7 +118,7 @@ abstract contract CompoundingValidatorManager is Governable {
         uint128 ethBalance;
     }
     /// @notice Mapping of the block root to the balances at that slot
-    mapping(bytes32 => Balances) internal snappedBalances;
+    mapping(bytes32 => Balances) public snappedBalances;
     uint64 public lastSnapTimestamp;
     uint128 public lastVerifiedEthBalance;
 
@@ -278,6 +286,7 @@ abstract contract CompoundingValidatorManager is Governable {
             depositAmountWei <= IWETH9(WETH).balanceOf(address(this)),
             "Insufficient WETH"
         );
+        require(depositList.length < MAX_DEPOSITS, "Max deposits");
 
         // Convert required ETH from WETH and do the necessary accounting
         _convertWethToEth(depositAmountWei);
@@ -488,6 +497,11 @@ abstract contract CompoundingValidatorManager is Governable {
             validator[pubKeyHash].state == VALIDATOR_STATE.STAKED,
             "Validator not staked"
         );
+        require(
+            verifiedValidators.length < MAX_VERIFIED_VALIDATORS,
+            "Max validators"
+        );
+
         // Get the beacon block root of the slot we are verifying the validator in.
         // The parent beacon block root of the next block is the beacon block root of the slot we are verifying.
         bytes32 blockRoot = BeaconRoots.parentBlockRoot(nextBlockTimestamp);
@@ -1102,61 +1116,15 @@ abstract contract CompoundingValidatorManager is Governable {
                 View Functions
     ****************************************/
 
-    struct ValidatorView {
-        bytes32 pubKeyHash;
-        uint64 index;
-        VALIDATOR_STATE state;
+    /// @notice Returns the number of deposits waiting to be verified as processed on the beacon chain,
+    /// or deposits that have been verified to an exiting validator and is now waiting for the
+    /// validator's balance to be swept.
+    function depositListLength() external view returns (uint256) {
+        return depositList.length;
     }
 
-    /// @notice Returns the strategy's active validators.
-    /// These are the ones that have been verified and have a non-zero balance.
-    /// @return validators An array of `ValidatorView` containing the public key hash, validator index and state.
-    function getVerifiedValidators()
-        external
-        view
-        returns (ValidatorView[] memory validators)
-    {
-        uint256 validatorCount = verifiedValidators.length;
-        validators = new ValidatorView[](validatorCount);
-        for (uint256 i = 0; i < validatorCount; ++i) {
-            bytes32 pubKeyHash = verifiedValidators[i];
-            ValidatorData memory validatorData = validator[pubKeyHash];
-            validators[i] = ValidatorView({
-                pubKeyHash: pubKeyHash,
-                index: validatorData.index,
-                state: validatorData.state
-            });
-        }
-    }
-
-    struct DepositView {
-        uint256 depositID;
-        bytes32 pubKeyHash;
-        uint64 amountGwei;
-        uint64 slot;
-        uint256 withdrawableEpoch;
-    }
-
-    /// @notice Returns the deposits that are still to be verified.
-    /// These may or may not have been processed by the beacon chain.
-    /// @return pendingDeposits An array of `DepositView` containing the deposit ID, public key hash,
-    /// amount in Gwei and the slot of the deposit.
-    function getPendingDeposits()
-        external
-        view
-        returns (DepositView[] memory pendingDeposits)
-    {
-        uint256 depositsCount = depositList.length;
-        pendingDeposits = new DepositView[](depositsCount);
-        for (uint256 i = 0; i < depositsCount; ++i) {
-            DepositData memory deposit = deposits[depositList[i]];
-            pendingDeposits[i] = DepositView({
-                depositID: depositList[i],
-                pubKeyHash: deposit.pubKeyHash,
-                amountGwei: deposit.amountGwei,
-                slot: deposit.slot,
-                withdrawableEpoch: deposit.withdrawableEpoch
-            });
-        }
+    /// @notice Returns the number of verified validators.
+    function verifiedValidatorsLength() external view returns (uint256) {
+        return verifiedValidators.length;
     }
 }
