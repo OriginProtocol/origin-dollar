@@ -37,6 +37,9 @@ abstract contract CompoundingValidatorManager is Governable {
     uint64 internal constant SLOT_DURATION = 12;
     /// @dev The number of slots in each beacon chain epoch.
     uint64 internal constant SLOTS_PER_EPOCH = 32;
+    /// @dev Minimum time in seconds to allow snapped balances to be verified.
+    uint64 internal constant SNAP_BALANCES_DELAY =
+        2 * SLOTS_PER_EPOCH * SLOT_DURATION;
 
     /// @notice The address of the Wrapped ETH (WETH) token contract
     address public immutable WETH;
@@ -838,12 +841,12 @@ abstract contract CompoundingValidatorManager is Governable {
     /// This behaviour is correct.
     ///
     /// The validator balances on the beacon chain can then be proved with `verifyBalances`.
-    /// Can only be called by the registrator.
-    function snapBalances() external onlyRegistrator {
-        _snapBalances();
-    }
+    function snapBalances() external {
+        require(
+            lastSnapTimestamp + SNAP_BALANCES_DELAY < block.timestamp,
+            "Snap too soon"
+        );
 
-    function _snapBalances() internal {
         bytes32 blockRoot = BeaconRoots.parentBlockRoot(
             SafeCast.toUint64(block.timestamp)
         );
