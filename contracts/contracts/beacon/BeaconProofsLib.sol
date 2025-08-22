@@ -55,12 +55,12 @@ library BeaconProofsLib {
     /// @dev Merkle height of the Balances container
     /// BeaconBlock.state.balances
     uint256 internal constant BALANCES_HEIGHT = 39;
-    /// @dev Merkle height of the Validators container
+    /// @dev Merkle height of the Validators container list
     /// BeaconBlock.state.validators
-    uint256 internal constant VALIDATORS_HEIGHT = 41;
+    uint256 internal constant VALIDATORS_LIST_HEIGHT = 41;
     /// @dev Merkle height of the Validator container
     /// BeaconBlock.state.validators[validatorIndex]
-    uint256 internal constant VALIDATOR_HEIGHT = 3;
+    uint256 internal constant VALIDATOR_CONTAINER_HEIGHT = 3;
 
     /// @dev Position of the pubkey field in the Validator container.
     /// BeaconBlock.state.validators[validatorIndex].pubkey
@@ -90,13 +90,13 @@ library BeaconProofsLib {
         // BeaconBlock.state.validators[validatorIndex]
         uint256 generalizedIndex = concatGenIndices(
             VALIDATORS_CONTAINER_GENERALIZED_INDEX,
-            VALIDATORS_HEIGHT,
+            VALIDATORS_LIST_HEIGHT,
             validatorIndex
         );
         // BeaconBlock.state.validators[validatorIndex].pubkey
         generalizedIndex = concatGenIndices(
             generalizedIndex,
-            VALIDATOR_HEIGHT,
+            VALIDATOR_CONTAINER_HEIGHT,
             VALIDATOR_PUBKEY_INDEX
         );
 
@@ -146,13 +146,13 @@ library BeaconProofsLib {
         // BeaconBlock.state.validators[validatorIndex]
         uint256 exitEpochGenIndex = concatGenIndices(
             VALIDATORS_CONTAINER_GENERALIZED_INDEX,
-            VALIDATORS_HEIGHT,
+            VALIDATORS_LIST_HEIGHT,
             validatorIndex
         );
         // BeaconBlock.state.validators[validatorIndex].withdrawableEpoch
         exitEpochGenIndex = concatGenIndices(
             exitEpochGenIndex,
-            VALIDATOR_HEIGHT,
+            VALIDATOR_CONTAINER_HEIGHT,
             VALIDATOR_WITHDRAWABLE_EPOCH_INDEX
         );
 
