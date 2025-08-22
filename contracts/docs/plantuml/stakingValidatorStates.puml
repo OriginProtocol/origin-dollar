@@ -9,7 +9,7 @@ REGISTERED --> STAKED : stakeETH
 STAKED --> VERIFIED : verifyValidator
 STAKED --> INVALID : verifyValidator
 
-VERIFIED --> EXITING : validatorWithdrawal
+VERIFIED --> EXITING : validatorWithdrawal\nverifyDeposit
 VERIFIED --> EXITED : verifyBalances
 EXITING --> EXITED : verifyBalances
 
