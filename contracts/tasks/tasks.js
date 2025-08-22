@@ -1917,8 +1917,8 @@ task("verifyValidator").setAction(async (_, __, runSuper) => {
 
 subtask("verifyDeposit", "Verify a deposit on the Beacon chain")
   .addParam(
-    "root",
-    "Root of the deposit data sent to the Beacon deposit contract in hex format with a 0x prefix",
+    "id",
+    "The deposit ID emitted in the `ETHStaked` event from the `stakeETH` function",
     undefined,
     types.string
   )
