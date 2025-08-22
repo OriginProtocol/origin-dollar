@@ -125,7 +125,9 @@ abstract contract CompoundingValidatorManager is Governable {
     }
     /// @notice Mapping of the block root to the balances at that slot
     mapping(bytes32 => Balances) public snappedBalances;
+    /// @notice The timestamp of the last snapshot taken
     uint64 public lastSnapTimestamp;
+    /// @notice The last verified ETH balance of the strategy
     uint128 public lastVerifiedEthBalance;
 
     /// @dev This contract receives WETH as the deposit asset, but unlike other strategies doesn't immediately
