@@ -3,6 +3,8 @@ const ethers = require("ethers");
 const MAX_UINT256 = ethers.BigNumber.from(
   "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
 );
+const MAX_UINT64 = ethers.BigNumber.from("0xffffffffffffffff");
+const ZERO_BYTES32 = ethers.utils.hexZeroPad("0x", 32);
 
 const ONE = ethers.utils.parseEther("1");
 
@@ -36,6 +38,7 @@ const beaconChainGenesisTimeMainnet = 1606824023; // Tue Dec 01 2020 12:00:23 GM
 // TODO get genesis time for hoodi
 const beaconChainGenesisTimeHoodi = 1742213400; //	Mon Mar 17 2025 12:10:00 GMT+0000
 
+const gIndexFirstPendingDepositPubKey = 1584842932224n;
 const gIndexFirstPendingDepositSlot = 1584842932228n;
 
 module.exports = {
@@ -43,6 +46,8 @@ module.exports = {
   metapoolLPCRVPid,
   oethPoolLpPID,
   MAX_UINT256,
+  MAX_UINT64,
+  ZERO_BYTES32,
   aura_stETH_WETH_PID,
   balancer_stETH_WETH_PID,
   aura_wstETH_sfrxETH_rETH_PID,
@@ -54,6 +59,7 @@ module.exports = {
   ONE,
   beaconChainGenesisTimeMainnet,
   beaconChainGenesisTimeHoodi,
+  gIndexFirstPendingDepositPubKey,
   gIndexFirstPendingDepositSlot,
 };
 

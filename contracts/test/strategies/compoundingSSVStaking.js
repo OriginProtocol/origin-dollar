@@ -6,10 +6,7 @@ const { setBalance } = require("@nomicfoundation/hardhat-network-helpers");
 const { isCI } = require("../helpers");
 const { shouldBehaveLikeGovernable } = require("../behaviour/governable");
 const { shouldBehaveLikeStrategy } = require("../behaviour/strategy");
-const {
-  MAX_UINT256,
-  gIndexFirstPendingDepositSlot,
-} = require("../../utils/constants");
+const { MAX_UINT256, ZERO_BYTES32 } = require("../../utils/constants");
 const { impersonateAndFund } = require("../../utils/signers");
 const { ethUnits } = require("../helpers");
 const { setERC20TokenBalance } = require("../_fund");
@@ -17,8 +14,6 @@ const { zero } = require("../../utils/addresses");
 const { calcDepositRoot } = require("../../tasks/beaconTesting");
 const {
   hashPubKey,
-  calcBeaconBlockRoot,
-  serializeUint64,
   calcSlot,
   calcBlockTimestamp,
 } = require("../../utils/beacon");
@@ -229,34 +224,32 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
         testValidator.validatorProof.nextBlockTimestamp,
         testValidator.index,
         testValidator.publicKeyHash,
+        compoundingStakingSSVStrategy.address,
         testValidator.validatorProof.bytes
       );
 
     if (state === "VERIFIED_VALIDATOR") return verifiedValidatorTx;
 
-    // Recalculate the beacon block root of the first pending deposit proof
-    // as we need to change the slot number to being after the deposit's slot
-    const firstPendingDepositSlot = depositSlot + 100n;
-    const leafHex = await serializeUint64(firstPendingDepositSlot);
-    const beaconBlockRoot = await calcBeaconBlockRoot(
-      leafHex,
-      testValidator.depositProof.proof,
-      gIndexFirstPendingDepositSlot
-    );
+    // Set parent beacon root for the block after the verification slots
+    const depositProcessedSlot = depositSlot + 10000n;
+    // Put the slot the validator of the first pending deposit was created one epoch later
+    const firstDepositValidatorCreatedSlot = depositProcessedSlot + 32n;
 
-    // Set parent beacon root for the block after the verification slot
-    const processSlot = depositSlot + 10000n;
-    const nextBlockTimestamp = calcBlockTimestamp(processSlot) + 12n;
     await beaconRoots["setBeaconRoot(uint256,bytes32)"](
-      nextBlockTimestamp,
-      beaconBlockRoot
+      calcBlockTimestamp(depositProcessedSlot) + 12n,
+      testValidator.depositProof.processedBeaconBlockRoot
+    );
+    await beaconRoots["setBeaconRoot(uint256,bytes32)"](
+      calcBlockTimestamp(firstDepositValidatorCreatedSlot) + 12n,
+      testValidator.depositProof.validatorBeaconBlockRoot
     );
 
     const verifiedDepositTx = await compoundingStakingSSVStrategy.verifyDeposit(
       depositDataRoot,
-      processSlot,
-      firstPendingDepositSlot,
-      testValidator.depositProof.proof
+      depositProcessedSlot,
+      firstDepositValidatorCreatedSlot,
+      testValidator.depositProof.firstPendingDeposit,
+      testValidator.depositProof.strategyValidator
     );
 
     if (state === "VERIFIED_DEPOSIT") return verifiedDepositTx;
@@ -304,29 +297,26 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
 
     if (state === "STAKED") return stakeTx;
 
-    // Recalculate the beacon block root of the first pending deposit proof
-    // as we need to change the slot number to being after the deposit's slot
-    const firstPendingDepositSlot = depositSlot + 100n;
-    const leafHex = await serializeUint64(firstPendingDepositSlot);
-    const beaconBlockRoot = await calcBeaconBlockRoot(
-      leafHex,
-      testValidator.depositProof.proof,
-      gIndexFirstPendingDepositSlot
-    );
+    // Set parent beacon root for the block after the verification slots
+    const depositProcessedSlot = depositSlot + 10000n;
+    // Put the slot the validator of the first pending deposit was created one epoch later
+    const firstDepositValidatorCreatedSlot = depositProcessedSlot + 32n;
 
-    // Set parent beacon root for the block after the verification slot
-    const processSlot = depositSlot + 10000n;
-    const nextBlockTimestamp = calcBlockTimestamp(processSlot) + 12n;
     await beaconRoots["setBeaconRoot(uint256,bytes32)"](
-      nextBlockTimestamp,
-      beaconBlockRoot
+      calcBlockTimestamp(depositProcessedSlot) + 12n,
+      testValidator.depositProof.processedBeaconBlockRoot
+    );
+    await beaconRoots["setBeaconRoot(uint256,bytes32)"](
+      calcBlockTimestamp(firstDepositValidatorCreatedSlot) + 12n,
+      testValidator.depositProof.validatorBeaconBlockRoot
     );
 
     const verifiedDepositTx = await compoundingStakingSSVStrategy.verifyDeposit(
       depositDataRoot,
-      processSlot,
-      firstPendingDepositSlot,
-      testValidator.depositProof.proof
+      depositProcessedSlot,
+      firstDepositValidatorCreatedSlot,
+      testValidator.depositProof.firstPendingDeposit,
+      testValidator.depositProof.strategyValidator
     );
 
     if (state === "VERIFIED_DEPOSIT") return verifiedDepositTx;
@@ -362,19 +352,13 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
   };
 
   const assertBalances = async ({
-    firstPendingDepositBlockNumber,
     wethAmount,
     ethAmount,
     balancesProof,
     pendingDepositAmount,
     activeValidators,
   }) => {
-    const { compoundingStakingSSVStrategy, weth } = fixture;
-
-    // If the block number of the first pending deposit is not overridden
-    if (!firstPendingDepositBlockNumber) {
-      firstPendingDepositBlockNumber = balancesProof.firstPendingDeposit.block;
-    }
+    const { beaconRoots, compoundingStakingSSVStrategy, weth } = fixture;
 
     if (wethAmount > 0) {
       // Set some WETH in the strategy
@@ -393,25 +377,41 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
       );
     }
 
-    await snapBalances(balancesProof.blockRoot);
+    const { timestamp: snapBalancesTimestamp } = await snapBalances(
+      balancesProof.snapBalancesBlockRoot
+    );
 
-    const filteredLeaves = balancesProof.validatorBalanceLeaves.filter(
-      (_, index) => activeValidators.includes(index)
-    );
-    const filteredProofs = balancesProof.validatorBalanceProofs.filter(
-      (_, index) => activeValidators.includes(index)
-    );
+    const filteredLeaves =
+      balancesProof.balanceProofs.validatorBalanceLeaves.filter((_, index) =>
+        activeValidators.includes(index)
+      );
+    const filteredProofs =
+      balancesProof.balanceProofs.validatorBalanceProofs.filter((_, index) =>
+        activeValidators.includes(index)
+      );
     const filteredBalances = balancesProof.validatorBalances.filter(
       (_, index) => activeValidators.includes(index)
     );
 
+    // Put the slot the validator of the first pending deposit was created one epoch later
+    const validatorVerificationBlockTimestamp = snapBalancesTimestamp + 12 * 32;
+
+    await beaconRoots["setBeaconRoot(uint256,bytes32)"](
+      validatorVerificationBlockTimestamp,
+      balancesProof.firstDepositValidatorBlockRoot
+    );
+
     // Verify balances with pending deposits and active validators
-    const tx = await compoundingStakingSSVStrategy.verifyBalances({
-      ...balancesProof,
-      mappedDepositSlot: balancesProof.firstPendingDeposit.slot,
-      validatorBalanceLeaves: filteredLeaves,
-      validatorBalanceProofs: filteredProofs,
-    });
+    const tx = await compoundingStakingSSVStrategy.verifyBalances(
+      balancesProof.snapBalancesBlockRoot,
+      validatorVerificationBlockTimestamp,
+      balancesProof.firstPendingDeposit,
+      {
+        ...balancesProof.balanceProofs,
+        validatorBalanceLeaves: filteredLeaves,
+        validatorBalanceProofs: filteredProofs,
+      }
+    );
 
     const totalDepositsWei = parseEther(pendingDepositAmount.toString());
     const wethBalance = parseEther(wethAmount.toString());
@@ -429,7 +429,6 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
       .withNamedArgs({
         totalDepositsWei,
         totalValidatorBalance,
-        wethBalance,
         ethBalance,
       });
 
@@ -492,9 +491,11 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
       // a failure transaction with the last stake call
       for (const testValidator of testValidators.slice(0, validators)) {
         expect(
-          await compoundingStakingSSVStrategy.validatorState(
-            testValidator.publicKeyHash
-          )
+          (
+            await compoundingStakingSSVStrategy.validator(
+              testValidator.publicKeyHash
+            )
+          ).state
         ).to.equal(0, "Validator state not 0 (NON_REGISTERED)");
 
         const ssvAmount = ethUnits("2");
@@ -514,9 +515,11 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
           .withArgs(testValidator.publicKeyHash, testValidator.operatorIds);
 
         expect(
-          await compoundingStakingSSVStrategy.validatorState(
-            testValidator.publicKeyHash
-          )
+          (
+            await compoundingStakingSSVStrategy.validator(
+              testValidator.publicKeyHash
+            )
+          ).state
         ).to.equal(1, "Validator state not 1 (REGISTERED)");
 
         // Stake ETH to the new validator
@@ -552,9 +555,11 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
           );
 
         expect(
-          await compoundingStakingSSVStrategy.validatorState(
-            testValidator.publicKeyHash
-          )
+          (
+            await compoundingStakingSSVStrategy.validator(
+              testValidator.publicKeyHash
+            )
+          ).state
         ).to.equal(2, "Validator state not 2 (STAKED)");
       }
     };
@@ -657,32 +662,30 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
         testValidator.validatorProof.nextBlockTimestamp,
         testValidator.index,
         testValidator.publicKeyHash,
+        compoundingStakingSSVStrategy.address,
         testValidator.validatorProof.bytes
       );
 
-      // Recalculate the beacon block root of the first pending deposit proof
-      // as we need to change the slot number to being after the deposit's slot
-      const firstPendingDepositSlot = depositSlot + 100n;
-      const leafHex = await serializeUint64(firstPendingDepositSlot);
-      const beaconBlockRoot = await calcBeaconBlockRoot(
-        leafHex,
-        testValidator.depositProof.proof,
-        gIndexFirstPendingDepositSlot
-      );
+      // Set parent beacon root for the block after the verification slots
+      const depositProcessedSlot = depositSlot + 10000n;
+      // Put the slot the validator of the first pending deposit was created one epoch later
+      const firstDepositValidatorCreatedSlot = depositProcessedSlot + 32n;
 
-      // Set parent beacon root for the block after the verification slot
-      const processSlot = depositSlot + 10000n;
-      const nextBlockTimestamp = calcBlockTimestamp(processSlot) + 12n;
       await beaconRoots["setBeaconRoot(uint256,bytes32)"](
-        nextBlockTimestamp,
-        beaconBlockRoot
+        calcBlockTimestamp(depositProcessedSlot) + 12n,
+        testValidator.depositProof.processedBeaconBlockRoot
+      );
+      await beaconRoots["setBeaconRoot(uint256,bytes32)"](
+        calcBlockTimestamp(firstDepositValidatorCreatedSlot) + 12n,
+        testValidator.depositProof.validatorBeaconBlockRoot
       );
 
       await compoundingStakingSSVStrategy.verifyDeposit(
         depositDataRoot,
-        processSlot,
-        firstPendingDepositSlot,
-        testValidator.depositProof.proof
+        depositProcessedSlot,
+        firstDepositValidatorCreatedSlot,
+        testValidator.depositProof.firstPendingDeposit,
+        testValidator.depositProof.strategyValidator
       );
 
       // Stake 2047 ETH to the new validator
@@ -720,9 +723,10 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
       // it works as the deposit block is after the second deposit on the execution layer
       await compoundingStakingSSVStrategy.verifyDeposit(
         depositDataRoot2,
-        processSlot,
-        firstPendingDepositSlot,
-        testValidator.depositProof.proof
+        depositProcessedSlot,
+        firstDepositValidatorCreatedSlot,
+        testValidator.depositProof.firstPendingDeposit,
+        testValidator.depositProof.strategyValidator
       );
 
       expect(
@@ -850,9 +854,11 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
         );
 
       expect(
-        await compoundingStakingSSVStrategy.validatorState(
-          testValidator.publicKeyHash
-        )
+        (
+          await compoundingStakingSSVStrategy.validator(
+            testValidator.publicKeyHash
+          )
+        ).state
       ).to.equal(1, "Validator state not 1 (REGISTERED)");
 
       // Withdraw from the validator
@@ -874,9 +880,11 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
 
       const testValidator = testValidators[0];
       expect(
-        await compoundingStakingSSVStrategy.validatorState(
-          testValidator.publicKeyHash
-        )
+        (
+          await compoundingStakingSSVStrategy.validator(
+            testValidator.publicKeyHash
+          )
+        ).state
       ).to.equal(0, "Validator state not 0 (NON_REGISTERED)");
 
       // Try to remove a validator that is not registered
@@ -924,9 +932,11 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
         await compoundingStakingSSVStrategy.getVerifiedValidators();
       expect(activeValidatorsBefore.length).to.eq(1);
       expect(
-        await compoundingStakingSSVStrategy.validatorState(
-          testValidators[3].publicKeyHash
-        )
+        (
+          await compoundingStakingSSVStrategy.validator(
+            testValidators[3].publicKeyHash
+          )
+        ).state
       ).to.equal(3); // VERIFIED
 
       // fund 1 WEI for the withdrawal request
@@ -977,9 +987,11 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
       const { compoundingStakingSSVStrategy } = fixture;
 
       expect(
-        await compoundingStakingSSVStrategy.validatorState(
-          testValidator.publicKeyHash
-        )
+        (
+          await compoundingStakingSSVStrategy.validator(
+            testValidator.publicKeyHash
+          )
+        ).state
       ).to.equal(2, "Validator state not 2 (STAKED)");
     });
   });
@@ -1314,19 +1326,30 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
 
   describe("Strategy balances", () => {
     describe("When no execution rewards (ETH), no pending deposits and no active validators", () => {
-      const verifyBalancesNoDepositsOrValidators = async (beaconBlockRoot) => {
+      const verifyBalancesNoDepositsOrValidators = async (
+        beaconBlockRoot,
+        validatorVerificationBlockTimestamp
+      ) => {
         const { compoundingStakingSSVStrategy } = fixture;
 
-        const tx = await compoundingStakingSSVStrategy.verifyBalances({
-          blockRoot: beaconBlockRoot,
-          mappedDepositSlot: 0,
-          firstPendingDepositSlot: 0,
-          firstPendingDepositSlotProof: "0x",
-          balancesContainerRoot: ethers.utils.hexZeroPad("0x0", 32),
-          balancesContainerProof: "0x",
-          validatorBalanceLeaves: [],
-          validatorBalanceProofs: [],
-        });
+        const tx = await compoundingStakingSSVStrategy.verifyBalances(
+          beaconBlockRoot,
+          validatorVerificationBlockTimestamp,
+          {
+            slot: 0,
+            validatorIndex: 0,
+            pubKeyHash: ZERO_BYTES32,
+            pendingDepositPubKeyProof: "0x",
+            withdrawableEpochProof: "0x",
+            validatorPubKeyProof: "0x",
+          },
+          {
+            balancesContainerRoot: ZERO_BYTES32,
+            balancesContainerProof: "0x",
+            validatorBalanceLeaves: [],
+            validatorBalanceProofs: [],
+          }
+        );
 
         return tx;
       };
@@ -1335,7 +1358,10 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
 
         const { beaconBlockRoot, timestamp } = await snapBalances();
 
-        const tx = await verifyBalancesNoDepositsOrValidators(beaconBlockRoot);
+        const tx = await verifyBalancesNoDepositsOrValidators(
+          beaconBlockRoot,
+          timestamp
+        );
 
         await expect(tx)
           .to.emit(compoundingStakingSSVStrategy, "BalancesVerified")
@@ -1343,7 +1369,6 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
             timestamp,
             0, // totalDepositsWei
             0, // totalValidatorBalance
-            0, // wethBalance
             0 // ethBalance
           );
 
@@ -1367,7 +1392,10 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
 
         const { beaconBlockRoot, timestamp } = await snapBalances();
 
-        const tx = await verifyBalancesNoDepositsOrValidators(beaconBlockRoot);
+        const tx = await verifyBalancesNoDepositsOrValidators(
+          beaconBlockRoot,
+          timestamp
+        );
 
         await expect(tx)
           .to.emit(compoundingStakingSSVStrategy, "BalancesVerified")
@@ -1375,7 +1403,6 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
             timestamp,
             0, // totalDepositsWei
             0, // totalValidatorBalance
-            wethAmountAdded, // wethBalance
             0 // ethBalance
           );
 
@@ -1398,7 +1425,10 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
           .connect(josh)
           .transfer(compoundingStakingSSVStrategy.address, wethAmountAdded);
 
-        const tx = await verifyBalancesNoDepositsOrValidators(beaconBlockRoot);
+        const tx = await verifyBalancesNoDepositsOrValidators(
+          beaconBlockRoot,
+          timestamp
+        );
 
         await expect(tx)
           .to.emit(compoundingStakingSSVStrategy, "BalancesVerified")
@@ -1406,7 +1436,6 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
             timestamp,
             0, // totalDepositsWei
             0, // totalValidatorBalance
-            wethAmountAdded, // wethBalance
             0 // ethBalance
           );
 
@@ -1435,7 +1464,10 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
           .connect(josh)
           .transfer(compoundingStakingSSVStrategy.address, wethAmountAdded);
 
-        const tx = await verifyBalancesNoDepositsOrValidators(beaconBlockRoot);
+        const tx = await verifyBalancesNoDepositsOrValidators(
+          beaconBlockRoot,
+          timestamp
+        );
 
         await expect(tx)
           .to.emit(compoundingStakingSSVStrategy, "BalancesVerified")
@@ -1443,7 +1475,6 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
             timestamp,
             0, // totalDepositsWei
             0, // totalValidatorBalance
-            wethAmountBefore.add(wethAmountAdded), // wethBalance
             0 // ethBalance
           );
 
@@ -1643,9 +1674,11 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
             await compoundingStakingSSVStrategy.getVerifiedValidators();
           expect(activeValidatorsBefore.length).to.eq(1);
           expect(
-            await compoundingStakingSSVStrategy.validatorState(
-              testValidators[3].publicKeyHash
-            )
+            (
+              await compoundingStakingSSVStrategy.validator(
+                testValidators[3].publicKeyHash
+              )
+            ).state
           ).to.equal(3); // VERIFIED
 
           // fund 1 WEI for the withdrawal request
@@ -1680,9 +1713,11 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
             await compoundingStakingSSVStrategy.getVerifiedValidators();
           expect(activeValidatorsAfter.length).to.eq(0);
           expect(
-            await compoundingStakingSSVStrategy.validatorState(
-              testValidators[3].publicKeyHash
-            )
+            (
+              await compoundingStakingSSVStrategy.validator(
+                testValidators[3].publicKeyHash
+              )
+            ).state
           ).to.equal(4); // EXITED
         });
       });
@@ -1752,22 +1787,28 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
       describe("when balances have been snapped", () => {
         const balancesProof = testBalancesProofs[3];
         beforeEach(async () => {
-          await snapBalances(balancesProof.blockRoot);
+          await snapBalances(balancesProof.snapBalancesBlockRoot);
         });
         it("Fail to verify balances with not enough validator leaves", async () => {
           const { compoundingStakingSSVStrategy } = fixture;
 
           // Verify balances with pending deposits and active validators
-          const tx = compoundingStakingSSVStrategy.verifyBalances({
-            ...balancesProof,
-            mappedDepositSlot: balancesProof.firstPendingDeposit.slot,
-            // Only one when there is two active validators
-            validatorBalanceLeaves: [balancesProof.validatorBalanceLeaves[0]],
-            validatorBalanceProofs: [
-              balancesProof.validatorBalanceProofs[0],
-              balancesProof.validatorBalanceProofs[1],
-            ],
-          });
+          const tx = compoundingStakingSSVStrategy.verifyBalances(
+            balancesProof.snapBalancesBlockRoot,
+            balancesProof.firstDepositValidatorBlockTimestamp,
+            balancesProof.firstPendingDeposit,
+            {
+              ...balancesProof.balanceProofs,
+              // Only one when there is three active validators
+              validatorBalanceLeaves: [
+                balancesProof.balanceProofs.validatorBalanceLeaves[0],
+              ],
+              validatorBalanceProofs: [
+                balancesProof.balanceProofs.validatorBalanceProofs[0],
+                balancesProof.balanceProofs.validatorBalanceProofs[1],
+              ],
+            }
+          );
 
           await expect(tx).to.be.revertedWith("Invalid balance leaves");
         });
@@ -1775,16 +1816,21 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
           const { compoundingStakingSSVStrategy } = fixture;
 
           // Verify balances with pending deposits and active validators
-          const tx = compoundingStakingSSVStrategy.verifyBalances({
-            ...balancesProof,
-            mappedDepositSlot: balancesProof.firstPendingDeposit.slot,
-            // Three when there is two active validators
-            validatorBalanceLeaves: balancesProof.validatorBalanceLeaves,
-            validatorBalanceProofs: [
-              balancesProof.validatorBalanceProofs[0],
-              balancesProof.validatorBalanceProofs[1],
-            ],
-          });
+          const tx = compoundingStakingSSVStrategy.verifyBalances(
+            balancesProof.snapBalancesBlockRoot,
+            balancesProof.firstDepositValidatorBlockTimestamp,
+            balancesProof.firstPendingDeposit,
+            {
+              ...balancesProof.balanceProofs,
+              // Three when there is two active validators
+              validatorBalanceLeaves:
+                balancesProof.balanceProofs.validatorBalanceLeaves,
+              validatorBalanceProofs: [
+                balancesProof.balanceProofs.validatorBalanceProofs[0],
+                balancesProof.balanceProofs.validatorBalanceProofs[1],
+              ],
+            }
+          );
 
           await expect(tx).to.be.revertedWith("Invalid balance leaves");
         });
@@ -1792,16 +1838,22 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
           const { compoundingStakingSSVStrategy } = fixture;
 
           // Verify balances with pending deposits and active validators
-          const tx = compoundingStakingSSVStrategy.verifyBalances({
-            ...balancesProof,
-            mappedDepositSlot: balancesProof.firstPendingDeposit.slot,
-            validatorBalanceLeaves: [
-              balancesProof.validatorBalanceLeaves[0],
-              balancesProof.validatorBalanceLeaves[1],
-            ],
-            // Only one when there is two active validators
-            validatorBalanceProofs: [balancesProof.validatorBalanceProofs[0]],
-          });
+          const tx = compoundingStakingSSVStrategy.verifyBalances(
+            balancesProof.snapBalancesBlockRoot,
+            balancesProof.firstDepositValidatorBlockTimestamp,
+            balancesProof.firstPendingDeposit,
+            {
+              ...balancesProof.balanceProofs,
+              validatorBalanceLeaves: [
+                balancesProof.balanceProofs.validatorBalanceLeaves[0],
+                balancesProof.balanceProofs.validatorBalanceLeaves[1],
+              ],
+              // Only one when there is two active validators
+              validatorBalanceProofs: [
+                balancesProof.balanceProofs.validatorBalanceProofs[0],
+              ],
+            }
+          );
 
           await expect(tx).to.be.revertedWith("Invalid balance proofs");
         });
@@ -1809,23 +1861,28 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
           const { compoundingStakingSSVStrategy } = fixture;
 
           // Verify balances with pending deposits and active validators
-          const tx = compoundingStakingSSVStrategy.verifyBalances({
-            ...balancesProof,
-            mappedDepositSlot: balancesProof.firstPendingDeposit.slot,
-            validatorBalanceLeaves: [
-              balancesProof.validatorBalanceLeaves[0],
-              balancesProof.validatorBalanceLeaves[1],
-            ],
-            // Three when there is two active validators
-            validatorBalanceProofs: balancesProof.validatorBalanceProofs,
-          });
+          const tx = compoundingStakingSSVStrategy.verifyBalances(
+            balancesProof.snapBalancesBlockRoot,
+            balancesProof.firstDepositValidatorBlockTimestamp,
+            balancesProof.firstPendingDeposit,
+            {
+              ...balancesProof.balanceProofs,
+              validatorBalanceLeaves: [
+                balancesProof.balanceProofs.validatorBalanceLeaves[0],
+                balancesProof.balanceProofs.validatorBalanceLeaves[1],
+              ],
+              // Three when there is two active validators
+              validatorBalanceProofs:
+                balancesProof.balanceProofs.validatorBalanceProofs,
+            }
+          );
 
           await expect(tx).to.be.revertedWith("Invalid balance proofs");
         });
       });
     });
-    describe("When some WETH, ETH, 3 pending deposits and 16 active validators", () => {
-      const testValidatorCount = 16;
+    describe("When some WETH, ETH, 3 pending deposits and 21 active validators", () => {
+      const testValidatorCount = 21;
       const testValidatorProofs = [...Array(testValidatorCount).keys()];
       beforeEach(async () => {
         // register, stake, verify validator and verify deposit
