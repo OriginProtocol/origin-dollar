@@ -97,9 +97,7 @@ library Merkle {
                     }
                 }
             }
-            assembly {
-                index := div(index, 2)
-            }
+            index = index / 2;
         }
         return computedHash[0];
     }
