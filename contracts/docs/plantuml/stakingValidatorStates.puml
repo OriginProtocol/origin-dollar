@@ -1,0 +1,21 @@
+@startuml
+
+title Compounding Validator States
+
+[*] --> REGISTERED : registerSsvValidator
+
+REGISTERED --> STAKED : stakeETH
+
+STAKED --> VERIFIED : verifyValidator
+STAKED --> INVALID : verifyValidator
+
+VERIFIED --> EXITED : verifyBalances
+
+REGISTERED --> REMOVED : removeSsvValidator
+INVALID --> REMOVED : removeSsvValidator
+EXITED --> REMOVED : removeSsvValidator
+
+
+' STAKED : Beacon Chain\n- Pending deposits\n- Processed deposit\n- Frontrun deposit
+
+@enduml
