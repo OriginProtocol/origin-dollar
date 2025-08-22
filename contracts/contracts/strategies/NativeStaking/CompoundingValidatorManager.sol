@@ -302,6 +302,10 @@ abstract contract CompoundingValidatorManager is Governable {
             depositAmountWei <= IWETH9(WETH).balanceOf(address(this)),
             "Insufficient WETH"
         );
+        require(
+            verifiedValidators.length + 1 < MAX_VERIFIED_VALIDATORS,
+            "Max validators"
+        );
         require(depositList.length < MAX_DEPOSITS, "Max deposits");
 
         // Convert required ETH from WETH and do the necessary accounting
@@ -521,10 +525,6 @@ abstract contract CompoundingValidatorManager is Governable {
         require(
             validator[pubKeyHash].state == VALIDATOR_STATE.STAKED,
             "Validator not staked"
-        );
-        require(
-            verifiedValidators.length < MAX_VERIFIED_VALIDATORS,
-            "Max validators"
         );
 
         // Get the beacon block root of the slot we are verifying the validator in.
