@@ -86,6 +86,7 @@ abstract contract CompoundingValidatorManager is Governable {
         REGISTERED, // validator is registered on the SSV network
         STAKED, // validator has funds staked
         VERIFIED, // validator has been verified to exist on the beacon chain
+        EXITING, // The validator has been requested to exit or has been verified as forced exit
         EXITED, // The validator has been verified to have a zero balance
         REMOVED, // validator has funds withdrawn to the EigenPod and is removed from the SSV
         INVALID // The validator has been front-run and the withdrawal address is not this strategy
@@ -381,6 +382,12 @@ abstract contract CompoundingValidatorManager is Governable {
         );
 
         PartialWithdrawal.request(publicKey, amountGwei);
+
+        // If a full withdrawal (validator exit)
+        if (amountGwei == 0) {
+            // Store the validator state as exiting so no more deposits can be made to it.
+            validator[pubKeyHash].state = VALIDATOR_STATE.EXITING;
+        }
 
         // Do not remove from the list of verified validators.
         // This is done in the verifyBalances function once the validator's balance has been verified to be zero.
@@ -882,6 +889,7 @@ abstract contract CompoundingValidatorManager is Governable {
                 // If the validator balance is zero
                 if (validatorBalanceGwei == 0) {
                     // Store the validator state as exited
+                    // This could have been in VERIFIED or EXITING state
                     validator[verifiedValidators[i]].state = VALIDATOR_STATE
                         .EXITED;
 

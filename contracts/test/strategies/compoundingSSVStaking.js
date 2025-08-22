@@ -1725,7 +1725,7 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
                 testValidators[3].publicKeyHash
               )
             ).state
-          ).to.equal(4); // EXITED
+          ).to.equal(5); // EXITED
         });
       });
     });

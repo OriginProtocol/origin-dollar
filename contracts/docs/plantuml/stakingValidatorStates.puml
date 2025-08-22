@@ -9,7 +9,9 @@ REGISTERED --> STAKED : stakeETH
 STAKED --> VERIFIED : verifyValidator
 STAKED --> INVALID : verifyValidator
 
+VERIFIED --> EXITING : validatorWithdrawal
 VERIFIED --> EXITED : verifyBalances
+EXITING --> EXITED : verifyBalances
 
 REGISTERED --> REMOVED : removeSsvValidator
 INVALID --> REMOVED : removeSsvValidator
