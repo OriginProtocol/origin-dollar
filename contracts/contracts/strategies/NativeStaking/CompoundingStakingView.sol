@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import {CompoundingValidatorManager} from "./CompoundingValidatorManager.sol";
+import { CompoundingValidatorManager } from "./CompoundingValidatorManager.sol";
 
 /**
  * @title Viewing contract for the Compounding Staking Strategy.
@@ -32,13 +32,24 @@ contract CompoundingStakingStrategyView {
     /// @notice Returns the strategy's active validators.
     /// These are the ones that have been verified and have a non-zero balance.
     /// @return validators An array of `ValidatorView` containing the public key hash, validator index and state.
-    function getVerifiedValidators() external view returns (ValidatorView[] memory validators) {
+    function getVerifiedValidators()
+        external
+        view
+        returns (ValidatorView[] memory validators)
+    {
         uint256 validatorCount = stakingStrategy.verifiedValidatorsLength();
         validators = new ValidatorView[](validatorCount);
         for (uint256 i = 0; i < validatorCount; ++i) {
             bytes32 pubKeyHash = stakingStrategy.verifiedValidators(i);
-            (CompoundingValidatorManager.ValidatorState state, uint64 index) = stakingStrategy.validator(pubKeyHash);
-            validators[i] = ValidatorView({pubKeyHash: pubKeyHash, index: index, state: state});
+            (
+                CompoundingValidatorManager.ValidatorState state,
+                uint64 index
+            ) = stakingStrategy.validator(pubKeyHash);
+            validators[i] = ValidatorView({
+                pubKeyHash: pubKeyHash,
+                index: index,
+                state: state
+            });
         }
     }
 
@@ -46,12 +57,22 @@ contract CompoundingStakingStrategyView {
     /// These may or may not have been processed by the beacon chain.
     /// @return pendingDeposits An array of `DepositView` containing the deposit ID, public key hash,
     /// amount in Gwei and the slot of the deposit.
-    function getPendingDeposits() external view returns (DepositView[] memory pendingDeposits) {
+    function getPendingDeposits()
+        external
+        view
+        returns (DepositView[] memory pendingDeposits)
+    {
         uint256 depositsCount = stakingStrategy.depositListLength();
         pendingDeposits = new DepositView[](depositsCount);
         for (uint256 i = 0; i < depositsCount; ++i) {
-            (bytes32 pubKeyHash, uint64 amountGwei, uint64 slot,,, uint256 withdrawableEpoch) =
-                stakingStrategy.deposits(stakingStrategy.depositList(i));
+            (
+                bytes32 pubKeyHash,
+                uint64 amountGwei,
+                uint64 slot,
+                ,
+                ,
+                uint256 withdrawableEpoch
+            ) = stakingStrategy.deposits(stakingStrategy.depositList(i));
             pendingDeposits[i] = DepositView({
                 depositID: stakingStrategy.depositList(i),
                 pubKeyHash: pubKeyHash,
