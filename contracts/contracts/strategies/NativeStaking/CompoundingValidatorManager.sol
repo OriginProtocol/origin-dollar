@@ -175,11 +175,7 @@ abstract contract CompoundingValidatorManager is Governable {
     );
     event DepositValidatorExited(uint256 indexed depositID, uint256 amountWei);
     event ValidatorWithdraw(bytes32 indexed pubKeyHash, uint256 amountWei);
-    event BalancesSnapped(
-        uint256 indexed timestamp,
-        bytes32 indexed blockRoot,
-        uint256 ethBalance
-    );
+    event BalancesSnapped(bytes32 indexed blockRoot, uint256 ethBalance);
     event BalancesVerified(
         uint64 indexed timestamp,
         uint256 totalDepositsWei,
@@ -880,7 +876,7 @@ abstract contract CompoundingValidatorManager is Governable {
         // Store the snapped timestamp
         lastSnapTimestamp = currentTimestamp;
 
-        emit BalancesSnapped(currentTimestamp, blockRoot, ethBalance);
+        emit BalancesSnapped(blockRoot, ethBalance);
     }
 
     // A struct is used to avoid stack too deep errors

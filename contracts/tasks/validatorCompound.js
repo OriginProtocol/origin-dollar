@@ -47,7 +47,7 @@ async function snapBalances() {
     `Balances snapped successfully. Beacon block root ${
       event.args.blockRoot
     }, block ${receipt.blockNumber} timestamp ${
-      event.args.timestamp
+      tx.timestamp
     }, ETH balance ${formatUnits(event.args.ethBalance)}`
   );
 }
