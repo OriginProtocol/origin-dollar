@@ -26,7 +26,7 @@ abstract contract CompoundingValidatorManager is Governable {
     /// Initially this is 32 ETH, but will be reduced to 1 ETH after P2P's APIs have been updated
     /// to support deposits of 1 ETH.
     uint256 internal constant DEPOSIT_AMOUNT_WEI = 32 ether;
-    /// @dev The maximum number of deposits that can waiting to be verified.
+    /// @dev The maximum number of deposits that are waiting to be verified as processed on the beacon chain.
     uint256 internal constant MAX_DEPOSITS = 12;
     /// @dev The maximum number of validators that can be verified.
     uint256 internal constant MAX_VERIFIED_VALIDATORS = 48;
