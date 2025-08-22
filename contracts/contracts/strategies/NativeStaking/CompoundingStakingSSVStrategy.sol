@@ -49,6 +49,7 @@ contract CompoundingStakingSSVStrategy is
         )
     {
         SSV_TOKEN = _ssvToken;
+        _disableInitializers();
     }
 
     /// @notice Set up initial internal state including
