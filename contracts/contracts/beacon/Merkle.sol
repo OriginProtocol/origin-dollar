@@ -76,7 +76,6 @@ library Merkle {
                     ) {
                         revert(0, 0)
                     }
-                    index := div(index, 2)
                 }
             } else {
                 // if ith bit of index is 1, then computedHash is a right sibling
@@ -96,8 +95,10 @@ library Merkle {
                     ) {
                         revert(0, 0)
                     }
-                    index := div(index, 2)
                 }
+            }
+            assembly {
+                index := div(index, 2)
             }
         }
         return computedHash[0];
