@@ -490,7 +490,7 @@ abstract contract CompoundingValidatorManager is Governable {
     /// @notice Withdraws excess SSV Tokens from the SSV Network contract which was used to pay the SSV Operators.
     /// @dev A SSV cluster is defined by the SSVOwnerAddress and the set of operatorIds.
     /// @param operatorIds The operator IDs of the SSV Cluster
-    /// @param ssvAmount The amount of SSV tokens to be deposited to the SSV cluster
+    /// @param ssvAmount The amount of SSV tokens to be withdrawn from the SSV cluster
     /// @param cluster The SSV cluster details including the validator count and SSV balance
     function withdrawSSV(
         uint64[] memory operatorIds,
