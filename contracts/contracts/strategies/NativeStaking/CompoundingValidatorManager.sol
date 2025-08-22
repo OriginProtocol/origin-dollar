@@ -800,20 +800,20 @@ abstract contract CompoundingValidatorManager is Governable {
     }
 
     function _snapBalances() internal {
-        bytes32 blockRoot = BeaconRoots.parentBlockRoot(
-            SafeCast.toUint64(block.timestamp)
-        );
+        uint64 currentTimestamp = SafeCast.toUint64(block.timestamp);
+
+        bytes32 blockRoot = BeaconRoots.parentBlockRoot(currentTimestamp);
         // Get the current ETH balance
         uint256 ethBalance = address(this).balance;
 
         // Store the balances in the mapping
         snappedBalances[blockRoot] = Balances({
-            timestamp: SafeCast.toUint64(block.timestamp),
+            timestamp: currentTimestamp,
             ethBalance: SafeCast.toUint128(ethBalance)
         });
 
         // Store the snapped timestamp
-        lastSnapTimestamp = SafeCast.toUint64(block.timestamp);
+        lastSnapTimestamp = currentTimestamp;
 
         emit BalancesSnapped(block.timestamp, blockRoot, ethBalance);
     }
