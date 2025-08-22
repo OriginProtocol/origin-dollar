@@ -911,7 +911,7 @@ abstract contract CompoundingValidatorManager is Governable {
         uint256 depositsCount = depositsRoots.length;
         uint256 totalDepositsWei = 0;
 
-        // If there are no deposits then we can skip the deposit verification
+        // If there are no deposits then we can skip the deposit verification.
         // This section is after the validator balance verifications so an exited validator will be marked
         // as EXITED before the deposits are verified. If there was a deposit to an exited validator
         // then the deposit can only be removed once the validator is fully exited.
@@ -936,7 +936,8 @@ abstract contract CompoundingValidatorManager is Governable {
                 "Invalid validator timestamp"
             );
 
-            // Verify the validator of the first pending deposit is not exiting.
+            // Verify the validator of the first pending deposit is not exiting by checking
+            // the withdrawable epoch is far into the future.
             // If it is exiting we can't be sure this deposit has not been postponed in the deposit queue.
             // Hence we can not verify if the strategy's deposit has been processed or not.
             IBeaconProofs(BEACON_PROOFS).verifyValidatorWithdrawable(
@@ -948,6 +949,7 @@ abstract contract CompoundingValidatorManager is Governable {
                 ),
                 firstPendingDeposit.validatorIndex,
                 firstPendingDeposit.pubKeyHash,
+                // Validator is not exiting
                 FAR_FUTURE_EPOCH,
                 firstPendingDeposit.withdrawableEpochProof,
                 firstPendingDeposit.validatorPubKeyProof
