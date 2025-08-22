@@ -912,7 +912,7 @@ abstract contract CompoundingValidatorManager is Governable {
                 }
 
                 // convert Gwei balance to Wei and add to the total validator balance
-                totalValidatorBalance += uint256(validatorBalanceGwei) * 1 gwei;
+                totalValidatorBalance += validatorBalanceGwei * 1 gwei;
             }
         }
 
