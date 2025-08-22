@@ -38,5 +38,16 @@ abstract contract Initializable {
         }
     }
 
+    /**
+     * @dev Locks the contract, preventing any future reinitialization. This cannot be part of an initializer call.
+     * Calling this in the constructor of a contract will prevent that contract from being initialized or reinitialized
+     * to any version. It is recommended to use this to lock implementation contracts that are designed to be called
+     * through proxies.
+     */
+    function _disableInitializers() internal virtual {
+        require(!initializing, "Initializable: contract is initializing");
+        initialized = true;
+    }
+
     uint256[50] private ______gap;
 }
