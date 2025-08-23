@@ -81,12 +81,6 @@ abstract contract CompoundingValidatorManager is Governable {
         DepositStatus status;
         uint64 withdrawableEpoch;
     }
-    /// @notice Restricts to only one deposit to an unverified validator at a time.
-    /// This is to limit front-running attacks of deposits to the beacon chain contract.
-
-    bool public firstDeposit;
-    /// @notice Unique identifier of the next validator deposit.
-    uint128 public nextDepositID;
     /// @notice Mapping of the deposit ID to the deposit data
     mapping(uint256 => DepositData) public deposits;
     /// @notice List of strategy deposit IDs to a validator.
@@ -148,6 +142,14 @@ abstract contract CompoundingValidatorManager is Governable {
     /// withdrawal of the validators. It is strictly concerned with WETH that has been deposited and is waiting to
     /// be staked.
     uint256 public depositedWethAccountedFor;
+
+    /// The following deposit storage variables are down here for backwards compatibility on Hoodi.
+
+    /// @notice Restricts to only one deposit to an unverified validator at a time.
+    /// This is to limit front-running attacks of deposits to the beacon chain contract.
+    bool public firstDeposit;
+    /// @notice Unique identifier of the next validator deposit.
+    uint128 public nextDepositID;
 
     // For future use
     uint256[50] private __gap;
