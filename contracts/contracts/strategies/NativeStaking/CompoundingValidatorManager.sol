@@ -70,6 +70,7 @@ abstract contract CompoundingValidatorManager is Governable {
     /// @param blockNumber Block number when the deposit was made
     /// @param depositIndex The index of the deposit in the list of active deposits
     /// @param status The status of the deposit, either PENDING or PROVEN
+
     struct DepositData {
         bytes32 pubKeyHash;
         uint64 amountGwei;
@@ -80,6 +81,7 @@ abstract contract CompoundingValidatorManager is Governable {
     }
     /// @notice Restricts to only one deposit to an unverified validator at a time.
     /// This is to limit front-running attacks of deposits to the beacon chain contract.
+
     bool public firstDeposit;
     /// @notice Unique identifier of the next validator deposit.
     uint128 public nextDepositID;
@@ -95,7 +97,7 @@ abstract contract CompoundingValidatorManager is Governable {
 
     // Validator data
 
-    enum VALIDATOR_STATE {
+    enum ValidatorState {
         NON_REGISTERED, // validator is not registered on the SSV network
         REGISTERED, // validator is registered on the SSV network
         STAKED, // validator has funds staked
@@ -105,13 +107,15 @@ abstract contract CompoundingValidatorManager is Governable {
         REMOVED, // validator has funds withdrawn to the EigenPod and is removed from the SSV
         INVALID // The validator has been front-run and the withdrawal address is not this strategy
     }
+
     struct ValidatorData {
-        VALIDATOR_STATE state;
+        ValidatorState state;
         uint64 index; // The index of the validator on the beacon chain
     }
     /// @notice List of validator public key hashes that have been verified to exist on the beacon chain.
     /// These have had a deposit processed and the validator's balance increased.
     /// Validators will be removed from this list when its verified they have a zero balance.
+
     bytes32[] public verifiedValidators;
     /// @notice Mapping of the hash of the validator's public key to the validator state and index.
     /// Uses the Beacon chain hashing for BLSPubkey which is sha256(abi.encodePacked(validator.pubkey, bytes16(0)))
@@ -124,6 +128,7 @@ abstract contract CompoundingValidatorManager is Governable {
         uint128 ethBalance;
     }
     /// @notice Mapping of the block root to the balances at that slot
+
     mapping(bytes32 => Balances) public snappedBalances;
     uint64 public lastSnapTimestamp;
     uint128 public lastVerifiedEthBalance;
@@ -170,11 +175,7 @@ abstract contract CompoundingValidatorManager is Governable {
     );
     event DepositValidatorExited(uint256 indexed depositID, uint256 amountWei);
     event ValidatorWithdraw(bytes32 indexed pubKeyHash, uint256 amountWei);
-    event BalancesSnapped(
-        uint256 indexed timestamp,
-        bytes32 indexed blockRoot,
-        uint256 ethBalance
-    );
+    event BalancesSnapped(bytes32 indexed blockRoot, uint256 ethBalance);
     event BalancesVerified(
         uint64 indexed timestamp,
         uint256 totalDepositsWei,
@@ -215,9 +216,11 @@ abstract contract CompoundingValidatorManager is Governable {
         );
     }
 
-    /***************************************
-                Admin Functions
-    ****************************************/
+    /**
+     *
+     *             Admin Functions
+     *
+     */
 
     /// @notice Set the address of the registrator which can register, exit and remove validators
     function setRegistrator(address _address) external onlyGovernor {
@@ -234,9 +237,11 @@ abstract contract CompoundingValidatorManager is Governable {
         emit FirstDepositReset();
     }
 
-    /***************************************
-                Validator Management
-    ****************************************/
+    /**
+     *
+     *             Validator Management
+     *
+     */
 
     /// @notice Registers a single validator in a SSV Cluster.
     /// Only the Registrator can call this function.
@@ -257,12 +262,12 @@ abstract contract CompoundingValidatorManager is Governable {
         bytes32 pubKeyHash = _hashPubKey(publicKey);
         // Check each public key has not already been used
         require(
-            validator[pubKeyHash].state == VALIDATOR_STATE.NON_REGISTERED,
+            validator[pubKeyHash].state == ValidatorState.NON_REGISTERED,
             "Validator already registered"
         );
 
         // Store the validator state as registered
-        validator[pubKeyHash].state = VALIDATOR_STATE.REGISTERED;
+        validator[pubKeyHash].state = ValidatorState.REGISTERED;
 
         ISSVNetwork(SSV_NETWORK).registerValidator(
             publicKey,
@@ -309,16 +314,16 @@ abstract contract CompoundingValidatorManager is Governable {
 
         // Hash the public key using the Beacon Chain's hashing for BLSPubkey
         bytes32 pubKeyHash = _hashPubKey(validatorStakeData.pubkey);
-        VALIDATOR_STATE currentState = validator[pubKeyHash].state;
+        ValidatorState currentState = validator[pubKeyHash].state;
         // Can only stake to a validator has have been registered or verified.
         // Can not stake to a validator that has been staked but not yet verified.
         require(
-            (currentState == VALIDATOR_STATE.REGISTERED ||
-                currentState == VALIDATOR_STATE.VERIFIED),
+            (currentState == ValidatorState.REGISTERED ||
+                currentState == ValidatorState.VERIFIED),
             "Not registered or verified"
         );
         require(depositAmountWei >= 1 ether, "Deposit too small");
-        if (currentState == VALIDATOR_STATE.REGISTERED) {
+        if (currentState == ValidatorState.REGISTERED) {
             // Can only have one pending deposit to an unverified validator at a time.
             // This is to limit front-running deposit attacks to a single deposit.
             // The exiting deposit needs to be verified before another deposit can be made.
@@ -365,8 +370,8 @@ abstract contract CompoundingValidatorManager is Governable {
 
         //// Update contract storage
         // Store the validator state if needed
-        if (currentState == VALIDATOR_STATE.REGISTERED) {
-            validator[pubKeyHash].state = VALIDATOR_STATE.STAKED;
+        if (currentState == ValidatorState.REGISTERED) {
+            validator[pubKeyHash].state = ValidatorState.STAKED;
         }
 
         /// After the Pectra upgrade the validators have a new restriction when proposing
@@ -417,9 +422,9 @@ abstract contract CompoundingValidatorManager is Governable {
     {
         // Hash the public key using the Beacon Chain's format
         bytes32 pubKeyHash = _hashPubKey(publicKey);
-        VALIDATOR_STATE currentState = validator[pubKeyHash].state;
+        ValidatorState currentState = validator[pubKeyHash].state;
         require(
-            currentState == VALIDATOR_STATE.VERIFIED,
+            currentState == ValidatorState.VERIFIED,
             "Validator not verified"
         );
 
@@ -428,7 +433,7 @@ abstract contract CompoundingValidatorManager is Governable {
         // If a full withdrawal (validator exit)
         if (amountGwei == 0) {
             // Store the validator state as exiting so no more deposits can be made to it.
-            validator[pubKeyHash].state = VALIDATOR_STATE.EXITING;
+            validator[pubKeyHash].state = ValidatorState.EXITING;
         }
 
         // Do not remove from the list of verified validators.
@@ -458,12 +463,12 @@ abstract contract CompoundingValidatorManager is Governable {
     ) external onlyRegistrator {
         // Hash the public key using the Beacon Chain's format
         bytes32 pubKeyHash = _hashPubKey(publicKey);
-        VALIDATOR_STATE currentState = validator[pubKeyHash].state;
+        ValidatorState currentState = validator[pubKeyHash].state;
         // Can remove SSV validators that were incorrectly registered and can not be deposited to.
         require(
-            currentState == VALIDATOR_STATE.REGISTERED ||
-                currentState == VALIDATOR_STATE.EXITED ||
-                currentState == VALIDATOR_STATE.INVALID,
+            currentState == ValidatorState.REGISTERED ||
+                currentState == ValidatorState.EXITED ||
+                currentState == ValidatorState.INVALID,
             "Validator not regd or exited"
         );
 
@@ -473,14 +478,16 @@ abstract contract CompoundingValidatorManager is Governable {
             cluster
         );
 
-        validator[pubKeyHash].state = VALIDATOR_STATE.REMOVED;
+        validator[pubKeyHash].state = ValidatorState.REMOVED;
 
         emit SSVValidatorRemoved(pubKeyHash, operatorIds);
     }
 
-    /***************************************
-                SSV Management
-    ****************************************/
+    /**
+     *
+     *             SSV Management
+     *
+     */
 
     // slither-disable-end reentrancy-no-eth
 
@@ -500,9 +507,11 @@ abstract contract CompoundingValidatorManager is Governable {
         ISSVNetwork(SSV_NETWORK).withdraw(operatorIds, ssvAmount, cluster);
     }
 
-    /***************************************
-                Beacon Chain Proofs
-    ****************************************/
+    /**
+     *
+     *             Beacon Chain Proofs
+     *
+     */
 
     /// @notice Verifies a validator's index to its public key.
     /// Adds to the list of verified validators if the validator's withdrawal address is this strategy's address.
@@ -527,7 +536,7 @@ abstract contract CompoundingValidatorManager is Governable {
         bytes calldata validatorPubKeyProof
     ) external {
         require(
-            validator[pubKeyHash].state == VALIDATOR_STATE.STAKED,
+            validator[pubKeyHash].state == ValidatorState.STAKED,
             "Validator not staked"
         );
 
@@ -548,7 +557,7 @@ abstract contract CompoundingValidatorManager is Governable {
         // If the initial deposit was front-run and the withdrawal address is not this strategy
         if (withdrawalAddress != address(this)) {
             validator[pubKeyHash] = ValidatorData({
-                state: VALIDATOR_STATE.INVALID,
+                state: ValidatorState.INVALID,
                 index: validatorIndex
             });
 
@@ -573,7 +582,7 @@ abstract contract CompoundingValidatorManager is Governable {
 
         // Store the validator state as verified
         validator[pubKeyHash] = ValidatorData({
-            state: VALIDATOR_STATE.VERIFIED,
+            state: ValidatorState.VERIFIED,
             index: validatorIndex
         });
 
@@ -627,7 +636,7 @@ abstract contract CompoundingValidatorManager is Governable {
         ValidatorData memory strategyValidator = validator[deposit.pubKeyHash];
         require(deposit.status == DepositStatus.PENDING, "Deposit not pending");
         require(
-            strategyValidator.state == VALIDATOR_STATE.VERIFIED,
+            strategyValidator.state == ValidatorState.VERIFIED,
             "Validator not verified"
         );
         // The verification slot must be after the deposit's slot.
@@ -694,7 +703,7 @@ abstract contract CompoundingValidatorManager is Governable {
                 strategyValidatorData.withdrawableEpoch
             );
 
-            validator[deposit.pubKeyHash].state = VALIDATOR_STATE.EXITING;
+            validator[deposit.pubKeyHash].state = ValidatorState.EXITING;
 
             // Leave the deposit status as PENDING
             return;
@@ -848,27 +857,26 @@ abstract contract CompoundingValidatorManager is Governable {
     ///
     /// The validator balances on the beacon chain can then be proved with `verifyBalances`.
     function snapBalances() external {
+        uint64 currentTimestamp = SafeCast.toUint64(block.timestamp);
         require(
-            lastSnapTimestamp + SNAP_BALANCES_DELAY < block.timestamp,
+            lastSnapTimestamp + SNAP_BALANCES_DELAY < currentTimestamp,
             "Snap too soon"
         );
 
-        bytes32 blockRoot = BeaconRoots.parentBlockRoot(
-            SafeCast.toUint64(block.timestamp)
-        );
+        bytes32 blockRoot = BeaconRoots.parentBlockRoot(currentTimestamp);
         // Get the current ETH balance
         uint256 ethBalance = address(this).balance;
 
         // Store the balances in the mapping
         snappedBalances[blockRoot] = Balances({
-            timestamp: SafeCast.toUint64(block.timestamp),
+            timestamp: currentTimestamp,
             ethBalance: SafeCast.toUint128(ethBalance)
         });
 
         // Store the snapped timestamp
-        lastSnapTimestamp = SafeCast.toUint64(block.timestamp);
+        lastSnapTimestamp = currentTimestamp;
 
-        emit BalancesSnapped(block.timestamp, blockRoot, ethBalance);
+        emit BalancesSnapped(blockRoot, ethBalance);
     }
 
     // A struct is used to avoid stack too deep errors
@@ -943,7 +951,7 @@ abstract contract CompoundingValidatorManager is Governable {
                 if (validatorBalanceGwei == 0) {
                     // Store the validator state as exited
                     // This could have been in VERIFIED or EXITING state
-                    validator[verifiedValidators[i]].state = VALIDATOR_STATE
+                    validator[verifiedValidators[i]].state = ValidatorState
                         .EXITED;
 
                     // Remove the validator with a zero balance from the list of verified validators
@@ -965,7 +973,7 @@ abstract contract CompoundingValidatorManager is Governable {
                 }
 
                 // convert Gwei balance to Wei and add to the total validator balance
-                totalValidatorBalance += uint256(validatorBalanceGwei) * 1 gwei;
+                totalValidatorBalance += validatorBalanceGwei * 1 gwei;
             }
         }
 
@@ -1056,7 +1064,7 @@ abstract contract CompoundingValidatorManager is Governable {
                             depositData.withdrawableEpoch !=
                             FAR_FUTURE_EPOCH) ||
                         validator[depositData.pubKeyHash].state ==
-                        VALIDATOR_STATE.EXITED,
+                        ValidatorState.EXITED,
                     "Deposit likely processed"
                 );
 
@@ -1066,7 +1074,7 @@ abstract contract CompoundingValidatorManager is Governable {
                 // Remove the deposit if the validator has exited.
                 if (
                     validator[depositData.pubKeyHash].state ==
-                    VALIDATOR_STATE.EXITED
+                    ValidatorState.EXITED
                 ) {
                     _removeDeposit(depositID, depositData);
 
@@ -1101,9 +1109,11 @@ abstract contract CompoundingValidatorManager is Governable {
         return sha256(abi.encodePacked(pubKey, bytes16(0)));
     }
 
-    /***************************************
-            WETH and ETH Accounting
-    ****************************************/
+    /**
+     *
+     *         WETH and ETH Accounting
+     *
+     */
 
     /// @dev Called when WETH is transferred out of the strategy so
     /// the strategy knows how much WETH it has on deposit.
@@ -1154,9 +1164,11 @@ abstract contract CompoundingValidatorManager is Governable {
         lastSnapTimestamp = 0;
     }
 
-    /***************************************
-                View Functions
-    ****************************************/
+    /**
+     *
+     *             View Functions
+     *
+     */
 
     /// @notice Returns the number of deposits waiting to be verified as processed on the beacon chain,
     /// or deposits that have been verified to an exiting validator and is now waiting for the

@@ -18,7 +18,7 @@ contract CompoundingStakingStrategyView {
     struct ValidatorView {
         bytes32 pubKeyHash;
         uint64 index;
-        CompoundingValidatorManager.VALIDATOR_STATE state;
+        CompoundingValidatorManager.ValidatorState state;
     }
 
     struct DepositView {
@@ -42,7 +42,7 @@ contract CompoundingStakingStrategyView {
         for (uint256 i = 0; i < validatorCount; ++i) {
             bytes32 pubKeyHash = stakingStrategy.verifiedValidators(i);
             (
-                CompoundingValidatorManager.VALIDATOR_STATE state,
+                CompoundingValidatorManager.ValidatorState state,
                 uint64 index
             ) = stakingStrategy.validator(pubKeyHash);
             validators[i] = ValidatorView({
