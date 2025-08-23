@@ -49,6 +49,9 @@ contract CompoundingStakingSSVStrategy is
         )
     {
         SSV_TOKEN = _ssvToken;
+
+        // Make sure nobody owns the implementation contract
+        _setGovernor(address(0));
     }
 
     /// @notice Set up initial internal state including
