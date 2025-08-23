@@ -38,8 +38,10 @@ abstract contract CompoundingValidatorManager is Governable {
     /// @dev The number of slots in each beacon chain epoch.
     uint64 internal constant SLOTS_PER_EPOCH = 32;
     /// @dev Minimum time in seconds to allow snapped balances to be verified.
+    /// Set to 1 epoch as the pending deposits only changes every epoch.
+    /// That's also enough time to generate the proofs and call `verifyBalances`.
     uint64 internal constant SNAP_BALANCES_DELAY =
-        2 * SLOTS_PER_EPOCH * SLOT_DURATION;
+        SLOTS_PER_EPOCH * SLOT_DURATION;
 
     /// @notice The address of the Wrapped ETH (WETH) token contract
     address public immutable WETH;
