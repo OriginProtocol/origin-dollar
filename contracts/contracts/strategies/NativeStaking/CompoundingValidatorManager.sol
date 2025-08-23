@@ -61,18 +61,17 @@ abstract contract CompoundingValidatorManager is Governable {
     address public validatorRegistrator;
 
     /// Deposit data for new compounding validators.
-
     enum DepositStatus {
         UNKNOWN, // default value
         PENDING, // deposit is pending and waiting to be  verified
         VERIFIED // deposit has been verified and is ready to be staked
     }
+
     /// @param pubKeyHash Hash of validator's public key using the Beacon Chain's format
     /// @param amountWei Amount of ETH in wei that has been deposited to the beacon chain deposit contract
     /// @param blockNumber Block number when the deposit was made
     /// @param depositIndex The index of the deposit in the list of active deposits
-    /// @param status The status of the deposit, either PENDING or PROVEN
-
+    /// @param status The status of the deposit, either PENDING or VERIFIED
     struct DepositData {
         bytes32 pubKeyHash;
         uint64 amountGwei;
@@ -81,6 +80,11 @@ abstract contract CompoundingValidatorManager is Governable {
         DepositStatus status;
         uint64 withdrawableEpoch;
     }
+    /// @notice Restricts to only one deposit to an unverified validator at a time.
+    /// This is to limit front-running attacks of deposits to the beacon chain contract.
+    bool public firstDeposit;
+    /// @notice Unique identifier of the next validator deposit.
+    uint128 public nextDepositID;
     /// @notice Mapping of the deposit ID to the deposit data
     mapping(uint256 => DepositData) public deposits;
     /// @notice List of strategy deposit IDs to a validator.
@@ -92,7 +96,6 @@ abstract contract CompoundingValidatorManager is Governable {
     uint256[] public depositList;
 
     // Validator data
-
     enum ValidatorState {
         NON_REGISTERED, // validator is not registered on the SSV network
         REGISTERED, // validator is registered on the SSV network
@@ -111,7 +114,6 @@ abstract contract CompoundingValidatorManager is Governable {
     /// @notice List of validator public key hashes that have been verified to exist on the beacon chain.
     /// These have had a deposit processed and the validator's balance increased.
     /// Validators will be removed from this list when its verified they have a zero balance.
-
     bytes32[] public verifiedValidators;
     /// @notice Mapping of the hash of the validator's public key to the validator state and index.
     /// Uses the Beacon chain hashing for BLSPubkey which is sha256(abi.encodePacked(validator.pubkey, bytes16(0)))
@@ -124,7 +126,6 @@ abstract contract CompoundingValidatorManager is Governable {
         uint128 ethBalance;
     }
     /// @notice Mapping of the block root to the balances at that slot
-
     mapping(bytes32 => Balances) public snappedBalances;
     /// @notice The timestamp of the last snapshot taken
     uint64 public lastSnapTimestamp;
@@ -142,14 +143,6 @@ abstract contract CompoundingValidatorManager is Governable {
     /// withdrawal of the validators. It is strictly concerned with WETH that has been deposited and is waiting to
     /// be staked.
     uint256 public depositedWethAccountedFor;
-
-    /// The following deposit storage variables are down here for backwards compatibility on Hoodi.
-
-    /// @notice Restricts to only one deposit to an unverified validator at a time.
-    /// This is to limit front-running attacks of deposits to the beacon chain contract.
-    bool public firstDeposit;
-    /// @notice Unique identifier of the next validator deposit.
-    uint128 public nextDepositID;
 
     // For future use
     uint256[50] private __gap;
