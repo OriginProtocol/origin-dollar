@@ -15,6 +15,7 @@ const mainExport = async () => {
     cStrategyProxy.address,
   ]);
 
+  console.log("Running 019 deployment done");
   return true;
 };
 
