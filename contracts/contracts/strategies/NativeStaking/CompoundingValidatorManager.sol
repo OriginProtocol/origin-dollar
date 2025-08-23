@@ -130,7 +130,9 @@ abstract contract CompoundingValidatorManager is Governable {
     /// @notice Mapping of the block root to the balances at that slot
 
     mapping(bytes32 => Balances) public snappedBalances;
+    /// @notice The timestamp of the last snapshot taken
     uint64 public lastSnapTimestamp;
+    /// @notice The last verified ETH balance of the strategy
     uint128 public lastVerifiedEthBalance;
 
     /// @dev This contract receives WETH as the deposit asset, but unlike other strategies doesn't immediately
@@ -497,7 +499,7 @@ abstract contract CompoundingValidatorManager is Governable {
     /// @notice Withdraws excess SSV Tokens from the SSV Network contract which was used to pay the SSV Operators.
     /// @dev A SSV cluster is defined by the SSVOwnerAddress and the set of operatorIds.
     /// @param operatorIds The operator IDs of the SSV Cluster
-    /// @param ssvAmount The amount of SSV tokens to be deposited to the SSV cluster
+    /// @param ssvAmount The amount of SSV tokens to be withdrawn from the SSV cluster
     /// @param cluster The SSV cluster details including the validator count and SSV balance
     function withdrawSSV(
         uint64[] memory operatorIds,
