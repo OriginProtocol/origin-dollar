@@ -1067,9 +1067,6 @@ abstract contract CompoundingValidatorManager is Governable {
                     "Deposit likely processed"
                 );
 
-                // Convert the deposit amount from Gwei to Wei and add to the total
-                totalDepositsWei += uint256(depositData.amountGwei) * 1 gwei;
-
                 // Remove the deposit if the validator has exited.
                 if (
                     validator[depositData.pubKeyHash].state ==
@@ -1081,7 +1078,13 @@ abstract contract CompoundingValidatorManager is Governable {
                         depositID,
                         uint256(depositData.amountGwei) * 1 gwei
                     );
+
+                    // Skip to the next deposit as the deposit amount is now in the strategy's ETH balance
+                    continue;
                 }
+
+                // Convert the deposit amount from Gwei to Wei and add to the total
+                totalDepositsWei += uint256(depositData.amountGwei) * 1 gwei;
             }
         }
 
