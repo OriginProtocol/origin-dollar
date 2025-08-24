@@ -207,9 +207,10 @@ async function snapStakingStrategy({ block }) {
     "CompoundingStakingSSVStrategyProxy",
     "CompoundingStakingSSVStrategy"
   );
+  const strategyView = await resolveContract("CompoundingStakingStrategyView");
 
   // Pending deposits
-  const deposits = await strategy.getPendingDeposits({ blockTag });
+  const deposits = await strategyView.getPendingDeposits({ blockTag });
   let totalDeposits = BigNumber.from(0);
   console.log(`\n${deposits.length || "No"} pending strategy deposits:`);
   if (deposits.length > 0) {
@@ -236,7 +237,7 @@ async function snapStakingStrategy({ block }) {
   }
 
   // Verified validators
-  const verifiedValidators = await strategy.getVerifiedValidators({
+  const verifiedValidators = await strategyView.getVerifiedValidators({
     blockTag,
   });
   console.log(`\n${verifiedValidators.length || "No"} verified validators:`);
@@ -248,7 +249,7 @@ async function snapStakingStrategy({ block }) {
   let totalValidators = BigNumber.from(0);
   for (const validator of verifiedValidators) {
     const balance = stateView.balances.get(validator.index);
-    const status = await strategy.validatorState(validator.pubKeyHash, {
+    const { status } = await strategy.validator(validator.pubKeyHash, {
       blockTag,
     });
     const beaconValidator = stateView.validators.get(validator.index);

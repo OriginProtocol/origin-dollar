@@ -406,6 +406,7 @@ async function verifyBalances({
     "CompoundingStakingSSVStrategyProxy",
     "CompoundingStakingSSVStrategy"
   );
+  const strategyView = await resolveContract("CompoundingStakingStrategyView");
 
   const {
     proof: pendingDepositPubKeyProof,
@@ -455,7 +456,7 @@ async function verifyBalances({
     ? indexes.split(",").map((index) => ({
         index,
       }))
-    : await strategy.getVerifiedValidators();
+    : await strategyView.getVerifiedValidators();
 
   const validatorBalanceLeaves = [];
   const validatorBalanceProofs = [];
