@@ -3,7 +3,6 @@ const {
   deployOETHCore,
   deployNativeStakingSSVStrategy,
   deployCompoundingStakingSSVStrategy,
-  deployBeaconContracts,
   configureOETHVault,
 } = require("../deployActions");
 const addresses = require("../../utils/addresses.js");
@@ -30,9 +29,6 @@ const mainExport = async () => {
 
   console.log("Deploying Native Staking");
   await deployNativeStakingSSVStrategy();
-
-  console.log("Deploy beacon contracts");
-  await deployBeaconContracts();
 
   console.log("Deploy compounding ssv strategy");
   const compoundingSsvStrategy = await deployCompoundingStakingSSVStrategy();

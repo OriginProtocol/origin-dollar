@@ -843,6 +843,8 @@ const deployCompoundingStakingSSVStrategy = async () => {
   const assetAddresses = await getAssetAddresses(deployments);
   const { governorAddr, deployerAddr } = await getNamedAccounts();
   const sDeployer = await ethers.provider.getSigner(deployerAddr);
+  const networkName = await getNetworkName();
+
   const cOETHVaultProxy = await ethers.getContract("OETHVaultProxy");
 
   log("Deploy Beacon Proofs");
@@ -850,9 +852,9 @@ const deployCompoundingStakingSSVStrategy = async () => {
   const cBeaconProofs = await ethers.getContract("BeaconProofs");
 
   let governorAddress;
-  // deploy the proxy on Hoodi fork not as defender relayer since we will not
+  // Deploy the proxy on Hoodi fork not as defender relayer since we will not
   // test SSV token claiming on that testnet
-  if ((isTest && !isFork) || isHoodi) {
+  if ((isTest && !isFork) || networkName == "hoodi") {
     // For unit tests, use the Governor contract
     governorAddress = governorAddr;
 
@@ -861,10 +863,12 @@ const deployCompoundingStakingSSVStrategy = async () => {
   } else {
     // For fork tests and mainnet deployments, use the Timelock contract
     governorAddress = addresses.mainnet.Timelock;
+    log(`Mainnet governor is the Timelock contract ${governorAddress}`);
   }
 
   let cCompoundingStakingSSVStrategyProxy;
   if (isTest) {
+    log(`Fix CompoundingStakingSSVStrategyProxy address for unit tests`);
     // For unit tests, fix the address of compoundingStakingSSVStrategy so the withdrawal credentials
     // are fixed for the validator public key proofs
     await replaceContractAt(
@@ -882,7 +886,7 @@ const deployCompoundingStakingSSVStrategy = async () => {
       addresses.mainnet.CompoundingStakingStrategyProxy
     );
   } else {
-    // For fork tests, mainnet and Hoodie deployments.
+    // For fork tests, mainnet and Hoodi deployments.
     // Should have already been deployed by the Defender Relayer as SSV rewards are sent to the deployer.
     // Use the deployStakingProxy Hardhat task to deploy
     cCompoundingStakingSSVStrategyProxy = await ethers.getContract(
@@ -890,17 +894,11 @@ const deployCompoundingStakingSSVStrategy = async () => {
     );
   }
 
-  log("Deploy CompoundingStakingStrategyView");
-  await deployWithConfirmation("CompoundingStakingStrategyView", [
-    cCompoundingStakingSSVStrategyProxy.address,
-  ]);
-
   const proxyGovernor = await cCompoundingStakingSSVStrategyProxy.governor();
+  log(`CompoundingStakingSSVStrategyProxy's governor: ${proxyGovernor}`);
   if (isFork && proxyGovernor != deployerAddr) {
     // For fork tests, transfer the governance to the deployer account
-    const currentSigner = await impersonateAccount(
-      "0x3Ba227D87c2A7aB89EAaCEFbeD9bfa0D15Ad249A"
-    );
+    const currentSigner = await impersonateAccount(proxyGovernor);
     await withConfirmation(
       cCompoundingStakingSSVStrategyProxy
         .connect(currentSigner)
@@ -959,7 +957,9 @@ const deployCompoundingStakingSSVStrategy = async () => {
     ]
   );
 
-  log("Initialize the proxy and execute the initialize strategy function");
+  log(
+    `Initialize the CompoundingStakingSSVStrategy proxy ${cCompoundingStakingSSVStrategyProxy.address} to implementation ${cStrategyImpl.address} and execute the initialize strategy function using deployer ${deployerAddr}`
+  );
   await withConfirmation(
     cCompoundingStakingSSVStrategyProxy.connect(sDeployer)[
       // eslint-disable-next-line no-unexpected-multiline
@@ -976,14 +976,16 @@ const deployCompoundingStakingSSVStrategy = async () => {
     cCompoundingStakingSSVStrategyProxy.address
   );
 
-  log("Approve spending of the SSV token");
-  await withConfirmation(cStrategy.connect(sDeployer).safeApproveAllTokens());
+  log("Deploy CompoundingStakingStrategyView");
+  await deployWithConfirmation("CompoundingStakingStrategyView", [
+    cCompoundingStakingSSVStrategyProxy.address,
+  ]);
 
   return cStrategy;
 };
 
 /**
- * Deploy the OracleRouter and initialise it with Chainlink sources.
+ * Deploy the OracleRouter and initialize it with Chainlink sources.
  */
 const deployOracles = async () => {
   const { deployerAddr } = await getNamedAccounts();
