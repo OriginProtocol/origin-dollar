@@ -481,16 +481,19 @@ async function verifyBalances({
   );
 
   if (dryrun) {
-    console.log(`verification slot                 : ${verificationSlot}`);
+    console.log(`snapped slot                      : ${verificationSlot}`);
     console.log(`snap balances block root          : ${snapBalancesBlockRoot}`);
     console.log(
-      `first deposit validator block root: ${firstDepositValidatorBlockRoot}`
+      `validator verification slot       : ${firstDepositValidatorBlockTimestamp}`
     );
     console.log(
-      `first pending deposit slot.       : ${firstPendingDepositSlot}`
+      `validator verification block root : ${firstDepositValidatorBlockRoot}`
     );
     console.log(
-      `firstPendingDepositPubKeyProof.   :\n${pendingDepositPubKeyProof}`
+      `first pending deposit slot        : ${firstPendingDepositSlot}`
+    );
+    console.log(
+      `firstPendingDepositPubKeyProof    :\n${pendingDepositPubKeyProof}`
     );
     console.log(`\nbalancesContainerRoot           : ${balancesContainerRoot}`);
     console.log(`\nbalancesContainerProof:\n${balancesContainerProof}`);
@@ -504,7 +507,9 @@ async function verifyBalances({
         .map((proof) => `"${proof}"`)
         .join(",\n")}]`
     );
-    console.log(`validatorBalances: ${validatorBalancesFormatted.join(", ")}`);
+    console.log(
+      `validatorBalances: [${validatorBalancesFormatted.join(", ")}]`
+    );
     return;
   }
 
@@ -545,11 +550,13 @@ async function verifyBalances({
   log(
     `About to verify ${verifiedValidators.length} validator balances for slot ${verificationSlot} with first pending deposit slot ${firstPendingDepositSlot} to beacon block root ${snapBalancesBlockRoot}`
   );
+  log(firstPendingDeposit);
+  log(balanceProofs);
   const tx = await strategy
     .connect(signer)
     .verifyBalances(
       snapBalancesBlockRoot,
-      firstDepositValidatorBlockTimestamp,
+      firstDepositValidatorBlockTimestamp.toString(),
       firstPendingDeposit,
       balanceProofs
     );

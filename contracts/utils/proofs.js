@@ -1,7 +1,7 @@
 const { toHex } = require("../utils/units");
 const { concatProof, hashPubKey, getValidator } = require("../utils/beacon");
 const { formatUnits } = require("ethers/lib/utils");
-const { MAX_UINT64 } = require("./constants");
+const { MAX_UINT64, ZERO_BYTES32 } = require("./constants");
 
 const log = require("../utils/logger")("task:proof");
 
@@ -33,8 +33,8 @@ async function generateFirstPendingDepositProof({
     `Generalized index for the pubkey of the first pending deposit or the root node of the first pending deposit in the beacon block: ${generalizedIndex}`
   );
   let firstPendingDepositSlot = 0;
-  let firstPendingDepositPubKey = "";
-  let firstPendingDepositPubKeyHash = "";
+  let firstPendingDepositPubKey = "0x";
+  let firstPendingDepositPubKeyHash = ZERO_BYTES32;
   let firstPendingDepositValidatorIndex = 0;
   if (stateView.pendingDeposits.length == 0) {
     log("No deposits in the deposit queue");
