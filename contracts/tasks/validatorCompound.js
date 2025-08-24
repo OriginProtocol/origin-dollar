@@ -210,22 +210,7 @@ async function snapStakingStrategy({ block }) {
   const strategyView = await resolveContract("CompoundingStakingStrategyView");
 
   // Pending deposits
-  const deposits = await strategyView.getPendingDeposits({ blockTag });
-  let totalDeposits = BigNumber.from(0);
-  console.log(`\n${deposits.length || "No"} pending strategy deposits:`);
-  if (deposits.length > 0) {
-    console.log(
-      `  amount   slot    public key hash                                                    deposit root`
-    );
-  }
-  for (const deposit of deposits) {
-    console.log(
-      `  ${formatUnits(deposit.amountGwei, 9)} ETH ${deposit.slot} ${
-        deposit.pubKeyHash
-      } ${deposit.root}`
-    );
-    totalDeposits = totalDeposits.add(deposit.amountGwei);
-  }
+  const totalDeposits = await logDeposits(strategyView, blockTag);
 
   if (stateView.pendingDeposits.length === 0) {
     console.log("No pending beacon chain deposits");
@@ -318,6 +303,26 @@ async function snapStakingStrategy({ block }) {
   );
 }
 
+async function logDeposits(strategyView, blockTag = "latest") {
+  const deposits = await strategyView.getPendingDeposits({ blockTag });
+  let totalDeposits = BigNumber.from(0);
+  console.log(`\n${deposits.length || "No"} pending strategy deposits:`);
+  if (deposits.length > 0) {
+    console.log(`  ID  amount   slot     withdrawable  public key hash`);
+  }
+  for (const deposit of deposits) {
+    console.log(
+      `  ${deposit.depositID.toString().padEnd(3)} ${formatUnits(
+        deposit.amountGwei,
+        9
+      )} ETH ${deposit.slot} ${deposit.withdrawableEpoch} ${deposit.pubKeyHash}`
+    );
+    totalDeposits = totalDeposits.add(deposit.amountGwei);
+  }
+
+  return totalDeposits;
+}
+
 function validatorStatus(status) {
   if (status === 0) {
     return "NON_REGISTERED";
@@ -355,6 +360,7 @@ module.exports = {
   stakeValidator,
   withdrawValidator,
   snapStakingStrategy,
+  logDeposits,
   setRegistrator,
   validatorStatus,
 };
