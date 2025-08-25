@@ -221,47 +221,120 @@ end group
 
 group Verify validator deposit
 
-sender -> val : getBlockV2(slot)
+sender -> val : getBlockV2(deposit processed slot)
 note left : Any slot after the deposit was\nprocessed on the beacon chain
 activate val
-return beacon block
+return deposit beacon block
 
-sender -> val : getStateV2(slot)
+sender -> val : getStateV2(deposit processed slot)
 note left : Any slot after the deposit was\nprocessed on the beacon chain
 activate val
-return beacon state
+return deposit beacon state
 
-sender -> sender : generateFirstPendingDepositSlotProof(\n beacon block,\n beacon state)
+sender -> val : getBlockV2(first pending validator created slot)
+note left : Any slot after the validator of\nthe first pending deposit was created
+activate val
+return validator beacon block
 
-sender -> compStrat : verifyDeposit(\ndepositDataRoot,\n verificationSlot,\n firstPendingDepositSlot,\n firstPendingDepositSlotProof)
+sender -> val : getStateV2(first pending validator created slot)
+note left :Any slot after the validator of\nthe first pending deposit was created
+activate val
+return validator beacon state
+
+sender -> sender : generateFirstPendingDepositProof(\n deposit beacon block,\n deposit beacon state)
+sender -> sender : generateVerifyValidatorWithdrawableProof(\n validator beacon block,\n validator beacon state)
+sender -> sender : generateVerifyValidatorWithdrawableProof(\n deposit beacon block,\n deposit beacon state)
+
+sender -> compStrat : verifyDeposit(\n depositID,\n depositProcessedSlot,\n firstDepositValidatorCreatedSlot,\n firstPendingDeposit,\n strategyValidatorData)
 activate compStrat
+note right
+FirstPendingDepositProofData:
+  slot
+  validatorIndex
+  pubKeyHash
+  pendingDepositPubKeyProof
+  withdrawableEpochProof
+  validatorPubKeyProof
+
+StrategyValidatorProofData:
+  withdrawableEpoch
+  withdrawableEpochProof
+end note
 
 note over compStrat
-Check stored deposit slot is\nbefore the first pending deposit slot.
-Check the verification slot is after the stored deposit slot.
-Calculate next block timestamp from the verification slot.
+Calculate next block timestamp from the depositProcessedSlot.
 end note
 
 compStrat -> roots : get(nextBlockTimestamp)
 note left
-Timestamp of block after the verification slot.
+Timestamp of block after the depositProcessedSlot.
 This is because the timestamp will get the parent block root.
 end note
 activate roots
-return beacon block root of the verification slot
+return beacon block root of the depositProcessedSlot
 
-compStrat -> proofs : verifyFirstPendingDepositSlot(\n beacon block root,\n firstPendingDepositSlot,\n firstPendingDepositSlotProof)
+compStrat -> proofs : verifyFirstPendingDeposit(\n beacon block root,\n firstPendingDepositSlot,\n pubKeyHash,\n firstPendingDepositSlotProof)
 activate proofs
+alt if empty pending deposit proof
+    note over proofs
+    verify the first pending deposit is empty
+      BeaconBlock.state.PendingDeposits[0]
+    end note
+else if first pending deposit proof
+    note over proofs
+    Verify the pubKeyHash of the first pending deposit
+      BeaconBlock.state.PendingDeposits[0].pubkey
+    Verify the slot of the first pending deposit to
+    the third witness of the pubKeyProof
+    end note
+end
+return
+
+alt if pending deposits
+
+    note over compStrat
+    Calculate next block timestamp from the firstDepositValidatorCreatedSlot.
+    end note
+    compStrat -> roots : get(nextBlockTimestamp)
+    note left
+    Timestamp of block after the firstDepositValidatorCreatedSlot.
+    This is because the timestamp will get the parent block root.
+    end note
+    activate roots
+    return beacon block root of the firstDepositValidatorCreatedSlot
+
+    compStrat -> proofs : verifyValidatorWithdrawable(\n beacon block root,\n firstPendingDeposit.validatorIndex,\n firstPendingDeposit.pubKeyHash,\n farFuture,\n firstPendingDeposit.withdrawableEpochProof,\n firstPendingDeposit.validatorPubKeyProof)
+    activate proofs
+
+    note over proofs
+    Verify the validator's withdrawable epoch to the beacon block root.
+      BeaconBlock.state.validators[validatorIndex].withdrawableEpoch
+    Verify the validator's public key to the third witness of the withdrawableEpochProof
+    end note
+    return
+end
+
+
+compStrat -> proofs : verifyValidatorWithdrawable(\n beacon block root,\n strategyValidator.validatorIndex,\n strategyValidator.withdrawableEpoch,\n strategyValidator.withdrawableEpochProof)
+activate proofs
+
 note over proofs
-Encode slot to little endian padded to 32 bytes.
-Index BeaconBlock.state.PendingDeposits[0].slot
-Verify merkle proof of slot against the beacon block root.
+Verify the validator's withdrawable epoch to the beacon block root.
+    BeaconBlock.state.validators[validatorIndex].withdrawableEpoch
 end note
 return
 
-note over compStrat
-Remove deposit from storage.
-end note
+alt if strategy validator is exiting
+    note over compStrat
+    Store the withdrawable epoch on the deposit
+    Store the validator as EXITING
+    end note
+else if strategy validator not exiting
+    note over compStrat
+    Check stored deposit slot is before the depositProcessedSlot.
+    Remove deposit from storage.
+    end note
+end
 
 return
 
