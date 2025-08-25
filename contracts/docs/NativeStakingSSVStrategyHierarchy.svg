@@ -16,119 +16,119 @@
 <text text-anchor="middle" x="802.6" y="-303.3" font-family="Times,serif" font-size="14.00">Governable</text>
 <text text-anchor="middle" x="802.6" y="-286.5" font-family="Times,serif" font-size="14.00">../contracts/governance/Governable.sol</text>
 </g>
-<!-- 286 -->
+<!-- 299 -->
 <g id="node2" class="node">
-<title>286</title>
+<title>299</title>
 <polygon fill="#f2f2f2" stroke="black" points="0,-87.5 0,-129.1 335.19,-129.1 335.19,-87.5 0,-87.5"/>
 <text text-anchor="middle" x="167.6" y="-112.5" font-family="Times,serif" font-size="14.00">FeeAccumulator</text>
 <text text-anchor="middle" x="167.6" y="-95.7" font-family="Times,serif" font-size="14.00">../contracts/strategies/NativeStaking/FeeAccumulator.sol</text>
 </g>
-<!-- 288 -->
+<!-- 301 -->
 <g id="node3" class="node">
-<title>288</title>
+<title>301</title>
 <polygon fill="#f2f2f2" stroke="black" points="335.43,-0.5 335.43,-42.1 729.76,-42.1 729.76,-0.5 335.43,-0.5"/>
 <text text-anchor="middle" x="532.6" y="-25.5" font-family="Times,serif" font-size="14.00">NativeStakingSSVStrategy</text>
 <text text-anchor="middle" x="532.6" y="-8.7" font-family="Times,serif" font-size="14.00">../contracts/strategies/NativeStaking/NativeStakingSSVStrategy.sol</text>
 </g>
-<!-- 288&#45;&gt;286 -->
+<!-- 301&#45;&gt;299 -->
 <g id="edge3" class="edge">
-<title>288&#45;&gt;286</title>
+<title>301&#45;&gt;299</title>
 <path fill="none" stroke="black" stroke-dasharray="5,2" d="M447.48,-42.12C392.12,-55.01 319.85,-71.84 262.62,-85.17"/>
 <polygon fill="black" stroke="black" points="261.79,-81.77 252.85,-87.45 263.38,-88.59 261.79,-81.77"/>
 </g>
-<!-- 289 -->
+<!-- 302 -->
 <g id="node4" class="node">
-<title>289</title>
+<title>302</title>
 <polygon fill="#f2f2f2" stroke="black" points="352.95,-79.1 352.95,-137.5 712.24,-137.5 712.24,-79.1 352.95,-79.1"/>
 <text text-anchor="middle" x="532.6" y="-120.9" font-family="Times,serif" font-size="14.00">&lt;&lt;Abstract&gt;&gt;</text>
 <text text-anchor="middle" x="532.6" y="-104.1" font-family="Times,serif" font-size="14.00">ValidatorAccountant</text>
 <text text-anchor="middle" x="532.6" y="-87.3" font-family="Times,serif" font-size="14.00">../contracts/strategies/NativeStaking/ValidatorAccountant.sol</text>
 </g>
-<!-- 288&#45;&gt;289 -->
+<!-- 301&#45;&gt;302 -->
 <g id="edge1" class="edge">
-<title>288&#45;&gt;289</title>
+<title>301&#45;&gt;302</title>
 <path fill="none" stroke="black" d="M532.6,-42.44C532.6,-44.49 532.6,-46.63 532.6,-48.83"/>
 <polygon fill="none" stroke="black" points="522.1,-48.94 532.6,-78.94 543.1,-48.94 522.1,-48.94"/>
 </g>
-<!-- 217 -->
+<!-- 226 -->
 <g id="node7" class="node">
-<title>217</title>
+<title>226</title>
 <polygon fill="#f2f2f2" stroke="black" points="730.55,-79.1 730.55,-137.5 1020.64,-137.5 1020.64,-79.1 730.55,-79.1"/>
 <text text-anchor="middle" x="875.6" y="-120.9" font-family="Times,serif" font-size="14.00">&lt;&lt;Abstract&gt;&gt;</text>
 <text text-anchor="middle" x="875.6" y="-104.1" font-family="Times,serif" font-size="14.00">InitializableAbstractStrategy</text>
 <text text-anchor="middle" x="875.6" y="-87.3" font-family="Times,serif" font-size="14.00">../contracts/utils/InitializableAbstractStrategy.sol</text>
 </g>
-<!-- 288&#45;&gt;217 -->
+<!-- 301&#45;&gt;226 -->
 <g id="edge2" class="edge">
-<title>288&#45;&gt;217</title>
+<title>301&#45;&gt;226</title>
 <path fill="none" stroke="black" d="M612.58,-42.12C648.26,-50.96 691.42,-61.66 732.36,-71.81"/>
 <polygon fill="none" stroke="black" points="730,-82.04 761.65,-79.06 735.06,-61.65 730,-82.04"/>
 </g>
-<!-- 291 -->
+<!-- 304 -->
 <g id="node5" class="node">
-<title>291</title>
+<title>304</title>
 <polygon fill="#f2f2f2" stroke="black" points="354.11,-174.5 354.11,-232.9 711.08,-232.9 711.08,-174.5 354.11,-174.5"/>
 <text text-anchor="middle" x="532.6" y="-216.3" font-family="Times,serif" font-size="14.00">&lt;&lt;Abstract&gt;&gt;</text>
 <text text-anchor="middle" x="532.6" y="-199.5" font-family="Times,serif" font-size="14.00">ValidatorRegistrator</text>
 <text text-anchor="middle" x="532.6" y="-182.7" font-family="Times,serif" font-size="14.00">../contracts/strategies/NativeStaking/ValidatorRegistrator.sol</text>
 </g>
-<!-- 289&#45;&gt;291 -->
+<!-- 302&#45;&gt;304 -->
 <g id="edge4" class="edge">
-<title>289&#45;&gt;291</title>
+<title>302&#45;&gt;304</title>
 <path fill="none" stroke="black" d="M532.6,-137.58C532.6,-139.66 532.6,-141.8 532.6,-143.98"/>
 <polygon fill="none" stroke="black" points="522.1,-144.2 532.6,-174.2 543.1,-144.2 522.1,-144.2"/>
 </g>
-<!-- 291&#45;&gt;20 -->
+<!-- 304&#45;&gt;20 -->
 <g id="edge5" class="edge">
-<title>291&#45;&gt;20</title>
+<title>304&#45;&gt;20</title>
 <path fill="none" stroke="black" d="M614.34,-232.98C646.66,-244.16 683.83,-257.02 716.56,-268.34"/>
 <polygon fill="none" stroke="black" points="713.32,-278.33 745.11,-278.21 720.19,-258.48 713.32,-278.33"/>
 </g>
-<!-- 348 -->
+<!-- 361 -->
 <g id="node8" class="node">
-<title>348</title>
+<title>361</title>
 <polygon fill="#f2f2f2" stroke="black" points="291.55,-269.9 291.55,-328.3 667.64,-328.3 667.64,-269.9 291.55,-269.9"/>
 <text text-anchor="middle" x="479.6" y="-311.7" font-family="Times,serif" font-size="14.00">&lt;&lt;Abstract&gt;&gt;</text>
 <text text-anchor="middle" x="479.6" y="-294.9" font-family="Times,serif" font-size="14.00">Pausable</text>
 <text text-anchor="middle" x="479.6" y="-278.1" font-family="Times,serif" font-size="14.00">../node_modules/@openzeppelin/contracts/security/Pausable.sol</text>
 </g>
-<!-- 291&#45;&gt;348 -->
+<!-- 304&#45;&gt;361 -->
 <g id="edge6" class="edge">
-<title>291&#45;&gt;348</title>
+<title>304&#45;&gt;361</title>
 <path fill="none" stroke="black" d="M516.55,-232.98C514.65,-236.33 512.66,-239.83 510.64,-243.4"/>
 <polygon fill="none" stroke="black" points="501.44,-238.32 495.77,-269.6 519.71,-248.69 501.44,-238.32"/>
 </g>
-<!-- 216 -->
+<!-- 225 -->
 <g id="node6" class="node">
-<title>216</title>
+<title>225</title>
 <polygon fill="#f2f2f2" stroke="black" points="830.59,-174.5 830.59,-232.9 1026.6,-232.9 1026.6,-174.5 830.59,-174.5"/>
 <text text-anchor="middle" x="928.6" y="-216.3" font-family="Times,serif" font-size="14.00">&lt;&lt;Abstract&gt;&gt;</text>
 <text text-anchor="middle" x="928.6" y="-199.5" font-family="Times,serif" font-size="14.00">Initializable</text>
 <text text-anchor="middle" x="928.6" y="-182.7" font-family="Times,serif" font-size="14.00">../contracts/utils/Initializable.sol</text>
 </g>
-<!-- 217&#45;&gt;20 -->
+<!-- 226&#45;&gt;20 -->
 <g id="edge8" class="edge">
-<title>217&#45;&gt;20</title>
+<title>226&#45;&gt;20</title>
 <path fill="none" stroke="black" d="M846.3,-137.56C836.98,-148.13 827.55,-160.8 821.6,-174 811.18,-197.09 806.3,-224.8 804.09,-248.17"/>
 <polygon fill="none" stroke="black" points="793.6,-247.72 802.4,-278.26 814.56,-248.9 793.6,-247.72"/>
 </g>
-<!-- 217&#45;&gt;216 -->
+<!-- 226&#45;&gt;225 -->
 <g id="edge7" class="edge">
-<title>217&#45;&gt;216</title>
+<title>226&#45;&gt;225</title>
 <path fill="none" stroke="black" d="M891.64,-137.58C893.54,-140.93 895.53,-144.43 897.56,-148"/>
 <polygon fill="none" stroke="black" points="888.48,-153.29 912.42,-174.2 906.75,-142.92 888.48,-153.29"/>
 </g>
-<!-- 353 -->
+<!-- 366 -->
 <g id="node9" class="node">
-<title>353</title>
+<title>366</title>
 <polygon fill="#f2f2f2" stroke="black" points="304.37,-365.3 304.37,-423.7 654.82,-423.7 654.82,-365.3 304.37,-365.3"/>
 <text text-anchor="middle" x="479.6" y="-407.1" font-family="Times,serif" font-size="14.00">&lt;&lt;Abstract&gt;&gt;</text>
 <text text-anchor="middle" x="479.6" y="-390.3" font-family="Times,serif" font-size="14.00">Context</text>
 <text text-anchor="middle" x="479.6" y="-373.5" font-family="Times,serif" font-size="14.00">../node_modules/@openzeppelin/contracts/utils/Context.sol</text>
 </g>
-<!-- 348&#45;&gt;353 -->
+<!-- 361&#45;&gt;366 -->
 <g id="edge9" class="edge">
-<title>348&#45;&gt;353</title>
+<title>361&#45;&gt;366</title>
 <path fill="none" stroke="black" d="M479.6,-328.38C479.6,-330.46 479.6,-332.6 479.6,-334.78"/>
 <polygon fill="none" stroke="black" points="469.1,-335 479.6,-365 490.1,-335 469.1,-335"/>
 </g>
