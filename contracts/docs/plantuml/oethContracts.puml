@@ -6,21 +6,18 @@
 !$changedColor = Orange
 !$thirdPartyColor = WhiteSmoke
 
-' legend
-' blue - Origin
-' green - New
-' ' orange - Changed
-' white - 3rd Party
-' end legend
+legend
+blue - Origin
+green - New
+' orange - Changed
+white - 3rd Party
+end legend
 
 title "Origin Ether Contract Dependencies"
 
 object "OETHZapper" as zap <<Origin>> #$originColor {
     assets: ETH
 }
-
-' object "ARM Router" as router <<Origin>><<Proxy>> #$newColor {
-' }
 
 object "OETH ARM" as arm <<Origin>><<Proxy>> #$originColor {
     assets: WETH, OETH
@@ -31,8 +28,8 @@ object "OETHFixedRateDripper" as drip <<Origin>><<Proxy>> #$originColor {
     asset: WETH
 }
 
-object "OETHVaultValueChecker" as checker <<Origin>> #$originColor {
-}
+' object "OETHVaultValueChecker" as checker <<Origin>> #$originColor {
+' }
 
 object "WOETH" as woeth <<Origin>><<Proxy>> #$originColor {
     asset: OETH
@@ -94,14 +91,29 @@ object "FeeAccumulator3" as feeAcc3 <<Origin>><<Proxy>> #$originColor {
     assets: ETH
 }
 
-object "CompoundingStakingStrategy" as compStrat <<Origin>><<Proxy>> #$originColor {
+object "CompoundingStakingSSVStrategy" as compStrat <<Origin>><<Proxy>> #$originColor {
     assets: WETH, ETH
     Rewards: SSV
 }
+object "CompoundingStakingStrategyView" as compView <<Origin>> #$originColor {
 
+}
 object "BeaconProofs" as proofs <<Origin>> #$originColor {
 
 }
+
+' object "DepositContract" as deposit <<System>> #$thirdPartyColor {
+'  asset : ETH
+' }
+
+' object "WithdrawalRequest" as withdraw <<System>> #$thirdPartyColor {
+
+' }
+
+' object "BeaconRoots" as roots <<System>> #$thirdPartyColor {
+
+' }
+
 
 ' ' Oracle
 ' object "OETHOracleRouter" as oracle <<Origin>> #$originColor {
@@ -137,17 +149,8 @@ object "BeaconProofs" as proofs <<Origin>> #$originColor {
 ' ' }
 
 ' ' SSV
-' object "SSV Network" as ssvNet <<SSV>> #$thirdPartyColor {
+' object "SSV Network" as ssvNet <<SSV>><<Proxy>> #$thirdPartyColor {
 ' assets: ETH, SSV
-' }
-
-' ' SSV
-' object "SSV Network" as ssvNet <<SSV>> #$thirdPartyColor {
-' assets: ETH, SSV
-' }
-
-' object "Deposit" as bDep <<Beacon>> #$thirdPartyColor {
-' assets: ETH
 ' }
 
 
@@ -172,7 +175,6 @@ zap ..> oeth
 zap ..> oethv
 ' zap .....> weth
 
-' router ..> arm
 arm ..> oethv
 
 ' drip .....> weth
@@ -206,22 +208,27 @@ oeth <... amoStrat
 ' oethv <...> nativeStrat
 ' nativeStrat <..> feeAcc
 ' nativeStrat ..> ssvNet
-' nativeStrat ..> bDep
+' nativeStrat ..> deposit
 
 harv <..> nativeStrat2
 oethv <...> nativeStrat2
 nativeStrat2 <..> feeAcc2
 ' nativeStrat2 ...> ssvNet
-' nativeStrat2 ...> bDep
+' nativeStrat2 ...> deposit
 
 harv <..> nativeStrat3
 oethv <...> nativeStrat3
 nativeStrat3 <..> feeAcc3
 ' nativeStrat2 ...> ssvNet
-' nativeStrat2 ...> bDep
+' nativeStrat2 ...> deposit
 
 oethv <...> compStrat
-compStrat <..> proofs
+compStrat ..> proofs
+compStrat <.. compView
+' compStrat ..> ssvNet
+' compStrat ...> deposit
+' compStrat ...> withdraw
+' compStrat ...> roots
 
 ' cvxStrat ...> crvPool
 ' cvxStrat ....> cvxPool
