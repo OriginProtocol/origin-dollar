@@ -60,18 +60,37 @@ abstract contract CompoundingValidatorManager is Governable {
     /// @notice Address of the registrator - allowed to register, withdraw, exit and remove validators
     address public validatorRegistrator;
 
-    /// Deposit data for new compounding validators.
+    /// @notice Deposit data for new compounding validators.
+    /// @dev A `VERIFIED` deposit can mean 3 separate things:
+    ///      - a deposit has been processed by the beacon chain and shall be included in the
+    ///        balance of the next verifyBalances call
+    ///      - a deposit has been done to a slashed validator and has probably been recovered
+    ///        back to this strategy. Probably because we can not know for certain. This contract
+    ///        only detects when the validator has passed its withdrawal epoch. It is close to impossible
+    ///        to prove with Merkle Proofs that the postponed deposit this contract is responsible for
+    ///        creating is not present anymore in BeaconChain.state.pending_deposits. This in effect
+    ///        means that there might be a period where this contract thinks the deposit has been already
+    ///        returned as ETH balance before it happens. This will result in some days (or weeks)
+    ///        -> depending on the size of deposit queue of showing a deficit when calling `checkBalance`.
+    ///        As this only offsets the yield and doesn't cause a critical double-counting we are not addressing
+    ///        this issue.
+    ///      - A deposit has been done to the validator, but our deposit has been front run by a malicious
+    ///        actor. Funds in the deposit this contract makes are not recoverable.
     enum DepositStatus {
         UNKNOWN, // default value
         PENDING, // deposit is pending and waiting to be  verified
-        VERIFIED // deposit has been verified and is ready to be staked
+        VERIFIED // deposit has been verified
     }
 
     /// @param pubKeyHash Hash of validator's public key using the Beacon Chain's format
-    /// @param amountWei Amount of ETH in wei that has been deposited to the beacon chain deposit contract
-    /// @param blockNumber Block number when the deposit was made
+    /// @param amountGwei Amount of ETH in gwei that has been deposited to the beacon chain deposit contract
+    /// @param slot The beacon chain slot number when the deposit has been made
     /// @param depositIndex The index of the deposit in the list of active deposits
-    /// @param status The status of the deposit, either PENDING or VERIFIED
+    /// @param status The status of the deposit, either UNKNOWN, PENDING or VERIFIED
+    /// @param withdrawableEpoch The withdrawableEpoch of the validator which is being deposited to.
+    ///        At deposit time this is set to max default value (FAR_FUTURE_EPOCH). If a deposit has
+    ///        made to a slashed validator the `withdrawableEpoch` will be set to the epoch of that
+    ///        validator.
     struct DepositData {
         bytes32 pubKeyHash;
         uint64 amountGwei;
@@ -82,6 +101,9 @@ abstract contract CompoundingValidatorManager is Governable {
     }
     /// @notice Restricts to only one deposit to an unverified validator at a time.
     /// This is to limit front-running attacks of deposits to the beacon chain contract.
+    ///
+    /// @dev The value is set to true when a deposit to a new validator has been done that has
+    /// not yet be verified.
     bool public firstDeposit;
     /// @notice Unique identifier of the next validator deposit.
     uint128 public nextDepositID;
@@ -95,7 +117,6 @@ abstract contract CompoundingValidatorManager is Governable {
     /// Removed deposits will move the last deposit to the removed index.
     uint256[] public depositList;
 
-    // Validator data
     enum ValidatorState {
         NON_REGISTERED, // validator is not registered on the SSV network
         REGISTERED, // validator is registered on the SSV network
@@ -103,12 +124,13 @@ abstract contract CompoundingValidatorManager is Governable {
         VERIFIED, // validator has been verified to exist on the beacon chain
         EXITING, // The validator has been requested to exit or has been verified as forced exit
         EXITED, // The validator has been verified to have a zero balance
-        REMOVED, // validator has funds withdrawn to the EigenPod and is removed from the SSV
+        REMOVED, // validator has funds withdrawn to this strategy contract and is removed from the SSV
         INVALID // The validator has been front-run and the withdrawal address is not this strategy
     }
 
+    // Validator data
     struct ValidatorData {
-        ValidatorState state;
+        ValidatorState state; // The state of the validator known to this contract
         uint64 index; // The index of the validator on the beacon chain
     }
     /// @notice List of validator public key hashes that have been verified to exist on the beacon chain.
@@ -553,12 +575,16 @@ abstract contract CompoundingValidatorManager is Governable {
             withdrawalAddress
         );
 
+        // Store the validator state as verified
+        validator[pubKeyHash] = ValidatorData({
+            state: ValidatorState.VERIFIED,
+            index: validatorIndex
+        });
+
         // If the initial deposit was front-run and the withdrawal address is not this strategy
         if (withdrawalAddress != address(this)) {
-            validator[pubKeyHash] = ValidatorData({
-                state: ValidatorState.INVALID,
-                index: validatorIndex
-            });
+            // override the validator state
+            validator[pubKeyHash].state = ValidatorState.INVALID;
 
             // Find and remove the deposit as the funds can not be recovered
             uint256 depositCount = depositList.length;
@@ -578,12 +604,6 @@ abstract contract CompoundingValidatorManager is Governable {
             emit ValidatorInvalid(pubKeyHash);
             return;
         }
-
-        // Store the validator state as verified
-        validator[pubKeyHash] = ValidatorData({
-            state: ValidatorState.VERIFIED,
-            index: validatorIndex
-        });
 
         // Add the new validator to the list of verified validators
         verifiedValidators.push(pubKeyHash);
@@ -1110,7 +1130,10 @@ abstract contract CompoundingValidatorManager is Governable {
         }
 
         // Store the verified balance in storage
-        lastVerifiedEthBalance = totalDepositsWei + totalValidatorBalance + balancesMem.ethBalance;
+        lastVerifiedEthBalance =
+            totalDepositsWei +
+            totalValidatorBalance +
+            balancesMem.ethBalance;
         // Reset the last snap timestamp so a new snapBalances has to be made
         snappedBalance.timestamp = 0;
 
