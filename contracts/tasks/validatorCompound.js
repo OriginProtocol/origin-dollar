@@ -267,7 +267,7 @@ async function snapStakingStrategy({ block }) {
     .add(stratWethBalance)
     .add(stratEthBalance);
   const assetDiff = totalAssets.sub(stratBalance);
-  const lastSnapTimestamp = await strategy.lastSnapTimestamp({
+  const snappedBalance = await strategy.snappedBalance({
     blockTag,
   });
   const lastVerifiedEthBalance = await strategy.lastVerifiedEthBalance({
@@ -293,8 +293,12 @@ async function snapStakingStrategy({ block }) {
     `Last verified ETH  : ${formatUnits(lastVerifiedEthBalance, 18)}`
   );
   console.log(
-    `Last snap timestamp: ${lastSnapTimestamp} ${new Date(
-      lastSnapTimestamp * 1000
+    `Last snapped ETH   : ${formatUnits(snappedBalance.ethBalance, 18)}`
+  );
+  console.log(`Last snapped root  : ${snappedBalance.blockRoot}`);
+  console.log(
+    `Last snap timestamp: ${snappedBalance.timestamp} ${new Date(
+      snappedBalance.timestamp * 1000
     ).toISOString()} `
   );
   console.log(`SSV balance        : ${formatUnits(stratSsvBalance, 18)}`);
