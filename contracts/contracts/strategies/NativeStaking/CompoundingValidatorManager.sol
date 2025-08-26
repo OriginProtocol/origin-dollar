@@ -641,7 +641,8 @@ abstract contract CompoundingValidatorManager is Governable {
     /// Can not be a slot before a missed slot as the Beacon Root contract will have the parent block root
     /// set for the next block timestamp in 12 seconds time.
     /// @param firstDepositValidatorCreatedSlot The slot on or after when the validator of the first pending deposit
-    /// was created on the beacon chain. This is used to verify the validator has not exited.
+    /// was created on the beacon chain. This is used to verify the validator has not exited. Can be the same as 
+    /// `depositProcessedSlot` when the first pending deposit was to an already existing validator
     // slither-disable-start reentrancy-no-eth
     function verifyDeposit(
         uint256 depositID,
