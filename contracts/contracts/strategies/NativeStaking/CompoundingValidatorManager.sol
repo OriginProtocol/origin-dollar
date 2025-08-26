@@ -378,17 +378,6 @@ abstract contract CompoundingValidatorManager is Governable {
             address(this)
         );
 
-        // Deposit to the Beacon Chain deposit contract.
-        // This will create a deposit in the beacon chain's pending deposit queue.
-        IDepositContract(BEACON_CHAIN_DEPOSIT_CONTRACT).deposit{
-            value: depositAmountWei
-        }(
-            validatorStakeData.pubkey,
-            withdrawalCredentials,
-            validatorStakeData.signature,
-            validatorStakeData.depositDataRoot
-        );
-
         //// Update contract storage
         // Store the validator state if needed
         if (currentState == ValidatorState.REGISTERED) {
@@ -414,6 +403,17 @@ abstract contract CompoundingValidatorManager is Governable {
             withdrawableEpoch: FAR_FUTURE_EPOCH
         });
         depositList.push(depositID);
+
+        // Deposit to the Beacon Chain deposit contract.
+        // This will create a deposit in the beacon chain's pending deposit queue.
+        IDepositContract(BEACON_CHAIN_DEPOSIT_CONTRACT).deposit{
+            value: depositAmountWei
+        }(
+            validatorStakeData.pubkey,
+            withdrawalCredentials,
+            validatorStakeData.signature,
+            validatorStakeData.depositDataRoot
+        );
 
         emit ETHStaked(
             pubKeyHash,
@@ -449,8 +449,6 @@ abstract contract CompoundingValidatorManager is Governable {
             "Validator not verified"
         );
 
-        PartialWithdrawal.request(publicKey, amountGwei);
-
         // If a full withdrawal (validator exit)
         if (amountGwei == 0) {
             // Store the validator state as exiting so no more deposits can be made to it.
@@ -460,6 +458,8 @@ abstract contract CompoundingValidatorManager is Governable {
         // Do not remove from the list of verified validators.
         // This is done in the verifyBalances function once the validator's balance has been verified to be zero.
         // The validator state will be set to EXITED in the verifyBalances function.
+
+        PartialWithdrawal.request(publicKey, amountGwei);
 
         emit ValidatorWithdraw(pubKeyHash, uint256(amountGwei) * 1 gwei);
     }
@@ -623,7 +623,7 @@ abstract contract CompoundingValidatorManager is Governable {
         bytes validatorPubKeyProof;
     }
 
-    struct DepositValidatorProofData {
+    struct StrategyValidatorProofData {
         uint64 withdrawableEpoch;
         bytes withdrawableEpochProof;
     }
@@ -631,25 +631,50 @@ abstract contract CompoundingValidatorManager is Governable {
     /// @notice Verifies a deposit on the execution layer has been processed by the beacon chain.
     /// This means the accounting of the strategy's ETH moves from a pending deposit to a validator balance.
     ///
-    /// Important: this function has a limitation where the `verificationSlot` that is passed by the off-chain
-    /// verifier requires a slot immediately after it to propose a block otherwise the `BeaconRoots.parentBlockRoot`
-    /// will fail. This shouldn't be a problem, since by the current behaviour of beacon chain only 1%-3% slots
-    /// don't propose a block.
+    /// Important: this function has a limitation where `depositProcessedSlot` and `firstDepositValidatorCreatedSlot`
+    /// that is passed by the off-chain verifier requires a slot immediately after them to propose a block otherwise
+    /// the `BeaconRoots.parentBlockRoot` will fail. This shouldn't be a problem, since by the current behaviour of
+    /// beacon chain only 1%-3% slots don't propose a block.
     /// @param depositID The deposit ID emitted in `ETHStaked` from the `stakeEth` function.
     /// @param depositProcessedSlot Any slot on or after the strategy's deposit was processed on the beacon chain.
     /// Can not be a slot with pending deposits with the same slot as the deposit being verified.
     /// Can not be a slot before a missed slot as the Beacon Root contract will have the parent block root
     /// set for the next block timestamp in 12 seconds time.
     /// @param firstDepositValidatorCreatedSlot The slot on or after when the validator of the first pending deposit
-    /// was created on the beacon chain. This is used to verify the validator has not exited. Can be the same as
-    /// `depositProcessedSlot` when the first pending deposit was to an already existing validator
+    /// was created on the beacon chain. This is used to verify the validator has not exited.
+    /// If the first pending deposit is to an exiting validator, this can be the same slot as `depositProcessedSlot`.
+    /// If the first pending deposit is to a new validator, the slot will have to be in the next epoch as the
+    /// pending deposits are only processed at the start of each epoch.
+    /// @param firstPendingDeposit a `FirstPendingDepositProofData` struct containing:
+    /// - slot: The beacon chain slot of the first deposit in the beacon chain's deposit queue.
+    ///   Can be anything if the deposit queue is empty, but zero is a good choice.
+    /// - validatorIndex: The index of the validator of the first pending deposit.
+    ///   Can be anything if the deposit queue is empty, but zero is a good choice.
+    /// - pubKeyHash: The hash of the public key of the validator of the first pending deposit.
+    ///   Can be anything if the deposit queue is empty, but 32 zero bytes is a good choice
+    /// - pendingDepositPubKeyProof: The merkle proof of the first pending deposit to the beacon block root.
+    ///   Can be either:
+    ///   * 40 witness hashes for BeaconBlock.state.PendingDeposits[0].pubKey when the deposit queue is not empty.
+    ///   * 37 witness hashes for BeaconBlock.state.PendingDeposits[0] when the deposit queue is empty.
+    ///   The 32 byte witness hashes are concatenated together starting from the leaf node.
+    /// - withdrawableEpochProof: The merkle proof for the withdrawable epoch of the first pending deposit's validator
+    ///   to the beacon block root.
+    ///   This is 53 witness hashes of 32 bytes each concatenated together starting from the leaf node.
+    /// - validatorPubKeyProof The merkle proof for the public key of the first pending deposit's validator
+    ///   to the this witness hash of withdrawableEpochProof.
+    ///   This is 2 witness hashes of 32 bytes each concatenated together starting from the leaf node.
+    /// @param strategyValidatorData a `StrategyValidatorProofData` struct containing:
+    /// - withdrawableEpoch: The withdrawable epoch of the validator the strategy is depositing to.
+    /// - withdrawableEpochProof: The merkle proof for the withdrawable epoch of the validator the strategy
+    ///   is depositing to, to the beacon block root.
+    ///   This is 53 witness hashes of 32 bytes each concatenated together starting from the leaf node.
     // slither-disable-start reentrancy-no-eth
     function verifyDeposit(
         uint256 depositID,
         uint64 depositProcessedSlot,
         uint64 firstDepositValidatorCreatedSlot,
         FirstPendingDepositProofData calldata firstPendingDeposit,
-        DepositValidatorProofData calldata strategyValidatorData
+        StrategyValidatorProofData calldata strategyValidatorData
     ) external {
         // Load into memory the previously saved deposit data
         DepositData memory deposit = deposits[depositID];
