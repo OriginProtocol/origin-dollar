@@ -61,7 +61,7 @@ abstract contract CompoundingValidatorManager is Governable {
     address public validatorRegistrator;
 
     /// @notice Deposit data for new compounding validators.
-    /// @dev A `VERIFIED` deposit can mean 3 separate things: 
+    /// @dev A `VERIFIED` deposit can mean 3 separate things:
     ///      - a deposit has been processed by the beacon chain and shall be included in the
     ///        balance of the next verifyBalances call
     ///      - a deposit has been done to a slashed validator and has probably been recovered
@@ -71,7 +71,7 @@ abstract contract CompoundingValidatorManager is Governable {
     ///        creating is not present anymore in BeaconChain.state.pending_deposits. This in effect
     ///        means that there might be a period where this contract thinks the deposit has been already
     ///        returned as ETH balance before it happens. This will result in some days (or weeks)
-    ///        -> depending on the size of deposit queue of showing a deficit when calling `checkBalance`. 
+    ///        -> depending on the size of deposit queue of showing a deficit when calling `checkBalance`.
     ///        As this only offsets the yield and doesn't cause a critical double-counting we are not addressing
     ///        this issue.
     ///      - A deposit has been done to the validator, but our deposit has been front run by a malicious
@@ -101,8 +101,8 @@ abstract contract CompoundingValidatorManager is Governable {
     }
     /// @notice Restricts to only one deposit to an unverified validator at a time.
     /// This is to limit front-running attacks of deposits to the beacon chain contract.
-    /// 
-    /// @dev The value is set to true when a deposit to a new validator has been done that has 
+    ///
+    /// @dev The value is set to true when a deposit to a new validator has been done that has
     /// not yet be verified.
     bool public firstDeposit;
     /// @notice Unique identifier of the next validator deposit.
@@ -641,7 +641,7 @@ abstract contract CompoundingValidatorManager is Governable {
     /// Can not be a slot before a missed slot as the Beacon Root contract will have the parent block root
     /// set for the next block timestamp in 12 seconds time.
     /// @param firstDepositValidatorCreatedSlot The slot on or after when the validator of the first pending deposit
-    /// was created on the beacon chain. This is used to verify the validator has not exited. Can be the same as 
+    /// was created on the beacon chain. This is used to verify the validator has not exited. Can be the same as
     /// `depositProcessedSlot` when the first pending deposit was to an already existing validator
     // slither-disable-start reentrancy-no-eth
     function verifyDeposit(
@@ -1105,7 +1105,10 @@ abstract contract CompoundingValidatorManager is Governable {
         }
 
         // Store the verified balance in storage
-        lastVerifiedEthBalance = totalDepositsWei + totalValidatorBalance + balancesMem.ethBalance;
+        lastVerifiedEthBalance =
+            totalDepositsWei +
+            totalValidatorBalance +
+            balancesMem.ethBalance;
         // Reset the last snap timestamp so a new snapBalances has to be made
         snappedBalance.timestamp = 0;
 
