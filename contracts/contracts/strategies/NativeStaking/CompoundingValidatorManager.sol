@@ -119,18 +119,18 @@ abstract contract CompoundingValidatorManager is Governable {
     /// Uses the Beacon chain hashing for BLSPubkey which is sha256(abi.encodePacked(validator.pubkey, bytes16(0)))
     mapping(bytes32 => ValidatorData) public validator;
 
+    /// @param blockRoot Beacon chain block root of the snapshot
     /// @param timestamp Timestamp of the snapshot
     /// @param ethBalance The balance of ETH in the strategy contract at the snapshot
     struct Balances {
+        bytes32 blockRoot;
         uint64 timestamp;
         uint128 ethBalance;
     }
     /// @notice Mapping of the block root to the balances at that slot
-    mapping(bytes32 => Balances) public snappedBalances;
-    /// @notice The timestamp of the last snapshot taken
-    uint64 public lastSnapTimestamp;
+    Balances public snappedBalance;
     /// @notice The last verified ETH balance of the strategy
-    uint128 public lastVerifiedEthBalance;
+    uint256 public lastVerifiedEthBalance;
 
     /// @dev This contract receives WETH as the deposit asset, but unlike other strategies doesn't immediately
     /// deposit it to an underlying platform. Rather a special privilege account stakes it to the validators.
@@ -858,7 +858,7 @@ abstract contract CompoundingValidatorManager is Governable {
     function snapBalances() external {
         uint64 currentTimestamp = SafeCast.toUint64(block.timestamp);
         require(
-            lastSnapTimestamp + SNAP_BALANCES_DELAY < currentTimestamp,
+            snappedBalance.timestamp + SNAP_BALANCES_DELAY < currentTimestamp,
             "Snap too soon"
         );
 
@@ -866,14 +866,12 @@ abstract contract CompoundingValidatorManager is Governable {
         // Get the current ETH balance
         uint256 ethBalance = address(this).balance;
 
-        // Store the balances in the mapping
-        snappedBalances[blockRoot] = Balances({
+        // Store the snapped balance
+        snappedBalance = Balances({
+            blockRoot: blockRoot,
             timestamp: currentTimestamp,
             ethBalance: SafeCast.toUint128(ethBalance)
         });
-
-        // Store the snapped timestamp
-        lastSnapTimestamp = currentTimestamp;
 
         emit BalancesSnapped(blockRoot, ethBalance);
     }
@@ -890,7 +888,6 @@ abstract contract CompoundingValidatorManager is Governable {
 
     /// @notice Verifies the balances of all active validators on the beacon chain
     /// and checks no pending deposits have been processed by the beacon chain.
-    /// @param snapBlockRoot The beacon block root emitted from `snapBalance` in `BalancesSnapped`.
     /// @param balanceProofs a `BalanceProofs` struct containing the following:
     /// balancesContainerRoot - the merkle root of the balances container
     /// balancesContainerProof - The merkle proof for the balances container to the beacon block root.
@@ -900,16 +897,14 @@ abstract contract CompoundingValidatorManager is Governable {
     ///   This is 39 witness hashes of 32 bytes each concatenated together starting from the leaf node.
     // slither-disable-start reentrancy-no-eth
     function verifyBalances(
-        bytes32 snapBlockRoot,
         uint64 validatorVerificationBlockTimestamp,
         FirstPendingDepositProofData calldata firstPendingDeposit,
         BalanceProofs calldata balanceProofs
     ) external {
         // Load previously snapped balances for the given block root
-        Balances memory balancesMem = snappedBalances[snapBlockRoot];
+        Balances memory balancesMem = snappedBalance;
         // Check the balances are the latest
-        require(lastSnapTimestamp > 0, "No snapped balances");
-        require(balancesMem.timestamp == lastSnapTimestamp, "Stale snap");
+        require(balancesMem.timestamp > 0, "No snapped balances");
 
         uint256 verifiedValidatorsCount = verifiedValidators.length;
         uint256 totalValidatorBalance = 0;
@@ -928,7 +923,7 @@ abstract contract CompoundingValidatorManager is Governable {
             );
             // verify beaconBlock.state.balances root to beacon block root
             IBeaconProofs(BEACON_PROOFS).verifyBalancesContainer(
-                snapBlockRoot,
+                balancesMem.blockRoot,
                 balanceProofs.balancesContainerRoot,
                 balanceProofs.balancesContainerProof
             );
@@ -987,7 +982,7 @@ abstract contract CompoundingValidatorManager is Governable {
             // Verify the slot of the first pending deposit matches the beacon chain
             bool isDepositQueueEmpty = IBeaconProofs(BEACON_PROOFS)
                 .verifyFirstPendingDeposit(
-                    snapBlockRoot,
+                    balancesMem.blockRoot,
                     firstPendingDeposit.slot,
                     firstPendingDeposit.pubKeyHash,
                     firstPendingDeposit.pendingDepositPubKeyProof
@@ -1089,11 +1084,9 @@ abstract contract CompoundingValidatorManager is Governable {
         }
 
         // Store the verified balance in storage
-        lastVerifiedEthBalance = SafeCast.toUint128(
-            totalDepositsWei + totalValidatorBalance + balancesMem.ethBalance
-        );
+        lastVerifiedEthBalance = totalDepositsWei + totalValidatorBalance + balancesMem.ethBalance;
         // Reset the last snap timestamp so a new snapBalances has to be made
-        lastSnapTimestamp = 0;
+        snappedBalance.timestamp = 0;
 
         emit BalancesVerified(
             balancesMem.timestamp,
@@ -1143,12 +1136,10 @@ abstract contract CompoundingValidatorManager is Governable {
         // The ETH balance in this strategy contract can be more than the last verified ETH balance
         // due to partial withdrawals or full exits being processed by the beacon chain since the last snapBalances.
         // It can also happen from execution rewards (MEV) or ETH donations.
-        lastVerifiedEthBalance -= SafeCast.toUint128(
-            Math.min(uint256(lastVerifiedEthBalance), _ethAmount)
-        );
+        lastVerifiedEthBalance -= Math.min(lastVerifiedEthBalance, _ethAmount);
 
         // The ETH balance was decreased to WETH so we need to invalidate the last balances snap.
-        lastSnapTimestamp = 0;
+        snappedBalance.timestamp = 0;
     }
 
     /// @dev Converts WETH to ETH and updates the accounting.
@@ -1160,10 +1151,10 @@ abstract contract CompoundingValidatorManager is Governable {
         depositedWethAccountedFor -= deductAmount;
 
         // Store the increased ETH balance
-        lastVerifiedEthBalance += SafeCast.toUint128(_wethAmount);
+        lastVerifiedEthBalance += _wethAmount;
 
         // The ETH balance was increased from WETH so we need to invalidate the last balances snap.
-        lastSnapTimestamp = 0;
+        snappedBalance.timestamp = 0;
     }
 
     /**
