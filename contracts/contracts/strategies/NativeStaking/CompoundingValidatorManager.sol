@@ -130,7 +130,7 @@ abstract contract CompoundingValidatorManager is Governable {
     /// @notice Mapping of the block root to the balances at that slot
     Balances public snappedBalance;
     /// @notice The last verified ETH balance of the strategy
-    uint128 public lastVerifiedEthBalance;
+    uint256 public lastVerifiedEthBalance;
 
     /// @dev This contract receives WETH as the deposit asset, but unlike other strategies doesn't immediately
     /// deposit it to an underlying platform. Rather a special privilege account stakes it to the validators.
@@ -1084,9 +1084,7 @@ abstract contract CompoundingValidatorManager is Governable {
         }
 
         // Store the verified balance in storage
-        lastVerifiedEthBalance = SafeCast.toUint128(
-            totalDepositsWei + totalValidatorBalance + balancesMem.ethBalance
-        );
+        lastVerifiedEthBalance = totalDepositsWei + totalValidatorBalance + balancesMem.ethBalance;
         // Reset the last snap timestamp so a new snapBalances has to be made
         snappedBalance.timestamp = 0;
 
@@ -1138,9 +1136,7 @@ abstract contract CompoundingValidatorManager is Governable {
         // The ETH balance in this strategy contract can be more than the last verified ETH balance
         // due to partial withdrawals or full exits being processed by the beacon chain since the last snapBalances.
         // It can also happen from execution rewards (MEV) or ETH donations.
-        lastVerifiedEthBalance -= SafeCast.toUint128(
-            Math.min(uint256(lastVerifiedEthBalance), _ethAmount)
-        );
+        lastVerifiedEthBalance -= Math.min(lastVerifiedEthBalance, _ethAmount);
 
         // The ETH balance was decreased to WETH so we need to invalidate the last balances snap.
         snappedBalance.timestamp = 0;
@@ -1155,7 +1151,7 @@ abstract contract CompoundingValidatorManager is Governable {
         depositedWethAccountedFor -= deductAmount;
 
         // Store the increased ETH balance
-        lastVerifiedEthBalance += SafeCast.toUint128(_wethAmount);
+        lastVerifiedEthBalance += _wethAmount;
 
         // The ETH balance was increased from WETH so we need to invalidate the last balances snap.
         snappedBalance.timestamp = 0;
