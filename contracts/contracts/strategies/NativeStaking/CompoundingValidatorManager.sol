@@ -68,10 +68,14 @@ abstract contract CompoundingValidatorManager is Governable {
     }
 
     /// @param pubKeyHash Hash of validator's public key using the Beacon Chain's format
-    /// @param amountWei Amount of ETH in wei that has been deposited to the beacon chain deposit contract
-    /// @param blockNumber Block number when the deposit was made
+    /// @param amountGwei Amount of ETH in gwei that has been deposited to the beacon chain deposit contract
+    /// @param slot The beacon chain slot number when the deposit has been made
     /// @param depositIndex The index of the deposit in the list of active deposits
-    /// @param status The status of the deposit, either PENDING or VERIFIED
+    /// @param status The status of the deposit, either UNKNOWN, PENDING or VERIFIED
+    /// @param withdrawableEpoch The withdrawableEpoch of the validator which is being deposited to.
+    ///        At deposit time this is set to max default value (FAR_FUTURE_EPOCH). If a deposit has
+    ///        made to a slashed validator the `withdrawableEpoch` will be set to the epoch of that
+    ///        validator.
     struct DepositData {
         bytes32 pubKeyHash;
         uint64 amountGwei;
@@ -82,6 +86,9 @@ abstract contract CompoundingValidatorManager is Governable {
     }
     /// @notice Restricts to only one deposit to an unverified validator at a time.
     /// This is to limit front-running attacks of deposits to the beacon chain contract.
+    /// 
+    /// @dev The value is set to true when a deposit to a new validator has been done that has 
+    /// not yet be verified.
     bool public firstDeposit;
     /// @notice Unique identifier of the next validator deposit.
     uint128 public nextDepositID;
@@ -95,7 +102,6 @@ abstract contract CompoundingValidatorManager is Governable {
     /// Removed deposits will move the last deposit to the removed index.
     uint256[] public depositList;
 
-    // Validator data
     enum ValidatorState {
         NON_REGISTERED, // validator is not registered on the SSV network
         REGISTERED, // validator is registered on the SSV network
@@ -103,12 +109,13 @@ abstract contract CompoundingValidatorManager is Governable {
         VERIFIED, // validator has been verified to exist on the beacon chain
         EXITING, // The validator has been requested to exit or has been verified as forced exit
         EXITED, // The validator has been verified to have a zero balance
-        REMOVED, // validator has funds withdrawn to the EigenPod and is removed from the SSV
+        REMOVED, // validator has funds withdrawn to this strategy contract and is removed from the SSV
         INVALID // The validator has been front-run and the withdrawal address is not this strategy
     }
 
+    // Validator data
     struct ValidatorData {
-        ValidatorState state;
+        ValidatorState state; // The state of the validator known to this contract
         uint64 index; // The index of the validator on the beacon chain
     }
     /// @notice List of validator public key hashes that have been verified to exist on the beacon chain.
