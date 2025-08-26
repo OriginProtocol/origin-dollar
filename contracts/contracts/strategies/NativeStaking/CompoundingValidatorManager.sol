@@ -60,11 +60,26 @@ abstract contract CompoundingValidatorManager is Governable {
     /// @notice Address of the registrator - allowed to register, withdraw, exit and remove validators
     address public validatorRegistrator;
 
-    /// Deposit data for new compounding validators.
+    /// @notice Deposit data for new compounding validators.
+    /// @dev A `VERIFIED` deposit can mean 3 separate things: 
+    ///      - a deposit has been processed by the beacon chain and shall be included in the
+    ///        balance of the next verifyBalances call
+    ///      - a deposit has been done to a slashed validator and has probably been recovered
+    ///        back to this strategy. Probably because we can not know for certain. This contract
+    ///        only detects when the validator has passed its withdrawal epoch. It is close to impossible
+    ///        to prove with Merkle Proofs that the postponed deposit this contract is responsible for
+    ///        creating is not present anymore in BeaconChain.state.pending_deposits. This in effect
+    ///        means that there might be a period where this contract thinks the deposit has been already
+    ///        returned as ETH balance before it happens. This will result in some days (or weeks)
+    ///        -> depending on the size of deposit queue of showing a deficit when calling `checkBalance`. 
+    ///        As this only offsets the yield and doesn't cause a critical double-counting we are not addressing
+    ///        this issue.
+    ///      - A deposit has been done to the validator, but our deposit has been front run by a malicious
+    ///        actor. Funds in the deposit this contract makes are not recoverable.
     enum DepositStatus {
         UNKNOWN, // default value
         PENDING, // deposit is pending and waiting to be  verified
-        VERIFIED // deposit has been verified and is ready to be staked
+        VERIFIED // deposit has been verified
     }
 
     /// @param pubKeyHash Hash of validator's public key using the Beacon Chain's format
@@ -479,7 +494,7 @@ abstract contract CompoundingValidatorManager is Governable {
         );
 
         validator[pubKeyHash].state = ValidatorState.REMOVED;
-        
+
         ISSVNetwork(SSV_NETWORK).removeValidator(
             publicKey,
             operatorIds,
