@@ -12,6 +12,7 @@ const {
   getBeaconBlock,
   getValidator: getValidatorBeacon,
   calcBlockTimestamp,
+  calcSlot,
 } = require("../utils/beacon");
 const { bytes32 } = require("../utils/regex");
 const { resolveContract } = require("../utils/resolvers");
@@ -372,7 +373,6 @@ async function verifyDeposit({
 }
 
 async function verifyBalances({
-  root,
   indexes,
   dryrun,
   test,
@@ -380,20 +380,25 @@ async function verifyBalances({
   slot,
   valSlot: firstDepositValidatorCreatedSlot,
 }) {
-  if (!root && !slot) {
-    if (!dryrun && !test) {
-      // TODO If no beacon block root, then get from the blockRoot from the last BalancesSnapped event
-      // Revert for now
-      throw Error("Beacon block root is currently required for verifyBalances");
-    }
+  const strategy = await resolveContract(
+    "CompoundingStakingSSVStrategyProxy",
+    "CompoundingStakingSSVStrategy"
+  );
+  const strategyView = await resolveContract("CompoundingStakingStrategyView");
 
-    root = "head";
+  if (!slot) {
+    if (!dryrun && !test) {
+      const { timestamp: snappedTimestamp } = await strategy.snappedBalance();
+      const networkName = await getNetworkName();
+      slot = await calcSlot(snappedTimestamp, networkName);
+      log(`Using last snapped slot ${slot} for verifying balances`);
+    } else {
+      slot = "head";
+    }
   }
 
   // Uses the beacon chain data for the beacon block root
-  const { blockView, blockTree, stateView } = await getBeaconBlock(
-    root || slot
-  );
+  const { blockView, blockTree, stateView } = await getBeaconBlock(slot);
   const verificationSlot = blockView.slot;
   // Set the slot when the validator of the first pending deposit was created
   firstDepositValidatorCreatedSlot =
@@ -401,12 +406,6 @@ async function verifyBalances({
   const firstDepositValidatorBlockTimestamp = calcBlockTimestamp(
     firstDepositValidatorCreatedSlot
   );
-
-  const strategy = await resolveContract(
-    "CompoundingStakingSSVStrategyProxy",
-    "CompoundingStakingSSVStrategy"
-  );
-  const strategyView = await resolveContract("CompoundingStakingStrategyView");
 
   const {
     proof: pendingDepositPubKeyProof,
@@ -555,7 +554,6 @@ async function verifyBalances({
   const tx = await strategy
     .connect(signer)
     .verifyBalances(
-      snapBalancesBlockRoot,
       firstDepositValidatorBlockTimestamp.toString(),
       firstPendingDeposit,
       balanceProofs

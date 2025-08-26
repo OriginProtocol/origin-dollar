@@ -1968,12 +1968,6 @@ subtask("verifyBalances", "Verify validator balances on the Beacon chain")
     types.int
   )
   .addOptionalParam(
-    "root",
-    "The beacon block root to verify balances to in hex format with a 0x prefix. Default: last balances snapshot",
-    undefined,
-    types.string
-  )
-  .addOptionalParam(
     "valSlot",
     "The slot on or after the validator of first pending deposit deposit was created on the beacon chain. Default to the next epoch from the balances snapshot",
     undefined,

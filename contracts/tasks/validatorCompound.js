@@ -1,5 +1,6 @@
 const addresses = require("../utils/addresses");
 const { formatUnits, parseUnits } = require("ethers/lib/utils");
+const { BigNumber } = require("ethers");
 
 const { getBlock } = require("../tasks/block");
 const { calcDepositRoot } = require("./beaconTesting");
@@ -13,12 +14,12 @@ const { getSigner } = require("../utils/signers");
 const { resolveContract } = require("../utils/resolvers");
 const { getClusterInfo, splitOperatorIds } = require("../utils/ssv");
 const { logTxDetails } = require("../utils/txLogger");
-const { BigNumber } = require("ethers");
 const {
   createValidatorRequest,
   getValidatorRequestStatus,
   getValidatorRequestDepositData,
 } = require("../utils/p2pValidatorCompound");
+const { toHex } = require("../utils/units");
 
 const log = require("../utils/logger")("task:validator:compounding");
 
@@ -217,7 +218,11 @@ async function snapStakingStrategy({ block }) {
   } else {
     const firstBeaconDeposit = stateView.pendingDeposits.get(0);
     console.log(
-      `${stateView.pendingDeposits.length} beacon chain deposits. The first has slot ${firstBeaconDeposit.slot}`
+      `${
+        stateView.pendingDeposits.length
+      } beacon chain deposits. The first has slot ${
+        firstBeaconDeposit.slot
+      } and public key ${toHex(firstBeaconDeposit.pubkey)}`
     );
   }
 
@@ -270,6 +275,10 @@ async function snapStakingStrategy({ block }) {
   const snappedBalance = await strategy.snappedBalance({
     blockTag,
   });
+  const snappedSlot =
+    snappedBalance.timestamp == 0
+      ? 0n
+      : calcSlot(snappedBalance.timestamp, networkName);
   const lastVerifiedEthBalance = await strategy.lastVerifiedEthBalance({
     blockTag,
   });
@@ -277,7 +286,7 @@ async function snapStakingStrategy({ block }) {
     blockTag,
   });
 
-  console.log(`\nBalances at block ${blockTag}:`);
+  console.log(`\nBalances at block ${blockTag}, slot ${slot}:`);
   console.log(`Deposits           : ${formatUnits(totalDeposits, 9)}`);
   console.log(`Validator balances : ${formatUnits(totalValidators, 9)}`);
   console.log(`WETH in strategy   : ${formatUnits(stratWethBalance, 18)}`);
@@ -300,6 +309,9 @@ async function snapStakingStrategy({ block }) {
     `Last snap timestamp: ${snappedBalance.timestamp} ${new Date(
       snappedBalance.timestamp * 1000
     ).toISOString()} `
+  );
+  console.log(
+    `Last snap slot     : ${snappedSlot} (${slot - snappedSlot} slots ago)`
   );
   console.log(`SSV balance        : ${formatUnits(stratSsvBalance, 18)}`);
   console.log(
