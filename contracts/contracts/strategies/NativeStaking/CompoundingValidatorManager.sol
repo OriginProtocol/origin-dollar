@@ -575,12 +575,16 @@ abstract contract CompoundingValidatorManager is Governable {
             withdrawalAddress
         );
 
+        // Store the validator state as verified
+        validator[pubKeyHash] = ValidatorData({
+            state: ValidatorState.VERIFIED,
+            index: validatorIndex
+        });
+
         // If the initial deposit was front-run and the withdrawal address is not this strategy
         if (withdrawalAddress != address(this)) {
-            validator[pubKeyHash] = ValidatorData({
-                state: ValidatorState.INVALID,
-                index: validatorIndex
-            });
+            // override the validator state
+            validator[pubKeyHash].state = ValidatorState.INVALID;
 
             // Find and remove the deposit as the funds can not be recovered
             uint256 depositCount = depositList.length;
@@ -600,12 +604,6 @@ abstract contract CompoundingValidatorManager is Governable {
             emit ValidatorInvalid(pubKeyHash);
             return;
         }
-
-        // Store the validator state as verified
-        validator[pubKeyHash] = ValidatorData({
-            state: ValidatorState.VERIFIED,
-            index: validatorIndex
-        });
 
         // Add the new validator to the list of verified validators
         verifiedValidators.push(pubKeyHash);
