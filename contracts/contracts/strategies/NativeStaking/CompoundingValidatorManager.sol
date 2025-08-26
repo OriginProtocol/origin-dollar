@@ -356,17 +356,6 @@ abstract contract CompoundingValidatorManager is Governable {
             address(this)
         );
 
-        // Deposit to the Beacon Chain deposit contract.
-        // This will create a deposit in the beacon chain's pending deposit queue.
-        IDepositContract(BEACON_CHAIN_DEPOSIT_CONTRACT).deposit{
-            value: depositAmountWei
-        }(
-            validatorStakeData.pubkey,
-            withdrawalCredentials,
-            validatorStakeData.signature,
-            validatorStakeData.depositDataRoot
-        );
-
         //// Update contract storage
         // Store the validator state if needed
         if (currentState == ValidatorState.REGISTERED) {
@@ -392,6 +381,17 @@ abstract contract CompoundingValidatorManager is Governable {
             withdrawableEpoch: FAR_FUTURE_EPOCH
         });
         depositList.push(depositID);
+
+        // Deposit to the Beacon Chain deposit contract.
+        // This will create a deposit in the beacon chain's pending deposit queue.
+        IDepositContract(BEACON_CHAIN_DEPOSIT_CONTRACT).deposit{
+            value: depositAmountWei
+        }(
+            validatorStakeData.pubkey,
+            withdrawalCredentials,
+            validatorStakeData.signature,
+            validatorStakeData.depositDataRoot
+        );
 
         emit ETHStaked(
             pubKeyHash,
@@ -427,8 +427,6 @@ abstract contract CompoundingValidatorManager is Governable {
             "Validator not verified"
         );
 
-        PartialWithdrawal.request(publicKey, amountGwei);
-
         // If a full withdrawal (validator exit)
         if (amountGwei == 0) {
             // Store the validator state as exiting so no more deposits can be made to it.
@@ -438,6 +436,8 @@ abstract contract CompoundingValidatorManager is Governable {
         // Do not remove from the list of verified validators.
         // This is done in the verifyBalances function once the validator's balance has been verified to be zero.
         // The validator state will be set to EXITED in the verifyBalances function.
+
+        PartialWithdrawal.request(publicKey, amountGwei);
 
         emit ValidatorWithdraw(pubKeyHash, uint256(amountGwei) * 1 gwei);
     }
@@ -471,13 +471,13 @@ abstract contract CompoundingValidatorManager is Governable {
             "Validator not regd or exited"
         );
 
+        validator[pubKeyHash].state = ValidatorState.REMOVED;
+
         ISSVNetwork(SSV_NETWORK).removeValidator(
             publicKey,
             operatorIds,
             cluster
         );
-
-        validator[pubKeyHash].state = ValidatorState.REMOVED;
 
         emit SSVValidatorRemoved(pubKeyHash, operatorIds);
     }
