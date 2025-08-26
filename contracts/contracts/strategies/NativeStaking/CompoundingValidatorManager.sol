@@ -478,13 +478,13 @@ abstract contract CompoundingValidatorManager is Governable {
             "Validator not regd or exited"
         );
 
+        validator[pubKeyHash].state = ValidatorState.REMOVED;
+        
         ISSVNetwork(SSV_NETWORK).removeValidator(
             publicKey,
             operatorIds,
             cluster
         );
-
-        validator[pubKeyHash].state = ValidatorState.REMOVED;
 
         emit SSVValidatorRemoved(pubKeyHash, operatorIds);
     }
