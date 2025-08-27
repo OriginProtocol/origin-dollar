@@ -398,15 +398,6 @@ async function verifyBalances({
   // Uses the beacon chain data for the beacon block root
   const { blockView, blockTree, stateView } = await getBeaconBlock(slot);
   const verificationSlot = blockView.slot;
-  const networkName = await getNetworkName();
-  // Set the slot when the validator of the first pending deposit was created
-  firstDepositValidatorCreatedSlot =
-    firstDepositValidatorCreatedSlot || verificationSlot + 32;
-  const firstDepositValidatorBlockTimestamp = calcBlockTimestamp(
-    // Use the next slot as we are getting the parent block root
-    firstDepositValidatorCreatedSlot + 1,
-    networkName
-  );
 
   const {
     proof: pendingDepositPubKeyProof,
@@ -428,6 +419,18 @@ async function verifyBalances({
       `Can not verify when the first pending deposits has a zero slot. This is from a validator consolidating to a compounding validator.\nExecute another snapBalances when the first pending deposit slot is not zero.`
     );
   }
+
+  const networkName = await getNetworkName();
+  // Set the slot when the validator of the first pending deposit was created
+  // If no valSlot option and the queue is empty, use the same slot as the first pending deposit verification
+  // otherwise use the next epoch
+  firstDepositValidatorCreatedSlot =
+    firstDepositValidatorCreatedSlot || verificationSlot + (isEmpty ? 0 : 32);
+  const firstDepositValidatorBlockTimestamp = calcBlockTimestamp(
+    // Use the next slot as we are getting the parent block root
+    firstDepositValidatorCreatedSlot + 1,
+    networkName
+  );
 
   // Verify the first pending deposit is not exiting
   const depositValidatorBeaconData =
