@@ -38,10 +38,13 @@ abstract contract CompoundingValidatorManager is Governable {
     /// @dev The number of slots in each beacon chain epoch.
     uint64 internal constant SLOTS_PER_EPOCH = 32;
     /// @dev Minimum time in seconds to allow snapped balances to be verified.
-    /// Set to 1 epoch as the pending deposits only changes every epoch.
-    /// That's also enough time to generate the proofs and call `verifyBalances`.
-    uint64 internal constant SNAP_BALANCES_DELAY =
-        SLOTS_PER_EPOCH * SLOT_DURATION;
+    /// Set to 35 slots which is 3 slots more than 1 epoch (32 slots). Deposits get processed
+    /// once per epoch. This larger than 1 epoch delay should achieve that `snapBalances` sometimes
+    /// get called in the middle (or towards the end) of the epoch. Giving the off-chain script
+    /// sufficient time after the end of the epoch to prepare the proofs and call `verifyBalances`.
+    /// This is considering a malicious actor would keep calling `snapBalances` as frequent as possible
+    /// to disturb our operations.
+    uint64 internal constant SNAP_BALANCES_DELAY = 35 * SLOT_DURATION;
 
     /// @notice The address of the Wrapped ETH (WETH) token contract
     address public immutable WETH;
