@@ -57,7 +57,7 @@ const _p2pRequest = async (uri, method, body) => {
 };
 
 const _getStakingContract = async () => {
-  return await ethers.getContract("CompoundingStakingSSVStrategy");
+  return await ethers.getContract("CompoundingStakingSSVStrategyProxy");
 };
 
 const getValidatorRequestStatus = async ({ uuid }) => {
