@@ -12,7 +12,6 @@ const {
   getBeaconBlock,
   getValidator: getValidatorBeacon,
   calcBlockTimestamp,
-  calcSlot,
 } = require("../utils/beacon");
 const { bytes32 } = require("../utils/regex");
 const { resolveContract } = require("../utils/resolvers");
@@ -387,11 +386,10 @@ async function verifyBalances({
   const strategyView = await resolveContract("CompoundingStakingStrategyView");
 
   if (!slot) {
-    if (!dryrun && !test) {
-      const { timestamp: snappedTimestamp } = await strategy.snappedBalance();
-      const networkName = await getNetworkName();
-      slot = await calcSlot(snappedTimestamp, networkName);
-      log(`Using last snapped slot ${slot} for verifying balances`);
+    if (!test) {
+      const { blockRoot } = await strategy.snappedBalance();
+      slot = blockRoot;
+      log(`Using slot with block root ${slot} for verifying balances`);
     } else {
       slot = "head";
     }
@@ -400,11 +398,14 @@ async function verifyBalances({
   // Uses the beacon chain data for the beacon block root
   const { blockView, blockTree, stateView } = await getBeaconBlock(slot);
   const verificationSlot = blockView.slot;
+  const networkName = await getNetworkName();
   // Set the slot when the validator of the first pending deposit was created
   firstDepositValidatorCreatedSlot =
     firstDepositValidatorCreatedSlot || verificationSlot + 32;
   const firstDepositValidatorBlockTimestamp = calcBlockTimestamp(
-    firstDepositValidatorCreatedSlot
+    // Use the next slot as we are getting the parent block root
+    firstDepositValidatorCreatedSlot + 1,
+    networkName
   );
 
   const {
@@ -483,7 +484,10 @@ async function verifyBalances({
     console.log(`snapped slot                      : ${verificationSlot}`);
     console.log(`snap balances block root          : ${snapBalancesBlockRoot}`);
     console.log(
-      `validator verification slot       : ${firstDepositValidatorBlockTimestamp}`
+      `validator verification slot       : ${firstDepositValidatorCreatedSlot}`
+    );
+    console.log(
+      `validator verification next timestamp : ${firstDepositValidatorBlockTimestamp}`
     );
     console.log(
       `validator verification block root : ${firstDepositValidatorBlockRoot}`

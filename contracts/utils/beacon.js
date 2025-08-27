@@ -307,8 +307,12 @@ const calcBeaconBlockRoot = (leafHex, proofHex, gIndex) => {
   return rootHex;
 };
 
-const calcBlockTimestamp = (slot) => {
-  return 12n * BigInt(slot) + BigInt(beaconChainGenesisTimeMainnet);
+const calcBlockTimestamp = (slot, networkName = "mainnet") => {
+  const genesisTime =
+    networkName == "hoodi"
+      ? beaconChainGenesisTimeHoodi
+      : beaconChainGenesisTimeMainnet;
+  return 12n * BigInt(slot) + BigInt(genesisTime);
 };
 
 const calcSlot = (blockTimestamp, networkName = "mainnet") => {
