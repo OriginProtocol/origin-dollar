@@ -369,14 +369,41 @@ async function setRegistrator({ account }) {
   await logTxDetails(tx, "setRegistrator");
 }
 
+async function removeValidator({ pubkey, operatorids }) {
+  const signer = await getSigner();
+
+  log(`Splitting operator IDs ${operatorids}`);
+  const operatorIds = splitOperatorIds(operatorids);
+
+  const strategy = await resolveContract(
+    "CompoundingStakingSSVStrategyProxy",
+    "CompoundingStakingSSVStrategy"
+  );
+
+  // Cluster details
+  const { chainId } = await ethers.provider.getNetwork();
+  const { cluster } = await getClusterInfo({
+    chainId,
+    operatorids,
+    ownerAddress: strategy.address,
+  });
+
+  log(`About to remove compounding validator with pubkey ${pubkey}`);
+  const tx = await strategy
+    .connect(signer)
+    .removeSsvValidator(pubkey, operatorIds, cluster);
+  await logTxDetails(tx, "removeSsvValidator");
+}
+
 module.exports = {
   snapBalances,
   registerValidatorCreateRequest,
   registerValidator,
   stakeValidator,
-  withdrawValidator,
   snapStakingStrategy,
   logDeposits,
   setRegistrator,
   validatorStatus,
+  withdrawValidator,
+  removeValidator,
 };

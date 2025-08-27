@@ -109,6 +109,7 @@ const {
   registerValidator,
   stakeValidator,
   withdrawValidator,
+  removeValidator,
   setRegistrator,
 } = require("./validatorCompound");
 const { tenderlySync, tenderlyUpload } = require("./tenderly");
@@ -2089,6 +2090,30 @@ subtask(
     }
   });
 task("withdrawValidator").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+subtask(
+  "removeValidator",
+  "Removes a registered or exited compounding validator from the SSV cluster"
+)
+  .addParam(
+    "pubkey",
+    "The validator's public key in hex format with a 0x prefix",
+    undefined,
+    types.string
+  )
+  .addParam(
+    "operatorids",
+    "Comma separated operator ids. E.g. 342,343,344,345",
+    undefined,
+    types.string
+  )
+  .setAction(async (taskArgs) => {
+    const signer = await getSigner();
+    await removeValidator({ ...taskArgs, signer });
+  });
+task("removeValidator").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
 
