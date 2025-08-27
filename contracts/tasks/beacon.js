@@ -196,7 +196,7 @@ async function verifyDeposit({
     }
 
     const strategyValidator = await strategy.validator(pubKeyHash);
-    strategyValidatorIndex = strategyValidator.index;
+    strategyValidatorIndex = strategyValidator.index.toNumber();
   }
 
   // Uses the latest slot if the slot is undefined
@@ -235,6 +235,7 @@ async function verifyDeposit({
     pubkeyHash: firstPendingDepositPubKeyHash,
     validatorIndex: firstPendingDepositValidatorIndex,
     root: processedBeaconBlockRoot,
+    isEmpty,
   } = await generateFirstPendingDepositProof({
     ...depositProcessedBeaconData,
     test,
@@ -242,7 +243,8 @@ async function verifyDeposit({
 
   // Generate a proof that the validator of the first pending deposit is not exiting
   if (!firstDepositValidatorCreatedSlot) {
-    firstDepositValidatorCreatedSlot = depositProcessedSlot + 32;
+    firstDepositValidatorCreatedSlot =
+      depositProcessedSlot + (isEmpty ? 0 : 32);
     log(
       `Using slot ${firstDepositValidatorCreatedSlot} to see if the first pending deposit validator is exiting`
     );
@@ -262,12 +264,12 @@ async function verifyDeposit({
     includePubKeyProof: true,
   });
 
-  if (firstPendingDepositSlot == 0 && !test) {
+  if (!isEmpty && firstPendingDepositSlot == 0 && !test) {
     throw Error(
       `Can not verify when the first pending deposits has a zero slot. This is from a validator consolidating to a compounding validator.\nExecute again when the first pending deposit slot is not zero.`
     );
   }
-  if (strategyDepositSlot > firstPendingDepositSlot) {
+  if (!isEmpty && strategyDepositSlot > firstPendingDepositSlot) {
     throw Error(
       `Deposit at slot ${strategyDepositSlot} has not been processed at slot ${depositProcessedSlot}. Next deposit in the queue is from slot ${firstPendingDepositSlot}.`
     );

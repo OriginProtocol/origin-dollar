@@ -1921,7 +1921,7 @@ subtask("verifyDeposit", "Verify a deposit on the Beacon chain")
     "id",
     "The deposit ID emitted in the `ETHStaked` event from the `stakeETH` function",
     undefined,
-    types.string
+    types.int
   )
   .addOptionalParam(
     "slot",
