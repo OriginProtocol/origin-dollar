@@ -239,16 +239,18 @@ async function snapStakingStrategy({ block }) {
   let totalValidators = BigNumber.from(0);
   for (const validator of verifiedValidators) {
     const balance = stateView.balances.get(validator.index);
-    const { status } = await strategy.validator(validator.pubKeyHash, {
+    const validatorData = await strategy.validator(validator.pubKeyHash, {
       blockTag,
     });
     const beaconValidator = stateView.validators.get(validator.index);
     console.log(
       `  ${formatUnits(balance, 9).padEnd(12)} ETH ${
         validator.index
-      } ${validatorStatus(status).padEnd(8)} ${validator.pubKeyHash} ${
-        beaconValidator.withdrawableEpoch || "\t\t"
-      }     ${beaconValidator.exitEpoch || ""}`
+      } ${validatorStatus(validatorData.state).padEnd(8)} ${
+        validator.pubKeyHash
+      } ${beaconValidator.withdrawableEpoch || "\t\t"}     ${
+        beaconValidator.exitEpoch || ""
+      }`
     );
     totalValidators = totalValidators.add(balance);
   }
@@ -349,8 +351,10 @@ function validatorStatus(status) {
   } else if (status === 3) {
     return "VERIFIED";
   } else if (status === 4) {
-    return "EXITED";
+    return "EXITING";
   } else if (status === 5) {
+    return "EXITED";
+  } else if (status === 6) {
     return "REMOVED";
   } else {
     return "UNKNOWN";
