@@ -25,6 +25,7 @@ const {
 const { toHex } = require("../utils/units");
 const { logTxDetails } = require("../utils/txLogger");
 const { getNetworkName } = require("../utils/hardhat-helpers");
+const { ZERO_BYTES32 } = require("../utils/constants");
 
 const log = require("../utils/logger")("task:beacon");
 
@@ -434,34 +435,46 @@ async function verifyBalances({
     networkName
   );
 
-  // Verify the first pending deposit is not exiting
-  const depositValidatorBeaconData =
-    firstDepositValidatorCreatedSlot == verificationSlot
-      ? { blockView, blockTree, stateView }
-      : await getBeaconBlock(firstDepositValidatorCreatedSlot);
+  let firstDepositValidatorWithdrawableEpochProof = "0x";
+  let firstDepositValidatorValidatorPubKeyProof = "0x";
+  let firstDepositValidatorBlockRoot = ZERO_BYTES32;
+  if (!isEmpty) {
+    // Verify the first pending deposit is not exiting
+    const depositValidatorBeaconData =
+      firstDepositValidatorCreatedSlot == verificationSlot
+        ? { blockView, blockTree, stateView }
+        : await getBeaconBlock(firstDepositValidatorCreatedSlot);
 
-  const {
-    proof: firstDepositValidatorWithdrawableEpochProof,
-    validatorPubKeyProof: firstDepositValidatorValidatorPubKeyProof,
-    root: firstDepositValidatorBlockRoot,
-  } = await generateValidatorWithdrawableEpochProof({
-    ...depositValidatorBeaconData,
-    validatorIndex: firstPendingDepositValidatorIndex,
-    includePubKeyProof: true,
-  });
-
-  const { leaf: balancesContainerRoot, proof: balancesContainerProof } =
-    await generateBalancesContainerProof({
-      blockView,
-      blockTree,
-      stateView,
-    });
+    const firstDepositValidatorProofs =
+      await generateValidatorWithdrawableEpochProof({
+        ...depositValidatorBeaconData,
+        validatorIndex: firstPendingDepositValidatorIndex,
+        includePubKeyProof: true,
+      });
+    firstDepositValidatorWithdrawableEpochProof =
+      firstDepositValidatorProofs.proof;
+    firstDepositValidatorValidatorPubKeyProof =
+      firstDepositValidatorProofs.validatorPubKeyProof;
+    firstDepositValidatorBlockRoot = firstDepositValidatorProofs.root;
+  }
 
   const verifiedValidators = indexes
     ? indexes.split(",").map((index) => ({
         index,
       }))
     : await strategyView.getVerifiedValidators();
+
+  let balancesContainerRoot = ZERO_BYTES32;
+  let balancesContainerProof = "0x";
+  if (verifiedValidators.length > 0) {
+    const balancesContainerProofData = await generateBalancesContainerProof({
+      blockView,
+      blockTree,
+      stateView,
+    });
+    balancesContainerRoot = balancesContainerProofData.leaf;
+    balancesContainerProof = balancesContainerProofData.proof;
+  }
 
   const validatorBalanceLeaves = [];
   const validatorBalanceProofs = [];
