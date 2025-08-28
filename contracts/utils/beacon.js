@@ -395,8 +395,9 @@ const verifyDepositSignatureAndMessageRoot = async ({
       `Deposit message root miss-match. Computed value: ${computedMessageRootString} p2p supplied value: ${depositMessageRoot}`
     );
   }
-  log(`Deposit message root matches the compouted message root: ${depositMessageRoot}`);
-
+  log(
+    `Deposit message root matches the compouted message root: ${depositMessageRoot}`
+  );
 };
 
 module.exports = {

@@ -102,7 +102,7 @@ const getValidatorRequestDepositData = async ({ uuid }) => {
 
   const depositData = response.result.depositData[0];
   log(`DepositData: `, depositData);
-  
+
   return {
     pubkey: depositData.pubkey,
     sig: depositData.signature,
