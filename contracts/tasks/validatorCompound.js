@@ -11,6 +11,7 @@ const {
 } = require("../utils/beacon");
 const { getNetworkName } = require("../utils/hardhat-helpers");
 const { getSigner } = require("../utils/signers");
+const { verifyDepositSignatureAndMessageRoot } = require("../utils/beacon");
 const { resolveContract } = require("../utils/resolvers");
 const { getClusterInfo, splitOperatorIds } = require("../utils/ssv");
 const { logTxDetails } = require("../utils/txLogger");
@@ -107,7 +108,15 @@ async function registerValidator({ pubkey, shares, operatorids, ssv, uuid }) {
  * If the UUID is passed to this function then pubkey, sig, amount are
  * ignored and fetched from the P2P
  */
-async function stakeValidator({ pubkey, sig, amount, uuid }) {
+async function stakeValidator({
+  pubkey,
+  sig,
+  amount,
+  withdrawalCredentials,
+  depositMessageRoot,
+  forkVersion,
+  uuid,
+}) {
   const signer = await getSigner();
 
   if (uuid) {
@@ -115,11 +124,26 @@ async function stakeValidator({ pubkey, sig, amount, uuid }) {
       pubkey: _pubkey,
       sig: _sig,
       amount: _amount,
+      depositMessageRoot: _depositMessageRoot,
+      withdrawalCredentials: _withdrawalCredentials,
+      forkVersion: _forkVersion,
     } = await getValidatorRequestDepositData({ uuid });
     pubkey = _pubkey;
     sig = _sig;
     amount = _amount;
+    withdrawalCredentials = _withdrawalCredentials;
+    depositMessageRoot = _depositMessageRoot;
+    forkVersion = _forkVersion;
   }
+
+  await verifyDepositSignatureAndMessageRoot({
+    pubkey,
+    withdrawalCredentials,
+    amount,
+    signature: sig,
+    depositMessageRoot,
+    forkVersion,
+  });
 
   const strategy = await resolveContract(
     "CompoundingStakingSSVStrategyProxy",

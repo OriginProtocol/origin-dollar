@@ -2154,6 +2154,24 @@ subtask(
     undefined,
     types.int
   )
+  .addParam(
+    "withdrawalCredentials",
+    "Withdrawal credentials of the validator",
+    undefined,
+    types.string
+  )
+  .addParam(
+    "depositMessageRoot",
+    "Deposit message root provided by p2p",
+    undefined,
+    types.string
+  )
+  .addParam(
+    "forkVersion",
+    "Fork version of the beacon chain. Required for validating the BLS signature",
+    undefined,
+    types.string
+  )
   .setAction(stakeValidator);
 task("stakeValidator").setAction(async (_, __, runSuper) => {
   return runSuper();

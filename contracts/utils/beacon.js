@@ -2,6 +2,7 @@ const fs = require("fs");
 const fetch = require("node-fetch");
 const ethers = require("ethers");
 const { createHash } = require("crypto");
+const { parseUnits } = require("ethers/lib/utils");
 
 const {
   beaconChainGenesisTimeMainnet,
@@ -323,6 +324,81 @@ const calcSlot = (blockTimestamp, networkName = "mainnet") => {
   return (BigInt(blockTimestamp) - BigInt(genesisTime)) / 12n;
 };
 
+// verifies the deposit signature so we can confirm P2P has not generated a faulty one
+// and a the deposit message root. The latter should also be verified by the Beacon chain
+// deposit contract
+const verifyDepositSignatureAndMessageRoot = async ({
+  pubkey, // validator public key with or without 0x
+  withdrawalCredentials, // withdrawal credentials with or without 0x
+  amount, // amount in eth units
+  signature, // signature without 0x
+  depositMessageRoot, // p2p supplied deposit message root with or without 0x
+  forkVersion, // fork version
+}) => {
+  // Can not import via require since these packages support only ESM mode
+  const bls = await import("@chainsafe/bls");
+  const { ssz } = await import("@lodestar/types/phase0");
+  const { computeDomain, computeSigningRoot } = await import(
+    "@lodestar/state-transition"
+  );
+  const { DOMAIN_DEPOSIT } = await import("@lodestar/params");
+  const { mainnetChainConfig } = await import("@lodestar/config/networks");
+  const { fromHex } = await import("@lodestar/utils");
+
+  log("Validating BLS deposit message signature");
+  log(`pubkey: ${pubkey}`);
+  log(`withdrawalCredentials: ${withdrawalCredentials}`);
+  log(`amount: ${amount}`);
+  log(`signature: ${signature}`);
+  log(`depositMessageRoot: ${depositMessageRoot}`);
+  log(`forkVersion: ${forkVersion}`);
+
+  const amountGwei = parseUnits(amount.toString(), 9);
+  depositMessageRoot = depositMessageRoot.startsWith("0x")
+    ? depositMessageRoot.substring(2)
+    : depositMessageRoot;
+
+  // Prepare the DepositMessage
+  const depositMessage = {
+    pubkey: fromHex(pubkey),
+    withdrawalCredentials: fromHex(withdrawalCredentials),
+    amount: amountGwei.toString(),
+  };
+
+  const domain = computeDomain(
+    DOMAIN_DEPOSIT,
+    fromHex(forkVersion),
+    new Uint8Array(32)
+  );
+
+  // Compute signing root
+  const signingRoot = computeSigningRoot(
+    ssz.DepositMessage,
+    depositMessage,
+    domain
+  );
+
+  if (
+    !bls.default.verify(depositMessage.pubkey, signingRoot, fromHex(signature))
+  ) {
+    throw Error(`BLS signature is invalid`);
+  }
+
+  log(`BLS signature valid`);
+
+  // Compare computed deposit_message_root with provided one for sanity check
+  const computedMessageRoot = ssz.DepositMessage.hashTreeRoot(depositMessage);
+  const computedMessageRootString =
+    Buffer.from(computedMessageRoot).toString("hex");
+  if (depositMessageRoot != computedMessageRootString) {
+    throw Error(
+      `Deposit message root miss-match. Computed value: ${computedMessageRootString} p2p supplied value: ${depositMessageRoot}`
+    );
+  }
+  log(`Deposit message root matches the compouted message root: ${depositMessageRoot}`);
+
+};
+
 module.exports = {
   concatProof,
   getBeaconBlock,
@@ -337,4 +413,5 @@ module.exports = {
   hashPubKey,
   serializeUint64,
   calcBeaconBlockRoot,
+  verifyDepositSignatureAndMessageRoot,
 };

@@ -127,6 +127,7 @@
   },
   "dependencies": {
     "@chainlink/contracts-ccip": "^1.2.1",
+    "@chainsafe/bls": "^8.2.0",
     "@layerzerolabs/devtools": "^0.4.10",
     "@layerzerolabs/lz-evm-messagelib-v2": "^3.0.103",
     "@layerzerolabs/lz-evm-protocol-v2": "^3.0.87",
@@ -134,6 +135,8 @@
     "@layerzerolabs/oapp-evm": "^0.3.2",
     "@lodestar/api": "^1.31.0",
     "@lodestar/config": "^1.31.0",
+    "@lodestar/params": "^1.33.0",
+    "@lodestar/state-transition": "^1.33.0",
     "@lodestar/types": "^1.31.0",
     "ganache": "^7.9.2"
   },
