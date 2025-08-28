@@ -3,6 +3,28 @@
 .EXPORT_ALL_VARIABLES:
 MAKEFLAGS += --no-print-directory
 
+# ANSI Colors
+RESET=\033[0m
+
+BLACK=\033[0;30m
+RED=\033[0;31m
+GREEN=\033[0;32m
+YELLOW=\033[0;33m
+BLUE=\033[0;34m
+MAGENTA=\033[0;35m
+CYAN=\033[0;36m
+WHITE=\033[0;37m
+
+# Bold colors
+BOLD_BLACK=\033[1;30m
+BOLD_RED=\033[1;31m
+BOLD_GREEN=\033[1;32m
+BOLD_YELLOW=\033[1;33m
+BOLD_BLUE=\033[1;34m
+BOLD_MAGENTA=\033[1;35m
+BOLD_CYAN=\033[1;36m
+BOLD_WHITE=\033[1;37m
+
 DATE ?= $(shell date +%Y_%m)
 CHAIN ?= Mainnet
 
@@ -27,8 +49,9 @@ endef
 
 script:
 	$(eval CHAIN_ID := $(call get_chain_id))
-	@echo "Running script RunlogsDATE=$(DATE)_CHAIN=$(CHAIN) \n"
+	@echo "$(BOLD_BLUE)Running script RunlogsDATE=$(DATE)_CHAIN=$(CHAIN) $(RESET) \n"
 	forge script Runlogs_$(DATE)_$(CHAIN)
-	python3 scripts/runlogs/broadcast_convertor.py -i broadcast/$(DATE).s.sol/$(CHAIN_ID)/dry-run/run-latest.json -d True
+	@echo "$(BOLD_BLUE)\nConverting foundry broadcast messages to Safe format... $(RESET) \n"
+	forge script BroadcastConvertor contracts/broadcast/$(DATE).s.sol/$(CHAIN_ID)/dry-run/
 
 .PHONY: script

@@ -8,7 +8,7 @@ verbosity = 3
 auto_detect_remappings = false
 viaIR = true
 etherscan_api_key = "${ETHERSCAN_API_KEY}"
-fs_permissions = [{ access = "read", path = "./"}]
+fs_permissions = [{ access = "read-write", path = "./"}]
 
 remappings = [
     "@openzeppelin/=contracts/node_modules/@openzeppelin",
