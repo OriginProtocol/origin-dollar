@@ -937,13 +937,33 @@ abstract contract CompoundingValidatorManager is Governable {
 
     /// @notice Verifies the balances of all active validators on the beacon chain
     /// and checks no pending deposits have been processed by the beacon chain.
+    /// @param validatorVerificationBlockTimestamp next block's timestamp of a slot that has the first pending
+    ///        deposit already applied to the validator.
+    /// @param firstPendingDeposit a `FirstPendingDepositProofData` struct containing:
+    /// - slot: The beacon chain slot of the first deposit in the beacon chain's deposit queue.
+    ///   Can be anything if the deposit queue is empty, but zero is a good choice.
+    /// - validatorIndex: The index of the validator of the first pending deposit.
+    ///   Can be anything if the deposit queue is empty, but zero is a good choice.
+    /// - pubKeyHash: The hash of the public key of the validator of the first pending deposit.
+    ///   Can be anything if the deposit queue is empty, but 32 zero bytes is a good choice
+    /// - pendingDepositPubKeyProof: The merkle proof of the first pending deposit to the beacon block root.
+    ///   Can be either:
+    ///   * 40 witness hashes for BeaconBlock.state.PendingDeposits[0].pubKey when the deposit queue is not empty.
+    ///   * 37 witness hashes for BeaconBlock.state.PendingDeposits[0] when the deposit queue is empty.
+    ///   The 32 byte witness hashes are concatenated together starting from the leaf node.
+    /// - withdrawableEpochProof: The merkle proof for the withdrawable epoch of the first pending deposit's validator
+    ///   to the beacon block root.
+    ///   This is 53 witness hashes of 32 bytes each concatenated together starting from the leaf node.
+    /// - validatorPubKeyProof The merkle proof for the public key of the first pending deposit's validator
+    ///   to the this witness hash of withdrawableEpochProof.
+    ///   This is 2 witness hashes of 32 bytes each concatenated together starting from the leaf node.
     /// @param balanceProofs a `BalanceProofs` struct containing the following:
-    /// balancesContainerRoot - the merkle root of the balances container
-    /// balancesContainerProof - The merkle proof for the balances container to the beacon block root.
-    ///   This is 9 witness hashes of 32 bytes each concatenated together starting from the leaf node.
-    /// validatorBalanceLeaves - Array of leaf nodes containing the validator balance with three other balances.
-    /// validatorBalanceProofs -  Array of merkle proofs for the validator balance to the Balances container root.
-    ///   This is 39 witness hashes of 32 bytes each concatenated together starting from the leaf node.
+    /// - balancesContainerRoot: The merkle root of the balances container
+    /// - balancesContainerProof: The merkle proof for the balances container to the beacon block root.
+    ///    This is 9 witness hashes of 32 bytes each concatenated together starting from the leaf node.
+    /// - validatorBalanceLeaves: Array of leaf nodes containing the validator balance with three other balances.
+    /// - validatorBalanceProofs: Array of merkle proofs for the validator balance to the Balances container root.
+    ///    This is 39 witness hashes of 32 bytes each concatenated together starting from the leaf node.
     // slither-disable-start reentrancy-no-eth
     function verifyBalances(
         uint64 validatorVerificationBlockTimestamp,
@@ -977,7 +997,7 @@ abstract contract CompoundingValidatorManager is Governable {
                 balanceProofs.balancesContainerProof
             );
 
-            // for each validator in reserve order so we can pop off exited validators at the end
+            // for each validator in reverse order so we can pop off exited validators at the end
             for (uint256 i = verifiedValidatorsCount; i > 0; ) {
                 --i;
                 // verify validator's balance in beaconBlock.state.balances to the
@@ -1027,6 +1047,9 @@ abstract contract CompoundingValidatorManager is Governable {
         // This section is after the validator balance verifications so an exited validator will be marked
         // as EXITED before the deposits are verified. If there was a deposit to an exited validator
         // then the deposit can only be removed once the validator is fully exited.
+        // It is possible that validator fully exits and a postponed deposit to an exited validator increases
+        // its balance again. In such case the contract will erroneously consider a deposit applied before it
+        // has been applied on the beacon chain showing a smaller than real `totalValidatorBalance`.
         if (depositsCount > 0) {
             // Verify the slot of the first pending deposit matches the beacon chain
             bool isDepositQueueEmpty = IBeaconProofs(BEACON_PROOFS)
