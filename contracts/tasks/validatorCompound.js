@@ -156,7 +156,7 @@ async function stakeValidator({ dryrun, pubkey, sig, amount, uuid }) {
   if (!event) {
     throw new Error("ETHStaked event not found in transaction receipt");
   }
-  console.log(`Deposit ID: ${event.args.depositId}`);
+  console.log(`Deposit ID: ${event.args.depositID}`);
 }
 
 async function withdrawValidator({ pubkey, amount, signer }) {
