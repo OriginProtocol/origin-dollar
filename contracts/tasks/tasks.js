@@ -2127,6 +2127,12 @@ subtask(
     undefined,
     types.string
   )
+  .addOptionalParam(
+    "dryrun",
+    "Do not call stakeEth on the strategy contract. Just log the params and verify the deposit signature",
+    false,
+    types.boolean
+  )
   .setAction(stakeValidator);
 task("stakeValidatorUuid").setAction(async (_, __, runSuper) => {
   return runSuper();
@@ -2171,6 +2177,12 @@ subtask(
     "Fork version of the beacon chain. Required for validating the BLS signature",
     undefined,
     types.string
+  )
+  .addOptionalParam(
+    "dryrun",
+    "Do not call stakeEth on the strategy contract. Just log the params and verify the deposit signature",
+    false,
+    types.boolean
   )
   .setAction(stakeValidator);
 task("stakeValidator").setAction(async (_, __, runSuper) => {

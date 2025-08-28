@@ -109,6 +109,7 @@ async function registerValidator({ pubkey, shares, operatorids, ssv, uuid }) {
  * ignored and fetched from the P2P
  */
 async function stakeValidator({
+  dryrun,
   pubkey,
   sig,
   amount,
@@ -159,6 +160,14 @@ async function stakeValidator({
   );
 
   const amountGwei = parseUnits(amount.toString(), 9);
+
+  if (dryrun) {
+    console.log(`About to stake ${amount} ETH to validator with`);
+    console.log(`  pubkey         : ${pubkey}`);
+    console.log(`  signature      : ${sig}`);
+    console.log(`  depositDataRoot: ${depositDataRoot}`);
+    return;
+  }
 
   log(
     `About to stake ${amount} ETH to validator with pubkey ${pubkey} and deposit root ${depositDataRoot}`
