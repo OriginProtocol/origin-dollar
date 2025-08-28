@@ -26,7 +26,7 @@ import { IWETH9 } from "contracts/contracts/interfaces/IWETH9.sol";
 import { ICurveStableSwapNG } from "contracts/contracts/interfaces/ICurveStableSwapNG.sol";
 
 // Helpers
-import { CrossChain, Mainnet, Base } from "./Addresses.sol";
+import { CrossChain, Mainnet, Base, Sonic } from "./Addresses.sol";
 import { Script } from "forge-std/Script.sol";
 import { Test } from "forge-std/Test.sol";
 
@@ -80,5 +80,17 @@ abstract contract SetupBase is Test, Script {
   function setUp() public {
     // Note: to ensure perfect simulation, don't fix block number, it will be automatically set to the latest block
     vm.createSelectFork(vm.envString("BASE_PROVIDER_URL"));
+  }
+}
+
+abstract contract SetupSonic is Test, Script {
+  // Governance
+  address public governor = Sonic.GOVERNOR;
+  address public timelock = Sonic.TIMELOCK;
+  address public strategist = CrossChain.STRATEGIST;
+
+  function setUp() public {
+    // Note: to ensure perfect simulation, don't fix block number, it will be automatically set to the latest block
+    vm.createSelectFork(vm.envString("SONIC_PROVIDER_URL"));
   }
 }

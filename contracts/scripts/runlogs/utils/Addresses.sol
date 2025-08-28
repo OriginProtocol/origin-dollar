@@ -8,6 +8,10 @@ library CrossChain {
 
 library Mainnet {
   uint256 public constant CHAIN_ID = 1; // Mainnet chain ID
+
+  // Governance
+  address public constant TIMELOCK = 0x35918cDE7233F2dD33fA41ae3Cb6aE0e42E0e69F;
+
   // OUSD
   address public constant OUSD = 0x2A8e1E676Ec238d8A992307B495b45B3fEAa5e86;
 
@@ -31,6 +35,9 @@ library Mainnet {
 library Base {
   uint256 public constant CHAIN_ID = 5483; // Base chain ID
 
+  // Governance
+  address public constant TIMELOCK = 0xf817cb3092179083c48c014688D98B72fB61464f;
+
   // OETHb
   address public constant OETHB = 0xDBFeFD2e8460a6Ee4955A68582F85708BAEA60A3;
   address public constant WOETHB = 0x7FcD174E80f264448ebeE8c88a7C4476AAF58Ea6;
@@ -46,4 +53,15 @@ library Base {
 
   // Curve pools
   address public constant OETHB_WETH_CURVE_POOL = 0x302A94E3C28c290EAF2a4605FC52e11Eb915f378;
+}
+
+library Sonic {
+  uint256 public constant CHAIN_ID = 146; // Sonic chain ID
+
+  // Governance
+  address public constant GOVERNOR = 0xAdDEA7933Db7d83855786EB43a238111C69B00b6;
+  address public constant TIMELOCK = 0x31a91336414d3B955E494E7d485a6B06b55FC8fB;
+
+  // ARM
+  address public constant ARM = 0x2F872623d1E1Af5835b08b0E49aAd2d81d649D30;
 }
