@@ -107,7 +107,7 @@ async function registerValidator({ pubkey, shares, operatorids, ssv, uuid }) {
  * If the UUID is passed to this function then pubkey, sig, amount are
  * ignored and fetched from the P2P
  */
-async function stakeValidator({ pubkey, sig, amount, uuid }) {
+async function stakeValidator({ dryrun, pubkey, sig, amount, uuid }) {
   const signer = await getSigner();
 
   if (uuid) {
@@ -135,6 +135,14 @@ async function stakeValidator({ pubkey, sig, amount, uuid }) {
   );
 
   const amountGwei = parseUnits(amount.toString(), 9);
+
+  if (dryrun) {
+    console.log(`About to stake ${amount} ETH to validator with`);
+    console.log(`  pubkey         : ${pubkey}`);
+    console.log(`  signature      : ${sig}`);
+    console.log(`  depositDataRoot: ${depositDataRoot}`);
+    return;
+  }
 
   log(
     `About to stake ${amount} ETH to validator with pubkey ${pubkey} and deposit root ${depositDataRoot}`

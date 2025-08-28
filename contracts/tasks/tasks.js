@@ -2154,6 +2154,12 @@ subtask(
     undefined,
     types.int
   )
+  .addOptionalParam(
+    "dryrun",
+    "Do not call stakeEth on the strategy contract. Just log the params and verify the deposit signature",
+    false,
+    types.boolean
+  )
   .setAction(stakeValidator);
 task("stakeValidator").setAction(async (_, __, runSuper) => {
   return runSuper();
