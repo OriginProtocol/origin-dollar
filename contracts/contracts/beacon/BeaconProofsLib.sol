@@ -22,6 +22,11 @@ library BeaconProofsLib {
     /// (((2 ^ 3 + 3) * 2 ^ 6 + 34) * 2 ^ 28 + 0) * 2 ^ 3 + 0  = 1584842932224
     uint256 internal constant FIRST_PENDING_DEPOSIT_PUBKEY_GENERALIZED_INDEX =
         1584842932224;
+    /// @dev BeaconBlock.state.PendingDeposits[0].pubkey
+    /// Pending Deposit container: height 3, pubkey at index 4
+    /// (((2 ^ 3 + 3) * 2 ^ 6 + 34) * 2 ^ 28 + 0) * 2 ^ 3 + 4  = 1584842932228
+    uint256 internal constant FIRST_PENDING_DEPOSIT_SLOT_GENERALIZED_INDEX =
+        1584842932228;
     /// @dev BeaconBlock.state.validators
     /// Beacon block container: height 3, state at at index 3
     /// Beacon state container: height 6, validators at index 11
@@ -43,6 +48,11 @@ library BeaconProofsLib {
     /// BeaconBlock.state.PendingDeposits[0].pubKey
     /// 40 * 32 bytes = 1280 bytes
     uint256 internal constant FIRST_PENDING_DEPOSIT_PUBKEY_PROOF_LENGTH = 1280;
+    /// @dev Number of bytes in the proof from the slot of the first pending deposit to the beacon block root.
+    /// 40 witness hashes of 32 bytes each concatenated together.
+    /// BeaconBlock.state.PendingDeposits[0].slot
+    /// 40 * 32 bytes = 1280 bytes
+    uint256 internal constant FIRST_PENDING_DEPOSIT_SLOT_PROOF_LENGTH = 1280;
     /// The slot is at index 4 in the Pending Deposits container.
     /// The sub tree from the right node from the root is a tree of height 2.
     /// The first 32 bytes witness is an empty bytes32 as there are
@@ -331,6 +341,54 @@ library BeaconProofsLib {
                 index: 4
             }),
             "Invalid deposit slot"
+        );
+    }
+
+    /// @notice If the deposit queue is not empty,
+    /// verify the slot of the first pending deposit to the beacon block root.
+    /// BeaconBlock.state.pendingDeposits[0].slot
+    /// If the deposit queue is empty, verify the root of the first pending deposit is empty
+    /// BeaconBlock.state.PendingDeposits[0]
+    /// @param beaconBlockRoot The root of the beacon block.
+    /// @param slot The beacon chain slot of the first deposit in the beacon chain's deposit queue.
+    /// Can be anything if the deposit queue is empty, but zero would be a good choice.
+    /// @param proof The merkle proof to the beacon block root. Can be either:
+    /// - 40 witness hashes for BeaconBlock.state.PendingDeposits[0].slot when the deposit queue is not empty.
+    /// - 37 witness hashes for BeaconBlock.state.PendingDeposits[0] when the deposit queue is empty.
+    /// The 32 byte witness hashes are concatenated together starting from the leaf node.
+    /// @return isEmptyDepositQueue True if the deposit queue is empty, false otherwise.
+    function verifyFirstPendingDeposit(
+        bytes32 beaconBlockRoot,
+        uint64 slot,
+        bytes calldata proof
+    ) internal view returns (bool isEmptyDepositQueue) {
+        require(beaconBlockRoot != bytes32(0), "Invalid block root");
+
+        // If the deposit queue is empty
+        if (proof.length == FIRST_PENDING_DEPOSIT_PROOF_LENGTH) {
+            require(
+                Merkle.verifyInclusionSha256({
+                    proof: proof,
+                    root: beaconBlockRoot,
+                    leaf: bytes32(0),
+                    index: FIRST_PENDING_DEPOSIT_GENERALIZED_INDEX
+                }),
+                "Invalid empty deposits proof"
+            );
+            return true;
+        }
+
+        // Verify the public key of the first pending deposit
+        // BeaconBlock.state.PendingDeposits[0].slot
+        require(
+            proof.length == FIRST_PENDING_DEPOSIT_SLOT_PROOF_LENGTH &&
+                Merkle.verifyInclusionSha256({
+                    proof: proof,
+                    root: beaconBlockRoot,
+                    leaf: Endian.toLittleEndianUint64(slot),
+                    index: FIRST_PENDING_DEPOSIT_SLOT_GENERALIZED_INDEX
+                }),
+            "Invalid deposit slot proof"
         );
     }
 

@@ -233,22 +233,15 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
 
     // Set parent beacon root for the block after the verification slots
     const depositProcessedSlot = depositSlot + 10000n;
-    // Put the slot the validator of the first pending deposit was created one epoch later
-    const firstDepositValidatorCreatedSlot = depositProcessedSlot + 32n;
 
     await beaconRoots["setBeaconRoot(uint256,bytes32)"](
       calcBlockTimestamp(depositProcessedSlot) + 12n,
       testValidator.depositProof.processedBeaconBlockRoot
     );
-    await beaconRoots["setBeaconRoot(uint256,bytes32)"](
-      calcBlockTimestamp(firstDepositValidatorCreatedSlot) + 12n,
-      testValidator.depositProof.validatorBeaconBlockRoot
-    );
 
     const verifiedDepositTx = await compoundingStakingSSVStrategy.verifyDeposit(
       depositID,
       depositProcessedSlot,
-      firstDepositValidatorCreatedSlot,
       testValidator.depositProof.firstPendingDeposit,
       testValidator.depositProof.strategyValidator
     );
@@ -316,7 +309,6 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
     const verifiedDepositTx = await compoundingStakingSSVStrategy.verifyDeposit(
       depositID,
       depositProcessedSlot,
-      firstDepositValidatorCreatedSlot,
       testValidator.depositProof.firstPendingDeposit,
       testValidator.depositProof.strategyValidator
     );
@@ -405,7 +397,6 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
 
     // Verify balances with pending deposits and active validators
     const tx = await compoundingStakingSSVStrategy.verifyBalances(
-      balancesProof.snapBalancesBlockRoot,
       validatorVerificationBlockTimestamp,
       balancesProof.firstPendingDeposit,
       {
@@ -691,7 +682,6 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
       await compoundingStakingSSVStrategy.verifyDeposit(
         depositID,
         depositProcessedSlot,
-        firstDepositValidatorCreatedSlot,
         testValidator.depositProof.firstPendingDeposit,
         testValidator.depositProof.strategyValidator
       );
@@ -732,7 +722,6 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
       await compoundingStakingSSVStrategy.verifyDeposit(
         depositID,
         depositProcessedSlot,
-        firstDepositValidatorCreatedSlot,
         testValidator.depositProof.firstPendingDeposit,
         testValidator.depositProof.strategyValidator
       );
@@ -1345,7 +1334,6 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
         const { compoundingStakingSSVStrategy } = fixture;
 
         const tx = await compoundingStakingSSVStrategy.verifyBalances(
-          beaconBlockRoot,
           validatorVerificationBlockTimestamp,
           {
             slot: 0,
@@ -1814,7 +1802,6 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
 
           // Verify balances with pending deposits and active validators
           const tx = compoundingStakingSSVStrategy.verifyBalances(
-            balancesProof.snapBalancesBlockRoot,
             balancesProof.firstDepositValidatorBlockTimestamp,
             balancesProof.firstPendingDeposit,
             {
@@ -1837,7 +1824,6 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
 
           // Verify balances with pending deposits and active validators
           const tx = compoundingStakingSSVStrategy.verifyBalances(
-            balancesProof.snapBalancesBlockRoot,
             balancesProof.firstDepositValidatorBlockTimestamp,
             balancesProof.firstPendingDeposit,
             {
@@ -1859,7 +1845,6 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
 
           // Verify balances with pending deposits and active validators
           const tx = compoundingStakingSSVStrategy.verifyBalances(
-            balancesProof.snapBalancesBlockRoot,
             balancesProof.firstDepositValidatorBlockTimestamp,
             balancesProof.firstPendingDeposit,
             {
@@ -1882,7 +1867,6 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
 
           // Verify balances with pending deposits and active validators
           const tx = compoundingStakingSSVStrategy.verifyBalances(
-            balancesProof.snapBalancesBlockRoot,
             balancesProof.firstDepositValidatorBlockTimestamp,
             balancesProof.firstPendingDeposit,
             {

@@ -43,6 +43,12 @@ interface IBeaconProofs {
         bytes32 beaconBlockRoot,
         uint64 slot,
         bytes32 pubKeyHash,
-        bytes calldata firstPendingDepositProof
+        bytes calldata firstPendingDepositPubKeyProof
+    ) external view returns (bool isEmptyDepositQueue);
+
+    function verifyFirstPendingDeposit(
+        bytes32 beaconBlockRoot,
+        uint64 slot,
+        bytes calldata firstPendingDepositSlotProof
     ) external view returns (bool isEmptyDepositQueue);
 }

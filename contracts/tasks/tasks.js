@@ -1930,12 +1930,6 @@ subtask("verifyDeposit", "Verify a deposit on the Beacon chain")
     types.int
   )
   .addOptionalParam(
-    "valSlot",
-    "The slot on or after the validator of first pending deposit deposit was created on the beacon chain. Default to the epoch after the deposit processed slot",
-    undefined,
-    types.int
-  )
-  .addOptionalParam(
     "dryrun",
     "Do not call verifyBalances on the strategy contract. Just log the params including the proofs",
     false,

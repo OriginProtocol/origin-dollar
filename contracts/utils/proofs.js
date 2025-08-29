@@ -5,8 +5,8 @@ const { MAX_UINT64, ZERO_BYTES32 } = require("./constants");
 
 const log = require("../utils/logger")("task:proof");
 
-// BeaconBlock.state.PendingDeposits[0].slot
-async function generateFirstPendingDepositProof({
+// BeaconBlock.state.PendingDeposits[0].pubkey
+async function generateFirstPendingDepositPubKeyProof({
   blockView,
   blockTree,
   stateView,
@@ -108,6 +108,111 @@ async function generateFirstPendingDepositProof({
     slot: firstPendingDepositSlot,
     pubkeyHash: firstPendingDepositPubKeyHash,
     validatorIndex: firstPendingDepositValidatorIndex,
+    isEmpty: stateView.pendingDeposits.length === 0,
+  };
+}
+
+// BeaconBlock.state.PendingDeposits[0].slot
+async function generateFirstPendingDepositSlotProof({
+  blockView,
+  blockTree,
+  stateView,
+  test,
+}) {
+  // Have to dynamically import the Lodestar API client as its an ESM module
+  const { concatGindices, createProof, ProofType, toGindex } = await import(
+    "@chainsafe/persistent-merkle-tree"
+  );
+
+  log(`There are ${stateView.pendingDeposits.length} pending deposits`);
+  const generalizedIndex =
+    stateView.pendingDeposits.length > 0
+      ? concatGindices([
+          blockView.type.getPathInfo(["stateRoot"]).gindex,
+          stateView.type.getPathInfo(["pendingDeposits", 0]).gindex,
+          toGindex(3, 4n), // depth 3, index 4 for slot = 12
+        ])
+      : concatGindices([
+          blockView.type.getPathInfo(["stateRoot"]).gindex,
+          stateView.type.getPathInfo(["pendingDeposits", 0]).gindex,
+        ]);
+  log(
+    `Generalized index for the slot of the first pending deposit or the root node of the first pending deposit in the beacon block: ${generalizedIndex}`
+  );
+  let firstPendingDepositSlot = 0;
+  let firstPendingDepositPubKey = "0x";
+  let firstPendingDepositPubKeyHash = ZERO_BYTES32;
+  let firstPendingDepositValidatorIndex = 0;
+  if (stateView.pendingDeposits.length == 0) {
+    log("No deposits in the deposit queue");
+  } else {
+    const firstPendingDeposit = stateView.pendingDeposits.get(0);
+    firstPendingDepositSlot = firstPendingDeposit.slot;
+    firstPendingDepositPubKey = toHex(firstPendingDeposit.pubkey);
+    firstPendingDepositPubKeyHash = hashPubKey(firstPendingDeposit.pubkey);
+    firstPendingDepositValidatorIndex = firstPendingDeposit.validatorIndex;
+    log(
+      `First pending deposit has slot ${
+        firstPendingDeposit.slot
+      }, withdrawal credential ${toHex(
+        firstPendingDeposit.withdrawalCredentials
+      )} and public key ${firstPendingDepositPubKey}`
+    );
+
+    const firstDepositValidator = await getValidator(firstPendingDepositPubKey);
+    firstPendingDepositValidatorIndex = firstDepositValidator.validatorindex;
+    log(
+      `First pending deposit validator index: ${firstPendingDepositValidatorIndex}`
+    );
+  }
+
+  log(
+    `Generating proof for the the first pending deposit slot to beacon block root ${toHex(
+      blockTree.root
+    )}`
+  );
+  const proofObj = createProof(blockTree.rootNode, {
+    type: ProofType.single,
+    gindex: generalizedIndex,
+  });
+  log(`First pending deposit slot leaf: ${toHex(proofObj.leaf)}`);
+  const proofBytes = toHex(concatProof(proofObj));
+  log(
+    `First pending deposit slot proof of depth ${proofObj.witnesses.length} in bytes:\n${proofBytes}`
+  );
+
+  if (test) {
+    // Generate the proof of the slot within the first pending deposit
+    const subTreeGeneralizedIndex = concatGindices([
+      blockView.type.getPathInfo(["stateRoot"]).gindex,
+      stateView.type.getPathInfo(["pendingDeposits", 0]).gindex,
+      toGindex(1, 1n), // depth 1, index 1 for slot = 3
+    ]);
+    // Generate the slot proof in the first pending deposit
+    const subTree = blockTree.getSubtree(subTreeGeneralizedIndex);
+    log(`Sub tree root: ${toHex(subTree.root)}`);
+    const subTreeProofObj = createProof(subTree.rootNode, {
+      type: ProofType.single,
+      // depth 2, index 0 for slot = 4
+      gindex: toGindex(2, 0n),
+    });
+    log(
+      `First pending deposit slot ${firstPendingDepositSlot} has leaf: ${toHex(
+        subTreeProofObj.leaf
+      )}`
+    );
+    const subTreeProofBytes = toHex(concatProof(subTreeProofObj));
+    log(
+      `First pending deposit slot proof of depth ${subTreeProofObj.witnesses.length} in bytes:\n${subTreeProofBytes}`
+    );
+  }
+
+  return {
+    proof: proofBytes,
+    generalizedIndex,
+    root: toHex(blockTree.root),
+    leaf: toHex(proofObj.leaf),
+    slot: firstPendingDepositSlot,
     isEmpty: stateView.pendingDeposits.length === 0,
   };
 }
@@ -385,7 +490,8 @@ async function generateBalanceProof({
 }
 
 module.exports = {
-  generateFirstPendingDepositProof,
+  generateFirstPendingDepositPubKeyProof,
+  generateFirstPendingDepositSlotProof,
   generateValidatorWithdrawableEpochProof,
   generateValidatorPubKeyProof,
   generateBalancesContainerProof,

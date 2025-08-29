@@ -129,27 +129,52 @@ contract BeaconProofs is IBeaconProofs {
     /// BeaconBlock.state.PendingDeposits[0].pubKey
     /// If the deposit queue is empty, verify the root of the first pending deposit is empty
     /// BeaconBlock.state.PendingDeposits[0]
-    /// @param beaconBlockRoot The root of the beacon block
+    /// @param beaconBlockRoot The root of the beacon block.
     /// @param slot The beacon chain slot of the first deposit in the beacon chain's deposit queue.
     /// Can be anything if the deposit queue is empty, but zero would be a good choice.
     /// @param pubKeyHash The hash of the validator public key for the first pending deposit.
     /// Use zero bytes if the deposit queue is empty.
-    /// @param firstPendingDepositProof The merkle proof to the beacon block root. Can be either:
+    /// @param firstPendingDepositPubKeyProof The merkle proof to the beacon block root. Can be either:
     /// - 40 witness hashes for BeaconBlock.state.PendingDeposits[0].pubKey when the deposit queue is not empty.
     /// - 37 witness hashes for BeaconBlock.state.PendingDeposits[0] when the deposit queue is empty.
     /// The 32 byte witness hashes are concatenated together starting from the leaf node.
-    /// @return isEmptyDepositQueue True if the deposit queue is empty, false otherwise
+    /// @return isEmptyDepositQueue True if the deposit queue is empty, false otherwise.
     function verifyFirstPendingDeposit(
         bytes32 beaconBlockRoot,
         uint64 slot,
         bytes32 pubKeyHash,
-        bytes calldata firstPendingDepositProof
+        bytes calldata firstPendingDepositPubKeyProof
     ) external view returns (bool isEmptyDepositQueue) {
         isEmptyDepositQueue = BeaconProofsLib.verifyFirstPendingDeposit(
             beaconBlockRoot,
             slot,
             pubKeyHash,
-            firstPendingDepositProof
+            firstPendingDepositPubKeyProof
+        );
+    }
+
+    /// @notice If the deposit queue is not empty,
+    /// verify the slot of the first pending deposit to the beacon block root.
+    /// BeaconBlock.state.pendingDeposits[0].slot
+    /// If the deposit queue is empty, verify the root of the first pending deposit is empty
+    /// BeaconBlock.state.PendingDeposits[0]
+    /// @param beaconBlockRoot The root of the beacon block.
+    /// @param slot The beacon chain slot of the first deposit in the beacon chain's deposit queue.
+    /// Can be anything if the deposit queue is empty, but zero would be a good choice.
+    /// @param firstPendingDepositSlotProof The merkle proof to the beacon block root. Can be either:
+    /// - 40 witness hashes for BeaconBlock.state.PendingDeposits[0].slot when the deposit queue is not empty.
+    /// - 37 witness hashes for BeaconBlock.state.PendingDeposits[0] when the deposit queue is empty.
+    /// The 32 byte witness hashes are concatenated together starting from the leaf node.
+    /// @return isEmptyDepositQueue True if the deposit queue is empty, false otherwise.
+    function verifyFirstPendingDeposit(
+        bytes32 beaconBlockRoot,
+        uint64 slot,
+        bytes calldata firstPendingDepositSlotProof
+    ) external view returns (bool isEmptyDepositQueue) {
+        isEmptyDepositQueue = BeaconProofsLib.verifyFirstPendingDeposit(
+            beaconBlockRoot,
+            slot,
+            firstPendingDepositSlotProof
         );
     }
 }
