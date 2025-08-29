@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.0;
-// Contracts - OUSD
 
+// Contracts - OUSD
 import { OUSD } from "contracts/contracts/token/OUSD.sol";
 
 // Contracts - OETH
@@ -15,11 +15,17 @@ import { OETHBaseVaultCore } from "contracts/contracts/vault/OETHBaseVaultCore.s
 import { OETHBaseVaultAdmin } from "contracts/contracts/vault/OETHBaseVaultAdmin.sol";
 import { OETHVaultValueChecker } from "contracts/contracts/strategies/VaultValueChecker.sol";
 
+// Contract - OS
+import { OSonic } from "contracts/contracts/token/OSonic.sol";
+
 // Contracts - Strategies
 import { CurveAMOStrategy } from "contracts/contracts/strategies/CurveAMOStrategy.sol";
 import { BaseCurveAMOStrategy } from "contracts/contracts/strategies/BaseCurveAMOStrategy.sol";
 import { AerodromeAMOStrategy } from
   "contracts/contracts/strategies/aerodrome/AerodromeAMOStrategy.sol";
+
+// Contracts - ARM
+import { ISonicARM } from "contracts/contracts/interfaces/arm/ISonicARM.sol";
 
 // Interfaces
 import { IWETH9 } from "contracts/contracts/interfaces/IWETH9.sol";
@@ -27,10 +33,10 @@ import { ICurveStableSwapNG } from "contracts/contracts/interfaces/ICurveStableS
 
 // Helpers
 import { CrossChain, Mainnet, Base, Sonic } from "./Addresses.sol";
-import { Script } from "forge-std/Script.sol";
-import { Test } from "forge-std/Test.sol";
 
 // Foundry
+import { Script } from "forge-std/Script.sol";
+import { Test } from "forge-std/Test.sol";
 
 abstract contract SetupMainnet is Test, Script {
   // Governance
@@ -88,6 +94,12 @@ abstract contract SetupSonic is Test, Script {
   address public governor = Sonic.GOVERNOR;
   address public timelock = Sonic.TIMELOCK;
   address public strategist = CrossChain.STRATEGIST;
+
+  // OS
+  OSonic public os = OSonic(Sonic.OS);
+
+  // ARM
+  ISonicARM public arm = ISonicARM(Sonic.ARM);
 
   function setUp() public {
     // Note: to ensure perfect simulation, don't fix block number, it will be automatically set to the latest block

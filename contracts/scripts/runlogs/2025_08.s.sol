@@ -267,20 +267,18 @@ contract Runlogs_2025_08_Base is SetupBase {
 
 contract Runlogs_2025_08_Sonic is SetupSonic {
   function run() public {
-    _2025_08_28();
+    _2025_08_29();
   }
 
-  function _2025_08_28() internal {
+  function _2025_08_29() internal {
     vm.startBroadcast(timelock);
     // Before
+    uint256 balance = os.balanceOf(address(Sonic.ARM));
 
     // Main action
-    (bool success,) = Sonic.ARM.call(
-      abi.encodeWithSignature(
-        "setFeeCollector(address)", 0xBB077E716A5f1F1B63ed5244eBFf5214E50fec8c
-      )
-    );
-    require(success, "Failed to set fee collector");
+    arm.requestOriginWithdrawal(balance);
+    arm.setCrossPrice(0.9999e36);
+    arm.setFeeCollector(0xBB077E716A5f1F1B63ed5244eBFf5214E50fec8c);
 
     // After
     vm.stopBroadcast();

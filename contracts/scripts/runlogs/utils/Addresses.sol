@@ -62,6 +62,9 @@ library Sonic {
   address public constant GOVERNOR = 0xAdDEA7933Db7d83855786EB43a238111C69B00b6;
   address public constant TIMELOCK = 0x31a91336414d3B955E494E7d485a6B06b55FC8fB;
 
+  // OS
+  address public constant OS = 0xb1e25689D55734FD3ffFc939c4C3Eb52DFf8A794;
+
   // ARM
   address public constant ARM = 0x2F872623d1E1Af5835b08b0E49aAd2d81d649D30;
 }
