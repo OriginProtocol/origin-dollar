@@ -8,7 +8,8 @@ const {
   generateBalanceProof,
   generateValidatorPubKeyProof,
   generateValidatorWithdrawableEpochProof,
-  generateFirstPendingDepositProof,
+  generateFirstPendingDepositPubKeyProof,
+  generateFirstPendingDepositSlotProof,
 } = require("../../utils/proofs");
 const { MAX_UINT64 } = require("../../utils/constants");
 
@@ -168,11 +169,11 @@ describe("ForkTest: Beacon Proofs", function () {
     );
   });
 
-  it("Should verify the slot of the first pending deposit in the beacon block", async () => {
+  it("Should verify the slot of the first pending deposit and check its not withdrawable in the beacon block", async () => {
     const { beaconProofs } = fixture;
 
     const { proof, slot, root, pubkeyHash } =
-      await generateFirstPendingDepositProof({
+      await generateFirstPendingDepositPubKeyProof({
         blockView,
         blockTree,
         stateView,
@@ -181,6 +182,27 @@ describe("ForkTest: Beacon Proofs", function () {
     log(
       `About to verify the slot of the first pending deposit in the beacon block`
     );
-    await beaconProofs.verifyFirstPendingDeposit(root, slot, pubkeyHash, proof);
+    await beaconProofs[
+      "verifyFirstPendingDeposit(bytes32,uint64,bytes32,bytes)"
+    ](root, slot, pubkeyHash, proof);
+  });
+
+  it("Should verify the slot of the first pending deposit in the beacon block", async () => {
+    const { beaconProofs } = fixture;
+
+    const { proof, slot, root } = await generateFirstPendingDepositSlotProof({
+      blockView,
+      blockTree,
+      stateView,
+    });
+
+    log(
+      `About to verify the slot of the first pending deposit in the beacon block`
+    );
+    await beaconProofs["verifyFirstPendingDeposit(bytes32,uint64,bytes)"](
+      root,
+      slot,
+      proof
+    );
   });
 });

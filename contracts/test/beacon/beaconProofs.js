@@ -622,173 +622,260 @@ describe("Beacon chain proofs", async () => {
     });
   });
   describe("First pending deposit to beacon block root proof", () => {
-    describe("with pending deposit", () => {
-      // Example is from Ethereum slot 11787450
-      const beaconRoot =
-        "0xc1825a2e9c8f353cbedee68dc636854c60f08962b6b246507183f9520dcc04e9";
-      // The slot of the first pending deposit
-      const slot = 11782118;
-      // The public key of the first pending deposit
-      const pubKeyHash = hashPubKey(
-        "0xab052b33cce3ff0f3f3bac890fdf72ce0045fb238bbe6ae699d62ef8b16d6567b5362bf3db9508ea19b289a208135f8e"
-      );
-      // The proof of the first pending deposit's public key
-      const proof =
-        "0x010000000000000000000000061d7af2231233e6897a5b6c390a86cdb67cbbcbd4496e40b13e635b63848be35d5ab64997f9bc158f77d995af3859bfa1cb3364d49e9b8ca85443be000978d3f0d4c36e699219b397d3e054119f130b1a72f73d3b7d47a8dc0679cef80387a199d3dfd80f88bd28a6f7e5faf86727d0c0eaa60f5965e4b5ed84eca8c4631abcbe2e7dcdb1c113eddab16db4ffd6e681a5c04862f84aab13a65766f9bfd3986f314c2bb295a0d7e5164df25942f3eaea9b23610154d2a221d0042bbf0b0ac737652d7e3f24944f95ebaaf61e01772ff8fa8364805cae429d6cd53dfe6a6aaa3b7c3c20a50a5ac79c6f5f45d23d092007600daa0b335be9d7fb7fa0cb9bff2829c0b12024b800825642c34599fb7635b6f077019d2db831bcf9018a14220a0a2b14d3c698e8bf550d797387529035135fe598e530d991993693ea28319c312e9d14925e3fbdf545ea4de402dd04ba7f45ff936f37a0e1bb63436d0dfa84ac1c9056c23b8da7a04f2963fac189edbb9721ee1a38a1926abe4a8de6725131a92f2bed3681545a5145bf676e465fcfb4f80f5f3f1764ffff0ad7e659772f9534c195c815efc4014ef1e1daed4404c06385d11192e92b6cf04127db05441cd833107a52be852868890e4317e6a02ab47683aa75964220b7d05f875f140027ef5118a2247bbb84ce8f2f0f1123623085daf7960c329f5fdf6af5f5bbdb6be9ef8aa618e4bf8073960867171e29676f8b284dea6a08a85eb58d900f5e182e3c50ef74969ea16c7726c549757cc23523c369587da7293784d49a7502ffcfb0340b1d7885688500ca308161a7f96b62df9d083b71fcc8f2bb8fe6b1689256c0d385f42f5bbe2027a22c1996e110ba97c171d3e5948de92beb8d0d63c39ebade8509e0ae3c9c3876fb5fa112be18f905ecacfecb92057603ab95eec8b2e541cad4e91de38385f2e046619f54496c2382cb6cacd5b98c26f5a4f893e908917775b62bff23294dbbe3a1cd8e6cc1c35b4801887b646a6f81f17fcddba7b592e3133393c16194fac7431abf2f5485ed711db282183c819e08ebaa8a8d7fe3af8caa085a7639a832001457dfb9128a8061142ad0335629ff23ff9cfeb3c337d7a51a6fbf00b9e34c52e1c9195c969bd4e7a0bfd51d5c5bed9c1167e71f0aa83cc32edfbefa9f4d3e0174ca85182eec9f3a09f6a6c0df6377a510d731206fa80a50bb6abe29085058f16212212a60eec8f049fecb92d8c8e0a84bc021352bfecbeddde993839f614c3dac0a3ee37543f9b412b16199dc158e23b544619e312724bb6d7c3153ed9de791d764a366b389af13c58bf8a8d90481a46765a003000000000000000000000000000000000000000000000000000000000000caa54f8693175f58ca1a359dfa10592d68316fbdbd6bd9959c6cfae391b3a58021c31acb067ec9840693a9258cb460696dda1452cc8e096b3d2c830fea9242e616dc8ff3b420eecaa31fb1c77e66785d2d9513353df79fbec890dd2f20c0038ac78009fdf07fc56a11f122370658a353aaa542ed63e44c4bc15ff4cd105ab33c536d98837f2dd165a55d5eeae91485954472d56f246df256bf3cae19352a123c9d23bdb299c03957c0f9cbe012fdd9dec47cc34aa7a1d889fd31f29c08ab5835bf78426cad74f39a544240e1660589b2d313e8844d2732f9bd01147a9d80fea6ea96575b44df85fcfe4245a27e904ee82ccfd0ba6a23fb8f15b364a8f65d073f56c6c9b43ceec1e1bd8b4fe32e1b90969bed029efbaca61efd0e0788bd8fab48";
-
-      it("Should verify", async () => {
-        const { beaconProofs } = fixture;
-
-        const isEmpty = await beaconProofs.verifyFirstPendingDeposit(
-          beaconRoot,
-          slot,
-          pubKeyHash,
-          proof
-        );
-        expect(isEmpty).to.be.false;
-      });
-      it("Fail to verify with zero beacon block root", async () => {
-        const { beaconProofs } = fixture;
-
-        const beaconRoot = ZERO_BYTES32;
-
-        const tx = beaconProofs.verifyFirstPendingDeposit(
-          beaconRoot,
-          slot,
-          pubKeyHash,
-          proof
-        );
-        await expect(tx).to.be.revertedWith("Invalid block root");
-      });
-      it("Fail to verify with invalid beacon block root", async () => {
-        const { beaconProofs } = fixture;
-
-        // Last byte changed to aa
+    describe("for verifyDeposit which only checks the deposit slot", () => {
+      describe("with pending deposit", () => {
+        // Example is from Ethereum slot 11787450
         const beaconRoot =
-          "0xc1825a2e9c8f353cbedee68dc636854c60f08962b6b246507183f9520dcc04aa";
+          "0xa5415fb0e0983887b72f43ce3d8efd1963790e1405f56f423e6bdda923ca3923";
+        // The slot of the first pending deposit
+        const slot = 17043450;
+        // The proof of the first pending deposit's public key
+        const proof =
+          "0x0000000000000000000000000000000000000000000000000000000000000000f5a5fd42d16a20302798ef6ed309979b43003d2320d9f0e8ea9831a92759fb4bdc4e0f397dfe60f10c7d1c9a198e071f5b035eabb9e8830627ffbee3feed7fcb3b7d47a8dc0679cef80387a199d3dfd80f88bd28a6f7e5faf86727d0c0eaa60f5965e4b5ed84eca8c4631abcbe2e7dcdb1c113eddab16db4ffd6e681a5c04862f84aab13a65766f9bfd3986f314c2bb295a0d7e5164df25942f3eaea9b23610154d2a221d0042bbf0b0ac737652d7e3f24944f95ebaaf61e01772ff8fa8364805cae429d6cd53dfe6a6aaa3b7c3c20a50a5ac79c6f5f45d23d092007600daa0b335be9d7fb7fa0cb9bff2829c0b12024b800825642c34599fb7635b6f077019d2db831bcf9018a14220a0a2b14d3c698e8bf550d797387529035135fe598e530d991993693ea28319c312e9d14925e3fbdf545ea4de402dd04ba7f45ff936f37a0e1bb63436d0dfa84ac1c9056c23b8da7a04f2963fac189edbb9721ee1a38a1926abe4a8de6725131a92f2bed3681545a5145bf676e465fcfb4f80f5f3f1764ffff0ad7e659772f9534c195c815efc4014ef1e1daed4404c06385d11192e92b6cf04127db05441cd833107a52be852868890e4317e6a02ab47683aa75964220b7d05f875f140027ef5118a2247bbb84ce8f2f0f1123623085daf7960c329f5fdf6af5f5bbdb6be9ef8aa618e4bf8073960867171e29676f8b284dea6a08a85eb58d900f5e182e3c50ef74969ea16c7726c549757cc23523c369587da7293784d49a7502ffcfb0340b1d7885688500ca308161a7f96b62df9d083b71fcc8f2bb8fe6b1689256c0d385f42f5bbe2027a22c1996e110ba97c171d3e5948de92beb8d0d63c39ebade8509e0ae3c9c3876fb5fa112be18f905ecacfecb92057603ab95eec8b2e541cad4e91de38385f2e046619f54496c2382cb6cacd5b98c26f5a4f893e908917775b62bff23294dbbe3a1cd8e6cc1c35b4801887b646a6f81f17fcddba7b592e3133393c16194fac7431abf2f5485ed711db282183c819e08ebaa8a8d7fe3af8caa085a7639a832001457dfb9128a8061142ad0335629ff23ff9cfeb3c337d7a51a6fbf00b9e34c52e1c9195c969bd4e7a0bfd51d5c5bed9c1167e71f0aa83cc32edfbefa9f4d3e0174ca85182eec9f3a09f6a6c0df6377a510d731206fa80a50bb6abe29085058f16212212a60eec8f049fecb92d8c8e0a84bc021352bfecbeddde993839f614c3dac0a3ee37543f9b412b16199dc158e23b544619e312724bb6d7c3153ed9de791d764a366b389af13c58bf8a8d90481a46765a003000000000000000000000000000000000000000000000000000000000000caa54f8693175f58ca1a359dfa10592d68316fbdbd6bd9959c6cfae391b3a58021c31acb067ec9840693a9258cb460696dda1452cc8e096b3d2c830fea9242e616dc8ff3b420eecaa31fb1c77e66785d2d9513353df79fbec890dd2f20c0038ac78009fdf07fc56a11f122370658a353aaa542ed63e44c4bc15ff4cd105ab33c536d98837f2dd165a55d5eeae91485954472d56f246df256bf3cae19352a123c9d23bdb299c03957c0f9cbe012fdd9dec47cc34aa7a1d889fd31f29c08ab5835bf78426cad74f39a544240e1660589b2d313e8844d2732f9bd01147a9d80fea6ea96575b44df85fcfe4245a27e904ee82ccfd0ba6a23fb8f15b364a8f65d073f56c6c9b43ceec1e1bd8b4fe32e1b90969bed029efbaca61efd0e0788bd8fab48";
 
-        const tx = beaconProofs.verifyFirstPendingDeposit(
-          beaconRoot,
-          slot,
-          pubKeyHash,
-          proof
-        );
-        await expect(tx).to.be.revertedWith("Invalid deposit pub key proof");
+        it("Should verify", async () => {
+          const { beaconProofs } = fixture;
+
+          const isEmpty = await beaconProofs[
+            "verifyFirstPendingDeposit(bytes32,uint64,bytes)"
+          ](beaconRoot, slot, proof);
+          expect(isEmpty).to.be.false;
+        });
+        it("Fail to verify with zero beacon block root", async () => {
+          const { beaconProofs } = fixture;
+
+          const beaconRoot = ZERO_BYTES32;
+
+          const tx = beaconProofs[
+            "verifyFirstPendingDeposit(bytes32,uint64,bytes)"
+          ](beaconRoot, slot, proof);
+          await expect(tx).to.be.revertedWith("Invalid block root");
+        });
+        it("Fail to verify with invalid beacon block root", async () => {
+          const { beaconProofs } = fixture;
+
+          // Last byte changed to aa
+          const beaconRoot =
+            "0xc1825a2e9c8f353cbedee68dc636854c60f08962b6b246507183f9520dcc04aa";
+
+          const tx = beaconProofs[
+            "verifyFirstPendingDeposit(bytes32,uint64,bytes)"
+          ](beaconRoot, slot, proof);
+          await expect(tx).to.be.revertedWith("Invalid deposit slot proof");
+        });
+        it("Fail to verify with zero padded proof", async () => {
+          const { beaconProofs } = fixture;
+
+          const proof = hexZeroPad("0x", 1280);
+
+          const tx = beaconProofs[
+            "verifyFirstPendingDeposit(bytes32,uint64,bytes)"
+          ](beaconRoot, slot, proof);
+          await expect(tx).to.be.revertedWith("Invalid deposit slot proof");
+        });
+        it("Fail to verify with incorrect slot", async () => {
+          const { beaconProofs } = fixture;
+
+          const tx = beaconProofs[
+            "verifyFirstPendingDeposit(bytes32,uint64,bytes)"
+          ](beaconRoot, slot + 1, proof);
+          await expect(tx).to.be.revertedWith("Invalid deposit slot proof");
+        });
       });
-      it("Fail to verify with zero padded proof", async () => {
-        const { beaconProofs } = fixture;
+      describe("with no pending deposit", () => {
+        // From Hoodi slot 1015023
+        const beaconRoot =
+          "0x936a7ac91224df0522e8fc70521b604b025d37504a432ca9ea842a018ba7546c";
+        const slot = 0;
+        const proof =
+          "0x0000000000000000000000000000000000000000000000000000000000000000f5a5fd42d16a20302798ef6ed309979b43003d2320d9f0e8ea9831a92759fb4bdb56114e00fdd4c1f85c892bf35ac9a89289aaecb1ebd0a96cde606a748b5d71c78009fdf07fc56a11f122370658a353aaa542ed63e44c4bc15ff4cd105ab33c536d98837f2dd165a55d5eeae91485954472d56f246df256bf3cae19352a123c9efde052aa15429fae05bad4d0b1d7c64da64d03d7a1854a588c2cb8430c0d30d88ddfeed400a8755596b21942c1497e114c302e6118290f91e6772976041fa187eb0ddba57e35f6d286673802a4af5975e22506c7cf4c64bb6be5ee11527f2c26846476fd5fc54a5d43385167c95144f2643f533cc85bb9d16b782f8d7db193506d86582d252405b840018792cad2bf1259f1ef5aa5f887e13cb2f0094f51e1ffff0ad7e659772f9534c195c815efc4014ef1e1daed4404c06385d11192e92b6cf04127db05441cd833107a52be852868890e4317e6a02ab47683aa75964220b7d05f875f140027ef5118a2247bbb84ce8f2f0f1123623085daf7960c329f5fdf6af5f5bbdb6be9ef8aa618e4bf8073960867171e29676f8b284dea6a08a85eb58d900f5e182e3c50ef74969ea16c7726c549757cc23523c369587da7293784d49a7502ffcfb0340b1d7885688500ca308161a7f96b62df9d083b71fcc8f2bb8fe6b1689256c0d385f42f5bbe2027a22c1996e110ba97c171d3e5948de92beb8d0d63c39ebade8509e0ae3c9c3876fb5fa112be18f905ecacfecb92057603ab95eec8b2e541cad4e91de38385f2e046619f54496c2382cb6cacd5b98c26f5a4f893e908917775b62bff23294dbbe3a1cd8e6cc1c35b4801887b646a6f81f17fcddba7b592e3133393c16194fac7431abf2f5485ed711db282183c819e08ebaa8a8d7fe3af8caa085a7639a832001457dfb9128a8061142ad0335629ff23ff9cfeb3c337d7a51a6fbf00b9e34c52e1c9195c969bd4e7a0bfd51d5c5bed9c1167e71f0aa83cc32edfbefa9f4d3e0174ca85182eec9f3a09f6a6c0df6377a510d731206fa80a50bb6abe29085058f16212212a60eec8f049fecb92d8c8e0a84bc021352bfecbeddde993839f614c3dac0a3ee37543f9b412b16199dc158e23b544619e312724bb6d7c3153ed9de791d764a366b389af13c58bf8a8d90481a467650000000000000000000000000000000000000000000000000000000000000000049c9edd0970b512318fe4a7d9ff12b2b1402164d872e40948fc7d9042ae6fa615433386cfe4fc95585fb6eeb51df3a6f619db3b3955884f7e5a2c4600ed2d47dae6d9c51743d5d9263bf2bd09c1db3bd529965d7ee7857643c919c6b696004ec78009fdf07fc56a11f122370658a353aaa542ed63e44c4bc15ff4cd105ab33c536d98837f2dd165a55d5eeae91485954472d56f246df256bf3cae19352a123ceb818784738117ef339dce506dc4996cecd38ef7ed6021eb0b4382bf9c3e81b3cce9d380b4759b9c6277871c289b42feed13f46b29b78c3be52296492ef902aecd1fa730ef94dfb6efa48a62de660970894608c2e16cce90ef2b3880778f8e383e09791016e57e609c54db8d85e1e0607a528e23b6c34dc738f899f2c284d765";
 
-        const proof = hexZeroPad("0x", 1280);
+        it("Should verify with zero slot", async () => {
+          const { beaconProofs } = fixture;
 
-        const tx = beaconProofs.verifyFirstPendingDeposit(
-          beaconRoot,
-          slot,
-          pubKeyHash,
-          proof
-        );
-        await expect(tx).to.be.revertedWith("Invalid deposit pub key proof");
-      });
-      it("Fail to verify with invalid pub key", async () => {
-        const { beaconProofs } = fixture;
+          const isEmpty = await beaconProofs[
+            "verifyFirstPendingDeposit(bytes32,uint64,bytes)"
+          ](beaconRoot, slot, proof);
+          expect(isEmpty).to.be.true;
+        });
+        it("Should verify with non-zero slot", async () => {
+          const { beaconProofs } = fixture;
 
-        // First bytes changed to aa
-        const pubKeyHash = hashPubKey(
-          "0xaa052b33cce3ff0f3f3bac890fdf72ce0045fb238bbe6ae699d62ef8b16d6567b5362bf3db9508ea19b289a208135f8e"
-        );
+          const slot = 12345678; // Arbitrary non-zero slot
+          const isEmpty = await beaconProofs[
+            "verifyFirstPendingDeposit(bytes32,uint64,bytes)"
+          ](beaconRoot, slot, proof);
+          expect(isEmpty).to.be.true;
+        });
+        it("Fail to verify with zero beacon root", async () => {
+          const { beaconProofs } = fixture;
 
-        const tx = beaconProofs.verifyFirstPendingDeposit(
-          beaconRoot,
-          slot,
-          pubKeyHash,
-          proof
-        );
-        await expect(tx).to.be.revertedWith("Invalid deposit pub key proof");
-      });
-      it("Fail to verify with incorrect slot", async () => {
-        const { beaconProofs } = fixture;
+          const beaconRoot = ZERO_BYTES32;
 
-        const tx = beaconProofs.verifyFirstPendingDeposit(
-          beaconRoot,
-          slot + 1,
-          pubKeyHash,
-          proof
-        );
-        await expect(tx).to.be.revertedWith("Invalid deposit slot");
+          const tx = beaconProofs[
+            "verifyFirstPendingDeposit(bytes32,uint64,bytes)"
+          ](beaconRoot, slot, proof);
+          await expect(tx).to.be.revertedWith("Invalid block root");
+        });
+        it("Fail to verify with invalid beacon root", async () => {
+          const { beaconProofs } = fixture;
+          // First byte changed to aa
+          const beaconRoot =
+            "0xaa6a7ac91224df0522e8fc70521b604b025d37504a432ca9ea842a018ba7546c";
+
+          const tx = beaconProofs[
+            "verifyFirstPendingDeposit(bytes32,uint64,bytes)"
+          ](beaconRoot, slot, proof);
+          await expect(tx).to.be.revertedWith("Invalid empty deposits proof");
+        });
+        it("Fail to verify with zero padded proof", async () => {
+          const { beaconProofs } = fixture;
+
+          const proof = hexZeroPad("0x", 1184);
+
+          const tx = beaconProofs[
+            "verifyFirstPendingDeposit(bytes32,uint64,bytes)"
+          ](beaconRoot, slot, proof);
+          await expect(tx).to.be.revertedWith("Invalid empty deposits proof");
+        });
       });
     });
-    describe("with no pending deposit", () => {
-      // From Hoodi slot 1015023
-      const beaconRoot =
-        "0x936a7ac91224df0522e8fc70521b604b025d37504a432ca9ea842a018ba7546c";
-      const slot = 0;
-      const pubKeyHash = ZERO_BYTES32;
-      const proof =
-        "0x0000000000000000000000000000000000000000000000000000000000000000f5a5fd42d16a20302798ef6ed309979b43003d2320d9f0e8ea9831a92759fb4bdb56114e00fdd4c1f85c892bf35ac9a89289aaecb1ebd0a96cde606a748b5d71c78009fdf07fc56a11f122370658a353aaa542ed63e44c4bc15ff4cd105ab33c536d98837f2dd165a55d5eeae91485954472d56f246df256bf3cae19352a123c9efde052aa15429fae05bad4d0b1d7c64da64d03d7a1854a588c2cb8430c0d30d88ddfeed400a8755596b21942c1497e114c302e6118290f91e6772976041fa187eb0ddba57e35f6d286673802a4af5975e22506c7cf4c64bb6be5ee11527f2c26846476fd5fc54a5d43385167c95144f2643f533cc85bb9d16b782f8d7db193506d86582d252405b840018792cad2bf1259f1ef5aa5f887e13cb2f0094f51e1ffff0ad7e659772f9534c195c815efc4014ef1e1daed4404c06385d11192e92b6cf04127db05441cd833107a52be852868890e4317e6a02ab47683aa75964220b7d05f875f140027ef5118a2247bbb84ce8f2f0f1123623085daf7960c329f5fdf6af5f5bbdb6be9ef8aa618e4bf8073960867171e29676f8b284dea6a08a85eb58d900f5e182e3c50ef74969ea16c7726c549757cc23523c369587da7293784d49a7502ffcfb0340b1d7885688500ca308161a7f96b62df9d083b71fcc8f2bb8fe6b1689256c0d385f42f5bbe2027a22c1996e110ba97c171d3e5948de92beb8d0d63c39ebade8509e0ae3c9c3876fb5fa112be18f905ecacfecb92057603ab95eec8b2e541cad4e91de38385f2e046619f54496c2382cb6cacd5b98c26f5a4f893e908917775b62bff23294dbbe3a1cd8e6cc1c35b4801887b646a6f81f17fcddba7b592e3133393c16194fac7431abf2f5485ed711db282183c819e08ebaa8a8d7fe3af8caa085a7639a832001457dfb9128a8061142ad0335629ff23ff9cfeb3c337d7a51a6fbf00b9e34c52e1c9195c969bd4e7a0bfd51d5c5bed9c1167e71f0aa83cc32edfbefa9f4d3e0174ca85182eec9f3a09f6a6c0df6377a510d731206fa80a50bb6abe29085058f16212212a60eec8f049fecb92d8c8e0a84bc021352bfecbeddde993839f614c3dac0a3ee37543f9b412b16199dc158e23b544619e312724bb6d7c3153ed9de791d764a366b389af13c58bf8a8d90481a467650000000000000000000000000000000000000000000000000000000000000000049c9edd0970b512318fe4a7d9ff12b2b1402164d872e40948fc7d9042ae6fa615433386cfe4fc95585fb6eeb51df3a6f619db3b3955884f7e5a2c4600ed2d47dae6d9c51743d5d9263bf2bd09c1db3bd529965d7ee7857643c919c6b696004ec78009fdf07fc56a11f122370658a353aaa542ed63e44c4bc15ff4cd105ab33c536d98837f2dd165a55d5eeae91485954472d56f246df256bf3cae19352a123ceb818784738117ef339dce506dc4996cecd38ef7ed6021eb0b4382bf9c3e81b3cce9d380b4759b9c6277871c289b42feed13f46b29b78c3be52296492ef902aecd1fa730ef94dfb6efa48a62de660970894608c2e16cce90ef2b3880778f8e383e09791016e57e609c54db8d85e1e0607a528e23b6c34dc738f899f2c284d765";
-
-      it("Should verify with zero slot", async () => {
-        const { beaconProofs } = fixture;
-
-        const isEmpty = await beaconProofs.verifyFirstPendingDeposit(
-          beaconRoot,
-          slot,
-          pubKeyHash,
-          proof
-        );
-        expect(isEmpty).to.be.true;
-      });
-      it("Should verify with non-zero slot and pub key", async () => {
-        const { beaconProofs } = fixture;
-
-        const slot = 12345678; // Arbitrary non-zero slot
-        const pubKeyHash =
-          "0x936a7ac91224df0522e8fc70521b604b025d37504a432ca9ea842a018ba7546c";
-        const isEmpty = await beaconProofs.verifyFirstPendingDeposit(
-          beaconRoot,
-          slot,
-          pubKeyHash,
-          proof
-        );
-        expect(isEmpty).to.be.true;
-      });
-      it("Fail to verify with zero beacon root", async () => {
-        const { beaconProofs } = fixture;
-
-        const beaconRoot = ZERO_BYTES32;
-
-        const tx = beaconProofs.verifyFirstPendingDeposit(
-          beaconRoot,
-          slot,
-          pubKeyHash,
-          proof
-        );
-        await expect(tx).to.be.revertedWith("Invalid block root");
-      });
-      it("Fail to verify with invalid beacon root", async () => {
-        const { beaconProofs } = fixture;
-        // First byte changed to aa
+    describe("for verifyBalances which checks if a validator is withdrawable", () => {
+      describe("with pending deposit", () => {
+        // Example is from Ethereum slot 11787450
         const beaconRoot =
-          "0xaa6a7ac91224df0522e8fc70521b604b025d37504a432ca9ea842a018ba7546c";
-
-        const tx = beaconProofs.verifyFirstPendingDeposit(
-          beaconRoot,
-          slot,
-          pubKeyHash,
-          proof
+          "0xc1825a2e9c8f353cbedee68dc636854c60f08962b6b246507183f9520dcc04e9";
+        // The slot of the first pending deposit
+        const slot = 11782118;
+        // The public key of the first pending deposit
+        const pubKeyHash = hashPubKey(
+          "0xab052b33cce3ff0f3f3bac890fdf72ce0045fb238bbe6ae699d62ef8b16d6567b5362bf3db9508ea19b289a208135f8e"
         );
-        await expect(tx).to.be.revertedWith("Invalid empty deposits proof");
+        // The proof of the first pending deposit's public key
+        const proof =
+          "0x010000000000000000000000061d7af2231233e6897a5b6c390a86cdb67cbbcbd4496e40b13e635b63848be35d5ab64997f9bc158f77d995af3859bfa1cb3364d49e9b8ca85443be000978d3f0d4c36e699219b397d3e054119f130b1a72f73d3b7d47a8dc0679cef80387a199d3dfd80f88bd28a6f7e5faf86727d0c0eaa60f5965e4b5ed84eca8c4631abcbe2e7dcdb1c113eddab16db4ffd6e681a5c04862f84aab13a65766f9bfd3986f314c2bb295a0d7e5164df25942f3eaea9b23610154d2a221d0042bbf0b0ac737652d7e3f24944f95ebaaf61e01772ff8fa8364805cae429d6cd53dfe6a6aaa3b7c3c20a50a5ac79c6f5f45d23d092007600daa0b335be9d7fb7fa0cb9bff2829c0b12024b800825642c34599fb7635b6f077019d2db831bcf9018a14220a0a2b14d3c698e8bf550d797387529035135fe598e530d991993693ea28319c312e9d14925e3fbdf545ea4de402dd04ba7f45ff936f37a0e1bb63436d0dfa84ac1c9056c23b8da7a04f2963fac189edbb9721ee1a38a1926abe4a8de6725131a92f2bed3681545a5145bf676e465fcfb4f80f5f3f1764ffff0ad7e659772f9534c195c815efc4014ef1e1daed4404c06385d11192e92b6cf04127db05441cd833107a52be852868890e4317e6a02ab47683aa75964220b7d05f875f140027ef5118a2247bbb84ce8f2f0f1123623085daf7960c329f5fdf6af5f5bbdb6be9ef8aa618e4bf8073960867171e29676f8b284dea6a08a85eb58d900f5e182e3c50ef74969ea16c7726c549757cc23523c369587da7293784d49a7502ffcfb0340b1d7885688500ca308161a7f96b62df9d083b71fcc8f2bb8fe6b1689256c0d385f42f5bbe2027a22c1996e110ba97c171d3e5948de92beb8d0d63c39ebade8509e0ae3c9c3876fb5fa112be18f905ecacfecb92057603ab95eec8b2e541cad4e91de38385f2e046619f54496c2382cb6cacd5b98c26f5a4f893e908917775b62bff23294dbbe3a1cd8e6cc1c35b4801887b646a6f81f17fcddba7b592e3133393c16194fac7431abf2f5485ed711db282183c819e08ebaa8a8d7fe3af8caa085a7639a832001457dfb9128a8061142ad0335629ff23ff9cfeb3c337d7a51a6fbf00b9e34c52e1c9195c969bd4e7a0bfd51d5c5bed9c1167e71f0aa83cc32edfbefa9f4d3e0174ca85182eec9f3a09f6a6c0df6377a510d731206fa80a50bb6abe29085058f16212212a60eec8f049fecb92d8c8e0a84bc021352bfecbeddde993839f614c3dac0a3ee37543f9b412b16199dc158e23b544619e312724bb6d7c3153ed9de791d764a366b389af13c58bf8a8d90481a46765a003000000000000000000000000000000000000000000000000000000000000caa54f8693175f58ca1a359dfa10592d68316fbdbd6bd9959c6cfae391b3a58021c31acb067ec9840693a9258cb460696dda1452cc8e096b3d2c830fea9242e616dc8ff3b420eecaa31fb1c77e66785d2d9513353df79fbec890dd2f20c0038ac78009fdf07fc56a11f122370658a353aaa542ed63e44c4bc15ff4cd105ab33c536d98837f2dd165a55d5eeae91485954472d56f246df256bf3cae19352a123c9d23bdb299c03957c0f9cbe012fdd9dec47cc34aa7a1d889fd31f29c08ab5835bf78426cad74f39a544240e1660589b2d313e8844d2732f9bd01147a9d80fea6ea96575b44df85fcfe4245a27e904ee82ccfd0ba6a23fb8f15b364a8f65d073f56c6c9b43ceec1e1bd8b4fe32e1b90969bed029efbaca61efd0e0788bd8fab48";
+
+        it("Should verify", async () => {
+          const { beaconProofs } = fixture;
+
+          const isEmpty = await beaconProofs[
+            "verifyFirstPendingDeposit(bytes32,uint64,bytes32,bytes)"
+          ](beaconRoot, slot, pubKeyHash, proof);
+          expect(isEmpty).to.be.false;
+        });
+        it("Fail to verify with zero beacon block root", async () => {
+          const { beaconProofs } = fixture;
+
+          const beaconRoot = ZERO_BYTES32;
+
+          const tx = beaconProofs[
+            "verifyFirstPendingDeposit(bytes32,uint64,bytes32,bytes)"
+          ](beaconRoot, slot, pubKeyHash, proof);
+          await expect(tx).to.be.revertedWith("Invalid block root");
+        });
+        it("Fail to verify with invalid beacon block root", async () => {
+          const { beaconProofs } = fixture;
+
+          // Last byte changed to aa
+          const beaconRoot =
+            "0xc1825a2e9c8f353cbedee68dc636854c60f08962b6b246507183f9520dcc04aa";
+
+          const tx = beaconProofs[
+            "verifyFirstPendingDeposit(bytes32,uint64,bytes32,bytes)"
+          ](beaconRoot, slot, pubKeyHash, proof);
+          await expect(tx).to.be.revertedWith("Invalid deposit pub key proof");
+        });
+        it("Fail to verify with zero padded proof", async () => {
+          const { beaconProofs } = fixture;
+
+          const proof = hexZeroPad("0x", 1280);
+
+          const tx = beaconProofs[
+            "verifyFirstPendingDeposit(bytes32,uint64,bytes32,bytes)"
+          ](beaconRoot, slot, pubKeyHash, proof);
+          await expect(tx).to.be.revertedWith("Invalid deposit pub key proof");
+        });
+        it("Fail to verify with invalid pub key", async () => {
+          const { beaconProofs } = fixture;
+
+          // First bytes changed to aa
+          const pubKeyHash = hashPubKey(
+            "0xaa052b33cce3ff0f3f3bac890fdf72ce0045fb238bbe6ae699d62ef8b16d6567b5362bf3db9508ea19b289a208135f8e"
+          );
+
+          const tx = beaconProofs[
+            "verifyFirstPendingDeposit(bytes32,uint64,bytes32,bytes)"
+          ](beaconRoot, slot, pubKeyHash, proof);
+          await expect(tx).to.be.revertedWith("Invalid deposit pub key proof");
+        });
+        it("Fail to verify with incorrect slot", async () => {
+          const { beaconProofs } = fixture;
+
+          const tx = beaconProofs[
+            "verifyFirstPendingDeposit(bytes32,uint64,bytes32,bytes)"
+          ](beaconRoot, slot + 1, pubKeyHash, proof);
+          await expect(tx).to.be.revertedWith("Invalid deposit slot");
+        });
       });
-      it("Fail to verify with zero padded proof", async () => {
-        const { beaconProofs } = fixture;
+      describe("with no pending deposit", () => {
+        // From Hoodi slot 1015023
+        const beaconRoot =
+          "0x936a7ac91224df0522e8fc70521b604b025d37504a432ca9ea842a018ba7546c";
+        const slot = 0;
+        const pubKeyHash = ZERO_BYTES32;
+        const proof =
+          "0x0000000000000000000000000000000000000000000000000000000000000000f5a5fd42d16a20302798ef6ed309979b43003d2320d9f0e8ea9831a92759fb4bdb56114e00fdd4c1f85c892bf35ac9a89289aaecb1ebd0a96cde606a748b5d71c78009fdf07fc56a11f122370658a353aaa542ed63e44c4bc15ff4cd105ab33c536d98837f2dd165a55d5eeae91485954472d56f246df256bf3cae19352a123c9efde052aa15429fae05bad4d0b1d7c64da64d03d7a1854a588c2cb8430c0d30d88ddfeed400a8755596b21942c1497e114c302e6118290f91e6772976041fa187eb0ddba57e35f6d286673802a4af5975e22506c7cf4c64bb6be5ee11527f2c26846476fd5fc54a5d43385167c95144f2643f533cc85bb9d16b782f8d7db193506d86582d252405b840018792cad2bf1259f1ef5aa5f887e13cb2f0094f51e1ffff0ad7e659772f9534c195c815efc4014ef1e1daed4404c06385d11192e92b6cf04127db05441cd833107a52be852868890e4317e6a02ab47683aa75964220b7d05f875f140027ef5118a2247bbb84ce8f2f0f1123623085daf7960c329f5fdf6af5f5bbdb6be9ef8aa618e4bf8073960867171e29676f8b284dea6a08a85eb58d900f5e182e3c50ef74969ea16c7726c549757cc23523c369587da7293784d49a7502ffcfb0340b1d7885688500ca308161a7f96b62df9d083b71fcc8f2bb8fe6b1689256c0d385f42f5bbe2027a22c1996e110ba97c171d3e5948de92beb8d0d63c39ebade8509e0ae3c9c3876fb5fa112be18f905ecacfecb92057603ab95eec8b2e541cad4e91de38385f2e046619f54496c2382cb6cacd5b98c26f5a4f893e908917775b62bff23294dbbe3a1cd8e6cc1c35b4801887b646a6f81f17fcddba7b592e3133393c16194fac7431abf2f5485ed711db282183c819e08ebaa8a8d7fe3af8caa085a7639a832001457dfb9128a8061142ad0335629ff23ff9cfeb3c337d7a51a6fbf00b9e34c52e1c9195c969bd4e7a0bfd51d5c5bed9c1167e71f0aa83cc32edfbefa9f4d3e0174ca85182eec9f3a09f6a6c0df6377a510d731206fa80a50bb6abe29085058f16212212a60eec8f049fecb92d8c8e0a84bc021352bfecbeddde993839f614c3dac0a3ee37543f9b412b16199dc158e23b544619e312724bb6d7c3153ed9de791d764a366b389af13c58bf8a8d90481a467650000000000000000000000000000000000000000000000000000000000000000049c9edd0970b512318fe4a7d9ff12b2b1402164d872e40948fc7d9042ae6fa615433386cfe4fc95585fb6eeb51df3a6f619db3b3955884f7e5a2c4600ed2d47dae6d9c51743d5d9263bf2bd09c1db3bd529965d7ee7857643c919c6b696004ec78009fdf07fc56a11f122370658a353aaa542ed63e44c4bc15ff4cd105ab33c536d98837f2dd165a55d5eeae91485954472d56f246df256bf3cae19352a123ceb818784738117ef339dce506dc4996cecd38ef7ed6021eb0b4382bf9c3e81b3cce9d380b4759b9c6277871c289b42feed13f46b29b78c3be52296492ef902aecd1fa730ef94dfb6efa48a62de660970894608c2e16cce90ef2b3880778f8e383e09791016e57e609c54db8d85e1e0607a528e23b6c34dc738f899f2c284d765";
 
-        const proof = hexZeroPad("0x", 1184);
+        it("Should verify with zero slot", async () => {
+          const { beaconProofs } = fixture;
 
-        const tx = beaconProofs.verifyFirstPendingDeposit(
-          beaconRoot,
-          slot,
-          pubKeyHash,
-          proof
-        );
-        await expect(tx).to.be.revertedWith("Invalid empty deposits proof");
+          const isEmpty = await beaconProofs[
+            "verifyFirstPendingDeposit(bytes32,uint64,bytes32,bytes)"
+          ](beaconRoot, slot, pubKeyHash, proof);
+          expect(isEmpty).to.be.true;
+        });
+        it("Should verify with non-zero slot and pub key", async () => {
+          const { beaconProofs } = fixture;
+
+          const slot = 12345678; // Arbitrary non-zero slot
+          const pubKeyHash =
+            "0x936a7ac91224df0522e8fc70521b604b025d37504a432ca9ea842a018ba7546c";
+          const isEmpty = await beaconProofs[
+            "verifyFirstPendingDeposit(bytes32,uint64,bytes32,bytes)"
+          ](beaconRoot, slot, pubKeyHash, proof);
+          expect(isEmpty).to.be.true;
+        });
+        it("Fail to verify with zero beacon root", async () => {
+          const { beaconProofs } = fixture;
+
+          const beaconRoot = ZERO_BYTES32;
+
+          const tx = beaconProofs[
+            "verifyFirstPendingDeposit(bytes32,uint64,bytes32,bytes)"
+          ](beaconRoot, slot, pubKeyHash, proof);
+          await expect(tx).to.be.revertedWith("Invalid block root");
+        });
+        it("Fail to verify with invalid beacon root", async () => {
+          const { beaconProofs } = fixture;
+          // First byte changed to aa
+          const beaconRoot =
+            "0xaa6a7ac91224df0522e8fc70521b604b025d37504a432ca9ea842a018ba7546c";
+
+          const tx = beaconProofs[
+            "verifyFirstPendingDeposit(bytes32,uint64,bytes32,bytes)"
+          ](beaconRoot, slot, pubKeyHash, proof);
+          await expect(tx).to.be.revertedWith("Invalid empty deposits proof");
+        });
+        it("Fail to verify with zero padded proof", async () => {
+          const { beaconProofs } = fixture;
+
+          const proof = hexZeroPad("0x", 1184);
+
+          const tx = beaconProofs[
+            "verifyFirstPendingDeposit(bytes32,uint64,bytes32,bytes)"
+          ](beaconRoot, slot, pubKeyHash, proof);
+          await expect(tx).to.be.revertedWith("Invalid empty deposits proof");
+        });
       });
     });
   });

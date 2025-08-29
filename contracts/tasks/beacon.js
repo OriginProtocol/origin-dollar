@@ -17,7 +17,8 @@ const { bytes32 } = require("../utils/regex");
 const { resolveContract } = require("../utils/resolvers");
 const {
   generateValidatorPubKeyProof,
-  generateFirstPendingDepositProof,
+  generateFirstPendingDepositPubKeyProof,
+  generateFirstPendingDepositSlotProof,
   generateValidatorWithdrawableEpochProof,
   generateBalancesContainerProof,
   generateBalanceProof,
@@ -148,7 +149,6 @@ async function verifyValidator({ slot, index, dryrun, withdrawal, signer }) {
 async function verifyDeposit({
   slot,
   id: depositID,
-  valSlot: firstDepositValidatorCreatedSlot,
   dryrun,
   test,
   index: strategyValidatorIndex,
@@ -231,38 +231,15 @@ async function verifyDeposit({
 
   // Generate a proof of the first pending deposit
   const {
-    proof: pendingDepositPubKeyProof,
+    proof: pendingDepositSlotProof,
     slot: firstPendingDepositSlot,
     pubkeyHash: firstPendingDepositPubKeyHash,
     validatorIndex: firstPendingDepositValidatorIndex,
     root: processedBeaconBlockRoot,
     isEmpty,
-  } = await generateFirstPendingDepositProof({
+  } = await generateFirstPendingDepositSlotProof({
     ...depositProcessedBeaconData,
     test,
-  });
-
-  // Generate a proof that the validator of the first pending deposit is not exiting
-  if (!firstDepositValidatorCreatedSlot) {
-    firstDepositValidatorCreatedSlot =
-      depositProcessedSlot + (isEmpty ? 0 : 32);
-    log(
-      `Using slot ${firstDepositValidatorCreatedSlot} to see if the first pending deposit validator is exiting`
-    );
-  }
-  const depositValidatorBeaconData = await getBeaconBlock(
-    firstDepositValidatorCreatedSlot
-  );
-
-  const {
-    root: validatorBeaconBlockRoot,
-    proof: firstDepositValidatorWithdrawableEpochProof,
-    withdrawableEpoch,
-    validatorPubKeyProof: firstDepositValidatorValidatorPubKeyProof,
-  } = await generateValidatorWithdrawableEpochProof({
-    ...depositValidatorBeaconData,
-    validatorIndex: firstPendingDepositValidatorIndex,
-    includePubKeyProof: true,
   });
 
   if (!isEmpty && firstPendingDepositSlot == 0 && !test) {
@@ -289,10 +266,7 @@ async function verifyDeposit({
   const firstPendingDeposit = {
     slot: firstPendingDepositSlot,
     validatorIndex: firstPendingDepositValidatorIndex,
-    pubKeyHash: firstPendingDepositPubKeyHash,
-    pendingDepositPubKeyProof,
-    withdrawableEpochProof: firstDepositValidatorWithdrawableEpochProof,
-    validatorPubKeyProof: firstDepositValidatorValidatorPubKeyProof,
+    proof: pendingDepositSlotProof,
   };
   const strategyValidator = {
     withdrawableEpoch: strategyValidatorWithdrawableEpoch.toString(),
@@ -317,19 +291,10 @@ async function verifyDeposit({
       `first pending deposit index               : ${firstPendingDepositValidatorIndex}`
     );
     console.log(
-      `first pending deposit withdrawable epoch. : ${withdrawableEpoch}`
-    );
-    console.log(
       `first pending deposit slot                : ${firstPendingDepositSlot}`
     );
     console.log(
-      `first pending deposit pub key proof       : ${pendingDepositPubKeyProof}`
-    );
-    console.log(
-      `first deposit validator withdrawable proof: ${firstDepositValidatorWithdrawableEpochProof}`
-    );
-    console.log(
-      `first deposit validator public key proof  : ${firstDepositValidatorValidatorPubKeyProof}`
+      `first pending deposit slot proof          : ${pendingDepositSlotProof}`
     );
     console.log(
       `Strategy validator index.                 : ${strategyValidatorIndex}`
@@ -350,7 +315,6 @@ async function verifyDeposit({
           firstPendingDeposit,
           strategyValidator,
           processedBeaconBlockRoot,
-          validatorBeaconBlockRoot,
         },
         null,
         2
@@ -367,7 +331,6 @@ async function verifyDeposit({
     .verifyDeposit(
       depositID,
       depositProcessedSlot,
-      firstDepositValidatorCreatedSlot,
       firstPendingDeposit,
       strategyValidator
     );
@@ -409,7 +372,7 @@ async function verifyBalances({
     pubkeyHash: firstPendingDepositPubKeyHash,
     root: snapBalancesBlockRoot,
     isEmpty,
-  } = await generateFirstPendingDepositProof({
+  } = await generateFirstPendingDepositPubKeyProof({
     blockView,
     blockTree,
     stateView,

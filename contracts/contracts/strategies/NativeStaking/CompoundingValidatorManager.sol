@@ -617,7 +617,11 @@ abstract contract CompoundingValidatorManager is Governable {
         emit ValidatorVerified(pubKeyHash, validatorIndex);
     }
 
-    struct FirstPendingDepositProofData {
+    struct FirstPendingDepositSlotProofData {
+        uint64 slot;
+        bytes proof;
+    }
+    struct FirstPendingDepositWithdrawableProofData {
         uint64 slot;
         uint64 validatorIndex;
         bytes32 pubKeyHash;
@@ -643,29 +647,14 @@ abstract contract CompoundingValidatorManager is Governable {
     /// Can not be a slot with pending deposits with the same slot as the deposit being verified.
     /// Can not be a slot before a missed slot as the Beacon Root contract will have the parent block root
     /// set for the next block timestamp in 12 seconds time.
-    /// @param firstDepositValidatorCreatedSlot The slot on or after when the validator of the first pending deposit
-    /// was created on the beacon chain. This is used to verify the validator has not exited.
-    /// If the first pending deposit is to an exiting validator, this can be the same slot as `depositProcessedSlot`.
-    /// If the first pending deposit is to a new validator, the slot will have to be in the next epoch as the
-    /// pending deposits are only processed at the start of each epoch.
-    /// @param firstPendingDeposit a `FirstPendingDepositProofData` struct containing:
+    /// @param firstPendingDeposit a `FirstPendingDepositSlotProofData` struct containing:
     /// - slot: The beacon chain slot of the first deposit in the beacon chain's deposit queue.
     ///   Can be anything if the deposit queue is empty, but zero is a good choice.
-    /// - validatorIndex: The index of the validator of the first pending deposit.
-    ///   Can be anything if the deposit queue is empty, but zero is a good choice.
-    /// - pubKeyHash: The hash of the public key of the validator of the first pending deposit.
-    ///   Can be anything if the deposit queue is empty, but 32 zero bytes is a good choice
-    /// - pendingDepositPubKeyProof: The merkle proof of the first pending deposit to the beacon block root.
+    /// - proof: The merkle proof of the first pending deposit's slot to the beacon block root.
     ///   Can be either:
-    ///   * 40 witness hashes for BeaconBlock.state.PendingDeposits[0].pubKey when the deposit queue is not empty.
+    ///   * 40 witness hashes for BeaconBlock.state.PendingDeposits[0].slot when the deposit queue is not empty.
     ///   * 37 witness hashes for BeaconBlock.state.PendingDeposits[0] when the deposit queue is empty.
     ///   The 32 byte witness hashes are concatenated together starting from the leaf node.
-    /// - withdrawableEpochProof: The merkle proof for the withdrawable epoch of the first pending deposit's validator
-    ///   to the beacon block root.
-    ///   This is 53 witness hashes of 32 bytes each concatenated together starting from the leaf node.
-    /// - validatorPubKeyProof The merkle proof for the public key of the first pending deposit's validator
-    ///   to the this witness hash of withdrawableEpochProof.
-    ///   This is 2 witness hashes of 32 bytes each concatenated together starting from the leaf node.
     /// @param strategyValidatorData a `StrategyValidatorProofData` struct containing:
     /// - withdrawableEpoch: The withdrawable epoch of the validator the strategy is depositing to.
     /// - withdrawableEpochProof: The merkle proof for the withdrawable epoch of the validator the strategy
@@ -675,8 +664,7 @@ abstract contract CompoundingValidatorManager is Governable {
     function verifyDeposit(
         uint256 depositID,
         uint64 depositProcessedSlot,
-        uint64 firstDepositValidatorCreatedSlot,
-        FirstPendingDepositProofData calldata firstPendingDeposit,
+        FirstPendingDepositSlotProofData calldata firstPendingDeposit,
         StrategyValidatorProofData calldata strategyValidatorData
     ) external {
         // Load into memory the previously saved deposit data
@@ -690,10 +678,6 @@ abstract contract CompoundingValidatorManager is Governable {
         // The verification slot must be after the deposit's slot.
         // This is needed for when the deposit queue is empty.
         require(deposit.slot < depositProcessedSlot, "Slot not after deposit");
-        require(
-            depositProcessedSlot <= firstDepositValidatorCreatedSlot,
-            "Invalid verification slots"
-        );
 
         // Get the parent beacon block root of the next block which is the block root of the deposit verification slot.
         // This will revert if the slot after the verification slot was missed.
@@ -706,31 +690,8 @@ abstract contract CompoundingValidatorManager is Governable {
             .verifyFirstPendingDeposit(
                 depositBlockRoot,
                 firstPendingDeposit.slot,
-                firstPendingDeposit.pubKeyHash,
-                firstPendingDeposit.pendingDepositPubKeyProof
+                firstPendingDeposit.proof
             );
-
-        // If the deposit queue is not empty
-        if (!isDepositQueueEmpty) {
-            // Get the parent beacon block root of the next block which is
-            // the block root of the validator verification slot.
-            // This will revert if the slot after the verification slot was missed.
-            bytes32 validatorBlockRoot = BeaconRoots.parentBlockRoot(
-                _calcNextBlockTimestamp(firstDepositValidatorCreatedSlot)
-            );
-
-            // Verify the validator of the first pending deposit is not exiting.
-            // If it is exiting we can't be sure this deposit has not been postponed in the deposit queue.
-            // Hence we can not verify if the strategy's deposit has been processed or not.
-            IBeaconProofs(BEACON_PROOFS).verifyValidatorWithdrawable(
-                validatorBlockRoot,
-                firstPendingDeposit.validatorIndex,
-                firstPendingDeposit.pubKeyHash,
-                FAR_FUTURE_EPOCH,
-                firstPendingDeposit.withdrawableEpochProof,
-                firstPendingDeposit.validatorPubKeyProof
-            );
-        }
 
         // Verify the withdrawableEpoch on the validator of the strategy's deposit
         IBeaconProofs(BEACON_PROOFS).verifyValidatorWithdrawable(
@@ -939,7 +900,7 @@ abstract contract CompoundingValidatorManager is Governable {
     /// and checks no pending deposits have been processed by the beacon chain.
     /// @param validatorVerificationBlockTimestamp next block's timestamp of a slot that has the first pending
     ///        deposit already applied to the validator.
-    /// @param firstPendingDeposit a `FirstPendingDepositProofData` struct containing:
+    /// @param firstPendingDeposit a `FirstPendingDepositWithdrawableProofData` struct containing:
     /// - slot: The beacon chain slot of the first deposit in the beacon chain's deposit queue.
     ///   Can be anything if the deposit queue is empty, but zero is a good choice.
     /// - validatorIndex: The index of the validator of the first pending deposit.
@@ -967,7 +928,7 @@ abstract contract CompoundingValidatorManager is Governable {
     // slither-disable-start reentrancy-no-eth
     function verifyBalances(
         uint64 validatorVerificationBlockTimestamp,
-        FirstPendingDepositProofData calldata firstPendingDeposit,
+        FirstPendingDepositWithdrawableProofData calldata firstPendingDeposit,
         BalanceProofs calldata balanceProofs
     ) external {
         // Load previously snapped balances for the given block root
