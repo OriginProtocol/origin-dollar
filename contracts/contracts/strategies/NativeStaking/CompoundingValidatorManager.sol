@@ -134,7 +134,7 @@ abstract contract CompoundingValidatorManager is Governable {
     // Validator data
     struct ValidatorData {
         ValidatorState state; // The state of the validator known to this contract
-        uint64 index; // The index of the validator on the beacon chain
+        uint40 index; // The index of the validator on the beacon chain
     }
     /// @notice List of validator public key hashes that have been verified to exist on the beacon chain.
     /// These have had a deposit processed and the validator's balance increased.
@@ -188,7 +188,7 @@ abstract contract CompoundingValidatorManager is Governable {
     );
     event ValidatorVerified(
         bytes32 indexed pubKeyHash,
-        uint64 indexed validatorIndex
+        uint40 indexed validatorIndex
     );
     event ValidatorInvalid(bytes32 indexed pubKeyHash);
     event DepositVerified(uint256 indexed depositID, uint256 amountWei);
@@ -554,7 +554,7 @@ abstract contract CompoundingValidatorManager is Governable {
     /// BeaconBlock.state.validators[validatorIndex].pubkey
     function verifyValidator(
         uint64 nextBlockTimestamp,
-        uint64 validatorIndex,
+        uint40 validatorIndex,
         bytes32 pubKeyHash,
         address withdrawalAddress,
         bytes calldata validatorPubKeyProof
@@ -623,7 +623,7 @@ abstract contract CompoundingValidatorManager is Governable {
     }
     struct FirstPendingDepositWithdrawableProofData {
         uint64 slot;
-        uint64 validatorIndex;
+        uint40 validatorIndex;
         bytes32 pubKeyHash;
         bytes pendingDepositPubKeyProof;
         bytes withdrawableEpochProof;

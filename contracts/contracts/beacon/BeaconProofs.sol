@@ -22,7 +22,7 @@ contract BeaconProofs is IBeaconProofs {
         bytes32 beaconBlockRoot,
         bytes32 pubKeyHash,
         bytes calldata proof,
-        uint64 validatorIndex,
+        uint40 validatorIndex,
         address withdrawalAddress
     ) external view {
         BeaconProofsLib.verifyValidator(
@@ -47,7 +47,7 @@ contract BeaconProofs is IBeaconProofs {
     /// This is 2 witness hashes of 32 bytes each concatenated together starting from the leaf node.
     function verifyValidatorWithdrawable(
         bytes32 beaconBlockRoot,
-        uint64 validatorIndex,
+        uint40 validatorIndex,
         bytes32 pubKeyHash,
         uint64 withdrawableEpoch,
         bytes calldata withdrawableEpochProof,
@@ -73,7 +73,7 @@ contract BeaconProofs is IBeaconProofs {
 
     function verifyValidatorWithdrawable(
         bytes32 beaconBlockRoot,
-        uint64 validatorIndex,
+        uint40 validatorIndex,
         uint64 withdrawableEpoch,
         bytes calldata withdrawableEpochProof
     ) external view {
@@ -114,7 +114,7 @@ contract BeaconProofs is IBeaconProofs {
         bytes32 balancesContainerRoot,
         bytes32 validatorBalanceLeaf,
         bytes calldata balanceProof,
-        uint64 validatorIndex
+        uint40 validatorIndex
     ) external view returns (uint256 validatorBalanceGwei) {
         validatorBalanceGwei = BeaconProofsLib.verifyValidatorBalance(
             balancesContainerRoot,
