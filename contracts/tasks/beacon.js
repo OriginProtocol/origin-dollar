@@ -170,11 +170,10 @@ async function verifyDeposit({
         depositData.pubKeyHash
       } and deposit index ${depositData.depositIndex}`
     );
-    const validatorStatus = (await strategy.validator(depositData.pubKeyHash))
-      .state;
-    if (validatorStatus !== 3)
+    const strategyValidator = await strategy.validator(depositData.pubKeyHash);
+    if (strategyValidator.state !== 3)
       throw Error(
-        `Validator with pub key hash ${depositData.pubKeyHash} is not VERIFIED. Status: ${validatorStatus}`
+        `Validator with pub key hash ${depositData.pubKeyHash} is not VERIFIED. Status: ${strategyValidator.state}`
       );
 
     const { slot, amountGwei, pubKeyHash, status } = await strategy.deposits(
@@ -196,8 +195,7 @@ async function verifyDeposit({
       );
     }
 
-    const strategyValidator = await strategy.validator(pubKeyHash);
-    strategyValidatorIndex = strategyValidator.index.toNumber();
+    strategyValidatorIndex = strategyValidator.index;
   }
 
   // Uses the latest slot if the slot is undefined
