@@ -447,9 +447,18 @@ abstract contract CompoundingValidatorManager is Governable {
         // Hash the public key using the Beacon Chain's format
         bytes32 pubKeyHash = _hashPubKey(publicKey);
         ValidatorState currentState = validator[pubKeyHash].state;
+        // Validator full withdrawal could be denied due to multiple reasons:
+        //  - the validator has not been activated or active long enough
+        //    (current_epoch < activation_epoch + SHARD_COMMITTEE_PERIOD)
+        //  - the validator has pending balance to withdraw from a previous partial withdrawal request
+        //
+        // Meaning that the on-chain to beacon chain full withdrawal request could fail. Instead
+        // of adding complexity of verifying if a validator is eligible for a full exit, we allow
+        // multiple full withdrawal requests per validator.
         require(
-            currentState == ValidatorState.VERIFIED,
-            "Validator not verified"
+            currentState == ValidatorState.VERIFIED ||
+                currentState == ValidatorState.EXITING,
+            "Validator not verified/exiting"
         );
 
         // If a full withdrawal (validator exit)
