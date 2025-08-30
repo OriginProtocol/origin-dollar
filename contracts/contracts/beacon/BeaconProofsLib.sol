@@ -123,6 +123,7 @@ library BeaconProofsLib {
             withdrawalAddressFromProof == withdrawalAddress,
             "Invalid withdrawal address"
         );
+        require(proof[0] == 0x02, "Invalid validator type");
 
         require(
             // 53 * 32 bytes = 1696 bytes

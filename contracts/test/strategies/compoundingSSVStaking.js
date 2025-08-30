@@ -1542,6 +1542,19 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
         expect(balancesAfter.verifiedEthBalance).to.equal(depositAmountWei);
         expect(balancesAfter.stratBalance).to.equal(depositAmountWei);
       });
+
+      it("Should not verify a validator with incorrect withdrawal credentials", async () => {
+        const originalValidatorProof = testValidators[0].validatorProof.bytes;
+        // replace the 0x02 validator type credentials to an invalid 0x01 one
+        const wrongValidatorTypeProof = "0x01" + originalValidatorProof.substring(4);
+        testValidators[0].validatorProof.bytes = wrongValidatorTypeProof;
+
+        await expect(processValidator(testValidators[0], "VERIFIED_DEPOSIT"))
+          .to.be.revertedWith("Invalid validator type");
+
+        testValidators[0].validatorProof.bytes = originalValidatorProof;
+      });
+
       it("Should verify balances with one verified deposit", async () => {
         await processValidator(testValidators[0], "VERIFIED_DEPOSIT");
 
