@@ -1,6 +1,9 @@
+const { deployWithConfirmation } = require("../../utils/deploy");
 const { upgradeCompoundingStakingSSVStrategy } = require("../deployActions");
 
 const mainExport = async () => {
+  await deployWithConfirmation("BeaconProofs", []);
+
   await upgradeCompoundingStakingSSVStrategy();
 
   console.log("Running 024 deployment done");
