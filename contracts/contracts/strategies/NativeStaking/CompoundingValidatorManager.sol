@@ -603,6 +603,12 @@ abstract contract CompoundingValidatorManager is Governable {
             for (uint256 i = 0; i < depositCount; i++) {
                 DepositData memory deposit = deposits[depositList[i]];
                 if (deposit.pubKeyHash == pubKeyHash) {
+                    // next verifyBalances will correctly account for the loss of a front-run
+                    // deposit. Doing it here accounts for the loss as soon as possible
+                    lastVerifiedEthBalance -= Math.min(
+                        lastVerifiedEthBalance,
+                        uint256(deposit.amountGwei) * 1 gwei
+                    );
                     _removeDeposit(depositList[i], deposit);
                     break;
                 }
