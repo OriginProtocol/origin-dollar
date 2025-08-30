@@ -361,7 +361,7 @@ describe("Beacon chain proofs", async () => {
         const { beaconProofs } = fixture;
 
         await beaconProofs[
-          "verifyValidatorWithdrawable(bytes32,uint64,uint64,bytes)"
+          "verifyValidatorWithdrawable(bytes32,uint40,uint64,bytes)"
         ](
           beaconRoot,
           validatorIndex,
@@ -370,7 +370,7 @@ describe("Beacon chain proofs", async () => {
         );
 
         await beaconProofs[
-          "verifyValidatorWithdrawable(bytes32,uint64,bytes32,uint64,bytes,bytes)"
+          "verifyValidatorWithdrawable(bytes32,uint40,bytes32,uint64,bytes,bytes)"
         ](
           beaconRoot,
           validatorIndex,
@@ -386,7 +386,7 @@ describe("Beacon chain proofs", async () => {
         const beaconRoot = ZERO_BYTES32;
 
         let tx = beaconProofs[
-          "verifyValidatorWithdrawable(bytes32,uint64,uint64,bytes)"
+          "verifyValidatorWithdrawable(bytes32,uint40,uint64,bytes)"
         ](
           beaconRoot,
           validatorIndex,
@@ -396,7 +396,7 @@ describe("Beacon chain proofs", async () => {
         await expect(tx).to.be.revertedWith("Invalid block root");
 
         tx = beaconProofs[
-          "verifyValidatorWithdrawable(bytes32,uint64,bytes32,uint64,bytes,bytes)"
+          "verifyValidatorWithdrawable(bytes32,uint40,bytes32,uint64,bytes,bytes)"
         ](
           beaconRoot,
           validatorIndex,
@@ -415,7 +415,7 @@ describe("Beacon chain proofs", async () => {
           "0x002b00b0ff536f96bacdb0f9d65055fb7b392d0d199a78719b5ef59225c7d7c6";
 
         let tx = beaconProofs[
-          "verifyValidatorWithdrawable(bytes32,uint64,uint64,bytes)"
+          "verifyValidatorWithdrawable(bytes32,uint40,uint64,bytes)"
         ](
           beaconRoot,
           validatorIndex,
@@ -425,7 +425,7 @@ describe("Beacon chain proofs", async () => {
         await expect(tx).to.be.revertedWith("Invalid withdrawable proof");
 
         tx = beaconProofs[
-          "verifyValidatorWithdrawable(bytes32,uint64,bytes32,uint64,bytes,bytes)"
+          "verifyValidatorWithdrawable(bytes32,uint40,bytes32,uint64,bytes,bytes)"
         ](
           beaconRoot,
           validatorIndex,
@@ -442,7 +442,7 @@ describe("Beacon chain proofs", async () => {
         const invalidValidatorIndex = validatorIndex + 1;
 
         let tx = beaconProofs[
-          "verifyValidatorWithdrawable(bytes32,uint64,uint64,bytes)"
+          "verifyValidatorWithdrawable(bytes32,uint40,uint64,bytes)"
         ](
           beaconRoot,
           invalidValidatorIndex,
@@ -452,7 +452,7 @@ describe("Beacon chain proofs", async () => {
         await expect(tx).to.be.revertedWith("Invalid withdrawable proof");
 
         tx = beaconProofs[
-          "verifyValidatorWithdrawable(bytes32,uint64,bytes32,uint64,bytes,bytes)"
+          "verifyValidatorWithdrawable(bytes32,uint40,bytes32,uint64,bytes,bytes)"
         ](
           beaconRoot,
           invalidValidatorIndex,
@@ -469,7 +469,7 @@ describe("Beacon chain proofs", async () => {
         const withdrawableEpoch = 0;
 
         let tx = beaconProofs[
-          "verifyValidatorWithdrawable(bytes32,uint64,uint64,bytes)"
+          "verifyValidatorWithdrawable(bytes32,uint40,uint64,bytes)"
         ](
           beaconRoot,
           validatorIndex,
@@ -479,7 +479,7 @@ describe("Beacon chain proofs", async () => {
         await expect(tx).to.be.revertedWith("Invalid withdrawable proof");
 
         tx = beaconProofs[
-          "verifyValidatorWithdrawable(bytes32,uint64,bytes32,uint64,bytes,bytes)"
+          "verifyValidatorWithdrawable(bytes32,uint40,bytes32,uint64,bytes,bytes)"
         ](
           beaconRoot,
           validatorIndex,
@@ -496,7 +496,7 @@ describe("Beacon chain proofs", async () => {
         const withdrawableEpochProof = hexZeroPad("0x", 1696);
 
         let tx = beaconProofs[
-          "verifyValidatorWithdrawable(bytes32,uint64,uint64,bytes)"
+          "verifyValidatorWithdrawable(bytes32,uint40,uint64,bytes)"
         ](
           beaconRoot,
           validatorIndex,
@@ -506,7 +506,7 @@ describe("Beacon chain proofs", async () => {
         await expect(tx).to.be.revertedWith("Invalid withdrawable proof");
 
         tx = beaconProofs[
-          "verifyValidatorWithdrawable(bytes32,uint64,bytes32,uint64,bytes,bytes)"
+          "verifyValidatorWithdrawable(bytes32,uint40,bytes32,uint64,bytes,bytes)"
         ](
           beaconRoot,
           validatorIndex,
@@ -526,7 +526,7 @@ describe("Beacon chain proofs", async () => {
         );
 
         const tx = beaconProofs[
-          "verifyValidatorWithdrawable(bytes32,uint64,bytes32,uint64,bytes,bytes)"
+          "verifyValidatorWithdrawable(bytes32,uint40,bytes32,uint64,bytes,bytes)"
         ](
           beaconRoot,
           validatorIndex,
@@ -543,7 +543,7 @@ describe("Beacon chain proofs", async () => {
         const publicKeyProof = hexZeroPad("0x", 64);
 
         const tx = beaconProofs[
-          "verifyValidatorWithdrawable(bytes32,uint64,bytes32,uint64,bytes,bytes)"
+          "verifyValidatorWithdrawable(bytes32,uint40,bytes32,uint64,bytes,bytes)"
         ](
           beaconRoot,
           validatorIndex,
@@ -573,7 +573,7 @@ describe("Beacon chain proofs", async () => {
         const { beaconProofs } = fixture;
 
         await beaconProofs[
-          "verifyValidatorWithdrawable(bytes32,uint64,uint64,bytes)"
+          "verifyValidatorWithdrawable(bytes32,uint40,uint64,bytes)"
         ](
           beaconRoot,
           validatorIndex,
@@ -582,7 +582,7 @@ describe("Beacon chain proofs", async () => {
         );
 
         await beaconProofs[
-          "verifyValidatorWithdrawable(bytes32,uint64,bytes32,uint64,bytes,bytes)"
+          "verifyValidatorWithdrawable(bytes32,uint40,bytes32,uint64,bytes,bytes)"
         ](
           beaconRoot,
           validatorIndex,
@@ -598,7 +598,7 @@ describe("Beacon chain proofs", async () => {
         const invalidWithdrawableEpoch = withdrawableEpoch + 1;
 
         let tx = beaconProofs[
-          "verifyValidatorWithdrawable(bytes32,uint64,uint64,bytes)"
+          "verifyValidatorWithdrawable(bytes32,uint40,uint64,bytes)"
         ](
           beaconRoot,
           validatorIndex,
@@ -608,7 +608,7 @@ describe("Beacon chain proofs", async () => {
         await expect(tx).to.be.revertedWith("Invalid withdrawable proof");
 
         tx = beaconProofs[
-          "verifyValidatorWithdrawable(bytes32,uint64,bytes32,uint64,bytes,bytes)"
+          "verifyValidatorWithdrawable(bytes32,uint40,bytes32,uint64,bytes,bytes)"
         ](
           beaconRoot,
           validatorIndex,

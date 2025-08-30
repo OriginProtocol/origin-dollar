@@ -92,7 +92,7 @@ library BeaconProofsLib {
         bytes32 beaconBlockRoot,
         bytes32 pubKeyHash,
         bytes calldata proof,
-        uint64 validatorIndex,
+        uint40 validatorIndex,
         address withdrawalAddress
     ) internal view {
         require(beaconBlockRoot != bytes32(0), "Invalid block root");
@@ -147,7 +147,7 @@ library BeaconProofsLib {
     /// This is 53 witness hashes of 32 bytes each concatenated together starting from the leaf node.
     function verifyValidatorWithdrawableEpoch(
         bytes32 beaconBlockRoot,
-        uint64 validatorIndex,
+        uint40 validatorIndex,
         uint64 withdrawableEpoch,
         bytes calldata proof
     ) internal view {
@@ -241,7 +241,7 @@ library BeaconProofsLib {
         bytes32 balancesContainerRoot,
         bytes32 validatorBalanceLeaf,
         bytes calldata proof,
-        uint64 validatorIndex
+        uint40 validatorIndex
     ) internal view returns (uint256 validatorBalanceGwei) {
         require(balancesContainerRoot != bytes32(0), "Invalid container root");
 
@@ -396,7 +396,7 @@ library BeaconProofsLib {
     ///       Internal Helper Functions
     ////////////////////////////////////////////////////
 
-    function balanceAtIndex(bytes32 validatorBalanceLeaf, uint64 validatorIndex)
+    function balanceAtIndex(bytes32 validatorBalanceLeaf, uint40 validatorIndex)
         internal
         pure
         returns (uint256)
