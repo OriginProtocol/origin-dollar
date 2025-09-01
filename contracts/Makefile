@@ -52,6 +52,6 @@ script:
 	@echo "$(BOLD_BLUE)Running script RunlogsDATE=$(DATE)_CHAIN=$(CHAIN) $(RESET) \n"
 	forge script Runlogs_$(DATE)_$(CHAIN)
 	@echo "$(BOLD_BLUE)\nConverting foundry broadcast messages to Safe format... $(RESET) \n"
-	forge script BroadcastConvertor contracts/broadcast/$(DATE).s.sol/$(CHAIN_ID)/dry-run/
+	forge script BroadcastConvertor contracts/broadcast/$(DATE).sol/$(CHAIN_ID)/dry-run/
 
 .PHONY: script
