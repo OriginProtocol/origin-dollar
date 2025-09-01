@@ -319,7 +319,7 @@ abstract contract CompoundingValidatorManager is Governable {
     /// The `ValidatorStakeData` struct contains the pubkey, signature and depositDataRoot.
     /// Only the registrator can call this function.
     /// @param depositAmountGwei The amount of WETH to stake to the validator in Gwei.
-    // slither-disable-start reentrancy-eth
+    // slither-disable-start reentrancy-eth,reentrancy-no-eth
     function stakeEth(
         ValidatorStakeData calldata validatorStakeData,
         uint64 depositAmountGwei
@@ -427,7 +427,7 @@ abstract contract CompoundingValidatorManager is Governable {
         );
     }
 
-    // slither-disable-end reentrancy-eth
+    // slither-disable-end reentrancy-eth,reentrancy-no-eth
 
     /// @notice Request a full or partial withdrawal from a validator.
     /// A zero amount will trigger a full withdrawal.
