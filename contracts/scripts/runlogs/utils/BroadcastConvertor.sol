@@ -63,19 +63,34 @@ contract BroadcastConvertor is Script, Test {
     // Convert Json into Json-Struct
     Json memory json = abi.decode(vm.parseJson(inputJson), (Json));
 
-    // Prepare for Safe
-    string memory safeJson = prepareForSafe(json);
+    // Is timelock targeted?
+    uint256 delay = timelockDelay(json);
 
-    // Print Safe JSON
-    console.log("Use this JSON is Safe:\n%s", safeJson);
+    if (delay > 0) {
+      // Prepare schedule for Timelock
+      string memory scheduleJson = prepareForSafe(json, Timelock.scheduleBatch.selector);
+      console.log("\nUse this JSON to schedule on Timelock:\n%s", scheduleJson);
 
-    // Write JSON
-    vm.writeJson(safeJson, string.concat(path, "run-latest-safe.json"));
+      // Prepare execute for Timelock
+      string memory executeJson = prepareForSafe(json, Timelock.executeBatch.selector);
+      console.log("\nUse this JSON to execute on Timelock:\n%s", executeJson);
+
+      // Write both JSONs
+      vm.writeJson(scheduleJson, string.concat(path, "run-latest-schedule.json"));
+      vm.writeJson(executeJson, string.concat(path, "run-latest-execute.json"));
+    } else {
+      // Prepare for Safe
+      string memory safeJson = prepareForSafe(json, bytes4(0));
+      console.log("Use this JSON is Safe:\n%s", safeJson);
+
+      // Write Safe JSON
+      vm.writeJson(safeJson, string.concat(path, "run-latest-safe.json"));
+    }
   }
 
   /// @notice Prepares the JSON for Safe format
   /// @param json The original JSON in Json-Struct format
-  function prepareForSafe(Json memory json) public pure returns (string memory) {
+  function prepareForSafe(Json memory json, bytes4 selector) public pure returns (string memory) {
     // Header
     string memory header = string.concat(
       '{ "version": "1.0", "chainId": "',
@@ -95,7 +110,7 @@ contract BroadcastConvertor is Script, Test {
     // Transactions
     string memory transactions = string.concat(
       '"transactions": [ ',
-      delay == 0 ? rawTransactions(json) : transactionForTimelock(json, delay),
+      delay == 0 ? rawTransactions(json) : transactionForTimelock(json, delay, selector),
       " ],"
     );
 
@@ -145,7 +160,7 @@ contract BroadcastConvertor is Script, Test {
   /// @dev This function will batch all the tx in a single one, and call the timelock pranked on the runlog
   /// @param json The original JSON in Json-Struct format
   /// @param delay The delay for the timelock
-  function transactionForTimelock(Json memory json, uint256 delay)
+  function transactionForTimelock(Json memory json, uint256 delay, bytes4 selector)
     public
     pure
     returns (string memory transaction)
@@ -172,11 +187,9 @@ contract BroadcastConvertor is Script, Test {
     transaction = string.concat(
       transaction,
       ' , "data": "',
-      vm.toString(
-        abi.encodeWithSelector(
-          Timelock.scheduleBatch.selector, targets, values, payloads, 0, 0, delay
-        )
-      ),
+      selector == (Timelock.scheduleBatch.selector)
+        ? vm.toString(abi.encodeWithSelector(selector, targets, values, payloads, 0, 0, delay))
+        : vm.toString(abi.encodeWithSelector(selector, targets, values, payloads, 0, 0)),
       '",'
     );
 
@@ -209,4 +222,12 @@ interface Timelock {
     bytes32 salt,
     uint256 delay
   ) external;
+
+  function executeBatch(
+    address[] calldata targets,
+    uint256[] calldata values,
+    bytes[] calldata dataElements,
+    bytes32 predecessor,
+    bytes32 salt
+  ) external payable;
 }
