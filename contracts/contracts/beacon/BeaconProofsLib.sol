@@ -125,6 +125,10 @@ library BeaconProofsLib {
         );
         require(proof[0] == 0x02, "Invalid validator type");
 
+        for (uint256 i = 1; i < 12; i++) {
+            require(proof[i] == 0x00, "Invalid withdrawal credentials");
+        }
+
         require(
             // 53 * 32 bytes = 1696 bytes
             proof.length == 1696 &&
