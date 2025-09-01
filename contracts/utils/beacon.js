@@ -392,11 +392,11 @@ const verifyDepositSignatureAndMessageRoot = async ({
     Buffer.from(computedMessageRoot).toString("hex");
   if (depositMessageRoot != computedMessageRootString) {
     throw Error(
-      `Deposit message root miss-match. Computed value: ${computedMessageRootString} p2p supplied value: ${depositMessageRoot}`
+      `Deposit message root miss-match. Computed value: ${computedMessageRootString} vs supplied value: ${depositMessageRoot}`
     );
   }
   log(
-    `Deposit message root matches the compouted message root: ${depositMessageRoot}`
+    `Deposit message root matches the computed message root: ${depositMessageRoot}`
   );
 };
 
