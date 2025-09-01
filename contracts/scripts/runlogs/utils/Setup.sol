@@ -11,6 +11,8 @@ import { OETHBase } from "contracts/contracts/token/OETHBase.sol";
 import { WOETHBase } from "contracts/contracts/token/WOETHBase.sol";
 import { OETHVaultCore } from "contracts/contracts/vault/OETHVaultCore.sol";
 import { OETHVaultAdmin } from "contracts/contracts/vault/OETHVaultAdmin.sol";
+import { OSonicVaultCore } from "contracts/contracts/vault/OSonicVaultCore.sol";
+import { OSonicVaultAdmin } from "contracts/contracts/vault/OSonicVaultAdmin.sol";
 import { OETHBaseVaultCore } from "contracts/contracts/vault/OETHBaseVaultCore.sol";
 import { OETHBaseVaultAdmin } from "contracts/contracts/vault/OETHBaseVaultAdmin.sol";
 import { OETHVaultValueChecker } from "contracts/contracts/strategies/VaultValueChecker.sol";
@@ -21,6 +23,7 @@ import { OSonic } from "contracts/contracts/token/OSonic.sol";
 // Contracts - Strategies
 import { CurveAMOStrategy } from "contracts/contracts/strategies/CurveAMOStrategy.sol";
 import { BaseCurveAMOStrategy } from "contracts/contracts/strategies/BaseCurveAMOStrategy.sol";
+import { SonicStakingStrategy } from "contracts/contracts/strategies/sonic/SonicStakingStrategy.sol";
 import { AerodromeAMOStrategy } from
   "contracts/contracts/strategies/aerodrome/AerodromeAMOStrategy.sol";
 
@@ -94,12 +97,24 @@ abstract contract SetupSonic is Test, Script {
   address public governor = Sonic.GOVERNOR;
   address public timelock = Sonic.TIMELOCK;
   address public strategist = CrossChain.STRATEGIST;
+  address public localStrategist = Sonic.STRATEGIST;
 
   // OS
   OSonic public os = OSonic(Sonic.OS);
+  OSonicVaultCore public osVaultCore = OSonicVaultCore(Sonic.OS_VAULT);
+  OSonicVaultAdmin public osVaultAdmin = OSonicVaultAdmin(Sonic.OS_VAULT);
+  OETHVaultValueChecker public osVaultValueChecker =
+    OETHVaultValueChecker(Sonic.OS_VAULT_VALUE_CHECKER);
+
+  // Interfaces
+  IWETH9 public ws = IWETH9(Sonic.WS);
 
   // ARM
   ISonicARM public arm = ISonicARM(Sonic.ARM);
+
+  // Staking strategy
+  SonicStakingStrategy public stakingStrategy =
+    SonicStakingStrategy(payable(Sonic.STAKING_STRATEGY));
 
   function setUp() public {
     // Note: to ensure perfect simulation, don't fix block number, it will be automatically set to the latest block

@@ -61,10 +61,19 @@ library Sonic {
   // Governance
   address public constant GOVERNOR = 0xAdDEA7933Db7d83855786EB43a238111C69B00b6;
   address public constant TIMELOCK = 0x31a91336414d3B955E494E7d485a6B06b55FC8fB;
+  address public constant STRATEGIST = 0x63cdd3072F25664eeC6FAEFf6dAeB668Ea4de94a;
 
   // OS
   address public constant OS = 0xb1e25689D55734FD3ffFc939c4C3Eb52DFf8A794;
+  address public constant OS_VAULT = 0xa3c0eCA00D2B76b4d1F170b0AB3FdeA16C180186;
+  address public constant OS_VAULT_VALUE_CHECKER = 0x06f172e6852085eCa886B7f9fd8f7B21Db3D2c40;
 
   // ARM
   address public constant ARM = 0x2F872623d1E1Af5835b08b0E49aAd2d81d649D30;
+
+  // Strategies
+  address public constant STAKING_STRATEGY = 0x596B0401479f6DfE1cAF8c12838311FeE742B95c;
+
+  // Other token
+  address public constant WS = 0x039e2fB66102314Ce7b64Ce5Ce3E5183bc94aD38;
 }
