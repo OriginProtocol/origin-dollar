@@ -412,6 +412,8 @@ addresses.base.childLiquidityGaugeFactory =
 
 addresses.base.CCIPRouter = "0x881e3A65B4d4a04dD529061dd0071cf975F58bCD";
 
+addresses.base.MerklDistributor = "0x8BB4C975Ff3c250e0ceEA271728547f3802B36Fd";
+
 // Sonic
 addresses.sonic.wS = "0x039e2fB66102314Ce7b64Ce5Ce3E5183bc94aD38";
 addresses.sonic.WETH = "0x309C92261178fA0CF748A855e90Ae73FDb79EBc7";
