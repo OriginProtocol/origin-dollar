@@ -11,7 +11,8 @@ const addresses = require("../utils/addresses");
 const {
   getBeaconBlock,
   getValidator: getValidatorBeacon,
-  calcBlockTimestamp
+  calcBlockTimestamp,
+  getSlot,
 } = require("../utils/beacon");
 const { bytes32 } = require("../utils/regex");
 const { resolveContract } = require("../utils/resolvers");
@@ -196,6 +197,14 @@ async function verifyDeposit({
     }
 
     strategyValidatorIndex = strategyValidator.index;
+  }
+
+  if (!slot) {
+    const latestSlot = await getSlot();
+    slot = latestSlot - 33;
+    log(
+      `Latest slot is ${latestSlot}, using slot ${slot} for verifying the deposit`
+    );
   }
 
   // Uses the latest slot if the slot is undefined
