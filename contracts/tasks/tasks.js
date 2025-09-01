@@ -2142,7 +2142,7 @@ subtask(
     undefined,
     types.string
   )
-  .addParam(
+  .addOptionalParam(
     "sig",
     "The validator's deposit signature in hex format with a 0x prefix",
     undefined,
@@ -2154,22 +2154,22 @@ subtask(
     undefined,
     types.int
   )
-  .addParam(
+  .addOptionalParam(
     "withdrawalCredentials",
     "Withdrawal credentials of the validator",
     undefined,
     types.string
   )
-  .addParam(
+  .addOptionalParam(
     "depositMessageRoot",
     "Deposit message root provided by p2p",
     undefined,
     types.string
   )
-  .addParam(
+  .addOptionalParam(
     "forkVersion",
     "Fork version of the beacon chain. Required for validating the BLS signature",
-    undefined,
+    "10000910",
     types.string
   )
   .addOptionalParam(

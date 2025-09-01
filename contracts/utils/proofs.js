@@ -141,7 +141,6 @@ async function generateFirstPendingDepositSlotProof({
   );
   let firstPendingDepositSlot = 0;
   let firstPendingDepositPubKey = "0x";
-  let firstPendingDepositPubKeyHash = ZERO_BYTES32;
   let firstPendingDepositValidatorIndex = 0;
   if (stateView.pendingDeposits.length == 0) {
     log("No deposits in the deposit queue");
@@ -149,7 +148,6 @@ async function generateFirstPendingDepositSlotProof({
     const firstPendingDeposit = stateView.pendingDeposits.get(0);
     firstPendingDepositSlot = firstPendingDeposit.slot;
     firstPendingDepositPubKey = toHex(firstPendingDeposit.pubkey);
-    firstPendingDepositPubKeyHash = hashPubKey(firstPendingDeposit.pubkey);
     firstPendingDepositValidatorIndex = firstPendingDeposit.validatorIndex;
     log(
       `First pending deposit has slot ${
