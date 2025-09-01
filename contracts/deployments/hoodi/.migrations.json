@@ -22,5 +22,6 @@
   "021_deploy_new_staking_contracts": 1756002665,
   "022_upgrade_staking_contract": 1756016922,
   "023_upgrade_staking_contract": 1756243916,
-  "024_upgrade_staking_contract": 1756527898
+  "024_upgrade_staking_contract": 1756527898,
+  "025_deploy_new_staking_contracts": 1756691955
 }

@@ -855,7 +855,7 @@ const deployCompoundingStakingSSVStrategy = async () => {
   // Deploy the proxy on Hoodi fork not as defender relayer since we will not
   // test SSV token claiming on that testnet
   if ((isTest && !isFork) || networkName == "hoodi") {
-    // For unit tests, use the Governor contract
+    // For unit tests and Hoodi, use the Governor contract
     governorAddress = governorAddr;
 
     log("Deploy CompoundingStakingSSVStrategyProxy");
