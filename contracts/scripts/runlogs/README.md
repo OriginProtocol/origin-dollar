@@ -34,7 +34,9 @@ forge script BroadcastConvertor contracts/broadcast/2025_09.sol/146/dry-run/
 This creates, by default, a file named `run-latest-safe.json` in the same location as the input file, ready to be imported into the Safe UI.
 
 ### Timelock targeted ?
-If on the script, the address used inside `startBroadcast()` is a `Timelock`, the Safe-compatible JSON will be adjusted to target the `scheduleBatch` function on the `Timelock` contract.
+If on the script, the address used inside `startBroadcast()` is a `Timelock`:
+- the Safe-compatible JSON will be adjusted to target the `scheduleBatch` and `executeBatch` functions on the `Timelock` contract. 
+- two files will be generated: `run-latest-schedule` and `run-latest-execute`.
 
 
 ## 4. How generates Safe JSON in just one command?
