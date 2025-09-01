@@ -22,27 +22,22 @@ This generates 2 files (that are `broadcast-ready` for execution) under `contrac
 ## 3. Convert runlogs into Safe-compatible JSON
 Since these transactions are meant to be executed from the Safe, it is not possible to use `cast`.
 
-To convert a `broadcast-ready` into a Safe-compatible JSON file, use the script: `scripts/runlogs/broadcast_convertor.py`. 
+To convert a `broadcast-ready` into a Safe-compatible JSON file, use the forge script: `scripts/runlogs/utils/BroadcastConvertor.sol`. 
 
 In the `contracts` folder run:
 ```bash
-python3 scripts/runlogs/broadcast_convertor.py -i broadcast/2025_08.s.sol/1/dry-run/run-latest.json
+forge script BroadcastConvertor contracts/broadcast/2025_09.sol/146/dry-run/
 ```
-> Note adjust the input accordingly.
+> Note adjust the input accordingly:
+> first the path to the run file, but stop at the dry-run folder.
 
 This creates, by default, a file named `run-latest-safe.json` in the same location as the input file, ready to be imported into the Safe UI.
 
+### Timelock targeted ?
+If on the script, the address used inside `startBroadcast()` is a `Timelock`, the Safe-compatible JSON will be adjusted to target the `scheduleBatch` function on the `Timelock` contract.
 
-## 4. Options for `broadcast_convertor.py`
-```
-  -h, --help            show this help message and exit
-  --input, -i INPUT     Path to input JSON file (MANDATORY)
-  --output, -o OUTPUT   Path to output JSON file (default: adds -safe to input filename)
-  --suffix SUFFIX       Suffix to add to filename (default: safe)
-  --display, -d DISPLAY Display the output JSON in the console
-```
 
-## 5. How generates Safe JSON in just one command?
+## 4. How generates Safe JSON in just one command?
 In the `contracts` folder:
 ```makefile
 make script
