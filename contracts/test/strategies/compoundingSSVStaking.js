@@ -458,7 +458,7 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
     await compoundingStakingSSVStrategy.connect(sVault).depositAll();
   };
 
-  describe("Register and stake validators", () => {
+  describe("Register, stake, withdraw and remove validators", () => {
     beforeEach(async () => {
       const { weth, josh, ssv, compoundingStakingSSVStrategy } = fixture;
 
@@ -805,6 +805,94 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
       await expect(tx).to.be.revertedWith("Not registered or verified");
     });
 
+    // Full validator exit
+
+    it("Should exit a validator with no pending deposit", async () => {
+      const { validatorRegistrator, compoundingStakingSSVStrategy } = fixture;
+
+      // Third validator is later withdrawn later
+      await processValidator(testValidators[3], "VERIFIED_DEPOSIT");
+      await topupValidator(
+        testValidators[3],
+        testValidators[3].depositProof.depositAmount - 1,
+        "VERIFIED_DEPOSIT"
+      );
+
+      const tx = await compoundingStakingSSVStrategy
+        .connect(validatorRegistrator)
+        .validatorWithdrawal(testValidators[3].publicKey, 0, {
+          value: 1,
+        });
+
+      await expect(tx)
+        .to.emit(compoundingStakingSSVStrategy, "ValidatorWithdraw")
+        .withArgs(testValidators[3].publicKeyHash, 0);
+
+      expect(
+        (
+          await compoundingStakingSSVStrategy.validator(
+            testValidators[3].publicKeyHash
+          )
+        ).state
+      ).to.equal(4); // EXITING
+    });
+
+    it("Should revert when exiting a validator with a pending deposit", async () => {
+      const { validatorRegistrator, compoundingStakingSSVStrategy } = fixture;
+
+      // Third validator is later withdrawn later
+      await processValidator(testValidators[3], "VERIFIED_DEPOSIT");
+      // Stake but do not verify the deposit
+      await topupValidator(
+        testValidators[3],
+        testValidators[3].depositProof.depositAmount - 1,
+        "STAKED"
+      );
+
+      // Amount 0 is a full validator exit
+      const tx = compoundingStakingSSVStrategy
+        .connect(validatorRegistrator)
+        .validatorWithdrawal(testValidators[3].publicKey, 0, { value: 1 });
+
+      await expect(tx).to.be.revertedWith("Pending deposit");
+    });
+
+    it("Should partial withdraw from a validator with a pending deposit", async () => {
+      const { validatorRegistrator, compoundingStakingSSVStrategy } = fixture;
+
+      // Third validator is later withdrawn later
+      await processValidator(testValidators[3], "VERIFIED_DEPOSIT");
+      // Stake but do not verify the deposit
+      await topupValidator(
+        testValidators[3],
+        testValidators[3].depositProof.depositAmount - 1,
+        "STAKED"
+      );
+
+      const withdrawAmountGwei = ETHInGwei.mul(5);
+
+      const tx = await compoundingStakingSSVStrategy
+        .connect(validatorRegistrator)
+        .validatorWithdrawal(testValidators[3].publicKey, withdrawAmountGwei, {
+          value: 1,
+        });
+
+      await expect(tx)
+        .to.emit(compoundingStakingSSVStrategy, "ValidatorWithdraw")
+        .withArgs(
+          testValidators[3].publicKeyHash,
+          withdrawAmountGwei.mul(GweiInWei)
+        );
+
+      expect(
+        (
+          await compoundingStakingSSVStrategy.validator(
+            testValidators[3].publicKeyHash
+          )
+        ).state
+      ).to.equal(3); // VERIFIED
+    });
+
     // Remove validator
     it("Should remove a validator when validator is registered", async () => {
       const { compoundingStakingSSVStrategy, validatorRegistrator } = fixture;
@@ -869,18 +957,8 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
     });
 
     it("Should remove a validator when validator is exited", async () => {
-      const {
-        weth,
-        validatorRegistrator,
-        compoundingStakingSSVStrategy,
-        compoundingStakingStrategyView,
-      } = fixture;
+      const { validatorRegistrator, compoundingStakingSSVStrategy } = fixture;
 
-      await setERC20TokenBalance(
-        compoundingStakingSSVStrategy.address,
-        weth,
-        parseEther("0")
-      );
       // Third validator is later withdrawn later
       await processValidator(testValidators[3], "VERIFIED_DEPOSIT");
       await topupValidator(
@@ -889,6 +967,7 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
         "VERIFIED_DEPOSIT"
       );
 
+      // Validator has 1588.918094377 ETH
       await assertBalances({
         pendingDepositAmount: 0,
         wethAmount: 0,
@@ -897,46 +976,16 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
         activeValidators: [2],
       });
 
-      // Validator has 1588.918094377 ETH
-      const withdrawalAmount = testBalancesProofs[1].validatorBalances[2];
-
-      // Stake before balance are verified
-      const activeValidatorsBefore =
-        await compoundingStakingStrategyView.getVerifiedValidators();
-      expect(activeValidatorsBefore.length).to.eq(1);
-      expect(
-        (
-          await compoundingStakingSSVStrategy.validator(
-            testValidators[3].publicKeyHash
-          )
-        ).state
-      ).to.equal(3); // VERIFIED
-
-      // fund 1 WEI for the withdrawal request
-      await setBalance(compoundingStakingSSVStrategy.address, "0x1");
-      const tx = await compoundingStakingSSVStrategy
-        .connect(validatorRegistrator)
-        .validatorWithdrawal(
-          testValidators[3].publicKey,
-          parseUnits(withdrawalAmount.toString(), 9)
-        );
-
-      await expect(tx)
-        .to.emit(compoundingStakingSSVStrategy, "ValidatorWithdraw")
-        .withArgs(
-          testValidators[3].publicKeyHash,
-          parseEther(withdrawalAmount.toString())
-        );
-
+      // Verify the validator with a zero balance which marks the validator as exited
       await assertBalances({
         pendingDepositAmount: 0,
         wethAmount: 0,
-        ethAmount: withdrawalAmount,
+        ethAmount: 0,
         balancesProof: testBalancesProofs[2],
         activeValidators: [2],
       });
 
-      const removeTx = compoundingStakingSSVStrategy
+      const removeTx = await compoundingStakingSSVStrategy
         .connect(validatorRegistrator)
         .removeSsvValidator(
           testValidators[3].publicKey,

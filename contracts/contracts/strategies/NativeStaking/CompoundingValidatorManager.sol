@@ -464,6 +464,17 @@ abstract contract CompoundingValidatorManager is Governable {
 
         // If a full withdrawal (validator exit)
         if (amountGwei == 0) {
+            // For each staking strategy's deposits
+            uint256 depositsCount = depositList.length;
+            for (uint256 i = 0; i < depositsCount; ++i) {
+                uint256 depositID = depositList[i];
+                // Check there is no pending deposits to the exiting validator
+                require(
+                    pubKeyHash != deposits[depositID].pubKeyHash,
+                    "Pending deposit"
+                );
+            }
+
             // Store the validator state as exiting so no more deposits can be made to it.
             validator[pubKeyHash].state = ValidatorState.EXITING;
         }
