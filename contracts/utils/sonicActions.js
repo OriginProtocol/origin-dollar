@@ -28,12 +28,21 @@ async function undelegateValidator({ id, amount, signer }) {
     const queue = await vault.withdrawalQueueMetadata();
     const pendingWithdrawals = await sonicStakingStrategy.pendingWithdrawals();
 
-    const available = wsBalance
+    const bufferPct = 10; // basis point
+    const vaultTotalAsset = await vault.totalValue();
+    log(`Vault total asset: ${formatUnits(vaultTotalAsset, 18)} wS`);
+
+    const buffer = vaultTotalAsset.mul(bufferPct).div(10000);
+    log(`Buffer (10% of total assets): ${formatUnits(buffer, 18)} wS`);
+
+    let available = wsBalance
       .add(queue.claimed)
       .sub(queue.queued)
       .add(pendingWithdrawals);
+    log(`available before buffer: ${formatUnits(available, 18)} wS`);
 
-    log(`Available balance: ${formatUnits(available, 18)} wS`);
+    available = available.sub(buffer);
+    log(`Available balance after: ${formatUnits(available, 18)} wS`);
 
     // Threshold is negative 1000 wS
     const threshold = parseUnits("1000", 18).mul(-1);
@@ -60,9 +69,9 @@ async function undelegateValidator({ id, amount, signer }) {
       amountBN
     )} S from validator ${validatorId}`
   );
-  const tx = await sonicStakingStrategy
-    .connect(signer)
-    .undelegate(validatorId, amountBN);
+  //const tx = await sonicStakingStrategy
+  //  .connect(signer)
+  //  .undelegate(validatorId, amountBN);
   await logTxDetails(tx, "undelegate");
 }
 
