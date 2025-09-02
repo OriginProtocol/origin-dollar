@@ -12,6 +12,7 @@ const {
   getBeaconBlock,
   getValidator: getValidatorBeacon,
   calcBlockTimestamp,
+  getSlot,
 } = require("../utils/beacon");
 const { bytes32 } = require("../utils/regex");
 const { resolveContract } = require("../utils/resolvers");
@@ -196,6 +197,14 @@ async function verifyDeposit({
     }
 
     strategyValidatorIndex = strategyValidator.index;
+  }
+
+  if (!slot) {
+    const latestSlot = await getSlot();
+    slot = latestSlot - 33;
+    log(
+      `Latest slot is ${latestSlot}, using slot ${slot} for verifying the deposit`
+    );
   }
 
   // Uses the latest slot if the slot is undefined
@@ -385,9 +394,9 @@ async function verifyBalances({
   }
 
   const networkName = await getNetworkName();
-  // Set the slot when the validator of the first pending deposit was created
+  // Set the slot when the validator of the first pending deposit was created.
   // If no valSlot option and the queue is empty, use the same slot as the first pending deposit verification
-  // otherwise use the next epoch
+  // otherwise use the epoch from the snap balances slot
   firstDepositValidatorCreatedSlot =
     firstDepositValidatorCreatedSlot || verificationSlot + (isEmpty ? 0 : 32);
   const firstDepositValidatorBlockTimestamp = calcBlockTimestamp(

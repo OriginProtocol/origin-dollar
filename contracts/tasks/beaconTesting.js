@@ -7,6 +7,16 @@ const { logTxDetails } = require("../utils/txLogger");
 
 const log = require("../utils/logger")("task:beacon:test:utils");
 
+const calcWithdrawalCredential = (type, owner) => {
+  const withdrawalCredential = solidityPack(
+    ["bytes1", "bytes11", "address"],
+    [type, "0x0000000000000000000000", owner]
+  );
+  log(`Withdrawal Credentials: ${withdrawalCredential}`);
+
+  return withdrawalCredential;
+};
+
 const calcDepositRoot = async (owner, type, pubkey, sig, amount) => {
   // Dynamically import the Lodestar as its an ESM module
   const { ssz } = await import("@lodestar/types");
@@ -104,6 +114,7 @@ async function mockBeaconRoot() {
 
 module.exports = {
   calcDepositRoot,
+  calcWithdrawalCredential,
   depositValidator,
   copyBeaconRoot,
   mockBeaconRoot,

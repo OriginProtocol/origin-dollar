@@ -3,7 +3,10 @@ const { formatUnits, parseUnits } = require("ethers/lib/utils");
 const { BigNumber } = require("ethers");
 
 const { getBlock } = require("../tasks/block");
-const { calcDepositRoot } = require("./beaconTesting");
+const {
+  calcDepositRoot,
+  calcWithdrawalCredential,
+} = require("./beaconTesting");
 const {
   calcSlot,
   getValidatorBalance,
@@ -137,19 +140,34 @@ async function stakeValidator({
     forkVersion = _forkVersion;
   }
 
-  await verifyDepositSignatureAndMessageRoot({
-    pubkey,
-    withdrawalCredentials,
-    amount,
-    signature: sig,
-    depositMessageRoot,
-    forkVersion,
-  });
-
   const strategy = await resolveContract(
     "CompoundingStakingSSVStrategyProxy",
     "CompoundingStakingSSVStrategy"
   );
+
+  if (!withdrawalCredentials) {
+    withdrawalCredentials = calcWithdrawalCredential("0x02", strategy.address);
+  }
+
+  if (amount == 1) {
+    if (!sig) {
+      throw new Error(
+        "The signature is required for the first deposit of 1 ETH"
+      );
+    }
+    await verifyDepositSignatureAndMessageRoot({
+      pubkey,
+      withdrawalCredentials,
+      amount,
+      signature: sig,
+      depositMessageRoot,
+      forkVersion,
+    });
+  } else {
+    // The signatures doesn't mater after the first deposit
+    sig =
+      "0x000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001";
+  }
 
   const depositDataRoot = await calcDepositRoot(
     strategy.address,
@@ -170,7 +188,7 @@ async function stakeValidator({
   }
 
   log(
-    `About to stake ${amount} ETH to validator with pubkey ${pubkey} and deposit root ${depositDataRoot}`
+    `About to stake ${amount} ETH to validator with pubkey ${pubkey}, deposit root ${depositDataRoot} and signature ${sig}`
   );
   const tx = await strategy
     .connect(signer)
@@ -359,14 +377,18 @@ async function logDeposits(strategyView, blockTag = "latest") {
   let totalDeposits = BigNumber.from(0);
   console.log(`\n${deposits.length || "No"} pending strategy deposits:`);
   if (deposits.length > 0) {
-    console.log(`  ID  amount   slot    withdrawable         public key hash`);
+    console.log(
+      `  ID  amount    slot    withdrawable         public key hash`
+    );
   }
   for (const deposit of deposits) {
     console.log(
       `  ${deposit.depositID.toString().padEnd(3)} ${formatUnits(
         deposit.amountGwei,
         9
-      )} ETH ${deposit.slot} ${deposit.withdrawableEpoch} ${deposit.pubKeyHash}`
+      ).padEnd(5)} ETH ${deposit.slot} ${deposit.withdrawableEpoch} ${
+        deposit.pubKeyHash
+      }`
     );
     totalDeposits = totalDeposits.add(deposit.amountGwei);
   }

@@ -23,9 +23,7 @@ abstract contract CompoundingValidatorManager is Governable {
     using SafeERC20 for IERC20;
 
     /// @dev The amount of ETH in wei that is required for a deposit to a new validator.
-    /// Initially this is 32 ETH, but will be reduced to 1 ETH after P2P's APIs have been updated
-    /// to support deposits of 1 ETH.
-    uint256 internal constant DEPOSIT_AMOUNT_WEI = 32 ether;
+    uint256 internal constant DEPOSIT_AMOUNT_WEI = 1 ether;
     /// @dev The maximum number of deposits that are waiting to be verified as processed on the beacon chain.
     uint256 internal constant MAX_DEPOSITS = 12;
     /// @dev The maximum number of validators that can be verified.
@@ -313,12 +311,15 @@ abstract contract CompoundingValidatorManager is Governable {
     }
 
     /// @notice Stakes WETH in this strategy to a compounding validator.
+    /// The the first deposit to a new validator, the amount must be 1 ETH.
+    /// Another deposit of at least 31 ETH is required for the validator to be activated.
+    /// This second deposit has to be done after the validator has been verified.
     /// Does not convert any ETH sitting in this strategy to WETH.
     /// @param validatorStakeData validator data needed to stake.
     /// The `ValidatorStakeData` struct contains the pubkey, signature and depositDataRoot.
     /// Only the registrator can call this function.
     /// @param depositAmountGwei The amount of WETH to stake to the validator in Gwei.
-    // slither-disable-start reentrancy-eth
+    // slither-disable-start reentrancy-eth,reentrancy-no-eth
     function stakeEth(
         ValidatorStakeData calldata validatorStakeData,
         uint64 depositAmountGwei
@@ -426,7 +427,7 @@ abstract contract CompoundingValidatorManager is Governable {
         );
     }
 
-    // slither-disable-end reentrancy-eth
+    // slither-disable-end reentrancy-eth,reentrancy-no-eth
 
     /// @notice Request a full or partial withdrawal from a validator.
     /// A zero amount will trigger a full withdrawal.
@@ -463,6 +464,17 @@ abstract contract CompoundingValidatorManager is Governable {
 
         // If a full withdrawal (validator exit)
         if (amountGwei == 0) {
+            // For each staking strategy's deposits
+            uint256 depositsCount = depositList.length;
+            for (uint256 i = 0; i < depositsCount; ++i) {
+                uint256 depositID = depositList[i];
+                // Check there is no pending deposits to the exiting validator
+                require(
+                    pubKeyHash != deposits[depositID].pubKeyHash,
+                    "Pending deposit"
+                );
+            }
+
             // Store the validator state as exiting so no more deposits can be made to it.
             validator[pubKeyHash].state = ValidatorState.EXITING;
         }
