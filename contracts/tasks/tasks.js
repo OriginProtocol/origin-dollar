@@ -1541,7 +1541,7 @@ subtask(
     "0x02",
     types.string
   )
-  .addOptionalParam("amount", "The deposit amount.", 32, types.int)
+  .addOptionalParam("amount", "The deposit amount.", 32, types.float)
   .setAction(async (taskArgs) => {
     const root = await calcDepositRoot(
       taskArgs.owner,
@@ -2152,7 +2152,7 @@ subtask(
     "amount",
     "Amount of ETH to deposit to the validator.",
     undefined,
-    types.int
+    types.float
   )
   .addOptionalParam(
     "withdrawalCredentials",
