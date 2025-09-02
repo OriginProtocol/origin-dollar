@@ -16,7 +16,8 @@ module.exports = deployOnSonic(
       "OSonicVaultCore",
       [addresses.sonic.wS],
       "OSonicVaultCore",
-      true);
+      true
+    );
 
     // ----------------
     // Governance Actions
