@@ -377,14 +377,18 @@ async function logDeposits(strategyView, blockTag = "latest") {
   let totalDeposits = BigNumber.from(0);
   console.log(`\n${deposits.length || "No"} pending strategy deposits:`);
   if (deposits.length > 0) {
-    console.log(`  ID  amount   slot    withdrawable         public key hash`);
+    console.log(
+      `  ID  amount    slot    withdrawable         public key hash`
+    );
   }
   for (const deposit of deposits) {
     console.log(
       `  ${deposit.depositID.toString().padEnd(3)} ${formatUnits(
         deposit.amountGwei,
         9
-      )} ETH ${deposit.slot} ${deposit.withdrawableEpoch} ${deposit.pubKeyHash}`
+      ).padEnd(5)} ETH ${deposit.slot} ${deposit.withdrawableEpoch} ${
+        deposit.pubKeyHash
+      }`
     );
     totalDeposits = totalDeposits.add(deposit.amountGwei);
   }
