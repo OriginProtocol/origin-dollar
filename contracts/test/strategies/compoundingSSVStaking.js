@@ -2084,6 +2084,11 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
         balancesProof: testBalancesProofs[1],
         activeValidators: [2],
       });
+
+      // verify that the deposits have been removed as the validator has simulated
+      // to been fully exited
+      await expect(depositData1.status).to.equal(2); // VERIFIED
+      await expect(depositData2.status).to.equal(2); // VERIFIED
     });
   });
 
