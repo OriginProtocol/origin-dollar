@@ -256,7 +256,7 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
     throw Error(`Invalid state: ${state}`);
   };
 
-  const topupValidator = async (
+  const topUpValidator = async (
     testValidator,
     depositAmount,
     state = "VERIFIED_DEPOSIT"
@@ -458,6 +458,7 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
     );
 
     return {
+      tx,
       totalDepositsWei,
       wethBalance,
       totalValidatorBalance,
@@ -833,7 +834,7 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
 
       // Third validator is later withdrawn later
       await processValidator(testValidators[3], "VERIFIED_DEPOSIT");
-      await topupValidator(
+      await topUpValidator(
         testValidators[3],
         testValidators[3].depositProof.depositAmount - 1,
         "VERIFIED_DEPOSIT"
@@ -864,7 +865,7 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
       // Third validator is later withdrawn later
       await processValidator(testValidators[3], "VERIFIED_DEPOSIT");
       // Stake but do not verify the deposit
-      await topupValidator(
+      await topUpValidator(
         testValidators[3],
         testValidators[3].depositProof.depositAmount - 1,
         "STAKED"
@@ -884,7 +885,7 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
       // Third validator is later withdrawn later
       await processValidator(testValidators[3], "VERIFIED_DEPOSIT");
       // Stake but do not verify the deposit
-      await topupValidator(
+      await topUpValidator(
         testValidators[3],
         testValidators[3].depositProof.depositAmount - 1,
         "STAKED"
@@ -982,7 +983,7 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
 
       // Third validator is later withdrawn later
       await processValidator(testValidators[3], "VERIFIED_DEPOSIT");
-      await topupValidator(
+      await topUpValidator(
         testValidators[3],
         testValidators[3].depositProof.depositAmount - 1,
         "VERIFIED_DEPOSIT"
@@ -1249,7 +1250,7 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
 
     it("Should withdraw ETH from the strategy, when lastVerifiedEthBalance > ethAmount", async () => {
       await processValidator(testValidators[0]);
-      await topupValidator(testValidators[0], 32, "VERIFIED_DEPOSIT");
+      await topUpValidator(testValidators[0], 32, "VERIFIED_DEPOSIT");
       await assertBalances({
         pendingDepositAmount: 0,
         wethAmount: 0,
@@ -1631,7 +1632,7 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
       beforeEach(async () => {
         // Third validator is later withdrawn later
         await processValidator(testValidators[3], "VERIFIED_DEPOSIT");
-        await topupValidator(
+        await topUpValidator(
           testValidators[3],
           testValidators[3].depositProof.depositAmount - 1,
           "VERIFIED_DEPOSIT"
@@ -1795,14 +1796,14 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
       beforeEach(async () => {
         // register, stake, verify validator and verify deposit
         await processValidator(testValidators[0], "VERIFIED_DEPOSIT");
-        await topupValidator(
+        await topUpValidator(
           testValidators[0],
           testValidators[0].depositProof.depositAmount - 1,
           "VERIFIED_DEPOSIT"
         );
 
         await processValidator(testValidators[1], "VERIFIED_DEPOSIT");
-        await topupValidator(
+        await topUpValidator(
           testValidators[1],
           testValidators[1].depositProof.depositAmount - 1,
           "VERIFIED_DEPOSIT"
@@ -1945,7 +1946,7 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
         });
       });
     });
-    describe("When some WETH, ETH, 3 pending deposits and 21 active validators", () => {
+    describe("With 21 active validators", () => {
       const testValidatorCount = 21;
       const testValidatorProofs = [...Array(testValidatorCount).keys()];
       beforeEach(async () => {
@@ -1960,14 +1961,14 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
           );
           await processValidator(testValidators[i], "VERIFIED_DEPOSIT");
           // Top up the validator to ensure it has enough balance
-          await topupValidator(
+          await topUpValidator(
             testValidators[i],
             testValidators[i].depositProof.depositAmount - 1,
             "VERIFIED_DEPOSIT"
           );
         }
       });
-      it("verify balances", async () => {
+      it("Should verify balances with some WETH, ETH and no deposits", async () => {
         const { compoundingStakingStrategyView } = fixture;
 
         const activeValidators =
@@ -1983,6 +1984,65 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
           balancesProof: testBalancesProofs[5],
           activeValidators: testValidatorProofs,
         });
+      });
+      it("Should verify balances with one validator exited with two pending deposits", async () => {
+        const { compoundingStakingSSVStrategy } = fixture;
+
+        const nextDepositID =
+          await compoundingStakingSSVStrategy.nextDepositID();
+
+        // Add two deposits to the fourth validator (index 3) that has a zero balance
+        // These deposits should be deleted
+        await topUpValidator(testValidators[3], 1, "STAKED");
+        await topUpValidator(testValidators[3], 2, "STAKED");
+
+        const { tx } = await assertBalances({
+          pendingDepositAmount: 0,
+          wethAmount: 123.456,
+          ethAmount: 0.345,
+          balancesProof: testBalancesProofs[5],
+          activeValidators: testValidatorProofs,
+        });
+
+        await expect(tx)
+          .to.emit(compoundingStakingSSVStrategy, "DepositValidatorExited")
+          .withArgs(nextDepositID, parseEther("1"));
+        await expect(tx)
+          .to.emit(compoundingStakingSSVStrategy, "DepositValidatorExited")
+          .withArgs(nextDepositID.add(1), parseEther("2"));
+      });
+      it("Should verify balances with one validator exited with two pending deposits and three deposits to non-exiting validators", async () => {
+        const { compoundingStakingSSVStrategy } = fixture;
+
+        // Add two deposits to the first validator (index 0) that has a balance
+        // These deposits should be kept
+        await topUpValidator(testValidators[0], 2, "STAKED");
+        await topUpValidator(testValidators[0], 3, "STAKED");
+        // Add another deposit to the second validator (index 1) that has a balance
+        await topUpValidator(testValidators[1], 4, "STAKED");
+
+        const nextDepositID =
+          await compoundingStakingSSVStrategy.nextDepositID();
+
+        // Add two deposits to the fourth validator (index 3) that has a zero balance
+        // These deposits should be deleted
+        await topUpValidator(testValidators[3], 5, "STAKED");
+        await topUpValidator(testValidators[3], 6, "STAKED");
+
+        const { tx } = await assertBalances({
+          pendingDepositAmount: 9, // 2 + 3 + 4
+          wethAmount: 123.456,
+          ethAmount: 0.345,
+          balancesProof: testBalancesProofs[5],
+          activeValidators: testValidatorProofs,
+        });
+
+        await expect(tx)
+          .to.emit(compoundingStakingSSVStrategy, "DepositValidatorExited")
+          .withArgs(nextDepositID, parseEther("5"));
+        await expect(tx)
+          .to.emit(compoundingStakingSSVStrategy, "DepositValidatorExited")
+          .withArgs(nextDepositID.add(1), parseEther("6"));
       });
     });
   });
