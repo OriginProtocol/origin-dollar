@@ -3,6 +3,8 @@ pragma solidity ^0.8.0;
 
 import { IBeaconProofs } from "../../interfaces/IBeaconProofs.sol";
 
+// solhint-disable no-unused-vars
+
 /**
  * @title Mock contract for test purposes verifying Merkle proofs
  * @author Origin Protocol Inc
