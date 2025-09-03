@@ -1099,8 +1099,10 @@ abstract contract CompoundingValidatorManager is Governable {
                 balancesMem.timestamp
             ) - BEACON_GENESIS_TIMESTAMP) / (SLOT_DURATION * SLOTS_PER_EPOCH);
 
-            // For each staking strategy's deposits
-            for (uint256 i = 0; i < depositsCount; ++i) {
+            // For each staking strategy's deposit.
+            // Iterate in reverse order so we can pop off deposits at the end of the storage array.
+            for (uint256 i = depositsCount; i > 0; ) {
+                --i;
                 uint256 depositID = depositList[i];
                 DepositData memory depositData = deposits[depositID];
 
@@ -1128,6 +1130,9 @@ abstract contract CompoundingValidatorManager is Governable {
                     ValidatorState.EXITED
                 ) {
                     _removeDeposit(depositID, depositData);
+
+                    // Reduce the count of deposits that needs to be iterated over
+                    depositsCount -= 1;
 
                     emit DepositValidatorExited(
                         depositID,
