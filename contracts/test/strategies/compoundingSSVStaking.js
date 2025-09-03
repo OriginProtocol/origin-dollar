@@ -2069,7 +2069,7 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
       // Third validator is later withdrawn later
       await processValidator(testValidators[3], "VERIFIED_DEPOSIT");
 
-      await topupValidator(
+      await topUpValidator(
         testValidator,
         testValidator.depositProof.depositAmount - 1,
         "STAKED"
@@ -2078,7 +2078,7 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
         compoundingStakingSSVStrategy
       );
 
-      await topupValidator(
+      await topUpValidator(
         testValidator,
         testValidator.depositProof.depositAmount - 1,
         "STAKED"
