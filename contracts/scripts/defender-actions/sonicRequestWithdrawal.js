@@ -15,7 +15,10 @@ const handler = async (event) => {
   const provider = new DefenderRelayProvider(event);
   const signer = new DefenderRelaySigner(event, provider, { speed: "fastest" });
 
-  await undelegateValidator({ signer });
+  // The vault buffer in basis points, so 100 = 1%
+  const bufferPct = 50;
+
+  await undelegateValidator({ signer, bufferPct });
 };
 
 module.exports = { handler };
