@@ -2063,7 +2063,11 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
     });
 
     it("Should be allowed 2 deposits to an exiting validator ", async () => {
-      const { compoundingStakingSSVStrategy, mockBeaconProof } = fixture;
+      const {
+        compoundingStakingSSVStrategy,
+        compoundingStakingStrategyView,
+        mockBeaconProof,
+      } = fixture;
       const testValidator = testValidators[3];
 
       // Third validator is later withdrawn later
@@ -2141,14 +2145,19 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
         pendingDepositAmount: 0,
         wethAmount: 0,
         ethAmount: 0,
-        balancesProof: testBalancesProofs[1],
-        activeValidators: [2],
+        balancesProof: testBalancesProofs[5],
+        activeValidators: [3],
       });
 
       // verify that the deposits have been removed as the validator has simulated
       // to been fully exited
-      await expect(depositData1.status).to.equal(2); // VERIFIED
-      await expect(depositData2.status).to.equal(2); // VERIFIED
+      const deposits =
+        await compoundingStakingStrategyView.getPendingDeposits();
+      expect(deposits.length).to.equal(0);
+
+      // Deposit status remains pending even though the validator has exited
+      await expect(depositData1.status).to.equal(1); // PENDING
+      await expect(depositData2.status).to.equal(1); // PENDING
     });
   });
 
