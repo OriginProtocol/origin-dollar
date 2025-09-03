@@ -900,7 +900,7 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
       );
 
       await expect(verifiedDepositTx).to.be.revertedWith(
-        "Deposit processed after last balance snapshot"
+        "Deposit after balance snapshot"
       );
     });
 

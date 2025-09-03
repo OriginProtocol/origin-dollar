@@ -716,7 +716,7 @@ abstract contract CompoundingValidatorManager is Governable {
         require(
             (_calcNextBlockTimestamp(depositProcessedSlot) <= snapTimestamp) ||
                 snapTimestamp == 0,
-            "Deposit processed after last balance snapshot"
+            "Deposit after balance snapshot"
         );
 
         // Get the parent beacon block root of the next block which is the block root of the deposit verification slot.
