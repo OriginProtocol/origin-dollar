@@ -2685,7 +2685,7 @@ async function beaconChainFixture() {
   if (isFork) {
     fixture.beaconProofs = await resolveContract("BeaconProofs");
   } else {
-    fixture.beaconProofs = await resolveContract("MockBeaconProofs");
+    fixture.beaconProofs = await resolveContract("EnhancedBeaconProofs");
   }
 
   return fixture;

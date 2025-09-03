@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import { BeaconRoots } from "../beacon/BeaconRoots.sol";
+import { BeaconRoots } from "../../beacon/BeaconRoots.sol";
 
 contract MockBeaconRoots {
     // Mapping to simulate the ring buffer: timestamp => beacon block root
