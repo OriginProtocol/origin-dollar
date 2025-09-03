@@ -1728,10 +1728,20 @@ subtask("sonicUndelegate", "Remove liquidity from a Sonic validator")
     undefined,
     types.float
   )
+  .addOptionalParam(
+    "buffer",
+    "Percentage of total assets to keep as buffer in basis points. 100 = 1%",
+    50,
+    types.float
+  )
   .setAction(async (taskArgs) => {
     const signer = await getSigner();
 
-    await undelegateValidator({ ...taskArgs, signer });
+    await undelegateValidator({
+      ...taskArgs,
+      bufferPct: taskArgs.buffer,
+      signer,
+    });
   });
 task("sonicUndelegate").setAction(async (_, __, runSuper) => {
   return runSuper();

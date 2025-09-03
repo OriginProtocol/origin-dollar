@@ -35,5 +35,6 @@
   "035_claimbribes_module_old_guardian": 1751363893,
   "036_oethb_upgrade_EIP7702": 1751453912,
   "037_deploy_harvester": 1752034150,
-  "038_vault_upgrade": 1752579215
+  "038_vault_upgrade": 1752579215,
+  "039_pool_booster_factory": 1756293140
 }
