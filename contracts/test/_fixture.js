@@ -2065,6 +2065,22 @@ async function compoundingStakingSSVStrategyFixture() {
   return fixture;
 }
 
+async function compoundingStakingSSVStrategyMerkleProofsMockedFixture() {
+  const fixture = await compoundingStakingSSVStrategyFixture();
+
+  const beaconProofsAddress = await fixture.compoundingStakingSSVStrategy.BEACON_PROOFS()
+
+  const mockBeaconProof = await ethers.getContract("MockBeaconProofs");
+
+  // replace beacon proofs library with the mocked one
+  await replaceContractAt(
+    beaconProofsAddress,
+    mockBeaconProof
+  );
+
+  return fixture;
+}
+
 /**
  * Generalized strategy fixture that works only in forked environment
  *
@@ -2865,6 +2881,7 @@ module.exports = {
   balancerREthFixture,
   nativeStakingSSVStrategyFixture,
   compoundingStakingSSVStrategyFixture,
+  compoundingStakingSSVStrategyMerkleProofsMockedFixture,
   oethMorphoAaveFixture,
   oeth1InchSwapperFixture,
   oethCollateralSwapFixture,

@@ -31,9 +31,11 @@ const log = require("../../utils/logger")(
 const {
   createFixtureLoader,
   compoundingStakingSSVStrategyFixture,
+  compoundingStakingSSVStrategyMerkleProofsMockedFixture,
 } = require("./../_fixture");
 
 const loadFixture = createFixtureLoader(compoundingStakingSSVStrategyFixture);
+const loadFixtureMockedProofs = createFixtureLoader(compoundingStakingSSVStrategyMerkleProofsMockedFixture);
 
 const emptyCluster = [
   0, // validatorCount
@@ -45,6 +47,8 @@ const emptyCluster = [
 
 const ETHInGwei = BigNumber.from("1000000000"); // 1 ETH in Gwei
 const GweiInWei = BigNumber.from("1000000000"); // 1 Gwei in Wei
+
+const LESS_THAN_FAR_FUTURE_EPOCH = "18446744073708551615";
 
 describe("Unit test: Compounding SSV Staking Strategy", function () {
   this.timeout(0);
@@ -316,6 +320,22 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
     if (state === "VERIFIED_DEPOSIT") return verifiedDepositTx;
 
     throw Error(`Invalid state: ${state}`);
+  };
+
+  // call right after depositing to the strategy
+  const getLastDeposit = async (compoundingStakingSSVStrategy) => {
+    const lastBlock = await ethers.provider.getBlock("latest");
+    // roughly the deposit slot
+    const depositSlot = calcSlot(lastBlock.timestamp);
+
+    let depositID = await compoundingStakingSSVStrategy.nextDepositID();
+    // - 1 to get the previously staked deposit id
+    depositID = depositID.sub(BigNumber.from("1"));
+
+    return {
+      depositSlot,
+      depositID
+    }
   };
 
   const snapBalances = async (beaconBlockRoot) => {
@@ -1963,6 +1983,76 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
           activeValidators: testValidatorProofs,
         });
       });
+    });
+  });
+  
+  describe("Compounding SSV Staking Strategy Mocked proofs", function () {
+    beforeEach(async () => {
+      fixture = await loadFixtureMockedProofs();
+      const { compoundingStakingSSVStrategy, josh, weth } = fixture;
+      sGov = await impersonateAndFund(
+        await compoundingStakingSSVStrategy.governor()
+      );
+      sVault = await impersonateAndFund(
+        await compoundingStakingSSVStrategy.vaultAddress()
+      );
+      await weth
+        .connect(josh)
+        .approve(compoundingStakingSSVStrategy.address, MAX_UINT256);
+    });
+
+    it("Should be allowed 2 deposits to an exiting validator ", async () => {
+      const { compoundingStakingSSVStrategy } = fixture;
+      const testValidator = testValidators[3];
+
+      // Third validator is later withdrawn later
+      await processValidator(testValidators[3], "VERIFIED_DEPOSIT");
+
+      await topupValidator(
+        testValidator,
+        testValidator.depositProof.depositAmount - 1,
+        "STAKED"
+      );
+      const { depositSlot, depositID } = await getLastDeposit(compoundingStakingSSVStrategy)
+
+      await topupValidator(
+        testValidator,
+        testValidator.depositProof.depositAmount - 1,
+        "STAKED"
+      );
+      const { depositSlot: depositSlot1, depositID:depositID1 } = await getLastDeposit(compoundingStakingSSVStrategy)
+
+      // simulate validator slashed from the beacon chain
+      testValidator.depositProof.strategyValidator.withdrawableEpoch = LESS_THAN_FAR_FUTURE_EPOCH;
+
+      await compoundingStakingSSVStrategy.verifyDeposit(
+        depositID,
+        depositSlot + 1000n,
+        testValidator.depositProof.firstPendingDeposit,
+        testValidator.depositProof.strategyValidator
+      );
+
+      await compoundingStakingSSVStrategy.verifyDeposit(
+        depositID1,
+        depositSlot1 + 1000n,
+        testValidator.depositProof.firstPendingDeposit,
+        testValidator.depositProof.strategyValidator
+      );
+
+      const depositData1 = await compoundingStakingSSVStrategy.deposits(depositID);
+      const depositData2 = await compoundingStakingSSVStrategy.deposits(depositID1);
+
+      await expect(depositData1.withdrawableEpoch).to.equal(LESS_THAN_FAR_FUTURE_EPOCH);
+      await expect(depositData2.withdrawableEpoch).to.equal(LESS_THAN_FAR_FUTURE_EPOCH);
+
+      expect(
+        (
+          await compoundingStakingSSVStrategy.validator(
+            testValidator.publicKeyHash
+          )
+        ).state
+      ).to.equal(4); // EXITING
+
     });
   });
 

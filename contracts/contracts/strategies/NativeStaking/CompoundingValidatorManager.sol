@@ -699,8 +699,9 @@ abstract contract CompoundingValidatorManager is Governable {
         ValidatorData memory strategyValidator = validator[deposit.pubKeyHash];
         require(deposit.status == DepositStatus.PENDING, "Deposit not pending");
         require(
-            strategyValidator.state == ValidatorState.VERIFIED,
-            "Validator not verified"
+            strategyValidator.state == ValidatorState.VERIFIED ||
+            strategyValidator.state == ValidatorState.EXITING,
+            "Validator not verified/exiting"
         );
         // The verification slot must be after the deposit's slot.
         // This is needed for when the deposit queue is empty.
@@ -740,7 +741,7 @@ abstract contract CompoundingValidatorManager is Governable {
             );
 
             validator[deposit.pubKeyHash].state = ValidatorState.EXITING;
-
+            deposits[depositID] = deposit;
             // Leave the deposit status as PENDING
             return;
         }
