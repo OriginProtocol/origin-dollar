@@ -1553,7 +1553,7 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
         expect(balancesAfter.stratBalance).to.equal(depositAmountWei);
       });
 
-      it("Should not verify a validator with incorrect withdrawal credentials", async () => {
+      it("Should not verify a validator with incorrect withdrawal credential validator type", async () => {
         const originalValidatorProof = testValidators[0].validatorProof.bytes;
         // replace the 0x02 validator type credentials to an invalid 0x01 one
         const wrongValidatorTypeProof =
@@ -1562,7 +1562,21 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
 
         await expect(
           processValidator(testValidators[0], "VERIFIED_DEPOSIT")
-        ).to.be.revertedWith("Invalid validator type");
+        ).to.be.revertedWith("Invalid withdrawal cred");
+
+        testValidators[0].validatorProof.bytes = originalValidatorProof;
+      });
+
+      it("Should not verify a validator with incorrect withdrawal zero padding", async () => {
+        const originalValidatorProof = testValidators[0].validatorProof.bytes;
+        // replace the 0x02 validator type credentials to an invalid 0x01 one
+        const wrongValidatorTypeProof =
+          "0x020001" + originalValidatorProof.substring(8);
+        testValidators[0].validatorProof.bytes = wrongValidatorTypeProof;
+
+        await expect(
+          processValidator(testValidators[0], "VERIFIED_DEPOSIT")
+        ).to.be.revertedWith("Invalid withdrawal cred");
 
         testValidators[0].validatorProof.bytes = originalValidatorProof;
       });

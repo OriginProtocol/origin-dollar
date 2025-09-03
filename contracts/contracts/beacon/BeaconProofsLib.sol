@@ -111,19 +111,25 @@ library BeaconProofsLib {
         );
 
         // Get the withdrawal address from the first witness in the pubkey merkle proof.
-        address withdrawalAddressFromProof;
+        bytes32 withdrawalCredentialsFromProofHash;
         // solhint-disable-next-line no-inline-assembly
         assembly {
             // The first 32 bytes of the proof is the withdrawal credential so load it into memory.
             calldatacopy(0, proof.offset, 32)
-            // Cast the 32 bytes in memory to an address which is the last 20 bytes.
-            withdrawalAddressFromProof := mload(0)
+            // Compute keccak256 hash directly on the scratch space
+            withdrawalCredentialsFromProofHash := keccak256(0, 32)
         }
+
+        bytes32 withdrawalCredentialsHash = keccak256(abi.encodePacked(
+            bytes1(0x02),
+            bytes11(0),
+            address(withdrawalAddress)
+        ));
+
         require(
-            withdrawalAddressFromProof == withdrawalAddress,
-            "Invalid withdrawal address"
+            withdrawalCredentialsFromProofHash == withdrawalCredentialsHash,
+            "Invalid withdrawal cred"
         );
-        require(proof[0] == 0x02, "Invalid validator type");
 
         require(
             // 53 * 32 bytes = 1696 bytes
