@@ -705,6 +705,19 @@ abstract contract CompoundingValidatorManager is Governable {
         // The verification slot must be after the deposit's slot.
         // This is needed for when the deposit queue is empty.
         require(deposit.slot < depositProcessedSlot, "Slot not after deposit");
+        uint64 snapTimestamp = snappedBalance.timestamp;
+
+        // This check prevents an accounting error that can happen if:
+        //  - snapBalances are snapped at the time of T
+        //  - deposit is processed on the beacon chain after time T and before verifyBalances()
+        //  - verifyDeposit is called before verifyBalances which removes a deposit from depositList
+        //    and deposit balance from totalDepositsWei
+        //  - verifyBalances is called under-reporting the strategy's balance
+        require(
+            (_calcNextBlockTimestamp(depositProcessedSlot) <= snapTimestamp) ||
+                snapTimestamp == 0,
+            "Deposit processed after last balance snapshot"
+        );
 
         // Get the parent beacon block root of the next block which is the block root of the deposit verification slot.
         // This will revert if the slot after the verification slot was missed.
