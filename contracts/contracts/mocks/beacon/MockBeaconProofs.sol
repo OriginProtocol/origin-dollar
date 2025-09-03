@@ -18,10 +18,9 @@ contract MockBeaconProofs is IBeaconProofs {
     // mapping of validator indexes to validator balances
     mapping(uint40 => uint256) public validatorBalances;
 
-    function setValidatorBalance(
-        uint40 index,
-        uint256 validatorBalance
-    ) external {
+    function setValidatorBalance(uint40 index, uint256 validatorBalance)
+        external
+    {
         // set special max value instead of 0
         if (validatorBalance == 0) {
             validatorBalances[index] = type(uint256).max;
@@ -114,7 +113,7 @@ contract MockBeaconProofs is IBeaconProofs {
             return 0;
         }
         // validator balance not set by the test cases
-        else if(validatorBalance == 0) {
+        else if (validatorBalance == 0) {
             return DEFAULT_VALIDATOR_BALANCE;
         }
 
@@ -142,7 +141,10 @@ contract MockBeaconProofs is IBeaconProofs {
         bytes32 pubKeyHash,
         bytes calldata firstPendingDepositPubKeyProof
     ) external view returns (bool isEmptyDepositQueue) {
-        if (firstPendingDepositPubKeyProof.length == FIRST_PENDING_DEPOSIT_PROOF_LENGTH) {
+        if (
+            firstPendingDepositPubKeyProof.length ==
+            FIRST_PENDING_DEPOSIT_PROOF_LENGTH
+        ) {
             isEmptyDepositQueue = true;
         }
     }
@@ -165,7 +167,10 @@ contract MockBeaconProofs is IBeaconProofs {
         uint64 slot,
         bytes calldata firstPendingDepositSlotProof
     ) external view returns (bool isEmptyDepositQueue) {
-        if (firstPendingDepositSlotProof.length == FIRST_PENDING_DEPOSIT_PROOF_LENGTH) {
+        if (
+            firstPendingDepositSlotProof.length ==
+            FIRST_PENDING_DEPOSIT_PROOF_LENGTH
+        ) {
             isEmptyDepositQueue = true;
         }
     }

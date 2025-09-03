@@ -2068,14 +2068,17 @@ async function compoundingStakingSSVStrategyFixture() {
 async function compoundingStakingSSVStrategyMerkleProofsMockedFixture() {
   const fixture = await compoundingStakingSSVStrategyFixture();
 
-  const beaconProofsAddress = await fixture.compoundingStakingSSVStrategy.BEACON_PROOFS()
+  const beaconProofsAddress =
+    await fixture.compoundingStakingSSVStrategy.BEACON_PROOFS();
 
   const mockBeaconProof = await ethers.getContract("MockBeaconProofs");
 
   // replace beacon proofs library with the mocked one
-  await replaceContractAt(
-    beaconProofsAddress,
-    mockBeaconProof
+  await replaceContractAt(beaconProofsAddress, mockBeaconProof);
+
+  fixture.mockBeaconProof = await ethers.getContractAt(
+    "MockBeaconProofs",
+    beaconProofsAddress
   );
 
   return fixture;

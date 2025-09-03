@@ -8,7 +8,7 @@ const { shouldBehaveLikeGovernable } = require("../behaviour/governable");
 const { shouldBehaveLikeStrategy } = require("../behaviour/strategy");
 const { MAX_UINT256, ZERO_BYTES32 } = require("../../utils/constants");
 const { impersonateAndFund } = require("../../utils/signers");
-const { ethUnits } = require("../helpers");
+const { ethUnits, advanceTime } = require("../helpers");
 const { setERC20TokenBalance } = require("../_fund");
 const { zero } = require("../../utils/addresses");
 const { calcDepositRoot } = require("../../tasks/beaconTesting");
@@ -16,6 +16,7 @@ const { logDeposits } = require("../../tasks/validatorCompound");
 const {
   hashPubKey,
   calcSlot,
+  calcEpoch,
   calcBlockTimestamp,
 } = require("../../utils/beacon");
 const { randomBytes } = require("crypto");
@@ -35,7 +36,9 @@ const {
 } = require("./../_fixture");
 
 const loadFixture = createFixtureLoader(compoundingStakingSSVStrategyFixture);
-const loadFixtureMockedProofs = createFixtureLoader(compoundingStakingSSVStrategyMerkleProofsMockedFixture);
+const loadFixtureMockedProofs = createFixtureLoader(
+  compoundingStakingSSVStrategyMerkleProofsMockedFixture
+);
 
 const emptyCluster = [
   0, // validatorCount
@@ -47,8 +50,6 @@ const emptyCluster = [
 
 const ETHInGwei = BigNumber.from("1000000000"); // 1 ETH in Gwei
 const GweiInWei = BigNumber.from("1000000000"); // 1 Gwei in Wei
-
-const LESS_THAN_FAR_FUTURE_EPOCH = "18446744073708551615";
 
 describe("Unit test: Compounding SSV Staking Strategy", function () {
   this.timeout(0);
@@ -334,8 +335,8 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
 
     return {
       depositSlot,
-      depositID
-    }
+      depositID,
+    };
   };
 
   const snapBalances = async (beaconBlockRoot) => {
@@ -1985,7 +1986,7 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
       });
     });
   });
-  
+
   describe("Compounding SSV Staking Strategy Mocked proofs", function () {
     beforeEach(async () => {
       fixture = await loadFixtureMockedProofs();
@@ -2002,7 +2003,7 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
     });
 
     it("Should be allowed 2 deposits to an exiting validator ", async () => {
-      const { compoundingStakingSSVStrategy } = fixture;
+      const { compoundingStakingSSVStrategy, mockBeaconProof } = fixture;
       const testValidator = testValidators[3];
 
       // Third validator is later withdrawn later
@@ -2013,17 +2014,29 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
         testValidator.depositProof.depositAmount - 1,
         "STAKED"
       );
-      const { depositSlot, depositID } = await getLastDeposit(compoundingStakingSSVStrategy)
+      const { depositSlot, depositID } = await getLastDeposit(
+        compoundingStakingSSVStrategy
+      );
 
       await topupValidator(
         testValidator,
         testValidator.depositProof.depositAmount - 1,
         "STAKED"
       );
-      const { depositSlot: depositSlot1, depositID:depositID1 } = await getLastDeposit(compoundingStakingSSVStrategy)
+      const { depositSlot: depositSlot1, depositID: depositID1 } =
+        await getLastDeposit(compoundingStakingSSVStrategy);
+
+      const lastBlock = await ethers.provider.getBlock("latest");
+      const epochTime = 12 * 32;
+
+      // 2 epochs from now
+      const nextNextEpoch = calcEpoch(
+        lastBlock.timestamp + epochTime * 2
+      ).toString();
 
       // simulate validator slashed from the beacon chain
-      testValidator.depositProof.strategyValidator.withdrawableEpoch = LESS_THAN_FAR_FUTURE_EPOCH;
+      testValidator.depositProof.strategyValidator.withdrawableEpoch =
+        nextNextEpoch;
 
       await compoundingStakingSSVStrategy.verifyDeposit(
         depositID,
@@ -2039,11 +2052,17 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
         testValidator.depositProof.strategyValidator
       );
 
-      const depositData1 = await compoundingStakingSSVStrategy.deposits(depositID);
-      const depositData2 = await compoundingStakingSSVStrategy.deposits(depositID1);
+      const depositData1 = await compoundingStakingSSVStrategy.deposits(
+        depositID
+      );
+      const depositData2 = await compoundingStakingSSVStrategy.deposits(
+        depositID1
+      );
 
-      await expect(depositData1.withdrawableEpoch).to.equal(LESS_THAN_FAR_FUTURE_EPOCH);
-      await expect(depositData2.withdrawableEpoch).to.equal(LESS_THAN_FAR_FUTURE_EPOCH);
+      await expect(depositData1.withdrawableEpoch).to.equal(nextNextEpoch);
+      await expect(depositData2.withdrawableEpoch).to.equal(nextNextEpoch);
+      await expect(depositData1.status).to.equal(1); // PENDING
+      await expect(depositData2.status).to.equal(1); // PENDING
 
       expect(
         (
@@ -2053,6 +2072,18 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
         ).state
       ).to.equal(4); // EXITING
 
+      await advanceTime(epochTime * 4);
+
+      // simulate validator has exited and been swept by the beacon chain sweeping process
+      await mockBeaconProof.setValidatorBalance(testValidator.index, 0);
+
+      await assertBalances({
+        pendingDepositAmount: 0,
+        wethAmount: 0,
+        ethAmount: 0,
+        balancesProof: testBalancesProofs[1],
+        activeValidators: [2],
+      });
     });
   });
 

@@ -700,7 +700,7 @@ abstract contract CompoundingValidatorManager is Governable {
         require(deposit.status == DepositStatus.PENDING, "Deposit not pending");
         require(
             strategyValidator.state == ValidatorState.VERIFIED ||
-            strategyValidator.state == ValidatorState.EXITING,
+                strategyValidator.state == ValidatorState.EXITING,
             "Validator not verified/exiting"
         );
         // The verification slot must be after the deposit's slot.

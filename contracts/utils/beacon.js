@@ -324,6 +324,11 @@ const calcSlot = (blockTimestamp, networkName = "mainnet") => {
   return (BigInt(blockTimestamp) - BigInt(genesisTime)) / 12n;
 };
 
+const calcEpoch = (blockTimestamp, networkName = "mainnet") => {
+  const slotsPerEpoch = 32n;
+  return calcSlot(blockTimestamp, networkName) / slotsPerEpoch;
+};
+
 // verifies the deposit signature so we can confirm P2P has not generated a faulty one
 // and a the deposit message root. The latter should also be verified by the Beacon chain
 // deposit contract
@@ -407,6 +412,7 @@ module.exports = {
   getBeaconBlockRoot,
   calcBlockTimestamp,
   calcSlot,
+  calcEpoch,
   getValidator,
   getValidators,
   getValidatorBalance,
