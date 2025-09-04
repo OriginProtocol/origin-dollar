@@ -2184,6 +2184,8 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
       // Third validator is later withdrawn later
       const testValidator = testValidators[3];
 
+      const nextDepositID = await compoundingStakingSSVStrategy.nextDepositID();
+
       await processValidator(testValidator, "STAKED");
 
       const lastVerifiedEthBalanceBefore =
@@ -2204,21 +2206,70 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
         .to.emit(compoundingStakingSSVStrategy, "ValidatorInvalid")
         .withArgs(testValidator.publicKeyHash);
 
+      // Validator is invalid
       const { state: validatorStateAfter } =
         await compoundingStakingSSVStrategy.validator(
           testValidator.publicKeyHash
         );
       expect(validatorStateAfter).to.equal(7); // INVALID
 
+      // There are no pending deposits
       const pendingDeposits =
         await compoundingStakingStrategyView.getPendingDeposits();
       expect(pendingDeposits).to.have.lengthOf(0);
 
+      // The deposit status is VERIFIED
+      const depositData = await compoundingStakingSSVStrategy.deposits(
+        nextDepositID
+      );
+      expect(depositData.status).to.equal(2); // VERIFIED
+
+      // The last verified ETH balance is reduced by the 1 ETH deposit
       expect(
         await compoundingStakingSSVStrategy.lastVerifiedEthBalance()
       ).to.equal(lastVerifiedEthBalanceBefore.sub(parseEther("1")));
 
+      // The first deposit flag is still set
       expect(await compoundingStakingSSVStrategy.firstDeposit()).to.equal(true);
+    });
+
+    it("Should fail to verify front-run deposit", async () => {
+      const { beaconRoots, compoundingStakingSSVStrategy } = fixture;
+
+      // Third validator is later withdrawn later
+      const testValidator = testValidators[3];
+
+      const nextDepositID = await compoundingStakingSSVStrategy.nextDepositID();
+
+      await processValidator(testValidator, "STAKED");
+
+      expect(await compoundingStakingSSVStrategy.firstDeposit()).to.equal(true);
+
+      await compoundingStakingSSVStrategy.verifyValidator(
+        testValidator.validatorProof.nextBlockTimestamp,
+        testValidator.index,
+        testValidator.publicKeyHash,
+        Wallet.createRandom().address,
+        "0x" // empty proof as it is not verified in the mock
+      );
+
+      const currentBlock = await ethers.provider.getBlock();
+      const depositSlot = calcSlot(currentBlock.timestamp);
+      // Set parent beacon root for the block after the verification slots
+      const depositProcessedSlot = depositSlot + 10000n;
+
+      await beaconRoots["setBeaconRoot(uint256,bytes32)"](
+        calcBlockTimestamp(depositProcessedSlot) + 12n,
+        testValidator.depositProof.processedBeaconBlockRoot
+      );
+
+      const tx = compoundingStakingSSVStrategy.verifyDeposit(
+        nextDepositID,
+        depositProcessedSlot,
+        testValidator.depositProof.firstPendingDeposit,
+        testValidator.depositProof.strategyValidator
+      );
+      await expect(tx).to.be.revertedWith("Deposit not pending");
     });
 
     it("Governor should reset first deposit after front-run deposit", async () => {
