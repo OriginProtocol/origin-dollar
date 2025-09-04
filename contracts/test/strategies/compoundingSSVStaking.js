@@ -24,7 +24,6 @@ const {
   testValidators,
   testBalancesProofs,
 } = require("./compoundingSSVStaking-validatorsData.json");
-
 const log = require("../../utils/logger")(
   "test:unit:strategy:compoundingSSVStaking"
 );
@@ -59,6 +58,7 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
   let sGov;
   let sVault;
   let fixture;
+
   beforeEach(async () => {
     fixture = await loadFixture();
     const { compoundingStakingSSVStrategy, josh, weth } = fixture;
@@ -1915,8 +1915,9 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
         );
       });
       describe("when balances have been snapped", () => {
-        const balancesProof = testBalancesProofs[3];
+        let balancesProof
         beforeEach(async () => {
+          balancesProof = testBalancesProofs[3];
           await snapBalances(balancesProof.snapBalancesBlockRoot);
         });
         it("Fail to verify balances with not enough validator leaves", async () => {
@@ -2129,10 +2130,11 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
         compoundingStakingStrategyView,
         mockBeaconProof,
       } = fixture;
-      const testValidator = testValidators[3];
+      // when modifying a json object make a copy  
+      const testValidator = JSON.parse(JSON.stringify(testValidators[3]));
 
       // Third validator is later withdrawn later
-      await processValidator(testValidators[3], "VERIFIED_DEPOSIT");
+      await processValidator(testValidator, "VERIFIED_DEPOSIT");
 
       await topUpValidator(
         testValidator,
