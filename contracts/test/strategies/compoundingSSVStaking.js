@@ -2346,8 +2346,8 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
     describe("When a verified validator is exiting after being slashed And a new deposit is made to the validator", () => {
       let nextDepositID;
       const depositAmount = 3;
-      // Third validator is later withdrawn later
-      const testValidator = testValidators[3];
+      // Validator is later withdrawn later
+      const testValidator = testValidators[11];
       let depositProcessedSlot, withdrawableEpoch, withdrawableTimestamp;
       beforeEach(async () => {
         const { compoundingStakingSSVStrategy } = fixture;
