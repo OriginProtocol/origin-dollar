@@ -745,7 +745,8 @@ abstract contract CompoundingValidatorManager is Governable {
         // If the validator is exiting because it has been slashed
         if (strategyValidatorData.withdrawableEpoch != FAR_FUTURE_EPOCH) {
             // Store the exit epoch in the deposit data
-            deposit.withdrawableEpoch = strategyValidatorData.withdrawableEpoch;
+            deposits[depositID].withdrawableEpoch = strategyValidatorData
+                .withdrawableEpoch;
 
             emit DepositToValidatorExiting(
                 depositID,
@@ -754,7 +755,7 @@ abstract contract CompoundingValidatorManager is Governable {
             );
 
             validator[deposit.pubKeyHash].state = ValidatorState.EXITING;
-            deposits[depositID] = deposit;
+
             // Leave the deposit status as PENDING
             return;
         }

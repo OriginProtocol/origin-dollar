@@ -897,10 +897,7 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
     });
 
     it("Should revert when verifying deposit between snapBalances and verifyBalances", async () => {
-      const {
-        beaconRoots,
-        compoundingStakingSSVStrategy,
-      } = fixture;
+      const { beaconRoots, compoundingStakingSSVStrategy } = fixture;
       const testValidator = testValidators[3];
 
       // Third validator is later withdrawn later
@@ -2281,7 +2278,7 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
     });
 
     it("Should fail to verify front-run deposit", async () => {
-      const { beaconRoots, compoundingStakingSSVStrategy } = fixture;
+      const { compoundingStakingSSVStrategy } = fixture;
 
       // Third validator is later withdrawn later
       const testValidator = testValidators[3];
@@ -2303,12 +2300,7 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
       const currentBlock = await ethers.provider.getBlock();
       const depositSlot = calcSlot(currentBlock.timestamp);
       // Set parent beacon root for the block after the verification slots
-      const depositProcessedSlot = depositSlot + 10000n;
-
-      await beaconRoots["setBeaconRoot(uint256,bytes32)"](
-        calcBlockTimestamp(depositProcessedSlot) + 12n,
-        testValidator.depositProof.processedBeaconBlockRoot
-      );
+      const depositProcessedSlot = depositSlot + 100n;
 
       const tx = compoundingStakingSSVStrategy.verifyDeposit(
         nextDepositID,
@@ -2349,6 +2341,65 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
       expect(await compoundingStakingSSVStrategy.firstDeposit()).to.equal(
         false
       );
+    });
+
+    it("Should verify deposit to an exiting validator from a slashing", async () => {
+      const { compoundingStakingSSVStrategy } = fixture;
+
+      // Third validator is later withdrawn later
+      const testValidator = testValidators[3];
+
+      await processValidator(testValidator, "VERIFIED_DEPOSIT");
+      await topUpValidator(
+        testValidator,
+        testValidator.depositProof.depositAmount - 1,
+        "VERIFIED_DEPOSIT"
+      );
+
+      const nextDepositID = await compoundingStakingSSVStrategy.nextDepositID();
+
+      const depositAmount = 3;
+      await topUpValidator(testValidator, depositAmount, "STAKED");
+
+      const currentBlock = await ethers.provider.getBlock();
+      const depositSlot = calcSlot(currentBlock.timestamp);
+      // Set parent beacon root for the block after the verification slots
+      const depositProcessedSlot = Number(depositSlot + 100n);
+
+      // Simulate the validator has been slashed and is exiting
+      const withdrawableEpoch = calcEpoch(currentBlock.timestamp) + 4n;
+
+      const tx = await compoundingStakingSSVStrategy.verifyDeposit(
+        nextDepositID,
+        depositProcessedSlot,
+        testValidator.depositProof.firstPendingDeposit,
+        {
+          ...testValidator.depositProof.strategyValidator,
+          withdrawableEpoch,
+        }
+      );
+
+      await expect(tx)
+        .to.emit(compoundingStakingSSVStrategy, "DepositToValidatorExiting")
+        .withArgs(
+          nextDepositID,
+          parseEther(depositAmount.toString()),
+          withdrawableEpoch
+        );
+
+      // The deposit is still PENDING and the withdrawable epoch is set
+      const depositAfter = await compoundingStakingSSVStrategy.deposits(
+        nextDepositID
+      );
+      expect(depositAfter.status).to.equal(1); // PENDING
+      expect(depositAfter.withdrawableEpoch).to.equal(withdrawableEpoch);
+
+      // The validator is in EXITING state
+      const { state: validatorStateAfter } =
+        await compoundingStakingSSVStrategy.validator(
+          testValidator.publicKeyHash
+        );
+      expect(validatorStateAfter).to.equal(4); // EXITING
     });
   });
 
