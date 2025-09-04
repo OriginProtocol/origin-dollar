@@ -896,6 +896,53 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
       await expect(tx).to.be.revertedWith("Pending deposit");
     });
 
+    it("Should revert when verifying deposit between snapBalances and verifyBalances", async () => {
+      const {
+        beaconRoots,
+        compoundingStakingSSVStrategy,
+      } = fixture;
+      const testValidator = testValidators[3];
+
+      // Third validator is later withdrawn later
+      const verifyTx = await processValidator(
+        testValidator,
+        "VERIFIED_VALIDATOR"
+      );
+
+      const verifyReceipt = await verifyTx.wait();
+      const verifyBlock = await ethers.provider.getBlock(
+        verifyReceipt.blockNumber
+      );
+      // roughly the deposit slot
+      const depositSlot = calcSlot(verifyBlock.timestamp);
+
+      let depositID = await compoundingStakingSSVStrategy.nextDepositID();
+      // - 1 to get the previously staked deposit id
+      depositID = depositID.sub(BigNumber.from("1"));
+
+      // Snap balances before the deposit is processed
+      await compoundingStakingSSVStrategy.snapBalances();
+
+      // Set parent beacon root for the block after the verification slots
+      const depositProcessedSlot = depositSlot + 10000n;
+
+      await beaconRoots["setBeaconRoot(uint256,bytes32)"](
+        calcBlockTimestamp(depositProcessedSlot) + 12n,
+        testValidator.depositProof.processedBeaconBlockRoot
+      );
+
+      const verifiedDepositTx = compoundingStakingSSVStrategy.verifyDeposit(
+        depositID,
+        depositProcessedSlot,
+        testValidator.depositProof.firstPendingDeposit,
+        testValidator.depositProof.strategyValidator
+      );
+
+      await expect(verifiedDepositTx).to.be.revertedWith(
+        "Deposit after balance snapshot"
+      );
+    });
+
     it("Should partial withdraw from a validator with a pending deposit", async () => {
       const { validatorRegistrator, compoundingStakingSSVStrategy } = fixture;
 
