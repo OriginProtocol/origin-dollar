@@ -698,9 +698,19 @@ abstract contract CompoundingValidatorManager is Governable {
         DepositData memory deposit = deposits[depositID];
         ValidatorData memory strategyValidator = validator[deposit.pubKeyHash];
         require(deposit.status == DepositStatus.PENDING, "Deposit not pending");
+
+        // We should allow the verification of deposits for validators that have been marked as exiting
+        // to cover this situation:
+        //  - there are have 2 pending deposits
+        //  - beacon chain has slashed the validator
+        //  - when verifyDeposit is called for the first deposit it sets the `withdrawableEpoch` for that
+        //    deposit and mark validator as exiting
+        //  - the verifyDeposit also needs to be called for the second deposit so it can have the 
+        //    `withdrawableEpoch` set. 
         require(
-            strategyValidator.state == ValidatorState.VERIFIED,
-            "Validator not verified"
+            strategyValidator.state == ValidatorState.VERIFIED ||
+                strategyValidator.state == ValidatorState.EXITING,
+            "Validator not verified/exiting"
         );
         // The verification slot must be after the deposit's slot.
         // This is needed for when the deposit queue is empty.
@@ -744,7 +754,8 @@ abstract contract CompoundingValidatorManager is Governable {
         // If the validator is exiting because it has been slashed
         if (strategyValidatorData.withdrawableEpoch != FAR_FUTURE_EPOCH) {
             // Store the exit epoch in the deposit data
-            deposit.withdrawableEpoch = strategyValidatorData.withdrawableEpoch;
+            deposits[depositID].withdrawableEpoch = strategyValidatorData
+                .withdrawableEpoch;
 
             emit DepositToValidatorExiting(
                 depositID,

@@ -120,11 +120,13 @@ library BeaconProofsLib {
             withdrawalCredentialsFromProofHash := keccak256(0, 32)
         }
 
-        bytes32 withdrawalCredentialsHash = keccak256(abi.encodePacked(
-            bytes1(0x02),
-            bytes11(0),
-            address(withdrawalAddress)
-        ));
+        bytes32 withdrawalCredentialsHash = keccak256(
+            abi.encodePacked(
+                bytes1(0x02),
+                bytes11(0),
+                address(withdrawalAddress)
+            )
+        );
 
         require(
             withdrawalCredentialsFromProofHash == withdrawalCredentialsHash,
