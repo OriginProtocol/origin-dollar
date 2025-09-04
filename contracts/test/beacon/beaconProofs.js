@@ -340,7 +340,7 @@ describe("Beacon chain proofs", async () => {
         validatorIndex,
         withdrawalAddress
       );
-      await expect(tx).to.be.revertedWith("Invalid withdrawal address");
+      await expect(tx).to.be.revertedWith("Invalid withdrawal cred");
     });
     it("Fail to verify with type 0x01 validator", async () => {
       const { beaconProofs } = fixture;
@@ -356,8 +356,31 @@ describe("Beacon chain proofs", async () => {
         validatorIndex,
         withdrawalAddress
       );
-      await expect(tx).to.be.revertedWith("Invalid validator type");
+      await expect(tx).to.be.revertedWith("Invalid withdrawal cred");
     });
+    const testPrefixes = [
+      "0x021000000000000000000000",
+      "0x020100000000000000000000",
+      "0x020000000001000000000000",
+      "0x020000000000000000000010",
+      "0x020000000000000000000001",
+    ];
+    for (const prefix of testPrefixes) {
+      it(`Fail to verify with withdrawal credential prefix ${prefix}`, async () => {
+        const { beaconProofs } = fixture;
+
+        // The first 32 bytes is the withdrawal credential
+        const invalidProof = prefix + proof.slice(26);
+        const tx = beaconProofs.verifyValidator(
+          beaconRoot,
+          publicKeyLeaf,
+          invalidProof,
+          validatorIndex,
+          withdrawalAddress
+        );
+        await expect(tx).to.be.revertedWith("Invalid withdrawal cred");
+      });
+    }
   });
   describe("Validator withdrawable epoch to beacon block root proof", () => {
     describe("when validator is not exiting", () => {
