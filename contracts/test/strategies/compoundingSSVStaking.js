@@ -2179,10 +2179,10 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
         testValidator.depositProof.strategyValidator
       );
 
-      const depositData1 = await compoundingStakingSSVStrategy.deposits(
+      let depositData1 = await compoundingStakingSSVStrategy.deposits(
         depositID
       );
-      const depositData2 = await compoundingStakingSSVStrategy.deposits(
+      let depositData2 = await compoundingStakingSSVStrategy.deposits(
         depositID1
       );
 
@@ -2218,9 +2218,13 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
         await compoundingStakingStrategyView.getPendingDeposits();
       expect(deposits.length).to.equal(0);
 
-      // Deposit status remains pending even though the validator has exited
-      await expect(depositData1.status).to.equal(1); // PENDING
-      await expect(depositData2.status).to.equal(1); // PENDING
+      depositData1 = await compoundingStakingSSVStrategy.deposits(depositID);
+      depositData2 = await compoundingStakingSSVStrategy.deposits(depositID1);
+
+      // Verify that the deposits have been marked as VERIFIED as they
+      // were removed
+      await expect(depositData1.status).to.equal(2); // VERIFIED
+      await expect(depositData2.status).to.equal(2); // VERIFIED
     });
 
     it("Should verify validator that has a front-run deposit", async () => {
