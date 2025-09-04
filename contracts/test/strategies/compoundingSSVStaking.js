@@ -1,6 +1,6 @@
 const { expect } = require("chai");
 const { network } = require("hardhat");
-const { BigNumber } = require("ethers");
+const { BigNumber, Wallet } = require("ethers");
 const { parseEther, parseUnits } = require("ethers").utils;
 const { setBalance } = require("@nomicfoundation/hardhat-network-helpers");
 const { isCI } = require("../helpers");
@@ -158,6 +158,23 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
         .connect(governor)
         .collectRewardTokens();
       await expect(collectRewards).to.revertedWith("Unsupported function");
+    });
+    it("Non governor should not be able to reset the first deposit flag", async () => {
+      const { compoundingStakingSSVStrategy, strategist, josh } = fixture;
+
+      const signers = [strategist, josh];
+      for (const signer of signers) {
+        await expect(
+          compoundingStakingSSVStrategy.connect(signer).resetFirstDeposit()
+        ).to.be.revertedWith("Caller is not the Governor");
+      }
+    });
+    it("Should revert reset of first deposit if there is no first deposit", async () => {
+      const { compoundingStakingSSVStrategy, governor } = fixture;
+
+      await expect(
+        compoundingStakingSSVStrategy.connect(governor).resetFirstDeposit()
+      ).to.be.revertedWith("No first deposit");
     });
   });
 
@@ -2158,6 +2175,82 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
       // Deposit status remains pending even though the validator has exited
       await expect(depositData1.status).to.equal(1); // PENDING
       await expect(depositData2.status).to.equal(1); // PENDING
+    });
+
+    it("Should verify validator that has a front-run deposit", async () => {
+      const { compoundingStakingSSVStrategy, compoundingStakingStrategyView } =
+        fixture;
+
+      // Third validator is later withdrawn later
+      const testValidator = testValidators[3];
+
+      await processValidator(testValidator, "STAKED");
+
+      const lastVerifiedEthBalanceBefore =
+        await compoundingStakingSSVStrategy.lastVerifiedEthBalance();
+
+      // Verify the the invalid validator
+      const attackerAddress = Wallet.createRandom().address;
+
+      const tx = await compoundingStakingSSVStrategy.verifyValidator(
+        testValidator.validatorProof.nextBlockTimestamp,
+        testValidator.index,
+        testValidator.publicKeyHash,
+        attackerAddress,
+        "0x" // empty proof as it is not verified in the mock
+      );
+
+      await expect(tx)
+        .to.emit(compoundingStakingSSVStrategy, "ValidatorInvalid")
+        .withArgs(testValidator.publicKeyHash);
+
+      const { state: validatorStateAfter } =
+        await compoundingStakingSSVStrategy.validator(
+          testValidator.publicKeyHash
+        );
+      expect(validatorStateAfter).to.equal(7); // INVALID
+
+      const pendingDeposits =
+        await compoundingStakingStrategyView.getPendingDeposits();
+      expect(pendingDeposits).to.have.lengthOf(0);
+
+      expect(
+        await compoundingStakingSSVStrategy.lastVerifiedEthBalance()
+      ).to.equal(lastVerifiedEthBalanceBefore.sub(parseEther("1")));
+
+      expect(await compoundingStakingSSVStrategy.firstDeposit()).to.equal(true);
+    });
+
+    it("Governor should reset first deposit after front-run deposit", async () => {
+      const { compoundingStakingSSVStrategy, governor } = fixture;
+
+      // Third validator is later withdrawn later
+      const testValidator = testValidators[3];
+
+      await processValidator(testValidator, "STAKED");
+
+      expect(await compoundingStakingSSVStrategy.firstDeposit()).to.equal(true);
+
+      await compoundingStakingSSVStrategy.verifyValidator(
+        testValidator.validatorProof.nextBlockTimestamp,
+        testValidator.index,
+        testValidator.publicKeyHash,
+        Wallet.createRandom().address,
+        "0x" // empty proof as it is not verified in the mock
+      );
+
+      const tx = await compoundingStakingSSVStrategy
+        .connect(governor)
+        .resetFirstDeposit();
+
+      await expect(tx).to.emit(
+        compoundingStakingSSVStrategy,
+        "FirstDepositReset"
+      );
+
+      expect(await compoundingStakingSSVStrategy.firstDeposit()).to.equal(
+        false
+      );
     });
   });
 
