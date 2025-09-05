@@ -34,8 +34,8 @@ library BeaconProofsLib {
     uint256 internal constant VALIDATORS_CONTAINER_GENERALIZED_INDEX = 715;
     /// @dev BeaconBlock.state.balances
     /// Beacon block container: height 3, state at at index 3
-    /// Beacon state container: height 6, balances at index 13
-    /// (2 ^ 3 + 3) * 2 ^ 6 + 13 = 716
+    /// Beacon state container: height 6, balances at index 12
+    /// (2 ^ 3 + 3) * 2 ^ 6 + 12 = 716
     uint256 internal constant BALANCES_CONTAINER_GENERALIZED_INDEX = 716;
 
     /// @dev Number of bytes in the proof to the first pending deposit.
