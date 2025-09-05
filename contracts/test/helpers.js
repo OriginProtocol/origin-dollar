@@ -335,6 +335,9 @@ const isPlume = hre.network.name == "plume";
 const isPlumeFork = isFork && process.env.FORK_NETWORK_NAME == "plume";
 const isPlumeOrFork = isPlume || isPlumeFork;
 const isPlumeUnitTest = process.env.UNIT_TESTS_NETWORK === "plume";
+const isHoodi = hre.network.name == "hoodi";
+const isHoodiFork = isFork && process.env.FORK_NETWORK_NAME == "hoodi";
+const isHoodiOrFork = isHoodi || isHoodiFork;
 
 /// Advances the EVM time by the given number of seconds
 const advanceTime = async (seconds) => {
@@ -518,6 +521,13 @@ const getAssetAddresses = async (deployments) => {
       SSV: addresses.holesky.SSV,
       SSVNetwork: addresses.holesky.SSVNetwork,
       beaconChainDepositContract: addresses.holesky.beaconChainDepositContract,
+    };
+  } else if (isHoodiOrFork) {
+    return {
+      WETH: addresses.hoodi.WETH,
+      SSV: addresses.hoodi.SSV,
+      SSVNetwork: addresses.hoodi.SSVNetwork,
+      beaconChainDepositContract: addresses.hoodi.beaconChainDepositContract,
     };
   } else {
     const addressMap = {
@@ -831,6 +841,9 @@ module.exports = {
   isPlumeFork,
   isPlumeOrFork,
   isPlumeUnitTest,
+  isHoodi,
+  isHoodiFork,
+  isHoodiOrFork,
   getOracleAddress,
   setOracleTokenPriceUsd,
   getOracleAddresses,

@@ -23,6 +23,7 @@ const {
   isPlume,
   isPlumeFork,
   isTest,
+  isHoodi,
 } = require("../test/helpers.js");
 
 const {
@@ -32,6 +33,7 @@ const {
 
 const addresses = require("../utils/addresses.js");
 const { getTxOpts } = require("../utils/tx");
+const { sleep } = require("../utils/time");
 const {
   proposeGovernanceArgs,
   accountCanCreateProposal,
@@ -125,11 +127,19 @@ const withConfirmation = async (
     ? process.env.HOLESKY_PROVIDER_URL
     : isPlume
     ? process.env.PLUME_PROVIDER_URL
+    : isHoodi
+    ? process.env.HOODI_PROVIDER_URL
     : process.env.PROVIDER_URL;
+
   if (providerUrl?.includes("rpc.tenderly.co") || (isTest && !isForkTest)) {
     // console.log("Skipping confirmation on Tenderly or for unit tests");
     // Skip on Tenderly and for unit tests
     return result;
+  }
+
+  // without waiting the receipt below returns null even though the has is passed to it
+  if (isHoodi) {
+    await sleep(10000);
   }
 
   const receipt = await hre.ethers.provider.waitForTransaction(
@@ -426,11 +436,12 @@ const executeGovernanceProposalOnFork = async ({
 
     executionRetries = executionRetries - 1;
     try {
-      await governorSix
-        .connect(sMultisig5of8)
-        ["execute(uint256)"](proposalIdBn, {
-          gasLimit: executeGasLimit || undefined,
-        });
+      await governorSix.connect(sMultisig5of8)[
+        // eslint-disable-next-line no-unexpected-multiline
+        "execute(uint256)"
+      ](proposalIdBn, {
+        gasLimit: executeGasLimit || undefined,
+      });
     } catch (e) {
       console.error(e);
       if (executionRetries <= -1) {
@@ -459,11 +470,7 @@ const executeGovernanceProposalOnFork = async ({
  * @param {string} description
  * @returns {Promise<void>}
  */
-const submitProposalGnosisSafe = async (
-  proposalArgs,
-  description,
-  opts = {}
-) => {
+const submitProposalGnosisSafe = async (proposalArgs, description) => {
   if (!isMainnet && !isFork) {
     throw new Error("submitProposalGnosisSafe only works on Mainnet");
   }
@@ -599,13 +606,10 @@ const submitProposalToOgvGovernance = async (
     await impersonateGuardian(multisig5of8);
   }
   const result = await withConfirmation(
-    governorSix
-      .connect(signer)
-      ["propose(address[],uint256[],string[],bytes[],string)"](
-        ...proposalArgs,
-        description,
-        await getTxOpts()
-      ),
+    governorSix.connect(signer)[
+      // eslint-disable-next-line no-unexpected-multiline
+      "propose(address[],uint256[],string[],bytes[],string)"
+    ](...proposalArgs, description, await getTxOpts()),
     governorSixAbi
   );
   const proposalId = result.receipt.parsedLogs[0].args[0].toString();
@@ -756,7 +760,9 @@ async function getProposalState(proposalIdBn) {
     try {
       state = await governorSix.state(proposalIdBn);
       tries = 0;
-    } catch (e) {}
+    } catch (e) {
+      /* do nothing */
+    }
   }
 
   return [
@@ -818,21 +824,6 @@ async function buildGnosisSafeJson(
   };
 
   return json;
-}
-
-async function simulateWithTimelockImpersonation(proposal) {
-  log("Simulating the proposal directly on the timelock...");
-  const { timelockAddr } = await getNamedAccounts();
-  const timelock = await impersonateAndFund(timelockAddr);
-
-  for (const action of proposal.actions) {
-    const { contract, signature, args } = action;
-
-    log(`Sending governance action ${signature} to ${contract.address}`);
-    await contract.connect(timelock)[signature](...args, await getTxOpts());
-
-    console.log(`... ${signature} completed`);
-  }
 }
 
 async function simulateWithTimelockImpersonation(proposal) {
@@ -946,7 +937,7 @@ function deploymentWithGovernanceProposal(opts, fn) {
         // On Fork we can send the proposal then impersonate the guardian to execute it.
         log("Sending the governance proposal to xOGN governance");
         propOpts.reduceQueueTime = reduceQueueTime;
-        const { proposalState, proposalId, proposalIdBn } =
+        const { proposalState, proposalIdBn } =
           await submitProposalToOgvGovernance(
             propArgs,
             propDescription,
@@ -1067,7 +1058,6 @@ function deploymentWithGuardianGovernor(opts, fn) {
 
     await sanityCheckOgvGovernance();
     const proposal = await fn(tools);
-    const propDescription = proposal.name;
 
     if (isMainnet) {
       // On Mainnet, only propose. The enqueue and execution are handled manually via multi-sig.
