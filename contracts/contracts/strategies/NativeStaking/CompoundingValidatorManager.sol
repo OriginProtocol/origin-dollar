@@ -705,8 +705,8 @@ abstract contract CompoundingValidatorManager is Governable {
         //  - beacon chain has slashed the validator
         //  - when verifyDeposit is called for the first deposit it sets the `withdrawableEpoch` for that
         //    deposit and mark validator as exiting
-        //  - the verifyDeposit also needs to be called for the second deposit so it can have the 
-        //    `withdrawableEpoch` set. 
+        //  - the verifyDeposit also needs to be called for the second deposit so it can have the
+        //    `withdrawableEpoch` set.
         require(
             strategyValidator.state == ValidatorState.VERIFIED ||
                 strategyValidator.state == ValidatorState.EXITING,
@@ -1118,9 +1118,14 @@ abstract contract CompoundingValidatorManager is Governable {
                 "Invalid first pending deposit"
             );
 
-            // Calculate the epoch at the time of the snapBalances
+            // Calculate the epoch for the slot before snapBalances which is 12 seconds before the snap timestamp.
+            // The block root of the snapped balances is the parent block root so is for the previous slot.
+            // If the parent slot was missed, then the block root will belong to the last non-missed slot. This could
+            // result in a verificationEpoch that is 1 more than the actual epoch of the slot before snapBalances.
+            // This means verifyBalances fails with `Deposit likely processed` and a new snapBalances has to be taken
+            // after the exiting validator's balance has been swept.
             uint64 verificationEpoch = (SafeCast.toUint64(
-                balancesMem.timestamp
+                balancesMem.timestamp - 12
             ) - BEACON_GENESIS_TIMESTAMP) / (SLOT_DURATION * SLOTS_PER_EPOCH);
 
             // For each staking strategy's deposit.
