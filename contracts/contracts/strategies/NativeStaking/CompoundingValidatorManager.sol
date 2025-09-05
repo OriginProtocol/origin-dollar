@@ -168,7 +168,7 @@ abstract contract CompoundingValidatorManager is Governable {
     uint256 public depositedWethAccountedFor;
 
     // For future use
-    uint256[50] private __gap;
+    uint256[40] private __gap;
 
     event RegistratorChanged(address indexed newAddress);
     event StakingMonitorChanged(address indexed newAddress);
