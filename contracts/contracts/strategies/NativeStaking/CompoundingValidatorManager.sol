@@ -676,7 +676,7 @@ abstract contract CompoundingValidatorManager is Governable {
     /// set for the next block timestamp in 12 seconds time.
     /// @param firstPendingDeposit a `FirstPendingDepositSlotProofData` struct containing:
     /// - slot: The beacon chain slot of the first deposit in the beacon chain's deposit queue.
-    ///   Can be anything if the deposit queue is empty, but zero is a good choice.
+    ///   Can be any non-zero value if the deposit queue is empty.
     /// - proof: The merkle proof of the first pending deposit's slot to the beacon block root.
     ///   Can be either:
     ///   * 40 witness hashes for BeaconBlock.state.PendingDeposits[0].slot when the deposit queue is not empty.
@@ -698,6 +698,7 @@ abstract contract CompoundingValidatorManager is Governable {
         DepositData memory deposit = deposits[depositID];
         ValidatorData memory strategyValidator = validator[deposit.pubKeyHash];
         require(deposit.status == DepositStatus.PENDING, "Deposit not pending");
+        require(firstPendingDeposit.slot != 0, "Zero 1st pending deposit slot");
 
         // We should allow the verification of deposits for validators that have been marked as exiting
         // to cover this situation:
@@ -705,8 +706,8 @@ abstract contract CompoundingValidatorManager is Governable {
         //  - beacon chain has slashed the validator
         //  - when verifyDeposit is called for the first deposit it sets the `withdrawableEpoch` for that
         //    deposit and mark validator as exiting
-        //  - the verifyDeposit also needs to be called for the second deposit so it can have the 
-        //    `withdrawableEpoch` set. 
+        //  - the verifyDeposit also needs to be called for the second deposit so it can have the
+        //    `withdrawableEpoch` set.
         require(
             strategyValidator.state == ValidatorState.VERIFIED ||
                 strategyValidator.state == ValidatorState.EXITING,
