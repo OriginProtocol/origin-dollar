@@ -1101,6 +1101,75 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
     });
   });
 
+  describe("Verify deposits", () => {
+    const testValidator = testValidators[1];
+    let depositID;
+    let depositSlot;
+    beforeEach(async () => {
+      const { compoundingStakingSSVStrategy } = fixture;
+
+      depositID = await compoundingStakingSSVStrategy.nextDepositID();
+
+      // register, stake and verify validator
+      await processValidator(testValidator, "VERIFIED_VALIDATOR");
+
+      const depositData = await compoundingStakingSSVStrategy.deposits(
+        depositID
+      );
+      depositSlot = depositData.slot;
+    });
+    it("Should revert first pending deposit slot is zero", async () => {
+      const { compoundingStakingSSVStrategy } = fixture;
+
+      const tx = compoundingStakingSSVStrategy.verifyDeposit(
+        depositID,
+        depositSlot + 100,
+        { ...testValidator.depositProof.firstPendingDeposit, slot: 0 },
+        testValidator.depositProof.strategyValidator
+      );
+
+      await expect(tx).to.be.revertedWith("Zero 1st pending deposit slot");
+    });
+    it("Should revert when no deposit", async () => {
+      const { compoundingStakingSSVStrategy } = fixture;
+
+      const tx = compoundingStakingSSVStrategy.verifyDeposit(
+        depositID + 1,
+        depositSlot + 100,
+        testValidator.depositProof.firstPendingDeposit,
+        testValidator.depositProof.strategyValidator
+      );
+
+      await expect(tx).to.be.revertedWith("Deposit not pending");
+    });
+
+    it("Should revert when deposit verified again", async () => {
+      const { beaconRoots, compoundingStakingSSVStrategy } = fixture;
+
+      const depositProcessedSlot = depositSlot + 100;
+      await beaconRoots["setBeaconRoot(uint256,bytes32)"](
+        calcBlockTimestamp(depositProcessedSlot) + 12n,
+        testValidator.depositProof.processedBeaconBlockRoot
+      );
+
+      await compoundingStakingSSVStrategy.verifyDeposit(
+        depositID,
+        depositProcessedSlot,
+        testValidator.depositProof.firstPendingDeposit,
+        testValidator.depositProof.strategyValidator
+      );
+
+      const tx = compoundingStakingSSVStrategy.verifyDeposit(
+        depositID,
+        depositProcessedSlot + 1,
+        testValidator.depositProof.firstPendingDeposit,
+        testValidator.depositProof.strategyValidator
+      );
+
+      await expect(tx).to.be.revertedWith("Deposit not pending");
+    });
+  });
+
   describe("Deposit/Withdraw in the strategy", () => {
     it("Should deposit ETH in the strategy", async () => {
       const { compoundingStakingSSVStrategy, weth, josh } = fixture;

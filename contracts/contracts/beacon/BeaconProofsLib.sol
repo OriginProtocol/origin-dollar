@@ -34,8 +34,8 @@ library BeaconProofsLib {
     uint256 internal constant VALIDATORS_CONTAINER_GENERALIZED_INDEX = 715;
     /// @dev BeaconBlock.state.balances
     /// Beacon block container: height 3, state at at index 3
-    /// Beacon state container: height 6, balances at index 13
-    /// (2 ^ 3 + 3) * 2 ^ 6 + 13 = 716
+    /// Beacon state container: height 6, balances at index 12
+    /// (2 ^ 3 + 3) * 2 ^ 6 + 12 = 716
     uint256 internal constant BALANCES_CONTAINER_GENERALIZED_INDEX = 716;
 
     /// @dev Number of bytes in the proof to the first pending deposit.
@@ -291,7 +291,7 @@ library BeaconProofsLib {
     /// BeaconBlock.state.PendingDeposits[0]
     /// @param beaconBlockRoot The root of the beacon block.
     /// @param slot The beacon chain slot of the first deposit in the beacon chain's deposit queue.
-    /// Can be anything if the deposit queue is empty, but zero would be a good choice.
+    /// Can be anything if the deposit queue is empty.
     /// @param pubKeyHash The hash of the validator public key for the first pending deposit.
     /// Use zero bytes if the deposit queue is empty.
     /// @param proof The merkle proof to the beacon block root. Can be either:
@@ -360,7 +360,7 @@ library BeaconProofsLib {
     /// BeaconBlock.state.PendingDeposits[0]
     /// @param beaconBlockRoot The root of the beacon block.
     /// @param slot The beacon chain slot of the first deposit in the beacon chain's deposit queue.
-    /// Can be anything if the deposit queue is empty, but zero would be a good choice.
+    /// Can be anything if the deposit queue is empty.
     /// @param proof The merkle proof to the beacon block root. Can be either:
     /// - 40 witness hashes for BeaconBlock.state.PendingDeposits[0].slot when the deposit queue is not empty.
     /// - 37 witness hashes for BeaconBlock.state.PendingDeposits[0] when the deposit queue is empty.

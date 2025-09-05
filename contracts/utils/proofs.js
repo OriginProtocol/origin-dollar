@@ -32,7 +32,7 @@ async function generateFirstPendingDepositPubKeyProof({
   log(
     `Generalized index for the pubkey of the first pending deposit or the root node of the first pending deposit in the beacon block: ${generalizedIndex}`
   );
-  let firstPendingDepositSlot = 0;
+  let firstPendingDepositSlot = 1;
   let firstPendingDepositPubKey = "0x";
   let firstPendingDepositPubKeyHash = ZERO_BYTES32;
   let firstPendingDepositValidatorIndex = 0;
@@ -139,7 +139,7 @@ async function generateFirstPendingDepositSlotProof({
   log(
     `Generalized index for the slot of the first pending deposit or the root node of the first pending deposit in the beacon block: ${generalizedIndex}`
   );
-  let firstPendingDepositSlot = 0;
+  let firstPendingDepositSlot = 1;
   let firstPendingDepositPubKey = "0x";
   let firstPendingDepositValidatorIndex = 0;
   if (stateView.pendingDeposits.length == 0) {
