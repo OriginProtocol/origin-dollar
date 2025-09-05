@@ -45,7 +45,7 @@
         "payable": false
       },
       "contractInputsValues": {
-        "targets": "[\"0x5220ffe4afECdd24684e16B090eac60fc48eA29E\"]",
+        "targets": "[\"0xa3c0eCA00D2B76b4d1F170b0AB3FdeA16C180186\"]",
         "values": "[\"0\"]",
         "payloads": "[\"0x3659cfe6000000000000000000000000d66afaa7fe071162d055b3cc703cc1eaed836cf3\"]",
         "predecessor": "0x0000000000000000000000000000000000000000000000000000000000000000",
