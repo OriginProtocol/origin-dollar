@@ -2548,6 +2548,169 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
             "DepositValidatorExited"
           );
         });
+
+        it("Should verify balances before the withdrawable epoch And the strategy's deposit has been processed", async () => {
+          const { compoundingStakingSSVStrategy } = fixture;
+
+          await compoundingStakingSSVStrategy.snapBalances();
+
+          const { timestamp: currentTimestamp } =
+            await ethers.provider.getBlock();
+
+          expect(currentTimestamp).to.lessThan(withdrawableTimestamp);
+
+          const depositData = await compoundingStakingSSVStrategy.deposits(
+            nextDepositID
+          );
+
+          const firstPendingDeposit = {
+            ...emptyFirstPendingDepositProofs,
+            // After the strategy's deposit slot so the deposit has been processed
+            slot: depositData.slot + 2,
+            validatorIndex: testValidator.index,
+            pubKeyHash: testValidator.publicKeyHash,
+          };
+
+          const tx = compoundingStakingSSVStrategy.verifyBalances(
+            currentTimestamp, // should be the next block timestamp but the proofs are mocked so it does not matter
+            firstPendingDeposit,
+            emptyBalanceProofs
+          );
+
+          await expect(tx).to.be.revertedWith("Deposit likely processed");
+        });
+
+        it("Should verify balances after the withdrawable epoch And the deposit has not been processed", async () => {
+          const { compoundingStakingSSVStrategy } = fixture;
+
+          await compoundingStakingSSVStrategy.snapBalances();
+
+          const { timestamp: currentTimestamp } =
+            await ethers.provider.getBlock();
+
+          // Advance the EVM time to after the withdrawable timestamp
+          await advanceTime(withdrawableTimestamp - currentTimestamp + 12);
+
+          const { timestamp: advancedTimestamp } =
+            await ethers.provider.getBlock();
+
+          expect(advancedTimestamp).to.greaterThan(withdrawableTimestamp);
+
+          const depositData = await compoundingStakingSSVStrategy.deposits(
+            nextDepositID
+          );
+
+          const firstPendingDeposit = {
+            ...emptyFirstPendingDepositProofs,
+            // Before the strategy's deposit slot so the deposit has not been processed
+            slot: depositData.slot - 2,
+            validatorIndex: testValidator.index,
+            pubKeyHash: testValidator.publicKeyHash,
+          };
+
+          const tx = await compoundingStakingSSVStrategy.verifyBalances(
+            advancedTimestamp, // should be the next block timestamp but the proofs are mocked so it does not matter
+            firstPendingDeposit,
+            emptyBalanceProofs
+          );
+
+          await expect(tx)
+            .to.emit(compoundingStakingSSVStrategy, "BalancesVerified")
+            .withNamedArgs({
+              totalDepositsWei: parseEther(depositAmount.toString()),
+            });
+          await expect(tx).to.not.emit(
+            compoundingStakingSSVStrategy,
+            "DepositValidatorExited"
+          );
+        });
+
+        it("Should fail to verify balances after the withdrawable epoch And the deposit has been processed", async () => {
+          const { compoundingStakingSSVStrategy } = fixture;
+
+          await compoundingStakingSSVStrategy.snapBalances();
+
+          const { timestamp: currentTimestamp } =
+            await ethers.provider.getBlock();
+
+          // Advance the EVM time to after the withdrawable timestamp
+          await advanceTime(withdrawableTimestamp - currentTimestamp + 12);
+
+          const { timestamp: advancedTimestamp } =
+            await ethers.provider.getBlock();
+
+          expect(advancedTimestamp).to.greaterThan(withdrawableTimestamp);
+
+          const depositData = await compoundingStakingSSVStrategy.deposits(
+            nextDepositID
+          );
+
+          const firstPendingDeposit = {
+            ...emptyFirstPendingDepositProofs,
+            // After the strategy's deposit slot so the deposit has been processed
+            slot: depositData.slot + 2,
+            validatorIndex: testValidator.index,
+            pubKeyHash: testValidator.publicKeyHash,
+          };
+
+          const tx = compoundingStakingSSVStrategy.verifyBalances(
+            advancedTimestamp, // should be the next block timestamp but the proofs are mocked so it does not matter
+            firstPendingDeposit,
+            emptyBalanceProofs
+          );
+
+          await expect(tx).to.be.revertedWith("Deposit likely processed");
+        });
+
+        it("Should verify balances after the withdrawable epoch And the withdrawal has been processed", async () => {
+          const { compoundingStakingSSVStrategy, mockBeaconProof } = fixture;
+
+          await compoundingStakingSSVStrategy.snapBalances();
+
+          const { timestamp: currentTimestamp } =
+            await ethers.provider.getBlock();
+
+          // Advance the EVM time to after the withdrawable timestamp
+          await advanceTime(withdrawableTimestamp - currentTimestamp + 12);
+
+          const { timestamp: advancedTimestamp } =
+            await ethers.provider.getBlock();
+
+          expect(advancedTimestamp).to.greaterThan(withdrawableTimestamp);
+
+          const depositData = await compoundingStakingSSVStrategy.deposits(
+            nextDepositID
+          );
+
+          const firstPendingDeposit = {
+            ...emptyFirstPendingDepositProofs,
+            // After the strategy's deposit slot so the deposit has been processed
+            slot: depositData.slot + 200,
+            validatorIndex: testValidator.index,
+            pubKeyHash: testValidator.publicKeyHash,
+          };
+
+          // Set the validator balance to zero
+          await mockBeaconProof.setValidatorBalance(
+            testValidator.index,
+            MAX_UINT256
+          );
+
+          const tx = await compoundingStakingSSVStrategy.verifyBalances(
+            advancedTimestamp, // should be the next block timestamp but the proofs are mocked so it does not matter
+            firstPendingDeposit,
+            emptyBalanceProofs
+          );
+
+          await expect(tx)
+            .to.emit(compoundingStakingSSVStrategy, "BalancesVerified")
+            .withNamedArgs({
+              totalDepositsWei: 0,
+            });
+          await expect(tx)
+            .to.emit(compoundingStakingSSVStrategy, "DepositValidatorExited")
+            .withArgs(nextDepositID, parseEther(depositAmount.toString()));
+        });
       });
     });
   });
