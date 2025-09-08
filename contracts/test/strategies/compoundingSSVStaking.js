@@ -2418,6 +2418,37 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
       );
     });
 
+    it("Should remove a validator from SSV cluster when validator is invalid", async () => {
+      const { compoundingStakingSSVStrategy, validatorRegistrator } = fixture;
+
+      // Third validator is later withdrawn later
+      const testValidator = testValidators[3];
+
+      await processValidator(testValidator, "STAKED");
+
+      expect(await compoundingStakingSSVStrategy.firstDeposit()).to.equal(true);
+
+      await compoundingStakingSSVStrategy.verifyValidator(
+        testValidator.validatorProof.nextBlockTimestamp,
+        testValidator.index,
+        testValidator.publicKeyHash,
+        Wallet.createRandom().address,
+        "0x" // empty proof as it is not verified in the mock
+      );
+
+      const tx = await compoundingStakingSSVStrategy
+        .connect(validatorRegistrator)
+        .removeSsvValidator(
+          testValidator.publicKey,
+          testValidator.operatorIds,
+          emptyCluster
+        );
+
+      await expect(tx)
+        .to.emit(compoundingStakingSSVStrategy, "SSVValidatorRemoved")
+        .withArgs(testValidator.publicKeyHash, testValidator.operatorIds);
+    });
+
     describe("When a verified validator is exiting after being slashed And a new deposit is made to the validator", () => {
       let nextDepositID;
       const depositAmount = 3;
