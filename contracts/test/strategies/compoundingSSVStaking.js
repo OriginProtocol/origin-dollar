@@ -2499,7 +2499,7 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
         beforeEach(async () => {
           const { compoundingStakingSSVStrategy } = fixture;
 
-          compoundingStakingSSVStrategy.verifyDeposit(
+          await compoundingStakingSSVStrategy.verifyDeposit(
             nextDepositID,
             depositProcessedSlot,
             testValidator.depositProof.firstPendingDeposit,
@@ -2571,13 +2571,21 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
             pubKeyHash: testValidator.publicKeyHash,
           };
 
-          const tx = compoundingStakingSSVStrategy.verifyBalances(
+          const tx = await compoundingStakingSSVStrategy.verifyBalances(
             currentTimestamp, // should be the next block timestamp but the proofs are mocked so it does not matter
             firstPendingDeposit,
             emptyBalanceProofs
           );
 
-          await expect(tx).to.be.revertedWith("Deposit likely processed");
+          await expect(tx)
+            .to.emit(compoundingStakingSSVStrategy, "BalancesVerified")
+            .withNamedArgs({
+              totalDepositsWei: parseEther(depositAmount.toString()),
+            });
+          await expect(tx).to.not.emit(
+            compoundingStakingSSVStrategy,
+            "DepositValidatorExited"
+          );
         });
 
         it("Should verify balances after the withdrawable epoch And the deposit has not been processed", async () => {
@@ -2628,8 +2636,6 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
         it("Should fail to verify balances after the withdrawable epoch And the deposit has been processed", async () => {
           const { compoundingStakingSSVStrategy } = fixture;
 
-          await compoundingStakingSSVStrategy.snapBalances();
-
           const { timestamp: currentTimestamp } =
             await ethers.provider.getBlock();
 
@@ -2640,6 +2646,10 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
             await ethers.provider.getBlock();
 
           expect(advancedTimestamp).to.greaterThan(withdrawableTimestamp);
+
+          await compoundingStakingSSVStrategy.snapBalances();
+          // The snapshot timestamp is in the next block which is 12 seconds after the time advancement
+          const snapTimestamp = advancedTimestamp + 12;
 
           const depositData = await compoundingStakingSSVStrategy.deposits(
             nextDepositID
@@ -2654,7 +2664,7 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
           };
 
           const tx = compoundingStakingSSVStrategy.verifyBalances(
-            advancedTimestamp, // should be the next block timestamp but the proofs are mocked so it does not matter
+            snapTimestamp,
             firstPendingDeposit,
             emptyBalanceProofs
           );
@@ -2664,8 +2674,6 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
 
         it("Should verify balances after the withdrawable epoch And the withdrawal has been processed", async () => {
           const { compoundingStakingSSVStrategy, mockBeaconProof } = fixture;
-
-          await compoundingStakingSSVStrategy.snapBalances();
 
           const { timestamp: currentTimestamp } =
             await ethers.provider.getBlock();
@@ -2677,6 +2685,10 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
             await ethers.provider.getBlock();
 
           expect(advancedTimestamp).to.greaterThan(withdrawableTimestamp);
+
+          await compoundingStakingSSVStrategy.snapBalances();
+          // The snapshot timestamp is in the next block which is 12 seconds after the time advancement
+          const snapTimestamp = advancedTimestamp + 12;
 
           const depositData = await compoundingStakingSSVStrategy.deposits(
             nextDepositID
@@ -2697,7 +2709,7 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
           );
 
           const tx = await compoundingStakingSSVStrategy.verifyBalances(
-            advancedTimestamp, // should be the next block timestamp but the proofs are mocked so it does not matter
+            snapTimestamp,
             firstPendingDeposit,
             emptyBalanceProofs
           );
