@@ -25,7 +25,7 @@ abstract contract CompoundingValidatorManager is Governable {
     /// @dev The amount of ETH in wei that is required for a deposit to a new validator.
     uint256 internal constant DEPOSIT_AMOUNT_WEI = 1 ether;
     /// @dev The amount of ETH balance in validator required for validator activation
-    uint256 internal constant MIN_ACTIVATION_BALANCE = 32 ether;
+    uint256 internal constant MIN_ACTIVATION_BALANCE_GWEI = 32 ether / 1e9;
     /// @dev The maximum number of deposits that are waiting to be verified as processed on the beacon chain.
     uint256 internal constant MAX_DEPOSITS = 12;
     /// @dev The maximum number of validators that can be verified.
@@ -467,11 +467,6 @@ abstract contract CompoundingValidatorManager is Governable {
 
         // If a full withdrawal (validator exit)
         if (amountGwei == 0) {
-            require(
-                validatorDataMem.canActivate,
-                "Validator can not yet activate"
-            );
-
             // For each staking strategy's deposits
             uint256 depositsCount = depositList.length;
             for (uint256 i = 0; i < depositsCount; ++i) {
@@ -482,6 +477,13 @@ abstract contract CompoundingValidatorManager is Governable {
                     "Pending deposit"
                 );
             }
+
+            // A validator that never had the minimal activation balance can not activate
+            // and thus can not perform a full exit
+            require(
+                validatorDataMem.canActivate,
+                "Validator can not activate"
+            );
 
             // Store the validator state as exiting so no more deposits can be made to it.
             validator[pubKeyHash].state = ValidatorState.EXITING;
@@ -1037,7 +1039,7 @@ abstract contract CompoundingValidatorManager is Governable {
                 if (validatorBalanceGwei == 0) {
                     // Store the validator state as exited
                     // This could have been in VERIFIED or EXITING state
-                    validatorDataMem.state = ValidatorState
+                    validator[verifiedValidators[i]].state = ValidatorState
                         .EXITED;
 
                     // Remove the validator with a zero balance from the list of verified validators
@@ -1056,7 +1058,7 @@ abstract contract CompoundingValidatorManager is Governable {
 
                     // The validator balance is zero so not need to add to totalValidatorBalance
                     continue;
-                } else if (validatorBalanceGwei > MIN_ACTIVATION_BALANCE && !validatorDataMem.canActivate) {
+                } else if (validatorBalanceGwei > MIN_ACTIVATION_BALANCE_GWEI && !validatorDataMem.canActivate) {
                     validator[verifiedValidators[i]].canActivate = true;
                 }
 

@@ -857,6 +857,16 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
         "VERIFIED_DEPOSIT"
       );
 
+      // Validator has 1588.918094377 ETH
+      // assert balances so validator can be fully withdrawable
+      await assertBalances({
+        pendingDepositAmount: 0,
+        wethAmount: 0,
+        ethAmount: 0,
+        balancesProof: testBalancesProofs[1],
+        activeValidators: [2],
+      });
+
       const tx = await compoundingStakingSSVStrategy
         .connect(validatorRegistrator)
         .validatorWithdrawal(testValidators[3].publicKey, 0, {
