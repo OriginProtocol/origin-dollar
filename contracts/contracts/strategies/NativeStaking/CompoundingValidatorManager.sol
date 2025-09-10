@@ -1161,9 +1161,6 @@ abstract contract CompoundingValidatorManager is Governable {
                 ) {
                     _removeDeposit(depositID, depositData);
 
-                    // Reduce the count of deposits that needs to be iterated over
-                    depositsCount -= 1;
-
                     emit DepositValidatorExited(
                         depositID,
                         uint256(depositData.amountGwei) * 1 gwei
