@@ -24,6 +24,8 @@ abstract contract CompoundingValidatorManager is Governable {
 
     /// @dev The amount of ETH in wei that is required for a deposit to a new validator.
     uint256 internal constant DEPOSIT_AMOUNT_WEI = 1 ether;
+    /// @dev The amount of ETH balance in validator required for validator activation
+    uint256 internal constant ACTIVATION_BALANCE = 32 ether;
     /// @dev The maximum number of deposits that are waiting to be verified as processed on the beacon chain.
     uint256 internal constant MAX_DEPOSITS = 12;
     /// @dev The maximum number of validators that can be verified.
@@ -133,6 +135,7 @@ abstract contract CompoundingValidatorManager is Governable {
     struct ValidatorData {
         ValidatorState state; // The state of the validator known to this contract
         uint40 index; // The index of the validator on the beacon chain
+        bool activated; // Has validator been activated in its lifetime
     }
     /// @notice List of validator public key hashes that have been verified to exist on the beacon chain.
     /// These have had a deposit processed and the validator's balance increased.
@@ -447,7 +450,7 @@ abstract contract CompoundingValidatorManager is Governable {
     {
         // Hash the public key using the Beacon Chain's format
         bytes32 pubKeyHash = _hashPubKey(publicKey);
-        ValidatorState currentState = validator[pubKeyHash].state;
+        ValidatorData memory validatorDataMem = validator[pubKeyHash];
         // Validator full withdrawal could be denied due to multiple reasons:
         //  - the validator has not been activated or active long enough
         //    (current_epoch < activation_epoch + SHARD_COMMITTEE_PERIOD)
@@ -457,13 +460,18 @@ abstract contract CompoundingValidatorManager is Governable {
         // of adding complexity of verifying if a validator is eligible for a full exit, we allow
         // multiple full withdrawal requests per validator.
         require(
-            currentState == ValidatorState.VERIFIED ||
-                currentState == ValidatorState.EXITING,
+            validatorDataMem.state == ValidatorState.VERIFIED ||
+                validatorDataMem.state == ValidatorState.EXITING,
             "Validator not verified/exiting"
         );
 
         // If a full withdrawal (validator exit)
         if (amountGwei == 0) {
+            require(
+                validatorDataMem.activated,
+                "Validator not yet activated"
+            );
+
             // For each staking strategy's deposits
             uint256 depositsCount = depositList.length;
             for (uint256 i = 0; i < depositsCount; ++i) {
@@ -602,7 +610,8 @@ abstract contract CompoundingValidatorManager is Governable {
         // Store the validator state as verified
         validator[pubKeyHash] = ValidatorData({
             state: ValidatorState.VERIFIED,
-            index: validatorIndex
+            index: validatorIndex,
+            activated: false
         });
 
         // If the initial deposit was front-run and the withdrawal address is not this strategy
@@ -1013,6 +1022,7 @@ abstract contract CompoundingValidatorManager is Governable {
             // for each validator in reverse order so we can pop off exited validators at the end
             for (uint256 i = verifiedValidatorsCount; i > 0; ) {
                 --i;
+                ValidatorData memory validatorDataMem = validator[verifiedValidators[i]];
                 // verify validator's balance in beaconBlock.state.balances to the
                 // beaconBlock.state.balances container root
                 uint256 validatorBalanceGwei = IBeaconProofs(BEACON_PROOFS)
@@ -1020,14 +1030,14 @@ abstract contract CompoundingValidatorManager is Governable {
                         balanceProofs.balancesContainerRoot,
                         balanceProofs.validatorBalanceLeaves[i],
                         balanceProofs.validatorBalanceProofs[i],
-                        validator[verifiedValidators[i]].index
+                        validatorDataMem.index
                     );
 
                 // If the validator balance is zero
                 if (validatorBalanceGwei == 0) {
                     // Store the validator state as exited
                     // This could have been in VERIFIED or EXITING state
-                    validator[verifiedValidators[i]].state = ValidatorState
+                    validatorDataMem.state = ValidatorState
                         .EXITED;
 
                     // Remove the validator with a zero balance from the list of verified validators
@@ -1046,6 +1056,8 @@ abstract contract CompoundingValidatorManager is Governable {
 
                     // The validator balance is zero so not need to add to totalValidatorBalance
                     continue;
+                } else if (validatorBalanceGwei > ACTIVATION_BALANCE && !validatorDataMem.activated) {
+                    validator[verifiedValidators[i]].activated = true;
                 }
 
                 // convert Gwei balance to Wei and add to the total validator balance
@@ -1136,6 +1148,7 @@ abstract contract CompoundingValidatorManager is Governable {
                 uint256 depositID = depositList[i];
                 DepositData memory depositData = deposits[depositID];
 
+                ValidatorState validatorState = validator[depositData.pubKeyHash].state;
                 // Check the stored deposit is still waiting to be processed on the beacon chain.
                 // That is, the first pending deposit slot is before the slot of the staking strategy's deposit.
                 // If the deposit has been processed, it will need to be verified with `verifyDeposit`.
@@ -1149,14 +1162,14 @@ abstract contract CompoundingValidatorManager is Governable {
                         (verificationEpoch < depositData.withdrawableEpoch &&
                             depositData.withdrawableEpoch !=
                             FAR_FUTURE_EPOCH) ||
-                        validator[depositData.pubKeyHash].state ==
+                        validatorState ==
                         ValidatorState.EXITED,
                     "Deposit likely processed"
                 );
 
                 // Remove the deposit if the validator has exited.
                 if (
-                    validator[depositData.pubKeyHash].state ==
+                    validatorState ==
                     ValidatorState.EXITED
                 ) {
                     _removeDeposit(depositID, depositData);
