@@ -88,14 +88,12 @@ abstract contract CompoundingValidatorManager is Governable {
     /// @param slot The beacon chain slot number when the deposit has been made
     /// @param depositIndex The index of the deposit in the list of active deposits
     /// @param status The status of the deposit, either UNKNOWN, PENDING or VERIFIED
-    /// @param pendingDepositRoot The merkle root of the beacon chain's pending deposit
     struct DepositData {
         bytes32 pubKeyHash;
         uint64 amountGwei;
         uint64 slot;
         uint32 depositIndex;
         DepositStatus status;
-        bytes32 pendingDepositRoot;
     }
     /// @notice Restricts to only one deposit to an unverified validator at a time.
     /// This is to limit front-running attacks of deposits to the beacon chain contract.
@@ -103,17 +101,17 @@ abstract contract CompoundingValidatorManager is Governable {
     /// @dev The value is set to true when a deposit to a new validator has been done that has
     /// not yet be verified.
     bool public firstDeposit;
-    /// @notice Unique identifier of the next validator deposit.
-    uint128 public nextDepositID;
-    /// @notice Mapping of the deposit ID to the deposit data
-    mapping(uint256 => DepositData) public deposits;
+    /// @notice Mapping of the pending deposit roots to the deposit data
+    mapping(bytes32 => DepositData) public deposits;
     /// @notice List of strategy deposit IDs to a validator.
+    /// The ID is the merkle root of the pending deposit data which is unique for each validator, amount and block.
+    /// Duplicate pending deposit roots are prevented so can be used as an identifier to each strategy deposit.
     /// The list can be for deposits waiting to be verified as processed on the beacon chain,
     /// or deposits that have been verified to an exiting validator and is now waiting for the
     /// validator's balance to be swept.
     /// The list may not be ordered by time of deposit.
     /// Removed deposits will move the last deposit to the removed index.
-    uint256[] public depositList;
+    bytes32[] public depositList;
 
     enum ValidatorState {
         NON_REGISTERED, // validator is not registered on the SSV network
@@ -165,7 +163,7 @@ abstract contract CompoundingValidatorManager is Governable {
     uint256 public depositedWethAccountedFor;
 
     // For future use
-    uint256[40] private __gap;
+    uint256[41] private __gap;
 
     event RegistratorChanged(address indexed newAddress);
     event StakingMonitorChanged(address indexed newAddress);
@@ -177,7 +175,7 @@ abstract contract CompoundingValidatorManager is Governable {
     event SSVValidatorRemoved(bytes32 indexed pubKeyHash, uint64[] operatorIds);
     event ETHStaked(
         bytes32 indexed pubKeyHash,
-        uint256 indexed depositID,
+        bytes32 indexed pendingDepositRoot,
         bytes pubKey,
         uint256 amountWei
     );
@@ -186,12 +184,18 @@ abstract contract CompoundingValidatorManager is Governable {
         uint40 indexed validatorIndex
     );
     event ValidatorInvalid(bytes32 indexed pubKeyHash);
-    event DepositVerified(uint256 indexed depositID, uint256 amountWei);
-    event DepositToValidatorExiting(
-        uint256 indexed depositID,
+    event DepositVerified(
+        bytes32 indexed pendingDepositRoot,
         uint256 amountWei
     );
-    event DepositValidatorExited(uint256 indexed depositID, uint256 amountWei);
+    event DepositToValidatorExiting(
+        bytes32 indexed pendingDepositRoot,
+        uint256 amountWei
+    );
+    event DepositValidatorExited(
+        bytes32 indexed pendingDepositRoot,
+        uint256 amountWei
+    );
     event ValidatorWithdraw(bytes32 indexed pubKeyHash, uint256 amountWei);
     event BalancesSnapped(bytes32 indexed blockRoot, uint256 ethBalance);
     event BalancesVerified(
@@ -311,6 +315,7 @@ abstract contract CompoundingValidatorManager is Governable {
     /// Another deposit of at least 31 ETH is required for the validator to be activated.
     /// This second deposit has to be done after the validator has been verified.
     /// Does not convert any ETH sitting in this strategy to WETH.
+    /// There can not be two deposits to the same validator in the same block for the same amount.
     /// @param validatorStakeData validator data needed to stake.
     /// The `ValidatorStakeData` struct contains the pubkey, signature and depositDataRoot.
     /// Only the registrator can call this function.
@@ -392,24 +397,30 @@ abstract contract CompoundingValidatorManager is Governable {
         uint64 depositSlot = (SafeCast.toUint64(block.timestamp) -
             BEACON_GENESIS_TIMESTAMP) / SLOT_DURATION;
 
+        // Calculate the merkle root of the beacon chain pending deposit data.
+        // This is used as the unique ID of the deposit.
+        bytes32 pendingDepositRoot = IBeaconProofs(BEACON_PROOFS)
+            .merkleizePendingDeposit(
+                pubKeyHash,
+                withdrawalCredentials,
+                depositAmountGwei,
+                validatorStakeData.signature,
+                depositSlot
+            );
+        require(
+            deposits[pendingDepositRoot].status == DepositStatus.UNKNOWN,
+            "Duplicate deposit"
+        );
+
         // Store the deposit data for verifyDeposit and verifyBalances
-        uint256 depositID = nextDepositID++;
-        deposits[depositID] = DepositData({
+        deposits[pendingDepositRoot] = DepositData({
             pubKeyHash: pubKeyHash,
             amountGwei: depositAmountGwei,
             slot: depositSlot,
             depositIndex: SafeCast.toUint32(depositList.length),
-            status: DepositStatus.PENDING,
-            pendingDepositRoot: IBeaconProofs(BEACON_PROOFS)
-                .merkleizePendingDeposit(
-                    pubKeyHash,
-                    withdrawalCredentials,
-                    depositAmountGwei,
-                    validatorStakeData.signature,
-                    depositSlot
-                )
+            status: DepositStatus.PENDING
         });
-        depositList.push(depositID);
+        depositList.push(pendingDepositRoot);
 
         // Deposit to the Beacon Chain deposit contract.
         // This will create a deposit in the beacon chain's pending deposit queue.
@@ -424,7 +435,7 @@ abstract contract CompoundingValidatorManager is Governable {
 
         emit ETHStaked(
             pubKeyHash,
-            depositID,
+            pendingDepositRoot,
             validatorStakeData.pubkey,
             depositAmountWei
         );
@@ -470,10 +481,10 @@ abstract contract CompoundingValidatorManager is Governable {
             // For each staking strategy's deposits
             uint256 depositsCount = depositList.length;
             for (uint256 i = 0; i < depositsCount; ++i) {
-                uint256 depositID = depositList[i];
+                bytes32 pendingDepositRoot = depositList[i];
                 // Check there is no pending deposits to the exiting validator
                 require(
-                    pubKeyHash != deposits[depositID].pubKeyHash,
+                    pubKeyHash != deposits[pendingDepositRoot].pubKeyHash,
                     "Pending deposit"
                 );
             }
@@ -664,7 +675,8 @@ abstract contract CompoundingValidatorManager is Governable {
     /// that is passed by the off-chain verifier requires a slot immediately after them to propose a block otherwise
     /// the `BeaconRoots.parentBlockRoot` will fail. This shouldn't be a problem, since by the current behaviour of
     /// beacon chain only 1%-3% slots don't propose a block.
-    /// @param depositID The deposit ID emitted in `ETHStaked` from the `stakeEth` function.
+    /// @param pendingDepositRoot The unique identifier of the deposit emitted in `ETHStaked` from
+    /// the `stakeEth` function.
     /// @param depositProcessedSlot Any slot on or after the strategy's deposit was processed on the beacon chain.
     /// Can not be a slot with pending deposits with the same slot as the deposit being verified.
     /// Can not be a slot before a missed slot as the Beacon Root contract will have the parent block root
@@ -684,13 +696,13 @@ abstract contract CompoundingValidatorManager is Governable {
     ///   This is 53 witness hashes of 32 bytes each concatenated together starting from the leaf node.
     // slither-disable-start reentrancy-no-eth
     function verifyDeposit(
-        uint256 depositID,
+        bytes32 pendingDepositRoot,
         uint64 depositProcessedSlot,
         FirstPendingDepositSlotProofData calldata firstPendingDeposit,
         StrategyValidatorProofData calldata strategyValidatorData
     ) external {
         // Load into memory the previously saved deposit data
-        DepositData memory deposit = deposits[depositID];
+        DepositData memory deposit = deposits[pendingDepositRoot];
         ValidatorData memory strategyValidator = validator[deposit.pubKeyHash];
         require(deposit.status == DepositStatus.PENDING, "Deposit not pending");
         require(firstPendingDeposit.slot != 0, "Zero 1st pending deposit slot");
@@ -750,7 +762,7 @@ abstract contract CompoundingValidatorManager is Governable {
         // If the validator is exiting because it has been slashed
         if (strategyValidatorData.withdrawableEpoch != FAR_FUTURE_EPOCH) {
             emit DepositToValidatorExiting(
-                depositID,
+                pendingDepositRoot,
                 uint256(deposit.amountGwei) * 1 gwei
             );
 
@@ -779,18 +791,22 @@ abstract contract CompoundingValidatorManager is Governable {
         );
 
         // Remove the deposit now it has been verified as processed on the beacon chain.
-        _removeDeposit(depositID, deposit);
+        _removeDeposit(pendingDepositRoot, deposit);
 
-        emit DepositVerified(depositID, uint256(deposit.amountGwei) * 1 gwei);
+        emit DepositVerified(
+            pendingDepositRoot,
+            uint256(deposit.amountGwei) * 1 gwei
+        );
     }
 
-    function _removeDeposit(uint256 depositID, DepositData memory deposit)
-        internal
-    {
+    function _removeDeposit(
+        bytes32 pendingDepositRoot,
+        DepositData memory deposit
+    ) internal {
         // After verifying the proof, update the contract storage
-        deposits[depositID].status = DepositStatus.VERIFIED;
+        deposits[pendingDepositRoot].status = DepositStatus.VERIFIED;
         // Move the last deposit to the index of the verified deposit
-        uint256 lastDeposit = depositList[depositList.length - 1];
+        bytes32 lastDeposit = depositList[depositList.length - 1];
         depositList[deposit.depositIndex] = lastDeposit;
         deposits[lastDeposit].depositIndex = deposit.depositIndex;
         // Delete the last deposit from the list
@@ -1072,26 +1088,27 @@ abstract contract CompoundingValidatorManager is Governable {
             // Iterate in reverse order so we can pop off deposits at the end of the storage array.
             for (uint256 i = depositsCount; i > 0; ) {
                 --i;
-                uint256 depositID = depositList[i];
-                DepositData memory depositData = deposits[depositID];
+                bytes32 pendingDepositRoot = depositList[i];
 
                 // Verify the strategy's deposit is still pending on the beacon chain.
                 IBeaconProofs(BEACON_PROOFS).verifyPendingDeposit(
                     pendingDepositProofs.pendingDepositContainerRoot,
-                    depositData.pendingDepositRoot,
+                    pendingDepositRoot,
                     pendingDepositProofs.pendingDepositProofs[i],
                     pendingDepositProofs.pendingDepositIndex[i]
                 );
+
+                DepositData memory depositData = deposits[pendingDepositRoot];
 
                 // Remove the deposit if the validator has exited.
                 if (
                     validator[depositData.pubKeyHash].state ==
                     ValidatorState.EXITED
                 ) {
-                    _removeDeposit(depositID, depositData);
+                    _removeDeposit(pendingDepositRoot, depositData);
 
                     emit DepositValidatorExited(
-                        depositID,
+                        pendingDepositRoot,
                         uint256(depositData.amountGwei) * 1 gwei
                     );
 

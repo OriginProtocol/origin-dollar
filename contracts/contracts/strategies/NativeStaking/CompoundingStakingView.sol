@@ -22,11 +22,10 @@ contract CompoundingStakingStrategyView {
     }
 
     struct DepositView {
-        uint256 depositID;
+        bytes32 pendingDepositRoot;
         bytes32 pubKeyHash;
         uint64 amountGwei;
         uint64 slot;
-        bytes32 pendingDepositRoot;
     }
 
     /// @notice Returns the strategy's active validators.
@@ -70,15 +69,13 @@ contract CompoundingStakingStrategyView {
                 uint64 amountGwei,
                 uint64 slot,
                 ,
-                ,
-                bytes32 pendingDepositRoot
+
             ) = stakingStrategy.deposits(stakingStrategy.depositList(i));
             pendingDeposits[i] = DepositView({
-                depositID: stakingStrategy.depositList(i),
+                pendingDepositRoot: stakingStrategy.depositList(i),
                 pubKeyHash: pubKeyHash,
                 amountGwei: amountGwei,
-                slot: slot,
-                pendingDepositRoot: pendingDepositRoot
+                slot: slot
             });
         }
     }
