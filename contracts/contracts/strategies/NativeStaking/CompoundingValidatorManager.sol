@@ -25,7 +25,7 @@ abstract contract CompoundingValidatorManager is Governable {
     /// @dev The amount of ETH in wei that is required for a deposit to a new validator.
     uint256 internal constant DEPOSIT_AMOUNT_WEI = 1 ether;
     /// @dev The amount of ETH balance in validator required for validator activation
-    uint256 internal constant ACTIVATION_BALANCE = 32 ether;
+    uint256 internal constant MIN_ACTIVATION_BALANCE = 32 ether;
     /// @dev The maximum number of deposits that are waiting to be verified as processed on the beacon chain.
     uint256 internal constant MAX_DEPOSITS = 12;
     /// @dev The maximum number of validators that can be verified.
@@ -135,7 +135,7 @@ abstract contract CompoundingValidatorManager is Governable {
     struct ValidatorData {
         ValidatorState state; // The state of the validator known to this contract
         uint40 index; // The index of the validator on the beacon chain
-        bool activated; // Has validator been activated in its lifetime
+        bool canActivate; // Has validator ever had minimal activation balance
     }
     /// @notice List of validator public key hashes that have been verified to exist on the beacon chain.
     /// These have had a deposit processed and the validator's balance increased.
@@ -468,8 +468,8 @@ abstract contract CompoundingValidatorManager is Governable {
         // If a full withdrawal (validator exit)
         if (amountGwei == 0) {
             require(
-                validatorDataMem.activated,
-                "Validator not yet activated"
+                validatorDataMem.canActivate,
+                "Validator can not yet activate"
             );
 
             // For each staking strategy's deposits
@@ -611,7 +611,7 @@ abstract contract CompoundingValidatorManager is Governable {
         validator[pubKeyHash] = ValidatorData({
             state: ValidatorState.VERIFIED,
             index: validatorIndex,
-            activated: false
+            canActivate: false
         });
 
         // If the initial deposit was front-run and the withdrawal address is not this strategy
@@ -1056,8 +1056,8 @@ abstract contract CompoundingValidatorManager is Governable {
 
                     // The validator balance is zero so not need to add to totalValidatorBalance
                     continue;
-                } else if (validatorBalanceGwei > ACTIVATION_BALANCE && !validatorDataMem.activated) {
-                    validator[verifiedValidators[i]].activated = true;
+                } else if (validatorBalanceGwei > MIN_ACTIVATION_BALANCE && !validatorDataMem.canActivate) {
+                    validator[verifiedValidators[i]].canActivate = true;
                 }
 
                 // convert Gwei balance to Wei and add to the total validator balance
