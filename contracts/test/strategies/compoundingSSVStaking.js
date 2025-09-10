@@ -886,6 +886,26 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
       ).to.equal(4); // EXITING
     });
 
+    it("Should revert when validator's balance hasn't been confirmed to equal or surpass 32 ETH", async () => {
+      const { validatorRegistrator, compoundingStakingSSVStrategy } = fixture;
+
+      // Third validator is later withdrawn later
+      await processValidator(testValidators[3], "VERIFIED_DEPOSIT");
+      await topUpValidator(
+        testValidators[3],
+        testValidators[3].depositProof.depositAmount - 1,
+        "VERIFIED_DEPOSIT"
+      );
+
+      const tx = compoundingStakingSSVStrategy
+        .connect(validatorRegistrator)
+        .validatorWithdrawal(testValidators[3].publicKey, 0, {
+          value: 1,
+        });
+
+      await expect(tx).to.be.revertedWith("Validator can not activate");
+    });
+
     it("Should revert when exiting a validator with a pending deposit", async () => {
       const { validatorRegistrator, compoundingStakingSSVStrategy } = fixture;
 

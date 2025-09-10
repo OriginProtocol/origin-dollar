@@ -1058,7 +1058,7 @@ abstract contract CompoundingValidatorManager is Governable {
 
                     // The validator balance is zero so not need to add to totalValidatorBalance
                     continue;
-                } else if (validatorBalanceGwei > MIN_ACTIVATION_BALANCE_GWEI && !validatorDataMem.canActivate) {
+                } else if (validatorBalanceGwei >= MIN_ACTIVATION_BALANCE_GWEI && !validatorDataMem.canActivate) {
                     validator[verifiedValidators[i]].canActivate = true;
                 }
 
