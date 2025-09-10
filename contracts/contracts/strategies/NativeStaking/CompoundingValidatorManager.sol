@@ -480,10 +480,7 @@ abstract contract CompoundingValidatorManager is Governable {
 
             // A validator that never had the minimal activation balance can not activate
             // and thus can not perform a full exit
-            require(
-                validatorDataMem.canActivate,
-                "Validator can not activate"
-            );
+            require(validatorDataMem.canActivate, "Validator can not activate");
 
             // Store the validator state as exiting so no more deposits can be made to it.
             validator[pubKeyHash].state = ValidatorState.EXITING;
@@ -1024,7 +1021,9 @@ abstract contract CompoundingValidatorManager is Governable {
             // for each validator in reverse order so we can pop off exited validators at the end
             for (uint256 i = verifiedValidatorsCount; i > 0; ) {
                 --i;
-                ValidatorData memory validatorDataMem = validator[verifiedValidators[i]];
+                ValidatorData memory validatorDataMem = validator[
+                    verifiedValidators[i]
+                ];
                 // verify validator's balance in beaconBlock.state.balances to the
                 // beaconBlock.state.balances container root
                 uint256 validatorBalanceGwei = IBeaconProofs(BEACON_PROOFS)
@@ -1058,7 +1057,10 @@ abstract contract CompoundingValidatorManager is Governable {
 
                     // The validator balance is zero so not need to add to totalValidatorBalance
                     continue;
-                } else if (validatorBalanceGwei >= MIN_ACTIVATION_BALANCE_GWEI && !validatorDataMem.canActivate) {
+                } else if (
+                    validatorBalanceGwei >= MIN_ACTIVATION_BALANCE_GWEI &&
+                    !validatorDataMem.canActivate
+                ) {
                     validator[verifiedValidators[i]].canActivate = true;
                 }
 
@@ -1150,7 +1152,9 @@ abstract contract CompoundingValidatorManager is Governable {
                 uint256 depositID = depositList[i];
                 DepositData memory depositData = deposits[depositID];
 
-                ValidatorState validatorState = validator[depositData.pubKeyHash].state;
+                ValidatorState validatorState = validator[
+                    depositData.pubKeyHash
+                ].state;
                 // Check the stored deposit is still waiting to be processed on the beacon chain.
                 // That is, the first pending deposit slot is before the slot of the staking strategy's deposit.
                 // If the deposit has been processed, it will need to be verified with `verifyDeposit`.
@@ -1164,16 +1168,12 @@ abstract contract CompoundingValidatorManager is Governable {
                         (verificationEpoch < depositData.withdrawableEpoch &&
                             depositData.withdrawableEpoch !=
                             FAR_FUTURE_EPOCH) ||
-                        validatorState ==
-                        ValidatorState.EXITED,
+                        validatorState == ValidatorState.EXITED,
                     "Deposit likely processed"
                 );
 
                 // Remove the deposit if the validator has exited.
-                if (
-                    validatorState ==
-                    ValidatorState.EXITED
-                ) {
+                if (validatorState == ValidatorState.EXITED) {
                     _removeDeposit(depositID, depositData);
 
                     // Reduce the count of deposits that needs to be iterated over
