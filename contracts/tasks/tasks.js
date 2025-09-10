@@ -1973,12 +1973,6 @@ subtask("verifyBalances", "Verify validator balances on the Beacon chain")
     types.int
   )
   .addOptionalParam(
-    "valSlot",
-    "The slot on or after the validator of first pending deposit deposit was created on the beacon chain. Default to the next epoch from the balances snapshot",
-    undefined,
-    types.int
-  )
-  .addOptionalParam(
     "indexes",
     "Comma separated list of validator indexes. Default: strategy's active validators",
     undefined,

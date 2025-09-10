@@ -957,7 +957,7 @@ abstract contract CompoundingValidatorManager is Governable {
     struct PendingDepositProofs {
         bytes32 pendingDepositContainerRoot;
         bytes pendingDepositContainerProof;
-        uint40[] pendingDepositIndex;
+        uint40[] pendingDepositIndexes;
         bytes[] pendingDepositProofs;
     }
 
@@ -975,7 +975,7 @@ abstract contract CompoundingValidatorManager is Governable {
     /// - pendingDepositContainerProof: The merkle proof from the pending deposits list container
     ///     to the beacon block root.
     ///    This is 9 witness hashes of 32 bytes each concatenated together starting from the leaf node.
-    /// - pendingDepositIndex: Array of indexes in the pending deposits list container for each
+    /// - pendingDepositIndexes: Array of indexes in the pending deposits list container for each
     ///    of the strategy's deposits.
     /// - pendingDepositProofs: Array of merkle proofs for each strategy deposit in the
     ///    beacon chain's pending deposit list container to the pending deposits list container root.
@@ -1072,7 +1072,7 @@ abstract contract CompoundingValidatorManager is Governable {
                 "Invalid deposit proofs"
             );
             require(
-                pendingDepositProofs.pendingDepositIndex.length ==
+                pendingDepositProofs.pendingDepositIndexes.length ==
                     depositsCount,
                 "Invalid deposit indexes"
             );
@@ -1095,7 +1095,7 @@ abstract contract CompoundingValidatorManager is Governable {
                     pendingDepositProofs.pendingDepositContainerRoot,
                     pendingDepositRoot,
                     pendingDepositProofs.pendingDepositProofs[i],
-                    pendingDepositProofs.pendingDepositIndex[i]
+                    pendingDepositProofs.pendingDepositIndexes[i]
                 );
 
                 DepositData memory depositData = deposits[pendingDepositRoot];
