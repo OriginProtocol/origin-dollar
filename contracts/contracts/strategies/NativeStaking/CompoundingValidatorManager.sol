@@ -665,10 +665,10 @@ abstract contract CompoundingValidatorManager is Governable {
     /// @notice Verifies a deposit on the execution layer has been processed by the beacon chain.
     /// This means the accounting of the strategy's ETH moves from a pending deposit to a validator balance.
     ///
-    /// Important: this function has a limitation where `depositProcessedSlot` and `firstDepositValidatorCreatedSlot`
-    /// that is passed by the off-chain verifier requires a slot immediately after them to propose a block otherwise
-    /// the `BeaconRoots.parentBlockRoot` will fail. This shouldn't be a problem, since by the current behaviour of
-    /// beacon chain only 1%-3% slots don't propose a block.
+    /// Important: this function has a limitation where `depositProcessedSlot` that is passed by the off-chain
+    /// verifier requires a slot immediately after it to propose a block otherwise the `BeaconRoots.parentBlockRoot`
+    /// will fail. This shouldn't be a problem, since by the current behaviour of beacon chain only 1%-3% slots
+    /// don't propose a block.
     /// @param depositID The deposit ID emitted in `ETHStaked` from the `stakeEth` function.
     /// @param depositProcessedSlot Any slot on or after the strategy's deposit was processed on the beacon chain.
     /// Can not be a slot with pending deposits with the same slot as the deposit being verified.
