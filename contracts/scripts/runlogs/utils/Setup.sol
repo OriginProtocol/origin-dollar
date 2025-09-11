@@ -30,6 +30,12 @@ import { AerodromeAMOStrategy } from
 // Contracts - ARM
 import { ISonicARM } from "contracts/contracts/interfaces/arm/ISonicARM.sol";
 
+// Contracts - Pool Booster
+import { PoolBoosterFactoryMerkl } from
+  "contracts/contracts/poolBooster/PoolBoosterFactoryMerkl.sol";
+import { PoolBoostCentralRegistry } from
+  "contracts/contracts/poolBooster/PoolBoostCentralRegistry.sol";
+
 // Interfaces
 import { IWETH9 } from "contracts/contracts/interfaces/IWETH9.sol";
 import { ICurveStableSwapNG } from "contracts/contracts/interfaces/ICurveStableSwapNG.sol";
@@ -81,6 +87,12 @@ abstract contract SetupBase is Test, Script {
     AerodromeAMOStrategy(Base.OETHB_WETH_AERODROME_POOL);
   OETHVaultValueChecker public oethVaultValueChecker =
     OETHVaultValueChecker(Base.OETHB_VAULT_VALUE_CHECKER);
+
+  // Pool Booster
+  PoolBoosterFactoryMerkl public poolBoosterFactoryMerkl =
+    PoolBoosterFactoryMerkl(Base.POOL_BOOSTER_FACTORY_MERKL);
+  PoolBoostCentralRegistry public poolBoosterCentralRegistry =
+    PoolBoostCentralRegistry(Base.POOL_BOOSTER_CENTRAL_REGISTRY);
 
   // Interfaces
   IWETH9 public weth = IWETH9(Base.WETH);

@@ -6,7 +6,7 @@ import { SetupBase } from "./utils/Setup.sol";
 import { SetupSonic } from "./utils/Setup.sol";
 import { SetupMainnet } from "./utils/Setup.sol";
 
-import { Sonic } from "./utils/Addresses.sol";
+import { CrossChain } from "./utils/Addresses.sol";
 
 // Foundry
 import { console } from "forge-std/console.sol";
@@ -48,7 +48,8 @@ contract Runlogs_2025_09_Mainnet is SetupMainnet {
 contract Runlogs_2025_09_Base is SetupBase {
   function run() public {
     //_2025_09_04();
-    _2025_09_09();
+    //_2025_09_09();
+    _2025_11_09();
   }
 
   // ------------------------------------------------------------------
@@ -168,6 +169,31 @@ contract Runlogs_2025_09_Base is SetupBase {
     console.log(
       "Sell 10 OETH Curve prices before and after: %18e || %18e", wethOutBefore, wethOutAfter
     );
+    vm.stopBroadcast();
+  }
+
+  // ------------------------------------------------------------------
+  // September 11, 2025 - Deploy Merkl Pool Booster + Yield Forward
+  // ------------------------------------------------------------------
+  function _2025_11_09() internal {
+    bytes memory campaignData =
+      "0x67a66cbacb2fe48ec4326932d4528215ad11656a86135f2795f5b90e501eb53800000000000000000000000000000000000000000000000000000000000000c000000000000000000000000000000000000000000000000000000000000000e000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000000000000000000000000120000000000000000000000000000000000000000000000000000000000000014000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000";
+
+    vm.startBroadcast(strategist);
+    // Create the pool booster
+    poolBoosterFactoryMerkl.createPoolBoosterMerkl({
+      _campaignType: 1,
+      _ammPoolAddress: CrossChain.MORPHO_BLUE,
+      _campaignDuration: 1 days,
+      campaignData: campaignData,
+      _salt: uint256(keccak256(abi.encodePacked(block.timestamp)))
+    });
+
+    uint256 length = poolBoosterFactoryMerkl.poolBoosterLength();
+    (address pb,,) = poolBoosterFactoryMerkl.poolBoosters(length - 1);
+
+    // Run yield forward
+    oeth.delegateYield(CrossChain.MORPHO_BLUE, address(pb));
     vm.stopBroadcast();
   }
 }

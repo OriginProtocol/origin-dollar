@@ -4,6 +4,9 @@ pragma solidity ^0.8.0;
 library CrossChain {
   // Governance
   address public constant STRATEGIST = 0x4FF1b9D9ba8558F5EAfCec096318eA0d8b541971;
+
+  // Protocols
+  address public constant MORPHO_BLUE = 0xBBBBBbbBBb9cC5e90e3b3Af64bdAF62C37EEFFCb;
 }
 
 library Mainnet {
@@ -47,6 +50,10 @@ library Base {
   // OETHb Strategies
   address public constant OETHB_WETH_CURVE_AMO = 0x9cfcAF81600155e01c63e4D2993A8A81A8205829;
   address public constant OETHB_WETH_AERODROME_POOL = 0xF611cC500eEE7E4e4763A05FE623E2363c86d2Af;
+
+  // Pool Booster
+  address public constant POOL_BOOSTER_FACTORY_MERKL = 0x1ADB902Ece465cA681C66187627a622a631a0a63;
+  address public constant POOL_BOOSTER_CENTRAL_REGISTRY = 0x157f0B239D7F83D153E6c95F8AD9d341694376E3;
 
   // Other token
   address public constant WETH = 0x4200000000000000000000000000000000000006;
