@@ -1,0 +1,127 @@
+@startuml
+
+title Staking Strategy Validator States
+
+state "Registered SSV Validator" as RegisteredValidator
+RegisteredValidator : validator REGISTERED
+RegisteredValidator : call SSVNetwork.registerValidator
+
+state "Invalid SSV Validator" as InvalidSSVValidator
+InvalidSSVValidator : validator REMOVED
+InvalidSSVValidator : call SSVNetwork.removeValidator
+
+state "Initial Deposit To Validator" as InitialDeposit
+InitialDeposit : validator STAKED
+InitialDeposit : deposit PENDING
+InitialDeposit : depositList added
+InitialDeposit : firstDeposit true
+InitialDeposit : 1 WETH convert to ETH
+InitialDeposit : depositedWethAccountedFor decreased by deposit amount
+InitialDeposit : lastVerifiedEthBalance increased by deposit amount
+InitialDeposit : snappedBalance timestamp reset
+InitialDeposit : call deposit contract with 1 ETH value
+
+state "Front-run Initial Deposit" as FrontRunDeposit
+FrontRunDeposit : validator INVALID
+FrontRunDeposit : deposit VERIFIED
+FrontRunDeposit : depositList removed
+FrontRunDeposit : lastVerifiedEthBalance reduced by deposit amount
+
+state "Removed Front-run Validator" as RemovedFrontRunValidator
+RemovedFrontRunValidator : validator REMOVED
+RemovedFrontRunValidator : call SSVNetwork.removeValidator
+
+state "Verified Validator" as VerifiedValidator
+VerifiedValidator : validator VERIFIED
+VerifiedValidator : validator index
+VerifiedValidator : verifiedValidators added
+VerifiedValidator : firstDeposit false
+
+state "Verified Deposit" as VerifiedDeposit
+VerifiedDeposit : deposit VERIFIED
+VerifiedDeposit : depositList removed
+
+state "Verified Deposit to Exiting Validator" as DepositToExitingValidator
+DepositToExitingValidator : validator EXITING
+
+state "Deposit to Top-Up Validator" as TopUpDeposit
+TopUpDeposit : deposit PENDING
+TopUpDeposit : depositList added
+TopUpDeposit : deposit amount of WETH convert to ETH
+TopUpDeposit : depositedWethAccountedFor decreased by deposit amount
+TopUpDeposit : lastVerifiedEthBalance increased by deposit amount
+TopUpDeposit : snappedBalance timestamp reset
+TopUpDeposit : call deposit contract with deposit amount of ETH value
+
+state "Verified Exited Validator with Deposit" as ExitedValidatorWithDeposit
+ExitedValidatorWithDeposit : deposit VERIFIED
+ExitedValidatorWithDeposit : depositList removed
+ExitedValidatorWithDeposit : validator EXITED
+ExitedValidatorWithDeposit : verifiedValidators removed
+ExitedValidatorWithDeposit : lastVerifiedEthBalance deposits + validators + ETH balance
+ExitedValidatorWithDeposit : snappedBalance timestamp reset
+
+state "Verified Exited Validator" as ExitedValidator
+ExitedValidator : validator EXITED
+ExitedValidator : verifiedValidators removed
+ExitedValidator : lastVerifiedEthBalance deposits + validators + ETH balance
+ExitedValidator : snappedBalance timestamp reset
+
+state "Partial Withdrawal\nfrom Validator" as PartialWithdrawal
+PartialWithdrawal : request partial withdrawal
+
+state "Exiting from Validator" as ExitingValidator
+ExitingValidator : validator EXITING
+ExitingValidator : request full exit
+
+state "Removed Exited Validator" as RemovedExitedValidator
+RemovedExitedValidator : validator REMOVED
+RemovedExitedValidator : call SSVNetwork.removeValidator
+
+state "Snapped Balances" as SnappedBalances
+SnappedBalances : snappedBalance\n  blockRoot\n  timestamp\n  ETH Balance
+
+state "Verified Balances" as VerifiedBalances
+VerifiedBalances : snappedBalance timestamp reset
+VerifiedBalances : lastVerifiedEthBalance deposits + validators + ETH balance
+
+[*] --> RegisteredValidator : registerSsvValidator
+
+RegisteredValidator --> InitialDeposit : stakeETH(1 ETH)
+RegisteredValidator --> InvalidSSVValidator : removeSsvValidator
+
+InitialDeposit --> VerifiedValidator : verifyValidator
+InitialDeposit --> FrontRunDeposit : verifyValidator
+FrontRunDeposit --> RemovedFrontRunValidator : removeSsvValidator
+VerifiedValidator ---> VerifiedDeposit : verifyDeposit
+VerifiedValidator --> DepositToExitingValidator : verifyDeposit
+
+VerifiedDeposit -> TopUpDeposit : stakeETH
+TopUpDeposit -> VerifiedDeposit : verifyDeposit
+TopUpDeposit --> DepositToExitingValidator : verifyDeposit
+
+DepositToExitingValidator --> ExitedValidatorWithDeposit : verifyBalances
+
+VerifiedDeposit -> PartialWithdrawal : validatorWithdrawal\n(amount > 0)
+PartialWithdrawal -> VerifiedDeposit
+VerifiedDeposit --> ExitingValidator : validatorWithdrawal\n(amount = 0)
+ExitingValidator --> ExitedValidator : verifyBalances
+ExitedValidator --> RemovedExitedValidator : removeSsvValidator
+
+SnappedBalances --> VerifiedBalances : verifyBalances
+VerifiedBalances --> SnappedBalances : snapBalances
+
+' InitialDeposit --> VERIFIED : verifyValidator
+' InitialDeposit --> INVALID : verifyValidator
+
+' VERIFIED --> EXITING : validatorWithdrawal\nverifyDeposit
+' VERIFIED --> EXITED : verifyBalances
+' EXITING --> EXITED : verifyBalances
+
+' RegisteredValidator --> REMOVED : removeSsvValidator
+' INVALID --> REMOVED : removeSsvValidator
+
+
+' STAKED : Beacon Chain\n- Pending deposits\n- Processed deposit\n- Frontrun deposit
+
+@enduml
