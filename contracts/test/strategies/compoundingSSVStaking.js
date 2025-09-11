@@ -1757,28 +1757,44 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
         expect(balancesAfter.verifiedEthBalance).to.equal(depositAmountWei);
         expect(balancesAfter.stratBalance).to.equal(depositAmountWei);
       });
-      it.skip("Should verify balances with one verified validator", async () => {
-        // Test validator has index 1897126
-        await processValidator(testValidators[3], "VERIFIED_VALIDATOR");
+      it("Should verify balances with one exited verified validator", async () => {
+        // Test validator has index 2018225 has a 32.008954871 balance
+        const testValidatorIndex = 4;
+        await processValidator(
+          testValidators[testValidatorIndex],
+          "VERIFIED_VALIDATOR"
+        );
 
         const { compoundingStakingStrategyView } = fixture;
         await logDeposits(compoundingStakingStrategyView);
 
-        const balancesAfter = await assertBalances({
+        await assertBalances({
           pendingDepositAmount: 1,
           wethAmount: 0,
           ethAmount: 0,
-          // Validator 1897126 has a zero balance
           balancesProof: testBalancesProofs[5],
-          activeValidators: [3],
+          activeValidators: [testValidatorIndex],
         });
-
-        const depositAmountWei = parseEther("1");
-        expect(balancesAfter.totalDepositsWei).to.equal(depositAmountWei);
-        expect(balancesAfter.verifiedEthBalance).to.equal(depositAmountWei);
-        expect(balancesAfter.stratBalance).to.equal(depositAmountWei);
       });
+      it("Should verify balances with one verified validator with a zero balance", async () => {
+        // Test validator has index 1897126 has a 0 balance
+        const testValidatorIndex = 3;
+        await processValidator(
+          testValidators[testValidatorIndex],
+          "VERIFIED_VALIDATOR"
+        );
 
+        const { compoundingStakingStrategyView } = fixture;
+        await logDeposits(compoundingStakingStrategyView);
+
+        await assertBalances({
+          pendingDepositAmount: 0,
+          wethAmount: 0,
+          ethAmount: 0,
+          balancesProof: testBalancesProofs[5],
+          activeValidators: [testValidatorIndex],
+        });
+      });
       it("Should not verify a validator with incorrect withdrawal credential validator type", async () => {
         const originalValidatorProof = testValidators[0].validatorProof.bytes;
         // replace the 0x02 validator type credentials to an invalid 0x01 one
