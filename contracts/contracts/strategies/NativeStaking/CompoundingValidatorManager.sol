@@ -1090,14 +1090,6 @@ abstract contract CompoundingValidatorManager is Governable {
                 --i;
                 bytes32 pendingDepositRoot = depositList[i];
 
-                // Verify the strategy's deposit is still pending on the beacon chain.
-                IBeaconProofs(BEACON_PROOFS).verifyPendingDeposit(
-                    pendingDepositProofs.pendingDepositContainerRoot,
-                    pendingDepositRoot,
-                    pendingDepositProofs.pendingDepositProofs[i],
-                    pendingDepositProofs.pendingDepositIndexes[i]
-                );
-
                 DepositData memory depositData = deposits[pendingDepositRoot];
 
                 // Remove the deposit if the validator has exited.
@@ -1115,6 +1107,14 @@ abstract contract CompoundingValidatorManager is Governable {
                     // Skip to the next deposit as the deposit amount is now in the strategy's ETH balance
                     continue;
                 }
+
+                // Verify the strategy's deposit is still pending on the beacon chain.
+                IBeaconProofs(BEACON_PROOFS).verifyPendingDeposit(
+                    pendingDepositProofs.pendingDepositContainerRoot,
+                    pendingDepositRoot,
+                    pendingDepositProofs.pendingDepositProofs[i],
+                    pendingDepositProofs.pendingDepositIndexes[i]
+                );
 
                 // Convert the deposit amount from Gwei to Wei and add to the total
                 totalDepositsWei += uint256(depositData.amountGwei) * 1 gwei;
