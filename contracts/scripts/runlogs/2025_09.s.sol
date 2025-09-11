@@ -186,7 +186,7 @@ contract Runlogs_2025_09_Base is SetupBase {
       _ammPoolAddress: CrossChain.MORPHO_BLUE,
       _campaignDuration: 1 days,
       campaignData: campaignData,
-      _salt: uint256(keccak256(abi.encodePacked(block.timestamp)))
+      _salt: uint256(keccak256(abi.encodePacked("Merkl Pool Booster V1")))
     });
 
     uint256 length = poolBoosterFactoryMerkl.poolBoosterLength();
