@@ -22,6 +22,7 @@ const {
   generateBalancesContainerProof,
   generateBalanceProof,
   generatePendingDepositsContainerProof,
+  generatePendingDepositProof,
 } = require("../utils/proofs");
 const { toHex } = require("../utils/units");
 const { logTxDetails } = require("../utils/txLogger");
@@ -343,7 +344,14 @@ async function verifyDeposit({
   await logTxDetails(tx, "verifyDeposit");
 }
 
-async function verifyBalances({ indexes, dryrun, test, signer, slot }) {
+async function verifyBalances({
+  indexes,
+  deposits,
+  dryrun,
+  test,
+  signer,
+  slot,
+}) {
   const strategy = test
     ? undefined
     : await resolveContract(
@@ -369,13 +377,53 @@ async function verifyBalances({ indexes, dryrun, test, signer, slot }) {
   const verificationSlot = blockView.slot;
 
   const {
-    root: pendingDepositContainerRoot,
+    leaf: pendingDepositContainerRoot,
     proof: pendingDepositContainerProof,
   } = await generatePendingDepositsContainerProof({
     blockView,
     blockTree,
     stateView,
   });
+
+  let pendingDepositIndexes = [];
+  let pendingDepositRoots = [];
+  let pendingDepositProofs = [];
+  if (test) {
+    const depositIndexes = (deposits || "")
+      .split(",")
+      .map((index) => Number(index));
+    for (const depositIndex of depositIndexes) {
+      pendingDepositIndexes.push(depositIndex);
+      const { proof, leaf } = await generatePendingDepositProof({
+        blockView,
+        blockTree,
+        stateView,
+        depositIndex,
+      });
+      pendingDepositRoots.push(leaf);
+      pendingDepositProofs.push(proof);
+    }
+  } else {
+    const pendingDeposits = await strategyView.getPendingDeposits();
+    for (const deposit of pendingDeposits) {
+      // find the pending deposit in the beacon chain's pending deposits
+      const pendingDepositIndex = stateView.pendingDeposits.findIndex((pd) => {
+        return pd.hashTreeRoot().equals(deposit.pendingDepositRoot);
+      });
+      if (pendingDepositIndex === -1) {
+        throw Error(
+          `Could not find pending deposit with root hash ${deposit.pendingDepositRoot}`
+        );
+      }
+      const { proof } = await generatePendingDepositProof({
+        blockView,
+        blockTree,
+        stateView,
+        depositIndex: pendingDepositIndex,
+      });
+      pendingDepositProofs.push(proof);
+    }
+  }
 
   const verifiedValidators = indexes
     ? indexes.split(",").map((index) => ({
@@ -385,7 +433,7 @@ async function verifyBalances({ indexes, dryrun, test, signer, slot }) {
 
   let balancesContainerRoot = ZERO_BYTES32;
   let balancesContainerProof = "0x";
-  let snapBalancesBlockRoot = ZERO_BYTES32;
+  let blockRoot = ZERO_BYTES32;
   if (verifiedValidators.length > 0) {
     const balancesContainerProofData = await generateBalancesContainerProof({
       blockView,
@@ -394,7 +442,7 @@ async function verifyBalances({ indexes, dryrun, test, signer, slot }) {
     });
     balancesContainerRoot = balancesContainerProofData.leaf;
     balancesContainerProof = balancesContainerProofData.proof;
-    snapBalancesBlockRoot = balancesContainerProofData.root;
+    blockRoot = balancesContainerProofData.root;
   }
 
   const validatorBalanceLeaves = [];
@@ -421,7 +469,7 @@ async function verifyBalances({ indexes, dryrun, test, signer, slot }) {
 
   if (dryrun) {
     console.log(`snapped slot                      : ${verificationSlot}`);
-    console.log(`snap balances block root          : ${snapBalancesBlockRoot}`);
+    console.log(`snap balances block root          : ${blockRoot}`);
     console.log(`\nbalancesContainerRoot           : ${balancesContainerRoot}`);
     console.log(`\nbalancesContainerProof:\n${balancesContainerProof}`);
     console.log(
@@ -437,6 +485,22 @@ async function verifyBalances({ indexes, dryrun, test, signer, slot }) {
     console.log(
       `validatorBalances: [${validatorBalancesFormatted.join(", ")}]`
     );
+    console.log(
+      `\npendingDepositsContainerRoot           : ${pendingDepositContainerRoot}`
+    );
+    console.log(
+      `\npendingDepositsContainerProof:\n${pendingDepositContainerProof}`
+    );
+    console.log(
+      `\npendingDepositIndexes:\n[${pendingDepositIndexes
+        .map((index) => `"${index}"`)
+        .join(",")}]`
+    );
+    console.log(
+      `\npendingDepositProofs:\n[${pendingDepositProofs
+        .map((proof) => `"${proof}"`)
+        .join(",\n")}]`
+    );
     return;
   }
 
@@ -446,18 +510,21 @@ async function verifyBalances({ indexes, dryrun, test, signer, slot }) {
     validatorBalanceLeaves,
     validatorBalanceProofs,
   };
-  const pendingDepositProofs = {
+  const pendingDepositProofsData = {
     pendingDepositContainerRoot,
     pendingDepositContainerProof,
+    pendingDepositIndexes,
+    pendingDepositRoots,
+    pendingDepositProofs,
   };
 
   if (test) {
     console.log(
       JSON.stringify(
         {
-          snapBalancesBlockRoot,
+          blockRoot,
+          pendingDepositProofsData,
           balanceProofs,
-          pendingDepositProofs,
           validatorBalances: validatorBalancesFormatted,
         },
         null,
@@ -468,12 +535,12 @@ async function verifyBalances({ indexes, dryrun, test, signer, slot }) {
   }
 
   log(
-    `About to verify ${verifiedValidators.length} validator balances for slot ${verificationSlot} to beacon block root ${snapBalancesBlockRoot}`
+    `About to verify ${verifiedValidators.length} validator balances for slot ${verificationSlot} to beacon block root ${blockRoot}`
   );
   log(balanceProofs);
   const tx = await strategy
     .connect(signer)
-    .verifyBalances(balanceProofs, pendingDepositProofs);
+    .verifyBalances(balanceProofs, pendingDepositProofsData);
   await logTxDetails(tx, "verifyBalances");
 }
 

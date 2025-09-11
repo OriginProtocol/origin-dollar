@@ -347,7 +347,7 @@ async function generatePendingDepositProof({
     root: toHex(pendingDepositsTree.root),
     leaf: toHex(proofObj.leaf),
     depth,
-    balance: pendingDeposit,
+    pendingDeposit,
   };
 }
 

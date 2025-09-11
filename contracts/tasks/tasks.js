@@ -1979,6 +1979,12 @@ subtask("verifyBalances", "Verify validator balances on the Beacon chain")
     types.string
   )
   .addOptionalParam(
+    "deposits",
+    "Comma separated list of indexes to beacon chain pending deposits used for generating unit test data",
+    undefined,
+    types.string
+  )
+  .addOptionalParam(
     "dryrun",
     "Do not call verifyBalances on the strategy contract. Just log the params including the proofs",
     false,

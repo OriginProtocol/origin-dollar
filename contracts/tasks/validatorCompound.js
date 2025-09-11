@@ -377,7 +377,7 @@ async function logDeposits(strategyView, blockTag = "latest") {
   let totalDeposits = BigNumber.from(0);
   console.log(`\n${deposits.length || "No"} pending strategy deposits:`);
   if (deposits.length > 0) {
-    console.log(`  ID  amount    slot    public key hash`);
+    console.log(`  Pending deposit root                                               amount    slot    public key hash`);
   }
   for (const deposit of deposits) {
     console.log(
