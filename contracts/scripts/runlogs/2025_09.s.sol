@@ -189,11 +189,11 @@ contract Runlogs_2025_09_Base is SetupBase {
       _salt: uint256(keccak256(abi.encodePacked("Merkl Pool Booster V1")))
     });
 
-    uint256 length = poolBoosterFactoryMerkl.poolBoosterLength();
-    (address pb,,) = poolBoosterFactoryMerkl.poolBoosters(length - 1);
+    //uint256 length = poolBoosterFactoryMerkl.poolBoosterLength();
+    //(address pb,,) = poolBoosterFactoryMerkl.poolBoosters(length - 1);
 
     // Run yield forward
-    oeth.delegateYield(CrossChain.MORPHO_BLUE, address(pb));
+    //oeth.delegateYield(CrossChain.MORPHO_BLUE, address(pb));
     vm.stopBroadcast();
   }
 }
