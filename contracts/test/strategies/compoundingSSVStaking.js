@@ -205,6 +205,23 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
         compoundingStakingSSVStrategy.connect(governor).resetFirstDeposit()
       ).to.be.revertedWith("No first deposit");
     });
+    it("Registrator or governor should be the only ones to pause the strategy", async () => {
+      const {
+        compoundingStakingSSVStrategy,
+        governor,
+        validatorRegistrator,
+        josh,
+      } = fixture;
+
+      await compoundingStakingSSVStrategy.connect(governor).pause();
+      await compoundingStakingSSVStrategy.connect(governor).unPause();
+      await compoundingStakingSSVStrategy.connect(validatorRegistrator).pause();
+      await compoundingStakingSSVStrategy.connect(governor).unPause();
+
+      await expect(
+        compoundingStakingSSVStrategy.connect(josh).pause()
+      ).to.be.revertedWith("Not Registrator or Governor");
+    });
   });
 
   const processValidator = async (
@@ -870,7 +887,7 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
       ).to.equal(stratBalanceBefore);
     });
 
-    it("Should revert when first stake amount is not exactly 32 ETH", async () => {
+    it("Should revert when first stake amount is not exactly 1 ETH", async () => {
       const { compoundingStakingSSVStrategy, validatorRegistrator } = fixture;
 
       const testValidator = testValidators[0];
@@ -886,7 +903,7 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
           emptyCluster
         );
 
-      // Try to stake 32 ETH to the new validator
+      // Try to stake 2 ETH to the new validator
       const stakeTx = compoundingStakingSSVStrategy
         .connect(validatorRegistrator)
         .stakeEth(
@@ -899,6 +916,58 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
         );
 
       await expect(stakeTx).to.be.revertedWith("Invalid first deposit amount");
+    });
+
+    it("Should revert registerSsvValidator when contract paused", async () => {
+      const { compoundingStakingSSVStrategy, governor, validatorRegistrator } =
+        fixture;
+      const testValidator = testValidators[0];
+
+      await compoundingStakingSSVStrategy.connect(governor).pause();
+      // Register a new validator with the SSV Network
+      const tx = compoundingStakingSSVStrategy
+        .connect(validatorRegistrator)
+        .registerSsvValidator(
+          testValidator.publicKey,
+          testValidator.operatorIds,
+          testValidator.sharesData,
+          ethUnits("2"),
+          emptyCluster
+        );
+
+      await expect(tx).to.be.revertedWith("Pausable: paused");
+    });
+
+    it("Should revert registerSsvValidator when contract paused", async () => {
+      const { compoundingStakingSSVStrategy, governor, validatorRegistrator } =
+        fixture;
+      const testValidator = testValidators[0];
+
+      // Register a new validator with the SSV Network
+      await compoundingStakingSSVStrategy
+        .connect(validatorRegistrator)
+        .registerSsvValidator(
+          testValidator.publicKey,
+          testValidator.operatorIds,
+          testValidator.sharesData,
+          ethUnits("2"),
+          emptyCluster
+        );
+
+      await compoundingStakingSSVStrategy.connect(governor).pause();
+
+      const tx = compoundingStakingSSVStrategy
+        .connect(validatorRegistrator)
+        .stakeEth(
+          {
+            pubkey: testValidator.publicKey,
+            signature: testValidator.signature,
+            depositDataRoot: testValidator.depositProof.depositDataRoot,
+          },
+          GweiInWei
+        );
+
+      await expect(tx).to.be.revertedWith("Pausable: paused");
     });
 
     it("Should revert when registering a validator that is already registered", async () => {

@@ -5,6 +5,7 @@ import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.s
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { Pausable } from "@openzeppelin/contracts/security/Pausable.sol";
 import { Governable } from "../../governance/Governable.sol";
 import { IDepositContract } from "../../interfaces/IDepositContract.sol";
 import { IWETH9 } from "../../interfaces/IWETH9.sol";
@@ -19,7 +20,7 @@ import { IBeaconProofs } from "../../interfaces/IBeaconProofs.sol";
  * register, deposit, withdraw, exit and remove validators.
  * @author Origin Protocol Inc
  */
-abstract contract CompoundingValidatorManager is Governable {
+abstract contract CompoundingValidatorManager is Governable, Pausable {
     using SafeERC20 for IERC20;
 
     /// @dev The amount of ETH in wei that is required for a deposit to a new validator.
@@ -203,6 +204,15 @@ abstract contract CompoundingValidatorManager is Governable {
         _;
     }
 
+    /// @dev Throws if called by any account other than the Registrator or Governor
+    modifier onlyRegistratorOrGovernor() {
+        require(
+            msg.sender == validatorRegistrator || isGovernor(),
+            "Not Registrator or Governor"
+        );
+        _;
+    }
+
     /// @param _wethAddress Address of the Erc20 WETH Token contract
     /// @param _vaultAddress Address of the Vault
     /// @param _beaconChainDepositContract Address of the beacon chain deposit contract
@@ -251,6 +261,14 @@ abstract contract CompoundingValidatorManager is Governable {
         emit FirstDepositReset();
     }
 
+    function pause() external onlyRegistratorOrGovernor {
+        _pause();
+    }
+
+    function unPause() external onlyGovernor {
+        _unpause();
+    }
+
     /**
      *
      *             Validator Management
@@ -271,7 +289,7 @@ abstract contract CompoundingValidatorManager is Governable {
         bytes calldata sharesData,
         uint256 ssvAmount,
         Cluster calldata cluster
-    ) external onlyRegistrator {
+    ) external onlyRegistrator whenNotPaused {
         // Hash the public key using the Beacon Chain's format
         bytes32 pubKeyHash = _hashPubKey(publicKey);
         // Check each public key has not already been used
@@ -308,6 +326,8 @@ abstract contract CompoundingValidatorManager is Governable {
     /// This second deposit has to be done after the validator has been verified.
     /// Does not convert any ETH sitting in this strategy to WETH.
     /// There can not be two deposits to the same validator in the same block for the same amount.
+    /// Function is pausable so in case a run-away Registrator can be prevented from continuing
+    /// to deposit funds to slashed or undesired validators.
     /// @param validatorStakeData validator data needed to stake.
     /// The `ValidatorStakeData` struct contains the pubkey, signature and depositDataRoot.
     /// Only the registrator can call this function.
@@ -316,7 +336,7 @@ abstract contract CompoundingValidatorManager is Governable {
     function stakeEth(
         ValidatorStakeData calldata validatorStakeData,
         uint64 depositAmountGwei
-    ) external onlyRegistrator {
+    ) external onlyRegistrator whenNotPaused {
         uint256 depositAmountWei = uint256(depositAmountGwei) * 1 gwei;
         // Check there is enough WETH from the deposits sitting in this strategy contract
         // There could be ETH from withdrawals but we'll ignore that. If it's really needed
