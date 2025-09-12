@@ -706,15 +706,14 @@ abstract contract CompoundingValidatorManager is Governable {
         ValidatorData memory strategyValidator = validator[deposit.pubKeyHash];
         require(deposit.status == DepositStatus.PENDING, "Deposit not pending");
         require(firstPendingDeposit.slot != 0, "Zero 1st pending deposit slot");
+        uint64 firstPendingDepositEpoch = firstPendingDeposit.slot / SLOTS_PER_EPOCH;
 
         // We should allow the verification of deposits for validators that have been marked as exiting
         // to cover this situation:
-        //  - there are have 2 pending deposits
+        //  - there are 2 pending deposits
         //  - beacon chain has slashed the validator
-        //  - when verifyDeposit is called for the first deposit it sets the `withdrawableEpoch` for that
-        //    deposit and mark validator as exiting
-        //  - the verifyDeposit also needs to be called for the second deposit so it can have the
-        //    `withdrawableEpoch` set.
+        //  - when verifyDeposit is called for the first deposit it sets the Validator state to EXITING
+        //  - verifyDeposit should allow a secondary call for the other deposit to a slashed validator
         require(
             strategyValidator.state == ValidatorState.VERIFIED ||
                 strategyValidator.state == ValidatorState.EXITING,
@@ -723,6 +722,7 @@ abstract contract CompoundingValidatorManager is Governable {
         // The verification slot must be after the deposit's slot.
         // This is needed for when the deposit queue is empty.
         require(deposit.slot < depositProcessedSlot, "Slot not after deposit");
+
         uint64 snapTimestamp = snappedBalance.timestamp;
 
         // This check prevents an accounting error that can happen if:
@@ -757,6 +757,23 @@ abstract contract CompoundingValidatorManager is Governable {
             strategyValidator.index,
             strategyValidatorData.withdrawableEpoch,
             strategyValidatorData.withdrawableEpochProof
+        );
+
+        // Validator can either be not exiting and no further checks are required 
+        // Or a validator is exiting then this function needs to make sure that the 
+        // pending deposit to an exited validator has certainly been processed. The 
+        // slot/epoch of first pending deposit is the one that contains the transaction
+        // where the deposit to the ETH Deposit Contract has been made.
+        // 
+        // Once the firstPendingDepositEpoch becomes greater than the withdrawableEpoch of
+        // the slashed validator then the deposit has certainly been processed. When the beacon
+        // chain reaches the withdrawableEpoch of the validator the deposit will no longer be
+        // postponed. And any new deposits created (and present in the deposit queue)
+        // will have an equal or larger withdrawableEpoch.
+        require(
+            strategyValidatorData.withdrawableEpoch == FAR_FUTURE_EPOCH ||
+                strategyValidatorData.withdrawableEpoch <= firstPendingDepositEpoch,
+            "Deposit likely not processed"
         );
 
         // If the validator is exiting because it has been slashed
