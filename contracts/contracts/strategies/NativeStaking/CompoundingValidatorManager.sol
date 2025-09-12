@@ -780,9 +780,6 @@ abstract contract CompoundingValidatorManager is Governable {
             );
 
             validator[deposit.pubKeyHash].state = ValidatorState.EXITING;
-
-            // Leave the deposit status as PENDING
-            return;
         }
 
         // solhint-disable max-line-length
