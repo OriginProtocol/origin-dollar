@@ -698,8 +698,6 @@ abstract contract CompoundingValidatorManager is Governable {
         ValidatorData memory strategyValidator = validator[deposit.pubKeyHash];
         require(deposit.status == DepositStatus.PENDING, "Deposit not pending");
         require(firstPendingDeposit.slot != 0, "Zero 1st pending deposit slot");
-        uint64 firstPendingDepositEpoch = firstPendingDeposit.slot /
-            SLOTS_PER_EPOCH;
 
         // We should allow the verification of deposits for validators that have been marked as exiting
         // to cover this situation:
@@ -751,6 +749,9 @@ abstract contract CompoundingValidatorManager is Governable {
             strategyValidatorData.withdrawableEpoch,
             strategyValidatorData.withdrawableEpochProof
         );
+
+        uint64 firstPendingDepositEpoch = firstPendingDeposit.slot /
+            SLOTS_PER_EPOCH;
 
         // Validator can either be not exiting and no further checks are required
         // Or a validator is exiting then this function needs to make sure that the
