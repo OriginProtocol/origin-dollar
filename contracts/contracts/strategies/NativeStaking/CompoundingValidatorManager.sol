@@ -5,6 +5,7 @@ import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.s
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { Pausable } from "@openzeppelin/contracts/security/Pausable.sol";
 import { Governable } from "../../governance/Governable.sol";
 import { IDepositContract } from "../../interfaces/IDepositContract.sol";
 import { IWETH9 } from "../../interfaces/IWETH9.sol";
@@ -19,7 +20,7 @@ import { IBeaconProofs } from "../../interfaces/IBeaconProofs.sol";
  * register, deposit, withdraw, exit and remove validators.
  * @author Origin Protocol Inc
  */
-abstract contract CompoundingValidatorManager is Governable {
+abstract contract CompoundingValidatorManager is Governable, Pausable {
     using SafeERC20 for IERC20;
 
     /// @dev The amount of ETH in wei that is required for a deposit to a new validator.
@@ -188,14 +189,6 @@ abstract contract CompoundingValidatorManager is Governable {
         bytes32 indexed pendingDepositRoot,
         uint256 amountWei
     );
-    event DepositToValidatorExiting(
-        bytes32 indexed pendingDepositRoot,
-        uint256 amountWei
-    );
-    event DepositValidatorExited(
-        bytes32 indexed pendingDepositRoot,
-        uint256 amountWei
-    );
     event ValidatorWithdraw(bytes32 indexed pubKeyHash, uint256 amountWei);
     event BalancesSnapped(bytes32 indexed blockRoot, uint256 ethBalance);
     event BalancesVerified(
@@ -208,6 +201,15 @@ abstract contract CompoundingValidatorManager is Governable {
     /// @dev Throws if called by any account other than the Registrator
     modifier onlyRegistrator() {
         require(msg.sender == validatorRegistrator, "Not Registrator");
+        _;
+    }
+
+    /// @dev Throws if called by any account other than the Registrator or Governor
+    modifier onlyRegistratorOrGovernor() {
+        require(
+            msg.sender == validatorRegistrator || isGovernor(),
+            "Not Registrator or Governor"
+        );
         _;
     }
 
@@ -259,6 +261,14 @@ abstract contract CompoundingValidatorManager is Governable {
         emit FirstDepositReset();
     }
 
+    function pause() external onlyRegistratorOrGovernor {
+        _pause();
+    }
+
+    function unPause() external onlyGovernor {
+        _unpause();
+    }
+
     /**
      *
      *             Validator Management
@@ -279,7 +289,7 @@ abstract contract CompoundingValidatorManager is Governable {
         bytes calldata sharesData,
         uint256 ssvAmount,
         Cluster calldata cluster
-    ) external onlyRegistrator {
+    ) external onlyRegistrator whenNotPaused {
         // Hash the public key using the Beacon Chain's format
         bytes32 pubKeyHash = _hashPubKey(publicKey);
         // Check each public key has not already been used
@@ -316,6 +326,8 @@ abstract contract CompoundingValidatorManager is Governable {
     /// This second deposit has to be done after the validator has been verified.
     /// Does not convert any ETH sitting in this strategy to WETH.
     /// There can not be two deposits to the same validator in the same block for the same amount.
+    /// Function is pausable so in case a run-away Registrator can be prevented from continuing
+    /// to deposit funds to slashed or undesired validators.
     /// @param validatorStakeData validator data needed to stake.
     /// The `ValidatorStakeData` struct contains the pubkey, signature and depositDataRoot.
     /// Only the registrator can call this function.
@@ -324,7 +336,7 @@ abstract contract CompoundingValidatorManager is Governable {
     function stakeEth(
         ValidatorStakeData calldata validatorStakeData,
         uint64 depositAmountGwei
-    ) external onlyRegistrator {
+    ) external onlyRegistrator whenNotPaused {
         uint256 depositAmountWei = uint256(depositAmountGwei) * 1 gwei;
         // Check there is enough WETH from the deposits sitting in this strategy contract
         // There could be ETH from withdrawals but we'll ignore that. If it's really needed
@@ -709,12 +721,10 @@ abstract contract CompoundingValidatorManager is Governable {
 
         // We should allow the verification of deposits for validators that have been marked as exiting
         // to cover this situation:
-        //  - there are have 2 pending deposits
+        //  - there are 2 pending deposits
         //  - beacon chain has slashed the validator
-        //  - when verifyDeposit is called for the first deposit it sets the `withdrawableEpoch` for that
-        //    deposit and mark validator as exiting
-        //  - the verifyDeposit also needs to be called for the second deposit so it can have the
-        //    `withdrawableEpoch` set.
+        //  - when verifyDeposit is called for the first deposit it sets the Validator state to EXITING
+        //  - verifyDeposit should allow a secondary call for the other deposit to a slashed validator
         require(
             strategyValidator.state == ValidatorState.VERIFIED ||
                 strategyValidator.state == ValidatorState.EXITING,
@@ -723,6 +733,7 @@ abstract contract CompoundingValidatorManager is Governable {
         // The verification slot must be after the deposit's slot.
         // This is needed for when the deposit queue is empty.
         require(deposit.slot < depositProcessedSlot, "Slot not after deposit");
+
         uint64 snapTimestamp = snappedBalance.timestamp;
 
         // This check prevents an accounting error that can happen if:
@@ -759,18 +770,26 @@ abstract contract CompoundingValidatorManager is Governable {
             strategyValidatorData.withdrawableEpochProof
         );
 
-        // If the validator is exiting because it has been slashed
-        if (strategyValidatorData.withdrawableEpoch != FAR_FUTURE_EPOCH) {
-            emit DepositToValidatorExiting(
-                pendingDepositRoot,
-                uint256(deposit.amountGwei) * 1 gwei
-            );
+        uint64 firstPendingDepositEpoch = firstPendingDeposit.slot /
+            SLOTS_PER_EPOCH;
 
-            validator[deposit.pubKeyHash].state = ValidatorState.EXITING;
-
-            // Leave the deposit status as PENDING
-            return;
-        }
+        // Validator can either be not exiting and no further checks are required
+        // Or a validator is exiting then this function needs to make sure that the
+        // pending deposit to an exited validator has certainly been processed. The
+        // slot/epoch of first pending deposit is the one that contains the transaction
+        // where the deposit to the ETH Deposit Contract has been made.
+        //
+        // Once the firstPendingDepositEpoch becomes greater than the withdrawableEpoch of
+        // the slashed validator then the deposit has certainly been processed. When the beacon
+        // chain reaches the withdrawableEpoch of the validator the deposit will no longer be
+        // postponed. And any new deposits created (and present in the deposit queue)
+        // will have an equal or larger withdrawableEpoch.
+        require(
+            strategyValidatorData.withdrawableEpoch == FAR_FUTURE_EPOCH ||
+                strategyValidatorData.withdrawableEpoch <=
+                firstPendingDepositEpoch,
+            "Exit Deposit likely not proc."
+        );
 
         // solhint-disable max-line-length
         // Check the deposit slot is before the first pending deposit's slot on the beacon chain.
@@ -1085,28 +1104,8 @@ abstract contract CompoundingValidatorManager is Governable {
             );
 
             // For each staking strategy's deposit.
-            // Iterate in reverse order so we can pop off deposits at the end of the storage array.
-            for (uint256 i = depositsCount; i > 0; ) {
-                --i;
+            for (uint256 i = 0; i < depositsCount; ++i) {
                 bytes32 pendingDepositRoot = depositList[i];
-
-                DepositData memory depositData = deposits[pendingDepositRoot];
-
-                // Remove the deposit if the validator has exited.
-                if (
-                    validator[depositData.pubKeyHash].state ==
-                    ValidatorState.EXITED
-                ) {
-                    _removeDeposit(pendingDepositRoot, depositData);
-
-                    emit DepositValidatorExited(
-                        pendingDepositRoot,
-                        uint256(depositData.amountGwei) * 1 gwei
-                    );
-
-                    // Skip to the next deposit as the deposit amount is now in the strategy's ETH balance
-                    continue;
-                }
 
                 // Verify the strategy's deposit is still pending on the beacon chain.
                 IBeaconProofs(BEACON_PROOFS).verifyPendingDeposit(
@@ -1117,7 +1116,9 @@ abstract contract CompoundingValidatorManager is Governable {
                 );
 
                 // Convert the deposit amount from Gwei to Wei and add to the total
-                totalDepositsWei += uint256(depositData.amountGwei) * 1 gwei;
+                totalDepositsWei +=
+                    uint256(deposits[pendingDepositRoot].amountGwei) *
+                    1 gwei;
             }
         }
 
