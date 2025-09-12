@@ -321,7 +321,7 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
     depositAmount,
     state = "VERIFIED_DEPOSIT"
   ) => {
-    const { beaconRoots, compoundingStakingSSVStrategy, validatorRegistrator } =
+    const { compoundingStakingSSVStrategy, validatorRegistrator } =
       fixture;
 
     // Stake ETH to the new validator
@@ -348,11 +348,22 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
         },
         depositGwei
       );
+
+    if (state === "STAKED") return stakeTx;
+
+    const verifiedDepositTx = await verifyDeposit(testValidator);
+
+    if (state === "VERIFIED_DEPOSIT") return verifiedDepositTx;
+
+    throw Error(`Invalid state: ${state}`);
+  };
+
+  const verifyDeposit = async (testValidator) => {
+    const { beaconRoots, compoundingStakingSSVStrategy } = fixture;
+
     const { pendingDepositRoot, depositSlot } = await getLastDeposit(
       compoundingStakingSSVStrategy
     );
-
-    if (state === "STAKED") return stakeTx;
 
     // Set parent beacon root for the block after the verification slots
     const depositProcessedSlot = depositSlot + 10000n;
@@ -375,9 +386,7 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
       testValidator.depositProof.strategyValidator
     );
 
-    if (state === "VERIFIED_DEPOSIT") return verifiedDepositTx;
-
-    throw Error(`Invalid state: ${state}`);
+    return verifiedDepositTx;
   };
 
   // call right after depositing to the strategy
@@ -1226,7 +1235,11 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
     });
 
     it("Should remove a validator when validator is exited", async () => {
-      const { validatorRegistrator, compoundingStakingSSVStrategy } = fixture;
+      const {
+        validatorRegistrator,
+        compoundingStakingSSVStrategy,
+        compoundingStakingStrategyView,
+      } = fixture;
 
       // Third validator is later withdrawn later
       await processValidator(testValidators[3], "VERIFIED_DEPOSIT");
@@ -1245,6 +1258,12 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
         activeValidators: [2],
       });
 
+      await expect(
+        (
+          await compoundingStakingStrategyView.getVerifiedValidators()
+        ).length
+      ).to.equal(1);
+
       // Verify the validator with a zero balance which marks the validator as exited
       await assertBalances({
         pendingDepositAmount: 0,
@@ -1253,6 +1272,12 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
         balancesProof: testBalancesProofs[2],
         activeValidators: [2],
       });
+
+      await expect(
+        (
+          await compoundingStakingStrategyView.getVerifiedValidators()
+        ).length
+      ).to.equal(0);
 
       const removeTx = await compoundingStakingSSVStrategy
         .connect(validatorRegistrator)
@@ -1268,6 +1293,80 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
           testValidators[3].publicKeyHash,
           testValidators[3].operatorIds
         );
+    });
+
+    it("Should not remove a validator if it still has a pending deposit", async () => {
+      const {
+        compoundingStakingStrategyView,
+      } = fixture;
+      const epochTime = 12 * 32;
+
+      // Third validator is later withdrawn later
+      await processValidator(testValidators[3], "VERIFIED_DEPOSIT");
+      await topUpValidator(
+        testValidators[3],
+        testValidators[3].depositProof.depositAmount - 1,
+        "VERIFIED_DEPOSIT"
+      );
+
+      // Validator has 1588.918094377 ETH
+      await assertBalances({
+        pendingDepositAmount: 0,
+        wethAmount: 0,
+        ethAmount: 0,
+        balancesProof: testBalancesProofs[1],
+        activeValidators: [2],
+      });
+
+      await expect(
+        (
+          await compoundingStakingStrategyView.getVerifiedValidators()
+        ).length
+      ).to.equal(1);
+
+      // need to advance to a new slot so there are no duplicate deposits
+      await advanceTime(epochTime * 4);
+
+      await topUpValidator(
+        testValidators[3],
+        testValidators[3].depositProof.depositAmount - 1,
+        "STAKED"
+      );
+
+      // Verify the validator with a zero balance doesn't mark the validator as exited
+      // because it still has one pending deposit
+      await assertBalances({
+        pendingDepositAmount: 50.497526,
+        wethAmount: 0,
+        ethAmount: 0,
+        balancesProof: testBalancesProofs[2],
+        activeValidators: [2],
+      });
+
+      await expect(
+        (
+          await compoundingStakingStrategyView.getVerifiedValidators()
+        ).length
+      ).to.equal(1);
+
+      // deposit to on beacon chain exited validator can still be verified
+      await verifyDeposit(testValidators[3]);
+
+      // and another snap/verify balances will exit that validator
+      await assertBalances({
+        pendingDepositAmount: 0,
+        wethAmount: 0,
+        ethAmount: 0,
+        balancesProof: testBalancesProofs[2],
+        activeValidators: [2],
+      });
+
+      // which means no more active validators
+      await expect(
+        (
+          await compoundingStakingStrategyView.getVerifiedValidators()
+        ).length
+      ).to.equal(0);
     });
 
     it("Should revert when removing a validator that has been found", async () => {

@@ -1011,6 +1011,7 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
 
         uint256 verifiedValidatorsCount = verifiedValidators.length;
         uint256 totalValidatorBalance = 0;
+        uint256 depositsCount = depositList.length;
 
         // If there are no verified validators then we can skip the balance verification
         if (verifiedValidatorsCount > 0) {
@@ -1031,6 +1032,11 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
                 balanceProofs.balancesContainerProof
             );
 
+            bytes32[]
+                memory validatorHashesMem = _getPendingDepositValidatorHashes(
+                    depositsCount
+                );
+
             // for each validator in reverse order so we can pop off exited validators at the end
             for (uint256 i = verifiedValidatorsCount; i > 0; ) {
                 --i;
@@ -1044,8 +1050,24 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
                         validator[verifiedValidators[i]].index
                     );
 
-                // If the validator balance is zero
-                if (validatorBalanceGwei == 0) {
+                bool depositPending = false;
+                for (uint256 i = 0; i < validatorHashesMem.length; i++) {
+                    if (validatorHashesMem[i] == verifiedValidators[i]) {
+                        depositPending = true;
+                        break;
+                    }
+                }
+
+                // If validator has a pending deposit we can not remove due to
+                // the following situation:
+                //  - validator has a pending deposit
+                //  - validator has been slashed
+                //  - sweep cycle has withdrawn all ETH from the validator. Balance is 0
+                //  - beacon chain has processed the deposit and set the validator balance
+                //    to deposit amount
+                //  - if validator is no longer in the list of verifiedValidators its
+                //    balance will not be considered and be under-counted.
+                if (validatorBalanceGwei == 0 && !depositPending) {
                     // Store the validator state as exited
                     // This could have been in VERIFIED or EXITING state
                     validator[verifiedValidators[i]].state = ValidatorState
@@ -1074,7 +1096,6 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
             }
         }
 
-        uint256 depositsCount = depositList.length;
         uint256 totalDepositsWei = 0;
 
         // If there are no deposits then we can skip the deposit verification.
@@ -1139,6 +1160,19 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
     }
 
     // slither-disable-end reentrancy-no-eth
+
+    /// @notice get a list of all validator hashes present in the pending deposits
+    ///         list can have duplicate entries
+    function _getPendingDepositValidatorHashes(uint256 depositsCount)
+        internal
+        view
+        returns (bytes32[] memory validatorHashes)
+    {
+        validatorHashes = new bytes32[](depositsCount);
+        for (uint256 i = 0; i < depositsCount; i++) {
+            validatorHashes[i] = deposits[depositList[i]].pubKeyHash;
+        }
+    }
 
     /// @notice Hash a validator public key using the Beacon Chain's format
     function _hashPubKey(bytes memory pubKey) internal pure returns (bytes32) {
