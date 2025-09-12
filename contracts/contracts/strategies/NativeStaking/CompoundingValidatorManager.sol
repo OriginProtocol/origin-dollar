@@ -188,10 +188,6 @@ abstract contract CompoundingValidatorManager is Governable {
         bytes32 indexed pendingDepositRoot,
         uint256 amountWei
     );
-    event DepositToValidatorExiting(
-        bytes32 indexed pendingDepositRoot,
-        uint256 amountWei
-    );
     event ValidatorWithdraw(bytes32 indexed pubKeyHash, uint256 amountWei);
     event BalancesSnapped(bytes32 indexed blockRoot, uint256 ethBalance);
     event BalancesVerified(
@@ -771,16 +767,6 @@ abstract contract CompoundingValidatorManager is Governable {
                 strategyValidatorData.withdrawableEpoch <= firstPendingDepositEpoch,
             "Deposit likely not processed"
         );
-
-        // If the validator is exiting because it has been slashed
-        if (strategyValidatorData.withdrawableEpoch != FAR_FUTURE_EPOCH) {
-            emit DepositToValidatorExiting(
-                pendingDepositRoot,
-                uint256(deposit.amountGwei) * 1 gwei
-            );
-
-            validator[deposit.pubKeyHash].state = ValidatorState.EXITING;
-        }
 
         // solhint-disable max-line-length
         // Check the deposit slot is before the first pending deposit's slot on the beacon chain.
