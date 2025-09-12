@@ -192,10 +192,6 @@ abstract contract CompoundingValidatorManager is Governable {
         bytes32 indexed pendingDepositRoot,
         uint256 amountWei
     );
-    event DepositValidatorExited(
-        bytes32 indexed pendingDepositRoot,
-        uint256 amountWei
-    );
     event ValidatorWithdraw(bytes32 indexed pubKeyHash, uint256 amountWei);
     event BalancesSnapped(bytes32 indexed blockRoot, uint256 ethBalance);
     event BalancesVerified(
