@@ -698,7 +698,8 @@ abstract contract CompoundingValidatorManager is Governable {
         ValidatorData memory strategyValidator = validator[deposit.pubKeyHash];
         require(deposit.status == DepositStatus.PENDING, "Deposit not pending");
         require(firstPendingDeposit.slot != 0, "Zero 1st pending deposit slot");
-        uint64 firstPendingDepositEpoch = firstPendingDeposit.slot / SLOTS_PER_EPOCH;
+        uint64 firstPendingDepositEpoch = firstPendingDeposit.slot /
+            SLOTS_PER_EPOCH;
 
         // We should allow the verification of deposits for validators that have been marked as exiting
         // to cover this situation:
@@ -751,12 +752,12 @@ abstract contract CompoundingValidatorManager is Governable {
             strategyValidatorData.withdrawableEpochProof
         );
 
-        // Validator can either be not exiting and no further checks are required 
-        // Or a validator is exiting then this function needs to make sure that the 
-        // pending deposit to an exited validator has certainly been processed. The 
+        // Validator can either be not exiting and no further checks are required
+        // Or a validator is exiting then this function needs to make sure that the
+        // pending deposit to an exited validator has certainly been processed. The
         // slot/epoch of first pending deposit is the one that contains the transaction
         // where the deposit to the ETH Deposit Contract has been made.
-        // 
+        //
         // Once the firstPendingDepositEpoch becomes greater than the withdrawableEpoch of
         // the slashed validator then the deposit has certainly been processed. When the beacon
         // chain reaches the withdrawableEpoch of the validator the deposit will no longer be
@@ -764,7 +765,8 @@ abstract contract CompoundingValidatorManager is Governable {
         // will have an equal or larger withdrawableEpoch.
         require(
             strategyValidatorData.withdrawableEpoch == FAR_FUTURE_EPOCH ||
-                strategyValidatorData.withdrawableEpoch <= firstPendingDepositEpoch,
+                strategyValidatorData.withdrawableEpoch <=
+                firstPendingDepositEpoch,
             "Deposit likely not processed"
         );
 
@@ -1081,12 +1083,8 @@ abstract contract CompoundingValidatorManager is Governable {
             );
 
             // For each staking strategy's deposit.
-            // Iterate in reverse order so we can pop off deposits at the end of the storage array.
-            for (uint256 i = depositsCount; i > 0; ) {
-                --i;
+            for (uint256 i = 0; i < depositsCount; ++i) {
                 bytes32 pendingDepositRoot = depositList[i];
-
-                DepositData memory depositData = deposits[pendingDepositRoot];
 
                 // Verify the strategy's deposit is still pending on the beacon chain.
                 IBeaconProofs(BEACON_PROOFS).verifyPendingDeposit(
@@ -1097,7 +1095,9 @@ abstract contract CompoundingValidatorManager is Governable {
                 );
 
                 // Convert the deposit amount from Gwei to Wei and add to the total
-                totalDepositsWei += uint256(depositData.amountGwei) * 1 gwei;
+                totalDepositsWei +=
+                    uint256(deposits[pendingDepositRoot].amountGwei) *
+                    1 gwei;
             }
         }
 
