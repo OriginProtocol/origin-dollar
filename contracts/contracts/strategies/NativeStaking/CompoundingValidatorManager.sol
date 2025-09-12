@@ -1109,22 +1109,6 @@ abstract contract CompoundingValidatorManager is Governable {
 
                 DepositData memory depositData = deposits[pendingDepositRoot];
 
-                // Remove the deposit if the validator has exited.
-                if (
-                    validator[depositData.pubKeyHash].state ==
-                    ValidatorState.EXITED
-                ) {
-                    _removeDeposit(pendingDepositRoot, depositData);
-
-                    emit DepositValidatorExited(
-                        pendingDepositRoot,
-                        uint256(depositData.amountGwei) * 1 gwei
-                    );
-
-                    // Skip to the next deposit as the deposit amount is now in the strategy's ETH balance
-                    continue;
-                }
-
                 // Verify the strategy's deposit is still pending on the beacon chain.
                 IBeaconProofs(BEACON_PROOFS).verifyPendingDeposit(
                     pendingDepositProofs.pendingDepositContainerRoot,
