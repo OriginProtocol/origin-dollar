@@ -768,7 +768,7 @@ abstract contract CompoundingValidatorManager is Governable {
             strategyValidatorData.withdrawableEpoch == FAR_FUTURE_EPOCH ||
                 strategyValidatorData.withdrawableEpoch <=
                 firstPendingDepositEpoch,
-            "Deposit likely not processed"
+            "Exit Deposit likely not proc."
         );
 
         // solhint-disable max-line-length

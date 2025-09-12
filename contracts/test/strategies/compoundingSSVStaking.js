@@ -2541,7 +2541,7 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
           strategyValidatorData
         );
 
-        await expect(tx).to.be.revertedWith("Deposit likely not processed");
+        await expect(tx).to.be.revertedWith("Exit Deposit likely not proc.");
       });
       it("Should verify deposit when the first pending deposit slot equals the withdrawable epoch", async () => {
         const {
