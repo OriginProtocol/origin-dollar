@@ -48,18 +48,18 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
     uint64 internal constant SNAP_BALANCES_DELAY = 35 * SLOT_DURATION;
 
     /// @notice The address of the Wrapped ETH (WETH) token contract
-    address public immutable WETH;
+    address internal immutable WETH;
     /// @notice The address of the beacon chain deposit contract
-    address public immutable BEACON_CHAIN_DEPOSIT_CONTRACT;
+    address internal immutable BEACON_CHAIN_DEPOSIT_CONTRACT;
     /// @notice The address of the SSV Network contract used to interface with
     address public immutable SSV_NETWORK;
     /// @notice Address of the OETH Vault proxy contract
-    address public immutable VAULT_ADDRESS;
+    address internal immutable VAULT_ADDRESS;
     /// @notice Address of the Beacon Proofs contract that verifies beacon chain data
     address public immutable BEACON_PROOFS;
     /// @notice The timestamp of the Beacon chain genesis.
     /// @dev this is different on Testnets like Hoodi so is set at deployment time.
-    uint64 public immutable BEACON_GENESIS_TIMESTAMP;
+    uint64 internal immutable BEACON_GENESIS_TIMESTAMP;
 
     /// @notice Address of the registrator - allowed to register, withdraw, exit and remove validators
     address public validatorRegistrator;
@@ -386,6 +386,7 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
             // Flag a deposit to an unverified validator so only no other deposits can be made
             // to an unverified validator.
             firstDeposit = true;
+            validator[pubKeyHash].state = ValidatorState.STAKED;
         }
 
         /* 0x02 to indicate that withdrawal credentials are for a compounding validator
@@ -398,12 +399,6 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
             bytes11(0),
             address(this)
         );
-
-        //// Update contract storage
-        // Store the validator state if needed
-        if (currentState == ValidatorState.REGISTERED) {
-            validator[pubKeyHash].state = ValidatorState.STAKED;
-        }
 
         /// After the Pectra upgrade the validators have a new restriction when proposing
         /// blocks. The timestamps are at strict intervals of 12 seconds from the genesis block
