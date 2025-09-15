@@ -6,12 +6,13 @@ state "Registered SSV Validator" as RegisteredValidator
 RegisteredValidator : validator REGISTERED
 RegisteredValidator : call SSVNetwork.registerValidator
 
-state "Invalid SSV Validator" as InvalidSSVValidator
+state "Removed Invalid\nSSV Validator" as InvalidSSVValidator
 InvalidSSVValidator : validator REMOVED
 InvalidSSVValidator : call SSVNetwork.removeValidator
 
 state "Initial Deposit To Validator" as InitialDeposit
 InitialDeposit : validator STAKED
+InitialDeposit : validator index 0
 InitialDeposit : deposit PENDING
 InitialDeposit : depositList added
 InitialDeposit : firstDeposit true
@@ -28,7 +29,7 @@ FrontRunDeposit : depositList removed
 FrontRunDeposit : lastVerifiedEthBalance reduced by deposit amount
 
 state "Removed Front-run Validator" as RemovedFrontRunValidator
-RemovedFrontRunValidator : validator REMOVEDprevi
+RemovedFrontRunValidator : validator REMOVED
 RemovedFrontRunValidator : call SSVNetwork.removeValidator
 
 state "Verified Validator" as VerifiedValidator
@@ -37,36 +38,40 @@ VerifiedValidator : validator index
 VerifiedValidator : verifiedValidators added
 VerifiedValidator : firstDeposit false
 
-state "Verified Deposit" as VerifiedDeposit
-VerifiedDeposit : deposit VERIFIED
-VerifiedDeposit : depositList removed
+state "Inactive Validator" as VerifiedDepositInactive
+VerifiedDepositInactive : deposit VERIFIED
+VerifiedDepositInactive : depositList removed
 
-state "Verified Deposit to Exiting Validator" as DepositToExitingValidator
+state "Active Validator" as VerifiedDepositActive
+VerifiedDepositActive : deposit ACTIVE
+VerifiedDepositActive : depositList removed
+
+state "Verified Deposit to\nExiting Validator" as DepositToExitingValidator
 DepositToExitingValidator : deposit VERIFIED
 DepositToExitingValidator : depositList removed
 
-state "Deposit to Top-Up Validator" as TopUpDeposit
-TopUpDeposit : deposit PENDING
-TopUpDeposit : depositList added
-TopUpDeposit : deposit amount of WETH convert to ETH
-TopUpDeposit : depositedWethAccountedFor decreased by deposit amount
-TopUpDeposit : lastVerifiedEthBalance increased by deposit amount
-TopUpDeposit : snappedBalance timestamp reset
-TopUpDeposit : call deposit contract with deposit amount of ETH value
+state "Deposit to Top-Up\nInactive Validator" as TopUpDepositInactive
+TopUpDepositInactive : deposit PENDING
+TopUpDepositInactive : depositList added
+TopUpDepositInactive : deposit amount of WETH convert to ETH
+TopUpDepositInactive : depositedWethAccountedFor decreased by deposit amount
+TopUpDepositInactive : lastVerifiedEthBalance increased by deposit amount
+TopUpDepositInactive : snappedBalance timestamp reset
+TopUpDepositInactive : call deposit contract with deposit amount of ETH value
 
+state "Deposit to Top-Up\nActive Validator" as TopUpDepositActive
+TopUpDepositActive : deposit PENDING
+TopUpDepositActive : depositList added
+TopUpDepositActive : deposit amount of WETH convert to ETH
+TopUpDepositActive : depositedWethAccountedFor decreased by deposit amount
+TopUpDepositActive : lastVerifiedEthBalance increased by deposit amount
+TopUpDepositActive : snappedBalance timestamp reset
+TopUpDepositActive : call deposit contract with deposit amount of ETH value
 
 state "Forced Exit with Deposit" as ForcedExitWithDeposit
 state "Forced Exit no Deposit" as ForcedExitNoDeposit
 
-' state "Verified Deposit to Exiting Validator" as ExitedValidatorWithDeposit
-' ExitedValidatorWithDeposit : deposit VERIFIED
-' ExitedValidatorWithDeposit : depositList removed
-' ExitedValidatorWithDeposit : validator EXITED
-' ExitedValidatorWithDeposit : verifiedValidators removed
-' ExitedValidatorWithDeposit : lastVerifiedEthBalance deposits + validators + ETH balance
-' ExitedValidatorWithDeposit : snappedBalance timestamp reset
-
-state "Verified Exited Validator" as ExitedValidator
+state "Exited Validator" as ExitedValidator
 ExitedValidator : validator EXITED
 ExitedValidator : verifiedValidators removed
 ExitedValidator : lastVerifiedEthBalance deposits + validators + ETH balance
@@ -75,11 +80,11 @@ ExitedValidator : snappedBalance timestamp reset
 state "Partial Withdrawal\nfrom Validator" as PartialWithdrawal
 PartialWithdrawal : request partial withdrawal
 
-state "Exiting from Validator" as ExitingValidator
+state "Exiting Validator" as ExitingValidator
 ExitingValidator : validator EXITING
 ExitingValidator : request full exit
 
-state "Removed Exited Validator" as RemovedExitedValidator
+state "Removed SSV Validator" as RemovedExitedValidator
 RemovedExitedValidator : validator REMOVED
 RemovedExitedValidator : call SSVNetwork.removeValidator
 
@@ -98,21 +103,27 @@ RegisteredValidator --> InvalidSSVValidator : removeSsvValidator
 InitialDeposit --> VerifiedValidator : verifyValidator
 InitialDeposit --> FrontRunDeposit : verifyValidator
 FrontRunDeposit --> RemovedFrontRunValidator : removeSsvValidator
-VerifiedValidator ---> VerifiedDeposit : verifyDeposit
+VerifiedValidator ---> VerifiedDepositInactive : verifyDeposit
 VerifiedValidator --> ForcedExitWithDeposit
 
-VerifiedDeposit -> TopUpDeposit : stakeETH
-TopUpDeposit -> VerifiedDeposit : verifyDeposit
-VerifiedDeposit --> ForcedExitNoDeposit
+TopUpDepositInactive <- VerifiedDepositInactive : stakeETH
+TopUpDepositInactive -> VerifiedDepositInactive : verifyDeposit
+VerifiedDepositInactive ---> ForcedExitNoDeposit
 ForcedExitNoDeposit ---> ExitedValidator : verifyBalances
-TopUpDeposit --> ForcedExitWithDeposit
+TopUpDepositInactive ---> ForcedExitWithDeposit
+TopUpDepositActive --> ForcedExitWithDeposit
 ForcedExitWithDeposit --> DepositToExitingValidator : verifyDeposit
+VerifiedDepositInactive --> VerifiedDepositActive : verifyBalances
+
+TopUpDepositActive <- VerifiedDepositActive : stakeETH
+TopUpDepositActive -> VerifiedDepositActive : verifyDeposit
+VerifiedDepositActive --> ForcedExitNoDeposit
 
 DepositToExitingValidator --> ExitedValidator : verifyBalances
 
-VerifiedDeposit -> PartialWithdrawal : validatorWithdrawal\n(amount > 0)
-PartialWithdrawal -> VerifiedDeposit
-VerifiedDeposit ---> ExitingValidator : validatorWithdrawal\n(amount = 0)
+VerifiedDepositActive -> PartialWithdrawal : validatorWithdrawal\n(amount > 0)
+VerifiedDepositActive <- PartialWithdrawal
+VerifiedDepositActive ---> ExitingValidator : validatorWithdrawal\n(amount = 0)
 ExitingValidator --> ExitedValidator : verifyBalances
 ExitedValidator --> RemovedExitedValidator : removeSsvValidator
 

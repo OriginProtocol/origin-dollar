@@ -25,6 +25,8 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
 
     /// @dev The amount of ETH in wei that is required for a deposit to a new validator.
     uint256 internal constant DEPOSIT_AMOUNT_WEI = 1 ether;
+    /// @dev The amount of ETH balance in validator required for validator activation
+    uint256 internal constant MIN_ACTIVATION_BALANCE_GWEI = 32 ether / 1e9;
     /// @dev The maximum number of deposits that are waiting to be verified as processed on the beacon chain.
     uint256 internal constant MAX_DEPOSITS = 12;
     /// @dev The maximum number of validators that can be verified.
@@ -46,18 +48,18 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
     uint64 internal constant SNAP_BALANCES_DELAY = 35 * SLOT_DURATION;
 
     /// @notice The address of the Wrapped ETH (WETH) token contract
-    address public immutable WETH;
+    address internal immutable WETH;
     /// @notice The address of the beacon chain deposit contract
-    address public immutable BEACON_CHAIN_DEPOSIT_CONTRACT;
+    address internal immutable BEACON_CHAIN_DEPOSIT_CONTRACT;
     /// @notice The address of the SSV Network contract used to interface with
     address public immutable SSV_NETWORK;
     /// @notice Address of the OETH Vault proxy contract
-    address public immutable VAULT_ADDRESS;
+    address internal immutable VAULT_ADDRESS;
     /// @notice Address of the Beacon Proofs contract that verifies beacon chain data
     address public immutable BEACON_PROOFS;
     /// @notice The timestamp of the Beacon chain genesis.
     /// @dev this is different on Testnets like Hoodi so is set at deployment time.
-    uint64 public immutable BEACON_GENESIS_TIMESTAMP;
+    uint64 internal immutable BEACON_GENESIS_TIMESTAMP;
 
     /// @notice Address of the registrator - allowed to register, withdraw, exit and remove validators
     address public validatorRegistrator;
@@ -119,6 +121,7 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
         REGISTERED, // validator is registered on the SSV network
         STAKED, // validator has funds staked
         VERIFIED, // validator has been verified to exist on the beacon chain
+        ACTIVE, // The validator balance is at least 32 ETH
         EXITING, // The validator has been requested to exit or has been verified as forced exit
         EXITED, // The validator has been verified to have a zero balance
         REMOVED, // validator has funds withdrawn to this strategy contract and is removed from the SSV
@@ -357,7 +360,8 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
         // Can not stake to a validator that has been staked but not yet verified.
         require(
             (currentState == ValidatorState.REGISTERED ||
-                currentState == ValidatorState.VERIFIED),
+                currentState == ValidatorState.VERIFIED ||
+                currentState == ValidatorState.ACTIVE),
             "Not registered or verified"
         );
         require(depositAmountWei >= 1 ether, "Deposit too small");
@@ -382,6 +386,7 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
             // Flag a deposit to an unverified validator so only no other deposits can be made
             // to an unverified validator.
             firstDeposit = true;
+            validator[pubKeyHash].state = ValidatorState.STAKED;
         }
 
         /* 0x02 to indicate that withdrawal credentials are for a compounding validator
@@ -394,12 +399,6 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
             bytes11(0),
             address(this)
         );
-
-        //// Update contract storage
-        // Store the validator state if needed
-        if (currentState == ValidatorState.REGISTERED) {
-            validator[pubKeyHash].state = ValidatorState.STAKED;
-        }
 
         /// After the Pectra upgrade the validators have a new restriction when proposing
         /// blocks. The timestamps are at strict intervals of 12 seconds from the genesis block
@@ -473,7 +472,7 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
     {
         // Hash the public key using the Beacon Chain's format
         bytes32 pubKeyHash = _hashPubKey(publicKey);
-        ValidatorState currentState = validator[pubKeyHash].state;
+        ValidatorData memory validatorDataMem = validator[pubKeyHash];
         // Validator full withdrawal could be denied due to multiple reasons:
         //  - the validator has not been activated or active long enough
         //    (current_epoch < activation_epoch + SHARD_COMMITTEE_PERIOD)
@@ -483,9 +482,9 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
         // of adding complexity of verifying if a validator is eligible for a full exit, we allow
         // multiple full withdrawal requests per validator.
         require(
-            currentState == ValidatorState.VERIFIED ||
-                currentState == ValidatorState.EXITING,
-            "Validator not verified/exiting"
+            validatorDataMem.state == ValidatorState.ACTIVE ||
+                validatorDataMem.state == ValidatorState.EXITING,
+            "Validator not active/exiting"
         );
 
         // If a full withdrawal (validator exit)
@@ -500,6 +499,13 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
                     "Pending deposit"
                 );
             }
+
+            // A validator that never had the minimal activation balance can not activate
+            // and thus can not perform a full exit
+            require(
+                validatorDataMem.state == ValidatorState.ACTIVE,
+                "Validator not active"
+            );
 
             // Store the validator state as exiting so no more deposits can be made to it.
             validator[pubKeyHash].state = ValidatorState.EXITING;
@@ -727,8 +733,9 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
         //  - verifyDeposit should allow a secondary call for the other deposit to a slashed validator
         require(
             strategyValidator.state == ValidatorState.VERIFIED ||
+                strategyValidator.state == ValidatorState.ACTIVE ||
                 strategyValidator.state == ValidatorState.EXITING,
-            "Validator not verified/exiting"
+            "Not verified/active/exiting"
         );
         // The verification slot must be after the deposit's slot.
         // This is needed for when the deposit queue is empty.
@@ -1040,6 +1047,9 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
             // for each validator in reverse order so we can pop off exited validators at the end
             for (uint256 i = verifiedValidatorsCount; i > 0; ) {
                 --i;
+                ValidatorData memory validatorDataMem = validator[
+                    verifiedValidators[i]
+                ];
                 // verify validator's balance in beaconBlock.state.balances to the
                 // beaconBlock.state.balances container root
                 uint256 validatorBalanceGwei = IBeaconProofs(BEACON_PROOFS)
@@ -1047,7 +1057,7 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
                         balanceProofs.balancesContainerRoot,
                         balanceProofs.validatorBalanceLeaves[i],
                         balanceProofs.validatorBalanceProofs[i],
-                        validator[verifiedValidators[i]].index
+                        validatorDataMem.index
                     );
 
                 bool depositPending = false;
@@ -1069,7 +1079,7 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
                 //    balance will not be considered and be under-counted.
                 if (validatorBalanceGwei == 0 && !depositPending) {
                     // Store the validator state as exited
-                    // This could have been in VERIFIED or EXITING state
+                    // This could have been in VERIFIED, ACTIVE or EXITING state
                     validator[verifiedValidators[i]].state = ValidatorState
                         .EXITED;
 
@@ -1089,6 +1099,12 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
 
                     // The validator balance is zero so not need to add to totalValidatorBalance
                     continue;
+                } else if (
+                    validatorDataMem.state == ValidatorState.VERIFIED &&
+                    validatorBalanceGwei >= MIN_ACTIVATION_BALANCE_GWEI
+                ) {
+                    validator[verifiedValidators[i]].state = ValidatorState
+                        .ACTIVE;
                 }
 
                 // convert Gwei balance to Wei and add to the total validator balance
@@ -1176,7 +1192,7 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
 
     /// @notice Hash a validator public key using the Beacon Chain's format
     function _hashPubKey(bytes memory pubKey) internal pure returns (bytes32) {
-        require(pubKey.length == 48, "Invalid public key length");
+        require(pubKey.length == 48, "Invalid public key");
         return sha256(abi.encodePacked(pubKey, bytes16(0)));
     }
 
