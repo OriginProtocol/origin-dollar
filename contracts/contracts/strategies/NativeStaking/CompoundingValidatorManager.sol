@@ -385,6 +385,7 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
             // Flag a deposit to an unverified validator so only no other deposits can be made
             // to an unverified validator.
             firstDeposit = true;
+            validator[pubKeyHash].state = ValidatorState.STAKED;
         }
 
         /* 0x02 to indicate that withdrawal credentials are for a compounding validator
@@ -397,12 +398,6 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
             bytes11(0),
             address(this)
         );
-
-        //// Update contract storage
-        // Store the validator state if needed
-        if (currentState == ValidatorState.REGISTERED) {
-            validator[pubKeyHash].state = ValidatorState.STAKED;
-        }
 
         /// After the Pectra upgrade the validators have a new restriction when proposing
         /// blocks. The timestamps are at strict intervals of 12 seconds from the genesis block
