@@ -1051,8 +1051,8 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
                     );
 
                 bool depositPending = false;
-                for (uint256 i = 0; i < validatorHashesMem.length; i++) {
-                    if (validatorHashesMem[i] == verifiedValidators[i]) {
+                for (uint256 j = 0; j < validatorHashesMem.length; j++) {
+                    if (validatorHashesMem[j] == verifiedValidators[i]) {
                         depositPending = true;
                         break;
                     }
