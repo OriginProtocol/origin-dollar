@@ -18,7 +18,6 @@ contract CompoundingStakingStrategyView {
     struct ValidatorView {
         bytes32 pubKeyHash;
         uint64 index;
-        bool activated;
         CompoundingValidatorManager.ValidatorState state;
     }
 
@@ -43,14 +42,12 @@ contract CompoundingStakingStrategyView {
             bytes32 pubKeyHash = stakingStrategy.verifiedValidators(i);
             (
                 CompoundingValidatorManager.ValidatorState state,
-                uint64 index,
-                bool activated
+                uint64 index
             ) = stakingStrategy.validator(pubKeyHash);
             validators[i] = ValidatorView({
                 pubKeyHash: pubKeyHash,
                 index: index,
-                state: state,
-                activated: activated
+                state: state
             });
         }
     }

@@ -13,7 +13,6 @@ InvalidSSVValidator : call SSVNetwork.removeValidator
 state "Initial Deposit To Validator" as InitialDeposit
 InitialDeposit : validator STAKED
 InitialDeposit : validator index 0
-InitialDeposit : validator canActivate false
 InitialDeposit : deposit PENDING
 InitialDeposit : depositList added
 InitialDeposit : firstDeposit true
@@ -36,7 +35,6 @@ RemovedFrontRunValidator : call SSVNetwork.removeValidator
 state "Verified Validator" as VerifiedValidator
 VerifiedValidator : validator VERIFIED
 VerifiedValidator : validator index
-VerifiedValidator : validator canActivate false
 VerifiedValidator : verifiedValidators added
 VerifiedValidator : firstDeposit false
 
@@ -45,8 +43,7 @@ VerifiedDepositInactive : deposit VERIFIED
 VerifiedDepositInactive : depositList removed
 
 state "Active Validator" as VerifiedDepositActive
-VerifiedDepositActive : validator canActivate true
-VerifiedDepositActive : deposit VERIFIED
+VerifiedDepositActive : deposit ACTIVE
 VerifiedDepositActive : depositList removed
 
 state "Verified Deposit to\nExiting Validator" as DepositToExitingValidator
