@@ -321,8 +321,7 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
     depositAmount,
     state = "VERIFIED_DEPOSIT"
   ) => {
-    const { compoundingStakingSSVStrategy, validatorRegistrator } =
-      fixture;
+    const { compoundingStakingSSVStrategy, validatorRegistrator } = fixture;
 
     // Stake ETH to the new validator
 
@@ -1296,9 +1295,7 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
     });
 
     it("Should not remove a validator if it still has a pending deposit", async () => {
-      const {
-        compoundingStakingStrategyView,
-      } = fixture;
+      const { compoundingStakingStrategyView } = fixture;
       const epochTime = 12 * 32;
 
       // Third validator is later withdrawn later
