@@ -17,7 +17,6 @@ const { ethUnits, advanceTime } = require("../helpers");
 const { setERC20TokenBalance } = require("../_fund");
 const { zero } = require("../../utils/addresses");
 const { calcDepositRoot } = require("../../tasks/beaconTesting");
-const { logDeposits } = require("../../tasks/validatorCompound");
 const {
   hashPubKey,
   calcSlot,
@@ -1062,6 +1061,11 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
         "VERIFIED_DEPOSIT"
       );
 
+      const validatorBefore = await compoundingStakingSSVStrategy.validator(
+        testValidators[3].publicKeyHash
+      );
+      expect(validatorBefore.state).to.equal(3); // VERIFIED
+
       // Validator has 1588.918094377 ETH
       // assert balances so validator can be fully withdrawable
       await assertBalances({
@@ -1071,6 +1075,11 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
         balancesProof: testBalancesProofs[1],
         activeValidators: [2],
       });
+
+      const validatorAfter = await compoundingStakingSSVStrategy.validator(
+        testValidators[3].publicKeyHash
+      );
+      expect(validatorAfter.state).to.equal(4); // ACTIVE
 
       const tx = await compoundingStakingSSVStrategy
         .connect(validatorRegistrator)
@@ -1088,7 +1097,7 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
             testValidators[3].publicKeyHash
           )
         ).state
-      ).to.equal(4); // EXITING
+      ).to.equal(5); // EXITING
     });
 
     it("Should revert when validator's balance hasn't been confirmed to equal or surpass 32 ETH", async () => {
@@ -1108,7 +1117,7 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
           value: 1,
         });
 
-      await expect(tx).to.be.revertedWith("Validator can not activate");
+      await expect(tx).to.be.revertedWith("Validator not active/exiting");
     });
 
     it("Should revert when exiting a validator with a pending deposit", async () => {
@@ -1120,8 +1129,20 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
       await topUpValidator(
         testValidators[3],
         testValidators[3].depositProof.depositAmount - 1,
-        "STAKED"
+        "VERIFIED_DEPOSIT"
       );
+
+      // Validator has 1588.918094377 ETH
+      // assert balances so validator can be fully withdrawable
+      await assertBalances({
+        pendingDepositAmount: 0,
+        wethAmount: 0,
+        ethAmount: 0,
+        balancesProof: testBalancesProofs[1],
+        activeValidators: [2],
+      });
+
+      await topUpValidator(testValidators[3], 1, "STAKED");
 
       // Amount 0 is a full validator exit
       const tx = compoundingStakingSSVStrategy
@@ -1173,8 +1194,28 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
       await topUpValidator(
         testValidators[3],
         testValidators[3].depositProof.depositAmount - 1,
-        "STAKED"
+        "VERIFIED_DEPOSIT"
       );
+
+      // Validator has 1588.918094377 ETH
+      // assert balances so validator can be fully withdrawable
+      await assertBalances({
+        pendingDepositAmount: 0,
+        wethAmount: 0,
+        ethAmount: 0,
+        balancesProof: testBalancesProofs[1],
+        activeValidators: [2],
+      });
+
+      await topUpValidator(testValidators[3], 1, "STAKED");
+
+      expect(
+        (
+          await compoundingStakingSSVStrategy.validator(
+            testValidators[3].publicKeyHash
+          )
+        ).state
+      ).to.equal(4); // ACTIVE
 
       const withdrawAmountGwei = ETHInGwei.mul(5);
 
@@ -1197,7 +1238,7 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
             testValidators[3].publicKeyHash
           )
         ).state
-      ).to.equal(3); // VERIFIED
+      ).to.equal(4); // ACTIVE
     });
 
     // Remove validator
@@ -1960,9 +2001,6 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
           "VERIFIED_VALIDATOR"
         );
 
-        const { compoundingStakingStrategyView } = fixture;
-        await logDeposits(compoundingStakingStrategyView);
-
         await assertBalances({
           pendingDepositAmount: 1,
           wethAmount: 0,
@@ -2144,7 +2182,7 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
                 testValidators[3].publicKeyHash
               )
             ).state
-          ).to.equal(3); // VERIFIED
+          ).to.equal(4); // ACTIVE
 
           // fund 1 WEI for the withdrawal request
           await setBalance(compoundingStakingSSVStrategy.address, "0x1");
@@ -2183,7 +2221,7 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
                 testValidators[3].publicKeyHash
               )
             ).state
-          ).to.equal(5); // EXITED
+          ).to.equal(6); // EXITED
         });
       });
     });
@@ -2567,7 +2605,7 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
         await compoundingStakingSSVStrategy.validator(
           testValidator.publicKeyHash
         );
-      expect(validatorStateAfter).to.equal(7); // INVALID
+      expect(validatorStateAfter).to.equal(8); // INVALID
 
       // There are no pending deposits
       const pendingDeposits =

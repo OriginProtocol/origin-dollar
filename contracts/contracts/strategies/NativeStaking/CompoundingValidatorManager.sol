@@ -489,7 +489,7 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
         require(
             validatorDataMem.state == ValidatorState.ACTIVE ||
                 validatorDataMem.state == ValidatorState.EXITING,
-            "Validator not verified/exiting"
+            "Validator not active/exiting"
         );
 
         // If a full withdrawal (validator exit)
@@ -508,7 +508,7 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
             // A validator that never had the minimal activation balance can not activate
             // and thus can not perform a full exit
             require(
-                validatorDataMem.state != ValidatorState.ACTIVE,
+                validatorDataMem.state == ValidatorState.ACTIVE,
                 "Validator not active"
             );
 
@@ -740,7 +740,7 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
             strategyValidator.state == ValidatorState.VERIFIED ||
                 strategyValidator.state == ValidatorState.ACTIVE ||
                 strategyValidator.state == ValidatorState.EXITING,
-            "Validator not verified/exiting"
+            "Not verified/active/exiting"
         );
         // The verification slot must be after the deposit's slot.
         // This is needed for when the deposit queue is empty.
