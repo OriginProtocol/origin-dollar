@@ -1,116 +1,9 @@
 const { toHex } = require("../utils/units");
-const { concatProof, hashPubKey, getValidator } = require("../utils/beacon");
+const { concatProof, getValidator } = require("../utils/beacon");
 const { formatUnits } = require("ethers/lib/utils");
-const { MAX_UINT64, ZERO_BYTES32 } = require("./constants");
+const { MAX_UINT64 } = require("./constants");
 
 const log = require("../utils/logger")("task:proof");
-
-// BeaconBlock.state.PendingDeposits[0].pubkey
-async function generateFirstPendingDepositPubKeyProof({
-  blockView,
-  blockTree,
-  stateView,
-  test,
-}) {
-  // Have to dynamically import the Lodestar API client as its an ESM module
-  const { concatGindices, createProof, ProofType, toGindex } = await import(
-    "@chainsafe/persistent-merkle-tree"
-  );
-
-  log(`There are ${stateView.pendingDeposits.length} pending deposits`);
-  const generalizedIndex =
-    stateView.pendingDeposits.length > 0
-      ? concatGindices([
-          blockView.type.getPathInfo(["stateRoot"]).gindex,
-          stateView.type.getPathInfo(["pendingDeposits", 0]).gindex,
-          toGindex(3, 0n), // depth 3, index 0 for pubKey = 8
-        ])
-      : concatGindices([
-          blockView.type.getPathInfo(["stateRoot"]).gindex,
-          stateView.type.getPathInfo(["pendingDeposits", 0]).gindex,
-        ]);
-  log(
-    `Generalized index for the pubkey of the first pending deposit or the root node of the first pending deposit in the beacon block: ${generalizedIndex}`
-  );
-  let firstPendingDepositSlot = 1;
-  let firstPendingDepositPubKey = "0x";
-  let firstPendingDepositPubKeyHash = ZERO_BYTES32;
-  let firstPendingDepositValidatorIndex = 0;
-  if (stateView.pendingDeposits.length == 0) {
-    log("No deposits in the deposit queue");
-  } else {
-    const firstPendingDeposit = stateView.pendingDeposits.get(0);
-    firstPendingDepositSlot = firstPendingDeposit.slot;
-    firstPendingDepositPubKey = toHex(firstPendingDeposit.pubkey);
-    firstPendingDepositPubKeyHash = hashPubKey(firstPendingDeposit.pubkey);
-    firstPendingDepositValidatorIndex = firstPendingDeposit.validatorIndex;
-    log(
-      `First pending deposit has slot ${
-        firstPendingDeposit.slot
-      }, withdrawal credential ${toHex(
-        firstPendingDeposit.withdrawalCredentials
-      )} and public key ${firstPendingDepositPubKey}`
-    );
-
-    const firstDepositValidator = await getValidator(firstPendingDepositPubKey);
-    firstPendingDepositValidatorIndex = firstDepositValidator.validatorindex;
-    log(
-      `First pending deposit validator index: ${firstPendingDepositValidatorIndex}`
-    );
-  }
-
-  log(
-    `Generating proof for the the first pending deposit to beacon block root ${toHex(
-      blockTree.root
-    )}`
-  );
-  const proofObj = createProof(blockTree.rootNode, {
-    type: ProofType.single,
-    gindex: generalizedIndex,
-  });
-  log(`First pending deposit pub key leaf: ${toHex(proofObj.leaf)}`);
-  const proofBytes = toHex(concatProof(proofObj));
-  log(
-    `First pending deposit pub key proof of depth ${proofObj.witnesses.length} in bytes:\n${proofBytes}`
-  );
-
-  if (test) {
-    // Generate the proof of the slot within the first pending deposit
-    const subTreeGeneralizedIndex = concatGindices([
-      blockView.type.getPathInfo(["stateRoot"]).gindex,
-      stateView.type.getPathInfo(["pendingDeposits", 0]).gindex,
-      toGindex(1, 1n), // depth 1, index 1 for slot = 3
-    ]);
-    // Generate the slot proof in the first pending deposit
-    const subTree = blockTree.getSubtree(subTreeGeneralizedIndex);
-    log(`Sub tree root: ${toHex(subTree.root)}`);
-    const subTreeProofObj = createProof(subTree.rootNode, {
-      type: ProofType.single,
-      // depth 2, index 0 for slot = 4
-      gindex: toGindex(2, 0n),
-    });
-    log(
-      `First pending deposit slot ${firstPendingDepositSlot} has leaf: ${toHex(
-        subTreeProofObj.leaf
-      )}`
-    );
-    const subTreeProofBytes = toHex(concatProof(subTreeProofObj));
-    log(
-      `First pending deposit slot proof of depth ${subTreeProofObj.witnesses.length} in bytes:\n${subTreeProofBytes}`
-    );
-  }
-
-  return {
-    proof: proofBytes,
-    generalizedIndex,
-    root: toHex(blockTree.root),
-    leaf: toHex(proofObj.leaf),
-    slot: firstPendingDepositSlot,
-    pubkeyHash: firstPendingDepositPubKeyHash,
-    validatorIndex: firstPendingDepositValidatorIndex,
-    isEmpty: stateView.pendingDeposits.length === 0,
-  };
-}
 
 // BeaconBlock.state.PendingDeposits[0].slot
 async function generateFirstPendingDepositSlotProof({
@@ -220,7 +113,6 @@ async function generateValidatorWithdrawableEpochProof({
   blockTree,
   stateView,
   validatorIndex,
-  includePubKeyProof,
 }) {
   // Have to dynamically import the Lodestar API client as its an ESM module
   const { concatGindices, createProof, ProofType, toGindex } = await import(
@@ -277,45 +169,12 @@ async function generateValidatorWithdrawableEpochProof({
   const depth = proofObj.witnesses.length;
   log(`Withdrawable epoch proof of depth ${depth} in bytes:\n${proofBytes}`);
 
-  if (!includePubKeyProof) {
-    return {
-      proof: proofBytes,
-      generalizedIndexWithdrawableEpoch,
-      root: toHex(blockTree.root),
-      leaf: toHex(proofObj.leaf),
-      withdrawableEpoch,
-    };
-  }
-
-  const generalizedIndexSubTreeRoot = concatGindices([
-    generalizedIndexValidatorContainer,
-    toGindex(1, 0n), // depth 1, index 0 = 2 ^ 1 + 0 = 2
-  ]);
-  const subTree = blockTree.getSubtree(generalizedIndexSubTreeRoot);
-
-  log(
-    `Generating validator pubkey proof to sub tree root ${toHex(subTree.root)}`
-  );
-  const pubKeySubProofObj = createProof(subTree.rootNode, {
-    type: ProofType.single,
-    gindex: 4, // depth 2, index 0 = 2 ^ 2 + 0 = 4
-  });
-
-  log(
-    `Validator public key hash leaf (hash): ${toHex(pubKeySubProofObj.leaf)}`
-  );
-  const pubKeySubTreeProofBytes = toHex(concatProof(pubKeySubProofObj));
-  log(
-    `Pub key sub tree proof of depth ${pubKeySubProofObj.witnesses.length} in bytes:\n${pubKeySubTreeProofBytes}`
-  );
-
   return {
     proof: proofBytes,
-    generalizedIndex: generalizedIndexWithdrawableEpoch,
+    generalizedIndexWithdrawableEpoch,
     root: toHex(blockTree.root),
     leaf: toHex(proofObj.leaf),
     withdrawableEpoch,
-    validatorPubKeyProof: pubKeySubTreeProofBytes,
   };
 }
 
@@ -376,6 +235,119 @@ async function generateValidatorPubKeyProof({
     root: toHex(blockTree.root),
     leaf: toHex(proofObj.leaf),
     pubKey: toHex(validatorDetails.pubkey),
+  };
+}
+
+// BeaconBlock.state.pendingDeposits
+async function generatePendingDepositsContainerProof({
+  blockView,
+  blockTree,
+  stateView,
+}) {
+  // Have to dynamically import the Lodestar API client as its an ESM module
+  const { concatGindices, createProof, ProofType } = await import(
+    "@chainsafe/persistent-merkle-tree"
+  );
+
+  const generalizedIndex = concatGindices([
+    blockView.type.getPathInfo(["stateRoot"]).gindex,
+    stateView.type.getPathInfo(["pendingDeposits"]).gindex,
+  ]);
+  log(
+    `gen index for pending deposits container in beacon block: ${generalizedIndex}`
+  );
+
+  log(
+    `Generating pending deposits container proof to beacon block root ${toHex(
+      blockTree.root
+    )}`
+  );
+  const proofObj = createProof(blockTree.rootNode, {
+    type: ProofType.single,
+    gindex: generalizedIndex,
+  });
+  log(`Pending deposits container leaf: ${toHex(proofObj.leaf)}`);
+
+  const proofBytes = toHex(concatProof(proofObj));
+  const depth = proofObj.witnesses.length;
+  log(
+    `Pending deposits container proof of depth ${depth} in bytes:\n${proofBytes}`
+  );
+
+  return {
+    proof: proofBytes,
+    generalizedIndex,
+    root: toHex(blockTree.root),
+    leaf: toHex(proofObj.leaf),
+  };
+}
+
+// BeaconBlock.state.pendingDeposits[depositIndex]
+// Generates a proof in the Pending Deposits container rather than the whole beacon block
+async function generatePendingDepositProof({
+  blockView,
+  blockTree,
+  stateView,
+  depositIndex,
+}) {
+  // Have to dynamically import the Lodestar API client as its an ESM module
+  const { concatGindices, createProof, ProofType, toGindex } = await import(
+    "@chainsafe/persistent-merkle-tree"
+  );
+
+  // Read the pending deposit from the state
+  const pendingDeposit = stateView.pendingDeposits.get(depositIndex);
+  log(`Pending deposit ${depositIndex}:`);
+  log(`  pubkey : ${toHex(pendingDeposit.pubkey)}`);
+  log(`  cred   : ${toHex(pendingDeposit.withdrawalCredentials)}`);
+  log(`  amount : ${formatUnits(pendingDeposit.amount, 9)}`);
+  log(`  slot   : ${pendingDeposit.slot}`);
+
+  // BeaconBlock.state.pendingDeposits
+  const genIndexPendingDepositsContainer = concatGindices([
+    blockView.type.getPathInfo(["stateRoot"]).gindex,
+    stateView.type.getPathInfo(["pendingDeposits"]).gindex,
+  ]);
+  log(
+    `gen index for pending deposits container in beacon block: ${genIndexPendingDepositsContainer}`
+  );
+  const pendingDepositsTree = blockTree.getSubtree(
+    genIndexPendingDepositsContainer
+  );
+
+  // BeaconBlock.state.pendingDeposits[depositIndex]
+  const genIndexPendingDepositContainer = toGindex(
+    stateView.pendingDeposits.type.depth,
+    BigInt(depositIndex)
+  );
+  log(
+    `index for pending deposit in pending deposits container: ${genIndexPendingDepositContainer}`
+  );
+
+  log(
+    `Generating pending deposit proof to pending deposits container root ${toHex(
+      pendingDepositsTree.root
+    )}`
+  );
+  const proofObj = createProof(pendingDepositsTree.rootNode, {
+    type: ProofType.single,
+    gindex: genIndexPendingDepositContainer,
+  });
+  log(`Pending deposit leaf: ${toHex(proofObj.leaf)}`);
+
+  const proofBytes = toHex(concatProof(proofObj));
+  const depth = proofObj.witnesses.length;
+  log(
+    `pending deposit ${depositIndex} proof of depth ${depth} in Pending Deposits container in bytes:\n${proofBytes}`
+  );
+
+  return {
+    proof: proofBytes,
+    generalizedIndex: genIndexPendingDepositContainer,
+    root: toHex(pendingDepositsTree.root),
+    leaf: toHex(proofObj.leaf),
+    depth,
+    pendingDeposit,
   };
 }
 
@@ -488,10 +460,11 @@ async function generateBalanceProof({
 }
 
 module.exports = {
-  generateFirstPendingDepositPubKeyProof,
   generateFirstPendingDepositSlotProof,
   generateValidatorWithdrawableEpochProof,
   generateValidatorPubKeyProof,
+  generatePendingDepositsContainerProof,
+  generatePendingDepositProof,
   generateBalancesContainerProof,
   generateBalanceProof,
 };

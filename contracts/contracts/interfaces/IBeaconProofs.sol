@@ -13,15 +13,6 @@ interface IBeaconProofs {
     function verifyValidatorWithdrawable(
         bytes32 beaconBlockRoot,
         uint40 validatorIndex,
-        bytes32 pubKeyHash,
-        uint64 withdrawableEpoch,
-        bytes calldata withdrawableEpochProof,
-        bytes calldata validatorPubKeyProof
-    ) external view;
-
-    function verifyValidatorWithdrawable(
-        bytes32 beaconBlockRoot,
-        uint40 validatorIndex,
         uint64 withdrawableEpoch,
         bytes calldata withdrawableEpochProof
     ) external view;
@@ -39,16 +30,35 @@ interface IBeaconProofs {
         uint40 validatorIndex
     ) external view returns (uint256 validatorBalance);
 
-    function verifyFirstPendingDeposit(
+    function verifyPendingDepositsContainer(
         bytes32 beaconBlockRoot,
-        uint64 slot,
-        bytes32 pubKeyHash,
-        bytes calldata firstPendingDepositPubKeyProof
-    ) external view returns (bool isEmptyDepositQueue);
+        bytes32 pendingDepositsContainerRoot,
+        bytes calldata proof
+    ) external view;
+
+    function verifyPendingDeposit(
+        bytes32 pendingDepositsContainerRoot,
+        bytes32 pendingDepositRoot,
+        bytes calldata proof,
+        uint64 depositIndex
+    ) external view;
 
     function verifyFirstPendingDeposit(
         bytes32 beaconBlockRoot,
         uint64 slot,
         bytes calldata firstPendingDepositSlotProof
     ) external view returns (bool isEmptyDepositQueue);
+
+    function merkleizePendingDeposit(
+        bytes32 pubKeyHash,
+        bytes calldata withdrawalCredentials,
+        uint64 amountGwei,
+        bytes calldata signature,
+        uint64 slot
+    ) external pure returns (bytes32 root);
+
+    function merkleizeSignature(bytes calldata signature)
+        external
+        pure
+        returns (bytes32 root);
 }

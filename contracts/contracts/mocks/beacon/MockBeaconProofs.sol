@@ -50,28 +50,6 @@ contract MockBeaconProofs is IBeaconProofs {
         // always pass
     }
 
-    /// @notice Verifies a validator's withdrawable epoch to the beacon block root
-    /// for a given validator index.
-    /// Also verifies the validator's public key for the given validator index.
-    /// BeaconBlock.state.validators[validatorIndex].withdrawableEpoch
-    /// @param beaconBlockRoot The root of the beacon block
-    /// @param validatorIndex The validator index to verify the withdrawable epoch for.
-    /// @param withdrawableEpoch The withdrawable epoch to verify in big endian uint64 format
-    /// @param withdrawableEpochProof The merkle proof for the validator's withdrawable epoch to the beacon block root.
-    /// This is 53 witness hashes of 32 bytes each concatenated together starting from the leaf node.
-    /// @param validatorPubKeyProof The merkle proof for the validator public key in a sub tree of height two.
-    /// This is 2 witness hashes of 32 bytes each concatenated together starting from the leaf node.
-    function verifyValidatorWithdrawable(
-        bytes32 beaconBlockRoot,
-        uint40 validatorIndex,
-        bytes32 pubKeyHash,
-        uint64 withdrawableEpoch,
-        bytes calldata withdrawableEpochProof,
-        bytes calldata validatorPubKeyProof
-    ) external view {
-        // always pass
-    }
-
     function verifyValidatorWithdrawable(
         bytes32 beaconBlockRoot,
         uint40 validatorIndex,
@@ -122,33 +100,21 @@ contract MockBeaconProofs is IBeaconProofs {
         return validatorBalance;
     }
 
-    /// @notice If the deposit queue is not empty,
-    /// verify the pubKey and slot of the first pending deposit to the beacon block root.
-    /// BeaconBlock.state.PendingDeposits[0].pubKey
-    /// If the deposit queue is empty, verify the root of the first pending deposit is empty
-    /// BeaconBlock.state.PendingDeposits[0]
-    /// @param beaconBlockRoot The root of the beacon block.
-    /// @param slot The beacon chain slot of the first deposit in the beacon chain's deposit queue.
-    /// Can be anything if the deposit queue is empty.
-    /// @param pubKeyHash The hash of the validator public key for the first pending deposit.
-    /// Use zero bytes if the deposit queue is empty.
-    /// @param firstPendingDepositPubKeyProof The merkle proof to the beacon block root. Can be either:
-    /// - 40 witness hashes for BeaconBlock.state.PendingDeposits[0].pubKey when the deposit queue is not empty.
-    /// - 37 witness hashes for BeaconBlock.state.PendingDeposits[0] when the deposit queue is empty.
-    /// The 32 byte witness hashes are concatenated together starting from the leaf node.
-    /// @return isEmptyDepositQueue True if the deposit queue is empty, false otherwise.
-    function verifyFirstPendingDeposit(
+    function verifyPendingDepositsContainer(
         bytes32 beaconBlockRoot,
-        uint64 slot,
-        bytes32 pubKeyHash,
-        bytes calldata firstPendingDepositPubKeyProof
-    ) external view returns (bool isEmptyDepositQueue) {
-        if (
-            firstPendingDepositPubKeyProof.length ==
-            FIRST_PENDING_DEPOSIT_PROOF_LENGTH
-        ) {
-            isEmptyDepositQueue = true;
-        }
+        bytes32 pendingDepositsContainerRoot,
+        bytes calldata proof
+    ) external view {
+        // always pass
+    }
+
+    function verifyPendingDeposit(
+        bytes32 pendingDepositsContainerRoot,
+        bytes32 pendingDepositRoot,
+        bytes calldata proof,
+        uint64 depositIndex
+    ) external view {
+        // always pass
     }
 
     /// @notice If the deposit queue is not empty,
@@ -175,5 +141,32 @@ contract MockBeaconProofs is IBeaconProofs {
         ) {
             isEmptyDepositQueue = true;
         }
+    }
+
+    function merkleizePendingDeposit(
+        bytes32 pubKeyHash,
+        bytes calldata withdrawalCredentials,
+        uint64 amountGwei,
+        bytes calldata signature,
+        uint64 slot
+    ) external pure returns (bytes32) {
+        return
+            keccak256(
+                abi.encodePacked(
+                    pubKeyHash,
+                    withdrawalCredentials,
+                    amountGwei,
+                    signature,
+                    slot
+                )
+            );
+    }
+
+    function merkleizeSignature(bytes calldata signature)
+        external
+        pure
+        returns (bytes32 root)
+    {
+        return keccak256(abi.encodePacked(signature));
     }
 }

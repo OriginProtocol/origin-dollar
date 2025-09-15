@@ -18,11 +18,6 @@ library BeaconProofsLib {
     uint256 internal constant FIRST_PENDING_DEPOSIT_GENERALIZED_INDEX =
         198105366528;
     /// @dev BeaconBlock.state.PendingDeposits[0].pubkey
-    /// Pending Deposit container: height 3, pubkey at index 0
-    /// (((2 ^ 3 + 3) * 2 ^ 6 + 34) * 2 ^ 28 + 0) * 2 ^ 3 + 0  = 1584842932224
-    uint256 internal constant FIRST_PENDING_DEPOSIT_PUBKEY_GENERALIZED_INDEX =
-        1584842932224;
-    /// @dev BeaconBlock.state.PendingDeposits[0].pubkey
     /// Pending Deposit container: height 3, pubkey at index 4
     /// (((2 ^ 3 + 3) * 2 ^ 6 + 34) * 2 ^ 28 + 0) * 2 ^ 3 + 4  = 1584842932228
     uint256 internal constant FIRST_PENDING_DEPOSIT_SLOT_GENERALIZED_INDEX =
@@ -38,29 +33,23 @@ library BeaconProofsLib {
     /// (2 ^ 3 + 3) * 2 ^ 6 + 12 = 716
     uint256 internal constant BALANCES_CONTAINER_GENERALIZED_INDEX = 716;
 
+    /// @dev BeaconBlock.state.pendingDeposits
+    /// Beacon block container: height 3, state at at index 3
+    /// Beacon state container: height 6, balances at index 34
+    /// (2 ^ 3 + 3) * 2 ^ 6 + 34 = 738
+    uint256 internal constant PENDING_DEPOSITS_CONTAINER_GENERALIZED_INDEX =
+        738;
+
     /// @dev Number of bytes in the proof to the first pending deposit.
     /// 37 witness hashes of 32 bytes each concatenated together.
     /// BeaconBlock.state.PendingDeposits[0]
     /// 37 * 32 bytes = 1184 bytes
     uint256 internal constant FIRST_PENDING_DEPOSIT_PROOF_LENGTH = 1184;
-    /// @dev Number of bytes in the proof from the pubKey of the first pending deposit to the beacon block root.
-    /// 40 witness hashes of 32 bytes each concatenated together.
-    /// BeaconBlock.state.PendingDeposits[0].pubKey
-    /// 40 * 32 bytes = 1280 bytes
-    uint256 internal constant FIRST_PENDING_DEPOSIT_PUBKEY_PROOF_LENGTH = 1280;
     /// @dev Number of bytes in the proof from the slot of the first pending deposit to the beacon block root.
     /// 40 witness hashes of 32 bytes each concatenated together.
     /// BeaconBlock.state.PendingDeposits[0].slot
     /// 40 * 32 bytes = 1280 bytes
     uint256 internal constant FIRST_PENDING_DEPOSIT_SLOT_PROOF_LENGTH = 1280;
-    /// The slot is at index 4 in the Pending Deposits container.
-    /// The sub tree from the right node from the root is a tree of height 2.
-    /// The first 32 bytes witness is an empty bytes32 as there are
-    /// no items after the slot in the Pending Deposits container.
-    /// The second 32 bytes witness is a hash or two empty bytes32.
-    bytes internal constant PENDING_DEPOSIT_SLOT_PROOF =
-        // solhint-disable-next-line max-line-length
-        hex"0000000000000000000000000000000000000000000000000000000000000000f5a5fd42d16a20302798ef6ed309979b43003d2320d9f0e8ea9831a92759fb4b";
 
     /// @dev Merkle height of the Balances container
     /// BeaconBlock.state.balances
@@ -68,6 +57,9 @@ library BeaconProofsLib {
     /// @dev Merkle height of the Validators container list
     /// BeaconBlock.state.validators
     uint256 internal constant VALIDATORS_LIST_HEIGHT = 41;
+    /// @dev Merkle height of the Pending Deposits container list
+    /// BeaconBlock.state.pendingDeposits
+    uint256 internal constant PENDING_DEPOSITS_LIST_HEIGHT = 28;
     /// @dev Merkle height of the Validator container
     /// BeaconBlock.state.validators[validatorIndex]
     uint256 internal constant VALIDATOR_CONTAINER_HEIGHT = 3;
@@ -180,30 +172,6 @@ library BeaconProofsLib {
         );
     }
 
-    /// @param subTreeRoot The third 32 byte witness from the withdrawable epoch proof
-    /// @param pubKeyHash Hash of validator's public key using the Beacon Chain's format
-    /// @param proof The merkle proof for the validator public key in a sub tree of height two.
-    /// This is 2 witness hashes of 32 bytes each concatenated together starting from the leaf node.
-    function verifyValidatorPubKeySubTree(
-        bytes32 subTreeRoot,
-        bytes32 pubKeyHash,
-        bytes calldata proof
-    ) internal view {
-        // Tree height 2 and pub key is at index 0
-        // index = 2 ^ 2 + 0 = 4
-        require(
-            // 2 * 32 bytes = 64 bytes
-            proof.length == 64 &&
-                Merkle.verifyInclusionSha256({
-                    proof: proof,
-                    root: subTreeRoot,
-                    leaf: pubKeyHash,
-                    index: 4
-                }),
-            "Invalid pub key proof"
-        );
-    }
-
     /// @notice Verifies the balances container to the beacon block root.
     /// BeaconBlock.state.balances
     /// @param beaconBlockRoot The root of the beacon block.
@@ -275,73 +243,65 @@ library BeaconProofsLib {
         );
     }
 
-    /// @notice If the deposit queue is not empty,
-    /// verify the pubKey and slot of the first pending deposit to the beacon block root.
-    /// BeaconBlock.state.pendingDeposits[0].pubKey
-    /// BeaconBlock.state.pendingDeposits[0].slot
-    /// If the deposit queue is empty, verify the root of the first pending deposit is empty
-    /// BeaconBlock.state.PendingDeposits[0]
+    /// @notice Verifies the pending deposits container to the beacon block root.
+    /// BeaconBlock.state.pendingDeposits
     /// @param beaconBlockRoot The root of the beacon block.
-    /// @param slot The beacon chain slot of the first deposit in the beacon chain's deposit queue.
-    /// Can be anything if the deposit queue is empty.
-    /// @param pubKeyHash The hash of the validator public key for the first pending deposit.
-    /// Use zero bytes if the deposit queue is empty.
-    /// @param proof The merkle proof to the beacon block root. Can be either:
-    /// - 40 witness hashes for BeaconBlock.state.PendingDeposits[0].pubKey when the deposit queue is not empty.
-    /// - 37 witness hashes for BeaconBlock.state.PendingDeposits[0] when the deposit queue is empty.
-    /// The 32 byte witness hashes are concatenated together starting from the leaf node.
-    /// @return isEmptyDepositQueue True if the deposit queue is empty, false otherwise.
-    function verifyFirstPendingDeposit(
+    /// @param pendingDepositsContainerRoot The merkle root of the the pending deposits container.
+    /// @param proof The merkle proof for the pending deposits container to the beacon block root.
+    /// This is 9 witness hashes of 32 bytes each concatenated together starting from the leaf node.
+    function verifyPendingDepositsContainer(
         bytes32 beaconBlockRoot,
-        uint64 slot,
-        bytes32 pubKeyHash,
+        bytes32 pendingDepositsContainerRoot,
         bytes calldata proof
-    ) internal view returns (bool isEmptyDepositQueue) {
+    ) internal view {
         require(beaconBlockRoot != bytes32(0), "Invalid block root");
 
-        // If the deposit queue is empty
-        if (proof.length == FIRST_PENDING_DEPOSIT_PROOF_LENGTH) {
-            require(
-                Merkle.verifyInclusionSha256({
-                    proof: proof,
-                    root: beaconBlockRoot,
-                    leaf: bytes32(0),
-                    index: FIRST_PENDING_DEPOSIT_GENERALIZED_INDEX
-                }),
-                "Invalid empty deposits proof"
-            );
-            return true;
-        }
-
-        // Verify the public key of the first pending deposit
-        // BeaconBlock.state.PendingDeposits[0].pubKey
+        // BeaconBlock.state.pendingDeposits
         require(
-            proof.length == FIRST_PENDING_DEPOSIT_PUBKEY_PROOF_LENGTH &&
+            // 9 * 32 bytes = 288 bytes
+            proof.length == 288 &&
                 Merkle.verifyInclusionSha256({
                     proof: proof,
                     root: beaconBlockRoot,
-                    leaf: pubKeyHash,
-                    index: FIRST_PENDING_DEPOSIT_PUBKEY_GENERALIZED_INDEX
+                    leaf: pendingDepositsContainerRoot,
+                    index: PENDING_DEPOSITS_CONTAINER_GENERALIZED_INDEX
                 }),
-            "Invalid deposit pub key proof"
+            "Invalid deposit container proof"
+        );
+    }
+
+    /// @notice Verifies a pending deposit in the pending deposits container.
+    /// BeaconBlock.state.pendingDeposits[depositIndex]
+    /// @param pendingDepositsContainerRoot The merkle root of the pending deposits list container
+    /// @param pendingDepositRoot The merkle root of the pending deposit to verify
+    /// @param proof The merkle proof for the pending deposit root to the pending deposits list container root.
+    /// This is 28 witness hashes of 32 bytes each concatenated together starting from the leaf node.
+    /// @param depositIndex The index in the pending deposits list container for the deposit to verify.
+    function verifyPendingDeposit(
+        bytes32 pendingDepositsContainerRoot,
+        bytes32 pendingDepositRoot,
+        bytes calldata proof,
+        uint64 depositIndex
+    ) internal view {
+        require(pendingDepositsContainerRoot != bytes32(0), "Invalid root");
+
+        // BeaconBlock.state.pendingDeposits[depositIndex]
+        uint256 generalizedIndex = concatGenIndices(
+            1,
+            PENDING_DEPOSITS_LIST_HEIGHT,
+            depositIndex
         );
 
-        // Now verify the slot of the first pending deposit
-
-        // Get the third 32 bytes witness from the first pending deposit pubKey proof
-        // 2 * 32 bytes = 64 bytes offset
-        bytes32 slotRoot = bytes32(proof[64:96]);
-
-        // Sub tree height 2 and slot is at index 0 in the sub tree
-        // index = 2 ^ 2 + 0 = 4
         require(
-            Merkle.verifyInclusionSha256({
-                proof: PENDING_DEPOSIT_SLOT_PROOF,
-                root: slotRoot,
-                leaf: Endian.toLittleEndianUint64(slot),
-                index: 4
-            }),
-            "Invalid deposit slot"
+            // 28 * 32 bytes = 896 bytes
+            proof.length == 896 &&
+                Merkle.verifyInclusionSha256({
+                    proof: proof,
+                    root: pendingDepositsContainerRoot,
+                    leaf: pendingDepositRoot,
+                    index: generalizedIndex
+                }),
+            "Invalid deposit proof"
         );
     }
 
@@ -391,6 +351,52 @@ library BeaconProofsLib {
                 }),
             "Invalid deposit slot proof"
         );
+    }
+
+    /// @notice Merkleizes a beacon chain pending deposit.
+    /// @param pubKeyHash Hash of validator's public key using the Beacon Chain's format
+    /// @param withdrawalCredentials The 32 byte withdrawal credentials.
+    /// @param amountGwei The amount of the deposit in Gwei.
+    /// @param signature The 96 byte BLS signature.
+    /// @param slot The beacon chain slot the deposit was made in.
+    /// @return root The merkle root of the pending deposit.
+    function merkleizePendingDeposit(
+        bytes32 pubKeyHash,
+        bytes calldata withdrawalCredentials,
+        uint64 amountGwei,
+        bytes calldata signature,
+        uint64 slot
+    ) internal pure returns (bytes32 root) {
+        bytes32[] memory leaves = new bytes32[](8);
+        leaves[0] = pubKeyHash;
+        leaves[1] = bytes32(withdrawalCredentials[:32]);
+        leaves[2] = Endian.toLittleEndianUint64(amountGwei);
+        leaves[3] = merkleizeSignature(signature);
+        leaves[4] = Endian.toLittleEndianUint64(slot);
+        leaves[5] = bytes32(0);
+        leaves[6] = bytes32(0);
+        leaves[7] = bytes32(0);
+
+        root = Merkle.merkleizeSha256(leaves);
+    }
+
+    /// @notice Merkleizes a BLS signature used for validator deposits.
+    /// @param signature The 96 byte BLS signature.
+    /// @return root The merkle root of the signature.
+    function merkleizeSignature(bytes calldata signature)
+        internal
+        pure
+        returns (bytes32)
+    {
+        require(signature.length == 96, "Invalid signature");
+
+        bytes32[] memory leaves = new bytes32[](4);
+        leaves[0] = bytes32(signature[:32]);
+        leaves[1] = bytes32(signature[32:64]);
+        leaves[2] = bytes32(signature[64:96]);
+        leaves[3] = bytes32(0);
+
+        return Merkle.merkleizeSha256(leaves);
     }
 
     ////////////////////////////////////////////////////
