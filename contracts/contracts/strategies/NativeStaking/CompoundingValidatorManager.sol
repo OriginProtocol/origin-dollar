@@ -778,7 +778,8 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
         uint64 firstPendingDepositEpoch = firstPendingDeposit.slot /
             SLOTS_PER_EPOCH;
 
-        // Validator can either be not exiting and no further checks are required
+        // If deposit queue is empty all deposits have certainly been processed. If not
+        // a validator can either be not exiting and no further checks are required.
         // Or a validator is exiting then this function needs to make sure that the
         // pending deposit to an exited validator has certainly been processed. The
         // slot/epoch of first pending deposit is the one that contains the transaction
@@ -792,7 +793,8 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
         require(
             strategyValidatorData.withdrawableEpoch == FAR_FUTURE_EPOCH ||
                 strategyValidatorData.withdrawableEpoch <=
-                firstPendingDepositEpoch,
+                firstPendingDepositEpoch ||
+                isDepositQueueEmpty,
             "Exit Deposit likely not proc."
         );
 
