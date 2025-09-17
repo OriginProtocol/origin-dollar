@@ -1058,42 +1058,46 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
                         validatorDataMem.index
                     );
 
-                bool depositPending = false;
-                for (uint256 j = 0; j < validatorHashesMem.length; j++) {
-                    if (validatorHashesMem[j] == verifiedValidators[i]) {
-                        depositPending = true;
-                        break;
+                // If the validator has exited and the balance is now zero
+                if (validatorBalanceGwei == 0) {
+                    // Check if there are any pending deposits to this validator
+                    bool depositPending = false;
+                    for (uint256 j = 0; j < validatorHashesMem.length; j++) {
+                        if (validatorHashesMem[j] == verifiedValidators[i]) {
+                            depositPending = true;
+                            break;
+                        }
                     }
-                }
 
-                // If validator has a pending deposit we can not remove due to
-                // the following situation:
-                //  - validator has a pending deposit
-                //  - validator has been slashed
-                //  - sweep cycle has withdrawn all ETH from the validator. Balance is 0
-                //  - beacon chain has processed the deposit and set the validator balance
-                //    to deposit amount
-                //  - if validator is no longer in the list of verifiedValidators its
-                //    balance will not be considered and be under-counted.
-                if (validatorBalanceGwei == 0 && !depositPending) {
-                    // Store the validator state as exited
-                    // This could have been in VERIFIED, ACTIVE or EXITING state
-                    validator[verifiedValidators[i]].state = ValidatorState
-                        .EXITED;
+                    // If validator has a pending deposit we can not remove due to
+                    // the following situation:
+                    //  - validator has a pending deposit
+                    //  - validator has been slashed
+                    //  - sweep cycle has withdrawn all ETH from the validator. Balance is 0
+                    //  - beacon chain has processed the deposit and set the validator balance
+                    //    to deposit amount
+                    //  - if validator is no longer in the list of verifiedValidators its
+                    //    balance will not be considered and be under-counted.
+                    if (!depositPending) {
+                        // Store the validator state as exited
+                        // This could have been in VERIFIED, ACTIVE or EXITING state
+                        validator[verifiedValidators[i]].state = ValidatorState
+                            .EXITED;
 
-                    // Remove the validator with a zero balance from the list of verified validators
+                        // Remove the validator with a zero balance from the list of verified validators
 
-                    // Reduce the count of verified validators which is the last index before the pop removes it.
-                    verifiedValidatorsCount -= 1;
+                        // Reduce the count of verified validators which is the last index before the pop removes it.
+                        verifiedValidatorsCount -= 1;
 
-                    // Move the last validator that has already been verified to the current index.
-                    // There's an extra SSTORE if i is the last active validator but that's fine,
-                    // It's not a common case and the code is simpler this way.
-                    verifiedValidators[i] = verifiedValidators[
-                        verifiedValidatorsCount
-                    ];
-                    // Delete the last validator from the list
-                    verifiedValidators.pop();
+                        // Move the last validator that has already been verified to the current index.
+                        // There's an extra SSTORE if i is the last active validator but that's fine,
+                        // It's not a common case and the code is simpler this way.
+                        verifiedValidators[i] = verifiedValidators[
+                            verifiedValidatorsCount
+                        ];
+                        // Delete the last validator from the list
+                        verifiedValidators.pop();
+                    }
 
                     // The validator balance is zero so not need to add to totalValidatorBalance
                     continue;
