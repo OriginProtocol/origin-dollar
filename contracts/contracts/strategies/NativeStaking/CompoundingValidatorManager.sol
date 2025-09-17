@@ -25,8 +25,11 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
 
     /// @dev The amount of ETH in wei that is required for a deposit to a new validator.
     uint256 internal constant DEPOSIT_AMOUNT_WEI = 1 ether;
-    /// @dev The amount of ETH balance in validator required for validator activation
-    uint256 internal constant MIN_ACTIVATION_BALANCE_GWEI = 32 ether / 1e9;
+    /// @dev Validator balances over this amount will eventually become active on the beacon chain.
+    /// Due to hysteresis, if the effective balance is 31 ETH, the actual balance
+    /// must rise to 32.25 ETH to trigger an effective balance update to 32 ETH.
+    /// https://eth2book.info/capella/part2/incentives/balances/#hysteresis
+    uint256 internal constant MIN_ACTIVATION_BALANCE_GWEI = 32.25 ether / 1e9;
     /// @dev The maximum number of deposits that are waiting to be verified as processed on the beacon chain.
     uint256 internal constant MAX_DEPOSITS = 12;
     /// @dev The maximum number of validators that can be verified.
@@ -1096,7 +1099,7 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
                     continue;
                 } else if (
                     validatorDataMem.state == ValidatorState.VERIFIED &&
-                    validatorBalanceGwei >= MIN_ACTIVATION_BALANCE_GWEI
+                    validatorBalanceGwei > MIN_ACTIVATION_BALANCE_GWEI
                 ) {
                     // Store the validator state as active. This does not necessarily mean the
                     // validator is active on the beacon chain yet. It just means the validator has
