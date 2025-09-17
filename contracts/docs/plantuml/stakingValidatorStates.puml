@@ -9,15 +9,15 @@ REGISTERED --> STAKED : stakeETH
 STAKED --> VERIFIED : verifyValidator
 STAKED --> INVALID : verifyValidator
 
-VERIFIED --> EXITING : validatorWithdrawal\nverifyDeposit
+VERIFIED --> ACTIVE : verifyBalances
+
+ACTIVE --> EXITING : validatorWithdrawal
+ACTIVE ---> EXITED : verifyBalances
 VERIFIED --> EXITED : verifyBalances
 EXITING --> EXITED : verifyBalances
 
 REGISTERED --> REMOVED : removeSsvValidator
 INVALID --> REMOVED : removeSsvValidator
 EXITED --> REMOVED : removeSsvValidator
-
-
-' STAKED : Beacon Chain\n- Pending deposits\n- Processed deposit\n- Frontrun deposit
 
 @enduml
