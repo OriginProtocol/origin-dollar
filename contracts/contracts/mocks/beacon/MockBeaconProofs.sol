@@ -16,18 +16,18 @@ contract MockBeaconProofs is IBeaconProofs {
     /// 37 * 32 bytes = 1184 bytes
     uint256 internal constant FIRST_PENDING_DEPOSIT_PROOF_LENGTH = 1184;
 
-    uint256 internal constant DEFAULT_VALIDATOR_BALANCE = 32 ether;
+    uint256 internal constant DEFAULT_VALIDATOR_BALANCE_GWEI = 33 ether / 1e9;
     // mapping of validator indexes to validator balances
     mapping(uint40 => uint256) public validatorBalances;
 
-    function setValidatorBalance(uint40 index, uint256 validatorBalance)
+    function setValidatorBalance(uint40 index, uint256 validatorBalanceGwei)
         external
     {
         // set special max value instead of 0
-        if (validatorBalance == 0) {
+        if (validatorBalanceGwei == 0) {
             validatorBalances[index] = type(uint256).max;
         } else {
-            validatorBalances[index] = validatorBalance;
+            validatorBalances[index] = validatorBalanceGwei;
         }
     }
 
@@ -94,7 +94,7 @@ contract MockBeaconProofs is IBeaconProofs {
         }
         // validator balance not set by the test cases
         else if (validatorBalance == 0) {
-            return DEFAULT_VALIDATOR_BALANCE;
+            return DEFAULT_VALIDATOR_BALANCE_GWEI;
         }
 
         return validatorBalance;

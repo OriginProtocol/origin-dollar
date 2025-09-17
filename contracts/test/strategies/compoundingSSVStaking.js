@@ -1100,16 +1100,15 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
       ).to.equal(5); // EXITING
     });
 
-    it("Should revert when validator's balance hasn't been confirmed to equal or surpass 32 ETH", async () => {
+    it("Should revert when validator's balance hasn't been confirmed to equal or surpass 32.25 ETH", async () => {
       const { validatorRegistrator, compoundingStakingSSVStrategy } = fixture;
 
       // Third validator is later withdrawn later
       await processValidator(testValidators[3], "VERIFIED_DEPOSIT");
-      await topUpValidator(
-        testValidators[3],
-        testValidators[3].depositProof.depositAmount - 1,
-        "VERIFIED_DEPOSIT"
-      );
+      await topUpValidator(testValidators[3], 32, "VERIFIED_DEPOSIT");
+
+      // verifyBalances has not been called so the validator is still VERIFIED even though the
+      // validator has more then 32.25 ETH staked
 
       const tx = compoundingStakingSSVStrategy
         .connect(validatorRegistrator)
@@ -2723,6 +2722,86 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
       await expect(tx)
         .to.emit(compoundingStakingSSVStrategy, "SSVValidatorRemoved")
         .withArgs(testValidator.publicKeyHash, testValidator.operatorIds);
+    });
+
+    it("Should fail to active a validator with a 32.25 ETH balance", async () => {
+      const { compoundingStakingSSVStrategy, mockBeaconProof } = fixture;
+
+      // Third validator is later withdrawn later
+      const testValidator = testValidators[3];
+
+      await processValidator(testValidator, "VERIFIED_DEPOSIT");
+      await topUpValidator(testValidator, 31, "VERIFIED_DEPOSIT");
+
+      const validatorBefore = await compoundingStakingSSVStrategy.validator(
+        testValidator.publicKeyHash
+      );
+      expect(validatorBefore.state).to.equal(3); // VERIFIED
+
+      await compoundingStakingSSVStrategy.snapBalances();
+
+      // Set validator balance to 32.25 Gwei
+      await mockBeaconProof.setValidatorBalance(
+        testValidator.index,
+        parseUnits("32.25", 9)
+      );
+
+      const tx = await compoundingStakingSSVStrategy.verifyBalances(
+        emptyOneBalanceProofs,
+        emptyPendingDepositProofs
+      );
+
+      await expect(tx)
+        .to.emit(compoundingStakingSSVStrategy, "BalancesVerified")
+        .withNamedArgs({
+          totalDepositsWei: 0,
+        });
+
+      // The validator should still be VERIFIED, not ACTIVE
+      const validatorAfter = await compoundingStakingSSVStrategy.validator(
+        testValidator.publicKeyHash
+      );
+      expect(validatorAfter.state).to.equal(3); // VERIFIED
+    });
+
+    it("Should active a validator with more than 32.25 ETH balance", async () => {
+      const { compoundingStakingSSVStrategy, mockBeaconProof } = fixture;
+
+      // Third validator is later withdrawn later
+      const testValidator = testValidators[3];
+
+      await processValidator(testValidator, "VERIFIED_DEPOSIT");
+      await topUpValidator(testValidator, 31, "VERIFIED_DEPOSIT");
+
+      const validatorBefore = await compoundingStakingSSVStrategy.validator(
+        testValidator.publicKeyHash
+      );
+      expect(validatorBefore.state).to.equal(3); // VERIFIED
+
+      await compoundingStakingSSVStrategy.snapBalances();
+
+      // Set validator balance to 32.26 Gwei
+      await mockBeaconProof.setValidatorBalance(
+        testValidator.index,
+        parseUnits("32.26", 9)
+      );
+
+      const tx = await compoundingStakingSSVStrategy.verifyBalances(
+        emptyOneBalanceProofs,
+        emptyPendingDepositProofs
+      );
+
+      await expect(tx)
+        .to.emit(compoundingStakingSSVStrategy, "BalancesVerified")
+        .withNamedArgs({
+          totalDepositsWei: 0,
+        });
+
+      // The validator should still be ACTIVE
+      const validatorAfter = await compoundingStakingSSVStrategy.validator(
+        testValidator.publicKeyHash
+      );
+      expect(validatorAfter.state).to.equal(4); // ACTIVE
     });
 
     describe("When a verified validator is exiting after being slashed And a new deposit is made to the validator", () => {
