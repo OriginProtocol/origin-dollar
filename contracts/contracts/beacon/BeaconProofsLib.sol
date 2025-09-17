@@ -284,6 +284,13 @@ library BeaconProofsLib {
         uint32 pendingDepositIndex
     ) internal view {
         require(pendingDepositsContainerRoot != bytes32(0), "Invalid root");
+        // ssz-merkleizing a list which has a variable length, an additional
+        // sha256(pending_deposits_root, pending_deposits_length) operation is done to get the actual pending deposits root
+        // so the max pending deposit index is 2^(28 - 1)
+        require(
+            pendingDepositIndex < 2**(PENDING_DEPOSITS_LIST_HEIGHT - 1),
+            "Invalid deposit index"
+        );
 
         // BeaconBlock.state.pendingDeposits[depositIndex]
         uint256 generalizedIndex = concatGenIndices(

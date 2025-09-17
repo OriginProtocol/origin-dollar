@@ -4,6 +4,7 @@ const { hexZeroPad } = require("ethers").utils;
 const { beaconChainFixture } = require("../_fixture");
 const { ZERO_BYTES32, MAX_UINT64 } = require("../../utils/constants");
 const { hashPubKey } = require("../../utils/beacon");
+const { BigNumber } = require("ethers");
 
 describe("Beacon chain proofs", async () => {
   let fixture;
@@ -712,6 +713,19 @@ describe("Beacon chain proofs", async () => {
         invalidDepositIndex
       );
       await expect(tx).to.be.revertedWith("Invalid deposit proof");
+    });
+    it("Fail to verify a pending deposit index that is too big", async () => {
+      const { beaconProofs } = fixture;
+
+      const pendingDepositIndexTooBig = BigNumber.from(2).pow(27);
+
+      const tx = beaconProofs.verifyPendingDeposit(
+        pendingDepositsContainerRoot,
+        pendingDepositRoot,
+        proof,
+        pendingDepositIndexTooBig
+      );
+      await expect(tx).to.be.revertedWith("Invalid deposit index");
     });
   });
   describe("First pending deposit to beacon block root proof", () => {
