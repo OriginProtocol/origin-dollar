@@ -794,7 +794,8 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
         require(
             strategyValidatorData.withdrawableEpoch == FAR_FUTURE_EPOCH ||
                 strategyValidatorData.withdrawableEpoch <=
-                firstPendingDepositEpoch,
+                firstPendingDepositEpoch ||
+                isDepositQueueEmpty,
             "Exit Deposit likely not proc."
         );
 

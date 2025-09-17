@@ -74,6 +74,12 @@ const emptyTwoPendingDepositProofs = {
   pendingDepositIndexes: [1, 2],
   pendingDepositProofs: ["0x", "0x"],
 };
+const emptyPendingDepositsProof = {
+  beaconRoot:
+    "0x936a7ac91224df0522e8fc70521b604b025d37504a432ca9ea842a018ba7546c",
+  proof:
+    "0x0000000000000000000000000000000000000000000000000000000000000000f5a5fd42d16a20302798ef6ed309979b43003d2320d9f0e8ea9831a92759fb4bdb56114e00fdd4c1f85c892bf35ac9a89289aaecb1ebd0a96cde606a748b5d71c78009fdf07fc56a11f122370658a353aaa542ed63e44c4bc15ff4cd105ab33c536d98837f2dd165a55d5eeae91485954472d56f246df256bf3cae19352a123c9efde052aa15429fae05bad4d0b1d7c64da64d03d7a1854a588c2cb8430c0d30d88ddfeed400a8755596b21942c1497e114c302e6118290f91e6772976041fa187eb0ddba57e35f6d286673802a4af5975e22506c7cf4c64bb6be5ee11527f2c26846476fd5fc54a5d43385167c95144f2643f533cc85bb9d16b782f8d7db193506d86582d252405b840018792cad2bf1259f1ef5aa5f887e13cb2f0094f51e1ffff0ad7e659772f9534c195c815efc4014ef1e1daed4404c06385d11192e92b6cf04127db05441cd833107a52be852868890e4317e6a02ab47683aa75964220b7d05f875f140027ef5118a2247bbb84ce8f2f0f1123623085daf7960c329f5fdf6af5f5bbdb6be9ef8aa618e4bf8073960867171e29676f8b284dea6a08a85eb58d900f5e182e3c50ef74969ea16c7726c549757cc23523c369587da7293784d49a7502ffcfb0340b1d7885688500ca308161a7f96b62df9d083b71fcc8f2bb8fe6b1689256c0d385f42f5bbe2027a22c1996e110ba97c171d3e5948de92beb8d0d63c39ebade8509e0ae3c9c3876fb5fa112be18f905ecacfecb92057603ab95eec8b2e541cad4e91de38385f2e046619f54496c2382cb6cacd5b98c26f5a4f893e908917775b62bff23294dbbe3a1cd8e6cc1c35b4801887b646a6f81f17fcddba7b592e3133393c16194fac7431abf2f5485ed711db282183c819e08ebaa8a8d7fe3af8caa085a7639a832001457dfb9128a8061142ad0335629ff23ff9cfeb3c337d7a51a6fbf00b9e34c52e1c9195c969bd4e7a0bfd51d5c5bed9c1167e71f0aa83cc32edfbefa9f4d3e0174ca85182eec9f3a09f6a6c0df6377a510d731206fa80a50bb6abe29085058f16212212a60eec8f049fecb92d8c8e0a84bc021352bfecbeddde993839f614c3dac0a3ee37543f9b412b16199dc158e23b544619e312724bb6d7c3153ed9de791d764a366b389af13c58bf8a8d90481a467650000000000000000000000000000000000000000000000000000000000000000049c9edd0970b512318fe4a7d9ff12b2b1402164d872e40948fc7d9042ae6fa615433386cfe4fc95585fb6eeb51df3a6f619db3b3955884f7e5a2c4600ed2d47dae6d9c51743d5d9263bf2bd09c1db3bd529965d7ee7857643c919c6b696004ec78009fdf07fc56a11f122370658a353aaa542ed63e44c4bc15ff4cd105ab33c536d98837f2dd165a55d5eeae91485954472d56f246df256bf3cae19352a123ceb818784738117ef339dce506dc4996cecd38ef7ed6021eb0b4382bf9c3e81b3cce9d380b4759b9c6277871c289b42feed13f46b29b78c3be52296492ef902aecd1fa730ef94dfb6efa48a62de660970894608c2e16cce90ef2b3880778f8e383e09791016e57e609c54db8d85e1e0607a528e23b6c34dc738f899f2c284d765",
+};
 
 const ETHInGwei = BigNumber.from("1000000000"); // 1 ETH in Gwei
 const GweiInWei = BigNumber.from("1000000000"); // 1 Gwei in Wei
@@ -2775,6 +2781,42 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
         );
 
         await expect(tx).to.be.revertedWith("Exit Deposit likely not proc.");
+      });
+      it("Should verify deposit when the pending deposit queue is empty", async () => {
+        const {
+          compoundingStakingSSVStrategy,
+          compoundingStakingStrategyView,
+        } = fixture;
+
+        const depositProcessedSlot = withdrawableSlot;
+        const firstPendingDeposit = {
+          ...emptyPendingDepositsProof,
+          slot: 1,
+        };
+
+        const tx = await compoundingStakingSSVStrategy.verifyDeposit(
+          lastDeposit.pendingDepositRoot,
+          depositProcessedSlot,
+          firstPendingDeposit,
+          strategyValidatorData
+        );
+
+        await expect(tx)
+          .to.emit(compoundingStakingSSVStrategy, "DepositVerified")
+          .withArgs(
+            lastDeposit.pendingDepositRoot,
+            parseEther(depositAmount.toString())
+          );
+
+        // The deposit is verified
+        const depositAfter = await compoundingStakingSSVStrategy.deposits(
+          lastDeposit.pendingDepositRoot
+        );
+        expect(depositAfter.status).to.equal(2); // VERIFIED
+
+        // No pending deposits
+        expect(await compoundingStakingStrategyView.getPendingDeposits()).to.be
+          .empty;
       });
       it("Should verify deposit when the first pending deposit slot equals the withdrawable epoch", async () => {
         const {
