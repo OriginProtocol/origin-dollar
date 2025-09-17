@@ -115,7 +115,7 @@ contract BeaconProofs is IBeaconProofs {
         bytes32 pendingDepositsContainerRoot,
         bytes32 pendingDepositRoot,
         bytes calldata proof,
-        uint64 pendingDepositIndex
+        uint32 pendingDepositIndex
     ) external view {
         BeaconProofsLib.verifyPendingDeposit(
             pendingDepositsContainerRoot,

@@ -981,7 +981,7 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
     struct PendingDepositProofs {
         bytes32 pendingDepositContainerRoot;
         bytes pendingDepositContainerProof;
-        uint40[] pendingDepositIndexes;
+        uint32[] pendingDepositIndexes;
         bytes[] pendingDepositProofs;
     }
 
