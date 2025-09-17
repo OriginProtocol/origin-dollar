@@ -347,7 +347,6 @@ const verifyDepositSignatureAndMessageRoot = async ({
     "@lodestar/state-transition"
   );
   const { DOMAIN_DEPOSIT } = await import("@lodestar/params");
-  const { mainnetChainConfig } = await import("@lodestar/config/networks");
   const { fromHex } = await import("@lodestar/utils");
 
   log("Validating BLS deposit message signature");
