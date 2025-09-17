@@ -124,7 +124,7 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
         REGISTERED, // validator is registered on the SSV network
         STAKED, // validator has funds staked
         VERIFIED, // validator has been verified to exist on the beacon chain
-        ACTIVE, // The validator balance is at least 32 ETH
+        ACTIVE, // The validator balance is at least 32 ETH. The validator may not yet be active on the beacon chain.
         EXITING, // The validator has been requested to exit or has been verified as forced exit
         EXITED, // The validator has been verified to have a zero balance
         REMOVED, // validator has funds withdrawn to this strategy contract and is removed from the SSV
@@ -359,7 +359,7 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
         // Hash the public key using the Beacon Chain's hashing for BLSPubkey
         bytes32 pubKeyHash = _hashPubKey(validatorStakeData.pubkey);
         ValidatorState currentState = validator[pubKeyHash].state;
-        // Can only stake to a validator has have been registered or verified.
+        // Can only stake to a validator has have been registered, verified or active.
         // Can not stake to a validator that has been staked but not yet verified.
         require(
             (currentState == ValidatorState.REGISTERED ||
@@ -503,14 +503,9 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
                 );
             }
 
-            // A validator that never had the minimal activation balance can not activate
-            // and thus can not perform a full exit
-            require(
-                validatorDataMem.state == ValidatorState.ACTIVE,
-                "Validator not active"
-            );
-
             // Store the validator state as exiting so no more deposits can be made to it.
+            // This may already be EXITING if the previous exit request failed. eg the validator
+            // was not active long enough.
             validator[pubKeyHash].state = ValidatorState.EXITING;
         }
 
@@ -1106,8 +1101,9 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
                     validatorDataMem.state == ValidatorState.VERIFIED &&
                     validatorBalanceGwei > MIN_ACTIVATION_BALANCE_GWEI
                 ) {
-                    // Although the validator may not be active on the beacon chain yet, it will 
-                    // eventually become active as it has enough ETH to become active.
+                    // Store the validator state as active. This does not necessarily mean the
+                    // validator is active on the beacon chain yet. It just means the validator has
+                    // enough balance that it can become active.
                     validator[verifiedValidators[i]].state = ValidatorState
                         .ACTIVE;
                 }

@@ -1100,6 +1100,64 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
       ).to.equal(5); // EXITING
     });
 
+    it("Should exit a validator that is already exiting", async () => {
+      const { validatorRegistrator, compoundingStakingSSVStrategy } = fixture;
+
+      // Third validator is later withdrawn later
+      await processValidator(testValidators[3], "VERIFIED_DEPOSIT");
+      await topUpValidator(
+        testValidators[3],
+        testValidators[3].depositProof.depositAmount - 1,
+        "VERIFIED_DEPOSIT"
+      );
+
+      const validatorBefore = await compoundingStakingSSVStrategy.validator(
+        testValidators[3].publicKeyHash
+      );
+      expect(validatorBefore.state).to.equal(3); // VERIFIED
+
+      // Validator has 1588.918094377 ETH
+      // assert balances so validator can be fully withdrawable
+      await assertBalances({
+        pendingDepositAmount: 0,
+        wethAmount: 0,
+        ethAmount: 0,
+        balancesProof: testBalancesProofs[1],
+        activeValidators: [2],
+      });
+
+      const validatorAfter = await compoundingStakingSSVStrategy.validator(
+        testValidators[3].publicKeyHash
+      );
+      expect(validatorAfter.state).to.equal(4); // ACTIVE
+
+      // First exit
+      await compoundingStakingSSVStrategy
+        .connect(validatorRegistrator)
+        .validatorWithdrawal(testValidators[3].publicKey, 0, {
+          value: 1,
+        });
+
+      expect(
+        (
+          await compoundingStakingSSVStrategy.validator(
+            testValidators[3].publicKeyHash
+          )
+        ).state
+      ).to.equal(5); // EXITING
+
+      // Second exit
+      const tx = await compoundingStakingSSVStrategy
+        .connect(validatorRegistrator)
+        .validatorWithdrawal(testValidators[3].publicKey, 0, {
+          value: 1,
+        });
+
+      await expect(tx)
+        .to.emit(compoundingStakingSSVStrategy, "ValidatorWithdraw")
+        .withArgs(testValidators[3].publicKeyHash, 0);
+    });
+
     it("Should revert when validator's balance hasn't been confirmed to equal or surpass 32.25 ETH", async () => {
       const { validatorRegistrator, compoundingStakingSSVStrategy } = fixture;
 
@@ -1113,6 +1171,26 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
       const tx = compoundingStakingSSVStrategy
         .connect(validatorRegistrator)
         .validatorWithdrawal(testValidators[3].publicKey, 0, {
+          value: 1,
+        });
+
+      await expect(tx).to.be.revertedWith("Validator not active/exiting");
+    });
+
+    it("Should revert partial withdrawal when validator's balance hasn't been confirmed to equal or surpass 32 ETH", async () => {
+      const { validatorRegistrator, compoundingStakingSSVStrategy } = fixture;
+
+      // Third validator is later withdrawn later
+      await processValidator(testValidators[3], "VERIFIED_DEPOSIT");
+      await topUpValidator(
+        testValidators[3],
+        testValidators[3].depositProof.depositAmount - 1,
+        "VERIFIED_DEPOSIT"
+      );
+
+      const tx = compoundingStakingSSVStrategy
+        .connect(validatorRegistrator)
+        .validatorWithdrawal(testValidators[3].publicKey, 1, {
           value: 1,
         });
 

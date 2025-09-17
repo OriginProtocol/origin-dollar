@@ -538,6 +538,7 @@ async function verifyBalances({
     `About to verify ${verifiedValidators.length} validator balances for slot ${verificationSlot} to beacon block root ${blockRoot}`
   );
   log(balanceProofs);
+  log(pendingDepositProofsData);
   const tx = await strategy
     .connect(signer)
     .verifyBalances(balanceProofs, pendingDepositProofsData);
