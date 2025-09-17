@@ -276,12 +276,12 @@ library BeaconProofsLib {
     /// @param pendingDepositRoot The merkle root of the pending deposit to verify
     /// @param proof The merkle proof for the pending deposit root to the pending deposits list container root.
     /// This is 28 witness hashes of 32 bytes each concatenated together starting from the leaf node.
-    /// @param depositIndex The index in the pending deposits list container for the deposit to verify.
+    /// @param pendingDepositIndex The index in the pending deposits list container for the deposit to verify.
     function verifyPendingDeposit(
         bytes32 pendingDepositsContainerRoot,
         bytes32 pendingDepositRoot,
         bytes calldata proof,
-        uint64 depositIndex
+        uint32 pendingDepositIndex
     ) internal view {
         require(pendingDepositsContainerRoot != bytes32(0), "Invalid root");
 
@@ -289,7 +289,7 @@ library BeaconProofsLib {
         uint256 generalizedIndex = concatGenIndices(
             1,
             PENDING_DEPOSITS_LIST_HEIGHT,
-            depositIndex
+            pendingDepositIndex
         );
 
         require(

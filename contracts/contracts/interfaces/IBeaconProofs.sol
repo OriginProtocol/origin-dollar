@@ -40,7 +40,7 @@ interface IBeaconProofs {
         bytes32 pendingDepositsContainerRoot,
         bytes32 pendingDepositRoot,
         bytes calldata proof,
-        uint64 depositIndex
+        uint32 pendingDepositIndex
     ) external view;
 
     function verifyFirstPendingDeposit(
