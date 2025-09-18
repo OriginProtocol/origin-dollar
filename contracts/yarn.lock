@@ -2927,6 +2927,11 @@
   dependencies:
     defer-to-connect "^2.0.1"
 
+"@tenderly/actions@^0.2.149":
+  version "0.2.149"
+  resolved "https://registry.yarnpkg.com/@tenderly/actions/-/actions-0.2.149.tgz#c8dbb6a3f03c502187220141df8f21dce302023a"
+  integrity sha512-ljtri1byxWz+DcRypNk8DXBpdXH4boejRnEQIH3HUqyYI6HTJ2fznSqaepFmFwKZnax2InWr1+7AsKVHNnuyRQ==
+
 "@trufflesuite/bigint-buffer@1.1.10":
   version "1.1.10"
   resolved "https://registry.yarnpkg.com/@trufflesuite/bigint-buffer/-/bigint-buffer-1.1.10.tgz#a1d9ca22d3cad1a138b78baaf15543637a3e1692"
@@ -3039,7 +3044,7 @@
     "@types/level-errors" "*"
     "@types/node" "*"
 
-"@types/lru-cache@5.1.1":
+"@types/lru-cache@5.1.1", "@types/lru-cache@^5.1.0":
   version "5.1.1"
   resolved "https://registry.yarnpkg.com/@types/lru-cache/-/lru-cache-5.1.1.tgz#c48c2e27b65d2a153b19bfc1a317e30872e01eef"
   integrity sha512-ssE3Vlrys7sdIzs5LOxCzTVMsU7i9oa/IaW92wF32JFb3CVczqOkru2xspuKczHEbG3nvmPY7IFqVmGGHdNbYw==
