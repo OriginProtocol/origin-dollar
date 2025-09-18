@@ -17,6 +17,9 @@ contract Runlogs_2025_09_Mainnet is SetupMainnet {
     _2025_09_18();
   }
 
+  // ------------------------------------------------------------------
+  // September 03, 2025 - Withdraw 7 WETH on Curve AMO
+  // ------------------------------------------------------------------
   function _2025_09_03() internal {
     vm.startBroadcast(strategist);
 
@@ -45,6 +48,9 @@ contract Runlogs_2025_09_Mainnet is SetupMainnet {
     vm.stopBroadcast();
   }
 
+  // ------------------------------------------------------------------
+  // September 18, 2025 - Deposit 86 WETH on Curve AMO
+  // ------------------------------------------------------------------
   function _2025_09_18() internal {
     vm.startBroadcast(strategist);
 
@@ -54,8 +60,8 @@ contract Runlogs_2025_09_Mainnet is SetupMainnet {
     address[] memory assets = new address[](1);
     assets[0] = address(weth);
     uint256[] memory amounts = new uint256[](1);
-    amounts[0] = 42 ether;
-    oethVaultAdmin.withdrawFromStrategy(address(oethWethCurveAMO), assets, amounts);
+    amounts[0] = 86 ether;
+    oethVaultAdmin.depositToStrategy(address(oethWethCurveAMO), assets, amounts);
 
     (uint256 vaultValueAfter, uint256 totalSupplyAfter,) =
       oethVaultValueChecker.snapshots(strategist);
