@@ -193,6 +193,36 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
         .collectRewardTokens();
       await expect(collectRewards).to.revertedWith("Unsupported function");
     });
+    it("Should not set platform token", async () => {
+      const { compoundingStakingSSVStrategy, governor, weth } = fixture;
+
+      const tx = compoundingStakingSSVStrategy
+        .connect(governor)
+        .setPTokenAddress(weth.address, weth.address);
+
+      await expect(tx).to.revertedWith("Unsupported function");
+    });
+    it("Should not remove platform token", async () => {
+      const { compoundingStakingSSVStrategy, governor } = fixture;
+
+      const tx = compoundingStakingSSVStrategy
+        .connect(governor)
+        .removePToken(0);
+
+      await expect(tx).to.revertedWith("Unsupported function");
+    });
+    it("Non governor should not be able to withdraw SSV", async () => {
+      const { compoundingStakingSSVStrategy, strategist, josh } = fixture;
+
+      const signers = [strategist, josh];
+      for (const signer of signers) {
+        await expect(
+          compoundingStakingSSVStrategy
+            .connect(signer)
+            .withdrawSSV([1, 2, 3, 4], parseUnits("1", 18), emptyCluster)
+        ).to.be.revertedWith("Caller is not the Governor");
+      }
+    });
     it("Non governor should not be able to reset the first deposit flag", async () => {
       const { compoundingStakingSSVStrategy, strategist, josh } = fixture;
 
