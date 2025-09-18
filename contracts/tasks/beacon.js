@@ -149,7 +149,7 @@ async function verifyValidator({ slot, index, dryrun, withdrawal, signer }) {
 
 async function verifyDeposit({
   slot,
-  id: depositID,
+  root: depositRoot,
   dryrun,
   test,
   index: strategyValidatorIndex,
@@ -162,7 +162,7 @@ async function verifyDeposit({
 
   let strategyDepositSlot = 0;
   if (!test) {
-    const depositData = await strategy.deposits(depositID);
+    const depositData = await strategy.deposits(depositRoot);
     log(
       `Found deposit for ${formatUnits(
         depositData.amountGwei,
@@ -178,11 +178,11 @@ async function verifyDeposit({
       );
 
     const { slot, amountGwei, pubKeyHash, status } = await strategy.deposits(
-      depositID
+      depositRoot
     );
     strategyDepositSlot = slot;
     if (strategyDepositSlot == 0) {
-      throw Error(`Failed to find deposit with ID ${depositID}`);
+      throw Error(`Failed to find deposit with root ${depositRoot}`);
     }
     log(
       `Verifying deposit of ${formatUnits(
@@ -192,7 +192,7 @@ async function verifyDeposit({
     );
     if (status !== 1) {
       throw Error(
-        `Deposit with ID ${depositID} is not Pending. Status: ${status}`
+        `Deposit with root ${depositRoot} is not Pending. Status: ${status}`
       );
     }
 
@@ -284,7 +284,7 @@ async function verifyDeposit({
     console.log(
       `deposit slot                              : ${strategyDepositSlot}`
     );
-    console.log(`deposit ID                                : ${depositID}`);
+    console.log(`deposit root                              : ${depositRoot}`);
     console.log(
       `beacon block root                         : ${processedBeaconBlockRoot}`
     );
@@ -331,12 +331,12 @@ async function verifyDeposit({
   }
 
   log(
-    `About to verify deposit from slot ${strategyDepositSlot} with processing slot ${depositProcessedSlot}, deposit ID ${depositID}, slot of first pending deposit ${firstPendingDepositSlot} to beacon block root ${processedBeaconBlockRoot}`
+    `About to verify deposit from slot ${strategyDepositSlot} with processing slot ${depositProcessedSlot}, deposit root ${depositRoot}, slot of first pending deposit ${firstPendingDepositSlot} to beacon block root ${processedBeaconBlockRoot}`
   );
   const tx = await strategy
     .connect(signer)
     .verifyDeposit(
-      depositID,
+      depositRoot,
       depositProcessedSlot,
       firstPendingDeposit,
       strategyValidator
@@ -405,11 +405,18 @@ async function verifyBalances({
     }
   } else {
     const pendingDeposits = await strategyView.getPendingDeposits();
+    // For each of the stategy's pending deposits
     for (const deposit of pendingDeposits) {
-      // find the pending deposit in the beacon chain's pending deposits
-      const pendingDepositIndex = stateView.pendingDeposits.findIndex((pd) => {
-        return pd.hashTreeRoot().equals(deposit.pendingDepositRoot);
-      });
+      // Find the strategy's deposit in the beacon chain's pending deposits
+      let pendingDepositIndex = -1;
+      for (let i = 0; i < stateView.pendingDeposits.length; i++) {
+        const pd = stateView.pendingDeposits.get(i);
+        if (pd.hashTreeRoot() === deposit.pendingDepositRoot) {
+          pendingDepositIndexes.push(i);
+          pendingDepositRoots.push(deposit.pendingDepositRoot);
+          break;
+        }
+      }
       if (pendingDepositIndex === -1) {
         throw Error(
           `Could not find pending deposit with root hash ${deposit.pendingDepositRoot}`

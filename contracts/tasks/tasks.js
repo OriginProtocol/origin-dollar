@@ -1928,10 +1928,10 @@ task("verifyValidator").setAction(async (_, __, runSuper) => {
 
 subtask("verifyDeposit", "Verify a deposit on the Beacon chain")
   .addParam(
-    "id",
-    "The deposit ID emitted in the `ETHStaked` event from the `stakeETH` function",
+    "root",
+    "The pending deposit root emitted in the `ETHStaked` event from the `stakeETH` function",
     undefined,
-    types.int
+    types.string
   )
   .addOptionalParam(
     "slot",

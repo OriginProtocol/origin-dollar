@@ -34,26 +34,18 @@ async function generateFirstPendingDepositSlotProof({
   );
   let firstPendingDepositSlot = 1;
   let firstPendingDepositPubKey = "0x";
-  let firstPendingDepositValidatorIndex = 0;
   if (stateView.pendingDeposits.length == 0) {
     log("No deposits in the deposit queue");
   } else {
     const firstPendingDeposit = stateView.pendingDeposits.get(0);
     firstPendingDepositSlot = firstPendingDeposit.slot;
     firstPendingDepositPubKey = toHex(firstPendingDeposit.pubkey);
-    firstPendingDepositValidatorIndex = firstPendingDeposit.validatorIndex;
     log(
       `First pending deposit has slot ${
         firstPendingDeposit.slot
       }, withdrawal credential ${toHex(
         firstPendingDeposit.withdrawalCredentials
       )} and public key ${firstPendingDepositPubKey}`
-    );
-
-    const firstDepositValidator = await getValidator(firstPendingDepositPubKey);
-    firstPendingDepositValidatorIndex = firstDepositValidator.validatorindex;
-    log(
-      `First pending deposit validator index: ${firstPendingDepositValidatorIndex}`
     );
   }
 
