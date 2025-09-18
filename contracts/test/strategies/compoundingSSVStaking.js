@@ -981,7 +981,7 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
       await expect(tx).to.be.revertedWith("Pausable: paused");
     });
 
-    it("Should revert registerSsvValidator when contract paused", async () => {
+    it("Should revert stakeEth when contract paused", async () => {
       const { compoundingStakingSSVStrategy, governor, validatorRegistrator } =
         fixture;
       const testValidator = testValidators[0];
@@ -1606,7 +1606,6 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
 
       await expect(tx).to.be.revertedWith("Deposit not pending");
     });
-
     it("Should revert when deposit verified again", async () => {
       const { beaconRoots, compoundingStakingSSVStrategy } = fixture;
 
@@ -1631,6 +1630,99 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
       );
 
       await expect(tx).to.be.revertedWith("Deposit not pending");
+    });
+    it("Should revert when processed slot is after snapped balances", async () => {
+      const { compoundingStakingSSVStrategy } = fixture;
+
+      // Make sure we are at the next slot by moving time forward 12 seconds
+      await advanceTime(12);
+      await compoundingStakingSSVStrategy.snapBalances();
+
+      const currentBlock = await ethers.provider.getBlock("latest");
+      const currentSlot = calcSlot(BigInt(currentBlock.timestamp));
+      const depositProcessedSlot = currentSlot;
+
+      const tx = compoundingStakingSSVStrategy.verifyDeposit(
+        pendingDepositRoot,
+        depositProcessedSlot,
+        testValidator.depositProof.firstPendingDeposit,
+        testValidator.depositProof.strategyValidator
+      );
+
+      await expect(tx).to.be.revertedWith("Deposit after balance snapshot");
+    });
+    it("Should verify deposit with no snapped balances", async () => {
+      const { beaconRoots, compoundingStakingSSVStrategy } = fixture;
+
+      const depositProcessedSlot = depositSlot + 1n;
+      await beaconRoots["setBeaconRoot(uint256,bytes32)"](
+        calcBlockTimestamp(depositProcessedSlot) + 12n,
+        testValidator.depositProof.processedBeaconBlockRoot
+      );
+
+      const tx = await compoundingStakingSSVStrategy.verifyDeposit(
+        pendingDepositRoot,
+        depositProcessedSlot,
+        testValidator.depositProof.firstPendingDeposit,
+        testValidator.depositProof.strategyValidator
+      );
+
+      await expect(tx)
+        .to.emit(compoundingStakingSSVStrategy, "DepositVerified")
+        .withArgs(pendingDepositRoot, parseEther("1"));
+    });
+    it("Should verify deposit with processed slot 1 before the snapped balances slot", async () => {
+      const { beaconRoots, compoundingStakingSSVStrategy } = fixture;
+
+      // Move two slots ahead so depositProcessedSlot is after the snap
+      await advanceTime(24);
+
+      await compoundingStakingSSVStrategy.snapBalances();
+
+      const { timestamp: snappedTimestamp } =
+        await compoundingStakingSSVStrategy.snappedBalance();
+      const depositProcessedSlot = calcSlot(BigInt(snappedTimestamp)) - 1n;
+
+      await beaconRoots["setBeaconRoot(uint256,bytes32)"](
+        calcBlockTimestamp(depositProcessedSlot) + 12n,
+        testValidator.depositProof.processedBeaconBlockRoot
+      );
+
+      const tx = await compoundingStakingSSVStrategy.verifyDeposit(
+        pendingDepositRoot,
+        depositProcessedSlot,
+        testValidator.depositProof.firstPendingDeposit,
+        testValidator.depositProof.strategyValidator
+      );
+
+      await expect(tx)
+        .to.emit(compoundingStakingSSVStrategy, "DepositVerified")
+        .withArgs(pendingDepositRoot, parseEther("1"));
+    });
+    it("Should verify deposit with processed slot well before the snapped balances slot", async () => {
+      const { beaconRoots, compoundingStakingSSVStrategy } = fixture;
+
+      // Move 10 slots ahead of the deposit slot
+      await advanceTime(120);
+      await compoundingStakingSSVStrategy.snapBalances();
+
+      const depositProcessedSlot = depositSlot + 1n;
+
+      await beaconRoots["setBeaconRoot(uint256,bytes32)"](
+        calcBlockTimestamp(depositProcessedSlot) + 12n,
+        testValidator.depositProof.processedBeaconBlockRoot
+      );
+
+      const tx = await compoundingStakingSSVStrategy.verifyDeposit(
+        pendingDepositRoot,
+        depositProcessedSlot,
+        testValidator.depositProof.firstPendingDeposit,
+        testValidator.depositProof.strategyValidator
+      );
+
+      await expect(tx)
+        .to.emit(compoundingStakingSSVStrategy, "DepositVerified")
+        .withArgs(pendingDepositRoot, parseEther("1"));
     });
   });
 
