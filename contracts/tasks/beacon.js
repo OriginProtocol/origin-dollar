@@ -405,14 +405,18 @@ async function verifyBalances({
     }
   } else {
     const pendingDeposits = await strategyView.getPendingDeposits();
-    // For each of the stategy's pending deposits
+    // For each of the strategy's pending deposits
     for (const deposit of pendingDeposits) {
       // Find the strategy's deposit in the beacon chain's pending deposits
       let pendingDepositIndex = -1;
       for (let i = 0; i < stateView.pendingDeposits.length; i++) {
         const pd = stateView.pendingDeposits.get(i);
-        if (pd.hashTreeRoot() === deposit.pendingDepositRoot) {
-          pendingDepositIndexes.push(i);
+        if (toHex(pd.hashTreeRoot()) === deposit.pendingDepositRoot) {
+          log(
+            `Found pending deposit with root ${deposit.pendingDepositRoot} at index ${i}`
+          );
+          pendingDepositIndex = i;
+          pendingDepositIndexes.push(pendingDepositIndex);
           pendingDepositRoots.push(deposit.pendingDepositRoot);
           break;
         }
