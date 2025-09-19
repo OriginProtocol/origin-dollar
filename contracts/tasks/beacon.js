@@ -57,7 +57,7 @@ async function requestValidatorWithdraw({ pubkey, amount, signer }) {
   await logTxDetails(tx, "requestWithdraw");
 }
 
-async function verifyValidator({ slot, index, dryrun, withdrawal, signer }) {
+async function verifyValidator({ slot, index, dryrun, cred, signer }) {
   // Get provider to mainnet or testnet and not a local fork
   const provider = await getLiveProvider(signer.provider);
 
@@ -68,8 +68,8 @@ async function verifyValidator({ slot, index, dryrun, withdrawal, signer }) {
     "CompoundingStakingSSVStrategy"
   );
 
-  if (withdrawal) {
-    log(`Overriding withdrawal address to ${withdrawal}`);
+  if (cred) {
+    log(`Overriding withdrawal credentials to ${cred}`);
 
     // Update the validator's withdrawalCredentials in stateView
     const validator = stateView.validators.get(index);
@@ -88,16 +88,14 @@ async function verifyValidator({ slot, index, dryrun, withdrawal, signer }) {
     );
 
     // Override the address in the withdrawal credentials
-    validator.withdrawalCredentials = arrayify(
-      `0x020000000000000000000000${withdrawal.slice(2)}`
-    );
+    validator.withdrawalCredentials = arrayify(cred);
     stateView.validators.set(index, validator); // Update validator in state
 
     // Update blockTree with new stateRoot
     const stateRootGindex = blockView.type.getPathInfo(["stateRoot"]).gindex;
     blockTree.setNode(stateRootGindex, stateView.node);
   } else {
-    withdrawal = strategy.address;
+    cred = "0x020000000000000000000000" + strategy.address.slice(2);
   }
 
   const nextBlock = blockView.body.executionPayload.blockNumber + 1;
@@ -128,22 +126,22 @@ async function verifyValidator({ slot, index, dryrun, withdrawal, signer }) {
     );
 
   if (dryrun) {
-    console.log(`beaconBlockRoot   : ${beaconBlockRoot}`);
-    console.log(`nextBlockTimestamp: ${nextBlockTimestamp}`);
-    console.log(`validator index   : ${index}`);
-    console.log(`pubKeyHash        : ${pubKeyHash}`);
-    console.log(`withdrawal address: ${withdrawal}`);
-    console.log(`Validator status  : ${stateEnum}`);
+    console.log(`beaconBlockRoot       : ${beaconBlockRoot}`);
+    console.log(`nextBlockTimestamp    : ${nextBlockTimestamp}`);
+    console.log(`validator index       : ${index}`);
+    console.log(`pubKeyHash            : ${pubKeyHash}`);
+    console.log(`withdrawal credentials: ${cred}`);
+    console.log(`Validator status      : ${stateEnum}`);
     console.log(`proof:\n${proof}`);
     return;
   }
 
   log(
-    `About verify validator ${index} with pub key ${pubKey}, pub key hash ${pubKeyHash}, withdrawal ${withdrawal} at slot ${blockView.slot} to beacon chain root ${beaconBlockRoot}`
+    `About verify validator ${index} with pub key ${pubKey}, pub key hash ${pubKeyHash}, withdrawal credential ${cred} at slot ${blockView.slot} to beacon chain root ${beaconBlockRoot}`
   );
   const tx = await strategy
     .connect(signer)
-    .verifyValidator(nextBlockTimestamp, index, pubKeyHash, withdrawal, proof);
+    .verifyValidator(nextBlockTimestamp, index, pubKeyHash, cred, proof);
   await logTxDetails(tx, "verifyValidator");
 }
 

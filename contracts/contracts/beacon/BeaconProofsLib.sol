@@ -79,13 +79,13 @@ library BeaconProofsLib {
     /// @param proof The merkle proof for the validator public key to the beacon block root.
     /// This is 53 witness hashes of 32 bytes each concatenated together starting from the leaf node.
     /// @param validatorIndex The validator index
-    /// @param withdrawalAddress The withdrawal address used in the validator's withdrawal credentials
+    /// @param withdrawalCredentials a value containing the validator type and withdrawal address.
     function verifyValidator(
         bytes32 beaconBlockRoot,
         bytes32 pubKeyHash,
         bytes calldata proof,
         uint40 validatorIndex,
-        address withdrawalAddress
+        bytes32 withdrawalCredentials
     ) internal view {
         require(beaconBlockRoot != bytes32(0), "Invalid block root");
 
@@ -104,13 +104,6 @@ library BeaconProofsLib {
 
         // Get the withdrawal credentials from the first witness in the pubkey merkle proof.
         bytes32 withdrawalCredentialsFromProof = bytes32(proof[:32]);
-        bytes32 withdrawalCredentials = bytes32(
-            abi.encodePacked(
-                bytes1(0x02),
-                bytes11(0),
-                address(withdrawalAddress)
-            )
-        );
 
         require(
             withdrawalCredentialsFromProof == withdrawalCredentials,
@@ -285,8 +278,8 @@ library BeaconProofsLib {
     ) internal view {
         require(pendingDepositsContainerRoot != bytes32(0), "Invalid root");
         // ssz-merkleizing a list which has a variable length, an additional
-        // sha256(pending_deposits_root, pending_deposits_length) operation is done to get the actual pending deposits root
-        // so the max pending deposit index is 2^(28 - 1)
+        // sha256(pending_deposits_root, pending_deposits_length) operation is done to get the
+        // actual pending deposits root so the max pending deposit index is 2^(28 - 1)
         require(
             pendingDepositIndex < 2**(PENDING_DEPOSITS_LIST_HEIGHT - 1),
             "Invalid deposit index"

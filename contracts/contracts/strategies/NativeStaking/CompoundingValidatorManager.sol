@@ -597,9 +597,8 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
     /// which is the beacon block root of the previous block.
     /// @param validatorIndex The index of the validator on the beacon chain.
     /// @param pubKeyHash The hash of the validator's public key using the Beacon Chain's format
-    /// @param withdrawalAddress The withdrawal address of the validator which should be this strategy's address.
-    /// If the withdrawal address is not this strategy's address, the initial deposit was front-run
-    /// and the validator is marked as invalid.
+    /// @param withdrawalCredentials contain the validator type and withdrawal address. These can be incorrect and/or
+    ///        malformed. In case of incorrect withdrawalCredentials the validator deposit has been front run
     /// @param validatorPubKeyProof The merkle proof for the validator public key to the beacon block root.
     /// This is 53 witness hashes of 32 bytes each concatenated together starting from the leaf node.
     /// BeaconBlock.state.validators[validatorIndex].pubkey
@@ -607,7 +606,7 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
         uint64 nextBlockTimestamp,
         uint40 validatorIndex,
         bytes32 pubKeyHash,
-        address withdrawalAddress,
+        bytes32 withdrawalCredentials,
         bytes calldata validatorPubKeyProof
     ) external {
         require(
@@ -620,13 +619,13 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
         bytes32 blockRoot = BeaconRoots.parentBlockRoot(nextBlockTimestamp);
 
         // Verify the validator index is for the validator with the given public key.
-        // Also verify the validator's withdrawal credential points to the `withdrawalAddress`.
+        // Also verify the validator's withdrawal credentials
         IBeaconProofs(BEACON_PROOFS).verifyValidator(
             blockRoot,
             pubKeyHash,
             validatorPubKeyProof,
             validatorIndex,
-            withdrawalAddress
+            withdrawalCredentials
         );
 
         // Store the validator state as verified
@@ -635,8 +634,13 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
             index: validatorIndex
         });
 
+        bytes32 expectedWithdrawalCredentials = bytes32(
+            abi.encodePacked(bytes1(0x02), bytes11(0), address(this))
+        );
+
         // If the initial deposit was front-run and the withdrawal address is not this strategy
-        if (withdrawalAddress != address(this)) {
+        // or the validator type is not a compounding validator (0x02)
+        if (expectedWithdrawalCredentials != withdrawalCredentials) {
             // override the validator state
             validator[pubKeyHash].state = ValidatorState.INVALID;
 
