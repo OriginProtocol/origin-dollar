@@ -2835,6 +2835,35 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
       expect(await compoundingStakingSSVStrategy.firstDeposit()).to.equal(true);
     });
 
+    it("Should verify validator with incorrect type", async () => {
+      const { compoundingStakingSSVStrategy } = fixture;
+
+      // Third validator is later withdrawn later
+      const testValidator = testValidators[3];
+
+      await processValidator(testValidator, "STAKED");
+
+      const tx = await compoundingStakingSSVStrategy.verifyValidator(
+        testValidator.validatorProof.nextBlockTimestamp,
+        testValidator.index,
+        testValidator.publicKeyHash,
+        compoundingStakingSSVStrategy.address,
+        "0x01",
+        "0x" // empty proof as it is not verified in the mock
+      );
+
+      await expect(tx)
+        .to.emit(compoundingStakingSSVStrategy, "ValidatorInvalid")
+        .withArgs(testValidator.publicKeyHash);
+
+      // Validator is invalid
+      const { state: validatorStateAfter } =
+        await compoundingStakingSSVStrategy.validator(
+          testValidator.publicKeyHash
+        );
+      expect(validatorStateAfter).to.equal(8); // INVALID
+    });
+
     it("Should fail to verify front-run deposit", async () => {
       const { compoundingStakingSSVStrategy } = fixture;
 
