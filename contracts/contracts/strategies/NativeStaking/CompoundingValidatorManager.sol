@@ -635,11 +635,7 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
         });
 
         bytes32 expectedWithdrawalCredentials = bytes32(
-            abi.encodePacked(
-                bytes1(0x02),
-                bytes11(0),
-                address(this)
-            )
+            abi.encodePacked(bytes1(0x02), bytes11(0), address(this))
         );
 
         // If the initial deposit was front-run and the withdrawal address is not this strategy

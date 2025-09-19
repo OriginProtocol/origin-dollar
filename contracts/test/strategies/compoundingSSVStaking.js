@@ -83,7 +83,7 @@ const emptyPendingDepositsProof = {
 
 const getWithdrawalCredentials = (type, address) => {
   return type + "0000000000000000000000" + address.slice(2);
-}
+};
 
 const ETHInGwei = BigNumber.from("1000000000"); // 1 ETH in Gwei
 const GweiInWei = BigNumber.from("1000000000"); // 1 Gwei in Wei
@@ -2872,8 +2872,9 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
 
       await processValidator(testValidator, "STAKED");
 
-      const malformedCredentials = "0x020000000bafa00000000000"
-        + compoundingStakingSSVStrategy.address.slice(2);
+      const malformedCredentials =
+        "0x020000000bafa00000000000" +
+        compoundingStakingSSVStrategy.address.slice(2);
 
       const tx = await compoundingStakingSSVStrategy.verifyValidator(
         testValidator.validatorProof.nextBlockTimestamp,
