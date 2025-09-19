@@ -56,8 +56,8 @@ describe("ForkTest: Beacon Proofs", function () {
     const pubKeyHash = hashPubKey(pubKey);
     expect(pubKeyHash).to.eq(leaf);
 
-    const withdrawalAddress = "0xf80432285c9d2055449330bbd7686a5ecf2a7247";
-    const validatorType = 0x02;
+    const withdrawalCredential =
+      "0x020000000000000000000000f80432285c9d2055449330bbd7686a5ecf2a7247";
 
     log(`About to verify validator public key`);
     await beaconProofs.verifyValidator(
@@ -65,8 +65,7 @@ describe("ForkTest: Beacon Proofs", function () {
       pubKeyHash,
       proof,
       validatorIndex,
-      withdrawalAddress,
-      validatorType
+      withdrawalCredential
     );
   });
 
