@@ -57,7 +57,14 @@ async function requestValidatorWithdraw({ pubkey, amount, signer }) {
   await logTxDetails(tx, "requestWithdraw");
 }
 
-async function verifyValidator({ slot, index, dryrun, withdrawal, signer }) {
+async function verifyValidator({
+  slot,
+  index,
+  dryrun,
+  withdrawal,
+  type,
+  signer,
+}) {
   // Get provider to mainnet or testnet and not a local fork
   const provider = await getLiveProvider(signer.provider);
 
@@ -133,17 +140,25 @@ async function verifyValidator({ slot, index, dryrun, withdrawal, signer }) {
     console.log(`validator index   : ${index}`);
     console.log(`pubKeyHash        : ${pubKeyHash}`);
     console.log(`withdrawal address: ${withdrawal}`);
+    console.log(`validator type    : ${type}`);
     console.log(`Validator status  : ${stateEnum}`);
     console.log(`proof:\n${proof}`);
     return;
   }
 
   log(
-    `About verify validator ${index} with pub key ${pubKey}, pub key hash ${pubKeyHash}, withdrawal ${withdrawal} at slot ${blockView.slot} to beacon chain root ${beaconBlockRoot}`
+    `About verify validator ${index} with pub key ${pubKey}, pub key hash ${pubKeyHash}, withdrawal ${withdrawal}, type ${type} at slot ${blockView.slot} to beacon chain root ${beaconBlockRoot}`
   );
   const tx = await strategy
     .connect(signer)
-    .verifyValidator(nextBlockTimestamp, index, pubKeyHash, withdrawal, proof);
+    .verifyValidator(
+      nextBlockTimestamp,
+      index,
+      pubKeyHash,
+      withdrawal,
+      type,
+      proof
+    );
   await logTxDetails(tx, "verifyValidator");
 }
 

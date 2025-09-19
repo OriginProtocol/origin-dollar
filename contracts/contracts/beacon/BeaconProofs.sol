@@ -18,19 +18,22 @@ contract BeaconProofs is IBeaconProofs {
     /// This is 53 witness hashes of 32 bytes each concatenated together starting from the leaf node.
     /// @param validatorIndex The validator index
     /// @param withdrawalAddress The withdrawal address used in the validator's withdrawal credentials
+    /// @param validatorType The type of validator using in the withdrawal credential. Should be 0x00, 0x01 or 0x02.
     function verifyValidator(
         bytes32 beaconBlockRoot,
         bytes32 pubKeyHash,
         bytes calldata proof,
         uint40 validatorIndex,
-        address withdrawalAddress
+        address withdrawalAddress,
+        bytes1 validatorType
     ) external view {
         BeaconProofsLib.verifyValidator(
             beaconBlockRoot,
             pubKeyHash,
             proof,
             validatorIndex,
-            withdrawalAddress
+            withdrawalAddress,
+            validatorType
         );
     }
 

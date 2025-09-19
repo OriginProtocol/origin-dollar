@@ -203,13 +203,12 @@ end note
 activate roots
 return parent block root
 
-compStrat -> proofs : verifyValidatorPubkey(\n beacon block root,\n pubKeyHash,\n validatorPubKeyProof,\n validatorIndex,\n withdrawalAddress)
+compStrat -> proofs : verifyValidatorPubkey(\n beacon block root,\n pubKeyHash,\n validatorPubKeyProof,\n validatorIndex,\n withdrawalAddress,\n validatorType)
 activate proofs
 note over proofs
 Index BeaconBlock.state.validators[validatorIndex].pubkey
-Verify merkle proof of pubKeyHash against the beacon block root.
-Verify first witness of the proof, which is the withdrawal credential,
-contains the Staking Strategy address.
+Verify merkle proof of pubKeyHash, strategy address
+and validatorType against the beacon block root.
 end note
 return
 

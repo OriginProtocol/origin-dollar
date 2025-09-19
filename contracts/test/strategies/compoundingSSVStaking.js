@@ -326,6 +326,7 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
         testValidator.index,
         testValidator.publicKeyHash,
         compoundingStakingSSVStrategy.address,
+        "0x02",
         testValidator.validatorProof.bytes
       );
 
@@ -857,6 +858,7 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
         testValidator.index,
         testValidator.publicKeyHash,
         compoundingStakingSSVStrategy.address,
+        "0x02",
         testValidator.validatorProof.bytes
       );
 
@@ -2798,6 +2800,7 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
         testValidator.index,
         testValidator.publicKeyHash,
         attackerAddress,
+        "0x02",
         "0x" // empty proof as it is not verified in the mock
       );
 
@@ -2850,6 +2853,7 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
         testValidator.index,
         testValidator.publicKeyHash,
         Wallet.createRandom().address,
+        "0x02",
         "0x" // empty proof as it is not verified in the mock
       );
 
@@ -2882,6 +2886,7 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
         testValidator.index,
         testValidator.publicKeyHash,
         Wallet.createRandom().address,
+        "0x02",
         "0x" // empty proof as it is not verified in the mock
       );
 
@@ -2914,6 +2919,7 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
         testValidator.index,
         testValidator.publicKeyHash,
         Wallet.createRandom().address,
+        "0x02",
         "0x" // empty proof as it is not verified in the mock
       );
 

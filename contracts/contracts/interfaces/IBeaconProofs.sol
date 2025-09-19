@@ -7,7 +7,8 @@ interface IBeaconProofs {
         bytes32 pubKeyHash,
         bytes calldata validatorPubKeyProof,
         uint40 validatorIndex,
-        address withdrawalAddress
+        address withdrawalAddress,
+        bytes1 validatorType
     ) external view;
 
     function verifyValidatorWithdrawable(

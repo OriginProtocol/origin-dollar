@@ -608,6 +608,7 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
         uint40 validatorIndex,
         bytes32 pubKeyHash,
         address withdrawalAddress,
+        bytes1 validatorType,
         bytes calldata validatorPubKeyProof
     ) external {
         require(
@@ -626,7 +627,8 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
             pubKeyHash,
             validatorPubKeyProof,
             validatorIndex,
-            withdrawalAddress
+            withdrawalAddress,
+            validatorType
         );
 
         // Store the validator state as verified
@@ -636,7 +638,8 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
         });
 
         // If the initial deposit was front-run and the withdrawal address is not this strategy
-        if (withdrawalAddress != address(this)) {
+        // or the validator type is not a compounding validator (0x02)
+        if (withdrawalAddress != address(this) || validatorType != 0x02) {
             // override the validator state
             validator[pubKeyHash].state = ValidatorState.INVALID;
 

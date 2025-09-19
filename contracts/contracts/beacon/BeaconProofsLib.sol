@@ -80,12 +80,14 @@ library BeaconProofsLib {
     /// This is 53 witness hashes of 32 bytes each concatenated together starting from the leaf node.
     /// @param validatorIndex The validator index
     /// @param withdrawalAddress The withdrawal address used in the validator's withdrawal credentials
+    /// @param validatorType The type of validator using in the withdrawal credential. Should be 0x00, 0x01 or 0x02.
     function verifyValidator(
         bytes32 beaconBlockRoot,
         bytes32 pubKeyHash,
         bytes calldata proof,
         uint40 validatorIndex,
-        address withdrawalAddress
+        address withdrawalAddress,
+        bytes1 validatorType
     ) internal view {
         require(beaconBlockRoot != bytes32(0), "Invalid block root");
 
@@ -106,7 +108,7 @@ library BeaconProofsLib {
         bytes32 withdrawalCredentialsFromProof = bytes32(proof[:32]);
         bytes32 withdrawalCredentials = bytes32(
             abi.encodePacked(
-                bytes1(0x02),
+                validatorType,
                 bytes11(0),
                 address(withdrawalAddress)
             )
@@ -285,8 +287,8 @@ library BeaconProofsLib {
     ) internal view {
         require(pendingDepositsContainerRoot != bytes32(0), "Invalid root");
         // ssz-merkleizing a list which has a variable length, an additional
-        // sha256(pending_deposits_root, pending_deposits_length) operation is done to get the actual pending deposits root
-        // so the max pending deposit index is 2^(28 - 1)
+        // sha256(pending_deposits_root, pending_deposits_length) operation is done to get the
+        // actual pending deposits root so the max pending deposit index is 2^(28 - 1)
         require(
             pendingDepositIndex < 2**(PENDING_DEPOSITS_LIST_HEIGHT - 1),
             "Invalid deposit index"

@@ -1918,6 +1918,12 @@ subtask("verifyValidator", "Verify a validator on the Beacon chain")
     undefined,
     types.string
   )
+  .addOptionalParam(
+    "type",
+    "Override the validator type in the withdrawal credentials. Used when generating proofs for unit tests or the deposit was front-run.",
+    "0x02",
+    types.string
+  )
   .setAction(async (taskArgs) => {
     const signer = await getSigner();
     await verifyValidator({ ...taskArgs, signer });
