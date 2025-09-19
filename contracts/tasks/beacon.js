@@ -134,14 +134,16 @@ async function verifyValidator({
       `Validator ${index} with pub key hash ${pubKeyHash} is not STAKED. Status: ${stateEnum}`
     );
 
+  const credentials = type + "0000000000000000000000" + withdrawal.slice(2);
   if (dryrun) {
-    console.log(`beaconBlockRoot   : ${beaconBlockRoot}`);
-    console.log(`nextBlockTimestamp: ${nextBlockTimestamp}`);
-    console.log(`validator index   : ${index}`);
-    console.log(`pubKeyHash        : ${pubKeyHash}`);
-    console.log(`withdrawal address: ${withdrawal}`);
-    console.log(`validator type    : ${type}`);
-    console.log(`Validator status  : ${stateEnum}`);
+    console.log(`beaconBlockRoot       : ${beaconBlockRoot}`);
+    console.log(`nextBlockTimestamp    : ${nextBlockTimestamp}`);
+    console.log(`validator index       : ${index}`);
+    console.log(`pubKeyHash            : ${pubKeyHash}`);
+    console.log(`withdrawal address    : ${withdrawal}`);
+    console.log(`withdrawal credentials: ${credentials}`);
+    console.log(`validator type        : ${type}`);
+    console.log(`Validator status      : ${stateEnum}`);
     console.log(`proof:\n${proof}`);
     return;
   }
@@ -155,8 +157,7 @@ async function verifyValidator({
       nextBlockTimestamp,
       index,
       pubKeyHash,
-      withdrawal,
-      type,
+      credentials,
       proof
     );
   await logTxDetails(tx, "verifyValidator");
