@@ -404,11 +404,15 @@ function validatorStatus(status) {
   } else if (status === 3) {
     return "VERIFIED";
   } else if (status === 4) {
-    return "EXITING";
+    return "ACTIVE";
   } else if (status === 5) {
-    return "EXITED";
+    return "EXITING";
   } else if (status === 6) {
+    return "EXITED";
+  } else if (status === 7) {
     return "REMOVED";
+  } else if (status === 8) {
+    return "INVALID";
   } else {
     return "UNKNOWN";
   }
