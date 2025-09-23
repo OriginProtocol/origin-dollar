@@ -386,7 +386,7 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
                 "Max validators"
             );
 
-            // Flag a deposit to an unverified validator so only no other deposits can be made
+            // Flag a deposit to an unverified validator so no other deposits can be made
             // to an unverified validator.
             firstDeposit = true;
             validator[pubKeyHash].state = ValidatorState.STAKED;
