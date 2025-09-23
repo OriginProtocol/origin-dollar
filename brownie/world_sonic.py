@@ -11,3 +11,15 @@ vault_value_checker = load_contract('vault_value_checker', OS_VAULT_VALUE_CHECKE
 swapx_amo_strat = load_contract('swapx_amo_strat', SWAPX_AMO_STRATEGY)
 swapx_amo_pool = load_contract('swapx_amo_pool', SWAPX_AMO_POOL)
 sonic_staking_strat = load_contract('sonic_staking_strat', SONIC_STAKING_STRATEGY)
+
+def print_amo_pool_status(description):
+    wsPoolBalance = ws.balanceOf(SWAPX_AMO_POOL)
+    osPoolBalance = os.balanceOf(SWAPX_AMO_POOL)
+    totalPool = wsPoolBalance + osPoolBalance
+    price_before = swapx_amo_pool.getAmountOut(10**18, OS)
+
+    print("SwapX wS/OS Pool ", description)  
+    print("Pool wS     ", "{:.2f}".format(wsPoolBalance / 10**18), "{:.2f}".format(wsPoolBalance * 100 / totalPool), "%")
+    print("Pool OS     ", "{:.2f}".format(osPoolBalance / 10**18), "{:.2f}".format(osPoolBalance * 100 / totalPool), "%")
+    print("Pool Total  ", "{:.2f}".format(totalPool / 10**18), totalPool)
+
