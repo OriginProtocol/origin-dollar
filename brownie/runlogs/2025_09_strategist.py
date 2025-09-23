@@ -17,15 +17,7 @@ def main():
     print("Amount wS to swap into the pool  ", "{:.2f}".format(ws_swap_in_amount / 10**18))
 
     # AMO pool before
-    wsPoolBalance = ws.balanceOf(SWAPX_AMO_POOL)
-    osPoolBalance = os.balanceOf(SWAPX_AMO_POOL)
-    totalPool = wsPoolBalance + osPoolBalance
-    price_before = swapx_amo_pool.getAmountOut(10**18, OS)
-
-    print("SwapX wS/OS Pool before")  
-    print("Pool wS     ", "{:.2f}".format(wsPoolBalance / 10**18), wsPoolBalance * 100 / totalPool)
-    print("Pool OS     ", "{:.2f}".format(osPoolBalance / 10**18), osPoolBalance * 100 / totalPool)
-    print("Pool Total  ", "{:.2f}".format(totalPool / 10**18), totalPool)
+    print_amo_pool_status("Before")
 
     # Claim withdrawal from the Validator
     txs.append(
@@ -34,18 +26,8 @@ def main():
         {'from': SONIC_STRATEGIST}
       )
     )
-
     # AMO pool after
-    wsPoolBalance = ws.balanceOf(SWAPX_AMO_POOL)
-    osPoolBalance = os.balanceOf(SWAPX_AMO_POOL)
-    totalPool = wsPoolBalance + osPoolBalance
-    price_after = swapx_amo_pool.getAmountOut(10**18, OS)
-
-    print("SwapX wS/OS Pool after")  
-    print("Pool wS     ", "{:.2f}".format(wsPoolBalance / 10**18), wsPoolBalance * 100 / totalPool)
-    print("Pool OS     ", "{:.2f}".format(osPoolBalance / 10**18), osPoolBalance * 100 / totalPool)
-    print("Pool Total  ", "{:.2f}".format(totalPool / 10**18), totalPool)
-    print("Sell 1000 OS prices before and after", "{:.6f}".format(price_before / 10**18), "{:.6f}".format(price_after / 10**18))
+    print_amo_pool_status("After")
 
     # After
     vault_change = vault_core.totalValue() - vault_value_checker.snapshots(SONIC_STRATEGIST)[0]
