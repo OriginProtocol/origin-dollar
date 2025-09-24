@@ -16,10 +16,10 @@ def print_amo_pool_status(description):
     wsPoolBalance = ws.balanceOf(SWAPX_AMO_POOL)
     osPoolBalance = os.balanceOf(SWAPX_AMO_POOL)
     totalPool = wsPoolBalance + osPoolBalance
-    price_before = swapx_amo_pool.getAmountOut(10**18, OS)
+    price = swapx_amo_pool.getAmountOut(10**18, OS)
 
     print("SwapX wS/OS Pool ", description)  
     print("Pool wS     ", "{:.2f}".format(wsPoolBalance / 10**18), "{:.2f}".format(wsPoolBalance * 100 / totalPool), "%")
     print("Pool OS     ", "{:.2f}".format(osPoolBalance / 10**18), "{:.2f}".format(osPoolBalance * 100 / totalPool), "%")
     print("Pool Total  ", "{:.2f}".format(totalPool / 10**18), totalPool)
-
+    print("Sell 1000 OS price", "{:.6f}".format(price / 10**18))
