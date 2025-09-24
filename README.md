@@ -58,6 +58,8 @@ cd contracts
 # Install the dependencies
 pnpm i
 
+# Do NOT run `pnpm approve-builds` as per the warning
+
 # Run the node in forked mode
 pnpm run node
 ```
