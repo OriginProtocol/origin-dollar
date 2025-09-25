@@ -20,13 +20,17 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Force Git deps to use HTTPS instead of SSH
+      # Write a dedicated gitconfig that forces SSH → HTTPS for GitHub
+      - name: Write CI git config (SSH → HTTPS)
         run: |
-          git config --global url."https://github.com/".insteadOf "git@github.com:"
-          git config --global url."https://github.com/".insteadOf "ssh://git@github.com/"
-      
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v2
+          cat > .gitconfig-ci <<'EOF'
+          [url "https://github.com/"]
+            insteadOf = git@github.com:
+            insteadOf = ssh://git@github.com/
+          EOF
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
         with:
           version: 10
           run_install: false
@@ -37,9 +41,13 @@ jobs:
           node-version: "20.x"
           cache: "pnpm"
           cache-dependency-path: contracts/pnpm-lock.yaml
-
-      - run: pnpm install --frozen-lockfile
+          
+      - name: Install deps
         working-directory: ./contracts
+        env:
+          # Make sure the git process used by pnpm reads our rewrite rules
+          GIT_CONFIG_GLOBAL: ${{ github.workspace }}/.gitconfig-ci
+        run: pnpm install --frozen-lockfile
 
       # this will compile and output the contract sizes
       - run: npx hardhat compile
@@ -59,12 +67,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Force Git deps to use HTTPS instead of SSH
-        run: |
-          git config --global url."https://github.com/".insteadOf "git@github.com:"
-          git config --global url."https://github.com/".insteadOf "ssh://git@github.com/"
-      
-      - name: Setup pnpm
+      - name: Install pnpm
         uses: pnpm/action-setup@v2
         with:
           version: 10
@@ -98,12 +101,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Force Git deps to use HTTPS instead of SSH
-        run: |
-          git config --global url."https://github.com/".insteadOf "git@github.com:"
-          git config --global url."https://github.com/".insteadOf "ssh://git@github.com/"
-      
-      - name: Setup pnpm
+      - name: Install pnpm
         uses: pnpm/action-setup@v2
         with:
           version: 10
@@ -139,12 +137,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Force Git deps to use HTTPS instead of SSH
-        run: |
-          git config --global url."https://github.com/".insteadOf "git@github.com:"
-          git config --global url."https://github.com/".insteadOf "ssh://git@github.com/"
-      
-      - name: Setup pnpm
+      - name: Install pnpm
         uses: pnpm/action-setup@v2
         with:
           version: 10
@@ -190,12 +183,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Force Git deps to use HTTPS instead of SSH
-        run: |
-          git config --global url."https://github.com/".insteadOf "git@github.com:"
-          git config --global url."https://github.com/".insteadOf "ssh://git@github.com/"
-      
-      - name: Setup pnpm
+      - name: Install pnpm
         uses: pnpm/action-setup@v2
         with:
           version: 10
@@ -241,12 +229,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Force Git deps to use HTTPS instead of SSH
-        run: |
-          git config --global url."https://github.com/".insteadOf "git@github.com:"
-          git config --global url."https://github.com/".insteadOf "ssh://git@github.com/"
-      
-      - name: Setup pnpm
+      - name: Install pnpm
         uses: pnpm/action-setup@v2
         with:
           version: 10
@@ -292,12 +275,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Force Git deps to use HTTPS instead of SSH
-        run: |
-          git config --global url."https://github.com/".insteadOf "git@github.com:"
-          git config --global url."https://github.com/".insteadOf "ssh://git@github.com/"
-      
-      - name: Setup pnpm
+      - name: Install pnpm
         uses: pnpm/action-setup@v2
         with:
           version: 10
@@ -343,12 +321,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Force Git deps to use HTTPS instead of SSH
-        run: |
-          git config --global url."https://github.com/".insteadOf "git@github.com:"
-          git config --global url."https://github.com/".insteadOf "ssh://git@github.com/"
-      
-      - name: Setup pnpm
+      - name: Install pnpm
         uses: pnpm/action-setup@v2
         with:
           version: 10
@@ -394,12 +367,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Force Git deps to use HTTPS instead of SSH
-        run: |
-          git config --global url."https://github.com/".insteadOf "git@github.com:"
-          git config --global url."https://github.com/".insteadOf "ssh://git@github.com/"
-      
-      - name: Setup pnpm
+      - name: Install pnpm
         uses: pnpm/action-setup@v2
         with:
           version: 10
