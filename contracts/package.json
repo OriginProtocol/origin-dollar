@@ -120,6 +120,9 @@
     "uuid": "^9.0.1",
     "web3-utils": "^1.5.2"
   },
+  "resolutions": {
+    "secp256k1": ">=4.0.4"
+  },
   "husky": {
     "hooks": {
       "pre-push": "yarn run prettier:check"
