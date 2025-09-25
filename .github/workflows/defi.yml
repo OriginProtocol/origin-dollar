@@ -20,15 +20,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # Write a dedicated gitconfig that forces SSH → HTTPS for GitHub
-      - name: Write CI git config (SSH → HTTPS)
-        run: |
-          cat > .gitconfig-ci <<'EOF'
-          [url "https://github.com/"]
-            insteadOf = git@github.com:
-            insteadOf = ssh://git@github.com/
-          EOF
-
       - name: Install pnpm
         uses: pnpm/action-setup@v4
         with:
@@ -41,12 +32,12 @@ jobs:
           node-version: "20.x"
           cache: "pnpm"
           cache-dependency-path: contracts/pnpm-lock.yaml
-          
+      
+      - name: Configure Git to use HTTPS for GitHub
+        run: git config --global url."https://github.com/".insteadOf "git@github.com:"
+
       - name: Install deps
         working-directory: ./contracts
-        env:
-          # Make sure the git process used by pnpm reads our rewrite rules
-          GIT_CONFIG_GLOBAL: ${{ github.workspace }}/.gitconfig-ci
         run: pnpm install --frozen-lockfile
 
       # this will compile and output the contract sizes
