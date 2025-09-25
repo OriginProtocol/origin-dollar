@@ -20,6 +20,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Force Git deps to use HTTPS instead of SSH
+        run: |
+          git config --global url."https://github.com/".insteadOf "git@github.com:"
+          git config --global url."https://github.com/".insteadOf "ssh://git@github.com/"
+      
       - name: Setup pnpm
         uses: pnpm/action-setup@v2
         with:
@@ -54,6 +59,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Force Git deps to use HTTPS instead of SSH
+        run: |
+          git config --global url."https://github.com/".insteadOf "git@github.com:"
+          git config --global url."https://github.com/".insteadOf "ssh://git@github.com/"
+      
       - name: Setup pnpm
         uses: pnpm/action-setup@v2
         with:
@@ -88,6 +98,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Force Git deps to use HTTPS instead of SSH
+        run: |
+          git config --global url."https://github.com/".insteadOf "git@github.com:"
+          git config --global url."https://github.com/".insteadOf "ssh://git@github.com/"
+      
       - name: Setup pnpm
         uses: pnpm/action-setup@v2
         with:
@@ -124,6 +139,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Force Git deps to use HTTPS instead of SSH
+        run: |
+          git config --global url."https://github.com/".insteadOf "git@github.com:"
+          git config --global url."https://github.com/".insteadOf "ssh://git@github.com/"
+      
       - name: Setup pnpm
         uses: pnpm/action-setup@v2
         with:
@@ -170,6 +190,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Force Git deps to use HTTPS instead of SSH
+        run: |
+          git config --global url."https://github.com/".insteadOf "git@github.com:"
+          git config --global url."https://github.com/".insteadOf "ssh://git@github.com/"
+      
       - name: Setup pnpm
         uses: pnpm/action-setup@v2
         with:
@@ -216,6 +241,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Force Git deps to use HTTPS instead of SSH
+        run: |
+          git config --global url."https://github.com/".insteadOf "git@github.com:"
+          git config --global url."https://github.com/".insteadOf "ssh://git@github.com/"
+      
       - name: Setup pnpm
         uses: pnpm/action-setup@v2
         with:
@@ -262,6 +292,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Force Git deps to use HTTPS instead of SSH
+        run: |
+          git config --global url."https://github.com/".insteadOf "git@github.com:"
+          git config --global url."https://github.com/".insteadOf "ssh://git@github.com/"
+      
       - name: Setup pnpm
         uses: pnpm/action-setup@v2
         with:
@@ -308,6 +343,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Force Git deps to use HTTPS instead of SSH
+        run: |
+          git config --global url."https://github.com/".insteadOf "git@github.com:"
+          git config --global url."https://github.com/".insteadOf "ssh://git@github.com/"
+      
       - name: Setup pnpm
         uses: pnpm/action-setup@v2
         with:
@@ -354,6 +394,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Force Git deps to use HTTPS instead of SSH
+        run: |
+          git config --global url."https://github.com/".insteadOf "git@github.com:"
+          git config --global url."https://github.com/".insteadOf "ssh://git@github.com/"
+      
       - name: Setup pnpm
         uses: pnpm/action-setup@v2
         with:

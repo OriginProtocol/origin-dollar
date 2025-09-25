@@ -10,6 +10,11 @@ jobs:
     steps:
       - uses: actions/checkout@master
 
+      - name: Force Git deps to use HTTPS instead of SSH
+        run: |
+          git config --global url."https://github.com/".insteadOf "git@github.com:"
+          git config --global url."https://github.com/".insteadOf "ssh://git@github.com/"
+      
       - name: Setup pnpm
         uses: pnpm/action-setup@v2
         with:
@@ -23,7 +28,7 @@ jobs:
           cache: "pnpm"
 
       - run: pnpm install --frozen-lockfile
-      
+
       - run: pnpm danger ci
         env:
           DANGER_GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
