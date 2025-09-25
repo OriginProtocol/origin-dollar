@@ -479,7 +479,7 @@ jobs:
 
       - name: Test with Slither
         working-directory: ./contracts
-        run: pnpm run slither
+        run: slither . --config-file slither.config.json
 
   snyk:
     name: "Snyk"
