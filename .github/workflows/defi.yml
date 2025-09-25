@@ -24,10 +24,10 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: "20.x"
-          cache: "yarn"
-          cache-dependency-path: contracts/yarn.lock
+          cache: "pnpm"
+          cache-dependency-path: contracts/pnpm.lock
 
-      - run: yarn install --frozen-lockfile
+      - run: pnpm install --frozen-lockfile
         working-directory: ./contracts
 
       # this will compile and output the contract sizes
@@ -36,10 +36,10 @@ jobs:
           CONTRACT_SIZE: true
         working-directory: ./contracts
 
-      - run: yarn run lint
+      - run: pnpm run lint
         working-directory: ./contracts
 
-      - run: yarn prettier:check
+      - run: pnpm prettier:check
         working-directory: ./contracts
 
   contracts-unit-coverage:
@@ -52,14 +52,14 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: "20.x"
-          cache: "yarn"
-          cache-dependency-path: contracts/yarn.lock
+          cache: "pnpm"
+          cache-dependency-path: contracts/pnpm.lock
 
-      - run: yarn install --frozen-lockfile
+      - run: pnpm install --frozen-lockfile
         working-directory: ./contracts
 
       - name: Run Mainnet Unit Coverage
-        run: yarn run test:coverage
+        run: pnpm run test:coverage
         working-directory: ./contracts
 
       - uses: actions/upload-artifact@v4
@@ -80,16 +80,16 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: "20.x"
-          cache: "yarn"
-          cache-dependency-path: contracts/yarn.lock
+          cache: "pnpm"
+          cache-dependency-path: contracts/pnpm.lock
 
-      - run: yarn install --frozen-lockfile
+      - run: pnpm install --frozen-lockfile
         working-directory: ./contracts
 
       - name: Run Base Unit Coverage
         env:
           UNIT_TESTS_NETWORK: base
-        run: yarn run test:coverage:base
+        run: pnpm run test:coverage:base
         working-directory: ./contracts
 
       - uses: actions/upload-artifact@v4
@@ -110,16 +110,16 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: "20.x"
-          cache: "yarn"
-          cache-dependency-path: contracts/yarn.lock
+          cache: "pnpm"
+          cache-dependency-path: contracts/pnpm.lock
 
-      - run: yarn install --frozen-lockfile
+      - run: pnpm install --frozen-lockfile
         working-directory: ./contracts
 
       - name: Run Sonic Unit Coverage
         env:
           UNIT_TESTS_NETWORK: sonic
-        run: yarn run test:coverage:sonic
+        run: pnpm run test:coverage:sonic
         working-directory: ./contracts
 
       - uses: actions/upload-artifact@v4
@@ -150,8 +150,8 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: "20.x"
-          cache: "yarn"
-          cache-dependency-path: contracts/yarn.lock
+          cache: "pnpm"
+          cache-dependency-path: contracts/pnpm.lock
 
       - uses: actions/cache@v4
         id: hardhat-cache
@@ -161,10 +161,10 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-hardhat-cache
 
-      - run: yarn install --frozen-lockfile
+      - run: pnpm install --frozen-lockfile
         working-directory: ./contracts
 
-      - run: yarn run test:coverage:fork
+      - run: pnpm run test:coverage:fork
         working-directory: ./contracts
 
       - uses: actions/upload-artifact@v4
@@ -190,8 +190,8 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: "20.x"
-          cache: "yarn"
-          cache-dependency-path: contracts/yarn.lock
+          cache: "pnpm"
+          cache-dependency-path: contracts/pnpm.lock
 
       - uses: actions/cache@v4
         id: hardhat-cache
@@ -201,10 +201,10 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-hardhat-cache
 
-      - run: yarn install --frozen-lockfile
+      - run: pnpm install --frozen-lockfile
         working-directory: ./contracts
 
-      - run: yarn run test:coverage:arb-fork
+      - run: pnpm run test:coverage:arb-fork
         working-directory: ./contracts
 
       - uses: actions/upload-artifact@v4
@@ -230,8 +230,8 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: "20.x"
-          cache: "yarn"
-          cache-dependency-path: contracts/yarn.lock
+          cache: "pnpm"
+          cache-dependency-path: contracts/pnpm.lock
 
       - uses: actions/cache@v4
         id: hardhat-cache
@@ -241,10 +241,10 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-hardhat-cache
 
-      - run: yarn install --frozen-lockfile
+      - run: pnpm install --frozen-lockfile
         working-directory: ./contracts
 
-      - run: yarn run test:coverage:base-fork
+      - run: pnpm run test:coverage:base-fork
         working-directory: ./contracts
 
       - uses: actions/upload-artifact@v4
@@ -270,8 +270,8 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: "20.x"
-          cache: "yarn"
-          cache-dependency-path: contracts/yarn.lock
+          cache: "pnpm"
+          cache-dependency-path: contracts/pnpm.lock
 
       - uses: actions/cache@v4
         id: hardhat-cache
@@ -281,10 +281,10 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-hardhat-cache
 
-      - run: yarn install --frozen-lockfile
+      - run: pnpm install --frozen-lockfile
         working-directory: ./contracts
 
-      - run: yarn run test:coverage:sonic-fork
+      - run: pnpm run test:coverage:sonic-fork
         working-directory: ./contracts
 
       - uses: actions/upload-artifact@v4
@@ -310,8 +310,8 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: "20.x"
-          cache: "yarn"
-          cache-dependency-path: contracts/yarn.lock
+          cache: "pnpm"
+          cache-dependency-path: contracts/pnpm.lock
 
       - uses: actions/cache@v4
         id: hardhat-cache
@@ -321,10 +321,10 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-hardhat-cache
 
-      - run: yarn install --frozen-lockfile
+      - run: pnpm install --frozen-lockfile
         working-directory: ./contracts
 
-      - run: yarn run test:coverage:plume-fork
+      - run: pnpm run test:coverage:plume-fork
         working-directory: ./contracts
 
       - uses: actions/upload-artifact@v4
@@ -356,8 +356,8 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: "20.x"
-          cache: "yarn"
-          cache-dependency-path: contracts/yarn.lock
+          cache: "pnpm"
+          cache-dependency-path: contracts/pnpm.lock
 
       - uses: actions/cache@v4
         id: hardhat-cache
@@ -367,7 +367,7 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-hardhat-cache
 
-      - run: yarn install --frozen-lockfile
+      - run: pnpm install --frozen-lockfile
         working-directory: ./contracts
       
       - name: Download all reports
@@ -402,15 +402,15 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: "20.x"
-          cache: "yarn"
-          cache-dependency-path: contracts/yarn.lock
+          cache: "pnpm"
+          cache-dependency-path: contracts/pnpm.lock
 
-      - run: yarn install --frozen-lockfile
+      - run: pnpm install --frozen-lockfile
         working-directory: ./contracts
 
       - name: Test with Slither
         working-directory: ./contracts
-        run: yarn run slither
+        run: pnpm run slither
 
   snyk:
     name: "Snyk"

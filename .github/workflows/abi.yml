@@ -20,14 +20,14 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: "20.x"
-          cache: "yarn"
-          cache-dependency-path: contracts/yarn.lock
+          cache: "pnpm"
+          cache-dependency-path: contracts/pnpm.lock
 
-      - run: yarn install --frozen-lockfile
+      - run: pnpm install --frozen-lockfile
         working-directory: ./contracts
 
       - name: "Generate ABI files"
-        run: (yarn run abi:generate) && (yarn run abi:dist)
+        run: (pnpm run abi:generate) && (pnpm run abi:dist)
         env:
           CONTRACT_SIZE: true
         working-directory: ./contracts
