@@ -477,6 +477,26 @@ jobs:
           pip3 install slither-analyzer
           pip3 inspect
 
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+          run_install: false
+          
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20.x"
+          cache: "pnpm"
+          cache-dependency-path: contracts/pnpm-lock.yaml
+
+      - name: Configure Git to use HTTPS for GitHub
+        run: git config --global url."https://github.com/".insteadOf "git@github.com:"
+
+      - name: Install deps
+        working-directory: ./contracts
+        run: pnpm install --frozen-lockfile
+
       - name: Test with Slither
         working-directory: ./contracts
         run: slither . --config-file slither.config.json
