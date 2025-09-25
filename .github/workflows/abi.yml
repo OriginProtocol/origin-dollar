@@ -21,8 +21,8 @@ jobs:
           git config --global url."https://github.com/".insteadOf "git@github.com:"
           git config --global url."https://github.com/".insteadOf "ssh://git@github.com/"
       
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v2
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
         with:
           version: 10
           run_install: false
@@ -34,8 +34,12 @@ jobs:
           cache: "pnpm"
           cache-dependency-path: contracts/pnpm-lock.yaml
 
-      - run: pnpm install --frozen-lockfile
+      - name: Configure Git to use HTTPS for GitHub
+        run: git config --global url."https://github.com/".insteadOf "git@github.com:"
+
+      - name: Install deps
         working-directory: ./contracts
+        run: pnpm install --frozen-lockfile
 
       - name: "Generate ABI files"
         run: (pnpm run abi:generate) && (pnpm run abi:dist)

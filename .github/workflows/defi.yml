@@ -59,7 +59,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Install pnpm
-        uses: pnpm/action-setup@v2
+        uses: pnpm/action-setup@v4
         with:
           version: 10
           run_install: false
@@ -71,8 +71,12 @@ jobs:
           cache: "pnpm"
           cache-dependency-path: contracts/pnpm-lock.yaml
       
-      - run: pnpm install --frozen-lockfile
+      - name: Configure Git to use HTTPS for GitHub
+        run: git config --global url."https://github.com/".insteadOf "git@github.com:"
+
+      - name: Install deps
         working-directory: ./contracts
+        run: pnpm install --frozen-lockfile
 
       - name: Run Mainnet Unit Coverage
         run: pnpm run test:coverage
@@ -93,7 +97,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Install pnpm
-        uses: pnpm/action-setup@v2
+        uses: pnpm/action-setup@v4
         with:
           version: 10
           run_install: false
@@ -105,8 +109,12 @@ jobs:
           cache: "pnpm"
           cache-dependency-path: contracts/pnpm-lock.yaml
 
-      - run: pnpm install --frozen-lockfile
+      - name: Configure Git to use HTTPS for GitHub
+        run: git config --global url."https://github.com/".insteadOf "git@github.com:"
+
+      - name: Install deps
         working-directory: ./contracts
+        run: pnpm install --frozen-lockfile
 
       - name: Run Base Unit Coverage
         env:
@@ -129,7 +137,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Install pnpm
-        uses: pnpm/action-setup@v2
+        uses: pnpm/action-setup@v4
         with:
           version: 10
           run_install: false
@@ -141,8 +149,12 @@ jobs:
           cache: "pnpm"
           cache-dependency-path: contracts/pnpm-lock.yaml
 
-      - run: pnpm install --frozen-lockfile
+      - name: Configure Git to use HTTPS for GitHub
+        run: git config --global url."https://github.com/".insteadOf "git@github.com:"
+
+      - name: Install deps
         working-directory: ./contracts
+        run: pnpm install --frozen-lockfile
 
       - name: Run Sonic Unit Coverage
         env:
@@ -175,7 +187,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Install pnpm
-        uses: pnpm/action-setup@v2
+        uses: pnpm/action-setup@v4
         with:
           version: 10
           run_install: false
@@ -195,8 +207,12 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-hardhat-cache
 
-      - run: pnpm install --frozen-lockfile
+      - name: Configure Git to use HTTPS for GitHub
+        run: git config --global url."https://github.com/".insteadOf "git@github.com:"
+
+      - name: Install deps
         working-directory: ./contracts
+        run: pnpm install --frozen-lockfile
 
       - run: pnpm run test:coverage:fork
         working-directory: ./contracts
@@ -221,7 +237,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Install pnpm
-        uses: pnpm/action-setup@v2
+        uses: pnpm/action-setup@v4
         with:
           version: 10
           run_install: false
@@ -241,8 +257,12 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-hardhat-cache
 
-      - run: pnpm install --frozen-lockfile
+      - name: Configure Git to use HTTPS for GitHub
+        run: git config --global url."https://github.com/".insteadOf "git@github.com:"
+
+      - name: Install deps
         working-directory: ./contracts
+        run: pnpm install --frozen-lockfile
 
       - run: pnpm run test:coverage:arb-fork
         working-directory: ./contracts
@@ -267,7 +287,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Install pnpm
-        uses: pnpm/action-setup@v2
+        uses: pnpm/action-setup@v4
         with:
           version: 10
           run_install: false
@@ -287,8 +307,12 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-hardhat-cache
 
-      - run: pnpm install --frozen-lockfile
+      - name: Configure Git to use HTTPS for GitHub
+        run: git config --global url."https://github.com/".insteadOf "git@github.com:"
+
+      - name: Install deps
         working-directory: ./contracts
+        run: pnpm install --frozen-lockfile
 
       - run: pnpm run test:coverage:base-fork
         working-directory: ./contracts
@@ -313,7 +337,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Install pnpm
-        uses: pnpm/action-setup@v2
+        uses: pnpm/action-setup@v4
         with:
           version: 10
           run_install: false
@@ -333,8 +357,12 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-hardhat-cache
 
-      - run: pnpm install --frozen-lockfile
+      - name: Configure Git to use HTTPS for GitHub
+        run: git config --global url."https://github.com/".insteadOf "git@github.com:"
+
+      - name: Install deps
         working-directory: ./contracts
+        run: pnpm install --frozen-lockfile
 
       - run: pnpm run test:coverage:sonic-fork
         working-directory: ./contracts
@@ -359,7 +387,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Install pnpm
-        uses: pnpm/action-setup@v2
+        uses: pnpm/action-setup@v4
         with:
           version: 10
           run_install: false
@@ -379,8 +407,12 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-hardhat-cache
 
-      - run: pnpm install --frozen-lockfile
+      - name: Configure Git to use HTTPS for GitHub
+        run: git config --global url."https://github.com/".insteadOf "git@github.com:"
+
+      - name: Install deps
         working-directory: ./contracts
+        run: pnpm install --frozen-lockfile
 
       - run: pnpm run test:coverage:plume-fork
         working-directory: ./contracts
@@ -410,19 +442,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v2
-        with:
-          version: 10
-          run_install: false
-          
-      - name: Use Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: "20.x"
-          cache: "pnpm"
-          cache-dependency-path: contracts/pnpm-lock.yaml
-
       - uses: actions/cache@v4
         id: hardhat-cache
         with:
@@ -430,9 +449,6 @@ jobs:
           key: ${{ runner.os }}-hardhat-${{ hashFiles('contracts/cache/*.json') }}
           restore-keys: |
             ${{ runner.os }}-hardhat-cache
-
-      - run: pnpm install --frozen-lockfile
-        working-directory: ./contracts
       
       - name: Download all reports
         uses: actions/download-artifact@v4
@@ -460,16 +476,6 @@ jobs:
           sudo mv solc-static-linux /usr/local/bin/solc
           pip3 install slither-analyzer
           pip3 inspect
-
-      - name: Use Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: "20.x"
-          cache: "pnpm"
-          cache-dependency-path: contracts/pnpm-lock.yaml
-
-      - run: pnpm install --frozen-lockfile
-        working-directory: ./contracts
 
       - name: Test with Slither
         working-directory: ./contracts
