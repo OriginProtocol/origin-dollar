@@ -55,7 +55,7 @@ def main():
     # Before
     txs.append(vault_core.rebase({'from': SONIC_STRATEGIST}))
     txs.append(vault_value_checker.takeSnapshot({'from': SONIC_STRATEGIST}))
-
+ 
     ws_swap_in_amount = 100000 * 10**18
     print("Amount wS to swap into the pool  ", "{:.2f}".format(ws_swap_in_amount / 10**18))
 
