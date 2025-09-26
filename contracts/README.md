@@ -11,16 +11,16 @@ The following package scripts can be used to format code:
 
 ```
 # Check for any formatting issues
-yarn prettier:check
+pnpm prettier:check
 
 # Format all Solidity files
-yarn prettier:sol
+pnpm prettier:sol
 
 # Format all JavaScript files
-yarn prettier:js
+pnpm prettier:js
 
 # Format both Solidity and JavaScript files
-yarn prettier
+pnpm prettier
 ```
 
 ## Linter
@@ -31,13 +31,13 @@ yarn prettier
 
 ```
 # Check for any Solidity linting issues
-yarn lint:sol
+pnpm lint:sol
 
 # Check for any JavaScript linting issues
-yarn lint:sol
+pnpm lint:sol
 
 # Check for any Solidity or JavaScript linting issues
-yarn lint
+pnpm lint
 ```
 
 ## Slither
@@ -67,7 +67,7 @@ The [Slither installation](https://github.com/crytic/slither#how-to-install) ins
 
 ```
 ## Run Slither
-yarn slither
+pnpm slither
 ```
 
 ## Hardhat
@@ -79,7 +79,7 @@ yarn slither
 npx hardhat compile
 
 # Recompile all contracts
-yarn clean
+pnpm clean
 npx hardhat compile
 ```
 
@@ -101,7 +101,7 @@ Hardhat tests are used for contract unit tests which are under the [test](./test
 
 ```
 # Run all unit tests
-yarn test
+pnpm test
 ```
 
 ### Fork Tests
@@ -110,10 +110,10 @@ Set your `PROVIDER_URL` and desired `BLOCK_NUMBER` in your [.env](./.env) file. 
 
 ```
 # in one terminal
-yarn run node
+pnpm run node
 
 # in another terminal
-yarn test:fork
+pnpm test:fork
 ```
 
 See [Fork Tests](./fork-test.md) for more information.
@@ -143,7 +143,7 @@ Installation instructions can be found [here](https://github.com/crytic/echidna#
 
 ```
 # Run Echidna tests
-yarn echidna
+pnpm echidna
 ```
 
 ## Logger
@@ -455,10 +455,10 @@ The Hardhat plug-in [solidity-coverage](https://github.com/sc-forks/solidity-cov
 
 ```
 # Unit test coverage
-yarn test:coverage
+pnpm test:coverage
 
 # For test coverage
-yarn test:fork:coverage
+pnpm test:fork:coverage
 ```
 
 The CI will upload the coverage reports to Codecov if they complete successfully.
