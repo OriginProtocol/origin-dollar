@@ -927,7 +927,6 @@ const defaultFixture = deployments.createFixture(async () => {
       merklDistributorAbi,
       addresses.mainnet.MerklDistributor
     );
-
   } else {
     usdt = await ethers.getContract("MockUSDT");
     usds = await ethers.getContract("MockUSDS");
@@ -1174,7 +1173,7 @@ const defaultFixture = deployments.createFixture(async () => {
     legacyMorphoToken,
     poolBoosterCentralRegistry,
     poolBoosterMerklFactory,
-    merklDistributor
+    merklDistributor,
   };
 });
 

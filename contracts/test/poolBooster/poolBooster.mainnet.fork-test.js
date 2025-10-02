@@ -10,10 +10,7 @@ describe("ForkTest: Merkl Pool Booster", function () {
   //const DEFAULT_DURATION = 86400 * 7; // a week
   //const MOPRHO_CAMPAIGN_DATA = "0xb8fef900b383db2dbbf4458c7f46acf5b140f26d603a6d1829963f241b82510e00000000000000000000000000000000000000000000000000000000000000c000000000000000000000000000000000000000000000000000000000000000e000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000000000000000000000000120000000000000000000000000000000000000000000000000000000000000014000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000";
 
-  let fixture,
-    poolBoosterMerklFactory,
-    merklDistributor,
-    oeth;
+  let fixture, poolBoosterMerklFactory, merklDistributor, oeth;
   beforeEach(async () => {
     fixture = await sonicFixture();
     oeth = fixture.oeth;
@@ -25,7 +22,7 @@ describe("ForkTest: Merkl Pool Booster", function () {
     expect(await poolBoosterMerklFactory.merklDistributor()).to.equal(
       addresses.mainnet.MerklDistributor
     );
-  
+
     // Uncomment once the pool booster is deployed
     // const poolBooster = await poolBoosterMerklFactory.poolBoosters(0)
     // expect(await poolBooster.campaignType()).to.equal(
@@ -45,6 +42,8 @@ describe("ForkTest: Merkl Pool Booster", function () {
   });
 
   it("Should have OETH token supported by Merkl Distributor", async () => {
-    expect(await merklDistributor.rewardTokenMinAmounts(oeth.address)).to.equal(oethUnits("0.00001"));
+    expect(await merklDistributor.rewardTokenMinAmounts(oeth.address)).to.equal(
+      oethUnits("0.00001")
+    );
   });
 });
