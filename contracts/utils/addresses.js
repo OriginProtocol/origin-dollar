@@ -349,6 +349,13 @@ addresses.mainnet.passthrough.uniswap.OETH_OGN =
 addresses.mainnet.passthrough.uniswap.OETH_WETH =
   "0x216dEBBF25e5e67e6f5B2AD59c856Fc364478A6A";
 
+// Mainnet Merkl
+addresses.mainnet.MerklDistributor = "0x8BB4C975Ff3c250e0ceEA271728547f3802B36Fd";
+
+// Morpho Markets
+// OUSD is supply asset - USDC borrowing asset
+addresses.mainnet.MorphoOusdUsdcMarket = "0xb8fef900b383db2dbbf4458c7f46acf5b140f26d603a6d1829963f241b82510e";
+
 // Arbitrum One
 addresses.arbitrumOne = {};
 addresses.arbitrumOne.WOETHProxy = "0xD8724322f44E5c58D7A815F542036fb17DbbF839";
