@@ -27,7 +27,7 @@ const handler = async (event) => {
   const signer = new DefenderRelaySigner(event, provider, { speed: "fastest" });
 
   const network = await provider.getNetwork();
-  const networkName = network.chainId === 1 ? "mainnet" : "holesky";
+  const networkName = network.chainId === 1 ? "mainnet" : "hoodi";
   log(`Network: ${networkName} with chain id (${network.chainId})`);
 
   const nativeStakingProxyAddress =
