@@ -1941,7 +1941,7 @@ subtask("verifyDeposit", "Verify a deposit on the Beacon chain")
   )
   .addOptionalParam(
     "dryrun",
-    "Do not call verifyBalances on the strategy contract. Just log the params including the proofs",
+    "Do not call verifyDeposit on the strategy contract. Just log the params including the proofs",
     false,
     types.boolean
   )
