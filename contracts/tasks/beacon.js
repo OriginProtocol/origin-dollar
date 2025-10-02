@@ -615,7 +615,11 @@ async function getValidator({ slot, index, pubkey }) {
 
   const balance = stateView.balances.get(index);
 
-  console.log(`Validator at index ${index} for slot ${stateView.slot}:`);
+  console.log(
+    `Validator at index ${index} for slot ${stateView.slot}, epoch ${
+      BigInt(stateView.slot) / 32n
+    }:`
+  );
   console.log(`Public Key                  : ${toHex(validator.pubkey)}`);
   console.log(
     `Withdrawal Credentials      : ${toHex(validator.withdrawalCredentials)}`
@@ -635,6 +639,7 @@ async function getValidator({ slot, index, pubkey }) {
     `Activation Eligibility Epoch: ${validator.activationEligibilityEpoch}`
   );
 
+  console.log(`\n${stateView.pendingDeposits.length} pending deposits:`);
   let depositsFound = 0;
   let totalDeposits = 0;
   for (let i = 0; i < stateView.pendingDeposits.length; i++) {
@@ -659,6 +664,9 @@ async function getValidator({ slot, index, pubkey }) {
     )} for validator in ${stateView.pendingDeposits.length} pending deposits`
   );
 
+  console.log(
+    `\n${stateView.pendingPartialWithdrawals.length} pending partial withdrawals:`
+  );
   let partialWithdrawalsFound = 0;
   let totalPartialWithdrawals = 0n;
   for (let i = 0; i < stateView.pendingPartialWithdrawals.length; i++) {
@@ -666,18 +674,15 @@ async function getValidator({ slot, index, pubkey }) {
     log(
       `Pending partial withdrawal for validator ${
         withdrawal.validatorIndex
-      }, amount ${formatUnits(withdrawal.amount, 9)} and withdrawable epoch ${
+      }, withdrawable epoch ${
         withdrawal.withdrawableEpoch
-      }`
+      } and amount ${formatUnits(withdrawal.amount, 9)}`
     );
     if (withdrawal.validatorIndex == index) {
       console.log(
-        `  pending partial withdrawal for ${formatUnits(
-          withdrawal.amount,
-          9
-        )} ETH at position ${i} with withdrawable epoch ${
+        `  pending partial withdrawal at position ${i} with withdrawable epoch ${
           withdrawal.withdrawableEpoch
-        }`
+        } for ${formatUnits(withdrawal.amount, 9)} ETH`
       );
       partialWithdrawalsFound++;
       totalPartialWithdrawals = totalPartialWithdrawals + withdrawal.amount;
@@ -692,6 +697,9 @@ async function getValidator({ slot, index, pubkey }) {
     } pending withdrawals`
   );
 
+  console.log(
+    `\n${blockView.body.executionPayload.withdrawals.length} execution payload withdrawals:`
+  );
   let withdrawals = 0;
   for (let i = 0; i < blockView.body.executionPayload.withdrawals.length; i++) {
     const withdrawal = blockView.body.executionPayload.withdrawals.get(i);
@@ -713,6 +721,9 @@ async function getValidator({ slot, index, pubkey }) {
     `${withdrawals} withdrawals for validator in ${blockView.body.executionPayload.withdrawals.length} withdrawals`
   );
 
+  console.log(
+    `\n${blockView.body.executionRequests.withdrawals.length} execution withdrawal requests:`
+  );
   let withdrawalRequests = 0;
   for (
     let i = 0;
@@ -744,6 +755,9 @@ async function getValidator({ slot, index, pubkey }) {
     `${withdrawalRequests} withdrawal requests on the execution layer found for validator in ${blockView.body.executionRequests.withdrawals.length} requests`
   );
 
+  console.log(
+    `\n${blockView.body.voluntaryExits.length} execution voluntary exits:`
+  );
   let validatorExits = 0;
   for (let i = 0; i < blockView.body.voluntaryExits.length; i++) {
     const exit = blockView.body.voluntaryExits.get(i);
@@ -761,7 +775,7 @@ async function getValidator({ slot, index, pubkey }) {
   );
 
   console.log(
-    `Next withdrawable validator is ${stateView.nextWithdrawalValidatorIndex} with withdrawal index ${stateView.nextWithdrawalIndex}`
+    `\nNext withdrawable validator is ${stateView.nextWithdrawalValidatorIndex} with withdrawal index ${stateView.nextWithdrawalIndex}`
   );
   const currentEpoch = Math.floor(blockView.slot / 32);
   const earliestExitEpochDiff = stateView.earliestExitEpoch - currentEpoch;
