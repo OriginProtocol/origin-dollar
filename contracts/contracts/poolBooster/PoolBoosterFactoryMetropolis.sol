@@ -13,18 +13,18 @@ contract PoolBoosterFactoryMetropolis is AbstractPoolBoosterFactory {
     address public immutable rewardFactory;
     address public immutable voter;
 
-    // @param address _oSonic address of the OSonic token
+    // @param address _oToken address of the OToken token
     // @param address _governor address governor
     // @param address _centralRegistry address of the central registry
     // @param address _rewardFactory address of the Metropolis reward factory
     // @param address _voter address of the Metropolis voter
     constructor(
-        address _oSonic,
+        address _oToken,
         address _governor,
         address _centralRegistry,
         address _rewardFactory,
         address _voter
-    ) AbstractPoolBoosterFactory(_oSonic, _governor, _centralRegistry) {
+    ) AbstractPoolBoosterFactory(_oToken, _governor, _centralRegistry) {
         rewardFactory = _rewardFactory;
         voter = _voter;
     }
@@ -49,7 +49,7 @@ contract PoolBoosterFactoryMetropolis is AbstractPoolBoosterFactory {
         address poolBoosterAddress = _deployContract(
             abi.encodePacked(
                 type(PoolBoosterMetropolis).creationCode,
-                abi.encode(oSonic, rewardFactory, _ammPoolAddress, voter)
+                abi.encode(oToken, rewardFactory, _ammPoolAddress, voter)
             ),
             _salt
         );
@@ -83,7 +83,7 @@ contract PoolBoosterFactoryMetropolis is AbstractPoolBoosterFactory {
             _computeAddress(
                 abi.encodePacked(
                     type(PoolBoosterMetropolis).creationCode,
-                    abi.encode(oSonic, rewardFactory, _ammPoolAddress, voter)
+                    abi.encode(oToken, rewardFactory, _ammPoolAddress, voter)
                 ),
                 _salt
             );

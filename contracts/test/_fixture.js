@@ -38,6 +38,7 @@ const morphoLensAbi = require("./abi/morphoLens.json");
 const crvMinterAbi = require("./abi/crvMinter.json");
 const susdsAbi = require("./abi/sUSDS.json");
 const metamorphoAbi = require("./abi/metamorpho.json");
+const merklDistributorAbi = require("./abi/merklDistributor.json");
 
 // const curveFactoryAbi = require("./abi/curveFactory.json")
 const ousdMetapoolAbi = require("./abi/ousdMetapool.json");
@@ -779,7 +780,10 @@ const defaultFixture = deployments.createFixture(async () => {
     mock1InchSwapRouter,
     convexEthMetaStrategy,
     vaultValueChecker,
-    oethVaultValueChecker;
+    oethVaultValueChecker,
+    poolBoosterCentralRegistry,
+    poolBoosterMerklFactory,
+    merklDistributor;
 
   if (isFork) {
     usdt = await ethers.getContractAt(usdtAbi, addresses.mainnet.USDT);
@@ -908,6 +912,21 @@ const defaultFixture = deployments.createFixture(async () => {
 
     vaultValueChecker = await ethers.getContract("VaultValueChecker");
     oethVaultValueChecker = await ethers.getContract("OETHVaultValueChecker");
+
+    poolBoosterCentralRegistry = await ethers.getContractAt(
+      "PoolBoostCentralRegistry",
+      (
+        await ethers.getContract("PoolBoostCentralRegistryProxy")
+      ).address
+    );
+    poolBoosterMerklFactory = await ethers.getContract(
+      "PoolBoosterFactoryMerkl"
+    );
+
+    merklDistributor = await ethers.getContractAt(
+      merklDistributorAbi,
+      addresses.mainnet.CampaignCreator
+    );
   } else {
     usdt = await ethers.getContract("MockUSDT");
     usds = await ethers.getContract("MockUSDS");
@@ -1152,6 +1171,9 @@ const defaultFixture = deployments.createFixture(async () => {
 
     morphoToken,
     legacyMorphoToken,
+    poolBoosterCentralRegistry,
+    poolBoosterMerklFactory,
+    merklDistributor,
   };
 });
 
