@@ -419,13 +419,34 @@ Validator public key: 90db8ae56a9e741775ca37dd960606541306974d4a998ef6a6227c85a9
 
 ## Contract Verification
 
-The Hardhat plug-in [@nomiclabs/hardhat-etherscan](https://www.npmjs.com/package/@nomiclabs/hardhat-etherscan) is used to verify contracts on Etherscan.
+The Hardhat plug-in [@nomiclabs/hardhat-verify](https://www.npmjs.com/package/@nomiclabs/hardhat-etherscan) is used to verify contracts on Etherscan. Etherscan has migrated to V2 api where all the chains use the same endpoint.
 
 There's an example
 
 ```
 npx hardhat --network mainnet verify --contract contracts/vault/VaultAdmin.sol:VaultAdmin 0x31a91336414d3B955E494E7d485a6B06b55FC8fB
 ```
+
+`hardhat-deploy` package offers a secondary way to verify contracts, where contructor parameters don't need to be passed into the verification call. Since Etherscan has migrated to V2 api this approach is no longer working. `etherscan-verify` call uses `hardhat verify` under the hood.
+```
+npx hardhat etherscan-verify --network mainnet --api-url https://api.etherscan.io
+```
+
+#### Addressing verificatoin slowdowns
+
+Profiling the `hardhat-verify` prooved that when the `hardhat verify` is ran without --contract parameter 
+it can take up to 4-5 minutes to gather the necessary contract information. 
+Use `--contract` e.g. `--contract contracts/vault/VaultAdmin.sol:VaultAdmin` to mitigate the issue.
+
+#### Migration to full support of Etherscan V2 api
+
+Migrating to Etherscan V2 has been attempted with no success.
+Resources:
+ - migration guid by Etherscan: https://docs.etherscan.io/v2-migration
+ - guide for Hardhat setup: https://docs.etherscan.io/contract-verification/verify-with-hardhat. (note upgrading @nomicfoundation/hardhat-verify to 2.0.14 didn't resolve the issue last time) 
+ - openzeppelin-upgrades claims to have solved the issue in 3.9.1 version of the package: https://github.com/OpenZeppelin/openzeppelin-upgrades/issues/1165 Not only does this not solve the verification issue, it is also a breaking change for our repo.
+
+Good luck when attempting to solve this. 
 
 ### Deployed contract code verification
 
