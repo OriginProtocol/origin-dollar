@@ -350,7 +350,7 @@ addresses.mainnet.passthrough.uniswap.OETH_WETH =
   "0x216dEBBF25e5e67e6f5B2AD59c856Fc364478A6A";
 
 // Mainnet Merkl
-addresses.mainnet.MerklDistributor =
+addresses.mainnet.CampaignCreator =
   "0x8BB4C975Ff3c250e0ceEA271728547f3802B36Fd";
 
 // Morpho Markets
