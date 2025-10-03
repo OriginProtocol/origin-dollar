@@ -432,7 +432,7 @@ npx hardhat --network mainnet verify --contract contracts/vault/VaultAdmin.sol:V
 npx hardhat etherscan-verify --network mainnet --api-url https://api.etherscan.io
 ```
 
-#### Addressing verificatoin slowdowns
+#### Addressing verification slowdowns
 
 Profiling the `hardhat-verify` prooved that when the `hardhat verify` is ran without --contract parameter 
 it can take up to 4-5 minutes to gather the necessary contract information. 
