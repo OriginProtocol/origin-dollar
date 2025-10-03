@@ -35,7 +35,7 @@ contract Runlogs_2025_10_Mainnet is SetupMainnet {
       _ammPoolAddress: CrossChain.MORPHO_BLUE,
       _campaignDuration: 7 days,
       campaignData: campaignData,
-      _salt: uint256(keccak256(abi.encodePacked("Merkl Morpho PB OUSD/USDC v1")))
+      _salt: uint256(keccak256(abi.encodePacked("Merkl Morpho PB OETH/USDC v1")))
     });
 
     console.log("computed address", poolBoosterAddress);
@@ -59,7 +59,7 @@ contract Runlogs_2025_10_Mainnet is SetupMainnet {
       _ammPoolAddress: CrossChain.MORPHO_BLUE,
       _campaignDuration: 7 days,
       campaignData: campaignData,
-      _salt: uint256(keccak256(abi.encodePacked("Merkl Morpho PB OUSD/USDC v1")))
+      _salt: uint256(keccak256(abi.encodePacked("Merkl Morpho PB OETH/USDC v1")))
     });
 
     vm.stopBroadcast();
