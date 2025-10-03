@@ -63,6 +63,12 @@ abstract contract SetupMainnet is Test, Script {
   OETHVaultValueChecker public oethVaultValueChecker =
     OETHVaultValueChecker(Mainnet.OETH_VAULT_VALUE_CHECKER);
 
+  // Pool Booster
+  PoolBoosterFactoryMerkl public poolBoosterFactoryMerkl =
+    PoolBoosterFactoryMerkl(Mainnet.POOL_BOOSTER_FACTORY_MERKL);
+  PoolBoostCentralRegistry public poolBoosterCentralRegistry =
+    PoolBoostCentralRegistry(Mainnet.POOL_BOOSTER_CENTRAL_REGISTRY);
+
   // Interfaces
   IWETH9 public weth = IWETH9(Mainnet.WETH);
   ICurveStableSwapNG public oethWethCurvePool = ICurveStableSwapNG(Mainnet.OETH_WETH_CURVE_POOL);

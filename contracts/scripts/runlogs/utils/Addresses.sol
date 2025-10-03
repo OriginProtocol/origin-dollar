@@ -27,6 +27,10 @@ library Mainnet {
   // OETH Strategies
   address public constant OETH_WETH_CURVE_AMO = 0xba0e352AB5c13861C26e4E773e7a833C3A223FE6;
 
+  // Pool Booster
+  address public constant POOL_BOOSTER_FACTORY_MERKL = 0x0FC66355B681503eFeE7741BD848080d809FD6db;
+  address public constant POOL_BOOSTER_CENTRAL_REGISTRY = 0xAA8af8Db4B6a827B51786334d26349eb03569731;
+
   // Other token
   address public constant USDC = 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48;
   address public constant WETH = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
