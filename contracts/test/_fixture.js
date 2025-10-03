@@ -925,7 +925,7 @@ const defaultFixture = deployments.createFixture(async () => {
 
     merklDistributor = await ethers.getContractAt(
       merklDistributorAbi,
-      addresses.mainnet.MerklDistributor
+      addresses.mainnet.CampaignCreator
     );
   } else {
     usdt = await ethers.getContract("MockUSDT");

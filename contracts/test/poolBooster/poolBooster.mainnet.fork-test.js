@@ -20,7 +20,7 @@ describe("ForkTest: Merkl Pool Booster", function () {
 
   it("Should have correct deployment params", async () => {
     expect(await poolBoosterMerklFactory.merklDistributor()).to.equal(
-      addresses.mainnet.MerklDistributor
+      addresses.mainnet.CampaignCreator
     );
 
     // Uncomment once the pool booster is deployed

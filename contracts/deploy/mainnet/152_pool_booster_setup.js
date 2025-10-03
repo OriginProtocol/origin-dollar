@@ -70,7 +70,7 @@ module.exports = deploymentWithGovernanceProposal(
         // so we can create a Merkl pool booster fast via a multichain strategist and kick off yield forwarding
         addresses.multichainStrategist,
         cPoolBoostCentralRegistryProxy.address,
-        addresses.mainnet.MerklDistributor,
+        addresses.mainnet.CampaignCreator,
       ]
     );
     const cPoolBoosterMerklFactory = await ethers.getContract(
