@@ -18,17 +18,17 @@ contract PoolBoosterFactoryMerkl is AbstractPoolBoosterFactory {
     event MerklDistributorUpdated(address newDistributor);
 
     /**
-     * @param _oSonic address of the OSonic token
+     * @param _oToken address of the OToken token
      * @param _governor address governor
      * @param _centralRegistry address of the central registry
      * @param _merklDistributor address of the Merkl distributor
      */
     constructor(
-        address _oSonic,
+        address _oToken,
         address _governor,
         address _centralRegistry,
         address _merklDistributor
-    ) AbstractPoolBoosterFactory(_oSonic, _governor, _centralRegistry) {
+    ) AbstractPoolBoosterFactory(_oToken, _governor, _centralRegistry) {
         _setMerklDistributor(_merklDistributor);
     }
 
@@ -64,7 +64,7 @@ contract PoolBoosterFactoryMerkl is AbstractPoolBoosterFactory {
             abi.encodePacked(
                 type(PoolBoosterMerkl).creationCode,
                 abi.encode(
-                    oSonic,
+                    oToken,
                     merklDistributor,
                     _campaignDuration,
                     _campaignType,
@@ -111,7 +111,7 @@ contract PoolBoosterFactoryMerkl is AbstractPoolBoosterFactory {
                 abi.encodePacked(
                     type(PoolBoosterMerkl).creationCode,
                     abi.encode(
-                        oSonic,
+                        oToken,
                         merklDistributor,
                         _campaignDuration,
                         _campaignType,
