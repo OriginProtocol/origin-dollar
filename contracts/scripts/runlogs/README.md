@@ -26,7 +26,7 @@ To convert a `broadcast-ready` into a Safe-compatible JSON file, use the forge s
 
 In the `contracts` folder run:
 ```bash
-forge script BroadcastConvertor contracts/broadcast/2025_09.sol/146/dry-run/
+forge script BroadcastConvertor --sig "run(string)" contracts/broadcast/2025_09.sol/146/dry-run/
 ```
 > Note adjust the input accordingly:
 > first the path to the run file, but stop at the dry-run folder.
