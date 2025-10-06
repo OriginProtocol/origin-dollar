@@ -459,7 +459,7 @@ module.exports = {
         network: "plume",
         chainId: 98866,
         urls: {
-          apiURL: "https://api.etherscan.io/v2/api?chainId=98866",
+          apiURL: "https://explorer.plume.org/api",
           browserURL: "https://explorer.plume.org",
         },
       },
