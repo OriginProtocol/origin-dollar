@@ -382,7 +382,7 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
             );
             // Limits the number of validator balance proofs to verifyBalances
             require(
-                verifiedValidators.length + 1 < MAX_VERIFIED_VALIDATORS,
+                verifiedValidators.length + 1 <= MAX_VERIFIED_VALIDATORS,
                 "Max validators"
             );
 
