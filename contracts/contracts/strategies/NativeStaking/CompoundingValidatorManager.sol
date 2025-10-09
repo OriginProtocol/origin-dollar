@@ -125,7 +125,7 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
         STAKED, // validator has funds staked
         VERIFIED, // validator has been verified to exist on the beacon chain
         ACTIVE, // The validator balance is at least 32 ETH. The validator may not yet be active on the beacon chain.
-        EXITING, // The validator has been requested to exit or has been verified as forced exit
+        EXITING, // The validator has been requested to exit
         EXITED, // The validator has been verified to have a zero balance
         REMOVED, // validator has funds withdrawn to this strategy contract and is removed from the SSV
         INVALID // The validator has been front-run and the withdrawal address is not this strategy
@@ -327,7 +327,7 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
     }
 
     /// @notice Stakes WETH in this strategy to a compounding validator.
-    /// The the first deposit to a new validator, the amount must be 1 ETH.
+    /// The first deposit to a new validator, the amount must be 1 ETH.
     /// Another deposit of at least 31 ETH is required for the validator to be activated.
     /// This second deposit has to be done after the validator has been verified.
     /// Does not convert any ETH sitting in this strategy to WETH.
@@ -359,7 +359,7 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
         // Hash the public key using the Beacon Chain's hashing for BLSPubkey
         bytes32 pubKeyHash = _hashPubKey(validatorStakeData.pubkey);
         ValidatorState currentState = validator[pubKeyHash].state;
-        // Can only stake to a validator has have been registered, verified or active.
+        // Can only stake to a validator that has been registered, verified or active.
         // Can not stake to a validator that has been staked but not yet verified.
         require(
             (currentState == ValidatorState.REGISTERED ||
