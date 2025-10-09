@@ -173,7 +173,6 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
     uint256[41] private __gap;
 
     event RegistratorChanged(address indexed newAddress);
-    event StakingMonitorChanged(address indexed newAddress);
     event FirstDepositReset();
     event SSVValidatorRegistered(
         bytes32 indexed pubKeyHash,
