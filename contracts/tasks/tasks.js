@@ -11,6 +11,7 @@ const {
   genECDHKey,
   decryptValidatorKey,
   decryptValidatorKeyWithMasterKey,
+  signMessage,
 } = require("./crypto");
 const { advanceBlocks } = require("./block");
 const {
@@ -1648,6 +1649,20 @@ subtask(
   )
   .setAction(decryptValidatorKeyWithMasterKey);
 task("masterDecrypt").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+subtask(
+  "signMessage",
+  "Sign a message using a Elliptic-curve Diffie–Hellman (ECDH) private key"
+)
+  .addParam("message", "Message to be signed", undefined, types.string)
+  .setAction(async (taskArgs) => {
+    const signer = await getSigner();
+
+    await signMessage({ ...taskArgs, signer });
+  });
+task("signMessage").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
 
