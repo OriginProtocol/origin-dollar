@@ -116,8 +116,12 @@ contract CompoundingStakingSSVStrategy is
         address _recipient,
         address _asset,
         uint256 _amount
-    ) external override onlyVault nonReentrant {
+    ) external override nonReentrant {
         require(_asset == WETH, "Unsupported asset");
+        require(
+            msg.sender == vaultAddress || msg.sender == validatorRegistrator,
+            "Caller not Vault or Registrator"
+        );
 
         _withdraw(_recipient, _amount, address(this).balance);
     }
@@ -128,7 +132,7 @@ contract CompoundingStakingSSVStrategy is
         uint256 _ethBalance
     ) internal {
         require(_withdrawAmount > 0, "Must withdraw something");
-        require(_recipient != address(0), "Must specify recipient");
+        require(_recipient == vaultAddress, "Recipient not Vault");
 
         // Convert any ETH from validator partial withdrawals, exits
         // or execution rewards to WETH and do the necessary accounting.
