@@ -15,11 +15,11 @@ BUIDLER_NETWORK="ganache" node all-price.js
 ### Ganache fork
 Start a ganache fork in a terminal window:
 ```
-yarn run node:fork
+pnpm run node:fork
 ```
 In a separate terminal, deploy the contracts then get the prices from the oracle by running"
 ```
-yarn run deploy:fork
+pnpm run deploy:fork
 BUIDLER_NETWORK=ganache FORK=true node all-price.js
 ```
 

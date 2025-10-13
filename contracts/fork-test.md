@@ -7,7 +7,7 @@ Fork tests are similar to unit tests, except that it is run on a mainnet fork ag
 
 ### Option 1: Fork each time (just like CI)
 - Set `PROVIDER_URL` in `.env` file
-- Run `yarn test:fork` (or `yarn test:fork -- filename.fork-test.js`)
+- Run `pnpm test:fork` (or `pnpm test:fork -- filename.fork-test.js`)
 
 This forks the blockchain (using `PROVIDER_URL`) every time you run the command, might take a lot of time.
 
@@ -33,11 +33,11 @@ gitGraph
 
 ### Option 2: Nested forking (only for local/dev usage)
 In cases where you don't want to fork or run the deployments again and again
-- Start the node in a separate terminal using `FORK=true yarn run node`
-- Run `yarn test:fork` in a new terminal
+- Start the node in a separate terminal using `FORK=true pnpm run node`
+- Run `pnpm test:fork` in a new terminal
 
 #### How it works
-Basically, you start a forked node that runs the deployments and all. Next, the hardhat forks from this forked node when running the tests. Since any new deployments have already been run on the base fork, running `yarn test:fork` will be much faster. This can be useful when you are just writing tests and there isn't any change to contracts or deployment files.
+Basically, you start a forked node that runs the deployments and all. Next, the hardhat forks from this forked node when running the tests. Since any new deployments have already been run on the base fork, running `pnpm test:fork` will be much faster. This can be useful when you are just writing tests and there isn't any change to contracts or deployment files.
 
 ```mermaid
 gitGraph
