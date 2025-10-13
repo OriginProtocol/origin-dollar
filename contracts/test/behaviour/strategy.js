@@ -218,11 +218,18 @@ const shouldBehaveLikeStrategy = (context) => {
 
         const harvesterSigner = await impersonateAndFund(harvester.address);
         for (const signer of [harvesterSigner, governor, strategist, matt]) {
-          await expect(
-            strategy
+          try {
+            await strategy
               .connect(signer)
-              .withdraw(vault.address, assets[0].address, parseUnits("10"))
-          ).to.revertedWith("Caller is not the Vault");
+              .withdraw(vault.address, assets[0].address, parseUnits("1"));
+            expect.fail("Expected transaction to revert");
+          } catch (error) {
+            console.log("Error message:", error.message);
+            expect(error.message).to.be.oneOf([
+              "VM Exception while processing transaction: reverted with reason string 'Caller is not the Vault'",
+              "VM Exception while processing transaction: reverted with reason string 'Caller not Vault or Registrator'",
+            ]);
+          }
         }
       });
       it("Should be able to call withdraw all by vault", async () => {

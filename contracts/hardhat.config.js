@@ -73,6 +73,7 @@ const SONIC_DEPLOYER = MAINNET_DEPLOYER;
 const SONIC_ADMIN = "0xAdDEA7933Db7d83855786EB43a238111C69B00b6";
 // 2/8 multi-sig that controls fund allocations. Aka "Guardian".
 const SONIC_STRATEGIST = "0x63cdd3072F25664eeC6FAEFf6dAeB668Ea4de94a";
+const MAINNET_RELAYER = "0x4b91827516f79d6F6a1F292eD99671663b09169a";
 
 const MULTICHAIN_STRATEGIST = "0x4FF1b9D9ba8558F5EAfCec096318eA0d8b541971";
 
@@ -200,6 +201,13 @@ const localEnvStrategist =
       ? HOODI_RELAYER
       : MULTICHAIN_STRATEGIST
     : 0;
+
+const localEnvRegistrator =
+  process.env.FORK === "true"
+    ? isHoodiFork
+      ? HOODI_RELAYER
+      : MAINNET_RELAYER
+    : 1; // signer at index 2
 
 module.exports = {
   solidity: {
@@ -406,6 +414,12 @@ module.exports = {
     },
     multichainStrategistAddr: {
       default: MULTICHAIN_STRATEGIST,
+    },
+    registratorAddr: {
+      default: 2,
+      localhost: localEnvRegistrator,
+      mainnet: MAINNET_RELAYER,
+      hoodi: HOODI_RELAYER,
     },
   },
   contractSizer: {
