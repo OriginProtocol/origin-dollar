@@ -111,6 +111,7 @@ const {
   stakeValidator,
   withdrawValidator,
   removeValidator,
+  autoValidatorWithdrawals,
   setRegistrator,
 } = require("./validatorCompound");
 const { tenderlySync, tenderlyUpload } = require("./tenderly");
@@ -2133,6 +2134,30 @@ subtask(
     await removeValidator({ ...taskArgs, signer });
   });
 task("removeValidator").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+subtask(
+  "autoValidatorWithdrawals",
+  "Automatically withdraws funds from a validator"
+)
+  .addParam(
+    "buffer",
+    "Withdrawal buffer in basis points. 100 = 1%",
+    100,
+    types.int
+  )
+  .addParam(
+    "execute",
+    "Whether to execute the withdrawals or just display them",
+    true,
+    types.boolean
+  )
+  .setAction(async (taskArgs) => {
+    const signer = await getSigner();
+    await autoValidatorWithdrawals({ ...taskArgs, signer });
+  });
+task("autoValidatorWithdrawals").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
 
