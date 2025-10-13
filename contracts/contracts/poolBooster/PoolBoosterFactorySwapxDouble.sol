@@ -12,14 +12,14 @@ import { AbstractPoolBoosterFactory, IPoolBoostCentralRegistry } from "./Abstrac
 contract PoolBoosterFactorySwapxDouble is AbstractPoolBoosterFactory {
     uint256 public constant version = 1;
 
-    // @param address _oSonic address of the OSonic token
+    // @param address _oToken address of the OToken token
     // @param address _governor address governor
     // @param address _centralRegistry address of the central registry
     constructor(
-        address _oSonic,
+        address _oToken,
         address _governor,
         address _centralRegistry
-    ) AbstractPoolBoosterFactory(_oSonic, _governor, _centralRegistry) {}
+    ) AbstractPoolBoosterFactory(_oToken, _governor, _centralRegistry) {}
 
     /**
      * @dev Create a Pool Booster for SwapX Ichi vault based pool where 2 Bribe contracts need to be
@@ -49,7 +49,7 @@ contract PoolBoosterFactorySwapxDouble is AbstractPoolBoosterFactory {
         address poolBoosterAddress = _deployContract(
             abi.encodePacked(
                 type(PoolBoosterSwapxDouble).creationCode,
-                abi.encode(_bribeAddressOS, _bribeAddressOther, oSonic, _split)
+                abi.encode(_bribeAddressOS, _bribeAddressOther, oToken, _split)
             ),
             _salt
         );
@@ -92,7 +92,7 @@ contract PoolBoosterFactorySwapxDouble is AbstractPoolBoosterFactory {
                     abi.encode(
                         _bribeAddressOS,
                         _bribeAddressOther,
-                        oSonic,
+                        oToken,
                         _split
                     )
                 ),
