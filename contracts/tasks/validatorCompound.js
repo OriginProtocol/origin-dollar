@@ -244,7 +244,7 @@ async function autoValidatorWithdrawals({
   buffer: bufferBps = 100, // 1% buffer
   minValidatorWithdrawAmount = BigInt(10e18),
   minStrategyWithdrawAmount = parseUnits("0.1", 18),
-  execute = true,
+  dryrun = false,
 }) {
   const networkName = await getNetworkName();
   const wethAddress = addresses[networkName].WETH;
@@ -353,7 +353,7 @@ async function autoValidatorWithdrawals({
       )} ETH/WETH from the strategy`
     );
 
-    if (execute) {
+    if (!dryrun) {
       const tx = await strategy
         .connect(signer)
         .withdraw(vaultAddress, wethAddress, withdrawAmount);
@@ -389,7 +389,6 @@ async function autoValidatorWithdrawals({
   const sortedValidators = validators.sort((a, b) =>
     a.balanceWei.lt(b.balanceWei) ? -1 : 1
   );
-  log(sortedValidators);
 
   // For each validator
   for (const validator of sortedValidators) {
@@ -419,7 +418,7 @@ async function autoValidatorWithdrawals({
       }`
     );
 
-    if (execute) {
+    if (!dryrun) {
       // Call strategy to partially withdraw from the validator
       await strategy
         .connect(signer)

@@ -2148,9 +2148,9 @@ subtask(
     types.int
   )
   .addParam(
-    "execute",
-    "Whether to execute the withdrawals or just display them",
-    true,
+    "dryrun",
+    "Do not send any txs to the staking strategy contract",
+    false,
     types.boolean
   )
   .setAction(async (taskArgs) => {
