@@ -41,14 +41,6 @@ const { setERC20TokenBalance } = require("../_fund");
           depositDataRoot:
             "0x3f327f69bb527386ff4c2f820e6e375fcc632b1b7ee826bd53d4d2807cfd6769",
         },
-        activeValidators: {
-          publicKeys: [
-            "0x80555037820e8afe44a45ed6d43fd4184f14f2ebcac2beaad382ed7e3dac52f87241d5ed8683a8101d8f49b0dbb6bc0e",
-            "0xb9588334499ee49ac5a1472424e968fe589362b419d9ed09a172f635727466780e11553fbfef1166de3438e9495d7257",
-            "0xaff707ce005f75d9c8b6b20a170c314219f6596e2fa043c99de0a50565d79155c4ce1ecf98742cd3fdbb878c3762e78b",
-          ],
-          operatorIds: [752, 753, 754, 755],
-        },
     }));
  */
 
@@ -162,7 +154,7 @@ const shouldBehaveLikeAnSsvStrategy = (context) => {
     });
   });
 
-  describe("Validator register and stake operations", function () {
+  describe("Validator operations", function () {
     const stakeAmount = oethUnits("32");
     const depositToStrategy = async (amount) => {
       const { weth, domen, nativeStakingSSVStrategy, oethVault } =
@@ -396,6 +388,90 @@ const shouldBehaveLikeAnSsvStrategy = (context) => {
       await registerAndStakeEth();
     });
 
+    it("Should exit and remove validator by validator registrator", async () => {
+      const {
+        ssv,
+        nativeStakingSSVStrategy,
+        ssvNetwork,
+        validatorRegistrator,
+        addresses,
+        testValidator,
+      } = await context();
+      await depositToStrategy(oethUnits("32"));
+
+      const { cluster } = await getClusterInfo({
+        ownerAddress: nativeStakingSSVStrategy.address,
+        operatorids: testValidator.operatorIds,
+        chainId: hre.network.config.chainId,
+        ssvNetwork: addresses.SSVNetwork,
+      });
+
+      await setERC20TokenBalance(
+        nativeStakingSSVStrategy.address,
+        ssv,
+        "1000",
+        hre
+      );
+
+      // Register a new validator with the SSV network
+      const ssvAmount = oethUnits("4");
+      const regTx = await nativeStakingSSVStrategy
+        .connect(validatorRegistrator)
+        .registerSsvValidators(
+          [testValidator.publicKey],
+          testValidator.operatorIds,
+          [testValidator.sharesData],
+          ssvAmount,
+          cluster
+        );
+      const regReceipt = await regTx.wait();
+      const ValidatorAddedRawEvent = regReceipt.events.find(
+        (e) => e.address.toLowerCase() == ssvNetwork.address.toLowerCase()
+      );
+      const ValidatorAddedEvent = ssvNetwork.interface.parseLog(
+        ValidatorAddedRawEvent
+      );
+      const { cluster: newCluster } = ValidatorAddedEvent.args;
+
+      // Stake 32 ETH to the new validator
+      await nativeStakingSSVStrategy.connect(validatorRegistrator).stakeEth([
+        {
+          pubkey: testValidator.publicKey,
+          signature: testValidator.signature,
+          depositDataRoot: testValidator.depositDataRoot,
+        },
+      ]);
+
+      // exit validator from SSV network
+      const exitTx = await nativeStakingSSVStrategy
+        .connect(validatorRegistrator)
+        .exitSsvValidator(testValidator.publicKey, testValidator.operatorIds);
+
+      await expect(exitTx)
+        .to.emit(nativeStakingSSVStrategy, "SSVValidatorExitInitiated")
+        .withArgs(
+          keccak256(testValidator.publicKey),
+          testValidator.publicKey,
+          testValidator.operatorIds
+        );
+
+      const removeTx = await nativeStakingSSVStrategy
+        .connect(validatorRegistrator)
+        .removeSsvValidator(
+          testValidator.publicKey,
+          testValidator.operatorIds,
+          newCluster
+        );
+
+      await expect(removeTx)
+        .to.emit(nativeStakingSSVStrategy, "SSVValidatorExitCompleted")
+        .withArgs(
+          keccak256(testValidator.publicKey),
+          testValidator.publicKey,
+          testValidator.operatorIds
+        );
+    });
+
     it("Should remove registered validator by validator registrator", async () => {
       const {
         ssv,
@@ -443,8 +519,8 @@ const shouldBehaveLikeAnSsvStrategy = (context) => {
 
       const removeTx = await nativeStakingSSVStrategy
         .connect(validatorRegistrator)
-        .removeSsvValidators(
-          [testValidator.publicKey],
+        .removeSsvValidator(
+          testValidator.publicKey,
           testValidator.operatorIds,
           newCluster
         );
@@ -455,56 +531,6 @@ const shouldBehaveLikeAnSsvStrategy = (context) => {
           keccak256(testValidator.publicKey),
           testValidator.publicKey,
           testValidator.operatorIds
-        );
-    });
-  });
-
-  describe("Validator exit and remove operations", function () {
-    it("Should exit and remove validator by validator registrator", async () => {
-      const {
-        nativeStakingSSVStrategy,
-        validatorRegistrator,
-        addresses,
-        activeValidators,
-      } = await context();
-
-      const { cluster } = await getClusterInfo({
-        ownerAddress: nativeStakingSSVStrategy.address,
-        operatorids: activeValidators.operatorIds,
-        chainId: hre.network.config.chainId,
-        ssvNetwork: addresses.SSVNetwork,
-      });
-
-      // exit validator from SSV network
-      const exitTx = await nativeStakingSSVStrategy
-        .connect(validatorRegistrator)
-        .exitSsvValidators(
-          activeValidators.publicKeys,
-          activeValidators.operatorIds
-        );
-
-      await expect(exitTx)
-        .to.emit(nativeStakingSSVStrategy, "SSVValidatorExitInitiated")
-        .withArgs(
-          keccak256(activeValidators.publicKeys[0]),
-          activeValidators.publicKeys[0],
-          activeValidators.operatorIds
-        );
-
-      const removeTx = await nativeStakingSSVStrategy
-        .connect(validatorRegistrator)
-        .removeSsvValidators(
-          activeValidators.publicKeys,
-          activeValidators.operatorIds,
-          cluster
-        );
-
-      await expect(removeTx)
-        .to.emit(nativeStakingSSVStrategy, "SSVValidatorExitCompleted")
-        .withArgs(
-          keccak256(activeValidators.publicKeys[0]),
-          activeValidators.publicKeys[0],
-          activeValidators.operatorIds
         );
     });
   });
@@ -648,7 +674,7 @@ const shouldBehaveLikeAnSsvStrategy = (context) => {
         weth,
         validatorRegistrator,
       } = await context();
-      const vaultWethBefore = await weth.balanceOf(oethVault.address);
+      const dripperWethBefore = await weth.balanceOf(oethVault.address);
       const strategyBalanceBefore = await nativeStakingSSVStrategy.checkBalance(
         weth.address
       );
@@ -693,7 +719,7 @@ const shouldBehaveLikeAnSsvStrategy = (context) => {
       ).to.equal(strategyBalanceBefore, "checkBalance should not increase");
 
       expect(await weth.balanceOf(oethVault.address)).to.equal(
-        vaultWethBefore.add(executionRewards).add(consensusRewards),
+        dripperWethBefore.add(executionRewards).add(consensusRewards),
         "Vault WETH balance should increase"
       );
     });
