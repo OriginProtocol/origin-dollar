@@ -237,7 +237,7 @@ const beaconchainRequest = async (endpoint, overrideProvider) => {
     log(`Call to Beacon API failed: ${url}`);
     log(`response: `, response);
     throw new Error(
-      `Call to Beacon API failed. Error: ${JSON.stringify(response.status)}`
+      `Call to Beacon API failed. Error: ${JSON.stringify(response.error)}`
     );
   } else {
     log(`GET request to Beacon API succeeded. Response: `, response);

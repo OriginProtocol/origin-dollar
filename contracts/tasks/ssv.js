@@ -1,4 +1,4 @@
-const { parseUnits, formatUnits, hexlify } = require("ethers/lib/utils");
+const { parseUnits, formatUnits } = require("ethers/lib/utils");
 
 const addresses = require("../utils/addresses");
 const { resolveContract } = require("../utils/resolvers");
@@ -10,11 +10,11 @@ const { resolveNativeStakingStrategyProxy } = require("./validator");
 
 const log = require("../utils/logger")("task:ssv");
 
-async function removeValidators({ index, pubkeys, operatorids }) {
+async function removeValidator({ index, pubkey, operatorids }) {
   const signer = await getSigner();
 
   log(`Splitting operator IDs ${operatorids}`);
-  const operatorIds = await sortOperatorIds(operatorids);
+  const operatorIds = operatorids.split(",").map((id) => parseInt(id));
 
   const strategy = await resolveNativeStakingStrategyProxy(index);
 
@@ -28,14 +28,11 @@ async function removeValidators({ index, pubkeys, operatorids }) {
     ownerAddress: strategy.address,
   });
 
-  log(`Splitting public keys ${pubkeys}`);
-  const pubKeys = pubkeys.split(",").map((pubkey) => hexlify(pubkey));
-
-  log(`About to remove validators: ${pubKeys}`);
+  log(`About to remove validator: ${pubkey}`);
   const tx = await strategy
     .connect(signer)
-    .removeSsvValidators(pubKeys, operatorIds, cluster);
-  await logTxDetails(tx, "removeSsvValidators");
+    .removeSsvValidator(pubkey, operatorIds, cluster);
+  await logTxDetails(tx, "removeSsvValidator");
 }
 
 const printClusterInfo = async (options) => {
@@ -121,5 +118,5 @@ module.exports = {
   printClusterInfo,
   depositSSV,
   withdrawSSV,
-  removeValidators,
+  removeValidator,
 };

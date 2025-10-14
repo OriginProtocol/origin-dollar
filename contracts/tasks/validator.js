@@ -1,4 +1,4 @@
-const { formatUnits, hexlify, parseEther } = require("ethers").utils;
+const { formatUnits, parseEther } = require("ethers").utils;
 const {
   KeyValueStoreClient,
 } = require("@openzeppelin/defender-kvstore-client");
@@ -92,25 +92,26 @@ const validatorOperationsConfig = async (taskArgs) => {
 
 // @dev check validator is eligible for exit -
 // has been active for at least 256 epochs
-async function verifyMinActivationTimes({ pubkeys }) {
+async function verifyMinActivationTime({ pubkey }) {
   const latestEpoch = await getEpoch("latest");
+  const validator = await getValidator(pubkey);
 
-  log(`Splitting public keys ${pubkeys}`);
-  const pubKeys = pubkeys.split(",").map((id) => hexlify(id));
+  const epochDiff = latestEpoch.epoch - validator.activationepoch;
 
-  for (const pubkey of pubKeys) {
-    const validator = await getValidator(pubkey);
-
-    const epochDiff = latestEpoch.epoch - validator.activationepoch;
-
-    if (epochDiff < 256) {
-      throw new Error(
-        `Can not exit validator. Validator needs to be ` +
-          `active for 256 epoch. ${pubkey} has only been active for ${epochDiff}`
-      );
-    }
+  if (epochDiff < 256) {
+    throw new Error(
+      `Can not exit validator. Validator needs to be ` +
+        `active for 256 epoch. Current one active for ${epochDiff}`
+    );
   }
 }
+
+const checkPubkeyFormat = (pubkey) => {
+  if (!pubkey.startsWith("0x")) {
+    pubkey = `0x${pubkey}`;
+  }
+  return pubkey;
+};
 
 async function getValidatorBalances({ pubkeys }) {
   const validator = await getValidators(pubkeys);
@@ -143,21 +144,21 @@ async function snapValidators({ pubkeys }) {
   }
 }
 
-async function exitValidators({ index, pubkeys, operatorids, signer }) {
-  await verifyMinActivationTimes({ pubkeys });
+async function exitValidator({ index, pubkey, operatorids, signer }) {
+  await verifyMinActivationTime({ pubkey });
 
   log(`Splitting operator IDs ${operatorids}`);
   const operatorIds = operatorids.split(",").map((id) => parseInt(id));
 
   const strategy = await resolveNativeStakingStrategyProxy(index);
 
-  const pubKeys = pubkeys.split(",").map((pubkey) => hexlify(pubkey));
+  pubkey = checkPubkeyFormat(pubkey);
 
-  log(`About to exit validators: ${pubKeys}`);
+  log(`About to exit validator ${pubkey}`);
   const tx = await strategy
     .connect(signer)
-    .exitSsvValidators(pubKeys, operatorIds);
-  await logTxDetails(tx, "exitSsvValidators");
+    .exitSsvValidator(pubkey, operatorIds);
+  await logTxDetails(tx, "exitSsvValidator");
 }
 
 async function doAccounting({ signer, nativeStakingStrategy }) {
@@ -357,7 +358,7 @@ const resolveFeeAccumulatorProxy = async (index) => {
 
 module.exports = {
   validatorOperationsConfig,
-  exitValidators,
+  exitValidator,
   doAccounting,
   resetStakeETHTally,
   setStakeETHThreshold,
