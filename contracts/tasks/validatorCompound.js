@@ -281,30 +281,9 @@ async function autoValidatorWithdrawals({
   // Get beacon chain data
   const { stateView } = await getBeaconBlock(slot);
 
-  // Iterate over the pending partial withdrawals
-  let totalPendingPartialWithdrawals = BigNumber.from(0);
-  let countPendingPartialWithdrawals = 0;
-  for (let i = 0; i < stateView.pendingPartialWithdrawals.length; i++) {
-    const withdrawal = stateView.pendingPartialWithdrawals.get(i);
-
-    if (validatorIndexes.includes(withdrawal.validatorIndex)) {
-      log(
-        `  Pending partial withdrawal of ${formatUnits(
-          withdrawal.amount,
-          18
-        )} ETH from validator index ${withdrawal.validatorIndex}`
-      );
-      totalPendingPartialWithdrawals = totalPendingPartialWithdrawals.add(
-        withdrawal.amount
-      );
-      countPendingPartialWithdrawals++;
-    }
-  }
-  log(
-    `${countPendingPartialWithdrawals} pending partial withdrawals from beacon chain totalling ${formatUnits(
-      totalPendingPartialWithdrawals,
-      18
-    )} ETH`
+  const totalPendingPartialWithdrawals = await totalPartialWithdrawals(
+    stateView,
+    validatorIndexes
   );
 
   // 5. Calculate the buffer amount = total assets * buffer in basis points
@@ -442,6 +421,43 @@ async function autoValidatorWithdrawals({
       )} ETH from the validators next time`
     );
   }
+}
+
+/**
+ * Sums the pending partial withdrawals for a set of validator indexes
+ * @param {*} stateView
+ * @param {*} validatorIndexes array of validator indexes to check for pending partial withdrawals
+ * @returns the total amount to 18 decimal places
+ */
+async function totalPartialWithdrawals(stateView, validatorIndexes) {
+  // Iterate over the pending partial withdrawals
+  let totalGwei = BigNumber.from(0);
+  let count = 0;
+  for (let i = 0; i < stateView.pendingPartialWithdrawals.length; i++) {
+    const withdrawal = stateView.pendingPartialWithdrawals.get(i);
+
+    if (validatorIndexes.includes(withdrawal.validatorIndex)) {
+      log(
+        `  Pending partial withdrawal of ${formatUnits(
+          withdrawal.amount,
+          9
+        )} ETH from validator index ${withdrawal.validatorIndex}`
+      );
+      totalGwei = totalGwei.add(withdrawal.amount);
+      count++;
+    }
+  }
+  log(
+    `${count} of ${
+      stateView.pendingPartialWithdrawals.length
+    } pending partial withdrawals from beacon chain totalling ${formatUnits(
+      totalGwei,
+      9
+    )} ETH`
+  );
+
+  // Scale up to 18 decimals
+  return parseUnits(totalGwei.toString(), 9);
 }
 
 async function snapStakingStrategy({ block }) {
