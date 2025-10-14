@@ -51,7 +51,6 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
     /// @notice Amount of ETH that has been staked since the `stakingMonitor` last called `resetStakeETHTally`.
     /// This can not go above `stakeETHThreshold`.
     uint256 public stakeETHTally;
-
     // For future use
     uint256[47] private __gap;
 
@@ -231,6 +230,7 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
     /// @param sharesData The shares data for each validator
     /// @param ssvAmount The amount of SSV tokens to be deposited to the SSV cluster
     /// @param cluster The SSV cluster details including the validator count and SSV balance
+    // slither-disable-start reentrancy-no-eth
     function registerSsvValidators(
         bytes[] calldata publicKeys,
         uint64[] calldata operatorIds,
@@ -267,85 +267,65 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
         );
     }
 
-    /// @notice Exit validators from the Beacon chain.
+    // slither-disable-end reentrancy-no-eth
+
+    /// @notice Exit a validator from the Beacon chain.
     /// The staked ETH will eventually swept to this native staking strategy.
     /// Only the registrator can call this function.
-    /// @param publicKeys List of SSV validator public keys
+    /// @param publicKey The public key of the validator
     /// @param operatorIds The operator IDs of the SSV Cluster
-    function exitSsvValidators(
-        bytes[] calldata publicKeys,
+    // slither-disable-start reentrancy-no-eth
+    function exitSsvValidator(
+        bytes calldata publicKey,
         uint64[] calldata operatorIds
-    ) external onlyRegistrator whenNotPaused nonReentrant {
-        ISSVNetwork(SSV_NETWORK).bulkExitValidator(publicKeys, operatorIds);
+    ) external onlyRegistrator whenNotPaused {
+        bytes32 pubKeyHash = keccak256(publicKey);
+        VALIDATOR_STATE currentState = validatorsStates[pubKeyHash];
+        require(currentState == VALIDATOR_STATE.STAKED, "Validator not staked");
 
-        bytes32 pubKeyHash;
-        VALIDATOR_STATE currentState;
-        for (uint256 i = 0; i < publicKeys.length; ++i) {
-            pubKeyHash = keccak256(publicKeys[i]);
-            currentState = validatorsStates[pubKeyHash];
+        ISSVNetwork(SSV_NETWORK).exitValidator(publicKey, operatorIds);
 
-            // Check each validator has not already been staked.
-            // This would normally be done before the external call but is after
-            // so only one for loop of the validators is needed.
-            require(
-                currentState == VALIDATOR_STATE.STAKED,
-                "Validator not staked"
-            );
+        validatorsStates[pubKeyHash] = VALIDATOR_STATE.EXITING;
 
-            // Store the new validator state
-            validatorsStates[pubKeyHash] = VALIDATOR_STATE.EXITING;
-
-            emit SSVValidatorExitInitiated(
-                pubKeyHash,
-                publicKeys[i],
-                operatorIds
-            );
-        }
+        emit SSVValidatorExitInitiated(pubKeyHash, publicKey, operatorIds);
     }
 
-    /// @notice Remove validators from the SSV Cluster.
+    // slither-disable-end reentrancy-no-eth
+
+    /// @notice Remove a validator from the SSV Cluster.
     /// Make sure `exitSsvValidator` is called before and the validate has exited the Beacon chain.
     /// If removed before the validator has exited the beacon chain will result in the validator being slashed.
     /// Only the registrator can call this function.
-    /// @param publicKeys List of SSV validator public keys
+    /// @param publicKey The public key of the validator
     /// @param operatorIds The operator IDs of the SSV Cluster
     /// @param cluster The SSV cluster details including the validator count and SSV balance
-    function removeSsvValidators(
-        bytes[] calldata publicKeys,
+    // slither-disable-start reentrancy-no-eth
+    function removeSsvValidator(
+        bytes calldata publicKey,
         uint64[] calldata operatorIds,
         Cluster calldata cluster
-    ) external onlyRegistrator whenNotPaused nonReentrant {
-        ISSVNetwork(SSV_NETWORK).bulkRemoveValidator(
-            publicKeys,
+    ) external onlyRegistrator whenNotPaused {
+        bytes32 pubKeyHash = keccak256(publicKey);
+        VALIDATOR_STATE currentState = validatorsStates[pubKeyHash];
+        // Can remove SSV validators that were incorrectly registered and can not be deposited to.
+        require(
+            currentState == VALIDATOR_STATE.EXITING ||
+                currentState == VALIDATOR_STATE.REGISTERED,
+            "Validator not regd or exiting"
+        );
+
+        ISSVNetwork(SSV_NETWORK).removeValidator(
+            publicKey,
             operatorIds,
             cluster
         );
 
-        bytes32 pubKeyHash;
-        VALIDATOR_STATE currentState;
-        for (uint256 i = 0; i < publicKeys.length; ++i) {
-            pubKeyHash = keccak256(publicKeys[i]);
-            currentState = validatorsStates[pubKeyHash];
+        validatorsStates[pubKeyHash] = VALIDATOR_STATE.EXIT_COMPLETE;
 
-            // Check each validator is either registered or exited.
-            // This would normally be done before the external call but is after
-            // so only one for loop of the validators is needed.
-            require(
-                currentState == VALIDATOR_STATE.EXITING ||
-                    currentState == VALIDATOR_STATE.REGISTERED,
-                "Validator not regd or exiting"
-            );
-
-            // Store the new validator state
-            validatorsStates[pubKeyHash] = VALIDATOR_STATE.EXIT_COMPLETE;
-
-            emit SSVValidatorExitCompleted(
-                pubKeyHash,
-                publicKeys[i],
-                operatorIds
-            );
-        }
+        emit SSVValidatorExitCompleted(pubKeyHash, publicKey, operatorIds);
     }
+
+    // slither-disable-end reentrancy-no-eth
 
     /// @notice Deposits more SSV Tokens to the SSV Network contract which is used to pay the SSV Operators.
     /// @dev A SSV cluster is defined by the SSVOwnerAddress and the set of operatorIds.

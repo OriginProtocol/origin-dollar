@@ -84,14 +84,6 @@ describe("ForkTest: Second Native SSV Staking Strategy", function () {
         depositDataRoot:
           "0x6f9cc503009ceb0960637bbf2482b19a62153144ab091f0b9f66d5800f02cc2c",
       },
-      activeValidators: {
-        publicKeys: [
-          "0x80555037820e8afe44a45ed6d43fd4184f14f2ebcac2beaad382ed7e3dac52f87241d5ed8683a8101d8f49b0dbb6bc0e",
-          "0xb9588334499ee49ac5a1472424e968fe589362b419d9ed09a172f635727466780e11553fbfef1166de3438e9495d7257",
-          "0xaff707ce005f75d9c8b6b20a170c314219f6596e2fa043c99de0a50565d79155c4ce1ecf98742cd3fdbb878c3762e78b",
-        ],
-        operatorIds: [752, 753, 754, 755],
-      },
     };
   });
 });
@@ -132,14 +124,6 @@ describe("ForkTest: Third Native SSV Staking Strategy", function () {
         // Calculated from npx hardhat depositRoot
         depositDataRoot:
           "0x3b8409ac7e028e595ac84735da6c19cdbc50931e5d6f910338614ea9660b5c86",
-      },
-      activeValidators: {
-        publicKeys: [
-          "0x81ff6c3dab37f0dd49856687bad2ca5406229223e2ac7efcf409aff7b8b55e0f21563adf6a6c23bbe3a8afe8c599ad23",
-          "0x8b7bdc261a7cbf96cbdfedd0250cef5de212ec497b7100a9a95ca030791e2080bf639ed6e1c8ebed152b17d101fe20cf",
-          "0xb8ee2f3a4520d9f96988ea57f216b16dd87ecf6e49a8ceb8d0b21a82fb420928c9e3a4b06e73f3ab55a50d61acc39906",
-        ],
-        operatorIds: [338, 339, 340, 341],
       },
     };
   });

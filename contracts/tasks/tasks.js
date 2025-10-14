@@ -70,7 +70,7 @@ const {
   depositSSV,
   withdrawSSV,
   printClusterInfo,
-  removeValidators,
+  removeValidator: removeOldValidator,
 } = require("./ssv");
 const {
   amoStrategyTask,
@@ -92,7 +92,7 @@ const {
 } = require("./strategy");
 const {
   validatorOperationsConfig,
-  exitValidators,
+  exitValidator,
   doAccounting,
   manuallyFixAccounting,
   resetStakeETHTally,
@@ -123,6 +123,7 @@ const {
 const { registerValidators, stakeValidators } = require("../utils/validator");
 const { harvestAndSwap } = require("./harvest");
 const { deployForceEtherSender, forceSend } = require("./simulation");
+const { sleep } = require("../utils/time");
 const { lzBridgeToken, lzSetConfig } = require("./layerzero");
 const {
   requestValidatorWithdraw,
@@ -1215,10 +1216,10 @@ task("stakeValidators").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
 
-subtask("exitValidators", "Starts the exit process from validators")
+subtask("exitValidator", "Starts the exit process from a validator")
   .addParam(
-    "pubkeys",
-    "Comma separated validator public keys",
+    "pubkey",
+    "Public key of the validator to exit",
     undefined,
     types.string
   )
@@ -1236,7 +1237,50 @@ subtask("exitValidators", "Starts the exit process from validators")
   )
   .setAction(async (taskArgs) => {
     const signer = await getSigner();
-    await exitValidators({ ...taskArgs, signer });
+    await exitValidator({ ...taskArgs, signer });
+  });
+task("exitValidator").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+subtask("exitValidators", "Starts the exit process from a list of validators")
+  .addParam(
+    "pubkeys",
+    "Comma separated list of validator public keys",
+    undefined,
+    types.string
+  )
+  .addParam(
+    "operatorids",
+    "Comma separated operator ids. E.g. 342,343,344,345",
+    undefined,
+    types.string
+  )
+  .addOptionalParam(
+    "index",
+    "The number of the Native Staking Contract deployed.",
+    undefined,
+    types.int
+  )
+  .addOptionalParam(
+    "sleep",
+    "Seconds between each tx so the SSV API can be updated before getting the cluster data.",
+    30,
+    types.int
+  )
+  .setAction(async (taskArgs) => {
+    const signer = await getSigner();
+
+    // Split the comma separated list of public keys
+    const pubKeys = taskArgs.pubkeys.split(",");
+    // For each public key
+    for (const pubkey of pubKeys) {
+      log(`About to exit validator with pubkey: ${pubkey}`);
+      await exitValidator({ ...taskArgs, pubkey, signer });
+
+      // wait for the SSV API can be updated
+      await sleep(taskArgs.sleep * 1000);
+    }
   });
 task("exitValidators").setAction(async (_, __, runSuper) => {
   return runSuper();
@@ -1246,15 +1290,9 @@ subtask(
   "removeValidators",
   "Removes validators from the SSV cluster after they have exited the beacon chain"
 )
-  .addOptionalParam(
-    "index",
-    "The number of the Native Staking Contract deployed.",
-    undefined,
-    types.int
-  )
   .addParam(
     "pubkeys",
-    "Comma separated validator public keys",
+    "Comma separated list of validator public keys",
     undefined,
     types.string
   )
@@ -1264,9 +1302,31 @@ subtask(
     undefined,
     types.string
   )
+  .addOptionalParam(
+    "index",
+    "The number of the Native Staking Contract deployed.",
+    undefined,
+    types.int
+  )
+  .addOptionalParam(
+    "sleep",
+    "Seconds between each tx so the SSV API can be updated before getting the cluster data.",
+    30,
+    types.int
+  )
   .setAction(async (taskArgs) => {
     const signer = await getSigner();
-    await removeValidators({ ...taskArgs, signer });
+
+    // Split the comma separated list of public keys
+    const pubKeys = taskArgs.pubkeys.split(",");
+    // For each public key
+    for (const pubkey of pubKeys) {
+      log(`About to remove validator with pubkey: ${pubkey}`);
+      await removeOldValidator({ ...taskArgs, pubkey, signer });
+
+      // wait for the SSV API can be updated
+      await sleep(taskArgs.sleep * 1000);
+    }
   });
 task("removeValidators").setAction(async (_, __, runSuper) => {
   return runSuper();
