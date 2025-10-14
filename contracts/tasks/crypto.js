@@ -178,9 +178,18 @@ const concatKDF = (secret, s1, keyLen) => {
   return hashSum.slice(0, keyLen);
 };
 
+const signMessage = async ({ signer, message }) => {
+  console.log(`Message: ${message}`);
+  console.log(`Signer: ${await signer.getAddress()}`);
+
+  const hash = await signer.signMessage(message);
+  console.log(`Hash: ${hash}`);
+};
+
 module.exports = {
   genECDHKey,
   decryptValidatorKey,
   decryptValidatorKeyWithMasterKey,
   decryptValidatorKeyFromStorage,
+  signMessage,
 };

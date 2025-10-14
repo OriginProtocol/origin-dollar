@@ -11,6 +11,7 @@ const {
   genECDHKey,
   decryptValidatorKey,
   decryptValidatorKeyWithMasterKey,
+  signMessage,
 } = require("./crypto");
 const { advanceBlocks } = require("./block");
 const {
@@ -110,6 +111,7 @@ const {
   stakeValidator,
   withdrawValidator,
   removeValidator,
+  autoValidatorWithdrawals,
   setRegistrator,
 } = require("./validatorCompound");
 const { tenderlySync, tenderlyUpload } = require("./tenderly");
@@ -1651,6 +1653,20 @@ task("masterDecrypt").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
 
+subtask(
+  "signMessage",
+  "Sign a message using a Elliptic-curve Diffie–Hellman (ECDH) private key"
+)
+  .addParam("message", "Message to be signed", undefined, types.string)
+  .setAction(async (taskArgs) => {
+    const signer = await getSigner();
+
+    await signMessage({ ...taskArgs, signer });
+  });
+task("signMessage").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
 // Defender
 subtask(
   "setActionVars",
@@ -2118,6 +2134,30 @@ subtask(
     await removeValidator({ ...taskArgs, signer });
   });
 task("removeValidator").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+subtask(
+  "autoValidatorWithdrawals",
+  "Automatically withdraws funds from a validator"
+)
+  .addParam(
+    "buffer",
+    "Withdrawal buffer in basis points. 100 = 1%",
+    100,
+    types.int
+  )
+  .addParam(
+    "dryrun",
+    "Do not send any txs to the staking strategy contract",
+    false,
+    types.boolean
+  )
+  .setAction(async (taskArgs) => {
+    const signer = await getSigner();
+    await autoValidatorWithdrawals({ ...taskArgs, signer });
+  });
+task("autoValidatorWithdrawals").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
 

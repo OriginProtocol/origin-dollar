@@ -8,7 +8,7 @@ const {
   setBalance,
   setStorageAt,
 } = require("@nomicfoundation/hardhat-network-helpers");
-const { isCI } = require("../helpers");
+const { isCI, getAssetAddresses } = require("../helpers");
 const { shouldBehaveLikeGovernable } = require("../behaviour/governable");
 const { shouldBehaveLikeStrategy } = require("../behaviour/strategy");
 const { MAX_UINT256, ZERO_BYTES32 } = require("../../utils/constants");
@@ -143,12 +143,11 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
     it("SSV network should have allowance to spend SSV tokens of the strategy", async () => {
       const { compoundingStakingSSVStrategy, ssv } = fixture;
 
-      const ssvNetworkAddress =
-        await compoundingStakingSSVStrategy.SSV_NETWORK();
+      const ssvNetworkAddress = await getAssetAddresses(deployments);
       await expect(
         await ssv.allowance(
           compoundingStakingSSVStrategy.address,
-          ssvNetworkAddress
+          ssvNetworkAddress.SSVNetwork
         )
       ).to.equal(MAX_UINT256);
     });
@@ -1864,7 +1863,7 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
     });
 
     it("Should withdraw ETH from the strategy, no ETH", async () => {
-      const { compoundingStakingSSVStrategy, weth, josh } = fixture;
+      const { compoundingStakingSSVStrategy, weth, josh, oethVault } = fixture;
 
       const depositAmount = parseEther("10");
       await weth
@@ -1879,7 +1878,7 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
 
       const withdrawTx = compoundingStakingSSVStrategy
         .connect(sVault)
-        .withdraw(josh.address, weth.address, depositAmount);
+        .withdraw(oethVault.address, weth.address, depositAmount);
 
       await expect(withdrawTx)
         .to.emit(compoundingStakingSSVStrategy, "Withdrawal")
@@ -1898,7 +1897,13 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
     });
 
     it("Should withdraw ETH from the strategy, withdraw some ETH", async () => {
-      const { compoundingStakingSSVStrategy, weth, josh } = fixture;
+      const {
+        compoundingStakingSSVStrategy,
+        weth,
+        josh,
+        oethVault,
+        validatorRegistrator,
+      } = fixture;
 
       const depositAmount = parseEther("10");
       await weth
@@ -1915,9 +1920,9 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
         await compoundingStakingSSVStrategy.checkBalance(weth.address);
 
       const withdrawTx = compoundingStakingSSVStrategy
-        .connect(sVault)
+        .connect(validatorRegistrator)
         .withdraw(
-          josh.address,
+          oethVault.address,
           weth.address,
           depositAmount.add(parseEther("5"))
         );
@@ -1970,7 +1975,17 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
           weth.address,
           parseEther("10")
         )
-      ).to.be.revertedWith("Must specify recipient");
+      ).to.be.revertedWith("Recipient not Vault");
+    });
+
+    it("Should revert when withdrawing to a user", async () => {
+      const { compoundingStakingSSVStrategy, weth, josh } = fixture;
+
+      await expect(
+        compoundingStakingSSVStrategy
+          .connect(sVault)
+          .withdraw(josh.address, weth.address, parseEther("10"))
+      ).to.be.revertedWith("Recipient not Vault");
     });
 
     it("Should withdrawAll ETH from the strategy, no ETH", async () => {

@@ -55,7 +55,7 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
     /// @notice The address of the beacon chain deposit contract
     address internal immutable BEACON_CHAIN_DEPOSIT_CONTRACT;
     /// @notice The address of the SSV Network contract used to interface with
-    address public immutable SSV_NETWORK;
+    address internal immutable SSV_NETWORK;
     /// @notice Address of the OETH Vault proxy contract
     address internal immutable VAULT_ADDRESS;
     /// @notice Address of the Beacon Proofs contract that verifies beacon chain data

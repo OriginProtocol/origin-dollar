@@ -655,6 +655,7 @@ addresses.plume.BridgedWOETHOracleFeed =
   "0x4915600Ed7d85De62011433eEf0BD5399f677e9b";
 
 addresses.hoodi = {};
+addresses.hoodi.OETHVaultProxy = "0xD0cC28bc8F4666286F3211e465ecF1fe5c72AC8B";
 addresses.hoodi.WETH = "0x2387fD72C1DA19f6486B843F5da562679FbB4057";
 addresses.hoodi.SSV = "0x9F5d4Ec84fC4785788aB44F9de973cF34F7A038e";
 addresses.hoodi.SSVNetwork = "0x58410Bef803ECd7E63B23664C586A6DB72DAf59c";

@@ -2034,9 +2034,10 @@ async function compoundingStakingSSVStrategyFixture() {
     */
   } else {
     fixture.ssvNetwork = await ethers.getContract("MockSSVNetwork");
-    const { governorAddr } = await getNamedAccounts();
+    const { governorAddr, registratorAddr } = await getNamedAccounts();
     const { oethVault, weth } = fixture;
     const sGovernor = await ethers.provider.getSigner(governorAddr);
+    const sRegistrator = await ethers.provider.getSigner(registratorAddr);
 
     // Approve Strategy
     await oethVault
@@ -2053,13 +2054,13 @@ async function compoundingStakingSSVStrategyFixture() {
 
     await compoundingStakingSSVStrategy
       .connect(sGovernor)
-      .setRegistrator(governorAddr);
+      .setRegistrator(registratorAddr);
 
     await compoundingStakingSSVStrategy
       .connect(sGovernor)
       .setHarvesterAddress(fixture.oethHarvester.address);
 
-    fixture.validatorRegistrator = sGovernor;
+    fixture.validatorRegistrator = sRegistrator;
   }
 
   return fixture;
