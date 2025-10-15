@@ -286,9 +286,14 @@ async function autoValidatorDeposits({
     });
   }
 
-  // 4. Sort validators by largest to smallest balance
+  // 4. Filter and sort validators
 
-  const sortedValidators = validators.sort((a, b) =>
+  // Filter out any validators that are already at or above the max balance
+  const filteredValidators = validators.filter((v) =>
+    v.balanceGwei.lt(maxBalanceGwei)
+  );
+  // Sort by largest to smallest balance
+  const sortedValidators = filteredValidators.sort((a, b) =>
     a.balanceGwei.gt(b.balanceGwei) ? -1 : 1
   );
 
@@ -297,7 +302,49 @@ async function autoValidatorDeposits({
   const emptySignature =
     "0x000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000";
 
+  // For each active validator that is under the max balance
   for (const validator of sortedValidators) {
+    const maxDepositAmount = maxBalanceGwei.sub(validator.balanceGwei);
+    const depositAmountGwei = remainingGwei.lt(maxDepositAmount)
+      ? remainingGwei
+      : maxDepositAmount;
+
+    if (depositAmountGwei.lt(minDepositGwei)) continue;
+
+    log(
+      `About to top up validator ${validator.index} with ${formatUnits(
+        depositAmountGwei,
+        9
+      )} WETH`
+    );
+
+    if (!dryrun) {
+      // Calculate the deposit data root
+      const depositDataRoot = await calcDepositRoot(
+        strategy.address,
+        "0x02",
+        validator.pubKey,
+        // This sig doesn't matter after the first deposit
+        emptySignature,
+        // Need to convert to an ETH amount with no decimals
+        formatUnits(depositAmountGwei, 9)
+      );
+
+      // Call the strategy to deposit to the beacon deposit contract
+      const tx = await strategy.connect(signer).stakeEth(
+        {
+          pubkey: validator.pubKey,
+          signature: emptySignature,
+          depositDataRoot,
+        },
+        depositAmountGwei
+      );
+      await logTxDetails(tx, "stakeEth");
+    }
+
+    // Reduce the remaining amount that needs to be deposited
+    remainingGwei = remainingGwei.sub(depositAmountGwei);
+
     if (remainingGwei.lt(minDepositGwei)) {
       log(
         `${formatUnits(
@@ -309,46 +356,6 @@ async function autoValidatorDeposits({
         )} WETH min deposit. Stopping`
       );
       break;
-    }
-
-    if (validator.balanceGwei.lt(maxBalanceGwei)) {
-      const maxDepositAmount = maxBalanceGwei.sub(validator.balanceGwei);
-      const depositAmountGwei = remainingGwei.lt(maxDepositAmount)
-        ? remainingGwei
-        : maxDepositAmount;
-
-      if (depositAmountGwei.lt(minDepositGwei)) continue;
-
-      log(
-        `About to top up validator ${validator.index} with ${formatUnits(
-          depositAmountGwei,
-          9
-        )} WETH`
-      );
-
-      if (!dryrun) {
-        const depositDataRoot = await calcDepositRoot(
-          strategy.address,
-          "0x02",
-          validator.pubKey,
-          // This sig doesn't matter after the first deposit
-          emptySignature,
-          // Need to convert to an ETH amount with no decimals
-          formatUnits(depositAmountGwei, 9)
-        );
-
-        const tx = await strategy.connect(signer).stakeEth(
-          {
-            pubkey: validator.pubKey,
-            signature: emptySignature,
-            depositDataRoot,
-          },
-          depositAmountGwei
-        );
-        await logTxDetails(tx, "stakeEth");
-      }
-
-      remainingGwei = remainingGwei.sub(depositAmountGwei);
     }
   }
 
