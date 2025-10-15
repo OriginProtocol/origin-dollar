@@ -202,6 +202,166 @@ async function stakeValidator({
   console.log(`Deposit ID: ${event.args.depositID}`);
 }
 
+async function autoValidatorDeposits({
+  signer,
+  slot, // undefined = latest slot
+  maxBalance: maxBalanceGwei = parseUnits("2030", 9),
+  minDeposit: minDepositGwei = parseUnits("1.1", 9),
+  dryrun = false,
+}) {
+  const networkName = await getNetworkName();
+  const wethAddress = addresses[networkName].WETH;
+  const weth = await ethers.getContractAt("IERC20", wethAddress);
+  const strategy = await resolveContract(
+    "CompoundingStakingSSVStrategyProxy",
+    "CompoundingStakingSSVStrategy"
+  );
+  const strategyView = await resolveContract("CompoundingStakingStrategyView");
+
+  // WETH in the strategy
+  const wethInStrategy = await weth.balanceOf(strategy.address);
+  log(`WETH balance in strategy ${formatUnits(wethInStrategy, 18)}`);
+  // Convert wei balance to gwei
+  let remainingGwei = wethInStrategy.div(parseUnits("1", 9));
+
+  if (remainingGwei.lt(minDepositGwei)) {
+    log(
+      `${formatUnits(
+        remainingGwei,
+        9
+      )} WETH balance in strategy less than ${formatUnits(
+        minDepositGwei,
+        9
+      )} ETH min deposit. Stopping`
+    );
+    return;
+  }
+
+  // 2. Get the staking strategy's active validators and pending deposits
+
+  const verifiedValidators = await strategyView.getVerifiedValidators();
+  const activeValidators = verifiedValidators.filter(
+    (validator) => validator.state === 4 // ACTIVE
+  );
+  const pendingDeposits = await strategyView.getPendingDeposits();
+
+  // 3. Calculate validators balances after all the pending deposits have been processed
+
+  // Get beacon chain data
+  const { stateView } = await getBeaconBlock(slot);
+
+  let validators = [];
+  // Iterate over the active validators
+  for (const validator of activeValidators) {
+    // get the validator's balance
+    let balanceGwei = stateView.balances.get(validator.index);
+    log(
+      `  Validator ${validator.index} balance ${formatUnits(
+        balanceGwei,
+        9
+      )} ETH`
+    );
+
+    // Add any pending deposits for this validator's balance
+    for (const deposit of pendingDeposits) {
+      if (toHex(deposit.pubKeyHash) === validator.pubKeyHash) {
+        log(
+          `  Pending deposit of ${formatUnits(
+            deposit.amount,
+            9
+          )} ETH for validator index ${validator.index}`
+        );
+        balanceGwei = BigNumber.from(balanceGwei.toString()).add(
+          deposit.amount
+        );
+      }
+    }
+
+    // Get the validator public key
+    const { pubkey } = stateView.validators.get(validator.index);
+    validators.push({
+      index: validator.index,
+      pubKey: toHex(pubkey),
+      balanceGwei: BigNumber.from(balanceGwei.toString()),
+    });
+  }
+
+  // 4. Sort validators by largest to smallest balance
+
+  const sortedValidators = validators.sort((a, b) =>
+    a.balanceGwei.gt(b.balanceGwei) ? -1 : 1
+  );
+
+  // 5. Iterate over each validator and top up to max ETH if necessary
+
+  const emptySignature =
+    "0x000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000";
+
+  for (const validator of sortedValidators) {
+    if (remainingGwei.lt(minDepositGwei)) {
+      log(
+        `${formatUnits(
+          remainingGwei,
+          9
+        )} WETH remaining less than ${formatUnits(
+          minDepositGwei,
+          9
+        )} WETH min deposit. Stopping`
+      );
+      break;
+    }
+
+    if (validator.balanceGwei.lt(maxBalanceGwei)) {
+      const maxDepositAmount = maxBalanceGwei.sub(validator.balanceGwei);
+      const depositAmountGwei = remainingGwei.lt(maxDepositAmount)
+        ? remainingGwei
+        : maxDepositAmount;
+
+      if (depositAmountGwei.lt(minDepositGwei)) continue;
+
+      log(
+        `About to top up validator ${validator.index} with ${formatUnits(
+          depositAmountGwei,
+          9
+        )} WETH`
+      );
+
+      if (!dryrun) {
+        const depositDataRoot = await calcDepositRoot(
+          strategy.address,
+          "0x02",
+          validator.pubKey,
+          // This sig doesn't matter after the first deposit
+          emptySignature,
+          // Need to convert to an ETH amount with no decimals
+          formatUnits(depositAmountGwei, 9)
+        );
+
+        const tx = await strategy.connect(signer).stakeEth(
+          {
+            pubkey: validator.pubKey,
+            signature: emptySignature,
+            depositDataRoot,
+          },
+          depositAmountGwei
+        );
+        await logTxDetails(tx, "stakeEth");
+      }
+
+      remainingGwei = remainingGwei.sub(depositAmountGwei);
+    }
+  }
+
+  if (remainingGwei.gt(0)) {
+    log(
+      `${formatUnits(
+        remainingGwei,
+        9
+      )} WETH remaining. Need more active validators before it can be deposited`
+    );
+  }
+}
+
 async function withdrawValidator({ pubkey, amount, signer }) {
   const strategy = await resolveContract(
     "CompoundingStakingSSVStrategyProxy",
@@ -683,6 +843,7 @@ module.exports = {
   registerValidatorCreateRequest,
   registerValidator,
   stakeValidator,
+  autoValidatorDeposits,
   snapStakingStrategy,
   logDeposits,
   setRegistrator,
