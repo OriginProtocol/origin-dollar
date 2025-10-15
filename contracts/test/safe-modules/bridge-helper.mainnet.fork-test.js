@@ -20,6 +20,7 @@ describe("ForkTest: Bridge Helper Safe Module (Ethereum)", function () {
   });
 
   const _mintOETH = async (amount, user) => {
+    await weth.connect(user).approve(oethVault.address, amount);
     await oethVault.connect(user).mint(weth.address, amount, amount);
   };
 

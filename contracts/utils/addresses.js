@@ -366,6 +366,15 @@ addresses.mainnet.toConsensus.consolidation =
 addresses.mainnet.toConsensus.withdrawals =
   "0x00000961Ef480Eb55e80D19ad83579A64c007002";
 
+// Mainnet Merkl
+addresses.mainnet.CampaignCreator =
+  "0x8BB4C975Ff3c250e0ceEA271728547f3802B36Fd";
+
+// Morpho Markets
+// OETH is supply asset - USDC borrowing asset
+addresses.mainnet.MorphoOethUsdcMarket =
+  "0xb8fef900b383db2dbbf4458c7f46acf5b140f26d603a6d1829963f241b82510e";
+
 // Arbitrum One
 addresses.arbitrumOne = {};
 addresses.arbitrumOne.WOETHProxy = "0xD8724322f44E5c58D7A815F542036fb17DbbF839";
