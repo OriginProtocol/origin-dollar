@@ -2,7 +2,7 @@ const { deploymentWithGovernanceProposal } = require("../../utils/deploy");
 
 module.exports = deploymentWithGovernanceProposal(
   {
-    deployName: "152_beacon_root_testing",
+    deployName: "153_beacon_root_testing",
     forceDeploy: false,
     //forceSkip: true,
     reduceQueueTime: true,
