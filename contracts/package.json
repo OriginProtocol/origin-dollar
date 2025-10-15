@@ -69,6 +69,7 @@
   "devDependencies": {
     "@aws-sdk/client-kms": "3.598.0",
     "@aws-sdk/client-s3": "3.600.0",
+    "@chainsafe/persistent-merkle-tree": "^1.2.1",
     "@layerzerolabs/oft-evm": "3.1.4",
     "@nomicfoundation/hardhat-network-helpers": "1.0.9",
     "@nomicfoundation/hardhat-verify": "2.1.1",
@@ -138,6 +139,7 @@
     "@lodestar/params": "^1.33.0",
     "@lodestar/state-transition": "^1.33.0",
     "@lodestar/types": "^1.31.0",
+    "@lodestar/utils": "^1.35.0",
     "ganache": "^7.9.2"
   },
   "resolutions": {
