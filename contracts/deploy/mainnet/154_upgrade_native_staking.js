@@ -28,7 +28,7 @@ module.exports = deploymentWithGovernanceProposal(
     // Governance Actions
     // ----------------
     return {
-      name: `Deploy new Compounding Staking Strategy that uses compounding validators`,
+      name: `Deploy new Compounding Staking Strategy that uses compounding validators and Beacon Chain merkle proofs`,
       actions: [
         // 1. Add new strategy to vault
         {
@@ -48,6 +48,12 @@ module.exports = deploymentWithGovernanceProposal(
           signature: "setRegistrator(address)",
           // The Defender Relayer
           args: [addresses.mainnet.validatorRegistrator],
+        },
+        // 4. set new Staking Strategy as the default strategy for WETH
+        {
+          contract: cVaultAdmin,
+          signature: "setAssetDefaultStrategy(address,address)",
+          args: [addresses.mainnet.WETH, cCompoundingStakingStrategy.address],
         },
       ],
     };

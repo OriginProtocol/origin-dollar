@@ -109,6 +109,7 @@ const {
   registerValidatorCreateRequest,
   registerValidator,
   stakeValidator,
+  autoValidatorDeposits,
   withdrawValidator,
   removeValidator,
   autoValidatorWithdrawals,
@@ -2136,6 +2137,24 @@ subtask(
     await registerValidator(taskArgs);
   });
 task("registerValidator").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+subtask(
+  "autoValidatorDeposits",
+  "Automatically deposit strategy WETH into validators"
+)
+  .addParam(
+    "dryrun",
+    "Do not send any txs to the staking strategy contract",
+    false,
+    types.boolean
+  )
+  .setAction(async (taskArgs) => {
+    const signer = await getSigner();
+    await autoValidatorDeposits({ ...taskArgs, signer });
+  });
+task("autoValidatorDeposits").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
 
