@@ -31,7 +31,7 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
     /// https://eth2book.info/capella/part2/incentives/balances/#hysteresis
     uint256 internal constant MIN_ACTIVATION_BALANCE_GWEI = 32.25 ether / 1e9;
     /// @dev The maximum number of deposits that are waiting to be verified as processed on the beacon chain.
-    uint256 internal constant MAX_DEPOSITS = 12;
+    uint256 internal constant MAX_DEPOSITS = 32;
     /// @dev The maximum number of validators that can be verified.
     uint256 internal constant MAX_VERIFIED_VALIDATORS = 48;
     /// @dev The default withdrawable epoch value on the Beacon chain.

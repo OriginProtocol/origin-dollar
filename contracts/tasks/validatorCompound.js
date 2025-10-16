@@ -264,15 +264,18 @@ async function autoValidatorDeposits({
 
     // Add any pending deposits for this validator's balance
     for (const deposit of pendingDeposits) {
-      if (toHex(deposit.pubKeyHash) === validator.pubKeyHash) {
+      if (deposit.pubKeyHash === validator.pubKeyHash) {
+        balanceGwei = BigNumber.from(balanceGwei.toString()).add(
+          deposit.amountGwei
+        );
         log(
           `  Pending deposit of ${formatUnits(
-            deposit.amount,
+            deposit.amountGwei,
             9
-          )} ETH for validator index ${validator.index}`
-        );
-        balanceGwei = BigNumber.from(balanceGwei.toString()).add(
-          deposit.amount
+          )} ETH for validator ${validator.index}. New balance ${formatUnits(
+            balanceGwei,
+            9
+          )} ETH`
         );
       }
     }
