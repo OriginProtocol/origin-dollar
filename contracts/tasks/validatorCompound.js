@@ -199,7 +199,7 @@ async function stakeValidator({
   if (!event) {
     throw new Error("ETHStaked event not found in transaction receipt");
   }
-  console.log(`Deposit ID: ${event.args.depositID}`);
+  console.log(`Pending deposit root: ${event.args.pendingDepositRoot}`);
 }
 
 async function autoValidatorDeposits({
