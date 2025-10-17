@@ -63,13 +63,13 @@ Whole upgrade team should test also balanceOf several random accounts as further
 
 ## Local resolution upgrade testing
 
-For local testing of the new transfer behavior, you can gererate a list of transfers between accounts:
+For local testing of the new transfer behavior, you can generate a list of transfers between accounts:
 
     node scripts/resolution/testSequenceCreate.js \
     --testFile=scripts/resolution/test.json \
     --upgradeFile=scripts/resolution/upgrade.json
 
-Then, you can run the approximately 1,000 transfers as tests against a fork. Each balance before and afer is checked against the amount transfers, and any balance discrepencies are shown.
+Then, you can run the approximately 1,000 transfers as tests against a fork. Each balance before and after is checked against the amount transfers, and any balance discrepancies are shown.
 
     HARDHAT_NETWORK=mainnet \
     node scripts/resolution/testSequenceRun.js \

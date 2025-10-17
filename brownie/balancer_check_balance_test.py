@@ -122,7 +122,7 @@ def deposit_withdrawal_test(amount, _outputAmount, print_states = False):
   #     # we should account for some slippage here since it comes down to balance amounts in the pool
   #     [reth.address, weth.address], # assets
   #     #[0, 177_972 * 10**18], # min amounts out
-  #     [0, 0], # min amounts out - no MEWS on local network no need to calculate exaclty
+  #     [0, 0], # min amounts out - no MEWS on local network no need to calculate exactly
   #     balancerUserDataEncoder.userDataTokenInExactBPTOut.encode_input(0, bpt_balance, 1)[10:],
   #     False, #fromInternalBalance
   #   ],
@@ -151,7 +151,7 @@ def deposit_withdrawal_test(amount, _outputAmount, print_states = False):
       # we should account for some slippage here since it comes down to balance amounts in the pool
       [reth.address, weth.address], # assets
       #[0, 177_972 * 10**18], # min amounts out
-      #outputAmounts, # min amounts out - no MEWS on local network no need to calculate exaclty
+      #outputAmounts, # min amounts out - no MEWS on local network no need to calculate exactly
       [_outputAmount * 10**18 - 10**9,0],
       balancerUserDataEncoder.userDataExactTokenInForBPTOut.encode_input(2, outputAmounts, bpt_balance)[10:],
       False, #fromInternalBalance

@@ -27,7 +27,7 @@ hook Sload OUSD.RebaseOptions rebaseOption rebaseState[KEY address account] {
     require rebaseOption == rebaseStateMirror[account];
 }
 
-// rebaseState is always updated before updateing the credits balance (when it is updated) so the best way to keep track of credit balance per state 
+// rebaseState is always updated before updating the credits balance (when it is updated) so the best way to keep track of credit balance per state 
 // is to add the changes when the credits are updated with consideration to the current account rebasing state.
 hook Sstore creditBalances[KEY address account] uint256 new_creditBalance (uint256 old_creditBalance) {
     require old_creditBalance == creditBalancesMirror[account];
@@ -41,7 +41,7 @@ hook Sstore creditBalances[KEY address account] uint256 new_creditBalance (uint2
 
 hook Sstore rebaseState[KEY address account] OUSD.RebaseOptions new_rebaseOption (OUSD.RebaseOptions old_rebaseOption) {
     require old_rebaseOption == rebaseStateMirror[account];
-	// transitioning out of StdNonRebasing state - substract balance from sumAllNonRebasing
+	// transitioning out of StdNonRebasing state - subtract balance from sumAllNonRebasing
 	if(old_rebaseOption == StdNonRebasing() && new_rebaseOption != StdNonRebasing()) {
 		sumAllNonRebasingBalances = sumAllNonRebasingBalances - creditBalancesMirror[account];
 	// transitioning into StdNonRebasing state - add balance to sumAllNonRebasing
