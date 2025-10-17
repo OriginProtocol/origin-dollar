@@ -419,13 +419,29 @@ Validator public key: 90db8ae56a9e741775ca37dd960606541306974d4a998ef6a6227c85a9
 
 ## Contract Verification
 
-The Hardhat plug-in [@nomiclabs/hardhat-verify](https://www.npmjs.com/package/@nomiclabs/hardhat-etherscan) is used to verify contracts on Etherscan. Etherscan has migrated to V2 api where all the chains use the same endpoint.
+The Hardhat plug-in [@nomiclabs/hardhat-verify](https://www.npmjs.com/package/@nomiclabs/hardhat-etherscan) is used to verify contracts on Etherscan. Etherscan has migrated to V2 api where all the chains use the same endpoint. Hardhat verify should be run with `--contract` parameter otherwise there is a significant slowdown while hardhat is gathering contract information. 
 
 There's an example
 
 ```
 npx hardhat --network mainnet verify --contract contracts/vault/VaultAdmin.sol:VaultAdmin 0x31a91336414d3B955E494E7d485a6B06b55FC8fB
 ```
+
+Example with constructor parameters passed as command params
+```
+yarn hardhat verify --network mainnet 0x0FC66355B681503eFeE7741BD848080d809FD6db --contract contracts/poolBooster/PoolBoosterFactoryMerkl.sol:PoolBoosterFactoryMerkl 0x856c4Efb76C1D1AE02e20CEB03A2A6a08b0b8dC3 0x4FF1b9D9ba8558F5EAfCec096318eA0d8b541971 0xAA8af8Db4B6a827B51786334d26349eb03569731 0x8BB4C975Ff3c250e0ceEA271728547f3802B36Fd
+```
+
+Example with constructor parameters saved to file and file path passed to the command
+```
+echo "module.exports = [{
+  platformAddress: \"0x0000000000000000000000000000000000000001\",
+  vaultAddress: \"0xe75d77b1865ae93c7eaa3040b038d7aa7bc02f70\",
+}]" > flux-args.js
+npx hardhat --network mainnet verify --contract contracts/strategies/FluxStrategy.sol:FluxStrategy --constructor-args flux-args.js 0x57d49c28Cf9A0f65B1279a97eD01C3e49a5A173f
+```
+
+
 
 `hardhat-deploy` package offers a secondary way to verify contracts, where contructor parameters don't need to be passed into the verification call. Since Etherscan has migrated to V2 api this approach is no longer working. `etherscan-verify` call uses `hardhat verify` under the hood.
 ```
