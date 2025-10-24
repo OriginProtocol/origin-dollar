@@ -654,7 +654,7 @@ async function snapStakingStrategy({ block }) {
   const strategyView = await resolveContract("CompoundingStakingStrategyView");
 
   // Pending deposits
-  const totalDeposits = await logDeposits(strategyView, blockTag);
+  const totalDeposits = await logDeposits(strategyView, blockTag, stateView);
 
   if (stateView.pendingDeposits.length === 0) {
     console.log("No pending beacon chain deposits");
@@ -676,7 +676,7 @@ async function snapStakingStrategy({ block }) {
   console.log(`\n${verifiedValidators.length || "No"} verified validators:`);
   if (verifiedValidators.length > 0) {
     console.log(
-      `  amount           index   status   public key hash                                                    Withdrawable Exit epoch`
+      `  amount (ETH) index   status   public key                                                                                         Withdrawable Exit epoch`
     );
   }
   let totalValidators = BigNumber.from(0);
@@ -687,11 +687,11 @@ async function snapStakingStrategy({ block }) {
     });
     const beaconValidator = stateView.validators.get(validator.index);
     console.log(
-      `  ${formatUnits(balance, 9).padEnd(12)} ETH ${
+      `  ${formatUnits(balance, 9).padEnd(12)} ${
         validator.index
-      } ${validatorStatus(validatorData.state).padEnd(8)} ${
-        validator.pubKeyHash
-      } ${beaconValidator.withdrawableEpoch || "\t\t"}     ${
+      } ${validatorStatus(validatorData.state).padEnd(8)} ${toHex(
+        beaconValidator.pubkey
+      )} ${beaconValidator.withdrawableEpoch || "\t\t"}     ${
         beaconValidator.exitEpoch || ""
       }`
     );
@@ -764,26 +764,45 @@ async function snapStakingStrategy({ block }) {
   );
 }
 
-async function logDeposits(strategyView, blockTag = "latest") {
+async function logDeposits(strategyView, blockTag = "latest", stateView) {
   const deposits = await strategyView.getPendingDeposits({ blockTag });
   let totalDeposits = BigNumber.from(0);
   console.log(`\n${deposits.length || "No"} pending strategy deposits:`);
   if (deposits.length > 0) {
     console.log(
-      `  Pending deposit root                                               amount    slot    public key hash`
+      `  Pending deposit root                                               amount (ETH)   slot    Q pos public key`
     );
   }
   for (const deposit of deposits) {
+    const { pendingDeposit, position } = findDepositInQueue(
+      deposit.pendingDepositRoot,
+      stateView
+    );
+    const pubKey = pendingDeposit
+      ? toHex(pendingDeposit.pubkey)
+      : deposit.pubKeyHash;
     console.log(
-      `  ${deposit.pendingDepositRoot.toString().padEnd(3)} ${formatUnits(
+      `  ${deposit.pendingDepositRoot} ${formatUnits(
         deposit.amountGwei,
         9
-      ).padEnd(5)} ETH ${deposit.slot} ${deposit.pubKeyHash}`
+      ).padEnd(14)} ${deposit.slot} ${position
+        .toString()
+        .padStart(5)} ${pubKey}`
     );
     totalDeposits = totalDeposits.add(deposit.amountGwei);
   }
 
   return totalDeposits;
+}
+
+function findDepositInQueue(pendingDepositRoot, stateView) {
+  for (let i = 0; i < stateView.pendingDeposits.length; i++) {
+    const pendingDeposit = stateView.pendingDeposits.get(i);
+    if (toHex(pendingDeposit.hashTreeRoot()) === pendingDepositRoot) {
+      return { pendingDeposit, position: i };
+    }
+  }
+  return { pendingDeposit: undefined, position: -1 };
 }
 
 function validatorStatus(status) {
