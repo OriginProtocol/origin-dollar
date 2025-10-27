@@ -429,19 +429,27 @@ module.exports = {
   etherscan: {
     apiKey: {
       mainnet: process.env.ETHERSCAN_API_KEY,
-      arbitrumOne: process.env.ARBISCAN_API_KEY,
+      arbitrumOne: process.env.ETHERSCAN_API_KEY,
       holesky: process.env.ETHERSCAN_API_KEY,
-      base: process.env.BASESCAN_API_KEY,
-      sonic: process.env.SONICSCAN_API_KEY,
-      hoodi: process.env.HOODISCAN_API_KEY,
+      base: process.env.ETHERSCAN_API_KEY,
+      sonic: process.env.ETHERSCAN_API_KEY,
+      hoodi: process.env.ETHERSCAN_API_KEY,
       plume: "empty", // this works for: npx hardhat verify...
     },
     customChains: [
       {
+        network: "mainnet",
+        chainId: 1,
+        urls: {
+          apiURL: "https://api.etherscan.io/v2/api?chainId=1",
+          browserURL: "https://etherscan.io",
+        },
+      },
+      {
         network: "holesky",
         chainId: 17000,
         urls: {
-          apiURL: "https://api-holesky.etherscan.io/api",
+          apiURL: "https://api.etherscan.io/v2/api?chainId=17000",
           browserURL: "https://holesky.etherscan.io",
         },
       },
@@ -449,7 +457,7 @@ module.exports = {
         network: "base",
         chainId: 8453,
         urls: {
-          apiURL: "https://api.basescan.org/api",
+          apiURL: "https://api.etherscan.io/v2/api?chainId=8453",
           browserURL: "https://basescan.org",
         },
       },
@@ -457,7 +465,7 @@ module.exports = {
         network: "sonic",
         chainId: 146,
         urls: {
-          apiURL: "https://api.sonicscan.org/api",
+          apiURL: "https://api.etherscan.io/v2/api?chainId=146",
           browserURL: "https://sonicscan.org",
         },
       },
@@ -473,7 +481,7 @@ module.exports = {
         network: "hoodi",
         chainId: 560048,
         urls: {
-          apiURL: "https://hoodi.etherscan.io/api",
+          apiURL: "https://api.etherscan.io/v2/api?chainId=560048",
           browserURL: "https://hoodi.etherscan.io",
         },
       },
