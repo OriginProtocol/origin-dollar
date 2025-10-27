@@ -676,7 +676,7 @@ async function snapStakingStrategy({ block }) {
   console.log(`\n${verifiedValidators.length || "No"} verified validators:`);
   if (verifiedValidators.length > 0) {
     console.log(
-      `  amount (ETH) index   status   public key                                                                                         Withdrawable Exit epoch`
+      `  amount (ETH)   index   status   public key                                                                                         Withdrawable Exit epoch`
     );
   }
   let totalValidators = BigNumber.from(0);
@@ -687,7 +687,7 @@ async function snapStakingStrategy({ block }) {
     });
     const beaconValidator = stateView.validators.get(validator.index);
     console.log(
-      `  ${formatUnits(balance, 9).padEnd(12)} ${
+      `  ${formatUnits(balance, 9).padEnd(14)} ${
         validator.index
       } ${validatorStatus(validatorData.state).padEnd(8)} ${toHex(
         beaconValidator.pubkey
