@@ -2014,7 +2014,7 @@ async function compoundingStakingSSVStrategyFixture() {
     // For unit tests, the proxy is pinned to a fixed address
     compoundingStakingStrategyProxy = await ethers.getContractAt(
       "CompoundingStakingSSVStrategyProxy",
-      addresses.mainnet.CompoundingStakingStrategyProxy
+      addresses.unitTests.CompoundingStakingStrategyProxy
     );
   } else {
     compoundingStakingStrategyProxy = await ethers.getContract(

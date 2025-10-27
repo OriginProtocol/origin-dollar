@@ -16,6 +16,7 @@ addresses.sonic = {};
 addresses.holesky = {};
 addresses.hoodi = {};
 addresses.plume = {};
+addresses.unitTests = {};
 
 addresses.mainnet.ORIGINTEAM = "0x449e0b5564e0d141b3bc3829e74ffa0ea8c08ad5";
 
@@ -184,7 +185,7 @@ addresses.mainnet.CurveOETHGauge = "0xd03BE91b1932715709e18021734fcB91BB431715";
 addresses.mainnet.CVXETHRewardsPool =
   "0x24b65DC1cf053A8D96872c323d29e86ec43eB33A";
 
-addresses.mainnet.CompoundingStakingStrategyProxy =
+addresses.unitTests.CompoundingStakingStrategyProxy =
   "0x840081c97256d553A8F234D469D797B9535a3B49";
 
 // Votemarket - StakeDAO

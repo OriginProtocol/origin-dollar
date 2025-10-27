@@ -872,18 +872,18 @@ const deployCompoundingStakingSSVStrategy = async () => {
     // For unit tests, fix the address of compoundingStakingSSVStrategy so the withdrawal credentials
     // are fixed for the validator public key proofs
     await replaceContractAt(
-      addresses.mainnet.CompoundingStakingStrategyProxy,
+      addresses.unitTests.CompoundingStakingStrategyProxy,
       await ethers.getContract("CompoundingStakingSSVStrategyProxy")
     );
     // Set the governor in storage of the proxy to the deployer
     await setStorageAt(
-      addresses.mainnet.CompoundingStakingStrategyProxy,
+      addresses.unitTests.CompoundingStakingStrategyProxy,
       "0x7bea13895fa79d2831e0a9e28edede30099005a50d652d8957cf8a607ee6ca4a", // governor storage slot
       deployerAddr
     );
     cCompoundingStakingSSVStrategyProxy = await ethers.getContractAt(
       "CompoundingStakingSSVStrategyProxy",
-      addresses.mainnet.CompoundingStakingStrategyProxy
+      addresses.unitTests.CompoundingStakingStrategyProxy
     );
   } else {
     // For fork tests, mainnet and Hoodi deployments.
