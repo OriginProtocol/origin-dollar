@@ -421,10 +421,12 @@ Validator public key: 90db8ae56a9e741775ca37dd960606541306974d4a998ef6a6227c85a9
 
 The Hardhat plug-in [@nomiclabs/hardhat-verify](https://www.npmjs.com/package/@nomiclabs/hardhat-etherscan) is used to verify contracts on Etherscan. Etherscan has migrated to V2 api where all the chains use the same endpoint. Hardhat verify should be run with `--contract` parameter otherwise there is a significant slowdown while hardhat is gathering contract information. 
 
+**IMPORTANT:** Currently only yarn works. Do not use npx/pnpm
+
 There's an example
 
 ```
-npx hardhat --network mainnet verify --contract contracts/vault/VaultAdmin.sol:VaultAdmin 0x31a91336414d3B955E494E7d485a6B06b55FC8fB
+yarn hardhat --network mainnet verify --contract contracts/vault/VaultAdmin.sol:VaultAdmin 0x31a91336414d3B955E494E7d485a6B06b55FC8fB
 ```
 
 Example with constructor parameters passed as command params
@@ -445,7 +447,7 @@ npx hardhat --network mainnet verify --contract contracts/strategies/FluxStrateg
 
 `hardhat-deploy` package offers a secondary way to verify contracts, where contructor parameters don't need to be passed into the verification call. Since Etherscan has migrated to V2 api this approach is no longer working. `etherscan-verify` call uses `hardhat verify` under the hood.
 ```
-npx hardhat etherscan-verify --network mainnet --api-url https://api.etherscan.io
+yarn hardhat etherscan-verify --network mainnet --api-url https://api.etherscan.io
 ```
 
 #### Addressing verification slowdowns
