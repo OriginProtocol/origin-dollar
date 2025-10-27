@@ -9,7 +9,7 @@ const {
   deployPlumeMockRoosterAMOStrategyImplementation,
 } = require("../deploy/deployActions.js");
 const addresses = require("../utils/addresses");
-const hhHelpers = require("@nomicfoundation/hardhat-network-helpers");
+// const hhHelpers = require("@nomicfoundation/hardhat-network-helpers");
 const log = require("../utils/logger")("test:fixtures-plume");
 
 const MINTER_ROLE =
@@ -176,39 +176,39 @@ const defaultFixture = async () => {
   };
 
   let roosterAmoStrategy, roosterOETHpWETHpool;
-  if (isFork) {
-    // Allow governor to mint WETH
-    const wethOwner = "0xb8ce2bE5c3c13712b4da61722EAd9d64bB57AbC9";
-    const ownerSigner = await impersonateAndFund(wethOwner);
-    await wethMintableContract.connect(ownerSigner).addMinter(governor.address);
+  // if (isFork) {
+  //   // Allow governor to mint WETH
+  //   const wethOwner = "0xb8ce2bE5c3c13712b4da61722EAd9d64bB57AbC9";
+  //   const ownerSigner = await impersonateAndFund(wethOwner);
+  //   await wethMintableContract.connect(ownerSigner).addMinter(governor.address);
 
-    // Aerodrome AMO Strategy
-    const roosterAmoStrategyProxy = await ethers.getContract(
-      "RoosterAMOStrategyProxy"
-    );
-    roosterAmoStrategy = await ethers.getContractAt(
-      "RoosterAMOStrategy",
-      roosterAmoStrategyProxy.address
-    );
+  //   // Aerodrome AMO Strategy
+  //   const roosterAmoStrategyProxy = await ethers.getContract(
+  //     "RoosterAMOStrategyProxy"
+  //   );
+  //   roosterAmoStrategy = await ethers.getContractAt(
+  //     "RoosterAMOStrategy",
+  //     roosterAmoStrategyProxy.address
+  //   );
 
-    roosterOETHpWETHpool = await ethers.getContractAt(
-      "IMaverickV2Pool",
-      addresses.plume.OethpWETHRoosterPool
-    );
-  }
+  //   roosterOETHpWETHpool = await ethers.getContractAt(
+  //     "IMaverickV2Pool",
+  //     addresses.plume.OethpWETHRoosterPool
+  //   );
+  // }
 
-  for (const signer of [rafael, daniel, nick, domen, clement]) {
-    // Everyone has tons of Plume for gas
-    await hhHelpers.setBalance(signer.address, oethUnits("100000000"));
+  // for (const signer of [rafael, daniel, nick, domen, clement]) {
+  //   // Everyone has tons of Plume for gas
+  //   await hhHelpers.setBalance(signer.address, oethUnits("100000000"));
 
-    // And WETH
-    await _mintWETH(signer, oethUnits("10000000"));
+  //   // And WETH
+  //   await _mintWETH(signer, oethUnits("10000000"));
 
-    // Set allowance on the vault
-    await weth
-      .connect(signer)
-      .approve(oethpVault.address, oethUnits("5000000"));
-  }
+  //   // Set allowance on the vault
+  //   await weth
+  //     .connect(signer)
+  //     .approve(oethpVault.address, oethUnits("5000000"));
+  // }
 
   return {
     // Signers

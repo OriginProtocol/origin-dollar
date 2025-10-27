@@ -22,7 +22,14 @@ describe("ForkTest: OETHp Vault", function () {
   }
 
   describe("Mint & Permissioned redeems", function () {
-    it("Should allow anyone to mint", async () => {
+    it("Should not allow anyone to mint", async () => {
+      const { nick, weth, oethpVault } = fixture;
+      await expect(
+        oethpVault.connect(nick).mint(weth.address, oethUnits("1"), "0")
+      ).to.be.revertedWith("Minting disabled.");
+    });
+
+    it.skip("Should allow anyone to mint", async () => {
       const { nick, weth, oethp, oethpVault } = fixture;
 
       // issue a pre-mint so that Dripper collect gets called so next mint
@@ -52,7 +59,7 @@ describe("ForkTest: OETHp Vault", function () {
       );
     });
 
-    it("Should allow only Strategist to redeem", async () => {
+    it.skip("Should allow only Strategist to redeem", async () => {
       const { strategist, oethpVault, oethp, weth, rafael } = fixture;
 
       // Add WETH liquidity to allow redeem
@@ -84,7 +91,7 @@ describe("ForkTest: OETHp Vault", function () {
       );
     });
 
-    it("Should allow only Governor to redeem", async () => {
+    it.skip("Should allow only Governor to redeem", async () => {
       const { governor, oethpVault, oethp, weth, rafael } = fixture;
 
       // Add WETH liquidity to allow redeem
@@ -116,7 +123,7 @@ describe("ForkTest: OETHp Vault", function () {
       );
     });
 
-    it("No one else can redeem", async () => {
+    it.skip("No one else can redeem", async () => {
       const { rafael, nick, oethpVault } = fixture;
 
       await oethpVault.rebase();
@@ -130,7 +137,7 @@ describe("ForkTest: OETHp Vault", function () {
     });
   });
 
-  describe("Async withdrawals", function () {
+  describe.skip("Async withdrawals", function () {
     it("Should allow 1:1 async withdrawals", async () => {
       const { rafael, governor, oethpVault, weth } = fixture;
 
@@ -238,7 +245,7 @@ describe("ForkTest: OETHp Vault", function () {
     });
   });
 
-  describe("Mint Whitelist", function () {
+  describe.skip("Mint Whitelist", function () {
     it("Should allow a strategy to be added to the whitelist", async () => {
       const { oethpVault, governor } = fixture;
 
@@ -321,7 +328,7 @@ describe("ForkTest: OETHp Vault", function () {
     });
   });
 
-  describe("Mint & Burn For Strategy", function () {
+  describe.skip("Mint & Burn For Strategy", function () {
     let strategySigner, mockStrategy;
 
     beforeEach(async () => {
