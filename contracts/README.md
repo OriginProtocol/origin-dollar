@@ -421,7 +421,9 @@ Validator public key: 90db8ae56a9e741775ca37dd960606541306974d4a998ef6a6227c85a9
 
 The Hardhat plug-in [@nomiclabs/hardhat-verify](https://www.npmjs.com/package/@nomiclabs/hardhat-etherscan) is used to verify contracts on Etherscan. Etherscan has migrated to V2 api where all the chains use the same endpoint. Hardhat verify should be run with `--contract` parameter otherwise there is a significant slowdown while hardhat is gathering contract information. 
 
-**IMPORTANT:** Currently only yarn works. Do not use npx/pnpm
+**IMPORTANT:** 
+ - Currently only yarn works. Do not use npx/pnpm
+ - Also if you switch package manager do run "hardhat compile" first to mitigate potential bytecode missmatch errors
 
 There's an example
 
@@ -436,9 +438,9 @@ yarn hardhat verify --network mainnet 0x0FC66355B681503eFeE7741BD848080d809FD6db
 
 Example with constructor parameters saved to file and file path passed to the command
 ```
-echo "module.exports = [{
-  platformAddress: \"0x0000000000000000000000000000000000000001\",
-  vaultAddress: \"0xe75d77b1865ae93c7eaa3040b038d7aa7bc02f70\",
+echo "module.exports = [[
+  \"0x0000000000000000000000000000000000000001\",
+  \"0xe75d77b1865ae93c7eaa3040b038d7aa7bc02f70\"
 }]" > flux-args.js
 npx hardhat --network mainnet verify --contract contracts/strategies/FluxStrategy.sol:FluxStrategy --constructor-args flux-args.js 0x57d49c28Cf9A0f65B1279a97eD01C3e49a5A173f
 ```
