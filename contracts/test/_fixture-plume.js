@@ -9,7 +9,7 @@ const {
   deployPlumeMockRoosterAMOStrategyImplementation,
 } = require("../deploy/deployActions.js");
 const addresses = require("../utils/addresses");
-// const hhHelpers = require("@nomicfoundation/hardhat-network-helpers");
+const hhHelpers = require("@nomicfoundation/hardhat-network-helpers");
 const log = require("../utils/logger")("test:fixtures-plume");
 
 const MINTER_ROLE =
@@ -197,18 +197,18 @@ const defaultFixture = async () => {
   //   );
   // }
 
-  // for (const signer of [rafael, daniel, nick, domen, clement]) {
-  //   // Everyone has tons of Plume for gas
-  //   await hhHelpers.setBalance(signer.address, oethUnits("100000000"));
+  for (const signer of [rafael, daniel, nick, domen, clement]) {
+    // Everyone has tons of Plume for gas
+    await hhHelpers.setBalance(signer.address, oethUnits("100000000"));
 
-  //   // And WETH
-  //   await _mintWETH(signer, oethUnits("10000000"));
+    // And WETH
+    await _mintWETH(signer, oethUnits("10000000"));
 
-  //   // Set allowance on the vault
-  //   await weth
-  //     .connect(signer)
-  //     .approve(oethpVault.address, oethUnits("5000000"));
-  // }
+    // Set allowance on the vault
+    await weth
+      .connect(signer)
+      .approve(oethpVault.address, oethUnits("5000000"));
+  }
 
   return {
     // Signers

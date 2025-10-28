@@ -14,8 +14,7 @@ contract OETHPlumeVaultCore is OETHVaultCore {
     function _mint(
         address _asset,
         uint256 _amount,
-        uint256 _minimumOusdAmount,
-        uint256
+        uint256 _minimumOusdAmount
     )
         internal
         virtual
