@@ -89,7 +89,8 @@ describe("ForkTest: Bridge Helper Safe Module (Plume)", function () {
     expect(minAmountLD).to.gt(oethUnits("0.99"));
   });
 
-  it("Should deposit wOETH for OETHp and redeem it for WETH", async () => {
+  // Skipping since minting is disabled
+  it.skip("Should deposit wOETH for OETHp and redeem it for WETH", async () => {
     const {
       _mintWETH,
       oethpVault,
@@ -158,7 +159,8 @@ describe("ForkTest: Bridge Helper Safe Module (Plume)", function () {
     );
   });
 
-  it("Should deposit wOETH for OETHp and not redeem it for WETH", async () => {
+  // Skipping since minting is disabled
+  it.skip("Should deposit wOETH for OETHp and not redeem it for WETH", async () => {
     const {
       _mintWETH,
       oethpVault,
