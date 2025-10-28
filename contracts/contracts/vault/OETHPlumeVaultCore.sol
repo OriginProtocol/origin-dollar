@@ -12,15 +12,24 @@ contract OETHPlumeVaultCore is OETHVaultCore {
 
     // @inheritdoc OETHVaultCore
     function _mint(
-        address,
-        uint256,
+        address _asset,
+        uint256 _amount,
+        uint256 _minimumOusdAmount,
         uint256
     )
         internal
         virtual
         override
     {
-        revert("Minting disabled.");
+        // Only Strategist or Governor can mint using the Vault for now.
+        // This allows the strateigst to fund the Vault with WETH when
+        // removing liquidi from wOETH strategy.
+        require(
+            msg.sender == strategistAddr || isGovernor(),
+            "Caller is not the Strategist or Governor"
+        );
+
+        super._mint(_asset, _amount, _minimumOusdAmount);
     }
 
     // @inheritdoc OETHVaultCore

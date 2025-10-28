@@ -22,7 +22,12 @@ describe("ForkTest: OETHp Vault", function () {
   }
 
   describe("Mint & Permissioned redeems", function () {
-    it("Should not allow anyone to mint", async () => {
+    it("Should allow Strategist to mint", async () => {
+      const { strategist } = fixture;
+      await _mint(strategist);
+    });
+
+    it("Should not allow anyone else to mint", async () => {
       const { nick, weth, oethpVault } = fixture;
       await expect(
         oethpVault.connect(nick).mint(weth.address, oethUnits("1"), "0")
@@ -59,7 +64,7 @@ describe("ForkTest: OETHp Vault", function () {
       );
     });
 
-    it.skip("Should allow only Strategist to redeem", async () => {
+    it("Should allow only Strategist to redeem", async () => {
       const { strategist, oethpVault, oethp, weth, rafael } = fixture;
 
       // Add WETH liquidity to allow redeem
@@ -91,7 +96,7 @@ describe("ForkTest: OETHp Vault", function () {
       );
     });
 
-    it.skip("Should allow only Governor to redeem", async () => {
+    it("Should allow only Governor to redeem", async () => {
       const { governor, oethpVault, oethp, weth, rafael } = fixture;
 
       // Add WETH liquidity to allow redeem
