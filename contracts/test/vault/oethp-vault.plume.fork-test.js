@@ -31,7 +31,7 @@ describe("ForkTest: OETHp Vault", function () {
       const { nick, weth, oethpVault } = fixture;
       await expect(
         oethpVault.connect(nick).mint(weth.address, oethUnits("1"), "0")
-      ).to.be.revertedWith("Minting disabled.");
+      ).to.be.revertedWith("Caller is not the Strategist or Governor");
     });
 
     it.skip("Should allow anyone to mint", async () => {
