@@ -437,8 +437,7 @@ npx hardhat --network mainnet verify --contract contracts/strategies/FluxStrateg
 ```
 
 
-
-`hardhat-deploy` package offers a secondary way to verify contracts, where contructor parameters don't need to be passed into the verification call. Since Etherscan has migrated to V2 api this approach is no longer working. `etherscan-verify` call uses `hardhat verify` under the hood.
+`hardhat-deploy` package offers a secondary way to verify contracts, where constructor parameters don't need to be passed into the verification call. Since Etherscan has migrated to V2 api this approach is no longer working. `etherscan-verify` call uses `hardhat verify` under the hood.
 ```
 npx hardhat etherscan-verify --network mainnet --api-url https://api.etherscan.io
 ```
