@@ -16,7 +16,7 @@
       "options": {
         "useTabs": false,
         "singleQuote": false,
-        "bracketSpacing": true,
+        "bracketSpacing": true
       }
     }
   ]

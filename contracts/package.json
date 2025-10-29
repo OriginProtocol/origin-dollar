@@ -33,7 +33,7 @@
     "prettier": "yarn run prettier:js && yarn run prettier:sol",
     "prettier:check": "prettier -c \"*.js\" \"deploy/**/*.js\"  \"scripts/**/*.js\" \"smoke/**/*.js\" \"scripts/**/*.js\" \"tasks/**/*.js\" \"test/**/*.js\" \"utils/**/*.js\"",
     "prettier:js": "prettier --write \"*.js\" \"deploy/**/*.js\"  \"scripts/**/*.js\" \"smoke/**/*.js\" \"scripts/**/*.js\" \"tasks/**/*.js\" \"test/**/*.js\" \"utils/**/*.js\"",
-    "prettier:sol": "prettier --write \"contracts/**/*.sol\"",
+    "prettier:sol": "prettier --write --plugin=prettier-plugin-solidity \"contracts/**/*.sol\"",
     "test": "rm -rf deployments/hardhat && IS_TEST=true npx hardhat test",
     "test:base": "rm -rf deployments/hardhat && UNIT_TESTS_NETWORK=base IS_TEST=true npx hardhat test",
     "test:sonic": "rm -rf deployments/hardhat && UNIT_TESTS_NETWORK=sonic IS_TEST=true npx hardhat test",

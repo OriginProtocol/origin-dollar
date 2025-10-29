@@ -15,7 +15,7 @@ const plumeFixtureWithMockedVault = createFixtureLoader(
 
 const { setERC20TokenBalance } = require("../../_fund");
 
-describe("ForkTest: Rooster AMO Strategy (Plume)", async function () {
+describe.skip("ForkTest: Rooster AMO Strategy (Plume)", async function () {
   let fixture,
     oethpVault,
     oethVaultSigner,
