@@ -14,6 +14,7 @@ library Mainnet {
 
   // Governance
   address public constant TIMELOCK = 0x35918cDE7233F2dD33fA41ae3Cb6aE0e42E0e69F;
+  address public constant TREASURY = 0x6E3fddab68Bf1EBaf9daCF9F7907c7Bc0951D1dc;
 
   // OUSD
   address public constant OUSD = 0x2A8e1E676Ec238d8A992307B495b45B3fEAa5e86;
@@ -29,7 +30,8 @@ library Mainnet {
 
   // Pool Booster
   address public constant POOL_BOOSTER_FACTORY_MERKL = 0x0FC66355B681503eFeE7741BD848080d809FD6db;
-  address public constant POOL_BOOSTER_CENTRAL_REGISTRY = 0xAA8af8Db4B6a827B51786334d26349eb03569731;
+  address public constant POOL_BOOSTER_CENTRAL_REGISTRY =
+    0xAA8af8Db4B6a827B51786334d26349eb03569731;
 
   // Other token
   address public constant USDC = 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48;
@@ -37,6 +39,9 @@ library Mainnet {
 
   // Curve pools
   address public constant OETH_WETH_CURVE_POOL = 0xcc7d5785AD5755B6164e21495E07aDb0Ff11C2A8;
+
+  // ARMs
+  address public constant ETHERFI_ARM = 0xfB0A3CF9B019BFd8827443d131b235B3E0FC58d2;
 }
 
 library Base {
@@ -57,7 +62,8 @@ library Base {
 
   // Pool Booster
   address public constant POOL_BOOSTER_FACTORY_MERKL = 0x1ADB902Ece465cA681C66187627a622a631a0a63;
-  address public constant POOL_BOOSTER_CENTRAL_REGISTRY = 0x157f0B239D7F83D153E6c95F8AD9d341694376E3;
+  address public constant POOL_BOOSTER_CENTRAL_REGISTRY =
+    0x157f0B239D7F83D153E6c95F8AD9d341694376E3;
 
   // Other token
   address public constant WETH = 0x4200000000000000000000000000000000000006;

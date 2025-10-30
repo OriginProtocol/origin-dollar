@@ -13,8 +13,9 @@ import { console } from "forge-std/console.sol";
 
 contract Runlogs_2025_10_Mainnet is SetupMainnet {
   function run() public {
-    _2025_10_01();
+    //_2025_10_01();
     //_2025_10_02();
+    _2025_10_30();
   }
 
   // ------------------------------------------------------------------
@@ -29,7 +30,7 @@ contract Runlogs_2025_10_Mainnet is SetupMainnet {
     console.log("-----");
     console.log("strategist address", address(strategist));
     console.log("poolBoosterFactoryMerkl address", address(poolBoosterFactoryMerkl));
-    
+
     address poolBoosterAddress = poolBoosterFactoryMerkl.computePoolBoosterAddress({
       _campaignType: 45,
       _ammPoolAddress: CrossChain.MORPHO_BLUE,
@@ -45,7 +46,7 @@ contract Runlogs_2025_10_Mainnet is SetupMainnet {
     vm.stopBroadcast();
   }
 
-// ------------------------------------------------------------------
+  // ------------------------------------------------------------------
   // Oct 3+ TODO, 2025 - Create Merkl Pool Booster once Central Registry governance passes
   // ------------------------------------------------------------------
   function _2025_10_02() internal {
@@ -62,6 +63,19 @@ contract Runlogs_2025_10_Mainnet is SetupMainnet {
       _salt: uint256(keccak256(abi.encodePacked("Merkl Morpho PB OETH/USDC v1")))
     });
 
+    vm.stopBroadcast();
+  }
+
+  function _2025_10_30() internal {
+    // Amount to deposit into Etherfi ARM
+    uint256 amountToDeposit = 10 ether;
+
+    vm.startBroadcast(treasury);
+    // Approve Etherfi ARM to pull WETH
+    weth.approve(address(etherfiARM), amountToDeposit);
+
+    // Deposit WETH into Etherfi ARM
+    etherfiARM.deposit(amountToDeposit);
     vm.stopBroadcast();
   }
 }

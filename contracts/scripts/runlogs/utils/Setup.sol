@@ -23,18 +23,23 @@ import { OSonic } from "contracts/contracts/token/OSonic.sol";
 // Contracts - Strategies
 import { CurveAMOStrategy } from "contracts/contracts/strategies/CurveAMOStrategy.sol";
 import { BaseCurveAMOStrategy } from "contracts/contracts/strategies/BaseCurveAMOStrategy.sol";
-import { SonicStakingStrategy } from "contracts/contracts/strategies/sonic/SonicStakingStrategy.sol";
-import { AerodromeAMOStrategy } from
-  "contracts/contracts/strategies/aerodrome/AerodromeAMOStrategy.sol";
+import {
+  SonicStakingStrategy
+} from "contracts/contracts/strategies/sonic/SonicStakingStrategy.sol";
+import {
+  AerodromeAMOStrategy
+} from "contracts/contracts/strategies/aerodrome/AerodromeAMOStrategy.sol";
 
 // Contracts - ARM
-import { ISonicARM } from "contracts/contracts/interfaces/arm/ISonicARM.sol";
+import { IARM } from "contracts/contracts/interfaces/arm/IARM.sol";
 
 // Contracts - Pool Booster
-import { PoolBoosterFactoryMerkl } from
-  "contracts/contracts/poolBooster/PoolBoosterFactoryMerkl.sol";
-import { PoolBoostCentralRegistry } from
-  "contracts/contracts/poolBooster/PoolBoostCentralRegistry.sol";
+import {
+  PoolBoosterFactoryMerkl
+} from "contracts/contracts/poolBooster/PoolBoosterFactoryMerkl.sol";
+import {
+  PoolBoostCentralRegistry
+} from "contracts/contracts/poolBooster/PoolBoostCentralRegistry.sol";
 
 // Interfaces
 import { IWETH9 } from "contracts/contracts/interfaces/IWETH9.sol";
@@ -50,6 +55,7 @@ import { Test } from "forge-std/Test.sol";
 abstract contract SetupMainnet is Test, Script {
   // Governance
   address public strategist = CrossChain.STRATEGIST;
+  address public treasury = Mainnet.TREASURY;
 
   // OUSD
   OUSD public ousd = OUSD(Mainnet.OUSD);
@@ -72,6 +78,7 @@ abstract contract SetupMainnet is Test, Script {
   // Interfaces
   IWETH9 public weth = IWETH9(Mainnet.WETH);
   ICurveStableSwapNG public oethWethCurvePool = ICurveStableSwapNG(Mainnet.OETH_WETH_CURVE_POOL);
+  IARM public etherfiARM = IARM(Mainnet.ETHERFI_ARM);
 
   function setUp() public {
     // Note: to ensure perfect simulation, don't fix block number, it will be automatically set to the latest block
@@ -128,7 +135,7 @@ abstract contract SetupSonic is Test, Script {
   IWETH9 public ws = IWETH9(Sonic.WS);
 
   // ARM
-  ISonicARM public arm = ISonicARM(Sonic.ARM);
+  IARM public arm = IARM(Sonic.ARM);
 
   // Staking strategy
   SonicStakingStrategy public stakingStrategy =
