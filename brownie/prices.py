@@ -15,6 +15,7 @@ decimalsMap = {
     DAI: 18,
     USDT: 6,
     USDC: 6,
+    USDS: 18,
 
     CVX: 18,
     OGV: 18,
@@ -48,6 +49,7 @@ def get_cmc_quote(from_token, to_token, from_amount):
         DAI: 4943,
         USDT: 825,
         USDC: 3408,
+        USDS: 39926,
 
         OGV: 20949,
         OGN: 5117,
@@ -88,6 +90,7 @@ def get_coingecko_quote(from_token, to_token, from_amount):
         DAI: ['dai', 'usd'],
         USDT: ['tether', 'usd'],
         USDC: ['usd-coin', 'usd'],
+        USDS: ['usds', 'usd'],
 
         OGV: ['origin-dollar-governance', 'usd'],
         OGN: ['origin-protocol', 'usd'],
