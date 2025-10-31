@@ -1,0 +1,10 @@
+@startuml
+
+title Compounding Staking Strategy Deposit States
+
+[*] --> PENDING : stakeEth
+
+PENDING --> VERIFIED : verifyDeposit
+PENDING --> VERIFIED : verifyBalances
+
+@enduml
