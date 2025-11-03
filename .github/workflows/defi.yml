@@ -180,6 +180,7 @@ jobs:
     env:
       HARDHAT_CACHE_DIR: ./cache
       PROVIDER_URL: ${{ secrets.PROVIDER_URL }}
+      BEACON_PROVIDER_URL: ${{ secrets.BEACON_PROVIDER_URL }}
       ONEINCH_API_KEY: ${{ secrets.ONEINCH_API_KEY }}
       CHUNK_ID: "${{matrix.chunk_id}}"
       MAX_CHUNKS: "4"

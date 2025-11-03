@@ -1,3 +1,4 @@
+require("dotenv").config();
 const { AutotaskClient } = require("@openzeppelin/defender-autotask-client");
 
 const log = require("../utils/logger")("task:defender");
@@ -20,7 +21,7 @@ const setActionVars = async ({ id, name }) => {
     ...envVars,
     DEBUG: "origin*",
   });
-  console.log("updated Defender Action variables to:", variables);
+  console.log("Updated Defender Actions environment variables to:", variables);
 };
 
 module.exports = {

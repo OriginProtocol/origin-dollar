@@ -341,9 +341,7 @@ export DEFENDER_TEAM_SECRET=
 # set -o allexport && source ../../.env && set +o allexport
 
 # Set the DEBUG environment variable to oeth* for the Defender Action
-npx hardhat setActionVars --id 38e44420-f38b-4d4a-86b0-6012a8897ad9
 npx hardhat setActionVars --id f4b5b8d4-82ff-483f-bfae-9fef015790ca
-npx hardhat setActionVars --id 191d9631-70b9-43c5-9db4-1dd985fde05c
 npx hardhat setActionVars --id e2929f53-db56-49b2-b054-35f7df7fc4fb
 npx hardhat setActionVars --id 12c153c8-c5ca-420b-9696-e80c827996d1
 npx hardhat setActionVars --id 6e4f764d-4126-45a5-b7d9-1ab90cd3ffd6
@@ -354,9 +352,6 @@ npx hardhat setActionVars --id b1d831f1-29d4-4943-bb2e-8e625b76e82c
 # The Defender autotask client uses generic env var names so we'll set them first from the values in the .env file
 export API_KEY=${DEFENDER_TEAM_KEY}
 export API_SECRET=${DEFENDER_TEAM_SECRET}
-# Holesky
-npx defender-autotask update-code 38e44420-f38b-4d4a-86b0-6012a8897ad9 ./dist/registerValidators
-npx defender-autotask update-code 191d9631-70b9-43c5-9db4-1dd985fde05c ./dist/doAccounting
 # Mainnet
 npx defender-autotask update-code f4b5b8d4-82ff-483f-bfae-9fef015790ca ./dist/registerValidators
 npx defender-autotask update-code 12c153c8-c5ca-420b-9696-e80c827996d1 ./dist/stakeValidators
@@ -446,8 +441,7 @@ npx hardhat --network mainnet verify --contract contracts/strategies/FluxStrateg
 ```
 
 
-
-`hardhat-deploy` package offers a secondary way to verify contracts, where contructor parameters don't need to be passed into the verification call. Since Etherscan has migrated to V2 api this approach is no longer working. `etherscan-verify` call uses `hardhat verify` under the hood.
+`hardhat-deploy` package offers a secondary way to verify contracts, where constructor parameters don't need to be passed into the verification call. Since Etherscan has migrated to V2 api this approach is no longer working. `etherscan-verify` call uses `hardhat verify` under the hood.
 ```
 yarn hardhat etherscan-verify --network mainnet --api-url https://api.etherscan.io
 ```

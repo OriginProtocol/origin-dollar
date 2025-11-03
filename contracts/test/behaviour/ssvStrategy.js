@@ -670,11 +670,11 @@ const shouldBehaveLikeAnSsvStrategy = (context) => {
         josh,
         nativeStakingSSVStrategy,
         nativeStakingFeeAccumulator,
+        oethVault,
         weth,
         validatorRegistrator,
-        oethVault,
       } = await context();
-      const oethVaultWethBefore = await weth.balanceOf(oethVault.address);
+      const dripperWethBefore = await weth.balanceOf(oethVault.address);
       const strategyBalanceBefore = await nativeStakingSSVStrategy.checkBalance(
         weth.address
       );
@@ -719,8 +719,8 @@ const shouldBehaveLikeAnSsvStrategy = (context) => {
       ).to.equal(strategyBalanceBefore, "checkBalance should not increase");
 
       expect(await weth.balanceOf(oethVault.address)).to.equal(
-        oethVaultWethBefore.add(executionRewards).add(consensusRewards),
-        "OETH Vault WETH balance should increase"
+        dripperWethBefore.add(executionRewards).add(consensusRewards),
+        "Vault WETH balance should increase"
       );
     });
   });

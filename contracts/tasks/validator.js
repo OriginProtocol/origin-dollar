@@ -4,8 +4,7 @@ const {
 } = require("@openzeppelin/defender-kvstore-client");
 
 const { getBlock } = require("./block");
-const { checkPubkeyFormat } = require("./taskUtils");
-const { getValidator, getValidators, getEpoch } = require("./beaconchain");
+const { getValidator, getValidators, getEpoch } = require("../utils/beacon");
 const addresses = require("../utils/addresses");
 const { resolveContract } = require("../utils/resolvers");
 const { logTxDetails } = require("../utils/txLogger");
@@ -48,7 +47,7 @@ const validatorOperationsConfig = async (taskArgs) => {
       "P2P API key environment variable is not set. P2P_MAINNET_API_KEY or P2P_HOLESKY_API_KEY"
     );
   }
-  const p2p_base_url = isMainnet ? "api.p2p.org" : "api-test-holesky.p2p.org";
+  const p2p_base_url = isMainnet ? "api.p2p.org" : "api-test.p2p.org";
 
   const awsS3AccessKeyId = process.env.AWS_ACCESS_S3_KEY_ID;
   const awsS3SexcretAccessKeyId = process.env.AWS_SECRET_S3_ACCESS_KEY;
@@ -107,6 +106,13 @@ async function verifyMinActivationTime({ pubkey }) {
   }
 }
 
+const checkPubkeyFormat = (pubkey) => {
+  if (!pubkey.startsWith("0x")) {
+    pubkey = `0x${pubkey}`;
+  }
+  return pubkey;
+};
+
 async function getValidatorBalances({ pubkeys }) {
   const validator = await getValidators(pubkeys);
 
@@ -128,7 +134,7 @@ async function snapValidators({ pubkeys }) {
   const validators = await getValidators(pubkeys);
 
   console.log(`Validators details`);
-  console.log(`pubkey, balance, status, withdrawalcredentials`);
+  console.log(`pubkey, balance, status, withdrawal credentials`);
   for (const validator of validators) {
     console.log(
       `${validator.pubkey}, ${formatUnits(validator.balance, 9)}, ${
@@ -146,9 +152,9 @@ async function exitValidator({ index, pubkey, operatorids, signer }) {
 
   const strategy = await resolveNativeStakingStrategyProxy(index);
 
-  log(`About to exit validator`);
   pubkey = checkPubkeyFormat(pubkey);
 
+  log(`About to exit validator ${pubkey}`);
   const tx = await strategy
     .connect(signer)
     .exitSsvValidator(pubkey, operatorIds);
