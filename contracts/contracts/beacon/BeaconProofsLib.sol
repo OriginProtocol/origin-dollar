@@ -17,8 +17,8 @@ library BeaconProofsLib {
     /// ((2 ^ 3 + 3) * 2 ^ 6 + 34) * 2 ^ 28 + 0 = 198105366528
     uint256 internal constant FIRST_PENDING_DEPOSIT_GENERALIZED_INDEX =
         198105366528;
-    /// @dev BeaconBlock.state.PendingDeposits[0].pubkey
-    /// Pending Deposit container: height 3, pubkey at index 4
+    /// @dev BeaconBlock.state.PendingDeposits[0].slot
+    /// Pending Deposit container: height 3, slot at index 4
     /// (((2 ^ 3 + 3) * 2 ^ 6 + 34) * 2 ^ 28 + 0) * 2 ^ 3 + 4  = 1584842932228
     uint256 internal constant FIRST_PENDING_DEPOSIT_SLOT_GENERALIZED_INDEX =
         1584842932228;
@@ -35,7 +35,7 @@ library BeaconProofsLib {
 
     /// @dev BeaconBlock.state.pendingDeposits
     /// Beacon block container: height 3, state at at index 3
-    /// Beacon state container: height 6, balances at index 34
+    /// Beacon state container: height 6, pending_deposits at index 34
     /// (2 ^ 3 + 3) * 2 ^ 6 + 34 = 738
     uint256 internal constant PENDING_DEPOSITS_CONTAINER_GENERALIZED_INDEX =
         738;
@@ -339,7 +339,7 @@ library BeaconProofsLib {
             return true;
         }
 
-        // Verify the public key of the first pending deposit
+        // Verify the slot of the first pending deposit
         // BeaconBlock.state.PendingDeposits[0].slot
         require(
             proof.length == FIRST_PENDING_DEPOSIT_SLOT_PROOF_LENGTH &&
