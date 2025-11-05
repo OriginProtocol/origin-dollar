@@ -30,9 +30,9 @@ object "WOETHBase" as woeth <<Origin>><<Proxy>> #$originColor {
     name: Wrapped Super OETH
 }
 
-object "OETHDripper" as drip <<Origin>><<Proxy>> #$originColor {
-    asset: WETH
-}
+' object "OETHDripper" as drip <<Origin>><<Proxy>> #$originColor {
+'     asset: WETH
+' }
 
 object "OETHVaultValueChecker" as checker <<Origin>> #$originColor {
 }
@@ -49,7 +49,11 @@ object "OETHBaseVault" as oethv <<Origin>><<Proxy>> #$originColor {
 ' Oracle
 object "OETHBaseOracleRouter" as oracle <<Origin>> #$originColor {
 pairs:
-    Bridged wOETH/ETH
+    wOETH/ETH
+}
+
+object "External\nAccess\nControlled\nAggregator" as chain <<Chainlink>> {
+pair: wOETH/ETH
 }
 
 object "BridgedWOETHStrategy" as bridgeStrat <<Origin>><<Proxy>> #$originColor {
@@ -86,8 +90,9 @@ zap ..> oethv
 
 woeth ..> oeth
 oeth <.> oethv
-oethv <.> drip
+' oethv <.> drip
 oethv ..> oracle
+oracle ..> chain
 oethv <...> bridgeStrat
 oethv <...> aeroStrat
 bridgeStrat ..> bridged
