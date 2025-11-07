@@ -44,18 +44,14 @@ describe("ForkTest: OETH Zapper", function () {
 
     const expected = await woeth.previewDeposit(oethUnits("1"));
 
-    const tx = await oethZapper
-      .connect(domen)
-      .depositETHForWrappedTokens("0", {
-        value: oethUnits("1"),
-      });
+    const tx = await oethZapper.connect(domen).depositETHForWrappedTokens("0", {
+      value: oethUnits("1"),
+    });
 
     await expect(tx).to.emit(oethZapper, "Zap");
 
     const supplyAfter = await oeth.totalSupply();
-    const ethBalanceAfter = await hre.ethers.provider.getBalance(
-      domen.address
-    );
+    const ethBalanceAfter = await hre.ethers.provider.getBalance(domen.address);
     const woethBalanceAfter = await woeth.balanceOf(domen.address);
 
     expect(supplyAfter).to.approxEqualTolerance(
