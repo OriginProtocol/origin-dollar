@@ -280,6 +280,7 @@ contract CurvePoolBooster is Initializable, Strategizable {
             additionalGasLimit,
             votemarket
         );
+        campaignId = 0;
         emit CampaignClosed(_campaignId);
     }
 
