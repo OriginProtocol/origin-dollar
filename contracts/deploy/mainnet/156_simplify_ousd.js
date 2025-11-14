@@ -7,12 +7,13 @@ const { parseUnits } = require("ethers").utils;
 
 module.exports = deploymentWithGovernanceProposal(
   {
-    deployName: "155_simplify_ousd",
+    deployName: "156_simplify_ousd",
     forceDeploy: false,
     //forceSkip: true,
     reduceQueueTime: true,
     deployerIsProposer: false,
-    proposalId: "",
+    proposalId:
+      "56096565193067425173017128270195048924276710798189153386671565902385950374248",
   },
   async ({ ethers }) => {
     // Current contracts
