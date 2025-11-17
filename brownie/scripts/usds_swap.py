@@ -5,6 +5,10 @@ def main():
   with TemporaryForkForReallocations() as txs:
     txs.append(vault_core.rebase({'from':MULTICHAIN_STRATEGIST}))
     txs.append(vault_value_checker.takeSnapshot({'from':MULTICHAIN_STRATEGIST}))
+    
+    txs.append(
+      vault_admin.setAssetDefaultStrategy(USDS, "0x0000000000000000000000000000000000000000", {'from': MULTICHAIN_STRATEGIST})
+    )
 
     txs.append(
       vault_admin.withdrawAllFromStrategy(
