@@ -1180,6 +1180,32 @@ const defaultFixture = deployments.createFixture(async () => {
   };
 });
 
+// Default fixture that has pool booster code updated and replaced to the latest version
+async function poolBoosterCodeUpdatedFixture() {
+  const fixture = await defaultFixture();
+  const poolBoosterAddress = "0xF4c001dfe53C584425d7943395C7E57b10BD1DC8";
+
+  const curvePoolBoosterProxy = await ethers.getContractAt(
+    "CurvePoolBoosterProxy",
+    poolBoosterAddress
+  );
+  const implementationAddress = await curvePoolBoosterProxy.implementation();
+
+  const rewardToken = addresses.mainnet.OUSDProxy;
+  const gauge = addresses.mainnet.CurveOUSDUSDTGauge;
+  const targetedChainId = 42161; // arbitrum
+
+  const UpdatedPoolBooster = await deployWithConfirmation("CurvePoolBooster", [
+    targetedChainId,
+    rewardToken,
+    gauge,
+  ]);
+
+  await replaceContractAt(implementationAddress, UpdatedPoolBooster);
+
+  return fixture;
+}
+
 async function oethDefaultFixture() {
   // TODO: Trim it down to only do OETH things
   const fixture = await defaultFixture();
@@ -2886,6 +2912,7 @@ module.exports = {
   resetAllowance,
   defaultFixture,
   oethDefaultFixture,
+  poolBoosterCodeUpdatedFixture,
   loadTokenTransferFixture,
   mockVaultFixture,
   compoundFixture,

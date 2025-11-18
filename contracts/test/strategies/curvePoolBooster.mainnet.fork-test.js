@@ -5,7 +5,11 @@ const { impersonateAndFund } = require("../../utils/signers.js");
 const addresses = require("../../utils/addresses");
 const { isCI } = require("../helpers");
 
-const { loadDefaultFixture } = require("../_fixture");
+const {
+  createFixtureLoader,
+  poolBoosterCodeUpdatedFixture,
+} = require("../_fixture");
+const loadFixture = createFixtureLoader(poolBoosterCodeUpdatedFixture);
 
 describe("ForkTest: CurvePoolBooster", function () {
   this.timeout(0);
@@ -23,7 +27,7 @@ describe("ForkTest: CurvePoolBooster", function () {
     sGov,
     curvePoolBoosterImpersonated;
   beforeEach(async () => {
-    fixture = await loadDefaultFixture();
+    fixture = await loadFixture();
     curvePoolBooster = fixture.curvePoolBooster;
     ousd = fixture.ousd;
     wousd = fixture.wousd;
@@ -218,6 +222,26 @@ describe("ForkTest: CurvePoolBooster", function () {
           0
         )
     ).to.be.revertedWith("Campaign already created");
+  });
+
+  it("Should create another campaign if campaign is closed", async () => {
+    await curvePoolBooster.connect(sStrategist).setCampaignId(12);
+    await curvePoolBooster
+      .connect(sStrategist)
+      .closeCampaign(12, parseUnits("0.1"), 0);
+
+    expect(await curvePoolBooster.campaignId()).to.equal(0);
+
+    // Create campaign
+    await curvePoolBooster
+      .connect(sStrategist)
+      .createCampaign(
+        4,
+        10,
+        [addresses.mainnet.ConvexVoter],
+        parseUnits("0.1"),
+        0
+      );
   });
 
   it("Should revert if campaign is not created", async () => {
