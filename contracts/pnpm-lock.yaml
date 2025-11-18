@@ -33,23 +33,23 @@ importers:
         specifier: ^0.3.2
         version: 0.3.2(58f675bc7fab1f0831b23c6c30e33292)
       '@lodestar/api':
-        specifier: ^1.31.0
-        version: 1.35.0
+        specifier: ^1.36.0
+        version: 1.36.0(typescript@4.9.5)
       '@lodestar/config':
-        specifier: ^1.31.0
-        version: 1.35.0
+        specifier: ^1.36.0
+        version: 1.36.0(typescript@4.9.5)
       '@lodestar/params':
-        specifier: ^1.33.0
-        version: 1.35.0
+        specifier: ^1.36.0
+        version: 1.36.0
       '@lodestar/state-transition':
-        specifier: ^1.33.0
-        version: 1.35.0
+        specifier: ^1.36.0
+        version: 1.36.0(typescript@4.9.5)
       '@lodestar/types':
-        specifier: ^1.31.0
-        version: 1.35.0
+        specifier: ^1.36.0
+        version: 1.36.0
       '@lodestar/utils':
-        specifier: ^1.35.0
-        version: 1.35.0
+        specifier: ^1.36.0
+        version: 1.36.0(typescript@4.9.5)
       ganache:
         specifier: ^7.9.2
         version: 7.9.2
@@ -497,6 +497,12 @@ packages:
   '@chainsafe/blst@2.2.0':
     resolution: {integrity: sha512-VBaQoNE2a9d9+skAjQKv3Suk0yGKqp3mZM0YWYJNPj/Ae/f6lAyeVSgKqo2LrsNQBzD/LqrJLKUY8rJT3vDKLA==}
     engines: {node: '>= 16'}
+
+  '@chainsafe/bun-ffi-z@1.1.5':
+    resolution: {integrity: sha512-nmiRudOInH2JQk32FEyOq/VeBftKuHxP44TYd345xCdZKv2j4ajecM6IZ9SzTQTNozFqt7gCsnWINJXYikfRzw==}
+    hasBin: true
+    peerDependencies:
+      typescript: ^5
 
   '@chainsafe/hashtree-darwin-arm64@1.0.2':
     resolution: {integrity: sha512-yIIwn9SUR5ZTl2vN1QqRtDFL/w2xYW4o68A1k8UexMbieGAnE7Ab7NvtCZRHRe8x0eONO46F/bWn5bxxyYlFXw==}
@@ -1091,23 +1097,29 @@ packages:
       '@openzeppelin/contracts': 4.4.2
       '@openzeppelin/contracts-upgradeable': ^4.8.1 || ^5.0.0
 
-  '@lodestar/api@1.35.0':
-    resolution: {integrity: sha512-9H9vU/LaecX19CkeWMUFiVQ3649Cd6Xbov8mUSC9GNXm0Hcgs9HkJeEE+INR0SV5FpJ4+o5gxhCK6eB+FzI1FA==}
+  '@lodestar/api@1.36.0':
+    resolution: {integrity: sha512-3EdDQMVR97RsKl56qFaX2L1bisKLhc7UmmeSkOT/Z+s6niyJlKPI2fgcRjZ1/RF+0Hilr8ZDzdgFJJ37C352pQ==}
 
-  '@lodestar/config@1.35.0':
-    resolution: {integrity: sha512-EOS6OnIQy/0JgQ1qvuFpVD+mF0JH//3Cx55maauHiSRyUwt50yfcUp4pcxUpsWmcwJGmhkklZ0SQ4lQBJUGNBw==}
+  '@lodestar/bun@https://codeload.github.com/ChainSafe/lodestar-bun/tar.gz/ac3bd660c0f2eeabe11f4f564ecc910826260f88':
+    resolution: {tarball: https://codeload.github.com/ChainSafe/lodestar-bun/tar.gz/ac3bd660c0f2eeabe11f4f564ecc910826260f88}
+    version: 0.1.0
+    peerDependencies:
+      typescript: ^5
 
-  '@lodestar/params@1.35.0':
-    resolution: {integrity: sha512-Ky2HmruUY1BZEiNeK6pfbxInvahdb9xXJLenzw0uuT7TYGkf6ShO30DgvUMWSmxeqCY1/mUOVUYxPgiLo9B7jQ==}
+  '@lodestar/config@1.36.0':
+    resolution: {integrity: sha512-9Nj3u+poqBo6c1loW311SYfL42oCNW0zrJW3NM9NaW2cXtPPSJGtJmu2BJoBPDH8jQGB/T6jyLKnT8e9s/8zZg==}
 
-  '@lodestar/state-transition@1.35.0':
-    resolution: {integrity: sha512-/pPfKmwjSYC+7cXGkj200Ok257tq+Agj3445B6tZpUUDPh2u2v7YjOgdA1y4rHRW5SZgfTZ6HpV9qc3mWcoGZA==}
+  '@lodestar/params@1.36.0':
+    resolution: {integrity: sha512-YsG2H2//Juk6j4quBG18IS/RH43Duc6HOTduKiP7yivjwnsjk1pANppHkZJNPCGR3vNVAFTaC/10rdnUZPYOLQ==}
 
-  '@lodestar/types@1.35.0':
-    resolution: {integrity: sha512-c2Kws0wpzA0N5P8ggm2OBKdZIVCmLPCliNA+LzbUKqkn9nz7bTVHwjA563J+3b+brZ9aSkq8fKNp+CRM/6qruA==}
+  '@lodestar/state-transition@1.36.0':
+    resolution: {integrity: sha512-5q2dIysR6BVVXOfG18vsme6z2/2hnBAxTuwlS5yb4PAK4Ak+spi7GI6opUN6M2sHTLn3uPAyjXGetMmKfnURMw==}
 
-  '@lodestar/utils@1.35.0':
-    resolution: {integrity: sha512-o6i+05PRiAyEgCdnpUTjixgbLqE9h1o94tRNtqbNhASeapc4bEV0ZmvJ216jRD8mL8kA14Eq4gS7tiO0d1sLKw==}
+  '@lodestar/types@1.36.0':
+    resolution: {integrity: sha512-0t1SEvVqnQQilNYdHF+ddarL2k5BzINNdYf5kK4YyFFxcJ9RXKhc6NTD+/NPYD1gm8SDVLZq7JqWC66cMXIv8g==}
+
+  '@lodestar/utils@1.36.0':
+    resolution: {integrity: sha512-6sBMgw6VJ4g8B+i8NJFA7g/wK+TqxIzD2sl7w1Ac9P8X5OBIhWU/Wa4N2yhMfR8FCthiKm5cKb4kuHOE2MQyhQ==}
 
   '@noble/ciphers@1.3.0':
     resolution: {integrity: sha512-2I0gnIVPtfnMw9ee9h1dJG7tp81+8Ob3OJb3Mv37rx5L40/b0i7djjCVvGOVqc9AEIQyvyu1i6ypKdFw8R8gQw==}
@@ -6066,8 +6078,8 @@ snapshots:
       '@aws-crypto/sha1-browser': 5.2.0
       '@aws-crypto/sha256-browser': 5.2.0
       '@aws-crypto/sha256-js': 5.2.0
-      '@aws-sdk/client-sso-oidc': 3.600.0(@aws-sdk/client-sts@3.600.0)
-      '@aws-sdk/client-sts': 3.600.0
+      '@aws-sdk/client-sso-oidc': 3.600.0
+      '@aws-sdk/client-sts': 3.600.0(@aws-sdk/client-sso-oidc@3.600.0)
       '@aws-sdk/core': 3.598.0
       '@aws-sdk/credential-provider-node': 3.600.0(@aws-sdk/client-sso-oidc@3.600.0)(@aws-sdk/client-sts@3.600.0)
       '@aws-sdk/middleware-bucket-endpoint': 3.598.0
@@ -6170,11 +6182,11 @@ snapshots:
       - '@aws-sdk/client-sts'
       - aws-crt
 
-  '@aws-sdk/client-sso-oidc@3.600.0(@aws-sdk/client-sts@3.600.0)':
+  '@aws-sdk/client-sso-oidc@3.600.0':
     dependencies:
       '@aws-crypto/sha256-browser': 5.2.0
       '@aws-crypto/sha256-js': 5.2.0
-      '@aws-sdk/client-sts': 3.600.0
+      '@aws-sdk/client-sts': 3.600.0(@aws-sdk/client-sso-oidc@3.600.0)
       '@aws-sdk/core': 3.598.0
       '@aws-sdk/credential-provider-node': 3.600.0(@aws-sdk/client-sso-oidc@3.600.0)(@aws-sdk/client-sts@3.600.0)
       '@aws-sdk/middleware-host-header': 3.598.0
@@ -6213,7 +6225,6 @@ snapshots:
       '@smithy/util-utf8': 3.0.0
       tslib: 2.8.1
     transitivePeerDependencies:
-      - '@aws-sdk/client-sts'
       - aws-crt
 
   '@aws-sdk/client-sso@3.598.0':
@@ -6304,11 +6315,11 @@ snapshots:
     transitivePeerDependencies:
       - aws-crt
 
-  '@aws-sdk/client-sts@3.600.0':
+  '@aws-sdk/client-sts@3.600.0(@aws-sdk/client-sso-oidc@3.600.0)':
     dependencies:
       '@aws-crypto/sha256-browser': 5.2.0
       '@aws-crypto/sha256-js': 5.2.0
-      '@aws-sdk/client-sso-oidc': 3.600.0(@aws-sdk/client-sts@3.600.0)
+      '@aws-sdk/client-sso-oidc': 3.600.0
       '@aws-sdk/core': 3.598.0
       '@aws-sdk/credential-provider-node': 3.600.0(@aws-sdk/client-sso-oidc@3.600.0)(@aws-sdk/client-sts@3.600.0)
       '@aws-sdk/middleware-host-header': 3.598.0
@@ -6347,6 +6358,7 @@ snapshots:
       '@smithy/util-utf8': 3.0.0
       tslib: 2.8.1
     transitivePeerDependencies:
+      - '@aws-sdk/client-sso-oidc'
       - aws-crt
 
   '@aws-sdk/core@3.598.0':
@@ -6398,7 +6410,7 @@ snapshots:
 
   '@aws-sdk/credential-provider-ini@3.598.0(@aws-sdk/client-sso-oidc@3.600.0)(@aws-sdk/client-sts@3.600.0)':
     dependencies:
-      '@aws-sdk/client-sts': 3.600.0
+      '@aws-sdk/client-sts': 3.600.0(@aws-sdk/client-sso-oidc@3.600.0)
       '@aws-sdk/credential-provider-env': 3.598.0
       '@aws-sdk/credential-provider-http': 3.598.0
       '@aws-sdk/credential-provider-process': 3.598.0
@@ -6496,7 +6508,7 @@ snapshots:
 
   '@aws-sdk/credential-provider-web-identity@3.598.0(@aws-sdk/client-sts@3.600.0)':
     dependencies:
-      '@aws-sdk/client-sts': 3.600.0
+      '@aws-sdk/client-sts': 3.600.0(@aws-sdk/client-sso-oidc@3.600.0)
       '@aws-sdk/types': 3.598.0
       '@smithy/property-provider': 3.1.11
       '@smithy/types': 3.7.2
@@ -6621,7 +6633,7 @@ snapshots:
 
   '@aws-sdk/token-providers@3.598.0(@aws-sdk/client-sso-oidc@3.600.0)':
     dependencies:
-      '@aws-sdk/client-sso-oidc': 3.600.0(@aws-sdk/client-sts@3.600.0)
+      '@aws-sdk/client-sso-oidc': 3.600.0
       '@aws-sdk/types': 3.598.0
       '@smithy/property-provider': 3.1.11
       '@smithy/shared-ini-file-loader': 3.1.12
@@ -6746,6 +6758,10 @@ snapshots:
       '@chainsafe/blst-linux-x64-gnu': 2.2.0
       '@chainsafe/blst-linux-x64-musl': 2.2.0
       '@chainsafe/blst-win32-x64-msvc': 2.2.0
+
+  '@chainsafe/bun-ffi-z@1.1.5(typescript@4.9.5)':
+    dependencies:
+      typescript: 4.9.5
 
   '@chainsafe/hashtree-darwin-arm64@1.0.2':
     optional: true
@@ -7746,27 +7762,36 @@ snapshots:
       '@openzeppelin/contracts': 4.4.2
       '@openzeppelin/contracts-upgradeable': 4.7.3
 
-  '@lodestar/api@1.35.0':
+  '@lodestar/api@1.36.0(typescript@4.9.5)':
     dependencies:
       '@chainsafe/persistent-merkle-tree': 1.2.1
       '@chainsafe/ssz': 1.2.2
-      '@lodestar/config': 1.35.0
-      '@lodestar/params': 1.35.0
-      '@lodestar/types': 1.35.0
-      '@lodestar/utils': 1.35.0
+      '@lodestar/config': 1.36.0(typescript@4.9.5)
+      '@lodestar/params': 1.36.0
+      '@lodestar/types': 1.36.0
+      '@lodestar/utils': 1.36.0(typescript@4.9.5)
       eventsource: 2.0.2
       qs: 6.14.0
+    transitivePeerDependencies:
+      - typescript
 
-  '@lodestar/config@1.35.0':
+  '@lodestar/bun@https://codeload.github.com/ChainSafe/lodestar-bun/tar.gz/ac3bd660c0f2eeabe11f4f564ecc910826260f88(typescript@4.9.5)':
+    dependencies:
+      '@chainsafe/bun-ffi-z': 1.1.5(typescript@4.9.5)
+      typescript: 4.9.5
+
+  '@lodestar/config@1.36.0(typescript@4.9.5)':
     dependencies:
       '@chainsafe/ssz': 1.2.2
-      '@lodestar/params': 1.35.0
-      '@lodestar/types': 1.35.0
-      '@lodestar/utils': 1.35.0
+      '@lodestar/params': 1.36.0
+      '@lodestar/types': 1.36.0
+      '@lodestar/utils': 1.36.0(typescript@4.9.5)
+    transitivePeerDependencies:
+      - typescript
 
-  '@lodestar/params@1.35.0': {}
+  '@lodestar/params@1.36.0': {}
 
-  '@lodestar/state-transition@1.35.0':
+  '@lodestar/state-transition@1.36.0(typescript@4.9.5)':
     dependencies:
       '@chainsafe/as-sha256': 1.2.0
       '@chainsafe/blst': 2.2.0
@@ -7775,25 +7800,30 @@ snapshots:
       '@chainsafe/pubkey-index-map': 3.0.0
       '@chainsafe/ssz': 1.2.2
       '@chainsafe/swap-or-not-shuffle': 1.2.1
-      '@lodestar/config': 1.35.0
-      '@lodestar/params': 1.35.0
-      '@lodestar/types': 1.35.0
-      '@lodestar/utils': 1.35.0
+      '@lodestar/config': 1.36.0(typescript@4.9.5)
+      '@lodestar/params': 1.36.0
+      '@lodestar/types': 1.36.0
+      '@lodestar/utils': 1.36.0(typescript@4.9.5)
       bigint-buffer: 1.1.5
+    transitivePeerDependencies:
+      - typescript
 
-  '@lodestar/types@1.35.0':
+  '@lodestar/types@1.36.0':
     dependencies:
       '@chainsafe/ssz': 1.2.2
-      '@lodestar/params': 1.35.0
+      '@lodestar/params': 1.36.0
       ethereum-cryptography: 2.2.1
 
-  '@lodestar/utils@1.35.0':
+  '@lodestar/utils@1.36.0(typescript@4.9.5)':
     dependencies:
       '@chainsafe/as-sha256': 1.2.0
+      '@lodestar/bun': https://codeload.github.com/ChainSafe/lodestar-bun/tar.gz/ac3bd660c0f2eeabe11f4f564ecc910826260f88(typescript@4.9.5)
       any-signal: 4.1.1
       bigint-buffer: 1.1.5
       case: 1.6.3
       js-yaml: 4.1.0
+    transitivePeerDependencies:
+      - typescript
 
   '@noble/ciphers@1.3.0': {}
 

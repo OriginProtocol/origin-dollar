@@ -248,7 +248,7 @@ async function autoValidatorDeposits({
   // 3. Calculate validators balances after all the pending deposits have been processed
 
   // Get beacon chain data
-  const { stateView } = await getBeaconBlock(slot);
+  const { stateView } = await getBeaconBlock(slot, networkName);
 
   let validators = [];
   // Iterate over the active validators
@@ -449,7 +449,7 @@ async function autoValidatorWithdrawals({
   // 3. Calculate pending validator partial withdrawal = sum amount in the partial withdrawal from the beacon chain data
 
   // Get beacon chain data
-  const { stateView } = await getBeaconBlock(slot);
+  const { stateView } = await getBeaconBlock(slot, networkName);
 
   const totalPendingPartialWithdrawals = await totalPartialWithdrawals(
     stateView,
@@ -640,7 +640,7 @@ async function snapStakingStrategy({ block }) {
   const slot = calcSlot(timestamp, networkName);
   log(`Snapping block ${blockTag} at slot ${slot}`);
 
-  const { stateView } = await getBeaconBlock(slot);
+  const { stateView } = await getBeaconBlock(slot, networkName);
 
   const wethAddress = addresses[networkName].WETH;
   const weth = await ethers.getContractAt("IERC20", wethAddress);
