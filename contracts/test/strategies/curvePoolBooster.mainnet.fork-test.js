@@ -230,6 +230,8 @@ describe("ForkTest: CurvePoolBooster", function () {
       .connect(sStrategist)
       .closeCampaign(12, parseUnits("0.1"), 0);
 
+    expect(await curvePoolBooster.campaignId()).to.equal(0);
+
     // Create campaign
     await curvePoolBooster
       .connect(sStrategist)
