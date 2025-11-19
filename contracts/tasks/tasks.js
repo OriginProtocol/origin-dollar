@@ -132,6 +132,7 @@ const {
   getValidator,
   verifyValidator,
   verifyDeposit,
+  verifyDeposits,
   verifyBalances,
 } = require("./beacon");
 const {
@@ -2039,6 +2040,21 @@ subtask("verifyDeposit", "Verify a deposit on the Beacon chain")
     await verifyDeposit({ ...taskArgs, signer });
   });
 task("verifyDeposit").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+subtask("verifyDeposits", "Verify any processed deposit on the Beacon chain")
+  .addOptionalParam(
+    "dryrun",
+    "Do not call verifyDeposit on the strategy contract. Just log the params including the proofs",
+    false,
+    types.boolean
+  )
+  .setAction(async (taskArgs) => {
+    const signer = await getSigner();
+    await verifyDeposits({ ...taskArgs, signer });
+  });
+task("verifyDeposits").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
 
