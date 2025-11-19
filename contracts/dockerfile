@@ -37,24 +37,27 @@ RUN corepack enable \
 COPY . .
 
 ENV PROVIDER_URL="" \
+  SONIC_PROVIDER_URL="" \
+  PLUME_PROVIDER_URL="" \
+  HOODI_PROVIDER_URL="" \
   BEACON_PROVIDER_URL="" \
   DEFENDER_API_KEY="" \
   DEFENDER_API_SECRET="" \
-  HARDHAT_NETWORK=mainnet
+  HARDHAT_NETWORK=""
 
 # Scripts executed by cron every hour (snapBalances runs five minutes earlier).
 RUN cat <<'EOF' > /usr/local/bin/run-snap-balances.sh
 #!/usr/bin/env bash
 set -euo pipefail
 cd /app
-export PROVIDER_URL BEACON_PROVIDER_URL DEFENDER_API_KEY DEFENDER_API_SECRET HARDHAT_NETWORK
+export PROVIDER_URL SONIC_PROVIDER_URL PLUME_PROVIDER_URL HOODI_PROVIDER_URL BEACON_PROVIDER_URL DEFENDER_API_KEY DEFENDER_API_SECRET
 pnpm hardhat snapBalances --network "${HARDHAT_NETWORK:-mainnet}"
 EOF
 RUN cat <<'EOF' > /usr/local/bin/run-hourly-tasks.sh
 #!/usr/bin/env bash
 set -euo pipefail
 cd /app
-export PROVIDER_URL BEACON_PROVIDER_URL DEFENDER_API_KEY DEFENDER_API_SECRET HARDHAT_NETWORK
+export PROVIDER_URL SONIC_PROVIDER_URL PLUME_PROVIDER_URL HOODI_PROVIDER_URL BEACON_PROVIDER_URL DEFENDER_API_KEY DEFENDER_API_SECRET
 pnpm hardhat
 pnpm hardhat verifyBalances --network "${HARDHAT_NETWORK:-mainnet}"
 pnpm hardhat verifyDeposits --network "${HARDHAT_NETWORK:-mainnet}"
