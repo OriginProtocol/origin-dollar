@@ -561,19 +561,26 @@ async function autoValidatorWithdrawals({
       continue;
     }
 
+    const withdrawalAmountGwei = withdrawalAmount.div(parseUnits("1", 9));
     log(
-      `  Withdrawing ${formatUnits(withdrawalAmount, 18)} ETH from validator ${
-        validator.index
-      }`
+      `  Withdrawing ${formatUnits(
+        withdrawalAmountGwei,
+        9
+      )} ETH from validator ${validator.index}`
     );
 
     if (!dryrun) {
       // Call strategy to partially withdraw from the validator
-      await strategy
+      const tx = await strategy
         .connect(signer)
-        .validatorWithdrawal(validator.pubKey, withdrawalAmount.toString(), {
-          value: 1,
-        });
+        .validatorWithdrawal(
+          validator.pubKey,
+          withdrawalAmountGwei.toString(),
+          {
+            value: 1,
+          }
+        );
+      await logTxDetails(tx, "validatorWithdrawal");
     }
 
     remainingAmount = remainingAmount.sub(withdrawalAmount);
