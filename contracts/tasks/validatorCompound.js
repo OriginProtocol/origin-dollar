@@ -444,7 +444,7 @@ async function autoValidatorWithdrawals({
   // 2. Get the staking strategy's active validator indexes
 
   const activeValidators = await strategyView.getVerifiedValidators();
-  const validatorIndexes = activeValidators.map((v) => v.index);
+  const validatorIndexes = activeValidators.map((v) => v.index.toNumber());
 
   // 3. Calculate pending validator partial withdrawal = sum amount in the partial withdrawal from the beacon chain data
 
@@ -459,14 +459,27 @@ async function autoValidatorWithdrawals({
   // 5. Calculate the buffer amount = total assets * buffer in basis points
   const totalAssets = await vault.totalValue();
   const buffer = totalAssets.mul(bufferBps).div(10000);
-  log(`Buffer amount ${formatUnits(buffer, 18)} (${bufferBps} bps)`);
+  log(
+    `Buffer amount ${formatUnits(
+      buffer,
+      18
+    )} (${bufferBps} bps of ${formatUnits(totalAssets, 18)})`
+  );
 
-  // 4. Remaining amount = WETH available in the vault * -1 + buffer - pending withdrawals - any ETH or WETH in the staking strategy
+  // 6. Calculate the ETH and WETH in the staking strategy
 
-  let remainingAmount = availableInVault
-    .mul(-1)
-    .add(buffer)
-    .sub(totalPendingPartialWithdrawals);
+  const wethInStrategy = await weth.balanceOf(strategy.address);
+  const ethInStrategy = await ethers.provider.getBalance(strategy.address);
+  log(`WETH available in strategy ${formatUnits(wethInStrategy, 18)}`);
+  log(`ETH available in strategy ${formatUnits(ethInStrategy, 18)}`);
+
+  // 7. Remaining amount = buffer - WETH available in the vault - pending withdrawals - any ETH or WETH in the staking strategy
+
+  let remainingAmount = buffer
+    .sub(availableInVault)
+    .sub(totalPendingPartialWithdrawals)
+    .sub(wethInStrategy)
+    .sub(ethInStrategy);
 
   log(`Remaining amount to withdraw ${formatUnits(remainingAmount, 18)}`);
 
@@ -476,10 +489,8 @@ async function autoValidatorWithdrawals({
     return;
   }
 
-  // 5. Withdraw any WETH or ETH in the staking strategy
+  // 8. Withdraw any WETH or ETH in the staking strategy
 
-  const wethInStrategy = await weth.balanceOf(strategy.address);
-  const ethInStrategy = await ethers.provider.getBalance(strategy.address);
   const availableInStrategy = wethInStrategy.add(ethInStrategy);
   log(
     `${formatUnits(wethInStrategy, 18)} WETH and ${formatUnits(
@@ -516,7 +527,7 @@ async function autoValidatorWithdrawals({
     }
   }
 
-  // 6. Withdraw from the validators is necessary
+  // 9. Withdraw from the validators is necessary
 
   // Get validator balances from the beacon chain data
   const validators = [];
@@ -606,7 +617,20 @@ async function autoValidatorWithdrawals({
  * @param {*} validatorIndexes array of validator indexes to check for pending partial withdrawals
  * @returns the total amount to 18 decimal places
  */
-async function totalPartialWithdrawals(stateView, validatorIndexes) {
+async function totalPartialWithdrawals(
+  stateView,
+  validatorIndexes,
+  display = false
+) {
+  // Either log to console or to the logger
+  const output = display ? console.log : log;
+
+  output(
+    `\nPending partial withdrawals for validators: ${validatorIndexes.join(
+      ", "
+    )}`
+  );
+
   // Iterate over the pending partial withdrawals
   let totalGwei = BigNumber.from(0);
   let count = 0;
@@ -614,17 +638,16 @@ async function totalPartialWithdrawals(stateView, validatorIndexes) {
     const withdrawal = stateView.pendingPartialWithdrawals.get(i);
 
     if (validatorIndexes.includes(withdrawal.validatorIndex)) {
-      log(
-        `  Pending partial withdrawal of ${formatUnits(
-          withdrawal.amount,
-          9
-        )} ETH from validator index ${withdrawal.validatorIndex}`
+      output(
+        `  ${formatUnits(withdrawal.amount, 9)} ETH from validator index ${
+          withdrawal.validatorIndex
+        }, withdrawable epoch ${withdrawal.withdrawableEpoch}`
       );
       totalGwei = totalGwei.add(withdrawal.amount);
       count++;
     }
   }
-  log(
+  output(
     `${count} of ${
       stateView.pendingPartialWithdrawals.length
     } pending partial withdrawals from beacon chain totalling ${formatUnits(
@@ -675,6 +698,16 @@ async function snapStakingStrategy({ block }) {
       } and public key ${toHex(firstBeaconDeposit.pubkey)}`
     );
   }
+
+  // Pending withdrawals
+  const activeValidators = await strategyView.getVerifiedValidators();
+  const validatorIndexes = activeValidators.map((v) => v.index.toNumber());
+
+  const totalWithdrawals = await totalPartialWithdrawals(
+    stateView,
+    validatorIndexes,
+    true
+  );
 
   // Verified validators
   const verifiedValidators = await strategyView.getVerifiedValidators({
@@ -739,7 +772,8 @@ async function snapStakingStrategy({ block }) {
   });
 
   console.log(`\nBalances at block ${blockTag}, slot ${slot}:`);
-  console.log(`Deposits           : ${formatUnits(totalDeposits, 9)}`);
+  console.log(`Total deposit      : ${formatUnits(totalDeposits, 9)}`);
+  console.log(`Total withdrawals  : ${formatUnits(totalWithdrawals, 18)}`);
   console.log(`Validator balances : ${formatUnits(totalValidators, 9)}`);
   console.log(`WETH in strategy   : ${formatUnits(stratWethBalance, 18)}`);
   console.log(`ETH in strategy    : ${formatUnits(stratEthBalance, 18)}`);
