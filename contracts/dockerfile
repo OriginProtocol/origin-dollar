@@ -4,10 +4,10 @@ ENV DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get update \
   && apt-get install -y --no-install-recommends \
-    ca-certificates \
-    curl \
-    git \
-    openssh-client \
+  ca-certificates \
+  curl \
+  git \
+  openssh-client \
   && rm -rf /var/lib/apt/lists/*
 
 # Preload GitHub host key for SSH-based dependencies.
@@ -31,10 +31,12 @@ WORKDIR /app
 # Enable pnpm via corepack and install dependencies first for better caching.
 COPY pnpm-lock.yaml package.json ./
 RUN corepack enable \
-  && pnpm install --frozen-lockfile
+  && pnpm install --frozen-lockfile  
 
 # Copy the rest of the contracts workspace.
 COPY . .
+
+RUN pnpm hardhat compile
 
 ENV PROVIDER_URL="" \
   SONIC_PROVIDER_URL="" \
@@ -58,7 +60,6 @@ RUN cat <<'EOF' > /usr/local/bin/run-hourly-tasks.sh
 set -euo pipefail
 cd /app
 export PROVIDER_URL SONIC_PROVIDER_URL PLUME_PROVIDER_URL HOODI_PROVIDER_URL BEACON_PROVIDER_URL DEFENDER_API_KEY DEFENDER_API_SECRET
-pnpm hardhat
 pnpm hardhat verifyBalances --network "${HARDHAT_NETWORK:-mainnet}"
 pnpm hardhat verifyDeposits --network "${HARDHAT_NETWORK:-mainnet}"
 pnpm hardhat autoValidatorDeposits --network "${HARDHAT_NETWORK:-mainnet}"
@@ -66,7 +67,7 @@ pnpm hardhat autoValidatorWithdrawals --network "${HARDHAT_NETWORK:-mainnet}"
 EOF
 RUN chmod +x /usr/local/bin/run-snap-balances.sh /usr/local/bin/run-hourly-tasks.sh
 
-# Cron configuration for supercronic.
-RUN printf '55 * * * * /usr/local/bin/run-snap-balances.sh\n0 * * * * /usr/local/bin/run-hourly-tasks.sh\n' > /etc/cronjob
+# run-snap-balances runs five minutes earlier than run-hourly-tasks
+RUN printf '0 * * * * /usr/local/bin/run-snap-balances.sh\n5 * * * * /usr/local/bin/run-hourly-tasks.sh\n' > /etc/cronjob
 
 ENTRYPOINT ["supercronic", "/etc/cronjob"]
