@@ -30,25 +30,12 @@ module.exports = deployOnArb(
     // as the message sender matches the initial part of the salt. This ensures that no other address can front-run our
     // factory deployment on another chain.
     const factoryEncodedSalt = encodeSaltForCreateX(deployerAddr, false, ethers.utils.keccak256(1));
-    // --- Deploy implementation --- //
-    const cachedInitCodeImpl = ethers.utils.concat([
-      await getFactoryBytecode(),
-      ethers.utils.defaultAbiCoder.encode(
-        ["address", "address"],
-        [addresses.arbitrumOne.admin, addresses.multichainStrategist]
-      ),
-      //TODO: add governor and strategist to initialiser function
-      //TODO1: make it possible to verify the pool booster expected address. Easier for multisig verifiers. 
-    ]);
     const txResponse = await withConfirmation(
-      cCreateX.connect(sDeployer).deployCreate2(factoryEncodedSalt, cachedInitCodeImpl)
+      cCreateX.connect(sDeployer).deployCreate2(factoryEncodedSalt, getFactoryBytecode())
     );
 
     const contractCreationTopic = "0xb8fda7e00c6b06a2b54e58521bc5894fee35f1090e5a3bb6390bfe2b98b497f7";
-    const txReceipt = await txResponse.wait();
-    // event 0 is GovernorshipTransferred
-    // event 1 is ContractCreation, topics[1] is the address of the deployed contract, topics[2] is the salt
-    
+    const txReceipt = await txResponse.wait();    
     const implementationAddress = ethers.utils.getAddress(
       `0x${txReceipt.events.find(event => event.topics[0] === contractCreationTopic).topics[1].slice(26)}`
     );
@@ -57,6 +44,8 @@ module.exports = deployOnArb(
       implementationAddress
     );
 
+    await cCurvePoolBoosterFactory.initialize(addresses.arbitrumOne.admin, addresses.multichainStrategist);
+    
     console.log(
       `Pool Booster Factory deployed to ${cCurvePoolBoosterFactory.address}`
     );
@@ -102,7 +91,8 @@ module.exports = deployOnArb(
         0, // fee
         addresses.mainnet.CampaignRemoteManager, // campaign remote manager
         addresses.votemarket, // votemarket
-        encodedSalt
+        encodedSalt,
+        poolBoosterPlainAddress // expected address
       );
     } else {
       console.log("Call createCurvePoolBoosterPlain on Pool Booster Factory with parameters:");
@@ -113,6 +103,7 @@ module.exports = deployOnArb(
       console.log("Campaign remote manager:", addresses.mainnet.CampaignRemoteManager);
       console.log("Votemarket:", addresses.votemarket);
       console.log("Salt:", salt);
+      console.log("Expected address:", poolBoosterPlainAddress);
     }
 });
 

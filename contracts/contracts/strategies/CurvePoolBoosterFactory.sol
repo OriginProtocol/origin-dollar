@@ -39,6 +39,9 @@ contract CurvePoolBoosterFactory is Initializable, Strategizable {
     /// @param _salt A unique number that affects the address of the pool booster created. Note: this number
     ///        should match the one from `computePoolBoosterAddress` in order for the final deployed address
     ///        and pre-computed address to match
+    /// @param _expectedAddress The expected address of the pool booster. This is used to verify that the pool booster
+    ///        was deployed at the expected address, otherwise the transaction batch will revert. If set to 0 then the
+    ///        address verification is skipped.
     function createCurvePoolBoosterPlain(
       address _rewardToken,
       address _gauge,
@@ -46,8 +49,12 @@ contract CurvePoolBoosterFactory is Initializable, Strategizable {
       uint16 _fee,
       address _campaignRemoteManager,
       address _votemarket,
-      bytes32 _salt
+      bytes32 _salt,
+      address _expectedAddress
     ) external onlyGovernorOrStrategist returns (address) {
+      require(governor() != address(0), "Governor not set");
+      require(strategistAddr != address(0), "Strategist not set");
+
       // salt encoded sender
       address sender = address(bytes20(_salt));
       // the contract that calls the CreateX should be encoded in the salt to protect against front-running
@@ -60,6 +67,12 @@ contract CurvePoolBoosterFactory is Initializable, Strategizable {
       address poolBoosterAddress = createX.deployCreate2(
         _salt,
         getInitCode(_rewardToken, _gauge)
+      );
+
+      require(
+        _expectedAddress != address(0) && 
+          poolBoosterAddress == _expectedAddress, 
+        "Pool booster deployed at unexpected address"
       );
 
       CurvePoolBoosterPlain poolBooster = CurvePoolBoosterPlain(payable(poolBoosterAddress));
