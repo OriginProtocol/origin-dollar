@@ -73,6 +73,9 @@ module.exports = deployOnArb(
     // The factory address is used to guard the salt, so that no other address can front-run our deployment.
     const encodedSalt = encodeSaltForCreateX(cCurvePoolBoosterFactory.address, false, salt);
 
+    console.log("Encoded salt:", await cCurvePoolBoosterFactory.encodeSaltForCreateX(salt));
+    console.log("Encoded salt self computed:", encodedSalt);
+
     const poolBoosterPlainAddress = await cCurvePoolBoosterFactory
       .computePoolBoosterAddress(addresses.mainnet.OETHProxy, addresses.mainnet.CurveOETHETHplusGauge, encodedSalt);
 

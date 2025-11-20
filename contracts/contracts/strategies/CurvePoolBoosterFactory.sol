@@ -7,8 +7,6 @@ import { CurvePoolBoosterPlain } from "./CurvePoolBoosterPlain.sol";
 import { ICreateX } from "../interfaces/ICreateX.sol";
 import { Initializable } from "../utils/Initializable.sol";
 
-import { console } from "hardhat/console.sol";
-
 /// @title CurvePoolBoosterFactory
 /// @author Origin Protocol
 /// @notice Factory contract to create CurvePoolBoosterPlain instances
@@ -55,15 +53,15 @@ contract CurvePoolBoosterFactory is Initializable, Strategizable {
       require(governor() != address(0), "Governor not set");
       require(strategistAddr != address(0), "Strategist not set");
       // salt encoded sender
-      address sender = address(bytes20(_salt));
+      address senderAddress = address(bytes20(_salt));
       // the contract that calls the CreateX should be encoded in the salt to protect against front-running
-      require(sender == address(this), "Frnt-run protection failed");
+      require(senderAddress == address(this), "Frnt-run protection failed");
       
       ICreateX.Values memory values = ICreateX.Values({
         constructorAmount: 2500000,
         initCallAmount: 500000
       });
-      
+
       address poolBoosterAddress = createX.deployCreate2(
         _salt,
         getInitCode(_rewardToken, _gauge)
@@ -139,4 +137,33 @@ contract CurvePoolBoosterFactory is Initializable, Strategizable {
         address(createX)
       );
     }
+
+    /**
+ * @dev Encodes a salt for CreateX by concatenating deployer address (bytes20), cross-chain protection flag (bytes1),
+ * and the first 11 bytes of the provided salt (most significant bytes).
+ * @param salt The raw salt as uint256; converted to bytes32, then only the first 11 bytes (MSB) are used.
+ * @return encodedSalt The resulting 32-byte encoded salt.
+ */
+function encodeSaltForCreateX(
+    uint256 salt
+) external view returns (bytes32 encodedSalt) {
+    // prepare encoded salt guarded by this factory address. When the deployer part of the salt is the same as the 
+    // caller of CreateX the salt is re-hashed and thus guarded from front-running.
+    address deployer = address(this);
+    
+    // Flag as uint8 (0)
+    uint8 flag = 0;
+    
+    // Salt prefix: high 11 bytes (88 bits) shifted to low position
+    uint256 saltPrefix = uint256(bytes32(salt)) >> 168;
+    
+    // Precompute parts
+    uint256 deployerPart = uint256(uint160(deployer)) << 96;  // 20 bytes shifted left 96 bits (12 bytes)
+    uint256 flagPart = uint256(flag) << 88;  // 1 byte shifted left 88 bits (11 bytes)
+    
+    // Concat via nested OR
+    assembly ("memory-safe") {
+        encodedSalt := or(or(deployerPart, flagPart), saltPrefix)
+    }
+}
 }

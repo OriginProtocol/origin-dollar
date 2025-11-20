@@ -7,8 +7,6 @@ import { Initializable } from "../utils/Initializable.sol";
 import { Strategizable } from "../governance/Strategizable.sol";
 import { ICampaignRemoteManager } from "../interfaces/ICampaignRemoteManager.sol";
 
-import { console } from "hardhat/console.sol";
-
 /// @title CurvePoolBooster
 /// @author Origin Protocol
 /// @notice Contract to manage interactions with VotemarketV2 for a dedicated Curve pool/gauge.
@@ -80,7 +78,6 @@ contract CurvePoolBooster is Initializable, Strategizable {
         rewardToken = _rewardToken;
         gauge = _gauge;
 
-        console.log("Governor set to 0");
         // Prevent implementation contract to be governed
         _setGovernor(address(0));
     }
