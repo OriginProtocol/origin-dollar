@@ -7,6 +7,8 @@ import { Initializable } from "../utils/Initializable.sol";
 import { Strategizable } from "../governance/Strategizable.sol";
 import { ICampaignRemoteManager } from "../interfaces/ICampaignRemoteManager.sol";
 
+import { console } from "hardhat/console.sol";
+
 /// @title CurvePoolBooster
 /// @author Origin Protocol
 /// @notice Contract to manage interactions with VotemarketV2 for a dedicated Curve pool/gauge.
@@ -18,6 +20,9 @@ contract CurvePoolBooster is Initializable, Strategizable {
     ////////////////////////////////////////////////////
     /// @notice Base fee for the contract, 100%
     uint16 public constant FEE_BASE = 10_000;
+                              
+    /// @notice Arbitrum where the votemarket is running
+    uint256 public constant targetChainId = 42161;
 
     /// @notice Address of the gauge to manage
     address public immutable gauge;
@@ -25,12 +30,10 @@ contract CurvePoolBooster is Initializable, Strategizable {
     /// @notice Address of the reward token
     address public immutable rewardToken;
 
-    /// @notice Chain id of the target chain
-    uint256 public immutable targetChainId;
-
     ////////////////////////////////////////////////////
     /// --- STORAGE
     ////////////////////////////////////////////////////
+
     /// @notice Fee in FEE_BASE unit payed when managing campaign.
     uint16 public fee;
 
@@ -71,14 +74,13 @@ contract CurvePoolBooster is Initializable, Strategizable {
     /// --- CONSTRUCTOR && INITIALIZATION
     ////////////////////////////////////////////////////
     constructor(
-        uint256 _targetChainId,
         address _rewardToken,
         address _gauge
     ) {
-        targetChainId = _targetChainId;
         rewardToken = _rewardToken;
         gauge = _gauge;
 
+        console.log("Governor set to 0");
         // Prevent implementation contract to be governed
         _setGovernor(address(0));
     }
@@ -93,7 +95,7 @@ contract CurvePoolBooster is Initializable, Strategizable {
         address _feeCollector,
         address _campaignRemoteManager,
         address _votemarket
-    ) external onlyGovernor initializer {
+    ) public onlyGovernor initializer {
         _setStrategistAddr(_strategist);
         _setFee(_fee);
         _setFeeCollector(_feeCollector);
@@ -406,7 +408,7 @@ contract CurvePoolBooster is Initializable, Strategizable {
     }
 
     /// @notice Internal logic to set the votemarket address
-    function _setVotemarket(address _votemarket) internal onlyGovernor {
+    function _setVotemarket(address _votemarket) internal {
         require(_votemarket != address(0), "Invalid votemarket");
         votemarket = _votemarket;
         emit VotemarketUpdated(_votemarket);

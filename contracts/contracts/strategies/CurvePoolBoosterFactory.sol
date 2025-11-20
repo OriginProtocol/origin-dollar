@@ -1,0 +1,137 @@
+// SPDX-License-Identifier: BUSL-1.1
+pragma solidity ^0.8.0;
+
+import { Initializable } from "../utils/Initializable.sol";
+import { Strategizable } from "../governance/Strategizable.sol";
+import { CurvePoolBoosterPlain } from "./CurvePoolBoosterPlain.sol";
+import { ICreateX } from "../interfaces/ICreateX.sol";
+import { Initializable } from "../utils/Initializable.sol";
+
+import { console } from "hardhat/console.sol";
+
+/// @title CurvePoolBoosterFactory
+/// @author Origin Protocol
+/// @notice Factory contract to create CurvePoolBoosterPlain instances
+contract CurvePoolBoosterFactory is Initializable, Strategizable {
+
+    /// @notice Address of the CreateX contract
+    ICreateX public constant createX = ICreateX(0xba5Ed099633D3B313e4D5F7bdc1305d3c28ba5Ed);
+    event CurvePoolBoosterPlainCreated(address indexed poolBoosterAddress);
+
+    /// @notice Initialize the contract. Normally we'd rather have the governor and strategist set in the constructor,
+    ///         but since this contract is deployed by CreateX we need to set them in the initialize function because the
+    ///         constructor's parameters influence the address of the contract when deployed using CreateX. And having different
+    ///         governor and strategist on the same address on different chains would cause issues.
+    /// @param _governor Address of the governor
+    /// @param _strategist Address of the strategist
+    function initialize(address _governor, address _strategist) external initializer {
+      _setGovernor(_governor);
+      _setStrategistAddr(_strategist);
+    }
+
+    /// @notice Create a new CurvePoolBoosterPlain instance
+    /// @param _rewardToken Address of the reward token (OETH or OUSD)
+    /// @param _gauge Address of the gauge (e.g. Curve OETH/WETH Gauge)
+    /// @param _feeCollector Address of the fee collector (e.g. MultichainStrategist)
+    /// @param _fee Fee in FEE_BASE unit payed when managing campaign
+    /// @param _campaignRemoteManager Address of the campaign remote manager
+    /// @param _votemarket Address of the votemarket
+    /// @param _salt A unique number that affects the address of the pool booster created. Note: this number
+    ///        should match the one from `computePoolBoosterAddress` in order for the final deployed address
+    ///        and pre-computed address to match
+    function createCurvePoolBoosterPlain(
+      address _rewardToken,
+      address _gauge,
+      address _feeCollector,
+      uint16 _fee,
+      address _campaignRemoteManager,
+      address _votemarket,
+      bytes32 _salt
+    ) external onlyGovernorOrStrategist returns (address) {
+      // salt encoded sender
+      address sender = address(bytes20(_salt));
+      // the contract that calls the CreateX should be encoded in the salt to protect against front-running
+      require(sender == address(this), "Frnt-run protection failed");
+      
+      ICreateX.Values memory values = ICreateX.Values({
+        constructorAmount: 2500000,
+        initCallAmount: 500000
+      });
+      address poolBoosterAddress = createX.deployCreate2(
+        _salt,
+        getInitCode(_rewardToken, _gauge)
+      );
+
+      CurvePoolBoosterPlain poolBooster = CurvePoolBoosterPlain(payable(poolBoosterAddress));
+
+      console.log("Pool Booster deployed at: %s", address(poolBoosterAddress));
+      CurvePoolBoosterPlain(payable(poolBoosterAddress)).initialize(
+        governor(),
+        strategistAddr,
+        _fee,
+        _feeCollector,
+        _campaignRemoteManager,
+        _votemarket);
+
+      console.log("Initialize succeeded");
+      emit CurvePoolBoosterPlainCreated(poolBoosterAddress);
+      return poolBoosterAddress;
+    }
+
+    // get initialisation code contract code + constructor arguments
+    function getInitCode(
+      address _rewardToken,
+      address _gauge
+    ) internal view returns (bytes memory) {
+      return abi.encodePacked(
+        type(CurvePoolBoosterPlain).creationCode,
+        abi.encode(_rewardToken, _gauge)
+      );
+    }
+
+      /// @notice Compute the guarded salt for CreateX protections
+    function _computeGuardedSalt(bytes32 _salt) internal view returns (bytes32) {
+      address sender = address(bytes20(_salt));
+      console.log("_computeGuardedSalt sender", sender);
+      return _efficientHash({a: bytes32(uint256(uint160(address(this)))), b: _salt});
+    }
+
+    /**
+     * @dev Returns the `keccak256` hash of `a` and `b` after concatenation.
+     * @param a The first 32-byte value to be concatenated and hashed.
+     * @param b The second 32-byte value to be concatenated and hashed.
+     * @return hash The 32-byte `keccak256` hash of `a` and `b`.
+     */
+    function _efficientHash(bytes32 a, bytes32 b) internal pure returns (bytes32 hash) {
+        assembly ("memory-safe") {
+            mstore(0x00, a)
+            mstore(0x20, b)
+            hash := keccak256(0x00, 0x40)
+        }
+    }
+
+    /// @notice Create a new CurvePoolBoosterPlain instance (address computation version)
+    /// @param _rewardToken Address of the reward token (OETH or OUSD)
+    /// @param _gauge Address of the gauge (e.g. Curve OETH/WETH Gauge)
+    /// @param _salt A unique number that affects the address of the pool booster created. Note: this number
+    ///        should match the one from `createCurvePoolBoosterPlain` in order for the final deployed address
+    ///        and pre-computed address to match
+    function computePoolBoosterAddress(
+        address _rewardToken,
+        address _gauge,
+        bytes32 _salt
+    ) external view returns (address) {
+
+      // console.log("Pool Booster Address computation...");
+      // console.log("init code:");
+      // console.logBytes(getInitCode(_rewardToken, _gauge));
+      // console.log("salt: %s", _salt);
+
+      bytes32 guardedSalt = _computeGuardedSalt(_salt);
+      return createX.computeCreate2Address(
+        guardedSalt,
+        keccak256(getInitCode(_rewardToken, _gauge)),
+        address(createX)
+      );
+    }
+}
