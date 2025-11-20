@@ -1,6 +1,7 @@
 const addresses = require("../../utils/addresses");
-const { deploymentWithGovernanceProposal } = require("../../utils/deploy");
-const { encodeSaltForCreateX } = require("../../utils/deploy")
+const { deploymentWithGovernanceProposal, encodeSaltForCreateX } = require("../../utils/deploy");
+const { impersonateAndFund } = require("../../utils/signers");
+const { isFork } = require("../../test/helpers")
 
 const createxAbi = require("../../abi/createx.json");
 
@@ -76,25 +77,30 @@ module.exports = deploymentWithGovernanceProposal(
       `OETH/ETH+ Pool Booster Plain address: ${poolBoosterPlainAddress}`
     );
 
-    return {
-      name: "Create PoolBoosterPlain for OETH+",
-      actions: [
-        {
-          // Create the pool booster via governance proposal. All next will be created via the strategist.
-          contract: cCurvePoolBoosterFactory,
-          signature: "createCurvePoolBoosterPlain(address,address,address,uint16,address,address,bytes32,address)",
-          args: [
-            addresses.mainnet.OETHProxy, // reward token
-            addresses.mainnet.CurveOETHETHplusGauge, // gauge
-            addresses.multichainStrategist, // fee collector
-            0, // fee
-            addresses.mainnet.CampaignRemoteManager, // campaign remote manager
-            addresses.votemarket, // votemarket
-            encodedSalt,
-            poolBoosterPlainAddress // expected address
-          ]
-        }
-      ]
+    if (isFork) {
+      console.log("Simulating creation of OETH/ETH+ Pool Booster on fork");
+      const sAdmin = await impersonateAndFund(addresses.multichainStrategist);
+
+      await cCurvePoolBoosterFactory.connect(sAdmin).createCurvePoolBoosterPlain(
+        addresses.mainnet.OETHProxy, // reward token
+        addresses.mainnet.CurveOETHETHplusGauge, // gauge
+        addresses.multichainStrategist, // fee collector
+        0, // fee
+        addresses.mainnet.CampaignRemoteManager, // campaign remote manager
+        addresses.votemarket, // votemarket
+        encodedSalt,
+        poolBoosterPlainAddress // expected address
+      );
+    } else {
+      console.log("Call createCurvePoolBoosterPlain on Pool Booster Factory with parameters:");
+      console.log("Reward token:", addresses.mainnet.OETHProxy);
+      console.log("Gauge:", addresses.mainnet.CurveOETHETHplusGauge);
+      console.log("Fee collector:", addresses.multichainStrategist);
+      console.log("Fee:", 0);
+      console.log("Campaign remote manager:", addresses.mainnet.CampaignRemoteManager);
+      console.log("Votemarket:", addresses.votemarket);
+      console.log("Salt:", salt);
+      console.log("Expected address:", poolBoosterPlainAddress);
     }
 });
 
