@@ -24,6 +24,7 @@ const {
   getValidatorRequestDepositData,
 } = require("../utils/p2pValidatorCompound");
 const { toHex } = require("../utils/units");
+const { calcAvailableInVault } = require("../utils/vault");
 
 const log = require("../utils/logger")("task:validator:compounding");
 
@@ -429,17 +430,11 @@ async function autoValidatorWithdrawals({
 
   // 1. Calculate the WETH available in the vault = WETH balance - withdrawals queued + withdrawals claimed
 
-  const wethInVault = await weth.balanceOf(
-    addresses[networkName].OETHVaultProxy
-  );
-  log(`WETH balance in vault ${formatUnits(wethInVault, 18)}`);
-
-  const vaultWithdrawals = await vault.withdrawalQueueMetadata();
-
-  const availableInVault = wethInVault
-    .sub(vaultWithdrawals.queued)
-    .add(vaultWithdrawals.claimed);
-  log(`WETH available in vault ${formatUnits(availableInVault, 18)}`);
+  const availableInVault = await calcAvailableInVault({
+    vault,
+    weth,
+    blockTag: "latest",
+  });
 
   // 2. Get the staking strategy's active validator indexes
 
@@ -682,6 +677,7 @@ async function snapStakingStrategy({ block }) {
     "CompoundingStakingSSVStrategy"
   );
   const strategyView = await resolveContract("CompoundingStakingStrategyView");
+  const vault = await resolveContract("OETHVaultProxy", "IVault");
 
   // Pending deposits
   const totalDeposits = await logDeposits(strategyView, blockTag, stateView);
@@ -760,6 +756,14 @@ async function snapStakingStrategy({ block }) {
   const snappedBalance = await strategy.snappedBalance({
     blockTag,
   });
+  const vaultTotalValue = await vault.totalValue({ blockTag });
+  // Target buffer is 1% of the vault total value
+  const targetBuffer = vaultTotalValue.mul(1).div(100);
+  const availableInVault = await calcAvailableInVault({
+    vault,
+    weth,
+    blockTag,
+  });
   const snappedSlot =
     snappedBalance.timestamp == 0
       ? 0n
@@ -784,6 +788,9 @@ async function snapStakingStrategy({ block }) {
       18
     )}`
   );
+  console.log(`Vault total value  : ${formatUnits(vaultTotalValue, 18)}`);
+  console.log(`Target buffer (1%) : ${formatUnits(targetBuffer, 18)}`);
+  console.log(`Available in vault  : ${formatUnits(availableInVault, 18)}`);
   console.log(
     `Last verified ETH  : ${formatUnits(lastVerifiedEthBalance, 18)}`
   );
