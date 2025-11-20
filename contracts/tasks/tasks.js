@@ -2236,7 +2236,7 @@ subtask(
   "autoValidatorWithdrawals",
   "Automatically withdraws funds from a validator"
 )
-  .addParam(
+  .addOptionalParam(
     "buffer",
     "Withdrawal buffer in basis points. 100 = 1%",
     100,
@@ -2341,6 +2341,12 @@ subtask("snapStakingStrat", "Dumps the staking strategy's data")
     "block",
     "Block number. (default: latest)",
     undefined,
+    types.int
+  )
+  .addOptionalParam(
+    "buffer",
+    "Withdrawal buffer in basis points. 100 = 1%",
+    100,
     types.int
   )
   .setAction(snapStakingStrategy);

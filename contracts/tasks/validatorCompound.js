@@ -609,7 +609,10 @@ async function autoValidatorWithdrawals({
   }
 }
 
-async function snapStakingStrategy({ block }) {
+async function snapStakingStrategy({
+  buffer: bufferBps = 100, // 1% buffer
+  block,
+}) {
   let blockTag = await getBlock(block);
   // Don't use the latest block as the slot probably won't be available yet
   if (!block) blockTag -= 1;
@@ -711,8 +714,7 @@ async function snapStakingStrategy({ block }) {
     blockTag,
   });
   const vaultTotalValue = await vault.totalValue({ blockTag });
-  // Target buffer is 1% of the vault total value
-  const targetBuffer = vaultTotalValue.mul(1).div(100);
+  const targetBuffer = vaultTotalValue.mul(bufferBps).div(10000);
   const availableInVault = await calcAvailableInVault({
     vault,
     weth,
