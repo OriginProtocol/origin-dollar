@@ -54,7 +54,6 @@ contract CurvePoolBoosterFactory is Initializable, Strategizable {
     ) external onlyGovernorOrStrategist returns (address) {
       require(governor() != address(0), "Governor not set");
       require(strategistAddr != address(0), "Strategist not set");
-
       // salt encoded sender
       address sender = address(bytes20(_salt));
       // the contract that calls the CreateX should be encoded in the salt to protect against front-running
@@ -64,6 +63,7 @@ contract CurvePoolBoosterFactory is Initializable, Strategizable {
         constructorAmount: 2500000,
         initCallAmount: 500000
       });
+      
       address poolBoosterAddress = createX.deployCreate2(
         _salt,
         getInitCode(_rewardToken, _gauge)
@@ -77,7 +77,6 @@ contract CurvePoolBoosterFactory is Initializable, Strategizable {
 
       CurvePoolBoosterPlain poolBooster = CurvePoolBoosterPlain(payable(poolBoosterAddress));
 
-      console.log("Pool Booster deployed at: %s", address(poolBoosterAddress));
       CurvePoolBoosterPlain(payable(poolBoosterAddress)).initialize(
         governor(),
         strategistAddr,
@@ -86,7 +85,6 @@ contract CurvePoolBoosterFactory is Initializable, Strategizable {
         _campaignRemoteManager,
         _votemarket);
 
-      console.log("Initialize succeeded");
       emit CurvePoolBoosterPlainCreated(poolBoosterAddress);
       return poolBoosterAddress;
     }
@@ -102,10 +100,10 @@ contract CurvePoolBoosterFactory is Initializable, Strategizable {
       );
     }
 
-      /// @notice Compute the guarded salt for CreateX protections
+    /// @notice Compute the guarded salt for CreateX protections. This version of guarded
+    ///         salt expects that this factory contract is the one doing calls to the CreateX contract.
     function _computeGuardedSalt(bytes32 _salt) internal view returns (bytes32) {
       address sender = address(bytes20(_salt));
-      console.log("_computeGuardedSalt sender", sender);
       return _efficientHash({a: bytes32(uint256(uint160(address(this)))), b: _salt});
     }
 
@@ -134,12 +132,6 @@ contract CurvePoolBoosterFactory is Initializable, Strategizable {
         address _gauge,
         bytes32 _salt
     ) external view returns (address) {
-
-      // console.log("Pool Booster Address computation...");
-      // console.log("init code:");
-      // console.logBytes(getInitCode(_rewardToken, _gauge));
-      // console.log("salt: %s", _salt);
-
       bytes32 guardedSalt = _computeGuardedSalt(_salt);
       return createX.computeCreate2Address(
         guardedSalt,
