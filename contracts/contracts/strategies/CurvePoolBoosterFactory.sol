@@ -68,7 +68,7 @@ contract CurvePoolBoosterFactory is Initializable, Strategizable {
       );
 
       require(
-        _expectedAddress != address(0) && 
+        _expectedAddress == address(0) || 
           poolBoosterAddress == _expectedAddress, 
         "Pool booster deployed at unexpected address"
       );

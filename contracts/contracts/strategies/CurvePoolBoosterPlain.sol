@@ -7,15 +7,14 @@ import { console } from "hardhat/console.sol";
 
 /// @title CurvePoolBoosterPlain
 /// @author Origin Protocol
-/// @notice Contract to manage interactions with VotemarketV2 for a dedicated Curve pool/gauge. It differs from the 
+/// @notice Contract to manage interactions with VotemarketV2 for a dedicated Curve pool/gauge. It differs from the
 ///         CurvePoolBooster in that it is not proxied.
 /// @dev    Governor is not set in the constructor so that the same contract can be deployed on the same address on
 ///         multiple chains. Governor is set in the initialize function.
 contract CurvePoolBoosterPlain is CurvePoolBooster {
-    constructor(
-        address _rewardToken,
-        address _gauge
-    ) CurvePoolBooster(_rewardToken, _gauge) {
+    constructor(address _rewardToken, address _gauge)
+        CurvePoolBooster(_rewardToken, _gauge)
+    {
         rewardToken = _rewardToken;
         gauge = _gauge;
     }

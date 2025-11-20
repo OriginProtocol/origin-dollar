@@ -18,7 +18,7 @@ contract CurvePoolBooster is Initializable, Strategizable {
     ////////////////////////////////////////////////////
     /// @notice Base fee for the contract, 100%
     uint16 public constant FEE_BASE = 10_000;
-                              
+
     /// @notice Arbitrum where the votemarket is running
     uint256 public constant targetChainId = 42161;
 
@@ -71,10 +71,7 @@ contract CurvePoolBooster is Initializable, Strategizable {
     ////////////////////////////////////////////////////
     /// --- CONSTRUCTOR && INITIALIZATION
     ////////////////////////////////////////////////////
-    constructor(
-        address _rewardToken,
-        address _gauge
-    ) {
+    constructor(address _rewardToken, address _gauge) {
         rewardToken = _rewardToken;
         gauge = _gauge;
 
