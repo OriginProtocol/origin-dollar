@@ -1,6 +1,4 @@
-FROM node:20-bookworm-slim
-
-ENV DEBIAN_FRONTEND=noninteractive
+FROM node:22
 
 RUN apt-get update \
   && apt-get install -y --no-install-recommends \
@@ -47,27 +45,13 @@ ENV PROVIDER_URL="" \
   DEFENDER_API_SECRET="" \
   HARDHAT_NETWORK=""
 
-# Scripts executed by cron every hour (snapBalances runs five minutes earlier).
-RUN cat <<'EOF' > /usr/local/bin/run-snap-balances.sh
-#!/usr/bin/env bash
-set -euo pipefail
-cd /app
-export PROVIDER_URL SONIC_PROVIDER_URL PLUME_PROVIDER_URL HOODI_PROVIDER_URL BEACON_PROVIDER_URL DEFENDER_API_KEY DEFENDER_API_SECRET
-pnpm hardhat snapBalances --network "${HARDHAT_NETWORK:-mainnet}"
-EOF
-RUN cat <<'EOF' > /usr/local/bin/run-hourly-tasks.sh
-#!/usr/bin/env bash
-set -euo pipefail
-cd /app
-export PROVIDER_URL SONIC_PROVIDER_URL PLUME_PROVIDER_URL HOODI_PROVIDER_URL BEACON_PROVIDER_URL DEFENDER_API_KEY DEFENDER_API_SECRET
-pnpm hardhat verifyBalances --network "${HARDHAT_NETWORK:-mainnet}"
-pnpm hardhat verifyDeposits --network "${HARDHAT_NETWORK:-mainnet}"
-pnpm hardhat autoValidatorDeposits --network "${HARDHAT_NETWORK:-mainnet}"
-pnpm hardhat autoValidatorWithdrawals --network "${HARDHAT_NETWORK:-mainnet}"
-EOF
-RUN chmod +x /usr/local/bin/run-snap-balances.sh /usr/local/bin/run-hourly-tasks.sh
-
-# run-snap-balances runs five minutes earlier than run-hourly-tasks
-RUN printf '0 * * * * /usr/local/bin/run-snap-balances.sh\n5 * * * * /usr/local/bin/run-hourly-tasks.sh\n' > /etc/cronjob
+# Cron configuration for supercronic.
+# Each Hardhat task runs with a 7 minute offset, ensuring sequential execution.
+RUN printf '0 * * * * cd /app && echo \"[snapBalances] starting\" && pnpm hardhat snapBalances --network ${HARDHAT_NETWORK:-mainnet}\n'\
+'7 * * * * cd /app && echo \"[verifyBalances] starting\" && pnpm hardhat verifyBalances --network ${HARDHAT_NETWORK:-mainnet}\n'\
+'14 * * * * cd /app && echo \"[verifyDeposits] starting\" && pnpm hardhat verifyDeposits --network ${HARDHAT_NETWORK:-mainnet}\n'\
+'21 * * * * cd /app && echo \"[autoValidatorDeposits] starting\" && pnpm hardhat autoValidatorDeposits --network ${HARDHAT_NETWORK:-mainnet}\n'\
+'28 * * * * cd /app && echo \"[autoValidatorWithdrawals] starting\" && pnpm hardhat autoValidatorWithdrawals --network ${HARDHAT_NETWORK:-mainnet}\n'\
+> /etc/cronjob
 
 ENTRYPOINT ["supercronic", "/etc/cronjob"]
