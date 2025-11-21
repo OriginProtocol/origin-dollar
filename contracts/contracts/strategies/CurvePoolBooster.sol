@@ -261,6 +261,7 @@ contract CurvePoolBooster is Initializable, Strategizable {
     /// @dev This function only work on the L2 chain. Not on mainnet.
     /// @dev The _campaignId parameter is not related to the campaignId of this contract, allowing greater flexibility.
     /// @param _campaignId Id of the campaign to close
+    // slither-disable-start reentrancy-eth
     function closeCampaign(
         uint256 _campaignId,
         uint256 bridgeFee,
@@ -279,6 +280,7 @@ contract CurvePoolBooster is Initializable, Strategizable {
         campaignId = 0;
         emit CampaignClosed(_campaignId);
     }
+    // slither-disable-end reentrancy-eth
 
     /// @notice calculate the fee amount and transfer it to the feeCollector
     /// @return Balance after fee
