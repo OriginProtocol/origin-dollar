@@ -1,5 +1,5 @@
 require("dotenv").config();
-const { AutotaskClient } = require("@openzeppelin/defender-autotask-client");
+const { Defender } = require("@openzeppelin/defender-sdk");
 
 const log = require("../utils/logger")("task:defender");
 
@@ -9,7 +9,7 @@ const setActionVars = async ({ id, name }) => {
     apiKey: process.env.DEFENDER_TEAM_KEY,
     apiSecret: process.env.DEFENDER_TEAM_SECRET,
   };
-  const client = new AutotaskClient(creds);
+  const client = new Defender(creds);
 
   const envVars = {};
   if (name) {
@@ -17,9 +17,11 @@ const setActionVars = async ({ id, name }) => {
   }
 
   // Update Variables
-  const variables = await client.updateEnvironmentVariables(id, {
-    ...envVars,
-    DEBUG: "origin*",
+  const variables = await client.action.updateEnvironmentVariables(id, {
+    variables: {
+      ...envVars,
+      DEBUG: "origin*",
+    },
   });
   console.log("Updated Defender Actions environment variables to:", variables);
 };

@@ -1,8 +1,5 @@
 const ethers = require("ethers");
-const {
-  DefenderRelaySigner,
-  DefenderRelayProvider,
-} = require("@openzeppelin/defender-relay-client/lib/ethers");
+const { Defender } = require("@openzeppelin/defender-sdk");
 const log = require("./logger")("utils:signers");
 
 const getDefenderSigner = async () => {
@@ -18,24 +15,30 @@ const getDefenderSigner = async () => {
 
   const isMainnet = chainId === 1;
 
-  const apiKey = isMainnet
+  const relayerApiKey = isMainnet
     ? process.env.DEFENDER_API_KEY
     : process.env.HOLESKY_DEFENDER_API_KEY || process.env.DEFENDER_API_KEY;
-  const apiSecret = isMainnet
+  const relayerApiSecret = isMainnet
     ? process.env.DEFENDER_API_SECRET
     : process.env.HOLESKY_DEFENDER_API_SECRET ||
       process.env.DEFENDER_API_SECRET;
 
-  const credentials = { apiKey, apiSecret };
+  const credentials = {
+    relayerApiKey,
+    relayerApiSecret,
+  };
 
-  const provider = new DefenderRelayProvider(credentials);
-  const signer = new DefenderRelaySigner(credentials, provider, {
+  const client = new Defender(credentials);
+  const provider = client.relaySigner.getProvider({ ethersVersion: "v5" });
+
+  const signer = await client.relaySigner.getSigner(provider, {
     speed,
+    ethersVersion: "v5",
   });
-
   log(
-    `Using Defender Relayer account ${await signer.getAddress()} with key ${apiKey} and speed ${speed}`
+    `Using Defender Relayer account ${await signer.getAddress()} with speed "${speed}" from env vars DEFENDER_RELAYER_KEY and DEFENDER_RELAYER_SECRET`
   );
+
   return signer;
 };
 

@@ -77,7 +77,6 @@
     "@nomiclabs/hardhat-solhint": "2.0.1",
     "@nomiclabs/hardhat-waffle": "2.0.6",
     "@openzeppelin/contracts": "4.4.2",
-    "@openzeppelin/defender-autotask-client": "1.54.4",
     "@openzeppelin/defender-kvstore-client": "1.54.5",
     "@openzeppelin/defender-sdk": "1.15.2",
     "@openzeppelin/hardhat-upgrades": "1.27.0",
