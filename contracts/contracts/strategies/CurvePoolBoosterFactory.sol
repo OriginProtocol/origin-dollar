@@ -17,9 +17,10 @@ contract CurvePoolBoosterFactory is Initializable, Strategizable {
     event CurvePoolBoosterPlainCreated(address indexed poolBoosterAddress);
 
     /// @notice Initialize the contract. Normally we'd rather have the governor and strategist set in the constructor,
-    ///         but since this contract is deployed by CreateX we need to set them in the initialize function because the
-    ///         constructor's parameters influence the address of the contract when deployed using CreateX. And having different
-    ///         governor and strategist on the same address on different chains would cause issues.
+    ///         but since this contract is deployed by CreateX we need to set them in the initialize function because
+    ///         the constructor's parameters influence the address of the contract when deployed using CreateX.
+    ///         And having different governor and strategist on the same address on different chains would 
+    ///         cause issues.
     /// @param _governor Address of the governor
     /// @param _strategist Address of the strategist
     function initialize(address _governor, address _strategist) external initializer {
@@ -56,11 +57,6 @@ contract CurvePoolBoosterFactory is Initializable, Strategizable {
       address senderAddress = address(bytes20(_salt));
       // the contract that calls the CreateX should be encoded in the salt to protect against front-running
       require(senderAddress == address(this), "Frnt-run protection failed");
-      
-      ICreateX.Values memory values = ICreateX.Values({
-        constructorAmount: 2500000,
-        initCallAmount: 500000
-      });
 
       address poolBoosterAddress = createX.deployCreate2(
         _salt,
@@ -72,8 +68,6 @@ contract CurvePoolBoosterFactory is Initializable, Strategizable {
           poolBoosterAddress == _expectedAddress, 
         "Pool booster deployed at unexpected address"
       );
-
-      CurvePoolBoosterPlain poolBooster = CurvePoolBoosterPlain(payable(poolBoosterAddress));
 
       CurvePoolBoosterPlain(payable(poolBoosterAddress)).initialize(
         governor(),
@@ -101,7 +95,6 @@ contract CurvePoolBoosterFactory is Initializable, Strategizable {
     /// @notice Compute the guarded salt for CreateX protections. This version of guarded
     ///         salt expects that this factory contract is the one doing calls to the CreateX contract.
     function _computeGuardedSalt(bytes32 _salt) internal view returns (bytes32) {
-      address sender = address(bytes20(_salt));
       return _efficientHash({a: bytes32(uint256(uint160(address(this)))), b: _salt});
     }
 
@@ -112,6 +105,7 @@ contract CurvePoolBoosterFactory is Initializable, Strategizable {
      * @return hash The 32-byte `keccak256` hash of `a` and `b`.
      */
     function _efficientHash(bytes32 a, bytes32 b) internal pure returns (bytes32 hash) {
+      // solhint-disable-next-line no-inline-assembly
         assembly ("memory-safe") {
             mstore(0x00, a)
             mstore(0x20, b)
@@ -140,8 +134,8 @@ contract CurvePoolBoosterFactory is Initializable, Strategizable {
 
     /**
     * @dev Encodes a salt for CreateX by concatenating deployer address (bytes20), cross-chain protection flag (bytes1),
-    * and the first 11 bytes of the provided salt (most significant bytes). This function is exposed for easier operations.
-    * For the salt value itself just use the epoch time when the operation is performed
+    * and the first 11 bytes of the provided salt (most significant bytes). This function is exposed for easier
+    * operations. For the salt value itself just use the epoch time when the operation is performed.
     * @param salt The raw salt as uint256; converted to bytes32, then only the first 11 bytes (MSB) are used.
     * @return encodedSalt The resulting 32-byte encoded salt.
     */
@@ -163,6 +157,7 @@ contract CurvePoolBoosterFactory is Initializable, Strategizable {
         uint256 flagPart = uint256(flag) << 88;  // 1 byte shifted left 88 bits (11 bytes)
         
         // Concat via nested OR
+        // solhint-disable-next-line no-inline-assembly
         assembly ("memory-safe") {
             encodedSalt := or(or(deployerPart, flagPart), saltPrefix)
         }

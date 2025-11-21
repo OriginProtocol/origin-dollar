@@ -3,8 +3,6 @@ pragma solidity ^0.8.0;
 
 import { CurvePoolBooster } from "./CurvePoolBooster.sol";
 
-import { console } from "hardhat/console.sol";
-
 /// @title CurvePoolBoosterPlain
 /// @author Origin Protocol
 /// @notice Contract to manage interactions with VotemarketV2 for a dedicated Curve pool/gauge. It differs from the
@@ -25,8 +23,8 @@ contract CurvePoolBoosterPlain is CurvePoolBooster {
     /// @param _feeCollector Address of the fee collector
     /// @dev   Since this function is initialized in the same transaction as it is created the initialize function
     ///        doesn't need role protection.
-    ///        Because the governor is only set in the initialisation function the base class initialize can not be called
-    ///        as it is not the governor who is issueing this call.
+    ///        Because the governor is only set in the initialisation function the base class initialize can not be
+    ///        called as it is not the governor who is issueing this call.
     function initialize(
         address _govenor,
         address _strategist,
