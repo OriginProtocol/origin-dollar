@@ -139,8 +139,7 @@
     "@lodestar/params": "^1.36.0",
     "@lodestar/state-transition": "^1.36.0",
     "@lodestar/types": "^1.36.0",
-    "@lodestar/utils": "^1.36.0",
-    "ganache": "^7.9.2"
+    "@lodestar/utils": "^1.36.0"
   },
   "resolutions": {
     "@openzeppelin/contracts": "4.4.2"
