@@ -517,7 +517,7 @@ describe("ForkTest: CurvePoolBooster", function () {
           addresses.dead,
           saltWithNoDeployerGuard
         )
-      ).to.be.revertedWith("Frnt-run protection failed");
+      ).to.be.revertedWith("Front-run protection failed");
     });
 
     async function computePoolBoosterAddress(saltNumber, gaugeAddress) {

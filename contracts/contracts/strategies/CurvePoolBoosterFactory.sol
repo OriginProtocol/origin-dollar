@@ -56,7 +56,7 @@ contract CurvePoolBoosterFactory is Initializable, Strategizable {
       // salt encoded sender
       address senderAddress = address(bytes20(_salt));
       // the contract that calls the CreateX should be encoded in the salt to protect against front-running
-      require(senderAddress == address(this), "Frnt-run protection failed");
+      require(senderAddress == address(this), "Front-run protection failed");
 
       address poolBoosterAddress = CREATEX.deployCreate2(
         _salt,
