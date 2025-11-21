@@ -1189,19 +1189,25 @@ async function poolBoosterCodeUpdatedFixture() {
     "CurvePoolBoosterProxy",
     poolBoosterAddress
   );
+  const curvePoolBoosterFactory = await ethers.getContractAt(
+    "CurvePoolBoosterFactory",
+    // hardcoded as generated with CreateX.
+    // TODO: replace these once deployed on mainnet
+    "0xa5721C0d670bB61d6FA315995B8F15b53CCB6662"
+  );
+
   const implementationAddress = await curvePoolBoosterProxy.implementation();
 
   const rewardToken = addresses.mainnet.OUSDProxy;
   const gauge = addresses.mainnet.CurveOUSDUSDTGauge;
-  const targetedChainId = 42161; // arbitrum
 
   const UpdatedPoolBooster = await deployWithConfirmation("CurvePoolBooster", [
-    targetedChainId,
     rewardToken,
     gauge,
   ]);
 
   await replaceContractAt(implementationAddress, UpdatedPoolBooster);
+  fixture.curvePoolBoosterFactory = curvePoolBoosterFactory;
 
   return fixture;
 }

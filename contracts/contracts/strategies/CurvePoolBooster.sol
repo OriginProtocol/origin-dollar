@@ -19,18 +19,19 @@ contract CurvePoolBooster is Initializable, Strategizable {
     /// @notice Base fee for the contract, 100%
     uint16 public constant FEE_BASE = 10_000;
 
+    /// @notice Arbitrum where the votemarket is running
+    uint256 public constant targetChainId = 42161;
+
     /// @notice Address of the gauge to manage
     address public immutable gauge;
 
     /// @notice Address of the reward token
     address public immutable rewardToken;
 
-    /// @notice Chain id of the target chain
-    uint256 public immutable targetChainId;
-
     ////////////////////////////////////////////////////
     /// --- STORAGE
     ////////////////////////////////////////////////////
+
     /// @notice Fee in FEE_BASE unit payed when managing campaign.
     uint16 public fee;
 
@@ -70,12 +71,7 @@ contract CurvePoolBooster is Initializable, Strategizable {
     ////////////////////////////////////////////////////
     /// --- CONSTRUCTOR && INITIALIZATION
     ////////////////////////////////////////////////////
-    constructor(
-        uint256 _targetChainId,
-        address _rewardToken,
-        address _gauge
-    ) {
-        targetChainId = _targetChainId;
+    constructor(address _rewardToken, address _gauge) {
         rewardToken = _rewardToken;
         gauge = _gauge;
 
@@ -265,6 +261,7 @@ contract CurvePoolBooster is Initializable, Strategizable {
     /// @dev This function only work on the L2 chain. Not on mainnet.
     /// @dev The _campaignId parameter is not related to the campaignId of this contract, allowing greater flexibility.
     /// @param _campaignId Id of the campaign to close
+    // slither-disable-start reentrancy-eth
     function closeCampaign(
         uint256 _campaignId,
         uint256 bridgeFee,
@@ -283,6 +280,7 @@ contract CurvePoolBooster is Initializable, Strategizable {
         campaignId = 0;
         emit CampaignClosed(_campaignId);
     }
+    // slither-disable-end reentrancy-eth
 
     /// @notice calculate the fee amount and transfer it to the feeCollector
     /// @return Balance after fee
@@ -406,7 +404,7 @@ contract CurvePoolBooster is Initializable, Strategizable {
     }
 
     /// @notice Internal logic to set the votemarket address
-    function _setVotemarket(address _votemarket) internal onlyGovernor {
+    function _setVotemarket(address _votemarket) internal {
         require(_votemarket != address(0), "Invalid votemarket");
         votemarket = _votemarket;
         emit VotemarketUpdated(_votemarket);
