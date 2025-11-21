@@ -2,7 +2,7 @@ const { subtask, task, types } = require("hardhat/config");
 const { fund } = require("./account");
 const { debug } = require("./debug");
 const { env } = require("./env");
-const { setActionVars } = require("./defender");
+const { setActionVars, updateAction } = require("./defender");
 const { execute, executeOnFork, proposal, governors } = require("./governance");
 const { smokeTest, smokeTestCheck } = require("./smokeTest");
 const addresses = require("../utils/addresses");
@@ -1743,6 +1743,14 @@ subtask(
   )
   .setAction(setActionVars);
 task("setActionVars").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+subtask("updateAction", "Upload a Defender Actions")
+  .addParam("id", "Identifier of the Defender Actions", undefined, types.string)
+  .addParam("file", "Path to the file to upload", undefined, types.string)
+  .setAction(updateAction);
+task("updateAction").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
 
