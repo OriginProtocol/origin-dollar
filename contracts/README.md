@@ -76,11 +76,11 @@ pnpm slither
 
 ```
 # Compile changed contracts
-npx hardhat compile
+pnpm hardhat compile
 
 # Recompile all contracts
 pnpm clean
-npx hardhat compile
+pnpm hardhat compile
 ```
 
 Alternatively, the Hardhat companion npm package [hardhat-shorthand](https://www.npmjs.com/package/hardhat-shorthand) can be used as a shorthand for npx hardhat. Installation instructions can be found [here](https://hardhat.org/hardhat-runner/docs/guides/command-line-completion#installation).
