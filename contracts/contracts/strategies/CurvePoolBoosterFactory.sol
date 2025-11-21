@@ -13,7 +13,7 @@ import { Initializable } from "../utils/Initializable.sol";
 contract CurvePoolBoosterFactory is Initializable, Strategizable {
 
     /// @notice Address of the CreateX contract
-    ICreateX public constant createX = ICreateX(0xba5Ed099633D3B313e4D5F7bdc1305d3c28ba5Ed);
+    ICreateX public constant CREATEX = ICreateX(0xba5Ed099633D3B313e4D5F7bdc1305d3c28ba5Ed);
     event CurvePoolBoosterPlainCreated(address indexed poolBoosterAddress);
 
     /// @notice Initialize the contract. Normally we'd rather have the governor and strategist set in the constructor,
@@ -58,7 +58,7 @@ contract CurvePoolBoosterFactory is Initializable, Strategizable {
       // the contract that calls the CreateX should be encoded in the salt to protect against front-running
       require(senderAddress == address(this), "Frnt-run protection failed");
 
-      address poolBoosterAddress = createX.deployCreate2(
+      address poolBoosterAddress = CREATEX.deployCreate2(
         _salt,
         getInitCode(_rewardToken, _gauge)
       );
@@ -85,7 +85,7 @@ contract CurvePoolBoosterFactory is Initializable, Strategizable {
     function getInitCode(
       address _rewardToken,
       address _gauge
-    ) internal view returns (bytes memory) {
+    ) internal pure returns (bytes memory) {
       return abi.encodePacked(
         type(CurvePoolBoosterPlain).creationCode,
         abi.encode(_rewardToken, _gauge)
@@ -125,10 +125,10 @@ contract CurvePoolBoosterFactory is Initializable, Strategizable {
         bytes32 _salt
     ) external view returns (address) {
       bytes32 guardedSalt = _computeGuardedSalt(_salt);
-      return createX.computeCreate2Address(
+      return CREATEX.computeCreate2Address(
         guardedSalt,
         keccak256(getInitCode(_rewardToken, _gauge)),
-        address(createX)
+        address(CREATEX)
       );
     }
 
