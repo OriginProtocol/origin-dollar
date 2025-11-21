@@ -1,11 +1,15 @@
 FROM node:22
 
+ENV DEBIAN_FRONTEND=noninteractive
+
 RUN apt-get update \
   && apt-get install -y --no-install-recommends \
   ca-certificates \
   curl \
   git \
   openssh-client \
+  build-essential \
+  python3 \
   && rm -rf /var/lib/apt/lists/*
 
 # Preload GitHub host key for SSH-based dependencies.
@@ -27,7 +31,7 @@ RUN curl -fsSLO "$SUPERCRONIC_URL" \
 WORKDIR /app
 
 # Enable pnpm via corepack and install dependencies first for better caching.
-COPY pnpm-lock.yaml package.json ./
+COPY pnpm-lock.yaml package.json pnpm-workspace.yaml ./
 RUN corepack enable \
   && pnpm install --frozen-lockfile  
 
@@ -47,11 +51,12 @@ ENV PROVIDER_URL="" \
 
 # Cron configuration for supercronic.
 # Each Hardhat task runs with a 7 minute offset, ensuring sequential execution.
-RUN printf '0 * * * * cd /app && echo \"[snapBalances] starting\" && pnpm hardhat snapBalances --network ${HARDHAT_NETWORK:-mainnet}\n'\
-'7 * * * * cd /app && echo \"[verifyBalances] starting\" && pnpm hardhat verifyBalances --network ${HARDHAT_NETWORK:-mainnet}\n'\
-'14 * * * * cd /app && echo \"[verifyDeposits] starting\" && pnpm hardhat verifyDeposits --network ${HARDHAT_NETWORK:-mainnet}\n'\
-'21 * * * * cd /app && echo \"[autoValidatorDeposits] starting\" && pnpm hardhat autoValidatorDeposits --network ${HARDHAT_NETWORK:-mainnet}\n'\
-'28 * * * * cd /app && echo \"[autoValidatorWithdrawals] starting\" && pnpm hardhat autoValidatorWithdrawals --network ${HARDHAT_NETWORK:-mainnet}\n'\
-> /etc/cronjob
+RUN cat <<'EOF' > /etc/cronjob
+0 * * * * cd /app && pnpm hardhat snapBalances --network ${HARDHAT_NETWORK:-mainnet}
+8 * * * * cd /app && pnpm hardhat verifyBalances --network ${HARDHAT_NETWORK:-mainnet}
+10 * * * * cd /app && pnpm hardhat verifyDeposits --network ${HARDHAT_NETWORK:-mainnet}
+12 * * * * cd /app && pnpm hardhat autoValidatorDeposits --network ${HARDHAT_NETWORK:-mainnet}
+14 * * * * cd /app && pnpm hardhat autoValidatorWithdrawals --network ${HARDHAT_NETWORK:-mainnet}
+EOF
 
 ENTRYPOINT ["supercronic", "/etc/cronjob"]
