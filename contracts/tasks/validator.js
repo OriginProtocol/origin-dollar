@@ -1,7 +1,5 @@
 const { formatUnits, parseEther } = require("ethers").utils;
-const {
-  KeyValueStoreClient,
-} = require("@openzeppelin/defender-kvstore-client");
+const { KeyValueStoreClient } = require("@openzeppelin/defender-sdk");
 
 const { getBlock } = require("./block");
 const { getValidator, getValidators, getEpoch } = require("../utils/beacon");
