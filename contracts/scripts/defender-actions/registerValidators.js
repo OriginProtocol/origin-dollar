@@ -1,8 +1,5 @@
 const { ethers } = require("ethers");
 const { Defender } = require("@openzeppelin/defender-sdk");
-const {
-  KeyValueStoreClient,
-} = require("@openzeppelin/defender-kvstore-client");
 const { registerValidators } = require("../../utils/validator");
 const addresses = require("../../utils/addresses");
 
@@ -17,8 +14,6 @@ const handler = async (event) => {
     `DEBUG env var in handler before being set: "${process.env.DEBUG}"`
   );
 
-  const store = new KeyValueStoreClient(event);
-
   // Initialize defender relayer provider and signer
   const client = new Defender(event);
   const provider = client.relaySigner.getProvider({ ethersVersion: "v5" });
@@ -26,6 +21,7 @@ const handler = async (event) => {
     speed: "fastest",
     ethersVersion: "v5",
   });
+  const store = client.keyValueStore;
 
   const network = await provider.getNetwork();
   const networkName = network.chainId === 1 ? "mainnet" : "hoodi";

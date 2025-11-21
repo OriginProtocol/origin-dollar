@@ -81,9 +81,6 @@ importers:
       '@openzeppelin/contracts':
         specifier: 4.4.2
         version: 4.4.2
-      '@openzeppelin/defender-kvstore-client':
-        specifier: 1.54.5
-        version: 1.54.5(debug@4.3.4)
       '@openzeppelin/defender-sdk':
         specifier: 1.15.2
         version: 1.15.2(bufferutil@4.0.9)(debug@4.3.4)(utf-8-validate@5.0.10)(web3-core@1.10.4)(web3-utils@1.10.2)(web3@1.10.4(bufferutil@4.0.9)(utf-8-validate@5.0.10))
@@ -1382,14 +1379,6 @@ packages:
 
   '@openzeppelin/contracts@5.1.0':
     resolution: {integrity: sha512-p1ULhl7BXzjjbha5aqst+QMLY+4/LCWADXOCsmLHRM77AqiPjnd9vvUN9sosUfhL9JGKpZ0TjEGxgvnizmWGSA==}
-
-  '@openzeppelin/defender-base-client@1.54.4':
-    resolution: {integrity: sha512-LEDiHFI8BavbjVjR/H8IJSyw0Dlr2NTiutTwMIJk6QKtQ1ZlTuUktl+tBzl3Fe3SpLiaBZvqYx4/3tN0byeE4Q==}
-    deprecated: This package has been deprecated and will no longer be maintained, please use @openzeppelin/defender-sdk package instead.
-
-  '@openzeppelin/defender-kvstore-client@1.54.5':
-    resolution: {integrity: sha512-vhkFgXJanwD/RvLtKogCCWBzWdBDyZTO9h0DKnS9ZFHV7E27zMTqjt9FISNT1pD2b1QBHVVlKaKXVk6SDYCrtQ==}
-    deprecated: This package has been deprecated and will no longer be maintained, please use @openzeppelin/defender-sdk package instead.
 
   '@openzeppelin/defender-sdk-account-client@1.15.2':
     resolution: {integrity: sha512-lhYf1rBtac1MBbKP/ALgkjUhVulqo45RtaemTP9xI6BwUCCb4nq2SSKM82UN5sOE2I+VXSbPXf8w91bao5Mmmg==}
@@ -8427,28 +8416,6 @@ snapshots:
   '@openzeppelin/contracts@5.0.2': {}
 
   '@openzeppelin/contracts@5.1.0': {}
-
-  '@openzeppelin/defender-base-client@1.54.4(debug@4.3.4)':
-    dependencies:
-      amazon-cognito-identity-js: 6.3.16
-      async-retry: 1.3.3
-      axios: 1.4.0(debug@4.3.4)
-      lodash: 4.17.21
-      node-fetch: 2.7.0
-    transitivePeerDependencies:
-      - debug
-      - encoding
-
-  '@openzeppelin/defender-kvstore-client@1.54.5(debug@4.3.4)':
-    dependencies:
-      '@openzeppelin/defender-base-client': 1.54.4(debug@4.3.4)
-      axios: 1.4.0(debug@4.3.4)
-      fs-extra: 10.1.0
-      lodash: 4.17.21
-      node-fetch: 2.7.0
-    transitivePeerDependencies:
-      - debug
-      - encoding
 
   '@openzeppelin/defender-sdk-account-client@1.15.2(debug@4.3.4)':
     dependencies:
