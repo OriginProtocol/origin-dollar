@@ -447,7 +447,7 @@ describe("ForkTest: CurvePoolBooster", function () {
   // `Pool Booster Factory deployed to 0x...`
   //
   // Update that address in: _fixture.js:poolBoosterCodeUpdatedFixture
-  describe.skip("Curve pool booster factory", () => {
+  describe("Curve pool booster factory", () => {
     it("Shouldn't be allowed to call initialize on the factory again", async () => {
       await expect(
         curvePoolBoosterFactory
