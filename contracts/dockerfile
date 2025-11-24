@@ -1,6 +1,7 @@
 FROM node:22
 
-ENV DEBIAN_FRONTEND=noninteractive
+ENV DEBIAN_FRONTEND=noninteractive \
+    DEBUG=origin*
 
 RUN apt-get update \
   && apt-get install -y --no-install-recommends \
