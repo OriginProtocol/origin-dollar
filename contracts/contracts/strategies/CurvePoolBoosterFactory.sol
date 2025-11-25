@@ -152,9 +152,9 @@ contract CurvePoolBoosterFactory is Initializable, Strategizable {
     }
 
     /**
-     * @dev Encodes a salt for CreateX by concatenating deployer address (bytes20), cross-chain protection flag (bytes1),
-     * and the first 11 bytes of the provided salt (most significant bytes). This function is exposed for easier
-     * operations. For the salt value itself just use the epoch time when the operation is performed.
+     * @dev Encodes a salt for CreateX by concatenating deployer address (bytes20), cross-chain protection flag
+     * (bytes1), and the first 11 bytes of the provided salt (most significant bytes). This function is exposed
+     * for easier operations. For the salt value itself just use the epoch time when the operation is performed.
      * @param salt The raw salt as uint256; converted to bytes32, then only the first 11 bytes (MSB) are used.
      * @return encodedSalt The resulting 32-byte encoded salt.
      */
