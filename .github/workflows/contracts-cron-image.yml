@@ -1,0 +1,43 @@
+name: Contracts Cron Image
+
+on:
+  push:
+    branches:
+      - master
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Prepare image metadata
+        id: prep
+        run: |
+          IMAGE_NAME="ghcr.io/${{ github.repository_owner }}/contracts-cron"
+          IMAGE_NAME="$(echo "${IMAGE_NAME}" | tr '[:upper:]' '[:lower:]')"
+          echo "image_name=${IMAGE_NAME}" >> "${GITHUB_OUTPUT}"
+
+      - name: Build and push image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./contracts
+          file: ./contracts/dockerfile
+          push: true
+          tags: |
+            ${{ steps.prep.outputs.image_name }}:latest
+            ${{ steps.prep.outputs.image_name }}:${{ github.sha }}
+
