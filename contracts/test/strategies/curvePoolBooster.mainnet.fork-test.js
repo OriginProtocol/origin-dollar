@@ -466,7 +466,8 @@ describe("ForkTest: CurvePoolBooster", function () {
         12345
       );
 
-      const hardcodedSalt = "0x28e25d059ff55e5addb95a4187a980649cffa7bc000000000000000000003039";
+      const hardcodedSalt =
+        "0x28e25d059ff55e5addb95a4187a980649cffa7bc000000000000000000003039";
       expect(hardcodedSalt).to.equal(
         await curvePoolBoosterFactory.encodeSaltForCreateX(12345)
       );
