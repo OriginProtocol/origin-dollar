@@ -280,6 +280,7 @@ contract CurvePoolBooster is Initializable, Strategizable {
         campaignId = 0;
         emit CampaignClosed(_campaignId);
     }
+
     // slither-disable-end reentrancy-eth
 
     /// @notice calculate the fee amount and transfer it to the feeCollector

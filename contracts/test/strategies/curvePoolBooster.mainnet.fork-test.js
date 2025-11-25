@@ -460,16 +460,40 @@ describe("ForkTest: CurvePoolBooster", function () {
     });
 
     it("Should produce matching encoded salt", async () => {
-      const saltBase = ethers.utils.keccak256(12345);
       const manualEncodedSalt = encodeSaltForCreateX(
         curvePoolBoosterFactory.address,
         false,
-        saltBase
+        12345
       );
 
-      expect(manualEncodedSalt).to.equal(
-        await curvePoolBoosterFactory.encodeSaltForCreateX(saltBase)
+      const hardcodedSalt =
+        "0x28e25d059ff55e5addb95a4187a980649cffa7bc000000000000000000003039";
+      expect(hardcodedSalt).to.equal(
+        await curvePoolBoosterFactory.encodeSaltForCreateX(12345)
       );
+      expect(manualEncodedSalt).to.equal(
+        await curvePoolBoosterFactory.encodeSaltForCreateX(12345)
+      );
+    });
+
+    it("Should not produce matching encoded salt", async () => {
+      const manualEncodedSalt = encodeSaltForCreateX(
+        curvePoolBoosterFactory.address,
+        false,
+        12346
+      );
+
+      expect(manualEncodedSalt).not.to.equal(
+        await curvePoolBoosterFactory.encodeSaltForCreateX(12345)
+      );
+    });
+
+    it("Should throw an exception if salt value too big", async () => {
+      await expect(
+        curvePoolBoosterFactory.encodeSaltForCreateX(
+          "309485009821345068724781056"
+        )
+      ).to.be.revertedWith("Invalid salt");
     });
 
     it("Should create a new pool booster instance", async () => {
@@ -503,11 +527,10 @@ describe("ForkTest: CurvePoolBooster", function () {
     });
 
     it("Should not create a new pool booster that doesn't have salt guarded with deployer address", async () => {
-      const saltBase = ethers.utils.keccak256(12345);
       const saltWithNoDeployerGuard = encodeSaltForCreateX(
         josh.address,
         false,
-        saltBase
+        12345
       );
 
       await expect(
@@ -521,9 +544,8 @@ describe("ForkTest: CurvePoolBooster", function () {
     });
 
     async function computePoolBoosterAddress(saltNumber, gaugeAddress) {
-      const saltBase = ethers.utils.keccak256(saltNumber);
       const encodedSalt = await curvePoolBoosterFactory.encodeSaltForCreateX(
-        saltBase
+        saltNumber
       );
 
       return await curvePoolBoosterFactory.computePoolBoosterAddress(
@@ -539,9 +561,8 @@ describe("ForkTest: CurvePoolBooster", function () {
       expectedAddress,
       encodedSaltOverride = null
     ) {
-      const saltBase = ethers.utils.keccak256(saltNumber);
       const encodedSalt = await curvePoolBoosterFactory.encodeSaltForCreateX(
-        saltBase
+        saltNumber
       );
 
       return curvePoolBoosterFactory

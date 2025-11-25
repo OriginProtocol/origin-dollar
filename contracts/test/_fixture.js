@@ -1193,7 +1193,7 @@ async function poolBoosterCodeUpdatedFixture() {
     "CurvePoolBoosterFactory",
     // hardcoded as generated with CreateX.
     // TODO: replace these once deployed on mainnet
-    "0xa5721C0d670bB61d6FA315995B8F15b53CCB6662"
+    "0x28e25d059fF55e5ADdB95A4187A980649CfFa7Bc"
   );
 
   const implementationAddress = await curvePoolBoosterProxy.implementation();
