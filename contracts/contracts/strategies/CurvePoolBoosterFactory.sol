@@ -142,15 +142,17 @@ contract CurvePoolBoosterFactory is Initializable, Strategizable {
     function encodeSaltForCreateX(
         uint256 salt
     ) external view returns (bytes32 encodedSalt) {
+        // only the right most 11 bytes are considered when encoding salt. Which is limited by the number in the below 
+        // require. If salt were higher, the higher bytes would need to be set to 0 to not affect the "or" way of encoding
+        // the salt.
+        require(salt <= 309485009821345068724781055, "Invalid salt");
+
         // prepare encoded salt guarded by this factory address. When the deployer part of the salt is the same as the 
         // caller of CreateX the salt is re-hashed and thus guarded from front-running.
         address deployer = address(this);
         
         // Flag as uint8 (0)
         uint8 flag = 0;
-        
-        // Salt prefix: high 11 bytes (88 bits) shifted to low position
-        uint256 saltPrefix = uint256(bytes32(salt)) >> 168;
         
         // Precompute parts
         uint256 deployerPart = uint256(uint160(deployer)) << 96;  // 20 bytes shifted left 96 bits (12 bytes)
@@ -159,7 +161,7 @@ contract CurvePoolBoosterFactory is Initializable, Strategizable {
         // Concat via nested OR
         // solhint-disable-next-line no-inline-assembly
         assembly ("memory-safe") {
-            encodedSalt := or(or(deployerPart, flagPart), saltPrefix)
+            encodedSalt := or(or(deployerPart, flagPart), salt)
         }
     }
 }

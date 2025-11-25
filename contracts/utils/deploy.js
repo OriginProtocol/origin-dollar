@@ -1141,9 +1141,12 @@ function encodeSaltForCreateX(deployer, crossChainProtectionFlag, salt) {
     ? "0x01"
     : "0x00";
 
-  // convert salt to bytes11
-  const saltBytes11 = "0x" + salt.slice(2, 24);
-
+  // this portion hexifies salt to bytes11
+  const saltBytes11 = ethers.utils.hexlify(
+    ethers.utils.zeroPad(
+      ethers.utils.hexlify(salt)
+    , 11)
+  )
   // concat all bytes into a bytes32
   const encodedSalt = ethers.utils.hexlify(
     ethers.utils.concat([
