@@ -3,7 +3,7 @@ const addresses = require("../../utils/addresses");
 
 module.exports = deploymentWithGovernanceProposal(
   {
-    deployName: "145_deploy_xogn_rewards_module",
+    deployName: "158_deploy_xogn_rewards_module",
     forceDeploy: false,
     reduceQueueTime: true,
     deployerIsProposer: false,
