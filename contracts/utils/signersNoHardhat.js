@@ -36,7 +36,7 @@ const getDefenderSigner = async () => {
     ethersVersion: "v5",
   });
   log(
-    `Using Defender Relayer account ${await signer.getAddress()} with speed "${speed}" from env vars DEFENDER_RELAYER_KEY and DEFENDER_RELAYER_SECRET`
+    `Using Defender Relayer account ${await signer.getAddress()} with speed "${speed}" from env vars DEFENDER_API_KEY and DEFENDER_API_SECRET`
   );
 
   return signer;
