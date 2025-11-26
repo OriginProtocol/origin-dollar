@@ -1,7 +1,8 @@
 FROM node:22
 
 ENV DEBIAN_FRONTEND=noninteractive \
-    DEBUG=origin*
+  DEBUG=origin* \
+  DEBUG_HIDE_DATE=true
 
 RUN apt-get update \
   && apt-get install -y --no-install-recommends \
@@ -11,7 +12,8 @@ RUN apt-get update \
   openssh-client \
   build-essential \
   python3 \
-  && rm -rf /var/lib/apt/lists/*
+  bsdutils \
+  && rm -rf /var/lib/apt/lists/*◄
 
 # Preload GitHub host key for SSH-based dependencies.
 RUN mkdir -p /root/.ssh \
