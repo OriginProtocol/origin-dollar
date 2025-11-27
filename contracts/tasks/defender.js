@@ -28,6 +28,7 @@ const setActionVars = async ({ id, name }) => {
     variables: {
       ...envVars,
       DEBUG: "origin*",
+      DEBUG_HIDE_DATE: "1",
     },
   });
   console.log("Updated Defender Actions environment variables to:", variables);

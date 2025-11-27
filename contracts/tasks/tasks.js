@@ -1732,7 +1732,7 @@ task("signMessage").setAction(async (_, __, runSuper) => {
 // Defender
 subtask(
   "setActionVars",
-  "Set environment variables on a Defender Actions. eg DEBUG=origin*"
+  "Set environment variables on a Defender Actions along with DEBUG=origin* and DEBUG_HIDE_DATE=1"
 )
   .addParam("id", "Identifier of the Defender Actions", undefined, types.string)
   .addOptionalParam(
