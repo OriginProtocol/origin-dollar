@@ -12,7 +12,7 @@ contract CollectXOGNRewardsModule is AbstractSafeModule {
     IXOGN public constant xogn =
         IXOGN(0x63898b3b6Ef3d39332082178656E9862bee45C57);
     address public constant rewardsSource =
-        0x7609c88E5880e934dd3A75bCFef44E31b1Badb8b;
+        0x67CE815d91de0f843472Fe9c171Acb036994Cd05;
     IERC20 public constant ogn =
         IERC20(0x8207c1FfC5B6804F6024322CcF34F29c3541Ae26);
 
