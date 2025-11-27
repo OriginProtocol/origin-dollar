@@ -1189,12 +1189,7 @@ async function poolBoosterCodeUpdatedFixture() {
     "CurvePoolBoosterProxy",
     poolBoosterAddress
   );
-  const curvePoolBoosterFactory = await ethers.getContractAt(
-    "CurvePoolBoosterFactory",
-    // hardcoded as generated with CreateX.
-    // TODO: replace these once deployed on mainnet
-    "0x28e25d059fF55e5ADdB95A4187A980649CfFa7Bc"
-  );
+  const curvePoolBoosterFactory = await ethers.getContract("CurvePoolBoosterFactory");
 
   const implementationAddress = await curvePoolBoosterProxy.implementation();
 
