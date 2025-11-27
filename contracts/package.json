@@ -6,7 +6,7 @@
   "scripts": {
     "deploy": "rm -rf deployments/hardhat && npx hardhat deploy",
     "deploy:mainnet": "npx hardhat deploy --network mainnet --verbose",
-    "deploy:arbitrum": "npx hardhat deploy --network arbitrumOne --tags arbitrumOne --verbose",
+    "deploy:arbitrum": "FORK_NETWORK_NAME=arbitrumOne npx hardhat deploy --network arbitrumOne --tags arbitrumOne --verbose",
     "deploy:holesky": "NETWORK_NAME=holesky npx hardhat deploy --network holesky --verbose",
     "deploy:base": "NETWORK_NAME=base npx hardhat deploy --network base --verbose",
     "deploy:sonic": "NETWORK_NAME=sonic npx hardhat deploy --network sonic --verbose",

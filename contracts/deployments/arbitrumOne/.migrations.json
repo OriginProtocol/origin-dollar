@@ -1,5 +1,6 @@
 {
   "001_deploy_woeth_on_arb": 1707820141,
   "002_upgrade_woeth_on_arb": 1710959437,
-  "003_pool_booster_curve": 1737965774
+  "003_pool_booster_curve": 1737965774,
+  "004_curve_pool_booster_factory": 1764091943
 }

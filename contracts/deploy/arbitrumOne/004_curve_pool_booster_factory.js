@@ -32,7 +32,7 @@ module.exports = deployOnArb(
     const factoryEncodedSalt = encodeSaltForCreateX(
       deployerAddr,
       false,
-      ethers.utils.keccak256(1)
+      1
     );
     const txResponse = await withConfirmation(
       cCreateX
@@ -71,13 +71,7 @@ module.exports = deployOnArb(
     // the most important part is the salt, it ensures that the contract is deployed at the same address
     // on the mainnet as well as arbitrum. If the same reward token and gauge require a new pool booster
     // the version should be incremented
-    const salt = ethers.utils.keccak256(
-      ethers.utils.concat([
-        addresses.mainnet.OETHProxy,
-        addresses.mainnet.CurveOETHETHplusGauge,
-        1,
-      ])
-    );
+    const salt = 2;
 
     // The way salt is encoded it specifies for CreateX if there should be cross chain protection or not.
     // We don't want chross chain protection, as we want to deploy the pool booster instance on the same address.
