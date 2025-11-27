@@ -1,7 +1,4 @@
-const {
-  DefenderRelaySigner,
-  DefenderRelayProvider,
-} = require("@openzeppelin/defender-relay-client/lib/ethers");
+const { Defender } = require("@openzeppelin/defender-sdk");
 
 const { undelegateValidator } = require("../../utils/sonicActions");
 
@@ -12,8 +9,12 @@ const handler = async (event) => {
   );
 
   // Initialize defender relayer provider and signer
-  const provider = new DefenderRelayProvider(event);
-  const signer = new DefenderRelaySigner(event, provider, { speed: "fastest" });
+  const client = new Defender(event);
+  const provider = client.relaySigner.getProvider({ ethersVersion: "v5" });
+  const signer = await client.relaySigner.getSigner(provider, {
+    speed: "fastest",
+    ethersVersion: "v5",
+  });
 
   // The vault buffer in basis points, so 100 = 1%
   const bufferPct = 50;

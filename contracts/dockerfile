@@ -1,0 +1,65 @@
+FROM node:22
+
+ENV DEBIAN_FRONTEND=noninteractive \
+  DEBUG=origin* \
+  DEBUG_HIDE_DATE=true
+
+RUN apt-get update \
+  && apt-get install -y --no-install-recommends \
+  ca-certificates \
+  curl \
+  git \
+  openssh-client \
+  build-essential \
+  python3 \
+  bsdutils \
+  && rm -rf /var/lib/apt/lists/*◄
+
+# Preload GitHub host key for SSH-based dependencies.
+RUN mkdir -p /root/.ssh \
+  && ssh-keyscan -t rsa github.com >> /root/.ssh/known_hosts
+
+RUN git config --global url."https://github.com/".insteadOf "git@github.com:"
+
+ENV SUPERCRONIC_URL=https://github.com/aptible/supercronic/releases/download/v0.2.39/supercronic-linux-amd64 \
+  SUPERCRONIC_SHA1SUM=c98bbf82c5f648aaac8708c182cc83046fe48423 \
+  SUPERCRONIC=supercronic-linux-amd64
+
+RUN curl -fsSLO "$SUPERCRONIC_URL" \
+  && echo "${SUPERCRONIC_SHA1SUM}  ${SUPERCRONIC}" | sha1sum -c - \
+  && chmod +x "$SUPERCRONIC" \
+  && mv "$SUPERCRONIC" "/usr/local/bin/${SUPERCRONIC}" \
+  && ln -s "/usr/local/bin/${SUPERCRONIC}" /usr/local/bin/supercronic
+
+WORKDIR /app
+
+# Enable pnpm via corepack and install dependencies first for better caching.
+COPY pnpm-lock.yaml package.json pnpm-workspace.yaml ./
+RUN corepack enable \
+  && pnpm install --frozen-lockfile  
+
+# Copy the rest of the contracts workspace.
+COPY . .
+
+RUN pnpm hardhat compile
+
+ENV PROVIDER_URL="" \
+  SONIC_PROVIDER_URL="" \
+  PLUME_PROVIDER_URL="" \
+  HOODI_PROVIDER_URL="" \
+  BEACON_PROVIDER_URL="" \
+  DEFENDER_API_KEY="" \
+  DEFENDER_API_SECRET="" \
+  HARDHAT_NETWORK=""
+
+# Cron configuration for supercronic.
+# Each Hardhat task runs with a 7 minute offset, ensuring sequential execution.
+RUN cat <<'EOF' > /etc/cronjob
+0 * * * * cd /app && pnpm hardhat snapBalances --network ${HARDHAT_NETWORK:-mainnet}
+8 * * * * cd /app && pnpm hardhat verifyBalances --network ${HARDHAT_NETWORK:-mainnet}
+10 * * * * cd /app && pnpm hardhat verifyDeposits --network ${HARDHAT_NETWORK:-mainnet}
+12 * * * * cd /app && pnpm hardhat autoValidatorDeposits --network ${HARDHAT_NETWORK:-mainnet}
+14 * * * * cd /app && pnpm hardhat autoValidatorWithdrawals --network ${HARDHAT_NETWORK:-mainnet}
+EOF
+
+ENTRYPOINT ["supercronic", "/etc/cronjob"]

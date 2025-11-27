@@ -61,7 +61,12 @@ async function verifyValidator({ slot, index, dryrun, cred, signer }) {
   // Get provider to mainnet or testnet and not a local fork
   const provider = await getLiveProvider(signer.provider);
 
-  const { blockView, blockTree, stateView } = await getBeaconBlock(slot);
+  const networkName = await getNetworkName();
+
+  const { blockView, blockTree, stateView } = await getBeaconBlock(
+    slot,
+    networkName
+  );
 
   const strategy = await resolveContract(
     "CompoundingStakingSSVStrategyProxy",
@@ -145,6 +150,90 @@ async function verifyValidator({ slot, index, dryrun, cred, signer }) {
   await logTxDetails(tx, "verifyValidator");
 }
 
+// get deposits that have been processed on the beacon chain but not yet validated by the strategy
+async function getProcessedDeposits(pendingDeposits) {
+  const depositProcessedSlot = (await getSlot()) - 30;
+
+  const networkName = await getNetworkName();
+
+  log(
+    `Checking if any deposits have been processed in slot ${depositProcessedSlot} for the ${networkName} network`
+  );
+
+  // Uses the beacon chain data for the beacon block root
+  const { stateView } = await getBeaconBlock(depositProcessedSlot, networkName);
+
+  const pendingDepositMap = {};
+
+  for (let i = 0; i < stateView.pendingDeposits.length; i++) {
+    pendingDepositMap[
+      toHex(stateView.pendingDeposits.get(i).hashTreeRoot())
+    ] = true;
+  }
+
+  const processedDeposits = [];
+  for (const deposit of pendingDeposits) {
+    if (!pendingDepositMap[deposit.pendingDepositRoot]) {
+      processedDeposits.push(deposit);
+      console.log(
+        `Found a deposit that has been processed on the beacon chain`
+      );
+      console.log(`Pending deposit root: ${deposit.pendingDepositRoot}`);
+      console.log(`Validator:            ${deposit.pubKeyHash}`);
+      console.log(`Slot:                 ${deposit.slot}`);
+      console.log(
+        `Amount:               ${formatUnits(deposit.amountGwei, "gwei")} ETH`
+      );
+    }
+  }
+  return { processedDeposits, depositProcessedSlot };
+}
+
+async function verifyDeposits({ dryrun, signer }) {
+  const stakingStrategy = await resolveContract(
+    "CompoundingStakingSSVStrategyProxy",
+    "CompoundingStakingSSVStrategy"
+  );
+  const stakingStrategyView = await resolveContract(
+    "CompoundingStakingStrategyView"
+  );
+
+  const pendingDeposits = await stakingStrategyView.getPendingDeposits();
+
+  if (pendingDeposits.length === 0) {
+    console.log("No pending deposits found on the strategy");
+    return;
+  }
+
+  const { processedDeposits, depositProcessedSlot } =
+    await getProcessedDeposits(pendingDeposits);
+
+  /**
+   * Deposit verification requires the depositProcessedSlot to be smaller than the
+   * snapshot slot. That can easily be achieved by calling the snapBalances just before
+   * calling the verifyDeposit.
+   */
+  if (processedDeposits.length > 0) {
+    log(`About to snap balances before verifying deposits`);
+    if (!dryrun) {
+      await stakingStrategy.connect(signer).snapBalances();
+    }
+  } else {
+    console.log(
+      `There are ${pendingDeposits.length} pending deposits but none have been processed on the beacon chain yet`
+    );
+  }
+
+  for (const deposit of processedDeposits) {
+    await verifyDeposit({
+      slot: depositProcessedSlot,
+      root: deposit.pendingDepositRoot,
+      dryrun,
+      signer,
+    });
+  }
+}
+
 async function verifyDeposit({
   slot,
   root: depositRoot,
@@ -170,9 +259,9 @@ async function verifyDeposit({
       } and deposit index ${depositData.depositIndex}`
     );
     const strategyValidator = await strategy.validator(depositData.pubKeyHash);
-    if (strategyValidator.state !== 3)
+    if (strategyValidator.state !== 3 && strategyValidator.state !== 4)
       throw Error(
-        `Validator with pub key hash ${depositData.pubKeyHash} is not VERIFIED. Status: ${strategyValidator.state}`
+        `Validator with pub key hash ${depositData.pubKeyHash} is not VERIFIED or ACTIVE. Status: ${strategyValidator.state}`
       );
 
     const { slot, amountGwei, pubKeyHash, status } = await strategy.deposits(
@@ -206,7 +295,8 @@ async function verifyDeposit({
   }
 
   // Uses the latest slot if the slot is undefined
-  const depositProcessedBeaconData = await getBeaconBlock(slot);
+  const networkName = await getNetworkName();
+  const depositProcessedBeaconData = await getBeaconBlock(slot, networkName);
   const depositProcessedSlot = depositProcessedBeaconData.blockView.slot;
 
   // if generating unit testing data
@@ -371,7 +461,11 @@ async function verifyBalances({
   }
 
   // Uses the beacon chain data for the beacon block root
-  const { blockView, blockTree, stateView } = await getBeaconBlock(slot);
+  const networkName = await getNetworkName();
+  const { blockView, blockTree, stateView } = await getBeaconBlock(
+    slot,
+    networkName
+  );
   const verificationSlot = blockView.slot;
 
   const {
@@ -602,7 +696,8 @@ async function getValidator({ slot, index, pubkey }) {
   }
 
   // Uses the latest slot if the slot is undefined
-  const { blockView, stateView } = await getBeaconBlock(slot);
+  const networkName = await getNetworkName();
+  const { blockView, stateView } = await getBeaconBlock(slot, networkName);
 
   const validator = stateView.validators.get(index);
   if (
@@ -793,5 +888,6 @@ module.exports = {
   getValidator,
   verifyValidator,
   verifyDeposit,
+  verifyDeposits,
   verifyBalances,
 };

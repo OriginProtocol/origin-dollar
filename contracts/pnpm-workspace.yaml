@@ -1,0 +1,15 @@
+ignoredBuiltDependencies:
+  - '@arbitrum/nitro-contracts'
+  - core-js-pure
+  - es5-ext
+  - secp256k1
+  - utf-8-validate
+  - web3
+  - web3-bzz
+  - web3-shh
+
+onlyBuiltDependencies:
+  - '@trufflesuite/bigint-buffer'
+  - bigint-buffer
+  - bufferutil
+  - keccak
