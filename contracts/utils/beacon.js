@@ -89,10 +89,11 @@ const getBeaconBlock = async (slot = "head", networkName = "mainnet") => {
   const client = await configClient();
 
   const { ssz } = await import("@lodestar/types");
+  // Hoodie and Mainnet currently use the same types but this could change in the future
   const BeaconBlock =
-    networkName === "mainnet" ? ssz.electra.BeaconBlock : ssz.fulu.BeaconBlock;
+    networkName === "mainnet" ? ssz.fulu.BeaconBlock : ssz.fulu.BeaconBlock;
   const BeaconState =
-    networkName === "mainnet" ? ssz.electra.BeaconState : ssz.fulu.BeaconState;
+    networkName === "mainnet" ? ssz.fulu.BeaconState : ssz.fulu.BeaconState;
 
   // Get the beacon block for the slot from the beacon node.
   log(`Fetching block for slot ${slot} from the beacon node`);
