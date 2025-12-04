@@ -1,11 +1,16 @@
 const { expect } = require("chai");
 const { parseUnits } = require("ethers/lib/utils");
 const { impersonateAndFund } = require("../../utils/signers.js");
+const { encodeSaltForCreateX } = require("../../utils/deploy");
 
 const addresses = require("../../utils/addresses");
 const { isCI } = require("../helpers");
 
-const { loadDefaultFixture } = require("../_fixture");
+const {
+  createFixtureLoader,
+  poolBoosterCodeUpdatedFixture,
+} = require("../_fixture");
+const loadFixture = createFixtureLoader(poolBoosterCodeUpdatedFixture);
 
 describe("ForkTest: CurvePoolBooster", function () {
   this.timeout(0);
@@ -15,6 +20,7 @@ describe("ForkTest: CurvePoolBooster", function () {
 
   let fixture,
     curvePoolBooster,
+    curvePoolBoosterFactory,
     sStrategist,
     ousd,
     wousd,
@@ -23,8 +29,9 @@ describe("ForkTest: CurvePoolBooster", function () {
     sGov,
     curvePoolBoosterImpersonated;
   beforeEach(async () => {
-    fixture = await loadDefaultFixture();
+    fixture = await loadFixture();
     curvePoolBooster = fixture.curvePoolBooster;
+    curvePoolBoosterFactory = fixture.curvePoolBoosterFactory;
     ousd = fixture.ousd;
     wousd = fixture.wousd;
     josh = fixture.josh;
@@ -220,6 +227,26 @@ describe("ForkTest: CurvePoolBooster", function () {
     ).to.be.revertedWith("Campaign already created");
   });
 
+  it("Should create another campaign if campaign is closed", async () => {
+    await curvePoolBooster.connect(sStrategist).setCampaignId(12);
+    await curvePoolBooster
+      .connect(sStrategist)
+      .closeCampaign(12, parseUnits("0.1"), 0);
+
+    expect(await curvePoolBooster.campaignId()).to.equal(0);
+
+    // Create campaign
+    await curvePoolBooster
+      .connect(sStrategist)
+      .createCampaign(
+        4,
+        10,
+        [addresses.mainnet.ConvexVoter],
+        parseUnits("0.1"),
+        0
+      );
+  });
+
   it("Should revert if campaign is not created", async () => {
     await expect(
       curvePoolBooster
@@ -412,5 +439,167 @@ describe("ForkTest: CurvePoolBooster", function () {
     await expect(
       curvePoolBooster.connect(sGov).setVotemarket(addresses.zero)
     ).to.be.revertedWith("Invalid votemarket");
+  });
+
+  // TODO: unskip once the factory is deployed on the mainnet via CreateX.
+  // For testing purposes unskip the below describe and observe the output
+  // of "yarn run node" command and search for the factory deployment address:
+  // `Pool Booster Factory deployed to 0x...`
+  //
+  // Update that address in: _fixture.js:poolBoosterCodeUpdatedFixture
+  describe("Curve pool booster factory", () => {
+    it("Shouldn't be allowed to call initialize on the factory again", async () => {
+      await expect(
+        curvePoolBoosterFactory
+          .connect(sGov)
+          .initialize(
+            addresses.mainnet.Timelock,
+            addresses.multichainStrategist
+          )
+      ).to.be.revertedWith("Initializable: contract is already initialized");
+    });
+
+    it("Should produce matching encoded salt", async () => {
+      const manualEncodedSalt = encodeSaltForCreateX(
+        curvePoolBoosterFactory.address,
+        false,
+        12345
+      );
+
+      const hardcodedSalt =
+        "0x9f4308cdfa4d02c045bc8bd82864013b62d516bb000000000000000000003039";
+      expect(hardcodedSalt).to.equal(
+        await curvePoolBoosterFactory.encodeSaltForCreateX(12345)
+      );
+      expect(manualEncodedSalt).to.equal(
+        await curvePoolBoosterFactory.encodeSaltForCreateX(12345)
+      );
+    });
+
+    it("Should not produce matching encoded salt", async () => {
+      const manualEncodedSalt = encodeSaltForCreateX(
+        curvePoolBoosterFactory.address,
+        false,
+        12346
+      );
+
+      expect(manualEncodedSalt).not.to.equal(
+        await curvePoolBoosterFactory.encodeSaltForCreateX(12345)
+      );
+    });
+
+    it("Should throw an exception if salt value too big", async () => {
+      await expect(
+        curvePoolBoosterFactory.encodeSaltForCreateX(
+          "309485009821345068724781056"
+        )
+      ).to.be.revertedWith("Invalid salt");
+    });
+
+    it("Should create a new pool booster instance", async () => {
+      await createPoolBoosterInstance(
+        12345,
+        addresses.mainnet.CurveOUSDUSDTGauge,
+        addresses.zero
+      );
+    });
+
+    it("Should create a new pool booster instance with expected address", async () => {
+      const expectedAddress = await computePoolBoosterAddress(
+        12345,
+        addresses.mainnet.CurveOUSDUSDTGauge
+      );
+      await createPoolBoosterInstance(
+        12345,
+        addresses.mainnet.CurveOUSDUSDTGauge,
+        expectedAddress
+      );
+    });
+
+    it("Should fail pool booster creation with an incorrect expected address", async () => {
+      await expect(
+        createPoolBoosterInstance(
+          12345,
+          addresses.mainnet.CurveOUSDUSDTGauge,
+          addresses.dead
+        )
+      ).to.be.revertedWith("Pool booster deployed at unexpected address");
+    });
+
+    it("Should not create a new pool booster that doesn't have salt guarded with deployer address", async () => {
+      const saltWithNoDeployerGuard = encodeSaltForCreateX(
+        josh.address,
+        false,
+        12345
+      );
+
+      await expect(
+        callCreatePoolBooster(
+          12345,
+          addresses.mainnet.CurveOUSDUSDTGauge,
+          addresses.dead,
+          saltWithNoDeployerGuard
+        )
+      ).to.be.revertedWith("Front-run protection failed");
+    });
+
+    async function computePoolBoosterAddress(saltNumber, gaugeAddress) {
+      const encodedSalt = await curvePoolBoosterFactory.encodeSaltForCreateX(
+        saltNumber
+      );
+
+      return await curvePoolBoosterFactory.computePoolBoosterAddress(
+        addresses.mainnet.OETHProxy,
+        gaugeAddress,
+        encodedSalt
+      );
+    }
+
+    async function callCreatePoolBooster(
+      saltNumber,
+      gaugeAddress,
+      expectedAddress,
+      encodedSaltOverride = null
+    ) {
+      const encodedSalt = await curvePoolBoosterFactory.encodeSaltForCreateX(
+        saltNumber
+      );
+
+      return curvePoolBoosterFactory
+        .connect(sStrategist)
+        .createCurvePoolBoosterPlain(
+          addresses.mainnet.OETHProxy, // reward token
+          gaugeAddress, // gauge
+          addresses.multichainStrategist, // fee collector
+          0, // fee
+          addresses.mainnet.CampaignRemoteManager, // campaign remote manager
+          addresses.votemarket, // votemarket
+          encodedSaltOverride ? encodedSaltOverride : encodedSalt,
+          expectedAddress // expected address
+        );
+    }
+
+    async function createPoolBoosterInstance(
+      saltNumber,
+      gaugeAddress,
+      expectedAddress
+    ) {
+      const tx = await callCreatePoolBooster(
+        saltNumber,
+        gaugeAddress,
+        expectedAddress
+      );
+      const receipt = await tx.wait();
+
+      const contractCreationTopic =
+        "0xb8fda7e00c6b06a2b54e58521bc5894fee35f1090e5a3bb6390bfe2b98b497f7";
+      const implementationAddress = ethers.utils.getAddress(
+        `0x${receipt.events
+          .find((event) => event.topics[0] === contractCreationTopic)
+          .topics[1].slice(26)}`
+      );
+
+      return implementationAddress;
+    }
   });
 });

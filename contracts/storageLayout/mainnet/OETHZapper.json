@@ -1,4 +1,6 @@
 {
+  "solcVersion": "0.8.28",
   "storage": [],
-  "types": {}
+  "types": {},
+  "namespaces": {}
 }
