@@ -2,7 +2,7 @@ const { subtask, task, types } = require("hardhat/config");
 const { fund } = require("./account");
 const { debug } = require("./debug");
 const { env } = require("./env");
-const { setActionVars } = require("./defender");
+const { setActionVars, updateAction } = require("./defender");
 const { execute, executeOnFork, proposal, governors } = require("./governance");
 const { smokeTest, smokeTestCheck } = require("./smokeTest");
 const addresses = require("../utils/addresses");
@@ -132,6 +132,7 @@ const {
   getValidator,
   verifyValidator,
   verifyDeposit,
+  verifyDeposits,
   verifyBalances,
 } = require("./beacon");
 const {
@@ -1731,7 +1732,7 @@ task("signMessage").setAction(async (_, __, runSuper) => {
 // Defender
 subtask(
   "setActionVars",
-  "Set environment variables on a Defender Actions. eg DEBUG=origin*"
+  "Set environment variables on a Defender Actions along with DEBUG=origin* and DEBUG_HIDE_DATE=1"
 )
   .addParam("id", "Identifier of the Defender Actions", undefined, types.string)
   .addOptionalParam(
@@ -1742,6 +1743,14 @@ subtask(
   )
   .setAction(setActionVars);
 task("setActionVars").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+subtask("updateAction", "Upload a Defender Actions")
+  .addParam("id", "Identifier of the Defender Actions", undefined, types.string)
+  .addParam("file", "Path to the file to upload", undefined, types.string)
+  .setAction(updateAction);
+task("updateAction").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
 
@@ -2042,6 +2051,21 @@ task("verifyDeposit").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
 
+subtask("verifyDeposits", "Verify any processed deposit on the Beacon chain")
+  .addOptionalParam(
+    "dryrun",
+    "Do not call verifyDeposit on the strategy contract. Just log the params including the proofs",
+    false,
+    types.boolean
+  )
+  .setAction(async (taskArgs) => {
+    const signer = await getSigner();
+    await verifyDeposits({ ...taskArgs, signer });
+  });
+task("verifyDeposits").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
 subtask("verifyBalances", "Verify validator balances on the Beacon chain")
   .addOptionalParam(
     "slot",
@@ -2142,7 +2166,7 @@ task("registerValidator").setAction(async (_, __, runSuper) => {
 
 subtask(
   "autoValidatorDeposits",
-  "Automatically deposit strategy WETH into validators"
+  "Automatically withdraw ETH/WETH from the strategy if needed for withdrawals, then deposit WETH to validators with a balance under 2030 ETH from the largest balance to the smallest"
 )
   .addParam(
     "dryrun",
@@ -2218,9 +2242,9 @@ task("removeValidator").setAction(async (_, __, runSuper) => {
 
 subtask(
   "autoValidatorWithdrawals",
-  "Automatically withdraws funds from a validator"
+  "Automatically withdraw ETH from a validators if the Vault needs WETH for user withdrawals. Start with the validator with the smallest balance over 42.25 ETH."
 )
-  .addParam(
+  .addOptionalParam(
     "buffer",
     "Withdrawal buffer in basis points. 100 = 1%",
     100,
@@ -2325,6 +2349,12 @@ subtask("snapStakingStrat", "Dumps the staking strategy's data")
     "block",
     "Block number. (default: latest)",
     undefined,
+    types.int
+  )
+  .addOptionalParam(
+    "buffer",
+    "Withdrawal buffer in basis points. 100 = 1%",
+    100,
     types.int
   )
   .setAction(snapStakingStrategy);

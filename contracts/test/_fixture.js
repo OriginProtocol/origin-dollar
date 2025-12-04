@@ -1189,7 +1189,9 @@ async function poolBoosterCodeUpdatedFixture() {
     "CurvePoolBoosterProxy",
     poolBoosterAddress
   );
-  const curvePoolBoosterFactory = await ethers.getContract("CurvePoolBoosterFactory");
+  const curvePoolBoosterFactory = await ethers.getContract(
+    "CurvePoolBoosterFactory"
+  );
 
   const implementationAddress = await curvePoolBoosterProxy.implementation();
 

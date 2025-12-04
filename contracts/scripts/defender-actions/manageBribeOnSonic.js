@@ -1,8 +1,5 @@
 const { ethers } = require("ethers");
-const {
-  DefenderRelaySigner,
-  DefenderRelayProvider,
-} = require("@openzeppelin/defender-relay-client/lib/ethers");
+const { Defender } = require("@openzeppelin/defender-sdk");
 
 const poolBoosterSwapXAbi = require("../../abi/poolBoosterSwapX.json");
 const poolBoosterCentralRegistryAbi = require("../../abi/poolBoosterCentralRegistry.json");
@@ -16,8 +13,12 @@ const handler = async (event) => {
   );
 
   // Initialize defender relayer provider and signer
-  const provider = new DefenderRelayProvider(event);
-  const signer = new DefenderRelaySigner(event, provider, { speed: "fastest" });
+  const client = new Defender(event);
+  const provider = client.relaySigner.getProvider({ ethersVersion: "v5" });
+  const signer = await client.relaySigner.getSigner(provider, {
+    speed: "fastest",
+    ethersVersion: "v5",
+  });
 
   const poolBoosterCentralRegistryProxyAddress =
     "0x4F3B656Aa5Fb5E708bF7B63D6ff71623eb4a218A";

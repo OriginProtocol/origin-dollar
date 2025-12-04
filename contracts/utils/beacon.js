@@ -85,12 +85,15 @@ const getBeaconBlockRoot = async (blockId = "head") => {
  * Gets the full beacon chain data for a given slot, root or "head".
  * @param {string|number} [slot=head] - The slot to get the beacon block for. Can be "head", a slot number or a beacon block root.
  */
-const getBeaconBlock = async (slot = "head") => {
+const getBeaconBlock = async (slot = "head", networkName = "mainnet") => {
   const client = await configClient();
 
   const { ssz } = await import("@lodestar/types");
-  const BeaconBlock = ssz.electra.BeaconBlock;
-  const BeaconState = ssz.electra.BeaconState;
+  // Hoodie and Mainnet currently use the same types but this could change in the future
+  const BeaconBlock =
+    networkName === "mainnet" ? ssz.fulu.BeaconBlock : ssz.fulu.BeaconBlock;
+  const BeaconState =
+    networkName === "mainnet" ? ssz.fulu.BeaconState : ssz.fulu.BeaconState;
 
   // Get the beacon block for the slot from the beacon node.
   log(`Fetching block for slot ${slot} from the beacon node`);

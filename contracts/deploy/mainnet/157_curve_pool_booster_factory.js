@@ -30,11 +30,7 @@ module.exports = deploymentWithGovernanceProposal(
     // This salt is constructed in a way where CreateX contract will recompute / guard the salt with the deployer address
     // as the message sender matches the initial part of the salt. This ensures that no other address can front-run our
     // factory deployment on another chain.
-    const factoryEncodedSalt = encodeSaltForCreateX(
-      deployerAddr,
-      false,
-      1
-    );
+    const factoryEncodedSalt = encodeSaltForCreateX(deployerAddr, false, 1);
     const txResponse = await withConfirmation(
       cCreateX
         .connect(sDeployer)
