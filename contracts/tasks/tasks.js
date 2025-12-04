@@ -2166,7 +2166,7 @@ task("registerValidator").setAction(async (_, __, runSuper) => {
 
 subtask(
   "autoValidatorDeposits",
-  "Automatically deposit strategy WETH into validators"
+  "Automatically withdraw ETH/WETH from the strategy if needed for withdrawals, then deposit WETH to validators with a balance under 2030 ETH from the largest balance to the smallest"
 )
   .addParam(
     "dryrun",
@@ -2242,7 +2242,7 @@ task("removeValidator").setAction(async (_, __, runSuper) => {
 
 subtask(
   "autoValidatorWithdrawals",
-  "Automatically withdraws funds from a validator"
+  "Automatically withdraw ETH from a validators if the Vault needs WETH for user withdrawals. Start with the validator with the smallest balance over 42.25 ETH."
 )
   .addOptionalParam(
     "buffer",
