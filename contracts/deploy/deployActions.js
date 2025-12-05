@@ -17,13 +17,15 @@ const {
   isHoodi,
   isHoodiOrFork,
 } = require("../test/helpers.js");
-const { deployWithConfirmation, withConfirmation } = require("../utils/deploy");
+const { deployWithConfirmation, withConfirmation, encodeSaltForCreateX } = require("../utils/deploy");
 const { metapoolLPCRVPid } = require("../utils/constants");
 const { replaceContractAt } = require("../utils/hardhat");
 const { resolveContract } = require("../utils/resolvers");
 const { impersonateAccount, getSigner } = require("../utils/signers");
 const { getDefenderSigner } = require("../utils/signersNoHardhat");
 const { getTxOpts } = require("../utils/tx");
+const createxAbi = require("../abi/createx.json");
+
 const {
   beaconChainGenesisTimeHoodi,
   beaconChainGenesisTimeMainnet,
@@ -1682,6 +1684,39 @@ const deploySonicSwapXAMOStrategyImplementation = async () => {
   return cSonicSwapXAMOStrategy;
 };
 
+// deploys an instance of InitializeGovernedUpgradeabilityProxy where address is defined by salt
+const deployProxyWithCreateX = async (salt) => {
+  const { deployerAddr } = await getNamedAccounts();
+  const sDeployer = await ethers.provider.getSigner(deployerAddr);
+  log(`Deploying proxy with salt: ${salt} as deployer ${deployerAddr}`);
+
+  const cCreateX = await ethers.getContractAt(createxAbi, addresses.createX);
+  const factoryEncodedSalt = encodeSaltForCreateX(deployerAddr, false, 1);
+
+  const getFactoryBytecode = async () => {
+    // No deployment needed—get factory directly from artifacts
+    const factory = await ethers.getContractFactory("InitializeGovernedUpgradeabilityProxy");
+    return factory.bytecode;
+  }
+
+  const txResponse = await withConfirmation(
+    cCreateX
+      .connect(sDeployer)
+      .deployCreate2(factoryEncodedSalt, getFactoryBytecode())
+  );
+
+  const contractCreationTopic =
+    "0xb8fda7e00c6b06a2b54e58521bc5894fee35f1090e5a3bb6390bfe2b98b497f7";
+  const txReceipt = await txResponse.wait();
+  const proxyAddress = ethers.utils.getAddress(
+    `0x${txReceipt.events
+      .find((event) => event.topics[0] === contractCreationTopic)
+      .topics[1].slice(26)}`
+  );
+  
+  return proxyAddress;
+};
+
 module.exports = {
   deployOracles,
   deployCore,
@@ -1719,4 +1754,5 @@ module.exports = {
   deployPlumeMockRoosterAMOStrategyImplementation,
   getPlumeContracts,
   deploySonicSwapXAMOStrategyImplementation,
+  deployProxyWithCreateX,
 };
