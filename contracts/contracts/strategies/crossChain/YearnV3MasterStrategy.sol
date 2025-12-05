@@ -38,6 +38,13 @@ contract YearnV3MasterStrategy is InitializableAbstractStrategy {
     }
 
     /**
+     * @dev Returns the address of the Slave part of the strategy on L2
+     */
+    function slaveAddress() internal virtual returns (address) {
+        return address(this);
+    }
+
+    /**
      * @dev Deposit asset into mainnet strategy making them ready to be 
      *      bridged to Slave part of the strategy
      * @param _asset Address of asset to deposit

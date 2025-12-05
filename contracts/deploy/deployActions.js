@@ -1685,18 +1685,19 @@ const deploySonicSwapXAMOStrategyImplementation = async () => {
 };
 
 // deploys an instance of InitializeGovernedUpgradeabilityProxy where address is defined by salt
-const deployProxyWithCreateX = async (salt) => {
+const deployProxyWithCreateX = async (salt, proxyName) => {
   const { deployerAddr } = await getNamedAccounts();
   const sDeployer = await ethers.provider.getSigner(deployerAddr);
-  log(`Deploying proxy with salt: ${salt} as deployer ${deployerAddr}`);
+  log(`Deploying ${proxyName} with salt: ${salt} as deployer ${deployerAddr}`);
 
   const cCreateX = await ethers.getContractAt(createxAbi, addresses.createX);
   const factoryEncodedSalt = encodeSaltForCreateX(deployerAddr, false, 1);
 
   const getFactoryBytecode = async () => {
     // No deployment needed—get factory directly from artifacts
-    const factory = await ethers.getContractFactory("InitializeGovernedUpgradeabilityProxy");
-    return factory.bytecode;
+    const ProxyContract = await ethers.getContractFactory(proxyName);
+    const encodedArgs = ProxyContract.interface.encodeDeploy([deployerAddr]);
+    return ethers.utils.hexConcat([ProxyContract.bytecode, encodedArgs]);
   }
 
   const txResponse = await withConfirmation(
@@ -1715,6 +1716,83 @@ const deployProxyWithCreateX = async (salt) => {
   );
   
   return proxyAddress;
+};
+
+// deploys and initializes the Yearn 3 master strategy
+const deployYearn3MasterStrategyImpl = async (proxyAddress, implementationName = "YearnV3MasterStrategy") => {
+  const { deployerAddr } = await getNamedAccounts();
+  const sDeployer = await ethers.provider.getSigner(deployerAddr);
+  log(`Deploying Yearn3MasterStrategyImpl as deployer ${deployerAddr}`);
+
+  const cYearnV3MasterStrategyProxy = await ethers.getContractAt(
+    "YearnV3MasterStrategyProxy",
+    proxyAddress
+  );
+
+  const dYearnV3MasterStrategy = await deployWithConfirmation(
+    implementationName,
+    [
+      [
+        addresses.zero, // platform address
+        addresses.mainnet.Vault
+      ]
+    ]
+  );
+
+  // const initData = cYearnV3MasterStrategy.interface.encodeFunctionData(
+  //   "initialize()",
+  //   []
+  // );
+  
+  // Init the proxy to point at the implementation, set the governor, and call initialize
+  const initFunction = "initialize(address,address,bytes)";
+  await withConfirmation(
+    cYearnV3MasterStrategyProxy.connect(sDeployer)[initFunction](
+      dYearnV3MasterStrategy.address,
+      addresses.mainnet.Timelock, // governor
+      //initData, // data for delegate call to the initialize function on the strategy
+      "0x",
+      await getTxOpts()
+    )
+  );
+
+  return dYearnV3MasterStrategy.address;
+};
+
+// deploys and initializes the Yearn 3 slave strategy
+const deployYearn3SlaveStrategyImpl = async (proxyAddress, implementationName = "YearnV3SlaveStrategy") => {
+  const { deployerAddr } = await getNamedAccounts();
+  const sDeployer = await ethers.provider.getSigner(deployerAddr);
+  log(`Deploying Yearn3SlaveStrategyImpl as deployer ${deployerAddr}`);
+
+  const cYearnV3SlaveStrategyProxy = await ethers.getContractAt(
+    "YearnV3SlaveStrategyProxy",
+    proxyAddress
+  );
+
+  const dYearnV3SlaveStrategy = await deployWithConfirmation(
+    implementationName,
+    []
+  );
+
+  // const initData = cYearnV3MasterStrategy.interface.encodeFunctionData(
+  //   "initialize()",
+  //   []
+  // );
+  
+  // Init the proxy to point at the implementation, set the governor, and call initialize
+  const initFunction = "initialize(address,address,bytes)";
+  await withConfirmation(
+    cYearnV3SlaveStrategyProxy.connect(sDeployer)[initFunction](
+      dYearnV3SlaveStrategy.address,
+      addresses.base.timelock, // governor
+      //initData, // data for delegate call to the initialize function on the strategy
+      "0x",
+      await getTxOpts()
+    )
+  );
+
+  return dYearnV3SlaveStrategy.address;
 };
 
 module.exports = {
@@ -1755,4 +1833,6 @@ module.exports = {
   getPlumeContracts,
   deploySonicSwapXAMOStrategyImplementation,
   deployProxyWithCreateX,
+  deployYearn3MasterStrategyImpl,
+  deployYearn3SlaveStrategyImpl,
 };

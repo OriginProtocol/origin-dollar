@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 import { InitializeGovernedUpgradeabilityProxy } from "./InitializeGovernedUpgradeabilityProxy.sol";
-
+import { InitializeGovernedUpgradeabilityProxy2 } from "./InitializeGovernedUpgradeabilityProxy2.sol";
 /**
  * @notice OUSDProxy delegates calls to an OUSD implementation
  */
@@ -319,4 +319,22 @@ contract CompoundingStakingSSVStrategyProxy is
     InitializeGovernedUpgradeabilityProxy
 {
 
+}
+
+/**
+ * @notice YearnV3MasterStrategyProxy delegates calls to a YearnV3MasterStrategy implementation
+ */
+contract YearnV3MasterStrategyProxy is
+    InitializeGovernedUpgradeabilityProxy2
+{
+    constructor(address governor) InitializeGovernedUpgradeabilityProxy2(governor) {}
+}
+
+/**
+ * @notice YearnV3SlaveStrategyProxy delegates calls to a YearnV3SlaveStrategy implementation
+ */
+contract YearnV3SlaveStrategyProxy is
+    InitializeGovernedUpgradeabilityProxy2
+{
+    constructor(address governor) InitializeGovernedUpgradeabilityProxy2(governor) {}
 }
