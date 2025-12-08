@@ -56,7 +56,7 @@ module.exports = deploymentWithGovernanceProposal(
           signature: "removeStrategy(address)",
           args: [cNativeStakingStrategyProxy.address],
         },
-        // 2. Upgrade the Native Staking Strategy Strategy
+        // 2. Upgrade the Native Staking Strategy
         {
           contract: cNativeStakingStrategyProxy,
           signature: "upgradeTo(address)",

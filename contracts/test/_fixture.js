@@ -15,6 +15,7 @@ const {
   fundAccounts,
   fundAccountsForOETHUnitTests,
 } = require("../utils/funding");
+const { deployWithConfirmation } = require("../utils/deploy");
 
 const { replaceContractAt } = require("../utils/hardhat");
 const {
@@ -24,6 +25,7 @@ const {
   oethUnits,
   ousdUnits,
   units,
+  isTest,
   isFork,
   isHolesky,
   isHoleskyFork,
@@ -38,6 +40,7 @@ const morphoLensAbi = require("./abi/morphoLens.json");
 const crvMinterAbi = require("./abi/crvMinter.json");
 const susdsAbi = require("./abi/sUSDS.json");
 const metamorphoAbi = require("./abi/metamorpho.json");
+const merklDistributorAbi = require("./abi/merklDistributor.json");
 
 // const curveFactoryAbi = require("./abi/curveFactory.json")
 const ousdMetapoolAbi = require("./abi/ousdMetapool.json");
@@ -779,7 +782,10 @@ const defaultFixture = deployments.createFixture(async () => {
     mock1InchSwapRouter,
     convexEthMetaStrategy,
     vaultValueChecker,
-    oethVaultValueChecker;
+    oethVaultValueChecker,
+    poolBoosterCentralRegistry,
+    poolBoosterMerklFactory,
+    merklDistributor;
 
   if (isFork) {
     usdt = await ethers.getContractAt(usdtAbi, addresses.mainnet.USDT);
@@ -908,6 +914,21 @@ const defaultFixture = deployments.createFixture(async () => {
 
     vaultValueChecker = await ethers.getContract("VaultValueChecker");
     oethVaultValueChecker = await ethers.getContract("OETHVaultValueChecker");
+
+    poolBoosterCentralRegistry = await ethers.getContractAt(
+      "PoolBoostCentralRegistry",
+      (
+        await ethers.getContract("PoolBoostCentralRegistryProxy")
+      ).address
+    );
+    poolBoosterMerklFactory = await ethers.getContract(
+      "PoolBoosterFactoryMerkl"
+    );
+
+    merklDistributor = await ethers.getContractAt(
+      merklDistributorAbi,
+      addresses.mainnet.CampaignCreator
+    );
   } else {
     usdt = await ethers.getContract("MockUSDT");
     usds = await ethers.getContract("MockUSDS");
@@ -1031,13 +1052,14 @@ const defaultFixture = deployments.createFixture(async () => {
         .mint(usds.address, usdsUnits("100"), 0);
 
       // Fund WETH contract
-      await hardhatSetBalance(user.address, "500");
-      await weth.connect(user).deposit({ value: oethUnits("100") });
+      await hardhatSetBalance(user.address, "50000");
+      await weth.connect(user).deposit({ value: oethUnits("10000") });
       await weth
         .connect(user)
         .approve(vaultAndTokenConracts.oethVault.address, oethUnits("100"));
     }
   }
+
   return {
     ...vaultAndTokenConracts,
     // Accounts
@@ -1152,8 +1174,40 @@ const defaultFixture = deployments.createFixture(async () => {
 
     morphoToken,
     legacyMorphoToken,
+    poolBoosterCentralRegistry,
+    poolBoosterMerklFactory,
+    merklDistributor,
   };
 });
+
+// Default fixture that has pool booster code updated and replaced to the latest version
+async function poolBoosterCodeUpdatedFixture() {
+  const fixture = await defaultFixture();
+  const poolBoosterAddress = "0xF4c001dfe53C584425d7943395C7E57b10BD1DC8";
+
+  const curvePoolBoosterProxy = await ethers.getContractAt(
+    "CurvePoolBoosterProxy",
+    poolBoosterAddress
+  );
+  const curvePoolBoosterFactory = await ethers.getContract(
+    "CurvePoolBoosterFactory"
+  );
+
+  const implementationAddress = await curvePoolBoosterProxy.implementation();
+
+  const rewardToken = addresses.mainnet.OUSDProxy;
+  const gauge = addresses.mainnet.CurveOUSDUSDTGauge;
+
+  const UpdatedPoolBooster = await deployWithConfirmation("CurvePoolBooster", [
+    rewardToken,
+    gauge,
+  ]);
+
+  await replaceContractAt(implementationAddress, UpdatedPoolBooster);
+  fixture.curvePoolBoosterFactory = curvePoolBoosterFactory;
+
+  return fixture;
+}
 
 async function oethDefaultFixture() {
   // TODO: Trim it down to only do OETH things
@@ -1976,6 +2030,113 @@ async function nativeStakingSSVStrategyFixture() {
 }
 
 /**
+ * CompoundingStakingSSVStrategy fixture
+ */
+async function compoundingStakingSSVStrategyFixture() {
+  const fixture = await beaconChainFixture();
+  await hotDeployOption(fixture, "compoundingStakingSSVStrategyFixture", {
+    isOethFixture: true,
+  });
+
+  let compoundingStakingStrategyProxy;
+  if (isTest && !isFork) {
+    // For unit tests, the proxy is pinned to a fixed address
+    compoundingStakingStrategyProxy = await ethers.getContractAt(
+      "CompoundingStakingSSVStrategyProxy",
+      addresses.unitTests.CompoundingStakingStrategyProxy
+    );
+  } else {
+    compoundingStakingStrategyProxy = await ethers.getContract(
+      "CompoundingStakingSSVStrategyProxy"
+    );
+  }
+
+  const compoundingStakingSSVStrategy = await ethers.getContractAt(
+    "CompoundingStakingSSVStrategy",
+    compoundingStakingStrategyProxy.address
+  );
+  fixture.compoundingStakingSSVStrategy = compoundingStakingSSVStrategy;
+
+  fixture.compoundingStakingStrategyView = await ethers.getContract(
+    "CompoundingStakingStrategyView"
+  );
+
+  if (isFork) {
+    /*
+    const { compoundingStakingSSVStrategy, ssv } = fixture;
+
+    // The Defender Relayer
+    fixture.validatorRegistrator = await impersonateAndFund(
+      addresses.mainnet.validatorRegistrator
+    );
+
+    // Fund some SSV to the compounding staking strategy
+    const ssvWhale = await impersonateAndFund(
+      "0xf977814e90da44bfa03b6295a0616a897441acec" // Binance 8
+    );
+    await ssv
+      .connect(ssvWhale)
+      .transfer(compoundingStakingSSVStrategy.address, oethUnits("100"));
+
+    fixture.ssvNetwork = await ethers.getContractAt(
+      "ISSVNetwork",
+      addresses.mainnet.SSVNetwork
+    );
+    */
+  } else {
+    fixture.ssvNetwork = await ethers.getContract("MockSSVNetwork");
+    const { governorAddr, registratorAddr } = await getNamedAccounts();
+    const { oethVault, weth } = fixture;
+    const sGovernor = await ethers.provider.getSigner(governorAddr);
+    const sRegistrator = await ethers.provider.getSigner(registratorAddr);
+
+    // Approve Strategy
+    await oethVault
+      .connect(sGovernor)
+      .approveStrategy(compoundingStakingSSVStrategy.address);
+
+    // Set as default
+    await oethVault
+      .connect(sGovernor)
+      .setAssetDefaultStrategy(
+        weth.address,
+        compoundingStakingSSVStrategy.address
+      );
+
+    await compoundingStakingSSVStrategy
+      .connect(sGovernor)
+      .setRegistrator(registratorAddr);
+
+    await compoundingStakingSSVStrategy
+      .connect(sGovernor)
+      .setHarvesterAddress(fixture.oethHarvester.address);
+
+    fixture.validatorRegistrator = sRegistrator;
+  }
+
+  return fixture;
+}
+
+async function compoundingStakingSSVStrategyMerkleProofsMockedFixture() {
+  const fixture = await compoundingStakingSSVStrategyFixture();
+
+  const beaconProofsAddress =
+    await fixture.compoundingStakingSSVStrategy.BEACON_PROOFS();
+
+  const mockBeaconProof = await ethers.getContract("MockBeaconProofs");
+
+  // replace beacon proofs library with the mocked one
+  await replaceContractAt(beaconProofsAddress, mockBeaconProof);
+
+  fixture.mockBeaconProof = await ethers.getContractAt(
+    "MockBeaconProofs",
+    beaconProofsAddress
+  );
+
+  return fixture;
+}
+
+/**
  * Generalized strategy fixture that works only in forked environment
  *
  * @param metapoolAddress -> the address of the metapool
@@ -2558,6 +2719,145 @@ async function woethCcipZapperFixture() {
   return fixture;
 }
 
+async function beaconChainFixture() {
+  const fixture = await defaultFixture();
+
+  fixture.beaconRoots = await ethers.getContractAt(
+    "MockBeaconRoots",
+    addresses.mainnet.beaconRoots
+  );
+
+  const { deploy } = deployments;
+  const { governorAddr } = await getNamedAccounts();
+
+  const { beaconConsolidationReplaced, beaconWithdrawalReplaced } =
+    await enableExecutionLayerGeneralPurposeRequests();
+
+  await deploy("MockBeaconConsolidation", {
+    from: governorAddr,
+  });
+
+  await deploy("MockPartialWithdrawal", {
+    from: governorAddr,
+  });
+
+  fixture.beaconConsolidationReplaced = beaconConsolidationReplaced;
+  fixture.beaconWithdrawalReplaced = beaconWithdrawalReplaced;
+
+  fixture.beaconConsolidation = await resolveContract(
+    "MockBeaconConsolidation"
+  );
+  fixture.partialWithdrawal = await resolveContract("MockPartialWithdrawal");
+
+  // fund the beacon communication contracts so they can pay the fee
+  await hardhatSetBalance(fixture.beaconConsolidation.address, "100");
+  await hardhatSetBalance(fixture.partialWithdrawal.address, "100");
+
+  if (isFork) {
+    fixture.beaconProofs = await resolveContract("BeaconProofs");
+  } else {
+    fixture.beaconProofs = await resolveContract("EnhancedBeaconProofs");
+  }
+
+  return fixture;
+}
+
+/**
+ * Harhdat doesn't have a support for execution layer general purpose requests to the
+ * consensus layer. E.g. consolidation request and (partial) withdrawal request.
+ */
+async function enableExecutionLayerGeneralPurposeRequests() {
+  const executionLayerConsolidation = await deployWithConfirmation(
+    "ExecutionLayerConsolidation"
+  );
+  const executionLayerWithdrawal = await deployWithConfirmation(
+    "ExecutionLayerWithdrawal"
+  );
+
+  await replaceContractAt(
+    addresses.mainnet.toConsensus.consolidation,
+    executionLayerConsolidation
+  );
+
+  await replaceContractAt(
+    addresses.mainnet.toConsensus.withdrawals,
+    executionLayerWithdrawal
+  );
+
+  const withdrawalAbi = `[
+    {
+      "inputs": [],
+      "name": "lastAmount",
+      "outputs": [
+        {
+          "internalType": "uint64",
+          "name": "",
+          "type": "uint64"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "lastPublicKey",
+      "outputs": [
+        {
+          "internalType": "bytes",
+          "name": "",
+          "type": "bytes"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    }
+  ]`;
+
+  const consolidationAbi = `[
+    {
+      "inputs": [],
+      "name": "lastSource",
+      "outputs": [
+        {
+          "internalType": "bytes",
+          "name": "",
+          "type": "bytes"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "lastTarget",
+      "outputs": [
+        {
+          "internalType": "bytes",
+          "name": "",
+          "type": "bytes"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    }
+  ]`;
+
+  const beaconConsolidationReplaced = await ethers.getContractAt(
+    JSON.parse(consolidationAbi),
+    addresses.mainnet.toConsensus.consolidation
+  );
+
+  const beaconWithdrawalReplaced = await ethers.getContractAt(
+    JSON.parse(withdrawalAbi),
+    addresses.mainnet.toConsensus.withdrawals
+  );
+
+  return {
+    beaconConsolidationReplaced,
+    beaconWithdrawalReplaced,
+  };
+}
+
 /**
  * A fixture is a setup function that is run only the first time it's invoked. On subsequent invocations,
  * Hardhat will reset the state of the network to what it was at the point after the fixture was initially executed.
@@ -2615,6 +2915,7 @@ module.exports = {
   resetAllowance,
   defaultFixture,
   oethDefaultFixture,
+  poolBoosterCodeUpdatedFixture,
   loadTokenTransferFixture,
   mockVaultFixture,
   compoundFixture,
@@ -2635,6 +2936,8 @@ module.exports = {
   rebornFixture,
   balancerREthFixture,
   nativeStakingSSVStrategyFixture,
+  compoundingStakingSSVStrategyFixture,
+  compoundingStakingSSVStrategyMerkleProofsMockedFixture,
   oethMorphoAaveFixture,
   oeth1InchSwapperFixture,
   oethCollateralSwapFixture,
@@ -2645,5 +2948,6 @@ module.exports = {
   nodeRevert,
   woethCcipZapperFixture,
   bridgeHelperModuleFixture,
+  beaconChainFixture,
   claimRewardsModuleFixture,
 };

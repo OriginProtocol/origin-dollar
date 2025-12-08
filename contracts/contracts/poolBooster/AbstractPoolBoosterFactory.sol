@@ -16,8 +16,8 @@ contract AbstractPoolBoosterFactory is Governable {
         IPoolBoostCentralRegistry.PoolBoosterType boosterType;
     }
 
-    // @notice address of Origin Sonic
-    address public immutable oSonic;
+    // @notice address of Origin Token
+    address public immutable oToken;
     // @notice Central registry contract
     IPoolBoostCentralRegistry public immutable centralRegistry;
 
@@ -26,22 +26,22 @@ contract AbstractPoolBoosterFactory is Governable {
     // @notice mapping of AMM pool to pool booster
     mapping(address => PoolBoosterEntry) public poolBoosterFromPool;
 
-    // @param address _oSonic address of the OSonic token
+    // @param address _oToken address of the OToken token
     // @param address _governor address governor
     // @param address _centralRegistry address of the central registry
     constructor(
-        address _oSonic,
+        address _oToken,
         address _governor,
         address _centralRegistry
     ) {
-        require(_oSonic != address(0), "Invalid oSonic address");
+        require(_oToken != address(0), "Invalid oToken address");
         require(_governor != address(0), "Invalid governor address");
         require(
             _centralRegistry != address(0),
             "Invalid central registry address"
         );
 
-        oSonic = _oSonic;
+        oToken = _oToken;
         centralRegistry = IPoolBoostCentralRegistry(_centralRegistry);
         _setGovernor(_governor);
     }

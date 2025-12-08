@@ -24,12 +24,7 @@ const getS3Context = async ({
   ];
 };
 
-const getPrivateKeyFromS3 = async ({
-  pubkey,
-  awsS3AccessKeyId,
-  awsS3SexcretAccessKeyId,
-  s3BucketName,
-}) => {
+const getPrivateKeyFromS3 = async ({ pubkey }) => {
   const [s3Client, bucketName] = await getS3Context();
   log("Attempting to fetch encrypted private key from S3");
   const fileName = `${pubkey}.json`;

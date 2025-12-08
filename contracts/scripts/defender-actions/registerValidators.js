@@ -1,11 +1,5 @@
 const { ethers } = require("ethers");
-const {
-  DefenderRelaySigner,
-  DefenderRelayProvider,
-} = require("@openzeppelin/defender-relay-client/lib/ethers");
-const {
-  KeyValueStoreClient,
-} = require("@openzeppelin/defender-kvstore-client");
+const { Defender } = require("@openzeppelin/defender-sdk");
 const { registerValidators } = require("../../utils/validator");
 const addresses = require("../../utils/addresses");
 
@@ -20,14 +14,17 @@ const handler = async (event) => {
     `DEBUG env var in handler before being set: "${process.env.DEBUG}"`
   );
 
-  const store = new KeyValueStoreClient(event);
-
   // Initialize defender relayer provider and signer
-  const provider = new DefenderRelayProvider(event);
-  const signer = new DefenderRelaySigner(event, provider, { speed: "fastest" });
+  const client = new Defender(event);
+  const provider = client.relaySigner.getProvider({ ethersVersion: "v5" });
+  const signer = await client.relaySigner.getSigner(provider, {
+    speed: "fastest",
+    ethersVersion: "v5",
+  });
+  const store = client.keyValueStore;
 
   const network = await provider.getNetwork();
-  const networkName = network.chainId === 1 ? "mainnet" : "holesky";
+  const networkName = network.chainId === 1 ? "mainnet" : "hoodi";
   log(`Network: ${networkName} with chain id (${network.chainId})`);
 
   const nativeStakingProxyAddress =

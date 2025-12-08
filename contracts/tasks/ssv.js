@@ -1,13 +1,12 @@
-const { parseUnits, formatUnits, solidityPack } = require("ethers/lib/utils");
+const { parseUnits, formatUnits } = require("ethers/lib/utils");
 
 const addresses = require("../utils/addresses");
 const { resolveContract } = require("../utils/resolvers");
 const { getSigner } = require("../utils/signers");
-const { getClusterInfo } = require("../utils/ssv");
-const { networkMap } = require("../utils/hardhat-helpers");
+const { getClusterInfo, sortOperatorIds } = require("../utils/ssv");
+const { getNetworkName } = require("../utils/hardhat-helpers");
 const { logTxDetails } = require("../utils/txLogger");
 const { resolveNativeStakingStrategyProxy } = require("./validator");
-const { checkPubkeyFormat } = require("./taskUtils");
 
 const log = require("../utils/logger")("task:ssv");
 
@@ -29,8 +28,7 @@ async function removeValidator({ index, pubkey, operatorids }) {
     ownerAddress: strategy.address,
   });
 
-  log(`About to remove validator`);
-  pubkey = checkPubkeyFormat(pubkey);
+  log(`About to remove validator: ${pubkey}`);
   const tx = await strategy
     .connect(signer)
     .removeSsvValidator(pubkey, operatorIds, cluster);
@@ -38,6 +36,7 @@ async function removeValidator({ index, pubkey, operatorids }) {
 }
 
 const printClusterInfo = async (options) => {
+  options.operatorids = await sortOperatorIds(options.operatorids);
   const cluster = await getClusterInfo(options);
   console.log(`block ${cluster.block}`);
   console.log(`Cluster: ${JSON.stringify(cluster.cluster, null, "  ")}`);
@@ -46,15 +45,15 @@ const printClusterInfo = async (options) => {
 const depositSSV = async ({ amount, index, operatorids }) => {
   const amountBN = parseUnits(amount.toString(), 18);
   log(`Splitting operator IDs ${operatorids}`);
-  const operatorIds = operatorids.split(",").map((id) => parseInt(id));
+  const operatorIds = await sortOperatorIds(operatorids);
 
   const signer = await getSigner();
 
   const strategy = await resolveNativeStakingStrategyProxy(index);
 
   const { chainId } = await ethers.provider.getNetwork();
-  const network = networkMap[chainId];
-  const ssvNetworkAddress = addresses[network].SSVNetwork;
+  const networkName = await getNetworkName();
+  const ssvNetworkAddress = addresses[networkName].SSVNetwork;
   const ssvNetwork = await resolveContract(ssvNetworkAddress, "ISSVNetwork");
 
   // Cluster details
@@ -82,15 +81,15 @@ const depositSSV = async ({ amount, index, operatorids }) => {
 const withdrawSSV = async ({ amount, index, operatorids }) => {
   const amountBN = parseUnits(amount.toString(), 18);
   log(`Splitting operator IDs ${operatorids}`);
-  const operatorIds = operatorids.split(",").map((id) => parseInt(id));
+  const operatorIds = await sortOperatorIds(operatorids);
 
   const signer = await getSigner();
 
   const strategy = await resolveNativeStakingStrategyProxy(index);
 
   const { chainId } = await ethers.provider.getNetwork();
-  const network = networkMap[chainId];
-  const ssvNetworkAddress = addresses[network].SSVNetwork;
+  const networkName = await getNetworkName();
+  const ssvNetworkAddress = addresses[networkName].SSVNetwork;
   const ssvNetwork = await resolveContract(ssvNetworkAddress, "ISSVNetwork");
 
   // Cluster details
@@ -115,48 +114,9 @@ const withdrawSSV = async ({ amount, index, operatorids }) => {
   await logTxDetails(tx, "withdrawSSV");
 };
 
-const calcDepositRoot = async ({ index, pubkey, sig }, hre) => {
-  if (hre.network.name !== "hardhat") {
-    throw new Error("This task can only be run in hardhat network");
-  }
-
-  const factory = await ethers.getContractFactory("DepositContractUtils");
-  const depositContractUtils = await factory.deploy();
-
-  const proxyNumber =
-    index === undefined || index === 1 ? "" : index.toString();
-  const strategyAddress =
-    addresses.mainnet[`NativeStakingSSVStrategy${proxyNumber}Proxy`];
-  log(
-    `Resolved Native Staking Strategy with index ${index} to address to ${strategyAddress}`
-  );
-
-  const withdrawalCredentials = solidityPack(
-    ["bytes1", "bytes11", "address"],
-    [
-      "0x01",
-      "0x0000000000000000000000",
-      addresses.mainnet[`NativeStakingSSVStrategy${proxyNumber}Proxy`],
-    ]
-  );
-  log(`Withdrawal Credentials: ${withdrawalCredentials}`);
-
-  log(
-    `About to calculate deposit data root for pubkey ${pubkey} and sig ${sig}`
-  );
-  const depositDataRoot = await depositContractUtils.calculateDepositDataRoot(
-    pubkey,
-    withdrawalCredentials,
-    sig
-  );
-
-  console.log(`Deposit Root Data: ${depositDataRoot}`);
-};
-
 module.exports = {
   printClusterInfo,
   depositSSV,
   withdrawSSV,
-  calcDepositRoot,
   removeValidator,
 };

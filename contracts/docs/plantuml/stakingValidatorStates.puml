@@ -1,0 +1,23 @@
+@startuml
+
+title Compounding Validator States
+
+[*] --> REGISTERED : registerSsvValidator
+
+REGISTERED --> STAKED : stakeETH
+
+STAKED --> VERIFIED : verifyValidator
+STAKED --> INVALID : verifyValidator
+
+VERIFIED --> ACTIVE : verifyBalances
+
+ACTIVE --> EXITING : validatorWithdrawal
+ACTIVE ---> EXITED : verifyBalances
+VERIFIED --> EXITED : verifyBalances
+EXITING --> EXITED : verifyBalances
+
+REGISTERED --> REMOVED : removeSsvValidator
+INVALID --> REMOVED : removeSsvValidator
+EXITED --> REMOVED : removeSsvValidator
+
+@enduml

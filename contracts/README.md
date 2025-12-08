@@ -11,16 +11,16 @@ The following package scripts can be used to format code:
 
 ```
 # Check for any formatting issues
-yarn prettier:check
+pnpm prettier:check
 
 # Format all Solidity files
-yarn prettier:sol
+pnpm prettier:sol
 
 # Format all JavaScript files
-yarn prettier:js
+pnpm prettier:js
 
 # Format both Solidity and JavaScript files
-yarn prettier
+pnpm prettier
 ```
 
 ## Linter
@@ -31,13 +31,13 @@ yarn prettier
 
 ```
 # Check for any Solidity linting issues
-yarn lint:sol
+pnpm lint:sol
 
 # Check for any JavaScript linting issues
-yarn lint:sol
+pnpm lint:sol
 
 # Check for any Solidity or JavaScript linting issues
-yarn lint
+pnpm lint
 ```
 
 ## Slither
@@ -67,7 +67,7 @@ The [Slither installation](https://github.com/crytic/slither#how-to-install) ins
 
 ```
 ## Run Slither
-yarn slither
+pnpm slither
 ```
 
 ## Hardhat
@@ -76,11 +76,11 @@ yarn slither
 
 ```
 # Compile changed contracts
-npx hardhat compile
+pnpm hardhat compile
 
 # Recompile all contracts
-yarn clean
-npx hardhat compile
+pnpm clean
+pnpm hardhat compile
 ```
 
 Alternatively, the Hardhat companion npm package [hardhat-shorthand](https://www.npmjs.com/package/hardhat-shorthand) can be used as a shorthand for npx hardhat. Installation instructions can be found [here](https://hardhat.org/hardhat-runner/docs/guides/command-line-completion#installation).
@@ -101,7 +101,7 @@ Hardhat tests are used for contract unit tests which are under the [test](./test
 
 ```
 # Run all unit tests
-yarn test
+pnpm test
 ```
 
 ### Fork Tests
@@ -110,10 +110,10 @@ Set your `PROVIDER_URL` and desired `BLOCK_NUMBER` in your [.env](./.env) file. 
 
 ```
 # in one terminal
-yarn run node
+pnpm run node
 
 # in another terminal
-yarn test:fork
+pnpm test:fork
 ```
 
 See [Fork Tests](./fork-test.md) for more information.
@@ -143,7 +143,7 @@ Installation instructions can be found [here](https://github.com/crytic/echidna#
 
 ```
 # Run Echidna tests
-yarn echidna
+pnpm echidna
 ```
 
 ## Logger
@@ -334,40 +334,28 @@ The following will upload the different Action bundles to Defender.
 cd ./scripts/defender-actions
 npx rollup -c
 
-# Export the DEFENDER_TEAM_KEY and DEFENDER_TEAM_SECRET environment variables
-export DEFENDER_TEAM_KEY=
-export DEFENDER_TEAM_SECRET=
-# Alternatively, the following can be used but it will export all env var including DEPLOYER_PRIVATE_KEY
-# set -o allexport && source ../../.env && set +o allexport
+# Set the DEFENDER_TEAM_KEY and DEFENDER_TEAM_SECRET environment variables in the .env file
 
 # Set the DEBUG environment variable to oeth* for the Defender Action
-npx hardhat setActionVars --id 38e44420-f38b-4d4a-86b0-6012a8897ad9
-npx hardhat setActionVars --id f4b5b8d4-82ff-483f-bfae-9fef015790ca
-npx hardhat setActionVars --id 191d9631-70b9-43c5-9db4-1dd985fde05c
-npx hardhat setActionVars --id e2929f53-db56-49b2-b054-35f7df7fc4fb
-npx hardhat setActionVars --id 12c153c8-c5ca-420b-9696-e80c827996d1
-npx hardhat setActionVars --id 6e4f764d-4126-45a5-b7d9-1ab90cd3ffd6
-npx hardhat setActionVars --id 84988850-6816-4074-8e7b-c11cb2b32e7e
-npx hardhat setActionVars --id f92ea662-fc34-433b-8beb-b34e9ab74685
-npx hardhat setActionVars --id b1d831f1-29d4-4943-bb2e-8e625b76e82c
+yarn hardhat setActionVars --id f4b5b8d4-82ff-483f-bfae-9fef015790ca
+yarn hardhat setActionVars --id e2929f53-db56-49b2-b054-35f7df7fc4fb
+yarn hardhat setActionVars --id 12c153c8-c5ca-420b-9696-e80c827996d1
+yarn hardhat setActionVars --id 6e4f764d-4126-45a5-b7d9-1ab90cd3ffd6
+yarn hardhat setActionVars --id 84988850-6816-4074-8e7b-c11cb2b32e7e
+yarn hardhat setActionVars --id f92ea662-fc34-433b-8beb-b34e9ab74685
+yarn hardhat setActionVars --id b1d831f1-29d4-4943-bb2e-8e625b76e82c
 
-# The Defender autotask client uses generic env var names so we'll set them first from the values in the .env file
-export API_KEY=${DEFENDER_TEAM_KEY}
-export API_SECRET=${DEFENDER_TEAM_SECRET}
-# Holesky
-npx defender-autotask update-code 38e44420-f38b-4d4a-86b0-6012a8897ad9 ./dist/registerValidators
-npx defender-autotask update-code 191d9631-70b9-43c5-9db4-1dd985fde05c ./dist/doAccounting
 # Mainnet
-npx defender-autotask update-code f4b5b8d4-82ff-483f-bfae-9fef015790ca ./dist/registerValidators
-npx defender-autotask update-code 12c153c8-c5ca-420b-9696-e80c827996d1 ./dist/stakeValidators
-npx defender-autotask update-code e2929f53-db56-49b2-b054-35f7df7fc4fb ./dist/doAccounting
-npx defender-autotask update-code 6e4f764d-4126-45a5-b7d9-1ab90cd3ffd6 ./dist/harvest
-npx defender-autotask update-code 84988850-6816-4074-8e7b-c11cb2b32e7e ./dist/sonicRequestWithdrawal
-npx defender-autotask update-code f92ea662-fc34-433b-8beb-b34e9ab74685 ./dist/sonicClaimWithdrawals
-npx defender-autotask update-code b1d831f1-29d4-4943-bb2e-8e625b76e82c ./dist/claimBribes
+yarn hardhat updateAction --id f4b5b8d4-82ff-483f-bfae-9fef015790ca --file registerValidators
+yarn hardhat updateAction --id 12c153c8-c5ca-420b-9696-e80c827996d1 --file stakeValidators
+yarn hardhat updateAction --id e2929f53-db56-49b2-b054-35f7df7fc4fb --file doAccounting
+yarn hardhat updateAction --id 6e4f764d-4126-45a5-b7d9-1ab90cd3ffd6 --file harvest
+yarn hardhat updateAction --id 84988850-6816-4074-8e7b-c11cb2b32e7e --file sonicRequestWithdrawal
+yarn hardhat updateAction --id f92ea662-fc34-433b-8beb-b34e9ab74685 --file sonicClaimWithdrawals
+yarn hardhat updateAction --id b1d831f1-29d4-4943-bb2e-8e625b76e82c --file claimBribes
 ```
 
-`rollup` and `defender-autotask-client` can be installed globally to avoid the `npx` prefix.
+`rollup` can be installed globally to avoid the `npx` prefix.
 
 ### Encrypting / decrypting validator private keys
 
@@ -419,13 +407,57 @@ Validator public key: 90db8ae56a9e741775ca37dd960606541306974d4a998ef6a6227c85a9
 
 ## Contract Verification
 
-The Hardhat plug-in [@nomiclabs/hardhat-etherscan](https://www.npmjs.com/package/@nomiclabs/hardhat-etherscan) is used to verify contracts on Etherscan.
+The Hardhat plug-in [@nomiclabs/hardhat-verify](https://www.npmjs.com/package/@nomiclabs/hardhat-etherscan) is used to verify contracts on Etherscan. Etherscan has migrated to V2 api where all the chains use the same endpoint. Hardhat verify should be run with `--contract` parameter otherwise there is a significant slowdown while hardhat is gathering contract information.
+
+**IMPORTANT:**
+
+- Currently only yarn works. Do not use npx/pnpm
+- Also if you switch package manager do run "hardhat compile" first to mitigate potential bytecode missmatch errors
 
 There's an example
 
 ```
-npx hardhat --network mainnet verify --contract contracts/vault/VaultAdmin.sol:VaultAdmin 0x31a91336414d3B955E494E7d485a6B06b55FC8fB
+yarn hardhat --network mainnet verify --contract contracts/vault/VaultAdmin.sol:VaultAdmin 0x31a91336414d3B955E494E7d485a6B06b55FC8fB
 ```
+
+Example with constructor parameters passed as command params
+
+```
+yarn hardhat verify --network mainnet 0x0FC66355B681503eFeE7741BD848080d809FD6db --contract contracts/poolBooster/PoolBoosterFactoryMerkl.sol:PoolBoosterFactoryMerkl 0x856c4Efb76C1D1AE02e20CEB03A2A6a08b0b8dC3 0x4FF1b9D9ba8558F5EAfCec096318eA0d8b541971 0xAA8af8Db4B6a827B51786334d26349eb03569731 0x8BB4C975Ff3c250e0ceEA271728547f3802B36Fd
+```
+
+Example with constructor parameters saved to file and file path passed to the command
+
+```
+echo "module.exports = [[
+  \"0x0000000000000000000000000000000000000001\",
+  \"0xe75d77b1865ae93c7eaa3040b038d7aa7bc02f70\"
+}]" > flux-args.js
+npx hardhat --network mainnet verify --contract contracts/strategies/FluxStrategy.sol:FluxStrategy --constructor-args flux-args.js 0x57d49c28Cf9A0f65B1279a97eD01C3e49a5A173f
+```
+
+`hardhat-deploy` package offers a secondary way to verify contracts, where constructor parameters don't need to be passed into the verification call. Since Etherscan has migrated to V2 api this approach is no longer working. `etherscan-verify` call uses `hardhat verify` under the hood.
+
+```
+yarn hardhat etherscan-verify --network mainnet --api-url https://api.etherscan.io
+```
+
+#### Addressing verification slowdowns
+
+Profiling the `hardhat-verify` prooved that when the `hardhat verify` is ran without --contract parameter
+it can take up to 4-5 minutes to gather the necessary contract information.
+Use `--contract` e.g. `--contract contracts/vault/VaultAdmin.sol:VaultAdmin` to mitigate the issue.
+
+#### Migration to full support of Etherscan V2 api
+
+Migrating to Etherscan V2 has been attempted with no success.
+Resources:
+
+- migration guid by Etherscan: https://docs.etherscan.io/v2-migration
+- guide for Hardhat setup: https://docs.etherscan.io/contract-verification/verify-with-hardhat. (note upgrading @nomicfoundation/hardhat-verify to 2.0.14 didn't resolve the issue last time)
+- openzeppelin-upgrades claims to have solved the issue in 3.9.1 version of the package: https://github.com/OpenZeppelin/openzeppelin-upgrades/issues/1165 Not only does this not solve the verification issue, it is also a breaking change for our repo.
+
+Good luck when attempting to solve this.
 
 ### Deployed contract code verification
 
@@ -455,10 +487,10 @@ The Hardhat plug-in [solidity-coverage](https://github.com/sc-forks/solidity-cov
 
 ```
 # Unit test coverage
-yarn test:coverage
+pnpm test:coverage
 
 # For test coverage
-yarn test:fork:coverage
+pnpm test:fork:coverage
 ```
 
 The CI will upload the coverage reports to Codecov if they complete successfully.

@@ -1,9 +1,6 @@
 const { ethers } = require("ethers");
 const { parseEther, formatUnits } = require("ethers/lib/utils");
-const {
-  DefenderRelaySigner,
-  DefenderRelayProvider,
-} = require("@openzeppelin/defender-relay-client/lib/ethers");
+const { Defender } = require("@openzeppelin/defender-sdk");
 const addresses = require("../../utils/addresses");
 const { logTxDetails } = require("../../utils/txLogger");
 
@@ -28,8 +25,12 @@ const handler = async (event) => {
   );
 
   // Initialize defender relayer provider and signer
-  const provider = new DefenderRelayProvider(event);
-  const signer = new DefenderRelaySigner(event, provider, { speed: "fastest" });
+  const client = new Defender(event);
+  const provider = client.relaySigner.getProvider({ ethersVersion: "v5" });
+  const signer = await client.relaySigner.getSigner(provider, {
+    speed: "fastest",
+    ethersVersion: "v5",
+  });
 
   const network = await provider.getNetwork();
   const networkName = network.chainId === 1 ? "mainnet" : "holesky";
@@ -143,7 +144,9 @@ const harvestMorphoStrategies = async (signer) => {
     signer
   );
 
-  const safeModuleTx = await safeModule.connect(signer).claimRewards(true);
+  const safeModuleTx = await safeModule.connect(signer).claimRewards(true, {
+    gasLimit: 2500000,
+  });
   await logTxDetails(safeModuleTx, `claimRewards`);
 };
 

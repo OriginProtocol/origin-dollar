@@ -397,7 +397,7 @@ describe("Sonic ForkTest: SwapX AMO Strategy", function () {
         const { clement, wS } = fixture;
 
         attackerWsBalanceBefore = await wS.balanceOf(clement.address);
-        const wsAmountIn = parseUnits("100000");
+        const wsAmountIn = parseUnits("10000000");
 
         dataBeforeSwap = await snapData();
         logSnapData(
@@ -480,7 +480,7 @@ describe("Sonic ForkTest: SwapX AMO Strategy", function () {
       beforeEach(async () => {
         const { clement, oSonic, oSonicVault, wS } = fixture;
 
-        const osAmountIn = parseUnits("100000");
+        const osAmountIn = parseUnits("10000000");
         // Mint OS using wS
         await oSonicVault.connect(clement).mint(wS.address, osAmountIn, 0);
 
@@ -572,7 +572,7 @@ describe("Sonic ForkTest: SwapX AMO Strategy", function () {
       wsMintAmount: 5000,
       depositToStrategy: true,
       balancePool: true,
-      poolAddOSAmount: 100000,
+      poolAddOSAmount: 1000000,
     });
     beforeEach(async () => {
       fixture = await loadFixture();
@@ -613,7 +613,7 @@ describe("Sonic ForkTest: SwapX AMO Strategy", function () {
 
       const tx = swapXAMOStrategy
         .connect(strategist)
-        .swapAssetsToPool(parseUnits("20000"));
+        .swapAssetsToPool(parseUnits("2000000"));
 
       await expect(tx).to.be.revertedWith("Not enough LP tokens in gauge");
     });
@@ -698,7 +698,7 @@ describe("Sonic ForkTest: SwapX AMO Strategy", function () {
       wsMintAmount: 5000,
       depositToStrategy: true,
       balancePool: true,
-      poolAddwSAmount: 200000,
+      poolAddwSAmount: 2000000,
     });
     beforeEach(async () => {
       fixture = await loadFixture();
@@ -735,7 +735,7 @@ describe("Sonic ForkTest: SwapX AMO Strategy", function () {
       // try swapping wS into the pool
       const tx = swapXAMOStrategy
         .connect(strategist)
-        .swapOTokensToPool(parseUnits("99990"));
+        .swapOTokensToPool(parseUnits("999990"));
 
       await expect(tx).to.be.revertedWith("OTokens overshot peg");
     });
@@ -756,7 +756,7 @@ describe("Sonic ForkTest: SwapX AMO Strategy", function () {
       wsMintAmount: 20000,
       depositToStrategy: true,
       balancePool: true,
-      poolAddwSAmount: 200,
+      poolAddwSAmount: 20000,
     });
     beforeEach(async () => {
       fixture = await loadFixture();
@@ -797,7 +797,7 @@ describe("Sonic ForkTest: SwapX AMO Strategy", function () {
       // Add OS to the pool
       const tx = swapXAMOStrategy
         .connect(strategist)
-        .swapOTokensToPool(parseUnits("110"));
+        .swapOTokensToPool(parseUnits("11000"));
 
       await expect(tx).to.be.revertedWith("OTokens overshot peg");
     });

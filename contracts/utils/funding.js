@@ -3,7 +3,6 @@ const hre = require("hardhat");
 const addresses = require("./addresses");
 const usdsAbi = require("../test/abi/usds.json").abi;
 const usdtAbi = require("../test/abi/usdt.json").abi;
-const tusdAbi = require("../test/abi/erc20.json");
 const usdcAbi = require("../test/abi/erc20.json");
 const ognAbi = require("../test/abi/erc20.json");
 
@@ -11,7 +10,6 @@ const {
   usdtUnits,
   usdsUnits,
   usdcUnits,
-  tusdUnits,
   ognUnits,
   oethUnits,
   isFork,
@@ -36,7 +34,7 @@ const fundAccountsForOETHUnitTests = async () => {
 
   for (const address of signerAddresses) {
     const signer = await ethers.provider.getSigner(address);
-    await weth.connect(signer).mint(oethUnits("1000"));
+    await weth.connect(signer).mint(oethUnits("10000"));
   }
 };
 

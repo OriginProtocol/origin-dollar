@@ -187,7 +187,7 @@ r = safe.post_transaction(safe_tx)
 # Nov 22, 2022 
 #
 
-# Due to an accident with with `git checkout -f`, the script for today's
+# Due to an accident with `git checkout -f`, the script for today's
 # large allocation today was lost.
 
 # --------------------------------

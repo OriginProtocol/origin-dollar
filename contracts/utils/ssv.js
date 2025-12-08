@@ -103,7 +103,7 @@ const getClusterInfo = async ({ ownerAddress, operatorids, chainId }) => {
   // HTTP encode the operator IDs
   // the .toString() will convert the array to a comma-separated string if not already a string
   const encodedOperatorIds = encodeURIComponent(operatorids.toString());
-  const network = chainId === 1 ? "mainnet" : "holesky";
+  const network = chainId === 1 ? "mainnet" : "hoodi";
   const url = `${SSV_API_ENDPOINT}/${network}/clusters/owner/${ownerAddress}/operators/${encodedOperatorIds}`;
   log(`SSV url: ${url}`);
 
@@ -176,9 +176,27 @@ const printClusterInfo = async (options) => {
   console.log("Next Nonce:", nextNonce);
 };
 
+/// @returns {string} Returns a string of sorted, comma-separated, operator IDs
+const sortOperatorIds = (operatorIdsString) => {
+  const operatorIds = splitOperatorIds(operatorIdsString);
+
+  return operatorIds.join(",");
+};
+
+/// @returns {number[]} Returns an array of sorted operator IDs
+const splitOperatorIds = (operatorIdsString) => {
+  log(`Splitting and sorting operator IDs ${operatorIdsString}`);
+  const operatorIds = operatorIdsString.split(",").map((id) => parseInt(id));
+  operatorIds.sort((a, b) => a - b);
+
+  return operatorIds;
+};
+
 module.exports = {
   printClusterInfo,
   getClusterInfo,
   getClusterNonce,
+  sortOperatorIds,
+  splitOperatorIds,
   splitValidatorKey,
 };

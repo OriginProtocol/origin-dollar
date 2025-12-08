@@ -20,11 +20,15 @@ const {
   isPlumeFork,
   isPlumeForkTest,
   isPlumeUnitTest,
+  isHoodi,
+  isHoodiFork,
+  isHoodiForkTest,
   baseProviderUrl,
   sonicProviderUrl,
   arbitrumProviderUrl,
   holeskyProviderUrl,
   plumeProviderUrl,
+  hoodiProviderUrl,
   adjustTheForkBlockNumber,
   getHardhatNetworkProperties,
 } = require("./utils/hardhat-helpers.js");
@@ -69,6 +73,7 @@ const SONIC_DEPLOYER = MAINNET_DEPLOYER;
 const SONIC_ADMIN = "0xAdDEA7933Db7d83855786EB43a238111C69B00b6";
 // 2/8 multi-sig that controls fund allocations. Aka "Guardian".
 const SONIC_STRATEGIST = "0x63cdd3072F25664eeC6FAEFf6dAeB668Ea4de94a";
+const MAINNET_RELAYER = "0x4b91827516f79d6F6a1F292eD99671663b09169a";
 
 const MULTICHAIN_STRATEGIST = "0x4FF1b9D9ba8558F5EAfCec096318eA0d8b541971";
 
@@ -77,6 +82,10 @@ const PLUME_DEPLOYER = MAINNET_DEPLOYER;
 const PLUME_ADMIN = "0x92A19381444A001d62cE67BaFF066fA1111d7202";
 // Plume 2/8 multisig
 const PLUME_STRATEGIST = MULTICHAIN_STRATEGIST;
+
+const HOODI_DEPLOYER = MAINNET_DEPLOYER;
+// Hoodi Relayer
+const HOODI_RELAYER = "0x419B6BdAE482f41b8B194515749F3A2Da26d583b";
 
 const mnemonic =
   "replace hover unaware super where filter stone fine garlic address matrix basic";
@@ -108,6 +117,8 @@ if (isHolesky || isHoleskyForkTest || isHoleskyFork) {
   paths.deploy = "deploy/arbitrumOne";
 } else if (isPlume || isPlumeFork || isPlumeForkTest || isPlumeUnitTest) {
   paths.deploy = "deploy/plume";
+} else if (isHoodi || isHoodiFork || isHoodiForkTest) {
+  paths.deploy = "deploy/hoodi";
 } else {
   // holesky deployment files are in contracts/deploy/mainnet
   paths.deploy = "deploy/mainnet";
@@ -147,6 +158,8 @@ const localEnvDeployer =
       ? SONIC_DEPLOYER
       : isPlumeFork
       ? PLUME_DEPLOYER
+      : isHoodiFork
+      ? HOODI_DEPLOYER
       : MAINNET_DEPLOYER
     : 0; // 0th signer fallback
 
@@ -160,6 +173,8 @@ const localEnvGovernor =
       ? SONIC_ADMIN
       : isPlumeFork
       ? PLUME_ADMIN
+      : isHoodiFork
+      ? HOODI_RELAYER
       : MAINNET_GOVERNOR
     : 1; // signer at index 1
 
@@ -182,8 +197,17 @@ const localEnvStrategist =
       : isSonicFork
       ? SONIC_STRATEGIST
       : // Base, Plume and Eth use Multichain Strategist
-        MULTICHAIN_STRATEGIST
+      isHoodiFork
+      ? HOODI_RELAYER
+      : MULTICHAIN_STRATEGIST
     : 0;
+
+const localEnvRegistrator =
+  process.env.FORK === "true"
+    ? isHoodiFork
+      ? HOODI_RELAYER
+      : MAINNET_RELAYER
+    : 1; // signer at index 2
 
 module.exports = {
   solidity: {
@@ -277,6 +301,13 @@ module.exports = {
       live: true,
       saveDeployments: true,
     },
+    hoodi: {
+      url: hoodiProviderUrl,
+      accounts: defaultAccounts,
+      chainId: 560048,
+      live: true,
+      saveDeployments: true,
+    },
   },
   mocha: {
     bail: process.env.BAIL === "true",
@@ -294,6 +325,7 @@ module.exports = {
       base: BASE_DEPLOYER,
       sonic: SONIC_DEPLOYER,
       plume: MAINNET_DEPLOYER,
+      hoodi: HOODI_DEPLOYER,
     },
     governorAddr: {
       default: 1,
@@ -305,6 +337,7 @@ module.exports = {
       base: BASE_GOVERNOR,
       sonic: SONIC_ADMIN,
       plume: PLUME_ADMIN,
+      hoodi: HOODI_RELAYER,
     },
     /* Local node environment currently has no access to Decentralized governance
      * address, since the contract is in another repo. Once we merge the ousd-governance
@@ -360,6 +393,7 @@ module.exports = {
       base: BASE_GOVERNOR,
       sonic: SONIC_ADMIN,
       plume: PLUME_STRATEGIST,
+      hoodi: HOODI_RELAYER,
     },
     adjusterAddr: {
       default: 0,
@@ -376,9 +410,16 @@ module.exports = {
       base: MULTICHAIN_STRATEGIST,
       sonic: SONIC_STRATEGIST,
       plume: PLUME_STRATEGIST,
+      hoodi: HOODI_RELAYER,
     },
     multichainStrategistAddr: {
       default: MULTICHAIN_STRATEGIST,
+    },
+    registratorAddr: {
+      default: 2,
+      localhost: localEnvRegistrator,
+      mainnet: MAINNET_RELAYER,
+      hoodi: HOODI_RELAYER,
     },
   },
   contractSizer: {
@@ -388,18 +429,27 @@ module.exports = {
   etherscan: {
     apiKey: {
       mainnet: process.env.ETHERSCAN_API_KEY,
-      arbitrumOne: process.env.ARBISCAN_API_KEY,
+      arbitrumOne: process.env.ETHERSCAN_API_KEY,
       holesky: process.env.ETHERSCAN_API_KEY,
-      base: process.env.BASESCAN_API_KEY,
-      sonic: process.env.SONICSCAN_API_KEY,
+      base: process.env.ETHERSCAN_API_KEY,
+      sonic: process.env.ETHERSCAN_API_KEY,
+      hoodi: process.env.ETHERSCAN_API_KEY,
       plume: "empty", // this works for: npx hardhat verify...
     },
     customChains: [
       {
+        network: "mainnet",
+        chainId: 1,
+        urls: {
+          apiURL: "https://api.etherscan.io/v2/api?chainId=1",
+          browserURL: "https://etherscan.io",
+        },
+      },
+      {
         network: "holesky",
         chainId: 17000,
         urls: {
-          apiURL: "https://api-holesky.etherscan.io/api",
+          apiURL: "https://api.etherscan.io/v2/api?chainId=17000",
           browserURL: "https://holesky.etherscan.io",
         },
       },
@@ -407,7 +457,7 @@ module.exports = {
         network: "base",
         chainId: 8453,
         urls: {
-          apiURL: "https://api.basescan.org/api",
+          apiURL: "https://api.etherscan.io/v2/api?chainId=8453",
           browserURL: "https://basescan.org",
         },
       },
@@ -415,7 +465,7 @@ module.exports = {
         network: "sonic",
         chainId: 146,
         urls: {
-          apiURL: "https://api.sonicscan.org/api",
+          apiURL: "https://api.etherscan.io/v2/api?chainId=146",
           browserURL: "https://sonicscan.org",
         },
       },
@@ -427,10 +477,19 @@ module.exports = {
           browserURL: "https://explorer.plume.org",
         },
       },
+      {
+        network: "hoodi",
+        chainId: 560048,
+        urls: {
+          apiURL: "https://api.etherscan.io/v2/api?chainId=560048",
+          browserURL: "https://hoodi.etherscan.io",
+        },
+      },
     ],
   },
   gasReporter: {
     enabled: process.env.REPORT_GAS ? true : false,
+    reportPureAndViewMethods: true,
   },
   sourcify: {
     enabled: true,

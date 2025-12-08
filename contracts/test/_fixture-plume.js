@@ -178,23 +178,23 @@ const defaultFixture = async () => {
   let roosterAmoStrategy, roosterOETHpWETHpool;
   if (isFork) {
     // Allow governor to mint WETH
-    const wethOwner = "0xb8ce2bE5c3c13712b4da61722EAd9d64bB57AbC9";
+    const wethOwner = "0xD372024F83B1882E4c615Fd834597Bd5B1532706";
     const ownerSigner = await impersonateAndFund(wethOwner);
     await wethMintableContract.connect(ownerSigner).addMinter(governor.address);
 
-    // Aerodrome AMO Strategy
-    const roosterAmoStrategyProxy = await ethers.getContract(
-      "RoosterAMOStrategyProxy"
-    );
-    roosterAmoStrategy = await ethers.getContractAt(
-      "RoosterAMOStrategy",
-      roosterAmoStrategyProxy.address
-    );
+    // // Aerodrome AMO Strategy
+    // const roosterAmoStrategyProxy = await ethers.getContract(
+    //   "RoosterAMOStrategyProxy"
+    // );
+    // roosterAmoStrategy = await ethers.getContractAt(
+    //   "RoosterAMOStrategy",
+    //   roosterAmoStrategyProxy.address
+    // );
 
-    roosterOETHpWETHpool = await ethers.getContractAt(
-      "IMaverickV2Pool",
-      addresses.plume.OethpWETHRoosterPool
-    );
+    // roosterOETHpWETHpool = await ethers.getContractAt(
+    //   "IMaverickV2Pool",
+    //   addresses.plume.OethpWETHRoosterPool
+    // );
   }
 
   for (const signer of [rafael, daniel, nick, domen, clement]) {

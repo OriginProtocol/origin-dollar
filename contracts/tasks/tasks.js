@@ -2,15 +2,16 @@ const { subtask, task, types } = require("hardhat/config");
 const { fund } = require("./account");
 const { debug } = require("./debug");
 const { env } = require("./env");
-const { setActionVars } = require("./defender");
+const { setActionVars, updateAction } = require("./defender");
 const { execute, executeOnFork, proposal, governors } = require("./governance");
 const { smokeTest, smokeTestCheck } = require("./smokeTest");
 const addresses = require("../utils/addresses");
-const { networkMap } = require("../utils/hardhat-helpers");
+const { getNetworkName } = require("../utils/hardhat-helpers");
 const {
   genECDHKey,
   decryptValidatorKey,
   decryptValidatorKeyWithMasterKey,
+  signMessage,
 } = require("./crypto");
 const { advanceBlocks } = require("./block");
 const {
@@ -66,11 +67,10 @@ const {
   curvePoolTask,
 } = require("./curve");
 const {
-  calcDepositRoot,
   depositSSV,
   withdrawSSV,
   printClusterInfo,
-  removeValidator,
+  removeValidator: removeOldValidator,
 } = require("./ssv");
 const {
   amoStrategyTask,
@@ -103,8 +103,19 @@ const {
   resolveNativeStakingStrategyProxy,
   snapValidators,
 } = require("./validator");
-
-const { tenderlySync } = require("./tenderly");
+const {
+  snapStakingStrategy,
+  snapBalances,
+  registerValidatorCreateRequest,
+  registerValidator,
+  stakeValidator,
+  autoValidatorDeposits,
+  withdrawValidator,
+  removeValidator,
+  autoValidatorWithdrawals,
+  setRegistrator,
+} = require("./validatorCompound");
+const { tenderlySync, tenderlyUpload } = require("./tenderly");
 const { setDefaultValidator, snapSonicStaking } = require("../utils/sonic");
 const {
   undelegateValidator,
@@ -114,8 +125,22 @@ const { registerValidators, stakeValidators } = require("../utils/validator");
 const { harvestAndSwap } = require("./harvest");
 const { deployForceEtherSender, forceSend } = require("./simulation");
 const { sleep } = require("../utils/time");
-
 const { lzBridgeToken, lzSetConfig } = require("./layerzero");
+const {
+  requestValidatorWithdraw,
+  beaconRoot,
+  getValidator,
+  verifyValidator,
+  verifyDeposit,
+  verifyDeposits,
+  verifyBalances,
+} = require("./beacon");
+const {
+  calcDepositRoot,
+  depositValidator,
+  mockBeaconRoot,
+  copyBeaconRoot,
+} = require("./beaconTesting");
 
 const log = require("../utils/logger")("tasks");
 
@@ -249,9 +274,9 @@ subtask("depositWETH", "Deposit ETH into WETH")
   .setAction(async (taskArgs) => {
     const signer = await getSigner();
 
-    const { chainId } = await ethers.provider.getNetwork();
-    const symbol = chainId == 146 ? "wS" : "WETH";
-    const wethAddress = addresses[networkMap[chainId]][symbol];
+    const networkName = await getNetworkName();
+    const symbol = networkName == "sonic" ? "wS" : "WETH";
+    const wethAddress = addresses[networkName][symbol];
     const weth = await ethers.getContractAt("IWETH9", wethAddress);
 
     await depositWETH({ ...taskArgs, weth, signer });
@@ -265,8 +290,8 @@ subtask("withdrawWETH", "Withdraw ETH from WETH")
   .setAction(async (taskArgs) => {
     const signer = await getSigner();
 
-    const { chainId } = await ethers.provider.getNetwork();
-    const wethAddress = addresses[networkMap[chainId]].WETH;
+    const networkName = await getNetworkName();
+    const wethAddress = addresses[networkName].WETH;
     const weth = await ethers.getContractAt("IWETH9", wethAddress);
 
     await withdrawWETH({ ...taskArgs, weth, signer });
@@ -1038,11 +1063,11 @@ subtask("getClusterInfo", "Print out information regarding SSV cluster")
   )
   .setAction(async (taskArgs) => {
     const { chainId } = await ethers.provider.getNetwork();
-    const network = networkMap[chainId];
-    const ssvNetwork = addresses[network].SSVNetwork;
+    const networkName = await getNetworkName();
+    const ssvNetwork = addresses[networkName].SSVNetwork;
 
     log(
-      `Fetching cluster info for cluster owner ${taskArgs.owner} with operator ids: ${taskArgs.operatorids} from the ${network} network using ssvNetworkContract ${ssvNetwork}`
+      `Fetching cluster info for cluster owner ${taskArgs.owner} with operator ids: ${taskArgs.operatorids} from the ${networkName} network using ssvNetworkContract ${ssvNetwork}`
     );
     await printClusterInfo({
       ...taskArgs,
@@ -1100,36 +1125,25 @@ task("withdrawSSV").setAction(async (_, __, runSuper) => {
 });
 
 /**
- * The native staking proxy needs to be deployed via the defender relayer because the SSV network
+ * The compounding staking proxy needs to be deployed via the defender relayer because the SSV network
  * grants the SSV rewards to the deployer of the contract. And we want the Defender Relayer to be
  * the recipient
  */
 subtask(
-  "deployNativeStakingProxy",
-  "Deploy the native staking proxy via the Defender Relayer"
-)
-  .addOptionalParam(
-    "index",
-    "The number of the Native Staking Contract deployed.",
-    undefined,
-    types.int
-  )
-  .setAction(async ({ index }) => {
-    const signer = await getSigner();
+  "deployStakingProxy",
+  "Deploy the compounding staking proxy via the Defender Relayer"
+).setAction(async () => {
+  const signer = await getSigner();
 
-    if (!index) {
-      throw new Error("Index is required and must be a positive integer");
-    }
-
-    log(`Deploy NativeStakingSSVStrategy${index}Proxy`);
-    const nativeStakingProxyFactory = await ethers.getContractFactory(
-      `NativeStakingSSVStrategy${index}Proxy`
-    );
-    const contract = await nativeStakingProxyFactory.connect(signer).deploy();
-    await contract.deployed();
-    log(`Address of deployed contract is: ${contract.address}`);
-  });
-task("deployNativeStakingProxy").setAction(async (_, __, runSuper) => {
+  log(`Deploy CompoundingStakingSSVStrategyProxy`);
+  const stakingProxyFactory = await ethers.getContractFactory(
+    `CompoundingStakingSSVStrategyProxy`
+  );
+  const contract = await stakingProxyFactory.connect(signer).deploy();
+  await contract.deployed();
+  log(`Address of deployed staking contract is: ${contract.address}`);
+});
+task("deployStakingProxy").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
 
@@ -1275,36 +1289,6 @@ task("exitValidators").setAction(async (_, __, runSuper) => {
 });
 
 subtask(
-  "removeValidator",
-  "Removes a validator from the SSV cluster after it has exited the beacon chain"
-)
-  .addOptionalParam(
-    "index",
-    "The number of the Native Staking Contract deployed.",
-    undefined,
-    types.int
-  )
-  .addParam(
-    "pubkey",
-    "Public key of the validator to exit",
-    undefined,
-    types.string
-  )
-  .addParam(
-    "operatorids",
-    "Comma separated operator ids. E.g. 342,343,344,345",
-    undefined,
-    types.string
-  )
-  .setAction(async (taskArgs) => {
-    const signer = await getSigner();
-    await removeValidator({ ...taskArgs, signer });
-  });
-task("removeValidator").setAction(async (_, __, runSuper) => {
-  return runSuper();
-});
-
-subtask(
   "removeValidators",
   "Removes validators from the SSV cluster after they have exited the beacon chain"
 )
@@ -1340,7 +1324,7 @@ subtask(
     // For each public key
     for (const pubkey of pubKeys) {
       log(`About to remove validator with pubkey: ${pubkey}`);
-      await removeValidator({ ...taskArgs, pubkey, signer });
+      await removeOldValidator({ ...taskArgs, pubkey, signer });
 
       // wait for the SSV API can be updated
       await sleep(taskArgs.sleep * 1000);
@@ -1603,13 +1587,35 @@ subtask(
     undefined,
     types.string
   )
+  .addParam(
+    "owner",
+    "The withdrawal address of the validator in hex format",
+    undefined,
+    types.string
+  )
   .addOptionalParam(
     "index",
     "The number of the Native Staking Contract deployed.",
     undefined,
     types.int
   )
-  .setAction(calcDepositRoot);
+  .addOptionalParam(
+    "type",
+    "Validator type. 0x00, 0x01 or 0x02",
+    "0x02",
+    types.string
+  )
+  .addOptionalParam("amount", "The deposit amount.", 32, types.float)
+  .setAction(async (taskArgs) => {
+    const root = await calcDepositRoot(
+      taskArgs.owner,
+      taskArgs.type,
+      taskArgs.pubkey,
+      taskArgs.sig,
+      taskArgs.amount
+    );
+    console.log(`Deposit data root: ${root}`);
+  });
 task("depositRoot").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
@@ -1709,14 +1715,42 @@ task("masterDecrypt").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
 
+subtask(
+  "signMessage",
+  "Sign a message using a Elliptic-curve Diffie–Hellman (ECDH) private key"
+)
+  .addParam("message", "Message to be signed", undefined, types.string)
+  .setAction(async (taskArgs) => {
+    const signer = await getSigner();
+
+    await signMessage({ ...taskArgs, signer });
+  });
+task("signMessage").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
 // Defender
 subtask(
   "setActionVars",
-  "Set environment variables on a Defender Actions. eg DEBUG=origin*"
+  "Set environment variables on a Defender Actions along with DEBUG=origin* and DEBUG_HIDE_DATE=1"
 )
   .addParam("id", "Identifier of the Defender Actions", undefined, types.string)
+  .addOptionalParam(
+    "name",
+    "Name of the environment variable to set. eg HOODI_BEACON_PROVIDER_URL",
+    undefined,
+    types.string
+  )
   .setAction(setActionVars);
 task("setActionVars").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+subtask("updateAction", "Upload a Defender Actions")
+  .addParam("id", "Identifier of the Defender Actions", undefined, types.string)
+  .addParam("file", "Path to the file to upload", undefined, types.string)
+  .setAction(updateAction);
+task("updateAction").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
 
@@ -1780,10 +1814,20 @@ subtask("sonicUndelegate", "Remove liquidity from a Sonic validator")
     undefined,
     types.float
   )
+  .addOptionalParam(
+    "buffer",
+    "Percentage of total assets to keep as buffer in basis points. 100 = 1%",
+    50,
+    types.float
+  )
   .setAction(async (taskArgs) => {
     const signer = await getSigner();
 
-    await undelegateValidator({ ...taskArgs, signer });
+    await undelegateValidator({
+      ...taskArgs,
+      bufferPct: taskArgs.buffer,
+      signer,
+    });
   });
 task("sonicUndelegate").setAction(async (_, __, runSuper) => {
   return runSuper();
@@ -1832,10 +1876,503 @@ task("lzSetConfig")
     await lzSetConfig(taskArgs, hre);
   });
 
+// Beacon Chain Operations
+subtask("depositValidator", "Deposits ETH to a validator on the Beacon chain")
+  .addParam("pubkey", "Validator public key in hex format with a 0x prefix")
+  .addParam("sig", "Validator signature in hex format with a 0x prefix")
+  .addParam(
+    "cred",
+    "Validator withdrawal credentials in hex format with a 0x prefix"
+  )
+  .addParam(
+    "root",
+    "Beacon chain deposit data root in hex format with a 0x prefix"
+  )
+  .addOptionalParam("amount", "Amount to deposit", 32, types.float)
+  .setAction(async (taskArgs) => {
+    const signer = await getSigner();
+    await depositValidator({ ...taskArgs, signer });
+  });
+task("depositValidator").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+subtask(
+  "setRegistrator",
+  "Set the registrator of the compounding staking strategy"
+)
+  .addParam("account", "Address of the registrator", undefined, types.string)
+  .setAction(setRegistrator);
+task("setRegistrator").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+subtask(
+  "beaconRoot",
+  "Gets the parent beacon block root for an execution layer block from the BeaconRoot contract"
+)
+  .addParam(
+    "block",
+    "Execution layer block number to get the parent beacon block root for",
+    undefined,
+    types.int
+  )
+  .addOptionalParam(
+    "live",
+    "Use live chain (mainnet or testnet) to get block timestamp. Not the local fork",
+    true,
+    types.boolean
+  )
+  .setAction(async (taskArgs) => {
+    const signer = await getSigner();
+    await beaconRoot({ ...taskArgs, signer });
+  });
+task("beaconRoot").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+subtask(
+  "copyBeaconRoot",
+  "Copies a parent beacon block root from mainnet to a local BeaconRoot contract (EIP-4788)"
+)
+  .addParam(
+    "block",
+    "Execution layer block number to set the parent root for",
+    undefined,
+    types.int
+  )
+  .setAction(async (taskArgs) => {
+    const signer = await getSigner();
+    await copyBeaconRoot({ ...taskArgs, signer });
+  });
+task("copyBeaconRoot").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+subtask(
+  "mockBeaconRoot",
+  "Replaces the BeaconRoot contract (EIP-4788) with a mocked one for testing purposes"
+).setAction(mockBeaconRoot);
+task("mockBeaconRoot").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+subtask("getValidator", "Gets the details of a validator")
+  .addOptionalParam(
+    "index",
+    "Index of the validator on the Beacon chain",
+    undefined,
+    types.int
+  )
+  .addOptionalParam(
+    "pubkey",
+    "Validator public key in hex format with a 0x prefix"
+  )
+  .addOptionalParam(
+    "slot",
+    "Beacon chain slot. Default head",
+    undefined,
+    types.int
+  )
+  .setAction(getValidator);
+task("getValidator").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+subtask("verifyValidator", "Verify a validator on the Beacon chain")
+  .addParam(
+    "index",
+    "Index of the validator on the Beacon chain",
+    undefined,
+    types.int
+  )
+  .addOptionalParam(
+    "slot",
+    "Any slot after the validator was registered on the Beacon chain. Default latest",
+    undefined,
+    types.int
+  )
+  .addOptionalParam(
+    "dryrun",
+    "Do not call verifyBalances on the strategy contract. Just log the params including the proofs",
+    false,
+    types.boolean
+  )
+  .addOptionalParam(
+    "cred",
+    "Override the withdrawal credential. Used when generating proofs for unit tests or the deposit was front-run.",
+    undefined,
+    types.string
+  )
+  .setAction(async (taskArgs) => {
+    const signer = await getSigner();
+    await verifyValidator({ ...taskArgs, signer });
+  });
+task("verifyValidator").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+subtask("verifyDeposit", "Verify a deposit on the Beacon chain")
+  .addParam(
+    "root",
+    "The pending deposit root emitted in the `ETHStaked` event from the `stakeETH` function",
+    undefined,
+    types.string
+  )
+  .addOptionalParam(
+    "slot",
+    "The slot on or after the deposit was process on the beacon chain. Default deposit processed slot",
+    undefined,
+    types.int
+  )
+  .addOptionalParam(
+    "dryrun",
+    "Do not call verifyDeposit on the strategy contract. Just log the params including the proofs",
+    false,
+    types.boolean
+  )
+  .addOptionalParam(
+    "test",
+    "Used for generating unit test data.",
+    false,
+    types.boolean
+  )
+  .addOptionalParam(
+    "index",
+    "Override the validator with the index of a test validator. Used when generating proofs for unit tests.",
+    undefined,
+    types.int
+  )
+  .setAction(async (taskArgs) => {
+    const signer = await getSigner();
+    await verifyDeposit({ ...taskArgs, signer });
+  });
+task("verifyDeposit").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+subtask("verifyDeposits", "Verify any processed deposit on the Beacon chain")
+  .addOptionalParam(
+    "dryrun",
+    "Do not call verifyDeposit on the strategy contract. Just log the params including the proofs",
+    false,
+    types.boolean
+  )
+  .setAction(async (taskArgs) => {
+    const signer = await getSigner();
+    await verifyDeposits({ ...taskArgs, signer });
+  });
+task("verifyDeposits").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+subtask("verifyBalances", "Verify validator balances on the Beacon chain")
+  .addOptionalParam(
+    "slot",
+    "The slot snapBalances was executed. Default: last balances snapshot",
+    undefined,
+    types.int
+  )
+  .addOptionalParam(
+    "indexes",
+    "Comma separated list of validator indexes. Default: strategy's active validators",
+    undefined,
+    types.string
+  )
+  .addOptionalParam(
+    "deposits",
+    "Comma separated list of indexes to beacon chain pending deposits used for generating unit test data",
+    undefined,
+    types.string
+  )
+  .addOptionalParam(
+    "dryrun",
+    "Do not call verifyBalances on the strategy contract. Just log the params including the proofs",
+    false,
+    types.boolean
+  )
+  .addOptionalParam(
+    "test",
+    "Used for generating unit test data.",
+    false,
+    types.boolean
+  )
+  .setAction(async (taskArgs) => {
+    const signer = await getSigner();
+    await verifyBalances({ ...taskArgs, signer });
+  });
+task("verifyBalances").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+subtask(
+  "requestNewValidator",
+  "Calls P2P's Create SSV Request to prepare a new SSV compounding (0x02) validator"
+)
+  .addOptionalParam(
+    "days",
+    "SSV Cluster operational time in days",
+    1,
+    types.int
+  )
+  .setAction(async (taskArgs) => {
+    await registerValidatorCreateRequest(taskArgs);
+    console.log("Once the validator is created run: registerValidatorUuid");
+  });
+task("requestNewValidator").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+subtask(
+  "registerValidator",
+  "Registers a new compounding validator in a SSV cluster"
+)
+  .addParam(
+    "operatorids",
+    "Comma separated operator ids. E.g. 342,343,344,345",
+    undefined,
+    types.string
+  )
+  .addOptionalParam(
+    "uuid",
+    "The uuid that has been used to create the request using requestNewValidator",
+    undefined,
+    types.string
+  )
+  .addOptionalParam(
+    "pubkey",
+    "If no uuid, the validator's public key in hex format with a 0x prefix",
+    undefined,
+    types.string
+  )
+  .addOptionalParam(
+    "shares",
+    "If no uuid, SSV shares data",
+    undefined,
+    types.string
+  )
+  .addOptionalParam(
+    "ssv",
+    "Amount of SSV to deposit to the cluster.",
+    0,
+    types.int
+  )
+  .setAction(async (taskArgs) => {
+    await registerValidator(taskArgs);
+  });
+task("registerValidator").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+subtask(
+  "autoValidatorDeposits",
+  "Automatically withdraw ETH/WETH from the strategy if needed for withdrawals, then deposit WETH to validators with a balance under 2030 ETH from the largest balance to the smallest"
+)
+  .addParam(
+    "dryrun",
+    "Do not send any txs to the staking strategy contract",
+    false,
+    types.boolean
+  )
+  .setAction(async (taskArgs) => {
+    const signer = await getSigner();
+    await autoValidatorDeposits({ ...taskArgs, signer });
+  });
+task("autoValidatorDeposits").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+subtask(
+  "withdrawValidator",
+  "Requests a partial or full withdrawal from a compounding validator"
+)
+  .addParam(
+    "pubkey",
+    "The validator's public key in hex format with a 0x prefix",
+    undefined,
+    types.string
+  )
+  .addOptionalParam(
+    "amount",
+    "Amount of ETH to withdraw from the validator. A zero amount is a full exit.",
+    0,
+    types.float
+  )
+  .addOptionalParam(
+    "direct",
+    "Withdraw via the staking contract or directly to the request withdrawal contract",
+    false,
+    types.boolean
+  )
+  .setAction(async (taskArgs) => {
+    const signer = await getSigner();
+    if (taskArgs.direct) {
+      await requestValidatorWithdraw({ ...taskArgs, signer });
+    } else {
+      await withdrawValidator({ ...taskArgs, signer });
+    }
+  });
+task("withdrawValidator").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+subtask(
+  "removeValidator",
+  "Removes a registered or exited compounding validator from the SSV cluster"
+)
+  .addParam(
+    "pubkey",
+    "The validator's public key in hex format with a 0x prefix",
+    undefined,
+    types.string
+  )
+  .addParam(
+    "operatorids",
+    "Comma separated operator ids. E.g. 342,343,344,345",
+    undefined,
+    types.string
+  )
+  .setAction(async (taskArgs) => {
+    const signer = await getSigner();
+    await removeValidator({ ...taskArgs, signer });
+  });
+task("removeValidator").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+subtask(
+  "autoValidatorWithdrawals",
+  "Automatically withdraw ETH from a validators if the Vault needs WETH for user withdrawals. Start with the validator with the smallest balance over 42.25 ETH."
+)
+  .addOptionalParam(
+    "buffer",
+    "Withdrawal buffer in basis points. 100 = 1%",
+    100,
+    types.int
+  )
+  .addParam(
+    "dryrun",
+    "Do not send any txs to the staking strategy contract",
+    false,
+    types.boolean
+  )
+  .setAction(async (taskArgs) => {
+    const signer = await getSigner();
+    await autoValidatorWithdrawals({ ...taskArgs, signer });
+  });
+task("autoValidatorWithdrawals").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+subtask(
+  "stakeValidatorUuid",
+  "Converts WETH to ETH and deposits to a validator from the Compounding Staking Strategy"
+)
+  .addParam(
+    "uuid",
+    "The P2P uuid used to create the Create SSV validators request",
+    undefined,
+    types.string
+  )
+  .addOptionalParam(
+    "dryrun",
+    "Do not call stakeEth on the strategy contract. Just log the params and verify the deposit signature",
+    false,
+    types.boolean
+  )
+  .setAction(stakeValidator);
+task("stakeValidatorUuid").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+subtask(
+  "stakeValidator",
+  "Converts WETH to ETH and deposits to a validator from the Compounding Staking Strategy"
+)
+  .addParam(
+    "pubkey",
+    "The validator's public key in hex format with a 0x prefix",
+    undefined,
+    types.string
+  )
+  .addOptionalParam(
+    "sig",
+    "The validator's deposit signature in hex format with a 0x prefix",
+    undefined,
+    types.string
+  )
+  .addParam(
+    "amount",
+    "Amount of ETH to deposit to the validator.",
+    undefined,
+    types.float
+  )
+  .addOptionalParam(
+    "withdrawalCredentials",
+    "Withdrawal credentials of the validator",
+    undefined,
+    types.string
+  )
+  .addOptionalParam(
+    "depositMessageRoot",
+    "Deposit message root provided by p2p",
+    undefined,
+    types.string
+  )
+  .addOptionalParam(
+    "forkVersion",
+    "Fork version of the beacon chain. Required for validating the BLS signature",
+    "10000910",
+    types.string
+  )
+  .addOptionalParam(
+    "dryrun",
+    "Do not call stakeEth on the strategy contract. Just log the params and verify the deposit signature",
+    false,
+    types.boolean
+  )
+  .setAction(stakeValidator);
+task("stakeValidator").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+subtask(
+  "snapBalances",
+  "Takes a snapshot of the staking strategy's balance"
+).setAction(snapBalances);
+task("snapBalances").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+subtask("snapStakingStrat", "Dumps the staking strategy's data")
+  .addOptionalParam(
+    "block",
+    "Block number. (default: latest)",
+    undefined,
+    types.int
+  )
+  .addOptionalParam(
+    "buffer",
+    "Withdrawal buffer in basis points. 100 = 1%",
+    100,
+    types.int
+  )
+  .setAction(snapStakingStrategy);
+task("snapStakingStrat").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
 subtask(
   "tenderlySync",
   "Fetches all contracts from deployment descriptors and uploads them to Tenderly if they are not there yet."
 ).setAction(tenderlySync);
 task("tenderlySync").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+subtask("tenderlyUpload", "Uploads a contract to Tenderly.")
+  .addParam("name", "The contract's name", undefined, types.string)
+  .setAction(tenderlyUpload);
+task("tenderlyUpload").setAction(async (_, __, runSuper) => {
   return runSuper();
 });

@@ -175,6 +175,7 @@ describe("ForkTest: OETH Vault", function () {
 
       // Send a heap of WETH to the vault so it can be redeemed
       await weth.connect(matt).transfer(oethVault.address, oethUnits("1000"));
+      await weth.connect(matt).transfer(strategist.address, oethUnits("100"));
 
       const amount = oethUnits("10");
 
