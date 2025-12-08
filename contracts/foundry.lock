@@ -1,0 +1,14 @@
+{
+  "lib/forge-std": {
+    "tag": {
+      "name": "v1.12.0",
+      "rev": "7117c90c8cf6c68e5acce4f09a6b24715cea4de6"
+    }
+  },
+  "lib/wormhole-solidity-sdk": {
+    "tag": {
+      "name": "v0.1.0",
+      "rev": "97ca219eb34af71b80678cbf7bb10ff0cbb0f5bd"
+    }
+  }
+}

@@ -33,6 +33,7 @@ const {
   getHardhatNetworkProperties,
 } = require("./utils/hardhat-helpers.js");
 
+require("@nomicfoundation/hardhat-foundry");
 require("@nomicfoundation/hardhat-verify");
 require("@nomiclabs/hardhat-waffle");
 require("@nomiclabs/hardhat-solhint");

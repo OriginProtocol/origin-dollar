@@ -1,5 +1,13 @@
 # Contract Development
 
+## Cloning the repo
+```
+# Clone the repo
+$ git clone git@github.com:OriginProtocol/origin-dollar.git
+# Install git submodules
+$ git submodule update --init --recursive
+```
+
 ## Prettier
 
 Both Solidity and JavaScript code are formatted using [Prettier](https://prettier.io/).
