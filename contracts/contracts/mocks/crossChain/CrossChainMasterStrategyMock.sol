@@ -12,7 +12,10 @@ import { InitializableAbstractStrategy } from "../../utils/InitializableAbstract
 contract CrossChainMasterStrategyMock is CrossChainMasterStrategy {
     address public _remoteAddress;
 
-    constructor(InitializableAbstractStrategy.BaseStrategyConfig memory _stratConfig) CrossChainMasterStrategy(_stratConfig) {}
+    constructor(
+        InitializableAbstractStrategy.BaseStrategyConfig memory _stratConfig
+    ) CrossChainMasterStrategy(_stratConfig) {}
+
     /**
      * @dev Returns the address of the Remote part of the strategy on L2
      */

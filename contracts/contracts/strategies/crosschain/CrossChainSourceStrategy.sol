@@ -1,17 +1,18 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import {ExecutorSendReceive} from "wormhole-solidity-sdk/Executor/Integration.sol";
-import {SequenceReplayProtectionLib} from "wormhole-solidity-sdk/libraries/ReplayProtection.sol";
-import {CONSISTENCY_LEVEL_INSTANT} from "wormhole-solidity-sdk/constants/ConsistencyLevel.sol";
+import { ExecutorSendReceive } from "wormhole-solidity-sdk/Executor/Integration.sol";
+import { SequenceReplayProtectionLib } from "wormhole-solidity-sdk/libraries/ReplayProtection.sol";
+import { CONSISTENCY_LEVEL_INSTANT } from "wormhole-solidity-sdk/constants/ConsistencyLevel.sol";
 
 contract CrossChainSourceStrategy is ExecutorSendReceive {
     using SequenceReplayProtectionLib for *;
 
     mapping(uint16 => bytes32) public peers;
 
-    constructor(address coreBridge, address executor) ExecutorSendReceive(coreBridge, executor) {
-    }
+    constructor(address coreBridge, address executor)
+        ExecutorSendReceive(coreBridge, executor)
+    {}
 
     event GreetingReceived(string greeting, uint16 senderChain, bytes32 sender);
     event GreetingSent(string greeting, uint16 targetChain, uint64 sequence);
@@ -31,11 +32,12 @@ contract CrossChainSourceStrategy is ExecutorSendReceive {
         bytes32 emitterAddress,
         uint64 sequence,
         bytes calldata /* encodedVaa */
-    )
-        internal
-        override
-    {
-        SequenceReplayProtectionLib.replayProtect(emitterChainId, emitterAddress, sequence);
+    ) internal override {
+        SequenceReplayProtectionLib.replayProtect(
+            emitterChainId,
+            emitterAddress,
+            sequence
+        );
     }
 
     function _executeVaa(
@@ -47,10 +49,7 @@ contract CrossChainSourceStrategy is ExecutorSendReceive {
         uint64,
         /* sequence */
         uint8 /* consistencyLevel */
-    )
-        internal
-        override
-    {
+    ) internal override {
         if (msg.value > 0) {
             revert NoValueAllowed();
         }
