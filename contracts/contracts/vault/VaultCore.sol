@@ -45,23 +45,12 @@ contract VaultCore is VaultInitializer {
         _;
     }
 
-    /**
-     * @dev Verifies that the caller is the AMO strategy.
-     */
-    modifier onlyOusdMetaStrategy() {
-        require(
-            msg.sender == ousdMetaStrategy,
-            "Caller is not the OUSD meta strategy"
-        );
-        _;
-    }
-
     constructor(address _backingAsset) {
         backingAsset = _backingAsset;
     }
 
     ////////////////////////////////////////////////////
-    ///                 MINT / REDEEM                ///
+    ///             MINT / REDEEM / BURN             ///
     ////////////////////////////////////////////////////
     /**
      * @notice Deposit a supported asset and mint OTokens.
@@ -118,9 +107,10 @@ contract VaultCore is VaultInitializer {
     }
 
     /**
-     * @notice Mint OTokens for a Metapool Strategy
+     * @notice Mint OTokens for an allowed Strategy
      * @param _amount Amount of the asset being deposited
      *
+     * Todo: Maybe this is a comment that we can remove now?
      * Notice: can't use `nonReentrant` modifier since the `mint` function can
      * call `allocate`, and that can trigger `ConvexOUSDMetaStrategy` to call this function
      * while the execution of the `mint` has not yet completed -> causing a `nonReentrant` collision.
@@ -134,20 +124,17 @@ contract VaultCore is VaultInitializer {
         external
         virtual
         whenNotCapitalPaused
-        onlyOusdMetaStrategy
     {
-        require(_amount < MAX_INT, "Amount too high");
-
-        emit Mint(msg.sender, _amount);
-
-        // safe to cast because of the require check at the beginning of the function
-        netOusdMintedForStrategy += int256(_amount);
-
         require(
-            abs(netOusdMintedForStrategy) < netOusdMintForStrategyThreshold,
-            "Minted ousd surpassed netOusdMintForStrategyThreshold."
+            strategies[msg.sender].isSupported == true,
+            "Unsupported strategy"
+        );
+        require(
+            isMintWhitelistedStrategy[msg.sender] == true,
+            "Not whitelisted strategy"
         );
 
+        emit Mint(msg.sender, _amount);
         // Mint matching amount of OTokens
         oUSD.mint(msg.sender, _amount);
     }
@@ -229,6 +216,40 @@ contract VaultCore is VaultInitializer {
                 "Backing supply liquidity error"
             );
         }
+    }
+
+    /**
+     * @notice Burn OTokens for an allowed Strategy
+     * @param _amount Amount of OToken to burn
+     *
+     * Todo: Maybe this is a comment that we can remove now?
+     * @dev Notice: can't use `nonReentrant` modifier since the `redeem` function could
+     * require withdrawal on `ConvexOUSDMetaStrategy` and that one can call `burnForStrategy`
+     * while the execution of the `redeem` has not yet completed -> causing a `nonReentrant` collision.
+     *
+     * Also important to understand is that this is a limitation imposed by the test suite.
+     * Production / mainnet contracts should never be configured in a way where mint/redeem functions
+     * that are moving funds between the Vault and end user wallets can influence strategies
+     * utilizing this function.
+     */
+    function burnForStrategy(uint256 _amount)
+        external
+        virtual
+        whenNotCapitalPaused
+    {
+        require(
+            strategies[msg.sender].isSupported == true,
+            "Unsupported strategy"
+        );
+        require(
+            isMintWhitelistedStrategy[msg.sender] == true,
+            "Not whitelisted strategy"
+        );
+
+        emit Redeem(msg.sender, _amount);
+
+        // Burn OTokens
+        oUSD.burn(msg.sender, _amount);
     }
 
     ////////////////////////////////////////////////////
@@ -393,41 +414,6 @@ contract VaultCore is VaultInitializer {
         emit WithdrawalClaimed(msg.sender, requestId, request.amount);
 
         return request.amount;
-    }
-
-    /**
-     * @notice Burn OTokens for Metapool Strategy
-     * @param _amount Amount of OUSD to burn
-     *
-     * @dev Notice: can't use `nonReentrant` modifier since the `redeem` function could
-     * require withdrawal on `ConvexOUSDMetaStrategy` and that one can call `burnForStrategy`
-     * while the execution of the `redeem` has not yet completed -> causing a `nonReentrant` collision.
-     *
-     * Also important to understand is that this is a limitation imposed by the test suite.
-     * Production / mainnet contracts should never be configured in a way where mint/redeem functions
-     * that are moving funds between the Vault and end user wallets can influence strategies
-     * utilizing this function.
-     */
-    function burnForStrategy(uint256 _amount)
-        external
-        virtual
-        whenNotCapitalPaused
-        onlyOusdMetaStrategy
-    {
-        require(_amount < MAX_INT, "Amount too high");
-
-        emit Redeem(msg.sender, _amount);
-
-        // safe to cast because of the require check at the beginning of the function
-        netOusdMintedForStrategy -= int256(_amount);
-
-        require(
-            abs(netOusdMintedForStrategy) < netOusdMintForStrategyThreshold,
-            "Attempting to burn too much OUSD."
-        );
-
-        // Burn OTokens
-        oUSD.burn(msg.sender, _amount);
     }
 
     /**
