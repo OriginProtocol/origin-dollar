@@ -7,7 +7,6 @@ import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 
 import { StableMath } from "../utils/StableMath.sol";
 import { VaultCore } from "./VaultCore.sol";
-import { IStrategy } from "../interfaces/IStrategy.sol";
 
 /**
  * @title OETH VaultCore Contract
@@ -17,31 +16,10 @@ contract OETHVaultCore is VaultCore {
     using SafeERC20 for IERC20;
     using StableMath for uint256;
 
-    address public immutable weth;
-    uint256 public wethAssetIndex;
-
     // For future use (because OETHBaseVaultCore inherits from this)
     uint256[50] private __gap;
 
-    constructor(address _weth) {
-        weth = _weth;
-    }
-
-    /**
-     * @dev Caches WETH's index in `allAssets` variable.
-     *      Reduces gas usage by redeem by caching that.
-     */
-    function cacheWETHAssetIndex() external onlyGovernor {
-        uint256 assetCount = allAssets.length;
-        for (uint256 i; i < assetCount; ++i) {
-            if (allAssets[i] == weth) {
-                wethAssetIndex = i;
-                break;
-            }
-        }
-
-        require(allAssets[wethAssetIndex] == weth, "Invalid WETH Asset Index");
-    }
+    constructor(address _backingAsset) VaultCore(_backingAsset) {}
 
     // @inheritdoc VaultCore
     function mintForStrategy(uint256 amount)
@@ -83,112 +61,6 @@ contract OETHVaultCore is VaultCore {
 
         // Burn OTokens
         oUSD.burn(msg.sender, amount);
-    }
-
-    // @inheritdoc VaultCore
-    // slither-disable-start reentrancy-no-eth
-    function _mint(
-        address _asset,
-        uint256 _amount,
-        uint256 _minimumOusdAmount
-    ) internal virtual override {
-        require(_asset == weth, "Unsupported asset for minting");
-        require(_amount > 0, "Amount must be greater than 0");
-        require(
-            _amount >= _minimumOusdAmount,
-            "Mint amount lower than minimum"
-        );
-
-        emit Mint(msg.sender, _amount);
-
-        // Rebase must happen before any transfers occur.
-        if (!rebasePaused && _amount >= rebaseThreshold) {
-            _rebase();
-        }
-
-        // Mint oTokens
-        oUSD.mint(msg.sender, _amount);
-
-        // Transfer the deposited coins to the vault
-        IERC20(_asset).safeTransferFrom(msg.sender, address(this), _amount);
-
-        // Give priority to the withdrawal queue for the new WETH liquidity
-        _addWithdrawalQueueLiquidity();
-
-        // Auto-allocate if necessary
-        if (_amount >= autoAllocateThreshold) {
-            _allocate();
-        }
-    }
-
-    // slither-disable-end reentrancy-no-eth
-
-    // @inheritdoc VaultCore
-    function _calculateRedeemOutputs(uint256 _amount)
-        internal
-        view
-        virtual
-        override
-        returns (uint256[] memory outputs)
-    {
-        // Overrides `VaultCore._calculateRedeemOutputs` to redeem with only
-        // WETH instead of LST-mix. Doesn't change the function signature
-        // for backward compatibility
-
-        // Calculate redeem fee
-        if (redeemFeeBps > 0) {
-            uint256 redeemFee = _amount.mulTruncateScale(redeemFeeBps, 1e4);
-            _amount = _amount - redeemFee;
-        }
-
-        // Ensure that the WETH index is cached
-        uint256 _wethAssetIndex = wethAssetIndex;
-        require(
-            allAssets[_wethAssetIndex] == weth,
-            "WETH Asset index not cached"
-        );
-
-        outputs = new uint256[](allAssets.length);
-        outputs[_wethAssetIndex] = _amount;
-    }
-
-    // @inheritdoc VaultCore
-    function _redeem(uint256 _amount, uint256 _minimumUnitAmount)
-        internal
-        virtual
-        override
-    {
-        // Override `VaultCore._redeem` to simplify it. Gets rid of oracle
-        // usage and looping through all assets for LST-mix redeem. Instead
-        // does a simple WETH-only redeem.
-        emit Redeem(msg.sender, _amount);
-
-        if (_amount == 0) {
-            return;
-        }
-
-        // Amount excluding fees
-        // No fee for the strategist or the governor, makes it easier to do operations
-        uint256 amountMinusFee = (msg.sender == strategistAddr || isGovernor())
-            ? _amount
-            : _calculateRedeemOutputs(_amount)[wethAssetIndex];
-
-        require(
-            amountMinusFee >= _minimumUnitAmount,
-            "Redeem amount lower than minimum"
-        );
-
-        // Is there enough WETH in the Vault available after accounting for the withdrawal queue
-        require(_wethAvailable() >= amountMinusFee, "Liquidity error");
-
-        // Transfer WETH minus the fee to the redeemer
-        IERC20(weth).safeTransfer(msg.sender, amountMinusFee);
-
-        // Burn OETH from user (including fees)
-        oUSD.burn(msg.sender, _amount);
-
-        // Prevent insolvency
-        _postRedeem(_amount);
     }
 
     /**
@@ -277,7 +149,7 @@ contract OETHVaultCore is VaultCore {
         amount = _claimWithdrawal(_requestId);
 
         // transfer WETH from the vault to the withdrawer
-        IERC20(weth).safeTransfer(msg.sender, amount);
+        IERC20(backingAsset).safeTransfer(msg.sender, amount);
 
         // Prevent insolvency
         _postRedeem(amount);
@@ -318,7 +190,7 @@ contract OETHVaultCore is VaultCore {
         }
 
         // transfer all the claimed WETH from the vault to the withdrawer
-        IERC20(weth).safeTransfer(msg.sender, totalAmount);
+        IERC20(backingAsset).safeTransfer(msg.sender, totalAmount);
 
         // Prevent insolvency
         _postRedeem(totalAmount);
@@ -360,144 +232,9 @@ contract OETHVaultCore is VaultCore {
         _addWithdrawalQueueLiquidity();
     }
 
-    /// @dev Adds WETH to the withdrawal queue if there is a funding shortfall.
-    /// This assumes 1 WETH equal 1 OETH.
-    function _addWithdrawalQueueLiquidity()
-        internal
-        returns (uint256 addedClaimable)
-    {
-        WithdrawalQueueMetadata memory queue = withdrawalQueueMetadata;
-
-        // Check if the claimable WETH is less than the queued amount
-        uint256 queueShortfall = queue.queued - queue.claimable;
-
-        // No need to do anything is the withdrawal queue is full funded
-        if (queueShortfall == 0) {
-            return 0;
-        }
-
-        uint256 wethBalance = IERC20(weth).balanceOf(address(this));
-
-        // Of the claimable withdrawal requests, how much is unclaimed?
-        // That is, the amount of WETH that is currently allocated for the withdrawal queue
-        uint256 allocatedWeth = queue.claimable - queue.claimed;
-
-        // If there is no unallocated WETH then there is nothing to add to the queue
-        if (wethBalance <= allocatedWeth) {
-            return 0;
-        }
-
-        uint256 unallocatedWeth = wethBalance - allocatedWeth;
-
-        // the new claimable amount is the smaller of the queue shortfall or unallocated weth
-        addedClaimable = queueShortfall < unallocatedWeth
-            ? queueShortfall
-            : unallocatedWeth;
-        uint256 newClaimable = queue.claimable + addedClaimable;
-
-        // Store the new claimable amount back to storage
-        withdrawalQueueMetadata.claimable = SafeCast.toUint128(newClaimable);
-
-        // emit a WithdrawalClaimable event
-        emit WithdrawalClaimable(newClaimable, addedClaimable);
-    }
-
     /***************************************
                 View Functions
     ****************************************/
-
-    /// @dev Calculate how much WETH in the vault is not reserved for the withdrawal queue.
-    // That is, it is available to be redeemed or deposited into a strategy.
-    function _wethAvailable() internal view returns (uint256 wethAvailable) {
-        WithdrawalQueueMetadata memory queue = withdrawalQueueMetadata;
-
-        // The amount of WETH that is still to be claimed in the withdrawal queue
-        uint256 outstandingWithdrawals = queue.queued - queue.claimed;
-
-        // The amount of sitting in WETH in the vault
-        uint256 wethBalance = IERC20(weth).balanceOf(address(this));
-
-        // If there is not enough WETH in the vault to cover the outstanding withdrawals
-        if (wethBalance <= outstandingWithdrawals) {
-            return 0;
-        }
-
-        return wethBalance - outstandingWithdrawals;
-    }
-
-    /// @dev Get the balance of an asset held in Vault and all strategies
-    /// less any WETH that is reserved for the withdrawal queue.
-    /// WETH is the only asset that can return a non-zero balance.
-    /// All other assets will return 0 even if there is some dust amounts left in the Vault.
-    /// For example, there is 1 wei left of stETH in the OETH Vault but will return 0 in this function.
-    ///
-    /// If there is not enough WETH in the vault and all strategies to cover all outstanding
-    /// withdrawal requests then return a WETH balance of 0
-    function _checkBalance(address _asset)
-        internal
-        view
-        override
-        returns (uint256 balance)
-    {
-        if (_asset != weth) {
-            return 0;
-        }
-
-        // Get the WETH in the vault and the strategies
-        balance = super._checkBalance(_asset);
-
-        WithdrawalQueueMetadata memory queue = withdrawalQueueMetadata;
-
-        // If the vault becomes insolvent enough that the total value in the vault and all strategies
-        // is less than the outstanding withdrawals.
-        // For example, there was a mass slashing event and most users request a withdrawal.
-        if (balance + queue.claimed < queue.queued) {
-            return 0;
-        }
-
-        // Need to remove WETH that is reserved for the withdrawal queue
-        return balance + queue.claimed - queue.queued;
-    }
-
-    /**
-     * @notice Allocate unallocated funds on Vault to strategies.
-     **/
-    function allocate() external override whenNotCapitalPaused nonReentrant {
-        // Add any unallocated WETH to the withdrawal queue first
-        _addWithdrawalQueueLiquidity();
-
-        _allocate();
-    }
-
-    /// @dev Allocate WETH to the default WETH strategy if there is excess to the Vault buffer.
-    /// This is called from either `mint` or `allocate` and assumes `_addWithdrawalQueueLiquidity`
-    /// has been called before this function.
-    function _allocate() internal override {
-        // No need to do anything if no default strategy for WETH
-        address depositStrategyAddr = assetDefaultStrategies[weth];
-        if (depositStrategyAddr == address(0)) return;
-
-        uint256 wethAvailableInVault = _wethAvailable();
-        // No need to do anything if there isn't any WETH in the vault to allocate
-        if (wethAvailableInVault == 0) return;
-
-        // Calculate the target buffer for the vault using the total supply
-        uint256 totalSupply = oUSD.totalSupply();
-        uint256 targetBuffer = totalSupply.mulTruncate(vaultBuffer);
-
-        // If available WETH in the Vault is below or equal the target buffer then there's nothing to allocate
-        if (wethAvailableInVault <= targetBuffer) return;
-
-        // The amount of assets to allocate to the default strategy
-        uint256 allocateAmount = wethAvailableInVault - targetBuffer;
-
-        IStrategy strategy = IStrategy(depositStrategyAddr);
-        // Transfer WETH to the strategy and call the strategy's deposit function
-        IERC20(weth).safeTransfer(address(strategy), allocateAmount);
-        strategy.deposit(weth, allocateAmount);
-
-        emit AssetAllocated(weth, depositStrategyAddr, allocateAmount);
-    }
 
     /// @dev The total value of all WETH held by the vault and all its strategies
     /// less any WETH that is reserved for the withdrawal queue.
@@ -506,7 +243,7 @@ contract OETHVaultCore is VaultCore {
     // withdrawal requests then return a total value of 0.
     function _totalValue() internal view override returns (uint256 value) {
         // As WETH is the only asset, just return the WETH balance
-        return _checkBalance(weth);
+        return _checkBalance(backingAsset);
     }
 
     /// @dev Only WETH is supported in the OETH Vault so return the WETH balance only
@@ -519,6 +256,6 @@ contract OETHVaultCore is VaultCore {
         override
         returns (uint256 value)
     {
-        value = IERC20(weth).balanceOf(address(this));
+        value = IERC20(backingAsset).balanceOf(address(this));
     }
 }

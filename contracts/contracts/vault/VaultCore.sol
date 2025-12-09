@@ -12,6 +12,7 @@ pragma solidity ^0.8.0;
  */
 
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 
 import { StableMath } from "../utils/StableMath.sol";
 import { IOracle } from "../interfaces/IOracle.sol";
@@ -24,6 +25,9 @@ contract VaultCore is VaultInitializer {
     using StableMath for uint256;
     /// @dev max signed int
     uint256 internal constant MAX_INT = uint256(type(int256).max);
+
+    /// @dev Address of the backing asset (eg. WETH or USDC)
+    address public immutable backingAsset;
 
     /**
      * @dev Verifies that the rebasing is not paused.
@@ -52,6 +56,10 @@ contract VaultCore is VaultInitializer {
         _;
     }
 
+    constructor(address _backingAsset) {
+        backingAsset = _backingAsset;
+    }
+
     /**
      * @notice Deposit a supported asset and mint OTokens.
      * @param _asset Address of the asset being deposited
@@ -77,35 +85,31 @@ contract VaultCore is VaultInitializer {
         uint256 _amount,
         uint256 _minimumOusdAmount
     ) internal virtual {
-        require(assets[_asset].isSupported, "Asset is not supported");
+        require(_asset == backingAsset, "Unsupported asset for minting");
         require(_amount > 0, "Amount must be greater than 0");
+        require(
+            _amount >= _minimumOusdAmount,
+            "Mint amount lower than minimum"
+        );
 
-        uint256 units = _toUnits(_amount, _asset);
-        uint256 unitPrice = _toUnitPrice(_asset, true);
-        uint256 priceAdjustedDeposit = (units * unitPrice) / 1e18;
-
-        if (_minimumOusdAmount > 0) {
-            require(
-                priceAdjustedDeposit >= _minimumOusdAmount,
-                "Mint amount lower than minimum"
-            );
-        }
-
-        emit Mint(msg.sender, priceAdjustedDeposit);
+        emit Mint(msg.sender, _amount);
 
         // Rebase must happen before any transfers occur.
-        if (priceAdjustedDeposit >= rebaseThreshold && !rebasePaused) {
+        if (!rebasePaused && _amount >= rebaseThreshold) {
             _rebase();
         }
 
-        // Mint matching amount of OTokens
-        oUSD.mint(msg.sender, priceAdjustedDeposit);
+        // Mint oTokens
+        oUSD.mint(msg.sender, _amount);
 
         // Transfer the deposited coins to the vault
-        IERC20 asset = IERC20(_asset);
-        asset.safeTransferFrom(msg.sender, address(this), _amount);
+        IERC20(_asset).safeTransferFrom(msg.sender, address(this), _amount);
 
-        if (priceAdjustedDeposit >= autoAllocateThreshold) {
+        // Give priority to the withdrawal queue for the new backingAsset liquidity
+        _addWithdrawalQueueLiquidity();
+
+        // Auto-allocate if necessary
+        if (_amount >= autoAllocateThreshold) {
             _allocate();
         }
     }
@@ -169,47 +173,31 @@ contract VaultCore is VaultInitializer {
         internal
         virtual
     {
-        // Calculate redemption outputs
-        uint256[] memory outputs = _calculateRedeemOutputs(_amount);
-
         emit Redeem(msg.sender, _amount);
 
-        // Send outputs
-        uint256 assetCount = allAssets.length;
-        for (uint256 i = 0; i < assetCount; ++i) {
-            if (outputs[i] == 0) continue;
+        if (_amount == 0) return;
 
-            address assetAddr = allAssets[i];
+        // Amount excluding fees
+        // No fee for the strategist or the governor, makes it easier to do operations
+        uint256 amountMinusFee = (msg.sender == strategistAddr || isGovernor())
+            ? _amount
+            : _calculateRedeemOutputs(_amount)[0];
 
-            if (IERC20(assetAddr).balanceOf(address(this)) >= outputs[i]) {
-                // Use Vault funds first if sufficient
-                IERC20(assetAddr).safeTransfer(msg.sender, outputs[i]);
-            } else {
-                address strategyAddr = assetDefaultStrategies[assetAddr];
-                if (strategyAddr != address(0)) {
-                    // Nothing in Vault, but something in Strategy, send from there
-                    IStrategy strategy = IStrategy(strategyAddr);
-                    strategy.withdraw(msg.sender, assetAddr, outputs[i]);
-                } else {
-                    // Cant find funds anywhere
-                    revert("Liquidity error");
-                }
-            }
-        }
+        require(
+            amountMinusFee >= _minimumUnitAmount,
+            "Redeem amount lower than minimum"
+        );
 
-        if (_minimumUnitAmount > 0) {
-            uint256 unitTotal = 0;
-            for (uint256 i = 0; i < outputs.length; ++i) {
-                unitTotal += _toUnits(outputs[i], allAssets[i]);
-            }
-            require(
-                unitTotal >= _minimumUnitAmount,
-                "Redeem amount lower than minimum"
-            );
-        }
+        // Is there enough backingAsset in the Vault available after accounting for the withdrawal queue
+        require(_backingAssetAvailable() >= amountMinusFee, "Liquidity error");
 
+        // Transfer backingAsset minus the fee to the redeemer
+        IERC20(backingAsset).safeTransfer(msg.sender, amountMinusFee);
+
+        // Burn OToken from user (including fees)
         oUSD.burn(msg.sender, _amount);
 
+        // Prevent insolvency
         _postRedeem(_amount);
     }
 
@@ -281,75 +269,40 @@ contract VaultCore is VaultInitializer {
      * @notice Allocate unallocated funds on Vault to strategies.
      **/
     function allocate() external virtual whenNotCapitalPaused nonReentrant {
+        // Add any unallocated backingAsset to the withdrawal queue first
+        _addWithdrawalQueueLiquidity();
+
         _allocate();
     }
 
-    /**
-     * @dev Allocate unallocated funds on Vault to strategies.
-     **/
+    /// @dev Allocate backingAsset (eg. WETH or USDC) to the default backingAsset strategy if there is excess to the Vault buffer.
+    /// This is called from either `mint` or `allocate` and assumes `_addWithdrawalQueueLiquidity`
+    /// has been called before this function.
     function _allocate() internal virtual {
-        uint256 vaultValue = _totalValueInVault();
-        // Nothing in vault to allocate
-        if (vaultValue == 0) return;
-        uint256 strategiesValue = _totalValueInStrategies();
-        // We have a method that does the same as this, gas optimisation
-        uint256 calculatedTotalValue = vaultValue + strategiesValue;
+        // No need to do anything if no default strategy for backingAsset
+        address depositStrategyAddr = assetDefaultStrategies[backingAsset];
+        if (depositStrategyAddr == address(0)) return;
 
-        // We want to maintain a buffer on the Vault so calculate a percentage
-        // modifier to multiply each amount being allocated by to enforce the
-        // vault buffer
-        uint256 vaultBufferModifier;
-        if (strategiesValue == 0) {
-            // Nothing in Strategies, allocate 100% minus the vault buffer to
-            // strategies
-            vaultBufferModifier = uint256(1e18) - vaultBuffer;
-        } else {
-            vaultBufferModifier =
-                (vaultBuffer * calculatedTotalValue) /
-                vaultValue;
-            if (1e18 > vaultBufferModifier) {
-                // E.g. 1e18 - (1e17 * 10e18)/5e18 = 8e17
-                // (5e18 * 8e17) / 1e18 = 4e18 allocated from Vault
-                vaultBufferModifier = uint256(1e18) - vaultBufferModifier;
-            } else {
-                // We need to let the buffer fill
-                return;
-            }
-        }
-        if (vaultBufferModifier == 0) return;
+        uint256 backingAssetAvailableInVault = _backingAssetAvailable();
+        // No need to do anything if there isn't any backingAsset in the vault to allocate
+        if (backingAssetAvailableInVault == 0) return;
 
-        // Iterate over all assets in the Vault and allocate to the appropriate
-        // strategy
-        uint256 assetCount = allAssets.length;
-        for (uint256 i = 0; i < assetCount; ++i) {
-            IERC20 asset = IERC20(allAssets[i]);
-            uint256 assetBalance = asset.balanceOf(address(this));
-            // No balance, nothing to do here
-            if (assetBalance == 0) continue;
+        // Calculate the target buffer for the vault using the total supply
+        uint256 totalSupply = oUSD.totalSupply();
+        uint256 targetBuffer = totalSupply.mulTruncate(vaultBuffer);
 
-            // Multiply the balance by the vault buffer modifier and truncate
-            // to the scale of the asset decimals
-            uint256 allocateAmount = assetBalance.mulTruncate(
-                vaultBufferModifier
-            );
+        // If available backingAsset in the Vault is below or equal the target buffer then there's nothing to allocate
+        if (backingAssetAvailableInVault <= targetBuffer) return;
 
-            address depositStrategyAddr = assetDefaultStrategies[
-                address(asset)
-            ];
+        // The amount of assets to allocate to the default strategy
+        uint256 allocateAmount = backingAssetAvailableInVault - targetBuffer;
 
-            if (depositStrategyAddr != address(0) && allocateAmount > 0) {
-                IStrategy strategy = IStrategy(depositStrategyAddr);
-                // Transfer asset to Strategy and call deposit method to
-                // mint or take required action
-                asset.safeTransfer(address(strategy), allocateAmount);
-                strategy.deposit(address(asset), allocateAmount);
-                emit AssetAllocated(
-                    address(asset),
-                    depositStrategyAddr,
-                    allocateAmount
-                );
-            }
-        }
+        IStrategy strategy = IStrategy(depositStrategyAddr);
+        // Transfer backingAsset to the strategy and call the strategy's deposit function
+        IERC20(backingAsset).safeTransfer(address(strategy), allocateAmount);
+        strategy.deposit(backingAsset, allocateAmount);
+
+        emit AssetAllocated(backingAsset, depositStrategyAddr, allocateAmount);
     }
 
     /**
@@ -543,6 +496,14 @@ contract VaultCore is VaultInitializer {
 
     /**
      * @notice Get the balance of an asset held in Vault and all strategies.
+     * @dev Get the balance of an asset held in Vault and all strategies
+     * less any backingAsset that is reserved for the withdrawal queue.
+     * BaseAsset is the only asset that can return a non-zero balance.
+     * All other assets will return 0 even if there is some dust amounts left in the Vault.
+     * For example, there is 1 wei left of stETH (or USDC) in the OETH (or OUSD) Vault but will return 0 in this function.
+     *
+     * If there is not enough backingAsset in the vault and all strategies to cover all outstanding
+     * withdrawal requests then return a backingAsset balance of 0
      * @param _asset Address of asset
      * @return balance Balance of asset in decimals of asset
      */
@@ -552,6 +513,9 @@ contract VaultCore is VaultInitializer {
         virtual
         returns (uint256 balance)
     {
+        if (_asset != backingAsset) return 0;
+
+        // Get the backingAsset in the vault and the strategies
         IERC20 asset = IERC20(_asset);
         balance = asset.balanceOf(address(this));
         uint256 stratCount = allStrategies.length;
@@ -561,6 +525,18 @@ contract VaultCore is VaultInitializer {
                 balance = balance + strategy.checkBalance(_asset);
             }
         }
+
+        WithdrawalQueueMetadata memory queue = withdrawalQueueMetadata;
+
+        // If the vault becomes insolvent enough that the total value in the vault and all strategies
+        // is less than the outstanding withdrawals.
+        // For example, there was a mass slashing event and most users request a withdrawal.
+        if (balance + queue.claimed < queue.queued) {
+            return 0;
+        }
+
+        // Need to remove backingAsset that is reserved for the withdrawal queue
+        return balance + queue.claimed - queue.queued;
     }
 
     /**
@@ -586,68 +562,80 @@ contract VaultCore is VaultInitializer {
         virtual
         returns (uint256[] memory outputs)
     {
-        // We always give out coins in proportion to how many we have,
-        // Now if all coins were the same value, this math would easy,
-        // just take the percentage of each coin, and multiply by the
-        // value to be given out. But if coins are worth more than $1,
-        // then we would end up handing out too many coins. We need to
-        // adjust by the total value of coins.
-        //
-        // To do this, we total up the value of our coins, by their
-        // percentages. Then divide what we would otherwise give out by
-        // this number.
-        //
-        // Let say we have 100 DAI at $1.06  and 200 USDT at $1.00.
-        // So for every 1 DAI we give out, we'll be handing out 2 USDT
-        // Our total output ratio is: 33% * 1.06 + 66% * 1.00 = 1.02
-        //
-        // So when calculating the output, we take the percentage of
-        // each coin, times the desired output value, divided by the
-        // totalOutputRatio.
-        //
-        // For example, withdrawing: 30 OUSD:
-        // DAI 33% * 30 / 1.02 = 9.80 DAI
-        // USDT = 66 % * 30 / 1.02 = 19.60 USDT
-        //
-        // Checking these numbers:
-        // 9.80 DAI * 1.06 = $10.40
-        // 19.60 USDT * 1.00 = $19.60
-        //
-        // And so the user gets $10.40 + $19.60 = $30 worth of value.
-
-        uint256 assetCount = allAssets.length;
-        uint256[] memory assetUnits = new uint256[](assetCount);
-        uint256[] memory assetBalances = new uint256[](assetCount);
-        outputs = new uint256[](assetCount);
-
         // Calculate redeem fee
         if (redeemFeeBps > 0) {
             uint256 redeemFee = _amount.mulTruncateScale(redeemFeeBps, 1e4);
             _amount = _amount - redeemFee;
         }
 
-        // Calculate assets balances and decimals once,
-        // for a large gas savings.
-        uint256 totalUnits = 0;
-        for (uint256 i = 0; i < assetCount; ++i) {
-            address assetAddr = allAssets[i];
-            uint256 balance = _checkBalance(assetAddr);
-            assetBalances[i] = balance;
-            assetUnits[i] = _toUnits(balance, assetAddr);
-            totalUnits = totalUnits + assetUnits[i];
+        require(allAssets[0] == backingAsset, "Base asset must be first");
+
+        // Todo: Maybe we can change function signature and return a simple uint256
+        outputs = new uint256[](1);
+        outputs[0] = _amount;
+    }
+
+    /// @dev Adds backingAsset (eg. WETH or USDC) to the withdrawal queue if there is a funding shortfall.
+    /// This assumes 1 backingAsset equal 1 corresponding OToken.
+    function _addWithdrawalQueueLiquidity()
+        internal
+        returns (uint256 addedClaimable)
+    {
+        WithdrawalQueueMetadata memory queue = withdrawalQueueMetadata;
+
+        // Check if the claimable backingAsset is less than the queued amount
+        uint256 queueShortfall = queue.queued - queue.claimable;
+
+        // No need to do anything is the withdrawal queue is full funded
+        if (queueShortfall == 0) {
+            return 0;
         }
-        // Calculate totalOutputRatio
-        uint256 totalOutputRatio = 0;
-        for (uint256 i = 0; i < assetCount; ++i) {
-            uint256 unitPrice = _toUnitPrice(allAssets[i], false);
-            uint256 ratio = (assetUnits[i] * unitPrice) / totalUnits;
-            totalOutputRatio = totalOutputRatio + ratio;
+
+        uint256 wethBalance = IERC20(backingAsset).balanceOf(address(this));
+
+        // Of the claimable withdrawal requests, how much is unclaimed?
+        // That is, the amount of backingAsset that is currently allocated for the withdrawal queue
+        uint256 allocatedBaseAsset = queue.claimable - queue.claimed;
+
+        // If there is no unallocated backingAsset then there is nothing to add to the queue
+        if (wethBalance <= allocatedBaseAsset) {
+            return 0;
         }
-        // Calculate final outputs
-        uint256 factor = _amount.divPrecisely(totalOutputRatio);
-        for (uint256 i = 0; i < assetCount; ++i) {
-            outputs[i] = (assetBalances[i] * factor) / totalUnits;
-        }
+
+        uint256 unallocatedBaseAsset = wethBalance - allocatedBaseAsset;
+        // the new claimable amount is the smaller of the queue shortfall or unallocated backingAsset
+        addedClaimable = queueShortfall < unallocatedBaseAsset
+            ? queueShortfall
+            : unallocatedBaseAsset;
+        uint256 newClaimable = queue.claimable + addedClaimable;
+
+        // Store the new claimable amount back to storage
+        withdrawalQueueMetadata.claimable = SafeCast.toUint128(newClaimable);
+
+        // emit a WithdrawalClaimable event
+        emit WithdrawalClaimable(newClaimable, addedClaimable);
+    }
+
+    /// @dev Calculate how much backingAsset (eg. WETH or USDC) in the vault is not reserved for the withdrawal queue.
+    // That is, it is available to be redeemed or deposited into a strategy.
+    function _backingAssetAvailable()
+        internal
+        view
+        returns (uint256 backingAssetAvailable)
+    {
+        WithdrawalQueueMetadata memory queue = withdrawalQueueMetadata;
+
+        // The amount of backingAsset that is still to be claimed in the withdrawal queue
+        uint256 outstandingWithdrawals = queue.queued - queue.claimed;
+
+        // The amount of sitting in backingAsset in the vault
+        uint256 backingAssetBalance = IERC20(backingAsset).balanceOf(
+            address(this)
+        );
+        // If there is not enough backingAsset in the vault to cover the outstanding withdrawals
+        if (backingAssetBalance <= outstandingWithdrawals) return 0;
+
+        return backingAssetBalance - outstandingWithdrawals;
     }
 
     /***************************************
