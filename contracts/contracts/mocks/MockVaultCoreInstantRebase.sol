@@ -4,6 +4,8 @@ pragma solidity ^0.8.0;
 import { VaultCore } from "../vault/VaultCore.sol";
 
 contract MockVaultCoreInstantRebase is VaultCore {
+    constructor() VaultCore(address(0)) {}
+
     function _nextYield(uint256 supply, uint256 vaultValue)
         internal
         view
