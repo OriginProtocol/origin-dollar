@@ -16,7 +16,6 @@ import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 
 import { StableMath } from "../utils/StableMath.sol";
 
-
 import "./VaultInitializer.sol";
 
 contract VaultCore is VaultInitializer {
