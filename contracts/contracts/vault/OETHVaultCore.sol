@@ -61,11 +61,4 @@ contract OETHVaultCore is VaultCore {
         // Burn OTokens
         oUSD.burn(msg.sender, amount);
     }
-
-    /// @notice Adds WETH to the withdrawal queue if there is a funding shortfall.
-    /// @dev is called from the Native Staking strategy when validator withdrawals are processed.
-    /// It also called before any WETH is allocated to a strategy.
-    function addWithdrawalQueueLiquidity() external {
-        _addWithdrawalQueueLiquidity();
-    }
 }

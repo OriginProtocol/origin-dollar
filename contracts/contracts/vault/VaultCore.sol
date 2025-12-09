@@ -441,7 +441,7 @@ contract VaultCore is VaultInitializer {
     }
 
     /**
-     * @dev Allocate backingAsset (eg. WETH or USDC) to the default backingAsset strategy 
+     * @dev Allocate backingAsset (eg. WETH or USDC) to the default backingAsset strategy
      *          if there is excess to the Vault buffer.
      * This is called from either `mint` or `allocate` and assumes `_addWithdrawalQueueLiquidity`
      * has been called before this function.
@@ -595,7 +595,7 @@ contract VaultCore is VaultInitializer {
      *          vault and its strategies.
      * @dev The total value of all WETH held by the vault and all its strategies
      *          less any WETH that is reserved for the withdrawal queue.
-     *          If there is not enough WETH in the vault and all strategies to cover 
+     *          If there is not enough WETH in the vault and all strategies to cover
      *          all outstanding withdrawal requests then return a total value of 0.
      * @return value Total value in USD/ETH (1e18)
      */
@@ -636,7 +636,7 @@ contract VaultCore is VaultInitializer {
      * less any backingAsset that is reserved for the withdrawal queue.
      * BaseAsset is the only asset that can return a non-zero balance.
      * All other assets will return 0 even if there is some dust amounts left in the Vault.
-     * For example, there is 1 wei left of stETH (or USDC) in the OETH (or OUSD) Vault but 
+     * For example, there is 1 wei left of stETH (or USDC) in the OETH (or OUSD) Vault but
      * will return 0 in this function.
      *
      * If there is not enough backingAsset in the vault and all strategies to cover all outstanding
@@ -712,8 +712,19 @@ contract VaultCore is VaultInitializer {
         outputs[0] = _amount;
     }
 
-    /// @dev Adds backingAsset (eg. WETH or USDC) to the withdrawal queue if there is a funding shortfall.
-    /// This assumes 1 backingAsset equal 1 corresponding OToken.
+    /**
+     * @notice Adds WETH to the withdrawal queue if there is a funding shortfall.
+     * @dev is called from the Native Staking strategy when validator withdrawals are processed.
+     * It also called before any WETH is allocated to a strategy.
+     */
+    function addWithdrawalQueueLiquidity() external {
+        _addWithdrawalQueueLiquidity();
+    }
+
+    /**
+     * @dev Adds backingAsset (eg. WETH or USDC) to the withdrawal queue if there is a funding shortfall.
+     * This assumes 1 backingAsset equal 1 corresponding OToken.
+     */
     function _addWithdrawalQueueLiquidity()
         internal
         returns (uint256 addedClaimable)
@@ -753,8 +764,10 @@ contract VaultCore is VaultInitializer {
         emit WithdrawalClaimable(newClaimable, addedClaimable);
     }
 
-    /// @dev Calculate how much backingAsset (eg. WETH or USDC) in the vault is not reserved for the withdrawal queue.
-    // That is, it is available to be redeemed or deposited into a strategy.
+    /**
+     * @dev Calculate how much backingAsset (eg. WETH or USDC) in the vault is not reserved for the withdrawal queue.
+     * That is, it is available to be redeemed or deposited into a strategy.
+     */
     function _backingAssetAvailable()
         internal
         view
