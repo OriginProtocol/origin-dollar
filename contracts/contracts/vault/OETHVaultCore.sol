@@ -11,5 +11,5 @@ contract OETHVaultCore is VaultCore {
     // For future use (because OETHBaseVaultCore inherits from this)
     uint256[50] private __gap;
 
-    constructor(address _backingAsset) VaultCore(_backingAsset) {}
+    constructor(address _weth) VaultCore(_weth) {}
 }
