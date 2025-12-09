@@ -441,7 +441,8 @@ contract VaultCore is VaultInitializer {
     }
 
     /**
-     * @dev Allocate backingAsset (eg. WETH or USDC) to the default backingAsset strategy if there is excess to the Vault buffer.
+     * @dev Allocate backingAsset (eg. WETH or USDC) to the default backingAsset strategy 
+     *          if there is excess to the Vault buffer.
      * This is called from either `mint` or `allocate` and assumes `_addWithdrawalQueueLiquidity`
      * has been called before this function.
      */
@@ -591,15 +592,24 @@ contract VaultCore is VaultInitializer {
 
     /**
      * @dev Internal Calculate the total value of the assets held by the
-     *         vault and its strategies.
+     *          vault and its strategies.
+     * @dev The total value of all WETH held by the vault and all its strategies
+     *          less any WETH that is reserved for the withdrawal queue.
+     *          If there is not enough WETH in the vault and all strategies to cover 
+     *          all outstanding withdrawal requests then return a total value of 0.
      * @return value Total value in USD/ETH (1e18)
      */
     function _totalValue() internal view virtual returns (uint256 value) {
-        return _totalValueInVault() + _totalValueInStrategies();
+        // As backingAsset is the only asset, just return the backingAsset balance
+        value = _checkBalance(backingAsset);
     }
 
     /**
      * @dev Internal to calculate total value of all assets held in Vault.
+     * @dev Only backingAsset is supported in the OETH Vault so return the backingAsset balance only
+     *          Any ETH balances in the Vault will be ignored.
+     *          Amounts from previously supported vault assets will also be ignored.
+     *          For example, there is 1 wei left of stETH in the OETH Vault but is will be ignored.
      * @return value Total value in USD/ETH (1e18)
      */
     function _totalValueInVault()
@@ -608,48 +618,7 @@ contract VaultCore is VaultInitializer {
         virtual
         returns (uint256 value)
     {
-        uint256 assetCount = allAssets.length;
-        for (uint256 y; y < assetCount; ++y) {
-            address assetAddr = allAssets[y];
-            uint256 balance = IERC20(assetAddr).balanceOf(address(this));
-            if (balance > 0) {
-                value += _toUnits(balance, assetAddr);
-            }
-        }
-    }
-
-    /**
-     * @dev Internal to calculate total value of all assets held in Strategies.
-     * @return value Total value in USD/ETH (1e18)
-     */
-    function _totalValueInStrategies() internal view returns (uint256 value) {
-        uint256 stratCount = allStrategies.length;
-        for (uint256 i = 0; i < stratCount; ++i) {
-            value = value + _totalValueInStrategy(allStrategies[i]);
-        }
-    }
-
-    /**
-     * @dev Internal to calculate total value of all assets held by strategy.
-     * @param _strategyAddr Address of the strategy
-     * @return value Total value in USD/ETH (1e18)
-     */
-    function _totalValueInStrategy(address _strategyAddr)
-        internal
-        view
-        returns (uint256 value)
-    {
-        IStrategy strategy = IStrategy(_strategyAddr);
-        uint256 assetCount = allAssets.length;
-        for (uint256 y; y < assetCount; ++y) {
-            address assetAddr = allAssets[y];
-            if (strategy.supportsAsset(assetAddr)) {
-                uint256 balance = strategy.checkBalance(assetAddr);
-                if (balance > 0) {
-                    value += _toUnits(balance, assetAddr);
-                }
-            }
-        }
+        value = IERC20(backingAsset).balanceOf(address(this));
     }
 
     /**
@@ -667,7 +636,8 @@ contract VaultCore is VaultInitializer {
      * less any backingAsset that is reserved for the withdrawal queue.
      * BaseAsset is the only asset that can return a non-zero balance.
      * All other assets will return 0 even if there is some dust amounts left in the Vault.
-     * For example, there is 1 wei left of stETH (or USDC) in the OETH (or OUSD) Vault but will return 0 in this function.
+     * For example, there is 1 wei left of stETH (or USDC) in the OETH (or OUSD) Vault but 
+     * will return 0 in this function.
      *
      * If there is not enough backingAsset in the vault and all strategies to cover all outstanding
      * withdrawal requests then return a backingAsset balance of 0
