@@ -2,19 +2,19 @@
 pragma solidity ^0.8.0;
 
 /**
- * @title OUSD Yearn V3 Master Strategy Mock - the Mainnet part
+ * @title Cross-chain Remote Strategy Mock - the L2 chain part
  * @author Origin Protocol Inc
  */
 
-import { YearnV3SlaveStrategy } from "../../strategies/crossChain/YearnV3SlaveStrategy.sol";
+import { CrossChainRemoteStrategy } from "../../strategies/crossChain/CrossChainRemoteStrategy.sol";
 
-contract YearnV3SlaveStrategyMock is YearnV3SlaveStrategy {
+contract CrossChainRemoteStrategyMock is CrossChainRemoteStrategy {
     address public _masterAddress;
 
-    constructor() YearnV3SlaveStrategy() {}
+    constructor() CrossChainRemoteStrategy() {}
 
     /**
-     * @dev Returns the address of the Slave part of the strategy on L2
+     * @dev Returns the address of the Master Strategy on the other chain
      */
     function masterAddress() internal override returns (address) {
         return _masterAddress;

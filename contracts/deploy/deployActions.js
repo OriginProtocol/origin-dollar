@@ -17,7 +17,11 @@ const {
   isHoodi,
   isHoodiOrFork,
 } = require("../test/helpers.js");
-const { deployWithConfirmation, withConfirmation, encodeSaltForCreateX } = require("../utils/deploy");
+const {
+  deployWithConfirmation,
+  withConfirmation,
+  encodeSaltForCreateX,
+} = require("../utils/deploy");
 const { metapoolLPCRVPid } = require("../utils/constants");
 const { replaceContractAt } = require("../utils/hardhat");
 const { resolveContract } = require("../utils/resolvers");
@@ -1698,7 +1702,7 @@ const deployProxyWithCreateX = async (salt, proxyName) => {
     const ProxyContract = await ethers.getContractFactory(proxyName);
     const encodedArgs = ProxyContract.interface.encodeDeploy([deployerAddr]);
     return ethers.utils.hexConcat([ProxyContract.bytecode, encodedArgs]);
-  }
+  };
 
   const txResponse = await withConfirmation(
     cCreateX
@@ -1714,41 +1718,44 @@ const deployProxyWithCreateX = async (salt, proxyName) => {
       .find((event) => event.topics[0] === contractCreationTopic)
       .topics[1].slice(26)}`
   );
-  
+
   return proxyAddress;
 };
 
 // deploys and initializes the Yearn 3 master strategy
-const deployYearn3MasterStrategyImpl = async (proxyAddress, implementationName = "YearnV3MasterStrategy") => {
+const deployYearn3MasterStrategyImpl = async (
+  proxyAddress,
+  implementationName = "CrossChainMasterStrategy"
+) => {
   const { deployerAddr } = await getNamedAccounts();
   const sDeployer = await ethers.provider.getSigner(deployerAddr);
   log(`Deploying Yearn3MasterStrategyImpl as deployer ${deployerAddr}`);
 
-  const cYearnV3MasterStrategyProxy = await ethers.getContractAt(
-    "YearnV3MasterStrategyProxy",
+  const cCrossChainMasterStrategyProxy = await ethers.getContractAt(
+    "CrossChainMasterStrategyProxy",
     proxyAddress
   );
 
-  const dYearnV3MasterStrategy = await deployWithConfirmation(
+  const dCrossChainMasterStrategy = await deployWithConfirmation(
     implementationName,
     [
       [
         addresses.zero, // platform address
-        addresses.mainnet.Vault
-      ]
+        addresses.mainnet.Vault,
+      ],
     ]
   );
 
-  // const initData = cYearnV3MasterStrategy.interface.encodeFunctionData(
+  // const initData = cCrossChainMasterStrategy.interface.encodeFunctionData(
   //   "initialize()",
   //   []
   // );
-  
+
   // Init the proxy to point at the implementation, set the governor, and call initialize
   const initFunction = "initialize(address,address,bytes)";
   await withConfirmation(
-    cYearnV3MasterStrategyProxy.connect(sDeployer)[initFunction](
-      dYearnV3MasterStrategy.address,
+    cCrossChainMasterStrategyProxy.connect(sDeployer)[initFunction](
+      dCrossChainMasterStrategy.address,
       addresses.mainnet.Timelock, // governor
       //initData, // data for delegate call to the initialize function on the strategy
       "0x",
@@ -1756,35 +1763,38 @@ const deployYearn3MasterStrategyImpl = async (proxyAddress, implementationName =
     )
   );
 
-  return dYearnV3MasterStrategy.address;
+  return dCrossChainMasterStrategy.address;
 };
 
-// deploys and initializes the Yearn 3 slave strategy
-const deployYearn3SlaveStrategyImpl = async (proxyAddress, implementationName = "YearnV3SlaveStrategy") => {
+// deploys and initializes the Yearn 3 remote strategy
+const deployYearn3RemoteStrategyImpl = async (
+  proxyAddress,
+  implementationName = "CrossChainRemoteStrategy"
+) => {
   const { deployerAddr } = await getNamedAccounts();
   const sDeployer = await ethers.provider.getSigner(deployerAddr);
-  log(`Deploying Yearn3SlaveStrategyImpl as deployer ${deployerAddr}`);
+  log(`Deploying Yearn3RemoteStrategyImpl as deployer ${deployerAddr}`);
 
-  const cYearnV3SlaveStrategyProxy = await ethers.getContractAt(
-    "YearnV3SlaveStrategyProxy",
+  const cCrossChainRemoteStrategyProxy = await ethers.getContractAt(
+    "CrossChainRemoteStrategyProxy",
     proxyAddress
   );
 
-  const dYearnV3SlaveStrategy = await deployWithConfirmation(
+  const dCrossChainRemoteStrategy = await deployWithConfirmation(
     implementationName,
     []
   );
 
-  // const initData = cYearnV3MasterStrategy.interface.encodeFunctionData(
+  // const initData = cCrossChainMasterStrategy.interface.encodeFunctionData(
   //   "initialize()",
   //   []
   // );
-  
+
   // Init the proxy to point at the implementation, set the governor, and call initialize
   const initFunction = "initialize(address,address,bytes)";
   await withConfirmation(
-    cYearnV3SlaveStrategyProxy.connect(sDeployer)[initFunction](
-      dYearnV3SlaveStrategy.address,
+    cCrossChainRemoteStrategyProxy.connect(sDeployer)[initFunction](
+      dCrossChainRemoteStrategy.address,
       addresses.base.timelock, // governor
       //initData, // data for delegate call to the initialize function on the strategy
       "0x",
@@ -1792,7 +1802,7 @@ const deployYearn3SlaveStrategyImpl = async (proxyAddress, implementationName = 
     )
   );
 
-  return dYearnV3SlaveStrategy.address;
+  return dCrossChainRemoteStrategy.address;
 };
 
 module.exports = {
@@ -1834,5 +1844,5 @@ module.exports = {
   deploySonicSwapXAMOStrategyImplementation,
   deployProxyWithCreateX,
   deployYearn3MasterStrategyImpl,
-  deployYearn3SlaveStrategyImpl,
+  deployYearn3RemoteStrategyImpl,
 };

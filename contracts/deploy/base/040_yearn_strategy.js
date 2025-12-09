@@ -1,6 +1,9 @@
 const { deployOnBase } = require("../../utils/deploy-l2");
 const addresses = require("../../utils/addresses");
-const { deployProxyWithCreateX, deployYearn3SlaveStrategyImpl } = require("../deployActions");
+const {
+  deployProxyWithCreateX,
+  deployYearn3RemoteStrategyImpl,
+} = require("../deployActions");
 const {
   deployWithConfirmation,
   withConfirmation,
@@ -12,15 +15,17 @@ module.exports = deployOnBase(
   },
   async ({ ethers }) => {
     const salt = "Yean strategy 1";
-    const proxyAddress = await deployProxyWithCreateX(salt, "YearnV3SlaveStrategyProxy");
-    console.log(`YearnV3SlaveStrategyProxy address: ${proxyAddress}`);
-    
-    const implAddress = await deployYearn3SlaveStrategyImpl(proxyAddress);
-    console.log(`YearnV3SlaveStrategyImpl address: ${implAddress}`);
+    const proxyAddress = await deployProxyWithCreateX(
+      salt,
+      "CrossChainRemoteStrategyProxy"
+    );
+    console.log(`CrossChainRemoteStrategyProxy address: ${proxyAddress}`);
+
+    const implAddress = await deployYearn3RemoteStrategyImpl(proxyAddress);
+    console.log(`CrossChainRemoteStrategyImpl address: ${implAddress}`);
 
     return {
-      actions: [
-      ],
+      actions: [],
     };
   }
 );

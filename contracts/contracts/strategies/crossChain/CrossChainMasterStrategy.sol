@@ -2,21 +2,26 @@
 pragma solidity ^0.8.0;
 
 /**
- * @title OUSD Yearn V3 Master Strategy - the Mainnet part
+ * @title Cross-chain Master Strategy - the Mainnet part
  * @author Origin Protocol Inc
  */
 
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { IERC20, InitializableAbstractStrategy } from "../../utils/InitializableAbstractStrategy.sol";
 
-contract YearnV3MasterStrategy is InitializableAbstractStrategy {
+import {ExecutorSendReceive} from "wormhole-solidity-sdk/Executor/Integration.sol";
+import {SequenceReplayProtectionLib} from "wormhole-solidity-sdk/libraries/ReplayProtection.sol";
+import {CONSISTENCY_LEVEL_INSTANT} from "wormhole-solidity-sdk/constants/ConsistencyLevel.sol";
+
+contract CrossChainMasterStrategy is InitializableAbstractStrategy, ExecutorSendReceive {
     using SafeERC20 for IERC20;
 
     /**
      * @param _stratConfig The platform and OToken vault addresses
      */
-    constructor(BaseStrategyConfig memory _stratConfig)
+    constructor(BaseStrategyConfig memory _stratConfig, address coreBridge, address executor)
         InitializableAbstractStrategy(_stratConfig)
+        ExecutorSendReceive(coreBridge, executor)
     {}
 
     /**
@@ -38,15 +43,15 @@ contract YearnV3MasterStrategy is InitializableAbstractStrategy {
     }
 
     /**
-     * @dev Returns the address of the Slave part of the strategy on L2
+     * @dev Returns the address of the Remote part of the strategy on L2
      */
-    function slaveAddress() internal virtual returns (address) {
+    function remoteAddress() internal virtual returns (address) {
         return address(this);
     }
 
     /**
      * @dev Deposit asset into mainnet strategy making them ready to be 
-     *      bridged to Slave part of the strategy
+     *      bridged to Remote part of the strategy
      * @param _asset Address of asset to deposit
      * @param _amount Amount of asset to deposit
      */
@@ -62,9 +67,9 @@ contract YearnV3MasterStrategy is InitializableAbstractStrategy {
 
     /**
      * @dev Bridge the assets prepared by a previous Deposit call to the 
-     *      Slave part of the strategy
+     *      Remote part of the strategy
      * @param _amount Amount of asset to deposit
-     * @param quote Quote to bridge the assets to the Slave part of the strategy
+     * @param quote Quote to bridge the assets to the Remote part of the strategy
      */
     function depositWithQuote(uint256 _amount, bytes calldata quote)
         external
@@ -143,7 +148,7 @@ contract YearnV3MasterStrategy is InitializableAbstractStrategy {
     {
         // USDC balance on this contract
         // + USDC being bridged
-        // + USDC cached in the corresponding Slave part of this contract
+        // + USDC cached in the corresponding Remote part of this contract
     }
 
     /**
@@ -161,30 +166,6 @@ contract YearnV3MasterStrategy is InitializableAbstractStrategy {
         external
         override
         onlyGovernor
-        nonReentrant
-    {
-        
-    }
-
-    /**
-     * @dev 
-     * @param _asset Address of the asset to approve
-     * @param _aToken Address of the aToken
-     */
-    // solhint-disable-next-line no-unused-vars
-    function _abstractSetPToken(address _asset, address _aToken)
-        internal
-        override
-    {
-    }
-
-    /**
-     * @dev 
-     */
-    function collectRewardTokens()
-        external
-        override
-        onlyHarvester
         nonReentrant
     {
         

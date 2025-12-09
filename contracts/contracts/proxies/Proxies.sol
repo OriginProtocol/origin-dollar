@@ -322,18 +322,18 @@ contract CompoundingStakingSSVStrategyProxy is
 }
 
 /**
- * @notice YearnV3MasterStrategyProxy delegates calls to a YearnV3MasterStrategy implementation
+ * @notice CrossChainMasterStrategyProxy delegates calls to a CrossChainMasterStrategy implementation
  */
-contract YearnV3MasterStrategyProxy is
+contract CrossChainMasterStrategyProxy is
     InitializeGovernedUpgradeabilityProxy2
 {
     constructor(address governor) InitializeGovernedUpgradeabilityProxy2(governor) {}
 }
 
 /**
- * @notice YearnV3SlaveStrategyProxy delegates calls to a YearnV3SlaveStrategy implementation
+ * @notice CrossChainRemoteStrategyProxy delegates calls to a CrossChainRemoteStrategy implementation
  */
-contract YearnV3SlaveStrategyProxy is
+contract CrossChainRemoteStrategyProxy is
     InitializeGovernedUpgradeabilityProxy2
 {
     constructor(address governor) InitializeGovernedUpgradeabilityProxy2(governor) {}
