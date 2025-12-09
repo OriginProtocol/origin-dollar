@@ -60,6 +60,9 @@ contract VaultCore is VaultInitializer {
         backingAsset = _backingAsset;
     }
 
+    ////////////////////////////////////////////////////
+    ///                 MINT / REDEEM                ///
+    ////////////////////////////////////////////////////
     /**
      * @notice Deposit a supported asset and mint OTokens.
      * @param _asset Address of the asset being deposited
@@ -149,8 +152,6 @@ contract VaultCore is VaultInitializer {
         oUSD.mint(msg.sender, _amount);
     }
 
-    // In memoriam
-
     /**
      * @notice Withdraw a supported asset and burn OTokens.
      * @param _amount Amount of OTokens to burn
@@ -230,6 +231,170 @@ contract VaultCore is VaultInitializer {
         }
     }
 
+    ////////////////////////////////////////////////////
+    ///               ASYNC WITHDRAWALS              ///
+    ////////////////////////////////////////////////////
+    /**
+     * @notice Request an asynchronous withdrawal of backingAsset in exchange for OToken.
+     * The OToken is burned on request and the backingAsset is transferred to the withdrawer on claim.
+     * This request can be claimed once the withdrawal queue's `claimable` amount
+     * is greater than or equal this request's `queued` amount.
+     * There is a minimum of 10 minutes before a request can be claimed. After that, the request just needs
+     * enough backingAsset liquidity in the Vault to satisfy all the outstanding requests to that point in the queue.
+     * OToken is converted to backingAsset at 1:1.
+     * @param _amount Amount of OToken to burn.
+     * @return requestId Unique ID for the withdrawal request
+     * @return queued Cumulative total of all backingAsset queued including already claimed requests.
+     */
+    function requestWithdrawal(uint256 _amount)
+        external
+        virtual
+        whenNotCapitalPaused
+        nonReentrant
+        returns (uint256 requestId, uint256 queued)
+    {
+        require(withdrawalClaimDelay > 0, "Async withdrawals not enabled");
+
+        // The check that the requester has enough OToken is done in to later burn call
+
+        requestId = withdrawalQueueMetadata.nextWithdrawalIndex;
+        queued = withdrawalQueueMetadata.queued + _amount;
+
+        // Store the next withdrawal request
+        withdrawalQueueMetadata.nextWithdrawalIndex = SafeCast.toUint128(
+            requestId + 1
+        );
+        // Store the updated queued amount which reserves backingAsset in the withdrawal queue
+        // and reduces the vault's total assets
+        withdrawalQueueMetadata.queued = SafeCast.toUint128(queued);
+        // Store the user's withdrawal request
+        withdrawalRequests[requestId] = WithdrawalRequest({
+            withdrawer: msg.sender,
+            claimed: false,
+            timestamp: uint40(block.timestamp),
+            amount: SafeCast.toUint128(_amount),
+            queued: SafeCast.toUint128(queued)
+        });
+
+        // Burn the user's OToken
+        oUSD.burn(msg.sender, _amount);
+
+        // Prevent withdrawal if the vault is solvent by more than the allowed percentage
+        _postRedeem(_amount);
+
+        emit WithdrawalRequested(msg.sender, requestId, _amount, queued);
+    }
+
+    // slither-disable-start reentrancy-no-eth
+    /**
+     * @notice Claim a previously requested withdrawal once it is claimable.
+     * This request can be claimed once the withdrawal queue's `claimable` amount
+     * is greater than or equal this request's `queued` amount and 10 minutes has passed.
+     * If the requests is not claimable, the transaction will revert with `Queue pending liquidity`.
+     * If the request is not older than 10 minutes, the transaction will revert with `Claim delay not met`.
+     * OToken is converted to backingAsset at 1:1.
+     * @param _requestId Unique ID for the withdrawal request
+     * @return amount Amount of backingAsset transferred to the withdrawer
+     */
+    function claimWithdrawal(uint256 _requestId)
+        external
+        virtual
+        whenNotCapitalPaused
+        nonReentrant
+        returns (uint256 amount)
+    {
+        // Try and get more liquidity if there is not enough available
+        if (
+            withdrawalRequests[_requestId].queued >
+            withdrawalQueueMetadata.claimable
+        ) {
+            // Add any backingAsset to the withdrawal queue
+            // this needs to remain here as:
+            //  - Vault can be funded and `addWithdrawalQueueLiquidity` is not externally called
+            //  - funds can be withdrawn from a strategy
+            //
+            // Those funds need to be added to withdrawal queue liquidity
+            _addWithdrawalQueueLiquidity();
+        }
+
+        amount = _claimWithdrawal(_requestId);
+
+        // transfer backingAsset from the vault to the withdrawer
+        IERC20(backingAsset).safeTransfer(msg.sender, amount);
+
+        // Prevent insolvency
+        _postRedeem(amount);
+    }
+
+    // slither-disable-end reentrancy-no-eth
+    /**
+     * @notice Claim a previously requested withdrawals once they are claimable.
+     * This requests can be claimed once the withdrawal queue's `claimable` amount
+     * is greater than or equal each request's `queued` amount and 10 minutes has passed.
+     * If one of the requests is not claimable, the whole transaction will revert with `Queue pending liquidity`.
+     * If one of the requests is not older than 10 minutes,
+     * the whole transaction will revert with `Claim delay not met`.
+     * @param _requestIds Unique ID of each withdrawal request
+     * @return amounts Amount of backingAsset received for each request
+     * @return totalAmount Total amount of backingAsset transferred to the withdrawer
+     */
+    function claimWithdrawals(uint256[] calldata _requestIds)
+        external
+        virtual
+        whenNotCapitalPaused
+        nonReentrant
+        returns (uint256[] memory amounts, uint256 totalAmount)
+    {
+        // Add any backingAsset to the withdrawal queue
+        // this needs to remain here as:
+        //  - Vault can be funded and `addWithdrawalQueueLiquidity` is not externally called
+        //  - funds can be withdrawn from a strategy
+        //
+        // Those funds need to be added to withdrawal queue liquidity
+        _addWithdrawalQueueLiquidity();
+
+        amounts = new uint256[](_requestIds.length);
+        for (uint256 i; i < _requestIds.length; ++i) {
+            amounts[i] = _claimWithdrawal(_requestIds[i]);
+            totalAmount += amounts[i];
+        }
+
+        // transfer all the claimed backingAsset from the vault to the withdrawer
+        IERC20(backingAsset).safeTransfer(msg.sender, totalAmount);
+
+        // Prevent insolvency
+        _postRedeem(totalAmount);
+    }
+
+    function _claimWithdrawal(uint256 requestId)
+        internal
+        returns (uint256 amount)
+    {
+        require(withdrawalClaimDelay > 0, "Async withdrawals not enabled");
+
+        // Load the structs from storage into memory
+        WithdrawalRequest memory request = withdrawalRequests[requestId];
+        WithdrawalQueueMetadata memory queue = withdrawalQueueMetadata;
+
+        require(
+            request.timestamp + withdrawalClaimDelay <= block.timestamp,
+            "Claim delay not met"
+        );
+        // If there isn't enough reserved liquidity in the queue to claim
+        require(request.queued <= queue.claimable, "Queue pending liquidity");
+        require(request.withdrawer == msg.sender, "Not requester");
+        require(request.claimed == false, "Already claimed");
+
+        // Store the request as claimed
+        withdrawalRequests[requestId].claimed = true;
+        // Store the updated claimed amount
+        withdrawalQueueMetadata.claimed = queue.claimed + request.amount;
+
+        emit WithdrawalClaimed(msg.sender, requestId, request.amount);
+
+        return request.amount;
+    }
+
     /**
      * @notice Burn OTokens for Metapool Strategy
      * @param _amount Amount of OUSD to burn
@@ -267,7 +432,7 @@ contract VaultCore is VaultInitializer {
 
     /**
      * @notice Allocate unallocated funds on Vault to strategies.
-     **/
+     */
     function allocate() external virtual whenNotCapitalPaused nonReentrant {
         // Add any unallocated backingAsset to the withdrawal queue first
         _addWithdrawalQueueLiquidity();
@@ -275,9 +440,11 @@ contract VaultCore is VaultInitializer {
         _allocate();
     }
 
-    /// @dev Allocate backingAsset (eg. WETH or USDC) to the default backingAsset strategy if there is excess to the Vault buffer.
-    /// This is called from either `mint` or `allocate` and assumes `_addWithdrawalQueueLiquidity`
-    /// has been called before this function.
+    /**
+     * @dev Allocate backingAsset (eg. WETH or USDC) to the default backingAsset strategy if there is excess to the Vault buffer.
+     * This is called from either `mint` or `allocate` and assumes `_addWithdrawalQueueLiquidity`
+     * has been called before this function.
+     */
     function _allocate() internal virtual {
         // No need to do anything if no default strategy for backingAsset
         address depositStrategyAddr = assetDefaultStrategies[backingAsset];
