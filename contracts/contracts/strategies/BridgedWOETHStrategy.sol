@@ -21,6 +21,7 @@ contract BridgedWOETHStrategy is InitializableAbstractStrategy {
     IWETH9 public immutable weth;
     IERC20 public immutable bridgedWOETH;
     IERC20 public immutable oethb;
+    IOracle public immutable oracle;
 
     uint256 public constant MAX_PRICE_STALENESS = 2 days;
 
@@ -31,11 +32,13 @@ contract BridgedWOETHStrategy is InitializableAbstractStrategy {
         BaseStrategyConfig memory _stratConfig,
         address _weth,
         address _bridgedWOETH,
-        address _oethb
+        address _oethb,
+        address _oracle
     ) InitializableAbstractStrategy(_stratConfig) {
         weth = IWETH9(_weth);
         bridgedWOETH = IERC20(_bridgedWOETH);
         oethb = IERC20(_oethb);
+        oracle = IOracle(_oracle);
     }
 
     function initialize(uint128 _maxPriceDiffBps)
@@ -100,8 +103,7 @@ contract BridgedWOETHStrategy is InitializableAbstractStrategy {
      */
     function _updateWOETHOraclePrice() internal returns (uint256) {
         // WETH price per unit of bridged wOETH
-        uint256 oraclePrice = IOracle(IVault(vaultAddress).priceProvider())
-            .price(address(bridgedWOETH));
+        uint256 oraclePrice = oracle.price(address(bridgedWOETH));
 
         // 1 wOETH > 1 WETH, always
         require(oraclePrice > 1 ether, "Invalid wOETH value");

@@ -96,7 +96,7 @@ contract VaultStorage is Initializable, Governable {
     address[] internal allStrategies;
 
     /// @notice Address of the Oracle price provider contract
-    address public _deprecated_priceProvider;
+    address internal _deprecated_priceProvider;
     /// @notice pause rebasing if true
     bool public rebasePaused;
     /// @notice pause operations that change the OToken supply.

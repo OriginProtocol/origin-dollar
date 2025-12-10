@@ -6,8 +6,6 @@ import { VaultStorage } from "../vault/VaultStorage.sol";
 interface IVault {
     // slither-disable-start constable-states
 
-    event AssetSupported(address _asset);
-    event AssetDefaultStrategyUpdated(address _asset, address _strategy);
     event AssetAllocated(address _asset, address _strategy, uint256 _amount);
     event StrategyApproved(address _addr);
     event StrategyRemoved(address _addr);
@@ -15,11 +13,11 @@ interface IVault {
     event Redeem(address _addr, uint256 _value);
     event CapitalPaused();
     event CapitalUnpaused();
+    event DefaultStrategyUpdated(address _strategy);
     event RebasePaused();
     event RebaseUnpaused();
     event VaultBufferUpdated(uint256 _vaultBuffer);
     event RedeemFeeUpdated(uint256 _redeemFeeBps);
-    event PriceProviderUpdated(address _priceProvider);
     event AllocateThresholdUpdated(uint256 _threshold);
     event RebaseThresholdUpdated(uint256 _threshold);
     event StrategistUpdated(address _address);
@@ -27,18 +25,10 @@ interface IVault {
     event YieldDistribution(address _to, uint256 _yield, uint256 _fee);
     event TrusteeFeeBpsChanged(uint256 _basis);
     event TrusteeAddressChanged(address _address);
-    event SwapperChanged(address _address);
-    event SwapAllowedUndervalueChanged(uint256 _basis);
-    event SwapSlippageChanged(address _asset, uint256 _basis);
-    event Swapped(
-        address indexed _fromAsset,
-        address indexed _toAsset,
-        uint256 _fromAssetAmount,
-        uint256 _toAssetAmount
-    );
     event StrategyAddedToMintWhitelist(address indexed strategy);
     event StrategyRemovedFromMintWhitelist(address indexed strategy);
-    event DripperChanged(address indexed _dripper);
+    event RebasePerSecondMaxChanged(uint256 rebaseRatePerSecond);
+    event DripDurationChanged(uint256 dripDuration);
     event WithdrawalRequested(
         address indexed _withdrawer,
         uint256 indexed _requestId,
@@ -51,6 +41,7 @@ interface IVault {
         uint256 _amount
     );
     event WithdrawalClaimable(uint256 _claimable, uint256 _newClaimable);
+    event WithdrawalClaimDelayUpdated(uint256 _newDelay);
 
     // Governable.sol
     function transferGovernance(address _newGovernor) external;
@@ -62,10 +53,6 @@ interface IVault {
     function ADMIN_IMPLEMENTATION() external view returns (address);
 
     // VaultAdmin.sol
-    function setPriceProvider(address _priceProvider) external;
-
-    function priceProvider() external view returns (address);
-
     function setRedeemFeeBps(uint256 _redeemFeeBps) external;
 
     function redeemFeeBps() external view returns (uint256);
@@ -98,28 +85,13 @@ interface IVault {
 
     function trusteeFeeBps() external view returns (uint256);
 
-    function ousdMetaStrategy() external view returns (address);
-
-    function setSwapper(address _swapperAddr) external;
-
-    function setSwapAllowedUndervalue(uint16 _percentageBps) external;
-
-    function setOracleSlippage(address _asset, uint16 _allowedOracleSlippageBps)
-        external;
-
-    function supportAsset(address _asset, uint8 _unitConversion) external;
-
     function approveStrategy(address _addr) external;
 
     function removeStrategy(address _addr) external;
 
-    function setAssetDefaultStrategy(address _asset, address _strategy)
-        external;
+    function setDefaultStrategy(address _strategy) external;
 
-    function assetDefaultStrategies(address _asset)
-        external
-        view
-        returns (address);
+    function defaultStrategy() external view returns (address);
 
     function pauseRebase() external;
 
@@ -134,10 +106,6 @@ interface IVault {
     function capitalPaused() external view returns (bool);
 
     function transferToken(address _asset, uint256 _amount) external;
-
-    function priceUnitMint(address asset) external view returns (uint256);
-
-    function priceUnitRedeem(address asset) external view returns (uint256);
 
     function withdrawAllFromStrategy(address _strategyAddr) external;
 
@@ -172,14 +140,6 @@ interface IVault {
 
     function rebase() external;
 
-    function swapCollateral(
-        address fromAsset,
-        address toAsset,
-        uint256 fromAssetAmount,
-        uint256 minToAssetAmount,
-        bytes calldata data
-    ) external returns (uint256 toAssetAmount);
-
     function totalValue() external view returns (uint256 value);
 
     function checkBalance(address _asset) external view returns (uint256);
@@ -191,48 +151,24 @@ interface IVault {
 
     function getAssetCount() external view returns (uint256);
 
-    function getAssetConfig(address _asset)
-        external
-        view
-        returns (VaultStorage.Asset memory config);
-
     function getAllAssets() external view returns (address[] memory);
 
     function getStrategyCount() external view returns (uint256);
-
-    function swapper() external view returns (address);
-
-    function allowedSwapUndervalue() external view returns (uint256);
 
     function getAllStrategies() external view returns (address[] memory);
 
     function isSupportedAsset(address _asset) external view returns (bool);
 
-    function netOusdMintForStrategyThreshold() external view returns (uint256);
-
-    function setOusdMetaStrategy(address _ousdMetaStrategy) external;
-
-    function setNetOusdMintForStrategyThreshold(uint256 _threshold) external;
-
-    function netOusdMintedForStrategy() external view returns (int256);
-
     function setDripper(address _dripper) external;
 
     function dripper() external view returns (address);
 
-    function weth() external view returns (address);
-
-    function cacheWETHAssetIndex() external;
-
-    function wethAssetIndex() external view returns (uint256);
+    function backingAsset() external view returns (address);
 
     function initialize(address, address) external;
 
     function setAdminImpl(address) external;
 
-    function removeAsset(address _asset) external;
-
-    // These are OETH specific functions
     function addWithdrawalQueueLiquidity() external;
 
     function requestWithdrawal(uint256 _amount)
@@ -257,7 +193,6 @@ interface IVault {
         view
         returns (VaultStorage.WithdrawalRequest memory);
 
-    // OETHb specific functions
     function addStrategyToMintWhitelist(address strategyAddr) external;
 
     function removeStrategyFromMintWhitelist(address strategyAddr) external;

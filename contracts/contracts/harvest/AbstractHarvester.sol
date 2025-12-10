@@ -97,6 +97,8 @@ abstract contract AbstractHarvester is Governable {
 
     address public immutable vaultAddress;
 
+    IOracle public immutable oracle;
+
     /**
      * Address receiving rewards proceeds. Initially the Vault contract later will possibly
      * be replaced by another contract that eases out rewards distribution.
@@ -126,12 +128,17 @@ abstract contract AbstractHarvester is Governable {
     // Packed indices of assets on the Curve pool
     mapping(address => CurvePoolIndices) public curvePoolIndices;
 
-    constructor(address _vaultAddress, address _baseTokenAddress) {
+    constructor(
+        address _vaultAddress,
+        address _baseTokenAddress,
+        address _oracleAddress
+    ) {
         require(_vaultAddress != address(0));
         require(_baseTokenAddress != address(0));
 
         vaultAddress = _vaultAddress;
         baseTokenAddress = _baseTokenAddress;
+        oracle = IOracle(_oracleAddress);
 
         // Cache decimals as well
         baseTokenDecimals = Helpers.getDecimals(_baseTokenAddress);
@@ -198,7 +205,7 @@ abstract contract AbstractHarvester is Governable {
 
         // Revert if feed does not exist
         // slither-disable-next-line unused-return
-        IOracle(IVault(vaultAddress).priceProvider()).price(_tokenAddress);
+        oracle.price(_tokenAddress);
 
         IERC20 token = IERC20(_tokenAddress);
         // if changing token swap provider cancel existing allowance
@@ -443,10 +450,9 @@ abstract contract AbstractHarvester is Governable {
         _harvest(_strategyAddr);
         IStrategy strategy = IStrategy(_strategyAddr);
         address[] memory rewardTokens = strategy.getRewardTokenAddresses();
-        IOracle priceProvider = IOracle(IVault(vaultAddress).priceProvider());
         uint256 len = rewardTokens.length;
         for (uint256 i = 0; i < len; ++i) {
-            _swap(rewardTokens[i], _rewardTo, priceProvider);
+            _swap(rewardTokens[i], _rewardTo, oracle);
         }
     }
 
