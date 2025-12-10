@@ -50,8 +50,8 @@ contract VaultAdmin is VaultStorage {
     }
 
     /**
-     * @notice Set a buffer of assets to keep in the Vault to handle most
-     * redemptions without needing to spend gas unwinding assets from a Strategy.
+     * @notice Set a buffer of backingAsset to keep in the Vault to handle most
+     * redemptions without needing to spend gas unwinding backingAsset from a Strategy.
      * @param _vaultBuffer Percentage using 18 decimals. 100% = 1e18.
      */
     function setVaultBuffer(uint256 _vaultBuffer)
@@ -112,7 +112,7 @@ contract VaultAdmin is VaultStorage {
             // Make sure the strategy meets some criteria
             require(strategies[_strategy].isSupported, "Strategy not approved");
             IStrategy strategy = IStrategy(_strategy);
-            require(assets[_asset].isSupported, "Asset is not supported");
+            require(backingAsset == _asset, "Asset is not supported");
             require(
                 strategy.supportsAsset(_asset),
                 "Asset not supported by Strategy"
@@ -189,14 +189,10 @@ contract VaultAdmin is VaultStorage {
 
     function removeStrategy(address _addr) external onlyGovernor {
         require(strategies[_addr].isSupported, "Strategy not approved");
-
-        uint256 assetCount = allAssets.length;
-        for (uint256 i = 0; i < assetCount; ++i) {
-            require(
-                assetDefaultStrategies[allAssets[i]] != _addr,
-                "Strategy is default for an asset"
-            );
-        }
+        require(
+            assetDefaultStrategies[backingAsset] != _addr,
+            "Strategy is default for backing asset"
+        );
 
         // Initialize strategyIndex with out of bounds result so function will
         // revert if no valid index found
@@ -216,7 +212,7 @@ contract VaultAdmin is VaultStorage {
             // Mark the strategy as not supported
             strategies[_addr].isSupported = false;
 
-            // Withdraw all assets
+            // Withdraw all backingAsset
             IStrategy strategy = IStrategy(_addr);
             strategy.withdrawAll();
 
@@ -268,8 +264,8 @@ contract VaultAdmin is VaultStorage {
     ****************************************/
 
     /**
-     * @notice Deposit multiple assets from the vault into the strategy.
-     * @param _strategyToAddress Address of the Strategy to deposit assets into.
+     * @notice Deposit multiple backingAsset from the vault into the strategy.
+     * @param _strategyToAddress Address of the Strategy to deposit backingAsset into.
      * @param _assets Array of asset address that will be deposited into the strategy.
      * @param _amounts Array of amounts of each corresponding asset to deposit.
      */
@@ -312,8 +308,8 @@ contract VaultAdmin is VaultStorage {
     }
 
     /**
-     * @notice Withdraw multiple assets from the strategy to the vault.
-     * @param _strategyFromAddress Address of the Strategy to withdraw assets from.
+     * @notice Withdraw multiple backingAsset from the strategy to the vault.
+     * @param _strategyFromAddress Address of the Strategy to withdraw backingAsset from.
      * @param _assets Array of asset address that will be withdrawn from the strategy.
      * @param _amounts Array of amounts of each corresponding asset to withdraw.
      */
@@ -360,7 +356,7 @@ contract VaultAdmin is VaultStorage {
 
     /**
      * @notice Sets the maximum allowable difference between
-     * total supply and backing assets' value.
+     * total supply and backing backingAsset' value.
      */
     function setMaxSupplyDiff(uint256 _maxSupplyDiff) external onlyGovernor {
         maxSupplyDiff = _maxSupplyDiff;
@@ -436,7 +432,7 @@ contract VaultAdmin is VaultStorage {
         external
         onlyGovernor
     {
-        require(!assets[_asset].isSupported, "Only unsupported assets");
+        require(backingAsset != _asset, "Only unsupported backingAsset");
         IERC20(_asset).safeTransfer(governor(), _amount);
     }
 
@@ -472,7 +468,7 @@ contract VaultAdmin is VaultStorage {
     ****************************************/
 
     /**
-     * @notice Withdraws all assets from the strategy and sends assets to the Vault.
+     * @notice Withdraws all backingAsset from the strategy and sends backingAsset to the Vault.
      * @param _strategyAddr Strategy address.
      */
     function withdrawAllFromStrategy(address _strategyAddr)
@@ -493,7 +489,7 @@ contract VaultAdmin is VaultStorage {
     }
 
     /**
-     * @notice Withdraws all assets from all the strategies and sends assets to the Vault.
+     * @notice Withdraws all backingAsset from all the strategies and sends backingAsset to the Vault.
      */
     function withdrawAllFromStrategies() external onlyGovernorOrStrategist {
         _withdrawAllFromStrategies();

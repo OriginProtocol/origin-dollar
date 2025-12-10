@@ -33,7 +33,7 @@ contract MockVault is VaultCore {
     {
         // Avoids rounding errors by returning the total value
         // in a single currency
-        if (allAssets[0] == _asset) {
+        if (backingAsset == _asset) {
             uint256 decimals = Helpers.getDecimals(_asset);
             return storedTotalValue.scaleBy(decimals, 18);
         } else {

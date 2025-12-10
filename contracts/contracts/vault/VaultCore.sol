@@ -3,9 +3,9 @@ pragma solidity ^0.8.0;
 
 /**
  * @title OToken VaultCore contract
- * @notice The Vault contract stores assets. On a deposit, OTokens will be minted
+ * @notice The Vault contract stores backingAsset. On a deposit, OTokens will be minted
            and sent to the depositor. On a withdrawal, OTokens will be burned and
-           assets will be sent to the withdrawer. The Vault accepts deposits of
+           backingAsset will be sent to the withdrawer. The Vault accepts deposits of
            interest from yield bearing strategies which will modify the supply
            of OTokens.
  * @author Origin Protocol Inc
@@ -183,7 +183,7 @@ contract VaultCore is VaultInitializer {
     }
 
     function _postRedeem(uint256 _amount) internal {
-        // Until we can prove that we won't affect the prices of our assets
+        // Until we can prove that we won't affect the prices of our backingAsset
         // by withdrawing them, this should be here.
         // It's possible that a strategy was off on its asset total, perhaps
         // a reward token sold for more or for less than anticipated.
@@ -194,15 +194,15 @@ contract VaultCore is VaultInitializer {
             totalUnits = _totalValue();
         }
 
-        // Check that the OTokens are backed by enough assets
+        // Check that the OTokens are backed by enough backingAsset
         if (maxSupplyDiff > 0) {
-            // If there are more outstanding withdrawal requests than assets in the vault and strategies
-            // then the available assets will be negative and totalUnits will be rounded up to zero.
+            // If there are more outstanding withdrawal requests than backingAsset in the vault and strategies
+            // then the available backingAsset will be negative and totalUnits will be rounded up to zero.
             // As we don't know the exact shortfall amount, we will reject all redeem and withdrawals
             require(totalUnits > 0, "Too many outstanding requests");
 
             // Allow a max difference of maxSupplyDiff% between
-            // backing assets value and OUSD total supply
+            // backing backingAsset value and OUSD total supply
             uint256 diff = oUSD.totalSupply().divPrecisely(totalUnits);
             require(
                 (diff > 1e18 ? diff - 1e18 : 1e18 - diff) <= maxSupplyDiff,
@@ -279,7 +279,7 @@ contract VaultCore is VaultInitializer {
             requestId + 1
         );
         // Store the updated queued amount which reserves backingAsset in the withdrawal queue
-        // and reduces the vault's total assets
+        // and reduces the vault's total backingAsset
         withdrawalQueueMetadata.queued = SafeCast.toUint128(queued);
         // Store the user's withdrawal request
         withdrawalRequests[requestId] = WithdrawalRequest({
@@ -441,7 +441,7 @@ contract VaultCore is VaultInitializer {
         // If available backingAsset in the Vault is below or equal the target buffer then there's nothing to allocate
         if (backingAssetAvailableInVault <= targetBuffer) return;
 
-        // The amount of assets to allocate to the default strategy
+        // The amount of backingAsset to allocate to the default strategy
         uint256 allocateAmount = backingAssetAvailableInVault - targetBuffer;
 
         IStrategy strategy = IStrategy(depositStrategyAddr);
@@ -453,7 +453,7 @@ contract VaultCore is VaultInitializer {
     }
 
     /**
-     * @notice Calculate the total value of assets held by the Vault and all
+     * @notice Calculate the total value of backingAsset held by the Vault and all
      *      strategies and update the supply of OTokens.
      */
     function rebase() external virtual nonReentrant {
@@ -461,7 +461,7 @@ contract VaultCore is VaultInitializer {
     }
 
     /**
-     * @dev Calculate the total value of assets held by the Vault and all
+     * @dev Calculate the total value of backingAsset held by the Vault and all
      *      strategies and update the supply of OTokens, optionally sending a
      *      portion of the yield to the trustee.
      * @return totalUnits Total balance of Vault in units
@@ -561,7 +561,7 @@ contract VaultCore is VaultInitializer {
     }
 
     /**
-     * @notice Determine the total value of assets held by the vault and its
+     * @notice Determine the total value of backingAsset held by the vault and its
      *         strategies.
      * @return value Total value in USD/ETH (1e18)
      */
@@ -570,7 +570,7 @@ contract VaultCore is VaultInitializer {
     }
 
     /**
-     * @dev Internal Calculate the total value of the assets held by the
+     * @dev Internal Calculate the total value of the backingAsset held by the
      *          vault and its strategies.
      * @dev The total value of all WETH held by the vault and all its strategies
      *          less any WETH that is reserved for the withdrawal queue.
@@ -584,10 +584,10 @@ contract VaultCore is VaultInitializer {
     }
 
     /**
-     * @dev Internal to calculate total value of all assets held in Vault.
+     * @dev Internal to calculate total value of all backingAsset held in Vault.
      * @dev Only backingAsset is supported in the OETH Vault so return the backingAsset balance only
      *          Any ETH balances in the Vault will be ignored.
-     *          Amounts from previously supported vault assets will also be ignored.
+     *          Amounts from previously supported vault backingAsset will also be ignored.
      *          For example, there is 1 wei left of stETH in the OETH Vault but is will be ignored.
      * @return value Total value in USD/ETH (1e18)
      */
@@ -614,7 +614,7 @@ contract VaultCore is VaultInitializer {
      * @dev Get the balance of an asset held in Vault and all strategies
      * less any backingAsset that is reserved for the withdrawal queue.
      * BaseAsset is the only asset that can return a non-zero balance.
-     * All other assets will return 0 even if there is some dust amounts left in the Vault.
+     * All other backingAsset will return 0 even if there is some dust amounts left in the Vault.
      * For example, there is 1 wei left of stETH (or USDC) in the OETH (or OUSD) Vault but
      * will return 0 in this function.
      *
@@ -670,7 +670,7 @@ contract VaultCore is VaultInitializer {
     /**
      * @dev Calculate the outputs for a redeem function, i.e. the mix of
      * coins that will be returned.
-     * @return outputs Array of amounts respective to the supported assets
+     * @return outputs Array of amounts respective to the supported backingAsset
      */
     function _calculateRedeemOutputs(uint256 _amount)
         internal
@@ -683,8 +683,6 @@ contract VaultCore is VaultInitializer {
             uint256 redeemFee = _amount.mulTruncateScale(redeemFeeBps, 1e4);
             _amount = _amount - redeemFee;
         }
-
-        require(allAssets[0] == backingAsset, "Base asset must be first");
 
         // Todo: Maybe we can change function signature and return a simple uint256
         outputs = new uint256[](1);
@@ -772,29 +770,19 @@ contract VaultCore is VaultInitializer {
     ****************************************/
 
     /**
-     * @notice Return the number of assets supported by the Vault.
+     * @notice Return the number of backingAsset supported by the Vault.
      */
     function getAssetCount() public view returns (uint256) {
-        return allAssets.length;
-    }
-
-    /**
-     * @notice Gets the vault configuration of a supported asset.
-     * @param _asset Address of the token asset
-     */
-    function getAssetConfig(address _asset)
-        public
-        view
-        returns (Asset memory config)
-    {
-        config = assets[_asset];
+        return 1;
     }
 
     /**
      * @notice Return all vault asset addresses in order
      */
     function getAllAssets() external view returns (address[] memory) {
-        return allAssets;
+        address[] memory a = new address[](1);
+        a[0] = backingAsset;
+        return a;
     }
 
     /**
@@ -817,7 +805,7 @@ contract VaultCore is VaultInitializer {
      * @return true if supported
      */
     function isSupportedAsset(address _asset) external view returns (bool) {
-        return assets[_asset].isSupported;
+        return backingAsset == _asset;
     }
 
     function ADMIN_IMPLEMENTATION() external view returns (address adminImpl) {

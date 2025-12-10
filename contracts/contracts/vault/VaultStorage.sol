@@ -81,9 +81,9 @@ contract VaultStorage is Initializable, Governable {
     }
 
     /// @dev mapping of supported vault assets to their configuration
-    mapping(address => Asset) internal assets;
+    mapping(address => Asset) internal _deprecated_assets;
     /// @dev list of all assets supported by the vault.
-    address[] internal allAssets;
+    address[] internal _deprecated_allAssets;
 
     // Strategies approved for use by the Vault
     struct Strategy {
