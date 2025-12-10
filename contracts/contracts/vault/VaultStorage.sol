@@ -20,7 +20,6 @@ import "../utils/Helpers.sol";
 contract VaultStorage is Initializable, Governable {
     using SafeERC20 for IERC20;
 
-    event AssetDefaultStrategyUpdated(address _asset, address _strategy);
     event AssetAllocated(address _asset, address _strategy, uint256 _amount);
     event StrategyApproved(address _addr);
     event StrategyRemoved(address _addr);
@@ -28,6 +27,7 @@ contract VaultStorage is Initializable, Governable {
     event Redeem(address _addr, uint256 _value);
     event CapitalPaused();
     event CapitalUnpaused();
+    event DefaultStrategyUpdated(address _strategy);
     event RebasePaused();
     event RebaseUnpaused();
     event VaultBufferUpdated(uint256 _vaultBuffer);
@@ -130,7 +130,7 @@ contract VaultStorage is Initializable, Governable {
 
     /// @notice Mapping of asset address to the Strategy that they should automatically
     // be allocated to
-    mapping(address => address) public assetDefaultStrategies;
+    mapping(address => address) public _deprecated_assetDefaultStrategies;
 
     /// @notice Max difference between total supply and total value of assets. 18 decimals.
     uint256 public maxSupplyDiff;
@@ -236,8 +236,11 @@ contract VaultStorage is Initializable, Governable {
     uint256 internal constant MAX_REBASE_PER_SECOND =
         uint256(0.05 ether) / 1 days;
 
+    /// @notice Default strategy for backingAsset
+    address public defaultStrategy;
+
     // For future use
-    uint256[43] private __gap;
+    uint256[42] private __gap;
 
     /// @dev Address of the backing asset (eg. WETH or USDC)
     address public immutable backingAsset;

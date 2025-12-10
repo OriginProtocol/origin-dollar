@@ -427,7 +427,7 @@ contract VaultCore is VaultInitializer {
      */
     function _allocate() internal virtual {
         // No need to do anything if no default strategy for backingAsset
-        address depositStrategyAddr = assetDefaultStrategies[backingAsset];
+        address depositStrategyAddr = defaultStrategy;
         if (depositStrategyAddr == address(0)) return;
 
         uint256 backingAssetAvailableInVault = _backingAssetAvailable();

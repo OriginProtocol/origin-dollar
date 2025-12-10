@@ -96,29 +96,26 @@ contract VaultAdmin is VaultStorage {
     }
 
     /**
-     * @notice Set the default Strategy for an asset, i.e. the one which the asset
-            will be automatically allocated to and withdrawn from
-     * @param _asset Address of the asset
+     * @notice Set the default Strategy for backingAsset, i.e. the one which
+     * the backingAsset will be automatically allocated to and withdrawn from
      * @param _strategy Address of the Strategy
      */
-    function setAssetDefaultStrategy(address _asset, address _strategy)
+    function setDefaultStrategy(address _strategy)
         external
         onlyGovernorOrStrategist
     {
-        emit AssetDefaultStrategyUpdated(_asset, _strategy);
+        emit DefaultStrategyUpdated(_strategy);
         // If its a zero address being passed for the strategy we are removing
         // the default strategy
         if (_strategy != address(0)) {
             // Make sure the strategy meets some criteria
             require(strategies[_strategy].isSupported, "Strategy not approved");
-            IStrategy strategy = IStrategy(_strategy);
-            require(backingAsset == _asset, "Asset is not supported");
             require(
-                strategy.supportsAsset(_asset),
+                IStrategy(_strategy).supportsAsset(backingAsset),
                 "Asset not supported by Strategy"
             );
         }
-        assetDefaultStrategies[_asset] = _strategy;
+        defaultStrategy = _strategy;
     }
 
     /**
@@ -190,7 +187,7 @@ contract VaultAdmin is VaultStorage {
     function removeStrategy(address _addr) external onlyGovernor {
         require(strategies[_addr].isSupported, "Strategy not approved");
         require(
-            assetDefaultStrategies[backingAsset] != _addr,
+            defaultStrategy != _addr,
             "Strategy is default for backing asset"
         );
 
