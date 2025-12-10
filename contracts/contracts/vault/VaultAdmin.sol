@@ -9,8 +9,6 @@ pragma solidity ^0.8.0;
 
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
-import { IOracle } from "../interfaces/IOracle.sol";
-import { ISwapper } from "../interfaces/ISwapper.sol";
 import { IVault } from "../interfaces/IVault.sol";
 import { StableMath } from "../utils/StableMath.sol";
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
@@ -21,6 +19,9 @@ contract VaultAdmin is VaultStorage {
     using SafeERC20 for IERC20;
     using StableMath for uint256;
     using SafeCast for uint256;
+
+    /// @dev Address of the backing asset (eg. WETH or USDC)
+    address public immutable backingAsset;
 
     /**
      * @dev Verifies that the caller is the Governor or Strategist.
@@ -33,18 +34,13 @@ contract VaultAdmin is VaultStorage {
         _;
     }
 
+    constructor(address _backingAsset) {
+        backingAsset = _backingAsset;
+    }
+
     /***************************************
                  Configuration
     ****************************************/
-
-    /**
-     * @notice Set address of price provider.
-     * @param _priceProvider Address of price provider
-     */
-    function setPriceProvider(address _priceProvider) external onlyGovernor {
-        priceProvider = _priceProvider;
-        emit PriceProviderUpdated(_priceProvider);
-    }
 
     /**
      * @notice Set a fee in basis points to be charged for a redeem.
@@ -129,34 +125,6 @@ contract VaultAdmin is VaultStorage {
     }
 
     /**
-     * @notice Set maximum amount of OTokens that can at any point be minted and deployed
-     * to strategy (used only by ConvexOUSDMetaStrategy for now).
-     * @param _threshold OToken amount with 18 fixed decimals.
-     */
-    function setNetOusdMintForStrategyThreshold(uint256 _threshold)
-        external
-        onlyGovernor
-    {
-        /**
-         * Because `netOusdMintedForStrategy` check in vault core works both ways
-         * (positive and negative) the actual impact of the amount of OToken minted
-         * could be double the threshold. E.g.:
-         *  - contract has threshold set to 100
-         *  - state of netOusdMinted is -90
-         *  - in effect it can mint 190 OToken and still be within limits
-         *
-         * We are somewhat mitigating this behaviour by resetting the netOusdMinted
-         * counter whenever new threshold is set. So it can only move one threshold
-         * amount in each direction. This also enables us to reduce the threshold
-         * amount and not have problems with current netOusdMinted being near
-         * limits on either side.
-         */
-        netOusdMintedForStrategy = 0;
-        netOusdMintForStrategyThreshold = _threshold;
-        emit NetOusdMintForStrategyThresholdChanged(_threshold);
-    }
-
-    /**
      * @notice Changes the async withdrawal claim period for OETH & superOETHb
      * @param _delay Delay period (should be between 10 mins to 7 days).
      *          Set to 0 to disable async withdrawals
@@ -200,267 +168,6 @@ contract VaultAdmin is VaultStorage {
         IVault(address(this)).rebase();
         dripDuration = _dripDuration.toUint64();
         emit DripDurationChanged(_dripDuration);
-    }
-
-    /***************************************
-                    Swaps
-    ****************************************/
-
-    /**
-     * @notice Strategist swaps collateral assets sitting in the vault.
-     * @param _fromAsset The token address of the asset being sold by the vault.
-     * @param _toAsset The token address of the asset being purchased by the vault.
-     * @param _fromAssetAmount The amount of assets being sold by the vault.
-     * @param _minToAssetAmount The minimum amount of assets to be purchased.
-     * @param _data implementation specific data. eg 1Inch swap data
-     * @return toAssetAmount The amount of toAssets that was received from the swap
-     */
-    function swapCollateral(
-        address _fromAsset,
-        address _toAsset,
-        uint256 _fromAssetAmount,
-        uint256 _minToAssetAmount,
-        bytes calldata _data
-    )
-        external
-        nonReentrant
-        onlyGovernorOrStrategist
-        returns (uint256 toAssetAmount)
-    {
-        toAssetAmount = _swapCollateral(
-            _fromAsset,
-            _toAsset,
-            _fromAssetAmount,
-            _minToAssetAmount,
-            _data
-        );
-    }
-
-    function _swapCollateral(
-        address _fromAsset,
-        address _toAsset,
-        uint256 _fromAssetAmount,
-        uint256 _minToAssetAmount,
-        bytes calldata _data
-    ) internal virtual returns (uint256 toAssetAmount) {
-        // Check fromAsset and toAsset are valid
-        Asset memory fromAssetConfig = assets[_fromAsset];
-        Asset memory toAssetConfig = assets[_toAsset];
-        require(fromAssetConfig.isSupported, "From asset is not supported");
-        require(toAssetConfig.isSupported, "To asset is not supported");
-
-        // Load swap config into memory to avoid separate SLOADs
-        SwapConfig memory config = swapConfig;
-
-        // Scope a new block to remove toAssetBalBefore from the scope of swapCollateral.
-        // This avoids a stack too deep error.
-        {
-            uint256 toAssetBalBefore = IERC20(_toAsset).balanceOf(
-                address(this)
-            );
-
-            // Transfer from assets to the swapper contract
-            IERC20(_fromAsset).safeTransfer(config.swapper, _fromAssetAmount);
-
-            // Call to the Swapper contract to do the actual swap
-            // The -1 is required for stETH which sometimes transfers 1 wei less than what was specified.
-            // slither-disable-next-line unused-return
-            ISwapper(config.swapper).swap(
-                _fromAsset,
-                _toAsset,
-                _fromAssetAmount - 1,
-                _minToAssetAmount,
-                _data
-            );
-
-            // Compute the change in asset balance held by the Vault
-            toAssetAmount =
-                IERC20(_toAsset).balanceOf(address(this)) -
-                toAssetBalBefore;
-        }
-
-        // Check the to assets returned is above slippage amount specified by the strategist
-        require(
-            toAssetAmount >= _minToAssetAmount,
-            "Strategist slippage limit"
-        );
-
-        // Scope a new block to remove minOracleToAssetAmount from the scope of swapCollateral.
-        // This avoids a stack too deep error.
-        {
-            // Check the slippage against the Oracle in case the strategist made a mistake or has become malicious.
-            // to asset amount = from asset amount * from asset price / to asset price
-            uint256 minOracleToAssetAmount = (_fromAssetAmount *
-                (1e4 - fromAssetConfig.allowedOracleSlippageBps) *
-                IOracle(priceProvider).price(_fromAsset)) /
-                (IOracle(priceProvider).price(_toAsset) *
-                    (1e4 + toAssetConfig.allowedOracleSlippageBps));
-
-            // Scale both sides up to 18 decimals to compare
-            require(
-                toAssetAmount.scaleBy(18, toAssetConfig.decimals) >=
-                    minOracleToAssetAmount.scaleBy(
-                        18,
-                        fromAssetConfig.decimals
-                    ),
-                "Oracle slippage limit exceeded"
-            );
-        }
-
-        // Check the vault's total value hasn't gone below the OToken total supply
-        // by more than the allowed percentage.
-        require(
-            IVault(address(this)).totalValue() >=
-                (oUSD.totalSupply() * ((1e4 - config.allowedUndervalueBps))) /
-                    1e4,
-            "Allowed value < supply"
-        );
-
-        emit Swapped(_fromAsset, _toAsset, _fromAssetAmount, toAssetAmount);
-    }
-
-    /***************************************
-                    Swap Config
-    ****************************************/
-
-    /**
-     * @notice Set the contract the performs swaps of collateral assets.
-     * @param _swapperAddr Address of the Swapper contract that implements the ISwapper interface.
-     */
-    function setSwapper(address _swapperAddr) external onlyGovernor {
-        swapConfig.swapper = _swapperAddr;
-        emit SwapperChanged(_swapperAddr);
-    }
-
-    /// @notice Contract that swaps the vault's collateral assets
-    function swapper() external view returns (address swapper_) {
-        swapper_ = swapConfig.swapper;
-    }
-
-    /**
-     * @notice Set max allowed percentage the vault total value can drop below the OToken total supply in basis points
-     * when executing collateral swaps.
-     * @param _basis Percentage in basis points. eg 100 == 1%
-     */
-    function setSwapAllowedUndervalue(uint16 _basis) external onlyGovernor {
-        require(_basis < 10001, "Invalid basis points");
-        swapConfig.allowedUndervalueBps = _basis;
-        emit SwapAllowedUndervalueChanged(_basis);
-    }
-
-    /**
-     * @notice Max allowed percentage the vault total value can drop below the OToken total supply in basis points
-     * when executing a collateral swap.
-     * For example 100 == 1%
-     * @return value Percentage in basis points.
-     */
-    function allowedSwapUndervalue() external view returns (uint256 value) {
-        value = swapConfig.allowedUndervalueBps;
-    }
-
-    /**
-     * @notice Set the allowed slippage from the Oracle price for collateral asset swaps.
-     * @param _asset Address of the asset token.
-     * @param _allowedOracleSlippageBps allowed slippage from Oracle in basis points. eg 20 = 0.2%. Max 10%.
-     */
-    function setOracleSlippage(address _asset, uint16 _allowedOracleSlippageBps)
-        external
-        onlyGovernor
-    {
-        require(assets[_asset].isSupported, "Asset not supported");
-        require(_allowedOracleSlippageBps < 1000, "Slippage too high");
-
-        assets[_asset].allowedOracleSlippageBps = _allowedOracleSlippageBps;
-
-        emit SwapSlippageChanged(_asset, _allowedOracleSlippageBps);
-    }
-
-    /***************************************
-                Asset Config
-    ****************************************/
-
-    /**
-     * @notice Add a supported asset to the contract, i.e. one that can be
-     *         to mint OTokens.
-     * @param _asset Address of asset
-     */
-    function supportAsset(address _asset, uint8 _unitConversion)
-        external
-        virtual
-        onlyGovernor
-    {
-        require(!assets[_asset].isSupported, "Asset already supported");
-
-        assets[_asset] = Asset({
-            isSupported: true,
-            unitConversion: UnitConversion(_unitConversion),
-            decimals: 0, // will be overridden in _cacheDecimals
-            allowedOracleSlippageBps: 0 // 0% by default
-        });
-
-        _cacheDecimals(_asset);
-        allAssets.push(_asset);
-
-        // Verify that our oracle supports the asset
-        // slither-disable-next-line unused-return
-        IOracle(priceProvider).price(_asset);
-
-        emit AssetSupported(_asset);
-    }
-
-    /**
-     * @notice Remove a supported asset from the Vault
-     * @param _asset Address of asset
-     */
-    function removeAsset(address _asset) external onlyGovernor {
-        require(assets[_asset].isSupported, "Asset not supported");
-
-        // 1e13 for 18 decimals. And 10 for 6 decimals
-        uint256 maxDustBalance = uint256(1e13).scaleBy(
-            assets[_asset].decimals,
-            18
-        );
-
-        require(
-            IVault(address(this)).checkBalance(_asset) <= maxDustBalance,
-            "Vault still holds asset"
-        );
-
-        uint256 assetsCount = allAssets.length;
-        uint256 assetIndex = assetsCount; // initialize at invalid index
-        for (uint256 i = 0; i < assetsCount; ++i) {
-            if (allAssets[i] == _asset) {
-                assetIndex = i;
-                break;
-            }
-        }
-
-        // Note: If asset is not found in `allAssets`, the following line
-        // will revert with an out-of-bound error. However, there's no
-        // reason why an asset would have `Asset.isSupported = true` but
-        // not exist in `allAssets`.
-
-        // Update allAssets array
-        allAssets[assetIndex] = allAssets[assetsCount - 1];
-        allAssets.pop();
-
-        // Reset default strategy
-        assetDefaultStrategies[_asset] = address(0);
-        emit AssetDefaultStrategyUpdated(_asset, address(0));
-
-        // Remove asset from storage
-        delete assets[_asset];
-
-        emit AssetRemoved(_asset);
-    }
-
-    /**
-     * @notice Cache decimals on OracleRouter for a particular asset. This action
-     *      is required before that asset's price can be accessed.
-     * @param _asset Address of asset token
-     */
-    function cacheDecimals(address _asset) external onlyGovernor {
-        _cacheDecimals(_asset);
     }
 
     /***************************************
@@ -520,6 +227,45 @@ contract VaultAdmin is VaultStorage {
         }
     }
 
+    /**
+     * @notice Adds a strategy to the mint whitelist.
+     *          Reverts if strategy isn't approved on Vault.
+     * @param strategyAddr Strategy address
+     */
+    function addStrategyToMintWhitelist(address strategyAddr)
+        external
+        onlyGovernor
+    {
+        require(strategies[strategyAddr].isSupported, "Strategy not approved");
+
+        require(
+            !isMintWhitelistedStrategy[strategyAddr],
+            "Already whitelisted"
+        );
+
+        isMintWhitelistedStrategy[strategyAddr] = true;
+
+        emit StrategyAddedToMintWhitelist(strategyAddr);
+    }
+
+    /**
+     * @notice Removes a strategy from the mint whitelist.
+     * @param strategyAddr Strategy address
+     */
+    function removeStrategyFromMintWhitelist(address strategyAddr)
+        external
+        onlyGovernor
+    {
+        // Intentionally skipping `strategies.isSupported` check since
+        // we may wanna remove an address even after removing the strategy
+
+        require(isMintWhitelistedStrategy[strategyAddr], "Not whitelisted");
+
+        isMintWhitelistedStrategy[strategyAddr] = false;
+
+        emit StrategyRemovedFromMintWhitelist(strategyAddr);
+    }
+
     /***************************************
                 Strategies
     ****************************************/
@@ -547,18 +293,22 @@ contract VaultAdmin is VaultStorage {
             strategies[_strategyToAddress].isSupported,
             "Invalid to Strategy"
         );
-        require(_assets.length == _amounts.length, "Parameter length mismatch");
+        require(
+            _assets.length == 1 &&
+                _amounts.length == 1 &&
+                _assets[0] == backingAsset,
+            "Only backing asset is supported"
+        );
 
-        uint256 assetCount = _assets.length;
-        for (uint256 i = 0; i < assetCount; ++i) {
-            address assetAddr = _assets[i];
-            require(
-                IStrategy(_strategyToAddress).supportsAsset(assetAddr),
-                "Asset unsupported"
-            );
-            // Send required amount of funds to the strategy
-            IERC20(assetAddr).safeTransfer(_strategyToAddress, _amounts[i]);
-        }
+        // Check the there is enough backing asset to transfer once the backing 
+        // asset reserved for the withdrawal queue is accounted for
+        require(
+            _amounts[0] <= _backingAssetAvailable(),
+            "Not enough backing asset available"
+        );
+
+        // Send required amount of funds to the strategy
+        IERC20(backingAsset).safeTransfer(_strategyToAddress, _amounts[0]);
 
         // Deposit all the funds that have been sent to the strategy
         IStrategy(_strategyToAddress).depositAll();
@@ -607,6 +357,8 @@ contract VaultAdmin is VaultStorage {
                 _amounts[i]
             );
         }
+
+        IVault(address(this)).addWithdrawalQueueLiquidity();
     }
 
     /**
@@ -635,18 +387,6 @@ contract VaultAdmin is VaultStorage {
         require(_basis <= 5000, "basis cannot exceed 50%");
         trusteeFeeBps = _basis;
         emit TrusteeFeeBpsChanged(_basis);
-    }
-
-    /**
-     * @notice Set OToken Metapool strategy
-     * @param _ousdMetaStrategy Address of OToken metapool strategy
-     */
-    function setOusdMetaStrategy(address _ousdMetaStrategy)
-        external
-        onlyGovernor
-    {
-        ousdMetaStrategy = _ousdMetaStrategy;
-        emit OusdMetaStrategyUpdated(_ousdMetaStrategy);
     }
 
     /***************************************
@@ -703,6 +443,33 @@ contract VaultAdmin is VaultStorage {
         IERC20(_asset).safeTransfer(governor(), _amount);
     }
 
+    /**
+     * @dev Calculate how much backingAsset (eg. WETH or USDC) in the vault is not reserved for the withdrawal queue.
+     * That is, it is available to be redeemed or deposited into a strategy.
+     */
+    function _backingAssetAvailable()
+        internal
+        view
+        returns (uint256 backingAssetAvailable)
+    {
+        WithdrawalQueueMetadata memory queue = withdrawalQueueMetadata;
+
+        // The amount of backingAsset that is still to be claimed in the withdrawal queue
+        uint256 outstandingWithdrawals = queue.queued - queue.claimed;
+
+        // The amount of sitting in backingAsset in the vault
+        uint256 backingAssetBalance = IERC20(backingAsset).balanceOf(
+            address(this)
+        );
+
+        // If there is not enough backingAsset in the vault to cover the outstanding withdrawals
+        if (backingAssetBalance <= outstandingWithdrawals) {
+            return 0;
+        }
+
+        return backingAssetBalance - outstandingWithdrawals;
+    }
+
     /***************************************
              Strategies Admin
     ****************************************/
@@ -725,6 +492,7 @@ contract VaultAdmin is VaultStorage {
         );
         IStrategy strategy = IStrategy(_strategyAddr);
         strategy.withdrawAll();
+        IVault(address(this)).addWithdrawalQueueLiquidity();
     }
 
     /**
@@ -739,19 +507,6 @@ contract VaultAdmin is VaultStorage {
         for (uint256 i = 0; i < stratCount; ++i) {
             IStrategy(allStrategies[i]).withdrawAll();
         }
-    }
-
-    /***************************************
-                    Utils
-    ****************************************/
-
-    function _cacheDecimals(address token) internal {
-        Asset storage tokenAsset = assets[token];
-        if (tokenAsset.decimals != 0) {
-            return;
-        }
-        uint8 decimals = IBasicToken(token).decimals();
-        require(decimals >= 6 && decimals <= 18, "Unexpected precision");
-        tokenAsset.decimals = decimals;
+        IVault(address(this)).addWithdrawalQueueLiquidity();
     }
 }
