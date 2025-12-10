@@ -165,7 +165,7 @@ interface IVault {
 
     function backingAsset() external view returns (address);
 
-    function initialize(address, address) external;
+    function initialize(address) external;
 
     function setAdminImpl(address) external;
 
