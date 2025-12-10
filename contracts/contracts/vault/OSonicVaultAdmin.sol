@@ -8,6 +8,5 @@ import { OETHVaultAdmin } from "./OETHVaultAdmin.sol";
  * @author Origin Protocol Inc
  */
 contract OSonicVaultAdmin is OETHVaultAdmin {
-    /// @param _wS Sonic's Wrapped S token
-    constructor(address _wS) OETHVaultAdmin(_wS) {}
+
 }

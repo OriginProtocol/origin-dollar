@@ -24,9 +24,6 @@ contract VaultCore is VaultInitializer {
     /// @dev max signed int
     uint256 internal constant MAX_INT = uint256(type(int256).max);
 
-    /// @dev Address of the backing asset (eg. WETH or USDC)
-    address public immutable backingAsset;
-
     /**
      * @dev Verifies that the rebasing is not paused.
      */
@@ -43,9 +40,7 @@ contract VaultCore is VaultInitializer {
         _;
     }
 
-    constructor(address _backingAsset) {
-        backingAsset = _backingAsset;
-    }
+    constructor(address _backingAsset) VaultInitializer(_backingAsset) {}
 
     ////////////////////////////////////////////////////
     ///             MINT / REDEEM / BURN             ///

@@ -20,9 +20,6 @@ contract VaultAdmin is VaultStorage {
     using StableMath for uint256;
     using SafeCast for uint256;
 
-    /// @dev Address of the backing asset (eg. WETH or USDC)
-    address public immutable backingAsset;
-
     /**
      * @dev Verifies that the caller is the Governor or Strategist.
      */
@@ -34,9 +31,9 @@ contract VaultAdmin is VaultStorage {
         _;
     }
 
-    constructor(address _backingAsset) {
-        backingAsset = _backingAsset;
-    }
+    // Not a problem to have an address(0) for backingAsset here since storage is read from
+    // the VaultCore -> VaultInitializer -> VaultStorage contract via delegatecall
+    constructor() VaultStorage(address(0)) {}
 
     /***************************************
                  Configuration
@@ -300,7 +297,7 @@ contract VaultAdmin is VaultStorage {
             "Only backing asset is supported"
         );
 
-        // Check the there is enough backing asset to transfer once the backing 
+        // Check the there is enough backing asset to transfer once the backing
         // asset reserved for the withdrawal queue is accounted for
         require(
             _amounts[0] <= _backingAssetAvailable(),

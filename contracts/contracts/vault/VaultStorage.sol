@@ -239,8 +239,15 @@ contract VaultStorage is Initializable, Governable {
     // For future use
     uint256[43] private __gap;
 
+    /// @dev Address of the backing asset (eg. WETH or USDC)
+    address public immutable backingAsset;
+
     // slither-disable-end constable-states
     // slither-disable-end uninitialized-state
+
+    constructor(address _backingAsset) {
+        backingAsset = _backingAsset;
+    }
 
     /**
      * @notice set the implementation for the admin, this needs to be in a base class else we cannot set it

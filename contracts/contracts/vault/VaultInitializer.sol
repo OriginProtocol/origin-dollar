@@ -10,11 +10,9 @@ pragma solidity ^0.8.0;
 import "./VaultStorage.sol";
 
 contract VaultInitializer is VaultStorage {
-    function initialize(address _oToken)
-        external
-        onlyGovernor
-        initializer
-    {
+    constructor(address _backingAsset) VaultStorage(_backingAsset) {}
+
+    function initialize(address _oToken) external onlyGovernor initializer {
         require(_oToken != address(0), "oToken address is zero");
 
         oUSD = OUSD(_oToken);
