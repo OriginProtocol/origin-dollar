@@ -37,6 +37,7 @@ contract CrossChainRemoteStrategy is
         Generalized4626Strategy(_baseConfig, _baseToken)
     {}
 
+    // solhint-disable-next-line no-unused-vars
     function deposit(address _asset, uint256 _amount)
         external
         virtual
@@ -52,9 +53,9 @@ contract CrossChainRemoteStrategy is
     }
 
     function withdraw(
-        address _recipient,
-        address _asset,
-        uint256 _amount
+        address,
+        address,
+        uint256
     ) external virtual override {
         // TODO: implement this
         revert("Not implemented");
@@ -72,7 +73,7 @@ contract CrossChainRemoteStrategy is
             // Do nothing because we receive acknowledgement with token transfer, so _onTokenReceived will handle it
             // TODO: Should _onTokenReceived always call _onMessageReceived?
             // _processDepositAckMessage(payload);
-        } else if (messageType == WITHDRAW_MESSAGE_TYPE) {
+        } else if (messageType == WITHDRAW_MESSAGE) {
             // Received when Master strategy requests a withdrawal
             _processWithdrawMessage(payload);
         }
@@ -85,6 +86,7 @@ contract CrossChainRemoteStrategy is
         uint256 feeExecuted,
         bytes memory payload
     ) internal virtual {
+        // solhint-disable-next-line no-unused-vars
         (uint64 nonce, uint256 depositAmount) = _decodeDepositMessage(payload);
 
         // Replay protection
@@ -141,10 +143,13 @@ contract CrossChainRemoteStrategy is
         _processDepositMessage(tokenAmount, feeExecuted, payload);
     }
 
-    function sendBalanceUpdate() external virtual override {
+    function sendBalanceUpdate() external virtual {
         // TODO: Add permissioning
         uint256 balance = checkBalance(baseToken);
-        bytes memory message = _encodeBalanceUpdateMessage(balance);
+        bytes memory message = _encodeBalanceCheckMessage(
+            lastTransferNonce,
+            balance
+        );
         _sendMessage(message);
     }
 }

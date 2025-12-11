@@ -10,6 +10,11 @@ addresses.multichainBuybackOperator =
   "0xBB077E716A5f1F1B63ed5244eBFf5214E50fec8c";
 addresses.votemarket = "0x8c2c5A295450DDFf4CB360cA73FCCC12243D14D9";
 
+// CCTP contracts (uses same addresses on all chains)
+addresses.CCTPTokenMessengerV2 = "0x28b5a0e9C621a5BadaA536219b3a228C8168cf5d";
+addresses.CCTPMessageTransmitterV2 =
+  "0x81D40F21F12A8F0E3252Bccb954D722d4c464B64";
+
 addresses.mainnet = {};
 addresses.base = {};
 addresses.sonic = {};

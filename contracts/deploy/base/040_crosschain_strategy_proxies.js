@@ -2,7 +2,7 @@ const { deployOnBase } = require("../../utils/deploy-l2");
 // const addresses = require("../../utils/addresses");
 const {
   deployProxyWithCreateX,
-  deployYearn3RemoteStrategyImpl,
+  // deployCrossChainRemoteStrategyImpl,
 } = require("../deployActions");
 // const {
 //   deployWithConfirmation,
@@ -11,18 +11,18 @@ const {
 
 module.exports = deployOnBase(
   {
-    deployName: "040_yearn_strategy",
+    deployName: "040_crosschain_strategy_proxies",
   },
   async () => {
-    const salt = "Yean strategy 1";
+    const salt = "CrossChain Strategy 1 Test";
     const proxyAddress = await deployProxyWithCreateX(
       salt,
       "CrossChainRemoteStrategyProxy"
     );
     console.log(`CrossChainRemoteStrategyProxy address: ${proxyAddress}`);
 
-    const implAddress = await deployYearn3RemoteStrategyImpl(proxyAddress);
-    console.log(`CrossChainRemoteStrategyImpl address: ${implAddress}`);
+    // const implAddress = await deployCrossChainRemoteStrategyImpl(proxyAddress);
+    // console.log(`CrossChainRemoteStrategyImpl address: ${implAddress}`);
 
     return {
       actions: [],

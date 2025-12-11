@@ -343,3 +343,12 @@ contract CrossChainRemoteStrategyProxy is
         InitializeGovernedUpgradeabilityProxy2(governor)
     {}
 }
+
+/**
+ * @notice CCTPHookWrapperProxy delegates calls to a CCTPHookWrapper implementation
+ */
+contract CCTPHookWrapperProxy is InitializeGovernedUpgradeabilityProxy2 {
+    constructor(address governor)
+        InitializeGovernedUpgradeabilityProxy2(governor)
+    {}
+}

@@ -35,6 +35,8 @@ const {
   beaconChainGenesisTimeMainnet,
 } = require("../utils/constants");
 
+const { cctpDomainIds } = require("../utils/cctp");
+
 const log = require("../utils/logger")("deploy:core");
 
 /**
@@ -1722,14 +1724,14 @@ const deployProxyWithCreateX = async (salt, proxyName) => {
   return proxyAddress;
 };
 
-// deploys and initializes the Yearn 3 master strategy
-const deployYearn3MasterStrategyImpl = async (
+// deploys and initializes the CrossChain master strategy
+const deployCrossChainMasterStrategyImpl = async (
   proxyAddress,
   implementationName = "CrossChainMasterStrategy"
 ) => {
   const { deployerAddr } = await getNamedAccounts();
   const sDeployer = await ethers.provider.getSigner(deployerAddr);
-  log(`Deploying Yearn3MasterStrategyImpl as deployer ${deployerAddr}`);
+  log(`Deploying CrossChainMasterStrategyImpl as deployer ${deployerAddr}`);
 
   const cCrossChainMasterStrategyProxy = await ethers.getContractAt(
     "CrossChainMasterStrategyProxy",
@@ -1743,6 +1745,12 @@ const deployYearn3MasterStrategyImpl = async (
         addresses.zero, // platform address
         addresses.mainnet.Vault,
       ],
+      addresses.CCTPTokenMessengerV2,
+      addresses.CCTPMessageTransmitterV2,
+      cctpDomainIds.Base,
+      addresses.base.CrossChainRemoteStrategy,
+      addresses.mainnet.USDC,
+      addresses.CCTPHookWrapper,
     ]
   );
 
@@ -1766,14 +1774,14 @@ const deployYearn3MasterStrategyImpl = async (
   return dCrossChainMasterStrategy.address;
 };
 
-// deploys and initializes the Yearn 3 remote strategy
-const deployYearn3RemoteStrategyImpl = async (
+// deploys and initializes the CrossChain remote strategy
+const deployCrossChainRemoteStrategyImpl = async (
   proxyAddress,
   implementationName = "CrossChainRemoteStrategy"
 ) => {
   const { deployerAddr } = await getNamedAccounts();
   const sDeployer = await ethers.provider.getSigner(deployerAddr);
-  log(`Deploying Yearn3RemoteStrategyImpl as deployer ${deployerAddr}`);
+  log(`Deploying CrossChainRemoteStrategyImpl as deployer ${deployerAddr}`);
 
   const cCrossChainRemoteStrategyProxy = await ethers.getContractAt(
     "CrossChainRemoteStrategyProxy",
@@ -1843,6 +1851,6 @@ module.exports = {
   getPlumeContracts,
   deploySonicSwapXAMOStrategyImplementation,
   deployProxyWithCreateX,
-  deployYearn3MasterStrategyImpl,
-  deployYearn3RemoteStrategyImpl,
+  deployCrossChainMasterStrategyImpl,
+  deployCrossChainRemoteStrategyImpl,
 };

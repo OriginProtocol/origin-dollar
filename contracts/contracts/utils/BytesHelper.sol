@@ -13,7 +13,7 @@ library BytesHelper {
         bytes memory data,
         uint256 start,
         uint256 end
-    ) private pure returns (bytes memory) {
+    ) internal pure returns (bytes memory) {
         require(end >= start, "Invalid slice range");
         require(end <= data.length, "Slice end exceeds data length");
 

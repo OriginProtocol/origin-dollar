@@ -17,8 +17,8 @@ const {
 } = require("../utils/funding");
 const { deployWithConfirmation } = require("../utils/deploy");
 const {
-  deployYearn3MasterStrategyImpl,
-  deployYearn3RemoteStrategyImpl,
+  deployCrossChainMasterStrategyImpl,
+  deployCrossChainRemoteStrategyImpl,
 } = require("../deploy/deployActions.js");
 
 const { replaceContractAt } = require("../utils/hardhat");
@@ -2541,7 +2541,7 @@ async function yearnCrossChainFixture() {
   );
   const masterProxyAddress = masterProxy.address;
   log(`CrossChainMasterStrategyProxy address: ${masterProxyAddress}`);
-  let implAddress = await deployYearn3MasterStrategyImpl(
+  let implAddress = await deployCrossChainMasterStrategyImpl(
     masterProxyAddress,
     "CrossChainMasterStrategyMock"
   );
@@ -2556,7 +2556,7 @@ async function yearnCrossChainFixture() {
   const remoteProxyAddress = remoteProxy.address;
   log(`CrossChainRemoteStrategyProxy address: ${remoteProxyAddress}`);
 
-  implAddress = await deployYearn3RemoteStrategyImpl(
+  implAddress = await deployCrossChainRemoteStrategyImpl(
     remoteProxyAddress,
     "CrossChainRemoteStrategyMock"
   );

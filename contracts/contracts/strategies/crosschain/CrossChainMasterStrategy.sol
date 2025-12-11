@@ -92,19 +92,17 @@ contract CrossChainMasterStrategy is
         address _asset,
         uint256 _amount
     ) external override onlyVault nonReentrant {
-        require(_amount > 0, "Must withdraw something");
         require(_recipient == vaultAddress, "Only Vault can withdraw");
 
-        // Withdraw the funds from this strategy to the Vault once
-        // they are allready bridged here
+        _withdraw(_asset, _recipient, _amount);
     }
 
     /**
      * @dev Remove all assets from platform and send them to Vault contract.
      */
     function withdrawAll() external override onlyVaultOrGovernor nonReentrant {
-        //
-        // TODO: implement this
+        uint256 balance = IERC20(baseToken).balanceOf(address(this));
+        _withdraw(baseToken, vaultAddress, balance);
     }
 
     /**
@@ -190,7 +188,7 @@ contract CrossChainMasterStrategy is
         // Only withdraw acknowledgements are expected here
         require(messageType == WITHDRAW_ACK_MESSAGE, "Invalid message type");
 
-        _processWithdrawAckMessage(payload);
+        _processWithdrawAckMessage(tokenAmount, feeExecuted, payload);
     }
 
     function _deposit(address _asset, uint256 depositAmount) internal virtual {
@@ -204,7 +202,7 @@ contract CrossChainMasterStrategy is
             "Deposit amount exceeds max transfer amount"
         );
 
-        emit Deposit(_asset, _asset, _amount);
+        emit Deposit(_asset, _asset, depositAmount);
 
         transferAmounts[nonce] = depositAmount;
 
@@ -237,10 +235,20 @@ contract CrossChainMasterStrategy is
 
         // Subtract from pending amount
         pendingAmount = pendingAmount - amountReceived;
+
+        // Update balance
+        remoteStrategyBalance = balanceAfter;
     }
 
-    function _withdraw(address _recipient, uint256 _amount) internal virtual {
+    function _withdraw(
+        address _asset,
+        address _recipient,
+        uint256 _amount
+    ) internal virtual {
+        require(_asset == baseToken, "Unsupported asset");
         require(_amount > 0, "Withdraw amount must be greater than 0");
+        require(_recipient == vaultAddress, "Only Vault can withdraw");
+
         require(
             _amount <= MAX_TRANSFER_AMOUNT,
             "Withdraw amount exceeds max transfer amount"
@@ -257,7 +265,12 @@ contract CrossChainMasterStrategy is
         _sendMessage(message);
     }
 
-    function _processWithdrawAckMessage(bytes memory message) internal virtual {
+    function _processWithdrawAckMessage(
+        uint256 tokenAmount,
+        // solhint-disable-next-line no-unused-vars
+        uint256 feeExecuted,
+        bytes memory message
+    ) internal virtual {
         (
             uint64 nonce,
             uint256 amountSent,
@@ -275,6 +288,9 @@ contract CrossChainMasterStrategy is
 
         // Update balance
         remoteStrategyBalance = balanceAfter;
+
+        // Transfer tokens to vault
+        IERC20(baseToken).safeTransfer(vaultAddress, tokenAmount);
     }
 
     function _processBalanceCheckMessage(bytes memory message)
@@ -283,7 +299,7 @@ contract CrossChainMasterStrategy is
     {
         (uint64 nonce, uint256 balance) = _decodeBalanceCheckMessage(message);
 
-        uint256 _lastNonce = lastTransferNonce;
+        uint64 _lastNonce = lastTransferNonce;
 
         if (_lastNonce != nonce || !isNonceProcessed(_lastNonce)) {
             // Do not update pending amount if the nonce is not the latest one

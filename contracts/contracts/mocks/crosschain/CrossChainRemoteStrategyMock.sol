@@ -11,7 +11,7 @@ contract CrossChainRemoteStrategyMock {
 
     constructor() {}
 
-    function masterAddress() internal override returns (address) {
+    function masterAddress() public view returns (address) {
         return _masterAddress;
     }
 
