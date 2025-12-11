@@ -57,6 +57,7 @@ contract Generalized4626Strategy is InitializableAbstractStrategy {
      */
     function deposit(address _asset, uint256 _amount)
         external
+        virtual
         override
         onlyVault
         nonReentrant
@@ -99,6 +100,14 @@ contract Generalized4626Strategy is InitializableAbstractStrategy {
         address _asset,
         uint256 _amount
     ) external virtual override onlyVault nonReentrant {
+        _withdraw(_recipient, _asset, _amount);
+    }
+
+    function _withdraw(
+        address _recipient,
+        address _asset,
+        uint256 _amount
+    ) internal virtual {
         require(_amount > 0, "Must withdraw something");
         require(_recipient != address(0), "Must specify recipient");
         require(_asset == address(assetToken), "Unexpected asset address");

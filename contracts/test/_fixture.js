@@ -16,7 +16,10 @@ const {
   fundAccountsForOETHUnitTests,
 } = require("../utils/funding");
 const { deployWithConfirmation } = require("../utils/deploy");
-const { deployYearn3MasterStrategyImpl, deployYearn3SlaveStrategyImpl } = require("../deploy/deployActions.js");
+const {
+  deployYearn3MasterStrategyImpl,
+  deployYearn3RemoteStrategyImpl,
+} = require("../deploy/deployActions.js");
 
 const { replaceContractAt } = require("../utils/hardhat");
 const {
@@ -2530,38 +2533,49 @@ async function yearnCrossChainFixture() {
   const fixture = await defaultFixture();
   const { deployerAddr } = await getNamedAccounts();
   const sDeployer = await ethers.provider.getSigner(deployerAddr);
-  
+
   // deploy master strategy
-  const masterProxy = await deployWithConfirmation("YearnV3MasterStrategyProxy", [
-      deployerAddr
-    ]
+  const masterProxy = await deployWithConfirmation(
+    "CrossChainMasterStrategyProxy",
+    [deployerAddr]
   );
   const masterProxyAddress = masterProxy.address;
-  log(`YearnV3MasterStrategyProxy address: ${masterProxyAddress}`);
-  let implAddress = await deployYearn3MasterStrategyImpl(masterProxyAddress, "YearnV3MasterStrategyMock");
-  log(`YearnV3MasterStrategyMockImpl address: ${implAddress}`);
+  log(`CrossChainMasterStrategyProxy address: ${masterProxyAddress}`);
+  let implAddress = await deployYearn3MasterStrategyImpl(
+    masterProxyAddress,
+    "CrossChainMasterStrategyMock"
+  );
+  log(`CrossChainMasterStrategyMockImpl address: ${implAddress}`);
 
-  
-  // deploy slave strategy
-  const slaveProxy = await deployWithConfirmation("YearnV3SlaveStrategyProxy", [
-      deployerAddr
-    ]
+  // deploy remote strategy
+  const remoteProxy = await deployWithConfirmation(
+    "CrossChainRemoteStrategyProxy",
+    [deployerAddr]
   );
 
-  const slaveProxyAddress = slaveProxy.address;
-  log(`YearnV3SlaveStrategyProxy address: ${slaveProxyAddress}`);
-  
-  implAddress = await deployYearn3SlaveStrategyImpl(slaveProxyAddress, "YearnV3SlaveStrategyMock");
-  log(`YearnV3SlaveStrategyMockImpl address: ${implAddress}`);
+  const remoteProxyAddress = remoteProxy.address;
+  log(`CrossChainRemoteStrategyProxy address: ${remoteProxyAddress}`);
 
-  const yearnMasterStrategy = await ethers.getContractAt("YearnV3MasterStrategyMock", masterProxyAddress);
-  const yearnSlaveStrategy = await ethers.getContractAt("YearnV3SlaveStrategyMock", slaveProxyAddress);
-  
-  yearnMasterStrategy.connect(sDeployer).setSlaveAddress(slaveProxyAddress);
-  yearnSlaveStrategy.connect(sDeployer).setMasterAddress(masterProxyAddress);
+  implAddress = await deployYearn3RemoteStrategyImpl(
+    remoteProxyAddress,
+    "CrossChainRemoteStrategyMock"
+  );
+  log(`CrossChainRemoteStrategyMockImpl address: ${implAddress}`);
+
+  const yearnMasterStrategy = await ethers.getContractAt(
+    "CrossChainMasterStrategyMock",
+    masterProxyAddress
+  );
+  const yearnRemoteStrategy = await ethers.getContractAt(
+    "CrossChainRemoteStrategyMock",
+    remoteProxyAddress
+  );
+
+  yearnMasterStrategy.connect(sDeployer).setRemoteAddress(remoteProxyAddress);
+  yearnRemoteStrategy.connect(sDeployer).setMasterAddress(masterProxyAddress);
 
   fixture.yearnMasterStrategy = yearnMasterStrategy;
-  fixture.yearnSlaveStrategy = yearnSlaveStrategy;
+  fixture.yearnRemoteStrategy = yearnRemoteStrategy;
   return fixture;
 }
 
