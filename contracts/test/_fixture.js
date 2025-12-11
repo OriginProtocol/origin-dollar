@@ -21,6 +21,7 @@ const { replaceContractAt } = require("../utils/hardhat");
 const {
   getAssetAddresses,
   usdsUnits,
+  usdcUnits,
   getOracleAddresses,
   oethUnits,
   ousdUnits,
@@ -1002,14 +1003,7 @@ const defaultFixture = deployments.createFixture(async () => {
   }
 
   if (!isFork) {
-    const assetAddresses = await getAssetAddresses(deployments);
-
     const sGovernor = await ethers.provider.getSigner(governorAddr);
-
-    // Add TUSD in fixture, it is disabled by default in deployment
-    await vaultAndTokenConracts.vault
-      .connect(sGovernor)
-      .supportAsset(assetAddresses.TUSD, 0);
 
     // Enable capital movement
     await vaultAndTokenConracts.vault.connect(sGovernor).unpauseCapital();
@@ -1044,12 +1038,12 @@ const defaultFixture = deployments.createFixture(async () => {
 
     // Matt and Josh each have $100 OUSD & 100 OETH
     for (const user of [matt, josh]) {
-      await usds
+      await usdc
         .connect(user)
-        .approve(vaultAndTokenConracts.vault.address, usdsUnits("100"));
+        .approve(vaultAndTokenConracts.vault.address, usdcUnits("100"));
       await vaultAndTokenConracts.vault
         .connect(user)
-        .mint(usds.address, usdsUnits("100"), 0);
+        .mint(usdc.address, usdcUnits("100"), 0);
 
       // Fund WETH contract
       await hardhatSetBalance(user.address, "50000");
