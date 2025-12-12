@@ -14,7 +14,6 @@ const {
   isFork,
   expectApproxSupply,
 } = require("../helpers");
-const addresses = require("../../utils/addresses");
 
 describe("Vault with Compound strategy", function () {
   if (isFork) {
@@ -40,12 +39,12 @@ describe("Vault with Compound strategy", function () {
   });
 
   it("Governor can call setPTokenAddress", async () => {
-    const { usds, ousd, matt, compoundStrategy } = fixture;
+    const { usdc, ousd, matt, compoundStrategy } = fixture;
 
     await expect(
       compoundStrategy
         .connect(matt)
-        .setPTokenAddress(ousd.address, usds.address)
+        .setPTokenAddress(ousd.address, usdc.address)
     ).to.be.revertedWith("Caller is not the Governor");
   });
 
@@ -58,55 +57,29 @@ describe("Vault with Compound strategy", function () {
   });
 
   it("Should allocate unallocated assets", async () => {
-    const { anna, governor, usds, usdc, usdt, tusd, vault, compoundStrategy } =
-      fixture;
+    const { anna, governor, usdc, vault, compoundStrategy } = fixture;
 
-    await usds.connect(anna).transfer(vault.address, usdsUnits("100"));
-    await usdc.connect(anna).transfer(vault.address, usdcUnits("200"));
-    await usdt.connect(anna).transfer(vault.address, usdtUnits("300"));
-
-    await tusd.connect(anna).mint(ousdUnits("1000.0"));
-    await tusd.connect(anna).transfer(vault.address, tusdUnits("400"));
-
+    await vault.connect(governor).setDefaultStrategy(compoundStrategy.address);
+    await usdc.connect(anna).transfer(vault.address, usdcUnits("100"));
     await expect(vault.connect(governor).allocate())
       .to.emit(vault, "AssetAllocated")
-      .withArgs(usds.address, compoundStrategy.address, usdsUnits("300"))
-      .to.emit(vault, "AssetAllocated")
-      .withArgs(usdc.address, compoundStrategy.address, usdcUnits("200"))
-      .to.emit(vault, "AssetAllocated")
-      .withArgs(usdt.address, compoundStrategy.address, usdcUnits("300"));
-    /*
-      TODO: There does not appear to be any support for .withoutArgs to verify
-      that this event doesn't get emitted.
-      .to.emit(vault, "AssetAllocated")
-      .withoutArgs(usdt.address, compoundStrategy.address, tusdUnits("400"));
-    */
+      .withArgs(usdc.address, compoundStrategy.address, usdcUnits("300"));
 
-    // Note compoundVaultFixture sets up with 200 USDS already in the Strategy
+    // Note compoundVaultFixture sets up with 200 USDC already in the Strategy
     // 200 + 100 = 300
     await expect(
-      await compoundStrategy.checkBalance(usds.address)
-    ).to.approxEqual(usdsUnits("300"));
-    await expect(
       await compoundStrategy.checkBalance(usdc.address)
-    ).to.approxEqual(usdcUnits("200"));
-    await expect(
-      await compoundStrategy.checkBalance(usdt.address)
-    ).to.approxEqual(usdtUnits("300"));
-
-    // Strategy doesn't support TUSD
-    // Vault balance for TUSD should remain unchanged
-    expect(await tusd.balanceOf(vault.address)).to.equal(tusdUnits("400"));
+    ).to.approxEqual(usdcUnits("300"));
   });
 
   it("Should correctly handle a deposit of USDC (6 decimals)", async function () {
     const { anna, ousd, usdc, vault } = fixture;
 
     await expect(anna).has.a.balanceOf("0", ousd);
-    // The mint process maxes out at a 1.0 price
-    await setOracleTokenPriceUsd("USDC", "1.25");
     await usdc.connect(anna).approve(vault.address, usdcUnits("50"));
-    await vault.connect(anna).mint(usdc.address, usdcUnits("50"), 0);
+    await vault
+      .connect(anna)
+      .mint(usdc.address, usdcUnits("50"), ousdUnits("50"));
     await expect(anna).has.a.balanceOf("50", ousd);
   });
 
@@ -365,15 +338,6 @@ describe("Vault with Compound strategy", function () {
 
     await expect(await vault.getStrategyCount()).to.equal(1);
 
-    await vault
-      .connect(governor)
-      .setAssetDefaultStrategy(usdt.address, addresses.zero);
-    await vault
-      .connect(governor)
-      .setAssetDefaultStrategy(usdc.address, addresses.zero);
-    await vault
-      .connect(governor)
-      .setAssetDefaultStrategy(usds.address, addresses.zero);
     await vault.connect(governor).removeStrategy(compoundStrategy.address);
 
     await expect(await vault.getStrategyCount()).to.equal(0);

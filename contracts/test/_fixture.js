@@ -1444,29 +1444,10 @@ async function compoundVaultFixture() {
   await fixture.compoundStrategy
     .connect(sGovernor)
     .setPTokenAddress(assetAddresses.USDT, assetAddresses.cUSDT);
-  await fixture.vault
-    .connect(sGovernor)
-    .setAssetDefaultStrategy(
-      fixture.usdt.address,
-      fixture.compoundStrategy.address
-    );
   // Add USDC
   await fixture.compoundStrategy
     .connect(sGovernor)
     .setPTokenAddress(assetAddresses.USDC, assetAddresses.cUSDC);
-  await fixture.vault
-    .connect(sGovernor)
-    .setAssetDefaultStrategy(
-      fixture.usdc.address,
-      fixture.compoundStrategy.address
-    );
-  // Add allocation mapping for USDS
-  await fixture.vault
-    .connect(sGovernor)
-    .setAssetDefaultStrategy(
-      fixture.usds.address,
-      fixture.compoundStrategy.address
-    );
 
   return fixture;
 }
