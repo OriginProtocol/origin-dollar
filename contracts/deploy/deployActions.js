@@ -35,8 +35,6 @@ const {
   beaconChainGenesisTimeMainnet,
 } = require("../utils/constants");
 
-const { cctpDomainIds } = require("../utils/cctp");
-
 const log = require("../utils/logger")("deploy:core");
 
 /**
@@ -1709,11 +1707,16 @@ const deployProxyWithCreateX = async (salt, proxyName) => {
   const txResponse = await withConfirmation(
     cCreateX
       .connect(sDeployer)
-      .deployCreate2(factoryEncodedSalt, getFactoryBytecode())
+      .deployCreate2(factoryEncodedSalt, await getFactoryBytecode())
   );
 
+  // // // Create3ProxyContractCreation
+  // const create3ContractCreationTopic =
+  //   "0x2feea65dd4e9f9cbd86b74b7734210c59a1b2981b5b137bd0ee3e208200c9067";
   const contractCreationTopic =
     "0xb8fda7e00c6b06a2b54e58521bc5894fee35f1090e5a3bb6390bfe2b98b497f7";
+
+  // const topicToUse = isCreate3 ? create3ContractCreationTopic : contractCreationTopic;
   const txReceipt = await txResponse.wait();
   const proxyAddress = ethers.utils.getAddress(
     `0x${txReceipt.events
@@ -1727,14 +1730,18 @@ const deployProxyWithCreateX = async (salt, proxyName) => {
 // deploys and initializes the CrossChain master strategy
 const deployCrossChainMasterStrategyImpl = async (
   proxyAddress,
+  targetDomainId,
+  remoteStrategyAddress,
+  baseToken,
+  hookWrapperAddress,
   implementationName = "CrossChainMasterStrategy"
 ) => {
   const { deployerAddr } = await getNamedAccounts();
   const sDeployer = await ethers.provider.getSigner(deployerAddr);
   log(`Deploying CrossChainMasterStrategyImpl as deployer ${deployerAddr}`);
 
-  const cCrossChainMasterStrategyProxy = await ethers.getContractAt(
-    "CrossChainMasterStrategyProxy",
+  const cCrossChainStrategyProxy = await ethers.getContractAt(
+    "CrossChainStrategyProxy",
     proxyAddress
   );
 
@@ -1743,14 +1750,16 @@ const deployCrossChainMasterStrategyImpl = async (
     [
       [
         addresses.zero, // platform address
-        addresses.mainnet.Vault,
+        // TODO: change to the actual vault address
+        deployerAddr, // vault address
+        // addresses.mainnet.VaultProxy,
       ],
       addresses.CCTPTokenMessengerV2,
       addresses.CCTPMessageTransmitterV2,
-      cctpDomainIds.Base,
-      addresses.base.CrossChainRemoteStrategy,
-      addresses.mainnet.USDC,
-      addresses.CCTPHookWrapper,
+      targetDomainId,
+      remoteStrategyAddress,
+      baseToken,
+      hookWrapperAddress,
     ]
   );
 
@@ -1762,9 +1771,11 @@ const deployCrossChainMasterStrategyImpl = async (
   // Init the proxy to point at the implementation, set the governor, and call initialize
   const initFunction = "initialize(address,address,bytes)";
   await withConfirmation(
-    cCrossChainMasterStrategyProxy.connect(sDeployer)[initFunction](
+    cCrossChainStrategyProxy.connect(sDeployer)[initFunction](
       dCrossChainMasterStrategy.address,
-      addresses.mainnet.Timelock, // governor
+      // TODO: change governor later
+      // addresses.mainnet.Timelock, // governor
+      deployerAddr, // governor
       //initData, // data for delegate call to the initialize function on the strategy
       "0x",
       await getTxOpts()
@@ -1776,21 +1787,39 @@ const deployCrossChainMasterStrategyImpl = async (
 
 // deploys and initializes the CrossChain remote strategy
 const deployCrossChainRemoteStrategyImpl = async (
+  platformAddress,
   proxyAddress,
+  targetDomainId,
+  remoteStrategyAddress,
+  baseToken,
+  hookWrapperAddress,
   implementationName = "CrossChainRemoteStrategy"
 ) => {
   const { deployerAddr } = await getNamedAccounts();
   const sDeployer = await ethers.provider.getSigner(deployerAddr);
   log(`Deploying CrossChainRemoteStrategyImpl as deployer ${deployerAddr}`);
 
-  const cCrossChainRemoteStrategyProxy = await ethers.getContractAt(
-    "CrossChainRemoteStrategyProxy",
+  const cCrossChainStrategyProxy = await ethers.getContractAt(
+    "CrossChainStrategyProxy",
     proxyAddress
   );
 
   const dCrossChainRemoteStrategy = await deployWithConfirmation(
     implementationName,
-    []
+    [
+      [
+        platformAddress,
+        // TODO: change to the actual vault address
+        deployerAddr, // vault address
+        // addresses.mainnet.VaultProxy,
+      ],
+      addresses.CCTPTokenMessengerV2,
+      addresses.CCTPMessageTransmitterV2,
+      targetDomainId,
+      remoteStrategyAddress,
+      baseToken,
+      hookWrapperAddress,
+    ]
   );
 
   // const initData = cCrossChainMasterStrategy.interface.encodeFunctionData(
@@ -1801,9 +1830,11 @@ const deployCrossChainRemoteStrategyImpl = async (
   // Init the proxy to point at the implementation, set the governor, and call initialize
   const initFunction = "initialize(address,address,bytes)";
   await withConfirmation(
-    cCrossChainRemoteStrategyProxy.connect(sDeployer)[initFunction](
+    cCrossChainStrategyProxy.connect(sDeployer)[initFunction](
       dCrossChainRemoteStrategy.address,
-      addresses.base.timelock, // governor
+      // TODO: change governor later
+      deployerAddr, // governor
+      // addresses.base.timelock, // governor
       //initData, // data for delegate call to the initialize function on the strategy
       "0x",
       await getTxOpts()

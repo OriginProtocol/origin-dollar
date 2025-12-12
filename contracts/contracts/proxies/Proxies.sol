@@ -321,34 +321,3 @@ contract CompoundingStakingSSVStrategyProxy is
 {
 
 }
-
-/**
- * @notice CrossChainMasterStrategyProxy delegates calls to a CrossChainMasterStrategy implementation
- */
-contract CrossChainMasterStrategyProxy is
-    InitializeGovernedUpgradeabilityProxy2
-{
-    constructor(address governor)
-        InitializeGovernedUpgradeabilityProxy2(governor)
-    {}
-}
-
-/**
- * @notice CrossChainRemoteStrategyProxy delegates calls to a CrossChainRemoteStrategy implementation
- */
-contract CrossChainRemoteStrategyProxy is
-    InitializeGovernedUpgradeabilityProxy2
-{
-    constructor(address governor)
-        InitializeGovernedUpgradeabilityProxy2(governor)
-    {}
-}
-
-/**
- * @notice CCTPHookWrapperProxy delegates calls to a CCTPHookWrapper implementation
- */
-contract CCTPHookWrapperProxy is InitializeGovernedUpgradeabilityProxy2 {
-    constructor(address governor)
-        InitializeGovernedUpgradeabilityProxy2(governor)
-    {}
-}

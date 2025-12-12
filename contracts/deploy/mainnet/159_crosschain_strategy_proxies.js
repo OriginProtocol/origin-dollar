@@ -1,9 +1,5 @@
 const { deploymentWithGovernanceProposal } = require("../../utils/deploy");
-// const addresses = require("../../utils/addresses");
-const {
-  deployProxyWithCreateX,
-  // deployCrossChainMasterStrategyImpl,
-} = require("../deployActions");
+const { deployProxyWithCreateX } = require("../deployActions");
 
 module.exports = deploymentWithGovernanceProposal(
   {
@@ -24,12 +20,9 @@ module.exports = deploymentWithGovernanceProposal(
     const salt = "CrossChain Strategy 1 Test";
     const proxyAddress = await deployProxyWithCreateX(
       salt,
-      "CrossChainMasterStrategyProxy"
+      "CrossChainStrategyProxy"
     );
-    console.log(`CrossChainMasterStrategyProxy address: ${proxyAddress}`);
-
-    // const implAddress = await deployCrossChainMasterStrategyImpl(proxyAddress);
-    // console.log(`CrossChainMasterStrategyImpl address: ${implAddress}`);
+    console.log(`CrossChainStrategyProxy address: ${proxyAddress}`);
 
     return {
       actions: [],

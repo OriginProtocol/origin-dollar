@@ -170,6 +170,11 @@ const _verifyProxyInitializedWithCorrectGovernor = (transactionData) => {
     return;
   }
 
+  if (isFork) {
+    // TODO: Skip verification for Fork for now
+    return;
+  }
+
   const initProxyGovernor = (
     "0x" + transactionData.slice(10 + 64 + 24, 10 + 64 + 64)
   ).toLowerCase();

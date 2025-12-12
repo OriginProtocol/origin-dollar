@@ -2535,12 +2535,11 @@ async function yearnCrossChainFixture() {
   const sDeployer = await ethers.provider.getSigner(deployerAddr);
 
   // deploy master strategy
-  const masterProxy = await deployWithConfirmation(
-    "CrossChainMasterStrategyProxy",
-    [deployerAddr]
-  );
+  const masterProxy = await deployWithConfirmation("CrossChainStrategyProxy", [
+    deployerAddr,
+  ]);
   const masterProxyAddress = masterProxy.address;
-  log(`CrossChainMasterStrategyProxy address: ${masterProxyAddress}`);
+  log(`CrossChainStrategyProxy address: ${masterProxyAddress}`);
   let implAddress = await deployCrossChainMasterStrategyImpl(
     masterProxyAddress,
     "CrossChainMasterStrategyMock"
@@ -2548,13 +2547,12 @@ async function yearnCrossChainFixture() {
   log(`CrossChainMasterStrategyMockImpl address: ${implAddress}`);
 
   // deploy remote strategy
-  const remoteProxy = await deployWithConfirmation(
-    "CrossChainRemoteStrategyProxy",
-    [deployerAddr]
-  );
+  const remoteProxy = await deployWithConfirmation("CrossChainStrategyProxy", [
+    deployerAddr,
+  ]);
 
   const remoteProxyAddress = remoteProxy.address;
-  log(`CrossChainRemoteStrategyProxy address: ${remoteProxyAddress}`);
+  log(`CrossChainStrategyProxy address: ${remoteProxyAddress}`);
 
   implAddress = await deployCrossChainRemoteStrategyImpl(
     remoteProxyAddress,
@@ -2912,6 +2910,26 @@ async function enableExecutionLayerGeneralPurposeRequests() {
   };
 }
 
+async function crossChainFixture() {
+  const fixture = await defaultFixture();
+
+  const cHookWrapper = await ethers.getContractAt(
+    "CCTPHookWrapper",
+    addresses.HookWrapperProxy
+  );
+  const cCrossChainMasterStrategy = await ethers.getContractAt(
+    "CrossChainMasterStrategy",
+    addresses.CrossChainStrategyProxy
+  );
+
+  return {
+    ...fixture,
+
+    hookWrapper: cHookWrapper,
+    crossChainMasterStrategy: cCrossChainMasterStrategy,
+  };
+}
+
 /**
  * A fixture is a setup function that is run only the first time it's invoked. On subsequent invocations,
  * Hardhat will reset the state of the network to what it was at the point after the fixture was initially executed.
@@ -3005,4 +3023,5 @@ module.exports = {
   beaconChainFixture,
   claimRewardsModuleFixture,
   yearnCrossChainFixture,
+  crossChainFixture,
 };

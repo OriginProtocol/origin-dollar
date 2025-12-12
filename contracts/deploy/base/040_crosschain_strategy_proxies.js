@@ -1,28 +1,24 @@
 const { deployOnBase } = require("../../utils/deploy-l2");
-// const addresses = require("../../utils/addresses");
-const {
-  deployProxyWithCreateX,
-  // deployCrossChainRemoteStrategyImpl,
-} = require("../deployActions");
-// const {
-//   deployWithConfirmation,
-//   withConfirmation,
-// } = require("../../utils/deploy.js");
+const { deployProxyWithCreateX } = require("../deployActions");
 
 module.exports = deployOnBase(
   {
     deployName: "040_crosschain_strategy_proxies",
   },
   async () => {
+    const cctpHookWrapperProxyAddress = await deployProxyWithCreateX(
+      "CCTPHookWrapperTest", // Salt
+      "CCTPHookWrapperProxy"
+    );
+    console.log(`CCTPHookWrapperProxy address: ${cctpHookWrapperProxyAddress}`);
+
+    // the salt needs to match the salt on the base chain deploying the other part of the strategy
     const salt = "CrossChain Strategy 1 Test";
     const proxyAddress = await deployProxyWithCreateX(
       salt,
-      "CrossChainRemoteStrategyProxy"
+      "CrossChainStrategyProxy"
     );
-    console.log(`CrossChainRemoteStrategyProxy address: ${proxyAddress}`);
-
-    // const implAddress = await deployCrossChainRemoteStrategyImpl(proxyAddress);
-    // console.log(`CrossChainRemoteStrategyImpl address: ${implAddress}`);
+    console.log(`CrossChainStrategyProxy address: ${proxyAddress}`);
 
     return {
       actions: [],

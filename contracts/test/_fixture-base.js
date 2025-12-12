@@ -150,11 +150,12 @@ const defaultFixture = async () => {
   );
 
   // WETH
-  let weth, aero;
+  let weth, aero, usdc;
 
   if (isFork) {
     weth = await ethers.getContractAt("IWETH9", addresses.base.WETH);
     aero = await ethers.getContractAt(erc20Abi, addresses.base.AERO);
+    usdc = await ethers.getContractAt(erc20Abi, addresses.base.USDC);
   } else {
     weth = await ethers.getContract("MockWETH");
     aero = await ethers.getContract("MockAero");
@@ -275,8 +276,9 @@ const defaultFixture = async () => {
     aerodromeAmoStrategy,
     curveAMOStrategy,
 
-    // WETH
+    // Tokens
     weth,
+    usdc,
 
     // Signers
     governor,
@@ -335,6 +337,23 @@ const bridgeHelperModuleFixture = deployments.createFixture(async () => {
   };
 });
 
+const crossChainFixture = deployments.createFixture(async () => {
+  const fixture = await defaultBaseFixture();
+  const crossChainRemoteStrategy = await ethers.getContractAt(
+    "CrossChainRemoteStrategy",
+    addresses.CrossChainStrategyProxy
+  );
+  const hookWrapper = await ethers.getContractAt(
+    "CCTPHookWrapper",
+    addresses.HookWrapperProxy
+  );
+  return {
+    ...fixture,
+    crossChainRemoteStrategy,
+    hookWrapper,
+  };
+});
+
 mocha.after(async () => {
   if (snapshotId) {
     await nodeRevert(snapshotId);
@@ -347,4 +366,5 @@ module.exports = {
   MINTER_ROLE,
   BURNER_ROLE,
   bridgeHelperModuleFixture,
+  crossChainFixture,
 };
