@@ -45,4 +45,14 @@ describe.only("ForkTest: CrossChainMasterStrategy", function () {
     console.log(`Balance before: ${formatUnits(balanceBefore, 6)}`);
     console.log(`Balance after: ${formatUnits(balanceAfter, 6)}`);
   });
+
+  it.only("Should handle attestation relay", async function () {
+    const { matt, hookWrapper, crossChainMasterStrategy, usdc } = fixture;
+    const attestation =
+      "0xf0b2792bd9b046124075e93647df38c7b1d524676f48969e692b7a79826df13913ae9086db0de46a194be8c4b52fe3b985a1fa5d6b0f038230506891a59869381b61b7567dc2e82817b7c63eb5968fcdddd53fb167eeb225aaef20ffda1aa9b0337529d52344ba8dbd272821adae236d51b8af81bdbe7ad610237f66161bbb34b41b";
+    const message =
+      "0x000000010000000600000000da5c3cfca2c93e77aeb7cd1c18df6e217d9a446930d4f95fdef03b2b59522bc5000000000000000000000000b8efd2c6ead9816841871c54d7b789eb517cc684000000000000000000000000b8efd2c6ead9816841871c54d7b789eb517cc684000000000000000000000000bfac208544c41ac1a675b9147f03c6df19d6435f00000000000003e8000003f20000000300000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000";
+
+    await hookWrapper.relay(message, attestation);
+  });
 });

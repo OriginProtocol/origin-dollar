@@ -1695,7 +1695,7 @@ const deployProxyWithCreateX = async (salt, proxyName) => {
   log(`Deploying ${proxyName} with salt: ${salt} as deployer ${deployerAddr}`);
 
   const cCreateX = await ethers.getContractAt(createxAbi, addresses.createX);
-  const factoryEncodedSalt = encodeSaltForCreateX(deployerAddr, false, 1);
+  const factoryEncodedSalt = encodeSaltForCreateX(deployerAddr, true, salt);
 
   const getFactoryBytecode = async () => {
     // No deployment needed—get factory directly from artifacts
@@ -1734,7 +1734,8 @@ const deployCrossChainMasterStrategyImpl = async (
   remoteStrategyAddress,
   baseToken,
   hookWrapperAddress,
-  implementationName = "CrossChainMasterStrategy"
+  implementationName = "CrossChainMasterStrategy",
+  skipInitialize = false
 ) => {
   const { deployerAddr } = await getNamedAccounts();
   const sDeployer = await ethers.provider.getSigner(deployerAddr);
@@ -1763,24 +1764,26 @@ const deployCrossChainMasterStrategyImpl = async (
     ]
   );
 
-  // const initData = cCrossChainMasterStrategy.interface.encodeFunctionData(
-  //   "initialize()",
-  //   []
-  // );
+  if (!skipInitialize) {
+    // const initData = cCrossChainMasterStrategy.interface.encodeFunctionData(
+    //   "initialize()",
+    //   []
+    // );
 
-  // Init the proxy to point at the implementation, set the governor, and call initialize
-  const initFunction = "initialize(address,address,bytes)";
-  await withConfirmation(
-    cCrossChainStrategyProxy.connect(sDeployer)[initFunction](
-      dCrossChainMasterStrategy.address,
-      // TODO: change governor later
-      // addresses.mainnet.Timelock, // governor
-      deployerAddr, // governor
-      //initData, // data for delegate call to the initialize function on the strategy
-      "0x",
-      await getTxOpts()
-    )
-  );
+    // Init the proxy to point at the implementation, set the governor, and call initialize
+    const initFunction = "initialize(address,address,bytes)";
+    await withConfirmation(
+      cCrossChainStrategyProxy.connect(sDeployer)[initFunction](
+        dCrossChainMasterStrategy.address,
+        // TODO: change governor later
+        // addresses.mainnet.Timelock, // governor
+        deployerAddr, // governor
+        //initData, // data for delegate call to the initialize function on the strategy
+        "0x",
+        await getTxOpts()
+      )
+    );
+  }
 
   return dCrossChainMasterStrategy.address;
 };

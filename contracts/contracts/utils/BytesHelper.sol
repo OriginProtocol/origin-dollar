@@ -27,4 +27,9 @@ library BytesHelper {
 
         return result;
     }
+
+    function decodeUint32(bytes memory data) internal pure returns (uint32) {
+        require(data.length == 4, "Invalid data length");
+        return uint32(uint256(bytes32(data)) >> 224);
+    }
 }

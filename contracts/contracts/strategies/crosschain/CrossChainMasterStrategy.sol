@@ -173,9 +173,9 @@ contract CrossChainMasterStrategy is
             // Do nothing because we receive acknowledgement with token transfer, so _onTokenReceived will handle it
             // TODO: Should _onTokenReceived always call _onMessageReceived?
             // _processWithdrawAckMessage(payload);
+        } else {
+            revert("Unknown message type");
         }
-
-        revert("Unknown message type");
     }
 
     function _onTokenReceived(

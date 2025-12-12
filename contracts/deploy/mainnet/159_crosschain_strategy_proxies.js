@@ -11,13 +11,13 @@ module.exports = deploymentWithGovernanceProposal(
   },
   async () => {
     const cctpHookWrapperProxyAddress = await deployProxyWithCreateX(
-      "CCTPHookWrapperTest", // Salt
+      "CCTPHookWrapperTest22", // Salt
       "CCTPHookWrapperProxy"
     );
     console.log(`CCTPHookWrapperProxy address: ${cctpHookWrapperProxyAddress}`);
 
     // the salt needs to match the salt on the base chain deploying the other part of the strategy
-    const salt = "CrossChain Strategy 1 Test";
+    const salt = "CrossChain Strategy 22 Test";
     const proxyAddress = await deployProxyWithCreateX(
       salt,
       "CrossChainStrategyProxy"

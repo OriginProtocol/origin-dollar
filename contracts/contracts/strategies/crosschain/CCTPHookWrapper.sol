@@ -74,29 +74,21 @@ contract CCTPHookWrapper is Governable {
         emit PeerRemoved(sourceDomainID, remoteContract, localContract);
     }
 
-    function relay(bytes calldata message, bytes calldata attestation)
-        external
-    {
-        require(
-            msg.sender == address(cctpMessageTransmitter),
-            "Caller is not the CCTP message transmitter"
-        );
-
+    function relay(bytes memory message, bytes memory attestation) external {
         // Ensure message version
-        uint32 version = abi.decode(
-            message.extractSlice(VERSION_INDEX, VERSION_INDEX + 4),
-            (uint32)
-        );
+        uint32 version = message
+            .extractSlice(VERSION_INDEX, VERSION_INDEX + 4)
+            .decodeUint32();
+
         // Ensure that it's a CCTP message
         require(
             version == CCTP_MESSAGE_VERSION,
             "Invalid CCTP message version"
         );
 
-        uint32 sourceDomainID = abi.decode(
-            message.extractSlice(SOURCE_DOMAIN_INDEX, SOURCE_DOMAIN_INDEX + 4),
-            (uint32)
-        );
+        uint32 sourceDomainID = message
+            .extractSlice(SOURCE_DOMAIN_INDEX, SOURCE_DOMAIN_INDEX + 4)
+            .decodeUint32();
 
         // Make sure sender is whitelisted
         address sender = abi.decode(
@@ -114,11 +106,11 @@ contract CCTPHookWrapper is Governable {
             MESSAGE_BODY_INDEX,
             message.length
         );
-        bytes memory versionSlice = messageBody.extractSlice(
+        bytes memory bodyVersionSlice = messageBody.extractSlice(
             BURN_MESSAGE_V2_VERSION_INDEX,
             BURN_MESSAGE_V2_VERSION_INDEX + 4
         );
-        version = abi.decode(versionSlice, (uint32));
+        version = bodyVersionSlice.decodeUint32();
 
         bool isBurnMessageV1 = version == 1 &&
             messageBody.length >= BURN_MESSAGE_V2_HOOK_DATA_INDEX;

@@ -76,9 +76,9 @@ contract CrossChainRemoteStrategy is
         } else if (messageType == WITHDRAW_MESSAGE) {
             // Received when Master strategy requests a withdrawal
             _processWithdrawMessage(payload);
+        } else {
+            revert("Unknown message type");
         }
-
-        revert("Unknown message type");
     }
 
     function _processDepositMessage(

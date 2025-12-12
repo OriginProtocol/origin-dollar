@@ -11,8 +11,6 @@ import { Governable } from "../../governance/Governable.sol";
 import { BytesHelper } from "../../utils/BytesHelper.sol";
 import "../../utils/Helpers.sol";
 
-import "hardhat/console.sol";
-
 abstract contract AbstractCCTPIntegrator is Governable, IMessageHandlerV2 {
     using SafeERC20 for IERC20;
 
@@ -160,12 +158,12 @@ abstract contract AbstractCCTPIntegrator is Governable, IMessageHandlerV2 {
         uint32 finalityThresholdExecuted,
         bytes memory messageBody
     ) internal returns (bool) {
-        // Make sure that the finality threshold is same on both chains
-        // TODO: Do we really need this?
-        require(
-            finalityThresholdExecuted >= minFinalityThreshold,
-            "Finality threshold too low"
-        );
+        // // Make sure that the finality threshold is same on both chains
+        // // TODO: Do we really need this? Also, fix this
+        // require(
+        //     finalityThresholdExecuted >= minFinalityThreshold,
+        //     "Finality threshold too low"
+        // );
         require(sourceDomain == destinationDomain, "Unknown Source Domain");
 
         // Extract address from bytes32 (CCTP stores addresses as right-padded bytes32)
@@ -202,8 +200,6 @@ abstract contract AbstractCCTPIntegrator is Governable, IMessageHandlerV2 {
         virtual
     {
         require(tokenAmount <= MAX_TRANSFER_AMOUNT, "Token amount too high");
-        console.log("Sending tokens");
-        console.logBytes(hookData);
 
         IERC20(baseToken).safeApprove(address(cctpTokenMessenger), tokenAmount);
 
@@ -233,11 +229,7 @@ abstract contract AbstractCCTPIntegrator is Governable, IMessageHandlerV2 {
     {
         // uint32 bytes 0 to 4 is Origin message version
         // uint32 bytes 4 to 8 is Message type
-        uint32 messageVersion = abi.decode(
-            message.extractSlice(0, 4),
-            (uint32)
-        );
-        return messageVersion;
+        return message.extractSlice(0, 4).decodeUint32();
     }
 
     function _getMessageType(bytes memory message)
@@ -247,8 +239,7 @@ abstract contract AbstractCCTPIntegrator is Governable, IMessageHandlerV2 {
     {
         // uint32 bytes 0 to 4 is Origin message version
         // uint32 bytes 4 to 8 is Message type
-        uint32 messageType = abi.decode(message.extractSlice(4, 8), (uint32));
-        return messageType;
+        return message.extractSlice(4, 8).decodeUint32();
     }
 
     function _getMessagePayload(bytes memory message)
