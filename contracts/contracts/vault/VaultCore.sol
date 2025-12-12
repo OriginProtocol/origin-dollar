@@ -72,29 +72,31 @@ contract VaultCore is VaultInitializer {
     ) internal virtual {
         require(_asset == backingAsset, "Unsupported asset for minting");
         require(_amount > 0, "Amount must be greater than 0");
+
+        // Scale amount to 18 decimals
+        uint256 scaledAmount = _amount * 10**(18 - backingAssetDecimals);
         require(
-            _amount >= _minimumOusdAmount,
+            scaledAmount >= _minimumOusdAmount,
             "Mint amount lower than minimum"
         );
 
-        emit Mint(msg.sender, _amount);
+        emit Mint(msg.sender, scaledAmount);
 
         // Rebase must happen before any transfers occur.
-        if (!rebasePaused && _amount >= rebaseThreshold) {
+        if (!rebasePaused && scaledAmount >= rebaseThreshold) {
             _rebase();
         }
 
         // Mint oTokens
-        oUSD.mint(msg.sender, _amount);
+        oUSD.mint(msg.sender, scaledAmount);
 
-        // Transfer the deposited coins to the vault
         IERC20(_asset).safeTransferFrom(msg.sender, address(this), _amount);
 
         // Give priority to the withdrawal queue for the new backingAsset liquidity
         _addWithdrawalQueueLiquidity();
 
         // Auto-allocate if necessary
-        if (_amount >= autoAllocateThreshold) {
+        if (scaledAmount >= autoAllocateThreshold) {
             _allocate();
         }
     }

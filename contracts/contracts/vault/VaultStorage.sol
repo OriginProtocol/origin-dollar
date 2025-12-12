@@ -12,6 +12,7 @@ import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.s
 import { Address } from "@openzeppelin/contracts/utils/Address.sol";
 
 import { IStrategy } from "../interfaces/IStrategy.sol";
+import { IWETH9 } from "../interfaces/IWETH9.sol";
 import { Governable } from "../governance/Governable.sol";
 import { OUSD } from "../token/OUSD.sol";
 import { Initializable } from "../utils/Initializable.sol";
@@ -244,12 +245,16 @@ contract VaultStorage is Initializable, Governable {
 
     /// @dev Address of the backing asset (eg. WETH or USDC)
     address public immutable backingAsset;
+    uint8 internal immutable backingAssetDecimals;
 
     // slither-disable-end constable-states
     // slither-disable-end uninitialized-state
 
     constructor(address _backingAsset) {
+        uint8 _decimals = IWETH9(_backingAsset).decimals();
+        require(_decimals <= 18, "BackingAsset not supported");
         backingAsset = _backingAsset;
+        backingAssetDecimals = _decimals;
     }
 
     /**

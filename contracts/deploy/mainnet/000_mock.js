@@ -133,6 +133,7 @@ const deployMocks = async ({ getNamedAccounts, deployments }) => {
 
   // Deploy a mock Vault with additional functions for tests
   await deploy("MockVault", {
+    args: [(await ethers.getContract("MockUSDC")).address],
     from: governorAddr,
   });
 

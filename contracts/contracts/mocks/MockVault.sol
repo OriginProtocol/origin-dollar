@@ -3,7 +3,6 @@ pragma solidity ^0.8.0;
 
 import { VaultCore } from "../vault/VaultCore.sol";
 import { StableMath } from "../utils/StableMath.sol";
-import { VaultInitializer } from "../vault/VaultInitializer.sol";
 import "../utils/Helpers.sol";
 
 contract MockVault is VaultCore {
@@ -11,7 +10,7 @@ contract MockVault is VaultCore {
 
     uint256 storedTotalValue;
 
-    constructor() VaultCore(address(0)) {}
+    constructor(address _backingAsset) VaultCore(_backingAsset) {}
 
     function setTotalValue(uint256 _value) public {
         storedTotalValue = _value;
