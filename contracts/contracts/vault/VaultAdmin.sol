@@ -31,9 +31,7 @@ contract VaultAdmin is VaultStorage {
         _;
     }
 
-    // Not a problem to have an address(0) for backingAsset here since storage is read from
-    // the VaultCore -> VaultInitializer -> VaultStorage contract via delegatecall
-    constructor() VaultStorage(address(0)) {}
+    constructor(address _backingAsset) VaultStorage(_backingAsset) {}
 
     /***************************************
                  Configuration

@@ -4,6 +4,8 @@ pragma solidity ^0.8.0;
 import { OETHVaultAdmin } from "../vault/OETHVaultAdmin.sol";
 
 contract MockOETHVaultAdmin is OETHVaultAdmin {
+    constructor(address _weth) OETHVaultAdmin(_weth) {}
+
     // fetches the WETH amount in outstanding withdrawals
     function outstandingWithdrawalsAmount()
         external

@@ -8,5 +8,5 @@ import { OETHVaultAdmin } from "./OETHVaultAdmin.sol";
  * @author Origin Protocol Inc
  */
 contract OSonicVaultAdmin is OETHVaultAdmin {
-
+    constructor(address _wS) OETHVaultAdmin(_wS) {}
 }

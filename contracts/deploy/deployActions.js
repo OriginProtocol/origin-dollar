@@ -1075,7 +1075,9 @@ const deployOETHCore = async () => {
   const dOETHVaultCore = await deployWithConfirmation("OETHVaultCore", [
     assetAddresses.WETH,
   ]);
-  const dOETHVaultAdmin = await deployWithConfirmation("OETHVaultAdmin");
+  const dOETHVaultAdmin = await deployWithConfirmation("OETHVaultAdmin", [
+    assetAddresses.WETH,
+  ]);
 
   // Get contract instances
   const cOETHProxy = await ethers.getContract("OETHProxy");
@@ -1174,7 +1176,9 @@ const deployOUSDCore = async () => {
   const dVaultCore = await deployWithConfirmation("VaultCore", [
     assetAddresses.USDC,
   ]);
-  const dVaultAdmin = await deployWithConfirmation("VaultAdmin");
+  const dVaultAdmin = await deployWithConfirmation("VaultAdmin", [
+    assetAddresses.USDC,
+  ]);
   log("Deployed OUSD Vault implementations (Core, Admin)");
 
   // Get contract instances
