@@ -686,12 +686,12 @@ addresses.hoodi.mockBeaconRoots = "0xdCfcAE4A084AA843eE446f400B23aA7B6340484b";
 
 // Crosschain Strategy
 
-addresses.HookWrapperProxy = "0x40eC39c3EcB0e7aD45D7BC604D8FA479D5d1F405";
+addresses.HookWrapperProxy = "0x30f8a2fc7D7098061C94F042B2E7E732f95Af40F";
 addresses.CrossChainStrategyProxy =
-  "0x02274FDFf21178BAD174551A9b9b68F81566A76A";
+  "0x8ebcCa1066d15aD901927Ab01c7C6D0b057bBD34";
 addresses.mainnet.CrossChainStrategyProxy =
-  "0x02274FDFf21178BAD174551A9b9b68F81566A76A";
+  "0x8ebcCa1066d15aD901927Ab01c7C6D0b057bBD34";
 addresses.base.CrossChainStrategyProxy =
-  "0x02274FDFf21178BAD174551A9b9b68F81566A76A";
+  "0x8ebcCa1066d15aD901927Ab01c7C6D0b057bBD34";
 
 module.exports = addresses;

@@ -19,6 +19,7 @@ const {
 } = require("../test/helpers.js");
 const {
   deployWithConfirmation,
+  verifyContractOnEtherscan,
   withConfirmation,
   encodeSaltForCreateX,
 } = require("../utils/deploy");
@@ -1689,7 +1690,12 @@ const deploySonicSwapXAMOStrategyImplementation = async () => {
 };
 
 // deploys an instance of InitializeGovernedUpgradeabilityProxy where address is defined by salt
-const deployProxyWithCreateX = async (salt, proxyName) => {
+const deployProxyWithCreateX = async (
+  salt,
+  proxyName,
+  verifyContract = false,
+  contractPath = null
+) => {
   const { deployerAddr } = await getNamedAccounts();
   const sDeployer = await ethers.provider.getSigner(deployerAddr);
   log(`Deploying ${proxyName} with salt: ${salt} as deployer ${deployerAddr}`);
@@ -1723,6 +1729,24 @@ const deployProxyWithCreateX = async (salt, proxyName) => {
       .find((event) => event.topics[0] === contractCreationTopic)
       .topics[1].slice(26)}`
   );
+
+  log(`Deployed ${proxyName} at ${proxyAddress}`);
+
+  // Verify contract on Etherscan if requested and on a live network
+  // Can be enabled via parameter or VERIFY_CONTRACTS environment variable
+  const shouldVerify =
+    verifyContract || process.env.VERIFY_CONTRACTS === "true";
+  if (shouldVerify && !isTest && !isFork && proxyAddress) {
+    // Constructor args for the proxy are [deployerAddr]
+    const constructorArgs = [deployerAddr];
+    await verifyContractOnEtherscan(
+      proxyName,
+      proxyAddress,
+      constructorArgs,
+      proxyName,
+      contractPath
+    );
+  }
 
   return proxyAddress;
 };
