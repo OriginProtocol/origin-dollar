@@ -116,9 +116,13 @@ contract CrossChainMasterStrategy is
         override
         returns (uint256 balance)
     {
+        require(_asset == baseToken, "Unsupported asset");
+
         // USDC balance on this contract
         // + USDC being bridged
         // + USDC cached in the corresponding Remote part of this contract
+        uint256 undepositedUSDC = IERC20(baseToken).balanceOf(address(this));
+        return undepositedUSDC + pendingAmount + remoteStrategyBalance;
     }
 
     /**
