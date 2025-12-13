@@ -1695,7 +1695,7 @@ const deployProxyWithCreateX = async (salt, proxyName) => {
   log(`Deploying ${proxyName} with salt: ${salt} as deployer ${deployerAddr}`);
 
   const cCreateX = await ethers.getContractAt(createxAbi, addresses.createX);
-  const factoryEncodedSalt = encodeSaltForCreateX(deployerAddr, true, salt);
+  const factoryEncodedSalt = encodeSaltForCreateX(deployerAddr, false, salt);
 
   const getFactoryBytecode = async () => {
     // No deployment needed—get factory directly from artifacts

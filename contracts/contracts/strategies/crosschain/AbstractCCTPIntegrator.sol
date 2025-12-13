@@ -155,6 +155,7 @@ abstract contract AbstractCCTPIntegrator is Governable, IMessageHandlerV2 {
     function _handleReceivedMessage(
         uint32 sourceDomain,
         bytes32 sender,
+        // solhint-disable-next-line no-unused-vars
         uint32 finalityThresholdExecuted,
         bytes memory messageBody
     ) internal returns (bool) {

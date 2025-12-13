@@ -1,13 +1,13 @@
-const { expect } = require("chai");
+// const { expect } = require("chai");
 
-const { units, ousdUnits, usdcUnits, isCI } = require("../../helpers");
+const { usdcUnits, isCI } = require("../../helpers");
 const { createFixtureLoader, crossChainFixture } = require("../../_fixture");
 const { impersonateAndFund } = require("../../../utils/signers");
 const { formatUnits } = require("ethers/lib/utils");
 
 const loadFixture = createFixtureLoader(crossChainFixture);
 
-describe.only("ForkTest: CrossChainMasterStrategy", function () {
+describe("ForkTest: CrossChainMasterStrategy", function () {
   this.timeout(0);
 
   // Retry up to 3 times on CI
@@ -19,9 +19,9 @@ describe.only("ForkTest: CrossChainMasterStrategy", function () {
   });
 
   it("Should initiate a bridge of deposited USDC", async function () {
-    const { matt, hookWrapper, crossChainMasterStrategy, usdc } = fixture;
-    const govAddr = await crossChainMasterStrategy.governor();
-    const governor = await impersonateAndFund(govAddr);
+    const { matt, crossChainMasterStrategy, usdc } = fixture;
+    // const govAddr = await crossChainMasterStrategy.governor();
+    // const governor = await impersonateAndFund(govAddr);
     const vaultAddr = await crossChainMasterStrategy.vaultAddress();
 
     const impersonatedVault = await impersonateAndFund(vaultAddr);
@@ -46,8 +46,8 @@ describe.only("ForkTest: CrossChainMasterStrategy", function () {
     console.log(`Balance after: ${formatUnits(balanceAfter, 6)}`);
   });
 
-  it.only("Should handle attestation relay", async function () {
-    const { matt, hookWrapper, crossChainMasterStrategy, usdc } = fixture;
+  it("Should handle attestation relay", async function () {
+    const { hookWrapper } = fixture;
     const attestation =
       "0xf0b2792bd9b046124075e93647df38c7b1d524676f48969e692b7a79826df13913ae9086db0de46a194be8c4b52fe3b985a1fa5d6b0f038230506891a59869381b61b7567dc2e82817b7c63eb5968fcdddd53fb167eeb225aaef20ffda1aa9b0337529d52344ba8dbd272821adae236d51b8af81bdbe7ad610237f66161bbb34b41b";
     const message =

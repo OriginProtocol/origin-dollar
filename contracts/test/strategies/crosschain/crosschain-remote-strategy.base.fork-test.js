@@ -1,14 +1,14 @@
-const { expect } = require("chai");
+// const { expect } = require("chai");
 
-const { ousdUnits, usdcUnits, isCI } = require("../../helpers");
+const { isCI } = require("../../helpers");
 const { createFixtureLoader } = require("../../_fixture");
 const { crossChainFixture } = require("../../_fixture-base");
-const { impersonateAndFund } = require("../../../utils/signers");
-const { formatUnits } = require("ethers/lib/utils");
+// const { impersonateAndFund } = require("../../../utils/signers");
+// const { formatUnits } = require("ethers/lib/utils");
 
 const loadFixture = createFixtureLoader(crossChainFixture);
 
-describe.only("ForkTest: CrossChainRemoteStrategy", function () {
+describe("ForkTest: CrossChainRemoteStrategy", function () {
   this.timeout(0);
 
   // Retry up to 3 times on CI
@@ -20,7 +20,7 @@ describe.only("ForkTest: CrossChainRemoteStrategy", function () {
   });
 
   it("Should initiate a bridge of deposited USDC", async function () {
-    const { hookWrapper, crossChainRemoteStrategy, usdc } = fixture;
+    const { crossChainRemoteStrategy } = fixture;
     await crossChainRemoteStrategy.sendBalanceUpdate();
     // const govAddr = (await crossChainMasterStrategy.governor())
     // const governor = await impersonateAndFund(govAddr);
