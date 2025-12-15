@@ -243,6 +243,17 @@ abstract contract AbstractCCTPIntegrator is Governable, IMessageHandlerV2 {
         return message.extractSlice(4, 8).decodeUint32();
     }
 
+    function _verifyMessageVersionAndType(bytes memory _message, uint32 _version, uint32 _type) internal virtual {
+        require(
+            _getMessageVersion(_message) == _version,
+            "Invalid Origin Message Version"
+        );
+        require(
+            _getMessageType(_message) == _type,
+            "Invalid Message type"
+        );
+    }
+
     function _getMessagePayload(bytes memory message)
         internal
         virtual
@@ -272,14 +283,7 @@ abstract contract AbstractCCTPIntegrator is Governable, IMessageHandlerV2 {
         virtual
         returns (uint64, uint256)
     {
-        require(
-            _getMessageVersion(message) == ORIGIN_MESSAGE_VERSION,
-            "Invalid Origin Message Version"
-        );
-        require(
-            _getMessageType(message) == DEPOSIT_MESSAGE,
-            "Invalid Message type"
-        );
+        _verifyMessageVersionAndType(message, ORIGIN_MESSAGE_VERSION, DEPOSIT_MESSAGE);
 
         (uint64 nonce, uint256 depositAmount) = abi.decode(
             _getMessagePayload(message),
@@ -312,14 +316,7 @@ abstract contract AbstractCCTPIntegrator is Governable, IMessageHandlerV2 {
             uint256
         )
     {
-        require(
-            _getMessageVersion(message) == ORIGIN_MESSAGE_VERSION,
-            "Invalid Origin Message Version"
-        );
-        require(
-            _getMessageType(message) == DEPOSIT_ACK_MESSAGE,
-            "Invalid Message type"
-        );
+        _verifyMessageVersionAndType(message, ORIGIN_MESSAGE_VERSION, DEPOSIT_ACK_MESSAGE);
 
         (
             uint64 nonce,
@@ -352,14 +349,7 @@ abstract contract AbstractCCTPIntegrator is Governable, IMessageHandlerV2 {
         virtual
         returns (uint64, uint256)
     {
-        require(
-            _getMessageVersion(message) == ORIGIN_MESSAGE_VERSION,
-            "Invalid Origin Message Version"
-        );
-        require(
-            _getMessageType(message) == WITHDRAW_MESSAGE,
-            "Invalid Message type"
-        );
+        _verifyMessageVersionAndType(message, ORIGIN_MESSAGE_VERSION, WITHDRAW_MESSAGE);
 
         (uint64 nonce, uint256 withdrawAmount) = abi.decode(
             _getMessagePayload(message),
@@ -390,14 +380,7 @@ abstract contract AbstractCCTPIntegrator is Governable, IMessageHandlerV2 {
             uint256
         )
     {
-        require(
-            _getMessageVersion(message) == ORIGIN_MESSAGE_VERSION,
-            "Invalid Origin Message Version"
-        );
-        require(
-            _getMessageType(message) == WITHDRAW_ACK_MESSAGE,
-            "Invalid Message type"
-        );
+        _verifyMessageVersionAndType(message, ORIGIN_MESSAGE_VERSION, WITHDRAW_ACK_MESSAGE);
 
         (uint64 nonce, uint256 amountSent, uint256 balanceAfter) = abi.decode(
             _getMessagePayload(message),
@@ -424,14 +407,7 @@ abstract contract AbstractCCTPIntegrator is Governable, IMessageHandlerV2 {
         virtual
         returns (uint64, uint256)
     {
-        require(
-            _getMessageVersion(message) == ORIGIN_MESSAGE_VERSION,
-            "Invalid Origin Message Version"
-        );
-        require(
-            _getMessageType(message) == BALANCE_CHECK_MESSAGE,
-            "Invalid Message type"
-        );
+        _verifyMessageVersionAndType(message, ORIGIN_MESSAGE_VERSION, BALANCE_CHECK_MESSAGE);
 
         (uint64 nonce, uint256 balance) = abi.decode(
             _getMessagePayload(message),
