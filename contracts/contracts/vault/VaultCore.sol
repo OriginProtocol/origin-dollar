@@ -74,7 +74,7 @@ contract VaultCore is VaultInitializer {
         require(_amount > 0, "Amount must be greater than 0");
 
         // Scale amount to 18 decimals
-        uint256 scaledAmount = _amount * 10**(18 - backingAssetDecimals);
+        uint256 scaledAmount = _amount.scaleBy(18, backingAssetDecimals);
         require(
             scaledAmount >= _minimumOusdAmount,
             "Mint amount lower than minimum"
@@ -163,7 +163,7 @@ contract VaultCore is VaultInitializer {
         // Amount excluding fees
         // No fee for the strategist or the governor, makes it easier to do operations
         uint256 amountMinusFee = (msg.sender == strategistAddr || isGovernor())
-            ? _amount
+            ? _amount.scaleBy(backingAssetDecimals, 18)
             : _calculateRedeemOutputs(_amount)[0];
 
         require(
@@ -438,7 +438,11 @@ contract VaultCore is VaultInitializer {
 
         // Calculate the target buffer for the vault using the total supply
         uint256 totalSupply = oUSD.totalSupply();
-        uint256 targetBuffer = totalSupply.mulTruncate(vaultBuffer);
+        // Scaled to backingAsset decimals
+        uint256 targetBuffer = totalSupply.mulTruncate(vaultBuffer).scaleBy(
+            backingAssetDecimals,
+            18
+        );
 
         // If available backingAsset in the Vault is below or equal the target buffer then there's nothing to allocate
         if (backingAssetAvailableInVault <= targetBuffer) return;
@@ -582,7 +586,7 @@ contract VaultCore is VaultInitializer {
      */
     function _totalValue() internal view virtual returns (uint256 value) {
         // As backingAsset is the only asset, just return the backingAsset balance
-        value = _checkBalance(backingAsset);
+        value = _checkBalance(backingAsset).scaleBy(18, backingAssetDecimals);
     }
 
     /**
@@ -688,7 +692,7 @@ contract VaultCore is VaultInitializer {
 
         // Todo: Maybe we can change function signature and return a simple uint256
         outputs = new uint256[](1);
-        outputs[0] = _amount;
+        outputs[0] = _amount.scaleBy(backingAssetDecimals, 18);
     }
 
     /**
