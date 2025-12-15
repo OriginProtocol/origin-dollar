@@ -30,6 +30,7 @@ module.exports = deploymentWithGovernanceProposal(
 
     await deployWithConfirmation("CCTPHookWrapper", [
       addresses.CCTPMessageTransmitterV2,
+      addresses.CCTPTokenMessengerV2,
     ]);
     const cHookWrapperImpl = await ethers.getContract("CCTPHookWrapper");
     console.log(`CCTPHookWrapper address: ${cHookWrapperImpl.address}`);

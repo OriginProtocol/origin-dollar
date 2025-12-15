@@ -25,7 +25,9 @@ contract CCTPHookWrapper is Governable {
 
     // Burn Message V2 fields
     uint8 private constant BURN_MESSAGE_V2_VERSION_INDEX = 0;
+    uint8 private constant BURN_MESSAGE_V2_RECIPIENT_INDEX = 36;
     uint8 private constant BURN_MESSAGE_V2_AMOUNT_INDEX = 68;
+    uint8 private constant BURN_MESSAGE_V2_MESSAGE_SENDER_INDEX = 100;
     uint8 private constant BURN_MESSAGE_V2_FEE_EXECUTED_INDEX = 164;
     uint8 private constant BURN_MESSAGE_V2_HOOK_DATA_INDEX = 228;
 
@@ -49,11 +51,13 @@ contract CCTPHookWrapper is Governable {
     uint32 private constant ORIGIN_MESSAGE_VERSION = 1010;
 
     ICCTPMessageTransmitter public immutable cctpMessageTransmitter;
+    ICCTPTokenMessenger public immutable cctpTokenMessenger;
 
-    constructor(address _cctpMessageTransmitter) {
+    constructor(address _cctpMessageTransmitter, address cctpTokenMessenger) {
         cctpMessageTransmitter = ICCTPMessageTransmitter(
             _cctpMessageTransmitter
         );
+        cctpTokenMessenger = ICCTPTokenMessenger(cctpTokenMessenger);
     }
 
     function setPeer(
@@ -90,15 +94,10 @@ contract CCTPHookWrapper is Governable {
             .extractSlice(SOURCE_DOMAIN_INDEX, SOURCE_DOMAIN_INDEX + 4)
             .decodeUint32();
 
-        // Make sure sender is whitelisted
+        // Grab the message sender
         address sender = abi.decode(
             message.extractSlice(SENDER_INDEX, SENDER_INDEX + 32),
             (address)
-        );
-        address recipientContract = peers[sourceDomainID][sender];
-        require(
-            recipientContract != address(0),
-            "Sender is not a configured peer"
         );
 
         // Ensure message body version
@@ -112,13 +111,44 @@ contract CCTPHookWrapper is Governable {
         );
         version = bodyVersionSlice.decodeUint32();
 
-        bool isBurnMessageV1 = version == 1 &&
-            messageBody.length >= BURN_MESSAGE_V2_HOOK_DATA_INDEX;
+        bool isBurnMessageV1 = sender == address(cctpTokenMessenger);
 
-        // It's either CCTP Burn message v1 or Origin's custom message
+        if (isBurnMessageV1) {
+            // Handle burn message
+            require(
+                version == 1 &&
+                    messageBody.length >= BURN_MESSAGE_V2_MINT_RECIPIENT_INDEX,
+                "Invalid burn message"
+            );
+
+            // Find sender
+            bytes memory messageSender = messageBody.extractSlice(
+                BURN_MESSAGE_V2_MESSAGE_SENDER_INDEX,
+                BURN_MESSAGE_V2_MESSAGE_SENDER_INDEX + 32
+            );
+            sender = abi.decode(messageSender, (address));
+        }
+
+        address recipientContract = peers[sourceDomainID][sender];
+
+        if (isBurnMessageV1) {
+            bytes memory recipientSlice = messageBody.extractSlice(
+                BURN_MESSAGE_V2_RECIPIENT_INDEX,
+                BURN_MESSAGE_V2_RECIPIENT_INDEX + 32
+            );
+            address whitelistedRecipient = abi.decode(
+                recipientSlice,
+                (address)
+            );
+            require(
+                whitelistedRecipient == recipientContract,
+                "Invalid recipient"
+            );
+        }
+
         require(
-            isBurnMessageV1 || version == ORIGIN_MESSAGE_VERSION,
-            "Invalid CCTP message body version"
+            recipientContract != address(0),
+            "Sender is not a configured peer"
         );
 
         // Relay the message
@@ -129,10 +159,6 @@ contract CCTPHookWrapper is Governable {
         require(relaySuccess, "Receive message failed");
 
         if (isBurnMessageV1) {
-            require(
-                messageBody.length >= BURN_MESSAGE_V2_HOOK_DATA_INDEX,
-                "Invalid burn message"
-            );
             bytes memory hookData = messageBody.extractSlice(
                 BURN_MESSAGE_V2_HOOK_DATA_INDEX,
                 messageBody.length

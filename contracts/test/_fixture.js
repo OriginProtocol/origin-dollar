@@ -2569,8 +2569,12 @@ async function yearnCrossChainFixture() {
     remoteProxyAddress
   );
 
-  yearnMasterStrategy.connect(sDeployer).setRemoteAddress(remoteProxyAddress);
-  yearnRemoteStrategy.connect(sDeployer).setMasterAddress(masterProxyAddress);
+  await yearnMasterStrategy
+    .connect(sDeployer)
+    .setRemoteAddress(remoteProxyAddress);
+  await yearnRemoteStrategy
+    .connect(sDeployer)
+    .setMasterAddress(masterProxyAddress);
 
   fixture.yearnMasterStrategy = yearnMasterStrategy;
   fixture.yearnRemoteStrategy = yearnRemoteStrategy;
