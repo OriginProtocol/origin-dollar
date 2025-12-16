@@ -12,10 +12,10 @@ pragma solidity ^0.8.0;
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { IERC20 } from "../../utils/InitializableAbstractStrategy.sol";
 import { Generalized4626Strategy } from "../Generalized4626Strategy.sol";
-import { AbstractCCTPStrategy } from "./AbstractCCTPStrategy.sol";
+import { AbstractCCTPMorphoStrategy } from "./AbstractCCTPMorphoStrategy.sol";
 
 contract CrossChainRemoteStrategy is
-    AbstractCCTPStrategy,
+    AbstractCCTPMorphoStrategy,
     Generalized4626Strategy
 {
     using SafeERC20 for IERC20;
@@ -24,7 +24,7 @@ contract CrossChainRemoteStrategy is
         BaseStrategyConfig memory _baseConfig,
         CCTPIntegrationConfig memory _cctpConfig
     )
-        AbstractCCTPStrategy(
+        AbstractCCTPMorphoStrategy(
             _cctpConfig
         )
         Generalized4626Strategy(_baseConfig, _cctpConfig.baseToken)
