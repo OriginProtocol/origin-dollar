@@ -1,0 +1,82 @@
+const addresses = require("../../utils/addresses");
+const { deploymentWithGovernanceProposal } = require("../../utils/deploy");
+
+module.exports = deploymentWithGovernanceProposal(
+  {
+    deployName: "159_upgrade_morpho_strategies",
+    forceDeploy: false,
+    // forceSkip: true,
+    // reduceQueueTime: true,
+    deployerIsProposer: false,
+    // proposalId: "",
+  },
+  async ({ deployWithConfirmation }) => {
+    // Current OUSD Vault contracts
+    const cVaultProxy = await ethers.getContract("VaultProxy");
+    const dMorphoSteakhouseUSDCStrategyProxy = await ethers.getContract(
+      "MetaMorphoStrategyProxy"
+    );
+    const dMorphoGauntletPrimeUSDCStrategyProxy = await ethers.getContract(
+      "MorphoGauntletPrimeUSDCStrategyProxy"
+    );
+    const dMorphoGauntletPrimeUSDTStrategyProxy = await ethers.getContract(
+      "MorphoGauntletPrimeUSDTStrategyProxy"
+    );
+
+    // Deployer Actions
+    // ----------------
+
+    // 1. Deploy new contract for Morpho Steakhouse USDC
+    const dMorphoSteakhouseUSDCStrategyImpl = await deployWithConfirmation(
+      "Generalized4626Strategy",
+      [
+        [addresses.mainnet.MorphoSteakhouseUSDCVault, cVaultProxy.address],
+        addresses.mainnet.USDC,
+      ]
+    );
+
+    // 2. Deploy new contract for Morpho Gauntlet Prime USDC
+    const dMorphoGauntletPrimeUSDCStrategyImpl = await deployWithConfirmation(
+      "Generalized4626Strategy",
+      [
+        [addresses.mainnet.MorphoGauntletPrimeUSDCVault, cVaultProxy.address],
+        addresses.mainnet.USDC,
+      ]
+    );
+
+    // 3. Deploy new contract for Morpho Gauntlet Prime USDT
+    const dMorphoGauntletPrimeUSDTStrategyImpl = await deployWithConfirmation(
+      "Generalized4626USDTStrategy",
+      [
+        [addresses.mainnet.MorphoGauntletPrimeUSDTVault, cVaultProxy.address],
+        addresses.mainnet.USDT,
+      ]
+    );
+
+    // Governance Actions
+    // ----------------
+    return {
+      name: "Upgrade Morpho Steakhouse and Gauntlet Prime Strategies to claim MORPHO rewards from Merkl",
+      actions: [
+        {
+          // 1. Upgrade Morpho Steakhouse USDC Strategy
+          contract: dMorphoSteakhouseUSDCStrategyProxy,
+          signature: "upgradeTo(address)",
+          args: [dMorphoSteakhouseUSDCStrategyImpl.address],
+        },
+        {
+          // 1. Upgrade Morpho Steakhouse USDC Strategy
+          contract: dMorphoGauntletPrimeUSDCStrategyProxy,
+          signature: "upgradeTo(address)",
+          args: [dMorphoGauntletPrimeUSDCStrategyImpl.address],
+        },
+        {
+          // 1. Upgrade Morpho Steakhouse USDC Strategy
+          contract: dMorphoGauntletPrimeUSDTStrategyProxy,
+          signature: "upgradeTo(address)",
+          args: [dMorphoGauntletPrimeUSDTStrategyImpl.address],
+        },
+      ],
+    };
+  }
+);
