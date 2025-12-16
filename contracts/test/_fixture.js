@@ -2073,10 +2073,7 @@ async function compoundingStakingSSVStrategyFixture() {
     // Set as default
     await oethVault
       .connect(sGovernor)
-      .setAssetDefaultStrategy(
-        weth.address,
-        compoundingStakingSSVStrategy.address
-      );
+      .setDefaultStrategy(compoundingStakingSSVStrategy.address);
 
     await compoundingStakingSSVStrategy
       .connect(sGovernor)
