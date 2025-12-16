@@ -206,6 +206,8 @@ abstract contract AbstractCCTPIntegrator is Governable, IMessageHandlerV2 {
 
         // TODO: figure out why getMinFeeAmount is not on CCTP v2 contract
         // Ref: https://developers.circle.com/cctp/evm-smart-contracts#getminfeeamount
+        // The issue is that the getMinFeeAmount is not present on v2.0 contracts, but is on 
+        // v2.1. We will only be using standard transfers and fee on those is 0.
 
         uint256 maxFee = feePremiumBps > 0
             ? (tokenAmount * feePremiumBps) / 10000
