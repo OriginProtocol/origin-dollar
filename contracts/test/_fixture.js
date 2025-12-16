@@ -1965,7 +1965,7 @@ async function nativeStakingSSVStrategyFixture() {
   } else {
     fixture.ssvNetwork = await ethers.getContract("MockSSVNetwork");
     const { governorAddr } = await getNamedAccounts();
-    const { oethVault, weth, nativeStakingSSVStrategy } = fixture;
+    const { oethVault, nativeStakingSSVStrategy } = fixture;
     const sGovernor = await ethers.provider.getSigner(governorAddr);
 
     // Approve Strategy
@@ -1979,7 +1979,7 @@ async function nativeStakingSSVStrategyFixture() {
     // Set as default
     await oethVault
       .connect(sGovernor)
-      .setAssetDefaultStrategy(weth.address, nativeStakingSSVStrategy.address);
+      .setDefaultStrategy(nativeStakingSSVStrategy.address);
 
     await nativeStakingSSVStrategy
       .connect(sGovernor)
@@ -2476,6 +2476,7 @@ async function instantRebaseVaultFixture() {
 
   await deploy("MockVaultCoreInstantRebase", {
     from: governorAddr,
+    args: [fixture.usdc.address],
   });
   const instantRebase = await ethers.getContract("MockVaultCoreInstantRebase");
 
