@@ -12,32 +12,22 @@ pragma solidity ^0.8.0;
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { IERC20 } from "../../utils/InitializableAbstractStrategy.sol";
 import { Generalized4626Strategy } from "../Generalized4626Strategy.sol";
-import { AbstractCCTPIntegrator } from "./AbstractCCTPIntegrator.sol";
+import { AbstractCCTPStrategy } from "./AbstractCCTPStrategy.sol";
 
 contract CrossChainRemoteStrategy is
-    AbstractCCTPIntegrator,
+    AbstractCCTPStrategy,
     Generalized4626Strategy
 {
     using SafeERC20 for IERC20;
 
     constructor(
         BaseStrategyConfig memory _baseConfig,
-        address _cctpTokenMessenger,
-        address _cctpMessageTransmitter,
-        uint32 _destinationDomain,
-        address _destinationStrategy,
-        address _baseToken,
-        address _cctpHookWrapper
+        CCTPIntegrationConfig memory _cctpConfig
     )
-        AbstractCCTPIntegrator(
-            _cctpTokenMessenger,
-            _cctpMessageTransmitter,
-            _destinationDomain,
-            _destinationStrategy,
-            _baseToken,
-            _cctpHookWrapper
+        AbstractCCTPStrategy(
+            _cctpConfig
         )
-        Generalized4626Strategy(_baseConfig, _baseToken)
+        Generalized4626Strategy(_baseConfig, _cctpConfig.baseToken)
     {}
 
     // solhint-disable-next-line no-unused-vars

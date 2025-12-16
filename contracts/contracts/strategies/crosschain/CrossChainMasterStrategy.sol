@@ -11,12 +11,12 @@ pragma solidity ^0.8.0;
 
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { IERC20, InitializableAbstractStrategy } from "../../utils/InitializableAbstractStrategy.sol";
-import { AbstractCCTPIntegrator } from "./AbstractCCTPIntegrator.sol";
+import { AbstractCCTPStrategy } from "./AbstractCCTPStrategy.sol";
 import { BytesHelper } from "../../utils/BytesHelper.sol";
 
 contract CrossChainMasterStrategy is
     InitializableAbstractStrategy,
-    AbstractCCTPIntegrator
+    AbstractCCTPStrategy
 {
     using SafeERC20 for IERC20;
 
@@ -34,21 +34,11 @@ contract CrossChainMasterStrategy is
      */
     constructor(
         BaseStrategyConfig memory _stratConfig,
-        address _cctpTokenMessenger,
-        address _cctpMessageTransmitter,
-        uint32 _destinationDomain,
-        address _destinationStrategy,
-        address _baseToken,
-        address _cctpHookWrapper
+        CCTPIntegrationConfig memory _cctpConfig
     )
         InitializableAbstractStrategy(_stratConfig)
-        AbstractCCTPIntegrator(
-            _cctpTokenMessenger,
-            _cctpMessageTransmitter,
-            _destinationDomain,
-            _destinationStrategy,
-            _baseToken,
-            _cctpHookWrapper
+        AbstractCCTPStrategy(
+            _cctpConfig
         )
     {}
 

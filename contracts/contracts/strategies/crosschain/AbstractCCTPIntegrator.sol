@@ -64,25 +64,27 @@ abstract contract AbstractCCTPIntegrator is Governable, IMessageHandlerV2 {
         _;
     }
 
+    struct CCTPIntegrationConfig {
+        address cctpTokenMessenger;
+        address cctpMessageTransmitter;
+        uint32 destinationDomain;
+        address destinationStrategy;
+        address baseToken;
+        address cctpHookWrapper;
+    }
+
     constructor(
-        address _cctpTokenMessenger,
-        address _cctpMessageTransmitter,
-        uint32 _destinationDomain,
-        address _destinationStrategy,
-        address _baseToken,
-        address _cctpHookWrapper
+        CCTPIntegrationConfig memory _config
     ) {
-        cctpTokenMessenger = ICCTPTokenMessenger(_cctpTokenMessenger);
-        cctpMessageTransmitter = ICCTPMessageTransmitter(
-            _cctpMessageTransmitter
-        );
-        destinationDomain = _destinationDomain;
-        destinationStrategy = _destinationStrategy;
-        baseToken = _baseToken;
-        cctpHookWrapper = _cctpHookWrapper;
+        cctpTokenMessenger = ICCTPTokenMessenger(_config.cctpTokenMessenger);
+        cctpMessageTransmitter = ICCTPMessageTransmitter(_config.cctpMessageTransmitter);
+        destinationDomain = _config.destinationDomain;
+        destinationStrategy = _config.destinationStrategy;
+        baseToken = _config.baseToken;
+        cctpHookWrapper = _config.cctpHookWrapper;
 
         // Just a sanity check to ensure the base token is USDC
-        uint256 _baseTokenDecimals = Helpers.getDecimals(_baseToken);
+        uint256 _baseTokenDecimals = Helpers.getDecimals(_config.baseToken);
         require(_baseTokenDecimals == 6, "Base token decimals must be 6");
     }
 
@@ -265,157 +267,6 @@ abstract contract AbstractCCTPIntegrator is Governable, IMessageHandlerV2 {
         // uint32 bytes 4 to 8 is Message type
         // Payload starts at byte 8
         return message.extractSlice(8, message.length);
-    }
-
-    function _encodeDepositMessage(uint64 nonce, uint256 depositAmount)
-        internal
-        virtual
-        returns (bytes memory)
-    {
-        return
-            abi.encodePacked(
-                ORIGIN_MESSAGE_VERSION,
-                DEPOSIT_MESSAGE,
-                abi.encode(nonce, depositAmount)
-            );
-    }
-
-    function _decodeDepositMessage(bytes memory message)
-        internal
-        virtual
-        returns (uint64, uint256)
-    {
-        _verifyMessageVersionAndType(message, ORIGIN_MESSAGE_VERSION, DEPOSIT_MESSAGE);
-
-        (uint64 nonce, uint256 depositAmount) = abi.decode(
-            _getMessagePayload(message),
-            (uint64, uint256)
-        );
-        return (nonce, depositAmount);
-    }
-
-    function _encodeDepositAckMessage(
-        uint64 nonce,
-        uint256 amountReceived,
-        uint256 feeExecuted,
-        uint256 balanceAfter
-    ) internal virtual returns (bytes memory) {
-        return
-            abi.encodePacked(
-                ORIGIN_MESSAGE_VERSION,
-                DEPOSIT_ACK_MESSAGE,
-                abi.encode(nonce, amountReceived, feeExecuted, balanceAfter)
-            );
-    }
-
-    function _decodeDepositAckMessage(bytes memory message)
-        internal
-        virtual
-        returns (
-            uint64,
-            uint256,
-            uint256,
-            uint256
-        )
-    {
-        _verifyMessageVersionAndType(message, ORIGIN_MESSAGE_VERSION, DEPOSIT_ACK_MESSAGE);
-
-        (
-            uint64 nonce,
-            uint256 amountReceived,
-            uint256 feeExecuted,
-            uint256 balanceAfter
-        ) = abi.decode(
-                _getMessagePayload(message),
-                (uint64, uint256, uint256, uint256)
-            );
-
-        return (nonce, amountReceived, feeExecuted, balanceAfter);
-    }
-
-    function _encodeWithdrawMessage(uint64 nonce, uint256 withdrawAmount)
-        internal
-        virtual
-        returns (bytes memory)
-    {
-        return
-            abi.encodePacked(
-                ORIGIN_MESSAGE_VERSION,
-                WITHDRAW_MESSAGE,
-                abi.encode(nonce, withdrawAmount)
-            );
-    }
-
-    function _decodeWithdrawMessage(bytes memory message)
-        internal
-        virtual
-        returns (uint64, uint256)
-    {
-        _verifyMessageVersionAndType(message, ORIGIN_MESSAGE_VERSION, WITHDRAW_MESSAGE);
-
-        (uint64 nonce, uint256 withdrawAmount) = abi.decode(
-            _getMessagePayload(message),
-            (uint64, uint256)
-        );
-        return (nonce, withdrawAmount);
-    }
-
-    function _encodeWithdrawAckMessage(
-        uint64 nonce,
-        uint256 amountSent,
-        uint256 balanceAfter
-    ) internal virtual returns (bytes memory) {
-        return
-            abi.encodePacked(
-                ORIGIN_MESSAGE_VERSION,
-                WITHDRAW_ACK_MESSAGE,
-                abi.encode(nonce, amountSent, balanceAfter)
-            );
-    }
-
-    function _decodeWithdrawAckMessage(bytes memory message)
-        internal
-        virtual
-        returns (
-            uint64,
-            uint256,
-            uint256
-        )
-    {
-        _verifyMessageVersionAndType(message, ORIGIN_MESSAGE_VERSION, WITHDRAW_ACK_MESSAGE);
-
-        (uint64 nonce, uint256 amountSent, uint256 balanceAfter) = abi.decode(
-            _getMessagePayload(message),
-            (uint64, uint256, uint256)
-        );
-        return (nonce, amountSent, balanceAfter);
-    }
-
-    function _encodeBalanceCheckMessage(uint64 nonce, uint256 balance)
-        internal
-        virtual
-        returns (bytes memory)
-    {
-        return
-            abi.encodePacked(
-                ORIGIN_MESSAGE_VERSION,
-                BALANCE_CHECK_MESSAGE,
-                abi.encode(nonce, balance)
-            );
-    }
-
-    function _decodeBalanceCheckMessage(bytes memory message)
-        internal
-        virtual
-        returns (uint64, uint256)
-    {
-        _verifyMessageVersionAndType(message, ORIGIN_MESSAGE_VERSION, BALANCE_CHECK_MESSAGE);
-
-        (uint64 nonce, uint256 balance) = abi.decode(
-            _getMessagePayload(message),
-            (uint64, uint256)
-        );
-        return (nonce, balance);
     }
 
     function _sendMessage(bytes memory message) internal virtual {
