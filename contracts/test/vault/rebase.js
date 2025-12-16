@@ -3,10 +3,7 @@ const { expect } = require("chai");
 const { loadDefaultFixture } = require("../_fixture");
 const {
   ousdUnits,
-  usdsUnits,
   usdcUnits,
-  usdtUnits,
-  tusdUnits,
   getOracleAddress,
   setOracleTokenPriceUsd,
   expectApproxSupply,
@@ -169,24 +166,16 @@ describe("Vault rebase", () => {
     });
 
     it("Should not allocate unallocated assets when no Strategy configured", async () => {
-      const { anna, governor, usds, usdc, usdt, tusd, vault } = fixture;
+      const { anna, governor, usdc, vault } = fixture;
 
-      await usds.connect(anna).transfer(vault.address, usdsUnits("100"));
-      await usdc.connect(anna).transfer(vault.address, usdcUnits("200"));
-      await usdt.connect(anna).transfer(vault.address, usdtUnits("300"));
-      await tusd.connect(anna).mintTo(vault.address, tusdUnits("400"));
+      await usdc.connect(anna).transfer(vault.address, usdcUnits("100"));
 
       expect(await vault.getStrategyCount()).to.equal(0);
       await vault.connect(governor).allocate();
 
-      // All assets should still remain in Vault
-
-      // Note defaultFixture sets up with 200 USDS already in the Strategy
+      // Note defaultFixture sets up with 200 USDC already in the Strategy
       // 200 + 100 = 300
-      expect(await usds.balanceOf(vault.address)).to.equal(usdsUnits("300"));
-      expect(await usdc.balanceOf(vault.address)).to.equal(usdcUnits("200"));
-      expect(await usdt.balanceOf(vault.address)).to.equal(usdtUnits("300"));
-      expect(await tusd.balanceOf(vault.address)).to.equal(tusdUnits("400"));
+      expect(await usdc.balanceOf(vault.address)).to.equal(usdcUnits("300"));
     });
 
     it("Should correctly handle a deposit of USDC (6 decimals)", async function () {
@@ -230,7 +219,7 @@ describe("Vault rebase", () => {
       const { _yield, basis, expectedFee } = options;
 
       it(`should collect on rebase a ${expectedFee} fee from ${_yield} yield at ${basis}bp `, async function () {
-        const { matt, governor, ousd, usdt, vault, mockNonRebasing } = fixture;
+        const { matt, governor, ousd, usdc, vault, mockNonRebasing } = fixture;
         const trustee = mockNonRebasing;
 
         // Setup trustee on vault
@@ -239,8 +228,8 @@ describe("Vault rebase", () => {
         await expect(trustee).has.a.balanceOf("0", ousd);
 
         // Create yield for the vault
-        await usdt.connect(matt).mint(usdcUnits(_yield));
-        await usdt.connect(matt).transfer(vault.address, usdcUnits(_yield));
+        await usdc.connect(matt).mint(usdcUnits(_yield));
+        await usdc.connect(matt).transfer(vault.address, usdcUnits(_yield));
         // Do rebase
         const supplyBefore = await ousd.totalSupply();
         await vault.rebase();

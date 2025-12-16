@@ -2,12 +2,7 @@ const { expect } = require("chai");
 const { utils } = require("ethers");
 
 const { loadDefaultFixture } = require("../_fixture");
-const {
-  ousdUnits,
-  usdsUnits,
-  usdcUnits,
-  isFork,
-} = require("../helpers");
+const { ousdUnits, usdsUnits, usdcUnits, isFork } = require("../helpers");
 
 describe("Vault", function () {
   if (isFork) {
