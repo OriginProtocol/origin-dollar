@@ -128,6 +128,7 @@ contract CCTPHookWrapper is Governable {
             );
             sender = abi.decode(messageSender, (address));
         }
+        // TODO: check the sender even if it is not a burn message
 
         address recipientContract = peers[sourceDomainID][sender];
 
