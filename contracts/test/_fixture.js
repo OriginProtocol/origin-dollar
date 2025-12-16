@@ -1471,16 +1471,7 @@ async function convexVaultFixture() {
 
   await fixture.vault
     .connect(sGovernor)
-    .setAssetDefaultStrategy(
-      fixture.usdt.address,
-      fixture.convexStrategy.address
-    );
-  await fixture.vault
-    .connect(sGovernor)
-    .setAssetDefaultStrategy(
-      fixture.usdc.address,
-      fixture.convexStrategy.address
-    );
+    .setDefaultStrategy(fixture.convexStrategy.address);
   return fixture;
 }
 
@@ -2061,7 +2052,7 @@ async function compoundingStakingSSVStrategyFixture() {
   } else {
     fixture.ssvNetwork = await ethers.getContract("MockSSVNetwork");
     const { governorAddr, registratorAddr } = await getNamedAccounts();
-    const { oethVault, weth } = fixture;
+    const { oethVault } = fixture;
     const sGovernor = await ethers.provider.getSigner(governorAddr);
     const sRegistrator = await ethers.provider.getSigner(registratorAddr);
 
