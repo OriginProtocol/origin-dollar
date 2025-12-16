@@ -2550,7 +2550,7 @@ async function rebornFixture() {
 async function buybackFixture() {
   const fixture = await defaultFixture();
 
-  const { ousd, oeth, oethVault, vault, weth, usds, josh, governor, timelock } =
+  const { ousd, oeth, oethVault, vault, weth, usdc, josh, governor, timelock } =
     fixture;
 
   const ousdBuybackProxy = await ethers.getContract("BuybackProxy");
@@ -2593,15 +2593,15 @@ async function buybackFixture() {
 
     // Load with funds to test swaps
     await setERC20TokenBalance(josh.address, weth, "10000");
-    await setERC20TokenBalance(josh.address, usds, "10000");
+    await setERC20TokenBalance(josh.address, usdc, "10000");
     await weth.connect(josh).approve(oethVault.address, oethUnits("10000"));
-    await usds.connect(josh).approve(vault.address, ousdUnits("10000"));
+    await usdc.connect(josh).approve(vault.address, usdcUnits("10000"));
 
     // Mint & transfer oToken
     await oethVault.connect(josh).mint(weth.address, oethUnits("1.23"), "0");
     await oeth.connect(josh).transfer(oethBuyback.address, oethUnits("1.1"));
 
-    await vault.connect(josh).mint(usds.address, oethUnits("1231"), "0");
+    await vault.connect(josh).mint(usdc.address, usdcUnits("1231"), "0");
     await ousd.connect(josh).transfer(ousdBuyback.address, oethUnits("1100"));
     await setERC20TokenBalance(armBuyback.address, weth, "100");
 
@@ -2614,9 +2614,9 @@ async function buybackFixture() {
     fixture.cvxLocker = await ethers.getContract("MockCVXLocker");
 
     // Mint some OUSD
-    await usds.connect(josh).mint(ousdUnits("3000"));
-    await usds.connect(josh).approve(vault.address, ousdUnits("3000"));
-    await vault.connect(josh).mint(usds.address, ousdUnits("3000"), "0");
+    await usdc.connect(josh).mint(usdcUnits("3000"));
+    await usdc.connect(josh).approve(vault.address, usdcUnits("3000"));
+    await vault.connect(josh).mint(usdc.address, usdcUnits("3000"), "0");
 
     // Mint some OETH
     await weth.connect(josh).mint(oethUnits("3"));
