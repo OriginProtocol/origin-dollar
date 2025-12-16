@@ -48,12 +48,10 @@ describe("Vault mock with rebase", async () => {
       utils.parseUnits(`${vaultTotalValue - redeemAmount}`, 18)
     );
     const promise = expect(
-      mockVault
-        .connect(matt)
-        .redeem(
-          utils.parseUnits(`${redeemAmount}`, 18),
-          utils.parseUnits(`${redeemAmount}`, 18)
-        )
+      mockVault.connect(matt).redeem(
+        utils.parseUnits(`${redeemAmount}`, 18),
+        utils.parseUnits(`${redeemAmount}`, 6) // Only USDC in vault.
+      )
     );
 
     if (revertMessage) {

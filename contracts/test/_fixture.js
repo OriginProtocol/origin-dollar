@@ -2513,7 +2513,7 @@ async function rebornFixture() {
 
   await deploy("Sanctum", {
     from: governorAddr,
-    args: [assetAddresses.USDS, vault.address],
+    args: [assetAddresses.USDC, vault.address],
   });
 
   const sanctum = await ethers.getContract("Sanctum");
