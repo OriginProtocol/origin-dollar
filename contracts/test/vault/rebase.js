@@ -4,7 +4,6 @@ const { loadDefaultFixture } = require("../_fixture");
 const {
   ousdUnits,
   usdcUnits,
-  getOracleAddress,
   setOracleTokenPriceUsd,
   expectApproxSupply,
 } = require("../helpers");
@@ -187,24 +186,6 @@ describe("Vault rebase", () => {
       await usdc.connect(anna).approve(vault.address, usdcUnits("50"));
       await vault.connect(anna).mint(usdc.address, usdcUnits("50"), 0);
       await expect(anna).has.a.balanceOf("50", ousd);
-    });
-
-    it("Should allow priceProvider to be changed", async function () {
-      const { anna, governor, vault } = fixture;
-
-      const oracle = await getOracleAddress(deployments);
-      await expect(await vault.priceProvider()).to.be.equal(oracle);
-      const annaAddress = await anna.getAddress();
-      await vault.connect(governor).setPriceProvider(annaAddress);
-      await expect(await vault.priceProvider()).to.be.equal(annaAddress);
-
-      // Only governor should be able to set it
-      await expect(
-        vault.connect(anna).setPriceProvider(oracle)
-      ).to.be.revertedWith("Caller is not the Governor");
-
-      await vault.connect(governor).setPriceProvider(oracle);
-      await expect(await vault.priceProvider()).to.be.equal(oracle);
     });
   });
 

@@ -20,7 +20,6 @@ const { deployWithConfirmation } = require("../utils/deploy");
 const { replaceContractAt } = require("../utils/hardhat");
 const {
   getAssetAddresses,
-  usdsUnits,
   usdcUnits,
   getOracleAddresses,
   oethUnits,
@@ -275,9 +274,9 @@ const createAccountTypes = async ({ vault, ousd, ousdUnlocked, deploy }) => {
 
   if (!isFork) {
     await fundAccounts();
-    const usds = await ethers.getContract("MockUSDS");
-    await usds.connect(matt).approve(vault.address, usdsUnits("1000"));
-    await vault.connect(matt).mint(usds.address, usdsUnits("1000"), 0);
+    const usdc = await ethers.getContract("MockUSDC");
+    await usdc.connect(matt).approve(vault.address, usdcUnits("1000"));
+    await vault.connect(matt).mint(usdc.address, usdcUnits("1000"), 0);
   }
 
   const createAccount = async () => {
@@ -1490,10 +1489,10 @@ async function balancerREthFixture(config = { defaultStrategy: true }) {
   if (config.defaultStrategy) {
     await oethVault
       .connect(timelock)
-      .setAssetDefaultStrategy(reth.address, balancerREthStrategy.address);
+      .setDefaultStrategy(reth.address, balancerREthStrategy.address);
     await oethVault
       .connect(timelock)
-      .setAssetDefaultStrategy(weth.address, balancerREthStrategy.address);
+      .setDefaultStrategy(weth.address, balancerREthStrategy.address);
   }
 
   fixture.rEthBPT = await ethers.getContractAt(
@@ -1829,24 +1828,15 @@ async function morphoCompoundFixture() {
   if (isFork) {
     await fixture.vault
       .connect(timelock)
-      .setAssetDefaultStrategy(
-        fixture.usdt.address,
-        fixture.morphoCompoundStrategy.address
-      );
+      .setDefaultStrategy(fixture.morphoCompoundStrategy.address);
 
     await fixture.vault
       .connect(timelock)
-      .setAssetDefaultStrategy(
-        fixture.usdc.address,
-        fixture.morphoCompoundStrategy.address
-      );
+      .setDefaultStrategy(fixture.morphoCompoundStrategy.address);
 
     await fixture.vault
       .connect(timelock)
-      .setAssetDefaultStrategy(
-        fixture.dai.address,
-        fixture.morphoCompoundStrategy.address
-      );
+      .setDefaultStrategy(fixture.morphoCompoundStrategy.address);
   } else {
     throw new Error(
       "Morpho strategy only supported in forked test environment"
@@ -1867,10 +1857,7 @@ async function aaveFixture() {
   if (isFork) {
     await fixture.vault
       .connect(timelock)
-      .setAssetDefaultStrategy(
-        fixture.usdt.address,
-        fixture.aaveStrategy.address
-      );
+      .setDefaultStrategy(fixture.aaveStrategy.address);
   } else {
     throw new Error(
       "Aave strategy supported for USDT in forked test environment"
@@ -1890,19 +1877,12 @@ async function morphoAaveFixture() {
 
   if (isFork) {
     // The supply of DAI and USDT has been paused for Morpho Aave V2 so no default strategy
-    await fixture.vault
-      .connect(timelock)
-      .setAssetDefaultStrategy(fixture.dai.address, addresses.zero);
-    await fixture.vault
-      .connect(timelock)
-      .setAssetDefaultStrategy(fixture.usdt.address, addresses.zero);
+    await fixture.vault.connect(timelock).setDefaultStrategy(addresses.zero);
+    await fixture.vault.connect(timelock).setDefaultStrategy(addresses.zero);
 
     await fixture.vault
       .connect(timelock)
-      .setAssetDefaultStrategy(
-        fixture.usdc.address,
-        fixture.morphoAaveStrategy.address
-      );
+      .setDefaultStrategy(fixture.morphoAaveStrategy.address);
   } else {
     throw new Error(
       "Morpho strategy only supported in forked test environment"
@@ -1919,11 +1899,11 @@ async function oethMorphoAaveFixture() {
   const fixture = await oethDefaultFixture();
 
   if (isFork) {
-    const { oethVault, timelock, weth, oethMorphoAaveStrategy } = fixture;
+    const { oethVault, timelock, oethMorphoAaveStrategy } = fixture;
 
     await oethVault
       .connect(timelock)
-      .setAssetDefaultStrategy(weth.address, oethMorphoAaveStrategy.address);
+      .setDefaultStrategy(oethMorphoAaveStrategy.address);
   } else {
     throw new Error(
       "Morpho strategy only supported in forked test environment"
@@ -2172,17 +2152,11 @@ async function convexGeneralizedMetaForkedFixture(
 
   await fixture.vault
     .connect(sGovernor)
-    .setAssetDefaultStrategy(
-      fixture.usdt.address,
-      fixture.metaStrategy.address
-    );
+    .setDefaultStrategy(fixture.metaStrategy.address);
 
   await fixture.vault
     .connect(sGovernor)
-    .setAssetDefaultStrategy(
-      fixture.usdc.address,
-      fixture.metaStrategy.address
-    );
+    .setDefaultStrategy(fixture.metaStrategy.address);
 
   return fixture;
 }
@@ -2248,9 +2222,7 @@ async function convexOETHMetaVaultFixture(
     .connect(timelock)
     .setNetOusdMintForStrategyThreshold(parseUnits("500", 21));
 
-  await oethVault
-    .connect(timelock)
-    .setAssetDefaultStrategy(weth.address, addresses.zero);
+  await oethVault.connect(timelock).setDefaultStrategy(addresses.zero);
 
   // Impersonate the OETH Vault
   fixture.oethVaultSigner = await impersonateAndFund(oethVault.address);
@@ -2467,16 +2439,27 @@ async function hackedVaultFixture() {
 /**
  * Instant rebase vault, for testing systems external to the vault
  */
-async function instantRebaseVaultFixture() {
+async function instantRebaseVaultFixture(tokenName) {
   const fixture = await defaultFixture();
 
   const { deploy } = deployments;
   const { governorAddr } = await getNamedAccounts();
   const sGovernor = await ethers.provider.getSigner(governorAddr);
 
+  // Default to "usdc" if tokenName not provided
+  const name = tokenName ? tokenName.toLowerCase() : "usdc";
+  let deployTokenAddress;
+  if (name === "usdc") {
+    deployTokenAddress = fixture.usdc.address;
+  } else if (name === "weth") {
+    deployTokenAddress = fixture.weth.address;
+  } else {
+    throw new Error(`Unsupported token name: ${name}`);
+  }
+
   await deploy("MockVaultCoreInstantRebase", {
     from: governorAddr,
-    args: [fixture.usdc.address],
+    args: [deployTokenAddress],
   });
   const instantRebase = await ethers.getContract("MockVaultCoreInstantRebase");
 
@@ -2638,7 +2621,6 @@ async function harvesterFixture() {
       vault,
       governor,
       harvester,
-      usdc,
       aaveStrategy,
       comp,
       aaveToken,
@@ -2654,9 +2636,7 @@ async function harvesterFixture() {
       .setSupportedStrategy(aaveStrategy.address, true);
 
     // Add direct allocation of USDC to Aave
-    await vault
-      .connect(governor)
-      .setAssetDefaultStrategy(usdc.address, aaveStrategy.address);
+    await vault.connect(governor).setDefaultStrategy(aaveStrategy.address);
 
     // Let strategies hold some reward tokens
     await comp

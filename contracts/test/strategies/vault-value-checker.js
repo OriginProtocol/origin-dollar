@@ -4,7 +4,7 @@ const { loadDefaultFixture } = require("../_fixture");
 const { impersonateAndFund } = require("../../utils/signers");
 const { usdcUnits, ousdUnits } = require("../helpers");
 
-describe.only("Check vault value", () => {
+describe("Check vault value", () => {
   let vault, ousd, matt, usdc, checker, vaultSigner;
 
   beforeEach(async () => {

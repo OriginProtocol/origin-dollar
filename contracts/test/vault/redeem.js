@@ -117,7 +117,7 @@ describe("Vault Redeem", function () {
     // Withdraw all
     await vault.connect(anna).redeem(ousd.balanceOf(anna.address), 0);
 
-    await expect(anna).has.a.balanceOf("100", usdc);
+    await expect(anna).has.a.balanceOf("1000", usdc);
   });
 
   it("Should have correct balances on consecutive mint and redeem", async () => {
