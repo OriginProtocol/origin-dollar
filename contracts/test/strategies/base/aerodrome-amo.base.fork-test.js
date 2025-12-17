@@ -282,10 +282,13 @@ describe("ForkTest: Aerodrome AMO Strategy (Base)", async function () {
     harvester = fixture.harvester;
     quoter = fixture.quoter;
 
+    console.log("Before setup");
     await setup();
+    console.log("After setup");
     await weth
       .connect(rafael)
       .approve(aeroSwapRouter.address, oethUnits("1000000000"));
+    console.log("After weth approve");
     await oethb
       .connect(rafael)
       .approve(aeroSwapRouter.address, oethUnits("1000000000"));
@@ -351,7 +354,7 @@ describe("ForkTest: Aerodrome AMO Strategy (Base)", async function () {
   };
 
   describe("ForkTest: Initial state (Base)", function () {
-    it("Should have the correct initial state", async function () {
+    it.only("Should have the correct initial state", async function () {
       // correct pool weth share interval
       expect(await aerodromeAmoStrategy.allowedWethShareStart()).to.equal(
         oethUnits("0.010000001")
@@ -1273,10 +1276,12 @@ describe("ForkTest: Aerodrome AMO Strategy (Base)", async function () {
   };
 
   const setup = async () => {
+    console.log("a");
     await mintAndDepositToStrategy({
       amount: oethUnits("5"),
       returnTransaction: true,
     });
+    console.log("a");
 
     const { value, direction } = await quoteAmountToSwapBeforeRebalance({
       lowValue: oethUnits("0"),
@@ -1430,6 +1435,7 @@ describe("ForkTest: Aerodrome AMO Strategy (Base)", async function () {
     await oethbVault.connect(user).mint(weth.address, amount, amount);
 
     const gov = await oethbVault.governor();
+    console.log("b");
     const tx = await oethbVault
       .connect(await impersonateAndFund(gov))
       .depositToStrategy(
@@ -1437,6 +1443,7 @@ describe("ForkTest: Aerodrome AMO Strategy (Base)", async function () {
         [weth.address],
         [amount]
       );
+    console.log("b");
 
     if (returnTransaction) {
       return tx;

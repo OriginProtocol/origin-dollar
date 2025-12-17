@@ -264,10 +264,6 @@ async function swapXAMOFixture(
     swpx = await resolveAsset("SWPx");
   }
 
-  await oSonicVault
-    .connect(timelock)
-    .setAssetDefaultStrategy(wS.address, addresses.zero);
-
   // mint some OS using wS if configured
   if (config?.wsMintAmount > 0) {
     const wsAmount = parseUnits(config.wsMintAmount.toString());

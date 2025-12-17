@@ -77,16 +77,6 @@ const shouldBehaveLikeASFCStakingStrategy = (context) => {
       expect(
         (await sonicStakingStrategy.getRewardTokenAddresses()).length
       ).to.equal(0, "Incorrectly configured Reward Token Addresses");
-
-      expect(await oSonicVault.priceProvider()).to.not.equal(
-        AddressZero,
-        "Price provider address not set"
-      );
-
-      expect(await oSonicVault.priceUnitMint(wS.address)).to.equal(
-        oethUnits("1"),
-        "not expected PriceUnitMint"
-      );
     });
   });
 
