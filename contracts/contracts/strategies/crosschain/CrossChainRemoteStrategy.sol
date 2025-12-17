@@ -20,7 +20,8 @@ contract CrossChainRemoteStrategy is
     Generalized4626Strategy
 {
     event DepositFailed(string reason);
-
+    event WithdrawFailed(string reason);
+    
     using SafeERC20 for IERC20;
 
     constructor(
@@ -119,7 +120,7 @@ contract CrossChainRemoteStrategy is
 
         // This call can fail, and the failure doesn't need to bubble up to the _processDepositMessage function
         // as the flow is not affected by the failure.
-        try IERC4626(platformAddress).deposit(_amount, address(this)) returns (uint256 shares) {
+        try IERC4626(platformAddress).deposit(_amount, address(this)) {
             emit Deposit(_asset, address(shareToken), _amount);
         } catch Error(string memory reason) {
             emit DepositFailed(string(abi.encodePacked("Deposit failed: ", reason)));
@@ -137,7 +138,7 @@ contract CrossChainRemoteStrategy is
         require(!isNonceProcessed(nonce), "Nonce already processed");
         _markNonceAsProcessed(nonce);
 
-        // Withdraw funds to the remote strategy
+        // Withdraw funds from the remote strategy
         _withdraw(address(this), baseToken, withdrawAmount);
 
         // Check balance after withdrawal
@@ -148,7 +149,41 @@ contract CrossChainRemoteStrategy is
             withdrawAmount,
             balanceAfter
         );
-        _sendTokens(withdrawAmount, message);
+        // Send the complete balance on the contract. If we were to send only the
+        // withdrawn amount, the call could revert if the balance is not sufficient.
+        // Or dust could be left on the contract that is hard to extract.
+        uint256 usdcBalance = IERC20(baseToken).balanceOf(address(this));
+        if (usdcBalance > 1e6) {
+            _sendTokens(usdcBalance, message);
+        }
+    }
+    
+    /**
+     * @dev Withdraw asset by burning shares
+     * @param _recipient Address to receive withdrawn asset
+     * @param _asset Address of asset to withdraw
+     * @param _amount Amount of asset to withdraw
+     */
+    function _withdraw(
+        address _recipient,
+        address _asset,
+        uint256 _amount
+    ) internal override {
+        require(_amount > 0, "Must withdraw something");
+        require(_recipient != address(0), "Must specify recipient");
+        require(_asset == address(assetToken), "Unexpected asset address");
+
+        // slither-disable-next-line unused-return
+
+        // This call can fail, and the failure doesn't need to bubble up to the _processWithdrawMessage function
+        // as the flow is not affected by the failure.
+        try IERC4626(platformAddress).withdraw(_amount, _recipient, address(this)) {
+            emit Withdrawal(_asset, address(shareToken), _amount);
+        } catch Error(string memory reason) {
+            emit WithdrawFailed(string(abi.encodePacked("Withdrawal failed: ", reason)));
+        } catch (bytes memory lowLevelData) {
+            emit WithdrawFailed(string(abi.encodePacked("Withdrawal failed: low-level call failed with data ", lowLevelData)));
+        }
     }
 
     function _onTokenReceived(
