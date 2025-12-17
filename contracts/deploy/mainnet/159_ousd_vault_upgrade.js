@@ -8,8 +8,7 @@ module.exports = deploymentWithGovernanceProposal(
     //forceSkip: true,
     reduceQueueTime: true,
     deployerIsProposer: false,
-    proposalId:
-      "",
+    proposalId: "",
   },
   async ({ deployWithConfirmation }) => {
     // Deployer Actions
@@ -52,7 +51,7 @@ module.exports = deploymentWithGovernanceProposal(
           contract: cVault,
           signature: "addStrategyToMintWhitelist(address)",
           args: [cOUSDAMO.address],
-        }, 
+        },
         // 4. Set OUSD/USDC AMO as default strategy
         {
           contract: cVault,
