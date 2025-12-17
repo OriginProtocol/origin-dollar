@@ -664,17 +664,19 @@ const shouldBehaveLikeAnSsvStrategy = (context) => {
   });
 
   describe("Harvest", async function () {
-    it("Should account for new execution rewards", async () => {
+    it.only("Should account for new execution rewards", async () => {
       const {
         simpleOETHHarvester,
         josh,
         nativeStakingSSVStrategy,
         nativeStakingFeeAccumulator,
-        oethVault,
+        oethFixedRateDripperProxy,
         weth,
         validatorRegistrator,
       } = await context();
-      const dripperWethBefore = await weth.balanceOf(oethVault.address);
+      const dripperWethBefore = await weth.balanceOf(
+        oethFixedRateDripperProxy.address
+      );
       const strategyBalanceBefore = await nativeStakingSSVStrategy.checkBalance(
         weth.address
       );
@@ -710,15 +712,14 @@ const shouldBehaveLikeAnSsvStrategy = (context) => {
           nativeStakingSSVStrategy.address,
           weth.address,
           executionRewards.add(consensusRewards),
-          oethVault.address
+          oethFixedRateDripperProxy.address
         );
-
       // check balances after
       expect(
         await nativeStakingSSVStrategy.checkBalance(weth.address)
       ).to.equal(strategyBalanceBefore, "checkBalance should not increase");
 
-      expect(await weth.balanceOf(oethVault.address)).to.equal(
+      expect(await weth.balanceOf(oethFixedRateDripperProxy.address)).to.equal(
         dripperWethBefore.add(executionRewards).add(consensusRewards),
         "Vault WETH balance should increase"
       );

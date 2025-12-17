@@ -1156,6 +1156,7 @@ const defaultFixture = deployments.createFixture(async () => {
     oethMorphoAaveStrategy,
     convexEthMetaStrategy,
     oethDripper,
+    oethFixedRateDripperProxy,
     oethHarvester,
     oethZapper,
     swapper,
