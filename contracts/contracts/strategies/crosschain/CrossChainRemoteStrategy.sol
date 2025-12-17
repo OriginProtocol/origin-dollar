@@ -99,11 +99,8 @@ contract CrossChainRemoteStrategy is
         _deposit(baseToken, balance);
 
         uint256 balanceAfter = checkBalance(baseToken);
-
-        bytes memory message = _encodeDepositAckMessage(
-            nonce,
-            tokenAmount,
-            feeExecuted,
+        bytes memory message = _encodeBalanceCheckMessage(
+            lastTransferNonce,
             balanceAfter
         );
         _sendMessage(message);
