@@ -220,5 +220,7 @@ interface IVault {
 
     function previewYield() external view returns (uint256 yield);
 
+    function weth() external view returns (address);
+
     // slither-disable-end constable-states
 }

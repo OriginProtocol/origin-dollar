@@ -49,14 +49,6 @@ describe("ForkTest: OETH Vault", function () {
         );
       }
     });
-
-    it("Should have correct WETH asset index cached", async () => {
-      const { oethVault, weth } = fixture;
-      const index = await oethVault.wethAssetIndex();
-      const assets = await oethVault.getAllAssets();
-
-      expect(assets[index]).to.equal(weth.address);
-    });
   });
 
   describe("user operations", () => {
@@ -105,15 +97,7 @@ describe("ForkTest: OETH Vault", function () {
     });
 
     it("should mint with WETH and allocate to strategy", async () => {
-      const { oethVault, nativeStakingSSVStrategy, weth, josh, strategist } =
-        fixture;
-
-      oethVault
-        .connect(strategist)
-        .setAssetDefaultStrategy(
-          weth.address,
-          nativeStakingSSVStrategy.address
-        );
+      const { oethVault, weth, josh } = fixture;
 
       const amount = parseUnits("11", 18);
       const minOeth = parseUnits("8", 18);
@@ -155,26 +139,20 @@ describe("ForkTest: OETH Vault", function () {
       const { oethVault } = fixture;
 
       const output = await oethVault.calculateRedeemOutputs(oethUnits("123"));
-      const index = await oethVault.wethAssetIndex();
+      const index = 0;
 
+      expect(output.length).to.equal(1);
       expect(output[index]).to.equal(oethUnits("123").mul("9990").div("10000"));
-
-      output.map((x, i) => {
-        if (i !== index.toNumber()) {
-          expect(x).to.equal("0");
-        }
-      });
     });
 
     it("should allow strategist to redeem without fee", async () => {
       const { oethVault, strategist, matt, weth, oeth } = fixture;
+      await depositDiffInWeth(fixture, matt);
 
       const sGovernor = await impersonateAndFund(addresses.mainnet.Timelock);
       // make sure to not trigger rebase on redeem
       await oethVault.connect(sGovernor).setRebaseThreshold(oethUnits("11"));
 
-      // Send a heap of WETH to the vault so it can be redeemed
-      await weth.connect(matt).transfer(oethVault.address, oethUnits("1000"));
       await weth.connect(matt).transfer(strategist.address, oethUnits("100"));
 
       const amount = oethUnits("10");
@@ -199,9 +177,7 @@ describe("ForkTest: OETH Vault", function () {
 
     it("should enforce fee on other users for instant redeem", async () => {
       const { oethVault, josh, matt, weth, oeth } = fixture;
-
-      // Send a heap of WETH to the vault so it can be redeemed
-      await weth.connect(matt).transfer(oethVault.address, oethUnits("1000"));
+      await depositDiffInWeth(fixture, matt);
 
       const amount = oethUnits("10");
       const expectedWETH = amount.mul("9990").div("10000");
@@ -225,7 +201,8 @@ describe("ForkTest: OETH Vault", function () {
     });
 
     it("should partially redeem 10 OETH", async () => {
-      const { domen, oeth, oethVault, weth } = fixture;
+      const { domen, oeth, oethVault, weth, matt } = fixture;
+      await depositDiffInWeth(fixture, matt);
 
       expect(await oeth.balanceOf(oethWhaleAddress)).to.gt(10);
 
@@ -287,10 +264,10 @@ describe("ForkTest: OETH Vault", function () {
         });
     });
     it("should claim withdraw by a OETH whale", async () => {
-      const { domen, oeth, oethVault, weth } = fixture;
+      const { domen, oeth, oethVault, weth, matt } = fixture;
 
       let oethWhaleBalance = await oeth.balanceOf(oethWhaleAddress);
-
+      await depositDiffInWeth(fixture, matt);
       // Calculate how much to mint based on the WETH in the vault,
       // the withdrawal queue, and the WETH to be withdrawn
       const wethBalance = await weth.balanceOf(oethVault.address);
@@ -326,13 +303,14 @@ describe("ForkTest: OETH Vault", function () {
         .withArgs(oethWhaleAddress, requestId, oethWhaleBalance);
     });
     it("OETH whale can redeem after withdraw from all strategies", async () => {
-      const { oeth, oethVault, timelock } = fixture;
+      const { oeth, oethVault, timelock, matt } = fixture;
 
       const oethWhaleBalance = await oeth.balanceOf(oethWhaleAddress);
       log(`OETH whale balance: ${formatUnits(oethWhaleBalance)}`);
       expect(oethWhaleBalance, "no longer an OETH whale").to.gt(
         parseUnits("1000", 18)
       );
+      await depositDiffInWeth(fixture, matt);
 
       await oethVault.connect(timelock).withdrawAllFromStrategies();
 
@@ -361,6 +339,28 @@ describe("ForkTest: OETH Vault", function () {
       await logTxDetails(tx, "rebase");
     });
   });
+
+  /**
+   * Checks the difference between withdrawalQueueMetadata[0] and [2]
+   * and deposits this diff in WETH.
+   * @param {Object} fixture
+   * @param {Object} depositor signer to perform the deposit
+   */
+  async function depositDiffInWeth(fixture, depositor) {
+    const { oethVault, weth } = fixture;
+
+    // Get withdrawalQueueMetadata[0] and [2]
+    const metadata = await oethVault.withdrawalQueueMetadata();
+    const queue = metadata.queued;
+    const claimed = metadata.claimed;
+
+    if (queue > claimed) {
+      const diff = queue.sub(claimed).mul(110).div(100);
+      await weth.connect(depositor).approve(oethVault.address, diff);
+      return await oethVault.connect(depositor).mint(weth.address, diff, 0);
+    }
+    return null;
+  }
 
   // We have migrated to simplified Harvester and this is no longer relevant
   // shouldHaveRewardTokensConfigured(() => ({
