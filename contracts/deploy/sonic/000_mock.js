@@ -61,7 +61,6 @@ const deployCore = async () => {
     "IVault",
     cOSonicVaultProxy.address
   );
-  const cOracleRouter = await ethers.getContract("MockOracleRouter");
 
   // Init OSonic
   const resolution = ethers.utils.parseUnits("1", 27);
@@ -82,9 +81,8 @@ const deployCore = async () => {
 
   // Init OSonicVault
   const initDataOSonicVault = cOSonicVault.interface.encodeFunctionData(
-    "initialize(address,address)",
+    "initialize(address)",
     [
-      cOracleRouter.address, // OracleRouter
       cOSonicProxy.address, // OSonic
     ]
   );
@@ -114,7 +112,6 @@ const deployCore = async () => {
     .upgradeTo(dOSonicVaultCore.address);
   await cOSonicVault.connect(sGovernor).setAdminImpl(dOSonicVaultAdmin.address);
 
-  await cOSonicVault.connect(sGovernor).supportAsset(cWS.address, 0);
   await cOSonicVault.connect(sGovernor).unpauseCapital();
   // Set withdrawal claim delay to 1 day
   await cOSonicVault.connect(sGovernor).setWithdrawalClaimDelay(86400);
