@@ -274,7 +274,7 @@ async function swapXAMOFixture(
     const wsBalance = await wS.balanceOf(oSonicVault.address);
     const queue = await oSonicVault.withdrawalQueueMetadata();
     const available = wsBalance.add(queue.claimed).sub(queue.queued);
-    const mintAmount = wsAmount.sub(available);
+    const mintAmount = wsAmount.sub(available).mul(10);
 
     if (mintAmount.gt(0)) {
       // Approve the Vault to transfer wS
