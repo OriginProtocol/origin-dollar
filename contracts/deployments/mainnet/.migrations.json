@@ -52,5 +52,6 @@
   "154_upgrade_native_staking": 1761558983,
   "155_oeth_zapper": 1762855829,
   "157_curve_pool_booster_factory": 1764086068,
-  "158_deploy_xogn_rewards_module": 1764146932
+  "158_deploy_xogn_rewards_module": 1764146932,
+  "159_ousd_morpho_v2_proxy": 1765998626
 }
