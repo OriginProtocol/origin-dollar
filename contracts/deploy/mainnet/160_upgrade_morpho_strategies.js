@@ -10,9 +10,13 @@ module.exports = deploymentWithGovernanceProposal(
     deployerIsProposer: false,
     // proposalId: "",
   },
-  async ({ deployWithConfirmation }) => {
+  async ({ deployWithConfirmation, getTxOpts, withConfirmation }) => {
     // Current OUSD Vault contracts
     const cVaultProxy = await ethers.getContract("VaultProxy");
+    const cVaultAdmin = await ethers.getContractAt(
+      "VaultAdmin",
+      cVaultProxy.address
+    );
     const dMorphoSteakhouseUSDCStrategyProxy = await ethers.getContract(
       "MetaMorphoStrategyProxy"
     );
@@ -25,6 +29,11 @@ module.exports = deploymentWithGovernanceProposal(
 
     // Deployer Actions
     // ----------------
+
+    // Fix the signer to the deployer of the Morpho OUSD v2 strategy proxy
+    const sDeployer = await ethers.provider.getSigner(
+      "0x58890A9cB27586E83Cb51d2d26bbE18a1a647245"
+    );
 
     // 1. Deploy new contract for Morpho Steakhouse USDC
     const dMorphoSteakhouseUSDCStrategyImpl = await deployWithConfirmation(
@@ -53,6 +62,41 @@ module.exports = deploymentWithGovernanceProposal(
       ]
     );
 
+    // 4. Get previously deployed proxy to Morpho OUSD v2 strategy
+    const cOUSDMorphoV2StrategyProxy = await ethers.getContract(
+      "OUSDMorphoV2StrategyProxy"
+    );
+
+    // 5. Deploy new strategy for the Morpho Yearn OUSD V2 Vault
+    const dOUSDMorphoV2StrategyImpl = await deployWithConfirmation(
+      "Generalized4626Strategy",
+      [
+        [addresses.mainnet.MorphoYearnOUSDv2Vault, cVaultProxy.address],
+        addresses.mainnet.USDC,
+      ]
+    );
+    const cOUSDMorphoV2Strategy = await ethers.getContractAt(
+      "Generalized4626Strategy",
+      cOUSDMorphoV2StrategyProxy.address
+    );
+
+    // 6. Construct initialize call data to initialize and configure the new strategy
+    const initData = cOUSDMorphoV2Strategy.interface.encodeFunctionData(
+      "initialize()",
+      []
+    );
+
+    // 7. Init the proxy to point at the implementation, set the governor, and call initialize
+    const initFunction = "initialize(address,address,bytes)";
+    await withConfirmation(
+      cOUSDMorphoV2StrategyProxy.connect(sDeployer)[initFunction](
+        dOUSDMorphoV2StrategyImpl.address,
+        addresses.mainnet.Timelock, // governor
+        initData, // data for delegate call to the initialize function on the strategy
+        await getTxOpts()
+      )
+    );
+
     // Governance Actions
     // ----------------
     return {
@@ -65,16 +109,28 @@ module.exports = deploymentWithGovernanceProposal(
           args: [dMorphoSteakhouseUSDCStrategyImpl.address],
         },
         {
-          // 1. Upgrade Morpho Steakhouse USDC Strategy
+          // 2. Upgrade Morpho Gauntlet Prime USDC Strategy
           contract: dMorphoGauntletPrimeUSDCStrategyProxy,
           signature: "upgradeTo(address)",
           args: [dMorphoGauntletPrimeUSDCStrategyImpl.address],
         },
         {
-          // 1. Upgrade Morpho Steakhouse USDC Strategy
+          // 3. Upgrade Morpho Gauntlet Prime USDT Strategy
           contract: dMorphoGauntletPrimeUSDTStrategyProxy,
           signature: "upgradeTo(address)",
           args: [dMorphoGauntletPrimeUSDTStrategyImpl.address],
+        },
+        {
+          // 4. Add the new Morpho OUSD v2 strategy to the vault
+          contract: cVaultAdmin,
+          signature: "approveStrategy(address)",
+          args: [cOUSDMorphoV2Strategy.address],
+        },
+        {
+          // 5. Set the Harvester of the Morpho OUSD v2 strategy to the BuyBack Operator
+          contract: cOUSDMorphoV2Strategy,
+          signature: "setHarvesterAddress(address)",
+          args: [addresses.multichainBuybackOperator],
         },
       ],
     };
