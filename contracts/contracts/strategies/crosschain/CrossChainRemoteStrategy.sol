@@ -11,6 +11,7 @@ pragma solidity ^0.8.0;
 
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { IERC20 } from "../../utils/InitializableAbstractStrategy.sol";
+import { IERC4626 } from "../../../lib/openzeppelin/interfaces/IERC4626.sol";
 import { Generalized4626Strategy } from "../Generalized4626Strategy.sol";
 import { AbstractCCTPMorphoStrategy } from "./AbstractCCTPMorphoStrategy.sol";
 
@@ -18,6 +19,8 @@ contract CrossChainRemoteStrategy is
     AbstractCCTPMorphoStrategy,
     Generalized4626Strategy
 {
+    event DepositFailed(string reason);
+
     using SafeERC20 for IERC20;
 
     constructor(
@@ -80,6 +83,7 @@ contract CrossChainRemoteStrategy is
         bytes memory payload
     ) internal virtual {
         // solhint-disable-next-line no-unused-vars
+        // TODO: no need to communicate the deposit amount if we deposit everything
         (uint64 nonce, uint256 depositAmount) = _decodeDepositMessage(payload);
 
         // Replay protection
@@ -88,6 +92,9 @@ contract CrossChainRemoteStrategy is
 
         // Deposit everything we got
         uint256 balance = IERC20(baseToken).balanceOf(address(this));
+
+        // Underlying call to deposit funds can fail. It mustn't affect the overall
+        // flow as confirmation message should still be sent.
         _deposit(baseToken, balance);
 
         uint256 balanceAfter = checkBalance(baseToken);
@@ -99,6 +106,24 @@ contract CrossChainRemoteStrategy is
             balanceAfter
         );
         _sendMessage(message);
+    }
+
+    /**
+     * @dev Deposit assets by converting them to shares
+     * @param _asset Address of asset to deposit
+     * @param _amount Amount of asset to deposit
+     */
+    function _deposit(address _asset, uint256 _amount) internal override {
+         require(_amount > 0, "Must deposit something");
+        require(_asset == address(assetToken), "Unexpected asset address");
+
+        try IERC4626(platformAddress).deposit(_amount, address(this)) returns (uint256 shares) {
+            emit Deposit(_asset, address(shareToken), _amount);
+        } catch Error(string memory reason) {
+            emit DepositFailed(string(abi.encodePacked("Deposit failed: ", reason)));
+        } catch (bytes memory lowLevelData) {
+            emit DepositFailed(string(abi.encodePacked("Deposit failed: low-level call failed with data ", lowLevelData)));
+        }
     }
 
     function _processWithdrawMessage(bytes memory payload) internal virtual {
@@ -144,5 +169,27 @@ contract CrossChainRemoteStrategy is
             balance
         );
         _sendMessage(message);
+    }
+
+    /**
+     * @notice Get the total asset value held in the platform and contract
+     * @param _asset      Address of the asset
+     * @return balance    Total value of the asset in the platform and contract
+     */
+    function checkBalance(address _asset)
+        public
+        view
+        override
+        returns (uint256 balance)
+    {
+        require(_asset == baseToken, "Unexpected asset address");
+        /**
+         * Balance of USDC on the contract is counted towards the total balance, since a deposit
+         * to the Morpho V2 might fail and the USDC might remain on this contract as a result of a 
+         * bridged transfer.
+         */
+        uint256 balanceOnContract = IERC20(baseToken).balanceOf(address(this));
+        IERC4626 platform = IERC4626(platformAddress);
+        return platform.previewRedeem(platform.balanceOf(address(this))) + balanceOnContract;
     }
 }

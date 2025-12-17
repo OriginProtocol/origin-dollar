@@ -11,6 +11,7 @@ import { AbstractCCTPIntegrator } from "./AbstractCCTPIntegrator.sol";
 abstract contract AbstractCCTPMorphoStrategy is
     AbstractCCTPIntegrator
 {
+
     constructor(
         CCTPIntegrationConfig memory _config
     )
