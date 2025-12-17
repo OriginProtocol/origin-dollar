@@ -664,7 +664,7 @@ const shouldBehaveLikeAnSsvStrategy = (context) => {
   });
 
   describe("Harvest", async function () {
-    it.only("Should account for new execution rewards", async () => {
+    it("Should account for new execution rewards", async () => {
       const {
         simpleOETHHarvester,
         josh,
