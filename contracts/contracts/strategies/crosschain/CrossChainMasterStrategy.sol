@@ -29,6 +29,7 @@ contract CrossChainMasterStrategy is
     // Transfer amounts by nonce
     mapping(uint64 => uint256) public transferAmounts;
 
+    event RemoteStrategyBalanceUpdated(uint256 balance);
     /**
      * @param _stratConfig The platform and OToken vault addresses
      */
@@ -159,18 +160,11 @@ contract CrossChainMasterStrategy is
 
     function _onMessageReceived(bytes memory payload) internal override {
         uint32 messageType = _getMessageType(payload);
-        if (messageType == DEPOSIT_ACK_MESSAGE) {
-            // Received when Remote strategy acknowledges the deposit
-            _processDepositAckMessage(payload);
-        } else if (messageType == BALANCE_CHECK_MESSAGE) {
+        if (messageType == BALANCE_CHECK_MESSAGE) {
             // Received when Remote strategy checks the balance
             _processBalanceCheckMessage(payload);
-        } else if (messageType == WITHDRAW_ACK_MESSAGE) {
-            // Received when Remote strategy acknowledges the withdrawal
-            // Do nothing because we receive acknowledgement with token transfer, so _onTokenReceived will handle it
-            // TODO: Should _onTokenReceived always call _onMessageReceived?
-            // _processWithdrawAckMessage(payload);
-        } else {
+        }
+        else {
             revert("Unknown message type");
         }
     }
@@ -180,61 +174,30 @@ contract CrossChainMasterStrategy is
         uint256 feeExecuted,
         bytes memory payload
     ) internal override {
-        // Received when Remote strategy sends tokens to the master strategy
-        uint32 messageType = _getMessageType(payload);
-        // Only withdraw acknowledgements are expected here
-        require(messageType == WITHDRAW_ACK_MESSAGE, "Invalid message type");
-
-        _processWithdrawAckMessage(tokenAmount, feeExecuted, payload);
+        // expecring a BALANCE_CHECK_MESSAGE
+        _onMessageReceived(payload);
     }
 
     function _deposit(address _asset, uint256 depositAmount) internal virtual {
         require(_asset == baseToken, "Unsupported asset");
-
-        uint64 nonce = _getNextNonce();
-
+        require(!isTransferPending(), "Transfer already pending");
+        require(pendingAmount == 0, "Unexpected pending amount");
         require(depositAmount > 0, "Deposit amount must be greater than 0");
         require(
             depositAmount <= MAX_TRANSFER_AMOUNT,
             "Deposit amount exceeds max transfer amount"
         );
 
-        emit Deposit(_asset, _asset, depositAmount);
-
+        uint64 nonce = _getNextNonce();
         transferAmounts[nonce] = depositAmount;
 
-        // Add to pending amount
-        // TODO: make sure overflow doesn't happen here (it shouldn't because of 0.8.0 but still make sure)
-        pendingAmount = pendingAmount + depositAmount;
+        // Set pending amount
+        pendingAmount = depositAmount;
 
         // Send deposit message with payload
         bytes memory message = _encodeDepositMessage(nonce, depositAmount);
         _sendTokens(depositAmount, message);
-    }
-
-    function _processDepositAckMessage(bytes memory message) internal virtual {
-        (
-            uint64 nonce,
-            uint256 amountReceived,
-            uint256 feeExecuted,
-            uint256 balanceAfter
-        ) = _decodeDepositAckMessage(message);
-
-        // Replay protection
-        require(!isNonceProcessed(nonce), "Nonce already processed");
-        _markNonceAsProcessed(nonce);
-
-        // TODO: Do we need any tolerance here?
-        require(
-            transferAmounts[nonce] == amountReceived + feeExecuted,
-            "Transfer amount mismatch"
-        );
-
-        // Subtract from pending amount
-        pendingAmount = pendingAmount - amountReceived;
-
-        // Update balance
-        remoteStrategyBalance = balanceAfter;
+        emit Deposit(_asset, _asset, depositAmount);
     }
 
     function _withdraw(
@@ -245,7 +208,7 @@ contract CrossChainMasterStrategy is
         require(_asset == baseToken, "Unsupported asset");
         require(_amount > 0, "Withdraw amount must be greater than 0");
         require(_recipient == vaultAddress, "Only Vault can withdraw");
-
+        require(!isTransferPending(), "Transfer already pending");
         require(
             _amount <= MAX_TRANSFER_AMOUNT,
             "Withdraw amount exceeds max transfer amount"
@@ -262,48 +225,47 @@ contract CrossChainMasterStrategy is
         _sendMessage(message);
     }
 
-    function _processWithdrawAckMessage(
-        uint256 tokenAmount,
-        // solhint-disable-next-line no-unused-vars
-        uint256 feeExecuted,
-        bytes memory message
-    ) internal virtual {
-        (
-            uint64 nonce,
-            uint256 amountSent,
-            uint256 balanceAfter
-        ) = _decodeWithdrawAckMessage(message);
-
-        // Replay protection
-        require(!isNonceProcessed(nonce), "Nonce already processed");
-        _markNonceAsProcessed(nonce);
-
-        require(
-            transferAmounts[nonce] == amountSent,
-            "Transfer amount mismatch"
-        );
-
-        // Update balance
-        remoteStrategyBalance = balanceAfter;
-
-        // Transfer tokens to vault
-        IERC20(baseToken).safeTransfer(vaultAddress, tokenAmount);
-    }
-
+    /**
+     * @dev process balance check serves 3 purposes: 
+     *  - confirms a deposit to the remote strategy
+     *  - confirms a withdrawal from the remote strategy
+     *  - updates the remote strategy balance
+     * @param message The message containing the nonce and balance
+     */
     function _processBalanceCheckMessage(bytes memory message)
         internal
         virtual
     {
         (uint64 nonce, uint256 balance) = _decodeBalanceCheckMessage(message);
 
-        uint64 _lastNonce = lastTransferNonce;
+        uint64 _lastCachedNonce = lastTransferNonce;
 
-        if (_lastNonce != nonce || !isNonceProcessed(_lastNonce)) {
-            // Do not update pending amount if the nonce is not the latest one
-            return;
+        /** 
+         * Either a deposit or withdrawal are being confirmed.
+         * Since only one transfer is allowed to be pending at a time we can apply the effects
+         * of deposit or withdrawal acknowledgement.
+         */ 
+        if (nonce == _lastCachedNonce && !isNonceProcessed(nonce)) {
+            _markNonceAsProcessed(nonce);
+
+            remoteStrategyBalance = balance;
+            emit RemoteStrategyBalanceUpdated(balance);
+
+            // effect of confirming a deposit
+            pendingAmount = 0;
+            // effect of confirming a withdrawal
+            uint256 usdcBalance = IERC20(baseToken).balanceOf(address(this));
+            if (usdcBalance > 1e6) {
+                IERC20(baseToken).safeTransfer(vaultAddress, usdcBalance);
+            }
+        } 
+        // Nonces match and are confirmed meaning it is just a balance update
+        else if (nonce == _lastCachedNonce) {
+            // Update balance
+            remoteStrategyBalance = balance;
+            emit RemoteStrategyBalanceUpdated(balance);
         }
-
-        // Update balance
-        remoteStrategyBalance = balance;
+        // otherwise the message nonce is smaller than the last cached nonce, meaning it is outdated
+        // the contract should ignore it
     }
 }
