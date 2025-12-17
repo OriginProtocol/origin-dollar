@@ -13,10 +13,10 @@ import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.s
 import { IERC20 } from "../../utils/InitializableAbstractStrategy.sol";
 import { IERC4626 } from "../../../lib/openzeppelin/interfaces/IERC4626.sol";
 import { Generalized4626Strategy } from "../Generalized4626Strategy.sol";
-import { AbstractCCTPMorphoStrategy } from "./AbstractCCTPMorphoStrategy.sol";
+import { AbstractCCTP4626Strategy } from "./AbstractCCTP4626Strategy.sol";
 
 contract CrossChainRemoteStrategy is
-    AbstractCCTPMorphoStrategy,
+    AbstractCCTP4626Strategy,
     Generalized4626Strategy
 {
     event DepositFailed(string reason);
@@ -27,7 +27,7 @@ contract CrossChainRemoteStrategy is
         BaseStrategyConfig memory _baseConfig,
         CCTPIntegrationConfig memory _cctpConfig
     )
-        AbstractCCTPMorphoStrategy(
+        AbstractCCTP4626Strategy(
             _cctpConfig
         )
         Generalized4626Strategy(_baseConfig, _cctpConfig.baseToken)
@@ -114,9 +114,11 @@ contract CrossChainRemoteStrategy is
      * @param _amount Amount of asset to deposit
      */
     function _deposit(address _asset, uint256 _amount) internal override {
-         require(_amount > 0, "Must deposit something");
+        require(_amount > 0, "Must deposit something");
         require(_asset == address(assetToken), "Unexpected asset address");
 
+        // This call can fail, and the failure doesn't need to bubble up to the _processDepositMessage function
+        // as the flow is not affected by the failure.
         try IERC4626(platformAddress).deposit(_amount, address(this)) returns (uint256 shares) {
             emit Deposit(_asset, address(shareToken), _amount);
         } catch Error(string memory reason) {

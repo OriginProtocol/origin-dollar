@@ -2,13 +2,13 @@
 pragma solidity ^0.8.0;
 
 /**
- * @title AbstractCCTPMorphoStrategy - Abstract contract for CCTP morpho strategy
+ * @title AbstractCCTP4626Strategy - Abstract contract for CCTP morpho strategy
  * @author Origin Protocol Inc
  */
 
 import { AbstractCCTPIntegrator } from "./AbstractCCTPIntegrator.sol";
 
-abstract contract AbstractCCTPMorphoStrategy is
+abstract contract AbstractCCTP4626Strategy is
     AbstractCCTPIntegrator
 {
 

@@ -7,11 +7,11 @@ import { IERC20 } from "../../utils/InitializableAbstractStrategy.sol";
 import { ICCTPTokenMessenger, ICCTPMessageTransmitter, IMessageHandlerV2 } from "../../interfaces/cctp/ICCTP.sol";
 
 import { Governable } from "../../governance/Governable.sol";
-
 import { BytesHelper } from "../../utils/BytesHelper.sol";
+import { CCTPMessageRelayer } from "./CCTPMessageRelayer.sol";
 import "../../utils/Helpers.sol";
 
-abstract contract AbstractCCTPIntegrator is Governable, IMessageHandlerV2 {
+abstract contract AbstractCCTPIntegrator is Governable, IMessageHandlerV2, CCTPMessageRelayer {
     using SafeERC20 for IERC20;
 
     using BytesHelper for bytes;
@@ -26,10 +26,6 @@ abstract contract AbstractCCTPIntegrator is Governable, IMessageHandlerV2 {
     uint32 public constant WITHDRAW_MESSAGE = 2;
     uint32 public constant WITHDRAW_ACK_MESSAGE = 20;
     uint32 public constant BALANCE_CHECK_MESSAGE = 3;
-
-    // CCTP contracts
-    ICCTPTokenMessenger public immutable cctpTokenMessenger;
-    ICCTPMessageTransmitter public immutable cctpMessageTransmitter;
 
     // CCTP Hook Wrapper
     address public immutable cctpHookWrapper;
@@ -46,6 +42,7 @@ abstract contract AbstractCCTPIntegrator is Governable, IMessageHandlerV2 {
     // CCTP params
     uint32 public minFinalityThreshold;
     uint32 public feePremiumBps;
+    // Threshold imposed by the CCTP
     uint256 public constant MAX_TRANSFER_AMOUNT = 10_000_000 * 10**6; // 10M USDC
 
     // Nonce of the last known deposit or withdrawal
@@ -75,7 +72,7 @@ abstract contract AbstractCCTPIntegrator is Governable, IMessageHandlerV2 {
 
     constructor(
         CCTPIntegrationConfig memory _config
-    ) {
+    ) CCTPMessageRelayer(_config.cctpMessageTransmitter, _config.cctpTokenMessenger) {
         cctpTokenMessenger = ICCTPTokenMessenger(_config.cctpTokenMessenger);
         cctpMessageTransmitter = ICCTPMessageTransmitter(_config.cctpMessageTransmitter);
         destinationDomain = _config.destinationDomain;
@@ -177,24 +174,6 @@ abstract contract AbstractCCTPIntegrator is Governable, IMessageHandlerV2 {
 
         return true;
     }
-
-    function onTokenReceived(
-        uint256 tokenAmount,
-        uint256 feeExecuted,
-        bytes memory payload
-    ) external virtual {
-        require(
-            msg.sender == cctpHookWrapper,
-            "Caller is not the CCTP hook wrapper"
-        );
-        _onTokenReceived(tokenAmount, feeExecuted, payload);
-    }
-
-    function _onTokenReceived(
-        uint256 tokenAmount,
-        uint256 feeExecuted,
-        bytes memory payload
-    ) internal virtual;
 
     function _onMessageReceived(bytes memory payload) internal virtual;
 
