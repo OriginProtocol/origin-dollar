@@ -3,7 +3,7 @@ const { deploymentWithGovernanceProposal } = require("../../utils/deploy");
 
 module.exports = deploymentWithGovernanceProposal(
   {
-    deployName: "159_upgrade_morpho_strategies",
+    deployName: "160_upgrade_morpho_strategies",
     forceDeploy: false,
     // forceSkip: true,
     // reduceQueueTime: true,
