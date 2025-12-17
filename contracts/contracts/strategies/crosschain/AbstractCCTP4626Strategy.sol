@@ -47,45 +47,6 @@ abstract contract AbstractCCTP4626Strategy is
         return (nonce, depositAmount);
     }
 
-    function _encodeDepositAckMessage(
-        uint64 nonce,
-        uint256 amountReceived,
-        uint256 feeExecuted,
-        uint256 balanceAfter
-    ) internal virtual returns (bytes memory) {
-        return
-            abi.encodePacked(
-                ORIGIN_MESSAGE_VERSION,
-                DEPOSIT_ACK_MESSAGE,
-                abi.encode(nonce, amountReceived, feeExecuted, balanceAfter)
-            );
-    }
-
-    function _decodeDepositAckMessage(bytes memory message)
-        internal
-        virtual
-        returns (
-            uint64,
-            uint256,
-            uint256,
-            uint256
-        )
-    {
-        _verifyMessageVersionAndType(message, ORIGIN_MESSAGE_VERSION, DEPOSIT_ACK_MESSAGE);
-
-        (
-            uint64 nonce,
-            uint256 amountReceived,
-            uint256 feeExecuted,
-            uint256 balanceAfter
-        ) = abi.decode(
-                _getMessagePayload(message),
-                (uint64, uint256, uint256, uint256)
-            );
-
-        return (nonce, amountReceived, feeExecuted, balanceAfter);
-    }
-
     function _encodeWithdrawMessage(uint64 nonce, uint256 withdrawAmount)
         internal
         virtual
@@ -111,37 +72,6 @@ abstract contract AbstractCCTP4626Strategy is
             (uint64, uint256)
         );
         return (nonce, withdrawAmount);
-    }
-
-    function _encodeWithdrawAckMessage(
-        uint64 nonce,
-        uint256 amountSent,
-        uint256 balanceAfter
-    ) internal virtual returns (bytes memory) {
-        return
-            abi.encodePacked(
-                ORIGIN_MESSAGE_VERSION,
-                WITHDRAW_ACK_MESSAGE,
-                abi.encode(nonce, amountSent, balanceAfter)
-            );
-    }
-
-    function _decodeWithdrawAckMessage(bytes memory message)
-        internal
-        virtual
-        returns (
-            uint64,
-            uint256,
-            uint256
-        )
-    {
-        _verifyMessageVersionAndType(message, ORIGIN_MESSAGE_VERSION, WITHDRAW_ACK_MESSAGE);
-
-        (uint64 nonce, uint256 amountSent, uint256 balanceAfter) = abi.decode(
-            _getMessagePayload(message),
-            (uint64, uint256, uint256)
-        );
-        return (nonce, amountSent, balanceAfter);
     }
 
     function _encodeBalanceCheckMessage(uint64 nonce, uint256 balance)
