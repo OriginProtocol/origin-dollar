@@ -59,6 +59,7 @@ contract VaultCore is VaultInitializer {
         _mint(_asset, _amount, _minimumOusdAmount);
     }
 
+    // slither-disable-start reentrancy-no-eth
     /**
      * @dev Deposit a supported asset and mint OTokens.
      * @param _asset Address of the asset being deposited
@@ -100,6 +101,8 @@ contract VaultCore is VaultInitializer {
             _allocate();
         }
     }
+
+    // slither-disable-end reentrancy-no-eth
 
     /**
      * @notice Mint OTokens for an allowed Strategy
