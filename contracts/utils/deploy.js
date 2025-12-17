@@ -63,6 +63,147 @@ function log(msg, deployResult = null) {
   }
 }
 
+/**
+ * Verifies a contract on Etherscan
+ * @param {string} contractName - Name of the contract (for logging)
+ * @param {string} contractAddress - Address of the deployed contract
+ * @param {Array} constructorArgs - Constructor arguments used for deployment
+ * @param {string} contract - Actual contract name in source code
+ * @param {string|null} contractPath - Optional contract path (e.g., "contracts/vault/VaultAdmin.sol:VaultAdmin")
+ */
+const verifyContractOnEtherscan = async (
+  contractName,
+  contractAddress,
+  constructorArgs,
+  contract,
+  contractPath = null
+) => {
+  // Declare finalContractPath outside try block so it's accessible in catch
+  let finalContractPath = contractPath;
+
+  try {
+    log(`Verifying ${contractName} at ${contractAddress}...`);
+
+    // Note: constructorArguments should be in the same format as used for deployment
+    // Structs should be passed as arrays/tuples (e.g., [[addr1, addr2]] for a struct with 2 addresses)
+    // Since we're using the same `args` that were used for deployment, structs will work correctly
+    const verifyArgs = {
+      address: contractAddress,
+      constructorArguments: constructorArgs || [],
+    };
+
+    // Try to get contract path from artifacts if not provided
+    if (!finalContractPath) {
+      try {
+        // Use the contract name (which is the actual contract name in source code)
+        const actualContractName =
+          typeof contract === "string" ? contract : contractName;
+        const artifact = await hre.artifacts.readArtifact(actualContractName);
+
+        // artifact.sourceName contains the path like "contracts/vault/VaultAdmin.sol"
+        // We need to format it as "contracts/vault/VaultAdmin.sol:VaultAdmin"
+        if (artifact.sourceName) {
+          finalContractPath = `${artifact.sourceName}:${actualContractName}`;
+          log(`Auto-detected contract path: ${finalContractPath}`);
+        }
+      } catch (artifactError) {
+        // If we can't read the artifact, continue without contract path
+        // Verification will still work but may be slower
+        log(`Could not auto-detect contract path: ${artifactError.message}`);
+      }
+    }
+
+    // If we have a contract path, use it (faster verification)
+    if (finalContractPath) {
+      verifyArgs.contract = finalContractPath;
+    }
+
+    // Note: "verify:verify" is the full task name in Hardhat's task system
+    // The CLI command "hardhat verify" is actually calling the "verify:verify" subtask
+    // This is Hardhat's namespace convention: <taskGroup>:<subtask>
+    await hre.run("verify:verify", verifyArgs);
+
+    log(`Verified ${contractName} at ${contractAddress}`);
+  } catch (error) {
+    // Log verification error but don't fail deployment
+    if (error.message.includes("Already Verified")) {
+      log(`${contractName} at ${contractAddress} is already verified`);
+    } else {
+      log(
+        `Warning: Failed to verify ${contractName} at ${contractAddress}: ${error.message}`
+      );
+
+      // Print the manual verification command for debugging
+      const networkName = hre.network.name;
+      let manualCommand = `yarn hardhat verify --network ${networkName}`;
+
+      if (finalContractPath) {
+        manualCommand += ` --contract ${finalContractPath}`;
+      }
+
+      // Format constructor arguments
+      if (constructorArgs && constructorArgs.length > 0) {
+        // Check if args are complex (contain arrays/objects) - if so, suggest using a file
+        const hasComplexArgs = constructorArgs.some(
+          (arg) =>
+            Array.isArray(arg) ||
+            (typeof arg === "object" &&
+              arg !== null &&
+              !BigNumber.isBigNumber(arg))
+        );
+
+        if (hasComplexArgs) {
+          // For complex args, suggest creating a file
+          // Format args as a JavaScript module export
+          const formatArg = (arg) => {
+            if (Array.isArray(arg)) {
+              return `[${arg.map(formatArg).join(", ")}]`;
+            } else if (BigNumber.isBigNumber(arg)) {
+              return `"${arg.toString()}"`;
+            } else if (typeof arg === "string") {
+              return `"${arg}"`;
+            } else if (typeof arg === "object" && arg !== null) {
+              return JSON.stringify(arg);
+            }
+            return String(arg);
+          };
+
+          const argsCode = `module.exports = [${constructorArgs
+            .map(formatArg)
+            .join(", ")}];`;
+          log(
+            `\nTo verify manually, create a file (e.g., verify-args.js) with:`
+          );
+          log(argsCode);
+          log(`\nThen run:`);
+          log(
+            `${manualCommand} --constructor-args verify-args.js ${contractAddress}`
+          );
+        } else {
+          // Simple args can be passed directly
+          const argsStr = constructorArgs
+            .map((arg) => {
+              if (BigNumber.isBigNumber(arg)) {
+                return arg.toString();
+              } else if (typeof arg === "string" && arg.startsWith("0x")) {
+                return arg;
+              }
+              return String(arg);
+            })
+            .join(" ");
+          manualCommand += ` ${contractAddress} ${argsStr}`;
+          log(`\nTo verify manually, run:`);
+          log(manualCommand);
+        }
+      } else {
+        manualCommand += ` ${contractAddress}`;
+        log(`\nTo verify manually, run:`);
+        log(manualCommand);
+      }
+    }
+  }
+};
+
 const deployWithConfirmation = async (
   contractName,
   args,
@@ -70,7 +211,9 @@ const deployWithConfirmation = async (
   skipUpgradeSafety = false,
   libraries = {},
   gasLimit,
-  useFeeData
+  useFeeData,
+  verifyContract = false,
+  contractPath = null
 ) => {
   // check that upgrade doesn't corrupt the storage slots
   if (!isTest && !skipUpgradeSafety) {
@@ -107,6 +250,21 @@ const deployWithConfirmation = async (
   // if upgrade happened on the mainnet save the new storage slot layout to the repo
   if (isMainnet || isArbitrumOne || isBase || isSonic || isPlume) {
     await storeStorageLayoutForContract(hre, contractName, contract);
+  }
+
+  log(`Deployed ${contractName}`, result);
+  // Verify contract on Etherscan if requested and on a live network
+  // Can be enabled via parameter or VERIFY_CONTRACTS environment variable
+  const shouldVerify =
+    verifyContract || process.env.VERIFY_CONTRACTS === "true";
+  if (shouldVerify && !isTest && !isFork && result.address) {
+    await verifyContractOnEtherscan(
+      contractName,
+      result.address,
+      args,
+      contract,
+      contractPath
+    );
   }
 
   log(`Deployed ${contractName}`, result);
@@ -167,6 +325,11 @@ const withConfirmation = async (
 const _verifyProxyInitializedWithCorrectGovernor = (transactionData) => {
   if (isPlume || isPlumeFork) {
     // TODO: Skip verification for Plume for now
+    return;
+  }
+
+  if (isMainnet || isBase || isFork) {
+    // TODO: Skip verification for Fork for now
     return;
   }
 
@@ -1128,28 +1291,41 @@ function deploymentWithGuardianGovernor(opts, fn) {
   return main;
 }
 
-function encodeSaltForCreateX(deployer, crossChainProtectionFlag, salt) {
-  // Generate encoded salt (deployer address || crossChainProtectionFlag || bytes11(keccak256(rewardToken, gauge)))
+function encodeSaltForCreateX(deployer, crosschainProtectionFlag, salt) {
+  // Generate encoded salt (deployer address || crosschainProtectionFlag || bytes11(keccak256(rewardToken, gauge)))
 
   // convert deployer address to bytes20
   const addressDeployerBytes20 = ethers.utils.hexlify(
     ethers.utils.zeroPad(deployer, 20)
   );
 
-  // convert crossChainProtectionFlag to bytes1
-  const crossChainProtectionFlagBytes1 = crossChainProtectionFlag
+  // convert crosschainProtectionFlag to bytes1
+  const crosschainProtectionFlagBytes1 = crosschainProtectionFlag
     ? "0x01"
     : "0x00";
 
   // this portion hexifies salt to bytes11
-  const saltBytes11 = ethers.utils.hexlify(
-    ethers.utils.zeroPad(ethers.utils.hexlify(salt), 11)
-  );
+  // For strings, hash them first (as per comment: bytes11(keccak256(rewardToken, gauge)))
+  // Then take the first 11 bytes of the hash (most significant bytes)
+  let saltBytes11;
+  if (typeof salt === "string" && !ethers.utils.isHexString(salt)) {
+    // Hash the string and take first 11 bytes (leftmost bytes)
+    const hash = ethers.utils.keccak256(ethers.utils.toUtf8Bytes(salt));
+    const hashBytes = ethers.utils.arrayify(hash);
+    // Take first 11 bytes and pad to 11 bytes (should already be 11, but ensure it)
+    saltBytes11 = ethers.utils.hexlify(
+      ethers.utils.zeroPad(hashBytes.slice(0, 11), 11)
+    );
+  } else {
+    // For numbers or hex strings, pad to 11 bytes
+    const saltBytes = ethers.utils.hexlify(salt);
+    saltBytes11 = ethers.utils.hexlify(ethers.utils.zeroPad(saltBytes, 11));
+  }
   // concat all bytes into a bytes32
   const encodedSalt = ethers.utils.hexlify(
     ethers.utils.concat([
       addressDeployerBytes20,
-      crossChainProtectionFlagBytes1,
+      crosschainProtectionFlagBytes1,
       saltBytes11,
     ])
   );
@@ -1267,6 +1443,7 @@ async function createPoolBoosterSonic({
 module.exports = {
   log,
   deployWithConfirmation,
+  verifyContractOnEtherscan,
   withConfirmation,
   impersonateGuardian,
   executeProposalOnFork,
