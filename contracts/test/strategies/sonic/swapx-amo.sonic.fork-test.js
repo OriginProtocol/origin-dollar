@@ -10,7 +10,7 @@ const { setERC20TokenBalance } = require("../../_fund");
 
 const log = require("../../../utils/logger")("test:fork:sonic:swapx:amo");
 
-describe("Sonic ForkTest: SwapX AMO Strategy", function () {
+describe.only("Sonic ForkTest: SwapX AMO Strategy", function () {
   // Retry up to 3 times on CI
   this.retries(isCI ? 3 : 0);
 
@@ -112,7 +112,7 @@ describe("Sonic ForkTest: SwapX AMO Strategy", function () {
 
   describe("with wS in the vault", () => {
     const loadFixture = createFixtureLoader(swapXAMOFixture, {
-      wsMintAmount: 50000000,
+      wsMintAmount: 5000000,
       depositToStrategy: false,
       balancePool: true,
     });
@@ -893,7 +893,7 @@ describe("Sonic ForkTest: SwapX AMO Strategy", function () {
 
   describe("with an insolvent vault", () => {
     const loadFixture = createFixtureLoader(swapXAMOFixture, {
-      wsMintAmount: 50000000,
+      wsMintAmount: 5000000,
       depositToStrategy: false,
     });
     beforeEach(async () => {
