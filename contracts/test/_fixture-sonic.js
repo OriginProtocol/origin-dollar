@@ -237,8 +237,7 @@ async function swapXAMOFixture(
 ) {
   const fixture = await defaultSonicFixture();
 
-  const { oSonic, oSonicVault, rafael, nick, strategist, timelock, wS } =
-    fixture;
+  const { oSonic, oSonicVault, rafael, nick, strategist, wS } = fixture;
 
   let swapXAMOStrategy, swapXPool, swapXGauge, swpx;
 

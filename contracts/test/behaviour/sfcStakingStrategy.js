@@ -31,13 +31,8 @@ const MIN_WITHDRAWAL_EPOCH_ADVANCE = 4;
 const shouldBehaveLikeASFCStakingStrategy = (context) => {
   describe("Initial setup", function () {
     it("Should verify the initial state", async () => {
-      const {
-        sonicStakingStrategy,
-        addresses,
-        oSonicVault,
-        testValidatorIds,
-        wS,
-      } = await context();
+      const { sonicStakingStrategy, addresses, oSonicVault, testValidatorIds } =
+        await context();
       expect(await sonicStakingStrategy.wrappedSonic()).to.equal(
         addresses.wS,
         "Incorrect wrapped sonic address set"
