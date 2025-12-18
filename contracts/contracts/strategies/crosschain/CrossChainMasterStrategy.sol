@@ -26,9 +26,6 @@ contract CrossChainMasterStrategy is
     // Amount that's bridged but not yet received on the destination chain
     uint256 public pendingAmount;
 
-    // Transfer amounts by nonce
-    mapping(uint64 => uint256) public transferAmounts;
-
     event RemoteStrategyBalanceUpdated(uint256 balance);
 
     /**
@@ -123,7 +120,7 @@ contract CrossChainMasterStrategy is
      * @param _asset Address of the asset
      */
     function supportsAsset(address _asset) public view override returns (bool) {
-        return assetToPToken[_asset] != address(0);
+        return _asset == baseToken;
     }
 
     /**
@@ -168,11 +165,13 @@ contract CrossChainMasterStrategy is
     }
 
     function _onTokenReceived(
+        // solhint-disable-next-line no-unused-vars
         uint256 tokenAmount,
+        // solhint-disable-next-line no-unused-vars
         uint256 feeExecuted,
         bytes memory payload
     ) internal override {
-        // expecring a BALANCE_CHECK_MESSAGE
+        // Expecting a BALANCE_CHECK_MESSAGE
         _onMessageReceived(payload);
     }
 
@@ -187,7 +186,6 @@ contract CrossChainMasterStrategy is
         );
 
         uint64 nonce = _getNextNonce();
-        transferAmounts[nonce] = depositAmount;
 
         // Set pending amount
         pendingAmount = depositAmount;
@@ -216,8 +214,6 @@ contract CrossChainMasterStrategy is
 
         emit Withdrawal(baseToken, baseToken, _amount);
 
-        transferAmounts[nonce] = _amount;
-
         // Send withdrawal message with payload
         bytes memory message = _encodeWithdrawMessage(nonce, _amount);
         _sendMessage(message);
@@ -238,32 +234,32 @@ contract CrossChainMasterStrategy is
 
         uint64 _lastCachedNonce = lastTransferNonce;
 
+        if (nonce != _lastCachedNonce) {
+            // If nonce is not the last cached nonce, it is an outdated message
+            // Ignore it
+            return;
+        }
+
+        // Update the balance always
+        remoteStrategyBalance = balance;
+        emit RemoteStrategyBalanceUpdated(balance);
+
         /**
          * Either a deposit or withdrawal are being confirmed.
          * Since only one transfer is allowed to be pending at a time we can apply the effects
          * of deposit or withdrawal acknowledgement.
          */
-        if (nonce == _lastCachedNonce && !isNonceProcessed(nonce)) {
+        if (!isNonceProcessed(nonce)) {
             _markNonceAsProcessed(nonce);
 
-            remoteStrategyBalance = balance;
-            emit RemoteStrategyBalanceUpdated(balance);
-
-            // effect of confirming a deposit
+            // Effect of confirming a deposit, reset pending amount
             pendingAmount = 0;
-            // effect of confirming a withdrawal
+
             uint256 usdcBalance = IERC20(baseToken).balanceOf(address(this));
+            // Effect of confirming a withdrawal
             if (usdcBalance > 1e6) {
                 IERC20(baseToken).safeTransfer(vaultAddress, usdcBalance);
             }
         }
-        // Nonces match and are confirmed meaning it is just a balance update
-        else if (nonce == _lastCachedNonce) {
-            // Update balance
-            remoteStrategyBalance = balance;
-            emit RemoteStrategyBalanceUpdated(balance);
-        }
-        // otherwise the message nonce is smaller than the last cached nonce, meaning it is outdated
-        // the contract should ignore it
     }
 }
