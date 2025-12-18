@@ -31,7 +31,8 @@ describe("Reborn Attack Protection", function () {
       expect(await ousd.nonRebasingSupply()).to.equal(ousdUnits("2"));
     });
 
-    it("Should correctly do accounting when reborn calls burn as different types of addresses", async function () {
+    // Skipped as instant redeem is no longer supported for ousd
+    it.skip("Should correctly do accounting when reborn calls burn as different types of addresses", async function () {
       const { usdc, ousd, matt, reborner, rebornAddress, deployAndCall } =
         fixture;
       await usdc.connect(matt).transfer(reborner.address, usdcUnits("4"));

@@ -82,19 +82,21 @@ describe("Vault with Compound strategy", function () {
   });
 
   it("Should allow withdrawals", async () => {
-    const { anna, ousd, usdc, vault } = fixture;
+    const { strategist, ousd, usdc, vault } = fixture;
 
-    await expect(anna).has.a.balanceOf("1000.00", usdc);
-    await usdc.connect(anna).approve(vault.address, usdcUnits("50.0"));
-    await vault.connect(anna).mint(usdc.address, usdcUnits("50.0"), 0);
-    await expect(anna).has.a.balanceOf("50.00", ousd);
+    await expect(strategist).has.a.balanceOf("1000.00", usdc);
+    await usdc.connect(strategist).approve(vault.address, usdcUnits("50.0"));
+    await vault.connect(strategist).mint(usdc.address, usdcUnits("50.0"), 0);
+    await expect(strategist).has.a.balanceOf("50.00", ousd);
 
-    await ousd.connect(anna).approve(vault.address, ousdUnits("40.0"));
-    await vault.connect(anna).redeem(ousdUnits("40.0"), usdcUnits("35.0"));
+    await ousd.connect(strategist).approve(vault.address, ousdUnits("40.0"));
+    await vault
+      .connect(strategist)
+      .redeem(ousdUnits("40.0"), usdcUnits("35.0"));
     expect(await vault.redeemFeeBps()).to.be.eq(0);
 
-    await expect(anna).has.an.balanceOf("10", ousd);
-    await expect(anna).has.an.balanceOf("990.0", usdc);
+    await expect(strategist).has.an.balanceOf("10", ousd);
+    await expect(strategist).has.an.balanceOf("990.0", usdc);
   });
 
   it("Should calculate the balance correctly with USDC in strategy", async () => {
@@ -351,7 +353,7 @@ describe("Vault with Compound strategy", function () {
   });
 
   it("Should have correct balances on consecutive mint and redeem", async () => {
-    const { ousd, vault, usdc, anna, matt, josh } = fixture;
+    const { ousd, vault, usdc, anna, matt, josh, governor } = fixture;
 
     const testCases = [
       { user: anna, start: 0 },
@@ -369,6 +371,7 @@ describe("Vault with Compound strategy", function () {
           (start + amount).toString(),
           ousd
         );
+        await vault.connect(governor).setStrategistAddr(user.address);
         await vault.connect(user).redeem(ousdUnits(amount.toString()), 0);
         await expect(user).has.an.approxBalanceOf(start.toString(), ousd);
       }

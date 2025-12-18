@@ -450,6 +450,8 @@ const createAccountTypes = async ({ vault, ousd, ousdUnlocked, deploy }) => {
       rebase_delegate_target_1.address
     );
 
+  // Allow matt to burn OUSD
+  await vault.connect(governor).setStrategistAddr(matt.address);
   // matt burn remaining OUSD
   await vault
     .connect(matt)
@@ -527,12 +529,14 @@ const loadTokenTransferFixture = deployments.createFixture(async () => {
   let governor = signers[1];
   let strategist = signers[0];
 
+  log("Creating account types...");
   const accountTypes = await createAccountTypes({
     ousd: vaultAndTokenConracts.ousd,
     ousdUnlocked: vaultAndTokenConracts.ousdUnlocked,
     vault: vaultAndTokenConracts.vault,
     deploy: deployments.deploy,
   });
+  log("Account types created.");
 
   return {
     ...vaultAndTokenConracts,

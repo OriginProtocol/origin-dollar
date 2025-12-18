@@ -1173,10 +1173,10 @@ const deployOUSDCore = async () => {
   }
 
   // Deploy Vault implementations
-  const dVaultCore = await deployWithConfirmation("VaultCore", [
+  const dVaultCore = await deployWithConfirmation("OUSDVaultCore", [
     assetAddresses.USDC,
   ]);
-  const dVaultAdmin = await deployWithConfirmation("VaultAdmin", [
+  const dVaultAdmin = await deployWithConfirmation("OUSDVaultAdmin", [
     assetAddresses.USDC,
   ]);
   log("Deployed OUSD Vault implementations (Core, Admin)");

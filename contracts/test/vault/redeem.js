@@ -8,7 +8,7 @@ const {
   expectApproxSupply,
 } = require("../helpers");
 
-describe("Vault Redeem", function () {
+describe("OUSD Vault Redeem", function () {
   if (isFork) {
     this.timeout(0);
   }
@@ -18,46 +18,45 @@ describe("Vault Redeem", function () {
     fixture = await loadDefaultFixture();
   });
 
-  it("Should allow a redeem", async () => {
-    const { ousd, vault, usdc, anna } = fixture;
+  it("Should allow a redeem for strategist", async () => {
+    const { ousd, vault, usdc, strategist } = fixture;
 
-    await expect(anna).has.a.balanceOf("1000.00", usdc);
-    await usdc.connect(anna).approve(vault.address, usdcUnits("50.0"));
-    await vault.connect(anna).mint(usdc.address, usdcUnits("50.0"), 0);
-    await expect(anna).has.a.balanceOf("50.00", ousd);
-    await vault.connect(anna).redeem(ousdUnits("50.0"), 0);
-    await expect(anna).has.a.balanceOf("0.00", ousd);
-    await expect(anna).has.a.balanceOf("1000.00", usdc);
+    await expect(strategist).has.a.balanceOf("1000.00", usdc);
+    await usdc.connect(strategist).approve(vault.address, usdcUnits("50.0"));
+    await vault.connect(strategist).mint(usdc.address, usdcUnits("50.0"), 0);
+    await expect(strategist).has.a.balanceOf("50.00", ousd);
+    await vault.connect(strategist).redeem(ousdUnits("50.0"), 0);
+    await expect(strategist).has.a.balanceOf("0.00", ousd);
+    await expect(strategist).has.a.balanceOf("1000.00", usdc);
     expect(await ousd.totalSupply()).to.eq(ousdUnits("200.0"));
   });
 
-  it("Should allow a redeem over the rebase threshold", async () => {
-    const { ousd, vault, usdc, anna, matt } = fixture;
+  it("Should allow a redeem over the rebase threshold for strategist", async () => {
+    const { ousd, vault, usdc, strategist, matt } = fixture;
 
-    await expect(anna).has.a.balanceOf("1000.00", usdc);
+    await expect(strategist).has.a.balanceOf("1000.00", usdc);
 
-    await expect(anna).has.a.balanceOf("0.00", ousd);
+    await expect(strategist).has.a.balanceOf("0.00", ousd);
     await expect(matt).has.a.balanceOf("100.00", ousd);
 
-    // Anna mints OUSD with USDC
-    await usdc.connect(anna).approve(vault.address, usdcUnits("1000.00"));
-    await vault.connect(anna).mint(usdc.address, usdcUnits("1000.00"), 0);
-    await expect(anna).has.a.balanceOf("1000.00", ousd);
+    // Strategist mints OUSD with USDC
+    await usdc.connect(strategist).approve(vault.address, usdcUnits("1000.00"));
+    await vault.connect(strategist).mint(usdc.address, usdcUnits("1000.00"), 0);
+    await expect(strategist).has.a.balanceOf("1000.00", ousd);
     await expect(matt).has.a.balanceOf("100.00", ousd);
 
     // Rebase should do nothing
     await vault.rebase();
-    await expect(anna).has.a.balanceOf("1000.00", ousd);
+    await expect(strategist).has.a.balanceOf("1000.00", ousd);
     await expect(matt).has.a.balanceOf("100.00", ousd);
 
-    // Anna redeems over the rebase threshold
-    await vault.connect(anna).redeem(ousdUnits("500.0"), 0);
-    await expect(anna).has.a.approxBalanceOf("500.00", ousd);
+    // Strategist redeems over the rebase threshold
+    await vault.connect(strategist).redeem(ousdUnits("500.0"), 0);
+    await expect(strategist).has.a.approxBalanceOf("500.00", ousd);
     await expect(matt).has.a.approxBalanceOf("100.00", ousd);
 
     // Redeem outputs will be 1000/2200 * 1500 USDC and 1200/2200 * 1500 USDS from fixture
-    await expect(anna).has.an.approxBalanceOf("500.00", usdc);
-
+    await expect(strategist).has.an.approxBalanceOf("500.00", usdc);
     await expectApproxSupply(ousd, ousdUnits("700.0"));
   });
 
@@ -67,7 +66,9 @@ describe("Vault Redeem", function () {
     await expect(await vault.redeemFeeBps()).to.equal("0");
   });
 
-  it("Should charge a redeem fee if redeem fee set", async () => {
+  // Skipped because OUSD redeem is only available for strategist or governor
+  // and this is without fees.
+  it.skip("Should charge a redeem fee if redeem fee set", async () => {
     const { ousd, vault, usdc, anna, governor } = fixture;
 
     // 1000 basis points = 10%
@@ -82,17 +83,17 @@ describe("Vault Redeem", function () {
   });
 
   it("Should revert redeem if balance is insufficient", async () => {
-    const { ousd, vault, usdc, anna } = fixture;
+    const { ousd, vault, usdc, strategist } = fixture;
 
     // Mint some OUSD tokens
-    await expect(anna).has.a.balanceOf("1000.00", usdc);
-    await usdc.connect(anna).approve(vault.address, usdcUnits("50.0"));
-    await vault.connect(anna).mint(usdc.address, usdcUnits("50.0"), 0);
-    await expect(anna).has.a.balanceOf("50.00", ousd);
+    await expect(strategist).has.a.balanceOf("1000.00", usdc);
+    await usdc.connect(strategist).approve(vault.address, usdcUnits("50.0"));
+    await vault.connect(strategist).mint(usdc.address, usdcUnits("50.0"), 0);
+    await expect(strategist).has.a.balanceOf("50.00", ousd);
 
     // Try to withdraw more than balance
     await expect(
-      vault.connect(anna).redeem(ousdUnits("100.0"), 0)
+      vault.connect(strategist).redeem(ousdUnits("100.0"), 0)
     ).to.be.revertedWith("Transfer amount exceeds balance");
   });
 
@@ -105,28 +106,29 @@ describe("Vault Redeem", function () {
   });
 
   it("Should redeem entire OUSD balance", async () => {
-    const { ousd, vault, usdc, anna } = fixture;
+    const { ousd, vault, usdc, strategist } = fixture;
 
-    await expect(anna).has.a.balanceOf("1000.00", usdc);
+    await expect(strategist).has.a.balanceOf("1000.00", usdc);
 
     // Mint 100 OUSD tokens using USDC
-    await usdc.connect(anna).approve(vault.address, usdcUnits("100.0"));
-    await vault.connect(anna).mint(usdc.address, usdcUnits("100.0"), 0);
-    await expect(anna).has.a.balanceOf("100.00", ousd);
+    await usdc.connect(strategist).approve(vault.address, usdcUnits("100.0"));
+    await vault.connect(strategist).mint(usdc.address, usdcUnits("100.0"), 0);
+    await expect(strategist).has.a.balanceOf("100.00", ousd);
 
     // Withdraw all
-    await vault.connect(anna).redeem(ousd.balanceOf(anna.address), 0);
+    await vault
+      .connect(strategist)
+      .redeem(ousd.balanceOf(strategist.address), 0);
 
-    await expect(anna).has.a.balanceOf("1000", usdc);
+    await expect(strategist).has.a.balanceOf("1000", usdc);
   });
 
   it("Should have correct balances on consecutive mint and redeem", async () => {
-    const { ousd, vault, usdc, anna, matt, josh } = fixture;
+    const { ousd, vault, usdc, strategist, governor } = fixture;
 
     const usersWithBalances = [
-      [anna, 0],
-      [matt, 100],
-      [josh, 100],
+      [strategist, 0],
+      [governor, 0],
     ];
 
     const assetsWithUnits = [[usdc, usdcUnits]];
@@ -155,32 +157,34 @@ describe("Vault Redeem", function () {
   });
 
   it("Should correctly handle redeem without a rebase and then full redeem", async function () {
-    const { ousd, vault, usdc, anna } = fixture;
-    await expect(anna).has.a.balanceOf("0.00", ousd);
-    await usdc.connect(anna).mint(usdcUnits("3000.0"));
-    await usdc.connect(anna).approve(vault.address, usdcUnits("3000.0"));
-    await vault.connect(anna).mint(usdc.address, usdcUnits("3000.0"), 0);
-    await expect(anna).has.a.balanceOf("3000.00", ousd);
+    const { ousd, vault, usdc, strategist } = fixture;
+    await expect(strategist).has.a.balanceOf("0.00", ousd);
+    await usdc.connect(strategist).mint(usdcUnits("3000.0"));
+    await usdc.connect(strategist).approve(vault.address, usdcUnits("3000.0"));
+    await vault.connect(strategist).mint(usdc.address, usdcUnits("3000.0"), 0);
+    await expect(strategist).has.a.balanceOf("3000.00", ousd);
 
     //redeem without rebasing (not over threshold)
-    await vault.connect(anna).redeem(ousdUnits("200.00"), 0);
+    await vault.connect(strategist).redeem(ousdUnits("200.00"), 0);
     //redeem with rebasing (over threshold)
-    await vault.connect(anna).redeem(ousd.balanceOf(anna.address), 0);
+    await vault
+      .connect(strategist)
+      .redeem(ousd.balanceOf(strategist.address), 0);
 
-    await expect(anna).has.a.balanceOf("0.00", ousd);
+    await expect(strategist).has.a.balanceOf("0.00", ousd);
   });
 
   it("Should respect minimum unit amount argument in redeem", async () => {
-    const { ousd, vault, usdc, anna } = fixture;
+    const { ousd, vault, usdc, strategist } = fixture;
 
-    await expect(anna).has.a.balanceOf("1000.00", usdc);
-    await usdc.connect(anna).approve(vault.address, usdcUnits("100.0"));
-    await vault.connect(anna).mint(usdc.address, usdcUnits("50.0"), 0);
-    await expect(anna).has.a.balanceOf("50.00", ousd);
-    await vault.connect(anna).redeem(ousdUnits("50.0"), usdcUnits("50"));
-    await vault.connect(anna).mint(usdc.address, usdcUnits("50.0"), 0);
+    await expect(strategist).has.a.balanceOf("1000.00", usdc);
+    await usdc.connect(strategist).approve(vault.address, usdcUnits("100.0"));
+    await vault.connect(strategist).mint(usdc.address, usdcUnits("50.0"), 0);
+    await expect(strategist).has.a.balanceOf("50.00", ousd);
+    await vault.connect(strategist).redeem(ousdUnits("50.0"), usdcUnits("50"));
+    await vault.connect(strategist).mint(usdc.address, usdcUnits("50.0"), 0);
     await expect(
-      vault.connect(anna).redeem(ousdUnits("50.0"), usdcUnits("51"))
+      vault.connect(strategist).redeem(ousdUnits("50.0"), usdcUnits("51"))
     ).to.be.revertedWith("Redeem amount lower than minimum");
   });
 

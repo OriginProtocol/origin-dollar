@@ -366,11 +366,11 @@ async function proposeUpgradeVaultCoreArgs(config) {
 async function proposeUpgradeVaultCoreAndAdminArgs() {
   const cVaultProxy = await ethers.getContract("VaultProxy");
   const cVaultCoreProxy = await ethers.getContractAt(
-    "VaultCore",
+    "OUSDVaultCore",
     cVaultProxy.address
   );
-  const cVaultCore = await ethers.getContract("VaultCore");
-  const cVaultAdmin = await ethers.getContract("VaultAdmin");
+  const cVaultCore = await ethers.getContract("OUSDVaultCore");
+  const cVaultAdmin = await ethers.getContract("OUSDVaultAdmin");
 
   const args = await proposeArgs([
     {
@@ -663,12 +663,11 @@ async function proposeProp14Args() {
 async function proposeProp17Args() {
   const cVaultProxy = await ethers.getContract("VaultProxy");
   const cVaultCoreProxy = await ethers.getContractAt(
-    "VaultCore",
+    "OUSDVaultCore",
     cVaultProxy.address
   );
-  const cVaultCore = await ethers.getContract("VaultCore");
-  const cVaultAdmin = await ethers.getContract("VaultAdmin");
-
+  const cVaultCore = await ethers.getContract("OUSDVaultCore");
+  const cVaultAdmin = await ethers.getContract("OUSDVaultAdmin");
   const cAaveStrategyProxy = await ethers.getContract("AaveStrategyProxy");
   const cAaveStrategy = await ethers.getContractAt(
     "AaveStrategy",

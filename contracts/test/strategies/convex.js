@@ -14,10 +14,10 @@ describe("Convex Strategy", function () {
     this.timeout(0);
   }
 
-  let anna,
-    ousd,
+  let ousd,
     vault,
     governor,
+    strategist,
     crv,
     threePoolToken,
     convexStrategy,
@@ -25,19 +25,18 @@ describe("Convex Strategy", function () {
     usdc;
 
   const mint = async (amount, asset) => {
-    await asset.connect(anna).mint(await units(amount, asset));
+    await asset.connect(strategist).mint(await units(amount, asset));
     await asset
-      .connect(anna)
+      .connect(strategist)
       .approve(vault.address, await units(amount, asset));
     return await vault
-      .connect(anna)
+      .connect(strategist)
       .mint(asset.address, await units(amount, asset), 0);
   };
 
   const loadFixture = createFixtureLoader(convexVaultFixture);
   beforeEach(async function () {
     const fixture = await loadFixture();
-    anna = fixture.anna;
     vault = fixture.vault;
     ousd = fixture.ousd;
     governor = fixture.governor;
@@ -46,6 +45,7 @@ describe("Convex Strategy", function () {
     convexStrategy = fixture.convexStrategy;
     cvxBooster = fixture.cvxBooster;
     usdc = fixture.usdc;
+    strategist = fixture.strategist;
   });
 
   describe("Mint", function () {
@@ -53,7 +53,7 @@ describe("Convex Strategy", function () {
       await expectApproxSupply(ousd, ousdUnits("200"));
       await mint("50000.00", usdc);
       await expectApproxSupply(ousd, ousdUnits("50200"));
-      await expect(anna).to.have.a.balanceOf("50000", ousd);
+      await expect(strategist).to.have.a.balanceOf("50000", ousd);
       await expect(cvxBooster).has.an.approxBalanceOf("50200", threePoolToken);
     });
   });
@@ -62,20 +62,21 @@ describe("Convex Strategy", function () {
     it("Should be able to unstake from gauge and return USDT", async function () {
       await expectApproxSupply(ousd, ousdUnits("200"));
       await mint("10000.00", usdc);
-      await vault.connect(anna).redeem(ousdUnits("10000"), 0);
+      await vault.connect(governor).set;
+      await vault.connect(strategist).redeem(ousdUnits("10000"), 0);
       await expectApproxSupply(ousd, ousdUnits("200"));
     });
   });
 
   describe("Utilities", function () {
     it("Should allow transfer of arbitrary token by Governor", async () => {
-      await usdc.connect(anna).approve(vault.address, usdcUnits("8.0"));
-      await vault.connect(anna).mint(usdc.address, usdcUnits("8.0"), 0);
-      // Anna sends her OUSD directly to Strategy
+      await usdc.connect(strategist).approve(vault.address, usdcUnits("8.0"));
+      await vault.connect(strategist).mint(usdc.address, usdcUnits("8.0"), 0);
+      // Strategist sends her OUSD directly to Strategy
       await ousd
-        .connect(anna)
+        .connect(strategist)
         .transfer(convexStrategy.address, ousdUnits("8.0"));
-      // Anna asks Governor for help
+      // Strategist asks Governor for help
       await convexStrategy
         .connect(governor)
         .transferToken(ousd.address, ousdUnits("8.0"));
@@ -83,10 +84,10 @@ describe("Convex Strategy", function () {
     });
 
     it("Should not allow transfer of arbitrary token by non-Governor", async () => {
-      // Naughty Anna
+      // Naughty Strategist
       await expect(
         convexStrategy
-          .connect(anna)
+          .connect(strategist)
           .transferToken(ousd.address, ousdUnits("8.0"))
       ).to.be.revertedWith("Caller is not the Governor");
     });
