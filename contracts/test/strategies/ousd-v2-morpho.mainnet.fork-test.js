@@ -2,6 +2,7 @@ const { expect } = require("chai");
 const { formatUnits, parseUnits } = require("ethers/lib/utils");
 
 const addresses = require("../../utils/addresses");
+const { getMerklRewards } = require("../../tasks/merkl");
 const { units, isCI } = require("../helpers");
 
 const { createFixtureLoader, morphoOUSDv2Fixture } = require("../_fixture");
@@ -337,6 +338,62 @@ describe("ForkTest: Yearn's Morpho OUSD v2 Strategy", function () {
       // Governor can withdraw all
       const tx = morphoOUSDv2Strategy.connect(timelock).withdrawAll();
       await expect(tx).to.emit(morphoOUSDv2Strategy, "Withdrawal");
+    });
+  });
+
+  describe("claim and collect MORPHO rewards", () => {
+    const loadFixture = createFixtureLoader(morphoOUSDv2Fixture);
+    beforeEach(async () => {
+      fixture = await loadFixture();
+    });
+    it("Should claim MORPHO rewards", async () => {
+      const { josh, morphoOUSDv2Strategy, morphoToken } = fixture;
+
+      const { amount, proofs } = await getMerklRewards({
+        userAddress: morphoOUSDv2Strategy.address,
+        chainId: 1,
+      });
+      log(`MORPHO rewards available to claim: ${formatUnits(amount, 18)}`);
+
+      if (amount != "0") {
+        const tx = await morphoOUSDv2Strategy
+          .connect(josh)
+          .merkleClaim(morphoToken.address, amount, proofs);
+        await expect(tx)
+          .to.emit(morphoOUSDv2Strategy, "ClaimedRewards")
+          .withArgs(morphoToken.address, amount);
+      }
+    });
+
+    it("Should be able to collect MORPHO rewards", async () => {
+      const { buyBackSigner, josh, morphoOUSDv2Strategy, morphoToken } =
+        fixture;
+
+      const { amount, proofs } = await getMerklRewards({
+        userAddress: morphoOUSDv2Strategy.address,
+        chainId: 1,
+      });
+      log(`MORPHO rewards available to claim: ${formatUnits(amount, 18)}`);
+
+      if (amount != "0") {
+        await morphoOUSDv2Strategy
+          .connect(josh)
+          .merkleClaim(morphoToken.address, amount, proofs);
+      }
+
+      const tx = await morphoOUSDv2Strategy
+        .connect(buyBackSigner)
+        .collectRewardTokens();
+
+      if (amount != "0") {
+        await expect(tx)
+          .to.emit(morphoToken, "Transfer")
+          .withArgs(
+            morphoOUSDv2Strategy.address,
+            buyBackSigner.address,
+            amount
+          );
+      }
     });
   });
 });

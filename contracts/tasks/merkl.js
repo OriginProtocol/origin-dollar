@@ -10,7 +10,17 @@ const MERKL_API_ENDPOINT = "https://api.merkl.xyz/v4";
 const getMerklRewards = async ({ userAddress, chainId = 1 }) => {
   const url = `${MERKL_API_ENDPOINT}/users/${userAddress}/rewards?chainId=${chainId}`;
   try {
+    log(`Getting Merkl rewards data from ${url}`);
+
     const response = await axios.get(url);
+
+    if (response.data.length === 0 || response.data[0].rewards.length === 0) {
+      return {
+        amount: 0n,
+        token: null,
+        proofs: [],
+      };
+    }
 
     return {
       amount: response.data[0].rewards[0].amount,
