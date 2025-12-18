@@ -1883,17 +1883,17 @@ async function morphoOUSDv2Fixture(
     const { usdc, josh, morphoOUSDv2Strategy, strategist, vault } = fixture;
 
     // TODO remove once Yearn has done this on mainnet
-    // Whitelist the strategy
-    const gateOwner = await impersonateAndFund(
-      "0x50B75d586929Ab2F75dC15f07E1B921b7C4Ba8fA"
-    );
-    const gate = await ethers.getContractAt(
-      ["function setIsWhitelisted(address,bool) external"],
-      "0x6704aB7aF6787930c60DFa422104E899E823e657"
-    );
-    await gate
-      .connect(gateOwner)
-      .setIsWhitelisted(morphoOUSDv2Strategy.address, true);
+    // // Whitelist the strategy
+    // const gateOwner = await impersonateAndFund(
+    //   "0x50B75d586929Ab2F75dC15f07E1B921b7C4Ba8fA"
+    // );
+    // const gate = await ethers.getContractAt(
+    //   ["function setIsWhitelisted(address,bool) external"],
+    //   "0x6704aB7aF6787930c60DFa422104E899E823e657"
+    // );
+    // await gate
+    //   .connect(gateOwner)
+    //   .setIsWhitelisted(morphoOUSDv2Strategy.address, true);
 
     // Impersonate the OUSD Vault
     fixture.vaultSigner = await impersonateAndFund(vault.address);
