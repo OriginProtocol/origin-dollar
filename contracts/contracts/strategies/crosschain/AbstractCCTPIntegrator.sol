@@ -63,22 +63,24 @@ abstract contract AbstractCCTPIntegrator is
     }
 
     constructor(CCTPIntegrationConfig memory _config)
-        CCTPMessageRelayer(
+        AbstractCCTPMessageRelayer(
             _config.cctpMessageTransmitter,
             _config.cctpTokenMessenger
         )
     {
-        cctpTokenMessenger = ICCTPTokenMessenger(_config.cctpTokenMessenger);
-        cctpMessageTransmitter = ICCTPMessageTransmitter(
-            _config.cctpMessageTransmitter
-        );
         destinationDomain = _config.destinationDomain;
         destinationStrategy = _config.destinationStrategy;
         baseToken = _config.baseToken;
 
         // Just a sanity check to ensure the base token is USDC
         uint256 _baseTokenDecimals = Helpers.getDecimals(_config.baseToken);
+        string memory _baseTokenSymbol = Helpers.getSymbol(_config.baseToken);
         require(_baseTokenDecimals == 6, "Base token decimals must be 6");
+        require(
+            keccak256(abi.encodePacked(_baseTokenSymbol)) ==
+                keccak256(abi.encodePacked("USDC")),
+            "Base token symbol must be USDC"
+        );
     }
 
     function _initialize(uint32 _minFinalityThreshold, uint32 _feePremiumBps)
