@@ -8,7 +8,7 @@ const { deployCrossChainMasterStrategyImpl } = require("../deployActions");
 
 module.exports = deploymentWithGovernanceProposal(
   {
-    deployName: "160_crosschain_strategy",
+    deployName: "161_crosschain_strategy",
     forceDeploy: false,
     reduceQueueTime: true,
     deployerIsProposer: false,
