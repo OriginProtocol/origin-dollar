@@ -410,10 +410,13 @@ Validator public key: 90db8ae56a9e741775ca37dd960606541306974d4a998ef6a6227c85a9
 The Hardhat plug-in [@nomiclabs/hardhat-verify](https://www.npmjs.com/package/@nomiclabs/hardhat-etherscan) is used to verify contracts on Etherscan. Etherscan has migrated to V2 api where all the chains use the same endpoint. Hardhat verify should be run with `--contract` parameter otherwise there is a significant slowdown while hardhat is gathering contract information.
 
 ### Auto-verification
+
 When deploying contracts, set `VERIFY_CONTRACTS=true` environment variable to verify contract immediately after deployment with no manual action.
+
 ```
 VERIFY_CONTRACTS=true npx hardhat deploy:mainnet
 ```
+
 If it reverts for any reason, it'll print out the command that you can use to run manually or debug.
 
 ### Manual verification
@@ -421,7 +424,7 @@ If it reverts for any reason, it'll print out the command that you can use to ru
 **IMPORTANT:**
 
 - Currently only yarn works. Do not use npx/pnpm
-- Also if you switch package manager do run "hardhat compile" first to mitigate potential bytecode missmatch errors
+- Also if you switch package manager do run "hardhat compile" first to mitigate potential bytecode mismatch errors
 
 There's an example
 

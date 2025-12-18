@@ -321,3 +321,10 @@ contract CompoundingStakingSSVStrategyProxy is
 {
 
 }
+
+/**
+ * @notice OUSDMorphoV2StrategyProxy delegates calls to a Generalized4626Strategy implementation
+ */
+contract OUSDMorphoV2StrategyProxy is InitializeGovernedUpgradeabilityProxy {
+
+}
