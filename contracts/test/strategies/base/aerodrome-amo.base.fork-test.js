@@ -1278,7 +1278,7 @@ describe("ForkTest: Aerodrome AMO Strategy (Base)", async function () {
     await mintAndDepositToStrategy({
       amount: oethUnits("5"),
       returnTransaction: true,
-      depositALotBefore: true,
+      depositALotBefore: false,
     });
 
     const { value, direction } = await quoteAmountToSwapBeforeRebalance({
@@ -1427,8 +1427,7 @@ describe("ForkTest: Aerodrome AMO Strategy (Base)", async function () {
     amount = amount || oethUnits("5");
     // Deposit a lot of WETH into the vault
     if (depositALotBefore) {
-      console.log("c");
-      const _amount = oethUnits("1500");
+      const _amount = oethUnits("5000");
       await setERC20TokenBalance(nick.address, weth, _amount, hre);
       await weth.connect(nick).approve(oethbVault.address, _amount);
       await oethbVault.connect(nick).mint(weth.address, _amount, _amount);
@@ -1442,7 +1441,6 @@ describe("ForkTest: Aerodrome AMO Strategy (Base)", async function () {
     await oethbVault.connect(user).mint(weth.address, amount, amount);
 
     const gov = await oethbVault.governor();
-    console.log("b");
     const tx = await oethbVault
       .connect(await impersonateAndFund(gov))
       .depositToStrategy(
@@ -1450,7 +1448,6 @@ describe("ForkTest: Aerodrome AMO Strategy (Base)", async function () {
         [weth.address],
         [amount]
       );
-    console.log("b");
 
     if (returnTransaction) {
       return tx;
