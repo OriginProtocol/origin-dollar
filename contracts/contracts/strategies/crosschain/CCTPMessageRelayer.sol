@@ -169,4 +169,10 @@ abstract contract CCTPMessageRelayer {
         uint256 feeExecuted,
         bytes memory payload
     ) internal virtual;
+
+    /**
+     * @dev Called when the message is received
+     * @param payload The payload of the message
+     */
+    function _onMessageReceived(bytes memory payload) internal virtual;
 }

@@ -686,7 +686,6 @@ addresses.hoodi.mockBeaconRoots = "0xdCfcAE4A084AA843eE446f400B23aA7B6340484b";
 
 // Crosschain Strategy
 
-addresses.HookWrapperProxy = "0x1D609cAE43c7C1DcD6601311d87Ae227a0FFcD0f";
 addresses.CrossChainStrategyProxy =
   "0x98F1bA152a6Bf039F5630CD74a8Ec2cC5EA9AEd3";
 addresses.mainnet.CrossChainStrategyProxy =

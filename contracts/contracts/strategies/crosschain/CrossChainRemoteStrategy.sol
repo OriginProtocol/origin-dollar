@@ -77,12 +77,14 @@ contract CrossChainRemoteStrategy is
     }
 
     function _processDepositMessage(
+        // solhint-disable-next-line no-unused-vars
         uint256 tokenAmount,
+        // solhint-disable-next-line no-unused-vars
         uint256 feeExecuted,
         bytes memory payload
     ) internal virtual {
-        // solhint-disable-next-line no-unused-vars
         // TODO: no need to communicate the deposit amount if we deposit everything
+        // solhint-disable-next-line no-unused-vars
         (uint64 nonce, uint256 depositAmount) = _decodeDepositMessage(payload);
 
         // Replay protection

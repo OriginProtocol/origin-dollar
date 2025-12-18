@@ -2917,10 +2917,6 @@ async function enableExecutionLayerGeneralPurposeRequests() {
 async function crossChainFixture() {
   const fixture = await defaultFixture();
 
-  const cHookWrapper = await ethers.getContractAt(
-    "CCTPHookWrapper",
-    addresses.HookWrapperProxy
-  );
   const cCrossChainMasterStrategy = await ethers.getContractAt(
     "CrossChainMasterStrategy",
     addresses.CrossChainStrategyProxy
@@ -2928,8 +2924,6 @@ async function crossChainFixture() {
 
   return {
     ...fixture,
-
-    hookWrapper: cHookWrapper,
     crossChainMasterStrategy: cCrossChainMasterStrategy,
   };
 }

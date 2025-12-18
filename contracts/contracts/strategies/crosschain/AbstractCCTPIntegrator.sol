@@ -177,8 +177,6 @@ abstract contract AbstractCCTPIntegrator is
         return true;
     }
 
-    function _onMessageReceived(bytes memory payload) internal virtual;
-
     function _sendTokens(uint256 tokenAmount, bytes memory hookData)
         internal
         virtual

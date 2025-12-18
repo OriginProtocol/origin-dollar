@@ -1757,7 +1757,6 @@ const deployCrossChainMasterStrategyImpl = async (
   targetDomainId,
   remoteStrategyAddress,
   baseToken,
-  hookWrapperAddress,
   implementationName = "CrossChainMasterStrategy",
   skipInitialize = false
 ) => {
@@ -1785,7 +1784,6 @@ const deployCrossChainMasterStrategyImpl = async (
         targetDomainId,
         remoteStrategyAddress,
         baseToken,
-        hookWrapperAddress,
       ],
     ]
   );
@@ -1821,7 +1819,6 @@ const deployCrossChainRemoteStrategyImpl = async (
   targetDomainId,
   remoteStrategyAddress,
   baseToken,
-  hookWrapperAddress,
   implementationName = "CrossChainRemoteStrategy"
 ) => {
   const { deployerAddr } = await getNamedAccounts();
@@ -1848,7 +1845,6 @@ const deployCrossChainRemoteStrategyImpl = async (
         targetDomainId,
         remoteStrategyAddress,
         baseToken,
-        hookWrapperAddress,
       ],
     ]
   );

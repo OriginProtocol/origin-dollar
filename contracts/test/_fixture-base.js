@@ -343,14 +343,9 @@ const crossChainFixture = deployments.createFixture(async () => {
     "CrossChainRemoteStrategy",
     addresses.CrossChainStrategyProxy
   );
-  const hookWrapper = await ethers.getContractAt(
-    "CCTPHookWrapper",
-    addresses.HookWrapperProxy
-  );
   return {
     ...fixture,
     crossChainRemoteStrategy,
-    hookWrapper,
   };
 });
 
