@@ -10,7 +10,7 @@ const { setERC20TokenBalance } = require("../../_fund");
 
 const log = require("../../../utils/logger")("test:fork:sonic:swapx:amo");
 
-describe.only("Sonic ForkTest: SwapX AMO Strategy", function () {
+describe("Sonic ForkTest: SwapX AMO Strategy", function () {
   // Retry up to 3 times on CI
   this.retries(isCI ? 3 : 0);
 

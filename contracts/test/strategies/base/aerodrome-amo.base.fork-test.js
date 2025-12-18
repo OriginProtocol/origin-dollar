@@ -260,6 +260,7 @@ describe("ForkTest: Aerodrome AMO Strategy (Base)", async function () {
     governor,
     strategist,
     rafael,
+    nick,
     aeroSwapRouter,
     aeroNftManager,
     harvester,
@@ -275,6 +276,7 @@ describe("ForkTest: Aerodrome AMO Strategy (Base)", async function () {
     governor = fixture.governor;
     strategist = fixture.strategist;
     rafael = fixture.rafael;
+    nick = fixture.nick;
     aeroSwapRouter = fixture.aeroSwapRouter;
     aeroNftManager = fixture.aeroNftManager;
     oethbVaultSigner = await impersonateAndFund(oethbVault.address);
@@ -282,13 +284,10 @@ describe("ForkTest: Aerodrome AMO Strategy (Base)", async function () {
     harvester = fixture.harvester;
     quoter = fixture.quoter;
 
-    console.log("Before setup");
     await setup();
-    console.log("After setup");
     await weth
       .connect(rafael)
       .approve(aeroSwapRouter.address, oethUnits("1000000000"));
-    console.log("After weth approve");
     await oethb
       .connect(rafael)
       .approve(aeroSwapRouter.address, oethUnits("1000000000"));
@@ -1276,12 +1275,11 @@ describe("ForkTest: Aerodrome AMO Strategy (Base)", async function () {
   };
 
   const setup = async () => {
-    console.log("a");
     await mintAndDepositToStrategy({
       amount: oethUnits("5"),
       returnTransaction: true,
+      depositALotBefore: true,
     });
-    console.log("a");
 
     const { value, direction } = await quoteAmountToSwapBeforeRebalance({
       lowValue: oethUnits("0"),
@@ -1423,9 +1421,18 @@ describe("ForkTest: Aerodrome AMO Strategy (Base)", async function () {
     userOverride,
     amount,
     returnTransaction,
+    depositALotBefore = false,
   } = {}) => {
     const user = userOverride || rafael;
     amount = amount || oethUnits("5");
+    // Deposit a lot of WETH into the vault
+    if (depositALotBefore) {
+      console.log("c");
+      const _amount = oethUnits("1500");
+      await setERC20TokenBalance(nick.address, weth, _amount, hre);
+      await weth.connect(nick).approve(oethbVault.address, _amount);
+      await oethbVault.connect(nick).mint(weth.address, _amount, _amount);
+    }
 
     const balance = weth.balanceOf(user.address);
     if (balance < amount) {
