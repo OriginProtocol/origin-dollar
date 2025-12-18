@@ -12,7 +12,7 @@ abstract contract CCTPMessageRelayer {
     uint8 private constant VERSION_INDEX = 0;
     uint8 private constant SOURCE_DOMAIN_INDEX = 4;
     uint8 private constant SENDER_INDEX = 44;
-    uint8 private constant RECIPIENT_INDEX = 44;
+    uint8 private constant RECIPIENT_INDEX = 76;
     uint8 private constant MESSAGE_BODY_INDEX = 148;
 
     // Message body V2 fields
@@ -114,15 +114,19 @@ abstract contract CCTPMessageRelayer {
                 BURN_MESSAGE_V2_MESSAGE_SENDER_INDEX + 32
             );
             sender = abi.decode(messageSender, (address));
-        }
 
-        if (isBurnMessageV1) {
             bytes memory recipientSlice = messageBody.extractSlice(
                 BURN_MESSAGE_V2_RECIPIENT_INDEX,
                 BURN_MESSAGE_V2_RECIPIENT_INDEX + 32
             );
             // TODO is this the same recipient as the one in the message header?
             recipient = abi.decode(recipientSlice, (address));
+        } else {
+            // We handle only Burn message or our custom messagee
+            require(
+                version == ORIGIN_MESSAGE_VERSION,
+                "Unsupported message version"
+            );
         }
 
         require(sender == recipient, "Sender and recipient must be the same");
