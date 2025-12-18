@@ -216,14 +216,13 @@ describe("ForkTest: Yearn's Morpho OUSD v2 Strategy", function () {
         vaultSigner,
       } = fixture;
 
-      expect(await morphoOUSDv2Vault.totalSupply()).to.be.gt(0);
-      const usdcWithdrawAmountExpected = await morphoOUSDv2Vault.maxWithdraw(
+      const minBalance = await units("12000", usdc);
+      const strategyVaultShares = await morphoOUSDv2Vault.balanceOf(
         morphoOUSDv2Strategy.address
       );
-      expect(
-        usdcWithdrawAmountExpected,
-        "Morpho Vault maxWithdraw greater than 0"
-      ).to.be.gt(0);
+      const usdcWithdrawAmountExpected =
+        await morphoOUSDv2Vault.convertToAssets(strategyVaultShares);
+      expect(usdcWithdrawAmountExpected).to.be.gte(minBalance.sub(1));
 
       log(
         `Expected to withdraw ${formatUnits(
