@@ -71,7 +71,7 @@ module.exports = deploymentWithGovernanceProposal(
     const dOUSDMorphoV2StrategyImpl = await deployWithConfirmation(
       "Generalized4626Strategy",
       [
-        [addresses.mainnet.MorphoYearnOUSDv2Vault, cVaultProxy.address],
+        [addresses.mainnet.MorphoOUSDv2Vault, cVaultProxy.address],
         addresses.mainnet.USDC,
       ]
     );

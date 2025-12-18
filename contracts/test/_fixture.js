@@ -658,6 +658,16 @@ const defaultFixture = deployments.createFixture(async () => {
         morphoGauntletPrimeUSDTStrategyProxy.address
       );
 
+  const morphoOUSDv2StrategyProxy = !isFork
+    ? undefined
+    : await ethers.getContract("OUSDMorphoV2StrategyProxy");
+  const morphoOUSDv2Strategy = !isFork
+    ? undefined
+    : await ethers.getContractAt(
+        "Generalized4626Strategy",
+        morphoOUSDv2StrategyProxy.address
+      );
+
   const curvePoolBooster = isFork
     ? await ethers.getContractAt(
         "CurvePoolBooster",
@@ -744,6 +754,7 @@ const defaultFixture = deployments.createFixture(async () => {
     morphoSteakHouseUSDCVault,
     morphoGauntletPrimeUSDCVault,
     morphoGauntletPrimeUSDTVault,
+    morphoOUSDv2Vault,
     ssv;
 
   let chainlinkOracleFeedDAI,
@@ -823,6 +834,10 @@ const defaultFixture = deployments.createFixture(async () => {
     morphoGauntletPrimeUSDTVault = await ethers.getContractAt(
       metamorphoAbi,
       addresses.mainnet.MorphoGauntletPrimeUSDTVault
+    );
+    morphoOUSDv2Vault = await ethers.getContractAt(
+      metamorphoAbi,
+      addresses.mainnet.MorphoOUSDv2Vault
     );
     morphoToken = await ethers.getContractAt(
       erc20Abi,
@@ -1143,6 +1158,8 @@ const defaultFixture = deployments.createFixture(async () => {
     morphoGauntletPrimeUSDCVault,
     morphoGauntletPrimeUSDTStrategy,
     morphoGauntletPrimeUSDTVault,
+    morphoOUSDv2Strategy,
+    morphoOUSDv2Vault,
     curvePoolBooster,
     simpleOETHHarvester,
     oethFixedRateDripper,
@@ -1845,6 +1862,70 @@ async function morphoGauntletPrimeUSDTFixture(
   } else {
     throw new Error(
       "Morpho Gauntlet Prime USDT strategy only supported in forked test environment"
+    );
+  }
+
+  return fixture;
+}
+
+/**
+ * Configure a Vault with default USDC strategy to Yearn's Morpho OUSD v2 Vault.
+ */
+async function morphoOUSDv2Fixture(
+  config = {
+    usdcMintAmount: 0,
+    depositToStrategy: false,
+  }
+) {
+  const fixture = await defaultFixture();
+
+  if (isFork) {
+    const { usdc, josh, morphoOUSDv2Strategy, strategist, vault } = fixture;
+
+    // TODO remove once Yearn has done this on mainnet
+    // Whitelist the strategy
+    const gateOwner = await impersonateAndFund(
+      "0x50B75d586929Ab2F75dC15f07E1B921b7C4Ba8fA"
+    );
+    const gate = await ethers.getContractAt(
+      ["function setIsWhitelisted(address,bool) external"],
+      "0x6704aB7aF6787930c60DFa422104E899E823e657"
+    );
+    await gate
+      .connect(gateOwner)
+      .setIsWhitelisted(morphoOUSDv2Strategy.address, true);
+
+    // Impersonate the OUSD Vault
+    fixture.vaultSigner = await impersonateAndFund(vault.address);
+
+    // mint some OUSD using USDC if configured
+    if (config?.usdcMintAmount > 0) {
+      const usdcMintAmount = parseUnits(config.usdcMintAmount.toString(), 6);
+      await vault.connect(josh).rebase();
+      await vault.connect(josh).allocate();
+
+      // Approve the Vault to transfer USDC
+      await usdc.connect(josh).approve(vault.address, usdcMintAmount);
+
+      // Mint OUSD with USDC
+      // This will sit in the vault, not the strategy
+      await vault.connect(josh).mint(usdc.address, usdcMintAmount, 0);
+
+      // Add USDC to the strategy
+      if (config?.depositToStrategy) {
+        // The strategist deposits the USDC to the strategy
+        await vault
+          .connect(strategist)
+          .depositToStrategy(
+            morphoOUSDv2Strategy.address,
+            [usdc.address],
+            [usdcMintAmount]
+          );
+      }
+    }
+  } else {
+    throw new Error(
+      "Yearn's Morpho OUSD v2 strategy only supported in forked test environment"
     );
   }
 
@@ -2928,6 +3009,7 @@ module.exports = {
   morphoSteakhouseUSDCFixture,
   morphoGauntletPrimeUSDCFixture,
   morphoGauntletPrimeUSDTFixture,
+  morphoOUSDv2Fixture,
   morphoCompoundFixture,
   aaveFixture,
   morphoAaveFixture,
