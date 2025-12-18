@@ -18,7 +18,7 @@ import { OUSD } from "../token/OUSD.sol";
 import { Initializable } from "../utils/Initializable.sol";
 import "../utils/Helpers.sol";
 
-contract VaultStorage is Initializable, Governable {
+abstract contract VaultStorage is Initializable, Governable {
     using SafeERC20 for IERC20;
 
     event AssetAllocated(address _asset, address _strategy, uint256 _amount);

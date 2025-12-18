@@ -18,7 +18,7 @@ import { StableMath } from "../utils/StableMath.sol";
 
 import "./VaultInitializer.sol";
 
-contract VaultCore is VaultInitializer {
+abstract contract VaultCore is VaultInitializer {
     using SafeERC20 for IERC20;
     using StableMath for uint256;
     /// @dev max signed int

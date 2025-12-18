@@ -9,7 +9,7 @@ pragma solidity ^0.8.0;
 
 import "./VaultStorage.sol";
 
-contract VaultInitializer is VaultStorage {
+abstract contract VaultInitializer is VaultStorage {
     constructor(address _backingAsset) VaultStorage(_backingAsset) {}
 
     function initialize(address _oToken) external onlyGovernor initializer {

@@ -15,7 +15,7 @@ import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 
 import "./VaultStorage.sol";
 
-contract VaultAdmin is VaultStorage {
+abstract contract VaultAdmin is VaultStorage {
     using SafeERC20 for IERC20;
     using StableMath for uint256;
     using SafeCast for uint256;
