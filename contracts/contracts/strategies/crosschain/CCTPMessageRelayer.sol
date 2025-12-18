@@ -1,19 +1,10 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import { Governable } from "../../governance/Governable.sol";
 import { ICCTPTokenMessenger, ICCTPMessageTransmitter } from "../../interfaces/cctp/ICCTP.sol";
 import { BytesHelper } from "../../utils/BytesHelper.sol";
 
-interface ICrossChainStrategy {
-    function onTokenReceived(
-        uint256 tokenAmount,
-        uint256 feeExecuted,
-        bytes memory payload
-    ) external;
-}
-
-contract CCTPHookWrapper is Governable {
+abstract contract CCTPMessageRelayer {
     using BytesHelper for bytes;
 
     // CCTP Message Header fields
@@ -21,35 +12,28 @@ contract CCTPHookWrapper is Governable {
     uint8 private constant VERSION_INDEX = 0;
     uint8 private constant SOURCE_DOMAIN_INDEX = 4;
     uint8 private constant SENDER_INDEX = 44;
+    uint8 private constant RECIPIENT_INDEX = 44;
     uint8 private constant MESSAGE_BODY_INDEX = 148;
 
-    // Burn Message V2 fields
+    // Message body V2 fields
+    // Ref: https://developers.circle.com/cctp/technical-guide#message-body
+    // Ref: https://github.com/circlefin/evm-cctp-contracts/blob/master/src/messages/v2/BurnMessageV2.sol
     uint8 private constant BURN_MESSAGE_V2_VERSION_INDEX = 0;
     uint8 private constant BURN_MESSAGE_V2_RECIPIENT_INDEX = 36;
     uint8 private constant BURN_MESSAGE_V2_AMOUNT_INDEX = 68;
     uint8 private constant BURN_MESSAGE_V2_MESSAGE_SENDER_INDEX = 100;
     uint8 private constant BURN_MESSAGE_V2_FEE_EXECUTED_INDEX = 164;
     uint8 private constant BURN_MESSAGE_V2_HOOK_DATA_INDEX = 228;
-
+    
     bytes32 private constant EMPTY_NONCE = bytes32(0);
     uint32 private constant EMPTY_FINALITY_THRESHOLD_EXECUTED = 0;
-
-    // mapping[sourceDomainID][remoteStrategyAddress] => localStrategyAddress
-    mapping(uint32 => mapping(address => address)) public peers;
-    event PeerAdded(
-        uint32 sourceDomainID,
-        address remoteContract,
-        address localContract
-    );
-    event PeerRemoved(
-        uint32 sourceDomainID,
-        address remoteContract,
-        address localContract
-    );
 
     uint32 private constant CCTP_MESSAGE_VERSION = 1;
     uint32 private constant ORIGIN_MESSAGE_VERSION = 1010;
 
+    // CCTP contracts
+    // This implementation assumes that remote and local chains have these contracts
+    // deployed on the same addresses.
     ICCTPMessageTransmitter public immutable cctpMessageTransmitter;
     ICCTPTokenMessenger public immutable cctpTokenMessenger;
 
@@ -60,29 +44,31 @@ contract CCTPHookWrapper is Governable {
         cctpTokenMessenger = ICCTPTokenMessenger(_cctpTokenMessenger);
     }
 
-    function setPeer(
-        uint32 sourceDomainID,
-        address remoteContract,
-        address localContract
-    ) external onlyGovernor {
-        peers[sourceDomainID][remoteContract] = localContract;
-        emit PeerAdded(sourceDomainID, remoteContract, localContract);
-    }
-
-    function removePeer(uint32 sourceDomainID, address remoteContract)
-        external
-        onlyGovernor
-    {
-        address localContract = peers[sourceDomainID][remoteContract];
-        delete peers[sourceDomainID][remoteContract];
-        emit PeerRemoved(sourceDomainID, remoteContract, localContract);
+    function _decodeMessageHeader(bytes memory message)
+        internal pure returns (
+            uint32 version,
+            uint32 sourceDomainID,
+            address sender,
+            address recipient,
+            bytes memory messageBody
+        ) {
+        version = message.extractSlice(VERSION_INDEX, VERSION_INDEX + 4).decodeUint32();
+        sourceDomainID = message.extractSlice(SOURCE_DOMAIN_INDEX, SOURCE_DOMAIN_INDEX + 4).decodeUint32();
+        // Address of MessageTransmitterV2 caller on source domain
+        sender = abi.decode(message.extractSlice(SENDER_INDEX, SENDER_INDEX + 32), (address));
+        // Address to handle message body on destination domain
+        recipient = abi.decode(message.extractSlice(RECIPIENT_INDEX, RECIPIENT_INDEX + 32), (address));
+        messageBody = message.extractSlice(MESSAGE_BODY_INDEX, message.length);
     }
 
     function relay(bytes memory message, bytes memory attestation) external {
-        // Ensure message version
-        uint32 version = message
-            .extractSlice(VERSION_INDEX, VERSION_INDEX + 4)
-            .decodeUint32();
+        (
+            uint32 version,
+            uint32 sourceDomainID,
+            address sender,
+            address recipient,
+            bytes memory messageBody
+        ) = _decodeMessageHeader(message);
 
         // Ensure that it's a CCTP message
         require(
@@ -90,70 +76,50 @@ contract CCTPHookWrapper is Governable {
             "Invalid CCTP message version"
         );
 
-        uint32 sourceDomainID = message
-            .extractSlice(SOURCE_DOMAIN_INDEX, SOURCE_DOMAIN_INDEX + 4)
-            .decodeUint32();
-
-        // Grab the message sender
-        address sender = abi.decode(
-            message.extractSlice(SENDER_INDEX, SENDER_INDEX + 32),
-            (address)
-        );
-
         // Ensure message body version
-        bytes memory messageBody = message.extractSlice(
-            MESSAGE_BODY_INDEX,
-            message.length
-        );
         bytes memory bodyVersionSlice = messageBody.extractSlice(
             BURN_MESSAGE_V2_VERSION_INDEX,
             BURN_MESSAGE_V2_VERSION_INDEX + 4
         );
         version = bodyVersionSlice.decodeUint32();
 
+        // TODO should we replace this with: 
+        // TODO: what if the sender sends another type of a message not just the burn message?
         bool isBurnMessageV1 = sender == address(cctpTokenMessenger);
 
         if (isBurnMessageV1) {
             // Handle burn message
-            // TODO: commenting this out as the BURN_MESSAGE_V2_MINT_RECIPIENT_INDEX is not defined
-            // require(
-            //     version == 1 &&
-            //         messageBody.length >= BURN_MESSAGE_V2_MINT_RECIPIENT_INDEX,
-            //     "Invalid burn message"
-            // );
+            require(
+                version == 1 &&
+                    messageBody.length >= BURN_MESSAGE_V2_HOOK_DATA_INDEX,
+                "Invalid burn message"
+            );
 
-            // Find sender
+            // Address of caller of depositForBurn (or depositForBurnWithCaller) on source domain
             bytes memory messageSender = messageBody.extractSlice(
                 BURN_MESSAGE_V2_MESSAGE_SENDER_INDEX,
                 BURN_MESSAGE_V2_MESSAGE_SENDER_INDEX + 32
             );
             sender = abi.decode(messageSender, (address));
         }
-        // TODO: check the sender even if it is not a burn message
-
-        address recipientContract = peers[sourceDomainID][sender];
 
         if (isBurnMessageV1) {
             bytes memory recipientSlice = messageBody.extractSlice(
                 BURN_MESSAGE_V2_RECIPIENT_INDEX,
                 BURN_MESSAGE_V2_RECIPIENT_INDEX + 32
             );
-            address whitelistedRecipient = abi.decode(
+            // TODO is this the same recipient as the one in the message header?
+            recipient = abi.decode(
                 recipientSlice,
                 (address)
             );
-            require(
-                whitelistedRecipient == recipientContract,
-                "Invalid recipient"
-            );
         }
 
-        require(
-            recipientContract != address(0),
-            "Sender is not a configured peer"
-        );
+        require(sender == recipient, "Sender and recipient must be the same");
+        require(sender == address(this), "Incorrect sender/recipient address");
 
         // Relay the message
+        // This step also mints USDC and transfers it to the recipient wallet
         bool relaySuccess = cctpMessageTransmitter.receiveMessage(
             message,
             attestation
@@ -178,11 +144,23 @@ contract CCTPHookWrapper is Governable {
             );
             uint256 feeExecuted = abi.decode(feeSlice, (uint256));
 
-            ICrossChainStrategy(recipientContract).onTokenReceived(
+            _onTokenReceived(
                 tokenAmount - feeExecuted,
                 feeExecuted,
                 hookData
             );
         }
     }
+
+    /**
+     * @dev Called when the USDC is received from the CCTP
+     * @param tokenAmount The actual amount of USDC received (amount sent - fee executed)
+     * @param feeExecuted The fee executed
+     * @param payload The payload of the message (hook data)
+     */
+    function _onTokenReceived(
+        uint256 tokenAmount,
+        uint256 feeExecuted,
+        bytes memory payload
+    ) internal virtual;
 }
