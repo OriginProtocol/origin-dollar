@@ -5,7 +5,7 @@ pragma solidity ^0.8.0;
  * @title OUSD Yearn V3 Remote Strategy - the L2 chain part
  * @author Origin Protocol Inc
  *
- * @dev This strategy can only perform 1 deposit or withdrawal at a time. For that 
+ * @dev This strategy can only perform 1 deposit or withdrawal at a time. For that
  *      reason it shouldn't be configured as an asset default strategy.
  */
 
@@ -21,16 +21,14 @@ contract CrossChainRemoteStrategy is
 {
     event DepositFailed(string reason);
     event WithdrawFailed(string reason);
-    
+
     using SafeERC20 for IERC20;
 
     constructor(
         BaseStrategyConfig memory _baseConfig,
         CCTPIntegrationConfig memory _cctpConfig
     )
-        AbstractCCTP4626Strategy(
-            _cctpConfig
-        )
+        AbstractCCTP4626Strategy(_cctpConfig)
         Generalized4626Strategy(_baseConfig, _cctpConfig.baseToken)
     {}
 
@@ -120,9 +118,18 @@ contract CrossChainRemoteStrategy is
         try IERC4626(platformAddress).deposit(_amount, address(this)) {
             emit Deposit(_asset, address(shareToken), _amount);
         } catch Error(string memory reason) {
-            emit DepositFailed(string(abi.encodePacked("Deposit failed: ", reason)));
+            emit DepositFailed(
+                string(abi.encodePacked("Deposit failed: ", reason))
+            );
         } catch (bytes memory lowLevelData) {
-            emit DepositFailed(string(abi.encodePacked("Deposit failed: low-level call failed with data ", lowLevelData)));
+            emit DepositFailed(
+                string(
+                    abi.encodePacked(
+                        "Deposit failed: low-level call failed with data ",
+                        lowLevelData
+                    )
+                )
+            );
         }
     }
 
@@ -155,7 +162,7 @@ contract CrossChainRemoteStrategy is
             _sendMessage(message);
         }
     }
-    
+
     /**
      * @dev Withdraw asset by burning shares
      * @param _recipient Address to receive withdrawn asset
@@ -175,12 +182,27 @@ contract CrossChainRemoteStrategy is
 
         // This call can fail, and the failure doesn't need to bubble up to the _processWithdrawMessage function
         // as the flow is not affected by the failure.
-        try IERC4626(platformAddress).withdraw(_amount, _recipient, address(this)) {
+        try
+            IERC4626(platformAddress).withdraw(
+                _amount,
+                _recipient,
+                address(this)
+            )
+        {
             emit Withdrawal(_asset, address(shareToken), _amount);
         } catch Error(string memory reason) {
-            emit WithdrawFailed(string(abi.encodePacked("Withdrawal failed: ", reason)));
+            emit WithdrawFailed(
+                string(abi.encodePacked("Withdrawal failed: ", reason))
+            );
         } catch (bytes memory lowLevelData) {
-            emit WithdrawFailed(string(abi.encodePacked("Withdrawal failed: low-level call failed with data ", lowLevelData)));
+            emit WithdrawFailed(
+                string(
+                    abi.encodePacked(
+                        "Withdrawal failed: low-level call failed with data ",
+                        lowLevelData
+                    )
+                )
+            );
         }
     }
 
@@ -220,11 +242,13 @@ contract CrossChainRemoteStrategy is
         require(_asset == baseToken, "Unexpected asset address");
         /**
          * Balance of USDC on the contract is counted towards the total balance, since a deposit
-         * to the Morpho V2 might fail and the USDC might remain on this contract as a result of a 
+         * to the Morpho V2 might fail and the USDC might remain on this contract as a result of a
          * bridged transfer.
          */
         uint256 balanceOnContract = IERC20(baseToken).balanceOf(address(this));
         IERC4626 platform = IERC4626(platformAddress);
-        return platform.previewRedeem(platform.balanceOf(address(this))) + balanceOnContract;
+        return
+            platform.previewRedeem(platform.balanceOf(address(this))) +
+            balanceOnContract;
     }
 }

@@ -8,18 +8,11 @@ pragma solidity ^0.8.0;
 
 import { AbstractCCTPIntegrator } from "./AbstractCCTPIntegrator.sol";
 
-abstract contract AbstractCCTP4626Strategy is
-    AbstractCCTPIntegrator
-{
-
-    constructor(
-        CCTPIntegrationConfig memory _config
-    )
-        AbstractCCTPIntegrator(
-            _config
-        )
+abstract contract AbstractCCTP4626Strategy is AbstractCCTPIntegrator {
+    constructor(CCTPIntegrationConfig memory _config)
+        AbstractCCTPIntegrator(_config)
     {}
-    
+
     function _encodeDepositMessage(uint64 nonce, uint256 depositAmount)
         internal
         virtual
@@ -38,7 +31,11 @@ abstract contract AbstractCCTP4626Strategy is
         virtual
         returns (uint64, uint256)
     {
-        _verifyMessageVersionAndType(message, ORIGIN_MESSAGE_VERSION, DEPOSIT_MESSAGE);
+        _verifyMessageVersionAndType(
+            message,
+            ORIGIN_MESSAGE_VERSION,
+            DEPOSIT_MESSAGE
+        );
 
         (uint64 nonce, uint256 depositAmount) = abi.decode(
             _getMessagePayload(message),
@@ -65,7 +62,11 @@ abstract contract AbstractCCTP4626Strategy is
         virtual
         returns (uint64, uint256)
     {
-        _verifyMessageVersionAndType(message, ORIGIN_MESSAGE_VERSION, WITHDRAW_MESSAGE);
+        _verifyMessageVersionAndType(
+            message,
+            ORIGIN_MESSAGE_VERSION,
+            WITHDRAW_MESSAGE
+        );
 
         (uint64 nonce, uint256 withdrawAmount) = abi.decode(
             _getMessagePayload(message),
@@ -92,7 +93,11 @@ abstract contract AbstractCCTP4626Strategy is
         virtual
         returns (uint64, uint256)
     {
-        _verifyMessageVersionAndType(message, ORIGIN_MESSAGE_VERSION, BALANCE_CHECK_MESSAGE);
+        _verifyMessageVersionAndType(
+            message,
+            ORIGIN_MESSAGE_VERSION,
+            BALANCE_CHECK_MESSAGE
+        );
 
         (uint64 nonce, uint256 balance) = abi.decode(
             _getMessagePayload(message),

@@ -1779,14 +1779,14 @@ const deployCrossChainMasterStrategyImpl = async (
         deployerAddr, // vault address
         // addresses.mainnet.VaultProxy,
       ],
-      [ 
+      [
         addresses.CCTPTokenMessengerV2,
         addresses.CCTPMessageTransmitterV2,
         targetDomainId,
         remoteStrategyAddress,
         baseToken,
         hookWrapperAddress,
-      ]
+      ],
     ]
   );
 
@@ -1849,7 +1849,7 @@ const deployCrossChainRemoteStrategyImpl = async (
         remoteStrategyAddress,
         baseToken,
         hookWrapperAddress,
-      ]
+      ],
     ]
   );
 

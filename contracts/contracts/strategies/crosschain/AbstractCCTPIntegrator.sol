@@ -11,7 +11,11 @@ import { BytesHelper } from "../../utils/BytesHelper.sol";
 import { CCTPMessageRelayer } from "./CCTPMessageRelayer.sol";
 import "../../utils/Helpers.sol";
 
-abstract contract AbstractCCTPIntegrator is Governable, IMessageHandlerV2, CCTPMessageRelayer {
+abstract contract AbstractCCTPIntegrator is
+    Governable,
+    IMessageHandlerV2,
+    CCTPMessageRelayer
+{
     using SafeERC20 for IERC20;
 
     using BytesHelper for bytes;
@@ -19,16 +23,11 @@ abstract contract AbstractCCTPIntegrator is Governable, IMessageHandlerV2, CCTPM
     event CCTPMinFinalityThresholdSet(uint32 minFinalityThreshold);
     event CCTPFeePremiumBpsSet(uint32 feePremiumBps);
 
-    uint32 public constant ORIGIN_MESSAGE_VERSION = 1010;
-
     uint32 public constant DEPOSIT_MESSAGE = 1;
     uint32 public constant DEPOSIT_ACK_MESSAGE = 10;
     uint32 public constant WITHDRAW_MESSAGE = 2;
     uint32 public constant WITHDRAW_ACK_MESSAGE = 20;
     uint32 public constant BALANCE_CHECK_MESSAGE = 3;
-
-    // CCTP Hook Wrapper
-    address public immutable cctpHookWrapper;
 
     // USDC address on local chain
     address public immutable baseToken;
@@ -67,18 +66,21 @@ abstract contract AbstractCCTPIntegrator is Governable, IMessageHandlerV2, CCTPM
         uint32 destinationDomain;
         address destinationStrategy;
         address baseToken;
-        address cctpHookWrapper;
     }
 
-    constructor(
-        CCTPIntegrationConfig memory _config
-    ) CCTPMessageRelayer(_config.cctpMessageTransmitter, _config.cctpTokenMessenger) {
+    constructor(CCTPIntegrationConfig memory _config)
+        CCTPMessageRelayer(
+            _config.cctpMessageTransmitter,
+            _config.cctpTokenMessenger
+        )
+    {
         cctpTokenMessenger = ICCTPTokenMessenger(_config.cctpTokenMessenger);
-        cctpMessageTransmitter = ICCTPMessageTransmitter(_config.cctpMessageTransmitter);
+        cctpMessageTransmitter = ICCTPMessageTransmitter(
+            _config.cctpMessageTransmitter
+        );
         destinationDomain = _config.destinationDomain;
         destinationStrategy = _config.destinationStrategy;
         baseToken = _config.baseToken;
-        cctpHookWrapper = _config.cctpHookWrapper;
 
         // Just a sanity check to ensure the base token is USDC
         uint256 _baseTokenDecimals = Helpers.getDecimals(_config.baseToken);
@@ -187,7 +189,7 @@ abstract contract AbstractCCTPIntegrator is Governable, IMessageHandlerV2, CCTPM
 
         // TODO: figure out why getMinFeeAmount is not on CCTP v2 contract
         // Ref: https://developers.circle.com/cctp/evm-smart-contracts#getminfeeamount
-        // The issue is that the getMinFeeAmount is not present on v2.0 contracts, but is on 
+        // The issue is that the getMinFeeAmount is not present on v2.0 contracts, but is on
         // v2.1. We will only be using standard transfers and fee on those is 0.
 
         uint256 maxFee = feePremiumBps > 0
@@ -199,7 +201,7 @@ abstract contract AbstractCCTPIntegrator is Governable, IMessageHandlerV2, CCTPM
             destinationDomain,
             bytes32(uint256(uint160(destinationStrategy))),
             address(baseToken),
-            bytes32(uint256(uint160(cctpHookWrapper))),
+            bytes32(uint256(uint160(destinationStrategy))),
             maxFee,
             minFinalityThreshold,
             hookData
@@ -226,15 +228,16 @@ abstract contract AbstractCCTPIntegrator is Governable, IMessageHandlerV2, CCTPM
         return message.extractSlice(4, 8).decodeUint32();
     }
 
-    function _verifyMessageVersionAndType(bytes memory _message, uint32 _version, uint32 _type) internal virtual {
+    function _verifyMessageVersionAndType(
+        bytes memory _message,
+        uint32 _version,
+        uint32 _type
+    ) internal virtual {
         require(
             _getMessageVersion(_message) == _version,
             "Invalid Origin Message Version"
         );
-        require(
-            _getMessageType(_message) == _type,
-            "Invalid Message type"
-        );
+        require(_getMessageType(_message) == _type, "Invalid Message type");
     }
 
     function _getMessagePayload(bytes memory message)
@@ -252,7 +255,7 @@ abstract contract AbstractCCTPIntegrator is Governable, IMessageHandlerV2, CCTPM
         cctpMessageTransmitter.sendMessage(
             destinationDomain,
             bytes32(uint256(uint160(destinationStrategy))),
-            bytes32(uint256(uint160(cctpHookWrapper))),
+            bytes32(uint256(uint160(destinationStrategy))),
             minFinalityThreshold,
             message
         );

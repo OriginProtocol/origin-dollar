@@ -24,12 +24,12 @@ abstract contract CCTPMessageRelayer {
     uint8 private constant BURN_MESSAGE_V2_MESSAGE_SENDER_INDEX = 100;
     uint8 private constant BURN_MESSAGE_V2_FEE_EXECUTED_INDEX = 164;
     uint8 private constant BURN_MESSAGE_V2_HOOK_DATA_INDEX = 228;
-    
+
     bytes32 private constant EMPTY_NONCE = bytes32(0);
     uint32 private constant EMPTY_FINALITY_THRESHOLD_EXECUTED = 0;
 
-    uint32 private constant CCTP_MESSAGE_VERSION = 1;
-    uint32 private constant ORIGIN_MESSAGE_VERSION = 1010;
+    uint32 public constant CCTP_MESSAGE_VERSION = 1;
+    uint32 public constant ORIGIN_MESSAGE_VERSION = 1010;
 
     // CCTP contracts
     // This implementation assumes that remote and local chains have these contracts
@@ -45,19 +45,32 @@ abstract contract CCTPMessageRelayer {
     }
 
     function _decodeMessageHeader(bytes memory message)
-        internal pure returns (
+        internal
+        pure
+        returns (
             uint32 version,
             uint32 sourceDomainID,
             address sender,
             address recipient,
             bytes memory messageBody
-        ) {
-        version = message.extractSlice(VERSION_INDEX, VERSION_INDEX + 4).decodeUint32();
-        sourceDomainID = message.extractSlice(SOURCE_DOMAIN_INDEX, SOURCE_DOMAIN_INDEX + 4).decodeUint32();
+        )
+    {
+        version = message
+            .extractSlice(VERSION_INDEX, VERSION_INDEX + 4)
+            .decodeUint32();
+        sourceDomainID = message
+            .extractSlice(SOURCE_DOMAIN_INDEX, SOURCE_DOMAIN_INDEX + 4)
+            .decodeUint32();
         // Address of MessageTransmitterV2 caller on source domain
-        sender = abi.decode(message.extractSlice(SENDER_INDEX, SENDER_INDEX + 32), (address));
+        sender = abi.decode(
+            message.extractSlice(SENDER_INDEX, SENDER_INDEX + 32),
+            (address)
+        );
         // Address to handle message body on destination domain
-        recipient = abi.decode(message.extractSlice(RECIPIENT_INDEX, RECIPIENT_INDEX + 32), (address));
+        recipient = abi.decode(
+            message.extractSlice(RECIPIENT_INDEX, RECIPIENT_INDEX + 32),
+            (address)
+        );
         messageBody = message.extractSlice(MESSAGE_BODY_INDEX, message.length);
     }
 
@@ -83,7 +96,7 @@ abstract contract CCTPMessageRelayer {
         );
         version = bodyVersionSlice.decodeUint32();
 
-        // TODO should we replace this with: 
+        // TODO should we replace this with:
         // TODO: what if the sender sends another type of a message not just the burn message?
         bool isBurnMessageV1 = sender == address(cctpTokenMessenger);
 
@@ -109,10 +122,7 @@ abstract contract CCTPMessageRelayer {
                 BURN_MESSAGE_V2_RECIPIENT_INDEX + 32
             );
             // TODO is this the same recipient as the one in the message header?
-            recipient = abi.decode(
-                recipientSlice,
-                (address)
-            );
+            recipient = abi.decode(recipientSlice, (address));
         }
 
         require(sender == recipient, "Sender and recipient must be the same");
@@ -144,11 +154,7 @@ abstract contract CCTPMessageRelayer {
             );
             uint256 feeExecuted = abi.decode(feeSlice, (uint256));
 
-            _onTokenReceived(
-                tokenAmount - feeExecuted,
-                feeExecuted,
-                hookData
-            );
+            _onTokenReceived(tokenAmount - feeExecuted, feeExecuted, hookData);
         }
     }
 

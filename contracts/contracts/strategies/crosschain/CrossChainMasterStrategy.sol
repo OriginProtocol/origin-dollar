@@ -4,8 +4,8 @@ pragma solidity ^0.8.0;
 /**
  * @title OUSD Yearn V3 Master Strategy - the Mainnet part
  * @author Origin Protocol Inc
- * 
- * @dev This strategy can only perform 1 deposit or withdrawal at a time. For that 
+ *
+ * @dev This strategy can only perform 1 deposit or withdrawal at a time. For that
  *      reason it shouldn't be configured as an asset default strategy.
  */
 
@@ -30,6 +30,7 @@ contract CrossChainMasterStrategy is
     mapping(uint64 => uint256) public transferAmounts;
 
     event RemoteStrategyBalanceUpdated(uint256 balance);
+
     /**
      * @param _stratConfig The platform and OToken vault addresses
      */
@@ -38,9 +39,7 @@ contract CrossChainMasterStrategy is
         CCTPIntegrationConfig memory _cctpConfig
     )
         InitializableAbstractStrategy(_stratConfig)
-        AbstractCCTP4626Strategy(
-            _cctpConfig
-        )
+        AbstractCCTP4626Strategy(_cctpConfig)
     {}
 
     // /**
@@ -163,8 +162,7 @@ contract CrossChainMasterStrategy is
         if (messageType == BALANCE_CHECK_MESSAGE) {
             // Received when Remote strategy checks the balance
             _processBalanceCheckMessage(payload);
-        }
-        else {
+        } else {
             revert("Unknown message type");
         }
     }
@@ -226,7 +224,7 @@ contract CrossChainMasterStrategy is
     }
 
     /**
-     * @dev process balance check serves 3 purposes: 
+     * @dev process balance check serves 3 purposes:
      *  - confirms a deposit to the remote strategy
      *  - confirms a withdrawal from the remote strategy
      *  - updates the remote strategy balance
@@ -240,11 +238,11 @@ contract CrossChainMasterStrategy is
 
         uint64 _lastCachedNonce = lastTransferNonce;
 
-        /** 
+        /**
          * Either a deposit or withdrawal are being confirmed.
          * Since only one transfer is allowed to be pending at a time we can apply the effects
          * of deposit or withdrawal acknowledgement.
-         */ 
+         */
         if (nonce == _lastCachedNonce && !isNonceProcessed(nonce)) {
             _markNonceAsProcessed(nonce);
 
@@ -258,7 +256,7 @@ contract CrossChainMasterStrategy is
             if (usdcBalance > 1e6) {
                 IERC20(baseToken).safeTransfer(vaultAddress, usdcBalance);
             }
-        } 
+        }
         // Nonces match and are confirmed meaning it is just a balance update
         else if (nonce == _lastCachedNonce) {
             // Update balance
