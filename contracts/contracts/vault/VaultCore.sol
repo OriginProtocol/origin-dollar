@@ -277,7 +277,9 @@ contract VaultCore is VaultInitializer {
         // The check that the requester has enough OToken is done in to later burn call
 
         requestId = withdrawalQueueMetadata.nextWithdrawalIndex;
-        queued = withdrawalQueueMetadata.queued + _amount;
+        queued =
+            withdrawalQueueMetadata.queued +
+            _amount.scaleBy(backingAssetDecimals, 18);
 
         // Store the next withdrawal request
         withdrawalQueueMetadata.nextWithdrawalIndex = SafeCast.toUint128(
@@ -287,6 +289,7 @@ contract VaultCore is VaultInitializer {
         // and reduces the vault's total backingAsset
         withdrawalQueueMetadata.queued = SafeCast.toUint128(queued);
         // Store the user's withdrawal request
+        // `queued` is in backingAsset decimals, while `amount` is in OToken decimals (18)
         withdrawalRequests[requestId] = WithdrawalRequest({
             withdrawer: msg.sender,
             claimed: false,
@@ -336,13 +339,14 @@ contract VaultCore is VaultInitializer {
             _addWithdrawalQueueLiquidity();
         }
 
-        amount = _claimWithdrawal(_requestId);
+        // Scale amount to backingAsset decimals
+        amount = _claimWithdrawal(_requestId).scaleBy(backingAssetDecimals, 18);
 
         // transfer backingAsset from the vault to the withdrawer
         IERC20(backingAsset).safeTransfer(msg.sender, amount);
 
         // Prevent insolvency
-        _postRedeem(amount);
+        _postRedeem(amount.scaleBy(18, backingAssetDecimals));
     }
 
     // slither-disable-end reentrancy-no-eth
@@ -374,7 +378,11 @@ contract VaultCore is VaultInitializer {
 
         amounts = new uint256[](_requestIds.length);
         for (uint256 i; i < _requestIds.length; ++i) {
-            amounts[i] = _claimWithdrawal(_requestIds[i]);
+            // Scale all amounts to backingAsset decimals, thus totalAmount is also in backingAsset decimals
+            amounts[i] = _claimWithdrawal(_requestIds[i]).scaleBy(
+                backingAssetDecimals,
+                18
+            );
             totalAmount += amounts[i];
         }
 
@@ -382,7 +390,9 @@ contract VaultCore is VaultInitializer {
         IERC20(backingAsset).safeTransfer(msg.sender, totalAmount);
 
         // Prevent insolvency
-        _postRedeem(totalAmount);
+        _postRedeem(totalAmount.scaleBy(18, backingAssetDecimals));
+
+        return (amounts, totalAmount);
     }
 
     function _claimWithdrawal(uint256 requestId)
@@ -407,7 +417,11 @@ contract VaultCore is VaultInitializer {
         // Store the request as claimed
         withdrawalRequests[requestId].claimed = true;
         // Store the updated claimed amount
-        withdrawalQueueMetadata.claimed = queue.claimed + request.amount;
+        withdrawalQueueMetadata.claimed =
+            queue.claimed +
+            SafeCast.toUint128(
+                StableMath.scaleBy(request.amount, backingAssetDecimals, 18)
+            );
 
         emit WithdrawalClaimed(msg.sender, requestId, request.amount);
 
@@ -725,18 +739,20 @@ contract VaultCore is VaultInitializer {
             return 0;
         }
 
-        uint256 wethBalance = IERC20(backingAsset).balanceOf(address(this));
+        uint256 backingAssetBalance = IERC20(backingAsset).balanceOf(
+            address(this)
+        );
 
         // Of the claimable withdrawal requests, how much is unclaimed?
         // That is, the amount of backingAsset that is currently allocated for the withdrawal queue
         uint256 allocatedBaseAsset = queue.claimable - queue.claimed;
 
         // If there is no unallocated backingAsset then there is nothing to add to the queue
-        if (wethBalance <= allocatedBaseAsset) {
+        if (backingAssetBalance <= allocatedBaseAsset) {
             return 0;
         }
 
-        uint256 unallocatedBaseAsset = wethBalance - allocatedBaseAsset;
+        uint256 unallocatedBaseAsset = backingAssetBalance - allocatedBaseAsset;
         // the new claimable amount is the smaller of the queue shortfall or unallocated backingAsset
         addedClaimable = queueShortfall < unallocatedBaseAsset
             ? queueShortfall
