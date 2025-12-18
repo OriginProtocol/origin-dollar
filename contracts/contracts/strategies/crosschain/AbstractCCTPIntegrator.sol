@@ -8,13 +8,13 @@ import { ICCTPTokenMessenger, ICCTPMessageTransmitter, IMessageHandlerV2 } from 
 
 import { Governable } from "../../governance/Governable.sol";
 import { BytesHelper } from "../../utils/BytesHelper.sol";
-import { CCTPMessageRelayer } from "./CCTPMessageRelayer.sol";
+import { AbstractCCTPMessageRelayer } from "./AbstractCCTPMessageRelayer.sol";
 import "../../utils/Helpers.sol";
 
 abstract contract AbstractCCTPIntegrator is
     Governable,
     IMessageHandlerV2,
-    CCTPMessageRelayer
+    AbstractCCTPMessageRelayer
 {
     using SafeERC20 for IERC20;
 
@@ -22,12 +22,6 @@ abstract contract AbstractCCTPIntegrator is
 
     event CCTPMinFinalityThresholdSet(uint32 minFinalityThreshold);
     event CCTPFeePremiumBpsSet(uint32 feePremiumBps);
-
-    uint32 public constant DEPOSIT_MESSAGE = 1;
-    uint32 public constant DEPOSIT_ACK_MESSAGE = 10;
-    uint32 public constant WITHDRAW_MESSAGE = 2;
-    uint32 public constant WITHDRAW_ACK_MESSAGE = 20;
-    uint32 public constant BALANCE_CHECK_MESSAGE = 3;
 
     // USDC address on local chain
     address public immutable baseToken;

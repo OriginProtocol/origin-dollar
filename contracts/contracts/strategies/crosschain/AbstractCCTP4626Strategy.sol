@@ -9,6 +9,10 @@ pragma solidity ^0.8.0;
 import { AbstractCCTPIntegrator } from "./AbstractCCTPIntegrator.sol";
 
 abstract contract AbstractCCTP4626Strategy is AbstractCCTPIntegrator {
+    uint32 public constant DEPOSIT_MESSAGE = 1;
+    uint32 public constant WITHDRAW_MESSAGE = 2;
+    uint32 public constant BALANCE_CHECK_MESSAGE = 3;
+
     constructor(CCTPIntegrationConfig memory _config)
         AbstractCCTPIntegrator(_config)
     {}

@@ -4,7 +4,7 @@ pragma solidity ^0.8.0;
 import { ICCTPTokenMessenger, ICCTPMessageTransmitter } from "../../interfaces/cctp/ICCTP.sol";
 import { BytesHelper } from "../../utils/BytesHelper.sol";
 
-abstract contract CCTPMessageRelayer {
+abstract contract AbstractCCTPMessageRelayer {
     using BytesHelper for bytes;
 
     // CCTP Message Header fields
@@ -77,6 +77,7 @@ abstract contract CCTPMessageRelayer {
     function relay(bytes memory message, bytes memory attestation) external {
         (
             uint32 version,
+            // solhint-disable-next-line no-unused-vars
             uint32 sourceDomainID,
             address sender,
             address recipient,
