@@ -100,7 +100,12 @@ module.exports = deploymentWithGovernanceProposal(
     // Governance Actions
     // ----------------
     return {
-      name: "Upgrade Morpho Steakhouse and Gauntlet Prime Strategies to claim MORPHO rewards from Merkl",
+      name: `Upgrade Morpho Steakhouse and Gauntlet Prime Strategies to claim MORPHO rewards from Merkl.
+Remove the Morpho Steakhouse Strategy.
+Set the Morpho Gauntlet Prime USDC strategy as the default for USDC
+Add new Morpho OUSD v2 Strategy and deposit 10k USDC.
+Change the redeem fee from 0.25% to 0.1%.
+`,
       actions: [
         {
           // 1. Upgrade Morpho Steakhouse USDC Strategy
