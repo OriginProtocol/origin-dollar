@@ -132,6 +132,43 @@ module.exports = deploymentWithGovernanceProposal(
           signature: "setHarvesterAddress(address)",
           args: [addresses.multichainBuybackOperator],
         },
+        {
+          // 6. Set the Morpho Gauntlet Prime USDC strategy as the default for USDC
+          contract: cVaultAdmin,
+          signature: "setAssetDefaultStrategy(address,address)",
+          args: [
+            addresses.mainnet.USDC,
+            dMorphoGauntletPrimeUSDCStrategyProxy.address,
+          ],
+        },
+        {
+          // 7. Withdraw all from the Morpho Steakhouse strategy
+          contract: cVaultAdmin,
+          signature: "withdrawAllFromStrategy(address)",
+          args: [dMorphoSteakhouseUSDCStrategyProxy.address],
+        },
+        {
+          // 8. Remove the Morpho Steakhouse strategy
+          contract: cVaultAdmin,
+          signature: "removeStrategy(address)",
+          args: [dMorphoSteakhouseUSDCStrategyProxy.address],
+        },
+        {
+          // 9. Deposit 10k to the new Morpho OUSD v2 strategy
+          contract: cVaultAdmin,
+          signature: "depositToStrategy(address,address[],uint256[])",
+          args: [
+            cOUSDMorphoV2Strategy.address,
+            [addresses.mainnet.USDC],
+            ["10000000000"], // 10,000 USDC with 6 decimals
+          ],
+        },
+        {
+          // 10. Change the redeem fee from 0.25% to 0.1%
+          contract: cVaultAdmin,
+          signature: "setRedeemFeeBps(uint256)",
+          args: [10],
+        },
       ],
     };
   }
