@@ -106,7 +106,7 @@ abstract contract VaultCore is VaultInitializer {
 
     /**
      * @notice Mint OTokens for an allowed Strategy
-     * @param _amount Amount of the asset being deposited
+     * @param _amount Amount of OToken to mint
      *
      * Todo: Maybe this is a comment that we can remove now?
      * Notice: can't use `nonReentrant` modifier since the `mint` function can
