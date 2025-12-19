@@ -1,20 +1,15 @@
 const { expect } = require("chai");
 const { formatUnits, parseUnits } = require("ethers/lib/utils");
 
-const { getMerklRewards } = require("../../tasks/merkl");
 const addresses = require("../../utils/addresses");
+const { getMerklRewards } = require("../../tasks/merkl");
 const { units, isCI } = require("../helpers");
 
-const {
-  createFixtureLoader,
-  morphoGauntletPrimeUSDCFixture,
-} = require("../_fixture");
+const { createFixtureLoader, morphoOUSDv2Fixture } = require("../_fixture");
 
-const log = require("../../utils/logger")(
-  "test:fork:ousd-morpho-gauntlet-usdc"
-);
+const log = require("../../utils/logger")("test:fork:ousd-v2-morpho");
 
-describe("ForkTest: Morpho Gauntlet Prime USDC Strategy", function () {
+describe("ForkTest: Yearn's Morpho OUSD v2 Strategy", function () {
   this.timeout(0);
 
   // Retry up to 3 times on CI
@@ -23,44 +18,38 @@ describe("ForkTest: Morpho Gauntlet Prime USDC Strategy", function () {
   let fixture;
 
   describe("post deployment", () => {
-    const loadFixture = createFixtureLoader(morphoGauntletPrimeUSDCFixture);
+    const loadFixture = createFixtureLoader(morphoOUSDv2Fixture);
     beforeEach(async () => {
       fixture = await loadFixture();
     });
     it("Should have constants and immutables set", async () => {
-      const { vault, morphoGauntletPrimeUSDCStrategy } = fixture;
+      const { vault, morphoOUSDv2Strategy } = fixture;
 
-      expect(await morphoGauntletPrimeUSDCStrategy.platformAddress()).to.equal(
-        addresses.mainnet.MorphoGauntletPrimeUSDCVault
+      expect(await morphoOUSDv2Strategy.platformAddress()).to.equal(
+        addresses.mainnet.MorphoOUSDv2Vault
       );
-      expect(await morphoGauntletPrimeUSDCStrategy.vaultAddress()).to.equal(
-        vault.address
+      expect(await morphoOUSDv2Strategy.vaultAddress()).to.equal(vault.address);
+      expect(await morphoOUSDv2Strategy.shareToken()).to.equal(
+        addresses.mainnet.MorphoOUSDv2Vault
       );
-      expect(await morphoGauntletPrimeUSDCStrategy.shareToken()).to.equal(
-        addresses.mainnet.MorphoGauntletPrimeUSDCVault
-      );
-      expect(await morphoGauntletPrimeUSDCStrategy.assetToken()).to.equal(
+      expect(await morphoOUSDv2Strategy.assetToken()).to.equal(
         addresses.mainnet.USDC
       );
       expect(
-        await morphoGauntletPrimeUSDCStrategy.supportsAsset(
-          addresses.mainnet.USDC
-        )
+        await morphoOUSDv2Strategy.supportsAsset(addresses.mainnet.USDC)
       ).to.equal(true);
       expect(
-        await morphoGauntletPrimeUSDCStrategy.assetToPToken(
-          addresses.mainnet.USDC
-        )
-      ).to.equal(addresses.mainnet.MorphoGauntletPrimeUSDCVault);
-      expect(await morphoGauntletPrimeUSDCStrategy.governor()).to.equal(
+        await morphoOUSDv2Strategy.assetToPToken(addresses.mainnet.USDC)
+      ).to.equal(addresses.mainnet.MorphoOUSDv2Vault);
+      expect(await morphoOUSDv2Strategy.governor()).to.equal(
         addresses.mainnet.Timelock
       );
     });
     it("Should be able to check balance", async () => {
-      const { usdc, josh, morphoGauntletPrimeUSDCStrategy } = fixture;
+      const { usdc, josh, morphoOUSDv2Strategy } = fixture;
 
       // This uses a transaction to call a view function so the gas usage can be reported.
-      const tx = await morphoGauntletPrimeUSDCStrategy
+      const tx = await morphoOUSDv2Strategy
         .connect(josh)
         .populateTransaction.checkBalance(usdc.address);
       await josh.sendTransaction(tx);
@@ -73,13 +62,13 @@ describe("ForkTest: Morpho Gauntlet Prime USDC Strategy", function () {
         josh,
         daniel,
         domen,
-        morphoGauntletPrimeUSDCStrategy,
+        morphoOUSDv2Strategy,
         usdc,
         vaultSigner,
       } = fixture;
 
       // Governor can approve all tokens
-      const tx = await morphoGauntletPrimeUSDCStrategy
+      const tx = await morphoOUSDv2Strategy
         .connect(timelock)
         .safeApproveAllTokens();
       await expect(tx).to.emit(usdc, "Approval");
@@ -92,16 +81,14 @@ describe("ForkTest: Morpho Gauntlet Prime USDC Strategy", function () {
         oldTimelock,
         vaultSigner,
       ]) {
-        const tx = morphoGauntletPrimeUSDCStrategy
-          .connect(signer)
-          .safeApproveAllTokens();
+        const tx = morphoOUSDv2Strategy.connect(signer).safeApproveAllTokens();
         await expect(tx).to.be.revertedWith("Caller is not the Governor");
       }
     });
   });
 
   describe("with some USDC in the vault", () => {
-    const loadFixture = createFixtureLoader(morphoGauntletPrimeUSDCFixture, {
+    const loadFixture = createFixtureLoader(morphoOUSDv2Fixture, {
       usdcMintAmount: 12000,
       depositToStrategy: false,
     });
@@ -113,36 +100,37 @@ describe("ForkTest: Morpho Gauntlet Prime USDC Strategy", function () {
       const {
         usdc,
         ousd,
-        morphoGauntletPrimeUSDCStrategy,
+        morphoOUSDv2Strategy,
         vault,
         strategist,
         vaultSigner,
       } = fixture;
 
-      const checkBalanceBefore =
-        await morphoGauntletPrimeUSDCStrategy.checkBalance(usdc.address);
+      const checkBalanceBefore = await morphoOUSDv2Strategy.checkBalance(
+        usdc.address
+      );
 
       const usdcDepositAmount = await units("1000", usdc);
 
       // Vault transfers USDC to strategy
       await usdc
         .connect(vaultSigner)
-        .transfer(morphoGauntletPrimeUSDCStrategy.address, usdcDepositAmount);
+        .transfer(morphoOUSDv2Strategy.address, usdcDepositAmount);
 
       await vault.connect(strategist).rebase();
 
       const ousdSupplyBefore = await ousd.totalSupply();
 
-      const tx = await morphoGauntletPrimeUSDCStrategy
+      const tx = await morphoOUSDv2Strategy
         .connect(vaultSigner)
         .deposit(usdc.address, usdcDepositAmount);
 
       // Check emitted event
       await expect(tx)
-        .to.emit(morphoGauntletPrimeUSDCStrategy, "Deposit")
+        .to.emit(morphoOUSDv2Strategy, "Deposit")
         .withArgs(
           usdc.address,
-          addresses.mainnet.MorphoGauntletPrimeUSDCVault,
+          addresses.mainnet.MorphoOUSDv2Vault,
           usdcDepositAmount
         );
 
@@ -153,7 +141,7 @@ describe("ForkTest: Morpho Gauntlet Prime USDC Strategy", function () {
         0.1 // 0.1% or 10 basis point
       );
       expect(
-        await morphoGauntletPrimeUSDCStrategy.checkBalance(usdc.address)
+        await morphoOUSDv2Strategy.checkBalance(usdc.address)
       ).to.approxEqualTolerance(
         checkBalanceBefore.add(usdcDepositAmount),
         0.01
@@ -162,7 +150,7 @@ describe("ForkTest: Morpho Gauntlet Prime USDC Strategy", function () {
     it("Only vault can deposit some USDC to the strategy", async function () {
       const {
         usdc,
-        morphoGauntletPrimeUSDCStrategy,
+        morphoOUSDv2Strategy,
         vaultSigner,
         strategist,
         timelock,
@@ -173,10 +161,10 @@ describe("ForkTest: Morpho Gauntlet Prime USDC Strategy", function () {
       const depositAmount = await units("50", usdc);
       await usdc
         .connect(vaultSigner)
-        .transfer(morphoGauntletPrimeUSDCStrategy.address, depositAmount);
+        .transfer(morphoOUSDv2Strategy.address, depositAmount);
 
       for (const signer of [strategist, oldTimelock, timelock, josh]) {
-        const tx = morphoGauntletPrimeUSDCStrategy
+        const tx = morphoOUSDv2Strategy
           .connect(signer)
           .deposit(usdc.address, depositAmount);
 
@@ -186,7 +174,7 @@ describe("ForkTest: Morpho Gauntlet Prime USDC Strategy", function () {
     it("Only vault can deposit all USDC to strategy", async function () {
       const {
         usdc,
-        morphoGauntletPrimeUSDCStrategy,
+        morphoOUSDv2Strategy,
         vaultSigner,
         strategist,
         timelock,
@@ -197,23 +185,21 @@ describe("ForkTest: Morpho Gauntlet Prime USDC Strategy", function () {
       const depositAmount = await units("50", usdc);
       await usdc
         .connect(vaultSigner)
-        .transfer(morphoGauntletPrimeUSDCStrategy.address, depositAmount);
+        .transfer(morphoOUSDv2Strategy.address, depositAmount);
 
       for (const signer of [strategist, oldTimelock, timelock, josh]) {
-        const tx = morphoGauntletPrimeUSDCStrategy.connect(signer).depositAll();
+        const tx = morphoOUSDv2Strategy.connect(signer).depositAll();
 
         await expect(tx).to.revertedWith("Caller is not the Vault");
       }
 
-      const tx = await morphoGauntletPrimeUSDCStrategy
-        .connect(vaultSigner)
-        .depositAll();
-      await expect(tx).to.emit(morphoGauntletPrimeUSDCStrategy, "Deposit");
+      const tx = await morphoOUSDv2Strategy.connect(vaultSigner).depositAll();
+      await expect(tx).to.emit(morphoOUSDv2Strategy, "Deposit");
     });
   });
 
-  describe("with the strategy having some USDC in MetaMorpho Strategy", () => {
-    const loadFixture = createFixtureLoader(morphoGauntletPrimeUSDCFixture, {
+  describe("with the strategy having some USDC in Morpho Strategy", () => {
+    const loadFixture = createFixtureLoader(morphoOUSDv2Fixture, {
       usdcMintAmount: 12000,
       depositToStrategy: true,
     });
@@ -224,20 +210,26 @@ describe("ForkTest: Morpho Gauntlet Prime USDC Strategy", function () {
     it("Vault should be able to withdraw all", async () => {
       const {
         usdc,
-        morphoGauntletPrimeUSDCVault,
-        morphoGauntletPrimeUSDCStrategy,
+        morphoOUSDv2Vault,
+        morphoOUSDv2Strategy,
         ousd,
         vault,
         vaultSigner,
       } = fixture;
 
+      const minBalance = await units("12000", usdc);
+      const strategyVaultShares = await morphoOUSDv2Vault.balanceOf(
+        morphoOUSDv2Strategy.address
+      );
       const usdcWithdrawAmountExpected =
-        await morphoGauntletPrimeUSDCVault.maxWithdraw(
-          morphoGauntletPrimeUSDCStrategy.address
-        );
+        await morphoOUSDv2Vault.convertToAssets(strategyVaultShares);
+      expect(usdcWithdrawAmountExpected).to.be.gte(minBalance.sub(1));
 
       log(
-        `Expected to withdraw ${formatUnits(usdcWithdrawAmountExpected)} USDC`
+        `Expected to withdraw ${formatUnits(
+          usdcWithdrawAmountExpected,
+          6
+        )} USDC`
       );
 
       const ousdSupplyBefore = await ousd.totalSupply();
@@ -246,16 +238,14 @@ describe("ForkTest: Morpho Gauntlet Prime USDC Strategy", function () {
       log("Before withdraw all from strategy");
 
       // Now try to withdraw all the WETH from the strategy
-      const tx = await morphoGauntletPrimeUSDCStrategy
-        .connect(vaultSigner)
-        .withdrawAll();
+      const tx = await morphoOUSDv2Strategy.connect(vaultSigner).withdrawAll();
 
       log("After withdraw all from strategy");
 
       // Check emitted event
       await expect(tx).to.emittedEvent("Withdrawal", [
         usdc.address,
-        morphoGauntletPrimeUSDCVault.address,
+        morphoOUSDv2Vault.address,
         (amount) =>
           expect(amount).approxEqualTolerance(
             usdcWithdrawAmountExpected,
@@ -279,8 +269,8 @@ describe("ForkTest: Morpho Gauntlet Prime USDC Strategy", function () {
     it("Vault should be able to withdraw some USDC", async () => {
       const {
         usdc,
-        morphoGauntletPrimeUSDCVault,
-        morphoGauntletPrimeUSDCStrategy,
+        morphoOUSDv2Vault,
+        morphoOUSDv2Strategy,
         ousd,
         vault,
         vaultSigner,
@@ -291,10 +281,10 @@ describe("ForkTest: Morpho Gauntlet Prime USDC Strategy", function () {
       const ousdSupplyBefore = await ousd.totalSupply();
       const vaultUSDCBalanceBefore = await usdc.balanceOf(vault.address);
 
-      log(`Before withdraw of ${formatUnits(withdrawAmount)} from strategy`);
+      log(`Before withdraw of ${formatUnits(withdrawAmount, 6)} from strategy`);
 
       // Now try to withdraw the USDC from the strategy
-      const tx = await morphoGauntletPrimeUSDCStrategy
+      const tx = await morphoOUSDv2Strategy
         .connect(vaultSigner)
         .withdraw(vault.address, usdc.address, withdrawAmount);
 
@@ -302,12 +292,8 @@ describe("ForkTest: Morpho Gauntlet Prime USDC Strategy", function () {
 
       // Check emitted event
       await expect(tx)
-        .to.emit(morphoGauntletPrimeUSDCStrategy, "Withdrawal")
-        .withArgs(
-          usdc.address,
-          morphoGauntletPrimeUSDCVault.address,
-          withdrawAmount
-        );
+        .to.emit(morphoOUSDv2Strategy, "Withdrawal")
+        .withArgs(usdc.address, morphoOUSDv2Vault.address, withdrawAmount);
 
       // Check the OUSD total supply stays the same
       const ousdSupplyAfter = await ousd.totalSupply();
@@ -323,7 +309,7 @@ describe("ForkTest: Morpho Gauntlet Prime USDC Strategy", function () {
     });
     it("Only vault can withdraw some USDC from strategy", async function () {
       const {
-        morphoGauntletPrimeUSDCStrategy,
+        morphoOUSDv2Strategy,
         oethVault,
         strategist,
         timelock,
@@ -333,7 +319,7 @@ describe("ForkTest: Morpho Gauntlet Prime USDC Strategy", function () {
       } = fixture;
 
       for (const signer of [strategist, timelock, oldTimelock, josh]) {
-        const tx = morphoGauntletPrimeUSDCStrategy
+        const tx = morphoOUSDv2Strategy
           .connect(signer)
           .withdraw(oethVault.address, weth.address, parseUnits("50"));
 
@@ -341,96 +327,73 @@ describe("ForkTest: Morpho Gauntlet Prime USDC Strategy", function () {
       }
     });
     it("Only vault and governor can withdraw all USDC from Maker DSR strategy", async function () {
-      const { morphoGauntletPrimeUSDCStrategy, strategist, timelock, josh } =
-        fixture;
+      const { morphoOUSDv2Strategy, strategist, timelock, josh } = fixture;
 
       for (const signer of [strategist, josh]) {
-        const tx = morphoGauntletPrimeUSDCStrategy
-          .connect(signer)
-          .withdrawAll();
+        const tx = morphoOUSDv2Strategy.connect(signer).withdrawAll();
 
         await expect(tx).to.revertedWith("Caller is not the Vault or Governor");
       }
 
       // Governor can withdraw all
-      const tx = morphoGauntletPrimeUSDCStrategy
-        .connect(timelock)
-        .withdrawAll();
-      await expect(tx).to.emit(morphoGauntletPrimeUSDCStrategy, "Withdrawal");
+      const tx = morphoOUSDv2Strategy.connect(timelock).withdrawAll();
+      await expect(tx).to.emit(morphoOUSDv2Strategy, "Withdrawal");
     });
   });
 
   describe("claim and collect MORPHO rewards", () => {
-    const loadFixture = createFixtureLoader(morphoGauntletPrimeUSDCFixture);
+    const loadFixture = createFixtureLoader(morphoOUSDv2Fixture);
     beforeEach(async () => {
       fixture = await loadFixture();
     });
     it("Should claim MORPHO rewards", async () => {
-      const { josh, morphoGauntletPrimeUSDCStrategy, morphoToken } = fixture;
+      const { josh, morphoOUSDv2Strategy, morphoToken } = fixture;
 
       const { amount, proofs } = await getMerklRewards({
-        userAddress: morphoGauntletPrimeUSDCStrategy.address,
+        userAddress: morphoOUSDv2Strategy.address,
         chainId: 1,
       });
       log(`MORPHO rewards available to claim: ${formatUnits(amount, 18)}`);
 
-      const tx = await morphoGauntletPrimeUSDCStrategy
-        .connect(josh)
-        .merkleClaim(morphoToken.address, amount, proofs);
-      await expect(tx)
-        .to.emit(morphoGauntletPrimeUSDCStrategy, "ClaimedRewards")
-        .withArgs(morphoToken.address, amount);
+      if (amount != "0") {
+        const tx = await morphoOUSDv2Strategy
+          .connect(josh)
+          .merkleClaim(morphoToken.address, amount, proofs);
+        await expect(tx)
+          .to.emit(morphoOUSDv2Strategy, "ClaimedRewards")
+          .withArgs(morphoToken.address, amount);
+      }
     });
 
     it("Should be able to collect MORPHO rewards", async () => {
-      const { strategist, josh, morphoGauntletPrimeUSDCStrategy, morphoToken } =
+      const { buyBackSigner, josh, morphoOUSDv2Strategy, morphoToken } =
         fixture;
 
       const { amount, proofs } = await getMerklRewards({
-        userAddress: morphoGauntletPrimeUSDCStrategy.address,
+        userAddress: morphoOUSDv2Strategy.address,
         chainId: 1,
       });
       log(`MORPHO rewards available to claim: ${formatUnits(amount, 18)}`);
 
-      await morphoGauntletPrimeUSDCStrategy
-        .connect(josh)
-        .merkleClaim(morphoToken.address, amount, proofs);
+      if (amount != "0") {
+        await morphoOUSDv2Strategy
+          .connect(josh)
+          .merkleClaim(morphoToken.address, amount, proofs);
+      }
 
-      const tx = await morphoGauntletPrimeUSDCStrategy
-        .connect(strategist)
+      const tx = await morphoOUSDv2Strategy
+        .connect(buyBackSigner)
         .collectRewardTokens();
 
-      await expect(tx)
-        .to.emit(morphoToken, "Transfer")
-        .withArgs(
-          morphoGauntletPrimeUSDCStrategy.address,
-          strategist.address,
-          amount
-        );
-    });
-  });
-
-  describe("administration", () => {
-    const loadFixture = createFixtureLoader(morphoGauntletPrimeUSDCFixture);
-    beforeEach(async () => {
-      fixture = await loadFixture();
-    });
-    it("Governor should not be able to set the platform token", () => {
-      const { frxETH, sfrxETH, morphoGauntletPrimeUSDCStrategy, timelock } =
-        fixture;
-
-      const tx = morphoGauntletPrimeUSDCStrategy
-        .connect(timelock)
-        .setPTokenAddress(frxETH.address, sfrxETH.address);
-      expect(tx).to.be.revertedWith("unsupported function");
-    });
-    it("Governor should not be able to remove the platform token", () => {
-      const { morphoGauntletPrimeUSDCStrategy, timelock } = fixture;
-
-      const tx = morphoGauntletPrimeUSDCStrategy
-        .connect(timelock)
-        .removePToken(0);
-      expect(tx).to.be.revertedWith("unsupported function");
+      if (amount != "0") {
+        await expect(tx)
+          .to.emit(morphoToken, "Transfer")
+          .withArgs(
+            morphoOUSDv2Strategy.address,
+            buyBackSigner.address,
+            amount
+          );
+      }
     });
   });
 });
