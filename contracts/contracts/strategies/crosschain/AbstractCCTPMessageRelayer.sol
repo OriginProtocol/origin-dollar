@@ -97,7 +97,6 @@ abstract contract AbstractCCTPMessageRelayer {
         );
         version = bodyVersionSlice.decodeUint32();
 
-        // TODO should we replace this with:
         // TODO: what if the sender sends another type of a message not just the burn message?
         bool isBurnMessageV1 = sender == address(cctpTokenMessenger);
 
@@ -120,7 +119,7 @@ abstract contract AbstractCCTPMessageRelayer {
                 BURN_MESSAGE_V2_RECIPIENT_INDEX,
                 BURN_MESSAGE_V2_RECIPIENT_INDEX + 32
             );
-            // TODO is this the same recipient as the one in the message header?
+
             recipient = abi.decode(recipientSlice, (address));
         } else {
             // We handle only Burn message or our custom messagee
