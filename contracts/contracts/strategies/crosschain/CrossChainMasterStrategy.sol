@@ -47,6 +47,21 @@ contract CrossChainMasterStrategy is
         AbstractCCTPIntegrator(_cctpConfig)
     {}
 
+
+    function initialize(address _operator, uint32 _minFinalityThreshold, uint32 _feePremiumBps) external virtual onlyGovernor initializer {
+        _initialize(_operator, _minFinalityThreshold, _feePremiumBps);
+
+        address[] memory rewardTokens = new address[](0);
+        address[] memory assets = new address[](0);
+        address[] memory pTokens = new address[](0);
+
+        InitializableAbstractStrategy._initialize(
+            rewardTokens,
+            assets,
+            pTokens
+        );
+    }
+
     // /**
     //  * @dev Returns the address of the Remote part of the strategy on L2
     //  */

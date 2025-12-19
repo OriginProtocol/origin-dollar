@@ -36,6 +36,7 @@ abstract contract AbstractCCTPIntegrator is Governable, IMessageHandlerV2 {
 
     event CCTPMinFinalityThresholdSet(uint32 minFinalityThreshold);
     event CCTPFeePremiumBpsSet(uint32 feePremiumBps);
+    event OperatorChanged(address operator);
 
     // CCTP contracts
     // This implementation assumes that remote and local chains have these contracts
@@ -63,6 +64,8 @@ abstract contract AbstractCCTPIntegrator is Governable, IMessageHandlerV2 {
 
     mapping(uint64 => bool) private nonceProcessed;
 
+    address public operator;
+
     // For future use
     uint256[50] private __gap;
 
@@ -71,6 +74,11 @@ abstract contract AbstractCCTPIntegrator is Governable, IMessageHandlerV2 {
             msg.sender == address(cctpMessageTransmitter),
             "Caller is not the CCTP message transmitter"
         );
+        _;
+    }
+
+    modifier onlyOperator() {
+        require(msg.sender == operator, "Caller is not the Operator");
         _;
     }
 
@@ -103,11 +111,22 @@ abstract contract AbstractCCTPIntegrator is Governable, IMessageHandlerV2 {
         );
     }
 
-    function _initialize(uint32 _minFinalityThreshold, uint32 _feePremiumBps)
-        internal
-    {
+    function _initialize(
+        address _operator,
+        uint32 _minFinalityThreshold,
+        uint32 _feePremiumBps
+    ) internal {
+        _setOperator(_operator);
         _setMinFinalityThreshold(_minFinalityThreshold);
         _setFeePremiumBps(_feePremiumBps);
+    }
+
+    function setOperator(address _operator) external onlyGovernor {
+        _setOperator(_operator);
+    }
+    function _setOperator(address _operator) internal {
+        operator = _operator;
+        emit OperatorChanged(_operator);
     }
 
     function setMinFinalityThreshold(uint32 _minFinalityThreshold)
@@ -291,7 +310,10 @@ abstract contract AbstractCCTPIntegrator is Governable, IMessageHandlerV2 {
         messageBody = message.extractSlice(MESSAGE_BODY_INDEX, message.length);
     }
 
-    function relay(bytes memory message, bytes memory attestation) external {
+    function relay(bytes memory message, bytes memory attestation)
+        external
+        onlyOperator
+    {
         (
             uint32 version,
             uint32 sourceDomainID,

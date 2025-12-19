@@ -15,6 +15,7 @@ import { IERC4626 } from "../../../lib/openzeppelin/interfaces/IERC4626.sol";
 import { Generalized4626Strategy } from "../Generalized4626Strategy.sol";
 import { AbstractCCTPIntegrator } from "./AbstractCCTPIntegrator.sol";
 import { CrossChainStrategyHelper } from "./CrossChainStrategyHelper.sol";
+import { InitializableAbstractStrategy } from "../../utils/InitializableAbstractStrategy.sol";
 
 contract CrossChainRemoteStrategy is
     AbstractCCTPIntegrator,
@@ -25,6 +26,9 @@ contract CrossChainRemoteStrategy is
 
     event DepositFailed(string reason);
     event WithdrawFailed(string reason);
+    event StrategistUpdated(address _address);
+
+    address public strategistAddr;
 
     constructor(
         BaseStrategyConfig memory _baseConfig,
@@ -32,35 +36,67 @@ contract CrossChainRemoteStrategy is
     )
         AbstractCCTPIntegrator(_cctpConfig)
         Generalized4626Strategy(_baseConfig, _cctpConfig.baseToken)
-    {}
+    {
+        // NOTE: Vault address must always be the proxy address
+        // so that IVault(vaultAddress).strategistAddr()
+    }
+
+    function initialize(address _strategist, address _operator, uint32 _minFinalityThreshold, uint32 _feePremiumBps) external virtual onlyGovernor initializer {
+        _initialize(_operator, _minFinalityThreshold, _feePremiumBps);
+        _setStrategistAddr(_strategist);
+
+        address[] memory rewardTokens = new address[](0);
+        address[] memory assets = new address[](1);
+        address[] memory pTokens = new address[](1);
+
+        assets[0] = address(assetToken);
+        pTokens[0] = address(platformAddress);
+
+        InitializableAbstractStrategy._initialize(
+            rewardTokens,
+            assets,
+            pTokens
+        );
+    }
+
+    /**
+     * @notice Set address of Strategist
+     * @param _address Address of Strategist
+     */
+    function setStrategistAddr(address _address) external onlyGovernor {
+        _setStrategistAddr(_address);
+    }
+    function _setStrategistAddr(address _address) internal {
+        strategistAddr = _address;
+        emit StrategistUpdated(_address);
+    }
 
     // solhint-disable-next-line no-unused-vars
     function deposit(address _asset, uint256 _amount)
         external
         virtual
         override
+        onlyGovernorOrStrategist
     {
-        // TODO: implement this
-        revert("Not implemented");
+        _deposit(_asset, _amount);
     }
 
-    function depositAll() external virtual override {
-        // TODO: implement this
-        revert("Not implemented");
+    function depositAll() external virtual override onlyGovernorOrStrategist {
+        _deposit(baseToken, IERC20(baseToken).balanceOf(address(this)));
     }
 
     function withdraw(
-        address,
-        address,
-        uint256
-    ) external virtual override {
-        // TODO: implement this
-        revert("Not implemented");
+        address _recipient,
+        address _asset,
+        uint256 _amount
+    ) external virtual override onlyGovernorOrStrategist {
+        _withdraw(_recipient, _asset, _amount);
     }
 
-    function withdrawAll() external virtual override {
-        // TODO: implement this
-        revert("Not implemented");
+    function withdrawAll() external virtual override onlyGovernorOrStrategist {
+        uint256 contractBalance = IERC20(baseToken).balanceOf(address(this));
+        uint256 balance = checkBalance(baseToken) - contractBalance;
+        _withdraw(address(this), baseToken, balance);
     }
 
     function _onMessageReceived(bytes memory payload) internal override {
@@ -174,7 +210,7 @@ contract CrossChainRemoteStrategy is
         uint256 _amount
     ) internal override {
         require(_amount > 0, "Must withdraw something");
-        require(_recipient != address(0), "Must specify recipient");
+        require(_recipient != address(this), "Invalid recipient");
         require(_asset == address(assetToken), "Unexpected asset address");
 
         // slither-disable-next-line unused-return
@@ -184,7 +220,7 @@ contract CrossChainRemoteStrategy is
         try
             IERC4626(platformAddress).withdraw(
                 _amount,
-                _recipient,
+                address(this),
                 address(this)
             )
         {
