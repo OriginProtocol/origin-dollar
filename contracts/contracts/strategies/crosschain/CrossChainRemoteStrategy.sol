@@ -13,22 +13,24 @@ import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.s
 import { IERC20 } from "../../utils/InitializableAbstractStrategy.sol";
 import { IERC4626 } from "../../../lib/openzeppelin/interfaces/IERC4626.sol";
 import { Generalized4626Strategy } from "../Generalized4626Strategy.sol";
-import { AbstractCCTP4626Strategy } from "./AbstractCCTP4626Strategy.sol";
+import { AbstractCCTPIntegrator } from "./AbstractCCTPIntegrator.sol";
+import { CrossChainStrategyHelper } from "./CrossChainStrategyHelper.sol";
 
 contract CrossChainRemoteStrategy is
-    AbstractCCTP4626Strategy,
+    AbstractCCTPIntegrator,
     Generalized4626Strategy
 {
+    using SafeERC20 for IERC20;
+    using CrossChainStrategyHelper for bytes;
+
     event DepositFailed(string reason);
     event WithdrawFailed(string reason);
-
-    using SafeERC20 for IERC20;
 
     constructor(
         BaseStrategyConfig memory _baseConfig,
         CCTPIntegrationConfig memory _cctpConfig
     )
-        AbstractCCTP4626Strategy(_cctpConfig)
+        AbstractCCTPIntegrator(_cctpConfig)
         Generalized4626Strategy(_baseConfig, _cctpConfig.baseToken)
     {}
 
@@ -62,13 +64,13 @@ contract CrossChainRemoteStrategy is
     }
 
     function _onMessageReceived(bytes memory payload) internal override {
-        uint32 messageType = _getMessageType(payload);
-        if (messageType == DEPOSIT_MESSAGE) {
+        uint32 messageType = payload.getMessageType();
+        if (messageType == CrossChainStrategyHelper.DEPOSIT_MESSAGE) {
             // // Received when Master strategy sends tokens to the remote strategy
             // Do nothing because we receive acknowledgement with token transfer, so _onTokenReceived will handle it
             // TODO: Should _onTokenReceived always call _onMessageReceived?
             // _processDepositAckMessage(payload);
-        } else if (messageType == WITHDRAW_MESSAGE) {
+        } else if (messageType == CrossChainStrategyHelper.WITHDRAW_MESSAGE) {
             // Received when Master strategy requests a withdrawal
             _processWithdrawMessage(payload);
         } else {
@@ -85,7 +87,7 @@ contract CrossChainRemoteStrategy is
     ) internal virtual {
         // TODO: no need to communicate the deposit amount if we deposit everything
         // solhint-disable-next-line no-unused-vars
-        (uint64 nonce, uint256 depositAmount) = _decodeDepositMessage(payload);
+        (uint64 nonce, uint256 depositAmount) = payload.decodeDepositMessage();
 
         // Replay protection
         require(!isNonceProcessed(nonce), "Nonce already processed");
@@ -99,10 +101,8 @@ contract CrossChainRemoteStrategy is
         _deposit(baseToken, balance);
 
         uint256 balanceAfter = checkBalance(baseToken);
-        bytes memory message = _encodeBalanceCheckMessage(
-            lastTransferNonce,
-            balanceAfter
-        );
+        bytes memory message = CrossChainStrategyHelper
+            .encodeBalanceCheckMessage(lastTransferNonce, balanceAfter);
         _sendMessage(message);
     }
 
@@ -136,9 +136,8 @@ contract CrossChainRemoteStrategy is
     }
 
     function _processWithdrawMessage(bytes memory payload) internal virtual {
-        (uint64 nonce, uint256 withdrawAmount) = _decodeWithdrawMessage(
-            payload
-        );
+        (uint64 nonce, uint256 withdrawAmount) = payload
+            .decodeWithdrawMessage();
 
         // Replay protection
         require(!isNonceProcessed(nonce), "Nonce already processed");
@@ -149,10 +148,8 @@ contract CrossChainRemoteStrategy is
 
         // Check balance after withdrawal
         uint256 balanceAfter = checkBalance(baseToken);
-        bytes memory message = _encodeBalanceCheckMessage(
-            lastTransferNonce,
-            balanceAfter
-        );
+        bytes memory message = CrossChainStrategyHelper
+            .encodeBalanceCheckMessage(lastTransferNonce, balanceAfter);
 
         // Send the complete balance on the contract. If we were to send only the
         // withdrawn amount, the call could revert if the balance is not sufficient.
@@ -213,9 +210,12 @@ contract CrossChainRemoteStrategy is
         uint256 feeExecuted,
         bytes memory payload
     ) internal override {
-        uint32 messageType = _getMessageType(payload);
+        uint32 messageType = payload.getMessageType();
 
-        require(messageType == DEPOSIT_MESSAGE, "Invalid message type");
+        require(
+            messageType == CrossChainStrategyHelper.DEPOSIT_MESSAGE,
+            "Invalid message type"
+        );
 
         _processDepositMessage(tokenAmount, feeExecuted, payload);
     }
@@ -223,10 +223,8 @@ contract CrossChainRemoteStrategy is
     function sendBalanceUpdate() external virtual {
         // TODO: Add permissioning
         uint256 balance = checkBalance(baseToken);
-        bytes memory message = _encodeBalanceCheckMessage(
-            lastTransferNonce,
-            balance
-        );
+        bytes memory message = CrossChainStrategyHelper
+            .encodeBalanceCheckMessage(lastTransferNonce, balance);
         _sendMessage(message);
     }
 

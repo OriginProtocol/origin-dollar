@@ -6,6 +6,7 @@ import { IERC20 } from "../../utils/InitializableAbstractStrategy.sol";
 
 import { ICCTPTokenMessenger, ICCTPMessageTransmitter, IMessageHandlerV2 } from "../../interfaces/cctp/ICCTP.sol";
 
+import { CrossChainStrategyHelper } from "./CrossChainStrategyHelper.sol";
 import { Governable } from "../../governance/Governable.sol";
 import { BytesHelper } from "../../utils/BytesHelper.sol";
 import "../../utils/Helpers.sol";
@@ -35,9 +36,6 @@ abstract contract AbstractCCTPIntegrator is Governable, IMessageHandlerV2 {
 
     event CCTPMinFinalityThresholdSet(uint32 minFinalityThreshold);
     event CCTPFeePremiumBpsSet(uint32 feePremiumBps);
-
-    uint32 public constant CCTP_MESSAGE_VERSION = 1;
-    uint32 public constant ORIGIN_MESSAGE_VERSION = 1010;
 
     // CCTP contracts
     // This implementation assumes that remote and local chains have these contracts
@@ -224,49 +222,6 @@ abstract contract AbstractCCTPIntegrator is Governable, IMessageHandlerV2 {
         );
     }
 
-    function _getMessageVersion(bytes memory message)
-        internal
-        virtual
-        returns (uint32)
-    {
-        // uint32 bytes 0 to 4 is Origin message version
-        // uint32 bytes 4 to 8 is Message type
-        return message.extractUint32(0);
-    }
-
-    function _getMessageType(bytes memory message)
-        internal
-        virtual
-        returns (uint32)
-    {
-        // uint32 bytes 0 to 4 is Origin message version
-        // uint32 bytes 4 to 8 is Message type
-        return message.extractUint32(4);
-    }
-
-    function _verifyMessageVersionAndType(
-        bytes memory _message,
-        uint32 _version,
-        uint32 _type
-    ) internal virtual {
-        require(
-            _getMessageVersion(_message) == _version,
-            "Invalid Origin Message Version"
-        );
-        require(_getMessageType(_message) == _type, "Invalid Message type");
-    }
-
-    function _getMessagePayload(bytes memory message)
-        internal
-        virtual
-        returns (bytes memory)
-    {
-        // uint32 bytes 0 to 4 is Origin message version
-        // uint32 bytes 4 to 8 is Message type
-        // Payload starts at byte 8
-        return message.extractSlice(8, message.length);
-    }
-
     function _sendMessage(bytes memory message) internal virtual {
         cctpMessageTransmitter.sendMessage(
             peerDomainID,
@@ -347,7 +302,7 @@ abstract contract AbstractCCTPIntegrator is Governable, IMessageHandlerV2 {
 
         // Ensure that it's a CCTP message
         require(
-            version == CCTP_MESSAGE_VERSION,
+            version == CrossChainStrategyHelper.CCTP_MESSAGE_VERSION,
             "Invalid CCTP message version"
         );
 
@@ -379,7 +334,7 @@ abstract contract AbstractCCTPIntegrator is Governable, IMessageHandlerV2 {
         } else {
             // We handle only Burn message or our custom messagee
             require(
-                version == ORIGIN_MESSAGE_VERSION,
+                version == CrossChainStrategyHelper.ORIGIN_MESSAGE_VERSION,
                 "Unsupported message version"
             );
         }
