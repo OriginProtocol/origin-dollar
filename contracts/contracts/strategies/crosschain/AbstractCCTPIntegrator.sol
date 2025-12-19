@@ -26,9 +26,6 @@ abstract contract AbstractCCTPIntegrator is
     // USDC address on local chain
     address public immutable baseToken;
 
-    // Destination chain domain ID
-    uint32 public immutable destinationDomain;
-
     // Strategy address on destination chain
     address public immutable destinationStrategy;
 
@@ -57,7 +54,7 @@ abstract contract AbstractCCTPIntegrator is
     struct CCTPIntegrationConfig {
         address cctpTokenMessenger;
         address cctpMessageTransmitter;
-        uint32 destinationDomain;
+        uint32 peerDomainID;
         address destinationStrategy;
         address baseToken;
     }
@@ -65,10 +62,10 @@ abstract contract AbstractCCTPIntegrator is
     constructor(CCTPIntegrationConfig memory _config)
         AbstractCCTPMessageRelayer(
             _config.cctpMessageTransmitter,
-            _config.cctpTokenMessenger
+            _config.cctpTokenMessenger,
+            _config.peerDomainID
         )
     {
-        destinationDomain = _config.destinationDomain;
         destinationStrategy = _config.destinationStrategy;
         baseToken = _config.baseToken;
 
@@ -162,7 +159,7 @@ abstract contract AbstractCCTPIntegrator is
         //     finalityThresholdExecuted >= minFinalityThreshold,
         //     "Finality threshold too low"
         // );
-        require(sourceDomain == destinationDomain, "Unknown Source Domain");
+        require(sourceDomain == peerDomainID, "Unknown Source Domain");
 
         // Extract address from bytes32 (CCTP stores addresses as right-padded bytes32)
         address senderAddress = address(uint160(uint256(sender)));
@@ -192,7 +189,7 @@ abstract contract AbstractCCTPIntegrator is
 
         cctpTokenMessenger.depositForBurnWithHook(
             tokenAmount,
-            destinationDomain,
+            peerDomainID,
             bytes32(uint256(uint160(destinationStrategy))),
             address(baseToken),
             bytes32(uint256(uint160(destinationStrategy))),
@@ -247,7 +244,7 @@ abstract contract AbstractCCTPIntegrator is
 
     function _sendMessage(bytes memory message) internal virtual {
         cctpMessageTransmitter.sendMessage(
-            destinationDomain,
+            peerDomainID,
             bytes32(uint256(uint160(destinationStrategy))),
             bytes32(uint256(uint160(destinationStrategy))),
             minFinalityThreshold,
