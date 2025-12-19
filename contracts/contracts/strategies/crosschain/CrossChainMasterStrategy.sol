@@ -98,8 +98,8 @@ contract CrossChainMasterStrategy is
      * @dev Remove all assets from platform and send them to Vault contract.
      */
     function withdrawAll() external override onlyVaultOrGovernor nonReentrant {
-        uint256 balance = IERC20(baseToken).balanceOf(address(this));
-        _withdraw(baseToken, vaultAddress, balance);
+        // Withdraw everything in Remote strategy
+        _withdraw(baseToken, vaultAddress, remoteStrategyBalance);
     }
 
     /**
@@ -108,7 +108,7 @@ contract CrossChainMasterStrategy is
      * @return balance    Total value of the asset in the platform
      */
     function checkBalance(address _asset)
-        external
+        public
         view
         override
         returns (uint256 balance)
