@@ -146,26 +146,10 @@ Add new Morpho OUSD v2 Strategy and deposit 10k USDC.
           ],
         },
         {
-          // 7. Withdraw all from the Morpho Steakhouse strategy
-          contract: cVaultAdmin,
-          signature: "withdrawAllFromStrategy(address)",
-          args: [dMorphoSteakhouseUSDCStrategyProxy.address],
-        },
-        {
-          // 8. Remove the Morpho Steakhouse strategy
+          // 7. Remove the Morpho Steakhouse strategy
           contract: cVaultAdmin,
           signature: "removeStrategy(address)",
           args: [dMorphoSteakhouseUSDCStrategyProxy.address],
-        },
-        {
-          // 9. Deposit 10k to the new Morpho OUSD v2 strategy
-          contract: cVaultAdmin,
-          signature: "depositToStrategy(address,address[],uint256[])",
-          args: [
-            cOUSDMorphoV2Strategy.address,
-            [addresses.mainnet.USDC],
-            ["10000000000"], // 10,000 USDC with 6 decimals
-          ],
         },
       ],
     };
