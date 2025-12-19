@@ -206,7 +206,8 @@ contract CrossChainMasterStrategy is
         uint256 usdcBalance = IERC20(baseToken).balanceOf(address(this));
         // Should always have enough tokens
         require(usdcBalance >= tokenAmount, "Insufficient balance");
-        IERC20(baseToken).safeTransfer(vaultAddress, tokenAmount);
+        // Transfer all tokens to the Vault to not leave any dust
+        IERC20(baseToken).safeTransfer(vaultAddress, usdcBalance);
     }
 
     function _deposit(address _asset, uint256 depositAmount) internal virtual {
