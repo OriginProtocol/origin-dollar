@@ -11,14 +11,15 @@ pragma solidity ^0.8.0;
 
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { IERC20, InitializableAbstractStrategy } from "../../utils/InitializableAbstractStrategy.sol";
-import { AbstractCCTP4626Strategy } from "./AbstractCCTP4626Strategy.sol";
-import { BytesHelper } from "../../utils/BytesHelper.sol";
+import { AbstractCCTPIntegrator } from "./AbstractCCTPIntegrator.sol";
+import { CrossChainStrategyHelper } from "./CrossChainStrategyHelper.sol";
 
 contract CrossChainMasterStrategy is
-    InitializableAbstractStrategy,
-    AbstractCCTP4626Strategy
+    AbstractCCTPIntegrator,
+    InitializableAbstractStrategy
 {
     using SafeERC20 for IERC20;
+    using CrossChainStrategyHelper for bytes;
 
     // Remote strategy balance
     uint256 public remoteStrategyBalance;
@@ -43,8 +44,23 @@ contract CrossChainMasterStrategy is
         CCTPIntegrationConfig memory _cctpConfig
     )
         InitializableAbstractStrategy(_stratConfig)
-        AbstractCCTP4626Strategy(_cctpConfig)
+        AbstractCCTPIntegrator(_cctpConfig)
     {}
+
+
+    function initialize(address _operator, uint32 _minFinalityThreshold, uint32 _feePremiumBps) external virtual onlyGovernor initializer {
+        _initialize(_operator, _minFinalityThreshold, _feePremiumBps);
+
+        address[] memory rewardTokens = new address[](0);
+        address[] memory assets = new address[](0);
+        address[] memory pTokens = new address[](0);
+
+        InitializableAbstractStrategy._initialize(
+            rewardTokens,
+            assets,
+            pTokens
+        );
+    }
 
     // /**
     //  * @dev Returns the address of the Remote part of the strategy on L2
@@ -98,8 +114,8 @@ contract CrossChainMasterStrategy is
      * @dev Remove all assets from platform and send them to Vault contract.
      */
     function withdrawAll() external override onlyVaultOrGovernor nonReentrant {
-        uint256 balance = IERC20(baseToken).balanceOf(address(this));
-        _withdraw(baseToken, vaultAddress, balance);
+        // Withdraw everything in Remote strategy
+        _withdraw(baseToken, vaultAddress, remoteStrategyBalance);
     }
 
     /**
@@ -108,7 +124,7 @@ contract CrossChainMasterStrategy is
      * @return balance    Total value of the asset in the platform
      */
     function checkBalance(address _asset)
-        external
+        public
         view
         override
         returns (uint256 balance)
@@ -162,8 +178,8 @@ contract CrossChainMasterStrategy is
     {}
 
     function _onMessageReceived(bytes memory payload) internal override {
-        uint32 messageType = _getMessageType(payload);
-        if (messageType == BALANCE_CHECK_MESSAGE) {
+        uint32 messageType = payload.getMessageType();
+        if (messageType == CrossChainStrategyHelper.BALANCE_CHECK_MESSAGE) {
             // Received when Remote strategy checks the balance
             _processBalanceCheckMessage(payload);
         } else {
@@ -227,7 +243,10 @@ contract CrossChainMasterStrategy is
         pendingAmount = depositAmount;
 
         // Send deposit message with payload
-        bytes memory message = _encodeDepositMessage(nonce, depositAmount);
+        bytes memory message = CrossChainStrategyHelper.encodeDepositMessage(
+            nonce,
+            depositAmount
+        );
         _sendTokens(depositAmount, message);
         emit Deposit(_asset, _asset, depositAmount);
     }
@@ -252,7 +271,10 @@ contract CrossChainMasterStrategy is
         emit Withdrawal(baseToken, baseToken, _amount);
 
         // Send withdrawal message with payload
-        bytes memory message = _encodeWithdrawMessage(nonce, _amount);
+        bytes memory message = CrossChainStrategyHelper.encodeWithdrawMessage(
+            nonce,
+            _amount
+        );
         _sendMessage(message);
     }
 
@@ -267,7 +289,7 @@ contract CrossChainMasterStrategy is
         internal
         virtual
     {
-        (uint64 nonce, uint256 balance) = _decodeBalanceCheckMessage(message);
+        (uint64 nonce, uint256 balance) = message.decodeBalanceCheckMessage();
 
         uint64 _lastCachedNonce = lastTransferNonce;
 

@@ -6,6 +6,7 @@ import { IERC20 } from "../../utils/InitializableAbstractStrategy.sol";
 
 import { ICCTPTokenMessenger, ICCTPMessageTransmitter, IMessageHandlerV2 } from "../../interfaces/cctp/ICCTP.sol";
 
+import { CrossChainStrategyHelper } from "./CrossChainStrategyHelper.sol";
 import { Governable } from "../../governance/Governable.sol";
 import { BytesHelper } from "../../utils/BytesHelper.sol";
 import "../../utils/Helpers.sol";
@@ -35,9 +36,7 @@ abstract contract AbstractCCTPIntegrator is Governable, IMessageHandlerV2 {
 
     event CCTPMinFinalityThresholdSet(uint32 minFinalityThreshold);
     event CCTPFeePremiumBpsSet(uint32 feePremiumBps);
-
-    uint32 public constant CCTP_MESSAGE_VERSION = 1;
-    uint32 public constant ORIGIN_MESSAGE_VERSION = 1010;
+    event OperatorChanged(address operator);
 
     // CCTP contracts
     // This implementation assumes that remote and local chains have these contracts
@@ -65,6 +64,8 @@ abstract contract AbstractCCTPIntegrator is Governable, IMessageHandlerV2 {
 
     mapping(uint64 => bool) private nonceProcessed;
 
+    address public operator;
+
     // For future use
     uint256[50] private __gap;
 
@@ -73,6 +74,11 @@ abstract contract AbstractCCTPIntegrator is Governable, IMessageHandlerV2 {
             msg.sender == address(cctpMessageTransmitter),
             "Caller is not the CCTP message transmitter"
         );
+        _;
+    }
+
+    modifier onlyOperator() {
+        require(msg.sender == operator, "Caller is not the Operator");
         _;
     }
 
@@ -105,9 +111,12 @@ abstract contract AbstractCCTPIntegrator is Governable, IMessageHandlerV2 {
         );
     }
 
-    function _initialize(uint32 _minFinalityThreshold, uint32 _feePremiumBps)
-        internal
-    {
+    function _initialize(
+        address _operator,
+        uint32 _minFinalityThreshold,
+        uint32 _feePremiumBps
+    ) internal {
+        _setOperator(_operator);
         _setMinFinalityThreshold(_minFinalityThreshold);
         _setFeePremiumBps(_feePremiumBps);
     }
@@ -115,6 +124,13 @@ abstract contract AbstractCCTPIntegrator is Governable, IMessageHandlerV2 {
     /***************************************
                     Settings
     ****************************************/
+    function setOperator(address _operator) external onlyGovernor {
+        _setOperator(_operator);
+    }
+    function _setOperator(address _operator) internal {
+        operator = _operator;
+        emit OperatorChanged(_operator);
+    }
 
     function setMinFinalityThreshold(uint32 _minFinalityThreshold)
         external
@@ -242,7 +258,10 @@ abstract contract AbstractCCTPIntegrator is Governable, IMessageHandlerV2 {
         );
     }
 
-    function relay(bytes memory message, bytes memory attestation) external {
+    function relay(bytes memory message, bytes memory attestation)
+        external
+        onlyOperator
+    {
         (
             uint32 version,
             uint32 sourceDomainID,
@@ -253,7 +272,7 @@ abstract contract AbstractCCTPIntegrator is Governable, IMessageHandlerV2 {
 
         // Ensure that it's a CCTP message
         require(
-            version == CCTP_MESSAGE_VERSION,
+            version == CrossChainStrategyHelper.CCTP_MESSAGE_VERSION,
             "Invalid CCTP message version"
         );
 
@@ -285,7 +304,7 @@ abstract contract AbstractCCTPIntegrator is Governable, IMessageHandlerV2 {
         } else {
             // We handle only Burn message or our custom messagee
             require(
-                version == ORIGIN_MESSAGE_VERSION,
+                version == CrossChainStrategyHelper.ORIGIN_MESSAGE_VERSION,
                 "Unsupported message version"
             );
         }
