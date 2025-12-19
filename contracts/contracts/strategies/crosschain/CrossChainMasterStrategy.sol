@@ -26,6 +26,13 @@ contract CrossChainMasterStrategy is
     // Amount that's bridged but not yet received on the destination chain
     uint256 public pendingAmount;
 
+    enum TransferType {
+        None, // To avoid using 0
+        Deposit,
+        Withdrawal
+    }
+    mapping(uint64 => TransferType) public transferTypeByNonce;
+
     event RemoteStrategyBalanceUpdated(uint256 balance);
 
     /**
@@ -171,8 +178,36 @@ contract CrossChainMasterStrategy is
         uint256 feeExecuted,
         bytes memory payload
     ) internal override {
-        // Expecting a BALANCE_CHECK_MESSAGE
+        uint64 _nonce = lastTransferNonce;
+
+        // Should be expecting an acknowledgement
+        require(!isNonceProcessed(_nonce), "Nonce already processed");
+        // Only a withdrawal can send tokens to Master strategy
+        require(
+            transferTypeByNonce[_nonce] == TransferType.Withdrawal,
+            "Expecting withdrawal"
+        );
+
+        // Confirm receipt of tokens from Withdraw command
+        _markNonceAsProcessed(_nonce);
+
+        // Now relay to the regular flow
+        // NOTE: Calling _onMessageReceived would mean that we are bypassing a
+        // few checks that the regular flow does (like sourceDomainID check
+        // and sender check in `handleReceiveFinalizedMessage`). However,
+        // CCTPMessageRelayer relays the message first (which will go through
+        // all the checks) and not update balance and then finally calls this
+        // `_onTokenReceived` which will update the balance.
+        // So, if any of the checks fail during the first no-balance-update flow,
+        // this won't happen either, since the tx would revert.
         _onMessageReceived(payload);
+
+        // Send any tokens in the contract to the Vault
+        uint256 usdcBalance = IERC20(baseToken).balanceOf(address(this));
+        // Should always have enough tokens
+        require(usdcBalance >= tokenAmount, "Insufficient balance");
+        // Transfer all tokens to the Vault to not leave any dust
+        IERC20(baseToken).safeTransfer(vaultAddress, usdcBalance);
     }
 
     function _deposit(address _asset, uint256 depositAmount) internal virtual {
@@ -186,6 +221,7 @@ contract CrossChainMasterStrategy is
         );
 
         uint64 nonce = _getNextNonce();
+        transferTypeByNonce[nonce] = TransferType.Deposit;
 
         // Set pending amount
         pendingAmount = depositAmount;
@@ -211,6 +247,7 @@ contract CrossChainMasterStrategy is
         );
 
         uint64 nonce = _getNextNonce();
+        transferTypeByNonce[nonce] = TransferType.Withdrawal;
 
         emit Withdrawal(baseToken, baseToken, _amount);
 
@@ -240,26 +277,31 @@ contract CrossChainMasterStrategy is
             return;
         }
 
+        bool processedTransfer = isNonceProcessed(nonce);
+        if (
+            !processedTransfer &&
+            transferTypeByNonce[nonce] == TransferType.Withdrawal
+        ) {
+            // Pending withdrawal is taken care of by _onTokenReceived
+            // Do not update balance due to race conditions
+            return;
+        }
+
         // Update the balance always
         remoteStrategyBalance = balance;
         emit RemoteStrategyBalanceUpdated(balance);
 
         /**
-         * Either a deposit or withdrawal are being confirmed.
-         * Since only one transfer is allowed to be pending at a time we can apply the effects
-         * of deposit or withdrawal acknowledgement.
+         * A deposit is being confirmed.
+         * A withdrawal will always be confirmed if it reaches this point of code.
          */
-        if (!isNonceProcessed(nonce)) {
+        if (!processedTransfer) {
             _markNonceAsProcessed(nonce);
 
             // Effect of confirming a deposit, reset pending amount
             pendingAmount = 0;
 
-            uint256 usdcBalance = IERC20(baseToken).balanceOf(address(this));
-            // Effect of confirming a withdrawal
-            if (usdcBalance > 1e6) {
-                IERC20(baseToken).safeTransfer(vaultAddress, usdcBalance);
-            }
+            // NOTE: Withdrawal is taken care of by _onTokenReceived
         }
     }
 }

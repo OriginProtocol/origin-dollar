@@ -25,9 +25,6 @@ abstract contract AbstractCCTPMessageRelayer {
     uint8 private constant BURN_MESSAGE_V2_FEE_EXECUTED_INDEX = 164;
     uint8 private constant BURN_MESSAGE_V2_HOOK_DATA_INDEX = 228;
 
-    bytes32 private constant EMPTY_NONCE = bytes32(0);
-    uint32 private constant EMPTY_FINALITY_THRESHOLD_EXECUTED = 0;
-
     uint32 public constant CCTP_MESSAGE_VERSION = 1;
     uint32 public constant ORIGIN_MESSAGE_VERSION = 1010;
 
@@ -37,11 +34,19 @@ abstract contract AbstractCCTPMessageRelayer {
     ICCTPMessageTransmitter public immutable cctpMessageTransmitter;
     ICCTPTokenMessenger public immutable cctpTokenMessenger;
 
-    constructor(address _cctpMessageTransmitter, address _cctpTokenMessenger) {
+    // Domain ID of the chain from which messages are accepted
+    uint32 public immutable peerDomainID;
+
+    constructor(
+        address _cctpMessageTransmitter,
+        address _cctpTokenMessenger,
+        uint32 _peerDomainID
+    ) {
         cctpMessageTransmitter = ICCTPMessageTransmitter(
             _cctpMessageTransmitter
         );
         cctpTokenMessenger = ICCTPTokenMessenger(_cctpTokenMessenger);
+        peerDomainID = _peerDomainID;
     }
 
     function _decodeMessageHeader(bytes memory message)
@@ -77,7 +82,6 @@ abstract contract AbstractCCTPMessageRelayer {
     function relay(bytes memory message, bytes memory attestation) external {
         (
             uint32 version,
-            // solhint-disable-next-line no-unused-vars
             uint32 sourceDomainID,
             address sender,
             address recipient,
@@ -90,6 +94,9 @@ abstract contract AbstractCCTPMessageRelayer {
             "Invalid CCTP message version"
         );
 
+        // Ensure that the source domain is the peer domain
+        require(sourceDomainID == peerDomainID, "Unknown Source Domain");
+
         // Ensure message body version
         bytes memory bodyVersionSlice = messageBody.extractSlice(
             BURN_MESSAGE_V2_VERSION_INDEX,
@@ -97,7 +104,6 @@ abstract contract AbstractCCTPMessageRelayer {
         );
         version = bodyVersionSlice.decodeUint32();
 
-        // TODO should we replace this with:
         // TODO: what if the sender sends another type of a message not just the burn message?
         bool isBurnMessageV1 = sender == address(cctpTokenMessenger);
 
@@ -120,7 +126,7 @@ abstract contract AbstractCCTPMessageRelayer {
                 BURN_MESSAGE_V2_RECIPIENT_INDEX,
                 BURN_MESSAGE_V2_RECIPIENT_INDEX + 32
             );
-            // TODO is this the same recipient as the one in the message header?
+
             recipient = abi.decode(recipientSlice, (address));
         } else {
             // We handle only Burn message or our custom messagee
