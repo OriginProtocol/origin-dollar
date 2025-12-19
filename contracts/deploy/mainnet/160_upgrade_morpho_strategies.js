@@ -104,7 +104,6 @@ module.exports = deploymentWithGovernanceProposal(
 Remove the Morpho Steakhouse Strategy.
 Set the Morpho Gauntlet Prime USDC strategy as the default for USDC
 Add new Morpho OUSD v2 Strategy and deposit 10k USDC.
-Change the redeem fee from 0.25% to 0.1%.
 `,
       actions: [
         {
@@ -167,12 +166,6 @@ Change the redeem fee from 0.25% to 0.1%.
             [addresses.mainnet.USDC],
             ["10000000000"], // 10,000 USDC with 6 decimals
           ],
-        },
-        {
-          // 10. Change the redeem fee from 0.25% to 0.1%
-          contract: cVaultAdmin,
-          signature: "setRedeemFeeBps(uint256)",
-          args: [10],
         },
       ],
     };
