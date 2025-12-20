@@ -9,7 +9,7 @@ module.exports = deploymentWithGovernanceProposal(
   {
     deployName: "156_simplify_ousd",
     forceDeploy: false,
-    //forceSkip: true,
+    forceSkip: true,
     reduceQueueTime: true,
     deployerIsProposer: false,
     proposalId:
