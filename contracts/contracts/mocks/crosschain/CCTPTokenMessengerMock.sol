@@ -30,7 +30,7 @@ contract CCTPTokenMessengerMock is ICCTPTokenMessenger{
         uint32 minFinalityThreshold
     ) external override {
         revert("Not implemented");
-    };
+    }
 
     function depositForBurnWithHook(
         uint256 amount,
@@ -55,9 +55,9 @@ contract CCTPTokenMessengerMock is ICCTPTokenMessenger{
             destinationAmount,
             hookData
         );
-    };
+    }
 
     function getMinFeeAmount(uint256 amount) external view override returns (uint256) {
         return 0;
-    };
+    }
 }

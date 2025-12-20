@@ -1871,6 +1871,40 @@ const deployCrossChainRemoteStrategyImpl = async (
   return dCrossChainRemoteStrategy.address;
 };
 
+// deploy the corss chain Master / Remote strategy pair for unit testing
+const deployCrossChainUnitTestStrategy = async (
+  usdcAddress,
+) => {
+  const { deployerAddr } = await getNamedAccounts();
+  const dMasterProxy = await deployWithConfirmation(
+    "CrossChainMasterStrategyProxy",
+    [deployerAddr],
+    "CrossChainStrategyProxy"
+  );
+  const dRemoteProxy = await deployWithConfirmation(
+    "CrossChainRemoteStrategyProxy",
+    [deployerAddr],
+    "CrossChainStrategyProxy"
+  );
+  
+  await deployCrossChainMasterStrategyImpl(
+    dMasterProxy.address,
+    6, // Base domain id
+    // unit tests differ from mainnet where remote strategy has a different address
+    dRemoteProxy.address,
+    usdcAddress
+  );
+  
+  await deployCrossChainRemoteStrategyImpl(
+    deployerAddr, // TODO platform address needs to be replaces with mock 4626 Moprho Vault
+    dRemoteProxy.address,
+    0, // Ethereum domain id
+    dMasterProxy.address,
+    usdcAddress
+  );
+  
+};
+
 module.exports = {
   deployOracles,
   deployCore,
@@ -1911,4 +1945,5 @@ module.exports = {
   deployProxyWithCreateX,
   deployCrossChainMasterStrategyImpl,
   deployCrossChainRemoteStrategyImpl,
+  deployCrossChainUnitTestStrategy,
 };

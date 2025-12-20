@@ -12,7 +12,6 @@ import { IERC20 } from "../../utils/InitializableAbstractStrategy.sol";
 
 contract CCTPMessageTransmitterMock is ICCTPMessageTransmitter {
     IERC20 public usdc;
-    ICCTPMessageTransmitter public cctpMessageTransmitter;
     uint256 public nonce = 0;
 
     
@@ -32,9 +31,8 @@ contract CCTPMessageTransmitterMock is ICCTPMessageTransmitter {
 
     Message[] public messages;
 
-    constructor(address _usdc, address _cctpMessageTransmitter) {
+    constructor(address _usdc) {
         usdc = IERC20(_usdc);
-        cctpMessageTransmitter = ICCTPMessageTransmitter(_cctpMessageTransmitter);
     }
 
     function sendMessage(
@@ -61,7 +59,7 @@ contract CCTPMessageTransmitterMock is ICCTPMessageTransmitter {
         });
         
         messages.push(message);
-    };
+    }
 
     function sendTokenTransferMessage(
         uint32 destinationDomain,
@@ -88,7 +86,7 @@ contract CCTPMessageTransmitterMock is ICCTPMessageTransmitter {
         });
         
         messages.push(message);
-    };
+    }
 
     function receiveMessage(bytes calldata message, bytes calldata attestation)
         external
@@ -117,7 +115,9 @@ contract CCTPMessageTransmitterMock is ICCTPMessageTransmitter {
 
     function removeBack() external returns (Message memory) {
         require(messages.length > 0, "No messages");
-        return messages.pop();
+        Message memory last = messages[messages.length - 1];
+        messages.pop();
+        return last;
     }
 
     function getMessagesLength() external view returns (uint256) {
