@@ -41,7 +41,12 @@ contract CrossChainRemoteStrategy is
         // so that IVault(vaultAddress).strategistAddr()
     }
 
-    function initialize(address _strategist, address _operator, uint32 _minFinalityThreshold, uint32 _feePremiumBps) external virtual onlyGovernor initializer {
+    function initialize(
+        address _strategist,
+        address _operator,
+        uint32 _minFinalityThreshold,
+        uint32 _feePremiumBps
+    ) external virtual onlyGovernor initializer {
         _initialize(_operator, _minFinalityThreshold, _feePremiumBps);
         _setStrategistAddr(_strategist);
 
@@ -66,6 +71,7 @@ contract CrossChainRemoteStrategy is
     function setStrategistAddr(address _address) external onlyGovernor {
         _setStrategistAddr(_address);
     }
+
     function _setStrategistAddr(address _address) internal {
         strategistAddr = _address;
         emit StrategistUpdated(_address);

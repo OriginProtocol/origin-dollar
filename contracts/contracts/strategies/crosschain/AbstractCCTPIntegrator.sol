@@ -124,6 +124,7 @@ abstract contract AbstractCCTPIntegrator is Governable, IMessageHandlerV2 {
     function setOperator(address _operator) external onlyGovernor {
         _setOperator(_operator);
     }
+
     function _setOperator(address _operator) internal {
         operator = _operator;
         emit OperatorChanged(_operator);

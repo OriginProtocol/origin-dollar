@@ -47,8 +47,11 @@ contract CrossChainMasterStrategy is
         AbstractCCTPIntegrator(_cctpConfig)
     {}
 
-
-    function initialize(address _operator, uint32 _minFinalityThreshold, uint32 _feePremiumBps) external virtual onlyGovernor initializer {
+    function initialize(
+        address _operator,
+        uint32 _minFinalityThreshold,
+        uint32 _feePremiumBps
+    ) external virtual onlyGovernor initializer {
         _initialize(_operator, _minFinalityThreshold, _feePremiumBps);
 
         address[] memory rewardTokens = new address[](0);
@@ -279,10 +282,10 @@ contract CrossChainMasterStrategy is
     }
 
     /**
-     * @dev process balance check serves 3 purposes:
-     *  - confirms a deposit to the remote strategy
-     *  - confirms a withdrawal from the remote strategy
-     *  - updates the remote strategy balance
+     * @dev Process balance check:
+     *  - Confirms a deposit to the remote strategy
+     *  - Skips balance update if there's a pending withdrawal
+     *  - Updates the remote strategy balance
      * @param message The message containing the nonce and balance
      */
     function _processBalanceCheckMessage(bytes memory message)
