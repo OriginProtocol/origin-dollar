@@ -2547,10 +2547,15 @@ async function crossChainFixtureUnit() {
     crossChainRemoteStrategyProxy.address
   );
 
+  const messageTransmitter = await ethers.getContract("CCTPMessageTransmitterMock");
+  const tokenMessenger = await ethers.getContract("CCTPTokenMessengerMock");
+
   return {
     ...fixture,
     crossChainMasterStrategy: cCrossChainMasterStrategy,
     crossChainRemoteStrategy: cCrossChainRemoteStrategy,
+    messageTransmitter: messageTransmitter,
+    tokenMessenger: tokenMessenger,
   };
 }
 

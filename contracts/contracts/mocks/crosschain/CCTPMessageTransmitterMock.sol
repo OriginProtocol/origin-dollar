@@ -34,7 +34,9 @@ contract CCTPMessageTransmitterMock is ICCTPMessageTransmitter {
     constructor(address _usdc) {
         usdc = IERC20(_usdc);
     }
-
+    
+    // @dev for the porposes of unit tests queues the message to be mock-sent using 
+    // the cctp bridge. 
     function sendMessage(
         uint32 destinationDomain,
         bytes32 recipient,
@@ -61,6 +63,8 @@ contract CCTPMessageTransmitterMock is ICCTPMessageTransmitter {
         messages.push(message);
     }
 
+    // @dev for the porposes of unit tests queues the USDC burn/mint to be executed  
+    // using the cctp bridge. 
     function sendTokenTransferMessage(
         uint32 destinationDomain,
         bytes32 recipient,
@@ -88,21 +92,44 @@ contract CCTPMessageTransmitterMock is ICCTPMessageTransmitter {
         messages.push(message);
     }
 
-    function receiveMessage(bytes calldata message, bytes calldata attestation)
-        external
+    function receiveMessage(bytes memory message, bytes memory attestation)
+        public
         override
         returns (bool) {
         // For mock, assume we can decode and push, but simplified: just push the bytes as body or something
         // To properly decode, we'd need the header parsing logic
         // For now, emit or log, but to store, perhaps add a function later
-        return true;
+
+        // this step also needs to mint USDC and transfer it to the recipient wallet
+        revert("Not implemented");
+        //return true;
     }
 
     function addMessage(Message memory msg) external {
         messages.push(msg);
     }
 
-    function removeFront() external returns (Message memory) {
+    function _encodeMessageHeader(
+        uint32 version,
+        uint32 sourceDomain,
+        bytes32 sender,
+        bytes32 recipient,
+        bytes memory messageBody
+    ) internal pure returns (bytes memory) {
+        bytes memory header = abi.encodePacked(
+            version,                          // 0-3
+            sourceDomain,                     // 4-7
+            bytes32(0),                       // 8-39 destinationDomain
+            bytes4(0),                        // 40-43 nonce
+            sender,                           // 44-75 sender
+            recipient,                        // 76-107 recipient
+            bytes32(0),                       // other stuff 
+            bytes8(0)                         // other stuff 
+        );
+        return abi.encodePacked(header, messageBody);
+    }
+
+    function _removeFront() internal returns (Message memory) {
         require(messages.length > 0, "No messages");
         Message memory removed = messages[0];
         // Shift array
@@ -113,14 +140,38 @@ contract CCTPMessageTransmitterMock is ICCTPMessageTransmitter {
         return removed;
     }
 
-    function removeBack() external returns (Message memory) {
+    function _processMessage(Message memory msg) internal {
+        bytes memory encoded = _encodeMessageHeader(
+            msg.version,
+            msg.sourceDomain,
+            msg.sender,
+            msg.recipient,
+            msg.messageBody
+        );
+
+        receiveMessage(encoded, bytes(""));
+    }
+
+    function _removeBack() internal returns (Message memory) {
         require(messages.length > 0, "No messages");
         Message memory last = messages[messages.length - 1];
         messages.pop();
         return last;
     }
 
+    function processFront() external {
+        Message memory msg = _removeFront();
+        _processMessage(msg);
+    }
+
+    function processBack() external {
+        Message memory msg = _removeBack();
+        _processMessage(msg);
+    }
+
     function getMessagesLength() external view returns (uint256) {
         return messages.length;
     }
+
+    
 }

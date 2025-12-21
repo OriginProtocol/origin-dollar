@@ -1758,7 +1758,9 @@ const deployCrossChainMasterStrategyImpl = async (
   remoteStrategyAddress,
   baseToken,
   implementationName = "CrossChainMasterStrategy",
-  skipInitialize = false
+  skipInitialize = false,
+  tokenMessengerAddress = addresses.CCTPTokenMessengerV2,
+  messageTransmitterAddress = addresses.CCTPMessageTransmitterV2
 ) => {
   const { deployerAddr } = await getNamedAccounts();
   const sDeployer = await ethers.provider.getSigner(deployerAddr);
@@ -1779,8 +1781,8 @@ const deployCrossChainMasterStrategyImpl = async (
         // addresses.mainnet.VaultProxy,
       ],
       [
-        addresses.CCTPTokenMessengerV2,
-        addresses.CCTPMessageTransmitterV2,
+        tokenMessengerAddress,
+        messageTransmitterAddress,
         targetDomainId,
         remoteStrategyAddress,
         baseToken,
@@ -1819,7 +1821,9 @@ const deployCrossChainRemoteStrategyImpl = async (
   targetDomainId,
   remoteStrategyAddress,
   baseToken,
-  implementationName = "CrossChainRemoteStrategy"
+  implementationName = "CrossChainRemoteStrategy",
+  tokenMessengerAddress = addresses.CCTPTokenMessengerV2,
+  messageTransmitterAddress = addresses.CCTPMessageTransmitterV2,
 ) => {
   const { deployerAddr } = await getNamedAccounts();
   const sDeployer = await ethers.provider.getSigner(deployerAddr);
@@ -1840,8 +1844,8 @@ const deployCrossChainRemoteStrategyImpl = async (
         // addresses.mainnet.VaultProxy,
       ],
       [
-        addresses.CCTPTokenMessengerV2,
-        addresses.CCTPMessageTransmitterV2,
+        tokenMessengerAddress,
+        messageTransmitterAddress,
         targetDomainId,
         remoteStrategyAddress,
         baseToken,
@@ -1886,13 +1890,21 @@ const deployCrossChainUnitTestStrategy = async (
     [deployerAddr],
     "CrossChainStrategyProxy"
   );
+
+  const messageTransmitter = await ethers.getContract("CCTPMessageTransmitterMock");
+  const tokenMessenger = await ethers.getContract("CCTPTokenMessengerMock");
+
   
   await deployCrossChainMasterStrategyImpl(
     dMasterProxy.address,
     6, // Base domain id
     // unit tests differ from mainnet where remote strategy has a different address
     dRemoteProxy.address,
-    usdcAddress
+    usdcAddress,
+    "CrossChainMasterStrategy",
+    false,
+    tokenMessenger.address,
+    messageTransmitter.address,
   );
   
   await deployCrossChainRemoteStrategyImpl(
@@ -1900,7 +1912,10 @@ const deployCrossChainUnitTestStrategy = async (
     dRemoteProxy.address,
     0, // Ethereum domain id
     dMasterProxy.address,
-    usdcAddress
+    usdcAddress,
+    "CrossChainRemoteStrategy",
+    tokenMessenger.address,
+    messageTransmitter.address,
   );
   
 };

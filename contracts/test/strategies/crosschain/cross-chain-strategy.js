@@ -17,6 +17,8 @@ describe.only("ForkTest: CrossChainRemoteStrategy", function () {
   });
 
   it("Should initiate a bridge of deposited USDC", async function () {
-    const { crossChainRemoteStrategy } = fixture;
+    const { crossChainRemoteStrategy, messageTransmitter, tokenMessenger } = fixture;
+
+    
   });
 });
