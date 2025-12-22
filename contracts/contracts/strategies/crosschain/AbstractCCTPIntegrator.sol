@@ -121,6 +121,9 @@ abstract contract AbstractCCTPIntegrator is Governable, IMessageHandlerV2 {
         _setFeePremiumBps(_feePremiumBps);
     }
 
+    /***************************************
+                    Settings
+    ****************************************/
     function setOperator(address _operator) external onlyGovernor {
         _setOperator(_operator);
     }
@@ -158,6 +161,10 @@ abstract contract AbstractCCTPIntegrator is Governable, IMessageHandlerV2 {
         feePremiumBps = _feePremiumBps;
         emit CCTPFeePremiumBpsSet(_feePremiumBps);
     }
+
+    /***************************************
+             CCTP message handling
+    ****************************************/
 
     function handleReceiveFinalizedMessage(
         uint32 sourceDomain,
@@ -252,65 +259,6 @@ abstract contract AbstractCCTPIntegrator is Governable, IMessageHandlerV2 {
         );
     }
 
-    function isTransferPending() public view returns (bool) {
-        uint64 nonce = lastTransferNonce;
-        return nonce > 0 && !nonceProcessed[nonce];
-    }
-
-    function isNonceProcessed(uint64 nonce) public view returns (bool) {
-        return nonceProcessed[nonce];
-    }
-
-    function _markNonceAsProcessed(uint64 nonce) internal {
-        uint64 lastNonce = lastTransferNonce;
-
-        // Can only mark latest nonce as processed
-        require(nonce >= lastNonce, "Nonce too low");
-        // Can only mark nonce as processed once
-        require(!nonceProcessed[nonce], "Nonce already processed");
-
-        nonceProcessed[nonce] = true;
-
-        if (nonce != lastNonce) {
-            // Update last known nonce
-            lastTransferNonce = nonce;
-        }
-    }
-
-    function _getNextNonce() internal returns (uint64) {
-        uint64 nonce = lastTransferNonce;
-
-        require(
-            nonce == 0 || nonceProcessed[nonce],
-            "Pending deposit or withdrawal"
-        );
-
-        nonce = nonce + 1;
-        lastTransferNonce = nonce;
-
-        return nonce;
-    }
-
-    function _decodeMessageHeader(bytes memory message)
-        internal
-        pure
-        returns (
-            uint32 version,
-            uint32 sourceDomainID,
-            address sender,
-            address recipient,
-            bytes memory messageBody
-        )
-    {
-        version = message.extractUint32(VERSION_INDEX);
-        sourceDomainID = message.extractUint32(SOURCE_DOMAIN_INDEX);
-        // Address of MessageTransmitterV2 caller on source domain
-        sender = message.extractAddress(SENDER_INDEX);
-        // Address to handle message body on destination domain
-        recipient = message.extractAddress(RECIPIENT_INDEX);
-        messageBody = message.extractSlice(MESSAGE_BODY_INDEX, message.length);
-    }
-
     function relay(bytes memory message, bytes memory attestation)
         external
         onlyOperator
@@ -390,6 +338,121 @@ abstract contract AbstractCCTPIntegrator is Governable, IMessageHandlerV2 {
             _onTokenReceived(tokenAmount - feeExecuted, feeExecuted, hookData);
         }
     }
+
+    /***************************************
+                  Message utils
+    ****************************************/
+
+
+    function _getMessageVersion(bytes memory message)
+        internal
+        virtual
+        returns (uint32)
+    {
+        // uint32 bytes 0 to 4 is Origin message version
+        // uint32 bytes 4 to 8 is Message type
+        return message.extractUint32(0);
+    }
+
+    function _getMessageType(bytes memory message)
+        internal
+        virtual
+        returns (uint32)
+    {
+        // uint32 bytes 0 to 4 is Origin message version
+        // uint32 bytes 4 to 8 is Message type
+        return message.extractUint32(4);
+    }
+
+    function _verifyMessageVersionAndType(
+        bytes memory _message,
+        uint32 _version,
+        uint32 _type
+    ) internal virtual {
+        require(
+            _getMessageVersion(_message) == _version,
+            "Invalid Origin Message Version"
+        );
+        require(_getMessageType(_message) == _type, "Invalid Message type");
+    }
+
+    function _getMessagePayload(bytes memory message)
+        internal
+        virtual
+        returns (bytes memory)
+    {
+        // uint32 bytes 0 to 4 is Origin message version
+        // uint32 bytes 4 to 8 is Message type
+        // Payload starts at byte 8
+        return message.extractSlice(8, message.length);
+    }
+
+    function _decodeMessageHeader(bytes memory message)
+        internal
+        pure
+        returns (
+            uint32 version,
+            uint32 sourceDomainID,
+            address sender,
+            address recipient,
+            bytes memory messageBody
+        )
+    {
+        version = message.extractUint32(VERSION_INDEX);
+        sourceDomainID = message.extractUint32(SOURCE_DOMAIN_INDEX);
+        // Address of MessageTransmitterV2 caller on source domain
+        sender = message.extractAddress(SENDER_INDEX);
+        // Address to handle message body on destination domain
+        recipient = message.extractAddress(RECIPIENT_INDEX);
+        messageBody = message.extractSlice(MESSAGE_BODY_INDEX, message.length);
+    }
+
+    /***************************************
+                  Nonce Handling
+    ****************************************/
+
+    function isTransferPending() public view returns (bool) {
+        uint64 nonce = lastTransferNonce;
+        return nonce > 0 && !nonceProcessed[nonce];
+    }
+
+    function isNonceProcessed(uint64 nonce) public view returns (bool) {
+        return nonceProcessed[nonce];
+    }
+
+    function _markNonceAsProcessed(uint64 nonce) internal {
+        uint64 lastNonce = lastTransferNonce;
+
+        // Can only mark latest nonce as processed
+        require(nonce >= lastNonce, "Nonce too low");
+        // Can only mark nonce as processed once
+        require(!nonceProcessed[nonce], "Nonce already processed");
+
+        nonceProcessed[nonce] = true;
+
+        if (nonce != lastNonce) {
+            // Update last known nonce
+            lastTransferNonce = nonce;
+        }
+    }
+
+    function _getNextNonce() internal returns (uint64) {
+        uint64 nonce = lastTransferNonce;
+
+        require(
+            nonce == 0 || nonceProcessed[nonce],
+            "Pending deposit or withdrawal"
+        );
+
+        nonce = nonce + 1;
+        lastTransferNonce = nonce;
+
+        return nonce;
+    }
+
+    /***************************************
+             Inheritence overrides
+    ****************************************/
 
     /**
      * @dev Called when the USDC is received from the CCTP

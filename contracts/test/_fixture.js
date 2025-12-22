@@ -16,10 +16,6 @@ const {
   fundAccountsForOETHUnitTests,
 } = require("../utils/funding");
 const { deployWithConfirmation } = require("../utils/deploy");
-const {
-  deployCrossChainMasterStrategyImpl,
-  deployCrossChainRemoteStrategyImpl,
-} = require("../deploy/deployActions.js");
 
 const { replaceContractAt } = require("../utils/hardhat");
 const {
@@ -2529,56 +2525,38 @@ async function instantRebaseVaultFixture() {
   return fixture;
 }
 
-async function yearnCrossChainFixture() {
+// Unit test cross chain fixture where both contracts are deployed on the same chain for the
+// purposes of unit testing
+async function crossChainFixtureUnit() {
   const fixture = await defaultFixture();
-  const { deployerAddr } = await getNamedAccounts();
-  const sDeployer = await ethers.provider.getSigner(deployerAddr);
 
-  // deploy master strategy
-  const masterProxy = await deployWithConfirmation("CrossChainStrategyProxy", [
-    deployerAddr,
-  ]);
-  const masterProxyAddress = masterProxy.address;
-  log(`CrossChainStrategyProxy address: ${masterProxyAddress}`);
-  let implAddress = await deployCrossChainMasterStrategyImpl(
-    masterProxyAddress,
-    "CrossChainMasterStrategyMock"
+  const crossChainMasterStrategyProxy = await ethers.getContract(
+    "CrossChainMasterStrategyProxy"
   );
-  log(`CrossChainMasterStrategyMockImpl address: ${implAddress}`);
-
-  // deploy remote strategy
-  const remoteProxy = await deployWithConfirmation("CrossChainStrategyProxy", [
-    deployerAddr,
-  ]);
-
-  const remoteProxyAddress = remoteProxy.address;
-  log(`CrossChainStrategyProxy address: ${remoteProxyAddress}`);
-
-  implAddress = await deployCrossChainRemoteStrategyImpl(
-    remoteProxyAddress,
-    "CrossChainRemoteStrategyMock"
+  const crossChainRemoteStrategyProxy = await ethers.getContract(
+    "CrossChainRemoteStrategyProxy"
   );
-  log(`CrossChainRemoteStrategyMockImpl address: ${implAddress}`);
-
-  const yearnMasterStrategy = await ethers.getContractAt(
-    "CrossChainMasterStrategyMock",
-    masterProxyAddress
-  );
-  const yearnRemoteStrategy = await ethers.getContractAt(
-    "CrossChainRemoteStrategyMock",
-    remoteProxyAddress
+  
+  const cCrossChainMasterStrategy = await ethers.getContractAt(
+    "CrossChainMasterStrategy",
+    crossChainMasterStrategyProxy.address
   );
 
-  await yearnMasterStrategy
-    .connect(sDeployer)
-    .setRemoteAddress(remoteProxyAddress);
-  await yearnRemoteStrategy
-    .connect(sDeployer)
-    .setMasterAddress(masterProxyAddress);
+  const cCrossChainRemoteStrategy = await ethers.getContractAt(
+    "CrossChainRemoteStrategy",
+    crossChainRemoteStrategyProxy.address
+  );
 
-  fixture.yearnMasterStrategy = yearnMasterStrategy;
-  fixture.yearnRemoteStrategy = yearnRemoteStrategy;
-  return fixture;
+  const messageTransmitter = await ethers.getContract("CCTPMessageTransmitterMock");
+  const tokenMessenger = await ethers.getContract("CCTPTokenMessengerMock");
+
+  return {
+    ...fixture,
+    crossChainMasterStrategy: cCrossChainMasterStrategy,
+    crossChainRemoteStrategy: cCrossChainRemoteStrategy,
+    messageTransmitter: messageTransmitter,
+    tokenMessenger: tokenMessenger,
+  };
 }
 
 /**
@@ -3020,6 +2998,6 @@ module.exports = {
   bridgeHelperModuleFixture,
   beaconChainFixture,
   claimRewardsModuleFixture,
-  yearnCrossChainFixture,
+  crossChainFixtureUnit,
   crossChainFixture,
 };
