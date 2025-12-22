@@ -1917,7 +1917,7 @@ const deployCrossChainUnitTestStrategy = async (
     tokenMessenger.address,
     messageTransmitter.address,
   );
-  
+
 };
 
 module.exports = {
