@@ -38,7 +38,7 @@ contract CrossChainRemoteStrategy is
         Generalized4626Strategy(_baseConfig, _cctpConfig.baseToken)
     {
         // NOTE: Vault address must always be the proxy address
-        // so that IVault(vaultAddress).strategistAddr()
+        // so that IVault(vaultAddress).strategistAddr() works
     }
 
     function initialize(

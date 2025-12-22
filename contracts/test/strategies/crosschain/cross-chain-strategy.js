@@ -1,10 +1,11 @@
 // const { expect } = require("chai");
 
 const { isCI } = require("../../helpers");
-const { createFixtureLoader, crossChainFixtureUnit } = require("../../_fixture");
 const {
-  units
-} = require("../../helpers");
+  createFixtureLoader,
+  crossChainFixtureUnit,
+} = require("../../_fixture");
+const { units } = require("../../helpers");
 
 const loadFixture = createFixtureLoader(crossChainFixtureUnit);
 
@@ -30,14 +31,10 @@ describe("ForkTest: CrossChainRemoteStrategy", function () {
     crossChainMasterStrategy = fixture.crossChainMasterStrategy;
     vault = fixture.vault;
   });
-  
+
   const mint = async (amount) => {
-    await usdc
-      .connect(josh)
-      .approve(vault.address, await units(amount, usdc));
-    await vault
-      .connect(josh)
-      .mint(usdc.address, await units(amount, usdc), 0);
+    await usdc.connect(josh).approve(vault.address, await units(amount, usdc));
+    await vault.connect(josh).mint(usdc.address, await units(amount, usdc), 0);
   };
 
   const depositToMasterStrategy = async (amount) => {
@@ -49,10 +46,14 @@ describe("ForkTest: CrossChainRemoteStrategy", function () {
         [await units(amount, usdc)]
       );
   };
-  
+
   const depositToStrategy = async (amount) => {
-    await usdc.connect(josh).approve(crossChainRemoteStrategy.address, await units(amount, usdc));
-    await crossChainRemoteStrategy.connect(josh).depositToStrategy(amount, usdc.address);
+    await usdc
+      .connect(josh)
+      .approve(crossChainRemoteStrategy.address, await units(amount, usdc));
+    await crossChainRemoteStrategy
+      .connect(josh)
+      .depositToStrategy(amount, usdc.address);
   };
 
   it("Should initiate a bridge of deposited USDC", async function () {

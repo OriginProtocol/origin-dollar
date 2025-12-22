@@ -3,18 +3,33 @@ pragma solidity ^0.8.0;
 
 import { ICCTPMessageTransmitter } from "../../interfaces/cctp/ICCTP.sol";
 import { IERC20 } from "../../utils/InitializableAbstractStrategy.sol";
+import { BytesHelper } from "../../utils/BytesHelper.sol";
+import { IMessageHandlerV2 } from "../../interfaces/cctp/ICCTP.sol";
+
+// CCTP Message Header fields
+// Ref: https://developers.circle.com/cctp/technical-guide#message-header
+uint8 constant VERSION_INDEX = 0;
+uint8 constant SOURCE_DOMAIN_INDEX = 4;
+uint8 constant SENDER_INDEX = 44;
+uint8 constant RECIPIENT_INDEX = 76;
+uint8 constant MESSAGE_BODY_INDEX = 148;
 
 /**
  * @title Mock conctract simulating the functionality of the CCTPTokenMessenger contract
- *        for the porposes of unit testing. 
+ *        for the porposes of unit testing.
  * @author Origin Protocol Inc
  */
 
 contract CCTPMessageTransmitterMock is ICCTPMessageTransmitter {
+    using BytesHelper for bytes;
+
     IERC20 public usdc;
     uint256 public nonce = 0;
 
-    
+    bool public shouldRevertNextReceiveMessage;
+
+    event MessageReceivedInMockTransmitter(bytes message);
+
     // Full message with header
     struct Message {
         uint32 version;
@@ -34,9 +49,9 @@ contract CCTPMessageTransmitterMock is ICCTPMessageTransmitter {
     constructor(address _usdc) {
         usdc = IERC20(_usdc);
     }
-    
-    // @dev for the porposes of unit tests queues the message to be mock-sent using 
-    // the cctp bridge. 
+
+    // @dev for the porposes of unit tests queues the message to be mock-sent using
+    // the cctp bridge.
     function sendMessage(
         uint32 destinationDomain,
         bytes32 recipient,
@@ -59,12 +74,12 @@ contract CCTPMessageTransmitterMock is ICCTPMessageTransmitter {
             tokenAmount: 0,
             messageBody: messageBody
         });
-        
+
         messages.push(message);
     }
 
-    // @dev for the porposes of unit tests queues the USDC burn/mint to be executed  
-    // using the cctp bridge. 
+    // @dev for the porposes of unit tests queues the USDC burn/mint to be executed
+    // using the cctp bridge.
     function sendTokenTransferMessage(
         uint32 destinationDomain,
         bytes32 recipient,
@@ -88,21 +103,40 @@ contract CCTPMessageTransmitterMock is ICCTPMessageTransmitter {
             tokenAmount: tokenAmount,
             messageBody: messageBody
         });
-        
+
         messages.push(message);
     }
 
     function receiveMessage(bytes memory message, bytes memory attestation)
         public
         override
-        returns (bool) {
+        returns (bool)
+    {
         // For mock, assume we can decode and push, but simplified: just push the bytes as body or something
         // To properly decode, we'd need the header parsing logic
         // For now, emit or log, but to store, perhaps add a function later
 
-        // this step also needs to mint USDC and transfer it to the recipient wallet
-        revert("Not implemented");
-        //return true;
+        uint32 sourceDomain = message.extractUint32(SOURCE_DOMAIN_INDEX);
+        address recipient = message.extractAddress(RECIPIENT_INDEX);
+        address sender = message.extractAddress(SENDER_INDEX);
+        IMessageHandlerV2(recipient).handleReceiveFinalizedMessage(
+            sourceDomain,
+            bytes32(uint256(uint160(sender))),
+            2000,
+            message.extractSlice(MESSAGE_BODY_INDEX, message.length)
+        );
+
+        // This step won't mint USDC, transfer it to the recipient address
+        // in your tests
+        emit MessageReceivedInMockTransmitter(message);
+
+        // // For testing purposes, we can revert the next receive message
+        // if (shouldRevertNextReceiveMessage) {
+        //     shouldRevertNextReceiveMessage = false;
+        //     return false;
+        // }
+
+        return true;
     }
 
     function addMessage(Message memory msg) external {
@@ -117,14 +151,14 @@ contract CCTPMessageTransmitterMock is ICCTPMessageTransmitter {
         bytes memory messageBody
     ) internal pure returns (bytes memory) {
         bytes memory header = abi.encodePacked(
-            version,                          // 0-3
-            sourceDomain,                     // 4-7
-            bytes32(0),                       // 8-39 destinationDomain
-            bytes4(0),                        // 40-43 nonce
-            sender,                           // 44-75 sender
-            recipient,                        // 76-107 recipient
-            bytes32(0),                       // other stuff 
-            bytes8(0)                         // other stuff 
+            version, // 0-3
+            sourceDomain, // 4-7
+            bytes32(0), // 8-39 destinationDomain
+            bytes4(0), // 40-43 nonce
+            sender, // 44-75 sender
+            recipient, // 76-107 recipient
+            bytes32(0), // other stuff
+            bytes8(0) // other stuff
         );
         return abi.encodePacked(header, messageBody);
     }
@@ -173,5 +207,7 @@ contract CCTPMessageTransmitterMock is ICCTPMessageTransmitter {
         return messages.length;
     }
 
-    
+    function revertNextReceiveMessage() external {
+        shouldRevertNextReceiveMessage = true;
+    }
 }

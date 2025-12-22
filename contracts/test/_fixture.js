@@ -2536,7 +2536,7 @@ async function crossChainFixtureUnit() {
   const crossChainRemoteStrategyProxy = await ethers.getContract(
     "CrossChainRemoteStrategyProxy"
   );
-  
+
   const cCrossChainMasterStrategy = await ethers.getContractAt(
     "CrossChainMasterStrategy",
     crossChainMasterStrategyProxy.address
@@ -2547,7 +2547,9 @@ async function crossChainFixtureUnit() {
     crossChainRemoteStrategyProxy.address
   );
 
-  const messageTransmitter = await ethers.getContract("CCTPMessageTransmitterMock");
+  const messageTransmitter = await ethers.getContract(
+    "CCTPMessageTransmitterMock"
+  );
   const tokenMessenger = await ethers.getContract("CCTPTokenMessengerMock");
 
   return {
@@ -2900,9 +2902,23 @@ async function crossChainFixture() {
     addresses.CrossChainStrategyProxy
   );
 
+  await deployWithConfirmation("CCTPMessageTransmitterMock", [
+    fixture.usdc.address,
+  ]);
+  const mockMessageTransmitter = await ethers.getContract(
+    "CCTPMessageTransmitterMock"
+  );
+  await deployWithConfirmation("CCTPTokenMessengerMock", [
+    fixture.usdc.address,
+    mockMessageTransmitter.address,
+  ]);
+  const mockTokenMessenger = await ethers.getContract("CCTPTokenMessengerMock");
+
   return {
     ...fixture,
     crossChainMasterStrategy: cCrossChainMasterStrategy,
+    mockMessageTransmitter: mockMessageTransmitter,
+    mockTokenMessenger: mockTokenMessenger,
   };
 }
 

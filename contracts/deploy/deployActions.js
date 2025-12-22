@@ -1762,7 +1762,7 @@ const deployCrossChainMasterStrategyImpl = async (
   tokenMessengerAddress = addresses.CCTPTokenMessengerV2,
   messageTransmitterAddress = addresses.CCTPMessageTransmitterV2
 ) => {
-  const { deployerAddr } = await getNamedAccounts();
+  const { deployerAddr, multichainStrategistAddr } = await getNamedAccounts();
   const sDeployer = await ethers.provider.getSigner(deployerAddr);
   log(`Deploying CrossChainMasterStrategyImpl as deployer ${deployerAddr}`);
 
@@ -1771,30 +1771,30 @@ const deployCrossChainMasterStrategyImpl = async (
     proxyAddress
   );
 
-  const dCrossChainMasterStrategy = await deployWithConfirmation(
-    implementationName,
+  await deployWithConfirmation(implementationName, [
     [
-      [
-        addresses.zero, // platform address
-        // TODO: change to the actual vault address
-        deployerAddr, // vault address
-        // addresses.mainnet.VaultProxy,
-      ],
-      [
-        tokenMessengerAddress,
-        messageTransmitterAddress,
-        targetDomainId,
-        remoteStrategyAddress,
-        baseToken,
-      ],
-    ]
+      addresses.zero, // platform address
+      // TODO: change to the actual vault address
+      deployerAddr, // vault address
+      // addresses.mainnet.VaultProxy,
+    ],
+    [
+      tokenMessengerAddress,
+      messageTransmitterAddress,
+      targetDomainId,
+      remoteStrategyAddress,
+      baseToken,
+    ],
+  ]);
+  const dCrossChainMasterStrategy = await ethers.getContract(
+    implementationName
   );
 
   if (!skipInitialize) {
-    // const initData = cCrossChainMasterStrategy.interface.encodeFunctionData(
-    //   "initialize()",
-    //   []
-    // );
+    const initData = dCrossChainMasterStrategy.interface.encodeFunctionData(
+      "initialize(address,uint32,uint32)",
+      [multichainStrategistAddr, 2000, 0]
+    );
 
     // Init the proxy to point at the implementation, set the governor, and call initialize
     const initFunction = "initialize(address,address,bytes)";
@@ -1804,8 +1804,7 @@ const deployCrossChainMasterStrategyImpl = async (
         // TODO: change governor later
         // addresses.mainnet.Timelock, // governor
         deployerAddr, // governor
-        //initData, // data for delegate call to the initialize function on the strategy
-        "0x",
+        initData, // data for delegate call to the initialize function on the strategy
         await getTxOpts()
       )
     );
@@ -1823,7 +1822,7 @@ const deployCrossChainRemoteStrategyImpl = async (
   baseToken,
   implementationName = "CrossChainRemoteStrategy",
   tokenMessengerAddress = addresses.CCTPTokenMessengerV2,
-  messageTransmitterAddress = addresses.CCTPMessageTransmitterV2,
+  messageTransmitterAddress = addresses.CCTPMessageTransmitterV2
 ) => {
   const { deployerAddr } = await getNamedAccounts();
   const sDeployer = await ethers.provider.getSigner(deployerAddr);
@@ -1839,8 +1838,8 @@ const deployCrossChainRemoteStrategyImpl = async (
     [
       [
         platformAddress,
-        // TODO: change to the actual vault address
-        deployerAddr, // vault address
+        // Vault address should be same as the proxy address
+        proxyAddress, // vault address
         // addresses.mainnet.VaultProxy,
       ],
       [
@@ -1876,9 +1875,7 @@ const deployCrossChainRemoteStrategyImpl = async (
 };
 
 // deploy the corss chain Master / Remote strategy pair for unit testing
-const deployCrossChainUnitTestStrategy = async (
-  usdcAddress,
-) => {
+const deployCrossChainUnitTestStrategy = async (usdcAddress) => {
   const { deployerAddr } = await getNamedAccounts();
   const dMasterProxy = await deployWithConfirmation(
     "CrossChainMasterStrategyProxy",
@@ -1891,10 +1888,11 @@ const deployCrossChainUnitTestStrategy = async (
     "CrossChainStrategyProxy"
   );
 
-  const messageTransmitter = await ethers.getContract("CCTPMessageTransmitterMock");
+  const messageTransmitter = await ethers.getContract(
+    "CCTPMessageTransmitterMock"
+  );
   const tokenMessenger = await ethers.getContract("CCTPTokenMessengerMock");
 
-  
   await deployCrossChainMasterStrategyImpl(
     dMasterProxy.address,
     6, // Base domain id
@@ -1904,9 +1902,9 @@ const deployCrossChainUnitTestStrategy = async (
     "CrossChainMasterStrategy",
     false,
     tokenMessenger.address,
-    messageTransmitter.address,
+    messageTransmitter.address
   );
-  
+
   await deployCrossChainRemoteStrategyImpl(
     deployerAddr, // TODO platform address needs to be replaces with mock 4626 Moprho Vault
     dRemoteProxy.address,
@@ -1915,9 +1913,8 @@ const deployCrossChainUnitTestStrategy = async (
     usdcAddress,
     "CrossChainRemoteStrategy",
     tokenMessenger.address,
-    messageTransmitter.address,
+    messageTransmitter.address
   );
-
 };
 
 module.exports = {
