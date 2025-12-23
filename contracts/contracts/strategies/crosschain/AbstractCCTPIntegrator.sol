@@ -10,7 +10,6 @@ import { CrossChainStrategyHelper } from "./CrossChainStrategyHelper.sol";
 import { Governable } from "../../governance/Governable.sol";
 import { BytesHelper } from "../../utils/BytesHelper.sol";
 import "../../utils/Helpers.sol";
-import "hardhat/console.sol";
 
 // CCTP Message Header fields
 // Ref: https://developers.circle.com/cctp/technical-guide#message-header
@@ -214,8 +213,6 @@ abstract contract AbstractCCTPIntegrator is Governable, IMessageHandlerV2 {
 
         // Extract address from bytes32 (CCTP stores addresses as right-padded bytes32)
         address senderAddress = address(uint160(uint256(sender)));
-        console.log("senderAddress", senderAddress);
-        console.log("peerStrategy", peerStrategy);
         require(senderAddress == peerStrategy, "Unknown Sender");
 
         _onMessageReceived(messageBody);
@@ -239,9 +236,6 @@ abstract contract AbstractCCTPIntegrator is Governable, IMessageHandlerV2 {
         uint256 maxFee = feePremiumBps > 0
             ? (tokenAmount * feePremiumBps) / 10000
             : 0;
-
-        console.log("SENDING tokens hookData");
-        console.logBytes(hookData);
 
         cctpTokenMessenger.depositForBurnWithHook(
             tokenAmount,
@@ -283,8 +277,6 @@ abstract contract AbstractCCTPIntegrator is Governable, IMessageHandlerV2 {
             "Invalid CCTP message version"
         );
 
-        console.log("sourceDomainID", sourceDomainID);
-        console.log("peerDomainID", peerDomainID);
         // Ensure that the source domain is the peer domain
         require(sourceDomainID == peerDomainID, "Unknown Source Domain");
 
@@ -318,8 +310,7 @@ abstract contract AbstractCCTPIntegrator is Governable, IMessageHandlerV2 {
             );
         }
 
-        // TODO: how to address this in unit test scope where sender and receiver are neve the same?
-        //require(sender == recipient, "Sender and recipient must be the same");
+        require(address(this) == recipient, "Unexpected recipient address");
         require(sender == peerStrategy, "Incorrect sender/recipient address");
 
         // Relay the message

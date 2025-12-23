@@ -50,7 +50,7 @@ describe.only("ForkTest: CrossChainRemoteStrategy", function () {
   };
 
   it("Should initiate a bridge of deposited USDC", async function () {
-    const { crossChainRemoteStrategy, messageTransmitter, tokenMessenger } = fixture;
+    const { messageTransmitter } = fixture;
     const amount = "1000";
 
     await mint(amount);

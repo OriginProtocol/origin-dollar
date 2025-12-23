@@ -16,7 +16,6 @@ import { Generalized4626Strategy } from "../Generalized4626Strategy.sol";
 import { AbstractCCTPIntegrator } from "./AbstractCCTPIntegrator.sol";
 import { CrossChainStrategyHelper } from "./CrossChainStrategyHelper.sol";
 import { InitializableAbstractStrategy } from "../../utils/InitializableAbstractStrategy.sol";
-import "hardhat/console.sol";
 
 contract CrossChainRemoteStrategy is
     AbstractCCTPIntegrator,
@@ -38,6 +37,10 @@ contract CrossChainRemoteStrategy is
         AbstractCCTPIntegrator(_cctpConfig)
         Generalized4626Strategy(_baseConfig, _cctpConfig.baseToken)
     {
+        // TODO: having 2 tokens representing the same asset is not ideal. 
+        // We use both tokens interchangeably in the contract.
+        require(baseToken == address(assetToken), "Token mismatch");
+        
         // NOTE: Vault address must always be the proxy address
         // so that IVault(vaultAddress).strategistAddr()
     }
@@ -107,9 +110,6 @@ contract CrossChainRemoteStrategy is
     }
 
     function _onMessageReceived(bytes memory payload) internal override {
-        console.log("Receiving message payload");
-        console.logBytes(payload);
-        
         uint32 messageType = payload.getMessageType();
         if (messageType == CrossChainStrategyHelper.DEPOSIT_MESSAGE) {
             // // Received when Master strategy sends tokens to the remote strategy
@@ -163,6 +163,9 @@ contract CrossChainRemoteStrategy is
 
         // This call can fail, and the failure doesn't need to bubble up to the _processDepositMessage function
         // as the flow is not affected by the failure.
+        // TODO: should we let 4626 handle the approval for all, or do we always approve 
+        // the exact amount?
+        IERC20(assetToken).approve(platformAddress, _amount);
         try IERC4626(platformAddress).deposit(_amount, address(this)) {
             emit Deposit(_asset, address(shareToken), _amount);
         } catch Error(string memory reason) {

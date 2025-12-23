@@ -16,7 +16,6 @@ const {
   isPlume,
   isHoodi,
   isHoodiOrFork,
-  governorArgs,
 } = require("../test/helpers.js");
 const {
   deployWithConfirmation,
@@ -1828,7 +1827,7 @@ const deployCrossChainRemoteStrategyImpl = async (
   messageTransmitterAddress = addresses.CCTPMessageTransmitterV2,
   governor = addresses.base.timelock,
 ) => {
-  const { deployerAddr, governorAddr } = await getNamedAccounts();
+  const { deployerAddr } = await getNamedAccounts();
   const sDeployer = await ethers.provider.getSigner(deployerAddr);
   log(`Deploying CrossChainRemoteStrategyImpl as deployer ${deployerAddr}`);
 
