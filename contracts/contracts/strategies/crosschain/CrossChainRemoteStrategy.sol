@@ -288,6 +288,7 @@ contract CrossChainRemoteStrategy is
          * bridged transfer.
          */
         uint256 balanceOnContract = IERC20(baseToken).balanceOf(address(this));
+        
         IERC4626 platform = IERC4626(platformAddress);
         return
             platform.previewRedeem(platform.balanceOf(address(this))) +

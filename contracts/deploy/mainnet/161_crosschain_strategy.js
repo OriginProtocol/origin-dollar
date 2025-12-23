@@ -28,6 +28,7 @@ module.exports = deploymentWithGovernanceProposal(
       // Same address for both master and remote strategy
       addresses.CrossChainStrategyProxy,
       addresses.mainnet.USDC,
+      deployerAddr,
       "CrossChainMasterStrategy"
     );
     console.log(`CrossChainMasterStrategyImpl address: ${implAddress}`);

@@ -1,5 +1,4 @@
-// const { expect } = require("chai");
-
+const { expect } = require("chai");
 const { isCI } = require("../../helpers");
 const { createFixtureLoader, crossChainFixtureUnit } = require("../../_fixture");
 const {
@@ -8,7 +7,7 @@ const {
 
 const loadFixture = createFixtureLoader(crossChainFixtureUnit);
 
-describe("ForkTest: CrossChainRemoteStrategy", function () {
+describe.only("ForkTest: CrossChainRemoteStrategy", function () {
   this.timeout(0);
 
   // Retry up to 3 times on CI
@@ -49,17 +48,18 @@ describe("ForkTest: CrossChainRemoteStrategy", function () {
         [await units(amount, usdc)]
       );
   };
-  
-  const depositToStrategy = async (amount) => {
-    await usdc.connect(josh).approve(crossChainRemoteStrategy.address, await units(amount, usdc));
-    await crossChainRemoteStrategy.connect(josh).depositToStrategy(amount, usdc.address);
-  };
 
   it("Should initiate a bridge of deposited USDC", async function () {
-    //const { crossChainRemoteStrategy, messageTransmitter, tokenMessenger } = fixture;
+    const { crossChainRemoteStrategy, messageTransmitter, tokenMessenger } = fixture;
 
     await mint("1000");
     await depositToMasterStrategy("1000");
-    await depositToStrategy("1000");
+    console.log("11")
+    await expect(await messageTransmitter.messagesInQueue()).to.eq(1);
+    console.log("22")
+    await expect(await crossChainRemoteStrategy.checkBalance(usdc.address)).to.eq(0);
+    console.log("33")
+    // Simulate off chain component to process a message
+    await messageTransmitter.processFront();
   });
 });

@@ -2529,6 +2529,7 @@ async function instantRebaseVaultFixture() {
 // purposes of unit testing
 async function crossChainFixtureUnit() {
   const fixture = await defaultFixture();
+  const { governor, vault } = fixture;
 
   const crossChainMasterStrategyProxy = await ethers.getContract(
     "CrossChainMasterStrategyProxy"
@@ -2546,10 +2547,17 @@ async function crossChainFixtureUnit() {
     "CrossChainRemoteStrategy",
     crossChainRemoteStrategyProxy.address
   );
+  
+  await vault.connect(governor).approveStrategy(cCrossChainMasterStrategy.address);
 
   const messageTransmitter = await ethers.getContract("CCTPMessageTransmitterMock");
   const tokenMessenger = await ethers.getContract("CCTPTokenMessengerMock");
 
+  // In unit test environment it is not the off-chain defender action that calls the "relay"
+  // to relay the messages but rather the message transmitter.
+  await cCrossChainMasterStrategy.connect(governor).setOperator(messageTransmitter.address);
+  await cCrossChainRemoteStrategy.connect(governor).setOperator(messageTransmitter.address);
+  
   return {
     ...fixture,
     crossChainMasterStrategy: cCrossChainMasterStrategy,

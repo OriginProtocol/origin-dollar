@@ -10,6 +10,7 @@ import { CrossChainStrategyHelper } from "./CrossChainStrategyHelper.sol";
 import { Governable } from "../../governance/Governable.sol";
 import { BytesHelper } from "../../utils/BytesHelper.sol";
 import "../../utils/Helpers.sol";
+import "hardhat/console.sol";
 
 // CCTP Message Header fields
 // Ref: https://developers.circle.com/cctp/technical-guide#message-header
@@ -277,6 +278,8 @@ abstract contract AbstractCCTPIntegrator is Governable, IMessageHandlerV2 {
             "Invalid CCTP message version"
         );
 
+        console.log("sourceDomainID", sourceDomainID);
+        console.log("peerDomainID", peerDomainID);
         // Ensure that the source domain is the peer domain
         require(sourceDomainID == peerDomainID, "Unknown Source Domain");
 

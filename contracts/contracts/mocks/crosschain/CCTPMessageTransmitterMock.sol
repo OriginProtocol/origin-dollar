@@ -3,7 +3,9 @@ pragma solidity ^0.8.0;
 
 import { ICCTPMessageTransmitter } from "../../interfaces/cctp/ICCTP.sol";
 import { IERC20 } from "../../utils/InitializableAbstractStrategy.sol";
+import { AbstractCCTPIntegrator } from "../../strategies/crosschain/AbstractCCTPIntegrator.sol";
 
+import "hardhat/console.sol";
 /**
  * @title Mock conctract simulating the functionality of the CCTPTokenMessenger contract
  *        for the porposes of unit testing. 
@@ -30,6 +32,8 @@ contract CCTPMessageTransmitterMock is ICCTPMessageTransmitter {
     }
 
     Message[] public messages;
+    // map of encoded messages to the corresponding message structs
+    mapping(bytes32 => Message) public encodedMessages;
 
     constructor(address _usdc) {
         usdc = IERC20(_usdc);
@@ -47,9 +51,12 @@ contract CCTPMessageTransmitterMock is ICCTPMessageTransmitter {
         bytes32 nonceHash = keccak256(abi.encodePacked(nonce));
         nonce++;
 
+        // If destination is mainnet, source is base and vice versa
+        uint32 sourceDomain = destinationDomain == 0 ? 6 : 0;
+
         Message memory message = Message({
             version: 1,
-            sourceDomain: 1,
+            sourceDomain: sourceDomain,
             destinationDomain: destinationDomain,
             recipient: recipient,
             sender: bytes32(uint256(uint160(msg.sender))),
@@ -59,7 +66,6 @@ contract CCTPMessageTransmitterMock is ICCTPMessageTransmitter {
             tokenAmount: 0,
             messageBody: messageBody
         });
-        
         messages.push(message);
     }
 
@@ -76,9 +82,12 @@ contract CCTPMessageTransmitterMock is ICCTPMessageTransmitter {
         bytes32 nonceHash = keccak256(abi.encodePacked(nonce));
         nonce++;
 
+        // If destination is mainnet, source is base and vice versa
+        uint32 sourceDomain = destinationDomain == 0 ? 6 : 0;
+
         Message memory message = Message({
             version: 1,
-            sourceDomain: 1,
+            sourceDomain: sourceDomain,
             destinationDomain: destinationDomain,
             recipient: recipient,
             sender: bytes32(uint256(uint160(msg.sender))),
@@ -88,7 +97,7 @@ contract CCTPMessageTransmitterMock is ICCTPMessageTransmitter {
             tokenAmount: tokenAmount,
             messageBody: messageBody
         });
-        
+
         messages.push(message);
     }
 
@@ -96,13 +105,17 @@ contract CCTPMessageTransmitterMock is ICCTPMessageTransmitter {
         public
         override
         returns (bool) {
-        // For mock, assume we can decode and push, but simplified: just push the bytes as body or something
-        // To properly decode, we'd need the header parsing logic
-        // For now, emit or log, but to store, perhaps add a function later
 
-        // this step also needs to mint USDC and transfer it to the recipient wallet
+        Message memory msg = encodedMessages[keccak256(message)];
+
+        // Credit USDC in this step as it is done in the live cctp contracts
+        if (msg.isTokenTransfer) {
+            usdc.transfer(address(uint160(uint256(msg.recipient))), msg.tokenAmount);
+        }
+
+        // Not needed for mock since the _processMessage handles the delivery
+        // of the message to the required party
         revert("Not implemented");
-        //return true;
     }
 
     function addMessage(Message memory msg) external {
@@ -141,15 +154,19 @@ contract CCTPMessageTransmitterMock is ICCTPMessageTransmitter {
     }
 
     function _processMessage(Message memory msg) internal {
-        bytes memory encoded = _encodeMessageHeader(
+        bytes memory encodedMessage = _encodeMessageHeader(
             msg.version,
             msg.sourceDomain,
             msg.sender,
             msg.recipient,
             msg.messageBody
         );
+        
+        encodedMessages[keccak256(encodedMessage)] = msg;
+        
+        address recipient = address(uint160(uint256(msg.recipient)));
 
-        receiveMessage(encoded, bytes(""));
+        AbstractCCTPIntegrator(recipient).relay(encodedMessage, bytes(""));
     }
 
     function _removeBack() internal returns (Message memory) {
@@ -157,6 +174,10 @@ contract CCTPMessageTransmitterMock is ICCTPMessageTransmitter {
         Message memory last = messages[messages.length - 1];
         messages.pop();
         return last;
+    }
+
+    function messagesInQueue() external view returns (uint256) {
+        return messages.length;
     }
 
     function processFront() external {
