@@ -17,20 +17,10 @@ object "OUSD" as ousd <<Origin>><<Proxy>> #DeepSkyBlue {
 }
 
 object "Vault" as vault <<Origin>><<Proxy>> #DeepSkyBlue {
-    assets: USDS, USDC, USDT  
-}
-
-object "Harvester" as harv <<Origin>><<Proxy>> #DeepSkyBlue {
-    rewards: CRV
+    assets: USDC 
 }
 
 ' Strategies
-' object "ConvexStrategy" as cvxStrat <<Origin>><<Proxy>> #DeepSkyBlue {
-'     asset: DAI, USDC, USDT
-'     Curve pool: 3Pool (3CRV)
-'     Convex pool: DAI+USDC+USDT
-'     rewards: CRV, CVX
-' }
 object "Morpho Steakhouse USDC\nStrategy" as steakUSDC <<Origin>><<Proxy>> #DeepSkyBlue {
     asset: USDC
     Morpho vault: steakUSDC
@@ -56,22 +46,14 @@ pairs:
 checker ..> ousd
 checker ..> vault
 
-vault <.. harv 
-
 wousd ..> ousd
 ousd <.> vault
 vault ..> oracle
 
 ' Strategies
-' vault <...> aaveStrat
-' vault <...> amoStrat
 vault <...> steakUSDC
 vault <...> gtUSDC
 vault <...> curveAmoStrat
 
-' harv <..> amoStrat
-harv <...> steakUSDC
-harv <...> gtUSDC
-harv <...> curveAmoStrat
 
 @enduml
