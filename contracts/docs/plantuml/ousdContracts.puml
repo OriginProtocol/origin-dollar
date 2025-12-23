@@ -2,10 +2,6 @@
 
 title "Origin USD Contract Dependencies"
 
-object "Dripper" as drip <<Origin>><<Proxy>> #DeepSkyBlue {
-    asset: USDT
-}
-
 object "VaultValueChecker" as checker <<Origin>> #DeepSkyBlue {
 }
 
@@ -28,10 +24,6 @@ object "Harvester" as harv <<Origin>><<Proxy>> #DeepSkyBlue {
     rewards: CRV
 }
 
-object "Buyback" as buy <<Origin>><<Proxy>> #DeepSkyBlue {
-swap OUSD for OGV
-}
-
 ' Strategies
 ' object "ConvexStrategy" as cvxStrat <<Origin>><<Proxy>> #DeepSkyBlue {
 '     asset: DAI, USDC, USDT
@@ -49,32 +41,17 @@ object "Morpho Gauntlet Prime USDC\nStrategy" as gtUSDC <<Origin>><<Proxy>> #Dee
     Morpho vault: gtUSDC
     rewards: MORPHO
 }
-object "Morpho Gauntlet Prime USDT\nStrategy" as gtUSDT <<Origin>><<Proxy>> #DeepSkyBlue {
-    asset: USDT
-    Morpho vault: gtUSDT
-    rewards: MORPHO
-}
 object "Curve USDC AMO\nStrategy" as curveAmoStrat <<Origin>><<Proxy>> #DeepSkyBlue {
     asset: USDC
     Curve pool: OUSD/USDC
     rewards: CRV
 }
 
-object "Sky Saving Rate (SSR)\nStrategy" as ssrStrat <<Origin>><<Proxy>> #DeepSkyBlue {
-    asset: USDS
-    vault: sUSDS
-}
-
 ' Oracle
 object "OracleRouter" as oracle <<Origin>> #DeepSkyBlue {
 pairs:
-    USDT/USD
     USDC/USD
-    USDS/USD
-    CRV/USD
 }
-
-vault <. drip
 
 checker ..> ousd
 checker ..> vault
@@ -85,23 +62,16 @@ wousd ..> ousd
 ousd <.> vault
 vault ..> oracle
 
-buy .> ousd
-
 ' Strategies
 ' vault <...> aaveStrat
 ' vault <...> amoStrat
-vault <...> ssrStrat
 vault <...> steakUSDC
 vault <...> gtUSDC
-vault <...> gtUSDT
 vault <...> curveAmoStrat
 
-drip <.. harv
 ' harv <..> amoStrat
-harv <...> ssrStrat
 harv <...> steakUSDC
 harv <...> gtUSDC
-harv <...> gtUSDT
 harv <...> curveAmoStrat
 
 @enduml
