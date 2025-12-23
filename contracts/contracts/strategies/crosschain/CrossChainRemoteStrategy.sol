@@ -197,6 +197,7 @@ contract CrossChainRemoteStrategy is
 
         // Check balance after withdrawal
         uint256 balanceAfter = checkBalance(baseToken);
+
         bytes memory message = CrossChainStrategyHelper
             .encodeBalanceCheckMessage(lastTransferNonce, balanceAfter);
 
@@ -205,6 +206,10 @@ contract CrossChainRemoteStrategy is
         // Or dust could be left on the contract that is hard to extract.
         uint256 usdcBalance = IERC20(baseToken).balanceOf(address(this));
         if (usdcBalance > 1e6) {
+            // The new balance on the contract needs to have USDC subtracted from it as 
+            // that will be withdrawn in the next steps
+            message = CrossChainStrategyHelper
+                .encodeBalanceCheckMessage(lastTransferNonce, balanceAfter - usdcBalance);
             _sendTokens(usdcBalance, message);
         } else {
             _sendMessage(message);
@@ -223,7 +228,8 @@ contract CrossChainRemoteStrategy is
         uint256 _amount
     ) internal override {
         require(_amount > 0, "Must withdraw something");
-        require(_recipient != address(this), "Invalid recipient");
+        // TODO: do we really need this check below?
+        // require(_recipient != address(this), "Invalid recipient");
         require(_asset == address(assetToken), "Unexpected asset address");
 
         // slither-disable-next-line unused-return

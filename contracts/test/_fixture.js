@@ -2558,12 +2558,15 @@ async function crossChainFixtureUnit() {
   await cCrossChainMasterStrategy.connect(governor).setOperator(messageTransmitter.address);
   await cCrossChainRemoteStrategy.connect(governor).setOperator(messageTransmitter.address);
   
+  const morphoVault = await ethers.getContract("MockERC4626Vault");
+  
   return {
     ...fixture,
     crossChainMasterStrategy: cCrossChainMasterStrategy,
     crossChainRemoteStrategy: cCrossChainRemoteStrategy,
     messageTransmitter: messageTransmitter,
     tokenMessenger: tokenMessenger,
+    morphoVault: morphoVault,
   };
 }
 
