@@ -16,6 +16,7 @@ import { Generalized4626Strategy } from "../Generalized4626Strategy.sol";
 import { AbstractCCTPIntegrator } from "./AbstractCCTPIntegrator.sol";
 import { CrossChainStrategyHelper } from "./CrossChainStrategyHelper.sol";
 import { InitializableAbstractStrategy } from "../../utils/InitializableAbstractStrategy.sol";
+import "hardhat/console.sol";
 
 contract CrossChainRemoteStrategy is
     AbstractCCTPIntegrator,
@@ -106,6 +107,9 @@ contract CrossChainRemoteStrategy is
     }
 
     function _onMessageReceived(bytes memory payload) internal override {
+        console.log("Receiving message payload");
+        console.logBytes(payload);
+        
         uint32 messageType = payload.getMessageType();
         if (messageType == CrossChainStrategyHelper.DEPOSIT_MESSAGE) {
             // // Received when Master strategy sends tokens to the remote strategy

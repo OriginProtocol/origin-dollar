@@ -14,8 +14,6 @@ import { IERC20, InitializableAbstractStrategy } from "../../utils/Initializable
 import { AbstractCCTPIntegrator } from "./AbstractCCTPIntegrator.sol";
 import { CrossChainStrategyHelper } from "./CrossChainStrategyHelper.sol";
 
-import "hardhat/console.sol";
-
 contract CrossChainMasterStrategy is
     AbstractCCTPIntegrator,
     InitializableAbstractStrategy
@@ -252,7 +250,7 @@ contract CrossChainMasterStrategy is
             nonce,
             depositAmount
         );
-        console.log("Sending deposit message with payload");
+
         _sendTokens(depositAmount, message);
         emit Deposit(_asset, _asset, depositAmount);
     }

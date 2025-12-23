@@ -4,7 +4,7 @@ pragma solidity ^0.8.0;
 import { ICCTPMessageTransmitter } from "../../interfaces/cctp/ICCTP.sol";
 import { IERC20 } from "../../utils/InitializableAbstractStrategy.sol";
 import { AbstractCCTPIntegrator } from "../../strategies/crosschain/AbstractCCTPIntegrator.sol";
-
+import { BytesHelper } from "../../utils/BytesHelper.sol";
 import "hardhat/console.sol";
 /**
  * @title Mock conctract simulating the functionality of the CCTPTokenMessenger contract
@@ -15,6 +15,12 @@ import "hardhat/console.sol";
 contract CCTPMessageTransmitterMock is ICCTPMessageTransmitter {
     IERC20 public usdc;
     uint256 public nonce = 0;
+    // Sender index in the burn message v2
+    // Ref: https://github.com/circlefin/evm-cctp-contracts/blob/master/src/messages/v2/BurnMessageV2.sol
+    uint8 constant BURN_MESSAGE_V2_MESSAGE_SENDER_INDEX = 100;
+    uint8 constant BURN_MESSAGE_V2_HOOK_DATA_INDEX = 228;
+
+    using BytesHelper for bytes;
 
     
     // Full message with header
@@ -107,15 +113,29 @@ contract CCTPMessageTransmitterMock is ICCTPMessageTransmitter {
         returns (bool) {
 
         Message memory msg = encodedMessages[keccak256(message)];
+        AbstractCCTPIntegrator recipient = AbstractCCTPIntegrator(address(uint160(uint256(msg.recipient))));
+
+        bytes32 sender = msg.sender;
+        bytes memory messageBody = msg.messageBody;
 
         // Credit USDC in this step as it is done in the live cctp contracts
         if (msg.isTokenTransfer) {
-            usdc.transfer(address(uint160(uint256(msg.recipient))), msg.tokenAmount);
+            usdc.transfer(address(recipient), msg.tokenAmount);
+            // override the sender with the one stored in the Burn message as the sender int he
+            // message header is the TokenMessenger.
+            sender = bytes32(uint256(uint160(msg.messageBody.extractAddress(BURN_MESSAGE_V2_MESSAGE_SENDER_INDEX))));
+            messageBody = msg.messageBody.extractSlice(BURN_MESSAGE_V2_HOOK_DATA_INDEX, msg.messageBody.length);
         }
 
-        // Not needed for mock since the _processMessage handles the delivery
-        // of the message to the required party
-        revert("Not implemented");
+        // TODO: should we also handle unfinalized messages: handleReceiveUnfinalizedMessage?
+        recipient.handleReceiveFinalizedMessage(
+            msg.sourceDomain,
+            sender,
+            2000, // finality threshold
+            messageBody
+        );
+
+        return true;
     }
 
     function addMessage(Message memory msg) external {
