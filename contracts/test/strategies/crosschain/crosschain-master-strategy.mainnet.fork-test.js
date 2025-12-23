@@ -16,6 +16,15 @@ const MESSAGE_SENT_EVENT_TOPIC =
 
 // const ORIGIN_MESSAGE_VERSION_HEX = "0x000003f2"; // 1010
 
+const emptyByte = "0000";
+const empty2Bytes = emptyByte.repeat(2);
+const empty4Bytes = emptyByte.repeat(4);
+const empty16Bytes = empty4Bytes.repeat(4);
+const empty18Bytes = `${empty2Bytes}${empty16Bytes}`;
+const empty20Bytes = empty4Bytes.repeat(5);
+
+const REMOTE_STRATEGY_BALANCE_SLOT = 210;
+
 const decodeDepositForBurnEvent = (event) => {
   const [
     amount,
@@ -123,13 +132,23 @@ const encodeCCTPMessage = (
     .toLowerCase()
     .padStart(64, "0");
   const messageBodyStr = messageBody.slice(2);
-  const emptyByte = "0000";
-  const empty2Bytes = emptyByte.repeat(2);
-  const empty4Bytes = emptyByte.repeat(4);
-  const empty16Bytes = empty4Bytes.repeat(4);
-  const empty18Bytes = `${empty2Bytes}${empty16Bytes}`;
-  const empty20Bytes = empty4Bytes.repeat(5);
   return `0x${versionStr}${sourceDomainStr}${empty18Bytes}${senderStr}${recipientStr}${empty20Bytes}${messageBodyStr}`;
+};
+
+const encodeBurnMessageBody = (sender, recipient, amount, hookData) => {
+  const senderEncoded = ethers.utils.defaultAbiCoder
+    .encode(["address"], [sender])
+    .slice(2);
+  const recipientEncoded = ethers.utils.defaultAbiCoder
+    .encode(["address"], [recipient])
+    .slice(2);
+  const amountEncoded = ethers.utils.defaultAbiCoder
+    .encode(["uint256"], [amount])
+    .slice(2);
+  const encodedHookData = hookData.slice(2);
+  return `0x00000001${empty16Bytes}${recipientEncoded}${amountEncoded}${senderEncoded}${empty16Bytes.repeat(
+    3
+  )}${encodedHookData}`;
 };
 
 const encodeBalanceCheckMessageBody = (nonce, balance) => {
@@ -254,10 +273,9 @@ describe("ForkTest: CrossChainMasterStrategy", function () {
       const impersonatedVault = await impersonateAndFund(vaultAddr);
 
       // set an arbitrary remote strategy balance
-      const remoteStrategyBalanceSlot = 209; // Slot 209
       await setStorageAt(
         crossChainMasterStrategy.address,
-        `0x${remoteStrategyBalanceSlot.toString(16)}`,
+        `0x${REMOTE_STRATEGY_BALANCE_SLOT.toString(16)}`,
         usdcUnits("1000").toHexString()
       );
 
@@ -327,7 +345,7 @@ describe("ForkTest: CrossChainMasterStrategy", function () {
       );
 
       // Build check balance payload
-      const payload = encodeBalanceCheckMessageBody(
+      const balancePayload = encodeBalanceCheckMessageBody(
         lastNonce,
         usdcUnits("12345")
       );
@@ -335,7 +353,7 @@ describe("ForkTest: CrossChainMasterStrategy", function () {
         6,
         crossChainMasterStrategy.address,
         crossChainMasterStrategy.address,
-        payload
+        balancePayload
       );
 
       // Relay the message with fake attestation
@@ -413,8 +431,83 @@ describe("ForkTest: CrossChainMasterStrategy", function () {
       );
     });
 
-    it.skip("Should accept tokens for a pending withdrawal", async function () {
-      // TODO:
+    it("Should accept tokens for a pending withdrawal", async function () {
+      const {
+        crossChainMasterStrategy,
+        mockMessageTransmitter,
+        strategist,
+        matt,
+        usdc,
+      } = fixture;
+
+      if (await crossChainMasterStrategy.isTransferPending()) {
+        // Skip if there's a pending transfer
+        console.log(
+          "Skipping balance check message fork test because there's a pending transfer"
+        );
+        return;
+      }
+
+      const vaultAddr = await crossChainMasterStrategy.vaultAddress();
+      const impersonatedVault = await impersonateAndFund(vaultAddr);
+
+      // set an arbitrary remote strategy balance
+      await setStorageAt(
+        crossChainMasterStrategy.address,
+        `0x${REMOTE_STRATEGY_BALANCE_SLOT.toString(16)}`,
+        usdcUnits("123456").toHexString()
+      );
+
+      // Simulate withdrawal call
+      await crossChainMasterStrategy
+        .connect(impersonatedVault)
+        .withdraw(vaultAddr, usdc.address, usdcUnits("1000"));
+
+      const lastNonce = (
+        await crossChainMasterStrategy.lastTransferNonce()
+      ).toNumber();
+
+      // Replace transmitter to mock transmitter
+      const actualTransmitter =
+        await crossChainMasterStrategy.cctpMessageTransmitter();
+      await replaceContractAt(actualTransmitter, mockMessageTransmitter);
+      const replacedTransmitter = await ethers.getContractAt(
+        "CCTPMessageTransmitterMock",
+        actualTransmitter
+      );
+      await replacedTransmitter.setCCTPTokenMessenger(
+        addresses.CCTPTokenMessengerV2
+      );
+
+      // Build check balance payload
+      const balancePayload = encodeBalanceCheckMessageBody(
+        lastNonce,
+        usdcUnits("12345")
+      );
+      const burnPayload = encodeBurnMessageBody(
+        crossChainMasterStrategy.address,
+        crossChainMasterStrategy.address,
+        usdcUnits("2342"),
+        balancePayload
+      );
+      const message = encodeCCTPMessage(
+        6,
+        addresses.CCTPTokenMessengerV2,
+        addresses.CCTPTokenMessengerV2,
+        burnPayload
+      );
+
+      // transfer some USDC to master strategy
+      await usdc
+        .connect(matt)
+        .transfer(crossChainMasterStrategy.address, usdcUnits("2342"));
+
+      // Relay the message with fake attestation
+      await crossChainMasterStrategy.connect(strategist).relay(message, "0x");
+
+      const remoteStrategyBalance =
+        await crossChainMasterStrategy.remoteStrategyBalance();
+      expect(remoteStrategyBalance).to.eq(usdcUnits("12345"));
     });
 
     it("Should ignore balance check message for a pending withdrawal", async function () {
@@ -437,10 +530,9 @@ describe("ForkTest: CrossChainMasterStrategy", function () {
       const impersonatedVault = await impersonateAndFund(vaultAddr);
 
       // set an arbitrary remote strategy balance
-      const remoteStrategyBalanceSlot = 209; // Slot 209
       await setStorageAt(
         crossChainMasterStrategy.address,
-        `0x${remoteStrategyBalanceSlot.toString(16)}`,
+        `0x${REMOTE_STRATEGY_BALANCE_SLOT.toString(16)}`,
         usdcUnits("1000").toHexString()
       );
 

@@ -14,6 +14,11 @@ uint8 constant SENDER_INDEX = 44;
 uint8 constant RECIPIENT_INDEX = 76;
 uint8 constant MESSAGE_BODY_INDEX = 148;
 
+// Message body V2 fields
+// Ref: https://developers.circle.com/cctp/technical-guide#message-body
+// Ref: https://github.com/circlefin/evm-cctp-contracts/blob/master/src/messages/v2/BurnMessageV2.sol
+uint8 constant BURN_MESSAGE_V2_RECIPIENT_INDEX = 36;
+
 /**
  * @title Mock conctract simulating the functionality of the CCTPTokenMessenger contract
  *        for the porposes of unit testing.
@@ -27,6 +32,7 @@ contract CCTPMessageTransmitterMock is ICCTPMessageTransmitter {
     uint256 public nonce = 0;
 
     bool public shouldRevertNextReceiveMessage;
+    address public cctpTokenMessenger;
 
     event MessageReceivedInMockTransmitter(bytes message);
 
@@ -48,6 +54,10 @@ contract CCTPMessageTransmitterMock is ICCTPMessageTransmitter {
 
     constructor(address _usdc) {
         usdc = IERC20(_usdc);
+    }
+
+    function setCCTPTokenMessenger(address _cctpTokenMessenger) external {
+        cctpTokenMessenger = _cctpTokenMessenger;
     }
 
     // @dev for the porposes of unit tests queues the message to be mock-sent using
@@ -119,12 +129,26 @@ contract CCTPMessageTransmitterMock is ICCTPMessageTransmitter {
         uint32 sourceDomain = message.extractUint32(SOURCE_DOMAIN_INDEX);
         address recipient = message.extractAddress(RECIPIENT_INDEX);
         address sender = message.extractAddress(SENDER_INDEX);
-        IMessageHandlerV2(recipient).handleReceiveFinalizedMessage(
-            sourceDomain,
-            bytes32(uint256(uint160(sender))),
-            2000,
-            message.extractSlice(MESSAGE_BODY_INDEX, message.length)
+
+        bytes memory messageBody = message.extractSlice(
+            MESSAGE_BODY_INDEX,
+            message.length
         );
+
+        bool isBurnMessage = recipient == cctpTokenMessenger;
+
+        if (isBurnMessage) {
+            // recipient = messageBody.extractAddress(BURN_MESSAGE_V2_RECIPIENT_INDEX);
+            // This step won't mint USDC, transfer it to the recipient address
+            // in your tests
+        } else {
+            IMessageHandlerV2(recipient).handleReceiveFinalizedMessage(
+                sourceDomain,
+                bytes32(uint256(uint160(sender))),
+                2000,
+                messageBody
+            );
+        }
 
         // This step won't mint USDC, transfer it to the recipient address
         // in your tests

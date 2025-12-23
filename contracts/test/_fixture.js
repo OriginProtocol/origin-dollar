@@ -24,6 +24,7 @@ const {
   getOracleAddresses,
   oethUnits,
   ousdUnits,
+  usdcUnits,
   units,
   isTest,
   isFork,
@@ -2913,6 +2914,15 @@ async function crossChainFixture() {
     mockMessageTransmitter.address,
   ]);
   const mockTokenMessenger = await ethers.getContract("CCTPTokenMessengerMock");
+  await mockMessageTransmitter.setCCTPTokenMessenger(
+    addresses.CCTPTokenMessengerV2
+  );
+
+  await setERC20TokenBalance(
+    fixture.matt.address,
+    fixture.usdc,
+    usdcUnits("1000000")
+  );
 
   return {
     ...fixture,
