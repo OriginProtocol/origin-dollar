@@ -51,15 +51,16 @@ describe.only("ForkTest: CrossChainRemoteStrategy", function () {
 
   it("Should initiate a bridge of deposited USDC", async function () {
     const { crossChainRemoteStrategy, messageTransmitter, tokenMessenger } = fixture;
+    const amount = "1000";
 
-    await mint("1000");
-    await depositToMasterStrategy("1000");
-    console.log("11")
+    await mint(amount);
+    await depositToMasterStrategy(amount);
     await expect(await messageTransmitter.messagesInQueue()).to.eq(1);
-    console.log("22")
     await expect(await crossChainRemoteStrategy.checkBalance(usdc.address)).to.eq(0);
-    console.log("33")
     // Simulate off chain component to process a message
-    await messageTransmitter.processFront();
+    //emit Deposit(_asset, address(shareToken), _amount);
+    await expect(messageTransmitter.processFront()).to.emit(crossChainRemoteStrategy, "Deposit");
+
+    await expect(await crossChainRemoteStrategy.checkBalance(usdc.address)).to.eq(await units(amount, usdc));
   });
 });
