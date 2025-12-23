@@ -5,7 +5,6 @@ import { ICCTPMessageTransmitter } from "../../interfaces/cctp/ICCTP.sol";
 import { IERC20 } from "../../utils/InitializableAbstractStrategy.sol";
 import { AbstractCCTPIntegrator } from "../../strategies/crosschain/AbstractCCTPIntegrator.sol";
 import { BytesHelper } from "../../utils/BytesHelper.sol";
-import "hardhat/console.sol";
 /**
  * @title Mock conctract simulating the functionality of the CCTPTokenMessenger contract
  *        for the porposes of unit testing. 
