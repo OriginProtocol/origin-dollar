@@ -265,6 +265,10 @@ contract CrossChainMasterStrategy is
         require(_recipient == vaultAddress, "Only Vault can withdraw");
         require(!isTransferPending(), "Transfer already pending");
         require(
+            _amount <= remoteStrategyBalance,
+            "Withdraw amount exceeds remote strategy balance"
+        );
+        require(
             _amount <= MAX_TRANSFER_AMOUNT,
             "Withdraw amount exceeds max transfer amount"
         );

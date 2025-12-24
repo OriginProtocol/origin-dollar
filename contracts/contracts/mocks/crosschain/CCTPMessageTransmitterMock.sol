@@ -3,8 +3,8 @@ pragma solidity ^0.8.0;
 
 import { ICCTPMessageTransmitter } from "../../interfaces/cctp/ICCTP.sol";
 import { IERC20 } from "../../utils/InitializableAbstractStrategy.sol";
-import { AbstractCCTPIntegrator } from "../../strategies/crosschain/AbstractCCTPIntegrator.sol";
 import { BytesHelper } from "../../utils/BytesHelper.sol";
+import { AbstractCCTPIntegrator } from "../../strategies/crosschain/AbstractCCTPIntegrator.sol";
 
 /**
  * @title Mock conctract simulating the functionality of the CCTPTokenMessenger contract
@@ -13,14 +13,14 @@ import { BytesHelper } from "../../utils/BytesHelper.sol";
  */
 
 contract CCTPMessageTransmitterMock is ICCTPMessageTransmitter {
+    using BytesHelper for bytes;
+
     IERC20 public usdc;
     uint256 public nonce = 0;
     // Sender index in the burn message v2
     // Ref: https://github.com/circlefin/evm-cctp-contracts/blob/master/src/messages/v2/BurnMessageV2.sol
     uint8 constant BURN_MESSAGE_V2_MESSAGE_SENDER_INDEX = 100;
     uint8 constant BURN_MESSAGE_V2_HOOK_DATA_INDEX = 228;
-
-    using BytesHelper for bytes;
 
     // Full message with header
     struct Message {
@@ -71,6 +71,7 @@ contract CCTPMessageTransmitterMock is ICCTPMessageTransmitter {
             tokenAmount: 0,
             messageBody: messageBody
         });
+
         messages.push(message);
     }
 
@@ -111,37 +112,37 @@ contract CCTPMessageTransmitterMock is ICCTPMessageTransmitter {
         override
         returns (bool)
     {
-        Message memory msg = encodedMessages[keccak256(message)];
+        Message memory storedMsg = encodedMessages[keccak256(message)];
         AbstractCCTPIntegrator recipient = AbstractCCTPIntegrator(
-            address(uint160(uint256(msg.recipient)))
+            address(uint160(uint256(storedMsg.recipient)))
         );
 
-        bytes32 sender = msg.sender;
-        bytes memory messageBody = msg.messageBody;
+        bytes32 sender = storedMsg.sender;
+        bytes memory messageBody = storedMsg.messageBody;
 
         // Credit USDC in this step as it is done in the live cctp contracts
-        if (msg.isTokenTransfer) {
-            usdc.transfer(address(recipient), msg.tokenAmount);
+        if (storedMsg.isTokenTransfer) {
+            usdc.transfer(address(recipient), storedMsg.tokenAmount);
             // override the sender with the one stored in the Burn message as the sender int he
             // message header is the TokenMessenger.
             sender = bytes32(
                 uint256(
                     uint160(
-                        msg.messageBody.extractAddress(
+                        storedMsg.messageBody.extractAddress(
                             BURN_MESSAGE_V2_MESSAGE_SENDER_INDEX
                         )
                     )
                 )
             );
-            messageBody = msg.messageBody.extractSlice(
+            messageBody = storedMsg.messageBody.extractSlice(
                 BURN_MESSAGE_V2_HOOK_DATA_INDEX,
-                msg.messageBody.length
+                storedMsg.messageBody.length
             );
         }
 
         // TODO: should we also handle unfinalized messages: handleReceiveUnfinalizedMessage?
         recipient.handleReceiveFinalizedMessage(
-            msg.sourceDomain,
+            storedMsg.sourceDomain,
             sender,
             2000, // finality threshold
             messageBody
@@ -150,8 +151,8 @@ contract CCTPMessageTransmitterMock is ICCTPMessageTransmitter {
         return true;
     }
 
-    function addMessage(Message memory msg) external {
-        messages.push(msg);
+    function addMessage(Message memory storedMsg) external {
+        messages.push(storedMsg);
     }
 
     function _encodeMessageHeader(
@@ -185,18 +186,18 @@ contract CCTPMessageTransmitterMock is ICCTPMessageTransmitter {
         return removed;
     }
 
-    function _processMessage(Message memory msg) internal {
+    function _processMessage(Message memory storedMsg) internal {
         bytes memory encodedMessage = _encodeMessageHeader(
-            msg.version,
-            msg.sourceDomain,
-            msg.sender,
-            msg.recipient,
-            msg.messageBody
+            storedMsg.version,
+            storedMsg.sourceDomain,
+            storedMsg.sender,
+            storedMsg.recipient,
+            storedMsg.messageBody
         );
 
-        encodedMessages[keccak256(encodedMessage)] = msg;
+        encodedMessages[keccak256(encodedMessage)] = storedMsg;
 
-        address recipient = address(uint160(uint256(msg.recipient)));
+        address recipient = address(uint160(uint256(storedMsg.recipient)));
 
         AbstractCCTPIntegrator(recipient).relay(encodedMessage, bytes(""));
     }
@@ -213,13 +214,13 @@ contract CCTPMessageTransmitterMock is ICCTPMessageTransmitter {
     }
 
     function processFront() external {
-        Message memory msg = _removeFront();
-        _processMessage(msg);
+        Message memory storedMsg = _removeFront();
+        _processMessage(storedMsg);
     }
 
     function processBack() external {
-        Message memory msg = _removeBack();
-        _processMessage(msg);
+        Message memory storedMsg = _removeBack();
+        _processMessage(storedMsg);
     }
 
     function getMessagesLength() external view returns (uint256) {

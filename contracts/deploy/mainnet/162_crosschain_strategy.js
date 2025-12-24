@@ -1,14 +1,11 @@
-const {
-  deploymentWithGovernanceProposal,
-  withConfirmation,
-} = require("../../utils/deploy");
+const { deploymentWithGovernanceProposal } = require("../../utils/deploy");
 const addresses = require("../../utils/addresses");
 const { cctpDomainIds } = require("../../utils/cctp");
 const { deployCrossChainMasterStrategyImpl } = require("../deployActions");
 
 module.exports = deploymentWithGovernanceProposal(
   {
-    deployName: "161_crosschain_strategy",
+    deployName: "162_crosschain_strategy",
     forceDeploy: false,
     reduceQueueTime: true,
     deployerIsProposer: false,
@@ -16,11 +13,11 @@ module.exports = deploymentWithGovernanceProposal(
   },
   async () => {
     const { deployerAddr } = await getNamedAccounts();
-    const sDeployer = await ethers.provider.getSigner(deployerAddr);
-
-    console.log(
-      `CrossChainStrategyProxy address: ${addresses.CrossChainStrategyProxy}`
+    const cProxy = await ethers.getContractAt(
+      "CrossChainStrategyProxy",
+      addresses.CrossChainStrategyProxy
     );
+    console.log(`CrossChainStrategyProxy address: ${cProxy.address}`);
 
     const implAddress = await deployCrossChainMasterStrategyImpl(
       addresses.CrossChainStrategyProxy,
@@ -41,11 +38,7 @@ module.exports = deploymentWithGovernanceProposal(
       `CrossChainMasterStrategy address: ${cCrossChainMasterStrategy.address}`
     );
 
-    await withConfirmation(
-      cCrossChainMasterStrategy.connect(sDeployer).setMinFinalityThreshold(
-        2000 // standard transfer
-      )
-    );
+    // TODO: Set reward tokens to Morpho
 
     return {
       actions: [],

@@ -42,7 +42,7 @@ contract CrossChainRemoteStrategy is
         require(baseToken == address(assetToken), "Token mismatch");
 
         // NOTE: Vault address must always be the proxy address
-        // so that IVault(vaultAddress).strategistAddr()
+        // so that IVault(vaultAddress).strategistAddr() works
     }
 
     function initialize(

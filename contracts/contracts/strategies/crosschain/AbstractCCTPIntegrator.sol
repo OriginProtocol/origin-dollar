@@ -416,7 +416,7 @@ abstract contract AbstractCCTPIntegrator is Governable, IMessageHandlerV2 {
     }
 
     function isNonceProcessed(uint64 nonce) public view returns (bool) {
-        return nonceProcessed[nonce];
+        return nonce == 0 || nonceProcessed[nonce];
     }
 
     function _markNonceAsProcessed(uint64 nonce) internal {
