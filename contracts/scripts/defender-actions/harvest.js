@@ -27,6 +27,13 @@ const handler = async (event) => {
     ethersVersion: "v5",
   });
 
+  const { chainId } = await provider.getNetwork();
+  if (chainId !== 1) {
+    throw new Error(
+      `Action should only be run on mainnet, not on network with chainId ${chainId}`
+    );
+  }
+
   const harvesterAddress = addresses.mainnet.OETHHarvesterSimpleProxy;
   log(`Resolved OETH Harvester Simple address to ${harvesterAddress}`);
   const harvester = new ethers.Contract(harvesterAddress, harvesterAbi, signer);
