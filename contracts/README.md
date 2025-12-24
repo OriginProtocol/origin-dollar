@@ -322,17 +322,33 @@ DEFENDER_TEAM_SECRET=
 The following will bundle the Actions code ready for upload.
 
 ```
-cd ./scripts/defender-actions
+cd contracts
+pnpm rollup -c ./scripts/defender-actions/rollup.config.cjs
+```
 
-npx rollup -c
+If you get error like the below, you will need to install `@rollup/rollup-darwin-x64`
+
+```
+Error: Cannot find module @rollup/rollup-darwin-x64. npm has a bug related to optional dependencies (https://github.com/npm/cli/issues/4828). Please try `npm i` again after removing both package-lock.json and node_modules directory.
+```
+
+If you are on Apple Silicon (M1/M2/M3) and you node is emulated x64, then the following will return `x64` rather than `arm64`.
+
+```
+node -p "process.arch"
+```
+
+If x64, run the following to install the required rollup package.
+
+```
+pnpm add -D @rollup/rollup-darwin-x64
 ```
 
 The following will upload the different Action bundles to Defender.
 
 ```sh
-# change to the defender-actions folder
-cd ./scripts/defender-actions
-npx rollup -c
+cd contracts
+pnpm rollup -c ./scripts/defender-actions/rollup.config.cjs
 
 # Set the DEFENDER_TEAM_KEY and DEFENDER_TEAM_SECRET environment variables in the .env file
 
