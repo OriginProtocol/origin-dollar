@@ -1,12 +1,12 @@
 const { parseEther, formatUnits } = require("ethers/lib/utils");
 
-const addresses = require("../../utils/addresses");
+const addresses = require("../utils/addresses");
 const { resolveContract } = require("../utils/resolvers");
 const { getSigner } = require("../utils/signers");
 const { logTxDetails } = require("../utils/txLogger");
 
-const claimRewardsSafeModuleAbi = require("../../abi/claim-rewards-module.json");
-const nativeStakingStrategyAbi = require("../../abi/native_staking_SSV_strategy.json");
+const claimRewardsSafeModuleAbi = require("../abi/claim-rewards-module.json");
+const nativeStakingStrategyAbi = require("../abi/native_staking_SSV_strategy.json");
 
 const log = require("../utils/logger")("task:harvest");
 
