@@ -250,6 +250,7 @@ contract CrossChainMasterStrategy is
             nonce,
             depositAmount
         );
+
         _sendTokens(depositAmount, message);
         emit Deposit(_asset, _asset, depositAmount);
     }
@@ -275,6 +276,9 @@ contract CrossChainMasterStrategy is
         uint64 nonce = _getNextNonce();
         transferTypeByNonce[nonce] = TransferType.Withdrawal;
 
+        // TODO: not sure that we should really emit a withdrawal here
+        // nothing is withdrawn to the vault yet. We might rather emit this in the
+        // _onTokenReceived function.
         emit Withdrawal(baseToken, baseToken, _amount);
 
         // Send withdrawal message with payload

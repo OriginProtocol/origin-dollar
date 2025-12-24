@@ -91,7 +91,9 @@ contract CCTPTokenMessengerMock is ICCTPTokenMessenger {
         bytes32 messageSenderBytes32 = bytes32(
             abi.encodePacked(bytes12(0), bytes20(uint160(messageSender)))
         );
+        bytes32 expirationBlock = bytes32(0);
 
+        // Ref: https://developers.circle.com/cctp/technical-guide#message-body
         return
             abi.encodePacked(
                 uint32(1), // 0-3: version
@@ -101,7 +103,8 @@ contract CCTPTokenMessengerMock is ICCTPTokenMessenger {
                 messageSenderBytes32, // 100-131: messageSender (bytes32 left-padded address)
                 maxFee, // 132-163: uint256 maxFee
                 feeExecuted, // 164-195: uint256 feeExecuted
-                hookData // 196+: dynamic hookData
+                expirationBlock, // 196-227: bytes32 expirationBlock
+                hookData // 228+: dynamic hookData
             );
     }
 

@@ -4,20 +4,7 @@ pragma solidity ^0.8.0;
 import { ICCTPMessageTransmitter } from "../../interfaces/cctp/ICCTP.sol";
 import { IERC20 } from "../../utils/InitializableAbstractStrategy.sol";
 import { BytesHelper } from "../../utils/BytesHelper.sol";
-import { IMessageHandlerV2 } from "../../interfaces/cctp/ICCTP.sol";
-
-// CCTP Message Header fields
-// Ref: https://developers.circle.com/cctp/technical-guide#message-header
-uint8 constant VERSION_INDEX = 0;
-uint8 constant SOURCE_DOMAIN_INDEX = 4;
-uint8 constant SENDER_INDEX = 44;
-uint8 constant RECIPIENT_INDEX = 76;
-uint8 constant MESSAGE_BODY_INDEX = 148;
-
-// Message body V2 fields
-// Ref: https://developers.circle.com/cctp/technical-guide#message-body
-// Ref: https://github.com/circlefin/evm-cctp-contracts/blob/master/src/messages/v2/BurnMessageV2.sol
-uint8 constant BURN_MESSAGE_V2_RECIPIENT_INDEX = 36;
+import { AbstractCCTPIntegrator } from "../../strategies/crosschain/AbstractCCTPIntegrator.sol";
 
 /**
  * @title Mock conctract simulating the functionality of the CCTPTokenMessenger contract
@@ -30,11 +17,10 @@ contract CCTPMessageTransmitterMock is ICCTPMessageTransmitter {
 
     IERC20 public usdc;
     uint256 public nonce = 0;
-
-    bool public shouldRevertNextReceiveMessage;
-    address public cctpTokenMessenger;
-
-    event MessageReceivedInMockTransmitter(bytes message);
+    // Sender index in the burn message v2
+    // Ref: https://github.com/circlefin/evm-cctp-contracts/blob/master/src/messages/v2/BurnMessageV2.sol
+    uint8 constant BURN_MESSAGE_V2_MESSAGE_SENDER_INDEX = 100;
+    uint8 constant BURN_MESSAGE_V2_HOOK_DATA_INDEX = 228;
 
     // Full message with header
     struct Message {
@@ -51,13 +37,11 @@ contract CCTPMessageTransmitterMock is ICCTPMessageTransmitter {
     }
 
     Message[] public messages;
+    // map of encoded messages to the corresponding message structs
+    mapping(bytes32 => Message) public encodedMessages;
 
     constructor(address _usdc) {
         usdc = IERC20(_usdc);
-    }
-
-    function setCCTPTokenMessenger(address _cctpTokenMessenger) external {
-        cctpTokenMessenger = _cctpTokenMessenger;
     }
 
     // @dev for the porposes of unit tests queues the message to be mock-sent using
@@ -72,9 +56,12 @@ contract CCTPMessageTransmitterMock is ICCTPMessageTransmitter {
         bytes32 nonceHash = keccak256(abi.encodePacked(nonce));
         nonce++;
 
+        // If destination is mainnet, source is base and vice versa
+        uint32 sourceDomain = destinationDomain == 0 ? 6 : 0;
+
         Message memory message = Message({
             version: 1,
-            sourceDomain: 1,
+            sourceDomain: sourceDomain,
             destinationDomain: destinationDomain,
             recipient: recipient,
             sender: bytes32(uint256(uint160(msg.sender))),
@@ -101,9 +88,12 @@ contract CCTPMessageTransmitterMock is ICCTPMessageTransmitter {
         bytes32 nonceHash = keccak256(abi.encodePacked(nonce));
         nonce++;
 
+        // If destination is mainnet, source is base and vice versa
+        uint32 sourceDomain = destinationDomain == 0 ? 6 : 0;
+
         Message memory message = Message({
             version: 1,
-            sourceDomain: 1,
+            sourceDomain: sourceDomain,
             destinationDomain: destinationDomain,
             recipient: recipient,
             sender: bytes32(uint256(uint160(msg.sender))),
@@ -122,49 +112,47 @@ contract CCTPMessageTransmitterMock is ICCTPMessageTransmitter {
         override
         returns (bool)
     {
-        // For mock, assume we can decode and push, but simplified: just push the bytes as body or something
-        // To properly decode, we'd need the header parsing logic
-        // For now, emit or log, but to store, perhaps add a function later
-
-        uint32 sourceDomain = message.extractUint32(SOURCE_DOMAIN_INDEX);
-        address recipient = message.extractAddress(RECIPIENT_INDEX);
-        address sender = message.extractAddress(SENDER_INDEX);
-
-        bytes memory messageBody = message.extractSlice(
-            MESSAGE_BODY_INDEX,
-            message.length
+        Message memory storedMsg = encodedMessages[keccak256(message)];
+        AbstractCCTPIntegrator recipient = AbstractCCTPIntegrator(
+            address(uint160(uint256(storedMsg.recipient)))
         );
 
-        bool isBurnMessage = recipient == cctpTokenMessenger;
+        bytes32 sender = storedMsg.sender;
+        bytes memory messageBody = storedMsg.messageBody;
 
-        if (isBurnMessage) {
-            // recipient = messageBody.extractAddress(BURN_MESSAGE_V2_RECIPIENT_INDEX);
-            // This step won't mint USDC, transfer it to the recipient address
-            // in your tests
-        } else {
-            IMessageHandlerV2(recipient).handleReceiveFinalizedMessage(
-                sourceDomain,
-                bytes32(uint256(uint160(sender))),
-                2000,
-                messageBody
+        // Credit USDC in this step as it is done in the live cctp contracts
+        if (storedMsg.isTokenTransfer) {
+            usdc.transfer(address(recipient), storedMsg.tokenAmount);
+            // override the sender with the one stored in the Burn message as the sender int he
+            // message header is the TokenMessenger.
+            sender = bytes32(
+                uint256(
+                    uint160(
+                        storedMsg.messageBody.extractAddress(
+                            BURN_MESSAGE_V2_MESSAGE_SENDER_INDEX
+                        )
+                    )
+                )
+            );
+            messageBody = storedMsg.messageBody.extractSlice(
+                BURN_MESSAGE_V2_HOOK_DATA_INDEX,
+                storedMsg.messageBody.length
             );
         }
 
-        // This step won't mint USDC, transfer it to the recipient address
-        // in your tests
-        emit MessageReceivedInMockTransmitter(message);
-
-        // // For testing purposes, we can revert the next receive message
-        // if (shouldRevertNextReceiveMessage) {
-        //     shouldRevertNextReceiveMessage = false;
-        //     return false;
-        // }
+        // TODO: should we also handle unfinalized messages: handleReceiveUnfinalizedMessage?
+        recipient.handleReceiveFinalizedMessage(
+            storedMsg.sourceDomain,
+            sender,
+            2000, // finality threshold
+            messageBody
+        );
 
         return true;
     }
 
-    function addMessage(Message memory msg) external {
-        messages.push(msg);
+    function addMessage(Message memory storedMsg) external {
+        messages.push(storedMsg);
     }
 
     function _encodeMessageHeader(
@@ -198,16 +186,20 @@ contract CCTPMessageTransmitterMock is ICCTPMessageTransmitter {
         return removed;
     }
 
-    function _processMessage(Message memory msg) internal {
-        bytes memory encoded = _encodeMessageHeader(
-            msg.version,
-            msg.sourceDomain,
-            msg.sender,
-            msg.recipient,
-            msg.messageBody
+    function _processMessage(Message memory storedMsg) internal {
+        bytes memory encodedMessage = _encodeMessageHeader(
+            storedMsg.version,
+            storedMsg.sourceDomain,
+            storedMsg.sender,
+            storedMsg.recipient,
+            storedMsg.messageBody
         );
 
-        receiveMessage(encoded, bytes(""));
+        encodedMessages[keccak256(encodedMessage)] = storedMsg;
+
+        address recipient = address(uint160(uint256(storedMsg.recipient)));
+
+        AbstractCCTPIntegrator(recipient).relay(encodedMessage, bytes(""));
     }
 
     function _removeBack() internal returns (Message memory) {
@@ -217,21 +209,21 @@ contract CCTPMessageTransmitterMock is ICCTPMessageTransmitter {
         return last;
     }
 
+    function messagesInQueue() external view returns (uint256) {
+        return messages.length;
+    }
+
     function processFront() external {
-        Message memory msg = _removeFront();
-        _processMessage(msg);
+        Message memory storedMsg = _removeFront();
+        _processMessage(storedMsg);
     }
 
     function processBack() external {
-        Message memory msg = _removeBack();
-        _processMessage(msg);
+        Message memory storedMsg = _removeBack();
+        _processMessage(storedMsg);
     }
 
     function getMessagesLength() external view returns (uint256) {
         return messages.length;
-    }
-
-    function revertNextReceiveMessage() external {
-        shouldRevertNextReceiveMessage = true;
     }
 }

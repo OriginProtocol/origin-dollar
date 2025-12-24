@@ -22,6 +22,7 @@ module.exports = deployOnBase(
       cctpDomainIds.Ethereum,
       addresses.CrossChainStrategyProxy,
       addresses.base.USDC,
+      deployerAddr,
       "CrossChainRemoteStrategy"
     );
     console.log(`CrossChainRemoteStrategyImpl address: ${implAddress}`);

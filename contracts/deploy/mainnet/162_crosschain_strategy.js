@@ -12,6 +12,7 @@ module.exports = deploymentWithGovernanceProposal(
     proposalId: "",
   },
   async () => {
+    const { deployerAddr } = await getNamedAccounts();
     const cProxy = await ethers.getContractAt(
       "CrossChainStrategyProxy",
       addresses.CrossChainStrategyProxy
@@ -24,6 +25,7 @@ module.exports = deploymentWithGovernanceProposal(
       // Same address for both master and remote strategy
       addresses.CrossChainStrategyProxy,
       addresses.mainnet.USDC,
+      deployerAddr,
       "CrossChainMasterStrategy"
     );
     console.log(`CrossChainMasterStrategyImpl address: ${implAddress}`);

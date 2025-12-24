@@ -310,7 +310,7 @@ abstract contract AbstractCCTPIntegrator is Governable, IMessageHandlerV2 {
             );
         }
 
-        require(sender == recipient, "Sender and recipient must be the same");
+        require(address(this) == recipient, "Unexpected recipient address");
         require(sender == peerStrategy, "Incorrect sender/recipient address");
 
         // Relay the message
