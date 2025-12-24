@@ -223,6 +223,7 @@ contract CrossChainRemoteStrategy is
      * @param _amount Amount of asset to withdraw
      */
     function _withdraw(
+        // solhint-disable-next-line no-unused-vars
         address _recipient,
         address _asset,
         uint256 _amount
