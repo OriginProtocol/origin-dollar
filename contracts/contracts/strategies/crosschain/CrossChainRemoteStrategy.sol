@@ -112,7 +112,7 @@ contract CrossChainRemoteStrategy is
     function _onMessageReceived(bytes memory payload) internal override {
         uint32 messageType = payload.getMessageType();
         if (messageType == CrossChainStrategyHelper.DEPOSIT_MESSAGE) {
-            // // Received when Master strategy sends tokens to the remote strategy
+            // Received when Master strategy sends tokens to the remote strategy
             // Do nothing because we receive acknowledgement with token transfer, so _onTokenReceived will handle it
             // TODO: Should _onTokenReceived always call _onMessageReceived?
             // _processDepositAckMessage(payload);
