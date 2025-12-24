@@ -35,8 +35,6 @@ const commonConfig = {
 const actions = [
   "doAccounting",
   "harvest",
-  // "stakeValidators",
-  // "registerValidators",
   "manageBribeOnSonic",
   "managePassThrough",
   "sonicRequestWithdrawal",

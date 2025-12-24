@@ -353,22 +353,22 @@ pnpm rollup -c ./scripts/defender-actions/rollup.config.cjs
 # Set the DEFENDER_TEAM_KEY and DEFENDER_TEAM_SECRET environment variables in the .env file
 
 # Set the DEBUG environment variable to oeth* for the Defender Action
-yarn hardhat setActionVars --id f4b5b8d4-82ff-483f-bfae-9fef015790ca
 yarn hardhat setActionVars --id e2929f53-db56-49b2-b054-35f7df7fc4fb
-yarn hardhat setActionVars --id 12c153c8-c5ca-420b-9696-e80c827996d1
 yarn hardhat setActionVars --id 6e4f764d-4126-45a5-b7d9-1ab90cd3ffd6
 yarn hardhat setActionVars --id 84988850-6816-4074-8e7b-c11cb2b32e7e
 yarn hardhat setActionVars --id f92ea662-fc34-433b-8beb-b34e9ab74685
 yarn hardhat setActionVars --id b1d831f1-29d4-4943-bb2e-8e625b76e82c
+yarn hardhat setActionVars --id 6567d7c6-7ec7-44bd-b95b-470dd1ff780b
+yarn hardhat setActionVars --id 6a633bb0-aff8-4b37-aaae-b4c6f244ed87
 
 # Mainnet
-yarn hardhat updateAction --id f4b5b8d4-82ff-483f-bfae-9fef015790ca --file registerValidators
-yarn hardhat updateAction --id 12c153c8-c5ca-420b-9696-e80c827996d1 --file stakeValidators
 yarn hardhat updateAction --id e2929f53-db56-49b2-b054-35f7df7fc4fb --file doAccounting
 yarn hardhat updateAction --id 6e4f764d-4126-45a5-b7d9-1ab90cd3ffd6 --file harvest
 yarn hardhat updateAction --id 84988850-6816-4074-8e7b-c11cb2b32e7e --file sonicRequestWithdrawal
 yarn hardhat updateAction --id f92ea662-fc34-433b-8beb-b34e9ab74685 --file sonicClaimWithdrawals
 yarn hardhat updateAction --id b1d831f1-29d4-4943-bb2e-8e625b76e82c --file claimBribes
+yarn hardhat updateAction --id 6567d7c6-7ec7-44bd-b95b-470dd1ff780b --file manageBribeOnSonic
+yarn hardhat updateAction --id 6a633bb0-aff8-4b37-aaae-b4c6f244ed87 --file managePassThrough
 ```
 
 `rollup` can be installed globally to avoid the `npx` prefix.
