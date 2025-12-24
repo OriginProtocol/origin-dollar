@@ -162,6 +162,25 @@ const encodeBalanceCheckMessageBody = (nonce, balance) => {
   return `0x000003f200000003${encodedPayload.slice(2)}`;
 };
 
+const replaceMessageTransmitter = async () => {
+  const mockMessageTransmitter = await ethers.getContract(
+    "CCTPMessageTransmitterMock2"
+  );
+  await replaceContractAt(
+    addresses.CCTPMessageTransmitterV2,
+    mockMessageTransmitter
+  );
+  const replacedTransmitter = await ethers.getContractAt(
+    "CCTPMessageTransmitterMock2",
+    addresses.CCTPMessageTransmitterV2
+  );
+  await replacedTransmitter.setCCTPTokenMessenger(
+    addresses.CCTPTokenMessengerV2
+  );
+
+  return replacedTransmitter;
+};
+
 describe("ForkTest: CrossChainMasterStrategy", function () {
   this.timeout(0);
 
@@ -323,8 +342,7 @@ describe("ForkTest: CrossChainMasterStrategy", function () {
 
   describe("Message receiving", function () {
     it("Should handle balance check message", async function () {
-      const { crossChainMasterStrategy, mockMessageTransmitter, strategist } =
-        fixture;
+      const { crossChainMasterStrategy, strategist } = fixture;
 
       if (await crossChainMasterStrategy.isTransferPending()) {
         // Skip if there's a pending transfer
@@ -339,10 +357,7 @@ describe("ForkTest: CrossChainMasterStrategy", function () {
       ).toNumber();
 
       // Replace transmitter to mock transmitter
-      await replaceContractAt(
-        await crossChainMasterStrategy.cctpMessageTransmitter(),
-        mockMessageTransmitter
-      );
+      await replaceMessageTransmitter();
 
       // Build check balance payload
       const balancePayload = encodeBalanceCheckMessageBody(
@@ -365,13 +380,7 @@ describe("ForkTest: CrossChainMasterStrategy", function () {
     });
 
     it("Should handle balance check message for a pending deposit", async function () {
-      const {
-        crossChainMasterStrategy,
-        mockMessageTransmitter,
-        strategist,
-        usdc,
-        matt,
-      } = fixture;
+      const { crossChainMasterStrategy, strategist, usdc, matt } = fixture;
 
       if (await crossChainMasterStrategy.isTransferPending()) {
         // Skip if there's a pending transfer
@@ -401,10 +410,7 @@ describe("ForkTest: CrossChainMasterStrategy", function () {
       ).toNumber();
 
       // Replace transmitter to mock transmitter
-      await replaceContractAt(
-        await crossChainMasterStrategy.cctpMessageTransmitter(),
-        mockMessageTransmitter
-      );
+      await replaceMessageTransmitter();
 
       // Build check balance payload
       const payload = encodeBalanceCheckMessageBody(
@@ -432,13 +438,7 @@ describe("ForkTest: CrossChainMasterStrategy", function () {
     });
 
     it("Should accept tokens for a pending withdrawal", async function () {
-      const {
-        crossChainMasterStrategy,
-        mockMessageTransmitter,
-        strategist,
-        matt,
-        usdc,
-      } = fixture;
+      const { crossChainMasterStrategy, strategist, matt, usdc } = fixture;
 
       if (await crossChainMasterStrategy.isTransferPending()) {
         // Skip if there's a pending transfer
@@ -468,16 +468,7 @@ describe("ForkTest: CrossChainMasterStrategy", function () {
       ).toNumber();
 
       // Replace transmitter to mock transmitter
-      const actualTransmitter =
-        await crossChainMasterStrategy.cctpMessageTransmitter();
-      await replaceContractAt(actualTransmitter, mockMessageTransmitter);
-      const replacedTransmitter = await ethers.getContractAt(
-        "CCTPMessageTransmitterMock",
-        actualTransmitter
-      );
-      await replacedTransmitter.setCCTPTokenMessenger(
-        addresses.CCTPTokenMessengerV2
-      );
+      await replaceMessageTransmitter();
 
       // Build check balance payload
       const balancePayload = encodeBalanceCheckMessageBody(
@@ -511,12 +502,7 @@ describe("ForkTest: CrossChainMasterStrategy", function () {
     });
 
     it("Should ignore balance check message for a pending withdrawal", async function () {
-      const {
-        crossChainMasterStrategy,
-        mockMessageTransmitter,
-        strategist,
-        usdc,
-      } = fixture;
+      const { crossChainMasterStrategy, strategist, usdc } = fixture;
 
       if (await crossChainMasterStrategy.isTransferPending()) {
         // Skip if there's a pending transfer
@@ -549,10 +535,7 @@ describe("ForkTest: CrossChainMasterStrategy", function () {
       ).toNumber();
 
       // Replace transmitter to mock transmitter
-      await replaceContractAt(
-        await crossChainMasterStrategy.cctpMessageTransmitter(),
-        mockMessageTransmitter
-      );
+      await replaceMessageTransmitter();
 
       // Build check balance payload
       const payload = encodeBalanceCheckMessageBody(
@@ -576,13 +559,7 @@ describe("ForkTest: CrossChainMasterStrategy", function () {
     });
 
     it("Should ignore balance check message with older nonce", async function () {
-      const {
-        crossChainMasterStrategy,
-        mockMessageTransmitter,
-        strategist,
-        matt,
-        usdc,
-      } = fixture;
+      const { crossChainMasterStrategy, strategist, matt, usdc } = fixture;
 
       if (await crossChainMasterStrategy.isTransferPending()) {
         // Skip if there's a pending transfer
@@ -615,10 +592,7 @@ describe("ForkTest: CrossChainMasterStrategy", function () {
         await crossChainMasterStrategy.remoteStrategyBalance();
 
       // Replace transmitter to mock transmitter
-      await replaceContractAt(
-        await crossChainMasterStrategy.cctpMessageTransmitter(),
-        mockMessageTransmitter
-      );
+      await replaceMessageTransmitter();
 
       // Build check balance payload
       const payload = encodeBalanceCheckMessageBody(
@@ -641,8 +615,7 @@ describe("ForkTest: CrossChainMasterStrategy", function () {
     });
 
     it("Should ignore if nonce is higher", async function () {
-      const { crossChainMasterStrategy, mockMessageTransmitter, strategist } =
-        fixture;
+      const { crossChainMasterStrategy, strategist } = fixture;
 
       if (await crossChainMasterStrategy.isTransferPending()) {
         // Skip if there's a pending transfer
@@ -657,10 +630,7 @@ describe("ForkTest: CrossChainMasterStrategy", function () {
       ).toNumber();
 
       // Replace transmitter to mock transmitter
-      await replaceContractAt(
-        await crossChainMasterStrategy.cctpMessageTransmitter(),
-        mockMessageTransmitter
-      );
+      await replaceMessageTransmitter();
 
       const remoteStrategyBalanceBefore =
         await crossChainMasterStrategy.remoteStrategyBalance();
@@ -684,14 +654,4 @@ describe("ForkTest: CrossChainMasterStrategy", function () {
       expect(remoteStrategyBalanceAfter).to.eq(remoteStrategyBalanceBefore);
     });
   });
-
-  // it.skip("Should handle attestation relay", async function () {
-  //   const { crossChainMasterStrategy } = fixture;
-  //   const attestation =
-  //     "0xc0ee7623da7bad1b2607f12c21ce71c4314b4ade3d36a0e6e13753fbb0603daa2b10fcbbc4942ce75a2b8d5f5c11f4b6c5ee5f8dce4663d3ec834674d0a9991a1cdeb52adf17d5fb3222b1f94f0767175f06e69f9473e7f948a4b5c478814f11915ed64081cbe6e139fd277630b8807b56be7c355ccdda6c20acbf0324231fc8301b";
-  //   const message =
-  //     "0x0000000100000006000000000384bc6f6bfe10f6df4967b6ad287d897ff729f0c7e43f73a1e18ab156e96bfb0000000000000000000000008ebcca1066d15ad901927ab01c7c6d0b057bbd340000000000000000000000008ebcca1066d15ad901927ab01c7c6d0b057bbd3400000000000000000000000030f8a2fc7d7098061c94f042b2e7e732f95af40f00000000000003e8000003f20000000300000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000";
-
-  //   await crossChainMasterStrategy.relay(message, attestation);
-  // });
 });

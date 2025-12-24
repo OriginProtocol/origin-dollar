@@ -109,6 +109,7 @@ contract CCTPMessageTransmitterMock is ICCTPMessageTransmitter {
 
     function receiveMessage(bytes memory message, bytes memory attestation)
         public
+        virtual
         override
         returns (bool)
     {

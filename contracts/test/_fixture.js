@@ -2920,20 +2920,20 @@ async function crossChainFixture() {
     addresses.CrossChainStrategyProxy
   );
 
-  await deployWithConfirmation("CCTPMessageTransmitterMock", [
+  await deployWithConfirmation("CCTPMessageTransmitterMock2", [
     fixture.usdc.address,
   ]);
   const mockMessageTransmitter = await ethers.getContract(
-    "CCTPMessageTransmitterMock"
+    "CCTPMessageTransmitterMock2"
   );
   await deployWithConfirmation("CCTPTokenMessengerMock", [
     fixture.usdc.address,
     mockMessageTransmitter.address,
   ]);
   const mockTokenMessenger = await ethers.getContract("CCTPTokenMessengerMock");
-  // await mockMessageTransmitter.setCCTPTokenMessenger(
-  //   addresses.CCTPTokenMessengerV2
-  // );
+  await mockMessageTransmitter.setCCTPTokenMessenger(
+    addresses.CCTPTokenMessengerV2
+  );
 
   await setERC20TokenBalance(
     fixture.matt.address,
