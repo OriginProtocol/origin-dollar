@@ -52,10 +52,14 @@ const handler = async (event) => {
     }
   }
 
-  const tx = await harvester
-    .connect(signer)
-    ["harvestAndTransfer(address[])"](strategiesToHarvest);
-  await logTxDetails(tx, `harvestAndTransfer`);
+  if (strategiesToHarvest.length > 0) {
+    const tx = await harvester
+      .connect(signer)
+      ["harvestAndTransfer(address[])"](strategiesToHarvest);
+    await logTxDetails(tx, `harvestAndTransfer`);
+  } else {
+    log("No native staking strategies require harvesting at this time");
+  }
 
   // await harvestMorphoStrategies(signer);
   await harvestCurveStrategies(signer);
