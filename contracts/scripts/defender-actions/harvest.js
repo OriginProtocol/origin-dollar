@@ -7,7 +7,7 @@ const {
   // harvestMorphoStrategies,
   shouldHarvestFromNativeStakingStrategy,
   harvestCurveStrategies,
-} = require("../../tasks/harvest");
+} = require("../../utils/harvest");
 
 const harvesterAbi = require("../../abi/harvester.json");
 
