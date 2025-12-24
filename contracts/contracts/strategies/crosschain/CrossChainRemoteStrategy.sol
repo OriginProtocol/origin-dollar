@@ -37,10 +37,10 @@ contract CrossChainRemoteStrategy is
         AbstractCCTPIntegrator(_cctpConfig)
         Generalized4626Strategy(_baseConfig, _cctpConfig.baseToken)
     {
-        // TODO: having 2 tokens representing the same asset is not ideal. 
+        // TODO: having 2 tokens representing the same asset is not ideal.
         // We use both tokens interchangeably in the contract.
         require(baseToken == address(assetToken), "Token mismatch");
-        
+
         // NOTE: Vault address must always be the proxy address
         // so that IVault(vaultAddress).strategistAddr()
     }
@@ -163,9 +163,7 @@ contract CrossChainRemoteStrategy is
 
         // This call can fail, and the failure doesn't need to bubble up to the _processDepositMessage function
         // as the flow is not affected by the failure.
-        // TODO: should we let 4626 handle the approval for all, or do we always approve 
-        // the exact amount?
-        IERC20(assetToken).approve(platformAddress, _amount);
+
         try IERC4626(platformAddress).deposit(_amount, address(this)) {
             emit Deposit(_asset, address(shareToken), _amount);
         } catch Error(string memory reason) {
@@ -206,10 +204,12 @@ contract CrossChainRemoteStrategy is
         // Or dust could be left on the contract that is hard to extract.
         uint256 usdcBalance = IERC20(baseToken).balanceOf(address(this));
         if (usdcBalance > 1e6) {
-            // The new balance on the contract needs to have USDC subtracted from it as 
+            // The new balance on the contract needs to have USDC subtracted from it as
             // that will be withdrawn in the next steps
-            message = CrossChainStrategyHelper
-                .encodeBalanceCheckMessage(lastTransferNonce, balanceAfter - usdcBalance);
+            message = CrossChainStrategyHelper.encodeBalanceCheckMessage(
+                lastTransferNonce,
+                balanceAfter - usdcBalance
+            );
             _sendTokens(usdcBalance, message);
         } else {
             _sendMessage(message);
@@ -301,7 +301,7 @@ contract CrossChainRemoteStrategy is
          * bridged transfer.
          */
         uint256 balanceOnContract = IERC20(baseToken).balanceOf(address(this));
-        
+
         IERC4626 platform = IERC4626(platformAddress);
         return
             platform.previewRedeem(platform.balanceOf(address(this))) +

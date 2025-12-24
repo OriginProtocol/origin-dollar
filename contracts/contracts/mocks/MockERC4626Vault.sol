@@ -20,21 +20,33 @@ contract MockERC4626Vault is IERC4626, ERC20 {
 
     // ERC20 balanceOf is inherited
 
-    function deposit(uint256 assets, address receiver) public override returns (uint256 shares) {
+    function deposit(uint256 assets, address receiver)
+        public
+        override
+        returns (uint256 shares)
+    {
         shares = previewDeposit(assets);
         IERC20(asset).safeTransferFrom(msg.sender, address(this), assets);
         _mint(receiver, shares);
         return shares;
     }
 
-    function mint(uint256 shares, address receiver) public override returns (uint256 assets) {
+    function mint(uint256 shares, address receiver)
+        public
+        override
+        returns (uint256 assets)
+    {
         assets = previewMint(shares);
         IERC20(asset).safeTransferFrom(msg.sender, address(this), assets);
         _mint(receiver, shares);
         return assets;
     }
 
-    function withdraw(uint256 assets, address receiver, address owner) public override returns (uint256 shares) {
+    function withdraw(
+        uint256 assets,
+        address receiver,
+        address owner
+    ) public override returns (uint256 shares) {
         shares = previewWithdraw(assets);
         if (msg.sender != owner) {
             // No approval check for mock
@@ -44,7 +56,11 @@ contract MockERC4626Vault is IERC4626, ERC20 {
         return shares;
     }
 
-    function redeem(uint256 shares, address receiver, address owner) public override returns (uint256 assets) {
+    function redeem(
+        uint256 shares,
+        address receiver,
+        address owner
+    ) public override returns (uint256 assets) {
         assets = previewRedeem(shares);
         if (msg.sender != owner) {
             // No approval check for mock
@@ -58,17 +74,35 @@ contract MockERC4626Vault is IERC4626, ERC20 {
         return IERC20(asset).balanceOf(address(this));
     }
 
-    function convertToShares(uint256 assets) public view override returns (uint256 shares) {
+    function convertToShares(uint256 assets)
+        public
+        view
+        override
+        returns (uint256 shares)
+    {
         uint256 supply = totalSupply(); // Use ERC20 totalSupply
-        return supply == 0 || assets == 0 ? assets : (assets * supply) / totalAssets();
+        return
+            supply == 0 || assets == 0
+                ? assets
+                : (assets * supply) / totalAssets();
     }
 
-    function convertToAssets(uint256 shares) public view override returns (uint256 assets) {
+    function convertToAssets(uint256 shares)
+        public
+        view
+        override
+        returns (uint256 assets)
+    {
         uint256 supply = totalSupply(); // Use ERC20 totalSupply
         return supply == 0 ? shares : (shares * totalAssets()) / supply;
     }
 
-    function maxDeposit(address receiver) public view override returns (uint256) {
+    function maxDeposit(address receiver)
+        public
+        view
+        override
+        returns (uint256)
+    {
         return type(uint256).max;
     }
 
@@ -84,19 +118,39 @@ contract MockERC4626Vault is IERC4626, ERC20 {
         return balanceOf(owner);
     }
 
-    function previewDeposit(uint256 assets) public view override returns (uint256 shares) {
+    function previewDeposit(uint256 assets)
+        public
+        view
+        override
+        returns (uint256 shares)
+    {
         return convertToShares(assets);
     }
 
-    function previewMint(uint256 shares) public view override returns (uint256 assets) {
+    function previewMint(uint256 shares)
+        public
+        view
+        override
+        returns (uint256 assets)
+    {
         return convertToAssets(shares);
     }
 
-    function previewWithdraw(uint256 assets) public view override returns (uint256 shares) {
+    function previewWithdraw(uint256 assets)
+        public
+        view
+        override
+        returns (uint256 shares)
+    {
         return convertToShares(assets);
     }
 
-    function previewRedeem(uint256 shares) public view override returns (uint256 assets) {
+    function previewRedeem(uint256 shares)
+        public
+        view
+        override
+        returns (uint256 assets)
+    {
         return convertToAssets(shares);
     }
 
@@ -110,4 +164,3 @@ contract MockERC4626Vault is IERC4626, ERC20 {
 
     // Inherited from ERC20
 }
-

@@ -2537,7 +2537,7 @@ async function crossChainFixtureUnit() {
   const crossChainRemoteStrategyProxy = await ethers.getContract(
     "CrossChainRemoteStrategyProxy"
   );
-  
+
   const cCrossChainMasterStrategy = await ethers.getContractAt(
     "CrossChainMasterStrategy",
     crossChainMasterStrategyProxy.address
@@ -2547,19 +2547,27 @@ async function crossChainFixtureUnit() {
     "CrossChainRemoteStrategy",
     crossChainRemoteStrategyProxy.address
   );
-  
-  await vault.connect(governor).approveStrategy(cCrossChainMasterStrategy.address);
 
-  const messageTransmitter = await ethers.getContract("CCTPMessageTransmitterMock");
+  await vault
+    .connect(governor)
+    .approveStrategy(cCrossChainMasterStrategy.address);
+
+  const messageTransmitter = await ethers.getContract(
+    "CCTPMessageTransmitterMock"
+  );
   const tokenMessenger = await ethers.getContract("CCTPTokenMessengerMock");
 
   // In unit test environment it is not the off-chain defender action that calls the "relay"
   // to relay the messages but rather the message transmitter.
-  await cCrossChainMasterStrategy.connect(governor).setOperator(messageTransmitter.address);
-  await cCrossChainRemoteStrategy.connect(governor).setOperator(messageTransmitter.address);
-  
+  await cCrossChainMasterStrategy
+    .connect(governor)
+    .setOperator(messageTransmitter.address);
+  await cCrossChainRemoteStrategy
+    .connect(governor)
+    .setOperator(messageTransmitter.address);
+
   const morphoVault = await ethers.getContract("MockERC4626Vault");
-  
+
   return {
     ...fixture,
     crossChainMasterStrategy: cCrossChainMasterStrategy,

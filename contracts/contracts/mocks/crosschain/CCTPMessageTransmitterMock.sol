@@ -5,9 +5,10 @@ import { ICCTPMessageTransmitter } from "../../interfaces/cctp/ICCTP.sol";
 import { IERC20 } from "../../utils/InitializableAbstractStrategy.sol";
 import { AbstractCCTPIntegrator } from "../../strategies/crosschain/AbstractCCTPIntegrator.sol";
 import { BytesHelper } from "../../utils/BytesHelper.sol";
+
 /**
  * @title Mock conctract simulating the functionality of the CCTPTokenMessenger contract
- *        for the porposes of unit testing. 
+ *        for the porposes of unit testing.
  * @author Origin Protocol Inc
  */
 
@@ -21,7 +22,6 @@ contract CCTPMessageTransmitterMock is ICCTPMessageTransmitter {
 
     using BytesHelper for bytes;
 
-    
     // Full message with header
     struct Message {
         uint32 version;
@@ -43,9 +43,9 @@ contract CCTPMessageTransmitterMock is ICCTPMessageTransmitter {
     constructor(address _usdc) {
         usdc = IERC20(_usdc);
     }
-    
-    // @dev for the porposes of unit tests queues the message to be mock-sent using 
-    // the cctp bridge. 
+
+    // @dev for the porposes of unit tests queues the message to be mock-sent using
+    // the cctp bridge.
     function sendMessage(
         uint32 destinationDomain,
         bytes32 recipient,
@@ -74,8 +74,8 @@ contract CCTPMessageTransmitterMock is ICCTPMessageTransmitter {
         messages.push(message);
     }
 
-    // @dev for the porposes of unit tests queues the USDC burn/mint to be executed  
-    // using the cctp bridge. 
+    // @dev for the porposes of unit tests queues the USDC burn/mint to be executed
+    // using the cctp bridge.
     function sendTokenTransferMessage(
         uint32 destinationDomain,
         bytes32 recipient,
@@ -109,10 +109,12 @@ contract CCTPMessageTransmitterMock is ICCTPMessageTransmitter {
     function receiveMessage(bytes memory message, bytes memory attestation)
         public
         override
-        returns (bool) {
-
+        returns (bool)
+    {
         Message memory msg = encodedMessages[keccak256(message)];
-        AbstractCCTPIntegrator recipient = AbstractCCTPIntegrator(address(uint160(uint256(msg.recipient))));
+        AbstractCCTPIntegrator recipient = AbstractCCTPIntegrator(
+            address(uint160(uint256(msg.recipient)))
+        );
 
         bytes32 sender = msg.sender;
         bytes memory messageBody = msg.messageBody;
@@ -122,8 +124,19 @@ contract CCTPMessageTransmitterMock is ICCTPMessageTransmitter {
             usdc.transfer(address(recipient), msg.tokenAmount);
             // override the sender with the one stored in the Burn message as the sender int he
             // message header is the TokenMessenger.
-            sender = bytes32(uint256(uint160(msg.messageBody.extractAddress(BURN_MESSAGE_V2_MESSAGE_SENDER_INDEX))));
-            messageBody = msg.messageBody.extractSlice(BURN_MESSAGE_V2_HOOK_DATA_INDEX, msg.messageBody.length);
+            sender = bytes32(
+                uint256(
+                    uint160(
+                        msg.messageBody.extractAddress(
+                            BURN_MESSAGE_V2_MESSAGE_SENDER_INDEX
+                        )
+                    )
+                )
+            );
+            messageBody = msg.messageBody.extractSlice(
+                BURN_MESSAGE_V2_HOOK_DATA_INDEX,
+                msg.messageBody.length
+            );
         }
 
         // TODO: should we also handle unfinalized messages: handleReceiveUnfinalizedMessage?
@@ -149,14 +162,14 @@ contract CCTPMessageTransmitterMock is ICCTPMessageTransmitter {
         bytes memory messageBody
     ) internal pure returns (bytes memory) {
         bytes memory header = abi.encodePacked(
-            version,                          // 0-3
-            sourceDomain,                     // 4-7
-            bytes32(0),                       // 8-39 destinationDomain
-            bytes4(0),                        // 40-43 nonce
-            sender,                           // 44-75 sender
-            recipient,                        // 76-107 recipient
-            bytes32(0),                       // other stuff 
-            bytes8(0)                         // other stuff 
+            version, // 0-3
+            sourceDomain, // 4-7
+            bytes32(0), // 8-39 destinationDomain
+            bytes4(0), // 40-43 nonce
+            sender, // 44-75 sender
+            recipient, // 76-107 recipient
+            bytes32(0), // other stuff
+            bytes8(0) // other stuff
         );
         return abi.encodePacked(header, messageBody);
     }
@@ -180,9 +193,9 @@ contract CCTPMessageTransmitterMock is ICCTPMessageTransmitter {
             msg.recipient,
             msg.messageBody
         );
-        
+
         encodedMessages[keccak256(encodedMessage)] = msg;
-        
+
         address recipient = address(uint160(uint256(msg.recipient)));
 
         AbstractCCTPIntegrator(recipient).relay(encodedMessage, bytes(""));
@@ -212,6 +225,4 @@ contract CCTPMessageTransmitterMock is ICCTPMessageTransmitter {
     function getMessagesLength() external view returns (uint256) {
         return messages.length;
     }
-
-    
 }

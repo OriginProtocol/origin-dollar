@@ -343,7 +343,6 @@ abstract contract AbstractCCTPIntegrator is Governable, IMessageHandlerV2 {
                   Message utils
     ****************************************/
 
-
     function _getMessageVersion(bytes memory message)
         internal
         virtual
