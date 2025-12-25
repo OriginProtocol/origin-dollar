@@ -1,7 +1,7 @@
 const hre = require("hardhat");
 const { ethers } = hre;
 const mocha = require("mocha");
-const { isFork, isBaseFork, oethUnits } = require("./helpers");
+const { isFork, isBaseFork, oethUnits, usdcUnits } = require("./helpers");
 const { impersonateAndFund, impersonateAccount } = require("../utils/signers");
 const { nodeRevert, nodeSnapshot } = require("./_fixture");
 const { deployWithConfirmation } = require("../utils/deploy");
@@ -343,9 +343,46 @@ const crossChainFixture = deployments.createFixture(async () => {
     "CrossChainRemoteStrategy",
     addresses.CrossChainStrategyProxy
   );
+
+  await deployWithConfirmation("CCTPMessageTransmitterMock2", [
+    fixture.usdc.address,
+  ]);
+  const mockMessageTransmitter = await ethers.getContract(
+    "CCTPMessageTransmitterMock2"
+  );
+  await deployWithConfirmation("CCTPTokenMessengerMock", [
+    fixture.usdc.address,
+    mockMessageTransmitter.address,
+  ]);
+  const mockTokenMessenger = await ethers.getContract("CCTPTokenMessengerMock");
+  await mockMessageTransmitter.setCCTPTokenMessenger(
+    addresses.CCTPTokenMessengerV2
+  );
+
+  const usdcMinter = await impersonateAndFund(
+    "0x2230393EDAD0299b7E7B59F20AA856cD1bEd52e1"
+  );
+  const usdcContract = await ethers.getContractAt(
+    [
+      "function mint(address to, uint256 amount) external",
+      "function configureMinter(address minter, uint256 minterAmount) external",
+    ],
+    addresses.base.USDC
+  );
+
+  await usdcContract
+    .connect(usdcMinter)
+    .configureMinter(fixture.rafael.address, usdcUnits("100000000"));
+
+  await usdcContract
+    .connect(fixture.rafael)
+    .mint(fixture.rafael.address, usdcUnits("1000000"));
+
   return {
     ...fixture,
     crossChainRemoteStrategy,
+    mockMessageTransmitter,
+    mockTokenMessenger,
   };
 });
 

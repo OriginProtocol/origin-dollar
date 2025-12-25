@@ -228,10 +228,9 @@ abstract contract AbstractCCTPIntegrator is Governable, IMessageHandlerV2 {
 
         IERC20(baseToken).safeApprove(address(cctpTokenMessenger), tokenAmount);
 
-        // TODO: figure out why getMinFeeAmount is not on CCTP v2 contract
         // Ref: https://developers.circle.com/cctp/evm-smart-contracts#getminfeeamount
         // The issue is that the getMinFeeAmount is not present on v2.0 contracts, but is on
-        // v2.1. We will only be using standard transfers and fee on those is 0.
+        // v2.1. We will only be using standard transfers and fee on those is 0 for now
 
         uint256 maxFee = feePremiumBps > 0
             ? (tokenAmount * feePremiumBps) / 10000
@@ -283,7 +282,14 @@ abstract contract AbstractCCTPIntegrator is Governable, IMessageHandlerV2 {
         // Ensure message body version
         version = messageBody.extractUint32(BURN_MESSAGE_V2_VERSION_INDEX);
 
-        // TODO: what if the sender sends another type of a message not just the burn message?
+        // NOTE: There's a possibility that the CCTP Token Messenger might
+        // send other types of messages in future, not just the burn message.
+        // If it ever comes to that, this shouldn't cause us any problems
+        // because it has to still go through the followign checks:
+        // - version check
+        // - message body length check
+        // - sender and recipient (which should be in the same slots and same as address(this))
+        // - hook data handling (which will revert even if all the above checks pass)
         bool isBurnMessageV1 = sender == address(cctpTokenMessenger);
 
         if (isBurnMessageV1) {

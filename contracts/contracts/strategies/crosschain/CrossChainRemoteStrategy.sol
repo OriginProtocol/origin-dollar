@@ -30,6 +30,16 @@ contract CrossChainRemoteStrategy is
 
     address public strategistAddr;
 
+    modifier onlyOperatorOrStrategistOrGovernor() {
+        require(
+            msg.sender == operator ||
+                msg.sender == strategistAddr ||
+                isGovernor(),
+            "Caller is not the Operator, Strategist or the Governor"
+        );
+        _;
+    }
+
     constructor(
         BaseStrategyConfig memory _baseConfig,
         CCTPIntegrationConfig memory _cctpConfig
@@ -37,8 +47,6 @@ contract CrossChainRemoteStrategy is
         AbstractCCTPIntegrator(_cctpConfig)
         Generalized4626Strategy(_baseConfig, _cctpConfig.baseToken)
     {
-        // TODO: having 2 tokens representing the same asset is not ideal.
-        // We use both tokens interchangeably in the contract.
         require(baseToken == address(assetToken), "Token mismatch");
 
         // NOTE: Vault address must always be the proxy address
@@ -58,7 +66,7 @@ contract CrossChainRemoteStrategy is
         address[] memory assets = new address[](1);
         address[] memory pTokens = new address[](1);
 
-        assets[0] = address(assetToken);
+        assets[0] = address(baseToken);
         pTokens[0] = address(platformAddress);
 
         InitializableAbstractStrategy._initialize(
@@ -114,8 +122,6 @@ contract CrossChainRemoteStrategy is
         if (messageType == CrossChainStrategyHelper.DEPOSIT_MESSAGE) {
             // Received when Master strategy sends tokens to the remote strategy
             // Do nothing because we receive acknowledgement with token transfer, so _onTokenReceived will handle it
-            // TODO: Should _onTokenReceived always call _onMessageReceived?
-            // _processDepositAckMessage(payload);
         } else if (messageType == CrossChainStrategyHelper.WITHDRAW_MESSAGE) {
             // Received when Master strategy requests a withdrawal
             _processWithdrawMessage(payload);
@@ -131,9 +137,7 @@ contract CrossChainRemoteStrategy is
         uint256 feeExecuted,
         bytes memory payload
     ) internal virtual {
-        // TODO: no need to communicate the deposit amount if we deposit everything
-        // solhint-disable-next-line no-unused-vars
-        (uint64 nonce, uint256 depositAmount) = payload.decodeDepositMessage();
+        (uint64 nonce, ) = payload.decodeDepositMessage();
 
         // Replay protection
         require(!isNonceProcessed(nonce), "Nonce already processed");
@@ -159,7 +163,7 @@ contract CrossChainRemoteStrategy is
      */
     function _deposit(address _asset, uint256 _amount) internal override {
         require(_amount > 0, "Must deposit something");
-        require(_asset == address(assetToken), "Unexpected asset address");
+        require(_asset == address(baseToken), "Unexpected asset address");
 
         // This call can fail, and the failure doesn't need to bubble up to the _processDepositMessage function
         // as the flow is not affected by the failure.
@@ -229,9 +233,8 @@ contract CrossChainRemoteStrategy is
         uint256 _amount
     ) internal override {
         require(_amount > 0, "Must withdraw something");
-        // TODO: do we really need this check below?
-        // require(_recipient != address(this), "Invalid recipient");
-        require(_asset == address(assetToken), "Unexpected asset address");
+        require(_recipient == address(this), "Invalid recipient");
+        require(_asset == address(baseToken), "Unexpected asset address");
 
         // slither-disable-next-line unused-return
 
@@ -276,8 +279,11 @@ contract CrossChainRemoteStrategy is
         _processDepositMessage(tokenAmount, feeExecuted, payload);
     }
 
-    function sendBalanceUpdate() external virtual {
-        // TODO: Add permissioning
+    function sendBalanceUpdate()
+        external
+        virtual
+        onlyOperatorOrStrategistOrGovernor
+    {
         uint256 balance = checkBalance(baseToken);
         bytes memory message = CrossChainStrategyHelper
             .encodeBalanceCheckMessage(lastTransferNonce, balance);
@@ -293,7 +299,7 @@ contract CrossChainRemoteStrategy is
         public
         view
         override
-        returns (uint256 balance)
+        returns (uint256)
     {
         require(_asset == baseToken, "Unexpected asset address");
         /**

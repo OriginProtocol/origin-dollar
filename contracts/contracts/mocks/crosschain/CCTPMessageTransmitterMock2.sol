@@ -22,11 +22,34 @@ contract CCTPMessageTransmitterMock2 is CCTPMessageTransmitterMock {
     address public cctpTokenMessenger;
 
     event MessageReceivedInMockTransmitter(bytes message);
+    event MessageSent(bytes message);
 
     constructor(address _usdc) CCTPMessageTransmitterMock(_usdc) {}
 
     function setCCTPTokenMessenger(address _cctpTokenMessenger) external {
         cctpTokenMessenger = _cctpTokenMessenger;
+    }
+
+    function sendMessage(
+        uint32 destinationDomain,
+        bytes32 recipient,
+        bytes32 destinationCaller,
+        uint32 minFinalityThreshold,
+        bytes memory messageBody
+    ) external virtual override {
+        bytes memory message = abi.encodePacked(
+            uint32(1), // version
+            uint32(destinationDomain == 0 ? 6 : 0), // source domain
+            uint32(destinationDomain), // destination domain
+            uint256(0),
+            bytes32(uint256(uint160(msg.sender))), // sender
+            recipient, // recipient
+            destinationCaller, // destination caller
+            minFinalityThreshold, // min finality threshold
+            uint32(0),
+            messageBody // message body
+        );
+        emit MessageSent(message);
     }
 
     function receiveMessage(bytes memory message, bytes memory attestation)

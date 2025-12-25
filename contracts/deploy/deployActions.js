@@ -1823,7 +1823,7 @@ const deployCrossChainRemoteStrategyImpl = async (
   messageTransmitterAddress = addresses.CCTPMessageTransmitterV2,
   governor = addresses.base.timelock
 ) => {
-  const { deployerAddr } = await getNamedAccounts();
+  const { deployerAddr, multichainStrategistAddr } = await getNamedAccounts();
   const sDeployer = await ethers.provider.getSigner(deployerAddr);
   log(`Deploying CrossChainRemoteStrategyImpl as deployer ${deployerAddr}`);
 
@@ -1832,29 +1832,29 @@ const deployCrossChainRemoteStrategyImpl = async (
     proxyAddress
   );
 
-  const dCrossChainRemoteStrategy = await deployWithConfirmation(
-    implementationName,
+  await deployWithConfirmation(implementationName, [
     [
-      [
-        platformAddress,
-        // Vault address should be same as the proxy address
-        proxyAddress, // vault address
-        // addresses.mainnet.VaultProxy,
-      ],
-      [
-        tokenMessengerAddress,
-        messageTransmitterAddress,
-        targetDomainId,
-        remoteStrategyAddress,
-        baseToken,
-      ],
-    ]
+      platformAddress,
+      // Vault address should be same as the proxy address
+      proxyAddress, // vault address
+      // addresses.mainnet.VaultProxy,
+    ],
+    [
+      tokenMessengerAddress,
+      messageTransmitterAddress,
+      targetDomainId,
+      remoteStrategyAddress,
+      baseToken,
+    ],
+  ]);
+  const dCrossChainRemoteStrategy = await ethers.getContract(
+    implementationName
   );
 
-  // const initData = cCrossChainMasterStrategy.interface.encodeFunctionData(
-  //   "initialize()",
-  //   []
-  // );
+  const initData = dCrossChainRemoteStrategy.interface.encodeFunctionData(
+    "initialize(address,address,uint32,uint32)",
+    [multichainStrategistAddr, multichainStrategistAddr, 2000, 0]
+  );
 
   // Init the proxy to point at the implementation, set the governor, and call initialize
   const initFunction = "initialize(address,address,bytes)";
@@ -1863,7 +1863,7 @@ const deployCrossChainRemoteStrategyImpl = async (
       dCrossChainRemoteStrategy.address,
       governor, // governor
       //initData, // data for delegate call to the initialize function on the strategy
-      "0x",
+      initData,
       await getTxOpts()
     )
   );

@@ -22,8 +22,10 @@ module.exports = deployOnBase(
       cctpDomainIds.Ethereum,
       addresses.CrossChainStrategyProxy,
       addresses.base.USDC,
-      deployerAddr,
-      "CrossChainRemoteStrategy"
+      "CrossChainRemoteStrategy",
+      addresses.CCTPTokenMessengerV2,
+      addresses.CCTPMessageTransmitterV2,
+      deployerAddr
     );
     console.log(`CrossChainRemoteStrategyImpl address: ${implAddress}`);
 
@@ -35,18 +37,17 @@ module.exports = deployOnBase(
       `CrossChainRemoteStrategy address: ${cCrossChainRemoteStrategy.address}`
     );
 
-    await withConfirmation(
-      cCrossChainRemoteStrategy.connect(sDeployer).setMinFinalityThreshold(
-        2000 // standard transfer
-      )
-    );
-
+    // TODO: Move to governance actions when going live
     await withConfirmation(
       cCrossChainRemoteStrategy.connect(sDeployer).safeApproveAllTokens()
     );
 
     return {
-      actions: [],
+      // actions: [{
+      //   contract: cCrossChainRemoteStrategy,
+      //   signature: "safeApproveAllTokens()",
+      //   args: [],
+      // }],
     };
   }
 );

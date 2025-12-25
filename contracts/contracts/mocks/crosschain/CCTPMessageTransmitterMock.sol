@@ -52,7 +52,7 @@ contract CCTPMessageTransmitterMock is ICCTPMessageTransmitter {
         bytes32 destinationCaller,
         uint32 minFinalityThreshold,
         bytes memory messageBody
-    ) external override {
+    ) external virtual override {
         bytes32 nonceHash = keccak256(abi.encodePacked(nonce));
         nonce++;
 
@@ -139,15 +139,16 @@ contract CCTPMessageTransmitterMock is ICCTPMessageTransmitter {
                 BURN_MESSAGE_V2_HOOK_DATA_INDEX,
                 storedMsg.messageBody.length
             );
+        } else {
+            recipient.handleReceiveFinalizedMessage(
+                storedMsg.sourceDomain,
+                sender,
+                2000, // finality threshold
+                messageBody
+            );
         }
 
         // TODO: should we also handle unfinalized messages: handleReceiveUnfinalizedMessage?
-        recipient.handleReceiveFinalizedMessage(
-            storedMsg.sourceDomain,
-            sender,
-            2000, // finality threshold
-            messageBody
-        );
 
         return true;
     }

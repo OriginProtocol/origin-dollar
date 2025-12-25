@@ -35,6 +35,7 @@ contract CrossChainMasterStrategy is
     mapping(uint64 => TransferType) public transferTypeByNonce;
 
     event RemoteStrategyBalanceUpdated(uint256 balance);
+    event WithdrawRequested(address indexed asset, uint256 amount);
 
     /**
      * @param _stratConfig The platform and OToken vault addresses
@@ -227,6 +228,9 @@ contract CrossChainMasterStrategy is
         require(usdcBalance >= tokenAmount, "Insufficient balance");
         // Transfer all tokens to the Vault to not leave any dust
         IERC20(baseToken).safeTransfer(vaultAddress, usdcBalance);
+
+        // Emit withdrawal amount
+        emit Withdrawal(baseToken, baseToken, usdcBalance);
     }
 
     function _deposit(address _asset, uint256 depositAmount) internal virtual {
@@ -276,10 +280,9 @@ contract CrossChainMasterStrategy is
         uint64 nonce = _getNextNonce();
         transferTypeByNonce[nonce] = TransferType.Withdrawal;
 
-        // TODO: not sure that we should really emit a withdrawal here
-        // nothing is withdrawn to the vault yet. We might rather emit this in the
-        // _onTokenReceived function.
-        emit Withdrawal(baseToken, baseToken, _amount);
+        // Emit Withdrawequested event here,
+        // Withdraw will emitted in _onTokenReceived
+        emit WithdrawRequested(baseToken, _amount);
 
         // Send withdrawal message with payload
         bytes memory message = CrossChainStrategyHelper.encodeWithdrawMessage(
