@@ -2,11 +2,12 @@
 pragma solidity ^0.8.0;
 
 /**
- * @title OUSD Yearn V3 Remote Strategy - the L2 chain part
+ * @title CrossChainRemoteStrategy
  * @author Origin Protocol Inc
  *
- * @dev This strategy can only perform 1 deposit or withdrawal at a time. For that
- *      reason it shouldn't be configured as an asset default strategy.
+ * @dev Part of the cross-chain strategy that lives on the remote chain.
+ *      Handles deposits and withdrawals from the master strategy on peer chain
+ *      and locally deposits the funds to a 4626 compatible vault.
  */
 
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
@@ -28,6 +29,12 @@ contract CrossChainRemoteStrategy is
     event WithdrawFailed(string reason);
     event StrategistUpdated(address _address);
 
+    /**
+     * @notice Address of the strategist.
+     *         This is important to have the variable name same as in IVault.
+     *         Because the parent contract (Generalized4626Strategy) uses this
+     *         function to get the strategist address.
+     */
     address public strategistAddr;
 
     modifier onlyOperatorOrStrategistOrGovernor() {
@@ -53,6 +60,13 @@ contract CrossChainRemoteStrategy is
         // so that IVault(vaultAddress).strategistAddr() works
     }
 
+    /**
+     * @dev Initialize the strategy implementation
+     * @param _strategist Address of the strategist
+     * @param _operator Address of the operator
+     * @param _minFinalityThreshold Minimum finality threshold
+     * @param _feePremiumBps Fee premium in basis points
+     */
     function initialize(
         address _strategist,
         address _operator,
@@ -77,19 +91,26 @@ contract CrossChainRemoteStrategy is
     }
 
     /**
-     * @notice Set address of Strategist
+     * @notice Set address of Strategist.
+     *         This is important to have the function name same as IVault.
+     *         Because the parent contract (Generalized4626Strategy) uses this
+     *         function to get/set the strategist address.
      * @param _address Address of Strategist
      */
     function setStrategistAddr(address _address) external onlyGovernor {
         _setStrategistAddr(_address);
     }
 
+    /**
+     * @dev Set the strategist address
+     * @param _address Address of the strategist
+     */
     function _setStrategistAddr(address _address) internal {
         strategistAddr = _address;
         emit StrategistUpdated(_address);
     }
 
-    // solhint-disable-next-line no-unused-vars
+    /// @inheritdoc Generalized4626Strategy
     function deposit(address _asset, uint256 _amount)
         external
         virtual
@@ -99,10 +120,12 @@ contract CrossChainRemoteStrategy is
         _deposit(_asset, _amount);
     }
 
+    /// @inheritdoc Generalized4626Strategy
     function depositAll() external virtual override onlyGovernorOrStrategist {
         _deposit(baseToken, IERC20(baseToken).balanceOf(address(this)));
     }
 
+    /// @inheritdoc Generalized4626Strategy
     function withdraw(
         address _recipient,
         address _asset,
@@ -111,17 +134,20 @@ contract CrossChainRemoteStrategy is
         _withdraw(_recipient, _asset, _amount);
     }
 
+    /// @inheritdoc Generalized4626Strategy
     function withdrawAll() external virtual override onlyGovernorOrStrategist {
         uint256 contractBalance = IERC20(baseToken).balanceOf(address(this));
         uint256 balance = checkBalance(baseToken) - contractBalance;
         _withdraw(address(this), baseToken, balance);
     }
 
+    /// @inheritdoc AbstractCCTPIntegrator
     function _onMessageReceived(bytes memory payload) internal override {
         uint32 messageType = payload.getMessageType();
         if (messageType == CrossChainStrategyHelper.DEPOSIT_MESSAGE) {
             // Received when Master strategy sends tokens to the remote strategy
-            // Do nothing because we receive acknowledgement with token transfer, so _onTokenReceived will handle it
+            // Do nothing because we receive acknowledgement with token transfer,
+            // so _onTokenReceived will handle it
         } else if (messageType == CrossChainStrategyHelper.WITHDRAW_MESSAGE) {
             // Received when Master strategy requests a withdrawal
             _processWithdrawMessage(payload);
@@ -130,6 +156,12 @@ contract CrossChainRemoteStrategy is
         }
     }
 
+    /**
+     * @dev Process deposit message from peer strategy
+     * @param tokenAmount Amount of tokens received
+     * @param feeExecuted Fee executed
+     * @param payload Payload of the message
+     */
     function _processDepositMessage(
         // solhint-disable-next-line no-unused-vars
         uint256 tokenAmount,
@@ -143,13 +175,14 @@ contract CrossChainRemoteStrategy is
         require(!isNonceProcessed(nonce), "Nonce already processed");
         _markNonceAsProcessed(nonce);
 
-        // Deposit everything we got
+        // Deposit everything we got, not just what was bridged
         uint256 balance = IERC20(baseToken).balanceOf(address(this));
 
         // Underlying call to deposit funds can fail. It mustn't affect the overall
         // flow as confirmation message should still be sent.
         _deposit(baseToken, balance);
 
+        // Send balance check message to the peer strategy
         uint256 balanceAfter = checkBalance(baseToken);
         bytes memory message = CrossChainStrategyHelper
             .encodeBalanceCheckMessage(lastTransferNonce, balanceAfter);
@@ -186,6 +219,10 @@ contract CrossChainRemoteStrategy is
         }
     }
 
+    /**
+     * @dev Process withdrawal message from peer strategy
+     * @param payload Payload of the message
+     */
     function _processWithdrawMessage(bytes memory payload) internal virtual {
         (uint64 nonce, uint256 withdrawAmount) = payload
             .decodeWithdrawMessage();
@@ -200,9 +237,6 @@ contract CrossChainRemoteStrategy is
         // Check balance after withdrawal
         uint256 balanceAfter = checkBalance(baseToken);
 
-        bytes memory message = CrossChainStrategyHelper
-            .encodeBalanceCheckMessage(lastTransferNonce, balanceAfter);
-
         // Send the complete balance on the contract. If we were to send only the
         // withdrawn amount, the call could revert if the balance is not sufficient.
         // Or dust could be left on the contract that is hard to extract.
@@ -210,12 +244,16 @@ contract CrossChainRemoteStrategy is
         if (usdcBalance > 1e6) {
             // The new balance on the contract needs to have USDC subtracted from it as
             // that will be withdrawn in the next steps
-            message = CrossChainStrategyHelper.encodeBalanceCheckMessage(
-                lastTransferNonce,
-                balanceAfter - usdcBalance
-            );
+            bytes memory message = CrossChainStrategyHelper
+                .encodeBalanceCheckMessage(
+                    lastTransferNonce,
+                    balanceAfter - usdcBalance
+                );
             _sendTokens(usdcBalance, message);
         } else {
+            // Contract only has a small dust, so only send the balance update message
+            bytes memory message = CrossChainStrategyHelper
+                .encodeBalanceCheckMessage(lastTransferNonce, balanceAfter);
             _sendMessage(message);
         }
     }
@@ -227,7 +265,6 @@ contract CrossChainRemoteStrategy is
      * @param _amount Amount of asset to withdraw
      */
     function _withdraw(
-        // solhint-disable-next-line no-unused-vars
         address _recipient,
         address _asset,
         uint256 _amount
@@ -236,11 +273,10 @@ contract CrossChainRemoteStrategy is
         require(_recipient == address(this), "Invalid recipient");
         require(_asset == address(baseToken), "Unexpected asset address");
 
-        // slither-disable-next-line unused-return
-
         // This call can fail, and the failure doesn't need to bubble up to the _processWithdrawMessage function
         // as the flow is not affected by the failure.
         try
+            // slither-disable-next-line unused-return
             IERC4626(platformAddress).withdraw(
                 _amount,
                 address(this),
@@ -264,6 +300,12 @@ contract CrossChainRemoteStrategy is
         }
     }
 
+    /**
+     * @dev Process token received message from peer strategy
+     * @param tokenAmount Amount of tokens received
+     * @param feeExecuted Fee executed
+     * @param payload Payload of the message
+     */
     function _onTokenReceived(
         uint256 tokenAmount,
         uint256 feeExecuted,
@@ -279,6 +321,9 @@ contract CrossChainRemoteStrategy is
         _processDepositMessage(tokenAmount, feeExecuted, payload);
     }
 
+    /**
+     * @dev Send balance update message to the peer strategy
+     */
     function sendBalanceUpdate()
         external
         virtual

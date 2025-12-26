@@ -1,6 +1,13 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
+/**
+ * @title AbstractCCTPIntegrator
+ * @author Origin Protocol Inc
+ *
+ * @dev Abstract contract that contains all the logic used to integrate with CCTP.
+ */
+
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { IERC20 } from "../../utils/InitializableAbstractStrategy.sol";
 
@@ -56,14 +63,17 @@ abstract contract AbstractCCTPIntegrator is Governable, IMessageHandlerV2 {
     // CCTP params
     uint32 public minFinalityThreshold;
     uint32 public feePremiumBps;
+
     // Threshold imposed by the CCTP
     uint256 public constant MAX_TRANSFER_AMOUNT = 10_000_000 * 10**6; // 10M USDC
 
     // Nonce of the last known deposit or withdrawal
     uint64 public lastTransferNonce;
 
+    // Mapping of processed nonces
     mapping(uint64 => bool) private nonceProcessed;
 
+    // Operator address: Can relay CCTP messages
     address public operator;
 
     // For future use
@@ -95,9 +105,15 @@ abstract contract AbstractCCTPIntegrator is Governable, IMessageHandlerV2 {
             _config.cctpMessageTransmitter
         );
         cctpTokenMessenger = ICCTPTokenMessenger(_config.cctpTokenMessenger);
+
+        // Domain ID of the chain from which messages are accepted
         peerDomainID = _config.peerDomainID;
 
+        // Strategy address on other chain, should
+        // always be same as the proxy of this strategy
         peerStrategy = _config.peerStrategy;
+
+        // USDC address on local chain
         baseToken = _config.baseToken;
 
         // Just a sanity check to ensure the base token is USDC
@@ -111,6 +127,12 @@ abstract contract AbstractCCTPIntegrator is Governable, IMessageHandlerV2 {
         );
     }
 
+    /**
+     * @dev Initialize the implementation contract
+     * @param _operator Operator address
+     * @param _minFinalityThreshold Minimum finality threshold
+     * @param _feePremiumBps Fee premium in basis points
+     */
     function _initialize(
         address _operator,
         uint32 _minFinalityThreshold,
@@ -124,15 +146,30 @@ abstract contract AbstractCCTPIntegrator is Governable, IMessageHandlerV2 {
     /***************************************
                     Settings
     ****************************************/
+    /**
+     * @dev Set the operator address
+     * @param _operator Operator address
+     */
     function setOperator(address _operator) external onlyGovernor {
         _setOperator(_operator);
     }
 
+    /**
+     * @dev Set the operator address
+     * @param _operator Operator address
+     */
     function _setOperator(address _operator) internal {
         operator = _operator;
         emit OperatorChanged(_operator);
     }
 
+    /**
+     * @dev Set the minimum finality threshold at which
+     *      the message is considered to be finalized to relay.
+     *      Only accepts a value of 1000 (Safe, after 1 epoch) or
+     *      2000 (Finalized, after 2 epochs).
+     * @param _minFinalityThreshold Minimum finality threshold
+     */
     function setMinFinalityThreshold(uint32 _minFinalityThreshold)
         external
         onlyGovernor
@@ -140,6 +177,10 @@ abstract contract AbstractCCTPIntegrator is Governable, IMessageHandlerV2 {
         _setMinFinalityThreshold(_minFinalityThreshold);
     }
 
+    /**
+     * @dev Set the minimum finality threshold
+     * @param _minFinalityThreshold Minimum finality threshold
+     */
     function _setMinFinalityThreshold(uint32 _minFinalityThreshold) internal {
         // 1000 for fast transfer and 2000 for standard transfer
         require(
@@ -151,10 +192,19 @@ abstract contract AbstractCCTPIntegrator is Governable, IMessageHandlerV2 {
         emit CCTPMinFinalityThresholdSet(_minFinalityThreshold);
     }
 
+    /**
+     * @dev Set the fee premium in basis points.
+     *      Cannot be higher than 30% (3000 basis points).
+     * @param _feePremiumBps Fee premium in basis points
+     */
     function setFeePremiumBps(uint32 _feePremiumBps) external onlyGovernor {
         _setFeePremiumBps(_feePremiumBps);
     }
 
+    /**
+     * @dev Set the fee premium in basis points
+     * @param _feePremiumBps Fee premium in basis points
+     */
     function _setFeePremiumBps(uint32 _feePremiumBps) internal {
         require(_feePremiumBps <= 3000, "Fee premium too high"); // 30%
 
@@ -166,6 +216,13 @@ abstract contract AbstractCCTPIntegrator is Governable, IMessageHandlerV2 {
              CCTP message handling
     ****************************************/
 
+    /**
+     * @dev Handles a finalized CCTP message
+     * @param sourceDomain Source domain of the message
+     * @param sender Sender of the message
+     * @param finalityThresholdExecuted Fidelity threshold executed
+     * @param messageBody Message body
+     */
     function handleReceiveFinalizedMessage(
         uint32 sourceDomain,
         bytes32 sender,
@@ -181,12 +238,25 @@ abstract contract AbstractCCTPIntegrator is Governable, IMessageHandlerV2 {
             );
     }
 
+    /**
+     * @dev Handles an unfinalized but safe CCTP message
+     * @param sourceDomain Source domain of the message
+     * @param sender Sender of the message
+     * @param finalityThresholdExecuted Fidelity threshold executed
+     * @param messageBody Message body
+     */
     function handleReceiveUnfinalizedMessage(
         uint32 sourceDomain,
         bytes32 sender,
         uint32 finalityThresholdExecuted,
         bytes memory messageBody
     ) external override onlyCCTPMessageTransmitter returns (bool) {
+        // Make sure the contract is configured to handle unfinalized messages
+        require(
+            minFinalityThreshold == 1000,
+            "Unfinalized messages are not supported"
+        );
+
         return
             _handleReceivedMessage(
                 sourceDomain,
@@ -196,6 +266,13 @@ abstract contract AbstractCCTPIntegrator is Governable, IMessageHandlerV2 {
             );
     }
 
+    /**
+     * @dev Handles a CCTP message
+     * @param sourceDomain Source domain of the message
+     * @param sender Sender of the message
+     * @param finalityThresholdExecuted Fidelity threshold executed
+     * @param messageBody Message body
+     */
     function _handleReceivedMessage(
         uint32 sourceDomain,
         bytes32 sender,
@@ -203,12 +280,6 @@ abstract contract AbstractCCTPIntegrator is Governable, IMessageHandlerV2 {
         uint32 finalityThresholdExecuted,
         bytes memory messageBody
     ) internal returns (bool) {
-        // // Make sure that the finality threshold is same on both chains
-        // // TODO: Do we really need this? Also, fix this
-        // require(
-        //     finalityThresholdExecuted >= minFinalityThreshold,
-        //     "Finality threshold too low"
-        // );
         require(sourceDomain == peerDomainID, "Unknown Source Domain");
 
         // Extract address from bytes32 (CCTP stores addresses as right-padded bytes32)
@@ -220,22 +291,34 @@ abstract contract AbstractCCTPIntegrator is Governable, IMessageHandlerV2 {
         return true;
     }
 
+    /**
+     * @dev Sends tokens to the peer strategy using CCTP Token Messenger
+     * @param tokenAmount Amount of tokens to send
+     * @param hookData Hook data
+     */
     function _sendTokens(uint256 tokenAmount, bytes memory hookData)
         internal
         virtual
     {
+        // CCTP has a maximum transfer amount of 10M USDC per tx
         require(tokenAmount <= MAX_TRANSFER_AMOUNT, "Token amount too high");
 
+        // Approve only what needs to be transferred
         IERC20(baseToken).safeApprove(address(cctpTokenMessenger), tokenAmount);
 
+        // Compute the max fee to be paid.
         // Ref: https://developers.circle.com/cctp/evm-smart-contracts#getminfeeamount
+        // The right way to compute fees would be to use CCTP's getMinFeeAmount function.
         // The issue is that the getMinFeeAmount is not present on v2.0 contracts, but is on
-        // v2.1. We will only be using standard transfers and fee on those is 0 for now
-
+        // v2.1. Some of CCTP's deployed contracts are v2.0, some are v2.1.
+        // We will only be using standard transfers and fee on those is 0 for now. If they
+        // ever start implementing fee for standard transfers or if we decide to use fast
+        // trasnfer, we can use feePremiumBps as a workaround.
         uint256 maxFee = feePremiumBps > 0
             ? (tokenAmount * feePremiumBps) / 10000
             : 0;
 
+        // Send tokens to the peer strategy using CCTP Token Messenger
         cctpTokenMessenger.depositForBurnWithHook(
             tokenAmount,
             peerDomainID,
@@ -248,6 +331,10 @@ abstract contract AbstractCCTPIntegrator is Governable, IMessageHandlerV2 {
         );
     }
 
+    /**
+     * @dev Sends a message to the peer strategy using CCTP Message Transmitter
+     * @param message Payload of the message to send
+     */
     function _sendMessage(bytes memory message) internal virtual {
         cctpMessageTransmitter.sendMessage(
             peerDomainID,
@@ -258,6 +345,14 @@ abstract contract AbstractCCTPIntegrator is Governable, IMessageHandlerV2 {
         );
     }
 
+    /**
+     * @dev Receives a message from the peer strategy on the other chain,
+     *      does some basic checks and relays it to the local MessageTransmitterV2.
+     *      If the message is a burn message, it will also handle the hook data
+     *      and call the _onTokenReceived function.
+     * @param message Payload of the message to send
+     * @param attestation Attestation of the message
+     */
     function relay(bytes memory message, bytes memory attestation)
         external
         onlyOperator
@@ -316,6 +411,8 @@ abstract contract AbstractCCTPIntegrator is Governable, IMessageHandlerV2 {
             );
         }
 
+        // Ensure the recipient is this contract
+        // Both sender and recipient should be deployed to same address on both chains.
         require(address(this) == recipient, "Unexpected recipient address");
         require(sender == peerStrategy, "Incorrect sender/recipient address");
 
@@ -328,19 +425,23 @@ abstract contract AbstractCCTPIntegrator is Governable, IMessageHandlerV2 {
         require(relaySuccess, "Receive message failed");
 
         if (isBurnMessageV1) {
+            // Extract the hook data from the message body
             bytes memory hookData = messageBody.extractSlice(
                 BURN_MESSAGE_V2_HOOK_DATA_INDEX,
                 messageBody.length
             );
 
+            // Extract the token amount from the message body
             uint256 tokenAmount = messageBody.extractUint256(
                 BURN_MESSAGE_V2_AMOUNT_INDEX
             );
 
+            // Extract the fee executed from the message body
             uint256 feeExecuted = messageBody.extractUint256(
                 BURN_MESSAGE_V2_FEE_EXECUTED_INDEX
             );
 
+            // Call the _onTokenReceived function
             _onTokenReceived(tokenAmount - feeExecuted, feeExecuted, hookData);
         }
     }
@@ -348,50 +449,15 @@ abstract contract AbstractCCTPIntegrator is Governable, IMessageHandlerV2 {
     /***************************************
                   Message utils
     ****************************************/
-
-    function _getMessageVersion(bytes memory message)
-        internal
-        virtual
-        returns (uint32)
-    {
-        // uint32 bytes 0 to 4 is Origin message version
-        // uint32 bytes 4 to 8 is Message type
-        return message.extractUint32(0);
-    }
-
-    function _getMessageType(bytes memory message)
-        internal
-        virtual
-        returns (uint32)
-    {
-        // uint32 bytes 0 to 4 is Origin message version
-        // uint32 bytes 4 to 8 is Message type
-        return message.extractUint32(4);
-    }
-
-    function _verifyMessageVersionAndType(
-        bytes memory _message,
-        uint32 _version,
-        uint32 _type
-    ) internal virtual {
-        require(
-            _getMessageVersion(_message) == _version,
-            "Invalid Origin Message Version"
-        );
-        require(_getMessageType(_message) == _type, "Invalid Message type");
-    }
-
-    function _getMessagePayload(bytes memory message)
-        internal
-        virtual
-        returns (bytes memory)
-    {
-        // uint32 bytes 0 to 4 is Origin message version
-        // uint32 bytes 4 to 8 is Message type
-        // Payload starts at byte 8
-        return message.extractSlice(8, message.length);
-    }
-
+    /**
+     * @dev Decodes the CCTP message header
+     * @param message Message to decode
+     * @return version Version of the message
+     * @return sourceDomainID Source domain ID
+     * @return sender Sender of the message
+     * @return recipient Recipient of the message
+     * @return messageBody Message body
+     */
     function _decodeMessageHeader(bytes memory message)
         internal
         pure
@@ -415,16 +481,33 @@ abstract contract AbstractCCTPIntegrator is Governable, IMessageHandlerV2 {
     /***************************************
                   Nonce Handling
     ****************************************/
-
+    /**
+     * @dev Checks if the last known transfer is pending.
+     *      Nonce starts at 1, so 0 is disregarded.
+     * @return True if a transfer is pending, false otherwise
+     */
     function isTransferPending() public view returns (bool) {
         uint64 nonce = lastTransferNonce;
         return nonce > 0 && !nonceProcessed[nonce];
     }
 
+    /**
+     * @dev Checks if a given nonce is processed.
+     *      Nonce starts at 1, so 0 is disregarded.
+     * @param nonce Nonce to check
+     * @return True if the nonce is processed, false otherwise
+     */
     function isNonceProcessed(uint64 nonce) public view returns (bool) {
         return nonce == 0 || nonceProcessed[nonce];
     }
 
+    /**
+     * @dev Marks a given nonce as processed.
+     *      Can only mark nonce as processed once. New nonce should
+     *      always be greater than the last known nonce. Also updates
+     *      the last known nonce.
+     * @param nonce Nonce to mark as processed
+     */
     function _markNonceAsProcessed(uint64 nonce) internal {
         uint64 lastNonce = lastTransferNonce;
 
@@ -441,6 +524,12 @@ abstract contract AbstractCCTPIntegrator is Governable, IMessageHandlerV2 {
         }
     }
 
+    /**
+     * @dev Gets the next nonce to use.
+     *      Nonce starts at 1, so 0 is disregarded.
+     *      Reverts if last nonce hasn't been processed yet.
+     * @return Next nonce
+     */
     function _getNextNonce() internal returns (uint64) {
         uint64 nonce = lastTransferNonce;
 

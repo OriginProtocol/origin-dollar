@@ -32,6 +32,7 @@ contract CrossChainMasterStrategy is
         Deposit,
         Withdrawal
     }
+    // Mapping of nonce to transfer type
     mapping(uint64 => TransferType) public transferTypeByNonce;
 
     event RemoteStrategyBalanceUpdated(uint256 balance);
@@ -48,6 +49,12 @@ contract CrossChainMasterStrategy is
         AbstractCCTPIntegrator(_cctpConfig)
     {}
 
+    /**
+     * @dev Initialize the strategy implementation
+     * @param _operator Address of the operator
+     * @param _minFinalityThreshold Minimum finality threshold
+     * @param _feePremiumBps Fee premium in basis points
+     */
     function initialize(
         address _operator,
         uint32 _minFinalityThreshold,
@@ -66,19 +73,7 @@ contract CrossChainMasterStrategy is
         );
     }
 
-    // /**
-    //  * @dev Returns the address of the Remote part of the strategy on L2
-    //  */
-    // function remoteAddress() internal virtual returns (address) {
-    //     return address(this);
-    // }
-
-    /**
-     * @dev Deposit asset into mainnet strategy making them ready to be
-     *      bridged to Remote part of the strategy
-     * @param _asset Address of asset to deposit
-     * @param _amount Amount of asset to deposit
-     */
+    /// @inheritdoc Generalized4626Strategy
     function deposit(address _asset, uint256 _amount)
         external
         override
@@ -88,9 +83,7 @@ contract CrossChainMasterStrategy is
         _deposit(_asset, _amount);
     }
 
-    /**
-     * @dev Deposit the entire balance
-     */
+    /// @inheritdoc Generalized4626Strategy
     function depositAll() external override onlyVault nonReentrant {
         uint256 balance = IERC20(baseToken).balanceOf(address(this));
         if (balance > 0) {
@@ -98,12 +91,7 @@ contract CrossChainMasterStrategy is
         }
     }
 
-    /**
-     * @dev Send a withdrawal Wormhole message requesting a certain withdrawal amount
-     * @param _recipient Address to receive withdrawn asset
-     * @param _asset Address of asset to withdraw
-     * @param _amount Amount of asset to withdraw
-     */
+    /// @inheritdoc Generalized4626Strategy
     function withdraw(
         address _recipient,
         address _asset,
@@ -114,19 +102,13 @@ contract CrossChainMasterStrategy is
         _withdraw(_asset, _recipient, _amount);
     }
 
-    /**
-     * @dev Remove all assets from platform and send them to Vault contract.
-     */
+    /// @inheritdoc Generalized4626Strategy
     function withdrawAll() external override onlyVaultOrGovernor nonReentrant {
         // Withdraw everything in Remote strategy
         _withdraw(baseToken, vaultAddress, remoteStrategyBalance);
     }
 
-    /**
-     * @dev Get the total asset value held in the platform
-     * @param _asset      Address of the asset
-     * @return balance    Total value of the asset in the platform
-     */
+    /// @inheritdoc Generalized4626Strategy
     function checkBalance(address _asset)
         public
         view
@@ -142,17 +124,12 @@ contract CrossChainMasterStrategy is
         return undepositedUSDC + pendingAmount + remoteStrategyBalance;
     }
 
-    /**
-     * @dev Returns bool indicating whether asset is supported by strategy
-     * @param _asset Address of the asset
-     */
+    /// @inheritdoc Generalized4626Strategy
     function supportsAsset(address _asset) public view override returns (bool) {
         return _asset == baseToken;
     }
 
-    /**
-     * @dev Approve the spending of all assets
-     */
+    /// @inheritdoc Generalized4626Strategy
     function safeApproveAllTokens()
         external
         override
@@ -160,20 +137,10 @@ contract CrossChainMasterStrategy is
         nonReentrant
     {}
 
-    /**
-     * @dev
-     * @param _asset Address of the asset to approve
-     * @param _aToken Address of the aToken
-     */
-    // solhint-disable-next-line no-unused-vars
-    function _abstractSetPToken(address _asset, address _aToken)
-        internal
-        override
-    {}
+    /// @inheritdoc Generalized4626Strategy
+    function _abstractSetPToken(address, address) internal override {}
 
-    /**
-     * @dev
-     */
+    /// @inheritdoc Generalized4626Strategy
     function collectRewardTokens()
         external
         override
@@ -181,6 +148,7 @@ contract CrossChainMasterStrategy is
         nonReentrant
     {}
 
+    /// @inheritdoc AbstractCCTPIntegrator
     function _onMessageReceived(bytes memory payload) internal override {
         uint32 messageType = payload.getMessageType();
         if (messageType == CrossChainStrategyHelper.BALANCE_CHECK_MESSAGE) {
@@ -191,8 +159,8 @@ contract CrossChainMasterStrategy is
         }
     }
 
+    /// @inheritdoc AbstractCCTPIntegrator
     function _onTokenReceived(
-        // solhint-disable-next-line no-unused-vars
         uint256 tokenAmount,
         // solhint-disable-next-line no-unused-vars
         uint256 feeExecuted,
@@ -233,6 +201,11 @@ contract CrossChainMasterStrategy is
         emit Withdrawal(baseToken, baseToken, usdcBalance);
     }
 
+    /**
+     * @dev Bridge and deposit asset into the remote strategy
+     * @param _asset Address of the asset to deposit
+     * @param depositAmount Amount of the asset to deposit
+     */
     function _deposit(address _asset, uint256 depositAmount) internal virtual {
         require(_asset == baseToken, "Unsupported asset");
         require(!isTransferPending(), "Transfer already pending");
@@ -243,22 +216,32 @@ contract CrossChainMasterStrategy is
             "Deposit amount exceeds max transfer amount"
         );
 
+        // Get the next nonce
         uint64 nonce = _getNextNonce();
         transferTypeByNonce[nonce] = TransferType.Deposit;
 
         // Set pending amount
         pendingAmount = depositAmount;
 
-        // Send deposit message with payload
+        // Build deposit message payload
         bytes memory message = CrossChainStrategyHelper.encodeDepositMessage(
             nonce,
             depositAmount
         );
 
+        // Send deposit message to the remote strategy
         _sendTokens(depositAmount, message);
+
+        // Emit deposit event
         emit Deposit(_asset, _asset, depositAmount);
     }
 
+    /**
+     * @dev Send a withdraw request to the remote strategy
+     * @param _asset Address of the asset to withdraw
+     * @param _recipient Address to receive the withdrawn asset
+     * @param _amount Amount of the asset to withdraw
+     */
     function _withdraw(
         address _asset,
         address _recipient,
@@ -277,19 +260,20 @@ contract CrossChainMasterStrategy is
             "Withdraw amount exceeds max transfer amount"
         );
 
+        // Get the next nonce
         uint64 nonce = _getNextNonce();
         transferTypeByNonce[nonce] = TransferType.Withdrawal;
 
-        // Emit Withdrawequested event here,
-        // Withdraw will emitted in _onTokenReceived
-        emit WithdrawRequested(baseToken, _amount);
-
-        // Send withdrawal message with payload
+        // Build and send withdrawal message with payload
         bytes memory message = CrossChainStrategyHelper.encodeWithdrawMessage(
             nonce,
             _amount
         );
         _sendMessage(message);
+
+        // Emit WithdrawRequested event here,
+        // Withdraw will be emitted in _onTokenReceived
+        emit WithdrawRequested(baseToken, _amount);
     }
 
     /**
@@ -303,8 +287,10 @@ contract CrossChainMasterStrategy is
         internal
         virtual
     {
+        // Decode the message
         (uint64 nonce, uint256 balance) = message.decodeBalanceCheckMessage();
 
+        // Get the last cached nonce
         uint64 _lastCachedNonce = lastTransferNonce;
 
         if (nonce != _lastCachedNonce) {
@@ -313,6 +299,7 @@ contract CrossChainMasterStrategy is
             return;
         }
 
+        // Check if the nonce has been processed
         bool processedTransfer = isNonceProcessed(nonce);
         if (
             !processedTransfer &&
@@ -323,7 +310,7 @@ contract CrossChainMasterStrategy is
             return;
         }
 
-        // Update the balance always
+        // Update the remote strategy balance always
         remoteStrategyBalance = balance;
         emit RemoteStrategyBalanceUpdated(balance);
 
