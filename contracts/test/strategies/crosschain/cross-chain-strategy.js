@@ -5,7 +5,6 @@ const {
   crossChainFixtureUnit,
 } = require("../../_fixture");
 const { units } = require("../../helpers");
-const addresses = require("../../../utils/addresses");
 
 const loadFixture = createFixtureLoader(crossChainFixtureUnit);
 
@@ -62,11 +61,13 @@ describe("ForkTest: CrossChainRemoteStrategy", function () {
 
   // Withdraws from the remote strategy directly, without going through the master strategy
   const directWithdrawFromRemoteStrategy = async (amount) => {
-    await crossChainRemoteStrategy.connect(governor).withdraw(
-      addresses.zeroAddress, // this gets ignored anyway
-      usdc.address,
-      await units(amount, usdc)
-    );
+    await crossChainRemoteStrategy
+      .connect(governor)
+      .withdraw(
+        crossChainRemoteStrategy.address,
+        usdc.address,
+        await units(amount, usdc)
+      );
   };
 
   // Withdraws all the remote strategy directly, without going through the master strategy
