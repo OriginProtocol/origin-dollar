@@ -73,7 +73,7 @@ contract CrossChainMasterStrategy is
         );
     }
 
-    /// @inheritdoc Generalized4626Strategy
+    /// @inheritdoc InitializableAbstractStrategy
     function deposit(address _asset, uint256 _amount)
         external
         override
@@ -83,7 +83,7 @@ contract CrossChainMasterStrategy is
         _deposit(_asset, _amount);
     }
 
-    /// @inheritdoc Generalized4626Strategy
+    /// @inheritdoc InitializableAbstractStrategy
     function depositAll() external override onlyVault nonReentrant {
         uint256 balance = IERC20(baseToken).balanceOf(address(this));
         if (balance > 0) {
@@ -91,7 +91,7 @@ contract CrossChainMasterStrategy is
         }
     }
 
-    /// @inheritdoc Generalized4626Strategy
+    /// @inheritdoc InitializableAbstractStrategy
     function withdraw(
         address _recipient,
         address _asset,
@@ -102,13 +102,13 @@ contract CrossChainMasterStrategy is
         _withdraw(_asset, _recipient, _amount);
     }
 
-    /// @inheritdoc Generalized4626Strategy
+    /// @inheritdoc InitializableAbstractStrategy
     function withdrawAll() external override onlyVaultOrGovernor nonReentrant {
         // Withdraw everything in Remote strategy
         _withdraw(baseToken, vaultAddress, remoteStrategyBalance);
     }
 
-    /// @inheritdoc Generalized4626Strategy
+    /// @inheritdoc InitializableAbstractStrategy
     function checkBalance(address _asset)
         public
         view
@@ -124,12 +124,12 @@ contract CrossChainMasterStrategy is
         return undepositedUSDC + pendingAmount + remoteStrategyBalance;
     }
 
-    /// @inheritdoc Generalized4626Strategy
+    /// @inheritdoc InitializableAbstractStrategy
     function supportsAsset(address _asset) public view override returns (bool) {
         return _asset == baseToken;
     }
 
-    /// @inheritdoc Generalized4626Strategy
+    /// @inheritdoc InitializableAbstractStrategy
     function safeApproveAllTokens()
         external
         override
@@ -137,10 +137,10 @@ contract CrossChainMasterStrategy is
         nonReentrant
     {}
 
-    /// @inheritdoc Generalized4626Strategy
+    /// @inheritdoc InitializableAbstractStrategy
     function _abstractSetPToken(address, address) internal override {}
 
-    /// @inheritdoc Generalized4626Strategy
+    /// @inheritdoc InitializableAbstractStrategy
     function collectRewardTokens()
         external
         override
