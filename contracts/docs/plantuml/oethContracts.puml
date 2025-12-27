@@ -28,8 +28,8 @@ object "OETHFixedRateDripper" as drip <<Origin>><<Proxy>> #$originColor {
     asset: WETH
 }
 
-' object "OETHVaultValueChecker" as checker <<Origin>> #$originColor {
-' }
+object "OETHVaultValueChecker" as checker <<Origin>> #$originColor {
+}
 
 object "WOETH" as woeth <<Origin>><<Proxy>> #$originColor {
     asset: OETH
@@ -51,12 +51,12 @@ object "OETHHarvesterSimple" as harv <<Origin>><<Proxy>> #$originColor {
 }
 
 ' Strategies
-object "ConvexEthMetaStrategy" as cvxStrat <<Origin>><<Proxy>> #$originColor {
-    asset: WETH
-    Curve metapool: OETHCRV-f
-    Convex pool: cvxOETHCRV-f
-    Rewards: CRV, CVX
-}
+'object "ConvexEthMetaStrategy" as cvxStrat <<Origin>><<Proxy>> #$originColor {
+'    asset: WETH
+'    Curve metapool: OETHCRV-f
+'    Convex pool: cvxOETHCRV-f
+'    Rewards: CRV, CVX
+'}
 
 object "CurveAMOStrategy" as amoStrat <<Origin>><<Proxy>> #$originColor {
     asset: WETH
@@ -180,8 +180,8 @@ arm ..> oethv
 ' drip .....> weth
 oethv <.> drip
 
-' checker ..> oeth
-' checker ..> oethv
+checker ..> oeth
+checker ..> oethv
 
 oethv <.. harv 
 drip <.. harv 
@@ -193,11 +193,6 @@ woeth ..> oeth
 oeth <.> oethv
 ' oethv ..> oracle
 ' oracle ...> chain
-
-' Convex ETH Metapool Strategy
-harv <..> cvxStrat
-oethv <...> cvxStrat
-oeth <... cvxStrat
 
 ' Curve AMO Strategy
 harv <..> amoStrat
