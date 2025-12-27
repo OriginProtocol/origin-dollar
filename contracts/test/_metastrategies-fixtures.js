@@ -21,17 +21,10 @@ async function withDefaultOUSDMetapoolStrategiesSet() {
   const { vault, timelock, dai, usdt, usdc, OUSDmetaStrategy, daniel } =
     fixture;
 
-  await vault
-    .connect(timelock)
-    .setAssetDefaultStrategy(dai.address, OUSDmetaStrategy.address);
+  await vault.connect(timelock).setDefaultStrategy(OUSDmetaStrategy.address);
 
-  await vault
-    .connect(timelock)
-    .setAssetDefaultStrategy(usdt.address, OUSDmetaStrategy.address);
-
-  await vault
-    .connect(timelock)
-    .setAssetDefaultStrategy(usdc.address, OUSDmetaStrategy.address);
+  await vault.connect(timelock).setDefaultStrategy(OUSDmetaStrategy.address);
+  await vault.connect(timelock).setDefaultStrategy(OUSDmetaStrategy.address);
 
   fixture.cvxRewardPool = await ethers.getContractAt(
     "IRewardStaking",

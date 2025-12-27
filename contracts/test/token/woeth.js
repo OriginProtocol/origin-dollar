@@ -11,7 +11,7 @@ describe("WOETH", function () {
   if (isFork) {
     this.timeout(0);
   }
-  const loadFixture = createFixtureLoader(instantRebaseVaultFixture);
+  const loadFixture = createFixtureLoader(instantRebaseVaultFixture, "weth");
 
   let oeth, weth, woeth, oethVault, usds, matt, josh, governor;
   beforeEach(async () => {

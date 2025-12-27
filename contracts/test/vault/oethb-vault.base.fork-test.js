@@ -58,7 +58,10 @@ describe("ForkTest: OETHb Vault", function () {
       // Add WETH liquidity to allow redeem
       await weth
         .connect(rafael)
-        .transfer(oethbVault.address, oethUnits("3000"));
+        .approve(oethbVault.address, oethUnits("10000"));
+      await oethbVault
+        .connect(rafael)
+        .mint(weth.address, oethUnits("10000"), 0);
 
       await oethbVault.rebase();
       await _mint(strategist);
@@ -90,7 +93,10 @@ describe("ForkTest: OETHb Vault", function () {
       // Add WETH liquidity to allow redeem
       await weth
         .connect(rafael)
-        .transfer(oethbVault.address, oethUnits("3000"));
+        .approve(oethbVault.address, oethUnits("10000"));
+      await oethbVault
+        .connect(rafael)
+        .mint(weth.address, oethUnits("10000"), 0);
 
       await oethbVault.rebase();
       await _mint(governor);
@@ -137,7 +143,10 @@ describe("ForkTest: OETHb Vault", function () {
       // Add WETH liquidity to allow withdrawal
       await weth
         .connect(rafael)
-        .transfer(oethbVault.address, oethUnits("3000"));
+        .approve(oethbVault.address, oethUnits("10000"));
+      await oethbVault
+        .connect(rafael)
+        .mint(weth.address, oethUnits("10000"), 0);
 
       const delayPeriod = await oethbVault.withdrawalClaimDelay();
 

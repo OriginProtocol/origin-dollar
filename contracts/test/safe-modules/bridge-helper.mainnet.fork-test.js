@@ -179,26 +179,16 @@ describe("ForkTest: Bridge Helper Safe Module (Ethereum)", function () {
   });
 
   it("Should unwrap WOETH and redeem it to WETH", async () => {
-    const {
-      woeth,
-      weth,
-      josh,
-      timelock,
-      safeSigner,
-      bridgeHelperModule,
-      oethVault,
-    } = fixture;
+    const { woeth, weth, josh, safeSigner, bridgeHelperModule, oethVault } =
+      fixture;
 
     await oethVault.connect(josh).rebase();
 
     // Do a huge yield deposit to fund the Vault
-    await oethVault
-      .connect(timelock)
-      .setAssetDefaultStrategy(weth.address, addresses.zero);
-    await impersonateAndFund(josh.address, "3000");
-    await weth.connect(josh).deposit({ value: oethUnits("2500") });
-    await weth.connect(josh).approve(oethVault.address, oethUnits("2500"));
-    await oethVault.connect(josh).mint(weth.address, oethUnits("2000"), "0");
+    await impersonateAndFund(josh.address, "10000");
+    await weth.connect(josh).deposit({ value: oethUnits("9500") });
+    await weth.connect(josh).approve(oethVault.address, oethUnits("9500"));
+    await oethVault.connect(josh).mint(weth.address, oethUnits("9000"), "0");
 
     const woethAmount = oethUnits("1");
 

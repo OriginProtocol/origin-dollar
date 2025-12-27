@@ -7,7 +7,7 @@ const {
 const { usdtUnits, advanceTime } = require("../helpers");
 
 describe("Dripper", async () => {
-  let dripper, usdt, vault, ousd, governor, josh;
+  let dripper, usdt, vault, governor, josh;
   const loadFixture = createFixtureLoader(instantRebaseVaultFixture);
 
   beforeEach(async () => {
@@ -15,7 +15,6 @@ describe("Dripper", async () => {
     dripper = fixture.dripper;
     usdt = fixture.usdt;
     vault = fixture.vault;
-    ousd = fixture.ousd;
     governor = fixture.governor;
     josh = fixture.josh;
 
@@ -79,16 +78,6 @@ describe("Dripper", async () => {
       await advanceTime(17890);
       const expected = ((await dripper.availableFunds()) / 1e6).toString();
       await expectApproxCollectOf(expected, dripper.collect);
-    });
-  });
-  describe("collectAndRebase()", async () => {
-    it("transfers funds to the vault and rebases", async () => {
-      const beforeRct = await ousd.rebasingCreditsPerToken();
-      await dripper.connect(governor).setDripDuration("20000");
-      await advanceTime(1000);
-      await expectApproxCollectOf("50", dripper.collectAndRebase);
-      const afterRct = await ousd.rebasingCreditsPerToken();
-      expect(afterRct).to.be.lt(beforeRct);
     });
   });
   describe("Drip math", async () => {

@@ -83,7 +83,6 @@ const deployCore = async () => {
   const dwOETHb = await deployWithConfirmation("WOETHBase", [
     cOETHbProxy.address, // Base token
   ]);
-  const dOETHbVault = await deployWithConfirmation("OETHVault");
   const dOETHbVaultCore = await deployWithConfirmation("OETHBaseVaultCore", [
     cWETH.address,
   ]);
@@ -98,7 +97,6 @@ const deployCore = async () => {
     "IVault",
     cOETHbVaultProxy.address
   );
-  const cOracleRouter = await ethers.getContract("MockOracleRouter");
 
   // Init OETHb
   const resolution = ethers.utils.parseUnits("1", 27);
@@ -119,16 +117,15 @@ const deployCore = async () => {
 
   // Init OETHbVault
   const initDataOETHbVault = cOETHbVault.interface.encodeFunctionData(
-    "initialize(address,address)",
+    "initialize(address)",
     [
-      cOracleRouter.address, // OracleRouter
       cOETHbProxy.address, // OETHb
     ]
   );
   // prettier-ignore
   await cOETHbVaultProxy
     .connect(sDeployer)["initialize(address,address,bytes)"](
-      dOETHbVault.address,
+      dOETHbVaultCore.address,
       governorAddr,
       initDataOETHbVault
     );
@@ -149,7 +146,6 @@ const deployCore = async () => {
   await cOETHbVaultProxy.connect(sGovernor).upgradeTo(dOETHbVaultCore.address);
   await cOETHbVault.connect(sGovernor).setAdminImpl(dOETHbVaultAdmin.address);
 
-  await cOETHbVault.connect(sGovernor).supportAsset(cWETH.address, 0);
   await cOETHbVault.connect(sGovernor).unpauseCapital();
 };
 
@@ -171,11 +167,13 @@ const deployBridgedWOETHStrategy = async () => {
   await deployWithConfirmation("BridgedWOETHStrategyProxy");
   const cStrategyProxy = await ethers.getContract("BridgedWOETHStrategyProxy");
 
+  const cOracleRouter = await ethers.getContract("MockOracleRouter");
   const dStrategyImpl = await deployWithConfirmation("BridgedWOETHStrategy", [
     [addresses.zero, cOETHbVaultProxy.address],
     cWETH.address,
     cWOETHProxy.address,
     cOETHbProxy.address,
+    cOracleRouter.address,
   ]);
   const cStrategy = await ethers.getContractAt(
     "BridgedWOETHStrategy",
