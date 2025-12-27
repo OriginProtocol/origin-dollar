@@ -38,7 +38,10 @@ const updateAction = async ({ id, file }) => {
   const client = getClient();
 
   // Read and zip the code
-  const distPath = path.join(process.cwd(), `src/js/actions/dist/${file}`);
+  const distPath = path.join(
+    process.cwd(),
+    `scripts/defender-actions/dist/${file}`
+  );
   const zip = new JSZip();
   const files = fs.readdirSync(distPath, { recursive: true });
   files.forEach((file) => {

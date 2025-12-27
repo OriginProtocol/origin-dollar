@@ -1,6 +1,6 @@
 const addresses = require("../utils/addresses");
 const { ethers } = require("ethers");
-const passThroughAbi = require("../../abi/passThrough.json");
+const passThroughAbi = require("../abi/passThrough.json");
 const { logTxDetails } = require("../utils/txLogger");
 
 async function transferTokens({ signer }) {

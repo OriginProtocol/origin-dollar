@@ -18,4 +18,6 @@ async function harvestAndSwap({ strategy, harvester }) {
   await logTxDetails(tx, "harvestAndSwap");
 }
 
-module.exports = { harvestAndSwap };
+module.exports = {
+  harvestAndSwap,
+};
