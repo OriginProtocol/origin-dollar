@@ -4,7 +4,7 @@ const { Defender } = require("@openzeppelin/defender-sdk");
 const addresses = require("../../utils/addresses");
 const { logTxDetails } = require("../../utils/txLogger");
 const {
-  // harvestMorphoStrategies,
+  harvestMorphoStrategies,
   shouldHarvestFromNativeStakingStrategy,
   harvestCurveStrategies,
 } = require("../../utils/harvest");
@@ -68,7 +68,7 @@ const handler = async (event) => {
     log("No native staking strategies require harvesting at this time");
   }
 
-  // await harvestMorphoStrategies(signer);
+  await harvestMorphoStrategies(signer);
   await harvestCurveStrategies(signer);
 };
 

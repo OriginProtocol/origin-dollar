@@ -50,12 +50,8 @@ const shouldHarvestFromNativeStakingStrategy = async (strategy, signer) => {
 
 const harvestMorphoStrategies = async (signer) => {
   const strategies = [
-    // Morpho Gauntlet Prime USDC
-    "0x2b8f37893ee713a4e9ff0ceb79f27539f20a32a1",
-    // Morpho Gauntlet Prime USDT
-    "0xe3ae7c80a1b02ccd3fb0227773553aeb14e32f26",
-    // Meta Morpho Vault
-    "0x603CDEAEC82A60E3C4A10dA6ab546459E5f64Fa0",
+    // Morpho OUSD v2 Strategy
+    "0x3643cafa6ef3dd7fcc2adad1cabf708075afff6e",
   ];
 
   log("Collecting Morpho Strategies rewards");
