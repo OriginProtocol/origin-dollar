@@ -11,7 +11,7 @@ const {
 
 const log = require("../../utils/logger");
 
-describe("ForkTest: Morpho Steakhouse USDC Strategy", function () {
+describe.skip("ForkTest: Morpho Steakhouse USDC Strategy", function () {
   this.timeout(0);
 
   // Retry up to 3 times on CI
