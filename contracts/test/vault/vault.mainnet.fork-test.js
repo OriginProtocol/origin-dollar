@@ -296,7 +296,7 @@ describe("ForkTest: Vault", function () {
       const { vault, usdc } = fixture;
 
       expect([
-        "0x2B8f37893EE713A4E9fF0cEb79F27539f20a32a1", // Morpho OUSD v2 Strategy
+        "0x2B8f37893EE713A4E9fF0cEb79F27539f20a32a1", //Morpho Gauntlet Prime USDC
       ]).to.include(await vault.assetDefaultStrategies(usdc.address));
     });
 

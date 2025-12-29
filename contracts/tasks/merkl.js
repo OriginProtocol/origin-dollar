@@ -18,11 +18,13 @@ const getMerklRewards = async ({ userAddress, chainId = 1 }) => {
 
     if (response.data.length === 0 || response.data[0].rewards.length === 0) {
       return {
-        amount: 0n,
+        amount: 0,
         token: null,
         proofs: [],
       };
     }
+
+    log(`Received Merkl rewards data: %O`, response.data[0].rewards[0]);
 
     return {
       amount: response.data[0].rewards[0].amount,

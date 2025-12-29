@@ -381,17 +381,22 @@ describe("ForkTest: Yearn's Morpho OUSD v2 Strategy", function () {
           .merkleClaim(morphoToken.address, amount, proofs);
       }
 
+      const expectMorphoTransfer = await morphoToken.balanceOf(
+        morphoOUSDv2Strategy.address
+      );
+
       const tx = await morphoOUSDv2Strategy
         .connect(buyBackSigner)
         .collectRewardTokens();
 
       if (amount != "0") {
+        // The amount is total claimed over time and not the amount of rewards claimed in this tx
         await expect(tx)
           .to.emit(morphoToken, "Transfer")
           .withArgs(
             morphoOUSDv2Strategy.address,
             buyBackSigner.address,
-            amount
+            expectMorphoTransfer
           );
       }
     });
