@@ -113,7 +113,7 @@
     "solidity-bytes-utils": "0.8.4",
     "solidity-coverage": "0.8.14",
     "ssv-keys": "1.1.0",
-    "ssv-scanner": "github:bloxapp/ssv-scanner#v1.0.3",
+    "ssv-scanner": "github:bloxapp/ssv-scanner#v1.0.5",
     "sync-fetch": "0.5.2",
     "uuid": "9.0.1"
   },

@@ -190,8 +190,8 @@ importers:
         specifier: 1.1.0
         version: 1.1.0(bufferutil@4.1.0)(utf-8-validate@5.0.10)
       ssv-scanner:
-        specifier: github:bloxapp/ssv-scanner#v1.0.3
-        version: git+https://git@github.com:bloxapp/ssv-scanner.git#3d6c2ef7af2ce0e935c5e18da42ce17fc1856c1a(bufferutil@4.1.0)(utf-8-validate@5.0.10)
+        specifier: github:bloxapp/ssv-scanner#v1.0.5
+        version: git+https://git@github.com:bloxapp/ssv-scanner.git#45068c93b3de84495f6cfad2767787c91d98aa8f(bufferutil@4.1.0)(utf-8-validate@5.0.10)
       sync-fetch:
         specifier: 0.5.2
         version: 0.5.2
@@ -5354,10 +5354,10 @@ packages:
     engines: {node: '>=12'}
     hasBin: true
 
-  ssv-scanner@git+https://git@github.com:bloxapp/ssv-scanner.git#3d6c2ef7af2ce0e935c5e18da42ce17fc1856c1a:
-    resolution: {commit: 3d6c2ef7af2ce0e935c5e18da42ce17fc1856c1a, repo: git@github.com:bloxapp/ssv-scanner.git, type: git}
-    version: 1.0.3
-    engines: {node: '>=12'}
+  ssv-scanner@git+https://git@github.com:bloxapp/ssv-scanner.git#45068c93b3de84495f6cfad2767787c91d98aa8f:
+    resolution: {commit: 45068c93b3de84495f6cfad2767787c91d98aa8f, repo: git@github.com:bloxapp/ssv-scanner.git, type: git}
+    version: 1.0.4
+    engines: {node: '>=18'}
     hasBin: true
 
   stack-trace@0.0.10:
@@ -6222,8 +6222,8 @@ snapshots:
     dependencies:
       '@aws-crypto/sha256-browser': 5.2.0
       '@aws-crypto/sha256-js': 5.2.0
-      '@aws-sdk/client-sso-oidc': 3.598.0
-      '@aws-sdk/client-sts': 3.598.0(@aws-sdk/client-sso-oidc@3.598.0)
+      '@aws-sdk/client-sso-oidc': 3.598.0(@aws-sdk/client-sts@3.598.0)
+      '@aws-sdk/client-sts': 3.598.0
       '@aws-sdk/core': 3.598.0
       '@aws-sdk/credential-provider-node': 3.598.0(@aws-sdk/client-sso-oidc@3.598.0)(@aws-sdk/client-sts@3.598.0)
       '@aws-sdk/middleware-host-header': 3.598.0
@@ -6376,11 +6376,11 @@ snapshots:
     transitivePeerDependencies:
       - aws-crt
 
-  '@aws-sdk/client-sso-oidc@3.598.0':
+  '@aws-sdk/client-sso-oidc@3.598.0(@aws-sdk/client-sts@3.598.0)':
     dependencies:
       '@aws-crypto/sha256-browser': 5.2.0
       '@aws-crypto/sha256-js': 5.2.0
-      '@aws-sdk/client-sts': 3.598.0(@aws-sdk/client-sso-oidc@3.598.0)
+      '@aws-sdk/client-sts': 3.598.0
       '@aws-sdk/core': 3.598.0
       '@aws-sdk/credential-provider-node': 3.598.0(@aws-sdk/client-sso-oidc@3.598.0)(@aws-sdk/client-sts@3.598.0)
       '@aws-sdk/middleware-host-header': 3.598.0
@@ -6419,6 +6419,7 @@ snapshots:
       '@smithy/util-utf8': 3.0.0
       tslib: 2.8.1
     transitivePeerDependencies:
+      - '@aws-sdk/client-sts'
       - aws-crt
 
   '@aws-sdk/client-sso-oidc@3.600.0':
@@ -6552,11 +6553,11 @@ snapshots:
     transitivePeerDependencies:
       - aws-crt
 
-  '@aws-sdk/client-sts@3.598.0(@aws-sdk/client-sso-oidc@3.598.0)':
+  '@aws-sdk/client-sts@3.598.0':
     dependencies:
       '@aws-crypto/sha256-browser': 5.2.0
       '@aws-crypto/sha256-js': 5.2.0
-      '@aws-sdk/client-sso-oidc': 3.598.0
+      '@aws-sdk/client-sso-oidc': 3.598.0(@aws-sdk/client-sts@3.598.0)
       '@aws-sdk/core': 3.598.0
       '@aws-sdk/credential-provider-node': 3.598.0(@aws-sdk/client-sso-oidc@3.598.0)(@aws-sdk/client-sts@3.598.0)
       '@aws-sdk/middleware-host-header': 3.598.0
@@ -6595,7 +6596,6 @@ snapshots:
       '@smithy/util-utf8': 3.0.0
       tslib: 2.8.1
     transitivePeerDependencies:
-      - '@aws-sdk/client-sso-oidc'
       - aws-crt
 
   '@aws-sdk/client-sts@3.600.0(@aws-sdk/client-sso-oidc@3.600.0)':
@@ -6712,7 +6712,7 @@ snapshots:
 
   '@aws-sdk/credential-provider-ini@3.598.0(@aws-sdk/client-sso-oidc@3.598.0)(@aws-sdk/client-sts@3.598.0)':
     dependencies:
-      '@aws-sdk/client-sts': 3.598.0(@aws-sdk/client-sso-oidc@3.598.0)
+      '@aws-sdk/client-sts': 3.598.0
       '@aws-sdk/credential-provider-env': 3.598.0
       '@aws-sdk/credential-provider-http': 3.598.0
       '@aws-sdk/credential-provider-process': 3.598.0
@@ -6891,7 +6891,7 @@ snapshots:
 
   '@aws-sdk/credential-provider-web-identity@3.598.0(@aws-sdk/client-sts@3.598.0)':
     dependencies:
-      '@aws-sdk/client-sts': 3.598.0(@aws-sdk/client-sso-oidc@3.598.0)
+      '@aws-sdk/client-sts': 3.598.0
       '@aws-sdk/types': 3.598.0
       '@smithy/property-provider': 3.1.11
       '@smithy/types': 3.7.2
@@ -7109,7 +7109,7 @@ snapshots:
 
   '@aws-sdk/token-providers@3.598.0(@aws-sdk/client-sso-oidc@3.598.0)':
     dependencies:
-      '@aws-sdk/client-sso-oidc': 3.598.0
+      '@aws-sdk/client-sso-oidc': 3.598.0(@aws-sdk/client-sts@3.598.0)
       '@aws-sdk/types': 3.598.0
       '@smithy/property-provider': 3.1.11
       '@smithy/shared-ini-file-loader': 3.1.12
@@ -13475,17 +13475,15 @@ snapshots:
       - supports-color
       - utf-8-validate
 
-  ssv-scanner@git+https://git@github.com:bloxapp/ssv-scanner.git#3d6c2ef7af2ce0e935c5e18da42ce17fc1856c1a(bufferutil@4.1.0)(utf-8-validate@5.0.10):
+  ssv-scanner@git+https://git@github.com:bloxapp/ssv-scanner.git#45068c93b3de84495f6cfad2767787c91d98aa8f(bufferutil@4.1.0)(utf-8-validate@5.0.10):
     dependencies:
       '@types/figlet': 1.7.0
       argparse: 2.0.1
       cli-progress: 3.12.0
+      ethers: 6.16.0(bufferutil@4.1.0)(utf-8-validate@5.0.10)
       figlet: 1.9.4
-      web3: 1.10.4(bufferutil@4.1.0)(utf-8-validate@5.0.10)
     transitivePeerDependencies:
       - bufferutil
-      - encoding
-      - supports-color
       - utf-8-validate
 
   stack-trace@0.0.10: {}
