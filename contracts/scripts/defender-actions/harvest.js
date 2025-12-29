@@ -4,10 +4,10 @@ const { Defender } = require("@openzeppelin/defender-sdk");
 const addresses = require("../../utils/addresses");
 const { logTxDetails } = require("../../utils/txLogger");
 const {
-  harvestMorphoStrategies,
   shouldHarvestFromNativeStakingStrategy,
-  harvestCurveStrategies,
+  claimStrategyRewards,
 } = require("../../utils/harvest");
+const { claimMerklRewards } = require("../../tasks/merkl");
 
 const harvesterAbi = require("../../abi/harvester.json");
 
@@ -68,8 +68,10 @@ const handler = async (event) => {
     log("No native staking strategies require harvesting at this time");
   }
 
-  await harvestMorphoStrategies(signer);
-  await harvestCurveStrategies(signer);
+  // Claim MORPHO rewards to the Morpho OUSD v2 Strategy
+  await claimMerklRewards(addresses.mainnet.MorphoOUSDv2StrategyProxy, signer);
+  // Collect the CRV and MORPHO rewards from the strategies using the Safe module
+  await claimStrategyRewards(signer);
 };
 
 module.exports = { handler };

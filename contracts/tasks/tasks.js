@@ -2378,26 +2378,18 @@ task("tenderlyUpload").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
 
-subtask(
-  "claimMorphoRewards",
-  "Claim MORPHO rewards from the Morpho Vaults."
-).setAction(async () => {
-  const signer = await getSigner();
+subtask("claimMorphoRewards", "Claim MORPHO rewards from the Morpho Vaults.")
+  .addOptionalParam(
+    "strategy",
+    "The address of the strategy. Default is the Morpho OUSD v2 Strategy.",
+    addresses.mainnet.MorphoOUSDv2StrategyProxy,
+    types.string
+  )
+  .setAction(async ({ strategy }) => {
+    const signer = await getSigner();
 
-  const morphoVaultAddresses = [
-    // Morpho Gauntlet Prime USDC
-    "0x2b8f37893ee713a4e9ff0ceb79f27539f20a32a1",
-    // Morpho Gauntlet Prime USDT
-    "0xe3ae7c80a1b02ccd3fb0227773553aeb14e32f26",
-    // Meta Morpho Vault
-    "0x603CDEAEC82A60E3C4A10dA6ab546459E5f64Fa0",
-  ];
-
-  for (const morphoVaultAddress of morphoVaultAddresses) {
-    log(`Claiming MORPHO rewards from Morpho Vault: ${morphoVaultAddress}`);
-    await claimMerklRewards(morphoVaultAddress, signer);
-  }
-});
+    await claimMerklRewards(strategy, signer);
+  });
 task("claimMorphoRewards").setAction(async (_, __, runSuper) => {
   return runSuper();
 });

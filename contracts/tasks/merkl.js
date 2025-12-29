@@ -1,5 +1,7 @@
 const axios = require("axios");
+const ethers = require("ethers");
 const { formatUnits } = require("ethers/lib/utils");
+const strategyAbi = require("../abi/generalized_4626_strategy.json");
 
 const { logTxDetails } = require("../utils/txLogger");
 
@@ -49,11 +51,7 @@ async function claimMerklRewards(strategyAddress, signer) {
     } rewards available to claim.`
   );
 
-  const strategy = await ethers.getContractAt(
-    "Generalized4626Strategy",
-    strategyAddress,
-    signer
-  );
+  const strategy = new ethers.Contract(strategyAddress, strategyAbi, signer);
 
   const tx = await strategy.merkleClaim(
     result.token,

@@ -76,7 +76,7 @@ const harvestMorphoStrategies = async (signer) => {
   }
 };
 
-const harvestCurveStrategies = async (signer) => {
+const claimStrategyRewards = async (signer) => {
   log("Invoking claim from safe module");
   const safeModule = new ethers.Contract(
     addresses.mainnet.ClaimStrategyRewardsSafeModule,
@@ -92,6 +92,6 @@ const harvestCurveStrategies = async (signer) => {
 
 module.exports = {
   harvestMorphoStrategies,
-  harvestCurveStrategies,
+  claimStrategyRewards,
   shouldHarvestFromNativeStakingStrategy,
 };
