@@ -674,7 +674,9 @@ const shouldBehaveLikeAnSsvStrategy = (context) => {
         weth,
         validatorRegistrator,
       } = await context();
-      const dripperWethBefore = await weth.balanceOf(oethFixedRateDripper.address);
+      const dripperWethBefore = await weth.balanceOf(
+        oethFixedRateDripper.address
+      );
       const strategyBalanceBefore = await nativeStakingSSVStrategy.checkBalance(
         weth.address
       );
