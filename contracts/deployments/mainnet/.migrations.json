@@ -54,5 +54,6 @@
   "157_curve_pool_booster_factory": 1764086068,
   "158_deploy_xogn_rewards_module": 1764146932,
   "159_ousd_morpho_v2_proxy": 1765998626,
-  "160_upgrade_morpho_strategies": 1766168031
+  "160_upgrade_morpho_strategies": 1766168031,
+  "161_add_morpho_rewards": 1767070523
 }
