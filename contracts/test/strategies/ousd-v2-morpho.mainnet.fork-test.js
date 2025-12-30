@@ -395,7 +395,7 @@ describe("ForkTest: Yearn's Morpho OUSD v2 Strategy", function () {
           .to.emit(morphoToken, "Transfer")
           .withArgs(
             morphoOUSDv2Strategy.address,
-            buyBackSigner.address,
+            await buyBackSigner.getAddress(),
             expectMorphoTransfer
           );
       }
