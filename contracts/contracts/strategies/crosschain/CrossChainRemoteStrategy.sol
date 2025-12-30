@@ -231,16 +231,21 @@ contract CrossChainRemoteStrategy is
         require(!isNonceProcessed(nonce), "Nonce already processed");
         _markNonceAsProcessed(nonce);
 
-        // Withdraw funds from the remote strategy
-        _withdraw(address(this), baseToken, withdrawAmount);
+        uint256 usdcBalance = IERC20(baseToken).balanceOf(address(this));
+
+        if (usdcBalance < withdrawAmount) {
+            // Withdraw funds from the remote strategy
+            _withdraw(address(this), baseToken, withdrawAmount);
+
+            // Send the complete balance on the contract. If we were to send only the
+            // withdrawn amount, the call could revert if the balance is not sufficient.
+            // Or dust could be left on the contract that is hard to extract.
+            usdcBalance = IERC20(baseToken).balanceOf(address(this));
+        }
 
         // Check balance after withdrawal
         uint256 balanceAfter = checkBalance(baseToken);
 
-        // Send the complete balance on the contract. If we were to send only the
-        // withdrawn amount, the call could revert if the balance is not sufficient.
-        // Or dust could be left on the contract that is hard to extract.
-        uint256 usdcBalance = IERC20(baseToken).balanceOf(address(this));
         if (usdcBalance > 1e6) {
             // The new balance on the contract needs to have USDC subtracted from it as
             // that will be withdrawn in the next steps
