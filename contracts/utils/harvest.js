@@ -1,4 +1,4 @@
-const { ethers } = require("ethers");
+const ethers = require("ethers");
 const { parseEther, formatUnits } = require("ethers/lib/utils");
 
 const addresses = require("./addresses");
