@@ -396,17 +396,24 @@ describe("ForkTest: Morpho Gauntlet Prime USDC Strategy", function () {
         .connect(josh)
         .merkleClaim(morphoToken.address, amount, proofs);
 
+      const expectMorphoTransfer = await morphoToken.balanceOf(
+        morphoGauntletPrimeUSDCStrategy.address
+      );
+
       const tx = await morphoGauntletPrimeUSDCStrategy
         .connect(strategist)
         .collectRewardTokens();
 
-      await expect(tx)
-        .to.emit(morphoToken, "Transfer")
-        .withArgs(
-          morphoGauntletPrimeUSDCStrategy.address,
-          strategist.address,
-          amount
-        );
+      if (expectMorphoTransfer.gt(0)) {
+        // The amount is total claimed over time and not the amount of rewards claimed in this tx
+        await expect(tx)
+          .to.emit(morphoToken, "Transfer")
+          .withArgs(
+            morphoGauntletPrimeUSDCStrategy.address,
+            strategist.address,
+            expectMorphoTransfer
+          );
+      }
     });
   });
 
