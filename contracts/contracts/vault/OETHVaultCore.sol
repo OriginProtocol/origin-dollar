@@ -8,6 +8,8 @@ import { VaultCore } from "./VaultCore.sol";
  * @author Origin Protocol Inc
  */
 contract OETHVaultCore is VaultCore {
+    uint256 private _deprecated_wethAssetIndex;
+
     // For future use (because OETHBaseVaultCore inherits from this)
     uint256[50] private __gap;
 
