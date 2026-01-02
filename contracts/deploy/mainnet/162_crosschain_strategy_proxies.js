@@ -3,7 +3,7 @@ const { deployProxyWithCreateX } = require("../deployActions");
 
 module.exports = deploymentWithGovernanceProposal(
   {
-    deployName: "161_crosschain_strategy_proxies",
+    deployName: "162_crosschain_strategy_proxies",
     forceDeploy: false,
     reduceQueueTime: true,
     deployerIsProposer: false,
