@@ -1,5 +1,4 @@
 const { expect } = require("chai");
-const hre = require("hardhat");
 
 const { createFixtureLoader, oethDefaultFixture } = require("../_fixture");
 const { parseUnits } = require("ethers/lib/utils");
@@ -155,7 +154,7 @@ describe("OETH Vault", function () {
       await oethVault.connect(governor).approveStrategy(mockStrategy.address);
       await oethVault
         .connect(governor)
-        .setAssetDefaultStrategy(weth.address, mockStrategy.address);
+        .setDefaultStrategy(mockStrategy.address);
 
       const fixtureWithUser = { ...fixture, user: domen };
       const dataBefore = await snapData(fixtureWithUser);
@@ -206,18 +205,6 @@ describe("OETH Vault", function () {
           assets[i] == weth.address ? oethUnits("1234.43") : "0"
         );
       }
-    });
-
-    it("Fail to calculateRedeemOutputs if WETH index isn't cached", async () => {
-      const { frxETH, weth } = fixture;
-
-      await deployWithConfirmation("MockOETHVault", [weth.address]);
-      const mockVault = await hre.ethers.getContract("MockOETHVault");
-
-      await mockVault.supportAsset(frxETH.address);
-
-      const tx = mockVault.calculateRedeemOutputs(oethUnits("12343"));
-      await expect(tx).to.be.revertedWith("WETH Asset index not cached");
     });
 
     it("Should update total supply correctly without redeem fee", async () => {
@@ -275,7 +262,7 @@ describe("OETH Vault", function () {
       await oethVault.connect(governor).approveStrategy(mockStrategy.address);
       await oethVault
         .connect(governor)
-        .setAssetDefaultStrategy(weth.address, mockStrategy.address);
+        .setDefaultStrategy(mockStrategy.address);
 
       // Mint some WETH
       await weth.connect(domen).approve(oethVault.address, oethUnits("10000"));
@@ -314,39 +301,6 @@ describe("OETH Vault", function () {
   });
 
   describe("Config", () => {
-    it("Should allow caching WETH index", async () => {
-      const { oethVault, weth, governor } = fixture;
-
-      await oethVault.connect(governor).cacheWETHAssetIndex();
-
-      const index = (await oethVault.wethAssetIndex()).toNumber();
-
-      const assets = await oethVault.getAllAssets();
-
-      expect(assets[index]).to.equal(weth.address);
-    });
-
-    it("Fail to allow anyone other than Governor to change cached index", async () => {
-      const { oethVault, strategist } = fixture;
-
-      const tx = oethVault.connect(strategist).cacheWETHAssetIndex();
-      await expect(tx).to.be.revertedWith("Caller is not the Governor");
-    });
-
-    it("Fail to cacheWETHAssetIndex if WETH is not a supported asset", async () => {
-      const { frxETH, weth } = fixture;
-      const { deployerAddr } = await hre.getNamedAccounts();
-      const sDeployer = hre.ethers.provider.getSigner(deployerAddr);
-
-      await deployWithConfirmation("MockOETHVault", [weth.address]);
-      const mockVault = await hre.ethers.getContract("MockOETHVault");
-
-      await mockVault.supportAsset(frxETH.address);
-
-      const tx = mockVault.connect(sDeployer).cacheWETHAssetIndex();
-      await expect(tx).to.be.revertedWith("Invalid WETH Asset Index");
-    });
-
     it("Should return all strategies", async () => {
       // Mostly to increase coverage
 
@@ -366,78 +320,6 @@ describe("OETH Vault", function () {
   });
 
   describe("Remove Asset", () => {
-    it("Should allow removing a single asset", async () => {
-      const { oethVault, frxETH, governor } = fixture;
-
-      const vaultAdmin = await ethers.getContractAt(
-        "OETHVaultAdmin",
-        oethVault.address
-      );
-      const assetCount = (await oethVault.getAssetCount()).toNumber();
-
-      const tx = await oethVault.connect(governor).removeAsset(frxETH.address);
-
-      await expect(tx)
-        .to.emit(vaultAdmin, "AssetRemoved")
-        .withArgs(frxETH.address);
-      await expect(tx)
-        .to.emit(vaultAdmin, "AssetDefaultStrategyUpdated")
-        .withArgs(frxETH.address, addresses.zero);
-
-      expect(await oethVault.isSupportedAsset(frxETH.address)).to.be.false;
-      expect(await oethVault.checkBalance(frxETH.address)).to.equal(0);
-      expect(await oethVault.assetDefaultStrategies(frxETH.address)).to.equal(
-        addresses.zero
-      );
-
-      const allAssets = await oethVault.getAllAssets();
-      expect(allAssets.length).to.equal(assetCount - 1);
-
-      expect(allAssets).to.not.contain(frxETH.address);
-
-      const config = await oethVault.getAssetConfig(frxETH.address);
-      expect(config.isSupported).to.be.false;
-    });
-
-    it("Should only allow governance to remove assets", async () => {
-      const { oethVault, weth, strategist, josh } = fixture;
-
-      for (const signer of [strategist, josh]) {
-        let tx = oethVault.connect(signer).removeAsset(weth.address);
-        await expect(tx).to.be.revertedWith("Caller is not the Governor");
-
-        tx = oethVault.connect(signer).removeAsset(weth.address);
-        await expect(tx).to.be.revertedWith("Caller is not the Governor");
-      }
-    });
-
-    it("Fail to remove asset if asset is not supported", async () => {
-      const { oethVault, usds, governor } = fixture;
-      const tx = oethVault.connect(governor).removeAsset(usds.address);
-
-      await expect(tx).to.be.revertedWith("Asset not supported");
-    });
-
-    it("Fail to remove asset if vault still holds the asset", async () => {
-      const { oethVault, weth, governor, daniel } = fixture;
-
-      await oethVault.connect(daniel).mint(weth.address, oethUnits("1"), "0");
-
-      const tx = oethVault.connect(governor).removeAsset(weth.address);
-
-      await expect(tx).to.be.revertedWith("Vault still holds asset");
-    });
-
-    it("Fail to revert for smaller dust", async () => {
-      const { oethVault, weth, governor, daniel } = fixture;
-
-      await oethVault.connect(daniel).mint(weth.address, "500000000000", "0");
-
-      const tx = oethVault.connect(governor).removeAsset(weth.address);
-
-      await expect(tx).to.not.be.revertedWith("Vault still holds asset");
-    });
-
     it("Should allow strategy to burnForStrategy", async () => {
       const { oethVault, oeth, weth, governor, daniel } = fixture;
 
@@ -445,11 +327,6 @@ describe("OETH Vault", function () {
       await oethVault
         .connect(governor)
         .addStrategyToMintWhitelist(daniel.address);
-
-      // First increase netOusdMintForStrategyThreshold
-      await oethVault
-        .connect(governor)
-        .setNetOusdMintForStrategyThreshold(oethUnits("100"));
 
       // Then mint for strategy
       await oethVault.connect(daniel).mint(weth.address, oethUnits("10"), "0");
@@ -534,7 +411,7 @@ describe("OETH Vault", function () {
         .approveStrategy(mockStrategy.address);
       await oethVault
         .connect(await impersonateAndFund(await oethVault.governor()))
-        .setAssetDefaultStrategy(weth.address, mockStrategy.address);
+        .setDefaultStrategy(mockStrategy.address);
 
       // Mint will allocate all to default strategy bc no buffer, no threshold
       await oethVault.connect(daniel).mint(weth.address, oethUnits("10"), "0");
@@ -575,14 +452,14 @@ describe("OETH Vault", function () {
       let mockStrategy;
       beforeEach(async () => {
         // Deploy default strategy
-        const { oethVault, weth } = fixture;
+        const { oethVault } = fixture;
         mockStrategy = await deployWithConfirmation("MockStrategy");
         await oethVault
           .connect(await impersonateAndFund(await oethVault.governor()))
           .approveStrategy(mockStrategy.address);
         await oethVault
           .connect(await impersonateAndFund(await oethVault.governor()))
-          .setAssetDefaultStrategy(weth.address, mockStrategy.address);
+          .setDefaultStrategy(mockStrategy.address);
       });
       it("buffer is 0%, 0 WETH in queue", async () => {
         const { oethVault, daniel, weth } = fixture;
@@ -1119,7 +996,9 @@ describe("OETH Vault", function () {
               [weth.address],
               [depositAmount]
             );
-          await expect(tx).to.be.revertedWith("Not enough WETH available");
+          await expect(tx).to.be.revertedWith(
+            "Not enough backing asset available"
+          );
         });
         it("Fail to deposit allocated WETH during allocate", async () => {
           const { oethVault, governor, weth } = fixture;
@@ -1127,7 +1006,7 @@ describe("OETH Vault", function () {
           // Set mock strategy as default strategy
           await oethVault
             .connect(governor)
-            .setAssetDefaultStrategy(weth.address, mockStrategy.address);
+            .setDefaultStrategy(mockStrategy.address);
 
           // and buffer to 10%
           await oethVault.connect(governor).setVaultBuffer(oethUnits("0.1"));
@@ -1647,7 +1526,9 @@ describe("OETH Vault", function () {
               [oethUnits("1")]
             );
 
-          await expect(tx).to.be.revertedWith("Not enough WETH available");
+          await expect(tx).to.be.revertedWith(
+            "Not enough backing asset available"
+          );
         });
         it("Fail to allocate any WETH to the default strategy", async () => {
           const { oethVault, domen } = fixture;
@@ -1690,7 +1571,9 @@ describe("OETH Vault", function () {
               [oethUnits("1.1")]
             );
 
-          await expect(tx).to.be.revertedWith("Not enough WETH available");
+          await expect(tx).to.be.revertedWith(
+            "Not enough backing asset available"
+          );
         });
         it("Fail to allocate any WETH to the default strategy", async () => {
           const { oethVault, domen } = fixture;
@@ -1733,14 +1616,16 @@ describe("OETH Vault", function () {
               [oethUnits("5")]
             );
 
-          await expect(tx).to.be.revertedWith("Not enough WETH available");
+          await expect(tx).to.be.revertedWith(
+            "Not enough backing asset available"
+          );
         });
         it("Should allocate 3 WETH to the default strategy", async () => {
           const { oethVault, governor, domen, weth } = fixture;
 
           await oethVault
             .connect(governor)
-            .setAssetDefaultStrategy(weth.address, mockStrategy.address);
+            .setDefaultStrategy(mockStrategy.address);
 
           const vaultBalance = await weth.balanceOf(oethVault.address);
           const stratBalance = await weth.balanceOf(mockStrategy.address);
@@ -1965,7 +1850,7 @@ describe("OETH Vault", function () {
         await oethVault.connect(governor).approveStrategy(mockStrategy.address);
         await oethVault
           .connect(governor)
-          .setAssetDefaultStrategy(weth.address, mockStrategy.address);
+          .setDefaultStrategy(mockStrategy.address);
 
         // Mint 60 OETH to three users
         await oethVault
@@ -2125,7 +2010,7 @@ describe("OETH Vault", function () {
         await oethVault.connect(governor).approveStrategy(mockStrategy.address);
         await oethVault
           .connect(governor)
-          .setAssetDefaultStrategy(weth.address, mockStrategy.address);
+          .setDefaultStrategy(mockStrategy.address);
 
         // Mint 100 OETH to three users
         await oethVault

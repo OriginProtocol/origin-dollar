@@ -6,7 +6,7 @@ const {
 } = require("../_fixture");
 const { utils, BigNumber } = require("ethers");
 
-const { usdsUnits, ousdUnits, usdcUnits, isFork } = require("../helpers");
+const { ousdUnits, usdcUnits, isFork } = require("../helpers");
 
 const zeroAddress = "0x0000000000000000000000000000000000000000";
 
@@ -718,23 +718,23 @@ describe("Token", function () {
   });
 
   it("Should mint correct amounts on non-rebasing account without previously set creditsPerToken", async () => {
-    let { ousd, usds, vault, josh, mockNonRebasing } = fixture;
+    let { ousd, usdc, vault, josh, mockNonRebasing } = fixture;
 
     // Give contract 100 USDS from Josh
-    await usds
+    await usdc
       .connect(josh)
-      .transfer(mockNonRebasing.address, usdsUnits("100"));
+      .transfer(mockNonRebasing.address, usdcUnits("100"));
     await expect(mockNonRebasing).has.a.balanceOf("0", ousd);
     const totalSupplyBefore = await ousd.totalSupply();
     await mockNonRebasing.approveFor(
-      usds.address,
+      usdc.address,
       vault.address,
-      usdsUnits("100")
+      usdcUnits("100")
     );
     const tx = await mockNonRebasing.mintOusd(
       vault.address,
-      usds.address,
-      usdsUnits("50")
+      usdc.address,
+      usdcUnits("50")
     );
     await expect(tx)
       .to.emit(ousd, "AccountRebasingDisabled")
@@ -759,22 +759,22 @@ describe("Token", function () {
   });
 
   it("Should mint correct amounts on non-rebasing account with previously set creditsPerToken", async () => {
-    let { ousd, usds, vault, matt, usdc, josh, mockNonRebasing } = fixture;
+    let { ousd, usdc, vault, matt, josh, mockNonRebasing } = fixture;
     // Give contract 100 USDS from Josh
-    await usds
+    await usdc
       .connect(josh)
-      .transfer(mockNonRebasing.address, usdsUnits("100"));
+      .transfer(mockNonRebasing.address, usdcUnits("100"));
     await expect(mockNonRebasing).has.a.balanceOf("0", ousd);
     const totalSupplyBefore = await ousd.totalSupply();
     await mockNonRebasing.approveFor(
-      usds.address,
+      usdc.address,
       vault.address,
-      usdsUnits("100")
+      usdcUnits("100")
     );
     await mockNonRebasing.mintOusd(
       vault.address,
-      usds.address,
-      usdsUnits("50")
+      usdc.address,
+      usdcUnits("50")
     );
     expect(await ousd.totalSupply()).to.equal(
       totalSupplyBefore.add(ousdUnits("50"))
@@ -793,8 +793,8 @@ describe("Token", function () {
     // Mint again
     await mockNonRebasing.mintOusd(
       vault.address,
-      usds.address,
-      usdsUnits("50")
+      usdc.address,
+      usdcUnits("50")
     );
     expect(await ousd.totalSupply()).to.equal(
       // Note 200 additional from simulated yield
@@ -817,22 +817,22 @@ describe("Token", function () {
   });
 
   it("Should burn the correct amount for non-rebasing account", async () => {
-    let { ousd, usds, vault, matt, usdc, josh, mockNonRebasing } = fixture;
+    let { ousd, usdc, vault, matt, josh, mockNonRebasing } = fixture;
     // Give contract 100 USDS from Josh
-    await usds
+    await usdc
       .connect(josh)
-      .transfer(mockNonRebasing.address, usdsUnits("100"));
+      .transfer(mockNonRebasing.address, usdcUnits("100"));
     await expect(mockNonRebasing).has.a.balanceOf("0", ousd);
     const totalSupplyBefore = await ousd.totalSupply();
     await mockNonRebasing.approveFor(
-      usds.address,
+      usdc.address,
       vault.address,
-      usdsUnits("100")
+      usdcUnits("100")
     );
     await mockNonRebasing.mintOusd(
       vault.address,
-      usds.address,
-      usdsUnits("50")
+      usdc.address,
+      usdcUnits("50")
     );
     await expect(await ousd.totalSupply()).to.equal(
       totalSupplyBefore.add(ousdUnits("50"))

@@ -12,17 +12,15 @@ import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.s
 import { Address } from "@openzeppelin/contracts/utils/Address.sol";
 
 import { IStrategy } from "../interfaces/IStrategy.sol";
+import { IWETH9 } from "../interfaces/IWETH9.sol";
 import { Governable } from "../governance/Governable.sol";
 import { OUSD } from "../token/OUSD.sol";
 import { Initializable } from "../utils/Initializable.sol";
 import "../utils/Helpers.sol";
 
-contract VaultStorage is Initializable, Governable {
+abstract contract VaultStorage is Initializable, Governable {
     using SafeERC20 for IERC20;
 
-    event AssetSupported(address _asset);
-    event AssetRemoved(address _asset);
-    event AssetDefaultStrategyUpdated(address _asset, address _strategy);
     event AssetAllocated(address _asset, address _strategy, uint256 _amount);
     event StrategyApproved(address _addr);
     event StrategyRemoved(address _addr);
@@ -30,12 +28,11 @@ contract VaultStorage is Initializable, Governable {
     event Redeem(address _addr, uint256 _value);
     event CapitalPaused();
     event CapitalUnpaused();
+    event DefaultStrategyUpdated(address _strategy);
     event RebasePaused();
     event RebaseUnpaused();
     event VaultBufferUpdated(uint256 _vaultBuffer);
-    event OusdMetaStrategyUpdated(address _ousdMetaStrategy);
     event RedeemFeeUpdated(uint256 _redeemFeeBps);
-    event PriceProviderUpdated(address _priceProvider);
     event AllocateThresholdUpdated(uint256 _threshold);
     event RebaseThresholdUpdated(uint256 _threshold);
     event StrategistUpdated(address _address);
@@ -43,16 +40,6 @@ contract VaultStorage is Initializable, Governable {
     event YieldDistribution(address _to, uint256 _yield, uint256 _fee);
     event TrusteeFeeBpsChanged(uint256 _basis);
     event TrusteeAddressChanged(address _address);
-    event NetOusdMintForStrategyThresholdChanged(uint256 _threshold);
-    event SwapperChanged(address _address);
-    event SwapAllowedUndervalueChanged(uint256 _basis);
-    event SwapSlippageChanged(address _asset, uint256 _basis);
-    event Swapped(
-        address indexed _fromAsset,
-        address indexed _toAsset,
-        uint256 _fromAssetAmount,
-        uint256 _toAssetAmount
-    );
     event StrategyAddedToMintWhitelist(address indexed strategy);
     event StrategyRemovedFromMintWhitelist(address indexed strategy);
     event RebasePerSecondMaxChanged(uint256 rebaseRatePerSecond);
@@ -95,9 +82,9 @@ contract VaultStorage is Initializable, Governable {
     }
 
     /// @dev mapping of supported vault assets to their configuration
-    mapping(address => Asset) internal assets;
+    mapping(address => Asset) internal _deprecated_assets;
     /// @dev list of all assets supported by the vault.
-    address[] internal allAssets;
+    address[] internal _deprecated_allAssets;
 
     // Strategies approved for use by the Vault
     struct Strategy {
@@ -110,7 +97,7 @@ contract VaultStorage is Initializable, Governable {
     address[] internal allStrategies;
 
     /// @notice Address of the Oracle price provider contract
-    address public priceProvider;
+    address internal _deprecated_priceProvider;
     /// @notice pause rebasing if true
     bool public rebasePaused;
     /// @notice pause operations that change the OToken supply.
@@ -144,7 +131,7 @@ contract VaultStorage is Initializable, Governable {
 
     /// @notice Mapping of asset address to the Strategy that they should automatically
     // be allocated to
-    mapping(address => address) public assetDefaultStrategies;
+    mapping(address => address) public _deprecated_assetDefaultStrategies;
 
     /// @notice Max difference between total supply and total value of assets. 18 decimals.
     uint256 public maxSupplyDiff;
@@ -162,13 +149,13 @@ contract VaultStorage is Initializable, Governable {
 
     /// @notice Metapool strategy that is allowed to mint/burn OTokens without changing collateral
 
-    address public ousdMetaStrategy;
+    address public _deprecated_ousdMetaStrategy;
 
     /// @notice How much OTokens are currently minted by the strategy
-    int256 public netOusdMintedForStrategy;
+    int256 public _deprecated_netOusdMintedForStrategy;
 
     /// @notice How much net total OTokens are allowed to be minted by all strategies
-    uint256 public netOusdMintForStrategyThreshold;
+    uint256 public _deprecated_netOusdMintForStrategyThreshold;
 
     uint256 constant MIN_UNIT_PRICE_DRIFT = 0.7e18;
     uint256 constant MAX_UNIT_PRICE_DRIFT = 1.3e18;
@@ -182,7 +169,8 @@ contract VaultStorage is Initializable, Governable {
         // For example 100 == 1%
         uint16 allowedUndervalueBps;
     }
-    SwapConfig internal swapConfig = SwapConfig(address(0), 0);
+
+    SwapConfig internal _deprecated_swapConfig = SwapConfig(address(0), 0);
 
     // List of strategies that can mint oTokens directly
     // Used in OETHBaseVaultCore
@@ -249,11 +237,25 @@ contract VaultStorage is Initializable, Governable {
     uint256 internal constant MAX_REBASE_PER_SECOND =
         uint256(0.05 ether) / 1 days;
 
+    /// @notice Default strategy for backingAsset
+    address public defaultStrategy;
+
     // For future use
-    uint256[43] private __gap;
+    uint256[42] private __gap;
+
+    /// @dev Address of the backing asset (eg. WETH or USDC)
+    address public immutable backingAsset;
+    uint8 internal immutable backingAssetDecimals;
 
     // slither-disable-end constable-states
     // slither-disable-end uninitialized-state
+
+    constructor(address _backingAsset) {
+        uint8 _decimals = IWETH9(_backingAsset).decimals();
+        require(_decimals <= 18, "BackingAsset not supported");
+        backingAsset = _backingAsset;
+        backingAssetDecimals = _decimals;
+    }
 
     /**
      * @notice set the implementation for the admin, this needs to be in a base class else we cannot set it

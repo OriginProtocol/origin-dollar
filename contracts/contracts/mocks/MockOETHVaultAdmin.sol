@@ -19,6 +19,6 @@ contract MockOETHVaultAdmin is OETHVaultAdmin {
     }
 
     function wethAvailable() external view returns (uint256) {
-        return _wethAvailable();
+        return _backingAssetAvailable();
     }
 }

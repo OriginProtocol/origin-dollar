@@ -3,13 +3,14 @@ pragma solidity ^0.8.0;
 
 import { VaultCore } from "../vault/VaultCore.sol";
 import { StableMath } from "../utils/StableMath.sol";
-import { VaultInitializer } from "../vault/VaultInitializer.sol";
 import "../utils/Helpers.sol";
 
 contract MockVault is VaultCore {
     using StableMath for uint256;
 
     uint256 storedTotalValue;
+
+    constructor(address _backingAsset) VaultCore(_backingAsset) {}
 
     function setTotalValue(uint256 _value) public {
         storedTotalValue = _value;
@@ -31,7 +32,7 @@ contract MockVault is VaultCore {
     {
         // Avoids rounding errors by returning the total value
         // in a single currency
-        if (allAssets[0] == _asset) {
+        if (backingAsset == _asset) {
             uint256 decimals = Helpers.getDecimals(_asset);
             return storedTotalValue.scaleBy(decimals, 18);
         } else {
