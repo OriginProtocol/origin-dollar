@@ -1,6 +1,7 @@
 const { expect } = require("chai");
 const { formatUnits, parseUnits } = require("ethers/lib/utils");
 
+const { getMerklRewards } = require("../../tasks/merkl");
 const addresses = require("../../utils/addresses");
 const { units, isCI } = require("../helpers");
 
@@ -9,7 +10,9 @@ const {
   morphoGauntletPrimeUSDCFixture,
 } = require("../_fixture");
 
-const log = require("../../utils/logger");
+const log = require("../../utils/logger")(
+  "test:fork:ousd-morpho-gauntlet-usdc"
+);
 
 describe("ForkTest: Morpho Gauntlet Prime USDC Strategy", function () {
   this.timeout(0);
@@ -354,6 +357,63 @@ describe("ForkTest: Morpho Gauntlet Prime USDC Strategy", function () {
         .connect(timelock)
         .withdrawAll();
       await expect(tx).to.emit(morphoGauntletPrimeUSDCStrategy, "Withdrawal");
+    });
+  });
+
+  describe("claim and collect MORPHO rewards", () => {
+    const loadFixture = createFixtureLoader(morphoGauntletPrimeUSDCFixture);
+    beforeEach(async () => {
+      fixture = await loadFixture();
+    });
+    it("Should claim MORPHO rewards", async () => {
+      const { josh, morphoGauntletPrimeUSDCStrategy, morphoToken } = fixture;
+
+      const { amount, proofs } = await getMerklRewards({
+        userAddress: morphoGauntletPrimeUSDCStrategy.address,
+        chainId: 1,
+      });
+      log(`MORPHO rewards available to claim: ${formatUnits(amount, 18)}`);
+
+      const tx = await morphoGauntletPrimeUSDCStrategy
+        .connect(josh)
+        .merkleClaim(morphoToken.address, amount, proofs);
+      await expect(tx)
+        .to.emit(morphoGauntletPrimeUSDCStrategy, "ClaimedRewards")
+        .withArgs(morphoToken.address, amount);
+    });
+
+    it("Should be able to collect MORPHO rewards", async () => {
+      const { strategist, josh, morphoGauntletPrimeUSDCStrategy, morphoToken } =
+        fixture;
+
+      const { amount, proofs } = await getMerklRewards({
+        userAddress: morphoGauntletPrimeUSDCStrategy.address,
+        chainId: 1,
+      });
+      log(`MORPHO rewards available to claim: ${formatUnits(amount, 18)}`);
+
+      await morphoGauntletPrimeUSDCStrategy
+        .connect(josh)
+        .merkleClaim(morphoToken.address, amount, proofs);
+
+      const expectMorphoTransfer = await morphoToken.balanceOf(
+        morphoGauntletPrimeUSDCStrategy.address
+      );
+
+      const tx = await morphoGauntletPrimeUSDCStrategy
+        .connect(strategist)
+        .collectRewardTokens();
+
+      if (expectMorphoTransfer.gt(0)) {
+        // The amount is total claimed over time and not the amount of rewards claimed in this tx
+        await expect(tx)
+          .to.emit(morphoToken, "Transfer")
+          .withArgs(
+            morphoGauntletPrimeUSDCStrategy.address,
+            strategist.address,
+            expectMorphoTransfer
+          );
+      }
     });
   });
 

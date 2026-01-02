@@ -141,6 +141,7 @@ const {
   mockBeaconRoot,
   copyBeaconRoot,
 } = require("./beaconTesting");
+const { claimMerklRewards } = require("./merkl");
 
 const log = require("../utils/logger")("tasks");
 
@@ -2374,5 +2375,21 @@ subtask("tenderlyUpload", "Uploads a contract to Tenderly.")
   .addParam("name", "The contract's name", undefined, types.string)
   .setAction(tenderlyUpload);
 task("tenderlyUpload").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+subtask("claimMorphoRewards", "Claim MORPHO rewards from the Morpho Vaults.")
+  .addOptionalParam(
+    "strategy",
+    "The address of the strategy. Default is the Morpho OUSD v2 Strategy.",
+    addresses.mainnet.MorphoOUSDv2StrategyProxy,
+    types.string
+  )
+  .setAction(async ({ strategy }) => {
+    const signer = await getSigner();
+
+    await claimMerklRewards(strategy, signer);
+  });
+task("claimMorphoRewards").setAction(async (_, __, runSuper) => {
   return runSuper();
 });

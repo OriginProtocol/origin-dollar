@@ -1,22 +1,17 @@
 const { ethers } = require("ethers");
-const { parseEther, formatUnits } = require("ethers/lib/utils");
 const { Defender } = require("@openzeppelin/defender-sdk");
+
 const addresses = require("../../utils/addresses");
 const { logTxDetails } = require("../../utils/txLogger");
+const {
+  shouldHarvestFromNativeStakingStrategy,
+  claimStrategyRewards,
+} = require("../../utils/harvest");
+const { claimMerklRewards } = require("../../tasks/merkl");
 
 const harvesterAbi = require("../../abi/harvester.json");
-const claimRewardsSafeModuleAbi = require("../../abi/claim-rewards-module.json");
-const nativeStakingStrategyAbi = require("../../abi/native_staking_SSV_strategy.json");
 
 const log = require("../../utils/logger")("action:harvest");
-
-const labelsSSV = {
-  [addresses.mainnet.NativeStakingSSVStrategyProxy]: "Staking Strategy 1",
-  [addresses.mainnet.NativeStakingSSVStrategy2Proxy]: "Staking Strategy 2",
-  [addresses.mainnet.NativeStakingSSVStrategy3Proxy]: "Staking Strategy 3",
-  [addresses.holesky.NativeStakingSSVStrategyProxy]:
-    "Staking Strategy 1 Holesky",
-};
 
 // Entrypoint for the Defender Action
 const handler = async (event) => {
@@ -32,25 +27,24 @@ const handler = async (event) => {
     ethersVersion: "v5",
   });
 
-  const network = await provider.getNetwork();
-  const networkName = network.chainId === 1 ? "mainnet" : "holesky";
-  log(`Network: ${networkName} with chain id (${network.chainId})`);
+  const { chainId } = await provider.getNetwork();
+  if (chainId !== 1) {
+    throw new Error(
+      `Action should only be run on mainnet, not on network with chainId ${chainId}`
+    );
+  }
 
-  const harvesterAddress = addresses[networkName].OETHHarvesterSimpleProxy;
+  const harvesterAddress = addresses.mainnet.OETHHarvesterSimpleProxy;
   log(`Resolved OETH Harvester Simple address to ${harvesterAddress}`);
   const harvester = new ethers.Contract(harvesterAddress, harvesterAbi, signer);
 
-  const convexAMOProxyAddress = addresses[networkName].ConvexOETHAMOStrategy;
-
-  // Always harvest from Convex AMO
-  const strategiesToHarvest = [convexAMOProxyAddress];
-
   const nativeStakingStrategies = [
     // addresses[networkName].NativeStakingSSVStrategyProxy,
-    addresses[networkName].NativeStakingSSVStrategy2Proxy,
-    addresses[networkName].NativeStakingSSVStrategy3Proxy,
+    addresses.mainnet.NativeStakingSSVStrategy2Proxy,
+    addresses.mainnet.NativeStakingSSVStrategy3Proxy,
   ];
 
+  const strategiesToHarvest = [];
   for (const strategy of nativeStakingStrategies) {
     log(`Resolved Native Staking Strategy address to ${strategy}`);
     const shouldHarvest = await shouldHarvestFromNativeStakingStrategy(
@@ -65,89 +59,19 @@ const handler = async (event) => {
     }
   }
 
-  const tx = await harvester
-    .connect(signer)
-    ["harvestAndTransfer(address[])"](strategiesToHarvest);
-  await logTxDetails(tx, `harvestAndTransfer`);
-
-  if (networkName === "mainnet") {
-    await harvestMorphoStrategies(signer);
-  }
-};
-
-const shouldHarvestFromNativeStakingStrategy = async (strategy, signer) => {
-  const nativeStakingStrategy = new ethers.Contract(
-    strategy,
-    nativeStakingStrategyAbi,
-    signer
-  );
-
-  const consensusRewards = await nativeStakingStrategy.consensusRewards();
-  log(
-    `Consensus rewards for ${labelsSSV[strategy]}: ${formatUnits(
-      consensusRewards
-    )}`
-  );
-
-  const feeAccumulatorAddress =
-    await nativeStakingStrategy.FEE_ACCUMULATOR_ADDRESS();
-  const executionRewards = await signer.provider.getBalance(
-    feeAccumulatorAddress
-  );
-  log(
-    `Execution rewards for ${labelsSSV[strategy]}: ${formatUnits(
-      executionRewards
-    )}`
-  );
-
-  return (
-    consensusRewards.gt(parseEther("1")) ||
-    executionRewards.gt(parseEther("0.5"))
-  );
-};
-
-const harvestMorphoStrategies = async (signer) => {
-  const strategies = [
-    // Morpho Gauntlet Prime USDC
-    "0x2b8f37893ee713a4e9ff0ceb79f27539f20a32a1",
-    // Morpho Gauntlet Prime USDT
-    "0xe3ae7c80a1b02ccd3fb0227773553aeb14e32f26",
-    // Meta Morpho Vault
-    "0x603CDEAEC82A60E3C4A10dA6ab546459E5f64Fa0",
-  ];
-
-  log("Collecting Morpho Strategies rewards");
-  for (const strategy of strategies) {
-    const distributions = await fetch(
-      `https://rewards.morpho.org/v1/users/${strategy}/distributions`
-    );
-    const distributionsData = await distributions.json();
-    for (const data of distributionsData.data) {
-      const distributor = data.distributor.address;
-      log(`Distributor: ${distributor}`);
-      log(`txData: ${data.tx_data}`);
-
-      await signer.sendTransaction({
-        to: distributor,
-        data: data.tx_data,
-        value: 0,
-        gasLimit: 1000000,
-        speed: "fastest",
-      });
-    }
+  if (strategiesToHarvest.length > 0) {
+    const tx = await harvester
+      .connect(signer)
+      ["harvestAndTransfer(address[])"](strategiesToHarvest);
+    await logTxDetails(tx, `harvestAndTransfer`);
+  } else {
+    log("No native staking strategies require harvesting at this time");
   }
 
-  log("Invoking claim from safe module");
-  const safeModule = new ethers.Contract(
-    addresses.mainnet.ClaimStrategyRewardsSafeModule,
-    claimRewardsSafeModuleAbi,
-    signer
-  );
-
-  const safeModuleTx = await safeModule.connect(signer).claimRewards(true, {
-    gasLimit: 2500000,
-  });
-  await logTxDetails(safeModuleTx, `claimRewards`);
+  // Claim MORPHO rewards to the Morpho OUSD v2 Strategy
+  await claimMerklRewards(addresses.mainnet.MorphoOUSDv2StrategyProxy, signer);
+  // Collect the CRV and MORPHO rewards from the strategies using the Safe module
+  await claimStrategyRewards(signer);
 };
 
 module.exports = { handler };

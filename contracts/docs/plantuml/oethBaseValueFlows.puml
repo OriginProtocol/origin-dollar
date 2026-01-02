@@ -17,7 +17,7 @@ participant "Dripper" as drip <<Origin>> #DeepSkyBlue
 participant "SuperOETH /\nWETH" as aeroPool <<Aerodrome>>
 end box
 
-box Mainnet
+box Ethereum
 participant "Strategist" as mainStrategist <<Origin>> #DeepSkyBlue
 participant "OETH\nVault" as mainVault <<Origin>> #DeepSkyBlue
 participant "Wrapper OETH" as woeth <<Origin>><<WOETH>> #DeepSkyBlue
@@ -80,11 +80,29 @@ note left : user claims WETH
 end
 
 
-group Strategist moves WETH from Base to Mainnet
+group Strategist moves WETH from Base to Ethereum
 
-strategist -> mainStrategist : ETH
-note left : Bridge WETH to\nMainnet using\nStargate or Jumper
+group BaseBridgeHelperModule.depositWOETHAndBridgeWETH
+strategist -> woethStrat : WOETH
+note left : deposit bridged WOETH
+woethStrat o-> strategist : SuperOETH
 
+
+' alt redeem from vault
+strategist ->x vault : SuperOETH
+note left : redeem SuperOETH\nfor WETH
+vault -> strategist : WETH
+' else swap using Aero pool
+' strategist -> aeroPool : SuperOETH
+' note left : swap SuperOETH for WETH\nusing Aerodrome Pool
+' aeroPool -> strategist : WETH
+' end
+
+strategist -> mainStrategist : WETH
+note left : Bridge WETH to\nEthereum using CCIP
+end group
+
+group EthereumBridgeHelperModule.mintWrapAndBridgeToBase
 mainStrategist -> mainVault : WETH
 note left : mint OETH using WETH
 mainVault o-> mainStrategist : OETH
@@ -95,29 +113,14 @@ woeth o-> mainStrategist : WOETH
 
 mainStrategist -> strategist : WOETH
 note left : bridge WOETH to\nBase using CCIP
+end group
 
-strategist -> woethStrat : WOETH
-note left : deposit bridged WOETH
-woethStrat o-> strategist : SuperOETH
-
-alt redeem from vault
-strategist ->x vault : SuperOETH
-note left : redeem
-vault -> strategist : WETH
-else swap using Aero pool
-strategist -> aeroPool : SuperOETH
-note left : swap SuperOETH for WETH\nusing Aerodrome Pool
-aeroPool -> strategist : WETH
-end
-
-strategist ->x weth : WETH
-note left : unwrap WETH for ETH
-weth -> strategist : ETH
 end
 
 
-group Strategist moves WETH from Mainnet to Base
+group Strategist moves WETH from Ethereum to Base
 
+group BaseBridgeHelperModule.depositWETHAndBridgeWOETH
 strategist -> vault : WETH
 note left : mint SuperOETH\nusing WETH
 vault o-> strategist : SuperOETH
@@ -127,8 +130,10 @@ note left : withdraw bridged WOETH
 woethStrat -> strategist : WOETH
 
 strategist -> mainStrategist : WOETH
-note left : bridge WOETH to\nMainnet using CCIP
+note left : bridge WOETH to\nEthereum using CCIP
+end group
 
+group EthereumBridgeHelperModule.unwrapRedeemAndBridgeToBase
 mainStrategist -> woeth : WOETH
 note left : unwrap WOETH for OETH
 woeth -> mainStrategist : OETH
@@ -138,7 +143,8 @@ note left : redeem OETH for WETH
 mainVault -> mainStrategist : WETH
 
 mainStrategist -> strategist : WETH
-note left : bridge WETH to Base\nusing Superbridge
+note left : bridge WETH to Base\nusing CCIP
+end group
 
 end
 
