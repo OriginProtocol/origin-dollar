@@ -8,7 +8,8 @@ module.exports = deploymentWithGovernanceProposal(
     // forceSkip: true,
     // reduceQueueTime: true,
     deployerIsProposer: false,
-    // proposalId: "",
+    proposalId:
+      "78346778432970987953565478654006291378903875570963237772741172114638181863041",
   },
   async () => {
     const cMorphoOUSDv2StrategyProxy = await ethers.getContract(
