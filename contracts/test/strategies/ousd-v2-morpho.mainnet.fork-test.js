@@ -2,16 +2,14 @@ const { expect } = require("chai");
 const { formatUnits, parseUnits } = require("ethers/lib/utils");
 
 const addresses = require("../../utils/addresses");
+const { getMerklRewards } = require("../../tasks/merkl");
 const { units, isCI } = require("../helpers");
 
-const {
-  createFixtureLoader,
-  morphoSteakhouseUSDCFixture,
-} = require("../_fixture");
+const { createFixtureLoader, morphoOUSDv2Fixture } = require("../_fixture");
 
-const log = require("../../utils/logger");
+const log = require("../../utils/logger")("test:fork:ousd-v2-morpho");
 
-describe.skip("ForkTest: Morpho Steakhouse USDC Strategy", function () {
+describe("ForkTest: Yearn's Morpho OUSD v2 Strategy", function () {
   this.timeout(0);
 
   // Retry up to 3 times on CI
@@ -20,40 +18,38 @@ describe.skip("ForkTest: Morpho Steakhouse USDC Strategy", function () {
   let fixture;
 
   describe("post deployment", () => {
-    const loadFixture = createFixtureLoader(morphoSteakhouseUSDCFixture);
+    const loadFixture = createFixtureLoader(morphoOUSDv2Fixture);
     beforeEach(async () => {
       fixture = await loadFixture();
     });
     it("Should have constants and immutables set", async () => {
-      const { vault, morphoSteakhouseUSDCStrategy } = fixture;
+      const { vault, morphoOUSDv2Strategy } = fixture;
 
-      expect(await morphoSteakhouseUSDCStrategy.platformAddress()).to.equal(
-        addresses.mainnet.MorphoSteakhouseUSDCVault
+      expect(await morphoOUSDv2Strategy.platformAddress()).to.equal(
+        addresses.mainnet.MorphoOUSDv2Vault
       );
-      expect(await morphoSteakhouseUSDCStrategy.vaultAddress()).to.equal(
-        vault.address
+      expect(await morphoOUSDv2Strategy.vaultAddress()).to.equal(vault.address);
+      expect(await morphoOUSDv2Strategy.shareToken()).to.equal(
+        addresses.mainnet.MorphoOUSDv2Vault
       );
-      expect(await morphoSteakhouseUSDCStrategy.shareToken()).to.equal(
-        addresses.mainnet.MorphoSteakhouseUSDCVault
-      );
-      expect(await morphoSteakhouseUSDCStrategy.assetToken()).to.equal(
+      expect(await morphoOUSDv2Strategy.assetToken()).to.equal(
         addresses.mainnet.USDC
       );
       expect(
-        await morphoSteakhouseUSDCStrategy.supportsAsset(addresses.mainnet.USDC)
+        await morphoOUSDv2Strategy.supportsAsset(addresses.mainnet.USDC)
       ).to.equal(true);
       expect(
-        await morphoSteakhouseUSDCStrategy.assetToPToken(addresses.mainnet.USDC)
-      ).to.equal(addresses.mainnet.MorphoSteakhouseUSDCVault);
-      expect(await morphoSteakhouseUSDCStrategy.governor()).to.equal(
+        await morphoOUSDv2Strategy.assetToPToken(addresses.mainnet.USDC)
+      ).to.equal(addresses.mainnet.MorphoOUSDv2Vault);
+      expect(await morphoOUSDv2Strategy.governor()).to.equal(
         addresses.mainnet.Timelock
       );
     });
     it("Should be able to check balance", async () => {
-      const { usdc, josh, morphoSteakhouseUSDCStrategy } = fixture;
+      const { usdc, josh, morphoOUSDv2Strategy } = fixture;
 
       // This uses a transaction to call a view function so the gas usage can be reported.
-      const tx = await morphoSteakhouseUSDCStrategy
+      const tx = await morphoOUSDv2Strategy
         .connect(josh)
         .populateTransaction.checkBalance(usdc.address);
       await josh.sendTransaction(tx);
@@ -66,13 +62,13 @@ describe.skip("ForkTest: Morpho Steakhouse USDC Strategy", function () {
         josh,
         daniel,
         domen,
-        morphoSteakhouseUSDCStrategy,
+        morphoOUSDv2Strategy,
         usdc,
         vaultSigner,
       } = fixture;
 
       // Governor can approve all tokens
-      const tx = await morphoSteakhouseUSDCStrategy
+      const tx = await morphoOUSDv2Strategy
         .connect(timelock)
         .safeApproveAllTokens();
       await expect(tx).to.emit(usdc, "Approval");
@@ -85,16 +81,14 @@ describe.skip("ForkTest: Morpho Steakhouse USDC Strategy", function () {
         oldTimelock,
         vaultSigner,
       ]) {
-        const tx = morphoSteakhouseUSDCStrategy
-          .connect(signer)
-          .safeApproveAllTokens();
+        const tx = morphoOUSDv2Strategy.connect(signer).safeApproveAllTokens();
         await expect(tx).to.be.revertedWith("Caller is not the Governor");
       }
     });
   });
 
   describe("with some USDC in the vault", () => {
-    const loadFixture = createFixtureLoader(morphoSteakhouseUSDCFixture, {
+    const loadFixture = createFixtureLoader(morphoOUSDv2Fixture, {
       usdcMintAmount: 12000,
       depositToStrategy: false,
     });
@@ -106,36 +100,37 @@ describe.skip("ForkTest: Morpho Steakhouse USDC Strategy", function () {
       const {
         usdc,
         ousd,
-        morphoSteakhouseUSDCStrategy,
+        morphoOUSDv2Strategy,
         vault,
         strategist,
         vaultSigner,
       } = fixture;
 
-      const checkBalanceBefore =
-        await morphoSteakhouseUSDCStrategy.checkBalance(usdc.address);
+      const checkBalanceBefore = await morphoOUSDv2Strategy.checkBalance(
+        usdc.address
+      );
 
       const usdcDepositAmount = await units("1000", usdc);
 
       // Vault transfers USDC to strategy
       await usdc
         .connect(vaultSigner)
-        .transfer(morphoSteakhouseUSDCStrategy.address, usdcDepositAmount);
+        .transfer(morphoOUSDv2Strategy.address, usdcDepositAmount);
 
       await vault.connect(strategist).rebase();
 
       const ousdSupplyBefore = await ousd.totalSupply();
 
-      const tx = await morphoSteakhouseUSDCStrategy
+      const tx = await morphoOUSDv2Strategy
         .connect(vaultSigner)
         .deposit(usdc.address, usdcDepositAmount);
 
       // Check emitted event
       await expect(tx)
-        .to.emit(morphoSteakhouseUSDCStrategy, "Deposit")
+        .to.emit(morphoOUSDv2Strategy, "Deposit")
         .withArgs(
           usdc.address,
-          addresses.mainnet.MorphoSteakhouseUSDCVault,
+          addresses.mainnet.MorphoOUSDv2Vault,
           usdcDepositAmount
         );
 
@@ -146,7 +141,7 @@ describe.skip("ForkTest: Morpho Steakhouse USDC Strategy", function () {
         0.1 // 0.1% or 10 basis point
       );
       expect(
-        await morphoSteakhouseUSDCStrategy.checkBalance(usdc.address)
+        await morphoOUSDv2Strategy.checkBalance(usdc.address)
       ).to.approxEqualTolerance(
         checkBalanceBefore.add(usdcDepositAmount),
         0.01
@@ -155,7 +150,7 @@ describe.skip("ForkTest: Morpho Steakhouse USDC Strategy", function () {
     it("Only vault can deposit some USDC to the strategy", async function () {
       const {
         usdc,
-        morphoSteakhouseUSDCStrategy,
+        morphoOUSDv2Strategy,
         vaultSigner,
         strategist,
         timelock,
@@ -166,10 +161,10 @@ describe.skip("ForkTest: Morpho Steakhouse USDC Strategy", function () {
       const depositAmount = await units("50", usdc);
       await usdc
         .connect(vaultSigner)
-        .transfer(morphoSteakhouseUSDCStrategy.address, depositAmount);
+        .transfer(morphoOUSDv2Strategy.address, depositAmount);
 
       for (const signer of [strategist, oldTimelock, timelock, josh]) {
-        const tx = morphoSteakhouseUSDCStrategy
+        const tx = morphoOUSDv2Strategy
           .connect(signer)
           .deposit(usdc.address, depositAmount);
 
@@ -179,7 +174,7 @@ describe.skip("ForkTest: Morpho Steakhouse USDC Strategy", function () {
     it("Only vault can deposit all USDC to strategy", async function () {
       const {
         usdc,
-        morphoSteakhouseUSDCStrategy,
+        morphoOUSDv2Strategy,
         vaultSigner,
         strategist,
         timelock,
@@ -190,23 +185,21 @@ describe.skip("ForkTest: Morpho Steakhouse USDC Strategy", function () {
       const depositAmount = await units("50", usdc);
       await usdc
         .connect(vaultSigner)
-        .transfer(morphoSteakhouseUSDCStrategy.address, depositAmount);
+        .transfer(morphoOUSDv2Strategy.address, depositAmount);
 
       for (const signer of [strategist, oldTimelock, timelock, josh]) {
-        const tx = morphoSteakhouseUSDCStrategy.connect(signer).depositAll();
+        const tx = morphoOUSDv2Strategy.connect(signer).depositAll();
 
         await expect(tx).to.revertedWith("Caller is not the Vault");
       }
 
-      const tx = await morphoSteakhouseUSDCStrategy
-        .connect(vaultSigner)
-        .depositAll();
-      await expect(tx).to.emit(morphoSteakhouseUSDCStrategy, "Deposit");
+      const tx = await morphoOUSDv2Strategy.connect(vaultSigner).depositAll();
+      await expect(tx).to.emit(morphoOUSDv2Strategy, "Deposit");
     });
   });
 
-  describe("with the strategy having some USDC in MetaMorpho Strategy", () => {
-    const loadFixture = createFixtureLoader(morphoSteakhouseUSDCFixture, {
+  describe("with the strategy having some USDC in Morpho Strategy", () => {
+    const loadFixture = createFixtureLoader(morphoOUSDv2Fixture, {
       usdcMintAmount: 12000,
       depositToStrategy: true,
     });
@@ -217,20 +210,26 @@ describe.skip("ForkTest: Morpho Steakhouse USDC Strategy", function () {
     it("Vault should be able to withdraw all", async () => {
       const {
         usdc,
-        morphoSteakHouseUSDCVault,
-        morphoSteakhouseUSDCStrategy,
+        morphoOUSDv2Vault,
+        morphoOUSDv2Strategy,
         ousd,
         vault,
         vaultSigner,
       } = fixture;
 
+      const minBalance = await units("12000", usdc);
+      const strategyVaultShares = await morphoOUSDv2Vault.balanceOf(
+        morphoOUSDv2Strategy.address
+      );
       const usdcWithdrawAmountExpected =
-        await morphoSteakHouseUSDCVault.maxWithdraw(
-          morphoSteakhouseUSDCStrategy.address
-        );
+        await morphoOUSDv2Vault.convertToAssets(strategyVaultShares);
+      expect(usdcWithdrawAmountExpected).to.be.gte(minBalance.sub(1));
 
       log(
-        `Expected to withdraw ${formatUnits(usdcWithdrawAmountExpected)} USDC`
+        `Expected to withdraw ${formatUnits(
+          usdcWithdrawAmountExpected,
+          6
+        )} USDC`
       );
 
       const ousdSupplyBefore = await ousd.totalSupply();
@@ -239,16 +238,14 @@ describe.skip("ForkTest: Morpho Steakhouse USDC Strategy", function () {
       log("Before withdraw all from strategy");
 
       // Now try to withdraw all the WETH from the strategy
-      const tx = await morphoSteakhouseUSDCStrategy
-        .connect(vaultSigner)
-        .withdrawAll();
+      const tx = await morphoOUSDv2Strategy.connect(vaultSigner).withdrawAll();
 
       log("After withdraw all from strategy");
 
       // Check emitted event
       await expect(tx).to.emittedEvent("Withdrawal", [
         usdc.address,
-        morphoSteakHouseUSDCVault.address,
+        morphoOUSDv2Vault.address,
         (amount) =>
           expect(amount).approxEqualTolerance(
             usdcWithdrawAmountExpected,
@@ -272,8 +269,8 @@ describe.skip("ForkTest: Morpho Steakhouse USDC Strategy", function () {
     it("Vault should be able to withdraw some USDC", async () => {
       const {
         usdc,
-        morphoSteakHouseUSDCVault,
-        morphoSteakhouseUSDCStrategy,
+        morphoOUSDv2Vault,
+        morphoOUSDv2Strategy,
         ousd,
         vault,
         vaultSigner,
@@ -284,10 +281,10 @@ describe.skip("ForkTest: Morpho Steakhouse USDC Strategy", function () {
       const ousdSupplyBefore = await ousd.totalSupply();
       const vaultUSDCBalanceBefore = await usdc.balanceOf(vault.address);
 
-      log(`Before withdraw of ${formatUnits(withdrawAmount)} from strategy`);
+      log(`Before withdraw of ${formatUnits(withdrawAmount, 6)} from strategy`);
 
       // Now try to withdraw the USDC from the strategy
-      const tx = await morphoSteakhouseUSDCStrategy
+      const tx = await morphoOUSDv2Strategy
         .connect(vaultSigner)
         .withdraw(vault.address, usdc.address, withdrawAmount);
 
@@ -295,12 +292,8 @@ describe.skip("ForkTest: Morpho Steakhouse USDC Strategy", function () {
 
       // Check emitted event
       await expect(tx)
-        .to.emit(morphoSteakhouseUSDCStrategy, "Withdrawal")
-        .withArgs(
-          usdc.address,
-          morphoSteakHouseUSDCVault.address,
-          withdrawAmount
-        );
+        .to.emit(morphoOUSDv2Strategy, "Withdrawal")
+        .withArgs(usdc.address, morphoOUSDv2Vault.address, withdrawAmount);
 
       // Check the OUSD total supply stays the same
       const ousdSupplyAfter = await ousd.totalSupply();
@@ -316,7 +309,7 @@ describe.skip("ForkTest: Morpho Steakhouse USDC Strategy", function () {
     });
     it("Only vault can withdraw some USDC from strategy", async function () {
       const {
-        morphoSteakhouseUSDCStrategy,
+        morphoOUSDv2Strategy,
         oethVault,
         strategist,
         timelock,
@@ -326,7 +319,7 @@ describe.skip("ForkTest: Morpho Steakhouse USDC Strategy", function () {
       } = fixture;
 
       for (const signer of [strategist, timelock, oldTimelock, josh]) {
-        const tx = morphoSteakhouseUSDCStrategy
+        const tx = morphoOUSDv2Strategy
           .connect(signer)
           .withdraw(oethVault.address, weth.address, parseUnits("50"));
 
@@ -334,40 +327,78 @@ describe.skip("ForkTest: Morpho Steakhouse USDC Strategy", function () {
       }
     });
     it("Only vault and governor can withdraw all USDC from Maker DSR strategy", async function () {
-      const { morphoSteakhouseUSDCStrategy, strategist, timelock, josh } =
-        fixture;
+      const { morphoOUSDv2Strategy, strategist, timelock, josh } = fixture;
 
       for (const signer of [strategist, josh]) {
-        const tx = morphoSteakhouseUSDCStrategy.connect(signer).withdrawAll();
+        const tx = morphoOUSDv2Strategy.connect(signer).withdrawAll();
 
         await expect(tx).to.revertedWith("Caller is not the Vault or Governor");
       }
 
       // Governor can withdraw all
-      const tx = morphoSteakhouseUSDCStrategy.connect(timelock).withdrawAll();
-      await expect(tx).to.emit(morphoSteakhouseUSDCStrategy, "Withdrawal");
+      const tx = morphoOUSDv2Strategy.connect(timelock).withdrawAll();
+      await expect(tx).to.emit(morphoOUSDv2Strategy, "Withdrawal");
     });
   });
 
-  describe("administration", () => {
-    const loadFixture = createFixtureLoader(morphoSteakhouseUSDCFixture);
+  describe("claim and collect MORPHO rewards", () => {
+    const loadFixture = createFixtureLoader(morphoOUSDv2Fixture);
     beforeEach(async () => {
       fixture = await loadFixture();
     });
-    it("Governor should not be able to set the platform token", () => {
-      const { frxETH, sfrxETH, morphoSteakhouseUSDCStrategy, timelock } =
+    it("Should claim MORPHO rewards", async () => {
+      const { josh, morphoOUSDv2Strategy, morphoToken } = fixture;
+
+      const { amount, proofs } = await getMerklRewards({
+        userAddress: morphoOUSDv2Strategy.address,
+        chainId: 1,
+      });
+      log(`MORPHO rewards available to claim: ${formatUnits(amount, 18)}`);
+
+      if (amount != 0) {
+        const tx = await morphoOUSDv2Strategy
+          .connect(josh)
+          .merkleClaim(morphoToken.address, amount, proofs);
+        await expect(tx)
+          .to.emit(morphoOUSDv2Strategy, "ClaimedRewards")
+          .withArgs(morphoToken.address, amount);
+      }
+    });
+
+    it("Should be able to collect MORPHO rewards", async () => {
+      const { buyBackSigner, josh, morphoOUSDv2Strategy, morphoToken } =
         fixture;
 
-      const tx = morphoSteakhouseUSDCStrategy
-        .connect(timelock)
-        .setPTokenAddress(frxETH.address, sfrxETH.address);
-      expect(tx).to.be.revertedWith("unsupported function");
-    });
-    it("Governor should not be able to remove the platform token", () => {
-      const { morphoSteakhouseUSDCStrategy, timelock } = fixture;
+      const { amount, proofs } = await getMerklRewards({
+        userAddress: morphoOUSDv2Strategy.address,
+        chainId: 1,
+      });
+      log(`MORPHO rewards available to claim: ${formatUnits(amount, 18)}`);
 
-      const tx = morphoSteakhouseUSDCStrategy.connect(timelock).removePToken(0);
-      expect(tx).to.be.revertedWith("unsupported function");
+      if (amount != "0") {
+        await morphoOUSDv2Strategy
+          .connect(josh)
+          .merkleClaim(morphoToken.address, amount, proofs);
+      }
+
+      const expectMorphoTransfer = await morphoToken.balanceOf(
+        morphoOUSDv2Strategy.address
+      );
+
+      const tx = await morphoOUSDv2Strategy
+        .connect(buyBackSigner)
+        .collectRewardTokens();
+
+      if (expectMorphoTransfer.gt(0)) {
+        // The amount is total claimed over time and not the amount of rewards claimed in this tx
+        await expect(tx)
+          .to.emit(morphoToken, "Transfer")
+          .withArgs(
+            morphoOUSDv2Strategy.address,
+            await buyBackSigner.getAddress(),
+            expectMorphoTransfer
+          );
+      }
     });
   });
 });

@@ -212,6 +212,10 @@ addresses.mainnet.MorphoGauntletPrimeUSDCVault =
   "0xdd0f28e19C1780eb6396170735D45153D261490d";
 addresses.mainnet.MorphoGauntletPrimeUSDTVault =
   "0x8CB3649114051cA5119141a34C200D65dc0Faa73";
+addresses.mainnet.MorphoOUSDv2StrategyProxy =
+  "0x3643cafA6eF3dd7Fcc2ADaD1cabf708075AFFf6e";
+addresses.mainnet.MorphoOUSDv2Vault =
+  "0xFB154c729A16802c4ad1E8f7FF539a8b9f49c960";
 
 addresses.mainnet.UniswapOracle = "0xc15169Bad17e676b3BaDb699DEe327423cE6178e";
 addresses.mainnet.CompensationClaims =
