@@ -105,7 +105,7 @@ contract Reborner {
     function redeem() public {
         log("We are attempting to redeem..");
         address vault = sanctum.vault();
-        IVault(vault).redeem(1e18, 0);
+        IVault(vault).redeem(1e18, 1e18);
         log("We are now redeeming..");
     }
 
