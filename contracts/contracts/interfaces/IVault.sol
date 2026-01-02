@@ -159,8 +159,6 @@ interface IVault {
 
     function isSupportedAsset(address _asset) external view returns (bool);
 
-    function setDripper(address _dripper) external;
-
     function dripper() external view returns (address);
 
     function backingAsset() external view returns (address);
