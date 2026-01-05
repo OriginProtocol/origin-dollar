@@ -401,7 +401,7 @@ sequenceDiagram
     Note over Master: Increments nonce, sets pendingAmount,<br/>marks as Deposit type
     Master->>CCTP1: depositForBurnWithHook(amount, hookData)
     Note over Master: hookData = DepositMessage(nonce, amount)
-    Master-->>Vault: Deposit event emitted
+    Master-->>Master: Deposit event emitted
     
     CCTP1->>Bridge: Burn USDC + Send message
     Bridge->>CCTP2: Message with attestation
@@ -412,7 +412,7 @@ sequenceDiagram
     Note over CCTPMsg1: Detects burn message,<br/>forwards to TokenMessenger
     CCTPMsg1->>CCTP2: Process burn message
     CCTP2->>Remote: Mint USDC (amount - fee)
-    CCTPMsg1->>Remote: _onTokenReceived(tokenAmount, fee, hookData)
+    Remote->>Remote: _onTokenReceived(tokenAmount, fee, hookData)
     Note over Remote: Decodes DepositMessage(nonce, amount)
     Note over Remote: Marks nonce as processed
     Remote->>Vault4626: deposit(USDC balance)
@@ -457,7 +457,7 @@ sequenceDiagram
     Note over Master: Increments nonce,<br/>marks as Withdrawal type
     Master->>CCTPMsg1: sendMessage(WithdrawMessage)
     Note over Master: WithdrawMessage(nonce, amount)
-    Master-->>Vault: WithdrawRequested event emitted
+    Master-->>Master: WithdrawRequested event emitted
     
     CCTPMsg1->>Bridge: Message with attestation
     Bridge->>CCTPMsg2: Message with attestation
@@ -499,7 +499,7 @@ sequenceDiagram
     Note over Master: Processes BalanceCheckMessage
     Note over Master: Updates remoteStrategyBalance
     Master->>Vault: Transfer all USDC
-    Master-->>Vault: Withdrawal event emitted
+    Master-->>Master: Withdrawal event emitted
 ```
 
 ### Balance Update Flow (Manual)
