@@ -1784,7 +1784,7 @@ const deployProxyWithCreateX = async (
 
   log(`Deployed ${proxyName} at ${proxyAddress}`);
 
-  storeCreate2ProxyAddress(proxyName, proxyAddress);
+  await storeCreate2ProxyAddress(proxyName, proxyAddress);
 
   // Verify contract on Etherscan if requested and on a live network
   // Can be enabled via parameter or VERIFY_CONTRACTS environment variable
