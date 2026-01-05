@@ -1720,7 +1720,7 @@ const storeCreate2ProxyAddress = async (proxyName, proxyAddress) => {
       2
     ),
     {
-      mode: "w",
+      flag: "w",
     }
   );
 };
