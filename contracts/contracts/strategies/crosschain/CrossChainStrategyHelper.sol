@@ -29,7 +29,7 @@ library CrossChainStrategyHelper {
      */
     function getMessageVersion(bytes memory message)
         internal
-        view
+        pure
         returns (uint32)
     {
         // uint32 bytes 0 to 4 is Origin message version
@@ -46,7 +46,7 @@ library CrossChainStrategyHelper {
      */
     function getMessageType(bytes memory message)
         internal
-        view
+        pure
         returns (uint32)
     {
         // uint32 bytes 0 to 4 is Origin message version
@@ -63,6 +63,7 @@ library CrossChainStrategyHelper {
      */
     function verifyMessageVersionAndType(bytes memory _message, uint32 _type)
         internal
+        pure
     {
         require(
             getMessageVersion(_message) == ORIGIN_MESSAGE_VERSION,
@@ -79,7 +80,7 @@ library CrossChainStrategyHelper {
      */
     function getMessagePayload(bytes memory message)
         internal
-        view
+        pure
         returns (bytes memory)
     {
         // uint32 bytes 0 to 4 is Origin message version
@@ -97,7 +98,7 @@ library CrossChainStrategyHelper {
      */
     function encodeDepositMessage(uint64 nonce, uint256 depositAmount)
         internal
-        view
+        pure
         returns (bytes memory)
     {
         return
@@ -116,6 +117,7 @@ library CrossChainStrategyHelper {
      */
     function decodeDepositMessage(bytes memory message)
         internal
+        pure
         returns (uint64, uint256)
     {
         verifyMessageVersionAndType(message, DEPOSIT_MESSAGE);
@@ -136,7 +138,7 @@ library CrossChainStrategyHelper {
      */
     function encodeWithdrawMessage(uint64 nonce, uint256 withdrawAmount)
         internal
-        view
+        pure
         returns (bytes memory)
     {
         return
@@ -155,6 +157,7 @@ library CrossChainStrategyHelper {
      */
     function decodeWithdrawMessage(bytes memory message)
         internal
+        pure
         returns (uint64, uint256)
     {
         verifyMessageVersionAndType(message, WITHDRAW_MESSAGE);
@@ -175,7 +178,7 @@ library CrossChainStrategyHelper {
      */
     function encodeBalanceCheckMessage(uint64 nonce, uint256 balance)
         internal
-        view
+        pure
         returns (bytes memory)
     {
         return
@@ -194,6 +197,7 @@ library CrossChainStrategyHelper {
      */
     function decodeBalanceCheckMessage(bytes memory message)
         internal
+        pure
         returns (uint64, uint256)
     {
         verifyMessageVersionAndType(message, BALANCE_CHECK_MESSAGE);
