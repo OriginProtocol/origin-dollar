@@ -1,7 +1,10 @@
 const { deploymentWithGovernanceProposal } = require("../../utils/deploy");
 const addresses = require("../../utils/addresses");
 const { cctpDomainIds } = require("../../utils/cctp");
-const { deployCrossChainMasterStrategyImpl } = require("../deployActions");
+const {
+  deployCrossChainMasterStrategyImpl,
+  getCreate2ProxyAddress,
+} = require("../deployActions");
 
 module.exports = deploymentWithGovernanceProposal(
   {
@@ -13,17 +16,20 @@ module.exports = deploymentWithGovernanceProposal(
   },
   async () => {
     const { deployerAddr } = await getNamedAccounts();
+    const crossChainStrategyProxyAddress = await getCreate2ProxyAddress(
+      "CrossChainStrategyProxy"
+    );
     const cProxy = await ethers.getContractAt(
       "CrossChainStrategyProxy",
-      addresses.CrossChainStrategyProxy
+      crossChainStrategyProxyAddress
     );
     console.log(`CrossChainStrategyProxy address: ${cProxy.address}`);
 
     const implAddress = await deployCrossChainMasterStrategyImpl(
-      addresses.CrossChainStrategyProxy,
+      crossChainStrategyProxyAddress,
       cctpDomainIds.Base,
       // Same address for both master and remote strategy
-      addresses.CrossChainStrategyProxy,
+      crossChainStrategyProxyAddress,
       addresses.mainnet.USDC,
       deployerAddr,
       "CrossChainMasterStrategy"
@@ -32,7 +38,7 @@ module.exports = deploymentWithGovernanceProposal(
 
     const cCrossChainMasterStrategy = await ethers.getContractAt(
       "CrossChainMasterStrategy",
-      addresses.CrossChainStrategyProxy
+      crossChainStrategyProxyAddress
     );
     console.log(
       `CrossChainMasterStrategy address: ${cCrossChainMasterStrategy.address}`

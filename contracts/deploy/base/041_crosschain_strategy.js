@@ -1,6 +1,9 @@
 const { deployOnBase } = require("../../utils/deploy-l2");
 const addresses = require("../../utils/addresses");
-const { deployCrossChainRemoteStrategyImpl } = require("../deployActions");
+const {
+  deployCrossChainRemoteStrategyImpl,
+  getCreate2ProxyAddress,
+} = require("../deployActions");
 const { withConfirmation } = require("../../utils/deploy.js");
 const { cctpDomainIds } = require("../../utils/cctp");
 
@@ -12,15 +15,18 @@ module.exports = deployOnBase(
     const { deployerAddr } = await getNamedAccounts();
     const sDeployer = await ethers.provider.getSigner(deployerAddr);
 
+    const crossChainStrategyProxyAddress = await getCreate2ProxyAddress(
+      "CrossChainStrategyProxy"
+    );
     console.log(
-      `CrossChainStrategyProxy address: ${addresses.CrossChainStrategyProxy}`
+      `CrossChainStrategyProxy address: ${crossChainStrategyProxyAddress}`
     );
 
     const implAddress = await deployCrossChainRemoteStrategyImpl(
       "0xbeeF010f9cb27031ad51e3333f9aF9C6B1228183", // 4626 Vault
-      addresses.CrossChainStrategyProxy,
+      crossChainStrategyProxyAddress,
       cctpDomainIds.Ethereum,
-      addresses.CrossChainStrategyProxy,
+      crossChainStrategyProxyAddress,
       addresses.base.USDC,
       "CrossChainRemoteStrategy",
       addresses.CCTPTokenMessengerV2,
@@ -31,7 +37,7 @@ module.exports = deployOnBase(
 
     const cCrossChainRemoteStrategy = await ethers.getContractAt(
       "CrossChainRemoteStrategy",
-      addresses.CrossChainStrategyProxy
+      crossChainStrategyProxyAddress
     );
     console.log(
       `CrossChainRemoteStrategy address: ${cCrossChainRemoteStrategy.address}`

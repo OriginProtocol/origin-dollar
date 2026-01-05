@@ -1,4 +1,6 @@
 const hre = require("hardhat");
+const fs = require("fs");
+const path = require("path");
 const { setStorageAt } = require("@nomicfoundation/hardhat-network-helpers");
 const { getNetworkName } = require("../utils/hardhat-helpers");
 const { parseUnits } = require("ethers/lib/utils.js");
@@ -29,7 +31,6 @@ const { resolveContract } = require("../utils/resolvers");
 const { impersonateAccount, getSigner } = require("../utils/signers");
 const { getDefenderSigner } = require("../utils/signersNoHardhat");
 const { getTxOpts } = require("../utils/tx");
-const { impersonateAndFund } = require("../utils/signers");
 const createxAbi = require("../abi/createx.json");
 
 const {
@@ -1690,6 +1691,47 @@ const deploySonicSwapXAMOStrategyImplementation = async () => {
   return cSonicSwapXAMOStrategy;
 };
 
+const getCreate2ProxiesFilePath = async () => {
+  const networkName = isFork ? "localhost" : await getNetworkName();
+  return path.resolve(
+    __dirname,
+    `./../deployments/${networkName}/create2Proxies.json`
+  );
+};
+
+const storeCreate2ProxyAddress = async (proxyName, proxyAddress) => {
+  const filePath = await getCreate2ProxiesFilePath();
+
+  let existingContents = {};
+  if (fs.existsSync(filePath)) {
+    existingContents = JSON.parse(fs.readFileSync(filePath, "utf8"));
+  }
+
+  fs.writeFileSync(
+    filePath,
+    JSON.stringify(
+      {
+        ...existingContents,
+        [proxyName]: proxyAddress,
+      },
+      undefined,
+      2
+    )
+  );
+};
+
+const getCreate2ProxyAddress = async (proxyName) => {
+  const filePath = await getCreate2ProxiesFilePath();
+  if (!fs.existsSync(filePath)) {
+    throw new Error(`Create2 proxies file not found at ${filePath}`);
+  }
+  const contents = JSON.parse(fs.readFileSync(filePath, "utf8"));
+  if (!contents[proxyName]) {
+    throw new Error(`Proxy ${proxyName} not found in ${filePath}`);
+  }
+  return contents[proxyName];
+};
+
 // deploys an instance of InitializeGovernedUpgradeabilityProxy where address is defined by salt
 const deployProxyWithCreateX = async (
   salt,
@@ -1699,11 +1741,7 @@ const deployProxyWithCreateX = async (
 ) => {
   const { deployerAddr } = await getNamedAccounts();
 
-  // Impersonate a single deployer for fork testing
-  const deployerToImpersonate = "0x58890A9cB27586E83Cb51d2d26bbE18a1a647245";
-  await impersonateAndFund(deployerToImpersonate);
-  const deployerToUse = isFork ? deployerToImpersonate : deployerAddr;
-  const sDeployer = await ethers.provider.getSigner(deployerToUse);
+  const sDeployer = await ethers.provider.getSigner(deployerAddr);
 
   // Basically hex of "originprotocol" padded to 20 bytes to mimic an address
   const addrForSalt = "0x0000000000006f726967696e70726f746f636f6c";
@@ -1720,7 +1758,7 @@ const deployProxyWithCreateX = async (
   const getFactoryBytecode = async () => {
     // No deployment needed—get factory directly from artifacts
     const ProxyContract = await ethers.getContractFactory(proxyName);
-    const encodedArgs = ProxyContract.interface.encodeDeploy([deployerToUse]);
+    const encodedArgs = ProxyContract.interface.encodeDeploy([deployerAddr]);
     return ethers.utils.hexConcat([ProxyContract.bytecode, encodedArgs]);
   };
 
@@ -1746,15 +1784,7 @@ const deployProxyWithCreateX = async (
 
   log(`Deployed ${proxyName} at ${proxyAddress}`);
 
-  if (isFork && deployerToUse !== deployerAddr) {
-    // Transfer governance of proxy to real deployer
-    const cProxy = await ethers.getContractAt(proxyName, proxyAddress);
-    const actualDeployer = await ethers.getSigner(deployerAddr);
-    await withConfirmation(
-      cProxy.connect(sDeployer).transferGovernance(deployerAddr)
-    );
-    await withConfirmation(cProxy.connect(actualDeployer).claimGovernance());
-  }
+  storeCreate2ProxyAddress(proxyName, proxyAddress);
 
   // Verify contract on Etherscan if requested and on a live network
   // Can be enabled via parameter or VERIFY_CONTRACTS environment variable
@@ -1997,4 +2027,6 @@ module.exports = {
   deployCrossChainMasterStrategyImpl,
   deployCrossChainRemoteStrategyImpl,
   deployCrossChainUnitTestStrategy,
+
+  getCreate2ProxyAddress,
 };
