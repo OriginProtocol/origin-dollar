@@ -1712,20 +1712,26 @@ const storeCreate2ProxyAddress = async (proxyName, proxyAddress) => {
     existingContents = JSON.parse(fs.readFileSync(filePath, "utf8"));
   }
 
-  fs.writeFileSync(
-    filePath,
-    JSON.stringify(
+  await new Promise((resolve, reject) => {
+    fs.writeFile(
+      filePath,
+      JSON.stringify(
+        {
+          ...existingContents,
+          [proxyName]: proxyAddress,
+        },
+        undefined,
+        2
+      ),
       {
-        ...existingContents,
-        [proxyName]: proxyAddress,
+        flag: "w",
       },
-      undefined,
-      2
-    ),
-    {
-      flag: "w",
-    }
-  );
+      (err) => {
+        if (err) reject(err);
+        resolve();
+      }
+    );
+  });
 };
 
 const getCreate2ProxyAddress = async (proxyName) => {
