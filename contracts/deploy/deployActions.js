@@ -1728,6 +1728,7 @@ const storeCreate2ProxyAddress = async (proxyName, proxyAddress) => {
       },
       (err) => {
         if (err) reject(err);
+        console.log(`Stored create2 proxy address for ${proxyName} at ${filePath}`);
         resolve();
       }
     );
