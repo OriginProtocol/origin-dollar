@@ -188,7 +188,7 @@ const getValidator = async (pubkey) => {
   const networkName = await getNetworkName();
   // some other beacon providers don't support fetching of the validator by pubkey
   const beaconProvider = `https://${
-    networkName == "hoodi" ? "hoodi." : ""
+    networkName === "mainnet" ? "" : `${networkName}.`
   }beaconcha.in/api/v1/`;
 
   return await beaconchainRequest(`validator/${pubkey}`, beaconProvider);
@@ -212,7 +212,9 @@ const beaconchainRequest = async (endpoint, overrideProvider) => {
   const API_URL =
     overrideProvider ||
     process.env.BEACON_PROVIDER_URL ||
-    `https://${networkName == "hoodi" ? "hoodi." : ""}beaconcha.in/api/v1/`;
+    `https://${
+      networkName === "mainnet" ? "" : `${networkName}.`
+    }beaconcha.in/api/v1/`;
 
   const apikey = process.env.BEACONCHAIN_API_KEY;
   const url = `${API_URL}${endpoint}`;
