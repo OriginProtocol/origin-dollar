@@ -15,6 +15,8 @@ const {
   isSonicOrFork,
   isTest,
   isFork,
+  isForkTest,
+  isCI,
   isPlume,
   isHoodi,
   isHoodiOrFork,
@@ -1692,7 +1694,8 @@ const deploySonicSwapXAMOStrategyImplementation = async () => {
 };
 
 const getCreate2ProxiesFilePath = async () => {
-  const networkName = isFork ? "localhost" : await getNetworkName();
+  const networkName =
+    isFork || isForkTest || isCI ? "localhost" : await getNetworkName();
   return path.resolve(
     __dirname,
     `./../deployments/${networkName}/create2Proxies.json`
