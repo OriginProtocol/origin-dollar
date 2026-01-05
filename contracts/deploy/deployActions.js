@@ -1707,6 +1707,12 @@ const storeCreate2ProxyAddress = async (proxyName, proxyAddress) => {
 
   console.log(`Storing create2 proxy address for ${proxyName} at ${filePath}`);
 
+  // Ensure the directory exists before writing the file
+  const dirPath = path.dirname(filePath);
+  if (!fs.existsSync(dirPath)) {
+    fs.mkdirSync(dirPath, { recursive: true });
+  }
+
   let existingContents = {};
   if (fs.existsSync(filePath)) {
     existingContents = JSON.parse(fs.readFileSync(filePath, "utf8"));
