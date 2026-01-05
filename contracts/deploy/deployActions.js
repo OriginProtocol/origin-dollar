@@ -1698,10 +1698,17 @@ const deployProxyWithCreateX = async (
 ) => {
   const { deployerAddr } = await getNamedAccounts();
   const sDeployer = await ethers.provider.getSigner(deployerAddr);
-  log(`Deploying ${proxyName} with salt: ${salt} as deployer ${deployerAddr}`);
+  // Basically hex of "originprotocol" padded to 20 bytes to mimic an address
+  const addrForSalt = "0x0000000000006f726967696e70726f746f636f6c";
+  // NOTE: We always use fixed address to compute the salt for the proxy.
+  // It makes the address predictable, easier to verify and easier to use
+  // with CI and local fork testing.
+  log(
+    `Deploying ${proxyName} with salt: ${salt} and fixed address: ${addrForSalt}`
+  );
 
   const cCreateX = await ethers.getContractAt(createxAbi, addresses.createX);
-  const factoryEncodedSalt = encodeSaltForCreateX(deployerAddr, false, salt);
+  const factoryEncodedSalt = encodeSaltForCreateX(addrForSalt, false, salt);
 
   const getFactoryBytecode = async () => {
     // No deployment needed—get factory directly from artifacts
