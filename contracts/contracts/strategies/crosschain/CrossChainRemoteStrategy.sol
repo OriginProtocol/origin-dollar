@@ -25,8 +25,9 @@ contract CrossChainRemoteStrategy is
     using SafeERC20 for IERC20;
     using CrossChainStrategyHelper for bytes;
 
-    event DepositFailed(string reason);
-    event WithdrawFailed(string reason);
+    event DepositUnderlyingFailed(string reason);
+    event WithdrawFailed(uint256 amountRequested, uint256 amountAvailable);
+    event WithdrawUnderlyingFailed(string reason);
     event StrategistUpdated(address _address);
 
     /**
@@ -204,11 +205,11 @@ contract CrossChainRemoteStrategy is
         try IERC4626(platformAddress).deposit(_amount, address(this)) {
             emit Deposit(_asset, address(shareToken), _amount);
         } catch Error(string memory reason) {
-            emit DepositFailed(
+            emit DepositUnderlyingFailed(
                 string(abi.encodePacked("Deposit failed: ", reason))
             );
         } catch (bytes memory lowLevelData) {
-            emit DepositFailed(
+            emit DepositUnderlyingFailed(
                 string(
                     abi.encodePacked(
                         "Deposit failed: low-level call failed with data ",
@@ -234,32 +235,41 @@ contract CrossChainRemoteStrategy is
         uint256 usdcBalance = IERC20(baseToken).balanceOf(address(this));
 
         if (usdcBalance < withdrawAmount) {
-            // Withdraw funds from the remote strategy
-            _withdraw(address(this), baseToken, withdrawAmount);
+            // Withdraw the missing funds from the remote strategy. This call can fail and
+            // the failure doesn't bubble up to the _processWithdrawMessage function
+            _withdraw(address(this), baseToken, withdrawAmount - usdcBalance);
 
-            // Send the complete balance on the contract. If we were to send only the
-            // withdrawn amount, the call could revert if the balance is not sufficient.
-            // Or dust could be left on the contract that is hard to extract.
+            // Update the possible increase in the balance on the contract.
             usdcBalance = IERC20(baseToken).balanceOf(address(this));
         }
 
         // Check balance after withdrawal
         uint256 balanceAfter = checkBalance(baseToken);
 
-        if (usdcBalance > 1e6) {
+        // If there are some tokens to be sent AND the balance is sufficient
+        // to satisfy the withdrawal request then send the funds to the peer strategy.
+        // In case a direct withdraw(All) has previously been called
+        // there is a possibility of USDC funds remaining on the contract.
+        // A separate withdraw to extract or deposit to the Morpho vault needs to be
+        // initiated from the peer Master strategy to utilise USDC funds.
+        if (usdcBalance > 1e6 && usdcBalance >= withdrawAmount) {
             // The new balance on the contract needs to have USDC subtracted from it as
-            // that will be withdrawn in the next steps
+            // that will be withdrawn in the next step
             bytes memory message = CrossChainStrategyHelper
                 .encodeBalanceCheckMessage(
                     lastTransferNonce,
-                    balanceAfter - usdcBalance
+                    balanceAfter - withdrawAmount
                 );
-            _sendTokens(usdcBalance, message);
+            _sendTokens(withdrawAmount, message);
         } else {
-            // Contract only has a small dust, so only send the balance update message
+            // Contract either:
+            // - only has a small dust
+            // - doesn't have sufficient funds to satisfy the withdrawal request
+            // In both cases send the balance update message to the peer strategy.
             bytes memory message = CrossChainStrategyHelper
                 .encodeBalanceCheckMessage(lastTransferNonce, balanceAfter);
             _sendMessage(message);
+            emit WithdrawFailed(withdrawAmount, usdcBalance);
         }
     }
 
@@ -290,11 +300,11 @@ contract CrossChainRemoteStrategy is
         {
             emit Withdrawal(_asset, address(shareToken), _amount);
         } catch Error(string memory reason) {
-            emit WithdrawFailed(
+            emit WithdrawUnderlyingFailed(
                 string(abi.encodePacked("Withdrawal failed: ", reason))
             );
         } catch (bytes memory lowLevelData) {
-            emit WithdrawFailed(
+            emit WithdrawUnderlyingFailed(
                 string(
                     abi.encodePacked(
                         "Withdrawal failed: low-level call failed with data ",
