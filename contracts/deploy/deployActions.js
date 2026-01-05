@@ -1720,7 +1720,7 @@ const deployProxyWithCreateX = async (
   const getFactoryBytecode = async () => {
     // No deployment needed—get factory directly from artifacts
     const ProxyContract = await ethers.getContractFactory(proxyName);
-    const encodedArgs = ProxyContract.interface.encodeDeploy([deployerAddr]);
+    const encodedArgs = ProxyContract.interface.encodeDeploy([deployerToUse]);
     return ethers.utils.hexConcat([ProxyContract.bytecode, encodedArgs]);
   };
 
