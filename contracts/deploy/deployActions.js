@@ -1702,6 +1702,8 @@ const getCreate2ProxiesFilePath = async () => {
 const storeCreate2ProxyAddress = async (proxyName, proxyAddress) => {
   const filePath = await getCreate2ProxiesFilePath();
 
+  console.log(`Storing create2 proxy address for ${proxyName} at ${filePath}`);
+
   let existingContents = {};
   if (fs.existsSync(filePath)) {
     existingContents = JSON.parse(fs.readFileSync(filePath, "utf8"));
@@ -1716,7 +1718,10 @@ const storeCreate2ProxyAddress = async (proxyName, proxyAddress) => {
       },
       undefined,
       2
-    )
+    ),
+    {
+      mode: "w",
+    }
   );
 };
 
