@@ -29,6 +29,7 @@ const { resolveContract } = require("../utils/resolvers");
 const { impersonateAccount, getSigner } = require("../utils/signers");
 const { getDefenderSigner } = require("../utils/signersNoHardhat");
 const { getTxOpts } = require("../utils/tx");
+const { impersonateAndFund } = require("../utils/signers");
 const createxAbi = require("../abi/createx.json");
 
 const {
@@ -1697,7 +1698,13 @@ const deployProxyWithCreateX = async (
   contractPath = null
 ) => {
   const { deployerAddr } = await getNamedAccounts();
-  const sDeployer = await ethers.provider.getSigner(deployerAddr);
+
+  // Impersonate a single deployer for fork testing
+  const deployerToImpersonate = "0x58890A9cB27586E83Cb51d2d26bbE18a1a647245";
+  await impersonateAndFund(deployerToImpersonate);
+  const deployerToUse = isFork ? deployerToImpersonate : deployerAddr;
+  const sDeployer = await ethers.provider.getSigner(deployerToUse);
+
   // Basically hex of "originprotocol" padded to 20 bytes to mimic an address
   const addrForSalt = "0x0000000000006f726967696e70726f746f636f6c";
   // NOTE: We always use fixed address to compute the salt for the proxy.
@@ -1738,6 +1745,16 @@ const deployProxyWithCreateX = async (
   );
 
   log(`Deployed ${proxyName} at ${proxyAddress}`);
+
+  if (isFork && deployerToUse !== deployerAddr) {
+    // Transfer governance of proxy to real deployer
+    const cProxy = await ethers.getContractAt(proxyName, proxyAddress);
+    const actualDeployer = await ethers.getSigner(deployerAddr);
+    await withConfirmation(
+      cProxy.connect(sDeployer).transferGovernance(deployerAddr)
+    );
+    await withConfirmation(cProxy.connect(actualDeployer).claimGovernance());
+  }
 
   // Verify contract on Etherscan if requested and on a live network
   // Can be enabled via parameter or VERIFY_CONTRACTS environment variable
