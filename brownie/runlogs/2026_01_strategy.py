@@ -18,12 +18,12 @@ def main():
       )
     )
 
-    # Deposit 3m USDC to new Morpho OUSD v2 Strategy
+    # Deposit 1.4m USDC to new Morpho OUSD v2 Strategy
     txs.append(
       vault_admin.depositToStrategy(
         MORPHO_OUSD_V2_STRAT,
         [USDC],
-        [3000000 * 10**6],
+        [1400000 * 10**6],
         std
       )
     )
