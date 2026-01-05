@@ -1705,8 +1705,6 @@ const getCreate2ProxiesFilePath = async () => {
 const storeCreate2ProxyAddress = async (proxyName, proxyAddress) => {
   const filePath = await getCreate2ProxiesFilePath();
 
-  console.log(`Storing create2 proxy address for ${proxyName} at ${filePath}`);
-
   // Ensure the directory exists before writing the file
   const dirPath = path.dirname(filePath);
   if (!fs.existsSync(dirPath)) {
@@ -1718,7 +1716,7 @@ const storeCreate2ProxyAddress = async (proxyName, proxyAddress) => {
     existingContents = JSON.parse(fs.readFileSync(filePath, "utf8"));
   }
 
-  await new Promise((resolve) => {
+  await new Promise((resolve, reject) => {
     fs.writeFile(
       filePath,
       JSON.stringify(
@@ -1730,7 +1728,11 @@ const storeCreate2ProxyAddress = async (proxyName, proxyAddress) => {
         2
       ),
       (err) => {
-        console.log("Err:", err);
+        if (err) {
+          console.log("Err:", err);
+          reject(err);
+          return;
+        }
         console.log(
           `Stored create2 proxy address for ${proxyName} at ${filePath}`
         );
@@ -1742,14 +1744,10 @@ const storeCreate2ProxyAddress = async (proxyName, proxyAddress) => {
 
 const getCreate2ProxyAddress = async (proxyName) => {
   const filePath = await getCreate2ProxiesFilePath();
-  console.log(
-    `Getting create2 proxy address for ${proxyName} from ${filePath}`
-  );
   if (!fs.existsSync(filePath)) {
     throw new Error(`Create2 proxies file not found at ${filePath}`);
   }
   const contents = JSON.parse(fs.readFileSync(filePath, "utf8"));
-  console.log(contents);
   if (!contents[proxyName]) {
     throw new Error(`Proxy ${proxyName} not found in ${filePath}`);
   }
@@ -1809,7 +1807,6 @@ const deployProxyWithCreateX = async (
   log(`Deployed ${proxyName} at ${proxyAddress}`);
 
   await storeCreate2ProxyAddress(proxyName, proxyAddress);
-  console.log("Stored create2 proxy address");
 
   // Verify contract on Etherscan if requested and on a live network
   // Can be enabled via parameter or VERIFY_CONTRACTS environment variable
