@@ -108,6 +108,6 @@ const main = async (hre) => {
 };
 
 main.id = "999_no_stale_oracles";
-main.skip = () => true || isForkWithLocalNode || !isFork;
+main.skip = () => isForkWithLocalNode || !isFork;
 
 module.exports = main;
