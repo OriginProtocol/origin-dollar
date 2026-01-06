@@ -57,8 +57,8 @@ contract CrossChainMasterStrategy is
      */
     function initialize(
         address _operator,
-        uint32 _minFinalityThreshold,
-        uint32 _feePremiumBps
+        uint16 _minFinalityThreshold,
+        uint16 _feePremiumBps
     ) external virtual onlyGovernor initializer {
         _initialize(_operator, _minFinalityThreshold, _feePremiumBps);
 
