@@ -413,4 +413,42 @@ describe("ForkTest: CrossChainRemoteStrategy", function () {
 
     await assertVaultTotalValue("1000");
   });
+
+  it("Should fail on deposit if a previous one has not completed", async function () {
+    await mint("100");
+    await depositToMasterStrategy("50");
+
+    await expect(depositToMasterStrategy("50")).to.be.revertedWith(
+      "Unexpected pending amount"
+    );
+  });
+
+  it("Should fail to withdraw if a previous deposit has not completed", async function () {
+    await mintToMasterDepositToRemote("40");
+    await mint("50");
+    await depositToMasterStrategy("50");
+
+    await expect(withdrawFromRemoteStrategy("40")).to.be.revertedWith(
+      "Pending deposit or withdrawal"
+    );
+  });
+
+  it("Should fail on deposit if a previous withdrawal has not completed", async function () {
+    await mintToMasterDepositToRemote("230");
+    await withdrawFromRemoteStrategy("50");
+
+    await mint("30");
+    await expect(depositToMasterStrategy("30")).to.be.revertedWith(
+      "Pending deposit or withdrawal"
+    );
+  });
+
+  it("Should fail to withdraw if a previous withdrawal has not completed", async function () {
+    await mintToMasterDepositToRemote("230");
+    await withdrawFromRemoteStrategy("50");
+
+    await expect(withdrawFromRemoteStrategy("40")).to.be.revertedWith(
+      "Pending deposit or withdrawal"
+    );
+  });
 });
