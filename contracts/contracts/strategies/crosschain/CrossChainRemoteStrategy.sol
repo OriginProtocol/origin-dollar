@@ -186,7 +186,7 @@ contract CrossChainRemoteStrategy is
         // Send balance check message to the peer strategy
         uint256 balanceAfter = checkBalance(baseToken);
         bytes memory message = CrossChainStrategyHelper
-            .encodeBalanceCheckMessage(lastTransferNonce, balanceAfter);
+            .encodeBalanceCheckMessage(lastTransferNonce, balanceAfter, true);
         _sendMessage(message);
     }
 
@@ -258,7 +258,8 @@ contract CrossChainRemoteStrategy is
             bytes memory message = CrossChainStrategyHelper
                 .encodeBalanceCheckMessage(
                     lastTransferNonce,
-                    balanceAfter - withdrawAmount
+                    balanceAfter - withdrawAmount,
+                    true
                 );
             _sendTokens(withdrawAmount, message);
         } else {
@@ -267,7 +268,11 @@ contract CrossChainRemoteStrategy is
             // - doesn't have sufficient funds to satisfy the withdrawal request
             // In both cases send the balance update message to the peer strategy.
             bytes memory message = CrossChainStrategyHelper
-                .encodeBalanceCheckMessage(lastTransferNonce, balanceAfter);
+                .encodeBalanceCheckMessage(
+                    lastTransferNonce,
+                    balanceAfter,
+                    true
+                );
             _sendMessage(message);
             emit WithdrawFailed(withdrawAmount, usdcBalance);
         }
@@ -346,7 +351,7 @@ contract CrossChainRemoteStrategy is
     {
         uint256 balance = checkBalance(baseToken);
         bytes memory message = CrossChainStrategyHelper
-            .encodeBalanceCheckMessage(lastTransferNonce, balance);
+            .encodeBalanceCheckMessage(lastTransferNonce, balance, false);
         _sendMessage(message);
     }
 

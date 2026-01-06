@@ -32,8 +32,6 @@ contract CrossChainMasterStrategy is
         Deposit,
         Withdrawal
     }
-    // Mapping of nonce to transfer type
-    mapping(uint64 => TransferType) public transferTypeByNonce;
 
     event RemoteStrategyBalanceUpdated(uint256 balance);
     event WithdrawRequested(address indexed asset, uint256 amount);
@@ -170,14 +168,6 @@ contract CrossChainMasterStrategy is
 
         // Should be expecting an acknowledgement
         require(!isNonceProcessed(_nonce), "Nonce already processed");
-        // Only a withdrawal can send tokens to Master strategy
-        require(
-            transferTypeByNonce[_nonce] == TransferType.Withdrawal,
-            "Expecting withdrawal"
-        );
-
-        // Confirm receipt of tokens from Withdraw command
-        _markNonceAsProcessed(_nonce);
 
         // Now relay to the regular flow
         // NOTE: Calling _onMessageReceived would mean that we are bypassing a
@@ -218,7 +208,6 @@ contract CrossChainMasterStrategy is
 
         // Get the next nonce
         uint64 nonce = _getNextNonce();
-        transferTypeByNonce[nonce] = TransferType.Deposit;
 
         // Set pending amount
         pendingAmount = depositAmount;
@@ -262,7 +251,6 @@ contract CrossChainMasterStrategy is
 
         // Get the next nonce
         uint64 nonce = _getNextNonce();
-        transferTypeByNonce[nonce] = TransferType.Withdrawal;
 
         // Build and send withdrawal message with payload
         bytes memory message = CrossChainStrategyHelper.encodeWithdrawMessage(
@@ -288,8 +276,10 @@ contract CrossChainMasterStrategy is
         virtual
     {
         // Decode the message
-        (uint64 nonce, uint256 balance) = message.decodeBalanceCheckMessage();
-
+        // When transferConfirmation is true, it means that the message is a result of a deposit or a withdrawal
+        // process.
+        (uint64 nonce, uint256 balance, bool transferConfirmation) = message
+            .decodeBalanceCheckMessage();
         // Get the last cached nonce
         uint64 _lastCachedNonce = lastTransferNonce;
 
@@ -299,32 +289,28 @@ contract CrossChainMasterStrategy is
             return;
         }
 
-        // Check if the nonce has been processed
-        bool processedTransfer = isNonceProcessed(nonce);
-        if (
-            !processedTransfer &&
-            transferTypeByNonce[nonce] == TransferType.Withdrawal
-        ) {
-            // Pending withdrawal is taken care of by _onTokenReceived
-            // Do not update balance due to race conditions
-            return;
+        // A received message nonce not yet processed indicates there is a
+        // deposit or withdrawal in progress.
+        bool transferInProgress = !isNonceProcessed(nonce);
+
+        if (transferInProgress) {
+            if (transferConfirmation) {
+                // Apply the effects of the deposit / withdrawal completion
+                _markNonceAsProcessed(nonce);
+                pendingAmount = 0;
+            } else {
+                // A balanceCheck arrived that is not part of the deposit / withdrawal process
+                // that has been generated on the Remote contract after the deposit / withdrawal which is
+                // still pending. This can happen when the CCTP bridge delivers the messages out of order.
+                // Ignore it, since the pending deposit / withdrawal must first be cofirmed.
+                return;
+            }
         }
 
-        // Update the remote strategy balance always
+        // At this point update the strategy balance the balanceCheck message is either:
+        // - a confirmation of a deposit / withdrawal
+        // - a message that updates balances when no deposit / withdrawal is in progress
         remoteStrategyBalance = balance;
         emit RemoteStrategyBalanceUpdated(balance);
-
-        /**
-         * A deposit is being confirmed.
-         * A withdrawal will always be confirmed if it reaches this point of code.
-         */
-        if (!processedTransfer) {
-            _markNonceAsProcessed(nonce);
-
-            // Effect of confirming a deposit, reset pending amount
-            pendingAmount = 0;
-
-            // NOTE: Withdrawal is taken care of by _onTokenReceived
-        }
     }
 }

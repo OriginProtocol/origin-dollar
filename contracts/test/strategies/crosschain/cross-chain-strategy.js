@@ -325,24 +325,27 @@ describe("ForkTest: CrossChainRemoteStrategy", function () {
     ).to.eq(await units("0", usdc));
   });
 
-  // For this test
-  it.only("Should fail when a withdrawal too large is requested on the remote strategy", async function () {
+  it("Should fail when a withdrawal too large is requested on the remote strategy", async function () {
     const { messageTransmitter } = fixture;
-    const remoteStrategySigner = await impersonateAndFund(crossChainRemoteStrategy.address);
-    
+    const remoteStrategySigner = await impersonateAndFund(
+      crossChainRemoteStrategy.address
+    );
+
     await mintToMasterDepositToRemote("1000");
     await assertVaultTotalValue("1000");
 
     await directWithdrawFromRemoteStrategy("10");
 
     // Trick the remote strategy into thinking it has 10 USDC more than it actually does
-    await usdc.connect(remoteStrategySigner).transfer(vault.address, await units("10", usdc));
+    await usdc
+      .connect(remoteStrategySigner)
+      .transfer(vault.address, await units("10", usdc));
     // Vault has 10 USDC more & Master strategy still thinks it has 1000 USDC
     await assertVaultTotalValue("1010");
 
     // This step should fail because the remote strategy no longer holds 1000 USDC
     await withdrawFromRemoteStrategy("1000");
-    
+
     // Process on remote strategy
     await expect(messageTransmitter.processFront())
       .to.emit(crossChainRemoteStrategy, "WithdrawFailed")
@@ -356,7 +359,7 @@ describe("ForkTest: CrossChainRemoteStrategy", function () {
     await expect(messageTransmitter.processFront())
       .to.emit(crossChainMasterStrategy, "RemoteStrategyBalanceUpdated")
       .withArgs(await units("990", usdc));
-    
+
     await expect(await messageTransmitter.messagesInQueue()).to.eq(0);
 
     await expect(
@@ -369,5 +372,4 @@ describe("ForkTest: CrossChainRemoteStrategy", function () {
   });
 
   it("Should be able to process withdrawal & checkBalance on Remote strategy and in reverse order on master strategy", async function () {});
-
 });

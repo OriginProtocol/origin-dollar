@@ -174,18 +174,20 @@ library CrossChainStrategyHelper {
      *      The message version and type are always encoded in the message.
      * @param nonce The nonce of the balance check
      * @param balance The balance to check
+     * @param transferConfirmation Indicates if the message is a transfer confirmation. This is true
+     *                            when the message is a result of a deposit or a withdrawal.
      * @return The encoded balance check message
      */
-    function encodeBalanceCheckMessage(uint64 nonce, uint256 balance)
-        internal
-        pure
-        returns (bytes memory)
-    {
+    function encodeBalanceCheckMessage(
+        uint64 nonce,
+        uint256 balance,
+        bool transferConfirmation
+    ) internal pure returns (bytes memory) {
         return
             abi.encodePacked(
                 ORIGIN_MESSAGE_VERSION,
                 BALANCE_CHECK_MESSAGE,
-                abi.encode(nonce, balance)
+                abi.encode(nonce, balance, transferConfirmation)
             );
     }
 
@@ -193,19 +195,23 @@ library CrossChainStrategyHelper {
      * @dev Decode the balance check message.
      *      The message version and type are verified in the message.
      * @param message The message to decode
-     * @return The nonce and the balance to check
+     * @return The nonce, the balance and indicates if the message is a transfer confirmation
      */
     function decodeBalanceCheckMessage(bytes memory message)
         internal
         pure
-        returns (uint64, uint256)
+        returns (
+            uint64,
+            uint256,
+            bool
+        )
     {
         verifyMessageVersionAndType(message, BALANCE_CHECK_MESSAGE);
 
-        (uint64 nonce, uint256 balance) = abi.decode(
+        (uint64 nonce, uint256 balance, bool transferConfirmation) = abi.decode(
             getMessagePayload(message),
-            (uint64, uint256)
+            (uint64, uint256, bool)
         );
-        return (nonce, balance);
+        return (nonce, balance, transferConfirmation);
     }
 }
