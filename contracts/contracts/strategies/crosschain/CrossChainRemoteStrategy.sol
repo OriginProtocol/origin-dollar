@@ -71,8 +71,8 @@ contract CrossChainRemoteStrategy is
     function initialize(
         address _strategist,
         address _operator,
-        uint32 _minFinalityThreshold,
-        uint32 _feePremiumBps
+        uint16 _minFinalityThreshold,
+        uint16 _feePremiumBps
     ) external virtual onlyGovernor initializer {
         _initialize(_operator, _minFinalityThreshold, _feePremiumBps);
         _setStrategistAddr(_strategist);
@@ -137,9 +137,12 @@ contract CrossChainRemoteStrategy is
 
     /// @inheritdoc Generalized4626Strategy
     function withdrawAll() external virtual override onlyGovernorOrStrategist {
-        uint256 contractBalance = IERC20(baseToken).balanceOf(address(this));
-        uint256 balance = checkBalance(baseToken) - contractBalance;
-        _withdraw(address(this), baseToken, balance);
+        IERC4626 platform = IERC4626(platformAddress);
+        _withdraw(
+            address(this),
+            baseToken,
+            platform.previewRedeem(platform.balanceOf(address(this)))
+        );
     }
 
     /// @inheritdoc AbstractCCTPIntegrator
