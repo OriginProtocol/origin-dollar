@@ -137,9 +137,12 @@ contract CrossChainRemoteStrategy is
 
     /// @inheritdoc Generalized4626Strategy
     function withdrawAll() external virtual override onlyGovernorOrStrategist {
-        uint256 contractBalance = IERC20(baseToken).balanceOf(address(this));
-        uint256 balance = checkBalance(baseToken) - contractBalance;
-        _withdraw(address(this), baseToken, balance);
+        IERC4626 platform = IERC4626(platformAddress);
+        _withdraw(
+            address(this),
+            baseToken,
+            platform.previewRedeem(platform.balanceOf(address(this)))
+        );
     }
 
     /// @inheritdoc AbstractCCTPIntegrator
