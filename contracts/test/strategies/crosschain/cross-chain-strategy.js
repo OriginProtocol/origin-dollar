@@ -5,6 +5,7 @@ const {
   crossChainFixtureUnit,
 } = require("../../_fixture");
 const { units } = require("../../helpers");
+const { impersonateAndFund } = require("../../../utils/signers");
 
 const loadFixture = createFixtureLoader(crossChainFixtureUnit);
 
@@ -177,6 +178,7 @@ describe("ForkTest: CrossChainRemoteStrategy", function () {
     await expect(
       await crossChainRemoteStrategy.checkBalance(usdc.address)
     ).to.eq(remoteBalanceAfter);
+
     // Simulate off chain component processing checkBalance message
     await expect(messageTransmitter.processFront())
       .to.emit(crossChainMasterStrategy, "RemoteStrategyBalanceUpdated")
@@ -323,9 +325,49 @@ describe("ForkTest: CrossChainRemoteStrategy", function () {
     ).to.eq(await units("0", usdc));
   });
 
+  // For this test
+  it.only("Should fail when a withdrawal too large is requested on the remote strategy", async function () {
+    const { messageTransmitter } = fixture;
+    const remoteStrategySigner = await impersonateAndFund(crossChainRemoteStrategy.address);
+    
+    await mintToMasterDepositToRemote("1000");
+    await assertVaultTotalValue("1000");
+
+    await directWithdrawFromRemoteStrategy("10");
+
+    // Trick the remote strategy into thinking it has 10 USDC more than it actually does
+    await usdc.connect(remoteStrategySigner).transfer(vault.address, await units("10", usdc));
+    // Vault has 10 USDC more & Master strategy still thinks it has 1000 USDC
+    await assertVaultTotalValue("1010");
+
+    // This step should fail because the remote strategy no longer holds 1000 USDC
+    await withdrawFromRemoteStrategy("1000");
+    
+    // Process on remote strategy
+    await expect(messageTransmitter.processFront())
+      .to.emit(crossChainRemoteStrategy, "WithdrawFailed")
+      .withArgs(await units("1000", usdc), await units("0", usdc));
+
+    // Process on master strategy
+    // This event doesn't get triggerred as the master strategy considers the balance check update
+    // as a race condition, and is exoecting an "on TokenReceived " to be called instead
+
+    // which also causes the master strategy not to update the balance of the remote strategy
+    await expect(messageTransmitter.processFront())
+      .to.emit(crossChainMasterStrategy, "RemoteStrategyBalanceUpdated")
+      .withArgs(await units("990", usdc));
+    
+    await expect(await messageTransmitter.messagesInQueue()).to.eq(0);
+
+    await expect(
+      await crossChainRemoteStrategy.checkBalance(usdc.address)
+    ).to.eq(await units("990", usdc));
+
+    await expect(
+      await crossChainMasterStrategy.checkBalance(usdc.address)
+    ).to.eq(await units("990", usdc));
+  });
+
   it("Should be able to process withdrawal & checkBalance on Remote strategy and in reverse order on master strategy", async function () {});
 
-  it("Should fail when a withdrawal too large is requested on the remote strategy", async function () {
-    // TODO: trick master into thinking there is more on remote strategy than is actually there
-  });
 });
