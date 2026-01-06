@@ -76,6 +76,10 @@ describe("ForkTest: CrossChainRemoteStrategy", function () {
     await crossChainRemoteStrategy.connect(governor).withdrawAll();
   };
 
+  const sendBalanceUpdateToMaster = async () => {
+    await crossChainRemoteStrategy.connect(governor).sendBalanceUpdate();
+  };
+
   // Checks the diff in the total expected value in the vault
   // (plus accompanying strategy value)
   const assertVaultTotalValue = async (amountExpected) => {
@@ -371,5 +375,42 @@ describe("ForkTest: CrossChainRemoteStrategy", function () {
     ).to.eq(await units("990", usdc));
   });
 
-  it("Should be able to process withdrawal & checkBalance on Remote strategy and in reverse order on master strategy", async function () {});
+  it("Should be able to process withdrawal & checkBalance on Remote strategy and in reverse order on master strategy", async function () {
+    const { messageTransmitter } = fixture;
+
+    await mintToMasterDepositToRemote("1000");
+
+    await withdrawFromRemoteStrategy("300");
+
+    // Process on remote strategy
+    await expect(messageTransmitter.processFront());
+    // This sends a second balanceUpdate message to the CCTP bridge
+    await sendBalanceUpdateToMaster();
+
+    await expect(await messageTransmitter.messagesInQueue()).to.eq(2);
+
+    // first process the standalone balanceCheck message - meaning we process messages out of order
+    // this message should be ignored on Master
+    await expect(messageTransmitter.processBack()).to.not.emit(
+      crossChainMasterStrategy,
+      "RemoteStrategyBalanceUpdated"
+    );
+
+    // Second balance update message is part of the deposit / withdrawal process and should be processed
+    await expect(messageTransmitter.processFront())
+      .to.emit(crossChainMasterStrategy, "RemoteStrategyBalanceUpdated")
+      .withArgs(await units("700", usdc));
+
+    await expect(await messageTransmitter.messagesInQueue()).to.eq(0);
+
+    await expect(
+      await crossChainRemoteStrategy.checkBalance(usdc.address)
+    ).to.eq(await units("700", usdc));
+
+    await expect(
+      await crossChainMasterStrategy.checkBalance(usdc.address)
+    ).to.eq(await units("700", usdc));
+
+    await assertVaultTotalValue("1000");
+  });
 });
