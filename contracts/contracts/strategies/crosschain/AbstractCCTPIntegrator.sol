@@ -41,40 +41,51 @@ abstract contract AbstractCCTPIntegrator is Governable, IMessageHandlerV2 {
 
     using BytesHelper for bytes;
 
-    event CCTPMinFinalityThresholdSet(uint32 minFinalityThreshold);
-    event CCTPFeePremiumBpsSet(uint32 feePremiumBps);
+    event CCTPMinFinalityThresholdSet(uint16 minFinalityThreshold);
+    event CCTPFeePremiumBpsSet(uint16 feePremiumBps);
     event OperatorChanged(address operator);
+
+    /**
+     * @notice Max trasnfer threshold imposed by the CCTP
+     *         Ref: https://developers.circle.com/cctp/evm-smart-contracts#depositforburn
+     */
+    uint256 public constant MAX_TRANSFER_AMOUNT = 10_000_000 * 10**6; // 10M USDC
 
     // CCTP contracts
     // This implementation assumes that remote and local chains have these contracts
     // deployed on the same addresses.
+    /// @notice CCTP message transmitter contract
     ICCTPMessageTransmitter public immutable cctpMessageTransmitter;
+    /// @notice CCTP token messenger contract
     ICCTPTokenMessenger public immutable cctpTokenMessenger;
 
-    // USDC address on local chain
+    /// @notice USDC address on local chain
     address public immutable baseToken;
 
-    // Domain ID of the chain from which messages are accepted
+    /// @notice Domain ID of the chain from which messages are accepted
     uint32 public immutable peerDomainID;
 
-    // Strategy address on other chain
+    /// @notice Strategy address on other chain
     address public immutable peerStrategy;
 
-    // CCTP params
-    uint32 public minFinalityThreshold;
-    uint32 public feePremiumBps;
+    /**
+     * @notice Minimum finality threshold
+     *         Can be 1000 (safe, after 1 epoch) or 2000 (finalized, after 2 epochs).
+     *         Ref: https://developers.circle.com/cctp/technical-guide#finality-thresholds
+     */
+    uint16 public minFinalityThreshold;
 
-    // Threshold imposed by the CCTP
-    uint256 public constant MAX_TRANSFER_AMOUNT = 10_000_000 * 10**6; // 10M USDC
+    /// @notice Fee premium in basis points
+    uint16 public feePremiumBps;
 
-    // Nonce of the last known deposit or withdrawal
+    /// @notice Nonce of the last known deposit or withdrawal
     uint64 public lastTransferNonce;
 
-    // Mapping of processed nonces
-    mapping(uint64 => bool) private nonceProcessed;
-
-    // Operator address: Can relay CCTP messages
+    /// @notice Operator address: Can relay CCTP messages
     address public operator;
+
+    /// @notice Mapping of processed nonces
+    mapping(uint64 => bool) private nonceProcessed;
 
     // For future use
     uint256[50] private __gap;
@@ -82,7 +93,7 @@ abstract contract AbstractCCTPIntegrator is Governable, IMessageHandlerV2 {
     modifier onlyCCTPMessageTransmitter() {
         require(
             msg.sender == address(cctpMessageTransmitter),
-            "Caller is not the CCTP message transmitter"
+            "Caller is not CCTP transmitter"
         );
         _;
     }
@@ -92,6 +103,16 @@ abstract contract AbstractCCTPIntegrator is Governable, IMessageHandlerV2 {
         _;
     }
 
+    /**
+     * @notice Configuration for CCTP integration
+     * @param cctpTokenMessenger Address of the CCTP token messenger contract
+     * @param cctpMessageTransmitter Address of the CCTP message transmitter contract
+     * @param peerDomainID Domain ID of the chain from which messages are accepted.
+     *         0 for Ethereum, 6 for Base, etc.
+     *         Ref: https://developers.circle.com/cctp/cctp-supported-blockchains
+     * @param peerStrategy Address of the master or remote strategy on the other chain
+     * @param baseToken USDC address on local chain
+     */
     struct CCTPIntegrationConfig {
         address cctpTokenMessenger;
         address cctpMessageTransmitter;
@@ -135,8 +156,8 @@ abstract contract AbstractCCTPIntegrator is Governable, IMessageHandlerV2 {
      */
     function _initialize(
         address _operator,
-        uint32 _minFinalityThreshold,
-        uint32 _feePremiumBps
+        uint16 _minFinalityThreshold,
+        uint16 _feePremiumBps
     ) internal {
         _setOperator(_operator);
         _setMinFinalityThreshold(_minFinalityThreshold);
@@ -170,7 +191,7 @@ abstract contract AbstractCCTPIntegrator is Governable, IMessageHandlerV2 {
      *      2000 (Finalized, after 2 epochs).
      * @param _minFinalityThreshold Minimum finality threshold
      */
-    function setMinFinalityThreshold(uint32 _minFinalityThreshold)
+    function setMinFinalityThreshold(uint16 _minFinalityThreshold)
         external
         onlyGovernor
     {
@@ -181,7 +202,7 @@ abstract contract AbstractCCTPIntegrator is Governable, IMessageHandlerV2 {
      * @dev Set the minimum finality threshold
      * @param _minFinalityThreshold Minimum finality threshold
      */
-    function _setMinFinalityThreshold(uint32 _minFinalityThreshold) internal {
+    function _setMinFinalityThreshold(uint16 _minFinalityThreshold) internal {
         // 1000 for fast transfer and 2000 for standard transfer
         require(
             _minFinalityThreshold == 1000 || _minFinalityThreshold == 2000,
@@ -197,15 +218,17 @@ abstract contract AbstractCCTPIntegrator is Governable, IMessageHandlerV2 {
      *      Cannot be higher than 30% (3000 basis points).
      * @param _feePremiumBps Fee premium in basis points
      */
-    function setFeePremiumBps(uint32 _feePremiumBps) external onlyGovernor {
+    function setFeePremiumBps(uint16 _feePremiumBps) external onlyGovernor {
         _setFeePremiumBps(_feePremiumBps);
     }
 
     /**
      * @dev Set the fee premium in basis points
+     *      Cannot be higher than 30% (3000 basis points).
+     *      Ref: https://developers.circle.com/cctp/technical-guide#fees
      * @param _feePremiumBps Fee premium in basis points
      */
-    function _setFeePremiumBps(uint32 _feePremiumBps) internal {
+    function _setFeePremiumBps(uint16 _feePremiumBps) internal {
         require(_feePremiumBps <= 3000, "Fee premium too high"); // 30%
 
         feePremiumBps = _feePremiumBps;
@@ -326,7 +349,7 @@ abstract contract AbstractCCTPIntegrator is Governable, IMessageHandlerV2 {
             address(baseToken),
             bytes32(uint256(uint160(peerStrategy))),
             maxFee,
-            minFinalityThreshold,
+            uint32(minFinalityThreshold),
             hookData
         );
     }
@@ -340,7 +363,7 @@ abstract contract AbstractCCTPIntegrator is Governable, IMessageHandlerV2 {
             peerDomainID,
             bytes32(uint256(uint160(peerStrategy))),
             bytes32(uint256(uint160(peerStrategy))),
-            minFinalityThreshold,
+            uint32(minFinalityThreshold),
             message
         );
     }

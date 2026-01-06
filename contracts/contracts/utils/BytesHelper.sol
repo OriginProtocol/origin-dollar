@@ -4,6 +4,7 @@ pragma solidity ^0.8.0;
 uint256 constant UINT32_LENGTH = 4;
 uint256 constant UINT64_LENGTH = 8;
 uint256 constant UINT256_LENGTH = 32;
+// Address is 20 bytes, but we expect the data to be padded with 0s to 32 bytes
 uint256 constant ADDRESS_LENGTH = 32;
 
 library BytesHelper {
@@ -33,11 +34,22 @@ library BytesHelper {
         return result;
     }
 
+    /**
+     * @dev Decode a uint32 from a bytes memory
+     * @param data The bytes memory to decode
+     * @return uint32 The decoded uint32
+     */
     function decodeUint32(bytes memory data) internal pure returns (uint32) {
         require(data.length == 4, "Invalid data length");
         return uint32(uint256(bytes32(data)) >> 224);
     }
 
+    /**
+     * @dev Extract a uint32 from a bytes memory
+     * @param data The bytes memory to extract from
+     * @param start The start index (inclusive)
+     * @return uint32 The extracted uint32
+     */
     function extractUint32(bytes memory data, uint256 start)
         internal
         pure
@@ -46,12 +58,24 @@ library BytesHelper {
         return decodeUint32(extractSlice(data, start, start + UINT32_LENGTH));
     }
 
+    /**
+     * @dev Decode an address from a bytes memory.
+     *      Expects the data to be padded with 0s to 32 bytes.
+     * @param data The bytes memory to decode
+     * @return address The decoded address
+     */
     function decodeAddress(bytes memory data) internal pure returns (address) {
         // We expect the data to be padded with 0s, so length is 32 not 20
         require(data.length == 32, "Invalid data length");
         return abi.decode(data, (address));
     }
 
+    /**
+     * @dev Extract an address from a bytes memory
+     * @param data The bytes memory to extract from
+     * @param start The start index (inclusive)
+     * @return address The extracted address
+     */
     function extractAddress(bytes memory data, uint256 start)
         internal
         pure
@@ -60,11 +84,22 @@ library BytesHelper {
         return decodeAddress(extractSlice(data, start, start + ADDRESS_LENGTH));
     }
 
+    /**
+     * @dev Decode a uint256 from a bytes memory
+     * @param data The bytes memory to decode
+     * @return uint256 The decoded uint256
+     */
     function decodeUint256(bytes memory data) internal pure returns (uint256) {
         require(data.length == 32, "Invalid data length");
         return abi.decode(data, (uint256));
     }
 
+    /**
+     * @dev Extract a uint256 from a bytes memory
+     * @param data The bytes memory to extract from
+     * @param start The start index (inclusive)
+     * @return uint256 The extracted uint256
+     */
     function extractUint256(bytes memory data, uint256 start)
         internal
         pure

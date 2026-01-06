@@ -1868,7 +1868,7 @@ const deployCrossChainMasterStrategyImpl = async (
 
   if (!skipInitialize) {
     const initData = dCrossChainMasterStrategy.interface.encodeFunctionData(
-      "initialize(address,uint32,uint32)",
+      "initialize(address,uint16,uint16)",
       [multichainStrategistAddr, 2000, 0]
     );
 
@@ -1928,7 +1928,7 @@ const deployCrossChainRemoteStrategyImpl = async (
   );
 
   const initData = dCrossChainRemoteStrategy.interface.encodeFunctionData(
-    "initialize(address,address,uint32,uint32)",
+    "initialize(address,address,uint16,uint16)",
     [multichainStrategistAddr, multichainStrategistAddr, 2000, 0]
   );
 

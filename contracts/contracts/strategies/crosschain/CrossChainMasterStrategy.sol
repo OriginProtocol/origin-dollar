@@ -21,10 +21,10 @@ contract CrossChainMasterStrategy is
     using SafeERC20 for IERC20;
     using CrossChainStrategyHelper for bytes;
 
-    // Remote strategy balance
+    /// @notice Remote strategy balance
     uint256 public remoteStrategyBalance;
 
-    // Amount that's bridged but not yet received on the destination chain
+    /// @notice Amount that's bridged but not yet received on the destination chain
     uint256 public pendingAmount;
 
     enum TransferType {
@@ -55,8 +55,8 @@ contract CrossChainMasterStrategy is
      */
     function initialize(
         address _operator,
-        uint32 _minFinalityThreshold,
-        uint32 _feePremiumBps
+        uint16 _minFinalityThreshold,
+        uint16 _feePremiumBps
     ) external virtual onlyGovernor initializer {
         _initialize(_operator, _minFinalityThreshold, _feePremiumBps);
 
@@ -118,8 +118,10 @@ contract CrossChainMasterStrategy is
         // USDC balance on this contract
         // + USDC being bridged
         // + USDC cached in the corresponding Remote part of this contract
-        uint256 undepositedUSDC = IERC20(baseToken).balanceOf(address(this));
-        return undepositedUSDC + pendingAmount + remoteStrategyBalance;
+        return
+            IERC20(baseToken).balanceOf(address(this)) +
+            pendingAmount +
+            remoteStrategyBalance;
     }
 
     /// @inheritdoc InitializableAbstractStrategy
@@ -148,13 +150,16 @@ contract CrossChainMasterStrategy is
 
     /// @inheritdoc AbstractCCTPIntegrator
     function _onMessageReceived(bytes memory payload) internal override {
-        uint32 messageType = payload.getMessageType();
-        if (messageType == CrossChainStrategyHelper.BALANCE_CHECK_MESSAGE) {
+        if (
+            payload.getMessageType() ==
+            CrossChainStrategyHelper.BALANCE_CHECK_MESSAGE
+        ) {
             // Received when Remote strategy checks the balance
             _processBalanceCheckMessage(payload);
-        } else {
-            revert("Unknown message type");
+            return;
         }
+
+        revert("Unknown message type");
     }
 
     /// @inheritdoc AbstractCCTPIntegrator
@@ -198,7 +203,6 @@ contract CrossChainMasterStrategy is
      */
     function _deposit(address _asset, uint256 depositAmount) internal virtual {
         require(_asset == baseToken, "Unsupported asset");
-        require(!isTransferPending(), "Transfer already pending");
         require(pendingAmount == 0, "Unexpected pending amount");
         require(depositAmount > 0, "Deposit amount must be greater than 0");
         require(
@@ -207,6 +211,7 @@ contract CrossChainMasterStrategy is
         );
 
         // Get the next nonce
+        // Note: reverts if a transfer is pending
         uint64 nonce = _getNextNonce();
 
         // Set pending amount
@@ -239,7 +244,6 @@ contract CrossChainMasterStrategy is
         require(_asset == baseToken, "Unsupported asset");
         require(_amount > 0, "Withdraw amount must be greater than 0");
         require(_recipient == vaultAddress, "Only Vault can withdraw");
-        require(!isTransferPending(), "Transfer already pending");
         require(
             _amount <= remoteStrategyBalance,
             "Withdraw amount exceeds remote strategy balance"
@@ -250,6 +254,7 @@ contract CrossChainMasterStrategy is
         );
 
         // Get the next nonce
+        // Note: reverts if a transfer is pending
         uint64 nonce = _getNextNonce();
 
         // Build and send withdrawal message with payload
