@@ -145,10 +145,10 @@ describe("ForkTest: OETH Vault", function () {
       }
     });
 
-    it("should have 0.1% redeem fee", async () => {
+    it("should have redeem fee", async () => {
       const { oethVault } = fixture;
 
-      expect(await oethVault.redeemFeeBps()).to.equal(10);
+      expect(await oethVault.redeemFeeBps()).to.equal(50);
     });
 
     it("should return only WETH in redeem calculations", async () => {
@@ -157,7 +157,7 @@ describe("ForkTest: OETH Vault", function () {
       const output = await oethVault.calculateRedeemOutputs(oethUnits("123"));
       const index = await oethVault.wethAssetIndex();
 
-      expect(output[index]).to.equal(oethUnits("123").mul("9990").div("10000"));
+      expect(output[index]).to.equal(oethUnits("123").mul("9950").div("10000"));
 
       output.map((x, i) => {
         if (i !== index.toNumber()) {
@@ -204,7 +204,7 @@ describe("ForkTest: OETH Vault", function () {
       await weth.connect(matt).transfer(oethVault.address, oethUnits("1000"));
 
       const amount = oethUnits("10");
-      const expectedWETH = amount.mul("9990").div("10000");
+      const expectedWETH = amount.mul("9950").div("10000");
 
       await weth.connect(josh).approve(oethVault.address, amount);
 
