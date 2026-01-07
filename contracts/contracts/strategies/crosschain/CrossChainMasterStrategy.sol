@@ -27,12 +27,6 @@ contract CrossChainMasterStrategy is
     /// @notice Amount that's bridged but not yet received on the destination chain
     uint256 public pendingAmount;
 
-    enum TransferType {
-        None, // To avoid using 0
-        Deposit,
-        Withdrawal
-    }
-
     event RemoteStrategyBalanceUpdated(uint256 balance);
     event WithdrawRequested(address indexed asset, uint256 amount);
 
