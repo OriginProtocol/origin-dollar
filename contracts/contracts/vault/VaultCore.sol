@@ -881,11 +881,6 @@ abstract contract VaultCore is VaultInitializer {
         }
     }
 
-    function abs(int256 x) private pure returns (uint256) {
-        require(x < int256(MAX_INT), "Amount too high");
-        return x >= 0 ? uint256(x) : uint256(-x);
-    }
-
     function _min(uint256 a, uint256 b) internal pure returns (uint256) {
         return a < b ? a : b;
     }

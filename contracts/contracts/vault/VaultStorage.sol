@@ -64,25 +64,8 @@ abstract contract VaultStorage is Initializable, Governable {
     // slither-disable-start uninitialized-state
     // slither-disable-start constable-states
 
-    // Assets supported by the Vault, i.e. Stablecoins
-    enum UnitConversion {
-        DECIMALS,
-        GETEXCHANGERATE
-    }
-    // Changed to fit into a single storage slot so the decimals needs to be recached
-    struct Asset {
-        // Note: OETHVaultCore doesn't use `isSupported` when minting,
-        // redeeming or checking balance of assets.
-        bool isSupported;
-        UnitConversion unitConversion;
-        uint8 decimals;
-        // Max allowed slippage from the Oracle price when swapping collateral assets in basis points.
-        // For example 40 == 0.4% slippage
-        uint16 allowedOracleSlippageBps;
-    }
-
     /// @dev mapping of supported vault assets to their configuration
-    mapping(address => Asset) internal _deprecated_assets;
+    mapping(address => uint256) internal _deprecated_assets;
     /// @dev list of all assets supported by the vault.
     address[] internal _deprecated_allAssets;
 
@@ -145,8 +128,6 @@ abstract contract VaultStorage is Initializable, Governable {
     /// @dev Deprecated: Tokens that should be swapped for stablecoins
     address[] private _deprecated_swapTokens;
 
-    uint256 constant MINT_MINIMUM_UNIT_PRICE = 0.998e18;
-
     /// @notice Metapool strategy that is allowed to mint/burn OTokens without changing collateral
 
     address private _deprecated_ousdMetaStrategy;
@@ -157,20 +138,7 @@ abstract contract VaultStorage is Initializable, Governable {
     /// @notice How much net total OTokens are allowed to be minted by all strategies
     uint256 private _deprecated_netOusdMintForStrategyThreshold;
 
-    uint256 constant MIN_UNIT_PRICE_DRIFT = 0.7e18;
-    uint256 constant MAX_UNIT_PRICE_DRIFT = 1.3e18;
-
-    /// @notice Collateral swap configuration.
-    /// @dev is packed into a single storage slot to save gas.
-    struct SwapConfig {
-        // Contract that swaps the vault's collateral assets
-        address swapper;
-        // Max allowed percentage the total value can drop below the total supply in basis points.
-        // For example 100 == 1%
-        uint16 allowedUndervalueBps;
-    }
-
-    SwapConfig internal _deprecated_swapConfig = SwapConfig(address(0), 0);
+    uint256 internal _deprecated_swapConfig;
 
     // List of strategies that can mint oTokens directly
     // Used in OETHBaseVaultCore
