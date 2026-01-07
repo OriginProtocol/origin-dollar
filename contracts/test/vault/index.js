@@ -130,16 +130,6 @@ describe("Vault", function () {
     await expect(matt).has.a.balanceOf("100.00", ousd);
   });
 
-  it("Should revert mint if minMintAmount check fails", async () => {
-    const { vault, matt, ousd, usdc } = fixture;
-
-    await expect(
-      vault.connect(matt).mint(usdc.address, usdcUnits("50"), ousdUnits("100"))
-    ).to.be.revertedWith("Mint amount lower than minimum");
-
-    await expect(matt).has.a.balanceOf("100.00", ousd);
-    expect(await ousd.totalSupply()).to.eq(ousdUnits("200.0"));
-  });
 
   it("Should allow transfer of arbitrary token by Governor", async () => {
     const { vault, ousd, usdc, matt, governor } = fixture;

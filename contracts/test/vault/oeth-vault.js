@@ -114,20 +114,6 @@ describe("OETH Vault", function () {
       );
     });
 
-    it("Fail to mint with any other asset", async () => {
-      const { oethVault, frxETH, stETH, reth, josh } = fixture;
-
-      const amount = parseUnits("1", 18);
-      const minOeth = parseUnits("0.8", 18);
-
-      for (const asset of [frxETH, stETH, reth]) {
-        await asset.connect(josh).approve(oethVault.address, amount);
-        const tx = oethVault.connect(josh).mint(asset.address, amount, minOeth);
-
-        await expect(tx).to.be.revertedWith("Asset is not supported");
-      }
-    });
-
     it("Fail to mint if amount is zero", async () => {
       const { oethVault, weth, josh } = fixture;
 

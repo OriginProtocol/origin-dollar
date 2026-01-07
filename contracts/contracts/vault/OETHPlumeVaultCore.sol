@@ -15,7 +15,7 @@ contract OETHPlumeVaultCore is OETHVaultCore {
         address _asset,
         uint256 _amount,
         uint256 _minimumOusdAmount
-    ) internal virtual override {
+    ) internal virtual {
         // Only Strategist or Governor can mint using the Vault for now.
         // This allows the strateigst to fund the Vault with WETH when
         // removing liquidi from wOETH strategy.
@@ -24,7 +24,7 @@ contract OETHPlumeVaultCore is OETHVaultCore {
             "Caller is not the Strategist or Governor"
         );
 
-        super._mint(_asset, _amount, _minimumOusdAmount);
+        super._mint(_amount);
     }
 
     // @inheritdoc OETHVaultCore
