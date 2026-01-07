@@ -24,7 +24,8 @@ contract CrossChainMasterStrategy is
     /// @notice Remote strategy balance
     uint256 public remoteStrategyBalance;
 
-    /// @notice Amount that's bridged but not yet received on the destination chain
+    /// @notice Amount that's bridged due to a pending Deposit process
+    ///         but not yet received on the destination chain
     uint256 public pendingAmount;
 
     event RemoteStrategyBalanceUpdated(uint256 balance);

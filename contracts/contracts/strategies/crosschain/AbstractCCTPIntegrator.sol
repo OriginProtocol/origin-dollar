@@ -46,7 +46,7 @@ abstract contract AbstractCCTPIntegrator is Governable, IMessageHandlerV2 {
     event OperatorChanged(address operator);
 
     /**
-     * @notice Max trasnfer threshold imposed by the CCTP
+     * @notice Max transfer threshold imposed by the CCTP
      *         Ref: https://developers.circle.com/cctp/evm-smart-contracts#depositforburn
      */
     uint256 public constant MAX_TRANSFER_AMOUNT = 10_000_000 * 10**6; // 10M USDC
