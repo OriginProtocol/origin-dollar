@@ -298,7 +298,7 @@ contract CrossChainMasterStrategy is
 
         // A received message nonce not yet processed indicates there is a
         // deposit or withdrawal in progress.
-        bool transferInProgress = !isNonceProcessed(nonce);
+        bool transferInProgress = isTransferPending();
 
         if (transferInProgress) {
             if (transferConfirmation) {
