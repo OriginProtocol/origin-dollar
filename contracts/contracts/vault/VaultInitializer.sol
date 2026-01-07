@@ -30,7 +30,7 @@ abstract contract VaultInitializer is VaultStorage {
         rebaseThreshold = 1000e18;
         // Initialize all strategies
         allStrategies = new address[](0);
-        // Start with drip duration disabled
-        dripDuration = 1;
+        // Start with drip duration: 7 days
+        dripDuration = 604800;
     }
 }
