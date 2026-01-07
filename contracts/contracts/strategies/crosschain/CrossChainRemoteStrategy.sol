@@ -186,9 +186,12 @@ contract CrossChainRemoteStrategy is
         _deposit(usdcToken, balance);
 
         // Send balance check message to the peer strategy
-        uint256 balanceAfter = checkBalance(usdcToken);
         bytes memory message = CrossChainStrategyHelper
-            .encodeBalanceCheckMessage(lastTransferNonce, balanceAfter, true);
+            .encodeBalanceCheckMessage(
+                lastTransferNonce,
+                checkBalance(usdcToken),
+                true
+            );
         _sendMessage(message);
     }
 
