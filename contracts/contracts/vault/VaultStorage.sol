@@ -252,7 +252,7 @@ abstract contract VaultStorage is Initializable, Governable {
 
     constructor(address _asset) {
         uint8 _decimals = IWETH9(_asset).decimals();
-        require(_decimals <= 18, "asset not supported");
+        require(_decimals <= 18, "invalid asset decimals");
         asset = _asset;
         assetDecimals = _decimals;
     }
