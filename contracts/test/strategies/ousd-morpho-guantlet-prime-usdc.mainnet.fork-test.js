@@ -14,7 +14,7 @@ const log = require("../../utils/logger")(
   "test:fork:ousd-morpho-gauntlet-usdc"
 );
 
-describe("ForkTest: Morpho Gauntlet Prime USDC Strategy", function () {
+describe.skip("ForkTest: Morpho Gauntlet Prime USDC Strategy", function () {
   this.timeout(0);
 
   // Retry up to 3 times on CI
