@@ -20,6 +20,14 @@ library CrossChainStrategyHelper {
     uint32 public constant CCTP_MESSAGE_VERSION = 1;
     uint32 public constant ORIGIN_MESSAGE_VERSION = 1010;
 
+    // CCTP Message Header fields
+    // Ref: https://developers.circle.com/cctp/technical-guide#message-header
+    uint8 private constant VERSION_INDEX = 0;
+    uint8 private constant SOURCE_DOMAIN_INDEX = 4;
+    uint8 private constant SENDER_INDEX = 44;
+    uint8 private constant RECIPIENT_INDEX = 76;
+    uint8 private constant MESSAGE_BODY_INDEX = 148;
+
     /**
      * @dev Get the message version from the message.
      *      It should always be 4 bytes long,
@@ -213,5 +221,34 @@ library CrossChainStrategyHelper {
             (uint64, uint256, bool)
         );
         return (nonce, balance, transferConfirmation);
+    }
+
+    /**
+     * @dev Decode the CCTP message header
+     * @param message Message to decode
+     * @return version Version of the message
+     * @return sourceDomainID Source domain ID
+     * @return sender Sender of the message
+     * @return recipient Recipient of the message
+     * @return messageBody Message body
+     */
+    function decodeMessageHeader(bytes memory message)
+        internal
+        pure
+        returns (
+            uint32 version,
+            uint32 sourceDomainID,
+            address sender,
+            address recipient,
+            bytes memory messageBody
+        )
+    {
+        version = message.extractUint32(VERSION_INDEX);
+        sourceDomainID = message.extractUint32(SOURCE_DOMAIN_INDEX);
+        // Address of MessageTransmitterV2 caller on source domain
+        sender = message.extractAddress(SENDER_INDEX);
+        // Address to handle message body on destination domain
+        recipient = message.extractAddress(RECIPIENT_INDEX);
+        messageBody = message.extractSlice(MESSAGE_BODY_INDEX, message.length);
     }
 }
