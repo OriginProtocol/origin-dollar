@@ -88,7 +88,7 @@ abstract contract AbstractCCTPIntegrator is Governable, IMessageHandlerV2 {
     mapping(uint64 => bool) private nonceProcessed;
 
     // For future use
-    uint256[50] private __gap;
+    uint256[48] private __gap;
 
     modifier onlyCCTPMessageTransmitter() {
         require(
@@ -122,6 +122,20 @@ abstract contract AbstractCCTPIntegrator is Governable, IMessageHandlerV2 {
     }
 
     constructor(CCTPIntegrationConfig memory _config) {
+        require(_config.usdcToken != address(0), "Invalid USDC address");
+        require(
+            _config.cctpTokenMessenger != address(0),
+            "Invalid CCTP config"
+        );
+        require(
+            _config.cctpMessageTransmitter != address(0),
+            "Invalid CCTP config"
+        );
+        require(
+            _config.peerStrategy != address(0),
+            "Invalid peer strategy address"
+        );
+
         cctpMessageTransmitter = ICCTPMessageTransmitter(
             _config.cctpMessageTransmitter
         );
