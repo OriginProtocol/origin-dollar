@@ -267,7 +267,7 @@ contract CrossChainRemoteStrategy is
             _sendTokens(withdrawAmount, message);
         } else {
             // Contract either:
-            // - only has a small dust
+            // - only has small dust amount of USDC
             // - doesn't have sufficient funds to satisfy the withdrawal request
             // In both cases send the balance update message to the peer strategy.
             bytes memory message = CrossChainStrategyHelper

@@ -514,6 +514,11 @@ abstract contract AbstractCCTPIntegrator is Governable, IMessageHandlerV2 {
         uint64 lastNonce = lastTransferNonce;
 
         // Can only mark latest nonce as processed
+        // Master strategy when receiving a message from the remote strategy
+        // will have lastNone == nonce, as the nonce is increase at the start
+        // of deposit / withdrawal flow.
+        // Remote strategy will have lastNonce < nonce, as a new nonce initiated
+        // from master will be greater than the last one.
         require(nonce >= lastNonce, "Nonce too low");
         // Can only mark nonce as processed once
         require(!nonceProcessed[nonce], "Nonce already processed");
