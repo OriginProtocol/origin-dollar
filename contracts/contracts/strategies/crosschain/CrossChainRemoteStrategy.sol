@@ -26,7 +26,7 @@ contract CrossChainRemoteStrategy is
     using CrossChainStrategyHelper for bytes;
 
     event DepositUnderlyingFailed(string reason);
-    event WithdrawFailed(uint256 amountRequested, uint256 amountAvailable);
+    event WithdrawalFailed(uint256 amountRequested, uint256 amountAvailable);
     event WithdrawUnderlyingFailed(string reason);
     event StrategistUpdated(address _address);
 
@@ -277,7 +277,7 @@ contract CrossChainRemoteStrategy is
                     true
                 );
             _sendMessage(message);
-            emit WithdrawFailed(withdrawAmount, usdcBalance);
+            emit WithdrawalFailed(withdrawAmount, usdcBalance);
         }
     }
 
