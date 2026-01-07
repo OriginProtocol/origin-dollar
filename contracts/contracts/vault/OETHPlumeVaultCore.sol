@@ -12,9 +12,9 @@ contract OETHPlumeVaultCore is OETHVaultCore {
 
     // @inheritdoc OETHVaultCore
     function _mint(
-        address _asset,
+        address,
         uint256 _amount,
-        uint256 _minimumOusdAmount
+        uint256
     ) internal virtual {
         // Only Strategist or Governor can mint using the Vault for now.
         // This allows the strateigst to fund the Vault with WETH when

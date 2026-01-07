@@ -48,14 +48,14 @@ abstract contract VaultCore is VaultInitializer {
     /**
      * @notice Deposit a supported asset and mint OTokens.
      * @dev Deprecated: use `mint(uint256 _amount)` instead.
-     * @param _asset Address of the asset being deposited
+     * @dev Deprecated: param _asset Address of the asset being deposited
      * @param _amount Amount of the asset being deposited
-     * @param _minimumOusdAmount Minimum OTokens to mint
+     * @dev Deprecated: param _minimumOusdAmount Minimum OTokens to mint
      */
     function mint(
-        address _asset,
+        address,
         uint256 _amount,
-        uint256 _minimumOusdAmount
+        uint256
     ) external whenNotCapitalPaused nonReentrant {
         _mint(_amount);
     }
