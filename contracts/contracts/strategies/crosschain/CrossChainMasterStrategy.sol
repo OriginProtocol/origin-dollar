@@ -99,7 +99,19 @@ contract CrossChainMasterStrategy is
     /// @inheritdoc InitializableAbstractStrategy
     function withdrawAll() external override onlyVaultOrGovernor nonReentrant {
         // Withdraw everything in Remote strategy
-        _withdraw(usdcToken, vaultAddress, remoteStrategyBalance);
+        uint256 _remoteBalance = remoteStrategyBalance;
+        if (_remoteBalance < 1e6) {
+            // Do nothing if there is less than 1 USDC in the Remote strategy
+            return;
+        }
+
+        _withdraw(
+            usdcToken,
+            vaultAddress,
+            _remoteBalance > MAX_TRANSFER_AMOUNT
+                ? MAX_TRANSFER_AMOUNT
+                : _remoteBalance
+        );
     }
 
     /**
