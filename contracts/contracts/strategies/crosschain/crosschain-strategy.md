@@ -70,7 +70,7 @@ classDiagram
         <<abstract>>
         +cctpMessageTransmitter: ICCTPMessageTransmitter
         +cctpTokenMessenger: ICCTPTokenMessenger
-        +baseToken: address
+        +usdcToken: address
         +peerDomainID: uint32
         +peerStrategy: address
         +lastTransferNonce: uint64
@@ -151,7 +151,7 @@ classDiagram
 **Key State Variables**:
 - `cctpMessageTransmitter`: CCTP Message Transmitter contract
 - `cctpTokenMessenger`: CCTP Token Messenger contract
-- `baseToken`: USDC address on local chain
+- `usdcToken`: USDC address on local chain
 - `peerDomainID`: Domain ID of the peer chain
 - `peerStrategy`: Address of the strategy on peer chain
 - `minFinalityThreshold`: Minimum finality threshold (1000 or 2000)
@@ -581,7 +581,7 @@ sequenceDiagram
 ### Master Strategy State
 
 **Local State**:
-- `IERC20(baseToken).balanceOf(address(this))`: USDC held locally
+- `IERC20(usdcToken).balanceOf(address(this))`: USDC held locally
 - `pendingAmount`: USDC bridged but not confirmed
 - `remoteStrategyBalance`: Cached balance in Remote strategy
 
@@ -595,7 +595,7 @@ sequenceDiagram
 ### Remote Strategy State
 
 **Local State**:
-- `IERC20(baseToken).balanceOf(address(this))`: USDC held locally
+- `IERC20(usdcToken).balanceOf(address(this))`: USDC held locally
 - `IERC4626(platformAddress).balanceOf(address(this))`: Shares in 4626 vault
 
 **Total Balance**: `contractBalance + previewRedeem(shares)`

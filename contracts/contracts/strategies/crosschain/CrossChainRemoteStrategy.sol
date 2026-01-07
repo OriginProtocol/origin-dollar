@@ -53,9 +53,9 @@ contract CrossChainRemoteStrategy is
         CCTPIntegrationConfig memory _cctpConfig
     )
         AbstractCCTPIntegrator(_cctpConfig)
-        Generalized4626Strategy(_baseConfig, _cctpConfig.baseToken)
+        Generalized4626Strategy(_baseConfig, _cctpConfig.usdcToken)
     {
-        require(baseToken == address(assetToken), "Token mismatch");
+        require(usdcToken == address(assetToken), "Token mismatch");
 
         // NOTE: Vault address must always be the proxy address
         // so that IVault(vaultAddress).strategistAddr() works
@@ -81,7 +81,7 @@ contract CrossChainRemoteStrategy is
         address[] memory assets = new address[](1);
         address[] memory pTokens = new address[](1);
 
-        assets[0] = address(baseToken);
+        assets[0] = address(usdcToken);
         pTokens[0] = address(platformAddress);
 
         InitializableAbstractStrategy._initialize(
@@ -123,7 +123,7 @@ contract CrossChainRemoteStrategy is
 
     /// @inheritdoc Generalized4626Strategy
     function depositAll() external virtual override onlyGovernorOrStrategist {
-        _deposit(baseToken, IERC20(baseToken).balanceOf(address(this)));
+        _deposit(usdcToken, IERC20(usdcToken).balanceOf(address(this)));
     }
 
     /// @inheritdoc Generalized4626Strategy
@@ -140,7 +140,7 @@ contract CrossChainRemoteStrategy is
         IERC4626 platform = IERC4626(platformAddress);
         _withdraw(
             address(this),
-            baseToken,
+            usdcToken,
             platform.previewRedeem(platform.balanceOf(address(this)))
         );
     }
@@ -180,14 +180,14 @@ contract CrossChainRemoteStrategy is
         _markNonceAsProcessed(nonce);
 
         // Deposit everything we got, not just what was bridged
-        uint256 balance = IERC20(baseToken).balanceOf(address(this));
+        uint256 balance = IERC20(usdcToken).balanceOf(address(this));
 
         // Underlying call to deposit funds can fail. It mustn't affect the overall
         // flow as confirmation message should still be sent.
-        _deposit(baseToken, balance);
+        _deposit(usdcToken, balance);
 
         // Send balance check message to the peer strategy
-        uint256 balanceAfter = checkBalance(baseToken);
+        uint256 balanceAfter = checkBalance(usdcToken);
         bytes memory message = CrossChainStrategyHelper
             .encodeBalanceCheckMessage(lastTransferNonce, balanceAfter, true);
         _sendMessage(message);
@@ -200,7 +200,7 @@ contract CrossChainRemoteStrategy is
      */
     function _deposit(address _asset, uint256 _amount) internal override {
         require(_amount > 0, "Must deposit something");
-        require(_asset == address(baseToken), "Unexpected asset address");
+        require(_asset == address(usdcToken), "Unexpected asset address");
 
         // This call can fail, and the failure doesn't need to bubble up to the _processDepositMessage function
         // as the flow is not affected by the failure.
@@ -235,19 +235,19 @@ contract CrossChainRemoteStrategy is
         require(!isNonceProcessed(nonce), "Nonce already processed");
         _markNonceAsProcessed(nonce);
 
-        uint256 usdcBalance = IERC20(baseToken).balanceOf(address(this));
+        uint256 usdcBalance = IERC20(usdcToken).balanceOf(address(this));
 
         if (usdcBalance < withdrawAmount) {
             // Withdraw the missing funds from the remote strategy. This call can fail and
             // the failure doesn't bubble up to the _processWithdrawMessage function
-            _withdraw(address(this), baseToken, withdrawAmount - usdcBalance);
+            _withdraw(address(this), usdcToken, withdrawAmount - usdcBalance);
 
             // Update the possible increase in the balance on the contract.
-            usdcBalance = IERC20(baseToken).balanceOf(address(this));
+            usdcBalance = IERC20(usdcToken).balanceOf(address(this));
         }
 
         // Check balance after withdrawal
-        uint256 balanceAfter = checkBalance(baseToken);
+        uint256 balanceAfter = checkBalance(usdcToken);
 
         // If there are some tokens to be sent AND the balance is sufficient
         // to satisfy the withdrawal request then send the funds to the peer strategy.
@@ -294,7 +294,7 @@ contract CrossChainRemoteStrategy is
     ) internal override {
         require(_amount > 0, "Must withdraw something");
         require(_recipient == address(this), "Invalid recipient");
-        require(_asset == address(baseToken), "Unexpected asset address");
+        require(_asset == address(usdcToken), "Unexpected asset address");
 
         // This call can fail, and the failure doesn't need to bubble up to the _processWithdrawMessage function
         // as the flow is not affected by the failure.
@@ -352,7 +352,7 @@ contract CrossChainRemoteStrategy is
         virtual
         onlyOperatorOrStrategistOrGovernor
     {
-        uint256 balance = checkBalance(baseToken);
+        uint256 balance = checkBalance(usdcToken);
         bytes memory message = CrossChainStrategyHelper
             .encodeBalanceCheckMessage(lastTransferNonce, balance, false);
         _sendMessage(message);
@@ -369,13 +369,13 @@ contract CrossChainRemoteStrategy is
         override
         returns (uint256)
     {
-        require(_asset == baseToken, "Unexpected asset address");
+        require(_asset == usdcToken, "Unexpected asset address");
         /**
          * Balance of USDC on the contract is counted towards the total balance, since a deposit
          * to the Morpho V2 might fail and the USDC might remain on this contract as a result of a
          * bridged transfer.
          */
-        uint256 balanceOnContract = IERC20(baseToken).balanceOf(address(this));
+        uint256 balanceOnContract = IERC20(usdcToken).balanceOf(address(this));
 
         IERC4626 platform = IERC4626(platformAddress);
         return

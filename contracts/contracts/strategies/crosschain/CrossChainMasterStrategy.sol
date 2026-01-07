@@ -78,9 +78,9 @@ contract CrossChainMasterStrategy is
 
     /// @inheritdoc InitializableAbstractStrategy
     function depositAll() external override onlyVault nonReentrant {
-        uint256 balance = IERC20(baseToken).balanceOf(address(this));
+        uint256 balance = IERC20(usdcToken).balanceOf(address(this));
         if (balance > 0) {
-            _deposit(baseToken, balance);
+            _deposit(usdcToken, balance);
         }
     }
 
@@ -98,7 +98,7 @@ contract CrossChainMasterStrategy is
     /// @inheritdoc InitializableAbstractStrategy
     function withdrawAll() external override onlyVaultOrGovernor nonReentrant {
         // Withdraw everything in Remote strategy
-        _withdraw(baseToken, vaultAddress, remoteStrategyBalance);
+        _withdraw(usdcToken, vaultAddress, remoteStrategyBalance);
     }
 
     /**
@@ -115,20 +115,20 @@ contract CrossChainMasterStrategy is
         override
         returns (uint256 balance)
     {
-        require(_asset == baseToken, "Unsupported asset");
+        require(_asset == usdcToken, "Unsupported asset");
 
         // USDC balance on this contract
         // + USDC being bridged
         // + USDC cached in the corresponding Remote part of this contract
         return
-            IERC20(baseToken).balanceOf(address(this)) +
+            IERC20(usdcToken).balanceOf(address(this)) +
             pendingAmount +
             remoteStrategyBalance;
     }
 
     /// @inheritdoc InitializableAbstractStrategy
     function supportsAsset(address _asset) public view override returns (bool) {
-        return _asset == baseToken;
+        return _asset == usdcToken;
     }
 
     /// @inheritdoc InitializableAbstractStrategy
@@ -188,14 +188,14 @@ contract CrossChainMasterStrategy is
         _onMessageReceived(payload);
 
         // Send any tokens in the contract to the Vault
-        uint256 usdcBalance = IERC20(baseToken).balanceOf(address(this));
+        uint256 usdcBalance = IERC20(usdcToken).balanceOf(address(this));
         // Should always have enough tokens
         require(usdcBalance >= tokenAmount, "Insufficient balance");
         // Transfer all tokens to the Vault to not leave any dust
-        IERC20(baseToken).safeTransfer(vaultAddress, usdcBalance);
+        IERC20(usdcToken).safeTransfer(vaultAddress, usdcBalance);
 
         // Emit withdrawal amount
-        emit Withdrawal(baseToken, baseToken, usdcBalance);
+        emit Withdrawal(usdcToken, usdcToken, usdcBalance);
     }
 
     /**
@@ -204,7 +204,7 @@ contract CrossChainMasterStrategy is
      * @param depositAmount Amount of the asset to deposit
      */
     function _deposit(address _asset, uint256 depositAmount) internal virtual {
-        require(_asset == baseToken, "Unsupported asset");
+        require(_asset == usdcToken, "Unsupported asset");
         require(pendingAmount == 0, "Unexpected pending amount");
         require(depositAmount > 0, "Must deposit somethin");
         require(
@@ -243,7 +243,7 @@ contract CrossChainMasterStrategy is
         address _recipient,
         uint256 _amount
     ) internal virtual {
-        require(_asset == baseToken, "Unsupported asset");
+        require(_asset == usdcToken, "Unsupported asset");
         require(_amount > 0, "Withdraw amount must be greater than 0");
         require(_recipient == vaultAddress, "Only Vault can withdraw");
         require(
@@ -268,7 +268,7 @@ contract CrossChainMasterStrategy is
 
         // Emit WithdrawRequested event here,
         // Withdraw will be emitted in _onTokenReceived
-        emit WithdrawRequested(baseToken, _amount);
+        emit WithdrawRequested(usdcToken, _amount);
     }
 
     /**

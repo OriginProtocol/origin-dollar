@@ -60,7 +60,7 @@ abstract contract AbstractCCTPIntegrator is Governable, IMessageHandlerV2 {
     ICCTPTokenMessenger public immutable cctpTokenMessenger;
 
     /// @notice USDC address on local chain
-    address public immutable baseToken;
+    address public immutable usdcToken;
 
     /// @notice Domain ID of the chain from which messages are accepted
     uint32 public immutable peerDomainID;
@@ -111,14 +111,14 @@ abstract contract AbstractCCTPIntegrator is Governable, IMessageHandlerV2 {
      *         0 for Ethereum, 6 for Base, etc.
      *         Ref: https://developers.circle.com/cctp/cctp-supported-blockchains
      * @param peerStrategy Address of the master or remote strategy on the other chain
-     * @param baseToken USDC address on local chain
+     * @param usdcToken USDC address on local chain
      */
     struct CCTPIntegrationConfig {
         address cctpTokenMessenger;
         address cctpMessageTransmitter;
         uint32 peerDomainID;
         address peerStrategy;
-        address baseToken;
+        address usdcToken;
     }
 
     constructor(CCTPIntegrationConfig memory _config) {
@@ -135,14 +135,14 @@ abstract contract AbstractCCTPIntegrator is Governable, IMessageHandlerV2 {
         peerStrategy = _config.peerStrategy;
 
         // USDC address on local chain
-        baseToken = _config.baseToken;
+        usdcToken = _config.usdcToken;
 
         // Just a sanity check to ensure the base token is USDC
-        uint256 _baseTokenDecimals = Helpers.getDecimals(_config.baseToken);
-        string memory _baseTokenSymbol = Helpers.getSymbol(_config.baseToken);
-        require(_baseTokenDecimals == 6, "Base token decimals must be 6");
+        uint256 _usdcTokenDecimals = Helpers.getDecimals(_config.usdcToken);
+        string memory _usdcTokenSymbol = Helpers.getSymbol(_config.usdcToken);
+        require(_usdcTokenDecimals == 6, "Base token decimals must be 6");
         require(
-            keccak256(abi.encodePacked(_baseTokenSymbol)) ==
+            keccak256(abi.encodePacked(_usdcTokenSymbol)) ==
                 keccak256(abi.encodePacked("USDC")),
             "Base token symbol must be USDC"
         );
@@ -327,7 +327,7 @@ abstract contract AbstractCCTPIntegrator is Governable, IMessageHandlerV2 {
         require(tokenAmount <= MAX_TRANSFER_AMOUNT, "Token amount too high");
 
         // Approve only what needs to be transferred
-        IERC20(baseToken).safeApprove(address(cctpTokenMessenger), tokenAmount);
+        IERC20(usdcToken).safeApprove(address(cctpTokenMessenger), tokenAmount);
 
         // Compute the max fee to be paid.
         // Ref: https://developers.circle.com/cctp/evm-smart-contracts#getminfeeamount
@@ -346,7 +346,7 @@ abstract contract AbstractCCTPIntegrator is Governable, IMessageHandlerV2 {
             tokenAmount,
             peerDomainID,
             bytes32(uint256(uint160(peerStrategy))),
-            address(baseToken),
+            address(usdcToken),
             bytes32(uint256(uint160(peerStrategy))),
             maxFee,
             uint32(minFinalityThreshold),
