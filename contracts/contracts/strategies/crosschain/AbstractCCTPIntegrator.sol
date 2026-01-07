@@ -18,24 +18,6 @@ import { Governable } from "../../governance/Governable.sol";
 import { BytesHelper } from "../../utils/BytesHelper.sol";
 import "../../utils/Helpers.sol";
 
-// CCTP Message Header fields
-// Ref: https://developers.circle.com/cctp/technical-guide#message-header
-uint8 constant VERSION_INDEX = 0;
-uint8 constant SOURCE_DOMAIN_INDEX = 4;
-uint8 constant SENDER_INDEX = 44;
-uint8 constant RECIPIENT_INDEX = 76;
-uint8 constant MESSAGE_BODY_INDEX = 148;
-
-// Message body V2 fields
-// Ref: https://developers.circle.com/cctp/technical-guide#message-body
-// Ref: https://github.com/circlefin/evm-cctp-contracts/blob/master/src/messages/v2/BurnMessageV2.sol
-uint8 constant BURN_MESSAGE_V2_VERSION_INDEX = 0;
-uint8 constant BURN_MESSAGE_V2_RECIPIENT_INDEX = 36;
-uint8 constant BURN_MESSAGE_V2_AMOUNT_INDEX = 68;
-uint8 constant BURN_MESSAGE_V2_MESSAGE_SENDER_INDEX = 100;
-uint8 constant BURN_MESSAGE_V2_FEE_EXECUTED_INDEX = 164;
-uint8 constant BURN_MESSAGE_V2_HOOK_DATA_INDEX = 228;
-
 abstract contract AbstractCCTPIntegrator is Governable, IMessageHandlerV2 {
     using SafeERC20 for IERC20;
 
@@ -44,6 +26,24 @@ abstract contract AbstractCCTPIntegrator is Governable, IMessageHandlerV2 {
     event CCTPMinFinalityThresholdSet(uint16 minFinalityThreshold);
     event CCTPFeePremiumBpsSet(uint16 feePremiumBps);
     event OperatorChanged(address operator);
+
+    // CCTP Message Header fields
+    // Ref: https://developers.circle.com/cctp/technical-guide#message-header
+    uint8 private constant VERSION_INDEX = 0;
+    uint8 private constant SOURCE_DOMAIN_INDEX = 4;
+    uint8 private constant SENDER_INDEX = 44;
+    uint8 private constant RECIPIENT_INDEX = 76;
+    uint8 private constant MESSAGE_BODY_INDEX = 148;
+
+    // Message body V2 fields
+    // Ref: https://developers.circle.com/cctp/technical-guide#message-body
+    // Ref: https://github.com/circlefin/evm-cctp-contracts/blob/master/src/messages/v2/BurnMessageV2.sol
+    uint8 private constant BURN_MESSAGE_V2_VERSION_INDEX = 0;
+    uint8 private constant BURN_MESSAGE_V2_RECIPIENT_INDEX = 36;
+    uint8 private constant BURN_MESSAGE_V2_AMOUNT_INDEX = 68;
+    uint8 private constant BURN_MESSAGE_V2_MESSAGE_SENDER_INDEX = 100;
+    uint8 private constant BURN_MESSAGE_V2_FEE_EXECUTED_INDEX = 164;
+    uint8 private constant BURN_MESSAGE_V2_HOOK_DATA_INDEX = 228;
 
     /**
      * @notice Max transfer threshold imposed by the CCTP
