@@ -71,7 +71,7 @@ abstract contract VaultCore is VaultInitializer {
         uint256 _amount,
         uint256 _minimumOusdAmount
     ) internal virtual {
-        require(_asset == asset, "Unsupported asset for minting");
+        require(_asset == asset, "Asset is not supported");
         require(_amount > 0, "Amount must be greater than 0");
 
         // Scale amount to 18 decimals

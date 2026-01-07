@@ -125,7 +125,7 @@ describe("ForkTest: OETH Vault", function () {
         await asset.connect(josh).approve(oethVault.address, amount);
         const tx = oethVault.connect(josh).mint(asset.address, amount, minOeth);
 
-        await expect(tx).to.be.revertedWith("Unsupported asset for minting");
+        await expect(tx).to.be.revertedWith("Asset is not supported");
       }
     });
 
