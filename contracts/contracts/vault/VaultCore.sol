@@ -206,7 +206,7 @@ abstract contract VaultCore is VaultInitializer {
             require(totalUnits > 0, "Too many outstanding requests");
 
             // Allow a max difference of maxSupplyDiff% between
-            // backing asset value and OUSD total supply
+            // asset value and OUSD total supply
             uint256 diff = oUSD.totalSupply().divPrecisely(totalUnits);
             require(
                 (diff > 1e18 ? diff - 1e18 : 1e18 - diff) <= maxSupplyDiff,

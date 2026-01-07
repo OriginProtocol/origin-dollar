@@ -742,9 +742,7 @@ describe("OUSD Vault Redeem", function () {
               [usdc.address],
               [depositAmount]
             );
-          await expect(tx).to.be.revertedWith(
-            "Not enough backing asset available"
-          );
+          await expect(tx).to.be.revertedWith("Not enough assets available");
         });
         it("Fail to deposit allocated USDC during allocate", async () => {
           const { vault, governor, usdc } = fixture;
@@ -1290,9 +1288,7 @@ describe("OUSD Vault Redeem", function () {
               [usdcUnits("1")]
             );
 
-          await expect(tx).to.be.revertedWith(
-            "Not enough backing asset available"
-          );
+          await expect(tx).to.be.revertedWith("Not enough assets available");
         });
         it("Fail to allocate any USDC to the default strategy", async () => {
           const { vault, domen } = fixture;
@@ -1335,9 +1331,7 @@ describe("OUSD Vault Redeem", function () {
               [usdcUnits("1.1")]
             );
 
-          await expect(tx).to.be.revertedWith(
-            "Not enough backing asset available"
-          );
+          await expect(tx).to.be.revertedWith("Not enough assets available");
         });
         it("Fail to allocate any USDC to the default strategy", async () => {
           const { vault, domen } = fixture;
@@ -1380,9 +1374,7 @@ describe("OUSD Vault Redeem", function () {
               [usdcUnits("5")]
             );
 
-          await expect(tx).to.be.revertedWith(
-            "Not enough backing asset available"
-          );
+          await expect(tx).to.be.revertedWith("Not enough assets available");
         });
         it("Should allocate 3 USDC to the default strategy", async () => {
           const { vault, governor, domen, usdc } = fixture;

@@ -996,9 +996,7 @@ describe("OETH Vault", function () {
               [weth.address],
               [depositAmount]
             );
-          await expect(tx).to.be.revertedWith(
-            "Not enough backing asset available"
-          );
+          await expect(tx).to.be.revertedWith("Not enough assets available");
         });
         it("Fail to deposit allocated WETH during allocate", async () => {
           const { oethVault, governor, weth } = fixture;
@@ -1526,9 +1524,7 @@ describe("OETH Vault", function () {
               [oethUnits("1")]
             );
 
-          await expect(tx).to.be.revertedWith(
-            "Not enough backing asset available"
-          );
+          await expect(tx).to.be.revertedWith("Not enough assets available");
         });
         it("Fail to allocate any WETH to the default strategy", async () => {
           const { oethVault, domen } = fixture;
@@ -1571,9 +1567,7 @@ describe("OETH Vault", function () {
               [oethUnits("1.1")]
             );
 
-          await expect(tx).to.be.revertedWith(
-            "Not enough backing asset available"
-          );
+          await expect(tx).to.be.revertedWith("Not enough assets available");
         });
         it("Fail to allocate any WETH to the default strategy", async () => {
           const { oethVault, domen } = fixture;
@@ -1616,9 +1610,7 @@ describe("OETH Vault", function () {
               [oethUnits("5")]
             );
 
-          await expect(tx).to.be.revertedWith(
-            "Not enough backing asset available"
-          );
+          await expect(tx).to.be.revertedWith("Not enough assets available");
         });
         it("Should allocate 3 WETH to the default strategy", async () => {
           const { oethVault, governor, domen, weth } = fixture;

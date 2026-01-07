@@ -243,7 +243,7 @@ abstract contract VaultStorage is Initializable, Governable {
     // For future use
     uint256[42] private __gap;
 
-    /// @dev Address of the backing asset (eg. WETH or USDC)
+    /// @dev Address of the asset (eg. WETH or USDC)
     address public immutable asset;
     uint8 internal immutable assetDecimals;
 

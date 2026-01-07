@@ -184,10 +184,7 @@ abstract contract VaultAdmin is VaultStorage {
 
     function removeStrategy(address _addr) external onlyGovernor {
         require(strategies[_addr].isSupported, "Strategy not approved");
-        require(
-            defaultStrategy != _addr,
-            "Strategy is default for backing asset"
-        );
+        require(defaultStrategy != _addr, "Strategy is default for asset");
 
         // Initialize strategyIndex with out of bounds result so function will
         // revert if no valid index found
@@ -283,14 +280,14 @@ abstract contract VaultAdmin is VaultStorage {
         );
         require(
             _assets.length == 1 && _amounts.length == 1 && _assets[0] == asset,
-            "Only backing asset is supported"
+            "Only asset is supported"
         );
 
-        // Check the there is enough backing asset to transfer once the backing
+        // Check the there is enough asset to transfer once the backing
         // asset reserved for the withdrawal queue is accounted for
         require(
             _amounts[0] <= _assetAvailable(),
-            "Not enough backing asset available"
+            "Not enough assets available"
         );
 
         // Send required amount of funds to the strategy
@@ -349,7 +346,7 @@ abstract contract VaultAdmin is VaultStorage {
 
     /**
      * @notice Sets the maximum allowable difference between
-     * total supply and backing asset' value.
+     * total supply and asset' value.
      */
     function setMaxSupplyDiff(uint256 _maxSupplyDiff) external onlyGovernor {
         maxSupplyDiff = _maxSupplyDiff;
