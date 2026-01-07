@@ -108,9 +108,8 @@ abstract contract VaultCore is VaultInitializer {
      * @notice Mint OTokens for an allowed Strategy
      * @param _amount Amount of OToken to mint
      *
-     * Todo: Maybe this is a comment that we can remove now?
      * Notice: can't use `nonReentrant` modifier since the `mint` function can
-     * call `allocate`, and that can trigger `ConvexOUSDMetaStrategy` to call this function
+     * call `allocate`, and that can trigger `an AMO strategy` to call this function
      * while the execution of the `mint` has not yet completed -> causing a `nonReentrant` collision.
      *
      * Also important to understand is that this is a limitation imposed by the test suite.
@@ -222,7 +221,7 @@ abstract contract VaultCore is VaultInitializer {
      *
      * Todo: Maybe this is a comment that we can remove now?
      * @dev Notice: can't use `nonReentrant` modifier since the `redeem` function could
-     * require withdrawal on `ConvexOUSDMetaStrategy` and that one can call `burnForStrategy`
+     * require withdrawal on `an AMO strategy` and that one can call `burnForStrategy`
      * while the execution of the `redeem` has not yet completed -> causing a `nonReentrant` collision.
      *
      * Also important to understand is that this is a limitation imposed by the test suite.
