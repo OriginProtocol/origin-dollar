@@ -115,20 +115,6 @@ describe("ForkTest: OETH Vault", function () {
         .withArgs(josh.address, amount);
     });
 
-    it("should not mint with any other asset", async () => {
-      const { oethVault, frxETH, stETH, reth, josh } = fixture;
-
-      const amount = parseUnits("1", 18);
-      const minOeth = parseUnits("0.8", 18);
-
-      for (const asset of [frxETH, stETH, reth]) {
-        await asset.connect(josh).approve(oethVault.address, amount);
-        const tx = oethVault.connect(josh).mint(asset.address, amount, minOeth);
-
-        await expect(tx).to.be.revertedWith("Asset is not supported");
-      }
-    });
-
     it("should have 0.1% redeem fee", async () => {
       const { oethVault } = fixture;
 

@@ -47,39 +47,37 @@ abstract contract VaultCore is VaultInitializer {
     ////////////////////////////////////////////////////
     /**
      * @notice Deposit a supported asset and mint OTokens.
-     * @param _asset Address of the asset being deposited
+     * @dev Deprecated: use `mint(uint256 _amount)` instead.
+     * @dev Deprecated: param _asset Address of the asset being deposited
      * @param _amount Amount of the asset being deposited
-     * @param _minimumOusdAmount Minimum OTokens to mint
+     * @dev Deprecated: param _minimumOusdAmount Minimum OTokens to mint
      */
     function mint(
-        address _asset,
+        address,
         uint256 _amount,
-        uint256 _minimumOusdAmount
+        uint256
     ) external whenNotCapitalPaused nonReentrant {
-        _mint(_asset, _amount, _minimumOusdAmount);
+        _mint(_amount);
+    }
+
+    /**
+     * @notice Deposit a supported asset and mint OTokens.
+     * @param _amount Amount of the asset being deposited
+     */
+    function mint(uint256 _amount) external whenNotCapitalPaused nonReentrant {
+        _mint(_amount);
     }
 
     // slither-disable-start reentrancy-no-eth
     /**
      * @dev Deposit a supported asset and mint OTokens.
-     * @param _asset Address of the asset being deposited
      * @param _amount Amount of the asset being deposited
-     * @param _minimumOusdAmount Minimum OTokens to mint
      */
-    function _mint(
-        address _asset,
-        uint256 _amount,
-        uint256 _minimumOusdAmount
-    ) internal virtual {
-        require(_asset == asset, "Asset is not supported");
+    function _mint(uint256 _amount) internal virtual {
         require(_amount > 0, "Amount must be greater than 0");
 
         // Scale amount to 18 decimals
         uint256 scaledAmount = _amount.scaleBy(18, assetDecimals);
-        require(
-            scaledAmount >= _minimumOusdAmount,
-            "Mint amount lower than minimum"
-        );
 
         emit Mint(msg.sender, scaledAmount);
 
@@ -91,7 +89,7 @@ abstract contract VaultCore is VaultInitializer {
         // Mint oTokens
         oUSD.mint(msg.sender, scaledAmount);
 
-        IERC20(_asset).safeTransferFrom(msg.sender, address(this), _amount);
+        IERC20(asset).safeTransferFrom(msg.sender, address(this), _amount);
 
         // Give priority to the withdrawal queue for the new asset liquidity
         _addWithdrawalQueueLiquidity();
@@ -879,11 +877,6 @@ abstract contract VaultCore is VaultInitializer {
                 return(0, returndatasize())
             }
         }
-    }
-
-    function abs(int256 x) private pure returns (uint256) {
-        require(x < int256(MAX_INT), "Amount too high");
-        return x >= 0 ? uint256(x) : uint256(-x);
     }
 
     function _min(uint256 a, uint256 b) internal pure returns (uint256) {
