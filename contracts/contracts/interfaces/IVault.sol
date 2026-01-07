@@ -144,10 +144,16 @@ interface IVault {
 
     function checkBalance(address _asset) external view returns (uint256);
 
+    /// @notice Deprecated: use calculateRedeemOutput
     function calculateRedeemOutputs(uint256 _amount)
         external
         view
         returns (uint256[] memory);
+
+    function calculateRedeemOutput(uint256 _amount)
+        external
+        view
+        returns (uint256);
 
     function getAssetCount() external view returns (uint256);
 

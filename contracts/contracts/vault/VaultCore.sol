@@ -679,8 +679,7 @@ abstract contract VaultCore is VaultInitializer {
     }
 
     /**
-     * @notice Calculate the outputs for a redeem function, i.e. the mix of
-     * coins that will be returned
+     * @notice Deprecated. Use calculateRedeemOutput instead.
      */
     function calculateRedeemOutputs(uint256 _amount)
         external
@@ -691,9 +690,7 @@ abstract contract VaultCore is VaultInitializer {
     }
 
     /**
-     * @dev Calculate the outputs for a redeem function, i.e. the mix of
-     * coins that will be returned.
-     * @return outputs Array of amounts respective to the supported backingAsset
+     * @notice Deprecated. Use _calculateRedeemOutput instead.
      */
     function _calculateRedeemOutputs(uint256 _amount)
         internal
@@ -707,9 +704,40 @@ abstract contract VaultCore is VaultInitializer {
             _amount = _amount - redeemFee;
         }
 
-        // Todo: Maybe we can change function signature and return a simple uint256
         outputs = new uint256[](1);
         outputs[0] = _amount.scaleBy(backingAssetDecimals, 18);
+    }
+
+    /**
+     * @notice Calculate the amount of backingAsset received on redeeming OToken.
+     * @param _amount Amount of OToken to redeem
+     * @return Amount of backingAsset received
+     */
+    function calculateRedeemOutput(uint256 _amount)
+        external
+        view
+        returns (uint256)
+    {
+        return _calculateRedeemOutput(_amount);
+    }
+
+    /**
+     * @dev Calculate the amount of backingAsset received on redeeming OToken.
+     * @param _amount Amount of OToken to redeem
+     * @return Amount of backingAsset received
+     */
+    function _calculateRedeemOutput(uint256 _amount)
+        internal
+        view
+        virtual
+        returns (uint256)
+    {
+        // Calculate redeem fee
+        if (redeemFeeBps > 0) {
+            uint256 redeemFee = _amount.mulTruncateScale(redeemFeeBps, 1e4);
+            _amount = _amount - redeemFee;
+        }
+        return _amount.scaleBy(backingAssetDecimals, 18);
     }
 
     /**
