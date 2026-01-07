@@ -175,7 +175,7 @@ contract CrossChainRemoteStrategy is
     ) internal virtual {
         (uint64 nonce, ) = payload.decodeDepositMessage();
 
-        // Replay protection
+        // Replay protection is part of the _markNonceAsProcessed function
         _markNonceAsProcessed(nonce);
 
         // Deposit everything we got, not just what was bridged
@@ -233,7 +233,7 @@ contract CrossChainRemoteStrategy is
         (uint64 nonce, uint256 withdrawAmount) = payload
             .decodeWithdrawMessage();
 
-        // Replay protection
+        // Replay protection is part of the _markNonceAsProcessed function
         _markNonceAsProcessed(nonce);
 
         uint256 usdcBalance = IERC20(usdcToken).balanceOf(address(this));
