@@ -177,7 +177,11 @@ const decodeBurnMessageBody = (message) => {
   return { version, burnToken, recipient, amount, sender, hookData };
 };
 
-const encodeBalanceCheckMessageBody = (nonce, balance, transferConfirmation) => {
+const encodeBalanceCheckMessageBody = (
+  nonce,
+  balance,
+  transferConfirmation
+) => {
   const encodedPayload = ethers.utils.defaultAbiCoder.encode(
     ["uint64", "uint256", "bool"],
     [nonce, balance, transferConfirmation]
