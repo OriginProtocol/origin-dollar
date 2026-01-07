@@ -65,7 +65,7 @@ abstract contract VaultStorage is Initializable, Governable {
     // slither-disable-start constable-states
 
     /// @dev mapping of supported vault assets to their configuration
-    mapping(address => uint256) private _deprecated_assets;
+    uint256 private _deprecated_assets;
     /// @dev list of all assets supported by the vault.
     address[] private _deprecated_allAssets;
 
@@ -114,7 +114,7 @@ abstract contract VaultStorage is Initializable, Governable {
 
     /// @notice Mapping of asset address to the Strategy that they should automatically
     // be allocated to
-    mapping(address => address) private _deprecated_assetDefaultStrategies;
+    uint256 private _deprecated_assetDefaultStrategies;
 
     /// @notice Max difference between total supply and total value of assets. 18 decimals.
     uint256 public maxSupplyDiff;
