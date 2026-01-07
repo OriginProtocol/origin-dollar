@@ -210,6 +210,10 @@ abstract contract VaultStorage is Initializable, Governable {
     // For future use
     uint256[42] private __gap;
 
+    /// @notice Index of WETH asset in allAssets array
+    /// Legacy OETHVaultCore code, relocated here for vault consistency.
+    uint256 private _deprecated_wethAssetIndex;
+
     /// @dev Address of the asset (eg. WETH or USDC)
     address public immutable asset;
     uint8 internal immutable assetDecimals;
