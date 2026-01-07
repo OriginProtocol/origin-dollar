@@ -176,7 +176,6 @@ contract CrossChainRemoteStrategy is
         (uint64 nonce, ) = payload.decodeDepositMessage();
 
         // Replay protection
-        require(!isNonceProcessed(nonce), "Nonce already processed");
         _markNonceAsProcessed(nonce);
 
         // Deposit everything we got, not just what was bridged
@@ -232,7 +231,6 @@ contract CrossChainRemoteStrategy is
             .decodeWithdrawMessage();
 
         // Replay protection
-        require(!isNonceProcessed(nonce), "Nonce already processed");
         _markNonceAsProcessed(nonce);
 
         uint256 usdcBalance = IERC20(usdcToken).balanceOf(address(this));
