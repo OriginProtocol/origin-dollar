@@ -10,6 +10,7 @@ const { getNetworkName } = require("../utils/hardhat-helpers");
 const { convertToBigNumber } = require("../utils/units");
 const { validatorsThatCanBeStaked } = require("../utils/validator");
 const { validatorKeys } = require("../utils/regex");
+const { sleep } = require("../utils/time");
 
 const log = require("../utils/logger")("task:p2p");
 
@@ -92,6 +93,7 @@ const validatorOperationsConfig = async (taskArgs) => {
 // has been active for at least 256 epochs
 async function verifyMinActivationTime({ pubkey }) {
   const latestEpoch = await getEpoch("latest");
+  await sleep(1000); // to avoid rate limiting
   const validator = await getValidator(pubkey);
 
   const epochDiff = latestEpoch.epoch - validator.activationepoch;
