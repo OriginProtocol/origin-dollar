@@ -99,7 +99,7 @@ describe("Vault", function () {
     // Governor cannot move USDC because it is a supported token.
     await expect(
       vault.connect(governor).transferToken(usdc.address, ousdUnits("8.0"))
-    ).to.be.revertedWith("Only unsupported backingAsset");
+    ).to.be.revertedWith("Only unsupported asset");
   });
 
   it("Should allow Governor to add Strategy", async () => {

@@ -31,7 +31,7 @@ abstract contract VaultAdmin is VaultStorage {
         _;
     }
 
-    constructor(address _backingAsset) VaultStorage(_backingAsset) {}
+    constructor(address _asset) VaultStorage(_asset) {}
 
     /***************************************
                  Configuration
@@ -48,8 +48,8 @@ abstract contract VaultAdmin is VaultStorage {
     }
 
     /**
-     * @notice Set a buffer of backingAsset to keep in the Vault to handle most
-     * redemptions without needing to spend gas unwinding backingAsset from a Strategy.
+     * @notice Set a buffer of asset to keep in the Vault to handle most
+     * redemptions without needing to spend gas unwinding asset from a Strategy.
      * @param _vaultBuffer Percentage using 18 decimals. 100% = 1e18.
      */
     function setVaultBuffer(uint256 _vaultBuffer)
@@ -94,8 +94,8 @@ abstract contract VaultAdmin is VaultStorage {
     }
 
     /**
-     * @notice Set the default Strategy for backingAsset, i.e. the one which
-     * the backingAsset will be automatically allocated to and withdrawn from
+     * @notice Set the default Strategy for asset, i.e. the one which
+     * the asset will be automatically allocated to and withdrawn from
      * @param _strategy Address of the Strategy
      */
     function setDefaultStrategy(address _strategy)
@@ -109,7 +109,7 @@ abstract contract VaultAdmin is VaultStorage {
             // Make sure the strategy meets some criteria
             require(strategies[_strategy].isSupported, "Strategy not approved");
             require(
-                IStrategy(_strategy).supportsAsset(backingAsset),
+                IStrategy(_strategy).supportsAsset(asset),
                 "Asset not supported by Strategy"
             );
         }
@@ -207,7 +207,7 @@ abstract contract VaultAdmin is VaultStorage {
             // Mark the strategy as not supported
             strategies[_addr].isSupported = false;
 
-            // Withdraw all backingAsset
+            // Withdraw all asset
             IStrategy strategy = IStrategy(_addr);
             strategy.withdrawAll();
 
@@ -259,8 +259,8 @@ abstract contract VaultAdmin is VaultStorage {
     ****************************************/
 
     /**
-     * @notice Deposit multiple backingAsset from the vault into the strategy.
-     * @param _strategyToAddress Address of the Strategy to deposit backingAsset into.
+     * @notice Deposit multiple asset from the vault into the strategy.
+     * @param _strategyToAddress Address of the Strategy to deposit asset into.
      * @param _assets Array of asset address that will be deposited into the strategy.
      * @param _amounts Array of amounts of each corresponding asset to deposit.
      */
@@ -282,29 +282,27 @@ abstract contract VaultAdmin is VaultStorage {
             "Invalid to Strategy"
         );
         require(
-            _assets.length == 1 &&
-                _amounts.length == 1 &&
-                _assets[0] == backingAsset,
+            _assets.length == 1 && _amounts.length == 1 && _assets[0] == asset,
             "Only backing asset is supported"
         );
 
         // Check the there is enough backing asset to transfer once the backing
         // asset reserved for the withdrawal queue is accounted for
         require(
-            _amounts[0] <= _backingAssetAvailable(),
+            _amounts[0] <= _assetAvailable(),
             "Not enough backing asset available"
         );
 
         // Send required amount of funds to the strategy
-        IERC20(backingAsset).safeTransfer(_strategyToAddress, _amounts[0]);
+        IERC20(asset).safeTransfer(_strategyToAddress, _amounts[0]);
 
         // Deposit all the funds that have been sent to the strategy
         IStrategy(_strategyToAddress).depositAll();
     }
 
     /**
-     * @notice Withdraw multiple backingAsset from the strategy to the vault.
-     * @param _strategyFromAddress Address of the Strategy to withdraw backingAsset from.
+     * @notice Withdraw multiple asset from the strategy to the vault.
+     * @param _strategyFromAddress Address of the Strategy to withdraw asset from.
      * @param _assets Array of asset address that will be withdrawn from the strategy.
      * @param _amounts Array of amounts of each corresponding asset to withdraw.
      */
@@ -351,7 +349,7 @@ abstract contract VaultAdmin is VaultStorage {
 
     /**
      * @notice Sets the maximum allowable difference between
-     * total supply and backing backingAsset' value.
+     * total supply and backing asset' value.
      */
     function setMaxSupplyDiff(uint256 _maxSupplyDiff) external onlyGovernor {
         maxSupplyDiff = _maxSupplyDiff;
@@ -427,35 +425,29 @@ abstract contract VaultAdmin is VaultStorage {
         external
         onlyGovernor
     {
-        require(backingAsset != _asset, "Only unsupported backingAsset");
+        require(asset != _asset, "Only unsupported asset");
         IERC20(_asset).safeTransfer(governor(), _amount);
     }
 
     /**
-     * @dev Calculate how much backingAsset (eg. WETH or USDC) in the vault is not reserved for the withdrawal queue.
+     * @dev Calculate how much asset (eg. WETH or USDC) in the vault is not reserved for the withdrawal queue.
      * That is, it is available to be redeemed or deposited into a strategy.
      */
-    function _backingAssetAvailable()
-        internal
-        view
-        returns (uint256 backingAssetAvailable)
-    {
+    function _assetAvailable() internal view returns (uint256 assetAvailable) {
         WithdrawalQueueMetadata memory queue = withdrawalQueueMetadata;
 
-        // The amount of backingAsset that is still to be claimed in the withdrawal queue
+        // The amount of asset that is still to be claimed in the withdrawal queue
         uint256 outstandingWithdrawals = queue.queued - queue.claimed;
 
-        // The amount of sitting in backingAsset in the vault
-        uint256 backingAssetBalance = IERC20(backingAsset).balanceOf(
-            address(this)
-        );
+        // The amount of sitting in asset in the vault
+        uint256 assetBalance = IERC20(asset).balanceOf(address(this));
 
-        // If there is not enough backingAsset in the vault to cover the outstanding withdrawals
-        if (backingAssetBalance <= outstandingWithdrawals) {
+        // If there is not enough asset in the vault to cover the outstanding withdrawals
+        if (assetBalance <= outstandingWithdrawals) {
             return 0;
         }
 
-        return backingAssetBalance - outstandingWithdrawals;
+        return assetBalance - outstandingWithdrawals;
     }
 
     /***************************************
@@ -463,7 +455,7 @@ abstract contract VaultAdmin is VaultStorage {
     ****************************************/
 
     /**
-     * @notice Withdraws all backingAsset from the strategy and sends backingAsset to the Vault.
+     * @notice Withdraws all asset from the strategy and sends asset to the Vault.
      * @param _strategyAddr Strategy address.
      */
     function withdrawAllFromStrategy(address _strategyAddr)
@@ -484,7 +476,7 @@ abstract contract VaultAdmin is VaultStorage {
     }
 
     /**
-     * @notice Withdraws all backingAsset from all the strategies and sends backingAsset to the Vault.
+     * @notice Withdraws all asset from all the strategies and sends asset to the Vault.
      */
     function withdrawAllFromStrategies() external onlyGovernorOrStrategist {
         _withdrawAllFromStrategies();

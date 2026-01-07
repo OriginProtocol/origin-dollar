@@ -237,24 +237,24 @@ abstract contract VaultStorage is Initializable, Governable {
     uint256 internal constant MAX_REBASE_PER_SECOND =
         uint256(0.05 ether) / 1 days;
 
-    /// @notice Default strategy for backingAsset
+    /// @notice Default strategy for asset
     address public defaultStrategy;
 
     // For future use
     uint256[42] private __gap;
 
     /// @dev Address of the backing asset (eg. WETH or USDC)
-    address public immutable backingAsset;
-    uint8 internal immutable backingAssetDecimals;
+    address public immutable asset;
+    uint8 internal immutable assetDecimals;
 
     // slither-disable-end constable-states
     // slither-disable-end uninitialized-state
 
-    constructor(address _backingAsset) {
-        uint8 _decimals = IWETH9(_backingAsset).decimals();
-        require(_decimals <= 18, "BackingAsset not supported");
-        backingAsset = _backingAsset;
-        backingAssetDecimals = _decimals;
+    constructor(address _asset) {
+        uint8 _decimals = IWETH9(_asset).decimals();
+        require(_decimals <= 18, "asset not supported");
+        asset = _asset;
+        assetDecimals = _decimals;
     }
 
     /**

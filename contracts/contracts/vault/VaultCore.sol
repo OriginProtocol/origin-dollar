@@ -3,9 +3,9 @@ pragma solidity ^0.8.0;
 
 /**
  * @title OToken VaultCore contract
- * @notice The Vault contract stores backingAsset. On a deposit, OTokens will be minted
+ * @notice The Vault contract stores asset. On a deposit, OTokens will be minted
            and sent to the depositor. On a withdrawal, OTokens will be burned and
-           backingAsset will be sent to the withdrawer. The Vault accepts deposits of
+           asset will be sent to the withdrawer. The Vault accepts deposits of
            interest from yield bearing strategies which will modify the supply
            of OTokens.
  * @author Origin Protocol Inc
@@ -40,7 +40,7 @@ abstract contract VaultCore is VaultInitializer {
         _;
     }
 
-    constructor(address _backingAsset) VaultInitializer(_backingAsset) {}
+    constructor(address _asset) VaultInitializer(_asset) {}
 
     ////////////////////////////////////////////////////
     ///             MINT / REDEEM / BURN             ///
@@ -71,11 +71,11 @@ abstract contract VaultCore is VaultInitializer {
         uint256 _amount,
         uint256 _minimumOusdAmount
     ) internal virtual {
-        require(_asset == backingAsset, "Unsupported asset for minting");
+        require(_asset == asset, "Unsupported asset for minting");
         require(_amount > 0, "Amount must be greater than 0");
 
         // Scale amount to 18 decimals
-        uint256 scaledAmount = _amount.scaleBy(18, backingAssetDecimals);
+        uint256 scaledAmount = _amount.scaleBy(18, assetDecimals);
         require(
             scaledAmount >= _minimumOusdAmount,
             "Mint amount lower than minimum"
@@ -93,7 +93,7 @@ abstract contract VaultCore is VaultInitializer {
 
         IERC20(_asset).safeTransferFrom(msg.sender, address(this), _amount);
 
-        // Give priority to the withdrawal queue for the new backingAsset liquidity
+        // Give priority to the withdrawal queue for the new asset liquidity
         _addWithdrawalQueueLiquidity();
 
         // Auto-allocate if necessary
@@ -166,7 +166,7 @@ abstract contract VaultCore is VaultInitializer {
         // Amount excluding fees
         // No fee for the strategist or the governor, makes it easier to do operations
         uint256 amountMinusFee = (msg.sender == strategistAddr || isGovernor())
-            ? _amount.scaleBy(backingAssetDecimals, 18)
+            ? _amount.scaleBy(assetDecimals, 18)
             : _calculateRedeemOutputs(_amount)[0];
 
         require(
@@ -174,11 +174,11 @@ abstract contract VaultCore is VaultInitializer {
             "Redeem amount lower than minimum"
         );
 
-        // Is there enough backingAsset in the Vault available after accounting for the withdrawal queue
-        require(_backingAssetAvailable() >= amountMinusFee, "Liquidity error");
+        // Is there enough asset in the Vault available after accounting for the withdrawal queue
+        require(_assetAvailable() >= amountMinusFee, "Liquidity error");
 
-        // Transfer backingAsset minus the fee to the redeemer
-        IERC20(backingAsset).safeTransfer(msg.sender, amountMinusFee);
+        // Transfer asset minus the fee to the redeemer
+        IERC20(asset).safeTransfer(msg.sender, amountMinusFee);
 
         // Burn OToken from user (including fees)
         oUSD.burn(msg.sender, _amount);
@@ -188,7 +188,7 @@ abstract contract VaultCore is VaultInitializer {
     }
 
     function _postRedeem(uint256 _amount) internal {
-        // Until we can prove that we won't affect the prices of our backingAsset
+        // Until we can prove that we won't affect the prices of our asset
         // by withdrawing them, this should be here.
         // It's possible that a strategy was off on its asset total, perhaps
         // a reward token sold for more or for less than anticipated.
@@ -199,15 +199,15 @@ abstract contract VaultCore is VaultInitializer {
             totalUnits = _totalValue();
         }
 
-        // Check that the OTokens are backed by enough backingAsset
+        // Check that the OTokens are backed by enough asset
         if (maxSupplyDiff > 0) {
-            // If there are more outstanding withdrawal requests than backingAsset in the vault and strategies
-            // then the available backingAsset will be negative and totalUnits will be rounded up to zero.
+            // If there are more outstanding withdrawal requests than asset in the vault and strategies
+            // then the available asset will be negative and totalUnits will be rounded up to zero.
             // As we don't know the exact shortfall amount, we will reject all redeem and withdrawals
             require(totalUnits > 0, "Too many outstanding requests");
 
             // Allow a max difference of maxSupplyDiff% between
-            // backing backingAsset value and OUSD total supply
+            // backing asset value and OUSD total supply
             uint256 diff = oUSD.totalSupply().divPrecisely(totalUnits);
             require(
                 (diff > 1e18 ? diff - 1e18 : 1e18 - diff) <= maxSupplyDiff,
@@ -254,16 +254,16 @@ abstract contract VaultCore is VaultInitializer {
     ///               ASYNC WITHDRAWALS              ///
     ////////////////////////////////////////////////////
     /**
-     * @notice Request an asynchronous withdrawal of backingAsset in exchange for OToken.
-     * The OToken is burned on request and the backingAsset is transferred to the withdrawer on claim.
+     * @notice Request an asynchronous withdrawal of asset in exchange for OToken.
+     * The OToken is burned on request and the asset is transferred to the withdrawer on claim.
      * This request can be claimed once the withdrawal queue's `claimable` amount
      * is greater than or equal this request's `queued` amount.
      * There is a minimum of 10 minutes before a request can be claimed. After that, the request just needs
-     * enough backingAsset liquidity in the Vault to satisfy all the outstanding requests to that point in the queue.
-     * OToken is converted to backingAsset at 1:1.
+     * enough asset liquidity in the Vault to satisfy all the outstanding requests to that point in the queue.
+     * OToken is converted to asset at 1:1.
      * @param _amount Amount of OToken to burn.
      * @return requestId Unique ID for the withdrawal request
-     * @return queued Cumulative total of all backingAsset queued including already claimed requests.
+     * @return queued Cumulative total of all asset queued including already claimed requests.
      */
     function requestWithdrawal(uint256 _amount)
         external
@@ -279,17 +279,17 @@ abstract contract VaultCore is VaultInitializer {
         requestId = withdrawalQueueMetadata.nextWithdrawalIndex;
         queued =
             withdrawalQueueMetadata.queued +
-            _amount.scaleBy(backingAssetDecimals, 18);
+            _amount.scaleBy(assetDecimals, 18);
 
         // Store the next withdrawal request
         withdrawalQueueMetadata.nextWithdrawalIndex = SafeCast.toUint128(
             requestId + 1
         );
-        // Store the updated queued amount which reserves backingAsset in the withdrawal queue
-        // and reduces the vault's total backingAsset
+        // Store the updated queued amount which reserves asset in the withdrawal queue
+        // and reduces the vault's total asset
         withdrawalQueueMetadata.queued = SafeCast.toUint128(queued);
         // Store the user's withdrawal request
-        // `queued` is in backingAsset decimals, while `amount` is in OToken decimals (18)
+        // `queued` is in asset decimals, while `amount` is in OToken decimals (18)
         withdrawalRequests[requestId] = WithdrawalRequest({
             withdrawer: msg.sender,
             claimed: false,
@@ -314,9 +314,9 @@ abstract contract VaultCore is VaultInitializer {
      * is greater than or equal this request's `queued` amount and 10 minutes has passed.
      * If the requests is not claimable, the transaction will revert with `Queue pending liquidity`.
      * If the request is not older than 10 minutes, the transaction will revert with `Claim delay not met`.
-     * OToken is converted to backingAsset at 1:1.
+     * OToken is converted to asset at 1:1.
      * @param _requestId Unique ID for the withdrawal request
-     * @return amount Amount of backingAsset transferred to the withdrawer
+     * @return amount Amount of asset transferred to the withdrawer
      */
     function claimWithdrawal(uint256 _requestId)
         external
@@ -330,7 +330,7 @@ abstract contract VaultCore is VaultInitializer {
             withdrawalRequests[_requestId].queued >
             withdrawalQueueMetadata.claimable
         ) {
-            // Add any backingAsset to the withdrawal queue
+            // Add any asset to the withdrawal queue
             // this needs to remain here as:
             //  - Vault can be funded and `addWithdrawalQueueLiquidity` is not externally called
             //  - funds can be withdrawn from a strategy
@@ -339,14 +339,14 @@ abstract contract VaultCore is VaultInitializer {
             _addWithdrawalQueueLiquidity();
         }
 
-        // Scale amount to backingAsset decimals
-        amount = _claimWithdrawal(_requestId).scaleBy(backingAssetDecimals, 18);
+        // Scale amount to asset decimals
+        amount = _claimWithdrawal(_requestId).scaleBy(assetDecimals, 18);
 
-        // transfer backingAsset from the vault to the withdrawer
-        IERC20(backingAsset).safeTransfer(msg.sender, amount);
+        // transfer asset from the vault to the withdrawer
+        IERC20(asset).safeTransfer(msg.sender, amount);
 
         // Prevent insolvency
-        _postRedeem(amount.scaleBy(18, backingAssetDecimals));
+        _postRedeem(amount.scaleBy(18, assetDecimals));
     }
 
     // slither-disable-end reentrancy-no-eth
@@ -358,8 +358,8 @@ abstract contract VaultCore is VaultInitializer {
      * If one of the requests is not older than 10 minutes,
      * the whole transaction will revert with `Claim delay not met`.
      * @param _requestIds Unique ID of each withdrawal request
-     * @return amounts Amount of backingAsset received for each request
-     * @return totalAmount Total amount of backingAsset transferred to the withdrawer
+     * @return amounts Amount of asset received for each request
+     * @return totalAmount Total amount of asset transferred to the withdrawer
      */
     function claimWithdrawals(uint256[] calldata _requestIds)
         external
@@ -368,7 +368,7 @@ abstract contract VaultCore is VaultInitializer {
         nonReentrant
         returns (uint256[] memory amounts, uint256 totalAmount)
     {
-        // Add any backingAsset to the withdrawal queue
+        // Add any asset to the withdrawal queue
         // this needs to remain here as:
         //  - Vault can be funded and `addWithdrawalQueueLiquidity` is not externally called
         //  - funds can be withdrawn from a strategy
@@ -378,19 +378,19 @@ abstract contract VaultCore is VaultInitializer {
 
         amounts = new uint256[](_requestIds.length);
         for (uint256 i; i < _requestIds.length; ++i) {
-            // Scale all amounts to backingAsset decimals, thus totalAmount is also in backingAsset decimals
+            // Scale all amounts to asset decimals, thus totalAmount is also in asset decimals
             amounts[i] = _claimWithdrawal(_requestIds[i]).scaleBy(
-                backingAssetDecimals,
+                assetDecimals,
                 18
             );
             totalAmount += amounts[i];
         }
 
-        // transfer all the claimed backingAsset from the vault to the withdrawer
-        IERC20(backingAsset).safeTransfer(msg.sender, totalAmount);
+        // transfer all the claimed asset from the vault to the withdrawer
+        IERC20(asset).safeTransfer(msg.sender, totalAmount);
 
         // Prevent insolvency
-        _postRedeem(totalAmount.scaleBy(18, backingAssetDecimals));
+        _postRedeem(totalAmount.scaleBy(18, assetDecimals));
 
         return (amounts, totalAmount);
     }
@@ -420,7 +420,7 @@ abstract contract VaultCore is VaultInitializer {
         withdrawalQueueMetadata.claimed =
             queue.claimed +
             SafeCast.toUint128(
-                StableMath.scaleBy(request.amount, backingAssetDecimals, 18)
+                StableMath.scaleBy(request.amount, assetDecimals, 18)
             );
 
         emit WithdrawalClaimed(msg.sender, requestId, request.amount);
@@ -432,51 +432,51 @@ abstract contract VaultCore is VaultInitializer {
      * @notice Allocate unallocated funds on Vault to strategies.
      */
     function allocate() external virtual whenNotCapitalPaused nonReentrant {
-        // Add any unallocated backingAsset to the withdrawal queue first
+        // Add any unallocated asset to the withdrawal queue first
         _addWithdrawalQueueLiquidity();
 
         _allocate();
     }
 
     /**
-     * @dev Allocate backingAsset (eg. WETH or USDC) to the default backingAsset strategy
+     * @dev Allocate asset (eg. WETH or USDC) to the default asset strategy
      *          if there is excess to the Vault buffer.
      * This is called from either `mint` or `allocate` and assumes `_addWithdrawalQueueLiquidity`
      * has been called before this function.
      */
     function _allocate() internal virtual {
-        // No need to do anything if no default strategy for backingAsset
+        // No need to do anything if no default strategy for asset
         address depositStrategyAddr = defaultStrategy;
         if (depositStrategyAddr == address(0)) return;
 
-        uint256 backingAssetAvailableInVault = _backingAssetAvailable();
-        // No need to do anything if there isn't any backingAsset in the vault to allocate
-        if (backingAssetAvailableInVault == 0) return;
+        uint256 assetAvailableInVault = _assetAvailable();
+        // No need to do anything if there isn't any asset in the vault to allocate
+        if (assetAvailableInVault == 0) return;
 
         // Calculate the target buffer for the vault using the total supply
         uint256 totalSupply = oUSD.totalSupply();
-        // Scaled to backingAsset decimals
+        // Scaled to asset decimals
         uint256 targetBuffer = totalSupply.mulTruncate(vaultBuffer).scaleBy(
-            backingAssetDecimals,
+            assetDecimals,
             18
         );
 
-        // If available backingAsset in the Vault is below or equal the target buffer then there's nothing to allocate
-        if (backingAssetAvailableInVault <= targetBuffer) return;
+        // If available asset in the Vault is below or equal the target buffer then there's nothing to allocate
+        if (assetAvailableInVault <= targetBuffer) return;
 
-        // The amount of backingAsset to allocate to the default strategy
-        uint256 allocateAmount = backingAssetAvailableInVault - targetBuffer;
+        // The amount of asset to allocate to the default strategy
+        uint256 allocateAmount = assetAvailableInVault - targetBuffer;
 
         IStrategy strategy = IStrategy(depositStrategyAddr);
-        // Transfer backingAsset to the strategy and call the strategy's deposit function
-        IERC20(backingAsset).safeTransfer(address(strategy), allocateAmount);
-        strategy.deposit(backingAsset, allocateAmount);
+        // Transfer asset to the strategy and call the strategy's deposit function
+        IERC20(asset).safeTransfer(address(strategy), allocateAmount);
+        strategy.deposit(asset, allocateAmount);
 
-        emit AssetAllocated(backingAsset, depositStrategyAddr, allocateAmount);
+        emit AssetAllocated(asset, depositStrategyAddr, allocateAmount);
     }
 
     /**
-     * @notice Calculate the total value of backingAsset held by the Vault and all
+     * @notice Calculate the total value of asset held by the Vault and all
      *      strategies and update the supply of OTokens.
      */
     function rebase() external virtual nonReentrant {
@@ -484,7 +484,7 @@ abstract contract VaultCore is VaultInitializer {
     }
 
     /**
-     * @dev Calculate the total value of backingAsset held by the Vault and all
+     * @dev Calculate the total value of asset held by the Vault and all
      *      strategies and update the supply of OTokens, optionally sending a
      *      portion of the yield to the trustee.
      * @return totalUnits Total balance of Vault in units
@@ -584,7 +584,7 @@ abstract contract VaultCore is VaultInitializer {
     }
 
     /**
-     * @notice Determine the total value of backingAsset held by the vault and its
+     * @notice Determine the total value of asset held by the vault and its
      *         strategies.
      * @return value Total value in USD/ETH (1e18)
      */
@@ -593,7 +593,7 @@ abstract contract VaultCore is VaultInitializer {
     }
 
     /**
-     * @dev Internal Calculate the total value of the backingAsset held by the
+     * @dev Internal Calculate the total value of the asset held by the
      *          vault and its strategies.
      * @dev The total value of all WETH held by the vault and all its strategies
      *          less any WETH that is reserved for the withdrawal queue.
@@ -602,15 +602,15 @@ abstract contract VaultCore is VaultInitializer {
      * @return value Total value in USD/ETH (1e18)
      */
     function _totalValue() internal view virtual returns (uint256 value) {
-        // As backingAsset is the only asset, just return the backingAsset balance
-        value = _checkBalance(backingAsset).scaleBy(18, backingAssetDecimals);
+        // As asset is the only asset, just return the asset balance
+        value = _checkBalance(asset).scaleBy(18, assetDecimals);
     }
 
     /**
-     * @dev Internal to calculate total value of all backingAsset held in Vault.
-     * @dev Only backingAsset is supported in the OETH Vault so return the backingAsset balance only
+     * @dev Internal to calculate total value of all asset held in Vault.
+     * @dev Only asset is supported in the OETH Vault so return the asset balance only
      *          Any ETH balances in the Vault will be ignored.
-     *          Amounts from previously supported vault backingAsset will also be ignored.
+     *          Amounts from previously supported vault asset will also be ignored.
      *          For example, there is 1 wei left of stETH in the OETH Vault but is will be ignored.
      * @return value Total value in USD/ETH (1e18)
      */
@@ -620,7 +620,7 @@ abstract contract VaultCore is VaultInitializer {
         virtual
         returns (uint256 value)
     {
-        value = IERC20(backingAsset).balanceOf(address(this));
+        value = IERC20(asset).balanceOf(address(this));
     }
 
     /**
@@ -635,14 +635,14 @@ abstract contract VaultCore is VaultInitializer {
     /**
      * @notice Get the balance of an asset held in Vault and all strategies.
      * @dev Get the balance of an asset held in Vault and all strategies
-     * less any backingAsset that is reserved for the withdrawal queue.
+     * less any asset that is reserved for the withdrawal queue.
      * BaseAsset is the only asset that can return a non-zero balance.
-     * All other backingAsset will return 0 even if there is some dust amounts left in the Vault.
+     * All other asset will return 0 even if there is some dust amounts left in the Vault.
      * For example, there is 1 wei left of stETH (or USDC) in the OETH (or OUSD) Vault but
      * will return 0 in this function.
      *
-     * If there is not enough backingAsset in the vault and all strategies to cover all outstanding
-     * withdrawal requests then return a backingAsset balance of 0
+     * If there is not enough asset in the vault and all strategies to cover all outstanding
+     * withdrawal requests then return a asset balance of 0
      * @param _asset Address of asset
      * @return balance Balance of asset in decimals of asset
      */
@@ -652,9 +652,9 @@ abstract contract VaultCore is VaultInitializer {
         virtual
         returns (uint256 balance)
     {
-        if (_asset != backingAsset) return 0;
+        if (_asset != asset) return 0;
 
-        // Get the backingAsset in the vault and the strategies
+        // Get the asset in the vault and the strategies
         IERC20 asset = IERC20(_asset);
         balance = asset.balanceOf(address(this));
         uint256 stratCount = allStrategies.length;
@@ -674,7 +674,7 @@ abstract contract VaultCore is VaultInitializer {
             return 0;
         }
 
-        // Need to remove backingAsset that is reserved for the withdrawal queue
+        // Need to remove asset that is reserved for the withdrawal queue
         return balance + queue.claimed - queue.queued;
     }
 
@@ -705,13 +705,13 @@ abstract contract VaultCore is VaultInitializer {
         }
 
         outputs = new uint256[](1);
-        outputs[0] = _amount.scaleBy(backingAssetDecimals, 18);
+        outputs[0] = _amount.scaleBy(assetDecimals, 18);
     }
 
     /**
-     * @notice Calculate the amount of backingAsset received on redeeming OToken.
+     * @notice Calculate the amount of asset received on redeeming OToken.
      * @param _amount Amount of OToken to redeem
-     * @return Amount of backingAsset received
+     * @return Amount of asset received
      */
     function calculateRedeemOutput(uint256 _amount)
         external
@@ -722,9 +722,9 @@ abstract contract VaultCore is VaultInitializer {
     }
 
     /**
-     * @dev Calculate the amount of backingAsset received on redeeming OToken.
+     * @dev Calculate the amount of asset received on redeeming OToken.
      * @param _amount Amount of OToken to redeem
-     * @return Amount of backingAsset received
+     * @return Amount of asset received
      */
     function _calculateRedeemOutput(uint256 _amount)
         internal
@@ -737,7 +737,7 @@ abstract contract VaultCore is VaultInitializer {
             uint256 redeemFee = _amount.mulTruncateScale(redeemFeeBps, 1e4);
             _amount = _amount - redeemFee;
         }
-        return _amount.scaleBy(backingAssetDecimals, 18);
+        return _amount.scaleBy(assetDecimals, 18);
     }
 
     /**
@@ -750,8 +750,8 @@ abstract contract VaultCore is VaultInitializer {
     }
 
     /**
-     * @dev Adds backingAsset (eg. WETH or USDC) to the withdrawal queue if there is a funding shortfall.
-     * This assumes 1 backingAsset equal 1 corresponding OToken.
+     * @dev Adds asset (eg. WETH or USDC) to the withdrawal queue if there is a funding shortfall.
+     * This assumes 1 asset equal 1 corresponding OToken.
      */
     function _addWithdrawalQueueLiquidity()
         internal
@@ -759,7 +759,7 @@ abstract contract VaultCore is VaultInitializer {
     {
         WithdrawalQueueMetadata memory queue = withdrawalQueueMetadata;
 
-        // Check if the claimable backingAsset is less than the queued amount
+        // Check if the claimable asset is less than the queued amount
         uint256 queueShortfall = queue.queued - queue.claimable;
 
         // No need to do anything is the withdrawal queue is full funded
@@ -767,21 +767,19 @@ abstract contract VaultCore is VaultInitializer {
             return 0;
         }
 
-        uint256 backingAssetBalance = IERC20(backingAsset).balanceOf(
-            address(this)
-        );
+        uint256 assetBalance = IERC20(asset).balanceOf(address(this));
 
         // Of the claimable withdrawal requests, how much is unclaimed?
-        // That is, the amount of backingAsset that is currently allocated for the withdrawal queue
+        // That is, the amount of asset that is currently allocated for the withdrawal queue
         uint256 allocatedBaseAsset = queue.claimable - queue.claimed;
 
-        // If there is no unallocated backingAsset then there is nothing to add to the queue
-        if (backingAssetBalance <= allocatedBaseAsset) {
+        // If there is no unallocated asset then there is nothing to add to the queue
+        if (assetBalance <= allocatedBaseAsset) {
             return 0;
         }
 
-        uint256 unallocatedBaseAsset = backingAssetBalance - allocatedBaseAsset;
-        // the new claimable amount is the smaller of the queue shortfall or unallocated backingAsset
+        uint256 unallocatedBaseAsset = assetBalance - allocatedBaseAsset;
+        // the new claimable amount is the smaller of the queue shortfall or unallocated asset
         addedClaimable = queueShortfall < unallocatedBaseAsset
             ? queueShortfall
             : unallocatedBaseAsset;
@@ -795,27 +793,21 @@ abstract contract VaultCore is VaultInitializer {
     }
 
     /**
-     * @dev Calculate how much backingAsset (eg. WETH or USDC) in the vault is not reserved for the withdrawal queue.
+     * @dev Calculate how much asset (eg. WETH or USDC) in the vault is not reserved for the withdrawal queue.
      * That is, it is available to be redeemed or deposited into a strategy.
      */
-    function _backingAssetAvailable()
-        internal
-        view
-        returns (uint256 backingAssetAvailable)
-    {
+    function _assetAvailable() internal view returns (uint256 assetAvailable) {
         WithdrawalQueueMetadata memory queue = withdrawalQueueMetadata;
 
-        // The amount of backingAsset that is still to be claimed in the withdrawal queue
+        // The amount of asset that is still to be claimed in the withdrawal queue
         uint256 outstandingWithdrawals = queue.queued - queue.claimed;
 
-        // The amount of sitting in backingAsset in the vault
-        uint256 backingAssetBalance = IERC20(backingAsset).balanceOf(
-            address(this)
-        );
-        // If there is not enough backingAsset in the vault to cover the outstanding withdrawals
-        if (backingAssetBalance <= outstandingWithdrawals) return 0;
+        // The amount of sitting in asset in the vault
+        uint256 assetBalance = IERC20(asset).balanceOf(address(this));
+        // If there is not enough asset in the vault to cover the outstanding withdrawals
+        if (assetBalance <= outstandingWithdrawals) return 0;
 
-        return backingAssetBalance - outstandingWithdrawals;
+        return assetBalance - outstandingWithdrawals;
     }
 
     /***************************************
@@ -823,7 +815,7 @@ abstract contract VaultCore is VaultInitializer {
     ****************************************/
 
     /**
-     * @notice Return the number of backingAsset supported by the Vault.
+     * @notice Return the number of asset supported by the Vault.
      */
     function getAssetCount() public view returns (uint256) {
         return 1;
@@ -834,7 +826,7 @@ abstract contract VaultCore is VaultInitializer {
      */
     function getAllAssets() external view returns (address[] memory) {
         address[] memory a = new address[](1);
-        a[0] = backingAsset;
+        a[0] = asset;
         return a;
     }
 
@@ -858,7 +850,7 @@ abstract contract VaultCore is VaultInitializer {
      * @return true if supported
      */
     function isSupportedAsset(address _asset) external view returns (bool) {
-        return backingAsset == _asset;
+        return asset == _asset;
     }
 
     function ADMIN_IMPLEMENTATION() external view returns (address adminImpl) {

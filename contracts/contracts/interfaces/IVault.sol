@@ -167,7 +167,7 @@ interface IVault {
 
     function dripper() external view returns (address);
 
-    function backingAsset() external view returns (address);
+    function asset() external view returns (address);
 
     function initialize(address) external;
 

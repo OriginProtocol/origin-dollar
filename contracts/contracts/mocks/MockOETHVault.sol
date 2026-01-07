@@ -13,6 +13,6 @@ contract MockOETHVault is OETHVaultCore {
     }
 
     function supportAsset(address asset) external {
-        require(asset == backingAsset, "Only backingAsset supported");
+        require(asset == asset, "Only asset supported");
     }
 }

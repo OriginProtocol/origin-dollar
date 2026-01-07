@@ -10,7 +10,7 @@ contract MockVault is VaultCore {
 
     uint256 storedTotalValue;
 
-    constructor(address _backingAsset) VaultCore(_backingAsset) {}
+    constructor(address _asset) VaultCore(_asset) {}
 
     function setTotalValue(uint256 _value) public {
         storedTotalValue = _value;
@@ -32,7 +32,7 @@ contract MockVault is VaultCore {
     {
         // Avoids rounding errors by returning the total value
         // in a single currency
-        if (backingAsset == _asset) {
+        if (asset == _asset) {
             uint256 decimals = Helpers.getDecimals(_asset);
             return storedTotalValue.scaleBy(decimals, 18);
         } else {
