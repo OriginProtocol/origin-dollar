@@ -685,26 +685,9 @@ abstract contract VaultCore is VaultInitializer {
         view
         returns (uint256[] memory)
     {
-        return _calculateRedeemOutputs(_amount);
-    }
-
-    /**
-     * @notice Deprecated. Use _calculateRedeemOutput instead.
-     */
-    function _calculateRedeemOutputs(uint256 _amount)
-        internal
-        view
-        virtual
-        returns (uint256[] memory outputs)
-    {
-        // Calculate redeem fee
-        if (redeemFeeBps > 0) {
-            uint256 redeemFee = _amount.mulTruncateScale(redeemFeeBps, 1e4);
-            _amount = _amount - redeemFee;
-        }
-
-        outputs = new uint256[](1);
-        outputs[0] = _amount.scaleBy(assetDecimals, 18);
+        uint256[] memory outputs = new uint256[](1);
+        outputs[0] = _calculateRedeemOutput(_amount);
+        return outputs;
     }
 
     /**
