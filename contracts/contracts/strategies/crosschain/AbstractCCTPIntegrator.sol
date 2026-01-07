@@ -84,7 +84,7 @@ abstract contract AbstractCCTPIntegrator is Governable, IMessageHandlerV2 {
     /// @notice Operator address: Can relay CCTP messages
     address public operator;
 
-    /// @notice Mapping of processed nonces 
+    /// @notice Mapping of processed nonces
     mapping(uint64 => bool) private nonceProcessed;
 
     // For future use
