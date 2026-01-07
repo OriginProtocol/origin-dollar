@@ -65,9 +65,9 @@ abstract contract VaultStorage is Initializable, Governable {
     // slither-disable-start constable-states
 
     /// @dev mapping of supported vault assets to their configuration
-    mapping(address => uint256) internal _deprecated_assets;
+    mapping(address => uint256) private _deprecated_assets;
     /// @dev list of all assets supported by the vault.
-    address[] internal _deprecated_allAssets;
+    address[] private _deprecated_allAssets;
 
     // Strategies approved for use by the Vault
     struct Strategy {
@@ -80,7 +80,7 @@ abstract contract VaultStorage is Initializable, Governable {
     address[] internal allStrategies;
 
     /// @notice Address of the Oracle price provider contract
-    address internal _deprecated_priceProvider;
+    address private _deprecated_priceProvider;
     /// @notice pause rebasing if true
     bool public rebasePaused;
     /// @notice pause operations that change the OToken supply.
@@ -138,7 +138,7 @@ abstract contract VaultStorage is Initializable, Governable {
     /// @notice How much net total OTokens are allowed to be minted by all strategies
     uint256 private _deprecated_netOusdMintForStrategyThreshold;
 
-    uint256 internal _deprecated_swapConfig;
+    uint256 private _deprecated_swapConfig;
 
     // List of strategies that can mint oTokens directly
     // Used in OETHBaseVaultCore
