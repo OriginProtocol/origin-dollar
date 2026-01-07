@@ -163,6 +163,7 @@ interface IVault {
 
     function getAllStrategies() external view returns (address[] memory);
 
+    /// @notice Deprecated.
     function isSupportedAsset(address _asset) external view returns (bool);
 
     function dripper() external view returns (address);
