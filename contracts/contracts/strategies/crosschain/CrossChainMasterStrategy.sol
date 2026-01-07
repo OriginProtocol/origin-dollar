@@ -79,7 +79,8 @@ contract CrossChainMasterStrategy is
     /// @inheritdoc InitializableAbstractStrategy
     function depositAll() external override onlyVault nonReentrant {
         uint256 balance = IERC20(usdcToken).balanceOf(address(this));
-        if (balance > 0) {
+        // Deposit if balance is greater than 1 USDC
+        if (balance > 1e6) {
             _deposit(usdcToken, balance);
         }
     }
@@ -206,7 +207,8 @@ contract CrossChainMasterStrategy is
     function _deposit(address _asset, uint256 depositAmount) internal virtual {
         require(_asset == usdcToken, "Unsupported asset");
         require(pendingAmount == 0, "Unexpected pending amount");
-        require(depositAmount > 0, "Must deposit somethin");
+        // Deposit at least 1 USDC
+        require(depositAmount > 1e6, "Deposit amount too small");
         require(
             depositAmount <= MAX_TRANSFER_AMOUNT,
             "Deposit amount too high"
@@ -244,7 +246,8 @@ contract CrossChainMasterStrategy is
         uint256 _amount
     ) internal virtual {
         require(_asset == usdcToken, "Unsupported asset");
-        require(_amount > 0, "Withdraw amount must be greater than 0");
+        // Withdraw at least 1 USDC
+        require(_amount > 1e6, "Withdraw amount too small");
         require(_recipient == vaultAddress, "Only Vault can withdraw");
         require(
             _amount <= remoteStrategyBalance,
