@@ -130,7 +130,6 @@ describe("Vault", function () {
     await expect(matt).has.a.balanceOf("100.00", ousd);
   });
 
-
   it("Should allow transfer of arbitrary token by Governor", async () => {
     const { vault, ousd, usdc, matt, governor } = fixture;
 

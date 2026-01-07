@@ -115,7 +115,6 @@ describe("ForkTest: OETH Vault", function () {
         .withArgs(josh.address, amount);
     });
 
-
     it("should have 0.1% redeem fee", async () => {
       const { oethVault } = fixture;
 
