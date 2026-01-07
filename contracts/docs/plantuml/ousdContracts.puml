@@ -21,11 +21,6 @@ object "Vault" as vault <<Origin>><<Proxy>> #DeepSkyBlue {
 }
 
 ' Strategies
-object "Morpho Gauntlet Prime USDC\nStrategy" as gtUSDC <<Origin>><<Proxy>> #DeepSkyBlue {
-    asset: USDC
-    Morpho vault: gtUSDC
-    rewards: MORPHO
-}
 object "Morpho OUSD v2\nStrategy" as musd <<Origin>><<Proxy>> #DeepSkyBlue {
     asset: USDC
     Morpho vault: mUSD
@@ -51,7 +46,6 @@ ousd <.> vault
 vault ..> oracle
 
 ' Strategies
-vault <...> gtUSDC
 vault <...> musd
 vault <...> curveAmoStrat
 
