@@ -84,7 +84,7 @@ abstract contract AbstractCCTPIntegrator is Governable, IMessageHandlerV2 {
     /// @notice Operator address: Can relay CCTP messages
     address public operator;
 
-    /// @notice Mapping of processed nonces
+    /// @notice Mapping of processed nonces 
     mapping(uint64 => bool) private nonceProcessed;
 
     // For future use
@@ -144,7 +144,7 @@ abstract contract AbstractCCTPIntegrator is Governable, IMessageHandlerV2 {
         require(
             keccak256(abi.encodePacked(_usdcTokenSymbol)) ==
                 keccak256(abi.encodePacked("USDC")),
-            "Base token symbol must be USDC"
+            "Token symbol must be USDC"
         );
     }
 
