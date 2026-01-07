@@ -108,7 +108,14 @@ contract CrossChainMasterStrategy is
         _withdraw(baseToken, vaultAddress, remoteStrategyBalance);
     }
 
-    /// @inheritdoc InitializableAbstractStrategy
+    /**
+     * @notice Check the balance of the strategy that includes
+     *          the balance of the asset on this contract,
+     *          the amount of the asset being bridged,
+     *          and the balance reported by the Remote strategy.
+     * @param _asset Address of the asset to check
+     * @return balance Total balance of the asset
+     */
     function checkBalance(address _asset)
         public
         view
@@ -214,10 +221,10 @@ contract CrossChainMasterStrategy is
     function _deposit(address _asset, uint256 depositAmount) internal virtual {
         require(_asset == baseToken, "Unsupported asset");
         require(pendingAmount == 0, "Unexpected pending amount");
-        require(depositAmount > 0, "Deposit amount must be greater than 0");
+        require(depositAmount > 0, "Must deposit somethin");
         require(
             depositAmount <= MAX_TRANSFER_AMOUNT,
-            "Deposit amount exceeds max transfer amount"
+            "Deposit amount too high"
         );
 
         // Get the next nonce
