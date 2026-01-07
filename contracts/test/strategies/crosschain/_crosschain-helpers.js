@@ -16,7 +16,7 @@ const empty16Bytes = empty4Bytes.repeat(4);
 const empty18Bytes = `${empty2Bytes}${empty16Bytes}`;
 const empty20Bytes = empty4Bytes.repeat(5);
 
-const REMOTE_STRATEGY_BALANCE_SLOT = 210;
+const REMOTE_STRATEGY_BALANCE_SLOT = 207;
 
 const decodeDepositForBurnEvent = (event) => {
   const [
@@ -177,10 +177,10 @@ const decodeBurnMessageBody = (message) => {
   return { version, burnToken, recipient, amount, sender, hookData };
 };
 
-const encodeBalanceCheckMessageBody = (nonce, balance) => {
+const encodeBalanceCheckMessageBody = (nonce, balance, transferConfirmation) => {
   const encodedPayload = ethers.utils.defaultAbiCoder.encode(
-    ["uint64", "uint256"],
-    [nonce, balance]
+    ["uint64", "uint256", "bool"],
+    [nonce, balance, transferConfirmation]
   );
 
   // const version = 1010; // ORIGIN_MESSAGE_VERSION

@@ -198,7 +198,8 @@ describe("ForkTest: CrossChainMasterStrategy", function () {
       // Build check balance payload
       const balancePayload = encodeBalanceCheckMessageBody(
         lastNonce,
-        usdcUnits("12345")
+        usdcUnits("12345"),
+        false
       );
       const message = encodeCCTPMessage(
         6,
@@ -251,7 +252,8 @@ describe("ForkTest: CrossChainMasterStrategy", function () {
       // Build check balance payload
       const payload = encodeBalanceCheckMessageBody(
         lastNonce,
-        usdcUnits("10000")
+        usdcUnits("10000"),
+        true // deposit confirmation
       );
       const message = encodeCCTPMessage(
         6,
@@ -308,7 +310,8 @@ describe("ForkTest: CrossChainMasterStrategy", function () {
       // Build check balance payload
       const balancePayload = encodeBalanceCheckMessageBody(
         lastNonce,
-        usdcUnits("12345")
+        usdcUnits("12345"),
+        true // withdrawal confirmation
       );
       const burnPayload = encodeBurnMessageBody(
         crossChainMasterStrategy.address,
@@ -374,7 +377,8 @@ describe("ForkTest: CrossChainMasterStrategy", function () {
       // Build check balance payload
       const payload = encodeBalanceCheckMessageBody(
         lastNonce,
-        usdcUnits("10000")
+        usdcUnits("10000"),
+        false
       );
       const message = encodeCCTPMessage(
         6,
@@ -431,7 +435,8 @@ describe("ForkTest: CrossChainMasterStrategy", function () {
       // Build check balance payload
       const payload = encodeBalanceCheckMessageBody(
         lastNonce,
-        usdcUnits("123244")
+        usdcUnits("123244"),
+        false // deposit confirmation
       );
       const message = encodeCCTPMessage(
         6,
@@ -472,7 +477,8 @@ describe("ForkTest: CrossChainMasterStrategy", function () {
       // Build check balance payload
       const payload = encodeBalanceCheckMessageBody(
         lastNonce + 2,
-        usdcUnits("123244")
+        usdcUnits("123244"),
+        false
       );
       const message = encodeCCTPMessage(
         6,
