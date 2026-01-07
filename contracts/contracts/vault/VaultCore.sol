@@ -21,8 +21,6 @@ import "./VaultInitializer.sol";
 abstract contract VaultCore is VaultInitializer {
     using SafeERC20 for IERC20;
     using StableMath for uint256;
-    /// @dev max signed int
-    uint256 internal constant MAX_INT = uint256(type(int256).max);
 
     /**
      * @dev Verifies that the rebasing is not paused.
@@ -43,7 +41,7 @@ abstract contract VaultCore is VaultInitializer {
     constructor(address _asset) VaultInitializer(_asset) {}
 
     ////////////////////////////////////////////////////
-    ///             MINT / REDEEM / BURN             ///
+    ///                 MINT / BURN                  ///
     ////////////////////////////////////////////////////
     /**
      * @notice Deposit a supported asset and mint OTokens.
@@ -132,85 +130,6 @@ abstract contract VaultCore is VaultInitializer {
         emit Mint(msg.sender, _amount);
         // Mint matching amount of OTokens
         oUSD.mint(msg.sender, _amount);
-    }
-
-    /**
-     * @notice Withdraw a supported asset and burn OTokens.
-     * @param _amount Amount of OTokens to burn
-     * @param _minimumUnitAmount Minimum stablecoin units to receive in return
-     */
-    function redeem(uint256 _amount, uint256 _minimumUnitAmount)
-        external
-        whenNotCapitalPaused
-        nonReentrant
-    {
-        _redeem(_amount, _minimumUnitAmount);
-    }
-
-    /**
-     * @notice Withdraw a supported asset and burn OTokens.
-     * @param _amount Amount of OTokens to burn
-     * @param _minimumUnitAmount Minimum stablecoin units to receive in return
-     */
-    function _redeem(uint256 _amount, uint256 _minimumUnitAmount)
-        internal
-        virtual
-    {
-        emit Redeem(msg.sender, _amount);
-
-        if (_amount == 0) return;
-
-        // Amount excluding fees
-        // No fee for the strategist or the governor, makes it easier to do operations
-        uint256 amountMinusFee = (msg.sender == strategistAddr || isGovernor())
-            ? _amount.scaleBy(assetDecimals, 18)
-            : _calculateRedeemOutput(_amount);
-
-        require(
-            amountMinusFee >= _minimumUnitAmount,
-            "Redeem amount lower than minimum"
-        );
-
-        // Is there enough asset in the Vault available after accounting for the withdrawal queue
-        require(_assetAvailable() >= amountMinusFee, "Liquidity error");
-
-        // Transfer asset minus the fee to the redeemer
-        IERC20(asset).safeTransfer(msg.sender, amountMinusFee);
-
-        // Burn OToken from user (including fees)
-        oUSD.burn(msg.sender, _amount);
-
-        // Prevent insolvency
-        _postRedeem(_amount);
-    }
-
-    function _postRedeem(uint256 _amount) internal {
-        // Until we can prove that we won't affect the prices of our asset
-        // by withdrawing them, this should be here.
-        // It's possible that a strategy was off on its asset total, perhaps
-        // a reward token sold for more or for less than anticipated.
-        uint256 totalUnits = 0;
-        if (_amount >= rebaseThreshold && !rebasePaused) {
-            totalUnits = _rebase();
-        } else {
-            totalUnits = _totalValue();
-        }
-
-        // Check that the OTokens are backed by enough asset
-        if (maxSupplyDiff > 0) {
-            // If there are more outstanding withdrawal requests than asset in the vault and strategies
-            // then the available asset will be negative and totalUnits will be rounded up to zero.
-            // As we don't know the exact shortfall amount, we will reject all redeem and withdrawals
-            require(totalUnits > 0, "Too many outstanding requests");
-
-            // Allow a max difference of maxSupplyDiff% between
-            // asset value and OUSD total supply
-            uint256 diff = oUSD.totalSupply().divPrecisely(totalUnits);
-            require(
-                (diff > 1e18 ? diff - 1e18 : 1e18 - diff) <= maxSupplyDiff,
-                "Backing supply liquidity error"
-            );
-        }
     }
 
     /**
@@ -423,6 +342,35 @@ abstract contract VaultCore is VaultInitializer {
         emit WithdrawalClaimed(msg.sender, requestId, request.amount);
 
         return request.amount;
+    }
+
+    function _postRedeem(uint256 _amount) internal {
+        // Until we can prove that we won't affect the prices of our asset
+        // by withdrawing them, this should be here.
+        // It's possible that a strategy was off on its asset total, perhaps
+        // a reward token sold for more or for less than anticipated.
+        uint256 totalUnits = 0;
+        if (_amount >= rebaseThreshold && !rebasePaused) {
+            totalUnits = _rebase();
+        } else {
+            totalUnits = _totalValue();
+        }
+
+        // Check that the OTokens are backed by enough asset
+        if (maxSupplyDiff > 0) {
+            // If there are more outstanding withdrawal requests than asset in the vault and strategies
+            // then the available asset will be negative and totalUnits will be rounded up to zero.
+            // As we don't know the exact shortfall amount, we will reject all redeem and withdrawals
+            require(totalUnits > 0, "Too many outstanding requests");
+
+            // Allow a max difference of maxSupplyDiff% between
+            // asset value and OUSD total supply
+            uint256 diff = oUSD.totalSupply().divPrecisely(totalUnits);
+            require(
+                (diff > 1e18 ? diff - 1e18 : 1e18 - diff) <= maxSupplyDiff,
+                "Backing supply liquidity error"
+            );
+        }
     }
 
     /**
@@ -711,11 +659,7 @@ abstract contract VaultCore is VaultInitializer {
         virtual
         returns (uint256)
     {
-        // Calculate redeem fee
-        if (redeemFeeBps > 0) {
-            uint256 redeemFee = _amount.mulTruncateScale(redeemFeeBps, 1e4);
-            _amount = _amount - redeemFee;
-        }
+        // Redeem 1:1 with asynchronous withdrawals
         return _amount.scaleBy(assetDecimals, 18);
     }
 

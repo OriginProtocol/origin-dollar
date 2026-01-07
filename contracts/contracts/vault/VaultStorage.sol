@@ -32,7 +32,6 @@ abstract contract VaultStorage is Initializable, Governable {
     event RebasePaused();
     event RebaseUnpaused();
     event VaultBufferUpdated(uint256 _vaultBuffer);
-    event RedeemFeeUpdated(uint256 _redeemFeeBps);
     event AllocateThresholdUpdated(uint256 _threshold);
     event RebaseThresholdUpdated(uint256 _threshold);
     event StrategistUpdated(address _address);
@@ -87,7 +86,7 @@ abstract contract VaultStorage is Initializable, Governable {
     /// eg mint, redeem, allocate, mint/burn for strategy
     bool public capitalPaused;
     /// @notice Redemption fee in basis points. eg 50 = 0.5%
-    uint256 public redeemFeeBps;
+    uint256 private _deprecated_redeemFeeBps;
     /// @notice Percentage of assets to keep in Vault to handle (most) withdrawals. 100% = 1e18.
     uint256 public vaultBuffer;
     /// @notice OToken mints over this amount automatically allocate funds. 18 decimals.

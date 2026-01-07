@@ -10,12 +10,4 @@ import { OETHVaultCore } from "./OETHVaultCore.sol";
 contract OSonicVaultCore is OETHVaultCore {
     /// @param _wS Sonic's Wrapped S token
     constructor(address _wS) OETHVaultCore(_wS) {}
-
-    /**
-     * @notice Instant redeem is not supported on Sonic.
-     * Use the asynchronous `requestWithdrawal` a `claimWithdrawal` instead.
-     */
-    function _redeem(uint256, uint256) internal override {
-        revert("unsupported function");
-    }
 }
