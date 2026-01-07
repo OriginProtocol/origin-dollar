@@ -166,7 +166,7 @@ abstract contract VaultCore is VaultInitializer {
         // No fee for the strategist or the governor, makes it easier to do operations
         uint256 amountMinusFee = (msg.sender == strategistAddr || isGovernor())
             ? _amount.scaleBy(assetDecimals, 18)
-            : _calculateRedeemOutputs(_amount)[0];
+            : _calculateRedeemOutput(_amount);
 
         require(
             amountMinusFee >= _minimumUnitAmount,
@@ -683,11 +683,10 @@ abstract contract VaultCore is VaultInitializer {
     function calculateRedeemOutputs(uint256 _amount)
         external
         view
-        returns (uint256[] memory)
+        returns (uint256[] memory outputs)
     {
-        uint256[] memory outputs = new uint256[](1);
+        outputs = new uint256[](1);
         outputs[0] = _calculateRedeemOutput(_amount);
-        return outputs;
     }
 
     /**
