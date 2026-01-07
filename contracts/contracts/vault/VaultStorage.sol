@@ -131,7 +131,7 @@ abstract contract VaultStorage is Initializable, Governable {
 
     /// @notice Mapping of asset address to the Strategy that they should automatically
     // be allocated to
-    mapping(address => address) public _deprecated_assetDefaultStrategies;
+    mapping(address => address) private _deprecated_assetDefaultStrategies;
 
     /// @notice Max difference between total supply and total value of assets. 18 decimals.
     uint256 public maxSupplyDiff;
@@ -149,13 +149,13 @@ abstract contract VaultStorage is Initializable, Governable {
 
     /// @notice Metapool strategy that is allowed to mint/burn OTokens without changing collateral
 
-    address public _deprecated_ousdMetaStrategy;
+    address private _deprecated_ousdMetaStrategy;
 
     /// @notice How much OTokens are currently minted by the strategy
-    int256 public _deprecated_netOusdMintedForStrategy;
+    int256 private _deprecated_netOusdMintedForStrategy;
 
     /// @notice How much net total OTokens are allowed to be minted by all strategies
-    uint256 public _deprecated_netOusdMintForStrategyThreshold;
+    uint256 private _deprecated_netOusdMintForStrategyThreshold;
 
     uint256 constant MIN_UNIT_PRICE_DRIFT = 0.7e18;
     uint256 constant MAX_UNIT_PRICE_DRIFT = 1.3e18;
