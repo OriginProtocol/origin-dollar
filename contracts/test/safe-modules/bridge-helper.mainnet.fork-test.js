@@ -178,6 +178,8 @@ describe("ForkTest: Bridge Helper Safe Module (Ethereum)", function () {
     );
   });
 
+  // Redeem has been deprecated for now, so skipping this test
+  /* 
   it("Should unwrap WOETH and redeem it to WETH", async () => {
     const { woeth, weth, josh, safeSigner, bridgeHelperModule, oethVault } =
       fixture;
@@ -210,4 +212,5 @@ describe("ForkTest: Bridge Helper Safe Module (Ethereum)", function () {
     );
     expect(woethBalanceAfter).to.eq(woethBalanceBefore.sub(woethAmount));
   });
+  */
 });
