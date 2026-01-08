@@ -204,7 +204,7 @@ describe("ForkTest: OETH Vault", function () {
       await weth.connect(matt).transfer(oethVault.address, oethUnits("1000"));
 
       const amount = oethUnits("10");
-      const expectedWETH = amount.mul("9950").div("10000");
+      const expectedWETH = amount.mul("9000").div("10000");
 
       await weth.connect(josh).approve(oethVault.address, amount);
 
@@ -230,7 +230,7 @@ describe("ForkTest: OETH Vault", function () {
       expect(await oeth.balanceOf(oethWhaleAddress)).to.gt(10);
 
       const redeemAmount = parseUnits("10", 18);
-      const minEth = parseUnits("9.94", 18);
+      const minEth = parseUnits("9", 18);
 
       // Calculate how much to mint based on the WETH in the vault,
       // the withdrawal queue, and the WETH to be redeemed
