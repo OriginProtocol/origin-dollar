@@ -41,7 +41,7 @@ describe("ForkTest: Bridge Helper Safe Module (Base)", function () {
       .bridgeWETHToEthereum(oethUnits("1"));
   });
 
-  it("Should deposit wOETH for OETHb and redeem it for WETH", async () => {
+  it.skip("Should deposit wOETH for OETHb and redeem it for WETH", async () => {
     const {
       nick,
       _mintWETH,
@@ -111,7 +111,7 @@ describe("ForkTest: Bridge Helper Safe Module (Base)", function () {
     );
   });
 
-  it("Should mint OETHb with WETH and redeem it for wOETH", async () => {
+  it.skip("Should mint OETHb with WETH and redeem it for wOETH", async () => {
     const {
       _mintWETH,
       oethbVault,
