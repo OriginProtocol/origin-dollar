@@ -1406,7 +1406,7 @@ describe("ForkTest: Aerodrome AMO Strategy (Base)", async function () {
     const user = userOverride || rafael;
     amount = amount || oethUnits("5");
 
-    const balance = weth.balanceOf(user.address);
+    const balance = await weth.balanceOf(user.address);
     if (balance < amount) {
       await setERC20TokenBalance(user.address, weth, amount + balance, hre);
     }
@@ -1433,7 +1433,7 @@ describe("ForkTest: Aerodrome AMO Strategy (Base)", async function () {
       await oethbVault.connect(nick).mint(weth.address, _amount, _amount);
     }
 
-    const balance = weth.balanceOf(user.address);
+    const balance = await weth.balanceOf(user.address);
     if (balance < amount) {
       await setERC20TokenBalance(user.address, weth, amount + balance, hre);
     }
