@@ -63,7 +63,7 @@ describe("Convex Strategy", function () {
       await expectApproxSupply(ousd, ousdUnits("200"));
       await mint("10000.00", usdc);
       await vault.connect(governor).set;
-      await vault.connect(strategist).redeem(ousdUnits("10000"), 0);
+      await vault.connect(strategist).requestWithdrawal(ousdUnits("10000"));
       await expectApproxSupply(ousd, ousdUnits("200"));
     });
   });

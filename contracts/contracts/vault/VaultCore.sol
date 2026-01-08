@@ -624,46 +624,6 @@ abstract contract VaultCore is VaultInitializer {
     }
 
     /**
-     * @notice Deprecated. Use calculateRedeemOutput instead.
-     */
-    function calculateRedeemOutputs(uint256 _amount)
-        external
-        view
-        returns (uint256[] memory outputs)
-    {
-        outputs = new uint256[](1);
-        outputs[0] = _calculateRedeemOutput(_amount);
-    }
-
-    /**
-     * @notice Calculate the amount of asset received on redeeming OToken.
-     * @param _amount Amount of OToken to redeem
-     * @return Amount of asset received
-     */
-    function calculateRedeemOutput(uint256 _amount)
-        external
-        view
-        returns (uint256)
-    {
-        return _calculateRedeemOutput(_amount);
-    }
-
-    /**
-     * @dev Calculate the amount of asset received on redeeming OToken.
-     * @param _amount Amount of OToken to redeem
-     * @return Amount of asset received
-     */
-    function _calculateRedeemOutput(uint256 _amount)
-        internal
-        view
-        virtual
-        returns (uint256)
-    {
-        // Redeem 1:1 with asynchronous withdrawals
-        return _amount.scaleBy(assetDecimals, 18);
-    }
-
-    /**
      * @notice Adds WETH to the withdrawal queue if there is a funding shortfall.
      * @dev is called from the Native Staking strategy when validator withdrawals are processed.
      * It also called before any WETH is allocated to a strategy.
