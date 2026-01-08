@@ -163,8 +163,13 @@ describe("Curve AMO OUSD strategy", function () {
       );
 
       const balance = await usdc.balanceOf(user.address);
-      if (balance < amount) {
-        await setERC20TokenBalance(user.address, usdc, amount + balance, hre);
+      if (balance.lt(amount)) {
+        await setERC20TokenBalance(
+          user.address,
+          usdc,
+          amount.add(balance),
+          hre
+        );
       }
       await usdc.connect(user).transfer(curveAMOStrategy.address, amount);
 
@@ -974,8 +979,8 @@ describe("Curve AMO OUSD strategy", function () {
     amount = amount || defaultDeposit.div(1e12);
 
     const balance = await usdc.balanceOf(user.address);
-    if (balance < amount) {
-      await setERC20TokenBalance(user.address, usdc, amount + balance, hre);
+    if (balance.lt(amount)) {
+      await setERC20TokenBalance(user.address, usdc, amount.add(balance), hre);
     }
 
     await usdc.connect(user).approve(ousdVault.address, 0);
@@ -1003,8 +1008,13 @@ describe("Curve AMO OUSD strategy", function () {
     if (balanceHardAsset.sub(balanceOToken) > 0) {
       const amount = balanceHardAsset.sub(balanceOToken).div(1e12);
       const balance = await usdc.balanceOf(nick.address);
-      if (balance < amount) {
-        await setERC20TokenBalance(nick.address, usdc, amount + balance, hre);
+      if (balance.lt(amount)) {
+        await setERC20TokenBalance(
+          nick.address,
+          usdc,
+          amount.add(balance),
+          hre
+        );
       }
       await usdc
         .connect(nick)
@@ -1016,11 +1026,16 @@ describe("Curve AMO OUSD strategy", function () {
       // prettier-ignore
       await curvePool
         .connect(nick)["add_liquidity(uint256[],uint256)"]([amount, 0], 0);
-    } else if (balanceHardAsset.sub(balanceOToken) < 0) {
+    } else if (balanceHardAsset.sub(balanceOToken).lt(0)) {
       const amount = balanceOToken.sub(balanceHardAsset).div(1e12);
       const balance = await usdc.balanceOf(nick.address);
-      if (balance < amount) {
-        await setERC20TokenBalance(nick.address, usdc, amount + balance, hre);
+      if (balance.lt(amount)) {
+        await setERC20TokenBalance(
+          nick.address,
+          usdc,
+          amount.add(balance),
+          hre
+        );
       }
       await usdc.connect(nick).approve(curvePool.address, 0);
       await usdc.connect(nick).approve(curvePool.address, amount);
@@ -1044,11 +1059,11 @@ describe("Curve AMO OUSD strategy", function () {
 
     if (usdcAmount) {
       const balance = await usdc.balanceOf(nick.address);
-      if (balance < usdcAmount) {
+      if (balance.lt(usdcAmount)) {
         await setERC20TokenBalance(
           nick.address,
           usdc,
-          usdcAmount + balance,
+          usdcAmount.add(balance),
           hre
         );
       }
@@ -1059,7 +1074,7 @@ describe("Curve AMO OUSD strategy", function () {
         .connect(nick)["add_liquidity(uint256[],uint256)"]([0, usdcAmount], 0);
     } else {
       const balance = await usdc.balanceOf(nick.address);
-      if (balance < ousdAmount.div(1e12)) {
+      if (balance.lt(ousdAmount.div(1e12))) {
         await setERC20TokenBalance(
           nick.address,
           usdc,
