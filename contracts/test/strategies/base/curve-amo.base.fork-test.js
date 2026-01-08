@@ -395,7 +395,7 @@ describe("Base Fork Test: Curve AMO strategy", function () {
     });
 
     it("Should deposit when pool is heavily unbalanced with OETH", async () => {
-      await unbalancePool({ oethbAmount: defaultDeposit.mul(20) });
+      await unbalancePool({ oethbAmount: defaultDeposit.mul(3) });
 
       const checkBalanceBefore = await curveAMOStrategy.checkBalance(
         weth.address
@@ -427,7 +427,7 @@ describe("Base Fork Test: Curve AMO strategy", function () {
     });
 
     it("Should deposit when pool is heavily unbalanced with WETH", async () => {
-      await unbalancePool({ wethbAmount: defaultDeposit.mul(20) });
+      await unbalancePool({ wethbAmount: defaultDeposit.mul(10) });
 
       const checkBalanceBefore = await curveAMOStrategy.checkBalance(
         weth.address
@@ -450,10 +450,10 @@ describe("Base Fork Test: Curve AMO strategy", function () {
 
       expect(
         await curveAMOStrategy.checkBalance(weth.address)
-      ).to.approxEqualTolerance(defaultDeposit.mul(2).add(checkBalanceBefore));
+      ).to.approxEqualTolerance(defaultDeposit.mul(3).add(checkBalanceBefore));
       expect(
         await curveGauge.balanceOf(curveAMOStrategy.address)
-      ).to.approxEqualTolerance(defaultDeposit.mul(2).add(gaugeTokensBefore));
+      ).to.approxEqualTolerance(defaultDeposit.mul(3).add(gaugeTokensBefore));
       expect(await weth.balanceOf(curveAMOStrategy.address)).to.equal(0);
     });
 
@@ -793,7 +793,7 @@ describe("Base Fork Test: Curve AMO strategy", function () {
 
     if (balanceWETH.gt(balanceOETH)) {
       const amount = balanceWETH.sub(balanceOETH);
-      const balance = weth.balanceOf(nick.address);
+      const balance = await weth.balanceOf(nick.address);
       if (balance < amount) {
         await setERC20TokenBalance(nick.address, weth, amount + balance, hre);
       }
@@ -809,9 +809,14 @@ describe("Base Fork Test: Curve AMO strategy", function () {
         .connect(nick)["add_liquidity(uint256[],uint256)"]([0, amount], 0);
     } else if (balanceWETH.lt(balanceOETH)) {
       const amount = balanceOETH.sub(balanceWETH);
-      const balance = weth.balanceOf(nick.address);
+      const balance = await weth.balanceOf(nick.address);
       if (balance < amount) {
-        await setERC20TokenBalance(nick.address, weth, amount + balance, hre);
+        await setERC20TokenBalance(
+          nick.address,
+          weth,
+          amount.add(balance),
+          hre
+        );
       }
       await weth.connect(nick).approve(curvePool.address, amount);
       // prettier-ignore
@@ -836,7 +841,7 @@ describe("Base Fork Test: Curve AMO strategy", function () {
     }
 
     if (wethbAmount) {
-      const balance = weth.balanceOf(nick.address);
+      const balance = await weth.balanceOf(nick.address);
       if (balance < wethbAmount) {
         await setERC20TokenBalance(
           nick.address,
@@ -855,7 +860,7 @@ describe("Base Fork Test: Curve AMO strategy", function () {
       await curvePool
         .connect(nick)["add_liquidity(uint256[],uint256)"]([wethbAmount, 0], 0);
     } else {
-      const balance = weth.balanceOf(nick.address);
+      const balance = await weth.balanceOf(nick.address);
       if (balance < oethbAmount) {
         await setERC20TokenBalance(
           nick.address,

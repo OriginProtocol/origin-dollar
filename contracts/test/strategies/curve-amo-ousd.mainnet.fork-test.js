@@ -1002,7 +1002,7 @@ describe("Curve AMO OUSD strategy", function () {
 
     if (balanceHardAsset.sub(balanceOToken) > 0) {
       const amount = balanceHardAsset.sub(balanceOToken).div(1e12);
-      const balance = usdc.balanceOf(nick.address);
+      const balance = await usdc.balanceOf(nick.address);
       if (balance < amount) {
         await setERC20TokenBalance(nick.address, usdc, amount + balance, hre);
       }
