@@ -274,6 +274,12 @@ abstract contract AbstractCCTPIntegrator is Governable, IMessageHandlerV2 {
         uint32 finalityThresholdExecuted,
         bytes memory messageBody
     ) external override onlyCCTPMessageTransmitter returns (bool) {
+        // Make sure the finality threshold at execution is at least 2000
+        require(
+            finalityThresholdExecuted >= 2000,
+            "Finality threshold too low"
+        );
+
         return
             _handleReceivedMessage(
                 sourceDomain,
@@ -300,6 +306,11 @@ abstract contract AbstractCCTPIntegrator is Governable, IMessageHandlerV2 {
         require(
             minFinalityThreshold == 1000,
             "Unfinalized messages are not supported"
+        );
+        // Make sure the finality threshold at execution is at least 1000
+        require(
+            finalityThresholdExecuted >= 1000,
+            "Finality threshold too low"
         );
 
         return
