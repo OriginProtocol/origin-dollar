@@ -248,7 +248,7 @@ contract CrossChainRemoteStrategy is
         }
 
         // Check balance after withdrawal
-        uint256 balanceAfter = checkBalance(usdcToken);
+        uint256 strategyBalance = checkBalance(usdcToken);
 
         // If there are some tokens to be sent AND the balance is sufficient
         // to satisfy the withdrawal request then send the funds to the peer strategy.
@@ -262,7 +262,7 @@ contract CrossChainRemoteStrategy is
             bytes memory message = CrossChainStrategyHelper
                 .encodeBalanceCheckMessage(
                     lastTransferNonce,
-                    balanceAfter - withdrawAmount,
+                    strategyBalance - withdrawAmount,
                     true
                 );
             _sendTokens(withdrawAmount, message);
@@ -274,7 +274,7 @@ contract CrossChainRemoteStrategy is
             bytes memory message = CrossChainStrategyHelper
                 .encodeBalanceCheckMessage(
                     lastTransferNonce,
-                    balanceAfter,
+                    strategyBalance,
                     true
                 );
             _sendMessage(message);
