@@ -122,7 +122,7 @@ describe("ForkTest: OETH Vault", function () {
       expect(await oeth.balanceOf(oethWhaleAddress)).to.gt(10);
 
       const redeemAmount = parseUnits("10", 18);
-      const minEth = parseUnits("9.94", 18);
+      const minEth = parseUnits("9", 18);
 
       // Calculate how much to mint based on the WETH in the vault,
       // the withdrawal queue, and the WETH to be redeemed

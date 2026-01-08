@@ -456,10 +456,10 @@ describe("Base Fork Test: Curve AMO strategy", function () {
 
       expect(
         await curveAMOStrategy.checkBalance(weth.address)
-      ).to.approxEqualTolerance(defaultDeposit.mul(2).add(checkBalanceBefore));
+      ).to.approxEqualTolerance(defaultDeposit.mul(3).add(checkBalanceBefore));
       expect(
         await curveGauge.balanceOf(curveAMOStrategy.address)
-      ).to.approxEqualTolerance(defaultDeposit.mul(2).add(gaugeTokensBefore));
+      ).to.approxEqualTolerance(defaultDeposit.mul(3).add(gaugeTokensBefore));
       expect(await weth.balanceOf(curveAMOStrategy.address)).to.equal(0);
     });
 

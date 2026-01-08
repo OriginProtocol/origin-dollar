@@ -681,6 +681,35 @@ abstract contract VaultCore is VaultInitializer {
         return request.amount;
     }
 
+    function _postRedeem(uint256 _amount) internal {
+        // Until we can prove that we won't affect the prices of our asset
+        // by withdrawing them, this should be here.
+        // It's possible that a strategy was off on its asset total, perhaps
+        // a reward token sold for more or for less than anticipated.
+        uint256 totalUnits = 0;
+        if (_amount >= rebaseThreshold && !rebasePaused) {
+            totalUnits = _rebase();
+        } else {
+            totalUnits = _totalValue();
+        }
+
+        // Check that the OTokens are backed by enough asset
+        if (maxSupplyDiff > 0) {
+            // If there are more outstanding withdrawal requests than asset in the vault and strategies
+            // then the available asset will be negative and totalUnits will be rounded up to zero.
+            // As we don't know the exact shortfall amount, we will reject all redeem and withdrawals
+            require(totalUnits > 0, "Too many outstanding requests");
+
+            // Allow a max difference of maxSupplyDiff% between
+            // asset value and OUSD total supply
+            uint256 diff = oUSD.totalSupply().divPrecisely(totalUnits);
+            require(
+                (diff > 1e18 ? diff - 1e18 : 1e18 - diff) <= maxSupplyDiff,
+                "Backing supply liquidity error"
+            );
+        }
+    }
+
     /**
      * @notice Adds WETH to the withdrawal queue if there is a funding shortfall.
      * @dev is called from the Native Staking strategy when validator withdrawals are processed.
