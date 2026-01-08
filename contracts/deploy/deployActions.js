@@ -300,6 +300,11 @@ const configureVault = async () => {
   await withConfirmation(
     cVault.connect(sGovernor).setStrategistAddr(strategistAddr)
   );
+
+  // Set withdrawal claim delay to 10m
+  await withConfirmation(
+    cVault.connect(sGovernor).setWithdrawalClaimDelay(10 * 60)
+  );
 };
 
 /**
@@ -330,9 +335,6 @@ const configureOETHVault = async () => {
   await withConfirmation(
     cVault.connect(sGovernor).setStrategistAddr(strategistAddr)
   );
-
-  // Redeem fee to 0
-  await withConfirmation(cVault.connect(sGovernor).setRedeemFeeBps(0));
 
   // Allocate threshold
   await withConfirmation(

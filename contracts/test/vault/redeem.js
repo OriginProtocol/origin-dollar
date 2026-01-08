@@ -1,17 +1,11 @@
 const { expect } = require("chai");
 const { loadDefaultFixture } = require("../_fixture");
 
-const {
-  ousdUnits,
-  usdcUnits,
-  isFork,
-  expectApproxSupply,
-  advanceTime,
-} = require("../helpers");
+const { ousdUnits, usdcUnits, isFork, advanceTime } = require("../helpers");
 const { impersonateAndFund } = require("../../utils/signers");
 const { deployWithConfirmation } = require("../../utils/deploy");
 
-describe("OUSD Vault Redeem", function () {
+describe("OUSD Vault Withdrawals", function () {
   if (isFork) {
     this.timeout(0);
   }
@@ -19,205 +13,6 @@ describe("OUSD Vault Redeem", function () {
   let fixture;
   beforeEach(async () => {
     fixture = await loadDefaultFixture();
-  });
-
-  describe("Redeem", function () {});
-
-  it("Should allow a redeem for strategist", async () => {
-    const { ousd, vault, usdc, strategist } = fixture;
-
-    await expect(strategist).has.a.balanceOf("1000.00", usdc);
-    await usdc.connect(strategist).approve(vault.address, usdcUnits("50.0"));
-    await vault.connect(strategist).mint(usdc.address, usdcUnits("50.0"), 0);
-    await expect(strategist).has.a.balanceOf("50.00", ousd);
-    await vault.connect(strategist).redeem(ousdUnits("50.0"), 0);
-    await expect(strategist).has.a.balanceOf("0.00", ousd);
-    await expect(strategist).has.a.balanceOf("1000.00", usdc);
-    expect(await ousd.totalSupply()).to.eq(ousdUnits("200.0"));
-
-    it("Should allow a redeem over the rebase threshold for strategist", async () => {
-      const { ousd, vault, usdc, strategist, matt } = fixture;
-
-      await expect(strategist).has.a.balanceOf("1000.00", usdc);
-
-      await expect(strategist).has.a.balanceOf("0.00", ousd);
-      await expect(matt).has.a.balanceOf("100.00", ousd);
-
-      // Strategist mints OUSD with USDC
-      await usdc
-        .connect(strategist)
-        .approve(vault.address, usdcUnits("1000.00"));
-      await vault
-        .connect(strategist)
-        .mint(usdc.address, usdcUnits("1000.00"), 0);
-      await expect(strategist).has.a.balanceOf("1000.00", ousd);
-      await expect(matt).has.a.balanceOf("100.00", ousd);
-
-      // Rebase should do nothing
-      await vault.rebase();
-      await expect(strategist).has.a.balanceOf("1000.00", ousd);
-      await expect(matt).has.a.balanceOf("100.00", ousd);
-
-      // Strategist redeems over the rebase threshold
-      await vault.connect(strategist).redeem(ousdUnits("500.0"), 0);
-      await expect(strategist).has.a.approxBalanceOf("500.00", ousd);
-      await expect(matt).has.a.approxBalanceOf("100.00", ousd);
-
-      // Redeem outputs will be 1000/2200 * 1500 USDC and 1200/2200 * 1500 USDS from fixture
-      await expect(strategist).has.an.approxBalanceOf("500.00", usdc);
-      await expectApproxSupply(ousd, ousdUnits("700.0"));
-    });
-
-    it("Should have a default redeem fee of 0", async () => {
-      const { vault } = fixture;
-
-      await expect(await vault.redeemFeeBps()).to.equal("0");
-    });
-
-    // Skipped because OUSD redeem is only available for strategist or governor
-    // and this is without fees.
-    it.skip("Should charge a redeem fee if redeem fee set", async () => {
-      const { ousd, vault, usdc, anna, governor } = fixture;
-
-      // 1000 basis points = 10%
-      await vault.connect(governor).setRedeemFeeBps(1000);
-      await expect(anna).has.a.balanceOf("1000.00", usdc);
-      await usdc.connect(anna).approve(vault.address, usdcUnits("50.0"));
-      await vault.connect(anna).mint(usdc.address, usdcUnits("50.0"), 0);
-      await expect(anna).has.a.balanceOf("50.00", ousd);
-      await vault.connect(anna).redeem(ousdUnits("50.0"), 0);
-      await expect(anna).has.a.balanceOf("0.00", ousd);
-      await expect(anna).has.a.balanceOf("995.00", usdc);
-    });
-
-    it("Should revert redeem if balance is insufficient", async () => {
-      const { ousd, vault, usdc, strategist } = fixture;
-
-      // Mint some OUSD tokens
-      await expect(strategist).has.a.balanceOf("1000.00", usdc);
-      await usdc.connect(strategist).approve(vault.address, usdcUnits("50.0"));
-      await vault.connect(strategist).mint(usdc.address, usdcUnits("50.0"), 0);
-      await expect(strategist).has.a.balanceOf("50.00", ousd);
-
-      // Try to withdraw more than balance
-      await expect(
-        vault.connect(strategist).redeem(ousdUnits("100.0"), 0)
-      ).to.be.revertedWith("Transfer amount exceeds balance");
-    });
-
-    it("Should only allow Governor to set a redeem fee", async () => {
-      const { vault, anna } = fixture;
-
-      await expect(vault.connect(anna).setRedeemFeeBps(100)).to.be.revertedWith(
-        "Caller is not the Governor"
-      );
-    });
-
-    it("Should redeem entire OUSD balance", async () => {
-      const { ousd, vault, usdc, strategist } = fixture;
-
-      await expect(strategist).has.a.balanceOf("1000.00", usdc);
-
-      // Mint 100 OUSD tokens using USDC
-      await usdc.connect(strategist).approve(vault.address, usdcUnits("100.0"));
-      await vault.connect(strategist).mint(usdc.address, usdcUnits("100.0"), 0);
-      await expect(strategist).has.a.balanceOf("100.00", ousd);
-
-      // Withdraw all
-      await vault
-        .connect(strategist)
-        .redeem(ousd.balanceOf(strategist.address), 0);
-
-      await expect(strategist).has.a.balanceOf("1000", usdc);
-    });
-
-    it("Should have correct balances on consecutive mint and redeem", async () => {
-      const { ousd, vault, usdc, strategist, governor } = fixture;
-
-      const usersWithBalances = [
-        [strategist, 0],
-        [governor, 0],
-      ];
-
-      const assetsWithUnits = [[usdc, usdcUnits]];
-
-      for (const [user, startBalance] of usersWithBalances) {
-        for (const [asset, units] of assetsWithUnits) {
-          for (const amount of [5.09, 10.32, 20.99, 100.01]) {
-            await asset
-              .connect(user)
-              .approve(vault.address, await units(amount.toString()));
-            await vault
-              .connect(user)
-              .mint(asset.address, await units(amount.toString()), 0);
-            await expect(user).has.an.approxBalanceOf(
-              (startBalance + amount).toString(),
-              ousd
-            );
-            await vault.connect(user).redeem(ousdUnits(amount.toString()), 0);
-            await expect(user).has.an.approxBalanceOf(
-              startBalance.toString(),
-              ousd
-            );
-          }
-        }
-      }
-    });
-
-    it("Should correctly handle redeem without a rebase and then full redeem", async function () {
-      const { ousd, vault, usdc, strategist } = fixture;
-      await expect(strategist).has.a.balanceOf("0.00", ousd);
-      await usdc.connect(strategist).mint(usdcUnits("3000.0"));
-      await usdc
-        .connect(strategist)
-        .approve(vault.address, usdcUnits("3000.0"));
-      await vault
-        .connect(strategist)
-        .mint(usdc.address, usdcUnits("3000.0"), 0);
-      await expect(strategist).has.a.balanceOf("3000.00", ousd);
-
-      //redeem without rebasing (not over threshold)
-      await vault.connect(strategist).redeem(ousdUnits("200.00"), 0);
-      //redeem with rebasing (over threshold)
-      await vault
-        .connect(strategist)
-        .redeem(ousd.balanceOf(strategist.address), 0);
-
-      await expect(strategist).has.a.balanceOf("0.00", ousd);
-    });
-
-    it("Should respect minimum unit amount argument in redeem", async () => {
-      const { ousd, vault, usdc, strategist } = fixture;
-
-      await expect(strategist).has.a.balanceOf("1000.00", usdc);
-      await usdc.connect(strategist).approve(vault.address, usdcUnits("100.0"));
-      await vault.connect(strategist).mint(usdc.address, usdcUnits("50.0"), 0);
-      await expect(strategist).has.a.balanceOf("50.00", ousd);
-      await vault
-        .connect(strategist)
-        .redeem(ousdUnits("50.0"), usdcUnits("50"));
-      await vault.connect(strategist).mint(usdc.address, usdcUnits("50.0"), 0);
-      await expect(
-        vault.connect(strategist).redeem(ousdUnits("50.0"), usdcUnits("51"))
-      ).to.be.revertedWith("Redeem amount lower than minimum");
-    });
-
-    it("Should calculate redeem outputs", async () => {
-      const { vault, anna, usdc, ousd } = fixture;
-
-      // OUSD total supply is 200 backed by 200 USDC
-      expect((await vault.calculateRedeemOutputs(ousdUnits("50")))[0]).to.equal(
-        usdcUnits("50")
-      );
-
-      await usdc.connect(anna).approve(vault.address, usdcUnits("600"));
-      await vault.connect(anna).mint(usdc.address, usdcUnits("600"), 0);
-      await expect(anna).has.a.balanceOf("600", ousd);
-
-      expect(
-        (await vault.calculateRedeemOutputs(ousdUnits("100")))[0]
-      ).to.equal(usdcUnits("100"));
-    });
   });
 
   const snapData = async (fixture) => {
@@ -283,20 +78,17 @@ describe("OUSD Vault Redeem", function () {
   describe("Withdrawal Queue", function () {
     const delayPeriod = 10 * 60; // 10 minutes
     beforeEach(async () => {
-      const { vault, governor, strategist, josh, matt, usdc } = fixture;
-      await vault.connect(governor).setWithdrawalClaimDelay(delayPeriod);
+      const { vault, josh, matt } = fixture;
 
       // In the fixture Matt and Josh mint 100 OUSD
       // We should redeem that first to have only the 60 OUSD from USDC minting
-      // To do so, we have to make them strategists temporarily
-      await vault.connect(governor).setStrategistAddr(josh.address);
-      await vault.connect(josh).redeem(ousdUnits("100"), 0);
-      await vault.connect(governor).setStrategistAddr(matt.address);
-      await vault.connect(matt).redeem(ousdUnits("100"), 0);
-      await vault.connect(governor).setStrategistAddr(strategist.address);
-      // Then both send usdc to governor to keep internal balance correct
-      await usdc.connect(josh).transfer(governor.address, usdcUnits("100"));
-      await usdc.connect(matt).transfer(governor.address, usdcUnits("100"));
+      await vault.connect(josh).requestWithdrawal(ousdUnits("100"));
+      await vault.connect(matt).requestWithdrawal(ousdUnits("100"));
+
+      await advanceTime(delayPeriod); // 10 minutes
+
+      await vault.connect(josh).claimWithdrawal(0);
+      await vault.connect(matt).claimWithdrawal(1);
     });
     describe("with all 60 USDC in the vault", () => {
       beforeEach(async () => {
@@ -337,14 +129,11 @@ describe("OUSD Vault Redeem", function () {
           .connect(daniel)
           .requestWithdrawal(firstRequestAmountOUSD);
 
+        const queuedAmount = usdcUnits("205"); // 100 + 100 + 5
+
         await expect(tx)
           .to.emit(vault, "WithdrawalRequested")
-          .withArgs(
-            daniel.address,
-            0,
-            firstRequestAmountOUSD,
-            firstRequestAmountUSDC
-          );
+          .withArgs(daniel.address, 2, firstRequestAmountOUSD, queuedAmount);
 
         await assertChangedData(
           dataBefore,
@@ -371,9 +160,11 @@ describe("OUSD Vault Redeem", function () {
 
         const tx = await vault.connect(josh).requestWithdrawal(0);
 
+        const queuedAmount = usdcUnits("205"); // 100 + 100 + 5
+
         await expect(tx)
           .to.emit(vault, "WithdrawalRequested")
-          .withArgs(josh.address, 1, 0, firstRequestAmountUSDC);
+          .withArgs(josh.address, 3, 0, queuedAmount);
 
         await assertChangedData(
           dataBefore,
@@ -415,14 +206,11 @@ describe("OUSD Vault Redeem", function () {
           .connect(matt)
           .requestWithdrawal(secondRequestAmountOUSD);
 
+        const queuedAmount = usdcUnits("223"); // 100 + 100 + 5 + 18
+
         await expect(tx)
           .to.emit(vault, "WithdrawalRequested")
-          .withArgs(
-            matt.address,
-            1,
-            secondRequestAmountOUSD,
-            firstRequestAmountUSDC.add(secondRequestAmountUSDC)
-          );
+          .withArgs(matt.address, 3, secondRequestAmountOUSD, queuedAmount);
 
         await assertChangedData(
           dataBefore,
@@ -457,14 +245,11 @@ describe("OUSD Vault Redeem", function () {
           .connect(matt)
           .requestWithdrawal(secondRequestAmountOUSD);
 
+        const queuedAmount = usdcUnits("223"); // 100 + 100 + 5 + 18
+
         await expect(tx)
           .to.emit(vault, "WithdrawalRequested")
-          .withArgs(
-            matt.address,
-            1,
-            secondRequestAmountOUSD,
-            firstRequestAmountUSDC.add(secondRequestAmountUSDC)
-          );
+          .withArgs(matt.address, 3, secondRequestAmountOUSD, queuedAmount);
 
         await assertChangedData(
           dataBefore,
@@ -492,10 +277,12 @@ describe("OUSD Vault Redeem", function () {
 
         const tx = await vault.connect(josh).addWithdrawalQueueLiquidity();
 
+        const claimableAmount = usdcUnits("223"); // 100 + 100 + 5 + 18
+
         await expect(tx)
           .to.emit(vault, "WithdrawalClaimable")
           .withArgs(
-            firstRequestAmountUSDC.add(secondRequestAmountUSDC),
+            claimableAmount,
             firstRequestAmountUSDC.add(secondRequestAmountUSDC)
           );
 
@@ -521,12 +308,14 @@ describe("OUSD Vault Redeem", function () {
         const fixtureWithUser = { ...fixture, user: josh };
         await vault.connect(daniel).requestWithdrawal(firstRequestAmountOUSD);
         await vault.connect(josh).requestWithdrawal(secondRequestAmountOUSD);
-        const requestId = 1; // ids start at 0 so the second request is at index 1
+        const requestId = 3; // ids start at 0 so the fourth request is at index 3. Two in set setup and two here.
         const dataBefore = await snapData(fixtureWithUser);
 
         await advanceTime(delayPeriod); // Advance in time to ensure time delay between request and claim.
 
         const tx = await vault.connect(josh).claimWithdrawal(requestId);
+
+        const claimableAmount = usdcUnits("223"); // 100 + 100 + 5 + 18
 
         await expect(tx)
           .to.emit(vault, "WithdrawalClaimed")
@@ -534,7 +323,7 @@ describe("OUSD Vault Redeem", function () {
         await expect(tx)
           .to.emit(vault, "WithdrawalClaimable")
           .withArgs(
-            firstRequestAmountUSDC.add(secondRequestAmountUSDC),
+            claimableAmount,
             firstRequestAmountUSDC.add(secondRequestAmountUSDC)
           );
 
@@ -564,18 +353,20 @@ describe("OUSD Vault Redeem", function () {
 
         await advanceTime(delayPeriod); // Advance in time to ensure time delay between request and claim.
 
-        const tx = await vault.connect(matt).claimWithdrawals([0, 1]);
+        const tx = await vault.connect(matt).claimWithdrawals([2, 3]);
+
+        const claimableAmount = usdcUnits("223"); // 100 + 100 + 5 + 18
 
         await expect(tx)
           .to.emit(vault, "WithdrawalClaimed")
-          .withArgs(matt.address, 0, firstRequestAmountOUSD);
+          .withArgs(matt.address, 2, firstRequestAmountOUSD);
         await expect(tx)
           .to.emit(vault, "WithdrawalClaimed")
-          .withArgs(matt.address, 1, secondRequestAmountOUSD);
+          .withArgs(matt.address, 3, secondRequestAmountOUSD);
         await expect(tx)
           .to.emit(vault, "WithdrawalClaimable")
           .withArgs(
-            firstRequestAmountUSDC.add(secondRequestAmountUSDC),
+            claimableAmount,
             firstRequestAmountUSDC.add(secondRequestAmountUSDC)
           );
 
@@ -616,11 +407,11 @@ describe("OUSD Vault Redeem", function () {
 
         const ousdTotalSupply = await ousd.totalSupply();
         await advanceTime(delayPeriod); // Advance in time to ensure time delay between request and claim.
-        const tx = await vault.connect(matt).claimWithdrawal(0); // Claim withdrawal for 50% of the supply
+        const tx = await vault.connect(matt).claimWithdrawal(2); // Claim withdrawal for 50% of the supply
 
         await expect(tx)
           .to.emit(vault, "WithdrawalClaimed")
-          .withArgs(matt.address, 0, ousdUnits("30"));
+          .withArgs(matt.address, 2, ousdUnits("30"));
 
         await expect(ousdTotalSupply).to.equal(await ousd.totalSupply());
         await expect(totalValueAfter).to.equal(await vault.totalValue());
@@ -632,7 +423,7 @@ describe("OUSD Vault Redeem", function () {
 
         // Daniel requests 5 OUSD to be withdrawn
         await vault.connect(daniel).requestWithdrawal(firstRequestAmountOUSD);
-        const requestId = 0;
+        const requestId = 2;
 
         // Daniel claimWithdraw request in the same block as the request
         const tx = vault.connect(daniel).claimWithdrawal(requestId);
@@ -664,7 +455,7 @@ describe("OUSD Vault Redeem", function () {
         await advanceTime(delayPeriod); // Advance in time to ensure time delay between request and claim.
 
         // Claim the withdrawal
-        const tx = vault.connect(daniel).claimWithdrawal(0);
+        const tx = vault.connect(daniel).claimWithdrawal(2);
 
         await expect(tx).to.revertedWith("Backing supply liquidity error");
       });
@@ -682,7 +473,7 @@ describe("OUSD Vault Redeem", function () {
         await advanceTime(delayPeriod); // Advance in time to ensure time delay between request and claim.
 
         // Claim the withdrawal
-        const tx = vault.connect(matt).claimWithdrawals([0, 1]);
+        const tx = vault.connect(matt).claimWithdrawals([2, 3]);
 
         await expect(tx).to.revertedWith("Backing supply liquidity error");
       });
@@ -796,11 +587,12 @@ describe("OUSD Vault Redeem", function () {
 
           await advanceTime(delayPeriod); // Advance in time to ensure time delay between request and claim.
 
-          const tx = await vault.connect(daniel).claimWithdrawal(0);
+          const requestId = 2;
+          const tx = await vault.connect(daniel).claimWithdrawal(requestId);
 
           await expect(tx)
             .to.emit(vault, "WithdrawalClaimed")
-            .withArgs(daniel.address, 0, firstRequestAmountOUSD);
+            .withArgs(daniel.address, requestId, firstRequestAmountOUSD);
 
           await assertChangedData(
             dataBefore,
@@ -836,11 +628,12 @@ describe("OUSD Vault Redeem", function () {
 
           await advanceTime(delayPeriod); // Advance in time to ensure time delay between request and claim.
 
-          const tx = await vault.connect(matt).claimWithdrawal(2);
+          const requestId = 4;
+          const tx = await vault.connect(matt).claimWithdrawal(requestId);
 
           await expect(tx)
             .to.emit(vault, "WithdrawalClaimed")
-            .withArgs(matt.address, 2, requestAmount);
+            .withArgs(matt.address, requestId, requestAmount);
 
           await assertChangedData(
             dataBefore,
@@ -868,7 +661,7 @@ describe("OUSD Vault Redeem", function () {
 
           await advanceTime(delayPeriod); // Advance in time to ensure time delay between request and claim.
 
-          const tx = vault.connect(matt).claimWithdrawal(2);
+          const tx = vault.connect(matt).claimWithdrawal(4);
           await expect(tx).to.be.revertedWith("Queue pending liquidity");
         });
         it("Should claim a new request after withdraw from strategy adds enough liquidity", async () => {
@@ -915,7 +708,7 @@ describe("OUSD Vault Redeem", function () {
 
           await advanceTime(delayPeriod); // Advance in time to ensure time delay between request and claim.
 
-          await vault.connect(matt).claimWithdrawal(2);
+          await vault.connect(matt).claimWithdrawal(4);
         });
         it("Should claim a new request after withdrawAllFromStrategy adds enough liquidity", async () => {
           const { vault, daniel, matt, strategist, usdc } = fixture;
@@ -959,7 +752,7 @@ describe("OUSD Vault Redeem", function () {
 
           await advanceTime(delayPeriod); // Advance in time to ensure time delay between request and claim.
 
-          await vault.connect(matt).claimWithdrawal(2);
+          await vault.connect(matt).claimWithdrawal(4);
         });
         it("Should claim a new request after withdrawAll from strategies adds enough liquidity", async () => {
           const { vault, daniel, matt, strategist, usdc } = fixture;
@@ -1001,7 +794,7 @@ describe("OUSD Vault Redeem", function () {
 
           await advanceTime(delayPeriod); // Advance in time to ensure time delay between request and claim.
 
-          await vault.connect(matt).claimWithdrawal(2);
+          await vault.connect(matt).claimWithdrawal(4);
         });
         it("Fail to claim a new request after mint with NOT enough liquidity", async () => {
           const { vault, daniel, matt, usdc } = fixture;
@@ -1021,7 +814,7 @@ describe("OUSD Vault Redeem", function () {
 
           await advanceTime(delayPeriod); // Advance in time to ensure time delay between request and claim.
 
-          const tx = vault.connect(matt).claimWithdrawal(2);
+          const tx = vault.connect(matt).claimWithdrawal(4);
           await expect(tx).to.be.revertedWith("Queue pending liquidity");
         });
         it("Should claim a new request after mint adds enough liquidity", async () => {
@@ -1067,7 +860,7 @@ describe("OUSD Vault Redeem", function () {
 
           await advanceTime(delayPeriod); // Advance in time to ensure time delay between request and claim.
 
-          await vault.connect(matt).claimWithdrawal(2);
+          await vault.connect(matt).claimWithdrawal(4);
         });
       });
 
@@ -1125,8 +918,8 @@ describe("OUSD Vault Redeem", function () {
         await vault.connect(daniel).requestWithdrawal(ousdUnits("2"));
         await vault.connect(josh).requestWithdrawal(ousdUnits("3"));
         await advanceTime(delayPeriod); // Advance in time to ensure time delay between request and claim.
-        await vault.connect(daniel).claimWithdrawal(0);
-        await vault.connect(josh).claimWithdrawal(1);
+        await vault.connect(daniel).claimWithdrawal(2);
+        await vault.connect(josh).claimWithdrawal(3);
 
         // Deploy a mock strategy
         mockStrategy = await deployWithConfirmation("MockStrategy");
@@ -1156,7 +949,7 @@ describe("OUSD Vault Redeem", function () {
         it("a previously claimed withdrawal", async () => {
           const { vault, daniel } = fixture;
 
-          const tx = vault.connect(daniel).claimWithdrawal(0);
+          const tx = vault.connect(daniel).claimWithdrawal(2);
 
           await expect(tx).to.be.revertedWith("Already claimed");
         });
@@ -1173,7 +966,7 @@ describe("OUSD Vault Redeem", function () {
         it("the first withdrawal request in the queue before 30 minutes", async () => {
           const { vault, daniel } = fixture;
 
-          const tx = vault.connect(daniel).claimWithdrawal(2);
+          const tx = vault.connect(daniel).claimWithdrawal(4);
 
           await expect(tx).to.be.revertedWith("Claim delay not met");
         });
@@ -1186,7 +979,7 @@ describe("OUSD Vault Redeem", function () {
         it("Fail to claim the first withdrawal with wrong withdrawer", async () => {
           const { vault, matt } = fixture;
 
-          const tx = vault.connect(matt).claimWithdrawal(2);
+          const tx = vault.connect(matt).claimWithdrawal(4);
 
           await expect(tx).to.be.revertedWith("Not requester");
         });
@@ -1195,11 +988,12 @@ describe("OUSD Vault Redeem", function () {
           const fixtureWithUser = { ...fixture, user: daniel };
           const dataBefore = await snapData(fixtureWithUser);
 
-          const tx = await vault.connect(daniel).claimWithdrawal(2);
+          const requestId = 4;
+          const tx = await vault.connect(daniel).claimWithdrawal(requestId);
 
           await expect(tx)
             .to.emit(vault, "WithdrawalClaimed")
-            .withArgs(daniel.address, 2, ousdUnits("4"));
+            .withArgs(daniel.address, requestId, ousdUnits("4"));
 
           await assertChangedData(
             dataBefore,
@@ -1221,14 +1015,14 @@ describe("OUSD Vault Redeem", function () {
         it("Fail to claim the second withdrawal request in the queue after 30 minutes", async () => {
           const { vault, josh } = fixture;
 
-          const tx = vault.connect(josh).claimWithdrawal(3);
+          const tx = vault.connect(josh).claimWithdrawal(5);
 
           await expect(tx).to.be.revertedWith("Queue pending liquidity");
         });
         it("Fail to claim the last (3rd) withdrawal request in the queue", async () => {
           const { vault, matt } = fixture;
 
-          const tx = vault.connect(matt).claimWithdrawal(4);
+          const tx = vault.connect(matt).claimWithdrawal(6);
 
           await expect(tx).to.be.revertedWith("Queue pending liquidity");
         });
@@ -1248,17 +1042,17 @@ describe("OUSD Vault Redeem", function () {
           const fixtureWithUser = { ...fixture, user: daniel };
           const dataBefore = await snapData(fixtureWithUser);
 
-          const tx1 = await vault.connect(daniel).claimWithdrawal(2);
+          const tx1 = await vault.connect(daniel).claimWithdrawal(4);
 
           await expect(tx1)
             .to.emit(vault, "WithdrawalClaimed")
-            .withArgs(daniel.address, 2, ousdUnits("4"));
+            .withArgs(daniel.address, 4, ousdUnits("4"));
 
-          const tx2 = await vault.connect(josh).claimWithdrawal(3);
+          const tx2 = await vault.connect(josh).claimWithdrawal(5);
 
           await expect(tx2)
             .to.emit(vault, "WithdrawalClaimed")
-            .withArgs(josh.address, 3, ousdUnits("12"));
+            .withArgs(josh.address, 5, ousdUnits("12"));
 
           await assertChangedData(
             dataBefore,
@@ -1430,8 +1224,8 @@ describe("OUSD Vault Redeem", function () {
         await advanceTime(delayPeriod); // Advance in time to ensure time delay between request and claim.
 
         // Claim 10 + 20 = 30 USDC from Vault
-        await vault.connect(daniel).claimWithdrawal(0);
-        await vault.connect(josh).claimWithdrawal(1);
+        await vault.connect(daniel).claimWithdrawal(2);
+        await vault.connect(josh).claimWithdrawal(3);
       });
       it("Should allow the last user to request the remaining 10 USDC", async () => {
         const { vault, matt } = fixture;
@@ -1440,9 +1234,10 @@ describe("OUSD Vault Redeem", function () {
 
         const tx = await vault.connect(matt).requestWithdrawal(ousdUnits("10"));
 
+        const queuedAmount = usdcUnits("240"); // 110 + 100 + 10 + 20 + 10
         await expect(tx)
           .to.emit(vault, "WithdrawalRequested")
-          .withArgs(matt.address, 2, ousdUnits("10"), usdcUnits("40"));
+          .withArgs(matt.address, 4, ousdUnits("10"), queuedAmount);
 
         await assertChangedData(
           dataBefore,
@@ -1469,11 +1264,11 @@ describe("OUSD Vault Redeem", function () {
 
         const dataBefore = await snapData(fixtureWithUser);
 
-        const tx = await vault.connect(matt).claimWithdrawal(2);
+        const tx = await vault.connect(matt).claimWithdrawal(4);
 
         await expect(tx)
           .to.emit(vault, "WithdrawalClaimed")
-          .withArgs(matt.address, 2, ousdUnits("10"));
+          .withArgs(matt.address, 4, ousdUnits("10"));
 
         await assertChangedData(
           dataBefore,
@@ -1523,11 +1318,11 @@ describe("OUSD Vault Redeem", function () {
         const fixtureWithUser = { ...fixture, user: matt };
         const dataBefore = await snapData(fixtureWithUser);
 
-        const tx = await vault.connect(matt).claimWithdrawal(0);
+        const tx = await vault.connect(matt).claimWithdrawal(2);
 
         await expect(tx)
           .to.emit(vault, "WithdrawalClaimed")
-          .withArgs(matt.address, 0, ousdUnits("40"));
+          .withArgs(matt.address, 2, ousdUnits("40"));
 
         await assertChangedData(
           dataBefore,
@@ -1552,13 +1347,13 @@ describe("OUSD Vault Redeem", function () {
         await vault.connect(josh).requestWithdrawal(ousdUnits("20"));
         await advanceTime(delayPeriod); // Advance in time to ensure time delay between request and claim.
 
-        const tx = await vault.connect(josh).claimWithdrawal(1);
+        const tx = await vault.connect(josh).claimWithdrawal(3);
 
         await expect(tx).to.emit(vault, "WithdrawalClaimed");
       });
       it("Should allow user to perform a new request and claim exactly the USDC available", async () => {
         const { vault, ousd, josh, matt, daniel } = fixture;
-        await vault.connect(matt).claimWithdrawal(0);
+        await vault.connect(matt).claimWithdrawal(2);
         // All user give OUSD to another user
         await ousd.connect(josh).transfer(matt.address, ousdUnits("20"));
         await ousd.connect(daniel).transfer(matt.address, ousdUnits("10"));
@@ -1571,11 +1366,11 @@ describe("OUSD Vault Redeem", function () {
 
         const dataBefore = await snapData(fixtureWithUser);
 
-        const tx = await vault.connect(matt).claimWithdrawal(1);
+        const tx = await vault.connect(matt).claimWithdrawal(3);
 
         await expect(tx)
           .to.emit(vault, "WithdrawalClaimed")
-          .withArgs(matt.address, 1, ousdUnits("60"));
+          .withArgs(matt.address, 3, ousdUnits("60"));
 
         await assertChangedData(
           dataBefore,
@@ -1596,7 +1391,7 @@ describe("OUSD Vault Redeem", function () {
       });
       it("Shouldn't allow user to perform a new request and claim more than the USDC available", async () => {
         const { vault, ousd, usdc, josh, matt, daniel, governor } = fixture;
-        await vault.connect(matt).claimWithdrawal(0);
+        await vault.connect(matt).claimWithdrawal(2);
         // All user give OUSD to another user
         await ousd.connect(josh).transfer(matt.address, ousdUnits("20"));
         await ousd.connect(daniel).transfer(matt.address, ousdUnits("10"));
@@ -1608,7 +1403,7 @@ describe("OUSD Vault Redeem", function () {
           .connect(await impersonateAndFund(vault.address))
           .transfer(governor.address, usdcUnits("50")); // Vault loses 50 USDC
 
-        const tx = vault.connect(matt).claimWithdrawal(1);
+        const tx = vault.connect(matt).claimWithdrawal(3);
         await expect(tx).to.be.revertedWith("Queue pending liquidity");
       });
     });
@@ -1664,11 +1459,11 @@ describe("OUSD Vault Redeem", function () {
         const fixtureWithUser = { ...fixture, user: daniel };
         const dataBefore = await snapData(fixtureWithUser);
 
-        const tx = await vault.connect(daniel).claimWithdrawal(0);
+        const tx = await vault.connect(daniel).claimWithdrawal(2);
 
         expect(tx)
           .to.emit(vault, "WithdrawalClaimed")
-          .withArgs(daniel.address, 0, ousdUnits("10"));
+          .withArgs(daniel.address, 2, ousdUnits("10"));
 
         await assertChangedData(
           dataBefore,
@@ -1690,7 +1485,7 @@ describe("OUSD Vault Redeem", function () {
       it("Fail to allow second user to claim the request of 20 USDC, due to liquidity", async () => {
         const { vault, josh } = fixture;
 
-        const tx = vault.connect(josh).claimWithdrawal(1);
+        const tx = vault.connect(josh).claimWithdrawal(3);
 
         await expect(tx).to.be.revertedWith("Queue pending liquidity");
       });
@@ -1704,7 +1499,7 @@ describe("OUSD Vault Redeem", function () {
 
         expect(tx)
           .to.emit(vault, "WithdrawalRequested")
-          .withArgs(matt.address, 3, ousdUnits("10"), ousdUnits("50"));
+          .withArgs(matt.address, 5, ousdUnits("10"), ousdUnits("50"));
 
         await assertChangedData(
           dataBefore,
@@ -1743,7 +1538,7 @@ describe("OUSD Vault Redeem", function () {
 
           await advanceTime(delayPeriod);
 
-          const tx = vault.connect(daniel).claimWithdrawal(0);
+          const tx = vault.connect(daniel).claimWithdrawal(2);
 
           await expect(tx).to.be.revertedWith("Backing supply liquidity error");
         });
@@ -1770,11 +1565,11 @@ describe("OUSD Vault Redeem", function () {
         it("Should allow first user to claim the request of 10 USDC", async () => {
           const { vault, daniel } = fixture;
 
-          const tx = await vault.connect(daniel).claimWithdrawal(0);
+          const tx = await vault.connect(daniel).claimWithdrawal(2);
 
           expect(tx)
             .to.emit(vault, "WithdrawalClaimed")
-            .withArgs(daniel.address, 0, ousdUnits("10"));
+            .withArgs(daniel.address, 2, ousdUnits("10"));
         });
       });
     });
@@ -1858,7 +1653,7 @@ describe("OUSD Vault Redeem", function () {
 
           await advanceTime(delayPeriod);
 
-          const tx = vault.connect(daniel).claimWithdrawal(0);
+          const tx = vault.connect(daniel).claimWithdrawal(2);
 
           await expect(tx).to.be.revertedWith("Too many outstanding requests");
         });
@@ -1888,7 +1683,7 @@ describe("OUSD Vault Redeem", function () {
 
           await advanceTime(delayPeriod);
 
-          const tx = vault.connect(daniel).claimWithdrawal(0);
+          const tx = vault.connect(daniel).claimWithdrawal(2);
 
           await expect(tx).to.be.revertedWith("Too many outstanding requests");
         });
@@ -1926,7 +1721,7 @@ describe("OUSD Vault Redeem", function () {
 
           await advanceTime(delayPeriod);
 
-          const tx = vault.connect(daniel).claimWithdrawal(0);
+          const tx = vault.connect(daniel).claimWithdrawal(2);
 
           // diff = 1 total supply / 0.98 assets = 1.020408163265306122 which is > 1 maxSupplyDiff
           await expect(tx).to.be.revertedWith("Backing supply liquidity error");

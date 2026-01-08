@@ -12,6 +12,9 @@ const {
   isFork,
   expectApproxSupply,
 } = require("../helpers");
+const {
+  increase,
+} = require("@nomicfoundation/hardhat-network-helpers/dist/src/helpers/time");
 
 describe("Vault with Compound strategy", function () {
   if (isFork) {
@@ -90,10 +93,9 @@ describe("Vault with Compound strategy", function () {
     await expect(strategist).has.a.balanceOf("50.00", ousd);
 
     await ousd.connect(strategist).approve(vault.address, ousdUnits("40.0"));
-    await vault
-      .connect(strategist)
-      .redeem(ousdUnits("40.0"), usdcUnits("35.0"));
-    expect(await vault.redeemFeeBps()).to.be.eq(0);
+    await vault.connect(strategist).requestWithdrawal(ousdUnits("40.0"));
+    await increase(60 * 10); // Advance 10 minutes
+    await vault.connect(strategist).claimWithdrawal(0); // Assumes request ID is 0
 
     await expect(strategist).has.an.balanceOf("10", ousd);
     await expect(strategist).has.an.balanceOf("990.0", usdc);
@@ -372,7 +374,9 @@ describe("Vault with Compound strategy", function () {
           ousd
         );
         await vault.connect(governor).setStrategistAddr(user.address);
-        await vault.connect(user).redeem(ousdUnits(amount.toString()), 0);
+        await vault
+          .connect(user)
+          .requestWithdrawal(ousdUnits(amount.toString()));
         await expect(user).has.an.approxBalanceOf(start.toString(), ousd);
       }
     }

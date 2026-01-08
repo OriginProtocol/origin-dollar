@@ -216,7 +216,7 @@ const simpleOETHFixture = deployments.createFixture(async () => {
   };
 });
 
-const getVaultAndTokenConracts = async () => {
+const getVaultAndTokenContracts = async () => {
   const ousdProxy = await ethers.getContract("OUSDProxy");
   const vaultProxy = await ethers.getContract("VaultProxy");
 
@@ -453,9 +453,7 @@ const createAccountTypes = async ({ vault, ousd, ousdUnlocked, deploy }) => {
   // Allow matt to burn OUSD
   await vault.connect(governor).setStrategistAddr(matt.address);
   // matt burn remaining OUSD
-  await vault
-    .connect(matt)
-    .redeem(ousd.balanceOf(matt.address), ousdUnits("0"));
+  await vault.connect(matt).requestWithdrawal(ousd.balanceOf(matt.address));
 
   return {
     // StdRebasing account type:
@@ -523,7 +521,7 @@ const loadTokenTransferFixture = deployments.createFixture(async () => {
   const { governorAddr, multichainStrategistAddr, timelockAddr } =
     await getNamedAccounts();
 
-  const vaultAndTokenConracts = await getVaultAndTokenConracts();
+  const vaultAndTokenContracts = await getVaultAndTokenContracts();
 
   const signers = await hre.ethers.getSigners();
   let governor = signers[1];
@@ -531,15 +529,15 @@ const loadTokenTransferFixture = deployments.createFixture(async () => {
 
   log("Creating account types...");
   const accountTypes = await createAccountTypes({
-    ousd: vaultAndTokenConracts.ousd,
-    ousdUnlocked: vaultAndTokenConracts.ousdUnlocked,
-    vault: vaultAndTokenConracts.vault,
+    ousd: vaultAndTokenContracts.ousd,
+    ousdUnlocked: vaultAndTokenContracts.ousdUnlocked,
+    vault: vaultAndTokenContracts.vault,
     deploy: deployments.deploy,
   });
   log("Account types created.");
 
   return {
-    ...vaultAndTokenConracts,
+    ...vaultAndTokenContracts,
     ...accountTypes,
     governorAddr,
     strategistAddr: multichainStrategistAddr,
@@ -569,7 +567,7 @@ const defaultFixture = deployments.createFixture(async () => {
   const { governorAddr, multichainStrategistAddr, timelockAddr } =
     await getNamedAccounts();
 
-  const vaultAndTokenConracts = await getVaultAndTokenConracts();
+  const vaultAndTokenConracts = await getVaultAndTokenContracts();
 
   const harvesterProxy = await ethers.getContract("HarvesterProxy");
   const harvester = await ethers.getContractAt(
