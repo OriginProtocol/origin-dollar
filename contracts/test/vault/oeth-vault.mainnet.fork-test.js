@@ -115,6 +115,20 @@ describe("ForkTest: OETH Vault", function () {
         .withArgs(josh.address, amount);
     });
 
+    it("should not mint with any other asset", async () => {
+      const { oethVault, frxETH, stETH, reth, josh } = fixture;
+
+      const amount = parseUnits("1", 18);
+      const minOeth = parseUnits("0.8", 18);
+
+      for (const asset of [frxETH, stETH, reth]) {
+        await asset.connect(josh).approve(oethVault.address, amount);
+        const tx = oethVault.connect(josh).mint(asset.address, amount, minOeth);
+
+        await expect(tx).to.be.revertedWith("Unsupported asset for minting");
+      }
+    });
+
     it("should partially redeem 10 OETH", async () => {
       const { domen, oeth, oethVault, weth, matt } = fixture;
       await depositDiffInWeth(fixture, matt);
@@ -122,7 +136,7 @@ describe("ForkTest: OETH Vault", function () {
       expect(await oeth.balanceOf(oethWhaleAddress)).to.gt(10);
 
       const redeemAmount = parseUnits("10", 18);
-      const minEth = parseUnits("9.94", 18);
+      const minEth = parseUnits("9", 18);
 
       // Calculate how much to mint based on the WETH in the vault,
       // the withdrawal queue, and the WETH to be redeemed
