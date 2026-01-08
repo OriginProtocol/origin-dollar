@@ -27,6 +27,21 @@ abstract contract AbstractCCTPIntegrator is Governable, IMessageHandlerV2 {
     event CCTPMinFinalityThresholdSet(uint16 minFinalityThreshold);
     event CCTPFeePremiumBpsSet(uint16 feePremiumBps);
     event OperatorChanged(address operator);
+    event TokensBridged(
+        uint32 destinationDomain,
+        address peerStrategy,
+        address tokenAddress,
+        uint256 tokenAmount,
+        uint256 maxFee,
+        uint32 minFinalityThreshold,
+        bytes hookData
+    );
+    event MessageTransmitted(
+        uint32 destinationDomain,
+        address peerStrategy,
+        uint32 minFinalityThreshold,
+        bytes message
+    );
 
     // Message body V2 fields
     // Ref: https://developers.circle.com/cctp/technical-guide#message-body
@@ -359,6 +374,16 @@ abstract contract AbstractCCTPIntegrator is Governable, IMessageHandlerV2 {
             uint32(minFinalityThreshold),
             hookData
         );
+
+        emit TokensBridged(
+            peerDomainID,
+            peerStrategy,
+            usdcToken,
+            tokenAmount,
+            maxFee,
+            uint32(minFinalityThreshold),
+            hookData
+        );
     }
 
     /**
@@ -370,6 +395,13 @@ abstract contract AbstractCCTPIntegrator is Governable, IMessageHandlerV2 {
             peerDomainID,
             bytes32(uint256(uint160(peerStrategy))),
             bytes32(uint256(uint160(peerStrategy))),
+            uint32(minFinalityThreshold),
+            message
+        );
+
+        emit MessageTransmitted(
+            peerDomainID,
+            peerStrategy,
             uint32(minFinalityThreshold),
             message
         );
