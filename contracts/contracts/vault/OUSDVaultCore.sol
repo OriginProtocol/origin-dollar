@@ -8,7 +8,5 @@ import { VaultCore } from "./VaultCore.sol";
  * @author Origin Protocol Inc
  */
 contract OUSDVaultCore is VaultCore {
-    uint256[50] private __gap;
-
     constructor(address _usdc) VaultCore(_usdc) {}
 }
