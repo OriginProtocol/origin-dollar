@@ -31,10 +31,14 @@ module.exports = deployOnBase(
     );
 
     // 3. Connect to the Aerodrome AMO
-    const defaultStrategy = await ethers.getContract("AerodromeAMOStrategyProxy");
+    const defaultStrategy = await ethers.getContract(
+      "AerodromeAMOStrategyProxy"
+    );
 
-    // 4. Connect to Bridged WOETH Strategy 
-    const bridgedWOETHStrategy = await ethers.getContract("BridgedWOETHStrategyProxy");
+    // 4. Connect to Bridged WOETH Strategy
+    const bridgedWOETHStrategy = await ethers.getContract(
+      "BridgedWOETHStrategyProxy"
+    );
 
     // 5. Connect to oracle router
     const cOracleRouter = await ethers.getContract("OETHBaseOracleRouter");
