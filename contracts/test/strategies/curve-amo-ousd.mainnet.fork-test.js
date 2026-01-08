@@ -1019,7 +1019,7 @@ describe("Curve AMO OUSD strategy", function () {
         .connect(nick)["add_liquidity(uint256[],uint256)"]([amount, 0], 0);
     } else if (balanceHardAsset.sub(balanceOToken) < 0) {
       const amount = balanceOToken.sub(balanceHardAsset).div(1e12);
-      const balance = usdc.balanceOf(nick.address);
+      const balance = await usdc.balanceOf(nick.address);
       if (balance < amount) {
         await setERC20TokenBalance(nick.address, usdc, amount + balance, hre);
       }
