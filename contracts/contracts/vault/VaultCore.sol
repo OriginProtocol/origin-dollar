@@ -14,6 +14,7 @@ pragma solidity ^0.8.0;
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 
+import { IVault } from "../interfaces/IVault.sol";
 import { StableMath } from "../utils/StableMath.sol";
 
 import "./VaultInitializer.sol";
@@ -21,6 +22,11 @@ import "./VaultInitializer.sol";
 abstract contract VaultCore is VaultInitializer {
     using SafeERC20 for IERC20;
     using StableMath for uint256;
+    using SafeCast for uint256;
+
+    // ╔══════════════════════════════════════════════════════════════════════╗
+    // ║                              MODIFIERS                               ║
+    // ╚══════════════════════════════════════════════════════════════════════╝
 
     /**
      * @dev Verifies that the rebasing is not paused.
@@ -38,11 +44,27 @@ abstract contract VaultCore is VaultInitializer {
         _;
     }
 
+    /**
+     * @dev Verifies that the caller is the Governor or Strategist.
+     */
+    modifier onlyGovernorOrStrategist() {
+        require(
+            msg.sender == strategistAddr || isGovernor(),
+            "Caller is not the Strategist or Governor"
+        );
+        _;
+    }
+
+    // ╔══════════════════════════════════════════════════════════════════════╗
+    // ║                             CONSTRUCTOR                              ║
+    // ╚══════════════════════════════════════════════════════════════════════╝
+
     constructor(address _asset) VaultInitializer(_asset) {}
 
-    ////////////////////////////////////////////////////
-    ///                 MINT / BURN                  ///
-    ////////////////////////////////////////////////////
+    // ╔══════════════════════════════════════════════════════════════════════╗
+    // ║                           MINT/BURN/REBASE                           ║
+    // ╚══════════════════════════════════════════════════════════════════════╝
+
     /**
      * @notice Deposit a supported asset and mint OTokens.
      * @dev Deprecated: use `mint(uint256 _amount)` instead.
@@ -166,9 +188,324 @@ abstract contract VaultCore is VaultInitializer {
         oUSD.burn(msg.sender, _amount);
     }
 
-    ////////////////////////////////////////////////////
-    ///               ASYNC WITHDRAWALS              ///
-    ////////////////////////////////////////////////////
+    /**
+     * @notice Calculate the total value of asset held by the Vault and all
+     *      strategies and update the supply of OTokens.
+     */
+
+    function rebase() external virtual nonReentrant {
+        _rebase();
+    }
+
+    /**
+     * @dev Calculate the total value of asset held by the Vault and all
+     *      strategies and update the supply of OTokens, optionally sending a
+     *      portion of the yield to the trustee.
+     * @return totalUnits Total balance of Vault in units
+     */
+    function _rebase() internal whenNotRebasePaused returns (uint256) {
+        uint256 supply = oUSD.totalSupply();
+        uint256 vaultValue = _totalValue();
+        // If no supply yet, do not rebase
+        if (supply == 0) {
+            return vaultValue;
+        }
+
+        // Calculate yield and new supply
+        (uint256 yield, uint256 targetRate) = _nextYield(supply, vaultValue);
+        uint256 newSupply = supply + yield;
+        // Only rebase upwards and if we have enough backing funds
+        if (newSupply <= supply || newSupply > vaultValue) {
+            return vaultValue;
+        }
+
+        rebasePerSecondTarget = uint64(_min(targetRate, type(uint64).max));
+        lastRebase = uint64(block.timestamp); // Intentional cast
+
+        // Fee collection on yield
+        address _trusteeAddress = trusteeAddress; // gas savings
+        uint256 fee = 0;
+        if (_trusteeAddress != address(0)) {
+            fee = (yield * trusteeFeeBps) / 1e4;
+            if (fee > 0) {
+                require(fee < yield, "Fee must not be greater than yield");
+                oUSD.mint(_trusteeAddress, fee);
+            }
+        }
+        emit YieldDistribution(_trusteeAddress, yield, fee);
+
+        // Only ratchet OToken supply upwards
+        // Final check uses latest totalSupply
+        if (newSupply > oUSD.totalSupply()) {
+            oUSD.changeSupply(newSupply);
+        }
+        return vaultValue;
+    }
+
+    // ╔══════════════════════════════════════════════════════════════════════╗
+    // ║                       STRATEGIES & ALLOCATION                        ║
+    // ╚══════════════════════════════════════════════════════════════════════╝
+
+    /**
+     * @notice Add a strategy to the Vault.
+     * @param _addr Address of the strategy to add
+     */
+    function approveStrategy(address _addr) external onlyGovernor {
+        require(!strategies[_addr].isSupported, "Strategy already approved");
+        strategies[_addr] = Strategy({ isSupported: true, _deprecated: 0 });
+        allStrategies.push(_addr);
+        emit StrategyApproved(_addr);
+    }
+
+    /**
+     * @notice Remove a strategy from the Vault.
+     * @param _addr Address of the strategy to remove
+     */
+
+    function removeStrategy(address _addr) external onlyGovernor {
+        require(strategies[_addr].isSupported, "Strategy not approved");
+        require(defaultStrategy != _addr, "Strategy is default for asset");
+
+        // Initialize strategyIndex with out of bounds result so function will
+        // revert if no valid index found
+        uint256 stratCount = allStrategies.length;
+        uint256 strategyIndex = stratCount;
+        for (uint256 i = 0; i < stratCount; ++i) {
+            if (allStrategies[i] == _addr) {
+                strategyIndex = i;
+                break;
+            }
+        }
+
+        if (strategyIndex < stratCount) {
+            allStrategies[strategyIndex] = allStrategies[stratCount - 1];
+            allStrategies.pop();
+
+            // Mark the strategy as not supported
+            strategies[_addr].isSupported = false;
+
+            // Withdraw all asset
+            IStrategy strategy = IStrategy(_addr);
+            strategy.withdrawAll();
+
+            emit StrategyRemoved(_addr);
+        }
+    }
+
+    /**
+     * @notice Adds a strategy to the mint whitelist.
+     *          Reverts if strategy isn't approved on Vault.
+     * @param strategyAddr Strategy address
+     */
+    function addStrategyToMintWhitelist(address strategyAddr)
+        external
+        onlyGovernor
+    {
+        require(strategies[strategyAddr].isSupported, "Strategy not approved");
+
+        require(
+            !isMintWhitelistedStrategy[strategyAddr],
+            "Already whitelisted"
+        );
+
+        isMintWhitelistedStrategy[strategyAddr] = true;
+
+        emit StrategyAddedToMintWhitelist(strategyAddr);
+    }
+
+    /**
+     * @notice Removes a strategy from the mint whitelist.
+     * @param strategyAddr Strategy address
+     */
+    function removeStrategyFromMintWhitelist(address strategyAddr)
+        external
+        onlyGovernor
+    {
+        // Intentionally skipping `strategies.isSupported` check since
+        // we may wanna remove an address even after removing the strategy
+
+        require(isMintWhitelistedStrategy[strategyAddr], "Not whitelisted");
+
+        isMintWhitelistedStrategy[strategyAddr] = false;
+
+        emit StrategyRemovedFromMintWhitelist(strategyAddr);
+    }
+
+    /**
+     * @notice Deposit multiple asset from the vault into the strategy.
+     * @param _strategyToAddress Address of the Strategy to deposit asset into.
+     * @param _assets Array of asset address that will be deposited into the strategy.
+     * @param _amounts Array of amounts of each corresponding asset to deposit.
+     */
+    function depositToStrategy(
+        address _strategyToAddress,
+        address[] calldata _assets,
+        uint256[] calldata _amounts
+    ) external onlyGovernorOrStrategist nonReentrant {
+        _depositToStrategy(_strategyToAddress, _assets, _amounts);
+    }
+
+    function _depositToStrategy(
+        address _strategyToAddress,
+        address[] calldata _assets,
+        uint256[] calldata _amounts
+    ) internal virtual {
+        require(
+            strategies[_strategyToAddress].isSupported,
+            "Invalid to Strategy"
+        );
+        require(
+            _assets.length == 1 && _amounts.length == 1 && _assets[0] == asset,
+            "Only asset is supported"
+        );
+
+        // Check the there is enough asset to transfer once the backing
+        // asset reserved for the withdrawal queue is accounted for
+        require(
+            _amounts[0] <= _assetAvailable(),
+            "Not enough assets available"
+        );
+
+        // Send required amount of funds to the strategy
+        IERC20(asset).safeTransfer(_strategyToAddress, _amounts[0]);
+
+        // Deposit all the funds that have been sent to the strategy
+        IStrategy(_strategyToAddress).depositAll();
+    }
+
+    /**
+     * @notice Withdraw multiple asset from the strategy to the vault.
+     * @param _strategyFromAddress Address of the Strategy to withdraw asset from.
+     * @param _assets Array of asset address that will be withdrawn from the strategy.
+     * @param _amounts Array of amounts of each corresponding asset to withdraw.
+     */
+    function withdrawFromStrategy(
+        address _strategyFromAddress,
+        address[] calldata _assets,
+        uint256[] calldata _amounts
+    ) external onlyGovernorOrStrategist nonReentrant {
+        _withdrawFromStrategy(
+            address(this),
+            _strategyFromAddress,
+            _assets,
+            _amounts
+        );
+    }
+
+    /**
+     * @param _recipient can either be a strategy or the Vault
+     */
+    function _withdrawFromStrategy(
+        address _recipient,
+        address _strategyFromAddress,
+        address[] calldata _assets,
+        uint256[] calldata _amounts
+    ) internal virtual {
+        require(
+            strategies[_strategyFromAddress].isSupported,
+            "Invalid from Strategy"
+        );
+        require(_assets.length == _amounts.length, "Parameter length mismatch");
+
+        uint256 assetCount = _assets.length;
+        for (uint256 i = 0; i < assetCount; ++i) {
+            // Withdraw from Strategy to the recipient
+            IStrategy(_strategyFromAddress).withdraw(
+                _recipient,
+                _assets[i],
+                _amounts[i]
+            );
+        }
+
+        IVault(address(this)).addWithdrawalQueueLiquidity();
+    }
+
+    /**
+     * @notice Withdraws all asset from the strategy and sends asset to the Vault.
+     * @param _strategyAddr Strategy address.
+     */
+    function withdrawAllFromStrategy(address _strategyAddr)
+        external
+        onlyGovernorOrStrategist
+    {
+        _withdrawAllFromStrategy(_strategyAddr);
+    }
+
+    function _withdrawAllFromStrategy(address _strategyAddr) internal virtual {
+        require(
+            strategies[_strategyAddr].isSupported,
+            "Strategy is not supported"
+        );
+        IStrategy strategy = IStrategy(_strategyAddr);
+        strategy.withdrawAll();
+        IVault(address(this)).addWithdrawalQueueLiquidity();
+    }
+
+    /**
+     * @notice Withdraws all asset from all the strategies and sends asset to the Vault.
+     */
+    function withdrawAllFromStrategies() external onlyGovernorOrStrategist {
+        _withdrawAllFromStrategies();
+    }
+
+    function _withdrawAllFromStrategies() internal virtual {
+        uint256 stratCount = allStrategies.length;
+        for (uint256 i = 0; i < stratCount; ++i) {
+            IStrategy(allStrategies[i]).withdrawAll();
+        }
+        IVault(address(this)).addWithdrawalQueueLiquidity();
+    }
+
+    /**
+     * @notice Allocate unallocated funds on Vault to strategies.
+     */
+    function allocate() external virtual whenNotCapitalPaused nonReentrant {
+        // Add any unallocated asset to the withdrawal queue first
+        _addWithdrawalQueueLiquidity();
+
+        _allocate();
+    }
+
+    /**
+     * @dev Allocate asset (eg. WETH or USDC) to the default asset strategy
+     *          if there is excess to the Vault buffer.
+     * This is called from either `mint` or `allocate` and assumes `_addWithdrawalQueueLiquidity`
+     * has been called before this function.
+     */
+    function _allocate() internal virtual {
+        // No need to do anything if no default strategy for asset
+        address depositStrategyAddr = defaultStrategy;
+        if (depositStrategyAddr == address(0)) return;
+
+        uint256 assetAvailableInVault = _assetAvailable();
+        // No need to do anything if there isn't any asset in the vault to allocate
+        if (assetAvailableInVault == 0) return;
+
+        // Calculate the target buffer for the vault using the total supply
+        uint256 totalSupply = oUSD.totalSupply();
+        // Scaled to asset decimals
+        uint256 targetBuffer = totalSupply.mulTruncate(vaultBuffer).scaleBy(
+            assetDecimals,
+            18
+        );
+
+        // If available asset in the Vault is below or equal the target buffer then there's nothing to allocate
+        if (assetAvailableInVault <= targetBuffer) return;
+
+        // The amount of asset to allocate to the default strategy
+        uint256 allocateAmount = assetAvailableInVault - targetBuffer;
+
+        IStrategy strategy = IStrategy(depositStrategyAddr);
+        // Transfer asset to the strategy and call the strategy's deposit function
+        IERC20(asset).safeTransfer(address(strategy), allocateAmount);
+        strategy.deposit(asset, allocateAmount);
+
+        emit AssetAllocated(asset, depositStrategyAddr, allocateAmount);
+    }
+
+    // ╔══════════════════════════════════════════════════════════════════════╗
+    // ║                       ASYNCHRONOUS WITHDRAWALS                       ║
+    // ╚══════════════════════════════════════════════════════════════════════╝
     /**
      * @notice Request an asynchronous withdrawal of asset in exchange for OToken.
      * The OToken is burned on request and the asset is transferred to the withdrawer on claim.
@@ -344,6 +681,273 @@ abstract contract VaultCore is VaultInitializer {
         return request.amount;
     }
 
+    /**
+     * @notice Adds WETH to the withdrawal queue if there is a funding shortfall.
+     * @dev is called from the Native Staking strategy when validator withdrawals are processed.
+     * It also called before any WETH is allocated to a strategy.
+     */
+    function addWithdrawalQueueLiquidity() external {
+        _addWithdrawalQueueLiquidity();
+    }
+
+    /**
+     * @dev Adds asset (eg. WETH or USDC) to the withdrawal queue if there is a funding shortfall.
+     * This assumes 1 asset equal 1 corresponding OToken.
+     */
+    function _addWithdrawalQueueLiquidity()
+        internal
+        returns (uint256 addedClaimable)
+    {
+        WithdrawalQueueMetadata memory queue = withdrawalQueueMetadata;
+
+        // Check if the claimable asset is less than the queued amount
+        uint256 queueShortfall = queue.queued - queue.claimable;
+
+        // No need to do anything is the withdrawal queue is full funded
+        if (queueShortfall == 0) {
+            return 0;
+        }
+
+        uint256 assetBalance = IERC20(asset).balanceOf(address(this));
+
+        // Of the claimable withdrawal requests, how much is unclaimed?
+        // That is, the amount of asset that is currently allocated for the withdrawal queue
+        uint256 allocatedBaseAsset = queue.claimable - queue.claimed;
+
+        // If there is no unallocated asset then there is nothing to add to the queue
+        if (assetBalance <= allocatedBaseAsset) {
+            return 0;
+        }
+
+        uint256 unallocatedBaseAsset = assetBalance - allocatedBaseAsset;
+        // the new claimable amount is the smaller of the queue shortfall or unallocated asset
+        addedClaimable = queueShortfall < unallocatedBaseAsset
+            ? queueShortfall
+            : unallocatedBaseAsset;
+        uint256 newClaimable = queue.claimable + addedClaimable;
+
+        // Store the new claimable amount back to storage
+        withdrawalQueueMetadata.claimable = SafeCast.toUint128(newClaimable);
+
+        // emit a WithdrawalClaimable event
+        emit WithdrawalClaimable(newClaimable, addedClaimable);
+    }
+
+    // ╔══════════════════════════════════════════════════════════════════════╗
+    // ║                                ADMIN                                 ║
+    // ╚══════════════════════════════════════════════════════════════════════╝
+
+    /**
+     * @notice Set a buffer of asset to keep in the Vault to handle most
+     * redemptions without needing to spend gas unwinding asset from a Strategy.
+     * @param _vaultBuffer Percentage using 18 decimals. 100% = 1e18.
+     */
+    function setVaultBuffer(uint256 _vaultBuffer)
+        external
+        onlyGovernorOrStrategist
+    {
+        require(_vaultBuffer <= 1e18, "Invalid value");
+        vaultBuffer = _vaultBuffer;
+        emit VaultBufferUpdated(_vaultBuffer);
+    }
+
+    /**
+     * @notice Sets the minimum amount of OTokens in a mint to trigger an
+     * automatic allocation of funds afterwords.
+     * @param _threshold OToken amount with 18 fixed decimals.
+     */
+    function setAutoAllocateThreshold(uint256 _threshold)
+        external
+        onlyGovernor
+    {
+        autoAllocateThreshold = _threshold;
+        emit AllocateThresholdUpdated(_threshold);
+    }
+
+    /**
+     * @notice Set a minimum amount of OTokens in a mint or redeem that triggers a
+     * rebase
+     * @param _threshold OToken amount with 18 fixed decimals.
+     */
+    function setRebaseThreshold(uint256 _threshold) external onlyGovernor {
+        rebaseThreshold = _threshold;
+        emit RebaseThresholdUpdated(_threshold);
+    }
+
+    /**
+     * @notice Set address of Strategist
+     * @param _address Address of Strategist
+     */
+    function setStrategistAddr(address _address) external onlyGovernor {
+        strategistAddr = _address;
+        emit StrategistUpdated(_address);
+    }
+
+    /**
+     * @notice Set the default Strategy for asset, i.e. the one which
+     * the asset will be automatically allocated to and withdrawn from
+     * @param _strategy Address of the Strategy
+     */
+    function setDefaultStrategy(address _strategy)
+        external
+        onlyGovernorOrStrategist
+    {
+        emit DefaultStrategyUpdated(_strategy);
+        // If its a zero address being passed for the strategy we are removing
+        // the default strategy
+        if (_strategy != address(0)) {
+            // Make sure the strategy meets some criteria
+            require(strategies[_strategy].isSupported, "Strategy not approved");
+            require(
+                IStrategy(_strategy).supportsAsset(asset),
+                "Asset not supported by Strategy"
+            );
+        }
+        defaultStrategy = _strategy;
+    }
+
+    /**
+     * @notice Changes the async withdrawal claim period for OETH & superOETHb
+     * @param _delay Delay period (should be between 10 mins to 7 days).
+     *          Set to 0 to disable async withdrawals
+     */
+    function setWithdrawalClaimDelay(uint256 _delay) external onlyGovernor {
+        require(
+            _delay == 0 || (_delay >= 10 minutes && _delay <= 15 days),
+            "Invalid claim delay period"
+        );
+        withdrawalClaimDelay = _delay;
+        emit WithdrawalClaimDelayUpdated(_delay);
+    }
+
+    /**
+     * @notice Set a yield streaming max rate. This spreads yield over
+     * time if it is above the max rate.
+     * @param yearlyApr in 1e18 notation. 3 * 1e18 = 3% APR
+     */
+    function setRebaseRateMax(uint256 yearlyApr)
+        external
+        onlyGovernorOrStrategist
+    {
+        // The old yield will be at the old rate
+        IVault(address(this)).rebase();
+        // Change the rate
+        uint256 newPerSecond = yearlyApr / 100 / 365 days;
+        require(newPerSecond <= MAX_REBASE_PER_SECOND, "Rate too high");
+        rebasePerSecondMax = newPerSecond.toUint64();
+        emit RebasePerSecondMaxChanged(newPerSecond);
+    }
+
+    /**
+     * @notice Set the drip duration period
+     * @param _dripDuration Time in seconds to target a constant yield rate
+     */
+    function setDripDuration(uint256 _dripDuration)
+        external
+        onlyGovernorOrStrategist
+    {
+        // The old yield will be at the old rate
+        IVault(address(this)).rebase();
+        dripDuration = _dripDuration.toUint64();
+        emit DripDurationChanged(_dripDuration);
+    }
+
+    /**
+     * @notice Sets the maximum allowable difference between
+     * total supply and asset' value.
+     */
+    function setMaxSupplyDiff(uint256 _maxSupplyDiff) external onlyGovernor {
+        maxSupplyDiff = _maxSupplyDiff;
+        emit MaxSupplyDiffChanged(_maxSupplyDiff);
+    }
+
+    /**
+     * @notice Sets the trusteeAddress that can receive a portion of yield.
+     *      Setting to the zero address disables this feature.
+     */
+    function setTrusteeAddress(address _address) external onlyGovernor {
+        trusteeAddress = _address;
+        emit TrusteeAddressChanged(_address);
+    }
+
+    /**
+     * @notice Sets the TrusteeFeeBps to the percentage of yield that should be
+     *      received in basis points.
+     */
+    function setTrusteeFeeBps(uint256 _basis) external onlyGovernor {
+        require(_basis <= 5000, "basis cannot exceed 50%");
+        trusteeFeeBps = _basis;
+        emit TrusteeFeeBpsChanged(_basis);
+    }
+
+    /**
+     * @notice Set the deposit paused flag to true to prevent rebasing.
+     */
+    function pauseRebase() external onlyGovernorOrStrategist {
+        rebasePaused = true;
+        emit RebasePaused();
+    }
+
+    /**
+     * @notice Set the deposit paused flag to true to allow rebasing.
+     */
+    function unpauseRebase() external onlyGovernorOrStrategist {
+        rebasePaused = false;
+        emit RebaseUnpaused();
+    }
+
+    /**
+     * @notice Set the deposit paused flag to true to prevent capital movement.
+     */
+    function pauseCapital() external onlyGovernorOrStrategist {
+        capitalPaused = true;
+        emit CapitalPaused();
+    }
+
+    /**
+     * @notice Set the deposit paused flag to false to enable capital movement.
+     */
+    function unpauseCapital() external onlyGovernorOrStrategist {
+        capitalPaused = false;
+        emit CapitalUnpaused();
+    }
+
+    /**
+     * @notice Transfer token to governor. Intended for recovering tokens stuck in
+     *      contract, i.e. mistaken sends.
+     * @param _asset Address for the asset
+     * @param _amount Amount of the asset to transfer
+     */
+    function transferToken(address _asset, uint256 _amount)
+        external
+        onlyGovernor
+    {
+        require(asset != _asset, "Only unsupported asset");
+        IERC20(_asset).safeTransfer(governor(), _amount);
+    }
+
+    // ╔══════════════════════════════════════════════════════════════════════╗
+    // ║                            INTERNAL LOGIC                            ║
+    // ╚══════════════════════════════════════════════════════════════════════╝
+
+    /**
+     * @dev Calculate how much asset (eg. WETH or USDC) in the vault is not reserved for the withdrawal queue.
+     * That is, it is available to be redeemed or deposited into a strategy.
+     */
+    function _assetAvailable() internal view returns (uint256 assetAvailable) {
+        WithdrawalQueueMetadata memory queue = withdrawalQueueMetadata;
+
+        // The amount of asset that is still to be claimed in the withdrawal queue
+        uint256 outstandingWithdrawals = queue.queued - queue.claimed;
+
+        // The amount of sitting in asset in the vault
+        uint256 assetBalance = IERC20(asset).balanceOf(address(this));
+        // If there is not enough asset in the vault to cover the outstanding withdrawals
+        if (assetBalance <= outstandingWithdrawals) return 0;
+
+        return assetBalance - outstandingWithdrawals;
+    }
+
     function _postRedeem(uint256 _amount) internal {
         // Until we can prove that we won't affect the prices of our asset
         // by withdrawing them, this should be here.
@@ -371,116 +975,6 @@ abstract contract VaultCore is VaultInitializer {
                 "Backing supply liquidity error"
             );
         }
-    }
-
-    /**
-     * @notice Allocate unallocated funds on Vault to strategies.
-     */
-    function allocate() external virtual whenNotCapitalPaused nonReentrant {
-        // Add any unallocated asset to the withdrawal queue first
-        _addWithdrawalQueueLiquidity();
-
-        _allocate();
-    }
-
-    /**
-     * @dev Allocate asset (eg. WETH or USDC) to the default asset strategy
-     *          if there is excess to the Vault buffer.
-     * This is called from either `mint` or `allocate` and assumes `_addWithdrawalQueueLiquidity`
-     * has been called before this function.
-     */
-    function _allocate() internal virtual {
-        // No need to do anything if no default strategy for asset
-        address depositStrategyAddr = defaultStrategy;
-        if (depositStrategyAddr == address(0)) return;
-
-        uint256 assetAvailableInVault = _assetAvailable();
-        // No need to do anything if there isn't any asset in the vault to allocate
-        if (assetAvailableInVault == 0) return;
-
-        // Calculate the target buffer for the vault using the total supply
-        uint256 totalSupply = oUSD.totalSupply();
-        // Scaled to asset decimals
-        uint256 targetBuffer = totalSupply.mulTruncate(vaultBuffer).scaleBy(
-            assetDecimals,
-            18
-        );
-
-        // If available asset in the Vault is below or equal the target buffer then there's nothing to allocate
-        if (assetAvailableInVault <= targetBuffer) return;
-
-        // The amount of asset to allocate to the default strategy
-        uint256 allocateAmount = assetAvailableInVault - targetBuffer;
-
-        IStrategy strategy = IStrategy(depositStrategyAddr);
-        // Transfer asset to the strategy and call the strategy's deposit function
-        IERC20(asset).safeTransfer(address(strategy), allocateAmount);
-        strategy.deposit(asset, allocateAmount);
-
-        emit AssetAllocated(asset, depositStrategyAddr, allocateAmount);
-    }
-
-    /**
-     * @notice Calculate the total value of asset held by the Vault and all
-     *      strategies and update the supply of OTokens.
-     */
-    function rebase() external virtual nonReentrant {
-        _rebase();
-    }
-
-    /**
-     * @dev Calculate the total value of asset held by the Vault and all
-     *      strategies and update the supply of OTokens, optionally sending a
-     *      portion of the yield to the trustee.
-     * @return totalUnits Total balance of Vault in units
-     */
-    function _rebase() internal whenNotRebasePaused returns (uint256) {
-        uint256 supply = oUSD.totalSupply();
-        uint256 vaultValue = _totalValue();
-        // If no supply yet, do not rebase
-        if (supply == 0) {
-            return vaultValue;
-        }
-
-        // Calculate yield and new supply
-        (uint256 yield, uint256 targetRate) = _nextYield(supply, vaultValue);
-        uint256 newSupply = supply + yield;
-        // Only rebase upwards and if we have enough backing funds
-        if (newSupply <= supply || newSupply > vaultValue) {
-            return vaultValue;
-        }
-
-        rebasePerSecondTarget = uint64(_min(targetRate, type(uint64).max));
-        lastRebase = uint64(block.timestamp); // Intentional cast
-
-        // Fee collection on yield
-        address _trusteeAddress = trusteeAddress; // gas savings
-        uint256 fee = 0;
-        if (_trusteeAddress != address(0)) {
-            fee = (yield * trusteeFeeBps) / 1e4;
-            if (fee > 0) {
-                require(fee < yield, "Fee must not be greater than yield");
-                oUSD.mint(_trusteeAddress, fee);
-            }
-        }
-        emit YieldDistribution(_trusteeAddress, yield, fee);
-
-        // Only ratchet OToken supply upwards
-        // Final check uses latest totalSupply
-        if (newSupply > oUSD.totalSupply()) {
-            oUSD.changeSupply(newSupply);
-        }
-        return vaultValue;
-    }
-
-    /**
-     * @notice Calculates the amount that would rebase at next rebase.
-     * This is before any fees.
-     * @return yield amount of expected yield
-     */
-    function previewYield() external view returns (uint256 yield) {
-        (yield, ) = _nextYield(oUSD.totalSupply(), _totalValue());
-        return yield;
     }
 
     function _nextYield(uint256 supply, uint256 vaultValue)
@@ -526,6 +1020,28 @@ abstract contract VaultCore is VaultInitializer {
         yield = _min(yield, (rebasing * MAX_REBASE) / 1e18);
 
         return (yield, targetRate);
+    }
+
+    function _min(uint256 a, uint256 b) internal pure returns (uint256) {
+        return a < b ? a : b;
+    }
+
+    function _max(uint256 a, uint256 b) internal pure returns (uint256) {
+        return a > b ? a : b;
+    }
+
+    // ╔══════════════════════════════════════════════════════════════════════╗
+    // ║                                VIEWS                                 ║
+    // ╚══════════════════════════════════════════════════════════════════════╝
+
+    /**
+     * @notice Calculates the amount that would rebase at next rebase.
+     * This is before any fees.
+     * @return yield amount of expected yield
+     */
+    function previewYield() external view returns (uint256 yield) {
+        (yield, ) = _nextYield(oUSD.totalSupply(), _totalValue());
+        return yield;
     }
 
     /**
@@ -624,80 +1140,6 @@ abstract contract VaultCore is VaultInitializer {
     }
 
     /**
-     * @notice Adds WETH to the withdrawal queue if there is a funding shortfall.
-     * @dev is called from the Native Staking strategy when validator withdrawals are processed.
-     * It also called before any WETH is allocated to a strategy.
-     */
-    function addWithdrawalQueueLiquidity() external {
-        _addWithdrawalQueueLiquidity();
-    }
-
-    /**
-     * @dev Adds asset (eg. WETH or USDC) to the withdrawal queue if there is a funding shortfall.
-     * This assumes 1 asset equal 1 corresponding OToken.
-     */
-    function _addWithdrawalQueueLiquidity()
-        internal
-        returns (uint256 addedClaimable)
-    {
-        WithdrawalQueueMetadata memory queue = withdrawalQueueMetadata;
-
-        // Check if the claimable asset is less than the queued amount
-        uint256 queueShortfall = queue.queued - queue.claimable;
-
-        // No need to do anything is the withdrawal queue is full funded
-        if (queueShortfall == 0) {
-            return 0;
-        }
-
-        uint256 assetBalance = IERC20(asset).balanceOf(address(this));
-
-        // Of the claimable withdrawal requests, how much is unclaimed?
-        // That is, the amount of asset that is currently allocated for the withdrawal queue
-        uint256 allocatedBaseAsset = queue.claimable - queue.claimed;
-
-        // If there is no unallocated asset then there is nothing to add to the queue
-        if (assetBalance <= allocatedBaseAsset) {
-            return 0;
-        }
-
-        uint256 unallocatedBaseAsset = assetBalance - allocatedBaseAsset;
-        // the new claimable amount is the smaller of the queue shortfall or unallocated asset
-        addedClaimable = queueShortfall < unallocatedBaseAsset
-            ? queueShortfall
-            : unallocatedBaseAsset;
-        uint256 newClaimable = queue.claimable + addedClaimable;
-
-        // Store the new claimable amount back to storage
-        withdrawalQueueMetadata.claimable = SafeCast.toUint128(newClaimable);
-
-        // emit a WithdrawalClaimable event
-        emit WithdrawalClaimable(newClaimable, addedClaimable);
-    }
-
-    /**
-     * @dev Calculate how much asset (eg. WETH or USDC) in the vault is not reserved for the withdrawal queue.
-     * That is, it is available to be redeemed or deposited into a strategy.
-     */
-    function _assetAvailable() internal view returns (uint256 assetAvailable) {
-        WithdrawalQueueMetadata memory queue = withdrawalQueueMetadata;
-
-        // The amount of asset that is still to be claimed in the withdrawal queue
-        uint256 outstandingWithdrawals = queue.queued - queue.claimed;
-
-        // The amount of sitting in asset in the vault
-        uint256 assetBalance = IERC20(asset).balanceOf(address(this));
-        // If there is not enough asset in the vault to cover the outstanding withdrawals
-        if (assetBalance <= outstandingWithdrawals) return 0;
-
-        return assetBalance - outstandingWithdrawals;
-    }
-
-    /***************************************
-                    Utils
-    ****************************************/
-
-    /**
      * @notice Return the number of asset supported by the Vault.
      */
     function getAssetCount() public view returns (uint256) {
@@ -734,60 +1176,5 @@ abstract contract VaultCore is VaultInitializer {
      */
     function isSupportedAsset(address _asset) external view returns (bool) {
         return asset == _asset;
-    }
-
-    function ADMIN_IMPLEMENTATION() external view returns (address adminImpl) {
-        bytes32 slot = adminImplPosition;
-        // solhint-disable-next-line no-inline-assembly
-        assembly {
-            adminImpl := sload(slot)
-        }
-    }
-
-    /**
-     * @dev Falldown to the admin implementation
-     * @notice This is a catch all for all functions not declared in core
-     */
-    // solhint-disable-next-line no-complex-fallback
-    fallback() external {
-        bytes32 slot = adminImplPosition;
-        // solhint-disable-next-line no-inline-assembly
-        assembly {
-            // Copy msg.data. We take full control of memory in this inline assembly
-            // block because it will not return to Solidity code. We overwrite the
-            // Solidity scratch pad at memory position 0.
-            calldatacopy(0, 0, calldatasize())
-
-            // Call the implementation.
-            // out and outsize are 0 because we don't know the size yet.
-            let result := delegatecall(
-                gas(),
-                sload(slot),
-                0,
-                calldatasize(),
-                0,
-                0
-            )
-
-            // Copy the returned data.
-            returndatacopy(0, 0, returndatasize())
-
-            switch result
-            // delegatecall returns 0 on error.
-            case 0 {
-                revert(0, returndatasize())
-            }
-            default {
-                return(0, returndatasize())
-            }
-        }
-    }
-
-    function _min(uint256 a, uint256 b) internal pure returns (uint256) {
-        return a < b ? a : b;
-    }
-
-    function _max(uint256 a, uint256 b) internal pure returns (uint256) {
-        return a > b ? a : b;
     }
 }

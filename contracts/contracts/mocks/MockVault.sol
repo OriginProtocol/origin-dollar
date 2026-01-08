@@ -39,8 +39,4 @@ contract MockVault is VaultCore {
             return 0;
         }
     }
-
-    function setMaxSupplyDiff(uint256 _maxSupplyDiff) external onlyGovernor {
-        maxSupplyDiff = _maxSupplyDiff;
-    }
 }
