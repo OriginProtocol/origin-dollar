@@ -20,8 +20,6 @@ abstract contract VaultInitializer is VaultStorage {
         rebasePaused = false;
         capitalPaused = true;
 
-        // Initial redeem fee of 0 basis points
-        redeemFeeBps = 0;
         // Initial Vault buffer of 0%
         vaultBuffer = 0;
         // Initial allocate threshold of 25,000 OUSD

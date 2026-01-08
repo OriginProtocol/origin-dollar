@@ -8,11 +8,5 @@ import { VaultCore } from "./VaultCore.sol";
  * @author Origin Protocol Inc
  */
 contract OETHVaultCore is VaultCore {
-    // slither-disable-next-line constable-states
-    uint256 private _deprecated_wethAssetIndex;
-
-    // For future use (because OETHBaseVaultCore inherits from this)
-    uint256[50] private __gap;
-
     constructor(address _weth) VaultCore(_weth) {}
 }

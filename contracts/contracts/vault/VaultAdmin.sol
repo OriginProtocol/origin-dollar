@@ -36,17 +36,6 @@ abstract contract VaultAdmin is VaultStorage {
     /***************************************
                  Configuration
     ****************************************/
-
-    /**
-     * @notice Set a fee in basis points to be charged for a redeem.
-     * @param _redeemFeeBps Basis point fee to be charged
-     */
-    function setRedeemFeeBps(uint256 _redeemFeeBps) external onlyGovernor {
-        require(_redeemFeeBps <= 1000, "Redeem fee should not be over 10%");
-        redeemFeeBps = _redeemFeeBps;
-        emit RedeemFeeUpdated(_redeemFeeBps);
-    }
-
     /**
      * @notice Set a buffer of asset to keep in the Vault to handle most
      * redemptions without needing to spend gas unwinding asset from a Strategy.

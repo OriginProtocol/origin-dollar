@@ -174,26 +174,8 @@ describe("OETH Vault", function () {
     });
   });
 
-  describe("Redeem", () => {
-    it("Should return only WETH in redeem calculations", async () => {
-      const { oethVault, weth } = fixture;
-
-      const outputs = await oethVault.calculateRedeemOutputs(
-        oethUnits("1234.43")
-      );
-
-      const assets = await oethVault.getAllAssets();
-
-      expect(assets.length).to.equal(outputs.length);
-
-      for (let i = 0; i < assets.length; i++) {
-        expect(outputs[i]).to.equal(
-          assets[i] == weth.address ? oethUnits("1234.43") : "0"
-        );
-      }
-    });
-
-    it("Should update total supply correctly without redeem fee", async () => {
+  describe("async withdrawal", () => {
+    it("Should update total supply correctly", async () => {
       const { oethVault, oeth, weth, daniel } = fixture;
       await oethVault.connect(daniel).mint(weth.address, oethUnits("10"), "0");
 
@@ -201,7 +183,9 @@ describe("OETH Vault", function () {
       const vaultBalanceBefore = await weth.balanceOf(oethVault.address);
       const supplyBefore = await oeth.totalSupply();
 
-      await oethVault.connect(daniel).redeem(oethUnits("10"), "0");
+      await oethVault.connect(daniel).requestWithdrawal(oethUnits("10"));
+      await advanceTime(10 * 60); // 10 minutes
+      await oethVault.connect(daniel).claimWithdrawal(0);
 
       const userBalanceAfter = await weth.balanceOf(daniel.address);
       const vaultBalanceAfter = await weth.balanceOf(oethVault.address);
@@ -213,35 +197,7 @@ describe("OETH Vault", function () {
       expect(supplyBefore.sub(supplyAfter)).to.eq(oethUnits("10"));
     });
 
-    it("Should update total supply correctly with redeem fee", async () => {
-      const { oethVault, oeth, weth, daniel } = fixture;
-      await oethVault.connect(daniel).mint(weth.address, oethUnits("10"), "0");
-
-      await oethVault
-        .connect(await impersonateAndFund(await oethVault.governor()))
-        .setRedeemFeeBps(100);
-
-      const userBalanceBefore = await weth.balanceOf(daniel.address);
-      const vaultBalanceBefore = await weth.balanceOf(oethVault.address);
-      const supplyBefore = await oeth.totalSupply();
-
-      await oethVault.connect(daniel).redeem(oethUnits("10"), "0");
-
-      const userBalanceAfter = await weth.balanceOf(daniel.address);
-      const vaultBalanceAfter = await weth.balanceOf(oethVault.address);
-      const supplyAfter = await oeth.totalSupply();
-
-      // Make sure the total supply went down
-      expect(userBalanceAfter.sub(userBalanceBefore)).to.eq(
-        oethUnits("10").sub(oethUnits("0.1"))
-      );
-      expect(vaultBalanceBefore.sub(vaultBalanceAfter)).to.eq(
-        oethUnits("10").sub(oethUnits("0.1"))
-      );
-      expect(supplyBefore.sub(supplyAfter)).to.eq(oethUnits("10"));
-    });
-
-    it("Fail to redeem if not enough liquidity available in the vault", async () => {
+    it("Fail to claim if not enough liquidity available in the vault", async () => {
       const { oethVault, weth, domen, governor } = fixture;
 
       const mockStrategy = await deployWithConfirmation("MockStrategy");
@@ -258,29 +214,26 @@ describe("OETH Vault", function () {
       await oethVault.connect(domen).mint(weth.address, oethUnits("1.23"), "0");
 
       // Withdraw something more than what the Vault holds
-      const tx = oethVault.connect(domen).redeem(oethUnits("12.55"), "0");
+      await oethVault.connect(domen).requestWithdrawal(oethUnits("12.55"));
+      await advanceTime(10 * 60); // 10 minutes
 
-      await expect(tx).to.revertedWith("Liquidity error");
+      const tx = oethVault.connect(domen).claimWithdrawal(0);
+      await expect(tx).to.revertedWith("Queue pending liquidity");
     });
 
-    it("Should redeem zero amount without revert", async () => {
+    it("Should request withdrawal of zero amount without revert", async () => {
       const { oethVault, daniel } = fixture;
 
-      await oethVault.connect(daniel).redeem(0, 0);
+      await oethVault.connect(daniel).requestWithdrawal(0);
     });
 
-    it("Fail to redeem if not enough liquidity", async () => {
-      const { oethVault, daniel } = fixture;
-      const tx = oethVault
-        .connect(daniel)
-        .redeem(oethUnits("1023232323232"), "0");
-      await expect(tx).to.be.revertedWith("Liquidity error");
-    });
-    it("Should allow every user to redeem", async () => {
+    it("Should allow every user to withdraw", async () => {
       const { oethVault, weth, daniel } = fixture;
       await oethVault.connect(daniel).mint(weth.address, oethUnits("10"), "0");
 
-      await oethVault.connect(daniel).redeem(oethUnits("10"), oethUnits("0"));
+      await oethVault.connect(daniel).requestWithdrawal(oethUnits("10"));
+      await advanceTime(10 * 60); // 10 minutes
+      await oethVault.connect(daniel).claimWithdrawal(0);
 
       await expect(await weth.balanceOf(oethVault.address)).to.equal(0);
     });

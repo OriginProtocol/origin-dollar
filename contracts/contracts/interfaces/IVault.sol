@@ -17,7 +17,6 @@ interface IVault {
     event RebasePaused();
     event RebaseUnpaused();
     event VaultBufferUpdated(uint256 _vaultBuffer);
-    event RedeemFeeUpdated(uint256 _redeemFeeBps);
     event AllocateThresholdUpdated(uint256 _threshold);
     event RebaseThresholdUpdated(uint256 _threshold);
     event StrategistUpdated(address _address);
@@ -53,10 +52,6 @@ interface IVault {
     function ADMIN_IMPLEMENTATION() external view returns (address);
 
     // VaultAdmin.sol
-    function setRedeemFeeBps(uint256 _redeemFeeBps) external;
-
-    function redeemFeeBps() external view returns (uint256);
-
     function setVaultBuffer(uint256 _vaultBuffer) external;
 
     function vaultBuffer() external view returns (uint256);
