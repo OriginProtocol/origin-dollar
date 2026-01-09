@@ -182,6 +182,12 @@ contract CrossChainRemoteStrategy is
      * @param _amount Amount of asset to deposit
      */
     function _deposit(address _asset, uint256 _amount) internal override {
+        // By design, this function should not revert. Otherwise, it'd
+        // not be able to process messages and might freeze the contracts
+        // state. However these two require statements would never fail
+        // in every function invoking this. The same kind of checks should
+        // be enforced in all the calling functions for these two and any
+        // other require statements added to this function.
         require(_amount > 0, "Must deposit something");
         require(_asset == address(usdcToken), "Unexpected asset address");
 
