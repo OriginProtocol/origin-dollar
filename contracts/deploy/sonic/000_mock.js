@@ -47,7 +47,7 @@ const deployCore = async () => {
     cOSonicProxy.address, // Base token
   ]);
 
-  const dOSonicVaultAdmin = await deployWithConfirmation("OSonicVaultAdmin", [
+  const dOSonicVault = await deployWithConfirmation("OSonicVault", [
     cWS.address,
   ]);
 
@@ -86,7 +86,7 @@ const deployCore = async () => {
   // prettier-ignore
   await cOSonicVaultProxy
     .connect(sDeployer)["initialize(address,address,bytes)"](
-      dOSonicVaultAdmin.address,
+      dOSonicVault.address,
       governorAddr,
       initDataOSonicVault
     );
@@ -104,9 +104,7 @@ const deployCore = async () => {
       initDataWOSonic
     )
 
-  await cOSonicVaultProxy
-    .connect(sGovernor)
-    .upgradeTo(dOSonicVaultAdmin.address);
+  await cOSonicVaultProxy.connect(sGovernor).upgradeTo(dOSonicVault.address);
 
   await cOSonicVault.connect(sGovernor).unpauseCapital();
   // Set withdrawal claim delay to 1 day
@@ -156,13 +154,13 @@ const deployStakingStrategy = async () => {
     cSonicStakingStrategy.interface.encodeFunctionData("initialize()", []);
   // prettier-ignore
   await withConfirmation(
-      cSonicStakingStrategyProxy
-        .connect(sDeployer)["initialize(address,address,bytes)"](
-          dSonicStakingStrategy.address,
-          governorAddr,
-          initSonicStakingStrategy
-        )
-    );
+    cSonicStakingStrategyProxy
+      .connect(sDeployer)["initialize(address,address,bytes)"](
+        dSonicStakingStrategy.address,
+        governorAddr,
+        initSonicStakingStrategy
+      )
+  );
 };
 
 const deployDripper = async () => {
@@ -184,12 +182,12 @@ const deployDripper = async () => {
   // prettier-ignore
   await withConfirmation(
     cOSonicDripperProxy
-        .connect(sDeployer)["initialize(address,address,bytes)"](
-          dFixedRateDripper.address,
-          governorAddr,
-          "0x"
-        )
-    );
+      .connect(sDeployer)["initialize(address,address,bytes)"](
+        dFixedRateDripper.address,
+        governorAddr,
+        "0x"
+      )
+  );
 };
 
 const main = async () => {

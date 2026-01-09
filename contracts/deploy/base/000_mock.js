@@ -22,11 +22,11 @@ const deployWOETH = async () => {
   // Initialize the proxy
   // prettier-ignore
   await cWOETHProxy["initialize(address,address,bytes)"](
-      cWOETHImpl.address,
-      governorAddr,
-      "0x",
-      await getTxOpts()
-    );
+    cWOETHImpl.address,
+    governorAddr,
+    "0x",
+    await getTxOpts()
+  );
 
   // Initialize implementation
   const cWOETH = await ethers.getContractAt(
@@ -83,7 +83,7 @@ const deployCore = async () => {
   const dwOETHb = await deployWithConfirmation("WOETHBase", [
     cOETHbProxy.address, // Base token
   ]);
-  const dOETHbVaultAdmin = await deployWithConfirmation("OETHBaseVaultAdmin", [
+  const dOETHbVaultAdmin = await deployWithConfirmation("OETHBaseVault", [
     cWETH.address,
   ]);
 

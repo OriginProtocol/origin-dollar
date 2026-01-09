@@ -16,7 +16,7 @@ module.exports = deploymentWithGovernanceProposal(
 
     // 1. Deploy new OETH Vault Core and Admin implementations
     const dVaultAdmin = await deployWithConfirmation(
-      "OETHVaultAdmin",
+      "OETHVault",
       [addresses.mainnet.WETH],
       undefined,
       true

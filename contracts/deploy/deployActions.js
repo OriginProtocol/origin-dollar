@@ -1074,7 +1074,7 @@ const deployOETHCore = async () => {
 
   // Main contracts
   const dOETH = await deployWithConfirmation("OETH");
-  const dOETHVaultAdmin = await deployWithConfirmation("OETHVaultAdmin", [
+  const dOETHVault = await deployWithConfirmation("OETHVault", [
     assetAddresses.WETH,
   ]);
 
@@ -1100,7 +1100,7 @@ const deployOETHCore = async () => {
   // prettier-ignore
   await withConfirmation(
     cOETHVaultProxy.connect(sDeployer)["initialize(address,address,bytes)"](
-      dOETHVaultAdmin.address,
+      dOETHVault.address,
       governorAddr,
       [],
       await getTxOpts()
@@ -1116,7 +1116,7 @@ const deployOETHCore = async () => {
   log("Initialized OETHVault");
 
   await withConfirmation(
-    cOETHVaultProxy.connect(sGovernor).upgradeTo(dOETHVaultAdmin.address)
+    cOETHVaultProxy.connect(sGovernor).upgradeTo(dOETHVault.address)
   );
   log("Upgraded VaultCore implementation");
 
@@ -1167,7 +1167,7 @@ const deployOUSDCore = async () => {
   }
 
   // Deploy Vault implementations
-  const dVaultAdmin = await deployWithConfirmation("OUSDVaultAdmin", [
+  const dVaultAdmin = await deployWithConfirmation("OUSDVault", [
     assetAddresses.USDC,
   ]);
   log("Deployed OUSD Vault implementations (Core, Admin)");

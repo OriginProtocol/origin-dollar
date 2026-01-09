@@ -10,9 +10,9 @@ module.exports = deployOnBase(
   async ({ ethers }) => {
     // 1. Deploy new VaultCore and VaultAdmin implementations
     const dOETHbVaultAdmin = await deployWithConfirmation(
-      "OETHBaseVaultAdmin",
+      "OETHBaseVault",
       [addresses.base.WETH],
-      "OETHBaseVaultAdmin",
+      "OETHBaseVault",
       true
     );
 

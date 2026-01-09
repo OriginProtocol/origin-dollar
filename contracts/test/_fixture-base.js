@@ -27,7 +27,7 @@ let snapshotId;
 
 const baseFixtureWithMockedVaultAdminConfig = async () => {
   const fixture = await defaultFixture();
-  await deployWithConfirmation("MockOETHVaultAdmin", [fixture.weth.address]);
+  await deployWithConfirmation("MockOETHVault", [fixture.weth.address]);
 
   fixture.oethbVault = await ethers.getContractAt(
     "IMockVault",

@@ -15,7 +15,7 @@ module.exports = deploymentWithGovernanceProposal(
     // ----------------
 
     // 1. Deploy new OUSD Vault Core and Admin implementations
-    const dVaultAdmin = await deployWithConfirmation("OUSDVaultAdmin", [
+    const dVault = await deployWithConfirmation("OUSDVault", [
       addresses.mainnet.USDC,
     ]);
 
@@ -35,7 +35,7 @@ module.exports = deploymentWithGovernanceProposal(
         {
           contract: cVaultProxy,
           signature: "upgradeTo(address)",
-          args: [dVaultAdmin.address],
+          args: [dVault.address],
         },
         // 2. Add OUSD/USDC AMO to mint whitelist
         {
