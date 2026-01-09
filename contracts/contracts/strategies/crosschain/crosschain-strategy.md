@@ -696,3 +696,49 @@ Both strategies require initialization:
 - Both strategies inherit from `Governable`
 - Governor can upgrade implementation, update operator, finality threshold, fee premium
 - Remote strategy governor can update strategist address
+
+## Analytics & Monitoring
+
+### Useful Contract Methods and Variables
+- `MasterStrategy.checkBalance(address)`: Returns the sum of balance held locally in the master contract, balance reported by the remote strategy and any tokens that are being bridged and are yet to be acknowledged by the rremote strategy
+- `MasterStrategy.pendingAmount`: Returns the amount that is being bridged from Master to Remote strategy. Once it's received on Remote strategy and it sends back an acknowledgement, it'll set back to zero.
+- `MasterStrategy.remoteStrategyBalacne`: Last reported balance of Remote strategy
+- `RemoteStrategy.checkBalance(address)`: Returns the balance held by the remote strategy as well as the amount it has deposited into the underlying 4626 vault
+- `RemoteStrategy.platformAddress`: Returns the underlying 4626 Vault to which remote strategy deposits funds to.
+
+
+### Contract Events 
+The following events need to be monitored from the contracts and an alert be sent to any of the channels as they happen:
+
+    ```
+    event CCTPMinFinalityThresholdSet(uint16 minFinalityThreshold);
+    event CCTPFeePremiumBpsSet(uint16 feePremiumBps);
+    event OperatorChanged(address operator);
+
+    event TokensBridged(
+        uint32 destinationDomain,
+        address peerStrategy,
+        address tokenAddress,
+        uint256 tokenAmount,
+        uint256 maxFee,
+        uint32 minFinalityThreshold,
+        bytes hookData
+    );
+
+    event MessageTransmitted(
+        uint32 destinationDomain,
+        address peerStrategy,
+        uint32 minFinalityThreshold,
+        bytes message
+    );
+
+    event DepositUnderlyingFailed(string reason);
+    event WithdrawalFailed(uint256 amountRequested, uint256 amountAvailable);
+    event WithdrawUnderlyingFailed(string reason);
+    event StrategistUpdated(address _address);
+
+    event RemoteStrategyBalanceUpdated(uint256 balance);
+    event WithdrawRequested(address indexed asset, uint256 amount);
+    ```
+
+Out of these, `DepositUnderlyingFailed`, `WithdrawalFailed` and `WithdrawUnderlyingFailed` are of higher importance as they require manual intervention by Guardian when they get emitted. 
