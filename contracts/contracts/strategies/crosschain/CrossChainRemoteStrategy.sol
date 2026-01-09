@@ -17,10 +17,12 @@ import { Generalized4626Strategy } from "../Generalized4626Strategy.sol";
 import { AbstractCCTPIntegrator } from "./AbstractCCTPIntegrator.sol";
 import { CrossChainStrategyHelper } from "./CrossChainStrategyHelper.sol";
 import { InitializableAbstractStrategy } from "../../utils/InitializableAbstractStrategy.sol";
+import { Strategizable } from "../../governance/Strategizable.sol";
 
 contract CrossChainRemoteStrategy is
     AbstractCCTPIntegrator,
-    Generalized4626Strategy
+    Generalized4626Strategy,
+    Strategizable
 {
     using SafeERC20 for IERC20;
     using CrossChainStrategyHelper for bytes;
@@ -28,15 +30,6 @@ contract CrossChainRemoteStrategy is
     event DepositUnderlyingFailed(string reason);
     event WithdrawalFailed(uint256 amountRequested, uint256 amountAvailable);
     event WithdrawUnderlyingFailed(string reason);
-    event StrategistUpdated(address _address);
-
-    /**
-     * @notice Address of the strategist.
-     *         This is important to have the variable name same as in IVault.
-     *         Because the parent contract (Generalized4626Strategy) uses this
-     *         function to get the strategist address.
-     */
-    address public strategistAddr;
 
     modifier onlyOperatorOrStrategistOrGovernor() {
         require(
@@ -44,6 +37,24 @@ contract CrossChainRemoteStrategy is
                 msg.sender == strategistAddr ||
                 isGovernor(),
             "Caller is not the Operator, Strategist or the Governor"
+        );
+        _;
+    }
+
+    /**
+     * @dev Overriding this modifier is important because the parent
+     *      contract`Generalized4626Strategy` uses `IVault.strategistAddr()`
+     *      in its implementation and there's no Vault on the remote strategy.
+     *      So, we set the Vault address of remote to be the proxy address and
+     *      inherit from Strategizable to get the same function signature.
+     *      Essentially, any calls to `IVault.strategistAddr()` will be equal to
+     *      calling `address(this).strategistAddr()`.
+     */
+    modifier onlyGovernorOrStrategist()
+        override(InitializableAbstractStrategy, Strategizable) {
+        require(
+            msg.sender == strategistAddr || isGovernor(),
+            "Caller is not the Strategist or Governor"
         );
         _;
     }
@@ -89,26 +100,6 @@ contract CrossChainRemoteStrategy is
             assets,
             pTokens
         );
-    }
-
-    /**
-     * @notice Set address of Strategist.
-     *         This is important to have the function name same as IVault.
-     *         Because the parent contract (Generalized4626Strategy) uses this
-     *         function to get/set the strategist address.
-     * @param _address Address of Strategist
-     */
-    function setStrategistAddr(address _address) external onlyGovernor {
-        _setStrategistAddr(_address);
-    }
-
-    /**
-     * @dev Set the strategist address
-     * @param _address Address of the strategist
-     */
-    function _setStrategistAddr(address _address) internal {
-        strategistAddr = _address;
-        emit StrategistUpdated(_address);
     }
 
     /// @inheritdoc Generalized4626Strategy
