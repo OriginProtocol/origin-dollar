@@ -107,6 +107,11 @@ contract CrossChainMasterStrategy is
 
     /// @inheritdoc InitializableAbstractStrategy
     function withdrawAll() external override onlyVaultOrGovernor nonReentrant {
+        if (isTransferPending()) {
+            // Do nothing if there is a pending transfer
+            return;
+        }
+
         // Withdraw everything in Remote strategy
         uint256 _remoteBalance = remoteStrategyBalance;
         if (_remoteBalance < 1e6) {
@@ -117,6 +122,7 @@ contract CrossChainMasterStrategy is
         _withdraw(
             usdcToken,
             vaultAddress,
+            // Withdraw at most the max transfer amount
             _remoteBalance > MAX_TRANSFER_AMOUNT
                 ? MAX_TRANSFER_AMOUNT
                 : _remoteBalance
