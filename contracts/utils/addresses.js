@@ -10,6 +10,11 @@ addresses.multichainBuybackOperator =
   "0xBB077E716A5f1F1B63ed5244eBFf5214E50fec8c";
 addresses.votemarket = "0x8c2c5A295450DDFf4CB360cA73FCCC12243D14D9";
 
+// CCTP contracts (uses same addresses on all chains)
+addresses.CCTPTokenMessengerV2 = "0x28b5a0e9C621a5BadaA536219b3a228C8168cf5d";
+addresses.CCTPMessageTransmitterV2 =
+  "0x81D40F21F12A8F0E3252Bccb954D722d4c464B64";
+
 addresses.mainnet = {};
 addresses.base = {};
 addresses.sonic = {};
@@ -448,6 +453,8 @@ addresses.base.CCIPRouter = "0x881e3A65B4d4a04dD529061dd0071cf975F58bCD";
 
 addresses.base.MerklDistributor = "0x8BB4C975Ff3c250e0ceEA271728547f3802B36Fd";
 
+addresses.base.USDC = "0x833589fcd6edb6e08f4c7c32d4f71b54bda02913";
+
 // Sonic
 addresses.sonic.wS = "0x039e2fB66102314Ce7b64Ce5Ce3E5183bc94aD38";
 addresses.sonic.WETH = "0x309C92261178fA0CF748A855e90Ae73FDb79EBc7";
@@ -680,5 +687,13 @@ addresses.hoodi.beaconChainDepositContract =
   "0x00000000219ab540356cBB839Cbe05303d7705Fa";
 addresses.hoodi.defenderRelayer = "0x419B6BdAE482f41b8B194515749F3A2Da26d583b";
 addresses.hoodi.mockBeaconRoots = "0xdCfcAE4A084AA843eE446f400B23aA7B6340484b";
+
+// Crosschain Strategy
+// addresses.CrossChainStrategyProxy =
+//   "TBD";
+// addresses.mainnet.CrossChainStrategyProxy =
+//   "TBD";
+// addresses.base.CrossChainStrategyProxy =
+//   "TBD";
 
 module.exports = addresses;
