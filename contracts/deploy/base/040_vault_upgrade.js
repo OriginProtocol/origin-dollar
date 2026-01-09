@@ -9,13 +9,6 @@ module.exports = deployOnBase(
   },
   async ({ ethers }) => {
     // 1. Deploy new VaultCore and VaultAdmin implementations
-    const dOETHbVaultCore = await deployWithConfirmation(
-      "OETHBaseVaultCore",
-      [addresses.base.WETH],
-      "OETHBaseVaultCore",
-      true
-    );
-
     const dOETHbVaultAdmin = await deployWithConfirmation(
       "OETHBaseVaultAdmin",
       [addresses.base.WETH],
@@ -72,15 +65,9 @@ module.exports = deployOnBase(
         {
           contract: cOETHbVaultProxy,
           signature: "upgradeTo(address)",
-          args: [dOETHbVaultCore.address],
-        },
-        // 3. Set VaultAdmin implementation
-        {
-          contract: cOETHbVault,
-          signature: "setAdminImpl(address)",
           args: [dOETHbVaultAdmin.address],
         },
-        // 4. Set Aerodrome AMO as default strategy
+        // 3. Set Aerodrome AMO as default strategy
         {
           contract: cOETHbVault,
           signature: "setDefaultStrategy(address)",

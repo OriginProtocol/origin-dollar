@@ -26,7 +26,9 @@ const {
 const main = async () => {
   console.log("Running 001_core deployment...");
   await deployOracles();
+  console.log("Oracles deployed.");
   await deployCore();
+  console.log("Core contracts deployed.");
   await deployCurveMetapoolMocks();
   await deployCompoundStrategy();
   await deployAaveStrategy();

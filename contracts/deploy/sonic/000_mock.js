@@ -46,9 +46,6 @@ const deployCore = async () => {
   const dWOSonic = await deployWithConfirmation("WOSonic", [
     cOSonicProxy.address, // Base token
   ]);
-  const dOSonicVaultCore = await deployWithConfirmation("OSonicVaultCore", [
-    cWS.address,
-  ]);
 
   const dOSonicVaultAdmin = await deployWithConfirmation("OSonicVaultAdmin", [
     cWS.address,
@@ -89,7 +86,7 @@ const deployCore = async () => {
   // prettier-ignore
   await cOSonicVaultProxy
     .connect(sDeployer)["initialize(address,address,bytes)"](
-      dOSonicVaultCore.address,
+      dOSonicVaultAdmin.address,
       governorAddr,
       initDataOSonicVault
     );
@@ -109,8 +106,7 @@ const deployCore = async () => {
 
   await cOSonicVaultProxy
     .connect(sGovernor)
-    .upgradeTo(dOSonicVaultCore.address);
-  await cOSonicVault.connect(sGovernor).setAdminImpl(dOSonicVaultAdmin.address);
+    .upgradeTo(dOSonicVaultAdmin.address);
 
   await cOSonicVault.connect(sGovernor).unpauseCapital();
   // Set withdrawal claim delay to 1 day

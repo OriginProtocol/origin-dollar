@@ -9,13 +9,6 @@ module.exports = deployOnSonic(
   },
   async ({ ethers }) => {
     // 1. Deploy new VaultCore and VaultAdmin implementations
-    const dOSonicVaultCore = await deployWithConfirmation(
-      "OSonicVaultCore",
-      [addresses.sonic.wS],
-      "OSonicVaultCore",
-      true
-    );
-
     const dOSonicVaultAdmin = await deployWithConfirmation(
       "OSonicVaultAdmin",
       [addresses.sonic.wS],
@@ -49,15 +42,9 @@ module.exports = deployOnSonic(
         {
           contract: cOSonicVaultProxy,
           signature: "upgradeTo(address)",
-          args: [dOSonicVaultCore.address],
-        },
-        // 2. Set VaultAdmin implementation
-        {
-          contract: cOSonicVault,
-          signature: "setAdminImpl(address)",
           args: [dOSonicVaultAdmin.address],
         },
-        // 3. Set Sonic Staking Strategy as default strategy
+        // 2. Set Sonic Staking Strategy as default strategy
         {
           contract: cOSonicVault,
           signature: "setDefaultStrategy(address)",
