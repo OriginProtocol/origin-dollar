@@ -12,7 +12,6 @@ const {
   oethPoolLpPID,
 } = require("../utils/constants");
 const { replaceContractAt } = require("../utils/hardhat");
-const { impersonateAndFund } = require("../utils/signers");
 
 const log = require("../utils/logger")("test:fixtures:hot-deploy");
 
@@ -205,15 +204,6 @@ async function hotDeployVaultAdmin(
       contract: vaultAdminName,
       args: isOeth ? [fixture.weth.address] : [],
     });
-
-    const implementation = await ethers.getContract(vaultAdminName);
-    const cVault = await ethers.getContractAt(
-      vaultCoreName,
-      cVaultProxy.address
-    );
-    // TODO: this might be faster by replacing bytecode of existing implementation contract
-    const signerTimelock = await impersonateAndFund(addresses.mainnet.Timelock);
-    await cVault.connect(signerTimelock).setAdminImpl(implementation.address);
 
     fixture[vaultVariableName] = await ethers.getContractAt(
       "IVault",

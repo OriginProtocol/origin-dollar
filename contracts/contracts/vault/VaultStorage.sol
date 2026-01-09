@@ -97,11 +97,6 @@ abstract contract VaultStorage is Initializable, Governable {
     /// @dev Address of the OToken token. eg OUSD or OETH.
     OUSD public oUSD;
 
-    /// @dev Storage slot for the address of the VaultAdmin contract that is delegated to
-    // keccak256("OUSD.vault.governor.admin.impl");
-    bytes32 public constant adminImplPosition =
-        0xa2bd3d3cf188a41358c8b401076eb59066b09dec5775650c0de4c55187d17bd9;
-
     /// @dev Address of the contract responsible for post rebase syncs with AMMs
     address private _deprecated_rebaseHooksAddr = address(0);
 
@@ -226,21 +221,5 @@ abstract contract VaultStorage is Initializable, Governable {
         require(_decimals <= 18, "invalid asset decimals");
         asset = _asset;
         assetDecimals = _decimals;
-    }
-
-    /**
-     * @notice set the implementation for the admin, this needs to be in a base class else we cannot set it
-     * @param newImpl address of the implementation
-     */
-    function setAdminImpl(address newImpl) external onlyGovernor {
-        require(
-            Address.isContract(newImpl),
-            "new implementation is not a contract"
-        );
-        bytes32 position = adminImplPosition;
-        // solhint-disable-next-line no-inline-assembly
-        assembly {
-            sstore(position, newImpl)
-        }
     }
 }

@@ -348,46 +348,6 @@ async function proposeUpgradeOusdArgs() {
   return { args, description };
 }
 
-// Returns the argument to use for sending a proposal to upgrade VaultCore.
-async function proposeUpgradeVaultCoreArgs(config) {
-  const vaultProxy = await ethers.getContract("VaultProxy");
-
-  const args = await proposeArgs([
-    {
-      contract: vaultProxy,
-      signature: "upgradeTo(address)",
-      args: [config.address],
-    },
-  ]);
-  const description = "Upgrade VaultCore";
-  return { args, description };
-}
-
-async function proposeUpgradeVaultCoreAndAdminArgs() {
-  const cVaultProxy = await ethers.getContract("VaultProxy");
-  const cVaultCoreProxy = await ethers.getContractAt(
-    "OUSDVaultCore",
-    cVaultProxy.address
-  );
-  const cVaultCore = await ethers.getContract("OUSDVaultCore");
-  const cVaultAdmin = await ethers.getContract("OUSDVaultAdmin");
-
-  const args = await proposeArgs([
-    {
-      contract: cVaultProxy,
-      signature: "upgradeTo(address)",
-      args: [cVaultCore.address],
-    },
-    {
-      contract: cVaultCoreProxy,
-      signature: "setAdminImpl(address)",
-      args: [cVaultAdmin.address],
-    },
-  ]);
-  const description = "Vault Core and Admin upgrade";
-  return { args, description };
-}
-
 // Returns the arguments to use for sending a proposal call to upgrade to a new MicOracle.
 // See migration 11_new_mix_oracle for reference.
 async function proposeUpgradeOracleArgs() {
@@ -656,94 +616,6 @@ async function proposeProp14Args() {
   return { args, description };
 }
 
-// Args to send a proposal to:
-//  - upgrade Vault Core and Admin
-//  - set the Aave reward token address to zero address
-//  - set the liquidation thresholds on strategies (except Aave since it does not have a reward token)
-async function proposeProp17Args() {
-  const cVaultProxy = await ethers.getContract("VaultProxy");
-  const cVaultCoreProxy = await ethers.getContractAt(
-    "OUSDVaultCore",
-    cVaultProxy.address
-  );
-  const cVaultCore = await ethers.getContract("OUSDVaultCore");
-  const cVaultAdmin = await ethers.getContract("OUSDVaultAdmin");
-  const cAaveStrategyProxy = await ethers.getContract("AaveStrategyProxy");
-  const cAaveStrategy = await ethers.getContractAt(
-    "AaveStrategy",
-    cAaveStrategyProxy.address
-  );
-
-  const cCompoundStrategyProxy = await ethers.getContract(
-    "CompoundStrategyProxy"
-  );
-  const cCompoundStrategy = await ethers.getContractAt(
-    "CompoundStrategy",
-    cCompoundStrategyProxy.address
-  );
-
-  const cCurveUSDCStrategyProxy = await ethers.getContract(
-    "CurveUSDCStrategyProxy"
-  );
-  const cCurveUSDCStrategy = await ethers.getContractAt(
-    "ThreePoolStrategy",
-    cCurveUSDCStrategyProxy.address
-  );
-
-  const cCurveUSDTStrategyProxy = await ethers.getContract(
-    "CurveUSDTStrategyProxy"
-  );
-  const cCurveUSDTStrategy = await ethers.getContractAt(
-    "ThreePoolStrategy",
-    cCurveUSDTStrategyProxy.address
-  );
-
-  const args = await proposeArgs([
-    {
-      contract: cVaultProxy,
-      signature: "upgradeTo(address)",
-      args: [cVaultCore.address],
-    },
-    {
-      contract: cVaultCoreProxy,
-      signature: "setAdminImpl(address)",
-      args: [cVaultAdmin.address],
-    },
-    {
-      contract: cAaveStrategy,
-      signature: "setRewardTokenAddress(address)",
-      args: [addresses.zero],
-    },
-    {
-      contract: cCompoundStrategy,
-      signature: "setPTokenAddress(address,address)",
-      args: [addresses.mainnet.USDC, addresses.mainnet.cUSDC],
-    },
-    {
-      contract: cCompoundStrategy,
-      signature: "setPTokenAddress(address,address)",
-      args: [addresses.mainnet.USDT, addresses.mainnet.cUSDT],
-    },
-    {
-      contract: cCompoundStrategy,
-      signature: "setRewardLiquidationThreshold(uint256)",
-      args: [utils.parseUnits("1", 18)], // 1 COMP with precision 18
-    },
-    {
-      contract: cCurveUSDCStrategy,
-      signature: "setRewardLiquidationThreshold(uint256)",
-      args: [utils.parseUnits("200", 18)], // 200 CRV with precision 18
-    },
-    {
-      contract: cCurveUSDTStrategy,
-      signature: "setRewardLiquidationThreshold(uint256)",
-      args: [utils.parseUnits("200", 18)], // 200 CRV with precision 18
-    },
-  ]);
-  const description = "Prop 16";
-  return { args, description };
-}
-
 async function proposeSetRewardLiquidationThresholdArgs() {
   const cCompoundStrategyProxy = await ethers.getContract(
     "CompoundStrategyProxy"
@@ -984,12 +856,6 @@ async function main(config) {
   } else if (config.upgradeOusd) {
     console.log("upgradeOusd proposal");
     argsMethod = proposeUpgradeOusdArgs;
-  } else if (config.upgradeVaultCore) {
-    console.log("upgradeVaultCore proposal");
-    argsMethod = proposeUpgradeVaultCoreArgs;
-  } else if (config.upgradeVaultCoreAndAdmin) {
-    console.log("upgradeVaultCoreAndAdmin proposal");
-    argsMethod = proposeUpgradeVaultCoreAndAdminArgs;
   } else if (config.upgradeOracle) {
     console.log("upgradeOracle proposal");
     argsMethod = proposeUpgradeOracleArgs;
@@ -1017,9 +883,6 @@ async function main(config) {
   } else if (config.prop14) {
     console.log("prop14 proposal");
     argsMethod = proposeProp14Args;
-  } else if (config.prop17) {
-    console.log("prop17 proposal");
-    argsMethod = proposeProp17Args;
   } else if (config.pauseCapital) {
     console.log("pauseCapital");
     argsMethod = proposePauseCapitalArgs;

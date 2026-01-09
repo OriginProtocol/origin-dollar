@@ -1074,10 +1074,7 @@ const deployOETHCore = async () => {
 
   // Main contracts
   const dOETH = await deployWithConfirmation("OETH");
-  const dOETHVaultCore = await deployWithConfirmation("OETHVaultCore", [
-    assetAddresses.WETH,
-  ]);
-  const dOETHVaultAdmin = await deployWithConfirmation("OETHVaultAdmin", [
+  const dOETHVault = await deployWithConfirmation("OETHVault", [
     assetAddresses.WETH,
   ]);
 
@@ -1103,7 +1100,7 @@ const deployOETHCore = async () => {
   // prettier-ignore
   await withConfirmation(
     cOETHVaultProxy.connect(sDeployer)["initialize(address,address,bytes)"](
-      dOETHVaultCore.address,
+      dOETHVault.address,
       governorAddr,
       [],
       await getTxOpts()
@@ -1119,15 +1116,10 @@ const deployOETHCore = async () => {
   log("Initialized OETHVault");
 
   await withConfirmation(
-    cOETHVaultProxy.connect(sGovernor).upgradeTo(dOETHVaultCore.address)
+    cOETHVaultProxy.connect(sGovernor).upgradeTo(dOETHVault.address)
   );
   log("Upgraded VaultCore implementation");
 
-  await withConfirmation(
-    cOETHVault.connect(sGovernor).setAdminImpl(dOETHVaultAdmin.address)
-  );
-
-  log("Initialized VaultAdmin implementation");
   // Initialize OETH
   /* Set the original resolution to 27 decimals. We used to have it set to 18
    * decimals at launch and then migrated to 27. Having it set to 27 it will
@@ -1175,10 +1167,7 @@ const deployOUSDCore = async () => {
   }
 
   // Deploy Vault implementations
-  const dVaultCore = await deployWithConfirmation("OUSDVaultCore", [
-    assetAddresses.USDC,
-  ]);
-  const dVaultAdmin = await deployWithConfirmation("OUSDVaultAdmin", [
+  const dVaultAdmin = await deployWithConfirmation("OUSDVault", [
     assetAddresses.USDC,
   ]);
   log("Deployed OUSD Vault implementations (Core, Admin)");
@@ -1203,7 +1192,7 @@ const deployOUSDCore = async () => {
   // prettier-ignore
   await withConfirmation(
     cVaultProxy.connect(sDeployer)["initialize(address,address,bytes)"](
-      dVaultCore.address,
+      dVaultAdmin.address,
       governorAddr,
       [],
       await getTxOpts()
@@ -1216,12 +1205,6 @@ const deployOUSDCore = async () => {
     cVault.connect(sGovernor).initialize(cOUSDProxy.address)
   );
   log("Initialized OUSD Vault Core");
-
-  // Set Vault implementation
-  await withConfirmation(
-    cVault.connect(sGovernor).setAdminImpl(dVaultAdmin.address)
-  );
-  log("Initialized OUSD VaultAdmin implementation");
 
   // Initialize OUSD
   /* Set the original resolution to 27 decimals. We used to have it set to 18

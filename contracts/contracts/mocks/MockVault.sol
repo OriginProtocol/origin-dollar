@@ -1,16 +1,16 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import { VaultCore } from "../vault/VaultCore.sol";
+import { VaultAdmin } from "../vault/VaultAdmin.sol";
 import { StableMath } from "../utils/StableMath.sol";
 import "../utils/Helpers.sol";
 
-contract MockVault is VaultCore {
+contract MockVault is VaultAdmin {
     using StableMath for uint256;
 
     uint256 storedTotalValue;
 
-    constructor(address _asset) VaultCore(_asset) {}
+    constructor(address _asset) VaultAdmin(_asset) {}
 
     function setTotalValue(uint256 _value) public {
         storedTotalValue = _value;
@@ -38,9 +38,5 @@ contract MockVault is VaultCore {
         } else {
             return 0;
         }
-    }
-
-    function setMaxSupplyDiff(uint256 _maxSupplyDiff) external onlyGovernor {
-        maxSupplyDiff = _maxSupplyDiff;
     }
 }

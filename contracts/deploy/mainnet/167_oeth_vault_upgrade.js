@@ -15,14 +15,8 @@ module.exports = deploymentWithGovernanceProposal(
     // ----------------
 
     // 1. Deploy new OETH Vault Core and Admin implementations
-    const dVaultCore = await deployWithConfirmation(
-      "OETHVaultCore",
-      [addresses.mainnet.WETH],
-      undefined,
-      true
-    );
     const dVaultAdmin = await deployWithConfirmation(
-      "OETHVaultAdmin",
+      "OETHVault",
       [addresses.mainnet.WETH],
       undefined,
       true
@@ -46,15 +40,9 @@ module.exports = deploymentWithGovernanceProposal(
         {
           contract: cVaultProxy,
           signature: "upgradeTo(address)",
-          args: [dVaultCore.address],
-        },
-        // 2. Set OETH Vault proxy to the new admin vault implementation
-        {
-          contract: cVault,
-          signature: "setAdminImpl(address)",
           args: [dVaultAdmin.address],
         },
-        // 3. Set OETH/WETH AMO as default strategy
+        // 2. Set OETH/WETH AMO as default strategy
         {
           contract: cVault,
           signature: "setDefaultStrategy(address)",

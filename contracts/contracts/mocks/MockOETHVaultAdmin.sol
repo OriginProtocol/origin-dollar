@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import { OETHVaultAdmin } from "../vault/OETHVaultAdmin.sol";
+import { OETHVault } from "../vault/OETHVault.sol";
 
-contract MockOETHVaultAdmin is OETHVaultAdmin {
-    constructor(address _weth) OETHVaultAdmin(_weth) {}
+contract MockOETHVault is OETHVault {
+    constructor(address _weth) OETHVault(_weth) {}
 
     // fetches the WETH amount in outstanding withdrawals
     function outstandingWithdrawalsAmount()
