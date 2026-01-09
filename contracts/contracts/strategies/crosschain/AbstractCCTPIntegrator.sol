@@ -195,6 +195,11 @@ abstract contract AbstractCCTPIntegrator is Governable, IMessageHandlerV2 {
         _setOperator(_operator);
         _setMinFinalityThreshold(_minFinalityThreshold);
         _setFeePremiumBps(_feePremiumBps);
+
+        // Nonce starts at 1, so assume nonce 0 as processed.
+        // NOTE: This will cause the deposit/withdraw to fail if the
+        // strategy is not initialized properly (which is expected).
+        nonceProcessed[0] = true;
     }
 
     /***************************************
@@ -543,8 +548,7 @@ abstract contract AbstractCCTPIntegrator is Governable, IMessageHandlerV2 {
      * @return True if a transfer is pending, false otherwise
      */
     function isTransferPending() public view returns (bool) {
-        uint64 nonce = lastTransferNonce;
-        return nonce > 0 && !nonceProcessed[nonce];
+        return !nonceProcessed[lastTransferNonce];
     }
 
     /**
@@ -554,7 +558,7 @@ abstract contract AbstractCCTPIntegrator is Governable, IMessageHandlerV2 {
      * @return True if the nonce is processed, false otherwise
      */
     function isNonceProcessed(uint64 nonce) public view returns (bool) {
-        return nonce == 0 || nonceProcessed[nonce];
+        return nonceProcessed[nonce];
     }
 
     /**
@@ -594,7 +598,7 @@ abstract contract AbstractCCTPIntegrator is Governable, IMessageHandlerV2 {
     function _getNextNonce() internal returns (uint64) {
         uint64 nonce = lastTransferNonce;
 
-        require(nonce == 0 || nonceProcessed[nonce], "Pending token transfer");
+        require(nonceProcessed[nonce], "Pending token transfer");
 
         nonce = nonce + 1;
         lastTransferNonce = nonce;
