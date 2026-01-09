@@ -21,7 +21,11 @@ contract CrossChainMasterStrategy is
     using SafeERC20 for IERC20;
     using CrossChainStrategyHelper for bytes;
 
-    /// @notice Remote strategy balance
+    /**
+     * @notice Remote strategy balance
+     * @dev    The remote balance is cached and might not reflect the actual
+     *         real-time balance of the remote strategy.
+     */
     uint256 public remoteStrategyBalance;
 
     /// @notice Amount that's bridged due to a pending Deposit process
