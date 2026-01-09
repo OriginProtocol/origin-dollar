@@ -1912,8 +1912,7 @@ const deployCrossChainRemoteStrategyImpl = async (
     [
       platformAddress,
       // Vault address should be same as the proxy address
-      proxyAddress, // vault address
-      // addresses.mainnet.VaultProxy,
+      addresses.zero, // There is no vault on the remote strategy
     ],
     [
       tokenMessengerAddress,
