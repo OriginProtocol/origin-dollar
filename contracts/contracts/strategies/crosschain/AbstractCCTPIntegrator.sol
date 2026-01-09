@@ -54,8 +54,16 @@ abstract contract AbstractCCTPIntegrator is Governable, IMessageHandlerV2 {
     uint8 private constant BURN_MESSAGE_V2_HOOK_DATA_INDEX = 228;
 
     /**
-     * @notice Max transfer threshold imposed by the CCTP
-     *         Ref: https://developers.circle.com/cctp/evm-smart-contracts#depositforburn
+     * @notice  Max transfer threshold imposed by the CCTP
+     *          Ref: https://developers.circle.com/cctp/evm-smart-contracts#depositforburn
+     * @dev     10M USDC limit applies to both standard and fast transfer modes. The fast transfer mode has
+     *          an additional limitation that is not present on-chain and Circle may alter that amount off-chain
+     *          at their preference. The amount available for fast transfer can be queried here:
+     *          https://iris-api.circle.com/v2/fastBurn/USDC/allowance .
+     *          If a fast transfer token transaction has been issued and there is not enough allowance for it
+     *          the off-chain Iris component will re-attempt the transaction and if it fails it will fallback
+     *          to a standard transfer. Reference section 4.3 in the whitepaper:
+     *          https://6778953.fs1.hubspotusercontent-na1.net/hubfs/6778953/PDFs/Whitepapers/CCTPV2_White_Paper.pdf
      */
     uint256 public constant MAX_TRANSFER_AMOUNT = 10_000_000 * 10**6; // 10M USDC
 
