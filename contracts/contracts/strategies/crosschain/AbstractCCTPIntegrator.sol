@@ -81,7 +81,7 @@ abstract contract AbstractCCTPIntegrator is Governable, IMessageHandlerV2 {
      *         Can be 1000 (safe, after 1 epoch) or 2000 (finalized, after 2 epochs).
      *         Ref: https://developers.circle.com/cctp/technical-guide#finality-thresholds
      * @dev    When configuring the contract for fast transfer we should check the available
-     *         allowance of USDC that can be bridged using fast mode: 
+     *         allowance of USDC that can be bridged using fast mode:
      *         wget https://iris-api.circle.com/v2/fastBurn/USDC/allowance
      */
     uint16 public minFinalityThreshold;
@@ -586,10 +586,7 @@ abstract contract AbstractCCTPIntegrator is Governable, IMessageHandlerV2 {
     function _getNextNonce() internal returns (uint64) {
         uint64 nonce = lastTransferNonce;
 
-        require(
-            nonce == 0 || nonceProcessed[nonce],
-            "Pending deposit or withdrawal"
-        );
+        require(nonce == 0 || nonceProcessed[nonce], "Pending token transfer");
 
         nonce = nonce + 1;
         lastTransferNonce = nonce;
