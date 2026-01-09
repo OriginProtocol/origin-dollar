@@ -8,7 +8,7 @@ module.exports = deployOnSonic(
     //proposalId: "",
   },
   async ({ ethers }) => {
-    // 1. Deploy new VaultCore and VaultAdmin implementations
+    // 1. Deploy new OSonicVault implementations
     const dOSonicVault = await deployWithConfirmation(
       "OSonicVault",
       [addresses.sonic.wS],
@@ -36,9 +36,9 @@ module.exports = deployOnSonic(
     // Governance Actions
     // ----------------
     return {
-      name: "Upgrade OSonic Vault to new Core and Admin implementations",
+      name: "Upgrade OSonicVault to new single Vault implementations",
       actions: [
-        // 1. Upgrade VaultCore implementation
+        // 1. Upgrade OSonicVaultProxy to new implementation
         {
           contract: cOSonicVaultProxy,
           signature: "upgradeTo(address)",

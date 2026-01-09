@@ -8,8 +8,8 @@ module.exports = deployOnBase(
     //proposalId: "",
   },
   async ({ ethers }) => {
-    // 1. Deploy new VaultCore and VaultAdmin implementations
-    const dOETHbVaultAdmin = await deployWithConfirmation(
+    // 1. Deploy OETHBaseVault implementations
+    const dOETHbVault = await deployWithConfirmation(
       "OETHBaseVault",
       [addresses.base.WETH],
       "OETHBaseVault",
@@ -53,7 +53,7 @@ module.exports = deployOnBase(
     // Governance Actions
     // ----------------
     return {
-      name: "Upgrade OETHBase Vault to new Core and Admin implementations",
+      name: "Upgrade OETHBaseVault to new single Vault implementations",
       actions: [
         // 1. Upgrade Bridged WOETH Strategy implementation
         {
@@ -61,11 +61,11 @@ module.exports = deployOnBase(
           signature: "upgradeTo(address)",
           args: [dStrategyImpl.address],
         },
-        // 2. Upgrade VaultCore implementation
+        // 2. Upgrade OETHBaseVaultProxy to new implementation
         {
           contract: cOETHbVaultProxy,
           signature: "upgradeTo(address)",
-          args: [dOETHbVaultAdmin.address],
+          args: [dOETHbVault.address],
         },
         // 3. Set Aerodrome AMO as default strategy
         {
