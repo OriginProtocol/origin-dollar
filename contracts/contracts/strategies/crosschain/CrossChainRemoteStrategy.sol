@@ -96,12 +96,19 @@ contract CrossChainRemoteStrategy is
         virtual
         override
         onlyGovernorOrStrategist
+        nonReentrant
     {
         _deposit(_asset, _amount);
     }
 
     /// @inheritdoc Generalized4626Strategy
-    function depositAll() external virtual override onlyGovernorOrStrategist {
+    function depositAll()
+        external
+        virtual
+        override
+        onlyGovernorOrStrategist
+        nonReentrant
+    {
         _deposit(usdcToken, IERC20(usdcToken).balanceOf(address(this)));
     }
 
@@ -110,12 +117,18 @@ contract CrossChainRemoteStrategy is
         address _recipient,
         address _asset,
         uint256 _amount
-    ) external virtual override onlyGovernorOrStrategist {
+    ) external virtual override onlyGovernorOrStrategist nonReentrant {
         _withdraw(_recipient, _asset, _amount);
     }
 
     /// @inheritdoc Generalized4626Strategy
-    function withdrawAll() external virtual override onlyGovernorOrStrategist {
+    function withdrawAll()
+        external
+        virtual
+        override
+        onlyGovernorOrStrategist
+        nonReentrant
+    {
         IERC4626 platform = IERC4626(platformAddress);
         _withdraw(
             address(this),
