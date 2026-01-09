@@ -44,7 +44,12 @@ contract CrossChainMasterStrategy is
     )
         InitializableAbstractStrategy(_stratConfig)
         AbstractCCTPIntegrator(_cctpConfig)
-    {}
+    {
+        require(
+            _stratConfig.vaultAddress != address(0),
+            "Invalid Vault address"
+        );
+    }
 
     /**
      * @dev Initialize the strategy implementation

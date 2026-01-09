@@ -58,6 +58,15 @@ contract CrossChainRemoteStrategy is
         Generalized4626Strategy(_baseConfig, _cctpConfig.usdcToken)
     {
         require(usdcToken == address(assetToken), "Token mismatch");
+        require(
+            _baseConfig.platformAddress != address(0),
+            "Invalid platform address"
+        );
+        // Vault address must always be address(0) for the remote strategy
+        require(
+            _baseConfig.vaultAddress == address(0),
+            "Invalid vault address"
+        );
     }
 
     /**
