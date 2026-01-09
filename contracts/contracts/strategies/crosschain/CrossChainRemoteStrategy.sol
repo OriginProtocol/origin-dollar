@@ -183,7 +183,9 @@ contract CrossChainRemoteStrategy is
 
         // Underlying call to deposit funds can fail. It mustn't affect the overall
         // flow as confirmation message should still be sent.
-        _deposit(usdcToken, balance);
+        if (balance >= 1e6) {
+            _deposit(usdcToken, balance);
+        }
 
         // Send balance check message to the peer strategy
         bytes memory message = CrossChainStrategyHelper
@@ -256,7 +258,7 @@ contract CrossChainRemoteStrategy is
         // there is a possibility of USDC funds remaining on the contract.
         // A separate withdraw to extract or deposit to the Morpho vault needs to be
         // initiated from the peer Master strategy to utilise USDC funds.
-        if (withdrawAmount > 1e6 && usdcBalance >= withdrawAmount) {
+        if (withdrawAmount >= 1e6 && usdcBalance >= withdrawAmount) {
             // The new balance on the contract needs to have USDC subtracted from it as
             // that will be withdrawn in the next step
             bytes memory message = CrossChainStrategyHelper
