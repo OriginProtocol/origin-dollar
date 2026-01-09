@@ -41,15 +41,6 @@ contract CrossChainRemoteStrategy is
         _;
     }
 
-    /**
-     * @dev Overriding this modifier is important because the parent
-     *      contract`Generalized4626Strategy` uses `IVault.strategistAddr()`
-     *      in its implementation and there's no Vault on the remote strategy.
-     *      So, we set the Vault address of remote to be the proxy address and
-     *      inherit from Strategizable to get the same function signature.
-     *      Essentially, any calls to `IVault.strategistAddr()` will be equal to
-     *      calling `address(this).strategistAddr()`.
-     */
     modifier onlyGovernorOrStrategist()
         override(InitializableAbstractStrategy, Strategizable) {
         require(
@@ -67,9 +58,6 @@ contract CrossChainRemoteStrategy is
         Generalized4626Strategy(_baseConfig, _cctpConfig.usdcToken)
     {
         require(usdcToken == address(assetToken), "Token mismatch");
-
-        // NOTE: Vault address must always be the proxy address
-        // so that IVault(vaultAddress).strategistAddr() works
     }
 
     /**

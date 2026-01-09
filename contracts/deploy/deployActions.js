@@ -1911,7 +1911,6 @@ const deployCrossChainRemoteStrategyImpl = async (
   await deployWithConfirmation(implementationName, [
     [
       platformAddress,
-      // Vault address should be same as the proxy address
       addresses.zero, // There is no vault on the remote strategy
     ],
     [
