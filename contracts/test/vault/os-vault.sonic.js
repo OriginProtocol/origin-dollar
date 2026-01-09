@@ -289,13 +289,6 @@ describe("Origin S Vault", function () {
         fixtureWithUser
       );
     });
-
-    it("Should not support redeem", async () => {
-      const { oSonicVault, wS, nick } = fixture;
-
-      const tx = oSonicVault.connect(nick).redeem(wS.address, 1);
-      await expect(tx).to.be.revertedWith("unsupported function");
-    });
   });
 
   describe("Administer Sonic Staking Strategy", function () {

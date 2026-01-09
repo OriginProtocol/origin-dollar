@@ -47,7 +47,7 @@ contract MockNonRebasing {
     }
 
     function redeemOusd(address _vaultContract, uint256 _amount) public {
-        IVault(_vaultContract).redeem(_amount, 0);
+        IVault(_vaultContract).requestWithdrawal(_amount);
     }
 
     function approveFor(

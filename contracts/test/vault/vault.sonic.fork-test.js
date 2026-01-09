@@ -79,11 +79,6 @@ describe("ForkTest: Sonic Vault", function () {
         addresses.multichainBuybackOperator
       );
     });
-
-    it("Should have redeem fee set to 0.1%", async () => {
-      const { oSonicVault } = fixture;
-      expect(await oSonicVault.redeemFeeBps()).to.equal(BigNumber.from("10"));
-    });
   });
 
   describe("Rebase", () => {

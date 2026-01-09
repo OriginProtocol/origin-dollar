@@ -112,7 +112,7 @@ describe("Sonic ForkTest: SwapX AMO Strategy", function () {
 
   describe("with wS in the vault", () => {
     const loadFixture = createFixtureLoader(swapXAMOFixture, {
-      wsMintAmount: 5000,
+      wsMintAmount: 5000000,
       depositToStrategy: false,
       balancePool: true,
     });
@@ -514,7 +514,7 @@ describe("Sonic ForkTest: SwapX AMO Strategy", function () {
           swapXAMOStrategy,
           wS,
         } = fixture;
-        const withdrawAmount = parseUnits("2000");
+        const withdrawAmount = parseUnits("200");
 
         const dataBeforeWithdraw = await snapData();
         logSnapData(
@@ -893,7 +893,7 @@ describe("Sonic ForkTest: SwapX AMO Strategy", function () {
 
   describe("with an insolvent vault", () => {
     const loadFixture = createFixtureLoader(swapXAMOFixture, {
-      wsMintAmount: 50000000,
+      wsMintAmount: 5000000,
       depositToStrategy: false,
     });
     beforeEach(async () => {

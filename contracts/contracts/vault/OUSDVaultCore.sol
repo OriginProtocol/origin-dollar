@@ -4,9 +4,9 @@ pragma solidity ^0.8.0;
 import { VaultCore } from "./VaultCore.sol";
 
 /**
- * @title OETH VaultCore Contract
+ * @title OUSD VaultCore Contract
  * @author Origin Protocol Inc
  */
-contract OETHVaultCore is VaultCore {
-    constructor(address _weth) VaultCore(_weth) {}
+contract OUSDVaultCore is VaultCore {
+    constructor(address _usdc) VaultCore(_usdc) {}
 }
