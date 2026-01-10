@@ -22,12 +22,12 @@ describe("Account type variations", function () {
       rebase_contract_1,
       nonrebase_eoa_0,
       nonrebase_eoa_1,
-      nonrebase_cotract_0,
-      nonrebase_cotract_1,
-      nonrebase_cotract_notSet_0,
-      nonrebase_cotract_notSet_1,
-      nonrebase_cotract_notSet_altcpt_gt_0,
-      nonrebase_cotract_notSet_altcpt_gt_1,
+      nonrebase_contract_0,
+      nonrebase_contract_1,
+      nonrebase_contract_notSet_0,
+      nonrebase_contract_notSet_1,
+      nonrebase_contract_notSet_altcpt_gt_0,
+      nonrebase_contract_notSet_altcpt_gt_1,
       rebase_delegate_source_0,
       rebase_delegate_source_1,
       rebase_delegate_target_0,
@@ -59,31 +59,31 @@ describe("Account type variations", function () {
     expect(await ousd.rebaseState(nonrebase_eoa_1.address)).to.equal(1); // rebaseState:StdNonRebasing
     await expect(nonrebase_eoa_1).has.a.balanceOf("45", ousd);
 
-    expect(await ousd.rebaseState(nonrebase_cotract_0.address)).to.equal(1); // rebaseState:StdNonRebasing
-    await expect(nonrebase_cotract_0).has.a.balanceOf("55", ousd);
-    expect(await ousd.rebaseState(nonrebase_cotract_1.address)).to.equal(1); // rebaseState:StdNonRebasing
-    await expect(nonrebase_cotract_1).has.a.balanceOf("56", ousd);
+    expect(await ousd.rebaseState(nonrebase_contract_0.address)).to.equal(1); // rebaseState:StdNonRebasing
+    await expect(nonrebase_contract_0).has.a.balanceOf("55", ousd);
+    expect(await ousd.rebaseState(nonrebase_contract_1.address)).to.equal(1); // rebaseState:StdNonRebasing
+    await expect(nonrebase_contract_1).has.a.balanceOf("56", ousd);
 
-    expect(await ousd.rebaseState(nonrebase_cotract_notSet_0.address)).to.equal(
+    expect(await ousd.rebaseState(nonrebase_contract_notSet_0.address)).to.equal(
       0
     ); // rebaseState:NotSet
-    await expect(nonrebase_cotract_notSet_0).has.a.balanceOf("0", ousd);
-    expect(await ousd.rebaseState(nonrebase_cotract_notSet_1.address)).to.equal(
+    await expect(nonrebase_contract_notSet_0).has.a.balanceOf("0", ousd);
+    expect(await ousd.rebaseState(nonrebase_contract_notSet_1.address)).to.equal(
       0
     ); // rebaseState:NotSet
-    await expect(nonrebase_cotract_notSet_1).has.a.balanceOf("0", ousd);
+    await expect(nonrebase_contract_notSet_1).has.a.balanceOf("0", ousd);
 
     expect(
-      await ousd.rebaseState(nonrebase_cotract_notSet_altcpt_gt_0.address)
+      await ousd.rebaseState(nonrebase_contract_notSet_altcpt_gt_0.address)
     ).to.equal(0); // rebaseState:NotSet
-    await expect(nonrebase_cotract_notSet_altcpt_gt_0).has.a.balanceOf(
+    await expect(nonrebase_contract_notSet_altcpt_gt_0).has.a.balanceOf(
       "65",
       ousd
     );
     expect(
-      await ousd.rebaseState(nonrebase_cotract_notSet_altcpt_gt_1.address)
+      await ousd.rebaseState(nonrebase_contract_notSet_altcpt_gt_1.address)
     ).to.equal(0); // rebaseState:NotSet
-    await expect(nonrebase_cotract_notSet_altcpt_gt_1).has.a.balanceOf(
+    await expect(nonrebase_contract_notSet_altcpt_gt_1).has.a.balanceOf(
       "66",
       ousd
     );
@@ -142,20 +142,20 @@ describe("Account type variations", function () {
       inYieldDelegation: false,
     },
     {
-      name: "nonrebase_cotract_0",
+      name: "nonrebase_contract_0",
       balancePartOfRebasingCredits: false,
       isContract: true,
       inYieldDelegation: false,
     },
     {
-      name: "nonrebase_cotract_notSet_0",
+      name: "nonrebase_contract_notSet_0",
       balancePartOfRebasingCredits: false,
       skipTransferTest: true,
       isContract: true,
       inYieldDelegation: false,
     },
     {
-      name: "nonrebase_cotract_notSet_altcpt_gt_0",
+      name: "nonrebase_contract_notSet_altcpt_gt_0",
       balancePartOfRebasingCredits: false,
       isContract: true,
       inYieldDelegation: false,
@@ -196,17 +196,17 @@ describe("Account type variations", function () {
       inYieldDelegation: false,
     },
     {
-      name: "nonrebase_cotract_1",
+      name: "nonrebase_contract_1",
       balancePartOfRebasingCredits: false,
       inYieldDelegation: false,
     },
     {
-      name: "nonrebase_cotract_notSet_1",
+      name: "nonrebase_contract_notSet_1",
       balancePartOfRebasingCredits: false,
       inYieldDelegation: false,
     },
     {
-      name: "nonrebase_cotract_notSet_altcpt_gt_1",
+      name: "nonrebase_contract_notSet_altcpt_gt_1",
       balancePartOfRebasingCredits: false,
       inYieldDelegation: false,
     },

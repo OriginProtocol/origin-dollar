@@ -1014,7 +1014,7 @@ describe("Token", function () {
     });
 
     it("Old code auto migrated contract when calling rebase OptIn shouldn't affect invariables", async () => {
-      const { nonrebase_cotract_notSet_altcpt_gt_0: contract_account, ousd } =
+      const { nonrebase_contract_notSet_altcpt_gt_0: contract_account, ousd } =
         fixture;
 
       const nonRebasingSupply = await ousd.nonRebasingSupply();
@@ -1084,16 +1084,16 @@ describe("Token", function () {
     });
 
     it("Contract should auto migrate to StdNonRebasing", async () => {
-      let { ousd, nonrebase_cotract_notSet_0, rebase_eoa_notset_0 } = fixture;
+      let { ousd, nonrebase_contract_notSet_0, rebase_eoa_notset_0 } = fixture;
 
       await expect(
-        await ousd.rebaseState(nonrebase_cotract_notSet_0.address)
+        await ousd.rebaseState(nonrebase_contract_notSet_0.address)
       ).to.equal(0); // NotSet
       await ousd
         .connect(rebase_eoa_notset_0)
-        .transfer(nonrebase_cotract_notSet_0.address, ousdUnits("10"));
+        .transfer(nonrebase_contract_notSet_0.address, ousdUnits("10"));
       await expect(
-        await ousd.rebaseState(nonrebase_cotract_notSet_0.address)
+        await ousd.rebaseState(nonrebase_contract_notSet_0.address)
       ).to.equal(1); // StdNonRebasing
     });
 

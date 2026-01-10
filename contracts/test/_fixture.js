@@ -320,10 +320,10 @@ const createAccountTypes = async ({ vault, ousd, ousdUnlocked, deploy }) => {
     creditsPerToken,
     balance,
   }) => {
-    const nonrebase_cotract_notSet_altcpt_gt = await createContract(name);
+    const nonrebase_contract_notSet_altcpt_gt = await createContract(name);
     await ousd
       .connect(matt)
-      .transfer(nonrebase_cotract_notSet_altcpt_gt.address, balance);
+      .transfer(nonrebase_contract_notSet_altcpt_gt.address, balance);
     const { creditsPerTokenBN, creditsBalanceBN } = generateCreditsBalancePair({
       creditsPerToken,
       tokenBalance: balance,
@@ -331,21 +331,21 @@ const createAccountTypes = async ({ vault, ousd, ousdUnlocked, deploy }) => {
     await ousdUnlocked
       .connect(matt)
       .overwriteCreditBalances(
-        nonrebase_cotract_notSet_altcpt_gt.address,
+        nonrebase_contract_notSet_altcpt_gt.address,
         creditsBalanceBN
       );
     await ousdUnlocked
       .connect(matt)
       .overwriteAlternativeCPT(
-        nonrebase_cotract_notSet_altcpt_gt.address,
+        nonrebase_contract_notSet_altcpt_gt.address,
         creditsPerTokenBN
       );
     await ousdUnlocked.connect(matt).overwriteRebaseState(
-      nonrebase_cotract_notSet_altcpt_gt.address,
+      nonrebase_contract_notSet_altcpt_gt.address,
       0 // NotSet
     );
 
-    return nonrebase_cotract_notSet_altcpt_gt;
+    return nonrebase_contract_notSet_altcpt_gt;
   };
 
   const rebase_eoa_notset_0 = await createAccount();
@@ -384,36 +384,36 @@ const createAccountTypes = async ({ vault, ousd, ousdUnlocked, deploy }) => {
   await ousd.connect(matt).transfer(nonrebase_eoa_1.address, ousdUnits("45"));
   await ousd.connect(nonrebase_eoa_1).rebaseOptOut();
 
-  const nonrebase_cotract_0 = await createContract("nonrebase_cotract_0");
+  const nonrebase_contract_0 = await createContract("nonrebase_contract_0");
   await ousd
     .connect(matt)
-    .transfer(nonrebase_cotract_0.address, ousdUnits("55"));
-  await nonrebase_cotract_0.connect(matt).rebaseOptIn();
-  await nonrebase_cotract_0.connect(matt).rebaseOptOut();
-  const nonrebase_cotract_1 = await createContract("nonrebase_cotract_1");
+    .transfer(nonrebase_contract_0.address, ousdUnits("55"));
+  await nonrebase_contract_0.connect(matt).rebaseOptIn();
+  await nonrebase_contract_0.connect(matt).rebaseOptOut();
+  const nonrebase_contract_1 = await createContract("nonrebase_contract_1");
   await ousd
     .connect(matt)
-    .transfer(nonrebase_cotract_1.address, ousdUnits("56"));
-  await nonrebase_cotract_1.connect(matt).rebaseOptIn();
-  await nonrebase_cotract_1.connect(matt).rebaseOptOut();
+    .transfer(nonrebase_contract_1.address, ousdUnits("56"));
+  await nonrebase_contract_1.connect(matt).rebaseOptIn();
+  await nonrebase_contract_1.connect(matt).rebaseOptOut();
 
-  const nonrebase_cotract_notSet_0 = await createContract(
-    "nonrebase_cotract_notSet_0"
+  const nonrebase_contract_notSet_0 = await createContract(
+    "nonrebase_contract_notSet_0"
   );
-  const nonrebase_cotract_notSet_1 = await createContract(
-    "nonrebase_cotract_notSet_1"
+  const nonrebase_contract_notSet_1 = await createContract(
+    "nonrebase_contract_notSet_1"
   );
 
-  const nonrebase_cotract_notSet_altcpt_gt_0 =
+  const nonrebase_contract_notSet_altcpt_gt_0 =
     await createNonRebasingNotSetAlternativeCptContract({
-      name: "nonrebase_cotract_notSet_altcpt_gt_0",
+      name: "nonrebase_contract_notSet_altcpt_gt_0",
       creditsPerToken: 0.934232,
       balance: ousdUnits("65"),
     });
 
-  const nonrebase_cotract_notSet_altcpt_gt_1 =
+  const nonrebase_contract_notSet_altcpt_gt_1 =
     await createNonRebasingNotSetAlternativeCptContract({
-      name: "nonrebase_cotract_notSet_altcpt_gt_1",
+      name: "nonrebase_contract_notSet_altcpt_gt_1",
       creditsPerToken: 0.890232,
       balance: ousdUnits("66"),
     });
@@ -480,16 +480,16 @@ const createAccountTypes = async ({ vault, ousd, ousdUnlocked, deploy }) => {
     nonrebase_eoa_0,
     nonrebase_eoa_1,
     // contract account that has rebaseState: StdNonRebasing
-    nonrebase_cotract_0,
-    nonrebase_cotract_1,
+    nonrebase_contract_0,
+    nonrebase_contract_1,
     // contract account that has rebaseState: NotSet
-    nonrebase_cotract_notSet_0,
-    nonrebase_cotract_notSet_1,
+    nonrebase_contract_notSet_0,
+    nonrebase_contract_notSet_1,
     // contract account that has rebaseState: NotSet & alternativeCreditsPerToken > 0
     // note: these are older accounts that have been migrated by the older versions of
     //       of the code without explicitly setting rebaseState to StdNonRebasing
-    nonrebase_cotract_notSet_altcpt_gt_0,
-    nonrebase_cotract_notSet_altcpt_gt_1,
+    nonrebase_contract_notSet_altcpt_gt_0,
+    nonrebase_contract_notSet_altcpt_gt_1,
 
     // account delegating yield
     rebase_delegate_source_0,
