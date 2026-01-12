@@ -10,9 +10,9 @@ module.exports = deployOnSonic(
   async ({ ethers }) => {
     // 1. Deploy new OSonicVault implementations
     const dOSonicVault = await deployWithConfirmation(
-      "OSonicVault",
+      "OSVault",
       [addresses.sonic.wS],
-      "OSonicVault",
+      "OSVault",
       true
     );
 
