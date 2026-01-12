@@ -124,14 +124,13 @@ async function hotDeployOption(
 
   const { isOethFixture } = config;
   const deployStrat = hotDeployOptions.includes("strategy");
-  const deployVaultCore = hotDeployOptions.includes("vaultCore");
-  const deployVaultAdmin = hotDeployOptions.includes("vaultAdmin");
+  const deployVault = hotDeployOptions.includes("vault");
   const deployHarvester = hotDeployOptions.includes("harvester");
   const deployOracleRouter = hotDeployOptions.includes("oracleRouter");
   const deployBuyback = hotDeployOptions.includes("buyback");
 
   log(`Running fixture hot deployment w/ config; isOethFixture:${isOethFixture} strategy:${!!deployStrat} 
-    vaultCore:${!!deployVaultCore} vaultAdmin:${!!deployVaultAdmin} harvester:${!!deployHarvester}`);
+    vault:${!!deployVault} harvester:${!!deployHarvester}`);
 
   if (deployStrat) {
     if (fixtureName === "balancerREthFixture") {
@@ -161,13 +160,8 @@ async function hotDeployOption(
     }
   }
 
-  if (deployVaultCore || deployVaultAdmin) {
-    await hotDeployVaultAdmin(
-      fixture,
-      deployVaultAdmin,
-      deployVaultCore,
-      isOethFixture
-    );
+  if (deployVault) {
+    await hotDeployVault(fixture, isOethFixture);
   }
   if (deployHarvester) {
     await hotDeployHarvester(fixture, isOethFixture);
@@ -181,57 +175,33 @@ async function hotDeployOption(
   }
 }
 
-async function hotDeployVaultAdmin(
-  fixture,
-  deployVaultAdmin,
-  deployVaultCore,
-  isOeth
-) {
+async function hotDeployVault(fixture, isOeth) {
   const { deploy } = deployments;
   const vaultProxyName = `${isOeth ? "OETH" : ""}VaultProxy`;
-  const vaultCoreName = `${isOeth ? "OETH" : ""}VaultCore`;
-  const vaultAdminName = `${isOeth ? "OETH" : ""}VaultAdmin`;
-  const vaultVariableName = `${isOeth ? "oethVault" : "vault"}`;
+  const vaultName = `${isOeth ? "OETH" : "OUSD"}Vault`;
 
   const cVaultProxy = await ethers.getContract(vaultProxyName);
 
-  if (deployVaultAdmin) {
-    log(`Deploying new ${vaultAdminName} implementation`);
+  log(`Deploying new ${vaultName} implementation`);
+  // deploy this contract that exposes internal function
+  await deploy(vaultName, {
+    from: addresses.mainnet.Timelock, // doesn't matter which address deploys it
+    contract: vaultName,
+    args: isOeth ? [fixture.weth.address] : [],
+  });
+  const implementation = await ethers.getContract(vaultName);
 
-    // deploy this contract that exposes internal function
-    await deploy(vaultAdminName, {
-      from: addresses.mainnet.Timelock, // doesn't matter which address deploys it
-      contract: vaultAdminName,
-      args: isOeth ? [fixture.weth.address] : [],
-    });
+  const cVault = await ethers.getContractAt(
+    "InitializeGovernedUpgradeabilityProxy",
+    cVaultProxy.address
+  );
+  const liveImplContractAddress = await cVault.implementation();
 
-    fixture[vaultVariableName] = await ethers.getContractAt(
-      "IVault",
-      cVaultProxy.address
-    );
-  }
-  if (deployVaultCore) {
-    log(`Deploying new ${vaultCoreName} implementation`);
-    // deploy this contract that exposes internal function
-    await deploy(vaultCoreName, {
-      from: addresses.mainnet.Timelock, // doesn't matter which address deploys it
-      contract: vaultCoreName,
-      args: isOeth ? [fixture.weth.address] : [],
-    });
-    const implementation = await ethers.getContract(vaultCoreName);
+  log(
+    `Replacing implementation at ${liveImplContractAddress} with the fresh bytecode`
+  );
 
-    const cVault = await ethers.getContractAt(
-      "InitializeGovernedUpgradeabilityProxy",
-      cVaultProxy.address
-    );
-    const liveImplContractAddress = await cVault.implementation();
-
-    log(
-      `Replacing implementation at ${liveImplContractAddress} with the fresh bytecode`
-    );
-
-    await replaceContractAt(liveImplContractAddress, implementation);
-  }
+  await replaceContractAt(liveImplContractAddress, implementation);
 }
 
 async function hotDeployHarvester(fixture, forOETH) {

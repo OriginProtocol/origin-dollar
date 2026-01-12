@@ -125,11 +125,10 @@ You can enable the "hot deploy" mode when doing fork testing development. The mo
 To enable Hot Deploys set the HOT_DEPLOY variable in the contracts/.env file. Enable various modes using comma separated flags to direct which contracts need source updated (in the node runtime):
 
 - strategy -> strategy contract associated to fixture
-- vaultCore -> vaultCore or oethVaultCore depending on the nature of the fixture
-- vaultAdmin -> vaultAdmin or oethVaultAdmin depending on the nature of the fixture
+- vault -> OUSDVault or OETHVault depending on the nature of the fixture
 - harvester -> harvester or oethHarvester (not yet supported)
 
-example: HOT_DEPLOY=strategy,vaultCore,vaultAdmin,harvester
+example: HOT_DEPLOY=strategy,vault,harvester
 
 #### Supporting new fixtures / contracts
 
