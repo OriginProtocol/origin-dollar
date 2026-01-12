@@ -338,7 +338,7 @@ abstract contract VaultCore is VaultInitializer {
 
         emit WithdrawalClaimed(msg.sender, requestId, request.amount);
 
-        return request.amount.scaleBy(assetDecimals, 18);
+        return StableMath.scaleBy(request.amount, assetDecimals, 18);
     }
 
     function _postRedeem(uint256 _amount) internal {
