@@ -256,7 +256,7 @@ abstract contract VaultCore is VaultInitializer {
         }
 
         // Scale amount to asset decimals
-        amount = _claimWithdrawal(_requestId).scaleBy(assetDecimals, 18);
+        amount = _claimWithdrawal(_requestId);
 
         // transfer asset from the vault to the withdrawer
         IERC20(asset).safeTransfer(msg.sender, amount);
@@ -295,10 +295,7 @@ abstract contract VaultCore is VaultInitializer {
         amounts = new uint256[](_requestIds.length);
         for (uint256 i; i < _requestIds.length; ++i) {
             // Scale all amounts to asset decimals, thus totalAmount is also in asset decimals
-            amounts[i] = _claimWithdrawal(_requestIds[i]).scaleBy(
-                assetDecimals,
-                18
-            );
+            amounts[i] = _claimWithdrawal(_requestIds[i]);
             totalAmount += amounts[i];
         }
 
@@ -341,7 +338,7 @@ abstract contract VaultCore is VaultInitializer {
 
         emit WithdrawalClaimed(msg.sender, requestId, request.amount);
 
-        return request.amount;
+        return request.amount.scaleBy(assetDecimals, 18);
     }
 
     function _postRedeem(uint256 _amount) internal {
