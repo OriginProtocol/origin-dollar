@@ -49,8 +49,6 @@ interface IVault {
 
     function governor() external view returns (address);
 
-    function ADMIN_IMPLEMENTATION() external view returns (address);
-
     // VaultAdmin.sol
     function setVaultBuffer(uint256 _vaultBuffer) external;
 
@@ -166,8 +164,6 @@ interface IVault {
     function asset() external view returns (address);
 
     function initialize(address) external;
-
-    function setAdminImpl(address) external;
 
     function addWithdrawalQueueLiquidity() external;
 

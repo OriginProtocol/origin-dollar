@@ -22,11 +22,11 @@ const deployWOETH = async () => {
   // Initialize the proxy
   // prettier-ignore
   await cWOETHProxy["initialize(address,address,bytes)"](
-      cWOETHImpl.address,
-      governorAddr,
-      "0x",
-      await getTxOpts()
-    );
+    cWOETHImpl.address,
+    governorAddr,
+    "0x",
+    await getTxOpts()
+  );
 
   // Initialize implementation
   const cWOETH = await ethers.getContractAt(
@@ -83,10 +83,7 @@ const deployCore = async () => {
   const dwOETHb = await deployWithConfirmation("WOETHBase", [
     cOETHbProxy.address, // Base token
   ]);
-  const dOETHbVaultCore = await deployWithConfirmation("OETHBaseVaultCore", [
-    cWETH.address,
-  ]);
-  const dOETHbVaultAdmin = await deployWithConfirmation("OETHBaseVaultAdmin", [
+  const dOETHbVaultAdmin = await deployWithConfirmation("OETHBaseVault", [
     cWETH.address,
   ]);
 
@@ -125,7 +122,7 @@ const deployCore = async () => {
   // prettier-ignore
   await cOETHbVaultProxy
     .connect(sDeployer)["initialize(address,address,bytes)"](
-      dOETHbVaultCore.address,
+      dOETHbVaultAdmin.address,
       governorAddr,
       initDataOETHbVault
     );
@@ -143,8 +140,7 @@ const deployCore = async () => {
       initDatawOETHb
     )
 
-  await cOETHbVaultProxy.connect(sGovernor).upgradeTo(dOETHbVaultCore.address);
-  await cOETHbVault.connect(sGovernor).setAdminImpl(dOETHbVaultAdmin.address);
+  await cOETHbVaultProxy.connect(sGovernor).upgradeTo(dOETHbVaultAdmin.address);
 
   await cOETHbVault.connect(sGovernor).unpauseCapital();
 };

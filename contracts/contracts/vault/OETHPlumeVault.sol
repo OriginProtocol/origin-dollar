@@ -1,16 +1,16 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import { VaultCore } from "./VaultCore.sol";
+import { VaultAdmin } from "./VaultAdmin.sol";
 
 /**
- * @title OETH Plume VaultCore Contract
+ * @title OETH Plume VaultAdmin Contract
  * @author Origin Protocol Inc
  */
-contract OETHPlumeVaultCore is VaultCore {
-    constructor(address _weth) VaultCore(_weth) {}
+contract OETHPlumeVault is VaultAdmin {
+    constructor(address _weth) VaultAdmin(_weth) {}
 
-    // @inheritdoc VaultCore
+    // @inheritdoc VaultAdmin
     function _mint(
         address,
         uint256 _amount,

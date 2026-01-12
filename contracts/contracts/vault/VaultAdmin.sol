@@ -13,9 +13,9 @@ import { IVault } from "../interfaces/IVault.sol";
 import { StableMath } from "../utils/StableMath.sol";
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 
-import "./VaultStorage.sol";
+import "./VaultCore.sol";
 
-abstract contract VaultAdmin is VaultStorage {
+abstract contract VaultAdmin is VaultCore {
     using SafeERC20 for IERC20;
     using StableMath for uint256;
     using SafeCast for uint256;
@@ -31,7 +31,7 @@ abstract contract VaultAdmin is VaultStorage {
         _;
     }
 
-    constructor(address _asset) VaultStorage(_asset) {}
+    constructor(address _asset) VaultCore(_asset) {}
 
     /***************************************
                  Configuration
@@ -413,27 +413,6 @@ abstract contract VaultAdmin is VaultStorage {
     {
         require(asset != _asset, "Only unsupported asset");
         IERC20(_asset).safeTransfer(governor(), _amount);
-    }
-
-    /**
-     * @dev Calculate how much asset (eg. WETH or USDC) in the vault is not reserved for the withdrawal queue.
-     * That is, it is available to be redeemed or deposited into a strategy.
-     */
-    function _assetAvailable() internal view returns (uint256 assetAvailable) {
-        WithdrawalQueueMetadata memory queue = withdrawalQueueMetadata;
-
-        // The amount of asset that is still to be claimed in the withdrawal queue
-        uint256 outstandingWithdrawals = queue.queued - queue.claimed;
-
-        // The amount of sitting in asset in the vault
-        uint256 assetBalance = IERC20(asset).balanceOf(address(this));
-
-        // If there is not enough asset in the vault to cover the outstanding withdrawals
-        if (assetBalance <= outstandingWithdrawals) {
-            return 0;
-        }
-
-        return assetBalance - outstandingWithdrawals;
     }
 
     /***************************************

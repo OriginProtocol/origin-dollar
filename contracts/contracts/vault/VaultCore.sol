@@ -733,53 +733,6 @@ abstract contract VaultCore is VaultInitializer {
         return asset == _asset;
     }
 
-    function ADMIN_IMPLEMENTATION() external view returns (address adminImpl) {
-        bytes32 slot = adminImplPosition;
-        // solhint-disable-next-line no-inline-assembly
-        assembly {
-            adminImpl := sload(slot)
-        }
-    }
-
-    /**
-     * @dev Falldown to the admin implementation
-     * @notice This is a catch all for all functions not declared in core
-     */
-    // solhint-disable-next-line no-complex-fallback
-    fallback() external {
-        bytes32 slot = adminImplPosition;
-        // solhint-disable-next-line no-inline-assembly
-        assembly {
-            // Copy msg.data. We take full control of memory in this inline assembly
-            // block because it will not return to Solidity code. We overwrite the
-            // Solidity scratch pad at memory position 0.
-            calldatacopy(0, 0, calldatasize())
-
-            // Call the implementation.
-            // out and outsize are 0 because we don't know the size yet.
-            let result := delegatecall(
-                gas(),
-                sload(slot),
-                0,
-                calldatasize(),
-                0,
-                0
-            )
-
-            // Copy the returned data.
-            returndatacopy(0, 0, returndatasize())
-
-            switch result
-            // delegatecall returns 0 on error.
-            case 0 {
-                revert(0, returndatasize())
-            }
-            default {
-                return(0, returndatasize())
-            }
-        }
-    }
-
     function _min(uint256 a, uint256 b) internal pure returns (uint256) {
         return a < b ? a : b;
     }

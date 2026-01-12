@@ -21,18 +21,7 @@ let snapshotId;
 
 const baseFixtureWithMockedVaultAdminConfig = async () => {
   const fixture = await defaultFixture();
-
-  const cOETHVaultProxy = await ethers.getContract("OETHPlumeVaultProxy");
-  const cOETHVaultAdmin = await ethers.getContractAt(
-    "IVault",
-    cOETHVaultProxy.address
-  );
-  await deployWithConfirmation("MockOETHVaultAdmin", [fixture.weth.address]);
-
-  const mockVaultAdmin = await ethers.getContract("MockOETHVaultAdmin");
-  await cOETHVaultAdmin
-    .connect(fixture.governor)
-    .setAdminImpl(mockVaultAdmin.address);
+  await deployWithConfirmation("MockOETHVault", [fixture.weth.address]);
 
   fixture.oethpVault = await ethers.getContractAt(
     "IMockVault",

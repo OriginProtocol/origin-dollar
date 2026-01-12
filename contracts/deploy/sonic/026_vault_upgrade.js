@@ -8,18 +8,11 @@ module.exports = deployOnSonic(
     //proposalId: "",
   },
   async ({ ethers }) => {
-    // 1. Deploy new VaultCore and VaultAdmin implementations
-    const dOSonicVaultCore = await deployWithConfirmation(
-      "OSonicVaultCore",
+    // 1. Deploy new OSonicVault implementations
+    const dOSonicVault = await deployWithConfirmation(
+      "OSVault",
       [addresses.sonic.wS],
-      "OSonicVaultCore",
-      true
-    );
-
-    const dOSonicVaultAdmin = await deployWithConfirmation(
-      "OSonicVaultAdmin",
-      [addresses.sonic.wS],
-      "OSonicVaultAdmin",
+      "OSVault",
       true
     );
 
@@ -43,21 +36,15 @@ module.exports = deployOnSonic(
     // Governance Actions
     // ----------------
     return {
-      name: "Upgrade OSonic Vault to new Core and Admin implementations",
+      name: "Upgrade OSonicVault to new single Vault implementations",
       actions: [
-        // 1. Upgrade VaultCore implementation
+        // 1. Upgrade OSonicVaultProxy to new implementation
         {
           contract: cOSonicVaultProxy,
           signature: "upgradeTo(address)",
-          args: [dOSonicVaultCore.address],
+          args: [dOSonicVault.address],
         },
-        // 2. Set VaultAdmin implementation
-        {
-          contract: cOSonicVault,
-          signature: "setAdminImpl(address)",
-          args: [dOSonicVaultAdmin.address],
-        },
-        // 3. Set Sonic Staking Strategy as default strategy
+        // 2. Set Sonic Staking Strategy as default strategy
         {
           contract: cOSonicVault,
           signature: "setDefaultStrategy(address)",
