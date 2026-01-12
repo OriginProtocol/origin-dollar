@@ -279,44 +279,44 @@ abstract contract AbstractCCTPIntegrator is Governable, IMessageHandlerV2 {
 
     /**
      * @dev Handles a finalized CCTP message
-     * @param sourceDomain Source domain of the message
-     * @param sender Sender of the message
-     * @param finalityThresholdExecuted Fidelity threshold executed
-     * @param messageBody Message body
+     * @param _sourceDomain Source domain of the message
+     * @param _sender Sender of the message
+     * @param _finalityThresholdExecuted Fidelity threshold executed
+     * @param _messageBody Message body
      */
     function handleReceiveFinalizedMessage(
-        uint32 sourceDomain,
-        bytes32 sender,
-        uint32 finalityThresholdExecuted,
-        bytes memory messageBody
+        uint32 _sourceDomain,
+        bytes32 _sender,
+        uint32 _finalityThresholdExecuted,
+        bytes memory _messageBody
     ) external override onlyCCTPMessageTransmitter returns (bool) {
         // Make sure the finality threshold at execution is at least 2000
         require(
-            finalityThresholdExecuted >= 2000,
+            _finalityThresholdExecuted >= 2000,
             "Finality threshold too low"
         );
 
         return
             _handleReceivedMessage(
-                sourceDomain,
-                sender,
-                finalityThresholdExecuted,
-                messageBody
+                _sourceDomain,
+                _sender,
+                _finalityThresholdExecuted,
+                _messageBody
             );
     }
 
     /**
      * @dev Handles an unfinalized but safe CCTP message
-     * @param sourceDomain Source domain of the message
-     * @param sender Sender of the message
-     * @param finalityThresholdExecuted Fidelity threshold executed
-     * @param messageBody Message body
+     * @param _sourceDomain Source domain of the message
+     * @param _sender Sender of the message
+     * @param _finalityThresholdExecuted Fidelity threshold executed
+     * @param _messageBody Message body
      */
     function handleReceiveUnfinalizedMessage(
-        uint32 sourceDomain,
-        bytes32 sender,
-        uint32 finalityThresholdExecuted,
-        bytes memory messageBody
+        uint32 _sourceDomain,
+        bytes32 _sender,
+        uint32 _finalityThresholdExecuted,
+        bytes memory _messageBody
     ) external override onlyCCTPMessageTransmitter returns (bool) {
         // Make sure the contract is configured to handle unfinalized messages
         require(
@@ -325,58 +325,61 @@ abstract contract AbstractCCTPIntegrator is Governable, IMessageHandlerV2 {
         );
         // Make sure the finality threshold at execution is at least 1000
         require(
-            finalityThresholdExecuted >= 1000,
+            _finalityThresholdExecuted >= 1000,
             "Finality threshold too low"
         );
 
         return
             _handleReceivedMessage(
-                sourceDomain,
-                sender,
-                finalityThresholdExecuted,
-                messageBody
+                _sourceDomain,
+                _sender,
+                _finalityThresholdExecuted,
+                _messageBody
             );
     }
 
     /**
      * @dev Handles a CCTP message
-     * @param sourceDomain Source domain of the message
-     * @param sender Sender of the message
-     * @param finalityThresholdExecuted Fidelity threshold executed
-     * @param messageBody Message body
+     * @param _sourceDomain Source domain of the message
+     * @param _sender Sender of the message
+     * @param _finalityThresholdExecuted Fidelity threshold executed
+     * @param _messageBody Message body
      */
     function _handleReceivedMessage(
-        uint32 sourceDomain,
-        bytes32 sender,
+        uint32 _sourceDomain,
+        bytes32 _sender,
         // solhint-disable-next-line no-unused-vars
-        uint32 finalityThresholdExecuted,
-        bytes memory messageBody
+        uint32 _finalityThresholdExecuted,
+        bytes memory _messageBody
     ) internal returns (bool) {
-        require(sourceDomain == peerDomainID, "Unknown Source Domain");
+        require(_sourceDomain == peerDomainID, "Unknown Source Domain");
 
         // Extract address from bytes32 (CCTP stores addresses as right-padded bytes32)
-        address senderAddress = address(uint160(uint256(sender)));
-        require(senderAddress == peerStrategy, "Unknown Sender");
+        address _senderAddress = address(uint160(uint256(_sender)));
+        require(_senderAddress == peerStrategy, "Unknown Sender");
 
-        _onMessageReceived(messageBody);
+        _onMessageReceived(_messageBody);
 
         return true;
     }
 
     /**
      * @dev Sends tokens to the peer strategy using CCTP Token Messenger
-     * @param tokenAmount Amount of tokens to send
-     * @param hookData Hook data
+     * @param _tokenAmount Amount of tokens to send
+     * @param _hookData Hook data
      */
-    function _sendTokens(uint256 tokenAmount, bytes memory hookData)
+    function _sendTokens(uint256 _tokenAmount, bytes memory _hookData)
         internal
         virtual
     {
         // CCTP has a maximum transfer amount of 10M USDC per tx
-        require(tokenAmount <= MAX_TRANSFER_AMOUNT, "Token amount too high");
+        require(_tokenAmount <= MAX_TRANSFER_AMOUNT, "Token amount too high");
 
         // Approve only what needs to be transferred
-        IERC20(usdcToken).safeApprove(address(cctpTokenMessenger), tokenAmount);
+        IERC20(usdcToken).safeApprove(
+            address(cctpTokenMessenger),
+            _tokenAmount
+        );
 
         // Compute the max fee to be paid.
         // Ref: https://developers.circle.com/cctp/evm-smart-contracts#getminfeeamount
@@ -387,50 +390,50 @@ abstract contract AbstractCCTPIntegrator is Governable, IMessageHandlerV2 {
         // ever start implementing fee for standard transfers or if we decide to use fast
         // trasnfer, we can use feePremiumBps as a workaround.
         uint256 maxFee = feePremiumBps > 0
-            ? (tokenAmount * feePremiumBps) / 10000
+            ? (_tokenAmount * feePremiumBps) / 10000
             : 0;
 
         // Send tokens to the peer strategy using CCTP Token Messenger
         cctpTokenMessenger.depositForBurnWithHook(
-            tokenAmount,
+            _tokenAmount,
             peerDomainID,
             bytes32(uint256(uint160(peerStrategy))),
             address(usdcToken),
             bytes32(uint256(uint160(peerStrategy))),
             maxFee,
             uint32(minFinalityThreshold),
-            hookData
+            _hookData
         );
 
         emit TokensBridged(
             peerDomainID,
             peerStrategy,
             usdcToken,
-            tokenAmount,
+            _tokenAmount,
             maxFee,
             uint32(minFinalityThreshold),
-            hookData
+            _hookData
         );
     }
 
     /**
      * @dev Sends a message to the peer strategy using CCTP Message Transmitter
-     * @param message Payload of the message to send
+     * @param _message Payload of the message to send
      */
-    function _sendMessage(bytes memory message) internal virtual {
+    function _sendMessage(bytes memory _message) internal virtual {
         cctpMessageTransmitter.sendMessage(
             peerDomainID,
             bytes32(uint256(uint160(peerStrategy))),
             bytes32(uint256(uint160(peerStrategy))),
             uint32(minFinalityThreshold),
-            message
+            _message
         );
 
         emit MessageTransmitted(
             peerDomainID,
             peerStrategy,
             uint32(minFinalityThreshold),
-            message
+            _message
         );
     }
 
@@ -439,24 +442,24 @@ abstract contract AbstractCCTPIntegrator is Governable, IMessageHandlerV2 {
      *      does some basic checks and relays it to the local MessageTransmitterV2.
      *      If the message is a burn message, it will also handle the hook data
      *      and call the _onTokenReceived function.
-     * @param message Payload of the message to send
-     * @param attestation Attestation of the message
+     * @param _message Payload of the message to send
+     * @param _attestation Attestation of the message
      */
-    function relay(bytes memory message, bytes memory attestation)
+    function relay(bytes memory _message, bytes memory _attestation)
         external
         onlyOperator
     {
         (
-            uint32 version,
+            uint32 cctpVersion,
             uint32 sourceDomainID,
             address sender,
             address recipient,
             bytes memory messageBody
-        ) = message.decodeMessageHeader();
+        ) = _message.decodeMessageHeader();
 
         // Ensure that it's a CCTP message
         require(
-            version == CrossChainStrategyHelper.CCTP_MESSAGE_VERSION,
+            cctpVersion == CrossChainStrategyHelper.CCTP_MESSAGE_VERSION,
             "Invalid CCTP message version"
         );
 
@@ -464,7 +467,9 @@ abstract contract AbstractCCTPIntegrator is Governable, IMessageHandlerV2 {
         require(sourceDomainID == peerDomainID, "Unknown Source Domain");
 
         // Ensure message body version
-        version = messageBody.extractUint32(BURN_MESSAGE_V2_VERSION_INDEX);
+        uint32 version = messageBody.extractUint32(
+            BURN_MESSAGE_V2_VERSION_INDEX
+        );
 
         // NOTE: There's a possibility that the CCTP Token Messenger might
         // send other types of messages in future, not just the burn message.
@@ -508,8 +513,8 @@ abstract contract AbstractCCTPIntegrator is Governable, IMessageHandlerV2 {
         // Relay the message
         // This step also mints USDC and transfers it to the recipient wallet
         bool relaySuccess = cctpMessageTransmitter.receiveMessage(
-            message,
-            attestation
+            messageBody,
+            _attestation
         );
         require(relaySuccess, "Receive message failed");
 
@@ -554,11 +559,11 @@ abstract contract AbstractCCTPIntegrator is Governable, IMessageHandlerV2 {
     /**
      * @dev Checks if a given nonce is processed.
      *      Nonce starts at 1, so 0 is disregarded.
-     * @param nonce Nonce to check
+     * @param _nonce Nonce to check
      * @return True if the nonce is processed, false otherwise
      */
-    function isNonceProcessed(uint64 nonce) public view returns (bool) {
-        return nonceProcessed[nonce];
+    function isNonceProcessed(uint64 _nonce) public view returns (bool) {
+        return nonceProcessed[_nonce];
     }
 
     /**
@@ -566,9 +571,9 @@ abstract contract AbstractCCTPIntegrator is Governable, IMessageHandlerV2 {
      *      Can only mark nonce as processed once. New nonce should
      *      always be greater than the last known nonce. Also updates
      *      the last known nonce.
-     * @param nonce Nonce to mark as processed
+     * @param _nonce Nonce to mark as processed
      */
-    function _markNonceAsProcessed(uint64 nonce) internal {
+    function _markNonceAsProcessed(uint64 _nonce) internal {
         uint64 lastNonce = lastTransferNonce;
 
         // Can only mark latest nonce as processed
@@ -577,15 +582,15 @@ abstract contract AbstractCCTPIntegrator is Governable, IMessageHandlerV2 {
         // of deposit / withdrawal flow.
         // Remote strategy will have lastNonce < nonce, as a new nonce initiated
         // from master will be greater than the last one.
-        require(nonce >= lastNonce, "Nonce too low");
+        require(_nonce >= lastNonce, "Nonce too low");
         // Can only mark nonce as processed once
-        require(!nonceProcessed[nonce], "Nonce already processed");
+        require(!nonceProcessed[_nonce], "Nonce already processed");
 
-        nonceProcessed[nonce] = true;
+        nonceProcessed[_nonce] = true;
 
-        if (nonce != lastNonce) {
+        if (_nonce != lastNonce) {
             // Update last known nonce
-            lastTransferNonce = nonce;
+            lastTransferNonce = _nonce;
         }
     }
 
@@ -612,19 +617,19 @@ abstract contract AbstractCCTPIntegrator is Governable, IMessageHandlerV2 {
 
     /**
      * @dev Called when the USDC is received from the CCTP
-     * @param tokenAmount The actual amount of USDC received (amount sent - fee executed)
-     * @param feeExecuted The fee executed
-     * @param payload The payload of the message (hook data)
+     * @param _tokenAmount The actual amount of USDC received (amount sent - fee executed)
+     * @param _feeExecuted The fee executed
+     * @param _payload The payload of the message (hook data)
      */
     function _onTokenReceived(
-        uint256 tokenAmount,
-        uint256 feeExecuted,
-        bytes memory payload
+        uint256 _tokenAmount,
+        uint256 _feeExecuted,
+        bytes memory _payload
     ) internal virtual;
 
     /**
      * @dev Called when the message is received
-     * @param payload The payload of the message
+     * @param _payload The payload of the message
      */
-    function _onMessageReceived(bytes memory payload) internal virtual;
+    function _onMessageReceived(bytes memory _payload) internal virtual;
 }

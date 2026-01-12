@@ -147,15 +147,15 @@ contract CrossChainRemoteStrategy is
     }
 
     /// @inheritdoc AbstractCCTPIntegrator
-    function _onMessageReceived(bytes memory payload) internal override {
-        uint32 messageType = payload.getMessageType();
+    function _onMessageReceived(bytes memory _payload) internal override {
+        uint32 messageType = _payload.getMessageType();
         if (messageType == CrossChainStrategyHelper.DEPOSIT_MESSAGE) {
             // Received when Master strategy sends tokens to the remote strategy
             // Do nothing because we receive acknowledgement with token transfer,
             // so _onTokenReceived will handle it
         } else if (messageType == CrossChainStrategyHelper.WITHDRAW_MESSAGE) {
             // Received when Master strategy requests a withdrawal
-            _processWithdrawMessage(payload);
+            _processWithdrawMessage(_payload);
         } else {
             revert("Unknown message type");
         }
@@ -163,18 +163,18 @@ contract CrossChainRemoteStrategy is
 
     /**
      * @dev Process deposit message from peer strategy
-     * @param tokenAmount Amount of tokens received
-     * @param feeExecuted Fee executed
-     * @param payload Payload of the message
+     * @param _tokenAmount Amount of tokens received
+     * @param _feeExecuted Fee executed
+     * @param _payload Payload of the message
      */
     function _processDepositMessage(
         // solhint-disable-next-line no-unused-vars
-        uint256 tokenAmount,
+        uint256 _tokenAmount,
         // solhint-disable-next-line no-unused-vars
-        uint256 feeExecuted,
-        bytes memory payload
+        uint256 _feeExecuted,
+        bytes memory _payload
     ) internal virtual {
-        (uint64 nonce, ) = payload.decodeDepositMessage();
+        (uint64 nonce, ) = _payload.decodeDepositMessage();
 
         // Replay protection is part of the _markNonceAsProcessed function
         _markNonceAsProcessed(nonce);
@@ -236,10 +236,10 @@ contract CrossChainRemoteStrategy is
 
     /**
      * @dev Process withdrawal message from peer strategy
-     * @param payload Payload of the message
+     * @param _payload Payload of the message
      */
-    function _processWithdrawMessage(bytes memory payload) internal virtual {
-        (uint64 nonce, uint256 withdrawAmount) = payload
+    function _processWithdrawMessage(bytes memory _payload) internal virtual {
+        (uint64 nonce, uint256 withdrawAmount) = _payload
             .decodeWithdrawMessage();
 
         // Replay protection is part of the _markNonceAsProcessed function
@@ -335,23 +335,23 @@ contract CrossChainRemoteStrategy is
 
     /**
      * @dev Process token received message from peer strategy
-     * @param tokenAmount Amount of tokens received
-     * @param feeExecuted Fee executed
-     * @param payload Payload of the message
+     * @param _tokenAmount Amount of tokens received
+     * @param _feeExecuted Fee executed
+     * @param _payload Payload of the message
      */
     function _onTokenReceived(
-        uint256 tokenAmount,
-        uint256 feeExecuted,
-        bytes memory payload
+        uint256 _tokenAmount,
+        uint256 _feeExecuted,
+        bytes memory _payload
     ) internal override {
-        uint32 messageType = payload.getMessageType();
+        uint32 messageType = _payload.getMessageType();
 
         require(
             messageType == CrossChainStrategyHelper.DEPOSIT_MESSAGE,
             "Invalid message type"
         );
 
-        _processDepositMessage(tokenAmount, feeExecuted, payload);
+        _processDepositMessage(_tokenAmount, _feeExecuted, _payload);
     }
 
     /**

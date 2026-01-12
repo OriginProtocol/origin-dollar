@@ -179,13 +179,13 @@ contract CrossChainMasterStrategy is
     {}
 
     /// @inheritdoc AbstractCCTPIntegrator
-    function _onMessageReceived(bytes memory payload) internal override {
+    function _onMessageReceived(bytes memory _payload) internal override {
         if (
-            payload.getMessageType() ==
+            _payload.getMessageType() ==
             CrossChainStrategyHelper.BALANCE_CHECK_MESSAGE
         ) {
             // Received when Remote strategy checks the balance
-            _processBalanceCheckMessage(payload);
+            _processBalanceCheckMessage(_payload);
             return;
         }
 
@@ -194,10 +194,10 @@ contract CrossChainMasterStrategy is
 
     /// @inheritdoc AbstractCCTPIntegrator
     function _onTokenReceived(
-        uint256 tokenAmount,
+        uint256 _tokenAmount,
         // solhint-disable-next-line no-unused-vars
-        uint256 feeExecuted,
-        bytes memory payload
+        uint256 _feeExecuted,
+        bytes memory _payload
     ) internal override {
         uint64 _nonce = lastTransferNonce;
 
@@ -213,12 +213,12 @@ contract CrossChainMasterStrategy is
         // `_onTokenReceived` which will update the balance.
         // So, if any of the checks fail during the first no-balance-update flow,
         // this won't happen either, since the tx would revert.
-        _onMessageReceived(payload);
+        _onMessageReceived(_payload);
 
         // Send any tokens in the contract to the Vault
         uint256 usdcBalance = IERC20(usdcToken).balanceOf(address(this));
         // Should always have enough tokens
-        require(usdcBalance >= tokenAmount, "Insufficient balance");
+        require(usdcBalance >= _tokenAmount, "Insufficient balance");
         // Transfer all tokens to the Vault to not leave any dust
         IERC20(usdcToken).safeTransfer(vaultAddress, usdcBalance);
 
@@ -229,15 +229,15 @@ contract CrossChainMasterStrategy is
     /**
      * @dev Bridge and deposit asset into the remote strategy
      * @param _asset Address of the asset to deposit
-     * @param depositAmount Amount of the asset to deposit
+     * @param _depositAmount Amount of the asset to deposit
      */
-    function _deposit(address _asset, uint256 depositAmount) internal virtual {
+    function _deposit(address _asset, uint256 _depositAmount) internal virtual {
         require(_asset == usdcToken, "Unsupported asset");
         require(pendingAmount == 0, "Unexpected pending amount");
         // Deposit at least 1 USDC
-        require(depositAmount >= 1e6, "Deposit amount too small");
+        require(_depositAmount >= 1e6, "Deposit amount too small");
         require(
-            depositAmount <= MAX_TRANSFER_AMOUNT,
+            _depositAmount <= MAX_TRANSFER_AMOUNT,
             "Deposit amount too high"
         );
 
@@ -246,19 +246,19 @@ contract CrossChainMasterStrategy is
         uint64 nonce = _getNextNonce();
 
         // Set pending amount
-        pendingAmount = depositAmount;
+        pendingAmount = _depositAmount;
 
         // Build deposit message payload
         bytes memory message = CrossChainStrategyHelper.encodeDepositMessage(
             nonce,
-            depositAmount
+            _depositAmount
         );
 
         // Send deposit message to the remote strategy
-        _sendTokens(depositAmount, message);
+        _sendTokens(_depositAmount, message);
 
         // Emit deposit event
-        emit Deposit(_asset, _asset, depositAmount);
+        emit Deposit(_asset, _asset, _depositAmount);
     }
 
     /**
@@ -306,16 +306,16 @@ contract CrossChainMasterStrategy is
      *  - Confirms a deposit to the remote strategy
      *  - Skips balance update if there's a pending withdrawal
      *  - Updates the remote strategy balance
-     * @param message The message containing the nonce and balance
+     * @param _message The message containing the nonce and balance
      */
-    function _processBalanceCheckMessage(bytes memory message)
+    function _processBalanceCheckMessage(bytes memory _message)
         internal
         virtual
     {
         // Decode the message
         // When transferConfirmation is true, it means that the message is a result of a deposit or a withdrawal
         // process.
-        (uint64 nonce, uint256 balance, bool transferConfirmation) = message
+        (uint64 nonce, uint256 balance, bool transferConfirmation) = _message
             .decodeBalanceCheckMessage();
         // Get the last cached nonce
         uint64 _lastCachedNonce = lastTransferNonce;
