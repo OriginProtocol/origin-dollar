@@ -8,7 +8,7 @@ module.exports = deploymentWithGovernanceProposal(
     // reduceQueueTime: true,
     deployerIsProposer: false,
     proposalId:
-      "74087219166026533236211044968704800558008230594792107684752001539143606662996",
+      "114762529796512226318240295500903888662758332295622344488561410551668255383581",
   },
   async () => {
     // Current contracts
@@ -21,7 +21,7 @@ module.exports = deploymentWithGovernanceProposal(
     // Governance Actions
     // ----------------
     return {
-      name: `Increase the OETH redeem fee from 0.1% to 10%. This is to prevent MEV bots taking WETH from the Vault after ETH from exited validators have been swept and accounted for.`,
+      name: `Increase the OETH redeem fee from 0.1% to 10%.\nThis is to prevent MEV bots taking WETH from the Vault after ETH from exited validators have been swept and accounted for.`,
       actions: [
         {
           contract: cVaultAdmin,
