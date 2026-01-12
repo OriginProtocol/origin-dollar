@@ -355,8 +355,8 @@ abstract contract AbstractCCTPIntegrator is Governable, IMessageHandlerV2 {
         require(_sourceDomain == peerDomainID, "Unknown Source Domain");
 
         // Extract address from bytes32 (CCTP stores addresses as right-padded bytes32)
-        address _senderAddress = address(uint160(uint256(_sender)));
-        require(_senderAddress == peerStrategy, "Unknown Sender");
+        address senderAddress = address(uint160(uint256(_sender)));
+        require(senderAddress == peerStrategy, "Unknown Sender");
 
         _onMessageReceived(_messageBody);
 
@@ -513,7 +513,7 @@ abstract contract AbstractCCTPIntegrator is Governable, IMessageHandlerV2 {
         // Relay the message
         // This step also mints USDC and transfers it to the recipient wallet
         bool relaySuccess = cctpMessageTransmitter.receiveMessage(
-            messageBody,
+            _message,
             _attestation
         );
         require(relaySuccess, "Receive message failed");

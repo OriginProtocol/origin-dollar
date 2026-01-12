@@ -245,7 +245,7 @@ library CrossChainStrategyHelper {
     {
         version = _message.extractUint32(VERSION_INDEX);
         sourceDomainID = _message.extractUint32(SOURCE_DOMAIN_INDEX);
-        // Address of _MessageTransmitterV2 caller on source domain
+        // Address of MessageTransmitterV2 caller on source domain
         sender = _message.extractAddress(SENDER_INDEX);
         // Address to handle message body on destination domain
         recipient = _message.extractAddress(RECIPIENT_INDEX);
