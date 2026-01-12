@@ -11,7 +11,6 @@ const {
   isCI,
   decimalsFor,
 } = require("./../helpers");
-const { canWithdrawAllFromMorphoOUSD } = require("../../utils/morpho");
 const { impersonateAndFund } = require("../../utils/signers");
 const {
   shouldHaveRewardTokensConfigured,
@@ -296,18 +295,12 @@ describe("ForkTest: Vault", function () {
       const { vault, usdc } = fixture;
 
       expect([
-        "0x3643cafA6eF3dd7Fcc2ADaD1cabf708075AFFf6e", // Morpho OUSD v2 Strategy
+        "0x3643cafA6eF3dd7Fcc2ADaD1cabf708075AFFf6e", //Morpho OUSD v2 Strategy
       ]).to.include(await vault.assetDefaultStrategies(usdc.address));
     });
 
     it("Should be able to withdraw from all strategies", async () => {
       const { vault, timelock } = fixture;
-
-      const withdrawAllAllowed = await canWithdrawAllFromMorphoOUSD();
-
-      // If there is not enough liquidity in the Morpho OUSD v1 Vault, skip the withdrawAll test
-      if (withdrawAllAllowed === false) return;
-
       await vault.connect(timelock).withdrawAllFromStrategies();
     });
   });

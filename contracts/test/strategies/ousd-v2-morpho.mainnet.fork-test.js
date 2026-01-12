@@ -2,7 +2,6 @@ const { expect } = require("chai");
 const { formatUnits, parseUnits } = require("ethers/lib/utils");
 
 const addresses = require("../../utils/addresses");
-const { canWithdrawAllFromMorphoOUSD } = require("../../utils/morpho");
 const { getMerklRewards } = require("../../tasks/merkl");
 const { units, isCI } = require("../helpers");
 
@@ -238,11 +237,6 @@ describe("ForkTest: Yearn's Morpho OUSD v2 Strategy", function () {
 
       log("Before withdraw all from strategy");
 
-      const withdrawAllAllowed = await canWithdrawAllFromMorphoOUSD();
-
-      // If there is not enough liquidity in the Morpho OUSD v1 Vault, skip the withdrawAll test
-      if (withdrawAllAllowed === false) return;
-
       // Now try to withdraw all the WETH from the strategy
       const tx = await morphoOUSDv2Strategy.connect(vaultSigner).withdrawAll();
 
@@ -332,13 +326,8 @@ describe("ForkTest: Yearn's Morpho OUSD v2 Strategy", function () {
         await expect(tx).to.revertedWith("Caller is not the Vault");
       }
     });
-    it("Only vault and governor can withdraw all USDC from the strategy", async function () {
+    it("Only vault and governor can withdraw all USDC from Maker DSR strategy", async function () {
       const { morphoOUSDv2Strategy, strategist, timelock, josh } = fixture;
-
-      const withdrawAllAllowed = await canWithdrawAllFromMorphoOUSD();
-
-      // If there is not enough liquidity in the Morpho OUSD v1 Vault, skip the withdrawAll test
-      if (withdrawAllAllowed === false) return;
 
       for (const signer of [strategist, josh]) {
         const tx = morphoOUSDv2Strategy.connect(signer).withdrawAll();
