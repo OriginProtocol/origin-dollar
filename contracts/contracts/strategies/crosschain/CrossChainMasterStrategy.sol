@@ -46,6 +46,10 @@ contract CrossChainMasterStrategy is
         AbstractCCTPIntegrator(_cctpConfig)
     {
         require(
+            _stratConfig.platformAddress == address(0),
+            "Invalid platform address"
+        );
+        require(
             _stratConfig.vaultAddress != address(0),
             "Invalid Vault address"
         );
