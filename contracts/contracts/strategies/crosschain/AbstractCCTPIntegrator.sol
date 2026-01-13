@@ -54,8 +54,16 @@ abstract contract AbstractCCTPIntegrator is Governable, IMessageHandlerV2 {
     uint8 private constant BURN_MESSAGE_V2_HOOK_DATA_INDEX = 228;
 
     /**
-     * @notice Max transfer threshold imposed by the CCTP
-     *         Ref: https://developers.circle.com/cctp/evm-smart-contracts#depositforburn
+     * @notice  Max transfer threshold imposed by the CCTP
+     *          Ref: https://developers.circle.com/cctp/evm-smart-contracts#depositforburn
+     * @dev     10M USDC limit applies to both standard and fast transfer modes. The fast transfer mode has
+     *          an additional limitation that is not present on-chain and Circle may alter that amount off-chain
+     *          at their preference. The amount available for fast transfer can be queried here:
+     *          https://iris-api.circle.com/v2/fastBurn/USDC/allowance .
+     *          If a fast transfer token transaction has been issued and there is not enough allowance for it
+     *          the off-chain Iris component will re-attempt the transaction and if it fails it will fallback
+     *          to a standard transfer. Reference section 4.3 in the whitepaper:
+     *          https://6778953.fs1.hubspotusercontent-na1.net/hubfs/6778953/PDFs/Whitepapers/CCTPV2_White_Paper.pdf
      */
     uint256 public constant MAX_TRANSFER_AMOUNT = 10_000_000 * 10**6; // 10M USDC
 
@@ -81,7 +89,7 @@ abstract contract AbstractCCTPIntegrator is Governable, IMessageHandlerV2 {
      *         Can be 1000 (safe, after 1 epoch) or 2000 (finalized, after 2 epochs).
      *         Ref: https://developers.circle.com/cctp/technical-guide#finality-thresholds
      * @dev    When configuring the contract for fast transfer we should check the available
-     *         allowance of USDC that can be bridged using fast mode: 
+     *         allowance of USDC that can be bridged using fast mode:
      *         wget https://iris-api.circle.com/v2/fastBurn/USDC/allowance
      */
     uint16 public minFinalityThreshold;
@@ -187,6 +195,11 @@ abstract contract AbstractCCTPIntegrator is Governable, IMessageHandlerV2 {
         _setOperator(_operator);
         _setMinFinalityThreshold(_minFinalityThreshold);
         _setFeePremiumBps(_feePremiumBps);
+
+        // Nonce starts at 1, so assume nonce 0 as processed.
+        // NOTE: This will cause the deposit/withdraw to fail if the
+        // strategy is not initialized properly (which is expected).
+        nonceProcessed[0] = true;
     }
 
     /***************************************
@@ -535,8 +548,7 @@ abstract contract AbstractCCTPIntegrator is Governable, IMessageHandlerV2 {
      * @return True if a transfer is pending, false otherwise
      */
     function isTransferPending() public view returns (bool) {
-        uint64 nonce = lastTransferNonce;
-        return nonce > 0 && !nonceProcessed[nonce];
+        return !nonceProcessed[lastTransferNonce];
     }
 
     /**
@@ -546,7 +558,7 @@ abstract contract AbstractCCTPIntegrator is Governable, IMessageHandlerV2 {
      * @return True if the nonce is processed, false otherwise
      */
     function isNonceProcessed(uint64 nonce) public view returns (bool) {
-        return nonce == 0 || nonceProcessed[nonce];
+        return nonceProcessed[nonce];
     }
 
     /**
@@ -586,10 +598,7 @@ abstract contract AbstractCCTPIntegrator is Governable, IMessageHandlerV2 {
     function _getNextNonce() internal returns (uint64) {
         uint64 nonce = lastTransferNonce;
 
-        require(
-            nonce == 0 || nonceProcessed[nonce],
-            "Pending deposit or withdrawal"
-        );
+        require(nonceProcessed[nonce], "Pending token transfer");
 
         nonce = nonce + 1;
         lastTransferNonce = nonce;

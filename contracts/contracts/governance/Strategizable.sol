@@ -15,7 +15,7 @@ contract Strategizable is Governable {
     /**
      * @dev Verifies that the caller is either Governor or Strategist.
      */
-    modifier onlyGovernorOrStrategist() {
+    modifier onlyGovernorOrStrategist() virtual {
         require(
             msg.sender == strategistAddr || isGovernor(),
             "Caller is not the Strategist or Governor"

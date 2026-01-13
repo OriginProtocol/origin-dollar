@@ -17,10 +17,12 @@ import { Generalized4626Strategy } from "../Generalized4626Strategy.sol";
 import { AbstractCCTPIntegrator } from "./AbstractCCTPIntegrator.sol";
 import { CrossChainStrategyHelper } from "./CrossChainStrategyHelper.sol";
 import { InitializableAbstractStrategy } from "../../utils/InitializableAbstractStrategy.sol";
+import { Strategizable } from "../../governance/Strategizable.sol";
 
 contract CrossChainRemoteStrategy is
     AbstractCCTPIntegrator,
-    Generalized4626Strategy
+    Generalized4626Strategy,
+    Strategizable
 {
     using SafeERC20 for IERC20;
     using CrossChainStrategyHelper for bytes;
@@ -28,15 +30,6 @@ contract CrossChainRemoteStrategy is
     event DepositUnderlyingFailed(string reason);
     event WithdrawalFailed(uint256 amountRequested, uint256 amountAvailable);
     event WithdrawUnderlyingFailed(string reason);
-    event StrategistUpdated(address _address);
-
-    /**
-     * @notice Address of the strategist.
-     *         This is important to have the variable name same as in IVault.
-     *         Because the parent contract (Generalized4626Strategy) uses this
-     *         function to get the strategist address.
-     */
-    address public strategistAddr;
 
     modifier onlyOperatorOrStrategistOrGovernor() {
         require(
@@ -44,6 +37,15 @@ contract CrossChainRemoteStrategy is
                 msg.sender == strategistAddr ||
                 isGovernor(),
             "Caller is not the Operator, Strategist or the Governor"
+        );
+        _;
+    }
+
+    modifier onlyGovernorOrStrategist()
+        override(InitializableAbstractStrategy, Strategizable) {
+        require(
+            msg.sender == strategistAddr || isGovernor(),
+            "Caller is not the Strategist or Governor"
         );
         _;
     }
@@ -56,9 +58,15 @@ contract CrossChainRemoteStrategy is
         Generalized4626Strategy(_baseConfig, _cctpConfig.usdcToken)
     {
         require(usdcToken == address(assetToken), "Token mismatch");
-
-        // NOTE: Vault address must always be the proxy address
-        // so that IVault(vaultAddress).strategistAddr() works
+        require(
+            _baseConfig.platformAddress != address(0),
+            "Invalid platform address"
+        );
+        // Vault address must always be address(0) for the remote strategy
+        require(
+            _baseConfig.vaultAddress == address(0),
+            "Invalid vault address"
+        );
     }
 
     /**
@@ -91,38 +99,25 @@ contract CrossChainRemoteStrategy is
         );
     }
 
-    /**
-     * @notice Set address of Strategist.
-     *         This is important to have the function name same as IVault.
-     *         Because the parent contract (Generalized4626Strategy) uses this
-     *         function to get/set the strategist address.
-     * @param _address Address of Strategist
-     */
-    function setStrategistAddr(address _address) external onlyGovernor {
-        _setStrategistAddr(_address);
-    }
-
-    /**
-     * @dev Set the strategist address
-     * @param _address Address of the strategist
-     */
-    function _setStrategistAddr(address _address) internal {
-        strategistAddr = _address;
-        emit StrategistUpdated(_address);
-    }
-
     /// @inheritdoc Generalized4626Strategy
     function deposit(address _asset, uint256 _amount)
         external
         virtual
         override
         onlyGovernorOrStrategist
+        nonReentrant
     {
         _deposit(_asset, _amount);
     }
 
     /// @inheritdoc Generalized4626Strategy
-    function depositAll() external virtual override onlyGovernorOrStrategist {
+    function depositAll()
+        external
+        virtual
+        override
+        onlyGovernorOrStrategist
+        nonReentrant
+    {
         _deposit(usdcToken, IERC20(usdcToken).balanceOf(address(this)));
     }
 
@@ -131,12 +126,18 @@ contract CrossChainRemoteStrategy is
         address _recipient,
         address _asset,
         uint256 _amount
-    ) external virtual override onlyGovernorOrStrategist {
+    ) external virtual override onlyGovernorOrStrategist nonReentrant {
         _withdraw(_recipient, _asset, _amount);
     }
 
     /// @inheritdoc Generalized4626Strategy
-    function withdrawAll() external virtual override onlyGovernorOrStrategist {
+    function withdrawAll()
+        external
+        virtual
+        override
+        onlyGovernorOrStrategist
+        nonReentrant
+    {
         IERC4626 platform = IERC4626(platformAddress);
         _withdraw(
             address(this),
@@ -183,7 +184,9 @@ contract CrossChainRemoteStrategy is
 
         // Underlying call to deposit funds can fail. It mustn't affect the overall
         // flow as confirmation message should still be sent.
-        _deposit(usdcToken, balance);
+        if (balance >= 1e6) {
+            _deposit(usdcToken, balance);
+        }
 
         // Send balance check message to the peer strategy
         bytes memory message = CrossChainStrategyHelper
@@ -201,6 +204,12 @@ contract CrossChainRemoteStrategy is
      * @param _amount Amount of asset to deposit
      */
     function _deposit(address _asset, uint256 _amount) internal override {
+        // By design, this function should not revert. Otherwise, it'd
+        // not be able to process messages and might freeze the contracts
+        // state. However these two require statements would never fail
+        // in every function invoking this. The same kind of checks should
+        // be enforced in all the calling functions for these two and any
+        // other require statements added to this function.
         require(_amount > 0, "Must deposit something");
         require(_asset == address(usdcToken), "Unexpected asset address");
 
@@ -256,7 +265,7 @@ contract CrossChainRemoteStrategy is
         // there is a possibility of USDC funds remaining on the contract.
         // A separate withdraw to extract or deposit to the Morpho vault needs to be
         // initiated from the peer Master strategy to utilise USDC funds.
-        if (withdrawAmount > 1e6 && usdcBalance >= withdrawAmount) {
+        if (withdrawAmount >= 1e6 && usdcBalance >= withdrawAmount) {
             // The new balance on the contract needs to have USDC subtracted from it as
             // that will be withdrawn in the next step
             bytes memory message = CrossChainStrategyHelper

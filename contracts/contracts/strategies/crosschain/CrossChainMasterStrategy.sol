@@ -21,11 +21,15 @@ contract CrossChainMasterStrategy is
     using SafeERC20 for IERC20;
     using CrossChainStrategyHelper for bytes;
 
-    /// @notice Remote strategy balance
+    /**
+     * @notice Remote strategy balance
+     * @dev    The remote balance is cached and might not reflect the actual
+     *         real-time balance of the remote strategy.
+     */
     uint256 public remoteStrategyBalance;
 
     /// @notice Amount that's bridged due to a pending Deposit process
-    ///         but not yet received on the destination chain
+    ///         but with no acknowledgement from the remote strategy yet
     uint256 public pendingAmount;
 
     event RemoteStrategyBalanceUpdated(uint256 balance);
@@ -40,7 +44,12 @@ contract CrossChainMasterStrategy is
     )
         InitializableAbstractStrategy(_stratConfig)
         AbstractCCTPIntegrator(_cctpConfig)
-    {}
+    {
+        require(
+            _stratConfig.vaultAddress != address(0),
+            "Invalid Vault address"
+        );
+    }
 
     /**
      * @dev Initialize the strategy implementation
@@ -80,7 +89,7 @@ contract CrossChainMasterStrategy is
     function depositAll() external override onlyVault nonReentrant {
         uint256 balance = IERC20(usdcToken).balanceOf(address(this));
         // Deposit if balance is greater than 1 USDC
-        if (balance > 1e6) {
+        if (balance >= 1e6) {
             _deposit(usdcToken, balance);
         }
     }
@@ -97,6 +106,11 @@ contract CrossChainMasterStrategy is
 
     /// @inheritdoc InitializableAbstractStrategy
     function withdrawAll() external override onlyVaultOrGovernor nonReentrant {
+        if (isTransferPending()) {
+            // Do nothing if there is a pending transfer
+            return;
+        }
+
         // Withdraw everything in Remote strategy
         uint256 _remoteBalance = remoteStrategyBalance;
         if (_remoteBalance < 1e6) {
@@ -218,7 +232,7 @@ contract CrossChainMasterStrategy is
         require(_asset == usdcToken, "Unsupported asset");
         require(pendingAmount == 0, "Unexpected pending amount");
         // Deposit at least 1 USDC
-        require(depositAmount > 1e6, "Deposit amount too small");
+        require(depositAmount >= 1e6, "Deposit amount too small");
         require(
             depositAmount <= MAX_TRANSFER_AMOUNT,
             "Deposit amount too high"
@@ -252,7 +266,12 @@ contract CrossChainMasterStrategy is
     function _withdraw(address _asset, uint256 _amount) internal virtual {
         require(_asset == usdcToken, "Unsupported asset");
         // Withdraw at least 1 USDC
+<<<<<<< HEAD
         require(_amount > 1e6, "Withdraw amount too small");
+=======
+        require(_amount >= 1e6, "Withdraw amount too small");
+        require(_recipient == vaultAddress, "Only Vault can withdraw");
+>>>>>>> origin/shah/cross-chain-strategy-cctpv2
         require(
             _amount <= remoteStrategyBalance,
             "Withdraw amount exceeds remote strategy balance"

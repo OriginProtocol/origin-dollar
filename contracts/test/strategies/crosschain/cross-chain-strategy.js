@@ -429,7 +429,7 @@ describe("ForkTest: CrossChainRemoteStrategy", function () {
     await depositToMasterStrategy("50");
 
     await expect(withdrawFromRemoteStrategy("40")).to.be.revertedWith(
-      "Pending deposit or withdrawal"
+      "Pending token transfer"
     );
   });
 
@@ -439,7 +439,7 @@ describe("ForkTest: CrossChainRemoteStrategy", function () {
 
     await mint("30");
     await expect(depositToMasterStrategy("30")).to.be.revertedWith(
-      "Pending deposit or withdrawal"
+      "Pending token transfer"
     );
   });
 
@@ -448,7 +448,7 @@ describe("ForkTest: CrossChainRemoteStrategy", function () {
     await withdrawFromRemoteStrategy("50");
 
     await expect(withdrawFromRemoteStrategy("40")).to.be.revertedWith(
-      "Pending deposit or withdrawal"
+      "Pending token transfer"
     );
   });
 });
