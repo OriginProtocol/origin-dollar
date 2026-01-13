@@ -129,7 +129,7 @@ abstract contract VaultAdmin is VaultCore {
         onlyGovernorOrStrategist
     {
         // The old yield will be at the old rate
-        IVault(address(this)).rebase();
+        _rebase();
         // Change the rate
         uint256 newPerSecond = yearlyApr / 100 / 365 days;
         require(newPerSecond <= MAX_REBASE_PER_SECOND, "Rate too high");
@@ -146,7 +146,7 @@ abstract contract VaultAdmin is VaultCore {
         onlyGovernorOrStrategist
     {
         // The old yield will be at the old rate
-        IVault(address(this)).rebase();
+        _rebase();
         dripDuration = _dripDuration.toUint64();
         emit DripDurationChanged(_dripDuration);
     }
@@ -330,7 +330,7 @@ abstract contract VaultAdmin is VaultCore {
             );
         }
 
-        IVault(address(this)).addWithdrawalQueueLiquidity();
+        _addWithdrawalQueueLiquidity();
     }
 
     /**
@@ -437,7 +437,7 @@ abstract contract VaultAdmin is VaultCore {
         );
         IStrategy strategy = IStrategy(_strategyAddr);
         strategy.withdrawAll();
-        IVault(address(this)).addWithdrawalQueueLiquidity();
+        _addWithdrawalQueueLiquidity();
     }
 
     /**
@@ -452,6 +452,6 @@ abstract contract VaultAdmin is VaultCore {
         for (uint256 i = 0; i < stratCount; ++i) {
             IStrategy(allStrategies[i]).withdrawAll();
         }
-        IVault(address(this)).addWithdrawalQueueLiquidity();
+        _addWithdrawalQueueLiquidity();
     }
 }
