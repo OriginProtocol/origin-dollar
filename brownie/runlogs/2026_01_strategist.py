@@ -89,6 +89,7 @@ def main():
 from world_base import *
 def main():
   with TemporaryForkForReallocations() as txs:
+    txs.append(woeth_strat.updateWOETHOraclePrice({ 'from': MULTICHAIN_STRATEGIST }))
     txs.append(vault_core.rebase({'from': MULTICHAIN_STRATEGIST}))
     txs.append(vault_value_checker.takeSnapshot({'from': MULTICHAIN_STRATEGIST}))
 
