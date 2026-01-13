@@ -546,4 +546,41 @@ describe("ForkTest: CrossChainRemoteStrategy", function () {
       "Withdraw amount exceeds max transfer amount"
     );
   });
+
+  it("Should revert if balance update on the remote strategy is not called by operator or governor or strategist", async function () {
+    await mintToMasterDepositToRemote("10");
+    await expect(crossChainRemoteStrategy.connect(josh).sendBalanceUpdate()).to.be.revertedWith(
+      "Caller is not the Operator, Strategist or the Governor"
+    );
+  });
+
+  it("Should revert if deposit on the remote strategy is not called by the governor or strategist", async function () {
+    await mintToMasterDepositToRemote("10");
+    await expect(crossChainRemoteStrategy.connect(josh).deposit(usdc.address, await units("10", usdc))).to.be.revertedWith(
+      "Caller is not the Strategist or Governor"
+    );
+  });
+
+  it("Should revert if depositAll on the remote strategy is not called by the governor or strategist", async function () {
+    await mintToMasterDepositToRemote("10");
+    await expect(crossChainRemoteStrategy.connect(josh).depositAll()).to.be.revertedWith(
+      "Caller is not the Strategist or Governor"
+    );
+  });
+
+  it("Should revert if withdraw on the remote strategy is not called by the governor or strategist", async function () {
+    await mintToMasterDepositToRemote("10");
+    await expect(crossChainRemoteStrategy.connect(josh).withdraw(vault.address, usdc.address, await units("10", usdc))).to.be.revertedWith(
+      "Caller is not the Strategist or Governor"
+    );
+  });
+
+  it("Should revert if withdrawAll on the remote strategy is not called by the governor or strategist", async function () {
+    await mintToMasterDepositToRemote("10");
+    await expect(crossChainRemoteStrategy.connect(josh).withdrawAll()).to.be.revertedWith(
+      "Caller is not the Strategist or Governor"
+    );
+  });
+
+  
 });
