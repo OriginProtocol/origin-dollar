@@ -101,8 +101,7 @@ contract CrossChainMasterStrategy is
         uint256 _amount
     ) external override onlyVault nonReentrant {
         require(_recipient == vaultAddress, "Only Vault can withdraw");
-
-        _withdraw(_asset, _recipient, _amount);
+        _withdraw(_asset, _amount);
     }
 
     /// @inheritdoc InitializableAbstractStrategy
@@ -121,8 +120,6 @@ contract CrossChainMasterStrategy is
 
         _withdraw(
             usdcToken,
-            vaultAddress,
-            // Withdraw at most the max transfer amount
             _remoteBalance > MAX_TRANSFER_AMOUNT
                 ? MAX_TRANSFER_AMOUNT
                 : _remoteBalance
@@ -264,18 +261,17 @@ contract CrossChainMasterStrategy is
     /**
      * @dev Send a withdraw request to the remote strategy
      * @param _asset Address of the asset to withdraw
-     * @param _recipient Address to receive the withdrawn asset
      * @param _amount Amount of the asset to withdraw
      */
-    function _withdraw(
-        address _asset,
-        address _recipient,
-        uint256 _amount
-    ) internal virtual {
+    function _withdraw(address _asset, uint256 _amount) internal virtual {
         require(_asset == usdcToken, "Unsupported asset");
         // Withdraw at least 1 USDC
+<<<<<<< HEAD
+        require(_amount > 1e6, "Withdraw amount too small");
+=======
         require(_amount >= 1e6, "Withdraw amount too small");
         require(_recipient == vaultAddress, "Only Vault can withdraw");
+>>>>>>> origin/shah/cross-chain-strategy-cctpv2
         require(
             _amount <= remoteStrategyBalance,
             "Withdraw amount exceeds remote strategy balance"
