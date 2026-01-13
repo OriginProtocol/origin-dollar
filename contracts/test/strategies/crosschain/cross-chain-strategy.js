@@ -4,7 +4,8 @@ const {
   createFixtureLoader,
   crossChainFixtureUnit,
 } = require("../../_fixture");
-const { units } = require("../../helpers");
+const { setERC20TokenBalance } = require("../../_fund");
+const { units, usdcUnits } = require("../../helpers");
 const { impersonateAndFund } = require("../../../utils/signers");
 
 const loadFixture = createFixtureLoader(crossChainFixtureUnit);
@@ -50,14 +51,20 @@ describe("ForkTest: CrossChainRemoteStrategy", function () {
   };
 
   // Even though remote strategy has funds withdrawn the message initiates on master strategy
-  const withdrawFromRemoteStrategy = async (amount) => {
-    await vault
+  const withdrawFromRemoteStrategy = (amount) => {
+    return vault
       .connect(governor)
       .withdrawFromStrategy(
         crossChainMasterStrategy.address,
         [usdc.address],
-        [await units(amount, usdc)]
+        [usdcUnits(amount, usdc)]
       );
+  };
+
+  const withdrawAllFromRemoteStrategy = () => {
+    return vault
+      .connect(governor)
+      .withdrawAllFromStrategy(crossChainMasterStrategy.address);
   };
 
   // Withdraws from the remote strategy directly, without going through the master strategy
@@ -128,19 +135,19 @@ describe("ForkTest: CrossChainRemoteStrategy", function () {
     );
     await expect(
       await morphoVault.balanceOf(crossChainRemoteStrategy.address)
-    ).to.eq(remoteBalanceBefore + amountBn);
+    ).to.eq(remoteBalanceBefore.add(amountBn));
 
     // Simulate off chain component processing checkBalance message
     await expect(messageTransmitter.processFront())
       .to.emit(crossChainMasterStrategy, "RemoteStrategyBalanceUpdated")
-      .withArgs(amountBn);
+      .withArgs(remoteBalanceBefore.add(amountBn));
 
     await expect(await messageTransmitter.messagesInQueue()).to.eq(
       messagesinQueueBefore
     );
     await assertVaultTotalValue(vaultDiffAfterMint);
     await expect(await crossChainMasterStrategy.remoteStrategyBalance()).to.eq(
-      remoteBalanceRecByMasterBefore + amountBn
+      remoteBalanceRecByMasterBefore.add(amountBn)
     );
   };
 
@@ -352,7 +359,7 @@ describe("ForkTest: CrossChainRemoteStrategy", function () {
 
     // Process on remote strategy
     await expect(messageTransmitter.processFront())
-      .to.emit(crossChainRemoteStrategy, "WithdrawFailed")
+      .to.emit(crossChainRemoteStrategy, "WithdrawalFailed")
       .withArgs(await units("1000", usdc), await units("0", usdc));
 
     // Process on master strategy
@@ -449,6 +456,94 @@ describe("ForkTest: CrossChainRemoteStrategy", function () {
 
     await expect(withdrawFromRemoteStrategy("40")).to.be.revertedWith(
       "Pending token transfer"
+    );
+  });
+
+  it("Should fail to deposit non usdc asset", async function () {
+    const { ousd, vault, vaultSigner, josh, crossChainMasterStrategy } =
+      fixture;
+    await mint("10");
+    await ousd.connect(josh).transfer(vault.address, await units("10", ousd));
+    await expect(
+      crossChainMasterStrategy
+        .connect(vaultSigner)
+        .deposit(ousd.address, await units("10", ousd))
+    ).to.be.revertedWith("Unsupported asset");
+  });
+
+  it("Should not deposit less than 1 USDC using normal depositAll approach", async function () {
+    await mint("1");
+    // DepositAll function doesn't call _deposit when amount is less than 1 USDC
+    await expect(
+      vault
+        .connect(governor)
+        .depositToStrategy(
+          crossChainMasterStrategy.address,
+          [usdc.address],
+          [await units("0.5", usdc)]
+        )
+    ).not.to.emit(crossChainMasterStrategy, "Deposit");
+  });
+
+  it("Should revert when depositing less than 1 USDC", async function () {
+    const { usdc, vaultSigner, crossChainMasterStrategy } = fixture;
+    await mint("10");
+    await expect(
+      crossChainMasterStrategy
+        .connect(vaultSigner)
+        .deposit(usdc.address, await units("0.5", usdc))
+    ).to.be.revertedWith("Deposit amount too small");
+  });
+
+  it("Should not calling withdrawAll if one withdraw is pending", async function () {
+    await mintToMasterDepositToRemote("10");
+    await withdrawFromRemoteStrategy("5");
+
+    // 1 withdraw is pending, the withdrawAll won't issue another withdraw, but wont fail as well
+    await expect(withdrawAllFromRemoteStrategy()).to.not.emit(
+      crossChainMasterStrategy,
+      "WithdrawRequested"
+    );
+  });
+
+  it("Should not calling withdrawAll if one withdraw is pending", async function () {
+    await mintToMasterDepositToRemote("10");
+    await withdrawFromRemoteToVault("9.5", true);
+
+    await expect(
+      await crossChainRemoteStrategy.checkBalance(usdc.address)
+    ).to.eq(usdcUnits("0.5"));
+
+    // Remote only has 0.5 USDC left, the withdrawAll won't issue another withdraw, but wont fail as well
+    await expect(withdrawAllFromRemoteStrategy()).to.not.emit(
+      crossChainMasterStrategy,
+      "WithdrawRequested"
+    );
+  });
+
+  it("Should revert if withdrawal amount is too small", async function () {
+    await mintToMasterDepositToRemote("10");
+
+    await expect(withdrawFromRemoteStrategy("0.9")).to.be.revertedWith(
+      "Withdraw amount too small"
+    );
+  });
+
+  it("Should revert if withdrawal exceeds remote strategy balance", async function () {
+    await mintToMasterDepositToRemote("10");
+
+    await expect(withdrawFromRemoteStrategy("11")).to.be.revertedWith(
+      "Withdraw amount exceeds remote strategy balance"
+    );
+  });
+
+  it("Should revert if withdrawal exceeds max transfer amount", async function () {
+    await setERC20TokenBalance(josh.address, usdc, "100000000");
+    await mintToMasterDepositToRemote("9000000");
+    await mintToMasterDepositToRemote("9000000");
+
+    await expect(withdrawFromRemoteStrategy("10000001")).to.be.revertedWith(
+      "Withdraw amount exceeds max transfer amount"
     );
   });
 });
