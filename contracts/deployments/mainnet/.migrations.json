@@ -55,5 +55,7 @@
   "158_deploy_xogn_rewards_module": 1764146932,
   "159_ousd_morpho_v2_proxy": 1765998626,
   "160_upgrade_morpho_strategies": 1766168031,
-  "161_add_morpho_rewards": 1767070523
+  "161_add_morpho_rewards": 1767070523,
+  "162_remove_morpho_gauntlet_strat": 1767659015,
+  "163_increase_oeth_redeem_fee": 1768182515
 }

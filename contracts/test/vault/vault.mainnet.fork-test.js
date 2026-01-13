@@ -11,6 +11,7 @@ const {
   isCI,
   decimalsFor,
 } = require("./../helpers");
+const { canWithdrawAllFromMorphoOUSD } = require("../../utils/morpho");
 const { impersonateAndFund } = require("../../utils/signers");
 const {
   shouldHaveRewardTokensConfigured,
@@ -156,7 +157,7 @@ describe("ForkTest: Vault", function () {
     });
 
     it("should withdraw from and deposit to strategy", async () => {
-      const { vault, josh, usdc, morphoGauntletPrimeUSDCStrategy } = fixture;
+      const { vault, josh, usdc, morphoOUSDv2Strategy } = fixture;
       await vault.connect(josh).mint(usdc.address, usdcUnits("90"), 0);
       const strategistSigner = await impersonateAndFund(
         await vault.strategistAddr()
@@ -170,12 +171,12 @@ describe("ForkTest: Vault", function () {
         async () => {
           [usdcStratDiff] = await differenceInStrategyBalance(
             [usdc.address],
-            [morphoGauntletPrimeUSDCStrategy],
+            [morphoOUSDv2Strategy],
             async () => {
               await vault
                 .connect(strategistSigner)
                 .depositToStrategy(
-                  morphoGauntletPrimeUSDCStrategy.address,
+                  morphoOUSDv2Strategy.address,
                   [usdc.address],
                   [usdcUnits("90")]
                 );
@@ -194,12 +195,12 @@ describe("ForkTest: Vault", function () {
         async () => {
           [usdcStratDiff] = await differenceInStrategyBalance(
             [usdc.address],
-            [morphoGauntletPrimeUSDCStrategy],
+            [morphoOUSDv2Strategy],
             async () => {
               await vault
                 .connect(strategistSigner)
                 .withdrawFromStrategy(
-                  morphoGauntletPrimeUSDCStrategy.address,
+                  morphoOUSDv2Strategy.address,
                   [usdc.address],
                   [usdcUnits("90")]
                 );
@@ -272,7 +273,6 @@ describe("ForkTest: Vault", function () {
 
       const knownStrategies = [
         // Update this every time a new strategy is added. Below are mainnet addresses
-        "0x2B8f37893EE713A4E9fF0cEb79F27539f20a32a1", // Morpho Gauntlet Prime USDC
         "0x26a02ec47ACC2A3442b757F45E0A82B8e993Ce11", // Curve AMO OUSD/USDC
         "0x3643cafA6eF3dd7Fcc2ADaD1cabf708075AFFf6e", // Morpho OUSD v2 Strategy
       ];
@@ -296,12 +296,18 @@ describe("ForkTest: Vault", function () {
       const { vault, usdc } = fixture;
 
       expect([
-        "0x2B8f37893EE713A4E9fF0cEb79F27539f20a32a1", //Morpho Gauntlet Prime USDC
+        "0x3643cafA6eF3dd7Fcc2ADaD1cabf708075AFFf6e", // Morpho OUSD v2 Strategy
       ]).to.include(await vault.assetDefaultStrategies(usdc.address));
     });
 
     it("Should be able to withdraw from all strategies", async () => {
       const { vault, timelock } = fixture;
+
+      const withdrawAllAllowed = await canWithdrawAllFromMorphoOUSD();
+
+      // If there is not enough liquidity in the Morpho OUSD v1 Vault, skip the withdrawAll test
+      if (withdrawAllAllowed === false) return;
+
       await vault.connect(timelock).withdrawAllFromStrategies();
     });
   });

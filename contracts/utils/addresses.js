@@ -214,6 +214,10 @@ addresses.mainnet.MorphoGauntletPrimeUSDTVault =
   "0x8CB3649114051cA5119141a34C200D65dc0Faa73";
 addresses.mainnet.MorphoOUSDv2StrategyProxy =
   "0x3643cafA6eF3dd7Fcc2ADaD1cabf708075AFFf6e";
+addresses.mainnet.MorphoOUSDv1Vault =
+  "0x5B8b9FA8e4145eE06025F642cAdB1B47e5F39F04";
+addresses.mainnet.MorphoOUSDv2Adaptor =
+  "0xD8F093dCE8504F10Ac798A978eF9E0C230B2f5fF";
 addresses.mainnet.MorphoOUSDv2Vault =
   "0xFB154c729A16802c4ad1E8f7FF539a8b9f49c960";
 
