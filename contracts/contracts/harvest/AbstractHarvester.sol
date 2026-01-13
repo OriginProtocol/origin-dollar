@@ -198,7 +198,6 @@ abstract contract AbstractHarvester is Governable {
 
         // Revert if feed does not exist
         // slither-disable-next-line unused-return
-        // IOracle(IVault(vaultAddress).priceProvider()).price(_tokenAddress);
 
         IERC20 token = IERC20(_tokenAddress);
         // if changing token swap provider cancel existing allowance
@@ -443,7 +442,6 @@ abstract contract AbstractHarvester is Governable {
         _harvest(_strategyAddr);
         IStrategy strategy = IStrategy(_strategyAddr);
         address[] memory rewardTokens = strategy.getRewardTokenAddresses();
-        //IOracle priceProvider = IOracle(IVault(vaultAddress).priceProvider());
         uint256 len = rewardTokens.length;
         for (uint256 i = 0; i < len; ++i) {
             // This harvester contract is not used anymore. Keeping the code
