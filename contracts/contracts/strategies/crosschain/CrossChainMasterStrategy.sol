@@ -270,7 +270,7 @@ contract CrossChainMasterStrategy is
     function _withdraw(address _asset, uint256 _amount) internal virtual {
         require(_asset == usdcToken, "Unsupported asset");
         // Withdraw at least 1 USDC
-        require(_amount > 1e6, "Withdraw amount too small");
+        require(_amount >= 1e6, "Withdraw amount too small");
         require(
             _amount <= remoteStrategyBalance,
             "Withdraw amount exceeds remote strategy balance"
