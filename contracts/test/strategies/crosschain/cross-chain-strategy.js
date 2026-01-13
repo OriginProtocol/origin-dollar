@@ -170,9 +170,11 @@ describe("ForkTest: CrossChainRemoteStrategy", function () {
     if (expectWithdrawalEvent) {
       await expect(messageTransmitter.processFront())
         .to.emit(crossChainRemoteStrategy, "Withdrawal")
-        .withArgs(usdc.address, morphoVault.address, amountBn);
+        .withArgs(usdc.address, morphoVault.address, amountBn)
+        .to.emit(crossChainRemoteStrategy, "TokensBridged");
     } else {
-      await messageTransmitter.processFront();
+      await expect(messageTransmitter.processFront())
+        .to.emit(crossChainRemoteStrategy, "TokensBridged");
     }
 
     await expect(await messageTransmitter.messagesInQueue()).to.eq(
@@ -506,7 +508,7 @@ describe("ForkTest: CrossChainRemoteStrategy", function () {
     );
   });
 
-  it("Should not calling withdrawAll if one withdraw is pending", async function () {
+  it("Should not calling withdrawAll when to little balance is on the remote strategy", async function () {
     await mintToMasterDepositToRemote("10");
     await withdrawFromRemoteToVault("9.5", true);
 
@@ -582,5 +584,37 @@ describe("ForkTest: CrossChainRemoteStrategy", function () {
     );
   });
 
-  
+  it("Should revert if depositing 0 amount", async function () {
+    await mintToMasterDepositToRemote("10");
+    await expect(crossChainRemoteStrategy.connect(governor).deposit(usdc.address, await units("0", usdc))).to.be.revertedWith(
+      "Must deposit something"
+    );
+  });
+
+  it("Should revert if not depositing USDC", async function () {
+    const { ousd } = fixture;
+    await mintToMasterDepositToRemote("10");
+    await expect(crossChainRemoteStrategy.connect(governor).deposit(ousd.address, await units("10", ousd))).to.be.revertedWith(
+      "Unexpected asset address"
+    );
+  });
+
+  it("Check balance on the remote strategy should revert when not passing USDC address", async function () {
+    const { ousd } = fixture;
+    await mintToMasterDepositToRemote("10");
+    await expect(crossChainRemoteStrategy.checkBalance(ousd.address)).to.be.revertedWith(
+      "Unexpected asset address"
+    );
+  });
+
+  it("Check balance on the remote strategy should revert when not passing USDC address", async function () {
+    const { messageTransmitter } = fixture;
+
+    await mintToMasterDepositToRemote("1000");
+
+    await withdrawFromRemoteStrategy("300");
+
+    // Process on remote strategy
+    await expect(messageTransmitter.processFrontOverrideHeader("0x00000001")).to.be.revertedWith("Unsupported message version");
+  });
 });

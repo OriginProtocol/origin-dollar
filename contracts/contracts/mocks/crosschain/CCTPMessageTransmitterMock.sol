@@ -215,6 +215,19 @@ contract CCTPMessageTransmitterMock is ICCTPMessageTransmitter {
         return messages.length;
     }
 
+    function processFrontOverrideHeader(bytes4 customHeader) external {
+        Message memory storedMsg = _removeFront();
+
+        bytes memory modifiedBody = abi.encodePacked(
+            customHeader,
+            storedMsg.messageBody.extractSlice(4, storedMsg.messageBody.length)
+        );
+
+        storedMsg.messageBody = modifiedBody;
+
+        _processMessage(storedMsg);
+    }
+
     function processFront() external {
         Message memory storedMsg = _removeFront();
         _processMessage(storedMsg);
