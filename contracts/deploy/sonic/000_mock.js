@@ -47,9 +47,7 @@ const deployCore = async () => {
     cOSonicProxy.address, // Base token
   ]);
 
-  const dOSonicVault = await deployWithConfirmation("OSonicVault", [
-    cWS.address,
-  ]);
+  const dOSonicVault = await deployWithConfirmation("OSVault", [cWS.address]);
 
   // Get contract instances
   const cOSonic = await ethers.getContractAt("OSonic", cOSonicProxy.address);
