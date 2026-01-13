@@ -218,7 +218,6 @@ abstract contract AbstractCCTPIntegrator is Governable, IMessageHandlerV2 {
      * @param _operator Operator address
      */
     function _setOperator(address _operator) internal {
-        require(_operator != address(0), "New Operator is address(0)");
         operator = _operator;
         emit OperatorChanged(_operator);
     }
