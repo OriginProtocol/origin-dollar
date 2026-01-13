@@ -173,8 +173,10 @@ describe("ForkTest: CrossChainRemoteStrategy", function () {
         .withArgs(usdc.address, morphoVault.address, amountBn)
         .to.emit(crossChainRemoteStrategy, "TokensBridged");
     } else {
-      await expect(messageTransmitter.processFront())
-        .to.emit(crossChainRemoteStrategy, "TokensBridged");
+      await expect(messageTransmitter.processFront()).to.emit(
+        crossChainRemoteStrategy,
+        "TokensBridged"
+      );
     }
 
     await expect(await messageTransmitter.messagesInQueue()).to.eq(
@@ -551,60 +553,70 @@ describe("ForkTest: CrossChainRemoteStrategy", function () {
 
   it("Should revert if balance update on the remote strategy is not called by operator or governor or strategist", async function () {
     await mintToMasterDepositToRemote("10");
-    await expect(crossChainRemoteStrategy.connect(josh).sendBalanceUpdate()).to.be.revertedWith(
+    await expect(
+      crossChainRemoteStrategy.connect(josh).sendBalanceUpdate()
+    ).to.be.revertedWith(
       "Caller is not the Operator, Strategist or the Governor"
     );
   });
 
   it("Should revert if deposit on the remote strategy is not called by the governor or strategist", async function () {
     await mintToMasterDepositToRemote("10");
-    await expect(crossChainRemoteStrategy.connect(josh).deposit(usdc.address, await units("10", usdc))).to.be.revertedWith(
-      "Caller is not the Strategist or Governor"
-    );
+    await expect(
+      crossChainRemoteStrategy
+        .connect(josh)
+        .deposit(usdc.address, await units("10", usdc))
+    ).to.be.revertedWith("Caller is not the Strategist or Governor");
   });
 
   it("Should revert if depositAll on the remote strategy is not called by the governor or strategist", async function () {
     await mintToMasterDepositToRemote("10");
-    await expect(crossChainRemoteStrategy.connect(josh).depositAll()).to.be.revertedWith(
-      "Caller is not the Strategist or Governor"
-    );
+    await expect(
+      crossChainRemoteStrategy.connect(josh).depositAll()
+    ).to.be.revertedWith("Caller is not the Strategist or Governor");
   });
 
   it("Should revert if withdraw on the remote strategy is not called by the governor or strategist", async function () {
     await mintToMasterDepositToRemote("10");
-    await expect(crossChainRemoteStrategy.connect(josh).withdraw(vault.address, usdc.address, await units("10", usdc))).to.be.revertedWith(
-      "Caller is not the Strategist or Governor"
-    );
+    await expect(
+      crossChainRemoteStrategy
+        .connect(josh)
+        .withdraw(vault.address, usdc.address, await units("10", usdc))
+    ).to.be.revertedWith("Caller is not the Strategist or Governor");
   });
 
   it("Should revert if withdrawAll on the remote strategy is not called by the governor or strategist", async function () {
     await mintToMasterDepositToRemote("10");
-    await expect(crossChainRemoteStrategy.connect(josh).withdrawAll()).to.be.revertedWith(
-      "Caller is not the Strategist or Governor"
-    );
+    await expect(
+      crossChainRemoteStrategy.connect(josh).withdrawAll()
+    ).to.be.revertedWith("Caller is not the Strategist or Governor");
   });
 
   it("Should revert if depositing 0 amount", async function () {
     await mintToMasterDepositToRemote("10");
-    await expect(crossChainRemoteStrategy.connect(governor).deposit(usdc.address, await units("0", usdc))).to.be.revertedWith(
-      "Must deposit something"
-    );
+    await expect(
+      crossChainRemoteStrategy
+        .connect(governor)
+        .deposit(usdc.address, await units("0", usdc))
+    ).to.be.revertedWith("Must deposit something");
   });
 
   it("Should revert if not depositing USDC", async function () {
     const { ousd } = fixture;
     await mintToMasterDepositToRemote("10");
-    await expect(crossChainRemoteStrategy.connect(governor).deposit(ousd.address, await units("10", ousd))).to.be.revertedWith(
-      "Unexpected asset address"
-    );
+    await expect(
+      crossChainRemoteStrategy
+        .connect(governor)
+        .deposit(ousd.address, await units("10", ousd))
+    ).to.be.revertedWith("Unexpected asset address");
   });
 
   it("Check balance on the remote strategy should revert when not passing USDC address", async function () {
     const { ousd } = fixture;
     await mintToMasterDepositToRemote("10");
-    await expect(crossChainRemoteStrategy.checkBalance(ousd.address)).to.be.revertedWith(
-      "Unexpected asset address"
-    );
+    await expect(
+      crossChainRemoteStrategy.checkBalance(ousd.address)
+    ).to.be.revertedWith("Unexpected asset address");
   });
 
   it("Check balance on the remote strategy should revert when not passing USDC address", async function () {
@@ -615,6 +627,8 @@ describe("ForkTest: CrossChainRemoteStrategy", function () {
     await withdrawFromRemoteStrategy("300");
 
     // Process on remote strategy
-    await expect(messageTransmitter.processFrontOverrideHeader("0x00000001")).to.be.revertedWith("Unsupported message version");
+    await expect(
+      messageTransmitter.processFrontOverrideHeader("0x00000001")
+    ).to.be.revertedWith("Unsupported message version");
   });
 });
