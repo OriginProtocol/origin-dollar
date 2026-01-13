@@ -352,7 +352,7 @@ describe("ForkTest: CrossChainRemoteStrategy", function () {
 
     // Process on remote strategy
     await expect(messageTransmitter.processFront())
-      .to.emit(crossChainRemoteStrategy, "WithdrawFailed")
+      .to.emit(crossChainRemoteStrategy, "WithdrawalFailed")
       .withArgs(await units("1000", usdc), await units("0", usdc));
 
     // Process on master strategy
