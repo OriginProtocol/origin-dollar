@@ -270,12 +270,7 @@ contract CrossChainMasterStrategy is
     function _withdraw(address _asset, uint256 _amount) internal virtual {
         require(_asset == usdcToken, "Unsupported asset");
         // Withdraw at least 1 USDC
-<<<<<<< HEAD
         require(_amount > 1e6, "Withdraw amount too small");
-=======
-        require(_amount >= 1e6, "Withdraw amount too small");
-        require(_recipient == vaultAddress, "Only Vault can withdraw");
->>>>>>> origin/shah/cross-chain-strategy-cctpv2
         require(
             _amount <= remoteStrategyBalance,
             "Withdraw amount exceeds remote strategy balance"
