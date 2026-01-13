@@ -23,8 +23,11 @@ module.exports = deploymentWithGovernanceProposal(
     const cVaultProxy = await ethers.getContract("VaultProxy");
     const cVault = await ethers.getContractAt("IVault", cVaultProxy.address);
 
-    // 3. Connect to the OUSD/USDC AMO
+    // 3. Connect to the Morpho OUSD v2 Strategy Proxy
     const cOUSDAMO = await ethers.getContract("OUSDCurveAMOProxy");
+    const cMorphoStrategy = await ethers.getContract(
+      "OUSDMorphoV2StrategyProxy"
+    );
 
     // Governance Actions
     // ----------------
@@ -43,11 +46,11 @@ module.exports = deploymentWithGovernanceProposal(
           signature: "addStrategyToMintWhitelist(address)",
           args: [cOUSDAMO.address],
         },
-        // 3. Set OUSD/USDC AMO as default strategy
+        // 3. Set Morpho OUSD v2 Strategy as default strategy
         {
           contract: cVault,
           signature: "setDefaultStrategy(address)",
-          args: [cOUSDAMO.address],
+          args: [cMorphoStrategy.address],
         },
       ],
     };
