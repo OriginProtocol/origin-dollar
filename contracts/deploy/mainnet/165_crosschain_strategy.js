@@ -8,7 +8,7 @@ const {
 
 module.exports = deploymentWithGovernanceProposal(
   {
-    deployName: "163_crosschain_strategy",
+    deployName: "165_crosschain_strategy",
     forceDeploy: false,
     reduceQueueTime: true,
     deployerIsProposer: false,
