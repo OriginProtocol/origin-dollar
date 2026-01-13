@@ -119,6 +119,7 @@ abstract contract VaultAdmin is VaultCore {
         emit WithdrawalClaimDelayUpdated(_delay);
     }
 
+    // slither-disable-start reentrancy-no-eth
     /**
      * @notice Set a yield streaming max rate. This spreads yield over
      * time if it is above the max rate.
@@ -137,6 +138,9 @@ abstract contract VaultAdmin is VaultCore {
         emit RebasePerSecondMaxChanged(newPerSecond);
     }
 
+    // slither-disable-end reentrancy-no-eth
+
+    // slither-disable-start reentrancy-no-eth
     /**
      * @notice Set the drip duration period
      * @param _dripDuration Time in seconds to target a constant yield rate
@@ -150,6 +154,8 @@ abstract contract VaultAdmin is VaultCore {
         dripDuration = _dripDuration.toUint64();
         emit DripDurationChanged(_dripDuration);
     }
+
+    // slither-disable-end reentrancy-no-eth
 
     /***************************************
                 Strategy Config
