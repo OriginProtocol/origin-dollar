@@ -61,6 +61,7 @@ contract CurvePoolBoosterBribesModule is AbstractSafeModule {
                 POOLS[i] = POOLS[length - 1];
                 POOLS.pop();
                 emit PoolBoosterAddressRemoved(pool);
+                break;
             }
         }
     }
