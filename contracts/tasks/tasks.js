@@ -20,6 +20,7 @@ const {
 } = require("./amazon");
 const { collect, setDripDuration } = require("./dripper");
 const { getSigner } = require("../utils/signers");
+const { snapMorpho } = require("../utils/morpho");
 const { snapAero } = require("./aero");
 const {
   storeStorageLayoutForAllContracts,
@@ -2391,5 +2392,17 @@ subtask("claimMorphoRewards", "Claim MORPHO rewards from the Morpho Vaults.")
     await claimMerklRewards(strategy, signer);
   });
 task("claimMorphoRewards").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+subtask("snapMorpho", "Get a snapshot of the Morpho OUSD v2 strategy.")
+  .addOptionalParam(
+    "block",
+    "Block number. (default: latest)",
+    undefined,
+    types.int
+  )
+  .setAction(snapMorpho);
+task("snapMorpho").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
