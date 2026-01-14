@@ -3,7 +3,7 @@ const { deploymentWithGovernanceProposal } = require("../../utils/deploy");
 
 module.exports = deploymentWithGovernanceProposal(
   {
-    deployName: "167_oeth_vault_upgrade",
+    deployName: "168_oeth_vault_upgrade",
     forceDeploy: false,
     //forceSkip: true,
     reduceQueueTime: true,
