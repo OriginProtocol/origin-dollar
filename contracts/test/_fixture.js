@@ -2655,6 +2655,9 @@ async function crossChainFixtureUnit() {
 
   const morphoVault = await ethers.getContract("MockERC4626Vault");
 
+  // Impersonate the OUSD Vault
+  fixture.vaultSigner = await impersonateAndFund(vault.address);
+
   return {
     ...fixture,
     crossChainMasterStrategy: cCrossChainMasterStrategy,
