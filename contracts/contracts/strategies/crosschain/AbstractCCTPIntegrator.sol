@@ -296,13 +296,7 @@ abstract contract AbstractCCTPIntegrator is Governable, IMessageHandlerV2 {
             "Finality threshold too low"
         );
 
-        return
-            _handleReceivedMessage(
-                sourceDomain,
-                sender,
-                finalityThresholdExecuted,
-                messageBody
-            );
+        return _handleReceivedMessage(sourceDomain, sender, messageBody);
     }
 
     /**
@@ -329,27 +323,18 @@ abstract contract AbstractCCTPIntegrator is Governable, IMessageHandlerV2 {
             "Finality threshold too low"
         );
 
-        return
-            _handleReceivedMessage(
-                sourceDomain,
-                sender,
-                finalityThresholdExecuted,
-                messageBody
-            );
+        return _handleReceivedMessage(sourceDomain, sender, messageBody);
     }
 
     /**
      * @dev Handles a CCTP message
      * @param sourceDomain Source domain of the message
      * @param sender Sender of the message
-     * @param finalityThresholdExecuted Fidelity threshold executed
      * @param messageBody Message body
      */
     function _handleReceivedMessage(
         uint32 sourceDomain,
         bytes32 sender,
-        // solhint-disable-next-line no-unused-vars
-        uint32 finalityThresholdExecuted,
         bytes memory messageBody
     ) internal returns (bool) {
         require(sourceDomain == peerDomainID, "Unknown Source Domain");
