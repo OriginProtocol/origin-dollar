@@ -91,10 +91,10 @@ zap ..> oethv
 woeth ..> oeth
 oeth <.> oethv
 ' oethv <.> drip
-oethv ..> oracle
+bridgeStrat .> oracle
 oracle ..> chain
-oethv <...> bridgeStrat
-oethv <...> aeroStrat
+oethv <..> bridgeStrat
+oethv <..> aeroStrat
 bridgeStrat ..> bridged
 
 aeroStrat ...> pm

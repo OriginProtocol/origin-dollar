@@ -646,7 +646,7 @@ describe("ForkTest: Pool Booster", function () {
           ],
           "PoolBoosterFactorySwapxSingle"
         )
-      ).to.be.revertedWith("Invalid oSonic address");
+      ).to.be.revertedWith("Invalid oToken address");
     });
 
     it("Can not deploy a factory with zero governor address", async () => {

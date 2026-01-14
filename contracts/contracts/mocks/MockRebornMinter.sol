@@ -97,8 +97,8 @@ contract Reborner {
         log("We are attempting to mint..");
         address asset = sanctum.asset();
         address vault = sanctum.vault();
-        IERC20(asset).approve(vault, 1e18);
-        IVault(vault).mint(asset, 1e18, 0);
+        IERC20(asset).approve(vault, 1e6);
+        IVault(vault).mint(asset, 1e6, 0);
         log("We are now minting..");
     }
 
