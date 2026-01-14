@@ -4,7 +4,8 @@ const {
   createFixtureLoader,
   crossChainFixtureUnit,
 } = require("../../_fixture");
-const { units } = require("../../helpers");
+const { setERC20TokenBalance } = require("../../_fund");
+const { units, usdcUnits } = require("../../helpers");
 const { impersonateAndFund } = require("../../../utils/signers");
 
 const loadFixture = createFixtureLoader(crossChainFixtureUnit);
@@ -50,14 +51,20 @@ describe("ForkTest: CrossChainRemoteStrategy", function () {
   };
 
   // Even though remote strategy has funds withdrawn the message initiates on master strategy
-  const withdrawFromRemoteStrategy = async (amount) => {
-    await vault
+  const withdrawFromRemoteStrategy = (amount) => {
+    return vault
       .connect(governor)
       .withdrawFromStrategy(
         crossChainMasterStrategy.address,
         [usdc.address],
-        [await units(amount, usdc)]
+        [usdcUnits(amount, usdc)]
       );
+  };
+
+  const withdrawAllFromRemoteStrategy = () => {
+    return vault
+      .connect(governor)
+      .withdrawAllFromStrategy(crossChainMasterStrategy.address);
   };
 
   // Withdraws from the remote strategy directly, without going through the master strategy
@@ -128,19 +135,19 @@ describe("ForkTest: CrossChainRemoteStrategy", function () {
     );
     await expect(
       await morphoVault.balanceOf(crossChainRemoteStrategy.address)
-    ).to.eq(remoteBalanceBefore + amountBn);
+    ).to.eq(remoteBalanceBefore.add(amountBn));
 
     // Simulate off chain component processing checkBalance message
     await expect(messageTransmitter.processFront())
       .to.emit(crossChainMasterStrategy, "RemoteStrategyBalanceUpdated")
-      .withArgs(amountBn);
+      .withArgs(remoteBalanceBefore.add(amountBn));
 
     await expect(await messageTransmitter.messagesInQueue()).to.eq(
       messagesinQueueBefore
     );
     await assertVaultTotalValue(vaultDiffAfterMint);
     await expect(await crossChainMasterStrategy.remoteStrategyBalance()).to.eq(
-      remoteBalanceRecByMasterBefore + amountBn
+      remoteBalanceRecByMasterBefore.add(amountBn)
     );
   };
 
@@ -163,9 +170,13 @@ describe("ForkTest: CrossChainRemoteStrategy", function () {
     if (expectWithdrawalEvent) {
       await expect(messageTransmitter.processFront())
         .to.emit(crossChainRemoteStrategy, "Withdrawal")
-        .withArgs(usdc.address, morphoVault.address, amountBn);
+        .withArgs(usdc.address, morphoVault.address, amountBn)
+        .to.emit(crossChainRemoteStrategy, "TokensBridged");
     } else {
-      await messageTransmitter.processFront();
+      await expect(messageTransmitter.processFront()).to.emit(
+        crossChainRemoteStrategy,
+        "TokensBridged"
+      );
     }
 
     await expect(await messageTransmitter.messagesInQueue()).to.eq(
@@ -450,5 +461,337 @@ describe("ForkTest: CrossChainRemoteStrategy", function () {
     await expect(withdrawFromRemoteStrategy("40")).to.be.revertedWith(
       "Pending token transfer"
     );
+  });
+
+  it("Should fail to deposit non usdc asset", async function () {
+    const { ousd, vault, vaultSigner, josh, crossChainMasterStrategy } =
+      fixture;
+    await mint("10");
+    await ousd.connect(josh).transfer(vault.address, await units("10", ousd));
+    await expect(
+      crossChainMasterStrategy
+        .connect(vaultSigner)
+        .deposit(ousd.address, await units("10", ousd))
+    ).to.be.revertedWith("Unsupported asset");
+  });
+
+  it("Should not deposit less than 1 USDC using normal depositAll approach", async function () {
+    await mint("1");
+    // DepositAll function doesn't call _deposit when amount is less than 1 USDC
+    await expect(
+      vault
+        .connect(governor)
+        .depositToStrategy(
+          crossChainMasterStrategy.address,
+          [usdc.address],
+          [await units("0.5", usdc)]
+        )
+    ).not.to.emit(crossChainMasterStrategy, "Deposit");
+  });
+
+  it("Should revert when depositing less than 1 USDC", async function () {
+    const { usdc, vaultSigner, crossChainMasterStrategy } = fixture;
+    await mint("10");
+    await expect(
+      crossChainMasterStrategy
+        .connect(vaultSigner)
+        .deposit(usdc.address, await units("0.5", usdc))
+    ).to.be.revertedWith("Deposit amount too small");
+  });
+
+  it("Should not calling withdrawAll if one withdraw is pending", async function () {
+    await mintToMasterDepositToRemote("10");
+    await withdrawFromRemoteStrategy("5");
+
+    // 1 withdraw is pending, the withdrawAll won't issue another withdraw, but wont fail as well
+    await expect(withdrawAllFromRemoteStrategy()).to.not.emit(
+      crossChainMasterStrategy,
+      "WithdrawRequested"
+    );
+  });
+
+  it("Should not calling withdrawAll when to little balance is on the remote strategy", async function () {
+    await mintToMasterDepositToRemote("10");
+    await withdrawFromRemoteToVault("9.5", true);
+
+    await expect(
+      await crossChainRemoteStrategy.checkBalance(usdc.address)
+    ).to.eq(usdcUnits("0.5"));
+
+    // Remote only has 0.5 USDC left, the withdrawAll won't issue another withdraw, but wont fail as well
+    await expect(withdrawAllFromRemoteStrategy()).to.not.emit(
+      crossChainMasterStrategy,
+      "WithdrawRequested"
+    );
+  });
+
+  it("Should revert if withdrawal amount is too small", async function () {
+    await mintToMasterDepositToRemote("10");
+
+    await expect(withdrawFromRemoteStrategy("0.9")).to.be.revertedWith(
+      "Withdraw amount too small"
+    );
+  });
+
+  it("Should revert if withdrawal exceeds remote strategy balance", async function () {
+    await mintToMasterDepositToRemote("10");
+
+    await expect(withdrawFromRemoteStrategy("11")).to.be.revertedWith(
+      "Withdraw amount exceeds remote strategy balance"
+    );
+  });
+
+  it("Should revert if withdrawal exceeds max transfer amount", async function () {
+    await setERC20TokenBalance(josh.address, usdc, "100000000");
+    await mintToMasterDepositToRemote("9000000");
+    await mintToMasterDepositToRemote("9000000");
+
+    await expect(withdrawFromRemoteStrategy("10000001")).to.be.revertedWith(
+      "Withdraw amount exceeds max transfer amount"
+    );
+  });
+
+  it("Should revert if balance update on the remote strategy is not called by operator or governor or strategist", async function () {
+    await mintToMasterDepositToRemote("10");
+    await expect(
+      crossChainRemoteStrategy.connect(josh).sendBalanceUpdate()
+    ).to.be.revertedWith(
+      "Caller is not the Operator, Strategist or the Governor"
+    );
+  });
+
+  it("Should revert if deposit on the remote strategy is not called by the governor or strategist", async function () {
+    await mintToMasterDepositToRemote("10");
+    await expect(
+      crossChainRemoteStrategy
+        .connect(josh)
+        .deposit(usdc.address, await units("10", usdc))
+    ).to.be.revertedWith("Caller is not the Strategist or Governor");
+  });
+
+  it("Should revert if depositAll on the remote strategy is not called by the governor or strategist", async function () {
+    await mintToMasterDepositToRemote("10");
+    await expect(
+      crossChainRemoteStrategy.connect(josh).depositAll()
+    ).to.be.revertedWith("Caller is not the Strategist or Governor");
+  });
+
+  it("Should revert if withdraw on the remote strategy is not called by the governor or strategist", async function () {
+    await mintToMasterDepositToRemote("10");
+    await expect(
+      crossChainRemoteStrategy
+        .connect(josh)
+        .withdraw(vault.address, usdc.address, await units("10", usdc))
+    ).to.be.revertedWith("Caller is not the Strategist or Governor");
+  });
+
+  it("Should revert if withdrawAll on the remote strategy is not called by the governor or strategist", async function () {
+    await mintToMasterDepositToRemote("10");
+    await expect(
+      crossChainRemoteStrategy.connect(josh).withdrawAll()
+    ).to.be.revertedWith("Caller is not the Strategist or Governor");
+  });
+
+  it("Should revert if depositing 0 amount", async function () {
+    await mintToMasterDepositToRemote("10");
+    await expect(
+      crossChainRemoteStrategy
+        .connect(governor)
+        .deposit(usdc.address, await units("0", usdc))
+    ).to.be.revertedWith("Must deposit something");
+  });
+
+  it("Should revert if not depositing USDC", async function () {
+    const { ousd } = fixture;
+    await mintToMasterDepositToRemote("10");
+    await expect(
+      crossChainRemoteStrategy
+        .connect(governor)
+        .deposit(ousd.address, await units("10", ousd))
+    ).to.be.revertedWith("Unexpected asset address");
+  });
+
+  it("Check balance on the remote strategy should revert when not passing USDC address", async function () {
+    const { ousd } = fixture;
+    await mintToMasterDepositToRemote("10");
+    await expect(
+      crossChainRemoteStrategy.checkBalance(ousd.address)
+    ).to.be.revertedWith("Unexpected asset address");
+  });
+
+  it("Check balance on the remote strategy should revert when not passing USDC address", async function () {
+    const { messageTransmitter } = fixture;
+
+    await mintToMasterDepositToRemote("1000");
+
+    await withdrawFromRemoteStrategy("300");
+
+    // Process on remote strategy
+    await expect(
+      messageTransmitter.processFrontOverrideHeader("0x00000001")
+    ).to.be.revertedWith("Unsupported message version");
+  });
+
+  it("Should revert if setMinFinalityThreshold does not equal 1000 or 2000", async function () {
+    await expect(
+      crossChainMasterStrategy.connect(governor).setMinFinalityThreshold(1001)
+    ).to.be.revertedWith("Invalid threshold");
+
+    await expect(
+      crossChainMasterStrategy.connect(governor).setMinFinalityThreshold(2001)
+    ).to.be.revertedWith("Invalid threshold");
+  });
+
+  it("Should set min finality threshold to 1000", async function () {
+    await crossChainMasterStrategy
+      .connect(governor)
+      .setMinFinalityThreshold(1000);
+    await expect(await crossChainMasterStrategy.minFinalityThreshold()).to.eq(
+      1000
+    );
+  });
+
+  it("Should set min finality threshold to 2000", async function () {
+    await crossChainMasterStrategy
+      .connect(governor)
+      .setMinFinalityThreshold(2000);
+    await expect(await crossChainMasterStrategy.minFinalityThreshold()).to.eq(
+      2000
+    );
+  });
+
+  it("Should set fee premium to 1000 bps successfully", async function () {
+    const initialFeeBps = await crossChainMasterStrategy.feePremiumBps();
+    expect(initialFeeBps).to.equal(0); // Default is 0
+
+    await expect(
+      crossChainMasterStrategy.connect(governor).setFeePremiumBps(1000)
+    )
+      .to.emit(crossChainMasterStrategy, "CCTPFeePremiumBpsSet")
+      .withArgs(1000);
+
+    // Verify state updated
+    expect(await crossChainMasterStrategy.feePremiumBps()).to.equal(1000);
+  });
+
+  it("Should revert when setting fee premium >3000 bps", async function () {
+    await expect(
+      crossChainMasterStrategy.connect(governor).setFeePremiumBps(3001)
+    ).to.be.revertedWith("Fee premium too high");
+  });
+
+  it("Should revert if sender of the message is not correct", async function () {
+    const { messageTransmitter } = fixture;
+
+    await mintToMasterDepositToRemote("1000");
+
+    await withdrawFromRemoteStrategy("300");
+
+    await messageTransmitter.connect(josh).overrideSender(josh.address);
+    // Process on remote strategy
+    await expect(messageTransmitter.processFront()).to.be.revertedWith(
+      "Unknown Sender"
+    );
+  });
+
+  it("Should revert if unfinalized messages are not supported", async function () {
+    const { messageTransmitter } = fixture;
+
+    await mintToMasterDepositToRemote("1000");
+
+    await withdrawFromRemoteStrategy("300");
+
+    await messageTransmitter.connect(josh).overrideMessageFinality(1000);
+    // Process on remote strategy
+    await expect(messageTransmitter.processFront()).to.be.revertedWith(
+      "Unfinalized messages are not supported"
+    );
+  });
+
+  it("Should accept unfinalized messages if min finality threshold is set to 1000", async function () {
+    const { messageTransmitter } = fixture;
+
+    await mintToMasterDepositToRemote("1000");
+
+    await withdrawFromRemoteStrategy("300");
+
+    await crossChainRemoteStrategy
+      .connect(governor)
+      .setMinFinalityThreshold(1000);
+
+    await messageTransmitter.connect(josh).overrideMessageFinality(1000);
+    // Process on remote strategy
+    await messageTransmitter.processFront();
+  });
+
+  it("Should revert is message finality is below 1000", async function () {
+    const { messageTransmitter } = fixture;
+
+    await mintToMasterDepositToRemote("1000");
+
+    await withdrawFromRemoteStrategy("300");
+
+    await crossChainRemoteStrategy
+      .connect(governor)
+      .setMinFinalityThreshold(1000);
+
+    await messageTransmitter.connect(josh).overrideMessageFinality(999);
+    // Process on remote strategy
+    await expect(messageTransmitter.processFront()).to.be.revertedWith(
+      "Finality threshold too low"
+    );
+  });
+
+  it("Should revert if the source domain is not correct", async function () {
+    const { messageTransmitter } = fixture;
+
+    await mintToMasterDepositToRemote("1000");
+
+    await withdrawFromRemoteStrategy("300");
+
+    await messageTransmitter.connect(josh).overrideSourceDomain(444);
+    // Process on remote strategy
+    await expect(messageTransmitter.processFront()).to.be.revertedWith(
+      "Unknown Source Domain"
+    );
+  });
+
+  it("Should revert if incorrect cctp message version is used", async function () {
+    const { messageTransmitter } = fixture;
+
+    await mintToMasterDepositToRemote("1000");
+
+    await withdrawFromRemoteStrategy("300");
+
+    // Process on remote strategy
+    await expect(
+      messageTransmitter.processFrontOverrideVersion(2)
+    ).to.be.revertedWith("Invalid CCTP message version");
+  });
+
+  it("Should revert if incorrect sender is used in the message header", async function () {
+    const { messageTransmitter } = fixture;
+
+    await mintToMasterDepositToRemote("1000");
+
+    await withdrawFromRemoteStrategy("300");
+
+    // Process on remote strategy
+    await expect(
+      messageTransmitter.processFrontOverrideSender(josh.address)
+    ).to.be.revertedWith("Incorrect sender/recipient address");
+  });
+
+  it("Should revert if incorrect sender is used in the message header", async function () {
+    const { messageTransmitter } = fixture;
+
+    await mintToMasterDepositToRemote("1000");
+
+    await withdrawFromRemoteStrategy("300");
+
+    // Process on remote strategy
+    await expect(
+      messageTransmitter.processFrontOverrideRecipient(josh.address)
+    ).to.be.revertedWith("Unexpected recipient address");
   });
 });

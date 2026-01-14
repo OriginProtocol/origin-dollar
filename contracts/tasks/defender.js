@@ -70,4 +70,5 @@ const updateAction = async ({ id, file }) => {
 module.exports = {
   setActionVars,
   updateAction,
+  getClient
 };

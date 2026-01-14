@@ -143,6 +143,9 @@ const {
 } = require("./beaconTesting");
 const { claimMerklRewards } = require("./merkl");
 
+const { processCctpBridgeTransactions } = require("./crossChain");
+
+
 const log = require("../utils/logger")("tasks");
 
 // Environment tasks.
@@ -1216,6 +1219,21 @@ subtask(
     await stakeValidators({ ...config, signer });
   });
 task("stakeValidators").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+task("relayCCTPMessage", "Fetches CCTP attested Messages via Circle Gateway API and relays it to the integrator contract")
+  .addOptionalParam(
+    "block",
+    "Override the block number at which the message emission transaction happened",
+    undefined,
+    types.int
+  )
+  .setAction(async (taskArgs) => {
+    await processCctpBridgeTransactions(taskArgs);
+  });
+
+task("relayCCTPMessage").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
 
