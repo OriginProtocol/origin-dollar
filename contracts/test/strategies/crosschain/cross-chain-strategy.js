@@ -631,4 +631,24 @@ describe("ForkTest: CrossChainRemoteStrategy", function () {
       messageTransmitter.processFrontOverrideHeader("0x00000001")
     ).to.be.revertedWith("Unsupported message version");
   });
+
+  it("Should revert if setMinFinalityThreshold does not equal 1000 or 2000", async function () {
+    await expect(
+      crossChainMasterStrategy.connect(governor).setMinFinalityThreshold(1001)
+    ).to.be.revertedWith("Invalid threshold");
+
+    await expect(
+      crossChainMasterStrategy.connect(governor).setMinFinalityThreshold(2001)
+    ).to.be.revertedWith("Invalid threshold");
+  });
+
+  it("Should set min finality threshold to 1000", async function () {
+    await crossChainMasterStrategy.connect(governor).setMinFinalityThreshold(1000);
+    await expect(await crossChainMasterStrategy.minFinalityThreshold()).to.eq(1000);
+  });
+
+  it("Should set min finality threshold to 2000", async function () {
+    await crossChainMasterStrategy.connect(governor).setMinFinalityThreshold(2000);
+    await expect(await crossChainMasterStrategy.minFinalityThreshold()).to.eq(2000);
+  });
 });
