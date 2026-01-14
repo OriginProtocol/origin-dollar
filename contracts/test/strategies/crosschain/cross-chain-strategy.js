@@ -643,12 +643,155 @@ describe("ForkTest: CrossChainRemoteStrategy", function () {
   });
 
   it("Should set min finality threshold to 1000", async function () {
-    await crossChainMasterStrategy.connect(governor).setMinFinalityThreshold(1000);
-    await expect(await crossChainMasterStrategy.minFinalityThreshold()).to.eq(1000);
+    await crossChainMasterStrategy
+      .connect(governor)
+      .setMinFinalityThreshold(1000);
+    await expect(await crossChainMasterStrategy.minFinalityThreshold()).to.eq(
+      1000
+    );
   });
 
   it("Should set min finality threshold to 2000", async function () {
-    await crossChainMasterStrategy.connect(governor).setMinFinalityThreshold(2000);
-    await expect(await crossChainMasterStrategy.minFinalityThreshold()).to.eq(2000);
+    await crossChainMasterStrategy
+      .connect(governor)
+      .setMinFinalityThreshold(2000);
+    await expect(await crossChainMasterStrategy.minFinalityThreshold()).to.eq(
+      2000
+    );
+  });
+
+  it("Should set fee premium to 1000 bps successfully", async function () {
+    const initialFeeBps = await crossChainMasterStrategy.feePremiumBps();
+    expect(initialFeeBps).to.equal(0); // Default is 0
+
+    await expect(
+      crossChainMasterStrategy.connect(governor).setFeePremiumBps(1000)
+    )
+      .to.emit(crossChainMasterStrategy, "CCTPFeePremiumBpsSet")
+      .withArgs(1000);
+
+    // Verify state updated
+    expect(await crossChainMasterStrategy.feePremiumBps()).to.equal(1000);
+  });
+
+  it("Should revert when setting fee premium >3000 bps", async function () {
+    await expect(
+      crossChainMasterStrategy.connect(governor).setFeePremiumBps(3001)
+    ).to.be.revertedWith("Fee premium too high");
+  });
+
+  it("Should revert if sender of the message is not correct", async function () {
+    const { messageTransmitter } = fixture;
+
+    await mintToMasterDepositToRemote("1000");
+
+    await withdrawFromRemoteStrategy("300");
+
+    await messageTransmitter.connect(josh).overrideSender(josh.address);
+    // Process on remote strategy
+    await expect(messageTransmitter.processFront()).to.be.revertedWith(
+      "Unknown Sender"
+    );
+  });
+
+  it("Should revert if unfinalized messages are not supported", async function () {
+    const { messageTransmitter } = fixture;
+
+    await mintToMasterDepositToRemote("1000");
+
+    await withdrawFromRemoteStrategy("300");
+
+    await messageTransmitter.connect(josh).overrideMessageFinality(1000);
+    // Process on remote strategy
+    await expect(messageTransmitter.processFront()).to.be.revertedWith(
+      "Unfinalized messages are not supported"
+    );
+  });
+
+  it("Should accept unfinalized messages if min finality threshold is set to 1000", async function () {
+    const { messageTransmitter } = fixture;
+
+    await mintToMasterDepositToRemote("1000");
+
+    await withdrawFromRemoteStrategy("300");
+
+    await crossChainRemoteStrategy
+      .connect(governor)
+      .setMinFinalityThreshold(1000);
+
+    await messageTransmitter.connect(josh).overrideMessageFinality(1000);
+    // Process on remote strategy
+    await messageTransmitter.processFront();
+  });
+
+  it("Should revert is message finality is below 1000", async function () {
+    const { messageTransmitter } = fixture;
+
+    await mintToMasterDepositToRemote("1000");
+
+    await withdrawFromRemoteStrategy("300");
+
+    await crossChainRemoteStrategy
+      .connect(governor)
+      .setMinFinalityThreshold(1000);
+
+    await messageTransmitter.connect(josh).overrideMessageFinality(999);
+    // Process on remote strategy
+    await expect(messageTransmitter.processFront()).to.be.revertedWith(
+      "Finality threshold too low"
+    );
+  });
+
+  it("Should revert if the source domain is not correct", async function () {
+    const { messageTransmitter } = fixture;
+
+    await mintToMasterDepositToRemote("1000");
+
+    await withdrawFromRemoteStrategy("300");
+
+    await messageTransmitter.connect(josh).overrideSourceDomain(444);
+    // Process on remote strategy
+    await expect(messageTransmitter.processFront()).to.be.revertedWith(
+      "Unknown Source Domain"
+    );
+  });
+
+  it("Should revert if incorrect cctp message version is used", async function () {
+    const { messageTransmitter } = fixture;
+
+    await mintToMasterDepositToRemote("1000");
+
+    await withdrawFromRemoteStrategy("300");
+
+    // Process on remote strategy
+    await expect(
+      messageTransmitter.processFrontOverrideVersion(2)
+    ).to.be.revertedWith("Invalid CCTP message version");
+  });
+
+  it("Should revert if incorrect sender is used in the message header", async function () {
+    const { messageTransmitter } = fixture;
+
+    await mintToMasterDepositToRemote("1000");
+
+    await withdrawFromRemoteStrategy("300");
+
+    // Process on remote strategy
+    await expect(
+      messageTransmitter.processFrontOverrideSender(josh.address)
+    ).to.be.revertedWith("Incorrect sender/recipient address");
+  });
+
+  it("Should revert if incorrect sender is used in the message header", async function () {
+    const { messageTransmitter } = fixture;
+
+    await mintToMasterDepositToRemote("1000");
+
+    await withdrawFromRemoteStrategy("300");
+
+    // Process on remote strategy
+    await expect(
+      messageTransmitter.processFrontOverrideRecipient(josh.address)
+    ).to.be.revertedWith("Unexpected recipient address");
   });
 });

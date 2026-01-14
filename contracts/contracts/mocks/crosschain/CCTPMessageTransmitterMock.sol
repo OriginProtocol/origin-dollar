@@ -22,12 +22,17 @@ contract CCTPMessageTransmitterMock is ICCTPMessageTransmitter {
     uint8 constant BURN_MESSAGE_V2_MESSAGE_SENDER_INDEX = 100;
     uint8 constant BURN_MESSAGE_V2_HOOK_DATA_INDEX = 228;
 
+    uint16 public messageFinality = 2000;
+    address public messageSender;
+    uint32 public sourceDomain = 4294967295; // 0xFFFFFFFF
+
     // Full message with header
     struct Message {
         uint32 version;
         uint32 sourceDomain;
         uint32 destinationDomain;
         bytes32 recipient;
+        bytes32 messageHeaderRecipient;
         bytes32 sender;
         bytes32 destinationCaller;
         uint32 minFinalityThreshold;
@@ -64,6 +69,7 @@ contract CCTPMessageTransmitterMock is ICCTPMessageTransmitter {
             sourceDomain: sourceDomain,
             destinationDomain: destinationDomain,
             recipient: recipient,
+            messageHeaderRecipient: recipient,
             sender: bytes32(uint256(uint160(msg.sender))),
             destinationCaller: destinationCaller,
             minFinalityThreshold: minFinalityThreshold,
@@ -96,6 +102,7 @@ contract CCTPMessageTransmitterMock is ICCTPMessageTransmitter {
             sourceDomain: sourceDomain,
             destinationDomain: destinationDomain,
             recipient: recipient,
+            messageHeaderRecipient: recipient,
             sender: bytes32(uint256(uint160(msg.sender))),
             destinationCaller: destinationCaller,
             minFinalityThreshold: minFinalityThreshold,
@@ -140,15 +147,29 @@ contract CCTPMessageTransmitterMock is ICCTPMessageTransmitter {
                 storedMsg.messageBody.length
             );
         } else {
-            recipient.handleReceiveFinalizedMessage(
-                storedMsg.sourceDomain,
-                sender,
-                2000, // finality threshold
-                messageBody
+            bytes32 overrideSenderBytes = bytes32(
+                uint256(uint160(messageSender))
             );
+            if (messageFinality >= 2000) {
+                recipient.handleReceiveFinalizedMessage(
+                    sourceDomain == 4294967295
+                        ? storedMsg.sourceDomain
+                        : sourceDomain,
+                    messageSender == address(0) ? sender : overrideSenderBytes,
+                    messageFinality,
+                    messageBody
+                );
+            } else {
+                recipient.handleReceiveUnfinalizedMessage(
+                    sourceDomain == 4294967295
+                        ? storedMsg.sourceDomain
+                        : sourceDomain,
+                    messageSender == address(0) ? sender : overrideSenderBytes,
+                    messageFinality,
+                    messageBody
+                );
+            }
         }
-
-        // TODO: should we also handle unfinalized messages: handleReceiveUnfinalizedMessage?
 
         return true;
     }
@@ -193,7 +214,7 @@ contract CCTPMessageTransmitterMock is ICCTPMessageTransmitter {
             storedMsg.version,
             storedMsg.sourceDomain,
             storedMsg.sender,
-            storedMsg.recipient,
+            storedMsg.messageHeaderRecipient,
             storedMsg.messageBody
         );
 
@@ -228,6 +249,26 @@ contract CCTPMessageTransmitterMock is ICCTPMessageTransmitter {
         _processMessage(storedMsg);
     }
 
+    function processFrontOverrideVersion(uint32 customVersion) external {
+        Message memory storedMsg = _removeFront();
+        storedMsg.version = customVersion;
+        _processMessage(storedMsg);
+    }
+
+    function processFrontOverrideSender(address customSender) external {
+        Message memory storedMsg = _removeFront();
+        storedMsg.sender = bytes32(uint256(uint160(customSender)));
+        _processMessage(storedMsg);
+    }
+
+    function processFrontOverrideRecipient(address customRecipient) external {
+        Message memory storedMsg = _removeFront();
+        storedMsg.messageHeaderRecipient = bytes32(
+            uint256(uint160(customRecipient))
+        );
+        _processMessage(storedMsg);
+    }
+
     function processFront() external {
         Message memory storedMsg = _removeFront();
         _processMessage(storedMsg);
@@ -240,5 +281,17 @@ contract CCTPMessageTransmitterMock is ICCTPMessageTransmitter {
 
     function getMessagesLength() external view returns (uint256) {
         return messages.length;
+    }
+
+    function overrideMessageFinality(uint16 _finality) external {
+        messageFinality = _finality;
+    }
+
+    function overrideSender(address _sender) external {
+        messageSender = _sender;
+    }
+
+    function overrideSourceDomain(uint32 _sourceDomain) external {
+        sourceDomain = _sourceDomain;
     }
 }
