@@ -1,0 +1,240 @@
+{
+  "solcVersion": "0.8.28",
+  "storage": [
+    {
+      "label": "initialized",
+      "offset": 0,
+      "slot": "0",
+      "type": "t_bool",
+      "contract": "Initializable",
+      "src": "contracts/utils/Initializable.sol:12"
+    },
+    {
+      "label": "initializing",
+      "offset": 1,
+      "slot": "0",
+      "type": "t_bool",
+      "contract": "Initializable",
+      "src": "contracts/utils/Initializable.sol:17"
+    },
+    {
+      "label": "______gap",
+      "offset": 0,
+      "slot": "1",
+      "type": "t_array(t_uint256)50_storage",
+      "contract": "Initializable",
+      "src": "contracts/utils/Initializable.sol:41"
+    },
+    {
+      "label": "minFinalityThreshold",
+      "offset": 0,
+      "slot": "51",
+      "type": "t_uint16",
+      "contract": "AbstractCCTPIntegrator",
+      "src": "contracts/strategies/crosschain/AbstractCCTPIntegrator.sol:95"
+    },
+    {
+      "label": "feePremiumBps",
+      "offset": 2,
+      "slot": "51",
+      "type": "t_uint16",
+      "contract": "AbstractCCTPIntegrator",
+      "src": "contracts/strategies/crosschain/AbstractCCTPIntegrator.sol:98"
+    },
+    {
+      "label": "lastTransferNonce",
+      "offset": 4,
+      "slot": "51",
+      "type": "t_uint64",
+      "contract": "AbstractCCTPIntegrator",
+      "src": "contracts/strategies/crosschain/AbstractCCTPIntegrator.sol:101"
+    },
+    {
+      "label": "operator",
+      "offset": 12,
+      "slot": "51",
+      "type": "t_address",
+      "contract": "AbstractCCTPIntegrator",
+      "src": "contracts/strategies/crosschain/AbstractCCTPIntegrator.sol:104"
+    },
+    {
+      "label": "nonceProcessed",
+      "offset": 0,
+      "slot": "52",
+      "type": "t_mapping(t_uint64,t_bool)",
+      "contract": "AbstractCCTPIntegrator",
+      "src": "contracts/strategies/crosschain/AbstractCCTPIntegrator.sol:107"
+    },
+    {
+      "label": "__gap",
+      "offset": 0,
+      "slot": "53",
+      "type": "t_array(t_uint256)48_storage",
+      "contract": "AbstractCCTPIntegrator",
+      "src": "contracts/strategies/crosschain/AbstractCCTPIntegrator.sol:110"
+    },
+    {
+      "label": "_deprecated_platformAddress",
+      "offset": 0,
+      "slot": "101",
+      "type": "t_address",
+      "contract": "InitializableAbstractStrategy",
+      "src": "contracts/utils/InitializableAbstractStrategy.sol:43"
+    },
+    {
+      "label": "_deprecated_vaultAddress",
+      "offset": 0,
+      "slot": "102",
+      "type": "t_address",
+      "contract": "InitializableAbstractStrategy",
+      "src": "contracts/utils/InitializableAbstractStrategy.sol:47"
+    },
+    {
+      "label": "assetToPToken",
+      "offset": 0,
+      "slot": "103",
+      "type": "t_mapping(t_address,t_address)",
+      "contract": "InitializableAbstractStrategy",
+      "src": "contracts/utils/InitializableAbstractStrategy.sol:50"
+    },
+    {
+      "label": "assetsMapped",
+      "offset": 0,
+      "slot": "104",
+      "type": "t_array(t_address)dyn_storage",
+      "contract": "InitializableAbstractStrategy",
+      "src": "contracts/utils/InitializableAbstractStrategy.sol:53"
+    },
+    {
+      "label": "_deprecated_rewardTokenAddress",
+      "offset": 0,
+      "slot": "105",
+      "type": "t_address",
+      "contract": "InitializableAbstractStrategy",
+      "src": "contracts/utils/InitializableAbstractStrategy.sol:57"
+    },
+    {
+      "label": "_deprecated_rewardLiquidationThreshold",
+      "offset": 0,
+      "slot": "106",
+      "type": "t_uint256",
+      "contract": "InitializableAbstractStrategy",
+      "src": "contracts/utils/InitializableAbstractStrategy.sol:61"
+    },
+    {
+      "label": "harvesterAddress",
+      "offset": 0,
+      "slot": "107",
+      "type": "t_address",
+      "contract": "InitializableAbstractStrategy",
+      "src": "contracts/utils/InitializableAbstractStrategy.sol:64"
+    },
+    {
+      "label": "rewardTokenAddresses",
+      "offset": 0,
+      "slot": "108",
+      "type": "t_array(t_address)dyn_storage",
+      "contract": "InitializableAbstractStrategy",
+      "src": "contracts/utils/InitializableAbstractStrategy.sol:67"
+    },
+    {
+      "label": "_reserved",
+      "offset": 0,
+      "slot": "109",
+      "type": "t_array(t_int256)98_storage",
+      "contract": "InitializableAbstractStrategy",
+      "src": "contracts/utils/InitializableAbstractStrategy.sol:74"
+    },
+    {
+      "label": "_deprecate_shareToken",
+      "offset": 0,
+      "slot": "207",
+      "type": "t_address",
+      "contract": "Generalized4626Strategy",
+      "src": "contracts/strategies/Generalized4626Strategy.sol:20"
+    },
+    {
+      "label": "_deprecate_assetToken",
+      "offset": 0,
+      "slot": "208",
+      "type": "t_address",
+      "contract": "Generalized4626Strategy",
+      "src": "contracts/strategies/Generalized4626Strategy.sol:23"
+    },
+    {
+      "label": "__gap",
+      "offset": 0,
+      "slot": "209",
+      "type": "t_array(t_uint256)50_storage",
+      "contract": "Generalized4626Strategy",
+      "src": "contracts/strategies/Generalized4626Strategy.sol:29"
+    },
+    {
+      "label": "strategistAddr",
+      "offset": 0,
+      "slot": "259",
+      "type": "t_address",
+      "contract": "Strategizable",
+      "src": "contracts/governance/Strategizable.sol:10"
+    },
+    {
+      "label": "__gap",
+      "offset": 0,
+      "slot": "260",
+      "type": "t_array(t_uint256)50_storage",
+      "contract": "Strategizable",
+      "src": "contracts/governance/Strategizable.sol:13"
+    }
+  ],
+  "types": {
+    "t_address": {
+      "label": "address",
+      "numberOfBytes": "20"
+    },
+    "t_array(t_address)dyn_storage": {
+      "label": "address[]",
+      "numberOfBytes": "32"
+    },
+    "t_array(t_int256)98_storage": {
+      "label": "int256[98]",
+      "numberOfBytes": "3136"
+    },
+    "t_array(t_uint256)48_storage": {
+      "label": "uint256[48]",
+      "numberOfBytes": "1536"
+    },
+    "t_array(t_uint256)50_storage": {
+      "label": "uint256[50]",
+      "numberOfBytes": "1600"
+    },
+    "t_bool": {
+      "label": "bool",
+      "numberOfBytes": "1"
+    },
+    "t_int256": {
+      "label": "int256",
+      "numberOfBytes": "32"
+    },
+    "t_mapping(t_address,t_address)": {
+      "label": "mapping(address => address)",
+      "numberOfBytes": "32"
+    },
+    "t_mapping(t_uint64,t_bool)": {
+      "label": "mapping(uint64 => bool)",
+      "numberOfBytes": "32"
+    },
+    "t_uint16": {
+      "label": "uint16",
+      "numberOfBytes": "2"
+    },
+    "t_uint256": {
+      "label": "uint256",
+      "numberOfBytes": "32"
+    },
+    "t_uint64": {
+      "label": "uint64",
+      "numberOfBytes": "8"
+    }
+  },
+  "namespaces": {}
+}
