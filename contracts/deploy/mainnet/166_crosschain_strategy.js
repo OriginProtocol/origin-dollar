@@ -32,7 +32,11 @@ module.exports = deploymentWithGovernanceProposal(
       crossChainStrategyProxyAddress,
       addresses.mainnet.USDC,
       deployerAddr,
-      "CrossChainMasterStrategy"
+      "CrossChainMasterStrategy",
+      false,
+      addresses.CCTPTokenMessengerV2,
+      addresses.CCTPMessageTransmitterV2,
+      addresses.mainnet.Timelock
     );
     console.log(`CrossChainMasterStrategyImpl address: ${implAddress}`);
 
