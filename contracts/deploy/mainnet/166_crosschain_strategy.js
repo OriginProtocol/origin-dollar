@@ -36,7 +36,7 @@ module.exports = deploymentWithGovernanceProposal(
       false,
       addresses.CCTPTokenMessengerV2,
       addresses.CCTPMessageTransmitterV2,
-      addresses.mainnet.Timelock
+      deployerAddr
     );
     console.log(`CrossChainMasterStrategyImpl address: ${implAddress}`);
 
