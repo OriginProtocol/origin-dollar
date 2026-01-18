@@ -4,7 +4,6 @@ const {
   deployCrossChainRemoteStrategyImpl,
   getCreate2ProxyAddress,
 } = require("../deployActions");
-const { withConfirmation } = require("../../utils/deploy.js");
 const { cctpDomainIds } = require("../../utils/cctp");
 
 module.exports = deployOnBase(
