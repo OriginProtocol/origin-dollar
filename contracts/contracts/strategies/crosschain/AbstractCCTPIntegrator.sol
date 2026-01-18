@@ -24,6 +24,9 @@ abstract contract AbstractCCTPIntegrator is Governable, IMessageHandlerV2 {
     using BytesHelper for bytes;
     using CrossChainStrategyHelper for bytes;
 
+    event LastTransferNonceUpdated(uint64 lastTransferNonce);
+    event NonceProcessed(uint64 nonce);
+
     event CCTPMinFinalityThresholdSet(uint16 minFinalityThreshold);
     event CCTPFeePremiumBpsSet(uint16 feePremiumBps);
     event OperatorChanged(address operator);
@@ -567,10 +570,12 @@ abstract contract AbstractCCTPIntegrator is Governable, IMessageHandlerV2 {
         require(!nonceProcessed[nonce], "Nonce already processed");
 
         nonceProcessed[nonce] = true;
+        emit NonceProcessed(nonce);
 
         if (nonce != lastNonce) {
             // Update last known nonce
             lastTransferNonce = nonce;
+            emit LastTransferNonceUpdated(nonce);
         }
     }
 
@@ -587,6 +592,7 @@ abstract contract AbstractCCTPIntegrator is Governable, IMessageHandlerV2 {
 
         nonce = nonce + 1;
         lastTransferNonce = nonce;
+        emit LastTransferNonceUpdated(nonce);
 
         return nonce;
     }
