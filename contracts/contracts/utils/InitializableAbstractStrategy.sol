@@ -81,7 +81,7 @@ abstract contract InitializableAbstractStrategy is Initializable, Governable {
     /**
      * @dev Verifies that the caller is the Governor or Strategist.
      */
-    modifier onlyGovernorOrStrategist() {
+    modifier onlyGovernorOrStrategist() virtual {
         require(
             isGovernor() || msg.sender == IVault(vaultAddress).strategistAddr(),
             "Caller is not the Strategist or Governor"
