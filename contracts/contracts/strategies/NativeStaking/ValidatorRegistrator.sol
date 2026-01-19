@@ -7,6 +7,7 @@ import { IDepositContract } from "../../interfaces/IDepositContract.sol";
 import { IVault } from "../../interfaces/IVault.sol";
 import { IWETH9 } from "../../interfaces/IWETH9.sol";
 import { ISSVNetwork, Cluster } from "../../interfaces/ISSVNetwork.sol";
+import { BeaconConsolidation } from "../../beacon/BeaconConsolidation.sol";
 
 struct ValidatorStakeData {
     bytes pubkey;
@@ -79,6 +80,15 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
         bytes32 indexed pubKeyHash,
         bytes pubKey,
         uint64[] operatorIds
+    );
+    event ConsolidationRequested(
+        bytes[] sourcePubKeys,
+        bytes targetPubKey,
+        uint256 consolidationCount
+    );
+    event ConsolidationConfirmed(
+        uint256 consolidationCount,
+        uint256 activeDepositedValidators
     );
     event StakeETHThresholdChanged(uint256 amount);
     event StakeETHTallyReset();
@@ -358,6 +368,56 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
         Cluster memory cluster
     ) external onlyGovernor {
         ISSVNetwork(SSV_NETWORK).withdraw(operatorIds, ssvAmount, cluster);
+    }
+
+    /***************************************
+            Consolidation functions
+    ****************************************/
+
+    function requestConsolidation(
+        bytes[] calldata sourcePubKeys,
+        bytes calldata targetPubKey
+    ) external nonReentrant whenNotPaused onlyRegistrator {
+        bytes32 targetPubKeyHash = keccak256(targetPubKey);
+        bytes32 sourcePubKeyHash;
+        for (uint256 i = 0; i < sourcePubKeys.length; ++i) {
+            // hash the source validator's public key using the Beacon Chain's format
+            sourcePubKeyHash = keccak256(sourcePubKeys[i]);
+            require(sourcePubKeyHash != targetPubKeyHash, "Self consolidation");
+            require(
+                validatorsStates[sourcePubKeyHash] == VALIDATOR_STATE.STAKED,
+                "Source validator not staked"
+            );
+
+            // Request consolidation from source to target validator
+            BeaconConsolidation.request(sourcePubKeys[i], targetPubKey);
+
+            // Store the state of the source validator as exiting so it can be removed
+            // after the consolidation is confirmed
+            validatorsStates[sourcePubKeyHash] == VALIDATOR_STATE.EXITING;
+        }
+
+        emit ConsolidationRequested(
+            sourcePubKeys,
+            targetPubKey,
+            sourcePubKeys.length
+        );
+    }
+
+    function confirmConsolidation(uint256 consolidationCount)
+        external
+        nonReentrant
+        whenPaused
+        onlyRegistrator
+    {
+        // Store the reduced number of active deposited validators
+        // managed by this strategy
+        activeDepositedValidators -= consolidationCount;
+
+        emit ConsolidationConfirmed(
+            consolidationCount,
+            activeDepositedValidators
+        );
     }
 
     /***************************************
