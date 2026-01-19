@@ -46,9 +46,9 @@ contract ConsolidationController {
     }
 
     function requestConsolidation(
+        address _sourceStrategy,
         bytes[] calldata sourcePubKeys,
-        bytes calldata targetPubKey,
-        address _sourceStrategy
+        bytes calldata targetPubKey
     ) external {
         // Check no consolidations are already in progress. ie consolidationCount > 0
         require(consolidationCount == 0, "Consolidation in progress");
@@ -56,16 +56,17 @@ contract ConsolidationController {
         _checkSourceStrategy(_sourceStrategy);
 
         // Check target validator is Active on the new Compounding Staking Strategy
+        bytes32 targetPubKeyHash = _hashPubKey(targetPubKey);
         (CompoundingStakingSSVStrategy.ValidatorState state, ) = targetStrategy
-            .validator(keccak256(targetPubKey));
+            .validator(targetPubKeyHash);
         require(
             state == CompoundingValidatorManager.ValidatorState.ACTIVE,
             "Target validator not active"
         );
 
-        // Check no pending deposits in the new target validator. need to iterate over the strategy’s `deposits`
+        // Check no pending deposits in the new target validator
         require(
-            _hasPendingDeposit(_hashPubKey(targetPubKey)) == false,
+            _hasPendingDeposit(targetPubKeyHash) == false,
             "Target has pending deposits"
         );
 
@@ -166,7 +167,7 @@ contract ConsolidationController {
      */
 
     /// @notice Can only call snapBalances on the new Compounding Staking Strategy
-    /// if no consolidations are in progress
+    /// if no there are consolidations in progress or the consolidation starting balance has already been stored
     function snapBalances() external {
         if (consolidationCount == 0 || startBalance > 0) {
             targetStrategy.snapBalances();
@@ -214,7 +215,9 @@ contract ConsolidationController {
      *
      */
 
-    function _hasPendingDeposit(bytes32 publicKeyHash)
+    /// @notice Check if there are any pending deposits for a validator with a given public key hash.
+    /// Need to iterate over the target strategy’s `deposits`
+    function _hasPendingDeposit(bytes32 targetPubKeyHash)
         internal
         view
         returns (bool)
@@ -222,16 +225,15 @@ contract ConsolidationController {
         uint256 depositsCount = targetStrategy.depositListLength();
         for (uint256 i = 0; i < depositsCount; ++i) {
             (
-                bytes32 pubKeyHash,
-                uint64 amountGwei,
-                uint64 slot,
+                bytes32 depositPubKeyHash,
                 ,
-
+                ,
+                ,
+                CompoundingValidatorManager.DepositStatus status
             ) = targetStrategy.deposits(targetStrategy.depositList(i));
             if (
-                pubKeyHash == publicKeyHash &&
-                amountGwei > 0 &&
-                slot != type(uint64).max
+                depositPubKeyHash == targetPubKeyHash &&
+                status == CompoundingValidatorManager.DepositStatus.PENDING
             ) {
                 return true;
             }
