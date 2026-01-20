@@ -378,10 +378,13 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
         bytes[] calldata sourcePubKeys,
         bytes calldata targetPubKey
     ) external nonReentrant whenNotPaused onlyRegistrator {
+        // Hash using the Native Staking Strategy's hashing method.
+        // This is different to the Beacon chain's method.
         bytes32 targetPubKeyHash = keccak256(targetPubKey);
         bytes32 sourcePubKeyHash;
+
+        // For each source validator
         for (uint256 i = 0; i < sourcePubKeys.length; ++i) {
-            // hash the source validator's public key using the Beacon Chain's format
             sourcePubKeyHash = keccak256(sourcePubKeys[i]);
             require(sourcePubKeyHash != targetPubKeyHash, "Self consolidation");
             require(

@@ -16,9 +16,11 @@ contract ConsolidationController {
         0x4685dB8bF2Df743c861d71E6cFb5347222992076;
     address internal constant NativeStakingStrategy3 =
         0xE98538A0e8C2871C2482e1Be8cC6bd9F8E8fFD63;
-
-    /// @notice Address of the new Compounding Staking Strategy
-    CompoundingStakingSSVStrategy public immutable targetStrategy;
+    /// @dev The new Compounding Staking Strategy Proxy
+    CompoundingStakingSSVStrategy internal constant targetStrategy =
+        CompoundingStakingSSVStrategy(
+            payable(0xaF04828Ed923216c77dC22a2fc8E077FDaDAA87d)
+        );
 
     /// @notice Address of the registrator
     address public validatorRegistrator;
@@ -38,13 +40,17 @@ contract ConsolidationController {
         _;
     }
 
-    constructor(address _validatorRegistrator, address _targetStrategy) {
+    constructor(address _validatorRegistrator) {
         validatorRegistrator = _validatorRegistrator;
-        targetStrategy = CompoundingStakingSSVStrategy(
-            payable(_targetStrategy)
-        );
     }
 
+    /**
+     * @notice Request consolidation of validators from an old Native Staking Strategy
+     * to the new Compounding Staking Strategy
+     * @param _sourceStrategy The address of the old Native Staking Strategy
+     * @param sourcePubKeys The public keys of the validators to be consolidated from the old Native Staking Strategy
+     * @param targetPubKey The public key of the target validator on the new Compounding Staking Strategy
+     */
     function requestConsolidation(
         address _sourceStrategy,
         bytes[] calldata sourcePubKeys,
@@ -63,28 +69,37 @@ contract ConsolidationController {
             state == CompoundingValidatorManager.ValidatorState.ACTIVE,
             "Target validator not active"
         );
-
         // Check no pending deposits in the new target validator
         require(
             _hasPendingDeposit(targetPubKeyHash) == false,
             "Target has pending deposits"
         );
 
-        // Snap the balances so the strategy balance at the start of consolidation can be calculated later
-        targetStrategy.snapBalances();
-
-        // Store the number of validators being consolidated
+        // Store the state at the start of the consolidation process
         consolidationCount = SafeCast.toUint64(sourcePubKeys.length);
         startTimestamp = SafeCast.toUint64(block.timestamp);
         sourceStrategy = _sourceStrategy;
 
+        // Snap the balances so the Compounding Staking Strategy balance at the
+        // start of consolidation process can be calculated later
+        targetStrategy.snapBalances();
+
         // Call requestConsolidation on the old Native Staking Strategy
+        // to initiate the consolidations
         ValidatorAccountant(_sourceStrategy).requestConsolidation(
             sourcePubKeys,
             targetPubKey
         );
+
+        // No event emitted as ConsolidationRequested is emitted from the old Native Staking Strategy
     }
 
+    /**
+     * @notice Confirm the consolidation of validators from an old Native Staking Strategy
+     * to the new Compounding Staking Strategy has been completed
+     * @param balanceProofs The balance proofs from the new Compounding Staking Strategy
+     * @param pendingDepositProofs The pending deposit proofs from the new Compounding Staking Strategy
+     */
     function confirmConsolidation(
         CompoundingStakingSSVStrategy.BalanceProofs calldata balanceProofs,
         CompoundingStakingSSVStrategy.PendingDepositProofs
@@ -96,14 +111,10 @@ contract ConsolidationController {
         uint128 currentBalance = SafeCast.toUint128(
             targetStrategy.checkBalance(WETH)
         );
+        // 32 ETH is used which assumes the source validators have not been slashed before or after the consolidation request.
         require(
-            currentBalance >= startBalance + (consolidationCount * 31 ether),
+            currentBalance >= startBalance + (consolidationCount * 32 ether),
             "Consolidation not complete"
-        );
-        // TODO do we also need to check the balance of the last source validator is zero?
-
-        ValidatorAccountant(sourceStrategy).confirmConsolidation(
-            consolidationCount
         );
 
         // Reset consolidation state
@@ -111,6 +122,12 @@ contract ConsolidationController {
         startTimestamp = 0;
         startBalance = 0;
         sourceStrategy = address(0);
+
+        ValidatorAccountant(sourceStrategy).confirmConsolidation(
+            consolidationCount
+        );
+
+        // No event emitted as ConsolidationConfirmed is emitted from the old Native Staking Strategy
     }
 
     /**
@@ -130,6 +147,13 @@ contract ConsolidationController {
         return ValidatorAccountant(_sourceStrategy).doAccounting();
     }
 
+    /**
+     * @notice Exit of source validators are allowed during the consolidation process
+     * as consolidated validators will be in EXITING state hence can not be consolidated after exit.
+     * @param _sourceStrategy The address of the old Native Staking Strategy
+     * @param publicKey The public key of the validator to exit which must have STAKED state.
+     * @param operatorIds The operator IDs for the source SSV cluster
+     */
     function exitSsvValidator(
         address _sourceStrategy,
         bytes calldata publicKey,
@@ -144,6 +168,14 @@ contract ConsolidationController {
         );
     }
 
+    /**
+     * @notice Removing source validators is not allowed during the consolidation process
+     * as consolidated validators will be in EXITING state hence can not be consolidated after removal.
+     * @param _sourceStrategy The address of the old Native Staking Strategy
+     * @param publicKey The public key of the validator to remove which must have EXITING or REGISTERED state.
+     * @param operatorIds The operator IDs for the source SSV cluster
+     * @param cluster The SSV cluster information for the source validator
+     */
     function removeSsvValidator(
         address _sourceStrategy,
         bytes calldata publicKey,
@@ -152,6 +184,11 @@ contract ConsolidationController {
     ) external onlyRegistrator {
         // Check sourceStrategy is a valid old Native Staking Strategy
         _checkSourceStrategy(_sourceStrategy);
+        // Prevent removing a validator from the SSV cluster before the consolidation
+        // process has been completed.
+        // This prevents validators that have been exited rather than consolidated but that's ok.
+        // The exited validator can be removed after the consolidation process is complete.
+        require(consolidationCount == 0, "Consolidation in progress");
 
         ValidatorAccountant(_sourceStrategy).removeSsvValidator(
             publicKey,
@@ -179,24 +216,20 @@ contract ConsolidationController {
         CompoundingStakingSSVStrategy.PendingDepositProofs
             calldata pendingDepositProofs
     ) external {
-        targetStrategy.verifyBalances(balanceProofs, pendingDepositProofs);
-
-        // Exit if no consolidation is in progress as there is nothing more to do
-        if (consolidationCount == 0) return;
-
-        // If the Compounding Staking Strategy's balance at the start of consolidation hasn't been stored yet
-        if (startBalance == 0) {
-            // Store the strategy balance at the start of consolidation
-            startBalance = SafeCast.toUint128(
-                targetStrategy.checkBalance(WETH)
-            );
-
-            return;
+        // Consolidation is in progress and the starting balance has already been stored.
+        if (consolidationCount > 0 && startBalance > 0) {
+            // Can not update the strategy's balance until after the consolidation has been completed.
+            // Call confirmConsolidation with the balance proofs if the consolidation is complete.
+            revert("Consolidation in progress");
         }
 
-        // Consolidation is in progress and the starting balance has been stored
-        // Can not update the strategy's balance until after the consolidation is confirmed
-        revert("Consolidation in progress");
+        targetStrategy.verifyBalances(balanceProofs, pendingDepositProofs);
+
+        // If no consolidation is in progress, there is nothing more to do
+        if (consolidationCount == 0) return;
+
+        // startBalance is zero so store the strategy balance at the start of consolidation
+        startBalance = SafeCast.toUint128(targetStrategy.checkBalance(WETH));
     }
 
     // removeSsvValidator and validatorWithdrawal on the new Compounding Staking Strategy are prevented during migration
