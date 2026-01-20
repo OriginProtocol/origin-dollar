@@ -2064,9 +2064,16 @@ async function nativeStakingSSVStrategyFixture() {
   if (isFork) {
     const { nativeStakingSSVStrategy, ssv } = fixture;
 
-    // The Defender Relayer
+    // // The Defender Relayer
+    // fixture.validatorRegistrator = await impersonateAndFund(
+    //   addresses.mainnet.validatorRegistrator
+    // );
+    // Set to the consolidation controller while the validator consolidation is ongoing
+    const consolidationController = await ethers.getContract(
+      "ConsolidationController"
+    );
     fixture.validatorRegistrator = await impersonateAndFund(
-      addresses.mainnet.validatorRegistrator
+      consolidationController.address
     );
 
     // Fund some SSV to the native staking strategy
