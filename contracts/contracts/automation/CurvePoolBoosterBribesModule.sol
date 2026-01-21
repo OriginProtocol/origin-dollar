@@ -14,6 +14,12 @@ interface ICurvePoolBooster {
         uint256 bridgeFee,
         uint256 additionalGasLimit
     ) external;
+
+    function manageRewardPerVote(
+        uint256 newMaxRewardPerVote,
+        uint256 bridgeFee,
+        uint256 additionalGasLimit
+    ) external;
 }
 
 contract CurvePoolBoosterBribesModule is AbstractSafeModule {
