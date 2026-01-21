@@ -23,7 +23,7 @@
       "slot": "2",
       "type": "t_array(t_address)dyn_storage",
       "contract": "CurvePoolBoosterBribesModule",
-      "src": "contracts/automation/CurvePoolBoosterBribesModule.sol:20"
+      "src": "contracts/automation/CurvePoolBoosterBribesModule.sol:26"
     }
   ],
   "types": {
@@ -115,5 +115,6 @@
       "label": "uint256",
       "numberOfBytes": "32"
     }
-  }
+  },
+  "namespaces": {}
 }
