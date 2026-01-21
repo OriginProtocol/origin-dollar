@@ -67,14 +67,30 @@ contract CurvePoolBoosterBribesModule is AbstractSafeModule {
     }
 
     function manageBribes() external onlyOperator {
+        uint256[] memory rewardsPerVote = new uint256[](POOLS.length);
+        _manageBribes(rewardsPerVote);
+    }
+
+    function manageBribes(uint256[] memory rewardsPerVote)
+        external
+        onlyOperator
+    {
+        require(POOLS.length == rewardsPerVote.length, "Length mismatch");
+        _manageBribes(rewardsPerVote);
+    }
+
+    function _manageBribes(uint256[] memory rewardsPerVote)
+        internal
+        onlyOperator
+    {
         uint256 length = POOLS.length;
         for (uint256 i = 0; i < length; i++) {
             address poolBoosterAddress = POOLS[i];
 
-            // PoolBooster need to have a balance of at least 0.002 ether to operate
+            // PoolBooster need to have a balance of at least 0.003 ether to operate
             // 0.001 ether are used for the bridge fee
             require(
-                poolBoosterAddress.balance > 0.002 ether,
+                poolBoosterAddress.balance > 0.003 ether,
                 "Insufficient balance for bribes"
             );
 
@@ -106,6 +122,27 @@ contract CurvePoolBoosterBribesModule is AbstractSafeModule {
                 ),
                 "Manage total reward failed"
             );
+
+            // Skip setting reward per vote if it's zero
+            if (rewardsPerVote[i] == 0) continue;
+            require(
+                safeContract.execTransactionFromModule(
+                    poolBoosterAddress,
+                    0, // Value
+                    abi.encodeWithSelector(
+                        ICurvePoolBooster.manageRewardPerVote.selector,
+                        rewardsPerVote[i], // newMaxRewardPerVote
+                        0.001 ether, // bridgeFee
+                        1000000 // additionalGasLimit
+                    ),
+                    0
+                ),
+                "Set reward per vote failed"
+            );
         }
+    }
+
+    function getPools() external view returns (address[] memory) {
+        return POOLS;
     }
 }
