@@ -1,4 +1,5 @@
 const { formatUnits, parseUnits } = require("ethers/lib/utils");
+const { Contract } = require("ethers");
 
 const addresses = require("../utils/addresses");
 
@@ -20,209 +21,316 @@ const OUSD = addresses.mainnet.OUSDProxy;
 // Constants
 const SECONDS_PER_WEEK = 60 * 60 * 24 * 7;
 
+// Minimal ABIs
+const bribesModuleAbi = [
+  "function getPools() external view returns (address[])",
+  "function manageBribes(uint256[] memory rewardsPerVote) external",
+];
+
+const poolBoosterAbi = [
+  "function rewardToken() external view returns (address)",
+];
+
+const gaugeControllerAbi = [
+  "function get_total_weight() external view returns (uint256)",
+];
+
+const veCRVAbi = ["function totalSupply() external view returns (uint256)"];
+
+const crvAbi = ["function rate() external view returns (uint256)"];
+
+// Curve pool ABIs for price queries
+const curvePoolInt128Abi = [
+  "function get_dy(int128 i, int128 j, uint256 dx) external view returns (uint256)",
+];
+
+const curvePoolUint256Abi = [
+  "function get_dy(uint256 i, uint256 j, uint256 dx) external view returns (uint256)",
+];
+
 /**
- * Hardhat task to calculate and display the MaxPricePerVote for all Curve Pool Boosters
+ * Get OETH price in ETH from the OETH/WETH Curve pool
+ * Pool composition: 0 = ETH, 1 = OETH
  */
-async function calculateMaxPricePerVoteTask(taskArguments, hre) {
-  const { ethers } = hre;
-  const targetEfficiency = parseFloat(taskArguments.efficiency || "1");
-  const skipRewardPerVote = taskArguments.skip || false;
-  const output = taskArguments.output ? console.log : log;
+async function getOETHPriceInETH(provider) {
+  const pool = new Contract(OETH_WETH_POOL, curvePoolInt128Abi, provider);
+  return await pool["get_dy(int128,int128,uint256)"](
+    1, // from OETH
+    0, // to ETH
+    parseUnits("1", 18)
+  );
+}
+
+/**
+ * Get OUSD price in USD from the OUSD/USDC Curve pool
+ * Pool composition: 0 = OUSD, 1 = USDC
+ */
+async function getOUSDPriceInUSD(provider) {
+  const pool = new Contract(OUSD_USDC_POOL, curvePoolInt128Abi, provider);
+  const ousdPriceInUsdc = await pool["get_dy(int128,int128,uint256)"](
+    0, // from OUSD
+    1, // to USDC
+    parseUnits("1", 18)
+  );
+  // Scale from 6 decimals to 18 decimals
+  return ousdPriceInUsdc.mul(parseUnits("1", 12));
+}
+
+/**
+ * Get CRV price in USD from the crvUSD/ETH/CRV tricrypto pool
+ * Pool composition: 0 = crvUSD, 1 = ETH, 2 = CRV
+ */
+async function getCRVPriceInUSD(provider) {
+  const pool = new Contract(CRV_USD_ETH_CRV_POOL, curvePoolUint256Abi, provider);
+  return await pool["get_dy(uint256,uint256,uint256)"](
+    2, // from CRV
+    0, // to crvUSD
+    parseUnits("1", 18)
+  );
+}
+
+/**
+ * Get ETH price in USD from the crvUSD/ETH/CRV tricrypto pool
+ * Pool composition: 0 = crvUSD, 1 = ETH, 2 = CRV
+ */
+async function getETHPriceInUSD(provider) {
+  const pool = new Contract(CRV_USD_ETH_CRV_POOL, curvePoolUint256Abi, provider);
+  return await pool["get_dy(uint256,uint256,uint256)"](
+    1, // from ETH
+    0, // to crvUSD
+    parseUnits("1", 18)
+  );
+}
+
+/**
+ * Fetch CRV emission data needed for price calculation
+ */
+async function fetchEmissionData(provider, output) {
+  const gaugeController = new Contract(
+    GAUGE_CONTROLLER,
+    gaugeControllerAbi,
+    provider
+  );
+  const veCRV = new Contract(VE_CRV, veCRVAbi, provider);
+  const crv = new Contract(CRV, crvAbi, provider);
+
+  const [totalWeight, veCRVTotalSupply, crvRate, crvPriceInUsd] =
+    await Promise.all([
+      gaugeController.get_total_weight(),
+      veCRV.totalSupply(),
+      crv.rate(),
+      getCRVPriceInUSD(provider),
+    ]);
+
+  output(`Total Weight (36 decimals): ${formatUnits(totalWeight, 36)}`);
+  output(`veCRV Total Supply: ${formatUnits(veCRVTotalSupply, 18)}`);
+  output(`CRV Rate (per second): ${formatUnits(crvRate, 18)}`);
+  output(`CRV price in USD: ${formatUnits(crvPriceInUsd, 18)}`);
+
+  const emissionPerWeek = crvRate.mul(SECONDS_PER_WEEK);
+  output(`CRV Emission per week: ${formatUnits(emissionPerWeek, 18)}`);
+
+  const voterPercentScaled = totalWeight.div(veCRVTotalSupply);
+  output(
+    `Voter Percent (scaled 1e18 = 100%): ${formatUnits(voterPercentScaled, 18)}`
+  );
+
+  return { totalWeight, veCRVTotalSupply, emissionPerWeek, crvPriceInUsd };
+}
+
+/**
+ * Calculate EmissionValuePerVote in USD
+ */
+function calculateEmissionValuePerVote(
+  emissionPerWeek,
+  crvPriceInUsd,
+  totalWeight,
+  output
+) {
+  const emissionValuePerVote = emissionPerWeek
+    .mul(crvPriceInUsd)
+    .mul(parseUnits("1", 18))
+    .div(totalWeight);
+  output(
+    `Emission Value per Vote (USD): ${formatUnits(emissionValuePerVote, 18)}`
+  );
+  return emissionValuePerVote;
+}
+
+/**
+ * Calculate MaxPricePerVote for a given reward token price
+ */
+function calculateMaxPricePerVote(
+  emissionValuePerVote,
+  rewardTokenPriceInUsd,
+  targetEfficiency
+) {
+  const targetEfficiencyScaled = parseUnits(targetEfficiency.toString(), 18);
+
+  return emissionValuePerVote
+    .mul(parseUnits("1", 18))
+    .div(
+      rewardTokenPriceInUsd.mul(targetEfficiencyScaled).div(parseUnits("1", 18))
+    );
+}
+
+/**
+ * Get the price of a reward token in USD
+ */
+async function getRewardTokenPrice(rewardToken, provider, ethPriceInUsd, output) {
+  const rewardTokenLower = rewardToken.toLowerCase().trim();
+  const oethLower = OETH.toLowerCase().trim();
+  const ousdLower = OUSD.toLowerCase().trim();
+
+  if (rewardTokenLower === oethLower) {
+    const oethPriceInEth = await getOETHPriceInETH(provider);
+    const oethPriceInUsd = oethPriceInEth
+      .mul(ethPriceInUsd)
+      .div(parseUnits("1", 18));
+    output(`OETH price in ETH: ${formatUnits(oethPriceInEth, 18)}`);
+    output(`OETH price in USD: ${formatUnits(oethPriceInUsd, 18)}`);
+    return { priceInUsd: oethPriceInUsd, symbol: "OETH" };
+  } else if (rewardTokenLower === ousdLower) {
+    const ousdPriceInUsd = await getOUSDPriceInUSD(provider);
+    output(`OUSD price in USD: ${formatUnits(ousdPriceInUsd, 18)}`);
+    return { priceInUsd: ousdPriceInUsd, symbol: "OUSD" };
+  } else {
+    throw new Error(`Unknown reward token: ${rewardToken}`);
+  }
+}
+
+/**
+ * Calculate rewards per vote for all pools in the BribesModule
+ * @param {ethers.providers.Provider} provider
+ * @param {Object} options
+ * @param {number} options.targetEfficiency - Target efficiency (e.g., 1 for 100%)
+ * @param {boolean} options.skipRewardPerVote - If true, returns array of zeros
+ * @param {Function} options.log - Logger function
+ * @returns {Promise<{pools: string[], rewardsPerVote: BigNumber[]}>}
+ */
+async function calculateRewardsPerVote(provider, options = {}) {
+  const {
+    targetEfficiency = 1,
+    skipRewardPerVote = false,
+    log: output = console.log,
+  } = options;
 
   output(`\n=== Calculating MaxPricePerVote for Pool Boosters ===`);
   output(`BribesModule: ${BRIBES_MODULE}`);
 
-  if (skipRewardPerVote) {
-    output(`Mode: Skip RewardPerVote (array of zeros)\n`);
-  } else {
-    if (targetEfficiency <= 0 || targetEfficiency > 10) {
-      throw new Error(
-        `Invalid target efficiency: ${targetEfficiency}. Must be between 0 and 10.`
-      );
-    }
-    output(`Target Efficiency: ${targetEfficiency * 100}%\n`);
-  }
-
-  // Minimal ABIs
-  const bribesModuleAbi = [
-    "function getPools() external view returns (address[])",
-  ];
-  const poolBoosterAbi = [
-    "function rewardToken() external view returns (address)",
-  ];
-  const gaugeControllerAbi = [
-    "function get_total_weight() view returns (uint256)",
-  ];
-  const veCRVAbi = ["function totalSupply() view returns (uint256)"];
-  const crvAbi = ["function rate() view returns (uint256)"];
-  const curvePool2Abi = [
-    "function get_dy(int128 i, int128 j, uint256 dx) view returns (uint256)",
-  ];
-  const curvePoolNGAbi = [
-    "function get_dy(uint256 i, uint256 j, uint256 dx) view returns (uint256)",
-  ];
-
-  // Get contract instances
-  const bribesModule = await ethers.getContractAt(
-    bribesModuleAbi,
-    BRIBES_MODULE
-  );
-  const gaugeController = await ethers.getContractAt(
-    gaugeControllerAbi,
-    GAUGE_CONTROLLER
-  );
-  const veCRVContract = await ethers.getContractAt(veCRVAbi, VE_CRV);
-  const crvContract = await ethers.getContractAt(crvAbi, CRV);
-  const oethPool = await ethers.getContractAt(curvePool2Abi, OETH_WETH_POOL);
-  const ousdPool = await ethers.getContractAt(curvePoolNGAbi, OUSD_USDC_POOL);
-  const triPool = await ethers.getContractAt(
-    curvePoolNGAbi,
-    CRV_USD_ETH_CRV_POOL
-  );
-
   // Fetch pools from BribesModule
+  const bribesModule = new Contract(BRIBES_MODULE, bribesModuleAbi, provider);
   const pools = await bribesModule.getPools();
   output(`Found ${pools.length} pools in BribesModule`);
 
   if (pools.length === 0) {
     output("No pools registered, nothing to calculate");
-    return [];
+    return { pools: [], rewardsPerVote: [] };
   }
 
-  // If skipping, just return array of zeros
+  // If skipping, return array of zeros
   if (skipRewardPerVote) {
-    const results = pools.map(() => parseUnits("0"));
-    output(`Pools found: ${pools.length}`);
+    output(`Mode: Skip RewardPerVote (array of zeros)\n`);
+    const rewardsPerVote = pools.map(() => parseUnits("0"));
     pools.forEach((pool, i) => output(`  Pool ${i + 1}: ${pool}`));
     output(`\n=== SUMMARY ===`);
-    output(`Rewards per vote array: [${results.map(() => "0").join(", ")}]`);
+    output(`Rewards per vote array: [${rewardsPerVote.map(() => "0").join(", ")}]`);
     output(`(RewardPerVote will be skipped for all pools)\n`);
-    return results;
+    return { pools, rewardsPerVote };
   }
 
-  // Fetch on-chain data
-  output("\n--- Fetching emission data ---");
+  // Validate target efficiency
+  if (targetEfficiency <= 0 || targetEfficiency > 10) {
+    throw new Error(
+      `Invalid target efficiency: ${targetEfficiency}. Must be between 0 and 10.`
+    );
+  }
+  output(`Target Efficiency: ${targetEfficiency * 100}%\n`);
 
-  const [totalWeight, veCRVTotalSupply, crvRate, crvPriceInUsd, ethPriceInUsd] =
-    await Promise.all([
-      gaugeController.get_total_weight(),
-      veCRVContract.totalSupply(),
-      crvContract.rate(),
-      triPool["get_dy(uint256,uint256,uint256)"](2, 0, parseUnits("1")),
-      triPool["get_dy(uint256,uint256,uint256)"](1, 0, parseUnits("1")),
-    ]);
-
-  output(
-    `GaugeController.get_total_weight() (36 decimals): ${formatUnits(
-      totalWeight,
-      36
-    )}`
+  // Fetch emission data
+  output(`--- Fetching emission data ---`);
+  const { totalWeight, emissionPerWeek, crvPriceInUsd } = await fetchEmissionData(
+    provider,
+    output
   );
-  output(`veCRV.totalSupply(): ${formatUnits(veCRVTotalSupply, 18)}`);
-  output(`CRV.rate() (per second): ${formatUnits(crvRate, 18)}`);
-  output(`CRV price in USD: ${formatUnits(crvPriceInUsd, 18)}`);
+  const emissionValuePerVote = calculateEmissionValuePerVote(
+    emissionPerWeek,
+    crvPriceInUsd,
+    totalWeight,
+    output
+  );
+
+  // Fetch ETH price (needed for OETH price calculation)
+  const ethPriceInUsd = await getETHPriceInUSD(provider);
   output(`ETH price in USD: ${formatUnits(ethPriceInUsd, 18)}`);
 
-  // Calculate emission data
-  const emissionPerWeek = crvRate.mul(SECONDS_PER_WEEK);
-  const voterPercentScaled = totalWeight.div(veCRVTotalSupply);
-  const emissionValuePerVote = emissionPerWeek
-    .mul(crvPriceInUsd)
-    .mul(parseUnits("1", 18))
-    .div(totalWeight);
-
-  output(`\n--- Calculated Emission Data ---`);
-  output(`CRV Emission per week: ${formatUnits(emissionPerWeek, 18)} CRV`);
-  output(
-    `Voter Percent (TotalWeight/veCRVSupply): ${formatUnits(
-      voterPercentScaled.mul(100),
-      18
-    )}%`
-  );
-  output(
-    `Emission Value per Vote: ${formatUnits(emissionValuePerVote, 18)} USD`
-  );
-
-  // Fetch token prices
-  output(`\n--- Token Prices ---`);
-  const oethPriceInEth = await oethPool["get_dy(int128,int128,uint256)"](
-    1,
-    0,
-    parseUnits("1")
-  );
-  const oethPriceInUsd = oethPriceInEth
-    .mul(ethPriceInUsd)
-    .div(parseUnits("1", 18));
-  output(`OETH price in ETH: ${formatUnits(oethPriceInEth, 18)}`);
-  output(`OETH price in USD: ${formatUnits(oethPriceInUsd, 18)}`);
-
-  const ousdPriceInUsdc = await ousdPool["get_dy(uint256,uint256,uint256)"](
-    0,
-    1,
-    parseUnits("1")
-  );
-  const ousdPriceInUsd = ousdPriceInUsdc.mul(parseUnits("1", 12)); // Scale 6 decimals to 18
-  output(`OUSD price in USD: ${formatUnits(ousdPriceInUsd, 18)}`);
-
   // Calculate maxPricePerVote for each pool
-  const results = [];
-  const targetEfficiencyScaled = parseUnits(targetEfficiency.toString(), 18);
-
+  const rewardsPerVote = [];
   output(`\n--- Pool Results ---`);
 
   for (let i = 0; i < pools.length; i++) {
     const poolAddress = pools[i];
-    const poolBooster = await ethers.getContractAt(poolBoosterAbi, poolAddress);
+    output(`\nPool ${i + 1}: ${poolAddress}`);
+
+    // Get reward token for this pool
+    const poolBooster = new Contract(poolAddress, poolBoosterAbi, provider);
     const rewardToken = await poolBooster.rewardToken();
 
-    let rewardTokenSymbol;
-    let rewardTokenPriceInUsd;
+    try {
+      const { priceInUsd: rewardTokenPriceInUsd, symbol } =
+        await getRewardTokenPrice(rewardToken, provider, ethPriceInUsd, output);
 
-    if (rewardToken.toLowerCase() === OETH.toLowerCase()) {
-      rewardTokenSymbol = "OETH";
-      rewardTokenPriceInUsd = oethPriceInUsd;
-    } else if (rewardToken.toLowerCase() === OUSD.toLowerCase()) {
-      rewardTokenSymbol = "OUSD";
-      rewardTokenPriceInUsd = ousdPriceInUsd;
-    } else {
-      output(
-        `Pool ${i + 1}: ${poolAddress} - Unknown reward token: ${rewardToken}`
+      const maxPricePerVote = calculateMaxPricePerVote(
+        emissionValuePerVote,
+        rewardTokenPriceInUsd,
+        targetEfficiency
       );
-      results.push(parseUnits("0"));
-      continue;
+
+      output(`  Reward Token: ${symbol} (${rewardToken})`);
+      output(`  Max Price Per Vote: ${formatUnits(maxPricePerVote, 18)} ${symbol}`);
+
+      rewardsPerVote.push(maxPricePerVote);
+    } catch (error) {
+      output(`  Error: ${error.message}`);
+      rewardsPerVote.push(parseUnits("0"));
     }
-
-    const maxPricePerVote = emissionValuePerVote
-      .mul(parseUnits("1", 18))
-      .div(
-        rewardTokenPriceInUsd
-          .mul(targetEfficiencyScaled)
-          .div(parseUnits("1", 18))
-      );
-
-    output(`Pool ${i + 1}: ${poolAddress}`);
-    output(`  Reward Token: ${rewardTokenSymbol} (${rewardToken})`);
-    output(
-      `  Max Price Per Vote: ${formatUnits(
-        maxPricePerVote,
-        18
-      )} ${rewardTokenSymbol}`
-    );
-
-    results.push(maxPricePerVote);
   }
 
   output(`\n=== SUMMARY ===`);
   output(
-    `Rewards per vote array: [${results
+    `Rewards per vote array: [${rewardsPerVote
       .map((r) => formatUnits(r, 18))
       .join(", ")}]`
   );
   output(`(with ${targetEfficiency * 100}% target efficiency)\n`);
 
-  return results;
+  return { pools, rewardsPerVote };
+}
+
+/**
+ * Hardhat task to calculate and display the MaxPricePerVote for all Curve Pool Boosters
+ */
+async function calculateMaxPricePerVoteTask(taskArguments) {
+  const targetEfficiency = parseFloat(taskArguments.efficiency || "1");
+  const skipRewardPerVote = taskArguments.skip || false;
+  const output = taskArguments.output ? console.log : log;
+
+  // Use Hardhat's global ethers provider
+  const { rewardsPerVote } = await calculateRewardsPerVote(ethers.provider, {
+    targetEfficiency,
+    skipRewardPerVote,
+    log: output,
+  });
+
+  return rewardsPerVote;
 }
 
 module.exports = {
+  // Hardhat task
   calculateMaxPricePerVoteTask,
+  // Shared function for defender action
+  calculateRewardsPerVote,
+  // Constants for defender action
+  BRIBES_MODULE,
+  bribesModuleAbi,
 };
