@@ -2,6 +2,7 @@
 pragma solidity ^0.8.0;
 
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
+import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 
 import { CompoundingStakingSSVStrategy, CompoundingValidatorManager } from "./CompoundingStakingSSVStrategy.sol";
 import { ValidatorAccountant } from "./ValidatorAccountant.sol";
@@ -10,7 +11,7 @@ import { Cluster } from "../../interfaces/ISSVNetwork.sol";
 /// @title Consolidation Controller
 /// @notice
 /// @author Origin Protocol Inc
-contract ConsolidationController {
+contract ConsolidationController is Ownable {
     address internal constant WETH = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
     address internal constant NativeStakingStrategy2 =
         0x4685dB8bF2Df743c861d71E6cFb5347222992076;
@@ -24,11 +25,14 @@ contract ConsolidationController {
 
     /// @notice Address of the registrator
     address public validatorRegistrator;
+
     /// @notice Number of validators being consolidated
     uint64 public consolidationCount;
     /// @notice When the consolidation process started
     uint64 public startTimestamp;
+    /// @notice The balance of the Compounding Staking Strategy at the start of consolidation
     uint128 public startBalance;
+    /// @notice The address of the source Native Staking Strategy being consolidated from
     address public sourceStrategy;
 
     /// @dev Throws if called by any account other than the Registrator
@@ -40,7 +44,11 @@ contract ConsolidationController {
         _;
     }
 
-    constructor(address _validatorRegistrator) {
+    /// @param _owner The owner who can request and confirm consolidations
+    /// @param _validatorRegistrator The registrator who does operations on the old staking strategy
+    constructor(address _owner, address _validatorRegistrator) {
+        _transferOwnership(_owner);
+
         validatorRegistrator = _validatorRegistrator;
     }
 
@@ -55,7 +63,7 @@ contract ConsolidationController {
         address _sourceStrategy,
         bytes[] calldata sourcePubKeys,
         bytes calldata targetPubKey
-    ) external {
+    ) external onlyOwner {
         // Check no consolidations are already in progress. ie consolidationCount > 0
         require(consolidationCount == 0, "Consolidation in progress");
         // Check sourceStrategy is a valid old Native Staking Strategy
@@ -96,18 +104,23 @@ contract ConsolidationController {
 
     /**
      * @notice Confirm the consolidation of validators from an old Native Staking Strategy
-     * to the new Compounding Staking Strategy has been completed
-     * @param balanceProofs The balance proofs from the new Compounding Staking Strategy
-     * @param pendingDepositProofs The pending deposit proofs from the new Compounding Staking Strategy
+     * to the new Compounding Staking Strategy has been completed.
+     * This is done by verifying the Compounding Staking Strategy's balance has increased by
+     * the consolidationCount * 32 ETH.
+     * Since `verifyBalances` can't be called during the consolidation process, the balance proofs
+     * need to be provided here to update the strategy's balance.
+     * The tx will revert if the consolidation is not complete. This includes updating the strategy's balance.
+     * @param balanceProofs The validator balance merkle proofs
+     * @param pendingDepositProofs The pending deposit merkle proofs
      */
     function confirmConsolidation(
         CompoundingStakingSSVStrategy.BalanceProofs calldata balanceProofs,
         CompoundingStakingSSVStrategy.PendingDepositProofs
             calldata pendingDepositProofs
-    ) external onlyRegistrator {
-        // Verify the consolidation has been completed
-        // Now check if the consolidation is complete
+    ) external onlyOwner {
+        // Update the Compounding Staking Strategy's balance by verifying the validator balances
         targetStrategy.verifyBalances(balanceProofs, pendingDepositProofs);
+        // Get the updated balance of the Compounding Staking Strategy
         uint128 currentBalance = SafeCast.toUint128(
             targetStrategy.checkBalance(WETH)
         );
@@ -136,6 +149,7 @@ contract ConsolidationController {
      *
      */
 
+    /// @dev The registrator of the old Native Staking Strategy can call doAccounting
     function doAccounting(address _sourceStrategy)
         external
         onlyRegistrator
