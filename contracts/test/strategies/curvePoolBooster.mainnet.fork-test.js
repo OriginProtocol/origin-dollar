@@ -67,22 +67,12 @@ describe("ForkTest: CurvePoolBooster", function () {
       parseUnits("10")
     );
 
-    // Deal ETH to pool booster
-    await sStrategist.sendTransaction({
-      to: curvePoolBooster.address,
-      value: parseUnits("1"),
-    });
-
     // Create campaign
     await curvePoolBooster
       .connect(sStrategist)
-      .createCampaign(
-        4,
-        10,
-        [addresses.mainnet.ConvexVoter],
-        parseUnits("0.1"),
-        0
-      );
+      .createCampaign(4, 10, [addresses.mainnet.ConvexVoter], 0, {
+        value: parseUnits("0.1"),
+      });
   }
 
   // --- Initialization ---
@@ -143,9 +133,13 @@ describe("ForkTest: CurvePoolBooster", function () {
 
     await curvePoolBooster.connect(sStrategist).setCampaignId(12);
 
+    // manageCampaign(totalRewardAmount, numberOfPeriods, maxRewardPerVote, additionalGasLimit)
+    // Use type(uint256).max to send all tokens
     await curvePoolBooster
       .connect(sStrategist)
-      .manageTotalRewardAmount(parseUnits("0.1"), 0);
+      .manageCampaign(ethers.constants.MaxUint256, 0, 0, 0, {
+        value: parseUnits("0.1"),
+      });
     expect(await ousd.balanceOf(curvePoolBooster.address)).to.equal(
       parseUnits("0")
     );
@@ -156,55 +150,37 @@ describe("ForkTest: CurvePoolBooster", function () {
 
     await curvePoolBooster.connect(sStrategist).setCampaignId(12);
 
-    await curvePoolBooster
-      .connect(sStrategist)
-      .manageNumberOfPeriods(2, parseUnits("0.1"), 0);
+    // manageCampaign(totalRewardAmount, numberOfPeriods, maxRewardPerVote, additionalGasLimit)
+    await curvePoolBooster.connect(sStrategist).manageCampaign(0, 2, 0, 0, {
+      value: parseUnits("0.1"),
+    });
   });
 
   it("Should manage reward per voter", async () => {
     await dealOETHAndCreateCampaign();
 
-    // Deal new OETH to pool booster
-    await ousd
-      .connect(woethSigner)
-      .transfer(curvePoolBooster.address, parseUnits("13"));
-    expect(await ousd.balanceOf(curvePoolBooster.address)).to.equal(
-      parseUnits("13")
-    );
-
     await curvePoolBooster.connect(sStrategist).setCampaignId(12);
 
-    await curvePoolBooster
-      .connect(sStrategist)
-      .manageRewardPerVote(100, parseUnits("0.1"), 0);
+    // manageCampaign(totalRewardAmount, numberOfPeriods, maxRewardPerVote, additionalGasLimit)
+    await curvePoolBooster.connect(sStrategist).manageCampaign(0, 0, 100, 0, {
+      value: parseUnits("0.1"),
+    });
   });
 
   it("Should close a campaign", async () => {
     await dealOETHAndCreateCampaign();
 
-    await curvePoolBooster
-      .connect(sStrategist)
-      .closeCampaign(12, parseUnits("0.1"), 0);
+    await curvePoolBooster.connect(sStrategist).closeCampaign(12, 0, {
+      value: parseUnits("0.1"),
+    });
   });
 
   it("Should revert if not called by operator", async () => {
     await expect(
-      curvePoolBooster.createCampaign(
-        4,
-        10,
-        [addresses.mainnet.ConvexVoter],
-        parseUnits("0.1"),
-        0
-      )
+      curvePoolBooster.createCampaign(4, 10, [addresses.mainnet.ConvexVoter], 0)
     ).to.be.revertedWith("Caller is not the Strategist or Governor");
     await expect(
-      curvePoolBooster.manageTotalRewardAmount(parseUnits("0.1"), 0)
-    ).to.be.revertedWith("Caller is not the Strategist or Governor");
-    await expect(
-      curvePoolBooster.manageNumberOfPeriods(2, parseUnits("0.1"), 0)
-    ).to.be.revertedWith("Caller is not the Strategist or Governor");
-    await expect(
-      curvePoolBooster.manageRewardPerVote(100, parseUnits("0.1"), 0)
+      curvePoolBooster.manageCampaign(ethers.constants.MaxUint256, 0, 0, 0)
     ).to.be.revertedWith("Caller is not the Strategist or Governor");
     await expect(curvePoolBooster.setCampaignId(12)).to.be.revertedWith(
       "Caller is not the Strategist or Governor"
@@ -217,96 +193,62 @@ describe("ForkTest: CurvePoolBooster", function () {
     await expect(
       curvePoolBooster
         .connect(sStrategist)
-        .createCampaign(
-          4,
-          10,
-          [addresses.mainnet.ConvexVoter],
-          parseUnits("0.1"),
-          0
-        )
+        .createCampaign(4, 10, [addresses.mainnet.ConvexVoter], 0)
     ).to.be.revertedWith("Campaign already created");
   });
 
   it("Should create another campaign if campaign is closed", async () => {
     await curvePoolBooster.connect(sStrategist).setCampaignId(12);
-    await curvePoolBooster
-      .connect(sStrategist)
-      .closeCampaign(12, parseUnits("0.1"), 0);
+    await curvePoolBooster.connect(sStrategist).closeCampaign(12, 0, {
+      value: parseUnits("0.1"),
+    });
 
     expect(await curvePoolBooster.campaignId()).to.equal(0);
 
     // Create campaign
     await curvePoolBooster
       .connect(sStrategist)
-      .createCampaign(
-        4,
-        10,
-        [addresses.mainnet.ConvexVoter],
-        parseUnits("0.1"),
-        0
-      );
+      .createCampaign(4, 10, [addresses.mainnet.ConvexVoter], 0, {
+        value: parseUnits("0.1"),
+      });
   });
 
   it("Should revert if campaign is not created", async () => {
     await expect(
       curvePoolBooster
         .connect(sStrategist)
-        .manageTotalRewardAmount(parseUnits("0.1"), 0)
-    ).to.be.revertedWith("Campaign not created");
-    await expect(
-      curvePoolBooster
-        .connect(sStrategist)
-        .manageNumberOfPeriods(2, parseUnits("0.1"), 0)
-    ).to.be.revertedWith("Campaign not created");
-    await expect(
-      curvePoolBooster
-        .connect(sStrategist)
-        .manageRewardPerVote(100, parseUnits("0.1"), 0)
+        .manageCampaign(ethers.constants.MaxUint256, 0, 0, 0, {
+          value: parseUnits("0.1"),
+        })
     ).to.be.revertedWith("Campaign not created");
   });
 
   it("Should revert if Invalid number of periods", async () => {
+    // createCampaign requires numberOfPeriods > 1
     await expect(
       curvePoolBooster
         .connect(sStrategist)
-        .createCampaign(
-          0,
-          10,
-          [addresses.mainnet.ConvexVoter],
-          parseUnits("0.1"),
-          0
-        )
+        .createCampaign(0, 10, [addresses.mainnet.ConvexVoter], 0)
     ).to.be.revertedWith("Invalid number of periods");
-
-    await curvePoolBooster.connect(sStrategist).setCampaignId(12);
 
     await expect(
       curvePoolBooster
         .connect(sStrategist)
-        .manageNumberOfPeriods(0, parseUnits("0.1"), 0)
+        .createCampaign(1, 10, [addresses.mainnet.ConvexVoter], 0)
     ).to.be.revertedWith("Invalid number of periods");
+
+    // Note: manageCampaign with numberOfPeriods=0 means "no update", so it won't revert
   });
 
   it("Should revert if Invalid reward per vote", async () => {
+    // createCampaign requires maxRewardPerVote > 0
     await expect(
       curvePoolBooster
         .connect(sStrategist)
-        .createCampaign(
-          4,
-          0,
-          [addresses.mainnet.ConvexVoter],
-          parseUnits("0.1"),
-          0
-        )
+        .createCampaign(4, 0, [addresses.mainnet.ConvexVoter], 0)
     ).to.be.revertedWith("Invalid reward per vote");
 
-    await curvePoolBooster.connect(sStrategist).setCampaignId(12);
-
-    await expect(
-      curvePoolBooster
-        .connect(sStrategist)
-        .manageRewardPerVote(0, parseUnits("0.1"), 0)
-    ).to.be.revertedWith("Invalid reward per vote");
+    // Note: manageCampaign with maxRewardPerVote=0 means "no update", so it won't revert
   });
 
   it("Should revert if No reward to manage", async () => {
@@ -322,29 +264,27 @@ describe("ForkTest: CurvePoolBooster", function () {
     await expect(
       curvePoolBooster
         .connect(sStrategist)
-        .createCampaign(
-          4,
-          10,
-          [addresses.mainnet.ConvexVoter],
-          parseUnits("0.1"),
-          0
-        )
+        .createCampaign(4, 10, [addresses.mainnet.ConvexVoter], 0)
     ).to.be.revertedWith("No reward to manage");
 
     await curvePoolBooster.connect(sStrategist).setCampaignId(12);
 
+    // manageCampaign with totalRewardAmount != 0 but no balance reverts with "No reward to add"
     await expect(
-      curvePoolBooster.connect(sStrategist).manageTotalRewardAmount(0, 0)
-    ).to.be.revertedWith("No reward to manage");
+      curvePoolBooster
+        .connect(sStrategist)
+        .manageCampaign(ethers.constants.MaxUint256, 0, 0, 0)
+    ).to.be.revertedWith("No reward to add");
   });
 
   // --- Rescue ETH and ERC20 ---
   it("Should rescue ETH", async () => {
-    // Deal ETH to pool booster
-    await sStrategist.sendTransaction({
-      to: curvePoolBooster.address,
-      value: parseUnits("1"),
-    });
+    // Deal ETH to pool booster using hardhat_setBalance
+    // (contract no longer has receive() function)
+    await ethers.provider.send("hardhat_setBalance", [
+      curvePoolBooster.address,
+      "0xDE0B6B3A7640000", // 1 ETH in hex
+    ]);
 
     const balanceBefore = await ethers.provider.getBalance(
       curvePoolBooster.address
