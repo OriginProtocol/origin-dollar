@@ -146,6 +146,7 @@ const processCctpBridgeTransactions = async ({ block = undefined }) => {
     log(`Attempting to relay attestation with tx hash: ${txHash} to cctp chain id: ${config.cctpDestinationDomainId}`);
     const relayResult = await config.cctpIntegrationContractDestination.relay(message, attestation);
     log(`Relay result: ${relayResult}`);
+    // TODO verify that the relay was successful and if it was, store the tx hash in the database
   }
 };
 
