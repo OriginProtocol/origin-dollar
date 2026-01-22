@@ -253,7 +253,9 @@ contract CurvePoolBooster is Initializable, Strategizable {
     /// @return Balance after fee
     function _handleFee() internal returns (uint256) {
         uint256 balance = IERC20(rewardToken).balanceOf(address(this));
-        require(balance > 0, "No reward to manage");
+        
+        // This is not a problem if balance is 0, feeAmount will be 0 as well
+        // We don't want to make the whole function revert just because of that.
         return _handleFee(balance);
     }
 
