@@ -12,7 +12,7 @@ const {
 } = require("../_fixture");
 const loadFixture = createFixtureLoader(poolBoosterCodeUpdatedFixture);
 
-describe("ForkTest: CurvePoolBooster", function () {
+describe.only("ForkTest: CurvePoolBooster", function () {
   this.timeout(0);
 
   // Retry up to 3 times on CI
