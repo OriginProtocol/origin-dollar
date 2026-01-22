@@ -40,7 +40,7 @@ const actions = [
   "sonicRequestWithdrawal",
   "sonicClaimWithdrawals",
   "claimBribes",
-  "manageMaxRewardPerVote",
+  "manageBribes"
 ];
 
 module.exports = actions.map((action) => ({
