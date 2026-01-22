@@ -269,7 +269,8 @@ contract CurvePoolBooster is Initializable, Strategizable {
             emit FeeCollected(feeCollector, feeAmount);
         }
 
-        return amount - feeAmount;
+        // Fetch balance again to avoid rounding issues
+        return IERC20(rewardToken).balanceOf(address(this));
     }
 
     ////////////////////////////////////////////////////
