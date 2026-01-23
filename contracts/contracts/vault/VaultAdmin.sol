@@ -203,6 +203,17 @@ abstract contract VaultAdmin is VaultCore {
             IStrategy strategy = IStrategy(_addr);
             strategy.withdrawAll();
 
+            // 1e13 for 18 decimals. And 1e1(10) for 6 decimals
+            uint256 maxDustBalance = uint256(1e13).scaleBy(assetDecimals, 18);
+
+            /*
+             * Some strategies are not able to withdraw all of their funds in a synchronous call.
+             * Prevent the possible accidental removal of such strategies before their funds are withdrawn.
+             */
+            require(
+                strategy.checkBalance(asset) < maxDustBalance,
+                "Strategy has funds"
+            );
             emit StrategyRemoved(_addr);
         }
     }
