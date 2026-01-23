@@ -19,7 +19,7 @@ const {
   decryptMasterPrivateKey,
 } = require("./amazon");
 const { collect, setDripDuration } = require("./dripper");
-const { getSigner } = require("../utils/signers");
+const { getSigner, getDefenderSigner } = require("../utils/signers");
 const { snapMorpho } = require("../utils/morpho");
 const { snapAero } = require("./aero");
 const {
@@ -67,6 +67,7 @@ const {
   curveSwapTask,
   curvePoolTask,
 } = require("./curve");
+const { calculateMaxPricePerVoteTask, manageBribes } = require("./poolBooster");
 const {
   depositSSV,
   withdrawSSV,
@@ -700,6 +701,64 @@ subtask("curvePool", "Dumps the current state of a Curve pool")
   )
   .setAction(curvePoolTask);
 task("curvePool").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+// Pool Booster
+subtask(
+  "calculateMaxPricePerVote",
+  "Calculates the MaxPricePerVote for Curve Pool Booster"
+)
+  .addOptionalParam(
+    "efficiency",
+    "Target efficiency (0-10, e.g. 1 for 100%, 0.5 for 50%)",
+    "1",
+    types.string
+  )
+  .addOptionalParam(
+    "skip",
+    "Skip setting RewardPerVote (pass array of zeros)",
+    false,
+    types.boolean
+  )
+  .addOptionalParam(
+    "output",
+    "true will output to the console. false will use debug logs.",
+    true,
+    types.boolean
+  )
+  .setAction(calculateMaxPricePerVoteTask);
+task("calculateMaxPricePerVote").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+subtask(
+  "manageCurvePoolBoosterBribes",
+  "Calls manageBribes on the CurvePoolBoosterBribesModule and calculates the rewards per vote based on the target efficiency"
+)
+  .addOptionalParam(
+    "efficiency",
+    "Target efficiency (0-10, e.g. 1 for 100%, 0.5 for 50%)",
+    "1",
+    types.string
+  )
+  .addOptionalParam(
+    "skipRewardPerVote",
+    "Skip setting RewardPerVote (pass array of zeros)",
+    false,
+    types.boolean
+  )
+  .setAction(async (taskArgs) => {
+    // This action only works with the Defender Relayer signer
+    const signer = await getDefenderSigner();
+    await manageBribes({
+      signer,
+      provider: signer.provider,
+      targetEfficiency: taskArgs.efficiency,
+      skipRewardPerVote: taskArgs.skipRewardPerVote,
+    });
+  });
+task("manageCurvePoolBoosterBribes").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
 
