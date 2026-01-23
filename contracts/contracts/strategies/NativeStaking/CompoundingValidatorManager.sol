@@ -1018,7 +1018,7 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
     function verifyBalances(
         BalanceProofs calldata balanceProofs,
         PendingDepositProofs calldata pendingDepositProofs
-    ) external onlyRegistrator {
+    ) external {
         // Load previously snapped balances for the given block root
         Balances memory balancesMem = snappedBalance;
         // Check the balances are the latest

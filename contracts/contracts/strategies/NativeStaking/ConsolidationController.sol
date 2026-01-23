@@ -4,7 +4,10 @@ pragma solidity ^0.8.0;
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 
-import { CompoundingStakingSSVStrategy, CompoundingValidatorManager } from "./CompoundingStakingSSVStrategy.sol";
+import {
+    CompoundingStakingSSVStrategy,
+    CompoundingValidatorManager
+} from "./CompoundingStakingSSVStrategy.sol";
 import { ValidatorAccountant } from "./ValidatorAccountant.sol";
 import { Cluster } from "../../interfaces/ISSVNetwork.sol";
 
@@ -28,10 +31,6 @@ contract ConsolidationController is Ownable {
 
     /// @notice Number of validators being consolidated
     uint64 public consolidationCount;
-    /// @notice When the consolidation process started
-    uint64 public startTimestamp;
-    /// @notice The balance of the Compounding Staking Strategy at the start of consolidation
-    uint128 public startBalance;
     /// @notice The address of the source Native Staking Strategy being consolidated from
     address public sourceStrategy;
 
@@ -64,7 +63,7 @@ contract ConsolidationController is Ownable {
         bytes[] calldata sourcePubKeys,
         bytes calldata targetPubKey
     ) external onlyOwner {
-        // Check no consolidations are already in progress. ie consolidationCount > 0
+        // Check no consolidations are already in progress
         require(consolidationCount == 0, "Consolidation in progress");
         // Check sourceStrategy is a valid old Native Staking Strategy
         _checkSourceStrategy(_sourceStrategy);
@@ -85,7 +84,6 @@ contract ConsolidationController is Ownable {
 
         // Store the state at the start of the consolidation process
         consolidationCount = SafeCast.toUint64(sourcePubKeys.length);
-        startTimestamp = SafeCast.toUint64(block.timestamp);
         sourceStrategy = _sourceStrategy;
 
         // Snap the balances so the Compounding Staking Strategy balance at the
@@ -105,35 +103,14 @@ contract ConsolidationController is Ownable {
     /**
      * @notice Confirm the consolidation of validators from an old Native Staking Strategy
      * to the new Compounding Staking Strategy has been completed.
-     * This is done by verifying the Compounding Staking Strategy's balance has increased by
-     * the consolidationCount * 32 ETH.
-     * Since `verifyBalances` can't be called during the consolidation process, the balance proofs
-     * need to be provided here to update the strategy's balance.
-     * The tx will revert if the consolidation is not complete. This includes updating the strategy's balance.
-     * @param balanceProofs The validator balance merkle proofs
-     * @param pendingDepositProofs The pending deposit merkle proofs
      */
-    function confirmConsolidation(
-        CompoundingStakingSSVStrategy.BalanceProofs calldata balanceProofs,
-        CompoundingStakingSSVStrategy.PendingDepositProofs
-            calldata pendingDepositProofs
-    ) external onlyOwner {
-        // Update the Compounding Staking Strategy's balance by verifying the validator balances
-        targetStrategy.verifyBalances(balanceProofs, pendingDepositProofs);
-        // Get the updated balance of the Compounding Staking Strategy
-        uint128 currentBalance = SafeCast.toUint128(
-            targetStrategy.checkBalance(WETH)
-        );
-        // 32 ETH is used which assumes the source validators have not been slashed before or after the consolidation request.
-        require(
-            currentBalance >= startBalance + (consolidationCount * 32 ether),
-            "Consolidation not complete"
-        );
+    function confirmConsolidation() external onlyOwner {
+        // Check consolidations are in progress
+        require(consolidationCount > 0, "No consolidation in progress");
+        // TODO verify the Beacon chain's consolidation request queue is empty
 
         // Reset consolidation state
         consolidationCount = 0;
-        startTimestamp = 0;
-        startBalance = 0;
         sourceStrategy = address(0);
 
         ValidatorAccountant(sourceStrategy).confirmConsolidation(
@@ -150,11 +127,9 @@ contract ConsolidationController is Ownable {
      */
 
     /// @dev The registrator of the old Native Staking Strategy can call doAccounting
-    function doAccounting(address _sourceStrategy)
-        external
-        onlyRegistrator
-        returns (bool accountingValid)
-    {
+    function doAccounting(
+        address _sourceStrategy
+    ) external onlyRegistrator returns (bool accountingValid) {
         // Check sourceStrategy is a valid old Native Staking Strategy
         _checkSourceStrategy(_sourceStrategy);
 
@@ -218,33 +193,16 @@ contract ConsolidationController is Ownable {
      */
 
     /// @notice Can only call snapBalances on the new Compounding Staking Strategy
-    /// if no there are consolidations in progress or the consolidation starting balance has already been stored
+    /// if there are no consolidations in progress
     function snapBalances() external {
-        if (consolidationCount == 0 || startBalance > 0) {
-            targetStrategy.snapBalances();
-        }
-    }
-
-    function verifyBalances(
-        CompoundingStakingSSVStrategy.BalanceProofs calldata balanceProofs,
-        CompoundingStakingSSVStrategy.PendingDepositProofs
-            calldata pendingDepositProofs
-    ) external {
-        // Consolidation is in progress and the starting balance has already been stored.
-        if (consolidationCount > 0 && startBalance > 0) {
-            // Can not update the strategy's balance until after the consolidation has been completed.
-            // Call confirmConsolidation with the balance proofs if the consolidation is complete.
+        if (consolidationCount > 0) {
             revert("Consolidation in progress");
         }
 
-        targetStrategy.verifyBalances(balanceProofs, pendingDepositProofs);
-
-        // If no consolidation is in progress, there is nothing more to do
-        if (consolidationCount == 0) return;
-
-        // startBalance is zero so store the strategy balance at the start of consolidation
-        startBalance = SafeCast.toUint128(targetStrategy.checkBalance(WETH));
+        targetStrategy.snapBalances();
     }
+
+    // TODO add validatorWithdrawal but only allow partial withdrawals. No exits with amount 0
 
     // removeSsvValidator and validatorWithdrawal on the new Compounding Staking Strategy are prevented during migration
     // between staking strategies. If the OETH Vault needs WETH, it can exit from the old sweeping validators.
@@ -264,11 +222,9 @@ contract ConsolidationController is Ownable {
 
     /// @notice Check if there are any pending deposits for a validator with a given public key hash.
     /// Need to iterate over the target strategy’s `deposits`
-    function _hasPendingDeposit(bytes32 targetPubKeyHash)
-        internal
-        view
-        returns (bool)
-    {
+    function _hasPendingDeposit(
+        bytes32 targetPubKeyHash
+    ) internal view returns (bool) {
         uint256 depositsCount = targetStrategy.depositListLength();
         for (uint256 i = 0; i < depositsCount; ++i) {
             (
