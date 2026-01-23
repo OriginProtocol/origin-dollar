@@ -2,7 +2,7 @@ const { formatUnits, parseUnits } = require("ethers/lib/utils");
 const { Contract } = require("ethers");
 
 const addresses = require("../utils/addresses");
-
+const { logTxDetails } = require("../utils/txLogger");
 const log = require("../utils/logger")("task:poolBooster");
 
 // Contract addresses
@@ -81,7 +81,11 @@ async function getOUSDPriceInUSD(provider) {
  * Pool composition: 0 = crvUSD, 1 = ETH, 2 = CRV
  */
 async function getCRVPriceInUSD(provider) {
-  const pool = new Contract(CRV_USD_ETH_CRV_POOL, curvePoolUint256Abi, provider);
+  const pool = new Contract(
+    CRV_USD_ETH_CRV_POOL,
+    curvePoolUint256Abi,
+    provider
+  );
   return await pool["get_dy(uint256,uint256,uint256)"](
     2, // from CRV
     0, // to crvUSD
@@ -94,7 +98,11 @@ async function getCRVPriceInUSD(provider) {
  * Pool composition: 0 = crvUSD, 1 = ETH, 2 = CRV
  */
 async function getETHPriceInUSD(provider) {
-  const pool = new Contract(CRV_USD_ETH_CRV_POOL, curvePoolUint256Abi, provider);
+  const pool = new Contract(
+    CRV_USD_ETH_CRV_POOL,
+    curvePoolUint256Abi,
+    provider
+  );
   return await pool["get_dy(uint256,uint256,uint256)"](
     1, // from ETH
     0, // to crvUSD
@@ -177,7 +185,12 @@ function calculateMaxPricePerVote(
 /**
  * Get the price of a reward token in USD
  */
-async function getRewardTokenPrice(rewardToken, provider, ethPriceInUsd, output) {
+async function getRewardTokenPrice(
+  rewardToken,
+  provider,
+  ethPriceInUsd,
+  output
+) {
   const rewardTokenLower = rewardToken.toLowerCase().trim();
   const oethLower = OETH.toLowerCase().trim();
   const ousdLower = OUSD.toLowerCase().trim();
@@ -234,7 +247,9 @@ async function calculateRewardsPerVote(provider, options = {}) {
     const rewardsPerVote = pools.map(() => parseUnits("0"));
     pools.forEach((pool, i) => output(`  Pool ${i + 1}: ${pool}`));
     output(`\n=== SUMMARY ===`);
-    output(`Rewards per vote array: [${rewardsPerVote.map(() => "0").join(", ")}]`);
+    output(
+      `Rewards per vote array: [${rewardsPerVote.map(() => "0").join(", ")}]`
+    );
     output(`(RewardPerVote will be skipped for all pools)\n`);
     return { pools, rewardsPerVote };
   }
@@ -249,10 +264,8 @@ async function calculateRewardsPerVote(provider, options = {}) {
 
   // Fetch emission data
   output(`--- Fetching emission data ---`);
-  const { totalWeight, emissionPerWeek, crvPriceInUsd } = await fetchEmissionData(
-    provider,
-    output
-  );
+  const { totalWeight, emissionPerWeek, crvPriceInUsd } =
+    await fetchEmissionData(provider, output);
   const emissionValuePerVote = calculateEmissionValuePerVote(
     emissionPerWeek,
     crvPriceInUsd,
@@ -287,7 +300,9 @@ async function calculateRewardsPerVote(provider, options = {}) {
       );
 
       output(`  Reward Token: ${symbol} (${rewardToken})`);
-      output(`  Max Price Per Vote: ${formatUnits(maxPricePerVote, 18)} ${symbol}`);
+      output(
+        `  Max Price Per Vote: ${formatUnits(maxPricePerVote, 18)} ${symbol}`
+      );
 
       rewardsPerVote.push(maxPricePerVote);
     } catch (error) {
@@ -325,12 +340,67 @@ async function calculateMaxPricePerVoteTask(taskArguments) {
   return rewardsPerVote;
 }
 
+/**
+ * Calls manageBribes on the pool booster bribes module which extends the active Vote Marke campaigns
+ * and overrides the max reward per vote for each pool booster according to the target efficiency
+ */
+async function manageBribes({
+  provider,
+  signer,
+  targetEfficiency,
+  skipRewardPerVote,
+}) {
+  const { chainId } = await provider.getNetwork();
+  if (chainId !== 1) {
+    throw new Error(
+      `Action should only be run on mainnet, not on network with chainId ${chainId}`
+    );
+  }
+
+  const bribesModuleContract = new ethers.Contract(
+    BRIBES_MODULE,
+    // old pool booster bribes module
+    //"0x12856b1944a6a8c86c61D0F8B6e44C37726e86D7",
+    bribesModuleAbi,
+    signer
+  );
+
+  const { rewardsPerVote } = await calculateRewardsPerVote(provider, {
+    targetEfficiency,
+    skipRewardPerVote,
+    log,
+  });
+
+  if (rewardsPerVote.length === 0) {
+    log("No pools registered in BribesModule, nothing to do");
+    return;
+  }
+
+  // Call manageBribes on the SafeModule
+  log(`\n--- Calling manageBribes on BribesModule ---`);
+  log(
+    `Rewards per vote: [${rewardsPerVote
+      .map((r) => formatUnits(r, 18))
+      .join(", ")}]`
+  );
+
+  const tx = await bribesModuleContract.manageBribes(rewardsPerVote);
+  const receipt = await logTxDetails(tx, "manageBribes");
+
+  // Final verification
+  if (receipt.status === 1) {
+    log("SUCCESS: Transaction executed successfully!");
+  } else {
+    log("FAILURE: Transaction reverted!");
+    throw new Error(`Transaction reverted - status: ${receipt.status}`);
+  }
+}
+
 module.exports = {
   // Hardhat task
   calculateMaxPricePerVoteTask,
   // Shared function for defender action
   calculateRewardsPerVote,
-  // Constants for defender action
-  BRIBES_MODULE,
-  bribesModuleAbi,
+  // manage bribes action on the pool booster bribes module
+  manageBribes,
 };

@@ -370,7 +370,7 @@ pnpm hardhat updateAction --id f92ea662-fc34-433b-8beb-b34e9ab74685 --file sonic
 pnpm hardhat updateAction --id b1d831f1-29d4-4943-bb2e-8e625b76e82c --file claimBribes
 pnpm hardhat updateAction --id 6567d7c6-7ec7-44bd-b95b-470dd1ff780b --file manageBribeOnSonic
 pnpm hardhat updateAction --id 6a633bb0-aff8-4b37-aaae-b4c6f244ed87 --file managePassThrough
-pnpm hardhat updateAction --id 076c59e4-4150-42c7-9ba0-9962069ac353 --file manageMaxRewardPerVote
+pnpm hardhat updateAction --id 076c59e4-4150-42c7-9ba0-9962069ac353 --file manageBribes 
 ```
 
 `rollup` can be installed globally to avoid the `npx` prefix.
