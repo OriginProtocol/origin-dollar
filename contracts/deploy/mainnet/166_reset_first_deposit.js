@@ -4,6 +4,7 @@ module.exports = deploymentWithGovernanceProposal(
   {
     deployName: "166_reset_first_deposit",
     forceDeploy: false,
+    // forceSkip: true,
     reduceQueueTime: true,
     deployerIsProposer: false,
     proposalId: "",
