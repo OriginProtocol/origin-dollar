@@ -1,15 +1,15 @@
 const { expect } = require("chai");
 const { parseUnits } = require("ethers/lib/utils");
-const { impersonateAndFund } = require("../../utils/signers.js");
-const { encodeSaltForCreateX } = require("../../utils/deploy");
+const { impersonateAndFund } = require("../../../utils/signers.js");
+const { encodeSaltForCreateX } = require("../../../utils/deploy");
 
-const addresses = require("../../utils/addresses");
-const { isCI } = require("../helpers");
+const addresses = require("../../../utils/addresses");
+const { isCI } = require("../../helpers");
 
 const {
   createFixtureLoader,
   poolBoosterCodeUpdatedFixture,
-} = require("../_fixture");
+} = require("../../_fixture");
 const loadFixture = createFixtureLoader(poolBoosterCodeUpdatedFixture);
 
 describe("ForkTest: CurvePoolBooster", function () {

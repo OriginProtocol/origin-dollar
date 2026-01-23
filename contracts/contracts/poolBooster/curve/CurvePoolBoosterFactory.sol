@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import { ICreateX } from "../interfaces/ICreateX.sol";
-import { Initializable } from "../utils/Initializable.sol";
-import { Strategizable } from "../governance/Strategizable.sol";
+import { ICreateX } from "../../interfaces/ICreateX.sol";
+import { Initializable } from "../../utils/Initializable.sol";
+import { Strategizable } from "../../governance/Strategizable.sol";
 import { CurvePoolBoosterPlain } from "./CurvePoolBoosterPlain.sol";
-import { IPoolBoostCentralRegistry } from "../interfaces/poolBooster/IPoolBoostCentralRegistry.sol";
+import { IPoolBoostCentralRegistry } from "../../interfaces/poolBooster/IPoolBoostCentralRegistry.sol";
 
 /// @title CurvePoolBoosterFactory
 /// @author Origin Protocol

@@ -4,7 +4,7 @@ const {
   encodeSaltForCreateX,
 } = require("../../utils/deploy");
 const createxAbi = require("../../abi/createx.json");
-const PoolBoosterBytecode = require("../../artifacts/contracts/poolBooster/CurvePoolBooster.sol/CurvePoolBooster.json");
+const PoolBoosterBytecode = require("../../artifacts/contracts/poolBooster/curve/CurvePoolBooster.sol/CurvePoolBooster.json");
 const ProxyBytecode = require("../../artifacts/contracts/proxies/Proxies.sol/CurvePoolBoosterProxy.json");
 
 module.exports = deploymentWithGovernanceProposal(
