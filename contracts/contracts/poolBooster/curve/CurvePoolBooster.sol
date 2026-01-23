@@ -3,9 +3,9 @@ pragma solidity ^0.8.0;
 
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import { Initializable } from "../utils/Initializable.sol";
-import { Strategizable } from "../governance/Strategizable.sol";
-import { ICampaignRemoteManager } from "../interfaces/ICampaignRemoteManager.sol";
+import { Initializable } from "../../utils/Initializable.sol";
+import { Strategizable } from "../../governance/Strategizable.sol";
+import { ICampaignRemoteManager } from "../../interfaces/ICampaignRemoteManager.sol";
 
 /// @title CurvePoolBooster
 /// @author Origin Protocol
@@ -253,7 +253,7 @@ contract CurvePoolBooster is Initializable, Strategizable {
     /// @return Balance after fee
     function _handleFee() internal returns (uint256) {
         uint256 balance = IERC20(rewardToken).balanceOf(address(this));
-        
+
         // This is not a problem if balance is 0, feeAmount will be 0 as well
         // We don't want to make the whole function revert just because of that.
         return _handleFee(balance);

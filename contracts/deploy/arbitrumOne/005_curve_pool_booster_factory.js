@@ -1,7 +1,5 @@
 const addresses = require("../../utils/addresses");
 const { deployOnArb } = require("../../utils/deploy-l2");
-const { isFork } = require("../../test/helpers");
-const { impersonateAndFund } = require("../../utils/signers");
 const { encodeSaltForCreateX } = require("../../utils/deploy");
 
 const createxAbi = require("../../abi/createx.json");
@@ -52,76 +50,13 @@ module.exports = deployOnArb(
 
     await cCurvePoolBoosterFactory.initialize(
       addresses.arbitrumOne.admin,
-      addresses.multichainStrategist
+      addresses.multichainStrategist,
+      addresses.zero
     );
 
     console.log(
       `Pool Booster Factory deployed to ${cCurvePoolBoosterFactory.address}`
     );
-
-    // ---------------------------------------------------------------------------------------------------------
-    // ---
-    // --- Deploy CurvePoolBoosterInstance
-    // ---
-    // ---------------------------------------------------------------------------------------------------------
-
-    // the most important part is the salt, it ensures that the contract is deployed at the same address
-    // on the mainnet as well as arbitrum. If the same reward token and gauge require a new pool booster
-    // the version should be incremented
-    const salt = 3;
-
-    // The way salt is encoded it specifies for CreateX if there should be cross chain protection or not.
-    // We don't want chross chain protection, as we want to deploy the pool booster instance on the same address.
-    // The factory address is used to guard the salt, so that no other address can front-run our deployment.
-    const encodedSalt = encodeSaltForCreateX(
-      cCurvePoolBoosterFactory.address,
-      false,
-      salt
-    );
-
-    const poolBoosterPlainAddress =
-      await cCurvePoolBoosterFactory.computePoolBoosterAddress(
-        addresses.mainnet.OETHProxy,
-        addresses.mainnet.CurveOETHETHplusGauge,
-        encodedSalt
-      );
-
-    console.log(
-      `OETH/ETH+ Pool Booster Plain address: ${poolBoosterPlainAddress}`
-    );
-
-    if (isFork) {
-      console.log("Simulating creation of OETH/ETH+ Pool Booster on fork");
-      const sAdmin = await impersonateAndFund(addresses.arbitrumOne.admin);
-
-      await cCurvePoolBoosterFactory
-        .connect(sAdmin)
-        .createCurvePoolBoosterPlain(
-          addresses.mainnet.OETHProxy, // reward token
-          addresses.mainnet.CurveOETHETHplusGauge, // gauge
-          addresses.multichainStrategist, // fee collector
-          0, // fee
-          addresses.mainnet.CampaignRemoteManager, // campaign remote manager
-          addresses.votemarket, // votemarket
-          encodedSalt,
-          poolBoosterPlainAddress // expected address
-        );
-    } else {
-      console.log(
-        "Call createCurvePoolBoosterPlain on Pool Booster Factory with parameters:"
-      );
-      console.log("Reward token:", addresses.mainnet.OETHProxy);
-      console.log("Gauge:", addresses.mainnet.CurveOETHETHplusGauge);
-      console.log("Fee collector:", addresses.multichainStrategist);
-      console.log("Fee:", 0);
-      console.log(
-        "Campaign remote manager:",
-        addresses.mainnet.CampaignRemoteManager
-      );
-      console.log("Votemarket:", addresses.votemarket);
-      console.log("Salt:", salt);
-      console.log("Expected address:", poolBoosterPlainAddress);
-    }
   }
 );
 

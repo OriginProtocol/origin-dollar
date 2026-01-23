@@ -21,7 +21,9 @@ interface IPoolBoostCentralRegistry {
         // Supports bribing a single contract per pool. Appropriate for Metropolis pools
         MetropolisBooster,
         // Supports creating a Merkl campaign.
-        MerklBooster
+        MerklBooster,
+        // Supports creating a plain Curve pool booster
+        CurvePoolBoosterPlain
     }
 
     struct PoolBoosterEntry {
