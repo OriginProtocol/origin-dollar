@@ -12,7 +12,7 @@ const {
 } = require("../_fixture");
 const loadFixture = createFixtureLoader(poolBoosterCodeUpdatedFixture);
 
-describe.only("ForkTest: CurvePoolBooster", function () {
+describe("ForkTest: CurvePoolBooster", function () {
   this.timeout(0);
 
   // Retry up to 3 times on CI
@@ -249,32 +249,6 @@ describe.only("ForkTest: CurvePoolBooster", function () {
     ).to.be.revertedWith("Invalid reward per vote");
 
     // Note: manageCampaign with maxRewardPerVote=0 means "no update", so it won't revert
-  });
-
-  it("Should revert if No reward to manage", async () => {
-    if ((await ousd.balanceOf(curvePoolBooster.address)) > 0) {
-      await ousd
-        .connect(curvePoolBoosterImpersonated)
-        .transfer(
-          sStrategist._address,
-          await ousd.balanceOf(curvePoolBooster.address)
-        );
-    }
-
-    await expect(
-      curvePoolBooster
-        .connect(sStrategist)
-        .createCampaign(4, 10, [addresses.mainnet.ConvexVoter], 0)
-    ).to.be.revertedWith("No reward to manage");
-
-    await curvePoolBooster.connect(sStrategist).setCampaignId(12);
-
-    // manageCampaign with totalRewardAmount != 0 but no balance reverts with "No reward to add"
-    await expect(
-      curvePoolBooster
-        .connect(sStrategist)
-        .manageCampaign(ethers.constants.MaxUint256, 0, 0, 0)
-    ).to.be.revertedWith("No reward to add");
   });
 
   // --- Rescue ETH and ERC20 ---

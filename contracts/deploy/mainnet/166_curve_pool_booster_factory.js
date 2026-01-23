@@ -3,8 +3,6 @@ const {
   deploymentWithGovernanceProposal,
   encodeSaltForCreateX,
 } = require("../../utils/deploy");
-const { impersonateAndFund } = require("../../utils/signers");
-const { isFork } = require("../../test/helpers");
 
 const createxAbi = require("../../abi/createx.json");
 
@@ -16,11 +14,36 @@ module.exports = deploymentWithGovernanceProposal(
     deployerIsProposer: false,
     proposalId: "",
   },
-  async ({ withConfirmation }) => {
+  async ({ deployWithConfirmation, withConfirmation }) => {
     const { deployerAddr } = await getNamedAccounts();
     const sDeployer = await ethers.provider.getSigner(deployerAddr);
     const cCreateX = await ethers.getContractAt(createxAbi, addresses.createX);
     console.log(`Deployer address: ${deployerAddr}`);
+    // ---------------------------------------------------------------------------------------------------------
+    // ---
+    // --- Upgrade PoolBoostCentralRegistry
+    // ---
+    // ---------------------------------------------------------------------------------------------------------
+    // Fetch current PoolBoostCentralRegistryProxy
+    const cPoolBoostCentralRegistryProxy = await ethers.getContract(
+      "PoolBoostCentralRegistryProxy"
+    );
+
+    // Deploy new PoolBoostCentralRegistry implementation
+    const dPoolBoostCentralRegistry = await deployWithConfirmation(
+      "PoolBoostCentralRegistry",
+      []
+    );
+
+    const cPoolBoostCentralRegistry = await ethers.getContractAt(
+      "PoolBoostCentralRegistry",
+      cPoolBoostCentralRegistryProxy.address
+    );
+
+    console.log(
+      `Deployed Pool Boost Central Registry implementation to ${dPoolBoostCentralRegistry.address}`
+    );
+
     // ---------------------------------------------------------------------------------------------------------
     // ---
     // --- Deploy CurvePoolBoosterFactory
@@ -53,76 +76,30 @@ module.exports = deploymentWithGovernanceProposal(
 
     await cCurvePoolBoosterFactory.initialize(
       addresses.mainnet.Timelock,
-      addresses.multichainStrategist
+      addresses.multichainStrategist,
+      cPoolBoostCentralRegistry.address
     );
 
     console.log(
       `Pool Booster Factory deployed to ${cCurvePoolBoosterFactory.address}`
     );
 
-    // ---------------------------------------------------------------------------------------------------------
-    // ---
-    // --- Deploy CurvePoolBoosterInstance
-    // ---
-    // ---------------------------------------------------------------------------------------------------------
-
-    // the most important part is the salt, it ensures that the contract is deployed at the same address
-    // on the mainnet as well as arbitrum. If the same reward token and gauge require a new pool booster
-    // the version should be incremented
-    const salt = 3;
-
-    // The way salt is encoded it specifies for CreateX if there should be cross chain protection or not.
-    // We don't want chross chain protection, as we want to deploy the pool booster instance on the same address.
-    // The factory address is used to guard the salt, so that no other address can front-run our deployment.
-    const encodedSalt = encodeSaltForCreateX(
-      cCurvePoolBoosterFactory.address,
-      false,
-      salt
-    );
-
-    const poolBoosterPlainAddress =
-      await cCurvePoolBoosterFactory.computePoolBoosterAddress(
-        addresses.mainnet.OETHProxy,
-        addresses.mainnet.CurveOETHETHplusGauge,
-        encodedSalt
-      );
-
-    console.log(
-      `OETH/ETH+ Pool Booster Plain address: ${poolBoosterPlainAddress}`
-    );
-
-    if (isFork) {
-      console.log("Simulating creation of OETH/ETH+ Pool Booster on fork");
-      const sAdmin = await impersonateAndFund(addresses.multichainStrategist);
-
-      await cCurvePoolBoosterFactory
-        .connect(sAdmin)
-        .createCurvePoolBoosterPlain(
-          addresses.mainnet.OETHProxy, // reward token
-          addresses.mainnet.CurveOETHETHplusGauge, // gauge
-          addresses.multichainStrategist, // fee collector
-          0, // fee
-          addresses.mainnet.CampaignRemoteManager, // campaign remote manager
-          addresses.votemarket, // votemarket
-          encodedSalt,
-          poolBoosterPlainAddress // expected address
-        );
-    } else {
-      console.log(
-        "Call createCurvePoolBoosterPlain on Pool Booster Factory with parameters:"
-      );
-      console.log("Reward token:", addresses.mainnet.OETHProxy);
-      console.log("Gauge:", addresses.mainnet.CurveOETHETHplusGauge);
-      console.log("Fee collector:", addresses.multichainStrategist);
-      console.log("Fee:", 0);
-      console.log(
-        "Campaign remote manager:",
-        addresses.mainnet.CampaignRemoteManager
-      );
-      console.log("Votemarket:", addresses.votemarket);
-      console.log("Salt:", salt);
-      console.log("Expected address:", poolBoosterPlainAddress);
-    }
+    return {
+      name: "Upgrade PoolBoosterCentralRegistry to support CurvePoolBoosterFactory",
+      actions: [
+        {
+          contract: cPoolBoostCentralRegistryProxy,
+          signature: "upgradeTo(address)",
+          args: [dPoolBoostCentralRegistry.address],
+        },
+        {
+          // set the factory as an approved one
+          contract: cPoolBoostCentralRegistry,
+          signature: "approveFactory(address)",
+          args: [cCurvePoolBoosterFactory.address],
+        },
+      ],
+    };
   }
 );
 
