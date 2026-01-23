@@ -4,10 +4,7 @@ pragma solidity ^0.8.0;
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 
-import {
-    CompoundingStakingSSVStrategy,
-    CompoundingValidatorManager
-} from "./CompoundingStakingSSVStrategy.sol";
+import { CompoundingStakingSSVStrategy, CompoundingValidatorManager } from "./CompoundingStakingSSVStrategy.sol";
 import { ValidatorAccountant } from "./ValidatorAccountant.sol";
 import { Cluster } from "../../interfaces/ISSVNetwork.sol";
 
@@ -127,9 +124,11 @@ contract ConsolidationController is Ownable {
      */
 
     /// @dev The registrator of the old Native Staking Strategy can call doAccounting
-    function doAccounting(
-        address _sourceStrategy
-    ) external onlyRegistrator returns (bool accountingValid) {
+    function doAccounting(address _sourceStrategy)
+        external
+        onlyRegistrator
+        returns (bool accountingValid)
+    {
         // Check sourceStrategy is a valid old Native Staking Strategy
         _checkSourceStrategy(_sourceStrategy);
 
@@ -202,17 +201,24 @@ contract ConsolidationController is Ownable {
         targetStrategy.snapBalances();
     }
 
-    // TODO add validatorWithdrawal but only allow partial withdrawals. No exits with amount 0
+    /// @notice Partial withdrawals are allowed during consolidation from the new Compounding Staking Strategy
+    function validatorWithdrawal(bytes calldata publicKey, uint64 amountGwei)
+        external
+        payable
+        onlyRegistrator
+    {
+        // Prevent full exits from any new compounding validators.
+        // This includes when there is no consolidation in progress.
+        // This reduces the risk of an exit request being processed before a consolidation request
+        require(amountGwei > 0, "No exit during migration");
+        targetStrategy.validatorWithdrawal{ value: msg.value }(
+            publicKey,
+            amountGwei
+        );
+    }
 
-    // removeSsvValidator and validatorWithdrawal on the new Compounding Staking Strategy are prevented during migration
-    // between staking strategies. If the OETH Vault needs WETH, it can exit from the old sweeping validators.
-    // Once the migration has been completed, the old Registrator will be set on the Compounding Staking Strategy
-    // which will allow full and partial withdrawals from the new compounding validators.
-    // If there is a large withdrawal request at the end of the migration and there is not enough liquidity in the
-    // old sweeping validators, the withdrawal will have to wait until the consolidation is complete and Registrator restored.
-    // The danger of allowing partial withdrawals during migration is it will mess with the check that a consolidation as been completed.
-    // Putting a restriction that there no consolidation in process helps a little, but there could be an exit just before a new consolidation
-    // is initiated which would mess with the checks.
+    /// removeSsvValidator from the new Compounding Staking Strategy is not allowed until after
+    /// all the validators have been consolidated
 
     /**
      *
@@ -222,9 +228,11 @@ contract ConsolidationController is Ownable {
 
     /// @notice Check if there are any pending deposits for a validator with a given public key hash.
     /// Need to iterate over the target strategy’s `deposits`
-    function _hasPendingDeposit(
-        bytes32 targetPubKeyHash
-    ) internal view returns (bool) {
+    function _hasPendingDeposit(bytes32 targetPubKeyHash)
+        internal
+        view
+        returns (bool)
+    {
         uint256 depositsCount = targetStrategy.depositListLength();
         for (uint256 i = 0; i < depositsCount; ++i) {
             (
