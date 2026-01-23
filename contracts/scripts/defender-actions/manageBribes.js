@@ -2,9 +2,7 @@ const { ethers } = require("ethers");
 const { Defender } = require("@openzeppelin/defender-sdk");
 const { formatUnits } = require("ethers/lib/utils");
 
-const {
-  manageBribes
-} = require("../../tasks/poolBooster");
+const { manageBribes } = require("../../tasks/poolBooster");
 
 const log = require("../../utils/logger")("action:manageBribes");
 
@@ -26,7 +24,9 @@ const handler = async (event) => {
   const skipRewardPerVote = event.request?.body?.skipRewardPerVote ?? false;
   const targetEfficiency = event.request?.body?.targetEfficiency ?? 1;
 
-  log(`Managing max reward per vote with target efficiency ${targetEfficiency} and skip reward per vote ${skipRewardPerVote}`);
+  log(
+    `Managing max reward per vote with target efficiency ${targetEfficiency} and skip reward per vote ${skipRewardPerVote}`
+  );
   await manageBribes({ provider, signer, targetEfficiency, skipRewardPerVote });
 };
 
