@@ -3,7 +3,7 @@ const { deploymentWithGovernanceProposal } = require("../../utils/deploy");
 
 module.exports = deploymentWithGovernanceProposal(
   {
-    deployName: "167_claim_CVX",
+    deployName: "169_claim_CVX",
     forceDeploy: false,
     // forceSkip: true,
     reduceQueueTime: true,
