@@ -221,3 +221,35 @@ def main():
     print("OETHb supply change", "{:.6f}".format(supply_change / 10**18), supply_change)
     print("Vault Change", "{:.6f}".format(vault_change / 10**18), vault_change)
     print("-----")
+
+# -------------------------------------------
+# Jan 14 2026 - Add 300 SSV to second Native Staking SSV Cluster
+# -------------------------------------------
+
+from world import *
+
+def main():
+  with TemporaryForkForReallocations() as txs:
+    amount = 300 * 10**18
+    txs.append(
+      ssv.transfer(
+        OETH_NATIVE_STAKING_2_STRAT, 
+        amount,
+        {'from': STRATEGIST}
+      )
+    )
+
+    # use the following command to get cluster info:
+    # pnpm hardhat getClusterInfo --operatorids 752,753,754,755 --network mainnet --owner 0x4685dB8bF2Df743c861d71E6cFb5347222992076
+
+    txs.append(
+      native_staking_2_strat.depositSSV(
+        # SSV Operator Ids
+        [752, 753, 754, 755], 
+        amount,
+        # SSV Cluster details:
+        # validatorCount, networkFeeIndex, index, active, balance
+        [492, 388682207390, 9585132, True, 271120049392422776597],
+        {'from': STRATEGIST}
+      )
+    )

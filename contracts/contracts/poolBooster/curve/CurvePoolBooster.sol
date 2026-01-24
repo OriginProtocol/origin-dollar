@@ -3,9 +3,9 @@ pragma solidity ^0.8.0;
 
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import { Initializable } from "../utils/Initializable.sol";
-import { Strategizable } from "../governance/Strategizable.sol";
-import { ICampaignRemoteManager } from "../interfaces/ICampaignRemoteManager.sol";
+import { Initializable } from "../../utils/Initializable.sol";
+import { Strategizable } from "../../governance/Strategizable.sol";
+import { ICampaignRemoteManager } from "../../interfaces/ICampaignRemoteManager.sol";
 
 /// @title CurvePoolBooster
 /// @author Origin Protocol
@@ -102,18 +102,17 @@ contract CurvePoolBooster is Initializable, Strategizable {
     ////////////////////////////////////////////////////
     /// @notice Create a new campaign on VotemarketV2
     /// @dev This will use all token available in this contract
+    /// @dev Caller must send ETH to pay for the bridge fee
     /// @param numberOfPeriods Duration of the campaign in weeks
     /// @param maxRewardPerVote Maximum reward per vote to distribute, to avoid overspending
     /// @param blacklist  List of addresses to exclude from the campaign
-    /// @param bridgeFee Fee to pay for the bridge
     /// @param additionalGasLimit Additional gas limit for the bridge
     function createCampaign(
         uint8 numberOfPeriods,
         uint256 maxRewardPerVote,
         address[] calldata blacklist,
-        uint256 bridgeFee,
         uint256 additionalGasLimit
-    ) external nonReentrant onlyGovernorOrStrategist {
+    ) external payable nonReentrant onlyGovernorOrStrategist {
         require(campaignId == 0, "Campaign already created");
         require(numberOfPeriods > 1, "Invalid number of periods");
         require(maxRewardPerVote > 0, "Invalid reward per vote");
@@ -127,7 +126,7 @@ contract CurvePoolBooster is Initializable, Strategizable {
 
         // Create a new campaign
         ICampaignRemoteManager(campaignRemoteManager).createCampaign{
-            value: bridgeFee
+            value: msg.value
         }(
             ICampaignRemoteManager.CampaignCreationParams({
                 chainId: targetChainId,
@@ -154,121 +153,87 @@ contract CurvePoolBooster is Initializable, Strategizable {
         );
     }
 
-    /// @notice Manage the total reward amount of the campaign
+    /// @notice Manage campaign parameters in a single call
     /// @dev This function should be called after the campaign is created
-    /// @dev This will use all the token available in this contract
-    /// @param bridgeFee Fee to pay for the bridge
+    /// @dev Caller must send ETH to pay for the bridge fee
+    /// @param totalRewardAmount Amount of reward tokens to add:
+    ///        - 0: no update
+    ///        - type(uint256).max: use all tokens in contract
+    ///        - other: use specific amount
+    /// @param numberOfPeriods Number of additional periods (0 = no update)
+    /// @param maxRewardPerVote New maximum reward per vote (0 = no update)
     /// @param additionalGasLimit Additional gas limit for the bridge
-    function manageTotalRewardAmount(
-        uint256 bridgeFee,
+    function manageCampaign(
+        uint256 totalRewardAmount,
+        uint8 numberOfPeriods,
+        uint256 maxRewardPerVote,
         uint256 additionalGasLimit
-    ) external nonReentrant onlyGovernorOrStrategist {
+    ) external payable nonReentrant onlyGovernorOrStrategist {
         require(campaignId != 0, "Campaign not created");
 
-        // Handle fee (if any)
-        uint256 balanceSubFee = _handleFee();
+        uint256 rewardAmount;
 
-        // Approve the total reward amount to the campaign manager
-        IERC20(rewardToken).safeApprove(campaignRemoteManager, 0);
-        IERC20(rewardToken).safeApprove(campaignRemoteManager, balanceSubFee);
+        if (totalRewardAmount != 0) {
+            uint256 amount = min(
+                IERC20(rewardToken).balanceOf(address(this)),
+                totalRewardAmount
+            );
 
-        // Manage the campaign
-        // https://github.com/stake-dao/votemarket-v2/blob/main/packages/votemarket/src/Votemarket.sol#L668
+            // Handle fee
+            rewardAmount = _handleFee(amount);
+            require(rewardAmount > 0, "No reward to add");
+
+            // Approve the reward amount to the campaign manager
+            IERC20(rewardToken).safeApprove(campaignRemoteManager, 0);
+            IERC20(rewardToken).safeApprove(
+                campaignRemoteManager,
+                rewardAmount
+            );
+        }
+
+        // Call remote manager
         ICampaignRemoteManager(campaignRemoteManager).manageCampaign{
-            value: bridgeFee
+            value: msg.value
         }(
             ICampaignRemoteManager.CampaignManagementParams({
                 campaignId: campaignId,
                 rewardToken: rewardToken,
-                numberOfPeriods: 0,
-                totalRewardAmount: balanceSubFee,
-                maxRewardPerVote: 0
+                numberOfPeriods: numberOfPeriods,
+                totalRewardAmount: rewardAmount,
+                maxRewardPerVote: maxRewardPerVote
             }),
             targetChainId,
             additionalGasLimit,
             votemarket
         );
 
-        emit TotalRewardAmountUpdated(balanceSubFee);
-    }
-
-    /// @notice Manage the number of periods of the campaign
-    /// @dev This function should be called after the campaign is created
-    /// @param extraNumberOfPeriods Number of additional periods (cannot be 0)
-    ///         that will be added to already existing amount of periods.
-    /// @param bridgeFee Fee to pay for the bridge
-    /// @param additionalGasLimit Additional gas limit for the bridge
-    function manageNumberOfPeriods(
-        uint8 extraNumberOfPeriods,
-        uint256 bridgeFee,
-        uint256 additionalGasLimit
-    ) external nonReentrant onlyGovernorOrStrategist {
-        require(campaignId != 0, "Campaign not created");
-        require(extraNumberOfPeriods > 0, "Invalid number of periods");
-
-        // Manage the campaign
-        ICampaignRemoteManager(campaignRemoteManager).manageCampaign{
-            value: bridgeFee
-        }(
-            ICampaignRemoteManager.CampaignManagementParams({
-                campaignId: campaignId,
-                rewardToken: rewardToken,
-                numberOfPeriods: extraNumberOfPeriods,
-                totalRewardAmount: 0,
-                maxRewardPerVote: 0
-            }),
-            targetChainId,
-            additionalGasLimit,
-            votemarket
-        );
-
-        emit NumberOfPeriodsUpdated(extraNumberOfPeriods);
-    }
-
-    /// @notice Manage the reward per vote of the campaign
-    /// @dev This function should be called after the campaign is created
-    /// @param newMaxRewardPerVote New maximum reward per vote
-    /// @param bridgeFee Fee to pay for the bridge
-    /// @param additionalGasLimit Additional gas limit for the bridge
-    function manageRewardPerVote(
-        uint256 newMaxRewardPerVote,
-        uint256 bridgeFee,
-        uint256 additionalGasLimit
-    ) external nonReentrant onlyGovernorOrStrategist {
-        require(campaignId != 0, "Campaign not created");
-        require(newMaxRewardPerVote > 0, "Invalid reward per vote");
-
-        // Manage the campaign
-        ICampaignRemoteManager(campaignRemoteManager).manageCampaign{
-            value: bridgeFee
-        }(
-            ICampaignRemoteManager.CampaignManagementParams({
-                campaignId: campaignId,
-                rewardToken: rewardToken,
-                numberOfPeriods: 0,
-                totalRewardAmount: 0,
-                maxRewardPerVote: newMaxRewardPerVote
-            }),
-            targetChainId,
-            additionalGasLimit,
-            votemarket
-        );
-
-        emit RewardPerVoteUpdated(newMaxRewardPerVote);
+        // Emit relevant events
+        if (rewardAmount > 0) {
+            emit TotalRewardAmountUpdated(rewardAmount);
+        }
+        if (numberOfPeriods > 0) {
+            emit NumberOfPeriodsUpdated(numberOfPeriods);
+        }
+        if (maxRewardPerVote > 0) {
+            emit RewardPerVoteUpdated(maxRewardPerVote);
+        }
     }
 
     /// @notice Close the campaign.
     /// @dev This function only work on the L2 chain. Not on mainnet.
+    /// @dev Caller must send ETH to pay for the bridge fee
     /// @dev The _campaignId parameter is not related to the campaignId of this contract, allowing greater flexibility.
     /// @param _campaignId Id of the campaign to close
+    /// @param additionalGasLimit Additional gas limit for the bridge
     // slither-disable-start reentrancy-eth
-    function closeCampaign(
-        uint256 _campaignId,
-        uint256 bridgeFee,
-        uint256 additionalGasLimit
-    ) external nonReentrant onlyGovernorOrStrategist {
+    function closeCampaign(uint256 _campaignId, uint256 additionalGasLimit)
+        external
+        payable
+        nonReentrant
+        onlyGovernorOrStrategist
+    {
         ICampaignRemoteManager(campaignRemoteManager).closeCampaign{
-            value: bridgeFee
+            value: msg.value
         }(
             ICampaignRemoteManager.CampaignClosingParams({
                 campaignId: campaignId
@@ -283,26 +248,31 @@ contract CurvePoolBooster is Initializable, Strategizable {
 
     // slither-disable-end reentrancy-eth
 
-    /// @notice calculate the fee amount and transfer it to the feeCollector
+    /// @notice Calculate the fee amount and transfer it to the feeCollector
+    /// @dev Uses full contract balance
     /// @return Balance after fee
     function _handleFee() internal returns (uint256) {
-        // Cache current rewardToken balance
         uint256 balance = IERC20(rewardToken).balanceOf(address(this));
-        require(balance > 0, "No reward to manage");
 
-        uint256 feeAmount = (balance * fee) / FEE_BASE;
+        // This is not a problem if balance is 0, feeAmount will be 0 as well
+        // We don't want to make the whole function revert just because of that.
+        return _handleFee(balance);
+    }
+
+    /// @notice Calculate the fee amount and transfer it to the feeCollector
+    /// @param amount Amount to take fee from
+    /// @return Amount after fee
+    function _handleFee(uint256 amount) internal returns (uint256) {
+        uint256 feeAmount = (amount * fee) / FEE_BASE;
 
         // If there is a fee, transfer it to the feeCollector
         if (feeAmount > 0) {
-            // Transfer the fee to the feeCollector
             IERC20(rewardToken).safeTransfer(feeCollector, feeAmount);
             emit FeeCollected(feeCollector, feeAmount);
-
-            return IERC20(rewardToken).balanceOf(address(this));
         }
 
-        // Return remaining balance
-        return balance;
+        // Fetch balance again to avoid rounding issues
+        return IERC20(rewardToken).balanceOf(address(this));
     }
 
     ////////////////////////////////////////////////////
@@ -409,6 +379,11 @@ contract CurvePoolBooster is Initializable, Strategizable {
         require(_votemarket != address(0), "Invalid votemarket");
         votemarket = _votemarket;
         emit VotemarketUpdated(_votemarket);
+    }
+
+    /// @notice Return the minimum of two uint256 numbers
+    function min(uint256 a, uint256 b) internal pure returns (uint256) {
+        return a < b ? a : b;
     }
 
     receive() external payable {}
