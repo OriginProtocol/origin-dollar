@@ -19,7 +19,7 @@ const {
   decryptMasterPrivateKey,
 } = require("./amazon");
 const { collect, setDripDuration } = require("./dripper");
-const { getSigner } = require("../utils/signers");
+const { getSigner, getDefenderSigner } = require("../utils/signers");
 const { snapAero } = require("./aero");
 const {
   storeStorageLayoutForAllContracts,
@@ -1230,7 +1230,9 @@ task("relayCCTPMessage", "Fetches CCTP attested Messages via Circle Gateway API 
     types.int
   )
   .setAction(async (taskArgs) => {
-    await processCctpBridgeTransactions(taskArgs);
+    // This action only works with the Defender Relayer signer
+    const signer = await getDefenderSigner();
+    await processCctpBridgeTransactions({ ...taskArgs, signer, provider: signer.provider });
   });
 
 task("relayCCTPMessage").setAction(async (_, __, runSuper) => {

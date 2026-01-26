@@ -1,53 +1,54 @@
 //const { KeyValueStoreClient } = require("@openzeppelin/defender-sdk");
 const addresses = require("../utils/addresses");
 const { getNetworkName } = require("../utils/hardhat-helpers");
-const { getSigner } = require("../utils/signers");
-const { getClient } = require("./defender");
+const { logTxDetails } = require("../utils/txLogger");
 
 const log = require("../utils/logger")("task:crossChain");
 
-const cctpOperationsConfig = async () => {
+const cctpOperationsConfig = async (signer, provider) => {
   const networkName = await getNetworkName();
-
-  const addressesSet = addresses[networkName];
   const isMainnet = networkName === "mainnet";
   const isBase = networkName === "base";
   // CCTP TESTNET API: https://iris-api-sandbox.circle.com
   const cctpApi = "https://iris-api.circle.com";
   //const cctpApiKey = process.env.CIRCLE_API_KEY;
  
-  let cctpDestinationDomainId, cctpSourceDomainId, cctpIntegrationContractAddress, cctpIntegrationContractAddressDestination, destinationChainRpcUrl;
+  let cctpDestinationDomainId, cctpSourceDomainId, cctpIntegrationContractAddress, cctpIntegrationContractAddressDestination;
   if (isMainnet) {
     cctpDestinationDomainId = 6;
     cctpSourceDomainId = 0;
-    cctpIntegrationContractAddress = addressesSet.CrossChainMasterStrategy;
+    cctpIntegrationContractAddress = addresses.mainnet.CrossChainMasterStrategy;
     cctpIntegrationContractAddressDestination = addresses.base.CrossChainRemoteStrategy;
   } else if (isBase) {
     cctpDestinationDomainId = 0;
     cctpSourceDomainId = 6;
-    cctpIntegrationContractAddress = addressesSet.CrossChainRemoteStrategy;
+    cctpIntegrationContractAddress = addresses.base.CrossChainRemoteStrategy;
     cctpIntegrationContractAddressDestination = addresses.mainnet.CrossChainMasterStrategy;
   } else {
     throw new Error(`Unsupported network: ${networkName}`);
   }
+  
+  const cctpIntegratorAbi = [
+    "event TokensBridged(uint32 peerDomainID,address peerStrategy,address usdcToken,uint256 tokenAmount,uint256 maxFee,uint32 minFinalityThreshold,bytes hookData)",
+    "event MessageTransmitted(uint32 peerDomainID,address peerStrategy,uint32 minFinalityThreshold,bytes message)",
+    "function relay(bytes message, bytes attestation) external",
+  ];
 
-  const jsonRpcProvider = new ethers.providers.JsonRpcProvider(destinationChainRpcUrl);
-  const signer = await getSigner();
-
-  const defenderClient = getClient();
-
-  const messageTransmitter = await ethers.getContractAt("ICCTPMessageTransmitter", addresses.CCTPMessageTransmitterV2);
-  const tokenMessenger = await ethers.getContractAt("ICCTPTokenMessenger", addresses.CCTPTokenMessengerV2);
-  const cctpIntegrationContractSource = await ethers.getContractAt("AbstractCCTPIntegrator", cctpIntegrationContractAddress);
-  const cctpIntegrationContractDestination = await ethers.getContractAt("AbstractCCTPIntegrator", cctpIntegrationContractAddressDestination, signer);
+  const cctpIntegrationContractSource = new ethers.Contract(
+    cctpIntegrationContractAddress,
+    cctpIntegratorAbi,
+    provider
+  );
+  const cctpIntegrationContractDestination = new ethers.Contract(
+    cctpIntegrationContractAddressDestination,
+    cctpIntegratorAbi,
+    signer
+  );
 
   return {
     networkName,
     cctpApi,
-    defenderClient,
-    jsonRpcProvider,
-    messageTransmitter,
-    tokenMessenger,
+    provider,
     cctpIntegrationContractSource,
     cctpIntegrationContractDestination,
     cctpDestinationDomainId,
@@ -132,8 +133,8 @@ const fetchTxHashesFromCctpTransactions = async ({ config, overrideBlock } = {})
   return { allTxHashes };
 };
 
-const processCctpBridgeTransactions = async ({ block = undefined }) => {
-  const config = await cctpOperationsConfig();
+const processCctpBridgeTransactions = async ({ block = undefined, signer, provider }) => {
+  const config = await cctpOperationsConfig(signer, provider);
   log(`Fetching cctp messages posted on ${config.networkName} network.${block ? `Only for block: ${block}` : "Looking at most recent blocks"}`);
 
   const { allTxHashes } = await fetchTxHashesFromCctpTransactions({ config, overrideBlock:block });
@@ -144,9 +145,17 @@ const processCctpBridgeTransactions = async ({ block = undefined }) => {
     }
 
     log(`Attempting to relay attestation with tx hash: ${txHash} to cctp chain id: ${config.cctpDestinationDomainId}`);
-    const relayResult = await config.cctpIntegrationContractDestination.relay(message, attestation);
-    log(`Relay result: ${relayResult}`);
-    // TODO verify that the relay was successful and if it was, store the tx hash in the database
+    const relayTx = await config.cctpIntegrationContractDestination.relay(message, attestation);
+    log(`Relay transaction with hash ${relayTx.hash} sent to cctp chain id: ${config.cctpDestinationDomainId}`);
+    const receipt = await logTxDetails(relayTx, "CCTP relay");
+
+    // Final verification
+    if (receipt.status === 1) {
+      log("SUCCESS: Transaction executed successfully!");
+    } else {
+      log("FAILURE: Transaction reverted!");
+      throw new Error(`Transaction reverted - status: ${receipt.status}`);
+    }
   }
 };
 
