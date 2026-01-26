@@ -95,12 +95,13 @@ const fetchAttestation = async ({ transactionHash, cctpApi, cctpChainId }) => {
 // One transaction containing such message can at most only contain one of these events
 const fetchTxHashesFromCctpTransactions = async ({ config, overrideBlock } = {}) => {
   const provider = hre.ethers.provider;
-  const latestBlock = await provider.getBlockNumber();
+
   let resolvedFromBlock, resolvedToBlock;
   if (overrideBlock) {
     resolvedFromBlock = overrideBlock;
     resolvedToBlock = overrideBlock;
   } else {
+    const latestBlock = await provider.getBlockNumber();
     resolvedFromBlock = Math.max(latestBlock - 10000, 0);
     resolvedToBlock = latestBlock;
   }
@@ -135,7 +136,7 @@ const fetchTxHashesFromCctpTransactions = async ({ config, overrideBlock } = {})
 
 const processCctpBridgeTransactions = async ({ block = undefined, signer, provider }) => {
   const config = await cctpOperationsConfig(signer, provider);
-  log(`Fetching cctp messages posted on ${config.networkName} network.${block ? `Only for block: ${block}` : "Looking at most recent blocks"}`);
+  log(`Fetching cctp messages posted on ${config.networkName} network.${block ? ` Only for block: ${block}` : " Looking at most recent blocks"}`);
 
   const { allTxHashes } = await fetchTxHashesFromCctpTransactions({ config, overrideBlock:block });
   for (const txHash of allTxHashes) {
