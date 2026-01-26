@@ -2,8 +2,49 @@
 const addresses = require("../utils/addresses");
 const { getNetworkName } = require("../utils/hardhat-helpers");
 const { logTxDetails } = require("../utils/txLogger");
+const fs = require("fs");
+const path = require("path");
 
 const log = require("../utils/logger")("task:crossChain");
+
+const keyValueStoreLocalClient = ({ _storePath }) => ({
+  storePath: _storePath,
+
+  async get(key) {
+    return this.getStore()[key];
+  },
+
+  async put(key, value) {
+    this.updateStore((store) => {
+      store[key] = value;
+    });
+  },
+
+  async del(key) {
+    this.updateStore((store) => {
+      delete store[key];
+    });
+  },
+
+  getStore() {
+    try {
+      if (!fs.existsSync(this.storePath)) {
+        return {};
+      }
+      const contents = fs.readFileSync(this.storePath, "utf8");
+      return contents ? JSON.parse(contents) : {};
+    } catch (error) {
+      return {};
+    }
+  },
+
+  updateStore(updater) {
+    const store = this.getStore();
+    updater(store);
+    fs.mkdirSync(path.dirname(this.storePath), { recursive: true });
+    fs.writeFileSync(this.storePath, JSON.stringify(store, null, 2));
+  },
+});
 
 const cctpOperationsConfig = async (signer, provider) => {
   const networkName = await getNetworkName();
@@ -110,7 +151,8 @@ const fetchTxHashesFromCctpTransactions = async ({ config, overrideBlock } = {})
 
   const tokensBridgedTopic = cctpIntegrationContractSource.interface.getEventTopic("TokensBridged");
   const messageTransmittedTopic = cctpIntegrationContractSource.interface.getEventTopic("MessageTransmitted");
-
+  
+  log(`Fetching event logs from block ${resolvedFromBlock} to block ${resolvedToBlock}`);
   const [eventLogsTokenBridged, eventLogsMessageTransmitted] = await Promise.all([
     provider.getLogs({
       address: cctpIntegrationContractSource.address,
@@ -134,12 +176,20 @@ const fetchTxHashesFromCctpTransactions = async ({ config, overrideBlock } = {})
   return { allTxHashes };
 };
 
-const processCctpBridgeTransactions = async ({ block = undefined, signer, provider }) => {
+const processCctpBridgeTransactions = async ({ block = undefined, signer, provider, store }) => {
   const config = await cctpOperationsConfig(signer, provider);
   log(`Fetching cctp messages posted on ${config.networkName} network.${block ? ` Only for block: ${block}` : " Looking at most recent blocks"}`);
 
-  const { allTxHashes } = await fetchTxHashesFromCctpTransactions({ config, overrideBlock:block });
+  const { allTxHashes } = await fetchTxHashesFromCctpTransactions({ config, overrideBlock: block });
   for (const txHash of allTxHashes) {
+    const storeKey = `cctp_message_${txHash}`;
+    const storedValue = await store.get(storeKey);
+
+    if (storedValue === "processed") {
+      log(`Transaction with hash: ${txHash} has already been processed. Skipping...`);
+      continue;
+    }
+
     const { attestation, message, status } = await fetchAttestation({ transactionHash: txHash, cctpApi: config.cctpApi, cctpChainId: config.cctpSourceDomainId });
     if (status !== "ok") {
       log(`Attestation from tx hash: ${txHash} on cctp chain id: ${config.cctpSourceDomainId} is not attested yet, status: ${status}. Skipping...`);
@@ -153,6 +203,7 @@ const processCctpBridgeTransactions = async ({ block = undefined, signer, provid
     // Final verification
     if (receipt.status === 1) {
       log("SUCCESS: Transaction executed successfully!");
+      await store.put(storeKey, "processed");
     } else {
       log("FAILURE: Transaction reverted!");
       throw new Error(`Transaction reverted - status: ${receipt.status}`);
@@ -162,5 +213,6 @@ const processCctpBridgeTransactions = async ({ block = undefined, signer, provid
 
 
 module.exports = {
+  keyValueStoreLocalClient,
   processCctpBridgeTransactions
 }
