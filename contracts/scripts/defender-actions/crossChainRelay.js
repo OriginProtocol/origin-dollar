@@ -17,7 +17,11 @@ const handler = async (event) => {
     ethersVersion: "v5",
   });
 
-  await processCctpBridgeTransactions({ signer, provider: signer.provider, store: client.keyValueStore });
+  await processCctpBridgeTransactions({
+    signer,
+    provider: signer.provider,
+    store: client.keyValueStore,
+  });
 };
 
 module.exports = { handler };

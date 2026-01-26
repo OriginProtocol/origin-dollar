@@ -143,9 +143,10 @@ const {
 } = require("./beaconTesting");
 const { claimMerklRewards } = require("./merkl");
 
-const { processCctpBridgeTransactions, keyValueStoreLocalClient } = require("./crossChain");
-
-
+const {
+  processCctpBridgeTransactions,
+  keyValueStoreLocalClient,
+} = require("./crossChain");
 
 const log = require("../utils/logger")("tasks");
 
@@ -1226,7 +1227,10 @@ task("stakeValidators").setAction(async (_, __, runSuper) => {
 /**
  * This function relays the messages between mainnet and base networks. If no block is specified last 10 000 blocks are checked.
  */
-task("relayCCTPMessage", "Fetches CCTP attested Messages via Circle Gateway API and relays it to the integrator contract")
+task(
+  "relayCCTPMessage",
+  "Fetches CCTP attested Messages via Circle Gateway API and relays it to the integrator contract"
+)
   .addOptionalParam(
     "block",
     "Override the block number at which the message emission transaction happened",
@@ -1241,11 +1245,15 @@ task("relayCCTPMessage", "Fetches CCTP attested Messages via Circle Gateway API 
       `.localKeyValueStorage.${networkName}`
     );
 
-    
     // This action only works with the Defender Relayer signer
     const signer = await getDefenderSigner();
     const store = keyValueStoreLocalClient({ _storePath: storeFilePath });
-    await processCctpBridgeTransactions({ ...taskArgs, signer, provider: signer.provider, store });
+    await processCctpBridgeTransactions({
+      ...taskArgs,
+      signer,
+      provider: signer.provider,
+      store,
+    });
   });
 
 task("relayCCTPMessage").setAction(async (_, __, runSuper) => {
