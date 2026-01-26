@@ -7,7 +7,7 @@ module.exports = deployOnBase(
   },
   async () => {
     // the salt needs to match the salt on the base chain deploying the other part of the strategy
-    const salt = "Morpho V2 Crosschain Strategy";
+    const salt = "Morpho V2 Crosschain Strategy 1";
     const proxyAddress = await deployProxyWithCreateX(
       salt,
       "CrossChainStrategyProxy"

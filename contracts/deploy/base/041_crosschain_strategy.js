@@ -4,7 +4,6 @@ const {
   deployCrossChainRemoteStrategyImpl,
   getCreate2ProxyAddress,
 } = require("../deployActions");
-const { withConfirmation } = require("../../utils/deploy.js");
 const { cctpDomainIds } = require("../../utils/cctp");
 
 module.exports = deployOnBase(
@@ -12,9 +11,6 @@ module.exports = deployOnBase(
     deployName: "041_crosschain_strategy",
   },
   async () => {
-    const { deployerAddr } = await getNamedAccounts();
-    const sDeployer = await ethers.provider.getSigner(deployerAddr);
-
     const crossChainStrategyProxyAddress = await getCreate2ProxyAddress(
       "CrossChainStrategyProxy"
     );
@@ -31,7 +27,7 @@ module.exports = deployOnBase(
       "CrossChainRemoteStrategy",
       addresses.CCTPTokenMessengerV2,
       addresses.CCTPMessageTransmitterV2,
-      deployerAddr
+      addresses.base.timelock
     );
     console.log(`CrossChainRemoteStrategyImpl address: ${implAddress}`);
 
@@ -43,17 +39,14 @@ module.exports = deployOnBase(
       `CrossChainRemoteStrategy address: ${cCrossChainRemoteStrategy.address}`
     );
 
-    // TODO: Move to governance actions when going live
-    await withConfirmation(
-      cCrossChainRemoteStrategy.connect(sDeployer).safeApproveAllTokens()
-    );
-
     return {
-      // actions: [{
-      //   contract: cCrossChainRemoteStrategy,
-      //   signature: "safeApproveAllTokens()",
-      //   args: [],
-      // }],
+      actions: [
+        {
+          contract: cCrossChainRemoteStrategy,
+          signature: "safeApproveAllTokens()",
+          args: [],
+        },
+      ],
     };
   }
 );

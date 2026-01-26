@@ -15,7 +15,6 @@ module.exports = deploymentWithGovernanceProposal(
     proposalId: "",
   },
   async () => {
-    const { deployerAddr } = await getNamedAccounts();
     const crossChainStrategyProxyAddress = await getCreate2ProxyAddress(
       "CrossChainStrategyProxy"
     );
@@ -25,14 +24,20 @@ module.exports = deploymentWithGovernanceProposal(
     );
     console.log(`CrossChainStrategyProxy address: ${cProxy.address}`);
 
+    const cVaultProxy = await ethers.getContract("VaultProxy");
+
     const implAddress = await deployCrossChainMasterStrategyImpl(
       crossChainStrategyProxyAddress,
       cctpDomainIds.Base,
       // Same address for both master and remote strategy
       crossChainStrategyProxyAddress,
       addresses.mainnet.USDC,
-      deployerAddr,
-      "CrossChainMasterStrategy"
+      cVaultProxy.address,
+      "CrossChainMasterStrategy",
+      false,
+      addresses.CCTPTokenMessengerV2,
+      addresses.CCTPMessageTransmitterV2,
+      addresses.mainnet.Timelock
     );
     console.log(`CrossChainMasterStrategyImpl address: ${implAddress}`);
 
