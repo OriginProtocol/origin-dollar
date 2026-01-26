@@ -145,8 +145,8 @@ const { claimMerklRewards } = require("./merkl");
 
 const {
   processCctpBridgeTransactions,
-  keyValueStoreLocalClient,
 } = require("./crossChain");
+const { keyValueStoreLocalClient } = require("../utils/defender");
 
 const log = require("../utils/logger")("tasks");
 
