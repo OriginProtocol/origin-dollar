@@ -46,7 +46,8 @@ module.exports = deploymentWithGovernanceProposal(
     forceDeploy: false,
     reduceQueueTime: true,
     deployerIsProposer: false,
-    proposalId: "",
+    proposalId:
+      "70336422361048948609898488791231866822675120244859766659168608925215046418279",
   },
   async () => {
     const cCurvePoolBoosterFactory = await ethers.getContractAt(
