@@ -3,6 +3,7 @@ const ethers = require("ethers");
 const addresses = require("../utils/addresses");
 const { getNetworkName } = require("../utils/hardhat-helpers");
 const { logTxDetails } = require("../utils/txLogger");
+const { cctpDomainIds } = require("../utils/cctp");
 
 const cctpOperationsConfig = async (destinationChainSigner, sourceChainProvider) => {
   const networkName = await getNetworkName(sourceChainProvider)
@@ -17,14 +18,14 @@ const cctpOperationsConfig = async (destinationChainSigner, sourceChainProvider)
     cctpIntegrationContractAddressDestination;
 
   if (isMainnet) {
-    cctpDestinationDomainId = 6;
-    cctpSourceDomainId = 0;
+    cctpDestinationDomainId = cctpDomainIds.Base;
+    cctpSourceDomainId = cctpDomainIds.Ethereum;
     cctpIntegrationContractAddress = addresses.mainnet.CrossChainMasterStrategy;
     cctpIntegrationContractAddressDestination =
       addresses.base.CrossChainRemoteStrategy;
   } else if (isBase) {
-    cctpDestinationDomainId = 0;
-    cctpSourceDomainId = 6;
+    cctpDestinationDomainId = cctpDomainIds.Ethereum;
+    cctpSourceDomainId = cctpDomainIds.Base;
     cctpIntegrationContractAddress = addresses.base.CrossChainRemoteStrategy;
     cctpIntegrationContractAddressDestination =
       addresses.mainnet.CrossChainMasterStrategy;
