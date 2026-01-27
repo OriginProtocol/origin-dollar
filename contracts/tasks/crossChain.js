@@ -87,17 +87,6 @@ const fetchAttestation = async ({ transactionHash, cctpChainId }) => {
     throw new Error(`Attestation is not complete, status: ${status}`);
   }
 
-  const decodedMessage = message.decodedMessage;
-  const minFinalityThreshold = decodedMessage.minFinalityThreshold;
-  const finalityThresholdExecuted =
-    message.decodedMessage.finalityThresholdExecuted;
-
-  if (minFinalityThreshold !== finalityThresholdExecuted) {
-    return {
-      status: "not-finalized",
-    };
-  }
-
   return {
     attestation: message.attestation,
     message: message.message,
