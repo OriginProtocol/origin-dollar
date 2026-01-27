@@ -99,7 +99,7 @@ contract ConsolidationController is Ownable {
 
     /**
      * @notice A consolidation request can fail to be processed on the beacon chain
-     * for various reasons. For example, the pending consolidation queue is full with 64 requests.
+     * for various reasons. For example, the pending consolidation queue is full with 262,144 requests.
      * This restores the consolidation count so that failed consolidations can be retried.
      * @param sourcePubKeys The public keys of the source validators that failed to be consolidated.
      */
