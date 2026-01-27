@@ -97,7 +97,7 @@ module.exports = deploymentWithGovernanceProposal(
     const dConsolidationController = await deployWithConfirmation(
       "ConsolidationController",
       [
-        addresses.Guardian, // Admin 5/8 multisig
+        addresses.mainnet.Guardian, // Admin 5/8 multisig
         addresses.mainnet.validatorRegistrator, // Defender Relayer
       ]
     );
