@@ -314,6 +314,17 @@ addresses.mainnet.curve.OETH_WETH.pool =
 addresses.mainnet.curve.OETH_WETH.gauge =
   "0x36cC1d791704445A5b6b9c36a667e511d4702F3f";
 
+// Curve governance
+addresses.mainnet.veCRV = "0x5f3b5DfEb7B28CDbD7FAba78963EE202a494e2A2";
+addresses.mainnet.CurveGaugeController =
+  "0x2F50D538606Fa9EDD2B11E2446BEb18C9D5846bB";
+
+// Curve Pool Booster
+addresses.mainnet.CurvePoolBoosterOETH =
+  "0x7B5e7aDEBC2da89912BffE55c86675CeCE59803E";
+addresses.mainnet.CurvePoolBoosterBribesModule =
+  "0xfA01FE78bBD1ade8064C34FE537BA2E2670B2198";
+
 // SSV network
 addresses.mainnet.SSV = "0x9D65fF81a3c488d585bBfb0Bfe3c7707c7917f54";
 addresses.mainnet.SSVNetwork = "0xDD9BC35aE942eF0cFa76930954a156B3fF30a4E1";
