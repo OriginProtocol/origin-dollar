@@ -1,44 +1,15 @@
 //const { KeyValueStoreClient } = require("@openzeppelin/defender-sdk");
 const ethers = require("ethers");
-const addresses = require("../utils/addresses");
-const { getNetworkName } = require("../utils/hardhat-helpers");
 const { logTxDetails } = require("../utils/txLogger");
-const { cctpDomainIds } = require("../utils/cctp");
 const { api: cctpApi } = require("../utils/cctp");
 
-const cctpOperationsConfig = async (
+const cctpOperationsConfig = async ({
   destinationChainSigner,
-  sourceChainProvider
-) => {
-  const networkName = await getNetworkName(sourceChainProvider);
-  const isMainnet = networkName === "mainnet";
-  const isBase = networkName === "base";
-  // The amount of blocks that the process looks back for CCTP messages
-  let blockLookback = 10000;
-
-  let cctpDestinationDomainId,
-    cctpSourceDomainId,
-    cctpIntegrationContractAddress,
-    cctpIntegrationContractAddressDestination;
-
-  if (isMainnet) {
-    cctpDestinationDomainId = cctpDomainIds.Base;
-    cctpSourceDomainId = cctpDomainIds.Ethereum;
-    cctpIntegrationContractAddress = addresses.mainnet.CrossChainMasterStrategy;
-    cctpIntegrationContractAddressDestination =
-      addresses.base.CrossChainRemoteStrategy;
-    blockLookback = 7300; // a bit over a day in block time on mainnet
-  } else if (isBase) {
-    cctpDestinationDomainId = cctpDomainIds.Ethereum;
-    cctpSourceDomainId = cctpDomainIds.Base;
-    cctpIntegrationContractAddress = addresses.base.CrossChainRemoteStrategy;
-    cctpIntegrationContractAddressDestination =
-      addresses.mainnet.CrossChainMasterStrategy;
-    blockLookback = 43800; // a bit over a day in block time on base
-  } else {
-    throw new Error(`Unsupported network: ${networkName}`);
-  }
-
+  sourceChainProvider,
+  networkName,
+  cctpIntegrationContractAddress,
+  cctpIntegrationContractAddressDestination,
+}) => {
   const cctpIntegratorAbi = [
     "event TokensBridged(uint32 peerDomainID,address peerStrategy,address usdcToken,uint256 tokenAmount,uint256 maxFee,uint32 minFinalityThreshold,bytes hookData)",
     "event MessageTransmitted(uint32 peerDomainID,address peerStrategy,uint32 minFinalityThreshold,bytes message)",
@@ -58,12 +29,8 @@ const cctpOperationsConfig = async (
 
   return {
     networkName,
-    sourceChainProvider,
     cctpIntegrationContractSource,
     cctpIntegrationContractDestination,
-    cctpDestinationDomainId,
-    cctpSourceDomainId,
-    blockLookback,
   };
 };
 
@@ -163,11 +130,20 @@ const processCctpBridgeTransactions = async ({
   destinationChainSigner,
   sourceChainProvider,
   store,
+  networkName,
+  blockLookback,
+  cctpDestinationDomainId,
+  cctpSourceDomainId,
+  cctpIntegrationContractAddress,
+  cctpIntegrationContractAddressDestination,
 }) => {
-  const config = await cctpOperationsConfig(
+  const config = await cctpOperationsConfig({
     destinationChainSigner,
-    sourceChainProvider
-  );
+    sourceChainProvider,
+    networkName,
+    cctpIntegrationContractAddress,
+    cctpIntegrationContractAddressDestination,
+  });
   console.log(
     `Fetching cctp messages posted on ${config.networkName} network.${
       block ? ` Only for block: ${block}` : " Looking at most recent blocks"
@@ -178,7 +154,7 @@ const processCctpBridgeTransactions = async ({
     config,
     overrideBlock: block,
     sourceChainProvider,
-    blockLookback: config.blockLookback,
+    blockLookback,
   });
   for (const txHash of allTxHashes) {
     const storeKey = `cctp_message_${txHash}`;
@@ -193,7 +169,7 @@ const processCctpBridgeTransactions = async ({
 
     const { attestation, message, status } = await fetchAttestation({
       transactionHash: txHash,
-      cctpChainId: config.cctpSourceDomainId,
+      cctpChainId: cctpSourceDomainId,
     });
     if (status !== "ok") {
       console.log(
@@ -202,12 +178,12 @@ const processCctpBridgeTransactions = async ({
     }
 
     console.log(
-      `Attempting to relay attestation with tx hash: ${txHash} and message: ${message} to cctp chain id: ${config.cctpDestinationDomainId}`
+      `Attempting to relay attestation with tx hash: ${txHash} and message: ${message} to cctp chain id: ${cctpDestinationDomainId}`
     );
 
     if (dryrun) {
       console.log(
-        `Dryrun: Would have relayed attestation with tx hash: ${txHash} to cctp chain id: ${config.cctpDestinationDomainId}`
+        `Dryrun: Would have relayed attestation with tx hash: ${txHash} to cctp chain id: ${cctpDestinationDomainId}`
       );
       continue;
     }
@@ -217,7 +193,7 @@ const processCctpBridgeTransactions = async ({
       attestation
     );
     console.log(
-      `Relay transaction with hash ${relayTx.hash} sent to cctp chain id: ${config.cctpDestinationDomainId}`
+      `Relay transaction with hash ${relayTx.hash} sent to cctp chain id: ${cctpDestinationDomainId}`
     );
     const receipt = await logTxDetails(relayTx, "CCTP relay");
 

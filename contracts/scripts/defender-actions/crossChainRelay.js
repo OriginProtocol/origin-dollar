@@ -1,8 +1,8 @@
 const { ethers } = require("ethers");
 const { Defender } = require("@openzeppelin/defender-sdk");
 const { processCctpBridgeTransactions } = require("../../tasks/crossChain");
-
-const log = require("../../utils/logger")("action:crossChainRelay");
+const { getNetworkName } = require("../../utils/hardhat-helpers");
+const { configuration } = require("../../utils/cctp");
 
 // Entrypoint for the Defender Action
 const handler = async (event) => {
@@ -42,10 +42,29 @@ const handler = async (event) => {
     throw new Error(`Unsupported chain id: ${chainId}`);
   }
 
+  const networkName = await getNetworkName(sourceProvider);
+  const isMainnet = networkName === "mainnet";
+  const isBase = networkName === "base";
+
+  let config;
+  if (isMainnet) {
+    config = configuration.mainnetBaseMorpho.mainnet;
+  } else if (isBase) {
+    config = configuration.mainnetBaseMorpho.base;
+  } else {
+    throw new Error(`Unsupported network name: ${networkName}`);
+  }
+
   await processCctpBridgeTransactions({
     destinationChainSigner: signer,
     sourceChainProvider: sourceProvider,
     store: client.keyValueStore,
+    networkName,
+    blockLookback: config.blockLookback,
+    cctpDestinationDomainId: config.cctpDestinationDomainId,
+    cctpSourceDomainId: config.cctpSourceDomainId,
+    cctpIntegrationContractAddress: config.cctpIntegrationContractAddress,
+    cctpIntegrationContractAddressDestination: config.cctpIntegrationContractAddressDestination,
   });
 };
 
