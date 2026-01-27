@@ -957,7 +957,7 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
     /// This behaviour is correct.
     ///
     /// The validator balances on the beacon chain can then be proved with `verifyBalances`.
-    function snapBalances() external onlyRegistrator {
+    function snapBalances() external {
         uint64 currentTimestamp = SafeCast.toUint64(block.timestamp);
         require(
             snappedBalance.timestamp + SNAP_BALANCES_DELAY < currentTimestamp,
@@ -1018,7 +1018,7 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
     function verifyBalances(
         BalanceProofs calldata balanceProofs,
         PendingDepositProofs calldata pendingDepositProofs
-    ) external {
+    ) external onlyRegistrator {
         // Load previously snapped balances for the given block root
         Balances memory balancesMem = snappedBalance;
         // Check the balances are the latest

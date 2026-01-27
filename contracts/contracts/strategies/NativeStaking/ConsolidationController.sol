@@ -241,13 +241,6 @@ contract ConsolidationController is Ownable {
      *
      */
 
-    /// @notice Anyone call snapBalances on the new Compounding Staking Strategy
-    /// This includes when there is a consolidation in progress so verifyBalances
-    /// can be called from `confirmConsolidation`.
-    function snapBalances() external {
-        targetStrategy.snapBalances();
-    }
-
     /**
      * @notice Anyone can verify balances on the new Compounding Staking Strategy
      * as long as there are no consolidations in progress.
