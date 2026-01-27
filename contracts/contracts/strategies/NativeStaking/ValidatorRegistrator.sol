@@ -379,9 +379,9 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
     ****************************************/
 
     /**
-     * @notice Initiates the consolidation of multiple source sweeping validators into a single target compounding validator.
-     * @dev The validator registrator should be set to the ConsolidationController contract which has checks against the
-     * target validator.
+     * @notice Initiates the consolidation of multiple source sweeping validators to a single compounding validator.
+     * @dev The validator registrator should be set to the ConsolidationController contract which
+     * has checks against the target validator.
      * @param sourcePubKeys The full public keys of the source validators to be consolidated.
      * @param targetPubKey The full public key of the target validator to consolidate into.
      */

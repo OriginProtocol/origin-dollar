@@ -271,7 +271,10 @@ contract ConsolidationController is Ownable {
         targetStrategy.verifyBalances(balanceProofs, pendingDepositProofs);
     }
 
-    /// @notice Partial withdrawals are allowed during consolidation from the new Compounding Staking Strategy
+    /// @notice Partial withdrawals are allowed during consolidation from the new Compounding Staking Strategy.
+    /// This includes partial withdrawals from the target validator.
+    // Full validator exits from any Compounding Staking Strategy validator are
+    // not allowed during the migration period.
     function validatorWithdrawal(bytes calldata publicKey, uint64 amountGwei)
         external
         payable
@@ -288,7 +291,8 @@ contract ConsolidationController is Ownable {
     }
 
     /**
-     * @notice Deposits to Compounding Staking Strategy validators that are not the target of a consolidation are allowed.
+     * @notice Deposits to Compounding Staking Strategy validators that are
+     * not the target of a consolidation are allowed.
      */
     function stakeEth(
         CompoundingValidatorManager.ValidatorStakeData
