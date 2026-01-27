@@ -4,13 +4,12 @@ const addresses = require("../utils/addresses");
 const { getNetworkName } = require("../utils/hardhat-helpers");
 const { logTxDetails } = require("../utils/txLogger");
 const { cctpDomainIds } = require("../utils/cctp");
+const { api: cctpApi } = require("../utils/cctp");
 
 const cctpOperationsConfig = async (destinationChainSigner, sourceChainProvider) => {
   const networkName = await getNetworkName(sourceChainProvider)
   const isMainnet = networkName === "mainnet";
   const isBase = networkName === "base";
-  // CCTP TESTNET API: https://iris-api-sandbox.circle.com
-  const cctpApi = "https://iris-api.circle.com";
 
   let cctpDestinationDomainId,
     cctpSourceDomainId,
@@ -52,7 +51,6 @@ const cctpOperationsConfig = async (destinationChainSigner, sourceChainProvider)
 
   return {
     networkName,
-    cctpApi,
     sourceChainProvider,
     cctpIntegrationContractSource,
     cctpIntegrationContractDestination,
@@ -61,7 +59,7 @@ const cctpOperationsConfig = async (destinationChainSigner, sourceChainProvider)
   };
 };
 
-const fetchAttestation = async ({ transactionHash, cctpApi, cctpChainId }) => {
+const fetchAttestation = async ({ transactionHash, cctpChainId }) => {
   console.log(
     `Fetching attestation for transaction hash: ${transactionHash} on cctp chain id: ${cctpChainId}`
   );
@@ -193,7 +191,6 @@ const processCctpBridgeTransactions = async ({
 
     const { attestation, message, status } = await fetchAttestation({
       transactionHash: txHash,
-      cctpApi: config.cctpApi,
       cctpChainId: config.cctpSourceDomainId,
     });
     if (status !== "ok") {
