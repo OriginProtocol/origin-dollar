@@ -143,9 +143,7 @@ const {
 } = require("./beaconTesting");
 const { claimMerklRewards } = require("./merkl");
 
-const {
-  processCctpBridgeTransactions,
-} = require("./crossChain");
+const { processCctpBridgeTransactions } = require("./crossChain");
 const { keyValueStoreLocalClient } = require("../utils/defender");
 
 const log = require("../utils/logger")("tasks");

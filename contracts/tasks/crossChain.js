@@ -6,10 +6,15 @@ const { logTxDetails } = require("../utils/txLogger");
 const { cctpDomainIds } = require("../utils/cctp");
 const { api: cctpApi } = require("../utils/cctp");
 
-const cctpOperationsConfig = async (destinationChainSigner, sourceChainProvider) => {
-  const networkName = await getNetworkName(sourceChainProvider)
+const cctpOperationsConfig = async (
+  destinationChainSigner,
+  sourceChainProvider
+) => {
+  const networkName = await getNetworkName(sourceChainProvider);
   const isMainnet = networkName === "mainnet";
   const isBase = networkName === "base";
+  // The amount of blocks that the process looks back for CCTP messages
+  let blockLookback = 10000;
 
   let cctpDestinationDomainId,
     cctpSourceDomainId,
@@ -22,12 +27,14 @@ const cctpOperationsConfig = async (destinationChainSigner, sourceChainProvider)
     cctpIntegrationContractAddress = addresses.mainnet.CrossChainMasterStrategy;
     cctpIntegrationContractAddressDestination =
       addresses.base.CrossChainRemoteStrategy;
+    blockLookback = 7300; // a bit over a day in block time on mainnet
   } else if (isBase) {
     cctpDestinationDomainId = cctpDomainIds.Ethereum;
     cctpSourceDomainId = cctpDomainIds.Base;
     cctpIntegrationContractAddress = addresses.base.CrossChainRemoteStrategy;
     cctpIntegrationContractAddressDestination =
       addresses.mainnet.CrossChainMasterStrategy;
+    blockLookback = 43800; // a bit over a day in block time on base
   } else {
     throw new Error(`Unsupported network: ${networkName}`);
   }
@@ -56,6 +63,7 @@ const cctpOperationsConfig = async (destinationChainSigner, sourceChainProvider)
     cctpIntegrationContractDestination,
     cctpDestinationDomainId,
     cctpSourceDomainId,
+    blockLookback,
   };
 };
 
@@ -98,8 +106,9 @@ const fetchAttestation = async ({ transactionHash, cctpChainId }) => {
 // One transaction containing such message can at most only contain one of these events
 const fetchTxHashesFromCctpTransactions = async ({
   config,
+  blockLookback,
   overrideBlock,
-  sourceChainProvider
+  sourceChainProvider,
 } = {}) => {
   let resolvedFromBlock, resolvedToBlock;
   if (overrideBlock) {
@@ -107,7 +116,7 @@ const fetchTxHashesFromCctpTransactions = async ({
     resolvedToBlock = overrideBlock;
   } else {
     const latestBlock = await sourceChainProvider.getBlockNumber();
-    resolvedFromBlock = Math.max(latestBlock - 10000, 0);
+    resolvedFromBlock = Math.max(latestBlock - blockLookback, 0);
     resolvedToBlock = latestBlock;
   }
 
@@ -155,7 +164,10 @@ const processCctpBridgeTransactions = async ({
   sourceChainProvider,
   store,
 }) => {
-  const config = await cctpOperationsConfig(destinationChainSigner, sourceChainProvider);
+  const config = await cctpOperationsConfig(
+    destinationChainSigner,
+    sourceChainProvider
+  );
   console.log(
     `Fetching cctp messages posted on ${config.networkName} network.${
       block ? ` Only for block: ${block}` : " Looking at most recent blocks"
@@ -166,6 +178,7 @@ const processCctpBridgeTransactions = async ({
     config,
     overrideBlock: block,
     sourceChainProvider,
+    blockLookback: config.blockLookback,
   });
   for (const txHash of allTxHashes) {
     const storeKey = `cctp_message_${txHash}`;

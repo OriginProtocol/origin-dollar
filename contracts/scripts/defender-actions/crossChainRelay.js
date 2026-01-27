@@ -24,17 +24,20 @@ const handler = async (event) => {
   // destinatino chain is mainnet, source chain is base
   if (chainId === 1) {
     if (!event.secrets.BASE_PROVIDER_URL) {
-        throw new Error("BASE_PROVIDER_URL env var required");
+      throw new Error("BASE_PROVIDER_URL env var required");
     }
-    sourceProvider = new ethers.providers.JsonRpcProvider(event.secrets.BASE_PROVIDER_URL);
-    
+    sourceProvider = new ethers.providers.JsonRpcProvider(
+      event.secrets.BASE_PROVIDER_URL
+    );
   }
   // destination chain is base, source chain is mainnet
   else if (chainId === 8453) {
     if (!event.secrets.PROVIDER_URL) {
-        throw new Error("PROVIDER_URL env var required");
+      throw new Error("PROVIDER_URL env var required");
     }
-    sourceProvider = new ethers.providers.JsonRpcProvider(event.secrets.PROVIDER_URL);
+    sourceProvider = new ethers.providers.JsonRpcProvider(
+      event.secrets.PROVIDER_URL
+    );
   } else {
     throw new Error(`Unsupported chain id: ${chainId}`);
   }
