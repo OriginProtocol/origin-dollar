@@ -1237,6 +1237,12 @@ task(
     undefined,
     types.int
   )
+  .addOptionalParam(
+    "dryrun",
+    "Do not call verifyBalances on the strategy contract. Just log the params including the proofs",
+    false,
+    types.boolean
+  )
   .setAction(async (taskArgs) => {
     const networkName = await getNetworkName();
     const storeFilePath = require("path").join(
@@ -1250,8 +1256,8 @@ task(
     const store = keyValueStoreLocalClient({ _storePath: storeFilePath });
     await processCctpBridgeTransactions({
       ...taskArgs,
-      signer,
-      provider: signer.provider,
+      destinationChainSigner: signer,
+      sourceChainProvider: ethers.provider,
       store,
     });
   });

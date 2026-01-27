@@ -1,22 +1,21 @@
 //const { KeyValueStoreClient } = require("@openzeppelin/defender-sdk");
+const ethers = require("ethers");
 const addresses = require("../utils/addresses");
 const { getNetworkName } = require("../utils/hardhat-helpers");
 const { logTxDetails } = require("../utils/txLogger");
 
-const log = require("../utils/logger")("task:crossChain");
-
-const cctpOperationsConfig = async (signer, provider) => {
-  const networkName = await getNetworkName();
+const cctpOperationsConfig = async (destinationChainSigner, sourceChainProvider) => {
+  const networkName = await getNetworkName(sourceChainProvider)
   const isMainnet = networkName === "mainnet";
   const isBase = networkName === "base";
   // CCTP TESTNET API: https://iris-api-sandbox.circle.com
   const cctpApi = "https://iris-api.circle.com";
-  //const cctpApiKey = process.env.CIRCLE_API_KEY;
 
   let cctpDestinationDomainId,
     cctpSourceDomainId,
     cctpIntegrationContractAddress,
     cctpIntegrationContractAddressDestination;
+
   if (isMainnet) {
     cctpDestinationDomainId = 6;
     cctpSourceDomainId = 0;
@@ -42,18 +41,18 @@ const cctpOperationsConfig = async (signer, provider) => {
   const cctpIntegrationContractSource = new ethers.Contract(
     cctpIntegrationContractAddress,
     cctpIntegratorAbi,
-    provider
+    sourceChainProvider
   );
   const cctpIntegrationContractDestination = new ethers.Contract(
     cctpIntegrationContractAddressDestination,
     cctpIntegratorAbi,
-    signer
+    destinationChainSigner
   );
 
   return {
     networkName,
     cctpApi,
-    provider,
+    sourceChainProvider,
     cctpIntegrationContractSource,
     cctpIntegrationContractDestination,
     cctpDestinationDomainId,
@@ -62,7 +61,7 @@ const cctpOperationsConfig = async (signer, provider) => {
 };
 
 const fetchAttestation = async ({ transactionHash, cctpApi, cctpChainId }) => {
-  log(
+  console.log(
     `Fetching attestation for transaction hash: ${transactionHash} on cctp chain id: ${cctpChainId}`
   );
   const response = await fetch(
@@ -112,15 +111,14 @@ const fetchAttestation = async ({ transactionHash, cctpApi, cctpChainId }) => {
 const fetchTxHashesFromCctpTransactions = async ({
   config,
   overrideBlock,
+  sourceChainProvider
 } = {}) => {
-  const provider = hre.ethers.provider;
-
   let resolvedFromBlock, resolvedToBlock;
   if (overrideBlock) {
     resolvedFromBlock = overrideBlock;
     resolvedToBlock = overrideBlock;
   } else {
-    const latestBlock = await provider.getBlockNumber();
+    const latestBlock = await sourceChainProvider.getBlockNumber();
     resolvedFromBlock = Math.max(latestBlock - 10000, 0);
     resolvedToBlock = latestBlock;
   }
@@ -132,18 +130,18 @@ const fetchTxHashesFromCctpTransactions = async ({
   const messageTransmittedTopic =
     cctpIntegrationContractSource.interface.getEventTopic("MessageTransmitted");
 
-  log(
+  console.log(
     `Fetching event logs from block ${resolvedFromBlock} to block ${resolvedToBlock}`
   );
   const [eventLogsTokenBridged, eventLogsMessageTransmitted] =
     await Promise.all([
-      provider.getLogs({
+      sourceChainProvider.getLogs({
         address: cctpIntegrationContractSource.address,
         fromBlock: resolvedFromBlock,
         toBlock: resolvedToBlock,
         topics: [tokensBridgedTopic],
       }),
-      provider.getLogs({
+      sourceChainProvider.getLogs({
         address: cctpIntegrationContractSource.address,
         fromBlock: resolvedFromBlock,
         toBlock: resolvedToBlock,
@@ -158,18 +156,19 @@ const fetchTxHashesFromCctpTransactions = async ({
   ].map((log) => log.transactionHash);
   const allTxHashes = Array.from(new Set([...possiblyDuplicatedTxHashes]));
 
-  log(`Found ${allTxHashes.length} transactions that emitted messages`);
+  console.log(`Found ${allTxHashes.length} transactions that emitted messages`);
   return { allTxHashes };
 };
 
 const processCctpBridgeTransactions = async ({
   block = undefined,
-  signer,
-  provider,
+  dryrun = false,
+  destinationChainSigner,
+  sourceChainProvider,
   store,
 }) => {
-  const config = await cctpOperationsConfig(signer, provider);
-  log(
+  const config = await cctpOperationsConfig(destinationChainSigner, sourceChainProvider);
+  console.log(
     `Fetching cctp messages posted on ${config.networkName} network.${
       block ? ` Only for block: ${block}` : " Looking at most recent blocks"
     }`
@@ -178,13 +177,14 @@ const processCctpBridgeTransactions = async ({
   const { allTxHashes } = await fetchTxHashesFromCctpTransactions({
     config,
     overrideBlock: block,
+    sourceChainProvider,
   });
   for (const txHash of allTxHashes) {
     const storeKey = `cctp_message_${txHash}`;
     const storedValue = await store.get(storeKey);
 
     if (storedValue === "processed") {
-      log(
+      console.log(
         `Transaction with hash: ${txHash} has already been processed. Skipping...`
       );
       continue;
@@ -196,29 +196,37 @@ const processCctpBridgeTransactions = async ({
       cctpChainId: config.cctpSourceDomainId,
     });
     if (status !== "ok") {
-      log(
+      console.log(
         `Attestation from tx hash: ${txHash} on cctp chain id: ${config.cctpSourceDomainId} is not attested yet, status: ${status}. Skipping...`
       );
     }
 
-    log(
-      `Attempting to relay attestation with tx hash: ${txHash} to cctp chain id: ${config.cctpDestinationDomainId}`
+    console.log(
+      `Attempting to relay attestation with tx hash: ${txHash} and message: ${message} to cctp chain id: ${config.cctpDestinationDomainId}`
     );
+
+    if (dryrun) {
+      console.log(
+        `Dryrun: Would have relayed attestation with tx hash: ${txHash} to cctp chain id: ${config.cctpDestinationDomainId}`
+      );
+      continue;
+    }
+
     const relayTx = await config.cctpIntegrationContractDestination.relay(
       message,
       attestation
     );
-    log(
+    console.log(
       `Relay transaction with hash ${relayTx.hash} sent to cctp chain id: ${config.cctpDestinationDomainId}`
     );
     const receipt = await logTxDetails(relayTx, "CCTP relay");
 
     // Final verification
     if (receipt.status === 1) {
-      log("SUCCESS: Transaction executed successfully!");
+      console.log("SUCCESS: Transaction executed successfully!");
       await store.put(storeKey, "processed");
     } else {
-      log("FAILURE: Transaction reverted!");
+      console.log("FAILURE: Transaction reverted!");
       throw new Error(`Transaction reverted - status: ${receipt.status}`);
     }
   }
