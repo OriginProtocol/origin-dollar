@@ -86,6 +86,10 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
         bytes targetPubKey,
         uint256 consolidationCount
     );
+    event ConsolidationFailed(
+        bytes[] sourcePubKeys,
+        uint256 consolidationCount
+    );
     event ConsolidationConfirmed(
         uint256 consolidationCount,
         uint256 activeDepositedValidators
@@ -374,6 +378,13 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
             Consolidation functions
     ****************************************/
 
+    /**
+     * @notice Initiates the consolidation of multiple source sweeping validators into a single target compounding validator.
+     * @dev The validator registrator should be set to the ConsolidationController contract which has checks against the
+     * target validator.
+     * @param sourcePubKeys The full public keys of the source validators to be consolidated.
+     * @param targetPubKey The full public key of the target validator to consolidate into.
+     */
     function requestConsolidation(
         bytes[] calldata sourcePubKeys,
         bytes calldata targetPubKey
@@ -407,6 +418,41 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
         );
     }
 
+    /**
+     * @notice A consolidation request can fail to be processed on the beacon chain
+     * for various reasons. For example, the pending consolidation queue is full with 64 requests.
+     * This restores the validator states back to STAKED so they can be consolidated again or exited.
+     * @param sourcePubKeys The full public keys of the source validators that failed to be consolidated.
+     */
+    function failConsolidation(bytes[] calldata sourcePubKeys)
+        external
+        nonReentrant
+        whenNotPaused
+        onlyRegistrator
+    {
+        bytes32 sourcePubKeyHash;
+
+        // For each failed source validator
+        for (uint256 i = 0; i < sourcePubKeys.length; ++i) {
+            sourcePubKeyHash = keccak256(sourcePubKeys[i]);
+            require(
+                validatorsStates[sourcePubKeyHash] == VALIDATOR_STATE.EXITING,
+                "Source validator not exiting"
+            );
+
+            // Store the state of the source validator back to staked
+            validatorsStates[sourcePubKeyHash] == VALIDATOR_STATE.STAKED;
+        }
+
+        emit ConsolidationFailed(sourcePubKeys, sourcePubKeys.length);
+    }
+
+    /**
+     * @notice Confirms that a consolidation has completed successfully on the beacon chain.
+     * This reduces the number of active deposited validators managed by this strategy which
+     * reduces the strategy's balance.
+     * @param consolidationCount The number of source validators that were consolidated.
+     */
     function confirmConsolidation(uint256 consolidationCount)
         external
         nonReentrant

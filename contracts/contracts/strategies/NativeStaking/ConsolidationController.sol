@@ -98,13 +98,36 @@ contract ConsolidationController is Ownable {
     }
 
     /**
+     * @notice A consolidation request can fail to be processed on the beacon chain
+     * for various reasons. For example, the pending consolidation queue is full with 64 requests.
+     * This restores the consolidation count so that failed consolidations can be retried.
+     * @param sourcePubKeys The public keys of the source validators that failed to be consolidated.
+     */
+    function failConsolidation(bytes[] calldata sourcePubKeys)
+        external
+        onlyOwner
+    {
+        // Check consolidations are in progress
+        require(consolidationCount > 0, "No consolidation in progress");
+        require(
+            sourcePubKeys.length <= consolidationCount,
+            "Exceeds consolidation count"
+        );
+
+        consolidationCount -= SafeCast.toUint64(sourcePubKeys.length);
+
+        ValidatorAccountant(sourceStrategy).failConsolidation(sourcePubKeys);
+
+        // No event emitted as ConsolidationFailed is emitted from the old Native Staking Strategy
+    }
+
+    /**
      * @notice Confirm the consolidation of validators from an old Native Staking Strategy
      * to the new Compounding Staking Strategy has been completed.
      */
     function confirmConsolidation() external onlyOwner {
         // Check consolidations are in progress
         require(consolidationCount > 0, "No consolidation in progress");
-        // TODO verify the Beacon chain's consolidation request queue is empty
 
         // Reset consolidation state
         consolidationCount = 0;

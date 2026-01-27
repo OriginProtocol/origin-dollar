@@ -96,7 +96,10 @@ module.exports = deploymentWithGovernanceProposal(
     console.log(`Deploy ConsolidationController`);
     const dConsolidationController = await deployWithConfirmation(
       "ConsolidationController",
-      [addresses.multichainStrategist, addresses.mainnet.validatorRegistrator]
+      [
+        addresses.Guardian, // Admin 5/8 multisig
+        addresses.mainnet.validatorRegistrator, // Defender Relayer
+      ]
     );
 
     console.log(`Finished deploying contracts`);
