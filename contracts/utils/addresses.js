@@ -693,6 +693,7 @@ addresses.hoodi.defenderRelayer = "0x419B6BdAE482f41b8B194515749F3A2Da26d583b";
 addresses.hoodi.mockBeaconRoots = "0xdCfcAE4A084AA843eE446f400B23aA7B6340484b";
 
 // Crosschain Strategy
+// TODO delete: master - remote test address: 0x1743658b284a843b47f555343dbb628d46d0c254
 addresses.base.CrossChainRemoteStrategy = "TODO";
 addresses.mainnet.CrossChainMasterStrategy = "TODO";
 // CCTP Circle Contract addresses: https://developers.circle.com/cctp/references/contract-addresses
