@@ -146,7 +146,7 @@ const { claimMerklRewards } = require("./merkl");
 const { processCctpBridgeTransactions } = require("./crossChain");
 const { keyValueStoreLocalClient } = require("../utils/defender");
 const { configuration } = require("../utils/cctp");
-  
+
 const log = require("../utils/logger")("tasks");
 
 // Environment tasks.
@@ -1224,13 +1224,13 @@ task("stakeValidators").setAction(async (_, __, runSuper) => {
 });
 
 /**
- * This function relays the messages between mainnet and base networks. 
- * 
+ * This function relays the messages between mainnet and base networks.
+ *
  * IMPORTANT!!!
  * If possible please use the defender action and not local execution. The defender action stores into the cloud
  * key-value store the transaction hashes that have already been relayed. Relaying the transaction via this task
  * will make the defender relayer continuously fail relaying the transaction that has already been processed.
- * If the action is ran every ~12 hours and looks back for ~1 day worth of blocks it might fail to run 2-3 times and 
+ * If the action is ran every ~12 hours and looks back for ~1 day worth of blocks it might fail to run 2-3 times and
  * then skip some pending transactions that would need relaying.
  */
 task(
@@ -1263,7 +1263,7 @@ task(
 
     const isMainnet = networkName === "mainnet";
     const isBase = networkName === "base";
-  
+
     let config;
     if (isMainnet) {
       config = configuration.mainnetBaseMorpho.mainnet;
@@ -1283,7 +1283,8 @@ task(
       cctpDestinationDomainId: config.cctpDestinationDomainId,
       cctpSourceDomainId: config.cctpSourceDomainId,
       cctpIntegrationContractAddress: config.cctpIntegrationContractAddress,
-      cctpIntegrationContractAddressDestination: config.cctpIntegrationContractAddressDestination,
+      cctpIntegrationContractAddressDestination:
+        config.cctpIntegrationContractAddressDestination,
     });
   });
 

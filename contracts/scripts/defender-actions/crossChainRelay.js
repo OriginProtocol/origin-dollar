@@ -64,7 +64,8 @@ const handler = async (event) => {
     cctpDestinationDomainId: config.cctpDestinationDomainId,
     cctpSourceDomainId: config.cctpSourceDomainId,
     cctpIntegrationContractAddress: config.cctpIntegrationContractAddress,
-    cctpIntegrationContractAddressDestination: config.cctpIntegrationContractAddressDestination,
+    cctpIntegrationContractAddressDestination:
+      config.cctpIntegrationContractAddressDestination,
   });
 };
 

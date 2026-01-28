@@ -6,23 +6,26 @@ const cctpDomainIds = {
 };
 const api = "https://iris-api.circle.com";
 const configuration = {
-  mainnetBaseMorpho:{
+  mainnetBaseMorpho: {
     mainnet: {
       cctpDestinationDomainId: cctpDomainIds.Base,
       cctpSourceDomainId: cctpDomainIds.Ethereum,
-      cctpIntegrationContractAddress: addresses.mainnet.CrossChainMasterStrategy,
-      cctpIntegrationContractAddressDestination: addresses.base.CrossChainRemoteStrategy,
+      cctpIntegrationContractAddress:
+        addresses.mainnet.CrossChainMasterStrategy,
+      cctpIntegrationContractAddressDestination:
+        addresses.base.CrossChainRemoteStrategy,
       blockLookback: 14600, // a bit over 2 days in block time on mainnet
     },
     base: {
       cctpDestinationDomainId: cctpDomainIds.Ethereum,
       cctpSourceDomainId: cctpDomainIds.Base,
       cctpIntegrationContractAddress: addresses.base.CrossChainRemoteStrategy,
-      cctpIntegrationContractAddressDestination: addresses.mainnet.CrossChainMasterStrategy,
+      cctpIntegrationContractAddressDestination:
+        addresses.mainnet.CrossChainMasterStrategy,
       blockLookback: 87600, // a bit over 2 days in block time on base
-    }
-  }
-} 
+    },
+  },
+};
 
 module.exports = {
   cctpDomainIds,
