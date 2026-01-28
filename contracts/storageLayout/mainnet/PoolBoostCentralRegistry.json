@@ -19,5 +19,6 @@
       "label": "address[]",
       "numberOfBytes": "32"
     }
-  }
+  },
+  "namespaces": {}
 }
