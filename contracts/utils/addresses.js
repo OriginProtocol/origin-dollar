@@ -693,11 +693,10 @@ addresses.hoodi.defenderRelayer = "0x419B6BdAE482f41b8B194515749F3A2Da26d583b";
 addresses.hoodi.mockBeaconRoots = "0xdCfcAE4A084AA843eE446f400B23aA7B6340484b";
 
 // Crosschain Strategy
-// addresses.CrossChainStrategyProxy =
-//   "TBD";
-// addresses.mainnet.CrossChainStrategyProxy =
-//   "TBD";
-// addresses.base.CrossChainStrategyProxy =
-//   "TBD";
-
+addresses.base.CrossChainRemoteStrategy = "TODO";
+addresses.mainnet.CrossChainMasterStrategy = "TODO";
+// CCTP Circle Contract addresses: https://developers.circle.com/cctp/references/contract-addresses
+addresses.CCTPTokenMessengerV2 = "0x28b5a0e9c621a5badaa536219b3a228c8168cf5d";
+addresses.CCTPMessageTransmitterV2 =
+  "0x81D40F21F12A8F0E3252Bccb954D722d4c464B64";
 module.exports = addresses;
