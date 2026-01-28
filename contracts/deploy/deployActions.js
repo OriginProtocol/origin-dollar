@@ -1897,7 +1897,8 @@ const deployCrossChainRemoteStrategyImpl = async (
   implementationName = "CrossChainRemoteStrategy",
   tokenMessengerAddress = addresses.CCTPTokenMessengerV2,
   messageTransmitterAddress = addresses.CCTPMessageTransmitterV2,
-  governor = addresses.base.timelock
+  governor = addresses.base.timelock,
+  initialize = true
 ) => {
   const { deployerAddr, multichainStrategistAddr } = await getNamedAccounts();
   const sDeployer = await ethers.provider.getSigner(deployerAddr);
@@ -1925,22 +1926,24 @@ const deployCrossChainRemoteStrategyImpl = async (
     implementationName
   );
 
-  const initData = dCrossChainRemoteStrategy.interface.encodeFunctionData(
-    "initialize(address,address,uint16,uint16)",
-    [multichainStrategistAddr, multichainStrategistAddr, 2000, 0]
-  );
-
-  // Init the proxy to point at the implementation, set the governor, and call initialize
-  const initFunction = "initialize(address,address,bytes)";
-  await withConfirmation(
-    cCrossChainStrategyProxy.connect(sDeployer)[initFunction](
-      dCrossChainRemoteStrategy.address,
-      governor, // governor
-      //initData, // data for delegate call to the initialize function on the strategy
-      initData,
-      await getTxOpts()
-    )
-  );
+  if (initialize) {
+    const initData = dCrossChainRemoteStrategy.interface.encodeFunctionData(
+      "initialize(address,address,uint16,uint16)",
+      [multichainStrategistAddr, multichainStrategistAddr, 2000, 0]
+    );
+  
+    // Init the proxy to point at the implementation, set the governor, and call initialize
+    const initFunction = "initialize(address,address,bytes)";
+    await withConfirmation(
+      cCrossChainStrategyProxy.connect(sDeployer)[initFunction](
+        dCrossChainRemoteStrategy.address,
+        governor, // governor
+        //initData, // data for delegate call to the initialize function on the strategy
+        initData,
+        await getTxOpts()
+      )
+    );
+  }
 
   return dCrossChainRemoteStrategy.address;
 };
