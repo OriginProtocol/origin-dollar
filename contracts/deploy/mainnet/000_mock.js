@@ -28,6 +28,7 @@ const {
 const deployMocks = async ({ getNamedAccounts, deployments }) => {
   const { deploy } = deployments;
   const { deployerAddr, governorAddr } = await getNamedAccounts();
+  // const sDeployer = await ethers.provider.getSigner(deployerAddr);
 
   console.log("Running 000_mock deployment...");
   console.log("Deployer address", deployerAddr);
@@ -446,6 +447,26 @@ const deployMocks = async ({ getNamedAccounts, deployments }) => {
   await deploy("MockBeaconRoots", { from: deployerAddr });
   const mockBeaconRoots = await ethers.getContract("MockBeaconRoots");
   await replaceContractAt(addresses.mainnet.beaconRoots, mockBeaconRoots);
+
+  await deploy("CCTPMessageTransmitterMock", {
+    from: deployerAddr,
+    args: [usdc.address],
+  });
+  const messageTransmitter = await ethers.getContract(
+    "CCTPMessageTransmitterMock"
+  );
+  await deploy("CCTPTokenMessengerMock", {
+    from: deployerAddr,
+    args: [usdc.address, messageTransmitter.address],
+  });
+  await deploy("MockERC4626Vault", {
+    from: deployerAddr,
+    args: [usdc.address],
+  });
+  // const tokenMessenger = await ethers.getContract("CCTPTokenMessengerMock");
+  // await messageTransmitter
+  //   .connect(sDeployer)
+  //   .setCCTPTokenMessenger(tokenMessenger.address);
 
   console.log("000_mock deploy done.");
 

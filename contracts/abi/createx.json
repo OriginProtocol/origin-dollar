@@ -34,6 +34,30 @@
                 "internalType": "bytes",
                 "name": "initCode",
                 "type": "bytes"
+            }
+        ],
+        "name": "deployCreate3",
+        "outputs": [
+            {
+                "internalType": "address",
+                "name": "newContract",
+                "type": "address"
+            }
+        ],
+        "stateMutability": "payable",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "bytes32",
+                "name": "salt",
+                "type": "bytes32"
+            },
+            {
+                "internalType": "bytes",
+                "name": "initCode",
+                "type": "bytes"
             },
             {
                 "internalType": "bytes",
