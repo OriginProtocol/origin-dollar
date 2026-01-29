@@ -255,8 +255,8 @@ contract ConsolidationController is Ownable {
         // but can if the snapped balance is the start of the consolidation process.
         // That is, snappedTimestamp == consolidationStartTimestamp
         if (
-            consolidationCount > 0 ||
-            snappedTimestamp > consolidationStartTimestamp
+            consolidationCount > 0 &&
+            snappedTimestamp != consolidationStartTimestamp
         ) {
             revert("Consolidation in progress");
         }
