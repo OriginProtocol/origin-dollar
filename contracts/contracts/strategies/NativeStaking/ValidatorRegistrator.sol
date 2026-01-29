@@ -388,7 +388,7 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
     function requestConsolidation(
         bytes[] calldata sourcePubKeys,
         bytes calldata targetPubKey
-    ) external nonReentrant whenNotPaused onlyRegistrator {
+    ) external payable nonReentrant whenNotPaused onlyRegistrator {
         // Hash using the Native Staking Strategy's hashing method.
         // This is different to the Beacon chain's method.
         bytes32 targetPubKeyHash = keccak256(targetPubKey);

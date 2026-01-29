@@ -62,7 +62,7 @@ contract ConsolidationController is Ownable {
         address _sourceStrategy,
         bytes[] calldata sourcePubKeys,
         bytes calldata targetPubKey
-    ) external onlyOwner {
+    ) external payable onlyOwner {
         // Check no consolidations are already in progress
         require(consolidationCount == 0, "Consolidation in progress");
         // Check sourceStrategy is a valid old Native Staking Strategy
@@ -90,10 +90,9 @@ contract ConsolidationController is Ownable {
 
         // Call requestConsolidation on the old Native Staking Strategy
         // to initiate the consolidations
-        ValidatorAccountant(_sourceStrategy).requestConsolidation(
-            sourcePubKeys,
-            targetPubKey
-        );
+        ValidatorAccountant(_sourceStrategy).requestConsolidation{
+            value: msg.value
+        }(sourcePubKeys, targetPubKey);
 
         // Snap the balances for the last time on the new Compounding Staking Strategy
         // until the consolidations are confirmed
