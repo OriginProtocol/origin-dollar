@@ -46,13 +46,8 @@ const deployCore = async () => {
   const dWOSonic = await deployWithConfirmation("WOSonic", [
     cOSonicProxy.address, // Base token
   ]);
-  const dOSonicVaultCore = await deployWithConfirmation("OSonicVaultCore", [
-    cWS.address,
-  ]);
 
-  const dOSonicVaultAdmin = await deployWithConfirmation("OSonicVaultAdmin", [
-    cWS.address,
-  ]);
+  const dOSonicVault = await deployWithConfirmation("OSVault", [cWS.address]);
 
   // Get contract instances
   const cOSonic = await ethers.getContractAt("OSonic", cOSonicProxy.address);
@@ -61,7 +56,6 @@ const deployCore = async () => {
     "IVault",
     cOSonicVaultProxy.address
   );
-  const cOracleRouter = await ethers.getContract("MockOracleRouter");
 
   // Init OSonic
   const resolution = ethers.utils.parseUnits("1", 27);
@@ -82,16 +76,15 @@ const deployCore = async () => {
 
   // Init OSonicVault
   const initDataOSonicVault = cOSonicVault.interface.encodeFunctionData(
-    "initialize(address,address)",
+    "initialize(address)",
     [
-      cOracleRouter.address, // OracleRouter
       cOSonicProxy.address, // OSonic
     ]
   );
   // prettier-ignore
   await cOSonicVaultProxy
     .connect(sDeployer)["initialize(address,address,bytes)"](
-      dOSonicVaultCore.address,
+      dOSonicVault.address,
       governorAddr,
       initDataOSonicVault
     );
@@ -109,12 +102,8 @@ const deployCore = async () => {
       initDataWOSonic
     )
 
-  await cOSonicVaultProxy
-    .connect(sGovernor)
-    .upgradeTo(dOSonicVaultCore.address);
-  await cOSonicVault.connect(sGovernor).setAdminImpl(dOSonicVaultAdmin.address);
+  await cOSonicVaultProxy.connect(sGovernor).upgradeTo(dOSonicVault.address);
 
-  await cOSonicVault.connect(sGovernor).supportAsset(cWS.address, 0);
   await cOSonicVault.connect(sGovernor).unpauseCapital();
   // Set withdrawal claim delay to 1 day
   await cOSonicVault.connect(sGovernor).setWithdrawalClaimDelay(86400);
@@ -163,13 +152,13 @@ const deployStakingStrategy = async () => {
     cSonicStakingStrategy.interface.encodeFunctionData("initialize()", []);
   // prettier-ignore
   await withConfirmation(
-      cSonicStakingStrategyProxy
-        .connect(sDeployer)["initialize(address,address,bytes)"](
-          dSonicStakingStrategy.address,
-          governorAddr,
-          initSonicStakingStrategy
-        )
-    );
+    cSonicStakingStrategyProxy
+      .connect(sDeployer)["initialize(address,address,bytes)"](
+        dSonicStakingStrategy.address,
+        governorAddr,
+        initSonicStakingStrategy
+      )
+  );
 };
 
 const deployDripper = async () => {
@@ -191,12 +180,12 @@ const deployDripper = async () => {
   // prettier-ignore
   await withConfirmation(
     cOSonicDripperProxy
-        .connect(sDeployer)["initialize(address,address,bytes)"](
-          dFixedRateDripper.address,
-          governorAddr,
-          "0x"
-        )
-    );
+      .connect(sDeployer)["initialize(address,address,bytes)"](
+        dFixedRateDripper.address,
+        governorAddr,
+        "0x"
+      )
+  );
 };
 
 const main = async () => {

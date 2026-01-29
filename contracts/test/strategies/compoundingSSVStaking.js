@@ -1568,6 +1568,24 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
         ).state
       ).to.equal(2, "Validator state not 2 (STAKED)");
     });
+
+    it("Should fail removing a strategy with funds", async () => {
+      const { compoundingStakingSSVStrategy, oethVault, governor } = fixture;
+
+      await stakeValidators(0, 1);
+      if (
+        (await oethVault.defaultStrategy()) ===
+        compoundingStakingSSVStrategy.address
+      ) {
+        await oethVault.connect(governor).setDefaultStrategy(zero);
+      }
+
+      await expect(
+        oethVault
+          .connect(governor)
+          .removeStrategy(compoundingStakingSSVStrategy.address)
+      ).to.be.revertedWith("Strategy has funds");
+    });
   });
 
   describe("Verify deposits", () => {

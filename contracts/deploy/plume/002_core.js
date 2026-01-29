@@ -53,11 +53,10 @@ module.exports = deployOnPlume(
     const dOETHpVaultCore = await deployWithConfirmation("OETHBaseVaultCore", [
       addresses.plume.WETH,
     ]);
-    const dOETHpVaultAdmin = await deployWithConfirmation(
-      "OETHBaseVaultAdmin",
-      [addresses.plume.WETH]
-    );
-    console.log("OETHBaseVaultAdmin deployed at", dOETHpVaultAdmin.address);
+    const dOETHpVaultAdmin = await deployWithConfirmation("OETHBaseVault", [
+      addresses.plume.WETH,
+    ]);
+    console.log("OETHBaseVault deployed at", dOETHpVaultAdmin.address);
     // Get contract instances
     const cOETHp = await ethers.getContractAt("OETHPlume", cOETHpProxy.address);
     const cwOETHp = await ethers.getContractAt(

@@ -50,10 +50,7 @@ describe("Vault mock with rebase", async () => {
     const promise = expect(
       mockVault
         .connect(matt)
-        .redeem(
-          utils.parseUnits(`${redeemAmount}`, 18),
-          utils.parseUnits(`${redeemAmount}`, 18)
-        )
+        .requestWithdrawal(utils.parseUnits(`${redeemAmount}`, 18))
     );
 
     if (revertMessage) {

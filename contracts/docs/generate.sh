@@ -147,23 +147,19 @@ sol2uml storage .. -c WOSonic -o WOSonicStorage.svg --hideExpand  ______gap
 
 # contracts/vault
 
-sol2uml .. -v -hv -hf -he -hs -hl -hi -b OETHBaseVaultCore,OETHBaseVaultAdmin,OSonicVaultCore,OSonicVaultAdmin -o VaultHierarchy.svg
+sol2uml .. -v -hv -hf -he -hs -hl -hi -i prettier-plugin-solidity -b OUSDVault,OETHVault,OETHBaseVault,OSonicVault -o VaultHierarchy.svg
 
-sol2uml .. -s -d 0 -b VaultCore -o VaultCoreSquashed.svg
-sol2uml .. -s -d 0 -b VaultAdmin -o VaultAdminSquashed.svg
-sol2uml storage .. -c VaultCore -o VaultStorage.svg --hideExpand __gap,______gap,_deprecated_swapTokens
+sol2uml .. -s -d 0 -i prettier-plugin-solidity -b OUSDVault -o VaultSquashed.svg
+sol2uml storage .. -i prettier-plugin-solidity -c OUSDVault -o VaultStorage.svg --hideExpand __gap,______gap,_deprecated_swapTokens
 
-sol2uml .. -s -d 0 -b OETHVaultCore -o OETHVaultCoreSquashed.svg
-sol2uml .. -s -d 0 -b OETHVaultAdmin -o OETHVaultAdminSquashed.svg
-sol2uml storage .. -c OETHVaultCore -o OETHVaultStorage.svg --hideExpand __gap,______gap,_deprecated_swapTokens
+# sol2uml .. -s -d 0 -i prettier-plugin-solidity -b OETHVault -o OETHVaultSquashed.svg
+# sol2uml storage .. -i prettier-plugin-solidity -c OETHVault -o OETHVaultStorage.svg --hideExpand __gap,______gap,_deprecated_swapTokens
 
-sol2uml .. -s -d 0 -b OETHBaseVaultCore -o OETHBaseVaultCoreSquashed.svg
-sol2uml .. -s -d 0 -b OETHBaseVaultAdmin -o OETHBaseVaultAdminSquashed.svg
-sol2uml storage .. -c OETHBaseVaultCore -o OETHBaseVaultStorage.svg --hideExpand __gap,______gap
+# sol2uml .. -s -d 0 -i prettier-plugin-solidity -b OETHBaseVault -o OETHBaseVaultSquashed.svg
+# sol2uml storage .. -i prettier-plugin-solidity -c OETHBaseVault -o OETHBaseVaultStorage.svg --hideExpand __gap,______gap
 
-sol2uml .. -s -d 0 -b OSonicVaultCore -o OSonicVaultCoreSquashed.svg
-sol2uml .. -s -d 0 -b OSonicVaultAdmin -o OSonicVaultAdminSquashed.svg
-sol2uml storage .. -c OSonicVaultCore -o OSonicVaultStorage.svg --hideExpand __gap,______gap,_deprecated_swapTokens
+# sol2uml .. -s -d 0 -i prettier-plugin-solidity -b OSonicVault -o OSonicVaultSquashed.svg
+# sol2uml storage .. -i prettier-plugin-solidity -c OSonicVault -o OSonicVaultStorage.svg --hideExpand __gap,______gap,_deprecated_swapTokens
 
 # contracts/poolBooster
 # call stack size exceeded

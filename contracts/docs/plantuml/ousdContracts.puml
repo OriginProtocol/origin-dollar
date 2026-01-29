@@ -32,22 +32,15 @@ object "Curve USDC AMO\nStrategy" as curveAmoStrat <<Origin>><<Proxy>> #DeepSkyB
     rewards: CRV
 }
 
-' Oracle
-object "OracleRouter" as oracle <<Origin>> #DeepSkyBlue {
-pairs:
-    USDC/USD
-}
-
 checker ..> ousd
 checker ..> vault
 
 wousd ..> ousd
 ousd <.> vault
-vault ..> oracle
 
 ' Strategies
-vault <...> musd
-vault <...> curveAmoStrat
+vault <..> musd
+vault <..> curveAmoStrat
 
 
 @enduml
