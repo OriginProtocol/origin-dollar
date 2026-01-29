@@ -205,8 +205,13 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
 
     /// @dev Throws if called by any account other than the Registrator
     modifier onlyRegistrator() {
-        require(msg.sender == validatorRegistrator, "Not Registrator");
+        _onlyRegistrator();
         _;
+    }
+
+    /// @dev internal function used to reduce contract size
+    function _onlyRegistrator() internal view {
+        require(msg.sender == validatorRegistrator, "Not Registrator");
     }
 
     /// @dev Throws if called by any account other than the Registrator or Governor
@@ -1013,7 +1018,7 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
     function verifyBalances(
         BalanceProofs calldata balanceProofs,
         PendingDepositProofs calldata pendingDepositProofs
-    ) external {
+    ) external onlyRegistrator {
         // Load previously snapped balances for the given block root
         Balances memory balancesMem = snappedBalance;
         // Check the balances are the latest

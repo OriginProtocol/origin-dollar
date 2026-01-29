@@ -435,6 +435,7 @@ async function verifyDeposit({
 async function verifyBalances({
   indexes,
   deposits,
+  activeIds,
   dryrun,
   test,
   signer,
@@ -467,6 +468,17 @@ async function verifyBalances({
     networkName
   );
   const verificationSlot = blockView.slot;
+
+  // Update validator balances so they become active
+  // Used to generated test data for fork tests
+  if (activeIds) {
+    const validatorIndexes = activeIds.split(",").map((index) => Number(index));
+    for (const validatorIndex of validatorIndexes) {
+      stateView.balances.set(validatorIndex, parseUnits("32.5", 9)); // 32.5 ETH
+    }
+  }
+  const stateRootGindex = blockView.type.getPathInfo(["stateRoot"]).gindex;
+  blockTree.setNode(stateRootGindex, stateView.node);
 
   const {
     leaf: pendingDepositContainerRoot,
@@ -589,10 +601,10 @@ async function verifyBalances({
       `validatorBalances: [${validatorBalancesFormatted.join(", ")}]`
     );
     console.log(
-      `\npendingDepositsContainerRoot           : ${pendingDepositContainerRoot}`
+      `\npendingDepositContainerRoot: ${pendingDepositContainerRoot}`
     );
     console.log(
-      `\npendingDepositsContainerProof:\n${pendingDepositContainerProof}`
+      `\npendingDepositContainerProof:\n${pendingDepositContainerProof}`
     );
     console.log(
       `\npendingDepositIndexes:\n[${pendingDepositIndexes
