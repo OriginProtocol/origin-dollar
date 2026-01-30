@@ -153,7 +153,12 @@ contract ConsolidationController is Ownable {
             "Consolidation expired"
         );
 
-        // Reset consolidation state
+        // Load into memory as the storage is about to be reset.
+        // These are used in the external contract calls
+        address sourceStrategyMem = sourceStrategy;
+        uint256 consolidationCountMem = consolidationCount;
+
+        // Reset consolidation state before external calls
         consolidationCount = 0;
         consolidationStartTimestamp = 0;
         sourceStrategy = address(0);
@@ -163,8 +168,8 @@ contract ConsolidationController is Ownable {
         targetStrategy.verifyBalances(balanceProofs, pendingDepositProofs);
 
         // Reduce the balance of the old Native Staking Strategy
-        ValidatorAccountant(sourceStrategy).confirmConsolidation(
-            consolidationCount
+        ValidatorAccountant(sourceStrategyMem).confirmConsolidation(
+            consolidationCountMem
         );
 
         // No event emitted as ConsolidationConfirmed is emitted from the old Native Staking Strategy

@@ -456,7 +456,7 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
     function confirmConsolidation(uint256 consolidationCount)
         external
         nonReentrant
-        whenPaused
+        whenNotPaused
         onlyRegistrator
     {
         // Store the reduced number of active deposited validators
