@@ -2161,7 +2161,7 @@ subtask("verifyBalances", "Verify validator balances on the Beacon chain")
   .addOptionalParam(
     "activeIds",
     "A comma separated list of validator IDs to set the balance to 33 ETH so they become active for tests.",
-    false,
+    "",
     types.string
   )
   .setAction(async (taskArgs) => {
