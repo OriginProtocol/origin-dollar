@@ -435,7 +435,8 @@ async function verifyDeposit({
 async function verifyBalances({
   indexes,
   deposits,
-  activeIds,
+  overIds,
+  overBals,
   dryrun,
   test,
   signer,
@@ -471,10 +472,16 @@ async function verifyBalances({
 
   // Update validator balances so they become active
   // Used to generated test data for fork tests
-  if (activeIds) {
-    const validatorIndexes = activeIds.split(",").map((index) => Number(index));
-    for (const validatorIndex of validatorIndexes) {
-      stateView.balances.set(validatorIndex, parseUnits("32.5", 9)); // 32.5 ETH
+  if (overIds) {
+    const validatorIndexes = overIds.split(",").map((index) => Number(index));
+    const validatorBalances = overBals
+      .split(",")
+      .map((balance) => parseUnits(balance, 9)); // in Gwei
+    if (overIds.split(",").length !== overBals.split(",").length) {
+      throw new Error("Mismatched lengths for overIds and overBals");
+    }
+    for (const [i, validatorIndex] of validatorIndexes.entries()) {
+      stateView.balances.set(validatorIndex, validatorBalances[i]);
     }
   }
   const stateRootGindex = blockView.type.getPathInfo(["stateRoot"]).gindex;

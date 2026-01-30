@@ -2159,8 +2159,14 @@ subtask("verifyBalances", "Verify validator balances on the Beacon chain")
     types.boolean
   )
   .addOptionalParam(
-    "activeIds",
-    "A comma separated list of validator IDs to set the balance to 33 ETH so they become active for tests.",
+    "overIds",
+    "A comma separated list of validator IDs to override balances.",
+    "",
+    types.string
+  )
+  .addOptionalParam(
+    "overBals",
+    "A comma separated list of validator balances to override in Gwei.",
     "",
     types.string
   )
