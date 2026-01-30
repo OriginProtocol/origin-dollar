@@ -408,7 +408,7 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
 
             // Store the state of the source validator as exiting so it can be removed
             // after the consolidation is confirmed
-            validatorsStates[sourcePubKeyHash] == VALIDATOR_STATE.EXITING;
+            validatorsStates[sourcePubKeyHash] = VALIDATOR_STATE.EXITING;
         }
 
         emit ConsolidationRequested(
