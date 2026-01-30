@@ -413,11 +413,96 @@ describe("ForkTest: Consolidation of Staking Strategies", function () {
 
       await expect(tx).to.be.revertedWith("Source validator not staked");
     });
-    // - Fail to request consolidate from a validator that is EXIT_COMPLETE sate
-    // - Fail to request consolidation from an invalid source validator
-    // - Fail to request consolidation to an invalid target validator
-    // - Fail to request consolidation to a validator that is STAKED
-    // - Fail to request consolidation to a target validator that has a pending deposit
+    it("Fail to request consolidation from an unkown source validator", async () => {
+      const unknownValidatorPubKey =
+        "0x808f0e79b73f968e064ecba2702a65bed93cf46149a69f0e4de921b44eab3fd456a1ca0f082887069e5831e139eb2690";
+
+      // Source validator pre-conditions
+      expect(
+        await nativeStakingStrategy2.validatorsStates(
+          keccak256(unknownValidatorPubKey)
+        )
+      ).to.equal(0); // UNKNOWN state
+
+      const tx = consolidationController
+        .connect(adminSigner)
+        .requestConsolidation(
+          nativeStakingStrategy2.address,
+          [unknownValidatorPubKey],
+          activeTargetPubKey,
+          { value: 1 }
+        );
+
+      await expect(tx).to.be.revertedWith("Source validator not staked");
+    });
+    it("Fail to request consolidation to an UNKNOWN target validator", async () => {
+      const unknownValidatorPubKey =
+        "0x808f0e79b73f968e064ecba2702a65bed93cf46149a69f0e4de921b44eab3fd456a1ca0f082887069e5831e139eb2690";
+
+      // Target validator pre-conditions
+      const targetPubKeyHash = hashPubKey(unknownValidatorPubKey);
+      const validatorData = await compoundingStakingStrategy.validator(
+        targetPubKeyHash
+      );
+      expect(validatorData.state).to.equal(0); // Unknown status
+
+      const tx = consolidationController
+        .connect(adminSigner)
+        .requestConsolidation(
+          nativeStakingStrategy2.address,
+          [secondClusterPubKeys[0]],
+          unknownValidatorPubKey,
+          { value: 1 }
+        );
+
+      await expect(tx).to.be.revertedWith("Target validator not active");
+    });
+    it("Fail to request consolidation to a STKAKED target validator", async () => {
+      const stakedCompoundingValidatorPubKey =
+        "0xa4258aa50aba9d7441f734213ae76fad9809572a593765c25c25d7afd42b83baba06397bd9e264a9fa24c3327a308682";
+
+      // Target validator pre-conditions
+      const targetPubKeyHash = hashPubKey(stakedCompoundingValidatorPubKey);
+      const validatorData = await compoundingStakingStrategy.validator(
+        targetPubKeyHash
+      );
+      expect(validatorData.state).to.equal(2); // Staked status
+
+      const tx = consolidationController
+        .connect(adminSigner)
+        .requestConsolidation(
+          nativeStakingStrategy2.address,
+          [secondClusterPubKeys[0]],
+          stakedCompoundingValidatorPubKey,
+          { value: 1 }
+        );
+
+      await expect(tx).to.be.revertedWith("Target validator not active");
+    });
+    it("Fail to request consolidation to a target validator with a pending deposit", async () => {
+      const activeWithDepositCompoundingValidatorPubKey =
+        "0x87b76ce8ea170a8a6db6842848eca2f3117367ada43120401a7f3095498a910a1455352bd12d15f5a07693f61e5b8c37";
+
+      // Target validator pre-conditions
+      const targetPubKeyHash = hashPubKey(
+        activeWithDepositCompoundingValidatorPubKey
+      );
+      const validatorData = await compoundingStakingStrategy.validator(
+        targetPubKeyHash
+      );
+      expect(validatorData.state).to.equal(4); // Active status
+
+      const tx = consolidationController
+        .connect(adminSigner)
+        .requestConsolidation(
+          nativeStakingStrategy2.address,
+          [secondClusterPubKeys[0]],
+          activeWithDepositCompoundingValidatorPubKey,
+          { value: 1 }
+        );
+
+      await expect(tx).to.be.revertedWith("Target has pending deposit");
+    });
     // - Fail to request consolidation if not validator registrator
     // - Fail to request consolidation when there's an active consolidation
   });

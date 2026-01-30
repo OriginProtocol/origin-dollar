@@ -79,7 +79,7 @@ contract ConsolidationController is Ownable {
         // Check no pending deposits in the new target validator
         require(
             _hasPendingDeposit(targetPubKeyHashMem) == false,
-            "Target has pending deposits"
+            "Target has pending deposit"
         );
 
         // Store the state at the start of the consolidation process
