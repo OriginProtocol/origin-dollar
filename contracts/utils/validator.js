@@ -717,7 +717,7 @@ const broadcastRegisterValidator = async (
       );
 
     await logTxDetails(tx, "registerSsvValidators");
-    
+
     log(
       `Transaction to register SSV Validator has been broadcast with hash: ${tx.hash}`
     );
