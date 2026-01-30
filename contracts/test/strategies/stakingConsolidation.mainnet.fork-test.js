@@ -204,7 +204,7 @@ describe("ForkTest: Consolidation of Staking Strategies", function () {
       .verifyBalances(balanceProofs, pendingDepositProofs);
   };
 
-  describe("When no consolidation in process", () => {
+  describe("When no consolidation in progress", () => {
     beforeEach(async () => {
       await activateTargetValidators(fixture);
     });
@@ -503,7 +503,158 @@ describe("ForkTest: Consolidation of Staking Strategies", function () {
 
       await expect(tx).to.be.revertedWith("Target has pending deposit");
     });
-    // - Fail to request consolidation if not validator registrator
-    // - Fail to request consolidation when there's an active consolidation
+    it("Fail to request consolidation on contract controller if not admin multsig", async () => {
+      const { josh, strategist, timelock } = fixture;
+      const sourceValidators = [secondClusterPubKeys[0]];
+
+      const users = [registratorSigner, josh, strategist, timelock];
+
+      for (const user of users) {
+        const tx = consolidationController
+          .connect(user)
+          .requestConsolidation(
+            nativeStakingStrategy2.address,
+            sourceValidators,
+            activeTargetPubKey,
+            { value: 1 }
+          );
+
+        await expect(tx).to.be.revertedWith("Ownable: caller is not the owner");
+      }
+    });
+    it("Fail to request consolidation on native staking strategy if not admin multsig", async () => {
+      const { josh, strategist, timelock } = fixture;
+      const sourceValidators = [secondClusterPubKeys[0]];
+
+      // The Defender Relayer, not the contract controller
+      const validatorRegistrator = await impersonateAndFund(
+        addresses.mainnet.validatorRegistrator
+      );
+
+      const users = [
+        adminSigner,
+        validatorRegistrator,
+        josh,
+        strategist,
+        timelock,
+      ];
+
+      for (const user of users) {
+        const tx = nativeStakingStrategy2
+          .connect(user)
+          .requestConsolidation(sourceValidators, activeTargetPubKey, {
+            value: 1,
+          });
+
+        await expect(tx).to.be.revertedWith("Caller is not the Registrator");
+      }
+    });
+    it("Fail to call fail consolidation when there's no active consolidation", async () => {
+      const tx = consolidationController
+        .connect(adminSigner)
+        .failConsolidation([secondClusterPubKeys[0]]);
+
+      await expect(tx).to.be.revertedWith("No consolidation in progress");
+    });
+  });
+  describe("When consolidation in progress", () => {
+    const sourceValidators = [
+      secondClusterPubKeys[0],
+      secondClusterPubKeys[1],
+      secondClusterPubKeys[2],
+    ];
+    beforeEach(async () => {
+      await activateTargetValidators(fixture);
+
+      await consolidationController
+        .connect(adminSigner)
+        .requestConsolidation(
+          nativeStakingStrategy2.address,
+          sourceValidators,
+          activeTargetPubKey,
+          { value: sourceValidators.length }
+        );
+    });
+    it("Fail to request consolidation when there's an active consolidation", async () => {
+      const tx = consolidationController
+        .connect(adminSigner)
+        .requestConsolidation(
+          nativeStakingStrategy2.address,
+          [secondClusterPubKeys[3]],
+          activeTargetPubKey,
+          { value: 1 }
+        );
+
+      await expect(tx).to.be.revertedWith("Consolidation in progress");
+    });
+    //  Should be able to verify balance when the consolidation was requested
+    // 	Should be able to call snapBalance on the Compounding Staking Strategy
+    // 	Should fail to verifyBalance of a snapshot after the consolidation was started
+
+    // When a consolidation has been requested
+    it("Should call fail consolidation of a single validator", async () => {
+      const consolidationCountBefore =
+        await consolidationController.consolidationCount();
+      expect(consolidationCountBefore).to.equal(3);
+
+      const tx = await consolidationController
+        .connect(adminSigner)
+        .failConsolidation([sourceValidators[0]]);
+
+      await expect(tx)
+        .to.emit(nativeStakingStrategy2, "ConsolidationFailed")
+        .withArgs([sourceValidators[0]], 1);
+      await expect(await consolidationController.consolidationCount()).to.equal(
+        consolidationCountBefore.sub(1)
+      );
+      expect(await consolidationController.sourceStrategy()).to.equal(
+        nativeStakingStrategy2.address
+      );
+    });
+    it("Should call fail consolidation for multiple validators", async () => {
+      const consolidationCountBefore =
+        await consolidationController.consolidationCount();
+      expect(consolidationCountBefore).to.equal(3);
+
+      const failedValidators = [sourceValidators[0], sourceValidators[1]];
+
+      const tx = await consolidationController
+        .connect(adminSigner)
+        .failConsolidation(failedValidators);
+
+      await expect(tx)
+        .to.emit(nativeStakingStrategy2, "ConsolidationFailed")
+        .withArgs(failedValidators, failedValidators.length);
+      await expect(await consolidationController.consolidationCount()).to.equal(
+        consolidationCountBefore.sub(failedValidators.length)
+      );
+      expect(await consolidationController.sourceStrategy()).to.equal(
+        nativeStakingStrategy2.address
+      );
+      expect(await consolidationController.targetPubKeyHash()).to.not.equal(
+        ethers.constants.HashZero
+      );
+    });
+    it("Should call fail consolidation for all validators and reset state", async () => {
+      const consolidationCountBefore =
+        await consolidationController.consolidationCount();
+      expect(consolidationCountBefore).to.equal(3);
+
+      const tx = await consolidationController
+        .connect(adminSigner)
+        .failConsolidation(sourceValidators);
+
+      await expect(tx)
+        .to.emit(nativeStakingStrategy2, "ConsolidationFailed")
+        .withArgs(sourceValidators, sourceValidators.length);
+      expect(await consolidationController.consolidationCount()).to.equal(0);
+      expect(await consolidationController.sourceStrategy()).to.equal(
+        ethers.constants.AddressZero
+      );
+      expect(await consolidationController.targetPubKeyHash()).to.equal(
+        ethers.constants.HashZero
+      );
+    });
+    // Should fail to call fail consolidation if not validator registrator
   });
 });

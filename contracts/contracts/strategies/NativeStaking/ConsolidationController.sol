@@ -118,8 +118,12 @@ contract ConsolidationController is Ownable {
             "Exceeds consolidation count"
         );
 
-        consolidationCount -= SafeCast.toUint64(sourcePubKeys.length);
+        // Read into memory in case it gets reset in storage before
+        // the external call to the source strategy
+        address sourceStrategyMem = sourceStrategy;
 
+        // Store updated consolidation state
+        consolidationCount -= SafeCast.toUint64(sourcePubKeys.length);
         if (consolidationCount == 0) {
             // Reset the rest of the consolidation state
             consolidationStartTimestamp = 0;
@@ -127,7 +131,7 @@ contract ConsolidationController is Ownable {
             targetPubKeyHash = bytes32(0);
         }
 
-        ValidatorAccountant(sourceStrategy).failConsolidation(sourcePubKeys);
+        ValidatorAccountant(sourceStrategyMem).failConsolidation(sourcePubKeys);
 
         // No event emitted as ConsolidationFailed is emitted from the old Native Staking Strategy
     }
