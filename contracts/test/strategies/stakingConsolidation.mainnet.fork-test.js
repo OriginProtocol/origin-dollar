@@ -7,6 +7,7 @@ const { resolveContract } = require("../../utils/resolvers");
 const { impersonateAndFund } = require("../../utils/signers");
 
 const { createFixtureLoader, beaconChainFixture } = require("../_fixture");
+const { advanceTime } = require("../helpers");
 const loadFixture = createFixtureLoader(beaconChainFixture);
 
 const secondClusterOperatorIds = [752, 753, 754, 755];
@@ -133,6 +134,7 @@ describe("ForkTest: Consolidation of Staking Strategies", function () {
       );
 
     // Get the current block timestamp
+    await advanceTime(12);
     const { timestamp: currentTimestamp } = await ethers.provider.getBlock(
       "latest"
     );
@@ -526,14 +528,9 @@ describe("ForkTest: Consolidation of Staking Strategies", function () {
       const { josh, strategist, timelock } = fixture;
       const sourceValidators = [secondClusterPubKeys[0]];
 
-      // The Defender Relayer, not the contract controller
-      const validatorRegistrator = await impersonateAndFund(
-        addresses.mainnet.validatorRegistrator
-      );
-
       const users = [
         adminSigner,
-        validatorRegistrator,
+        registratorSigner,
         josh,
         strategist,
         timelock,
@@ -588,8 +585,16 @@ describe("ForkTest: Consolidation of Staking Strategies", function () {
       await expect(tx).to.be.revertedWith("Consolidation in progress");
     });
     //  Should be able to verify balance when the consolidation was requested
-    // 	Should be able to call snapBalance on the Compounding Staking Strategy
+    it("Should call snapBalance on the Compounding Staking Strategy", async () => {
+      const { josh } = fixture;
+      await advanceTime(12 * 40);
+
+      const tx = await compoundingStakingStrategy.connect(josh).snapBalances();
+
+      await expect(tx).to.emit(compoundingStakingStrategy, "BalancesSnapped");
+    });
     // 	Should fail to verifyBalance of a snapshot after the consolidation was started
+    it("Should fail to verifyBalances after consolidation was requested", async () => {});
 
     // When a consolidation has been requested
     it("Should call fail consolidation of a single validator", async () => {
@@ -655,6 +660,23 @@ describe("ForkTest: Consolidation of Staking Strategies", function () {
         ethers.constants.HashZero
       );
     });
-    // Should fail to call fail consolidation if not validator registrator
+    it("Should fail to call fail consolidation if not admin multisig", async () => {
+      const { josh, strategist, timelock } = fixture;
+      const sourceValidators = [secondClusterPubKeys[0]];
+
+      const users = [registratorSigner, josh, strategist, timelock];
+
+      for (const user of users) {
+        const tx = consolidationController
+          .connect(user)
+          .failConsolidation([sourceValidators[0]]);
+
+        await expect(tx).to.be.revertedWith("Ownable: caller is not the owner");
+      }
+    });
+
+    // Should confirm consolidation
+    // then changes in the strategy balances should net off
+    // Should fail to confirm consolidation when no consolidation
   });
 });
