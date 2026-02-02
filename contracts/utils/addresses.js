@@ -185,6 +185,10 @@ addresses.mainnet.CurveOETHGauge = "0xd03BE91b1932715709e18021734fcB91BB431715";
 addresses.mainnet.CVXETHRewardsPool =
   "0x24b65DC1cf053A8D96872c323d29e86ec43eB33A";
 
+// Curve OETH/WETH pool
+addresses.mainnet.CurveOETHAMOStrategy =
+  "0xba0e352AB5c13861C26e4E773e7a833C3A223FE6";
+
 addresses.mainnet.CurveOETHETHplusGauge =
   "0xCAe10a7553AccA53ad58c4EC63e3aB6Ad6546F71";
 
