@@ -12,6 +12,7 @@ import { Cluster } from "../../interfaces/ISSVNetwork.sol";
 /// @notice
 /// @author Origin Protocol Inc
 contract ConsolidationController is Ownable {
+    uint256 MIN_CONSOLIDATION_PERIOD = 256 * 32 * 12; // ~27 hours in seconds
     address internal constant WETH = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
     address internal constant NativeStakingStrategy2 =
         0x4685dB8bF2Df743c861d71E6cFb5347222992076;
@@ -147,10 +148,11 @@ contract ConsolidationController is Ownable {
     ) external onlyOwner {
         // Check consolidations are in progress
         require(consolidationCount > 0, "No consolidation in progress");
-        // TODO is there a min time before a consolidation can be processed on the beacon chain?
+        // There a min time before a consolidation can be processed on the beacon chain
         require(
-            uint64(block.timestamp) > consolidationStartTimestamp,
-            "Consolidation expired"
+            uint64(block.timestamp) >
+                consolidationStartTimestamp + MIN_CONSOLIDATION_PERIOD,
+            "Source not withdrawable"
         );
 
         // Load into memory as the storage is about to be reset.
