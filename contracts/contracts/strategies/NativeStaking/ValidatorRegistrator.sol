@@ -403,12 +403,12 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
                 "Source validator not staked"
             );
 
-            // Request consolidation from source to target validator
-            BeaconConsolidation.request(sourcePubKeys[i], targetPubKey);
-
             // Store the state of the source validator as exiting so it can be removed
             // after the consolidation is confirmed
             validatorsStates[sourcePubKeyHash] = VALIDATOR_STATE.EXITING;
+
+            // Request consolidation from source to target validator
+            BeaconConsolidation.request(sourcePubKeys[i], targetPubKey);
         }
 
         emit ConsolidationRequested(

@@ -12,7 +12,7 @@ import { Cluster } from "../../interfaces/ISSVNetwork.sol";
 /// @notice
 /// @author Origin Protocol Inc
 contract ConsolidationController is Ownable {
-    uint256 MIN_CONSOLIDATION_PERIOD = 256 * 32 * 12; // ~27 hours in seconds
+    uint256 internal constant MIN_CONSOLIDATION_PERIOD = 256 * 32 * 12; // ~27 hours in seconds
     address internal constant WETH = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
     address internal constant NativeStakingStrategy2 =
         0x4685dB8bF2Df743c861d71E6cFb5347222992076;
@@ -25,7 +25,7 @@ contract ConsolidationController is Ownable {
         );
 
     /// @notice Address of the registrator
-    address public validatorRegistrator;
+    address public immutable validatorRegistrator;
 
     /// @notice Number of validators being consolidated
     uint64 public consolidationCount;
