@@ -1,5 +1,5 @@
 const { expect } = require("chai");
-const { keccak256 } = require("ethers/lib/utils");
+const { keccak256, parseUnits } = require("ethers/lib/utils");
 
 const addresses = require("../../utils/addresses");
 const { calcBlockTimestamp, hashPubKey } = require("../../utils/beacon");
@@ -8,6 +8,7 @@ const { impersonateAndFund } = require("../../utils/signers");
 
 const { createFixtureLoader, beaconChainFixture } = require("../_fixture");
 const { advanceTime } = require("../helpers");
+const { calcDepositRoot } = require("../../tasks/beaconTesting");
 const loadFixture = createFixtureLoader(beaconChainFixture);
 
 const secondClusterOperatorIds = [752, 753, 754, 755];
@@ -53,6 +54,7 @@ const secondClusterPubKeys = [
   "0xb065146c773f831935702bb58d0fae499cf8e3c89db491efeb04e1545aee69dc3c077e5d5e470bbc888dbf3478891bc8",
 ];
 
+const thirdClusterOperatorIds = [338, 339, 340, 341];
 const thirdClusterPubKeys = [
   "0x999702d1ad3f224ac76dca1edcb91c5e7d1e05bd13646cd4d0b0fa1252ad3ace4d8b34f48a7c4ca13c84a7c71f175c72",
   "0xa5fe057240ad0ea978f7ac58130ff124c733de28ac271878178d00017b91353062bcc220cabaeccbc77fba71a48d4dfa",
@@ -364,6 +366,25 @@ describe("ForkTest: Consolidation of Staking Strategies", function () {
         )
       ).to.equal(3); // EXITING state
     });
+    it("Fail to request consolidation with duplicate source validators", async () => {
+      const sourceValidators = [
+        secondClusterPubKeys[0],
+        secondClusterPubKeys[1],
+        // duplicated on purpose to testing
+        secondClusterPubKeys[0],
+      ];
+
+      const tx = consolidationController
+        .connect(adminSigner)
+        .requestConsolidation(
+          nativeStakingStrategy2.address,
+          sourceValidators,
+          activeTargetPubKey,
+          { value: 3 }
+        );
+
+      await expect(tx).to.revertedWith("Source validator not staked");
+    });
     it("Fail to request consolidate from a validator that is EXITING state", async () => {
       const exitedValidatorPubKey = secondClusterPubKeys[0];
       // Exit a validator from the second cluster
@@ -553,6 +574,143 @@ describe("ForkTest: Consolidation of Staking Strategies", function () {
 
       await expect(tx).to.be.revertedWith("No consolidation in progress");
     });
+    it("Fail to directly call verifyBalance on the Compounding Staking Strategy", async () => {
+      await advanceTime(12 * 40);
+      await compoundingStakingStrategy.snapBalances();
+
+      const tx = compoundingStakingStrategy
+        .connect(registratorSigner)
+        .verifyBalances(balanceProofs, pendingDepositProofs);
+
+      await expect(tx).to.be.revertedWith("Not Registrator");
+    });
+    it("Should call doAccounting via the Consolidation Controller", async () => {
+      await consolidationController
+        .connect(registratorSigner)
+        .doAccounting(nativeStakingStrategy2.address);
+
+      await consolidationController
+        .connect(registratorSigner)
+        .doAccounting(nativeStakingStrategy3.address);
+    });
+    it("Fail to directly call doAccounting via the old Native Staking Strategies", async () => {
+      let tx = nativeStakingStrategy2.connect(registratorSigner).doAccounting();
+      await expect(tx).to.be.revertedWith("Caller is not the Registrator");
+
+      tx = nativeStakingStrategy3.connect(registratorSigner).doAccounting();
+      await expect(tx).to.be.revertedWith("Caller is not the Registrator");
+    });
+    it("Should exit source validators via the consolidation controller", async () => {
+      await consolidationController
+        .connect(registratorSigner)
+        .exitSsvValidator(
+          nativeStakingStrategy2.address,
+          secondClusterPubKeys[0],
+          secondClusterOperatorIds
+        );
+
+      await consolidationController
+        .connect(registratorSigner)
+        .exitSsvValidator(
+          nativeStakingStrategy3.address,
+          thirdClusterPubKeys[0],
+          thirdClusterOperatorIds
+        );
+    });
+    it("Fail to exit source validators directly to the native staking strategies", async () => {
+      let tx = nativeStakingStrategy2
+        .connect(registratorSigner)
+        .exitSsvValidator(secondClusterPubKeys[0], secondClusterOperatorIds);
+      await expect(tx).to.be.revertedWith("Caller is not the Registrator");
+
+      tx = nativeStakingStrategy3
+        .connect(registratorSigner)
+        .exitSsvValidator(thirdClusterPubKeys[0], thirdClusterOperatorIds);
+      await expect(tx).to.be.revertedWith("Caller is not the Registrator");
+    });
+    it("Fail to remove source validators directly to the native staking strategies", async () => {
+      const emptyCluster = [
+        0, // validatorCount
+        0, // networkFeeIndex
+        0, // index
+        true, // active
+        0, // balance
+      ];
+
+      let tx = nativeStakingStrategy2
+        .connect(registratorSigner)
+        .removeSsvValidator(
+          secondClusterPubKeys[0],
+          secondClusterOperatorIds,
+          emptyCluster
+        );
+      await expect(tx).to.be.revertedWith("Caller is not the Registrator");
+
+      tx = nativeStakingStrategy3
+        .connect(registratorSigner)
+        .removeSsvValidator(
+          thirdClusterPubKeys[0],
+          thirdClusterOperatorIds,
+          emptyCluster
+        );
+      await expect(tx).to.be.revertedWith("Caller is not the Registrator");
+    });
+    it("Should partial withdraw from compounding validator via the consolidation controller", async () => {
+      const withdrawAmount = ethers.utils.parseEther("2", 9);
+      const targetPubKeyHash = hashPubKey(activeTargetPubKey);
+
+      const tx = await consolidationController
+        .connect(registratorSigner)
+        .validatorWithdrawal(activeTargetPubKey, withdrawAmount, { value: 1 });
+
+      await expect(tx)
+        .to.emit(compoundingStakingStrategy, "ValidatorWithdraw")
+        .withArgs(targetPubKeyHash, withdrawAmount.mul(parseUnits("1", 9)));
+    });
+    it("Fail validatoer exit from compounding validator via the consolidation controller", async () => {
+      const tx = consolidationController
+        .connect(registratorSigner)
+        .validatorWithdrawal(activeTargetPubKey, 0, { value: 1 });
+
+      await expect(tx).to.be.revertedWith("No exit during migration");
+    });
+    it("Should stake to compounding validator via the consolidation controller", async () => {
+      const depositEth = "3";
+      const depositGwei = parseUnits(depositEth, 9);
+      const depositWei = parseUnits(depositEth, 18);
+      const targetPubKeyHash = hashPubKey(activeTargetPubKey);
+
+      const emptySignature =
+        "0x000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000";
+
+      const depositDataRoot = await calcDepositRoot(
+        compoundingStakingStrategy.address,
+        "0x02",
+        activeTargetPubKey,
+        emptySignature,
+        depositEth
+      );
+
+      const tx = await consolidationController
+        .connect(registratorSigner)
+        .stakeEth(
+          {
+            pubkey: activeTargetPubKey,
+            signature: emptySignature,
+            depositDataRoot: depositDataRoot,
+          },
+          depositGwei
+        );
+
+      await expect(tx)
+        .to.emit(compoundingStakingStrategy, "ETHStaked")
+        .withNamedArgs({
+          pubKeyHash: targetPubKeyHash,
+          // pendingDepositRoot
+          pubKey: activeTargetPubKey,
+          amountWei: depositWei,
+        });
+    });
   });
   describe("When consolidation in progress", () => {
     const sourceValidators = [
@@ -613,7 +771,7 @@ describe("ForkTest: Consolidation of Staking Strategies", function () {
 
       await expect(tx).to.emit(compoundingStakingStrategy, "BalancesSnapped");
     });
-    it("Should fail to verifyBalance of a snapshot after the consolidation was started", async () => {
+    it("Fail to verifyBalance of a snapshot after the consolidation was started", async () => {
       await advanceTime(12 * 40);
       await compoundingStakingStrategy.snapBalances();
 
@@ -687,7 +845,7 @@ describe("ForkTest: Consolidation of Staking Strategies", function () {
         ethers.constants.HashZero
       );
     });
-    it("Should fail to call fail consolidation if not admin multisig", async () => {
+    it("Fail to call fail consolidation if not admin multisig", async () => {
       const { josh, strategist, timelock } = fixture;
       const sourceValidators = [secondClusterPubKeys[0]];
 
@@ -700,6 +858,32 @@ describe("ForkTest: Consolidation of Staking Strategies", function () {
 
         await expect(tx).to.be.revertedWith("Ownable: caller is not the owner");
       }
+    });
+    it("Fail to stake to target of active consolidation", async () => {
+      const depositEth = "3";
+      const depositGwei = parseUnits(depositEth, 9);
+
+      const emptySignature =
+        "0x000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000";
+
+      const depositDataRoot = await calcDepositRoot(
+        compoundingStakingStrategy.address,
+        "0x02",
+        activeTargetPubKey,
+        emptySignature,
+        depositEth
+      );
+
+      const tx = consolidationController.connect(registratorSigner).stakeEth(
+        {
+          pubkey: activeTargetPubKey,
+          signature: emptySignature,
+          depositDataRoot: depositDataRoot,
+        },
+        depositGwei
+      );
+
+      await expect(tx).to.be.revertedWith("Stake to consolidation target");
     });
   });
   describe("When consolidation in progress and balances snapped", () => {
