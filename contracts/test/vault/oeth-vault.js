@@ -256,6 +256,39 @@ describe("OETH Vault", function () {
         weth.address,
       ]);
     });
+
+    it("Should reset mint whitelist flag when removing a strategy", async () => {
+      const { oethVault, weth, governor } = fixture;
+
+      // Deploy a mock strategy that can be removed
+      const dMockStrategy = await deployWithConfirmation("MockStrategy");
+      const mockStrategy = await ethers.getContractAt(
+        "MockStrategy",
+        dMockStrategy.address
+      );
+
+      // Set up the mock strategy to support withdrawAll
+      await mockStrategy.setWithdrawAll(weth.address, oethVault.address);
+
+      // Approve the strategy
+      await oethVault.connect(governor).approveStrategy(mockStrategy.address);
+
+      // Add strategy to mint whitelist
+      await oethVault
+        .connect(governor)
+        .addStrategyToMintWhitelist(mockStrategy.address);
+
+      // Verify it's whitelisted
+      expect(await oethVault.isMintWhitelistedStrategy(mockStrategy.address)).to
+        .be.true;
+
+      // Remove the strategy
+      await oethVault.connect(governor).removeStrategy(mockStrategy.address);
+
+      // Verify the mint whitelist flag is reset
+      expect(await oethVault.isMintWhitelistedStrategy(mockStrategy.address)).to
+        .be.false;
+    });
   });
 
   describe("Remove Asset", () => {
