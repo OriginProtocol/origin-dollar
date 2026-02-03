@@ -9,33 +9,40 @@ import { ValidatorAccountant } from "./ValidatorAccountant.sol";
 import { Cluster } from "../../interfaces/ISSVNetwork.sol";
 
 /// @title Consolidation Controller
-/// @notice
+/// @notice Orchestrates the consolidation of validators from old Native Staking Strategies
+/// to the new Compounding Staking Strategy.
 /// @author Origin Protocol Inc
 contract ConsolidationController is Ownable {
-    uint256 internal constant MIN_CONSOLIDATION_PERIOD = 256 * 32 * 12; // ~27 hours in seconds
-    address internal constant WETH = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
+    /// @dev Minimum time that must pass before a consolidation request can be processed.
+    /// 256 epochs * 32 slots/epoch * 12 seconds/slot = 98304 seconds (~27 hours)
+    /// The actual time can be a lot longer than this depending on the number of
+    /// requests in the beacon chain's pending consolidation queue.
+    uint256 internal constant MIN_CONSOLIDATION_PERIOD = 256 * 32 * 12;
+    /// @dev The old Native Staking Strategy connected to the second SSV cluster
     address internal constant NativeStakingStrategy2 =
         0x4685dB8bF2Df743c861d71E6cFb5347222992076;
+    /// @dev The old Native Staking Strategy connected to the third SSV cluster
     address internal constant NativeStakingStrategy3 =
         0xE98538A0e8C2871C2482e1Be8cC6bd9F8E8fFD63;
-    /// @dev The new Compounding Staking Strategy Proxy
+    /// @dev The new Compounding Staking Strategy
     CompoundingStakingSSVStrategy internal constant targetStrategy =
         CompoundingStakingSSVStrategy(
             payable(0xaF04828Ed923216c77dC22a2fc8E077FDaDAA87d)
         );
 
-    /// @notice Address of the registrator
+    /// @notice Address of the validator registrator account
     address public immutable validatorRegistrator;
 
     /// @notice Number of validators being consolidated
     uint64 public consolidationCount;
+    /// @notice Timestamp when the consolidation process was requested
     uint64 public consolidationStartTimestamp;
     /// @notice The address of the source Native Staking Strategy being consolidated from
     address public sourceStrategy;
     /// @notice The public key hash of the target validator on the new Compounding Staking Strategy
     bytes32 public targetPubKeyHash;
 
-    /// @dev Throws if called by any account other than the Registrator
+    /// @dev Throws if called by any account other than the Validator Registrator
     modifier onlyRegistrator() {
         require(
             msg.sender == validatorRegistrator,
@@ -44,8 +51,8 @@ contract ConsolidationController is Ownable {
         _;
     }
 
-    /// @param _owner The owner who can request and confirm consolidations
-    /// @param _validatorRegistrator The registrator who does operations on the old staking strategy
+    /// @param _owner The owner who can request, fail and confirm consolidations
+    /// @param _validatorRegistrator The validator registrator who does operations on the old staking strategy
     constructor(address _owner, address _validatorRegistrator) {
         _transferOwnership(_owner);
 
@@ -105,7 +112,8 @@ contract ConsolidationController is Ownable {
     /**
      * @notice A consolidation request can fail to be processed on the beacon chain
      * for various reasons. For example, the pending consolidation queue is full with 262,144 requests.
-     * This restores the consolidation count so that failed consolidations can be retried.
+     * Or the source validator has exited from a voluntary exit request.
+     * This reduces the consolidation count and changes the validator state back to STAKED.
      * @param sourcePubKeys The public keys of the source validators that failed to be consolidated.
      */
     function failConsolidation(bytes[] calldata sourcePubKeys)
@@ -140,6 +148,23 @@ contract ConsolidationController is Ownable {
     /**
      * @notice Confirm the consolidation of validators from an old Native Staking Strategy
      * to the new Compounding Staking Strategy has been completed.
+     * @param balanceProofs a `BalanceProofs` struct containing the following:
+     * - balancesContainerRoot: The merkle root of the balances container
+     * - balancesContainerProof: The merkle proof for the balances container to the beacon block root.
+     *    This is 9 witness hashes of 32 bytes each concatenated together starting from the leaf node.
+     * - validatorBalanceLeaves: Array of leaf nodes containing the validator balance with three other balances.
+     * - validatorBalanceProofs: Array of merkle proofs for the validator balance to the Balances container root.
+     *    This is 39 witness hashes of 32 bytes each concatenated together starting from the leaf node.
+     * @param pendingDepositProofs a `PendingDepositProofs` struct containing the following:
+     * - pendingDepositContainerRoot: The merkle root of the pending deposits list container
+     * - pendingDepositContainerProof: The merkle proof from the pending deposits list container
+     *     to the beacon block root.
+     *    This is 9 witness hashes of 32 bytes each concatenated together starting from the leaf node.
+     * - pendingDepositIndexes: Array of indexes in the pending deposits list container for each
+     *    of the strategy's deposits.
+     * - pendingDepositProofs: Array of merkle proofs for each strategy deposit in the
+     *    beacon chain's pending deposit list container to the pending deposits list container root.
+     *    These are 28 witness hashes of 32 bytes each concatenated together starting from the leaf node.
      */
     function confirmConsolidation(
         CompoundingValidatorManager.BalanceProofs calldata balanceProofs,
@@ -183,7 +208,9 @@ contract ConsolidationController is Ownable {
      *
      */
 
-    /// @dev The registrator of the old Native Staking Strategy can call doAccounting
+    /// @notice The validator registrator of the old Native Staking Strategy can call doAccounting
+    /// @param _sourceStrategy The address of the old Native Staking Strategy
+    /// @return accountingValid true if accounting was successful, false if fuse is blown
     function doAccounting(address _sourceStrategy)
         external
         onlyRegistrator
@@ -198,6 +225,7 @@ contract ConsolidationController is Ownable {
     /**
      * @notice Exit of source validators are allowed during the consolidation process
      * as consolidated validators will be in EXITING state hence can not be consolidated after exit.
+     * Only callable by the validator registrator.
      * @param _sourceStrategy The address of the old Native Staking Strategy
      * @param publicKey The public key of the validator to exit which must have STAKED state.
      * @param operatorIds The operator IDs for the source SSV cluster
@@ -219,6 +247,7 @@ contract ConsolidationController is Ownable {
     /**
      * @notice Removing source validators is not allowed during the consolidation process
      * as consolidated validators will be in EXITING state hence can not be consolidated after removal.
+     * Only callable by the validator registrator.
      * @param _sourceStrategy The address of the old Native Staking Strategy
      * @param publicKey The public key of the validator to remove which must have EXITING or REGISTERED state.
      * @param operatorIds The operator IDs for the source SSV cluster
@@ -254,6 +283,23 @@ contract ConsolidationController is Ownable {
     /**
      * @notice Anyone can verify balances on the new Compounding Staking Strategy
      * as long as there are no consolidations in progress.
+     * @param balanceProofs a `BalanceProofs` struct containing the following:
+     * - balancesContainerRoot: The merkle root of the balances container
+     * - balancesContainerProof: The merkle proof for the balances container to the beacon block root.
+     *    This is 9 witness hashes of 32 bytes each concatenated together starting from the leaf node.
+     * - validatorBalanceLeaves: Array of leaf nodes containing the validator balance with three other balances.
+     * - validatorBalanceProofs: Array of merkle proofs for the validator balance to the Balances container root.
+     *    This is 39 witness hashes of 32 bytes each concatenated together starting from the leaf node.
+     * @param pendingDepositProofs a `PendingDepositProofs` struct containing the following:
+     * - pendingDepositContainerRoot: The merkle root of the pending deposits list container
+     * - pendingDepositContainerProof: The merkle proof from the pending deposits list container
+     *     to the beacon block root.
+     *    This is 9 witness hashes of 32 bytes each concatenated together starting from the leaf node.
+     * - pendingDepositIndexes: Array of indexes in the pending deposits list container for each
+     *    of the strategy's deposits.
+     * - pendingDepositProofs: Array of merkle proofs for each strategy deposit in the
+     *    beacon chain's pending deposit list container to the pending deposits list container root.
+     *    These are 28 witness hashes of 32 bytes each concatenated together starting from the leaf node.
      */
     function verifyBalances(
         CompoundingValidatorManager.BalanceProofs calldata balanceProofs,
@@ -277,7 +323,11 @@ contract ConsolidationController is Ownable {
     /// @notice Partial withdrawals are allowed during consolidation from the new Compounding Staking Strategy.
     /// This includes partial withdrawals from the target validator.
     // Full validator exits from any Compounding Staking Strategy validator are
-    // not allowed during the migration period.
+    /// not allowed during the migration period.
+    /// Only the registrator can call this function.
+    /// @param publicKey The public key of the validator
+    /// @param amountGwei The amount of ETH to be withdrawn from the validator in Gwei.
+    /// A zero amount is not allowed.
     function validatorWithdrawal(bytes calldata publicKey, uint64 amountGwei)
         external
         payable
@@ -296,6 +346,10 @@ contract ConsolidationController is Ownable {
     /**
      * @notice Deposits to Compounding Staking Strategy validators that are
      * not the target of a consolidation are allowed.
+     * Only the registrator can call this function.
+     * @param validatorStakeData validator data needed to stake.
+     * The `ValidatorStakeData` struct contains the pubkey, signature and depositDataRoot.
+     * @param depositAmountGwei The amount of WETH to stake to the validator in Gwei.
      */
     function stakeEth(
         CompoundingValidatorManager.ValidatorStakeData
@@ -311,7 +365,8 @@ contract ConsolidationController is Ownable {
     }
 
     /// removeSsvValidator from the new Compounding Staking Strategy is not allowed until after
-    /// all the validators have been consolidated
+    /// all the validators have been consolidated. This is done by restoring the validator registrator
+    /// back to the account used before the consolidation upgrades.
 
     /**
      *
@@ -319,8 +374,9 @@ contract ConsolidationController is Ownable {
      *
      */
 
-    /// @notice Check if there are any pending deposits for a validator with a given public key hash.
+    /// @dev Check if there are any pending deposits for a validator with a given public key hash.
     /// Need to iterate over the target strategy’s `deposits`
+    /// @return True if there is at least one pending deposit for the validator
     function _hasPendingDeposit(bytes32 _targetPubKeyHash)
         internal
         view
@@ -345,12 +401,15 @@ contract ConsolidationController is Ownable {
         return false;
     }
 
-    /// @notice Hash a validator public key using the Beacon Chain's format
+    /// @dev Hash a validator public key using the Beacon Chain's format
+    /// @param pubKey The full validator public key
+    /// @return The hashed public key using the Beacon Chain's hashing for BLSPubkey
     function _hashPubKey(bytes memory pubKey) internal pure returns (bytes32) {
         return sha256(abi.encodePacked(pubKey, bytes16(0)));
     }
 
     /// @dev Check source strategy is a valid old Native Staking Strategy
+    /// @param _sourceStrategy The address of the old Native Staking Strategy
     function _checkSourceStrategy(address _sourceStrategy) internal pure {
         require(
             _sourceStrategy == NativeStakingStrategy2 ||
