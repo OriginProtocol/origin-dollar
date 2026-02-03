@@ -50,6 +50,7 @@ abstract contract AbstractCCTPIntegrator is Governable, IMessageHandlerV2 {
     // Ref: https://developers.circle.com/cctp/technical-guide#message-body
     // Ref: https://github.com/circlefin/evm-cctp-contracts/blob/master/src/messages/v2/BurnMessageV2.sol
     uint8 private constant BURN_MESSAGE_V2_VERSION_INDEX = 0;
+    uint8 private constant BURN_MESSAGE_V2_BURN_TOKEN_INDEX = 4;
     uint8 private constant BURN_MESSAGE_V2_RECIPIENT_INDEX = 36;
     uint8 private constant BURN_MESSAGE_V2_AMOUNT_INDEX = 68;
     uint8 private constant BURN_MESSAGE_V2_MESSAGE_SENDER_INDEX = 100;
@@ -471,6 +472,12 @@ abstract contract AbstractCCTPIntegrator is Governable, IMessageHandlerV2 {
                     messageBody.length >= BURN_MESSAGE_V2_HOOK_DATA_INDEX,
                 "Invalid burn message"
             );
+
+            // Ensure the burn token is USDC
+            address burnToken = messageBody.extractAddress(
+                BURN_MESSAGE_V2_BURN_TOKEN_INDEX
+            );
+            require(burnToken == usdcToken, "Invalid burn token");
 
             // Address of caller of depositForBurn (or depositForBurnWithCaller) on source domain
             sender = messageBody.extractAddress(
