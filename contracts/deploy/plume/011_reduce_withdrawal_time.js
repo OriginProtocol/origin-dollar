@@ -7,7 +7,10 @@ module.exports = deployOnPlume(
   },
   async ({ ethers }) => {
     const cOETHpVaultProxy = await ethers.getContract("OETHPlumeVaultProxy");
-    const cOETHpVault = await ethers.getContractAt("IVault", cOETHpVaultProxy.address);
+    const cOETHpVault = await ethers.getContractAt(
+      "IVault",
+      cOETHpVaultProxy.address
+    );
 
     // ----------------
     // Governance Actions

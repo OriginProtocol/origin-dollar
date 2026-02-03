@@ -1931,7 +1931,7 @@ const deployCrossChainRemoteStrategyImpl = async (
       "initialize(address,address,uint16,uint16)",
       [multichainStrategistAddr, multichainStrategistAddr, 2000, 0]
     );
-  
+
     // Init the proxy to point at the implementation, set the governor, and call initialize
     const initFunction = "initialize(address,address,bytes)";
     await withConfirmation(
