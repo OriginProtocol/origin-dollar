@@ -18,13 +18,13 @@ flowchart LR
   subgraph Base["Base (Spoke Chain)"]
     BaseVault[SpokeVault]
     BaseOUSD[SpokeRebasingOUSD]
-    BaseAMO[Local AMO (optional)]
+    BaseAMO["Local AMO (optional)"]
   end
 
   subgraph SEI["SEI (Spoke Chain)"]
     SeiVault[SpokeVault]
     SeiOUSD[SpokeRebasingOUSD]
-    SeiAMO[Local AMO (optional)]
+    SeiAMO["Local AMO (optional)"]
   end
 
   User -->|mint/withdraw| BaseVault
