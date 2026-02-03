@@ -181,6 +181,17 @@ abstract contract VaultAdmin is VaultCore {
         require(strategies[_addr].isSupported, "Strategy not approved");
         require(defaultStrategy != _addr, "Strategy is default for asset");
 
+        // 1e13 for 18 decimals. And 1e1(10) for 6 decimals
+        uint256 maxDustBalance = uint256(1e13).scaleBy(assetDecimals, 18);
+
+        // Require all funds to be withdrawn before strategy can be removed.
+        // This prevents accounting discrepancies for cross-chain strategies
+        // where withdrawAll() is asynchronous.
+        require(
+            IStrategy(_addr).checkBalance(asset) < maxDustBalance,
+            "Strategy has funds"
+        );
+
         // Initialize strategyIndex with out of bounds result so function will
         // revert if no valid index found
         uint256 stratCount = allStrategies.length;
@@ -199,21 +210,6 @@ abstract contract VaultAdmin is VaultCore {
             // Mark the strategy as not supported
             strategies[_addr].isSupported = false;
 
-            // Withdraw all asset
-            IStrategy strategy = IStrategy(_addr);
-            strategy.withdrawAll();
-
-            // 1e13 for 18 decimals. And 1e1(10) for 6 decimals
-            uint256 maxDustBalance = uint256(1e13).scaleBy(assetDecimals, 18);
-
-            /*
-             * Some strategies are not able to withdraw all of their funds in a synchronous call.
-             * Prevent the possible accidental removal of such strategies before their funds are withdrawn.
-             */
-            require(
-                strategy.checkBalance(asset) < maxDustBalance,
-                "Strategy has funds"
-            );
             emit StrategyRemoved(_addr);
         }
     }
