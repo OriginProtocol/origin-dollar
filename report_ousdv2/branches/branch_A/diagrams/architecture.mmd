@@ -1,0 +1,39 @@
+%% Phase 2 Branch A Architecture
+%% UNKNOWN: None in this diagram; destination chain labeled Base per deploy scripts.
+flowchart LR
+  subgraph Actors
+    User[User/EOA]
+    Governor[Governor/Timelock]
+    Strategist[Strategist]
+    Operator[Operator/Relayer]
+    CCTPTransmitter[CCTP MessageTransmitter]
+    CCTPMessenger[CCTP TokenMessenger]
+  end
+
+  subgraph Mainnet
+    Vault[OUSD Vault]
+    Master[CrossChainMasterStrategy]
+    ProxyA[CrossChainStrategyProxy]
+  end
+
+  subgraph Base["Base (Destination Chain)"]
+    Remote[CrossChainRemoteStrategy]
+    ERC4626[ERC-4626 Vault]
+    ProxyB[CrossChainStrategyProxy]
+  end
+
+  User -->|mint USDC| Vault
+  Governor -->|configure strategy| Vault
+  Strategist -->|allocate/withdraw| Vault
+  Vault -->|deposit USDC| Master
+  Master -->|delegatecall| ProxyA
+
+  Master -->|CCTP depositForBurnWithHook| CCTPMessenger
+  CCTPTransmitter -->|deliver message| Remote
+  Operator -->|relay CCTP message| Remote
+  Remote -->|deposit/withdraw| ERC4626
+  Remote -->|balance update| CCTPTransmitter
+  Remote -->|delegatecall| ProxyB
+
+  %% Trust boundary
+  CCTPMessenger -. Cross-chain messenger boundary .- CCTPTransmitter

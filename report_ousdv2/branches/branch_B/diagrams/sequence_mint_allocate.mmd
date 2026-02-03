@@ -1,0 +1,10 @@
+%% Branch B Sequence: mint -> allocate (single asset)
+%% UNKNOWN: No cross-chain dispatch in this branch.
+sequenceDiagram
+  actor User
+  participant Vault as OUSD Vault
+  participant Strategy as Default Strategy
+
+  User->>Vault: mint(amount)
+  Vault->>Vault: _mint (scale by assetDecimals)
+  Vault->>Strategy: deposit (via _allocate)

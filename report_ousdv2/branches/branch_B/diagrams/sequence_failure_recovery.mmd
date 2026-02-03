@@ -1,0 +1,10 @@
+%% Branch B Sequence: failure recovery (vault-level pauses)
+%% UNKNOWN: No cross-chain outage handling in this branch.
+sequenceDiagram
+  participant Vault as OUSD Vault
+  actor Governor
+  actor Strategist
+
+  Governor->>Vault: pauseCapital()
+  Strategist->>Vault: pauseRebase()
+  Note over Vault: Vault pauses available via VaultAdmin

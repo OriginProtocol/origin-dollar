@@ -1,0 +1,9 @@
+%% Branch B Sequence: yield accrual -> rebase
+%% UNKNOWN: No explicit harvest function in VaultCore; yield assumed via strategy balance growth.
+sequenceDiagram
+  participant Strategy as Default Strategy
+  participant Vault as OUSD Vault
+
+  Strategy-->>Strategy: Yield accrues (external to Vault)
+  Vault->>Vault: _rebase uses _checkBalance(asset)
+  Vault->>Vault: oUSD.changeSupply

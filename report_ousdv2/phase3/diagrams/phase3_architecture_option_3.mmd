@@ -1,0 +1,23 @@
+%% Phase 3 Option 3 Architecture - Burn-mint messaging (OFT-like)
+%% UNKNOWN: Exact messaging endpoint and governance model.
+flowchart LR
+  subgraph Actors
+    User[User/EOA]
+    Governor[Governor]
+  end
+
+  subgraph Mainnet
+    OUSD[OUSD Token]
+    AdapterM[Omnichain Mainnet Adapter]
+  end
+
+  subgraph L2["Destination Chain"]
+    AdapterL2[Omnichain L2 Adapter]
+    OUSDL2[OUSD on L2]
+  end
+
+  User -->|transfer cross-chain| AdapterM
+  AdapterM -->|burn| OUSD
+  AdapterL2 -->|mint| OUSDL2
+
+  AdapterM -. trust boundary .- AdapterL2

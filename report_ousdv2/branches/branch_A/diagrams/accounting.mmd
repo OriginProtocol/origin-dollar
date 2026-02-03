@@ -1,0 +1,17 @@
+%% Phase 2 Branch A Accounting Relationships
+%% UNKNOWN: None in this diagram; derived from checkBalance implementations.
+flowchart TD
+  VaultValue[Vault total value] -->|uses| CheckBalance[VaultCore._checkBalance]
+  CheckBalance -->|includes| StrategyBalance[IStrategy.checkBalance]
+
+  subgraph MasterStrategy[CrossChainMasterStrategy.checkBalance]
+    LocalUSDC[Local USDC balance]
+    Pending[pendingAmount]
+    RemoteBal[remoteStrategyBalance]
+    LocalUSDC --> Sum
+    Pending --> Sum
+    RemoteBal --> Sum
+  end
+
+  StrategyBalance -->|for USDC asset| Sum
+  Sum --> VaultValue

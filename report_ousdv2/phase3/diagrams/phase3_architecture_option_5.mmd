@@ -1,0 +1,50 @@
+%% Phase 3 Option 5 Architecture - Hub-spoke rebasing with async withdrawals + AMO
+%% UNKNOWN: Specific messenger/bridge stack and OUSD-specific AMO contracts on Base/SEI.
+flowchart LR
+  subgraph Actors
+    User[User/EOA]
+    Governor[Governor/Timelock]
+    Relayer[Relayer/Operator]
+  end
+
+  subgraph Ethereum["Ethereum (Hub)"]
+    HubVault[OUSD Vault]
+    HubCredit[HubCreditManager]
+    OUSD[OUSD Token]
+    Morpho[Morpho Strategy]
+    RebaseSync[RebaseSyncer]
+  end
+
+  subgraph Base["Base (Spoke Chain)"]
+    BaseVault[SpokeVault]
+    BaseOUSD[SpokeRebasingOUSD]
+    BaseAMO[Local AMO (optional)]
+  end
+
+  subgraph SEI["SEI (Spoke Chain)"]
+    SeiVault[SpokeVault]
+    SeiOUSD[SpokeRebasingOUSD]
+    SeiAMO[Local AMO (optional)]
+  end
+
+  User -->|mint/withdraw| BaseVault
+  BaseVault --> BaseOUSD
+  User -->|mint/withdraw| SeiVault
+  SeiVault --> SeiOUSD
+
+  BaseVault -->|credit usage + reports| HubCredit
+  SeiVault -->|credit usage + reports| HubCredit
+
+  BaseVault -->|bridge USDC| HubVault
+  SeiVault -->|bridge USDC| HubVault
+  HubVault -->|deposit USDC| Morpho
+
+  RebaseSync -->|rebase updates| BaseOUSD
+  RebaseSync -->|rebase updates| SeiOUSD
+
+  BaseVault -->|local liquidity| BaseAMO
+  SeiVault -->|local liquidity| SeiAMO
+
+  %% Trust boundaries
+  Relayer -. cross-chain messenger .- HubCredit
+  Relayer -. cross-chain messenger .- RebaseSync

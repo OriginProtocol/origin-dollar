@@ -1,0 +1,13 @@
+%% Phase 3 Failure + Recovery - Option 1 (Bridge outage)
+%% UNKNOWN: Lockbox refund path and bridge retry semantics.
+sequenceDiagram
+  participant Lockbox as OUSD Lockbox
+  participant Bridge as Bridge Adapter
+  actor Governor
+  actor User
+
+  User->>Lockbox: depositOUSD(amount, destChain, recipient)
+  Lockbox->>Bridge: bridgeMint(destChain, recipient, amount)
+  Bridge--xLockbox: bridge failure
+  Note over Lockbox: OUSD remains locked (refund semantics UNKNOWN)
+  Governor->>Lockbox: pause or cap bridge (new control)

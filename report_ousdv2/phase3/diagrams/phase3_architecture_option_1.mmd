@@ -1,0 +1,30 @@
+%% Phase 3 Option 1 Architecture - Canonical bridged OUSD
+%% UNKNOWN: Specific bridge/messenger not selected.
+flowchart LR
+  subgraph Actors
+    User[User/EOA]
+    Governor[Governor]
+    BridgeOps[Bridge Operator]
+  end
+
+  subgraph Mainnet
+    Vault[OUSD Vault]
+    Lockbox[OUSD Lockbox]
+    OUSD[OUSD Token]
+  end
+
+  subgraph L2["Destination Chain"]
+    Bridged[BridgedOUSD]
+    L2LP[L2 Liquidity Pools]
+  end
+
+  User -->|mint/redeem| Vault
+  Vault --> OUSD
+  Governor -->|configure| Lockbox
+  OUSD -->|escrow| Lockbox
+
+  Lockbox -->|bridge mint/burn| Bridged
+  Bridged --> L2LP
+
+  BridgeOps -. trust boundary .- Lockbox
+  BridgeOps -. trust boundary .- Bridged

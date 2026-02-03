@@ -1,0 +1,25 @@
+%% Phase 3 Option 4 Architecture - Liquidity-only expansion
+%% UNKNOWN: Bridge/messenger stack for moving OUSD to L2.
+flowchart LR
+  subgraph Actors
+    User[User/EOA]
+    Governor[Governor]
+    LiquidityOps[Liquidity Operator]
+  end
+
+  subgraph Mainnet
+    Vault[OUSD Vault]
+    OUSD[OUSD Token]
+  end
+
+  subgraph L2["Destination Chain"]
+    Bridged[Bridged OUSD]
+    Pools[L2 Liquidity Pools]
+  end
+
+  User -->|mint/redeem| Vault
+  Vault --> OUSD
+  LiquidityOps -->|bridge OUSD| Bridged
+  Bridged --> Pools
+
+  LiquidityOps -. trust boundary .- Bridged

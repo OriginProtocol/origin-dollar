@@ -1,0 +1,26 @@
+%% Phase 3 Option 2 Architecture - Hub-and-spoke lockbox
+%% UNKNOWN: Exact credit reconciliation protocol.
+flowchart LR
+  subgraph Actors
+    User[User/EOA]
+    Governor[Governor]
+    Reporter[Balance Reporter]
+  end
+
+  subgraph Mainnet
+    Vault[OUSD Vault]
+    Hub[HubCreditManager]
+  end
+
+  subgraph L2["Spoke Chain"]
+    SpokeVault[Spoke Vault]
+    SpokeToken[Spoke OUSD]
+  end
+
+  User -->|mint/redeem| SpokeVault
+  SpokeVault --> SpokeToken
+  SpokeVault -->|report net mint/burn| Hub
+  Hub -->|credit limits| SpokeVault
+  Vault --> Hub
+
+  Reporter -. trust boundary .- Hub

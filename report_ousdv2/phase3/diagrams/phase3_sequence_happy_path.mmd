@@ -1,0 +1,16 @@
+%% Phase 3 Happy Path - Option 1 (Canonical bridged OUSD)
+%% UNKNOWN: Specific bridge API calls; shown generically.
+sequenceDiagram
+  actor User
+  participant Vault as OUSD Vault
+  participant OUSD as OUSD Token
+  participant Lockbox as OUSD Lockbox
+  participant Bridge as Bridge Adapter
+  participant Bridged as BridgedOUSD
+
+  User->>Vault: mint(amount)
+  Vault->>OUSD: mint(to, amount)
+  User->>Lockbox: depositOUSD(amount, destChain, recipient)
+  Lockbox->>OUSD: transferFrom(user, lockbox)
+  Lockbox->>Bridge: bridgeMint(destChain, recipient, amount)
+  Bridge->>Bridged: mint(recipient, amount)

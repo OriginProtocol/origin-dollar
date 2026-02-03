@@ -1,0 +1,7 @@
+%% Branch B Accounting Relationships (single asset)
+%% UNKNOWN: No per-chain or cross-chain balances in this branch.
+flowchart TD
+  VaultValue[Vault total value] -->|uses| CheckBalance[VaultCore._checkBalance]
+  CheckBalance --> VaultBal[Vault asset balance]
+  CheckBalance --> StratBal[Sum of strategy.checkBalance(asset)]
+  CheckBalance --> Queue[Withdrawal queue adjustment]

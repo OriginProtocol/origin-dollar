@@ -1,0 +1,19 @@
+%% Phase 2 Branch A Sequence: bridge outage and recovery paths
+%% UNKNOWN: No dedicated cross-chain pause in strategy; only Vault pause functions exist.
+sequenceDiagram
+  participant Master as CrossChainMasterStrategy
+  participant Vault as OUSD Vault
+  participant Remote as CrossChainRemoteStrategy
+  actor Operator
+  actor Governor
+
+  Master->>Master: _getNextNonce -> pending transfer
+  Note over Operator,Remote: Bridge/messenger outage
+  Operator--xRemote: relay(message, attestation) fails
+  Master->>Master: isTransferPending() == true
+  Vault-->>Master: withdrawAll() called
+  Master-->>Vault: returns early (pending transfer)
+
+  Governor->>Vault: pauseCapital()
+  Governor->>Vault: pauseRebase()
+  Note over Governor,Vault: Vault pauses are available while transfer remains pending

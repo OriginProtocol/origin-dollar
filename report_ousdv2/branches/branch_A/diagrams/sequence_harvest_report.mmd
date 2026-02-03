@@ -1,0 +1,18 @@
+%% Phase 2 Branch A Sequence: yield accrual -> report -> rebase
+%% UNKNOWN: No explicit on-chain harvest; yield assumed to accrue via ERC-4626 share price.
+sequenceDiagram
+  participant ERC4626 as ERC-4626 Vault
+  participant Remote as CrossChainRemoteStrategy
+  participant Transmitter as CCTP MessageTransmitter
+  participant Master as CrossChainMasterStrategy
+  participant Vault as OUSD Vault
+  actor Operator
+
+  ERC4626-->>ERC4626: Yield accrues (share price increases)
+  Operator->>Remote: sendBalanceUpdate()
+  Remote->>Remote: checkBalance
+  Remote->>Transmitter: sendMessage(balanceCheck)
+  Transmitter-->>Master: handleReceiveFinalizedMessage(messageBody)
+  Master->>Master: _processBalanceCheckMessage (remoteStrategyBalance updated)
+  Vault->>Vault: _rebase uses strategy.checkBalance
+  Vault->>Vault: oUSD.changeSupply

@@ -1,0 +1,25 @@
+%% Phase 2 Branch A Sequence: mint -> allocate -> cross-chain deposit
+%% UNKNOWN: None in this diagram; assumes default strategy configured to CrossChainMasterStrategy.
+sequenceDiagram
+  actor User
+  participant Vault as OUSD Vault
+  participant Master as CrossChainMasterStrategy
+  participant Messenger as CCTP TokenMessenger
+  participant Remote as CrossChainRemoteStrategy
+  participant ERC4626 as ERC-4626 Vault
+  participant Transmitter as CCTP MessageTransmitter
+  actor Operator
+
+  User->>Vault: mint(asset, amount, minOusd)
+  Vault->>Vault: _mint, maybe _rebase
+  Vault->>Master: deposit(asset, amount)
+  Master->>Master: _getNextNonce and set pendingAmount
+  Master->>Messenger: depositForBurnWithHook(amount, hookData)
+  Operator->>Remote: relay(message, attestation)
+  Remote->>Transmitter: receiveMessage(message, attestation)
+  Remote->>Remote: _onTokenReceived -> _processDepositMessage
+  Remote->>ERC4626: deposit(amount)
+  Remote->>Remote: encodeBalanceCheckMessage
+  Remote->>Transmitter: sendMessage(balanceCheck)
+  Transmitter-->>Master: handleReceiveFinalizedMessage(messageBody)
+  Master->>Master: _processBalanceCheckMessage
