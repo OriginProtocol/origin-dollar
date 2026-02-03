@@ -549,23 +549,6 @@ abstract contract VaultCore is VaultInitializer {
     }
 
     /**
-     * @dev Internal to calculate total value of all asset held in Vault.
-     * @dev Only asset is supported in the OETH Vault so return the asset balance only
-     *          Any ETH balances in the Vault will be ignored.
-     *          Amounts from previously supported vault asset will also be ignored.
-     *          For example, there is 1 wei left of stETH in the OETH Vault but is will be ignored.
-     * @return value Total value in USD/ETH (1e18)
-     */
-    function _totalValueInVault()
-        internal
-        view
-        virtual
-        returns (uint256 value)
-    {
-        value = IERC20(asset).balanceOf(address(this));
-    }
-
-    /**
      * @notice Get the balance of an asset held in Vault and all strategies.
      * @param _asset Address of asset
      * @return uint256 Balance of asset in decimals of asset
