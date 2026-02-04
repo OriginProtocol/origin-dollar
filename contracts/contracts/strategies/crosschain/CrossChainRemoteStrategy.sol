@@ -193,7 +193,8 @@ contract CrossChainRemoteStrategy is
             .encodeBalanceCheckMessage(
                 lastTransferNonce,
                 checkBalance(usdcToken),
-                true
+                true,
+                block.timestamp
             );
         _sendMessage(message);
     }
@@ -272,7 +273,8 @@ contract CrossChainRemoteStrategy is
                 .encodeBalanceCheckMessage(
                     lastTransferNonce,
                     strategyBalance - withdrawAmount,
-                    true
+                    true,
+                    block.timestamp
                 );
             _sendTokens(withdrawAmount, message);
         } else {
@@ -284,7 +286,8 @@ contract CrossChainRemoteStrategy is
                 .encodeBalanceCheckMessage(
                     lastTransferNonce,
                     strategyBalance,
-                    true
+                    true,
+                    block.timestamp
                 );
             _sendMessage(message);
             emit WithdrawalFailed(withdrawAmount, usdcBalance);
@@ -364,7 +367,12 @@ contract CrossChainRemoteStrategy is
     {
         uint256 balance = checkBalance(usdcToken);
         bytes memory message = CrossChainStrategyHelper
-            .encodeBalanceCheckMessage(lastTransferNonce, balance, false);
+            .encodeBalanceCheckMessage(
+                lastTransferNonce,
+                balance,
+                false,
+                block.timestamp
+            );
         _sendMessage(message);
     }
 

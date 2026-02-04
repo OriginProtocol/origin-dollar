@@ -32,8 +32,11 @@ contract CrossChainMasterStrategy is
     ///         but with no acknowledgement from the remote strategy yet
     uint256 public pendingAmount;
 
+    uint256 internal constant MAX_BALANCE_CHECK_AGE = 1 days;
+
     event RemoteStrategyBalanceUpdated(uint256 balance);
     event WithdrawRequested(address indexed asset, uint256 amount);
+    event BalanceCheckIgnored(uint64 nonce, uint256 timestamp, bool isTooOld);
 
     /**
      * @param _stratConfig The platform and OToken vault addresses
@@ -310,8 +313,12 @@ contract CrossChainMasterStrategy is
         // Decode the message
         // When transferConfirmation is true, it means that the message is a result of a deposit or a withdrawal
         // process.
-        (uint64 nonce, uint256 balance, bool transferConfirmation) = message
-            .decodeBalanceCheckMessage();
+        (
+            uint64 nonce,
+            uint256 balance,
+            bool transferConfirmation,
+            uint256 timestamp
+        ) = message.decodeBalanceCheckMessage();
         // Get the last cached nonce
         uint64 _lastCachedNonce = lastTransferNonce;
 
@@ -335,6 +342,13 @@ contract CrossChainMasterStrategy is
                 // that has been generated on the Remote contract after the deposit / withdrawal which is
                 // still pending. This can happen when the CCTP bridge delivers the messages out of order.
                 // Ignore it, since the pending deposit / withdrawal must first be cofirmed.
+                emit BalanceCheckIgnored(nonce, timestamp, false);
+                return;
+            }
+        } else {
+            if (block.timestamp > timestamp + MAX_BALANCE_CHECK_AGE) {
+                // Balance check is too old, ignore it
+                emit BalanceCheckIgnored(nonce, timestamp, true);
                 return;
             }
         }

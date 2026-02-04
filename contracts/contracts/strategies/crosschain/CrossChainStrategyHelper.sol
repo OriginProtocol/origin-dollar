@@ -189,13 +189,14 @@ library CrossChainStrategyHelper {
     function encodeBalanceCheckMessage(
         uint64 nonce,
         uint256 balance,
-        bool transferConfirmation
+        bool transferConfirmation,
+        uint256 timestamp
     ) internal pure returns (bytes memory) {
         return
             abi.encodePacked(
                 ORIGIN_MESSAGE_VERSION,
                 BALANCE_CHECK_MESSAGE,
-                abi.encode(nonce, balance, transferConfirmation)
+                abi.encode(nonce, balance, transferConfirmation, timestamp)
             );
     }
 
@@ -211,16 +212,22 @@ library CrossChainStrategyHelper {
         returns (
             uint64,
             uint256,
-            bool
+            bool,
+            uint256
         )
     {
         verifyMessageVersionAndType(message, BALANCE_CHECK_MESSAGE);
 
-        (uint64 nonce, uint256 balance, bool transferConfirmation) = abi.decode(
-            getMessagePayload(message),
-            (uint64, uint256, bool)
-        );
-        return (nonce, balance, transferConfirmation);
+        (
+            uint64 nonce,
+            uint256 balance,
+            bool transferConfirmation,
+            uint256 timestamp
+        ) = abi.decode(
+                getMessagePayload(message),
+                (uint64, uint256, bool, uint256)
+            );
+        return (nonce, balance, transferConfirmation, timestamp);
     }
 
     /**

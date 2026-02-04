@@ -180,11 +180,13 @@ const decodeBurnMessageBody = (message) => {
 const encodeBalanceCheckMessageBody = (
   nonce,
   balance,
-  transferConfirmation
+  transferConfirmation,
+  timestamp
 ) => {
+  const resolvedTimestamp = timestamp ?? Math.floor(Date.now() / 1000);
   const encodedPayload = ethers.utils.defaultAbiCoder.encode(
-    ["uint64", "uint256", "bool"],
-    [nonce, balance, transferConfirmation]
+    ["uint64", "uint256", "bool", "uint256"],
+    [nonce, balance, transferConfirmation, resolvedTimestamp]
   );
 
   // const version = 1010; // ORIGIN_MESSAGE_VERSION
@@ -198,11 +200,19 @@ const decodeBalanceCheckMessageBody = (message) => {
   const messageType = ethers.BigNumber.from(`0x${message.slice(8, 16)}`);
   expect(version).to.eq(1010);
   expect(messageType).to.eq(3);
-  const [nonce, balance] = ethers.utils.defaultAbiCoder.decode(
-    ["uint64", "uint256"],
-    `0x${message.slice(16)}`
-  );
-  return { version, messageType, nonce, balance };
+  const [nonce, balance, transferConfirmation, timestamp] =
+    ethers.utils.defaultAbiCoder.decode(
+      ["uint64", "uint256", "bool", "uint256"],
+      `0x${message.slice(16)}`
+    );
+  return {
+    version,
+    messageType,
+    nonce,
+    balance,
+    transferConfirmation,
+    timestamp,
+  };
 };
 
 const replaceMessageTransmitter = async () => {
