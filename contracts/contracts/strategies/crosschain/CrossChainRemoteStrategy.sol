@@ -122,6 +122,7 @@ contract CrossChainRemoteStrategy is
     }
 
     /// @inheritdoc Generalized4626Strategy
+    /// @dev Interface requires a recipient, but for compatibility it must be address(this).
     function withdraw(
         address _recipient,
         address _asset,
