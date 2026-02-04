@@ -10,6 +10,7 @@ import { Generalized4626Strategy } from "./Generalized4626Strategy.sol";
 import { IVaultV2 } from "../interfaces/morpho/IVaultV2.sol";
 import { IERC4626 } from "../../lib/openzeppelin/interfaces/IERC4626.sol";
 import { IMorphoV2Adapter } from "../interfaces/morpho/IMorphoV2Adapter.sol";
+import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
 
 contract MorphoV2Strategy is Generalized4626Strategy {
     /**
@@ -37,11 +38,14 @@ contract MorphoV2Strategy is Generalized4626Strategy {
         onlyVaultOrGovernor
         nonReentrant
     {
-        uint256 availableAssetLiquidity = _maxWithdraw();
+        uint256 availableMorphoVault = _maxWithdraw();
 
-        if (availableAssetLiquidity > 0) {
-        IVaultV2(platformAddress).withdraw(
-            availableAssetLiquidity,
+        uint256 strategyAssetBalance = checkBalance(address(assetToken));
+        uint256 balanceToWithdraw = Math.min(availableMorphoVault, strategyAssetBalance);
+        
+        if (balanceToWithdraw > 0) {
+            IVaultV2(platformAddress).withdraw(
+                balanceToWithdraw,
                 vaultAddress,
                 address(this)
             );
@@ -50,7 +54,7 @@ contract MorphoV2Strategy is Generalized4626Strategy {
         emit Withdrawal(
             address(assetToken),
             address(shareToken),
-            availableAssetLiquidity
+            balanceToWithdraw
         );
     }
 

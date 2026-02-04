@@ -154,7 +154,7 @@ contract Generalized4626Strategy is InitializableAbstractStrategy {
      * @return balance    Total value of the asset in the platform
      */
     function checkBalance(address _asset)
-        external
+        public
         view
         virtual
         override
