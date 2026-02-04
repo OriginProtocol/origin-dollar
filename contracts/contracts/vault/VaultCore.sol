@@ -136,7 +136,6 @@ abstract contract VaultCore is VaultInitializer {
      * @notice Burn OTokens for an allowed Strategy
      * @param _amount Amount of OToken to burn
      *
-     * Todo: Maybe this is a comment that we can remove now?
      * @dev Notice: can't use `nonReentrant` modifier since the `redeem` function could
      * require withdrawal on an AMO strategy and that one can call `burnForStrategy`
      * while the execution of the `redeem` has not yet completed -> causing a `nonReentrant` collision.
