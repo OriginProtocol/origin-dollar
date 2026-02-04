@@ -267,6 +267,7 @@ contract BridgedWOETHStrategy is InitializableAbstractStrategy {
             _asset != address(bridgedWOETH) && _asset != address(weth),
             "Cannot transfer supported asset"
         );
+        // Use SafeERC20 only for rescuing unknown assets; core tokens are standard.
         IERC20(_asset).safeTransfer(governor(), _amount);
     }
 
