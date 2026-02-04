@@ -480,6 +480,11 @@ abstract contract VaultCore is VaultInitializer {
         return yield;
     }
 
+    /**
+     * @dev Calculates the amount that would rebase at next rebase.
+     *      See this Readme for detailed explanation:
+     *      contracts/contracts/vault/README - Yield Limits.md
+     */
     function _nextYield(uint256 supply, uint256 vaultValue)
         internal
         view
