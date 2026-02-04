@@ -85,7 +85,7 @@ abstract contract VaultCore is VaultInitializer {
         }
 
         // Mint oTokens
-        oUSD.mint(msg.sender, scaledAmount);
+        OToken.mint(msg.sender, scaledAmount);
 
         IERC20(asset).safeTransferFrom(msg.sender, address(this), _amount);
 
@@ -129,7 +129,7 @@ abstract contract VaultCore is VaultInitializer {
 
         emit Mint(msg.sender, _amount);
         // Mint matching amount of OTokens
-        oUSD.mint(msg.sender, _amount);
+        OToken.mint(msg.sender, _amount);
     }
 
     /**
@@ -162,7 +162,7 @@ abstract contract VaultCore is VaultInitializer {
         emit Redeem(msg.sender, _amount);
 
         // Burn OTokens
-        oUSD.burn(msg.sender, _amount);
+        OToken.burn(msg.sender, _amount);
     }
 
     ////////////////////////////////////////////////////
@@ -214,7 +214,7 @@ abstract contract VaultCore is VaultInitializer {
         });
 
         // Burn the user's OToken
-        oUSD.burn(msg.sender, _amount);
+        OToken.burn(msg.sender, _amount);
 
         // Prevent withdrawal if the vault is solvent by more than the allowed percentage
         _postRedeem(_amount);
@@ -361,7 +361,7 @@ abstract contract VaultCore is VaultInitializer {
 
             // Allow a max difference of maxSupplyDiff% between
             // asset value and OUSD total supply
-            uint256 diff = oUSD.totalSupply().divPrecisely(totalUnits);
+            uint256 diff = OToken.totalSupply().divPrecisely(totalUnits);
             require(
                 (diff > 1e18 ? diff - 1e18 : 1e18 - diff) <= maxSupplyDiff,
                 "Backing supply liquidity error"
@@ -395,7 +395,7 @@ abstract contract VaultCore is VaultInitializer {
         if (assetAvailableInVault == 0) return;
 
         // Calculate the target buffer for the vault using the total supply
-        uint256 totalSupply = oUSD.totalSupply();
+        uint256 totalSupply = OToken.totalSupply();
         // Scaled to asset decimals
         uint256 targetBuffer = totalSupply.mulTruncate(vaultBuffer).scaleBy(
             assetDecimals,
@@ -431,7 +431,7 @@ abstract contract VaultCore is VaultInitializer {
      * @return totalUnits Total balance of Vault in units
      */
     function _rebase() internal whenNotRebasePaused returns (uint256) {
-        uint256 supply = oUSD.totalSupply();
+        uint256 supply = OToken.totalSupply();
         uint256 vaultValue = _totalValue();
         // If no supply yet, do not rebase
         if (supply == 0) {
@@ -456,15 +456,15 @@ abstract contract VaultCore is VaultInitializer {
             fee = (yield * trusteeFeeBps) / 1e4;
             if (fee > 0) {
                 require(fee < yield, "Fee must not be greater than yield");
-                oUSD.mint(_trusteeAddress, fee);
+                OToken.mint(_trusteeAddress, fee);
             }
         }
         emit YieldDistribution(_trusteeAddress, yield, fee);
 
         // Only ratchet OToken supply upwards
         // Final check uses latest totalSupply
-        if (newSupply > oUSD.totalSupply()) {
-            oUSD.changeSupply(newSupply);
+        if (newSupply > OToken.totalSupply()) {
+            OToken.changeSupply(newSupply);
         }
         return vaultValue;
     }
@@ -475,7 +475,7 @@ abstract contract VaultCore is VaultInitializer {
      * @return yield amount of expected yield
      */
     function previewYield() external view returns (uint256 yield) {
-        (yield, ) = _nextYield(oUSD.totalSupply(), _totalValue());
+        (yield, ) = _nextYield(OToken.totalSupply(), _totalValue());
         return yield;
     }
 
@@ -490,7 +490,7 @@ abstract contract VaultCore is VaultInitializer {
         virtual
         returns (uint256 yield, uint256 targetRate)
     {
-        uint256 nonRebasing = oUSD.nonRebasingSupply();
+        uint256 nonRebasing = OToken.nonRebasingSupply();
         uint256 rebasing = supply - nonRebasing;
         uint256 elapsed = block.timestamp - lastRebase;
         targetRate = rebasePerSecondTarget;
