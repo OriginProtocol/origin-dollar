@@ -800,6 +800,13 @@ describe("ForkTest: Consolidation of Staking Strategies", function () {
       expect(await consolidationController.sourceStrategy()).to.equal(
         nativeStakingStrategy2.address
       );
+
+      // Source validator post-conditions
+      expect(
+        await nativeStakingStrategy2.validatorsStates(
+          keccak256(sourceValidators[0])
+        )
+      ).to.equal(2); // STAKED state
     });
     it("Should call fail consolidation for multiple validators", async () => {
       const consolidationCountBefore =
@@ -824,6 +831,13 @@ describe("ForkTest: Consolidation of Staking Strategies", function () {
       expect(await consolidationController.targetPubKeyHash()).to.not.equal(
         ethers.constants.HashZero
       );
+
+      // Source validator post-conditions
+      expect(
+        await nativeStakingStrategy2.validatorsStates(
+          keccak256(sourceValidators[1])
+        )
+      ).to.equal(2); // STAKED state
     });
     it("Should call fail consolidation for all validators and reset state", async () => {
       const consolidationCountBefore =

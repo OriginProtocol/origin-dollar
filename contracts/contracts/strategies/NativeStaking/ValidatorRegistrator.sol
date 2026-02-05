@@ -441,7 +441,7 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
             );
 
             // Store the state of the source validator back to staked
-            validatorsStates[sourcePubKeyHash] == VALIDATOR_STATE.STAKED;
+            validatorsStates[sourcePubKeyHash] = VALIDATOR_STATE.STAKED;
         }
 
         emit ConsolidationFailed(sourcePubKeys, sourcePubKeys.length);
