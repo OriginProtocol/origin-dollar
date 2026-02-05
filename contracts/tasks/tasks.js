@@ -2175,6 +2175,12 @@ subtask("verifyBalances", "Verify validator balances on the Beacon chain")
     "",
     types.string
   )
+  .addOptionalParam(
+    "consol",
+    "Call the consolidation controller instead of the strategy",
+    false,
+    types.boolean
+  )
   .setAction(async (taskArgs) => {
     const signer = await getSigner();
     await verifyBalances({ ...taskArgs, signer });

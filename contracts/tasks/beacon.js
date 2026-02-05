@@ -441,6 +441,7 @@ async function verifyBalances({
   test,
   signer,
   slot,
+  consol,
 }) {
   const strategy = test
     ? undefined
@@ -662,7 +663,12 @@ async function verifyBalances({
   );
   log(balanceProofs);
   log(pendingDepositProofsData);
-  const tx = await strategy
+
+  const contract = consol
+    ? await resolveContract("ConsolidationController")
+    : strategy;
+
+  const tx = await contract
     .connect(signer)
     .verifyBalances(balanceProofs, pendingDepositProofsData);
   await logTxDetails(tx, "verifyBalances");
