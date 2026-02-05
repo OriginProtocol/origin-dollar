@@ -589,6 +589,20 @@ async function verifyBalances({
     formatUnits(bal, 9)
   );
 
+  const balanceProofs = {
+    balancesContainerRoot,
+    balancesContainerProof,
+    validatorBalanceLeaves,
+    validatorBalanceProofs,
+  };
+  const pendingDepositProofsData = {
+    pendingDepositContainerRoot,
+    pendingDepositContainerProof,
+    pendingDepositIndexes,
+    pendingDepositRoots,
+    pendingDepositProofs,
+  };
+
   if (dryrun) {
     console.log(`snapped slot                      : ${verificationSlot}`);
     console.log(`snap balances block root          : ${blockRoot}`);
@@ -623,22 +637,9 @@ async function verifyBalances({
         .map((proof) => `"${proof}"`)
         .join(",\n")}]`
     );
-    return;
-  }
 
-  const balanceProofs = {
-    balancesContainerRoot,
-    balancesContainerProof,
-    validatorBalanceLeaves,
-    validatorBalanceProofs,
-  };
-  const pendingDepositProofsData = {
-    pendingDepositContainerRoot,
-    pendingDepositContainerProof,
-    pendingDepositIndexes,
-    pendingDepositRoots,
-    pendingDepositProofs,
-  };
+    return { balanceProofs, pendingDepositProofs: pendingDepositProofsData };
+  }
 
   if (test) {
     console.log(

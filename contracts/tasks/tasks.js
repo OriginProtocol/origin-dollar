@@ -144,7 +144,11 @@ const {
   copyBeaconRoot,
 } = require("./beaconTesting");
 const { claimMerklRewards } = require("./merkl");
-const { requestConsolidation } = require("./consolidation");
+const {
+  requestConsolidation,
+  failConsolidation,
+  confirmConsolidation,
+} = require("./consolidation");
 
 const log = require("../utils/logger")("tasks");
 
@@ -2481,7 +2485,7 @@ task("snapMorpho").setAction(async (_, __, runSuper) => {
 
 // Consolidation Tasks
 
-subtask("requestConsol", "Request validator consolidation.")
+subtask("requestConsol", "Request validator consolidation")
   .addOptionalParam(
     "source",
     "A comma-separated list of public keys of the validators to consolidate from in hex format with a 0x prefix",
@@ -2502,5 +2506,24 @@ subtask("requestConsol", "Request validator consolidation.")
   )
   .setAction(requestConsolidation);
 task("requestConsol").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+subtask("failConsol", "Fail a validator consolidation")
+  .addOptionalParam(
+    "source",
+    "A comma-separated list of public keys of the validators to consolidate from in hex format with a 0x prefix",
+    undefined,
+    types.string
+  )
+  .setAction(failConsolidation);
+task("failConsol").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+subtask("confirmConsol", "Confirm a validator consolidation").setAction(
+  confirmConsolidation
+);
+task("confirmConsol").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
