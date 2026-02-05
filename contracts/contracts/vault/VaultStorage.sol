@@ -95,7 +95,7 @@ abstract contract VaultStorage is Initializable, Governable {
     uint256 public rebaseThreshold;
 
     /// @dev Address of the OToken token. eg OUSD or OETH.
-    OUSD public OToken;
+    OUSD public oToken;
 
     /// @dev Address of the contract responsible for post rebase syncs with AMMs
     address private _deprecated_rebaseHooksAddr = address(0);
@@ -226,6 +226,6 @@ abstract contract VaultStorage is Initializable, Governable {
 
     /// @notice Deprecated: use `oToken()` instead.
     function oUSD() external view returns (OUSD) {
-        return OToken;
+        return oToken;
     }
 }
