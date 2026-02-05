@@ -99,6 +99,9 @@ module.exports = deploymentWithGovernanceProposal(
       [
         addresses.mainnet.Guardian, // Admin 5/8 multisig
         addresses.mainnet.validatorRegistrator, // Defender Relayer
+        cNativeStakingStrategy2.address, // Old Native Staking Strategy 2
+        cNativeStakingStrategy3.address, // Old Native Staking Strategy 3
+        cCompoundingStakingSSVStrategy.address, // New Compounding Staking Strategy
       ]
     );
 

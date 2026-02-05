@@ -18,20 +18,15 @@ contract ConsolidationController is Ownable {
     /// The actual time can be a lot longer than this depending on the number of
     /// requests in the beacon chain's pending consolidation queue.
     uint256 internal constant MIN_CONSOLIDATION_PERIOD = 256 * 32 * 12;
-    /// @dev The old Native Staking Strategy connected to the second SSV cluster
-    address internal constant NativeStakingStrategy2 =
-        0x4685dB8bF2Df743c861d71E6cFb5347222992076;
-    /// @dev The old Native Staking Strategy connected to the third SSV cluster
-    address internal constant NativeStakingStrategy3 =
-        0xE98538A0e8C2871C2482e1Be8cC6bd9F8E8fFD63;
-    /// @dev The new Compounding Staking Strategy
-    CompoundingStakingSSVStrategy internal constant targetStrategy =
-        CompoundingStakingSSVStrategy(
-            payable(0xaF04828Ed923216c77dC22a2fc8E077FDaDAA87d)
-        );
 
     /// @notice Address of the validator registrator account
     address public immutable validatorRegistrator;
+    /// @dev The old Native Staking Strategy connected to the second SSV cluster
+    address internal immutable nativeStakingStrategy2;
+    /// @dev The old Native Staking Strategy connected to the third SSV cluster
+    address internal immutable nativeStakingStrategy3;
+    /// @dev The new Compounding Staking Strategy
+    CompoundingStakingSSVStrategy internal immutable targetStrategy;
 
     /// @notice Number of validators being consolidated
     uint64 public consolidationCount;
@@ -53,10 +48,21 @@ contract ConsolidationController is Ownable {
 
     /// @param _owner The owner who can request, fail and confirm consolidations
     /// @param _validatorRegistrator The validator registrator who does operations on the old staking strategy
-    constructor(address _owner, address _validatorRegistrator) {
+    constructor(
+        address _owner,
+        address _validatorRegistrator,
+        address _nativeStakingStrategy2,
+        address _nativeStakingStrategy3,
+        address _targetStrategy
+    ) {
         _transferOwnership(_owner);
 
         validatorRegistrator = _validatorRegistrator;
+        nativeStakingStrategy2 = _nativeStakingStrategy2;
+        nativeStakingStrategy3 = _nativeStakingStrategy3;
+        targetStrategy = CompoundingStakingSSVStrategy(
+            payable(_targetStrategy)
+        );
     }
 
     /**
@@ -410,10 +416,10 @@ contract ConsolidationController is Ownable {
 
     /// @dev Check source strategy is a valid old Native Staking Strategy
     /// @param _sourceStrategy The address of the old Native Staking Strategy
-    function _checkSourceStrategy(address _sourceStrategy) internal pure {
+    function _checkSourceStrategy(address _sourceStrategy) internal view {
         require(
-            _sourceStrategy == NativeStakingStrategy2 ||
-                _sourceStrategy == NativeStakingStrategy3,
+            _sourceStrategy == nativeStakingStrategy2 ||
+                _sourceStrategy == nativeStakingStrategy3,
             "Invalid source strategy"
         );
     }
