@@ -411,6 +411,7 @@ contract ConsolidationController is Ownable {
     /// @param pubKey The full validator public key
     /// @return The hashed public key using the Beacon Chain's hashing for BLSPubkey
     function _hashPubKey(bytes memory pubKey) internal pure returns (bytes32) {
+        require(pubKey.length == 48, "Invalid public key");
         return sha256(abi.encodePacked(pubKey, bytes16(0)));
     }
 

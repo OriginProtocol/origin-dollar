@@ -480,6 +480,22 @@ describe("ForkTest: Consolidation of Staking Strategies", function () {
 
       await expect(tx).to.be.revertedWith("Target validator not active");
     });
+    it("Fail to request consolidation to invalid target public key", async () => {
+      // Key only 32 bytes long instead of 48 bytes
+      const invlaidValidatorPubKey =
+        "0x0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF";
+
+      const tx = consolidationController
+        .connect(adminSigner)
+        .requestConsolidation(
+          nativeStakingStrategy2.address,
+          [secondClusterPubKeys[0]],
+          invlaidValidatorPubKey,
+          { value: 1 }
+        );
+
+      await expect(tx).to.be.revertedWith("Invalid public key");
+    });
     it("Fail to request consolidation to a STKAKED target validator", async () => {
       const stakedCompoundingValidatorPubKey =
         "0xa4258aa50aba9d7441f734213ae76fad9809572a593765c25c25d7afd42b83baba06397bd9e264a9fa24c3327a308682";
