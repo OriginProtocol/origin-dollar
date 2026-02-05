@@ -14,19 +14,19 @@ import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
 
 contract MorphoV2Strategy is Generalized4626Strategy {
     /**
-     * @param _baseConfig Base strategy config with Morpho V2 Vault and 
+     * @param _baseConfig Base strategy config with Morpho V2 Vault and
      * vaultAddress (OToken Vault contract), eg VaultProxy or OETHVaultProxy
      * @param _assetToken Address of the ERC-4626 asset token. e.g. USDC
      */
     constructor(BaseStrategyConfig memory _baseConfig, address _assetToken)
         Generalized4626Strategy(_baseConfig, _assetToken)
     {}
-    
+
     /**
      * @dev Remove all the liquidity that is available in the Morpho V2 vault
-     *      The particular behaviour of the Morpho V2 vault is that it can hold 
+     *      The particular behaviour of the Morpho V2 vault is that it can hold
      *      multiple Morpho V1 vaults as adapters but only one liquidity adapter.
-     *      The immediate available funds on the Morpho V2 vault are therfore any 
+     *      The immediate available funds on the Morpho V2 vault are therfore any
      *      any liquid assets residing on the Vault V2 contract and the maxWithdraw
      *      amount that the Morpho V1 contract can supply.
      *
@@ -41,8 +41,11 @@ contract MorphoV2Strategy is Generalized4626Strategy {
         uint256 availableMorphoVault = _maxWithdraw();
 
         uint256 strategyAssetBalance = checkBalance(address(assetToken));
-        uint256 balanceToWithdraw = Math.min(availableMorphoVault, strategyAssetBalance);
-        
+        uint256 balanceToWithdraw = Math.min(
+            availableMorphoVault,
+            strategyAssetBalance
+        );
+
         if (balanceToWithdraw > 0) {
             IVaultV2(platformAddress).withdraw(
                 balanceToWithdraw,
@@ -62,16 +65,21 @@ contract MorphoV2Strategy is Generalized4626Strategy {
         return _maxWithdraw();
     }
 
-    function _maxWithdraw() internal view returns (uint256 availableAssetLiquidity) {
+    function _maxWithdraw()
+        internal
+        view
+        returns (uint256 availableAssetLiquidity)
+    {
         availableAssetLiquidity = assetToken.balanceOf(platformAddress);
 
         address liquidityAdapter = IVaultV2(platformAddress).liquidityAdapter();
         if (liquidityAdapter != address(0)) {
             // adapter representing one Morpho V1 vault
-            address underlyingVault = IMorphoV2Adapter(liquidityAdapter).morphoVaultV1();
-            availableAssetLiquidity += IERC4626(underlyingVault).maxWithdraw(liquidityAdapter);
+            address underlyingVault = IMorphoV2Adapter(liquidityAdapter)
+                .morphoVaultV1();
+            availableAssetLiquidity += IERC4626(underlyingVault).maxWithdraw(
+                liquidityAdapter
+            );
         }
     }
-
-    
 }

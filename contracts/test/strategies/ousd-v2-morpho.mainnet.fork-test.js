@@ -227,12 +227,16 @@ describe("ForkTest: Yearn's Morpho OUSD v2 Strategy", function () {
         await morphoOUSDv2Vault.convertToAssets(strategyVaultShares);
       expect(usdcWithdrawAmountExpected).to.be.gte(minBalance.sub(1));
       // amount expected minus the shortfall due to not enough liquidity in the Morpho OUSD v1 Vault
-      const usdcWithdrawAmountAvailable = usdcWithdrawAmountExpected.sub(withdrawAllShortfall)
+      const usdcWithdrawAmountAvailable =
+        usdcWithdrawAmountExpected.sub(withdrawAllShortfall);
       log(
         `Wanted to withdraw ${formatUnits(
           usdcWithdrawAmountExpected,
           6
-        )} USDC, adjusted for shortfall of ${formatUnits(withdrawAllShortfall, 6)} USDC totals to ${formatUnits(usdcWithdrawAmountAvailable, 6)} USDC`
+        )} USDC, adjusted for shortfall of ${formatUnits(
+          withdrawAllShortfall,
+          6
+        )} USDC totals to ${formatUnits(usdcWithdrawAmountAvailable, 6)} USDC`
       );
 
       const ousdSupplyBefore = await ousd.totalSupply();
