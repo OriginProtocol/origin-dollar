@@ -144,6 +144,7 @@ const {
   copyBeaconRoot,
 } = require("./beaconTesting");
 const { claimMerklRewards } = require("./merkl");
+const { requestConsolidation } = require("./consolidation");
 
 const log = require("../utils/logger")("tasks");
 
@@ -2475,5 +2476,31 @@ subtask("snapMorpho", "Get a snapshot of the Morpho OUSD v2 strategy.")
   )
   .setAction(snapMorpho);
 task("snapMorpho").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+// Consolidation Tasks
+
+subtask("requestConsol", "Request validator consolidation.")
+  .addOptionalParam(
+    "source",
+    "A comma-separated list of public keys of the validators to consolidate from in hex format with a 0x prefix",
+    undefined,
+    types.string
+  )
+  .addOptionalParam(
+    "cluster",
+    "An integer for the second or third cluster SSV cluster. Default none for Hoodi",
+    undefined,
+    types.int
+  )
+  .addOptionalParam(
+    "target",
+    "Public key of the validator to consolidate to in hex format with a 0x prefix",
+    undefined,
+    types.string
+  )
+  .setAction(requestConsolidation);
+task("requestConsol").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
