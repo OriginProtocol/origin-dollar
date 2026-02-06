@@ -4,39 +4,64 @@ pragma solidity ^0.8.0;
 import { AbstractSafeModule } from "./AbstractSafeModule.sol";
 
 interface ICurvePoolBooster {
-    function manageTotalRewardAmount(
-        uint256 bridgeFee,
+    function manageCampaign(
+        uint256 totalRewardAmount,
+        uint8 numberOfPeriods,
+        uint256 maxRewardPerVote,
         uint256 additionalGasLimit
-    ) external;
-
-    function manageNumberOfPeriods(
-        uint8 extraNumberOfPeriods,
-        uint256 bridgeFee,
-        uint256 additionalGasLimit
-    ) external;
-
-    function manageRewardPerVote(
-        uint256 newMaxRewardPerVote,
-        uint256 bridgeFee,
-        uint256 additionalGasLimit
-    ) external;
+    ) external payable;
 }
 
+/// @title CurvePoolBoosterBribesModule
+/// @author Origin Protocol
+/// @notice Gnosis Safe module that automates the management of VotemarketV2 bribe campaigns
+///         across multiple CurvePoolBooster contracts. It instructs the Safe to call `manageCampaign`
+///         on each registered pool booster, extending campaigns by one period and forwarding ETH
+///         from the Safe's balance to cover bridge fees.
 contract CurvePoolBoosterBribesModule is AbstractSafeModule {
+    ////////////////////////////////////////////////////
+    /// --- Storage
+    ////////////////////////////////////////////////////
+
+    /// @notice List of CurvePoolBooster addresses managed by this module
     address[] public POOLS;
 
+    /// @notice ETH amount sent per pool booster to cover the L1 -> L2 bridge fee
+    uint256 public bridgeFee;
+
+    ////////////////////////////////////////////////////
+    /// --- Events
+    ////////////////////////////////////////////////////
+
+    event BridgeFeeUpdated(uint256 newFee);
     event PoolBoosterAddressAdded(address pool);
     event PoolBoosterAddressRemoved(address pool);
 
+    ////////////////////////////////////////////////////
+    /// --- Constructor
+    ////////////////////////////////////////////////////
+
+    /// @param _safeContract Address of the Gnosis Safe this module is attached to
+    /// @param _operator Address authorized to call operator-restricted functions
+    /// @param _pools Initial list of CurvePoolBooster addresses to manage
+    /// @param _bridgeFee ETH amount to send per pool booster for bridge fees
     constructor(
         address _safeContract,
         address _operator,
-        address[] memory _pools
+        address[] memory _pools,
+        uint256 _bridgeFee
     ) AbstractSafeModule(_safeContract) {
         _grantRole(OPERATOR_ROLE, _operator);
         _addPoolBoosterAddress(_pools);
+        _setBridgeFee(_bridgeFee);
     }
 
+    ////////////////////////////////////////////////////
+    /// --- External Mutative Functions
+    ////////////////////////////////////////////////////
+
+    /// @notice Add new CurvePoolBooster addresses to the managed list
+    /// @param pools Addresses to add
     function addPoolBoosterAddress(address[] memory pools)
         external
         onlyOperator
@@ -44,13 +69,8 @@ contract CurvePoolBoosterBribesModule is AbstractSafeModule {
         _addPoolBoosterAddress(pools);
     }
 
-    function _addPoolBoosterAddress(address[] memory pools) internal {
-        for (uint256 i = 0; i < pools.length; i++) {
-            POOLS.push(pools[i]);
-            emit PoolBoosterAddressAdded(pools[i]);
-        }
-    }
-
+    /// @notice Remove CurvePoolBooster addresses from the managed list
+    /// @param pools Addresses to remove
     function removePoolBoosterAddress(address[] calldata pools)
         external
         onlyOperator
@@ -60,6 +80,57 @@ contract CurvePoolBoosterBribesModule is AbstractSafeModule {
         }
     }
 
+    /// @notice Update the ETH bridge fee sent per pool booster
+    /// @param newFee New bridge fee amount in wei
+    function setBridgeFee(uint256 newFee) external onlyOperator {
+        _setBridgeFee(newFee);
+    }
+
+    /// @notice Manage bribe campaigns for all registered pool boosters with no maxRewardPerVote update.
+    /// @dev Calls `manageCampaign` on each pool booster via the Safe, extending by 1 period
+    ///      and using all available reward tokens. The Safe must hold enough ETH to cover
+    ///      `bridgeFee * POOLS.length`.
+    function manageBribes() external onlyOperator {
+        uint256[] memory rewardsPerVote = new uint256[](POOLS.length);
+        _manageBribes(rewardsPerVote);
+    }
+
+    /// @notice Manage bribe campaigns with per-pool maxRewardPerVote values
+    /// @param rewardsPerVote Array of maxRewardPerVote values, one per pool (0 = no update)
+    function manageBribes(uint256[] memory rewardsPerVote)
+        external
+        onlyOperator
+    {
+        require(POOLS.length == rewardsPerVote.length, "Length mismatch");
+        _manageBribes(rewardsPerVote);
+    }
+
+    ////////////////////////////////////////////////////
+    /// --- External View Functions
+    ////////////////////////////////////////////////////
+
+    /// @notice Get the full list of managed CurvePoolBooster addresses
+    /// @return Array of pool booster addresses
+    function getPools() external view returns (address[] memory) {
+        return POOLS;
+    }
+
+    ////////////////////////////////////////////////////
+    /// --- Internal Functions
+    ////////////////////////////////////////////////////
+
+    /// @notice Internal logic to add pool booster addresses
+    /// @param pools Addresses to append to the POOLS array
+    function _addPoolBoosterAddress(address[] memory pools) internal {
+        for (uint256 i = 0; i < pools.length; i++) {
+            POOLS.push(pools[i]);
+            emit PoolBoosterAddressAdded(pools[i]);
+        }
+    }
+
+    /// @notice Internal logic to remove a pool booster address
+    /// @dev Swaps the target with the last element and pops to avoid gaps
+    /// @param pool Address to remove from the POOLS array
     function _removePoolBoosterAddress(address pool) internal {
         uint256 length = POOLS.length;
         for (uint256 i = 0; i < length; i++) {
@@ -72,83 +143,43 @@ contract CurvePoolBoosterBribesModule is AbstractSafeModule {
         }
     }
 
-    function manageBribes() external onlyOperator {
-        uint256[] memory rewardsPerVote = new uint256[](POOLS.length);
-        _manageBribes(rewardsPerVote);
+    /// @notice Internal logic to set the bridge fee
+    /// @param newFee New bridge fee amount in wei
+    function _setBridgeFee(uint256 newFee) internal {
+        bridgeFee = newFee;
+        emit BridgeFeeUpdated(newFee);
     }
 
-    function manageBribes(uint256[] memory rewardsPerVote)
-        external
-        onlyOperator
-    {
-        require(POOLS.length == rewardsPerVote.length, "Length mismatch");
-        _manageBribes(rewardsPerVote);
-    }
-
+    /// @notice Internal logic to manage bribe campaigns for all registered pool boosters
+    /// @dev Iterates over all pool boosters and instructs the Safe to call `manageCampaign`
+    ///      on each one, sending `bridgeFee` ETH from the Safe's balance per call.
+    /// @param rewardsPerVote Array of maxRewardPerVote values, one per pool (0 = no update)
     function _manageBribes(uint256[] memory rewardsPerVote)
         internal
         onlyOperator
     {
         uint256 length = POOLS.length;
+        require(
+            address(safeContract).balance >= bridgeFee * length,
+            "Not enough ETH for bridge fees"
+        );
         for (uint256 i = 0; i < length; i++) {
             address poolBoosterAddress = POOLS[i];
-
-            // PoolBooster need to have a balance of at least 0.003 ether to operate
-            // 0.001 ether are used for the bridge fee
-            require(
-                poolBoosterAddress.balance > 0.003 ether,
-                "Insufficient balance for bribes"
-            );
-
             require(
                 safeContract.execTransactionFromModule(
                     poolBoosterAddress,
-                    0, // Value
+                    bridgeFee, // ETH value to cover bridge fee
                     abi.encodeWithSelector(
-                        ICurvePoolBooster.manageNumberOfPeriods.selector,
-                        1, // extraNumberOfPeriods
-                        0.001 ether, // bridgeFee
+                        ICurvePoolBooster.manageCampaign.selector,
+                        type(uint256).max, // totalRewardAmount, 0 = no update
+                        1, // numberOfPeriods, 0 = no update, 1 = +1 period (week)
+                        rewardsPerVote[i], // maxRewardPerVote, 0 = no update
                         1000000 // additionalGasLimit
                     ),
                     0
                 ),
-                "Manage number of periods failed"
-            );
-
-            require(
-                safeContract.execTransactionFromModule(
-                    poolBoosterAddress,
-                    0, // Value
-                    abi.encodeWithSelector(
-                        ICurvePoolBooster.manageTotalRewardAmount.selector,
-                        0.001 ether, // bridgeFee
-                        1000000 // additionalGasLimit
-                    ),
-                    0
-                ),
-                "Manage total reward failed"
-            );
-
-            // Skip setting reward per vote if it's zero
-            if (rewardsPerVote[i] == 0) continue;
-            require(
-                safeContract.execTransactionFromModule(
-                    poolBoosterAddress,
-                    0, // Value
-                    abi.encodeWithSelector(
-                        ICurvePoolBooster.manageRewardPerVote.selector,
-                        rewardsPerVote[i], // newMaxRewardPerVote
-                        0.001 ether, // bridgeFee
-                        1000000 // additionalGasLimit
-                    ),
-                    0
-                ),
-                "Set reward per vote failed"
+                "Manage campaign failed"
             );
         }
-    }
-
-    function getPools() external view returns (address[] memory) {
-        return POOLS;
     }
 }
