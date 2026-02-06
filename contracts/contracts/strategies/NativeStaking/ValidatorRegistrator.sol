@@ -397,6 +397,7 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
         // For each source validator
         for (uint256 i = 0; i < sourcePubKeys.length; ++i) {
             sourcePubKeyHash = keccak256(sourcePubKeys[i]);
+            require(sourcePubKeys[i].length == 48, "Invalid source public key");
             require(sourcePubKeyHash != targetPubKeyHash, "Self consolidation");
             require(
                 validatorsStates[sourcePubKeyHash] == VALIDATOR_STATE.STAKED,
@@ -434,6 +435,7 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
 
         // For each failed source validator
         for (uint256 i = 0; i < sourcePubKeys.length; ++i) {
+            require(sourcePubKeys[i].length == 48, "Invalid source public key");
             sourcePubKeyHash = keccak256(sourcePubKeys[i]);
             require(
                 validatorsStates[sourcePubKeyHash] == VALIDATOR_STATE.EXITING,

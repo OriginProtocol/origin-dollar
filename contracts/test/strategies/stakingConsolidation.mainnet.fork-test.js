@@ -480,6 +480,22 @@ describe("ForkTest: Consolidation of Staking Strategies", function () {
 
       await expect(tx).to.be.revertedWith("Target validator not active");
     });
+    it("Fail to request consolidation to invalid source public key", async () => {
+      // Key only 32 bytes long instead of 48 bytes
+      const invlaidValidatorPubKey =
+        "0x0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF";
+
+      const tx = consolidationController
+        .connect(adminSigner)
+        .requestConsolidation(
+          nativeStakingStrategy2.address,
+          [invlaidValidatorPubKey],
+          activeTargetPubKey,
+          { value: 1 }
+        );
+
+      await expect(tx).to.be.revertedWith("Invalid source public key");
+    });
     it("Fail to request consolidation to invalid target public key", async () => {
       // Key only 32 bytes long instead of 48 bytes
       const invlaidValidatorPubKey =
@@ -888,6 +904,17 @@ describe("ForkTest: Consolidation of Staking Strategies", function () {
 
         await expect(tx).to.be.revertedWith("Ownable: caller is not the owner");
       }
+    });
+    it("Fail to call fail consolidation to invalid source public key", async () => {
+      // Key only 32 bytes long instead of 48 bytes
+      const invlaidValidatorPubKey =
+        "0x0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF";
+
+      const tx = consolidationController
+        .connect(adminSigner)
+        .failConsolidation([invlaidValidatorPubKey]);
+
+      await expect(tx).to.be.revertedWith("Invalid source public key");
     });
     it("Fail to stake to target of active consolidation", async () => {
       const depositEth = "3";
