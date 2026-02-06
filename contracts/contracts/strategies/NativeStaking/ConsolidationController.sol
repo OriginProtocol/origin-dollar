@@ -180,8 +180,9 @@ contract ConsolidationController is Ownable {
         // Check consolidations are in progress
         require(consolidationCount > 0, "No consolidation in progress");
         // There a min time before a consolidation can be processed on the beacon chain
+        (, uint64 snappedTimestamp, ) = targetStrategy.snappedBalance();
         require(
-            uint64(block.timestamp) >
+            uint64(snappedTimestamp) >
                 consolidationStartTimestamp + MIN_CONSOLIDATION_PERIOD,
             "Source not withdrawable"
         );

@@ -942,6 +942,13 @@ describe("ForkTest: Consolidation of Staking Strategies", function () {
 
       await expect(tx).to.be.revertedWith("Stake to consolidation target");
     });
+    it("Fail confirm consolidation if processed too soon", async () => {
+      const tx = consolidationController
+        .connect(adminSigner)
+        .confirmConsolidation(balanceProofs, pendingDepositProofs);
+
+      await expect(tx).to.be.revertedWith("Source not withdrawable");
+    });
   });
   describe("When consolidation in progress and balances snapped", () => {
     const sourceValidators = [
@@ -1019,6 +1026,8 @@ describe("ForkTest: Consolidation of Staking Strategies", function () {
           { value: sourceValidators.length }
         );
 
+      await advanceTime(minWithdrableTime);
+
       // Get the current block timestamp
       await advanceTime(12 * 40);
       const { timestamp: currentTimestamp } = await ethers.provider.getBlock(
@@ -1046,8 +1055,6 @@ describe("ForkTest: Consolidation of Staking Strategies", function () {
       expect(consolidationCountBefore).to.equal(3);
       const activeDepositedValidatorsBefore =
         await nativeStakingStrategy2.activeDepositedValidators();
-
-      await advanceTime(minWithdrableTime);
 
       const tx = await consolidationController
         .connect(adminSigner)
@@ -1082,8 +1089,6 @@ describe("ForkTest: Consolidation of Staking Strategies", function () {
       ).to.equal(0);
     });
     it("Should not confirm consolidation twice", async () => {
-      await advanceTime(minWithdrableTime);
-
       await consolidationController
         .connect(adminSigner)
         .confirmConsolidation(balanceProofs, pendingDepositProofs);
@@ -1094,20 +1099,9 @@ describe("ForkTest: Consolidation of Staking Strategies", function () {
 
       await expect(tx).to.be.revertedWith("No consolidation in progress");
     });
-    it("Fail confirm consolidation if processed too soon", async () => {
-      await advanceTime(250 * 32 * 12); // 250 epochs
-
-      const tx = consolidationController
-        .connect(adminSigner)
-        .confirmConsolidation(balanceProofs, pendingDepositProofs);
-
-      await expect(tx).to.be.revertedWith("Source not withdrawable");
-    });
     it("Fail confirm consolidation if not admin multisig", async () => {
       const { josh, strategist, timelock } = fixture;
       const users = [registratorSigner, josh, strategist, timelock];
-
-      await advanceTime(minWithdrableTime);
 
       for (const user of users) {
         const tx = consolidationController
@@ -1118,8 +1112,6 @@ describe("ForkTest: Consolidation of Staking Strategies", function () {
       }
     });
     it("Fail confirm consolidation with invalid balance proofs", async () => {
-      await advanceTime(minWithdrableTime);
-
       const invalidBalanceProofs = structuredClone(balanceProofs);
       invalidBalanceProofs.validatorBalanceLeaves[0] =
         "0x0000000000000000000000000000000000000000000000000000000000000000";
@@ -1131,8 +1123,6 @@ describe("ForkTest: Consolidation of Staking Strategies", function () {
       await expect(tx).to.be.revertedWith("Invalid balance proof");
     });
     it("Fail confirm consolidation with invalid pending deposit proofs", async () => {
-      await advanceTime(minWithdrableTime);
-
       const invalidPendingDepositProofs = structuredClone(pendingDepositProofs);
       invalidPendingDepositProofs.pendingDepositIndexes[0] = "1234";
 
