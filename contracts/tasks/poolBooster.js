@@ -29,7 +29,12 @@ const bribesModuleAbi = [
 
 const poolBoosterAbi = [
   "function rewardToken() external view returns (address)",
+  "function gauge() external view returns (address)",
 ];
+
+const gaugeAbi = ["function lp_token() external view returns (address)"];
+
+const lpTokenAbi = ["function name() external view returns (string)"];
 
 const gaugeControllerAbi = [
   "function get_total_weight() external view returns (uint256)",
@@ -241,6 +246,20 @@ async function calculateRewardsPerVote(provider, options = {}) {
     return { pools: [], rewardsPerVote: [] };
   }
 
+  // Display gauge names for each pool
+  for (let i = 0; i < pools.length; i++) {
+    const poolAddress = pools[i];
+    if (poolAddress === addresses.zero) continue;
+
+    const poolBooster = new Contract(poolAddress, poolBoosterAbi, provider);
+    const gaugeAddress = await poolBooster.gauge();
+    const gauge = new Contract(gaugeAddress, gaugeAbi, provider);
+    const lpTokenAddress = await gauge.lp_token();
+    const lpToken = new Contract(lpTokenAddress, lpTokenAbi, provider);
+    const lpTokenName = await lpToken.name();
+    output(`  Pool ${i + 1} (${poolAddress}) - LP: ${lpTokenName}`);
+  }
+
   // If skipping, return array of zeros
   if (skipRewardPerVote) {
     output(`Mode: Skip RewardPerVote (array of zeros)\n`);
@@ -283,10 +302,17 @@ async function calculateRewardsPerVote(provider, options = {}) {
 
   for (let i = 0; i < pools.length; i++) {
     const poolAddress = pools[i];
-    output(`\nPool ${i + 1}: ${poolAddress}`);
-
-    // Get reward token for this pool
+    // Get reward token and LP token name for this pool
     const poolBooster = new Contract(poolAddress, poolBoosterAbi, provider);
+    const gaugeAddress = await poolBooster.gauge();
+    const gauge = new Contract(gaugeAddress, gaugeAbi, provider);
+    const lpTokenAddress = await gauge.lp_token();
+    const lpToken = new Contract(lpTokenAddress, lpTokenAbi, provider);
+    const lpTokenName = await lpToken.name();
+    output(`\nPool Booster ${i + 1}:\t ${poolAddress}`);
+    output(`Gauge:\t\t ${gaugeAddress}`);
+    output(`Pool:\t\t ${lpTokenAddress} (${lpTokenName})`);
+
     const rewardToken = await poolBooster.rewardToken();
 
     try {
