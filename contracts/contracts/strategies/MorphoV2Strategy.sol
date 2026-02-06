@@ -23,13 +23,14 @@ contract MorphoV2Strategy is Generalized4626Strategy {
     {}
 
     /**
+     * @notice Remove all the liquidity that is available in the Morpho V2 vault.
+               Which might not be all of the liquidity owned by the strategy.
      * @dev Remove all the liquidity that is available in the Morpho V2 vault
      *      The particular behaviour of the Morpho V2 vault is that it can hold
      *      multiple Morpho V1 vaults as adapters but only one liquidity adapter.
      *      The immediate available funds on the Morpho V2 vault are therfore any
      *      any liquid assets residing on the Vault V2 contract and the maxWithdraw
      *      amount that the Morpho V1 contract can supply.
-     *
      */
     function withdrawAll()
         external
