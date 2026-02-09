@@ -193,6 +193,7 @@ contract CurvePoolBoosterBribesModule is AbstractSafeModule {
     /// @notice Internal logic to set the additional gas limit
     /// @param newGasLimit New gas limit value
     function _setAdditionalGasLimit(uint256 newGasLimit) internal {
+        require(newGasLimit <= 10_000_000, "Gas limit too high");
         additionalGasLimit = newGasLimit;
         emit AdditionalGasLimitUpdated(newGasLimit);
     }
