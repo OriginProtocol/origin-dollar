@@ -25,7 +25,7 @@ contract CurvePoolBoosterBribesModule is AbstractSafeModule {
     ////////////////////////////////////////////////////
 
     /// @notice List of CurvePoolBooster addresses managed by this module
-    address[] public POOLS;
+    address[] public pools;
 
     /// @notice ETH amount sent per pool booster to cover the L1 -> L2 bridge fee
     uint256 public bridgeFee;
@@ -62,22 +62,22 @@ contract CurvePoolBoosterBribesModule is AbstractSafeModule {
     ////////////////////////////////////////////////////
 
     /// @notice Add new CurvePoolBooster addresses to the managed list
-    /// @param pools Addresses to add
-    function addPoolBoosterAddress(address[] memory pools)
+    /// @param _pools Addresses to add
+    function addPoolBoosterAddress(address[] memory _pools)
         external
         onlyOperator
     {
-        _addPoolBoosterAddress(pools);
+        _addPoolBoosterAddress(_pools);
     }
 
     /// @notice Remove CurvePoolBooster addresses from the managed list
-    /// @param pools Addresses to remove
-    function removePoolBoosterAddress(address[] calldata pools)
+    /// @param _pools Addresses to remove
+    function removePoolBoosterAddress(address[] calldata _pools)
         external
         onlyOperator
     {
-        for (uint256 i = 0; i < pools.length; i++) {
-            _removePoolBoosterAddress(pools[i]);
+        for (uint256 i = 0; i < _pools.length; i++) {
+            _removePoolBoosterAddress(_pools[i]);
         }
     }
 
@@ -93,12 +93,12 @@ contract CurvePoolBoosterBribesModule is AbstractSafeModule {
     ///           - numberOfPeriods = 1 → extend by one period (week)
     ///           - maxRewardPerVote = 0 → no update
     /// @dev Calls `manageCampaign` on each pool booster via the Safe. The Safe must hold
-    ///      enough ETH to cover `bridgeFee * POOLS.length`.
+    ///      enough ETH to cover `bridgeFee * pools.length`.
     function manageBribes() external onlyOperator {
-        uint256[] memory totalRewardAmounts = new uint256[](POOLS.length);
-        uint8[] memory extraDuration = new uint8[](POOLS.length);
-        uint256[] memory rewardsPerVote = new uint256[](POOLS.length);
-        for (uint256 i = 0; i < POOLS.length; i++) {
+        uint256[] memory totalRewardAmounts = new uint256[](pools.length);
+        uint8[] memory extraDuration = new uint8[](pools.length);
+        uint256[] memory rewardsPerVote = new uint256[](pools.length);
+        for (uint256 i = 0; i < pools.length; i++) {
             totalRewardAmounts[i] = type(uint256).max; // use all available rewards
             extraDuration[i] = 1; // extend by 1 period (week)
             rewardsPerVote[i] = 0; // no update to maxRewardPerVote
@@ -108,7 +108,7 @@ contract CurvePoolBoosterBribesModule is AbstractSafeModule {
 
     /// @notice Fully configurable entry point to manage bribe campaigns. Allows setting
     ///         reward amounts, durations, and reward rates individually for each pool.
-    ///         Each array must have the same length as the POOLS array.
+    ///         Each array must have the same length as the pools array.
     /// @param totalRewardAmounts Total reward amount per pool (0 = no update, type(uint256).max = use all available)
     /// @param extraDuration Number of periods to extend per pool (0 = no update, 1 = +1 week)
     /// @param rewardsPerVote Max reward per vote per pool (0 = no update)
@@ -117,9 +117,9 @@ contract CurvePoolBoosterBribesModule is AbstractSafeModule {
         uint8[] memory extraDuration,
         uint256[] memory rewardsPerVote
     ) external onlyOperator {
-        require(POOLS.length == totalRewardAmounts.length, "Length mismatch");
-        require(POOLS.length == extraDuration.length, "Length mismatch");
-        require(POOLS.length == rewardsPerVote.length, "Length mismatch");
+        require(pools.length == totalRewardAmounts.length, "Length mismatch");
+        require(pools.length == extraDuration.length, "Length mismatch");
+        require(pools.length == rewardsPerVote.length, "Length mismatch");
         _manageBribes(totalRewardAmounts, extraDuration, rewardsPerVote);
     }
 
@@ -130,7 +130,7 @@ contract CurvePoolBoosterBribesModule is AbstractSafeModule {
     /// @notice Get the full list of managed CurvePoolBooster addresses
     /// @return Array of pool booster addresses
     function getPools() external view returns (address[] memory) {
-        return POOLS;
+        return pools;
     }
 
     ////////////////////////////////////////////////////
@@ -138,23 +138,23 @@ contract CurvePoolBoosterBribesModule is AbstractSafeModule {
     ////////////////////////////////////////////////////
 
     /// @notice Internal logic to add pool booster addresses
-    /// @param pools Addresses to append to the POOLS array
-    function _addPoolBoosterAddress(address[] memory pools) internal {
-        for (uint256 i = 0; i < pools.length; i++) {
-            POOLS.push(pools[i]);
-            emit PoolBoosterAddressAdded(pools[i]);
+    /// @param _pools Addresses to append to the pools array
+    function _addPoolBoosterAddress(address[] memory _pools) internal {
+        for (uint256 i = 0; i < _pools.length; i++) {
+            pools.push(_pools[i]);
+            emit PoolBoosterAddressAdded(_pools[i]);
         }
     }
 
     /// @notice Internal logic to remove a pool booster address
     /// @dev Swaps the target with the last element and pops to avoid gaps
-    /// @param pool Address to remove from the POOLS array
+    /// @param pool Address to remove from the pools array
     function _removePoolBoosterAddress(address pool) internal {
-        uint256 length = POOLS.length;
+        uint256 length = pools.length;
         for (uint256 i = 0; i < length; i++) {
-            if (POOLS[i] == pool) {
-                POOLS[i] = POOLS[length - 1];
-                POOLS.pop();
+            if (pools[i] == pool) {
+                pools[i] = pools[length - 1];
+                pools.pop();
                 emit PoolBoosterAddressRemoved(pool);
                 break;
             }
@@ -179,13 +179,13 @@ contract CurvePoolBoosterBribesModule is AbstractSafeModule {
         uint8[] memory extraDuration,
         uint256[] memory rewardsPerVote
     ) internal {
-        uint256 length = POOLS.length;
+        uint256 length = pools.length;
         require(
             address(safeContract).balance >= bridgeFee * length,
             "Not enough ETH for bridge fees"
         );
         for (uint256 i = 0; i < length; i++) {
-            address poolBoosterAddress = POOLS[i];
+            address poolBoosterAddress = pools[i];
             require(
                 safeContract.execTransactionFromModule(
                     poolBoosterAddress,
