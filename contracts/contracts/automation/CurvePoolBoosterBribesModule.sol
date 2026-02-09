@@ -156,9 +156,10 @@ contract CurvePoolBoosterBribesModule is AbstractSafeModule {
                 pools[i] = pools[length - 1];
                 pools.pop();
                 emit PoolBoosterAddressRemoved(pool);
-                break;
+                return;
             }
         }
+        revert("Pool not found");
     }
 
     /// @notice Internal logic to set the bridge fee
