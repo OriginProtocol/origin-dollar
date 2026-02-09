@@ -16,8 +16,9 @@ interface ICurvePoolBooster {
 /// @author Origin Protocol
 /// @notice Gnosis Safe module that automates the management of VotemarketV2 bribe campaigns
 ///         across multiple CurvePoolBooster contracts. It instructs the Safe to call `manageCampaign`
-///         on each registered pool booster, extending campaigns by one period and forwarding ETH
-///         from the Safe's balance to cover bridge fees.
+///         on each registered pool booster, forwarding ETH from the Safe's balance to cover
+///         bridge fees. Campaign parameters (reward amount, duration, reward rate) can be
+///         configured per pool or left to sensible defaults.
 contract CurvePoolBoosterBribesModule is AbstractSafeModule {
     ////////////////////////////////////////////////////
     /// --- Storage
@@ -86,23 +87,40 @@ contract CurvePoolBoosterBribesModule is AbstractSafeModule {
         _setBridgeFee(newFee);
     }
 
-    /// @notice Manage bribe campaigns for all registered pool boosters with no maxRewardPerVote update.
-    /// @dev Calls `manageCampaign` on each pool booster via the Safe, extending by 1 period
-    ///      and using all available reward tokens. The Safe must hold enough ETH to cover
-    ///      `bridgeFee * POOLS.length`.
+    /// @notice Default entry point to manage bribe campaigns for all registered pool boosters.
+    ///         Applies the same behavior to every pool:
+    ///           - totalRewardAmount = type(uint256).max → use all available reward tokens
+    ///           - numberOfPeriods = 1 → extend by one period (week)
+    ///           - maxRewardPerVote = 0 → no update
+    /// @dev Calls `manageCampaign` on each pool booster via the Safe. The Safe must hold
+    ///      enough ETH to cover `bridgeFee * POOLS.length`.
     function manageBribes() external onlyOperator {
+        uint256[] memory totalRewardAmounts = new uint256[](POOLS.length);
+        uint8[] memory extraDuration = new uint8[](POOLS.length);
         uint256[] memory rewardsPerVote = new uint256[](POOLS.length);
-        _manageBribes(rewardsPerVote);
+        for (uint256 i = 0; i < POOLS.length; i++) {
+            totalRewardAmounts[i] = type(uint256).max; // use all available rewards
+            extraDuration[i] = 1; // extend by 1 period (week)
+            rewardsPerVote[i] = 0; // no update to maxRewardPerVote
+        }
+        _manageBribes(totalRewardAmounts, extraDuration, rewardsPerVote);
     }
 
-    /// @notice Manage bribe campaigns with per-pool maxRewardPerVote values
-    /// @param rewardsPerVote Array of maxRewardPerVote values, one per pool (0 = no update)
-    function manageBribes(uint256[] memory rewardsPerVote)
-        external
-        onlyOperator
-    {
+    /// @notice Fully configurable entry point to manage bribe campaigns. Allows setting
+    ///         reward amounts, durations, and reward rates individually for each pool.
+    ///         Each array must have the same length as the POOLS array.
+    /// @param totalRewardAmounts Total reward amount per pool (0 = no update, type(uint256).max = use all available)
+    /// @param extraDuration Number of periods to extend per pool (0 = no update, 1 = +1 week)
+    /// @param rewardsPerVote Max reward per vote per pool (0 = no update)
+    function manageBribes(
+        uint256[] memory totalRewardAmounts,
+        uint8[] memory extraDuration,
+        uint256[] memory rewardsPerVote
+    ) external onlyOperator {
+        require(POOLS.length == totalRewardAmounts.length, "Length mismatch");
+        require(POOLS.length == extraDuration.length, "Length mismatch");
         require(POOLS.length == rewardsPerVote.length, "Length mismatch");
-        _manageBribes(rewardsPerVote);
+        _manageBribes(totalRewardAmounts, extraDuration, rewardsPerVote);
     }
 
     ////////////////////////////////////////////////////
@@ -153,11 +171,14 @@ contract CurvePoolBoosterBribesModule is AbstractSafeModule {
     /// @notice Internal logic to manage bribe campaigns for all registered pool boosters
     /// @dev Iterates over all pool boosters and instructs the Safe to call `manageCampaign`
     ///      on each one, sending `bridgeFee` ETH from the Safe's balance per call.
-    /// @param rewardsPerVote Array of maxRewardPerVote values, one per pool (0 = no update)
-    function _manageBribes(uint256[] memory rewardsPerVote)
-        internal
-        onlyOperator
-    {
+    /// @param totalRewardAmounts Total reward amount per pool (0 = no update, type(uint256).max = use all available)
+    /// @param extraDuration Number of periods to extend per pool (0 = no update)
+    /// @param rewardsPerVote Max reward per vote per pool (0 = no update)
+    function _manageBribes(
+        uint256[] memory totalRewardAmounts,
+        uint8[] memory extraDuration,
+        uint256[] memory rewardsPerVote
+    ) internal {
         uint256 length = POOLS.length;
         require(
             address(safeContract).balance >= bridgeFee * length,
@@ -171,8 +192,8 @@ contract CurvePoolBoosterBribesModule is AbstractSafeModule {
                     bridgeFee, // ETH value to cover bridge fee
                     abi.encodeWithSelector(
                         ICurvePoolBooster.manageCampaign.selector,
-                        type(uint256).max, // totalRewardAmount, 0 = no update
-                        1, // numberOfPeriods, 0 = no update, 1 = +1 period (week)
+                        totalRewardAmounts[i], // totalRewardAmount, 0 = no update, type(uint256).max = use all available rewards
+                        extraDuration[i], // numberOfPeriods, 0 = no update, 1 = +1 period (week)
                         rewardsPerVote[i], // maxRewardPerVote, 0 = no update
                         1000000 // additionalGasLimit
                     ),
