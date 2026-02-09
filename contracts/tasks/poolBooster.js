@@ -23,7 +23,7 @@ const SECONDS_PER_WEEK = 60 * 60 * 24 * 7;
 
 // Minimal ABIs
 const bribesModuleAbi = [
-  "function getPools() external view returns (address[])",
+  "function getPoolBoosters() external view returns (address[])",
   "function manageBribes() external",
   "function manageBribes(uint256[] totalRewardAmounts, uint8[] extraDuration, uint256[] rewardsPerVote) external",
 ];
@@ -239,11 +239,11 @@ async function calculateRewardsPerVote(provider, options = {}) {
 
   // Fetch pools from BribesModule
   const bribesModule = new Contract(BRIBES_MODULE, bribesModuleAbi, provider);
-  const pools = await bribesModule.getPools();
-  output(`Found ${pools.length} pools in BribesModule`);
+  const pools = await bribesModule.getPoolBoosters();
+  output(`Found ${pools.length} pool boosters in BribesModule`);
 
   if (pools.length === 0) {
-    output("No pools registered, nothing to calculate");
+    output("No pool boosters registered, nothing to calculate");
     return { pools: [], rewardsPerVote: [] };
   }
 
@@ -399,7 +399,7 @@ async function manageBribes({
   });
 
   if (rewardsPerVote.length === 0) {
-    log("No pools registered in BribesModule, nothing to do");
+    log("No pool boosters registered in BribesModule, nothing to do");
     return;
   }
 

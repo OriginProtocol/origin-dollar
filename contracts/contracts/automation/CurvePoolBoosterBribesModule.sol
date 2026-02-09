@@ -25,7 +25,7 @@ contract CurvePoolBoosterBribesModule is AbstractSafeModule {
     ////////////////////////////////////////////////////
 
     /// @notice List of CurvePoolBooster addresses managed by this module
-    address[] public pools;
+    address[] public poolBoosters;
 
     /// @notice ETH amount sent per pool booster to cover the L1 -> L2 bridge fee
     uint256 public bridgeFee;
@@ -48,19 +48,19 @@ contract CurvePoolBoosterBribesModule is AbstractSafeModule {
 
     /// @param _safeContract Address of the Gnosis Safe this module is attached to
     /// @param _operator Address authorized to call operator-restricted functions
-    /// @param _pools Initial list of CurvePoolBooster addresses to manage
+    /// @param _poolBoosters Initial list of CurvePoolBooster addresses to manage
     /// @param _bridgeFee ETH amount to send per pool booster for bridge fees
     /// @param _additionalGasLimit Gas limit for cross-chain execution in manageCampaign
     constructor(
         address _safeContract,
         address _operator,
-        address[] memory _pools,
+        address[] memory _poolBoosters,
         uint256 _bridgeFee,
         uint256 _additionalGasLimit
     ) AbstractSafeModule(_safeContract) {
         _grantRole(OPERATOR_ROLE, _operator);
-        for (uint256 i = 0; i < _pools.length; i++) {
-            _addPoolBoosterAddress(_pools[i]);
+        for (uint256 i = 0; i < _poolBoosters.length; i++) {
+            _addPoolBoosterAddress(_poolBoosters[i]);
         }
         _setBridgeFee(_bridgeFee);
         _setAdditionalGasLimit(_additionalGasLimit);
@@ -71,24 +71,24 @@ contract CurvePoolBoosterBribesModule is AbstractSafeModule {
     ////////////////////////////////////////////////////
 
     /// @notice Add new CurvePoolBooster addresses to the managed list
-    /// @param _pools Addresses to add
-    function addPoolBoosterAddress(address[] calldata _pools)
+    /// @param _poolBoosters Addresses to add
+    function addPoolBoosterAddress(address[] calldata _poolBoosters)
         external
         onlyOperator
     {
-        for (uint256 i = 0; i < _pools.length; i++) {
-            _addPoolBoosterAddress(_pools[i]);
+        for (uint256 i = 0; i < _poolBoosters.length; i++) {
+            _addPoolBoosterAddress(_poolBoosters[i]);
         }
     }
 
     /// @notice Remove CurvePoolBooster addresses from the managed list
-    /// @param _pools Addresses to remove
-    function removePoolBoosterAddress(address[] calldata _pools)
+    /// @param _poolBoosters Addresses to remove
+    function removePoolBoosterAddress(address[] calldata _poolBoosters)
         external
         onlyOperator
     {
-        for (uint256 i = 0; i < _pools.length; i++) {
-            _removePoolBoosterAddress(_pools[i]);
+        for (uint256 i = 0; i < _poolBoosters.length; i++) {
+            _removePoolBoosterAddress(_poolBoosters[i]);
         }
     }
 
@@ -110,12 +110,14 @@ contract CurvePoolBoosterBribesModule is AbstractSafeModule {
     ///           - numberOfPeriods = 1 → extend by one period (week)
     ///           - maxRewardPerVote = 0 → no update
     /// @dev Calls `manageCampaign` on each pool booster via the Safe. The Safe must hold
-    ///      enough ETH to cover `bridgeFee * pools.length`.
+    ///      enough ETH to cover `bridgeFee * poolBoosters.length`.
     function manageBribes() external onlyOperator {
-        uint256[] memory totalRewardAmounts = new uint256[](pools.length);
-        uint8[] memory extraDuration = new uint8[](pools.length);
-        uint256[] memory rewardsPerVote = new uint256[](pools.length);
-        for (uint256 i = 0; i < pools.length; i++) {
+        uint256[] memory totalRewardAmounts = new uint256[](
+            poolBoosters.length
+        );
+        uint8[] memory extraDuration = new uint8[](poolBoosters.length);
+        uint256[] memory rewardsPerVote = new uint256[](poolBoosters.length);
+        for (uint256 i = 0; i < poolBoosters.length; i++) {
             totalRewardAmounts[i] = type(uint256).max; // use all available rewards
             extraDuration[i] = 1; // extend by 1 period (week)
             rewardsPerVote[i] = 0; // no update to maxRewardPerVote
@@ -125,7 +127,7 @@ contract CurvePoolBoosterBribesModule is AbstractSafeModule {
 
     /// @notice Fully configurable entry point to manage bribe campaigns. Allows setting
     ///         reward amounts, durations, and reward rates individually for each pool.
-    ///         Each array must have the same length as the pools array.
+    ///         Each array must have the same length as the poolBoosters array.
     /// @param totalRewardAmounts Total reward amount per pool (0 = no update, type(uint256).max = use all available)
     /// @param extraDuration Number of periods to extend per pool (0 = no update, 1 = +1 week)
     /// @param rewardsPerVote Max reward per vote per pool (0 = no update)
@@ -134,9 +136,15 @@ contract CurvePoolBoosterBribesModule is AbstractSafeModule {
         uint8[] calldata extraDuration,
         uint256[] calldata rewardsPerVote
     ) external onlyOperator {
-        require(pools.length == totalRewardAmounts.length, "Length mismatch");
-        require(pools.length == extraDuration.length, "Length mismatch");
-        require(pools.length == rewardsPerVote.length, "Length mismatch");
+        require(
+            poolBoosters.length == totalRewardAmounts.length,
+            "Length mismatch"
+        );
+        require(poolBoosters.length == extraDuration.length, "Length mismatch");
+        require(
+            poolBoosters.length == rewardsPerVote.length,
+            "Length mismatch"
+        );
         _manageBribes(totalRewardAmounts, extraDuration, rewardsPerVote);
     }
 
@@ -146,8 +154,8 @@ contract CurvePoolBoosterBribesModule is AbstractSafeModule {
 
     /// @notice Get the full list of managed CurvePoolBooster addresses
     /// @return Array of pool booster addresses
-    function getPools() external view returns (address[] memory) {
-        return pools;
+    function getPoolBoosters() external view returns (address[] memory) {
+        return poolBoosters;
     }
 
     ////////////////////////////////////////////////////
@@ -155,26 +163,26 @@ contract CurvePoolBoosterBribesModule is AbstractSafeModule {
     ////////////////////////////////////////////////////
 
     /// @notice Internal logic to add a single pool booster address
-    /// @dev Reverts if the address is already in the pools array
-    /// @param _pool Address to append to the pools array
+    /// @dev Reverts if the address is already in the poolBoosters array
+    /// @param _pool Address to append to the poolBoosters array
     function _addPoolBoosterAddress(address _pool) internal {
         require(_pool != address(0), "Zero address");
-        for (uint256 j = 0; j < pools.length; j++) {
-            require(pools[j] != _pool, "Pool already added");
+        for (uint256 j = 0; j < poolBoosters.length; j++) {
+            require(poolBoosters[j] != _pool, "Pool already added");
         }
-        pools.push(_pool);
+        poolBoosters.push(_pool);
         emit PoolBoosterAddressAdded(_pool);
     }
 
     /// @notice Internal logic to remove a pool booster address
     /// @dev Swaps the target with the last element and pops to avoid gaps
-    /// @param pool Address to remove from the pools array
+    /// @param pool Address to remove from the poolBoosters array
     function _removePoolBoosterAddress(address pool) internal {
-        uint256 length = pools.length;
+        uint256 length = poolBoosters.length;
         for (uint256 i = 0; i < length; i++) {
-            if (pools[i] == pool) {
-                pools[i] = pools[length - 1];
-                pools.pop();
+            if (poolBoosters[i] == pool) {
+                poolBoosters[i] = poolBoosters[length - 1];
+                poolBoosters.pop();
                 emit PoolBoosterAddressRemoved(pool);
                 return;
             }
@@ -209,13 +217,13 @@ contract CurvePoolBoosterBribesModule is AbstractSafeModule {
         uint8[] memory extraDuration,
         uint256[] memory rewardsPerVote
     ) internal {
-        uint256 pbCount = pools.length;
+        uint256 pbCount = poolBoosters.length;
         require(
             address(safeContract).balance >= bridgeFee * pbCount,
             "Not enough ETH for bridge fees"
         );
         for (uint256 i = 0; i < pbCount; i++) {
-            address poolBoosterAddress = pools[i];
+            address poolBoosterAddress = poolBoosters[i];
             require(
                 safeContract.execTransactionFromModule(
                     poolBoosterAddress,
