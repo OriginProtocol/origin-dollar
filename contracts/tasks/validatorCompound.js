@@ -826,13 +826,19 @@ function validatorStatus(status) {
   }
 }
 
-async function setRegistrator({ account }) {
+async function setRegistrator({ account, type }) {
   const signer = await getSigner();
 
-  const strategy = await resolveContract(
-    "CompoundingStakingSSVStrategyProxy",
-    "CompoundingStakingSSVStrategy"
-  );
+  const strategy =
+    type === "new"
+      ? await resolveContract(
+          "CompoundingStakingSSVStrategyProxy",
+          "CompoundingStakingSSVStrategy"
+        )
+      : await resolveContract(
+          "NativeStakingSSVStrategyProxy",
+          "NativeStakingSSVStrategy"
+        );
 
   const tx = await strategy.connect(signer).setRegistrator(account);
   await logTxDetails(tx, "setRegistrator");

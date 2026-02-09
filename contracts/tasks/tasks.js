@@ -1968,6 +1968,12 @@ subtask(
   "Set the registrator of the compounding staking strategy"
 )
   .addParam("account", "Address of the registrator", undefined, types.string)
+  .addOptionalParam(
+    "type",
+    "new for compounding staking strategy. old for old Native Staking Strategy",
+    "new",
+    types.string
+  )
   .setAction(setRegistrator);
 task("setRegistrator").setAction(async (_, __, runSuper) => {
   return runSuper();
