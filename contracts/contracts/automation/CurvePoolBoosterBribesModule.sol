@@ -130,9 +130,9 @@ contract CurvePoolBoosterBribesModule is AbstractSafeModule {
     /// @param extraDuration Number of periods to extend per pool (0 = no update, 1 = +1 week)
     /// @param rewardsPerVote Max reward per vote per pool (0 = no update)
     function manageBribes(
-        uint256[] memory totalRewardAmounts,
-        uint8[] memory extraDuration,
-        uint256[] memory rewardsPerVote
+        uint256[] calldata totalRewardAmounts,
+        uint8[] calldata extraDuration,
+        uint256[] calldata rewardsPerVote
     ) external onlyOperator {
         require(pools.length == totalRewardAmounts.length, "Length mismatch");
         require(pools.length == extraDuration.length, "Length mismatch");
