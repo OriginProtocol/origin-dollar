@@ -26,6 +26,7 @@ module.exports = deploymentWithGovernanceProposal(
           "0xc835BcA1378acb32C522f3831b8dba161a763FBE",
         ],
         ethers.utils.parseEther("0.001"), // Bridge fee
+        1000000, // Additional gas limit for cross-chain execution
       ],
       "CurvePoolBoosterBribesModule"
     );
