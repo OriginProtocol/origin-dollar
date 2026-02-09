@@ -53,7 +53,9 @@ contract CurvePoolBoosterBribesModule is AbstractSafeModule {
         uint256 _bridgeFee
     ) AbstractSafeModule(_safeContract) {
         _grantRole(OPERATOR_ROLE, _operator);
-        _addPoolBoosterAddress(_pools);
+        for (uint256 i = 0; i < _pools.length; i++) {
+            _addPoolBoosterAddress(_pools[i]);
+        }
         _setBridgeFee(_bridgeFee);
     }
 
@@ -63,11 +65,13 @@ contract CurvePoolBoosterBribesModule is AbstractSafeModule {
 
     /// @notice Add new CurvePoolBooster addresses to the managed list
     /// @param _pools Addresses to add
-    function addPoolBoosterAddress(address[] memory _pools)
+    function addPoolBoosterAddress(address[] calldata _pools)
         external
         onlyOperator
     {
-        _addPoolBoosterAddress(_pools);
+        for (uint256 i = 0; i < _pools.length; i++) {
+            _addPoolBoosterAddress(_pools[i]);
+        }
     }
 
     /// @notice Remove CurvePoolBooster addresses from the managed list
@@ -137,13 +141,15 @@ contract CurvePoolBoosterBribesModule is AbstractSafeModule {
     /// --- Internal Functions
     ////////////////////////////////////////////////////
 
-    /// @notice Internal logic to add pool booster addresses
-    /// @param _pools Addresses to append to the pools array
-    function _addPoolBoosterAddress(address[] memory _pools) internal {
-        for (uint256 i = 0; i < _pools.length; i++) {
-            pools.push(_pools[i]);
-            emit PoolBoosterAddressAdded(_pools[i]);
+    /// @notice Internal logic to add a single pool booster address
+    /// @dev Reverts if the address is already in the pools array
+    /// @param _pool Address to append to the pools array
+    function _addPoolBoosterAddress(address _pool) internal {
+        for (uint256 j = 0; j < pools.length; j++) {
+            require(pools[j] != _pool, "Pool already added");
         }
+        pools.push(_pool);
+        emit PoolBoosterAddressAdded(_pool);
     }
 
     /// @notice Internal logic to remove a pool booster address
