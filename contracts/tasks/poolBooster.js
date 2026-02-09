@@ -24,7 +24,8 @@ const SECONDS_PER_WEEK = 60 * 60 * 24 * 7;
 // Minimal ABIs
 const bribesModuleAbi = [
   "function getPools() external view returns (address[])",
-  "function manageBribes(uint256[] memory rewardsPerVote) external",
+  "function manageBribes() external",
+  "function manageBribes(uint256[] totalRewardAmounts, uint8[] extraDuration, uint256[] rewardsPerVote) external",
 ];
 
 const poolBoosterAbi = [
@@ -391,7 +392,7 @@ async function manageBribes({
     signer
   );
 
-  const { rewardsPerVote } = await calculateRewardsPerVote(provider, {
+  const { pools, rewardsPerVote } = await calculateRewardsPerVote(provider, {
     targetEfficiency,
     skipRewardPerVote,
     log,
@@ -404,13 +405,26 @@ async function manageBribes({
 
   // Call manageBribes on the SafeModule
   log(`\n--- Calling manageBribes on BribesModule ---`);
-  log(
-    `Rewards per vote: [${rewardsPerVote
-      .map((r) => formatUnits(r, 18))
-      .join(", ")}]`
-  );
 
-  const tx = await bribesModuleContract.manageBribes(rewardsPerVote);
+  let tx;
+  if (skipRewardPerVote) {
+    // Use the no-arg version (defaults: all rewards, +1 period, no reward rate update)
+    log("Using default parameters (no-arg manageBribes)");
+    tx = await bribesModuleContract["manageBribes()"]();
+  } else {
+    // Build default arrays for totalRewardAmounts and extraDuration
+    const totalRewardAmounts = pools.map(() => ethers.constants.MaxUint256);
+    const extraDuration = pools.map(() => 1);
+
+    log(
+      `Rewards per vote: [${rewardsPerVote
+        .map((r) => formatUnits(r, 18))
+        .join(", ")}]`
+    );
+    tx = await bribesModuleContract[
+      "manageBribes(uint256[],uint8[],uint256[])"
+    ](totalRewardAmounts, extraDuration, rewardsPerVote);
+  }
   const receipt = await logTxDetails(tx, "manageBribes");
 
   // Final verification
