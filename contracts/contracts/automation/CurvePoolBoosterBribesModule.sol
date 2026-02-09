@@ -209,12 +209,12 @@ contract CurvePoolBoosterBribesModule is AbstractSafeModule {
         uint8[] memory extraDuration,
         uint256[] memory rewardsPerVote
     ) internal {
-        uint256 length = pools.length;
+        uint256 pbCount = pools.length;
         require(
-            address(safeContract).balance >= bridgeFee * length,
+            address(safeContract).balance >= bridgeFee * pbCount,
             "Not enough ETH for bridge fees"
         );
-        for (uint256 i = 0; i < length; i++) {
+        for (uint256 i = 0; i < pbCount; i++) {
             address poolBoosterAddress = pools[i];
             require(
                 safeContract.execTransactionFromModule(
