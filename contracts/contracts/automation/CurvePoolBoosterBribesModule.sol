@@ -219,7 +219,7 @@ contract CurvePoolBoosterBribesModule is AbstractSafeModule {
                     bridgeFee, // ETH value to cover bridge fee
                     abi.encodeWithSelector(
                         ICurvePoolBooster.manageCampaign.selector,
-                        totalRewardAmounts[i], // totalRewardAmount, 0 = no update, type(uint256).max = use all available rewards
+                        totalRewardAmounts[i], // 0 = no update, max = use all
                         extraDuration[i], // numberOfPeriods, 0 = no update, 1 = +1 period (week)
                         rewardsPerVote[i], // maxRewardPerVote, 0 = no update
                         additionalGasLimit
