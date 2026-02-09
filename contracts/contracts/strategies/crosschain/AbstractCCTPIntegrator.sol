@@ -82,6 +82,9 @@ abstract contract AbstractCCTPIntegrator is Governable, IMessageHandlerV2 {
     /// @notice USDC address on local chain
     address public immutable usdcToken;
 
+    /// @notice USDC address on remote chain
+    address public immutable peerUsdcToken;
+
     /// @notice Domain ID of the chain from which messages are accepted
     uint32 public immutable peerDomainID;
 
@@ -142,10 +145,15 @@ abstract contract AbstractCCTPIntegrator is Governable, IMessageHandlerV2 {
         uint32 peerDomainID;
         address peerStrategy;
         address usdcToken;
+        address peerUsdcToken;
     }
 
     constructor(CCTPIntegrationConfig memory _config) {
         require(_config.usdcToken != address(0), "Invalid USDC address");
+        require(
+            _config.peerUsdcToken != address(0),
+            "Invalid peer USDC address"
+        );
         require(
             _config.cctpTokenMessenger != address(0),
             "Invalid CCTP config"
@@ -183,6 +191,9 @@ abstract contract AbstractCCTPIntegrator is Governable, IMessageHandlerV2 {
                 keccak256(abi.encodePacked("USDC")),
             "Token symbol must be USDC"
         );
+
+        // USDC address on remote chain
+        peerUsdcToken = _config.peerUsdcToken;
     }
 
     /**
@@ -477,7 +488,7 @@ abstract contract AbstractCCTPIntegrator is Governable, IMessageHandlerV2 {
             address burnToken = messageBody.extractAddress(
                 BURN_MESSAGE_V2_BURN_TOKEN_INDEX
             );
-            require(burnToken == usdcToken, "Invalid burn token");
+            require(burnToken == peerUsdcToken, "Invalid burn token");
 
             // Address of caller of depositForBurn (or depositForBurnWithCaller) on source domain
             sender = messageBody.extractAddress(

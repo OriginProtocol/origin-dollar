@@ -24,6 +24,7 @@ module.exports = deployOnBase(
       cctpDomainIds.Ethereum,
       crossChainStrategyProxyAddress,
       addresses.base.USDC,
+      addresses.mainnet.USDC,
       "CrossChainRemoteStrategy",
       addresses.CCTPTokenMessengerV2,
       addresses.CCTPMessageTransmitterV2,

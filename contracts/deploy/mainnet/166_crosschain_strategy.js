@@ -32,6 +32,7 @@ module.exports = deploymentWithGovernanceProposal(
       // Same address for both master and remote strategy
       crossChainStrategyProxyAddress,
       addresses.mainnet.USDC,
+      addresses.base.USDC,
       cVaultProxy.address,
       "CrossChainMasterStrategy",
       false,
