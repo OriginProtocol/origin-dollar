@@ -158,6 +158,7 @@ contract CurvePoolBoosterBribesModule is AbstractSafeModule {
     /// @dev Reverts if the address is already in the pools array
     /// @param _pool Address to append to the pools array
     function _addPoolBoosterAddress(address _pool) internal {
+        require(_pool != address(0), "Zero address");
         for (uint256 j = 0; j < pools.length; j++) {
             require(pools[j] != _pool, "Pool already added");
         }
