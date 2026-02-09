@@ -185,6 +185,7 @@ contract CurvePoolBoosterBribesModule is AbstractSafeModule {
     /// @notice Internal logic to set the bridge fee
     /// @param newFee New bridge fee amount in wei
     function _setBridgeFee(uint256 newFee) internal {
+        require(newFee <= 0.01 ether, "Bridge fee too high");
         bridgeFee = newFee;
         emit BridgeFeeUpdated(newFee);
     }
