@@ -30,11 +30,15 @@ contract CurvePoolBoosterBribesModule is AbstractSafeModule {
     /// @notice ETH amount sent per pool booster to cover the L1 -> L2 bridge fee
     uint256 public bridgeFee;
 
+    /// @notice Gas limit passed to manageCampaign for cross-chain execution
+    uint256 public additionalGasLimit;
+
     ////////////////////////////////////////////////////
     /// --- Events
     ////////////////////////////////////////////////////
 
     event BridgeFeeUpdated(uint256 newFee);
+    event AdditionalGasLimitUpdated(uint256 newGasLimit);
     event PoolBoosterAddressAdded(address pool);
     event PoolBoosterAddressRemoved(address pool);
 
@@ -46,17 +50,20 @@ contract CurvePoolBoosterBribesModule is AbstractSafeModule {
     /// @param _operator Address authorized to call operator-restricted functions
     /// @param _pools Initial list of CurvePoolBooster addresses to manage
     /// @param _bridgeFee ETH amount to send per pool booster for bridge fees
+    /// @param _additionalGasLimit Gas limit for cross-chain execution in manageCampaign
     constructor(
         address _safeContract,
         address _operator,
         address[] memory _pools,
-        uint256 _bridgeFee
+        uint256 _bridgeFee,
+        uint256 _additionalGasLimit
     ) AbstractSafeModule(_safeContract) {
         _grantRole(OPERATOR_ROLE, _operator);
         for (uint256 i = 0; i < _pools.length; i++) {
             _addPoolBoosterAddress(_pools[i]);
         }
         _setBridgeFee(_bridgeFee);
+        _setAdditionalGasLimit(_additionalGasLimit);
     }
 
     ////////////////////////////////////////////////////
@@ -89,6 +96,12 @@ contract CurvePoolBoosterBribesModule is AbstractSafeModule {
     /// @param newFee New bridge fee amount in wei
     function setBridgeFee(uint256 newFee) external onlyOperator {
         _setBridgeFee(newFee);
+    }
+
+    /// @notice Update the additional gas limit for cross-chain execution
+    /// @param newGasLimit New gas limit value
+    function setAdditionalGasLimit(uint256 newGasLimit) external onlyOperator {
+        _setAdditionalGasLimit(newGasLimit);
     }
 
     /// @notice Default entry point to manage bribe campaigns for all registered pool boosters.
@@ -175,6 +188,13 @@ contract CurvePoolBoosterBribesModule is AbstractSafeModule {
         emit BridgeFeeUpdated(newFee);
     }
 
+    /// @notice Internal logic to set the additional gas limit
+    /// @param newGasLimit New gas limit value
+    function _setAdditionalGasLimit(uint256 newGasLimit) internal {
+        additionalGasLimit = newGasLimit;
+        emit AdditionalGasLimitUpdated(newGasLimit);
+    }
+
     /// @notice Internal logic to manage bribe campaigns for all registered pool boosters
     /// @dev Iterates over all pool boosters and instructs the Safe to call `manageCampaign`
     ///      on each one, sending `bridgeFee` ETH from the Safe's balance per call.
@@ -202,7 +222,7 @@ contract CurvePoolBoosterBribesModule is AbstractSafeModule {
                         totalRewardAmounts[i], // totalRewardAmount, 0 = no update, type(uint256).max = use all available rewards
                         extraDuration[i], // numberOfPeriods, 0 = no update, 1 = +1 period (week)
                         rewardsPerVote[i], // maxRewardPerVote, 0 = no update
-                        1000000 // additionalGasLimit
+                        additionalGasLimit
                     ),
                     0
                 ),
