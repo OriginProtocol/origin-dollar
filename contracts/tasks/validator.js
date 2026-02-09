@@ -1,5 +1,4 @@
 const { formatUnits, parseEther } = require("ethers").utils;
-const { KeyValueStoreClient } = require("@openzeppelin/defender-sdk");
 
 const { getBlock } = require("./block");
 const { getValidator, getValidators, getEpoch } = require("../utils/beacon");
@@ -24,11 +23,6 @@ const validatorOperationsConfig = async (taskArgs) => {
   const addressesSet = addresses[networkName];
   const isMainnet = networkName === "mainnet";
 
-  const storeFilePath = require("path").join(
-    __dirname,
-    "..",
-    `.localKeyValueStorage.${networkName}`
-  );
 
   const WETH = await ethers.getContractAt("IWETH9", addressesSet.WETH);
 
@@ -40,10 +34,10 @@ const validatorOperationsConfig = async (taskArgs) => {
 
   const p2p_api_key = isMainnet
     ? process.env.P2P_MAINNET_API_KEY
-    : process.env.P2P_HOLESKY_API_KEY;
+    : process.env.P2P_HOODI_API_KEY;
   if (!p2p_api_key) {
     throw new Error(
-      "P2P API key environment variable is not set. P2P_MAINNET_API_KEY or P2P_HOLESKY_API_KEY"
+      "P2P API key environment variable is not set. P2P_MAINNET_API_KEY or P2P_HOODI_API_KEY"
     );
   }
   const p2p_base_url = isMainnet ? "api.p2p.org" : "api-test.p2p.org";
@@ -68,8 +62,23 @@ const validatorOperationsConfig = async (taskArgs) => {
       ? parseEther(taskArgs.ssv.toString()).toString()
       : undefined;
 
+  // Local/dev mode — simple in-memory store
+  const store = new Map();
+  const kvClient = {
+    async get(key) {
+      return store.get(key) ?? null;
+    },
+    async put(key, value) {
+      store.set(key, value);
+      return value;
+    },
+    async del(key) {
+      store.delete(key);
+    },
+  };
+
   return {
-    store: new KeyValueStoreClient({ path: storeFilePath }),
+    store: kvClient,
     p2p_api_key,
     p2p_base_url,
     nativeStakingStrategy,
@@ -209,6 +218,14 @@ async function setStakeETHThreshold({ amount, index, signer }) {
   log(`About to setStakeETHThreshold`);
   const tx = await strategy.connect(signer).setStakeETHThreshold(threshold);
   await logTxDetails(tx, "setStakeETHThreshold");
+}
+
+async function setStakingMonitor({ account, index, signer }) {
+  const strategy = await resolveNativeStakingStrategyProxy(index);
+
+  log(`About to setStakingMonitor to ${account}`);
+  const tx = await strategy.connect(signer).setStakingMonitor(account);
+  await logTxDetails(tx, "setStakingMonitor");
 }
 
 async function fixAccounting({ index, validators, rewards, ether, signer }) {
@@ -362,6 +379,7 @@ module.exports = {
   doAccounting,
   resetStakeETHTally,
   setStakeETHThreshold,
+  setStakingMonitor,
   fixAccounting,
   manuallyFixAccounting,
   pauseStaking,

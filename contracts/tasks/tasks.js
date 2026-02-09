@@ -99,6 +99,7 @@ const {
   manuallyFixAccounting,
   resetStakeETHTally,
   setStakeETHThreshold,
+  setStakingMonitor,
   fixAccounting,
   pauseStaking,
   snapStaking,
@@ -1490,6 +1491,27 @@ subtask(
   await resetStakeETHTally({ signer });
 });
 task("resetStakeETHTally").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+subtask("setStakingMonitor", "Resets the amount of Ether staked back to zero")
+  .addOptionalParam(
+    "account",
+    "The account to set as the staking monitor.",
+    undefined,
+    types.string
+  )
+  .addOptionalParam(
+    "index",
+    "The number of the Native Staking Contract deployed.",
+    undefined,
+    types.int
+  )
+  .setAction(async (taskArgs) => {
+    const signer = await getSigner();
+    await setStakingMonitor({ ...taskArgs, signer });
+  });
+task("setStakingMonitor").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
 
