@@ -20,6 +20,7 @@ module.exports = deploymentWithGovernanceProposal(
       [
         [addresses.mainnet.MorphoOUSDv2Vault, cVaultProxy.address],
         addresses.mainnet.USDC,
+        addresses.mainnet.MorphoOUSDv2Adapter,
       ]
     );
 
