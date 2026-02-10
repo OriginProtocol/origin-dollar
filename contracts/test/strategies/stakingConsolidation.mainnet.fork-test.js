@@ -512,7 +512,7 @@ describe("ForkTest: Consolidation of Staking Strategies", function () {
 
       await expect(tx).to.be.revertedWith("Invalid public key");
     });
-    it("Fail to request consolidation to a STKAKED target validator", async () => {
+    it("Fail to request consolidation to a STAKED target validator", async () => {
       const stakedCompoundingValidatorPubKey =
         "0xa4258aa50aba9d7441f734213ae76fad9809572a593765c25c25d7afd42b83baba06397bd9e264a9fa24c3327a308682";
 
