@@ -20,7 +20,6 @@ const { deployWithConfirmation } = require("../utils/deploy");
 const { replaceContractAt } = require("../utils/hardhat");
 const {
   getAssetAddresses,
-  usdcUnits,
   getOracleAddresses,
   oethUnits,
   ousdUnits,
