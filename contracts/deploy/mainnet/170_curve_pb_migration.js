@@ -42,7 +42,7 @@ const pools = [
 
 module.exports = deploymentWithGovernanceProposal(
   {
-    deployName: "167_curve_pb_migration",
+    deployName: "170_curve_pb_migration",
     forceDeploy: false,
     reduceQueueTime: true,
     deployerIsProposer: false,
