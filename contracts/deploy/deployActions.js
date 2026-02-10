@@ -1,4 +1,6 @@
 const hre = require("hardhat");
+const fs = require("fs");
+const path = require("path");
 const { setStorageAt } = require("@nomicfoundation/hardhat-network-helpers");
 const { getNetworkName } = require("../utils/hardhat-helpers");
 const { parseUnits } = require("ethers/lib/utils.js");
@@ -13,17 +15,26 @@ const {
   isSonicOrFork,
   isTest,
   isFork,
+  isForkTest,
+  isCI,
   isPlume,
   isHoodi,
   isHoodiOrFork,
 } = require("../test/helpers.js");
-const { deployWithConfirmation, withConfirmation } = require("../utils/deploy");
+const {
+  deployWithConfirmation,
+  verifyContractOnEtherscan,
+  withConfirmation,
+  encodeSaltForCreateX,
+} = require("../utils/deploy");
 const { metapoolLPCRVPid } = require("../utils/constants");
 const { replaceContractAt } = require("../utils/hardhat");
 const { resolveContract } = require("../utils/resolvers");
 const { impersonateAccount, getSigner } = require("../utils/signers");
 const { getDefenderSigner } = require("../utils/signersNoHardhat");
 const { getTxOpts } = require("../utils/tx");
+const createxAbi = require("../abi/createx.json");
+
 const {
   beaconChainGenesisTimeHoodi,
   beaconChainGenesisTimeMainnet,
@@ -1629,6 +1640,328 @@ const deploySonicSwapXAMOStrategyImplementation = async () => {
   return cSonicSwapXAMOStrategy;
 };
 
+const getCreate2ProxiesFilePath = async () => {
+  const networkName =
+    isFork || isForkTest || isCI ? "localhost" : await getNetworkName();
+  return path.resolve(
+    __dirname,
+    `./../deployments/${networkName}/create2Proxies.json`
+  );
+};
+
+const storeCreate2ProxyAddress = async (proxyName, proxyAddress) => {
+  const filePath = await getCreate2ProxiesFilePath();
+
+  // Ensure the directory exists before writing the file
+  const dirPath = path.dirname(filePath);
+  if (!fs.existsSync(dirPath)) {
+    fs.mkdirSync(dirPath, { recursive: true });
+  }
+
+  let existingContents = {};
+  if (fs.existsSync(filePath)) {
+    existingContents = JSON.parse(fs.readFileSync(filePath, "utf8"));
+  }
+
+  await new Promise((resolve, reject) => {
+    fs.writeFile(
+      filePath,
+      JSON.stringify(
+        {
+          ...existingContents,
+          [proxyName]: proxyAddress,
+        },
+        undefined,
+        2
+      ),
+      (err) => {
+        if (err) {
+          console.log("Err:", err);
+          reject(err);
+          return;
+        }
+        console.log(
+          `Stored create2 proxy address for ${proxyName} at ${filePath}`
+        );
+        resolve();
+      }
+    );
+  });
+};
+
+const getCreate2ProxyAddress = async (proxyName) => {
+  const filePath = await getCreate2ProxiesFilePath();
+  if (!fs.existsSync(filePath)) {
+    throw new Error(`Create2 proxies file not found at ${filePath}`);
+  }
+  const contents = JSON.parse(fs.readFileSync(filePath, "utf8"));
+  if (!contents[proxyName]) {
+    throw new Error(`Proxy ${proxyName} not found in ${filePath}`);
+  }
+  return contents[proxyName];
+};
+
+// deploys an instance of InitializeGovernedUpgradeabilityProxy where address is defined by salt
+const deployProxyWithCreateX = async (
+  salt,
+  proxyName,
+  verifyContract = false,
+  contractPath = null
+) => {
+  const { deployerAddr } = await getNamedAccounts();
+
+  const sDeployer = await ethers.provider.getSigner(deployerAddr);
+
+  // Basically hex of "originprotocol" padded to 20 bytes to mimic an address
+  const addrForSalt = "0x0000000000006f726967696e70726f746f636f6c";
+  // NOTE: We always use fixed address to compute the salt for the proxy.
+  // It makes the address predictable, easier to verify and easier to use
+  // with CI and local fork testing.
+  log(
+    `Deploying ${proxyName} with salt: ${salt} and fixed address: ${addrForSalt}`
+  );
+
+  const cCreateX = await ethers.getContractAt(createxAbi, addresses.createX);
+  const factoryEncodedSalt = encodeSaltForCreateX(addrForSalt, false, salt);
+
+  const getFactoryBytecode = async () => {
+    // No deployment needed—get factory directly from artifacts
+    const ProxyContract = await ethers.getContractFactory(proxyName);
+    const encodedArgs = ProxyContract.interface.encodeDeploy([deployerAddr]);
+    return ethers.utils.hexConcat([ProxyContract.bytecode, encodedArgs]);
+  };
+
+  const txResponse = await withConfirmation(
+    cCreateX
+      .connect(sDeployer)
+      .deployCreate2(factoryEncodedSalt, await getFactoryBytecode())
+  );
+
+  // // // Create3ProxyContractCreation
+  // const create3ContractCreationTopic =
+  //   "0x2feea65dd4e9f9cbd86b74b7734210c59a1b2981b5b137bd0ee3e208200c9067";
+  const contractCreationTopic =
+    "0xb8fda7e00c6b06a2b54e58521bc5894fee35f1090e5a3bb6390bfe2b98b497f7";
+
+  // const topicToUse = isCreate3 ? create3ContractCreationTopic : contractCreationTopic;
+  const txReceipt = await txResponse.wait();
+  const proxyAddress = ethers.utils.getAddress(
+    `0x${txReceipt.events
+      .find((event) => event.topics[0] === contractCreationTopic)
+      .topics[1].slice(26)}`
+  );
+
+  log(`Deployed ${proxyName} at ${proxyAddress}`);
+
+  await storeCreate2ProxyAddress(proxyName, proxyAddress);
+
+  // Verify contract on Etherscan if requested and on a live network
+  // Can be enabled via parameter or VERIFY_CONTRACTS environment variable
+  const shouldVerify =
+    verifyContract || process.env.VERIFY_CONTRACTS === "true";
+  if (shouldVerify && !isTest && !isFork && proxyAddress) {
+    // Constructor args for the proxy are [deployerAddr]
+    const constructorArgs = [deployerAddr];
+    await verifyContractOnEtherscan(
+      proxyName,
+      proxyAddress,
+      constructorArgs,
+      proxyName,
+      contractPath
+    );
+  }
+
+  return proxyAddress;
+};
+
+// deploys and initializes the CrossChain master strategy
+const deployCrossChainMasterStrategyImpl = async (
+  proxyAddress,
+  targetDomainId,
+  remoteStrategyAddress,
+  baseToken,
+  peerBaseToken,
+  vaultAddress,
+  implementationName = "CrossChainMasterStrategy",
+  skipInitialize = false,
+  tokenMessengerAddress = addresses.CCTPTokenMessengerV2,
+  messageTransmitterAddress = addresses.CCTPMessageTransmitterV2,
+  governor = addresses.mainnet.Timelock
+) => {
+  const { deployerAddr, multichainStrategistAddr } = await getNamedAccounts();
+  const sDeployer = await ethers.provider.getSigner(deployerAddr);
+  log(`Deploying CrossChainMasterStrategyImpl as deployer ${deployerAddr}`);
+
+  const cCrossChainStrategyProxy = await ethers.getContractAt(
+    "CrossChainStrategyProxy",
+    proxyAddress
+  );
+
+  await deployWithConfirmation(implementationName, [
+    [
+      addresses.zero, // platform address
+      vaultAddress, // vault address
+    ],
+    [
+      tokenMessengerAddress,
+      messageTransmitterAddress,
+      targetDomainId,
+      remoteStrategyAddress,
+      baseToken,
+      peerBaseToken,
+    ],
+  ]);
+  const dCrossChainMasterStrategy = await ethers.getContract(
+    implementationName
+  );
+
+  if (!skipInitialize) {
+    const initData = dCrossChainMasterStrategy.interface.encodeFunctionData(
+      "initialize(address,uint16,uint16)",
+      [multichainStrategistAddr, 2000, 0]
+    );
+
+    // Init the proxy to point at the implementation, set the governor, and call initialize
+    const initFunction = "initialize(address,address,bytes)";
+    await withConfirmation(
+      cCrossChainStrategyProxy.connect(sDeployer)[initFunction](
+        dCrossChainMasterStrategy.address,
+        governor, // governor
+        initData, // data for delegate call to the initialize function on the strategy
+        await getTxOpts()
+      )
+    );
+  }
+
+  return dCrossChainMasterStrategy.address;
+};
+
+// deploys and initializes the CrossChain remote strategy
+const deployCrossChainRemoteStrategyImpl = async (
+  platformAddress, // underlying 4626 vault address
+  proxyAddress,
+  targetDomainId,
+  remoteStrategyAddress,
+  baseToken,
+  peerBaseToken,
+  implementationName = "CrossChainRemoteStrategy",
+  tokenMessengerAddress = addresses.CCTPTokenMessengerV2,
+  messageTransmitterAddress = addresses.CCTPMessageTransmitterV2,
+  governor = addresses.base.timelock,
+  initialize = true
+) => {
+  const { deployerAddr, multichainStrategistAddr } = await getNamedAccounts();
+  const sDeployer = await ethers.provider.getSigner(deployerAddr);
+  log(`Deploying CrossChainRemoteStrategyImpl as deployer ${deployerAddr}`);
+
+  const cCrossChainStrategyProxy = await ethers.getContractAt(
+    "CrossChainStrategyProxy",
+    proxyAddress
+  );
+
+  await deployWithConfirmation(implementationName, [
+    [
+      platformAddress,
+      addresses.zero, // There is no vault on the remote strategy
+    ],
+    [
+      tokenMessengerAddress,
+      messageTransmitterAddress,
+      targetDomainId,
+      remoteStrategyAddress,
+      baseToken,
+      peerBaseToken,
+    ],
+  ]);
+  const dCrossChainRemoteStrategy = await ethers.getContract(
+    implementationName
+  );
+
+  if (initialize) {
+    const initData = dCrossChainRemoteStrategy.interface.encodeFunctionData(
+      "initialize(address,address,uint16,uint16)",
+      [multichainStrategistAddr, multichainStrategistAddr, 2000, 0]
+    );
+
+    // Init the proxy to point at the implementation, set the governor, and call initialize
+    const initFunction = "initialize(address,address,bytes)";
+    await withConfirmation(
+      cCrossChainStrategyProxy.connect(sDeployer)[initFunction](
+        dCrossChainRemoteStrategy.address,
+        governor, // governor
+        //initData, // data for delegate call to the initialize function on the strategy
+        initData,
+        await getTxOpts()
+      )
+    );
+  }
+
+  return dCrossChainRemoteStrategy.address;
+};
+
+// deploy the corss chain Master / Remote strategy pair for unit testing
+const deployCrossChainUnitTestStrategy = async (usdcAddress) => {
+  const { deployerAddr, governorAddr } = await getNamedAccounts();
+  // const sDeployer = await ethers.provider.getSigner(deployerAddr);
+  const sGovernor = await ethers.provider.getSigner(governorAddr);
+  const dMasterProxy = await deployWithConfirmation(
+    "CrossChainMasterStrategyProxy",
+    [deployerAddr],
+    "CrossChainStrategyProxy"
+  );
+  const dRemoteProxy = await deployWithConfirmation(
+    "CrossChainRemoteStrategyProxy",
+    [deployerAddr],
+    "CrossChainStrategyProxy"
+  );
+
+  const cVaultProxy = await ethers.getContract("VaultProxy");
+  const messageTransmitter = await ethers.getContract(
+    "CCTPMessageTransmitterMock"
+  );
+  const tokenMessenger = await ethers.getContract("CCTPTokenMessengerMock");
+  const c4626Vault = await ethers.getContract("MockERC4626Vault");
+
+  await deployCrossChainMasterStrategyImpl(
+    dMasterProxy.address,
+    6, // Base domain id
+    // unit tests differ from mainnet where remote strategy has a different address
+    dRemoteProxy.address,
+    usdcAddress,
+    usdcAddress, // Assume both are same on unit tests
+    cVaultProxy.address,
+    "CrossChainMasterStrategy",
+    false,
+    tokenMessenger.address,
+    messageTransmitter.address,
+    governorAddr
+  );
+
+  await deployCrossChainRemoteStrategyImpl(
+    c4626Vault.address,
+    dRemoteProxy.address,
+    0, // Ethereum domain id
+    dMasterProxy.address,
+    usdcAddress,
+    usdcAddress, // Assume both are same on unit tests
+    "CrossChainRemoteStrategy",
+    tokenMessenger.address,
+    messageTransmitter.address,
+    governorAddr
+  );
+
+  const cCrossChainRemoteStrategy = await ethers.getContractAt(
+    "CrossChainRemoteStrategy",
+    dRemoteProxy.address
+  );
+  await withConfirmation(
+    cCrossChainRemoteStrategy.connect(sGovernor).safeApproveAllTokens()
+  );
+  // await withConfirmation(
+  //   messageTransmitter.connect(sDeployer).setCCTPTokenMessenger(tokenMessenger.address)
+  // );
+};
+
 module.exports = {
   deployOracles,
   deployCore,
@@ -1666,4 +1999,10 @@ module.exports = {
   deployPlumeMockRoosterAMOStrategyImplementation,
   getPlumeContracts,
   deploySonicSwapXAMOStrategyImplementation,
+  deployProxyWithCreateX,
+  deployCrossChainMasterStrategyImpl,
+  deployCrossChainRemoteStrategyImpl,
+  deployCrossChainUnitTestStrategy,
+
+  getCreate2ProxyAddress,
 };

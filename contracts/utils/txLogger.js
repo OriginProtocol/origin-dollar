@@ -16,6 +16,10 @@ async function logTxDetails(tx, method) {
   );
   const receipt = await tx.wait();
 
+  if (receipt.status !== 1) {
+    throw new Error(`Transaction ${method} failed`);
+  }
+
   // Calculate tx cost in Wei
   const txCost = receipt.gasUsed.mul(tx.gasPrice ?? 0);
   log(

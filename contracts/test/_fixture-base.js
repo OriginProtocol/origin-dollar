@@ -1,13 +1,14 @@
 const hre = require("hardhat");
 const { ethers } = hre;
 const mocha = require("mocha");
-const { isFork, isBaseFork, oethUnits } = require("./helpers");
+const { isFork, isBaseFork, oethUnits, usdcUnits } = require("./helpers");
 const { impersonateAndFund, impersonateAccount } = require("../utils/signers");
 const { nodeRevert, nodeSnapshot } = require("./_fixture");
 const { deployWithConfirmation } = require("../utils/deploy");
 const addresses = require("../utils/addresses");
 const erc20Abi = require("./abi/erc20.json");
 const hhHelpers = require("@nomicfoundation/hardhat-network-helpers");
+const { getCreate2ProxyAddress } = require("../deploy/deployActions");
 
 const log = require("../utils/logger")("test:fixtures-base");
 
@@ -143,11 +144,12 @@ const defaultFixture = async () => {
     : await ethers.getContract("MockStrategy");
 
   // WETH
-  let weth, aero;
+  let weth, aero, usdc;
 
   if (isFork) {
     weth = await ethers.getContractAt("IWETH9", addresses.base.WETH);
     aero = await ethers.getContractAt(erc20Abi, addresses.base.AERO);
+    usdc = await ethers.getContractAt(erc20Abi, addresses.base.USDC);
   } else {
     weth = await ethers.getContract("MockWETH");
     aero = await ethers.getContract("MockAero");
@@ -269,8 +271,9 @@ const defaultFixture = async () => {
     curveAMOStrategy,
     mockStrategy,
 
-    // WETH
+    // Tokens
     weth,
+    usdc,
 
     // Signers
     governor,
@@ -329,6 +332,58 @@ const bridgeHelperModuleFixture = deployments.createFixture(async () => {
   };
 });
 
+const crossChainFixture = deployments.createFixture(async () => {
+  const fixture = await defaultBaseFixture();
+  const crossChainStrategyProxyAddress = await getCreate2ProxyAddress(
+    "CrossChainStrategyProxy"
+  );
+  const crossChainRemoteStrategy = await ethers.getContractAt(
+    "CrossChainRemoteStrategy",
+    crossChainStrategyProxyAddress
+  );
+
+  await deployWithConfirmation("CCTPMessageTransmitterMock2", [
+    fixture.usdc.address,
+  ]);
+  const mockMessageTransmitter = await ethers.getContract(
+    "CCTPMessageTransmitterMock2"
+  );
+  await deployWithConfirmation("CCTPTokenMessengerMock", [
+    fixture.usdc.address,
+    mockMessageTransmitter.address,
+  ]);
+  const mockTokenMessenger = await ethers.getContract("CCTPTokenMessengerMock");
+  await mockMessageTransmitter.setCCTPTokenMessenger(
+    addresses.CCTPTokenMessengerV2
+  );
+
+  const usdcMinter = await impersonateAndFund(
+    "0x2230393EDAD0299b7E7B59F20AA856cD1bEd52e1"
+  );
+  const usdcContract = await ethers.getContractAt(
+    [
+      "function mint(address to, uint256 amount) external",
+      "function configureMinter(address minter, uint256 minterAmount) external",
+    ],
+    addresses.base.USDC
+  );
+
+  await usdcContract
+    .connect(usdcMinter)
+    .configureMinter(fixture.rafael.address, usdcUnits("100000000"));
+
+  await usdcContract
+    .connect(fixture.rafael)
+    .mint(fixture.rafael.address, usdcUnits("1000000"));
+
+  return {
+    ...fixture,
+    crossChainRemoteStrategy,
+    mockMessageTransmitter,
+    mockTokenMessenger,
+  };
+});
+
 mocha.after(async () => {
   if (snapshotId) {
     await nodeRevert(snapshotId);
@@ -341,4 +396,5 @@ module.exports = {
   MINTER_ROLE,
   BURNER_ROLE,
   bridgeHelperModuleFixture,
+  crossChainFixture,
 };

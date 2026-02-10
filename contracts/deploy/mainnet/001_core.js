@@ -21,10 +21,13 @@ const {
   deployWOeth,
   deployOETHSwapper,
   deployOUSDSwapper,
+  deployCrossChainUnitTestStrategy,
 } = require("../deployActions");
 
 const main = async () => {
   console.log("Running 001_core deployment...");
+  const usdc = await ethers.getContract("MockUSDC");
+
   await deployOracles();
   await deployCore();
   await deployCurveMetapoolMocks();
@@ -48,6 +51,7 @@ const main = async () => {
   await deployWOeth();
   await deployOETHSwapper();
   await deployOUSDSwapper();
+  await deployCrossChainUnitTestStrategy(usdc.address);
   console.log("001_core deploy done.");
   return true;
 };

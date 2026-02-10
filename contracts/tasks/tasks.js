@@ -18,7 +18,8 @@ const {
   decryptMasterPrivateKey,
 } = require("./amazon");
 const { collect, setDripDuration } = require("./dripper");
-const { getSigner } = require("../utils/signers");
+const { getSigner, getDefenderSigner } = require("../utils/signers");
+const { snapMorpho } = require("../utils/morpho");
 const { snapAero } = require("./aero");
 const {
   storeStorageLayoutForAllContracts,
@@ -63,6 +64,7 @@ const {
   curveSwapTask,
   curvePoolTask,
 } = require("./curve");
+const { calculateMaxPricePerVoteTask, manageBribes } = require("./poolBooster");
 const {
   depositSSV,
   withdrawSSV,
@@ -139,6 +141,10 @@ const {
   copyBeaconRoot,
 } = require("./beaconTesting");
 const { claimMerklRewards } = require("./merkl");
+
+const { processCctpBridgeTransactions } = require("./crossChain");
+const { keyValueStoreLocalClient } = require("../utils/defender");
+const { configuration } = require("../utils/cctp");
 
 const log = require("../utils/logger")("tasks");
 
@@ -667,6 +673,64 @@ task("curvePool").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
 
+// Pool Booster
+subtask(
+  "calculateMaxPricePerVote",
+  "Calculates the MaxPricePerVote for Curve Pool Booster"
+)
+  .addOptionalParam(
+    "efficiency",
+    "Target efficiency (0-10, e.g. 1 for 100%, 0.5 for 50%)",
+    "1",
+    types.string
+  )
+  .addOptionalParam(
+    "skip",
+    "Skip setting RewardPerVote (pass array of zeros)",
+    false,
+    types.boolean
+  )
+  .addOptionalParam(
+    "output",
+    "true will output to the console. false will use debug logs.",
+    true,
+    types.boolean
+  )
+  .setAction(calculateMaxPricePerVoteTask);
+task("calculateMaxPricePerVote").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+subtask(
+  "manageCurvePoolBoosterBribes",
+  "Calls manageBribes on the CurvePoolBoosterBribesModule and calculates the rewards per vote based on the target efficiency"
+)
+  .addOptionalParam(
+    "efficiency",
+    "Target efficiency (0-10, e.g. 1 for 100%, 0.5 for 50%)",
+    "1",
+    types.string
+  )
+  .addOptionalParam(
+    "skipRewardPerVote",
+    "Skip setting RewardPerVote (pass array of zeros)",
+    false,
+    types.boolean
+  )
+  .setAction(async (taskArgs) => {
+    // This action only works with the Defender Relayer signer
+    const signer = await getDefenderSigner();
+    await manageBribes({
+      signer,
+      provider: signer.provider,
+      targetEfficiency: taskArgs.efficiency,
+      skipRewardPerVote: taskArgs.skipRewardPerVote,
+    });
+  });
+task("manageCurvePoolBoosterBribes").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
 // Curve Pools
 subtask("amoStrat", "Dumps the current state of an AMO strategy")
   .addParam("pool", "Symbol of the curve Metapool. OUSD or OETH")
@@ -1181,6 +1245,75 @@ subtask(
     await stakeValidators({ ...config, signer });
   });
 task("stakeValidators").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+/**
+ * This function relays the messages between mainnet and base networks.
+ *
+ * IMPORTANT!!!
+ * If possible please use the defender action and not local execution. The defender action stores into the cloud
+ * key-value store the transaction hashes that have already been relayed. Relaying the transaction via this task
+ * will make the defender relayer continuously fail relaying the transaction that has already been processed.
+ * If the action is ran every ~12 hours and looks back for ~1 day worth of blocks it might fail to run 2-3 times and
+ * then skip some pending transactions that would need relaying.
+ */
+task(
+  "relayCCTPMessage",
+  "Fetches CCTP attested Messages via Circle Gateway API and relays it to the integrator contract"
+)
+  .addOptionalParam(
+    "block",
+    "Override the block number at which the message emission transaction happened",
+    undefined,
+    types.int
+  )
+  .addOptionalParam(
+    "dryrun",
+    "Do not call verifyBalances on the strategy contract. Just log the params including the proofs",
+    false,
+    types.boolean
+  )
+  .setAction(async (taskArgs) => {
+    const networkName = await getNetworkName();
+    const storeFilePath = require("path").join(
+      __dirname,
+      "..",
+      `.localKeyValueStorage.${networkName}`
+    );
+
+    // This action only works with the Defender Relayer signer
+    const signer = await getDefenderSigner();
+    const store = keyValueStoreLocalClient({ _storePath: storeFilePath });
+
+    const isMainnet = networkName === "mainnet";
+    const isBase = networkName === "base";
+
+    let config;
+    if (isMainnet) {
+      config = configuration.mainnetBaseMorpho.mainnet;
+    } else if (isBase) {
+      config = configuration.mainnetBaseMorpho.base;
+    } else {
+      throw new Error(`Unsupported network name: ${networkName}`);
+    }
+
+    await processCctpBridgeTransactions({
+      ...taskArgs,
+      destinationChainSigner: signer,
+      sourceChainProvider: ethers.provider,
+      store,
+      networkName,
+      blockLookback: config.blockLookback,
+      cctpDestinationDomainId: config.cctpDestinationDomainId,
+      cctpSourceDomainId: config.cctpSourceDomainId,
+      cctpIntegrationContractAddress: config.cctpIntegrationContractAddress,
+      cctpIntegrationContractAddressDestination:
+        config.cctpIntegrationContractAddressDestination,
+    });
+  });
+
+task("relayCCTPMessage").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
 
@@ -2356,5 +2489,17 @@ subtask("claimMorphoRewards", "Claim MORPHO rewards from the Morpho Vaults.")
     await claimMerklRewards(strategy, signer);
   });
 task("claimMorphoRewards").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+subtask("snapMorpho", "Get a snapshot of the Morpho OUSD v2 strategy.")
+  .addOptionalParam(
+    "block",
+    "Block number. (default: latest)",
+    undefined,
+    types.int
+  )
+  .setAction(snapMorpho);
+task("snapMorpho").setAction(async (_, __, runSuper) => {
   return runSuper();
 });

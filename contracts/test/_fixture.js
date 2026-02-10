@@ -24,6 +24,7 @@ const {
   getOracleAddresses,
   oethUnits,
   ousdUnits,
+  usdcUnits,
   units,
   isTest,
   isFork,
@@ -31,6 +32,7 @@ const {
   isHoleskyFork,
 } = require("./helpers");
 const { hardhatSetBalance, setERC20TokenBalance } = require("./_fund");
+const { getCreate2ProxyAddress } = require("../deploy/deployActions");
 
 const usdsAbi = require("./abi/usds.json").abi;
 const usdtAbi = require("./abi/usdt.json").abi;
@@ -2566,6 +2568,62 @@ async function instantRebaseVaultFixture(tokenName) {
   return fixture;
 }
 
+// Unit test cross chain fixture where both contracts are deployed on the same chain for the
+// purposes of unit testing
+async function crossChainFixtureUnit() {
+  const fixture = await defaultFixture();
+  const { governor, vault } = fixture;
+
+  const crossChainMasterStrategyProxy = await ethers.getContract(
+    "CrossChainMasterStrategyProxy"
+  );
+  const crossChainRemoteStrategyProxy = await ethers.getContract(
+    "CrossChainRemoteStrategyProxy"
+  );
+
+  const cCrossChainMasterStrategy = await ethers.getContractAt(
+    "CrossChainMasterStrategy",
+    crossChainMasterStrategyProxy.address
+  );
+
+  const cCrossChainRemoteStrategy = await ethers.getContractAt(
+    "CrossChainRemoteStrategy",
+    crossChainRemoteStrategyProxy.address
+  );
+
+  await vault
+    .connect(governor)
+    .approveStrategy(cCrossChainMasterStrategy.address);
+
+  const messageTransmitter = await ethers.getContract(
+    "CCTPMessageTransmitterMock"
+  );
+  const tokenMessenger = await ethers.getContract("CCTPTokenMessengerMock");
+
+  // In unit test environment it is not the off-chain defender action that calls the "relay"
+  // to relay the messages but rather the message transmitter.
+  await cCrossChainMasterStrategy
+    .connect(governor)
+    .setOperator(messageTransmitter.address);
+  await cCrossChainRemoteStrategy
+    .connect(governor)
+    .setOperator(messageTransmitter.address);
+
+  const morphoVault = await ethers.getContract("MockERC4626Vault");
+
+  // Impersonate the OUSD Vault
+  fixture.vaultSigner = await impersonateAndFund(vault.address);
+
+  return {
+    ...fixture,
+    crossChainMasterStrategy: cCrossChainMasterStrategy,
+    crossChainRemoteStrategy: cCrossChainRemoteStrategy,
+    messageTransmitter: messageTransmitter,
+    tokenMessenger: tokenMessenger,
+    morphoVault: morphoVault,
+  };
+}
+
 /**
  * Configure a reborn hack attack
  */
@@ -2896,6 +2954,46 @@ async function enableExecutionLayerGeneralPurposeRequests() {
   };
 }
 
+async function crossChainFixture() {
+  const fixture = await defaultFixture();
+
+  const crossChainStrategyProxyAddress = await getCreate2ProxyAddress(
+    "CrossChainStrategyProxy"
+  );
+  const cCrossChainMasterStrategy = await ethers.getContractAt(
+    "CrossChainMasterStrategy",
+    crossChainStrategyProxyAddress
+  );
+
+  await deployWithConfirmation("CCTPMessageTransmitterMock2", [
+    fixture.usdc.address,
+  ]);
+  const mockMessageTransmitter = await ethers.getContract(
+    "CCTPMessageTransmitterMock2"
+  );
+  await deployWithConfirmation("CCTPTokenMessengerMock", [
+    fixture.usdc.address,
+    mockMessageTransmitter.address,
+  ]);
+  const mockTokenMessenger = await ethers.getContract("CCTPTokenMessengerMock");
+  await mockMessageTransmitter.setCCTPTokenMessenger(
+    addresses.CCTPTokenMessengerV2
+  );
+
+  await setERC20TokenBalance(
+    fixture.matt.address,
+    fixture.usdc,
+    usdcUnits("1000000")
+  );
+
+  return {
+    ...fixture,
+    crossChainMasterStrategy: cCrossChainMasterStrategy,
+    mockMessageTransmitter: mockMessageTransmitter,
+    mockTokenMessenger: mockTokenMessenger,
+  };
+}
+
 /**
  * A fixture is a setup function that is run only the first time it's invoked. On subsequent invocations,
  * Hardhat will reset the state of the network to what it was at the point after the fixture was initially executed.
@@ -2989,4 +3087,6 @@ module.exports = {
   bridgeHelperModuleFixture,
   beaconChainFixture,
   claimRewardsModuleFixture,
+  crossChainFixtureUnit,
+  crossChainFixture,
 };
