@@ -23,8 +23,6 @@ contract BridgedWOETHStrategy is InitializableAbstractStrategy {
     IERC20 public immutable oethb;
     IOracle public immutable oracle;
 
-    uint256 public constant MAX_PRICE_STALENESS = 2 days;
-
     uint128 public lastOraclePrice;
     uint128 public maxPriceDiffBps;
 
