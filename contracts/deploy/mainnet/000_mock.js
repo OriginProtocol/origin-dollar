@@ -134,6 +134,7 @@ const deployMocks = async ({ getNamedAccounts, deployments }) => {
 
   // Deploy a mock Vault with additional functions for tests
   await deploy("MockVault", {
+    args: [(await ethers.getContract("MockUSDC")).address],
     from: governorAddr,
   });
 
@@ -448,6 +449,7 @@ const deployMocks = async ({ getNamedAccounts, deployments }) => {
   const mockBeaconRoots = await ethers.getContract("MockBeaconRoots");
   await replaceContractAt(addresses.mainnet.beaconRoots, mockBeaconRoots);
 
+  await deploy("MockStrategy", { from: deployerAddr });
   await deploy("CCTPMessageTransmitterMock", {
     from: deployerAddr,
     args: [usdc.address],

@@ -4,13 +4,13 @@ const {
   createFixtureLoader,
   instantRebaseVaultFixture,
 } = require("../_fixture");
-const { ousdUnits, usdsUnits, isFork } = require("../helpers");
+const { ousdUnits, usdcUnits, isFork } = require("../helpers");
 
 describe("WOUSD", function () {
   if (isFork) {
     this.timeout(0);
   }
-  let ousd, wousd, vault, usds, matt, josh, governor;
+  let ousd, wousd, vault, usdc, matt, josh, governor;
   const loadFixture = createFixtureLoader(instantRebaseVaultFixture);
 
   beforeEach(async () => {
@@ -18,7 +18,7 @@ describe("WOUSD", function () {
     ousd = fixture.ousd;
     wousd = fixture.wousd;
     vault = fixture.vault;
-    usds = fixture.usds;
+    usdc = fixture.usdc;
     matt = fixture.matt;
     josh = fixture.josh;
     governor = fixture.governor;
@@ -34,13 +34,15 @@ describe("WOUSD", function () {
     await increaseOUSDSupplyAndRebase(await ousd.totalSupply());
   });
 
-  const increaseOUSDSupplyAndRebase = async (usdsAmount) => {
-    await usds.connect(matt).transfer(vault.address, usdsAmount);
+  const increaseOUSDSupplyAndRebase = async (usdcAmount) => {
+    await usdc.mintTo(matt.address, usdcAmount.div(1e12));
+    await usdc.connect(matt).transfer(vault.address, usdcAmount.div(1e12));
     await vault.rebase();
   };
 
   describe("Funds in, Funds out", async () => {
     it("should deposit at the correct ratio", async () => {
+      console.log((await wousd.balanceOf(josh.address)).toString());
       await wousd.connect(josh).deposit(ousdUnits("50"), josh.address);
       await expect(josh).to.have.a.balanceOf("75", wousd);
       await expect(josh).to.have.a.balanceOf("50", ousd);
@@ -70,7 +72,7 @@ describe("WOUSD", function () {
   describe("Collects Rebase", async () => {
     it("should increase with an OUSD rebase", async () => {
       await expect(wousd).to.have.approxBalanceOf("100", ousd);
-      await usds.connect(josh).transfer(vault.address, usdsUnits("200"));
+      await usdc.connect(josh).transfer(vault.address, usdcUnits("200"));
       await vault.rebase();
       await expect(wousd).to.have.approxBalanceOf("150", ousd);
     });
@@ -86,12 +88,12 @@ describe("WOUSD", function () {
 
   describe("Token recovery", async () => {
     it("should allow a governor to recover tokens", async () => {
-      await usds.connect(matt).transfer(wousd.address, usdsUnits("2"));
-      await expect(wousd).to.have.a.balanceOf("2", usds);
-      await expect(governor).to.have.a.balanceOf("1000", usds);
-      await wousd.connect(governor).transferToken(usds.address, usdsUnits("2"));
-      await expect(wousd).to.have.a.balanceOf("0", usds);
-      await expect(governor).to.have.a.balanceOf("1002", usds);
+      await usdc.connect(matt).transfer(wousd.address, usdcUnits("2"));
+      await expect(wousd).to.have.a.balanceOf("2", usdc);
+      await expect(governor).to.have.a.balanceOf("1000", usdc);
+      await wousd.connect(governor).transferToken(usdc.address, usdcUnits("2"));
+      await expect(wousd).to.have.a.balanceOf("0", usdc);
+      await expect(governor).to.have.a.balanceOf("1002", usdc);
     });
     it("should not allow a governor to collect OUSD", async () => {
       await expect(

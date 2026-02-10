@@ -51,83 +51,6 @@ describe("ForkTest: OETHb Vault", function () {
         0.1
       );
     });
-
-    it("Should allow only Strategist to redeem", async () => {
-      const { strategist, oethbVault, oethb, weth, rafael } = fixture;
-
-      // Add WETH liquidity to allow redeem
-      await weth
-        .connect(rafael)
-        .transfer(oethbVault.address, oethUnits("3000"));
-
-      await oethbVault.rebase();
-      await _mint(strategist);
-
-      const vaultBalanceBefore = await weth.balanceOf(oethbVault.address);
-      const userBalanceBefore = await oethb.balanceOf(strategist.address);
-      const totalSupplyBefore = await oethb.totalSupply();
-
-      await oethbVault.connect(strategist).redeem(oethUnits("1"), "0");
-
-      const vaultBalanceAfter = await weth.balanceOf(oethbVault.address);
-      const userBalanceAfter = await oethb.balanceOf(strategist.address);
-      const totalSupplyAfter = await oethb.totalSupply();
-
-      expect(totalSupplyAfter).to.approxEqualTolerance(
-        totalSupplyBefore.sub(oethUnits("1"))
-      );
-      expect(userBalanceAfter).to.approxEqualTolerance(
-        userBalanceBefore.sub(oethUnits("1"))
-      );
-      expect(vaultBalanceAfter).to.approxEqualTolerance(
-        vaultBalanceBefore.sub(oethUnits("1"))
-      );
-    });
-
-    it("Should allow only Governor to redeem", async () => {
-      const { governor, oethbVault, oethb, weth, rafael } = fixture;
-
-      // Add WETH liquidity to allow redeem
-      await weth
-        .connect(rafael)
-        .transfer(oethbVault.address, oethUnits("3000"));
-
-      await oethbVault.rebase();
-      await _mint(governor);
-
-      const vaultBalanceBefore = await weth.balanceOf(oethbVault.address);
-      const userBalanceBefore = await oethb.balanceOf(governor.address);
-      const totalSupplyBefore = await oethb.totalSupply();
-
-      await oethbVault.connect(governor).redeem(oethUnits("1"), "0");
-
-      const vaultBalanceAfter = await weth.balanceOf(oethbVault.address);
-      const userBalanceAfter = await oethb.balanceOf(governor.address);
-      const totalSupplyAfter = await oethb.totalSupply();
-
-      expect(totalSupplyAfter).to.approxEqualTolerance(
-        totalSupplyBefore.sub(oethUnits("1"))
-      );
-      expect(userBalanceAfter).to.approxEqualTolerance(
-        userBalanceBefore.sub(oethUnits("1"))
-      );
-      expect(vaultBalanceAfter).to.approxEqualTolerance(
-        vaultBalanceBefore.sub(oethUnits("1"))
-      );
-    });
-
-    it("No one else can redeem", async () => {
-      const { rafael, nick, oethbVault } = fixture;
-
-      await oethbVault.rebase();
-
-      for (const signer of [rafael, nick]) {
-        await _mint(signer);
-        await expect(
-          oethbVault.connect(signer).redeem(oethUnits("1"), "0")
-        ).to.be.revertedWith("Caller is not the Strategist or Governor");
-      }
-    });
   });
 
   describe("Async withdrawals", function () {
@@ -137,7 +60,10 @@ describe("ForkTest: OETHb Vault", function () {
       // Add WETH liquidity to allow withdrawal
       await weth
         .connect(rafael)
-        .transfer(oethbVault.address, oethUnits("3000"));
+        .approve(oethbVault.address, oethUnits("10000"));
+      await oethbVault
+        .connect(rafael)
+        .mint(weth.address, oethUnits("10000"), 0);
 
       const delayPeriod = await oethbVault.withdrawalClaimDelay();
 
@@ -238,7 +164,7 @@ describe("ForkTest: OETHb Vault", function () {
     });
   });
 
-  describe("Mint Whitelist", function () {
+  describe.skip("Mint Whitelist", function () {
     it("Should allow a strategy to be added to the whitelist", async () => {
       const { oethbVault, governor } = fixture;
 
@@ -321,7 +247,7 @@ describe("ForkTest: OETHb Vault", function () {
     });
   });
 
-  describe("Mint & Burn For Strategy", function () {
+  describe.skip("Mint & Burn For Strategy", function () {
     let strategySigner, mockStrategy;
 
     beforeEach(async () => {

@@ -294,7 +294,6 @@ const deployConvexOUSDMetaStrategy = async () => {
  * Configure Vault by adding supported assets and Strategies.
  */
 const configureVault = async () => {
-  const assetAddresses = await getAssetAddresses(deployments);
   const { governorAddr, strategistAddr } = await getNamedAccounts();
   // Signers
   const sGovernor = await ethers.provider.getSigner(governorAddr);
@@ -305,19 +304,6 @@ const configureVault = async () => {
       await ethers.getContract("VaultProxy")
     ).address
   );
-  // Set up supported assets for Vault
-  await withConfirmation(
-    cVault.connect(sGovernor).supportAsset(assetAddresses.USDS, 0)
-  );
-  log("Added USDS asset to Vault");
-  await withConfirmation(
-    cVault.connect(sGovernor).supportAsset(assetAddresses.USDT, 0)
-  );
-  log("Added USDT asset to Vault");
-  await withConfirmation(
-    cVault.connect(sGovernor).supportAsset(assetAddresses.USDC, 0)
-  );
-  log("Added USDC asset to Vault");
   // Unpause deposits
   await withConfirmation(cVault.connect(sGovernor).unpauseCapital());
   log("Unpaused deposits on Vault");
@@ -325,13 +311,17 @@ const configureVault = async () => {
   await withConfirmation(
     cVault.connect(sGovernor).setStrategistAddr(strategistAddr)
   );
+
+  // Set withdrawal claim delay to 10m
+  await withConfirmation(
+    cVault.connect(sGovernor).setWithdrawalClaimDelay(10 * 60)
+  );
 };
 
 /**
  * Configure OETH Vault by adding supported assets and Strategies.
  */
-const configureOETHVault = async (isSimpleOETH) => {
-  const assetAddresses = await getAssetAddresses(deployments);
+const configureOETHVault = async () => {
   let { governorAddr, deployerAddr, strategistAddr } = await getNamedAccounts();
   // Signers
   let sGovernor = await ethers.provider.getSigner(governorAddr);
@@ -349,14 +339,6 @@ const configureOETHVault = async (isSimpleOETH) => {
     sGovernor = sDeployer;
   }
 
-  // Set up supported assets for Vault
-  const { WETH, RETH, stETH, frxETH } = assetAddresses;
-  const assets = isSimpleOETH ? [WETH] : [WETH, RETH, stETH, frxETH];
-  for (const asset of assets) {
-    await withConfirmation(cVault.connect(sGovernor).supportAsset(asset, 0));
-  }
-  log("Added assets to OETH Vault");
-
   // Unpause deposits
   await withConfirmation(cVault.connect(sGovernor).unpauseCapital());
   log("Unpaused deposits on OETH Vault");
@@ -364,12 +346,6 @@ const configureOETHVault = async (isSimpleOETH) => {
   await withConfirmation(
     cVault.connect(sGovernor).setStrategistAddr(strategistAddr)
   );
-
-  // Cache WETH asset address
-  await withConfirmation(cVault.connect(sGovernor).cacheWETHAssetIndex());
-
-  // Redeem fee to 0
-  await withConfirmation(cVault.connect(sGovernor).setRedeemFeeBps(0));
 
   // Allocate threshold
   await withConfirmation(
@@ -519,29 +495,47 @@ const configureStrategies = async (harvesterProxy, oethHarvesterProxy) => {
   // Signers
   const sGovernor = await ethers.provider.getSigner(governorAddr);
 
-  const compoundProxy = await ethers.getContract("CompoundStrategyProxy");
-  const compound = await ethers.getContractAt(
-    "CompoundStrategy",
-    compoundProxy.address
-  );
-  await withConfirmation(
-    compound.connect(sGovernor).setHarvesterAddress(harvesterProxy.address)
-  );
+  // Configure Compound Strategy if deployed
+  const compoundDeployment = await hre.deployments
+    .get("CompoundStrategyProxy")
+    .catch(() => null);
+  if (compoundDeployment) {
+    const compound = await ethers.getContractAt(
+      "CompoundStrategy",
+      compoundDeployment.address
+    );
+    await withConfirmation(
+      compound.connect(sGovernor).setHarvesterAddress(harvesterProxy.address)
+    );
+  }
 
-  const aaveProxy = await ethers.getContract("AaveStrategyProxy");
-  const aave = await ethers.getContractAt("AaveStrategy", aaveProxy.address);
-  await withConfirmation(
-    aave.connect(sGovernor).setHarvesterAddress(harvesterProxy.address)
-  );
+  // Configure Aave Strategy if deployed
+  const aaveDeployment = await hre.deployments
+    .get("AaveStrategyProxy")
+    .catch(() => null);
+  if (aaveDeployment) {
+    const aave = await ethers.getContractAt(
+      "AaveStrategy",
+      aaveDeployment.address
+    );
+    await withConfirmation(
+      aave.connect(sGovernor).setHarvesterAddress(harvesterProxy.address)
+    );
+  }
 
-  const convexProxy = await ethers.getContract("ConvexStrategyProxy");
-  const convex = await ethers.getContractAt(
-    "ConvexStrategy",
-    convexProxy.address
-  );
-  await withConfirmation(
-    convex.connect(sGovernor).setHarvesterAddress(harvesterProxy.address)
-  );
+  // Configure Convex Strategy if deployed
+  const convexDeployment = await hre.deployments
+    .get("ConvexStrategyProxy")
+    .catch(() => null);
+  if (convexDeployment) {
+    const convex = await ethers.getContractAt(
+      "ConvexStrategy",
+      convexDeployment.address
+    );
+    await withConfirmation(
+      convex.connect(sGovernor).setHarvesterAddress(harvesterProxy.address)
+    );
+  }
 
   const nativeStakingSSVStrategyProxy = await ethers.getContract(
     "NativeStakingSSVStrategyProxy"
@@ -1091,11 +1085,7 @@ const deployOETHCore = async () => {
 
   // Main contracts
   const dOETH = await deployWithConfirmation("OETH");
-  const dOETHVault = await deployWithConfirmation("OETHVault");
-  const dOETHVaultCore = await deployWithConfirmation("OETHVaultCore", [
-    assetAddresses.WETH,
-  ]);
-  const dOETHVaultAdmin = await deployWithConfirmation("OETHVaultAdmin", [
+  const dOETHVault = await deployWithConfirmation("OETHVault", [
     assetAddresses.WETH,
   ]);
 
@@ -1103,10 +1093,6 @@ const deployOETHCore = async () => {
   const cOETHProxy = await ethers.getContract("OETHProxy");
   const cOETHVaultProxy = await ethers.getContract("OETHVaultProxy");
   const cOETH = await ethers.getContractAt("OETH", cOETHProxy.address);
-
-  const oracleRouterContractName =
-    isMainnet || isHoodiOrFork ? "OETHOracleRouter" : "OracleRouter";
-  const cOETHOracleRouter = await ethers.getContract(oracleRouterContractName);
   const cOETHVault = await ethers.getContractAt(
     "IVault",
     cOETHVaultProxy.address
@@ -1136,24 +1122,15 @@ const deployOETHCore = async () => {
   await withConfirmation(
     cOETHVault
       .connect(sGovernor)
-      .initialize(
-        cOETHOracleRouter.address,
-        cOETHProxy.address,
-        await getTxOpts()
-      )
+      .initialize(cOETHProxy.address, await getTxOpts())
   );
   log("Initialized OETHVault");
 
   await withConfirmation(
-    cOETHVaultProxy.connect(sGovernor).upgradeTo(dOETHVaultCore.address)
+    cOETHVaultProxy.connect(sGovernor).upgradeTo(dOETHVault.address)
   );
   log("Upgraded VaultCore implementation");
 
-  await withConfirmation(
-    cOETHVault.connect(sGovernor).setAdminImpl(dOETHVaultAdmin.address)
-  );
-
-  log("Initialized VaultAdmin implementation");
   // Initialize OETH
   /* Set the original resolution to 27 decimals. We used to have it set to 18
    * decimals at launch and then migrated to 27. Having it set to 27 it will
@@ -1178,16 +1155,19 @@ const deployOETHCore = async () => {
 };
 
 const deployOUSDCore = async () => {
-  const { governorAddr } = await hre.getNamedAccounts();
+  const { governorAddr, deployerAddr } = await hre.getNamedAccounts();
+
   const assetAddresses = await getAssetAddresses(deployments);
   log(`Using asset addresses: ${JSON.stringify(assetAddresses, null, 2)}`);
 
   // Signers
   const sGovernor = await ethers.provider.getSigner(governorAddr);
+  const sDeployer = await ethers.provider.getSigner(deployerAddr);
 
   // Proxies
   await deployWithConfirmation("OUSDProxy");
   await deployWithConfirmation("VaultProxy");
+  log("Deployed OUSD Token and OUSD Vault proxies");
 
   // Main contracts
   let dOUSD;
@@ -1196,17 +1176,20 @@ const deployOUSDCore = async () => {
   } else {
     dOUSD = await deployWithConfirmation("OUSD");
   }
-  const dVault = await deployWithConfirmation("Vault");
-  const dVaultCore = await deployWithConfirmation("VaultCore");
-  const dVaultAdmin = await deployWithConfirmation("VaultAdmin");
+
+  // Deploy Vault implementations
+  const dVaultAdmin = await deployWithConfirmation("OUSDVault", [
+    assetAddresses.USDC,
+  ]);
+  log("Deployed OUSD Vault implementations (Core, Admin)");
 
   // Get contract instances
   const cOUSDProxy = await ethers.getContract("OUSDProxy");
   const cVaultProxy = await ethers.getContract("VaultProxy");
   const cOUSD = await ethers.getContractAt("OUSD", cOUSDProxy.address);
-  const cOracleRouter = await ethers.getContract("OracleRouter");
   const cVault = await ethers.getContractAt("IVault", cVaultProxy.address);
 
+  // Initialize OUSD Token Proxy
   await withConfirmation(
     cOUSDProxy["initialize(address,address,bytes)"](
       dOUSD.address,
@@ -1214,34 +1197,25 @@ const deployOUSDCore = async () => {
       []
     )
   );
-  log("Initialized OUSDProxy");
+  log("Initialized OUSD Token Proxy");
 
-  // Need to call the initializer on the Vault then upgraded it to the actual
-  // VaultCore implementation
+  // Initialize OUSD Vault Proxy with Vault Core implementation
+  // prettier-ignore
   await withConfirmation(
-    cVaultProxy["initialize(address,address,bytes)"](
-      dVault.address,
+    cVaultProxy.connect(sDeployer)["initialize(address,address,bytes)"](
+      dVaultAdmin.address,
       governorAddr,
-      []
+      [],
+      await getTxOpts()
     )
   );
+  log("Initialized OUSD Vault Proxy");
 
+  // Initialize OUSD Vault Core
   await withConfirmation(
-    cVault
-      .connect(sGovernor)
-      .initialize(cOracleRouter.address, cOUSDProxy.address)
+    cVault.connect(sGovernor).initialize(cOUSDProxy.address)
   );
-  log("Initialized Vault");
-
-  await withConfirmation(
-    cVaultProxy.connect(sGovernor).upgradeTo(dVaultCore.address)
-  );
-  log("Upgraded VaultCore implementation");
-
-  await withConfirmation(
-    cVault.connect(sGovernor).setAdminImpl(dVaultAdmin.address)
-  );
-  log("Initialized VaultAdmin implementation");
+  log("Initialized OUSD Vault Core");
 
   // Initialize OUSD
   /* Set the original resolution to 27 decimals. We used to have it set to 18
@@ -1263,7 +1237,7 @@ const deployOUSDCore = async () => {
   await withConfirmation(
     cOUSD.connect(sGovernor).initialize(cVaultProxy.address, resolution)
   );
-  log("Initialized OUSD");
+  log("Initialized OUSD Token");
 
   await withConfirmation(
     cVault
@@ -1497,16 +1471,10 @@ const deployWOeth = async () => {
 };
 
 const deployOETHSwapper = async () => {
-  const { deployerAddr, governorAddr } = await getNamedAccounts();
+  const { deployerAddr } = await getNamedAccounts();
   const sDeployer = await ethers.provider.getSigner(deployerAddr);
-  const sGovernor = await ethers.provider.getSigner(governorAddr);
 
   const assetAddresses = await getAssetAddresses(deployments);
-
-  const vaultProxy = await ethers.getContract("OETHVaultProxy");
-  const vault = await ethers.getContractAt("IVault", vaultProxy.address);
-
-  const mockSwapper = await ethers.getContract("MockSwapper");
 
   await deployWithConfirmation("Swapper1InchV5");
   const cSwapper = await ethers.getContract("Swapper1InchV5");
@@ -1519,27 +1487,13 @@ const deployOETHSwapper = async () => {
       assetAddresses.WETH,
       assetAddresses.frxETH,
     ]);
-
-  await vault.connect(sGovernor).setSwapper(mockSwapper.address);
-  await vault.connect(sGovernor).setSwapAllowedUndervalue(100);
-
-  await vault.connect(sGovernor).setOracleSlippage(assetAddresses.RETH, 200);
-  await vault.connect(sGovernor).setOracleSlippage(assetAddresses.stETH, 70);
-  await vault.connect(sGovernor).setOracleSlippage(assetAddresses.WETH, 20);
-  await vault.connect(sGovernor).setOracleSlippage(assetAddresses.frxETH, 20);
 };
 
 const deployOUSDSwapper = async () => {
-  const { deployerAddr, governorAddr } = await getNamedAccounts();
+  const { deployerAddr } = await getNamedAccounts();
   const sDeployer = await ethers.provider.getSigner(deployerAddr);
-  const sGovernor = await ethers.provider.getSigner(governorAddr);
 
   const assetAddresses = await getAssetAddresses(deployments);
-
-  const vaultProxy = await ethers.getContract("VaultProxy");
-  const vault = await ethers.getContractAt("IVault", vaultProxy.address);
-
-  const mockSwapper = await ethers.getContract("MockSwapper");
   // Assumes deployOETHSwapper has already been run
   const cSwapper = await ethers.getContract("Swapper1InchV5");
 
@@ -1550,13 +1504,6 @@ const deployOUSDSwapper = async () => {
       assetAddresses.USDC,
       assetAddresses.USDT,
     ]);
-
-  await vault.connect(sGovernor).setSwapper(mockSwapper.address);
-  await vault.connect(sGovernor).setSwapAllowedUndervalue(100);
-
-  await vault.connect(sGovernor).setOracleSlippage(assetAddresses.USDS, 50);
-  await vault.connect(sGovernor).setOracleSlippage(assetAddresses.USDC, 50);
-  await vault.connect(sGovernor).setOracleSlippage(assetAddresses.USDT, 50);
 };
 
 const deployBaseAerodromeAMOStrategyImplementation = async () => {
