@@ -36,6 +36,7 @@ contract CrossChainMasterStrategy is
 
     event RemoteStrategyBalanceUpdated(uint256 balance);
     event WithdrawRequested(address indexed asset, uint256 amount);
+    event WithdrawAllSkipped();
     event BalanceCheckIgnored(uint64 nonce, uint256 timestamp, bool isTooOld);
 
     /**
@@ -115,6 +116,9 @@ contract CrossChainMasterStrategy is
     function withdrawAll() external override onlyVaultOrGovernor nonReentrant {
         if (isTransferPending()) {
             // Do nothing if there is a pending transfer
+            // Note: We never want withdrawAll to fail, so
+            // emit an event to indicate that the withdrawal was skipped
+            emit WithdrawAllSkipped();
             return;
         }
 
