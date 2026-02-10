@@ -187,6 +187,7 @@ abstract contract VaultCore is VaultInitializer {
         nonReentrant
         returns (uint256 requestId, uint256 queued)
     {
+        require(_amount > 0, "Amount must be greater than 0");
         require(withdrawalClaimDelay > 0, "Async withdrawals not enabled");
 
         // The check that the requester has enough OToken is done in to later burn call

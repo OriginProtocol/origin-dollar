@@ -221,10 +221,11 @@ describe("OETH Vault", function () {
       await expect(tx).to.revertedWith("Queue pending liquidity");
     });
 
-    it("Should request withdrawal of zero amount without revert", async () => {
+    it("Fail to request withdrawal of zero amount", async () => {
       const { oethVault, daniel } = fixture;
 
-      await oethVault.connect(daniel).requestWithdrawal(0);
+      const tx = oethVault.connect(daniel).requestWithdrawal(0);
+      await expect(tx).to.be.revertedWith("Amount must be greater than 0");
     });
 
     it("Should allow every user to withdraw", async () => {
@@ -594,34 +595,11 @@ describe("OETH Vault", function () {
           fixtureWithUser
         );
       });
-      it("Should request withdrawal of zero amount", async () => {
+      it("Fail to request withdrawal of zero amount", async () => {
         const { oethVault, josh } = fixture;
-        const fixtureWithUser = { ...fixture, user: josh };
-        await oethVault.connect(josh).requestWithdrawal(firstRequestAmount);
-        const dataBefore = await snapData(fixtureWithUser);
 
-        const tx = await oethVault.connect(josh).requestWithdrawal(0);
-
-        await expect(tx)
-          .to.emit(oethVault, "WithdrawalRequested")
-          .withArgs(josh.address, 1, 0, firstRequestAmount);
-
-        await assertChangedData(
-          dataBefore,
-          {
-            oethTotalSupply: 0,
-            oethTotalValue: 0,
-            vaultCheckBalance: 0,
-            userOeth: 0,
-            userWeth: 0,
-            vaultWeth: 0,
-            queued: 0,
-            claimable: 0,
-            claimed: 0,
-            nextWithdrawalIndex: 1,
-          },
-          fixtureWithUser
-        );
+        const tx = oethVault.connect(josh).requestWithdrawal(0);
+        await expect(tx).to.be.revertedWith("Amount must be greater than 0");
       });
       it("Should request first and second withdrawals with no WETH in the Vault", async () => {
         const { oethVault, governor, josh, matt, weth } = fixture;
