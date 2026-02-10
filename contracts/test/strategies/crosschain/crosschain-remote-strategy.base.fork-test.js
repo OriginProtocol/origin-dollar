@@ -143,6 +143,7 @@ describe("ForkTest: CrossChainRemoteStrategy", function () {
     const burnPayload = encodeBurnMessageBody(
       crossChainRemoteStrategy.address,
       crossChainRemoteStrategy.address,
+      addresses.mainnet.USDC,
       depositAmount,
       depositPayload
     );
@@ -245,5 +246,41 @@ describe("ForkTest: CrossChainRemoteStrategy", function () {
       usdc.address
     );
     expect(balanceAfter).to.approxEqual(expectedBalance);
+  });
+
+  it("Should revert if the burn token is not peer USDC", async function () {
+    const { crossChainRemoteStrategy, strategist } = fixture;
+
+    const nonceBefore = await crossChainRemoteStrategy.lastTransferNonce();
+
+    const depositAmount = usdcUnits("1234.56");
+
+    // Replace transmitter to mock transmitter
+    await replaceMessageTransmitter();
+
+    const nextNonce = nonceBefore.toNumber() + 1;
+
+    // Build deposit message
+    const depositPayload = encodeDepositMessageBody(nextNonce, depositAmount);
+    const burnPayload = encodeBurnMessageBody(
+      crossChainRemoteStrategy.address,
+      crossChainRemoteStrategy.address,
+      addresses.base.WETH, // Not peer USDC
+      depositAmount,
+      depositPayload
+    );
+    const message = encodeCCTPMessage(
+      0,
+      addresses.CCTPTokenMessengerV2,
+      addresses.CCTPTokenMessengerV2,
+      burnPayload
+    );
+
+    // Relay the message
+    const tx = crossChainRemoteStrategy
+      .connect(strategist)
+      .relay(message, "0x");
+
+    await expect(tx).to.be.revertedWith("Invalid burn token");
   });
 });

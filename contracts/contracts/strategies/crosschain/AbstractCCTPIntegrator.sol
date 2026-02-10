@@ -50,6 +50,7 @@ abstract contract AbstractCCTPIntegrator is Governable, IMessageHandlerV2 {
     // Ref: https://developers.circle.com/cctp/technical-guide#message-body
     // Ref: https://github.com/circlefin/evm-cctp-contracts/blob/master/src/messages/v2/BurnMessageV2.sol
     uint8 private constant BURN_MESSAGE_V2_VERSION_INDEX = 0;
+    uint8 private constant BURN_MESSAGE_V2_BURN_TOKEN_INDEX = 4;
     uint8 private constant BURN_MESSAGE_V2_RECIPIENT_INDEX = 36;
     uint8 private constant BURN_MESSAGE_V2_AMOUNT_INDEX = 68;
     uint8 private constant BURN_MESSAGE_V2_MESSAGE_SENDER_INDEX = 100;
@@ -80,6 +81,9 @@ abstract contract AbstractCCTPIntegrator is Governable, IMessageHandlerV2 {
 
     /// @notice USDC address on local chain
     address public immutable usdcToken;
+
+    /// @notice USDC address on remote chain
+    address public immutable peerUsdcToken;
 
     /// @notice Domain ID of the chain from which messages are accepted
     uint32 public immutable peerDomainID;
@@ -141,10 +145,15 @@ abstract contract AbstractCCTPIntegrator is Governable, IMessageHandlerV2 {
         uint32 peerDomainID;
         address peerStrategy;
         address usdcToken;
+        address peerUsdcToken;
     }
 
     constructor(CCTPIntegrationConfig memory _config) {
         require(_config.usdcToken != address(0), "Invalid USDC address");
+        require(
+            _config.peerUsdcToken != address(0),
+            "Invalid peer USDC address"
+        );
         require(
             _config.cctpTokenMessenger != address(0),
             "Invalid CCTP config"
@@ -182,6 +191,9 @@ abstract contract AbstractCCTPIntegrator is Governable, IMessageHandlerV2 {
                 keccak256(abi.encodePacked("USDC")),
             "Token symbol must be USDC"
         );
+
+        // USDC address on remote chain
+        peerUsdcToken = _config.peerUsdcToken;
     }
 
     /**
@@ -471,6 +483,12 @@ abstract contract AbstractCCTPIntegrator is Governable, IMessageHandlerV2 {
                     messageBody.length >= BURN_MESSAGE_V2_HOOK_DATA_INDEX,
                 "Invalid burn message"
             );
+
+            // Ensure the burn token is USDC
+            address burnToken = messageBody.extractAddress(
+                BURN_MESSAGE_V2_BURN_TOKEN_INDEX
+            );
+            require(burnToken == peerUsdcToken, "Invalid burn token");
 
             // Address of caller of depositForBurn (or depositForBurnWithCaller) on source domain
             sender = messageBody.extractAddress(
