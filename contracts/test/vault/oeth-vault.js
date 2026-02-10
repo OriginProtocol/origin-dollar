@@ -294,18 +294,21 @@ describe("OETH Vault", function () {
 
   describe("Remove Asset", () => {
     it("Should allow strategy to burnForStrategy", async () => {
-      const { oethVault, oeth, weth, governor, daniel, mockStrategy } = fixture;
+      const { oethVault, oeth, weth, governor, mockStrategy } = fixture;
 
       await weth
-        .connect(daniel)
+        .connect(governor)
         .transfer(mockStrategy.address, oethUnits("10"));
-
       await oethVault.connect(governor).approveStrategy(mockStrategy.address);
       await oethVault
         .connect(governor)
         .addStrategyToMintWhitelist(mockStrategy.address);
 
       const strategySigner = await impersonateAndFund(mockStrategy.address);
+
+      await weth
+        .connect(strategySigner)
+        .approve(oethVault.address, oethUnits("10"));
 
       // Then mint for strategy
       await oethVault
