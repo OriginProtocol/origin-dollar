@@ -1,7 +1,6 @@
 const { formatUnits, parseUnits } = require("ethers/lib/utils");
 
 const { getBlock } = require("./block");
-const addresses = require("../utils/addresses");
 const { resolveAsset } = require("../utils/resolvers");
 const { getSigner } = require("../utils/signers");
 const { logTxDetails } = require("../utils/txLogger");
@@ -199,57 +198,6 @@ async function rebase({ symbol }, hre) {
 }
 
 /**
- * Artificially generate yield on the vault by sending it USDT.
- */
-async function yieldTask(_, hre) {
-  const usdtAbi = require("../test/abi/usdt.json").abi;
-  const {
-    ousdUnitsFormat,
-    usdtUnits,
-    usdtUnitsFormat,
-    isFork,
-    isLocalhost,
-  } = require("../test/helpers");
-  if (!isFork && !isLocalhost) {
-    throw new Error("Task can only be used on local or fork");
-  }
-
-  let richSigner, usdt;
-  if (isFork) {
-    await hre.network.provider.request({
-      method: "hardhat_impersonateAccount",
-      params: [addresses.mainnet.Binance],
-    });
-    richSigner = await hre.ethers.provider.getSigner(addresses.mainnet.Binance);
-    usdt = await hre.ethers.getContractAt(usdtAbi, addresses.mainnet.USDT);
-  } else {
-    const signers = await hre.ethers.getSigners();
-    richSigner = signers;
-    usdt = await hre.ethers.getContract("MockUSDT");
-  }
-
-  const { vault, oToken } = await getContracts(hre, "OUSD");
-
-  log("Sending yield to vault");
-  let usdtBalance = await usdt.balanceOf(vault.address);
-  log("USDT vault balance", usdtUnitsFormat(usdtBalance));
-  let vaultValue = await vault.totalValue();
-  log("Vault value", ousdUnitsFormat(vaultValue));
-  let supply = await oToken.totalSupply();
-  log("OUSD supply", ousdUnitsFormat(supply));
-
-  // Transfer 100k USDT to the vault.
-  await usdt.connect(richSigner).transfer(vault.address, usdtUnits("100000"));
-
-  usdtBalance = await usdt.balanceOf(vault.address);
-  log("USDT vault balance", usdtUnitsFormat(usdtBalance));
-  vaultValue = await vault.totalValue();
-  log("Vault value", ousdUnitsFormat(vaultValue));
-  supply = await oToken.totalSupply();
-  log("OUSD supply", ousdUnitsFormat(supply));
-}
-
-/**
  * Call the Vault's admin pauseCapital method.
  */
 async function capital({ symbol, pause }, hre) {
@@ -310,19 +258,6 @@ async function mint({ amount, asset, symbol, min, approve }, hre) {
     .connect(signer)
     .mint(cAsset.address, assetUnits, minUnits);
   await logTxDetails(tx, "mint");
-}
-
-async function redeem({ amount, min, symbol }, hre) {
-  const signer = await getSigner();
-
-  const { vault } = await getContracts(hre, symbol);
-
-  const oTokenUnits = parseUnits(amount.toString());
-  const minUnits = parseUnits(min.toString());
-
-  log(`About to redeem ${amount} ${symbol}`);
-  const tx = await vault.connect(signer).redeem(oTokenUnits, minUnits);
-  await logTxDetails(tx, "redeem");
 }
 
 async function resolveStrategyAddress(strategy, hre) {
@@ -476,12 +411,10 @@ module.exports = {
   depositToStrategy,
   mint,
   rebase,
-  redeem,
   requestWithdrawal,
   claimWithdrawal,
   snapVault,
   withdrawFromStrategy,
   withdrawAllFromStrategy,
   withdrawAllFromStrategies,
-  yieldTask,
 };

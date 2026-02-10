@@ -1,7 +1,7 @@
 const { expect } = require("chai");
 
 const { createFixtureLoader, rebornFixture } = require("../_fixture");
-const { isFork, usdsUnits, ousdUnits } = require("../helpers");
+const { isFork, usdcUnits, ousdUnits } = require("../helpers");
 
 describe("Reborn Attack Protection", function () {
   if (isFork) {
@@ -15,9 +15,9 @@ describe("Reborn Attack Protection", function () {
       fixture = await loadFixture();
     });
     it("Should correctly do accounting when reborn calls mint as different types of addresses", async function () {
-      const { usds, ousd, matt, rebornAddress, reborner, deployAndCall } =
+      const { usdc, ousd, matt, rebornAddress, reborner, deployAndCall } =
         fixture;
-      await usds.connect(matt).transfer(rebornAddress, usdsUnits("4"));
+      await usdc.connect(matt).transfer(rebornAddress, usdcUnits("4"));
       // call mint and self destruct (since account.code.length = 0) in constructor this is done
       // as an EOA from OUSD.sol's point of view
       await deployAndCall({ shouldAttack: true, shouldDestruct: true });
@@ -31,10 +31,11 @@ describe("Reborn Attack Protection", function () {
       expect(await ousd.nonRebasingSupply()).to.equal(ousdUnits("2"));
     });
 
-    it("Should correctly do accounting when reborn calls burn as different types of addresses", async function () {
-      const { usds, ousd, matt, reborner, rebornAddress, deployAndCall } =
+    // Skipped as instant redeem is no longer supported for ousd
+    it.skip("Should correctly do accounting when reborn calls burn as different types of addresses", async function () {
+      const { usdc, ousd, matt, reborner, rebornAddress, deployAndCall } =
         fixture;
-      await usds.connect(matt).transfer(reborner.address, usdsUnits("4"));
+      await usdc.connect(matt).transfer(reborner.address, usdcUnits("4"));
       // call mint and self destruct (since account.code.length = 0) in constructor this is done
       // as an EOA from OUSD.sol's point of view
       await deployAndCall({ shouldAttack: true, shouldDestruct: true });
@@ -50,9 +51,9 @@ describe("Reborn Attack Protection", function () {
     });
 
     it("Should correctly do accounting when reborn calls transfer as different types of addresses", async function () {
-      const { usds, ousd, matt, reborner, rebornAddress, deployAndCall } =
+      const { usdc, ousd, matt, reborner, rebornAddress, deployAndCall } =
         fixture;
-      await usds.connect(matt).transfer(reborner.address, usdsUnits("4"));
+      await usdc.connect(matt).transfer(reborner.address, usdcUnits("4"));
       // call mint and self destruct (since account.code.length = 0) in constructor this is done
       // as an EOA from OUSD.sol's point of view
       await deployAndCall({ shouldAttack: true, shouldDestruct: true });
@@ -74,10 +75,10 @@ describe("Reborn Attack Protection", function () {
     });
 
     it("Should have correct balance even after recreating", async function () {
-      const { usds, matt, reborner, deployAndCall, ousd } = fixture;
+      const { usdc, matt, reborner, deployAndCall, ousd } = fixture;
 
       // Mint one OUSD and self-destruct
-      await usds.connect(matt).transfer(reborner.address, usdsUnits("4"));
+      await usdc.connect(matt).transfer(reborner.address, usdcUnits("4"));
       await deployAndCall({ shouldAttack: true, shouldDestruct: true });
       await expect(reborner).to.have.a.balanceOf("1", ousd);
 

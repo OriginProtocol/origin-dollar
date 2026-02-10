@@ -2,6 +2,7 @@
 pragma solidity ^0.8.0;
 
 import { InitializeGovernedUpgradeabilityProxy } from "./InitializeGovernedUpgradeabilityProxy.sol";
+import { InitializeGovernedUpgradeabilityProxy2 } from "./InitializeGovernedUpgradeabilityProxy2.sol";
 
 /**
  * @notice OUSDProxy delegates calls to an OUSD implementation
