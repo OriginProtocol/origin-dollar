@@ -169,6 +169,10 @@ abstract contract VaultAdmin is VaultCore {
      */
     function approveStrategy(address _addr) external onlyGovernor {
         require(!strategies[_addr].isSupported, "Strategy already approved");
+        require(
+            IStrategy(_addr).supportsAsset(asset),
+            "Asset not supported by Strategy"
+        );
         strategies[_addr] = Strategy({ isSupported: true, _deprecated: 0 });
         allStrategies.push(_addr);
         emit StrategyApproved(_addr);
