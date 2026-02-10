@@ -577,7 +577,7 @@ describe("ForkTest: Consolidation of Staking Strategies", function () {
         await expect(tx).to.be.revertedWith("Ownable: caller is not the owner");
       }
     });
-    it("Fail to request consolidation on native staking strategy if not admin multisig", async () => {
+    it("Fail to request consolidation on native staking strategy if not Consolidation Controller", async () => {
       const { josh, strategist, timelock } = fixture;
       const sourceValidators = [secondClusterPubKeys[0]];
 
