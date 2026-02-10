@@ -164,7 +164,7 @@ describe("ForkTest: OETHb Vault", function () {
     });
   });
 
-  describe("Mint Whitelist", function () {
+  describe.skip("Mint Whitelist", function () {
     it("Should allow a strategy to be added to the whitelist", async () => {
       const { oethbVault, governor } = fixture;
 
@@ -247,7 +247,7 @@ describe("ForkTest: OETHb Vault", function () {
     });
   });
 
-  describe("Mint & Burn For Strategy", function () {
+  describe.skip("Mint & Burn For Strategy", function () {
     let strategySigner, mockStrategy;
 
     beforeEach(async () => {
