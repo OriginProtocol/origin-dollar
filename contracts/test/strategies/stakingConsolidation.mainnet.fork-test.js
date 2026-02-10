@@ -558,7 +558,7 @@ describe("ForkTest: Consolidation of Staking Strategies", function () {
 
       await expect(tx).to.be.revertedWith("Target has pending deposit");
     });
-    it("Fail to request consolidation on contract controller if not admin multsig", async () => {
+    it("Fail to request consolidation on contract controller if not admin multisig", async () => {
       const { josh, strategist, timelock } = fixture;
       const sourceValidators = [secondClusterPubKeys[0]];
 
@@ -577,7 +577,7 @@ describe("ForkTest: Consolidation of Staking Strategies", function () {
         await expect(tx).to.be.revertedWith("Ownable: caller is not the owner");
       }
     });
-    it("Fail to request consolidation on native staking strategy if not admin multsig", async () => {
+    it("Fail to request consolidation on native staking strategy if not admin multisig", async () => {
       const { josh, strategist, timelock } = fixture;
       const sourceValidators = [secondClusterPubKeys[0]];
 
@@ -699,7 +699,7 @@ describe("ForkTest: Consolidation of Staking Strategies", function () {
         .to.emit(compoundingStakingStrategy, "ValidatorWithdraw")
         .withArgs(targetPubKeyHash, withdrawAmount.mul(parseUnits("1", 9)));
     });
-    it("Fail validatoer exit from compounding validator via the consolidation controller", async () => {
+    it("Fail validator exit from compounding validator via the consolidation controller", async () => {
       const tx = consolidationController
         .connect(registratorSigner)
         .validatorWithdrawal(activeTargetPubKey, 0, { value: 1 });
