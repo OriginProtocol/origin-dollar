@@ -32,9 +32,12 @@ contract CrossChainMasterStrategy is
     ///         but with no acknowledgement from the remote strategy yet
     uint256 public pendingAmount;
 
+    uint256 internal constant MAX_BALANCE_CHECK_AGE = 1 days;
+
     event RemoteStrategyBalanceUpdated(uint256 balance);
     event WithdrawRequested(address indexed asset, uint256 amount);
     event WithdrawAllSkipped();
+    event BalanceCheckIgnored(uint64 nonce, uint256 timestamp, bool isTooOld);
 
     /**
      * @param _stratConfig The platform and OToken vault addresses
@@ -94,7 +97,7 @@ contract CrossChainMasterStrategy is
     function depositAll() external override onlyVault nonReentrant {
         uint256 balance = IERC20(usdcToken).balanceOf(address(this));
         // Deposit if balance is greater than 1 USDC
-        if (balance >= 1e6) {
+        if (balance >= MIN_TRANSFER_AMOUNT) {
             _deposit(usdcToken, balance);
         }
     }
@@ -121,7 +124,7 @@ contract CrossChainMasterStrategy is
 
         // Withdraw everything in Remote strategy
         uint256 _remoteBalance = remoteStrategyBalance;
-        if (_remoteBalance < 1e6) {
+        if (_remoteBalance < MIN_TRANSFER_AMOUNT) {
             // Do nothing if there is less than 1 USDC in the Remote strategy
             return;
         }
@@ -240,7 +243,10 @@ contract CrossChainMasterStrategy is
         require(_asset == usdcToken, "Unsupported asset");
         require(pendingAmount == 0, "Unexpected pending amount");
         // Deposit at least 1 USDC
-        require(depositAmount >= 1e6, "Deposit amount too small");
+        require(
+            depositAmount >= MIN_TRANSFER_AMOUNT,
+            "Deposit amount too small"
+        );
         require(
             depositAmount <= MAX_TRANSFER_AMOUNT,
             "Deposit amount too high"
@@ -274,7 +280,7 @@ contract CrossChainMasterStrategy is
     function _withdraw(address _asset, uint256 _amount) internal virtual {
         require(_asset == usdcToken, "Unsupported asset");
         // Withdraw at least 1 USDC
-        require(_amount >= 1e6, "Withdraw amount too small");
+        require(_amount >= MIN_TRANSFER_AMOUNT, "Withdraw amount too small");
         require(
             _amount <= remoteStrategyBalance,
             "Withdraw amount exceeds remote strategy balance"
@@ -314,8 +320,12 @@ contract CrossChainMasterStrategy is
         // Decode the message
         // When transferConfirmation is true, it means that the message is a result of a deposit or a withdrawal
         // process.
-        (uint64 nonce, uint256 balance, bool transferConfirmation) = message
-            .decodeBalanceCheckMessage();
+        (
+            uint64 nonce,
+            uint256 balance,
+            bool transferConfirmation,
+            uint256 timestamp
+        ) = message.decodeBalanceCheckMessage();
         // Get the last cached nonce
         uint64 _lastCachedNonce = lastTransferNonce;
 
@@ -339,6 +349,13 @@ contract CrossChainMasterStrategy is
                 // that has been generated on the Remote contract after the deposit / withdrawal which is
                 // still pending. This can happen when the CCTP bridge delivers the messages out of order.
                 // Ignore it, since the pending deposit / withdrawal must first be cofirmed.
+                emit BalanceCheckIgnored(nonce, timestamp, false);
+                return;
+            }
+        } else {
+            if (block.timestamp > timestamp + MAX_BALANCE_CHECK_AGE) {
+                // Balance check is too old, ignore it
+                emit BalanceCheckIgnored(nonce, timestamp, true);
                 return;
             }
         }

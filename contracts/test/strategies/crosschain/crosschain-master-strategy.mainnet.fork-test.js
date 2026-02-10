@@ -316,6 +316,7 @@ describe("ForkTest: CrossChainMasterStrategy", function () {
       const burnPayload = encodeBurnMessageBody(
         crossChainMasterStrategy.address,
         crossChainMasterStrategy.address,
+        addresses.base.USDC,
         usdcUnits("2342"),
         balancePayload
       );
@@ -492,6 +493,58 @@ describe("ForkTest: CrossChainMasterStrategy", function () {
       const remoteStrategyBalanceAfter =
         await crossChainMasterStrategy.remoteStrategyBalance();
       expect(remoteStrategyBalanceAfter).to.eq(remoteStrategyBalanceBefore);
+    });
+
+    it("Should revert if the burn token is not peer USDC", async function () {
+      const { crossChainMasterStrategy, strategist } = fixture;
+
+      if (await crossChainMasterStrategy.isTransferPending()) {
+        // Skip if there's a pending transfer
+        console.log(
+          "Skipping balance check message fork test because there's a pending transfer"
+        );
+        return;
+      }
+
+      // set an arbitrary remote strategy balance
+      await setRemoteStrategyBalance(
+        crossChainMasterStrategy,
+        usdcUnits("123456")
+      );
+
+      const lastNonce = (
+        await crossChainMasterStrategy.lastTransferNonce()
+      ).toNumber();
+
+      // Replace transmitter to mock transmitter
+      await replaceMessageTransmitter();
+
+      // Build check balance payload
+      const balancePayload = encodeBalanceCheckMessageBody(
+        lastNonce,
+        usdcUnits("12345"),
+        true // withdrawal confirmation
+      );
+      const burnPayload = encodeBurnMessageBody(
+        crossChainMasterStrategy.address,
+        crossChainMasterStrategy.address,
+        addresses.mainnet.WETH, // Not peer USDC
+        usdcUnits("2342"),
+        balancePayload
+      );
+      const message = encodeCCTPMessage(
+        6,
+        addresses.CCTPTokenMessengerV2,
+        addresses.CCTPTokenMessengerV2,
+        burnPayload
+      );
+
+      // Relay the message with fake attestation
+      const tx = crossChainMasterStrategy
+        .connect(strategist)
+        .relay(message, "0x");
+
+      await expect(tx).to.be.revertedWith("Invalid burn token");
     });
   });
 });

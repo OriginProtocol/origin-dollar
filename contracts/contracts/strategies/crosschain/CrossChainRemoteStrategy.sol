@@ -122,6 +122,7 @@ contract CrossChainRemoteStrategy is
     }
 
     /// @inheritdoc Generalized4626Strategy
+    /// @dev Interface requires a recipient, but for compatibility it must be address(this).
     function withdraw(
         address _recipient,
         address _asset,
@@ -184,7 +185,7 @@ contract CrossChainRemoteStrategy is
 
         // Underlying call to deposit funds can fail. It mustn't affect the overall
         // flow as confirmation message should still be sent.
-        if (balance >= 1e6) {
+        if (balance >= MIN_TRANSFER_AMOUNT) {
             _deposit(usdcToken, balance);
         }
 
@@ -193,7 +194,8 @@ contract CrossChainRemoteStrategy is
             .encodeBalanceCheckMessage(
                 lastTransferNonce,
                 checkBalance(usdcToken),
-                true
+                true,
+                block.timestamp
             );
         _sendMessage(message);
     }
@@ -265,14 +267,18 @@ contract CrossChainRemoteStrategy is
         // there is a possibility of USDC funds remaining on the contract.
         // A separate withdraw to extract or deposit to the Morpho vault needs to be
         // initiated from the peer Master strategy to utilise USDC funds.
-        if (withdrawAmount >= 1e6 && usdcBalance >= withdrawAmount) {
+        if (
+            withdrawAmount >= MIN_TRANSFER_AMOUNT &&
+            usdcBalance >= withdrawAmount
+        ) {
             // The new balance on the contract needs to have USDC subtracted from it as
             // that will be withdrawn in the next step
             bytes memory message = CrossChainStrategyHelper
                 .encodeBalanceCheckMessage(
                     lastTransferNonce,
                     strategyBalance - withdrawAmount,
-                    true
+                    true,
+                    block.timestamp
                 );
             _sendTokens(withdrawAmount, message);
         } else {
@@ -284,7 +290,8 @@ contract CrossChainRemoteStrategy is
                 .encodeBalanceCheckMessage(
                     lastTransferNonce,
                     strategyBalance,
-                    true
+                    true,
+                    block.timestamp
                 );
             _sendMessage(message);
             emit WithdrawalFailed(withdrawAmount, usdcBalance);
@@ -364,7 +371,12 @@ contract CrossChainRemoteStrategy is
     {
         uint256 balance = checkBalance(usdcToken);
         bytes memory message = CrossChainStrategyHelper
-            .encodeBalanceCheckMessage(lastTransferNonce, balance, false);
+            .encodeBalanceCheckMessage(
+                lastTransferNonce,
+                balance,
+                false,
+                block.timestamp
+            );
         _sendMessage(message);
     }
 
