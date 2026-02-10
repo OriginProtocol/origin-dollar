@@ -40,6 +40,7 @@ const actions = [
   "sonicRequestWithdrawal",
   "sonicClaimWithdrawals",
   "claimBribes",
+  "crossChainRelay",
   "manageBribes"
 ];
 
