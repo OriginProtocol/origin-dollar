@@ -122,15 +122,12 @@ abstract contract VaultAdmin is VaultCore {
     // slither-disable-start reentrancy-no-eth
     /**
      * @notice Set a yield streaming max rate. This spreads yield over
-     * time if it is above the max rate. This is a per rebase APR which 
-     * due to compounding differs from the yearly APR. Governance should 
+     * time if it is above the max rate. This is a per rebase APR which
+     * due to compounding differs from the yearly APR. Governance should
      * consider this fact when picking a desired APR
      * @param apr in 1e18 notation. 3 * 1e18 = 3% APR
      */
-    function setRebaseRateMax(uint256 apr)
-        external
-        onlyGovernorOrStrategist
-    {
+    function setRebaseRateMax(uint256 apr) external onlyGovernorOrStrategist {
         // The old yield will be at the old rate
         _rebase();
         // Change the rate

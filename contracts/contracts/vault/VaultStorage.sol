@@ -223,7 +223,6 @@ abstract contract VaultStorage is Initializable, Governable {
         assetDecimals = _decimals;
     }
 
-
     /// @notice Deprecated: use `oToken()` instead.
     function oUSD() external view returns (OUSD) {
         return oToken;

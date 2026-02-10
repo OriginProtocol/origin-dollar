@@ -138,6 +138,10 @@ const defaultFixture = async () => {
     isFork ? "OETHBaseOracleRouter" : "MockOracleRouter"
   );
 
+  const mockStrategy = isFork
+    ? undefined
+    : await ethers.getContract("MockStrategy");
+
   // WETH
   let weth, aero;
 
@@ -263,6 +267,7 @@ const defaultFixture = async () => {
     // Strategies
     aerodromeAmoStrategy,
     curveAMOStrategy,
+    mockStrategy,
 
     // WETH
     weth,
