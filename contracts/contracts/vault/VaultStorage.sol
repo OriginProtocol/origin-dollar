@@ -12,7 +12,7 @@ import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.s
 import { Address } from "@openzeppelin/contracts/utils/Address.sol";
 
 import { IStrategy } from "../interfaces/IStrategy.sol";
-import { IWETH9 } from "../interfaces/IWETH9.sol";
+import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import { Governable } from "../governance/Governable.sol";
 import { OUSD } from "../token/OUSD.sol";
 import { Initializable } from "../utils/Initializable.sol";
@@ -95,7 +95,7 @@ abstract contract VaultStorage is Initializable, Governable {
     uint256 public rebaseThreshold;
 
     /// @dev Address of the OToken token. eg OUSD or OETH.
-    OUSD public oUSD;
+    OUSD public oToken;
 
     /// @dev Address of the contract responsible for post rebase syncs with AMMs
     address private _deprecated_rebaseHooksAddr = address(0);
@@ -217,9 +217,15 @@ abstract contract VaultStorage is Initializable, Governable {
     // slither-disable-end uninitialized-state
 
     constructor(address _asset) {
-        uint8 _decimals = IWETH9(_asset).decimals();
+        uint8 _decimals = IERC20Metadata(_asset).decimals();
         require(_decimals <= 18, "invalid asset decimals");
         asset = _asset;
         assetDecimals = _decimals;
+    }
+
+
+    /// @notice Deprecated: use `oToken()` instead.
+    function oUSD() external view returns (OUSD) {
+        return oToken;
     }
 }

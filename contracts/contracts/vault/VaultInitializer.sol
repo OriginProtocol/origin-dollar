@@ -15,7 +15,7 @@ abstract contract VaultInitializer is VaultStorage {
     function initialize(address _oToken) external onlyGovernor initializer {
         require(_oToken != address(0), "oToken address is zero");
 
-        oUSD = OUSD(_oToken);
+        oToken = OUSD(_oToken);
 
         rebasePaused = false;
         capitalPaused = true;
