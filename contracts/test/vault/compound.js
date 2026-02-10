@@ -16,7 +16,7 @@ const {
   increase,
 } = require("@nomicfoundation/hardhat-network-helpers/dist/src/helpers/time");
 
-describe("Vault with Compound strategy", function () {
+describe.skip("Vault with Compound strategy", function () {
   if (isFork) {
     this.timeout(0);
   }

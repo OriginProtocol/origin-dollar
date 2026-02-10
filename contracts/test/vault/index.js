@@ -103,10 +103,9 @@ describe("Vault", function () {
   });
 
   it("Should allow Governor to add Strategy", async () => {
-    const { vault, governor, ousd } = fixture;
+    const { vault, governor, mockStrategy } = fixture;
 
-    // Pretend OUSD is a strategy and add its address
-    await vault.connect(governor).approveStrategy(ousd.address);
+    await vault.connect(governor).approveStrategy(mockStrategy.address);
   });
 
   it("Should revert when removing a Strategy that has not been added", async () => {

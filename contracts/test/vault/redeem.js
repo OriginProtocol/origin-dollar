@@ -152,36 +152,10 @@ describe("OUSD Vault Withdrawals", function () {
           fixtureWithUser
         );
       });
-      it("Should request withdrawal of zero amount", async () => {
+      it("Should revert withdrawal of zero amount", async () => {
         const { vault, josh } = fixture;
-        const fixtureWithUser = { ...fixture, user: josh };
-        await vault.connect(josh).requestWithdrawal(firstRequestAmountOUSD);
-        const dataBefore = await snapData(fixtureWithUser);
-
-        const tx = await vault.connect(josh).requestWithdrawal(0);
-
-        const queuedAmount = usdcUnits("205"); // 100 + 100 + 5
-
-        await expect(tx)
-          .to.emit(vault, "WithdrawalRequested")
-          .withArgs(josh.address, 3, 0, queuedAmount);
-
-        await assertChangedData(
-          dataBefore,
-          {
-            ousdTotalSupply: 0,
-            ousdTotalValue: 0,
-            vaultCheckBalance: 0,
-            userOusd: 0,
-            userUsdc: 0,
-            vaultUsdc: 0,
-            queued: 0,
-            claimable: 0,
-            claimed: 0,
-            nextWithdrawalIndex: 1,
-          },
-          fixtureWithUser
-        );
+        const tx = vault.connect(josh).requestWithdrawal(0);
+        await expect(tx).to.be.revertedWith("Amount must be greater than 0");
       });
       it("Should request first and second withdrawals with no USDC in the Vault", async () => {
         const { vault, governor, josh, matt, usdc } = fixture;

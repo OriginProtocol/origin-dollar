@@ -244,17 +244,17 @@ describe("OETH Vault", function () {
     it("Should return all strategies", async () => {
       // Mostly to increase coverage
 
-      const { oethVault, weth, governor } = fixture;
+      const { oethVault, governor, mockStrategy } = fixture;
 
       // Empty list
       await expect((await oethVault.getAllStrategies()).length).to.equal(0);
 
       // Add a strategy
-      await oethVault.connect(governor).approveStrategy(weth.address);
+      await oethVault.connect(governor).approveStrategy(mockStrategy.address);
 
       // Check the strategy list
       await expect(await oethVault.getAllStrategies()).to.deep.equal([
-        weth.address,
+        mockStrategy.address,
       ]);
     });
 
@@ -294,38 +294,51 @@ describe("OETH Vault", function () {
 
   describe("Remove Asset", () => {
     it("Should allow strategy to burnForStrategy", async () => {
-      const { oethVault, oeth, weth, governor, daniel } = fixture;
+      const { oethVault, oeth, weth, governor, mockStrategy } = fixture;
 
-      await oethVault.connect(governor).approveStrategy(daniel.address);
+      await weth
+        .connect(governor)
+        .transfer(mockStrategy.address, oethUnits("10"));
+      await oethVault.connect(governor).approveStrategy(mockStrategy.address);
       await oethVault
         .connect(governor)
-        .addStrategyToMintWhitelist(daniel.address);
+        .addStrategyToMintWhitelist(mockStrategy.address);
+
+      const strategySigner = await impersonateAndFund(mockStrategy.address);
+
+      await weth
+        .connect(strategySigner)
+        .approve(oethVault.address, oethUnits("10"));
 
       // Then mint for strategy
-      await oethVault.connect(daniel).mint(weth.address, oethUnits("10"), "0");
+      await oethVault
+        .connect(strategySigner)
+        .mint(weth.address, oethUnits("10"), "0");
 
-      await expect(await oeth.balanceOf(daniel.address)).to.equal(
+      await expect(await oeth.balanceOf(mockStrategy.address)).to.equal(
         oethUnits("10")
       );
 
       // Then burn for strategy
-      await oethVault.connect(daniel).burnForStrategy(oethUnits("10"));
+      await oethVault.connect(strategySigner).burnForStrategy(oethUnits("10"));
 
-      await expect(await oeth.balanceOf(daniel.address)).to.equal(
+      await expect(await oeth.balanceOf(mockStrategy.address)).to.equal(
         oethUnits("0")
       );
     });
 
     it("Fail when burnForStrategy because amount > int256 ", async () => {
-      const { oethVault, governor, daniel } = fixture;
+      const { oethVault, governor, mockStrategy } = fixture;
 
-      await oethVault.connect(governor).approveStrategy(daniel.address);
+      await oethVault.connect(governor).approveStrategy(mockStrategy.address);
       await oethVault
         .connect(governor)
-        .addStrategyToMintWhitelist(daniel.address);
+        .addStrategyToMintWhitelist(mockStrategy.address);
+
+      const strategySigner = await impersonateAndFund(mockStrategy.address);
 
       const tx = oethVault
-        .connect(daniel)
+        .connect(strategySigner)
         .burnForStrategy(parseUnits("10", 76));
 
       await expect(tx).to.be.revertedWith(
@@ -334,26 +347,26 @@ describe("OETH Vault", function () {
     });
 
     it("Governor should remove strategy from mint whitelist", async () => {
-      const { oethVault, governor, daniel } = fixture;
+      const { oethVault, governor, mockStrategy } = fixture;
 
-      await oethVault.connect(governor).approveStrategy(daniel.address);
+      await oethVault.connect(governor).approveStrategy(mockStrategy.address);
       await oethVault
         .connect(governor)
-        .addStrategyToMintWhitelist(daniel.address);
+        .addStrategyToMintWhitelist(mockStrategy.address);
 
-      expect(await oethVault.isMintWhitelistedStrategy(daniel.address)).to.be
-        .true;
+      expect(await oethVault.isMintWhitelistedStrategy(mockStrategy.address)).to
+        .be.true;
 
       const tx = await oethVault
         .connect(governor)
-        .removeStrategyFromMintWhitelist(daniel.address);
+        .removeStrategyFromMintWhitelist(mockStrategy.address);
 
       expect(tx)
         .to.emit(oethVault, "StrategyRemovedFromMintWhitelist")
-        .withArgs(daniel.address);
+        .withArgs(mockStrategy.address);
 
-      expect(await oethVault.isMintWhitelistedStrategy(daniel.address)).to.be
-        .false;
+      expect(await oethVault.isMintWhitelistedStrategy(mockStrategy.address)).to
+        .be.false;
     });
   });
 

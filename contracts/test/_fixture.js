@@ -730,6 +730,10 @@ const defaultFixture = deployments.createFixture(async () => {
     addresses.mainnet.curve.OETH_WETH.gauge
   );
 
+  const mockStrategy = isFork
+    ? undefined
+    : await ethers.getContract("MockStrategy");
+
   let usdt,
     usds,
     tusd,
@@ -1190,6 +1194,8 @@ const defaultFixture = deployments.createFixture(async () => {
     poolBoosterCentralRegistry,
     poolBoosterMerklFactory,
     merklDistributor,
+
+    mockStrategy,
   };
 });
 
