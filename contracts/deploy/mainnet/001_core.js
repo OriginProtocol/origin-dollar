@@ -42,7 +42,7 @@ const main = async () => {
     oethDripper
   );
   await configureVault();
-  await configureOETHVault(false);
+  await configureOETHVault();
   await configureStrategies(harvesterProxy, oethHarvesterProxy);
   await deployBuyback();
   await deployUniswapV3Pool();

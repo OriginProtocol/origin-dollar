@@ -1,6 +1,6 @@
 const { expect } = require("chai");
 
-const { createFixtureLoader, compoundVaultFixture } = require("../_fixture");
+const { createFixtureLoader, defaultFixture } = require("../_fixture");
 const { usdcUnits, isFork } = require("../helpers");
 
 describe("Vault deposit pausing", function () {
@@ -8,7 +8,7 @@ describe("Vault deposit pausing", function () {
     this.timeout(0);
   }
   let fixture;
-  const loadFixture = createFixtureLoader(compoundVaultFixture);
+  const loadFixture = createFixtureLoader(defaultFixture);
   beforeEach(async () => {
     fixture = await loadFixture();
   });

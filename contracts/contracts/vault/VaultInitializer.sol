@@ -9,24 +9,17 @@ pragma solidity ^0.8.0;
 
 import "./VaultStorage.sol";
 
-contract VaultInitializer is VaultStorage {
-    function initialize(address _priceProvider, address _oToken)
-        external
-        onlyGovernor
-        initializer
-    {
-        require(_priceProvider != address(0), "PriceProvider address is zero");
+abstract contract VaultInitializer is VaultStorage {
+    constructor(address _asset) VaultStorage(_asset) {}
+
+    function initialize(address _oToken) external onlyGovernor initializer {
         require(_oToken != address(0), "oToken address is zero");
 
-        oUSD = OUSD(_oToken);
-
-        priceProvider = _priceProvider;
+        oToken = OUSD(_oToken);
 
         rebasePaused = false;
         capitalPaused = true;
 
-        // Initial redeem fee of 0 basis points
-        redeemFeeBps = 0;
         // Initial Vault buffer of 0%
         vaultBuffer = 0;
         // Initial allocate threshold of 25,000 OUSD
@@ -35,7 +28,7 @@ contract VaultInitializer is VaultStorage {
         rebaseThreshold = 1000e18;
         // Initialize all strategies
         allStrategies = new address[](0);
-        // Start with drip duration disabled
-        dripDuration = 1;
+        // Start with drip duration: 7 days
+        dripDuration = 604800;
     }
 }
