@@ -448,6 +448,8 @@ const deployMocks = async ({ getNamedAccounts, deployments }) => {
   const mockBeaconRoots = await ethers.getContract("MockBeaconRoots");
   await replaceContractAt(addresses.mainnet.beaconRoots, mockBeaconRoots);
 
+  await deploy("MockStrategy", { from: deployerAddr });
+
   console.log("000_mock deploy done.");
 
   return true;
