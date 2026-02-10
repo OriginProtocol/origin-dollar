@@ -200,6 +200,7 @@ abstract contract VaultAdmin is VaultCore {
 
             // Mark the strategy as not supported
             strategies[_addr].isSupported = false;
+            isMintWhitelistedStrategy[_addr] = false;
 
             // Withdraw all asset
             IStrategy strategy = IStrategy(_addr);
