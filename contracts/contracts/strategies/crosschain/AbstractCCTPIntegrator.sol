@@ -71,6 +71,9 @@ abstract contract AbstractCCTPIntegrator is Governable, IMessageHandlerV2 {
      */
     uint256 public constant MAX_TRANSFER_AMOUNT = 10_000_000 * 10**6; // 10M USDC
 
+    /// @notice Minimum transfer amount to avoid zero or dust transfers
+    uint256 public constant MIN_TRANSFER_AMOUNT = 10**6;
+
     // CCTP contracts
     // This implementation assumes that remote and local chains have these contracts
     // deployed on the same addresses.
