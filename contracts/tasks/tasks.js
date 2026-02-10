@@ -2448,10 +2448,14 @@ task("stakeValidator").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
 
-subtask(
-  "snapBalances",
-  "Takes a snapshot of the staking strategy's balance"
-).setAction(snapBalances);
+subtask("snapBalances", "Takes a snapshot of the staking strategy's balance")
+  .addOptionalParam(
+    "consol",
+    "Call the consolidation controller instead of the strategy",
+    false,
+    types.boolean
+  )
+  .setAction(snapBalances);
 task("snapBalances").setAction(async (_, __, runSuper) => {
   return runSuper();
 });

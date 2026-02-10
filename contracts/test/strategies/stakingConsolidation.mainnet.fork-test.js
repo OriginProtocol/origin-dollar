@@ -201,7 +201,7 @@ describe("ForkTest: Consolidation of Staking Strategies", function () {
       "0x67d077e55a1f4af124a8df1e1ac720d1e1e557a5305d774c5ebf98be3479cf8d"
     );
 
-    await compoundingStakingStrategy.connect(registratorSigner).snapBalances();
+    await consolidationController.connect(registratorSigner).snapBalances();
 
     await consolidationController
       .connect(registratorSigner)
@@ -606,9 +606,17 @@ describe("ForkTest: Consolidation of Staking Strategies", function () {
 
       await expect(tx).to.be.revertedWith("No consolidation in progress");
     });
+    it("Should call snapBalance on the Consolidation Controller by anyone when no consolidation in progress", async () => {
+      const { josh } = fixture;
+      await advanceTime(12 * 40);
+
+      const tx = await consolidationController.connect(josh).snapBalances();
+
+      await expect(tx).to.emit(compoundingStakingStrategy, "BalancesSnapped");
+    });
     it("Fail to directly call verifyBalance on the Compounding Staking Strategy", async () => {
       await advanceTime(12 * 40);
-      await compoundingStakingStrategy.snapBalances();
+      await consolidationController.snapBalances();
 
       const tx = compoundingStakingStrategy
         .connect(registratorSigner)
@@ -795,17 +803,26 @@ describe("ForkTest: Consolidation of Staking Strategies", function () {
       await expect(tx).to.emit(compoundingStakingStrategy, "BalancesVerified");
     });
     // Balance proofs after the deposit to validator 13498458 has been verified.
-    it("Should call snapBalance on the Compounding Staking Strategy", async () => {
-      const { josh } = fixture;
+    it("Should call snapBalance on the Consolidation Controller by the Registrator after the consolidation has started", async () => {
       await advanceTime(12 * 40);
 
-      const tx = await compoundingStakingStrategy.connect(josh).snapBalances();
+      const tx = await consolidationController
+        .connect(registratorSigner)
+        .snapBalances();
 
       await expect(tx).to.emit(compoundingStakingStrategy, "BalancesSnapped");
     });
-    it("Fail to verifyBalance of a snapshot after the consolidation was started", async () => {
+    it("Fail snapBalance on the new compounding staking strategy when called by non-registrator after the consolidation has started", async () => {
+      const { josh } = fixture;
       await advanceTime(12 * 40);
-      await compoundingStakingStrategy.snapBalances();
+
+      const tx = compoundingStakingStrategy.connect(josh).snapBalances();
+
+      await expect(tx).to.be.revertedWith("Not Registrator");
+    });
+    it("Fail to verifyBalance of a snapshot after the consolidation has started", async () => {
+      await advanceTime(12 * 40);
+      await consolidationController.connect(registratorSigner).snapBalances();
 
       const tx = consolidationController
         .connect(registratorSigner)
@@ -1040,7 +1057,7 @@ describe("ForkTest: Consolidation of Staking Strategies", function () {
         beaconBlockRoot
       );
 
-      await compoundingStakingStrategy.connect(fixture.josh).snapBalances();
+      await consolidationController.connect(registratorSigner).snapBalances();
     });
 
     it("Should confirm consolidation", async () => {

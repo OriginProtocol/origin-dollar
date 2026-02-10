@@ -287,6 +287,17 @@ contract ConsolidationController is Ownable {
      *
      */
 
+    /// @notice Forwards to the new Compounding Staking Strategy.
+    /// Is only callable by the validator registrator when a consolidation is in progress.
+    /// Anyone can call when there are no consolidations in progress.
+    function snapBalances() external {
+        if (consolidationCount > 0 && msg.sender != validatorRegistrator) {
+            revert("Consolidation in progress");
+        }
+
+        targetStrategy.snapBalances();
+    }
+
     /**
      * @notice Anyone can verify balances on the new Compounding Staking Strategy
      * as long as there are no consolidations in progress.
