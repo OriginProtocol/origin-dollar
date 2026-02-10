@@ -7,8 +7,10 @@ const {
 const { setERC20TokenBalance } = require("../../_fund");
 const { units, usdcUnits } = require("../../helpers");
 const { impersonateAndFund } = require("../../../utils/signers");
+const { encodeBalanceCheckMessageBody } = require("./_crosschain-helpers");
 
 const loadFixture = createFixtureLoader(crossChainFixtureUnit);
+const DAY_IN_SECONDS = 86400;
 
 describe("ForkTest: CrossChainRemoteStrategy", function () {
   this.timeout(0);
@@ -423,6 +425,36 @@ describe("ForkTest: CrossChainRemoteStrategy", function () {
     ).to.eq(await units("700", usdc));
 
     await assertVaultTotalValue("1000");
+  });
+
+  it("Should emit a BalanceCheckIgnored event if balance update message is too old", async function () {
+    const { messageTransmitter, crossChainMasterStrategy } = fixture;
+    await sendBalanceUpdateToMaster();
+    const latestBlock = await ethers.provider.getBlock("latest");
+    const staleTimestamp = latestBlock.timestamp - DAY_IN_SECONDS - 1;
+    await expect(
+      messageTransmitter.processFrontOverrideMessageBody(
+        encodeBalanceCheckMessageBody("0", "1000", true, staleTimestamp)
+      )
+    )
+      .to.emit(crossChainMasterStrategy, "BalanceCheckIgnored")
+      .withArgs(0, staleTimestamp, true);
+
+    await expect(await messageTransmitter.messagesInQueue()).to.eq(0);
+  });
+
+  it("Should emit a RemoteStrategyBalanceUpdated event if balance update message is just in time", async function () {
+    const { messageTransmitter, crossChainMasterStrategy } = fixture;
+    await sendBalanceUpdateToMaster();
+    const latestBlock = await ethers.provider.getBlock("latest");
+    const staleTimestamp = latestBlock.timestamp - DAY_IN_SECONDS + 10;
+    await expect(
+      messageTransmitter.processFrontOverrideMessageBody(
+        encodeBalanceCheckMessageBody("0", "1000", true, staleTimestamp)
+      )
+    ).to.emit(crossChainMasterStrategy, "RemoteStrategyBalanceUpdated");
+
+    await expect(await messageTransmitter.messagesInQueue()).to.eq(0);
   });
 
   it("Should fail on deposit if a previous one has not completed", async function () {

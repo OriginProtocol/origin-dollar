@@ -269,6 +269,14 @@ contract CCTPMessageTransmitterMock is ICCTPMessageTransmitter {
         _processMessage(storedMsg);
     }
 
+    function processFrontOverrideMessageBody(bytes memory customMessageBody)
+        external
+    {
+        Message memory storedMsg = _removeFront();
+        storedMsg.messageBody = customMessageBody;
+        _processMessage(storedMsg);
+    }
+
     function processFront() external {
         Message memory storedMsg = _removeFront();
         _processMessage(storedMsg);
