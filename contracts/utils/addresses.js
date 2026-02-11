@@ -394,6 +394,9 @@ addresses.mainnet.toConsensus.consolidation =
 addresses.mainnet.toConsensus.withdrawals =
   "0x00000961Ef480Eb55e80D19ad83579A64c007002";
 
+addresses.mainnet.supernovaPairFactory =
+  "0x5aef44edfc5a7edd30826c724ea12d7be15bdc30";
+
 // Mainnet Merkl
 addresses.mainnet.CampaignCreator =
   "0x8BB4C975Ff3c250e0ceEA271728547f3802B36Fd";
