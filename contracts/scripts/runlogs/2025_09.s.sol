@@ -334,7 +334,7 @@ contract Runlogs_2025_09_Sonic is SetupSonic {
 
   function _2025_09_01_BIS() internal {
     vm.startBroadcast(timelock);
-    osVaultAdmin.setAssetDefaultStrategy(address(ws), address(stakingStrategy));
+    osVaultAdmin.setDefaultStrategy(address(stakingStrategy));
     vm.stopBroadcast();
   }
 }

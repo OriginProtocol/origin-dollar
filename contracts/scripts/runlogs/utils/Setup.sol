@@ -9,18 +9,8 @@ import { OETH } from "contracts/contracts/token/OETH.sol";
 import { WOETH } from "contracts/contracts/token/WOETH.sol";
 import { OETHBase } from "contracts/contracts/token/OETHBase.sol";
 import { WOETHBase } from "contracts/contracts/token/WOETHBase.sol";
-import { OETHVaultCore } from "contracts/contracts/vault/OETHVaultCore.sol";
-import { OETHVaultAdmin } from "contracts/contracts/vault/OETHVaultAdmin.sol";
-import { OSonicVaultCore } from "contracts/contracts/vault/OSonicVaultCore.sol";
-import {
-    OSonicVaultAdmin
-} from "contracts/contracts/vault/OSonicVaultAdmin.sol";
-import {
-    OETHBaseVaultCore
-} from "contracts/contracts/vault/OETHBaseVaultCore.sol";
-import {
-    OETHBaseVaultAdmin
-} from "contracts/contracts/vault/OETHBaseVaultAdmin.sol";
+import { VaultCore } from "contracts/contracts/vault/VaultCore.sol";
+import { VaultAdmin } from "contracts/contracts/vault/VaultAdmin.sol";
 import {
     OETHVaultValueChecker
 } from "contracts/contracts/strategies/VaultValueChecker.sol";
@@ -79,8 +69,8 @@ abstract contract SetupMainnet is Test, Script {
     // OETH
     OETH public oeth = OETH(Mainnet.OETH);
     WOETH public woeth = WOETH(Mainnet.WOETH);
-    OETHVaultCore public oethVaultCore = OETHVaultCore(Mainnet.OETH_VAULT);
-    OETHVaultAdmin public oethVaultAdmin = OETHVaultAdmin(Mainnet.OETH_VAULT);
+    VaultCore public oethVaultCore = VaultCore(Mainnet.OETH_VAULT);
+    VaultAdmin public oethVaultAdmin = VaultAdmin(Mainnet.OETH_VAULT);
     CurveAMOStrategy public oethWethCurveAMO =
         CurveAMOStrategy(Mainnet.OETH_WETH_CURVE_AMO);
     OETHVaultValueChecker public oethVaultValueChecker =
@@ -114,10 +104,8 @@ abstract contract SetupBase is Test, Script {
     // OETH
     OETHBase public oeth = OETHBase(Base.OETHB);
     WOETHBase public woeth = WOETHBase(Base.WOETHB);
-    OETHBaseVaultCore public oethVaultCore =
-        OETHBaseVaultCore(Base.OETHB_VAULT);
-    OETHBaseVaultAdmin public oethVaultAdmin =
-        OETHBaseVaultAdmin(Base.OETHB_VAULT);
+    VaultCore public oethVaultCore = VaultCore(Base.OETHB_VAULT);
+    VaultAdmin public oethVaultAdmin = VaultAdmin(Base.OETHB_VAULT);
     BaseCurveAMOStrategy public oethWethCurveAMO =
         BaseCurveAMOStrategy(Base.OETHB_WETH_CURVE_AMO);
     AerodromeAMOStrategy public oethWethAerodromeAMO =
@@ -151,8 +139,8 @@ abstract contract SetupSonic is Test, Script {
 
     // OS
     OSonic public os = OSonic(Sonic.OS);
-    OSonicVaultCore public osVaultCore = OSonicVaultCore(Sonic.OS_VAULT);
-    OSonicVaultAdmin public osVaultAdmin = OSonicVaultAdmin(Sonic.OS_VAULT);
+    VaultCore public osVaultCore = VaultCore(Sonic.OS_VAULT);
+    VaultAdmin public osVaultAdmin = VaultAdmin(Sonic.OS_VAULT);
     OETHVaultValueChecker public osVaultValueChecker =
         OETHVaultValueChecker(Sonic.OS_VAULT_VALUE_CHECKER);
 
