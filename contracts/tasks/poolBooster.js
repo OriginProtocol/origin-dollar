@@ -23,13 +23,19 @@ const SECONDS_PER_WEEK = 60 * 60 * 24 * 7;
 
 // Minimal ABIs
 const bribesModuleAbi = [
-  "function getPools() external view returns (address[])",
-  "function manageBribes(uint256[] memory rewardsPerVote) external",
+  "function getPoolBoosters() external view returns (address[])",
+  "function manageBribes() external",
+  "function manageBribes(uint256[] totalRewardAmounts, uint8[] extraDuration, uint256[] rewardsPerVote) external",
 ];
 
 const poolBoosterAbi = [
   "function rewardToken() external view returns (address)",
+  "function gauge() external view returns (address)",
 ];
+
+const gaugeAbi = ["function lp_token() external view returns (address)"];
+
+const lpTokenAbi = ["function name() external view returns (string)"];
 
 const gaugeControllerAbi = [
   "function get_total_weight() external view returns (uint256)",
@@ -233,12 +239,26 @@ async function calculateRewardsPerVote(provider, options = {}) {
 
   // Fetch pools from BribesModule
   const bribesModule = new Contract(BRIBES_MODULE, bribesModuleAbi, provider);
-  const pools = await bribesModule.getPools();
-  output(`Found ${pools.length} pools in BribesModule`);
+  const pools = await bribesModule.getPoolBoosters();
+  output(`Found ${pools.length} pool boosters in BribesModule`);
 
   if (pools.length === 0) {
-    output("No pools registered, nothing to calculate");
+    output("No pool boosters registered, nothing to calculate");
     return { pools: [], rewardsPerVote: [] };
+  }
+
+  // Display gauge names for each pool
+  for (let i = 0; i < pools.length; i++) {
+    const poolAddress = pools[i];
+    if (poolAddress === addresses.zero) continue;
+
+    const poolBooster = new Contract(poolAddress, poolBoosterAbi, provider);
+    const gaugeAddress = await poolBooster.gauge();
+    const gauge = new Contract(gaugeAddress, gaugeAbi, provider);
+    const lpTokenAddress = await gauge.lp_token();
+    const lpToken = new Contract(lpTokenAddress, lpTokenAbi, provider);
+    const lpTokenName = await lpToken.name();
+    output(`  Pool ${i + 1} (${poolAddress}) - LP: ${lpTokenName}`);
   }
 
   // If skipping, return array of zeros
@@ -283,10 +303,17 @@ async function calculateRewardsPerVote(provider, options = {}) {
 
   for (let i = 0; i < pools.length; i++) {
     const poolAddress = pools[i];
-    output(`\nPool ${i + 1}: ${poolAddress}`);
-
-    // Get reward token for this pool
+    // Get reward token and LP token name for this pool
     const poolBooster = new Contract(poolAddress, poolBoosterAbi, provider);
+    const gaugeAddress = await poolBooster.gauge();
+    const gauge = new Contract(gaugeAddress, gaugeAbi, provider);
+    const lpTokenAddress = await gauge.lp_token();
+    const lpToken = new Contract(lpTokenAddress, lpTokenAbi, provider);
+    const lpTokenName = await lpToken.name();
+    output(`\nPool Booster ${i + 1}:\t ${poolAddress}`);
+    output(`Gauge:\t\t ${gaugeAddress}`);
+    output(`Pool:\t\t ${lpTokenAddress} (${lpTokenName})`);
+
     const rewardToken = await poolBooster.rewardToken();
 
     try {
@@ -365,26 +392,39 @@ async function manageBribes({
     signer
   );
 
-  const { rewardsPerVote } = await calculateRewardsPerVote(provider, {
+  const { pools, rewardsPerVote } = await calculateRewardsPerVote(provider, {
     targetEfficiency,
     skipRewardPerVote,
     log,
   });
 
   if (rewardsPerVote.length === 0) {
-    log("No pools registered in BribesModule, nothing to do");
+    log("No pool boosters registered in BribesModule, nothing to do");
     return;
   }
 
   // Call manageBribes on the SafeModule
   log(`\n--- Calling manageBribes on BribesModule ---`);
-  log(
-    `Rewards per vote: [${rewardsPerVote
-      .map((r) => formatUnits(r, 18))
-      .join(", ")}]`
-  );
 
-  const tx = await bribesModuleContract.manageBribes(rewardsPerVote);
+  let tx;
+  if (skipRewardPerVote) {
+    // Use the no-arg version (defaults: all rewards, +1 period, no reward rate update)
+    log("Using default parameters (no-arg manageBribes)");
+    tx = await bribesModuleContract["manageBribes()"]();
+  } else {
+    // Build default arrays for totalRewardAmounts and extraDuration
+    const totalRewardAmounts = pools.map(() => ethers.constants.MaxUint256);
+    const extraDuration = pools.map(() => 1);
+
+    log(
+      `Rewards per vote: [${rewardsPerVote
+        .map((r) => formatUnits(r, 18))
+        .join(", ")}]`
+    );
+    tx = await bribesModuleContract[
+      "manageBribes(uint256[],uint8[],uint256[])"
+    ](totalRewardAmounts, extraDuration, rewardsPerVote);
+  }
   const receipt = await logTxDetails(tx, "manageBribes");
 
   // Final verification
