@@ -1,8 +1,8 @@
 const { createFixtureLoader } = require("../_fixture");
 const { defaultBaseFixture } = require("../_fixture-base");
 const { expect } = require("chai");
-const addresses = require("../../utils/addresses");
 const { advanceTime, advanceBlocks } = require("../helpers");
+const { parseUnits } = require("ethers/lib/utils");
 
 const baseFixture = createFixtureLoader(defaultBaseFixture);
 
@@ -15,9 +15,10 @@ describe("ForkTest: OETHb Timelock", function () {
   it("Multisig can propose and execute on Timelock", async () => {
     const { guardian, timelock, oethbVault } = fixture;
 
+    const newBufferValue = parseUnits("0.1", 18);
     const calldata = oethbVault.interface.encodeFunctionData(
-      "setDripper(address)",
-      [addresses.dead]
+      "setVaultBuffer(uint256)",
+      [newBufferValue]
     );
 
     const args = [
@@ -41,6 +42,6 @@ describe("ForkTest: OETHb Timelock", function () {
 
     await timelock.connect(guardian).executeBatch(...args);
 
-    expect(await oethbVault.dripper()).to.eq(addresses.dead);
+    expect(await oethbVault.vaultBuffer()).to.eq(newBufferValue);
   });
 });

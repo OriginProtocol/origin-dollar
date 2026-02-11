@@ -49,10 +49,10 @@ module.exports = deployOnSonic(
     ]);
     console.log(`Deployed Vault Core to ${dOSonicVaultCore.address}`);
 
-    const dOSonicVaultAdmin = await deployWithConfirmation("OSonicVaultAdmin", [
+    const dOSonicVault = await deployWithConfirmation("OSonicVault", [
       cWS.address,
     ]);
-    console.log(`Deployed Vault Admin to ${dOSonicVaultAdmin.address}`);
+    console.log(`Deployed Vault Admin to ${dOSonicVault.address}`);
 
     // Get contract instances
     const cOSonic = await ethers.getContractAt("OSonic", cOSonicProxy.address);
@@ -77,11 +77,11 @@ module.exports = deployOnSonic(
 
     // prettier-ignore
     await cOSonicProxy
-    .connect(sDeployer)["initialize(address,address,bytes)"](
-      dOSonic.address,
-      addresses.sonic.timelock,
-      initDataOSonic
-    );
+      .connect(sDeployer)["initialize(address,address,bytes)"](
+        dOSonic.address,
+        addresses.sonic.timelock,
+        initDataOSonic
+      );
     console.log("Initialized Origin S");
 
     // Init OSonicVault
@@ -94,11 +94,11 @@ module.exports = deployOnSonic(
     );
     // prettier-ignore
     await cOSonicVaultProxy
-    .connect(sDeployer)["initialize(address,address,bytes)"](
-      dOSonicVaultCore.address,
-      addresses.sonic.timelock,
-      initDataOSonicVault
-    );
+      .connect(sDeployer)["initialize(address,address,bytes)"](
+        dOSonicVaultCore.address,
+        addresses.sonic.timelock,
+        initDataOSonicVault
+      );
     console.log("Initialized Origin S Vault");
 
     // Init WOSonic
@@ -108,11 +108,11 @@ module.exports = deployOnSonic(
     );
     // prettier-ignore
     await cWOSonicProxy
-    .connect(sDeployer)["initialize(address,address,bytes)"](
-      dWOSonic.address,
-      addresses.sonic.timelock,
-      initDataWOSonic
-    )
+      .connect(sDeployer)["initialize(address,address,bytes)"](
+        dWOSonic.address,
+        addresses.sonic.timelock,
+        initDataWOSonic
+      )
     console.log("Initialized Wrapper Origin S");
 
     // Deploy the Dripper
@@ -133,7 +133,7 @@ module.exports = deployOnSonic(
     // Init the Dripper proxy
     // prettier-ignore
     await withConfirmation(
-    cOSonicDripperProxy
+      cOSonicDripperProxy
         .connect(sDeployer)["initialize(address,address,bytes)"](
           dFixedRateDripper.address,
           addresses.sonic.timelock,
@@ -170,7 +170,7 @@ module.exports = deployOnSonic(
         {
           contract: cOSonicVault,
           signature: "setAdminImpl(address)",
-          args: [dOSonicVaultAdmin.address],
+          args: [dOSonicVault.address],
         },
         // 3. Support wrapped S
         {

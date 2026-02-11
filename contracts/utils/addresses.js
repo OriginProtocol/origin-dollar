@@ -10,6 +10,11 @@ addresses.multichainBuybackOperator =
   "0xBB077E716A5f1F1B63ed5244eBFf5214E50fec8c";
 addresses.votemarket = "0x8c2c5A295450DDFf4CB360cA73FCCC12243D14D9";
 
+// CCTP contracts (uses same addresses on all chains)
+addresses.CCTPTokenMessengerV2 = "0x28b5a0e9C621a5BadaA536219b3a228C8168cf5d";
+addresses.CCTPMessageTransmitterV2 =
+  "0x81D40F21F12A8F0E3252Bccb954D722d4c464B64";
+
 addresses.mainnet = {};
 addresses.base = {};
 addresses.sonic = {};
@@ -463,6 +468,10 @@ addresses.base.CCIPRouter = "0x881e3A65B4d4a04dD529061dd0071cf975F58bCD";
 
 addresses.base.MerklDistributor = "0x8BB4C975Ff3c250e0ceEA271728547f3802B36Fd";
 
+addresses.base.USDC = "0x833589fcd6edb6e08f4c7c32d4f71b54bda02913";
+
+addresses.base.MorphoOusdV2Vault = "0x2Ba14b2e1E7D2189D3550b708DFCA01f899f33c1";
+
 // Sonic
 addresses.sonic.wS = "0x039e2fB66102314Ce7b64Ce5Ce3E5183bc94aD38";
 addresses.sonic.WETH = "0x309C92261178fA0CF748A855e90Ae73FDb79EBc7";
@@ -696,4 +705,12 @@ addresses.hoodi.beaconChainDepositContract =
 addresses.hoodi.defenderRelayer = "0x419B6BdAE482f41b8B194515749F3A2Da26d583b";
 addresses.hoodi.mockBeaconRoots = "0xdCfcAE4A084AA843eE446f400B23aA7B6340484b";
 
+// Crosschain Strategy
+// TODO delete: master - remote test address: 0x1743658b284a843b47f555343dbb628d46d0c254
+addresses.base.CrossChainRemoteStrategy = "TODO";
+addresses.mainnet.CrossChainMasterStrategy = "TODO";
+// CCTP Circle Contract addresses: https://developers.circle.com/cctp/references/contract-addresses
+addresses.CCTPTokenMessengerV2 = "0x28b5a0e9c621a5badaa536219b3a228c8168cf5d";
+addresses.CCTPMessageTransmitterV2 =
+  "0x81D40F21F12A8F0E3252Bccb954D722d4c464B64";
 module.exports = addresses;

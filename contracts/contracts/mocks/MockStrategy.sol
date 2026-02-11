@@ -9,7 +9,11 @@ contract MockStrategy {
     address public withdrawAllAsset;
     address public withdrawAllRecipient;
 
-    constructor() {}
+    bool public shouldSupportAsset;
+
+    constructor() {
+        shouldSupportAsset = true;
+    }
 
     function deposit(address asset, uint256 amount) external {}
 
@@ -39,7 +43,11 @@ contract MockStrategy {
     }
 
     function supportsAsset(address) external view returns (bool) {
-        return true;
+        return shouldSupportAsset;
+    }
+
+    function setShouldSupportAsset(bool _shouldSupportAsset) external {
+        shouldSupportAsset = _shouldSupportAsset;
     }
 
     function collectRewardTokens() external {}
