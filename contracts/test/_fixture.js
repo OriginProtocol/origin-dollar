@@ -2567,33 +2567,11 @@ async function instantRebaseVaultFixture(tokenName) {
   return fixture;
 }
 
-async function supernovaAMOFixure() {
+async function supernovaOETHAMOFixure() {
   const fixture = await defaultFixture();
-  const { ousd, usdc } = fixture;
+  const { oeth, weth } = fixture;
 
-  const factoryABI = [
-    "function createPair(address tokenA, address tokenB) external returns (address pair)",
-    "function getPair(address tokenA, address tokenB) external view returns (address pair)"
-  ];
-  const factory = await ethers.getContractAt(factoryABI, addresses.mainnet.supernovaPairFactory);
-
-  const pairAddress = await factory.getPair(ousd.address, usdc.address);
-  let pair;
-
-  if (pairAddress === ethers.constants.AddressZero) {
-    log("Creating new OUSD/USDC pair...");
-    const tx = await factory.createPair(ousd.address, usdc.address);
-    const receipt = await tx.wait();
-    const pairCreatedEvent = receipt.events.find(e => e.event === 'PairCreated');
-    const newPairAddress = pairCreatedEvent.args.pair;
-  } else {
-    log(`Using existing OUSD/USDC pair: ${pairAddress}`);
-  }
-  
-  // TODO fetch strategy contract from deployment file
-  // use deploy actions
-
-  fixture.supernovaPair = await ethers.getContractAt("IPair", pairAddress);
+  return fixture;
 }
 
 
@@ -3119,5 +3097,5 @@ module.exports = {
   claimRewardsModuleFixture,
   crossChainFixtureUnit,
   crossChainFixture,
-  supernovaAMOFixure,
+  supernovaOETHAMOFixure,
 };
