@@ -1,6 +1,5 @@
 const hre = require("hardhat");
 const { ethers } = hre;
-const { formatUnits } = require("ethers/lib/utils");
 const mocha = require("mocha");
 
 require("./_global-hooks");
@@ -10,7 +9,6 @@ const addresses = require("../utils/addresses");
 const { resolveContract } = require("../utils/resolvers");
 //const { setChainlinkOraclePrice } = require("../utils/oracle");
 
-const { balancer_rETH_WETH_PID } = require("../utils/constants");
 const {
   fundAccounts,
   fundAccountsForOETHUnitTests,
@@ -43,11 +41,6 @@ const susdsAbi = require("./abi/sUSDS.json");
 const metamorphoAbi = require("./abi/metamorpho.json");
 const merklDistributorAbi = require("./abi/merklDistributor.json");
 
-// const curveFactoryAbi = require("./abi/curveFactory.json")
-const ousdMetapoolAbi = require("./abi/ousdMetapool.json");
-const oethMetapoolAbi = require("./abi/oethMetapool.json");
-const threepoolLPAbi = require("./abi/threepoolLP.json");
-const threepoolSwapAbi = require("./abi/threepoolSwap.json");
 const curveXChainLiquidityGaugeAbi = require("./abi/curveXChainLiquidityGauge.json");
 const curveStableSwapNGAbi = require("./abi/curveStableSwapNG.json");
 
@@ -598,18 +591,6 @@ const defaultFixture = deployments.createFixture(async () => {
     compoundStrategyProxy.address
   );
 
-  const convexStrategyProxy = await ethers.getContract("ConvexStrategyProxy");
-  const convexStrategy = await ethers.getContractAt(
-    "ConvexStrategy",
-    convexStrategyProxy.address
-  );
-
-  const aaveStrategyProxy = await ethers.getContract("AaveStrategyProxy");
-  const aaveStrategy = await ethers.getContractAt(
-    "AaveStrategy",
-    aaveStrategyProxy.address
-  );
-
   const oracleRouter = await ethers.getContract("OracleRouter");
   const oethOracleRouter = await ethers.getContract(
     isFork ? "OETHOracleRouter" : "OracleRouter"
@@ -782,22 +763,16 @@ const defaultFixture = deployments.createFixture(async () => {
     legacyMorphoToken,
     morphoCompoundStrategy,
     balancerREthStrategy,
-    makerSSRStrategy,
     morphoAaveStrategy,
     oethMorphoAaveStrategy,
     morphoLens,
     threePoolGauge,
-    aaveAddressProvider,
     cvx,
     cvxBooster,
     cvxRewardPool,
     depositContractUtils,
     oethDripper,
     oethZapper,
-    swapper,
-    mockSwapper,
-    swapper1Inch,
-    mock1InchSwapRouter,
     convexEthMetaStrategy,
     vaultValueChecker,
     oethVaultValueChecker,
@@ -876,14 +851,6 @@ const defaultFixture = deployments.createFixture(async () => {
       addresses.mainnet.CVXRewardsPool
     );
 
-    const makerSSRStrategyProxy = await ethers.getContract(
-      "MakerSSRStrategyProxy"
-    );
-    makerSSRStrategy = await ethers.getContractAt(
-      "Generalized4626Strategy",
-      makerSSRStrategyProxy.address
-    );
-
     const morphoCompoundStrategyProxy = await ethers.getContract(
       "MorphoCompoundStrategyProxy"
     );
@@ -931,8 +898,6 @@ const defaultFixture = deployments.createFixture(async () => {
     );
 
     oethZapper = await ethers.getContract("OETHZapper");
-
-    swapper = await ethers.getContract("Swapper1InchV5");
 
     vaultValueChecker = await ethers.getContract("VaultValueChecker");
     oethVaultValueChecker = await ethers.getContract("OETHVaultValueChecker");
@@ -985,19 +950,6 @@ const defaultFixture = deployments.createFixture(async () => {
     cvxRewardPool = await ethers.getContract("MockRewardPool");
     depositContractUtils = await ethers.getContract("DepositContractUtils");
 
-    adai = await ethers.getContract("MockADAI");
-    aaveToken = await ethers.getContract("MockAAVEToken");
-    aave = await ethers.getContract("MockAave");
-    // currently in test the mockAave is itself the address provider
-    aaveAddressProvider = await ethers.getContractAt(
-      "ILendingPoolAddressesProvider",
-      aave.address
-    );
-    stkAave = await ethers.getContract("MockStkAave");
-    aaveIncentivesController = await ethers.getContract(
-      "MockAaveIncentivesController"
-    );
-
     chainlinkOracleFeedDAI = await ethers.getContract(
       "MockChainlinkOracleFeedDAI"
     );
@@ -1016,11 +968,6 @@ const defaultFixture = deployments.createFixture(async () => {
     chainlinkOracleFeedETH = await ethers.getContract(
       "MockChainlinkOracleFeedETH"
     );
-
-    swapper = await ethers.getContract("MockSwapper");
-    mockSwapper = await ethers.getContract("MockSwapper");
-    swapper1Inch = await ethers.getContract("Swapper1InchV5");
-    mock1InchSwapRouter = await ethers.getContract("Mock1InchSwapRouter");
   }
 
   if (!isFork) {
@@ -1134,21 +1081,12 @@ const defaultFixture = deployments.createFixture(async () => {
     metapoolToken,
     morpho,
     morphoLens,
-    convexStrategy,
-    makerSSRStrategy,
     morphoCompoundStrategy,
     morphoAaveStrategy,
     cvx,
     cvxBooster,
     cvxRewardPool,
     depositContractUtils,
-
-    aaveStrategy,
-    aaveToken,
-    aaveAddressProvider,
-    aaveIncentivesController,
-    aave,
-    stkAave,
     // uniswapPairOUSD_USDT,
     // liquidityRewardOUSD_USDT,
     wousd,
@@ -1183,10 +1121,6 @@ const defaultFixture = deployments.createFixture(async () => {
     oethFixedRateDripperProxy,
     oethHarvester,
     oethZapper,
-    swapper,
-    mockSwapper,
-    swapper1Inch,
-    mock1InchSwapRouter,
     aura,
     bal,
 
@@ -1346,22 +1280,6 @@ async function ousdCollateralSwapFixture() {
   return fixture;
 }
 
-async function oeth1InchSwapperFixture() {
-  const fixture = await oethDefaultFixture();
-  const { mock1InchSwapRouter } = fixture;
-
-  const swapPlatformAddr = "0x1111111254EEB25477B68fb85Ed929f73A960582";
-  await replaceContractAt(swapPlatformAddr, mock1InchSwapRouter);
-
-  const stubbedRouterContract = await hre.ethers.getContractAt(
-    "Mock1InchSwapRouter",
-    swapPlatformAddr
-  );
-  fixture.mock1InchSwapRouter = stubbedRouterContract;
-
-  return fixture;
-}
-
 /**
  * Configure the MockVault contract by initializing it and setting supported
  * assets and then upgrade the Vault implementation via VaultProxy.
@@ -1447,403 +1365,6 @@ async function claimRewardsModuleFixture() {
 }
 
 /**
- * Configure a Vault with only the Compound strategy.
- */
-async function compoundVaultFixture() {
-  const fixture = await defaultFixture();
-
-  const { governorAddr } = await getNamedAccounts();
-  const sGovernor = await ethers.provider.getSigner(governorAddr);
-
-  const assetAddresses = await getAssetAddresses(deployments);
-
-  // Approve in Vault
-  await fixture.vault
-    .connect(sGovernor)
-    .approveStrategy(fixture.compoundStrategy.address);
-
-  await fixture.harvester
-    .connect(sGovernor)
-    .setSupportedStrategy(fixture.compoundStrategy.address, true);
-
-  // Add USDT
-  await fixture.compoundStrategy
-    .connect(sGovernor)
-    .setPTokenAddress(assetAddresses.USDT, assetAddresses.cUSDT);
-  // Add USDC
-  await fixture.compoundStrategy
-    .connect(sGovernor)
-    .setPTokenAddress(assetAddresses.USDC, assetAddresses.cUSDC);
-
-  return fixture;
-}
-
-/**
- * Configure a Vault with only the Convex strategy.
- */
-async function convexVaultFixture() {
-  const fixture = await defaultFixture();
-
-  const { governorAddr } = await getNamedAccounts();
-  const sGovernor = await ethers.provider.getSigner(governorAddr);
-  // Add Convex
-  await fixture.vault
-    .connect(sGovernor)
-    .approveStrategy(fixture.convexStrategy.address);
-
-  await fixture.harvester
-    .connect(sGovernor)
-    .setSupportedStrategy(fixture.convexStrategy.address, true);
-
-  await fixture.vault
-    .connect(sGovernor)
-    .setDefaultStrategy(fixture.convexStrategy.address);
-  return fixture;
-}
-
-/**
- * Configure a Vault with the balancerREthStrategy
- */
-async function balancerREthFixture(config = { defaultStrategy: true }) {
-  const fixture = await defaultFixture();
-  await hotDeployOption(fixture, "balancerREthFixture", {
-    isOethFixture: true,
-  });
-
-  const { oethVault, timelock, weth, reth, balancerREthStrategy, josh } =
-    fixture;
-
-  if (config.defaultStrategy) {
-    await oethVault
-      .connect(timelock)
-      .setDefaultStrategy(reth.address, balancerREthStrategy.address);
-    await oethVault
-      .connect(timelock)
-      .setDefaultStrategy(weth.address, balancerREthStrategy.address);
-  }
-
-  fixture.rEthBPT = await ethers.getContractAt(
-    "IERC20Metadata",
-    addresses.mainnet.rETH_WETH_BPT,
-    josh
-  );
-  fixture.balancerREthPID = balancer_rETH_WETH_PID;
-
-  fixture.auraPool = await ethers.getContractAt(
-    "IERC4626",
-    addresses.mainnet.rETH_WETH_AuraRewards
-  );
-
-  fixture.balancerVault = await ethers.getContractAt(
-    "IBalancerVault",
-    addresses.mainnet.balancerVault,
-    josh
-  );
-
-  // completely peg the rETH price
-  // await setChainlinkOraclePrice(addresses.mainnet.rETH, await reth.getExchangeRate());
-
-  await setERC20TokenBalance(josh.address, reth, "1000000", hre);
-  await hardhatSetBalance(josh.address, "1000000");
-
-  return fixture;
-}
-
-/**
- * Configure a Vault with only the Meta strategy.
- */
-async function convexMetaVaultFixture() {
-  throw new Error("Fix fixtures");
-  // const fixture = await defaultFixture();
-
-  // if (isFork) {
-  //   const { josh, matt, anna, domen, daniel, franck, ousd } = fixture;
-
-  //   // const curveFactoryAddress = '0xB9fC157394Af804a3578134A6585C0dc9cc990d4'
-
-  //   const threepoolLP = await ethers.getContractAt(
-  //     threepoolLPAbi,
-  //     addresses.mainnet.ThreePoolToken
-  //   );
-  //   const ousdMetaPool = await ethers.getContractAt(
-  //     ousdMetapoolAbi,
-  //     addresses.mainnet.CurveOUSDMetaPool
-  //   );
-  //   const threepoolSwap = await ethers.getContractAt(
-  //     threepoolSwapAbi,
-  //     addresses.mainnet.ThreePool
-  //   );
-  //   // const curveFactory = await ethers.getContractAt(curveFactoryAbi, curveFactoryAddress)
-
-  //   const balances = await ousdMetaPool.get_balances();
-  //   log(`Metapool balance 0: ${formatUnits(balances[0])}`);
-  //   log(`Metapool balance 1: ${formatUnits(balances[1])}`);
-
-  //   // Domen is loaded with 3CRV
-  //   await hardhatSetBalance(domen.address, "1000000");
-  //   await setERC20TokenBalance(domen.address, threepoolLP, "1000000", hre);
-
-  //   for (const user of [josh, matt, anna, domen, daniel, franck]) {
-  //     // Approve OUSD MetaPool contract to move funds
-  //     await resetAllowance(threepoolLP, user, ousdMetaPool.address);
-  //     await resetAllowance(ousd, user, ousdMetaPool.address);
-  //   }
-
-  //   fixture.ousdMetaPool = ousdMetaPool;
-  //   fixture.threePoolToken = threepoolLP;
-  //   fixture.threepoolSwap = threepoolSwap;
-  // } else {
-  //   // Migrations should do these on fork
-  //   const { governorAddr } = await getNamedAccounts();
-  //   const sGovernor = await ethers.provider.getSigner(governorAddr);
-
-  //   // Add Convex Meta strategy
-  //   await fixture.vault
-  //     .connect(sGovernor)
-  //     .approveStrategy(fixture.OUSDmetaStrategy.address);
-
-  //   // set meta strategy on vault so meta strategy is allowed to mint OUSD
-  //   await fixture.vault
-  //     .connect(sGovernor)
-  //     .setOusdMetaStrategy(fixture.OUSDmetaStrategy.address);
-
-  //   // set OUSD mint threshold to 50 million
-  //   await fixture.vault
-  //     .connect(sGovernor)
-  //     .setNetOusdMintForStrategyThreshold(parseUnits("50", 24));
-
-  //   await fixture.harvester
-  //     .connect(sGovernor)
-  //     .setSupportedStrategy(fixture.OUSDmetaStrategy.address, true);
-
-  //   await fixture.vault
-  //     .connect(sGovernor)
-  //     .setAssetDefaultStrategy(
-  //       fixture.usdt.address,
-  //       fixture.OUSDmetaStrategy.address
-  //     );
-
-  //   await fixture.vault
-  //     .connect(sGovernor)
-  //     .setAssetDefaultStrategy(
-  //       fixture.usdc.address,
-  //       fixture.OUSDmetaStrategy.address
-  //     );
-  // }
-
-  // return fixture;
-}
-
-/**
- * Configure a Vault with default DAI strategy to the Maker DSR strategy.
- */
-
-async function makerSSRFixture(
-  config = {
-    usdsMintAmount: 0,
-    depositToStrategy: false,
-  }
-) {
-  const fixture = await defaultFixture();
-
-  if (isFork) {
-    const { usds, josh, makerSSRStrategy, strategist, vault } = fixture;
-
-    // Impersonate the OUSD Vault
-    fixture.vaultSigner = await impersonateAndFund(vault.address);
-
-    // mint some OUSD using USDS if configured
-    if (config?.usdsMintAmount > 0) {
-      const usdsMintAmount = parseUnits(config.usdsMintAmount.toString());
-      await vault.connect(josh).rebase();
-      await vault.connect(josh).allocate();
-
-      // Approve the Vault to transfer USDS
-      await usds.connect(josh).approve(vault.address, usdsMintAmount);
-
-      // Mint OUSD with USDS
-      // This will sit in the vault, not the strategy
-      await vault.connect(josh).mint(usds.address, usdsMintAmount, 0);
-
-      // Add DAI to the Maker DSR Strategy
-      if (config?.depositToStrategy) {
-        // The strategist deposits the WETH to the AMO strategy
-        await vault
-          .connect(strategist)
-          .depositToStrategy(
-            makerSSRStrategy.address,
-            [usds.address],
-            [usdsMintAmount]
-          );
-      }
-    }
-  } else {
-    throw new Error(
-      "Maker SSR strategy only supported in forked test environment"
-    );
-  }
-
-  return fixture;
-}
-
-/**
- * Configure a Vault with default USDC strategy to the Morpho Steakhouse USDC Vault.
- */
-async function morphoSteakhouseUSDCFixture(
-  config = {
-    usdcMintAmount: 0,
-    depositToStrategy: false,
-  }
-) {
-  const fixture = await defaultFixture();
-
-  if (isFork) {
-    const { usdc, josh, morphoSteakhouseUSDCStrategy, strategist, vault } =
-      fixture;
-
-    // Impersonate the OUSD Vault
-    fixture.vaultSigner = await impersonateAndFund(vault.address);
-
-    // mint some OUSD using USDC if configured
-    if (config?.usdcMintAmount > 0) {
-      const usdcMintAmount = parseUnits(config.usdcMintAmount.toString(), 6);
-      await vault.connect(josh).rebase();
-      await vault.connect(josh).allocate();
-
-      // Approve the Vault to transfer USDC
-      await usdc.connect(josh).approve(vault.address, usdcMintAmount);
-
-      // Mint OUSD with USDC
-      // This will sit in the vault, not the strategy
-      await vault.connect(josh).mint(usdc.address, usdcMintAmount, 0);
-
-      // Add USDC to the strategy
-      if (config?.depositToStrategy) {
-        // The strategist deposits the USDC to the strategy
-        await vault
-          .connect(strategist)
-          .depositToStrategy(
-            morphoSteakhouseUSDCStrategy.address,
-            [usdc.address],
-            [usdcMintAmount]
-          );
-      }
-    }
-  } else {
-    throw new Error(
-      "Morpho Steakhouse USDC strategy only supported in forked test environment"
-    );
-  }
-
-  return fixture;
-}
-
-/**
- * Configure a Vault with default USDC strategy to the Morpho Gauntlet Prime USDC Vault.
- */
-async function morphoGauntletPrimeUSDCFixture(
-  config = {
-    usdcMintAmount: 0,
-    depositToStrategy: false,
-  }
-) {
-  const fixture = await defaultFixture();
-
-  if (isFork) {
-    const { usdc, josh, morphoGauntletPrimeUSDCStrategy, strategist, vault } =
-      fixture;
-
-    // Impersonate the OUSD Vault
-    fixture.vaultSigner = await impersonateAndFund(vault.address);
-
-    // mint some OUSD using USDC if configured
-    if (config?.usdcMintAmount > 0) {
-      const usdcMintAmount = parseUnits(config.usdcMintAmount.toString(), 6);
-      await vault.connect(josh).rebase();
-      await vault.connect(josh).allocate();
-
-      // Approve the Vault to transfer USDC
-      await usdc.connect(josh).approve(vault.address, usdcMintAmount);
-
-      // Mint OUSD with USDC
-      // This will sit in the vault, not the strategy
-      await vault.connect(josh).mint(usdc.address, usdcMintAmount, 0);
-
-      // Add USDC to the strategy
-      if (config?.depositToStrategy) {
-        // The strategist deposits the USDC to the strategy
-        await vault
-          .connect(strategist)
-          .depositToStrategy(
-            morphoGauntletPrimeUSDCStrategy.address,
-            [usdc.address],
-            [usdcMintAmount]
-          );
-      }
-    }
-  } else {
-    throw new Error(
-      "Morpho Gauntlet Prime USDC strategy only supported in forked test environment"
-    );
-  }
-
-  return fixture;
-}
-
-/**
- * Configure a Vault with default USDT strategy to the Morpho Gauntlet Prime USDT Vault.
- */
-async function morphoGauntletPrimeUSDTFixture(
-  config = {
-    usdtMintAmount: 0,
-    depositToStrategy: false,
-  }
-) {
-  const fixture = await defaultFixture();
-
-  if (isFork) {
-    const { usdt, josh, morphoGauntletPrimeUSDTStrategy, strategist, vault } =
-      fixture;
-
-    // Impersonate the OUSD Vault
-    fixture.vaultSigner = await impersonateAndFund(vault.address);
-
-    // mint some OUSD using USDT if configured
-    if (config?.usdtMintAmount > 0) {
-      const usdtMintAmount = parseUnits(config.usdtMintAmount.toString(), 6);
-      await vault.connect(josh).rebase();
-      await vault.connect(josh).allocate();
-
-      // Approve the Vault to transfer USDT
-      await usdt.connect(josh).approve(vault.address, 0);
-      await usdt.connect(josh).approve(vault.address, usdtMintAmount);
-
-      // Mint OUSD with USDT
-      // This will sit in the vault, not the strategy
-      await vault.connect(josh).mint(usdt.address, usdtMintAmount, 0);
-
-      // Add USDT to the strategy
-      if (config?.depositToStrategy) {
-        // The strategist deposits the USDT to the strategy
-        await vault
-          .connect(strategist)
-          .depositToStrategy(
-            morphoGauntletPrimeUSDTStrategy.address,
-            [usdt.address],
-            [usdtMintAmount]
-          );
-      }
-    }
-  } else {
-    throw new Error(
-      "Morpho Gauntlet Prime USDT strategy only supported in forked test environment"
-    );
-  }
-
-  return fixture;
-}
-
-/**
  * Configure a Vault with default USDC strategy to Yearn's Morpho OUSD v2 Vault.
  */
 async function morphoOUSDv2Fixture(
@@ -1905,103 +1426,6 @@ async function morphoOUSDv2Fixture(
   } else {
     throw new Error(
       "Yearn's Morpho OUSD v2 strategy only supported in forked test environment"
-    );
-  }
-
-  return fixture;
-}
-
-/**
- * Configure a Vault with only the Morpho strategy.
- */
-async function morphoCompoundFixture() {
-  const fixture = await defaultFixture();
-  await hotDeployOption(fixture, "morphoCompoundFixture");
-
-  const { timelock } = fixture;
-
-  if (isFork) {
-    await fixture.vault
-      .connect(timelock)
-      .setDefaultStrategy(fixture.morphoCompoundStrategy.address);
-
-    await fixture.vault
-      .connect(timelock)
-      .setDefaultStrategy(fixture.morphoCompoundStrategy.address);
-
-    await fixture.vault
-      .connect(timelock)
-      .setDefaultStrategy(fixture.morphoCompoundStrategy.address);
-  } else {
-    throw new Error(
-      "Morpho strategy only supported in forked test environment"
-    );
-  }
-
-  return fixture;
-}
-
-/**
- * Configure a Vault with only the Aave strategy for USDT.
- */
-async function aaveFixture() {
-  const fixture = await defaultFixture();
-
-  const { timelock } = fixture;
-
-  if (isFork) {
-    await fixture.vault
-      .connect(timelock)
-      .setDefaultStrategy(fixture.aaveStrategy.address);
-  } else {
-    throw new Error(
-      "Aave strategy supported for USDT in forked test environment"
-    );
-  }
-
-  return fixture;
-}
-
-/**
- * Configure a Vault with only the Morpho strategy.
- */
-async function morphoAaveFixture() {
-  const fixture = await defaultFixture();
-
-  const { timelock } = fixture;
-
-  if (isFork) {
-    // The supply of DAI and USDT has been paused for Morpho Aave V2 so no default strategy
-    await fixture.vault.connect(timelock).setDefaultStrategy(addresses.zero);
-    await fixture.vault.connect(timelock).setDefaultStrategy(addresses.zero);
-
-    await fixture.vault
-      .connect(timelock)
-      .setDefaultStrategy(fixture.morphoAaveStrategy.address);
-  } else {
-    throw new Error(
-      "Morpho strategy only supported in forked test environment"
-    );
-  }
-
-  return fixture;
-}
-
-/**
- * Configure a Vault with only the Morpho strategy.
- */
-async function oethMorphoAaveFixture() {
-  const fixture = await oethDefaultFixture();
-
-  if (isFork) {
-    const { oethVault, timelock, oethMorphoAaveStrategy } = fixture;
-
-    await oethVault
-      .connect(timelock)
-      .setDefaultStrategy(oethMorphoAaveStrategy.address);
-  } else {
-    throw new Error(
-      "Morpho strategy only supported in forked test environment"
     );
   }
 
@@ -2174,88 +1598,6 @@ async function compoundingStakingSSVStrategyMerkleProofsMockedFixture() {
   return fixture;
 }
 
-/**
- * Generalized strategy fixture that works only in forked environment
- *
- * @param metapoolAddress -> the address of the metapool
- * @param rewardPoolAddress -> address of the reward staker contract
- * @param metastrategyProxyName -> name of the generalizedMetastrategy proxy contract
- */
-async function convexGeneralizedMetaForkedFixture(
-  config = {
-    metapoolAddress: addresses.mainnet.CurveOUSDMetaPool,
-    rewardPoolAddress: addresses.mainnet.CVXRewardsPool,
-    metastrategyProxyName: addresses.mainnet.ConvexOUSDAMOStrategy,
-    lpTokenAddress: addresses.mainnet.ThreePoolToken,
-  }
-) {
-  const {
-    metapoolAddress,
-    rewardPoolAddress,
-    metastrategyProxyName,
-    lpTokenAddress,
-  } = config;
-  const fixture = await defaultFixture();
-
-  const { timelockAddr } = await getNamedAccounts();
-  const sGovernor = await ethers.provider.getSigner(timelockAddr);
-  const { josh, matt, anna, domen, daniel, franck } = fixture;
-
-  const threepoolLP = await ethers.getContractAt(
-    threepoolLPAbi,
-    addresses.mainnet.ThreePoolToken
-  );
-  const metapool = await ethers.getContractAt(ousdMetapoolAbi, metapoolAddress);
-
-  const primaryCoin = await ethers.getContractAt(
-    erc20Abi,
-    await metapool.coins(0)
-  );
-
-  const threepoolSwap = await ethers.getContractAt(
-    threepoolSwapAbi,
-    addresses.mainnet.ThreePool
-  );
-
-  const lpToken = await ethers.getContractAt(erc20Abi, lpTokenAddress);
-
-  for (const user of [josh, matt, anna, domen, daniel, franck]) {
-    // Approve Metapool contract to move funds
-    await resetAllowance(threepoolLP, user, metapoolAddress);
-    await resetAllowance(primaryCoin, user, metapoolAddress);
-  }
-
-  await impersonateAndFund(domen.address, "1000000");
-  await setERC20TokenBalance(domen.address, threepoolLP, "1000000", hre);
-
-  fixture.metapoolCoin = primaryCoin;
-  fixture.metapool = metapool;
-  fixture.metapoolLpToken = lpToken;
-  fixture.threePoolToken = threepoolLP;
-  fixture.threepoolSwap = threepoolSwap;
-
-  fixture.metaStrategyProxy = await ethers.getContract(metastrategyProxyName);
-  fixture.metaStrategy = await ethers.getContractAt(
-    "ConvexGeneralizedMetaStrategy",
-    fixture.metaStrategyProxy.address
-  );
-
-  fixture.rewardPool = await ethers.getContractAt(
-    "IRewardStaking",
-    rewardPoolAddress
-  );
-
-  await fixture.vault
-    .connect(sGovernor)
-    .setDefaultStrategy(fixture.metaStrategy.address);
-
-  await fixture.vault
-    .connect(sGovernor)
-    .setDefaultStrategy(fixture.metaStrategy.address);
-
-  return fixture;
-}
-
 async function nodeSnapshot() {
   return await hre.network.provider.request({
     method: "evm_snapshot",
@@ -2278,218 +1620,6 @@ async function resetAllowance(
 ) {
   await tokenContract.connect(signer).approve(toAddress, "0");
   await tokenContract.connect(signer).approve(toAddress, allowance);
-}
-
-/**
- * Configure a Vault with only the OETH/(W)ETH Curve Metastrategy.
- */
-async function convexOETHMetaVaultFixture(
-  config = {
-    wethMintAmount: 0,
-    depositToStrategy: false,
-    poolAddEthAmount: 0,
-    poolAddOethAmount: 0,
-    balancePool: false,
-  }
-) {
-  const fixture = await oethDefaultFixture();
-  await hotDeployOption(fixture, "convexOETHMetaVaultFixture", {
-    isOethFixture: true,
-  });
-
-  const {
-    convexEthMetaStrategy,
-    oeth,
-    oethVault,
-    josh,
-    strategist,
-    timelock,
-    weth,
-    crv,
-  } = fixture;
-
-  await impersonateAndFund(josh.address);
-  await setERC20TokenBalance(josh.address, weth, "10000000", hre);
-  await setERC20TokenBalance(josh.address, crv, "10000000", hre);
-
-  // Update the strategy threshold to 500k ETH
-  await oethVault
-    .connect(timelock)
-    .setNetOusdMintForStrategyThreshold(parseUnits("500", 21));
-
-  await oethVault.connect(timelock).setDefaultStrategy(addresses.zero);
-
-  // Impersonate the OETH Vault
-  fixture.oethVaultSigner = await impersonateAndFund(oethVault.address);
-  // Impersonate the Curve gauge that holds all the LP tokens
-  fixture.oethGaugeSigner = await impersonateAndFund(
-    addresses.mainnet.CurveOETHGauge
-  );
-
-  // Convex pool that records the deposited balances
-  fixture.cvxRewardPool = await ethers.getContractAt(
-    "IRewardStaking",
-    addresses.mainnet.CVXETHRewardsPool
-  );
-
-  fixture.oethMetaPool = await ethers.getContractAt(
-    oethMetapoolAbi,
-    addresses.mainnet.CurveOETHMetaPool
-  );
-
-  // mint some OETH using WETH is configured
-  if (config?.wethMintAmount > 0) {
-    const wethAmount = parseUnits(config.wethMintAmount.toString());
-    await oethVault.connect(josh).rebase();
-    await oethVault.connect(josh).allocate();
-
-    // Calculate how much to mint based on the WETH in the vault,
-    // the withdrawal queue, and the WETH to be sent to the strategy
-    const wethBalance = await weth.balanceOf(oethVault.address);
-    const queue = await oethVault.withdrawalQueueMetadata();
-    const available = wethBalance.add(queue.claimed).sub(queue.queued);
-    const mintAmount = wethAmount.sub(available);
-
-    if (mintAmount.gt(0)) {
-      // Approve the Vault to transfer WETH
-      await weth.connect(josh).approve(oethVault.address, mintAmount);
-
-      // Mint OETH with WETH
-      // This will sit in the vault, not the strategy
-      await oethVault.connect(josh).mint(weth.address, mintAmount, 0);
-    }
-
-    // Add ETH to the Metapool
-    if (config?.depositToStrategy) {
-      // The strategist deposits the WETH to the AMO strategy
-      await oethVault
-        .connect(strategist)
-        .depositToStrategy(
-          convexEthMetaStrategy.address,
-          [weth.address],
-          [wethAmount]
-        );
-    }
-  }
-
-  if (config?.balancePool) {
-    const ethBalance = await fixture.oethMetaPool.balances(0);
-    const oethBalance = await fixture.oethMetaPool.balances(1);
-
-    const diff = parseInt(
-      ethBalance.sub(oethBalance).div(oethUnits("1")).toString()
-    );
-
-    if (diff > 0) {
-      config.poolAddOethAmount = (config.poolAddOethAmount || 0) + diff;
-    } else if (diff < 0) {
-      config.poolAddEthAmount = (config.poolAddEthAmount || 0) - diff;
-    }
-  }
-
-  // Add ETH to the Metapool
-  if (config?.poolAddEthAmount > 0) {
-    // Fund Josh with ETH plus some extra for gas fees
-    const fundAmount = config.poolAddEthAmount + 1;
-    await hardhatSetBalance(josh.address, fundAmount.toString());
-
-    const ethAmount = parseUnits(config.poolAddEthAmount.toString(), 18);
-    // prettier-ignore
-    await fixture.oethMetaPool
-      .connect(josh)["add_liquidity(uint256[2],uint256)"]([ethAmount, 0], 0, {
-        value: ethAmount,
-      });
-  }
-
-  const { oethWhaleAddress } = addresses.mainnet;
-  fixture.oethWhale = await impersonateAndFund(oethWhaleAddress);
-
-  // Add OETH to the Metapool
-  if (config?.poolAddOethAmount > 0) {
-    const poolAddOethAmountUnits = parseUnits(
-      config.poolAddOethAmount.toString()
-    );
-
-    const { oethWhale } = fixture;
-
-    // Load with WETH
-    await setERC20TokenBalance(
-      oethWhaleAddress,
-      weth,
-      (config.poolAddOethAmount * 2).toString()
-    );
-
-    // Approve the Vault to transfer WETH
-    await weth
-      .connect(oethWhale)
-      .approve(oethVault.address, poolAddOethAmountUnits);
-
-    // Mint OETH with WETH
-    await oethVault
-      .connect(oethWhale)
-      .mint(weth.address, poolAddOethAmountUnits, 0);
-
-    const oethAmount = await oeth.balanceOf(oethWhaleAddress);
-    log(`OETH whale balance     : ${formatUnits(oethAmount)}`);
-    log(`OETH to add to Metapool: ${formatUnits(poolAddOethAmountUnits)}`);
-
-    await oeth
-      .connect(fixture.oethWhale)
-      .approve(fixture.oethMetaPool.address, poolAddOethAmountUnits);
-
-    // prettier-ignore
-    await fixture.oethMetaPool
-      .connect(fixture.oethWhale)["add_liquidity(uint256[2],uint256)"]([0, poolAddOethAmountUnits], 0);
-  }
-
-  return fixture;
-}
-
-/**
- * Configure a compound fixture with a false vault for testing
- */
-async function compoundFixture() {
-  throw new Error("Update fixture to remove usage of DAI");
-  // const fixture = await defaultFixture();
-
-  // const assetAddresses = await getAssetAddresses(deployments);
-  // const { deploy } = deployments;
-  // const { governorAddr } = await getNamedAccounts();
-  // const sGovernor = await ethers.provider.getSigner(governorAddr);
-
-  // await deploy("StandaloneCompound", {
-  //   from: governorAddr,
-  //   contract: "CompoundStrategy",
-  //   args: [[addresses.dead, fixture.vault.address]],
-  // });
-
-  // fixture.cStandalone = await ethers.getContract("StandaloneCompound");
-
-  // // Set governor as vault
-  // await fixture.cStandalone
-  //   .connect(sGovernor)
-  //   .initialize(
-  //     [assetAddresses.COMP],
-  //     [assetAddresses.DAI, assetAddresses.USDC],
-  //     [assetAddresses.cDAI, assetAddresses.cUSDC]
-  //   );
-
-  // await fixture.cStandalone
-  //   .connect(sGovernor)
-  //   .setHarvesterAddress(fixture.harvester.address);
-
-  // // impersonate the vault and strategy
-  // fixture.vaultSigner = await impersonateAndFund(fixture.vault.address);
-  // fixture.strategySigner = await impersonateAndFund(
-  //   fixture.cStandalone.address
-  // );
-
-  // await fixture.usdc.transfer(
-  //   await fixture.matt.getAddress(),
-  //   parseUnits("1000", 6)
-  // );
-
-  // return fixture;
 }
 
 /**
@@ -2666,50 +1796,6 @@ async function rebornFixture() {
   fixture.rebornAddress = rebornAddress;
   fixture.reborner = reborner;
   fixture.deployAndCall = deployAndCall;
-
-  return fixture;
-}
-
-async function harvesterFixture() {
-  let fixture;
-
-  if (isFork) {
-    fixture = await defaultFixture();
-  } else {
-    fixture = await compoundVaultFixture();
-
-    const {
-      vault,
-      governor,
-      harvester,
-      aaveStrategy,
-      comp,
-      aaveToken,
-      strategist,
-      compoundStrategy,
-    } = fixture;
-
-    // Add Aave which only supports USDC
-    await vault.connect(governor).approveStrategy(aaveStrategy.address);
-
-    await harvester
-      .connect(governor)
-      .setSupportedStrategy(aaveStrategy.address, true);
-
-    // Add direct allocation of USDC to Aave
-    await vault.connect(governor).setDefaultStrategy(aaveStrategy.address);
-
-    // Let strategies hold some reward tokens
-    await comp
-      .connect(strategist)
-      .mintTo(compoundStrategy.address, ousdUnits("120"));
-    await aaveToken
-      .connect(strategist)
-      .mintTo(aaveStrategy.address, ousdUnits("150"));
-
-    fixture.uniswapRouter = await ethers.getContract("MockUniswapRouter");
-    fixture.balancerVault = await ethers.getContract("MockBalancerVault");
-  }
 
   return fixture;
 }
@@ -2963,32 +2049,15 @@ module.exports = {
   poolBoosterCodeUpdatedFixture,
   loadTokenTransferFixture,
   mockVaultFixture,
-  compoundFixture,
-  compoundVaultFixture,
-  convexVaultFixture,
-  convexMetaVaultFixture,
-  convexOETHMetaVaultFixture,
-  convexGeneralizedMetaForkedFixture,
-  makerSSRFixture,
-  morphoSteakhouseUSDCFixture,
-  morphoGauntletPrimeUSDCFixture,
-  morphoGauntletPrimeUSDTFixture,
   morphoOUSDv2Fixture,
-  morphoCompoundFixture,
-  aaveFixture,
-  morphoAaveFixture,
   hackedVaultFixture,
   instantRebaseVaultFixture,
   rebornFixture,
-  balancerREthFixture,
   nativeStakingSSVStrategyFixture,
   compoundingStakingSSVStrategyFixture,
   compoundingStakingSSVStrategyMerkleProofsMockedFixture,
-  oethMorphoAaveFixture,
-  oeth1InchSwapperFixture,
   oethCollateralSwapFixture,
   ousdCollateralSwapFixture,
-  harvesterFixture,
   nodeSnapshot,
   nodeRevert,
   woethCcipZapperFixture,

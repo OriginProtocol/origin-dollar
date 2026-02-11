@@ -26,27 +26,6 @@ contract VaultProxy is InitializeGovernedUpgradeabilityProxy {
 }
 
 /**
- * @notice CompoundStrategyProxy delegates calls to a CompoundStrategy implementation
- */
-contract CompoundStrategyProxy is InitializeGovernedUpgradeabilityProxy {
-
-}
-
-/**
- * @notice AaveStrategyProxy delegates calls to a AaveStrategy implementation
- */
-contract AaveStrategyProxy is InitializeGovernedUpgradeabilityProxy {
-
-}
-
-/**
- * @notice ConvexStrategyProxy delegates calls to a ConvexStrategy implementation
- */
-contract ConvexStrategyProxy is InitializeGovernedUpgradeabilityProxy {
-
-}
-
-/**
  * @notice HarvesterProxy delegates calls to a Harvester implementation
  */
 contract HarvesterProxy is InitializeGovernedUpgradeabilityProxy {
@@ -57,27 +36,6 @@ contract HarvesterProxy is InitializeGovernedUpgradeabilityProxy {
  * @notice DripperProxy delegates calls to a Dripper implementation
  */
 contract DripperProxy is InitializeGovernedUpgradeabilityProxy {
-
-}
-
-/**
- * @notice MorphoCompoundStrategyProxy delegates calls to a MorphoCompoundStrategy implementation
- */
-contract MorphoCompoundStrategyProxy is InitializeGovernedUpgradeabilityProxy {
-
-}
-
-/**
- * @notice ConvexOUSDMetaStrategyProxy delegates calls to a ConvexOUSDMetaStrategy implementation
- */
-contract ConvexOUSDMetaStrategyProxy is InitializeGovernedUpgradeabilityProxy {
-
-}
-
-/**
- * @notice MorphoAaveStrategyProxy delegates calls to a MorphoCompoundStrategy implementation
- */
-contract MorphoAaveStrategyProxy is InitializeGovernedUpgradeabilityProxy {
 
 }
 
@@ -268,13 +226,6 @@ contract OETHSimpleHarvesterProxy is InitializeGovernedUpgradeabilityProxy {
 contract PoolBoostCentralRegistryProxy is
     InitializeGovernedUpgradeabilityProxy
 {
-
-}
-
-/**
- * @notice MakerSSRStrategyProxy delegates calls to a Generalized4626Strategy implementation
- */
-contract MakerSSRStrategyProxy is InitializeGovernedUpgradeabilityProxy {
 
 }
 
