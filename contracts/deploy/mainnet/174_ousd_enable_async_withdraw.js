@@ -7,7 +7,8 @@ module.exports = deploymentWithGovernanceProposal(
     forceDeploy: false,
     reduceQueueTime: true,
     deployerIsProposer: false,
-    proposalId: "",
+    proposalId:
+      "80837757447669692892403190167850973826061122692899866950563027606125775267397",
   },
   async () => {
     // 1. Connect to the OUSD Vault as its governor via the proxy
@@ -22,7 +23,7 @@ module.exports = deploymentWithGovernanceProposal(
           contract: cVault,
           signature: "setWithdrawalClaimDelay(uint256)",
           args: [600], // 10 minutes
-        }
+        },
       ],
     };
   }
