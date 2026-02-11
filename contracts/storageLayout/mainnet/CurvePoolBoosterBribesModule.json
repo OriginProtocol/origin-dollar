@@ -18,12 +18,28 @@
       "src": "@openzeppelin/contracts/access/AccessControlEnumerable.sol:16"
     },
     {
-      "label": "POOLS",
+      "label": "poolBoosters",
       "offset": 0,
       "slot": "2",
       "type": "t_array(t_address)dyn_storage",
       "contract": "CurvePoolBoosterBribesModule",
-      "src": "contracts/automation/CurvePoolBoosterBribesModule.sol:26"
+      "src": "contracts/automation/CurvePoolBoosterBribesModule.sol:28"
+    },
+    {
+      "label": "bridgeFee",
+      "offset": 0,
+      "slot": "3",
+      "type": "t_uint256",
+      "contract": "CurvePoolBoosterBribesModule",
+      "src": "contracts/automation/CurvePoolBoosterBribesModule.sol:31"
+    },
+    {
+      "label": "additionalGasLimit",
+      "offset": 0,
+      "slot": "4",
+      "type": "t_uint256",
+      "contract": "CurvePoolBoosterBribesModule",
+      "src": "contracts/automation/CurvePoolBoosterBribesModule.sol:34"
     }
   ],
   "types": {
