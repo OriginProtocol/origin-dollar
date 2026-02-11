@@ -54,4 +54,17 @@ script:
 	@echo "$(BOLD_BLUE)\nConverting foundry broadcast messages to Safe format... $(RESET) \n"
 	forge script BroadcastConvertor contracts/broadcast/$(DATE).s.sol/$(CHAIN_ID)/dry-run/
 
-.PHONY: script
+
+# Usage : make verify file=src/contracts/Proxy.sol addr=0xCED...
+SHELL := /bin/bash
+match:
+	@if [ -z "$(file)" ] || [ -z "$(addr)" ]; then \
+		echo "Usage: make verify file=<path> addr=<address>"; \
+		exit 1; \
+	fi
+	@name=$$(basename $(file) .sol); \
+	diff <(forge flatten $(file)) <(cast source --flatten $(addr)) \
+	&& printf "✅ Success: Local contract %-20s matches deployment at $(addr)\n" "$$name" \
+	|| printf "❌ Failure: Local contract %-20s differs from deployment at $(addr)\n" "$$name"
+
+.PHONY: script match
