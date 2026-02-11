@@ -28,7 +28,8 @@ module.exports = deploymentWithGovernanceProposal(
         ethers.utils.parseEther("0.001"), // Bridge fee
         1000000, // Additional gas limit for cross-chain execution
       ],
-      "CurvePoolBoosterBribesModule"
+      "CurvePoolBoosterBribesModule",
+      true
     );
     const cCurvePoolBoosterBribesModule = await ethers.getContract(moduleName);
 
