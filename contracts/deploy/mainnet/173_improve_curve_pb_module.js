@@ -29,7 +29,7 @@ module.exports = deploymentWithGovernanceProposal(
         1000000, // Additional gas limit for cross-chain execution
       ],
       "CurvePoolBoosterBribesModule",
-      skipUpgradeSafety = true
+      true
     );
     const cCurvePoolBoosterBribesModule = await ethers.getContract(moduleName);
 
