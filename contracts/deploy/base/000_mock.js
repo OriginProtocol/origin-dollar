@@ -6,6 +6,8 @@ const addresses = require("../../utils/addresses");
 const deployMocks = async () => {
   await deployWithConfirmation("MockWETH", []);
   await deployWithConfirmation("MockAero", []);
+
+  await deployWithConfirmation("MockStrategy", []);
 };
 
 const deployWOETH = async () => {
@@ -22,11 +24,11 @@ const deployWOETH = async () => {
   // Initialize the proxy
   // prettier-ignore
   await cWOETHProxy["initialize(address,address,bytes)"](
-      cWOETHImpl.address,
-      governorAddr,
-      "0x",
-      await getTxOpts()
-    );
+    cWOETHImpl.address,
+    governorAddr,
+    "0x",
+    await getTxOpts()
+  );
 
   // Initialize implementation
   const cWOETH = await ethers.getContractAt(
@@ -83,11 +85,7 @@ const deployCore = async () => {
   const dwOETHb = await deployWithConfirmation("WOETHBase", [
     cOETHbProxy.address, // Base token
   ]);
-  const dOETHbVault = await deployWithConfirmation("OETHVault");
-  const dOETHbVaultCore = await deployWithConfirmation("OETHBaseVaultCore", [
-    cWETH.address,
-  ]);
-  const dOETHbVaultAdmin = await deployWithConfirmation("OETHBaseVaultAdmin", [
+  const dOETHbVaultAdmin = await deployWithConfirmation("OETHBaseVault", [
     cWETH.address,
   ]);
 
@@ -98,7 +96,6 @@ const deployCore = async () => {
     "IVault",
     cOETHbVaultProxy.address
   );
-  const cOracleRouter = await ethers.getContract("MockOracleRouter");
 
   // Init OETHb
   const resolution = ethers.utils.parseUnits("1", 27);
@@ -119,16 +116,15 @@ const deployCore = async () => {
 
   // Init OETHbVault
   const initDataOETHbVault = cOETHbVault.interface.encodeFunctionData(
-    "initialize(address,address)",
+    "initialize(address)",
     [
-      cOracleRouter.address, // OracleRouter
       cOETHbProxy.address, // OETHb
     ]
   );
   // prettier-ignore
   await cOETHbVaultProxy
     .connect(sDeployer)["initialize(address,address,bytes)"](
-      dOETHbVault.address,
+      dOETHbVaultAdmin.address,
       governorAddr,
       initDataOETHbVault
     );
@@ -146,10 +142,8 @@ const deployCore = async () => {
       initDatawOETHb
     )
 
-  await cOETHbVaultProxy.connect(sGovernor).upgradeTo(dOETHbVaultCore.address);
-  await cOETHbVault.connect(sGovernor).setAdminImpl(dOETHbVaultAdmin.address);
+  await cOETHbVaultProxy.connect(sGovernor).upgradeTo(dOETHbVaultAdmin.address);
 
-  await cOETHbVault.connect(sGovernor).supportAsset(cWETH.address, 0);
   await cOETHbVault.connect(sGovernor).unpauseCapital();
 };
 
@@ -171,11 +165,13 @@ const deployBridgedWOETHStrategy = async () => {
   await deployWithConfirmation("BridgedWOETHStrategyProxy");
   const cStrategyProxy = await ethers.getContract("BridgedWOETHStrategyProxy");
 
+  const cOracleRouter = await ethers.getContract("MockOracleRouter");
   const dStrategyImpl = await deployWithConfirmation("BridgedWOETHStrategy", [
     [addresses.zero, cOETHbVaultProxy.address],
     cWETH.address,
     cWOETHProxy.address,
     cOETHbProxy.address,
+    cOracleRouter.address,
   ]);
   const cStrategy = await ethers.getContractAt(
     "BridgedWOETHStrategy",

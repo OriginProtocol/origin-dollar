@@ -1,4 +1,6 @@
 const hre = require("hardhat");
+const fs = require("fs");
+const path = require("path");
 const { setStorageAt } = require("@nomicfoundation/hardhat-network-helpers");
 const { getNetworkName } = require("../utils/hardhat-helpers");
 const { parseUnits } = require("ethers/lib/utils.js");
@@ -13,17 +15,26 @@ const {
   isSonicOrFork,
   isTest,
   isFork,
+  isForkTest,
+  isCI,
   isPlume,
   isHoodi,
   isHoodiOrFork,
 } = require("../test/helpers.js");
-const { deployWithConfirmation, withConfirmation } = require("../utils/deploy");
+const {
+  deployWithConfirmation,
+  verifyContractOnEtherscan,
+  withConfirmation,
+  encodeSaltForCreateX,
+} = require("../utils/deploy");
 const { metapoolLPCRVPid } = require("../utils/constants");
 const { replaceContractAt } = require("../utils/hardhat");
 const { resolveContract } = require("../utils/resolvers");
 const { impersonateAccount, getSigner } = require("../utils/signers");
 const { getDefenderSigner } = require("../utils/signersNoHardhat");
 const { getTxOpts } = require("../utils/tx");
+const createxAbi = require("../abi/createx.json");
+
 const {
   beaconChainGenesisTimeHoodi,
   beaconChainGenesisTimeMainnet,
@@ -283,7 +294,6 @@ const deployConvexOUSDMetaStrategy = async () => {
  * Configure Vault by adding supported assets and Strategies.
  */
 const configureVault = async () => {
-  const assetAddresses = await getAssetAddresses(deployments);
   const { governorAddr, strategistAddr } = await getNamedAccounts();
   // Signers
   const sGovernor = await ethers.provider.getSigner(governorAddr);
@@ -294,19 +304,6 @@ const configureVault = async () => {
       await ethers.getContract("VaultProxy")
     ).address
   );
-  // Set up supported assets for Vault
-  await withConfirmation(
-    cVault.connect(sGovernor).supportAsset(assetAddresses.USDS, 0)
-  );
-  log("Added USDS asset to Vault");
-  await withConfirmation(
-    cVault.connect(sGovernor).supportAsset(assetAddresses.USDT, 0)
-  );
-  log("Added USDT asset to Vault");
-  await withConfirmation(
-    cVault.connect(sGovernor).supportAsset(assetAddresses.USDC, 0)
-  );
-  log("Added USDC asset to Vault");
   // Unpause deposits
   await withConfirmation(cVault.connect(sGovernor).unpauseCapital());
   log("Unpaused deposits on Vault");
@@ -314,13 +311,17 @@ const configureVault = async () => {
   await withConfirmation(
     cVault.connect(sGovernor).setStrategistAddr(strategistAddr)
   );
+
+  // Set withdrawal claim delay to 10m
+  await withConfirmation(
+    cVault.connect(sGovernor).setWithdrawalClaimDelay(10 * 60)
+  );
 };
 
 /**
  * Configure OETH Vault by adding supported assets and Strategies.
  */
-const configureOETHVault = async (isSimpleOETH) => {
-  const assetAddresses = await getAssetAddresses(deployments);
+const configureOETHVault = async () => {
   let { governorAddr, deployerAddr, strategistAddr } = await getNamedAccounts();
   // Signers
   let sGovernor = await ethers.provider.getSigner(governorAddr);
@@ -338,14 +339,6 @@ const configureOETHVault = async (isSimpleOETH) => {
     sGovernor = sDeployer;
   }
 
-  // Set up supported assets for Vault
-  const { WETH, RETH, stETH, frxETH } = assetAddresses;
-  const assets = isSimpleOETH ? [WETH] : [WETH, RETH, stETH, frxETH];
-  for (const asset of assets) {
-    await withConfirmation(cVault.connect(sGovernor).supportAsset(asset, 0));
-  }
-  log("Added assets to OETH Vault");
-
   // Unpause deposits
   await withConfirmation(cVault.connect(sGovernor).unpauseCapital());
   log("Unpaused deposits on OETH Vault");
@@ -353,12 +346,6 @@ const configureOETHVault = async (isSimpleOETH) => {
   await withConfirmation(
     cVault.connect(sGovernor).setStrategistAddr(strategistAddr)
   );
-
-  // Cache WETH asset address
-  await withConfirmation(cVault.connect(sGovernor).cacheWETHAssetIndex());
-
-  // Redeem fee to 0
-  await withConfirmation(cVault.connect(sGovernor).setRedeemFeeBps(0));
 
   // Allocate threshold
   await withConfirmation(
@@ -508,29 +495,47 @@ const configureStrategies = async (harvesterProxy, oethHarvesterProxy) => {
   // Signers
   const sGovernor = await ethers.provider.getSigner(governorAddr);
 
-  const compoundProxy = await ethers.getContract("CompoundStrategyProxy");
-  const compound = await ethers.getContractAt(
-    "CompoundStrategy",
-    compoundProxy.address
-  );
-  await withConfirmation(
-    compound.connect(sGovernor).setHarvesterAddress(harvesterProxy.address)
-  );
+  // Configure Compound Strategy if deployed
+  const compoundDeployment = await hre.deployments
+    .get("CompoundStrategyProxy")
+    .catch(() => null);
+  if (compoundDeployment) {
+    const compound = await ethers.getContractAt(
+      "CompoundStrategy",
+      compoundDeployment.address
+    );
+    await withConfirmation(
+      compound.connect(sGovernor).setHarvesterAddress(harvesterProxy.address)
+    );
+  }
 
-  const aaveProxy = await ethers.getContract("AaveStrategyProxy");
-  const aave = await ethers.getContractAt("AaveStrategy", aaveProxy.address);
-  await withConfirmation(
-    aave.connect(sGovernor).setHarvesterAddress(harvesterProxy.address)
-  );
+  // Configure Aave Strategy if deployed
+  const aaveDeployment = await hre.deployments
+    .get("AaveStrategyProxy")
+    .catch(() => null);
+  if (aaveDeployment) {
+    const aave = await ethers.getContractAt(
+      "AaveStrategy",
+      aaveDeployment.address
+    );
+    await withConfirmation(
+      aave.connect(sGovernor).setHarvesterAddress(harvesterProxy.address)
+    );
+  }
 
-  const convexProxy = await ethers.getContract("ConvexStrategyProxy");
-  const convex = await ethers.getContractAt(
-    "ConvexStrategy",
-    convexProxy.address
-  );
-  await withConfirmation(
-    convex.connect(sGovernor).setHarvesterAddress(harvesterProxy.address)
-  );
+  // Configure Convex Strategy if deployed
+  const convexDeployment = await hre.deployments
+    .get("ConvexStrategyProxy")
+    .catch(() => null);
+  if (convexDeployment) {
+    const convex = await ethers.getContractAt(
+      "ConvexStrategy",
+      convexDeployment.address
+    );
+    await withConfirmation(
+      convex.connect(sGovernor).setHarvesterAddress(harvesterProxy.address)
+    );
+  }
 
   const nativeStakingSSVStrategyProxy = await ethers.getContract(
     "NativeStakingSSVStrategyProxy"
@@ -1080,11 +1085,7 @@ const deployOETHCore = async () => {
 
   // Main contracts
   const dOETH = await deployWithConfirmation("OETH");
-  const dOETHVault = await deployWithConfirmation("OETHVault");
-  const dOETHVaultCore = await deployWithConfirmation("OETHVaultCore", [
-    assetAddresses.WETH,
-  ]);
-  const dOETHVaultAdmin = await deployWithConfirmation("OETHVaultAdmin", [
+  const dOETHVault = await deployWithConfirmation("OETHVault", [
     assetAddresses.WETH,
   ]);
 
@@ -1092,10 +1093,6 @@ const deployOETHCore = async () => {
   const cOETHProxy = await ethers.getContract("OETHProxy");
   const cOETHVaultProxy = await ethers.getContract("OETHVaultProxy");
   const cOETH = await ethers.getContractAt("OETH", cOETHProxy.address);
-
-  const oracleRouterContractName =
-    isMainnet || isHoodiOrFork ? "OETHOracleRouter" : "OracleRouter";
-  const cOETHOracleRouter = await ethers.getContract(oracleRouterContractName);
   const cOETHVault = await ethers.getContractAt(
     "IVault",
     cOETHVaultProxy.address
@@ -1125,24 +1122,15 @@ const deployOETHCore = async () => {
   await withConfirmation(
     cOETHVault
       .connect(sGovernor)
-      .initialize(
-        cOETHOracleRouter.address,
-        cOETHProxy.address,
-        await getTxOpts()
-      )
+      .initialize(cOETHProxy.address, await getTxOpts())
   );
   log("Initialized OETHVault");
 
   await withConfirmation(
-    cOETHVaultProxy.connect(sGovernor).upgradeTo(dOETHVaultCore.address)
+    cOETHVaultProxy.connect(sGovernor).upgradeTo(dOETHVault.address)
   );
   log("Upgraded VaultCore implementation");
 
-  await withConfirmation(
-    cOETHVault.connect(sGovernor).setAdminImpl(dOETHVaultAdmin.address)
-  );
-
-  log("Initialized VaultAdmin implementation");
   // Initialize OETH
   /* Set the original resolution to 27 decimals. We used to have it set to 18
    * decimals at launch and then migrated to 27. Having it set to 27 it will
@@ -1167,16 +1155,19 @@ const deployOETHCore = async () => {
 };
 
 const deployOUSDCore = async () => {
-  const { governorAddr } = await hre.getNamedAccounts();
+  const { governorAddr, deployerAddr } = await hre.getNamedAccounts();
+
   const assetAddresses = await getAssetAddresses(deployments);
   log(`Using asset addresses: ${JSON.stringify(assetAddresses, null, 2)}`);
 
   // Signers
   const sGovernor = await ethers.provider.getSigner(governorAddr);
+  const sDeployer = await ethers.provider.getSigner(deployerAddr);
 
   // Proxies
   await deployWithConfirmation("OUSDProxy");
   await deployWithConfirmation("VaultProxy");
+  log("Deployed OUSD Token and OUSD Vault proxies");
 
   // Main contracts
   let dOUSD;
@@ -1185,17 +1176,20 @@ const deployOUSDCore = async () => {
   } else {
     dOUSD = await deployWithConfirmation("OUSD");
   }
-  const dVault = await deployWithConfirmation("Vault");
-  const dVaultCore = await deployWithConfirmation("VaultCore");
-  const dVaultAdmin = await deployWithConfirmation("VaultAdmin");
+
+  // Deploy Vault implementations
+  const dVaultAdmin = await deployWithConfirmation("OUSDVault", [
+    assetAddresses.USDC,
+  ]);
+  log("Deployed OUSD Vault implementations (Core, Admin)");
 
   // Get contract instances
   const cOUSDProxy = await ethers.getContract("OUSDProxy");
   const cVaultProxy = await ethers.getContract("VaultProxy");
   const cOUSD = await ethers.getContractAt("OUSD", cOUSDProxy.address);
-  const cOracleRouter = await ethers.getContract("OracleRouter");
   const cVault = await ethers.getContractAt("IVault", cVaultProxy.address);
 
+  // Initialize OUSD Token Proxy
   await withConfirmation(
     cOUSDProxy["initialize(address,address,bytes)"](
       dOUSD.address,
@@ -1203,34 +1197,25 @@ const deployOUSDCore = async () => {
       []
     )
   );
-  log("Initialized OUSDProxy");
+  log("Initialized OUSD Token Proxy");
 
-  // Need to call the initializer on the Vault then upgraded it to the actual
-  // VaultCore implementation
+  // Initialize OUSD Vault Proxy with Vault Core implementation
+  // prettier-ignore
   await withConfirmation(
-    cVaultProxy["initialize(address,address,bytes)"](
-      dVault.address,
+    cVaultProxy.connect(sDeployer)["initialize(address,address,bytes)"](
+      dVaultAdmin.address,
       governorAddr,
-      []
+      [],
+      await getTxOpts()
     )
   );
+  log("Initialized OUSD Vault Proxy");
 
+  // Initialize OUSD Vault Core
   await withConfirmation(
-    cVault
-      .connect(sGovernor)
-      .initialize(cOracleRouter.address, cOUSDProxy.address)
+    cVault.connect(sGovernor).initialize(cOUSDProxy.address)
   );
-  log("Initialized Vault");
-
-  await withConfirmation(
-    cVaultProxy.connect(sGovernor).upgradeTo(dVaultCore.address)
-  );
-  log("Upgraded VaultCore implementation");
-
-  await withConfirmation(
-    cVault.connect(sGovernor).setAdminImpl(dVaultAdmin.address)
-  );
-  log("Initialized VaultAdmin implementation");
+  log("Initialized OUSD Vault Core");
 
   // Initialize OUSD
   /* Set the original resolution to 27 decimals. We used to have it set to 18
@@ -1252,7 +1237,7 @@ const deployOUSDCore = async () => {
   await withConfirmation(
     cOUSD.connect(sGovernor).initialize(cVaultProxy.address, resolution)
   );
-  log("Initialized OUSD");
+  log("Initialized OUSD Token");
 
   await withConfirmation(
     cVault
@@ -1486,16 +1471,10 @@ const deployWOeth = async () => {
 };
 
 const deployOETHSwapper = async () => {
-  const { deployerAddr, governorAddr } = await getNamedAccounts();
+  const { deployerAddr } = await getNamedAccounts();
   const sDeployer = await ethers.provider.getSigner(deployerAddr);
-  const sGovernor = await ethers.provider.getSigner(governorAddr);
 
   const assetAddresses = await getAssetAddresses(deployments);
-
-  const vaultProxy = await ethers.getContract("OETHVaultProxy");
-  const vault = await ethers.getContractAt("IVault", vaultProxy.address);
-
-  const mockSwapper = await ethers.getContract("MockSwapper");
 
   await deployWithConfirmation("Swapper1InchV5");
   const cSwapper = await ethers.getContract("Swapper1InchV5");
@@ -1508,27 +1487,13 @@ const deployOETHSwapper = async () => {
       assetAddresses.WETH,
       assetAddresses.frxETH,
     ]);
-
-  await vault.connect(sGovernor).setSwapper(mockSwapper.address);
-  await vault.connect(sGovernor).setSwapAllowedUndervalue(100);
-
-  await vault.connect(sGovernor).setOracleSlippage(assetAddresses.RETH, 200);
-  await vault.connect(sGovernor).setOracleSlippage(assetAddresses.stETH, 70);
-  await vault.connect(sGovernor).setOracleSlippage(assetAddresses.WETH, 20);
-  await vault.connect(sGovernor).setOracleSlippage(assetAddresses.frxETH, 20);
 };
 
 const deployOUSDSwapper = async () => {
-  const { deployerAddr, governorAddr } = await getNamedAccounts();
+  const { deployerAddr } = await getNamedAccounts();
   const sDeployer = await ethers.provider.getSigner(deployerAddr);
-  const sGovernor = await ethers.provider.getSigner(governorAddr);
 
   const assetAddresses = await getAssetAddresses(deployments);
-
-  const vaultProxy = await ethers.getContract("VaultProxy");
-  const vault = await ethers.getContractAt("IVault", vaultProxy.address);
-
-  const mockSwapper = await ethers.getContract("MockSwapper");
   // Assumes deployOETHSwapper has already been run
   const cSwapper = await ethers.getContract("Swapper1InchV5");
 
@@ -1539,13 +1504,6 @@ const deployOUSDSwapper = async () => {
       assetAddresses.USDC,
       assetAddresses.USDT,
     ]);
-
-  await vault.connect(sGovernor).setSwapper(mockSwapper.address);
-  await vault.connect(sGovernor).setSwapAllowedUndervalue(100);
-
-  await vault.connect(sGovernor).setOracleSlippage(assetAddresses.USDS, 50);
-  await vault.connect(sGovernor).setOracleSlippage(assetAddresses.USDC, 50);
-  await vault.connect(sGovernor).setOracleSlippage(assetAddresses.USDT, 50);
 };
 
 const deployBaseAerodromeAMOStrategyImplementation = async () => {
@@ -1682,6 +1640,328 @@ const deploySonicSwapXAMOStrategyImplementation = async () => {
   return cSonicSwapXAMOStrategy;
 };
 
+const getCreate2ProxiesFilePath = async () => {
+  const networkName =
+    isFork || isForkTest || isCI ? "localhost" : await getNetworkName();
+  return path.resolve(
+    __dirname,
+    `./../deployments/${networkName}/create2Proxies.json`
+  );
+};
+
+const storeCreate2ProxyAddress = async (proxyName, proxyAddress) => {
+  const filePath = await getCreate2ProxiesFilePath();
+
+  // Ensure the directory exists before writing the file
+  const dirPath = path.dirname(filePath);
+  if (!fs.existsSync(dirPath)) {
+    fs.mkdirSync(dirPath, { recursive: true });
+  }
+
+  let existingContents = {};
+  if (fs.existsSync(filePath)) {
+    existingContents = JSON.parse(fs.readFileSync(filePath, "utf8"));
+  }
+
+  await new Promise((resolve, reject) => {
+    fs.writeFile(
+      filePath,
+      JSON.stringify(
+        {
+          ...existingContents,
+          [proxyName]: proxyAddress,
+        },
+        undefined,
+        2
+      ),
+      (err) => {
+        if (err) {
+          console.log("Err:", err);
+          reject(err);
+          return;
+        }
+        console.log(
+          `Stored create2 proxy address for ${proxyName} at ${filePath}`
+        );
+        resolve();
+      }
+    );
+  });
+};
+
+const getCreate2ProxyAddress = async (proxyName) => {
+  const filePath = await getCreate2ProxiesFilePath();
+  if (!fs.existsSync(filePath)) {
+    throw new Error(`Create2 proxies file not found at ${filePath}`);
+  }
+  const contents = JSON.parse(fs.readFileSync(filePath, "utf8"));
+  if (!contents[proxyName]) {
+    throw new Error(`Proxy ${proxyName} not found in ${filePath}`);
+  }
+  return contents[proxyName];
+};
+
+// deploys an instance of InitializeGovernedUpgradeabilityProxy where address is defined by salt
+const deployProxyWithCreateX = async (
+  salt,
+  proxyName,
+  verifyContract = false,
+  contractPath = null
+) => {
+  const { deployerAddr } = await getNamedAccounts();
+
+  const sDeployer = await ethers.provider.getSigner(deployerAddr);
+
+  // Basically hex of "originprotocol" padded to 20 bytes to mimic an address
+  const addrForSalt = "0x0000000000006f726967696e70726f746f636f6c";
+  // NOTE: We always use fixed address to compute the salt for the proxy.
+  // It makes the address predictable, easier to verify and easier to use
+  // with CI and local fork testing.
+  log(
+    `Deploying ${proxyName} with salt: ${salt} and fixed address: ${addrForSalt}`
+  );
+
+  const cCreateX = await ethers.getContractAt(createxAbi, addresses.createX);
+  const factoryEncodedSalt = encodeSaltForCreateX(addrForSalt, false, salt);
+
+  const getFactoryBytecode = async () => {
+    // No deployment needed—get factory directly from artifacts
+    const ProxyContract = await ethers.getContractFactory(proxyName);
+    const encodedArgs = ProxyContract.interface.encodeDeploy([deployerAddr]);
+    return ethers.utils.hexConcat([ProxyContract.bytecode, encodedArgs]);
+  };
+
+  const txResponse = await withConfirmation(
+    cCreateX
+      .connect(sDeployer)
+      .deployCreate2(factoryEncodedSalt, await getFactoryBytecode())
+  );
+
+  // // // Create3ProxyContractCreation
+  // const create3ContractCreationTopic =
+  //   "0x2feea65dd4e9f9cbd86b74b7734210c59a1b2981b5b137bd0ee3e208200c9067";
+  const contractCreationTopic =
+    "0xb8fda7e00c6b06a2b54e58521bc5894fee35f1090e5a3bb6390bfe2b98b497f7";
+
+  // const topicToUse = isCreate3 ? create3ContractCreationTopic : contractCreationTopic;
+  const txReceipt = await txResponse.wait();
+  const proxyAddress = ethers.utils.getAddress(
+    `0x${txReceipt.events
+      .find((event) => event.topics[0] === contractCreationTopic)
+      .topics[1].slice(26)}`
+  );
+
+  log(`Deployed ${proxyName} at ${proxyAddress}`);
+
+  await storeCreate2ProxyAddress(proxyName, proxyAddress);
+
+  // Verify contract on Etherscan if requested and on a live network
+  // Can be enabled via parameter or VERIFY_CONTRACTS environment variable
+  const shouldVerify =
+    verifyContract || process.env.VERIFY_CONTRACTS === "true";
+  if (shouldVerify && !isTest && !isFork && proxyAddress) {
+    // Constructor args for the proxy are [deployerAddr]
+    const constructorArgs = [deployerAddr];
+    await verifyContractOnEtherscan(
+      proxyName,
+      proxyAddress,
+      constructorArgs,
+      proxyName,
+      contractPath
+    );
+  }
+
+  return proxyAddress;
+};
+
+// deploys and initializes the CrossChain master strategy
+const deployCrossChainMasterStrategyImpl = async (
+  proxyAddress,
+  targetDomainId,
+  remoteStrategyAddress,
+  baseToken,
+  peerBaseToken,
+  vaultAddress,
+  implementationName = "CrossChainMasterStrategy",
+  skipInitialize = false,
+  tokenMessengerAddress = addresses.CCTPTokenMessengerV2,
+  messageTransmitterAddress = addresses.CCTPMessageTransmitterV2,
+  governor = addresses.mainnet.Timelock
+) => {
+  const { deployerAddr, multichainStrategistAddr } = await getNamedAccounts();
+  const sDeployer = await ethers.provider.getSigner(deployerAddr);
+  log(`Deploying CrossChainMasterStrategyImpl as deployer ${deployerAddr}`);
+
+  const cCrossChainStrategyProxy = await ethers.getContractAt(
+    "CrossChainStrategyProxy",
+    proxyAddress
+  );
+
+  await deployWithConfirmation(implementationName, [
+    [
+      addresses.zero, // platform address
+      vaultAddress, // vault address
+    ],
+    [
+      tokenMessengerAddress,
+      messageTransmitterAddress,
+      targetDomainId,
+      remoteStrategyAddress,
+      baseToken,
+      peerBaseToken,
+    ],
+  ]);
+  const dCrossChainMasterStrategy = await ethers.getContract(
+    implementationName
+  );
+
+  if (!skipInitialize) {
+    const initData = dCrossChainMasterStrategy.interface.encodeFunctionData(
+      "initialize(address,uint16,uint16)",
+      [multichainStrategistAddr, 2000, 0]
+    );
+
+    // Init the proxy to point at the implementation, set the governor, and call initialize
+    const initFunction = "initialize(address,address,bytes)";
+    await withConfirmation(
+      cCrossChainStrategyProxy.connect(sDeployer)[initFunction](
+        dCrossChainMasterStrategy.address,
+        governor, // governor
+        initData, // data for delegate call to the initialize function on the strategy
+        await getTxOpts()
+      )
+    );
+  }
+
+  return dCrossChainMasterStrategy.address;
+};
+
+// deploys and initializes the CrossChain remote strategy
+const deployCrossChainRemoteStrategyImpl = async (
+  platformAddress, // underlying 4626 vault address
+  proxyAddress,
+  targetDomainId,
+  remoteStrategyAddress,
+  baseToken,
+  peerBaseToken,
+  implementationName = "CrossChainRemoteStrategy",
+  tokenMessengerAddress = addresses.CCTPTokenMessengerV2,
+  messageTransmitterAddress = addresses.CCTPMessageTransmitterV2,
+  governor = addresses.base.timelock,
+  initialize = true
+) => {
+  const { deployerAddr, multichainStrategistAddr } = await getNamedAccounts();
+  const sDeployer = await ethers.provider.getSigner(deployerAddr);
+  log(`Deploying CrossChainRemoteStrategyImpl as deployer ${deployerAddr}`);
+
+  const cCrossChainStrategyProxy = await ethers.getContractAt(
+    "CrossChainStrategyProxy",
+    proxyAddress
+  );
+
+  await deployWithConfirmation(implementationName, [
+    [
+      platformAddress,
+      addresses.zero, // There is no vault on the remote strategy
+    ],
+    [
+      tokenMessengerAddress,
+      messageTransmitterAddress,
+      targetDomainId,
+      remoteStrategyAddress,
+      baseToken,
+      peerBaseToken,
+    ],
+  ]);
+  const dCrossChainRemoteStrategy = await ethers.getContract(
+    implementationName
+  );
+
+  if (initialize) {
+    const initData = dCrossChainRemoteStrategy.interface.encodeFunctionData(
+      "initialize(address,address,uint16,uint16)",
+      [multichainStrategistAddr, multichainStrategistAddr, 2000, 0]
+    );
+
+    // Init the proxy to point at the implementation, set the governor, and call initialize
+    const initFunction = "initialize(address,address,bytes)";
+    await withConfirmation(
+      cCrossChainStrategyProxy.connect(sDeployer)[initFunction](
+        dCrossChainRemoteStrategy.address,
+        governor, // governor
+        //initData, // data for delegate call to the initialize function on the strategy
+        initData,
+        await getTxOpts()
+      )
+    );
+  }
+
+  return dCrossChainRemoteStrategy.address;
+};
+
+// deploy the corss chain Master / Remote strategy pair for unit testing
+const deployCrossChainUnitTestStrategy = async (usdcAddress) => {
+  const { deployerAddr, governorAddr } = await getNamedAccounts();
+  // const sDeployer = await ethers.provider.getSigner(deployerAddr);
+  const sGovernor = await ethers.provider.getSigner(governorAddr);
+  const dMasterProxy = await deployWithConfirmation(
+    "CrossChainMasterStrategyProxy",
+    [deployerAddr],
+    "CrossChainStrategyProxy"
+  );
+  const dRemoteProxy = await deployWithConfirmation(
+    "CrossChainRemoteStrategyProxy",
+    [deployerAddr],
+    "CrossChainStrategyProxy"
+  );
+
+  const cVaultProxy = await ethers.getContract("VaultProxy");
+  const messageTransmitter = await ethers.getContract(
+    "CCTPMessageTransmitterMock"
+  );
+  const tokenMessenger = await ethers.getContract("CCTPTokenMessengerMock");
+  const c4626Vault = await ethers.getContract("MockERC4626Vault");
+
+  await deployCrossChainMasterStrategyImpl(
+    dMasterProxy.address,
+    6, // Base domain id
+    // unit tests differ from mainnet where remote strategy has a different address
+    dRemoteProxy.address,
+    usdcAddress,
+    usdcAddress, // Assume both are same on unit tests
+    cVaultProxy.address,
+    "CrossChainMasterStrategy",
+    false,
+    tokenMessenger.address,
+    messageTransmitter.address,
+    governorAddr
+  );
+
+  await deployCrossChainRemoteStrategyImpl(
+    c4626Vault.address,
+    dRemoteProxy.address,
+    0, // Ethereum domain id
+    dMasterProxy.address,
+    usdcAddress,
+    usdcAddress, // Assume both are same on unit tests
+    "CrossChainRemoteStrategy",
+    tokenMessenger.address,
+    messageTransmitter.address,
+    governorAddr
+  );
+
+  const cCrossChainRemoteStrategy = await ethers.getContractAt(
+    "CrossChainRemoteStrategy",
+    dRemoteProxy.address
+  );
+  await withConfirmation(
+    cCrossChainRemoteStrategy.connect(sGovernor).safeApproveAllTokens()
+  );
+  // await withConfirmation(
+  //   messageTransmitter.connect(sDeployer).setCCTPTokenMessenger(tokenMessenger.address)
+  // );
+};
+
 module.exports = {
   deployOracles,
   deployCore,
@@ -1719,4 +1999,10 @@ module.exports = {
   deployPlumeMockRoosterAMOStrategyImplementation,
   getPlumeContracts,
   deploySonicSwapXAMOStrategyImplementation,
+  deployProxyWithCreateX,
+  deployCrossChainMasterStrategyImpl,
+  deployCrossChainRemoteStrategyImpl,
+  deployCrossChainUnitTestStrategy,
+
+  getCreate2ProxyAddress,
 };

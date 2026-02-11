@@ -7,5 +7,6 @@
   "006_enable_buyback_operator": 1749060781,
   "007_bridge_helper_module": 1750259976,
   "009_vault_upgrade": 1752595639,
-  "010_disable_mints": 1761720125
+  "010_disable_mints": 1761720125,
+  "011_reduce_withdrawal_time": 1769523223
 }
