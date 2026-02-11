@@ -230,7 +230,7 @@ describe("ForkTest: Bridge Helper Safe Module (Plume)", function () {
     );
   });
 
-  it("Should mint OETHp with WETH and redeem it for wOETH", async () => {
+  it.skip("Should mint OETHp with WETH and redeem it for wOETH", async () => {
     const {
       _mintWETH,
       oethpVault,

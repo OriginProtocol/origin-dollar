@@ -10,6 +10,11 @@ addresses.multichainBuybackOperator =
   "0xBB077E716A5f1F1B63ed5244eBFf5214E50fec8c";
 addresses.votemarket = "0x8c2c5A295450DDFf4CB360cA73FCCC12243D14D9";
 
+// CCTP contracts (uses same addresses on all chains)
+addresses.CCTPTokenMessengerV2 = "0x28b5a0e9C621a5BadaA536219b3a228C8168cf5d";
+addresses.CCTPMessageTransmitterV2 =
+  "0x81D40F21F12A8F0E3252Bccb954D722d4c464B64";
+
 addresses.mainnet = {};
 addresses.base = {};
 addresses.sonic = {};
@@ -207,6 +212,14 @@ addresses.mainnet.MorphoGauntletPrimeUSDCVault =
   "0xdd0f28e19C1780eb6396170735D45153D261490d";
 addresses.mainnet.MorphoGauntletPrimeUSDTVault =
   "0x8CB3649114051cA5119141a34C200D65dc0Faa73";
+addresses.mainnet.MorphoOUSDv2StrategyProxy =
+  "0x3643cafA6eF3dd7Fcc2ADaD1cabf708075AFFf6e";
+addresses.mainnet.MorphoOUSDv1Vault =
+  "0x5B8b9FA8e4145eE06025F642cAdB1B47e5F39F04";
+addresses.mainnet.MorphoOUSDv2Adaptor =
+  "0xD8F093dCE8504F10Ac798A978eF9E0C230B2f5fF";
+addresses.mainnet.MorphoOUSDv2Vault =
+  "0xFB154c729A16802c4ad1E8f7FF539a8b9f49c960";
 
 addresses.mainnet.UniswapOracle = "0xc15169Bad17e676b3BaDb699DEe327423cE6178e";
 addresses.mainnet.CompensationClaims =
@@ -305,6 +318,17 @@ addresses.mainnet.curve.OETH_WETH.pool =
   "0xcc7d5785AD5755B6164e21495E07aDb0Ff11C2A8";
 addresses.mainnet.curve.OETH_WETH.gauge =
   "0x36cC1d791704445A5b6b9c36a667e511d4702F3f";
+
+// Curve governance
+addresses.mainnet.veCRV = "0x5f3b5DfEb7B28CDbD7FAba78963EE202a494e2A2";
+addresses.mainnet.CurveGaugeController =
+  "0x2F50D538606Fa9EDD2B11E2446BEb18C9D5846bB";
+
+// Curve Pool Booster
+addresses.mainnet.CurvePoolBoosterOETH =
+  "0x7B5e7aDEBC2da89912BffE55c86675CeCE59803E";
+addresses.mainnet.CurvePoolBoosterBribesModule =
+  "0xfA01FE78bBD1ade8064C34FE537BA2E2670B2198";
 
 // SSV network
 addresses.mainnet.SSV = "0x9D65fF81a3c488d585bBfb0Bfe3c7707c7917f54";
@@ -443,6 +467,10 @@ addresses.base.childLiquidityGaugeFactory =
 addresses.base.CCIPRouter = "0x881e3A65B4d4a04dD529061dd0071cf975F58bCD";
 
 addresses.base.MerklDistributor = "0x8BB4C975Ff3c250e0ceEA271728547f3802B36Fd";
+
+addresses.base.USDC = "0x833589fcd6edb6e08f4c7c32d4f71b54bda02913";
+
+addresses.base.MorphoOusdV2Vault = "0x2Ba14b2e1E7D2189D3550b708DFCA01f899f33c1";
 
 // Sonic
 addresses.sonic.wS = "0x039e2fB66102314Ce7b64Ce5Ce3E5183bc94aD38";
@@ -677,4 +705,12 @@ addresses.hoodi.beaconChainDepositContract =
 addresses.hoodi.defenderRelayer = "0x419B6BdAE482f41b8B194515749F3A2Da26d583b";
 addresses.hoodi.mockBeaconRoots = "0xdCfcAE4A084AA843eE446f400B23aA7B6340484b";
 
+// Crosschain Strategy
+// TODO delete: master - remote test address: 0x1743658b284a843b47f555343dbb628d46d0c254
+addresses.base.CrossChainRemoteStrategy = "TODO";
+addresses.mainnet.CrossChainMasterStrategy = "TODO";
+// CCTP Circle Contract addresses: https://developers.circle.com/cctp/references/contract-addresses
+addresses.CCTPTokenMessengerV2 = "0x28b5a0e9c621a5badaa536219b3a228c8168cf5d";
+addresses.CCTPMessageTransmitterV2 =
+  "0x81D40F21F12A8F0E3252Bccb954D722d4c464B64";
 module.exports = addresses;

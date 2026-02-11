@@ -8,6 +8,7 @@ const { storePrivateKeyToS3 } = require("./amazon");
 const { sleep } = require("./time");
 const { p2pApiEncodedKey } = require("./constants");
 const { mainnet } = require("./addresses");
+const { logTxDetails } = require("./txLogger");
 
 const log = require("./logger")("task:p2p");
 
@@ -566,6 +567,11 @@ const waitForTransactionAndUpdateStateOnSuccess = async (
       `Transaction with hash "${txHash}" not found for method "${methodName}" and uuid "${uuid}"`
     );
   }
+  if (tx.status !== 1) {
+    throw Error(
+      `Transaction with hash "${txHash}" failed for method "${methodName}" and uuid "${uuid}"`
+    );
+  }
   log(
     `Transaction with hash "${txHash}", method "${methodName}" and uuid "${uuid}" has been mined`
   );
@@ -709,6 +715,8 @@ const broadcastRegisterValidator = async (
         ssvAmount,
         cluster
       );
+
+    await logTxDetails(tx, "registerSsvValidators");
 
     log(
       `Transaction to register SSV Validator has been broadcast with hash: ${tx.hash}`

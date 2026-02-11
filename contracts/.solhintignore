@@ -1,2 +1,3 @@
 node_modules
 contracts/interfaces/morpho/Types.sol
+contracts/mocks/**/*.sol

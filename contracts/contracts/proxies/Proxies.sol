@@ -2,6 +2,7 @@
 pragma solidity ^0.8.0;
 
 import { InitializeGovernedUpgradeabilityProxy } from "./InitializeGovernedUpgradeabilityProxy.sol";
+import { InitializeGovernedUpgradeabilityProxy2 } from "./InitializeGovernedUpgradeabilityProxy2.sol";
 
 /**
  * @notice OUSDProxy delegates calls to an OUSD implementation
@@ -318,5 +319,12 @@ contract OETHCurveAMOProxy is InitializeGovernedUpgradeabilityProxy {
 contract CompoundingStakingSSVStrategyProxy is
     InitializeGovernedUpgradeabilityProxy
 {
+
+}
+
+/**
+ * @notice OUSDMorphoV2StrategyProxy delegates calls to a Generalized4626Strategy implementation
+ */
+contract OUSDMorphoV2StrategyProxy is InitializeGovernedUpgradeabilityProxy {
 
 }

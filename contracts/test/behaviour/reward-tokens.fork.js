@@ -77,6 +77,10 @@ const shouldHaveRewardTokensConfigured = (context) => {
 
         // If the strategy has tokens,
         if (rewardTokens.length) {
+          // Morpho strategy is harvested by the Buy Back Operator, skip it
+          if (strategy.address === addresses.mainnet.MorphoOUSDv2StrategyProxy)
+            continue;
+
           // It should be whitelisted on Harvester
           expect(await harvester.supportedStrategies(strategy.address)).to.be
             .true;

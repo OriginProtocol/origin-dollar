@@ -125,11 +125,10 @@ You can enable the "hot deploy" mode when doing fork testing development. The mo
 To enable Hot Deploys set the HOT_DEPLOY variable in the contracts/.env file. Enable various modes using comma separated flags to direct which contracts need source updated (in the node runtime):
 
 - strategy -> strategy contract associated to fixture
-- vaultCore -> vaultCore or oethVaultCore depending on the nature of the fixture
-- vaultAdmin -> vaultAdmin or oethVaultAdmin depending on the nature of the fixture
+- vault -> OUSDVault or OETHVault depending on the nature of the fixture
 - harvester -> harvester or oethHarvester (not yet supported)
 
-example: HOT_DEPLOY=strategy,vaultCore,vaultAdmin,harvester
+example: HOT_DEPLOY=strategy,vault,harvester
 
 #### Supporting new fixtures / contracts
 
@@ -322,37 +321,60 @@ DEFENDER_TEAM_SECRET=
 The following will bundle the Actions code ready for upload.
 
 ```
-cd ./scripts/defender-actions
+cd contracts
+pnpm rollup -c ./scripts/defender-actions/rollup.config.cjs
+```
 
-npx rollup -c
+If you get error like the below, you will need to install `@rollup/rollup-darwin-x64`
+
+```
+Error: Cannot find module @rollup/rollup-darwin-x64. npm has a bug related to optional dependencies (https://github.com/npm/cli/issues/4828). Please try `npm i` again after removing both package-lock.json and node_modules directory.
+```
+
+If you are on Apple Silicon (M1/M2/M3) and you node is emulated x64, then the following will return `x64` rather than `arm64`.
+
+```
+node -p "process.arch"
+```
+
+If x64, run the following to install the required rollup package.
+
+```
+pnpm add -D @rollup/rollup-darwin-x64
 ```
 
 The following will upload the different Action bundles to Defender.
 
 ```sh
-# change to the defender-actions folder
-cd ./scripts/defender-actions
-npx rollup -c
+cd contracts
+pnpm rollup -c ./scripts/defender-actions/rollup.config.cjs
 
 # Set the DEFENDER_TEAM_KEY and DEFENDER_TEAM_SECRET environment variables in the .env file
 
 # Set the DEBUG environment variable to oeth* for the Defender Action
-yarn hardhat setActionVars --id f4b5b8d4-82ff-483f-bfae-9fef015790ca
-yarn hardhat setActionVars --id e2929f53-db56-49b2-b054-35f7df7fc4fb
-yarn hardhat setActionVars --id 12c153c8-c5ca-420b-9696-e80c827996d1
-yarn hardhat setActionVars --id 6e4f764d-4126-45a5-b7d9-1ab90cd3ffd6
-yarn hardhat setActionVars --id 84988850-6816-4074-8e7b-c11cb2b32e7e
-yarn hardhat setActionVars --id f92ea662-fc34-433b-8beb-b34e9ab74685
-yarn hardhat setActionVars --id b1d831f1-29d4-4943-bb2e-8e625b76e82c
+pnpm hardhat setActionVars --id e2929f53-db56-49b2-b054-35f7df7fc4fb
+pnpm hardhat setActionVars --id 6e4f764d-4126-45a5-b7d9-1ab90cd3ffd6
+pnpm hardhat setActionVars --id 84988850-6816-4074-8e7b-c11cb2b32e7e
+pnpm hardhat setActionVars --id f92ea662-fc34-433b-8beb-b34e9ab74685
+pnpm hardhat setActionVars --id b1d831f1-29d4-4943-bb2e-8e625b76e82c
+pnpm hardhat setActionVars --id 6567d7c6-7ec7-44bd-b95b-470dd1ff780b
+pnpm hardhat setActionVars --id 6a633bb0-aff8-4b37-aaae-b4c6f244ed87
+pnpm hardhat setActionVars --id 076c59e4-4150-42c7-9ba0-9962069ac353
 
 # Mainnet
-yarn hardhat updateAction --id f4b5b8d4-82ff-483f-bfae-9fef015790ca --file registerValidators
-yarn hardhat updateAction --id 12c153c8-c5ca-420b-9696-e80c827996d1 --file stakeValidators
-yarn hardhat updateAction --id e2929f53-db56-49b2-b054-35f7df7fc4fb --file doAccounting
-yarn hardhat updateAction --id 6e4f764d-4126-45a5-b7d9-1ab90cd3ffd6 --file harvest
-yarn hardhat updateAction --id 84988850-6816-4074-8e7b-c11cb2b32e7e --file sonicRequestWithdrawal
-yarn hardhat updateAction --id f92ea662-fc34-433b-8beb-b34e9ab74685 --file sonicClaimWithdrawals
-yarn hardhat updateAction --id b1d831f1-29d4-4943-bb2e-8e625b76e82c --file claimBribes
+pnpm hardhat updateAction --id e2929f53-db56-49b2-b054-35f7df7fc4fb --file doAccounting
+pnpm hardhat updateAction --id 6e4f764d-4126-45a5-b7d9-1ab90cd3ffd6 --file harvest
+pnpm hardhat updateAction --id 84988850-6816-4074-8e7b-c11cb2b32e7e --file sonicRequestWithdrawal
+pnpm hardhat updateAction --id f92ea662-fc34-433b-8beb-b34e9ab74685 --file sonicClaimWithdrawals
+pnpm hardhat updateAction --id b1d831f1-29d4-4943-bb2e-8e625b76e82c --file claimBribes
+pnpm hardhat updateAction --id 6567d7c6-7ec7-44bd-b95b-470dd1ff780b --file manageBribeOnSonic
+pnpm hardhat updateAction --id 6a633bb0-aff8-4b37-aaae-b4c6f244ed87 --file managePassThrough
+pnpm hardhat updateAction --id 076c59e4-4150-42c7-9ba0-9962069ac353 --file manageBribes
+# These are Base -> Mainnet & Mainnet -> Base actions
+# they share the codebase. The direction of relaying attestations is defined by the
+# network of the relayer that is attached to the action
+pnpm hardhat updateAction --id bb43e5da-f936-4185-84da-253394583665 --file crossChainRelay
+pnpm hardhat updateAction --id e571409b-5399-48e4-bfb2-50b7af9903aa --file crossChainRelay
 ```
 
 `rollup` can be installed globally to avoid the `npx` prefix.
@@ -409,10 +431,22 @@ Validator public key: 90db8ae56a9e741775ca37dd960606541306974d4a998ef6a6227c85a9
 
 The Hardhat plug-in [@nomiclabs/hardhat-verify](https://www.npmjs.com/package/@nomiclabs/hardhat-etherscan) is used to verify contracts on Etherscan. Etherscan has migrated to V2 api where all the chains use the same endpoint. Hardhat verify should be run with `--contract` parameter otherwise there is a significant slowdown while hardhat is gathering contract information.
 
+### Auto-verification
+
+When deploying contracts, set `VERIFY_CONTRACTS=true` environment variable to verify contract immediately after deployment with no manual action.
+
+```
+VERIFY_CONTRACTS=true npx hardhat deploy:mainnet
+```
+
+If it reverts for any reason, it'll print out the command that you can use to run manually or debug.
+
+### Manual verification
+
 **IMPORTANT:**
 
 - Currently only yarn works. Do not use npx/pnpm
-- Also if you switch package manager do run "hardhat compile" first to mitigate potential bytecode missmatch errors
+- Also if you switch package manager do run "hardhat compile" first to mitigate potential bytecode mismatch errors
 
 There's an example
 

@@ -1,3 +1,4 @@
+const path = require("path");
 const resolve = require("@rollup/plugin-node-resolve");
 const commonjs = require("@rollup/plugin-commonjs");
 const json = require("@rollup/plugin-json");
@@ -31,86 +32,24 @@ const commonConfig = {
   ],
 };
 
-module.exports = [
-  {
-    ...commonConfig,
-    input: "doAccounting.js",
-    output: {
-      file: "dist/doAccounting/index.js",
-      inlineDynamicImports: true,
-      format: "cjs",
-    },
-  },
-  {
-    ...commonConfig,
-    input: "harvest.js",
-    output: {
-      file: "dist/harvest/index.js",
-      inlineDynamicImports: true,
-      format: "cjs",
-    },
-  },
-  {
-    ...commonConfig,
-    input: "stakeValidators.js",
-    output: {
-      file: "dist/stakeValidators/index.js",
-      inlineDynamicImports: true,
-      format: "cjs",
-    },
-  },
-  {
-    ...commonConfig,
-    input: "registerValidators.js",
-    output: {
-      file: "dist/registerValidators/index.js",
-      inlineDynamicImports: true,
-      format: "cjs",
-    },
-  },
-  {
-    ...commonConfig,
-    input: "manageBribeOnSonic.js",
-    output: {
-      file: "dist/manageBribeOnSonic/index.js",
-      inlineDynamicImports: true,
-      format: "cjs",
-    },
-  },
-  {
-    ...commonConfig,
-    input: "managePassThrough.js",
-    output: {
-      file: "dist/managePassThrough/index.js",
-      inlineDynamicImports: true,
-      format: "cjs",
-    },
-  },
-  {
-    ...commonConfig,
-    input: "sonicRequestWithdrawal.js",
-    output: {
-      file: "dist/sonicRequestWithdrawal/index.js",
-      inlineDynamicImports: true,
-      format: "cjs",
-    },
-  },
-  {
-    ...commonConfig,
-    input: "sonicClaimWithdrawals.js",
-    output: {
-      file: "dist/sonicClaimWithdrawals/index.js",
-      inlineDynamicImports: true,
-      format: "cjs",
-    },
-  },
-  {
-    ...commonConfig,
-    input: "claimBribes.js",
-    output: {
-      file: "dist/claimBribes/index.js",
-      inlineDynamicImports: true,
-      format: "cjs",
-    },
-  },
+const actions = [
+  "doAccounting",
+  "harvest",
+  "manageBribeOnSonic",
+  "managePassThrough",
+  "sonicRequestWithdrawal",
+  "sonicClaimWithdrawals",
+  "claimBribes",
+  "crossChainRelay",
+  "manageBribes"
 ];
+
+module.exports = actions.map((action) => ({
+  input: path.resolve(__dirname, `${action}.js`),
+  output: {
+    file: path.resolve(__dirname, `dist/${action}/index.js`),
+    inlineDynamicImports: true,
+    format: "cjs",
+  },
+  ...commonConfig,
+}));

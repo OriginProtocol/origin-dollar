@@ -2,10 +2,6 @@
 
 title "Origin USD Contract Dependencies"
 
-object "Dripper" as drip <<Origin>><<Proxy>> #DeepSkyBlue {
-    asset: USDT
-}
-
 object "VaultValueChecker" as checker <<Origin>> #DeepSkyBlue {
 }
 
@@ -21,37 +17,13 @@ object "OUSD" as ousd <<Origin>><<Proxy>> #DeepSkyBlue {
 }
 
 object "Vault" as vault <<Origin>><<Proxy>> #DeepSkyBlue {
-    assets: USDS, USDC, USDT  
-}
-
-object "Harvester" as harv <<Origin>><<Proxy>> #DeepSkyBlue {
-    rewards: CRV
-}
-
-object "Buyback" as buy <<Origin>><<Proxy>> #DeepSkyBlue {
-swap OUSD for OGV
+    assets: USDC 
 }
 
 ' Strategies
-' object "ConvexStrategy" as cvxStrat <<Origin>><<Proxy>> #DeepSkyBlue {
-'     asset: DAI, USDC, USDT
-'     Curve pool: 3Pool (3CRV)
-'     Convex pool: DAI+USDC+USDT
-'     rewards: CRV, CVX
-' }
-object "Morpho Steakhouse USDC\nStrategy" as steakUSDC <<Origin>><<Proxy>> #DeepSkyBlue {
+object "Morpho OUSD v2\nStrategy" as musd <<Origin>><<Proxy>> #DeepSkyBlue {
     asset: USDC
-    Morpho vault: steakUSDC
-    rewards: MORPHO
-}
-object "Morpho Gauntlet Prime USDC\nStrategy" as gtUSDC <<Origin>><<Proxy>> #DeepSkyBlue {
-    asset: USDC
-    Morpho vault: gtUSDC
-    rewards: MORPHO
-}
-object "Morpho Gauntlet Prime USDT\nStrategy" as gtUSDT <<Origin>><<Proxy>> #DeepSkyBlue {
-    asset: USDT
-    Morpho vault: gtUSDT
+    Morpho vault: mUSD
     rewards: MORPHO
 }
 object "Curve USDC AMO\nStrategy" as curveAmoStrat <<Origin>><<Proxy>> #DeepSkyBlue {
@@ -60,48 +32,15 @@ object "Curve USDC AMO\nStrategy" as curveAmoStrat <<Origin>><<Proxy>> #DeepSkyB
     rewards: CRV
 }
 
-object "Sky Saving Rate (SSR)\nStrategy" as ssrStrat <<Origin>><<Proxy>> #DeepSkyBlue {
-    asset: USDS
-    vault: sUSDS
-}
-
-' Oracle
-object "OracleRouter" as oracle <<Origin>> #DeepSkyBlue {
-pairs:
-    USDT/USD
-    USDC/USD
-    USDS/USD
-    CRV/USD
-}
-
-vault <. drip
-
 checker ..> ousd
 checker ..> vault
 
-vault <.. harv 
-
 wousd ..> ousd
 ousd <.> vault
-vault ..> oracle
-
-buy .> ousd
 
 ' Strategies
-' vault <...> aaveStrat
-' vault <...> amoStrat
-vault <...> ssrStrat
-vault <...> steakUSDC
-vault <...> gtUSDC
-vault <...> gtUSDT
-vault <...> curveAmoStrat
+vault <..> musd
+vault <..> curveAmoStrat
 
-drip <.. harv
-' harv <..> amoStrat
-harv <...> ssrStrat
-harv <...> steakUSDC
-harv <...> gtUSDC
-harv <...> gtUSDT
-harv <...> curveAmoStrat
 
 @enduml
