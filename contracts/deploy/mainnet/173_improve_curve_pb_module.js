@@ -3,7 +3,7 @@ const { deploymentWithGovernanceProposal } = require("../../utils/deploy");
 
 module.exports = deploymentWithGovernanceProposal(
   {
-    deployName: "169_improve_curve_pb_module",
+    deployName: "173_improve_curve_pb_module",
     forceDeploy: false,
     reduceQueueTime: true,
     deployerIsProposer: false,
