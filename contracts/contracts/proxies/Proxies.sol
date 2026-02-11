@@ -124,13 +124,6 @@ contract ConvexEthMetaStrategyProxy is InitializeGovernedUpgradeabilityProxy {
 }
 
 /**
- * @notice BuybackProxy delegates calls to Buyback implementation
- */
-contract BuybackProxy is InitializeGovernedUpgradeabilityProxy {
-
-}
-
-/**
  * @notice OETHMorphoAaveStrategyProxy delegates calls to a MorphoAaveStrategy implementation
  */
 contract OETHMorphoAaveStrategyProxy is InitializeGovernedUpgradeabilityProxy {
@@ -159,13 +152,6 @@ contract OETHBalancerMetaPoolwstEthStrategyProxy is
  * @notice MakerDsrStrategyProxy delegates calls to a Generalized4626Strategy implementation
  */
 contract MakerDsrStrategyProxy is InitializeGovernedUpgradeabilityProxy {
-
-}
-
-/**
- * @notice OETHBuybackProxy delegates calls to Buyback implementation
- */
-contract OETHBuybackProxy is InitializeGovernedUpgradeabilityProxy {
 
 }
 
@@ -234,13 +220,6 @@ contract NativeStakingFeeAccumulator3Proxy is
  * @notice MetaMorphoStrategyProxy delegates calls to a Generalized4626Strategy implementation
  */
 contract MetaMorphoStrategyProxy is InitializeGovernedUpgradeabilityProxy {
-
-}
-
-/**
- * @notice ARMBuybackProxy delegates calls to Buyback implementation
- */
-contract ARMBuybackProxy is InitializeGovernedUpgradeabilityProxy {
 
 }
 

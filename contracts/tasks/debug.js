@@ -46,8 +46,6 @@ async function debug(taskArguments, hre) {
   const ognStakingProxy = await hre.ethers.getContract("OGNStakingProxy");
   const ognStaking = await hre.ethers.getContract("SingleAssetStaking");
 
-  const cBuyback = await hre.ethers.getContract("Buyback");
-
   //
   // Addresses
   //
@@ -76,7 +74,6 @@ async function debug(taskArguments, hre) {
   );
   console.log(`ThreePoolStrategy:       ${cThreePoolStrategy.address}`);
   console.log(`Governor:                ${governor.address}`);
-  console.log(`Buyback:                 ${cBuyback.address}`);
   console.log(`OGNStaking proxy:        ${ognStakingProxy.address}`);
   console.log(
     `OGNStaking proxy impl:   ${await ognStakingProxy.implementation()}`

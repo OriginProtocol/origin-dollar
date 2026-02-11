@@ -103,7 +103,6 @@ async function governors() {
     "ThreePoolStrategyProxy"
   );
   const cAaveStrategyProxy = await ethers.getContract("AaveStrategyProxy");
-  const cBuyback = await ethers.getContract("Buyback");
   const cOGNStakingProxy = await ethers.getContract("OGNStakingProxy");
   const cCompensationClaim = await ethers.getContract("CompensationClaims");
 
@@ -120,7 +119,6 @@ async function governors() {
     await cThreePoolStrategyProxy.governor()
   );
   console.log("AaveStrategyProxy:      ", await cAaveStrategyProxy.governor());
-  console.log("Buyback:                ", await cBuyback.governor());
   console.log("OGNSTakingProxy:        ", await cOGNStakingProxy.governor());
   console.log("CompensationClaim:      ", await cCompensationClaim.governor());
 }

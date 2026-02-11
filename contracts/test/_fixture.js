@@ -2670,96 +2670,6 @@ async function rebornFixture() {
   return fixture;
 }
 
-async function buybackFixture() {
-  const fixture = await defaultFixture();
-
-  const { ousd, oeth, oethVault, vault, weth, usdc, josh, governor, timelock } =
-    fixture;
-
-  const ousdBuybackProxy = await ethers.getContract("BuybackProxy");
-  const ousdBuyback = await ethers.getContractAt(
-    "OUSDBuyback",
-    ousdBuybackProxy.address
-  );
-
-  const oethBuybackProxy = await ethers.getContract("OETHBuybackProxy");
-  const oethBuyback = await ethers.getContractAt(
-    "OETHBuyback",
-    oethBuybackProxy.address
-  );
-
-  let armBuyback;
-  if (isFork) {
-    const armBuybackProxy = await ethers.getContract("ARMBuybackProxy");
-    armBuyback = await ethers.getContractAt(
-      "ARMBuyback",
-      armBuybackProxy.address
-    );
-    fixture.armBuyback = armBuyback;
-  }
-
-  fixture.ousdBuyback = ousdBuyback;
-  fixture.oethBuyback = oethBuyback;
-
-  const rewardsSourceAddress = await ousdBuyback.connect(josh).rewardsSource();
-  fixture.rewardsSource = await ethers.getContractAt([], rewardsSourceAddress);
-
-  if (isFork) {
-    fixture.cvxLocker = await ethers.getContractAt(
-      "ICVXLocker",
-      addresses.mainnet.CVXLocker
-    );
-    fixture.uniswapRouter = await ethers.getContractAt(
-      "IUniswapUniversalRouter",
-      addresses.mainnet.uniswapUniversalRouter
-    );
-
-    // Load with funds to test swaps
-    await setERC20TokenBalance(josh.address, weth, "10000");
-    await setERC20TokenBalance(josh.address, usdc, "10000");
-    await weth.connect(josh).approve(oethVault.address, oethUnits("10000"));
-    await usdc.connect(josh).approve(vault.address, usdcUnits("10000"));
-
-    // Mint & transfer oToken
-    await oethVault.connect(josh).mint(weth.address, oethUnits("1.23"), "0");
-    await oeth.connect(josh).transfer(oethBuyback.address, oethUnits("1.1"));
-
-    await vault.connect(josh).mint(usdc.address, usdcUnits("1231"), "0");
-    await ousd.connect(josh).transfer(ousdBuyback.address, oethUnits("1100"));
-    await setERC20TokenBalance(armBuyback.address, weth, "100");
-
-    // Compute splits
-    await oethBuyback.connect(timelock).updateBuybackSplits();
-    await ousdBuyback.connect(timelock).updateBuybackSplits();
-    await armBuyback.connect(timelock).updateBuybackSplits();
-  } else {
-    fixture.mockSwapper = await ethers.getContract("MockSwapper");
-    fixture.cvxLocker = await ethers.getContract("MockCVXLocker");
-
-    // Mint some OUSD
-    await usdc.connect(josh).mint(usdcUnits("3000"));
-    await usdc.connect(josh).approve(vault.address, usdcUnits("3000"));
-    await vault.connect(josh).mint(usdc.address, usdcUnits("3000"), "0");
-
-    // Mint some OETH
-    await weth.connect(josh).mint(oethUnits("3"));
-    await weth.connect(josh).approve(oethVault.address, oethUnits("3"));
-    await oethVault.connect(josh).mint(weth.address, oethUnits("3"), "0");
-
-    // Transfer those to the buyback contract
-    await oeth.connect(josh).transfer(oethBuyback.address, oethUnits("3"));
-    await ousd.connect(josh).transfer(ousdBuyback.address, ousdUnits("3000"));
-    //await weth.connect(josh).transfer(armBuyback.address, oethUnits("3"));
-
-    // Compute splits
-    await oethBuyback.connect(governor).updateBuybackSplits();
-    await ousdBuyback.connect(governor).updateBuybackSplits();
-    //await armBuyback.connect(governor).updateBuybackSplits();
-  }
-
-  return fixture;
-}
-
 async function harvesterFixture() {
   let fixture;
 
@@ -3078,7 +2988,6 @@ module.exports = {
   oeth1InchSwapperFixture,
   oethCollateralSwapFixture,
   ousdCollateralSwapFixture,
-  buybackFixture,
   harvesterFixture,
   nodeSnapshot,
   nodeRevert,

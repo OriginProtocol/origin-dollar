@@ -298,21 +298,6 @@ async function proposeSetUniswapAddrArgs(config) {
   return { args, description };
 }
 
-// Returns the arguments to use for sending a proposal to call setUniswapAddr(address) on the vault.
-async function proposeSetBuybackUniswapAddrArgs(config) {
-  const buyback = await ethers.getContract("Buyback");
-
-  const args = await proposeArgs([
-    {
-      contract: buyback,
-      signature: "setUniswapAddr(address)",
-      args: [config.address],
-    },
-  ]);
-  const description = "Call setUniswapAddr on buyback";
-  return { args, description };
-}
-
 // Returns the arguments to use for sending a proposal to call setTrusteeFeeBps(bps) on the vault.
 async function proposeSetTrusteeFeeBpsArgs(config) {
   const vaultProxy = await ethers.getContract("VaultProxy");
@@ -844,9 +829,6 @@ async function main(config) {
   } else if (config.setUniswapAddr) {
     console.log("setUniswapAddr proposal");
     argsMethod = proposeSetUniswapAddrArgs;
-  } else if (config.setBuybackUniswapAddr) {
-    console.log("setBuybackUniswapAddr proposal");
-    argsMethod = proposeSetBuybackUniswapAddrArgs;
   } else if (config.setTrusteeFeeBps) {
     console.log("setTrusteeFeeBps proposal");
     argsMethod = proposeSetTrusteeFeeBpsArgs;
@@ -1004,7 +986,6 @@ const config = {
   governorV1: args["--governorV1"],
   harvest: args["--harvest"],
   setUniswapAddr: args["--setUniswapAddr"],
-  setBuybackUniswapAddr: args["--setBuybackUniswapAddr"],
   setTrusteeFeeBps: args["--setTrusteeFeeBps"],
   setRebaseHookAddr: args["--setRebaseHookAddr"],
   upgradeOusd: args["--upgradeOusd"],
