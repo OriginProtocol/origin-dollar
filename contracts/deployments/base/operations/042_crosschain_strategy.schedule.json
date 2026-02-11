@@ -1,7 +1,7 @@
 {
   "version": "1.0",
   "chainId": "8453",
-  "createdAt": 1770737709,
+  "createdAt": 1770807435,
   "meta": {
     "name": "Transaction Batch",
     "description": "",
@@ -45,9 +45,9 @@
         "payable": false
       },
       "contractInputsValues": {
-        "targets": "[\"0xB1d624fc40824683e2bFBEfd19eB208DbBE00866\"]",
-        "values": "[\"0\"]",
-        "payloads": "[\"0xad1728cb\"]",
+        "targets": "[\"0xB1d624fc40824683e2bFBEfd19eB208DbBE00866\",\"0xB1d624fc40824683e2bFBEfd19eB208DbBE00866\"]",
+        "values": "[\"0\",\"0\"]",
+        "payloads": "[\"0xad1728cb\",\"0xc2e1e3f40000000000000000000000004ff1b9d9ba8558f5eafcec096318ea0d8b541971\"]",
         "predecessor": "0x0000000000000000000000000000000000000000000000000000000000000000",
         "salt": "0x163f0d8486627d87fa054abf55d6e76533445aed2ca1b3837ff760baf919af27",
         "delay": "172800"

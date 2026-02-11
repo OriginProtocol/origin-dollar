@@ -47,6 +47,11 @@ module.exports = deployOnBase(
           signature: "safeApproveAllTokens()",
           args: [],
         },
+        {
+          contract: cCrossChainRemoteStrategy,
+          signature: "setHarvesterAddress(address)",
+          args: [addresses.multichainStrategist],
+        },
       ],
     };
   }
