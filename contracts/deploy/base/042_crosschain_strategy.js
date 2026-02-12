@@ -8,7 +8,7 @@ const { cctpDomainIds } = require("../../utils/cctp");
 
 module.exports = deployOnBase(
   {
-    deployName: "041_crosschain_strategy",
+    deployName: "042_crosschain_strategy",
   },
   async () => {
     const crossChainStrategyProxyAddress = await getCreate2ProxyAddress(
@@ -19,7 +19,7 @@ module.exports = deployOnBase(
     );
 
     const implAddress = await deployCrossChainRemoteStrategyImpl(
-      "0xbeeF010f9cb27031ad51e3333f9aF9C6B1228183", // 4626 Vault
+      addresses.base.MorphoOusdV2Vault, // 4626 Vault
       crossChainStrategyProxyAddress,
       cctpDomainIds.Ethereum,
       crossChainStrategyProxyAddress,
@@ -46,6 +46,11 @@ module.exports = deployOnBase(
           contract: cCrossChainRemoteStrategy,
           signature: "safeApproveAllTokens()",
           args: [],
+        },
+        {
+          contract: cCrossChainRemoteStrategy,
+          signature: "setHarvesterAddress(address)",
+          args: [addresses.multichainStrategist],
         },
       ],
     };
