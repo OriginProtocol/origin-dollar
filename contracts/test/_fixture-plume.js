@@ -5,9 +5,6 @@ const { isFork, isPlumeFork, oethUnits } = require("./helpers");
 const { impersonateAndFund } = require("../utils/signers");
 const { nodeRevert, nodeSnapshot } = require("./_fixture");
 const { deployWithConfirmation } = require("../utils/deploy");
-const {
-  deployPlumeMockRoosterAMOStrategyImplementation,
-} = require("../deploy/deployActions.js");
 const addresses = require("../utils/addresses");
 const hhHelpers = require("@nomicfoundation/hardhat-network-helpers");
 const log = require("../utils/logger")("test:fixtures-plume");
@@ -18,36 +15,6 @@ const BURNER_ROLE =
   "0x3c11d16cbaffd01df69ce1c404f6340ee057498f5f00246190ea54220576a848";
 
 let snapshotId;
-
-const baseFixtureWithMockedVaultAdminConfig = async () => {
-  const fixture = await defaultFixture();
-  await deployWithConfirmation("MockOETHVault", [fixture.weth.address]);
-
-  fixture.oethpVault = await ethers.getContractAt(
-    "IMockVault",
-    fixture.oethpVault.address
-  );
-
-  const mockImplementation =
-    await deployPlumeMockRoosterAMOStrategyImplementation(
-      addresses.plume.OethpWETHRoosterPool
-    );
-
-  const roosterAmoStrategyProxy = await ethers.getContract(
-    "RoosterAMOStrategyProxy"
-  );
-
-  await roosterAmoStrategyProxy
-    .connect(fixture.governor)
-    .upgradeTo(mockImplementation.address);
-
-  fixture.roosterAmoStrategy = await ethers.getContractAt(
-    "MockRoosterAMOStrategy",
-    roosterAmoStrategyProxy.address
-  );
-
-  return fixture;
-};
 
 const defaultFixture = async () => {
   if (!snapshotId && !isFork) {
@@ -230,9 +197,6 @@ const defaultFixture = async () => {
 };
 
 const defaultPlumeFixture = deployments.createFixture(defaultFixture);
-const plumeFixtureWithMockedVaultAdmin = deployments.createFixture(
-  baseFixtureWithMockedVaultAdminConfig
-);
 
 const bridgeHelperModuleFixture = deployments.createFixture(async () => {
   const fixture = await defaultPlumeFixture();
@@ -270,6 +234,5 @@ mocha.after(async () => {
 
 module.exports = {
   defaultPlumeFixture,
-  plumeFixtureWithMockedVaultAdmin,
   bridgeHelperModuleFixture,
 };

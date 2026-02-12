@@ -11,9 +11,6 @@ describe("Vault", function () {
   let fixture;
   beforeEach(async () => {
     fixture = await loadDefaultFixture();
-    await fixture.compoundStrategy
-      .connect(fixture.governor)
-      .setPTokenAddress(fixture.usdc.address, fixture.cusdc.address);
   });
 
   it("Should support an asset", async () => {
@@ -24,19 +21,19 @@ describe("Vault", function () {
   });
 
   it("Should revert when adding a strategy that is already approved", async function () {
-    const { vault, governor, compoundStrategy } = fixture;
+    const { vault, governor, mockStrategy } = fixture;
 
-    await vault.connect(governor).approveStrategy(compoundStrategy.address);
+    await vault.connect(governor).approveStrategy(mockStrategy.address);
     await expect(
-      vault.connect(governor).approveStrategy(compoundStrategy.address)
+      vault.connect(governor).approveStrategy(mockStrategy.address)
     ).to.be.revertedWith("Strategy already approved");
   });
 
   it("Should revert when attempting to approve a strategy and not Governor", async function () {
-    const { vault, josh, compoundStrategy } = fixture;
+    const { vault, josh, mockStrategy } = fixture;
 
     await expect(
-      vault.connect(josh).approveStrategy(compoundStrategy.address)
+      vault.connect(josh).approveStrategy(mockStrategy.address)
     ).to.be.revertedWith("Caller is not the Governor");
   });
 
@@ -180,11 +177,11 @@ describe("Vault", function () {
   });
 
   it("Should allow the Governor to call withdraw and then deposit", async () => {
-    const { vault, governor, usdc, josh, compoundStrategy } = fixture;
+    const { vault, governor, usdc, josh, mockStrategy } = fixture;
 
-    await vault.connect(governor).approveStrategy(compoundStrategy.address);
+    await vault.connect(governor).approveStrategy(mockStrategy.address);
     // Send all USDC to Compound
-    await vault.connect(governor).setDefaultStrategy(compoundStrategy.address);
+    await vault.connect(governor).setDefaultStrategy(mockStrategy.address);
     await usdc.connect(josh).approve(vault.address, usdcUnits("200"));
     await vault.connect(josh).mint(usdc.address, usdcUnits("200"), 0);
     await vault.connect(governor).allocate();
@@ -192,7 +189,7 @@ describe("Vault", function () {
     await vault
       .connect(governor)
       .withdrawFromStrategy(
-        compoundStrategy.address,
+        mockStrategy.address,
         [usdc.address],
         [usdcUnits("200")]
       );
@@ -200,19 +197,18 @@ describe("Vault", function () {
     await vault
       .connect(governor)
       .depositToStrategy(
-        compoundStrategy.address,
+        mockStrategy.address,
         [usdc.address],
         [usdcUnits("200")]
       );
   });
 
   it("Should allow the Strategist to call withdrawFromStrategy and then depositToStrategy", async () => {
-    const { vault, governor, usdc, josh, strategist, compoundStrategy } =
-      fixture;
+    const { vault, governor, usdc, josh, strategist, mockStrategy } = fixture;
 
-    await vault.connect(governor).approveStrategy(compoundStrategy.address);
+    await vault.connect(governor).approveStrategy(mockStrategy.address);
     // Send all USDC to Compound
-    await vault.connect(governor).setDefaultStrategy(compoundStrategy.address);
+    await vault.connect(governor).setDefaultStrategy(mockStrategy.address);
     await usdc.connect(josh).approve(vault.address, usdcUnits("200"));
     await vault.connect(josh).mint(usdc.address, usdcUnits("200"), 0);
     await vault.connect(governor).allocate();
@@ -220,7 +216,7 @@ describe("Vault", function () {
     await vault
       .connect(strategist)
       .withdrawFromStrategy(
-        compoundStrategy.address,
+        mockStrategy.address,
         [usdc.address],
         [usdcUnits("200")]
       );
@@ -228,7 +224,7 @@ describe("Vault", function () {
     await vault
       .connect(strategist)
       .depositToStrategy(
-        compoundStrategy.address,
+        mockStrategy.address,
         [usdc.address],
         [usdcUnits("200")]
       );
@@ -255,13 +251,12 @@ describe("Vault", function () {
   });
 
   it("Should withdrawFromStrategy the correct amount for multiple assests and redeploy them using depositToStrategy", async () => {
-    const { vault, governor, usdc, josh, strategist, compoundStrategy } =
-      fixture;
+    const { vault, governor, usdc, josh, strategist, mockStrategy } = fixture;
 
-    await vault.connect(governor).approveStrategy(compoundStrategy.address);
+    await vault.connect(governor).approveStrategy(mockStrategy.address);
 
     // Send all USDC to Compound
-    await vault.connect(governor).setDefaultStrategy(compoundStrategy.address);
+    await vault.connect(governor).setDefaultStrategy(mockStrategy.address);
 
     await usdc.connect(josh).approve(vault.address, usdcUnits("90"));
     await vault.connect(josh).mint(usdc.address, usdcUnits("90"), 0);
@@ -270,7 +265,7 @@ describe("Vault", function () {
     await vault
       .connect(strategist)
       .withdrawFromStrategy(
-        compoundStrategy.address,
+        mockStrategy.address,
         [usdc.address],
         [usdcUnits("90")]
       );
@@ -284,7 +279,7 @@ describe("Vault", function () {
     await vault
       .connect(strategist)
       .depositToStrategy(
-        compoundStrategy.address,
+        mockStrategy.address,
         [usdc.address],
         [usdcUnits("90")]
       );
@@ -324,23 +319,21 @@ describe("Vault", function () {
   });
 
   it("Should only allow Governor and Strategist to call withdrawAllFromStrategy", async () => {
-    const { vault, governor, strategist, compoundStrategy, matt, josh, usdc } =
+    const { vault, governor, strategist, mockStrategy, matt, josh, usdc } =
       fixture;
-    await vault.connect(governor).approveStrategy(compoundStrategy.address);
+    await vault.connect(governor).approveStrategy(mockStrategy.address);
 
     // Get the vault's initial USDC balance.
     const vaultUsdcBalance = await usdc.balanceOf(vault.address);
 
     // Mint and allocate USDC to Compound.
-    await vault.connect(governor).setDefaultStrategy(compoundStrategy.address);
+    await vault.connect(governor).setDefaultStrategy(mockStrategy.address);
     await usdc.connect(josh).approve(vault.address, usdcUnits("200"));
     await vault.connect(josh).mint(usdc.address, usdcUnits("200"), 0);
     await vault.connect(governor).allocate();
 
     // Call to withdrawAll by the governor should go thru.
-    await vault
-      .connect(governor)
-      .withdrawAllFromStrategy(compoundStrategy.address);
+    await vault.connect(governor).withdrawAllFromStrategy(mockStrategy.address);
 
     // All the USDC should have been moved back to the vault.
     const expectedVaultUsdsBalance = vaultUsdcBalance.add(usdcUnits("200"));
@@ -351,11 +344,11 @@ describe("Vault", function () {
     // Call to withdrawAll by the strategist should go thru.
     await vault
       .connect(strategist)
-      .withdrawAllFromStrategy(compoundStrategy.address);
+      .withdrawAllFromStrategy(mockStrategy.address);
 
     // Call to withdrawAll from random dude matt should get rejected.
     await expect(
-      vault.connect(matt).withdrawAllFromStrategy(compoundStrategy.address)
+      vault.connect(matt).withdrawAllFromStrategy(mockStrategy.address)
     ).to.be.revertedWith("Caller is not the Strategist or Governor");
   });
 });

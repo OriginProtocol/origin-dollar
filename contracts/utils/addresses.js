@@ -64,9 +64,6 @@ addresses.mainnet.cUSDT = "0xf650c3d88d12db855b8bf7d11be6c55a4e07dcc9";
 // Curve
 addresses.mainnet.CRV = "0xD533a949740bb3306d119CC777fa900bA034cd52";
 addresses.mainnet.CRVMinter = "0xd061D61a4d941c39E5453435B6345Dc261C2fcE0";
-addresses.mainnet.ThreePool = "0xbEbc44782C7dB0a1A60Cb6fe97d0b483032FF1C7";
-addresses.mainnet.ThreePoolToken = "0x6c3F90f043a72FA612cbac8115EE7e52BDe6E490";
-addresses.mainnet.ThreePoolGauge = "0xbFcF63294aD7105dEa65aA58F8AE5BE2D9d0952A";
 // CVX
 addresses.mainnet.CVX = "0x4e3fbd56cd56c3e72c1403e103b45db9da5b9d2b";
 addresses.mainnet.CVXBooster = "0xF403C135812408BFbE8713b5A23a04b3D48AAE31";
@@ -184,8 +181,6 @@ addresses.mainnet.CurveOUSDUSDTGauge =
 // Curve OETH/ETH pool
 addresses.mainnet.ConvexOETHAMOStrategy =
   "0x1827F9eA98E0bf96550b2FC20F7233277FcD7E63";
-addresses.mainnet.CurveOETHMetaPool =
-  "0x94B17476A93b3262d87B9a326965D1E91f9c13E7";
 addresses.mainnet.CurveOETHGauge = "0xd03BE91b1932715709e18021734fcB91BB431715";
 addresses.mainnet.CVXETHRewardsPool =
   "0x24b65DC1cf053A8D96872c323d29e86ec43eB33A";
@@ -255,8 +250,6 @@ addresses.mainnet.OETHHarvesterProxy =
 // TODO add after deployment
 addresses.mainnet.OETHHarvesterSimpleProxy =
   "0x6D416E576eECBB9F897856a7c86007905274ed04";
-addresses.mainnet.BalancerRETHStrategy =
-  "0x49109629aC1deB03F2e9b2fe2aC4a623E0e7dfDC";
 // OETH Tokens
 addresses.mainnet.sfrxETH = "0xac3E018457B222d93114458476f3E3416Abbe38F";
 addresses.mainnet.frxETH = "0x5E8422345238F34275888049021821E8E08CAa1f";
@@ -268,29 +261,6 @@ addresses.mainnet.FraxETHMinter = "0xbAFA44EFE7901E04E39Dad13167D089C559c1138";
 // 1Inch
 addresses.mainnet.oneInchRouterV5 =
   "0x1111111254EEB25477B68fb85Ed929f73A960582";
-
-// Balancer
-addresses.mainnet.BAL = "0xba100000625a3754423978a60c9317c58a424e3D";
-addresses.mainnet.balancerVault = "0xBA12222222228d8Ba445958a75a0704d566BF2C8";
-// wstETH/WETH
-addresses.mainnet.wstETH_WETH_BPT =
-  "0x32296969Ef14EB0c6d29669C550D4a0449130230";
-addresses.mainnet.wstETH_WETH_AuraRewards =
-  "0x59D66C58E83A26d6a0E35114323f65c3945c89c1";
-// rETH/WETH
-addresses.mainnet.rETH_WETH_BPT = "0x1E19CF2D73a72Ef1332C882F20534B6519Be0276";
-addresses.mainnet.rETH_WETH_AuraRewards =
-  "0xDd1fE5AD401D4777cE89959b7fa587e569Bf125D";
-// wstETH/sfrxETH/rETH
-addresses.mainnet.wstETH_sfrxETH_rETH_BPT =
-  "0x42ed016f826165c2e5976fe5bc3df540c5ad0af7";
-addresses.mainnet.wstETH_sfrxETH_rETH_AuraRewards =
-  "0xd26948E7a0223700e3C3cdEA21cA2471abCb8d47";
-
-// Aura
-addresses.mainnet.AURA = "0xC0c293ce456fF0ED870ADd98a0828Dd4d2903DBF";
-addresses.mainnet.AuraWeightedOraclePool =
-  "0xc29562b045D80fD77c69Bec09541F5c16fe20d9d";
 
 // Frax Oracle for frxETH/ETH
 addresses.mainnet.FrxEthFraxOracle =

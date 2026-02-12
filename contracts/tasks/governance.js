@@ -96,31 +96,11 @@ async function proposal(taskArguments, hre) {
 async function governors() {
   const cOUSDProxy = await ethers.getContract("OUSDProxy");
   const cVaultProxy = await ethers.getContract("VaultProxy");
-  const cCompoundStrategyProxy = await ethers.getContract(
-    "CompoundStrategyProxy"
-  );
-  const cThreePoolStrategyProxy = await ethers.getContract(
-    "ThreePoolStrategyProxy"
-  );
-  const cAaveStrategyProxy = await ethers.getContract("AaveStrategyProxy");
-  const cOGNStakingProxy = await ethers.getContract("OGNStakingProxy");
-  const cCompensationClaim = await ethers.getContract("CompensationClaims");
 
   console.log("Governor addresses:");
   console.log("===================");
   console.log("OUSDProxy:              ", await cOUSDProxy.governor());
   console.log("VaultProxy:             ", await cVaultProxy.governor());
-  console.log(
-    "CompoundStrategyProxy:  ",
-    await cCompoundStrategyProxy.governor()
-  );
-  console.log(
-    "ThreePoolStrategyProxy: ",
-    await cThreePoolStrategyProxy.governor()
-  );
-  console.log("AaveStrategyProxy:      ", await cAaveStrategyProxy.governor());
-  console.log("OGNSTakingProxy:        ", await cOGNStakingProxy.governor());
-  console.log("CompensationClaim:      ", await cCompensationClaim.governor());
 }
 
 module.exports = {

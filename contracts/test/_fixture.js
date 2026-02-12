@@ -34,17 +34,11 @@ const { getCreate2ProxyAddress } = require("../deploy/deployActions");
 const usdsAbi = require("./abi/usds.json").abi;
 const usdtAbi = require("./abi/usdt.json").abi;
 const erc20Abi = require("./abi/erc20.json");
-const morphoAbi = require("./abi/morpho.json");
-const morphoLensAbi = require("./abi/morphoLens.json");
-const crvMinterAbi = require("./abi/crvMinter.json");
-const susdsAbi = require("./abi/sUSDS.json");
 const metamorphoAbi = require("./abi/metamorpho.json");
 const merklDistributorAbi = require("./abi/merklDistributor.json");
 
 const curveXChainLiquidityGaugeAbi = require("./abi/curveXChainLiquidityGauge.json");
 const curveStableSwapNGAbi = require("./abi/curveStableSwapNG.json");
-
-const sfrxETHAbi = require("./abi/sfrxETH.json");
 const { defaultAbiCoder, parseUnits } = require("ethers/lib/utils");
 const { impersonateAndFund } = require("../utils/signers");
 
@@ -80,12 +74,6 @@ const simpleOETHFixture = deployments.createFixture(async () => {
   const cWOETHProxy = await ethers.getContract("WOETHProxy");
   const woeth = await ethers.getContractAt("WOETH", cWOETHProxy.address);
 
-  const oethHarvesterProxy = await ethers.getContract("OETHHarvesterProxy");
-  const oethHarvester = await ethers.getContractAt(
-    "OETHHarvester",
-    oethHarvesterProxy.address
-  );
-
   const oethOracleRouter = await ethers.getContract(
     isFork ? "OETHOracleRouter" : "OracleRouter"
   );
@@ -93,7 +81,6 @@ const simpleOETHFixture = deployments.createFixture(async () => {
   let weth,
     ssv,
     nativeStakingSSVStrategy,
-    oethDripper,
     oethFixedRateDripper,
     simpleOETHHarvester;
 
@@ -105,12 +92,6 @@ const simpleOETHFixture = deployments.createFixture(async () => {
 
     weth = await ethers.getContractAt("IWETH9", addressContext.WETH);
     ssv = await ethers.getContractAt(erc20Abi, addressContext.SSV);
-
-    const oethDripperProxy = await ethers.getContract("OETHDripperProxy");
-    oethDripper = await ethers.getContractAt(
-      "OETHDripper",
-      oethDripperProxy.address
-    );
 
     const oethFixedRateDripperProxy = await ethers.getContract(
       "OETHFixedRateDripperProxy"
@@ -146,6 +127,14 @@ const simpleOETHFixture = deployments.createFixture(async () => {
     nativeStakingSSVStrategy = await ethers.getContractAt(
       "NativeStakingSSVStrategy",
       nativeStakingStrategyProxy.address
+    );
+
+    const simpleOETHHarvesterProxy = await ethers.getContract(
+      "OETHSimpleHarvesterProxy"
+    );
+    simpleOETHHarvester = await ethers.getContractAt(
+      "OETHHarvesterSimple",
+      simpleOETHHarvesterProxy.address
     );
   }
 
@@ -203,10 +192,9 @@ const simpleOETHFixture = deployments.createFixture(async () => {
     oeth,
     woeth,
     nativeStakingSSVStrategy,
-    oethDripper,
     oethFixedRateDripper,
-    oethHarvester,
     simpleOETHHarvester,
+    oethHarvester: simpleOETHHarvester,
   };
 });
 
@@ -563,33 +551,14 @@ const defaultFixture = deployments.createFixture(async () => {
 
   const vaultAndTokenConracts = await getVaultAndTokenContracts();
 
-  const harvesterProxy = await ethers.getContract("HarvesterProxy");
-  const harvester = await ethers.getContractAt(
-    "Harvester",
-    harvesterProxy.address
-  );
-  const oethHarvesterProxy = await ethers.getContract("OETHHarvesterProxy");
-  const oethHarvester = await ethers.getContractAt(
-    "OETHHarvester",
-    oethHarvesterProxy.address
-  );
-
-  const dripperProxy = await ethers.getContract("DripperProxy");
-  const dripper = await ethers.getContractAt("Dripper", dripperProxy.address);
+  const dripperProxy = isFork
+    ? await ethers.getContract("DripperProxy")
+    : undefined;
+  const dripper = isFork
+    ? await ethers.getContractAt("Dripper", dripperProxy.address)
+    : undefined;
   const wousdProxy = await ethers.getContract("WrappedOUSDProxy");
   const wousd = await ethers.getContractAt("WrappedOusd", wousdProxy.address);
-  const CompoundStrategyFactory = await ethers.getContractFactory(
-    "CompoundStrategy"
-  );
-
-  const compoundStrategyProxy = await ethers.getContract(
-    "CompoundStrategyProxy"
-  );
-
-  const compoundStrategy = await ethers.getContractAt(
-    "CompoundStrategy",
-    compoundStrategyProxy.address
-  );
 
   const oracleRouter = await ethers.getContract("OracleRouter");
   const oethOracleRouter = await ethers.getContract(
@@ -659,16 +628,13 @@ const defaultFixture = deployments.createFixture(async () => {
       )
     : undefined;
 
-  const simpleHarvesterProxy = isFork
-    ? await ethers.getContract("OETHSimpleHarvesterProxy")
-    : undefined;
-
-  const simpleOETHHarvester = isFork
-    ? await ethers.getContractAt(
-        "OETHHarvesterSimple",
-        simpleHarvesterProxy.address
-      )
-    : undefined;
+  const simpleHarvesterProxy = await ethers.getContract(
+    "OETHSimpleHarvesterProxy"
+  );
+  const simpleOETHHarvester = await ethers.getContractAt(
+    "OETHHarvesterSimple",
+    simpleHarvesterProxy.address
+  );
 
   const oethFixedRateDripperProxy = !isFork
     ? undefined
@@ -718,27 +684,10 @@ const defaultFixture = deployments.createFixture(async () => {
 
   let usdt,
     usds,
-    tusd,
     usdc,
     weth,
     ogn,
-    ogv,
     nonStandardToken,
-    cusdt,
-    cusdc,
-    comp,
-    adai,
-    ausdt,
-    ausdc,
-    aave,
-    aaveToken,
-    stkAave,
-    aaveIncentivesController,
-    reth,
-    stETH,
-    frxETH,
-    sfrxETH,
-    sUSDS,
     morphoSteakHouseUSDCVault,
     morphoGauntletPrimeUSDCVault,
     morphoGauntletPrimeUSDTVault,
@@ -751,29 +700,8 @@ const defaultFixture = deployments.createFixture(async () => {
     chainlinkOracleFeedUSDS,
     chainlinkOracleFeedOGNETH,
     chainlinkOracleFeedETH,
-    crv,
-    crvMinter,
-    aura,
-    bal,
-    threePool,
-    threePoolToken,
-    metapoolToken,
-    morpho,
-    morphoToken,
-    legacyMorphoToken,
-    morphoCompoundStrategy,
-    balancerREthStrategy,
-    morphoAaveStrategy,
-    oethMorphoAaveStrategy,
-    morphoLens,
-    threePoolGauge,
-    cvx,
-    cvxBooster,
-    cvxRewardPool,
     depositContractUtils,
-    oethDripper,
     oethZapper,
-    convexEthMetaStrategy,
     vaultValueChecker,
     oethVaultValueChecker,
     poolBoosterCentralRegistry,
@@ -785,26 +713,7 @@ const defaultFixture = deployments.createFixture(async () => {
     usds = await ethers.getContractAt(usdsAbi, addresses.mainnet.USDS);
     usdc = await ethers.getContractAt(erc20Abi, addresses.mainnet.USDC);
     weth = await ethers.getContractAt("IWETH9", addresses.mainnet.WETH);
-    cusdt = await ethers.getContractAt(erc20Abi, addresses.mainnet.cUSDT);
-    cusdc = await ethers.getContractAt(erc20Abi, addresses.mainnet.cUSDC);
-    comp = await ethers.getContractAt(erc20Abi, addresses.mainnet.COMP);
-    crv = await ethers.getContractAt(erc20Abi, addresses.mainnet.CRV);
-    cvx = await ethers.getContractAt(erc20Abi, addresses.mainnet.CVX);
     ogn = await ethers.getContractAt(erc20Abi, addresses.mainnet.OGN);
-    aave = await ethers.getContractAt(erc20Abi, addresses.mainnet.Aave);
-    ausdt = await ethers.getContractAt(erc20Abi, addresses.mainnet.aUSDT);
-    ausdc = await ethers.getContractAt(erc20Abi, addresses.mainnet.aUSDC);
-    adai = await ethers.getContractAt(erc20Abi, addresses.mainnet.aDAI);
-    reth = await ethers.getContractAt("IRETH", addresses.mainnet.rETH);
-    frxETH = await ethers.getContractAt(erc20Abi, addresses.mainnet.frxETH);
-    sfrxETH = await ethers.getContractAt(sfrxETHAbi, addresses.mainnet.sfrxETH);
-    stETH = await ethers.getContractAt(erc20Abi, addresses.mainnet.stETH);
-    sUSDS = await ethers.getContractAt(susdsAbi, addresses.mainnet.sUSDS);
-    morpho = await ethers.getContractAt(morphoAbi, addresses.mainnet.Morpho);
-    morphoLens = await ethers.getContractAt(
-      morphoLensAbi,
-      addresses.mainnet.MorphoLens
-    );
     morphoSteakHouseUSDCVault = await ethers.getContractAt(
       metamorphoAbi,
       addresses.mainnet.MorphoSteakhouseUSDCVault
@@ -821,81 +730,7 @@ const defaultFixture = deployments.createFixture(async () => {
       metamorphoAbi,
       addresses.mainnet.MorphoOUSDv2Vault
     );
-    morphoToken = await ethers.getContractAt(
-      erc20Abi,
-      addresses.mainnet.MorphoToken
-    );
-    legacyMorphoToken = await ethers.getContractAt(
-      erc20Abi,
-      addresses.mainnet.LegacyMorphoToken
-    );
-    aura = await ethers.getContractAt(erc20Abi, addresses.mainnet.AURA);
-    bal = await ethers.getContractAt(erc20Abi, addresses.mainnet.BAL);
-    ogv = await ethers.getContractAt(erc20Abi, addresses.mainnet.OGV);
     ssv = await ethers.getContractAt(erc20Abi, addresses.mainnet.SSV);
-
-    crvMinter = await ethers.getContractAt(
-      crvMinterAbi,
-      addresses.mainnet.CRVMinter
-    );
-    aaveAddressProvider = await ethers.getContractAt(
-      "ILendingPoolAddressesProvider",
-      addresses.mainnet.AAVE_ADDRESS_PROVIDER
-    );
-    cvxBooster = await ethers.getContractAt(
-      "MockBooster",
-      addresses.mainnet.CVXBooster
-    );
-    cvxRewardPool = await ethers.getContractAt(
-      "IRewardStaking",
-      addresses.mainnet.CVXRewardsPool
-    );
-
-    const morphoCompoundStrategyProxy = await ethers.getContract(
-      "MorphoCompoundStrategyProxy"
-    );
-    morphoCompoundStrategy = await ethers.getContractAt(
-      "MorphoCompoundStrategy",
-      morphoCompoundStrategyProxy.address
-    );
-
-    const morphoAaveStrategyProxy = await ethers.getContract(
-      "MorphoAaveStrategyProxy"
-    );
-    morphoAaveStrategy = await ethers.getContractAt(
-      "MorphoAaveStrategy",
-      morphoAaveStrategyProxy.address
-    );
-
-    const oethMorphoAaveStrategyProxy = await ethers.getContract(
-      "OETHMorphoAaveStrategyProxy"
-    );
-    oethMorphoAaveStrategy = await ethers.getContractAt(
-      "MorphoAaveStrategy",
-      oethMorphoAaveStrategyProxy.address
-    );
-
-    const balancerRethStrategyProxy = await ethers.getContract(
-      "OETHBalancerMetaPoolrEthStrategyProxy"
-    );
-    balancerREthStrategy = await ethers.getContractAt(
-      "BalancerMetaPoolStrategy",
-      balancerRethStrategyProxy.address
-    );
-
-    const convexEthMetaStrategyProxy = await ethers.getContract(
-      "ConvexEthMetaStrategyProxy"
-    );
-    convexEthMetaStrategy = await ethers.getContractAt(
-      "ConvexEthMetaStrategy",
-      convexEthMetaStrategyProxy.address
-    );
-
-    const oethDripperProxy = await ethers.getContract("OETHDripperProxy");
-    oethDripper = await ethers.getContractAt(
-      "OETHDripper",
-      oethDripperProxy.address
-    );
 
     oethZapper = await ethers.getContract("OETHZapper");
 
@@ -919,35 +754,11 @@ const defaultFixture = deployments.createFixture(async () => {
   } else {
     usdt = await ethers.getContract("MockUSDT");
     usds = await ethers.getContract("MockUSDS");
-    tusd = await ethers.getContract("MockTUSD");
     usdc = await ethers.getContract("MockUSDC");
     weth = await ethers.getContractAt("MockWETH", addresses.mainnet.WETH);
     ogn = await ethers.getContract("MockOGN");
-    ogv = await ethers.getContract("MockOGV");
-    reth = await ethers.getContract("MockRETH");
-    frxETH = await ethers.getContract("MockfrxETH");
-    sfrxETH = await ethers.getContract("MocksfrxETH");
-    // // Note: Not used anywhere in unit tests
-    sUSDS = undefined;
-    stETH = await ethers.getContract("MockstETH");
     nonStandardToken = await ethers.getContract("MockNonStandardToken");
     ssv = await ethers.getContract("MockSSV");
-
-    cusdt = await ethers.getContract("MockCUSDT");
-    cusdc = await ethers.getContract("MockCUSDC");
-    comp = await ethers.getContract("MockCOMP");
-    bal = await ethers.getContract("MockBAL");
-    aura = await ethers.getContract("MockAura");
-
-    crv = await ethers.getContract("MockCRV");
-    cvx = await ethers.getContract("MockCVX");
-    crvMinter = await ethers.getContract("MockCRVMinter");
-    threePool = await ethers.getContract("MockCurvePool");
-    threePoolToken = await ethers.getContract("Mock3CRV");
-    metapoolToken = await ethers.getContract("MockCurveMetapool");
-    threePoolGauge = await ethers.getContract("MockCurveGauge");
-    cvxBooster = await ethers.getContract("MockBooster");
-    cvxRewardPool = await ethers.getContract("MockRewardPool");
     depositContractUtils = await ethers.getContract("DepositContractUtils");
 
     chainlinkOracleFeedDAI = await ethers.getContract(
@@ -1038,7 +849,6 @@ const defaultFixture = deployments.createFixture(async () => {
     oldTimelock,
     // Contracts
     vaultValueChecker,
-    harvester,
     dripper,
     // Oracle
     chainlinkOracleFeedDAI,
@@ -1047,48 +857,17 @@ const defaultFixture = deployments.createFixture(async () => {
     chainlinkOracleFeedUSDS,
     chainlinkOracleFeedOGNETH,
     chainlinkOracleFeedETH,
-    compoundStrategy,
     oracleRouter,
     oethOracleRouter,
     // Assets
     usdt,
     usds,
-    sUSDS,
-    tusd,
     usdc,
     ogn,
     ssv,
     weth,
-    ogv,
-    reth,
-    stETH,
     nonStandardToken,
-    // cTokens
-    cusdc,
-    cusdt,
-    comp,
-    // aTokens,
-    adai,
-    ausdt,
-    ausdc,
-    // CompoundStrategy contract factory to deploy
-    CompoundStrategyFactory,
-    crv,
-    crvMinter,
-    threePool,
-    threePoolGauge,
-    threePoolToken,
-    metapoolToken,
-    morpho,
-    morphoLens,
-    morphoCompoundStrategy,
-    morphoAaveStrategy,
-    cvx,
-    cvxBooster,
-    cvxRewardPool,
     depositContractUtils,
-    // uniswapPairOUSD_USDT,
-    // liquidityRewardOUSD_USDT,
     wousd,
     morphoSteakhouseUSDCStrategy,
     morphoSteakHouseUSDCVault,
@@ -1100,6 +879,7 @@ const defaultFixture = deployments.createFixture(async () => {
     morphoOUSDv2Vault,
     curvePoolBooster,
     simpleOETHHarvester,
+    oethHarvester: simpleOETHHarvester,
     oethFixedRateDripper,
     OUSDCurveAMO,
     curvePoolOusdUsdc,
@@ -1110,22 +890,11 @@ const defaultFixture = deployments.createFixture(async () => {
 
     // OETH
     oethVaultValueChecker,
-    frxETH,
-    sfrxETH,
     nativeStakingSSVStrategy,
     nativeStakingFeeAccumulator,
-    balancerREthStrategy,
-    oethMorphoAaveStrategy,
-    convexEthMetaStrategy,
-    oethDripper,
     oethFixedRateDripperProxy,
-    oethHarvester,
     oethZapper,
-    aura,
-    bal,
 
-    morphoToken,
-    legacyMorphoToken,
     poolBoosterCentralRegistry,
     poolBoosterMerklFactory,
     merklDistributor,
@@ -1164,29 +933,17 @@ async function poolBoosterCodeUpdatedFixture() {
 }
 
 async function oethDefaultFixture() {
-  // TODO: Trim it down to only do OETH things
   const fixture = await defaultFixture();
 
-  const { weth, reth, stETH, frxETH, sfrxETH } = fixture;
+  const { weth } = fixture;
   const { matt, josh, domen, daniel, franck, oethVault } = fixture;
 
   if (isFork) {
     for (const user of [matt, josh, domen, daniel, franck]) {
-      // Everyone gets free tokens
-      for (const token of [weth, reth, stETH, frxETH, sfrxETH]) {
-        await setERC20TokenBalance(user.address, token, "1000000", hre);
-
-        // And vault can rug them all
-        await resetAllowance(token, user, oethVault.address);
-      }
+      await setERC20TokenBalance(user.address, weth, "1000000", hre);
+      await resetAllowance(weth, user, oethVault.address);
     }
   } else {
-    // Replace frxETHMinter
-    await replaceContractAt(
-      addresses.mainnet.FraxETHMinter,
-      await ethers.getContract("MockFrxETHMinter")
-    );
-
     // Fund WETH contract
     await hardhatSetBalance(weth.address, "999999999999999");
 
@@ -1195,9 +952,7 @@ async function oethDefaultFixture() {
 
     // Reset allowances
     for (const user of [matt, josh, domen, daniel, franck]) {
-      for (const asset of [weth, reth, stETH, frxETH, sfrxETH]) {
-        await resetAllowance(asset, user, oethVault.address);
-      }
+      await resetAllowance(weth, user, oethVault.address);
     }
   }
 
@@ -1206,42 +961,7 @@ async function oethDefaultFixture() {
 
 async function oethCollateralSwapFixture() {
   const fixture = await oethDefaultFixture();
-
   return fixture;
-
-  // const { reth, stETH, matt, strategist, timelock, oethVault } = fixture;
-
-  // const bufferBps = await oethVault.vaultBuffer();
-  // const shouldChangeBuffer = bufferBps.lt(oethUnits("1"));
-
-  // if (shouldChangeBuffer) {
-  //   // If it's not 100% already, set it to 100%
-  //   await oethVault.connect(strategist).setVaultBuffer(
-  //     oethUnits("1") // 100%
-  //   );
-  // }
-
-  // for (const token of [reth, stETH]) {
-  //   await token
-  //     .connect(matt)
-  //     .approve(
-  //       oethVault.address,
-  //       parseEther("100000000000000000000000000000000000")
-  //     );
-
-  //   // Transfer some tokens to the Vault so they can be swapped out
-  //   await token.connect(matt).transfer(oethVault.address, parseEther("200"));
-  // }
-
-  // if (shouldChangeBuffer) {
-  //   // Set it back
-  //   await oethVault.connect(strategist).setVaultBuffer(bufferBps);
-  // }
-
-  // // Withdraw all from strategies so we have assets to swap
-  // await oethVault.connect(timelock).withdrawAllFromStrategies();
-
-  // return fixture;
 }
 
 async function ousdCollateralSwapFixture() {
@@ -1394,10 +1114,6 @@ async function morphoOUSDv2Fixture(
     // Impersonate the OUSD Vault
     fixture.vaultSigner = await impersonateAndFund(vault.address);
 
-    fixture.buyBackSigner = await impersonateAndFund(
-      addresses.multichainBuybackOperator
-    );
-
     // mint some OUSD using USDC if configured
     if (config?.usdcMintAmount > 0) {
       const usdcMintAmount = parseUnits(config.usdcMintAmount.toString(), 6);
@@ -1488,6 +1204,11 @@ async function nativeStakingSSVStrategyFixture() {
       .connect(sGovernor)
       .setRegistrator(governorAddr);
 
+    // Set harvester address on the strategy
+    await nativeStakingSSVStrategy
+      .connect(sGovernor)
+      .setHarvesterAddress(fixture.simpleOETHHarvester.address);
+
     fixture.validatorRegistrator = sGovernor;
   }
 
@@ -1571,7 +1292,7 @@ async function compoundingStakingSSVStrategyFixture() {
 
     await compoundingStakingSSVStrategy
       .connect(sGovernor)
-      .setHarvesterAddress(fixture.oethHarvester.address);
+      .setHarvesterAddress(fixture.simpleOETHHarvester.address);
 
     fixture.validatorRegistrator = sRegistrator;
   }
