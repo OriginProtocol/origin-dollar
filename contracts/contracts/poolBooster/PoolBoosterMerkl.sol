@@ -106,7 +106,7 @@ contract PoolBoosterMerkl is IPoolBooster, Strategizable, Initializable {
             msg.sender == factory ||
                 isGovernor() ||
                 msg.sender == strategistAddr,
-            "Caller is not the Strategist or Governor or Factory"
+            "Not governor, strategist, fctry"
         );
 
         // Ensure token is approved for the Merkl distributor
@@ -232,7 +232,7 @@ contract PoolBoosterMerkl is IPoolBooster, Strategizable, Initializable {
     function _setMerklDistributor(address _merklDistributor) internal {
         require(
             _merklDistributor != address(0),
-            "Invalid merklDistributor address"
+            "Invalid merklDistributor addr"
         );
         merklDistributor = IMerklDistributor(_merklDistributor);
         emit MerklDistributorUpdated(_merklDistributor);

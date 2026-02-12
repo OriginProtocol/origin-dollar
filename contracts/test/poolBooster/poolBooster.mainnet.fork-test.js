@@ -350,7 +350,7 @@ describe("ForkTest: Merkl Pool Booster", function () {
     it("Should revert setMerklDistributor with zero address", async () => {
       await expect(
         poolBooster.connect(pbGovernor).setMerklDistributor(addresses.zero)
-      ).to.be.revertedWith("Invalid merklDistributor address");
+      ).to.be.revertedWith("Invalid merklDistributor addr");
     });
 
     it("Should revert setMerklDistributor if non-governor/strategist", async () => {
@@ -427,7 +427,7 @@ describe("ForkTest: Merkl Pool Booster", function () {
 
     it("Should revert when called by random address", async () => {
       await expect(poolBooster.connect(anna).bribe()).to.be.revertedWith(
-        "Caller is not the Strategist or Governor or Factory"
+        "Not governor, strategist, fctry"
       );
     });
   });
