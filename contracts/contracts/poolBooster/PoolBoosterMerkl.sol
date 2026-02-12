@@ -8,10 +8,10 @@ import { IMerklDistributor } from "../interfaces/poolBooster/IMerklDistributor.s
 import { Strategizable } from "../governance/Strategizable.sol";
 import { Initializable } from "../utils/Initializable.sol";
 
-/// @title PoolBoosterMerklV2
+/// @title PoolBoosterMerkl
 /// @author Origin Protocol
 /// @notice Pool booster that creates campaigns on the Merkl distributor to incentivize liquidity.
-contract PoolBoosterMerklV2 is IPoolBooster, Strategizable, Initializable {
+contract PoolBoosterMerkl is IPoolBooster, Strategizable, Initializable {
     using SafeERC20 for IERC20;
 
     ////////////////////////////////////////////////////

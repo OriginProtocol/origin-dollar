@@ -25,15 +25,13 @@ module.exports = deploymentWithGovernanceProposal(
     const oldFactory = await ethers.getContract("PoolBoosterFactoryMerkl");
 
     // ---------------------------------------------------------------------------------------------------------
-    // --- Deploy PoolBoosterMerklV2 (implementation for clones)
+    // --- Deploy PoolBoosterMerkl (implementation for clones)
     // ---------------------------------------------------------------------------------------------------------
-    const dPoolBoosterMerklV2 = await deployWithConfirmation(
-      "PoolBoosterMerklV2",
+    const dPoolBoosterMerkl = await deployWithConfirmation(
+      "PoolBoosterMerkl",
       []
     );
-    console.log(
-      `PoolBoosterMerklV2 deployed to ${dPoolBoosterMerklV2.address}`
-    );
+    console.log(`PoolBoosterMerkl deployed to ${dPoolBoosterMerkl.address}`);
 
     // ---------------------------------------------------------------------------------------------------------
     // --- Deploy new PoolBoosterFactoryMerkl
@@ -45,7 +43,7 @@ module.exports = deploymentWithGovernanceProposal(
         oeth.address,
         addresses.mainnet.Timelock,
         cPoolBoostCentralRegistryProxy.address,
-        dPoolBoosterMerklV2.address,
+        dPoolBoosterMerkl.address,
       ],
       undefined,
       true
