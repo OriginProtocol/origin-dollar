@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import {IPoolBooster} from "../interfaces/poolBooster/IPoolBooster.sol";
-import {IMerklDistributor} from "../interfaces/poolBooster/IMerklDistributor.sol";
-import {Strategizable} from "../governance/Strategizable.sol";
-import {Initializable} from "../utils/Initializable.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { IPoolBooster } from "../interfaces/poolBooster/IPoolBooster.sol";
+import { IMerklDistributor } from "../interfaces/poolBooster/IMerklDistributor.sol";
+import { Strategizable } from "../governance/Strategizable.sol";
+import { Initializable } from "../utils/Initializable.sol";
 
 /// @title PoolBoosterMerklV2
 /// @author Origin Protocol
@@ -103,7 +103,10 @@ contract PoolBoosterMerklV2 is IPoolBooster, Strategizable, Initializable {
 
         // if balance too small or below threshold, do no bribes
         uint256 balance = IERC20(rewardToken).balanceOf(address(this));
-        if (balance < MIN_BRIBE_AMOUNT || (balance * 1 hours < minAmount * duration)) {
+        if (
+            balance < MIN_BRIBE_AMOUNT ||
+            (balance * 1 hours < minAmount * duration)
+        ) {
             return;
         }
 
@@ -142,7 +145,10 @@ contract PoolBoosterMerklV2 is IPoolBooster, Strategizable, Initializable {
 
     /// @notice Set the campaign data
     /// @param _campaignData New campaign data
-    function setCampaignData(bytes calldata _campaignData) external onlyGovernorOrStrategist {
+    function setCampaignData(bytes calldata _campaignData)
+        external
+        onlyGovernorOrStrategist
+    {
         _setCampaignData(_campaignData);
     }
 
@@ -169,7 +175,10 @@ contract PoolBoosterMerklV2 is IPoolBooster, Strategizable, Initializable {
 
     /// @notice Set the campaign type
     /// @param _campaignType New campaign type
-    function setCampaignType(uint32 _campaignType) external onlyGovernorOrStrategist {
+    function setCampaignType(uint32 _campaignType)
+        external
+        onlyGovernorOrStrategist
+    {
         _setCampaignType(_campaignType);
     }
 
@@ -182,7 +191,10 @@ contract PoolBoosterMerklV2 is IPoolBooster, Strategizable, Initializable {
 
     /// @notice Set the reward token
     /// @param _rewardToken New reward token address
-    function setRewardToken(address _rewardToken) external onlyGovernorOrStrategist {
+    function setRewardToken(address _rewardToken)
+        external
+        onlyGovernorOrStrategist
+    {
         _setRewardToken(_rewardToken);
     }
 
@@ -196,14 +208,20 @@ contract PoolBoosterMerklV2 is IPoolBooster, Strategizable, Initializable {
 
     /// @notice Set the Merkl distributor
     /// @param _merklDistributor New Merkl distributor address
-    function setMerklDistributor(address _merklDistributor) external onlyGovernorOrStrategist {
+    function setMerklDistributor(address _merklDistributor)
+        external
+        onlyGovernorOrStrategist
+    {
         _setMerklDistributor(_merklDistributor);
     }
 
     /// @notice Internal logic to set the Merkl distributor
     /// @param _merklDistributor New Merkl distributor address, must be non-zero
     function _setMerklDistributor(address _merklDistributor) internal {
-        require(_merklDistributor != address(0), "Invalid merklDistributor address");
+        require(
+            _merklDistributor != address(0),
+            "Invalid merklDistributor address"
+        );
         merklDistributor = IMerklDistributor(_merklDistributor);
         emit MerklDistributorUpdated(_merklDistributor);
     }
@@ -216,7 +234,10 @@ contract PoolBoosterMerklV2 is IPoolBooster, Strategizable, Initializable {
     /// @dev Only callable by the governor
     /// @param token Address of the token to rescue
     /// @param receiver Address to receive the tokens
-    function rescueToken(address token, address receiver) external onlyGovernor {
+    function rescueToken(address token, address receiver)
+        external
+        onlyGovernor
+    {
         require(receiver != address(0), "Invalid receiver");
         uint256 balance = IERC20(token).balanceOf(address(this));
         IERC20(token).safeTransfer(receiver, balance);

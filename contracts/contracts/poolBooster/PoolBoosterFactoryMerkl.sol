@@ -1,14 +1,13 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import {Clones} from "@openzeppelin/contracts/proxy/Clones.sol";
-import {AbstractPoolBoosterFactory, IPoolBoostCentralRegistry} from "./AbstractPoolBoosterFactory.sol";
+import { Clones } from "@openzeppelin/contracts/proxy/Clones.sol";
+import { AbstractPoolBoosterFactory, IPoolBoostCentralRegistry } from "./AbstractPoolBoosterFactory.sol";
 
 /// @title PoolBoosterFactoryMerkl
 /// @author Origin Protocol
 /// @notice Factory for creating Merkl pool boosters using minimal proxies (EIP-1167).
 contract PoolBoosterFactoryMerkl is AbstractPoolBoosterFactory {
-
     ////////////////////////////////////////////////////
     /// --- CONSTANTS
     ////////////////////////////////////////////////////
@@ -44,7 +43,10 @@ contract PoolBoosterFactoryMerkl is AbstractPoolBoosterFactory {
         address _centralRegistry,
         address _implementation
     ) AbstractPoolBoosterFactory(_oToken, _governor, _centralRegistry) {
-        require(_implementation != address(0), "Invalid implementation address");
+        require(
+            _implementation != address(0),
+            "Invalid implementation address"
+        );
         implementation = _implementation;
         emit ImplementationUpdated(_implementation);
     }
@@ -63,7 +65,10 @@ contract PoolBoosterFactoryMerkl is AbstractPoolBoosterFactory {
         uint256 _salt
     ) external onlyGovernor {
         require(implementation != address(0), "Implementation not set");
-        require(_ammPoolAddress != address(0), "Invalid ammPoolAddress address");
+        require(
+            _ammPoolAddress != address(0),
+            "Invalid ammPoolAddress address"
+        );
         require(_salt > 0, "Invalid salt");
 
         address clone = Clones.cloneDeterministic(
@@ -88,9 +93,14 @@ contract PoolBoosterFactoryMerkl is AbstractPoolBoosterFactory {
     /// @notice Compute the deterministic address of a Pool Booster clone
     /// @param _salt Unique number matching the one used in createPoolBoosterMerkl
     /// @return The predicted clone address
-    function computePoolBoosterAddress(uint256 _salt) external view returns (address) {
+    function computePoolBoosterAddress(uint256 _salt)
+        external
+        view
+        returns (address)
+    {
         require(_salt > 0, "Invalid salt");
-        return Clones.predictDeterministicAddress(implementation, bytes32(_salt));
+        return
+            Clones.predictDeterministicAddress(implementation, bytes32(_salt));
     }
 
     ////////////////////////////////////////////////////
@@ -100,7 +110,10 @@ contract PoolBoosterFactoryMerkl is AbstractPoolBoosterFactory {
     /// @notice Set the address of the implementation contract
     /// @param _implementation New PoolBoosterMerklV2 implementation address
     function setImplementation(address _implementation) external onlyGovernor {
-        require(_implementation != address(0), "Invalid implementation address");
+        require(
+            _implementation != address(0),
+            "Invalid implementation address"
+        );
         implementation = _implementation;
         emit ImplementationUpdated(_implementation);
     }
