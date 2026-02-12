@@ -96,7 +96,7 @@ contract PoolBoosterMerklV2 is IPoolBooster, Strategizable, Initializable {
 
     /// @notice Execute a bribe by creating a campaign on the Merkl distributor
     /// @dev Skips silently if balance is below MIN_BRIBE_AMOUNT or insufficient for the duration
-    function bribe() external onlyGovernorOrStrategist {
+    function bribe() external override {
         // Ensure token is approved for the Merkl distributor
         uint256 minAmount = merklDistributor.rewardTokenMinAmounts(rewardToken);
         require(minAmount > 0, "Min reward amount must be > 0");
