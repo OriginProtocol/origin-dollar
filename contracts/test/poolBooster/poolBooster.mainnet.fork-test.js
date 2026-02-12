@@ -136,19 +136,21 @@ describe("ForkTest: Merkl Pool Booster", function () {
       expect(await poolBooster.merklDistributor()).to.equal(
         addresses.mainnet.CampaignCreator
       );
-      expect(await poolBooster.governor()).to.equal(
-        addresses.mainnet.Guardian
-      );
+      expect(await poolBooster.governor()).to.equal(addresses.mainnet.Guardian);
       expect(await poolBooster.strategistAddr()).to.equal(
         addresses.multichainStrategist
+      );
+      expect(await poolBooster.factory()).to.equal(
+        poolBoosterMerklFactory.address
       );
     });
 
     it("Should match computePoolBoosterAddress", async () => {
       const salt = 300;
       const initData = encodeInitData();
-      const computed =
-        await poolBoosterMerklFactory.computePoolBoosterAddress(salt);
+      const computed = await poolBoosterMerklFactory.computePoolBoosterAddress(
+        salt
+      );
 
       await poolBoosterMerklFactory
         .connect(governor)
@@ -214,9 +216,7 @@ describe("ForkTest: Merkl Pool Booster", function () {
 
     it("Should revert when called by non-governor", async () => {
       await expect(
-        poolBoosterMerklFactory
-          .connect(anna)
-          .setImplementation(anna.address)
+        poolBoosterMerklFactory.connect(anna).setImplementation(anna.address)
       ).to.be.revertedWith("Caller is not the Governor");
     });
   });
@@ -281,9 +281,7 @@ describe("ForkTest: Merkl Pool Booster", function () {
     // setDuration
     it("Should setDuration and emit event", async () => {
       const newDuration = 86400 * 14; // 2 weeks
-      const tx = await poolBooster
-        .connect(pbGovernor)
-        .setDuration(newDuration);
+      const tx = await poolBooster.connect(pbGovernor).setDuration(newDuration);
       await expect(tx)
         .to.emit(poolBooster, "DurationUpdated")
         .withArgs(newDuration);
@@ -304,12 +302,8 @@ describe("ForkTest: Merkl Pool Booster", function () {
 
     // setCampaignType
     it("Should setCampaignType and emit event", async () => {
-      const tx = await poolBooster
-        .connect(pbStrategist)
-        .setCampaignType(99);
-      await expect(tx)
-        .to.emit(poolBooster, "CampaignTypeUpdated")
-        .withArgs(99);
+      const tx = await poolBooster.connect(pbStrategist).setCampaignType(99);
+      await expect(tx).to.emit(poolBooster, "CampaignTypeUpdated").withArgs(99);
       expect(await poolBooster.campaignType()).to.equal(99);
     });
 
@@ -322,9 +316,7 @@ describe("ForkTest: Merkl Pool Booster", function () {
     // setRewardToken
     it("Should setRewardToken and emit event", async () => {
       const newToken = addresses.mainnet.WETH;
-      const tx = await poolBooster
-        .connect(pbGovernor)
-        .setRewardToken(newToken);
+      const tx = await poolBooster.connect(pbGovernor).setRewardToken(newToken);
       await expect(tx)
         .to.emit(poolBooster, "RewardTokenUpdated")
         .withArgs(newToken);
@@ -390,15 +382,17 @@ describe("ForkTest: Merkl Pool Booster", function () {
   // 6. PoolBoosterMerklV2: bribe()
   // -------------------------------------------------------------------
   describe("PoolBoosterMerklV2: bribe()", () => {
-    let poolBooster;
+    let poolBooster, pbGovernor, pbStrategist;
 
     beforeEach(async () => {
       poolBooster = await createPoolBooster(600);
+      pbGovernor = await impersonateAndFund(addresses.mainnet.Guardian);
+      pbStrategist = await impersonateAndFund(addresses.multichainStrategist);
     });
 
     it("Should skip when balance < MIN_BRIBE_AMOUNT", async () => {
       // Pool booster has 0 balance — bribe should just return silently
-      const tx = await poolBooster.bribe();
+      const tx = await poolBooster.connect(pbGovernor).bribe();
       await expect(tx).to.not.emit(poolBooster, "BribeExecuted");
     });
 
@@ -410,7 +404,7 @@ describe("ForkTest: Merkl Pool Booster", function () {
         .connect(anna)
         .transfer(poolBooster.address, ethers.BigNumber.from("100000000000")); // 1e11
 
-      const tx = await poolBooster.bribe();
+      const tx = await poolBooster.connect(pbStrategist).bribe();
       await expect(tx).to.not.emit(poolBooster, "BribeExecuted");
       // Balance unchanged
       expect(await oeth.balanceOf(poolBooster.address)).to.be.gte(
@@ -421,18 +415,20 @@ describe("ForkTest: Merkl Pool Booster", function () {
     it("Should execute campaign creation when funded", async () => {
       // Mint OETH to anna and transfer to pool booster
       await mintOeth(anna, oethUnits("100"));
-      await oeth
-        .connect(anna)
-        .transfer(poolBooster.address, oethUnits("10"));
+      await oeth.connect(anna).transfer(poolBooster.address, oethUnits("10"));
 
       const balance = await oeth.balanceOf(poolBooster.address);
-      const tx = await poolBooster.bribe();
-      await expect(tx)
-        .to.emit(poolBooster, "BribeExecuted")
-        .withArgs(balance);
+      const tx = await poolBooster.connect(pbGovernor).bribe();
+      await expect(tx).to.emit(poolBooster, "BribeExecuted").withArgs(balance);
 
       // Balance should be 0 after bribe
       expect(await oeth.balanceOf(poolBooster.address)).to.equal(0);
+    });
+
+    it("Should revert when called by random address", async () => {
+      await expect(poolBooster.connect(anna).bribe()).to.be.revertedWith(
+        "Caller is not the Strategist or Governor or Factory"
+      );
     });
   });
 
@@ -451,9 +447,7 @@ describe("ForkTest: Merkl Pool Booster", function () {
       // Fund pool booster
       await mintOeth(anna, oethUnits("100"));
       const transferAmount = oethUnits("5");
-      await oeth
-        .connect(anna)
-        .transfer(poolBooster.address, transferAmount);
+      await oeth.connect(anna).transfer(poolBooster.address, transferAmount);
 
       const receiver = fixture.matt.address;
       const balanceBefore = await oeth.balanceOf(receiver);
@@ -481,9 +475,7 @@ describe("ForkTest: Merkl Pool Booster", function () {
 
     it("Should revert when called by non-governor", async () => {
       await expect(
-        poolBooster
-          .connect(anna)
-          .rescueToken(oeth.address, anna.address)
+        poolBooster.connect(anna).rescueToken(oeth.address, anna.address)
       ).to.be.revertedWith("Caller is not the Governor");
     });
   });
@@ -500,8 +492,7 @@ describe("ForkTest: Merkl Pool Booster", function () {
       await createPoolBooster(802, pool2);
 
       const entry1 = await poolBoosterMerklFactory.poolBoosterFromPool(pool1);
-      const initialLength =
-        await poolBoosterMerklFactory.poolBoosterLength();
+      const initialLength = await poolBoosterMerklFactory.poolBoosterLength();
 
       const tx = await poolBoosterMerklFactory
         .connect(governor)
@@ -517,8 +508,9 @@ describe("ForkTest: Merkl Pool Booster", function () {
       );
 
       // Removed entry should be zeroed out
-      const removedEntry =
-        await poolBoosterMerklFactory.poolBoosterFromPool(pool1);
+      const removedEntry = await poolBoosterMerklFactory.poolBoosterFromPool(
+        pool1
+      );
       expect(removedEntry.boosterAddress).to.equal(addresses.zero);
     });
 
@@ -540,19 +532,17 @@ describe("ForkTest: Merkl Pool Booster", function () {
 
       // Fund the pool booster
       await mintOeth(anna, oethUnits("100"));
-      await oeth
-        .connect(anna)
-        .transfer(poolBooster.address, oethUnits("10"));
+      await oeth.connect(anna).transfer(poolBooster.address, oethUnits("10"));
 
       const balanceBefore = await oeth.balanceOf(poolBooster.address);
 
       // bribeAll with the pool booster on the exclusion list
-      await poolBoosterMerklFactory.bribeAll([poolBooster.address]);
+      await poolBoosterMerklFactory
+        .connect(governor)
+        .bribeAll([poolBooster.address]);
 
       // Balance should remain the same (excluded from bribe)
-      expect(await oeth.balanceOf(poolBooster.address)).to.equal(
-        balanceBefore
-      );
+      expect(await oeth.balanceOf(poolBooster.address)).to.equal(balanceBefore);
     });
 
     it("Should bribeAll and execute bribes on funded pool boosters", async () => {
@@ -561,20 +551,22 @@ describe("ForkTest: Merkl Pool Booster", function () {
 
       // Fund the pool booster
       await mintOeth(anna, oethUnits("100"));
-      await oeth
-        .connect(anna)
-        .transfer(poolBooster.address, oethUnits("10"));
+      await oeth.connect(anna).transfer(poolBooster.address, oethUnits("10"));
 
       const balance = await oeth.balanceOf(poolBooster.address);
       expect(balance).to.be.gt(0);
 
       // bribeAll with empty exclusion list — should execute bribe
-      const tx = await poolBoosterMerklFactory.bribeAll([]);
+      const tx = await poolBoosterMerklFactory.connect(governor).bribeAll([]);
 
-      await expect(tx)
-        .to.emit(poolBooster, "BribeExecuted")
-        .withArgs(balance);
+      await expect(tx).to.emit(poolBooster, "BribeExecuted").withArgs(balance);
       expect(await oeth.balanceOf(poolBooster.address)).to.equal(0);
+    });
+
+    it("Should revert bribeAll when called by non-governor", async () => {
+      await expect(
+        poolBoosterMerklFactory.connect(anna).bribeAll([])
+      ).to.be.revertedWith("Caller is not the Governor");
     });
   });
 

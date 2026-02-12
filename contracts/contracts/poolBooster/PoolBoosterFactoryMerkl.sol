@@ -86,6 +86,16 @@ contract PoolBoosterFactoryMerkl is AbstractPoolBoosterFactory {
         );
     }
 
+    /// @notice Override bribeAll to restrict access to governor only
+    /// @param _exclusionList A list of pool booster addresses to skip
+    function bribeAll(address[] memory _exclusionList)
+        public
+        override
+        onlyGovernor
+    {
+        super.bribeAll(_exclusionList);
+    }
+
     ////////////////////////////////////////////////////
     /// --- VIEW FUNCTIONS
     ////////////////////////////////////////////////////

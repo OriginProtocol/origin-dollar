@@ -40,6 +40,9 @@ contract PoolBoosterMerklV2 is IPoolBooster, Strategizable, Initializable {
     /// @notice Address of the reward token used for bribes
     address public rewardToken;
 
+    /// @notice Address of the factory that created this pool booster
+    address public factory;
+
     /// @notice Merkl distributor contract used to create campaigns
     IMerklDistributor public merklDistributor;
 
@@ -87,6 +90,8 @@ contract PoolBoosterMerklV2 is IPoolBooster, Strategizable, Initializable {
         _setStrategistAddr(_strategist);
         _setCampaignData(_campaignData);
 
+        factory = msg.sender;
+
         merklDistributor.acceptConditions();
     }
 
@@ -97,6 +102,13 @@ contract PoolBoosterMerklV2 is IPoolBooster, Strategizable, Initializable {
     /// @notice Execute a bribe by creating a campaign on the Merkl distributor
     /// @dev Skips silently if balance is below MIN_BRIBE_AMOUNT or insufficient for the duration
     function bribe() external override {
+        require(
+            msg.sender == factory ||
+                isGovernor() ||
+                msg.sender == strategistAddr,
+            "Caller is not the Strategist or Governor or Factory"
+        );
+
         // Ensure token is approved for the Merkl distributor
         uint256 minAmount = merklDistributor.rewardTokenMinAmounts(rewardToken);
         require(minAmount > 0, "Min reward amount must be > 0");
