@@ -1,145 +1,130 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import { PoolBoosterMerkl } from "./PoolBoosterMerkl.sol";
+import { Clones } from "@openzeppelin/contracts/proxy/Clones.sol";
 import { AbstractPoolBoosterFactory, IPoolBoostCentralRegistry } from "./AbstractPoolBoosterFactory.sol";
 
-/**
- * @title Pool booster factory for creating Merkl pool boosters.
- * @author Origin Protocol Inc
- */
+/// @title PoolBoosterFactoryMerkl
+/// @author Origin Protocol
+/// @notice Factory for creating Merkl pool boosters using minimal proxies (EIP-1167).
 contract PoolBoosterFactoryMerkl is AbstractPoolBoosterFactory {
-    uint256 public constant version = 1;
+    ////////////////////////////////////////////////////
+    /// --- CONSTANTS
+    ////////////////////////////////////////////////////
 
-    /// @notice address of the Merkl distributor
-    address public merklDistributor;
+    /// @notice Contract version
+    string public constant VERSION = "1.0.0";
 
-    /// @notice event emitted when the Merkl distributor is updated
-    event MerklDistributorUpdated(address newDistributor);
+    ////////////////////////////////////////////////////
+    /// --- STORAGE
+    ////////////////////////////////////////////////////
 
-    /**
-     * @param _oToken address of the OToken token
-     * @param _governor address governor
-     * @param _centralRegistry address of the central registry
-     * @param _merklDistributor address of the Merkl distributor
-     */
+    /// @notice Address of the PoolBoosterMerkl implementation contract
+    address public implementation;
+
+    ////////////////////////////////////////////////////
+    /// --- EVENTS
+    ////////////////////////////////////////////////////
+
+    event ImplementationUpdated(address newImplementation);
+
+    ////////////////////////////////////////////////////
+    /// --- CONSTRUCTOR
+    ////////////////////////////////////////////////////
+
+    /// @notice Initialize the factory
+    /// @param _oToken Address of the OToken token
+    /// @param _governor Address of the governor
+    /// @param _centralRegistry Address of the central registry
+    /// @param _implementation Address of the PoolBoosterMerkl implementation
     constructor(
         address _oToken,
         address _governor,
         address _centralRegistry,
-        address _merklDistributor
+        address _implementation
     ) AbstractPoolBoosterFactory(_oToken, _governor, _centralRegistry) {
-        _setMerklDistributor(_merklDistributor);
+        require(
+            _implementation != address(0),
+            "Invalid implementation address"
+        );
+        implementation = _implementation;
+        emit ImplementationUpdated(_implementation);
     }
 
-    /**
-     * @dev Create a Pool Booster for Merkl.
-     * @param _campaignType The type of campaign to create. This is used to determine the type of
-     *        bribe contract to create. The type is defined in the MerklDistributor contract.
-     * @param _ammPoolAddress address of the AMM pool where the yield originates from
-     * @param _campaignDuration The duration of the campaign in seconds
-     * @param campaignData The data to be used for the campaign. This is used to determine the type of
-     *        bribe contract to create. The type is defined in the MerklDistributor contract.
-     *        This should be fetched from the Merkl UI.
-     * @param _salt A unique number that affects the address of the pool booster created. Note: this number
-     *        should match the one from `computePoolBoosterAddress` in order for the final deployed address
-     *        and pre-computed address to match
-     */
+    ////////////////////////////////////////////////////
+    /// --- CORE LOGIC
+    ////////////////////////////////////////////////////
+
+    /// @notice Create a Pool Booster for Merkl using a minimal proxy clone
+    /// @param _ammPoolAddress Address of the AMM pool where the yield originates from
+    /// @param _initData Encoded call data for initializing the clone
+    /// @param _salt Unique number that determines the clone address
     function createPoolBoosterMerkl(
-        uint32 _campaignType,
         address _ammPoolAddress,
-        uint32 _campaignDuration,
-        bytes calldata campaignData,
+        bytes calldata _initData,
         uint256 _salt
     ) external onlyGovernor {
+        require(implementation != address(0), "Implementation not set");
         require(
             _ammPoolAddress != address(0),
             "Invalid ammPoolAddress address"
         );
         require(_salt > 0, "Invalid salt");
-        require(_campaignDuration > 1 hours, "Invalid campaign duration");
-        require(campaignData.length > 0, "Invalid campaign data");
 
-        address poolBoosterAddress = _deployContract(
-            abi.encodePacked(
-                type(PoolBoosterMerkl).creationCode,
-                abi.encode(
-                    oToken,
-                    merklDistributor,
-                    _campaignDuration,
-                    _campaignType,
-                    governor(),
-                    campaignData
-                )
-            ),
-            _salt
+        address clone = Clones.cloneDeterministic(
+            implementation,
+            bytes32(_salt)
         );
 
+        (bool success, ) = clone.call(_initData);
+        require(success, "Initialization failed");
+
         _storePoolBoosterEntry(
-            poolBoosterAddress,
+            clone,
             _ammPoolAddress,
             IPoolBoostCentralRegistry.PoolBoosterType.MerklBooster
         );
     }
 
-    /**
-     * @dev Create a Pool Booster for Merkl.
-     * @param _campaignType The type of campaign to create. This is used to determine the type of
-     *        bribe contract to create. The type is defined in the MerklDistributor contract.
-     * @param _ammPoolAddress address of the AMM pool where the yield originates from
-     * @param _salt A unique number that affects the address of the pool booster created. Note: this number
-     *        should match the one from `createPoolBoosterMerkl` in order for the final deployed address
-     *        and pre-computed address to match
-     */
-    function computePoolBoosterAddress(
-        uint32 _campaignType,
-        address _ammPoolAddress,
-        uint32 _campaignDuration,
-        bytes calldata campaignData,
-        uint256 _salt
-    ) external view returns (address) {
-        require(
-            _ammPoolAddress != address(0),
-            "Invalid ammPoolAddress address"
-        );
-        require(_salt > 0, "Invalid salt");
-        require(_campaignDuration > 1 hours, "Invalid campaign duration");
-        require(campaignData.length > 0, "Invalid campaign data");
-
-        return
-            _computeAddress(
-                abi.encodePacked(
-                    type(PoolBoosterMerkl).creationCode,
-                    abi.encode(
-                        oToken,
-                        merklDistributor,
-                        _campaignDuration,
-                        _campaignType,
-                        governor(),
-                        campaignData
-                    )
-                ),
-                _salt
-            );
-    }
-
-    /**
-     * @dev Set the address of the Merkl distributor
-     * @param _merklDistributor The address of the Merkl distributor
-     */
-    function setMerklDistributor(address _merklDistributor)
-        external
+    /// @notice Override bribeAll to restrict access to governor only
+    /// @param _exclusionList A list of pool booster addresses to skip
+    function bribeAll(address[] memory _exclusionList)
+        public
+        override
         onlyGovernor
     {
-        _setMerklDistributor(_merklDistributor);
+        super.bribeAll(_exclusionList);
     }
 
-    function _setMerklDistributor(address _merklDistributor) internal {
+    ////////////////////////////////////////////////////
+    /// --- VIEW FUNCTIONS
+    ////////////////////////////////////////////////////
+
+    /// @notice Compute the deterministic address of a Pool Booster clone
+    /// @param _salt Unique number matching the one used in createPoolBoosterMerkl
+    /// @return The predicted clone address
+    function computePoolBoosterAddress(uint256 _salt)
+        external
+        view
+        returns (address)
+    {
+        require(_salt > 0, "Invalid salt");
+        return
+            Clones.predictDeterministicAddress(implementation, bytes32(_salt));
+    }
+
+    ////////////////////////////////////////////////////
+    /// --- SETTERS
+    ////////////////////////////////////////////////////
+
+    /// @notice Set the address of the implementation contract
+    /// @param _implementation New PoolBoosterMerklV2 implementation address
+    function setImplementation(address _implementation) external onlyGovernor {
         require(
-            _merklDistributor != address(0),
-            "Invalid merklDistributor address"
+            _implementation != address(0),
+            "Invalid implementation address"
         );
-        merklDistributor = _merklDistributor;
-        emit MerklDistributorUpdated(_merklDistributor);
+        implementation = _implementation;
+        emit ImplementationUpdated(_implementation);
     }
 }
