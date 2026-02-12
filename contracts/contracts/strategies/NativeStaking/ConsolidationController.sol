@@ -30,12 +30,14 @@ contract ConsolidationController is Ownable {
 
     /// @notice Number of validators being consolidated
     uint64 public consolidationCount;
-    /// @notice Timestamp when the consolidation process was requested
-    uint64 public consolidationStartTimestamp;
+    /// @notice Timestamp of the first consolidation request
+    uint64 public firstRequestTimestamp;
+    /// @notice Timestamp of the last consolidation request
+    uint64 public lastRequestTimestamp;
     /// @notice The address of the source Native Staking Strategy being consolidated from
     address public sourceStrategy;
-    /// @notice The public key hash of the target validator on the new Compounding Staking Strategy
-    bytes32 public targetPubKeyHash;
+    /// @notice The public key of the target validator on the new Compounding Staking Strategy
+    bytes public targetPubKey;
 
     /// @dev Throws if called by any account other than the Validator Registrator
     modifier onlyRegistrator() {
@@ -69,13 +71,13 @@ contract ConsolidationController is Ownable {
      * @notice Request consolidation of validators from an old Native Staking Strategy
      * to the new Compounding Staking Strategy
      * @param _sourceStrategy The address of the old Native Staking Strategy
-     * @param sourcePubKeys The public keys of the validators to be consolidated from the old Native Staking Strategy
-     * @param targetPubKey The public key of the target validator on the new Compounding Staking Strategy
+     * @param _sourcePubKeys The public keys of the validators to be consolidated from the old Native Staking Strategy
+     * @param _targetPubKey The public key of the target validator on the new Compounding Staking Strategy
      */
     function requestConsolidation(
         address _sourceStrategy,
-        bytes[] calldata sourcePubKeys,
-        bytes calldata targetPubKey
+        bytes[] calldata _sourcePubKeys,
+        bytes calldata _targetPubKey
     ) external payable onlyOwner {
         // Check no consolidations are already in progress
         require(consolidationCount == 0, "Consolidation in progress");
@@ -83,7 +85,7 @@ contract ConsolidationController is Ownable {
         _checkSourceStrategy(_sourceStrategy);
 
         // Check target validator is Active on the new Compounding Staking Strategy
-        bytes32 targetPubKeyHashMem = _hashPubKey(targetPubKey);
+        bytes32 targetPubKeyHashMem = _hashPubKey(_targetPubKey);
         (CompoundingStakingSSVStrategy.ValidatorState state, ) = targetStrategy
             .validator(targetPubKeyHashMem);
         require(
@@ -97,20 +99,55 @@ contract ConsolidationController is Ownable {
         );
 
         // Store the state at the start of the consolidation process
-        consolidationCount = SafeCast.toUint64(sourcePubKeys.length);
-        consolidationStartTimestamp = uint64(block.timestamp);
+        consolidationCount = SafeCast.toUint64(_sourcePubKeys.length);
+        firstRequestTimestamp = uint64(block.timestamp);
+        lastRequestTimestamp = uint64(block.timestamp);
         sourceStrategy = _sourceStrategy;
-        targetPubKeyHash = targetPubKeyHashMem;
+        targetPubKey = _targetPubKey;
 
         // Call requestConsolidation on the old Native Staking Strategy
         // to initiate the consolidations
         ValidatorAccountant(_sourceStrategy).requestConsolidation{
             value: msg.value
-        }(sourcePubKeys, targetPubKey);
+        }(_sourcePubKeys, _targetPubKey);
 
         // Snap the balances for the last time on the new Compounding Staking Strategy
         // until the consolidations are confirmed
         targetStrategy.snapBalances();
+
+        // No event emitted as ConsolidationRequested is emitted from the old Native Staking Strategy
+    }
+
+    /**
+     * @notice Allow more validators to be added to the consolidation as there is a maximum of 9 validators
+     * per epoch due to the churn limit.
+     * Can not add to a consolidation after 256 epochs (~27 hours) from the first consolidation request.
+     * @param sourcePubKeys The public keys of the additional validators to be consolidated from the old Native Staking Strategy
+     */
+    function addConsolidation(bytes[] calldata sourcePubKeys)
+        external
+        payable
+        onlyOwner
+    {
+        // Check a consolidations is already in progress
+        require(consolidationCount > 0, "No consolidation in progress");
+        // Can not add to a consolidation after 256 epochs (~27 hours)
+        require(
+            firstRequestTimestamp + MIN_CONSOLIDATION_PERIOD > block.timestamp,
+            "No longer add to consolidation"
+        );
+
+        // Store updated consolidation state
+        consolidationCount += SafeCast.toUint64(sourcePubKeys.length);
+        lastRequestTimestamp = uint64(block.timestamp);
+
+        // Call requestConsolidation on the old Native Staking Strategy
+        // to initiate the consolidations
+        ValidatorAccountant(sourceStrategy).requestConsolidation{
+            value: msg.value
+        }(sourcePubKeys, targetPubKey);
+
+        // Can not snap balances here as the consolidation process has already started
 
         // No event emitted as ConsolidationRequested is emitted from the old Native Staking Strategy
     }
@@ -141,9 +178,10 @@ contract ConsolidationController is Ownable {
         consolidationCount -= SafeCast.toUint64(sourcePubKeys.length);
         if (consolidationCount == 0) {
             // Reset the rest of the consolidation state
-            consolidationStartTimestamp = 0;
+            firstRequestTimestamp = 0;
+            lastRequestTimestamp = 0;
             sourceStrategy = address(0);
-            targetPubKeyHash = bytes32(0);
+            targetPubKey = bytes("");
         }
 
         ValidatorAccountant(sourceStrategyMem).failConsolidation(sourcePubKeys);
@@ -183,7 +221,7 @@ contract ConsolidationController is Ownable {
         (, uint64 snappedTimestamp, ) = targetStrategy.snappedBalance();
         require(
             uint64(snappedTimestamp) >
-                consolidationStartTimestamp + MIN_CONSOLIDATION_PERIOD,
+                lastRequestTimestamp + MIN_CONSOLIDATION_PERIOD,
             "Source not withdrawable"
         );
 
@@ -194,9 +232,10 @@ contract ConsolidationController is Ownable {
 
         // Reset consolidation state before external calls
         consolidationCount = 0;
-        consolidationStartTimestamp = 0;
+        firstRequestTimestamp = 0;
+        lastRequestTimestamp = 0;
         sourceStrategy = address(0);
-        targetPubKeyHash = bytes32(0);
+        targetPubKey = bytes("");
 
         // Verify balances on the new Compounding Staking Strategy and update the strategy's balance
         targetStrategy.verifyBalances(balanceProofs, pendingDepositProofs);
@@ -290,10 +329,24 @@ contract ConsolidationController is Ownable {
     /// @notice Forwards to the new Compounding Staking Strategy.
     /// Is only callable by the validator registrator when a consolidation is in progress.
     /// Anyone can call when there are no consolidations in progress.
+    /// The validator registrator can not call before there has been enough time for the
+    /// consolidation to be processed on the beacon chain. This allows time for the balance
+    /// at the start of the consolidation process to be verified.
+    /// @dev The validator registrator restriction is to prevent anyone calling snapBalances
+    /// and preventing the owner multisig from calling confirmConsolidation.
     function snapBalances() external {
-        if (consolidationCount > 0 && msg.sender != validatorRegistrator) {
-            revert("Consolidation in progress");
-        }
+        require(
+            consolidationCount == 0 || msg.sender == validatorRegistrator,
+            "Consolidation in progress"
+        );
+        // Don't allow snapBalances too soon so there is time to verify the balances at
+        // the start of the consolidation process
+        require(
+            consolidationCount == 0 ||
+                lastRequestTimestamp + MIN_CONSOLIDATION_PERIOD <
+                block.timestamp,
+            "Consolidation not completed"
+        );
 
         targetStrategy.snapBalances();
     }
@@ -326,14 +379,12 @@ contract ConsolidationController is Ownable {
     ) external {
         (, uint64 snappedTimestamp, ) = targetStrategy.snappedBalance();
         // Can not verify balances while consolidations are in progress
-        // but can if the snapped balance is the start of the consolidation process.
-        // That is, snappedTimestamp == consolidationStartTimestamp
-        if (
-            consolidationCount > 0 &&
-            snappedTimestamp != consolidationStartTimestamp
-        ) {
-            revert("Consolidation in progress");
-        }
+        // except if the snapped balance is the start of the consolidation process.
+        require(
+            consolidationCount == 0 ||
+                snappedTimestamp == firstRequestTimestamp,
+            "Consolidation in progress"
+        );
 
         targetStrategy.verifyBalances(balanceProofs, pendingDepositProofs);
     }
@@ -375,7 +426,9 @@ contract ConsolidationController is Ownable {
         uint64 depositAmountGwei
     ) external onlyRegistrator {
         require(
-            _hashPubKey(validatorStakeData.pubkey) != targetPubKeyHash,
+            consolidationCount == 0 ||
+                _hashPubKey(validatorStakeData.pubkey) !=
+                _hashPubKey(targetPubKey),
             "Stake to consolidation target"
         );
 

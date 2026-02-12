@@ -803,8 +803,17 @@ describe("ForkTest: Consolidation of Staking Strategies", function () {
       await expect(tx).to.emit(compoundingStakingStrategy, "BalancesVerified");
     });
     // Balance proofs after the deposit to validator 13498458 has been verified.
-    it("Should call snapBalance on the Consolidation Controller by the Registrator after the consolidation has started", async () => {
+    it("Should call snapBalance on the Consolidation Controller by the Registrator before 256 epochs (~27 hours)", async () => {
       await advanceTime(12 * 40);
+
+      const tx = consolidationController
+        .connect(registratorSigner)
+        .snapBalances();
+
+      await expect(tx).to.revertedWith("Consolidation not completed");
+    });
+    it("Should call snapBalance on the Consolidation Controller by the Registrator after 256 epochs (~27 hours)", async () => {
+      await advanceTime(256 * 32 * 12);
 
       const tx = await consolidationController
         .connect(registratorSigner)
@@ -814,14 +823,14 @@ describe("ForkTest: Consolidation of Staking Strategies", function () {
     });
     it("Fail snapBalance on the new compounding staking strategy when called by non-registrator after the consolidation has started", async () => {
       const { josh } = fixture;
-      await advanceTime(12 * 40);
+      await advanceTime(256 * 32 * 12);
 
       const tx = compoundingStakingStrategy.connect(josh).snapBalances();
 
       await expect(tx).to.be.revertedWith("Not Registrator");
     });
     it("Fail to verifyBalance of a snapshot after the consolidation has started", async () => {
-      await advanceTime(12 * 40);
+      await advanceTime(256 * 32 * 12);
       await consolidationController.connect(registratorSigner).snapBalances();
 
       const tx = consolidationController
@@ -877,8 +886,8 @@ describe("ForkTest: Consolidation of Staking Strategies", function () {
       expect(await consolidationController.sourceStrategy()).to.equal(
         nativeStakingStrategy2.address
       );
-      expect(await consolidationController.targetPubKeyHash()).to.not.equal(
-        ethers.constants.HashZero
+      expect(await consolidationController.targetPubKey()).to.equal(
+        activeTargetPubKey
       );
 
       // Source validator post-conditions
@@ -904,9 +913,7 @@ describe("ForkTest: Consolidation of Staking Strategies", function () {
       expect(await consolidationController.sourceStrategy()).to.equal(
         ethers.constants.AddressZero
       );
-      expect(await consolidationController.targetPubKeyHash()).to.equal(
-        ethers.constants.HashZero
-      );
+      expect(await consolidationController.targetPubKey()).to.equal("0x");
     });
     it("Fail to call fail consolidation if not admin multisig", async () => {
       const { josh, strategist, timelock } = fixture;
@@ -1043,7 +1050,7 @@ describe("ForkTest: Consolidation of Staking Strategies", function () {
           { value: sourceValidators.length }
         );
 
-      await advanceTime(minWithdrableTime);
+      await advanceTime(minWithdrableTime + 200);
 
       // Get the current block timestamp
       await advanceTime(12 * 40);
@@ -1087,9 +1094,7 @@ describe("ForkTest: Consolidation of Staking Strategies", function () {
       expect(await consolidationController.sourceStrategy()).to.equal(
         ethers.constants.AddressZero
       );
-      expect(await consolidationController.targetPubKeyHash()).to.equal(
-        ethers.constants.HashZero
-      );
+      expect(await consolidationController.targetPubKey()).to.equal("0x");
       expect(await nativeStakingStrategy2.activeDepositedValidators()).to.equal(
         activeDepositedValidatorsBefore.sub(consolidationCountBefore)
       );
