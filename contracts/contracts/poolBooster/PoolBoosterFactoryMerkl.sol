@@ -56,9 +56,9 @@ contract PoolBoosterFactoryMerkl is AbstractPoolBoosterFactory {
         bytes calldata _initData,
         uint256 _salt
     ) external onlyGovernor {
+        require(implementation != address(0), "Implementation not set");
         require(_ammPoolAddress != address(0), "Invalid ammPoolAddress address");
         require(_salt > 0, "Invalid salt");
-        require(implementation != address(0), "Implementation not set");
 
         address clone = Clones.cloneDeterministic(
             implementation,
