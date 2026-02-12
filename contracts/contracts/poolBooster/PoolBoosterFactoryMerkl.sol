@@ -37,11 +37,17 @@ contract PoolBoosterFactoryMerkl is AbstractPoolBoosterFactory {
     /// @param _oToken Address of the OToken token
     /// @param _governor Address of the governor
     /// @param _centralRegistry Address of the central registry
+    /// @param _implementation Address of the PoolBoosterMerkl implementation
     constructor(
         address _oToken,
         address _governor,
-        address _centralRegistry
-    ) AbstractPoolBoosterFactory(_oToken, _governor, _centralRegistry) {}
+        address _centralRegistry,
+        address _implementation
+    ) AbstractPoolBoosterFactory(_oToken, _governor, _centralRegistry) {
+        require(_implementation != address(0), "Invalid implementation address");
+        implementation = _implementation;
+        emit ImplementationUpdated(_implementation);
+    }
 
     ////////////////////////////////////////////////////
     /// --- CORE LOGIC
