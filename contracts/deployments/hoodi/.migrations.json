@@ -31,5 +31,6 @@
   "030_upgrade_staking_contract": 1758515961,
   "031_upgrade_staking_contract": 1760330143,
   "032_upgrade_staking_contract": 1760583153,
-  "033_validator_consolidation": 1770255907
+  "033_validator_consolidation": 1770255907,
+  "034_validator_consolidation_upgrade": 1770803840
 }
