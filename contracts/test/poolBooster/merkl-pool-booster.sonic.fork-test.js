@@ -114,7 +114,7 @@ describe("ForkTest: Merkl Pool Booster", function () {
       .transfer(poolBoosterMerkl.address, oethUnits("1000"));
 
     // Bribe the pool booster
-    let tx = await poolBoosterMerkl.bribe();
+    let tx = await poolBoosterMerkl.connect(strategist).bribe();
 
     await expect(tx).to.emittedEvent("BribeExecuted", [oethUnits("1000")]);
     expect(await oSonic.balanceOf(poolBoosterMerkl.address)).to.equal(
@@ -131,7 +131,7 @@ describe("ForkTest: Merkl Pool Booster", function () {
       .transfer(poolBoosterMerkl.address, oethUnits("1000"));
 
     // Bribe the pool booster
-    tx = await poolBoosterMerkl.bribe();
+    tx = await poolBoosterMerkl.connect(strategist).bribe();
     await expect(tx).to.emittedEvent("BribeExecuted", [oethUnits("1000")]);
     expect(await oSonic.balanceOf(poolBoosterMerkl.address)).to.equal(
       oethUnits("0")
@@ -145,7 +145,7 @@ describe("ForkTest: Merkl Pool Booster", function () {
     await oSonic.connect(nick).transfer(poolBoosterMerkl.address, "100"); // 100 wei of OS
 
     // Bribe the pool booster
-    await poolBoosterMerkl.bribe();
+    await poolBoosterMerkl.connect(strategist).bribe();
     expect(await oSonic.balanceOf(poolBoosterMerkl.address)).to.equal("100");
 
     // Second test to ensure that amount is lower than minBribeAmount required from rewardFactory.
@@ -155,7 +155,7 @@ describe("ForkTest: Merkl Pool Booster", function () {
       .transfer(poolBoosterMerkl.address, oethUnits("1")); // 1e18 wei of OS
 
     // Bribe the pool booster
-    await poolBoosterMerkl.bribe();
+    await poolBoosterMerkl.connect(strategist).bribe();
     expect(await oSonic.balanceOf(poolBoosterMerkl.address)).to.equal(
       "1000000000000000100"
     );
