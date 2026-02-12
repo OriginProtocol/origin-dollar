@@ -118,7 +118,7 @@ contract PoolBoosterFactoryMerkl is AbstractPoolBoosterFactory {
     ////////////////////////////////////////////////////
 
     /// @notice Set the address of the implementation contract
-    /// @param _implementation New PoolBoosterMerkl implementation address
+    /// @param _implementation New PoolBoosterMerklV2 implementation address
     function setImplementation(address _implementation) external onlyGovernor {
         require(
             _implementation != address(0),

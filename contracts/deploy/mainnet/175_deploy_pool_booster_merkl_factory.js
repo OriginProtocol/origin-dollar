@@ -25,13 +25,15 @@ module.exports = deploymentWithGovernanceProposal(
     const oldFactory = await ethers.getContract("PoolBoosterFactoryMerkl");
 
     // ---------------------------------------------------------------------------------------------------------
-    // --- Deploy PoolBoosterMerkl (implementation for clones)
+    // --- Deploy PoolBoosterMerklV2 (implementation for clones)
     // ---------------------------------------------------------------------------------------------------------
-    const dPoolBoosterMerkl = await deployWithConfirmation(
-      "PoolBoosterMerkl",
+    const dPoolBoosterMerklV2 = await deployWithConfirmation(
+      "PoolBoosterMerklV2",
       []
     );
-    console.log(`PoolBoosterMerkl deployed to ${dPoolBoosterMerkl.address}`);
+    console.log(
+      `PoolBoosterMerklV2 deployed to ${dPoolBoosterMerklV2.address}`
+    );
 
     // ---------------------------------------------------------------------------------------------------------
     // --- Deploy new PoolBoosterFactoryMerkl
@@ -43,7 +45,7 @@ module.exports = deploymentWithGovernanceProposal(
         oeth.address,
         addresses.mainnet.Timelock,
         cPoolBoostCentralRegistryProxy.address,
-        dPoolBoosterMerkl.address,
+        dPoolBoosterMerklV2.address,
       ],
       undefined,
       true
@@ -53,10 +55,10 @@ module.exports = deploymentWithGovernanceProposal(
     );
 
     // Encode initData for the new Pool Booster clone
-    const iPoolBoosterMerkl = new ethers.utils.Interface([
+    const iPoolBoosterMerklV2 = new ethers.utils.Interface([
       "function initialize(uint32,uint32,address,address,address,address,bytes)",
     ]);
-    const initData = iPoolBoosterMerkl.encodeFunctionData("initialize", [
+    const initData = iPoolBoosterMerklV2.encodeFunctionData("initialize", [
       604800, // duration: 7 days
       45, // campaignType: concentrated liquidity
       oeth.address, // rewardToken

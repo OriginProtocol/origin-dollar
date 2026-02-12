@@ -76,7 +76,7 @@ describe("ForkTest: Merkl Pool Booster", function () {
     const entry = await poolBoosterMerklFactory.poolBoosterFromPool(
       ammPool || AMM_POOL
     );
-    return ethers.getContractAt("PoolBoosterMerkl", entry.boosterAddress);
+    return ethers.getContractAt("PoolBoosterMerklV2", entry.boosterAddress);
   }
 
   // -------------------------------------------------------------------
@@ -193,7 +193,7 @@ describe("ForkTest: Merkl Pool Booster", function () {
   // -------------------------------------------------------------------
   describe("Factory: setImplementation", () => {
     it("Should update implementation and emit event", async () => {
-      const newImpl = await deployWithConfirmation("PoolBoosterMerkl", []);
+      const newImpl = await deployWithConfirmation("PoolBoosterMerklV2", []);
       const tx = await poolBoosterMerklFactory
         .connect(governor)
         .setImplementation(newImpl.address);
@@ -222,9 +222,9 @@ describe("ForkTest: Merkl Pool Booster", function () {
   });
 
   // -------------------------------------------------------------------
-  // 4. PoolBoosterMerkl: Initialization
+  // 4. PoolBoosterMerklV2: Initialization
   // -------------------------------------------------------------------
-  describe("PoolBoosterMerkl: Initialization", () => {
+  describe("PoolBoosterMerklV2: Initialization", () => {
     it("Should not allow double initialization", async () => {
       const poolBooster = await createPoolBooster(400);
       const pbGovernor = await impersonateAndFund(addresses.mainnet.Guardian);
@@ -267,9 +267,9 @@ describe("ForkTest: Merkl Pool Booster", function () {
   });
 
   // -------------------------------------------------------------------
-  // 5. PoolBoosterMerkl: Setters
+  // 5. PoolBoosterMerklV2: Setters
   // -------------------------------------------------------------------
-  describe("PoolBoosterMerkl: Setters", () => {
+  describe("PoolBoosterMerklV2: Setters", () => {
     let poolBooster, pbGovernor, pbStrategist;
 
     beforeEach(async () => {
@@ -379,9 +379,9 @@ describe("ForkTest: Merkl Pool Booster", function () {
   });
 
   // -------------------------------------------------------------------
-  // 6. PoolBoosterMerkl: bribe()
+  // 6. PoolBoosterMerklV2: bribe()
   // -------------------------------------------------------------------
-  describe("PoolBoosterMerkl: bribe()", () => {
+  describe("PoolBoosterMerklV2: bribe()", () => {
     let poolBooster, pbGovernor, pbStrategist;
 
     beforeEach(async () => {
@@ -433,9 +433,9 @@ describe("ForkTest: Merkl Pool Booster", function () {
   });
 
   // -------------------------------------------------------------------
-  // 7. PoolBoosterMerkl: rescueToken()
+  // 7. PoolBoosterMerklV2: rescueToken()
   // -------------------------------------------------------------------
-  describe("PoolBoosterMerkl: rescueToken()", () => {
+  describe("PoolBoosterMerklV2: rescueToken()", () => {
     let poolBooster, pbGovernor;
 
     beforeEach(async () => {

@@ -176,7 +176,7 @@ describe("ForkTest: Merkl Pool Booster", function () {
       boostersCount.sub(1)
     );
     const cont = await ethers.getContractAt(
-      "PoolBoosterMerkl",
+      "PoolBoosterMerklV2",
       boosterEntry.boosterAddress
     );
     return cont;
