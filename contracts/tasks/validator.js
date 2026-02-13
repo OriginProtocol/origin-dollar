@@ -23,7 +23,6 @@ const validatorOperationsConfig = async (taskArgs) => {
   const addressesSet = addresses[networkName];
   const isMainnet = networkName === "mainnet";
 
-
   const WETH = await ethers.getContractAt("IWETH9", addressesSet.WETH);
 
   const nativeStakingStrategy = await resolveNativeStakingStrategyProxy(

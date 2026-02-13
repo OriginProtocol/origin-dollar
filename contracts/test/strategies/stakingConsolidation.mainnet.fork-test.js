@@ -7,7 +7,7 @@ const { resolveContract } = require("../../utils/resolvers");
 const { impersonateAndFund } = require("../../utils/signers");
 
 const { createFixtureLoader, beaconChainFixture } = require("../_fixture");
-const { advanceTime } = require("../helpers");
+const { advanceTime, advanceEpochs } = require("../helpers");
 const { calcDepositRoot } = require("../../tasks/beaconTesting");
 const loadFixture = createFixtureLoader(beaconChainFixture);
 
@@ -67,6 +67,8 @@ const activeTargetPubKey =
 // Balance proofs after the deposit to validator 13498458 has been verified.
 // Run the following Hardhat task to get the proofs:
 // pnpm hardhat verifyBalances --network mainnet --dryrun true --active-ids 2178131,2183214
+const beaconBlockRoot =
+  "0x67d077e55a1f4af124a8df1e1ac720d1e1e557a5305d774c5ebf98be3479cf8d";
 const balanceProofs = {
   balancesContainerRoot:
     "0x6301b3758c02d9a1b3364e5d0e955c6f41a39fbb28c5b7e11b36f3bc047c4b27",
@@ -198,7 +200,7 @@ describe("ForkTest: Consolidation of Staking Strategies", function () {
     await beaconRoots["setBeaconRoot(uint256,bytes32)"](
       // I can't control the timestamp with Hardhat
       nextBlockTimestamp + 2,
-      "0x67d077e55a1f4af124a8df1e1ac720d1e1e557a5305d774c5ebf98be3479cf8d"
+      beaconBlockRoot
     );
 
     await consolidationController.connect(registratorSigner).snapBalances();
@@ -206,6 +208,16 @@ describe("ForkTest: Consolidation of Staking Strategies", function () {
     await consolidationController
       .connect(registratorSigner)
       .verifyBalances(balanceProofs, pendingDepositProofs);
+  };
+
+  const assertConsolidationReset = async () => {
+    expect(await consolidationController.consolidationCount()).to.equal(0);
+    expect(await consolidationController.sourceStrategy()).to.equal(
+      ethers.constants.AddressZero
+    );
+    expect(await consolidationController.targetPubKey()).to.equal("0x");
+    expect(await consolidationController.firstRequestTimestamp()).to.equal(0);
+    expect(await consolidationController.lastRequestTimestamp()).to.equal(0);
   };
 
   describe("When no consolidation in progress", () => {
@@ -292,10 +304,13 @@ describe("ForkTest: Consolidation of Staking Strategies", function () {
         )
       ).to.equal(3); // EXITING state
     });
-    it("Should request consolidation of a lot of validators from the second cluster", async () => {
+    it("Should request consolidation of nine validators from the second cluster", async () => {
+      const sourceValidators = [...secondClusterPubKeys.slice(0, 9)];
+      expect(sourceValidators.length).to.equal(9);
+
       expect(
         await nativeStakingStrategy2.validatorsStates(
-          keccak256(secondClusterPubKeys[37])
+          keccak256(secondClusterPubKeys[8])
         )
       ).to.equal(2); // STAKED state
 
@@ -310,22 +325,22 @@ describe("ForkTest: Consolidation of Staking Strategies", function () {
         .connect(adminSigner)
         .requestConsolidation(
           nativeStakingStrategy2.address,
-          secondClusterPubKeys,
+          sourceValidators,
           activeTargetPubKey,
-          { value: secondClusterPubKeys.length }
+          { value: sourceValidators.length }
         );
 
       // Assert source strategy
       await expect(tx)
         .to.emit(nativeStakingStrategy2, "ConsolidationRequested")
         .withArgs(
-          secondClusterPubKeys,
+          sourceValidators,
           activeTargetPubKey,
-          secondClusterPubKeys.length
+          sourceValidators.length
         );
       expect(
         await nativeStakingStrategy2.validatorsStates(
-          keccak256(secondClusterPubKeys[37])
+          keccak256(secondClusterPubKeys[8])
         )
       ).to.equal(3); // EXITING state
     });
@@ -457,6 +472,21 @@ describe("ForkTest: Consolidation of Staking Strategies", function () {
         );
 
       await expect(tx).to.be.revertedWith("Source validator not staked");
+    });
+    it("Fail to request consolidation of 10 validators", async () => {
+      const tenSourceValidators = [...secondClusterPubKeys.slice(0, 10)];
+      expect(tenSourceValidators.length).to.equal(10);
+
+      const tx = consolidationController
+        .connect(adminSigner)
+        .requestConsolidation(
+          nativeStakingStrategy2.address,
+          tenSourceValidators,
+          activeTargetPubKey,
+          { value: 10 }
+        );
+
+      await expect(tx).to.be.revertedWith("Too many source validators");
     });
     it("Fail to request consolidation to an UNKNOWN target validator", async () => {
       const unknownValidatorPubKey =
@@ -751,8 +781,15 @@ describe("ForkTest: Consolidation of Staking Strategies", function () {
           amountWei: depositWei,
         });
     });
+    it("Fail to add when no consolidation in progress", async () => {
+      const tx = consolidationController
+        .connect(adminSigner)
+        .addConsolidation([secondClusterPubKeys[3]], { value: 1 });
+
+      await expect(tx).to.be.revertedWith("No consolidation in progress");
+    });
   });
-  describe("When consolidation in progress", () => {
+  describe("When consolidation of three validators in progress", () => {
     const sourceValidators = [
       secondClusterPubKeys[0],
       secondClusterPubKeys[1],
@@ -771,7 +808,7 @@ describe("ForkTest: Consolidation of Staking Strategies", function () {
         // I can't control the timestamp with Hardhat
         nextBlockTimestamp + 2,
         // reusing the last balances proof assuming the balances have not changed.
-        "0x67d077e55a1f4af124a8df1e1ac720d1e1e557a5305d774c5ebf98be3479cf8d"
+        beaconBlockRoot
       );
 
       await consolidationController
@@ -813,7 +850,7 @@ describe("ForkTest: Consolidation of Staking Strategies", function () {
       await expect(tx).to.revertedWith("Consolidation not completed");
     });
     it("Should call snapBalance on the Consolidation Controller by the Registrator after 256 epochs (~27 hours)", async () => {
-      await advanceTime(256 * 32 * 12);
+      await advanceEpochs(256);
 
       const tx = await consolidationController
         .connect(registratorSigner)
@@ -823,14 +860,14 @@ describe("ForkTest: Consolidation of Staking Strategies", function () {
     });
     it("Fail snapBalance on the new compounding staking strategy when called by non-registrator after the consolidation has started", async () => {
       const { josh } = fixture;
-      await advanceTime(256 * 32 * 12);
+      await advanceEpochs(256);
 
       const tx = compoundingStakingStrategy.connect(josh).snapBalances();
 
       await expect(tx).to.be.revertedWith("Not Registrator");
     });
     it("Fail to verifyBalance of a snapshot after the consolidation has started", async () => {
-      await advanceTime(256 * 32 * 12);
+      await advanceEpochs(256);
       await consolidationController.connect(registratorSigner).snapBalances();
 
       const tx = consolidationController
@@ -909,11 +946,8 @@ describe("ForkTest: Consolidation of Staking Strategies", function () {
       await expect(tx)
         .to.emit(nativeStakingStrategy2, "ConsolidationFailed")
         .withArgs(sourceValidators, sourceValidators.length);
-      expect(await consolidationController.consolidationCount()).to.equal(0);
-      expect(await consolidationController.sourceStrategy()).to.equal(
-        ethers.constants.AddressZero
-      );
-      expect(await consolidationController.targetPubKey()).to.equal("0x");
+
+      await assertConsolidationReset();
     });
     it("Fail to call fail consolidation if not admin multisig", async () => {
       const { josh, strategist, timelock } = fixture;
@@ -973,7 +1007,284 @@ describe("ForkTest: Consolidation of Staking Strategies", function () {
 
       await expect(tx).to.be.revertedWith("Source not withdrawable");
     });
+    it("Should add a single validator to consolidation", async () => {
+      const consolidationCountBefore =
+        await consolidationController.consolidationCount();
+
+      const additionalValidators = [secondClusterPubKeys[3]];
+
+      const tx = await consolidationController
+        .connect(adminSigner)
+        .addConsolidation(additionalValidators, { value: 1 });
+
+      await expect(tx)
+        .to.emit(nativeStakingStrategy2, "ConsolidationRequested")
+        .withArgs(
+          additionalValidators,
+          activeTargetPubKey,
+          additionalValidators.length
+        );
+      expect(await consolidationController.consolidationCount()).to.equal(
+        consolidationCountBefore.add(additionalValidators.length)
+      );
+    });
+    it("Should add a multiple validators to consolidation", async () => {
+      const consolidationCountBefore =
+        await consolidationController.consolidationCount();
+
+      const additionalValidators = [
+        secondClusterPubKeys[3],
+        secondClusterPubKeys[4],
+        secondClusterPubKeys[5],
+      ];
+
+      const tx = await consolidationController
+        .connect(adminSigner)
+        .addConsolidation(additionalValidators, { value: 3 });
+
+      await expect(tx)
+        .to.emit(nativeStakingStrategy2, "ConsolidationRequested")
+        .withArgs(
+          additionalValidators,
+          activeTargetPubKey,
+          additionalValidators.length
+        );
+      expect(await consolidationController.consolidationCount()).to.equal(
+        consolidationCountBefore.add(additionalValidators.length)
+      );
+    });
+    it("Fail to add to consolidation of 10 validators", async () => {
+      const tenSourceValidators = [...secondClusterPubKeys.slice(4, 14)];
+      expect(tenSourceValidators.length).to.equal(10);
+
+      const tx = consolidationController
+        .connect(adminSigner)
+        .addConsolidation(tenSourceValidators, { value: 10 });
+
+      await expect(tx).to.be.revertedWith("Too many source validators");
+    });
+    it("Fail to add consolidation of duplicated validators", async () => {
+      const additionalValidators = [
+        secondClusterPubKeys[3],
+        secondClusterPubKeys[4],
+        secondClusterPubKeys[4], // duplicate
+      ];
+
+      const tx = consolidationController
+        .connect(adminSigner)
+        .addConsolidation(additionalValidators, { value: 3 });
+
+      await expect(tx).to.be.revertedWith("Source validator not staked");
+    });
+    it("Fail to add consolidation of previously requested validator", async () => {
+      const additionalValidators = [
+        secondClusterPubKeys[3],
+        secondClusterPubKeys[4],
+        sourceValidators[0], // was in request consolidation
+      ];
+
+      const tx = consolidationController
+        .connect(adminSigner)
+        .addConsolidation(additionalValidators, { value: 3 });
+
+      await expect(tx).to.be.revertedWith("Source validator not staked");
+    });
+    it("Should add multiple validators to a consolidation before 256 epochs has passed", async () => {
+      const consolidationCountBefore =
+        await consolidationController.consolidationCount();
+
+      const additionalValidators = [secondClusterPubKeys[3]];
+
+      await advanceEpochs(200);
+
+      const tx = await consolidationController
+        .connect(adminSigner)
+        .addConsolidation(additionalValidators, { value: 1 });
+
+      await expect(tx)
+        .to.emit(nativeStakingStrategy2, "ConsolidationRequested")
+        .withArgs(
+          additionalValidators,
+          activeTargetPubKey,
+          additionalValidators.length
+        );
+      expect(await consolidationController.consolidationCount()).to.equal(
+        consolidationCountBefore.add(additionalValidators.length)
+      );
+    });
+    it("Fail to add to consolidation after 256 epochs has passed from the first request", async () => {
+      await advanceEpochs(200);
+
+      await consolidationController
+        .connect(adminSigner)
+        .addConsolidation([secondClusterPubKeys[3]], { value: 1 });
+
+      // Advance time by 60 epochs which is over 256 epochs from the first consolidation request
+      await advanceEpochs(60);
+
+      const tx = consolidationController
+        .connect(adminSigner)
+        .addConsolidation([secondClusterPubKeys[4]], { value: 1 });
+
+      await expect(tx).to.be.revertedWith("No longer add to consolidation");
+    });
+    describe("When consolidation added two more validators", () => {
+      const addedSourceValidators = [
+        secondClusterPubKeys[3],
+        secondClusterPubKeys[4],
+      ];
+      beforeEach(async () => {
+        await advanceEpochs(100);
+
+        await consolidationController
+          .connect(adminSigner)
+          .addConsolidation(addedSourceValidators, {
+            value: addedSourceValidators.length,
+          });
+      });
+      it("Should add four more validators to the consolidation", async () => {
+        const consolidationCountBefore =
+          await consolidationController.consolidationCount();
+        const additionalValidators = [
+          secondClusterPubKeys[5],
+          secondClusterPubKeys[6],
+          secondClusterPubKeys[7],
+          secondClusterPubKeys[8],
+        ];
+
+        const tx = await consolidationController
+          .connect(adminSigner)
+          .addConsolidation(additionalValidators, { value: 4 });
+
+        await expect(tx)
+          .to.emit(nativeStakingStrategy2, "ConsolidationRequested")
+          .withArgs(
+            additionalValidators,
+            activeTargetPubKey,
+            additionalValidators.length
+          );
+        expect(await consolidationController.consolidationCount()).to.equal(
+          consolidationCountBefore.add(additionalValidators.length)
+        );
+      });
+      it("Should fail a validator that was added in the consolidation", async () => {
+        const failedValidators = [addedSourceValidators[0]];
+        const consolidationCountBefore =
+          await consolidationController.consolidationCount();
+
+        const tx = await consolidationController
+          .connect(adminSigner)
+          .failConsolidation(failedValidators);
+
+        await expect(tx)
+          .to.emit(nativeStakingStrategy2, "ConsolidationFailed")
+          .withArgs(failedValidators, failedValidators.length);
+
+        expect(await consolidationController.consolidationCount()).to.equal(
+          consolidationCountBefore.sub(failedValidators.length)
+        );
+      });
+      it("Should fail all validators that were added in the consolidation", async () => {
+        const consolidationCountBefore =
+          await consolidationController.consolidationCount();
+
+        const tx = await consolidationController
+          .connect(adminSigner)
+          .failConsolidation(addedSourceValidators);
+
+        await expect(tx)
+          .to.emit(nativeStakingStrategy2, "ConsolidationFailed")
+          .withArgs(addedSourceValidators, addedSourceValidators.length);
+
+        expect(await consolidationController.consolidationCount()).to.equal(
+          consolidationCountBefore.sub(addedSourceValidators.length)
+        );
+      });
+      it("Should fail all validators that were requested and added", async () => {
+        const allSourceValidators = [
+          ...sourceValidators,
+          ...addedSourceValidators,
+        ];
+        const tx = await consolidationController
+          .connect(adminSigner)
+          .failConsolidation(allSourceValidators);
+
+        await expect(tx)
+          .to.emit(nativeStakingStrategy2, "ConsolidationFailed")
+          .withArgs(allSourceValidators, allSourceValidators.length);
+
+        await assertConsolidationReset();
+      });
+      it("Should verify balances at the start of the consolidation", async () => {
+        const tx = await consolidationController
+          .connect(registratorSigner)
+          .verifyBalances(balanceProofs, pendingDepositProofs);
+
+        await expect(tx).to.emit(
+          compoundingStakingStrategy,
+          "BalancesVerified"
+        );
+      });
+      it("Fail to snap balances after 256 epochs from the request but less before 256 epochs from the last add consolidation", async () => {
+        // Advance another 200 epoch on the already 100 epochs from the request
+        // So 300 epochs from the request but only 200 epochs from the last add consolidation
+        await advanceEpochs(200);
+
+        const tx = consolidationController
+          .connect(registratorSigner)
+          .snapBalances();
+
+        await expect(tx).to.be.revertedWith("Consolidation not completed");
+      });
+      it("Should snap balances after 256 epochs has passed from the last consolidation request", async () => {
+        // Advance another 260 epoch on the already 100 epochs from the request
+        // So 360 epochs from the request and 260 epochs from the last add consolidation
+        await advanceEpochs(260);
+
+        const tx = await consolidationController
+          .connect(registratorSigner)
+          .snapBalances();
+
+        await expect(tx).to.emit(compoundingStakingStrategy, "BalancesSnapped");
+      });
+      it("Should confirm all consolidated validators", async () => {
+        const activeDepositedValidatorsBefore =
+          await nativeStakingStrategy2.activeDepositedValidators();
+        const consolidationCountBefore =
+          await consolidationController.consolidationCount();
+        expect(consolidationCountBefore).to.equal(3 + 2);
+
+        await advanceEpochs(260);
+
+        const { timestamp: currentTimestamp } = await ethers.provider.getBlock(
+          "latest"
+        );
+        const nextBlockTimestamp = currentTimestamp;
+        await fixture.beaconRoots["setBeaconRoot(uint256,bytes32)"](
+          // I can't control the timestamp with Hardhat
+          nextBlockTimestamp + 2,
+          // reusing the last balances proof even though the balances have not changed.
+          beaconBlockRoot
+        );
+
+        await consolidationController.connect(registratorSigner).snapBalances();
+
+        const tx = await consolidationController
+          .connect(adminSigner)
+          .confirmConsolidation(balanceProofs, pendingDepositProofs);
+
+        expect(tx)
+          .to.emit(nativeStakingStrategy2, "ConsolidationConfirmed")
+          .withArgs([
+            consolidationCountBefore,
+            activeDepositedValidatorsBefore.sub(consolidationCountBefore),
+          ]);
+
+        await assertConsolidationReset();
+      });
+    });
   });
+
   describe("When consolidation in progress and balances snapped", () => {
     const sourceValidators = [
       secondClusterPubKeys[0],
@@ -1090,11 +1401,8 @@ describe("ForkTest: Consolidation of Staking Strategies", function () {
           consolidationCountBefore,
           activeDepositedValidatorsBefore.sub(consolidationCountBefore)
         );
-      expect(await consolidationController.consolidationCount()).to.equal(0);
-      expect(await consolidationController.sourceStrategy()).to.equal(
-        ethers.constants.AddressZero
-      );
-      expect(await consolidationController.targetPubKey()).to.equal("0x");
+
+      await assertConsolidationReset();
       expect(await nativeStakingStrategy2.activeDepositedValidators()).to.equal(
         activeDepositedValidatorsBefore.sub(consolidationCountBefore)
       );

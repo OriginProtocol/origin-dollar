@@ -83,6 +83,8 @@ contract ConsolidationController is Ownable {
         require(consolidationCount == 0, "Consolidation in progress");
         // Check sourceStrategy is a valid old Native Staking Strategy
         _checkSourceStrategy(_sourceStrategy);
+        // Check no more than 9 source validators
+        require(_sourcePubKeys.length < 10, "Too many source validators");
 
         // Check target validator is Active on the new Compounding Staking Strategy
         bytes32 targetPubKeyHashMem = _hashPubKey(_targetPubKey);
@@ -131,6 +133,8 @@ contract ConsolidationController is Ownable {
     {
         // Check a consolidations is already in progress
         require(consolidationCount > 0, "No consolidation in progress");
+        // Check no more than 9 source validators
+        require(sourcePubKeys.length < 10, "Too many source validators");
         // Can not add to a consolidation after 256 epochs (~27 hours)
         require(
             firstRequestTimestamp + MIN_CONSOLIDATION_PERIOD > block.timestamp,
