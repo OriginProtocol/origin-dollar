@@ -322,7 +322,9 @@ describe("Vault", function () {
     const { vault, governor, strategist, mockStrategy, matt, josh, usdc } =
       fixture;
     await vault.connect(governor).approveStrategy(mockStrategy.address);
-    await mockStrategy.connect(governor).setWithdrawAll(usdc.address, vault.address);
+    await mockStrategy
+      .connect(governor)
+      .setWithdrawAll(usdc.address, vault.address);
 
     // Get the vault's initial USDC balance.
     const vaultUsdcBalance = await usdc.balanceOf(vault.address);

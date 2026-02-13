@@ -4,7 +4,6 @@ const mocha = require("mocha");
 const { isFork, isPlumeFork, oethUnits } = require("./helpers");
 const { impersonateAndFund } = require("../utils/signers");
 const { nodeRevert, nodeSnapshot } = require("./_fixture");
-const { deployWithConfirmation } = require("../utils/deploy");
 const addresses = require("../utils/addresses");
 const hhHelpers = require("@nomicfoundation/hardhat-network-helpers");
 const log = require("../utils/logger")("test:fixtures-plume");

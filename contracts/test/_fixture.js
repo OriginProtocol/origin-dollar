@@ -1114,6 +1114,12 @@ async function morphoOUSDv2Fixture(
     // Impersonate the OUSD Vault
     fixture.vaultSigner = await impersonateAndFund(vault.address);
 
+    const morphoToken = await ethers.getContractAt(
+      "MintableERC20",
+      addresses.mainnet.MorphoToken
+    );
+    fixture.morphoToken = morphoToken;
+
     // mint some OUSD using USDC if configured
     if (config?.usdcMintAmount > 0) {
       const usdcMintAmount = parseUnits(config.usdcMintAmount.toString(), 6);
