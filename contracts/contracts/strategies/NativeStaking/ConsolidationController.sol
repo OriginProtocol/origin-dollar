@@ -124,7 +124,8 @@ contract ConsolidationController is Ownable {
      * @notice Allow more validators to be added to the consolidation as there is a maximum of 9 validators
      * per epoch due to the churn limit.
      * Can not add to a consolidation after 256 epochs (~27 hours) from the first consolidation request.
-     * @param sourcePubKeys The public keys of the additional validators to be consolidated from the old Native Staking Strategy
+     * @param sourcePubKeys The public keys of the additional validators to be consolidated
+     * from the old Native Staking Strategy
      */
     function addConsolidation(bytes[] calldata sourcePubKeys)
         external
