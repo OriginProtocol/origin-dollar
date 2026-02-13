@@ -1464,6 +1464,14 @@ async function crossChainFixtureUnit() {
   // Impersonate the OUSD Vault
   fixture.vaultSigner = await impersonateAndFund(vault.address);
 
+  // Fund extra USDC for cross-chain tests that require large mints
+  if (!isFork) {
+    const usdc = await ethers.getContract("MockUSDC");
+    for (const user of [fixture.josh, fixture.matt]) {
+      await usdc.connect(user).mint(usdcUnits("100000"));
+    }
+  }
+
   return {
     ...fixture,
     crossChainMasterStrategy: cCrossChainMasterStrategy,
