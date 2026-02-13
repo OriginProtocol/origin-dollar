@@ -481,6 +481,7 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
     const {
       compoundingStakingSSVStrategy,
       compoundingStakingStrategyView,
+      validatorRegistrator,
       weth,
     } = fixture;
 
@@ -554,10 +555,9 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
     };
 
     // Verify balances with pending deposits and active validators
-    const tx = await compoundingStakingSSVStrategy.verifyBalances(
-      balanceProofsData,
-      pendingDepositProofsData
-    );
+    const tx = await compoundingStakingSSVStrategy
+      .connect(validatorRegistrator)
+      .verifyBalances(balanceProofsData, pendingDepositProofsData);
 
     // Do not restore the pendingDepositRoots as they can be removed in verifyBalances
     // for (let i = 0; i < deposits.length; i++) {
@@ -1269,7 +1269,11 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
     });
 
     it("Should revert when verifying deposit between snapBalances and verifyBalances", async () => {
-      const { beaconRoots, compoundingStakingSSVStrategy } = fixture;
+      const {
+        beaconRoots,
+        compoundingStakingSSVStrategy,
+        validatorRegistrator,
+      } = fixture;
       const testValidator = testValidators[3];
 
       // Third validator is later withdrawn later
@@ -1279,7 +1283,9 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
       );
 
       // Snap balances before the deposit is processed
-      await compoundingStakingSSVStrategy.snapBalances();
+      await compoundingStakingSSVStrategy
+        .connect(validatorRegistrator)
+        .snapBalances();
 
       // Set parent beacon root for the block after the verification slots
       const depositProcessedSlot = depositSlot + 10000n;
@@ -1289,12 +1295,14 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
         testValidator.depositProof.processedBeaconBlockRoot
       );
 
-      const verifiedDepositTx = compoundingStakingSSVStrategy.verifyDeposit(
-        pendingDepositRoot,
-        depositProcessedSlot,
-        testValidator.depositProof.firstPendingDeposit,
-        testValidator.depositProof.strategyValidator
-      );
+      const verifiedDepositTx = compoundingStakingSSVStrategy
+        .connect(validatorRegistrator)
+        .verifyDeposit(
+          pendingDepositRoot,
+          depositProcessedSlot,
+          testValidator.depositProof.firstPendingDeposit,
+          testValidator.depositProof.strategyValidator
+        );
 
       await expect(verifiedDepositTx).to.be.revertedWith(
         "Deposit after balance snapshot"
@@ -1653,11 +1661,13 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
       await expect(tx).to.be.revertedWith("Deposit not pending");
     });
     it("Should revert when processed slot is after snapped balances", async () => {
-      const { compoundingStakingSSVStrategy } = fixture;
+      const { compoundingStakingSSVStrategy, validatorRegistrator } = fixture;
 
       // Make sure we are at the next slot by moving time forward 12 seconds
       await advanceTime(12);
-      await compoundingStakingSSVStrategy.snapBalances();
+      await compoundingStakingSSVStrategy
+        .connect(validatorRegistrator)
+        .snapBalances();
 
       const currentBlock = await ethers.provider.getBlock("latest");
       const currentSlot = calcSlot(BigInt(currentBlock.timestamp));
@@ -1693,12 +1703,18 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
         .withArgs(pendingDepositRoot, parseEther("1"));
     });
     it("Should verify deposit with processed slot 1 before the snapped balances slot", async () => {
-      const { beaconRoots, compoundingStakingSSVStrategy } = fixture;
+      const {
+        beaconRoots,
+        compoundingStakingSSVStrategy,
+        validatorRegistrator,
+      } = fixture;
 
       // Move two slots ahead so depositProcessedSlot is after the snap
       await advanceTime(24);
 
-      await compoundingStakingSSVStrategy.snapBalances();
+      await compoundingStakingSSVStrategy
+        .connect(validatorRegistrator)
+        .snapBalances();
 
       const { timestamp: snappedTimestamp } =
         await compoundingStakingSSVStrategy.snappedBalance();
@@ -1721,11 +1737,17 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
         .withArgs(pendingDepositRoot, parseEther("1"));
     });
     it("Should verify deposit with processed slot well before the snapped balances slot", async () => {
-      const { beaconRoots, compoundingStakingSSVStrategy } = fixture;
+      const {
+        beaconRoots,
+        compoundingStakingSSVStrategy,
+        validatorRegistrator,
+      } = fixture;
 
       // Move 10 slots ahead of the deposit slot
       await advanceTime(120);
-      await compoundingStakingSSVStrategy.snapBalances();
+      await compoundingStakingSSVStrategy
+        .connect(validatorRegistrator)
+        .snapBalances();
 
       const depositProcessedSlot = depositSlot + 1n;
 
@@ -2069,17 +2091,19 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
   describe("Strategy balances", () => {
     describe("When no execution rewards (ETH), no pending deposits and no active validators", () => {
       const verifyBalancesNoDepositsOrValidators = async () => {
-        const { compoundingStakingSSVStrategy } = fixture;
+        const { compoundingStakingSSVStrategy, validatorRegistrator } = fixture;
 
-        const tx = await compoundingStakingSSVStrategy.verifyBalances(
-          {
-            balancesContainerRoot: ZERO_BYTES32,
-            balancesContainerProof: "0x",
-            validatorBalanceLeaves: [],
-            validatorBalanceProofs: [],
-          },
-          emptyPendingDepositProofs
-        );
+        const tx = await compoundingStakingSSVStrategy
+          .connect(validatorRegistrator)
+          .verifyBalances(
+            {
+              balancesContainerRoot: ZERO_BYTES32,
+              balancesContainerProof: "0x",
+              validatorBalanceLeaves: [],
+              validatorBalanceProofs: [],
+            },
+            emptyPendingDepositProofs
+          );
 
         return tx;
       };
@@ -2536,84 +2560,96 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
           await snapBalances(balancesProof.blockRoot);
         });
         it("Fail to verify balances with not enough validator leaves", async () => {
-          const { compoundingStakingSSVStrategy } = fixture;
+          const { compoundingStakingSSVStrategy, validatorRegistrator } =
+            fixture;
 
           // Verify balances with pending deposits and active validators
-          const tx = compoundingStakingSSVStrategy.verifyBalances(
-            {
-              ...balancesProof.balanceProofs,
-              // Only one when there is three active validators
-              validatorBalanceLeaves: [
-                balancesProof.balanceProofs.validatorBalanceLeaves[0],
-              ],
-              validatorBalanceProofs: [
-                balancesProof.balanceProofs.validatorBalanceProofs[0],
-                balancesProof.balanceProofs.validatorBalanceProofs[1],
-              ],
-            },
-            emptyPendingDepositProofs
-          );
+          const tx = compoundingStakingSSVStrategy
+            .connect(validatorRegistrator)
+            .verifyBalances(
+              {
+                ...balancesProof.balanceProofs,
+                // Only one when there is three active validators
+                validatorBalanceLeaves: [
+                  balancesProof.balanceProofs.validatorBalanceLeaves[0],
+                ],
+                validatorBalanceProofs: [
+                  balancesProof.balanceProofs.validatorBalanceProofs[0],
+                  balancesProof.balanceProofs.validatorBalanceProofs[1],
+                ],
+              },
+              emptyPendingDepositProofs
+            );
 
           await expect(tx).to.be.revertedWith("Invalid balance leaves");
         });
         it("Fail to verify balances with too many validator leaves", async () => {
-          const { compoundingStakingSSVStrategy } = fixture;
+          const { compoundingStakingSSVStrategy, validatorRegistrator } =
+            fixture;
 
           // Verify balances with pending deposits and active validators
-          const tx = compoundingStakingSSVStrategy.verifyBalances(
-            {
-              ...balancesProof.balanceProofs,
-              // Three when there is two active validators
-              validatorBalanceLeaves:
-                balancesProof.balanceProofs.validatorBalanceLeaves,
-              validatorBalanceProofs: [
-                balancesProof.balanceProofs.validatorBalanceProofs[0],
-                balancesProof.balanceProofs.validatorBalanceProofs[1],
-              ],
-            },
-            emptyPendingDepositProofs
-          );
+          const tx = compoundingStakingSSVStrategy
+            .connect(validatorRegistrator)
+            .verifyBalances(
+              {
+                ...balancesProof.balanceProofs,
+                // Three when there is two active validators
+                validatorBalanceLeaves:
+                  balancesProof.balanceProofs.validatorBalanceLeaves,
+                validatorBalanceProofs: [
+                  balancesProof.balanceProofs.validatorBalanceProofs[0],
+                  balancesProof.balanceProofs.validatorBalanceProofs[1],
+                ],
+              },
+              emptyPendingDepositProofs
+            );
 
           await expect(tx).to.be.revertedWith("Invalid balance leaves");
         });
         it("Fail to verify balances with not enough validator proofs", async () => {
-          const { compoundingStakingSSVStrategy } = fixture;
+          const { compoundingStakingSSVStrategy, validatorRegistrator } =
+            fixture;
 
           // Verify balances with pending deposits and active validators
-          const tx = compoundingStakingSSVStrategy.verifyBalances(
-            {
-              ...balancesProof.balanceProofs,
-              validatorBalanceLeaves: [
-                balancesProof.balanceProofs.validatorBalanceLeaves[0],
-                balancesProof.balanceProofs.validatorBalanceLeaves[1],
-              ],
-              // Only one when there is two active validators
-              validatorBalanceProofs: [
-                balancesProof.balanceProofs.validatorBalanceProofs[0],
-              ],
-            },
-            emptyPendingDepositProofs
-          );
+          const tx = compoundingStakingSSVStrategy
+            .connect(validatorRegistrator)
+            .verifyBalances(
+              {
+                ...balancesProof.balanceProofs,
+                validatorBalanceLeaves: [
+                  balancesProof.balanceProofs.validatorBalanceLeaves[0],
+                  balancesProof.balanceProofs.validatorBalanceLeaves[1],
+                ],
+                // Only one when there is two active validators
+                validatorBalanceProofs: [
+                  balancesProof.balanceProofs.validatorBalanceProofs[0],
+                ],
+              },
+              emptyPendingDepositProofs
+            );
 
           await expect(tx).to.be.revertedWith("Invalid balance proofs");
         });
         it("Fail to verify balances with too many proofs", async () => {
-          const { compoundingStakingSSVStrategy } = fixture;
+          const { compoundingStakingSSVStrategy, validatorRegistrator } =
+            fixture;
 
           // Verify balances with pending deposits and active validators
-          const tx = compoundingStakingSSVStrategy.verifyBalances(
-            {
-              ...balancesProof.balanceProofs,
-              validatorBalanceLeaves: [
-                balancesProof.balanceProofs.validatorBalanceLeaves[0],
-                balancesProof.balanceProofs.validatorBalanceLeaves[1],
-              ],
-              // Three when there is two active validators
-              validatorBalanceProofs:
-                balancesProof.balanceProofs.validatorBalanceProofs,
-            },
-            emptyPendingDepositProofs
-          );
+          const tx = compoundingStakingSSVStrategy
+            .connect(validatorRegistrator)
+            .verifyBalances(
+              {
+                ...balancesProof.balanceProofs,
+                validatorBalanceLeaves: [
+                  balancesProof.balanceProofs.validatorBalanceLeaves[0],
+                  balancesProof.balanceProofs.validatorBalanceLeaves[1],
+                ],
+                // Three when there is two active validators
+                validatorBalanceProofs:
+                  balancesProof.balanceProofs.validatorBalanceProofs,
+              },
+              emptyPendingDepositProofs
+            );
 
           await expect(tx).to.be.revertedWith("Invalid balance proofs");
         });
@@ -3028,7 +3064,11 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
     });
 
     it("Should fail to active a validator with a 32.25 ETH balance", async () => {
-      const { compoundingStakingSSVStrategy, mockBeaconProof } = fixture;
+      const {
+        compoundingStakingSSVStrategy,
+        mockBeaconProof,
+        validatorRegistrator,
+      } = fixture;
 
       // Third validator is later withdrawn later
       const testValidator = testValidators[3];
@@ -3041,7 +3081,9 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
       );
       expect(validatorBefore.state).to.equal(3); // VERIFIED
 
-      await compoundingStakingSSVStrategy.snapBalances();
+      await compoundingStakingSSVStrategy
+        .connect(validatorRegistrator)
+        .snapBalances();
 
       // Set validator balance to 32.25 Gwei
       await mockBeaconProof.setValidatorBalance(
@@ -3049,10 +3091,9 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
         parseUnits("32.25", 9)
       );
 
-      const tx = await compoundingStakingSSVStrategy.verifyBalances(
-        emptyOneBalanceProofs,
-        emptyPendingDepositProofs
-      );
+      const tx = await compoundingStakingSSVStrategy
+        .connect(validatorRegistrator)
+        .verifyBalances(emptyOneBalanceProofs, emptyPendingDepositProofs);
 
       await expect(tx)
         .to.emit(compoundingStakingSSVStrategy, "BalancesVerified")
@@ -3068,7 +3109,11 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
     });
 
     it("Should active a validator with more than 32.25 ETH balance", async () => {
-      const { compoundingStakingSSVStrategy, mockBeaconProof } = fixture;
+      const {
+        compoundingStakingSSVStrategy,
+        mockBeaconProof,
+        validatorRegistrator,
+      } = fixture;
 
       // Third validator is later withdrawn later
       const testValidator = testValidators[3];
@@ -3081,7 +3126,9 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
       );
       expect(validatorBefore.state).to.equal(3); // VERIFIED
 
-      await compoundingStakingSSVStrategy.snapBalances();
+      await compoundingStakingSSVStrategy
+        .connect(validatorRegistrator)
+        .snapBalances();
 
       // Set validator balance to 32.26 Gwei
       await mockBeaconProof.setValidatorBalance(
@@ -3089,10 +3136,9 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
         parseUnits("32.26", 9)
       );
 
-      const tx = await compoundingStakingSSVStrategy.verifyBalances(
-        emptyOneBalanceProofs,
-        emptyPendingDepositProofs
-      );
+      const tx = await compoundingStakingSSVStrategy
+        .connect(validatorRegistrator)
+        .verifyBalances(emptyOneBalanceProofs, emptyPendingDepositProofs);
 
       await expect(tx)
         .to.emit(compoundingStakingSSVStrategy, "BalancesVerified")
@@ -3285,7 +3331,11 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
         });
 
         it("Should verify balances", async () => {
-          const { compoundingStakingSSVStrategy, mockBeaconProof } = fixture;
+          const {
+            compoundingStakingSSVStrategy,
+            mockBeaconProof,
+            validatorRegistrator,
+          } = fixture;
 
           const { timestamp: currentTimestamp } =
             await ethers.provider.getBlock();
@@ -3298,7 +3348,9 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
 
           expect(advancedTimestamp).to.greaterThan(withdrawableTimestamp);
 
-          await compoundingStakingSSVStrategy.snapBalances();
+          await compoundingStakingSSVStrategy
+            .connect(validatorRegistrator)
+            .snapBalances();
 
           // Set the validator balance to zero
           await mockBeaconProof.setValidatorBalance(
@@ -3306,10 +3358,12 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
             MAX_UINT256
           );
 
-          const tx = await compoundingStakingSSVStrategy.verifyBalances(
-            emptyOneBalanceProofs,
-            emptyOnePendingDepositProofs
-          );
+          const tx = await compoundingStakingSSVStrategy
+            .connect(validatorRegistrator)
+            .verifyBalances(
+              emptyOneBalanceProofs,
+              emptyOnePendingDepositProofs
+            );
 
           await expect(tx)
             .to.emit(compoundingStakingSSVStrategy, "BalancesVerified")

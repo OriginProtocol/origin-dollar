@@ -346,6 +346,11 @@ const advanceTime = async (seconds) => {
   await hre.ethers.provider.send("evm_mine");
 };
 
+const advanceEpochs = async (epochs) => {
+  const SECONDS_PER_EPOCH = 12 * 32; // 12 seconds per slot, 32 slots per epoch
+  await advanceTime(epochs * SECONDS_PER_EPOCH);
+};
+
 /// Gets the timestamp of the latest block
 const getBlockTimestamp = async () => {
   return (await hre.ethers.provider.getBlock("latest")).timestamp;
@@ -810,6 +815,7 @@ module.exports = {
   humanBalance,
   expectApproxSupply,
   advanceTime,
+  advanceEpochs,
   getBlockTimestamp,
   isMainnet,
   isExternalNet,

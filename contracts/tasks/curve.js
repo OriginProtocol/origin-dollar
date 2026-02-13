@@ -2,7 +2,6 @@ const { BigNumber } = require("ethers");
 const { formatUnits, parseUnits } = require("ethers/lib/utils");
 
 const curveNGPoolAbi = require("../test/abi/curveStableSwapNG.json");
-const oethPoolAbi = require("../test/abi/oethMetapool.json");
 const addresses = require("../utils/addresses");
 const { resolveAsset } = require("../utils/resolvers");
 const { getDiffBlocks } = require("./block");
@@ -32,7 +31,7 @@ async function curvePoolTask(taskArguments) {
 }
 
 /**
- * Dumps the current state of a Curve Metapool pool used for AMO
+ * Dumps the current state of a Curve pool used for AMO
  */
 async function curvePool({
   poolOTokenSymbol,
@@ -87,8 +86,7 @@ async function curvePool({
     (await pool.get_balances({
       blockTag: fromBlockTag,
     }));
-  // let poolBalances = await pool.get_balances({ blockTag });
-  let poolBalances = await pool.get_balances();
+  let poolBalances = await pool.get_balances({ blockTag });
   if (oTokenSymbol === "OUSD") {
     // scale up the USDC balance to 18 decimals
     poolBalancesBefore = poolBalancesBefore
@@ -96,42 +94,27 @@ async function curvePool({
       : [];
     poolBalances = [poolBalances[0], poolBalances[1].mul(parseUnits("1", 12))];
   }
-  const assetBalanceBefore =
-    diffBlocks &&
-    (oTokenSymbol === "OETH" ? poolBalancesBefore[0] : poolBalancesBefore[1]);
-  const oTokenBalanceBefore =
-    diffBlocks &&
-    (oTokenSymbol === "OETH" ? poolBalancesBefore[1] : poolBalancesBefore[0]);
-  const assetBalance =
-    oTokenSymbol === "OETH" ? poolBalances[0] : poolBalances[1];
-  const oTokenBalance =
-    oTokenSymbol === "OETH" ? poolBalances[1] : poolBalances[0];
+  const assetBalanceBefore = diffBlocks && poolBalancesBefore[1];
+  const oTokenBalanceBefore = diffBlocks && poolBalancesBefore[0];
+  const assetBalance = poolBalances[1];
+  const oTokenBalance = poolBalances[0];
 
+  const assetScaleup = oTokenSymbol === "OUSD" ? parseUnits("1", 12) : 1;
   const price1Before =
     diffBlocks &&
-    (oTokenSymbol === "OETH"
-      ? // swap 1 OETH for ETH (OETH/ETH)
-        await pool["get_dy(int128,int128,uint256)"](1, 0, parseUnits("1"), {
-          blockTag: fromBlockTag,
-        })
-      : // swap 1 OUSD for USDC (OUSD/USDC) scaled to 18 decimals
-        (
-          await pool["get_dy(int128,int128,uint256)"](0, 1, parseUnits("1"), {
-            blockTag,
-          })
-        ).mul(parseUnits("1", 12)));
+    // swap 1 OUSD or OETH for USDC (OUSD/USDC) or WETH scaled to 18 decimals
+    (
+      await pool["get_dy(int128,int128,uint256)"](0, 1, parseUnits("1"), {
+        blockTag,
+      })
+    ).mul(assetScaleup);
   const price1 =
-    oTokenSymbol === "OETH"
-      ? // swap 1 OETH for ETH (OETH/ETH)
-        await pool["get_dy(int128,int128,uint256)"](1, 0, parseUnits("1"), {
-          blockTag,
-        })
-      : // swap 1 OUSD for USDC (OUSD/USDC) scaled to 18 decimals
-        (
-          await pool["get_dy(int128,int128,uint256)"](0, 1, parseUnits("1"), {
-            blockTag,
-          })
-        ).mul(parseUnits("1", 12));
+    // swap 1 OUSD or OETH for USDC (OUSD/USDC) or WETH scaled to 18 decimals
+    (
+      await pool["get_dy(int128,int128,uint256)"](0, 1, parseUnits("1"), {
+        blockTag,
+      })
+    ).mul(assetScaleup);
 
   output(
     displayProperty(
@@ -373,23 +356,23 @@ async function curveSwapTask(taskArguments) {
 
 async function curveContracts(oTokenSymbol) {
   // Get symbols of tokens in the pool
-  const assetSymbol = oTokenSymbol === "OETH" ? "ETH " : "USDC";
+  const assetSymbol = oTokenSymbol === "OETH" ? "WETH " : "USDC";
 
   // Get the contract addresses
   const poolAddr =
     oTokenSymbol === "OETH"
-      ? addresses.mainnet.CurveOETHMetaPool
+      ? addresses.mainnet.curve.OETH_WETH.pool
       : addresses.mainnet.curve.OUSD_USDC.pool;
   log(`Resolved ${oTokenSymbol} Curve pool to ${poolAddr}`);
   const strategyAddr =
     oTokenSymbol === "OETH"
-      ? addresses.mainnet.ConvexOETHAMOStrategy
+      ? addresses.mainnet.CurveOETHAMOStrategy
       : addresses.mainnet.CurveOUSDAMOStrategy;
   const convexRewardsPoolAddr =
     oTokenSymbol === "OETH"
-      ? addresses.mainnet.CVXETHRewardsPool
+      ? addresses.mainnet.curve.OETH_WETH.gauge
       : addresses.mainnet.curve.OUSD_USDC.gauge;
-  const poolLPSymbol = oTokenSymbol === "OETH" ? "OETHCRV-f" : "OUSD/USDC";
+  const poolLPSymbol = oTokenSymbol === "OETH" ? "OETH/WETH" : "OUSD/USDC";
   const vaultAddr =
     oTokenSymbol === "OETH"
       ? addresses.mainnet.OETHVaultProxy
@@ -406,7 +389,7 @@ async function curveContracts(oTokenSymbol) {
       : await resolveAsset("USDC");
   const pool =
     oTokenSymbol === "OETH"
-      ? await hre.ethers.getContractAt(oethPoolAbi, poolAddr)
+      ? await hre.ethers.getContractAt(curveNGPoolAbi, poolAddr)
       : await hre.ethers.getContractAt(curveNGPoolAbi, poolAddr);
   const cvxRewardPool = await ethers.getContractAt(
     "IRewardStaking",
