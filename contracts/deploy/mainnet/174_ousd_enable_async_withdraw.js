@@ -1,4 +1,3 @@
-const addresses = require("../../utils/addresses");
 const { deploymentWithGovernanceProposal } = require("../../utils/deploy");
 
 module.exports = deploymentWithGovernanceProposal(

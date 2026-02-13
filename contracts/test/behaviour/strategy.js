@@ -19,9 +19,9 @@ const { parseUnits } = require("ethers/lib/utils");
  * @example
     shouldBehaveLikeStrategy(() => ({
       ...fixture,
-      strategy: fixture.fraxEthStrategy,
-      assets: [fixture.frxETH, fixture.weth],
-      valueAssets: [fixture.frxETH],
+      strategy: fixture.nativeStakingSSVStrategy,
+      assets: [fixture.weth],
+      valueAssets: [],
       harvester: fixture.oethHarvester,
       vault: fixture.oethVault,
       checkWithdrawAmounts: true,
@@ -47,31 +47,9 @@ const shouldBehaveLikeStrategy = (context) => {
       }
     });
     it("Should NOT be a supported asset", async () => {
-      const {
-        assets,
-        strategy,
-        usdt,
-        usdc,
-        usds,
-        weth,
-        reth,
-        stETH,
-        frxETH,
-        crv,
-        cvx,
-      } = await context();
+      const { assets, strategy, usdt, usdc, usds, weth } = await context();
 
-      const randomAssets = [
-        usdt,
-        usdc,
-        usds,
-        weth,
-        reth,
-        stETH,
-        frxETH,
-        cvx,
-        crv,
-      ];
+      const randomAssets = [usdt, usdc, usds, weth];
       for (const asset of randomAssets) {
         if (assets.includes(asset)) {
           continue; // Since `assets` already has a list of supported assets
@@ -358,28 +336,27 @@ const shouldBehaveLikeStrategy = (context) => {
       });
     });
     it("Should allow transfer of arbitrary token by Governor", async () => {
-      const { governor, crv, strategy } = context();
-      const governorCRVBalanceBefore = await crv.balanceOf(governor.address);
-      const strategyCRVBalanceBefore = await crv.balanceOf(strategy.address);
+      const { governor, ssv, strategy } = context();
+      const governorBalanceBefore = await ssv.balanceOf(governor.address);
 
-      // Anna accidentally sends CRV to strategy
+      // Someone accidentally sends SSV to strategy
       const recoveryAmount = parseUnits("2");
-      await setERC20TokenBalance(strategy.address, crv, recoveryAmount, hre);
+      await setERC20TokenBalance(strategy.address, ssv, recoveryAmount, hre);
 
-      // Anna asks Governor for help
+      // Governor recovers the token
       const tx = await strategy
         .connect(governor)
-        .transferToken(crv.address, recoveryAmount);
+        .transferToken(ssv.address, recoveryAmount);
 
       await expect(tx)
-        .to.emit(crv, "Transfer")
+        .to.emit(ssv, "Transfer")
         .withArgs(strategy.address, governor.address, recoveryAmount);
 
       await expect(governor).has.a.balanceOf(
-        governorCRVBalanceBefore.add(recoveryAmount),
-        crv
+        governorBalanceBefore.add(recoveryAmount),
+        ssv
       );
-      await expect(strategy).has.a.balanceOf(strategyCRVBalanceBefore, crv);
+      await expect(strategy).has.a.balanceOf("0", ssv);
     });
     it("Should not transfer supported assets from strategy", async () => {
       const { assets, governor, strategy } = context();
@@ -439,9 +416,13 @@ const shouldBehaveLikeStrategy = (context) => {
       }
     });
     it("Should allow reward tokens to be set by the governor", async () => {
-      const { governor, strategy, comp, crv, bal } = context();
+      const { governor, strategy } = context();
 
-      const newRewardTokens = [comp.address, crv.address, bal.address];
+      // Use random addresses as reward tokens for testing
+      const rewardToken1 = Wallet.createRandom().address;
+      const rewardToken2 = Wallet.createRandom().address;
+      const rewardToken3 = Wallet.createRandom().address;
+      const newRewardTokens = [rewardToken1, rewardToken2, rewardToken3];
       const oldRewardTokens = await strategy.getRewardTokenAddresses();
 
       const tx = await strategy
@@ -452,18 +433,21 @@ const shouldBehaveLikeStrategy = (context) => {
         .to.emit(strategy, "RewardTokenAddressesUpdated")
         .withArgs(oldRewardTokens, newRewardTokens);
 
-      expect(await strategy.rewardTokenAddresses(0)).to.equal(comp.address);
-      expect(await strategy.rewardTokenAddresses(1)).to.equal(crv.address);
-      expect(await strategy.rewardTokenAddresses(2)).to.equal(bal.address);
+      expect(await strategy.rewardTokenAddresses(0)).to.equal(rewardToken1);
+      expect(await strategy.rewardTokenAddresses(1)).to.equal(rewardToken2);
+      expect(await strategy.rewardTokenAddresses(2)).to.equal(rewardToken3);
     });
     it("Should not allow reward tokens to be set by non-governor", async () => {
-      const { comp, crv, bal, strategy, strategist, matt, harvester, vault } =
-        context();
+      const { strategy, strategist, matt, harvester, vault } = context();
 
       const vaultSigner = await impersonateAndFund(vault.address);
       const harvesterSigner = await impersonateAndFund(harvester.address);
 
-      const newRewardTokens = [comp.address, crv.address, bal.address];
+      const newRewardTokens = [
+        Wallet.createRandom().address,
+        Wallet.createRandom().address,
+        Wallet.createRandom().address,
+      ];
 
       for (const signer of [strategist, matt, harvesterSigner, vaultSigner]) {
         await expect(
