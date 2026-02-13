@@ -79,7 +79,7 @@ contract StableSwapAMMStrategy is InitializableAbstractStrategy {
     }
 
     /**
-     * @dev Skim the SwapX pool in case any extra wS or OS tokens were added
+     * @dev Skim the Algebra pool in case any extra asset or OToken tokens were added
      */
     modifier skimPool() {
         IPair(pool).skim(address(this));
@@ -118,7 +118,7 @@ contract StableSwapAMMStrategy is InitializableAbstractStrategy {
     modifier improvePoolBalance() {
         // Get the asset and OToken balances in the pool
         (uint256 assetReserveBefore, uint256 oTokenReserveBefore) = _getPoolReserves();
-        // diff = wS balance - OS balance
+        // diff = asset balance - OToken balance
         int256 diffBefore = assetReserveBefore.toInt256() -
             oTokenReserveBefore.toInt256();
 
@@ -146,7 +146,7 @@ contract StableSwapAMMStrategy is InitializableAbstractStrategy {
     }
 
     /**
-     * @param _baseConfig The `platformAddress` is the address of the SwapX pool.
+     * @param _baseConfig The `platformAddress` is the address of the Algebra pool.
      * The `vaultAddress` is the address of the Origin Sonic Vault.
      * @param _oToken Address of the OToken.
      * @param _asset Address of the asset token.
@@ -164,7 +164,7 @@ contract StableSwapAMMStrategy is InitializableAbstractStrategy {
                 IBasicToken(_oToken).decimals() == 18,
             "Incorrect token decimals"
         );
-        // Check the SwapX pool is a Stable AMM (sAMM)
+        // Check the Algebra pool is a Stable AMM (sAMM)
         require(
             IPair(_baseConfig.platformAddress).isStable() == true,
             "Pool not stable"
@@ -194,10 +194,10 @@ contract StableSwapAMMStrategy is InitializableAbstractStrategy {
 
     /**
      * Initializer for setting up strategy internal state. This overrides the
-     * InitializableAbstractStrategy initializer as SwapX strategies don't fit
+     * InitializableAbstractStrategy initializer as Algebra strategies don't fit
      * well within that abstraction.
      * @param _rewardTokenAddresses Array containing SWPx token address
-     * @param _maxDepeg The max amount the OS/wS price can deviate from peg (1e18) before deposits are reverted.
+     * @param _maxDepeg The max amount the OToken/asset price can deviate from peg (1e18) before deposits are reverted.
      */
     function initialize(
         address[] calldata _rewardTokenAddresses,
@@ -251,7 +251,7 @@ contract StableSwapAMMStrategy is InitializableAbstractStrategy {
         // Ensure solvency of the vault
         _solvencyAssert();
 
-        // Emit event for the deposited wS tokens
+        // Emit event for the deposited asset tokens
         emit Deposit(asset, pool, _assetAmount);
         // Emit event for the minted OToken tokens
         emit Deposit(oToken, pool, oTokenDepositAmount);
@@ -294,7 +294,7 @@ contract StableSwapAMMStrategy is InitializableAbstractStrategy {
      * mint the pool's LP token and deposit in the gauge.
      * @param _assetAmount Amount of asset tokens to deposit.
      * @return oTokenDepositAmount Amount of OToken tokens minted and deposited into the pool.
-     * @return lpTokens Amount of SwapX pool LP tokens minted and deposited into the gauge.
+     * @return lpTokens Amount of Algebra pool LP tokens minted and deposited into the gauge.
      */
     function _deposit(uint256 _assetAmount)
         internal
@@ -315,56 +315,56 @@ contract StableSwapAMMStrategy is InitializableAbstractStrategy {
     ****************************************/
 
     /**
-     * @notice Withdraw wS and OS from the SwapX pool, burn the OS,
-     * and transfer the wS to the recipient.
+     * @notice Withdraw asset and OToken from the Algebra pool, burn the OToken,
+     * and transfer the asset to the recipient.
      * @param _recipient Address of the Vault.
-     * @param _asset Address of the Wrapped S (wS) contract.
-     * @param _wsAmount Amount of Wrapped S (wS) to withdraw.
+     * @param _asset Address of the asset token.
+     * @param _assetAmount Amount of asset tokens to withdraw.
      */
     function withdraw(
         address _recipient,
         address _asset,
-        uint256 _wsAmount
+        uint256 _assetAmount
     ) external override onlyVault nonReentrant skimPool {
-        require(_wsAmount > 0, "Must withdraw something");
+        require(_assetAmount > 0, "Must withdraw something");
         require(_asset == asset, "Unsupported asset");
-        // This strategy can't be set as a default strategy for wS in the Vault.
+        // This strategy can't be set as a default strategy for asset in the Vault.
         // This means the recipient must always be the Vault.
         require(_recipient == vaultAddress, "Only withdraw to vault allowed");
 
-        // Calculate how much pool LP tokens to burn to get the required amount of wS tokens back
-        uint256 lpTokens = _calcTokensToBurn(_wsAmount);
+        // Calculate how much pool LP tokens to burn to get the required amount of asset tokens back
+        uint256 lpTokens = _calcTokensToBurn(_assetAmount);
 
         // Withdraw pool LP tokens from the gauge and remove assets from from the pool
         _withdrawFromGaugeAndPool(lpTokens);
 
-        // Burn all the removed OS and any that was left in the strategy
-        uint256 osToBurn = IERC20(oToken).balanceOf(address(this));
-        IVault(vaultAddress).burnForStrategy(osToBurn);
+        // Burn all the removed OToken and any that was left in the strategy
+        uint256 oTokenToBurn = IERC20(oToken).balanceOf(address(this));
+        IVault(vaultAddress).burnForStrategy(oTokenToBurn);
 
-        // Transfer wS to the recipient
-        // Note there can be a dust amount of wS left in the strategy as
+        // Transfer asset to the recipient
+        // Note there can be a dust amount of asset left in the strategy as
         // the burn of the pool's LP tokens is rounded up
         require(
-            IERC20(asset).balanceOf(address(this)) >= _wsAmount,
-            "Not enough wS removed from pool"
+            IERC20(asset).balanceOf(address(this)) >= _assetAmount,
+            "Not enough asset removed"
         );
-        IERC20(asset).safeTransfer(_recipient, _wsAmount);
+        IERC20(asset).safeTransfer(_recipient, _assetAmount);
 
         // Ensure solvency of the vault
         _solvencyAssert();
 
-        // Emit event for the withdrawn wS tokens
-        emit Withdrawal(asset, pool, _wsAmount);
-        // Emit event for the burnt OS tokens
-        emit Withdrawal(oToken, pool, osToBurn);
+        // Emit event for the withdrawn asset tokens
+        emit Withdrawal(asset, pool, _assetAmount);
+        // Emit event for the burnt OToken tokens
+        emit Withdrawal(oToken, pool, oTokenToBurn);
     }
 
     /**
      * @notice Withdraw all pool LP tokens from the gauge,
-     * remove all wS and OS from the SwapX pool,
-     * burn all the OS tokens,
-     * and transfer all the wS to the Vault contract.
+     * remove all asset and OToken from the Algebra pool,
+     * burn all the OToken,
+     * and transfer all the asset to the Vault contract.
      * @dev There is no solvency check here as withdrawAll can be called to
      * quickly secure assets to the Vault in emergencies.
      */
@@ -388,112 +388,112 @@ contract StableSwapAMMStrategy is InitializableAbstractStrategy {
             _withdrawFromGaugeAndPool(lpTokens);
         }
 
-        // Burn all OS in this strategy contract
-        uint256 osToBurn = IERC20(oToken).balanceOf(address(this));
-        IVault(vaultAddress).burnForStrategy(osToBurn);
+        // Burn all OToken in this strategy contract
+        uint256 oTokenToBurn = IERC20(oToken).balanceOf(address(this));
+        IVault(vaultAddress).burnForStrategy(oTokenToBurn);
 
-        // Get the strategy contract's wS balance.
-        // This includes all that was removed from the SwapX pool and
+        // Get the strategy contract's asset balance.
+        // This includes all that was removed from the Algebra pool and
         // any that was sitting in the strategy contract before the removal.
-        uint256 wsBalance = IERC20(asset).balanceOf(address(this));
-        IERC20(asset).safeTransfer(vaultAddress, wsBalance);
+        uint256 assetBalance = IERC20(asset).balanceOf(address(this));
+        IERC20(asset).safeTransfer(vaultAddress, assetBalance);
 
-        // Emit event for the withdrawn wS tokens
-        emit Withdrawal(asset, pool, wsBalance);
-        // Emit event for the burnt OS tokens
-        emit Withdrawal(oToken, pool, osToBurn);
+        // Emit event for the withdrawn asset tokens
+        emit Withdrawal(asset, pool, assetBalance);
+        // Emit event for the burnt OToken tokens
+        emit Withdrawal(oToken, pool, oTokenToBurn);
     }
 
     /***************************************
                 Pool Rebalancing
     ****************************************/
 
-    /** @notice Used when there is more OS than wS in the pool.
-     * wS and OS is removed from the pool, the received wS is swapped for OS
-     * and the left over OS in the strategy is burnt.
-     * The OS/wS price is < 1.0 so OS is being bought at a discount.
-     * @param _wsAmount Amount of Wrapped S (wS) to swap into the pool.
+    /** @notice Used when there is more OToken than asset in the pool.
+     * asset and OToken is removed from the pool, the received asset is swapped for OToken
+     * and the left over OToken in the strategy is burnt.
+     * The OToken/asset price is < 1.0 so OToken is being bought at a discount.
+     * @param _assetAmount Amount of asset tokens to swap into the pool.
      */
-    function swapAssetsToPool(uint256 _wsAmount)
+    function swapAssetsToPool(uint256 _assetAmount)
         external
         onlyStrategist
         nonReentrant
         improvePoolBalance
         skimPool
     {
-        require(_wsAmount > 0, "Must swap something");
+        require(_assetAmount > 0, "Must swap something");
 
-        // 1. Partially remove liquidity so there’s enough wS for the swap
+        // 1. Partially remove liquidity so there’s enough asset for the swap
 
-        // Calculate how much pool LP tokens to burn to get the required amount of wS tokens back
-        uint256 lpTokens = _calcTokensToBurn(_wsAmount);
+        // Calculate how much pool LP tokens to burn to get the required amount of asset tokens back
+        uint256 lpTokens = _calcTokensToBurn(_assetAmount);
         require(lpTokens > 0, "No LP tokens to burn");
 
         _withdrawFromGaugeAndPool(lpTokens);
 
-        // 2. Swap wS for OS against the pool
-        // Swap exact amount of wS for OS against the pool
-        // There can be a dust amount of wS left in the strategy as the burn of the pool's LP tokens is rounded up
-        _swapExactTokensForTokens(_wsAmount, asset, oToken);
+        // 2. Swap asset for OToken against the pool
+        // Swap exact amount of asset for OToken against the pool
+        // There can be a dust amount of asset left in the strategy as the burn of the pool's LP tokens is rounded up
+        _swapExactTokensForTokens(_assetAmount, asset, oToken);
 
-        // 3. Burn all the OS left in the strategy from the remove liquidity and swap
-        uint256 osToBurn = IERC20(oToken).balanceOf(address(this));
-        IVault(vaultAddress).burnForStrategy(osToBurn);
+        // 3. Burn all the OToken left in the strategy from the remove liquidity and swap
+        uint256 oTokenToBurn = IERC20(oToken).balanceOf(address(this));
+        IVault(vaultAddress).burnForStrategy(oTokenToBurn);
 
         // Ensure solvency of the vault
         _solvencyAssert();
 
-        // Emit event for the burnt OS tokens
-        emit Withdrawal(oToken, pool, osToBurn);
+        // Emit event for the burnt OToken tokens
+        emit Withdrawal(oToken, pool, oTokenToBurn);
         // Emit event for the swap
-        emit SwapAssetsToPool(_wsAmount, lpTokens, osToBurn);
+        emit SwapAssetsToPool(_assetAmount, lpTokens, oTokenToBurn);
     }
 
     /**
-     * @notice Used when there is more wS than OS in the pool.
-     * OS is minted and swapped for wS against the pool,
-     * more OS is minted and added back into the pool with the swapped out wS.
-     * The OS/wS price is > 1.0 so OS is being sold at a premium.
-     * @param _osAmount Amount of OS to swap into the pool.
+     * @notice Used when there is more asset than OToken in the pool.
+     * OToken is minted and swapped for asset against the pool,
+     * more OToken is minted and added back into the pool with the swapped out asset.
+     * The OToken/asset price is > 1.0 so OToken is being sold at a premium.
+     * @param _oTokenAmount Amount of OToken to swap into the pool.
      */
-    function swapOTokensToPool(uint256 _osAmount)
+    function swapOTokensToPool(uint256 _oTokenAmount)
         external
         onlyStrategist
         nonReentrant
         improvePoolBalance
         skimPool
     {
-        require(_osAmount > 0, "Must swap something");
+        require(_oTokenAmount > 0, "Must swap something");
 
-        // 1. Mint OS so it can be swapped into the pool
+        // 1. Mint OToken so it can be swapped into the pool
 
-        // There can be OS in the strategy from skimming the pool
-        uint256 osInStrategy = IERC20(oToken).balanceOf(address(this));
-        require(_osAmount >= osInStrategy, "Too much OS in strategy");
-        uint256 osToMint = _osAmount - osInStrategy;
+        // There can be OToken in the strategy from skimming the pool
+        uint256 oTokenInStrategy = IERC20(oToken).balanceOf(address(this));
+        require(_oTokenAmount >= oTokenInStrategy, "Too much OToken in strategy");
+        uint256 oTokenToMint = _oTokenAmount - oTokenInStrategy;
 
-        // Mint the required OS tokens to this strategy
-        IVault(vaultAddress).mintForStrategy(osToMint);
+        // Mint the required OToken tokens to this strategy
+        IVault(vaultAddress).mintForStrategy(oTokenToMint);
 
-        // 2. Swap OS for wS against the pool
-        _swapExactTokensForTokens(_osAmount, oToken, asset);
+        // 2. Swap OToken for asset against the pool
+        _swapExactTokensForTokens(_oTokenAmount, oToken, asset);
 
-        // The wS is from the swap and any wS that was sitting in the strategy
-        uint256 wsDepositAmount = IERC20(asset).balanceOf(address(this));
+        // The asset is from the swap and any asset that was sitting in the strategy
+        uint256 assetDepositAmount = IERC20(asset).balanceOf(address(this));
 
-        // 3. Add wS and OS back to the pool in proportion to the pool's reserves
-        (uint256 osDepositAmount, uint256 lpTokens) = _deposit(wsDepositAmount);
+        // 3. Add asset and OToken back to the pool in proportion to the pool's reserves
+        (uint256 oTokenDepositAmount, uint256 lpTokens) = _deposit(assetDepositAmount);
 
         // Ensure solvency of the vault
         _solvencyAssert();
 
-        // Emit event for the minted OS tokens
-        emit Deposit(oToken, pool, osToMint + osDepositAmount);
+        // Emit event for the minted OToken tokens
+        emit Deposit(oToken, pool, oTokenToMint + oTokenDepositAmount);
         // Emit event for the swap
         emit SwapOTokensToPool(
-            osToMint,
-            wsDepositAmount,
-            osDepositAmount,
+            oTokenToMint,
+            assetDepositAmount,
+            oTokenDepositAmount,
             lpTokens
         );
     }
@@ -503,11 +503,11 @@ contract StableSwapAMMStrategy is InitializableAbstractStrategy {
     ****************************************/
 
     /**
-     * @notice Get the wS value of assets in the strategy and SwapX pool.
+     * @notice Get the asset value of assets in the strategy and Algebra pool.
      * The value of the assets in the pool is calculated assuming the pool is balanced.
      * This way the value can not be manipulated by changing the pool's token balances.
-     * @param _asset      Address of the Wrapped S (wS) token
-     * @return balance    Total value in wS.
+     * @param _asset      Address of the asset token
+     * @return balance    Total value in asset.
      */
     function checkBalance(address _asset)
         external
@@ -517,14 +517,14 @@ contract StableSwapAMMStrategy is InitializableAbstractStrategy {
     {
         require(_asset == asset, "Unsupported asset");
 
-        // wS balance needed here for the balance check that happens from vault during depositing.
+        // asset balance needed here for the balance check that happens from vault during depositing.
         balance = IERC20(asset).balanceOf(address(this));
 
         // This assumes 1 gauge LP token = 1 pool LP token
         uint256 lpTokens = IGauge(gauge).balanceOf(address(this));
         if (lpTokens == 0) return balance;
 
-        // Add the strategy’s share of the wS and OS tokens in the SwapX pool if the pool was balanced.
+        // Add the strategy’s share of the asset and OToken tokens in the Algebra pool if the pool was balanced.
         balance += _lpValue(lpTokens);
     }
 
@@ -552,44 +552,44 @@ contract StableSwapAMMStrategy is InitializableAbstractStrategy {
     }
 
     /***************************************
-        Internal SwapX Pool and Gauge Functions
+        Internal Algebra Pool and Gauge Functions
     ****************************************/
 
     /**
-     * @dev Calculate the required amount of OS to mint based on the wS amount.
-     * This ensures the proportion of OS tokens being added to the pool matches the proportion of wS tokens.
-     * For example, if the added wS tokens is 10% of existing wS tokens in the pool,
-     * then the OS tokens being added should also be 10% of the OS tokens in the pool.
-     * @param _wsAmount Amount of Wrapped S (wS) to be added to the pool.
-     * @return osAmount Amount of OS to be minted and added to the pool.
+     * @dev Calculate the required amount of OToken to mint based on the asset amount.
+     * This ensures the proportion of OToken tokens being added to the pool matches the proportion of asset tokens.
+     * For example, if the added asset tokens is 10% of existing asset tokens in the pool,
+     * then the OToken tokens being added should also be 10% of the OToken tokens in the pool.
+     * @param _assetAmount Amount of asset tokens to be added to the pool.
+     * @return oTokenAmount Amount of OToken tokens to be minted and added to the pool.
      */
-    function _calcTokensToMint(uint256 _wsAmount)
+    function _calcTokensToMint(uint256 _assetAmount)
         internal
         view
-        returns (uint256 osAmount)
+        returns (uint256 oTokenAmount)
     {
-        (uint256 wsReserves, uint256 osReserves, ) = IPair(pool).getReserves();
-        require(wsReserves > 0, "Empty pool");
+        (uint256 assetReserves, uint256 oTokenReserves) = _getPoolReserves();
+        require(assetReserves > 0, "Empty pool");
 
-        // OS to add = (wS being added * OS in pool) / wS in pool
-        osAmount = (_wsAmount * osReserves) / wsReserves;
+        // OToken to add = (asset being added * OToken in pool) / asset in pool
+        oTokenAmount = (_assetAmount * oTokenReserves) / assetReserves;
     }
 
     /**
-     * @dev Calculate how much pool LP tokens to burn to get the required amount of wS tokens back
+     * @dev Calculate how much pool LP tokens to burn to get the required amount of asset tokens back
      * from the pool.
-     * @param _wsAmount Amount of Wrapped S (wS) to be removed from the pool.
-     * @return lpTokens Amount of SwapX pool LP tokens to burn.
+     * @param _assetAmount Amount of asset tokens to be removed from the pool.
+     * @return lpTokens Amount of Algebra pool LP tokens to burn.
      */
-    function _calcTokensToBurn(uint256 _wsAmount)
+    function _calcTokensToBurn(uint256 _assetAmount)
         internal
         view
         returns (uint256 lpTokens)
     {
-        /* The SwapX pool proportionally returns the reserve tokens when removing liquidity.
-         * First, calculate the proportion of required wS tokens against the pools wS reserves.
+        /* The Algebra pool proportionally returns the reserve tokens when removing liquidity.
+         * First, calculate the proportion of required asset tokens against the pools asset reserves.
          * That same proportion is used to calculate the required amount of pool LP tokens.
-         * For example, if the required wS tokens is 10% of the pool's wS reserves,
+         * For example, if the required asset tokens is 10% of the pool's asset reserves,
          * then 10% of the pool's LP supply needs to be burned.
          *
          * Because we are doing balanced removal we should be making profit when removing liquidity in a
@@ -601,28 +601,28 @@ contract StableSwapAMMStrategy is InitializableAbstractStrategy {
          * created is no longer valid.
          */
 
-        (uint256 wsReserves, , ) = IPair(pool).getReserves();
-        require(wsReserves > 0, "Empty pool");
+        (uint256 assetReserves, ) = _getPoolReserves();
+        require(assetReserves > 0, "Empty pool");
 
-        lpTokens = (_wsAmount * IPair(pool).totalSupply()) / wsReserves;
+        lpTokens = (_assetAmount * IPair(pool).totalSupply()) / assetReserves;
         lpTokens += 1; // Add 1 to ensure we get enough LP tokens with rounding
     }
 
     /**
-     * @dev Deposit Wrapped S (wS) and OS liquidity to the SwapX pool
+     * @dev Deposit asset and OToken liquidity to the Algebra pool
      * and stake the pool's LP token in the gauge.
-     * @param _wsAmount Amount of Wrapped S (wS) to deposit.
-     * @param _osAmount Amount of OS to deposit.
-     * @return lpTokens Amount of SwapX pool LP tokens minted.
+     * @param _assetAmount Amount of asset to deposit.
+     * @param _oTokenAmount Amount of OToken to deposit.
+     * @return lpTokens Amount of Algebra pool LP tokens minted.
      */
-    function _depositToPoolAndGauge(uint256 _wsAmount, uint256 _osAmount)
+    function _depositToPoolAndGauge(uint256 _assetAmount, uint256 _oTokenAmount)
         internal
         returns (uint256 lpTokens)
     {
-        // Transfer wS to the pool
-        IERC20(asset).safeTransfer(pool, _wsAmount);
-        // Transfer OS to the pool
-        IERC20(oToken).safeTransfer(pool, _osAmount);
+        // Transfer asset to the pool
+        IERC20(asset).safeTransfer(pool, _assetAmount);
+        // Transfer OToken to the pool
+        IERC20(oToken).safeTransfer(pool, _oTokenAmount);
 
         // Mint LP tokens from the pool
         lpTokens = IPair(pool).mint(address(this));
@@ -632,8 +632,8 @@ contract StableSwapAMMStrategy is InitializableAbstractStrategy {
     }
 
     /**
-     * @dev Withdraw pool LP tokens from the gauge and remove wS and OS from the pool.
-     * @param _lpTokens Amount of SwapX pool LP tokens to withdraw from the gauge
+     * @dev Withdraw pool LP tokens from the gauge and remove asset and OToken from the pool.
+     * @param _lpTokens Amount of Algebra pool LP tokens to withdraw from the gauge
      */
     function _withdrawFromGaugeAndPool(uint256 _lpTokens) internal {
         require(
@@ -647,13 +647,13 @@ contract StableSwapAMMStrategy is InitializableAbstractStrategy {
         // Transfer the pool LP tokens to the pool
         IERC20(pool).safeTransfer(pool, _lpTokens);
 
-        // Burn the LP tokens and transfer the wS and OS back to the strategy
+        // Burn the LP tokens and transfer the asset and OToken back to the strategy
         IPair(pool).burn(address(this));
     }
 
     /**
      * @dev Withdraw all pool LP tokens from the gauge when it's in emergency mode
-     * and remove wS and OS from the pool.
+     * and remove asset and OToken from the pool.
      */
     function _emergencyWithdrawFromGaugeAndPool() internal {
         // Withdraw all pool LP tokens from the gauge
@@ -665,7 +665,7 @@ contract StableSwapAMMStrategy is InitializableAbstractStrategy {
         // Transfer the pool LP tokens to the pool
         IERC20(pool).safeTransfer(pool, _lpTokens);
 
-        // Burn the LP tokens and transfer the wS and OS back to the strategy
+        // Burn the LP tokens and transfer the asset and OToken back to the strategy
         IPair(pool).burn(address(this));
     }
 
@@ -705,21 +705,21 @@ contract StableSwapAMMStrategy is InitializableAbstractStrategy {
         // via the improvePoolBalance
     }
 
-    /// @dev Calculate the value of a LP position in a SwapX stable pool
+    /// @dev Calculate the value of a LP position in a Algebra stable pool
     /// if the pool was balanced.
-    /// @param _lpTokens Amount of LP tokens in the SwapX pool
-    /// @return value The wS value of the LP tokens when the pool is balanced
+    /// @param _lpTokens Amount of LP tokens in the Algebra pool
+    /// @return value The asset value of the LP tokens when the pool is balanced
     function _lpValue(uint256 _lpTokens) internal view returns (uint256 value) {
         // Get total supply of LP tokens
         uint256 totalSupply = IPair(pool).totalSupply();
         if (totalSupply == 0) return 0;
 
         // Get the current reserves of the pool
-        (uint256 wsReserves, uint256 osReserves, ) = IPair(pool).getReserves();
+        (uint256 assetReserves, uint256 oTokenReserves) = _getPoolReserves();
 
         // Calculate the invariant of the pool assuming both tokens have 18 decimals.
         // k is scaled to 18 decimals.
-        uint256 k = _invariant(wsReserves, osReserves);
+        uint256 k = _invariant(assetReserves, oTokenReserves);
 
         // If x = y, let’s denote x = y = z (where z is the common reserve value)
         // Substitute z into the invariant:
@@ -737,13 +737,13 @@ contract StableSwapAMMStrategy is InitializableAbstractStrategy {
     }
 
     /**
-     * @dev Compute the invariant for a SwapX stable pool.
+     * @dev Compute the invariant for a Algebra stable pool.
      * This assumed both x and y tokens are to 18 decimals which is checked in the constructor.
      * invariant: k = x^3 * y + x * y^3
-     * @dev This implementation is copied from SwapX's Pair contract.
-     * @param _x The amount of Wrapped S (wS) tokens in the pool
-     * @param _y The amount of the OS tokens in the pool
-     * @return k The invariant of the SwapX stable pool
+     * @dev This implementation is copied from Algebra's Pair contract.
+     * @param _x The amount of asset tokens in the pool
+     * @param _y The amount of the OToken tokens in the pool
+     * @return k The invariant of the Algebra stable pool
      */
     function _invariant(uint256 _x, uint256 _y)
         internal
@@ -792,8 +792,8 @@ contract StableSwapAMMStrategy is InitializableAbstractStrategy {
     ****************************************/
 
     /**
-     * @notice Set the maximum deviation from the OS/wS peg (1e18) before deposits are reverted.
-     * @param _maxDepeg the OS/wS price from peg (1e18) in 18 decimals.
+     * @notice Set the maximum deviation from the OToken/asset peg (1e18) before deposits are reverted.
+     * @param _maxDepeg the OToken/asset price from peg (1e18) in 18 decimals.
      * eg 0.01e18 or 1e16 is 1% which is 100 basis points.
      */
     function setMaxDepeg(uint256 _maxDepeg) external onlyGovernor {
@@ -826,8 +826,8 @@ contract StableSwapAMMStrategy is InitializableAbstractStrategy {
     {}
 
     function _approveBase() internal {
-        // Approve SwapX gauge contract to transfer SwapX pool LP tokens
-        // This is needed for deposits of SwapX pool LP tokens into the gauge.
+        // Approve Algebra gauge contract to transfer Algebra pool LP tokens
+        // This is needed for deposits of Algebra pool LP tokens into the gauge.
         // slither-disable-next-line unused-return
         IPair(pool).approve(address(gauge), type(uint256).max);
     }

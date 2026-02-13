@@ -1598,12 +1598,6 @@ const getPlumeContracts = async () => {
 };
 
 const deploySonicSwapXAMOStrategyImplementation = async () => {
-  const { deployerAddr } = await getNamedAccounts();
-  const sDeployer = await ethers.provider.getSigner(deployerAddr);
-
-  const cSonicSwapXAMOStrategyProxy = await ethers.getContract(
-    "SonicSwapXAMOStrategyProxy"
-  );
   const cOSonicProxy = await ethers.getContract("OSonicProxy");
   const cOSonicVaultProxy = await ethers.getContract("OSonicVaultProxy");
 
@@ -1617,6 +1611,23 @@ const deploySonicSwapXAMOStrategyImplementation = async () => {
       addresses.sonic.SwapXWSOS.gauge,
     ]
   );
+
+  return dSonicSwapXAMOStrategy;
+};
+
+const deploySonicSwapXAMOStrategyImplementationAndInitialize = async () => {
+  const { deployerAddr } = await getNamedAccounts();
+  const sDeployer = await ethers.provider.getSigner(deployerAddr);
+
+  const cSonicSwapXAMOStrategyProxy = await ethers.getContract(
+    "SonicSwapXAMOStrategyProxy"
+  );
+  const cOSonicProxy = await ethers.getContract("OSonicProxy");
+  const cOSonicVaultProxy = await ethers.getContract("OSonicVaultProxy");
+
+  // Deploy Sonic SwapX AMO Strategy implementation
+  const dSonicSwapXAMOStrategy = await deploySonicSwapXAMOStrategyImplementation();
+  
   const cSonicSwapXAMOStrategy = await ethers.getContractAt(
     "SonicSwapXAMOStrategy",
     cSonicSwapXAMOStrategyProxy.address
@@ -2110,6 +2121,7 @@ module.exports = {
   deployPlumeMockRoosterAMOStrategyImplementation,
   getPlumeContracts,
   deploySonicSwapXAMOStrategyImplementation,
+  deploySonicSwapXAMOStrategyImplementationAndInitialize,
   deployOETHSupernovaAMOStrategyImplementation,
   deployOETHSupernovaAMOStrategyPoolAndGauge,
   deployProxyWithCreateX,

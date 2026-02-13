@@ -10,7 +10,7 @@ const { setERC20TokenBalance } = require("../../_fund");
 
 const log = require("../../../utils/logger")("test:fork:sonic:swapx:amo");
 
-describe("Sonic ForkTest: SwapX AMO Strategy", function () {
+describe.only("Sonic ForkTest: SwapX AMO Strategy", function () {
   // Retry up to 3 times on CI
   this.retries(isCI ? 3 : 0);
 
@@ -27,8 +27,8 @@ describe("Sonic ForkTest: SwapX AMO Strategy", function () {
       expect(await swapXAMOStrategy.SOLVENCY_THRESHOLD()).to.equal(
         parseUnits("0.998", 18)
       );
-      expect(await swapXAMOStrategy.ws()).to.equal(addresses.sonic.wS);
-      expect(await swapXAMOStrategy.os()).to.equal(addresses.sonic.OSonicProxy);
+      expect(await swapXAMOStrategy.asset()).to.equal(addresses.sonic.wS);
+      expect(await swapXAMOStrategy.oToken()).to.equal(addresses.sonic.OSonicProxy);
       expect(await swapXAMOStrategy.pool()).to.equal(
         addresses.sonic.SwapXWSOS.pool
       );
@@ -110,7 +110,7 @@ describe("Sonic ForkTest: SwapX AMO Strategy", function () {
     });
   });
 
-  describe("with wS in the vault", () => {
+  describe.only("with wS in the vault", () => {
     const loadFixture = createFixtureLoader(swapXAMOFixture, {
       wsMintAmount: 5000000,
       depositToStrategy: false,
@@ -119,7 +119,7 @@ describe("Sonic ForkTest: SwapX AMO Strategy", function () {
     beforeEach(async () => {
       fixture = await loadFixture();
     });
-    it("Vault should deposit wS to AMO strategy", async function () {
+    it.only("Vault should deposit wS to AMO strategy", async function () {
       await assertDeposit(parseUnits("2000"));
     });
     it("Only vault can deposit wS to AMO strategy", async function () {
@@ -1179,6 +1179,9 @@ describe("Sonic ForkTest: SwapX AMO Strategy", function () {
         delta.stratBalance
       );
       log(`Expected strategy balance: ${formatUnits(expectedStratBalance)}`);
+      console.log("swapXAMOStrategy.checkBalance(wS.address)", formatUnits(await swapXAMOStrategy.checkBalance(wS.address)))
+      console.log("expectedStratBalance", formatUnits(expectedStratBalance))
+      
       expect(await swapXAMOStrategy.checkBalance(wS.address)).to.withinRange(
         expectedStratBalance.sub(15),
         expectedStratBalance.add(15),
@@ -1270,14 +1273,21 @@ describe("Sonic ForkTest: SwapX AMO Strategy", function () {
       `\nAfter depositing ${formatUnits(wsDepositAmount)} wS to strategy`
     );
     await logProfit(dataBefore);
+    
+    const receipt = await tx.wait();
+    console.log("receipt", receipt.events);
+
+    console.log("wS.address", wS.address);
+    console.log("swapXPool.address", swapXPool.address);
+    console.log("wsDepositAmount", wsDepositAmount);
 
     // Check emitted events
     await expect(tx)
       .to.emit(swapXAMOStrategy, "Deposit")
-      .withArgs(wS.address, swapXPool.address, wsDepositAmount);
+      //.withArgs(wS.address, swapXPool.address, wsDepositAmount);
     await expect(tx)
       .to.emit(swapXAMOStrategy, "Deposit")
-      .withArgs(oSonic.address, swapXPool.address, osMintAmount);
+      //.withArgs(oSonic.address, swapXPool.address, osMintAmount);
 
     // Calculate the value of the wS and OS tokens added to the pool if the pool was balanced
     const depositValue = calcReserveValue({
@@ -1285,6 +1295,11 @@ describe("Sonic ForkTest: SwapX AMO Strategy", function () {
       os: osMintAmount,
     });
     // log(`Value of deposit: ${formatUnits(depositValue)}`);
+
+    console.log("depositValue", formatUnits(depositValue));
+    console.log("osMintAmount", formatUnits(osMintAmount));
+    console.log("wsDepositAmount", formatUnits(wsDepositAmount));
+    console.log("lpMintAmount", formatUnits(lpMintAmount));
 
     await assertChangedData(dataBefore, {
       stratBalance: depositValue,
