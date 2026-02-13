@@ -25,7 +25,7 @@ module.exports = deploymentWithGovernanceProposal(
     const oldFactory = await ethers.getContract("PoolBoosterFactoryMerkl");
 
     // ---------------------------------------------------------------------------------------------------------
-    // --- Deploy PoolBoosterMerklV2 (implementation for clones)
+    // --- 1. Deploy PoolBoosterMerklV2 (implementation for beacon proxies)
     // ---------------------------------------------------------------------------------------------------------
     const dPoolBoosterMerklV2 = await deployWithConfirmation(
       "PoolBoosterMerklV2",
@@ -36,25 +36,68 @@ module.exports = deploymentWithGovernanceProposal(
     );
 
     // ---------------------------------------------------------------------------------------------------------
-    // --- Deploy new PoolBoosterFactoryMerkl
+    // --- 2. Deploy GovernableBeacon pointing to PoolBoosterMerklV2
     // ---------------------------------------------------------------------------------------------------------
-    // skipUpgradeSafety: true — this is a fresh deploy, not an upgrade of the old factory
-    const dPoolBoosterFactoryMerkl = await deployWithConfirmation(
+    const dGovernableBeacon = await deployWithConfirmation("GovernableBeacon", [
+      dPoolBoosterMerklV2.address,
+      addresses.mainnet.Timelock,
+    ]);
+    console.log(`GovernableBeacon deployed to ${dGovernableBeacon.address}`);
+
+    // ---------------------------------------------------------------------------------------------------------
+    // --- 3. Deploy PoolBoosterFactoryMerklProxy
+    // ---------------------------------------------------------------------------------------------------------
+    const dFactoryProxy = await deployWithConfirmation(
+      "PoolBoosterFactoryMerklProxy",
+      []
+    );
+    console.log(
+      `PoolBoosterFactoryMerklProxy deployed to ${dFactoryProxy.address}`
+    );
+
+    // ---------------------------------------------------------------------------------------------------------
+    // --- 4. Deploy PoolBoosterFactoryMerkl implementation (new initializable version)
+    // ---------------------------------------------------------------------------------------------------------
+    const dFactoryImpl = await deployWithConfirmation(
       "PoolBoosterFactoryMerkl",
-      [
-        oeth.address,
-        addresses.mainnet.Timelock,
-        cPoolBoostCentralRegistryProxy.address,
-        dPoolBoosterMerklV2.address,
-      ],
+      [],
       undefined,
       true
     );
     console.log(
-      `New PoolBoosterFactoryMerkl deployed to ${dPoolBoosterFactoryMerkl.address}`
+      `PoolBoosterFactoryMerkl impl deployed to ${dFactoryImpl.address}`
     );
 
-    // Encode initData for the new Pool Booster clone
+    // ---------------------------------------------------------------------------------------------------------
+    // --- 5. Initialize factory proxy
+    // ---------------------------------------------------------------------------------------------------------
+    const iFactory = new ethers.utils.Interface([
+      "function initialize(address,address,address)",
+    ]);
+    const factoryInitData = iFactory.encodeFunctionData("initialize", [
+      addresses.mainnet.Timelock,
+      cPoolBoostCentralRegistryProxy.address,
+      dGovernableBeacon.address,
+    ]);
+
+    const cFactoryProxy = await ethers.getContractAt(
+      "PoolBoosterFactoryMerklProxy",
+      dFactoryProxy.address
+    );
+    // The deployer initializes the proxy (sets impl + governor + calls initialize)
+    const { deployerAddr } = await getNamedAccounts();
+    const sDeployer = ethers.provider.getSigner(deployerAddr);
+    await cFactoryProxy.connect(sDeployer)["initialize(address,address,bytes)"](
+      dFactoryImpl.address,
+      addresses.mainnet.Timelock,
+      factoryInitData
+    );
+    console.log("Factory proxy initialized");
+
+    // ---------------------------------------------------------------------------------------------------------
+    // --- 6. Governance proposal
+    // ---------------------------------------------------------------------------------------------------------
+    // Encode initData for the first Pool Booster
     const iPoolBoosterMerklV2 = new ethers.utils.Interface([
       "function initialize(uint32,uint32,address,address,address,address,bytes)",
     ]);
@@ -70,7 +113,7 @@ module.exports = deploymentWithGovernanceProposal(
 
     const cNewFactory = await ethers.getContractAt(
       "PoolBoosterFactoryMerkl",
-      dPoolBoosterFactoryMerkl.address
+      dFactoryProxy.address
     );
 
     return {
@@ -83,10 +126,10 @@ module.exports = deploymentWithGovernanceProposal(
           args: [oldFactory.address],
         },
         {
-          // Approve new factory in central registry
+          // Approve new factory proxy in central registry
           contract: cPoolBoostCentralRegistry,
           signature: "approveFactory(address)",
-          args: [dPoolBoosterFactoryMerkl.address],
+          args: [dFactoryProxy.address],
         },
         {
           // Create a new Pool Booster via the new factory

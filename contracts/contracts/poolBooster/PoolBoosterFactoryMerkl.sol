@@ -1,13 +1,22 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import { Clones } from "@openzeppelin/contracts/proxy/Clones.sol";
-import { AbstractPoolBoosterFactory, IPoolBoostCentralRegistry } from "./AbstractPoolBoosterFactory.sol";
+import { BeaconProxy } from "@openzeppelin/contracts/proxy/beacon/BeaconProxy.sol";
+import { Governable } from "../governance/Governable.sol";
+import { Initializable } from "../utils/Initializable.sol";
+import { IPoolBooster } from "../interfaces/poolBooster/IPoolBooster.sol";
+import { IPoolBoostCentralRegistry } from "../interfaces/poolBooster/IPoolBoostCentralRegistry.sol";
 
 /// @title PoolBoosterFactoryMerkl
 /// @author Origin Protocol
-/// @notice Factory for creating Merkl pool boosters using minimal proxies (EIP-1167).
-contract PoolBoosterFactoryMerkl is AbstractPoolBoosterFactory {
+/// @notice Factory for creating Merkl pool boosters using BeaconProxy.
+contract PoolBoosterFactoryMerkl is Governable, Initializable {
+    struct PoolBoosterEntry {
+        address boosterAddress;
+        address ammPoolAddress;
+        IPoolBoostCentralRegistry.PoolBoosterType boosterType;
+    }
+
     ////////////////////////////////////////////////////
     /// --- CONSTANTS
     ////////////////////////////////////////////////////
@@ -19,112 +28,179 @@ contract PoolBoosterFactoryMerkl is AbstractPoolBoosterFactory {
     /// --- STORAGE
     ////////////////////////////////////////////////////
 
-    /// @notice Address of the PoolBoosterMerkl implementation contract
-    address public implementation;
+    /// @notice Central registry contract
+    IPoolBoostCentralRegistry public centralRegistry;
+    /// @notice Address of the GovernableBeacon
+    address public beacon;
+
+    /// @notice List of all pool boosters created by this factory
+    PoolBoosterEntry[] public poolBoosters;
+    /// @notice Mapping of AMM pool to pool booster
+    mapping(address => PoolBoosterEntry) public poolBoosterFromPool;
+
+    /// @dev Reserved storage for future upgrades
+    uint256[50] private __gap;
 
     ////////////////////////////////////////////////////
-    /// --- EVENTS
+    /// --- CONSTRUCTOR && INITIALIZATION
     ////////////////////////////////////////////////////
 
-    event ImplementationUpdated(address newImplementation);
-
-    ////////////////////////////////////////////////////
-    /// --- CONSTRUCTOR
-    ////////////////////////////////////////////////////
+    constructor() {}
 
     /// @notice Initialize the factory
-    /// @param _oToken Address of the OToken token
     /// @param _governor Address of the governor
     /// @param _centralRegistry Address of the central registry
-    /// @param _implementation Address of the PoolBoosterMerkl implementation
-    constructor(
-        address _oToken,
+    /// @param _beacon Address of the GovernableBeacon
+    function initialize(
         address _governor,
         address _centralRegistry,
-        address _implementation
-    ) AbstractPoolBoosterFactory(_oToken, _governor, _centralRegistry) {
+        address _beacon
+    ) external initializer {
+        require(_governor != address(0), "Invalid governor address");
         require(
-            _implementation != address(0),
-            "Invalid implementation address"
+            _centralRegistry != address(0),
+            "Invalid central registry addr"
         );
-        implementation = _implementation;
-        emit ImplementationUpdated(_implementation);
+        require(_beacon != address(0), "Invalid beacon address");
+
+        centralRegistry = IPoolBoostCentralRegistry(_centralRegistry);
+        beacon = _beacon;
+        _setGovernor(_governor);
     }
 
     ////////////////////////////////////////////////////
     /// --- CORE LOGIC
     ////////////////////////////////////////////////////
 
-    /// @notice Create a Pool Booster for Merkl using a minimal proxy clone
-    /// @param _ammPoolAddress Address of the AMM pool where the yield originates from
-    /// @param _initData Encoded call data for initializing the clone
-    /// @param _salt Unique number that determines the clone address
+    /// @notice Create a Pool Booster for Merkl using a BeaconProxy
+    /// @param _ammPoolAddress Address of the AMM pool
+    /// @param _initData Encoded call data for initializing the proxy
+    /// @param _salt Unique number that determines the proxy address
     function createPoolBoosterMerkl(
         address _ammPoolAddress,
         bytes calldata _initData,
         uint256 _salt
     ) external onlyGovernor {
-        require(implementation != address(0), "Implementation not set");
         require(
             _ammPoolAddress != address(0),
             "Invalid ammPoolAddress address"
         );
         require(_salt > 0, "Invalid salt");
-
-        address clone = Clones.cloneDeterministic(
-            implementation,
-            bytes32(_salt)
+        require(
+            poolBoosterFromPool[_ammPoolAddress].boosterAddress == address(0),
+            "Pool booster already exists"
         );
 
-        (bool success, ) = clone.call(_initData);
-        require(success, "Initialization failed");
+        address proxy = address(
+            new BeaconProxy{ salt: bytes32(_salt) }(beacon, _initData)
+        );
 
         _storePoolBoosterEntry(
-            clone,
+            proxy,
             _ammPoolAddress,
             IPoolBoostCentralRegistry.PoolBoosterType.MerklBooster
         );
     }
 
-    /// @notice Override bribeAll to restrict access to governor only
+    /// @notice Calls bribe() on all pool boosters, skipping those in the exclusion list
     /// @param _exclusionList A list of pool booster addresses to skip
-    function bribeAll(address[] memory _exclusionList)
-        public
-        override
+    function bribeAll(address[] memory _exclusionList) public onlyGovernor {
+        uint256 lengthI = poolBoosters.length;
+        for (uint256 i = 0; i < lengthI; i++) {
+            address poolBoosterAddress = poolBoosters[i].boosterAddress;
+            bool skipBribeCall = false;
+            uint256 lengthJ = _exclusionList.length;
+            for (uint256 j = 0; j < lengthJ; j++) {
+                if (_exclusionList[j] == poolBoosterAddress) {
+                    skipBribeCall = true;
+                    break;
+                }
+            }
+
+            if (!skipBribeCall) {
+                IPoolBooster(poolBoosterAddress).bribe();
+            }
+        }
+    }
+
+    /// @notice Removes a pool booster from the internal list
+    /// @param _poolBoosterAddress Address of the pool booster to remove
+    function removePoolBooster(address _poolBoosterAddress)
+        external
         onlyGovernor
     {
-        super.bribeAll(_exclusionList);
+        uint256 boostersLen = poolBoosters.length;
+        bool found = false;
+        for (uint256 i = 0; i < boostersLen; ++i) {
+            if (poolBoosters[i].boosterAddress == _poolBoosterAddress) {
+                delete poolBoosterFromPool[poolBoosters[i].ammPoolAddress];
+                poolBoosters[i] = poolBoosters[boostersLen - 1];
+                poolBoosters.pop();
+                centralRegistry.emitPoolBoosterRemoved(_poolBoosterAddress);
+                found = true;
+                break;
+            }
+        }
+        require(found, "Pool booster not found");
     }
 
     ////////////////////////////////////////////////////
     /// --- VIEW FUNCTIONS
     ////////////////////////////////////////////////////
 
-    /// @notice Compute the deterministic address of a Pool Booster clone
+    /// @notice Compute the deterministic address of a BeaconProxy
     /// @param _salt Unique number matching the one used in createPoolBoosterMerkl
-    /// @return The predicted clone address
-    function computePoolBoosterAddress(uint256 _salt)
+    /// @param _initData Encoded call data matching the one used in createPoolBoosterMerkl
+    /// @return The predicted proxy address
+    function computePoolBoosterAddress(uint256 _salt, bytes calldata _initData)
         external
         view
         returns (address)
     {
         require(_salt > 0, "Invalid salt");
-        return
-            Clones.predictDeterministicAddress(implementation, bytes32(_salt));
+
+        bytes memory bytecode = abi.encodePacked(
+            type(BeaconProxy).creationCode,
+            abi.encode(beacon, _initData)
+        );
+        bytes32 hash = keccak256(
+            abi.encodePacked(
+                bytes1(0xff),
+                address(this),
+                bytes32(_salt),
+                keccak256(bytecode)
+            )
+        );
+        return address(uint160(uint256(hash)));
+    }
+
+    /// @notice Returns the number of pool boosters
+    function poolBoosterLength() external view returns (uint256) {
+        return poolBoosters.length;
     }
 
     ////////////////////////////////////////////////////
-    /// --- SETTERS
+    /// --- INTERNAL
     ////////////////////////////////////////////////////
 
-    /// @notice Set the address of the implementation contract
-    /// @param _implementation New PoolBoosterMerklV2 implementation address
-    function setImplementation(address _implementation) external onlyGovernor {
-        require(
-            _implementation != address(0),
-            "Invalid implementation address"
+    function _storePoolBoosterEntry(
+        address _poolBoosterAddress,
+        address _ammPoolAddress,
+        IPoolBoostCentralRegistry.PoolBoosterType _boosterType
+    ) internal {
+        PoolBoosterEntry memory entry = PoolBoosterEntry(
+            _poolBoosterAddress,
+            _ammPoolAddress,
+            _boosterType
         );
-        implementation = _implementation;
-        emit ImplementationUpdated(_implementation);
+
+        poolBoosters.push(entry);
+        poolBoosterFromPool[_ammPoolAddress] = entry;
+
+        centralRegistry.emitPoolBoosterCreated(
+            _poolBoosterAddress,
+            _ammPoolAddress,
+            _boosterType
+        );
     }
 }

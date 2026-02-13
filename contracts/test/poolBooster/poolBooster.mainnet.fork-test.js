@@ -22,6 +22,7 @@ describe("ForkTest: Merkl Pool Booster", function () {
     weth,
     oethVault,
     poolBoosterCentralRegistry,
+    beacon,
     governor, // Timelock — governor of the factory
     anna; // random signer for auth tests
 
@@ -38,6 +39,10 @@ describe("ForkTest: Merkl Pool Booster", function () {
     // Governor of the factory is the Timelock
     governor = await impersonateAndFund(addresses.mainnet.Timelock);
     governor.address = addresses.mainnet.Timelock;
+
+    // Get beacon from factory
+    const beaconAddr = await poolBoosterMerklFactory.beacon();
+    beacon = await ethers.getContractAt("GovernableBeacon", beaconAddr);
   });
 
   // Helper: mint OETH by depositing WETH into the vault
@@ -65,17 +70,17 @@ describe("ForkTest: Merkl Pool Booster", function () {
   }
 
   // Helper to create a pool booster and return contract instance.
-  // Note: salt and ammPool must always be provided explicitly to avoid
-  // the || operator silently replacing falsy values (e.g. 0) with defaults.
+  // Uses salt as a unique pool address when ammPool is not provided.
   async function createPoolBooster(salt, ammPool, initOverrides = {}) {
+    const pool =
+      ammPool ||
+      ethers.utils.hexZeroPad(ethers.utils.hexlify(salt || 999), 20);
     const initData = encodeInitData(initOverrides);
     await poolBoosterMerklFactory
       .connect(governor)
-      .createPoolBoosterMerkl(ammPool || AMM_POOL, initData, salt || 999);
+      .createPoolBoosterMerkl(pool, initData, salt || 999);
 
-    const entry = await poolBoosterMerklFactory.poolBoosterFromPool(
-      ammPool || AMM_POOL
-    );
+    const entry = await poolBoosterMerklFactory.poolBoosterFromPool(pool);
     return ethers.getContractAt("PoolBoosterMerklV2", entry.boosterAddress);
   }
 
@@ -83,13 +88,9 @@ describe("ForkTest: Merkl Pool Booster", function () {
   // 1. Factory: Deployment & initial state
   // -------------------------------------------------------------------
   describe("Factory: Deployment & initial state", () => {
-    it("Should have correct oToken", async () => {
-      expect(await poolBoosterMerklFactory.oToken()).to.equal(oeth.address);
-    });
-
-    it("Should have correct implementation (non-zero)", async () => {
-      const impl = await poolBoosterMerklFactory.implementation();
-      expect(impl).to.not.equal(addresses.zero);
+    it("Should have correct beacon (non-zero)", async () => {
+      const b = await poolBoosterMerklFactory.beacon();
+      expect(b).to.not.equal(addresses.zero);
     });
 
     it("Should have correct governor", async () => {
@@ -109,15 +110,16 @@ describe("ForkTest: Merkl Pool Booster", function () {
   // 2. Factory: createPoolBoosterMerkl
   // -------------------------------------------------------------------
   describe("Factory: createPoolBoosterMerkl", () => {
-    it("Should create a clone with correct params", async () => {
+    it("Should create a proxy with correct params", async () => {
+      const pool = "0x0000000000000000000000000000000000000100";
       const initData = encodeInitData();
       const tx = await poolBoosterMerklFactory
         .connect(governor)
-        .createPoolBoosterMerkl(AMM_POOL, initData, 100);
+        .createPoolBoosterMerkl(pool, initData, 100);
 
-      const entry = await poolBoosterMerklFactory.poolBoosterFromPool(AMM_POOL);
+      const entry = await poolBoosterMerklFactory.poolBoosterFromPool(pool);
       expect(entry.boosterAddress).to.not.equal(addresses.zero);
-      expect(entry.ammPoolAddress).to.equal(AMM_POOL);
+      expect(entry.ammPoolAddress).to.equal(pool);
       expect(entry.boosterType).to.equal(MERKL_BOOSTER_TYPE);
 
       // Check PoolBoosterCreated event via central registry
@@ -127,7 +129,7 @@ describe("ForkTest: Merkl Pool Booster", function () {
       );
     });
 
-    it("Should initialize clone with correct parameters", async () => {
+    it("Should initialize proxy with correct parameters", async () => {
       const poolBooster = await createPoolBooster(200);
 
       expect(await poolBooster.duration()).to.equal(DEFAULT_DURATION);
@@ -147,17 +149,27 @@ describe("ForkTest: Merkl Pool Booster", function () {
 
     it("Should match computePoolBoosterAddress", async () => {
       const salt = 300;
+      const pool = "0x0000000000000000000000000000000000000300";
       const initData = encodeInitData();
       const computed = await poolBoosterMerklFactory.computePoolBoosterAddress(
-        salt
+        salt,
+        initData
       );
 
       await poolBoosterMerklFactory
         .connect(governor)
-        .createPoolBoosterMerkl(AMM_POOL, initData, salt);
+        .createPoolBoosterMerkl(pool, initData, salt);
 
-      const entry = await poolBoosterMerklFactory.poolBoosterFromPool(AMM_POOL);
+      const entry = await poolBoosterMerklFactory.poolBoosterFromPool(pool);
       expect(entry.boosterAddress).to.equal(computed);
+    });
+
+    it("Should revert when creating duplicate for same AMM pool", async () => {
+      const pool = "0x0000000000000000000000000000000000000099";
+      await createPoolBooster(350, pool);
+      await expect(
+        createPoolBooster(351, pool)
+      ).to.be.revertedWith("Pool booster already exists");
     });
 
     it("Should revert with zero ammPoolAddress", async () => {
@@ -189,34 +201,36 @@ describe("ForkTest: Merkl Pool Booster", function () {
   });
 
   // -------------------------------------------------------------------
-  // 3. Factory: setImplementation
+  // 3. Beacon: upgradeTo
   // -------------------------------------------------------------------
-  describe("Factory: setImplementation", () => {
-    it("Should update implementation and emit event", async () => {
+  describe("Beacon: upgradeTo", () => {
+    it("Should upgrade beacon and affect existing proxies", async () => {
+      // Create a pool booster with the current implementation
+      const poolBooster = await createPoolBooster(900);
+      expect(await poolBooster.VERSION()).to.equal("1.0.0");
+
+      // Deploy a new implementation
       const newImpl = await deployWithConfirmation("PoolBoosterMerklV2", []);
-      const tx = await poolBoosterMerklFactory
-        .connect(governor)
-        .setImplementation(newImpl.address);
 
-      await expect(tx)
-        .to.emit(poolBoosterMerklFactory, "ImplementationUpdated")
-        .withArgs(newImpl.address);
-      expect(await poolBoosterMerklFactory.implementation()).to.equal(
-        newImpl.address
-      );
+      // Upgrade beacon
+      const tx = await beacon.connect(governor).upgradeTo(newImpl.address);
+      await expect(tx).to.emit(beacon, "Upgraded").withArgs(newImpl.address);
+
+      // Existing proxy should still work (uses new implementation)
+      expect(await poolBooster.VERSION()).to.equal("1.0.0");
+      expect(await poolBooster.duration()).to.equal(DEFAULT_DURATION);
     });
 
-    it("Should revert with zero address", async () => {
+    it("Should revert upgradeTo with non-contract address", async () => {
       await expect(
-        poolBoosterMerklFactory
-          .connect(governor)
-          .setImplementation(addresses.zero)
-      ).to.be.revertedWith("Invalid implementation address");
+        beacon.connect(governor).upgradeTo(anna.address)
+      ).to.be.revertedWith("Impl is not a contract");
     });
 
-    it("Should revert when called by non-governor", async () => {
+    it("Should revert upgradeTo when called by non-governor", async () => {
+      const newImpl = await deployWithConfirmation("PoolBoosterMerklV2", []);
       await expect(
-        poolBoosterMerklFactory.connect(anna).setImplementation(anna.address)
+        beacon.connect(anna).upgradeTo(newImpl.address)
       ).to.be.revertedWith("Caller is not the Governor");
     });
   });
@@ -244,25 +258,27 @@ describe("ForkTest: Merkl Pool Booster", function () {
       ).to.be.revertedWith("Initializable: contract is already initialized");
     });
 
-    // Note: These test "Initialization failed" because the factory wraps the
-    // clone's low-level call — the underlying revert reasons (e.g. "Invalid
-    // duration") are swallowed by the factory's `require(success, ...)` check.
     it("Should revert with invalid duration (≤ 1 hour)", async () => {
-      await expect(
-        createPoolBooster(401, undefined, { duration: 3600 })
-      ).to.be.revertedWith("Initialization failed");
+      await expect(createPoolBooster(401, undefined, { duration: 3600 })).to.be
+        .reverted;
     });
 
     it("Should revert with zero rewardToken", async () => {
       await expect(
         createPoolBooster(402, undefined, { rewardToken: addresses.zero })
-      ).to.be.revertedWith("Initialization failed");
+      ).to.be.reverted;
     });
 
     it("Should revert with zero merklDistributor", async () => {
       await expect(
         createPoolBooster(403, undefined, { merklDistributor: addresses.zero })
-      ).to.be.revertedWith("Initialization failed");
+      ).to.be.reverted;
+    });
+
+    it("Should revert with zero campaignType", async () => {
+      await expect(
+        createPoolBooster(404, undefined, { campaignType: 0 })
+      ).to.be.reverted;
     });
   });
 
@@ -305,6 +321,12 @@ describe("ForkTest: Merkl Pool Booster", function () {
       const tx = await poolBooster.connect(pbStrategist).setCampaignType(99);
       await expect(tx).to.emit(poolBooster, "CampaignTypeUpdated").withArgs(99);
       expect(await poolBooster.campaignType()).to.equal(99);
+    });
+
+    it("Should revert setCampaignType with zero value", async () => {
+      await expect(
+        poolBooster.connect(pbGovernor).setCampaignType(0)
+      ).to.be.revertedWith("Invalid campaignType");
     });
 
     it("Should revert setCampaignType if non-governor/strategist", async () => {
@@ -526,6 +548,14 @@ describe("ForkTest: Merkl Pool Booster", function () {
       ).to.be.revertedWith("Caller is not the Governor");
     });
 
+    it("Should revert removePoolBooster when address not found", async () => {
+      await expect(
+        poolBoosterMerklFactory
+          .connect(governor)
+          .removePoolBooster(anna.address)
+      ).to.be.revertedWith("Pool booster not found");
+    });
+
     it("Should bribeAll and skip exclusion list", async () => {
       const pool1 = "0x0000000000000000000000000000000000000003";
       const poolBooster = await createPoolBooster(803, pool1);
@@ -571,67 +601,162 @@ describe("ForkTest: Merkl Pool Booster", function () {
   });
 
   // -------------------------------------------------------------------
-  // 9. Factory: Constructor validation
+  // 9. Factory: Initialization validation
   // -------------------------------------------------------------------
-  describe("Factory: Constructor validation", () => {
-    it("Should revert with zero implementation address", async () => {
-      const centralRegistryAddr = poolBoosterCentralRegistry.address;
+  describe("Factory: Initialization validation", () => {
+    async function deployFreshProxy() {
+      const dImpl = await deployWithConfirmation(
+        "PoolBoosterFactoryMerkl",
+        [],
+        undefined,
+        true
+      );
+      const dProxy = await deployWithConfirmation(
+        "PoolBoosterFactoryMerklProxy",
+        []
+      );
+      const { deployerAddr } = await hre.getNamedAccounts();
+      const sDeployer = ethers.provider.getSigner(deployerAddr);
+      const proxy = await ethers.getContractAt(
+        "PoolBoosterFactoryMerklProxy",
+        dProxy.address
+      );
+      return { dImpl, proxy, sDeployer };
+    }
+
+    function encodeFactoryInit(args) {
+      const iFactory = new ethers.utils.Interface([
+        "function initialize(address,address,address)",
+      ]);
+      return iFactory.encodeFunctionData("initialize", args);
+    }
+
+    it("Should revert initialize with zero governor", async () => {
+      const { dImpl, proxy, sDeployer } = await deployFreshProxy();
+      const initData = encodeFactoryInit([
+        addresses.zero,
+        poolBoosterCentralRegistry.address,
+        beacon.address,
+      ]);
+      const p = proxy.connect(sDeployer);
       await expect(
-        deployWithConfirmation(
-          "PoolBoosterFactoryMerkl",
-          [
-            oeth.address,
-            addresses.mainnet.Timelock,
-            centralRegistryAddr,
-            addresses.zero,
-          ],
-          undefined,
-          true
+        p["initialize(address,address,bytes)"](
+          dImpl.address,
+          addresses.mainnet.Timelock,
+          initData
         )
-      ).to.be.revertedWith("Invalid implementation address");
+      ).to.be.reverted;
     });
 
-    it("Should revert with zero oToken address", async () => {
-      const impl = await poolBoosterMerklFactory.implementation();
-      const centralRegistryAddr = poolBoosterCentralRegistry.address;
+    it("Should revert initialize with zero central registry", async () => {
+      const { dImpl, proxy, sDeployer } = await deployFreshProxy();
+      const initData = encodeFactoryInit([
+        addresses.mainnet.Timelock,
+        addresses.zero,
+        beacon.address,
+      ]);
+      const p = proxy.connect(sDeployer);
       await expect(
-        deployWithConfirmation(
-          "PoolBoosterFactoryMerkl",
-          [
-            addresses.zero,
-            addresses.mainnet.Timelock,
-            centralRegistryAddr,
-            impl,
-          ],
-          undefined,
-          true
+        p["initialize(address,address,bytes)"](
+          dImpl.address,
+          addresses.mainnet.Timelock,
+          initData
         )
-      ).to.be.revertedWith("Invalid oToken address");
+      ).to.be.reverted;
     });
 
-    it("Should revert with zero governor address", async () => {
-      const impl = await poolBoosterMerklFactory.implementation();
-      const centralRegistryAddr = poolBoosterCentralRegistry.address;
+    it("Should revert initialize with zero beacon", async () => {
+      const { dImpl, proxy, sDeployer } = await deployFreshProxy();
+      const initData = encodeFactoryInit([
+        addresses.mainnet.Timelock,
+        poolBoosterCentralRegistry.address,
+        addresses.zero,
+      ]);
+      const p = proxy.connect(sDeployer);
       await expect(
-        deployWithConfirmation(
-          "PoolBoosterFactoryMerkl",
-          [oeth.address, addresses.zero, centralRegistryAddr, impl],
-          undefined,
-          true
+        p["initialize(address,address,bytes)"](
+          dImpl.address,
+          addresses.mainnet.Timelock,
+          initData
         )
-      ).to.be.revertedWith("Invalid governor address");
+      ).to.be.reverted;
+    });
+  });
+
+  // -------------------------------------------------------------------
+  // 10. Beacon: constructor & implementation view
+  // -------------------------------------------------------------------
+  describe("Beacon: state", () => {
+    it("Should return the current implementation address", async () => {
+      const impl = await beacon.implementation();
+      expect(impl).to.not.equal(addresses.zero);
+      // Verify it's a contract
+      const code = await ethers.provider.getCode(impl);
+      expect(code.length).to.be.gt(2); // "0x" for EOA
     });
 
-    it("Should revert with zero central registry address", async () => {
-      const impl = await poolBoosterMerklFactory.implementation();
-      await expect(
-        deployWithConfirmation(
-          "PoolBoosterFactoryMerkl",
-          [oeth.address, addresses.mainnet.Timelock, addresses.zero, impl],
-          undefined,
-          true
-        )
-      ).to.be.revertedWith("Invalid central registry address");
+    it("Should have correct governor", async () => {
+      expect(await beacon.governor()).to.equal(addresses.mainnet.Timelock);
+    });
+  });
+
+  // -------------------------------------------------------------------
+  // 11. Factory: poolBoosterLength & poolBoosters array
+  // -------------------------------------------------------------------
+  describe("Factory: pool booster tracking", () => {
+    it("Should track multiple pool boosters correctly", async () => {
+      const pool1 = "0x0000000000000000000000000000000000000011";
+      const pool2 = "0x0000000000000000000000000000000000000012";
+      const pool3 = "0x0000000000000000000000000000000000000013";
+
+      const lengthBefore = await poolBoosterMerklFactory.poolBoosterLength();
+
+      await createPoolBooster(1101, pool1);
+      await createPoolBooster(1102, pool2);
+      await createPoolBooster(1103, pool3);
+
+      expect(await poolBoosterMerklFactory.poolBoosterLength()).to.equal(
+        lengthBefore.add(3)
+      );
+
+      // Verify each pool maps correctly
+      const entry1 = await poolBoosterMerklFactory.poolBoosterFromPool(pool1);
+      const entry2 = await poolBoosterMerklFactory.poolBoosterFromPool(pool2);
+      const entry3 = await poolBoosterMerklFactory.poolBoosterFromPool(pool3);
+      expect(entry1.ammPoolAddress).to.equal(pool1);
+      expect(entry2.ammPoolAddress).to.equal(pool2);
+      expect(entry3.ammPoolAddress).to.equal(pool3);
+    });
+
+    it("Should access poolBoosters array by index", async () => {
+      const pool1 = "0x0000000000000000000000000000000000000014";
+      await createPoolBooster(1104, pool1);
+
+      const length = await poolBoosterMerklFactory.poolBoosterLength();
+      const entry = await poolBoosterMerklFactory.poolBoosters(length.sub(1));
+      expect(entry.ammPoolAddress).to.equal(pool1);
+      expect(entry.boosterType).to.equal(MERKL_BOOSTER_TYPE);
+    });
+  });
+
+  // -------------------------------------------------------------------
+  // 12. PoolBoosterMerklV2: bribe() called by factory
+  // -------------------------------------------------------------------
+  describe("PoolBoosterMerklV2: bribe() via factory", () => {
+    it("Should allow factory to call bribe()", async () => {
+      const pool1 = "0x0000000000000000000000000000000000000015";
+      const poolBooster = await createPoolBooster(1201, pool1);
+
+      // Fund the pool booster
+      await mintOeth(anna, oethUnits("100"));
+      await oeth.connect(anna).transfer(poolBooster.address, oethUnits("10"));
+
+      const balance = await oeth.balanceOf(poolBooster.address);
+
+      // bribeAll calls bribe() on the pool booster from the factory
+      const tx = await poolBoosterMerklFactory.connect(governor).bribeAll([]);
+
+      await expect(tx).to.emit(poolBooster, "BribeExecuted").withArgs(balance);
     });
   });
 });

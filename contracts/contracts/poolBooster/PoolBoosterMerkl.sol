@@ -61,9 +61,8 @@ contract PoolBoosterMerklV2 is IPoolBooster, Strategizable, Initializable {
     /// --- CONSTRUCTOR && INITIALIZATION
     ////////////////////////////////////////////////////
 
-    constructor() {
-        _setGovernor(address(msg.sender));
-    }
+    /// @dev Lock the implementation contract against initialization
+    constructor() initializer {}
 
     /// @notice Initialize the contract with campaign parameters and governance
     /// @param _duration Duration of each campaign period
@@ -197,6 +196,7 @@ contract PoolBoosterMerklV2 is IPoolBooster, Strategizable, Initializable {
     /// @notice Internal logic to set the campaign type
     /// @param _campaignType New campaign type
     function _setCampaignType(uint32 _campaignType) internal {
+        require(_campaignType > 0, "Invalid campaignType");
         campaignType = _campaignType;
         emit CampaignTypeUpdated(_campaignType);
     }
