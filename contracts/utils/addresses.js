@@ -328,7 +328,7 @@ addresses.mainnet.CurveGaugeController =
 addresses.mainnet.CurvePoolBoosterOETH =
   "0x7B5e7aDEBC2da89912BffE55c86675CeCE59803E";
 addresses.mainnet.CurvePoolBoosterBribesModule =
-  "0xfA01FE78bBD1ade8064C34FE537BA2E2670B2198";
+  "0x82447F7C3eF0a628B0c614A3eA0898a5bb7c18fe";
 
 // SSV network
 addresses.mainnet.SSV = "0x9D65fF81a3c488d585bBfb0Bfe3c7707c7917f54";
