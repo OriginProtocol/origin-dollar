@@ -3,10 +3,12 @@ const {
   deploySonicSwapXAMOStrategyImplementation,
 } = require("../deployActions");
 
+// This is just used to confirm that the Refactoring SwapX AMO strategy into a generalized Algebra strategy is working
+// as expected
 module.exports = deployOnSonic(
   {
     deployName: "027_upgrade_swapx",
-    forceSkip: false,
+    forceSkip: true,
   },
   async ({ ethers }) => {
     const cSonicSwapXAMOStrategyProxy = await ethers.getContract(

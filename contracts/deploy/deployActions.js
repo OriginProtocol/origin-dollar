@@ -1757,21 +1757,20 @@ const deployOETHSupernovaAMOStrategyImplementation = async (
   const cOETHProxy = await ethers.getContract("OETHProxy");
   const cOETHVaultProxy = await ethers.getContract("OETHVaultProxy");
 
-  // Deploy Sonic SwapX AMO Strategy implementation that will serve
+  // Deploy OETH Supernova AMO Strategy implementation that will serve
   // OETH Supernova AMO
   const dSupernovaAMOStrategy = await deployWithConfirmation(
-    "SupernovaAMOStrategy",
+    "OETHSupernovaAMOStrategy",
     [
       [poolAddress, cOETHVaultProxy.address],
       cOETHProxy.address,
       addresses.mainnet.WETH,
       gaugeAddress,
-    ],
-    "SonicSwapXAMOStrategy"
+    ]
   );
 
   const cOETHSupernovaAMOStrategy = await ethers.getContractAt(
-    "SonicSwapXAMOStrategy",
+    "OETHSupernovaAMOStrategy",
     cOETHSupernovaAMOStrategyProxy.address
   );
 
