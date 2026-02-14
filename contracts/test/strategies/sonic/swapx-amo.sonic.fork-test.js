@@ -10,7 +10,7 @@ const { setERC20TokenBalance } = require("../../_fund");
 
 const log = require("../../../utils/logger")("test:fork:sonic:swapx:amo");
 
-describe.only("Sonic ForkTest: SwapX AMO Strategy", function () {
+describe("Sonic ForkTest: SwapX AMO Strategy", function () {
   // Retry up to 3 times on CI
   this.retries(isCI ? 3 : 0);
 
@@ -28,7 +28,9 @@ describe.only("Sonic ForkTest: SwapX AMO Strategy", function () {
         parseUnits("0.998", 18)
       );
       expect(await swapXAMOStrategy.asset()).to.equal(addresses.sonic.wS);
-      expect(await swapXAMOStrategy.oToken()).to.equal(addresses.sonic.OSonicProxy);
+      expect(await swapXAMOStrategy.oToken()).to.equal(
+        addresses.sonic.OSonicProxy
+      );
       expect(await swapXAMOStrategy.pool()).to.equal(
         addresses.sonic.SwapXWSOS.pool
       );
@@ -1179,7 +1181,7 @@ describe.only("Sonic ForkTest: SwapX AMO Strategy", function () {
         delta.stratBalance
       );
       log(`Expected strategy balance: ${formatUnits(expectedStratBalance)}`);
-      
+
       expect(await swapXAMOStrategy.checkBalance(wS.address)).to.withinRange(
         expectedStratBalance.sub(15),
         expectedStratBalance.add(15),
@@ -1273,12 +1275,10 @@ describe.only("Sonic ForkTest: SwapX AMO Strategy", function () {
     await logProfit(dataBefore);
 
     // Check emitted events
-    await expect(tx)
-      .to.emit(swapXAMOStrategy, "Deposit")
-      //.withArgs(wS.address, swapXPool.address, wsDepositAmount);
-    await expect(tx)
-      .to.emit(swapXAMOStrategy, "Deposit")
-      //.withArgs(oSonic.address, swapXPool.address, osMintAmount);
+    await expect(tx).to.emit(swapXAMOStrategy, "Deposit")
+      .withArgs(wS.address, swapXPool.address, wsDepositAmount);
+    await expect(tx).to.emit(swapXAMOStrategy, "Deposit")
+      .withArgs(oSonic.address, swapXPool.address, osMintAmount);
 
     // Calculate the value of the wS and OS tokens added to the pool if the pool was balanced
     const depositValue = calcReserveValue({

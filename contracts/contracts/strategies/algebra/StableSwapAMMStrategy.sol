@@ -117,7 +117,10 @@ contract StableSwapAMMStrategy is InitializableAbstractStrategy {
      */
     modifier improvePoolBalance() {
         // Get the asset and OToken balances in the pool
-        (uint256 assetReserveBefore, uint256 oTokenReserveBefore) = _getPoolReserves();
+        (
+            uint256 assetReserveBefore,
+            uint256 oTokenReserveBefore
+        ) = _getPoolReserves();
         // diff = asset balance - OToken balance
         int256 diffBefore = assetReserveBefore.toInt256() -
             oTokenReserveBefore.toInt256();
@@ -125,7 +128,10 @@ contract StableSwapAMMStrategy is InitializableAbstractStrategy {
         _;
 
         // Get the asset and OToken balances in the pool
-        (uint256 assetReserveAfter, uint256 oTokenReserveAfter) = _getPoolReserves();
+        (
+            uint256 assetReserveAfter,
+            uint256 oTokenReserveAfter
+        ) = _getPoolReserves();
         // diff = asset balance - OToken balance
         int256 diffAfter = assetReserveAfter.toInt256() -
             oTokenReserveAfter.toInt256();
@@ -174,11 +180,15 @@ contract StableSwapAMMStrategy is InitializableAbstractStrategy {
             IGauge(_gauge).TOKEN() == _baseConfig.platformAddress,
             "Incorrect gauge"
         );
-        oTokenPoolIndex = IPair(_baseConfig.platformAddress).token0() == _oToken ? 0 : 1;
+        oTokenPoolIndex = IPair(_baseConfig.platformAddress).token0() == _oToken
+            ? 0
+            : 1;
         // Check the pool tokens are correct
         require(
-            IPair(_baseConfig.platformAddress).token0() == (oTokenPoolIndex == 0 ? _oToken : _asset) &&
-                IPair(_baseConfig.platformAddress).token1() == (oTokenPoolIndex == 0 ? _asset : _oToken),
+            IPair(_baseConfig.platformAddress).token0() ==
+                (oTokenPoolIndex == 0 ? _oToken : _asset) &&
+                IPair(_baseConfig.platformAddress).token1() ==
+                (oTokenPoolIndex == 0 ? _asset : _oToken),
             "Incorrect pool tokens"
         );
 
@@ -469,7 +479,10 @@ contract StableSwapAMMStrategy is InitializableAbstractStrategy {
 
         // There can be OToken in the strategy from skimming the pool
         uint256 oTokenInStrategy = IERC20(oToken).balanceOf(address(this));
-        require(_oTokenAmount >= oTokenInStrategy, "Too much OToken in strategy");
+        require(
+            _oTokenAmount >= oTokenInStrategy,
+            "Too much OToken in strategy"
+        );
         uint256 oTokenToMint = _oTokenAmount - oTokenInStrategy;
 
         // Mint the required OToken tokens to this strategy
@@ -482,7 +495,9 @@ contract StableSwapAMMStrategy is InitializableAbstractStrategy {
         uint256 assetDepositAmount = IERC20(asset).balanceOf(address(this));
 
         // 3. Add asset and OToken back to the pool in proportion to the pool's reserves
-        (uint256 oTokenDepositAmount, uint256 lpTokens) = _deposit(assetDepositAmount);
+        (uint256 oTokenDepositAmount, uint256 lpTokens) = _deposit(
+            assetDepositAmount
+        );
 
         // Ensure solvency of the vault
         _solvencyAssert();
@@ -777,16 +792,21 @@ contract StableSwapAMMStrategy is InitializableAbstractStrategy {
     }
 
     /**
-     * @dev Get the reserves of the pool no matter the order of tokens in the underlying 
+     * @dev Get the reserves of the pool no matter the order of tokens in the underlying
      * Algebra pool.
      * @return assetReserves The reserves of the asset token in the pool.
      * @return oTokenReserves The reserves of the OToken token in the pool.
      */
-    function _getPoolReserves() internal view returns (uint256 assetReserves, uint256 oTokenReserves) {
+    function _getPoolReserves()
+        internal
+        view
+        returns (uint256 assetReserves, uint256 oTokenReserves)
+    {
         (uint256 reserve0, uint256 reserve1, ) = IPair(pool).getReserves();
         assetReserves = oTokenPoolIndex == 0 ? reserve1 : reserve0;
         oTokenReserves = oTokenPoolIndex == 0 ? reserve0 : reserve1;
     }
+
     /***************************************
                     Setters
     ****************************************/

@@ -237,7 +237,8 @@ async function swapXAMOFixture(
 ) {
   const fixture = await defaultSonicFixture();
 
-  const { oSonic, oSonicVault, rafael, nick, strategist, governor, wS } = fixture;
+  const { oSonic, oSonicVault, rafael, nick, strategist, governor, wS } =
+    fixture;
 
   let swapXAMOStrategy, swapXPool, swapXGauge, swpx;
 
@@ -277,8 +278,16 @@ async function swapXAMOFixture(
     const available = wsBalance.add(queue.claimed).sub(queue.queued);
     const mintAmount = wsAmount.sub(available).mul(10);
 
-    log(`To deposit ${formatUnits(wsAmount)} wS to the strategy, ${formatUnits(mintAmount)} wS needs to be minted to the vault`);
-    log(`Vualt has ${formatUnits(wsBalance)} wS in balance and ${formatUnits(available)} wS available considering async withdrawals`);
+    log(
+      `To deposit ${formatUnits(wsAmount)} wS to the strategy, ${formatUnits(
+        mintAmount
+      )} wS needs to be minted to the vault`
+    );
+    log(
+      `Vualt has ${formatUnits(wsBalance)} wS in balance and ${formatUnits(
+        available
+      )} wS available considering async withdrawals`
+    );
 
     if (mintAmount.gt(0)) {
       log(`Minting ${formatUnits(mintAmount)} wS to the vault and vault`);
@@ -287,11 +296,15 @@ async function swapXAMOFixture(
       await wS.connect(nick).approve(oSonicVault.address, mintAmount);
 
       const disableAutoAllocate = autoAllocateThreshold.lt(mintAmount);
-      
+
       // disable auto allocate for the next mint
       if (disableAutoAllocate) {
-        log(`Mint would trigger auto allocate. Disabling auto allocate for the next mint`);
-        await oSonicVault.connect(governor).setAutoAllocateThreshold(mintAmount.add(1));
+        log(
+          `Mint would trigger auto allocate. Disabling auto allocate for the next mint`
+        );
+        await oSonicVault
+          .connect(governor)
+          .setAutoAllocateThreshold(mintAmount.add(1));
       }
       // Mint OS with wS
       // This will sit in the vault, not the strategy
@@ -299,15 +312,25 @@ async function swapXAMOFixture(
 
       // revert the auto allocate setting
       if (disableAutoAllocate) {
-        log(`Setting auto allocate back to the previous value: ${formatUnits(autoAllocateThreshold)} wS`);
-        await oSonicVault.connect(governor).setAutoAllocateThreshold(autoAllocateThreshold);
+        log(
+          `Setting auto allocate back to the previous value: ${formatUnits(
+            autoAllocateThreshold
+          )} wS`
+        );
+        await oSonicVault
+          .connect(governor)
+          .setAutoAllocateThreshold(autoAllocateThreshold);
       }
     }
 
     // Add ETH to the Metapool
     if (config?.depositToStrategy) {
       wsBalance = await wS.balanceOf(oSonicVault.address);
-      log(`Depositing ${formatUnits(wsAmount)} wS to the strategy. Vault ${formatUnits(wsBalance)} wS balance`);
+      log(
+        `Depositing ${formatUnits(
+          wsAmount
+        )} wS to the strategy. Vault ${formatUnits(wsBalance)} wS balance`
+      );
       // The strategist deposits the WETH to the AMO strategy
       await oSonicVault
         .connect(strategist)

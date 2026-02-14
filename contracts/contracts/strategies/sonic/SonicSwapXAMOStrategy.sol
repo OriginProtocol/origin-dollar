@@ -9,7 +9,6 @@ pragma solidity ^0.8.0;
 import { StableSwapAMMStrategy } from "../algebra/StableSwapAMMStrategy.sol";
 
 contract SonicSwapXAMOStrategy is StableSwapAMMStrategy {
-
     /**
      * @param _baseConfig The `platformAddress` is the address of the SwapX pool.
      * The `vaultAddress` is the address of the Origin Sonic Vault.
@@ -22,6 +21,5 @@ contract SonicSwapXAMOStrategy is StableSwapAMMStrategy {
         address _os,
         address _ws,
         address _gauge
-    ) StableSwapAMMStrategy(_baseConfig, _os, _ws, _gauge) {
-    }
+    ) StableSwapAMMStrategy(_baseConfig, _os, _ws, _gauge) {}
 }

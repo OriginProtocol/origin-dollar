@@ -398,8 +398,7 @@ addresses.mainnet.supernovaPairFactory =
   "0x5aef44edfc5a7edd30826c724ea12d7be15bdc30";
 addresses.mainnet.supernovaGaugeManager =
   "0x19a410046Afc4203AEcE5fbFc7A6Ac1a4F517AE2";
-addresses.mainnet.supernovaToken =
-  "0x00Da8466B296E382E5Da2Bf20962D0cB87200c78";
+addresses.mainnet.supernovaToken = "0x00Da8466B296E382E5Da2Bf20962D0cB87200c78";
 
 // Mainnet Merkl
 addresses.mainnet.CampaignCreator =

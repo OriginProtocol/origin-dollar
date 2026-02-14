@@ -5,7 +5,7 @@ const {
 } = require("../../utils/deploy");
 const {
   deployOETHSupernovaAMOStrategyImplementation,
-  deployOETHSupernovaAMOStrategyPoolAndGauge
+  deployOETHSupernovaAMOStrategyPoolAndGauge,
 } = require("../deployActions");
 
 module.exports = deploymentWithGovernanceProposal(
@@ -18,9 +18,10 @@ module.exports = deploymentWithGovernanceProposal(
       "VaultAdmin",
       cOETHVaultProxy.address
     );
-    
+
     // TODO: delete once the pools ang gauges are created
-    const { poolAddress, gaugeAddress } = await deployOETHSupernovaAMOStrategyPoolAndGauge();
+    const { poolAddress, gaugeAddress } =
+      await deployOETHSupernovaAMOStrategyPoolAndGauge();
 
     await deployWithConfirmation("OETHSupernovaAMOProxy");
     const cOETHSupernovaAMOProxy = await ethers.getContract(
@@ -31,7 +32,10 @@ module.exports = deploymentWithGovernanceProposal(
 
     // Deploy Sonic SwapX AMO Strategy implementation
     const cSupernovaAMOStrategy =
-      await deployOETHSupernovaAMOStrategyImplementation(poolAddress, gaugeAddress);
+      await deployOETHSupernovaAMOStrategyImplementation(
+        poolAddress,
+        gaugeAddress
+      );
 
     return {
       name: "Deploy Supernova AMO Strategy",

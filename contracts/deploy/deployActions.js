@@ -30,7 +30,11 @@ const {
 const { metapoolLPCRVPid } = require("../utils/constants");
 const { replaceContractAt } = require("../utils/hardhat");
 const { resolveContract } = require("../utils/resolvers");
-const { impersonateAccount, impersonateAndFund, getSigner } = require("../utils/signers");
+const {
+  impersonateAccount,
+  impersonateAndFund,
+  getSigner,
+} = require("../utils/signers");
 const { getDefenderSigner } = require("../utils/signersNoHardhat");
 const { getTxOpts } = require("../utils/tx");
 const createxAbi = require("../abi/createx.json");
@@ -1622,12 +1626,11 @@ const deploySonicSwapXAMOStrategyImplementationAndInitialize = async () => {
   const cSonicSwapXAMOStrategyProxy = await ethers.getContract(
     "SonicSwapXAMOStrategyProxy"
   );
-  const cOSonicProxy = await ethers.getContract("OSonicProxy");
-  const cOSonicVaultProxy = await ethers.getContract("OSonicVaultProxy");
 
   // Deploy Sonic SwapX AMO Strategy implementation
-  const dSonicSwapXAMOStrategy = await deploySonicSwapXAMOStrategyImplementation();
-  
+  const dSonicSwapXAMOStrategy =
+    await deploySonicSwapXAMOStrategyImplementation();
+
   const cSonicSwapXAMOStrategy = await ethers.getContractAt(
     "SonicSwapXAMOStrategy",
     cSonicSwapXAMOStrategyProxy.address
@@ -1657,65 +1660,94 @@ const deployOETHSupernovaAMOStrategyPoolAndGauge = async () => {
   const pairBootstrapper = "0x7F8f2B6D0b0AaE8e95221Ce90B5C26B128C1Cb66";
   const topkenHandlerWhitelister = "0xD09A1388F0CcE25DA97E8bBAbf5D083E25a5Fbc6";
   const sPairBootstrapper = await impersonateAndFund(pairBootstrapper);
-  const sTokenHandlerWhitelister = await impersonateAndFund(topkenHandlerWhitelister);
+  const sTokenHandlerWhitelister = await impersonateAndFund(
+    topkenHandlerWhitelister
+  );
 
   const oeth = await ethers.getContract("OETHProxy");
 
   const factoryABI = [
     "function createPair(address tokenA, address tokenB, bool stable) external returns (address pair)",
-    "event PairCreated(address token0, address token1, bool stable, address pair, uint);"
+    "event PairCreated(address token0, address token1, bool stable, address pair, uint);",
   ];
   const tokenHandlerABI = [
     "function whitelistToken(address _token) external",
     "function whitelistConnector(address _token) external",
   ];
-  const pairCreatedTopic = "0xc4805696c66d7cf352fc1d6bb633ad5ee82f6cb577c453024b6e0eb8306c6fc9";
+  const pairCreatedTopic =
+    "0xc4805696c66d7cf352fc1d6bb633ad5ee82f6cb577c453024b6e0eb8306c6fc9";
 
   const gaugeManagerAbi = [
     "function createGauge(address _pool, uint256 _gaugeType) external returns (address _gauge, address _internal_bribe, address _external_bribe)",
     "function tokenHandler() external view returns (address)",
-    "event GaugeCreated(address gauge, address creator, address internal_bribe, address external_bribe, address pool)"
+    "event GaugeCreated(address gauge, address creator, address internal_bribe, address external_bribe, address pool)",
   ];
-  const gaugeManager = await ethers.getContractAt(gaugeManagerAbi, addresses.mainnet.supernovaGaugeManager);
-  const tokenHandler = await ethers.getContractAt(tokenHandlerABI, await gaugeManager.tokenHandler());
+  const gaugeManager = await ethers.getContractAt(
+    gaugeManagerAbi,
+    addresses.mainnet.supernovaGaugeManager
+  );
+  const tokenHandler = await ethers.getContractAt(
+    tokenHandlerABI,
+    await gaugeManager.tokenHandler()
+  );
 
-  const factory = await ethers.getContractAt(factoryABI, addresses.mainnet.supernovaPairFactory);
+  const factory = await ethers.getContractAt(
+    factoryABI,
+    addresses.mainnet.supernovaPairFactory
+  );
 
   let poolAddress;
   log("Creating new OETH/WETH pair...");
   const tx = await factory
-     .connect(sPairBootstrapper)
-     .createPair(oeth.address, addresses.mainnet.WETH, true);
+    .connect(sPairBootstrapper)
+    .createPair(oeth.address, addresses.mainnet.WETH, true);
 
   const receipt = await tx.wait();
-  const pairCreatedEvent = receipt.events.find(e => e.topics[0] === pairCreatedTopic);
-  const [,pairAddress,] = ethers.utils.defaultAbiCoder.decode(
+  const pairCreatedEvent = receipt.events.find(
+    (e) => e.topics[0] === pairCreatedTopic
+  );
+  const [, pairAddress] = ethers.utils.defaultAbiCoder.decode(
     ["bool", "address", "uint256"],
     pairCreatedEvent.data
   );
   console.log("Pair address:", pairAddress);
-  
+
   console.log("Whitelisting OETH token & WETH token as connector");
-  await tokenHandler.connect(sTokenHandlerWhitelister).whitelistToken(oeth.address);
-  await tokenHandler.connect(sTokenHandlerWhitelister).whitelistToken(addresses.mainnet.WETH);
-  await tokenHandler.connect(sTokenHandlerWhitelister).whitelistConnector(addresses.mainnet.WETH);
+  await tokenHandler
+    .connect(sTokenHandlerWhitelister)
+    .whitelistToken(oeth.address);
+  await tokenHandler
+    .connect(sTokenHandlerWhitelister)
+    .whitelistToken(addresses.mainnet.WETH);
+  await tokenHandler
+    .connect(sTokenHandlerWhitelister)
+    .whitelistConnector(addresses.mainnet.WETH);
 
   poolAddress = pairAddress;
-  
+
   log("Creating gauge for OETH/WETH...");
-  const gaugeCreatedTopic = ethers.utils.id("GaugeCreated(address,address,address,address,address)");
+  const gaugeCreatedTopic = ethers.utils.id(
+    "GaugeCreated(address,address,address,address,address)"
+  );
   const tx1 = await gaugeManager.createGauge(poolAddress, 0);
   const receipt1 = await tx1.wait();
-  const gaugeCreatedEvent = receipt1.events.find(e => e.topics[0] === gaugeCreatedTopic);
-  console.log("gaugeCreatedEvent", gaugeCreatedEvent)
+  const gaugeCreatedEvent = receipt1.events.find(
+    (e) => e.topics[0] === gaugeCreatedTopic
+  );
+  console.log("gaugeCreatedEvent", gaugeCreatedEvent);
   //const gaugeAddress = gaugeCreatedEvent.topics[1];
-  const gaugeAddress = ethers.utils.getAddress(`0x${gaugeCreatedEvent.topics[1].slice(-40)}`);
+  const gaugeAddress = ethers.utils.getAddress(
+    `0x${gaugeCreatedEvent.topics[1].slice(-40)}`
+  );
   log(`Created gauge at ${gaugeAddress}`);
-  
+
   return { poolAddress, gaugeAddress };
 };
 
-const deployOETHSupernovaAMOStrategyImplementation = async (poolAddress, gaugeAddress) => {
+const deployOETHSupernovaAMOStrategyImplementation = async (
+  poolAddress,
+  gaugeAddress
+) => {
   const { deployerAddr } = await getNamedAccounts();
   const sDeployer = await ethers.provider.getSigner(deployerAddr);
 
@@ -1725,7 +1757,7 @@ const deployOETHSupernovaAMOStrategyImplementation = async (poolAddress, gaugeAd
   const cOETHProxy = await ethers.getContract("OETHProxy");
   const cOETHVaultProxy = await ethers.getContract("OETHVaultProxy");
 
-  // Deploy Sonic SwapX AMO Strategy implementation that will serve 
+  // Deploy Sonic SwapX AMO Strategy implementation that will serve
   // OETH Supernova AMO
   const dSupernovaAMOStrategy = await deployWithConfirmation(
     "SupernovaAMOStrategy",
@@ -1742,7 +1774,7 @@ const deployOETHSupernovaAMOStrategyImplementation = async (poolAddress, gaugeAd
     "SonicSwapXAMOStrategy",
     cOETHSupernovaAMOStrategyProxy.address
   );
-  
+
   // Initialize Sonic Curve AMO Strategy implementation
   const depositPriceRange = parseUnits("0.01", 18); // 1% or 100 basis points
   const initData = cOETHSupernovaAMOStrategy.interface.encodeFunctionData(

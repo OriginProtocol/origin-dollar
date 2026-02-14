@@ -2569,12 +2569,10 @@ async function instantRebaseVaultFixture(tokenName) {
 
 async function supernovaOETHAMOFixure() {
   const fixture = await defaultFixture();
-  const { oeth, weth } = fixture;
+  //const { oeth, weth } = fixture;
 
   return fixture;
 }
-
-
 
 // Unit test cross chain fixture where both contracts are deployed on the same chain for the
 // purposes of unit testing

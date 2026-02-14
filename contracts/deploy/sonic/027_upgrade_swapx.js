@@ -2,7 +2,6 @@ const { deployOnSonic } = require("../../utils/deploy-l2");
 const {
   deploySonicSwapXAMOStrategyImplementation,
 } = require("../deployActions");
-const addresses = require("../../utils/addresses");
 
 module.exports = deployOnSonic(
   {
