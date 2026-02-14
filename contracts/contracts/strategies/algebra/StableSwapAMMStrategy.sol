@@ -44,15 +44,15 @@ contract StableSwapAMMStrategy is InitializableAbstractStrategy {
     /// @notice Address of the Algebra Gauge contract.
     address public immutable gauge;
 
+    /// @notice Index of the OToken in the Algebra pool.
+    uint256 public immutable oTokenPoolIndex;
+
     /// @notice The max amount the OToken/asset price can deviate from peg (1e18)
     /// before deposits are reverted scaled to 18 decimals.
     /// eg 0.01e18 or 1e16 is 1% which is 100 basis points.
     /// This is the amount below and above peg so a 50 basis point deviation (0.005e18)
     /// allows a price range from 0.995 to 1.005.
     uint256 public maxDepeg;
-
-    /// @notice Index of the OToken in the Algebra pool.
-    uint256 public oTokenPoolIndex;
 
     event SwapOTokensToPool(
         uint256 oTokenMinted,

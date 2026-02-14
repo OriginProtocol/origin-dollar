@@ -7,7 +7,7 @@ const addresses = require("../../utils/addresses");
 module.exports = deployOnSonic(
   {
     deployName: "027_upgrade_swapx",
-    forceSkip: true,
+    forceSkip: false,
   },
   async ({ ethers }) => {
     const cSonicSwapXAMOStrategyProxy = await ethers.getContract(
