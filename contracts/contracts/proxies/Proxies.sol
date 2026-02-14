@@ -328,3 +328,10 @@ contract CompoundingStakingSSVStrategyProxy is
 contract OUSDMorphoV2StrategyProxy is InitializeGovernedUpgradeabilityProxy {
 
 }
+
+/**
+ * @notice OETHSupernovaAMOProxy delegates calls to a SonicSwapXAMOStrategy implementation
+ */
+contract OETHSupernovaAMOProxy is InitializeGovernedUpgradeabilityProxy {
+
+}

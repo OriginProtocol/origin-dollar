@@ -27,8 +27,10 @@ describe("Sonic ForkTest: SwapX AMO Strategy", function () {
       expect(await swapXAMOStrategy.SOLVENCY_THRESHOLD()).to.equal(
         parseUnits("0.998", 18)
       );
-      expect(await swapXAMOStrategy.ws()).to.equal(addresses.sonic.wS);
-      expect(await swapXAMOStrategy.os()).to.equal(addresses.sonic.OSonicProxy);
+      expect(await swapXAMOStrategy.asset()).to.equal(addresses.sonic.wS);
+      expect(await swapXAMOStrategy.oToken()).to.equal(
+        addresses.sonic.OSonicProxy
+      );
       expect(await swapXAMOStrategy.pool()).to.equal(
         addresses.sonic.SwapXWSOS.pool
       );
@@ -1179,6 +1181,7 @@ describe("Sonic ForkTest: SwapX AMO Strategy", function () {
         delta.stratBalance
       );
       log(`Expected strategy balance: ${formatUnits(expectedStratBalance)}`);
+
       expect(await swapXAMOStrategy.checkBalance(wS.address)).to.withinRange(
         expectedStratBalance.sub(15),
         expectedStratBalance.add(15),
@@ -1272,11 +1275,9 @@ describe("Sonic ForkTest: SwapX AMO Strategy", function () {
     await logProfit(dataBefore);
 
     // Check emitted events
-    await expect(tx)
-      .to.emit(swapXAMOStrategy, "Deposit")
+    await expect(tx).to.emit(swapXAMOStrategy, "Deposit")
       .withArgs(wS.address, swapXPool.address, wsDepositAmount);
-    await expect(tx)
-      .to.emit(swapXAMOStrategy, "Deposit")
+    await expect(tx).to.emit(swapXAMOStrategy, "Deposit")
       .withArgs(oSonic.address, swapXPool.address, osMintAmount);
 
     // Calculate the value of the wS and OS tokens added to the pool if the pool was balanced
@@ -1284,7 +1285,7 @@ describe("Sonic ForkTest: SwapX AMO Strategy", function () {
       ws: wsDepositAmount,
       os: osMintAmount,
     });
-    // log(`Value of deposit: ${formatUnits(depositValue)}`);
+    log(`Value of deposit: ${formatUnits(depositValue)}`);
 
     await assertChangedData(dataBefore, {
       stratBalance: depositValue,
@@ -1541,7 +1542,7 @@ describe("Sonic ForkTest: SwapX AMO Strategy", function () {
     // Check emitted event
     await expect(tx)
       .emit(swapXAMOStrategy, "SwapOTokensToPool")
-      .withNamedArgs({ osMinted: osAmount });
+      .withNamedArgs({ oTokenMinted: osAmount });
 
     await logSnapData(await snapData(), "\nAfter swapping OTokens to the pool");
     await logProfit(dataBefore);

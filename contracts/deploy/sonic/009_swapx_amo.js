@@ -4,7 +4,7 @@ const {
   withConfirmation,
 } = require("../../utils/deploy");
 const {
-  deploySonicSwapXAMOStrategyImplementation,
+  deploySonicSwapXAMOStrategyImplementationAndInitialize,
 } = require("../deployActions");
 const addresses = require("../../utils/addresses");
 
@@ -74,7 +74,7 @@ module.exports = deployOnSonic(
 
     // Deploy Sonic SwapX AMO Strategy implementation
     const cSonicSwapXAMOStrategy =
-      await deploySonicSwapXAMOStrategyImplementation();
+      await deploySonicSwapXAMOStrategyImplementationAndInitialize();
 
     return {
       actions: [
