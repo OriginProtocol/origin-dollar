@@ -8,10 +8,6 @@ const { parseUnits } = require("ethers/lib/utils.js");
 const addresses = require("../utils/addresses");
 const {
   getAssetAddresses,
-  getOracleAddresses,
-  isMainnet,
-  isHoleskyOrFork,
-  isSonicOrFork,
   isTest,
   isFork,
   isForkTest,
@@ -503,68 +499,10 @@ const deployCompoundingStakingSSVStrategy = async () => {
 };
 
 /**
- * Deploy the OracleRouter and initialize it with Chainlink sources.
+ * Deploy the OracleRouter.
+ * Deprecated
  */
-const deployOracles = async () => {
-  const { deployerAddr } = await getNamedAccounts();
-  // Signers
-  const sDeployer = await ethers.provider.getSigner(deployerAddr);
-
-  let oracleContract = "MockOracleRouter";
-  let contractName = "OracleRouter";
-  let args = [];
-  if (isMainnet) {
-    oracleContract = "OracleRouter";
-  } else if (isHoleskyOrFork || isHoodiOrFork) {
-    oracleContract = "OETHFixedOracle";
-    contractName = "OETHOracleRouter";
-    args = [];
-  } else if (isSonicOrFork) {
-    oracleContract = "OSonicOracleRouter";
-    contractName = "OSonicOracleRouter";
-    args = [addresses.zero];
-  }
-
-  await deployWithConfirmation(contractName, args, oracleContract);
-  if (isHoleskyOrFork || isHoodiOrFork || isSonicOrFork) {
-    // no need to configure any feeds since they are hardcoded to a fixed feed
-    // TODO: further deployments will require more intelligent separation of different
-    // chains / environment oracle deployments
-    return;
-  }
-
-  const oracleRouter = await ethers.getContract("OracleRouter");
-  log("Deployed OracleRouter");
-
-  const assetAddresses = await getAssetAddresses(deployments);
-
-  // Register feeds
-  // Not needed in production
-  const oracleAddresses = await getOracleAddresses(deployments);
-  /* Mock oracle feeds report 0 for updatedAt data point. Set
-   * maxStaleness to 100 years from epoch to make the Oracle
-   * feeds valid
-   */
-  const maxStaleness = 24 * 60 * 60 * 365 * 100;
-
-  const oracleFeeds = [
-    [assetAddresses.USDS, oracleAddresses.chainlink.USDS_USD],
-    [assetAddresses.USDT, oracleAddresses.chainlink.USDT_USD],
-    [assetAddresses.USDC, oracleAddresses.chainlink.USDC_USD],
-    [assetAddresses.WETH, oracleAddresses.chainlink.WETH_ETH],
-    [addresses.mainnet.WETH, oracleAddresses.chainlink.WETH_ETH],
-    [
-      assetAddresses.NonStandardToken,
-      oracleAddresses.chainlink.NonStandardToken_USD,
-    ],
-  ];
-
-  for (const [asset, oracle] of oracleFeeds) {
-    await withConfirmation(
-      oracleRouter.connect(sDeployer).setFeed(asset, oracle, maxStaleness)
-    );
-  }
-};
+const deployOracles = async () => {};
 
 const deployOETHCore = async () => {
   let { governorAddr, deployerAddr } = await hre.getNamedAccounts();

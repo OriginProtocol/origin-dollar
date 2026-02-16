@@ -351,82 +351,6 @@ const advanceBlocks = async (numBlocks) => {
   await hre.network.provider.send("hardhat_mine", [blocksHex]);
 };
 
-const getOracleAddress = async (deployments) => {
-  return (await deployments.get("OracleRouter")).address;
-};
-
-/**
- * Sets the price in USD the mix oracle will return for a specific token.
- * This first sets the ETH price in USD, then token price in ETH
- *
- * @param {string} tokenSymbol: "DAI", USDC", etc...
- * @param {number} usdPrice: price of the token in USD.
- * @returns {Promise<void>}
- */
-const setOracleTokenPriceUsd = async (tokenSymbol, usdPrice) => {
-  const symbolMap = {
-    USDC: 6,
-    USDT: 6,
-    DAI: 6,
-    USDS: 18,
-  };
-
-  if (isMainnetOrFork) {
-    throw new Error(
-      `setOracleTokenPriceUsd not supported on network ${hre.network.name}`
-    );
-  }
-  // Set the chainlink token price in USD, with 8 decimals.
-  const tokenFeed = await ethers.getContract(
-    "MockChainlinkOracleFeed" + tokenSymbol
-  );
-
-  const decimals = Object.keys(symbolMap).includes(tokenSymbol)
-    ? symbolMap[tokenSymbol]
-    : 18;
-  await tokenFeed.setDecimals(decimals);
-  await tokenFeed.setPrice(parseUnits(usdPrice, decimals));
-};
-
-const getOracleAddresses = async (deployments) => {
-  if (isMainnetOrFork) {
-    // On mainnet or fork, return mainnet addresses.
-    return {
-      chainlink: {
-        ETH_USD: addresses.mainnet.chainlinkETH_USD,
-        DAI_USD: addresses.mainnet.chainlinkDAI_USD,
-        // Use same Oracle as DAI for USDS
-        USDS_USD: addresses.mainnet.chainlinkDAI_USD,
-        USDC_USD: addresses.mainnet.chainlinkUSDC_USD,
-        USDT_USD: addresses.mainnet.chainlinkUSDT_USD,
-        OGN_ETH: addresses.mainnet.chainlinkOGN_ETH,
-      },
-      openOracle: addresses.mainnet.openOracle, // Deprecated
-    };
-  } else {
-    // On other environments, return mock feeds.
-    return {
-      chainlink: {
-        ETH_USD: (await deployments.get("MockChainlinkOracleFeedETH")).address,
-        DAI_USD: (await deployments.get("MockChainlinkOracleFeedDAI")).address,
-        USDS_USD: (await deployments.get("MockChainlinkOracleFeedUSDS"))
-          .address,
-        USDC_USD: (await deployments.get("MockChainlinkOracleFeedUSDC"))
-          .address,
-        USDT_USD: (await deployments.get("MockChainlinkOracleFeedUSDT"))
-          .address,
-        OGN_ETH: (await deployments.get("MockChainlinkOracleFeedOGNETH"))
-          .address,
-        WETH_ETH: (await deployments.get("MockChainlinkOracleFeedWETHETH"))
-          .address,
-        NonStandardToken_USD: (
-          await deployments.get("MockChainlinkOracleFeedNonStandardToken")
-        ).address,
-      },
-    };
-  }
-};
-
 const getAssetAddresses = async (deployments) => {
   if (isMainnetOrFork) {
     return {
@@ -738,9 +662,6 @@ module.exports = {
   isHoodi,
   isHoodiFork,
   isHoodiOrFork,
-  getOracleAddress,
-  setOracleTokenPriceUsd,
-  getOracleAddresses,
   getAssetAddresses,
   governorArgs,
   proposeArgs,

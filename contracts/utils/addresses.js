@@ -262,16 +262,6 @@ addresses.mainnet.FraxETHMinter = "0xbAFA44EFE7901E04E39Dad13167D089C559c1138";
 addresses.mainnet.oneInchRouterV5 =
   "0x1111111254EEB25477B68fb85Ed929f73A960582";
 
-// Frax Oracle for frxETH/ETH
-addresses.mainnet.FrxEthFraxOracle =
-  "0xC58F3385FBc1C8AD2c0C9a061D7c13b141D7A5Df";
-// FrxEthEthDualOracle gets the oracle prices from the Curve and Uniswap pools
-addresses.mainnet.FrxEthEthDualOracle =
-  "0xb12c19C838499E3447AFd9e59274B1BE56b1546A";
-// FrxEthWethDualOracle
-addresses.mainnet.FrxEthWethDualOracle =
-  "0x350a9841956D8B0212EAdF5E14a449CA85FAE1C0";
-
 // Curve Pools
 addresses.mainnet.CurveTriPool = "0x4ebdf703948ddcea3b11f675b4d1fba9d2414a14";
 addresses.mainnet.CurveCVXPool = "0xB576491F1E6e5E62f1d8F26062Ee822B40B0E0d4";

@@ -67,7 +67,6 @@ async function hotDeployOption(
   const { isOethFixture } = config;
   const deployStrat = hotDeployOptions.includes("strategy");
   const deployVault = hotDeployOptions.includes("vault");
-  const deployOracleRouter = hotDeployOptions.includes("oracleRouter");
 
   log(`Running fixture hot deployment w/ config; isOethFixture:${isOethFixture} strategy:${!!deployStrat} 
     vault:${!!deployVault}`);
@@ -84,9 +83,6 @@ async function hotDeployOption(
 
   if (deployVault) {
     await hotDeployVault(fixture, isOethFixture);
-  }
-  if (deployOracleRouter) {
-    await hotDeployOracleRouter(fixture, isOethFixture);
   }
 }
 
@@ -117,22 +113,6 @@ async function hotDeployVault(fixture, isOeth) {
   );
 
   await replaceContractAt(liveImplContractAddress, implementation);
-}
-
-async function hotDeployOracleRouter(fixture, forOETH) {
-  const { deploy } = deployments;
-  const routerName = `${forOETH ? "OETH" : ""}OracleRouter`;
-
-  const cRouter = await ethers.getContract(routerName);
-
-  await deploy(routerName, {
-    from: await fixture.strategist.getAddress(),
-    args: [],
-  });
-
-  const implementation = await ethers.getContract(routerName);
-  log(`Replacing implementation at ${cRouter.address} with the fresh bytecode`);
-  await replaceContractAt(cRouter.address, implementation);
 }
 
 /* Run the fixture and replace the main strategy contract(s) of the fixture

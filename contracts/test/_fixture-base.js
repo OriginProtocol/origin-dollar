@@ -26,17 +26,6 @@ const BURNER_ROLE =
 
 let snapshotId;
 
-const baseFixtureWithMockedVaultAdminConfig = async () => {
-  const fixture = await defaultFixture();
-  await deployWithConfirmation("MockOETHVault", [fixture.weth.address]);
-
-  fixture.oethbVault = await ethers.getContractAt(
-    "IMockVault",
-    fixture.oethbVault.address
-  );
-  return fixture;
-};
-
 const defaultFixture = async () => {
   if (!snapshotId && !isFork) {
     snapshotId = await nodeSnapshot();
@@ -134,11 +123,6 @@ const defaultFixture = async () => {
     "BridgedWOETHStrategy",
     woethStrategyProxy.address
   );
-
-  const oracleRouter = await ethers.getContract(
-    isFork ? "OETHBaseOracleRouter" : "MockOracleRouter"
-  );
-
   const mockStrategy = isFork
     ? undefined
     : await ethers.getContract("MockStrategy");
@@ -264,7 +248,6 @@ const defaultFixture = async () => {
     woeth,
     woethProxy,
     woethStrategy,
-    oracleRouter,
 
     // Strategies
     aerodromeAmoStrategy,
@@ -295,9 +278,6 @@ const defaultFixture = async () => {
 };
 
 const defaultBaseFixture = deployments.createFixture(defaultFixture);
-const baseFixtureWithMockedVaultAdmin = deployments.createFixture(
-  baseFixtureWithMockedVaultAdminConfig
-);
 
 const bridgeHelperModuleFixture = deployments.createFixture(async () => {
   const fixture = await defaultBaseFixture();
@@ -392,7 +372,6 @@ mocha.after(async () => {
 
 module.exports = {
   defaultBaseFixture,
-  baseFixtureWithMockedVaultAdmin,
   MINTER_ROLE,
   BURNER_ROLE,
   bridgeHelperModuleFixture,

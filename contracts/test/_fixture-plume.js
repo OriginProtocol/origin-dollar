@@ -116,10 +116,6 @@ const defaultFixture = async () => {
     addresses.plume.WETH
   );
 
-  const oracleRouter = await ethers.getContract(
-    isFork ? "OETHPlumeOracleRouter" : "MockOracleRouter"
-  );
-
   const _mintWETH = async (signer, amount) => {
     if (isFork) {
       await wethMintableContract.connect(governor).mint(signer.address, amount);
@@ -188,7 +184,6 @@ const defaultFixture = async () => {
     woeth,
     woethProxy,
     woethStrategy,
-    oracleRouter,
 
     // Helpers
     _mintWETH,

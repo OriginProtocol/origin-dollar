@@ -7,7 +7,6 @@ require("./_global-hooks");
 const { hotDeployOption } = require("./_hot-deploy.js");
 const addresses = require("../utils/addresses");
 const { resolveContract } = require("../utils/resolvers");
-//const { setChainlinkOraclePrice } = require("../utils/oracle");
 
 const {
   fundAccounts,
@@ -18,11 +17,9 @@ const { deployWithConfirmation } = require("../utils/deploy");
 const { replaceContractAt } = require("../utils/hardhat");
 const {
   getAssetAddresses,
-  getOracleAddresses,
   oethUnits,
   ousdUnits,
   usdcUnits,
-  units,
   isTest,
   isFork,
   isHolesky,
@@ -73,10 +70,6 @@ const simpleOETHFixture = deployments.createFixture(async () => {
 
   const cWOETHProxy = await ethers.getContract("WOETHProxy");
   const woeth = await ethers.getContractAt("WOETH", cWOETHProxy.address);
-
-  const oethOracleRouter = await ethers.getContract(
-    isFork ? "OETHOracleRouter" : "OracleRouter"
-  );
 
   let weth,
     ssv,
@@ -182,8 +175,6 @@ const simpleOETHFixture = deployments.createFixture(async () => {
     domen,
     daniel,
     franck,
-    // Contracts
-    oethOracleRouter,
     // Assets
     ssv,
     weth,
@@ -560,11 +551,6 @@ const defaultFixture = deployments.createFixture(async () => {
   const wousdProxy = await ethers.getContract("WrappedOUSDProxy");
   const wousd = await ethers.getContractAt("WrappedOusd", wousdProxy.address);
 
-  const oracleRouter = await ethers.getContract("OracleRouter");
-  const oethOracleRouter = await ethers.getContract(
-    isFork ? "OETHOracleRouter" : "OracleRouter"
-  );
-
   const nativeStakingStrategyProxy = await ethers.getContract(
     "NativeStakingSSVStrategyProxy"
   );
@@ -687,23 +673,14 @@ const defaultFixture = deployments.createFixture(async () => {
     usdc,
     weth,
     ogn,
-    nonStandardToken,
     morphoSteakHouseUSDCVault,
     morphoGauntletPrimeUSDCVault,
     morphoGauntletPrimeUSDTVault,
     morphoOUSDv2Vault,
     ssv;
 
-  let chainlinkOracleFeedDAI,
-    chainlinkOracleFeedUSDT,
-    chainlinkOracleFeedUSDC,
-    chainlinkOracleFeedUSDS,
-    chainlinkOracleFeedOGNETH,
-    chainlinkOracleFeedETH,
-    depositContractUtils,
+  let depositContractUtils,
     oethZapper,
-    vaultValueChecker,
-    oethVaultValueChecker,
     poolBoosterCentralRegistry,
     poolBoosterMerklFactory,
     merklDistributor;
@@ -734,9 +711,6 @@ const defaultFixture = deployments.createFixture(async () => {
 
     oethZapper = await ethers.getContract("OETHZapper");
 
-    vaultValueChecker = await ethers.getContract("VaultValueChecker");
-    oethVaultValueChecker = await ethers.getContract("OETHVaultValueChecker");
-
     poolBoosterCentralRegistry = await ethers.getContractAt(
       "PoolBoostCentralRegistry",
       (
@@ -757,28 +731,8 @@ const defaultFixture = deployments.createFixture(async () => {
     usdc = await ethers.getContract("MockUSDC");
     weth = await ethers.getContractAt("MockWETH", addresses.mainnet.WETH);
     ogn = await ethers.getContract("MockOGN");
-    nonStandardToken = await ethers.getContract("MockNonStandardToken");
     ssv = await ethers.getContract("MockSSV");
     depositContractUtils = await ethers.getContract("DepositContractUtils");
-
-    chainlinkOracleFeedDAI = await ethers.getContract(
-      "MockChainlinkOracleFeedDAI"
-    );
-    chainlinkOracleFeedUSDS = await ethers.getContract(
-      "MockChainlinkOracleFeedUSDS"
-    );
-    chainlinkOracleFeedUSDT = await ethers.getContract(
-      "MockChainlinkOracleFeedUSDT"
-    );
-    chainlinkOracleFeedUSDC = await ethers.getContract(
-      "MockChainlinkOracleFeedUSDC"
-    );
-    chainlinkOracleFeedOGNETH = await ethers.getContract(
-      "MockChainlinkOracleFeedOGNETH"
-    );
-    chainlinkOracleFeedETH = await ethers.getContract(
-      "MockChainlinkOracleFeedETH"
-    );
   }
 
   if (!isFork) {
@@ -791,7 +745,6 @@ const defaultFixture = deployments.createFixture(async () => {
   const signers = await hre.ethers.getSigners();
   let governor = signers[1];
   let strategist = signers[0];
-  const adjuster = signers[0];
   let timelock;
   let oldTimelock;
 
@@ -841,24 +794,13 @@ const defaultFixture = deployments.createFixture(async () => {
     anna,
     governor,
     strategist,
-    adjuster,
     domen,
     daniel,
     franck,
     timelock,
     oldTimelock,
     // Contracts
-    vaultValueChecker,
     dripper,
-    // Oracle
-    chainlinkOracleFeedDAI,
-    chainlinkOracleFeedUSDT,
-    chainlinkOracleFeedUSDC,
-    chainlinkOracleFeedUSDS,
-    chainlinkOracleFeedOGNETH,
-    chainlinkOracleFeedETH,
-    oracleRouter,
-    oethOracleRouter,
     // Assets
     usdt,
     usds,
@@ -866,7 +808,6 @@ const defaultFixture = deployments.createFixture(async () => {
     ogn,
     ssv,
     weth,
-    nonStandardToken,
     depositContractUtils,
     wousd,
     morphoSteakhouseUSDCStrategy,
@@ -889,7 +830,6 @@ const defaultFixture = deployments.createFixture(async () => {
     curveGaugeOETHWETH,
 
     // OETH
-    oethVaultValueChecker,
     nativeStakingSSVStrategy,
     nativeStakingFeeAccumulator,
     oethFixedRateDripperProxy,
@@ -955,47 +895,6 @@ async function oethDefaultFixture() {
       await resetAllowance(weth, user, oethVault.address);
     }
   }
-
-  return fixture;
-}
-
-async function oethCollateralSwapFixture() {
-  const fixture = await oethDefaultFixture();
-  return fixture;
-}
-
-async function ousdCollateralSwapFixture() {
-  const fixture = await defaultFixture();
-
-  const { usds, usdc, usdt, matt, strategist, timelock, vault } = fixture;
-
-  const bufferBps = await vault.vaultBuffer();
-  const shouldChangeBuffer = bufferBps.lt(ousdUnits("1"));
-
-  if (shouldChangeBuffer) {
-    // If it's not 100% already, set it to 100%
-    await vault.connect(strategist).setVaultBuffer(
-      ousdUnits("1") // 100%
-    );
-  }
-
-  await usdt.connect(matt).approve(vault.address, 0);
-  for (const token of [usds, usdc, usdt]) {
-    await token
-      .connect(matt)
-      .approve(vault.address, await units("10000", token));
-
-    // Mint some tokens, so it ends up in Vault
-    await vault.connect(matt).mint(token.address, await units("500", token), 0);
-  }
-
-  if (shouldChangeBuffer) {
-    // Set it back
-    await vault.connect(strategist).setVaultBuffer(bufferBps);
-  }
-
-  // Withdraw all from strategies so we have assets to swap
-  await vault.connect(timelock).withdrawAllFromStrategies();
 
   return fixture;
 }
@@ -1347,45 +1246,6 @@ async function resetAllowance(
 ) {
   await tokenContract.connect(signer).approve(toAddress, "0");
   await tokenContract.connect(signer).approve(toAddress, allowance);
-}
-
-/**
- * Configure a hacked Vault
- */
-async function hackedVaultFixture() {
-  const fixture = await defaultFixture();
-
-  const assetAddresses = await getAssetAddresses(deployments);
-  const { deploy } = deployments;
-  const { vault, oracleRouter } = fixture;
-  const { governorAddr } = await getNamedAccounts();
-  const sGovernor = await ethers.provider.getSigner(governorAddr);
-  const oracleAddresses = await getOracleAddresses(hre.deployments);
-
-  await deploy("MockEvilDAI", {
-    from: governorAddr,
-    args: [vault.address, assetAddresses.USDS],
-  });
-
-  const evilDAI = await ethers.getContract("MockEvilDAI");
-  /* Mock oracle feeds report 0 for updatedAt data point. Set
-   * maxStaleness to 100 years from epoch to make the Oracle
-   * feeds valid
-   */
-  const maxStaleness = 24 * 60 * 60 * 365 * 100;
-
-  await oracleRouter.setFeed(
-    evilDAI.address,
-    oracleAddresses.chainlink.DAI_USD,
-    maxStaleness
-  );
-  await oracleRouter.cacheDecimals(evilDAI.address);
-
-  await fixture.vault.connect(sGovernor).supportAsset(evilDAI.address, 0);
-
-  fixture.evilDAI = evilDAI;
-
-  return fixture;
 }
 
 /**
@@ -1785,14 +1645,11 @@ module.exports = {
   loadTokenTransferFixture,
   mockVaultFixture,
   morphoOUSDv2Fixture,
-  hackedVaultFixture,
   instantRebaseVaultFixture,
   rebornFixture,
   nativeStakingSSVStrategyFixture,
   compoundingStakingSSVStrategyFixture,
   compoundingStakingSSVStrategyMerkleProofsMockedFixture,
-  oethCollateralSwapFixture,
-  ousdCollateralSwapFixture,
   nodeSnapshot,
   nodeRevert,
   woethCcipZapperFixture,
