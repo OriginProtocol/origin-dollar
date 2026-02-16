@@ -26,6 +26,7 @@ describe.only("Sonic Fork Test: Sonic Staking Strategy", function () {
       addresses: addresses.sonic,
       assetToken: fixture.wS, // address of the asset token in the pool
       oToken: fixture.oSonic, // address of the oToken in the pool
+      rewardToken: fixture.swpx, // address of the reward token
       amoStrategy: fixture.swapXAMOStrategy, // address of the strategy
       pool: fixture.swapXPool,
       gauge: fixture.swapXGauge, // address of the gauge
@@ -36,6 +37,7 @@ describe.only("Sonic Fork Test: Sonic Staking Strategy", function () {
       oTokenPoolIndex: 1, // index of the oToken in the pool
       vaultSigner: fixture.oSonicVaultSigner, // address of the vault signer
       vault: fixture.oSonicVault, // address of the vault
+      harvester: fixture.harvester, // address of the harvester
     };
   });
 });

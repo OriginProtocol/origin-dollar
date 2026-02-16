@@ -1,6 +1,7 @@
 const { expect } = require("chai");
 const { formatUnits, parseUnits } = require("ethers/lib/utils");
 const { impersonateAndFund } = require("../../utils/signers");
+const { setERC20TokenBalance } = require("../_fund");
 const { isCI } = require("../helpers");
 
 const log = require("../../utils/logger")("test:fork:algebra:amo");
@@ -305,20 +306,20 @@ const shouldBehaveLikeAlgebraAmoStrategy = (contextFunction) => {
           nick,
           amoStrategy,
           gauge,
-          swpx,
+          rewardToken,
           strategist,
         } = context;
   
-        const swpxBalanceBefore = await swpx.balanceOf(strategist.address);
+        const rewardTokenBalanceBefore = await rewardToken.balanceOf(strategist.address);
   
         // Send some SWPx rewards to the gauge
         const distributorAddress = await gauge.DISTRIBUTION();
         const distributorSigner = await impersonateAndFund(distributorAddress);
         const rewardAmount = parseUnits("1000");
-        await setERC20TokenBalance(distributorAddress, swpx, rewardAmount);
+        await setERC20TokenBalance(distributorAddress, rewardToken, rewardAmount);
         await gauge
           .connect(distributorSigner)
-          .notifyRewardAmount(swpx.address, rewardAmount);
+          .notifyRewardAmount(rewardToken.address, rewardAmount);
   
         // Harvest the rewards
         // prettier-ignore
@@ -327,32 +328,32 @@ const shouldBehaveLikeAlgebraAmoStrategy = (contextFunction) => {
   
         await expect(tx).to.emit(amoStrategy, "RewardTokenCollected");
   
-        const swpxBalanceAfter = await swpx.balanceOf(strategist.address);
+        const rewardTokenBalanceAfter = await rewardToken.balanceOf(strategist.address);
         log(
           `Rewards collected ${formatUnits(
-            swpxBalanceAfter.sub(swpxBalanceBefore)
-          )} SWPx`
+            rewardTokenBalanceAfter.sub(rewardTokenBalanceBefore)
+          )}`
         );
-        expect(swpxBalanceAfter).to.gt(swpxBalanceBefore);
+        expect(rewardTokenBalanceAfter).to.gt(rewardTokenBalanceBefore);
       });
       it("Attacker front-run deposit within range by adding wS to the pool", async () => {
-        const { nick, oSonic, vaultSigner, amoStrategy, assetToken } =
+        const { nick, oToken, vaultSigner, amoStrategy, assetToken } =
           context;
   
-        const attackerWsBalanceBefore = await assetToken.balanceOf(nick.address);
-        const wsAmountIn = parseUnits("20000");
+        const attackerAssetTokenBalanceBefore = await assetToken.balanceOf(nick.address);
+        const assetTokenAmountIn = parseUnits("20000");
   
         const dataBeforeSwap = await snapData();
         logSnapData(
           dataBeforeSwap,
           `\nBefore attacker swaps ${formatUnits(
-            wsAmountIn
-          )} wS into the pool for OS`
+            assetTokenAmountIn
+          )} asset token into the pool for OToken`
         );
   
-        // Attacker swaps a lot of wS for OS in the pool
-        // This drops the pool's wS/OS price and increases the OS/wS price
-        const osAmountOut = await poolSwapTokensIn(assetToken, wsAmountIn);
+        // Attacker swaps a lot of asset token for OToken in the pool
+        // This drops the pool's asset token/OToken price and increases the OToken/asset token price
+        const oTokenAmountOut = await poolSwapTokensIn(assetToken, assetTokenAmountIn);
   
         const depositAmount = parseUnits("200000");
   
@@ -361,7 +362,7 @@ const shouldBehaveLikeAlgebraAmoStrategy = (contextFunction) => {
           dataBeforeDeposit,
           `\nAfter attacker tilted pool and before strategist deposits ${formatUnits(
             depositAmount
-          )} wS`
+          )} asset token`
         );
   
         // Vault deposits wS to the strategy
@@ -377,271 +378,274 @@ const shouldBehaveLikeAlgebraAmoStrategy = (contextFunction) => {
           dataAfterDeposit,
           `\nAfter deposit of ${formatUnits(
             depositAmount
-          )} wS to strategy and before attacker swaps ${formatUnits(
-            osAmountOut
-          )} OS back into the pool for wS`
+          )} asset token to strategy and before attacker swaps ${formatUnits(
+            oTokenAmountOut
+          )} OToken back into the pool for asset token`
         );
         await logProfit(dataBeforeSwap);
   
         // Attacker swaps the OS back for wS
-        await poolSwapTokensIn(oSonic, osAmountOut);
+        await poolSwapTokensIn(oToken, oTokenAmountOut);
   
         const dataAfterFinalSwap = await snapData();
         logSnapData(
           dataAfterFinalSwap,
           `\nAfter attacker swaps ${formatUnits(
-            osAmountOut
-          )} OS back into the pool for wS`
+            oTokenAmountOut
+          )} OToken back into the pool for asset token`
         );
         await logProfit(dataBeforeSwap);
   
         const attackerWsBalanceAfter = await assetToken.balanceOf(nick.address);
         log(
           `Attacker's profit ${formatUnits(
-            attackerWsBalanceAfter.sub(attackerWsBalanceBefore)
-          )} wS`
+            attackerWsBalanceAfter.sub(attackerAssetTokenBalanceBefore)
+          )} asset token`
         );
       });
-    }); // TODO DELETE THIS LINE AFTER UNCOMMENT BELOW
-    //   describe("When attacker front-run by adding a lot of wS to the pool", () => {
-    //     let attackerWsBalanceBefore;
-    //     let dataBeforeSwap;
-    //     let osAmountOut;
-    //     beforeEach(async () => {
-    //       const { nick, wS } = fixture;
+
+      describe("When attacker front-run by adding a lot of asset token to the pool", () => {
+        let attackerAssetBalanceBefore;
+        let dataBeforeSwap;
+        let oTokenAmountOut;
+        beforeEach(async () => {
+          context = await contextFunction();
+          fixture = await context.loadFixture();
+          const { nick, assetToken } = context;
   
-    //       attackerWsBalanceBefore = await assetToken.balanceOf(nick.address);
-    //       const wsAmountIn = parseUnits("10000000");
+          attackerAssetBalanceBefore = await assetToken.balanceOf(nick.address);
+          const assetTokenAmountIn = parseUnits("10000000");
   
-    //       dataBeforeSwap = await snapData();
-    //       logSnapData(
-    //         dataBeforeSwap,
-    //         `\nBefore attacker swaps ${formatUnits(
-    //           wsAmountIn
-    //         )} wS into the pool for OS`
-    //       );
+          dataBeforeSwap = await snapData();
+          logSnapData(
+            dataBeforeSwap,
+            `\nBefore attacker swaps ${formatUnits(
+              assetTokenAmountIn
+            )} asset token into the pool for OToken`
+          );
   
-    //       // Attacker swaps a lot of wS for OS in the pool
-    //       // This drops the pool's wS/OS price and increases the OS/wS price
-    //       osAmountOut = await poolSwapTokensIn(wS, wsAmountIn);
-    //     });
-    //     it("Strategist fails to deposit to strategy", async () => {
-    //       await assertFailedDeposit(parseUnits("5000"), "price out of range");
-    //     });
-    //     it("Strategist fails to deposit all to strategy", async () => {
-    //       await assertFailedDepositAll(parseUnits("5000"), "price out of range");
-    //     });
-    //     it("Strategist should withdraw from strategy with a profit", async () => {
-    //       const {
-    //         nick,
-    //         oSonic,
-    //         oSonicVault,
-    //         vaultSigner,
-    //         amoStrategy,
-    //         wS,
-    //       } = fixture;
-    //       const withdrawAmount = parseUnits("4000");
+          // Attacker swaps a lot of asset token for OToken in the pool
+          // This drops the pool's asset token/OToken price and increases the OToken/asset token price
+          oTokenAmountOut = await poolSwapTokensIn(assetToken, assetTokenAmountIn);
+        });
+        it("Strategist fails to deposit to strategy", async () => {
+          await assertFailedDeposit(parseUnits("5000"), "price out of range");
+        });
+        it("Strategist fails to deposit all to strategy", async () => {
+          await assertFailedDepositAll(parseUnits("5000"), "price out of range");
+        });
+        it("Strategist should withdraw from strategy with a profit", async () => {
+          const {
+            nick,
+            oToken,
+            vault,
+            vaultSigner,
+            amoStrategy,
+            assetToken,
+          } = context;
+          const withdrawAmount = parseUnits("4000");
   
-    //       const dataBeforeWithdraw = await snapData();
-    //       logSnapData(
-    //         dataBeforeWithdraw,
-    //         `\nBefore strategist withdraw ${formatUnits(withdrawAmount)} wS`
-    //       );
+          const dataBeforeWithdraw = await snapData();
+          logSnapData(
+            dataBeforeWithdraw,
+            `\nBefore strategist withdraw ${formatUnits(withdrawAmount)} asset token`
+          );
   
-    //       const tx = await amoStrategy
-    //         .connect(vaultSigner)
-    //         .withdraw(oSonicVault.address, assetToken.address, withdrawAmount);
+          const tx = await amoStrategy
+            .connect(vaultSigner)
+            .withdraw(vault.address, assetToken.address, withdrawAmount);
   
-    //       const dataAfterWithdraw = await snapData();
-    //       logSnapData(
-    //         dataAfterWithdraw,
-    //         `\nAfter withdraw and before attacker swaps ${formatUnits(
-    //           osAmountOut
-    //         )} OS back into the pool for wS`
-    //       );
-    //       await logProfit(dataBeforeSwap);
+          const dataAfterWithdraw = await snapData();
+          logSnapData(
+            dataAfterWithdraw,
+            `\nAfter withdraw and before attacker swaps ${formatUnits(
+              oTokenAmountOut
+            )} OToken back into the pool for asset token`
+          );
+          await logProfit(dataBeforeSwap);
   
-    //       // Get how much OS was burnt
-    //       const receipt = await tx.wait();
-    //       const redeemEvent = receipt.events.find(
-    //         (e) => e.event === "Withdrawal" && e.args._asset === oSonic.address
-    //       );
-    //       log(`\nWithdraw burnt ${formatUnits(redeemEvent.args._amount)} OS`);
+          // Get how much OS was burnt
+          const receipt = await tx.wait();
+          const redeemEvent = receipt.events.find(
+            (e) => e.event === "Withdrawal" && e.args._asset === oToken.address
+          );
+          log(`\nWithdraw burnt ${formatUnits(redeemEvent.args._amount)} OS`);
   
-    //       // Attacker swaps the OS back for wS
-    //       await poolSwapTokensIn(oSonic, osAmountOut);
+          // Attacker swaps the OS back for wS
+          await poolSwapTokensIn(oToken, oTokenAmountOut);
   
-    //       const dataAfterFinalSwap = await snapData();
-    //       logSnapData(
-    //         dataAfterFinalSwap,
-    //         "\nAfter attacker swaps OS into the pool for wS"
-    //       );
-    //       const profit = await logProfit(dataBeforeSwap);
-    //       expect(profit, "vault profit").to.gt(0);
+          const dataAfterFinalSwap = await snapData();
+          logSnapData(
+            dataAfterFinalSwap,
+            "\nAfter attacker swaps OToken into the pool for the asset token"
+          );
+          const profit = await logProfit(dataBeforeSwap);
+          expect(profit, "vault profit").to.gt(0);
   
-    //       const attackerWsBalanceAfter = await assetToken.balanceOf(nick.address);
-    //       log(
-    //         `Attacker's profit/loss ${formatUnits(
-    //           attackerWsBalanceAfter.sub(attackerWsBalanceBefore)
-    //         )} wS`
-    //       );
-    //     });
-    //   });
-    //   describe("When attacker front-run by adding a lot of OS to the pool", () => {
-    //     const attackerBalanceBefore = {};
-    //     let dataBeforeSwap;
-    //     let wsAmountOut;
-    //     beforeEach(async () => {
-    //       const { nick, oSonic, oSonicVault, wS } = fixture;
+          const attackerWsBalanceAfter = await assetToken.balanceOf(nick.address);
+          log(
+            `Attacker's profit/loss ${formatUnits(
+              attackerWsBalanceAfter.sub(attackerAssetBalanceBefore)
+            )} wS`
+          );
+        });
+      });
+      describe("When attacker front-run by adding a lot of OToken to the pool", () => {
+        const attackerBalanceBefore = {};
+        let dataBeforeSwap;
+        let assetAmountOut;
+        beforeEach(async () => {
+          context = await contextFunction();
+          fixture = await context.loadFixture();
+          const { nick, oToken, vault, assetToken } = context;
   
-    //       const osAmountIn = parseUnits("10000000");
-    //       // Mint OS using wS
-    //       await oSonicVault.connect(nick).mint(assetToken.address, osAmountIn, 0);
+          const oTokenAmountIn = parseUnits("10000000");
+
+          // Mint OToken using asset token
+          await vault.connect(nick).mint(assetToken.address, oTokenAmountIn, 0);
   
-    //       attackerBalanceBefore.os = await oSonic.balanceOf(nick.address);
-    //       attackerBalanceBefore.ws = await assetToken.balanceOf(nick.address);
+          attackerBalanceBefore.oToken = await oToken.balanceOf(nick.address);
+          attackerBalanceBefore.assetToken = await assetToken.balanceOf(nick.address);
   
-    //       dataBeforeSwap = await snapData();
-    //       logSnapData(
-    //         dataBeforeSwap,
-    //         `\nBefore attacker swaps ${formatUnits(
-    //           osAmountIn
-    //         )} OS into the pool for wS`
-    //       );
+          dataBeforeSwap = await snapData();
+          logSnapData(
+            dataBeforeSwap,
+            `\nBefore attacker swaps ${formatUnits(
+              oTokenAmountIn
+            )} OToken into the pool for asset token`
+          );
   
-    //       // Attacker swaps a lot of OS for wS in the pool
-    //       // This increases the pool's wS/OS price and decreases the OS/wS price
-    //       wsAmountOut = await poolSwapTokensIn(oSonic, osAmountIn);
-    //     });
-    //     it("Strategist fails to deposit to strategy", async () => {
-    //       await assertFailedDeposit(parseUnits("5000"), "price out of range");
-    //     });
-    //     it("Strategist fails to deposit all to strategy", async () => {
-    //       await assertFailedDepositAll(parseUnits("5000"), "price out of range");
-    //     });
-    //     it("Strategist should withdraw from strategy with a profit", async () => {
-    //       const {
-    //         nick,
-    //         oSonic,
-    //         oSonicVault,
-    //         vaultSigner,
-    //         amoStrategy,
-    //         wS,
-    //       } = fixture;
-    //       const withdrawAmount = parseUnits("200");
+          // Attacker swaps a lot of OToken for the asset token in the pool
+          // This increases the pool's asset/OToken price and decreases the OToken/asset price
+          assetAmountOut = await poolSwapTokensIn(oToken, oTokenAmountIn);
+        });
+        it("Strategist fails to deposit to strategy", async () => {
+          await assertFailedDeposit(parseUnits("5000"), "price out of range");
+        });
+        it("Strategist fails to deposit all to strategy", async () => {
+          await assertFailedDepositAll(parseUnits("5000"), "price out of range");
+        });
+        it("Strategist should withdraw from strategy with a profit", async () => {
+          const {
+            nick,
+            oToken,
+            vault,
+            vaultSigner,
+            amoStrategy,
+            assetToken,
+          } = context;
+          const withdrawAmount = parseUnits("200");
   
-    //       const dataBeforeWithdraw = await snapData();
-    //       logSnapData(
-    //         dataBeforeWithdraw,
-    //         `\nBefore strategist withdraw ${formatUnits(withdrawAmount)} wS`
-    //       );
+          const dataBeforeWithdraw = await snapData();
+          logSnapData(
+            dataBeforeWithdraw,
+            `\nBefore strategist withdraw ${formatUnits(withdrawAmount)} asset token`
+          );
   
-    //       const tx = await amoStrategy
-    //         .connect(vaultSigner)
-    //         .withdraw(oSonicVault.address, assetToken.address, withdrawAmount);
+          const tx = await amoStrategy
+            .connect(vaultSigner)
+            .withdraw(vault.address, assetToken.address, withdrawAmount);
   
-    //       const dataAfterWithdraw = await snapData();
-    //       logSnapData(
-    //         dataAfterWithdraw,
-    //         `\nAfter withdraw and before attacker swaps ${formatUnits(
-    //           wsAmountOut
-    //         )} wS back into the pool for OS`
-    //       );
-    //       await logProfit(dataBeforeSwap);
+          const dataAfterWithdraw = await snapData();
+          logSnapData(
+            dataAfterWithdraw,
+            `\nAfter withdraw and before attacker swaps ${formatUnits(
+              assetAmountOut
+            )} asset token back into the pool for OToken`
+          );
+          await logProfit(dataBeforeSwap);
   
-    //       // Get how much OS was burnt
-    //       const receipt = await tx.wait();
-    //       const redeemEvent = receipt.events.find(
-    //         (e) => e.event === "Withdrawal" && e.args._asset === oSonic.address
-    //       );
-    //       log(`\nWithdraw burnt ${formatUnits(redeemEvent.args._amount)} OS`);
+          // Get how much OS was burnt
+          const receipt = await tx.wait();
+          const redeemEvent = receipt.events.find(
+            (e) => e.event === "Withdrawal" && e.args._asset === oToken.address
+          );
+          log(`\nWithdraw burnt ${formatUnits(redeemEvent.args._amount)} OS`);
   
-    //       // Attacker swaps the wS back for OS
-    //       await poolSwapTokensIn(wS, wsAmountOut);
+          // Attacker swaps the asset token back for OToken
+          await poolSwapTokensIn(assetToken, assetAmountOut);
   
-    //       const dataAfterFinalSwap = await snapData();
-    //       logSnapData(
-    //         dataAfterFinalSwap,
-    //         "\nAfter attacker swaps wS into the pool for OS"
-    //       );
-    //       const profit = await logProfit(dataBeforeSwap);
-    //       expect(profit, "vault profit").to.gt(0);
+          const dataAfterFinalSwap = await snapData();
+          logSnapData(
+            dataAfterFinalSwap,
+            "\nAfter attacker swaps asset token into the pool for OToken"
+          );
+          const profit = await logProfit(dataBeforeSwap);
+          expect(profit, "vault profit").to.gt(0);
   
-    //       const attackerBalanceAfter = {};
-    //       attackerBalanceAfter.os = await oSonic.balanceOf(nick.address);
-    //       attackerBalanceAfter.ws = await assetToken.balanceOf(nick.address);
-    //       log(
-    //         `Attacker's profit/loss ${formatUnits(
-    //           attackerBalanceAfter.os.sub(attackerBalanceBefore.os)
-    //         )} OS and ${formatUnits(
-    //           attackerBalanceAfter.assetToken.sub(attackerBalanceBefore.ws)
-    //         )} wS`
-    //       );
-    //     });
-    //   });
-    // });
+          const attackerBalanceAfter = {};
+          attackerBalanceAfter.oToken = await oToken.balanceOf(nick.address);
+          attackerBalanceAfter.assetToken = await assetToken.balanceOf(nick.address);
+          log(
+            `Attacker's profit/loss ${formatUnits(
+              attackerBalanceAfter.oToken.sub(attackerBalanceBefore.oToken)
+            )} OToken and ${formatUnits(
+              attackerBalanceAfter.assetToken.sub(attackerBalanceBefore.assetToken)
+            )} asset token`
+          );
+        });
+      });
+    });
   
-    // describe("with a lot more OS in the pool", () => {
-    //   const loadFixture = createFixtureLoader(swapXAMOFixture, {
-    //     wsMintAmount: 5000,
-    //     depositToStrategy: true,
-    //     balancePool: true,
-    //     poolAddOSAmount: 1000000,
-    //   });
-    //   beforeEach(async () => {
-    //     fixture = await loadFixture();
-    //   });
-    //   it("Vault should fail to deposit wS to AMO strategy", async function () {
-    //     await assertFailedDeposit(parseUnits("5000"), "price out of range");
-    //   });
-    //   it("Vault should be able to withdraw all", async () => {
-    //     await assertWithdrawAll();
-    //   });
-    //   it("Vault should be able to partially withdraw", async () => {
-    //     await assertWithdrawPartial(parseUnits("4000"));
-    //   });
-    //   it("Strategist should swap a little assets to the pool", async () => {
-    //     await assertSwapAssetsToPool(parseUnits("3"));
-    //   });
-    //   it("Strategist should swap enough wS to get the pool close to balanced", async () => {
-    //     const { pool } = fixture;
-    //     const { _reserve0: wsReserves, _reserve1: osReserves } =
-    //       await pool.getReserves();
-    //     // 5% of the extra OS
-    //     const osAmount = osReserves.sub(wsReserves).mul(5).div(100);
-    //     const wsAmount = osAmount.mul(wsReserves).div(osReserves);
-    //     log(`OS amount: ${formatUnits(osAmount)}`);
-    //     log(`wS amount: ${formatUnits(wsAmount)}`);
+    describe.only("with a lot more OToken in the pool", () => {
+      beforeEach(async () => {
+        context = await contextFunction();
+        fixture = await context.loadFixture({
+          assetMintAmount: 5000,
+          depositToStrategy: true,
+          balancePool: true,
+          poolAddOTokenAmount: 1000000,
+        });
+      });
+      it("Vault should fail to deposit asset token to AMO strategy", async function () {
+        await assertFailedDeposit(parseUnits("5000"), "price out of range");
+      });
+      it("Vault should be able to withdraw all", async () => {
+        await assertWithdrawAll();
+      });
+      it("Vault should be able to partially withdraw", async () => {
+        await assertWithdrawPartial(parseUnits("4000"));
+      });
+      it("Strategist should swap a little assets to the pool", async () => {
+        await assertSwapAssetsToPool(parseUnits("3"));
+      });
+      it("Strategist should swap enough asset token to get the pool close to balanced", async () => {
+        const { assetReserves, oTokenReserves } = await getPoolReserves();
+        // 5% of the extra oToken in the pool
+        const oTokenAmount = oTokenReserves.sub(assetReserves).mul(5).div(100);
+        const assetAmount = oTokenAmount.mul(assetReserves).div(oTokenReserves);
+        log(`oToken amount: ${formatUnits(oTokenAmount)}`);
+        log(`asset amount: ${formatUnits(assetAmount)}`);
   
-    //     await assertSwapAssetsToPool(wsAmount);
-    //   });
-    //   it("Strategist should swap a lot of assets to the pool", async () => {
-    //     await assertSwapAssetsToPool(parseUnits("3000"));
-    //   });
-    //   it("Strategist should swap most of the wS owned by the strategy", async () => {
-    //     // TODO calculate how much wS should be swapped to get the pool balanced
-    //     await assertSwapAssetsToPool(parseUnits("4400"));
-    //   });
-    //   it("Strategist should fail to add more wS than owned by the strategy", async () => {
-    //     const { amoStrategy, strategist } = fixture;
+        await assertSwapAssetsToPool(assetAmount);
+      });
+      it("Strategist should swap a lot of assets to the pool", async () => {
+        await assertSwapAssetsToPool(parseUnits("3000"));
+      });
+      it("Strategist should swap most of the wS owned by the strategy", async () => {
+        // TODO calculate how much wS should be swapped to get the pool balanced
+        await assertSwapAssetsToPool(parseUnits("4400"));
+      });
+      it("Strategist should fail to add more wS than owned by the strategy", async () => {
+        const { amoStrategy, strategist } = context;
   
-    //     const tx = amoStrategy
-    //       .connect(strategist)
-    //       .swapAssetsToPool(parseUnits("2000000"));
+        const tx = amoStrategy
+          .connect(strategist)
+          .swapAssetsToPool(parseUnits("2000000"));
   
-    //     await expect(tx).to.be.revertedWith("Not enough LP tokens in gauge");
-    //   });
-    //   it("Strategist should fail to add more OS to the pool", async () => {
-    //     const { amoStrategy, strategist } = fixture;
+        await expect(tx).to.be.revertedWith("Not enough LP tokens in gauge");
+      });
+      it("Strategist should fail to add more OS to the pool", async () => {
+        const { amoStrategy, strategist } = context;
   
-    //     // try swapping OS into the pool
-    //     const tx = amoStrategy
-    //       .connect(strategist)
-    //       .swapOTokensToPool(parseUnits("0.001"));
+        // try swapping OS into the pool
+        const tx = amoStrategy
+          .connect(strategist)
+          .swapOTokensToPool(parseUnits("0.001"));
   
-    //     await expect(tx).to.be.revertedWith("OTokens balance worse");
-    //   });
-    // });
+        await expect(tx).to.be.revertedWith("OTokens balance worse");
+      });
+    });
   
     // describe("with a little more OS in the pool", () => {
     //   const loadFixture = createFixtureLoader(swapXAMOFixture, {
@@ -986,13 +990,24 @@ const shouldBehaveLikeAlgebraAmoStrategy = (contextFunction) => {
     // });
   
     const poolSwapTokensIn = async (tokenIn, amountIn) => {
-      const { nick, pool, wS } = fixture;
+      const { nick, pool, assetToken, oTokenPoolIndex } = context;
       const amountOut = await pool.getAmountOut(amountIn, tokenIn.address);
       await tokenIn.connect(nick).transfer(pool.address, amountIn);
+
       if (tokenIn.address == assetToken.address) {
-        await pool.swap(0, amountOut, nick.address, "0x");
+        await pool.swap(
+          oTokenPoolIndex == 1 ? 0 : amountOut,
+          oTokenPoolIndex == 1 ? amountOut: 0,
+          nick.address,
+          "0x"
+        );
       } else {
-        await pool.swap(amountOut, 0, nick.address, "0x");
+        await pool.swap(
+          oTokenPoolIndex == 0 ? 0 : amountOut,
+          oTokenPoolIndex == 0 ? amountOut: 0,
+          nick.address,
+          "0x"
+        );
       }
   
       return amountOut;
@@ -1317,13 +1332,13 @@ const shouldBehaveLikeAlgebraAmoStrategy = (contextFunction) => {
     }
   
     async function assertFailedDeposit(assetDepositAmount, errorMessage) {
-      const { wS, vaultSigner, amoStrategy } = context;
+      const { assetToken, vaultSigner, amoStrategy } = context;
   
       const dataBefore = await snapData();
-      await logSnapData(dataBefore, "\nBefore depositing wS to strategy");
+      await logSnapData(dataBefore, "\nBefore depositing asset token to strategy");
   
       // Vault transfers wS to strategy
-      await wS
+      await assetToken
         .connect(vaultSigner)
         .transfer(amoStrategy.address, assetDepositAmount);
   
@@ -1336,13 +1351,13 @@ const shouldBehaveLikeAlgebraAmoStrategy = (contextFunction) => {
     }
   
     async function assertFailedDepositAll(assetDepositAmount, errorMessage) {
-      const { wS, vaultSigner, amoStrategy } = context;
+      const { assetToken, vaultSigner, amoStrategy } = context;
   
       const dataBefore = await snapData();
       await logSnapData(dataBefore, "\nBefore depositing all wS to strategy");
   
       // Vault transfers wS to strategy
-      await wS
+      await assetToken
         .connect(vaultSigner)
         .transfer(amoStrategy.address, assetDepositAmount);
   
@@ -1476,45 +1491,45 @@ const shouldBehaveLikeAlgebraAmoStrategy = (contextFunction) => {
       ).to.equal(0);
     }
   
-    async function assertSwapAssetsToPool(wsAmount) {
-      const { oSonic, amoStrategy, pool, strategist, wS } = context;
+    async function assertSwapAssetsToPool(assetAmount) {
+      const { oToken, amoStrategy, pool, strategist, assetToken } = context;
   
       const dataBefore = await snapData();
       await logSnapData(
         dataBefore,
-        `Before swapping ${formatUnits(wsAmount)} wS into the pool`
+        `Before swapping ${formatUnits(assetAmount)} wS into the pool`
       );
   
-      const { lpBurnAmount: expectedLpBurnAmount, osBurnAmount: osBurnAmount1 } =
-        await calcOSWithdrawAmount(wsAmount);
+      const { lpBurnAmount: expectedLpBurnAmount, oTokenBurnAmount: oTokenBurnAmount1 } =
+        await calcOTokenWithdrawAmount(assetAmount);
       // TODO this is not accurate as the liquidity needs to be removed first
-      const osBurnAmount2 = await pool.getAmountOut(wsAmount, assetToken.address);
-      const osBurnAmount = osBurnAmount1.add(osBurnAmount2);
+      const oTokenBurnAmount2 = await pool.getAmountOut(assetAmount, assetToken.address);
+      const oTokenBurnAmount = oTokenBurnAmount1.add(oTokenBurnAmount2);
   
-      // Swap wS to the pool and burn the received OS from the pool
+      // Swap asset token to the pool and burn the received OToken from the pool
       const tx = await amoStrategy
         .connect(strategist)
-        .swapAssetsToPool(wsAmount);
+        .swapAssetsToPool(assetAmount);
   
       await logSnapData(await snapData(), "\nAfter swapping assets to the pool");
       await logProfit(dataBefore);
   
       // Check emitted event
       await expect(tx).to.emittedEvent("SwapAssetsToPool", [
-        (actualWsAmount) => {
-          expect(actualWsAmount).to.withinRange(
-            wsAmount.sub(1),
-            wsAmount.add(1),
-            "SwapAssetsToPool event wsAmount"
+        (actualAssetTokenAmount) => {
+          expect(actualAssetTokenAmount).to.withinRange(
+            assetAmount.sub(1),
+            assetAmount.add(1),
+            "SwapAssetsToPool event asset token amount"
           );
         },
         expectedLpBurnAmount,
-        (actualOsBurnAmount) => {
-          // TODO this can be tightened once osBurnAmount is more accurately calculated
-          expect(actualOsBurnAmount).to.approxEqualTolerance(
-            osBurnAmount,
+        (actualOTokenBurnAmount) => {
+          // TODO this can be tightened once oTokenBurnAmount is more accurately calculated
+          expect(actualOTokenBurnAmount).to.approxEqualTolerance(
+            oTokenBurnAmount,
             10,
-            "SwapAssetsToPool event osBurnt"
+            "SwapAssetsToPool event oTokenBurnt"
           );
         },
       ]);
@@ -1523,7 +1538,7 @@ const shouldBehaveLikeAlgebraAmoStrategy = (contextFunction) => {
         dataBefore,
         {
           // stratBalance: osBurnAmount.mul(-1),
-          vaultWSBalance: 0,
+          vaultAssetBalance: 0,
           stratGaugeBalance: 0,
         },
         fixture
@@ -1534,8 +1549,8 @@ const shouldBehaveLikeAlgebraAmoStrategy = (contextFunction) => {
         "Strategy's pool LP balance"
       ).to.equal(0);
       expect(
-        await oSonic.balanceOf(amoStrategy.address),
-        "Strategy's OS balance"
+        await oToken.balanceOf(amoStrategy.address),
+        "Strategy's oToken balance"
       ).to.equal(0);
     }
   
