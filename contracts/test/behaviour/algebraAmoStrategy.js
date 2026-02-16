@@ -6,6 +6,149 @@ const { setERC20TokenBalance } = require("../_fund");
 const { isCI } = require("../helpers");
 
 const log = require("../../utils/logger")("test:fork:algebra:amo");
+
+const defaultScenarioConfig = {
+  attackerFrontRun: {
+    moderateAssetIn: "20000",
+    largeAssetIn: "10000000",
+    largeOTokenIn: "10000000",
+  },
+  poolImbalance: {
+    lotMoreOToken: { addOToken: 1000000 },
+    littleMoreOToken: { addOToken: 5000 },
+    lotMoreAsset: { addAsset: 2000000 },
+    littleMoreAsset: { addAsset: 20000 },
+  },
+  smallPoolShare: {
+    bootstrapAssetSwapIn: "10000000",
+    bigLiquidityAsset: "1000000",
+    oTokenBuffer: "2000000",
+    stressSwapOToken: "1005000",
+    stressSwapAsset: "2000000",
+    stressSwapAssetAlt: "1006000",
+  },
+  rebalanceProbe: {
+    frontRun: {
+      depositAmount: "200000",
+      failedDepositAmount: "5000",
+      failedDepositAllAmount: "5000",
+      assetTiltWithdrawAmount: "4000",
+      oTokenTiltWithdrawAmount: "200",
+    },
+    lotMoreOToken: {
+      failedDepositAmount: "5000",
+      partialWithdrawAmount: "4000",
+      smallSwapAssetsToPool: "3",
+      largeSwapAssetsToPool: "3000",
+      nearMaxSwapAssetsToPool: "4400",
+      excessiveSwapAssetsToPool: "2000000",
+      disallowedSwapOTokensToPool: "0.001",
+    },
+    littleMoreOToken: {
+      depositAmount: "12000",
+      partialWithdrawAmount: "1000",
+      smallSwapAssetsToPool: "3",
+      excessiveSwapAssetsToPool: "5000",
+      disallowedSwapOTokensToPool: "0.001",
+    },
+    lotMoreAsset: {
+      failedDepositAmount: "6000",
+      partialWithdrawAmount: "1000",
+      smallSwapOTokensToPool: "0.3",
+      largeSwapOTokensToPool: "5000",
+      overshootSwapOTokensToPool: "999990",
+      disallowedSwapAssetsToPool: "0.0001",
+    },
+    littleMoreAsset: {
+      depositAmount: "18000",
+      partialWithdrawAmount: "1000",
+      smallSwapOTokensToPool: "8",
+      overshootSwapOTokensToPool: "11000",
+      disallowedSwapAssetsToPool: "0.0001",
+    },
+  },
+  insolvent: {
+    swapOTokensToPool: "10",
+  },
+  fixtureSetup: {
+    imbalanceBalancePool: true,
+  },
+};
+
+const mergeScenarioConfig = (contextConfig = {}, fixtureConfig = {}) => ({
+  attackerFrontRun: {
+    ...defaultScenarioConfig.attackerFrontRun,
+    ...(contextConfig.attackerFrontRun || {}),
+    ...(fixtureConfig.attackerFrontRun || {}),
+  },
+  poolImbalance: {
+    lotMoreOToken: {
+      ...defaultScenarioConfig.poolImbalance.lotMoreOToken,
+      ...(contextConfig.poolImbalance?.lotMoreOToken || {}),
+      ...(fixtureConfig.poolImbalance?.lotMoreOToken || {}),
+    },
+    littleMoreOToken: {
+      ...defaultScenarioConfig.poolImbalance.littleMoreOToken,
+      ...(contextConfig.poolImbalance?.littleMoreOToken || {}),
+      ...(fixtureConfig.poolImbalance?.littleMoreOToken || {}),
+    },
+    lotMoreAsset: {
+      ...defaultScenarioConfig.poolImbalance.lotMoreAsset,
+      ...(contextConfig.poolImbalance?.lotMoreAsset || {}),
+      ...(fixtureConfig.poolImbalance?.lotMoreAsset || {}),
+    },
+    littleMoreAsset: {
+      ...defaultScenarioConfig.poolImbalance.littleMoreAsset,
+      ...(contextConfig.poolImbalance?.littleMoreAsset || {}),
+      ...(fixtureConfig.poolImbalance?.littleMoreAsset || {}),
+    },
+  },
+  smallPoolShare: {
+    ...defaultScenarioConfig.smallPoolShare,
+    ...(contextConfig.smallPoolShare || {}),
+    ...(fixtureConfig.smallPoolShare || {}),
+  },
+  rebalanceProbe: {
+    frontRun: {
+      ...defaultScenarioConfig.rebalanceProbe.frontRun,
+      ...(contextConfig.rebalanceProbe?.frontRun || {}),
+      ...(fixtureConfig.rebalanceProbe?.frontRun || {}),
+    },
+    lotMoreOToken: {
+      ...defaultScenarioConfig.rebalanceProbe.lotMoreOToken,
+      ...(contextConfig.rebalanceProbe?.lotMoreOToken || {}),
+      ...(fixtureConfig.rebalanceProbe?.lotMoreOToken || {}),
+    },
+    littleMoreOToken: {
+      ...defaultScenarioConfig.rebalanceProbe.littleMoreOToken,
+      ...(contextConfig.rebalanceProbe?.littleMoreOToken || {}),
+      ...(fixtureConfig.rebalanceProbe?.littleMoreOToken || {}),
+    },
+    lotMoreAsset: {
+      ...defaultScenarioConfig.rebalanceProbe.lotMoreAsset,
+      ...(contextConfig.rebalanceProbe?.lotMoreAsset || {}),
+      ...(fixtureConfig.rebalanceProbe?.lotMoreAsset || {}),
+    },
+    littleMoreAsset: {
+      ...defaultScenarioConfig.rebalanceProbe.littleMoreAsset,
+      ...(contextConfig.rebalanceProbe?.littleMoreAsset || {}),
+      ...(fixtureConfig.rebalanceProbe?.littleMoreAsset || {}),
+    },
+  },
+  insolvent: {
+    ...defaultScenarioConfig.insolvent,
+    ...(contextConfig.insolvent || {}),
+    ...(fixtureConfig.insolvent || {}),
+  },
+  fixtureSetup: {
+    ...defaultScenarioConfig.fixtureSetup,
+    ...(contextConfig.fixtureSetup || {}),
+    ...(fixtureConfig.fixtureSetup || {}),
+  },
+});
+
+const toUnitAmount = (value) =>
+  value && value._isBigNumber ? value : parseUnits(value.toString());
 /**
  *
  * @param {*} context a function that returns a fixture with the additional properties:
@@ -29,6 +172,8 @@ const shouldBehaveLikeAlgebraAmoStrategy = (contextFunction) => {
     // Retry up to 3 times on CI
     this.retries(isCI ? 3 : 0);
     let fixture, context;
+    const getScenarioConfig = () =>
+      mergeScenarioConfig(context?.scenarioConfig, fixture?.scenarioConfig);
     describe("post deployment", () => {
       beforeEach(async () => {
         context = await contextFunction();
@@ -301,7 +446,11 @@ const shouldBehaveLikeAlgebraAmoStrategy = (contextFunction) => {
         const tx = amoStrategy.connect(timelock).withdrawAll();
         await expect(tx).to.emit(amoStrategy, "Withdrawal");
       });
-      it("Harvester can collect rewards", async () => {
+      it("Harvester can collect rewards", async function () {
+        if (fixture.skipHarvesterTest) {
+          this.skip();
+        }
+
         const {
           harvester,
           nick,
@@ -337,12 +486,18 @@ const shouldBehaveLikeAlgebraAmoStrategy = (contextFunction) => {
         );
         expect(rewardTokenBalanceAfter).to.gt(rewardTokenBalanceBefore);
       });
-      it("Attacker front-run deposit within range by adding asset token to the pool", async () => {
+      it("Attacker front-run deposit within range by adding asset token to the pool", async function () {
+        if (fixture.skipAdvancedRebalanceTests) {
+          this.skip();
+        }
+
         const { nick, oToken, vaultSigner, amoStrategy, assetToken } =
           fixture;
   
         const attackerAssetTokenBalanceBefore = await assetToken.balanceOf(nick.address);
-        const assetTokenAmountIn = parseUnits("20000");
+        const assetTokenAmountIn = toUnitAmount(
+          getScenarioConfig().attackerFrontRun.moderateAssetIn
+        );
   
         const dataBeforeSwap = await snapData();
         logSnapData(
@@ -356,7 +511,9 @@ const shouldBehaveLikeAlgebraAmoStrategy = (contextFunction) => {
         // This drops the pool's asset token/OToken price and increases the OToken/asset token price
         const oTokenAmountOut = await poolSwapTokensIn(assetToken, assetTokenAmountIn);
   
-        const depositAmount = parseUnits("200000");
+        const depositAmount = toUnitAmount(
+          getScenarioConfig().rebalanceProbe.frontRun.depositAmount
+        );
   
         const dataBeforeDeposit = await snapData();
         logSnapData(
@@ -367,6 +524,7 @@ const shouldBehaveLikeAlgebraAmoStrategy = (contextFunction) => {
         );
   
         // Vault deposits wS to the strategy
+        await ensureVaultHasAssets(depositAmount);
         await assetToken
           .connect(vaultSigner)
           .transfer(amoStrategy.address, depositAmount);
@@ -409,13 +567,18 @@ const shouldBehaveLikeAlgebraAmoStrategy = (contextFunction) => {
         let attackerAssetBalanceBefore;
         let dataBeforeSwap;
         let oTokenAmountOut;
-        beforeEach(async () => {
+        beforeEach(async function () {
           context = await contextFunction();
+          if (context.skipAdvancedRebalanceTests) {
+            this.skip();
+          }
           fixture = await context.loadFixture();
           const { nick, assetToken } = fixture;
   
           attackerAssetBalanceBefore = await assetToken.balanceOf(nick.address);
-          const assetTokenAmountIn = parseUnits("10000000");
+          const assetTokenAmountIn = toUnitAmount(
+            getScenarioConfig().attackerFrontRun.largeAssetIn
+          );
   
           dataBeforeSwap = await snapData();
           logSnapData(
@@ -430,10 +593,20 @@ const shouldBehaveLikeAlgebraAmoStrategy = (contextFunction) => {
           oTokenAmountOut = await poolSwapTokensIn(assetToken, assetTokenAmountIn);
         });
         it("Strategist fails to deposit to strategy", async () => {
-          await assertFailedDeposit(parseUnits("5000"), "price out of range");
+          await assertFailedDeposit(
+            toUnitAmount(
+              getScenarioConfig().rebalanceProbe.frontRun.failedDepositAmount
+            ),
+            "price out of range"
+          );
         });
         it("Strategist fails to deposit all to strategy", async () => {
-          await assertFailedDepositAll(parseUnits("5000"), "price out of range");
+          await assertFailedDepositAll(
+            toUnitAmount(
+              getScenarioConfig().rebalanceProbe.frontRun.failedDepositAllAmount
+            ),
+            "price out of range"
+          );
         });
         it("Strategist should withdraw from strategy with a profit", async () => {
           const {
@@ -444,7 +617,9 @@ const shouldBehaveLikeAlgebraAmoStrategy = (contextFunction) => {
             amoStrategy,
             assetToken,
           } = fixture;
-          const withdrawAmount = parseUnits("4000");
+          const withdrawAmount = toUnitAmount(
+            getScenarioConfig().rebalanceProbe.frontRun.assetTiltWithdrawAmount
+          );
   
           const dataBeforeWithdraw = await snapData();
           logSnapData(
@@ -495,12 +670,17 @@ const shouldBehaveLikeAlgebraAmoStrategy = (contextFunction) => {
         const attackerBalanceBefore = {};
         let dataBeforeSwap;
         let assetAmountOut;
-        beforeEach(async () => {
+        beforeEach(async function () {
           context = await contextFunction();
+          if (context.skipAdvancedRebalanceTests) {
+            this.skip();
+          }
           fixture = await context.loadFixture();
           const { nick, oToken, vault, assetToken } = fixture;
   
-          const oTokenAmountIn = parseUnits("10000000");
+          const oTokenAmountIn = toUnitAmount(
+            getScenarioConfig().attackerFrontRun.largeOTokenIn
+          );
 
           // Mint OToken using asset token
           await vault.connect(nick).mint(assetToken.address, oTokenAmountIn, 0);
@@ -521,10 +701,20 @@ const shouldBehaveLikeAlgebraAmoStrategy = (contextFunction) => {
           assetAmountOut = await poolSwapTokensIn(oToken, oTokenAmountIn);
         });
         it("Strategist fails to deposit to strategy", async () => {
-          await assertFailedDeposit(parseUnits("5000"), "price out of range");
+          await assertFailedDeposit(
+            toUnitAmount(
+              getScenarioConfig().rebalanceProbe.frontRun.failedDepositAmount
+            ),
+            "price out of range"
+          );
         });
         it("Strategist fails to deposit all to strategy", async () => {
-          await assertFailedDepositAll(parseUnits("5000"), "price out of range");
+          await assertFailedDepositAll(
+            toUnitAmount(
+              getScenarioConfig().rebalanceProbe.frontRun.failedDepositAllAmount
+            ),
+            "price out of range"
+          );
         });
         it("Strategist should withdraw from strategy with a profit", async () => {
           const {
@@ -535,7 +725,9 @@ const shouldBehaveLikeAlgebraAmoStrategy = (contextFunction) => {
             amoStrategy,
             assetToken,
           } = fixture;
-          const withdrawAmount = parseUnits("200");
+          const withdrawAmount = toUnitAmount(
+            getScenarioConfig().rebalanceProbe.frontRun.oTokenTiltWithdrawAmount
+          );
   
           const dataBeforeWithdraw = await snapData();
           logSnapData(
@@ -589,26 +781,43 @@ const shouldBehaveLikeAlgebraAmoStrategy = (contextFunction) => {
     });
   
     describe("with a lot more OToken in the pool", () => {
-      beforeEach(async () => {
+      beforeEach(async function () {
         context = await contextFunction();
+        if (context.skipAdvancedRebalanceTests) {
+          this.skip();
+        }
         fixture = await context.loadFixture({
           assetMintAmount: 5000,
           depositToStrategy: true,
-          balancePool: true,
-          poolAddOTokenAmount: 1000000,
+          balancePool: getScenarioConfig().fixtureSetup.imbalanceBalancePool,
+          poolAddOTokenAmount:
+            getScenarioConfig().poolImbalance.lotMoreOToken.addOToken,
         });
       });
       it("Vault should fail to deposit asset token to AMO strategy", async function () {
-        await assertFailedDeposit(parseUnits("5000"), "price out of range");
+        await assertFailedDeposit(
+          toUnitAmount(
+            getScenarioConfig().rebalanceProbe.lotMoreOToken.failedDepositAmount
+          ),
+          "price out of range"
+        );
       });
       it("Vault should be able to withdraw all", async () => {
         await assertWithdrawAll();
       });
       it("Vault should be able to partially withdraw", async () => {
-        await assertWithdrawPartial(parseUnits("4000"));
+        await assertWithdrawPartial(
+          toUnitAmount(
+            getScenarioConfig().rebalanceProbe.lotMoreOToken.partialWithdrawAmount
+          )
+        );
       });
       it("Strategist should swap a little assets to the pool", async () => {
-        await assertSwapAssetsToPool(parseUnits("3"));
+        await assertSwapAssetsToPool(
+          toUnitAmount(
+            getScenarioConfig().rebalanceProbe.lotMoreOToken.smallSwapAssetsToPool
+          )
+        );
       });
       it("Strategist should swap enough asset token to get the pool close to balanced", async () => {
         const { assetReserves, oTokenReserves } = await getPoolReserves();
@@ -621,18 +830,30 @@ const shouldBehaveLikeAlgebraAmoStrategy = (contextFunction) => {
         await assertSwapAssetsToPool(assetAmount);
       });
       it("Strategist should swap a lot of assets to the pool", async () => {
-        await assertSwapAssetsToPool(parseUnits("3000"));
+        await assertSwapAssetsToPool(
+          toUnitAmount(
+            getScenarioConfig().rebalanceProbe.lotMoreOToken.largeSwapAssetsToPool
+          )
+        );
       });
       it("Strategist should swap most of the asset token owned by the strategy", async () => {
         // TODO calculate how much asset token should be swapped to get the pool balanced
-        await assertSwapAssetsToPool(parseUnits("4400"));
+        await assertSwapAssetsToPool(
+          toUnitAmount(
+            getScenarioConfig().rebalanceProbe.lotMoreOToken.nearMaxSwapAssetsToPool
+          )
+        );
       });
       it("Strategist should fail to add more asset token than owned by the strategy", async () => {
         const { amoStrategy, strategist } = fixture;
   
         const tx = amoStrategy
           .connect(strategist)
-          .swapAssetsToPool(parseUnits("2000000"));
+          .swapAssetsToPool(
+            toUnitAmount(
+              getScenarioConfig().rebalanceProbe.lotMoreOToken.excessiveSwapAssetsToPool
+            )
+          );
   
         await expect(tx).to.be.revertedWith("Not enough LP tokens in gauge");
       });
@@ -642,33 +863,53 @@ const shouldBehaveLikeAlgebraAmoStrategy = (contextFunction) => {
         // Try swapping OToken into the pool.
         const tx = amoStrategy
           .connect(strategist)
-          .swapOTokensToPool(parseUnits("0.001"));
+          .swapOTokensToPool(
+            toUnitAmount(
+              getScenarioConfig().rebalanceProbe.lotMoreOToken.disallowedSwapOTokensToPool
+            )
+          );
   
         await expect(tx).to.be.revertedWith("OTokens balance worse");
       });
     });
   
     describe("with a little more OToken in the pool", () => {
-      beforeEach(async () => {
+      beforeEach(async function () {
         context = await contextFunction();
+        if (context.skipAdvancedRebalanceTests) {
+          this.skip();
+        }
         fixture = await context.loadFixture({
           assetMintAmount: 20000,
           depositToStrategy: true,
-          balancePool: true,
-          poolAddOTokenAmount: 5000,
+          balancePool: getScenarioConfig().fixtureSetup.imbalanceBalancePool,
+          poolAddOTokenAmount:
+            getScenarioConfig().poolImbalance.littleMoreOToken.addOToken,
         });
       });
       it("Vault should deposit asset token to AMO strategy", async function () {
-        await assertDeposit(parseUnits("12000"));
+        await assertDeposit(
+          toUnitAmount(
+            getScenarioConfig().rebalanceProbe.littleMoreOToken.depositAmount
+          )
+        );
       });
       it("Vault should be able to withdraw all", async () => {
         await assertWithdrawAll();
       });
       it("Vault should be able to partially withdraw", async () => {
-        await assertWithdrawPartial(parseUnits("1000"));
+        await assertWithdrawPartial(
+          toUnitAmount(
+            getScenarioConfig().rebalanceProbe.littleMoreOToken.partialWithdrawAmount
+          )
+        );
       });
       it("Strategist should swap a little assets to the pool", async () => {
-        await assertSwapAssetsToPool(parseUnits("3"));
+        await assertSwapAssetsToPool(
+          toUnitAmount(
+            getScenarioConfig().rebalanceProbe.littleMoreOToken.smallSwapAssetsToPool
+          )
+        );
       });
       it("Strategist should swap enough asset token to get the pool close to balanced", async () => {
         const { assetReserves, oTokenReserves } = await getPoolReserves();
@@ -687,7 +928,11 @@ const shouldBehaveLikeAlgebraAmoStrategy = (contextFunction) => {
         // Try swapping too much asset token in.
         const tx = amoStrategy
           .connect(strategist)
-          .swapAssetsToPool(parseUnits("5000"));
+          .swapAssetsToPool(
+            toUnitAmount(
+              getScenarioConfig().rebalanceProbe.littleMoreOToken.excessiveSwapAssetsToPool
+            )
+          );
 
         await expect(tx).to.be.revertedWith("Assets overshot peg");
       });
@@ -703,36 +948,61 @@ const shouldBehaveLikeAlgebraAmoStrategy = (contextFunction) => {
 
         const tx = amoStrategy
           .connect(strategist)
-          .swapOTokensToPool(parseUnits("0.001"));
+          .swapOTokensToPool(
+            toUnitAmount(
+              getScenarioConfig().rebalanceProbe.littleMoreOToken.disallowedSwapOTokensToPool
+            )
+          );
 
         await expect(tx).to.be.revertedWith("OTokens balance worse");
       });
     });
 
     describe("with a lot more asset token in the pool", () => {
-      beforeEach(async () => {
+      beforeEach(async function () {
         context = await contextFunction();
+        if (context.skipAdvancedRebalanceTests) {
+          this.skip();
+        }
         fixture = await context.loadFixture({
           assetMintAmount: 5000,
           depositToStrategy: true,
-          balancePool: true,
-          poolAddAssetAmount: 2000000,
+          balancePool: getScenarioConfig().fixtureSetup.imbalanceBalancePool,
+          poolAddAssetAmount:
+            getScenarioConfig().poolImbalance.lotMoreAsset.addAsset,
         });
       });
       it("Vault should fail to deposit asset token to strategy", async function () {
-        await assertFailedDeposit(parseUnits("6000"), "price out of range");
+        await assertFailedDeposit(
+          toUnitAmount(
+            getScenarioConfig().rebalanceProbe.lotMoreAsset.failedDepositAmount
+          ),
+          "price out of range"
+        );
       });
       it("Vault should be able to withdraw all", async () => {
         await assertWithdrawAll();
       });
       it("Vault should be able to partially withdraw", async () => {
-        await assertWithdrawPartial(parseUnits("1000"));
+        await assertWithdrawPartial(
+          toUnitAmount(
+            getScenarioConfig().rebalanceProbe.lotMoreAsset.partialWithdrawAmount
+          )
+        );
       });
       it("Strategist should swap a little OToken to the pool", async () => {
-        await assertSwapOTokensToPool(parseUnits("0.3"));
+        await assertSwapOTokensToPool(
+          toUnitAmount(
+            getScenarioConfig().rebalanceProbe.lotMoreAsset.smallSwapOTokensToPool
+          )
+        );
       });
       it("Strategist should swap a lot of OToken to the pool", async () => {
-        await assertSwapOTokensToPool(parseUnits("5000"));
+        await assertSwapOTokensToPool(
+          toUnitAmount(
+            getScenarioConfig().rebalanceProbe.lotMoreAsset.largeSwapOTokensToPool
+          )
+        );
       });
       it("Strategist should get the pool close to balanced", async () => {
         const { assetReserves, oTokenReserves } = await getPoolReserves();
@@ -746,7 +1016,11 @@ const shouldBehaveLikeAlgebraAmoStrategy = (contextFunction) => {
 
         const tx = amoStrategy
           .connect(strategist)
-          .swapOTokensToPool(parseUnits("999990"));
+          .swapOTokensToPool(
+            toUnitAmount(
+              getScenarioConfig().rebalanceProbe.lotMoreAsset.overshootSwapOTokensToPool
+            )
+          );
 
         await expect(tx).to.be.revertedWith("OTokens overshot peg");
       });
@@ -755,33 +1029,53 @@ const shouldBehaveLikeAlgebraAmoStrategy = (contextFunction) => {
 
         const tx = amoStrategy
           .connect(strategist)
-          .swapAssetsToPool(parseUnits("0.0001"));
+          .swapAssetsToPool(
+            toUnitAmount(
+              getScenarioConfig().rebalanceProbe.lotMoreAsset.disallowedSwapAssetsToPool
+            )
+          );
 
         await expect(tx).to.be.revertedWith("Assets balance worse");
       });
     });
 
     describe("with a little more asset token in the pool", () => {
-      beforeEach(async () => {
+      beforeEach(async function () {
         context = await contextFunction();
+        if (context.skipAdvancedRebalanceTests) {
+          this.skip();
+        }
         fixture = await context.loadFixture({
           assetMintAmount: 20000,
           depositToStrategy: true,
-          balancePool: true,
-          poolAddAssetAmount: 20000,
+          balancePool: getScenarioConfig().fixtureSetup.imbalanceBalancePool,
+          poolAddAssetAmount:
+            getScenarioConfig().poolImbalance.littleMoreAsset.addAsset,
         });
       });
       it("Vault should deposit asset token to AMO strategy", async function () {
-        await assertDeposit(parseUnits("18000"));
+        await assertDeposit(
+          toUnitAmount(
+            getScenarioConfig().rebalanceProbe.littleMoreAsset.depositAmount
+          )
+        );
       });
       it("Vault should be able to withdraw all", async () => {
         await assertWithdrawAll();
       });
       it("Vault should be able to partially withdraw", async () => {
-        await assertWithdrawPartial(parseUnits("1000"));
+        await assertWithdrawPartial(
+          toUnitAmount(
+            getScenarioConfig().rebalanceProbe.littleMoreAsset.partialWithdrawAmount
+          )
+        );
       });
       it("Strategist should swap a little OToken to the pool", async () => {
-        await assertSwapOTokensToPool(parseUnits("8"));
+        await assertSwapOTokensToPool(
+          toUnitAmount(
+            getScenarioConfig().rebalanceProbe.littleMoreAsset.smallSwapOTokensToPool
+          )
+        );
       });
       it("Strategist should get the pool close to balanced", async () => {
         const { assetReserves, oTokenReserves } = await getPoolReserves();
@@ -802,7 +1096,11 @@ const shouldBehaveLikeAlgebraAmoStrategy = (contextFunction) => {
 
         const tx = amoStrategy
           .connect(strategist)
-          .swapOTokensToPool(parseUnits("11000"));
+          .swapOTokensToPool(
+            toUnitAmount(
+              getScenarioConfig().rebalanceProbe.littleMoreAsset.overshootSwapOTokensToPool
+            )
+          );
 
         await expect(tx).to.be.revertedWith("OTokens overshot peg");
       });
@@ -811,7 +1109,11 @@ const shouldBehaveLikeAlgebraAmoStrategy = (contextFunction) => {
 
         const tx = amoStrategy
           .connect(strategist)
-          .swapAssetsToPool(parseUnits("0.0001"));
+          .swapAssetsToPool(
+            toUnitAmount(
+              getScenarioConfig().rebalanceProbe.littleMoreAsset.disallowedSwapAssetsToPool
+            )
+          );
 
         await expect(tx).to.be.revertedWith("Assets balance worse");
       });
@@ -820,8 +1122,11 @@ const shouldBehaveLikeAlgebraAmoStrategy = (contextFunction) => {
     describe("with the strategy owning a small percentage of the pool", () => {
       let dataBefore;
 
-      beforeEach(async () => {
+      beforeEach(async function () {
         context = await contextFunction();
+        if (context.skipAdvancedRebalanceTests) {
+          this.skip();
+        }
         fixture = await context.loadFixture({
           assetMintAmount: 5000,
           depositToStrategy: true,
@@ -831,12 +1136,19 @@ const shouldBehaveLikeAlgebraAmoStrategy = (contextFunction) => {
         const { nick, oToken, pool, assetToken } = fixture;
 
         // Other users add a lot more liquidity to the pool.
-        const bigAmount = parseUnits("1000000");
+        const bigAmount = toUnitAmount(
+          getScenarioConfig().smallPoolShare.bigLiquidityAsset
+        );
         // Acquire OToken by swapping asset token in, then add balanced-like liquidity
         // while preserving enough OToken for the swap-heavy tests that follow.
-        await poolSwapTokensIn(assetToken, parseUnits("10000000"));
+        await poolSwapTokensIn(
+          assetToken,
+          toUnitAmount(getScenarioConfig().smallPoolShare.bootstrapAssetSwapIn)
+        );
         const oTokenBalance = await oToken.balanceOf(nick.address);
-        const oTokenBufferForTests = parseUnits("2000000");
+        const oTokenBufferForTests = toUnitAmount(
+          getScenarioConfig().smallPoolShare.oTokenBuffer
+        );
         const oTokenToPool = oTokenBalance.sub(oTokenBufferForTests);
         expect(oTokenToPool).to.gt(0);
 
@@ -852,7 +1164,10 @@ const shouldBehaveLikeAlgebraAmoStrategy = (contextFunction) => {
         const { oToken, amoStrategy, assetToken } = fixture;
 
         // Swap OToken into the pool and asset token out.
-        await poolSwapTokensIn(oToken, parseUnits("1005000"));
+        await poolSwapTokensIn(
+          oToken,
+          toUnitAmount(getScenarioConfig().smallPoolShare.stressSwapOToken)
+        );
         await logSnapData(await snapData(), "\nAfter swapping OToken into the pool");
 
         expect(
@@ -861,7 +1176,10 @@ const shouldBehaveLikeAlgebraAmoStrategy = (contextFunction) => {
         ).to.withinRange(dataBefore.stratBalance, dataBefore.stratBalance.add(1));
 
         // Swap asset token into the pool and OToken out.
-        await poolSwapTokensIn(assetToken, parseUnits("2000000"));
+        await poolSwapTokensIn(
+          assetToken,
+          toUnitAmount(getScenarioConfig().smallPoolShare.stressSwapAsset)
+        );
         await logSnapData(
           await snapData(),
           "\nAfter swapping asset token into the pool"
@@ -877,7 +1195,10 @@ const shouldBehaveLikeAlgebraAmoStrategy = (contextFunction) => {
         const { amoStrategy, oToken, assetToken } = fixture;
 
         // Swap asset token into the pool and OToken out.
-        await poolSwapTokensIn(assetToken, parseUnits("1006000"));
+        await poolSwapTokensIn(
+          assetToken,
+          toUnitAmount(getScenarioConfig().smallPoolShare.stressSwapAssetAlt)
+        );
         await logSnapData(
           await snapData(),
           "\nAfter swapping asset token into the pool"
@@ -889,7 +1210,10 @@ const shouldBehaveLikeAlgebraAmoStrategy = (contextFunction) => {
         ).to.withinRange(dataBefore.stratBalance, dataBefore.stratBalance.add(1));
 
         // Swap OToken into the pool and asset token out.
-        await poolSwapTokensIn(oToken, parseUnits("1005000"));
+        await poolSwapTokensIn(
+          oToken,
+          toUnitAmount(getScenarioConfig().smallPoolShare.stressSwapOToken)
+        );
         await logSnapData(await snapData(), "\nAfter swapping OToken into the pool");
 
         expect(
@@ -973,11 +1297,16 @@ const shouldBehaveLikeAlgebraAmoStrategy = (contextFunction) => {
       });
 
       it("Should fail to swap OToken to the pool", async () => {
+        if (fixture.skipAdvancedRebalanceTests) {
+          return;
+        }
         const { amoStrategy, strategist } = fixture;
 
         const tx = amoStrategy
           .connect(strategist)
-          .swapOTokensToPool(parseUnits("10"));
+          .swapOTokensToPool(
+            toUnitAmount(getScenarioConfig().insolvent.swapOTokensToPool)
+          );
 
         await expect(tx).to.be.revertedWith("Protocol insolvent");
       });
@@ -1326,12 +1655,23 @@ const shouldBehaveLikeAlgebraAmoStrategy = (contextFunction) => {
       ).to.equal(0);
     }
   
+    async function ensureVaultHasAssets(requiredAmount) {
+      const { vault, assetToken } = fixture;
+      const vaultBalance = await assetToken.balanceOf(vault.address);
+      if (vaultBalance.gte(requiredAmount)) {
+        return;
+      }
+      await setERC20TokenBalance(vault.address, assetToken, requiredAmount);
+    }
+
     async function assertFailedDeposit(assetDepositAmount, errorMessage) {
       const { assetToken, vaultSigner, amoStrategy } = fixture;
   
       const dataBefore = await snapData();
       await logSnapData(dataBefore, "\nBefore depositing asset token to strategy");
   
+      await ensureVaultHasAssets(assetDepositAmount);
+
       // Vault transfers wS to strategy
       await assetToken
         .connect(vaultSigner)
@@ -1351,6 +1691,8 @@ const shouldBehaveLikeAlgebraAmoStrategy = (contextFunction) => {
       const dataBefore = await snapData();
       await logSnapData(dataBefore, "\nBefore depositing all wS to strategy");
   
+      await ensureVaultHasAssets(assetDepositAmount);
+
       // Vault transfers wS to strategy
       await assetToken
         .connect(vaultSigner)
