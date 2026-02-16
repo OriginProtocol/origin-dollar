@@ -8,8 +8,20 @@ describe.only("Sonic Fork Test: Sonic Staking Strategy", function () {
     const fixture = await swapXAMOFixture();
     return {
       fixture: swapXAMOFixture,
-      loadFixture: (config = {}) => {
-        return createFixtureLoader(swapXAMOFixture, config);
+      loadFixture: ({
+        assetMintAmount = 0,
+        depositToStrategy = false,
+        balancePool = false,
+        poolAddAssetAmount = 0,
+        poolAddOTokenAmount = 0
+      } = {}) => {
+        return createFixtureLoader(swapXAMOFixture, {
+          wsMintAmount: assetMintAmount,
+          depositToStrategy,
+          balancePool,
+          poolAddwSAmount: poolAddAssetAmount,
+          poolAddOSAmount: poolAddOTokenAmount
+        });
       },
       addresses: addresses.sonic,
       assetToken: fixture.wS, // address of the asset token in the pool

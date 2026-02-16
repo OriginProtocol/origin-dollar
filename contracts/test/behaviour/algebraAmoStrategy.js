@@ -1,6 +1,6 @@
 const { expect } = require("chai");
 const { formatUnits, parseUnits } = require("ethers/lib/utils");
-
+const { impersonateAndFund } = require("../../utils/signers");
 const { isCI } = require("../helpers");
 
 const log = require("../../utils/logger")("test:fork:algebra:amo");
@@ -22,18 +22,18 @@ const log = require("../../utils/logger")("test:fork:algebra:amo");
       vaultSigner: addresses.sonic.vaultSigner, // address of the vault signer
     }));
  */
-const shouldBehaveLikeAlgebraAmoStrategy = (context) => {
-  describe("ForkTest: Algebra AMO Strategy", function () {
+const shouldBehaveLikeAlgebraAmoStrategy = (contextFunction) => {
+  describe("ForkTest: Algebra AMO Strategy", async function () {
     // Retry up to 3 times on CI
     this.retries(isCI ? 3 : 0);
-    let fixture;
+    let fixture, context;
     describe("post deployment", () => {
       beforeEach(async () => {
-        const { loadFixture } = await context();
-        fixture = await loadFixture();
+        context = await contextFunction();
+        fixture = await context.loadFixture();
       });
       it("Should have constants and immutables set", async () => {
-        const { amoStrategy, assetToken, oToken, pool, gauge, governor } = await context();
+        const { amoStrategy, assetToken, oToken, pool, gauge, governor } = context;
   
         expect(await amoStrategy.SOLVENCY_THRESHOLD()).to.equal(
           parseUnits("0.998", 18)
@@ -55,7 +55,7 @@ const shouldBehaveLikeAlgebraAmoStrategy = (context) => {
         expect(await amoStrategy.maxDepeg()).to.equal(parseUnits("0.01"));
       });
       it("Should be able to check balance", async () => {
-        const { assetToken, nick, amoStrategy } = await context();
+        const { assetToken, nick, amoStrategy } = context;
   
         const balance = await amoStrategy.checkBalance(assetToken.address);
         log(`check balance ${balance}`);
@@ -75,7 +75,7 @@ const shouldBehaveLikeAlgebraAmoStrategy = (context) => {
           vaultSigner,
           amoStrategy,
           pool,
-        } = await context();
+        } = context;
   
         expect(await amoStrategy.connect(timelock).isGovernor()).to.equal(
           true
@@ -99,7 +99,7 @@ const shouldBehaveLikeAlgebraAmoStrategy = (context) => {
           nick,
           vaultSigner,
           amoStrategy,
-        } = await context();
+        } = context;
   
         expect(await amoStrategy.connect(timelock).isGovernor()).to.equal(
           true
@@ -123,19 +123,19 @@ const shouldBehaveLikeAlgebraAmoStrategy = (context) => {
       });
     });
   
-    describe("with wS in the vault", () => {
+    describe("with asset token in the vault", () => {
       beforeEach(async () => {
-        const { loadFixture } = await context({
-          wsMintAmount: 5000000,
+        context = await contextFunction();
+        fixture = await context.loadFixture({
+          assetMintAmount: 5000000,
           depositToStrategy: false,
           balancePool: true,
         });
-        fixture = await loadFixture();
       });
-      it.only("Vault should deposit wS to AMO strategy", async function () {
+      it("Vault should deposit asset token to AMO strategy", async function () {
         await assertDeposit(parseUnits("2000"));
       });
-      it("Only vault can deposit wS to AMO strategy", async function () {
+      it("Only vault can deposit asset token to AMO strategy", async function () {
         const {
           amoStrategy,
           vaultSigner,
@@ -143,7 +143,7 @@ const shouldBehaveLikeAlgebraAmoStrategy = (context) => {
           timelock,
           nick,
           assetToken,
-        } = await context();
+        } = context;
   
         const depositAmount = parseUnits("50");
         await assetToken
@@ -167,7 +167,7 @@ const shouldBehaveLikeAlgebraAmoStrategy = (context) => {
           timelock,
           nick,
           assetToken,
-        } = await context();
+        } = context;
   
         const depositAmount = parseUnits("50");
         await assetToken
@@ -187,221 +187,222 @@ const shouldBehaveLikeAlgebraAmoStrategy = (context) => {
       });
     });
   
-    // describe("with the strategy having OS and wS in a balanced pool", () => {
-    //   const loadFixture = createFixtureLoader(swapXAMOFixture, {
-    //     wsMintAmount: 100000,
-    //     depositToStrategy: true,
-    //     balancePool: true,
-    //   });
-    //   beforeEach(async () => {
-    //     fixture = await loadFixture();
-    //   });
-    //   it("Vault should deposit wS", async function () {
-    //     await assertDeposit(parseUnits("5000"));
-    //   });
-    //   it("Vault should be able to withdraw all", async () => {
-    //     await assertWithdrawAll();
-    //   });
-    //   it("Vault should be able to withdraw all in SwapX Emergency", async () => {
-    //     const { amoStrategy, swapXGauge, vaultSigner } = fixture;
+    describe("with the strategy having OToken and asset token in a balanced pool", () => {
+      beforeEach(async () => {
+        context = await contextFunction();
+        fixture = await context.loadFixture({
+          assetMintAmount: 5000000,
+          depositToStrategy: true,
+          balancePool: true,
+        });
+      });
+      it("Vault should deposit asset token", async function () {
+        await assertDeposit(parseUnits("5000"));
+      });
+      it("Vault should be able to withdraw all", async () => {
+        await assertWithdrawAll();
+      });
+      it("Vault should be able to withdraw all in SwapX Emergency", async () => {
+        const { amoStrategy, gauge, vaultSigner } = context;
   
-    //     const gaugeOwner = await swapXGauge.owner();
-    //     const ownerSigner = await impersonateAndFund(gaugeOwner);
-    //     await swapXGauge.connect(ownerSigner).activateEmergencyMode();
-    //     await assertWithdrawAll();
+        const gaugeOwner = await gauge.owner();
+        const ownerSigner = await impersonateAndFund(gaugeOwner);
+        await gauge.connect(ownerSigner).activateEmergencyMode();
+        await assertWithdrawAll();
   
-    //     // Try again when the strategy is empty
-    //     await amoStrategy.connect(vaultSigner).withdrawAll();
-    //   });
-    //   it("Should fail to deposit zero wS", async () => {
-    //     const { amoStrategy, vaultSigner, wS } = fixture;
+        // Try again when the strategy is empty
+        await amoStrategy.connect(vaultSigner).withdrawAll();
+      });
+      it("Should fail to deposit zero asset token", async () => {
+        const { amoStrategy, vaultSigner, assetToken } = context;
   
-    //     const tx = amoStrategy
-    //       .connect(vaultSigner)
-    //       .deposit(assetToken.address, 0);
+        const tx = amoStrategy
+          .connect(vaultSigner)
+          .deposit(assetToken.address, 0);
   
-    //     await expect(tx).to.be.revertedWith("Must deposit something");
-    //   });
-    //   it("Should fail to deposit OS", async () => {
-    //     const { amoStrategy, vaultSigner, oSonic } = fixture;
+        await expect(tx).to.be.revertedWith("Must deposit something");
+      });
+      it("Should fail to deposit oToken", async () => {
+        const { amoStrategy, vaultSigner, oToken } = context;
   
-    //     const tx = amoStrategy
-    //       .connect(vaultSigner)
-    //       .deposit(oSonic.address, parseUnits("1"));
+        const tx = amoStrategy
+          .connect(vaultSigner)
+          .deposit(oToken.address, parseUnits("1"));
   
-    //     await expect(tx).to.be.revertedWith("Unsupported asset");
-    //   });
-    //   it("Should fail to withdraw zero wS", async () => {
-    //     const { amoStrategy, vaultSigner, oSonicVault, wS } = fixture;
+        await expect(tx).to.be.revertedWith("Unsupported asset");
+      });
+      it("Should fail to withdraw zero asset token", async () => {
+        const { amoStrategy, vaultSigner, vault, assetToken } = context;
   
-    //     const tx = amoStrategy
-    //       .connect(vaultSigner)
-    //       .withdraw(oSonicVault.address, assetToken.address, 0);
+        const tx = amoStrategy
+          .connect(vaultSigner)
+          .withdraw(vault.address, assetToken.address, 0);
   
-    //     await expect(tx).to.be.revertedWith("Must withdraw something");
-    //   });
-    //   it("Should fail to withdraw OS", async () => {
-    //     const { amoStrategy, vaultSigner, oSonic, oSonicVault } =
-    //       fixture;
+        await expect(tx).to.be.revertedWith("Must withdraw something");
+      });
+      it("Should fail to withdraw oToken", async () => {
+        const { amoStrategy, vaultSigner, oToken, vault } =
+          context;
   
-    //     const tx = amoStrategy
-    //       .connect(vaultSigner)
-    //       .withdraw(oSonicVault.address, oSonic.address, parseUnits("1"));
+        const tx = amoStrategy
+          .connect(vaultSigner)
+          .withdraw(vault.address, oToken.address, parseUnits("1"));
   
-    //     await expect(tx).to.be.revertedWith("Unsupported asset");
-    //   });
-    //   it("Should fail to withdraw to a user", async () => {
-    //     const { amoStrategy, vaultSigner, wS, nick } = fixture;
+        await expect(tx).to.be.revertedWith("Unsupported asset");
+      });
+      it("Should fail to withdraw to a user", async () => {
+        const { amoStrategy, vaultSigner, assetToken, nick } = context;
   
-    //     const tx = amoStrategy
-    //       .connect(vaultSigner)
-    //       .withdraw(nick.address, assetToken.address, parseUnits("1"));
+        const tx = amoStrategy
+          .connect(vaultSigner)
+          .withdraw(nick.address, assetToken.address, parseUnits("1"));
   
-    //     await expect(tx).to.be.revertedWith("Only withdraw to vault allowed");
-    //   });
-    //   it("Vault should be able to withdraw all from empty strategy", async () => {
-    //     const { amoStrategy, vaultSigner } = fixture;
-    //     await assertWithdrawAll();
+        await expect(tx).to.be.revertedWith("Only withdraw to vault allowed");
+      });
+      it("Vault should be able to withdraw all from empty strategy", async () => {
+        const { amoStrategy, vaultSigner } = context;
+        await assertWithdrawAll();
   
-    //     // Now try again after all the assets have already been withdrawn
-    //     const tx = await amoStrategy
-    //       .connect(vaultSigner)
-    //       .withdrawAll();
+        // Now try again after all the assets have already been withdrawn
+        const tx = await amoStrategy
+          .connect(vaultSigner)
+          .withdrawAll();
   
-    //     // Check emitted events
-    //     await expect(tx).to.not.emit(amoStrategy, "Withdrawal");
-    //   });
-    //   it("Vault should be able to partially withdraw", async () => {
-    //     await assertWithdrawPartial(parseUnits("1000"));
-    //   });
-    //   it("Only vault can withdraw wS from AMO strategy", async function () {
-    //     const { amoStrategy, oSonicVault, strategist, timelock, nick, wS } =
-    //       fixture;
+        // Check emitted events
+        await expect(tx).to.not.emit(amoStrategy, "Withdrawal");
+      });
+      it("Vault should be able to partially withdraw", async () => {
+        await assertWithdrawPartial(parseUnits("1000"));
+      });
+      it("Only vault can withdraw asset token from AMO strategy", async function () {
+        const { amoStrategy, vault, strategist, timelock, nick, assetToken } =
+          context;
   
-    //     for (const signer of [strategist, timelock, nick]) {
-    //       const tx = amoStrategy
-    //         .connect(signer)
-    //         .withdraw(oSonicVault.address, assetToken.address, parseUnits("50"));
+        for (const signer of [strategist, timelock, nick]) {
+          const tx = amoStrategy
+            .connect(signer)
+            .withdraw(vault.address, assetToken.address, parseUnits("50"));
   
-    //       await expect(tx).to.revertedWith("Caller is not the Vault");
-    //     }
-    //   });
-    //   it("Only vault and governor can withdraw all WETH from AMO strategy", async function () {
-    //     const { amoStrategy, strategist, timelock, nick } = fixture;
+          await expect(tx).to.revertedWith("Caller is not the Vault");
+        }
+      });
+      it("Only vault and governor can withdraw all WETH from AMO strategy", async function () {
+        const { amoStrategy, strategist, timelock, nick } = context;
   
-    //     for (const signer of [strategist, nick]) {
-    //       const tx = amoStrategy.connect(signer).withdrawAll();
+        for (const signer of [strategist, nick]) {
+          const tx = amoStrategy.connect(signer).withdrawAll();
   
-    //       await expect(tx).to.revertedWith("Caller is not the Vault or Governor");
-    //     }
+          await expect(tx).to.revertedWith("Caller is not the Vault or Governor");
+        }
   
-    //     // Governor can withdraw all
-    //     const tx = amoStrategy.connect(timelock).withdrawAll();
-    //     await expect(tx).to.emit(amoStrategy, "Withdrawal");
-    //   });
-    //   it("Harvester can collect rewards", async () => {
-    //     const {
-    //       harvester,
-    //       nick,
-    //       amoStrategy,
-    //       swapXGauge,
-    //       swpx,
-    //       strategist,
-    //     } = fixture;
+        // Governor can withdraw all
+        const tx = amoStrategy.connect(timelock).withdrawAll();
+        await expect(tx).to.emit(amoStrategy, "Withdrawal");
+      });
+      it("Harvester can collect rewards", async () => {
+        const {
+          harvester,
+          nick,
+          amoStrategy,
+          gauge,
+          swpx,
+          strategist,
+        } = context;
   
-    //     const swpxBalanceBefore = await swpx.balanceOf(strategist.address);
+        const swpxBalanceBefore = await swpx.balanceOf(strategist.address);
   
-    //     // Send some SWPx rewards to the gauge
-    //     const distributorAddress = await swapXGauge.DISTRIBUTION();
-    //     const distributorSigner = await impersonateAndFund(distributorAddress);
-    //     const rewardAmount = parseUnits("1000");
-    //     await setERC20TokenBalance(distributorAddress, swpx, rewardAmount);
-    //     await swapXGauge
-    //       .connect(distributorSigner)
-    //       .notifyRewardAmount(swpx.address, rewardAmount);
+        // Send some SWPx rewards to the gauge
+        const distributorAddress = await gauge.DISTRIBUTION();
+        const distributorSigner = await impersonateAndFund(distributorAddress);
+        const rewardAmount = parseUnits("1000");
+        await setERC20TokenBalance(distributorAddress, swpx, rewardAmount);
+        await gauge
+          .connect(distributorSigner)
+          .notifyRewardAmount(swpx.address, rewardAmount);
   
-    //     // Harvest the rewards
-    //     // prettier-ignore
-    //     const tx = await harvester
-    //       .connect(nick)["harvestAndTransfer(address)"](amoStrategy.address);
+        // Harvest the rewards
+        // prettier-ignore
+        const tx = await harvester
+          .connect(nick)["harvestAndTransfer(address)"](amoStrategy.address);
   
-    //     await expect(tx).to.emit(amoStrategy, "RewardTokenCollected");
+        await expect(tx).to.emit(amoStrategy, "RewardTokenCollected");
   
-    //     const swpxBalanceAfter = await swpx.balanceOf(strategist.address);
-    //     log(
-    //       `Rewards collected ${formatUnits(
-    //         swpxBalanceAfter.sub(swpxBalanceBefore)
-    //       )} SWPx`
-    //     );
-    //     expect(swpxBalanceAfter).to.gt(swpxBalanceBefore);
-    //   });
-    //   it("Attacker front-run deposit within range by adding wS to the pool", async () => {
-    //     const { nick, oSonic, vaultSigner, amoStrategy, wS } =
-    //       fixture;
+        const swpxBalanceAfter = await swpx.balanceOf(strategist.address);
+        log(
+          `Rewards collected ${formatUnits(
+            swpxBalanceAfter.sub(swpxBalanceBefore)
+          )} SWPx`
+        );
+        expect(swpxBalanceAfter).to.gt(swpxBalanceBefore);
+      });
+      it("Attacker front-run deposit within range by adding wS to the pool", async () => {
+        const { nick, oSonic, vaultSigner, amoStrategy, assetToken } =
+          context;
   
-    //     const attackerWsBalanceBefore = await assetToken.balanceOf(nick.address);
-    //     const wsAmountIn = parseUnits("20000");
+        const attackerWsBalanceBefore = await assetToken.balanceOf(nick.address);
+        const wsAmountIn = parseUnits("20000");
   
-    //     const dataBeforeSwap = await snapData();
-    //     logSnapData(
-    //       dataBeforeSwap,
-    //       `\nBefore attacker swaps ${formatUnits(
-    //         wsAmountIn
-    //       )} wS into the pool for OS`
-    //     );
+        const dataBeforeSwap = await snapData();
+        logSnapData(
+          dataBeforeSwap,
+          `\nBefore attacker swaps ${formatUnits(
+            wsAmountIn
+          )} wS into the pool for OS`
+        );
   
-    //     // Attacker swaps a lot of wS for OS in the pool
-    //     // This drops the pool's wS/OS price and increases the OS/wS price
-    //     const osAmountOut = await poolSwapTokensIn(wS, wsAmountIn);
+        // Attacker swaps a lot of wS for OS in the pool
+        // This drops the pool's wS/OS price and increases the OS/wS price
+        const osAmountOut = await poolSwapTokensIn(assetToken, wsAmountIn);
   
-    //     const depositAmount = parseUnits("200000");
+        const depositAmount = parseUnits("200000");
   
-    //     const dataBeforeDeposit = await snapData();
-    //     logSnapData(
-    //       dataBeforeDeposit,
-    //       `\nAfter attacker tilted pool and before strategist deposits ${formatUnits(
-    //         depositAmount
-    //       )} wS`
-    //     );
+        const dataBeforeDeposit = await snapData();
+        logSnapData(
+          dataBeforeDeposit,
+          `\nAfter attacker tilted pool and before strategist deposits ${formatUnits(
+            depositAmount
+          )} wS`
+        );
   
-    //     // Vault deposits wS to the strategy
-    //     await wS
-    //       .connect(vaultSigner)
-    //       .transfer(amoStrategy.address, depositAmount);
-    //     await amoStrategy
-    //       .connect(vaultSigner)
-    //       .deposit(assetToken.address, depositAmount);
+        // Vault deposits wS to the strategy
+        await assetToken
+          .connect(vaultSigner)
+          .transfer(amoStrategy.address, depositAmount);
+        await amoStrategy
+          .connect(vaultSigner)
+          .deposit(assetToken.address, depositAmount);
   
-    //     const dataAfterDeposit = await snapData();
-    //     logSnapData(
-    //       dataAfterDeposit,
-    //       `\nAfter deposit of ${formatUnits(
-    //         depositAmount
-    //       )} wS to strategy and before attacker swaps ${formatUnits(
-    //         osAmountOut
-    //       )} OS back into the pool for wS`
-    //     );
-    //     await logProfit(dataBeforeSwap);
+        const dataAfterDeposit = await snapData();
+        logSnapData(
+          dataAfterDeposit,
+          `\nAfter deposit of ${formatUnits(
+            depositAmount
+          )} wS to strategy and before attacker swaps ${formatUnits(
+            osAmountOut
+          )} OS back into the pool for wS`
+        );
+        await logProfit(dataBeforeSwap);
   
-    //     // Attacker swaps the OS back for wS
-    //     await poolSwapTokensIn(oSonic, osAmountOut);
+        // Attacker swaps the OS back for wS
+        await poolSwapTokensIn(oSonic, osAmountOut);
   
-    //     const dataAfterFinalSwap = await snapData();
-    //     logSnapData(
-    //       dataAfterFinalSwap,
-    //       `\nAfter attacker swaps ${formatUnits(
-    //         osAmountOut
-    //       )} OS back into the pool for wS`
-    //     );
-    //     await logProfit(dataBeforeSwap);
+        const dataAfterFinalSwap = await snapData();
+        logSnapData(
+          dataAfterFinalSwap,
+          `\nAfter attacker swaps ${formatUnits(
+            osAmountOut
+          )} OS back into the pool for wS`
+        );
+        await logProfit(dataBeforeSwap);
   
-    //     const attackerWsBalanceAfter = await assetToken.balanceOf(nick.address);
-    //     log(
-    //       `Attacker's profit ${formatUnits(
-    //         attackerWsBalanceAfter.sub(attackerWsBalanceBefore)
-    //       )} wS`
-    //     );
-    //   });
+        const attackerWsBalanceAfter = await assetToken.balanceOf(nick.address);
+        log(
+          `Attacker's profit ${formatUnits(
+            attackerWsBalanceAfter.sub(attackerWsBalanceBefore)
+          )} wS`
+        );
+      });
+    }); // TODO DELETE THIS LINE AFTER UNCOMMENT BELOW
     //   describe("When attacker front-run by adding a lot of wS to the pool", () => {
     //     let attackerWsBalanceBefore;
     //     let dataBeforeSwap;
@@ -1067,7 +1068,7 @@ const shouldBehaveLikeAlgebraAmoStrategy = (context) => {
   
     const snapData = async () => {
       const { vault, amoStrategy, oToken, pool, gauge, assetToken } =
-        await context();
+        context;
   
       const stratBalance = await amoStrategy.checkBalance(assetToken.address);
       const oTokenSupply = await oToken.totalSupply();
@@ -1154,7 +1155,7 @@ const shouldBehaveLikeAlgebraAmoStrategy = (context) => {
     };
   
     const logProfit = async (dataBefore) => {
-      const { oToken, vault, amoStrategy, assetToken } = await context();
+      const { oToken, vault, amoStrategy, assetToken } = context;
   
       const stratBalanceAfter = await amoStrategy.checkBalance(assetToken.address);
       const oTokenSupplyAfter = await oToken.totalSupply();
@@ -1185,7 +1186,7 @@ const shouldBehaveLikeAlgebraAmoStrategy = (context) => {
   
     const assertChangedData = async (dataBefore, delta) => {
       const { oToken, vault, amoStrategy, pool, gauge, assetToken } =
-        await context();
+        context;
   
       if (delta.stratBalance != undefined) {
         const expectedStratBalance = dataBefore.stratBalance.add(
@@ -1208,23 +1209,23 @@ const shouldBehaveLikeAlgebraAmoStrategy = (context) => {
       }
   
       // Check Vault's asset token balance
-      if (delta.vaultAssetTokenBalance != undefined) {
+      if (delta.vaultAssetBalance != undefined) {
           expect(await assetToken.balanceOf(vault.address)).to.equal(
-          dataBefore.vaultAssetTokenBalance.add(delta.vaultAssetTokenBalance),
+          dataBefore.vaultAssetBalance.add(delta.vaultAssetBalance),
           "Vault's assetToken balance"
         );
       }
   
       // Check the pool's reserves
       if (delta.reserves != undefined) {
-        const { assetTokenReserves, oTokenReserves } = await getPoolReserves();
+        const { assetReserves, oTokenReserves } = await getPoolReserves();
   
         // If the asset reserves delta is a function, call it to check the asset token reserves
         if (typeof delta.reserves.assetToken == "function") {
           // Call test function to check the asset token reserves
-          delta.reserves.assetToken(assetTokenReserves);
+          delta.reserves.assetToken(assetReserves);
         } else {
-          expect(assetTokenReserves, "assetToken reserves").to.equal(
+          expect(assetReserves, "assetToken reserves").to.equal(
             dataBefore.reserves.assetToken.add(delta.reserves.assetToken)
           );
         }
@@ -1258,7 +1259,7 @@ const shouldBehaveLikeAlgebraAmoStrategy = (context) => {
         pool,
         vaultSigner,
         assetToken,
-      } = await context();
+      } = context;
   
       await vault.connect(nick).mint(assetToken.address, assetDepositAmount, 0);
   
@@ -1284,14 +1285,12 @@ const shouldBehaveLikeAlgebraAmoStrategy = (context) => {
       );
       await logProfit(dataBefore);
       
-      console.log("HERE 1");
       // Check emitted events
       await expect(tx).to.emit(amoStrategy, "Deposit")
         .withArgs(assetToken.address, pool.address, assetDepositAmount);
-      // await expect(tx).to.emit(amoStrategy, "Deposit")
-      //   .withArgs(oToken.address, pool.address, oTokenMintAmount);
+      await expect(tx).to.emit(amoStrategy, "Deposit")
+        .withArgs(oToken.address, pool.address, oTokenMintAmount);
   
-      console.log("HERE 2");
       // Calculate the value of the asset token and oToken added to the pool if the pool was balanced
       const depositValue = calcReserveValue({
         assetToken: assetDepositAmount,
@@ -1307,7 +1306,6 @@ const shouldBehaveLikeAlgebraAmoStrategy = (context) => {
         gaugeSupply: lpMintAmount,
       });
       
-      console.log("HERE 3");
       expect(
         await pool.balanceOf(amoStrategy.address),
         "Strategy's pool LP balance"
@@ -1319,7 +1317,7 @@ const shouldBehaveLikeAlgebraAmoStrategy = (context) => {
     }
   
     async function assertFailedDeposit(assetDepositAmount, errorMessage) {
-      const { wS, vaultSigner, amoStrategy } = fixture;
+      const { wS, vaultSigner, amoStrategy } = context;
   
       const dataBefore = await snapData();
       await logSnapData(dataBefore, "\nBefore depositing wS to strategy");
@@ -1338,7 +1336,7 @@ const shouldBehaveLikeAlgebraAmoStrategy = (context) => {
     }
   
     async function assertFailedDepositAll(assetDepositAmount, errorMessage) {
-      const { wS, vaultSigner, amoStrategy } = fixture;
+      const { wS, vaultSigner, amoStrategy } = context;
   
       const dataBefore = await snapData();
       await logSnapData(dataBefore, "\nBefore depositing all wS to strategy");
@@ -1355,13 +1353,13 @@ const shouldBehaveLikeAlgebraAmoStrategy = (context) => {
     }
   
     async function assertWithdrawAll() {
-      const { amoStrategy, pool, oSonic, vaultSigner, wS } =
-        fixture;
+      const { amoStrategy, pool, oToken, vaultSigner, assetToken } =
+        context;
   
       const dataBefore = await snapData();
       await logSnapData(dataBefore);
   
-      const { osBurnAmount, wsWithdrawAmount } = await calcWithdrawAllAmounts();
+      const { oTokenBurnAmount, assetTokenWithdrawAmount } = await calcWithdrawAllAmounts();
   
       // Now try to withdraw all the wS from the strategy
       const tx = await amoStrategy.connect(vaultSigner).withdrawAll();
@@ -1372,28 +1370,28 @@ const shouldBehaveLikeAlgebraAmoStrategy = (context) => {
       // Check emitted events
       await expect(tx)
         .to.emit(amoStrategy, "Withdrawal")
-        .withArgs(assetToken.address, pool.address, wsWithdrawAmount);
+        .withArgs(assetToken.address, pool.address, assetTokenWithdrawAmount);
       await expect(tx)
         .to.emit(amoStrategy, "Withdrawal")
-        .withArgs(oSonic.address, pool.address, osBurnAmount);
+        .withArgs(oToken.address, pool.address, oTokenBurnAmount);
   
-      // Calculate the value of the wS and OS tokens removed from the pool if the pool was balanced
+      // Calculate the value of the asset token and oToken removed from the pool if the pool was balanced
       const withdrawValue = calcReserveValue({
-        ws: wsWithdrawAmount,
-        os: osBurnAmount,
+        assetToken: assetTokenWithdrawAmount,
+        oToken: oTokenBurnAmount,
       });
   
       await assertChangedData(dataBefore, {
         stratBalance: withdrawValue.mul(-1),
-        osSupply: osBurnAmount.mul(-1),
-        reserves: { ws: wsWithdrawAmount.mul(-1), os: osBurnAmount.mul(-1) },
-        vaultWSBalance: wsWithdrawAmount,
+        oTokenSupply: oTokenBurnAmount.mul(-1),
+        reserves: { assetToken: assetTokenWithdrawAmount.mul(-1), oToken: oTokenBurnAmount.mul(-1) },
+        vaultAssetBalance: assetTokenWithdrawAmount,
         stratGaugeBalance: dataBefore.stratGaugeBalance.mul(-1),
       });
   
       expect(
-        wsWithdrawAmount.add(osBurnAmount),
-        "wS withdraw and OS burnt >= strategy balance"
+        assetTokenWithdrawAmount.add(oTokenBurnAmount),
+        "asset token withdraw and oToken burn >= strategy balance"
       ).to.gte(dataBefore.stratBalance);
   
       expect(
@@ -1401,70 +1399,70 @@ const shouldBehaveLikeAlgebraAmoStrategy = (context) => {
         "Strategy's pool LP balance"
       ).to.equal(0);
       expect(
-        await oSonic.balanceOf(amoStrategy.address),
-        "Strategy's OS balance"
+        await oToken.balanceOf(amoStrategy.address),
+        "Strategy's oToken balance"
       ).to.equal(0);
     }
   
-    async function assertWithdrawPartial(wsWithdrawAmount) {
+    async function assertWithdrawPartial(assetTokenWithdrawAmount) {
       const {
         amoStrategy,
-        oSonic,
+        oToken,
         pool,
-        oSonicVault,
+        vault,
         vaultSigner,
-        wS,
-      } = fixture;
+        assetToken,
+      } = context;
   
       const dataBefore = await snapData();
   
-      const { lpBurnAmount, osBurnAmount } = await calcOSWithdrawAmount(
-        wsWithdrawAmount
+      const { lpBurnAmount, oTokenBurnAmount } = await calcOTokenWithdrawAmount(
+        assetTokenWithdrawAmount
       );
   
-      // Now try to withdraw the wS from the strategy
+      // Now try to withdraw the asset token from the strategy
       const tx = await amoStrategy
         .connect(vaultSigner)
-        .withdraw(oSonicVault.address, assetToken.address, wsWithdrawAmount);
+        .withdraw(vault.address, assetToken.address, assetTokenWithdrawAmount);
   
       await logSnapData(
         await snapData(),
-        `\nAfter withdraw of ${formatUnits(wsWithdrawAmount)}`
+        `\nAfter withdraw of ${formatUnits(assetTokenWithdrawAmount)}`
       );
       await logProfit(dataBefore);
   
       // Check emitted events
       await expect(tx)
         .to.emit(amoStrategy, "Withdrawal")
-        .withArgs(assetToken.address, pool.address, wsWithdrawAmount);
+        .withArgs(assetToken.address, pool.address, assetTokenWithdrawAmount);
       await expect(tx).to.emit(amoStrategy, "Withdrawal").withNamedArgs({
-        _asset: oSonic.address,
+        _asset: oToken.address,
         _pToken: pool.address,
       });
   
-      // Calculate the value of the wS and OS tokens removed from the pool if the pool was balanced
+      // Calculate the value of the asset token and OToken removed from the pool if the pool was balanced
       const withdrawValue = calcReserveValue({
-        ws: wsWithdrawAmount,
-        os: osBurnAmount,
+        assetToken: assetTokenWithdrawAmount,
+        oToken: oTokenBurnAmount,
       });
   
       await assertChangedData(dataBefore, {
         stratBalance: withdrawValue.mul(-1),
-        osSupply: osBurnAmount.mul(-1),
+        oTokenSupply: oTokenBurnAmount.mul(-1),
         reserves: {
-          ws: (actualWsReserve) => {
-            const expectedWsReserves =
-              dataBefore.reserves.assetToken.sub(wsWithdrawAmount);
+          assetToken: (actualAssetTokenReserve) => {
+            const expectedAssetTokenReserves =
+              dataBefore.reserves.assetToken.sub(assetTokenWithdrawAmount);
   
-            expect(actualWsReserve).to.withinRange(
-              expectedWsReserves.sub(50),
-              expectedWsReserves,
-              "wS reserves"
+            expect(actualAssetTokenReserve).to.withinRange(
+              expectedAssetTokenReserves.sub(50),
+              expectedAssetTokenReserves,
+              "asset token reserves"
             );
           },
-          os: osBurnAmount.mul(-1),
+          oToken: oTokenBurnAmount.mul(-1),
         },
-        vaultWSBalance: wsWithdrawAmount,
+        vaultAssetBalance: assetTokenWithdrawAmount,
         gaugeSupply: lpBurnAmount.mul(-1),
       });
   
@@ -1473,13 +1471,13 @@ const shouldBehaveLikeAlgebraAmoStrategy = (context) => {
         "Strategy's pool LP balance"
       ).to.equal(0);
       expect(
-        await oSonic.balanceOf(amoStrategy.address),
-        "Strategy's OS balance"
+        await oToken.balanceOf(amoStrategy.address),
+        "Strategy's OToken balance"
       ).to.equal(0);
     }
   
     async function assertSwapAssetsToPool(wsAmount) {
-      const { oSonic, amoStrategy, pool, strategist, wS } = fixture;
+      const { oSonic, amoStrategy, pool, strategist, wS } = context;
   
       const dataBefore = await snapData();
       await logSnapData(
@@ -1582,7 +1580,7 @@ const shouldBehaveLikeAlgebraAmoStrategy = (context) => {
   
     // Calculate the minted OS amount for a deposit
     async function calcOTokenMintAmount(assetDepositAmount) {
-      const { pool } = await context();
+      const { pool } = context;
       
       const { assetReserves, oTokenReserves } = await getPoolReserves();
   
@@ -1596,7 +1594,7 @@ const shouldBehaveLikeAlgebraAmoStrategy = (context) => {
     }
     
     async function getPoolReserves() {
-      const { pool, oTokenPoolIndex } = await context();
+      const { pool, oTokenPoolIndex } = context;
 
       let assetReserves, oTokenReserves;
       // Get the reserves of the pool
@@ -1607,53 +1605,50 @@ const shouldBehaveLikeAlgebraAmoStrategy = (context) => {
 
       return { assetReserves, oTokenReserves };
     }
-    // Calculate the amount of OS burnt from a withdraw
-    async function calcOSWithdrawAmount(wsWithdrawAmount) {
-      const { pool } = fixture;
+    // Calculate the amount of oToken burnt from a withdraw
+    async function calcOTokenWithdrawAmount(assetTokenWithdrawAmount) {
+      const { pool } = context;
   
-      // Get the reserves of the pool
-      const { _reserve0: wsReserves, _reserve1: osReserves } =
-        await pool.getReserves();
+      const { assetReserves, oTokenReserves } = await getPoolReserves();
   
-      // lp tokens to burn = wS withdrawn * total LP supply / wS pool balance
+      // lp tokens to burn = asset token withdrawn * total LP supply / asset token pool balance
       const totalLpSupply = await pool.totalSupply();
-      const lpBurnAmount = wsWithdrawAmount
+      const lpBurnAmount = assetTokenWithdrawAmount
         .mul(totalLpSupply)
-        .div(wsReserves)
+        .div(assetReserves)
         .add(1);
-      // OS to burn = LP tokens to burn * OS reserves / total LP supply
-      const osBurnAmount = lpBurnAmount.mul(osReserves).div(totalLpSupply);
+      // OToken to burn = LP tokens to burn * OToken reserves / total LP supply
+      const oTokenBurnAmount = lpBurnAmount.mul(oTokenReserves).div(totalLpSupply);
   
-      log(`OS burn amount : ${formatUnits(osBurnAmount)}`);
+      log(`OToken burn amount : ${formatUnits(oTokenBurnAmount)}`);
   
-      return { lpBurnAmount, osBurnAmount };
+      return { lpBurnAmount, oTokenBurnAmount };
     }
   
-    // Calculate the OS and wS amounts from a withdrawAll
+    // Calculate the OToken and asset token amounts from a withdrawAll
     async function calcWithdrawAllAmounts() {
-      const { amoStrategy, swapXGauge, pool } = fixture;
+      const { amoStrategy, gauge, pool } = context;
   
       // Get the reserves of the pool
-      const { _reserve0: wsReserves, _reserve1: osReserves } =
-        await pool.getReserves();
-      const strategyLpAmount = await swapXGauge.balanceOf(
+      const { assetReserves, oTokenReserves } = await getPoolReserves();
+      const strategyLpAmount = await gauge.balanceOf(
         amoStrategy.address
       );
       const totalLpSupply = await pool.totalSupply();
   
-      // wS to withdraw = wS pool balance * strategy LP amount / total pool LP amount
-      const wsWithdrawAmount = wsReserves
+      // asset token to withdraw = asset token pool balance * strategy LP amount / total pool LP amount
+      const assetTokenWithdrawAmount = assetReserves
         .mul(strategyLpAmount)
         .div(totalLpSupply);
       // OS to burn = OS pool balance * strategy LP amount / total pool LP amount
-      const osBurnAmount = osReserves.mul(strategyLpAmount).div(totalLpSupply);
+      const oTokenBurnAmount = oTokenReserves.mul(strategyLpAmount).div(totalLpSupply);
   
-      log(`wS withdraw amount : ${formatUnits(wsWithdrawAmount)}`);
-      log(`OS burn amount    : ${formatUnits(osBurnAmount)}`);
+      log(`asset token withdraw amount : ${formatUnits(assetTokenWithdrawAmount)}`);
+      log(`oToken burn amount    : ${formatUnits(oTokenBurnAmount)}`);
   
       return {
-        wsWithdrawAmount,
-        osBurnAmount,
+        assetTokenWithdrawAmount,
+        oTokenBurnAmount,
       };
     }
   });
