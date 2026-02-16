@@ -492,7 +492,7 @@ const executeGovernanceProposalOnFork = async ({
       await getStorageAt(governorSix.address, slotKey)
     ).toNumber();
     const currentBlock = await hre.ethers.provider.getBlockNumber();
-    let blocksToMine = deadline - currentBlock;
+    let blocksToMine = deadline - currentBlock + 7000; // Add 1d buffer
 
     if (blocksToMine > 0) {
       if (reduceQueueTime) {

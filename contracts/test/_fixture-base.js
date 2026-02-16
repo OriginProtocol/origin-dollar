@@ -67,7 +67,7 @@ const defaultFixture = async () => {
     oethbVaultProxy.address
   );
 
-  let aerodromeAmoStrategy, dripper, harvester, quoter, sugar, curveAMOStrategy;
+  let aerodromeAmoStrategy, harvester, quoter, sugar, curveAMOStrategy;
   if (isFork) {
     // Aerodrome AMO Strategy
     const aerodromeAmoStrategyProxy = await ethers.getContract(
@@ -97,13 +97,6 @@ const defaultFixture = async () => {
     ]);
 
     quoter = await hre.ethers.getContract("AerodromeAMOQuoter");
-
-    // Dripper
-    const dripperProxy = await ethers.getContract("OETHBaseDripperProxy");
-    dripper = await ethers.getContractAt(
-      "FixedRateDripper",
-      dripperProxy.address
-    );
 
     const curveAMOProxy = await ethers.getContract("OETHBaseCurveAMOProxy");
     curveAMOStrategy = await ethers.getContractAt(
@@ -242,7 +235,6 @@ const defaultFixture = async () => {
     wOETHb,
     zapper,
     harvester,
-    dripper,
 
     // Bridged WOETH
     woeth,
