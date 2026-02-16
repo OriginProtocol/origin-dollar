@@ -1,6 +1,7 @@
 const { expect } = require("chai");
 const { formatUnits, parseUnits } = require("ethers/lib/utils");
 const { impersonateAndFund } = require("../../utils/signers");
+const addresses = require("../../utils/addresses");
 const { setERC20TokenBalance } = require("../_fund");
 const { isCI } = require("../helpers");
 
@@ -34,7 +35,7 @@ const shouldBehaveLikeAlgebraAmoStrategy = (contextFunction) => {
         fixture = await context.loadFixture();
       });
       it("Should have constants and immutables set", async () => {
-        const { amoStrategy, assetToken, oToken, pool, gauge, governor } = context;
+        const { amoStrategy, assetToken, oToken, pool, gauge, governor } = fixture;
   
         expect(await amoStrategy.SOLVENCY_THRESHOLD()).to.equal(
           parseUnits("0.998", 18)
@@ -56,7 +57,7 @@ const shouldBehaveLikeAlgebraAmoStrategy = (contextFunction) => {
         expect(await amoStrategy.maxDepeg()).to.equal(parseUnits("0.01"));
       });
       it("Should be able to check balance", async () => {
-        const { assetToken, nick, amoStrategy } = context;
+        const { assetToken, nick, amoStrategy } = fixture;
   
         const balance = await amoStrategy.checkBalance(assetToken.address);
         log(`check balance ${balance}`);
@@ -76,7 +77,7 @@ const shouldBehaveLikeAlgebraAmoStrategy = (contextFunction) => {
           vaultSigner,
           amoStrategy,
           pool,
-        } = context;
+        } = fixture;
   
         expect(await amoStrategy.connect(timelock).isGovernor()).to.equal(
           true
@@ -100,7 +101,7 @@ const shouldBehaveLikeAlgebraAmoStrategy = (contextFunction) => {
           nick,
           vaultSigner,
           amoStrategy,
-        } = context;
+        } = fixture;
   
         expect(await amoStrategy.connect(timelock).isGovernor()).to.equal(
           true
@@ -144,7 +145,7 @@ const shouldBehaveLikeAlgebraAmoStrategy = (contextFunction) => {
           timelock,
           nick,
           assetToken,
-        } = context;
+        } = fixture;
   
         const depositAmount = parseUnits("50");
         await assetToken
@@ -159,7 +160,7 @@ const shouldBehaveLikeAlgebraAmoStrategy = (contextFunction) => {
           await expect(tx).to.revertedWith("Caller is not the Vault");
         }
       });
-      it("Only vault can deposit all wS to AMO strategy", async function () {
+      it("Only vault can deposit all asset tokens to AMO strategy", async function () {
         const {
           amoStrategy,
           pool,
@@ -168,7 +169,7 @@ const shouldBehaveLikeAlgebraAmoStrategy = (contextFunction) => {
           timelock,
           nick,
           assetToken,
-        } = context;
+        } = fixture;
   
         const depositAmount = parseUnits("50");
         await assetToken
@@ -204,7 +205,7 @@ const shouldBehaveLikeAlgebraAmoStrategy = (contextFunction) => {
         await assertWithdrawAll();
       });
       it("Vault should be able to withdraw all in SwapX Emergency", async () => {
-        const { amoStrategy, gauge, vaultSigner } = context;
+        const { amoStrategy, gauge, vaultSigner } = fixture;
   
         const gaugeOwner = await gauge.owner();
         const ownerSigner = await impersonateAndFund(gaugeOwner);
@@ -215,7 +216,7 @@ const shouldBehaveLikeAlgebraAmoStrategy = (contextFunction) => {
         await amoStrategy.connect(vaultSigner).withdrawAll();
       });
       it("Should fail to deposit zero asset token", async () => {
-        const { amoStrategy, vaultSigner, assetToken } = context;
+        const { amoStrategy, vaultSigner, assetToken } = fixture;
   
         const tx = amoStrategy
           .connect(vaultSigner)
@@ -224,7 +225,7 @@ const shouldBehaveLikeAlgebraAmoStrategy = (contextFunction) => {
         await expect(tx).to.be.revertedWith("Must deposit something");
       });
       it("Should fail to deposit oToken", async () => {
-        const { amoStrategy, vaultSigner, oToken } = context;
+        const { amoStrategy, vaultSigner, oToken } = fixture;
   
         const tx = amoStrategy
           .connect(vaultSigner)
@@ -233,7 +234,7 @@ const shouldBehaveLikeAlgebraAmoStrategy = (contextFunction) => {
         await expect(tx).to.be.revertedWith("Unsupported asset");
       });
       it("Should fail to withdraw zero asset token", async () => {
-        const { amoStrategy, vaultSigner, vault, assetToken } = context;
+        const { amoStrategy, vaultSigner, vault, assetToken } = fixture;
   
         const tx = amoStrategy
           .connect(vaultSigner)
@@ -243,7 +244,7 @@ const shouldBehaveLikeAlgebraAmoStrategy = (contextFunction) => {
       });
       it("Should fail to withdraw oToken", async () => {
         const { amoStrategy, vaultSigner, oToken, vault } =
-          context;
+          fixture;
   
         const tx = amoStrategy
           .connect(vaultSigner)
@@ -252,7 +253,7 @@ const shouldBehaveLikeAlgebraAmoStrategy = (contextFunction) => {
         await expect(tx).to.be.revertedWith("Unsupported asset");
       });
       it("Should fail to withdraw to a user", async () => {
-        const { amoStrategy, vaultSigner, assetToken, nick } = context;
+        const { amoStrategy, vaultSigner, assetToken, nick } = fixture;
   
         const tx = amoStrategy
           .connect(vaultSigner)
@@ -261,7 +262,7 @@ const shouldBehaveLikeAlgebraAmoStrategy = (contextFunction) => {
         await expect(tx).to.be.revertedWith("Only withdraw to vault allowed");
       });
       it("Vault should be able to withdraw all from empty strategy", async () => {
-        const { amoStrategy, vaultSigner } = context;
+        const { amoStrategy, vaultSigner } = fixture;
         await assertWithdrawAll();
   
         // Now try again after all the assets have already been withdrawn
@@ -277,7 +278,7 @@ const shouldBehaveLikeAlgebraAmoStrategy = (contextFunction) => {
       });
       it("Only vault can withdraw asset token from AMO strategy", async function () {
         const { amoStrategy, vault, strategist, timelock, nick, assetToken } =
-          context;
+          fixture;
   
         for (const signer of [strategist, timelock, nick]) {
           const tx = amoStrategy
@@ -287,8 +288,8 @@ const shouldBehaveLikeAlgebraAmoStrategy = (contextFunction) => {
           await expect(tx).to.revertedWith("Caller is not the Vault");
         }
       });
-      it("Only vault and governor can withdraw all WETH from AMO strategy", async function () {
-        const { amoStrategy, strategist, timelock, nick } = context;
+      it("Only vault and governor can withdraw all from AMO strategy", async function () {
+        const { amoStrategy, strategist, timelock, nick } = fixture;
   
         for (const signer of [strategist, nick]) {
           const tx = amoStrategy.connect(signer).withdrawAll();
@@ -308,7 +309,7 @@ const shouldBehaveLikeAlgebraAmoStrategy = (contextFunction) => {
           gauge,
           rewardToken,
           strategist,
-        } = context;
+        } = fixture;
   
         const rewardTokenBalanceBefore = await rewardToken.balanceOf(strategist.address);
   
@@ -336,9 +337,9 @@ const shouldBehaveLikeAlgebraAmoStrategy = (contextFunction) => {
         );
         expect(rewardTokenBalanceAfter).to.gt(rewardTokenBalanceBefore);
       });
-      it("Attacker front-run deposit within range by adding wS to the pool", async () => {
+      it("Attacker front-run deposit within range by adding asset token to the pool", async () => {
         const { nick, oToken, vaultSigner, amoStrategy, assetToken } =
-          context;
+          fixture;
   
         const attackerAssetTokenBalanceBefore = await assetToken.balanceOf(nick.address);
         const assetTokenAmountIn = parseUnits("20000");
@@ -411,7 +412,7 @@ const shouldBehaveLikeAlgebraAmoStrategy = (contextFunction) => {
         beforeEach(async () => {
           context = await contextFunction();
           fixture = await context.loadFixture();
-          const { nick, assetToken } = context;
+          const { nick, assetToken } = fixture;
   
           attackerAssetBalanceBefore = await assetToken.balanceOf(nick.address);
           const assetTokenAmountIn = parseUnits("10000000");
@@ -442,7 +443,7 @@ const shouldBehaveLikeAlgebraAmoStrategy = (contextFunction) => {
             vaultSigner,
             amoStrategy,
             assetToken,
-          } = context;
+          } = fixture;
           const withdrawAmount = parseUnits("4000");
   
           const dataBeforeWithdraw = await snapData();
@@ -497,7 +498,7 @@ const shouldBehaveLikeAlgebraAmoStrategy = (contextFunction) => {
         beforeEach(async () => {
           context = await contextFunction();
           fixture = await context.loadFixture();
-          const { nick, oToken, vault, assetToken } = context;
+          const { nick, oToken, vault, assetToken } = fixture;
   
           const oTokenAmountIn = parseUnits("10000000");
 
@@ -533,7 +534,7 @@ const shouldBehaveLikeAlgebraAmoStrategy = (contextFunction) => {
             vaultSigner,
             amoStrategy,
             assetToken,
-          } = context;
+          } = fixture;
           const withdrawAmount = parseUnits("200");
   
           const dataBeforeWithdraw = await snapData();
@@ -587,7 +588,7 @@ const shouldBehaveLikeAlgebraAmoStrategy = (contextFunction) => {
       });
     });
   
-    describe.only("with a lot more OToken in the pool", () => {
+    describe("with a lot more OToken in the pool", () => {
       beforeEach(async () => {
         context = await contextFunction();
         fixture = await context.loadFixture({
@@ -622,12 +623,12 @@ const shouldBehaveLikeAlgebraAmoStrategy = (contextFunction) => {
       it("Strategist should swap a lot of assets to the pool", async () => {
         await assertSwapAssetsToPool(parseUnits("3000"));
       });
-      it("Strategist should swap most of the wS owned by the strategy", async () => {
-        // TODO calculate how much wS should be swapped to get the pool balanced
+      it("Strategist should swap most of the asset token owned by the strategy", async () => {
+        // TODO calculate how much asset token should be swapped to get the pool balanced
         await assertSwapAssetsToPool(parseUnits("4400"));
       });
-      it("Strategist should fail to add more wS than owned by the strategy", async () => {
-        const { amoStrategy, strategist } = context;
+      it("Strategist should fail to add more asset token than owned by the strategy", async () => {
+        const { amoStrategy, strategist } = fixture;
   
         const tx = amoStrategy
           .connect(strategist)
@@ -635,10 +636,10 @@ const shouldBehaveLikeAlgebraAmoStrategy = (contextFunction) => {
   
         await expect(tx).to.be.revertedWith("Not enough LP tokens in gauge");
       });
-      it("Strategist should fail to add more OS to the pool", async () => {
-        const { amoStrategy, strategist } = context;
+      it("Strategist should fail to add more OToken to the pool", async () => {
+        const { amoStrategy, strategist } = fixture;
   
-        // try swapping OS into the pool
+        // Try swapping OToken into the pool.
         const tx = amoStrategy
           .connect(strategist)
           .swapOTokensToPool(parseUnits("0.001"));
@@ -647,350 +648,343 @@ const shouldBehaveLikeAlgebraAmoStrategy = (contextFunction) => {
       });
     });
   
-    // describe("with a little more OS in the pool", () => {
-    //   const loadFixture = createFixtureLoader(swapXAMOFixture, {
-    //     wsMintAmount: 20000,
-    //     depositToStrategy: true,
-    //     balancePool: true,
-    //     poolAddOSAmount: 5000,
-    //   });
-    //   beforeEach(async () => {
-    //     fixture = await loadFixture();
-    //   });
-    //   it("Vault should deposit wS to AMO strategy", async function () {
-    //     await assertDeposit(parseUnits("12000"));
-    //   });
-    //   it("Vault should be able to withdraw all", async () => {
-    //     await assertWithdrawAll();
-    //   });
-    //   it("Vault should be able to partially withdraw", async () => {
-    //     await assertWithdrawPartial(parseUnits("1000"));
-    //   });
-    //   it("Strategist should swap a little assets to the pool", async () => {
-    //     await assertSwapAssetsToPool(parseUnits("3"));
-    //   });
-    //   it("Strategist should swap enough wS to get the pool close to balanced", async () => {
-    //     const { pool } = fixture;
-    //     const { _reserve0: wsReserves, _reserve1: osReserves } =
-    //       await pool.getReserves();
-    //     // 50% of the extra OS in the pool gets close to balanced
-    //     const osAmount = osReserves.sub(wsReserves).mul(50).div(100);
-    //     const wsAmount = osAmount.mul(wsReserves).div(osReserves);
-  
-    //     await assertSwapAssetsToPool(wsAmount);
-    //   });
-    //   it("Strategist should fail to add too much wS to the pool", async () => {
-    //     const { amoStrategy, strategist } = fixture;
-  
-    //     const dataBefore = await snapData();
-    //     await logSnapData(dataBefore, "Before swapping assets to the pool");
-  
-    //     // try the extra OS in the pool
-    //     const tx = amoStrategy
-    //       .connect(strategist)
-    //       .swapAssetsToPool(parseUnits("5000"));
-  
-    //     await expect(tx).to.be.revertedWith("Assets overshot peg");
-    //   });
-    //   it("Strategist should fail to add zero wS to the pool", async () => {
-    //     const { amoStrategy, strategist } = fixture;
-  
-    //     const tx = amoStrategy.connect(strategist).swapAssetsToPool(0);
-  
-    //     await expect(tx).to.be.revertedWith("Must swap something");
-    //   });
-    //   it("Strategist should fail to add more OS to the pool", async () => {
-    //     const { amoStrategy, strategist } = fixture;
-  
-    //     // try swapping OS into the pool
-    //     const tx = amoStrategy
-    //       .connect(strategist)
-    //       .swapOTokensToPool(parseUnits("0.001"));
-  
-    //     await expect(tx).to.be.revertedWith("OTokens balance worse");
-    //   });
-    // });
-  
-    // describe("with a lot more wS in the pool", () => {
-    //   const loadFixture = createFixtureLoader(swapXAMOFixture, {
-    //     wsMintAmount: 5000,
-    //     depositToStrategy: true,
-    //     balancePool: true,
-    //     poolAddwSAmount: 2000000,
-    //   });
-    //   beforeEach(async () => {
-    //     fixture = await loadFixture();
-    //   });
-    //   it("Vault should fail to deposit wS to strategy", async function () {
-    //     await assertFailedDeposit(parseUnits("6000"), "price out of range");
-    //   });
-    //   it("Vault should be able to withdraw all", async () => {
-    //     await assertWithdrawAll();
-    //   });
-    //   it("Vault should be able to partially withdraw", async () => {
-    //     await assertWithdrawPartial(parseUnits("1000"));
-    //   });
-    //   it("Strategist should swap a little OS to the pool", async () => {
-    //     const osAmount = parseUnits("0.3");
-    //     await assertSwapOTokensToPool(osAmount, fixture);
-    //   });
-    //   it("Strategist should swap a lot of OS to the pool", async () => {
-    //     const osAmount = parseUnits("5000");
-    //     await assertSwapOTokensToPool(osAmount, fixture);
-    //   });
-    //   it("Strategist should get the pool close to balanced", async () => {
-    //     const { pool } = fixture;
-    //     const { _reserve0: wsReserves, _reserve1: osReserves } =
-    //       await pool.getReserves();
-    //     // 32% of the extra wS in the pool gets pretty close to balanced
-    //     const osAmount = wsReserves.sub(osReserves).mul(32).div(100);
-  
-    //     await assertSwapOTokensToPool(osAmount);
-    //   });
-    //   it("Strategist should fail to add so much OS that is overshoots", async () => {
-    //     const { amoStrategy, strategist } = fixture;
-  
-    //     // try swapping wS into the pool
-    //     const tx = amoStrategy
-    //       .connect(strategist)
-    //       .swapOTokensToPool(parseUnits("999990"));
-  
-    //     await expect(tx).to.be.revertedWith("OTokens overshot peg");
-    //   });
-    //   it("Strategist should fail to add more wS to the pool", async () => {
-    //     const { amoStrategy, strategist } = fixture;
-  
-    //     // try swapping wS into the pool
-    //     const tx = amoStrategy
-    //       .connect(strategist)
-    //       .swapAssetsToPool(parseUnits("0.0001"));
-  
-    //     await expect(tx).to.be.revertedWith("Assets balance worse");
-    //   });
-    // });
-  
-    // describe("with a little more wS in the pool", () => {
-    //   const loadFixture = createFixtureLoader(swapXAMOFixture, {
-    //     wsMintAmount: 20000,
-    //     depositToStrategy: true,
-    //     balancePool: true,
-    //     poolAddwSAmount: 20000,
-    //   });
-    //   beforeEach(async () => {
-    //     fixture = await loadFixture();
-    //   });
-    //   it("Vault should deposit wS to AMO strategy", async function () {
-    //     await assertDeposit(parseUnits("18000"));
-    //   });
-    //   it("Vault should be able to withdraw all", async () => {
-    //     await assertWithdrawAll();
-    //   });
-    //   it("Vault should be able to partially withdraw", async () => {
-    //     await assertWithdrawPartial(parseUnits("1000"));
-    //   });
-    //   it("Strategist should swap a little OS to the pool", async () => {
-    //     const osAmount = parseUnits("8");
-    //     await assertSwapOTokensToPool(osAmount, fixture);
-    //   });
-    //   it("Strategist should get the pool close to balanced", async () => {
-    //     const { pool } = fixture;
-  
-    //     const { _reserve0: wsReserves, _reserve1: osReserves } =
-    //       await pool.getReserves();
-    //     // 50% of the extra wS in the pool gets pretty close to balanced
-    //     const osAmount = wsReserves.sub(osReserves).mul(50).div(100);
-  
-    //     await assertSwapOTokensToPool(osAmount, fixture);
-    //   });
-    //   it("Strategist should fail to add zero OS to the pool", async () => {
-    //     const { amoStrategy, strategist } = fixture;
-  
-    //     const tx = amoStrategy.connect(strategist).swapOTokensToPool(0);
-  
-    //     await expect(tx).to.be.revertedWith("Must swap something");
-    //   });
-    //   it("Strategist should fail to add too much OS to the pool", async () => {
-    //     const { amoStrategy, strategist } = fixture;
-  
-    //     // Add OS to the pool
-    //     const tx = amoStrategy
-    //       .connect(strategist)
-    //       .swapOTokensToPool(parseUnits("11000"));
-  
-    //     await expect(tx).to.be.revertedWith("OTokens overshot peg");
-    //   });
-    //   it("Strategist should fail to add more wS to the pool", async () => {
-    //     const { amoStrategy, strategist } = fixture;
-  
-    //     // try swapping wS into the pool
-    //     const tx = amoStrategy
-    //       .connect(strategist)
-    //       .swapAssetsToPool(parseUnits("0.0001"));
-  
-    //     await expect(tx).to.be.revertedWith("Assets balance worse");
-    //   });
-    // });
-  
-    // describe("with the strategy owning a small percentage of the pool", () => {
-    //   const loadFixture = createFixtureLoader(swapXAMOFixture, {
-    //     wsMintAmount: 5000,
-    //     depositToStrategy: true,
-    //     balancePool: true,
-    //   });
-    //   let dataBefore;
-    //   beforeEach(async () => {
-    //     fixture = await loadFixture();
-  
-    //     const { nick, wS, oSonic, oSonicVault, pool } = fixture;
-  
-    //     // Other users adds a lot more liquidity to the pool
-    //     const bigAmount = parseUnits("1000000");
-    //     // transfer wS to the pool
-    //     await assetToken.connect(nick).transfer(pool.address, bigAmount);
-    //     // Mint OS with wS
-    //     await oSonicVault.connect(nick).mint(assetToken.address, bigAmount.mul(5), 0);
-    //     // transfer OS to the pool
-    //     await oSonic.connect(nick).transfer(pool.address, bigAmount);
-    //     // mint pool LP tokens
-    //     await pool.connect(nick).mint(nick.address);
-  
-    //     dataBefore = await snapData();
-    //     await logSnapData(dataBefore);
-    //   });
-    //   it("a lot of OS is swapped into the pool", async () => {
-    //     const { oSonic, amoStrategy, wS } = fixture;
-  
-    //     // Swap OS into the pool and wS out
-    //     await poolSwapTokensIn(oSonic, parseUnits("1005000"));
-  
-    //     await logSnapData(await snapData(), "\nAfter swapping OS into the pool");
-  
-    //     // Assert the strategy's balance
-    //     expect(
-    //       await amoStrategy.checkBalance(assetToken.address),
-    //       "Strategy's check balance"
-    //     ).to.withinRange(dataBefore.stratBalance, dataBefore.stratBalance.add(1));
-  
-    //     // Swap wS into the pool and OS out
-    //     await poolSwapTokensIn(wS, parseUnits("2000000"));
-  
-    //     await logSnapData(await snapData(), "\nAfter swapping wS into the pool");
-  
-    //     // Assert the strategy's balance
-    //     expect(
-    //       await amoStrategy.checkBalance(assetToken.address),
-    //       "Strategy's check balance"
-    //     ).to.withinRange(dataBefore.stratBalance, dataBefore.stratBalance.add(1));
-    //   });
-    //   it("a lot of wS is swapped into the pool", async () => {
-    //     const { amoStrategy, oSonic, wS } = fixture;
-  
-    //     // Swap wS into the pool and OS out
-    //     await poolSwapTokensIn(wS, parseUnits("1006000"));
-  
-    //     await logSnapData(await snapData(), "\nAfter swapping wS into the pool");
-  
-    //     // Assert the strategy's balance
-    //     expect(
-    //       await amoStrategy.checkBalance(assetToken.address),
-    //       "Strategy's check balance"
-    //     ).to.withinRange(dataBefore.stratBalance, dataBefore.stratBalance.add(1));
-  
-    //     // Swap OS into the pool and wS out
-    //     await poolSwapTokensIn(oSonic, parseUnits("1005000"));
-  
-    //     await logSnapData(await snapData(), "\nAfter swapping OS into the pool");
-  
-    //     // Assert the strategy's balance
-    //     expect(
-    //       await amoStrategy.checkBalance(assetToken.address),
-    //       "Strategy's check balance"
-    //     ).to.withinRange(dataBefore.stratBalance, dataBefore.stratBalance.add(1));
-    //   });
-    // });
-  
-    // describe("with an insolvent vault", () => {
-    //   const loadFixture = createFixtureLoader(swapXAMOFixture, {
-    //     wsMintAmount: 5000000,
-    //     depositToStrategy: false,
-    //   });
-    //   beforeEach(async () => {
-    //     fixture = await loadFixture();
-  
-    //     const { oSonicVault, vaultSigner, amoStrategy, wS } = fixture;
-  
-    //     // Deposit a little to the strategy
-    //     const littleAmount = parseUnits("100");
-    //     await wS
-    //       .connect(vaultSigner)
-    //       .transfer(amoStrategy.address, littleAmount);
-    //     await amoStrategy
-    //       .connect(vaultSigner)
-    //       .deposit(assetToken.address, littleAmount);
-  
-    //     const totalAssets = await oSonicVault.totalValue();
-    //     // Calculate a 0.21% (21 basis points) loss
-    //     const lossAmount = totalAssets.mul(21).div(10000);
-    //     await assetToken.connect(vaultSigner).transfer(addresses.dead, lossAmount);
-    //     expect(
-    //       await assetToken.balanceOf(oSonicVault.address),
-    //       "Must have enough wS in vault to make insolvent"
-    //     ).to.gte(lossAmount);
-    //   });
-    //   it("Should fail to deposit", async () => {
-    //     const { vaultSigner, amoStrategy, wS } = fixture;
-  
-    //     // Vault calls deposit on the strategy
-    //     const depositAmount = parseUnits("10");
-    //     await wS
-    //       .connect(vaultSigner)
-    //       .transfer(amoStrategy.address, depositAmount);
-    //     const tx = amoStrategy
-    //       .connect(vaultSigner)
-    //       .deposit(assetToken.address, depositAmount);
-  
-    //     await expect(tx).to.be.revertedWith("Protocol insolvent");
-    //   });
-    //   it("Should fail to withdraw", async () => {
-    //     const { oSonicVault, vaultSigner, amoStrategy, wS } = fixture;
-  
-    //     // Vault withdraws from the strategy
-    //     const tx = amoStrategy
-    //       .connect(vaultSigner)
-    //       .withdraw(oSonicVault.address, assetToken.address, parseUnits("10"));
-  
-    //     await expect(tx).to.be.revertedWith("Protocol insolvent");
-    //   });
-    //   it("Should withdraw all", async () => {
-    //     const { vaultSigner, amoStrategy } = fixture;
-  
-    //     // Vault withdraw alls from the strategy
-    //     const tx = amoStrategy.connect(vaultSigner).withdrawAll();
-  
-    //     await expect(tx).to.not.revertedWith("Protocol insolvent");
-    //   });
-    //   it("Should fail to swap assets to the pool", async () => {
-    //     const { amoStrategy, strategist } = fixture;
-  
-    //     const tx = amoStrategy
-    //       .connect(strategist)
-    //       .swapAssetsToPool(parseUnits("10"));
-  
-    //     await expect(tx).to.be.revertedWith("Protocol insolvent");
-    //   });
-    //   it("Should fail to swap OS to the pool", async () => {
-    //     const { amoStrategy, strategist } = fixture;
-  
-    //     const tx = amoStrategy
-    //       .connect(strategist)
-    //       .swapOTokensToPool(parseUnits("10"));
-  
-    //     await expect(tx).to.be.revertedWith("Protocol insolvent");
-    //   });
-    // });
+    describe("with a little more OToken in the pool", () => {
+      beforeEach(async () => {
+        context = await contextFunction();
+        fixture = await context.loadFixture({
+          assetMintAmount: 20000,
+          depositToStrategy: true,
+          balancePool: true,
+          poolAddOTokenAmount: 5000,
+        });
+      });
+      it("Vault should deposit asset token to AMO strategy", async function () {
+        await assertDeposit(parseUnits("12000"));
+      });
+      it("Vault should be able to withdraw all", async () => {
+        await assertWithdrawAll();
+      });
+      it("Vault should be able to partially withdraw", async () => {
+        await assertWithdrawPartial(parseUnits("1000"));
+      });
+      it("Strategist should swap a little assets to the pool", async () => {
+        await assertSwapAssetsToPool(parseUnits("3"));
+      });
+      it("Strategist should swap enough asset token to get the pool close to balanced", async () => {
+        const { assetReserves, oTokenReserves } = await getPoolReserves();
+        // 50% of the extra OToken in the pool gets close to balanced
+        const oTokenAmount = oTokenReserves.sub(assetReserves).mul(50).div(100);
+        const assetAmount = oTokenAmount.mul(assetReserves).div(oTokenReserves);
+
+        await assertSwapAssetsToPool(assetAmount);
+      });
+      it("Strategist should fail to add too much asset token to the pool", async () => {
+        const { amoStrategy, strategist } = fixture;
+
+        const dataBefore = await snapData();
+        await logSnapData(dataBefore, "Before swapping assets to the pool");
+
+        // Try swapping too much asset token in.
+        const tx = amoStrategy
+          .connect(strategist)
+          .swapAssetsToPool(parseUnits("5000"));
+
+        await expect(tx).to.be.revertedWith("Assets overshot peg");
+      });
+      it("Strategist should fail to add zero asset token to the pool", async () => {
+        const { amoStrategy, strategist } = fixture;
+
+        const tx = amoStrategy.connect(strategist).swapAssetsToPool(0);
+
+        await expect(tx).to.be.revertedWith("Must swap something");
+      });
+      it("Strategist should fail to add more OToken to the pool", async () => {
+        const { amoStrategy, strategist } = fixture;
+
+        const tx = amoStrategy
+          .connect(strategist)
+          .swapOTokensToPool(parseUnits("0.001"));
+
+        await expect(tx).to.be.revertedWith("OTokens balance worse");
+      });
+    });
+
+    describe("with a lot more asset token in the pool", () => {
+      beforeEach(async () => {
+        context = await contextFunction();
+        fixture = await context.loadFixture({
+          assetMintAmount: 5000,
+          depositToStrategy: true,
+          balancePool: true,
+          poolAddAssetAmount: 2000000,
+        });
+      });
+      it("Vault should fail to deposit asset token to strategy", async function () {
+        await assertFailedDeposit(parseUnits("6000"), "price out of range");
+      });
+      it("Vault should be able to withdraw all", async () => {
+        await assertWithdrawAll();
+      });
+      it("Vault should be able to partially withdraw", async () => {
+        await assertWithdrawPartial(parseUnits("1000"));
+      });
+      it("Strategist should swap a little OToken to the pool", async () => {
+        await assertSwapOTokensToPool(parseUnits("0.3"));
+      });
+      it("Strategist should swap a lot of OToken to the pool", async () => {
+        await assertSwapOTokensToPool(parseUnits("5000"));
+      });
+      it("Strategist should get the pool close to balanced", async () => {
+        const { assetReserves, oTokenReserves } = await getPoolReserves();
+        // 32% of the extra asset token in the pool gets pretty close to balanced
+        const oTokenAmount = assetReserves.sub(oTokenReserves).mul(32).div(100);
+
+        await assertSwapOTokensToPool(oTokenAmount);
+      });
+      it("Strategist should fail to add so much OToken that it overshoots", async () => {
+        const { amoStrategy, strategist } = fixture;
+
+        const tx = amoStrategy
+          .connect(strategist)
+          .swapOTokensToPool(parseUnits("999990"));
+
+        await expect(tx).to.be.revertedWith("OTokens overshot peg");
+      });
+      it("Strategist should fail to add more asset token to the pool", async () => {
+        const { amoStrategy, strategist } = fixture;
+
+        const tx = amoStrategy
+          .connect(strategist)
+          .swapAssetsToPool(parseUnits("0.0001"));
+
+        await expect(tx).to.be.revertedWith("Assets balance worse");
+      });
+    });
+
+    describe("with a little more asset token in the pool", () => {
+      beforeEach(async () => {
+        context = await contextFunction();
+        fixture = await context.loadFixture({
+          assetMintAmount: 20000,
+          depositToStrategy: true,
+          balancePool: true,
+          poolAddAssetAmount: 20000,
+        });
+      });
+      it("Vault should deposit asset token to AMO strategy", async function () {
+        await assertDeposit(parseUnits("18000"));
+      });
+      it("Vault should be able to withdraw all", async () => {
+        await assertWithdrawAll();
+      });
+      it("Vault should be able to partially withdraw", async () => {
+        await assertWithdrawPartial(parseUnits("1000"));
+      });
+      it("Strategist should swap a little OToken to the pool", async () => {
+        await assertSwapOTokensToPool(parseUnits("8"));
+      });
+      it("Strategist should get the pool close to balanced", async () => {
+        const { assetReserves, oTokenReserves } = await getPoolReserves();
+        // 50% of the extra asset token in the pool gets pretty close to balanced
+        const oTokenAmount = assetReserves.sub(oTokenReserves).mul(50).div(100);
+
+        await assertSwapOTokensToPool(oTokenAmount);
+      });
+      it("Strategist should fail to add zero OToken to the pool", async () => {
+        const { amoStrategy, strategist } = fixture;
+
+        const tx = amoStrategy.connect(strategist).swapOTokensToPool(0);
+
+        await expect(tx).to.be.revertedWith("Must swap something");
+      });
+      it("Strategist should fail to add too much OToken to the pool", async () => {
+        const { amoStrategy, strategist } = fixture;
+
+        const tx = amoStrategy
+          .connect(strategist)
+          .swapOTokensToPool(parseUnits("11000"));
+
+        await expect(tx).to.be.revertedWith("OTokens overshot peg");
+      });
+      it("Strategist should fail to add more asset token to the pool", async () => {
+        const { amoStrategy, strategist } = fixture;
+
+        const tx = amoStrategy
+          .connect(strategist)
+          .swapAssetsToPool(parseUnits("0.0001"));
+
+        await expect(tx).to.be.revertedWith("Assets balance worse");
+      });
+    });
+
+    describe("with the strategy owning a small percentage of the pool", () => {
+      let dataBefore;
+
+      beforeEach(async () => {
+        context = await contextFunction();
+        fixture = await context.loadFixture({
+          assetMintAmount: 5000,
+          depositToStrategy: true,
+          balancePool: true,
+        });
+
+        const { nick, oToken, pool, assetToken } = fixture;
+
+        // Other users add a lot more liquidity to the pool.
+        const bigAmount = parseUnits("1000000");
+        // Acquire OToken by swapping asset token in, then add balanced-like liquidity
+        // while preserving enough OToken for the swap-heavy tests that follow.
+        await poolSwapTokensIn(assetToken, parseUnits("10000000"));
+        const oTokenBalance = await oToken.balanceOf(nick.address);
+        const oTokenBufferForTests = parseUnits("2000000");
+        const oTokenToPool = oTokenBalance.sub(oTokenBufferForTests);
+        expect(oTokenToPool).to.gt(0);
+
+        await assetToken.connect(nick).transfer(pool.address, bigAmount);
+        await oToken.connect(nick).transfer(pool.address, oTokenToPool);
+        await pool.connect(nick).mint(nick.address);
+
+        dataBefore = await snapData();
+        await logSnapData(dataBefore);
+      });
+
+      it("A lot of OToken is swapped into the pool", async () => {
+        const { oToken, amoStrategy, assetToken } = fixture;
+
+        // Swap OToken into the pool and asset token out.
+        await poolSwapTokensIn(oToken, parseUnits("1005000"));
+        await logSnapData(await snapData(), "\nAfter swapping OToken into the pool");
+
+        expect(
+          await amoStrategy.checkBalance(assetToken.address),
+          "Strategy's check balance"
+        ).to.withinRange(dataBefore.stratBalance, dataBefore.stratBalance.add(1));
+
+        // Swap asset token into the pool and OToken out.
+        await poolSwapTokensIn(assetToken, parseUnits("2000000"));
+        await logSnapData(
+          await snapData(),
+          "\nAfter swapping asset token into the pool"
+        );
+
+        expect(
+          await amoStrategy.checkBalance(assetToken.address),
+          "Strategy's check balance"
+        ).to.withinRange(dataBefore.stratBalance, dataBefore.stratBalance.add(1));
+      });
+
+      it("A lot of asset token is swapped into the pool", async () => {
+        const { amoStrategy, oToken, assetToken } = fixture;
+
+        // Swap asset token into the pool and OToken out.
+        await poolSwapTokensIn(assetToken, parseUnits("1006000"));
+        await logSnapData(
+          await snapData(),
+          "\nAfter swapping asset token into the pool"
+        );
+
+        expect(
+          await amoStrategy.checkBalance(assetToken.address),
+          "Strategy's check balance"
+        ).to.withinRange(dataBefore.stratBalance, dataBefore.stratBalance.add(1));
+
+        // Swap OToken into the pool and asset token out.
+        await poolSwapTokensIn(oToken, parseUnits("1005000"));
+        await logSnapData(await snapData(), "\nAfter swapping OToken into the pool");
+
+        expect(
+          await amoStrategy.checkBalance(assetToken.address),
+          "Strategy's check balance"
+        ).to.withinRange(dataBefore.stratBalance, dataBefore.stratBalance.add(1));
+      });
+    });
+
+    describe("with an insolvent vault", () => {
+      beforeEach(async () => {
+        context = await contextFunction();
+        fixture = await context.loadFixture({
+          assetMintAmount: 5000000,
+          depositToStrategy: false,
+        });
+
+        const { vault, vaultSigner, amoStrategy, assetToken } = fixture;
+
+        // Deposit a little to the strategy.
+        const littleAmount = parseUnits("100");
+        await assetToken
+          .connect(vaultSigner)
+          .transfer(amoStrategy.address, littleAmount);
+        await amoStrategy
+          .connect(vaultSigner)
+          .deposit(assetToken.address, littleAmount);
+
+        const totalAssets = await vault.totalValue();
+        // Calculate a 0.21% (21 basis points) loss.
+        const lossAmount = totalAssets.mul(21).div(10000);
+        await assetToken.connect(vaultSigner).transfer(addresses.dead, lossAmount);
+        expect(
+          await assetToken.balanceOf(vault.address),
+          "Must have enough asset token in vault to make insolvent"
+        ).to.gte(lossAmount);
+      });
+
+      it("Should fail to deposit", async () => {
+        const { vaultSigner, amoStrategy, assetToken } = fixture;
+
+        // Vault calls deposit on the strategy.
+        const depositAmount = parseUnits("10");
+        await assetToken
+          .connect(vaultSigner)
+          .transfer(amoStrategy.address, depositAmount);
+        const tx = amoStrategy
+          .connect(vaultSigner)
+          .deposit(assetToken.address, depositAmount);
+
+        await expect(tx).to.be.revertedWith("Protocol insolvent");
+      });
+
+      it("Should fail to withdraw", async () => {
+        const { vault, vaultSigner, amoStrategy, assetToken } = fixture;
+
+        // Vault withdraws from the strategy.
+        const tx = amoStrategy
+          .connect(vaultSigner)
+          .withdraw(vault.address, assetToken.address, parseUnits("10"));
+
+        await expect(tx).to.be.revertedWith("Protocol insolvent");
+      });
+
+      it("Should withdraw all", async () => {
+        const { vaultSigner, amoStrategy } = fixture;
+
+        const tx = amoStrategy.connect(vaultSigner).withdrawAll();
+
+        await expect(tx).to.not.revertedWith("Protocol insolvent");
+      });
+
+      it("Should fail to swap assets to the pool", async () => {
+        const { amoStrategy, strategist } = fixture;
+
+        const tx = amoStrategy
+          .connect(strategist)
+          .swapAssetsToPool(parseUnits("10"));
+
+        await expect(tx).to.be.revertedWith("Protocol insolvent");
+      });
+
+      it("Should fail to swap OToken to the pool", async () => {
+        const { amoStrategy, strategist } = fixture;
+
+        const tx = amoStrategy
+          .connect(strategist)
+          .swapOTokensToPool(parseUnits("10"));
+
+        await expect(tx).to.be.revertedWith("Protocol insolvent");
+      });
+    });
   
     const poolSwapTokensIn = async (tokenIn, amountIn) => {
-      const { nick, pool, assetToken, oTokenPoolIndex } = context;
+      const { nick, pool, assetToken, oTokenPoolIndex } = fixture;
       const amountOut = await pool.getAmountOut(amountIn, tokenIn.address);
       await tokenIn.connect(nick).transfer(pool.address, amountIn);
 
@@ -1083,7 +1077,7 @@ const shouldBehaveLikeAlgebraAmoStrategy = (contextFunction) => {
   
     const snapData = async () => {
       const { vault, amoStrategy, oToken, pool, gauge, assetToken } =
-        context;
+        fixture;
   
       const stratBalance = await amoStrategy.checkBalance(assetToken.address);
       const oTokenSupply = await oToken.totalSupply();
@@ -1170,7 +1164,7 @@ const shouldBehaveLikeAlgebraAmoStrategy = (contextFunction) => {
     };
   
     const logProfit = async (dataBefore) => {
-      const { oToken, vault, amoStrategy, assetToken } = context;
+      const { oToken, vault, amoStrategy, assetToken } = fixture;
   
       const stratBalanceAfter = await amoStrategy.checkBalance(assetToken.address);
       const oTokenSupplyAfter = await oToken.totalSupply();
@@ -1200,8 +1194,8 @@ const shouldBehaveLikeAlgebraAmoStrategy = (contextFunction) => {
     };
   
     const assertChangedData = async (dataBefore, delta) => {
-      const { oToken, vault, amoStrategy, pool, gauge, assetToken } =
-        context;
+      const { oToken, vault, amoStrategy, gauge, assetToken } =
+        fixture;
   
       if (delta.stratBalance != undefined) {
         const expectedStratBalance = dataBefore.stratBalance.add(
@@ -1274,8 +1268,9 @@ const shouldBehaveLikeAlgebraAmoStrategy = (contextFunction) => {
         pool,
         vaultSigner,
         assetToken,
-      } = context;
-  
+      } = fixture;
+
+      await assetToken.connect(nick).approve(vault.address, assetDepositAmount);
       await vault.connect(nick).mint(assetToken.address, assetDepositAmount, 0);
   
       const dataBefore = await snapData();
@@ -1332,7 +1327,7 @@ const shouldBehaveLikeAlgebraAmoStrategy = (contextFunction) => {
     }
   
     async function assertFailedDeposit(assetDepositAmount, errorMessage) {
-      const { assetToken, vaultSigner, amoStrategy } = context;
+      const { assetToken, vaultSigner, amoStrategy } = fixture;
   
       const dataBefore = await snapData();
       await logSnapData(dataBefore, "\nBefore depositing asset token to strategy");
@@ -1351,7 +1346,7 @@ const shouldBehaveLikeAlgebraAmoStrategy = (contextFunction) => {
     }
   
     async function assertFailedDepositAll(assetDepositAmount, errorMessage) {
-      const { assetToken, vaultSigner, amoStrategy } = context;
+      const { assetToken, vaultSigner, amoStrategy } = fixture;
   
       const dataBefore = await snapData();
       await logSnapData(dataBefore, "\nBefore depositing all wS to strategy");
@@ -1369,7 +1364,7 @@ const shouldBehaveLikeAlgebraAmoStrategy = (contextFunction) => {
   
     async function assertWithdrawAll() {
       const { amoStrategy, pool, oToken, vaultSigner, assetToken } =
-        context;
+      fixture;
   
       const dataBefore = await snapData();
       await logSnapData(dataBefore);
@@ -1427,7 +1422,7 @@ const shouldBehaveLikeAlgebraAmoStrategy = (contextFunction) => {
         vault,
         vaultSigner,
         assetToken,
-      } = context;
+      } = fixture;
   
       const dataBefore = await snapData();
   
@@ -1492,7 +1487,7 @@ const shouldBehaveLikeAlgebraAmoStrategy = (contextFunction) => {
     }
   
     async function assertSwapAssetsToPool(assetAmount) {
-      const { oToken, amoStrategy, pool, strategist, assetToken } = context;
+      const { oToken, amoStrategy, pool, strategist, assetToken } = fixture;
   
       const dataBefore = await snapData();
       await logSnapData(
@@ -1554,21 +1549,21 @@ const shouldBehaveLikeAlgebraAmoStrategy = (contextFunction) => {
       ).to.equal(0);
     }
   
-    async function assertSwapOTokensToPool(osAmount) {
-      const { oSonic, pool, amoStrategy, strategist } = fixture;
+    async function assertSwapOTokensToPool(oTokenAmount) {
+      const { oToken, pool, amoStrategy, strategist } = fixture;
   
       const dataBefore = await snapData();
       await logSnapData(dataBefore, "Before swapping OTokens to the pool");
   
-      // Mint OS and swap into the pool, then mint more OS to add with the wS swapped out
+      // Mint OToken and swap into the pool, then mint more OToken to add with the swapped out asset token.
       const tx = await amoStrategy
         .connect(strategist)
-        .swapOTokensToPool(osAmount);
+        .swapOTokensToPool(oTokenAmount);
   
       // Check emitted event
       await expect(tx)
         .emit(amoStrategy, "SwapOTokensToPool")
-        .withNamedArgs({ oTokenMinted: osAmount });
+        .withNamedArgs({ oTokenMinted: oTokenAmount });
   
       await logSnapData(await snapData(), "\nAfter swapping OTokens to the pool");
       await logProfit(dataBefore);
@@ -1577,7 +1572,7 @@ const shouldBehaveLikeAlgebraAmoStrategy = (contextFunction) => {
         dataBefore,
         {
           // stratBalance: osBurnAmount.mul(-1),
-          vaultWSBalance: 0,
+          vaultAssetBalance: 0,
           stratGaugeBalance: 0,
         },
         fixture
@@ -1588,14 +1583,14 @@ const shouldBehaveLikeAlgebraAmoStrategy = (contextFunction) => {
         "Strategy's pool LP balance"
       ).to.equal(0);
       expect(
-        await oSonic.balanceOf(amoStrategy.address),
-        "Strategy's OS balance"
+        await oToken.balanceOf(amoStrategy.address),
+        "Strategy's OToken balance"
       ).to.equal(0);
     }
   
     // Calculate the minted OS amount for a deposit
     async function calcOTokenMintAmount(assetDepositAmount) {
-      const { pool } = context;
+      const { pool } = fixture;
       
       const { assetReserves, oTokenReserves } = await getPoolReserves();
   
@@ -1609,7 +1604,7 @@ const shouldBehaveLikeAlgebraAmoStrategy = (contextFunction) => {
     }
     
     async function getPoolReserves() {
-      const { pool, oTokenPoolIndex } = context;
+      const { pool, oTokenPoolIndex } = fixture;
 
       let assetReserves, oTokenReserves;
       // Get the reserves of the pool
@@ -1622,7 +1617,7 @@ const shouldBehaveLikeAlgebraAmoStrategy = (contextFunction) => {
     }
     // Calculate the amount of oToken burnt from a withdraw
     async function calcOTokenWithdrawAmount(assetTokenWithdrawAmount) {
-      const { pool } = context;
+      const { pool } = fixture;
   
       const { assetReserves, oTokenReserves } = await getPoolReserves();
   
@@ -1642,7 +1637,7 @@ const shouldBehaveLikeAlgebraAmoStrategy = (contextFunction) => {
   
     // Calculate the OToken and asset token amounts from a withdrawAll
     async function calcWithdrawAllAmounts() {
-      const { amoStrategy, gauge, pool } = context;
+      const { amoStrategy, gauge, pool } = fixture;
   
       // Get the reserves of the pool
       const { assetReserves, oTokenReserves } = await getPoolReserves();
