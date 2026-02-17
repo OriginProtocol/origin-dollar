@@ -78,10 +78,10 @@ const shouldBehaveLikeAnSsvStrategy = (context) => {
         oethUnits("25.6"),
         "Incorrect fuse end"
       );
-      // expect(await nativeStakingSSVStrategy.validatorRegistrator()).to.equal(
-      //   addresses.validatorRegistrator,
-      //   "Incorrect validator registrator"
-      // );
+      expect(await nativeStakingSSVStrategy.validatorRegistrator()).to.equal(
+        addresses.validatorRegistrator,
+        "Incorrect validator registrator"
+      );
       expect(await nativeStakingSSVStrategy.stakingMonitor()).to.equal(
         addresses.Guardian,
         "Incorrect staking monitor"
@@ -219,15 +219,15 @@ const shouldBehaveLikeAnSsvStrategy = (context) => {
       ).to.equal(0, "Validator state not 0 (NON_REGISTERED)");
 
       // Register a new validator with the SSV Network
-      const ethAmount = oethUnits("2");
+      const ssvAmount = oethUnits("2");
       const regTx = await nativeStakingSSVStrategy
         .connect(validatorRegistrator)
         .registerSsvValidators(
           [testValidator.publicKey],
           testValidator.operatorIds,
           [testValidator.sharesData],
-          cluster,
-          { value: ethAmount }
+          ssvAmount,
+          cluster
         );
       await expect(regTx)
         .to.emit(nativeStakingSSVStrategy, "SSVValidatorRegistered")
@@ -325,15 +325,15 @@ const shouldBehaveLikeAnSsvStrategy = (context) => {
       });
 
       // Register a new validator the first time
-      const ethAmount = oethUnits("3");
+      const ssvAmount = oethUnits("3");
       const tx = await nativeStakingSSVStrategy
         .connect(validatorRegistrator)
         .registerSsvValidators(
           [testValidator.publicKey],
           testValidator.operatorIds,
           [testValidator.sharesData],
-          cluster,
-          { value: ethAmount }
+          ssvAmount,
+          cluster
         );
 
       const receipt = await tx.wait();
@@ -349,8 +349,8 @@ const shouldBehaveLikeAnSsvStrategy = (context) => {
           [testValidator.publicKey],
           [1, 20, 300, 4000],
           [testValidator.sharesData],
-          validatorAddedEvent.args.cluster,
-          { value: ethAmount }
+          ssvAmount,
+          validatorAddedEvent.args.cluster
         );
 
       await expect(tx2).to.be.revertedWith("Validator already registered");
@@ -414,15 +414,15 @@ const shouldBehaveLikeAnSsvStrategy = (context) => {
       );
 
       // Register a new validator with the SSV network
-      const ethAmount = oethUnits("4");
+      const ssvAmount = oethUnits("4");
       const regTx = await nativeStakingSSVStrategy
         .connect(validatorRegistrator)
         .registerSsvValidators(
           [testValidator.publicKey],
           testValidator.operatorIds,
           [testValidator.sharesData],
-          cluster,
-          { value: ethAmount }
+          ssvAmount,
+          cluster
         );
       const regReceipt = await regTx.wait();
       const ValidatorAddedRawEvent = regReceipt.events.find(
@@ -498,15 +498,15 @@ const shouldBehaveLikeAnSsvStrategy = (context) => {
       );
 
       // Register a new validator with the SSV network
-      const ethAmount = oethUnits("4");
+      const ssvAmount = oethUnits("4");
       const regTx = await nativeStakingSSVStrategy
         .connect(validatorRegistrator)
         .registerSsvValidators(
           [testValidator.publicKey],
           testValidator.operatorIds,
           [testValidator.sharesData],
-          cluster,
-          { value: ethAmount },
+          ssvAmount,
+          cluster
         );
       const regReceipt = await regTx.wait();
       const ValidatorAddedRawEvent = regReceipt.events.find(

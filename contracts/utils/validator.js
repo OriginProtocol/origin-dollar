@@ -55,7 +55,7 @@ const registerValidators = async ({
   clear,
   uuid,
   maxValidatorsToRegister,
-  ethAmount,
+  ssvAmount,
   awsS3AccessKeyId,
   awsS3SexcretAccessKeyId,
   s3BucketName,
@@ -149,7 +149,7 @@ const registerValidators = async ({
           signer,
           currentState.metadata,
           nativeStakingStrategy,
-          ethAmount
+          ssvAmount
         );
         currentState = await getState(store);
       }
@@ -660,7 +660,7 @@ const broadcastRegisterValidator = async (
   signer,
   metadata,
   nativeStakingStrategy,
-  ethAmount
+  ssvAmount
 ) => {
   const registerTransactionParams = defaultAbiCoder.decode(
     [
@@ -684,7 +684,7 @@ const broadcastRegisterValidator = async (
     throw Error(`sharesData not found in metadata: ${metadata}`);
   }
 
-  ethAmount = ethAmount !== undefined ? ethAmount : amount;
+  ssvAmount = ssvAmount !== undefined ? ssvAmount : amount;
 
   // Check the first validator has not already been registered
   const hashedPubkey = keccak256(metadata.pubkeys[0]);
@@ -702,15 +702,19 @@ const broadcastRegisterValidator = async (
   log(`publicKeys: ${publicKeys}`);
   log(`operatorIds: ${operatorIds}`);
   log(`sharesData: ${sharesData}`);
-  log(`ethAmount: ${ethAmount}`);
+  log(`ssvAmount: ${ssvAmount}`);
   log(`cluster: ${cluster}`);
 
   try {
     const tx = await nativeStakingStrategy
       .connect(signer)
-      .registerSsvValidators(publicKeys, operatorIds, sharesData, cluster, {
-        value: ethAmount,
-      });
+      .registerSsvValidators(
+        publicKeys,
+        operatorIds,
+        sharesData,
+        ssvAmount,
+        cluster
+      );
 
     await logTxDetails(tx, "registerSsvValidators");
 
