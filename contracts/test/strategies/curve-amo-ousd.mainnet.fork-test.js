@@ -233,6 +233,7 @@ describe("Curve AMO OUSD strategy", function () {
         )} usdc to the pool`
       );
 
+      await setERC20TokenBalance(nick.address, usdc, attackerusdcAmount, hre);
       await usdc.connect(nick).approve(curvePool.address, attackerusdcAmount);
       // Attacker adds a lot of usdc into the pool
       // prettier-ignore

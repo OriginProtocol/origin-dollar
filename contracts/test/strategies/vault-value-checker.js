@@ -2,16 +2,17 @@ const { expect } = require("chai");
 
 const { loadDefaultFixture } = require("../_fixture");
 const { impersonateAndFund } = require("../../utils/signers");
+const { usdcUnits, ousdUnits } = require("../helpers");
 
 describe("Check vault value", () => {
-  let vault, ousd, matt, usds, checker, vaultSigner;
+  let vault, ousd, matt, usdc, checker, vaultSigner;
 
   beforeEach(async () => {
     const fixture = await loadDefaultFixture();
     vault = fixture.vault;
     ousd = fixture.ousd;
     matt = fixture.matt;
-    usds = fixture.usds;
+    usdc = fixture.usdc;
     checker = await ethers.getContract("VaultValueChecker");
     vaultSigner = await ethers.getSigner(vault.address);
     await impersonateAndFund(vaultSigner.address);
@@ -26,10 +27,10 @@ describe("Check vault value", () => {
 
     // Alter value
     if (vaultChange > 0) {
-      await usds.mintTo(vault.address, vaultChange);
+      await usdc.mintTo(vault.address, vaultChange);
     } else if (vaultChange < 0) {
       // transfer amount out of the vault
-      await usds
+      await usdc
         .connect(vaultSigner)
         .transfer(matt.address, vaultChange * -1, { gasPrice: 0 });
     }
@@ -77,58 +78,58 @@ describe("Check vault value", () => {
   it(
     "should succeed if vault gain was inside the allowed band",
     testChange({
-      vaultChange: 200,
-      expectedProfit: 0,
-      profitVariance: 100,
-      supplyChange: 200,
-      expectedVaultChange: 200,
-      vaultChangeVariance: 100,
+      vaultChange: usdcUnits("2"), // In USDC, 6 decimals
+      expectedProfit: ousdUnits("0"),
+      profitVariance: ousdUnits("100"),
+      supplyChange: ousdUnits("2"), // In OUSD, 18 decimals
+      expectedVaultChange: ousdUnits("2"),
+      vaultChangeVariance: ousdUnits("100"),
     })
   );
   it(
     "should revert if vault gain less than allowed",
     testChange({
-      vaultChange: 50,
-      expectedProfit: 125,
-      profitVariance: 25,
-      supplyChange: 2,
-      expectedVaultChange: 1,
-      vaultChangeVariance: 1,
+      vaultChange: usdcUnits("50"),
+      expectedProfit: ousdUnits("125"),
+      profitVariance: ousdUnits("25"),
+      supplyChange: ousdUnits("2"),
+      expectedVaultChange: ousdUnits("1"),
+      vaultChangeVariance: ousdUnits("1"),
       expectedRevert: "Profit too low",
     })
   );
   it(
     "should revert if vault gain more than allowed",
     testChange({
-      vaultChange: 550,
-      expectedProfit: 500,
-      profitVariance: 50,
-      supplyChange: 2,
-      expectedVaultChange: 1,
-      vaultChangeVariance: 1,
+      vaultChange: usdcUnits("550"),
+      expectedProfit: ousdUnits("500"),
+      profitVariance: ousdUnits("50"),
+      supplyChange: ousdUnits("2"),
+      expectedVaultChange: ousdUnits("1"),
+      vaultChangeVariance: ousdUnits("1"),
       expectedRevert: "Vault value change too high",
     })
   );
   it(
     "should succeed if vault loss was inside the allowed band",
     testChange({
-      vaultChange: -200,
-      expectedProfit: -200,
-      profitVariance: 100,
-      supplyChange: 0,
-      expectedVaultChange: -200,
-      vaultChangeVariance: 0,
+      vaultChange: usdcUnits("200").mul(-1),
+      expectedProfit: ousdUnits("200").mul(-1),
+      profitVariance: ousdUnits("100"),
+      supplyChange: ousdUnits("0"),
+      expectedVaultChange: ousdUnits("200").mul(-1),
+      vaultChangeVariance: ousdUnits("0"),
     })
   );
   it(
     "should revert if vault loss under allowed band",
     testChange({
-      vaultChange: -400,
-      expectedProfit: -400,
-      profitVariance: 40,
-      supplyChange: 0,
-      expectedVaultChange: 0,
-      vaultChangeVariance: 100,
+      vaultChange: usdcUnits("40").mul(-1),
+      expectedProfit: ousdUnits("40").mul(-1),
+      profitVariance: ousdUnits("4"),
+      supplyChange: ousdUnits("0"),
+      expectedVaultChange: ousdUnits("0"),
+      vaultChangeVariance: ousdUnits("10"),
       expectedRevert: "Vault value change too low",
     })
   );
@@ -136,12 +137,12 @@ describe("Check vault value", () => {
   it(
     "should revert if vault loss over allowed band",
     testChange({
-      vaultChange: 100,
-      expectedProfit: 100,
-      profitVariance: 100,
-      supplyChange: 0,
-      expectedVaultChange: 0,
-      vaultChangeVariance: 50,
+      vaultChange: usdcUnits("100"),
+      expectedProfit: ousdUnits("100"),
+      profitVariance: ousdUnits("100"),
+      supplyChange: ousdUnits("0"),
+      expectedVaultChange: ousdUnits("0"),
+      vaultChangeVariance: ousdUnits("50"),
       expectedRevert: "Vault value change too high",
     })
   );

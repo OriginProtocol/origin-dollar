@@ -1,5 +1,4 @@
 const { expect } = require("chai");
-const { utils } = require("ethers");
 
 const addresses = require("../../utils/addresses");
 const { loadDefaultFixture } = require("./../_fixture");
@@ -9,16 +8,12 @@ const {
   differenceInStrategyBalance,
   differenceInErc20TokenBalances,
   isCI,
-  decimalsFor,
 } = require("./../helpers");
 const { canWithdrawAllFromMorphoOUSD } = require("../../utils/morpho");
 const { impersonateAndFund } = require("../../utils/signers");
 const {
   shouldHaveRewardTokensConfigured,
 } = require("./../behaviour/reward-tokens.fork");
-const { formatUnits } = require("ethers/lib/utils");
-
-const log = require("../../utils/logger")("test:fork:ousd:vault");
 
 /**
  * Regarding hardcoded addresses:
@@ -76,11 +71,13 @@ describe("ForkTest: Vault", function () {
       );
     });
 
-    it("Should have the correct OUSD MetaStrategy address set", async () => {
+    it("Should have the OUSD/USDC AMO mint whitelist", async () => {
       const { vault } = fixture;
-      expect(await vault.ousdMetaStrategy()).to.equal(
-        addresses.mainnet.CurveOUSDAMOStrategy
-      );
+      expect(
+        await vault.isMintWhitelistedStrategy(
+          addresses.mainnet.CurveOUSDAMOStrategy
+        )
+      ).to.be.true;
     });
 
     it("Should have supported assets", async () => {
@@ -110,7 +107,7 @@ describe("ForkTest: Vault", function () {
       expect(await vault.capitalPaused()).to.be.false;
     });
 
-    it("Should allow to mint and redeem w/ USDC", async () => {
+    it("Should allow to mint w/ USDC", async () => {
       const { ousd, vault, josh, usdc } = fixture;
       const balancePreMint = await ousd
         .connect(josh)
@@ -123,37 +120,6 @@ describe("ForkTest: Vault", function () {
 
       const balanceDiff = balancePostMint.sub(balancePreMint);
       expect(balanceDiff).to.approxEqualTolerance(ousdUnits("500"), 1);
-
-      await vault.connect(josh).redeem(balanceDiff, 0);
-
-      const balancePostRedeem = await ousd
-        .connect(josh)
-        .balanceOf(josh.getAddress());
-      expect(balancePreMint).to.approxEqualTolerance(balancePostRedeem, 1);
-    });
-
-    it("Should calculate and return redeem outputs", async () => {
-      const { vault } = fixture;
-      const outputs = await vault.calculateRedeemOutputs(ousdUnits("100"));
-      expect(outputs).to.have.length(1);
-      const assets = await vault.getAllAssets();
-
-      const values = await Promise.all(
-        outputs.map(async (output, index) => {
-          const asset = await ethers.getContractAt(
-            "MintableERC20",
-            assets[index]
-          );
-          return parseFloat(
-            formatUnits(output.toString(), await decimalsFor(asset))
-          );
-        })
-      );
-
-      expect(ousdUnits(values[0].toString())).to.approxEqualTolerance(
-        ousdUnits("100"),
-        0.5
-      );
     });
 
     it("should withdraw from and deposit to strategy", async () => {
@@ -220,34 +186,6 @@ describe("ForkTest: Vault", function () {
     });
   });
 
-  describe("Oracle", () => {
-    it("Should have correct Price Oracle address set", async () => {
-      const { vault } = fixture;
-      expect(await vault.priceProvider()).to.equal(
-        "0x36CFB852d3b84afB3909BCf4ea0dbe8C82eE1C3c"
-      );
-    });
-
-    it("Should return a price for minting with USDC", async () => {
-      const { vault, usdc } = fixture;
-      const price = await vault.priceUnitMint(usdc.address);
-
-      log(`Price for minting with USDC: ${utils.formatEther(price, 6)}`);
-
-      expect(price).to.be.lte(utils.parseEther("1"));
-      expect(price).to.be.gt(utils.parseEther("0.999"));
-    });
-
-    it("Should return a price for redeem with USDC", async () => {
-      const { vault, usdc } = fixture;
-      const price = await vault.priceUnitRedeem(usdc.address);
-
-      log(`Price for redeeming with USDC: ${utils.formatEther(price, 6)}`);
-
-      expect(price).to.be.gte(utils.parseEther("1"));
-    });
-  });
-
   describe("Assets & Strategies", () => {
     it("Should NOT have any unknown assets", async () => {
       const { vault } = fixture;
@@ -292,12 +230,12 @@ describe("ForkTest: Vault", function () {
       }
     });
 
-    it("Should have correct default strategy set for USDC", async () => {
-      const { vault, usdc } = fixture;
+    it("Should have correct default strategy", async () => {
+      const { vault } = fixture;
 
-      expect([
-        "0x3643cafA6eF3dd7Fcc2ADaD1cabf708075AFFf6e", // Morpho OUSD v2 Strategy
-      ]).to.include(await vault.assetDefaultStrategies(usdc.address));
+      expect(await vault.defaultStrategy()).to.equal(
+        "0x3643cafA6eF3dd7Fcc2ADaD1cabf708075AFFf6e" // Morpho OUSD v2 Strategy
+      );
     });
 
     it("Should be able to withdraw from all strategies", async () => {

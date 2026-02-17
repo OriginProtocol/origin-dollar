@@ -125,11 +125,10 @@ You can enable the "hot deploy" mode when doing fork testing development. The mo
 To enable Hot Deploys set the HOT_DEPLOY variable in the contracts/.env file. Enable various modes using comma separated flags to direct which contracts need source updated (in the node runtime):
 
 - strategy -> strategy contract associated to fixture
-- vaultCore -> vaultCore or oethVaultCore depending on the nature of the fixture
-- vaultAdmin -> vaultAdmin or oethVaultAdmin depending on the nature of the fixture
+- vault -> OUSDVault or OETHVault depending on the nature of the fixture
 - harvester -> harvester or oethHarvester (not yet supported)
 
-example: HOT_DEPLOY=strategy,vaultCore,vaultAdmin,harvester
+example: HOT_DEPLOY=strategy,vault,harvester
 
 #### Supporting new fixtures / contracts
 
@@ -360,6 +359,7 @@ pnpm hardhat setActionVars --id f92ea662-fc34-433b-8beb-b34e9ab74685
 pnpm hardhat setActionVars --id b1d831f1-29d4-4943-bb2e-8e625b76e82c
 pnpm hardhat setActionVars --id 6567d7c6-7ec7-44bd-b95b-470dd1ff780b
 pnpm hardhat setActionVars --id 6a633bb0-aff8-4b37-aaae-b4c6f244ed87
+pnpm hardhat setActionVars --id 076c59e4-4150-42c7-9ba0-9962069ac353
 
 # Mainnet
 pnpm hardhat updateAction --id e2929f53-db56-49b2-b054-35f7df7fc4fb --file doAccounting
@@ -369,6 +369,12 @@ pnpm hardhat updateAction --id f92ea662-fc34-433b-8beb-b34e9ab74685 --file sonic
 pnpm hardhat updateAction --id b1d831f1-29d4-4943-bb2e-8e625b76e82c --file claimBribes
 pnpm hardhat updateAction --id 6567d7c6-7ec7-44bd-b95b-470dd1ff780b --file manageBribeOnSonic
 pnpm hardhat updateAction --id 6a633bb0-aff8-4b37-aaae-b4c6f244ed87 --file managePassThrough
+pnpm hardhat updateAction --id 076c59e4-4150-42c7-9ba0-9962069ac353 --file manageBribes
+# These are Base -> Mainnet & Mainnet -> Base actions
+# they share the codebase. The direction of relaying attestations is defined by the
+# network of the relayer that is attached to the action
+pnpm hardhat updateAction --id bb43e5da-f936-4185-84da-253394583665 --file crossChainRelay
+pnpm hardhat updateAction --id e571409b-5399-48e4-bfb2-50b7af9903aa --file crossChainRelay
 ```
 
 `rollup` can be installed globally to avoid the `npx` prefix.

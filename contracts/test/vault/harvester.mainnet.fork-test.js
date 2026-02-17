@@ -3,7 +3,6 @@ const { utils, BigNumber } = require("ethers");
 
 const { createFixtureLoader, harvesterFixture } = require("./../_fixture");
 const { isCI, oethUnits } = require("./../helpers");
-const { hotDeployOption } = require("../_hot-deploy");
 const addresses = require("../../utils/addresses");
 const { setERC20TokenBalance } = require("../_fund");
 const { parseUnits } = require("ethers").utils;
@@ -19,12 +18,6 @@ describe("ForkTest: Harvester", function () {
   let fixture;
   beforeEach(async () => {
     fixture = await loadFixture();
-    await hotDeployOption(fixture, null, {
-      isOethFixture: true,
-    });
-    await hotDeployOption(fixture, null, {
-      isOethFixture: false,
-    });
   });
 
   // Skipping this since we switched to simple harvester

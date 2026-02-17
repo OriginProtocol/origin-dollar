@@ -1,5 +1,4 @@
 const { subtask, task, types } = require("hardhat/config");
-const { fund } = require("./account");
 const { debug } = require("./debug");
 const { env } = require("./env");
 const { setActionVars, updateAction } = require("./defender");
@@ -19,7 +18,7 @@ const {
   decryptMasterPrivateKey,
 } = require("./amazon");
 const { collect, setDripDuration } = require("./dripper");
-const { getSigner } = require("../utils/signers");
+const { getSigner, getDefenderSigner } = require("../utils/signers");
 const { snapMorpho } = require("../utils/morpho");
 const { snapAero } = require("./aero");
 const {
@@ -51,14 +50,12 @@ const {
   depositToStrategy,
   mint,
   rebase,
-  redeem,
   requestWithdrawal,
   claimWithdrawal,
   snapVault,
   withdrawFromStrategy,
   withdrawAllFromStrategy,
   withdrawAllFromStrategies,
-  yieldTask,
 } = require("./vault");
 const { checkDelta, getDelta, takeSnapshot } = require("./valueChecker");
 const {
@@ -67,6 +64,7 @@ const {
   curveSwapTask,
   curvePoolTask,
 } = require("./curve");
+const { calculateMaxPricePerVoteTask, manageBribes } = require("./poolBooster");
 const {
   depositSSV,
   withdrawSSV,
@@ -144,21 +142,14 @@ const {
 } = require("./beaconTesting");
 const { claimMerklRewards } = require("./merkl");
 
+const { processCctpBridgeTransactions } = require("./crossChain");
+const { keyValueStoreLocalClient } = require("../utils/defender");
+const { configuration } = require("../utils/cctp");
+
 const log = require("../utils/logger")("tasks");
 
 // Environment tasks.
 task("env", "Check env vars are properly set for a Mainnet deployment", env);
-
-// Account tasks.
-task("fund", "Fund accounts on local or fork")
-  .addOptionalParam("num", "Number of accounts to fund")
-  .addOptionalParam("index", "Account start index")
-  .addOptionalParam("amount", "Stable coin amount to fund each account with")
-  .addOptionalParam(
-    "accountsfromenv",
-    "Fund accounts from the .env file instead of mnemonic"
-  )
-  .setAction(fund);
 
 // Debug tasks.
 task("debug", "Print info about contracts and their configs", debug);
@@ -167,7 +158,7 @@ task("debug", "Print info about contracts and their configs", debug);
 subtask("allowance", "Get the token allowance an owner has given to a spender")
   .addParam(
     "symbol",
-    "Symbol of the token. eg OETH, WETH, USDT or OGV",
+    "Symbol of the token. eg OETH, WETH, USDC or OGV",
     undefined,
     types.string
   )
@@ -193,7 +184,7 @@ task("allowance").setAction(async (_, __, runSuper) => {
 subtask("balance", "Get the token balance of an account or contract")
   .addParam(
     "symbol",
-    "Symbol of the token. eg OETH, WETH, USDT or OGV",
+    "Symbol of the token. eg OETH, WETH, USDC or OGV",
     undefined,
     types.string
   )
@@ -215,7 +206,7 @@ task("balance").setAction(async (_, __, runSuper) => {
 subtask("approve", "Approve an account or contract to spend tokens")
   .addParam(
     "symbol",
-    "Symbol of the token. eg OETH, WETH, USDT or OGV",
+    "Symbol of the token. eg OETH, WETH, USDC or OGV",
     undefined,
     types.string
   )
@@ -239,7 +230,7 @@ task("approve").setAction(async (_, __, runSuper) => {
 subtask("transfer", "Transfer tokens to an account or contract")
   .addParam(
     "symbol",
-    "Symbol of the token. eg OETH, WETH, USDT or OGV",
+    "Symbol of the token. eg OETH, WETH, USDC or OGV",
     undefined,
     types.string
   )
@@ -253,7 +244,7 @@ task("transfer").setAction(async (_, __, runSuper) => {
 subtask("transferFrom", "Transfer tokens from an account or contract")
   .addParam(
     "symbol",
-    "Symbol of the token. eg OETH, WETH, USDT or OGV",
+    "Symbol of the token. eg OETH, WETH, USDC or OGV",
     undefined,
     types.string
   )
@@ -354,12 +345,10 @@ task("rebase").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
 
-task("yield", "Artificially generate yield on the OUSD Vault", yieldTask);
-
 subtask("mint", "Mint OTokens from the Vault using collateral assets")
   .addOptionalParam(
     "asset",
-    "Symbol of the collateral asset to deposit. eg WETH, wS, USDT, DAI or USDC",
+    "Symbol of the collateral asset to deposit. eg WETH, wS or USDC",
     undefined,
     types.string
   )
@@ -384,25 +373,6 @@ subtask("mint", "Mint OTokens from the Vault using collateral assets")
   )
   .setAction(mint);
 task("mint").setAction(async (_, __, runSuper) => {
-  return runSuper();
-});
-
-subtask("redeem", "Redeem OTokens for collateral assets from the Vault")
-  .addParam("amount", "Amount of OTokens to burn", undefined, types.float)
-  .addOptionalParam(
-    "symbol",
-    "Symbol of the OToken. eg OETH or OUSD",
-    "OETH",
-    types.string
-  )
-  .addOptionalParam(
-    "min",
-    "Minimum amount of collateral to receive",
-    0,
-    types.float
-  )
-  .setAction(redeem);
-task("redeem").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
 
@@ -700,6 +670,64 @@ subtask("curvePool", "Dumps the current state of a Curve pool")
   )
   .setAction(curvePoolTask);
 task("curvePool").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+// Pool Booster
+subtask(
+  "calculateMaxPricePerVote",
+  "Calculates the MaxPricePerVote for Curve Pool Booster"
+)
+  .addOptionalParam(
+    "efficiency",
+    "Target efficiency (0-10, e.g. 1 for 100%, 0.5 for 50%)",
+    "1",
+    types.string
+  )
+  .addOptionalParam(
+    "skip",
+    "Skip setting RewardPerVote (pass array of zeros)",
+    false,
+    types.boolean
+  )
+  .addOptionalParam(
+    "output",
+    "true will output to the console. false will use debug logs.",
+    true,
+    types.boolean
+  )
+  .setAction(calculateMaxPricePerVoteTask);
+task("calculateMaxPricePerVote").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+subtask(
+  "manageCurvePoolBoosterBribes",
+  "Calls manageBribes on the CurvePoolBoosterBribesModule and calculates the rewards per vote based on the target efficiency"
+)
+  .addOptionalParam(
+    "efficiency",
+    "Target efficiency (0-10, e.g. 1 for 100%, 0.5 for 50%)",
+    "1",
+    types.string
+  )
+  .addOptionalParam(
+    "skipRewardPerVote",
+    "Skip setting RewardPerVote (pass array of zeros)",
+    false,
+    types.boolean
+  )
+  .setAction(async (taskArgs) => {
+    // This action only works with the Defender Relayer signer
+    const signer = await getDefenderSigner();
+    await manageBribes({
+      signer,
+      provider: signer.provider,
+      targetEfficiency: taskArgs.efficiency,
+      skipRewardPerVote: taskArgs.skipRewardPerVote,
+    });
+  });
+task("manageCurvePoolBoosterBribes").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
 
@@ -1217,6 +1245,75 @@ subtask(
     await stakeValidators({ ...config, signer });
   });
 task("stakeValidators").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+/**
+ * This function relays the messages between mainnet and base networks.
+ *
+ * IMPORTANT!!!
+ * If possible please use the defender action and not local execution. The defender action stores into the cloud
+ * key-value store the transaction hashes that have already been relayed. Relaying the transaction via this task
+ * will make the defender relayer continuously fail relaying the transaction that has already been processed.
+ * If the action is ran every ~12 hours and looks back for ~1 day worth of blocks it might fail to run 2-3 times and
+ * then skip some pending transactions that would need relaying.
+ */
+task(
+  "relayCCTPMessage",
+  "Fetches CCTP attested Messages via Circle Gateway API and relays it to the integrator contract"
+)
+  .addOptionalParam(
+    "block",
+    "Override the block number at which the message emission transaction happened",
+    undefined,
+    types.int
+  )
+  .addOptionalParam(
+    "dryrun",
+    "Do not call verifyBalances on the strategy contract. Just log the params including the proofs",
+    false,
+    types.boolean
+  )
+  .setAction(async (taskArgs) => {
+    const networkName = await getNetworkName();
+    const storeFilePath = require("path").join(
+      __dirname,
+      "..",
+      `.localKeyValueStorage.${networkName}`
+    );
+
+    // This action only works with the Defender Relayer signer
+    const signer = await getDefenderSigner();
+    const store = keyValueStoreLocalClient({ _storePath: storeFilePath });
+
+    const isMainnet = networkName === "mainnet";
+    const isBase = networkName === "base";
+
+    let config;
+    if (isMainnet) {
+      config = configuration.mainnetBaseMorpho.mainnet;
+    } else if (isBase) {
+      config = configuration.mainnetBaseMorpho.base;
+    } else {
+      throw new Error(`Unsupported network name: ${networkName}`);
+    }
+
+    await processCctpBridgeTransactions({
+      ...taskArgs,
+      destinationChainSigner: signer,
+      sourceChainProvider: ethers.provider,
+      store,
+      networkName,
+      blockLookback: config.blockLookback,
+      cctpDestinationDomainId: config.cctpDestinationDomainId,
+      cctpSourceDomainId: config.cctpSourceDomainId,
+      cctpIntegrationContractAddress: config.cctpIntegrationContractAddress,
+      cctpIntegrationContractAddressDestination:
+        config.cctpIntegrationContractAddressDestination,
+    });
+  });
+
+task("relayCCTPMessage").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
 

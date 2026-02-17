@@ -237,8 +237,7 @@ async function swapXAMOFixture(
 ) {
   const fixture = await defaultSonicFixture();
 
-  const { oSonic, oSonicVault, rafael, nick, strategist, timelock, wS } =
-    fixture;
+  const { oSonic, oSonicVault, rafael, nick, strategist, wS } = fixture;
 
   let swapXAMOStrategy, swapXPool, swapXGauge, swpx;
 
@@ -264,10 +263,6 @@ async function swapXAMOFixture(
     swpx = await resolveAsset("SWPx");
   }
 
-  await oSonicVault
-    .connect(timelock)
-    .setAssetDefaultStrategy(wS.address, addresses.zero);
-
   // mint some OS using wS if configured
   if (config?.wsMintAmount > 0) {
     const wsAmount = parseUnits(config.wsMintAmount.toString());
@@ -279,7 +274,7 @@ async function swapXAMOFixture(
     const wsBalance = await wS.balanceOf(oSonicVault.address);
     const queue = await oSonicVault.withdrawalQueueMetadata();
     const available = wsBalance.add(queue.claimed).sub(queue.queued);
-    const mintAmount = wsAmount.sub(available);
+    const mintAmount = wsAmount.sub(available).mul(10);
 
     if (mintAmount.gt(0)) {
       // Approve the Vault to transfer wS

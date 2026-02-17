@@ -188,6 +188,39 @@ def main():
       )
     )
 
+########################################################
+# Deposit WETH and Redeem wOETH
+########################################################
+from world_base import *
+def main():
+  with TemporaryForkForReallocations() as txs:
+    txs.append(woeth_strat.updateWOETHOraclePrice({ 'from': MULTICHAIN_STRATEGIST }))
+    txs.append(vault_core.rebase({'from': MULTICHAIN_STRATEGIST}))
+    txs.append(vault_value_checker.takeSnapshot({'from': MULTICHAIN_STRATEGIST}))
+
+    eth_balance = base_strategist.balance() - (0.005 * 10**18)
+    borrowed_from_guardian = 373_624625 * 10**12
+
+    current_guardian_balance = oethb.balanceOf(MULTICHAIN_STRATEGIST)
+    original_guardian_balance = current_guardian_balance + borrowed_from_guardian
+    print("ETH balance", c18(eth_balance), eth_balance)
+    print("Current guardian balance", c18(current_guardian_balance), current_guardian_balance)
+    print("Original guardian balance", c18(original_guardian_balance), original_guardian_balance)
+    print("OETHb borrowed from guardian", c18(borrowed_from_guardian), borrowed_from_guardian)
+    
+    txs.append(weth.deposit({'from': MULTICHAIN_STRATEGIST, 'value': eth_balance}))
+    txs.append(base_bridge_helper_module.depositWETHAndBridgeWOETH(eth_balance, {'from': MULTICHAIN_STRATEGIST}))
+
+    vault_change = vault_core.totalValue() - vault_value_checker.snapshots(MULTICHAIN_STRATEGIST)[0]
+    supply_change = oethb.totalSupply() - vault_value_checker.snapshots(MULTICHAIN_STRATEGIST)[1]
+    profit = vault_change - supply_change
+    txs.append(vault_value_checker.checkDelta(profit, (0.1 * 10**18), vault_change, (1 * 10**18), {'from': MULTICHAIN_STRATEGIST}))
+
+    print("-----")
+    print("Profit", "{:.6f}".format(profit / 10**18), profit)
+    print("OETHb supply change", "{:.6f}".format(supply_change / 10**18), supply_change)
+    print("Vault Change", "{:.6f}".format(vault_change / 10**18), vault_change)
+    print("-----")
 
 # -------------------------------------------
 # Jan 14 2026 - Add 300 SSV to second Native Staking SSV Cluster

@@ -19,6 +19,7 @@ contract MockEvilReentrantContract {
     IVault public immutable oethVault;
     address public immutable poolAddress;
     bytes32 public immutable balancerPoolId;
+    address public immutable priceProvider;
 
     constructor(
         address _balancerVault,
@@ -37,7 +38,6 @@ contract MockEvilReentrantContract {
     }
 
     function doEvilStuff() public {
-        address priceProvider = oethVault.priceProvider();
         uint256 rethPrice = IOracle(priceProvider).price(address(reth));
 
         // 1. Join pool
@@ -99,9 +99,6 @@ contract MockEvilReentrantContract {
         virtual
         returns (uint256 bptExpected)
     {
-        // Get the oracle from the OETH Vault
-        address priceProvider = oethVault.priceProvider();
-
         for (uint256 i = 0; i < _assets.length; ++i) {
             uint256 strategyAssetMarketPrice = IOracle(priceProvider).price(
                 _assets[i]
