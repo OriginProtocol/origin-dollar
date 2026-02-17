@@ -1203,8 +1203,8 @@ subtask(
   )
   .addOptionalParam("clear", "Clear storage", false, types.boolean)
   .addOptionalParam(
-    "ssv",
-    "Override the days option and set the amount of SSV to deposit to the cluster.",
+    "eth",
+    "Override the days option and set the amount of ETH to deposit to the cluster.",
     undefined,
     types.float
   )

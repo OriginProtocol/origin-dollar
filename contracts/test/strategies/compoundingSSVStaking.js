@@ -8,7 +8,7 @@ const {
   setBalance,
   setStorageAt,
 } = require("@nomicfoundation/hardhat-network-helpers");
-const { isCI, getAssetAddresses } = require("../helpers");
+const { isCI } = require("../helpers");
 const { shouldBehaveLikeGovernable } = require("../behaviour/governable");
 const { shouldBehaveLikeStrategy } = require("../behaviour/strategy");
 const { MAX_UINT256, ZERO_BYTES32 } = require("../../utils/constants");
@@ -139,18 +139,6 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
 
       await expect(signer.sendTransaction(tx)).to.not.be.reverted;
     });
-
-    it("SSV network should have allowance to spend SSV tokens of the strategy", async () => {
-      const { compoundingStakingSSVStrategy, ssv } = fixture;
-
-      const ssvNetworkAddress = await getAssetAddresses(deployments);
-      await expect(
-        await ssv.allowance(
-          compoundingStakingSSVStrategy.address,
-          ssvNetworkAddress.SSVNetwork
-        )
-      ).to.equal(MAX_UINT256);
-    });
   });
 
   describe("Configuring the strategy", () => {
@@ -278,7 +266,6 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
         testValidator.publicKey,
         testValidator.operatorIds,
         testValidator.sharesData,
-        0, // SSV amount
         emptyCluster
       );
 
@@ -728,7 +715,7 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
         ).state
       ).to.equal(0, "Validator state not 0 (NON_REGISTERED)");
 
-      const ssvAmount = ethUnits("2");
+      const ethAmount = ethUnits("2");
       // Register a new validator with the SSV Network
       const regTx = await compoundingStakingSSVStrategy
         .connect(validatorRegistrator)
@@ -736,8 +723,8 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
           testValidator.publicKey,
           testValidator.operatorIds,
           testValidator.sharesData,
-          ssvAmount,
-          emptyCluster
+          emptyCluster,
+          { value: ethAmount }
         );
 
       await expect(regTx)
@@ -816,8 +803,8 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
           testValidator.publicKey,
           testValidator.operatorIds,
           testValidator.sharesData,
-          ethUnits("2"),
-          emptyCluster
+          emptyCluster,
+          { value: ethUnits("2") }
         );
 
       const depositDataRoot = await calcDepositRoot(
@@ -945,8 +932,8 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
           testValidator.publicKey,
           testValidator.operatorIds,
           testValidator.sharesData,
-          ethUnits("2"),
-          emptyCluster
+          emptyCluster,
+          { value: ethUnits("2") }
         );
 
       // Try to stake 2 ETH to the new validator
@@ -977,8 +964,8 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
           testValidator.publicKey,
           testValidator.operatorIds,
           testValidator.sharesData,
-          ethUnits("2"),
-          emptyCluster
+          emptyCluster,
+          { value: ethUnits("2") }
         );
 
       await expect(tx).to.be.revertedWith("Pausable: paused");
@@ -996,8 +983,8 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
           testValidator.publicKey,
           testValidator.operatorIds,
           testValidator.sharesData,
-          ethUnits("2"),
-          emptyCluster
+          emptyCluster,
+          { value: ethUnits("2") }
         );
 
       await compoundingStakingSSVStrategy.connect(governor).pause();
@@ -1028,8 +1015,8 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
           testValidator.publicKey,
           testValidator.operatorIds,
           testValidator.sharesData,
-          ethUnits("2"),
-          emptyCluster
+          emptyCluster,
+          { value: ethUnits("2") }
         );
 
       // Try to register the same validator again
@@ -1040,8 +1027,8 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
             testValidator.publicKey,
             testValidator.operatorIds,
             testValidator.sharesData,
-            ethUnits("2"),
-            emptyCluster
+            emptyCluster,
+            { value: ethUnits("2") }
           )
       ).to.be.revertedWith("Validator already registered");
     });
@@ -1378,8 +1365,8 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
           testValidator.publicKey,
           testValidator.operatorIds,
           testValidator.sharesData,
-          ethUnits("2"),
-          emptyCluster
+          emptyCluster,
+          { value: ethUnits("2") }
         );
 
       expect(

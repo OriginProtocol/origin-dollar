@@ -23,7 +23,6 @@ const validatorOperationsConfig = async (taskArgs) => {
   const addressesSet = addresses[networkName];
   const isMainnet = networkName === "mainnet";
 
-
   const WETH = await ethers.getContractAt("IWETH9", addressesSet.WETH);
 
   const nativeStakingStrategy = await resolveNativeStakingStrategyProxy(
@@ -56,10 +55,10 @@ const validatorOperationsConfig = async (taskArgs) => {
     throw new Error("Secret VALIDATOR_KEYS_S3_BUCKET_NAME not set");
   }
 
-  // Convert the SSV amount to wei in string format if it is provided
-  const ssvAmount =
-    taskArgs.ssv >= 0
-      ? parseEther(taskArgs.ssv.toString()).toString()
+  // Convert the ETH amount to wei in string format if it is provided
+  const ethAmount =
+    taskArgs.eth >= 0
+      ? parseEther(taskArgs.eth.toString()).toString()
       : undefined;
 
   // Local/dev mode — simple in-memory store
@@ -91,7 +90,7 @@ const validatorOperationsConfig = async (taskArgs) => {
     clear: taskArgs.clear,
     uuid: taskArgs.uuid,
     maxValidatorsToRegister: taskArgs.validators,
-    ssvAmount,
+    ethAmount,
     awsS3AccessKeyId,
     awsS3SexcretAccessKeyId,
     s3BucketName,

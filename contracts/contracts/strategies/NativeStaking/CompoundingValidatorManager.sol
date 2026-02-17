@@ -290,16 +290,14 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
     /// @param publicKey The public key of the validator
     /// @param operatorIds The operator IDs of the SSV Cluster
     /// @param sharesData The shares data for the validator
-    /// @param ssvAmount The amount of SSV tokens to be deposited to the SSV cluster
     /// @param cluster The SSV cluster details including the validator count and SSV balance
     // slither-disable-start reentrancy-no-eth
     function registerSsvValidator(
         bytes calldata publicKey,
         uint64[] calldata operatorIds,
         bytes calldata sharesData,
-        uint256 ssvAmount,
         Cluster calldata cluster
-    ) external onlyRegistrator whenNotPaused {
+    ) external payable onlyRegistrator whenNotPaused {
         // Hash the public key using the Beacon Chain's format
         bytes32 pubKeyHash = _hashPubKey(publicKey);
         // Check each public key has not already been used
@@ -311,11 +309,10 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
         // Store the validator state as registered
         validator[pubKeyHash].state = ValidatorState.REGISTERED;
 
-        ISSVNetwork(SSV_NETWORK).registerValidator(
+        ISSVNetwork(SSV_NETWORK).registerValidator{ value: msg.value }(
             publicKey,
             operatorIds,
             sharesData,
-            ssvAmount,
             cluster
         );
 

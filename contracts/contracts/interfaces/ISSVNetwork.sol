@@ -217,9 +217,8 @@ interface ISSVNetwork {
         bytes memory publicKey,
         uint64[] memory operatorIds,
         bytes memory sharesData,
-        uint256 amount,
         Cluster memory cluster
-    ) external;
+    ) external payable;
 
     function bulkRegisterValidator(
         bytes[] calldata publicKeys,
