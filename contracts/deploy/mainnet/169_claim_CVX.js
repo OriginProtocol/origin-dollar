@@ -17,6 +17,7 @@ module.exports = deploymentWithGovernanceProposal(
       "VaultAdmin",
       cVaultProxy.address
     );
+    const cCVX = await ethers.getContractAt("ERC20", addresses.mainnet.CVX);
 
     return {
       name: `Claim CVX tokens stuck in the OUSD Vault.`,
@@ -25,6 +26,11 @@ module.exports = deploymentWithGovernanceProposal(
           contract: cVaultAdmin,
           signature: "transferToken(address,uint256)",
           args: [addresses.mainnet.CVX, "805679677566091469209"],
+        },
+        {
+          contract: cCVX,
+          signature: "transfer(address,uint256)",
+          args: [addresses.multichainStrategist, "805679677566091469209"],
         },
       ],
     };
