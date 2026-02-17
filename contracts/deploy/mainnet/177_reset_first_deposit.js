@@ -2,7 +2,7 @@ const { deploymentWithGovernanceProposal } = require("../../utils/deploy");
 
 module.exports = deploymentWithGovernanceProposal(
   {
-    deployName: "168_reset_first_deposit",
+    deployName: "177_reset_first_deposit",
     forceDeploy: false,
     // Skipping as this is run 5 times and doesn't make sense to execute without the validator registrator
     // calling stakeEth between each
