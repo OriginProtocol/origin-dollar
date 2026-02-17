@@ -4,7 +4,7 @@ const addresses = require("../../utils/addresses");
 
 module.exports = deploymentWithGovernanceProposal(
   {
-    deployName: "173_staking_consolidation",
+    deployName: "179_staking_consolidation",
     forceDeploy: false,
     //forceSkip: true,
     reduceQueueTime: true,
