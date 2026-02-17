@@ -23,7 +23,7 @@ describe("ForkTest: Merkl Pool Booster", function () {
     oethVault,
     poolBoosterCentralRegistry,
     beacon,
-    governor, // Timelock — governor of the factory
+    governor, // multichainStrategist — governor of the factory & owner of the beacon
     anna; // random signer for auth tests
 
   beforeEach(async () => {
@@ -36,9 +36,9 @@ describe("ForkTest: Merkl Pool Booster", function () {
     poolBoosterCentralRegistry = fixture.poolBoosterCentralRegistry;
     anna = fixture.anna;
 
-    // Governor of the factory is the Timelock
-    governor = await impersonateAndFund(addresses.mainnet.Timelock);
-    governor.address = addresses.mainnet.Timelock;
+    // Governor of the factory & owner of the beacon is the multichainStrategist
+    governor = await impersonateAndFund(addresses.multichainStrategist);
+    governor.address = addresses.multichainStrategist;
 
     // Get beacon from factory
     const beaconAddr = await poolBoosterMerklFactory.beacon();
@@ -94,7 +94,7 @@ describe("ForkTest: Merkl Pool Booster", function () {
 
     it("Should have correct governor", async () => {
       expect(await poolBoosterMerklFactory.governor()).to.equal(
-        addresses.mainnet.Timelock
+        addresses.multichainStrategist
       );
     });
 
@@ -696,7 +696,7 @@ describe("ForkTest: Merkl Pool Booster", function () {
     });
 
     it("Should have correct owner", async () => {
-      expect(await beacon.owner()).to.equal(addresses.mainnet.Timelock);
+      expect(await beacon.owner()).to.equal(addresses.multichainStrategist);
     });
   });
 

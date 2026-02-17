@@ -10,9 +10,6 @@ module.exports = deploymentWithGovernanceProposal(
     proposalId: "",
   },
   async ({ deployWithConfirmation }) => {
-    const oethProxy = await ethers.getContract("OETHProxy");
-    const oeth = await ethers.getContractAt("OETH", oethProxy.address);
-
     const cPoolBoostCentralRegistryProxy = await ethers.getContract(
       "PoolBoostCentralRegistryProxy"
     );
@@ -42,7 +39,7 @@ module.exports = deploymentWithGovernanceProposal(
       "UpgradeableBeacon",
       [dPoolBoosterMerklV2.address]
     );
-    // Transfer beacon ownership from deployer to Timelock
+    // Transfer beacon ownership from deployer to multichainStrategist
     const cBeacon = await ethers.getContractAt(
       "UpgradeableBeacon",
       dUpgradeableBeacon.address
@@ -51,7 +48,7 @@ module.exports = deploymentWithGovernanceProposal(
     const sBeaconDeployer = ethers.provider.getSigner(beaconDeployerAddr);
     await cBeacon
       .connect(sBeaconDeployer)
-      .transferOwnership(addresses.mainnet.Timelock);
+      .transferOwnership(addresses.multichainStrategist);
     console.log(`UpgradeableBeacon deployed to ${dUpgradeableBeacon.address}`);
 
     // ---------------------------------------------------------------------------------------------------------
@@ -85,7 +82,7 @@ module.exports = deploymentWithGovernanceProposal(
       "function initialize(address,address,address)",
     ]);
     const factoryInitData = iFactory.encodeFunctionData("initialize", [
-      addresses.mainnet.Timelock,
+      addresses.multichainStrategist,
       cPoolBoostCentralRegistryProxy.address,
       dUpgradeableBeacon.address,
     ]);
@@ -100,7 +97,7 @@ module.exports = deploymentWithGovernanceProposal(
     const initProxy = cFactoryProxy.connect(sDeployer);
     await initProxy["initialize(address,address,bytes)"](
       dFactoryImpl.address,
-      addresses.mainnet.Timelock,
+      addresses.multichainStrategist,
       factoryInitData
     );
     console.log("Factory proxy initialized");
@@ -108,27 +105,8 @@ module.exports = deploymentWithGovernanceProposal(
     // ---------------------------------------------------------------------------------------------------------
     // --- 6. Governance proposal
     // ---------------------------------------------------------------------------------------------------------
-    // Encode initData for the first Pool Booster
-    const iPoolBoosterMerklV2 = new ethers.utils.Interface([
-      "function initialize(uint32,uint32,address,address,address,address,bytes)",
-    ]);
-    const initData = iPoolBoosterMerklV2.encodeFunctionData("initialize", [
-      604800, // duration: 7 days
-      45, // campaignType: concentrated liquidity
-      oeth.address, // rewardToken
-      addresses.mainnet.CampaignCreator, // merklDistributor
-      addresses.mainnet.Guardian, // governor
-      addresses.multichainStrategist, // strategist
-      "0x", // campaignData: placeholder
-    ]);
-
-    const cNewFactory = await ethers.getContractAt(
-      "PoolBoosterFactoryMerkl",
-      dFactoryProxy.address
-    );
-
     return {
-      name: "Swap PoolBoosterFactoryMerkl and create Pool Booster",
+      name: "Swap PoolBoosterFactoryMerkl",
       actions: [
         {
           // Remove old factory from central registry
@@ -141,16 +119,6 @@ module.exports = deploymentWithGovernanceProposal(
           contract: cPoolBoostCentralRegistry,
           signature: "approveFactory(address)",
           args: [dFactoryProxy.address],
-        },
-        {
-          // Create a new Pool Booster via the new factory
-          contract: cNewFactory,
-          signature: "createPoolBoosterMerkl(address,bytes,uint256)",
-          args: [
-            "0xBBBBBbbBBb9cC5e90e3b3Af64bdAF62C37EEFFCb", // AMM pool
-            initData,
-            1, // salt
-          ],
         },
       ],
     };
