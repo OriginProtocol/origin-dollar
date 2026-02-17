@@ -17,6 +17,7 @@ module.exports = deploymentWithGovernanceProposal(
       "PoolBoostCentralRegistry",
       cPoolBoostCentralRegistryProxy.address
     );
+    const oethProxy = await ethers.getContract("OETHProxy");
 
     // Get old factory from deployment artifacts
     const oldFactory = await ethers.getContract("PoolBoosterFactoryMerkl");
@@ -57,6 +58,7 @@ module.exports = deploymentWithGovernanceProposal(
     const dFactory = await deployWithConfirmation(
       "PoolBoosterFactoryMerkl",
       [
+        oethProxy.address,
         addresses.multichainStrategist,
         cPoolBoostCentralRegistryProxy.address,
         dUpgradeableBeacon.address,

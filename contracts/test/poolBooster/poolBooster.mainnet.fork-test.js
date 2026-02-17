@@ -12,6 +12,7 @@ const mainnetFixture = createFixtureLoader(defaultFixture);
 describe("ForkTest: Merkl Pool Booster", function () {
   const DEFAULT_DURATION = 604800; // 7 days
   const DEFAULT_CAMPAIGN_TYPE = 45;
+  const DEFAULT_CAMPAIGN_DATA = "0xc0c0c0";
   const MERKL_BOOSTER_TYPE = 3; // IPoolBoostCentralRegistry.PoolBoosterType.MerklBooster
   const AMM_POOL = "0xBBBBBbbBBb9cC5e90e3b3Af64bdAF62C37EEFFCb";
 
@@ -65,7 +66,7 @@ describe("ForkTest: Merkl Pool Booster", function () {
       overrides.merklDistributor ?? addresses.mainnet.CampaignCreator,
       overrides.governor ?? addresses.mainnet.Guardian,
       overrides.strategist ?? addresses.multichainStrategist,
-      overrides.campaignData ?? "0x",
+      overrides.campaignData ?? DEFAULT_CAMPAIGN_DATA,
     ]);
   }
 
@@ -280,6 +281,32 @@ describe("ForkTest: Merkl Pool Booster", function () {
       await expect(createPoolBooster(404, undefined, { campaignType: 0 })).to.be
         .reverted;
     });
+
+    it("Should revert with empty campaignData", async () => {
+      await expect(
+        createPoolBooster(405, undefined, { campaignData: "0x" })
+      ).to.be.reverted;
+    });
+
+    it("Should not allow initialize on implementation contract", async () => {
+      const implAddress = await beacon.implementation();
+      const impl = await ethers.getContractAt(
+        "PoolBoosterMerklV2",
+        implAddress
+      );
+
+      await expect(
+        impl.initialize(
+          DEFAULT_DURATION,
+          DEFAULT_CAMPAIGN_TYPE,
+          oeth.address,
+          addresses.mainnet.CampaignCreator,
+          addresses.mainnet.Guardian,
+          addresses.multichainStrategist,
+          DEFAULT_CAMPAIGN_DATA
+        )
+      ).to.be.revertedWith("Initializable: contract is already initialized");
+    });
   });
 
   // -------------------------------------------------------------------
@@ -391,6 +418,12 @@ describe("ForkTest: Merkl Pool Booster", function () {
         .to.emit(poolBooster, "CampaignDataUpdated")
         .withArgs(newData);
       expect(await poolBooster.campaignData()).to.equal(newData);
+    });
+
+    it("Should revert setCampaignData with empty data", async () => {
+      await expect(
+        poolBooster.connect(pbGovernor).setCampaignData("0x")
+      ).to.be.revertedWith("Invalid campaign data");
     });
 
     it("Should revert setCampaignData if non-governor/strategist", async () => {

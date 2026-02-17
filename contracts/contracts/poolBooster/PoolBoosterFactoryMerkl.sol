@@ -3,20 +3,12 @@ pragma solidity ^0.8.0;
 
 import { BeaconProxy } from "@openzeppelin/contracts/proxy/beacon/BeaconProxy.sol";
 import { UpgradeableBeacon } from "@openzeppelin/contracts/proxy/beacon/UpgradeableBeacon.sol";
-import { Governable } from "../governance/Governable.sol";
-import { IPoolBooster } from "../interfaces/poolBooster/IPoolBooster.sol";
-import { IPoolBoostCentralRegistry } from "../interfaces/poolBooster/IPoolBoostCentralRegistry.sol";
+import { AbstractPoolBoosterFactory, IPoolBoostCentralRegistry } from "./AbstractPoolBoosterFactory.sol";
 
 /// @title PoolBoosterFactoryMerkl
 /// @author Origin Protocol
 /// @notice Factory for creating Merkl pool boosters using BeaconProxy.
-contract PoolBoosterFactoryMerkl is Governable {
-    struct PoolBoosterEntry {
-        address boosterAddress;
-        address ammPoolAddress;
-        IPoolBoostCentralRegistry.PoolBoosterType boosterType;
-    }
-
+contract PoolBoosterFactoryMerkl is AbstractPoolBoosterFactory {
     ////////////////////////////////////////////////////
     /// --- CONSTANTS
     ////////////////////////////////////////////////////
@@ -28,38 +20,25 @@ contract PoolBoosterFactoryMerkl is Governable {
     /// --- STORAGE
     ////////////////////////////////////////////////////
 
-    /// @notice Central registry contract
-    IPoolBoostCentralRegistry public centralRegistry;
     /// @notice Address of the UpgradeableBeacon
     address public beacon;
-
-    /// @notice List of all pool boosters created by this factory
-    PoolBoosterEntry[] public poolBoosters;
-    /// @notice Mapping of AMM pool to pool booster
-    mapping(address => PoolBoosterEntry) public poolBoosterFromPool;
 
     ////////////////////////////////////////////////////
     /// --- CONSTRUCTOR
     ////////////////////////////////////////////////////
 
+    /// @param _oToken Address of the OToken
     /// @param _governor Address of the governor
     /// @param _centralRegistry Address of the central registry
     /// @param _beacon Address of the UpgradeableBeacon
     constructor(
+        address _oToken,
         address _governor,
         address _centralRegistry,
         address _beacon
-    ) {
-        require(_governor != address(0), "Invalid governor address");
-        require(
-            _centralRegistry != address(0),
-            "Invalid central registry addr"
-        );
+    ) AbstractPoolBoosterFactory(_oToken, _governor, _centralRegistry) {
         require(_beacon != address(0), "Invalid beacon address");
-
-        centralRegistry = IPoolBoostCentralRegistry(_centralRegistry);
         beacon = _beacon;
-        _setGovernor(_governor);
     }
 
     ////////////////////////////////////////////////////
@@ -98,29 +77,19 @@ contract PoolBoosterFactoryMerkl is Governable {
 
     /// @notice Calls bribe() on all pool boosters, skipping those in the exclusion list
     /// @param _exclusionList A list of pool booster addresses to skip
-    function bribeAll(address[] memory _exclusionList) public onlyGovernor {
-        uint256 lengthI = poolBoosters.length;
-        for (uint256 i = 0; i < lengthI; i++) {
-            address poolBoosterAddress = poolBoosters[i].boosterAddress;
-            bool skipBribeCall = false;
-            uint256 lengthJ = _exclusionList.length;
-            for (uint256 j = 0; j < lengthJ; j++) {
-                if (_exclusionList[j] == poolBoosterAddress) {
-                    skipBribeCall = true;
-                    break;
-                }
-            }
-
-            if (!skipBribeCall) {
-                IPoolBooster(poolBoosterAddress).bribe();
-            }
-        }
+    function bribeAll(address[] memory _exclusionList)
+        public
+        override
+        onlyGovernor
+    {
+        super.bribeAll(_exclusionList);
     }
 
     /// @notice Removes a pool booster from the internal list
     /// @param _poolBoosterAddress Address of the pool booster to remove
     function removePoolBooster(address _poolBoosterAddress)
         external
+        override
         onlyGovernor
     {
         uint256 boostersLen = poolBoosters.length;
@@ -166,35 +135,5 @@ contract PoolBoosterFactoryMerkl is Governable {
             )
         );
         return address(uint160(uint256(hash)));
-    }
-
-    /// @notice Returns the number of pool boosters
-    function poolBoosterLength() external view returns (uint256) {
-        return poolBoosters.length;
-    }
-
-    ////////////////////////////////////////////////////
-    /// --- INTERNAL
-    ////////////////////////////////////////////////////
-
-    function _storePoolBoosterEntry(
-        address _poolBoosterAddress,
-        address _ammPoolAddress,
-        IPoolBoostCentralRegistry.PoolBoosterType _boosterType
-    ) internal {
-        PoolBoosterEntry memory entry = PoolBoosterEntry(
-            _poolBoosterAddress,
-            _ammPoolAddress,
-            _boosterType
-        );
-
-        poolBoosters.push(entry);
-        poolBoosterFromPool[_ammPoolAddress] = entry;
-
-        centralRegistry.emitPoolBoosterCreated(
-            _poolBoosterAddress,
-            _ammPoolAddress,
-            _boosterType
-        );
     }
 }

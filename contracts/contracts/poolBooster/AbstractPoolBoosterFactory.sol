@@ -80,6 +80,7 @@ contract AbstractPoolBoosterFactory is Governable {
      */
     function removePoolBooster(address _poolBoosterAddress)
         external
+        virtual
         onlyGovernor
     {
         uint256 boostersLen = poolBoosters.length;
