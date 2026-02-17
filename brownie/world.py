@@ -63,6 +63,7 @@ flux_strat = load_contract('comp_strat', FLUX_STRAT)
 frxeth_redeem_strat = load_contract('frxeth_redeem_strat', OETH_FRAX_ETH_REDEEM_STRAT)
 native_staking_strat = load_contract('native_staking_strat', OETH_NATIVE_STAKING_STRAT)
 native_staking_2_strat = load_contract('native_staking_strat', OETH_NATIVE_STAKING_2_STRAT)
+native_staking_3_strat = load_contract('native_staking_strat', OETH_NATIVE_STAKING_3_STRAT)
 lido_withdrawal_strat = load_contract('lido_withdrawal_strat', OETH_LIDO_WITHDRAWAL_STRAT)
 
 ousd_metapool = load_contract("ousd_metapool", OUSD_METAPOOL)
