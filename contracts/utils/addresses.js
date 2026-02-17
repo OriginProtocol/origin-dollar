@@ -328,7 +328,7 @@ addresses.mainnet.CurveGaugeController =
 addresses.mainnet.CurvePoolBoosterOETH =
   "0x7B5e7aDEBC2da89912BffE55c86675CeCE59803E";
 addresses.mainnet.CurvePoolBoosterBribesModule =
-  "0xfA01FE78bBD1ade8064C34FE537BA2E2670B2198";
+  "0x82447F7C3eF0a628B0c614A3eA0898a5bb7c18fe";
 
 // SSV network
 addresses.mainnet.SSV = "0x9D65fF81a3c488d585bBfb0Bfe3c7707c7917f54";
@@ -707,8 +707,10 @@ addresses.hoodi.mockBeaconRoots = "0xdCfcAE4A084AA843eE446f400B23aA7B6340484b";
 
 // Crosschain Strategy
 // TODO delete: master - remote test address: 0x1743658b284a843b47f555343dbb628d46d0c254
-addresses.base.CrossChainRemoteStrategy = "TODO";
-addresses.mainnet.CrossChainMasterStrategy = "TODO";
+addresses.base.CrossChainRemoteStrategy =
+  "0xB1d624fc40824683e2bFBEfd19eB208DbBE00866";
+addresses.mainnet.CrossChainMasterStrategy =
+  "0xB1d624fc40824683e2bFBEfd19eB208DbBE00866";
 // CCTP Circle Contract addresses: https://developers.circle.com/cctp/references/contract-addresses
 addresses.CCTPTokenMessengerV2 = "0x28b5a0e9c621a5badaa536219b3a228c8168cf5d";
 addresses.CCTPMessageTransmitterV2 =
