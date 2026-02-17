@@ -3,7 +3,7 @@ const { deployProxyWithCreateX } = require("../deployActions");
 
 module.exports = deployOnBase(
   {
-    deployName: "040_crosschain_strategy_proxies",
+    deployName: "041_crosschain_strategy_proxies",
   },
   async () => {
     // the salt needs to match the salt on the base chain deploying the other part of the strategy
