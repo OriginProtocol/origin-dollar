@@ -2,6 +2,7 @@
 pragma solidity ^0.8.0;
 
 import { BeaconProxy } from "@openzeppelin/contracts/proxy/beacon/BeaconProxy.sol";
+import { UpgradeableBeacon } from "@openzeppelin/contracts/proxy/beacon/UpgradeableBeacon.sol";
 import { Governable } from "../governance/Governable.sol";
 import { Initializable } from "../utils/Initializable.sol";
 import { IPoolBooster } from "../interfaces/poolBooster/IPoolBooster.sol";
@@ -30,7 +31,7 @@ contract PoolBoosterFactoryMerkl is Governable, Initializable {
 
     /// @notice Central registry contract
     IPoolBoostCentralRegistry public centralRegistry;
-    /// @notice Address of the GovernableBeacon
+    /// @notice Address of the UpgradeableBeacon
     address public beacon;
 
     /// @notice List of all pool boosters created by this factory
@@ -50,7 +51,7 @@ contract PoolBoosterFactoryMerkl is Governable, Initializable {
     /// @notice Initialize the factory
     /// @param _governor Address of the governor
     /// @param _centralRegistry Address of the central registry
-    /// @param _beacon Address of the GovernableBeacon
+    /// @param _beacon Address of the UpgradeableBeacon
     function initialize(
         address _governor,
         address _centralRegistry,

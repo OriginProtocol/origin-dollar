@@ -36,13 +36,23 @@ module.exports = deploymentWithGovernanceProposal(
     );
 
     // ---------------------------------------------------------------------------------------------------------
-    // --- 2. Deploy GovernableBeacon pointing to PoolBoosterMerklV2
+    // --- 2. Deploy UpgradeableBeacon pointing to PoolBoosterMerklV2
     // ---------------------------------------------------------------------------------------------------------
-    const dGovernableBeacon = await deployWithConfirmation("GovernableBeacon", [
-      dPoolBoosterMerklV2.address,
-      addresses.mainnet.Timelock,
-    ]);
-    console.log(`GovernableBeacon deployed to ${dGovernableBeacon.address}`);
+    const dUpgradeableBeacon = await deployWithConfirmation(
+      "UpgradeableBeacon",
+      [dPoolBoosterMerklV2.address]
+    );
+    // Transfer beacon ownership from deployer to Timelock
+    const cBeacon = await ethers.getContractAt(
+      "UpgradeableBeacon",
+      dUpgradeableBeacon.address
+    );
+    const { deployerAddr: beaconDeployerAddr } = await getNamedAccounts();
+    const sBeaconDeployer = ethers.provider.getSigner(beaconDeployerAddr);
+    await cBeacon
+      .connect(sBeaconDeployer)
+      .transferOwnership(addresses.mainnet.Timelock);
+    console.log(`UpgradeableBeacon deployed to ${dUpgradeableBeacon.address}`);
 
     // ---------------------------------------------------------------------------------------------------------
     // --- 3. Deploy PoolBoosterFactoryMerklProxy
@@ -77,7 +87,7 @@ module.exports = deploymentWithGovernanceProposal(
     const factoryInitData = iFactory.encodeFunctionData("initialize", [
       addresses.mainnet.Timelock,
       cPoolBoostCentralRegistryProxy.address,
-      dGovernableBeacon.address,
+      dUpgradeableBeacon.address,
     ]);
 
     const cFactoryProxy = await ethers.getContractAt(
@@ -87,7 +97,8 @@ module.exports = deploymentWithGovernanceProposal(
     // The deployer initializes the proxy (sets impl + governor + calls initialize)
     const { deployerAddr } = await getNamedAccounts();
     const sDeployer = ethers.provider.getSigner(deployerAddr);
-    await cFactoryProxy.connect(sDeployer)["initialize(address,address,bytes)"](
+    const initProxy = cFactoryProxy.connect(sDeployer);
+    await initProxy["initialize(address,address,bytes)"](
       dFactoryImpl.address,
       addresses.mainnet.Timelock,
       factoryInitData

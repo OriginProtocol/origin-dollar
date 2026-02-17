@@ -42,7 +42,7 @@ describe("ForkTest: Merkl Pool Booster", function () {
 
     // Get beacon from factory
     const beaconAddr = await poolBoosterMerklFactory.beacon();
-    beacon = await ethers.getContractAt("GovernableBeacon", beaconAddr);
+    beacon = await ethers.getContractAt("UpgradeableBeacon", beaconAddr);
   });
 
   // Helper: mint OETH by depositing WETH into the vault
@@ -73,8 +73,7 @@ describe("ForkTest: Merkl Pool Booster", function () {
   // Uses salt as a unique pool address when ammPool is not provided.
   async function createPoolBooster(salt, ammPool, initOverrides = {}) {
     const pool =
-      ammPool ||
-      ethers.utils.hexZeroPad(ethers.utils.hexlify(salt || 999), 20);
+      ammPool || ethers.utils.hexZeroPad(ethers.utils.hexlify(salt || 999), 20);
     const initData = encodeInitData(initOverrides);
     await poolBoosterMerklFactory
       .connect(governor)
@@ -167,9 +166,9 @@ describe("ForkTest: Merkl Pool Booster", function () {
     it("Should revert when creating duplicate for same AMM pool", async () => {
       const pool = "0x0000000000000000000000000000000000000099";
       await createPoolBooster(350, pool);
-      await expect(
-        createPoolBooster(351, pool)
-      ).to.be.revertedWith("Pool booster already exists");
+      await expect(createPoolBooster(351, pool)).to.be.revertedWith(
+        "Pool booster already exists"
+      );
     });
 
     it("Should revert with zero ammPoolAddress", async () => {
@@ -224,14 +223,16 @@ describe("ForkTest: Merkl Pool Booster", function () {
     it("Should revert upgradeTo with non-contract address", async () => {
       await expect(
         beacon.connect(governor).upgradeTo(anna.address)
-      ).to.be.revertedWith("Impl is not a contract");
+      ).to.be.revertedWith(
+        "UpgradeableBeacon: implementation is not a contract"
+      );
     });
 
     it("Should revert upgradeTo when called by non-governor", async () => {
       const newImpl = await deployWithConfirmation("PoolBoosterMerklV2", []);
       await expect(
         beacon.connect(anna).upgradeTo(newImpl.address)
-      ).to.be.revertedWith("Caller is not the Governor");
+      ).to.be.revertedWith("Ownable: caller is not the owner");
     });
   });
 
@@ -276,9 +277,8 @@ describe("ForkTest: Merkl Pool Booster", function () {
     });
 
     it("Should revert with zero campaignType", async () => {
-      await expect(
-        createPoolBooster(404, undefined, { campaignType: 0 })
-      ).to.be.reverted;
+      await expect(createPoolBooster(404, undefined, { campaignType: 0 })).to.be
+        .reverted;
     });
   });
 
@@ -695,8 +695,8 @@ describe("ForkTest: Merkl Pool Booster", function () {
       expect(code.length).to.be.gt(2); // "0x" for EOA
     });
 
-    it("Should have correct governor", async () => {
-      expect(await beacon.governor()).to.equal(addresses.mainnet.Timelock);
+    it("Should have correct owner", async () => {
+      expect(await beacon.owner()).to.equal(addresses.mainnet.Timelock);
     });
   });
 
