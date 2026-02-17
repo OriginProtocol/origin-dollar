@@ -943,11 +943,8 @@ const defaultFixture = deployments.createFixture(async () => {
         await ethers.getContract("PoolBoostCentralRegistryProxy")
       ).address
     );
-    poolBoosterMerklFactory = await ethers.getContractAt(
-      "PoolBoosterFactoryMerkl",
-      (
-        await ethers.getContract("PoolBoosterFactoryMerklProxy")
-      ).address
+    poolBoosterMerklFactory = await ethers.getContract(
+      "PoolBoosterFactoryMerkl"
     );
 
     merklDistributor = await ethers.getContractAt(

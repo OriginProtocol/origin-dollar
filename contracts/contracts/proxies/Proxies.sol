@@ -328,10 +328,3 @@ contract CompoundingStakingSSVStrategyProxy is
 contract OUSDMorphoV2StrategyProxy is InitializeGovernedUpgradeabilityProxy {
 
 }
-
-/**
- * @notice PoolBoosterFactoryMerklProxy delegates calls to PoolBoosterFactoryMerkl implementation
- */
-contract PoolBoosterFactoryMerklProxy is InitializeGovernedUpgradeabilityProxy {
-
-}

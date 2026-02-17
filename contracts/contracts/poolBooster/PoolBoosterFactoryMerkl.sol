@@ -4,14 +4,13 @@ pragma solidity ^0.8.0;
 import { BeaconProxy } from "@openzeppelin/contracts/proxy/beacon/BeaconProxy.sol";
 import { UpgradeableBeacon } from "@openzeppelin/contracts/proxy/beacon/UpgradeableBeacon.sol";
 import { Governable } from "../governance/Governable.sol";
-import { Initializable } from "../utils/Initializable.sol";
 import { IPoolBooster } from "../interfaces/poolBooster/IPoolBooster.sol";
 import { IPoolBoostCentralRegistry } from "../interfaces/poolBooster/IPoolBoostCentralRegistry.sol";
 
 /// @title PoolBoosterFactoryMerkl
 /// @author Origin Protocol
 /// @notice Factory for creating Merkl pool boosters using BeaconProxy.
-contract PoolBoosterFactoryMerkl is Governable, Initializable {
+contract PoolBoosterFactoryMerkl is Governable {
     struct PoolBoosterEntry {
         address boosterAddress;
         address ammPoolAddress;
@@ -39,24 +38,18 @@ contract PoolBoosterFactoryMerkl is Governable, Initializable {
     /// @notice Mapping of AMM pool to pool booster
     mapping(address => PoolBoosterEntry) public poolBoosterFromPool;
 
-    /// @dev Reserved storage for future upgrades
-    uint256[50] private __gap;
-
     ////////////////////////////////////////////////////
-    /// --- CONSTRUCTOR && INITIALIZATION
+    /// --- CONSTRUCTOR
     ////////////////////////////////////////////////////
 
-    constructor() {}
-
-    /// @notice Initialize the factory
     /// @param _governor Address of the governor
     /// @param _centralRegistry Address of the central registry
     /// @param _beacon Address of the UpgradeableBeacon
-    function initialize(
+    constructor(
         address _governor,
         address _centralRegistry,
         address _beacon
-    ) external initializer {
+    ) {
         require(_governor != address(0), "Invalid governor address");
         require(
             _centralRegistry != address(0),

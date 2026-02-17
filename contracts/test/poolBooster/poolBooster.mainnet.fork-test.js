@@ -601,90 +601,7 @@ describe("ForkTest: Merkl Pool Booster", function () {
   });
 
   // -------------------------------------------------------------------
-  // 9. Factory: Initialization validation
-  // -------------------------------------------------------------------
-  describe("Factory: Initialization validation", () => {
-    async function deployFreshProxy() {
-      const dImpl = await deployWithConfirmation(
-        "PoolBoosterFactoryMerkl",
-        [],
-        undefined,
-        true
-      );
-      const dProxy = await deployWithConfirmation(
-        "PoolBoosterFactoryMerklProxy",
-        []
-      );
-      const { deployerAddr } = await hre.getNamedAccounts();
-      const sDeployer = ethers.provider.getSigner(deployerAddr);
-      const proxy = await ethers.getContractAt(
-        "PoolBoosterFactoryMerklProxy",
-        dProxy.address
-      );
-      return { dImpl, proxy, sDeployer };
-    }
-
-    function encodeFactoryInit(args) {
-      const iFactory = new ethers.utils.Interface([
-        "function initialize(address,address,address)",
-      ]);
-      return iFactory.encodeFunctionData("initialize", args);
-    }
-
-    it("Should revert initialize with zero governor", async () => {
-      const { dImpl, proxy, sDeployer } = await deployFreshProxy();
-      const initData = encodeFactoryInit([
-        addresses.zero,
-        poolBoosterCentralRegistry.address,
-        beacon.address,
-      ]);
-      const p = proxy.connect(sDeployer);
-      await expect(
-        p["initialize(address,address,bytes)"](
-          dImpl.address,
-          addresses.mainnet.Timelock,
-          initData
-        )
-      ).to.be.reverted;
-    });
-
-    it("Should revert initialize with zero central registry", async () => {
-      const { dImpl, proxy, sDeployer } = await deployFreshProxy();
-      const initData = encodeFactoryInit([
-        addresses.mainnet.Timelock,
-        addresses.zero,
-        beacon.address,
-      ]);
-      const p = proxy.connect(sDeployer);
-      await expect(
-        p["initialize(address,address,bytes)"](
-          dImpl.address,
-          addresses.mainnet.Timelock,
-          initData
-        )
-      ).to.be.reverted;
-    });
-
-    it("Should revert initialize with zero beacon", async () => {
-      const { dImpl, proxy, sDeployer } = await deployFreshProxy();
-      const initData = encodeFactoryInit([
-        addresses.mainnet.Timelock,
-        poolBoosterCentralRegistry.address,
-        addresses.zero,
-      ]);
-      const p = proxy.connect(sDeployer);
-      await expect(
-        p["initialize(address,address,bytes)"](
-          dImpl.address,
-          addresses.mainnet.Timelock,
-          initData
-        )
-      ).to.be.reverted;
-    });
-  });
-
-  // -------------------------------------------------------------------
-  // 10. Beacon: constructor & implementation view
+  // 9. Beacon: constructor & implementation view
   // -------------------------------------------------------------------
   describe("Beacon: state", () => {
     it("Should return the current implementation address", async () => {
@@ -701,7 +618,7 @@ describe("ForkTest: Merkl Pool Booster", function () {
   });
 
   // -------------------------------------------------------------------
-  // 11. Factory: poolBoosterLength & poolBoosters array
+  // 10. Factory: poolBoosterLength & poolBoosters array
   // -------------------------------------------------------------------
   describe("Factory: pool booster tracking", () => {
     it("Should track multiple pool boosters correctly", async () => {
@@ -740,7 +657,7 @@ describe("ForkTest: Merkl Pool Booster", function () {
   });
 
   // -------------------------------------------------------------------
-  // 12. PoolBoosterMerklV2: bribe() called by factory
+  // 11. PoolBoosterMerklV2: bribe() called by factory
   // -------------------------------------------------------------------
   describe("PoolBoosterMerklV2: bribe() via factory", () => {
     it("Should allow factory to call bribe()", async () => {

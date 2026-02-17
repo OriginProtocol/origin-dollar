@@ -52,58 +52,22 @@ module.exports = deploymentWithGovernanceProposal(
     console.log(`UpgradeableBeacon deployed to ${dUpgradeableBeacon.address}`);
 
     // ---------------------------------------------------------------------------------------------------------
-    // --- 3. Deploy PoolBoosterFactoryMerklProxy
+    // --- 3. Deploy PoolBoosterFactoryMerkl
     // ---------------------------------------------------------------------------------------------------------
-    const dFactoryProxy = await deployWithConfirmation(
-      "PoolBoosterFactoryMerklProxy",
-      []
-    );
-    console.log(
-      `PoolBoosterFactoryMerklProxy deployed to ${dFactoryProxy.address}`
-    );
-
-    // ---------------------------------------------------------------------------------------------------------
-    // --- 4. Deploy PoolBoosterFactoryMerkl implementation (new initializable version)
-    // ---------------------------------------------------------------------------------------------------------
-    const dFactoryImpl = await deployWithConfirmation(
+    const dFactory = await deployWithConfirmation(
       "PoolBoosterFactoryMerkl",
-      [],
-      undefined,
-      true
+      [
+        addresses.multichainStrategist,
+        cPoolBoostCentralRegistryProxy.address,
+        dUpgradeableBeacon.address,
+      ]
     );
     console.log(
-      `PoolBoosterFactoryMerkl impl deployed to ${dFactoryImpl.address}`
+      `PoolBoosterFactoryMerkl deployed to ${dFactory.address}`
     );
 
     // ---------------------------------------------------------------------------------------------------------
-    // --- 5. Initialize factory proxy
-    // ---------------------------------------------------------------------------------------------------------
-    const iFactory = new ethers.utils.Interface([
-      "function initialize(address,address,address)",
-    ]);
-    const factoryInitData = iFactory.encodeFunctionData("initialize", [
-      addresses.multichainStrategist,
-      cPoolBoostCentralRegistryProxy.address,
-      dUpgradeableBeacon.address,
-    ]);
-
-    const cFactoryProxy = await ethers.getContractAt(
-      "PoolBoosterFactoryMerklProxy",
-      dFactoryProxy.address
-    );
-    // The deployer initializes the proxy (sets impl + governor + calls initialize)
-    const { deployerAddr } = await getNamedAccounts();
-    const sDeployer = ethers.provider.getSigner(deployerAddr);
-    const initProxy = cFactoryProxy.connect(sDeployer);
-    await initProxy["initialize(address,address,bytes)"](
-      dFactoryImpl.address,
-      addresses.multichainStrategist,
-      factoryInitData
-    );
-    console.log("Factory proxy initialized");
-
-    // ---------------------------------------------------------------------------------------------------------
-    // --- 6. Governance proposal
+    // --- 4. Governance proposal
     // ---------------------------------------------------------------------------------------------------------
     return {
       name: "Swap PoolBoosterFactoryMerkl",
@@ -115,10 +79,10 @@ module.exports = deploymentWithGovernanceProposal(
           args: [oldFactory.address],
         },
         {
-          // Approve new factory proxy in central registry
+          // Approve new factory in central registry
           contract: cPoolBoostCentralRegistry,
           signature: "approveFactory(address)",
-          args: [dFactoryProxy.address],
+          args: [dFactory.address],
         },
       ],
     };
