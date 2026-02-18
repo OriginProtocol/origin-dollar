@@ -10,13 +10,13 @@ const { resolveNativeStakingStrategyProxy } = require("./validator");
 
 const log = require("../utils/logger")("task:ssv");
 
-async function removeValidator({ index, pubkey, operatorids }) {
+async function removeValidator({ consol, index, pubkey, operatorids }) {
   const signer = await getSigner();
 
   log(`Splitting operator IDs ${operatorids}`);
   const operatorIds = operatorids.split(",").map((id) => parseInt(id));
 
-  const strategy = await resolveNativeStakingStrategyProxy(index);
+  const nativeStakingStrategy = await resolveNativeStakingStrategyProxy(index);
 
   const { chainId } = await ethers.provider.getNetwork();
 
@@ -25,13 +25,27 @@ async function removeValidator({ index, pubkey, operatorids }) {
     chainId,
     ssvNetwork: hre.network.name.toUpperCase(),
     operatorids,
-    ownerAddress: strategy.address,
+    ownerAddress: nativeStakingStrategy.address,
   });
 
+  const strategy = consol
+    ? await resolveContract("ConsolidationController")
+    : nativeStakingStrategy;
+
   log(`About to remove validator: ${pubkey}`);
-  const tx = await strategy
-    .connect(signer)
-    .removeSsvValidator(pubkey, operatorIds, cluster);
+  let tx = consol
+    ? await strategy
+        .connect(signer)
+        .removeSsvValidator(
+          nativeStakingStrategy.address,
+          pubkey,
+          operatorIds,
+          cluster
+        )
+    : await strategy
+        .connect(signer)
+        .removeSsvValidator(pubkey, operatorIds, cluster);
+
   await logTxDetails(tx, "removeSsvValidator");
 }
 

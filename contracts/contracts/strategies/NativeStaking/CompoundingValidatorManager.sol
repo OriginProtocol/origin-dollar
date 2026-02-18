@@ -573,8 +573,13 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
     function migrateClusterToETH(
         uint64[] memory operatorIds,
         Cluster memory cluster
-    ) external onlyGovernor {
-        ISSVNetwork(SSV_NETWORK).migrateClusterToETH(operatorIds, cluster);
+    ) external payable onlyGovernor {
+        ISSVNetwork(SSV_NETWORK).migrateClusterToETH{ value: msg.value }(
+            operatorIds,
+            cluster
+        );
+
+        // The SSV Network emits ClusterMigratedToETH(msg.sender, operatorIds, msg.value, ssvClusterBalance, effectiveBalance, cluster)
     }
 
     /**

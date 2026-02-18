@@ -55,11 +55,11 @@ const mainExport = async () => {
     .connect(sDeployer)
     .setRegistrator(dConsolidationController.address);
 
-  console.log("Running 034 deployment done");
+  console.log("Running 035 deployment done");
   return true;
 };
 
-mainExport.id = "034_validator_consolidation_upgrade";
+mainExport.id = "035_validator_consolidation_upgrade";
 mainExport.tags = [];
 mainExport.dependencies = [];
 mainExport.skip = () => false;
