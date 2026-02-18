@@ -1143,6 +1143,12 @@ subtask(
   "Migrate the SSV Cluster to ETH used by the CompoundingStakingSSVStrategy"
 )
   .addParam(
+    "type",
+    "new for compounding staking strategy. old for old Native Staking Strategy",
+    undefined,
+    types.string
+  )
+  .addParam(
     "operatorids",
     "Comma separated operator ids. E.g. 342,343,344,345",
     undefined,

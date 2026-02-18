@@ -3,7 +3,11 @@ const { parseUnits, formatUnits } = require("ethers/lib/utils");
 const addresses = require("../utils/addresses");
 const { resolveContract } = require("../utils/resolvers");
 const { getSigner } = require("../utils/signers");
-const { getClusterInfo, sortOperatorIds } = require("../utils/ssv");
+const {
+  getClusterInfo,
+  sortOperatorIds,
+  splitOperatorIds,
+} = require("../utils/ssv");
 const { getNetworkName } = require("../utils/hardhat-helpers");
 const { logTxDetails } = require("../utils/txLogger");
 const { resolveNativeStakingStrategyProxy } = require("./validator");
@@ -92,28 +96,27 @@ const depositSSV = async ({ amount, index, operatorids }) => {
   await logTxDetails(tx, "depositSSV");
 };
 
-const migrateClusterToETH = async ({ amount, operatorids }) => {
+const migrateClusterToETH = async ({ type, amount, operatorids }) => {
   const etherAmountBN = parseUnits(amount.toString(), 18);
   log(`Splitting operator IDs ${operatorids}`);
-  const operatorIds = await sortOperatorIds(operatorids);
+  const operatorIds = splitOperatorIds(operatorids);
 
   const signer = await getSigner();
 
-  const strategy = await resolveContract(
-    "CompoundingStakingSSVStrategyProxy",
-    "CompoundingStakingSSVStrategy"
-  );
+  const strategy =
+    type === "new"
+      ? await resolveContract(
+          "CompoundingStakingSSVStrategyProxy",
+          "CompoundingStakingSSVStrategy"
+        )
+      : await resolveNativeStakingStrategyProxy();
 
   const { chainId } = await ethers.provider.getNetwork();
-  const networkName = await getNetworkName();
-  const ssvNetworkAddress = addresses[networkName].SSVNetwork;
-  const ssvNetwork = await resolveContract(ssvNetworkAddress, "ISSVNetwork");
 
   // Cluster details
   const clusterInfo = await getClusterInfo({
     chainId,
-    ssvNetwork: ssvNetwork.address,
-    operatorids,
+    operatorids: operatorIds.join(","),
     ownerAddress: strategy.address,
   });
 

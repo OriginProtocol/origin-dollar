@@ -579,7 +579,8 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
             cluster
         );
 
-        // The SSV Network emits ClusterMigratedToETH(msg.sender, operatorIds, msg.value, ssvClusterBalance, effectiveBalance, cluster)
+        // The SSV Network emits
+        // ClusterMigratedToETH(msg.sender, operatorIds, msg.value, ssvClusterBalance, effectiveBalance, cluster)
     }
 
     /**
