@@ -8,7 +8,6 @@ const { deployWithConfirmation } = require("../utils/deploy");
 const addresses = require("../utils/addresses");
 const erc20Abi = require("./abi/erc20.json");
 const hhHelpers = require("@nomicfoundation/hardhat-network-helpers");
-const { getCreate2ProxyAddress } = require("../deploy/deployActions");
 
 const log = require("../utils/logger")("test:fixtures-base");
 
@@ -306,9 +305,8 @@ const bridgeHelperModuleFixture = deployments.createFixture(async () => {
 
 const crossChainFixture = deployments.createFixture(async () => {
   const fixture = await defaultBaseFixture();
-  const crossChainStrategyProxyAddress = await getCreate2ProxyAddress(
-    "CrossChainStrategyProxy"
-  );
+  const crossChainStrategyProxyAddress =
+    addresses.base.CrossChainRemoteStrategy;
   const crossChainRemoteStrategy = await ethers.getContractAt(
     "CrossChainRemoteStrategy",
     crossChainStrategyProxyAddress

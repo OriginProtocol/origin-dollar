@@ -26,7 +26,6 @@ const {
   isHoleskyFork,
 } = require("./helpers");
 const { hardhatSetBalance, setERC20TokenBalance } = require("./_fund");
-const { getCreate2ProxyAddress } = require("../deploy/deployActions");
 
 const usdsAbi = require("./abi/usds.json").abi;
 const usdtAbi = require("./abi/usdt.json").abi;
@@ -1547,9 +1546,8 @@ async function enableExecutionLayerGeneralPurposeRequests() {
 async function crossChainFixture() {
   const fixture = await defaultFixture();
 
-  const crossChainStrategyProxyAddress = await getCreate2ProxyAddress(
-    "CrossChainStrategyProxy"
-  );
+  const crossChainStrategyProxyAddress =
+    addresses.mainnet.CrossChainMasterStrategy;
   const cCrossChainMasterStrategy = await ethers.getContractAt(
     "CrossChainMasterStrategy",
     crossChainStrategyProxyAddress
