@@ -149,8 +149,8 @@ sol2uml storage .. -c WOSonic -o WOSonicStorage.svg --hideExpand  ______gap
 
 sol2uml .. -v -hv -hf -he -hs -hl -hi -i prettier-plugin-solidity -b OUSDVault,OETHVault,OETHBaseVault,OSVault -o VaultHierarchy.svg
 
-sol2uml .. -s -d 0 -i prettier-plugin-solidity -b OUSDVault -o VaultSquashed.svg
-sol2uml storage .. -i prettier-plugin-solidity -c OUSDVault -o VaultStorage.svg --hideExpand __gap,______gap,_deprecated_swapTokens
+sol2uml .. -s -d 0 -i prettier-plugin-solidity -b OUSDVault -o VaultSquashed.svg -v
+sol2uml storage .. -i prettier-plugin-solidity -c OUSDVault -o VaultStorage.svg --hideExpand __gap,______gap,_deprecated_swapTokens -v
 
 # sol2uml .. -s -d 0 -i prettier-plugin-solidity -b OETHVault -o OETHVaultSquashed.svg
 # sol2uml storage .. -i prettier-plugin-solidity -c OETHVault -o OETHVaultStorage.svg --hideExpand __gap,______gap,_deprecated_swapTokens

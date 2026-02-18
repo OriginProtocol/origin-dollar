@@ -117,9 +117,9 @@
 <polyline fill="none" stroke="black" points="66.41,-570.9 1483.03,-570.9 "/>
 <text text-anchor="middle" x="774.34" y="-554.3" font-family="Courier New" font-size="14.00">uint256: VaultStorage.rebaseThreshold (32)</text>
 <polyline fill="none" stroke="black" points="66.41,-546.1 1483.03,-546.1 "/>
-<text text-anchor="middle" x="395.12" y="-529.5" font-family="Courier New" font-size="14.00">unallocated (12)</text>
-<polyline fill="none" stroke="black" points="723.83,-521.3 723.83,-546.1 "/>
-<text text-anchor="middle" x="1102.95" y="-529.5" font-family="Courier New" font-size="14.00">OUSD: VaultStorage.oUSD (20)</text>
+<text text-anchor="middle" x="391.12" y="-529.5" font-family="Courier New" font-size="14.00">unallocated (12)</text>
+<polyline fill="none" stroke="black" points="715.83,-521.3 715.83,-546.1 "/>
+<text text-anchor="middle" x="1099.35" y="-529.5" font-family="Courier New" font-size="14.00">OUSD: VaultStorage.oToken (20)</text>
 <polyline fill="none" stroke="black" points="66.41,-521.3 1483.03,-521.3 "/>
 <text text-anchor="middle" x="340.62" y="-504.7" font-family="Courier New" font-size="14.00">unallocated (12)</text>
 <polyline fill="none" stroke="black" points="614.83,-496.5 614.83,-521.3 "/>
