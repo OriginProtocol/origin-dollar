@@ -55,18 +55,13 @@ module.exports = deploymentWithGovernanceProposal(
     // ---------------------------------------------------------------------------------------------------------
     // --- 3. Deploy PoolBoosterFactoryMerkl
     // ---------------------------------------------------------------------------------------------------------
-    const dFactory = await deployWithConfirmation(
-      "PoolBoosterFactoryMerkl",
-      [
-        oethProxy.address,
-        addresses.multichainStrategist,
-        cPoolBoostCentralRegistryProxy.address,
-        dUpgradeableBeacon.address,
-      ]
-    );
-    console.log(
-      `PoolBoosterFactoryMerkl deployed to ${dFactory.address}`
-    );
+    const dFactory = await deployWithConfirmation("PoolBoosterFactoryMerkl", [
+      oethProxy.address,
+      addresses.multichainStrategist,
+      cPoolBoostCentralRegistryProxy.address,
+      dUpgradeableBeacon.address,
+    ]);
+    console.log(`PoolBoosterFactoryMerkl deployed to ${dFactory.address}`);
 
     // ---------------------------------------------------------------------------------------------------------
     // --- 4. Governance proposal

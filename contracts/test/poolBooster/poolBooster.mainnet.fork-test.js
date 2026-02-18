@@ -283,9 +283,8 @@ describe("ForkTest: Merkl Pool Booster", function () {
     });
 
     it("Should revert with empty campaignData", async () => {
-      await expect(
-        createPoolBooster(405, undefined, { campaignData: "0x" })
-      ).to.be.reverted;
+      await expect(createPoolBooster(405, undefined, { campaignData: "0x" })).to
+        .be.reverted;
     });
 
     it("Should not allow initialize on implementation contract", async () => {
