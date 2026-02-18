@@ -67,7 +67,7 @@ const {
 const { calculateMaxPricePerVoteTask, manageBribes } = require("./poolBooster");
 const {
   depositSSV,
-  withdrawSSV,
+  migrateClusterToETH,
   printClusterInfo,
   removeValidator: removeOldValidator,
 } = require("./ssv");
@@ -1139,24 +1139,17 @@ task("depositSSV").setAction(async (_, __, runSuper) => {
 });
 
 subtask(
-  "withdrawSSV",
-  "Withdraw SSV tokens from an SSV Cluster to the native staking strategy"
+  "migrateCluster",
+  "Migrate the SSV Cluster to ETH used by the CompoundingStakingSSVStrategy"
 )
-  .addParam("amount", "Amount of SSV tokens", undefined, types.float)
-  .addOptionalParam(
-    "index",
-    "The number of the Native Staking Contract deployed.",
-    undefined,
-    types.int
-  )
   .addParam(
     "operatorids",
     "Comma separated operator ids. E.g. 342,343,344,345",
     undefined,
     types.string
   )
-  .setAction(withdrawSSV);
-task("withdrawSSV").setAction(async (_, __, runSuper) => {
+  .setAction(migrateClusterToETH);
+task("migrateCluster").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
 

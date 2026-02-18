@@ -202,18 +202,6 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
 
       await expect(tx).to.revertedWith("Unsupported function");
     });
-    it("Non governor should not be able to withdraw SSV", async () => {
-      const { compoundingStakingSSVStrategy, strategist, josh } = fixture;
-
-      const signers = [strategist, josh];
-      for (const signer of signers) {
-        await expect(
-          compoundingStakingSSVStrategy
-            .connect(signer)
-            .withdrawSSV([1, 2, 3, 4], parseUnits("1", 18), emptyCluster)
-        ).to.be.revertedWith("Caller is not the Governor");
-      }
-    });
     it("Non governor should not be able to reset the first deposit flag", async () => {
       const { compoundingStakingSSVStrategy, strategist, josh } = fixture;
 

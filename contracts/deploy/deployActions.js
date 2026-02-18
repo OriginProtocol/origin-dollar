@@ -715,7 +715,6 @@ const upgradeCompoundingStakingSSVStrategy = async () => {
     [
       [addresses.zero, cOETHVaultProxy.address], //_baseConfig
       assetAddresses.WETH, // wethAddress
-      assetAddresses.SSV, // ssvToken
       assetAddresses.SSVNetwork, // ssvNetwork
       assetAddresses.beaconChainDepositContract, // depositContractMock
       cBeaconProofs.address, // BeaconProofs
@@ -937,7 +936,6 @@ const deployCompoundingStakingSSVStrategy = async () => {
     [
       [addresses.zero, cOETHVaultProxy.address], //_baseConfig
       assetAddresses.WETH, // wethAddress
-      assetAddresses.SSV, // ssvToken
       assetAddresses.SSVNetwork, // ssvNetwork
       assetAddresses.beaconChainDepositContract, // depositContractMock
       cBeaconProofs.address, // BeaconProofs

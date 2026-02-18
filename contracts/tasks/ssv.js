@@ -78,14 +78,16 @@ const depositSSV = async ({ amount, index, operatorids }) => {
   await logTxDetails(tx, "depositSSV");
 };
 
-const withdrawSSV = async ({ amount, index, operatorids }) => {
-  const amountBN = parseUnits(amount.toString(), 18);
+const migrateClusterToETH = async ({ operatorids }) => {
   log(`Splitting operator IDs ${operatorids}`);
   const operatorIds = await sortOperatorIds(operatorids);
 
   const signer = await getSigner();
 
-  const strategy = await resolveNativeStakingStrategyProxy(index);
+  const strategy = await resolveContract(
+    "CompoundingStakingSSVStrategyProxy",
+    "CompoundingStakingSSVStrategy"
+  );
 
   const { chainId } = await ethers.provider.getNetwork();
   const networkName = await getNetworkName();
@@ -100,23 +102,17 @@ const withdrawSSV = async ({ amount, index, operatorids }) => {
     ownerAddress: strategy.address,
   });
 
-  log(
-    `About to withdraw ${formatUnits(
-      amountBN
-    )} SSV tokens from the SSV Network for native staking strategy ${
-      strategy.address
-    } with operator IDs ${operatorIds}`
-  );
+  log(`About to migrate cluster to ETH with operator IDs ${operatorIds}`);
   log(`Cluster: ${JSON.stringify(clusterInfo.cluster)}`);
   const tx = await strategy
     .connect(signer)
-    .withdrawSSV(operatorIds, amountBN, clusterInfo.cluster);
-  await logTxDetails(tx, "withdrawSSV");
+    .migrateClusterToETH(operatorIds, clusterInfo.cluster);
+  await logTxDetails(tx, "migrateClusterToETH");
 };
 
 module.exports = {
   printClusterInfo,
   depositSSV,
-  withdrawSSV,
+  migrateClusterToETH,
   removeValidator,
 };

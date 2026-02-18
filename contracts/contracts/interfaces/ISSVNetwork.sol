@@ -228,6 +228,11 @@ interface ISSVNetwork {
         Cluster memory cluster
     ) external;
 
+    function migrateClusterToETH(
+        uint64[] calldata operatorIds,
+        Cluster memory cluster
+    ) external payable;
+
     function removeOperator(uint64 operatorId) external;
 
     function removeValidator(

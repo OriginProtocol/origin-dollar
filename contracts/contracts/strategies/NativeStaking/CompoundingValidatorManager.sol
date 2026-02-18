@@ -567,20 +567,14 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
 
     // slither-disable-end reentrancy-no-eth
 
-    /// `depositSSV` has been removed as `deposit` on the SSVNetwork contract can be called directly
-    /// by the Strategist which is already holding SSV tokens.
-
-    /// @notice Withdraws excess SSV Tokens from the SSV Network contract which was used to pay the SSV Operators.
-    /// @dev A SSV cluster is defined by the SSVOwnerAddress and the set of operatorIds.
+    /// @notice Migrate the SSV cluster to use ETH for payment instead of SSV tokens.
     /// @param operatorIds The operator IDs of the SSV Cluster
-    /// @param ssvAmount The amount of SSV tokens to be withdrawn from the SSV cluster
     /// @param cluster The SSV cluster details including the validator count and SSV balance
-    function withdrawSSV(
+    function migrateClusterToETH(
         uint64[] memory operatorIds,
-        uint256 ssvAmount,
         Cluster memory cluster
     ) external onlyGovernor {
-        ISSVNetwork(SSV_NETWORK).withdraw(operatorIds, ssvAmount, cluster);
+        ISSVNetwork(SSV_NETWORK).migrateClusterToETH(operatorIds, cluster);
     }
 
     /**

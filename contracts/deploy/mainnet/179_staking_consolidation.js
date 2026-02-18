@@ -56,7 +56,6 @@ module.exports = deploymentWithGovernanceProposal(
       [
         [addresses.zero, cOETHVaultProxy.address], //_baseConfig
         addresses.mainnet.WETH, // wethAddress
-        addresses.mainnet.SSV, // ssvToken
         addresses.mainnet.SSVNetwork, // ssvNetwork
         addresses.mainnet.beaconChainDepositContract, // depositContractMock
         cBeaconProofs.address, // BeaconProofs
