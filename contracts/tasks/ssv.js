@@ -78,7 +78,8 @@ const depositSSV = async ({ amount, index, operatorids }) => {
   await logTxDetails(tx, "depositSSV");
 };
 
-const migrateClusterToETH = async ({ operatorids }) => {
+const migrateClusterToETH = async ({ amount, operatorids }) => {
+  const etherAmountBN = parseUnits(amount.toString(), 18);
   log(`Splitting operator IDs ${operatorids}`);
   const operatorIds = await sortOperatorIds(operatorids);
 
@@ -102,11 +103,17 @@ const migrateClusterToETH = async ({ operatorids }) => {
     ownerAddress: strategy.address,
   });
 
-  log(`About to migrate cluster to ETH with operator IDs ${operatorIds}`);
+  log(
+    `About to migrate cluster adding ${formatUnits(
+      etherAmountBN
+    )} ETH with operator IDs ${operatorIds}`
+  );
   log(`Cluster: ${JSON.stringify(clusterInfo.cluster)}`);
   const tx = await strategy
     .connect(signer)
-    .migrateClusterToETH(operatorIds, clusterInfo.cluster);
+    .migrateClusterToETH(operatorIds, clusterInfo.cluster, {
+      value: etherAmountBN,
+    });
   await logTxDetails(tx, "migrateClusterToETH");
 };
 

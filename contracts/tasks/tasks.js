@@ -1148,6 +1148,12 @@ subtask(
     undefined,
     types.string
   )
+  .addParam(
+    "amount",
+    "Initial amount of ETH to add to the cluster",
+    undefined,
+    types.float
+  )
   .setAction(migrateClusterToETH);
 task("migrateCluster").setAction(async (_, __, runSuper) => {
   return runSuper();
