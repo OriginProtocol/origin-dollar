@@ -91,7 +91,7 @@ def main():
     txs.append(vault_admin.withdrawFromStrategy(
       MORPHO_OUSD_V2_STRAT,
       [usdc],
-      [138_000 * 10**6],
+      [189_000 * 10**6],
       {'from': MULTICHAIN_STRATEGIST}
     ))
 
