@@ -9,6 +9,7 @@ const { impersonateAndFund } = require("../../utils/signers");
 const { createFixtureLoader, beaconChainFixture } = require("../_fixture");
 const { advanceTime } = require("../helpers");
 const { calcDepositRoot } = require("../../tasks/beaconTesting");
+const { getClusterInfo } = require("../../utils/ssv");
 const loadFixture = createFixtureLoader(beaconChainFixture);
 
 const secondClusterOperatorIds = [752, 753, 754, 755];
@@ -117,6 +118,13 @@ const pendingDepositProofs = {
     "0xe43aa97c7b45d686240e148893fb944692f4a5513afca99a351c1f20e26c5597b952f1c1498e677bc53c02cbc5508746390ee5fe28ac78bb3269e3d508f26cb59cee7306db15b383b855e646ac37b0037cb71362f1d6d572080e23f4774cba5b83729aa771eef156624149b21cc655b1488a5d57d6bce4e10b93f5172eeb54731f5d33a55787852d3b1eecc7fb0c066d055b7b39c33b2ff209ec1ef5dd2645e3f4823e7cd8705b6e071b9a6c1e2f03a5f526aae52320ed0a47059c65f119d1a17f42fa6b8a8ab1e90adf86a48397eed6926f631596053f591befeb78b7bce41dbf72cb7943c7c59edd04b8f76160f3ce886a13706747047a83a7776a8215b104c90ce5e1fe6d0bde131ab5ecc1b711d7985281eca4e8a1af2769bd5cf6ef9c144c94a31e5bd4250f9581a65fe2fd5f7d50376a14c30d6ba56e02b806f1db61d3009f2a7742dc822473ab080134a0a7ef13a44c7d657d8eaba02ed5cc9fdd814617a608e510334d3112f80398e8650333342c623260139a0143aa59b31abb4348b7d05f875f140027ef5118a2247bbb84ce8f2f0f1123623085daf7960c329f5f339eebeac8b5a6dcaa2a8be7227579f7b9654cbff561a6aa52648171fdff2861b58d900f5e182e3c50ef74969ea16c7726c549757cc23523c369587da7293784334389ca1621fcc084f1855c0c04827935652cbdcc1b4a1fd86bac1043eb66138fe6b1689256c0d385f42f5bbe2027a22c1996e110ba97c171d3e5948de92beb8d0d63c39ebade8509e0ae3c9c3876fb5fa112be18f905ecacfecb92057603ab95eec8b2e541cad4e91de38385f2e046619f54496c2382cb6cacd5b98c26f5a4f893e908917775b62bff23294dbbe3a1cd8e6cc1c35b4801887b646a6f81f17fcddba7b592e3133393c16194fac7431abf2f5485ed711db282183c819e08ebaa8a8d7fe3af8caa085a7639a832001457dfb9128a8061142ad0335629ff23ff9cfeb3c337d7a51a6fbf00b9e34c52e1c9195c969bd4e7a0bfd51d5c5bed9c1167e71f0aa83cc32edfbefa9f4d3e0174ca85182eec9f3a09f6a6c0df6377a510d731206fa80a50bb6abe29085058f16212212a60eec8f049fecb92d8c8e0a84bc021352bfecbeddde993839f614c3dac0a3ee37543f9b412b16199dc158e23b544619e312724bb6d7c3153ed9de791d764a366b389af13c58bf8a8d90481a4676565af000000000000000000000000000000000000000000000000000000000000",
   ],
 };
+const emptyCluster = [
+  0, // validatorCount
+  0, // networkFeeIndex
+  0, // index
+  true, // active
+  0, // balance
+];
 
 describe("ForkTest: Consolidation of Staking Strategies", function () {
   this.timeout(0);
@@ -669,14 +677,6 @@ describe("ForkTest: Consolidation of Staking Strategies", function () {
       await expect(tx).to.be.revertedWith("Caller is not the Registrator");
     });
     it("Fail to remove source validators directly to the native staking strategies", async () => {
-      const emptyCluster = [
-        0, // validatorCount
-        0, // networkFeeIndex
-        0, // index
-        true, // active
-        0, // balance
-      ];
-
       let tx = nativeStakingStrategy2
         .connect(registratorSigner)
         .removeSsvValidator(
@@ -750,6 +750,56 @@ describe("ForkTest: Consolidation of Staking Strategies", function () {
           pubKey: activeTargetPubKey,
           amountWei: depositWei,
         });
+    });
+    it("Should remove a source validator via the Consolidation Controller", async () => {
+      const sourceValidator = secondClusterPubKeys[0];
+
+      // Exit the source validator to be able to remove it
+      await consolidationController
+        .connect(registratorSigner)
+        .exitSsvValidator(
+          nativeStakingStrategy2.address,
+          sourceValidator,
+          secondClusterOperatorIds
+        );
+
+      const { cluster } = await getClusterInfo({
+        ownerAddress: nativeStakingStrategy2.address,
+        operatorids: secondClusterOperatorIds,
+        chainId: hre.network.config.chainId,
+        ssvNetwork: addresses.SSVNetwork,
+      });
+
+      const tx = await consolidationController
+        .connect(registratorSigner)
+        .removeSsvValidator(
+          nativeStakingStrategy2.address,
+          sourceValidator,
+          secondClusterOperatorIds,
+          cluster
+        );
+
+      await expect(tx)
+        .to.emit(nativeStakingStrategy2, "SSVValidatorExitCompleted")
+        .withArgs(
+          keccak256(sourceValidator),
+          sourceValidator,
+          secondClusterOperatorIds
+        );
+    });
+    it("Fail to remove validator if not registrator", async () => {
+      const { josh } = fixture;
+      const sourceValidator = secondClusterPubKeys[0];
+
+      const tx = consolidationController
+        .connect(josh)
+        .removeSsvValidator(
+          nativeStakingStrategy2.address,
+          sourceValidator,
+          secondClusterOperatorIds,
+          emptyCluster
+        );
+      await expect(tx).to.be.revertedWith("Caller is not the Registrator");
     });
   });
   describe("When consolidation in progress", () => {
@@ -965,6 +1015,19 @@ describe("ForkTest: Consolidation of Staking Strategies", function () {
         .confirmConsolidation(balanceProofs, pendingDepositProofs);
 
       await expect(tx).to.be.revertedWith("Source not withdrawable");
+    });
+    it("Fail to remove validator when consolidation in progress", async () => {
+      const sourceValidator = secondClusterPubKeys[0];
+
+      const tx = consolidationController
+        .connect(registratorSigner)
+        .removeSsvValidator(
+          nativeStakingStrategy2.address,
+          sourceValidator,
+          secondClusterOperatorIds,
+          emptyCluster
+        );
+      await expect(tx).to.be.revertedWith("Consolidation in progress");
     });
   });
   describe("When consolidation in progress and balances snapped", () => {
