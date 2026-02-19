@@ -7,7 +7,8 @@ module.exports = deploymentWithGovernanceProposal(
     forceDeploy: false,
     reduceQueueTime: true,
     deployerIsProposer: false,
-    proposalId: "",
+    proposalId:
+      "44576067657297086005253513834508683316408185013245459259067058344639958414003",
   },
   async () => {
     const cCrossChainMasterStrategy = await ethers.getContractAt(

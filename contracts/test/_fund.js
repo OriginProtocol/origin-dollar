@@ -20,16 +20,10 @@ const log = require("../utils/logger")("test:_fund");
 
 const mappedFundingSlots = {};
 const balancesContractSlotCache = {
-  [addresses.mainnet.stETH.toLowerCase()]: [0, false],
-  [addresses.mainnet.frxETH.toLowerCase()]: [0, false],
-  [addresses.mainnet.rETH.toLowerCase()]: [1, false],
-  [addresses.mainnet.sfrxETH.toLowerCase()]: [3, false],
-  [addresses.mainnet.ThreePoolToken.toLowerCase()]: [3, true],
   [addresses.mainnet.DAI.toLowerCase()]: [2, false],
   [addresses.mainnet.USDS.toLowerCase()]: [2, false],
   [addresses.mainnet.USDC.toLowerCase()]: [9, false],
   [addresses.mainnet.USDT.toLowerCase()]: [2, false],
-  [addresses.mainnet.TUSD.toLowerCase()]: [14, false],
   [addresses.mainnet.OGN.toLowerCase()]: [0, true],
   [addresses.mainnet.OETHProxy.toLowerCase()]: [157, false],
   [addresses.mainnet.OUSDProxy.toLowerCase()]: [157, false],

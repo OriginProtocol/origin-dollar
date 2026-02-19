@@ -10,12 +10,14 @@ const { advanceTime } = require("../helpers");
 const { shouldBehaveLikeGovernable } = require("../behaviour/governable");
 const { shouldBehaveLikeHarvestable } = require("../behaviour/harvestable");
 const { shouldBehaveLikeStrategy } = require("../behaviour/strategy");
+const erc20Abi = require("../../abi/erc20.json");
+const crvMinterAbi = require("../../abi/crvMinter.json");
 
 const { loadDefaultFixture } = require("../_fixture");
 
 const log = require("../../utils/logger")("test:fork:ousd:curve:amo");
 
-describe("Curve AMO OUSD strategy", function () {
+describe("Fork Test: Curve AMO OUSD strategy", function () {
   this.timeout(0);
 
   let fixture,
@@ -37,6 +39,7 @@ describe("Curve AMO OUSD strategy", function () {
     impersonatedCurveStrategy,
     impersonatedTimelock,
     crv,
+    crvMinter,
     harvester;
 
   let defaultDepositor;
@@ -55,7 +58,11 @@ describe("Curve AMO OUSD strategy", function () {
     timelock = fixture.timelock;
     curvePool = fixture.curvePoolOusdUsdc;
     curveGauge = fixture.curveGaugeOusdUsdc;
-    crv = fixture.crv;
+    crv = await ethers.getContractAt(erc20Abi, addresses.mainnet.CRV);
+    crvMinter = await ethers.getContractAt(
+      crvMinterAbi,
+      addresses.mainnet.CRVMinter
+    );
     harvester = fixture.strategist;
     governor = await ethers.getSigner(addresses.mainnet.Timelock);
 
@@ -609,7 +616,7 @@ describe("Curve AMO OUSD strategy", function () {
       const integrate_fraction = await curveGauge.integrate_fraction(
         curveAMOStrategy.address
       );
-      const alreadyMinted = await fixture.crvMinter.minted(
+      const alreadyMinted = await crvMinter.minted(
         curveAMOStrategy.address,
         curveGauge.address
       );
