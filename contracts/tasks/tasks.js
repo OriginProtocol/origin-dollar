@@ -1,5 +1,4 @@
 const { subtask, task, types } = require("hardhat/config");
-const { debug } = require("./debug");
 const { env } = require("./env");
 const { setActionVars, updateAction } = require("./defender");
 const { execute, executeOnFork, proposal, governors } = require("./governance");
@@ -17,7 +16,6 @@ const {
   encryptMasterPrivateKey,
   decryptMasterPrivateKey,
 } = require("./amazon");
-const { collect, setDripDuration } = require("./dripper");
 const { getSigner, getDefenderSigner } = require("../utils/signers");
 const { snapMorpho } = require("../utils/morpho");
 const { snapAero } = require("./aero");
@@ -156,9 +154,6 @@ const log = require("../utils/logger")("tasks");
 
 // Environment tasks.
 task("env", "Check env vars are properly set for a Mainnet deployment", env);
-
-// Debug tasks.
-task("debug", "Print info about contracts and their configs", debug);
 
 // Token tasks.
 subtask("allowance", "Get the token allowance an owner has given to a spender")
@@ -517,38 +512,6 @@ task("claimWithdrawal").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
 
-// Dripper
-
-subtask("collect", "Collect harvested rewards from the Dripper to the Vault")
-  .addOptionalParam(
-    "symbol",
-    "Symbol of the OToken. eg OETH or OUSD",
-    "OETH",
-    types.string
-  )
-  .setAction(collect);
-task("collect").setAction(async (_, __, runSuper) => {
-  return runSuper();
-});
-
-subtask("setDripDuration", "Set the Dripper duration")
-  .addParam(
-    "duration",
-    "The number of seconds to drip harvested rewards",
-    undefined,
-    types.int
-  )
-  .addOptionalParam(
-    "symbol",
-    "Symbol of the OToken. eg OETH or OUSD",
-    "OETH",
-    types.string
-  )
-  .setAction(setDripDuration);
-task("setDripDuration").setAction(async (_, __, runSuper) => {
-  return runSuper();
-});
-
 // Governance tasks
 subtask("execute", "Execute a governance proposal")
   .addParam("id", "Proposal ID")
@@ -777,7 +740,7 @@ subtask("curveAdd", "Add liquidity to Curve Metapool")
     types.string
   )
   .addParam("otokens", "Amount of OTokens. eg OETH or OUSD", 0, types.float)
-  .addParam("assets", "Amount of assets. eg ETH or 3CRV", 0, types.float)
+  .addParam("assets", "Amount of assets. eg ETH", 0, types.float)
   .addOptionalParam(
     "slippage",
     "Max allowed slippage as a percentage to 2 decimal places.",
@@ -786,7 +749,7 @@ subtask("curveAdd", "Add liquidity to Curve Metapool")
   )
   .addOptionalParam(
     "min",
-    "Min Metapool LP tokens to be minted.",
+    "Min Curve pool LP tokens to be minted.",
     undefined,
     types.float
   )
@@ -803,7 +766,7 @@ subtask("curveRemove", "Remove liquidity from Curve Metapool")
     types.string
   )
   .addParam("otokens", "Amount of OTokens. eg OETH or OUSD", 0, types.float)
-  .addParam("assets", "Amount of assets. eg ETH or 3CRV", 0, types.float)
+  .addParam("assets", "Amount of assets. eg ETH", 0, types.float)
   .addOptionalParam(
     "slippage",
     "Max allowed slippage as a percentage to 2 decimal places.",
@@ -824,7 +787,7 @@ subtask("curveSwap", "Swap Metapool tokens")
   )
   .addParam(
     "from",
-    "Symbol of the from token. eg OETH, ETH, 3CRV, OUSD",
+    "Symbol of the from token. eg OETH, ETH, OUSD",
     undefined,
     types.string
   )
@@ -885,7 +848,7 @@ subtask(
   )
   .addParam(
     "amount",
-    "Amount of Metapool LP tokens to burn for removed assets",
+    "Amount of Curve pool LP tokens to burn for removed assets",
     0,
     types.float
   )
