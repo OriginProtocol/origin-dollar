@@ -10,7 +10,7 @@ async function requestConsolidation({ source, target, cluster }) {
   const signer = await getSigner();
   const controller = await resolveContract("ConsolidationController");
 
-  const sourcePublicKey = source.split(",");
+  const sourcePublicKeys = source.split(",");
 
   const nativeStakingStrategyProxy =
     cluster === undefined
@@ -24,13 +24,12 @@ async function requestConsolidation({ source, target, cluster }) {
   log(
     `About to request validator consolidation.\nsource: ${source}\ntarget: ${target}`
   );
-  const tx = await controller
-    .connect(signer)
-    .requestConsolidation(
-      nativeStakingStrategy.address,
-      sourcePublicKey,
-      target
-    );
+  const tx = await controller.connect(signer).requestConsolidation(
+    nativeStakingStrategy.address,
+    sourcePublicKeys,
+    target,
+    { value: sourcePublicKeys.length } // 1 wei pre request
+  );
 
   await logTxDetails(tx, "requestConsolidation");
 }
@@ -39,14 +38,14 @@ async function failConsolidation({ source }) {
   const signer = await getSigner();
   const controller = await resolveContract("ConsolidationController");
 
-  const sourcePublicKey = source.split(",");
+  const sourcePublicKeys = source.split(",");
 
   log(`About to fail validator consolidations.\nsource: ${source}`);
   const tx = await controller
     .connect(signer)
-    .requestConsolidation(sourcePublicKey);
+    .failConsolidation(sourcePublicKeys);
 
-  await logTxDetails(tx, "requestConsolidation");
+  await logTxDetails(tx, "failConsolidation");
 }
 
 async function confirmConsolidation() {
@@ -62,7 +61,7 @@ async function confirmConsolidation() {
     .connect(signer)
     .confirmConsolidation(balanceProofs, pendingDepositProofs);
 
-  await logTxDetails(tx, "requestConsolidation");
+  await logTxDetails(tx, "confirmConsolidation");
 }
 
 module.exports = {
