@@ -31,6 +31,11 @@ object "Curve USDC AMO\nStrategy" as curveAmoStrat <<Origin>><<Proxy>> #DeepSkyB
     Curve pool: OUSD/USDC
     rewards: CRV
 }
+object "Morpho Base\nCross-chain Strategy" as baseCrossStrat <<Origin>><<Proxy>> #DeepSkyBlue {
+    asset: USDC
+    Morpho vault: OUSD V2
+    rewards: MORPHO
+}
 
 checker ..> ousd
 checker ..> vault
@@ -41,6 +46,6 @@ ousd <.> vault
 ' Strategies
 vault <..> musd
 vault <..> curveAmoStrat
-
+vault <..> baseCrossStrat
 
 @enduml
