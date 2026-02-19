@@ -112,4 +112,4 @@ def main():
     print("-----")
 
     vault_usdc = usdc.balanceOf(VAULT_PROXY_ADDRESS)
-    print("Vault USDC", "{:.6f}".format(vault_usdc / 10**6), vault_usdc)
+    print("USDC left in Vault", "{:.6f}".format(vault_usdc / 10**6), vault_usdc)
