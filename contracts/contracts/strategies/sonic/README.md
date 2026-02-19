@@ -14,20 +14,6 @@
 
 ![Sonic Staking Strategy Storage](../../../docs/SonicStakingStrategyStorage.svg)
 
-## Curve AMO Strategy
-
-### Hierarchy
-
-![Curve AMO Strategy Hierarchy](../../../docs/SonicCurveAMOStrategyHierarchy.svg)
-
-### Squashed
-
-![Curve AMO Strategy Squashed](../../../docs/SonicCurveAMOStrategySquashed.svg)
-
-### Storage
-
-![Curve AMO Strategy Storage](../../../docs/SonicCurveAMOStrategyStorage.svg)
-
 ## SwapX AMO Strategy
 
 ### Hierarchy

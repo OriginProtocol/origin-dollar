@@ -57,6 +57,14 @@ sol2uml storage .. -c NativeStakingSSVStrategy -o NativeStakingSSVStrategyStorag
 sol2uml .. -v -hv -hf -he -hs -hl -hi -b FeeAccumulator -o FeeAccumulatorHierarchy.svg
 sol2uml .. -s -d 0 -b FeeAccumulator -o FeeAccumulatorSquashed.svg
 
+sol2uml .. -v -hv -hf -he -hs -hl -hi -i prettier-plugin-solidity -b CurveAMOStrategy -o CurveAMOStrategyHierarchy.svg
+sol2uml .. -s -d 0 -b CurveAMOStrategy -i prettier-plugin-solidity -o CurveAMOStrategySquashed.svg
+sol2uml storage .. -c CurveAMOStrategy -i prettier-plugin-solidity -o CurveAMOStrategyStorage.svg --hideExpand ______gap,_reserved,__gap
+
+sol2uml .. -v -hv -hf -he -hs -hl -hi -i prettier-plugin-solidity -b BaseCurveAMOStrategy -o BaseCurveAMOStrategyHierarchy.svg
+sol2uml .. -s -d 0 -b BaseCurveAMOStrategy -i prettier-plugin-solidity -o BaseCurveAMOStrategySquashed.svg
+sol2uml storage .. -c BaseCurveAMOStrategy -i prettier-plugin-solidity -o BaseCurveAMOStrategyStorage.svg --hideExpand ______gap,_reserved,__gap
+
 # contracts/strategies/sonic
 sol2uml .. -v -hv -hf -he -hs -hl -hi -b SonicStakingStrategy -o SonicStakingStrategyHierarchy.svg
 sol2uml .. -s -d 0 -b SonicStakingStrategy -o SonicStakingStrategySquashed.svg
@@ -84,9 +92,9 @@ sol2uml .. -s -d 0 -b WOETH -o WOETHSquashed.svg
 sol2uml storage .. -c WOETH -o WOETHStorage.svg --hideExpand ______gap
 
 # Base tokens
-sol2uml .. -v -hv -hf -he -hs -hl -hi -b OETHBase -o OETHBaseHierarchy.svg
-sol2uml .. -s -d 0 -b OETHBase -o OETHBaseSquashed.svg
-sol2uml storage .. -c OETHBase -o OETHBaseStorage.svg --hideExpand  _gap,__gap
+sol2uml .. -v -hv -hf -he -hs -hl -hi -i prettier-plugin-solidity -b OETHBase -o OETHBaseHierarchy.svg
+sol2uml .. -s -d 0 -b OETHBase -i prettier-plugin-solidity -o OETHBaseSquashed.svg
+sol2uml storage .. -c OETHBase -i prettier-plugin-solidity -o OETHBaseStorage.svg --hideExpand  _gap,__gap
 
 sol2uml .. -v -hv -hf -he -hs -hl -hi -b WOETHBase -o WOETHBaseHierarchy.svg
 sol2uml .. -s -d 0 -b WOETHBase -o WOETHBaseSquashed.svg
