@@ -75,13 +75,6 @@ contract OETHHarvesterProxy is InitializeGovernedUpgradeabilityProxy {
 }
 
 /**
- * @notice CurveEthStrategyProxy delegates calls to a CurveEthStrategy implementation
- */
-contract ConvexEthMetaStrategyProxy is InitializeGovernedUpgradeabilityProxy {
-
-}
-
-/**
  * @notice OETHMorphoAaveStrategyProxy delegates calls to a MorphoAaveStrategy implementation
  */
 contract OETHMorphoAaveStrategyProxy is InitializeGovernedUpgradeabilityProxy {
@@ -185,15 +178,6 @@ contract MetaMorphoStrategyProxy is InitializeGovernedUpgradeabilityProxy {
  * @notice MorphoGauntletPrimeUSDCStrategyProxy delegates calls to a Generalized4626Strategy implementation
  */
 contract MorphoGauntletPrimeUSDCStrategyProxy is
-    InitializeGovernedUpgradeabilityProxy
-{
-
-}
-
-/**
- * @notice MorphoGauntletPrimeUSDTStrategyProxy delegates calls to a Generalized4626USDTStrategy implementation
- */
-contract MorphoGauntletPrimeUSDTStrategyProxy is
     InitializeGovernedUpgradeabilityProxy
 {
 

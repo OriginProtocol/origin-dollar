@@ -586,16 +586,6 @@ const defaultFixture = deployments.createFixture(async () => {
         morphoGauntletPrimeUSDCStrategyProxy.address
       );
 
-  const morphoGauntletPrimeUSDTStrategyProxy = !isFork
-    ? undefined
-    : await ethers.getContract("MorphoGauntletPrimeUSDTStrategyProxy");
-  const morphoGauntletPrimeUSDTStrategy = !isFork
-    ? undefined
-    : await ethers.getContractAt(
-        "Generalized4626USDTStrategy",
-        morphoGauntletPrimeUSDTStrategyProxy.address
-      );
-
   const morphoOUSDv2StrategyProxy = !isFork
     ? undefined
     : await ethers.getContract("OUSDMorphoV2StrategyProxy");
@@ -813,7 +803,6 @@ const defaultFixture = deployments.createFixture(async () => {
     morphoSteakHouseUSDCVault,
     morphoGauntletPrimeUSDCStrategy,
     morphoGauntletPrimeUSDCVault,
-    morphoGauntletPrimeUSDTStrategy,
     morphoGauntletPrimeUSDTVault,
     morphoOUSDv2Strategy,
     morphoOUSDv2Vault,
