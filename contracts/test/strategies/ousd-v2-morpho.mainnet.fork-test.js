@@ -202,7 +202,7 @@ describe("ForkTest: Yearn's Morpho OUSD v2 Strategy", function () {
 
   describe("with the strategy having some USDC in Morpho Strategy", () => {
     const loadFixture = createFixtureLoader(morphoOUSDv2Fixture, {
-      usdcMintAmount: 12000,
+      usdcMintAmount: 120000,
       depositToStrategy: true,
     });
     beforeEach(async () => {
@@ -219,7 +219,7 @@ describe("ForkTest: Yearn's Morpho OUSD v2 Strategy", function () {
         vaultSigner,
       } = fixture;
 
-      const minBalance = await units("12000", usdc);
+      const minBalance = await units("120000", usdc);
       const strategyVaultShares = await morphoOUSDv2Vault.balanceOf(
         morphoOUSDv2Strategy.address
       );

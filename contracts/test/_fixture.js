@@ -982,13 +982,19 @@ async function morphoOUSDv2Fixture(
 
       // Add USDC to the strategy
       if (config?.depositToStrategy) {
+        // Calculate how much can be deposited to the strategy
+        // given outstanding withdrawal requests.
+        const usdcBalance = await usdc.balanceOf(vault.address);
+        const queue = await vault.withdrawalQueueMetadata();
+        const available = usdcBalance.add(queue.claimed).sub(queue.queued);
+
         // The strategist deposits the USDC to the strategy
         await vault
           .connect(strategist)
           .depositToStrategy(
             morphoOUSDv2Strategy.address,
             [usdc.address],
-            [usdcMintAmount]
+            [available]
           );
       }
     }
