@@ -292,8 +292,15 @@ task("withdrawWETH").setAction(async (_, __, runSuper) => {
 
 task(
   "queueLiquidity",
-  "Call addWithdrawalQueueLiquidity() on the Vault to add WETH to the withdrawal queue"
-).setAction(addWithdrawalQueueLiquidity);
+  "Call addWithdrawalQueueLiquidity() on the Vault to add assets to the withdrawal queue"
+)
+  .addOptionalParam(
+    "symbol",
+    "Symbol of the OToken. eg OETH, OUSD or OS",
+    undefined,
+    types.string
+  )
+  .setAction(addWithdrawalQueueLiquidity);
 task("queueLiquidity").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
@@ -1604,6 +1611,12 @@ task("snapAero").setAction(async (_, __, runSuper) => {
 });
 
 subtask("snapVault", "Takes a snapshot of a OETH Vault")
+  .addOptionalParam(
+    "symbol",
+    "Symbol of the OToken. eg OETH, OUSD or OS",
+    undefined,
+    types.string
+  )
   .addOptionalParam(
     "block",
     "Block number. (default: latest)",
