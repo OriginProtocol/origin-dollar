@@ -539,7 +539,7 @@ const defaultFixture = deployments.createFixture(async () => {
   const { governorAddr, multichainStrategistAddr, timelockAddr } =
     await getNamedAccounts();
 
-  const vaultAndTokenConracts = await getVaultAndTokenContracts();
+  const vaultAndTokenContracts = await getVaultAndTokenContracts();
 
   const dripperProxy = isFork
     ? await ethers.getContract("DripperProxy")
@@ -565,36 +565,6 @@ const defaultFixture = deployments.createFixture(async () => {
     "FeeAccumulator",
     nativeStakingFeeAccumulatorProxy.address
   );
-
-  const morphoSteakhouseUSDCStrategyProxy = !isFork
-    ? undefined
-    : await ethers.getContract("MetaMorphoStrategyProxy");
-  const morphoSteakhouseUSDCStrategy = !isFork
-    ? undefined
-    : await ethers.getContractAt(
-        "Generalized4626Strategy",
-        morphoSteakhouseUSDCStrategyProxy.address
-      );
-
-  const morphoGauntletPrimeUSDCStrategyProxy = !isFork
-    ? undefined
-    : await ethers.getContract("MorphoGauntletPrimeUSDCStrategyProxy");
-  const morphoGauntletPrimeUSDCStrategy = !isFork
-    ? undefined
-    : await ethers.getContractAt(
-        "Generalized4626Strategy",
-        morphoGauntletPrimeUSDCStrategyProxy.address
-      );
-
-  const morphoGauntletPrimeUSDTStrategyProxy = !isFork
-    ? undefined
-    : await ethers.getContract("MorphoGauntletPrimeUSDTStrategyProxy");
-  const morphoGauntletPrimeUSDTStrategy = !isFork
-    ? undefined
-    : await ethers.getContractAt(
-        "Generalized4626USDTStrategy",
-        morphoGauntletPrimeUSDTStrategyProxy.address
-      );
 
   const morphoOUSDv2StrategyProxy = !isFork
     ? undefined
@@ -667,16 +637,7 @@ const defaultFixture = deployments.createFixture(async () => {
     ? undefined
     : await ethers.getContract("MockStrategy");
 
-  let usdt,
-    usds,
-    usdc,
-    weth,
-    ogn,
-    morphoSteakHouseUSDCVault,
-    morphoGauntletPrimeUSDCVault,
-    morphoGauntletPrimeUSDTVault,
-    morphoOUSDv2Vault,
-    ssv;
+  let usdt, usds, usdc, weth, ogn, morphoOUSDv2Vault, ssv;
 
   let depositContractUtils,
     oethZapper,
@@ -690,18 +651,7 @@ const defaultFixture = deployments.createFixture(async () => {
     usdc = await ethers.getContractAt(erc20Abi, addresses.mainnet.USDC);
     weth = await ethers.getContractAt("IWETH9", addresses.mainnet.WETH);
     ogn = await ethers.getContractAt(erc20Abi, addresses.mainnet.OGN);
-    morphoSteakHouseUSDCVault = await ethers.getContractAt(
-      metamorphoAbi,
-      addresses.mainnet.MorphoSteakhouseUSDCVault
-    );
-    morphoGauntletPrimeUSDCVault = await ethers.getContractAt(
-      metamorphoAbi,
-      addresses.mainnet.MorphoGauntletPrimeUSDCVault
-    );
-    morphoGauntletPrimeUSDTVault = await ethers.getContractAt(
-      metamorphoAbi,
-      addresses.mainnet.MorphoGauntletPrimeUSDTVault
-    );
+
     morphoOUSDv2Vault = await ethers.getContractAt(
       metamorphoAbi,
       addresses.mainnet.MorphoOUSDv2Vault
@@ -738,7 +688,7 @@ const defaultFixture = deployments.createFixture(async () => {
     const sGovernor = await ethers.provider.getSigner(governorAddr);
 
     // Enable capital movement
-    await vaultAndTokenConracts.vault.connect(sGovernor).unpauseCapital();
+    await vaultAndTokenContracts.vault.connect(sGovernor).unpauseCapital();
   }
 
   const signers = await hre.ethers.getSigners();
@@ -771,8 +721,8 @@ const defaultFixture = deployments.createFixture(async () => {
     for (const user of [matt, josh]) {
       await usdc
         .connect(user)
-        .approve(vaultAndTokenConracts.vault.address, usdcUnits("100"));
-      await vaultAndTokenConracts.vault
+        .approve(vaultAndTokenContracts.vault.address, usdcUnits("100"));
+      await vaultAndTokenContracts.vault
         .connect(user)
         .mint(usdc.address, usdcUnits("100"), 0);
 
@@ -781,12 +731,12 @@ const defaultFixture = deployments.createFixture(async () => {
       await weth.connect(user).deposit({ value: oethUnits("10000") });
       await weth
         .connect(user)
-        .approve(vaultAndTokenConracts.oethVault.address, oethUnits("100"));
+        .approve(vaultAndTokenContracts.oethVault.address, oethUnits("100"));
     }
   }
 
   return {
-    ...vaultAndTokenConracts,
+    ...vaultAndTokenContracts,
     // Accounts
     matt,
     josh,
@@ -809,12 +759,6 @@ const defaultFixture = deployments.createFixture(async () => {
     weth,
     depositContractUtils,
     wousd,
-    morphoSteakhouseUSDCStrategy,
-    morphoSteakHouseUSDCVault,
-    morphoGauntletPrimeUSDCStrategy,
-    morphoGauntletPrimeUSDCVault,
-    morphoGauntletPrimeUSDTStrategy,
-    morphoGauntletPrimeUSDTVault,
     morphoOUSDv2Strategy,
     morphoOUSDv2Vault,
     curvePoolBooster,
@@ -974,6 +918,11 @@ async function claimRewardsModuleFixture() {
   if (isFork && !(await cSafe.isModuleEnabled(claimRewardsModule.address))) {
     await cSafe.connect(safeSigner).enableModule(claimRewardsModule.address);
   }
+
+  fixture.morphoToken = await ethers.getContractAt(
+    "MintableERC20",
+    addresses.mainnet.MorphoToken
+  );
 
   return {
     ...fixture,

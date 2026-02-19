@@ -178,12 +178,17 @@ addresses.mainnet.CurveOUSDUSDTPool =
 addresses.mainnet.CurveOUSDUSDTGauge =
   "0x74231E4d96498A30FCEaf9aACCAbBD79339Ecd7f";
 
-// Curve OETH/ETH pool
+// Old Curve OETH/ETH pool used by the Convex AMO. No longer used.
 addresses.mainnet.ConvexOETHAMOStrategy =
   "0x1827F9eA98E0bf96550b2FC20F7233277FcD7E63";
-addresses.mainnet.CurveOETHGauge = "0xd03BE91b1932715709e18021734fcB91BB431715";
+addresses.mainnet.ConvexOETHGauge =
+  "0xd03BE91b1932715709e18021734fcB91BB431715";
 addresses.mainnet.CVXETHRewardsPool =
   "0x24b65DC1cf053A8D96872c323d29e86ec43eB33A";
+
+// New Curve OETH/WETH pool used by the Curve AMO
+addresses.mainnet.CurveOETHAMOStrategy =
+  "0xba0e352AB5c13861C26e4E773e7a833C3A223FE6";
 
 addresses.mainnet.CurveOETHETHplusGauge =
   "0xCAe10a7553AccA53ad58c4EC63e3aB6Ad6546F71";

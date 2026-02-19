@@ -32,22 +32,6 @@ Used on Mainnet for OETH, Base and Sonic.
 
 ![Fixed Rate Dripper Storage](../../docs/OETHFixedRateDripperStorage.svg)
 
-## Harvester
-
-Used on Mainnet for OUSD.
-
-### Hierarchy
-
-![Harvester Hierarchy](../../docs/HarvesterHierarchy.svg)
-
-### Squashed
-
-![Harvester Squashed](../../docs/HarvesterSquashed.svg)
-
-### Storage
-
-![Harvester Storage](../../docs/HarvesterStorage.svg)
-
 ## OETH Simple Harvester
 
 Used on Mainnet for OETH.

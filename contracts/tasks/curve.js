@@ -382,13 +382,13 @@ async function curveContracts(oTokenSymbol) {
   log(`Resolved ${oTokenSymbol} Curve pool to ${poolAddr}`);
   const strategyAddr =
     oTokenSymbol === "OETH"
-      ? addresses.mainnet.ConvexOETHAMOStrategy
+      ? addresses.mainnet.CurveOETHAMOStrategy
       : addresses.mainnet.CurveOUSDAMOStrategy;
   const convexRewardsPoolAddr =
     oTokenSymbol === "OETH"
-      ? addresses.mainnet.CVXETHRewardsPool
+      ? addresses.mainnet.curve.OETH_WETH.gauge
       : addresses.mainnet.curve.OUSD_USDC.gauge;
-  const poolLPSymbol = oTokenSymbol === "OETH" ? "OETHCRV-f" : "OUSD/USDC";
+  const poolLPSymbol = oTokenSymbol === "OETH" ? "OETH/WETH" : "OUSD/USDC";
   const vaultAddr =
     oTokenSymbol === "OETH"
       ? addresses.mainnet.OETHVaultProxy

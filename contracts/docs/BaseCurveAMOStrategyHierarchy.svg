@@ -9,51 +9,52 @@
 <g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(4 237.4)">
 <title>UmlClassDiagram</title>
 <polygon fill="white" stroke="transparent" points="-4,4 -4,-237.4 452.44,-237.4 452.44,4 -4,4"/>
-<!-- 20 -->
+<!-- 40 -->
 <g id="node1" class="node">
-<title>20</title>
-<polygon fill="#f2f2f2" stroke="black" points="0,-182.9 0,-224.5 234.86,-224.5 234.86,-182.9 0,-182.9"/>
-<text text-anchor="middle" x="117.43" y="-207.9" font-family="Times,serif" font-size="14.00">Governable</text>
-<text text-anchor="middle" x="117.43" y="-191.1" font-family="Times,serif" font-size="14.00">../contracts/governance/Governable.sol</text>
+<title>40</title>
+<polygon fill="#f2f2f2" stroke="black" points="0,-174.5 0,-232.9 234.86,-232.9 234.86,-174.5 0,-174.5"/>
+<text text-anchor="middle" x="117.43" y="-216.3" font-family="Times,serif" font-size="14.00">&lt;&lt;Abstract&gt;&gt;</text>
+<text text-anchor="middle" x="117.43" y="-199.5" font-family="Times,serif" font-size="14.00">Governable</text>
+<text text-anchor="middle" x="117.43" y="-182.7" font-family="Times,serif" font-size="14.00">../contracts/governance/Governable.sol</text>
 </g>
-<!-- 176 -->
+<!-- 203 -->
 <g id="node2" class="node">
-<title>176</title>
-<polygon fill="#f2f2f2" stroke="black" points="93.82,-0.5 93.82,-42.1 373.04,-42.1 373.04,-0.5 93.82,-0.5"/>
-<text text-anchor="middle" x="233.43" y="-25.5" font-family="Times,serif" font-size="14.00">MorphoAaveStrategy</text>
-<text text-anchor="middle" x="233.43" y="-8.7" font-family="Times,serif" font-size="14.00">../contracts/strategies/MorphoAaveStrategy.sol</text>
+<title>203</title>
+<polygon fill="#f2f2f2" stroke="black" points="84.1,-0.5 84.1,-42.1 382.76,-42.1 382.76,-0.5 84.1,-0.5"/>
+<text text-anchor="middle" x="233.43" y="-25.5" font-family="Times,serif" font-size="14.00">BaseCurveAMOStrategy</text>
+<text text-anchor="middle" x="233.43" y="-8.7" font-family="Times,serif" font-size="14.00">../contracts/strategies/BaseCurveAMOStrategy.sol</text>
 </g>
-<!-- 195 -->
+<!-- 251 -->
 <g id="node4" class="node">
-<title>195</title>
+<title>251</title>
 <polygon fill="#f2f2f2" stroke="black" points="88.38,-79.1 88.38,-137.5 378.48,-137.5 378.48,-79.1 88.38,-79.1"/>
 <text text-anchor="middle" x="233.43" y="-120.9" font-family="Times,serif" font-size="14.00">&lt;&lt;Abstract&gt;&gt;</text>
 <text text-anchor="middle" x="233.43" y="-104.1" font-family="Times,serif" font-size="14.00">InitializableAbstractStrategy</text>
 <text text-anchor="middle" x="233.43" y="-87.3" font-family="Times,serif" font-size="14.00">../contracts/utils/InitializableAbstractStrategy.sol</text>
 </g>
-<!-- 176&#45;&gt;195 -->
+<!-- 203&#45;&gt;251 -->
 <g id="edge1" class="edge">
-<title>176&#45;&gt;195</title>
+<title>203&#45;&gt;251</title>
 <path fill="none" stroke="black" d="M233.43,-42.44C233.43,-44.49 233.43,-46.63 233.43,-48.83"/>
 <polygon fill="none" stroke="black" points="222.93,-48.94 233.43,-78.94 243.93,-48.94 222.93,-48.94"/>
 </g>
-<!-- 194 -->
+<!-- 250 -->
 <g id="node3" class="node">
-<title>194</title>
+<title>250</title>
 <polygon fill="#f2f2f2" stroke="black" points="252.42,-174.5 252.42,-232.9 448.44,-232.9 448.44,-174.5 252.42,-174.5"/>
 <text text-anchor="middle" x="350.43" y="-216.3" font-family="Times,serif" font-size="14.00">&lt;&lt;Abstract&gt;&gt;</text>
 <text text-anchor="middle" x="350.43" y="-199.5" font-family="Times,serif" font-size="14.00">Initializable</text>
 <text text-anchor="middle" x="350.43" y="-182.7" font-family="Times,serif" font-size="14.00">../contracts/utils/Initializable.sol</text>
 </g>
-<!-- 195&#45;&gt;20 -->
+<!-- 251&#45;&gt;40 -->
 <g id="edge3" class="edge">
-<title>195&#45;&gt;20</title>
-<path fill="none" stroke="black" d="M198.31,-137.58C188.11,-145.79 176.78,-154.91 165.91,-163.66"/>
-<polygon fill="none" stroke="black" points="158.91,-155.82 142.13,-182.81 172.08,-172.18 158.91,-155.82"/>
+<title>251&#45;&gt;40</title>
+<path fill="none" stroke="black" d="M198.31,-137.58C191.33,-143.19 183.83,-149.24 176.31,-155.29"/>
+<polygon fill="none" stroke="black" points="169.61,-147.2 152.83,-174.2 182.78,-163.56 169.61,-147.2"/>
 </g>
-<!-- 195&#45;&gt;194 -->
+<!-- 251&#45;&gt;250 -->
 <g id="edge2" class="edge">
-<title>195&#45;&gt;194</title>
+<title>251&#45;&gt;250</title>
 <path fill="none" stroke="black" d="M268.85,-137.58C275.89,-143.19 283.46,-149.24 291.04,-155.29"/>
 <polygon fill="none" stroke="black" points="284.73,-163.69 314.72,-174.2 297.83,-147.27 284.73,-163.69"/>
 </g>
