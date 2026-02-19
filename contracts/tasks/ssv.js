@@ -96,7 +96,7 @@ const depositSSV = async ({ amount, index, operatorids }) => {
   await logTxDetails(tx, "depositSSV");
 };
 
-const migrateClusterToETH = async ({ type, amount, operatorids }) => {
+const migrateClusterToETH = async ({ type, amount, operatorids, index }) => {
   const etherAmountBN = parseUnits(amount.toString(), 18);
   log(`Splitting operator IDs ${operatorids}`);
   const operatorIds = splitOperatorIds(operatorids);
@@ -109,7 +109,7 @@ const migrateClusterToETH = async ({ type, amount, operatorids }) => {
           "CompoundingStakingSSVStrategyProxy",
           "CompoundingStakingSSVStrategy"
         )
-      : await resolveNativeStakingStrategyProxy();
+      : await resolveNativeStakingStrategyProxy(index);
 
   const { chainId } = await ethers.provider.getNetwork();
 

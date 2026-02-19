@@ -1130,6 +1130,12 @@ subtask(
     undefined,
     types.float
   )
+  .addOptionalParam(
+    "index",
+    "The number of the Native Staking Contract deployed. Default to none for Hoodi",
+    undefined,
+    types.int
+  )
   .setAction(migrateClusterToETH);
 task("migrateCluster").setAction(async (_, __, runSuper) => {
   return runSuper();
