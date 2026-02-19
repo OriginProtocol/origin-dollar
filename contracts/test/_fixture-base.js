@@ -346,6 +346,8 @@ const crossChainFixture = deployments.createFixture(async () => {
     .connect(fixture.rafael)
     .mint(fixture.rafael.address, usdcUnits("1000000"));
 
+  fixture.relayer = await impersonateAndFund(addresses.base.OZRelayerAddress);
+
   return {
     ...fixture,
     crossChainRemoteStrategy,
