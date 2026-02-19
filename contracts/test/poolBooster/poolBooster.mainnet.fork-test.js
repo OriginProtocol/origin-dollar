@@ -41,6 +41,14 @@ describe("ForkTest: Merkl Pool Booster", function () {
     governor = await impersonateAndFund(addresses.multichainStrategist);
     governor.address = addresses.multichainStrategist;
 
+    // Complete governance transfer from script 176 (transferGovernance -> claimGovernance)
+    await poolBoosterCentralRegistry.connect(governor).claimGovernance();
+
+    // Approve new factory in registry (registry now governed by strategist)
+    await poolBoosterCentralRegistry
+      .connect(governor)
+      .approveFactory(poolBoosterMerklFactory.address);
+
     // Get beacon from factory
     const beaconAddr = await poolBoosterMerklFactory.beacon();
     beacon = await ethers.getContractAt("UpgradeableBeacon", beaconAddr);

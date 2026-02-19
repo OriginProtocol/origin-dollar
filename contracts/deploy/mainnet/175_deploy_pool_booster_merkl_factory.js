@@ -1,87 +1,83 @@
 const addresses = require("../../utils/addresses");
-const { deploymentWithGovernanceProposal } = require("../../utils/deploy");
+const { deployWithConfirmation } = require("../../utils/deploy");
+const {
+  isFork,
+  isMainnet,
+  isSmokeTest,
+  isForkTest,
+} = require("../../test/helpers");
+const { hardhatSetBalance } = require("../../test/_fund");
 
-module.exports = deploymentWithGovernanceProposal(
-  {
-    deployName: "175_deploy_pool_booster_merkl_factory",
-    forceDeploy: false,
-    reduceQueueTime: true,
-    deployerIsProposer: false,
-    proposalId: "",
-  },
-  async ({ deployWithConfirmation }) => {
-    const cPoolBoostCentralRegistryProxy = await ethers.getContract(
-      "PoolBoostCentralRegistryProxy"
-    );
-    const cPoolBoostCentralRegistry = await ethers.getContractAt(
-      "PoolBoostCentralRegistry",
-      cPoolBoostCentralRegistryProxy.address
-    );
-    const oethProxy = await ethers.getContract("OETHProxy");
+const deployName = "175_deploy_pool_booster_merkl_factory";
 
-    // Get old factory from deployment artifacts
-    const oldFactory = await ethers.getContract("PoolBoosterFactoryMerkl");
+const main = async () => {
+  console.log(`Running ${deployName} deployment...`);
 
-    // ---------------------------------------------------------------------------------------------------------
-    // --- 1. Deploy PoolBoosterMerklV2 (implementation for beacon proxies)
-    // ---------------------------------------------------------------------------------------------------------
-    const dPoolBoosterMerklV2 = await deployWithConfirmation(
-      "PoolBoosterMerklV2",
-      []
-    );
-    console.log(
-      `PoolBoosterMerklV2 deployed to ${dPoolBoosterMerklV2.address}`
-    );
-
-    // ---------------------------------------------------------------------------------------------------------
-    // --- 2. Deploy UpgradeableBeacon pointing to PoolBoosterMerklV2
-    // ---------------------------------------------------------------------------------------------------------
-    const dUpgradeableBeacon = await deployWithConfirmation(
-      "UpgradeableBeacon",
-      [dPoolBoosterMerklV2.address]
-    );
-    // Transfer beacon ownership from deployer to multichainStrategist
-    const cBeacon = await ethers.getContractAt(
-      "UpgradeableBeacon",
-      dUpgradeableBeacon.address
-    );
-    const { deployerAddr: beaconDeployerAddr } = await getNamedAccounts();
-    const sBeaconDeployer = ethers.provider.getSigner(beaconDeployerAddr);
-    await cBeacon
-      .connect(sBeaconDeployer)
-      .transferOwnership(addresses.multichainStrategist);
-    console.log(`UpgradeableBeacon deployed to ${dUpgradeableBeacon.address}`);
-
-    // ---------------------------------------------------------------------------------------------------------
-    // --- 3. Deploy PoolBoosterFactoryMerkl
-    // ---------------------------------------------------------------------------------------------------------
-    const dFactory = await deployWithConfirmation("PoolBoosterFactoryMerkl", [
-      oethProxy.address,
-      addresses.multichainStrategist,
-      cPoolBoostCentralRegistryProxy.address,
-      dUpgradeableBeacon.address,
-    ]);
-    console.log(`PoolBoosterFactoryMerkl deployed to ${dFactory.address}`);
-
-    // ---------------------------------------------------------------------------------------------------------
-    // --- 4. Governance proposal
-    // ---------------------------------------------------------------------------------------------------------
-    return {
-      name: "Swap PoolBoosterFactoryMerkl",
-      actions: [
-        {
-          // Remove old factory from central registry
-          contract: cPoolBoostCentralRegistry,
-          signature: "removeFactory(address)",
-          args: [oldFactory.address],
-        },
-        {
-          // Approve new factory in central registry
-          contract: cPoolBoostCentralRegistry,
-          signature: "approveFactory(address)",
-          args: [dFactory.address],
-        },
-      ],
-    };
+  const { deployerAddr } = await getNamedAccounts();
+  if (isFork) {
+    await hardhatSetBalance(deployerAddr, "1000000");
   }
-);
+
+  const cPoolBoostCentralRegistryProxy = await ethers.getContract(
+    "PoolBoostCentralRegistryProxy"
+  );
+  const oethProxy = await ethers.getContract("OETHProxy");
+
+  // ---------------------------------------------------------------------------------------------------------
+  // --- 1. Deploy PoolBoosterMerklV2 (implementation for beacon proxies)
+  // ---------------------------------------------------------------------------------------------------------
+  const dPoolBoosterMerklV2 = await deployWithConfirmation(
+    "PoolBoosterMerklV2",
+    []
+  );
+  console.log(
+    `PoolBoosterMerklV2 deployed to ${dPoolBoosterMerklV2.address}`
+  );
+
+  // ---------------------------------------------------------------------------------------------------------
+  // --- 2. Deploy UpgradeableBeacon pointing to PoolBoosterMerklV2
+  // ---------------------------------------------------------------------------------------------------------
+  const dUpgradeableBeacon = await deployWithConfirmation(
+    "UpgradeableBeacon",
+    [dPoolBoosterMerklV2.address]
+  );
+  // Transfer beacon ownership from deployer to multichainStrategist
+  const cBeacon = await ethers.getContractAt(
+    "UpgradeableBeacon",
+    dUpgradeableBeacon.address
+  );
+  const sDeployer = ethers.provider.getSigner(deployerAddr);
+  await cBeacon
+    .connect(sDeployer)
+    .transferOwnership(addresses.multichainStrategist);
+  console.log(`UpgradeableBeacon deployed to ${dUpgradeableBeacon.address}`);
+
+  // ---------------------------------------------------------------------------------------------------------
+  // --- 3. Deploy PoolBoosterFactoryMerkl
+  // ---------------------------------------------------------------------------------------------------------
+  const dFactory = await deployWithConfirmation("PoolBoosterFactoryMerkl", [
+    oethProxy.address,
+    addresses.multichainStrategist,
+    cPoolBoostCentralRegistryProxy.address,
+    dUpgradeableBeacon.address,
+  ]);
+  console.log(`PoolBoosterFactoryMerkl deployed to ${dFactory.address}`);
+
+  // NOTE: Registry approveFactory/removeFactory must be called by the
+  // multichain strategist safe (registry governance was transferred in script 176).
+
+  console.log(`${deployName} deploy done.`);
+  return true;
+};
+
+main.id = deployName;
+
+if (isFork) {
+  const networkName = isForkTest ? "hardhat" : "localhost";
+  const migrations = require(`../../deployments/${networkName}/.migrations.json`);
+  main.skip = () => Boolean(migrations[deployName]);
+} else {
+  main.skip = () => !isMainnet || isSmokeTest;
+}
+
+module.exports = main;
