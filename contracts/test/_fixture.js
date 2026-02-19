@@ -637,13 +637,7 @@ const defaultFixture = deployments.createFixture(async () => {
     ? undefined
     : await ethers.getContract("MockStrategy");
 
-  let usdt,
-    usds,
-    usdc,
-    weth,
-    ogn,
-    morphoOUSDv2Vault,
-    ssv;
+  let usdt, usds, usdc, weth, ogn, morphoOUSDv2Vault, ssv;
 
   let depositContractUtils,
     oethZapper,
