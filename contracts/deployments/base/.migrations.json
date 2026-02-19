@@ -38,5 +38,6 @@
   "038_vault_upgrade": 1752579215,
   "039_pool_booster_factory": 1756293140,
   "041_crosschain_strategy_proxies": 1770737618,
-  "042_crosschain_strategy": 1770807435
+  "042_crosschain_strategy": 1770807435,
+  "043_change_crosschain_strategy_operator": 1771403173
 }

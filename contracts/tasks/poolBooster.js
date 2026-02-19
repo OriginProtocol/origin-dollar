@@ -1,5 +1,5 @@
 const { formatUnits, parseUnits } = require("ethers/lib/utils");
-const { Contract } = require("ethers");
+const { Contract, constants } = require("ethers");
 
 const addresses = require("../utils/addresses");
 const { logTxDetails } = require("../utils/txLogger");
@@ -384,10 +384,8 @@ async function manageBribes({
     );
   }
 
-  const bribesModuleContract = new ethers.Contract(
+  const bribesModuleContract = new Contract(
     BRIBES_MODULE,
-    // old pool booster bribes module
-    //"0x12856b1944a6a8c86c61D0F8B6e44C37726e86D7",
     bribesModuleAbi,
     signer
   );
@@ -413,7 +411,7 @@ async function manageBribes({
     tx = await bribesModuleContract["manageBribes()"]();
   } else {
     // Build default arrays for totalRewardAmounts and extraDuration
-    const totalRewardAmounts = pools.map(() => ethers.constants.MaxUint256);
+    const totalRewardAmounts = pools.map(() => constants.MaxUint256);
     const extraDuration = pools.map(() => 1);
 
     log(
