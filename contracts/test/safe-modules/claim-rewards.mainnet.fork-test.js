@@ -1,21 +1,27 @@
+const { expect } = require("chai");
+const { ethers } = require("hardhat");
 const {
   createFixtureLoader,
   claimRewardsModuleFixture,
 } = require("../_fixture");
-const { expect } = require("chai");
-const { ethers } = require("hardhat");
+const addresses = require("../../utils/addresses");
+
+const erc20Abi = require("../../abi/erc20.json");
 
 const mainnetFixture = createFixtureLoader(claimRewardsModuleFixture);
 
 describe("ForkTest: Claim Strategy Rewards Safe Module", function () {
   let fixture;
+  let crv;
 
   beforeEach(async () => {
     fixture = await mainnetFixture();
+
+    crv = await ethers.getContractAt(erc20Abi, addresses.mainnet.CRV);
   });
 
   it("Should claim CRV rewards", async () => {
-    const { crv, safeSigner, claimRewardsModule } = fixture;
+    const { safeSigner, claimRewardsModule } = fixture;
 
     const cOUSDCurveAMOProxy = await ethers.getContract("OUSDCurveAMOProxy");
     const cOETHCurveAMOProxy = await ethers.getContract("OETHCurveAMOProxy");

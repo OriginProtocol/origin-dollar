@@ -1,8 +1,6 @@
 const { isFork, isForkWithLocalNode } = require("../../test/helpers");
-const { deployWithConfirmation } = require("../../utils/deploy");
 const { fundAccounts } = require("../../utils/funding");
 const addresses = require("../../utils/addresses");
-const { replaceContractAt } = require("../../utils/hardhat");
 const { impersonateAndFund } = require("../../utils/signers");
 const { hardhatSetBalance } = require("../../test/_fund");
 
@@ -32,27 +30,6 @@ const main = async (hre) => {
   } = await getNamedAccounts();
 
   await hardhatSetBalance(deployerAddr, "1000000");
-
-  const oracleRouter = await ethers.getContract("OracleRouter");
-  const oethOracleRouter = await ethers.getContract(
-    isFork ? "OETHOracleRouter" : "OracleRouter"
-  );
-
-  // Replace OracleRouter to disable staleness
-  const dMockOracleRouterNoStale = await deployWithConfirmation(
-    "MockOracleRouterNoStale"
-  );
-  const dMockOETHOracleRouterNoStale = await deployWithConfirmation(
-    "MockOETHOracleRouterNoStale"
-  );
-  log("Deployed MockOracleRouterNoStale and MockOETHOracleRouterNoStale");
-  await replaceContractAt(oracleRouter.address, dMockOracleRouterNoStale);
-  await replaceContractAt(
-    oethOracleRouter.address,
-    dMockOETHOracleRouterNoStale
-  );
-
-  log("Replaced Oracle contracts for fork test");
 
   const signers = await hre.ethers.getSigners();
 
@@ -107,7 +84,7 @@ const main = async (hre) => {
   log(`999_fork_test_setup deployment done!`);
 };
 
-main.id = "999_no_stale_oracles";
+main.id = "999_fork_test_setup";
 main.skip = () => isForkWithLocalNode || !isFork;
 
 module.exports = main;
