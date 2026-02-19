@@ -1517,6 +1517,10 @@ async function crossChainFixture() {
     addresses.CCTPTokenMessengerV2
   );
 
+  fixture.relayer = await impersonateAndFund(
+    addresses.mainnet.validatorRegistrator
+  );
+
   await setERC20TokenBalance(
     fixture.matt.address,
     fixture.usdc,
