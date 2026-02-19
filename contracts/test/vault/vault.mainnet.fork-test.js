@@ -124,6 +124,9 @@ describe("ForkTest: Vault", function () {
 
     it("should withdraw from and deposit to strategy", async () => {
       const { vault, josh, usdc, morphoOUSDv2Strategy } = fixture;
+      // Mint a lot more in case there are outstanding withdrawals
+      await vault.connect(josh).mint(usdc.address, usdcUnits("500000"), 0);
+      // The next mint should all be deposited into the strategy
       await vault.connect(josh).mint(usdc.address, usdcUnits("90"), 0);
       const strategistSigner = await impersonateAndFund(
         await vault.strategistAddr()
@@ -163,21 +166,20 @@ describe("ForkTest: Vault", function () {
             [usdc.address],
             [morphoOUSDv2Strategy],
             async () => {
-              await vault
-                .connect(strategistSigner)
-                .withdrawFromStrategy(
-                  morphoOUSDv2Strategy.address,
-                  [usdc.address],
-                  [usdcUnits("90")]
-                );
+              await vault.connect(strategistSigner).withdrawFromStrategy(
+                morphoOUSDv2Strategy.address,
+                [usdc.address],
+                // Can not always get the full 90 back out due to Morpho utilization
+                [usdcUnits("89")]
+              );
             }
           );
         }
       );
 
-      expect(usdcBalanceDiff).to.equal(usdcUnits("90"));
+      expect(usdcBalanceDiff).to.equal(usdcUnits("89"));
 
-      expect(usdcStratDiff).to.lte(usdcUnits("-89.91"));
+      expect(usdcStratDiff).to.lte(usdcUnits("-88.91"));
     });
 
     it("Should have vault buffer disabled", async () => {
