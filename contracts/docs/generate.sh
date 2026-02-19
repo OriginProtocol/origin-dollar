@@ -1,12 +1,3 @@
-# contracts/buyback
-sol2uml .. -v -hv -hf -he -hs -hl -b OUSDBuyback -o OUSDBuybackHierarchy.svg
-sol2uml .. -s -d 0 -b OUSDBuyback -o OUSDBuybackSquashed.svg
-sol2uml storage .. -c OUSDBuyback -o OUSDBuybackStorage.svg
-
-sol2uml .. -v -hv -hf -he -hs -hl -b OETHBuyback -o OETHBuybackHierarchy.svg
-sol2uml .. -s -d 0 -b OETHBuyback -o OETHBuybackSquashed.svg
-sol2uml storage .. -c OETHBuyback -o OETHBuybackStorage.svg
-
 # contracts/harvest
 sol2uml .. -v -hv -hf -he -hs -hl -hi -b Dripper -o DripperHierarchy.svg
 sol2uml .. -s -d 0 -b Dripper -o DripperSquashed.svg
@@ -16,17 +7,9 @@ sol2uml .. -v -hv -hf -he -hs -hl -hi -b OETHFixedRateDripper -o OETHFixedRateDr
 sol2uml .. -s -d 0 -b OETHFixedRateDripper -o OETHFixedRateDripperSquashed.svg
 sol2uml storage .. -c OETHFixedRateDripper -o OETHFixedRateDripperStorage.svg
 
-sol2uml .. -v -hv -hf -he -hs -hl -hi -b Harvester -o HarvesterHierarchy.svg
-sol2uml .. -s -d 0 -b Harvester -o HarvesterSquashed.svg
-sol2uml storage .. -c Harvester -o HarvesterStorage.svg
-
 sol2uml .. -v -hv -hf -he -hs -hl -hi -b OETHHarvesterSimple -o OETHHarvesterSimpleHierarchy.svg
 sol2uml .. -s -d 0 -b OETHHarvesterSimple -o OETHHarvesterSimpleSquashed.svg
 sol2uml storage .. -c OETHHarvesterSimple -o OETHHarvesterSimpleStorage.svg --hideExpand __gap,___gap,______gap
-
-sol2uml .. -v -hv -hf -he -hs -hl -hi -b OETHBaseHarvester -o OETHBaseHarvesterHierarchy.svg
-sol2uml .. -s -d 0 -b OETHBaseHarvester -o OETHBaseHarvesterSquashed.svg
-sol2uml storage .. -c OETHBaseHarvester -o OETHBaseHarvesterStorage.svg --hideExpand __gap,___gap,______gap
 
 sol2uml .. -v -hv -hf -he -hs -hl -hi -b OSonicHarvester -o OSonicHarvesterHierarchy.svg
 sol2uml .. -s -d 0 -b OSonicHarvester -o OSonicHarvesterSquashed.svg
@@ -64,15 +47,6 @@ sol2uml .. -v -hv -hf -he -hs -hl -hi -b BridgedWOETHStrategy -o BridgedWOETHStr
 sol2uml .. -s -d 0 -b BridgedWOETHStrategy -o BridgedWOETHStrategySquashed.svg
 sol2uml storage .. -c BridgedWOETHStrategy -o BridgedWOETHStrategyStorage.svg --hideExpand ______gap,_reserved,__reserved
 
-sol2uml .. -v -hv -hf -he -hs -hl -hi -b ConvexEthMetaStrategy -o ConvexEthMetaStrategyHierarchy.svg
-sol2uml .. -s -d 0 -b ConvexEthMetaStrategy -o ConvexEthMetaStrategySquashed.svg
-sol2uml storage .. -c ConvexEthMetaStrategy -o ConvexEthMetaStrategyStorage.svg --hideExpand ______gap,_reserved,__reserved
-
-sol2uml .. -v -hv -hf -he -hs -hl -hi -b ConvexOUSDMetaStrategy -o ConvexOUSDMetaStrategyHierarchy.svg
-sol2uml .. -s -d 0 -b ConvexOUSDMetaStrategy -o ConvexOUSDMetaStrategySquashed.svg
-# Failed to find user defined type "IERC20" in attribute "metapoolMainToken" of type "1""
-# sol2uml storage .. -c ConvexOUSDMetaStrategy -o ConvexOUSDMetaStrategyStorage.svg
-
 sol2uml .. -v -hv -hf -he -hs -hl -hi -b Generalized4626Strategy -o Generalized4626StrategyHierarchy.svg
 sol2uml .. -s -d 0 -b Generalized4626Strategy -o Generalized4626StrategySquashed.svg
 sol2uml storage .. -c Generalized4626Strategy -o Generalized4626StrategyStorage.svg --hideExpand ______gap,_reserved,__gap
@@ -83,18 +57,13 @@ sol2uml storage .. -c NativeStakingSSVStrategy -o NativeStakingSSVStrategyStorag
 sol2uml .. -v -hv -hf -he -hs -hl -hi -b FeeAccumulator -o FeeAccumulatorHierarchy.svg
 sol2uml .. -s -d 0 -b FeeAccumulator -o FeeAccumulatorSquashed.svg
 
-sol2uml .. -v -hv -hf -he -hs -hl -hi -b MorphoAaveStrategy -o MorphoAaveStrategyHierarchy.svg
-sol2uml .. -s -d 0 -b MorphoAaveStrategy -o MorphoAaveStrategySquashed.svg
-sol2uml storage .. -c MorphoAaveStrategy -o MorphoAaveStrategyStorage.svg --hideExpand ______gap,_reserved
+sol2uml .. -v -hv -hf -he -hs -hl -hi -i prettier-plugin-solidity -b CurveAMOStrategy -o CurveAMOStrategyHierarchy.svg
+sol2uml .. -s -d 0 -b CurveAMOStrategy -i prettier-plugin-solidity -o CurveAMOStrategySquashed.svg
+sol2uml storage .. -c CurveAMOStrategy -i prettier-plugin-solidity -o CurveAMOStrategyStorage.svg --hideExpand ______gap,_reserved,__gap
 
-sol2uml .. -v -hv -hf -he -hs -hl -hi -b MorphoCompoundStrategy -o MorphoCompStrategyHierarchy.svg
-sol2uml .. -s -d 0 -b MorphoCompoundStrategy -o MorphoCompStrategySquashed.svg
-sol2uml storage .. -c MorphoCompoundStrategy -o MorphoCompStrategyStorage.svg --hideExpand ______gap,_reserved,__reserved
-
-# contracts/strategies/balancer
-sol2uml .. -v -hv -hf -he -hs -hl -hi -b BalancerMetaPoolStrategy -o BalancerMetaPoolStrategyHierarchy.svg
-sol2uml .. -s -d 0 -b BalancerMetaPoolStrategy -o BalancerMetaPoolStrategySquashed.svg
-sol2uml storage .. -c BalancerMetaPoolStrategy -o BalancerMetaPoolStrategyStorage.svg --hideExpand ______gap,_reserved,__reserved,__reserved_baseAuraStrategy
+sol2uml .. -v -hv -hf -he -hs -hl -hi -i prettier-plugin-solidity -b BaseCurveAMOStrategy -o BaseCurveAMOStrategyHierarchy.svg
+sol2uml .. -s -d 0 -b BaseCurveAMOStrategy -i prettier-plugin-solidity -o BaseCurveAMOStrategySquashed.svg
+sol2uml storage .. -c BaseCurveAMOStrategy -i prettier-plugin-solidity -o BaseCurveAMOStrategyStorage.svg --hideExpand ______gap,_reserved,__gap
 
 # contracts/strategies/sonic
 sol2uml .. -v -hv -hf -he -hs -hl -hi -b SonicStakingStrategy -o SonicStakingStrategyHierarchy.svg
@@ -104,11 +73,6 @@ sol2uml storage .. -c SonicStakingStrategy -o SonicStakingStrategyStorage.svg --
 sol2uml .. -v -hv -hf -he -hs -hl -hi -b SonicSwapXAMOStrategy -o SonicSwapXAMOStrategyHierarchy.svg
 sol2uml .. -s -d 0 -b SonicSwapXAMOStrategy -o SonicSwapXAMOStrategySquashed.svg
 sol2uml storage .. -c SonicSwapXAMOStrategy -o SonicSwapXAMOStrategyStorage.svg --hideExpand __gap,______gap,_reserved
-
-# contracts/swapper
-sol2uml .. -v -hv -hf -he -hs -hl -b Swapper1InchV5 -o Swapper1InchV5Hierarchy.svg
-sol2uml .. -s -d 0 -b Swapper1InchV5 -o Swapper1InchV5Squashed.svg
-sol2uml storage .. -c Swapper1InchV5 -o Swapper1InchV5Storage.svg
 
 # contracts/token
 sol2uml .. -v -hv -hf -he -hs -hl -hi  -b OUSD -o OUSDHierarchy.svg
@@ -128,9 +92,9 @@ sol2uml .. -s -d 0 -b WOETH -o WOETHSquashed.svg
 sol2uml storage .. -c WOETH -o WOETHStorage.svg --hideExpand ______gap
 
 # Base tokens
-sol2uml .. -v -hv -hf -he -hs -hl -hi -b OETHBase -o OETHBaseHierarchy.svg
-sol2uml .. -s -d 0 -b OETHBase -o OETHBaseSquashed.svg
-sol2uml storage .. -c OETHBase -o OETHBaseStorage.svg --hideExpand  _gap,__gap
+sol2uml .. -v -hv -hf -he -hs -hl -hi -i prettier-plugin-solidity -b OETHBase -o OETHBaseHierarchy.svg
+sol2uml .. -s -d 0 -b OETHBase -i prettier-plugin-solidity -o OETHBaseSquashed.svg
+sol2uml storage .. -c OETHBase -i prettier-plugin-solidity -o OETHBaseStorage.svg --hideExpand  _gap,__gap
 
 sol2uml .. -v -hv -hf -he -hs -hl -hi -b WOETHBase -o WOETHBaseHierarchy.svg
 sol2uml .. -s -d 0 -b WOETHBase -o WOETHBaseSquashed.svg
@@ -162,15 +126,13 @@ sol2uml storage .. -i prettier-plugin-solidity -c OUSDVault -o VaultStorage.svg 
 # sol2uml storage .. -i prettier-plugin-solidity -c OSVault -o OSVaultStorage.svg --hideExpand __gap,______gap,_deprecated_swapTokens
 
 # contracts/poolBooster
-# call stack size exceeded
-#sol2uml .. -v -hv -hf -he -hs -hl -b PoolBoosterFactorySwapxSingle -o PoolBoosterFactorySwapxSingleHierarchy.svg
-#sol2uml .. -s -d 0 -b PoolBoosterFactorySwapxSingle -o PoolBoosterFactorySwapxSingleSquashed.svg
-sol2uml storage .. -c PoolBoosterFactorySwapxSingle -o PoolBoosterFactorySwapxSingleStorage.svg
+sol2uml .. -v -hv -hf -he -hs -hl `-i prettier-plugin-solidity` -b PoolBoosterFactorySwapxSingle -o PoolBoosterFactorySwapxSingleHierarchy.svg
+sol2uml .. -s -d 0 -i prettier-plugin-solidity -b PoolBoosterFactorySwapxSingle -o PoolBoosterFactorySwapxSingleSquashed.svg
+sol2uml storage .. -i prettier-plugin-solidity -c PoolBoosterFactorySwapxSingle -o PoolBoosterFactorySwapxSingleStorage.svg
 
-# call stack size exceeded
-#sol2uml .. -v -hv -hf -he -hs -hl -b PoolBoosterFactorySwapxDouble -o PoolBoosterFactorySwapxDoubleHierarchy.svg
-#sol2uml .. -s -d 0 -b PoolBoosterFactorySwapxDouble -o PoolBoosterFactorySwapxDoubleSquashed.svg
-sol2uml storage .. -c PoolBoosterFactorySwapxDouble -o PoolBoosterFactorySwapxDoubleStorage.svg
+sol2uml .. -v -hv -hf -he -hs -hl -i prettier-plugin-solidity -b PoolBoosterFactorySwapxDouble -o PoolBoosterFactorySwapxDoubleHierarchy.svg
+sol2uml .. -s -d 0 -i prettier-plugin-solidity -b PoolBoosterFactorySwapxDouble -o PoolBoosterFactorySwapxDoubleSquashed.svg
+sol2uml storage .. -i prettier-plugin-solidity -c PoolBoosterFactorySwapxDouble -o PoolBoosterFactorySwapxDoubleStorage.svg
 
 # contracts/utils
 sol2uml .. -v -hv -hf -he -hs -hl -b InitializableAbstractStrategy -o InitializableAbstractStrategyHierarchy.svg

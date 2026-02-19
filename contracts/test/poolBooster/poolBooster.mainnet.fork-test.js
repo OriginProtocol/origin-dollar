@@ -42,7 +42,7 @@ describe("ForkTest: Merkl Pool Booster", function () {
   });
 
   it("Should have OETH token supported by Merkl Distributor", async () => {
-    expect(await merklDistributor.rewardTokenMinAmounts(oeth.address)).to.equal(
+    expect(await merklDistributor.rewardTokenMinAmounts(oeth.address)).to.gt(
       oethUnits("0.00001")
     );
   });

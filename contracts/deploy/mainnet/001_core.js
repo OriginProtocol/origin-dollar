@@ -3,24 +3,15 @@ const { isFork } = require("../../test/helpers.js");
 const {
   deployOracles,
   deployCore,
-  deployCurveMetapoolMocks,
-  deployCompoundStrategy,
-  deployAaveStrategy,
-  deployConvexStrategy,
   deployNativeStakingSSVStrategy,
   deployCompoundingStakingSSVStrategy,
-  deployDrippers,
-  deployHarvesters,
+  deploySimpleOETHHarvester,
   configureVault,
   configureOETHVault,
-  configureStrategies,
-  deployBuyback,
   deployUniswapV3Pool,
   deployVaultValueChecker,
   deployWOusd,
   deployWOeth,
-  deployOETHSwapper,
-  deployOUSDSwapper,
   deployCrossChainUnitTestStrategy,
 } = require("../deployActions");
 
@@ -30,27 +21,15 @@ const main = async () => {
 
   await deployOracles();
   await deployCore();
-  await deployCurveMetapoolMocks();
-  await deployCompoundStrategy();
-  await deployAaveStrategy();
-  await deployConvexStrategy();
   await deployNativeStakingSSVStrategy();
   await deployCompoundingStakingSSVStrategy();
-  const [ousdDripper, oethDripper] = await deployDrippers();
-  const [harvesterProxy, oethHarvesterProxy] = await deployHarvesters(
-    ousdDripper,
-    oethDripper
-  );
+  await deploySimpleOETHHarvester();
   await configureVault();
   await configureOETHVault();
-  await configureStrategies(harvesterProxy, oethHarvesterProxy);
-  await deployBuyback();
   await deployUniswapV3Pool();
   await deployVaultValueChecker();
   await deployWOusd();
   await deployWOeth();
-  await deployOETHSwapper();
-  await deployOUSDSwapper();
   await deployCrossChainUnitTestStrategy(usdc.address);
   console.log("001_core deploy done.");
   return true;

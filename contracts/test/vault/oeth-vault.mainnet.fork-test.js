@@ -25,23 +25,9 @@ describe("ForkTest: OETH Vault", function () {
 
   describe("post deployment", () => {
     it("Should have the correct governor address set", async () => {
-      const {
-        oethVault,
-        oethDripper,
-        convexEthMetaStrategy,
-        oeth,
-        woeth,
-        oethHarvester,
-      } = fixture;
+      const { oethVault, oeth, woeth, oethHarvester } = fixture;
 
-      const oethContracts = [
-        oethVault,
-        oethDripper,
-        convexEthMetaStrategy,
-        oeth,
-        woeth,
-        oethHarvester,
-      ];
+      const oethContracts = [oethVault, oeth, woeth, oethHarvester];
 
       for (let i = 0; i < oethContracts.length; i++) {
         expect(await oethContracts[i].governor()).to.equal(
@@ -113,26 +99,6 @@ describe("ForkTest: OETH Vault", function () {
       await expect(tx)
         .to.emit(oethVault, "Mint")
         .withArgs(josh.address, amount);
-    });
-
-    it("should mint when specifying any other assets", async () => {
-      const { oethVault, frxETH, stETH, reth, weth, josh } = fixture;
-
-      const amount = parseUnits("1", 18);
-      const minOeth = parseUnits("0.8", 18);
-
-      for (const asset of [frxETH, stETH, reth]) {
-        const wethBefore = await weth.balanceOf(josh.address);
-        const assetBefore = await asset.balanceOf(josh.address);
-
-        // Mints with WETH even though other assets are specified
-        await oethVault.connect(josh).mint(asset.address, amount, minOeth);
-
-        expect(await weth.balanceOf(josh.address)).to.eq(
-          wethBefore.sub(amount)
-        );
-        expect(await asset.balanceOf(josh.address)).to.eq(assetBefore);
-      }
     });
 
     it("should request a withdraw by OETH whale", async () => {
