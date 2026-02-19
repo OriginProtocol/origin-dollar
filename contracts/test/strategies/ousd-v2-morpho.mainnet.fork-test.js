@@ -7,6 +7,7 @@ const { getMerklRewards } = require("../../tasks/merkl");
 const { units, isCI } = require("../helpers");
 
 const { createFixtureLoader, morphoOUSDv2Fixture } = require("../_fixture");
+const { impersonateAndFund } = require("../../utils/signers");
 
 const log = require("../../utils/logger")("test:fork:ousd-v2-morpho");
 
@@ -377,8 +378,7 @@ describe("ForkTest: Yearn's Morpho OUSD v2 Strategy", function () {
     });
 
     it("Should be able to collect MORPHO rewards", async () => {
-      const { buyBackSigner, josh, morphoOUSDv2Strategy, morphoToken } =
-        fixture;
+      const { josh, morphoOUSDv2Strategy, morphoToken } = fixture;
 
       const { amount, proofs } = await getMerklRewards({
         userAddress: morphoOUSDv2Strategy.address,
@@ -396,6 +396,9 @@ describe("ForkTest: Yearn's Morpho OUSD v2 Strategy", function () {
         morphoOUSDv2Strategy.address
       );
 
+      const buyBackSigner = await impersonateAndFund(
+        addresses.multichainBuybackOperator
+      );
       const tx = await morphoOUSDv2Strategy
         .connect(buyBackSigner)
         .collectRewardTokens();
