@@ -1,12 +1,7 @@
 const { expect } = require("chai");
 
 const { loadDefaultFixture } = require("../_fixture");
-const {
-  ousdUnits,
-  usdcUnits,
-  setOracleTokenPriceUsd,
-  expectApproxSupply,
-} = require("../helpers");
+const { ousdUnits, usdcUnits, expectApproxSupply } = require("../helpers");
 
 describe("Vault rebase", () => {
   let fixture;
@@ -68,59 +63,6 @@ describe("Vault rebase", () => {
   });
 
   describe("Vault rebasing", async () => {
-    it("Should not alter balances after an asset price change", async () => {
-      const { ousd, vault, matt } = fixture;
-
-      await expect(matt).has.a.balanceOf("100.00", ousd);
-      await vault.rebase();
-      await expect(matt).has.a.balanceOf("100.00", ousd);
-      await setOracleTokenPriceUsd("USDS", "1.30");
-
-      await vault.rebase();
-      await expect(matt).has.a.approxBalanceOf("100.00", ousd);
-      await setOracleTokenPriceUsd("USDS", "1.00");
-      await vault.rebase();
-      await expect(matt).has.a.balanceOf("100.00", ousd);
-    });
-
-    it("Should not alter balances after an asset price change, single", async () => {
-      const { ousd, vault, matt } = fixture;
-
-      await expect(matt).has.a.balanceOf("100.00", ousd);
-      await vault.rebase();
-      await expect(matt).has.a.balanceOf("100.00", ousd);
-      await setOracleTokenPriceUsd("USDS", "1.30");
-      await vault.rebase();
-      await expect(matt).has.a.approxBalanceOf("100.00", ousd);
-      await setOracleTokenPriceUsd("USDS", "1.00");
-      await vault.rebase();
-      await expect(matt).has.a.balanceOf("100.00", ousd);
-    });
-
-    it("Should not alter balances after an asset price change with multiple assets", async () => {
-      const { ousd, vault, matt, usdc } = fixture;
-
-      await usdc.connect(matt).approve(vault.address, usdcUnits("200"));
-      await vault.connect(matt).mint(usdc.address, usdcUnits("200"), 0);
-      expect(await ousd.totalSupply()).to.eq(ousdUnits("400.0"));
-      await expect(matt).has.a.balanceOf("300.00", ousd);
-      await vault.rebase();
-      await expect(matt).has.a.balanceOf("300.00", ousd);
-
-      await setOracleTokenPriceUsd("USDS", "1.30");
-      await vault.rebase();
-      expect(await ousd.totalSupply()).to.eq(ousdUnits("400.0"));
-      await expect(matt).has.an.approxBalanceOf("300.00", ousd);
-
-      await setOracleTokenPriceUsd("USDS", "1.00");
-      await vault.rebase();
-      expect(await ousd.totalSupply()).to.eq(
-        ousdUnits("400.0"),
-        "After assets go back"
-      );
-      await expect(matt).has.a.balanceOf("300.00", ousd);
-    });
-
     it("Should alter balances after supported asset deposited and rebase called for rebasing accounts", async () => {
       const { ousd, vault, matt, usdc, josh } = fixture;
 
@@ -181,8 +123,6 @@ describe("Vault rebase", () => {
       const { anna, ousd, usdc, vault } = fixture;
 
       await expect(anna).has.a.balanceOf("0", ousd);
-      // The price should be limited by the code to $1
-      await setOracleTokenPriceUsd("USDC", "1.20");
       await usdc.connect(anna).approve(vault.address, usdcUnits("50"));
       await vault.connect(anna).mint(usdc.address, usdcUnits("50"), 0);
       await expect(anna).has.a.balanceOf("50", ousd);

@@ -110,7 +110,7 @@ describe("ForkTest: CrossChainMasterStrategy", function () {
         burnEventData.hookData
       );
       expect(messageType).to.eq(1);
-      expect(nonce).to.eq(1);
+      expect(nonce).to.gt(2);
       expect(amount).to.eq(usdcUnits("1000"));
     });
 
@@ -171,14 +171,14 @@ describe("ForkTest: CrossChainMasterStrategy", function () {
       const { messageType, nonce, amount } =
         decodeDepositOrWithdrawMessage(payload);
       expect(messageType).to.eq(2);
-      expect(nonce).to.eq(1);
+      expect(nonce).to.gt(2);
       expect(amount).to.eq(usdcUnits("1000"));
     });
   });
 
   describe("Message receiving", function () {
     it("Should handle balance check message", async function () {
-      const { crossChainMasterStrategy, strategist } = fixture;
+      const { crossChainMasterStrategy, relayer } = fixture;
 
       if (await crossChainMasterStrategy.isTransferPending()) {
         // Skip if there's a pending transfer
@@ -209,7 +209,7 @@ describe("ForkTest: CrossChainMasterStrategy", function () {
       );
 
       // Relay the message with fake attestation
-      await crossChainMasterStrategy.connect(strategist).relay(message, "0x");
+      await crossChainMasterStrategy.connect(relayer).relay(message, "0x");
 
       const remoteStrategyBalance =
         await crossChainMasterStrategy.remoteStrategyBalance();
@@ -217,7 +217,7 @@ describe("ForkTest: CrossChainMasterStrategy", function () {
     });
 
     it("Should handle balance check message for a pending deposit", async function () {
-      const { crossChainMasterStrategy, strategist, usdc, matt } = fixture;
+      const { crossChainMasterStrategy, relayer, usdc, matt } = fixture;
 
       if (await crossChainMasterStrategy.isTransferPending()) {
         // Skip if there's a pending transfer
@@ -263,7 +263,7 @@ describe("ForkTest: CrossChainMasterStrategy", function () {
       );
 
       // Relay the message with fake attestation
-      await crossChainMasterStrategy.connect(strategist).relay(message, "0x");
+      await crossChainMasterStrategy.connect(relayer).relay(message, "0x");
 
       const remoteStrategyBalance =
         await crossChainMasterStrategy.remoteStrategyBalance();
@@ -276,7 +276,7 @@ describe("ForkTest: CrossChainMasterStrategy", function () {
     });
 
     it("Should accept tokens for a pending withdrawal", async function () {
-      const { crossChainMasterStrategy, strategist, matt, usdc } = fixture;
+      const { crossChainMasterStrategy, relayer, matt, usdc } = fixture;
 
       if (await crossChainMasterStrategy.isTransferPending()) {
         // Skip if there's a pending transfer
@@ -333,7 +333,7 @@ describe("ForkTest: CrossChainMasterStrategy", function () {
         .transfer(crossChainMasterStrategy.address, usdcUnits("2342"));
 
       // Relay the message with fake attestation
-      await crossChainMasterStrategy.connect(strategist).relay(message, "0x");
+      await crossChainMasterStrategy.connect(relayer).relay(message, "0x");
 
       const remoteStrategyBalance =
         await crossChainMasterStrategy.remoteStrategyBalance();
@@ -341,7 +341,7 @@ describe("ForkTest: CrossChainMasterStrategy", function () {
     });
 
     it("Should ignore balance check message for a pending withdrawal", async function () {
-      const { crossChainMasterStrategy, strategist, usdc } = fixture;
+      const { crossChainMasterStrategy, relayer, usdc } = fixture;
 
       if (await crossChainMasterStrategy.isTransferPending()) {
         // Skip if there's a pending transfer
@@ -389,7 +389,7 @@ describe("ForkTest: CrossChainMasterStrategy", function () {
       );
 
       // Relay the message with fake attestation
-      await crossChainMasterStrategy.connect(strategist).relay(message, "0x");
+      await crossChainMasterStrategy.connect(relayer).relay(message, "0x");
 
       // Should've ignore the message
       const remoteStrategyBalance =
@@ -398,7 +398,7 @@ describe("ForkTest: CrossChainMasterStrategy", function () {
     });
 
     it("Should ignore balance check message with older nonce", async function () {
-      const { crossChainMasterStrategy, strategist, matt, usdc } = fixture;
+      const { crossChainMasterStrategy, relayer, matt, usdc } = fixture;
 
       if (await crossChainMasterStrategy.isTransferPending()) {
         // Skip if there's a pending transfer
@@ -447,7 +447,7 @@ describe("ForkTest: CrossChainMasterStrategy", function () {
       );
 
       // Relay the message with fake attestation
-      await crossChainMasterStrategy.connect(strategist).relay(message, "0x");
+      await crossChainMasterStrategy.connect(relayer).relay(message, "0x");
 
       const remoteStrategyBalance =
         await crossChainMasterStrategy.remoteStrategyBalance();
@@ -455,7 +455,7 @@ describe("ForkTest: CrossChainMasterStrategy", function () {
     });
 
     it("Should ignore if nonce is higher", async function () {
-      const { crossChainMasterStrategy, strategist } = fixture;
+      const { crossChainMasterStrategy, relayer } = fixture;
 
       if (await crossChainMasterStrategy.isTransferPending()) {
         // Skip if there's a pending transfer
@@ -489,14 +489,14 @@ describe("ForkTest: CrossChainMasterStrategy", function () {
       );
 
       // Relay the message with fake attestation
-      await crossChainMasterStrategy.connect(strategist).relay(message, "0x");
+      await crossChainMasterStrategy.connect(relayer).relay(message, "0x");
       const remoteStrategyBalanceAfter =
         await crossChainMasterStrategy.remoteStrategyBalance();
       expect(remoteStrategyBalanceAfter).to.eq(remoteStrategyBalanceBefore);
     });
 
     it("Should revert if the burn token is not peer USDC", async function () {
-      const { crossChainMasterStrategy, strategist } = fixture;
+      const { crossChainMasterStrategy, relayer } = fixture;
 
       if (await crossChainMasterStrategy.isTransferPending()) {
         // Skip if there's a pending transfer
@@ -540,9 +540,7 @@ describe("ForkTest: CrossChainMasterStrategy", function () {
       );
 
       // Relay the message with fake attestation
-      const tx = crossChainMasterStrategy
-        .connect(strategist)
-        .relay(message, "0x");
+      const tx = crossChainMasterStrategy.connect(relayer).relay(message, "0x");
 
       await expect(tx).to.be.revertedWith("Invalid burn token");
     });

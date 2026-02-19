@@ -10,6 +10,8 @@ const { advanceTime } = require("../helpers");
 const { shouldBehaveLikeGovernable } = require("../behaviour/governable");
 const { shouldBehaveLikeHarvestable } = require("../behaviour/harvestable");
 const { shouldBehaveLikeStrategy } = require("../behaviour/strategy");
+const erc20Abi = require("../../abi/erc20.json");
+const crvMinterAbi = require("../../abi/crvMinter.json");
 
 const { loadDefaultFixture } = require("../_fixture");
 
@@ -37,6 +39,7 @@ describe("Curve AMO OETH strategy", function () {
     impersonatedCurveStrategy,
     impersonatedTimelock,
     crv,
+    crvMinter,
     harvester;
 
   let defaultDepositor;
@@ -55,7 +58,11 @@ describe("Curve AMO OETH strategy", function () {
     timelock = fixture.timelock;
     curvePool = fixture.curvePoolOETHWETH;
     curveGauge = fixture.curveGaugeOETHWETH;
-    crv = fixture.crv;
+    crv = await ethers.getContractAt(erc20Abi, addresses.mainnet.CRV);
+    crvMinter = await ethers.getContractAt(
+      crvMinterAbi,
+      addresses.mainnet.CRVMinter
+    );
     harvester = fixture.strategist;
     governor = await ethers.getSigner(addresses.mainnet.Timelock);
 
@@ -614,7 +621,7 @@ describe("Curve AMO OETH strategy", function () {
       const integrate_fraction = await curveGauge.integrate_fraction(
         curveAMOStrategy.address
       );
-      const alreadyMinted = await fixture.crvMinter.minted(
+      const alreadyMinted = await crvMinter.minted(
         curveAMOStrategy.address,
         curveGauge.address
       );

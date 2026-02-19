@@ -11,7 +11,7 @@ const { impersonateAndFund } = require("../../utils/signers");
     shouldBehaveLikeHarvester(() => ({
       ...fixture,
       harvester: fixture.oethHarvester
-      strategy: fixture.convexEthMetaStrategy,
+      strategy: fixture.nativeStakingSSVStrategy,
     }));
  */
 const shouldBehaveLikeHarvestable = (context) => {

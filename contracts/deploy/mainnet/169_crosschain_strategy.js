@@ -12,7 +12,8 @@ module.exports = deploymentWithGovernanceProposal(
     forceDeploy: false,
     reduceQueueTime: true,
     deployerIsProposer: false,
-    proposalId: "",
+    proposalId:
+      "82859201447218338287719298348503030894203878448854317959506610360592214196029",
   },
   async () => {
     const crossChainStrategyProxyAddress = await getCreate2ProxyAddress(

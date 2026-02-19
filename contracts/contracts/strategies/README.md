@@ -1,47 +1,5 @@
 # Diagrams
 
-## Aave Strategy
-
-### Hierarchy
-
-![Aave Strategy Hierarchy](../../docs/AaveStrategyHierarchy.svg)
-
-### Squashed
-
-![Aave Strategy Squashed](../../docs/AaveStrategySquashed.svg)
-
-### Storage
-
-![Aave Strategy Storage](../../docs/AaveStrategyStorage.svg)
-
-## Convex ETH AMO Strategy
-
-### Hierarchy
-
-![Convex ETH AMO Strategy Hierarchy](../../docs/ConvexEthMetaStrategyHierarchy.svg)
-
-### Squashed
-
-![Convex ETH AMO Strategy Squashed](../../docs/ConvexEthMetaStrategySquashed.svg)
-
-### Storage
-
-![Convex ETH AMO Strategy Storage](../../docs/ConvexEthMetaStrategyStorage.svg)
-
-## Convex OUSD AMO Strategy
-
-### Hierarchy
-
-![Convex OUSD AMO Strategy Hierarchy](../../docs/ConvexOUSDMetaStrategyHierarchy.svg)
-
-### Squashed
-
-![Convex OUSD AMO Strategy Squashed](../../docs/ConvexOUSDMetaStrategySquashed.svg)
-
-<!-- ### Storage
-
-![Convex OUSD AMO Strategy Storage](../../docs/ConvexOUSDMetaStrategyStorage.svg) -->
-
 ## Generalized ERC-4626 Strategy
 
 ### Hierarchy
@@ -56,30 +14,30 @@
 
 ![Generalized ERC-4626 Strategy Storage](../../docs/Generalized4626StrategyStorage.svg)
 
-## Morpho Aave Strategy
+## Curve AMO Strategy
 
 ### Hierarchy
 
-![Morpho Aave Strategy Hierarchy](../../docs/MorphoAaveStrategyHierarchy.svg)
+![Curve AMO Strategy Hierarchy](../../docs/CurveAMOStrategyHierarchy.svg)
 
 ### Squashed
 
-![Morpho Aave Strategy Squashed](../../docs/MorphoAaveStrategySquashed.svg)
+![Curve AMO Strategy Squashed](../../docs/CurveAMOStrategySquashed.svg)
 
 ### Storage
 
-![Morpho Aave Strategy Storage](../../docs/MorphoAaveStrategyStorage.svg)
+![Curve AMO Strategy Storage](../../docs/CurveAMOStrategyStorage.svg)
 
-## Morpho Compound Strategy
+## Base Curve AMO Strategy
 
 ### Hierarchy
 
-![Morpho Compound Strategy Hierarchy](../../docs/MorphoCompStrategyHierarchy.svg)
+![Base Curve AMO Strategy Hierarchy](../../docs/BaseCurveAMOStrategyHierarchy.svg)
 
 ### Squashed
 
-![Morpho Compound Strategy Squashed](../../docs/MorphoCompStrategySquashed.svg)
+![Base Curve AMO Strategy Squashed](../../docs/BaseCurveAMOStrategySquashed.svg)
 
 ### Storage
 
-![Morpho Compound Strategy Storage](../../docs/MorphoCompStrategyStorage.svg)
+![Base Curve AMO Strategy Storage](../../docs/BaseCurveAMOStrategyStorage.svg)

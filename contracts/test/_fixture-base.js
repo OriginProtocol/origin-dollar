@@ -8,7 +8,6 @@ const { deployWithConfirmation } = require("../utils/deploy");
 const addresses = require("../utils/addresses");
 const erc20Abi = require("./abi/erc20.json");
 const hhHelpers = require("@nomicfoundation/hardhat-network-helpers");
-const { getCreate2ProxyAddress } = require("../deploy/deployActions");
 
 const log = require("../utils/logger")("test:fixtures-base");
 
@@ -25,17 +24,6 @@ const BURNER_ROLE =
   "0x3c11d16cbaffd01df69ce1c404f6340ee057498f5f00246190ea54220576a848";
 
 let snapshotId;
-
-const baseFixtureWithMockedVaultAdminConfig = async () => {
-  const fixture = await defaultFixture();
-  await deployWithConfirmation("MockOETHVault", [fixture.weth.address]);
-
-  fixture.oethbVault = await ethers.getContractAt(
-    "IMockVault",
-    fixture.oethbVault.address
-  );
-  return fixture;
-};
 
 const defaultFixture = async () => {
   if (!snapshotId && !isFork) {
@@ -78,7 +66,7 @@ const defaultFixture = async () => {
     oethbVaultProxy.address
   );
 
-  let aerodromeAmoStrategy, dripper, harvester, quoter, sugar, curveAMOStrategy;
+  let aerodromeAmoStrategy, harvester, quoter, sugar, curveAMOStrategy;
   if (isFork) {
     // Aerodrome AMO Strategy
     const aerodromeAmoStrategyProxy = await ethers.getContract(
@@ -109,13 +97,6 @@ const defaultFixture = async () => {
 
     quoter = await hre.ethers.getContract("AerodromeAMOQuoter");
 
-    // Dripper
-    const dripperProxy = await ethers.getContract("OETHBaseDripperProxy");
-    dripper = await ethers.getContractAt(
-      "FixedRateDripper",
-      dripperProxy.address
-    );
-
     const curveAMOProxy = await ethers.getContract("OETHBaseCurveAMOProxy");
     curveAMOStrategy = await ethers.getContractAt(
       "BaseCurveAMOStrategy",
@@ -134,11 +115,6 @@ const defaultFixture = async () => {
     "BridgedWOETHStrategy",
     woethStrategyProxy.address
   );
-
-  const oracleRouter = await ethers.getContract(
-    isFork ? "OETHBaseOracleRouter" : "MockOracleRouter"
-  );
-
   const mockStrategy = isFork
     ? undefined
     : await ethers.getContract("MockStrategy");
@@ -258,13 +234,11 @@ const defaultFixture = async () => {
     wOETHb,
     zapper,
     harvester,
-    dripper,
 
     // Bridged WOETH
     woeth,
     woethProxy,
     woethStrategy,
-    oracleRouter,
 
     // Strategies
     aerodromeAmoStrategy,
@@ -295,9 +269,6 @@ const defaultFixture = async () => {
 };
 
 const defaultBaseFixture = deployments.createFixture(defaultFixture);
-const baseFixtureWithMockedVaultAdmin = deployments.createFixture(
-  baseFixtureWithMockedVaultAdminConfig
-);
 
 const bridgeHelperModuleFixture = deployments.createFixture(async () => {
   const fixture = await defaultBaseFixture();
@@ -334,9 +305,8 @@ const bridgeHelperModuleFixture = deployments.createFixture(async () => {
 
 const crossChainFixture = deployments.createFixture(async () => {
   const fixture = await defaultBaseFixture();
-  const crossChainStrategyProxyAddress = await getCreate2ProxyAddress(
-    "CrossChainStrategyProxy"
-  );
+  const crossChainStrategyProxyAddress =
+    addresses.base.CrossChainRemoteStrategy;
   const crossChainRemoteStrategy = await ethers.getContractAt(
     "CrossChainRemoteStrategy",
     crossChainStrategyProxyAddress
@@ -376,6 +346,8 @@ const crossChainFixture = deployments.createFixture(async () => {
     .connect(fixture.rafael)
     .mint(fixture.rafael.address, usdcUnits("1000000"));
 
+  fixture.relayer = await impersonateAndFund(addresses.base.OZRelayerAddress);
+
   return {
     ...fixture,
     crossChainRemoteStrategy,
@@ -392,7 +364,6 @@ mocha.after(async () => {
 
 module.exports = {
   defaultBaseFixture,
-  baseFixtureWithMockedVaultAdmin,
   MINTER_ROLE,
   BURNER_ROLE,
   bridgeHelperModuleFixture,

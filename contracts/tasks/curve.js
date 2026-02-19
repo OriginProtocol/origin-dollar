@@ -2,7 +2,6 @@ const { BigNumber } = require("ethers");
 const { formatUnits, parseUnits } = require("ethers/lib/utils");
 
 const curveNGPoolAbi = require("../test/abi/curveStableSwapNG.json");
-const oethPoolAbi = require("../test/abi/oethMetapool.json");
 const addresses = require("../utils/addresses");
 const { resolveAsset } = require("../utils/resolvers");
 const { getDiffBlocks } = require("./block");
@@ -378,18 +377,18 @@ async function curveContracts(oTokenSymbol) {
   // Get the contract addresses
   const poolAddr =
     oTokenSymbol === "OETH"
-      ? addresses.mainnet.CurveOETHMetaPool
+      ? addresses.mainnet.curve.OETH_WETH.pool
       : addresses.mainnet.curve.OUSD_USDC.pool;
   log(`Resolved ${oTokenSymbol} Curve pool to ${poolAddr}`);
   const strategyAddr =
     oTokenSymbol === "OETH"
-      ? addresses.mainnet.ConvexOETHAMOStrategy
+      ? addresses.mainnet.CurveOETHAMOStrategy
       : addresses.mainnet.CurveOUSDAMOStrategy;
   const convexRewardsPoolAddr =
     oTokenSymbol === "OETH"
-      ? addresses.mainnet.CVXETHRewardsPool
+      ? addresses.mainnet.curve.OETH_WETH.gauge
       : addresses.mainnet.curve.OUSD_USDC.gauge;
-  const poolLPSymbol = oTokenSymbol === "OETH" ? "OETHCRV-f" : "OUSD/USDC";
+  const poolLPSymbol = oTokenSymbol === "OETH" ? "OETH/WETH" : "OUSD/USDC";
   const vaultAddr =
     oTokenSymbol === "OETH"
       ? addresses.mainnet.OETHVaultProxy
@@ -406,7 +405,7 @@ async function curveContracts(oTokenSymbol) {
       : await resolveAsset("USDC");
   const pool =
     oTokenSymbol === "OETH"
-      ? await hre.ethers.getContractAt(oethPoolAbi, poolAddr)
+      ? await hre.ethers.getContractAt(curveNGPoolAbi, poolAddr)
       : await hre.ethers.getContractAt(curveNGPoolAbi, poolAddr);
   const cvxRewardPool = await ethers.getContractAt(
     "IRewardStaking",

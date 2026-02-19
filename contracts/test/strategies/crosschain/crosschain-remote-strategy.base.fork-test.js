@@ -123,7 +123,7 @@ describe("ForkTest: CrossChainRemoteStrategy", function () {
   });
 
   it("Should handle deposits", async function () {
-    const { crossChainRemoteStrategy, strategist, rafael, usdc } = fixture;
+    const { crossChainRemoteStrategy, relayer, rafael, usdc } = fixture;
 
     // snapshot state
     const balanceBefore = await crossChainRemoteStrategy.checkBalance(
@@ -161,7 +161,7 @@ describe("ForkTest: CrossChainRemoteStrategy", function () {
 
     // Relay the message
     const tx = await crossChainRemoteStrategy
-      .connect(strategist)
+      .connect(relayer)
       .relay(message, "0x");
 
     // Check if it sent the check balance message
@@ -184,7 +184,8 @@ describe("ForkTest: CrossChainRemoteStrategy", function () {
   });
 
   it("Should handle withdrawals", async function () {
-    const { crossChainRemoteStrategy, strategist, rafael, usdc } = fixture;
+    const { crossChainRemoteStrategy, strategist, relayer, rafael, usdc } =
+      fixture;
 
     const withdrawalAmount = usdcUnits("1234.56");
 
@@ -221,7 +222,7 @@ describe("ForkTest: CrossChainRemoteStrategy", function () {
 
     // Relay the message
     const tx = await crossChainRemoteStrategy
-      .connect(strategist)
+      .connect(relayer)
       .relay(message, "0x");
 
     // Check if it sent the check balance message
@@ -249,7 +250,7 @@ describe("ForkTest: CrossChainRemoteStrategy", function () {
   });
 
   it("Should revert if the burn token is not peer USDC", async function () {
-    const { crossChainRemoteStrategy, strategist } = fixture;
+    const { crossChainRemoteStrategy, relayer } = fixture;
 
     const nonceBefore = await crossChainRemoteStrategy.lastTransferNonce();
 
@@ -277,9 +278,7 @@ describe("ForkTest: CrossChainRemoteStrategy", function () {
     );
 
     // Relay the message
-    const tx = crossChainRemoteStrategy
-      .connect(strategist)
-      .relay(message, "0x");
+    const tx = crossChainRemoteStrategy.connect(relayer).relay(message, "0x");
 
     await expect(tx).to.be.revertedWith("Invalid burn token");
   });

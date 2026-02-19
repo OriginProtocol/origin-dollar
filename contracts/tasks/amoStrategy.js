@@ -280,37 +280,6 @@ async function amoStrategyTask(taskArguments) {
       vaultAdjustedTotalSupplyBefore
     )}`
   );
-
-  // Strategy's net minted and threshold
-  const netMintedForStrategy = await vault.netOusdMintedForStrategy({
-    blockTag,
-  });
-  const netMintedForStrategyThreshold =
-    await vault.netOusdMintForStrategyThreshold({ blockTag });
-  const netMintedForStrategyDiff =
-    netMintedForStrategyThreshold.sub(netMintedForStrategy);
-
-  output(
-    displayProperty(
-      "\nNet minted for strategy  ",
-      assetSymbol,
-      netMintedForStrategy
-    )
-  );
-  output(
-    displayProperty(
-      "Net minted threshold",
-      assetSymbol,
-      netMintedForStrategyThreshold
-    )
-  );
-  output(
-    displayProperty(
-      "Net minted for strat diff",
-      assetSymbol,
-      netMintedForStrategyDiff
-    )
-  );
 }
 
 /************************************
@@ -323,10 +292,10 @@ async function mintAndAddOTokensTask(taskArguments) {
   // Get symbols and contracts
   const amoStrategyAddr =
     symbol === "OETH"
-      ? addresses.mainnet.ConvexOETHAMOStrategy
+      ? addresses.mainnet.CurveOETHAMOStrategy
       : addresses.mainnet.ConvexOUSDAMOStrategy;
   const amoStrategy = await ethers.getContractAt(
-    "ConvexEthMetaStrategy",
+    "CurveAMOStrategy",
     amoStrategyAddr
   );
 
@@ -345,10 +314,10 @@ async function removeAndBurnOTokensTask(taskArguments) {
   // Get symbols and contracts
   const amoStrategyAddr =
     symbol === "OETH"
-      ? addresses.mainnet.ConvexOETHAMOStrategy
+      ? addresses.mainnet.CurveOETHAMOStrategy
       : addresses.mainnet.ConvexOUSDAMOStrategy;
   const amoStrategy = await ethers.getContractAt(
-    "ConvexEthMetaStrategy",
+    "CurveAMOStrategy",
     amoStrategyAddr
   );
 
@@ -373,10 +342,10 @@ async function removeOnlyAssetsTask(taskArguments) {
   // Get symbols and contracts
   const amoStrategyAddr =
     symbol === "OETH"
-      ? addresses.mainnet.ConvexOETHAMOStrategy
+      ? addresses.mainnet.CurveOETHAMOStrategy
       : addresses.mainnet.ConvexOUSDAMOStrategy;
   const amoStrategy = await ethers.getContractAt(
-    "ConvexEthMetaStrategy",
+    "CurveAMOStrategy",
     amoStrategyAddr
   );
 

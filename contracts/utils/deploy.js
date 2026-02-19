@@ -12,7 +12,6 @@ const {
   isHolesky,
   isFork,
   isMainnetOrFork,
-  getOracleAddresses,
   getAssetAddresses,
   isSmokeTest,
   isForkTest,
@@ -493,7 +492,7 @@ const executeGovernanceProposalOnFork = async ({
       await getStorageAt(governorSix.address, slotKey)
     ).toNumber();
     const currentBlock = await hre.ethers.provider.getBlockNumber();
-    let blocksToMine = deadline - currentBlock;
+    let blocksToMine = deadline - currentBlock + 7000; // Add 1d buffer
 
     if (blocksToMine > 0) {
       if (reduceQueueTime) {
@@ -1027,10 +1026,8 @@ function deploymentWithGovernanceProposal(opts, fn) {
     executionRetries = 0,
   } = opts;
   const runDeployment = async (hre) => {
-    const oracleAddresses = await getOracleAddresses(hre.deployments);
     const assetAddresses = await getAssetAddresses(hre.deployments);
     const tools = {
-      oracleAddresses,
       assetAddresses,
       deployWithConfirmation,
       ethers,
@@ -1208,10 +1205,8 @@ function deploymentWithGovernanceProposal(opts, fn) {
 function deploymentWithGuardianGovernor(opts, fn) {
   const { deployName, dependencies, forceDeploy, onlyOnFork, forceSkip } = opts;
   const runDeployment = async (hre) => {
-    const oracleAddresses = await getOracleAddresses(hre.deployments);
     const assetAddresses = await getAssetAddresses(hre.deployments);
     const tools = {
-      oracleAddresses,
       assetAddresses,
       deployWithConfirmation,
       ethers,
