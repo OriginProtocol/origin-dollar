@@ -30,17 +30,14 @@ const main = async () => {
     "PoolBoosterMerklV2",
     []
   );
-  console.log(
-    `PoolBoosterMerklV2 deployed to ${dPoolBoosterMerklV2.address}`
-  );
+  console.log(`PoolBoosterMerklV2 deployed to ${dPoolBoosterMerklV2.address}`);
 
   // ---------------------------------------------------------------------------------------------------------
   // --- 2. Deploy UpgradeableBeacon pointing to PoolBoosterMerklV2
   // ---------------------------------------------------------------------------------------------------------
-  const dUpgradeableBeacon = await deployWithConfirmation(
-    "UpgradeableBeacon",
-    [dPoolBoosterMerklV2.address]
-  );
+  const dUpgradeableBeacon = await deployWithConfirmation("UpgradeableBeacon", [
+    dPoolBoosterMerklV2.address,
+  ]);
   // Transfer beacon ownership from deployer to multichainStrategist
   const cBeacon = await ethers.getContractAt(
     "UpgradeableBeacon",
