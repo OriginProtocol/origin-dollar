@@ -278,9 +278,7 @@ describe("ForkTest: CrossChainRemoteStrategy", function () {
     );
 
     // Relay the message
-    const tx = crossChainRemoteStrategy
-      .connect(relayer)
-      .relay(message, "0x");
+    const tx = crossChainRemoteStrategy.connect(relayer).relay(message, "0x");
 
     await expect(tx).to.be.revertedWith("Invalid burn token");
   });
