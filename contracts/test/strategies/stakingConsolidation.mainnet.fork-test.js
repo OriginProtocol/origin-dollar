@@ -862,6 +862,14 @@ describe("ForkTest: Consolidation of Staking Strategies", function () {
 
       await expect(tx).to.emit(compoundingStakingStrategy, "BalancesSnapped");
     });
+    it("Fail snapBalance on the Consolidation Controller when called by non-registrator after the consolidation has started", async () => {
+      const { josh } = fixture;
+      await advanceTime(12 * 40);
+
+      const tx = consolidationController.connect(josh).snapBalances();
+
+      await expect(tx).to.be.revertedWith("Consolidation in progress");
+    });
     it("Fail snapBalance on the new compounding staking strategy when called by non-registrator after the consolidation has started", async () => {
       const { josh } = fixture;
       await advanceTime(12 * 40);
