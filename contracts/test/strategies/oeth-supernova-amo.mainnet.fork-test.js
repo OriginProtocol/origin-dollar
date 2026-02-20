@@ -2,7 +2,7 @@ const { supernovaOETHAMOFixure, createFixtureLoader } = require("../_fixture");
 const addresses = require("../../utils/addresses");
 const { shouldBehaveLikeAlgebraAmoStrategy } = require("../behaviour/algebraAmoStrategy");
 
-describe.only("Mainnet Fork Test: OETH Supernova AMO Strategy", function () {
+describe("Mainnet Fork Test: OETH Supernova AMO Strategy", function () {
   shouldBehaveLikeAlgebraAmoStrategy(async () => {
     const scenarioConfig = {
       attackerFrontRun: {

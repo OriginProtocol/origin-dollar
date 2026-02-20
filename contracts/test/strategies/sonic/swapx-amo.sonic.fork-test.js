@@ -3,7 +3,7 @@ const addresses = require("../../../utils/addresses");
 const { shouldBehaveLikeAlgebraAmoStrategy } = require("../../behaviour/algebraAmoStrategy");
 const { createFixtureLoader } = require("../../_fixture");
 
-describe.only("Sonic Fork Test: SwapX AMO Strategy", function () {
+describe("Sonic Fork Test: SwapX AMO Strategy", function () {
   shouldBehaveLikeAlgebraAmoStrategy(async () => {
     const scenarioConfig = {
       attackerFrontRun: {
