@@ -2572,8 +2572,8 @@ async function supernovaOETHAMOFixure(
     assetMintAmount: 0,
     depositToStrategy: false,
     balancePool: false,
-    poolAddAssetAmount: 0,
-    poolAddOTokenAmount: 0,
+    poolAddWethAmount: 0,
+    poolAddOethAmount: 0,
   }
 ) {
   const fixture = await defaultFixture();
@@ -2587,8 +2587,8 @@ async function supernovaOETHAMOFixure(
     assetMintAmount: config?.assetMintAmount || 0,
     depositToStrategy: config?.depositToStrategy || false,
     balancePool: config?.balancePool || false,
-    poolAddAssetAmount: config?.poolAddAssetAmount || 0,
-    poolAddOTokenAmount: config?.poolAddOTokenAmount || 0,
+    poolAddWethAmount: config?.poolAddWethAmount || 0,
+    poolAddOethAmount: config?.poolAddOethAmount || 0,
   };
 
   const cOETHSupernovaAMOProxy = await ethers.getContract("OETHSupernovaAMOProxy");
@@ -2690,21 +2690,24 @@ async function supernovaOETHAMOFixure(
     );
 
     if (diff > 0) {
-      cfg.poolAddOTokenAmount += diff;
+      cfg.poolAddOethAmount += diff;
     } else if (diff < 0) {
-      cfg.poolAddAssetAmount += -diff;
+      cfg.poolAddWethAmount += -diff;
     }
   }
 
   // Add WETH to the pool directly.
-  if (cfg.poolAddAssetAmount > 0) {
-    const wethAmount = parseUnits(cfg.poolAddAssetAmount.toString(), 18);
+  if (cfg.poolAddWethAmount > 0) {
+    log(`Adding ${config.poolAddOethAmount} WETH to the pool`);
+    const wethAmount = parseUnits(cfg.poolAddWethAmount.toString(), 18);
     await weth.connect(josh).transfer(supernovaPool.address, wethAmount);
   }
 
   // Add OETH to the pool directly.
-  if (cfg.poolAddOTokenAmount > 0) {
-    const oethAmount = parseUnits(cfg.poolAddOTokenAmount.toString(), 18);
+  if (cfg.poolAddOethAmount > 0) {
+    log(`Adding ${config.poolAddOethAmount} OETH to the pool`);
+    const oethAmount = parseUnits(cfg.poolAddOethAmount.toString(), 18);
+    await weth.connect(josh).approve(oethVault.address, oethAmount);
     await oethVault.connect(josh).mint(weth.address, oethAmount, 0);
     await oeth.connect(josh).transfer(supernovaPool.address, oethAmount);
   }

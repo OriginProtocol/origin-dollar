@@ -11,9 +11,9 @@ describe("Mainnet Fork Test: OETH Supernova AMO Strategy", function () {
         largeOTokenIn: "10000",
       },
       poolImbalance: {
-        lotMoreOToken: { addOToken: 20 },
+        lotMoreOToken: { addOToken: 400 },
         littleMoreOToken: { addOToken: 2 },
-        lotMoreAsset: { addAsset: 20 },
+        lotMoreAsset: { addAsset: 400 },
         littleMoreAsset: { addAsset: 2 },
       },
       smallPoolShare: {
@@ -87,8 +87,8 @@ describe("Mainnet Fork Test: OETH Supernova AMO Strategy", function () {
           assetMintAmount,
           depositToStrategy,
           balancePool,
-          poolAddAssetAmount,
-          poolAddOTokenAmount,
+          poolAddWethAmount: poolAddAssetAmount,
+          poolAddOethAmount: poolAddOTokenAmount,
         });
 
         const fixture = await fixtureLoader();
