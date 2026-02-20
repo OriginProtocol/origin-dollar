@@ -69,10 +69,7 @@ const defaultScenarioConfig = {
   },
   insolvent: {
     swapOTokensToPool: "10",
-  },
-  fixtureSetup: {
-    imbalanceBalancePool: true,
-  },
+  }
 };
 
 const mergeScenarioConfig = (contextConfig = {}, fixtureConfig = {}) => ({
@@ -784,7 +781,7 @@ const shouldBehaveLikeAlgebraAmoStrategy = (contextFunction) => {
         fixture = await context.loadFixture({
           assetMintAmount: 5000,
           depositToStrategy: true,
-          balancePool: getScenarioConfig().fixtureSetup.imbalanceBalancePool,
+          balancePool: true,
           poolAddOTokenAmount:
             getScenarioConfig().poolImbalance.lotMoreOToken.addOToken,
         });
@@ -874,7 +871,7 @@ const shouldBehaveLikeAlgebraAmoStrategy = (contextFunction) => {
         fixture = await context.loadFixture({
           assetMintAmount: 20000,
           depositToStrategy: true,
-          balancePool: getScenarioConfig().fixtureSetup.imbalanceBalancePool,
+          balancePool: true,
           poolAddOTokenAmount:
             getScenarioConfig().poolImbalance.littleMoreOToken.addOToken,
         });
@@ -956,7 +953,7 @@ const shouldBehaveLikeAlgebraAmoStrategy = (contextFunction) => {
         fixture = await context.loadFixture({
           assetMintAmount: 5000,
           depositToStrategy: true,
-          balancePool: getScenarioConfig().fixtureSetup.imbalanceBalancePool,
+          balancePool: true,
           poolAddAssetAmount:
             getScenarioConfig().poolImbalance.lotMoreAsset.addAsset,
         });
@@ -1034,7 +1031,7 @@ const shouldBehaveLikeAlgebraAmoStrategy = (contextFunction) => {
         fixture = await context.loadFixture({
           assetMintAmount: 20000,
           depositToStrategy: true,
-          balancePool: getScenarioConfig().fixtureSetup.imbalanceBalancePool,
+          balancePool: true,
           poolAddAssetAmount:
             getScenarioConfig().poolImbalance.littleMoreAsset.addAsset,
         });

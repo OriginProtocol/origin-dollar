@@ -68,9 +68,6 @@ describe("Mainnet Fork Test: OETH Supernova AMO Strategy", function () {
       insolvent: {
         swapOTokensToPool: "0.1",
       },
-      fixtureSetup: {
-        imbalanceBalancePool: false,
-      },
     };
 
     return {
