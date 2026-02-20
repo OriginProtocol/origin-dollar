@@ -11,6 +11,17 @@ describe("Sonic Fork Test: SwapX AMO Strategy", function () {
         largeAssetIn: "10000000",
         largeOTokenIn: "10000000",
       },
+      bootstrapPool:{
+        smallAssetBootstrapIn: "5000",
+        mediumAssetBootstrapIn: "20000",
+        largeAssetBootstrapIn: "5000000",
+      },
+      mintValues:{
+        extraSmall: "50",
+        extraSmallPlus: "100",
+        small: "2000",
+        medium: "5000",
+      },
       poolImbalance: {
         lotMoreOToken: { addOToken: 1000000 },
         littleMoreOToken: { addOToken: 5000 },

@@ -2620,7 +2620,7 @@ async function supernovaOETHAMOFixure(
 
   // Supernova deployment creates a fresh empty pool, seed it once for AMO tests.
   if ((await supernovaPool.totalSupply()).eq(0)) {
-    const seedAmount = parseUnits("2000");
+    const seedAmount = parseUnits("150");
     await oethVault.connect(josh).mint(weth.address, seedAmount.mul(2), 0);
     await weth.connect(josh).transfer(supernovaPool.address, seedAmount);
     await oeth.connect(josh).transfer(supernovaPool.address, seedAmount);

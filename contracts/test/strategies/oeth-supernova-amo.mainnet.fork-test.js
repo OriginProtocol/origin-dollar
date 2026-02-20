@@ -10,6 +10,17 @@ describe("Mainnet Fork Test: OETH Supernova AMO Strategy", function () {
         largeAssetIn: "10000",
         largeOTokenIn: "10000",
       },
+      bootstrapPool:{
+        smallAssetBootstrapIn: "50",
+        mediumAssetBootstrapIn: "200",
+        largeAssetBootstrapIn: "500000",
+      },
+      mintValues:{
+        extraSmall: "0.1",
+        extraSmallPlus: "0.2",
+        small: "1",
+        medium: "2",
+      },
       poolImbalance: {
         lotMoreOToken: { addOToken: 400 },
         littleMoreOToken: { addOToken: 2 },

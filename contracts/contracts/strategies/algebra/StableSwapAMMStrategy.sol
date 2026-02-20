@@ -726,8 +726,7 @@ contract StableSwapAMMStrategy is InitializableAbstractStrategy {
                 amount1 = amountOut;
             } else {
                 amount0 = amountOut;
-                amount1 = 0;
-                
+                amount1 = 0;   
             }
         }
 

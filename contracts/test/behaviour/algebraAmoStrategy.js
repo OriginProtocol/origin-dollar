@@ -19,6 +19,17 @@ const defaultScenarioConfig = {
     lotMoreAsset: { addAsset: 2000000 },
     littleMoreAsset: { addAsset: 20000 },
   },
+  bootstrapPool:{
+    smallAssetBootstrapIn: "5000",
+    mediumAssetBootstrapIn: "20000",
+    largeAssetBootstrapIn: "5000000",
+  },
+  mintValues:{
+    extraSmall: "0.1",
+    extraSmallPlus: "0.2",
+    small: "1",
+    medium: "2",
+  },
   smallPoolShare: {
     bootstrapAssetSwapIn: "10000000",
     bigLiquidityAsset: "1000000",
@@ -77,6 +88,16 @@ const mergeScenarioConfig = (contextConfig = {}, fixtureConfig = {}) => ({
     ...defaultScenarioConfig.attackerFrontRun,
     ...(contextConfig.attackerFrontRun || {}),
     ...(fixtureConfig.attackerFrontRun || {}),
+  },
+  bootstrapPool: {
+    ...defaultScenarioConfig.bootstrapPool,
+    ...(contextConfig.bootstrapPool || {}),
+    ...(fixtureConfig.bootstrapPool || {}),
+  },
+  mintValues: {
+    ...defaultScenarioConfig.mintValues,
+    ...(contextConfig.mintValues || {}),
+    ...(fixtureConfig.mintValues || {}),
   },
   poolImbalance: {
     lotMoreOToken: {
@@ -271,13 +292,13 @@ const shouldBehaveLikeAlgebraAmoStrategy = (contextFunction) => {
       beforeEach(async () => {
         context = await contextFunction();
         fixture = await context.loadFixture({
-          assetMintAmount: 5000000,
+          assetMintAmount: getScenarioConfig().bootstrapPool.largeAssetBootstrapIn,
           depositToStrategy: false,
           balancePool: true,
         });
       });
       it("Vault should deposit asset token to AMO strategy", async function () {
-        await assertDeposit(parseUnits("2000"));
+        await assertDeposit(toUnitAmount(getScenarioConfig().mintValues.small));
       });
       it("Only vault can deposit asset token to AMO strategy", async function () {
         const {
@@ -289,7 +310,7 @@ const shouldBehaveLikeAlgebraAmoStrategy = (contextFunction) => {
           assetToken,
         } = fixture;
   
-        const depositAmount = parseUnits("50");
+        const depositAmount = toUnitAmount(getScenarioConfig().mintValues.extraSmall);
         await assetToken
           .connect(vaultSigner)
           .transfer(amoStrategy.address, depositAmount);
@@ -313,7 +334,7 @@ const shouldBehaveLikeAlgebraAmoStrategy = (contextFunction) => {
           assetToken,
         } = fixture;
   
-        const depositAmount = parseUnits("50");
+        const depositAmount = toUnitAmount(getScenarioConfig().mintValues.extraSmall);
         await assetToken
           .connect(vaultSigner)
           .transfer(amoStrategy.address, depositAmount);
@@ -335,13 +356,13 @@ const shouldBehaveLikeAlgebraAmoStrategy = (contextFunction) => {
       beforeEach(async () => {
         context = await contextFunction();
         fixture = await context.loadFixture({
-          assetMintAmount: 5000000,
+          assetMintAmount: getScenarioConfig().bootstrapPool.largeAssetBootstrapIn,
           depositToStrategy: true,
           balancePool: true,
         });
       });
       it("Vault should deposit asset token", async function () {
-        await assertDeposit(parseUnits("5000"));
+        await assertDeposit(toUnitAmount(getScenarioConfig().mintValues.medium));
       });
       it("Vault should be able to withdraw all", async () => {
         await assertWithdrawAll();
@@ -416,7 +437,7 @@ const shouldBehaveLikeAlgebraAmoStrategy = (contextFunction) => {
         await expect(tx).to.not.emit(amoStrategy, "Withdrawal");
       });
       it("Vault should be able to partially withdraw", async () => {
-        await assertWithdrawPartial(parseUnits("1000"));
+        await assertWithdrawPartial(toUnitAmount(getScenarioConfig().mintValues.small));
       });
       it("Only vault can withdraw asset token from AMO strategy", async function () {
         const { amoStrategy, vault, strategist, timelock, nick, assetToken } =
@@ -425,7 +446,7 @@ const shouldBehaveLikeAlgebraAmoStrategy = (contextFunction) => {
         for (const signer of [strategist, timelock, nick]) {
           const tx = amoStrategy
             .connect(signer)
-            .withdraw(vault.address, assetToken.address, parseUnits("50"));
+            .withdraw(vault.address, assetToken.address, toUnitAmount(getScenarioConfig().mintValues.extraSmall));
   
           await expect(tx).to.revertedWith("Caller is not the Vault");
         }
@@ -462,7 +483,7 @@ const shouldBehaveLikeAlgebraAmoStrategy = (contextFunction) => {
         // Send some SWPx rewards to the gauge
         const distributorAddress = await gauge.DISTRIBUTION();
         const distributorSigner = await impersonateAndFund(distributorAddress);
-        const rewardAmount = parseUnits("1000");
+        const rewardAmount = toUnitAmount(getScenarioConfig().mintValues.small);
         await setERC20TokenBalance(distributorAddress, rewardToken, rewardAmount);
         await gauge
           .connect(distributorSigner)
@@ -779,7 +800,7 @@ const shouldBehaveLikeAlgebraAmoStrategy = (contextFunction) => {
       beforeEach(async function () {
         context = await contextFunction();
         fixture = await context.loadFixture({
-          assetMintAmount: 5000,
+          assetMintAmount: getScenarioConfig().bootstrapPool.smallAssetBootstrapIn,
           depositToStrategy: true,
           balancePool: true,
           poolAddOTokenAmount:
@@ -869,7 +890,7 @@ const shouldBehaveLikeAlgebraAmoStrategy = (contextFunction) => {
       beforeEach(async function () {
         context = await contextFunction();
         fixture = await context.loadFixture({
-          assetMintAmount: 20000,
+          assetMintAmount: getScenarioConfig().bootstrapPool.mediumAssetBootstrapIn,
           depositToStrategy: true,
           balancePool: true,
           poolAddOTokenAmount:
@@ -951,7 +972,7 @@ const shouldBehaveLikeAlgebraAmoStrategy = (contextFunction) => {
       beforeEach(async function () {
         context = await contextFunction();
         fixture = await context.loadFixture({
-          assetMintAmount: 5000,
+          assetMintAmount: getScenarioConfig().bootstrapPool.smallAssetBootstrapIn,
           depositToStrategy: true,
           balancePool: true,
           poolAddAssetAmount:
@@ -1029,7 +1050,7 @@ const shouldBehaveLikeAlgebraAmoStrategy = (contextFunction) => {
       beforeEach(async function () {
         context = await contextFunction();
         fixture = await context.loadFixture({
-          assetMintAmount: 20000,
+          assetMintAmount: getScenarioConfig().bootstrapPool.mediumAssetBootstrapIn,
           depositToStrategy: true,
           balancePool: true,
           poolAddAssetAmount:
@@ -1108,7 +1129,7 @@ const shouldBehaveLikeAlgebraAmoStrategy = (contextFunction) => {
       beforeEach(async function () {
         context = await contextFunction();
         fixture = await context.loadFixture({
-          assetMintAmount: 5000,
+          assetMintAmount: getScenarioConfig().bootstrapPool.smallAssetBootstrapIn,
           depositToStrategy: true,
           balancePool: true,
         });
@@ -1207,14 +1228,14 @@ const shouldBehaveLikeAlgebraAmoStrategy = (contextFunction) => {
       beforeEach(async () => {
         context = await contextFunction();
         fixture = await context.loadFixture({
-          assetMintAmount: 5000000,
+          assetMintAmount: getScenarioConfig().bootstrapPool.largeAssetBootstrapIn,
           depositToStrategy: false,
         });
 
         const { vault, vaultSigner, amoStrategy, assetToken } = fixture;
 
         // Deposit a little to the strategy.
-        const littleAmount = parseUnits("100");
+        const littleAmount = toUnitAmount(getScenarioConfig().mintValues.extraSmallPlus);
         await assetToken
           .connect(vaultSigner)
           .transfer(amoStrategy.address, littleAmount);
@@ -1226,6 +1247,13 @@ const shouldBehaveLikeAlgebraAmoStrategy = (contextFunction) => {
         // Calculate a 0.21% (21 basis points) loss.
         const lossAmount = totalAssets.mul(21).div(10000);
         await assetToken.connect(vaultSigner).transfer(addresses.dead, lossAmount);
+
+        const insolventSnapshot = await snapData();
+          logSnapData(
+            insolventSnapshot,
+            `Snapshot of the protocol when it is insolvent`
+          );
+
         expect(
           await assetToken.balanceOf(vault.address),
           "Must have enough asset token in vault to make insolvent"
@@ -1236,7 +1264,7 @@ const shouldBehaveLikeAlgebraAmoStrategy = (contextFunction) => {
         const { vaultSigner, amoStrategy, assetToken } = fixture;
 
         // Vault calls deposit on the strategy.
-        const depositAmount = parseUnits("10");
+        const depositAmount = toUnitAmount(getScenarioConfig().mintValues.extraSmall);
         await assetToken
           .connect(vaultSigner)
           .transfer(amoStrategy.address, depositAmount);
@@ -1253,7 +1281,7 @@ const shouldBehaveLikeAlgebraAmoStrategy = (contextFunction) => {
         // Vault withdraws from the strategy.
         const tx = amoStrategy
           .connect(vaultSigner)
-          .withdraw(vault.address, assetToken.address, parseUnits("10"));
+          .withdraw(vault.address, assetToken.address, toUnitAmount(getScenarioConfig().mintValues.extraSmall));
 
         await expect(tx).to.be.revertedWith("Protocol insolvent");
       });
@@ -1271,7 +1299,7 @@ const shouldBehaveLikeAlgebraAmoStrategy = (contextFunction) => {
 
         const tx = amoStrategy
           .connect(strategist)
-          .swapAssetsToPool(parseUnits("10"));
+          .swapAssetsToPool(toUnitAmount(getScenarioConfig().mintValues.extraSmall));
 
         await expect(tx).to.be.revertedWith("Protocol insolvent");
       });
