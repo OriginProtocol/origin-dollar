@@ -42,7 +42,7 @@ describe("Mainnet Fork Test: OETH Supernova AMO Strategy", function () {
           failedDepositAllAmount: "200",
           tiltSeedWithdrawAmount: "60",
           assetTiltWithdrawAmount: "40",
-          oTokenTiltWithdrawAmount: "0.01",
+          oTokenTiltWithdrawAmount: "0.001",
         },
         lotMoreOToken: {
           failedDepositAmount: "200",
@@ -54,7 +54,7 @@ describe("Mainnet Fork Test: OETH Supernova AMO Strategy", function () {
           disallowedSwapOTokensToPool: "0.0001",
         },
         littleMoreOToken: {
-          depositAmount: "120",
+          depositAmount: "12",
           partialWithdrawAmount: "10",
           smallSwapAssetsToPool: "0.3",
           excessiveSwapAssetsToPool: "50",
@@ -69,7 +69,7 @@ describe("Mainnet Fork Test: OETH Supernova AMO Strategy", function () {
           disallowedSwapAssetsToPool: "0.00001",
         },
         littleMoreAsset: {
-          depositAmount: "180",
+          depositAmount: "18",
           partialWithdrawAmount: "10",
           smallSwapOTokensToPool: "0.8",
           overshootSwapOTokensToPool: "110",
