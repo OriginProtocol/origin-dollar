@@ -708,10 +708,28 @@ contract StableSwapAMMStrategy is InitializableAbstractStrategy {
             "Unsupported swap"
         );
 
+        uint256 amount0;
+        uint256 amount1;
+
         // Work out the correct order of the amounts for the pool
-        (uint256 amount0, uint256 amount1) = _tokenIn == asset
-            ? (uint256(0), amountOut)
-            : (amountOut, 0);
+        if (_tokenIn == asset) {
+            if (oTokenPoolIndex == 0) {
+                amount0 = amountOut;
+                amount1 = 0;
+            } else {
+                amount0 = 0;
+                amount1 = amountOut;
+            }
+        } else {
+           if (oTokenPoolIndex == 0) {
+                amount0 = 0;
+                amount1 = amountOut;
+            } else {
+                amount0 = amountOut;
+                amount1 = 0;
+                
+            }
+        }
 
         // Perform the swap on the pool
         IPair(pool).swap(amount0, amount1, address(this), new bytes(0));

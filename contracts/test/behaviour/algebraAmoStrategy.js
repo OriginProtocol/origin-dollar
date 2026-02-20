@@ -679,7 +679,8 @@ const shouldBehaveLikeAlgebraAmoStrategy = (contextFunction) => {
             getScenarioConfig().attackerFrontRun.largeOTokenIn
           );
 
-          // Mint OToken using asset token
+          // Mint OToken using asset token 
+          await assetToken.connect(nick).approve(vault.address, oTokenAmountIn);
           await vault.connect(nick).mint(assetToken.address, oTokenAmountIn, 0);
   
           attackerBalanceBefore.oToken = await oToken.balanceOf(nick.address);
@@ -1813,7 +1814,7 @@ const shouldBehaveLikeAlgebraAmoStrategy = (contextFunction) => {
       const dataBefore = await snapData();
       await logSnapData(
         dataBefore,
-        `Before swapping ${formatUnits(assetAmount)} wS into the pool`
+        `Before swapping ${formatUnits(assetAmount)} asset token into the pool`
       );
   
       const { lpBurnAmount: expectedLpBurnAmount, oTokenBurnAmount: oTokenBurnAmount1 } =
