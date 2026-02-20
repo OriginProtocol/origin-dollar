@@ -30,6 +30,7 @@ describe.only("Sonic Fork Test: SwapX AMO Strategy", function () {
           depositAmount: "200000",
           failedDepositAmount: "5000",
           failedDepositAllAmount: "5000",
+          tiltSeedWithdrawAmount: "6000",
           assetTiltWithdrawAmount: "4000",
           oTokenTiltWithdrawAmount: "200",
         },

@@ -6,9 +6,9 @@ describe.only("Mainnet Fork Test: OETH Supernova AMO Strategy", function () {
   shouldBehaveLikeAlgebraAmoStrategy(async () => {
     const scenarioConfig = {
       attackerFrontRun: {
-        moderateAssetIn: "2",
-        largeAssetIn: "100",
-        largeOTokenIn: "100",
+        moderateAssetIn: "20",
+        largeAssetIn: "10000",
+        largeOTokenIn: "10000",
       },
       poolImbalance: {
         lotMoreOToken: { addOToken: 20 },
@@ -29,8 +29,9 @@ describe.only("Mainnet Fork Test: OETH Supernova AMO Strategy", function () {
           depositAmount: "200",
           failedDepositAmount: "200",
           failedDepositAllAmount: "200",
+          tiltSeedWithdrawAmount: "60",
           assetTiltWithdrawAmount: "40",
-          oTokenTiltWithdrawAmount: "20",
+          oTokenTiltWithdrawAmount: "0.01",
         },
         lotMoreOToken: {
           failedDepositAmount: "200",

@@ -168,7 +168,7 @@ const toUnitAmount = (value) =>
     }));
  */
 const shouldBehaveLikeAlgebraAmoStrategy = (contextFunction) => {
-  describe("ForkTest: Algebra AMO Strategy", async function () {
+  describe.only("ForkTest: Algebra AMO Strategy", async function () {
     // Retry up to 3 times on CI
     this.retries(isCI ? 3 : 0);
     let fixture, context;
@@ -487,9 +487,6 @@ const shouldBehaveLikeAlgebraAmoStrategy = (contextFunction) => {
         expect(rewardTokenBalanceAfter).to.gt(rewardTokenBalanceBefore);
       });
       it("Attacker front-run deposit within range by adding asset token to the pool", async function () {
-        if (fixture.skipAdvancedRebalanceTests) {
-          this.skip();
-        }
 
         const { nick, oToken, vaultSigner, amoStrategy, assetToken } =
           fixture;
@@ -569,10 +566,10 @@ const shouldBehaveLikeAlgebraAmoStrategy = (contextFunction) => {
         let oTokenAmountOut;
         beforeEach(async function () {
           context = await contextFunction();
-          if (context.skipAdvancedRebalanceTests) {
-            this.skip();
-          }
-          fixture = await context.loadFixture();
+          fixture = await context.loadFixture({
+            assetMintAmount: getScenarioConfig().rebalanceProbe.frontRun.tiltSeedWithdrawAmount,
+            depositToStrategy: true
+          });
           const { nick, assetToken } = fixture;
   
           attackerAssetBalanceBefore = await assetToken.balanceOf(nick.address);
@@ -626,7 +623,7 @@ const shouldBehaveLikeAlgebraAmoStrategy = (contextFunction) => {
             dataBeforeWithdraw,
             `\nBefore strategist withdraw ${formatUnits(withdrawAmount)} asset token`
           );
-  
+
           const tx = await amoStrategy
             .connect(vaultSigner)
             .withdraw(vault.address, assetToken.address, withdrawAmount);
@@ -672,10 +669,10 @@ const shouldBehaveLikeAlgebraAmoStrategy = (contextFunction) => {
         let assetAmountOut;
         beforeEach(async function () {
           context = await contextFunction();
-          if (context.skipAdvancedRebalanceTests) {
-            this.skip();
-          }
-          fixture = await context.loadFixture();
+          fixture = await context.loadFixture({
+            assetMintAmount: getScenarioConfig().rebalanceProbe.frontRun.tiltSeedWithdrawAmount,
+            depositToStrategy: true
+          });
           const { nick, oToken, vault, assetToken } = fixture;
   
           const oTokenAmountIn = toUnitAmount(
@@ -783,9 +780,6 @@ const shouldBehaveLikeAlgebraAmoStrategy = (contextFunction) => {
     describe("with a lot more OToken in the pool", () => {
       beforeEach(async function () {
         context = await contextFunction();
-        if (context.skipAdvancedRebalanceTests) {
-          this.skip();
-        }
         fixture = await context.loadFixture({
           assetMintAmount: 5000,
           depositToStrategy: true,
@@ -876,9 +870,6 @@ const shouldBehaveLikeAlgebraAmoStrategy = (contextFunction) => {
     describe("with a little more OToken in the pool", () => {
       beforeEach(async function () {
         context = await contextFunction();
-        if (context.skipAdvancedRebalanceTests) {
-          this.skip();
-        }
         fixture = await context.loadFixture({
           assetMintAmount: 20000,
           depositToStrategy: true,
@@ -961,9 +952,6 @@ const shouldBehaveLikeAlgebraAmoStrategy = (contextFunction) => {
     describe("with a lot more asset token in the pool", () => {
       beforeEach(async function () {
         context = await contextFunction();
-        if (context.skipAdvancedRebalanceTests) {
-          this.skip();
-        }
         fixture = await context.loadFixture({
           assetMintAmount: 5000,
           depositToStrategy: true,
@@ -1042,9 +1030,6 @@ const shouldBehaveLikeAlgebraAmoStrategy = (contextFunction) => {
     describe("with a little more asset token in the pool", () => {
       beforeEach(async function () {
         context = await contextFunction();
-        if (context.skipAdvancedRebalanceTests) {
-          this.skip();
-        }
         fixture = await context.loadFixture({
           assetMintAmount: 20000,
           depositToStrategy: true,
@@ -1124,9 +1109,6 @@ const shouldBehaveLikeAlgebraAmoStrategy = (contextFunction) => {
 
       beforeEach(async function () {
         context = await contextFunction();
-        if (context.skipAdvancedRebalanceTests) {
-          this.skip();
-        }
         fixture = await context.loadFixture({
           assetMintAmount: 5000,
           depositToStrategy: true,
@@ -1297,9 +1279,6 @@ const shouldBehaveLikeAlgebraAmoStrategy = (contextFunction) => {
       });
 
       it("Should fail to swap OToken to the pool", async () => {
-        if (fixture.skipAdvancedRebalanceTests) {
-          return;
-        }
         const { amoStrategy, strategist } = fixture;
 
         const tx = amoStrategy
