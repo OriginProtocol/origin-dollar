@@ -37,15 +37,23 @@ async function getContracts(hre, symbol, assetSymbol) {
   // Resolve the wrapped OToken. eg wOETH, wOSonic
   let wOToken;
   if (networkName !== "hoodi") {
+    const wrappedProxyPrefix = symbol === "OUSD" ? "WrappedOUSD" : `W${symbol}`;
     const wOTokenProxy = await ethers.getContract(
-      `W${symbol}${networkPrefix}Proxy`
+      `${wrappedProxyPrefix}${networkPrefix}Proxy`
     );
-    wOToken = await ethers.getContractAt(`W${symbol}`, wOTokenProxy.address);
+    const wrappedContractName =
+      symbol === "OUSD" ? "WrappedOusd" : `W${symbol}`;
+    wOToken = await ethers.getContractAt(
+      `${wrappedContractName}`,
+      wOTokenProxy.address
+    );
   }
 
   // Resolve the Asset. eg WETH or wS
   // This won't work for OUSD if the assetSymbol has not been set as it has three assets
-  assetSymbol = assetSymbol || (networkName === "sonic" ? "wS" : "WETH");
+  assetSymbol =
+    assetSymbol ||
+    (networkName === "sonic" ? "wS" : symbol === "OUSD" ? "USDC" : "WETH");
   const asset = await resolveAsset(assetSymbol);
   log(
     `Resolved ${networkName} ${symbol} Vault asset to ${assetSymbol} with address ${asset.address}`
@@ -59,10 +67,10 @@ async function getContracts(hre, symbol, assetSymbol) {
   };
 }
 
-async function snapVault({ block }, hre) {
+async function snapVault({ symbol, block }, hre) {
   const blockTag = getBlock(block);
 
-  const { vault, oToken, wOToken, asset } = await getContracts(hre);
+  const { vault, oToken, wOToken, asset } = await getContracts(hre, symbol);
 
   const assetBalance = await asset.balanceOf(vault.address, {
     blockTag,
@@ -97,37 +105,53 @@ async function snapVault({ block }, hre) {
     blockTag,
   });
 
+  const assetDecimals = await asset.decimals();
+
   console.log(
-    `Vault assets        : ${formatUnits(assetBalance)}, ${assetBalance} wei`
+    `Vault assets        : ${formatUnits(
+      assetBalance,
+      assetDecimals
+    )}, ${assetBalance} wei`
   );
 
   console.log(
-    `Queued              : ${formatUnits(queue.queued)}, ${queue.queued} wei`
+    `Queued              : ${formatUnits(queue.queued, assetDecimals)}, ${
+      queue.queued
+    } wei`
   );
   console.log(
-    `Claimable           : ${formatUnits(queue.claimable)}, ${
+    `Claimable           : ${formatUnits(queue.claimable, assetDecimals)}, ${
       queue.claimable
     } wei`
   );
   console.log(
-    `Claimed             : ${formatUnits(queue.claimed)}, ${queue.claimed} wei`
+    `Claimed             : ${formatUnits(queue.claimed, assetDecimals)}, ${
+      queue.claimed
+    } wei`
   );
   console.log(
-    `Shortfall           : ${formatUnits(shortfall)}, ${shortfall} wei`
+    `Shortfall           : ${formatUnits(
+      shortfall,
+      assetDecimals
+    )}, ${shortfall} wei`
   );
   console.log(
-    `Unclaimed           : ${formatUnits(unclaimed)}, ${unclaimed} wei`
+    `Unclaimed           : ${formatUnits(
+      unclaimed,
+      assetDecimals
+    )}, ${unclaimed} wei`
   );
   console.log(
     `Available           : ${formatUnits(
-      available
+      available,
+      assetDecimals
     )}, ${available} wei, ${formatUnits(availablePercentage, 2)}%`
   );
   console.log(
-    `Target Buffer       : ${formatUnits(vaultBuffer)}, ${formatUnits(
-      vaultBufferPercentage,
-      16
-    )}%`
+    `Target Buffer       : ${formatUnits(
+      vaultBuffer,
+      assetDecimals
+    )}, ${formatUnits(vaultBufferPercentage, assetDecimals - 2)}%`
   );
 
   console.log(
@@ -161,10 +185,10 @@ async function snapVault({ block }, hre) {
   console.log(`last request id     : ${queue.nextWithdrawalIndex - 1}`);
 }
 
-async function addWithdrawalQueueLiquidity(_, hre) {
+async function addWithdrawalQueueLiquidity({ symbol }, hre) {
   const signer = await getSigner();
 
-  const { vault } = await getContracts(hre);
+  const { vault } = await getContracts(hre, symbol);
 
   log(
     `About to call addWithdrawalQueueLiquidity() on the vault with address ${vault.address}`

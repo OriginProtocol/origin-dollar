@@ -12,7 +12,8 @@ module.exports = deploymentWithGovernanceProposal(
     forceDeploy: false,
     reduceQueueTime: true,
     deployerIsProposer: false,
-    proposalId: "",
+    proposalId:
+      "82859201447218338287719298348503030894203878448854317959506610360592214196029",
   },
   async () => {
     const crossChainStrategyProxyAddress = await getCreate2ProxyAddress(
@@ -25,6 +26,7 @@ module.exports = deploymentWithGovernanceProposal(
     console.log(`CrossChainStrategyProxy address: ${cProxy.address}`);
 
     const cVaultProxy = await ethers.getContract("VaultProxy");
+    const cVault = await ethers.getContractAt("IVault", cVaultProxy.address);
 
     const implAddress = await deployCrossChainMasterStrategyImpl(
       crossChainStrategyProxyAddress,
@@ -50,10 +52,15 @@ module.exports = deploymentWithGovernanceProposal(
       `CrossChainMasterStrategy address: ${cCrossChainMasterStrategy.address}`
     );
 
-    // TODO: Set reward tokens to Morpho
-
     return {
-      actions: [],
+      name: "Add Morpho V2 Crosschain Strategy to OUSD Vault",
+      actions: [
+        {
+          contract: cVault,
+          signature: "approveStrategy(address)",
+          args: [crossChainStrategyProxyAddress],
+        },
+      ],
     };
   }
 );
