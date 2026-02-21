@@ -10,7 +10,7 @@ const {
 
 module.exports = deploymentWithGovernanceProposal(
   {
-    deployName: "174_supernova_AMO",
+    deployName: "178_supernova_AMO",
   },
   async ({ ethers }) => {
     const cOETHVaultProxy = await ethers.getContract("OETHVaultProxy");

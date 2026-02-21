@@ -923,16 +923,10 @@ const deployOETHSupernovaAMOStrategyPoolAndGauge = async () => {
   );
   console.log("Pair address:", pairAddress);
 
-  console.log("Whitelisting OETH token & WETH token as connector");
+  console.log("Whitelisting OETH token");
   await tokenHandler
     .connect(sTokenHandlerWhitelister)
     .whitelistToken(oeth.address);
-  await tokenHandler
-    .connect(sTokenHandlerWhitelister)
-    .whitelistToken(addresses.mainnet.WETH);
-  await tokenHandler
-    .connect(sTokenHandlerWhitelister)
-    .whitelistConnector(addresses.mainnet.WETH);
 
   poolAddress = pairAddress;
 
