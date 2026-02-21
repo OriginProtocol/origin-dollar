@@ -1,6 +1,7 @@
 const { swapXAMOFixture } = require("../../_fixture-sonic");
-const addresses = require("../../../utils/addresses");
-const { shouldBehaveLikeAlgebraAmoStrategy } = require("../../behaviour/algebraAmoStrategy");
+const {
+  shouldBehaveLikeAlgebraAmoStrategy,
+} = require("../../behaviour/algebraAmoStrategy");
 const { createFixtureLoader } = require("../../_fixture");
 
 describe("Sonic Fork Test: SwapX AMO Strategy", function () {
@@ -11,12 +12,12 @@ describe("Sonic Fork Test: SwapX AMO Strategy", function () {
         largeAssetIn: "10000000",
         largeOTokenIn: "10000000",
       },
-      bootstrapPool:{
+      bootstrapPool: {
         smallAssetBootstrapIn: "5000",
         mediumAssetBootstrapIn: "20000",
         largeAssetBootstrapIn: "5000000",
       },
-      mintValues:{
+      mintValues: {
         extraSmall: "50",
         extraSmallPlus: "100",
         small: "2000",
@@ -89,14 +90,14 @@ describe("Sonic Fork Test: SwapX AMO Strategy", function () {
         depositToStrategy = false,
         balancePool = false,
         poolAddAssetAmount = 0,
-        poolAddOTokenAmount = 0
+        poolAddOTokenAmount = 0,
       } = {}) => {
         const fixtureLoader = await createFixtureLoader(swapXAMOFixture, {
           wsMintAmount: assetMintAmount,
           depositToStrategy,
           balancePool,
           poolAddwSAmount: poolAddAssetAmount,
-          poolAddOSAmount: poolAddOTokenAmount
+          poolAddOSAmount: poolAddOTokenAmount,
         });
 
         const fixture = await fixtureLoader();
@@ -104,7 +105,6 @@ describe("Sonic Fork Test: SwapX AMO Strategy", function () {
           (await fixture.swapXPool.token0()) === fixture.oSonic.address ? 0 : 1;
 
         return {
-          addresses: addresses.sonic,
           assetToken: fixture.wS, // address of the asset token in the pool
           oToken: fixture.oSonic, // address of the oToken in the pool
           rewardToken: fixture.swpx, // address of the reward token

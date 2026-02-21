@@ -721,12 +721,12 @@ contract StableSwapAMMStrategy is InitializableAbstractStrategy {
                 amount1 = amountOut;
             }
         } else {
-           if (oTokenPoolIndex == 0) {
+            if (oTokenPoolIndex == 0) {
                 amount0 = 0;
                 amount1 = amountOut;
             } else {
                 amount0 = amountOut;
-                amount1 = 0;   
+                amount1 = 0;
             }
         }
 

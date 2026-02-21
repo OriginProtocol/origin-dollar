@@ -1,6 +1,7 @@
 const { supernovaOETHAMOFixure, createFixtureLoader } = require("../_fixture");
-const addresses = require("../../utils/addresses");
-const { shouldBehaveLikeAlgebraAmoStrategy } = require("../behaviour/algebraAmoStrategy");
+const {
+  shouldBehaveLikeAlgebraAmoStrategy,
+} = require("../behaviour/algebraAmoStrategy");
 
 describe("Mainnet Fork Test: OETH Supernova AMO Strategy", function () {
   shouldBehaveLikeAlgebraAmoStrategy(async () => {
@@ -10,12 +11,12 @@ describe("Mainnet Fork Test: OETH Supernova AMO Strategy", function () {
         largeAssetIn: "10000",
         largeOTokenIn: "10000",
       },
-      bootstrapPool:{
+      bootstrapPool: {
         smallAssetBootstrapIn: "50",
         mediumAssetBootstrapIn: "200",
         largeAssetBootstrapIn: "500000",
       },
-      mintValues:{
+      mintValues: {
         extraSmall: "0.1",
         extraSmallPlus: "0.2",
         small: "1",
@@ -65,7 +66,7 @@ describe("Mainnet Fork Test: OETH Supernova AMO Strategy", function () {
           partialWithdrawAmount: "10",
           smallSwapOTokensToPool: "0.03",
           largeSwapOTokensToPool: "50",
-          overshootSwapOTokensToPool: "999",
+          overshootSwapOTokensToPool: "350",
           disallowedSwapAssetsToPool: "0.00001",
         },
         littleMoreAsset: {
@@ -91,20 +92,24 @@ describe("Mainnet Fork Test: OETH Supernova AMO Strategy", function () {
         poolAddAssetAmount = 0,
         poolAddOTokenAmount = 0,
       } = {}) => {
-        const fixtureLoader = await createFixtureLoader(supernovaOETHAMOFixure, {
-          assetMintAmount,
-          depositToStrategy,
-          balancePool,
-          poolAddWethAmount: poolAddAssetAmount,
-          poolAddOethAmount: poolAddOTokenAmount,
-        });
+        const fixtureLoader = await createFixtureLoader(
+          supernovaOETHAMOFixure,
+          {
+            assetMintAmount,
+            depositToStrategy,
+            balancePool,
+            poolAddWethAmount: poolAddAssetAmount,
+            poolAddOethAmount: poolAddOTokenAmount,
+          }
+        );
 
         const fixture = await fixtureLoader();
         const oTokenPoolIndex =
-          (await fixture.supernovaPool.token0()) === fixture.oeth.address ? 0 : 1;
+          (await fixture.supernovaPool.token0()) === fixture.oeth.address
+            ? 0
+            : 1;
 
         return {
-          addresses: addresses.mainnet,
           assetToken: fixture.weth,
           oToken: fixture.oeth,
           rewardToken: fixture.supernovaRewardToken,
@@ -119,7 +124,7 @@ describe("Mainnet Fork Test: OETH Supernova AMO Strategy", function () {
           vaultSigner: fixture.oethVaultSigner,
           vault: fixture.oethVault,
           harvester: fixture.oethHarvester,
-          skipHarvesterTest: true,
+          skipHarvesterTest: false,
           scenarioConfig,
         };
       },

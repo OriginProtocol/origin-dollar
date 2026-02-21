@@ -2591,7 +2591,9 @@ async function supernovaOETHAMOFixure(
     poolAddOethAmount: config?.poolAddOethAmount || 0,
   };
 
-  const cOETHSupernovaAMOProxy = await ethers.getContract("OETHSupernovaAMOProxy");
+  const cOETHSupernovaAMOProxy = await ethers.getContract(
+    "OETHSupernovaAMOProxy"
+  );
   const cOETHSupernovaAMOStrategy = await ethers.getContractAt(
     "OETHSupernovaAMOStrategy",
     cOETHSupernovaAMOProxy.address
@@ -2612,7 +2614,9 @@ async function supernovaOETHAMOFixure(
 
   // Impersonate the OETH Vault to call strategy deposit/withdraw methods directly in tests.
   const oethVaultSigner = await impersonateAndFund(oethVault.address);
-  const oethVaultGovernor = await impersonateAndFund(await oethVault.governor());
+  const oethVaultGovernor = await impersonateAndFund(
+    await oethVault.governor()
+  );
 
   // Ensure the test actor has enough WETH to mint OETH and manipulate pool balances.
   await setERC20TokenBalance(josh.address, weth, oethUnits("1000000000"), hre);
