@@ -19,7 +19,7 @@ module.exports = deploymentWithGovernanceProposal(
       cOETHVaultProxy.address
     );
 
-    // TODO: delete once the pools ang gauges are created
+    // TODO: delete once the pools and gauges are created
     const { poolAddress, gaugeAddress } =
       await deployOETHSupernovaAMOStrategyPoolAndGauge();
 
