@@ -26,3 +26,12 @@ Two reviewers complete the following checklist:
 - [ ] Smoke tests pass after fork test execution of the governance proposal
 ```
 
+## UI/dApp Change Checklist
+
+For changes affecting the dApp interface:
+
+- [ ] Approval button state is correctly maintained when switching between contract selections
+- [ ] On-chain allowance is queried when contract selection changes
+- [ ] UI state reflects actual on-chain approval state (not cached/stale local state)
+- [ ] Tested with multiple wallet connections
+- [ ] Tested switching between different vault/contract selections with varying approval states
