@@ -81,6 +81,9 @@ const defaultScenarioConfig = {
   insolvent: {
     swapOTokensToPool: "10",
   },
+  harvest: {
+    collectedBy: "strategist", // "strategist" or "harvester"
+  },
 };
 
 const mergeScenarioConfig = (contextConfig = {}, fixtureConfig = {}) => ({
@@ -157,6 +160,11 @@ const mergeScenarioConfig = (contextConfig = {}, fixtureConfig = {}) => ({
     ...defaultScenarioConfig.insolvent,
     ...(contextConfig.insolvent || {}),
     ...(fixtureConfig.insolvent || {}),
+  },
+  harvest: {
+    ...defaultScenarioConfig.harvest,
+    ...(contextConfig.harvest || {}),
+    ...(fixtureConfig.harvest || {}),
   },
   fixtureSetup: {
     ...defaultScenarioConfig.fixtureSetup,
@@ -457,10 +465,6 @@ const shouldBehaveLikeAlgebraAmoStrategy = (contextFunction) => {
         await expect(tx).to.emit(amoStrategy, "Withdrawal");
       });
       it("Harvester can collect rewards", async function () {
-        if (fixture.skipHarvesterTest) {
-          this.skip();
-        }
-
         const { harvester, nick, amoStrategy, gauge, rewardToken, strategist } =
           fixture;
 
@@ -482,9 +486,20 @@ const shouldBehaveLikeAlgebraAmoStrategy = (contextFunction) => {
           .notifyRewardAmount(rewardToken.address, rewardAmount);
 
         // Harvest the rewards
-        // prettier-ignore
-        const tx = await harvester
-          .connect(nick)["harvestAndTransfer(address)"](amoStrategy.address);
+        let tx;
+        if (getScenarioConfig().harvest.collectedBy === "strategist") {
+          tx = await amoStrategy.connect(strategist).collectRewardTokens();
+        } else if (getScenarioConfig().harvest.collectedBy === "harvester") {
+          // prettier-ignore
+          tx = await harvester
+             .connect(nick)["harvestAndTransfer(address)"](amoStrategy.address);
+        } else {
+          throw new Error(
+            `Invalid collectedBy value: ${
+              getScenarioConfig().harvest.collectedBy
+            }`
+          );
+        }
 
         await expect(tx).to.emit(amoStrategy, "RewardTokenCollected");
 

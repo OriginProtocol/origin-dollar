@@ -56,7 +56,7 @@ module.exports = deploymentWithGovernanceProposal(
         {
           contract: cSupernovaAMOStrategy,
           signature: "setHarvesterAddress(address)",
-          args: [addresses.multichainBuybackOperator],
+          args: [addresses.multichainStrategist],
         },
       ],
     };

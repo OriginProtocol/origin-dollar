@@ -80,10 +80,12 @@ describe("Mainnet Fork Test: OETH Supernova AMO Strategy", function () {
       insolvent: {
         swapOTokensToPool: "0.1",
       },
+      harvest: {
+        collectedBy: "strategist",
+      },
     };
 
     return {
-      skipHarvesterTest: true,
       scenarioConfig,
       loadFixture: async ({
         assetMintAmount = 0,
@@ -124,7 +126,6 @@ describe("Mainnet Fork Test: OETH Supernova AMO Strategy", function () {
           vaultSigner: fixture.oethVaultSigner,
           vault: fixture.oethVault,
           harvester: fixture.oethHarvester,
-          skipHarvesterTest: false,
           scenarioConfig,
         };
       },

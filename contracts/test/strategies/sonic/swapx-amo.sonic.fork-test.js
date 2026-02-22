@@ -81,6 +81,9 @@ describe("Sonic Fork Test: SwapX AMO Strategy", function () {
       insolvent: {
         swapOTokensToPool: "10",
       },
+      harvest: {
+        collectedBy: "harvester",
+      },
     };
 
     return {
