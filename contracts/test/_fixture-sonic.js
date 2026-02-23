@@ -323,7 +323,7 @@ async function swapXAMOFixture(
       }
     }
 
-    // Add ETH to the Metapool
+    // Add wS (Wrapped S) to a Sonic SwapX pool
     if (config?.depositToStrategy) {
       wsBalance = await wS.balanceOf(oSonicVault.address);
       log(
