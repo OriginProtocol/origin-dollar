@@ -284,7 +284,7 @@ async function swapXAMOFixture(
       )} wS needs to be minted to the vault`
     );
     log(
-      `Vualt has ${formatUnits(wsBalance)} wS in balance and ${formatUnits(
+      `Vault has ${formatUnits(wsBalance)} wS in balance and ${formatUnits(
         available
       )} wS available considering async withdrawals`
     );
