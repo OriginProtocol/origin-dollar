@@ -165,6 +165,7 @@ def main():
     # Buy OUSD
     oTokens_received = ousd_curve_pool.get_dy(1, 0, 10**6)
 
+    print("-----")
     print("Curve OUSD/USDC Pool after")  
     print("Pool USDC   ", "{:.6f}".format(usdcPoolBalance / 10**6), usdcPoolBalance * 10**12 * 100 / totalPool)
     print("Pool OUSD   ", "{:.6f}".format(ousdPoolBalance / 10**18), ousdPoolBalance * 100 / totalPool)
