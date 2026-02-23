@@ -8,7 +8,7 @@ module.exports = deploymentWithGovernanceProposal(
     // forceSkip: true,
     reduceQueueTime: true,
     deployerIsProposer: false,
-    proposalId: "57581469695523133024511182636369891884849435427610817026787152366134160238232",
+    proposalId: "56969544083996304166076833674482534703985965819377671508249694929739383139166",
   },
   async () => {
     // Current OUSD Vault contracts
@@ -20,7 +20,7 @@ module.exports = deploymentWithGovernanceProposal(
     const cCVX = await ethers.getContractAt("ERC20", addresses.mainnet.CVX);
 
     return {
-      name: `Claim CVX tokens stuck in the OUSD Vault.`,
+      name: `Claim CVX tokens stuck in the OUSD Vault`,
       actions: [
         {
           contract: cVaultAdmin,
