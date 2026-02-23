@@ -81,7 +81,8 @@ contract AutoWithdrawalModule is AbstractSafeModule {
 
         vault = IVault(_vault);
         asset = IVault(_vault).asset();
-        strategy = _strategy;
+
+        _setStrategy(_strategy);
 
         _grantRole(OPERATOR_ROLE, _operator);
     }
@@ -166,6 +167,10 @@ contract AutoWithdrawalModule is AbstractSafeModule {
      * @param _strategy New strategy address. Must not be zero.
      */
     function setStrategy(address _strategy) external onlySafe {
+        _setStrategy(_strategy);
+    }
+
+    function _setStrategy(address _strategy) internal {
         require(_strategy != address(0), "Invalid strategy");
         address oldStrategy = strategy;
         strategy = _strategy;
