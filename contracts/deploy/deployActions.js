@@ -979,7 +979,7 @@ const deployOETHSupernovaAMOStrategyImplementation = async (
     cOETHSupernovaAMOStrategyProxy.address
   );
 
-  // Initialize Sonic Curve AMO Strategy implementation
+  // Initialize OETH Supernova AMO Strategy implementation
   const depositPriceRange = parseUnits("0.01", 18); // 1% or 100 basis points
   const initData = cOETHSupernovaAMOStrategy.interface.encodeFunctionData(
     "initialize(address[],uint256)",
