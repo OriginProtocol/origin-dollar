@@ -331,7 +331,7 @@ async function swapXAMOFixture(
           wsAmount
         )} wS to the strategy. Vault ${formatUnits(wsBalance)} wS balance`
       );
-      // The strategist deposits the WETH to the AMO strategy
+      // The strategist deposits wS (Wrapped S) to the AMO strategy
       await oSonicVault
         .connect(strategist)
         .depositToStrategy(swapXAMOStrategy.address, [wS.address], [wsAmount]);
