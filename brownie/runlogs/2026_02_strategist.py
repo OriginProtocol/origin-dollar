@@ -113,3 +113,71 @@ def main():
 
     vault_usdc = usdc.balanceOf(VAULT_PROXY_ADDRESS)
     print("USDC left in Vault", "{:.6f}".format(vault_usdc / 10**6), vault_usdc)
+
+
+# -------------------------------------------
+# Feb 23 2026 - Withdraw from Morpho v2 OUSD Strategy
+# -------------------------------------------
+from world import *
+def main():
+  with TemporaryForkForReallocations() as txs:
+    txs.append(vault_core.rebase({'from': MULTICHAIN_STRATEGIST}))
+    txs.append(vault_value_checker.takeSnapshot({'from': MULTICHAIN_STRATEGIST}))
+
+    # AMO pool before
+    usdcPoolBalance = usdc.balanceOf(OUSD_CURVE_POOL)
+    ousdPoolBalance = ousd.balanceOf(OUSD_CURVE_POOL)
+    totalPool = usdcPoolBalance * 10**12 + ousdPoolBalance
+    # Sell OUSD
+    assets_received = ousd_curve_pool.get_dy(0, 1, 10**18)
+    # Buy OUSD
+    oTokens_received = ousd_curve_pool.get_dy(1, 0, 10**6)
+
+    print("Curve OUSD/USDC Pool before")  
+    print("Pool USDC   ", "{:.6f}".format(usdcPoolBalance / 10**6), usdcPoolBalance * 10**12 * 100 / totalPool)
+    print("Pool OUSD   ", "{:.6f}".format(ousdPoolBalance / 10**18), ousdPoolBalance * 100 / totalPool)
+    print("Pool Total  ", "{:.6f}".format(totalPool / 10**18))
+    print("OUSD buy price ", "{:.6f}".format(10**18 / oTokens_received))
+    print("OUSD sell price", "{:.6f}".format(assets_received / 10**6 ))
+
+    # Remove and burn OUSD from the Curve pool
+    curve_lp = 700000 * 10**18
+    txs.append(
+      ousd_curve_amo_strat.removeAndBurnOTokens(
+        curve_lp,
+        {'from': STRATEGIST}
+      )
+    )
+
+    txs.append(vault_admin.withdrawFromStrategy(
+      MORPHO_OUSD_V2_STRAT,
+      [usdc],
+      [28204 * 10**6],
+      {'from': MULTICHAIN_STRATEGIST}
+    ))
+
+    # AMO pool after
+    usdcPoolBalance = usdc.balanceOf(OUSD_CURVE_POOL)
+    ousdPoolBalance = ousd.balanceOf(OUSD_CURVE_POOL)
+    totalPool = usdcPoolBalance * 10**12 + ousdPoolBalance
+    # Sell OUSD
+    assets_received = ousd_curve_pool.get_dy(0, 1, 10**18)
+    # Buy OUSD
+    oTokens_received = ousd_curve_pool.get_dy(1, 0, 10**6)
+
+    print("Curve OUSD/USDC Pool after")  
+    print("Pool USDC   ", "{:.6f}".format(usdcPoolBalance / 10**6), usdcPoolBalance * 10**12 * 100 / totalPool)
+    print("Pool OUSD   ", "{:.6f}".format(ousdPoolBalance / 10**18), ousdPoolBalance * 100 / totalPool)
+    print("Pool Total  ", "{:.6f}".format(totalPool / 10**18))
+    print("OUSD buy price ", "{:.6f}".format(10**18 / oTokens_received))
+    print("OUSD sell price", "{:.6f}".format(assets_received / 10**6 ))
+
+    vault_change = vault_core.totalValue() - vault_value_checker.snapshots(MULTICHAIN_STRATEGIST)[0]
+    supply_change = ousd.totalSupply() - vault_value_checker.snapshots(MULTICHAIN_STRATEGIST)[1]
+    profit = vault_change - supply_change
+    txs.append(vault_value_checker.checkDelta(profit, (1 * 10**18), vault_change, (1 * 10**18), {'from': MULTICHAIN_STRATEGIST}))
+    print("-----")
+    print("Profit", "{:.6f}".format(profit / 10**18), profit)
+    print("OUSD supply change", "{:.6f}".format(supply_change / 10**18), supply_change)
+    print("Vault Change", "{:.6f}".format(vault_change / 10**18), vault_change)
+    print("-----")
