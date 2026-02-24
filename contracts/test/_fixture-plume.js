@@ -80,6 +80,16 @@ const defaultFixture = async () => {
     oethpVaultProxy.address
   );
 
+  // Plume vault uses deprecated mint/redeem signatures (won't be upgraded)
+  const oethpVaultLegacy = new ethers.Contract(
+    oethpVaultProxy.address,
+    [
+      "function mint(address _asset, uint256 _amount, uint256 _minimumOusdAmount) external",
+      "function redeem(uint256 _amount, uint256 _minimumUnitAmount) external",
+    ],
+    ethers.provider
+  );
+
   // Bridged wOETH
   const woethProxy = await ethers.getContract("BridgedWOETHProxy");
   const woeth = await ethers.getContractAt("BridgedWOETH", woethProxy.address);
@@ -178,6 +188,7 @@ const defaultFixture = async () => {
     oethp,
     wOETHp,
     oethpVault,
+    oethpVaultLegacy,
     roosterAmoStrategy,
     roosterOETHpWETHpool,
     // Bridged wOETH

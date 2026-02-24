@@ -229,10 +229,16 @@ contract PlumeBridgeHelperModule is
         require(success, "Failed to approve WETH");
 
         // Mint OETHp with WETH
+        // mint(address,uint256,uint256) was removed from IVault; use hardcoded selector
         success = safeContract.execTransactionFromModule(
             address(vault),
             0, // Value
-            abi.encodeWithSelector(vault.mint.selector, wethAmount),
+            abi.encodeWithSelector(
+                bytes4(keccak256("mint(address,uint256,uint256)")),
+                address(weth),
+                wethAmount,
+                wethAmount
+            ),
             0 // Call
         );
         require(success, "Failed to mint OETHp");
