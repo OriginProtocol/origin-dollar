@@ -125,7 +125,7 @@ contract OSonicZapper {
         returns (uint256)
     {
         uint256 toMint = wS.balanceOf(address(this));
-        vault.mint(address(wS), toMint, minOS);
+        vault.mint(toMint);
         uint256 mintedAmount = OS.balanceOf(address(this));
         require(mintedAmount >= minOS, "Zapper: not enough minted");
 

@@ -482,7 +482,7 @@ describe("Sonic ForkTest: SwapX AMO Strategy", function () {
 
         const osAmountIn = parseUnits("10000000");
         // Mint OS using wS
-        await oSonicVault.connect(clement).mint(wS.address, osAmountIn, 0);
+        await oSonicVault.connect(clement).mint(osAmountIn);
 
         attackerBalanceBefore.os = await oSonic.balanceOf(clement.address);
         attackerBalanceBefore.ws = await wS.balanceOf(clement.address);
@@ -830,7 +830,7 @@ describe("Sonic ForkTest: SwapX AMO Strategy", function () {
       // transfer wS to the pool
       await wS.connect(clement).transfer(swapXPool.address, bigAmount);
       // Mint OS with wS
-      await oSonicVault.connect(clement).mint(wS.address, bigAmount.mul(5), 0);
+      await oSonicVault.connect(clement).mint(bigAmount.mul(5));
       // transfer OS to the pool
       await oSonic.connect(clement).transfer(swapXPool.address, bigAmount);
       // mint pool LP tokens
@@ -1247,7 +1247,7 @@ describe("Sonic ForkTest: SwapX AMO Strategy", function () {
       wS,
     } = fixture;
 
-    await oSonicVault.connect(clement).mint(wS.address, wsDepositAmount, 0);
+    await oSonicVault.connect(clement).mint(wsDepositAmount);
 
     const dataBefore = await snapData();
     await logSnapData(dataBefore, "\nBefore depositing wS to strategy");

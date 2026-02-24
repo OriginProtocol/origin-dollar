@@ -43,7 +43,7 @@ describe("Vault", function () {
 
     // Matt deposits USDC, 6 decimals
     await usdc.connect(matt).approve(vault.address, usdcUnits("2.0"));
-    await vault.connect(matt).mint(usdc.address, usdcUnits("2.0"), 0);
+    await vault.connect(matt).mint(usdcUnits("2.0"));
     await expect(matt).has.a.balanceOf("102.00", ousd);
   });
 
@@ -52,7 +52,7 @@ describe("Vault", function () {
 
     await expect(anna).has.a.balanceOf("0.00", ousd);
     await usdc.connect(anna).approve(vault.address, usdcUnits("50.0"));
-    await vault.connect(anna).mint(usdc.address, usdcUnits("50.0"), 0);
+    await vault.connect(anna).mint(usdcUnits("50.0"));
     await expect(anna).has.a.balanceOf("50.00", ousd);
   });
 
@@ -61,7 +61,7 @@ describe("Vault", function () {
 
     // Matt deposits USDC, 6 decimals
     await usdc.connect(matt).approve(vault.address, usdcUnits("2.0"));
-    await vault.connect(matt).mint(usdc.address, usdcUnits("2.0"), 0);
+    await vault.connect(matt).mint(usdcUnits("2.0"));
     // Fixture loads 200 USDS, so result should be 202
     expect(await vault.totalValue()).to.equal(utils.parseUnits("202", 18));
   });
@@ -71,7 +71,7 @@ describe("Vault", function () {
 
     // Matt deposits USDC, 6 decimals
     await usdc.connect(matt).approve(vault.address, usdcUnits("8.0"));
-    await vault.connect(matt).mint(usdc.address, usdcUnits("8.0"), 0);
+    await vault.connect(matt).mint(usdcUnits("8.0"));
     // Matt sends his OUSD directly to Vault
     await ousd.connect(matt).transfer(vault.address, ousdUnits("8.0"));
     // Matt asks Governor for help
@@ -121,7 +121,7 @@ describe("Vault", function () {
     await expect(matt).has.a.balanceOf("100.00", ousd);
     await usdc.connect(anna).mint(usdcUnits("5000.0"));
     await usdc.connect(anna).approve(vault.address, usdcUnits("5000.0"));
-    await vault.connect(anna).mint(usdc.address, usdcUnits("5000.0"), 0);
+    await vault.connect(anna).mint(usdcUnits("5000.0"));
     await expect(anna).has.a.balanceOf("5000.00", ousd);
     await expect(matt).has.a.balanceOf("100.00", ousd);
   });
@@ -131,7 +131,7 @@ describe("Vault", function () {
 
     // Matt deposits USDC, 6 decimals
     await usdc.connect(matt).approve(vault.address, usdcUnits("8.0"));
-    await vault.connect(matt).mint(usdc.address, usdcUnits("8.0"), 0);
+    await vault.connect(matt).mint(usdcUnits("8.0"));
     // Matt sends his OUSD directly to Vault
     await ousd.connect(matt).transfer(vault.address, ousdUnits("8.0"));
     // Matt asks Governor for help
@@ -183,7 +183,7 @@ describe("Vault", function () {
     // Send all USDC to Compound
     await vault.connect(governor).setDefaultStrategy(mockStrategy.address);
     await usdc.connect(josh).approve(vault.address, usdcUnits("200"));
-    await vault.connect(josh).mint(usdc.address, usdcUnits("200"), 0);
+    await vault.connect(josh).mint(usdcUnits("200"));
     await vault.connect(governor).allocate();
 
     await vault
@@ -210,7 +210,7 @@ describe("Vault", function () {
     // Send all USDC to Compound
     await vault.connect(governor).setDefaultStrategy(mockStrategy.address);
     await usdc.connect(josh).approve(vault.address, usdcUnits("200"));
-    await vault.connect(josh).mint(usdc.address, usdcUnits("200"), 0);
+    await vault.connect(josh).mint(usdcUnits("200"));
     await vault.connect(governor).allocate();
 
     await vault
@@ -259,7 +259,7 @@ describe("Vault", function () {
     await vault.connect(governor).setDefaultStrategy(mockStrategy.address);
 
     await usdc.connect(josh).approve(vault.address, usdcUnits("90"));
-    await vault.connect(josh).mint(usdc.address, usdcUnits("90"), 0);
+    await vault.connect(josh).mint(usdcUnits("90"));
     await vault.connect(governor).allocate();
 
     await vault
@@ -332,7 +332,7 @@ describe("Vault", function () {
     // Mint and allocate USDC to Compound.
     await vault.connect(governor).setDefaultStrategy(mockStrategy.address);
     await usdc.connect(josh).approve(vault.address, usdcUnits("200"));
-    await vault.connect(josh).mint(usdc.address, usdcUnits("200"), 0);
+    await vault.connect(josh).mint(usdcUnits("200"));
     await vault.connect(governor).allocate();
 
     // Call to withdrawAll by the governor should go thru.

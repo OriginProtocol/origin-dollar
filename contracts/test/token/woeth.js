@@ -27,7 +27,7 @@ describe("WOETH", function () {
 
     // mint some OETH
     for (const user of [matt, josh]) {
-      await oethVault.connect(user).mint(weth.address, oethUnits("100"), 0);
+      await oethVault.connect(user).mint(oethUnits("100"));
     }
 
     // Josh wraps 50 OETH to WOETH

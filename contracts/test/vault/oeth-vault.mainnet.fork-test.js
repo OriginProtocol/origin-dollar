@@ -48,13 +48,10 @@ describe("ForkTest: OETH Vault", function () {
       const { oethVault, weth, josh } = fixture;
 
       const amount = parseUnits("1", 18);
-      const minOeth = parseUnits("0.8", 18);
 
       await weth.connect(josh).approve(oethVault.address, amount);
 
-      const tx = await oethVault
-        .connect(josh)
-        .mint(weth.address, amount, minOeth);
+      const tx = await oethVault.connect(josh).mint(amount);
 
       await logTxDetails(tx, "mint");
 
@@ -67,13 +64,10 @@ describe("ForkTest: OETH Vault", function () {
       const { oethVault, weth, josh } = fixture;
 
       const amount = parseUnits("11", 18);
-      const minOeth = parseUnits("8", 18);
 
       await weth.connect(josh).approve(oethVault.address, amount);
 
-      const tx = await oethVault
-        .connect(josh)
-        .mint(weth.address, amount, minOeth);
+      const tx = await oethVault.connect(josh).mint(amount);
 
       await logTxDetails(tx, "mint");
 
@@ -86,13 +80,10 @@ describe("ForkTest: OETH Vault", function () {
       const { oethVault, weth, josh } = fixture;
 
       const amount = parseUnits("11", 18);
-      const minOeth = parseUnits("8", 18);
 
       await weth.connect(josh).approve(oethVault.address, amount);
 
-      const tx = await oethVault
-        .connect(josh)
-        .mint(weth.address, amount, minOeth);
+      const tx = await oethVault.connect(josh).mint(amount);
 
       await logTxDetails(tx, "mint");
 
@@ -219,7 +210,7 @@ describe("ForkTest: OETH Vault", function () {
     if (queue > claimed) {
       const diff = queue.sub(claimed).mul(110).div(100);
       await weth.connect(depositor).approve(oethVault.address, diff);
-      return await oethVault.connect(depositor).mint(weth.address, diff, 0);
+      return await oethVault.connect(depositor).mint(diff);
     }
     return null;
   }

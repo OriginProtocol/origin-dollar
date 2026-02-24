@@ -1,6 +1,6 @@
 const { createFixtureLoader } = require("../_fixture");
 const { bridgeHelperModuleFixture } = require("../_fixture-base");
-const { oethUnits } = require("../helpers");
+const { oethUnits, advanceTime } = require("../helpers");
 const { expect } = require("chai");
 
 const baseFixture = createFixtureLoader(bridgeHelperModuleFixture);
@@ -41,24 +41,31 @@ describe("ForkTest: Bridge Helper Safe Module (Base)", function () {
       .bridgeWETHToEthereum(oethUnits("1"));
   });
 
-  it.skip("Should deposit wOETH for OETHb and redeem it for WETH", async () => {
+  it("Should deposit wOETH for OETHb and async withdraw for WETH", async () => {
     const {
       nick,
       _mintWETH,
       oethbVault,
       woeth,
       weth,
-      oethb,
       minter,
+      governor,
       safeSigner,
       woethStrategy,
       bridgeHelperModule,
     } = fixture;
 
     // Make sure Vault has some WETH
-    _mintWETH(nick, "10000");
+    await _mintWETH(nick, "10000");
     await weth.connect(nick).approve(oethbVault.address, oethUnits("10000"));
-    await oethbVault.connect(nick).mint(weth.address, oethUnits("10000"), "0");
+    await oethbVault.connect(nick).mint(oethUnits("10000"));
+
+    // Ensure withdrawal claim delay is set
+    let delayPeriod = await oethbVault.withdrawalClaimDelay();
+    if (delayPeriod == 0) {
+      await oethbVault.connect(governor).setWithdrawalClaimDelay(10 * 60);
+      delayPeriod = 10 * 60;
+    }
 
     // Update oracle price
     await woethStrategy.updateWOETHOraclePrice();
@@ -70,7 +77,6 @@ describe("ForkTest: Bridge Helper Safe Module (Base)", function () {
     // Mint 1 wOETH
     await woeth.connect(minter).mint(safeSigner.address, woethAmount);
 
-    const supplyBefore = await oethb.totalSupply();
     const wethBalanceBefore = await weth.balanceOf(safeSigner.address);
     const woethBalanceBefore = await woeth.balanceOf(safeSigner.address);
 
@@ -81,37 +87,44 @@ describe("ForkTest: Bridge Helper Safe Module (Base)", function () {
       weth.address
     );
 
-    // Deposit 1 wOETH for OETHb and redeem it for WETH
+    // Get request ID before the call
+    const { nextWithdrawalIndex } = await oethbVault.withdrawalQueueMetadata();
+
+    // Deposit 1 wOETH and request async withdrawal
     await bridgeHelperModule
       .connect(safeSigner)
-      .depositWOETH(oethUnits("1"), true);
+      .depositWOETH(woethAmount, true);
 
-    const supplyAfter = await oethb.totalSupply();
+    // wOETH should be transferred to strategy
+    expect(await woeth.balanceOf(safeSigner.address)).to.eq(
+      woethBalanceBefore.sub(woethAmount)
+    );
+    expect(await woeth.balanceOf(woethStrategy.address)).to.eq(
+      woethStrategyBalanceBefore.add(woethAmount)
+    );
+    expect(
+      await woethStrategy.checkBalance(weth.address)
+    ).to.approxEqualTolerance(woethStrategyValueBefore.add(expectedWETH));
+
+    // WETH shouldn't have changed yet (withdrawal is pending)
+    expect(await weth.balanceOf(safeSigner.address)).to.eq(wethBalanceBefore);
+
+    // Advance time past the claim delay
+    await advanceTime(delayPeriod + 1);
+
+    // Claim the withdrawal
+    await bridgeHelperModule
+      .connect(safeSigner)
+      .claimWithdrawal(nextWithdrawalIndex);
+
+    // WETH should have increased by the expected amount
     const wethBalanceAfter = await weth.balanceOf(safeSigner.address);
-    const woethBalanceAfter = await woeth.balanceOf(safeSigner.address);
-    const woethStrategyBalanceAfter = await woeth.balanceOf(
-      woethStrategy.address
-    );
-    const woethStrategyValueAfter = await woethStrategy.checkBalance(
-      weth.address
-    );
-
-    expect(supplyAfter).to.approxEqualTolerance(
-      supplyBefore.add(oethUnits("1"))
-    );
     expect(wethBalanceAfter).to.approxEqualTolerance(
       wethBalanceBefore.add(expectedWETH)
     );
-    expect(woethBalanceAfter).to.eq(woethBalanceBefore.sub(woethAmount));
-    expect(woethStrategyBalanceAfter).to.eq(
-      woethStrategyBalanceBefore.add(woethAmount)
-    );
-    expect(woethStrategyValueAfter).to.approxEqualTolerance(
-      woethStrategyValueBefore.add(expectedWETH)
-    );
   });
 
-  it.skip("Should mint OETHb with WETH and redeem it for wOETH", async () => {
+  it("Should mint OETHb with WETH and redeem it for wOETH", async () => {
     const {
       _mintWETH,
       oethbVault,

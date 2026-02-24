@@ -124,7 +124,7 @@ describe("Vault rebase", () => {
 
       await expect(anna).has.a.balanceOf("0", ousd);
       await usdc.connect(anna).approve(vault.address, usdcUnits("50"));
-      await vault.connect(anna).mint(usdc.address, usdcUnits("50"), 0);
+      await vault.connect(anna).mint(usdcUnits("50"));
       await expect(anna).has.a.balanceOf("50", ousd);
     });
   });

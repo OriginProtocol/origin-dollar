@@ -282,7 +282,7 @@ async function swapXAMOFixture(
 
       // Mint OS with wS
       // This will sit in the vault, not the strategy
-      await oSonicVault.connect(nick).mint(wS.address, mintAmount, 0);
+      await oSonicVault.connect(nick).mint(mintAmount);
     }
 
     // Add ETH to the Metapool
@@ -324,7 +324,7 @@ async function swapXAMOFixture(
     const osAmount = parseUnits(config.poolAddOSAmount.toString(), 18);
 
     // Mint OS with wS
-    await oSonicVault.connect(rafael).mint(wS.address, osAmount, 0);
+    await oSonicVault.connect(rafael).mint(osAmount);
 
     // transfer OS to the pool
     await oSonic.connect(rafael).transfer(swapXPool.address, osAmount);

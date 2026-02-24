@@ -64,9 +64,7 @@ describe("ForkTest: OETH", function () {
       // Mint some OETH to the eip7702 user
       await weth.connect(eip770User).deposit({ value: ethUnits("13") });
       await weth.connect(eip770User).approve(oethVault.address, ethUnits("3"));
-      await oethVault
-        .connect(eip770User)
-        .mint(weth.address, ethUnits("3"), ethUnits("0"));
+      await oethVault.connect(eip770User).mint(ethUnits("3"));
 
       // EIP7702 keep 1 OETH and transfer 1 OETH to a smart contract (USDC in this case)
       // and transfer 1 OETH to a wallet (josh in this case)

@@ -18,7 +18,7 @@ describe("ForkTest: OETHb Vault", function () {
     const { weth, oethbVault } = fixture;
     await weth.connect(signer).deposit({ value: oethUnits("1") });
     await weth.connect(signer).approve(oethbVault.address, oethUnits("1"));
-    await oethbVault.connect(signer).mint(weth.address, oethUnits("1"), "0");
+    await oethbVault.connect(signer).mint(oethUnits("1"));
   }
 
   describe("Mint & Permissioned redeems", function () {
@@ -61,9 +61,7 @@ describe("ForkTest: OETHb Vault", function () {
       await weth
         .connect(rafael)
         .approve(oethbVault.address, oethUnits("10000"));
-      await oethbVault
-        .connect(rafael)
-        .mint(weth.address, oethUnits("10000"), 0);
+      await oethbVault.connect(rafael).mint(oethUnits("10000"));
 
       const delayPeriod = await oethbVault.withdrawalClaimDelay();
 

@@ -39,7 +39,7 @@ describe("ForkTest: CrossChainRemoteStrategy", function () {
 
   const mint = async (amount) => {
     await usdc.connect(josh).approve(vault.address, await units(amount, usdc));
-    await vault.connect(josh).mint(usdc.address, await units(amount, usdc), 0);
+    await vault.connect(josh).mint(await units(amount, usdc));
   };
 
   const depositToMasterStrategy = async (amount) => {

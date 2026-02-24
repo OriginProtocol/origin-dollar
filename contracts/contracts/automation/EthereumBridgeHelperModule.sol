@@ -1,12 +1,10 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import { AbstractLZBridgeHelperModule, AbstractSafeModule } from "./AbstractLZBridgeHelperModule.sol";
-import { AbstractCCIPBridgeHelperModule, IRouterClient } from "./AbstractCCIPBridgeHelperModule.sol";
+// solhint-disable-next-line max-line-length
+import { AbstractCCIPBridgeHelperModule, AbstractSafeModule, IRouterClient } from "./AbstractCCIPBridgeHelperModule.sol";
 
 import { AccessControlEnumerable } from "@openzeppelin/contracts/access/AccessControlEnumerable.sol";
-
-import { IOFT } from "@layerzerolabs/oft-evm/contracts/interfaces/IOFT.sol";
 
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { IERC4626 } from "../../lib/openzeppelin/interfaces/IERC4626.sol";
@@ -15,7 +13,6 @@ import { IVault } from "../interfaces/IVault.sol";
 
 contract EthereumBridgeHelperModule is
     AccessControlEnumerable,
-    AbstractLZBridgeHelperModule,
     AbstractCCIPBridgeHelperModule
 {
     IVault public constant vault =
@@ -27,38 +24,12 @@ contract EthereumBridgeHelperModule is
     IERC4626 public constant woeth =
         IERC4626(0xDcEe70654261AF21C44c093C300eD3Bb97b78192);
 
-    uint32 public constant LZ_PLUME_ENDPOINT_ID = 30370;
-    IOFT public constant LZ_WOETH_OMNICHAIN_ADAPTER =
-        IOFT(0x7d1bEa5807e6af125826d56ff477745BB89972b8);
-    IOFT public constant LZ_ETH_OMNICHAIN_ADAPTER =
-        IOFT(0x77b2043768d28E9C9aB44E1aBfC95944bcE57931);
-
     IRouterClient public constant CCIP_ROUTER =
         IRouterClient(0x80226fc0Ee2b096224EeAc085Bb9a8cba1146f7D);
 
     uint64 public constant CCIP_BASE_CHAIN_SELECTOR = 15971525489660198786;
 
     constructor(address _safeContract) AbstractSafeModule(_safeContract) {}
-
-    /**
-     * @dev Bridges wOETH to Plume.
-     * @param woethAmount Amount of wOETH to bridge.
-     * @param slippageBps Slippage in 10^4 basis points.
-     */
-    function bridgeWOETHToPlume(uint256 woethAmount, uint256 slippageBps)
-        public
-        payable
-        onlyOperator
-    {
-        _bridgeTokenWithLz(
-            LZ_PLUME_ENDPOINT_ID,
-            woeth,
-            LZ_WOETH_OMNICHAIN_ADAPTER,
-            woethAmount,
-            slippageBps,
-            false
-        );
-    }
 
     /**
      * @dev Bridges wOETH to Base using CCIP.
@@ -74,34 +45,6 @@ contract EthereumBridgeHelperModule is
             CCIP_BASE_CHAIN_SELECTOR,
             woeth,
             woethAmount
-        );
-    }
-
-    /**
-     * @dev Bridges wETH to Plume.
-     * @param wethAmount Amount of wETH to bridge.
-     * @param slippageBps Slippage in 10^4 basis points.
-     */
-    function bridgeWETHToPlume(uint256 wethAmount, uint256 slippageBps)
-        public
-        payable
-        onlyOperator
-    {
-        // Unwrap into ETH
-        safeContract.execTransactionFromModule(
-            address(weth),
-            0, // Value
-            abi.encodeWithSelector(weth.withdraw.selector, wethAmount),
-            0 // Call
-        );
-
-        _bridgeTokenWithLz(
-            LZ_PLUME_ENDPOINT_ID,
-            IERC20(address(weth)),
-            LZ_ETH_OMNICHAIN_ADAPTER,
-            wethAmount,
-            slippageBps,
-            true
         );
     }
 
@@ -169,12 +112,7 @@ contract EthereumBridgeHelperModule is
         success = safeContract.execTransactionFromModule(
             address(vault),
             0, // Value
-            abi.encodeWithSelector(
-                vault.mint.selector,
-                address(weth),
-                wethAmount,
-                wethAmount
-            ),
+            abi.encodeWithSelector(vault.mint.selector, wethAmount),
             0 // Call
         );
         require(success, "Failed to mint OETH");
@@ -212,25 +150,6 @@ contract EthereumBridgeHelperModule is
     }
 
     /**
-     * @dev Mints OETH and wraps it into wOETH, then bridges it to Plume.
-     * @param wethAmount Amount of WETH to mint.
-     * @param slippageBps Bridge slippage in 10^4 basis points.
-     * @param useNativeToken Whether to use native token to mint.
-     */
-    function mintWrapAndBridgeToPlume(
-        uint256 wethAmount,
-        uint256 slippageBps,
-        bool useNativeToken
-    ) external payable onlyOperator {
-        if (useNativeToken) {
-            wrapETH(wethAmount);
-        }
-
-        uint256 woethAmount = _mintAndWrap(wethAmount);
-        bridgeWOETHToPlume(woethAmount, slippageBps);
-    }
-
-    /**
      * @dev Mints OETH and wraps it into wOETH, then bridges it to Base using CCIP.
      * @param wethAmount Amount of WETH to mint.
      * @param useNativeToken Whether to use native token to mint.
@@ -249,25 +168,60 @@ contract EthereumBridgeHelperModule is
     }
 
     /**
-     * @dev Unwraps wOETH and redeems it to get WETH.
+     * @dev Unwraps wOETH and requests an async withdrawal from the Vault.
      * @param woethAmount Amount of wOETH to unwrap.
-     * @return Amount of WETH received.
+     * @return requestId The withdrawal request ID.
+     * @return oethAmount Amount of OETH queued for withdrawal.
      */
-    function unwrapAndRedeem(uint256 woethAmount)
+    function unwrapAndRequestWithdrawal(uint256 woethAmount)
         external
         onlyOperator
-        returns (uint256)
+        returns (uint256 requestId, uint256 oethAmount)
     {
-        return _unwrapAndRedeem(woethAmount);
+        return _unwrapAndRequestWithdrawal(woethAmount);
     }
 
     /**
-     * @dev Unwraps wOETH and redeems it to get WETH.
-     * @param woethAmount Amount of wOETH to unwrap.
-     * @return Amount of WETH received.
+     * @dev Claims a previously requested withdrawal and bridges WETH to Base.
+     * @param requestId The withdrawal request ID to claim.
      */
-    function _unwrapAndRedeem(uint256 woethAmount) internal returns (uint256) {
-        uint256 oethAmount = oeth.balanceOf(address(safeContract));
+    function claimAndBridgeToBase(uint256 requestId)
+        external
+        payable
+        onlyOperator
+    {
+        uint256 wethAmount = _claimWithdrawal(requestId);
+        bridgeWETHToBase(wethAmount);
+    }
+
+    /**
+     * @dev Claims a previously requested withdrawal.
+     * @param requestId The withdrawal request ID to claim.
+     * @return wethAmount Amount of WETH received.
+     */
+    function claimWithdrawal(uint256 requestId)
+        external
+        onlyOperator
+        returns (uint256 wethAmount)
+    {
+        return _claimWithdrawal(requestId);
+    }
+
+    /**
+     * @dev Unwraps wOETH and requests an async withdrawal from the Vault.
+     * @param woethAmount Amount of wOETH to unwrap.
+     * @return requestId The withdrawal request ID.
+     * @return oethAmount Amount of OETH queued for withdrawal.
+     */
+    function _unwrapAndRequestWithdrawal(uint256 woethAmount)
+        internal
+        returns (uint256 requestId, uint256 oethAmount)
+    {
+        // Read the next withdrawal index before requesting
+        // (safe because requestWithdrawal is nonReentrant)
+        requestId = vault.withdrawalQueueMetadata().nextWithdrawalIndex;
+
+        oethAmount = oeth.balanceOf(address(safeContract));
 
         // Unwrap wOETH
         bool success = safeContract.execTransactionFromModule(
@@ -285,53 +239,38 @@ contract EthereumBridgeHelperModule is
 
         oethAmount = oeth.balanceOf(address(safeContract)) - oethAmount;
 
-        // Redeem OETH using Vault to get WETH
+        // Request async withdrawal from Vault
         success = safeContract.execTransactionFromModule(
             address(vault),
             0, // Value
             abi.encodeWithSelector(
-                vault.redeem.selector,
-                oethAmount,
+                vault.requestWithdrawal.selector,
                 oethAmount
             ),
             0 // Call
         );
-        require(success, "Failed to redeem OETH");
-
-        return oethAmount;
+        require(success, "Failed to request withdrawal");
     }
 
     /**
-     * @dev Unwraps wOETH and redeems it to get WETH, then bridges it to Plume.
-     * @param woethAmount Amount of wOETH to unwrap.
-     * @param slippageBps Bridge slippage in 10^4 basis points.
+     * @dev Claims a previously requested withdrawal from the Vault.
+     * @param requestId The withdrawal request ID to claim.
+     * @return wethAmount Amount of WETH received.
      */
-    function unwrapRedeemAndBridgeToPlume(
-        uint256 woethAmount,
-        uint256 slippageBps
-    ) external payable onlyOperator {
-        uint256 wethAmount = _unwrapAndRedeem(woethAmount);
-        // Unwrap into ETH
-        safeContract.execTransactionFromModule(
-            address(weth),
+    function _claimWithdrawal(uint256 requestId)
+        internal
+        returns (uint256 wethAmount)
+    {
+        wethAmount = weth.balanceOf(address(safeContract));
+
+        bool success = safeContract.execTransactionFromModule(
+            address(vault),
             0, // Value
-            abi.encodeWithSelector(weth.withdraw.selector, wethAmount),
+            abi.encodeWithSelector(vault.claimWithdrawal.selector, requestId),
             0 // Call
         );
+        require(success, "Failed to claim withdrawal");
 
-        bridgeWETHToPlume(wethAmount, slippageBps);
-    }
-
-    /**
-     * @dev Unwraps wOETH and redeems it to get WETH, then bridges it to Base using CCIP.
-     * @param woethAmount Amount of wOETH to unwrap.
-     */
-    function unwrapRedeemAndBridgeToBase(uint256 woethAmount)
-        external
-        payable
-        onlyOperator
-    {
-        uint256 wethAmount = _unwrapAndRedeem(woethAmount);
-        bridgeWETHToBase(wethAmount);
+        wethAmount = weth.balanceOf(address(safeContract)) - wethAmount;
     }
 }

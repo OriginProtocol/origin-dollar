@@ -777,7 +777,7 @@ describe("Base Fork Test: Curve AMO strategy", function () {
       await setERC20TokenBalance(user.address, weth, amount.add(balance), hre);
     }
     await weth.connect(user).approve(oethbVault.address, amount);
-    await oethbVault.connect(user).mint(weth.address, amount, amount);
+    await oethbVault.connect(user).mint(amount);
 
     const gov = await oethbVault.governor();
     log(`Depositing ${formatUnits(amount)} WETH to AMO strategy`);
@@ -811,9 +811,7 @@ describe("Base Fork Test: Curve AMO strategy", function () {
       await weth
         .connect(nick)
         .approve(oethbVault.address, amount.mul(101).div(10));
-      await oethbVault
-        .connect(nick)
-        .mint(weth.address, amount.mul(101).div(10), amount);
+      await oethbVault.connect(nick).mint(amount.mul(101).div(10));
       await oethb.connect(nick).approve(curvePool.address, amount);
       // prettier-ignore
       await curvePool
@@ -881,9 +879,7 @@ describe("Base Fork Test: Curve AMO strategy", function () {
         );
       }
       await weth.connect(nick).approve(oethbVault.address, oethbAmount);
-      await oethbVault
-        .connect(nick)
-        .mint(weth.address, oethbAmount, oethbAmount);
+      await oethbVault.connect(nick).mint(oethbAmount);
       await oethb.connect(nick).approve(curvePool.address, oethbAmount);
       log(
         `Adding ${formatUnits(
