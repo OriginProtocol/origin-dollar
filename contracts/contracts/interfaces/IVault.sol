@@ -117,15 +117,9 @@ interface IVault {
     ) external;
 
     // VaultCore.sol
-    function mint(
-        address _asset,
-        uint256 _amount,
-        uint256 _minimumOusdAmount
-    ) external;
+    function mint(uint256 _amount) external;
 
     function mintForStrategy(uint256 _amount) external;
-
-    function redeem(uint256 _amount, uint256 _minimumUnitAmount) external;
 
     function burnForStrategy(uint256 _amount) external;
 
@@ -137,17 +131,6 @@ interface IVault {
 
     function checkBalance(address _asset) external view returns (uint256);
 
-    /// @notice Deprecated: use calculateRedeemOutput
-    function calculateRedeemOutputs(uint256 _amount)
-        external
-        view
-        returns (uint256[] memory);
-
-    function calculateRedeemOutput(uint256 _amount)
-        external
-        view
-        returns (uint256);
-
     function getAssetCount() external view returns (uint256);
 
     function getAllAssets() external view returns (address[] memory);
@@ -158,8 +141,6 @@ interface IVault {
 
     /// @notice Deprecated.
     function isSupportedAsset(address _asset) external view returns (bool);
-
-    function dripper() external view returns (address);
 
     function asset() external view returns (address);
 
@@ -215,8 +196,6 @@ interface IVault {
     function rebasePerSecondTarget() external view returns (uint64);
 
     function previewYield() external view returns (uint256 yield);
-
-    function weth() external view returns (address);
 
     // slither-disable-end constable-states
 }

@@ -163,11 +163,12 @@ contract PlumeBridgeHelperModule is
         }
 
         // Redeem for WETH using Vault
+        // redeem(uint256,uint256) was removed from VaultCore; use hardcoded selector
         success = safeContract.execTransactionFromModule(
             address(vault),
             0, // Value
             abi.encodeWithSelector(
-                vault.redeem.selector,
+                bytes4(keccak256("redeem(uint256,uint256)")),
                 oethpAmount,
                 oethpAmount
             ),
@@ -231,12 +232,7 @@ contract PlumeBridgeHelperModule is
         success = safeContract.execTransactionFromModule(
             address(vault),
             0, // Value
-            abi.encodeWithSelector(
-                vault.mint.selector,
-                address(weth),
-                wethAmount,
-                wethAmount
-            ),
+            abi.encodeWithSelector(vault.mint.selector, wethAmount),
             0 // Call
         );
         require(success, "Failed to mint OETHp");
