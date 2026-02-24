@@ -12,14 +12,9 @@ contract OETHSupernovaAMOStrategy is StableSwapAMMStrategy {
     /**
      * @param _baseConfig The `platformAddress` is the address of the Supernova OETH/WETH pool.
      * The `vaultAddress` is the address of the OETH Vault.
-     * @param _oeth Address of the OETH token.
-     * @param _weth Address of the WETH token.
      * @param _gauge Address of the Supernova gauge for the pool.
      */
-    constructor(
-        BaseStrategyConfig memory _baseConfig,
-        address _oeth,
-        address _weth,
-        address _gauge
-    ) StableSwapAMMStrategy(_baseConfig, _oeth, _weth, _gauge) {}
+    constructor(BaseStrategyConfig memory _baseConfig, address _gauge)
+        StableSwapAMMStrategy(_baseConfig, _gauge)
+    {}
 }

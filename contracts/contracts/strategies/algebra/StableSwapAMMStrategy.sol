@@ -154,20 +154,19 @@ contract StableSwapAMMStrategy is InitializableAbstractStrategy {
     /**
      * @param _baseConfig The `platformAddress` is the address of the Algebra pool.
      * The `vaultAddress` is the address of the Origin Sonic Vault.
-     * @param _oToken Address of the OToken.
-     * @param _asset Address of the asset token.
      * @param _gauge Address of the Algebra gauge for the pool.
      */
-    constructor(
-        BaseStrategyConfig memory _baseConfig,
-        address _oToken,
-        address _asset,
-        address _gauge
-    ) InitializableAbstractStrategy(_baseConfig) {
+    constructor(BaseStrategyConfig memory _baseConfig, address _gauge)
+        InitializableAbstractStrategy(_baseConfig)
+    {
+        // Read the oToken address from the Vault
+        address oTokenMem = IVault(_baseConfig.vaultAddress).oToken();
+        address assetMem = IVault(_baseConfig.vaultAddress).asset();
+
         // Checked both tokens are to 18 decimals
         require(
-            IBasicToken(_asset).decimals() == 18 &&
-                IBasicToken(_oToken).decimals() == 18,
+            IBasicToken(assetMem).decimals() == 18 &&
+                IBasicToken(oTokenMem).decimals() == 18,
             "Incorrect token decimals"
         );
         // Check the Algebra pool is a Stable AMM (sAMM)
@@ -180,21 +179,22 @@ contract StableSwapAMMStrategy is InitializableAbstractStrategy {
             IGauge(_gauge).TOKEN() == _baseConfig.platformAddress,
             "Incorrect gauge"
         );
-        oTokenPoolIndex = IPair(_baseConfig.platformAddress).token0() == _oToken
+        oTokenPoolIndex = IPair(_baseConfig.platformAddress).token0() ==
+            oTokenMem
             ? 0
             : 1;
         // Check the pool tokens are correct
         require(
             IPair(_baseConfig.platformAddress).token0() ==
-                (oTokenPoolIndex == 0 ? _oToken : _asset) &&
+                (oTokenPoolIndex == 0 ? oTokenMem : assetMem) &&
                 IPair(_baseConfig.platformAddress).token1() ==
-                (oTokenPoolIndex == 0 ? _asset : _oToken),
+                (oTokenPoolIndex == 0 ? assetMem : oTokenMem),
             "Incorrect pool tokens"
         );
 
         // Set the immutable variables
-        oToken = _oToken;
-        asset = _asset;
+        oToken = oTokenMem;
+        asset = assetMem;
         pool = _baseConfig.platformAddress;
         gauge = _gauge;
 
