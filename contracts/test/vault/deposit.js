@@ -44,8 +44,7 @@ describe("Vault deposit pausing", function () {
     await vault.connect(governor).pauseCapital();
     expect(await vault.connect(anna).capitalPaused()).to.be.true;
     await usdc.connect(anna).approve(vault.address, usdcUnits("50.0"));
-    await expect(vault.connect(anna).mint(usdc.address, usdcUnits("50.0"), 0))
-      .to.be.reverted;
+    await expect(vault.connect(anna).mint(usdcUnits("50.0"))).to.be.reverted;
   });
 
   it("Unpausing deposits allows mint", async () => {
@@ -55,7 +54,7 @@ describe("Vault deposit pausing", function () {
     await vault.connect(governor).unpauseCapital();
     expect(await vault.connect(anna).capitalPaused()).to.be.false;
     await usdc.connect(anna).approve(vault.address, usdcUnits("50.0"));
-    await vault.connect(anna).mint(usdc.address, usdcUnits("50.0"), 0);
+    await vault.connect(anna).mint(usdcUnits("50.0"));
   });
 
   it("Deposit pause status can be read", async () => {

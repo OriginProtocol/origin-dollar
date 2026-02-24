@@ -73,41 +73,56 @@ contract BaseBridgeHelperModule is
     /**
      * @dev Deposits wOETH into the bridgedWOETH strategy.
      * @param woethAmount Amount of wOETH to deposit.
-     * @param redeemWithVault Whether to redeem the wOETH for WETH using the Vault.
-     * @return Amount of WETH received.
+     * @param requestWithdrawal Whether to request an async withdrawal of the
+     *        resulting OETHb from the Vault.
+     * @return requestId The withdrawal request ID (0 if not requested).
+     * @return oethbAmount Amount of OETHb received or queued for withdrawal.
      */
-    function depositWOETH(uint256 woethAmount, bool redeemWithVault)
+    function depositWOETH(uint256 woethAmount, bool requestWithdrawal)
         external
         onlyOperator
-        returns (uint256)
+        returns (uint256 requestId, uint256 oethbAmount)
     {
-        return _depositWOETH(woethAmount, redeemWithVault);
+        oethbAmount = _depositWOETH(woethAmount);
+        if (requestWithdrawal) {
+            requestId = _requestWithdrawal(oethbAmount);
+        }
     }
 
     /**
-     * @dev Deposits wOETH into the bridgedWOETH strategy and bridges it to Ethereum.
-     * @param woethAmount Amount of wOETH to deposit.
-     * @return Amount of WETH received.
+     * @dev Claims a previously requested withdrawal and bridges WETH to Ethereum.
+     * @param requestId The withdrawal request ID to claim.
      */
-    function depositWOETHAndBridgeWETH(uint256 woethAmount)
+    function claimAndBridgeWETH(uint256 requestId)
+        external
+        payable
+        onlyOperator
+    {
+        uint256 wethAmount = _claimWithdrawal(requestId);
+        bridgeWETHToEthereum(wethAmount);
+    }
+
+    /**
+     * @dev Claims a previously requested withdrawal.
+     * @param requestId The withdrawal request ID to claim.
+     * @return wethAmount Amount of WETH received.
+     */
+    function claimWithdrawal(uint256 requestId)
         external
         onlyOperator
-        returns (uint256)
+        returns (uint256 wethAmount)
     {
-        uint256 wethAmount = _depositWOETH(woethAmount, true);
-        bridgeWETHToEthereum(wethAmount);
-        return wethAmount;
+        return _claimWithdrawal(requestId);
     }
 
     /**
      * @dev Deposits wOETH into the bridgedWOETH strategy.
      * @param woethAmount Amount of wOETH to deposit.
-     * @param redeemWithVault Whether to redeem the wOETH for WETH using the Vault.
-     * @return Amount of WETH received.
+     * @return oethbAmount Amount of OETHb received.
      */
-    function _depositWOETH(uint256 woethAmount, bool redeemWithVault)
+    function _depositWOETH(uint256 woethAmount)
         internal
-        returns (uint256)
+        returns (uint256 oethbAmount)
     {
         // Update oracle price
         bridgedWOETHStrategy.updateWOETHOraclePrice();
@@ -115,7 +130,7 @@ contract BaseBridgeHelperModule is
         // Rebase to account for any yields from price update
         vault.rebase();
 
-        uint256 oethbAmount = oethb.balanceOf(address(safeContract));
+        oethbAmount = oethb.balanceOf(address(safeContract));
 
         // Approve bridgedWOETH strategy to move wOETH
         bool success = safeContract.execTransactionFromModule(
@@ -128,6 +143,7 @@ contract BaseBridgeHelperModule is
             ),
             0 // Call
         );
+        require(success, "Failed to approve wOETH");
 
         // Deposit to bridgedWOETH strategy
         success = safeContract.execTransactionFromModule(
@@ -146,25 +162,53 @@ contract BaseBridgeHelperModule is
         // Rebase to account for any yields from price update
         // and backing asset change from deposit
         vault.rebase();
+    }
 
-        if (!redeemWithVault) {
-            return oethbAmount;
-        }
+    /**
+     * @dev Requests an async withdrawal from the Vault.
+     * @param oethbAmount Amount of OETHb to withdraw.
+     * @return requestId The withdrawal request ID.
+     */
+    function _requestWithdrawal(uint256 oethbAmount)
+        internal
+        returns (uint256 requestId)
+    {
+        // Read the next withdrawal index before requesting
+        // (safe because requestWithdrawal is nonReentrant)
+        requestId = vault.withdrawalQueueMetadata().nextWithdrawalIndex;
 
-        // Redeem for WETH using Vault
-        success = safeContract.execTransactionFromModule(
+        bool success = safeContract.execTransactionFromModule(
             address(vault),
             0, // Value
             abi.encodeWithSelector(
-                vault.redeem.selector,
-                oethbAmount,
+                vault.requestWithdrawal.selector,
                 oethbAmount
             ),
             0 // Call
         );
-        require(success, "Failed to redeem OETHb");
+        require(success, "Failed to request withdrawal");
+    }
 
-        return oethbAmount;
+    /**
+     * @dev Claims a previously requested withdrawal from the Vault.
+     * @param requestId The withdrawal request ID to claim.
+     * @return wethAmount Amount of WETH received.
+     */
+    function _claimWithdrawal(uint256 requestId)
+        internal
+        returns (uint256 wethAmount)
+    {
+        wethAmount = weth.balanceOf(address(safeContract));
+
+        bool success = safeContract.execTransactionFromModule(
+            address(vault),
+            0, // Value
+            abi.encodeWithSelector(vault.claimWithdrawal.selector, requestId),
+            0 // Call
+        );
+        require(success, "Failed to claim withdrawal");
+
+        wethAmount = weth.balanceOf(address(safeContract)) - wethAmount;
     }
 
     /**
@@ -213,12 +257,7 @@ contract BaseBridgeHelperModule is
         success = safeContract.execTransactionFromModule(
             address(vault),
             0, // Value
-            abi.encodeWithSelector(
-                vault.mint.selector,
-                address(weth),
-                wethAmount,
-                wethAmount
-            ),
+            abi.encodeWithSelector(vault.mint.selector, wethAmount),
             0 // Call
         );
         require(success, "Failed to mint OETHb");

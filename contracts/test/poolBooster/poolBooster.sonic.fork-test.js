@@ -17,11 +17,9 @@ describe("ForkTest: Pool Booster", function () {
   let fixture, strategist;
   beforeEach(async () => {
     fixture = await sonicFixture();
-    const { wS, oSonicVault, nick } = fixture;
+    const { oSonicVault, nick } = fixture;
     // mint some OS
-    await oSonicVault
-      .connect(nick)
-      .mint(wS.address, oethUnits("1000"), oethUnits("0"));
+    await oSonicVault.connect(nick).mint(oethUnits("1000"));
     strategist = await impersonateAndFund(addresses.multichainStrategist);
   });
 

@@ -98,15 +98,15 @@ contract Reborner {
         address asset = sanctum.asset();
         address vault = sanctum.vault();
         IERC20(asset).approve(vault, 1e6);
-        IVault(vault).mint(asset, 1e6, 0);
+        IVault(vault).mint(1e6);
         log("We are now minting..");
     }
 
     function redeem() public {
-        log("We are attempting to redeem..");
+        log("We are attempting to request withdrawal..");
         address vault = sanctum.vault();
-        IVault(vault).redeem(1e18, 1e18);
-        log("We are now redeeming..");
+        IVault(vault).requestWithdrawal(1e18);
+        log("We are now requesting withdrawal..");
     }
 
     function transfer() public {

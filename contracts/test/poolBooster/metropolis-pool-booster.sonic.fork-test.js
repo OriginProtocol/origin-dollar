@@ -11,23 +11,19 @@ describe("ForkTest: Metropolis Pool Booster", function () {
   let fixture,
     poolBoosterFactoryMetropolis,
     nick,
-    wS,
     oSonicVault,
     oSonic,
     strategist;
   beforeEach(async () => {
     fixture = await sonicFixture();
     nick = fixture.nick;
-    wS = fixture.wS;
     oSonicVault = fixture.oSonicVault;
     oSonic = fixture.oSonic;
     poolBoosterFactoryMetropolis = fixture.poolBoosterFactoryMetropolis;
     strategist = await impersonateAndFund(addresses.multichainStrategist);
 
     // mint some OS to Nick
-    await oSonicVault
-      .connect(nick)
-      .mint(wS.address, oethUnits("1000000"), oethUnits("0"));
+    await oSonicVault.connect(nick).mint(oethUnits("1000000"));
   });
 
   it("Should deploy a Pool Booster for a Metropolis pool", async () => {
