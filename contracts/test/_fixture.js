@@ -248,7 +248,7 @@ const createAccountTypes = async ({ vault, ousd, ousdUnlocked, deploy }) => {
     await fundAccounts();
     const usdc = await ethers.getContract("MockUSDC");
     await usdc.connect(matt).approve(vault.address, usdcUnits("1000"));
-    await vault.connect(matt).mint(usdc.address, usdcUnits("1000"), 0);
+    await vault.connect(matt).mint(usdcUnits("1000"));
   }
 
   const createAccount = async () => {
@@ -722,9 +722,7 @@ const defaultFixture = deployments.createFixture(async () => {
       await usdc
         .connect(user)
         .approve(vaultAndTokenContracts.vault.address, usdcUnits("100"));
-      await vaultAndTokenContracts.vault
-        .connect(user)
-        .mint(usdc.address, usdcUnits("100"), 0);
+      await vaultAndTokenContracts.vault.connect(user).mint(usdcUnits("100"));
 
       // Fund WETH contract
       await hardhatSetBalance(user.address, "50000");
@@ -978,7 +976,7 @@ async function morphoOUSDv2Fixture(
 
       // Mint OUSD with USDC
       // This will sit in the vault, not the strategy
-      await vault.connect(josh).mint(usdc.address, usdcMintAmount, 0);
+      await vault.connect(josh).mint(usdcMintAmount);
 
       // Add USDC to the strategy
       if (config?.depositToStrategy) {

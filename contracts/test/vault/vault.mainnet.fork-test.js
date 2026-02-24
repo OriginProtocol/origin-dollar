@@ -108,11 +108,11 @@ describe("ForkTest: Vault", function () {
     });
 
     it("Should allow to mint w/ USDC", async () => {
-      const { ousd, vault, josh, usdc } = fixture;
+      const { ousd, vault, josh } = fixture;
       const balancePreMint = await ousd
         .connect(josh)
         .balanceOf(josh.getAddress());
-      await vault.connect(josh).mint(usdc.address, usdcUnits("500"), 0);
+      await vault.connect(josh).mint(usdcUnits("500"));
 
       const balancePostMint = await ousd
         .connect(josh)
@@ -125,9 +125,9 @@ describe("ForkTest: Vault", function () {
     it("should withdraw from and deposit to strategy", async () => {
       const { vault, josh, usdc, morphoOUSDv2Strategy } = fixture;
       // Mint a lot more in case there are outstanding withdrawals
-      await vault.connect(josh).mint(usdc.address, usdcUnits("500000"), 0);
+      await vault.connect(josh).mint(usdcUnits("500000"));
       // The next mint should all be deposited into the strategy
-      await vault.connect(josh).mint(usdc.address, usdcUnits("90"), 0);
+      await vault.connect(josh).mint(usdcUnits("90"));
       const strategistSigner = await impersonateAndFund(
         await vault.strategistAddr()
       );

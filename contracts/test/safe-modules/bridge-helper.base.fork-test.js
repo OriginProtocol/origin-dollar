@@ -58,7 +58,7 @@ describe("ForkTest: Bridge Helper Safe Module (Base)", function () {
     // Make sure Vault has some WETH
     _mintWETH(nick, "10000");
     await weth.connect(nick).approve(oethbVault.address, oethUnits("10000"));
-    await oethbVault.connect(nick).mint(weth.address, oethUnits("10000"), "0");
+    await oethbVault.connect(nick).mint(oethUnits("10000"));
 
     // Update oracle price
     await woethStrategy.updateWOETHOraclePrice();
@@ -82,9 +82,7 @@ describe("ForkTest: Bridge Helper Safe Module (Base)", function () {
     );
 
     // Deposit 1 wOETH for OETHb and redeem it for WETH
-    await bridgeHelperModule
-      .connect(safeSigner)
-      .depositWOETH(oethUnits("1"), true);
+    await bridgeHelperModule.connect(safeSigner).depositWOETH(oethUnits("1"));
 
     const supplyAfter = await oethb.totalSupply();
     const wethBalanceAfter = await weth.balanceOf(safeSigner.address);

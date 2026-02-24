@@ -90,7 +90,7 @@ describe("Curve AMO OETH strategy", function () {
     await setERC20TokenBalance(nick.address, weth, ousdUnits("5000000"), hre);
     await weth.connect(nick).approve(oethVault.address, ousdUnits("0"));
     await weth.connect(nick).approve(oethVault.address, ousdUnits("5000000"));
-    await oethVault.connect(nick).mint(weth.address, ousdUnits("2000000"), 0);
+    await oethVault.connect(nick).mint(ousdUnits("2000000"));
     await oeth
       .connect(nick)
       .approve(curvePool.address, ousdUnits("1000000000"));
@@ -989,7 +989,7 @@ describe("Curve AMO OETH strategy", function () {
 
     await weth.connect(user).approve(oethVault.address, 0);
     await weth.connect(user).approve(oethVault.address, amount);
-    await oethVault.connect(user).mint(weth.address, amount, amount);
+    await oethVault.connect(user).mint(amount);
 
     const gov = await oethVault.governor();
     const tx = await oethVault
@@ -1023,9 +1023,7 @@ describe("Curve AMO OETH strategy", function () {
       await weth
         .connect(nick)
         .approve(oethVault.address, amount.mul(101).div(10));
-      await oethVault
-        .connect(nick)
-        .mint(weth.address, amount.mul(101).div(10), amount);
+      await oethVault.connect(nick).mint(amount.mul(101).div(10));
       await oeth.connect(nick).approve(curvePool.address, amount);
       // prettier-ignore
       await curvePool
@@ -1088,9 +1086,7 @@ describe("Curve AMO OETH strategy", function () {
       }
       await weth.connect(nick).approve(oethVault.address, 0);
       await weth.connect(nick).approve(oethVault.address, ousdAmount.mul(2));
-      await oethVault
-        .connect(nick)
-        .mint(weth.address, ousdAmount.mul(101).div(100), 0);
+      await oethVault.connect(nick).mint(ousdAmount.mul(101).div(100));
       await oeth.connect(nick).approve(curvePool.address, ousdAmount);
       // prettier-ignore
       await curvePool

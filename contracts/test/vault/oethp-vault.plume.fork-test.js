@@ -18,7 +18,7 @@ describe("ForkTest: OETHp Vault", function () {
     const { weth, oethpVault, _mintWETH } = fixture;
     await _mintWETH(signer, amount);
     await weth.connect(signer).approve(oethpVault.address, amount);
-    await oethpVault.connect(signer).mint(weth.address, amount, "0");
+    await oethpVault.connect(signer).mint(amount);
   }
 
   describe("Mint & Permissioned redeems", function () {
@@ -28,9 +28,9 @@ describe("ForkTest: OETHp Vault", function () {
     });
 
     it("Should not allow anyone else to mint", async () => {
-      const { nick, weth, oethpVault } = fixture;
+      const { nick, oethpVault } = fixture;
       await expect(
-        oethpVault.connect(nick).mint(weth.address, oethUnits("1"), "0")
+        oethpVault.connect(nick).mint(oethUnits("1"))
       ).to.be.revertedWith("Caller is not the Strategist or Governor");
     });
 
