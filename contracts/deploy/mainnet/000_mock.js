@@ -119,6 +119,8 @@ const deployMocks = async ({ getNamedAccounts, deployments }) => {
   //   .connect(sDeployer)
   //   .setCCTPTokenMessenger(tokenMessenger.address);
 
+  await deploy("MockSafeContract", { from: deployerAddr });
+
   console.log("000_mock deploy done.");
 
   return true;
