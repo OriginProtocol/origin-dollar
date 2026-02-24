@@ -103,7 +103,10 @@ contract Reborner {
     }
 
     function redeem() public {
-        revert("Redeem no longer supported");
+        log("We are attempting to request withdrawal..");
+        address vault = sanctum.vault();
+        IVault(vault).requestWithdrawal(1e18);
+        log("We are now requesting withdrawal..");
     }
 
     function transfer() public {

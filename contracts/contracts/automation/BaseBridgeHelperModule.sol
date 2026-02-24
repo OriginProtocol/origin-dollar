@@ -153,6 +153,7 @@ contract BaseBridgeHelperModule is
             ),
             0 // Call
         );
+        require(success, "Failed to approve wOETH");
 
         // Deposit to bridgedWOETH strategy
         success = safeContract.execTransactionFromModule(
