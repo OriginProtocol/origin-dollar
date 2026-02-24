@@ -931,6 +931,33 @@ async function claimRewardsModuleFixture() {
   };
 }
 
+async function autoWithdrawalModuleFixture() {
+  const fixture = await defaultFixture();
+
+  const autoWithdrawalModule = await ethers.getContract("AutoWithdrawalModule");
+  const mockVault = await ethers.getContract("MockAutoWithdrawalVault");
+  const mockSafe = await ethers.getContract("MockSafeContract");
+  const mockStrategy = await ethers.getContract("MockStrategy");
+
+  // MockSafeContract is both safe and operator in the unit-test deployment.
+  const safeSigner = await impersonateAndFund(mockSafe.address);
+
+  // A stranger with no roles
+  const stranger = await impersonateAndFund(
+    "0x0000000000000000000000000000000000000002"
+  );
+
+  return {
+    ...fixture,
+    autoWithdrawalModule,
+    mockVault,
+    mockSafe,
+    mockStrategy,
+    safeSigner,
+    stranger,
+  };
+}
+
 /**
  * Configure a Vault with default USDC strategy to Yearn's Morpho OUSD v2 Vault.
  */
@@ -1613,6 +1640,7 @@ module.exports = {
   bridgeHelperModuleFixture,
   beaconChainFixture,
   claimRewardsModuleFixture,
+  autoWithdrawalModuleFixture,
   crossChainFixtureUnit,
   crossChainFixture,
 };

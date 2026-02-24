@@ -11,6 +11,8 @@ contract MockStrategy {
 
     bool public shouldSupportAsset;
 
+    uint256 private _nextBalance;
+
     constructor() {
         shouldSupportAsset = true;
     }
@@ -34,11 +36,16 @@ contract MockStrategy {
         );
     }
 
+    function setNextBalance(uint256 balance) external {
+        _nextBalance = balance;
+    }
+
     function checkBalance(address asset)
         external
         view
         returns (uint256 balance)
     {
+        if (_nextBalance > 0) return _nextBalance;
         balance = IERC20(asset).balanceOf(address(this));
     }
 
