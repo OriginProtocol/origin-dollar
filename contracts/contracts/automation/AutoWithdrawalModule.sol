@@ -108,9 +108,7 @@ contract AutoWithdrawalModule is AbstractSafeModule {
         vault.addWithdrawalQueueLiquidity();
 
         // Step 2: Read the current shortfall.
-        VaultStorage.WithdrawalQueueMetadata memory meta = vault
-            .withdrawalQueueMetadata();
-        uint256 shortfall = meta.queued - meta.claimable;
+        uint256 shortfall = pendingShortfall();
 
         if (shortfall == 0) {
             // Queue is fully funded — nothing to do.
@@ -172,9 +170,8 @@ contract AutoWithdrawalModule is AbstractSafeModule {
 
     function _setStrategy(address _strategy) internal {
         require(_strategy != address(0), "Invalid strategy");
-        address oldStrategy = strategy;
+        emit StrategyUpdated(strategy, _strategy);
         strategy = _strategy;
-        emit StrategyUpdated(oldStrategy, _strategy);
     }
 
     // ──────────────────────────────────────────────────────── View helpers ──
@@ -187,7 +184,7 @@ contract AutoWithdrawalModule is AbstractSafeModule {
      *         first (which is what `fundWithdrawals()` does).
      * @return shortfall Queue shortfall in asset units (vault asset decimals).
      */
-    function pendingShortfall() external view returns (uint256 shortfall) {
+    function pendingShortfall() public view returns (uint256 shortfall) {
         VaultStorage.WithdrawalQueueMetadata memory meta = vault
             .withdrawalQueueMetadata();
         shortfall = meta.queued - meta.claimable;

@@ -23,9 +23,7 @@ describe("Unit Test: OUSD Auto-Withdrawal Safe Module", function () {
 
     it("Should set asset to MockVault's asset", async () => {
       const { autoWithdrawalModule, mockVault } = f;
-      expect(await autoWithdrawalModule.asset()).to.eq(
-        await mockVault.asset()
-      );
+      expect(await autoWithdrawalModule.asset()).to.eq(await mockVault.asset());
     });
 
     it("Should set strategy to addresses.dead", async () => {
@@ -105,9 +103,7 @@ describe("Unit Test: OUSD Auto-Withdrawal Safe Module", function () {
         ousdUnits("400")
       );
 
-      await expect(
-        autoWithdrawalModule.connect(safeSigner).fundWithdrawals()
-      )
+      await expect(autoWithdrawalModule.connect(safeSigner).fundWithdrawals())
         .to.emit(autoWithdrawalModule, "InsufficientStrategyLiquidity")
         .withArgs(mockStrategy.address, ousdUnits("600"), 0);
     });
@@ -137,7 +133,11 @@ describe("Unit Test: OUSD Auto-Withdrawal Safe Module", function () {
 
       await expect(tx)
         .to.emit(mockVault, "MockedWithdrawal")
-        .withArgs(mockStrategy.address, await autoWithdrawalModule.asset(), ousdUnits("600"));
+        .withArgs(
+          mockStrategy.address,
+          await autoWithdrawalModule.asset(),
+          ousdUnits("600")
+        );
     });
   });
 
@@ -165,7 +165,11 @@ describe("Unit Test: OUSD Auto-Withdrawal Safe Module", function () {
 
       await expect(tx)
         .to.emit(mockVault, "MockedWithdrawal")
-        .withArgs(mockStrategy.address, await autoWithdrawalModule.asset(), ousdUnits("200"));
+        .withArgs(
+          mockStrategy.address,
+          await autoWithdrawalModule.asset(),
+          ousdUnits("200")
+        );
     });
   });
 
@@ -202,9 +206,7 @@ describe("Unit Test: OUSD Auto-Withdrawal Safe Module", function () {
     it("Should revert if called by a non-safe address", async () => {
       const { autoWithdrawalModule, mockStrategy, stranger } = f;
       await expect(
-        autoWithdrawalModule
-          .connect(stranger)
-          .setStrategy(mockStrategy.address)
+        autoWithdrawalModule.connect(stranger).setStrategy(mockStrategy.address)
       ).to.be.revertedWith("Caller is not the safe contract");
     });
 
@@ -220,17 +222,13 @@ describe("Unit Test: OUSD Auto-Withdrawal Safe Module", function () {
         .to.emit(autoWithdrawalModule, "StrategyUpdated")
         .withArgs(oldStrategy, mockStrategy.address);
 
-      expect(await autoWithdrawalModule.strategy()).to.eq(
-        mockStrategy.address
-      );
+      expect(await autoWithdrawalModule.strategy()).to.eq(mockStrategy.address);
     });
 
     it("Should revert on zero address", async () => {
       const { autoWithdrawalModule, safeSigner } = f;
       await expect(
-        autoWithdrawalModule
-          .connect(safeSigner)
-          .setStrategy(addresses.zero)
+        autoWithdrawalModule.connect(safeSigner).setStrategy(addresses.zero)
       ).to.be.revertedWith("Invalid strategy");
     });
   });

@@ -16,7 +16,9 @@ contract MockAutoWithdrawalVault {
         asset = _asset;
     }
 
-    function setWithdrawalQueueMetadata(uint256 queued, uint256 claimable) external {
+    function setWithdrawalQueueMetadata(uint256 queued, uint256 claimable)
+        external
+    {
         withdrawalQueueMetadata.queued = uint128(queued);
         withdrawalQueueMetadata.claimable = uint128(claimable);
     }
