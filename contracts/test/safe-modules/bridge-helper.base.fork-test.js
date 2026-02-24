@@ -102,9 +102,9 @@ describe("ForkTest: Bridge Helper Safe Module (Base)", function () {
     expect(await woeth.balanceOf(woethStrategy.address)).to.eq(
       woethStrategyBalanceBefore.add(woethAmount)
     );
-    expect(await woethStrategy.checkBalance(weth.address)).to.approxEqualTolerance(
-      woethStrategyValueBefore.add(expectedWETH)
-    );
+    expect(
+      await woethStrategy.checkBalance(weth.address)
+    ).to.approxEqualTolerance(woethStrategyValueBefore.add(expectedWETH));
 
     // WETH shouldn't have changed yet (withdrawal is pending)
     expect(await weth.balanceOf(safeSigner.address)).to.eq(wethBalanceBefore);
