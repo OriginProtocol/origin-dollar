@@ -73,30 +73,20 @@ contract BaseBridgeHelperModule is
     /**
      * @dev Deposits wOETH into the bridgedWOETH strategy.
      * @param woethAmount Amount of wOETH to deposit.
-     * @return oethbAmount Amount of OETHb received.
+     * @param requestWithdrawal Whether to request an async withdrawal of the
+     *        resulting OETHb from the Vault.
+     * @return requestId The withdrawal request ID (0 if not requested).
+     * @return oethbAmount Amount of OETHb received or queued for withdrawal.
      */
-    function depositWOETH(uint256 woethAmount)
-        external
-        onlyOperator
-        returns (uint256)
-    {
-        return _depositWOETH(woethAmount);
-    }
-
-    /**
-     * @dev Deposits wOETH into the bridgedWOETH strategy and requests an
-     *      async withdrawal of the resulting OETHb from the Vault.
-     * @param woethAmount Amount of wOETH to deposit.
-     * @return requestId The withdrawal request ID.
-     * @return oethbAmount Amount of OETHb queued for withdrawal.
-     */
-    function depositWOETHAndRequestWithdrawal(uint256 woethAmount)
+    function depositWOETH(uint256 woethAmount, bool requestWithdrawal)
         external
         onlyOperator
         returns (uint256 requestId, uint256 oethbAmount)
     {
         oethbAmount = _depositWOETH(woethAmount);
-        requestId = _requestWithdrawal(oethbAmount);
+        if (requestWithdrawal) {
+            requestId = _requestWithdrawal(oethbAmount);
+        }
     }
 
     /**

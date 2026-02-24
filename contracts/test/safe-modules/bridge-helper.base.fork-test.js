@@ -93,7 +93,7 @@ describe("ForkTest: Bridge Helper Safe Module (Base)", function () {
     // Deposit 1 wOETH and request async withdrawal
     await bridgeHelperModule
       .connect(safeSigner)
-      .depositWOETHAndRequestWithdrawal(woethAmount);
+      .depositWOETH(woethAmount, true);
 
     // wOETH should be transferred to strategy
     expect(await woeth.balanceOf(safeSigner.address)).to.eq(
