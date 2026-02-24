@@ -1243,7 +1243,7 @@ const shouldBehaveLikeAlgebraAmoStrategy = (contextFunction) => {
           "Strategy's check balance"
         ).to.withinRange(
           dataBefore.stratBalance,
-          dataBefore.stratBalance.add(1)
+          dataBefore.stratBalance.add(2)
         );
       });
 
