@@ -64,5 +64,6 @@
   "168_crosschain_strategy_proxies": 1770738208,
   "169_crosschain_strategy": 1770738961,
   "173_improve_curve_pb_module": 1770818413,
-  "177_change_crosschain_strategy_operator": 1771489463
+  "177_change_crosschain_strategy_operator": 1771489463,
+  "178_ousd_auto_withdrawal_module": 1771922160
 }
