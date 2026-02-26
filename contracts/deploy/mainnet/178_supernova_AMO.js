@@ -4,7 +4,7 @@ const {
   deployWithConfirmation,
 } = require("../../utils/deploy");
 const {
-  deployOETHSupernovaAMOStrategyImplementation
+  deployOETHSupernovaAMOStrategyImplementation,
 } = require("../deployActions");
 
 module.exports = deploymentWithGovernanceProposal(

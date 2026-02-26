@@ -22,10 +22,7 @@ const {
 } = require("../utils/deploy");
 const { replaceContractAt } = require("../utils/hardhat");
 const { resolveContract } = require("../utils/resolvers");
-const {
-  impersonateAccount,
-  getSigner,
-} = require("../utils/signers");
+const { impersonateAccount, getSigner } = require("../utils/signers");
 const { getDefenderSigner } = require("../utils/signersNoHardhat");
 const { getTxOpts } = require("../utils/tx");
 const createxAbi = require("../abi/createx.json");
