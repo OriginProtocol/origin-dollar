@@ -1399,14 +1399,14 @@ async function supernovaOETHAMOFixure(
 
   // Add WETH to the pool directly.
   if (cfg.poolAddWethAmount > 0) {
-    log(`Adding ${config.poolAddOethAmount} WETH to the pool`);
+    log(`Adding ${cfg.poolAddWethAmount} WETH to the pool`);
     const wethAmount = parseUnits(cfg.poolAddWethAmount.toString(), 18);
     await weth.connect(josh).transfer(supernovaPool.address, wethAmount);
   }
 
   // Add OETH to the pool directly.
   if (cfg.poolAddOethAmount > 0) {
-    log(`Adding ${config.poolAddOethAmount} OETH to the pool`);
+    log(`Adding ${cfg.poolAddOethAmount} OETH to the pool`);
     const oethAmount = parseUnits(cfg.poolAddOethAmount.toString(), 18);
     await weth.connect(josh).approve(oethVault.address, oethAmount);
     await oethVault.connect(josh).mint(oethAmount);
