@@ -100,16 +100,16 @@ async function curvePool({
   const oTokenBalance = poolBalances[0];
 
   const assetScaleup = oTokenSymbol === "OUSD" ? parseUnits("1", 12) : 1;
-  const price1Before =
+  const sellPriceBefore =
     diffBlocks &&
-    // swap 1 OUSD or OETH for USDC (OUSD/USDC) or WETH scaled to 18 decimals
+    // swap 1 OUSD or OETH for USDC (OUSD/USDC) or WETH
     (
       await pool["get_dy(int128,int128,uint256)"](0, 1, parseUnits("1"), {
-        blockTag,
+        blockTag: fromBlockTag,
       })
     ).mul(assetScaleup);
-  const price1 =
-    // swap 1 OUSD or OETH for USDC (OUSD/USDC) or WETH scaled to 18 decimals
+  const sellPrice =
+    // swap 1 OUSD or OETH for USDC (OUSD/USDC) or WETH
     (
       await pool["get_dy(int128,int128,uint256)"](0, 1, parseUnits("1"), {
         blockTag,
@@ -120,34 +120,30 @@ async function curvePool({
     displayProperty(
       `${oTokenSymbol} sell price`,
       `${oTokenSymbol}/${assetSymbol}`,
-      price1,
-      price1Before,
+      sellPrice,
+      sellPriceBefore,
       6
     )
   );
 
   // swap 1 ETH for OETH (ETH/OETH)
-  const price2Before =
+  const oneAsset = parseUnits("1", oTokenSymbol === "OUSD" ? 6 : 18);
+  const buyPriceBefore =
     diffBlocks &&
-    (oTokenSymbol === "OETH"
-      ? await pool["get_dy(int128,int128,uint256)"](0, 1, parseUnits("1"), {
-          blockTag: fromBlockTag,
-        })
-      : // swap 1 USDC for OUSD (USDC/OUSD)
-        await pool["get_dy(int128,int128,uint256)"](1, 0, parseUnits("1", 6), {
-          blockTag: fromBlockTag,
-        }));
-  const price2 =
-    oTokenSymbol === "OETH"
-      ? await pool["get_dy(int128,int128,uint256)"](0, 1, parseUnits("1"), {
-          blockTag,
-        })
-      : // swap 1 USDC for OUSD (USDC/OUSD)
-        await pool["get_dy(int128,int128,uint256)"](1, 0, parseUnits("1", 6), {
-          blockTag,
-        });
-  const buyPriceBefore = diffBlocks && parseUnits("1", 36).div(price2Before);
-  const buyPrice = parseUnits("1", 36).div(price2);
+    // invert to get OUSD/USDC or OETH/WETH price
+    parseUnits("1", 36).div(
+      // swap 1 USDC (OUSD/USDC) or WETH for OUSD or OETH
+      await pool["get_dy(int128,int128,uint256)"](1, 0, oneAsset, {
+        blockTag: fromBlockTag,
+      })
+    );
+  // invert to get OUSD/USDC or OETH/WETH price
+  const buyPrice = parseUnits("1", 36).div(
+    // swap 1 USDC (OUSD/USDC) or WETH for OUSD or OETH
+    await pool["get_dy(int128,int128,uint256)"](1, 0, oneAsset, {
+      blockTag,
+    })
+  );
 
   output(
     displayProperty(
@@ -356,7 +352,7 @@ async function curveSwapTask(taskArguments) {
 
 async function curveContracts(oTokenSymbol) {
   // Get symbols of tokens in the pool
-  const assetSymbol = oTokenSymbol === "OETH" ? "WETH " : "USDC";
+  const assetSymbol = oTokenSymbol === "OETH" ? "WETH" : "USDC";
 
   // Get the contract addresses
   const poolAddr =

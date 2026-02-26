@@ -15,10 +15,10 @@ describe("ForkTest: OETHp Vault", function () {
   });
 
   async function _mint(signer, amount = oethUnits("1")) {
-    const { weth, oethpVault, _mintWETH } = fixture;
+    const { weth, oethpVault, oethpVaultLegacy, _mintWETH } = fixture;
     await _mintWETH(signer, amount);
     await weth.connect(signer).approve(oethpVault.address, amount);
-    await oethpVault.connect(signer).mint(weth.address, amount, "0");
+    await oethpVaultLegacy.connect(signer).mint(weth.address, amount, amount);
   }
 
   describe("Mint & Permissioned redeems", function () {
@@ -28,9 +28,11 @@ describe("ForkTest: OETHp Vault", function () {
     });
 
     it("Should not allow anyone else to mint", async () => {
-      const { nick, weth, oethpVault } = fixture;
+      const { nick, weth, oethpVaultLegacy } = fixture;
       await expect(
-        oethpVault.connect(nick).mint(weth.address, oethUnits("1"), "0")
+        oethpVaultLegacy
+          .connect(nick)
+          .mint(weth.address, oethUnits("1"), oethUnits("1"))
       ).to.be.revertedWith("Caller is not the Strategist or Governor");
     });
 
@@ -79,7 +81,9 @@ describe("ForkTest: OETHp Vault", function () {
       const userBalanceBefore = await oethp.balanceOf(strategist.address);
       const totalSupplyBefore = await oethp.totalSupply();
 
-      await oethpVault.connect(strategist).redeem(oethUnits("1"), "0");
+      await fixture.oethpVaultLegacy
+        .connect(strategist)
+        .redeem(oethUnits("1"), "0");
 
       const vaultBalanceAfter = await weth.balanceOf(oethpVault.address);
       const userBalanceAfter = await oethp.balanceOf(strategist.address);
@@ -111,7 +115,9 @@ describe("ForkTest: OETHp Vault", function () {
       const userBalanceBefore = await oethp.balanceOf(governor.address);
       const totalSupplyBefore = await oethp.totalSupply();
 
-      await oethpVault.connect(governor).redeem(oethUnits("1"), "0");
+      await fixture.oethpVaultLegacy
+        .connect(governor)
+        .redeem(oethUnits("1"), "0");
 
       const vaultBalanceAfter = await weth.balanceOf(oethpVault.address);
       const userBalanceAfter = await oethp.balanceOf(governor.address);

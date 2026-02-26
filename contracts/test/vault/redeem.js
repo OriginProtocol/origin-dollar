@@ -105,9 +105,9 @@ describe("OUSD Vault Withdrawals", function () {
         await usdc.connect(matt).approve(vault.address, usdcUnits("30"));
 
         // Mint some OUSD to three users
-        await vault.connect(daniel).mint(usdc.address, usdcUnits("10"), "0");
-        await vault.connect(josh).mint(usdc.address, usdcUnits("20"), "0");
-        await vault.connect(matt).mint(usdc.address, usdcUnits("30"), "0");
+        await vault.connect(daniel).mint(usdcUnits("10"));
+        await vault.connect(josh).mint(usdcUnits("20"));
+        await vault.connect(matt).mint(usdcUnits("30"));
 
         // Set max supply diff to 3% to allow withdrawals
         await vault
@@ -784,7 +784,7 @@ describe("OUSD Vault Withdrawals", function () {
           await usdc
             .connect(daniel)
             .approve(vault.address, ousdUnits("6").div(1e12));
-          await vault.connect(daniel).mint(usdc.address, usdcUnits("6"), 0);
+          await vault.connect(daniel).mint(usdcUnits("6"));
 
           await advanceTime(delayPeriod); // Advance in time to ensure time delay between request and claim.
 
@@ -811,9 +811,7 @@ describe("OUSD Vault Withdrawals", function () {
           await usdc
             .connect(daniel)
             .approve(vault.address, mintAmount.div(1e12));
-          await vault
-            .connect(daniel)
-            .mint(usdc.address, mintAmount.div(1e12), 0);
+          await vault.connect(daniel).mint(mintAmount.div(1e12));
 
           await assertChangedData(
             dataBeforeMint,
@@ -880,10 +878,10 @@ describe("OUSD Vault Withdrawals", function () {
         await usdc.connect(domen).approve(vault.address, usdcUnits("40"));
 
         // Mint 105 OUSD to four users
-        await vault.connect(daniel).mint(usdc.address, usdcUnits("15"), "0");
-        await vault.connect(josh).mint(usdc.address, usdcUnits("20"), "0");
-        await vault.connect(matt).mint(usdc.address, usdcUnits("30"), "0");
-        await vault.connect(domen).mint(usdc.address, usdcUnits("40"), "0");
+        await vault.connect(daniel).mint(usdcUnits("15"));
+        await vault.connect(josh).mint(usdcUnits("20"));
+        await vault.connect(matt).mint(usdcUnits("30"));
+        await vault.connect(domen).mint(usdcUnits("40"));
         await vault
           .connect(await impersonateAndFund(await vault.governor()))
           .setMaxSupplyDiff(ousdUnits("0.03"));
@@ -1006,7 +1004,7 @@ describe("OUSD Vault Withdrawals", function () {
           const { vault, daniel, usdc } = fixture;
           await usdc.mintTo(daniel.address, usdcUnits("17"));
           await usdc.connect(daniel).approve(vault.address, usdcUnits("17"));
-          await vault.connect(daniel).mint(usdc.address, usdcUnits("17"), "0");
+          await vault.connect(daniel).mint(usdcUnits("17"));
 
           // Advance in time to ensure time delay between request and claim.
           await advanceTime(delayPeriod);
@@ -1071,7 +1069,7 @@ describe("OUSD Vault Withdrawals", function () {
           const { vault, daniel, usdc } = fixture;
           await usdc.mintTo(daniel.address, usdcUnits("18"));
           await usdc.connect(daniel).approve(vault.address, usdcUnits("18"));
-          await vault.connect(daniel).mint(usdc.address, usdcUnits("18"), "0");
+          await vault.connect(daniel).mint(usdcUnits("18"));
         });
         it("Should deposit 1 USDC to a strategy which is the vault buffer", async () => {
           const { vault, usdc, governor } = fixture;
@@ -1114,7 +1112,7 @@ describe("OUSD Vault Withdrawals", function () {
           const { vault, daniel, usdc } = fixture;
           await usdc.mintTo(daniel.address, usdcUnits("21"));
           await usdc.connect(daniel).approve(vault.address, usdcUnits("21"));
-          await vault.connect(daniel).mint(usdc.address, usdcUnits("21"), "0");
+          await vault.connect(daniel).mint(usdcUnits("21"));
         });
         it("Should deposit 4 USDC to a strategy", async () => {
           const { vault, usdc, governor } = fixture;
@@ -1188,9 +1186,9 @@ describe("OUSD Vault Withdrawals", function () {
         await usdc.connect(matt).approve(vault.address, usdcUnits("10"));
 
         // Mint 60 OUSD to three users
-        await vault.connect(daniel).mint(usdc.address, usdcUnits("10"), "0");
-        await vault.connect(josh).mint(usdc.address, usdcUnits("20"), "0");
-        await vault.connect(matt).mint(usdc.address, usdcUnits("10"), "0");
+        await vault.connect(daniel).mint(usdcUnits("10"));
+        await vault.connect(josh).mint(usdcUnits("20"));
+        await vault.connect(matt).mint(usdcUnits("10"));
 
         // Request and claim 10 USDC from Vault
         await vault.connect(daniel).requestWithdrawal(ousdUnits("10"));
@@ -1279,9 +1277,9 @@ describe("OUSD Vault Withdrawals", function () {
         await usdc.connect(matt).approve(vault.address, usdcUnits("70"));
 
         // Mint 100 OUSD to three users
-        await vault.connect(daniel).mint(usdc.address, usdcUnits("10"), "0");
-        await vault.connect(josh).mint(usdc.address, usdcUnits("20"), "0");
-        await vault.connect(matt).mint(usdc.address, usdcUnits("70"), "0");
+        await vault.connect(daniel).mint(usdcUnits("10"));
+        await vault.connect(josh).mint(usdcUnits("20"));
+        await vault.connect(matt).mint(usdcUnits("70"));
 
         // Request 40 USDC from Vault
         await vault.connect(matt).requestWithdrawal(ousdUnits("40"));
@@ -1401,9 +1399,9 @@ describe("OUSD Vault Withdrawals", function () {
         await usdc.connect(matt).approve(vault.address, usdcUnits("30"));
 
         // Mint 60 OUSD to three users
-        await vault.connect(daniel).mint(usdc.address, usdcUnits("10"), "0");
-        await vault.connect(josh).mint(usdc.address, usdcUnits("20"), "0");
-        await vault.connect(matt).mint(usdc.address, usdcUnits("30"), "0");
+        await vault.connect(daniel).mint(usdcUnits("10"));
+        await vault.connect(josh).mint(usdcUnits("20"));
+        await vault.connect(matt).mint(usdcUnits("30"));
 
         await vault.allocate();
         // Request and claim 10 + 20 + 10 = 40 USDC from Vault
@@ -1568,9 +1566,9 @@ describe("OUSD Vault Withdrawals", function () {
         await usdc.connect(matt).approve(vault.address, usdcUnits("50"));
 
         // Mint 100 OUSD to three users
-        await vault.connect(daniel).mint(usdc.address, usdcUnits("20"), "0");
-        await vault.connect(josh).mint(usdc.address, usdcUnits("30"), "0");
-        await vault.connect(matt).mint(usdc.address, usdcUnits("50"), "0");
+        await vault.connect(daniel).mint(usdcUnits("20"));
+        await vault.connect(josh).mint(usdcUnits("30"));
+        await vault.connect(matt).mint(usdcUnits("50"));
 
         await vault.allocate();
 
