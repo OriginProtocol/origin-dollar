@@ -9,7 +9,7 @@ const {
 
 module.exports = deploymentWithGovernanceProposal(
   {
-    deployName: "178_supernova_AMO",
+    deployName: "179_supernova_AMO",
   },
   async ({ ethers }) => {
     const cOETHVaultProxy = await ethers.getContract("OETHVaultProxy");
@@ -23,7 +23,7 @@ module.exports = deploymentWithGovernanceProposal(
       "OETHSupernovaAMOProxy"
     );
 
-    // Deploy Sonic SwapX AMO Strategy implementation
+    // Deploy Supernova AMO Strategy implementation
     const cSupernovaAMOStrategy =
       await deployOETHSupernovaAMOStrategyImplementation();
 
