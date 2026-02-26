@@ -199,7 +199,7 @@ const toUnitAmount = (value) =>
     }));
  */
 const shouldBehaveLikeAlgebraAmoStrategy = (contextFunction) => {
-  describe("ForkTest: Algebra AMO Strategy", async function () {
+  describe.only("ForkTest: Algebra AMO Strategy", async function () {
     // Retry up to 3 times on CI
     this.retries(isCI ? 3 : 0);
     let fixture, context;

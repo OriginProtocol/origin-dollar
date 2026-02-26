@@ -24,7 +24,6 @@ const { replaceContractAt } = require("../utils/hardhat");
 const { resolveContract } = require("../utils/resolvers");
 const {
   impersonateAccount,
-  impersonateAndFund,
   getSigner,
 } = require("../utils/signers");
 const { getDefenderSigner } = require("../utils/signersNoHardhat");
@@ -862,77 +861,7 @@ const deploySonicSwapXAMOStrategyImplementationAndInitialize = async () => {
   return cSonicSwapXAMOStrategy;
 };
 
-// TODO: once this gets deployed on the mainnet delete this function
-const deployOETHSupernovaAMOStrategyPoolAndGauge = async () => {
-  // Account authorized to call createPair on the factory contract
-  const pairBootstrapper = "0x7F8f2B6D0b0AaE8e95221Ce90B5C26B128C1Cb66";
-  const sPairBootstrapper = await impersonateAndFund(pairBootstrapper);
-
-  const oeth = await ethers.getContract("OETHProxy");
-
-  const factoryABI = [
-    "function createPair(address tokenA, address tokenB, bool stable) external returns (address pair)",
-    "event PairCreated(address token0, address token1, bool stable, address pair, uint);",
-  ];
-  const pairCreatedTopic =
-    "0xc4805696c66d7cf352fc1d6bb633ad5ee82f6cb577c453024b6e0eb8306c6fc9";
-
-  const gaugeManagerAbi = [
-    "function createGauge(address _pool, uint256 _gaugeType) external returns (address _gauge, address _internal_bribe, address _external_bribe)",
-    "function tokenHandler() external view returns (address)",
-    "event GaugeCreated(address gauge, address creator, address internal_bribe, address external_bribe, address pool)",
-  ];
-  const gaugeManager = await ethers.getContractAt(
-    gaugeManagerAbi,
-    addresses.mainnet.supernovaGaugeManager
-  );
-
-  const factory = await ethers.getContractAt(
-    factoryABI,
-    addresses.mainnet.supernovaPairFactory
-  );
-
-  let poolAddress;
-  console.log("Creating new OETH/WETH pair...");
-  const tx = await factory
-    .connect(sPairBootstrapper)
-    .createPair(oeth.address, addresses.mainnet.WETH, true);
-
-  const receipt = await tx.wait();
-  const pairCreatedEvent = receipt.events.find(
-    (e) => e.topics[0] === pairCreatedTopic
-  );
-  const [, pairAddress] = ethers.utils.defaultAbiCoder.decode(
-    ["bool", "address", "uint256"],
-    pairCreatedEvent.data
-  );
-  console.log("Pair address:", pairAddress);
-
-  poolAddress = pairAddress;
-
-  console.log("Creating gauge for OETH/WETH...");
-  const gaugeCreatedTopic = ethers.utils.id(
-    "GaugeCreated(address,address,address,address,address)"
-  );
-  const tx1 = await gaugeManager.createGauge(poolAddress, 0);
-  const receipt1 = await tx1.wait();
-  const gaugeCreatedEvent = receipt1.events.find(
-    (e) => e.topics[0] === gaugeCreatedTopic
-  );
-  console.log("gaugeCreatedEvent", gaugeCreatedEvent);
-  //const gaugeAddress = gaugeCreatedEvent.topics[1];
-  const gaugeAddress = ethers.utils.getAddress(
-    `0x${gaugeCreatedEvent.topics[1].slice(-40)}`
-  );
-  log(`Created gauge at ${gaugeAddress}`);
-
-  return { poolAddress, gaugeAddress };
-};
-
-const deployOETHSupernovaAMOStrategyImplementation = async (
-  poolAddress,
-  gaugeAddress
-) => {
+const deployOETHSupernovaAMOStrategyImplementation = async () => {
   const { deployerAddr } = await getNamedAccounts();
   const sDeployer = await ethers.provider.getSigner(deployerAddr);
 
@@ -945,7 +874,10 @@ const deployOETHSupernovaAMOStrategyImplementation = async (
   // OETH Supernova AMO
   const dSupernovaAMOStrategy = await deployWithConfirmation(
     "OETHSupernovaAMOStrategy",
-    [[poolAddress, cOETHVaultProxy.address], gaugeAddress]
+    [
+      [addresses.mainnet.SupernovaOETHWETH.pool, cOETHVaultProxy.address],
+      addresses.mainnet.SupernovaOETHWETH.gauge,
+    ]
   );
 
   const cOETHSupernovaAMOStrategy = await ethers.getContractAt(
@@ -1316,7 +1248,6 @@ module.exports = {
   deploySonicSwapXAMOStrategyImplementation,
   deploySonicSwapXAMOStrategyImplementationAndInitialize,
   deployOETHSupernovaAMOStrategyImplementation,
-  deployOETHSupernovaAMOStrategyPoolAndGauge,
   deployProxyWithCreateX,
   deployCrossChainMasterStrategyImpl,
   deployCrossChainRemoteStrategyImpl,

@@ -4,8 +4,7 @@ const {
   deployWithConfirmation,
 } = require("../../utils/deploy");
 const {
-  deployOETHSupernovaAMOStrategyImplementation,
-  deployOETHSupernovaAMOStrategyPoolAndGauge,
+  deployOETHSupernovaAMOStrategyImplementation
 } = require("../deployActions");
 
 module.exports = deploymentWithGovernanceProposal(
@@ -19,23 +18,14 @@ module.exports = deploymentWithGovernanceProposal(
       cOETHVaultProxy.address
     );
 
-    // TODO: delete once the pools and gauges are created
-    const { poolAddress, gaugeAddress } =
-      await deployOETHSupernovaAMOStrategyPoolAndGauge();
-
     await deployWithConfirmation("OETHSupernovaAMOProxy");
     const cOETHSupernovaAMOProxy = await ethers.getContract(
       "OETHSupernovaAMOProxy"
     );
-    console.log("poolAddress", poolAddress);
-    console.log("gaugeAddress", gaugeAddress);
 
     // Deploy Sonic SwapX AMO Strategy implementation
     const cSupernovaAMOStrategy =
-      await deployOETHSupernovaAMOStrategyImplementation(
-        poolAddress,
-        gaugeAddress
-      );
+      await deployOETHSupernovaAMOStrategyImplementation();
 
     return {
       name: "Deploy Supernova AMO Strategy",
