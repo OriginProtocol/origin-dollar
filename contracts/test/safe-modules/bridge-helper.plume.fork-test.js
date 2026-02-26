@@ -106,7 +106,7 @@ describe("ForkTest: Bridge Helper Safe Module (Plume)", function () {
     // Make sure Vault has some WETH
     _mintWETH(governor, oethUnits("1"));
     await weth.connect(governor).approve(oethpVault.address, oethUnits("1"));
-    await oethpVault.connect(governor).mint(weth.address, oethUnits("1"), "0");
+    await oethpVault.connect(governor).mint(oethUnits("1"));
 
     // Update oracle price
     await woethStrategy.updateWOETHOraclePrice();
@@ -181,9 +181,7 @@ describe("ForkTest: Bridge Helper Safe Module (Plume)", function () {
     await oethpVault.rebase();
     await woethStrategy.updateWOETHOraclePrice();
 
-    await oethpVault
-      .connect(governor)
-      .mint(weth.address, oethUnits("1.1"), "0");
+    await oethpVault.connect(governor).mint(oethUnits("1.1"));
     const woethAmount = oethUnits("1");
     const expectedWETH = await woethStrategy.getBridgedWOETHValue(woethAmount);
 

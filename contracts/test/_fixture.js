@@ -249,7 +249,7 @@ const createAccountTypes = async ({ vault, ousd, ousdUnlocked, deploy }) => {
     await fundAccounts();
     const usdc = await ethers.getContract("MockUSDC");
     await usdc.connect(matt).approve(vault.address, usdcUnits("1000"));
-    await vault.connect(matt).mint(usdc.address, usdcUnits("1000"), 0);
+    await vault.connect(matt).mint(usdcUnits("1000"));
   }
 
   const createAccount = async () => {
@@ -723,9 +723,7 @@ const defaultFixture = deployments.createFixture(async () => {
       await usdc
         .connect(user)
         .approve(vaultAndTokenContracts.vault.address, usdcUnits("100"));
-      await vaultAndTokenContracts.vault
-        .connect(user)
-        .mint(usdc.address, usdcUnits("100"), 0);
+      await vaultAndTokenContracts.vault.connect(user).mint(usdcUnits("100"));
 
       // Fund WETH contract
       await hardhatSetBalance(user.address, "50000");
@@ -932,6 +930,33 @@ async function claimRewardsModuleFixture() {
   };
 }
 
+async function autoWithdrawalModuleFixture() {
+  const fixture = await defaultFixture();
+
+  const autoWithdrawalModule = await ethers.getContract("AutoWithdrawalModule");
+  const mockVault = await ethers.getContract("MockAutoWithdrawalVault");
+  const mockSafe = await ethers.getContract("MockSafeContract");
+  const mockStrategy = await ethers.getContract("MockStrategy");
+
+  // MockSafeContract is both safe and operator in the unit-test deployment.
+  const safeSigner = await impersonateAndFund(mockSafe.address);
+
+  // A stranger with no roles
+  const stranger = await impersonateAndFund(
+    "0x0000000000000000000000000000000000000002"
+  );
+
+  return {
+    ...fixture,
+    autoWithdrawalModule,
+    mockVault,
+    mockSafe,
+    mockStrategy,
+    safeSigner,
+    stranger,
+  };
+}
+
 /**
  * Configure a Vault with default USDC strategy to Yearn's Morpho OUSD v2 Vault.
  */
@@ -979,7 +1004,7 @@ async function morphoOUSDv2Fixture(
 
       // Mint OUSD with USDC
       // This will sit in the vault, not the strategy
-      await vault.connect(josh).mint(usdc.address, usdcMintAmount, 0);
+      await vault.connect(josh).mint(usdcMintAmount);
 
       // Add USDC to the strategy
       if (config?.depositToStrategy) {
@@ -1297,7 +1322,7 @@ async function supernovaOETHAMOFixure(
   // Supernova deployment creates a fresh empty pool, seed it once for AMO tests.
   let seedAmount = parseUnits("150");
   if ((await supernovaPool.totalSupply()).lt(seedAmount.mul(2))) {
-    await oethVault.connect(josh).mint(weth.address, seedAmount.mul(2), 0);
+    await oethVault.connect(josh).mint(seedAmount.mul(2));
     await weth.connect(josh).transfer(supernovaPool.address, seedAmount);
     await oeth.connect(josh).transfer(supernovaPool.address, seedAmount);
     await supernovaPool.connect(josh).mint(josh.address);
@@ -1326,7 +1351,7 @@ async function supernovaOETHAMOFixure(
       }
 
       // This mints OETH and keeps backing WETH in the vault.
-      await oethVault.connect(josh).mint(weth.address, mintAmount, 0);
+      await oethVault.connect(josh).mint(mintAmount);
 
       if (disableAutoAllocate) {
         await oethVault
@@ -1384,7 +1409,7 @@ async function supernovaOETHAMOFixure(
     log(`Adding ${config.poolAddOethAmount} OETH to the pool`);
     const oethAmount = parseUnits(cfg.poolAddOethAmount.toString(), 18);
     await weth.connect(josh).approve(oethVault.address, oethAmount);
-    await oethVault.connect(josh).mint(weth.address, oethAmount, 0);
+    await oethVault.connect(josh).mint(oethAmount);
     await oeth.connect(josh).transfer(supernovaPool.address, oethAmount);
   }
 
@@ -1776,6 +1801,7 @@ module.exports = {
   bridgeHelperModuleFixture,
   beaconChainFixture,
   claimRewardsModuleFixture,
+  autoWithdrawalModuleFixture,
   crossChainFixtureUnit,
   crossChainFixture,
   supernovaOETHAMOFixure,

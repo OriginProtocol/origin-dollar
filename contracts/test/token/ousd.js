@@ -731,11 +731,7 @@ describe("Token", function () {
       vault.address,
       usdcUnits("100")
     );
-    const tx = await mockNonRebasing.mintOusd(
-      vault.address,
-      usdc.address,
-      usdcUnits("50")
-    );
+    const tx = await mockNonRebasing.mintOusd(vault.address, usdcUnits("50"));
     await expect(tx)
       .to.emit(ousd, "AccountRebasingDisabled")
       .withArgs(mockNonRebasing.address);
@@ -771,11 +767,7 @@ describe("Token", function () {
       vault.address,
       usdcUnits("100")
     );
-    await mockNonRebasing.mintOusd(
-      vault.address,
-      usdc.address,
-      usdcUnits("50")
-    );
+    await mockNonRebasing.mintOusd(vault.address, usdcUnits("50"));
     expect(await ousd.totalSupply()).to.equal(
       totalSupplyBefore.add(ousdUnits("50"))
     );
@@ -791,11 +783,7 @@ describe("Token", function () {
       (await ousd.creditsBalanceOf(await josh.getAddress()))[1]
     ).to.not.equal(contractCreditsBalanceOf[1]);
     // Mint again
-    await mockNonRebasing.mintOusd(
-      vault.address,
-      usdc.address,
-      usdcUnits("50")
-    );
+    await mockNonRebasing.mintOusd(vault.address, usdcUnits("50"));
     expect(await ousd.totalSupply()).to.equal(
       // Note 200 additional from simulated yield
       totalSupplyBefore.add(ousdUnits("100")).add(ousdUnits("200"))
@@ -829,11 +817,7 @@ describe("Token", function () {
       vault.address,
       usdcUnits("100")
     );
-    await mockNonRebasing.mintOusd(
-      vault.address,
-      usdc.address,
-      usdcUnits("50")
-    );
+    await mockNonRebasing.mintOusd(vault.address, usdcUnits("50"));
     await expect(await ousd.totalSupply()).to.equal(
       totalSupplyBefore.add(ousdUnits("50"))
     );

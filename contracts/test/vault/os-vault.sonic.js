@@ -135,13 +135,10 @@ describe("Origin S Vault", function () {
       const dataBefore = await snapData(fixtureWithUser);
 
       const mintAmount = parseUnits("1", 18);
-      const minOS = parseUnits("0.8", 18);
 
       await wS.connect(nick).approve(oSonicVault.address, mintAmount);
 
-      const tx = await oSonicVault
-        .connect(nick)
-        .mint(wS.address, mintAmount, minOS);
+      const tx = await oSonicVault.connect(nick).mint(mintAmount);
 
       await expect(tx)
         .to.emit(oSonicVault, "Mint")
@@ -171,7 +168,7 @@ describe("Origin S Vault", function () {
       // Mint some OSonic
       const mintAmount = parseUnits("100", 18);
       await wS.connect(nick).approve(oSonicVault.address, mintAmount);
-      await oSonicVault.connect(nick).mint(wS.address, mintAmount, 0);
+      await oSonicVault.connect(nick).mint(mintAmount);
 
       const fixtureWithUser = { ...fixture, user: nick };
       const dataBefore = await snapData(fixtureWithUser);
@@ -210,7 +207,7 @@ describe("Origin S Vault", function () {
       // Mint some OSonic
       const mintAmount = parseUnits("100", 18);
       await wS.connect(nick).approve(oSonicVault.address, mintAmount);
-      await oSonicVault.connect(nick).mint(wS.address, mintAmount, 0);
+      await oSonicVault.connect(nick).mint(mintAmount);
       const withdrawAmount = parseUnits("90", 18);
       await oSonicVault.connect(nick).requestWithdrawal(withdrawAmount);
 
@@ -250,7 +247,7 @@ describe("Origin S Vault", function () {
       // Mint some OSonic
       const mintAmount = parseUnits("100", 18);
       await wS.connect(nick).approve(oSonicVault.address, mintAmount);
-      await oSonicVault.connect(nick).mint(wS.address, mintAmount, 0);
+      await oSonicVault.connect(nick).mint(mintAmount);
       const withdrawAmount1 = parseUnits("10", 18);
       const withdrawAmount2 = parseUnits("20", 18);
       const withdrawAmount = withdrawAmount1.add(withdrawAmount2);

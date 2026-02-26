@@ -716,7 +716,7 @@ const shouldBehaveLikeAlgebraAmoStrategy = (contextFunction) => {
 
           // Mint OToken using asset token
           await assetToken.connect(nick).approve(vault.address, oTokenAmountIn);
-          await vault.connect(nick).mint(assetToken.address, oTokenAmountIn, 0);
+          await vault.connect(nick).mint(oTokenAmountIn);
 
           attackerBalanceBefore.oToken = await oToken.balanceOf(nick.address);
           attackerBalanceBefore.assetToken = await assetToken.balanceOf(
@@ -1685,7 +1685,7 @@ const shouldBehaveLikeAlgebraAmoStrategy = (contextFunction) => {
       } = fixture;
 
       await assetToken.connect(nick).approve(vault.address, assetDepositAmount);
-      await vault.connect(nick).mint(assetToken.address, assetDepositAmount, 0);
+      await vault.connect(nick).mint(assetDepositAmount);
 
       const dataBefore = await snapData();
       await logSnapData(dataBefore, "\nBefore depositing asset to strategy");

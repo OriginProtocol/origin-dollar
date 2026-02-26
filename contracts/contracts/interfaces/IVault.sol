@@ -117,17 +117,9 @@ interface IVault {
     ) external;
 
     // VaultCore.sol
-
-    /// @notice Deprecated: use `mint(uint256 _amount)` instead.
-    function mint(
-        address _asset,
-        uint256 _amount,
-        uint256 _minimumOusdAmount
-    ) external;
+    function mint(uint256 _amount) external;
 
     function mintForStrategy(uint256 _amount) external;
-
-    function redeem(uint256 _amount, uint256 _minimumUnitAmount) external;
 
     function burnForStrategy(uint256 _amount) external;
 
@@ -154,8 +146,6 @@ interface IVault {
 
     /// @notice Deprecated: use `asset()` instead.
     function isSupportedAsset(address _asset) external view returns (bool);
-
-    function dripper() external view returns (address);
 
     function asset() external view returns (address);
 
@@ -213,9 +203,6 @@ interface IVault {
     function rebasePerSecondTarget() external view returns (uint64);
 
     function previewYield() external view returns (uint256 yield);
-
-    /// @notice Deprecated: user `asset()` instead.
-    function weth() external view returns (address);
 
     // slither-disable-end constable-states
 }

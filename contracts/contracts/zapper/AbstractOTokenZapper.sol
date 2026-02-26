@@ -123,7 +123,7 @@ abstract contract AbstractOTokenZapper {
         returns (uint256)
     {
         uint256 toMint = weth.balanceOf(address(this));
-        vault.mint(address(weth), toMint, minOToken);
+        vault.mint(toMint);
         uint256 mintedAmount = oToken.balanceOf(address(this));
         require(mintedAmount >= minOToken, "Zapper: not enough minted");
 
