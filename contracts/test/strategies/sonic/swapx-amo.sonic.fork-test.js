@@ -32,7 +32,7 @@ describe("Sonic Fork Test: SwapX AMO Strategy", function () {
       smallPoolShare: {
         bootstrapAssetSwapIn: "10000000",
         bigLiquidityAsset: "1000000",
-        oTokenBuffer: "2000000",
+        oTokenBuffer: "1800000",
         stressSwapOToken: "1005000",
         stressSwapAsset: "2000000",
         stressSwapAssetAlt: "1006000",

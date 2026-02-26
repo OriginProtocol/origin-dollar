@@ -117,6 +117,8 @@ interface IVault {
     ) external;
 
     // VaultCore.sol
+
+    /// @notice Deprecated: use `mint(uint256 _amount)` instead.
     function mint(
         address _asset,
         uint256 _amount,
@@ -137,17 +139,6 @@ interface IVault {
 
     function checkBalance(address _asset) external view returns (uint256);
 
-    /// @notice Deprecated: use calculateRedeemOutput
-    function calculateRedeemOutputs(uint256 _amount)
-        external
-        view
-        returns (uint256[] memory);
-
-    function calculateRedeemOutput(uint256 _amount)
-        external
-        view
-        returns (uint256);
-
     function getAssetCount() external view returns (uint256);
 
     function getAllAssets() external view returns (address[] memory);
@@ -156,12 +147,19 @@ interface IVault {
 
     function getAllStrategies() external view returns (address[] memory);
 
-    /// @notice Deprecated.
+    function strategies(address _addr)
+        external
+        view
+        returns (VaultStorage.Strategy memory);
+
+    /// @notice Deprecated: use `asset()` instead.
     function isSupportedAsset(address _asset) external view returns (bool);
 
     function dripper() external view returns (address);
 
     function asset() external view returns (address);
+
+    function oToken() external view returns (address);
 
     function initialize(address) external;
 
@@ -216,6 +214,7 @@ interface IVault {
 
     function previewYield() external view returns (uint256 yield);
 
+    /// @notice Deprecated: user `asset()` instead.
     function weth() external view returns (address);
 
     // slither-disable-end constable-states

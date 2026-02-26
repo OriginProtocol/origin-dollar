@@ -813,7 +813,6 @@ const getPlumeContracts = async () => {
 };
 
 const deploySonicSwapXAMOStrategyImplementation = async () => {
-  const cOSonicProxy = await ethers.getContract("OSonicProxy");
   const cOSonicVaultProxy = await ethers.getContract("OSonicVaultProxy");
 
   // Deploy Sonic SwapX AMO Strategy implementation
@@ -821,8 +820,6 @@ const deploySonicSwapXAMOStrategyImplementation = async () => {
     "SonicSwapXAMOStrategy",
     [
       [addresses.sonic.SwapXWSOS.pool, cOSonicVaultProxy.address],
-      cOSonicProxy.address,
-      addresses.sonic.wS,
       addresses.sonic.SwapXWSOS.gauge,
     ]
   );
@@ -869,21 +866,13 @@ const deploySonicSwapXAMOStrategyImplementationAndInitialize = async () => {
 const deployOETHSupernovaAMOStrategyPoolAndGauge = async () => {
   // Account authorized to call createPair on the factory contract
   const pairBootstrapper = "0x7F8f2B6D0b0AaE8e95221Ce90B5C26B128C1Cb66";
-  const topkenHandlerWhitelister = "0xD09A1388F0CcE25DA97E8bBAbf5D083E25a5Fbc6";
   const sPairBootstrapper = await impersonateAndFund(pairBootstrapper);
-  const sTokenHandlerWhitelister = await impersonateAndFund(
-    topkenHandlerWhitelister
-  );
 
   const oeth = await ethers.getContract("OETHProxy");
 
   const factoryABI = [
     "function createPair(address tokenA, address tokenB, bool stable) external returns (address pair)",
     "event PairCreated(address token0, address token1, bool stable, address pair, uint);",
-  ];
-  const tokenHandlerABI = [
-    "function whitelistToken(address _token) external",
-    "function whitelistConnector(address _token) external",
   ];
   const pairCreatedTopic =
     "0xc4805696c66d7cf352fc1d6bb633ad5ee82f6cb577c453024b6e0eb8306c6fc9";
@@ -897,10 +886,6 @@ const deployOETHSupernovaAMOStrategyPoolAndGauge = async () => {
     gaugeManagerAbi,
     addresses.mainnet.supernovaGaugeManager
   );
-  const tokenHandler = await ethers.getContractAt(
-    tokenHandlerABI,
-    await gaugeManager.tokenHandler()
-  );
 
   const factory = await ethers.getContractAt(
     factoryABI,
@@ -908,7 +893,7 @@ const deployOETHSupernovaAMOStrategyPoolAndGauge = async () => {
   );
 
   let poolAddress;
-  log("Creating new OETH/WETH pair...");
+  console.log("Creating new OETH/WETH pair...");
   const tx = await factory
     .connect(sPairBootstrapper)
     .createPair(oeth.address, addresses.mainnet.WETH, true);
@@ -923,14 +908,9 @@ const deployOETHSupernovaAMOStrategyPoolAndGauge = async () => {
   );
   console.log("Pair address:", pairAddress);
 
-  console.log("Whitelisting OETH token");
-  await tokenHandler
-    .connect(sTokenHandlerWhitelister)
-    .whitelistToken(oeth.address);
-
   poolAddress = pairAddress;
 
-  log("Creating gauge for OETH/WETH...");
+  console.log("Creating gauge for OETH/WETH...");
   const gaugeCreatedTopic = ethers.utils.id(
     "GaugeCreated(address,address,address,address,address)"
   );
@@ -959,19 +939,13 @@ const deployOETHSupernovaAMOStrategyImplementation = async (
   const cOETHSupernovaAMOStrategyProxy = await ethers.getContract(
     "OETHSupernovaAMOProxy"
   );
-  const cOETHProxy = await ethers.getContract("OETHProxy");
   const cOETHVaultProxy = await ethers.getContract("OETHVaultProxy");
 
   // Deploy OETH Supernova AMO Strategy implementation that will serve
   // OETH Supernova AMO
   const dSupernovaAMOStrategy = await deployWithConfirmation(
     "OETHSupernovaAMOStrategy",
-    [
-      [poolAddress, cOETHVaultProxy.address],
-      cOETHProxy.address,
-      addresses.mainnet.WETH,
-      gaugeAddress,
-    ]
+    [[poolAddress, cOETHVaultProxy.address], gaugeAddress]
   );
 
   const cOETHSupernovaAMOStrategy = await ethers.getContractAt(
