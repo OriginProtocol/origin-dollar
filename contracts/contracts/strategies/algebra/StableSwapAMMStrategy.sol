@@ -160,8 +160,11 @@ contract StableSwapAMMStrategy is InitializableAbstractStrategy {
         InitializableAbstractStrategy(_baseConfig)
     {
         // Read the oToken address from the Vault
-        address oTokenMem = IVault(_baseConfig.vaultAddress).oToken();
-        address assetMem = IVault(_baseConfig.vaultAddress).asset();
+        // TODO: After vault upgrade remove these hardcoded values
+        // address oTokenMem = IVault(_baseConfig.vaultAddress).oToken();
+        // address assetMem = IVault(_baseConfig.vaultAddress).asset();
+        address oTokenMem = 0x856c4Efb76C1D1AE02e20CEB03A2A6a08b0b8dC3;
+        address assetMem = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
 
         // Checked both tokens are to 18 decimals
         require(
