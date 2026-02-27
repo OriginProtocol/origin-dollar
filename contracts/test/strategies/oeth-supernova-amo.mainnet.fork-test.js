@@ -1,4 +1,4 @@
-const { supernovaOETHAMOFixure, createFixtureLoader } = require("../_fixture");
+const { supernovaOETHAMOFixture, createFixtureLoader } = require("../_fixture");
 const {
   shouldBehaveLikeAlgebraAmoStrategy,
 } = require("../behaviour/algebraAmoStrategy");
@@ -95,7 +95,7 @@ describe("Mainnet Fork Test: OETH Supernova AMO Strategy", function () {
         poolAddOTokenAmount = 0,
       } = {}) => {
         const fixtureLoader = await createFixtureLoader(
-          supernovaOETHAMOFixure,
+          supernovaOETHAMOFixture,
           {
             assetMintAmount,
             depositToStrategy,

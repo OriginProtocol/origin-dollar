@@ -1264,7 +1264,7 @@ async function instantRebaseVaultFixture(tokenName) {
   return fixture;
 }
 
-async function supernovaOETHAMOFixure(
+async function supernovaOETHAMOFixture(
   config = {
     assetMintAmount: 0,
     depositToStrategy: false,
@@ -1277,7 +1277,7 @@ async function supernovaOETHAMOFixure(
   const { oeth, oethVault, weth, josh, strategist } = fixture;
 
   if (!isFork) {
-    throw new Error("supernovaOETHAMOFixure is only supported on fork tests");
+    throw new Error("supernovaOETHAMOFixture is only supported on fork tests");
   }
 
   const cfg = {
@@ -1804,5 +1804,5 @@ module.exports = {
   autoWithdrawalModuleFixture,
   crossChainFixtureUnit,
   crossChainFixture,
-  supernovaOETHAMOFixure,
+  supernovaOETHAMOFixture,
 };
