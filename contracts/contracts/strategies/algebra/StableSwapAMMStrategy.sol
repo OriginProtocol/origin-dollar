@@ -153,7 +153,7 @@ contract StableSwapAMMStrategy is InitializableAbstractStrategy {
 
     /**
      * @param _baseConfig The `platformAddress` is the address of the Algebra pool.
-     * The `vaultAddress` is the address of the Origin Sonic Vault.
+     * The `vaultAddress` is the address of the Origin Vault.
      * @param _gauge Address of the Algebra gauge for the pool.
      */
     constructor(BaseStrategyConfig memory _baseConfig, address _gauge)
