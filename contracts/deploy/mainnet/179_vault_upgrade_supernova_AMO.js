@@ -19,10 +19,13 @@ module.exports = deploymentWithGovernanceProposal(
       undefined,
       true
     );
-    
+
     // 2. Connect to the OETH Vault as its governor via the proxy
     const cOETHVaultProxy = await ethers.getContract("OETHVaultProxy");
-    const cVault = await ethers.getContractAt("IVault", cOETHVaultProxy.address);
+    const cVault = await ethers.getContractAt(
+      "IVault",
+      cOETHVaultProxy.address
+    );
 
     // 3. Connect to the Compounding Staking Strategy Proxy to set it as default strategy
     const defaultStrategy = await ethers.getContract(
