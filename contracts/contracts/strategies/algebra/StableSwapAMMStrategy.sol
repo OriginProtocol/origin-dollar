@@ -843,7 +843,7 @@ contract StableSwapAMMStrategy is InitializableAbstractStrategy {
      */
     function setMaxDepeg(uint256 _maxDepeg) external onlyGovernor {
         require(
-            _maxDepeg >= 0.001e18 && _maxDepeg <= 0.1e18,
+            _maxDepeg >= 0.001 ether && _maxDepeg <= 0.1 ether,
             "Invalid max depeg range"
         );
         maxDepeg = _maxDepeg;
