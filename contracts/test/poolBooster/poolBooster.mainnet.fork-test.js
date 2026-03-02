@@ -646,7 +646,10 @@ describe("ForkTest: Merkl Pool Booster", function () {
     });
 
     it("Should revert removePoolBoosterByIndex when called by non-governor", async () => {
-      await createPoolBooster(808, "0x0000000000000000000000000000000000000008");
+      await createPoolBooster(
+        808,
+        "0x0000000000000000000000000000000000000008"
+      );
       await expect(
         poolBoosterMerklFactory.connect(anna).removePoolBoosterByIndex(0)
       ).to.be.revertedWith("Caller is not the Governor");
