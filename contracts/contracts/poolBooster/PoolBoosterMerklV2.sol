@@ -93,8 +93,6 @@ contract PoolBoosterMerklV2 is IPoolBooster, Strategizable, Initializable {
         _setCampaignData(_campaignData);
 
         factory = msg.sender;
-
-        merklDistributor.acceptConditions();
     }
 
     ////////////////////////////////////////////////////
@@ -239,6 +237,7 @@ contract PoolBoosterMerklV2 is IPoolBooster, Strategizable, Initializable {
             "Invalid merklDistributor addr"
         );
         merklDistributor = IMerklDistributor(_merklDistributor);
+        merklDistributor.acceptConditions();
         emit MerklDistributorUpdated(_merklDistributor);
     }
 

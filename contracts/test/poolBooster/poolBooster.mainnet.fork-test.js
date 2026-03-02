@@ -393,7 +393,7 @@ describe("ForkTest: Merkl Pool Booster", function () {
 
     // setMerklDistributor
     it("Should setMerklDistributor and emit event", async () => {
-      const newDist = addresses.mainnet.WETH; // just a non-zero address
+      const newDist = addresses.mainnet.CampaignCreator;
       const tx = await poolBooster
         .connect(pbGovernor)
         .setMerklDistributor(newDist);
@@ -411,7 +411,9 @@ describe("ForkTest: Merkl Pool Booster", function () {
 
     it("Should revert setMerklDistributor if non-governor/strategist", async () => {
       await expect(
-        poolBooster.connect(anna).setMerklDistributor(addresses.mainnet.WETH)
+        poolBooster
+          .connect(anna)
+          .setMerklDistributor(addresses.mainnet.CampaignCreator)
       ).to.be.revertedWith("Caller is not the Strategist or Governor");
     });
 
