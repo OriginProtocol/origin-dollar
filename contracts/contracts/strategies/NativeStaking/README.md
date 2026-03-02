@@ -1,18 +1,18 @@
 # Diagrams
 
-## Native Staking SSV Strategy
+## Native Staking Strategy
 
 ### Hierarchy
 
-![Native Staking SSV Strategy Hierarchy](../../../docs/NativeStakingSSVStrategyHierarchy.svg)
+![Native Staking Strategy Hierarchy](../../../docs/NativeStakingSSVStrategyHierarchy.svg)
 
 ### Squashed
 
-![Native Staking SSV Strategy Squashed](../../../docs/NativeStakingSSVStrategySquashed.svg)
+![Native Staking Strategy Squashed](../../../docs/NativeStakingSSVStrategySquashed.svg)
 
 ### Storage
 
-![Native Staking SSV Strategy Storage](../../../docs/NativeStakingSSVStrategyStorage.svg)
+![Native Staking Strategy Storage](../../../docs/NativeStakingSSVStrategyStorage.svg)
 
 ## Fee Accumulator
 
@@ -23,3 +23,23 @@
 ### Squashed
 
 ![Fee Accumulator Squashed](../../../docs/FeeAccumulatorSquashed.svg)
+
+## Compounding Staking Strategy
+
+### Hierarchy
+
+![Compounding Staking Strategy Hierarchy](../../../docs/CompoundingStakingSSVStrategyHierarchy.svg)
+
+### Squashed
+
+![Compounding Staking Strategy Squashed](../../../docs/CompoundingStakingSSVStrategySquashed.svg)
+
+### Storage
+
+![Compounding Staking Strategy Storage](../../../docs/CompoundingStakingSSVStrategyStorage.svg)
+
+## Consolidation Controller
+
+### Squashed
+
+![Consolidation Controller Squashed](../../../docs/ConsolidationControllerSquashed.svg)

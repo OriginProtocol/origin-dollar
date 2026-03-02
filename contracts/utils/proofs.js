@@ -1,5 +1,5 @@
 const { toHex } = require("../utils/units");
-const { concatProof, getValidator } = require("../utils/beacon");
+const { concatProof } = require("../utils/beacon");
 const { formatUnits } = require("ethers/lib/utils");
 const { MAX_UINT64 } = require("./constants");
 

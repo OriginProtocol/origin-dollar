@@ -65,7 +65,7 @@ const {
 const { calculateMaxPricePerVoteTask, manageBribes } = require("./poolBooster");
 const {
   depositSSV,
-  withdrawSSV,
+  migrateClusterToETH,
   printClusterInfo,
   removeValidator: removeOldValidator,
 } = require("./ssv");
@@ -94,6 +94,7 @@ const {
   manuallyFixAccounting,
   resetStakeETHTally,
   setStakeETHThreshold,
+  setStakingMonitor,
   fixAccounting,
   pauseStaking,
   snapStaking,
@@ -139,6 +140,11 @@ const {
   copyBeaconRoot,
 } = require("./beaconTesting");
 const { claimMerklRewards } = require("./merkl");
+const {
+  requestConsolidation,
+  failConsolidation,
+  confirmConsolidation,
+} = require("./consolidation");
 
 const { processCctpBridgeTransactions } = require("./crossChain");
 const { keyValueStoreLocalClient } = require("../utils/defender");
@@ -1103,15 +1109,14 @@ task("depositSSV").setAction(async (_, __, runSuper) => {
 });
 
 subtask(
-  "withdrawSSV",
-  "Withdraw SSV tokens from an SSV Cluster to the native staking strategy"
+  "migrateCluster",
+  "Migrate the SSV Cluster to ETH used by the CompoundingStakingSSVStrategy"
 )
-  .addParam("amount", "Amount of SSV tokens", undefined, types.float)
-  .addOptionalParam(
-    "index",
-    "The number of the Native Staking Contract deployed.",
+  .addParam(
+    "type",
+    "new for compounding staking strategy. old for old Native Staking Strategy",
     undefined,
-    types.int
+    types.string
   )
   .addParam(
     "operatorids",
@@ -1119,8 +1124,20 @@ subtask(
     undefined,
     types.string
   )
-  .setAction(withdrawSSV);
-task("withdrawSSV").setAction(async (_, __, runSuper) => {
+  .addParam(
+    "amount",
+    "Initial amount of ETH to add to the cluster",
+    undefined,
+    types.float
+  )
+  .addOptionalParam(
+    "index",
+    "The number of the Native Staking Contract deployed. Default to none for Hoodi",
+    undefined,
+    types.int
+  )
+  .setAction(migrateClusterToETH);
+task("migrateCluster").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
 
@@ -1167,8 +1184,8 @@ subtask(
   )
   .addOptionalParam("clear", "Clear storage", false, types.boolean)
   .addOptionalParam(
-    "ssv",
-    "Override the days option and set the amount of SSV to deposit to the cluster.",
+    "eth",
+    "Override the days option and set the amount of ETH to deposit to the cluster.",
     undefined,
     types.float
   )
@@ -1385,6 +1402,12 @@ subtask(
     30,
     types.int
   )
+  .addOptionalParam(
+    "consol",
+    "Call the consolidation controller instead of the strategy",
+    false,
+    types.boolean
+  )
   .setAction(async (taskArgs) => {
     const signer = await getSigner();
 
@@ -1493,6 +1516,27 @@ subtask(
   await resetStakeETHTally({ signer });
 });
 task("resetStakeETHTally").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+subtask("setStakingMonitor", "Resets the amount of Ether staked back to zero")
+  .addOptionalParam(
+    "account",
+    "The account to set as the staking monitor.",
+    undefined,
+    types.string
+  )
+  .addOptionalParam(
+    "index",
+    "The number of the Native Staking Contract deployed.",
+    undefined,
+    types.int
+  )
+  .setAction(async (taskArgs) => {
+    const signer = await getSigner();
+    await setStakingMonitor({ ...taskArgs, signer });
+  });
+task("setStakingMonitor").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
 
@@ -1977,6 +2021,12 @@ subtask(
   "Set the registrator of the compounding staking strategy"
 )
   .addParam("account", "Address of the registrator", undefined, types.string)
+  .addOptionalParam(
+    "type",
+    "new for compounding staking strategy. old for old Native Staking Strategy",
+    "new",
+    types.string
+  )
   .setAction(setRegistrator);
 task("setRegistrator").setAction(async (_, __, runSuper) => {
   return runSuper();
@@ -2169,6 +2219,24 @@ subtask("verifyBalances", "Verify validator balances on the Beacon chain")
   .addOptionalParam(
     "test",
     "Used for generating unit test data.",
+    false,
+    types.boolean
+  )
+  .addOptionalParam(
+    "overIds",
+    "A comma separated list of validator IDs to override balances.",
+    "",
+    types.string
+  )
+  .addOptionalParam(
+    "overBals",
+    "A comma separated list of validator balances to override in Gwei.",
+    "",
+    types.string
+  )
+  .addOptionalParam(
+    "consol",
+    "Call the consolidation controller instead of the strategy",
     false,
     types.boolean
   )
@@ -2411,10 +2479,14 @@ task("stakeValidator").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
 
-subtask(
-  "snapBalances",
-  "Takes a snapshot of the staking strategy's balance"
-).setAction(snapBalances);
+subtask("snapBalances", "Takes a snapshot of the staking strategy's balance")
+  .addOptionalParam(
+    "consol",
+    "Call the consolidation controller instead of the strategy",
+    false,
+    types.boolean
+  )
+  .setAction(snapBalances);
 task("snapBalances").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
@@ -2477,5 +2549,50 @@ subtask("snapMorpho", "Get a snapshot of the Morpho OUSD v2 strategy.")
   )
   .setAction(snapMorpho);
 task("snapMorpho").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+// Consolidation Tasks
+
+subtask("requestConsol", "Request validator consolidation")
+  .addOptionalParam(
+    "source",
+    "A comma-separated list of public keys of the validators to consolidate from in hex format with a 0x prefix",
+    undefined,
+    types.string
+  )
+  .addOptionalParam(
+    "cluster",
+    "An integer for the second or third cluster SSV cluster. Default none for Hoodi",
+    undefined,
+    types.int
+  )
+  .addOptionalParam(
+    "target",
+    "Public key of the validator to consolidate to in hex format with a 0x prefix",
+    undefined,
+    types.string
+  )
+  .setAction(requestConsolidation);
+task("requestConsol").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+subtask("failConsol", "Fail a validator consolidation")
+  .addOptionalParam(
+    "source",
+    "A comma-separated list of public keys of the validators to consolidate from in hex format with a 0x prefix",
+    undefined,
+    types.string
+  )
+  .setAction(failConsolidation);
+task("failConsol").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+subtask("confirmConsol", "Confirm a validator consolidation").setAction(
+  confirmConsolidation
+);
+task("confirmConsol").setAction(async (_, __, runSuper) => {
   return runSuper();
 });

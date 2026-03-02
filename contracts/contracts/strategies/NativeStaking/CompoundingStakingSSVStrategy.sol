@@ -14,9 +14,6 @@ contract CompoundingStakingSSVStrategy is
     CompoundingValidatorManager,
     InitializableAbstractStrategy
 {
-    /// @notice SSV ERC20 token that serves as a payment for operating SSV validators
-    address public immutable SSV_TOKEN;
-
     // For future use
     uint256[50] private __gap;
 
@@ -24,7 +21,6 @@ contract CompoundingStakingSSVStrategy is
     ///   `platformAddress` not used so empty address
     ///   `vaultAddress` the address of the OETH Vault contract
     /// @param _wethAddress Address of the WETH Token contract
-    /// @param _ssvToken Address of the SSV Token contract
     /// @param _ssvNetwork Address of the SSV Network contract
     /// @param _beaconChainDepositContract Address of the beacon chain deposit contract
     /// @param _beaconProofs Address of the Beacon Proofs contract that verifies beacon chain data
@@ -32,7 +28,6 @@ contract CompoundingStakingSSVStrategy is
     constructor(
         BaseStrategyConfig memory _baseConfig,
         address _wethAddress,
-        address _ssvToken,
         address _ssvNetwork,
         address _beaconChainDepositContract,
         address _beaconProofs,
@@ -48,8 +43,6 @@ contract CompoundingStakingSSVStrategy is
             _beaconGenesisTimestamp
         )
     {
-        SSV_TOKEN = _ssvToken;
-
         // Make sure nobody owns the implementation contract
         _setGovernor(address(0));
     }
@@ -69,8 +62,6 @@ contract CompoundingStakingSSVStrategy is
             _assets,
             _pTokens
         );
-
-        safeApproveAllTokens();
     }
 
     /// @notice Unlike other strategies, this does not deposit assets into the underlying platform.
@@ -184,11 +175,9 @@ contract CompoundingStakingSSVStrategy is
         return _asset == WETH;
     }
 
-    /// @notice Approves the SSV Network contract to transfer SSV tokens for validator registration.
-    function safeApproveAllTokens() public override {
-        // Approves the SSV Network contract to transfer SSV tokens when validators are registered
-        IERC20(SSV_TOKEN).approve(SSV_NETWORK, type(uint256).max);
-    }
+    /// @notice Does nothing but needed as this function is abstract on InitializableAbstractStrategy
+    /// @dev Use to be used to approve SSV tokens but that is no longer used by the SSV Network.
+    function safeApproveAllTokens() public override {}
 
     /**
      * @notice We can accept ETH directly to this contract from anyone as it does not impact our accounting

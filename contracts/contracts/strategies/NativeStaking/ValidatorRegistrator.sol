@@ -7,6 +7,7 @@ import { IDepositContract } from "../../interfaces/IDepositContract.sol";
 import { IVault } from "../../interfaces/IVault.sol";
 import { IWETH9 } from "../../interfaces/IWETH9.sol";
 import { ISSVNetwork, Cluster } from "../../interfaces/ISSVNetwork.sol";
+import { BeaconConsolidation } from "../../beacon/BeaconConsolidation.sol";
 
 struct ValidatorStakeData {
     bytes pubkey;
@@ -79,6 +80,19 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
         bytes32 indexed pubKeyHash,
         bytes pubKey,
         uint64[] operatorIds
+    );
+    event ConsolidationRequested(
+        bytes[] sourcePubKeys,
+        bytes targetPubKey,
+        uint256 consolidationCount
+    );
+    event ConsolidationFailed(
+        bytes[] sourcePubKeys,
+        uint256 consolidationCount
+    );
+    event ConsolidationConfirmed(
+        uint256 consolidationCount,
+        uint256 activeDepositedValidators
     );
     event StakeETHThresholdChanged(uint256 amount);
     event StakeETHTallyReset();
@@ -228,16 +242,14 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
     /// @param publicKeys The public keys of the validators
     /// @param operatorIds The operator IDs of the SSV Cluster
     /// @param sharesData The shares data for each validator
-    /// @param ssvAmount The amount of SSV tokens to be deposited to the SSV cluster
     /// @param cluster The SSV cluster details including the validator count and SSV balance
     // slither-disable-start reentrancy-no-eth
     function registerSsvValidators(
         bytes[] calldata publicKeys,
         uint64[] calldata operatorIds,
         bytes[] calldata sharesData,
-        uint256 ssvAmount,
         Cluster calldata cluster
-    ) external onlyRegistrator whenNotPaused {
+    ) external payable onlyRegistrator whenNotPaused {
         require(
             publicKeys.length == sharesData.length,
             "Pubkey sharesData mismatch"
@@ -258,11 +270,10 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
             emit SSVValidatorRegistered(pubKeyHash, publicKeys[i], operatorIds);
         }
 
-        ISSVNetwork(SSV_NETWORK).bulkRegisterValidator(
+        ISSVNetwork(SSV_NETWORK).bulkRegisterValidator{ value: msg.value }(
             publicKeys,
             operatorIds,
             sharesData,
-            ssvAmount,
             cluster
         );
     }
@@ -327,37 +338,117 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
 
     // slither-disable-end reentrancy-no-eth
 
-    /// @notice Deposits more SSV Tokens to the SSV Network contract which is used to pay the SSV Operators.
-    /// @dev A SSV cluster is defined by the SSVOwnerAddress and the set of operatorIds.
-    /// uses "onlyStrategist" modifier so continuous front-running can't DOS our maintenance service
-    /// that tries to top up SSV tokens.
+    /// @notice Migrate the SSV cluster to use ETH for payment instead of SSV tokens.
     /// @param operatorIds The operator IDs of the SSV Cluster
-    /// @param ssvAmount The amount of SSV tokens to be deposited to the SSV cluster
     /// @param cluster The SSV cluster details including the validator count and SSV balance
-    function depositSSV(
+    function migrateClusterToETH(
         uint64[] memory operatorIds,
-        uint256 ssvAmount,
         Cluster memory cluster
-    ) external onlyStrategist {
-        ISSVNetwork(SSV_NETWORK).deposit(
-            address(this),
+    ) external payable onlyGovernor {
+        ISSVNetwork(SSV_NETWORK).migrateClusterToETH{ value: msg.value }(
             operatorIds,
-            ssvAmount,
             cluster
+        );
+
+        // The SSV Network emits
+        // ClusterMigratedToETH(msg.sender, operatorIds, msg.value, ssvClusterBalance, effectiveBalance, cluster)
+    }
+
+    /***************************************
+            Consolidation functions
+    ****************************************/
+
+    /**
+     * @notice Initiates the consolidation of multiple source sweeping validators to a single compounding validator.
+     * @dev The validator registrator should be set to the ConsolidationController contract which
+     * has checks against the target validator.
+     * @param sourcePubKeys The full public keys of the source validators to be consolidated.
+     * @param targetPubKey The full public key of the target validator to consolidate into.
+     */
+    function requestConsolidation(
+        bytes[] calldata sourcePubKeys,
+        bytes calldata targetPubKey
+    ) external payable nonReentrant whenNotPaused onlyRegistrator {
+        // Hash using the Native Staking Strategy's hashing method.
+        // This is different to the Beacon chain's method.
+        bytes32 targetPubKeyHash = keccak256(targetPubKey);
+        bytes32 sourcePubKeyHash;
+
+        // For each source validator
+        for (uint256 i = 0; i < sourcePubKeys.length; ++i) {
+            sourcePubKeyHash = keccak256(sourcePubKeys[i]);
+            require(sourcePubKeys[i].length == 48, "Invalid source public key");
+            require(sourcePubKeyHash != targetPubKeyHash, "Self consolidation");
+            require(
+                validatorsStates[sourcePubKeyHash] == VALIDATOR_STATE.STAKED,
+                "Source validator not staked"
+            );
+
+            // Store the state of the source validator as exiting so it can be removed
+            // after the consolidation is confirmed
+            validatorsStates[sourcePubKeyHash] = VALIDATOR_STATE.EXITING;
+
+            // Request consolidation from source to target validator
+            BeaconConsolidation.request(sourcePubKeys[i], targetPubKey);
+        }
+
+        emit ConsolidationRequested(
+            sourcePubKeys,
+            targetPubKey,
+            sourcePubKeys.length
         );
     }
 
-    /// @notice Withdraws excess SSV Tokens from the SSV Network contract which was used to pay the SSV Operators.
-    /// @dev A SSV cluster is defined by the SSVOwnerAddress and the set of operatorIds.
-    /// @param operatorIds The operator IDs of the SSV Cluster
-    /// @param ssvAmount The amount of SSV tokens to be deposited to the SSV cluster
-    /// @param cluster The SSV cluster details including the validator count and SSV balance
-    function withdrawSSV(
-        uint64[] memory operatorIds,
-        uint256 ssvAmount,
-        Cluster memory cluster
-    ) external onlyGovernor {
-        ISSVNetwork(SSV_NETWORK).withdraw(operatorIds, ssvAmount, cluster);
+    /**
+     * @notice A consolidation request can fail to be processed on the beacon chain
+     * for various reasons. For example, the pending consolidation queue is full with 262,144 requests.
+     * This restores the validator states back to STAKED so they can be consolidated again or exited.
+     * @param sourcePubKeys The full public keys of the source validators that failed to be consolidated.
+     */
+    function failConsolidation(bytes[] calldata sourcePubKeys)
+        external
+        nonReentrant
+        whenNotPaused
+        onlyRegistrator
+    {
+        bytes32 sourcePubKeyHash;
+
+        // For each failed source validator
+        for (uint256 i = 0; i < sourcePubKeys.length; ++i) {
+            require(sourcePubKeys[i].length == 48, "Invalid source public key");
+            sourcePubKeyHash = keccak256(sourcePubKeys[i]);
+            require(
+                validatorsStates[sourcePubKeyHash] == VALIDATOR_STATE.EXITING,
+                "Source validator not exiting"
+            );
+
+            // Store the state of the source validator back to staked
+            validatorsStates[sourcePubKeyHash] = VALIDATOR_STATE.STAKED;
+        }
+
+        emit ConsolidationFailed(sourcePubKeys, sourcePubKeys.length);
+    }
+
+    /**
+     * @notice Confirms that a consolidation has completed successfully on the beacon chain.
+     * This reduces the number of active deposited validators managed by this strategy which
+     * reduces the strategy's balance.
+     * @param consolidationCount The number of source validators that were consolidated.
+     */
+    function confirmConsolidation(uint256 consolidationCount)
+        external
+        nonReentrant
+        whenNotPaused
+        onlyRegistrator
+    {
+        // Store the reduced number of active deposited validators
+        // managed by this strategy
+        activeDepositedValidators -= consolidationCount;
+
+        emit ConsolidationConfirmed(
+            consolidationCount,
+            activeDepositedValidators
+        );
     }
 
     /***************************************

@@ -205,8 +205,13 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
 
     /// @dev Throws if called by any account other than the Registrator
     modifier onlyRegistrator() {
-        require(msg.sender == validatorRegistrator, "Not Registrator");
+        _onlyRegistrator();
         _;
+    }
+
+    /// @dev internal function used to reduce contract size
+    function _onlyRegistrator() internal view {
+        require(msg.sender == validatorRegistrator, "Not Registrator");
     }
 
     /// @dev Throws if called by any account other than the Registrator or Governor
@@ -285,16 +290,14 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
     /// @param publicKey The public key of the validator
     /// @param operatorIds The operator IDs of the SSV Cluster
     /// @param sharesData The shares data for the validator
-    /// @param ssvAmount The amount of SSV tokens to be deposited to the SSV cluster
     /// @param cluster The SSV cluster details including the validator count and SSV balance
     // slither-disable-start reentrancy-no-eth
     function registerSsvValidator(
         bytes calldata publicKey,
         uint64[] calldata operatorIds,
         bytes calldata sharesData,
-        uint256 ssvAmount,
         Cluster calldata cluster
-    ) external onlyRegistrator whenNotPaused {
+    ) external payable onlyRegistrator whenNotPaused {
         // Hash the public key using the Beacon Chain's format
         bytes32 pubKeyHash = _hashPubKey(publicKey);
         // Check each public key has not already been used
@@ -306,11 +309,10 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
         // Store the validator state as registered
         validator[pubKeyHash].state = ValidatorState.REGISTERED;
 
-        ISSVNetwork(SSV_NETWORK).registerValidator(
+        ISSVNetwork(SSV_NETWORK).registerValidator{ value: msg.value }(
             publicKey,
             operatorIds,
             sharesData,
-            ssvAmount,
             cluster
         );
 
@@ -565,20 +567,20 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
 
     // slither-disable-end reentrancy-no-eth
 
-    /// `depositSSV` has been removed as `deposit` on the SSVNetwork contract can be called directly
-    /// by the Strategist which is already holding SSV tokens.
-
-    /// @notice Withdraws excess SSV Tokens from the SSV Network contract which was used to pay the SSV Operators.
-    /// @dev A SSV cluster is defined by the SSVOwnerAddress and the set of operatorIds.
+    /// @notice Migrate the SSV cluster to use ETH for payment instead of SSV tokens.
     /// @param operatorIds The operator IDs of the SSV Cluster
-    /// @param ssvAmount The amount of SSV tokens to be withdrawn from the SSV cluster
     /// @param cluster The SSV cluster details including the validator count and SSV balance
-    function withdrawSSV(
+    function migrateClusterToETH(
         uint64[] memory operatorIds,
-        uint256 ssvAmount,
         Cluster memory cluster
-    ) external onlyGovernor {
-        ISSVNetwork(SSV_NETWORK).withdraw(operatorIds, ssvAmount, cluster);
+    ) external payable onlyGovernor {
+        ISSVNetwork(SSV_NETWORK).migrateClusterToETH{ value: msg.value }(
+            operatorIds,
+            cluster
+        );
+
+        // The SSV Network emits
+        // ClusterMigratedToETH(msg.sender, operatorIds, msg.value, ssvClusterBalance, effectiveBalance, cluster)
     }
 
     /**
@@ -952,7 +954,7 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
     /// This behaviour is correct.
     ///
     /// The validator balances on the beacon chain can then be proved with `verifyBalances`.
-    function snapBalances() external {
+    function snapBalances() external onlyRegistrator {
         uint64 currentTimestamp = SafeCast.toUint64(block.timestamp);
         require(
             snappedBalance.timestamp + SNAP_BALANCES_DELAY < currentTimestamp,
@@ -1013,7 +1015,7 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
     function verifyBalances(
         BalanceProofs calldata balanceProofs,
         PendingDepositProofs calldata pendingDepositProofs
-    ) external {
+    ) external onlyRegistrator {
         // Load previously snapped balances for the given block root
         Balances memory balancesMem = snappedBalance;
         // Check the balances are the latest

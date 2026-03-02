@@ -435,10 +435,13 @@ async function verifyDeposit({
 async function verifyBalances({
   indexes,
   deposits,
+  overIds,
+  overBals,
   dryrun,
   test,
   signer,
   slot,
+  consol,
 }) {
   const strategy = test
     ? undefined
@@ -467,6 +470,23 @@ async function verifyBalances({
     networkName
   );
   const verificationSlot = blockView.slot;
+
+  // Update validator balances so they become active
+  // Used to generated test data for fork tests
+  if (overIds) {
+    const validatorIndexes = overIds.split(",").map((index) => Number(index));
+    const validatorBalances = overBals
+      .split(",")
+      .map((balance) => parseUnits(balance, 9)); // in Gwei
+    if (overIds.split(",").length !== overBals.split(",").length) {
+      throw new Error("Mismatched lengths for overIds and overBals");
+    }
+    for (const [i, validatorIndex] of validatorIndexes.entries()) {
+      stateView.balances.set(validatorIndex, validatorBalances[i]);
+    }
+  }
+  const stateRootGindex = blockView.type.getPathInfo(["stateRoot"]).gindex;
+  blockTree.setNode(stateRootGindex, stateView.node);
 
   const {
     leaf: pendingDepositContainerRoot,
@@ -570,6 +590,20 @@ async function verifyBalances({
     formatUnits(bal, 9)
   );
 
+  const balanceProofs = {
+    balancesContainerRoot,
+    balancesContainerProof,
+    validatorBalanceLeaves,
+    validatorBalanceProofs,
+  };
+  const pendingDepositProofsData = {
+    pendingDepositContainerRoot,
+    pendingDepositContainerProof,
+    pendingDepositIndexes,
+    pendingDepositRoots,
+    pendingDepositProofs,
+  };
+
   if (dryrun) {
     console.log(`snapped slot                      : ${verificationSlot}`);
     console.log(`snap balances block root          : ${blockRoot}`);
@@ -589,10 +623,10 @@ async function verifyBalances({
       `validatorBalances: [${validatorBalancesFormatted.join(", ")}]`
     );
     console.log(
-      `\npendingDepositsContainerRoot           : ${pendingDepositContainerRoot}`
+      `\npendingDepositContainerRoot: ${pendingDepositContainerRoot}`
     );
     console.log(
-      `\npendingDepositsContainerProof:\n${pendingDepositContainerProof}`
+      `\npendingDepositContainerProof:\n${pendingDepositContainerProof}`
     );
     console.log(
       `\npendingDepositIndexes:\n[${pendingDepositIndexes
@@ -604,22 +638,9 @@ async function verifyBalances({
         .map((proof) => `"${proof}"`)
         .join(",\n")}]`
     );
-    return;
-  }
 
-  const balanceProofs = {
-    balancesContainerRoot,
-    balancesContainerProof,
-    validatorBalanceLeaves,
-    validatorBalanceProofs,
-  };
-  const pendingDepositProofsData = {
-    pendingDepositContainerRoot,
-    pendingDepositContainerProof,
-    pendingDepositIndexes,
-    pendingDepositRoots,
-    pendingDepositProofs,
-  };
+    return { balanceProofs, pendingDepositProofs: pendingDepositProofsData };
+  }
 
   if (test) {
     console.log(
@@ -642,7 +663,12 @@ async function verifyBalances({
   );
   log(balanceProofs);
   log(pendingDepositProofsData);
-  const tx = await strategy
+
+  const contract = consol
+    ? await resolveContract("ConsolidationController")
+    : strategy;
+
+  const tx = await contract
     .connect(signer)
     .verifyBalances(balanceProofs, pendingDepositProofsData);
   await logTxDetails(tx, "verifyBalances");

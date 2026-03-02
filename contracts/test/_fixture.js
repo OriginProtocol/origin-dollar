@@ -1044,9 +1044,16 @@ async function nativeStakingSSVStrategyFixture() {
   if (isFork) {
     const { nativeStakingSSVStrategy, ssv } = fixture;
 
-    // The Defender Relayer
+    // // The Defender Relayer
+    // fixture.validatorRegistrator = await impersonateAndFund(
+    //   addresses.mainnet.validatorRegistrator
+    // );
+    // Set to the consolidation controller while the validator consolidation is ongoing
+    const consolidationController = await ethers.getContract(
+      "ConsolidationController"
+    );
     fixture.validatorRegistrator = await impersonateAndFund(
-      addresses.mainnet.validatorRegistrator
+      consolidationController.address
     );
 
     // Fund some SSV to the native staking strategy
@@ -1387,41 +1394,61 @@ async function woethCcipZapperFixture() {
 async function beaconChainFixture() {
   const fixture = await defaultFixture();
 
-  fixture.beaconRoots = await ethers.getContractAt(
-    "MockBeaconRoots",
-    addresses.mainnet.beaconRoots
-  );
-
   const { deploy } = deployments;
   const { governorAddr } = await getNamedAccounts();
 
-  const { beaconConsolidationReplaced, beaconWithdrawalReplaced } =
-    await enableExecutionLayerGeneralPurposeRequests();
-
-  await deploy("MockBeaconConsolidation", {
-    from: governorAddr,
-  });
-
-  await deploy("MockPartialWithdrawal", {
-    from: governorAddr,
-  });
-
-  fixture.beaconConsolidationReplaced = beaconConsolidationReplaced;
-  fixture.beaconWithdrawalReplaced = beaconWithdrawalReplaced;
-
-  fixture.beaconConsolidation = await resolveContract(
-    "MockBeaconConsolidation"
-  );
-  fixture.partialWithdrawal = await resolveContract("MockPartialWithdrawal");
-
-  // fund the beacon communication contracts so they can pay the fee
-  await hardhatSetBalance(fixture.beaconConsolidation.address, "100");
-  await hardhatSetBalance(fixture.partialWithdrawal.address, "100");
-
   if (isFork) {
     fixture.beaconProofs = await resolveContract("BeaconProofs");
+
+    // Replace the BeaconRoots contract with a mock
+    await deploy("MockBeaconRoots", {
+      from: governorAddr,
+    });
+    const mockBeaconRoots = await ethers.getContract("MockBeaconRoots");
+    await replaceContractAt(addresses.mainnet.beaconRoots, mockBeaconRoots);
+    fixture.beaconRoots = await ethers.getContractAt(
+      "MockBeaconRoots",
+      addresses.mainnet.beaconRoots
+    );
+
+    fixture.beaconConsolidation = await ethers.getContractAt(
+      "ExecutionLayerConsolidation",
+      addresses.mainnet.toConsensus.consolidation
+    );
+    fixture.partialWithdrawal = await ethers.getContractAt(
+      "ExecutionLayerWithdrawal",
+      addresses.mainnet.toConsensus.withdrawals
+    );
   } else {
     fixture.beaconProofs = await resolveContract("EnhancedBeaconProofs");
+
+    fixture.beaconRoots = await ethers.getContractAt(
+      "MockBeaconRoots",
+      addresses.mainnet.beaconRoots
+    );
+
+    const { beaconConsolidationReplaced, beaconWithdrawalReplaced } =
+      await enableExecutionLayerGeneralPurposeRequests();
+
+    await deploy("MockBeaconConsolidation", {
+      from: governorAddr,
+    });
+
+    await deploy("MockPartialWithdrawal", {
+      from: governorAddr,
+    });
+
+    fixture.beaconConsolidationReplaced = beaconConsolidationReplaced;
+    fixture.beaconWithdrawalReplaced = beaconWithdrawalReplaced;
+
+    fixture.beaconConsolidation = await resolveContract(
+      "MockBeaconConsolidation"
+    );
+    fixture.partialWithdrawal = await resolveContract("MockPartialWithdrawal");
+
+    // fund the beacon communication contracts so they can pay the fee
+    await hardhatSetBalance(fixture.beaconConsolidation.address, "100");
+    await hardhatSetBalance(fixture.partialWithdrawal.address, "100");
   }
 
   return fixture;
