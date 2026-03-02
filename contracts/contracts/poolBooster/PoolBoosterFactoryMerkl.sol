@@ -107,6 +107,20 @@ contract PoolBoosterFactoryMerkl is AbstractPoolBoosterFactory {
         require(found, "Pool booster not found");
     }
 
+    /// @notice Removes a pool booster at a specific index from the internal list
+    /// @dev More gas-efficient than removePoolBooster when the index is known
+    /// @param _index Index of the pool booster in the poolBoosters array
+    function removePoolBoosterByIndex(uint256 _index) external onlyGovernor {
+        uint256 boostersLen = poolBoosters.length;
+        require(_index < boostersLen, "Index out of bounds");
+
+        address boosterAddress = poolBoosters[_index].boosterAddress;
+        delete poolBoosterFromPool[poolBoosters[_index].ammPoolAddress];
+        poolBoosters[_index] = poolBoosters[boostersLen - 1];
+        poolBoosters.pop();
+        centralRegistry.emitPoolBoosterRemoved(boosterAddress);
+    }
+
     ////////////////////////////////////////////////////
     /// --- VIEW FUNCTIONS
     ////////////////////////////////////////////////////

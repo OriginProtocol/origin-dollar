@@ -598,6 +598,60 @@ describe("ForkTest: Merkl Pool Booster", function () {
       ).to.be.revertedWith("Pool booster not found");
     });
 
+    it("Should remove a pool booster by index", async () => {
+      const pool1 = "0x0000000000000000000000000000000000000006";
+      const pool2 = "0x0000000000000000000000000000000000000007";
+      await createPoolBooster(806, pool1);
+      await createPoolBooster(807, pool2);
+
+      const initialLength = await poolBoosterMerklFactory.poolBoosterLength();
+      const entry1 = await poolBoosterMerklFactory.poolBoosterFromPool(pool1);
+
+      // Find the index of pool1's booster
+      let targetIndex;
+      for (let i = 0; i < initialLength; i++) {
+        const entry = await poolBoosterMerklFactory.poolBoosters(i);
+        if (entry.boosterAddress === entry1.boosterAddress) {
+          targetIndex = i;
+          break;
+        }
+      }
+
+      const tx = await poolBoosterMerklFactory
+        .connect(governor)
+        .removePoolBoosterByIndex(targetIndex);
+
+      await expect(tx).to.emit(
+        poolBoosterCentralRegistry,
+        "PoolBoosterRemoved"
+      );
+
+      expect(await poolBoosterMerklFactory.poolBoosterLength()).to.equal(
+        initialLength.sub(1)
+      );
+
+      const removedEntry = await poolBoosterMerklFactory.poolBoosterFromPool(
+        pool1
+      );
+      expect(removedEntry.boosterAddress).to.equal(addresses.zero);
+    });
+
+    it("Should revert removePoolBoosterByIndex with out of bounds index", async () => {
+      const length = await poolBoosterMerklFactory.poolBoosterLength();
+      await expect(
+        poolBoosterMerklFactory
+          .connect(governor)
+          .removePoolBoosterByIndex(length)
+      ).to.be.revertedWith("Index out of bounds");
+    });
+
+    it("Should revert removePoolBoosterByIndex when called by non-governor", async () => {
+      await createPoolBooster(808, "0x0000000000000000000000000000000000000008");
+      await expect(
+        poolBoosterMerklFactory.connect(anna).removePoolBoosterByIndex(0)
+      ).to.be.revertedWith("Caller is not the Governor");
+    });
+
     it("Should bribeAll and skip exclusion list", async () => {
       const pool1 = "0x0000000000000000000000000000000000000003";
       const poolBooster = await createPoolBooster(803, pool1);
