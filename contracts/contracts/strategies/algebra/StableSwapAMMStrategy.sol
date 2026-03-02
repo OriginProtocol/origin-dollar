@@ -698,11 +698,12 @@ contract StableSwapAMMStrategy is InitializableAbstractStrategy {
         address _tokenIn,
         address _tokenOut
     ) internal {
-        // Transfer in tokens to the pool
-        IERC20(_tokenIn).safeTransfer(pool, _amountIn);
-
         // Calculate how much out tokens we get from the swap
         uint256 amountOut = IPair(pool).getAmountOut(_amountIn, _tokenIn);
+
+        // Transfer in tokens to the pool after the amountOut calculation has been mde.
+        // This way we don't have to worry about sending tokens to pool confusing the pool's reserves.
+        IERC20(_tokenIn).safeTransfer(pool, _amountIn);
 
         // Safety check that we are dealing with the correct pool tokens
         require(
