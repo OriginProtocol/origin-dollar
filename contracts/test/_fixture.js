@@ -36,6 +36,7 @@ const merklDistributorAbi = require("./abi/merklDistributor.json");
 const curveXChainLiquidityGaugeAbi = require("./abi/curveXChainLiquidityGauge.json");
 const curveStableSwapNGAbi = require("./abi/curveStableSwapNG.json");
 const { defaultAbiCoder, parseUnits } = require("ethers/lib/utils");
+const { formatUnits } = ethers.utils;
 const { impersonateAndFund } = require("../utils/signers");
 
 const log = require("../utils/logger")("test:fixtures");
@@ -1263,6 +1264,168 @@ async function instantRebaseVaultFixture(tokenName) {
   return fixture;
 }
 
+async function supernovaOETHAMOFixture(
+  config = {
+    assetMintAmount: 0,
+    depositToStrategy: false,
+    balancePool: false,
+    poolAddWethAmount: 0,
+    poolAddOethAmount: 0,
+  }
+) {
+  const fixture = await defaultFixture();
+  const { oeth, oethVault, weth, josh, strategist } = fixture;
+
+  if (!isFork) {
+    throw new Error("supernovaOETHAMOFixture is only supported on fork tests");
+  }
+
+  const cfg = {
+    assetMintAmount: config?.assetMintAmount || 0,
+    depositToStrategy: config?.depositToStrategy || false,
+    balancePool: config?.balancePool || false,
+    poolAddWethAmount: config?.poolAddWethAmount || 0,
+    poolAddOethAmount: config?.poolAddOethAmount || 0,
+  };
+
+  const cOETHSupernovaAMOProxy = await ethers.getContract(
+    "OETHSupernovaAMOProxy"
+  );
+  const cOETHSupernovaAMOStrategy = await ethers.getContractAt(
+    "OETHSupernovaAMOStrategy",
+    cOETHSupernovaAMOProxy.address
+  );
+
+  const supernovaPool = await ethers.getContractAt(
+    "IPair",
+    await cOETHSupernovaAMOStrategy.pool()
+  );
+  const supernovaGauge = await ethers.getContractAt(
+    "IGauge",
+    await cOETHSupernovaAMOStrategy.gauge()
+  );
+  const supernovaRewardToken = await ethers.getContractAt(
+    erc20Abi,
+    addresses.mainnet.supernovaToken
+  );
+
+  // Impersonate the OETH Vault to call strategy deposit/withdraw methods directly in tests.
+  const oethVaultSigner = await impersonateAndFund(oethVault.address);
+  const oethVaultGovernor = await impersonateAndFund(
+    await oethVault.governor()
+  );
+
+  // Ensure the test actor has enough WETH to mint OETH and manipulate pool balances.
+  await setERC20TokenBalance(josh.address, weth, oethUnits("1000000000"), hre);
+  await resetAllowance(weth, josh, oethVault.address);
+
+  // Supernova deployment creates a fresh empty pool, seed it once for AMO tests.
+  let seedAmount = parseUnits("150");
+  if ((await supernovaPool.totalSupply()).lt(seedAmount.mul(2))) {
+    await oethVault.connect(josh).mint(seedAmount.mul(2));
+    await weth.connect(josh).transfer(supernovaPool.address, seedAmount);
+    await oeth.connect(josh).transfer(supernovaPool.address, seedAmount);
+    await supernovaPool.connect(josh).mint(josh.address);
+  }
+
+  // Mint some OETH using WETH if configured.
+  if (cfg.assetMintAmount > 0) {
+    const wethAmount = parseUnits(cfg.assetMintAmount.toString());
+    await oethVault.connect(josh).rebase();
+    await oethVault.connect(josh).allocate();
+
+    let wethBalance = await weth.balanceOf(oethVault.address);
+    const autoAllocateThreshold = await oethVault.autoAllocateThreshold();
+    const queue = await oethVault.withdrawalQueueMetadata();
+    const available = wethBalance.add(queue.claimed).sub(queue.queued);
+    const mintAmount = wethAmount.sub(available);
+
+    if (mintAmount.gt(0)) {
+      await weth.connect(josh).approve(oethVault.address, mintAmount);
+
+      const disableAutoAllocate = autoAllocateThreshold.lt(mintAmount);
+      if (disableAutoAllocate) {
+        await oethVault
+          .connect(oethVaultGovernor)
+          .setAutoAllocateThreshold(mintAmount.add(1));
+      }
+
+      // This mints OETH and keeps backing WETH in the vault.
+      await oethVault.connect(josh).mint(mintAmount);
+
+      if (disableAutoAllocate) {
+        await oethVault
+          .connect(oethVaultGovernor)
+          .setAutoAllocateThreshold(autoAllocateThreshold);
+      }
+    }
+
+    if (cfg.depositToStrategy) {
+      wethBalance = await weth.balanceOf(oethVault.address);
+      log(
+        `Depositing ${formatUnits(
+          wethAmount
+        )} WETH to Supernova AMO strategy. Vault has ${formatUnits(
+          wethBalance
+        )} WETH`
+      );
+      await oethVault
+        .connect(strategist)
+        .depositToStrategy(
+          cOETHSupernovaAMOStrategy.address,
+          [weth.address],
+          [wethAmount]
+        );
+    }
+  }
+
+  if (cfg.balancePool) {
+    const { _reserve0, _reserve1 } = await supernovaPool.getReserves();
+    const oTokenPoolIndex =
+      (await supernovaPool.token0()) === oeth.address ? 0 : 1;
+    const assetReserves = oTokenPoolIndex === 0 ? _reserve1 : _reserve0;
+    const oTokenReserves = oTokenPoolIndex === 0 ? _reserve0 : _reserve1;
+
+    const diff = parseInt(
+      assetReserves.sub(oTokenReserves).div(oethUnits("1")).toString()
+    );
+
+    if (diff > 0) {
+      cfg.poolAddOethAmount += diff;
+    } else if (diff < 0) {
+      cfg.poolAddWethAmount += -diff;
+    }
+  }
+
+  // Add WETH to the pool directly.
+  if (cfg.poolAddWethAmount > 0) {
+    log(`Adding ${cfg.poolAddWethAmount} WETH to the pool`);
+    const wethAmount = parseUnits(cfg.poolAddWethAmount.toString(), 18);
+    await weth.connect(josh).transfer(supernovaPool.address, wethAmount);
+  }
+
+  // Add OETH to the pool directly.
+  if (cfg.poolAddOethAmount > 0) {
+    log(`Adding ${cfg.poolAddOethAmount} OETH to the pool`);
+    const oethAmount = parseUnits(cfg.poolAddOethAmount.toString(), 18);
+    await weth.connect(josh).approve(oethVault.address, oethAmount);
+    await oethVault.connect(josh).mint(oethAmount);
+    await oeth.connect(josh).transfer(supernovaPool.address, oethAmount);
+  }
+
+  // Force reserves to match balances.
+  await supernovaPool.sync();
+
+  return {
+    ...fixture,
+    oethVaultSigner,
+    supernovaRewardToken,
+    supernovaPool,
+    supernovaGauge,
+    supernovaAMOStrategy: cOETHSupernovaAMOStrategy,
+  };
+}
+
 // Unit test cross chain fixture where both contracts are deployed on the same chain for the
 // purposes of unit testing
 async function crossChainFixtureUnit() {
@@ -1641,4 +1804,5 @@ module.exports = {
   autoWithdrawalModuleFixture,
   crossChainFixtureUnit,
   crossChainFixture,
+  supernovaOETHAMOFixture,
 };
