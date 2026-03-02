@@ -4,7 +4,7 @@ const {
 } = require("../deployActions");
 
 // This is just used to confirm that the Refactoring SwapX AMO strategy into a generalized Algebra strategy is working
-// as expected
+// as expected. This doesn't need to be deployed on Sonic. It should stay in to not break the behavior tests.
 module.exports = deployOnSonic(
   {
     deployName: "027_upgrade_swapx",

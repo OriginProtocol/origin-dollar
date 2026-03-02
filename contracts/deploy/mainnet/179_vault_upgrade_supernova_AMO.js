@@ -51,7 +51,7 @@ module.exports = deploymentWithGovernanceProposal(
           signature: "upgradeTo(address)",
           args: [dVaultAdmin.address],
         },
-        // 2. Set OETH/WETH AMO as default strategy
+        // 2. Set Compounding Staking Strategy as default strategy
         {
           contract: cVault,
           signature: "setDefaultStrategy(address)",
