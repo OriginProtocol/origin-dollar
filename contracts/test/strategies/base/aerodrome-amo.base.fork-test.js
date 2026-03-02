@@ -75,9 +75,7 @@ describe("Base Fork Test: Aerodrome AMO Strategy empty pool setup (Base)", async
       .timestamp;
 
     await weth.connect(rafael).approve(oethbVault.address, oethUnits("200"));
-    await oethbVault
-      .connect(rafael)
-      .mint(weth.address, oethUnits("200"), oethUnits("199.999"));
+    await oethbVault.connect(rafael).mint(oethUnits("200"));
 
     // we need to supply liquidity in 2 separate transactions so liquidity position is populated
     // outside the active tick.
@@ -115,7 +113,7 @@ describe("Base Fork Test: Aerodrome AMO Strategy empty pool setup (Base)", async
   // Haven't found a way to test for this in the strategy contract yet
   it.skip("Revert when there is no token id yet and no liquidity to perform the swap.", async () => {
     const amount = oethUnits("5");
-    await oethbVault.connect(rafael).mint(weth.address, amount, amount);
+    await oethbVault.connect(rafael).mint(amount);
 
     await oethbVault
       .connect(governor)
@@ -221,7 +219,7 @@ describe("Base Fork Test: Aerodrome AMO Strategy empty pool setup (Base)", async
     const balanceOETHb = await oethb.balanceOf(rafael.address);
     if (!swapWeth && balanceOETHb.lt(amount)) {
       await weth.connect(rafael).approve(oethbVault.address, amount);
-      await oethbVault.connect(rafael).mint(weth.address, amount, amount);
+      await oethbVault.connect(rafael).mint(amount);
     }
 
     const sqrtRatioX96Tick1000 = BigNumber.from(
@@ -315,9 +313,7 @@ describe("ForkTest: Aerodrome AMO Strategy (Base)", async function () {
       .timestamp;
 
     await weth.connect(rafael).approve(oethbVault.address, oethUnits("200"));
-    await oethbVault
-      .connect(rafael)
-      .mint(weth.address, oethUnits("200"), oethUnits("199.999"));
+    await oethbVault.connect(rafael).mint(oethUnits("200"));
 
     // we need to supply liquidity in 2 separate transactions so liquidity position is populated
     // outside the active tick.
@@ -832,7 +828,7 @@ describe("ForkTest: Aerodrome AMO Strategy (Base)", async function () {
       const amount = oethUnits("5");
 
       weth.connect(rafael).approve(oethbVault.address, amount);
-      await oethbVault.connect(rafael).mint(weth.address, amount, amount);
+      await oethbVault.connect(rafael).mint(amount);
 
       const gov = await aerodromeAmoStrategy.governor();
       await oethbVault
@@ -1337,7 +1333,7 @@ describe("ForkTest: Aerodrome AMO Strategy (Base)", async function () {
     const balanceOETHb = await oethb.balanceOf(rafael.address);
     if (!swapWeth && balanceOETHb.lt(amount)) {
       await weth.connect(rafael).approve(oethbVault.address, amount);
-      await oethbVault.connect(rafael).mint(weth.address, amount, amount);
+      await oethbVault.connect(rafael).mint(amount);
       // Deal WETH and mint OETHb
     }
 
@@ -1411,9 +1407,7 @@ describe("ForkTest: Aerodrome AMO Strategy (Base)", async function () {
       await setERC20TokenBalance(user.address, weth, amount + balance, hre);
     }
     await weth.connect(user).approve(oethbVault.address, amount);
-    const tx = await oethbVault
-      .connect(user)
-      .mint(weth.address, amount, amount);
+    const tx = await oethbVault.connect(user).mint(amount);
     return tx;
   };
 
@@ -1430,7 +1424,7 @@ describe("ForkTest: Aerodrome AMO Strategy (Base)", async function () {
       const _amount = oethUnits("5000");
       await setERC20TokenBalance(nick.address, weth, _amount, hre);
       await weth.connect(nick).approve(oethbVault.address, _amount);
-      await oethbVault.connect(nick).mint(weth.address, _amount, _amount);
+      await oethbVault.connect(nick).mint(_amount);
     }
 
     const balance = await weth.balanceOf(user.address);
@@ -1438,7 +1432,7 @@ describe("ForkTest: Aerodrome AMO Strategy (Base)", async function () {
       await setERC20TokenBalance(user.address, weth, amount + balance, hre);
     }
     await weth.connect(user).approve(oethbVault.address, amount);
-    await oethbVault.connect(user).mint(weth.address, amount, amount);
+    await oethbVault.connect(user).mint(amount);
 
     const gov = await oethbVault.governor();
     const tx = await oethbVault

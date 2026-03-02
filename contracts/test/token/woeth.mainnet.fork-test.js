@@ -8,12 +8,10 @@ const { oethUnits } = require("../helpers");
 const oethWhaleFixture = async () => {
   const fixture = await simpleOETHFixture();
 
-  const { weth, oeth, oethVault, woeth, domen } = fixture;
+  const { oeth, oethVault, woeth, domen } = fixture;
 
   // Domen is a OETH whale
-  await oethVault
-    .connect(domen)
-    .mint(weth.address, oethUnits("20000"), oethUnits("19999"));
+  await oethVault.connect(domen).mint(oethUnits("20000"));
 
   await oeth.connect(domen).approve(woeth.address, oethUnits("20000"));
 

@@ -84,13 +84,9 @@ describe("OETH Vault", function () {
       const dataBefore = await snapData(fixtureWithUser);
 
       const amount = parseUnits("1", 18);
-      const minOeth = parseUnits("0.8", 18);
-
       await weth.connect(josh).approve(oethVault.address, amount);
 
-      const tx = await oethVault
-        .connect(josh)
-        .mint(weth.address, amount, minOeth);
+      const tx = await oethVault.connect(josh).mint(amount);
 
       await expect(tx)
         .to.emit(oethVault, "Mint")
@@ -115,21 +111,19 @@ describe("OETH Vault", function () {
     });
 
     it("Fail to mint if amount is zero", async () => {
-      const { oethVault, weth, josh } = fixture;
+      const { oethVault, josh } = fixture;
 
-      const tx = oethVault.connect(josh).mint(weth.address, "0", "0");
+      const tx = oethVault.connect(josh).mint("0");
       await expect(tx).to.be.revertedWith("Amount must be greater than 0");
     });
 
     it("Fail to mint if capital is paused", async () => {
-      const { oethVault, weth, governor } = fixture;
+      const { oethVault, governor } = fixture;
 
       await oethVault.connect(governor).pauseCapital();
       expect(await oethVault.capitalPaused()).to.equal(true);
 
-      const tx = oethVault
-        .connect(governor)
-        .mint(weth.address, oethUnits("10"), "0");
+      const tx = oethVault.connect(governor).mint(oethUnits("10"));
       await expect(tx).to.be.revertedWith("Capital paused");
     });
 
@@ -148,7 +142,7 @@ describe("OETH Vault", function () {
       // Mint some WETH
       await weth.connect(domen).approve(oethVault.address, oethUnits("10000"));
       const mintAmount = oethUnits("100");
-      await oethVault.connect(domen).mint(weth.address, mintAmount, "0");
+      await oethVault.connect(domen).mint(mintAmount);
 
       expect(await weth.balanceOf(mockStrategy.address)).to.eq(
         mintAmount,
@@ -177,7 +171,7 @@ describe("OETH Vault", function () {
   describe("async withdrawal", () => {
     it("Should update total supply correctly", async () => {
       const { oethVault, oeth, weth, daniel } = fixture;
-      await oethVault.connect(daniel).mint(weth.address, oethUnits("10"), "0");
+      await oethVault.connect(daniel).mint(oethUnits("10"));
 
       const userBalanceBefore = await weth.balanceOf(daniel.address);
       const vaultBalanceBefore = await weth.balanceOf(oethVault.address);
@@ -208,10 +202,10 @@ describe("OETH Vault", function () {
 
       // Mint some WETH
       await weth.connect(domen).approve(oethVault.address, oethUnits("10000"));
-      await oethVault.connect(domen).mint(weth.address, oethUnits("100"), "0");
+      await oethVault.connect(domen).mint(oethUnits("100"));
 
       // Mint a small amount that won't get allocated to the strategy
-      await oethVault.connect(domen).mint(weth.address, oethUnits("1.23"), "0");
+      await oethVault.connect(domen).mint(oethUnits("1.23"));
 
       // Withdraw something more than what the Vault holds
       await oethVault.connect(domen).requestWithdrawal(oethUnits("12.55"));
@@ -230,7 +224,7 @@ describe("OETH Vault", function () {
 
     it("Should allow every user to withdraw", async () => {
       const { oethVault, weth, daniel } = fixture;
-      await oethVault.connect(daniel).mint(weth.address, oethUnits("10"), "0");
+      await oethVault.connect(daniel).mint(oethUnits("10"));
 
       await oethVault.connect(daniel).requestWithdrawal(oethUnits("10"));
       await advanceTime(10 * 60); // 10 minutes
@@ -311,9 +305,7 @@ describe("OETH Vault", function () {
         .approve(oethVault.address, oethUnits("10"));
 
       // Then mint for strategy
-      await oethVault
-        .connect(strategySigner)
-        .mint(weth.address, oethUnits("10"), "0");
+      await oethVault.connect(strategySigner).mint(oethUnits("10"));
 
       await expect(await oeth.balanceOf(mockStrategy.address)).to.equal(
         oethUnits("10")
@@ -373,7 +365,7 @@ describe("OETH Vault", function () {
   describe("Allocate", () => {
     const delayPeriod = 10 * 60; // 10mins
     it("Shouldn't allocate as minted amount is lower than autoAllocateThreshold", async () => {
-      const { oethVault, weth, daniel } = fixture;
+      const { oethVault, daniel } = fixture;
 
       // Set auto allocate threshold to 100 WETH
       await oethVault
@@ -381,14 +373,12 @@ describe("OETH Vault", function () {
         .setAutoAllocateThreshold(oethUnits("100"));
 
       // Mint for 10 WETH
-      const tx = oethVault
-        .connect(daniel)
-        .mint(weth.address, oethUnits("10"), "0");
+      const tx = oethVault.connect(daniel).mint(oethUnits("10"));
 
       await expect(tx).to.not.emit(oethVault, "AssetAllocated");
     });
     it("Shouldn't allocate as no WETH available", async () => {
-      const { oethVault, weth, daniel } = fixture;
+      const { oethVault, daniel } = fixture;
 
       // Deploy default strategy
       const mockStrategy = await deployWithConfirmation("MockStrategy");
@@ -400,19 +390,17 @@ describe("OETH Vault", function () {
         .setDefaultStrategy(mockStrategy.address);
 
       // Mint will allocate all to default strategy bc no buffer, no threshold
-      await oethVault.connect(daniel).mint(weth.address, oethUnits("10"), "0");
+      await oethVault.connect(daniel).mint(oethUnits("10"));
       await oethVault.connect(daniel).requestWithdrawal(oethUnits("5"));
 
       // Deposit less than queued amount (5 WETH) => _wethAvailable() return 0
-      const tx = oethVault
-        .connect(daniel)
-        .mint(weth.address, oethUnits("3", "0"));
+      const tx = oethVault.connect(daniel).mint(oethUnits("3"));
       expect(tx).to.not.emit(oethVault, "AssetAllocated");
     });
     it("Shouldn't allocate as WETH available is lower than buffer", async () => {
-      const { oethVault, weth, daniel } = fixture;
+      const { oethVault, daniel } = fixture;
 
-      await oethVault.connect(daniel).mint(weth.address, oethUnits("100"), "0");
+      await oethVault.connect(daniel).mint(oethUnits("100"));
 
       // Set vault buffer to 5%
       await oethVault
@@ -422,15 +410,13 @@ describe("OETH Vault", function () {
       // OETH total supply = 100(first deposit) + 5(second deposit) = 105
       // Buffer = 105 * 5% = 5.25 WETH
       // Second deposit should remain in the vault as below vault buffer
-      const tx = oethVault.connect(daniel).mint(oethUnits("5"), "0");
+      const tx = oethVault.connect(daniel).mint(oethUnits("5"));
       expect(tx).to.not.emit(oethVault, "AssetAllocated");
     });
     it("Shouldn't allocate as default strategy is address null", async () => {
-      const { oethVault, weth, daniel } = fixture;
+      const { oethVault, daniel } = fixture;
 
-      const tx = oethVault
-        .connect(daniel)
-        .mint(weth.address, oethUnits("100"), "0");
+      const tx = oethVault.connect(daniel).mint(oethUnits("100"));
 
       expect(tx).to.not.emit(oethVault, "AssetAllocated");
     });
@@ -449,9 +435,7 @@ describe("OETH Vault", function () {
       });
       it("buffer is 0%, 0 WETH in queue", async () => {
         const { oethVault, daniel, weth } = fixture;
-        const tx = oethVault
-          .connect(daniel)
-          .mint(weth.address, oethUnits("10"), "0");
+        const tx = oethVault.connect(daniel).mint(oethUnits("10"));
         await expect(tx)
           .to.emit(oethVault, "AssetAllocated")
           .withArgs(weth.address, mockStrategy.address, oethUnits("10"));
@@ -466,9 +450,7 @@ describe("OETH Vault", function () {
           .connect(await impersonateAndFund(await oethVault.governor()))
           .setVaultBuffer(oethUnits("0.05"));
 
-        const tx = oethVault
-          .connect(daniel)
-          .mint(weth.address, oethUnits("10"), "0");
+        const tx = oethVault.connect(daniel).mint(oethUnits("10"));
         await expect(tx)
           .to.emit(oethVault, "AssetAllocated")
           .withArgs(weth.address, mockStrategy.address, oethUnits("9.5"));
@@ -478,13 +460,9 @@ describe("OETH Vault", function () {
       });
       it("buffer is 0%, 10 WETH in queue", async () => {
         const { oethVault, daniel, weth } = fixture;
-        await oethVault
-          .connect(daniel)
-          .mint(weth.address, oethUnits("10"), "0");
+        await oethVault.connect(daniel).mint(oethUnits("10"));
         await oethVault.connect(daniel).requestWithdrawal(oethUnits("10"));
-        const tx = oethVault
-          .connect(daniel)
-          .mint(weth.address, oethUnits("20"), "0");
+        const tx = oethVault.connect(daniel).mint(oethUnits("20"));
 
         // 10 WETH in the queue, 10 WETH in strat. New deposit of 20, only 10 WETH available to allocate to strategy.
         await expect(tx)
@@ -496,9 +474,7 @@ describe("OETH Vault", function () {
       });
       it("buffer is 0%, 20 WETH in queue, 10 WETH claimed", async () => {
         const { oethVault, daniel, weth } = fixture;
-        await oethVault
-          .connect(daniel)
-          .mint(weth.address, oethUnits("30"), "0");
+        await oethVault.connect(daniel).mint(oethUnits("30"));
         await oethVault.connect(daniel).requestWithdrawal(oethUnits("10"));
         await advanceTime(delayPeriod);
         // Simulate strategist pulling back WETH to the vault.
@@ -512,9 +488,7 @@ describe("OETH Vault", function () {
         // So far, 20 WETH queued, 10 WETH claimed, 0 WETH available, 20 WETH in strat
 
         // Deposit 35 WETH, 10 WETH should remain in the vault for withdraw, so strat should have 45WETH.
-        const tx = oethVault
-          .connect(daniel)
-          .mint(weth.address, oethUnits("35"), "0");
+        const tx = oethVault.connect(daniel).mint(oethUnits("35"));
         await expect(tx)
           .to.emit(oethVault, "AssetAllocated")
           .withArgs(weth.address, mockStrategy.address, oethUnits("25"));
@@ -525,9 +499,7 @@ describe("OETH Vault", function () {
       });
       it("buffer is 5%, 20 WETH in queue, 10 WETH claimed", async () => {
         const { oethVault, daniel, weth } = fixture;
-        await oethVault
-          .connect(daniel)
-          .mint(weth.address, oethUnits("40"), "0");
+        await oethVault.connect(daniel).mint(oethUnits("40"));
         await oethVault.connect(daniel).requestWithdrawal(oethUnits("10"));
         await advanceTime(delayPeriod);
         // Simulate strategist pulling back WETH to the vault.
@@ -547,9 +519,7 @@ describe("OETH Vault", function () {
 
         // Deposit 40 WETH, 10 WETH should remain in the vault for withdraw + 3 (i.e. 20+40 *5%)
         // So strat should have 57WETH.
-        const tx = oethVault
-          .connect(daniel)
-          .mint(weth.address, oethUnits("40"), "0");
+        const tx = oethVault.connect(daniel).mint(oethUnits("40"));
         await expect(tx)
           .to.emit(oethVault, "AssetAllocated")
           .withArgs(weth.address, mockStrategy.address, oethUnits("27"));
@@ -565,13 +535,11 @@ describe("OETH Vault", function () {
     const delayPeriod = 10 * 60; // 10 minutes
     describe("with all 60 WETH in the vault", () => {
       beforeEach(async () => {
-        const { oethVault, weth, daniel, josh, matt } = fixture;
+        const { oethVault, daniel, josh, matt } = fixture;
         // Mint some OETH to three users
-        await oethVault
-          .connect(daniel)
-          .mint(weth.address, oethUnits("10"), "0");
-        await oethVault.connect(josh).mint(weth.address, oethUnits("20"), "0");
-        await oethVault.connect(matt).mint(weth.address, oethUnits("30"), "0");
+        await oethVault.connect(daniel).mint(oethUnits("10"));
+        await oethVault.connect(josh).mint(oethUnits("20"));
+        await oethVault.connect(matt).mint(oethUnits("30"));
         await oethVault
           .connect(await impersonateAndFund(await oethVault.governor()))
           .setMaxSupplyDiff(oethUnits("0.03"));
@@ -1221,7 +1189,7 @@ describe("OETH Vault", function () {
           await oethVault.connect(matt).claimWithdrawal(2);
         });
         it("Fail to claim a new request after mint with NOT enough liquidity", async () => {
-          const { oethVault, daniel, matt, weth } = fixture;
+          const { oethVault, daniel, matt } = fixture;
 
           // Matt requests all 30 OETH to be withdrawn which is not enough liquidity
           const requestAmount = oethUnits("30");
@@ -1230,7 +1198,7 @@ describe("OETH Vault", function () {
           // WETH in the vault = 60 - 15 = 45 WETH
           // unallocated WETH in the Vault = 45 - 23 = 22 WETH
           // Add another 6 WETH so the unallocated WETH is 22 + 6 = 28 WETH
-          await oethVault.connect(daniel).mint(weth.address, oethUnits("6"), 0);
+          await oethVault.connect(daniel).mint(oethUnits("6"));
 
           await advanceTime(delayPeriod); // Advance in time to ensure time delay between request and claim.
 
@@ -1238,7 +1206,7 @@ describe("OETH Vault", function () {
           await expect(tx).to.be.revertedWith("Queue pending liquidity");
         });
         it("Should claim a new request after mint adds enough liquidity", async () => {
-          const { oethVault, daniel, matt, weth } = fixture;
+          const { oethVault, daniel, matt } = fixture;
 
           // Set the claimable amount to the queued amount
           await oethVault.addWithdrawalQueueLiquidity();
@@ -1254,7 +1222,7 @@ describe("OETH Vault", function () {
           // unallocated WETH in the Vault = 45 - 23 = 22 WETH
           // Add another 8 WETH so the unallocated WETH is 22 + 8 = 30 WETH
           const mintAmount = oethUnits("8");
-          await oethVault.connect(daniel).mint(weth.address, mintAmount, 0);
+          await oethVault.connect(daniel).mint(mintAmount);
 
           await assertChangedData(
             dataBeforeMint,
@@ -1310,12 +1278,10 @@ describe("OETH Vault", function () {
         const { governor, oethVault, weth, daniel, domen, josh, matt } =
           fixture;
         // Mint 105 OETH to four users
-        await oethVault
-          .connect(daniel)
-          .mint(weth.address, oethUnits("15"), "0");
-        await oethVault.connect(josh).mint(weth.address, oethUnits("20"), "0");
-        await oethVault.connect(matt).mint(weth.address, oethUnits("30"), "0");
-        await oethVault.connect(domen).mint(weth.address, oethUnits("40"), "0");
+        await oethVault.connect(daniel).mint(oethUnits("15"));
+        await oethVault.connect(josh).mint(oethUnits("20"));
+        await oethVault.connect(matt).mint(oethUnits("30"));
+        await oethVault.connect(domen).mint(oethUnits("40"));
         await oethVault
           .connect(await impersonateAndFund(await oethVault.governor()))
           .setMaxSupplyDiff(oethUnits("0.03"));
@@ -1434,10 +1400,8 @@ describe("OETH Vault", function () {
       });
       describe("when mint covers exactly outstanding requests (32 - 15 = 17 OETH)", () => {
         beforeEach(async () => {
-          const { oethVault, daniel, weth } = fixture;
-          await oethVault
-            .connect(daniel)
-            .mint(weth.address, oethUnits("17"), "0");
+          const { oethVault, daniel } = fixture;
+          await oethVault.connect(daniel).mint(oethUnits("17"));
 
           // Advance in time to ensure time delay between request and claim.
           await advanceTime(delayPeriod);
@@ -1499,10 +1463,8 @@ describe("OETH Vault", function () {
       });
       describe("when mint covers exactly outstanding requests and vault buffer (17 + 1 WETH)", () => {
         beforeEach(async () => {
-          const { oethVault, daniel, weth } = fixture;
-          await oethVault
-            .connect(daniel)
-            .mint(weth.address, oethUnits("18"), "0");
+          const { oethVault, daniel } = fixture;
+          await oethVault.connect(daniel).mint(oethUnits("18"));
         });
         it("Should deposit 1 WETH to a strategy which is the vault buffer", async () => {
           const { oethVault, weth, governor } = fixture;
@@ -1542,10 +1504,8 @@ describe("OETH Vault", function () {
       });
       describe("when mint more than covers outstanding requests and vault buffer (17 + 1 + 3 = 21 OETH)", () => {
         beforeEach(async () => {
-          const { oethVault, daniel, weth } = fixture;
-          await oethVault
-            .connect(daniel)
-            .mint(weth.address, oethUnits("21"), "0");
+          const { oethVault, daniel } = fixture;
+          await oethVault.connect(daniel).mint(oethUnits("21"));
         });
         it("Should deposit 4 WETH to a strategy", async () => {
           const { oethVault, weth, governor } = fixture;
@@ -1606,14 +1566,12 @@ describe("OETH Vault", function () {
     });
     describe("with 40 WETH in the queue, 10 WETH in the vault, 30 WETH already claimed", () => {
       beforeEach(async () => {
-        const { oethVault, weth, daniel, josh, matt } = fixture;
+        const { oethVault, daniel, josh, matt } = fixture;
 
         // Mint 60 OETH to three users
-        await oethVault
-          .connect(daniel)
-          .mint(weth.address, oethUnits("10"), "0");
-        await oethVault.connect(josh).mint(weth.address, oethUnits("20"), "0");
-        await oethVault.connect(matt).mint(weth.address, oethUnits("10"), "0");
+        await oethVault.connect(daniel).mint(oethUnits("10"));
+        await oethVault.connect(josh).mint(oethUnits("20"));
+        await oethVault.connect(matt).mint(oethUnits("10"));
 
         // Request and claim 10 WETH from Vault
         await oethVault.connect(daniel).requestWithdrawal(oethUnits("10"));
@@ -1690,13 +1648,11 @@ describe("OETH Vault", function () {
     });
     describe("with 40 WETH in the queue, 100 WETH in the vault, 0 WETH in the strategy", () => {
       beforeEach(async () => {
-        const { oethVault, weth, daniel, josh, matt } = fixture;
+        const { oethVault, daniel, josh, matt } = fixture;
         // Mint 100 OETH to three users
-        await oethVault
-          .connect(daniel)
-          .mint(weth.address, oethUnits("10"), "0");
-        await oethVault.connect(josh).mint(weth.address, oethUnits("20"), "0");
-        await oethVault.connect(matt).mint(weth.address, oethUnits("70"), "0");
+        await oethVault.connect(daniel).mint(oethUnits("10"));
+        await oethVault.connect(josh).mint(oethUnits("20"));
+        await oethVault.connect(matt).mint(oethUnits("70"));
 
         // Request 40 WETH from Vault
         await oethVault.connect(matt).requestWithdrawal(oethUnits("40"));
@@ -1808,11 +1764,9 @@ describe("OETH Vault", function () {
           .setDefaultStrategy(mockStrategy.address);
 
         // Mint 60 OETH to three users
-        await oethVault
-          .connect(daniel)
-          .mint(weth.address, oethUnits("10"), "0");
-        await oethVault.connect(josh).mint(weth.address, oethUnits("20"), "0");
-        await oethVault.connect(matt).mint(weth.address, oethUnits("30"), "0");
+        await oethVault.connect(daniel).mint(oethUnits("10"));
+        await oethVault.connect(josh).mint(oethUnits("20"));
+        await oethVault.connect(matt).mint(oethUnits("30"));
 
         // Request and claim 10 + 20 + 10 = 40 WETH from Vault
         await oethVault.connect(daniel).requestWithdrawal(oethUnits("10"));
@@ -1968,11 +1922,9 @@ describe("OETH Vault", function () {
           .setDefaultStrategy(mockStrategy.address);
 
         // Mint 100 OETH to three users
-        await oethVault
-          .connect(daniel)
-          .mint(weth.address, oethUnits("20"), "0");
-        await oethVault.connect(josh).mint(weth.address, oethUnits("30"), "0");
-        await oethVault.connect(matt).mint(weth.address, oethUnits("50"), "0");
+        await oethVault.connect(daniel).mint(oethUnits("20"));
+        await oethVault.connect(josh).mint(oethUnits("30"));
+        await oethVault.connect(matt).mint(oethUnits("50"));
 
         // Request and claim 20 + 30 + 49 = 99 WETH from Vault
         await oethVault.connect(daniel).requestWithdrawal(oethUnits("20"));

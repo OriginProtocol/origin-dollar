@@ -13,6 +13,7 @@ const {
   deployWOusd,
   deployWOeth,
   deployCrossChainUnitTestStrategy,
+  deploySafeModulesForUnitTests,
 } = require("../deployActions");
 
 const main = async () => {
@@ -31,6 +32,7 @@ const main = async () => {
   await deployWOusd();
   await deployWOeth();
   await deployCrossChainUnitTestStrategy(usdc.address);
+  await deploySafeModulesForUnitTests();
   console.log("001_core deploy done.");
   return true;
 };

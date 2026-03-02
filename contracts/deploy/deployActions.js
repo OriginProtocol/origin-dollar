@@ -1173,6 +1173,21 @@ const deployCrossChainUnitTestStrategy = async (usdcAddress) => {
   // );
 };
 
+const deploySafeModulesForUnitTests = async () => {
+  const cSafeContract = await ethers.getContract("MockSafeContract");
+  const usdc = await ethers.getContract("MockUSDC");
+  await deployWithConfirmation("MockAutoWithdrawalVault", [usdc.address]);
+  const mockAutoWithdrawalVault = await ethers.getContract(
+    "MockAutoWithdrawalVault"
+  );
+  await deployWithConfirmation("AutoWithdrawalModule", [
+    cSafeContract.address,
+    cSafeContract.address,
+    mockAutoWithdrawalVault.address,
+    addresses.dead,
+  ]);
+};
+
 module.exports = {
   deployOracles,
   deployCore,
@@ -1197,6 +1212,7 @@ module.exports = {
   deployCrossChainMasterStrategyImpl,
   deployCrossChainRemoteStrategyImpl,
   deployCrossChainUnitTestStrategy,
+  deploySafeModulesForUnitTests,
 
   getCreate2ProxyAddress,
 };

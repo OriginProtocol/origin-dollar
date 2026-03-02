@@ -15,7 +15,6 @@ describe("ForkTest: Merkl Pool Booster", function () {
   let fixture,
     poolBoosterMerklFactory,
     nick,
-    wS,
     oSonicVault,
     oSonic,
     strategist,
@@ -23,7 +22,6 @@ describe("ForkTest: Merkl Pool Booster", function () {
   beforeEach(async () => {
     fixture = await sonicFixture();
     nick = fixture.nick;
-    wS = fixture.wS;
     oSonicVault = fixture.oSonicVault;
     oSonic = fixture.oSonic;
     poolBoosterMerklFactory = fixture.poolBoosterMerklFactory;
@@ -33,9 +31,7 @@ describe("ForkTest: Merkl Pool Booster", function () {
     await ensureTokenIsApproved(oSonic);
 
     // mint some OS to Nick
-    await oSonicVault
-      .connect(nick)
-      .mint(wS.address, oethUnits("10000"), oethUnits("0"));
+    await oSonicVault.connect(nick).mint(oethUnits("10000"));
   });
 
   it("Should have correct deployment params", async () => {

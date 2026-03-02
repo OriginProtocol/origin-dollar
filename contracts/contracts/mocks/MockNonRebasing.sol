@@ -38,12 +38,8 @@ contract MockNonRebasing {
         oUSD.approve(_spender, _addedValue);
     }
 
-    function mintOusd(
-        address _vaultContract,
-        address _asset,
-        uint256 _amount
-    ) public {
-        IVault(_vaultContract).mint(_asset, _amount, 0);
+    function mintOusd(address _vaultContract, uint256 _amount) public {
+        IVault(_vaultContract).mint(_amount);
     }
 
     function redeemOusd(address _vaultContract, uint256 _amount) public {

@@ -90,7 +90,7 @@ describe("Fork Test: Curve AMO OUSD strategy", function () {
     await setERC20TokenBalance(nick.address, usdc, "5000000", hre);
     await usdc.connect(nick).approve(ousdVault.address, usdcUnits("0"));
     await usdc.connect(nick).approve(ousdVault.address, usdcUnits("5000000"));
-    await ousdVault.connect(nick).mint(usdc.address, usdcUnits("2000000"), 0);
+    await ousdVault.connect(nick).mint(usdcUnits("2000000"));
     await ousd.connect(nick).approve(curvePool.address, ousdUnits("2000000"));
     await usdc.connect(nick).approve(curvePool.address, usdcUnits("2000000"));
     // prettier-ignore
@@ -993,7 +993,7 @@ describe("Fork Test: Curve AMO OUSD strategy", function () {
 
     await usdc.connect(user).approve(ousdVault.address, 0);
     await usdc.connect(user).approve(ousdVault.address, amount);
-    await ousdVault.connect(user).mint(usdc.address, amount, amount);
+    await ousdVault.connect(user).mint(amount);
 
     const gov = await ousdVault.governor();
     const tx = await ousdVault
@@ -1027,9 +1027,7 @@ describe("Fork Test: Curve AMO OUSD strategy", function () {
       await usdc
         .connect(nick)
         .approve(ousdVault.address, amount.mul(101).div(10));
-      await ousdVault
-        .connect(nick)
-        .mint(usdc.address, amount.mul(101).div(10), amount);
+      await ousdVault.connect(nick).mint(amount.mul(101).div(10));
       await ousd.connect(nick).approve(curvePool.address, amount);
       // prettier-ignore
       await curvePool
@@ -1094,7 +1092,7 @@ describe("Fork Test: Curve AMO OUSD strategy", function () {
       await usdc.connect(nick).approve(ousdVault.address, ousdAmount.mul(2));
       await ousdVault
         .connect(nick)
-        .mint(usdc.address, ousdAmount.mul(101).div(100).div(1e12), 0);
+        .mint(ousdAmount.mul(101).div(100).div(1e12));
       await ousd.connect(nick).approve(curvePool.address, ousdAmount);
       // prettier-ignore
       await curvePool
