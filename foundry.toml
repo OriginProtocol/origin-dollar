@@ -1,0 +1,36 @@
+[profile.default]
+src = "contracts/contracts"
+out = "contracts/out"
+script = "contracts/scripts"
+libs = ["dependencies", "contracts/node_modules"]
+broadcast = "contracts/broadcast"
+verbosity = 3
+auto_detect_remappings = false
+viaIR = true
+etherscan_api_key = "${ETHERSCAN_API_KEY}"
+fs_permissions = [{ access = "read-write", path = "./"}]
+
+remappings = [
+    "@openzeppelin/=contracts/node_modules/@openzeppelin",
+    "@chainlink/=contracts/node_modules/@chainlink",
+    "@layerzerolabs/=contracts/node_modules/@layerzerolabs",
+    "hardhat/=contracts/node_modules/hardhat",
+    "solidity-bytes-utils/=contracts/node_modules/solidity-bytes-utils/",
+    "forge-std/=dependencies/forge-std-1.10.0/src",
+]
+
+[fmt]
+line_length = 100
+tab_width = 2
+bracket_spacing = true
+
+[dependencies]
+forge-std = "1.10.0"
+
+[soldeer]
+recursive_deps = false
+remappings_version = false
+remappings_generate = false
+remappings_regenerate = false
+remappings_prefix = "@"
+remappings_location = "config"

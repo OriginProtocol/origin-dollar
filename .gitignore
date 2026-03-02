@@ -65,6 +65,10 @@ contracts/.localKeyValueStorage.mainnet
 contracts/.localKeyValueStorage.holesky
 contracts/.localKeyValueStorage.base
 contracts/scripts/defender-actions/dist/
+contracts/broadcast/
+contracts/out/
+cache/
+dependencies/
 
 contracts/lib/defender-actions/dist/
 
@@ -90,3 +94,8 @@ unit-coverage
 
 # Certora #
 .certora_internal
+
+
+# Soldeer
+foundry/dependencies
+soldeer.lock
