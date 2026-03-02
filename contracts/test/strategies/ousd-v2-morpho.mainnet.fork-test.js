@@ -11,7 +11,7 @@ const { impersonateAndFund } = require("../../utils/signers");
 
 const log = require("../../utils/logger")("test:fork:ousd-v2-morpho");
 
-describe("ForkTest: Yearn's Morpho OUSD v2 Strategy", function () {
+describe.only("ForkTest: Yearn's Morpho OUSD v2 Strategy", function () {
   this.timeout(0);
 
   // Retry up to 3 times on CI

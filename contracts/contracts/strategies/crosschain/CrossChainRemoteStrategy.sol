@@ -11,13 +11,16 @@ pragma solidity ^0.8.0;
  */
 
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
 import { IERC20 } from "../../utils/InitializableAbstractStrategy.sol";
 import { IERC4626 } from "../../../lib/openzeppelin/interfaces/IERC4626.sol";
+import { IVaultV2 } from "../../interfaces/morpho/IVaultV2.sol";
 import { Generalized4626Strategy } from "../Generalized4626Strategy.sol";
 import { AbstractCCTPIntegrator } from "./AbstractCCTPIntegrator.sol";
 import { CrossChainStrategyHelper } from "./CrossChainStrategyHelper.sol";
 import { InitializableAbstractStrategy } from "../../utils/InitializableAbstractStrategy.sol";
 import { Strategizable } from "../../governance/Strategizable.sol";
+import { MorphoV2VaultUtils } from "../MorphoV2VaultUtils.sol";
 
 contract CrossChainRemoteStrategy is
     AbstractCCTPIntegrator,
@@ -140,10 +143,19 @@ contract CrossChainRemoteStrategy is
         nonReentrant
     {
         IERC4626 platform = IERC4626(platformAddress);
+        uint256 availableMorphoVault = MorphoV2VaultUtils.maxWithdrawableAssets(
+            platformAddress,
+            usdcToken
+        );
+        uint256 amountToWithdraw = Math.min(
+            availableMorphoVault,
+            platform.previewRedeem(platform.balanceOf(address(this)))
+        );
+
         _withdraw(
             address(this),
             usdcToken,
-            platform.previewRedeem(platform.balanceOf(address(this)))
+            amountToWithdraw
         );
     }
 

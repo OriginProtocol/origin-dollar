@@ -7,32 +7,20 @@ pragma solidity ^0.8.0;
  * @author Origin Protocol Inc
  */
 import { Generalized4626Strategy } from "./Generalized4626Strategy.sol";
+import { MorphoV2VaultUtils } from "./MorphoV2VaultUtils.sol";
 import { IVaultV2 } from "../interfaces/morpho/IVaultV2.sol";
-import { IERC4626 } from "../../lib/openzeppelin/interfaces/IERC4626.sol";
-import { IMorphoV2Adapter } from "../interfaces/morpho/IMorphoV2Adapter.sol";
 import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
 
 contract MorphoV2Strategy is Generalized4626Strategy {
-
-    IMorphoV2Adapter public immutable expectedAdapter;
 
     /**
      * @param _baseConfig Base strategy config with Morpho V2 Vault and
      * vaultAddress (OToken Vault contract), eg VaultProxy or OETHVaultProxy
      * @param _assetToken Address of the ERC-4626 asset token. e.g. USDC
-     * @param _expectedAdapter The Morpho V1 marketplace adapter address that is expected to offer
-     *        additional liquidity for the Morpho V2 vault. The nature of the Morpho V2 vaults is that the
-     *        adapter can be switched for another (type of) adapter. Which could point to Morpho V2 vault,
-     *        or future V2 Market not yet introduced. The `withdrawAll` function of this strategy only supports
-     *        Morpho V1 vault as the underlying liquidity source. For that reason the expected adapter must be
-     *        confirmed to be a Morpho V1 adapter.
      */
-    constructor(BaseStrategyConfig memory _baseConfig, address _assetToken, address _expectedAdapter)
+    constructor(BaseStrategyConfig memory _baseConfig, address _assetToken)
         Generalized4626Strategy(_baseConfig, _assetToken)
-    {
-        require(_expectedAdapter != address(0), "Expected adapter must be set");
-        expectedAdapter = IMorphoV2Adapter(_expectedAdapter);
-    }
+    {}
 
     /**
      * @notice Remove all the liquidity that is available in the Morpho V2 vault.
@@ -52,14 +40,13 @@ contract MorphoV2Strategy is Generalized4626Strategy {
         nonReentrant
     {
         uint256 availableMorphoVault = _maxWithdraw();
-
-        uint256 strategyAssetBalance = checkBalance(address(assetToken));
         uint256 balanceToWithdraw = Math.min(
             availableMorphoVault,
-            strategyAssetBalance
+            checkBalance(address(assetToken))
         );
 
         if (balanceToWithdraw > 0) {
+            // slither-disable-next-line unused-return
             IVaultV2(platformAddress).withdraw(
                 balanceToWithdraw,
                 vaultAddress,
@@ -83,21 +70,9 @@ contract MorphoV2Strategy is Generalized4626Strategy {
         view
         returns (uint256 availableAssetLiquidity)
     {
-        availableAssetLiquidity = assetToken.balanceOf(platformAddress);
-
-        address liquidityAdapter = IVaultV2(platformAddress).liquidityAdapter();
-        // This strategy can only safely calculate and withdraw additional liquidity when
-        // the liquidity adapter is set to the expected Morpho V1 Vault adapter. If that configuration
-        // changes the additional available liquidity can not be calculated anymore.
-        if (
-            liquidityAdapter == address(expectedAdapter)
-        ) {
-            // adapter representing one Morpho V1 vault
-            address underlyingVault = IMorphoV2Adapter(liquidityAdapter)
-                .morphoVaultV1();
-            availableAssetLiquidity += IERC4626(underlyingVault).maxWithdraw(
-                liquidityAdapter
-            );
-        }
+        availableAssetLiquidity = MorphoV2VaultUtils.maxWithdrawableAssets(
+            platformAddress,
+            address(assetToken)
+        );
     }
 }

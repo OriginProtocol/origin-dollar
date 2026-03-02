@@ -3,7 +3,7 @@ const { deploymentWithGovernanceProposal } = require("../../utils/deploy");
 
 module.exports = deploymentWithGovernanceProposal(
   {
-    deployName: "168_upgrade_ousd_morpho_v2_strategy",
+    deployName: "179_upgrade_ousd_morpho_v2_strategy",
     forceDeploy: false,
     reduceQueueTime: true,
     deployerIsProposer: false,
@@ -19,8 +19,7 @@ module.exports = deploymentWithGovernanceProposal(
       "MorphoV2Strategy",
       [
         [addresses.mainnet.MorphoOUSDv2Vault, cVaultProxy.address],
-        addresses.mainnet.USDC,
-        addresses.mainnet.MorphoOUSDv2Adapter,
+        addresses.mainnet.USDC
       ]
     );
 
