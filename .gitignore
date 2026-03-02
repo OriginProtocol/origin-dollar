@@ -85,6 +85,7 @@ coverage
 coverage.json
 fork-coverage
 unit-coverage
+lcov.info
 
 .VSCodeCounter
 

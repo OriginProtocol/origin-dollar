@@ -10,3 +10,10 @@ version = "1.9.7"
 url = "https://soldeer-revisions.s3.amazonaws.com/forge-std/1_9_7_28-04-2025_15:55:08_forge-std-1.9.zip"
 checksum = "8d9e0a885fa8ee6429a4d344aeb6799119f6a94c7c4fe6f188df79b0dce294ba"
 integrity = "9e60fdba82bc374df80db7f2951faff6467b9091873004a3d314cf0c084b3c7d"
+
+[[dependencies]]
+name = "solmate"
+version = "89365b880c4f3c786bdd453d4b8e8fe410344a69"
+url = "https://soldeer-revisions.s3.amazonaws.com/solmate/89365b880c4f3c786bdd453d4b8e8fe410344a69_25-08-2025_15:48:50_solmate-89365b880c4f3c786bdd453d4b8e8fe410344a69.zip"
+checksum = "76a5ec8e8a119288a318d6220331f985ba7a3278edf558402232782736066dd0"
+integrity = "a70931c29b02514a8a2a29f58f689c3ed0448b8f58dc8ba0ad34fa2037531c3d"

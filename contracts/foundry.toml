@@ -1,5 +1,6 @@
 [profile.default]
 src = "contracts"
+test = "tests"
 out = "out"
 libs = ["dependencies", "lib"]
 auto_detect_remappings = false
@@ -31,6 +32,8 @@ remappings = [
   "@layerzerolabs/oft-evm/=dependencies/@layerzerolabs-oft-evm-3.1.4/package/",
   "@layerzerolabs/oapp-evm/=dependencies/@layerzerolabs-oapp-evm-0.3.3/package/",
   "forge-std/=dependencies/forge-std-1.9.7/src/",
+  "tests/=tests/",
+  "@solmate/=dependencies/solmate-89365b880c4f3c786bdd453d4b8e8fe410344a69/src/"
 ]
 
 [lint]
@@ -38,6 +41,7 @@ lint_on_build = false
 
 [dependencies]
 forge-std = "1.9.7"
+solmate = "89365b880c4f3c786bdd453d4b8e8fe410344a69"
 "@openzeppelin-contracts" = { version = "4.4.2", git = "https://github.com/OpenZeppelin/openzeppelin-contracts.git", rev = "b53c43242fc9c0e435b66178c3847c4a1b417cc1" }
 # The following npm packages are installed manually (Soldeer 0.9.0 does not support tgz):
 # cd dependencies && mkdir <name> && tar -xzf <url> -C <name>
