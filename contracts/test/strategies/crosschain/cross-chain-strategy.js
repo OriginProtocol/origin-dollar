@@ -102,6 +102,20 @@ describe("ForkTest: CrossChainRemoteStrategy", function () {
     );
   });
 
+  it("Should revert withdrawAll when morpho vault liquidity adapter is incompatible", async function () {
+    const { morphoVault } = fixture;
+
+    // Misconfigure adapter to an invalid value that does not implement IMorphoV2Adapter.
+    await morphoVault
+      .connect(governor)
+      .setLiquidityAdapter(morphoVault.address);
+
+    await expect(crossChainRemoteStrategy.connect(governor).withdrawAll())
+      .to.be.revertedWithCustomError(
+        "IncompatibleAdapter(address)"
+      );
+  });
+
   // Checks the diff in the total expected value in the vault
   // (plus accompanying strategy value)
   const assertVaultTotalValue = async (amountExpected) => {
