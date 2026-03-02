@@ -152,11 +152,13 @@ contract CrossChainRemoteStrategy is
             platform.previewRedeem(platform.balanceOf(address(this)))
         );
 
-        _withdraw(
-            address(this),
-            usdcToken,
-            amountToWithdraw
-        );
+        if (amountToWithdraw > 0) {
+            _withdraw(
+                address(this),
+                usdcToken,
+                amountToWithdraw
+            );
+        }
     }
 
     /// @inheritdoc AbstractCCTPIntegrator

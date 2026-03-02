@@ -12,7 +12,7 @@ const { encodeBalanceCheckMessageBody } = require("./_crosschain-helpers");
 const loadFixture = createFixtureLoader(crossChainFixtureUnit);
 const DAY_IN_SECONDS = 86400;
 
-describe.only("ForkTest: CrossChainRemoteStrategy", function () {
+describe("ForkTest: CrossChainRemoteStrategy", function () {
   this.timeout(0);
 
   // Retry up to 3 times on CI
@@ -353,6 +353,9 @@ describe.only("ForkTest: CrossChainRemoteStrategy", function () {
     await expect(
       await crossChainRemoteStrategy.checkBalance(usdc.address)
     ).to.eq(await units("0", usdc));
+
+    // calling withdrawAll a second time should not fail
+    await directWithdrawAllFromRemoteStrategy();
   });
 
   it("Should fail when a withdrawal too large is requested on the remote strategy", async function () {
