@@ -1,55 +1,57 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import { PoolBoosterMerkl } from "./PoolBoosterMerkl.sol";
+import { BeaconProxy } from "@openzeppelin/contracts/proxy/beacon/BeaconProxy.sol";
+import { UpgradeableBeacon } from "@openzeppelin/contracts/proxy/beacon/UpgradeableBeacon.sol";
 import { AbstractPoolBoosterFactory, IPoolBoostCentralRegistry } from "./AbstractPoolBoosterFactory.sol";
 
-/**
- * @title Pool booster factory for creating Merkl pool boosters.
- * @author Origin Protocol Inc
- */
+/// @title PoolBoosterFactoryMerkl
+/// @author Origin Protocol
+/// @notice Factory for creating Merkl pool boosters using BeaconProxy.
 contract PoolBoosterFactoryMerkl is AbstractPoolBoosterFactory {
-    uint256 public constant version = 1;
+    ////////////////////////////////////////////////////
+    /// --- CONSTANTS
+    ////////////////////////////////////////////////////
 
-    /// @notice address of the Merkl distributor
-    address public merklDistributor;
+    /// @notice Contract version
+    string public constant VERSION = "1.0.0";
 
-    /// @notice event emitted when the Merkl distributor is updated
-    event MerklDistributorUpdated(address newDistributor);
+    ////////////////////////////////////////////////////
+    /// --- STORAGE
+    ////////////////////////////////////////////////////
 
-    /**
-     * @param _oToken address of the OToken token
-     * @param _governor address governor
-     * @param _centralRegistry address of the central registry
-     * @param _merklDistributor address of the Merkl distributor
-     */
+    /// @notice Address of the UpgradeableBeacon
+    address public beacon;
+
+    ////////////////////////////////////////////////////
+    /// --- CONSTRUCTOR
+    ////////////////////////////////////////////////////
+
+    /// @param _oToken Address of the OToken
+    /// @param _governor Address of the governor
+    /// @param _centralRegistry Address of the central registry
+    /// @param _beacon Address of the UpgradeableBeacon
     constructor(
         address _oToken,
         address _governor,
         address _centralRegistry,
-        address _merklDistributor
+        address _beacon
     ) AbstractPoolBoosterFactory(_oToken, _governor, _centralRegistry) {
-        _setMerklDistributor(_merklDistributor);
+        require(_beacon != address(0), "Invalid beacon address");
+        beacon = _beacon;
     }
 
-    /**
-     * @dev Create a Pool Booster for Merkl.
-     * @param _campaignType The type of campaign to create. This is used to determine the type of
-     *        bribe contract to create. The type is defined in the MerklDistributor contract.
-     * @param _ammPoolAddress address of the AMM pool where the yield originates from
-     * @param _campaignDuration The duration of the campaign in seconds
-     * @param campaignData The data to be used for the campaign. This is used to determine the type of
-     *        bribe contract to create. The type is defined in the MerklDistributor contract.
-     *        This should be fetched from the Merkl UI.
-     * @param _salt A unique number that affects the address of the pool booster created. Note: this number
-     *        should match the one from `computePoolBoosterAddress` in order for the final deployed address
-     *        and pre-computed address to match
-     */
+    ////////////////////////////////////////////////////
+    /// --- CORE LOGIC
+    ////////////////////////////////////////////////////
+
+    /// @notice Create a Pool Booster for Merkl using a BeaconProxy
+    /// @param _ammPoolAddress Address of the AMM pool
+    /// @param _initData Encoded call data for initializing the proxy
+    /// @param _salt Unique number that determines the proxy address
     function createPoolBoosterMerkl(
-        uint32 _campaignType,
         address _ammPoolAddress,
-        uint32 _campaignDuration,
-        bytes calldata campaignData,
+        bytes calldata _initData,
         uint256 _salt
     ) external onlyGovernor {
         require(
@@ -57,89 +59,81 @@ contract PoolBoosterFactoryMerkl is AbstractPoolBoosterFactory {
             "Invalid ammPoolAddress address"
         );
         require(_salt > 0, "Invalid salt");
-        require(_campaignDuration > 1 hours, "Invalid campaign duration");
-        require(campaignData.length > 0, "Invalid campaign data");
+        require(
+            poolBoosterFromPool[_ammPoolAddress].boosterAddress == address(0),
+            "Pool booster already exists"
+        );
 
-        address poolBoosterAddress = _deployContract(
-            abi.encodePacked(
-                type(PoolBoosterMerkl).creationCode,
-                abi.encode(
-                    oToken,
-                    merklDistributor,
-                    _campaignDuration,
-                    _campaignType,
-                    governor(),
-                    campaignData
-                )
-            ),
-            _salt
+        address proxy = address(
+            new BeaconProxy{ salt: bytes32(_salt) }(beacon, _initData)
         );
 
         _storePoolBoosterEntry(
-            poolBoosterAddress,
+            proxy,
             _ammPoolAddress,
             IPoolBoostCentralRegistry.PoolBoosterType.MerklBooster
         );
     }
 
-    /**
-     * @dev Create a Pool Booster for Merkl.
-     * @param _campaignType The type of campaign to create. This is used to determine the type of
-     *        bribe contract to create. The type is defined in the MerklDistributor contract.
-     * @param _ammPoolAddress address of the AMM pool where the yield originates from
-     * @param _salt A unique number that affects the address of the pool booster created. Note: this number
-     *        should match the one from `createPoolBoosterMerkl` in order for the final deployed address
-     *        and pre-computed address to match
-     */
-    function computePoolBoosterAddress(
-        uint32 _campaignType,
-        address _ammPoolAddress,
-        uint32 _campaignDuration,
-        bytes calldata campaignData,
-        uint256 _salt
-    ) external view returns (address) {
-        require(
-            _ammPoolAddress != address(0),
-            "Invalid ammPoolAddress address"
-        );
-        require(_salt > 0, "Invalid salt");
-        require(_campaignDuration > 1 hours, "Invalid campaign duration");
-        require(campaignData.length > 0, "Invalid campaign data");
-
-        return
-            _computeAddress(
-                abi.encodePacked(
-                    type(PoolBoosterMerkl).creationCode,
-                    abi.encode(
-                        oToken,
-                        merklDistributor,
-                        _campaignDuration,
-                        _campaignType,
-                        governor(),
-                        campaignData
-                    )
-                ),
-                _salt
-            );
-    }
-
-    /**
-     * @dev Set the address of the Merkl distributor
-     * @param _merklDistributor The address of the Merkl distributor
-     */
-    function setMerklDistributor(address _merklDistributor)
-        external
+    /// @notice Calls bribe() on all pool boosters, skipping those in the exclusion list
+    /// @param _exclusionList A list of pool booster addresses to skip
+    function bribeAll(address[] memory _exclusionList)
+        public
+        override
         onlyGovernor
     {
-        _setMerklDistributor(_merklDistributor);
+        super.bribeAll(_exclusionList);
     }
 
-    function _setMerklDistributor(address _merklDistributor) internal {
-        require(
-            _merklDistributor != address(0),
-            "Invalid merklDistributor address"
+    /// @notice Removes a pool booster from the internal list
+    /// @param _poolBoosterAddress Address of the pool booster to remove
+    function removePoolBooster(address _poolBoosterAddress)
+        external
+        override
+        onlyGovernor
+    {
+        uint256 boostersLen = poolBoosters.length;
+        bool found = false;
+        for (uint256 i = 0; i < boostersLen; ++i) {
+            if (poolBoosters[i].boosterAddress == _poolBoosterAddress) {
+                delete poolBoosterFromPool[poolBoosters[i].ammPoolAddress];
+                poolBoosters[i] = poolBoosters[boostersLen - 1];
+                poolBoosters.pop();
+                centralRegistry.emitPoolBoosterRemoved(_poolBoosterAddress);
+                found = true;
+                break;
+            }
+        }
+        require(found, "Pool booster not found");
+    }
+
+    ////////////////////////////////////////////////////
+    /// --- VIEW FUNCTIONS
+    ////////////////////////////////////////////////////
+
+    /// @notice Compute the deterministic address of a BeaconProxy
+    /// @param _salt Unique number matching the one used in createPoolBoosterMerkl
+    /// @param _initData Encoded call data matching the one used in createPoolBoosterMerkl
+    /// @return The predicted proxy address
+    function computePoolBoosterAddress(uint256 _salt, bytes calldata _initData)
+        external
+        view
+        returns (address)
+    {
+        require(_salt > 0, "Invalid salt");
+
+        bytes memory bytecode = abi.encodePacked(
+            type(BeaconProxy).creationCode,
+            abi.encode(beacon, _initData)
         );
-        merklDistributor = _merklDistributor;
-        emit MerklDistributorUpdated(_merklDistributor);
+        bytes32 hash = keccak256(
+            abi.encodePacked(
+                bytes1(0xff),
+                address(this),
+                bytes32(_salt),
+                keccak256(bytecode)
+            )
+        );
+        return address(uint160(uint256(hash)));
     }
 }

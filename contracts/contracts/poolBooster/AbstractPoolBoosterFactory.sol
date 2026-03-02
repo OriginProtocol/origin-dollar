@@ -52,7 +52,7 @@ contract AbstractPoolBoosterFactory is Governable {
      * @param _exclusionList A list of pool booster addresses to skip when
      *        calling this function.
      */
-    function bribeAll(address[] memory _exclusionList) external {
+    function bribeAll(address[] memory _exclusionList) public virtual {
         uint256 lengthI = poolBoosters.length;
         for (uint256 i = 0; i < lengthI; i++) {
             address poolBoosterAddress = poolBoosters[i].boosterAddress;
@@ -80,6 +80,7 @@ contract AbstractPoolBoosterFactory is Governable {
      */
     function removePoolBooster(address _poolBoosterAddress)
         external
+        virtual
         onlyGovernor
     {
         uint256 boostersLen = poolBoosters.length;
