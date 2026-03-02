@@ -90,3 +90,7 @@ unit-coverage
 
 # Certora #
 .certora_internal
+
+# Foundry / Soldeer
+contracts/dependencies/
+contracts/out/

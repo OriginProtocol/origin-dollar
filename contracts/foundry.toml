@@ -1,0 +1,55 @@
+[profile.default]
+src = "contracts"
+out = "out"
+libs = ["dependencies", "lib"]
+auto_detect_remappings = false
+solc_version = "0.8.28"
+optimizer = true
+optimizer_runs = 200
+
+# Remappings order matters: transitive (inside deps) first, then root-level.
+remappings = [
+  # --- Transitive remappings (resolve imports inside Soldeer packages) ---
+  # LZ oft-evm imports OZ + oapp-evm
+  "dependencies/@layerzerolabs-oft-evm-3.1.4/package/:@openzeppelin/contracts/=dependencies/@openzeppelin-contracts-4.4.2/contracts/",
+  "dependencies/@layerzerolabs-oft-evm-3.1.4/package/:@layerzerolabs/oapp-evm/=dependencies/@layerzerolabs-oapp-evm-0.3.3/package/",
+  # LZ oapp-evm imports OZ + protocol-v2 + messagelib-v2 + solidity-bytes-utils
+  "dependencies/@layerzerolabs-oapp-evm-0.3.3/package/:@openzeppelin/contracts/=dependencies/@openzeppelin-contracts-4.4.2/contracts/",
+  "dependencies/@layerzerolabs-oapp-evm-0.3.3/package/:@layerzerolabs/lz-evm-protocol-v2/=dependencies/@layerzerolabs-lz-evm-protocol-v2-3.0.160/package/",
+  "dependencies/@layerzerolabs-oapp-evm-0.3.3/package/:@layerzerolabs/lz-evm-messagelib-v2/=dependencies/@layerzerolabs-lz-evm-messagelib-v2-3.0.160/package/",
+  "dependencies/@layerzerolabs-oapp-evm-0.3.3/package/:solidity-bytes-utils/=dependencies/solidity-bytes-utils-0.8.4/package/",
+  # LZ messagelib-v2 imports protocol-v2 + solidity-bytes-utils
+  "dependencies/@layerzerolabs-lz-evm-messagelib-v2-3.0.160/package/:@layerzerolabs/lz-evm-protocol-v2/=dependencies/@layerzerolabs-lz-evm-protocol-v2-3.0.160/package/",
+  "dependencies/@layerzerolabs-lz-evm-messagelib-v2-3.0.160/package/:solidity-bytes-utils/=dependencies/solidity-bytes-utils-0.8.4/package/",
+  # LZ protocol-v2 imports OZ + solidity-bytes-utils
+  "dependencies/@layerzerolabs-lz-evm-protocol-v2-3.0.160/package/:@openzeppelin/contracts/=dependencies/@openzeppelin-contracts-4.4.2/contracts/",
+  "dependencies/@layerzerolabs-lz-evm-protocol-v2-3.0.160/package/:solidity-bytes-utils/=dependencies/solidity-bytes-utils-0.8.4/package/",
+
+  # --- Root-level remappings (resolve imports from contracts/contracts/*.sol) ---
+  "@openzeppelin/contracts/=dependencies/@openzeppelin-contracts-4.4.2/contracts/",
+  "@chainlink/contracts-ccip/=dependencies/@chainlink-contracts-ccip-1.2.1/package/",
+  "@layerzerolabs/oft-evm/=dependencies/@layerzerolabs-oft-evm-3.1.4/package/",
+  "@layerzerolabs/oapp-evm/=dependencies/@layerzerolabs-oapp-evm-0.3.3/package/",
+  "forge-std/=dependencies/forge-std-1.9.7/src/",
+]
+
+[lint]
+lint_on_build = false
+
+[dependencies]
+forge-std = "1.9.7"
+"@openzeppelin-contracts" = { version = "4.4.2", git = "https://github.com/OpenZeppelin/openzeppelin-contracts.git", rev = "b53c43242fc9c0e435b66178c3847c4a1b417cc1" }
+# The following npm packages are installed manually (Soldeer 0.9.0 does not support tgz):
+# cd dependencies && mkdir <name> && tar -xzf <url> -C <name>
+"@chainlink-contracts-ccip" = { version = "1.2.1", url = "https://registry.npmjs.org/@chainlink/contracts-ccip/-/contracts-ccip-1.2.1.tgz" }
+"@layerzerolabs-oft-evm" = { version = "3.1.4", url = "https://registry.npmjs.org/@layerzerolabs/oft-evm/-/oft-evm-3.1.4.tgz" }
+"@layerzerolabs-oapp-evm" = { version = "0.3.3", url = "https://registry.npmjs.org/@layerzerolabs/oapp-evm/-/oapp-evm-0.3.3.tgz" }
+"@layerzerolabs-lz-evm-protocol-v2" = { version = "3.0.160", url = "https://registry.npmjs.org/@layerzerolabs/lz-evm-protocol-v2/-/lz-evm-protocol-v2-3.0.160.tgz" }
+"@layerzerolabs-lz-evm-messagelib-v2" = { version = "3.0.160", url = "https://registry.npmjs.org/@layerzerolabs/lz-evm-messagelib-v2/-/lz-evm-messagelib-v2-3.0.160.tgz" }
+"solidity-bytes-utils" = { version = "0.8.4", url = "https://registry.npmjs.org/solidity-bytes-utils/-/solidity-bytes-utils-0.8.4.tgz" }
+
+[soldeer]
+recursive_deps = false
+remappings_generate = false
+remappings_regenerate = false
+remappings_location = "config"
