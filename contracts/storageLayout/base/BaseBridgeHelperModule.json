@@ -103,5 +103,6 @@
       "label": "uint256",
       "numberOfBytes": "32"
     }
-  }
+  },
+  "namespaces": {}
 }

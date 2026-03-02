@@ -1,5 +1,5 @@
 {
-  "solcVersion": "0.8.7",
+  "solcVersion": "0.8.28",
   "storage": [
     {
       "label": "initialized",
@@ -103,7 +103,7 @@
       "slot": "157",
       "type": "t_uint128",
       "contract": "BridgedWOETHStrategy",
-      "src": "contracts/strategies/BridgedWOETHStrategy.sol:27"
+      "src": "contracts/strategies/BridgedWOETHStrategy.sol:26"
     },
     {
       "label": "maxPriceDiffBps",
@@ -111,7 +111,7 @@
       "slot": "157",
       "type": "t_uint128",
       "contract": "BridgedWOETHStrategy",
-      "src": "contracts/strategies/BridgedWOETHStrategy.sol:28"
+      "src": "contracts/strategies/BridgedWOETHStrategy.sol:27"
     }
   ],
   "types": {
@@ -151,5 +151,6 @@
       "label": "uint256",
       "numberOfBytes": "32"
     }
-  }
+  },
+  "namespaces": {}
 }
