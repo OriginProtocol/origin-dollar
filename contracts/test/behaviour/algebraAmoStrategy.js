@@ -273,6 +273,22 @@ const shouldBehaveLikeAlgebraAmoStrategy = (contextFunction) => {
           await expect(tx).to.be.revertedWith("Caller is not the Governor");
         }
       });
+      it("Governor should fail to set max depeg too small (1bp)", async () => {
+        const { timelock, amoStrategy } = fixture;
+
+        const tx = amoStrategy
+          .connect(timelock)
+          .setMaxDepeg(parseUnits("0.0001"));
+        await expect(tx).to.be.revertedWith("Invalid max depeg range");
+      });
+      it("Governor should fail to set max depeg too large (1100bp)", async () => {
+        const { timelock, amoStrategy } = fixture;
+
+        const tx = amoStrategy
+          .connect(timelock)
+          .setMaxDepeg(parseUnits("0.11"));
+        await expect(tx).to.be.revertedWith("Invalid max depeg range");
+      });
     });
 
     describe("with asset token in the vault", () => {

@@ -842,6 +842,10 @@ contract StableSwapAMMStrategy is InitializableAbstractStrategy {
      * eg 0.01e18 or 1e16 is 1% which is 100 basis points.
      */
     function setMaxDepeg(uint256 _maxDepeg) external onlyGovernor {
+        require(
+            _maxDepeg >= 0.001e18 && _maxDepeg <= 0.1e18,
+            "Invalid max depeg range"
+        );
         maxDepeg = _maxDepeg;
 
         emit MaxDepegUpdated(_maxDepeg);
