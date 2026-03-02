@@ -125,7 +125,7 @@ contract PoolBoosterMerklV2 is IPoolBooster, Strategizable, Initializable {
         }
 
         // Approve the bribe contract to spend the reward token
-        IERC20(rewardToken).approve(address(merklDistributor), balance);
+        IERC20(rewardToken).safeApprove(address(merklDistributor), balance);
 
         // Notify the bribe contract of the reward amount
         merklDistributor.createCampaign(
