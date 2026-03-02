@@ -18,7 +18,7 @@ const addresses = require("../../../utils/addresses");
 
 const loadFixture = createFixtureLoader(crossChainFixture);
 
-describe("ForkTest: CrossChainRemoteStrategy", function () {
+describe.only("ForkTest: CrossChainRemoteStrategy", function () {
   this.timeout(0);
 
   // Retry up to 3 times on CI

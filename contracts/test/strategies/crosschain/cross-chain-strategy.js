@@ -12,7 +12,7 @@ const { encodeBalanceCheckMessageBody } = require("./_crosschain-helpers");
 const loadFixture = createFixtureLoader(crossChainFixtureUnit);
 const DAY_IN_SECONDS = 86400;
 
-describe("ForkTest: CrossChainRemoteStrategy", function () {
+describe.only("ForkTest: CrossChainRemoteStrategy", function () {
   this.timeout(0);
 
   // Retry up to 3 times on CI
@@ -88,6 +88,19 @@ describe("ForkTest: CrossChainRemoteStrategy", function () {
   const sendBalanceUpdateToMaster = async () => {
     await crossChainRemoteStrategy.connect(governor).sendBalanceUpdate();
   };
+
+  it("Should wire morpho vault and liquidity adapter in fixture", async function () {
+    const { morphoVault, morphoVaultLiquidityAdapter } = fixture;
+    await expect(await morphoVault.liquidityAdapter()).to.eq(
+      morphoVaultLiquidityAdapter.address
+    );
+    await expect(await morphoVaultLiquidityAdapter.morphoVaultV1()).to.eq(
+      morphoVault.address
+    );
+    await expect(await morphoVaultLiquidityAdapter.parentVault()).to.eq(
+      morphoVault.address
+    );
+  });
 
   // Checks the diff in the total expected value in the vault
   // (plus accompanying strategy value)

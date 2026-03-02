@@ -854,6 +854,7 @@ const deploySonicSwapXAMOStrategyImplementation = async () => {
 const getCreate2ProxiesFilePath = async () => {
   const networkName =
     isFork || isForkTest || isCI ? "localhost" : await getNetworkName();
+  console.log(`Getting create2 proxies file for ${networkName}`);
   return path.resolve(
     __dirname,
     `./../deployments/${networkName}/create2Proxies.json`
@@ -1131,7 +1132,7 @@ const deployCrossChainUnitTestStrategy = async (usdcAddress) => {
     "CCTPMessageTransmitterMock"
   );
   const tokenMessenger = await ethers.getContract("CCTPTokenMessengerMock");
-  const c4626Vault = await ethers.getContract("MockERC4626Vault");
+  const c4626Vault = await ethers.getContract("MockMorphoV1Vault");
 
   await deployCrossChainMasterStrategyImpl(
     dMasterProxy.address,
