@@ -4,6 +4,9 @@ pragma solidity ^0.8.0;
 /**
  * @title Generalized 4626 Strategy
  * @notice Investment strategy for ERC-4626 Tokenized Vaults
+ * @dev This strategy should not be used for the Morpho V2 Vaults as those are not
+ *      completley ERC-4626 compliant - they don't implement the maxWithdraw() and 
+ *      maxRedeem() functions and rather return 0 when any of them is called.
  * @author Origin Protocol Inc
  */
 import { IERC4626 } from "../../lib/openzeppelin/interfaces/IERC4626.sol";
@@ -141,11 +144,13 @@ contract Generalized4626Strategy is InitializableAbstractStrategy {
         onlyVaultOrGovernor
         nonReentrant
     {
-        uint256 shareBalance = shareToken.balanceOf(address(this));
+        // @dev Don't use for Morpho V2 Vaults as below line will return 0
+        uint256 sharesToRedeem = IERC4626(platformAddress).maxRedeem(address(this));
+
         uint256 assetAmount = 0;
-        if (shareBalance > 0) {
+        if (sharesToRedeem > 0) {
             assetAmount = IERC4626(platformAddress).redeem(
-                shareBalance,
+                sharesToRedeem,
                 vaultAddress,
                 address(this)
             );

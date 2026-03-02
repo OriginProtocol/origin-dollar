@@ -2,7 +2,7 @@ const { expect } = require("chai");
 const { formatUnits, parseUnits } = require("ethers/lib/utils");
 
 const addresses = require("../../utils/addresses");
-const { canWithdrawAllFromMorphoOUSD } = require("../../utils/morpho");
+const { morphoWithdrawShortfall } = require("../../utils/morpho");
 const { getMerklRewards } = require("../../tasks/merkl");
 const { units, isCI } = require("../helpers");
 
@@ -223,26 +223,27 @@ describe("ForkTest: Yearn's Morpho OUSD v2 Strategy", function () {
       const strategyVaultShares = await morphoOUSDv2Vault.balanceOf(
         morphoOUSDv2Strategy.address
       );
+      const withdrawAllShortfall = await morphoWithdrawShortfall();
       const usdcWithdrawAmountExpected =
         await morphoOUSDv2Vault.convertToAssets(strategyVaultShares);
       expect(usdcWithdrawAmountExpected).to.be.gte(minBalance.sub(1));
-
+      // amount expected minus the shortfall due to not enough liquidity in the Morpho OUSD v1 Vault
+      const usdcWithdrawAmountAvailable =
+        usdcWithdrawAmountExpected.sub(withdrawAllShortfall);
       log(
-        `Expected to withdraw ${formatUnits(
+        `Wanted to withdraw ${formatUnits(
           usdcWithdrawAmountExpected,
           6
-        )} USDC`
+        )} USDC, adjusted for shortfall of ${formatUnits(
+          withdrawAllShortfall,
+          6
+        )} USDC totals to ${formatUnits(usdcWithdrawAmountAvailable, 6)} USDC`
       );
 
       const ousdSupplyBefore = await ousd.totalSupply();
       const vaultUSDCBalanceBefore = await usdc.balanceOf(vault.address);
 
       log("Before withdraw all from strategy");
-
-      const withdrawAllAllowed = await canWithdrawAllFromMorphoOUSD();
-
-      // If there is not enough liquidity in the Morpho OUSD v1 Vault, skip the withdrawAll test
-      if (withdrawAllAllowed === false) return;
 
       // Now try to withdraw all the WETH from the strategy
       const tx = await morphoOUSDv2Strategy.connect(vaultSigner).withdrawAll();
@@ -255,7 +256,7 @@ describe("ForkTest: Yearn's Morpho OUSD v2 Strategy", function () {
         morphoOUSDv2Vault.address,
         (amount) =>
           expect(amount).approxEqualTolerance(
-            usdcWithdrawAmountExpected,
+            usdcWithdrawAmountAvailable,
             0.01,
             "Withdrawal amount"
           ),
@@ -269,7 +270,7 @@ describe("ForkTest: Yearn's Morpho OUSD v2 Strategy", function () {
 
       // Check the USDC amount in the vault increases
       expect(await usdc.balanceOf(vault.address)).to.approxEqualTolerance(
-        vaultUSDCBalanceBefore.add(usdcWithdrawAmountExpected),
+        vaultUSDCBalanceBefore.add(usdcWithdrawAmountAvailable),
         0.01
       );
     });
@@ -335,11 +336,6 @@ describe("ForkTest: Yearn's Morpho OUSD v2 Strategy", function () {
     });
     it("Only vault and governor can withdraw all USDC from the strategy", async function () {
       const { morphoOUSDv2Strategy, strategist, timelock, josh } = fixture;
-
-      const withdrawAllAllowed = await canWithdrawAllFromMorphoOUSD();
-
-      // If there is not enough liquidity in the Morpho OUSD v1 Vault, skip the withdrawAll test
-      if (withdrawAllAllowed === false) return;
 
       for (const signer of [strategist, josh]) {
         const tx = morphoOUSDv2Strategy.connect(signer).withdrawAll();

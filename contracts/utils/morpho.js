@@ -25,7 +25,7 @@ async function morphoWithdrawShortfall() {
   );
 
   const maxWithdrawal = await morphoOUSDv1Vault.maxWithdraw(
-    addresses.mainnet.MorphoOUSDv2Adaptor
+    addresses.mainnet.MorphoOUSDv2Adapter
   );
 
   // check all funds can be withdrawn from the Morpho OUSD v2 Strategy
@@ -74,7 +74,7 @@ async function snapMorpho({ block }) {
   );
 
   const maxWithdrawal = await morphoOUSDv1Vault.maxWithdraw(
-    addresses.mainnet.MorphoOUSDv2Adaptor,
+    addresses.mainnet.MorphoOUSDv2Adapter,
     { blockTag }
   );
 
