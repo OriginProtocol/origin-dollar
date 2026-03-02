@@ -97,6 +97,10 @@ contract StableSwapAMMStrategy is InitializableAbstractStrategy {
 
         // Get the amount of OToken received from selling 1 asset. This is buying OToken.
         uint256 oTokenAmount = IPair(pool).getAmountOut(1e18, asset);
+
+        // If the pool is degenerate, then the pool is not valid and we can't deposit.
+        require(oTokenAmount > 0, "Pool degenerate");
+
         // Convert to a OToken/asset price = asset / OToken
         uint256 buyPrice = 1e36 / oTokenAmount;
 
