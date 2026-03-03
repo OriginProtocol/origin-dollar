@@ -539,6 +539,25 @@ describe("ForkTest: Consolidation of Staking Strategies", function () {
 
       await expect(tx).to.revertedWith("Source validator not staked");
     });
+    it("Fail to request consolidation with empty source validators", async () => {
+      const tx = consolidationController
+        .connect(adminSigner)
+        .requestConsolidation(
+          nativeStakingStrategy2.address,
+          [],
+          activeTargetPubKey,
+          { value: 0 }
+        );
+
+      await expect(tx).to.be.revertedWith("Empty source validators");
+      expect(await consolidationController.consolidationCount()).to.equal(0);
+      expect(await consolidationController.sourceStrategy()).to.equal(
+        ethers.constants.AddressZero
+      );
+      expect(await consolidationController.targetPubKeyHash()).to.equal(
+        ethers.constants.HashZero
+      );
+    });
     it("Fail to request consolidate from a validator that is EXITING state", async () => {
       const exitedValidatorPubKey = secondClusterPubKeys[0];
       // Exit a validator from the second cluster
