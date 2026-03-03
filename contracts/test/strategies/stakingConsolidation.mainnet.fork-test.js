@@ -375,6 +375,37 @@ describe("ForkTest: Consolidation of Staking Strategies", function () {
         )
       ).to.equal(3); // EXITING state
     });
+    it("Fail to request consolidation when consolidation fees exceed msg.value", async () => {
+      const sourceValidators = [
+        secondClusterPubKeys[0],
+        secondClusterPubKeys[1],
+      ];
+
+      // Get the current consolidation request fee
+      const result = await hre.ethers.provider.call({
+        to: addresses.mainnet.toConsensus.consolidation,
+        data: "0x",
+      });
+      const fee = hre.ethers.BigNumber.from(result);
+
+      // Send 2 times the fee to the native staking strategy to cover two requests
+      await hre.ethers.provider.send("hardhat_setBalance", [
+        nativeStakingStrategy2.address,
+        fee.mul(2).toHexString(),
+      ]);
+
+      const tx = consolidationController
+        .connect(adminSigner)
+        .requestConsolidation(
+          nativeStakingStrategy2.address,
+          sourceValidators,
+          activeTargetPubKey,
+          // Only send enough to one request, not two
+          { value: fee }
+        );
+
+      await expect(tx).to.be.revertedWith("Insufficient consolidation fee");
+    });
     it("Should request consolidation of a lot of validators from the second cluster", async () => {
       expect(
         await nativeStakingStrategy2.validatorsStates(
