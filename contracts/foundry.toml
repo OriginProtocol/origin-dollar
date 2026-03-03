@@ -43,14 +43,13 @@ lint_on_build = false
 forge-std = "1.9.7"
 solmate = "89365b880c4f3c786bdd453d4b8e8fe410344a69"
 "@openzeppelin-contracts" = { version = "4.4.2", git = "https://github.com/OpenZeppelin/openzeppelin-contracts.git", rev = "b53c43242fc9c0e435b66178c3847c4a1b417cc1" }
-# The following npm packages are installed manually (Soldeer 0.9.0 does not support tgz):
-# cd dependencies && mkdir <name> && tar -xzf <url> -C <name>
-"@chainlink-contracts-ccip" = { version = "1.2.1", url = "https://registry.npmjs.org/@chainlink/contracts-ccip/-/contracts-ccip-1.2.1.tgz" }
-"@layerzerolabs-oft-evm" = { version = "3.1.4", url = "https://registry.npmjs.org/@layerzerolabs/oft-evm/-/oft-evm-3.1.4.tgz" }
-"@layerzerolabs-oapp-evm" = { version = "0.3.3", url = "https://registry.npmjs.org/@layerzerolabs/oapp-evm/-/oapp-evm-0.3.3.tgz" }
-"@layerzerolabs-lz-evm-protocol-v2" = { version = "3.0.160", url = "https://registry.npmjs.org/@layerzerolabs/lz-evm-protocol-v2/-/lz-evm-protocol-v2-3.0.160.tgz" }
-"@layerzerolabs-lz-evm-messagelib-v2" = { version = "3.0.160", url = "https://registry.npmjs.org/@layerzerolabs/lz-evm-messagelib-v2/-/lz-evm-messagelib-v2-3.0.160.tgz" }
-"solidity-bytes-utils" = { version = "0.8.4", url = "https://registry.npmjs.org/solidity-bytes-utils/-/solidity-bytes-utils-0.8.4.tgz" }
+# The following npm packages are installed via install-deps.sh (Soldeer does not support tgz).
+# "@chainlink-contracts-ccip" v1.2.1
+# "@layerzerolabs-oft-evm" v3.1.4
+# "@layerzerolabs-oapp-evm" v0.3.3
+# "@layerzerolabs-lz-evm-protocol-v2" v3.0.160
+# "@layerzerolabs-lz-evm-messagelib-v2" v3.0.160
+# "solidity-bytes-utils" v0.8.4
 
 [soldeer]
 recursive_deps = false
