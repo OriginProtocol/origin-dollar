@@ -9,6 +9,10 @@ import {OUSD} from "contracts/token/OUSD.sol";
 import {OUSDVault} from "contracts/vault/OUSDVault.sol";
 import {OUSDProxy} from "contracts/proxies/Proxies.sol";
 import {VaultProxy} from "contracts/proxies/Proxies.sol";
+import {OETH} from "contracts/token/OETH.sol";
+import {OETHVault} from "contracts/vault/OETHVault.sol";
+import {OETHProxy} from "contracts/proxies/Proxies.sol";
+import {OETHVaultProxy} from "contracts/proxies/Proxies.sol";
 import {MockStrategy} from "contracts/mocks/MockStrategy.sol";
 import {MockNonRebasing} from "contracts/mocks/MockNonRebasing.sol";
 
@@ -54,6 +58,11 @@ abstract contract Base is Test {
     OUSDVault internal ousdVault;
     OUSDProxy internal ousdProxy;
     VaultProxy internal ousdVaultProxy;
+
+    OETH internal oeth;
+    OETHVault internal oethVault;
+    OETHProxy internal oethProxy;
+    OETHVaultProxy internal oethVaultProxy;
 
     //////////////////////////////////////////////////////
     /// --- MOCKS

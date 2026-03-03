@@ -35,8 +35,8 @@ forge-std/Test
             └─ Unit_Fuzz_<Contract>_<Feature>_Test      (fuzz/*.fuzz.t.sol)
 ```
 
-- `Base` creates actors (`alice`, `bobby`, …, `governor`, `strategist`, etc.) and declares shared contract/token references.
-- `Unit_Shared_Test` is **abstract** and owns all deployment + configuration logic.
+- `Base` creates actors (`alice`, `bobby`, …, `governor`, `strategist`, etc.) and declares **all contract state variables** (OUSD, OUSDVault, OETH, OETHVault, proxies, mocks, external tokens). **Never declare contract variables in `Shared.sol`** — all contract/token storage lives in `Base.sol` so it is shared across all test suites.
+- `Unit_Shared_Test` is **abstract** and owns all deployment + configuration logic. It assigns to the variables declared in `Base`, but does not re-declare them.
 - Concrete and fuzz test contracts inherit `Unit_Shared_Test` directly — no extra layers.
 
 ## 3. Shared Test Contract (`shared/Shared.sol`)
@@ -236,6 +236,7 @@ All commands must be run from the `contracts/` directory.
 ## 9. Checklist Before Submitting Tests
 
 - [ ] `shared/Shared.sol` is `abstract` and inherits `Base`
+- [ ] All contract/proxy/token state variables are declared in `Base.sol`, not in `Shared.sol`
 - [ ] `setUp()` follows the exact order: super → warp → mocks → contracts → config → fund → label
 - [ ] Concrete contracts use `Unit_Concrete_<Contract>_<Feature>_Test`
 - [ ] Fuzz contracts use `Unit_Fuzz_<Contract>_<Feature>_Test`
