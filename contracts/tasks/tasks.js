@@ -144,6 +144,7 @@ const {
   requestConsolidation,
   failConsolidation,
   confirmConsolidation,
+  getConsolidationFee,
 } = require("./consolidation");
 
 const { processCctpBridgeTransactions } = require("./crossChain");
@@ -2594,5 +2595,20 @@ subtask("confirmConsol", "Confirm a validator consolidation").setAction(
   confirmConsolidation
 );
 task("confirmConsol").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+subtask(
+  "consolFee",
+  "Display the current consolidation request fee from the EIP-7251 precompile"
+)
+  .addOptionalParam(
+    "block",
+    "Block number to query the fee at",
+    undefined,
+    types.int
+  )
+  .setAction(getConsolidationFee);
+task("consolFee").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
