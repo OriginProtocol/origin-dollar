@@ -480,6 +480,46 @@ describe("ForkTest: Consolidation of Staking Strategies", function () {
         )
       ).to.equal(3); // EXITING state
     });
+    it("Should skip snapBalances in requestConsolidation when a recent snap exists (OGVC-03)", async () => {
+      // After activateTargetValidators the snappedBalance.timestamp is 0 (cleared
+      // by verifyBalances), so we first take a legitimate snap and then call
+      // requestConsolidation before SNAP_BALANCES_DELAY elapses.
+
+      // SNAP_BALANCES_DELAY = 35 slots * 12 seconds = 420 seconds
+      const snapDelay = 35 * 12;
+      // Advance enough time for an initial snap to succeed
+      await advanceTime(snapDelay + 12);
+      await consolidationController.connect(registratorSigner).snapBalances();
+
+      // Record the timestamp of that snap
+      const { timestamp: timestampBefore } =
+        await compoundingStakingStrategy.snappedBalance();
+
+      // Advance only a few slots – still within SNAP_BALANCES_DELAY
+      await advanceTime(5 * 12); // 5 slots = 60 seconds
+
+      // requestConsolidation should succeed without emitting BalancesSnapped
+      const tx = await consolidationController
+        .connect(adminSigner)
+        .requestConsolidation(
+          nativeStakingStrategy2.address,
+          [secondClusterPubKeys[0]],
+          activeTargetPubKey,
+          { value: consolidationFee }
+        );
+
+      await expect(tx).to.not.emit(
+        compoundingStakingStrategy,
+        "BalancesSnapped"
+      );
+
+      // Record the timestamp of that snap
+      const { timestamp: timestampafter } =
+        await compoundingStakingStrategy.snappedBalance();
+
+      expect(timestampafter).to.equal(timestampBefore);
+      expect(await consolidationController.consolidationCount()).to.equal(1);
+    });
     it("Fail to request consolidation with duplicate source validators", async () => {
       const sourceValidators = [
         secondClusterPubKeys[0],
