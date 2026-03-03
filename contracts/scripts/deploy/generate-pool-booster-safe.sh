@@ -1,15 +1,19 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# ── Defaults ──────────────────────────────────────────────────────────────────
+# ── Known addresses ───────────────────────────────────────────────────────────
+OUSD="0x2A8e1E676Ec238d8A992307B495b45B3fEAa5e86"
+OETH="0x856c4Efb76C1D1AE02e20CEB03A2A6a08b0b8dC3"
+
+# ── Defaults (overridable via flags) ──────────────────────────────────────────
 REWARD_TOKEN=""
-FEE_COLLECTOR=""
-FEE=""
-CAMPAIGN_REMOTE_MANAGER=""
-VOTEMARKET=""
-FACTORY=""
+FEE_COLLECTOR="0x4FF1b9D9ba8558F5EAfCec096318eA0d8b541971"
+FEE="0"
+CAMPAIGN_REMOTE_MANAGER="0x53aD4Cd1F1e52DD02aa9FC4A8250A1b74F351CA2"
+VOTEMARKET="0x8c2c5A295450DDFf4CB360cA73FCCC12243D14D9"
+FACTORY="0xB6073788e5302122F4DfB6C5aD53a1EAC9cb0289"
 RPC_URL=""
-SAFE=""
+SAFE="0x4FF1b9D9ba8558F5EAfCec096318eA0d8b541971"
 GAUGES=()
 
 # ── Usage ─────────────────────────────────────────────────────────────────────
@@ -18,17 +22,20 @@ usage() {
 Usage: generate-pool-booster-safe.sh [OPTIONS] GAUGE_ADDRESS...
 
 Options:
-  --reward-token ADDRESS
-  --fee-collector ADDRESS
-  --fee UINT16
-  --campaign-remote-manager ADDRESS
-  --votemarket ADDRESS
-  --factory ADDRESS
+  --reward-token ADDRESS       Override auto-detected reward token (OUSD/OETH)
+  --fee-collector ADDRESS      (default: 0x4FF1b9D9ba8558F5EAfCec096318eA0d8b541971)
+  --fee UINT16                 (default: 0)
+  --campaign-remote-manager ADDRESS (default: 0x53aD4Cd1F1e52DD02aa9FC4A8250A1b74F351CA2)
+  --votemarket ADDRESS         (default: 0x8c2c5A295450DDFf4CB360cA73FCCC12243D14D9)
+  --factory ADDRESS            (default: 0xB6073788e5302122F4DfB6C5aD53a1EAC9cb0289)
   --rpc-url URL
-  --safe ADDRESS               Safe address (used in meta.createdFromSafeAddress)
+  --safe ADDRESS               (default: 0x4FF1b9D9ba8558F5EAfCec096318eA0d8b541971)
   -h, --help                   Show this help
 
 Positional arguments are gauge addresses (one or more).
+
+The reward token is auto-detected by inspecting pool coins for OUSD or OETH.
+All gauges must use the same reward token.
 
 Output: Safe Transaction Builder JSON written to stdout.
 
@@ -55,12 +62,10 @@ while [[ $# -gt 0 ]]; do
 done
 
 # ── Validate ──────────────────────────────────────────────────────────────────
-for var in REWARD_TOKEN FEE_COLLECTOR FEE CAMPAIGN_REMOTE_MANAGER VOTEMARKET FACTORY RPC_URL SAFE; do
-  if [[ -z "${!var}" ]]; then
-    echo "Error: --$(echo "$var" | tr '_' '-' | tr '[:upper:]' '[:lower:]') is required" >&2
-    exit 1
-  fi
-done
+if [[ -z "$RPC_URL" ]]; then
+  echo "Error: --rpc-url is required" >&2
+  exit 1
+fi
 
 if [[ ${#GAUGES[@]} -eq 0 ]]; then
   echo "Error: at least one gauge address is required" >&2
@@ -88,6 +93,37 @@ for gauge in "${GAUGES[@]}"; do
   fi
 done
 echo "All gauges verified on gauge controller." >&2
+
+# ── Auto-detect reward token from first gauge's pool coins ──────────────────
+if [[ -z "$REWARD_TOKEN" ]]; then
+  first_gauge="${GAUGES[0]}"
+  detect_pool=$(cast call "$first_gauge" "lp_token()(address)" --rpc-url "$RPC_URL")
+  echo "Auto-detecting reward token from pool $detect_pool..." >&2
+
+  OUSD_LOWER=$(echo "$OUSD" | tr '[:upper:]' '[:lower:]')
+  OETH_LOWER=$(echo "$OETH" | tr '[:upper:]' '[:lower:]')
+  found_token=""
+
+  for i in 0 1 2 3; do
+    coin=$(cast call "$detect_pool" "coins(uint256)(address)" "$i" --rpc-url "$RPC_URL" 2>/dev/null || break)
+    coin_lower=$(echo "$coin" | tr '[:upper:]' '[:lower:]')
+    if [[ "$coin_lower" == "$OUSD_LOWER" ]]; then
+      found_token="$OUSD"
+      break
+    elif [[ "$coin_lower" == "$OETH_LOWER" ]]; then
+      found_token="$OETH"
+      break
+    fi
+  done
+
+  if [[ -z "$found_token" ]]; then
+    echo "Error: could not find OUSD or OETH in pool $detect_pool coins" >&2
+    exit 1
+  fi
+
+  REWARD_TOKEN="$found_token"
+  echo "Reward token: $REWARD_TOKEN" >&2
+fi
 
 # ── JSON templates ────────────────────────────────────────────────────────────
 create_tx_template=$(cat <<'TMPL'
@@ -214,18 +250,28 @@ jq -n \
     },
     transactions: $txs
   }'
- 
-# Example usage:
-# ./generate-pool-booster-safe.sh \
-#        --reward-token 0x2A8e1E676Ec238d8A992307B495b45B3fEAa5e86 \
-#        --fee-collector 0x4FF1b9D9ba8558F5EAfCec096318eA0d8b541971 \
-#        --fee 0 \
-#        --campaign-remote-manager 0x53aD4Cd1F1e52DD02aa9FC4A8250A1b74F351CA2 \
-#        --votemarket 0x8c2c5A295450DDFf4CB360cA73FCCC12243D14D9 \
-#        --factory 0xB6073788e5302122F4DfB6C5aD53a1EAC9cb0289 \
-#        --rpc-url https://... \
-#        --safe 0x4FF1b9D9ba8558F5EAfCec096318eA0d8b541971 \
-#        0x0e0fd7517e9b0e206e5ee8c7df7348f6f32c3caf \
-#        0x7738ca93e0a122d3e66bb4e863f1572958f2c150 \
-#        0x5e54eb89fb1ba7f735c96a45e6641b362009b228 \
-#        > safe-create-pool-boosters-ousd.json
+
+# ── Example usage ─────────────────────────────────────────────────────────────
+# OUSD gauges (reward token auto-detected):
+#
+#   ./generate-pool-booster-safe.sh \
+#     --rpc-url https://ethereum-rpc.publicnode.com \
+#     0x0e0fd7517e9b0e206e5ee8c7df7348f6f32c3caf \
+#     0x7738ca93e0a122d3e66bb4e863f1572958f2c150 \
+#     0x5e54eb89fb1ba7f735c96a45e6641b362009b228 \
+#     0x8605c1fde3bed25b4cde604daec1599644629159 \
+#     0xc58cb38c462c27baee0abb9790402f2e80cfb471 \
+#     0x12c3cfd7a60c4d85f9bdbd8d799cd2f7824fd4b7 \
+#     0x35e4b1bc8818fc098efcf9ad9784b28d8b4bf639 \
+#     0xab704870d468fc3b6c313d5e63fd550ffe3d513b \
+#     > safe-create-pool-boosters-ousd.json
+#
+# With overrides:
+#
+#   ./generate-pool-booster-safe.sh \
+#     --rpc-url https://ethereum-rpc.publicnode.com \
+#     --reward-token 0x856c4Efb76C1D1AE02e20CEB03A2A6a08b0b8dC3 \
+#     --fee 500 \
+#     --safe 0x1234...abcd \
+#     0xGAUGE1 0xGAUGE2 \
+#     > output.json
