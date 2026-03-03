@@ -109,8 +109,15 @@ contract ConsolidationController is Ownable {
         }(sourcePubKeys, targetPubKey);
 
         // Snap the balances for the last time on the new Compounding Staking Strategy
-        // until the consolidations are confirmed
-        targetStrategy.snapBalances();
+        // if it hasn't been called recently. Otherwise skip to prevent a DoS
+        // attack where an attacker front-runs this call with the permissionless snapBalances().
+        (, uint64 lastSnapTimestamp, ) = targetStrategy.snappedBalance();
+        if (
+            uint64(block.timestamp) >
+            lastSnapTimestamp + targetStrategy.SNAP_BALANCES_DELAY()
+        ) {
+            targetStrategy.snapBalances();
+        }
 
         // No event emitted as ConsolidationRequested is emitted from the old Native Staking Strategy
     }

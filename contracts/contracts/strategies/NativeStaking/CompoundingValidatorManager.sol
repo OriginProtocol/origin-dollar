@@ -48,7 +48,7 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
     /// sufficient time after the end of the epoch to prepare the proofs and call `verifyBalances`.
     /// This is considering a malicious actor would keep calling `snapBalances` as frequent as possible
     /// to disturb our operations.
-    uint64 internal constant SNAP_BALANCES_DELAY = 35 * SLOT_DURATION;
+    uint64 public constant SNAP_BALANCES_DELAY = 35 * SLOT_DURATION;
 
     /// @notice The address of the Wrapped ETH (WETH) token contract
     address internal immutable WETH;
