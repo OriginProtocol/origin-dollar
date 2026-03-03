@@ -214,3 +214,18 @@ jq -n \
     },
     transactions: $txs
   }'
+ 
+# Example usage:
+# ./generate-pool-booster-safe.sh \
+#        --reward-token 0x2A8e1E676Ec238d8A992307B495b45B3fEAa5e86 \
+#        --fee-collector 0x4FF1b9D9ba8558F5EAfCec096318eA0d8b541971 \
+#        --fee 0 \
+#        --campaign-remote-manager 0x53aD4Cd1F1e52DD02aa9FC4A8250A1b74F351CA2 \
+#        --votemarket 0x8c2c5A295450DDFf4CB360cA73FCCC12243D14D9 \
+#        --factory 0xB6073788e5302122F4DfB6C5aD53a1EAC9cb0289 \
+#        --rpc-url https://... \
+#        --safe 0x4FF1b9D9ba8558F5EAfCec096318eA0d8b541971 \
+#        0x0e0fd7517e9b0e206e5ee8c7df7348f6f32c3caf \
+#        0x7738ca93e0a122d3e66bb4e863f1572958f2c150 \
+#        0x5e54eb89fb1ba7f735c96a45e6641b362009b228 \
+#        > safe-create-pool-boosters-ousd.json
