@@ -16,14 +16,25 @@ contracts/tests/unit/<category>/<ContractName>/
 ├── shared/
 │   └── Shared.sol          # Abstract base with setUp, mocks, helpers
 ├── concrete/
-│   ├── Feature1.t.sol      # One file per feature / function group
-│   └── Feature2.t.sol
+│   ├── FunctionA.t.sol     # One file per public/external function
+│   ├── FunctionB.t.sol
+│   └── ViewFunctions.t.sol # Exception: all view/pure functions grouped in one file
 └── fuzz/
-    ├── Feature1.fuzz.t.sol  # Property-based tests per feature
-    └── Feature2.fuzz.t.sol
+    ├── FunctionA.fuzz.t.sol # Property-based tests per function
+    └── FunctionB.fuzz.t.sol
 ```
 
 `<category>` matches the subdirectories already in `contracts/tests/unit/` (vault, token, strategies, oracle, etc.).
+
+### One file per function rule
+
+Each public/external **state-changing** function gets its own dedicated test file, named after the function in PascalCase (e.g. `rebaseOptIn()` → `RebaseOptIn.t.sol`, `delegateYield()` → `DelegateYield.t.sol`).
+
+**Exceptions** (may be grouped into a single file):
+- **View/pure functions** → group in `ViewFunctions.t.sol`
+- **Setter functions** (governor/admin config) → group in `Admin.t.sol` or `Config.t.sol`
+
+**Do NOT** group multiple distinct functions in one file just because they are thematically related. For example, `rebaseOptIn()` and `rebaseOptOut()` are two separate functions and must have two separate files, even though they are conceptually related.
 
 ## 2. Inheritance Chain
 
@@ -65,21 +76,24 @@ function setUp() public virtual override {
 
 ## 4. Concrete Test Naming
 
-### Contract name
+### Contract & file name
+
+Each file tests **one function**. The file name and contract name use the function name in PascalCase:
 
 ```
-Unit_Concrete_<ContractName>_<Feature>_Test
+File:     concrete/RebaseOptIn.t.sol
+Contract: Unit_Concrete_<ContractName>_RebaseOptIn_Test
 ```
 
-### File sections
-
-Group tests by function/feature. Separate groups with a `//////` banner:
+Since each file covers a single function, there is typically **one section** per file. Use the `//////` banner at the top:
 
 ```solidity
 //////////////////////////////////////////////////////
 /// --- FUNCTION_NAME
 //////////////////////////////////////////////////////
 ```
+
+If a function has many scenarios, you may add sub-sections (e.g. `/// --- FUNCTION_NAME — edge cases`), but **never** add a section for a different function — that belongs in its own file.
 
 ### Function naming
 
@@ -238,8 +252,9 @@ All commands must be run from the `contracts/` directory.
 - [ ] `shared/Shared.sol` is `abstract` and inherits `Base`
 - [ ] All contract/proxy/token state variables are declared in `Base.sol`, not in `Shared.sol`
 - [ ] `setUp()` follows the exact order: super → warp → mocks → contracts → config → fund → label
-- [ ] Concrete contracts use `Unit_Concrete_<Contract>_<Feature>_Test`
-- [ ] Fuzz contracts use `Unit_Fuzz_<Contract>_<Feature>_Test`
+- [ ] **One file per function**: each state-changing function has its own `.t.sol` file (only views/setters may be grouped)
+- [ ] Concrete contracts use `Unit_Concrete_<Contract>_<Function>_Test`
+- [ ] Fuzz contracts use `Unit_Fuzz_<Contract>_<Function>_Test`
 - [ ] Every fuzz test uses `bound()`, not `vm.assume()`
 - [ ] Every fuzz test has a `/// @notice` property description
 - [ ] Helpers are at the bottom of each file
