@@ -12,6 +12,9 @@ const { calcDepositRoot } = require("../../tasks/beaconTesting");
 const { getClusterInfo } = require("../../utils/ssv");
 const loadFixture = createFixtureLoader(beaconChainFixture);
 
+// 5 million wei should cover the fee when there is a high number of requests
+const consolidationFee = 5e6;
+
 const secondClusterOperatorIds = [752, 753, 754, 755];
 const secondClusterPubKeys = [
   "0xb7e1156c6ca50c42f60fc3503d435ecc430614d9d0304442d0badea7c648de854fa1b37c3125c8ff4de9ca765823eefd",
@@ -315,7 +318,7 @@ describe("ForkTest: Consolidation of Staking Strategies", function () {
           nativeStakingStrategy2.address,
           sourceValidators,
           activeTargetPubKey,
-          { value: 1 }
+          { value: consolidationFee }
         );
 
       // Assert source strategy
@@ -354,7 +357,7 @@ describe("ForkTest: Consolidation of Staking Strategies", function () {
           nativeStakingStrategy2.address,
           sourceValidators,
           activeTargetPubKey,
-          { value: 2 }
+          { value: consolidationFee * sourceValidators.length }
         );
 
       // Assert source strategy
@@ -392,7 +395,7 @@ describe("ForkTest: Consolidation of Staking Strategies", function () {
           nativeStakingStrategy2.address,
           secondClusterPubKeys,
           activeTargetPubKey,
-          { value: secondClusterPubKeys.length }
+          { value: consolidationFee * secondClusterPubKeys.length }
         );
 
       // Assert source strategy
@@ -429,7 +432,7 @@ describe("ForkTest: Consolidation of Staking Strategies", function () {
           nativeStakingStrategy3.address,
           thirdClusterPubKeys,
           activeTargetPubKey,
-          { value: thirdClusterPubKeys.length }
+          { value: consolidationFee * thirdClusterPubKeys.length }
         );
 
       // Assert source strategy
@@ -460,7 +463,7 @@ describe("ForkTest: Consolidation of Staking Strategies", function () {
           nativeStakingStrategy2.address,
           sourceValidators,
           activeTargetPubKey,
-          { value: 3 }
+          { value: consolidationFee * sourceValidators.length }
         );
 
       await expect(tx).to.revertedWith("Source validator not staked");
@@ -489,7 +492,7 @@ describe("ForkTest: Consolidation of Staking Strategies", function () {
           nativeStakingStrategy2.address,
           [exitedValidatorPubKey],
           activeTargetPubKey,
-          { value: 1 }
+          { value: consolidationFee }
         );
 
       await expect(tx).to.be.revertedWith("Source validator not staked");
@@ -511,7 +514,7 @@ describe("ForkTest: Consolidation of Staking Strategies", function () {
           nativeStakingStrategy2.address,
           [previouslyExitedValidatorPubKey],
           activeTargetPubKey,
-          { value: 1 }
+          { value: consolidationFee }
         );
 
       await expect(tx).to.be.revertedWith("Source validator not staked");
@@ -533,7 +536,7 @@ describe("ForkTest: Consolidation of Staking Strategies", function () {
           nativeStakingStrategy2.address,
           [unknownValidatorPubKey],
           activeTargetPubKey,
-          { value: 1 }
+          { value: consolidationFee }
         );
 
       await expect(tx).to.be.revertedWith("Source validator not staked");
@@ -555,7 +558,7 @@ describe("ForkTest: Consolidation of Staking Strategies", function () {
           nativeStakingStrategy2.address,
           [secondClusterPubKeys[0]],
           unknownValidatorPubKey,
-          { value: 1 }
+          { value: consolidationFee }
         );
 
       await expect(tx).to.be.revertedWith("Target validator not active");
@@ -571,7 +574,7 @@ describe("ForkTest: Consolidation of Staking Strategies", function () {
           nativeStakingStrategy2.address,
           [invlaidValidatorPubKey],
           activeTargetPubKey,
-          { value: 1 }
+          { value: consolidationFee }
         );
 
       await expect(tx).to.be.revertedWith("Invalid source public key");
@@ -587,7 +590,7 @@ describe("ForkTest: Consolidation of Staking Strategies", function () {
           nativeStakingStrategy2.address,
           [secondClusterPubKeys[0]],
           invlaidValidatorPubKey,
-          { value: 1 }
+          { value: consolidationFee }
         );
 
       await expect(tx).to.be.revertedWith("Invalid public key");
@@ -609,7 +612,7 @@ describe("ForkTest: Consolidation of Staking Strategies", function () {
           nativeStakingStrategy2.address,
           [secondClusterPubKeys[0]],
           stakedCompoundingValidatorPubKey,
-          { value: 1 }
+          { value: consolidationFee }
         );
 
       await expect(tx).to.be.revertedWith("Target validator not active");
@@ -633,7 +636,7 @@ describe("ForkTest: Consolidation of Staking Strategies", function () {
           nativeStakingStrategy2.address,
           [secondClusterPubKeys[0]],
           activeWithDepositCompoundingValidatorPubKey,
-          { value: 1 }
+          { value: consolidationFee }
         );
 
       await expect(tx).to.be.revertedWith("Target has pending deposit");
@@ -651,7 +654,7 @@ describe("ForkTest: Consolidation of Staking Strategies", function () {
             nativeStakingStrategy2.address,
             sourceValidators,
             activeTargetPubKey,
-            { value: 1 }
+            { value: consolidationFee }
           );
 
         await expect(tx).to.be.revertedWith("Ownable: caller is not the owner");
@@ -673,7 +676,7 @@ describe("ForkTest: Consolidation of Staking Strategies", function () {
         const tx = nativeStakingStrategy2
           .connect(user)
           .requestConsolidation(sourceValidators, activeTargetPubKey, {
-            value: 1,
+            value: consolidationFee,
           });
 
         await expect(tx).to.be.revertedWith("Caller is not the Registrator");
@@ -773,7 +776,9 @@ describe("ForkTest: Consolidation of Staking Strategies", function () {
 
       const tx = await consolidationController
         .connect(registratorSigner)
-        .validatorWithdrawal(activeTargetPubKey, withdrawAmount, { value: 1 });
+        .validatorWithdrawal(activeTargetPubKey, withdrawAmount, {
+          value: consolidationFee,
+        });
 
       await expect(tx)
         .to.emit(compoundingStakingStrategy, "ValidatorWithdraw")
@@ -782,18 +787,27 @@ describe("ForkTest: Consolidation of Staking Strategies", function () {
     it("Fail validator exit from compounding validator via the consolidation controller", async () => {
       const tx = consolidationController
         .connect(registratorSigner)
-        .validatorWithdrawal(activeTargetPubKey, 0, { value: 1 });
+        .validatorWithdrawal(activeTargetPubKey, 0, {
+          value: consolidationFee,
+        });
 
       await expect(tx).to.be.revertedWith("No exit during migration");
     });
     it("Should stake to compounding validator via the consolidation controller", async () => {
+      const { weth, josh } = fixture;
+
       const depositEth = "3";
       const depositGwei = parseUnits(depositEth, 9);
       const depositWei = parseUnits(depositEth, 18);
       const targetPubKeyHash = hashPubKey(activeTargetPubKey);
-
       const emptySignature =
         "0x000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000";
+
+      // Fund the staking strategy with enough WETH to be able to stake
+      await weth.connect(josh).deposit({ value: depositWei });
+      await weth
+        .connect(josh)
+        .transfer(compoundingStakingStrategy.address, depositWei);
 
       const depositDataRoot = await calcDepositRoot(
         compoundingStakingStrategy.address,
@@ -902,7 +916,7 @@ describe("ForkTest: Consolidation of Staking Strategies", function () {
           nativeStakingStrategy2.address,
           sourceValidators,
           activeTargetPubKey,
-          { value: sourceValidators.length }
+          { value: consolidationFee * sourceValidators.length }
         );
     });
     it("Fail to request consolidation when there's an active consolidation", async () => {
@@ -912,7 +926,7 @@ describe("ForkTest: Consolidation of Staking Strategies", function () {
           nativeStakingStrategy2.address,
           [secondClusterPubKeys[3]],
           activeTargetPubKey,
-          { value: 1 }
+          { value: consolidationFee }
         );
 
       await expect(tx).to.be.revertedWith("Consolidation in progress");
@@ -1186,7 +1200,7 @@ describe("ForkTest: Consolidation of Staking Strategies", function () {
           nativeStakingStrategy2.address,
           sourceValidators,
           activeTargetPubKey,
-          { value: sourceValidators.length }
+          { value: consolidationFee * sourceValidators.length }
         );
 
       await advanceTime(minWithdrableTime);
