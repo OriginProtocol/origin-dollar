@@ -8,101 +8,6 @@ import {MockERC20} from "@solmate/test/utils/mocks/MockERC20.sol";
 
 contract Unit_Concrete_OUSDVault_Withdraw_Test is Unit_Shared_Test {
     //////////////////////////////////////////////////////
-    /// --- SNAPSHOT HELPERS
-    //////////////////////////////////////////////////////
-
-    struct VaultSnapshot {
-        uint256 ousdTotalSupply;
-        uint256 ousdTotalValue;
-        uint256 vaultCheckBalance;
-        uint256 userOusd;
-        uint256 userUsdc;
-        uint256 vaultUsdc;
-        uint128 queued;
-        uint128 claimable;
-        uint128 claimed;
-        uint128 nextWithdrawalIndex;
-    }
-
-    function _snap(address user) internal view returns (VaultSnapshot memory s) {
-        s.ousdTotalSupply = ousd.totalSupply();
-        s.ousdTotalValue = ousdVault.totalValue();
-        s.vaultCheckBalance = ousdVault.checkBalance(address(usdc));
-        s.userOusd = ousd.balanceOf(user);
-        s.userUsdc = usdc.balanceOf(user);
-        s.vaultUsdc = usdc.balanceOf(address(ousdVault));
-        (s.queued, s.claimable, s.claimed, s.nextWithdrawalIndex) = ousdVault.withdrawalQueueMetadata();
-    }
-
-    function _toArray(address a) internal pure returns (address[] memory arr) {
-        arr = new address[](1);
-        arr[0] = a;
-    }
-
-    function _toArray(uint256 a) internal pure returns (uint256[] memory arr) {
-        arr = new uint256[](1);
-        arr[0] = a;
-    }
-
-    //////////////////////////////////////////////////////
-    /// --- STATE SETUP HELPERS
-    //////////////////////////////////////////////////////
-
-    /// @dev Drain the initial 200 OUSD minted in setUp (matt+josh 100 each)
-    function _drainInitialOUSD() internal {
-        // Disable solvency check during drain (totalValue goes to 0)
-        vm.prank(governor);
-        ousdVault.setMaxSupplyDiff(0);
-
-        vm.prank(josh);
-        ousdVault.requestWithdrawal(100e18);
-        vm.prank(matt);
-        ousdVault.requestWithdrawal(100e18);
-
-        vm.warp(block.timestamp + DELAY_PERIOD);
-
-        vm.prank(josh);
-        ousdVault.claimWithdrawal(0);
-        vm.prank(matt);
-        ousdVault.claimWithdrawal(1);
-
-        // Restore default solvency check
-        vm.prank(governor);
-        ousdVault.setMaxSupplyDiff(5e16);
-    }
-
-    /// @dev Fund daniel(10), josh(20), matt(30) with USDC and mint OUSD. Set maxSupplyDiff to 3%.
-    function _setupThreeUsersWithOUSD() internal {
-        _drainInitialOUSD();
-
-        _mintOUSD(daniel, 10e6);
-        _mintOUSD(josh, 20e6);
-        _mintOUSD(matt, 30e6);
-
-        vm.prank(governor);
-        ousdVault.setMaxSupplyDiff(3e16); // 3%
-    }
-
-    /// @dev Deploy+approve strategy, deposit 15 USDC to it. Also request 5+18=23 OUSD withdrawals.
-    function _setupStrategyWith15USDC() internal returns (MockStrategy strategy) {
-        _setupThreeUsersWithOUSD();
-
-        strategy = _deployAndApproveStrategy();
-
-        // Deposit 15 USDC to strategy (leaves 45 USDC in vault)
-        vm.prank(governor);
-        ousdVault.depositToStrategy(
-            address(strategy), _toArray(address(usdc)), _toArray(uint256(15e6))
-        );
-
-        // Request 5 + 18 = 23 OUSD withdrawal (leaves 22 USDC unallocated)
-        vm.prank(daniel);
-        ousdVault.requestWithdrawal(5e18);
-        vm.prank(josh);
-        ousdVault.requestWithdrawal(18e18);
-    }
-
-    //////////////////////////////////////////////////////
     /// --- BASIC REQUEST / CLAIM  (~10 TESTS)
     //////////////////////////////////////////////////////
 
@@ -816,43 +721,6 @@ contract Unit_Concrete_OUSDVault_Withdraw_Test is Unit_Shared_Test {
     /// --- INSOLVENCY / SLASH SCENARIOS  (~10 TESTS)
     //////////////////////////////////////////////////////
 
-    function _setupInsolvencyScenario() internal returns (MockStrategy strategy) {
-        _drainInitialOUSD();
-
-        _mintOUSD(daniel, 20e6);
-        _mintOUSD(josh, 30e6);
-        _mintOUSD(matt, 50e6);
-
-        strategy = _deployAndApproveStrategy();
-
-        vm.prank(governor);
-        ousdVault.setDefaultStrategy(address(strategy));
-
-        vm.prank(governor);
-        ousdVault.allocate(); // Send 100 USDC to strategy
-
-        // Request 99 USDC withdrawal
-        vm.prank(daniel);
-        ousdVault.requestWithdrawal(20e18);
-        vm.prank(josh);
-        ousdVault.requestWithdrawal(30e18);
-        vm.prank(matt);
-        ousdVault.requestWithdrawal(49e18);
-
-        vm.warp(block.timestamp + DELAY_PERIOD);
-
-        // Withdraw 40 USDC from strategy to vault
-        vm.prank(strategist);
-        ousdVault.withdrawFromStrategy(
-            address(strategy), _toArray(address(usdc)), _toArray(uint256(40e6))
-        );
-
-        ousdVault.addWithdrawalQueueLiquidity();
-
-        vm.prank(governor);
-        ousdVault.setMaxSupplyDiff(1e16); // 1%
-    }
-
     function test_insolvency_totalValueZeroAfter2USDCSlash() public {
         MockStrategy strategy = _setupInsolvencyScenario();
 
@@ -956,48 +824,6 @@ contract Unit_Concrete_OUSDVault_Withdraw_Test is Unit_Shared_Test {
     //////////////////////////////////////////////////////
     /// --- SOLVENCY WITH 3% AND 10% MAXSUPPLYDIFF
     //////////////////////////////////////////////////////
-
-    function _setupSlashWith5Percent() internal returns (MockStrategy strategy) {
-        _drainInitialOUSD();
-
-        _mintOUSD(daniel, 10e6);
-        _mintOUSD(josh, 20e6);
-        _mintOUSD(matt, 30e6);
-
-        strategy = _deployAndApproveStrategy();
-
-        vm.prank(governor);
-        ousdVault.setDefaultStrategy(address(strategy));
-
-        vm.prank(governor);
-        ousdVault.allocate();
-
-        // Request 40 USDC withdrawal
-        vm.prank(daniel);
-        ousdVault.requestWithdrawal(10e18);
-        vm.prank(josh);
-        ousdVault.requestWithdrawal(20e18);
-        vm.prank(matt);
-        ousdVault.requestWithdrawal(10e18);
-
-        vm.warp(block.timestamp + DELAY_PERIOD);
-
-        // Slash 1 USDC
-        vm.prank(address(strategy));
-        usdc.transfer(governor, 1e6);
-
-        // Withdraw 15 USDC to vault
-        vm.prank(strategist);
-        ousdVault.withdrawFromStrategy(
-            address(strategy), _toArray(address(usdc)), _toArray(uint256(15e6))
-        );
-
-        ousdVault.addWithdrawalQueueLiquidity();
-
-        // Initially maxSupplyDiff is 5% (set in setUp), turn it off for base state
-        vm.prank(governor);
-        ousdVault.setMaxSupplyDiff(0);
-    }
 
     function test_solvencyAt3Pct_requestReverts() public {
         _setupSlashWith5Percent();
@@ -1145,5 +971,175 @@ contract Unit_Concrete_OUSDVault_Withdraw_Test is Unit_Shared_Test {
         vm.prank(matt);
         vm.expectRevert("Async withdrawals not enabled");
         ousdVault.claimWithdrawal(0);
+    }
+
+    //////////////////////////////////////////////////////
+    /// --- HELPERS
+    //////////////////////////////////////////////////////
+
+    struct VaultSnapshot {
+        uint256 ousdTotalSupply;
+        uint256 ousdTotalValue;
+        uint256 vaultCheckBalance;
+        uint256 userOusd;
+        uint256 userUsdc;
+        uint256 vaultUsdc;
+        uint128 queued;
+        uint128 claimable;
+        uint128 claimed;
+        uint128 nextWithdrawalIndex;
+    }
+
+    function _snap(address user) internal view returns (VaultSnapshot memory s) {
+        s.ousdTotalSupply = ousd.totalSupply();
+        s.ousdTotalValue = ousdVault.totalValue();
+        s.vaultCheckBalance = ousdVault.checkBalance(address(usdc));
+        s.userOusd = ousd.balanceOf(user);
+        s.userUsdc = usdc.balanceOf(user);
+        s.vaultUsdc = usdc.balanceOf(address(ousdVault));
+        (s.queued, s.claimable, s.claimed, s.nextWithdrawalIndex) = ousdVault.withdrawalQueueMetadata();
+    }
+
+    function _toArray(address a) internal pure returns (address[] memory arr) {
+        arr = new address[](1);
+        arr[0] = a;
+    }
+
+    function _toArray(uint256 a) internal pure returns (uint256[] memory arr) {
+        arr = new uint256[](1);
+        arr[0] = a;
+    }
+
+    /// @dev Drain the initial 200 OUSD minted in setUp (matt+josh 100 each)
+    function _drainInitialOUSD() internal {
+        // Disable solvency check during drain (totalValue goes to 0)
+        vm.prank(governor);
+        ousdVault.setMaxSupplyDiff(0);
+
+        vm.prank(josh);
+        ousdVault.requestWithdrawal(100e18);
+        vm.prank(matt);
+        ousdVault.requestWithdrawal(100e18);
+
+        vm.warp(block.timestamp + DELAY_PERIOD);
+
+        vm.prank(josh);
+        ousdVault.claimWithdrawal(0);
+        vm.prank(matt);
+        ousdVault.claimWithdrawal(1);
+
+        // Restore default solvency check
+        vm.prank(governor);
+        ousdVault.setMaxSupplyDiff(5e16);
+    }
+
+    /// @dev Fund daniel(10), josh(20), matt(30) with USDC and mint OUSD. Set maxSupplyDiff to 3%.
+    function _setupThreeUsersWithOUSD() internal {
+        _drainInitialOUSD();
+
+        _mintOUSD(daniel, 10e6);
+        _mintOUSD(josh, 20e6);
+        _mintOUSD(matt, 30e6);
+
+        vm.prank(governor);
+        ousdVault.setMaxSupplyDiff(3e16); // 3%
+    }
+
+    /// @dev Deploy+approve strategy, deposit 15 USDC to it. Also request 5+18=23 OUSD withdrawals.
+    function _setupStrategyWith15USDC() internal returns (MockStrategy strategy) {
+        _setupThreeUsersWithOUSD();
+
+        strategy = _deployAndApproveStrategy();
+
+        // Deposit 15 USDC to strategy (leaves 45 USDC in vault)
+        vm.prank(governor);
+        ousdVault.depositToStrategy(
+            address(strategy), _toArray(address(usdc)), _toArray(uint256(15e6))
+        );
+
+        // Request 5 + 18 = 23 OUSD withdrawal (leaves 22 USDC unallocated)
+        vm.prank(daniel);
+        ousdVault.requestWithdrawal(5e18);
+        vm.prank(josh);
+        ousdVault.requestWithdrawal(18e18);
+    }
+
+    function _setupInsolvencyScenario() internal returns (MockStrategy strategy) {
+        _drainInitialOUSD();
+
+        _mintOUSD(daniel, 20e6);
+        _mintOUSD(josh, 30e6);
+        _mintOUSD(matt, 50e6);
+
+        strategy = _deployAndApproveStrategy();
+
+        vm.prank(governor);
+        ousdVault.setDefaultStrategy(address(strategy));
+
+        vm.prank(governor);
+        ousdVault.allocate(); // Send 100 USDC to strategy
+
+        // Request 99 USDC withdrawal
+        vm.prank(daniel);
+        ousdVault.requestWithdrawal(20e18);
+        vm.prank(josh);
+        ousdVault.requestWithdrawal(30e18);
+        vm.prank(matt);
+        ousdVault.requestWithdrawal(49e18);
+
+        vm.warp(block.timestamp + DELAY_PERIOD);
+
+        // Withdraw 40 USDC from strategy to vault
+        vm.prank(strategist);
+        ousdVault.withdrawFromStrategy(
+            address(strategy), _toArray(address(usdc)), _toArray(uint256(40e6))
+        );
+
+        ousdVault.addWithdrawalQueueLiquidity();
+
+        vm.prank(governor);
+        ousdVault.setMaxSupplyDiff(1e16); // 1%
+    }
+
+    function _setupSlashWith5Percent() internal returns (MockStrategy strategy) {
+        _drainInitialOUSD();
+
+        _mintOUSD(daniel, 10e6);
+        _mintOUSD(josh, 20e6);
+        _mintOUSD(matt, 30e6);
+
+        strategy = _deployAndApproveStrategy();
+
+        vm.prank(governor);
+        ousdVault.setDefaultStrategy(address(strategy));
+
+        vm.prank(governor);
+        ousdVault.allocate();
+
+        // Request 40 USDC withdrawal
+        vm.prank(daniel);
+        ousdVault.requestWithdrawal(10e18);
+        vm.prank(josh);
+        ousdVault.requestWithdrawal(20e18);
+        vm.prank(matt);
+        ousdVault.requestWithdrawal(10e18);
+
+        vm.warp(block.timestamp + DELAY_PERIOD);
+
+        // Slash 1 USDC
+        vm.prank(address(strategy));
+        usdc.transfer(governor, 1e6);
+
+        // Withdraw 15 USDC to vault
+        vm.prank(strategist);
+        ousdVault.withdrawFromStrategy(
+            address(strategy), _toArray(address(usdc)), _toArray(uint256(15e6))
+        );
+
+        ousdVault.addWithdrawalQueueLiquidity();
+
+        // Initially maxSupplyDiff is 5% (set in setUp), turn it off for base state
+        vm.prank(governor);
+        ousdVault.setMaxSupplyDiff(0);
     }
 }

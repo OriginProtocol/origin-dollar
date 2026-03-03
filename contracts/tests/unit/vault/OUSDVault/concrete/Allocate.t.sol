@@ -7,20 +7,6 @@ import {MockStrategy} from "contracts/mocks/MockStrategy.sol";
 
 contract Unit_Concrete_OUSDVault_Allocate_Test is Unit_Shared_Test {
     //////////////////////////////////////////////////////
-    /// --- HELPERS
-    //////////////////////////////////////////////////////
-
-    function _toArray(address a) internal pure returns (address[] memory arr) {
-        arr = new address[](1);
-        arr[0] = a;
-    }
-
-    function _toArray(uint256 a) internal pure returns (uint256[] memory arr) {
-        arr = new uint256[](1);
-        arr[0] = a;
-    }
-
-    //////////////////////////////////////////////////////
     /// --- ALLOCATE()
     //////////////////////////////////////////////////////
 
@@ -308,5 +294,19 @@ contract Unit_Concrete_OUSDVault_Allocate_Test is Unit_Shared_Test {
 
         // Strategy should receive nothing — all USDC reserved for withdrawal queue
         assertEq(usdc.balanceOf(address(strategy)), 0, "Strategy should receive nothing");
+    }
+
+    //////////////////////////////////////////////////////
+    /// --- HELPERS
+    //////////////////////////////////////////////////////
+
+    function _toArray(address a) internal pure returns (address[] memory arr) {
+        arr = new address[](1);
+        arr[0] = a;
+    }
+
+    function _toArray(uint256 a) internal pure returns (uint256[] memory arr) {
+        arr = new uint256[](1);
+        arr[0] = a;
     }
 }
