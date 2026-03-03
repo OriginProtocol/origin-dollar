@@ -44,7 +44,7 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
     uint256 public activeDepositedValidators;
     /// @notice State of the validators keccak256(pubKey) => state
     mapping(bytes32 => VALIDATOR_STATE) public validatorsStates;
-    /// @notice The account that is allowed to modify stakeETHThreshold and reset stakeETHTally
+    /// @notice The account that is allowed to reset stakeETHTally
     address public stakingMonitor;
     /// @notice Amount of ETH that can be staked before staking on the contract is suspended
     /// and the `stakingMonitor` needs to approve further staking by calling `resetStakeETHTally`

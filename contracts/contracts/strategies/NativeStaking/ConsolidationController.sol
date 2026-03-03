@@ -280,10 +280,10 @@ contract ConsolidationController is Ownable {
         // Check sourceStrategy is a valid old Native Staking Strategy
         _checkSourceStrategy(_sourceStrategy);
         // Prevent removing a validator from the SSV cluster before the consolidation
-        // process has been completed.
+        // process has been completed for the source strategy being consolidated.
         // This prevents validators that have been exited rather than consolidated but that's ok.
         // The exited validator can be removed after the consolidation process is complete.
-        require(consolidationCount == 0, "Consolidation in progress");
+        require(_sourceStrategy != sourceStrategy, "Consolidation in progress");
 
         ValidatorAccountant(_sourceStrategy).removeSsvValidator(
             publicKey,
