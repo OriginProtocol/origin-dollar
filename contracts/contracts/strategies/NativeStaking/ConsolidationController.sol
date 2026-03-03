@@ -14,10 +14,12 @@ import { Cluster } from "../../interfaces/ISSVNetwork.sol";
 /// @author Origin Protocol Inc
 contract ConsolidationController is Ownable {
     /// @dev Minimum time that must pass before a consolidation request can be processed.
-    /// 256 epochs * 32 slots/epoch * 12 seconds/slot = 98304 seconds (~27 hours)
+    /// 261 epochs * 32 slots/epoch * 12 seconds/slot = 100224 seconds (~27.8 hours)
+    /// Includes 256 epochs minimum withdrawability delay + 5 epochs from
+    /// compute_activation_exit_epoch (MAX_SEED_LOOKAHEAD + 1).
     /// The actual time can be a lot longer than this depending on the number of
     /// requests in the beacon chain's pending consolidation queue.
-    uint256 internal constant MIN_CONSOLIDATION_PERIOD = 256 * 32 * 12;
+    uint256 internal constant MIN_CONSOLIDATION_PERIOD = 261 * 32 * 12;
 
     /// @notice Address of the validator registrator account
     address public immutable validatorRegistrator;
