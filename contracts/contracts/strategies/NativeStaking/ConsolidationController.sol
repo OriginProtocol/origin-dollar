@@ -128,6 +128,13 @@ contract ConsolidationController is Ownable {
     {
         // Check consolidations are in progress
         require(consolidationCount > 0, "No consolidation in progress");
+        // There a min time before a failed consolidation can be unwound.
+        // This gives the beacon chain time to process the request.
+        require(
+            block.timestamp >=
+                consolidationStartTimestamp + MIN_CONSOLIDATION_PERIOD,
+            "Source not withdrawable"
+        );
         require(
             sourcePubKeys.length <= consolidationCount,
             "Exceeds consolidation count"

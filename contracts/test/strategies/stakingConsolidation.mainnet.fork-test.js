@@ -894,6 +894,7 @@ describe("ForkTest: Consolidation of Staking Strategies", function () {
       secondClusterPubKeys[1],
       secondClusterPubKeys[2],
     ];
+    const minWithdrableTime = 261 * 32 * 12; // 261 epochs
     beforeEach(async () => {
       await activateTargetValidators(fixture);
 
@@ -974,8 +975,17 @@ describe("ForkTest: Consolidation of Staking Strategies", function () {
 
       await expect(tx).to.be.revertedWith("Consolidation in progress");
     });
+    it("Fail to call fail consolidation before minimum consolidation period", async () => {
+      const tx = consolidationController
+        .connect(adminSigner)
+        .failConsolidation([sourceValidators[0]]);
+
+      await expect(tx).to.be.revertedWith("Source not withdrawable");
+    });
     // When a consolidation has been requested
     it("Should call fail consolidation of a single validator", async () => {
+      await advanceTime(minWithdrableTime);
+
       const consolidationCountBefore =
         await consolidationController.consolidationCount();
       expect(consolidationCountBefore).to.equal(3);
@@ -1002,6 +1012,8 @@ describe("ForkTest: Consolidation of Staking Strategies", function () {
       ).to.equal(2); // STAKED state
     });
     it("Should call fail consolidation for multiple validators", async () => {
+      await advanceTime(minWithdrableTime);
+
       const consolidationCountBefore =
         await consolidationController.consolidationCount();
       expect(consolidationCountBefore).to.equal(3);
@@ -1033,6 +1045,8 @@ describe("ForkTest: Consolidation of Staking Strategies", function () {
       ).to.equal(2); // STAKED state
     });
     it("Should call fail consolidation for all validators and reset state", async () => {
+      await advanceTime(minWithdrableTime);
+
       const consolidationCountBefore =
         await consolidationController.consolidationCount();
       expect(consolidationCountBefore).to.equal(3);
@@ -1070,6 +1084,8 @@ describe("ForkTest: Consolidation of Staking Strategies", function () {
       // Key only 32 bytes long instead of 48 bytes
       const invlaidValidatorPubKey =
         "0x0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF";
+
+      await advanceTime(minWithdrableTime);
 
       const tx = consolidationController
         .connect(adminSigner)
