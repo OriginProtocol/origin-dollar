@@ -1123,6 +1123,41 @@ describe("ForkTest: Consolidation of Staking Strategies", function () {
         );
       await expect(tx).to.be.revertedWith("Consolidation in progress");
     });
+    it("Should remove validator from non-consolidating source strategy during consolidation", async () => {
+      const sourceValidator = thirdClusterPubKeys[0];
+
+      await consolidationController
+        .connect(registratorSigner)
+        .exitSsvValidator(
+          nativeStakingStrategy3.address,
+          sourceValidator,
+          thirdClusterOperatorIds
+        );
+
+      const { cluster } = await getClusterInfo({
+        ownerAddress: nativeStakingStrategy3.address,
+        operatorids: thirdClusterOperatorIds,
+        chainId: hre.network.config.chainId,
+        ssvNetwork: addresses.SSVNetwork,
+      });
+
+      const tx = await consolidationController
+        .connect(registratorSigner)
+        .removeSsvValidator(
+          nativeStakingStrategy3.address,
+          sourceValidator,
+          thirdClusterOperatorIds,
+          cluster
+        );
+
+      await expect(tx)
+        .to.emit(nativeStakingStrategy3, "SSVValidatorExitCompleted")
+        .withArgs(
+          keccak256(sourceValidator),
+          sourceValidator,
+          thirdClusterOperatorIds
+        );
+    });
   });
   describe("When consolidation in progress and balances snapped", () => {
     const sourceValidators = [
