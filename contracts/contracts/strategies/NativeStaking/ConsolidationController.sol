@@ -305,6 +305,13 @@ contract ConsolidationController is Ownable {
         if (consolidationCount > 0 && msg.sender != validatorRegistrator) {
             revert("Consolidation in progress");
         }
+        if (consolidationCount > 0) {
+            require(
+                block.timestamp >
+                    consolidationStartTimestamp + MIN_CONSOLIDATION_PERIOD,
+                "Source not withdrawable"
+            );
+        }
 
         targetStrategy.snapBalances();
     }

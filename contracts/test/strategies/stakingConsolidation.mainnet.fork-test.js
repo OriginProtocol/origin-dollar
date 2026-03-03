@@ -984,6 +984,7 @@ describe("ForkTest: Consolidation of Staking Strategies", function () {
       secondClusterPubKeys[1],
       secondClusterPubKeys[2],
     ];
+    const minWithdrableTime = 261 * 32 * 12; // 261 epochs
     beforeEach(async () => {
       await activateTargetValidators(fixture);
 
@@ -1030,6 +1031,7 @@ describe("ForkTest: Consolidation of Staking Strategies", function () {
     });
     // Balance proofs after the deposit to validator 13498458 has been verified.
     it("Should call snapBalance on the Consolidation Controller by the Registrator after the consolidation has started", async () => {
+      await advanceTime(minWithdrableTime);
       await advanceTime(12 * 40);
 
       const tx = await consolidationController
@@ -1037,6 +1039,13 @@ describe("ForkTest: Consolidation of Staking Strategies", function () {
         .snapBalances();
 
       await expect(tx).to.emit(compoundingStakingStrategy, "BalancesSnapped");
+    });
+    it("Fail snapBalance on the Consolidation Controller if called too soon during consolidation", async () => {
+      const tx = consolidationController
+        .connect(registratorSigner)
+        .snapBalances();
+
+      await expect(tx).to.be.revertedWith("Source not withdrawable");
     });
     it("Fail snapBalance on the Consolidation Controller when called by non-registrator after the consolidation has started", async () => {
       const { josh } = fixture;
@@ -1055,6 +1064,7 @@ describe("ForkTest: Consolidation of Staking Strategies", function () {
       await expect(tx).to.be.revertedWith("Not Registrator");
     });
     it("Fail to verifyBalance of a snapshot after the consolidation has started", async () => {
+      await advanceTime(minWithdrableTime);
       await advanceTime(12 * 40);
       await consolidationController.connect(registratorSigner).snapBalances();
 
