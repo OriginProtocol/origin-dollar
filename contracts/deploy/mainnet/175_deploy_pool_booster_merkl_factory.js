@@ -57,7 +57,7 @@ const main = async () => {
     addresses.multichainStrategist,
     cPoolBoostCentralRegistryProxy.address,
     dUpgradeableBeacon.address,
-  ]);
+  ], "PoolBoosterFactoryMerkl", true);
   console.log(`PoolBoosterFactoryMerkl deployed to ${dFactory.address}`);
 
   // NOTE: Registry approveFactory/removeFactory must be called by the

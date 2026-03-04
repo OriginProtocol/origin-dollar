@@ -5,7 +5,7 @@
       "label": "poolBoosters",
       "offset": 0,
       "slot": "0",
-      "type": "t_array(t_struct(PoolBoosterEntry)36430_storage)dyn_storage",
+      "type": "t_array(t_struct(PoolBoosterEntry)35879_storage)dyn_storage",
       "contract": "AbstractPoolBoosterFactory",
       "src": "contracts/poolBooster/AbstractPoolBoosterFactory.sol:25"
     },
@@ -13,17 +13,17 @@
       "label": "poolBoosterFromPool",
       "offset": 0,
       "slot": "1",
-      "type": "t_mapping(t_address,t_struct(PoolBoosterEntry)36430_storage)",
+      "type": "t_mapping(t_address,t_struct(PoolBoosterEntry)35879_storage)",
       "contract": "AbstractPoolBoosterFactory",
       "src": "contracts/poolBooster/AbstractPoolBoosterFactory.sol:27"
     },
     {
-      "label": "merklDistributor",
+      "label": "beacon",
       "offset": 0,
       "slot": "2",
       "type": "t_address",
       "contract": "PoolBoosterFactoryMerkl",
-      "src": "contracts/poolBooster/PoolBoosterFactoryMerkl.sol:15"
+      "src": "contracts/poolBooster/PoolBoosterFactoryMerkl.sol:24"
     }
   ],
   "types": {
@@ -31,25 +31,26 @@
       "label": "address",
       "numberOfBytes": "20"
     },
-    "t_array(t_struct(PoolBoosterEntry)36430_storage)dyn_storage": {
+    "t_array(t_struct(PoolBoosterEntry)35879_storage)dyn_storage": {
       "label": "struct AbstractPoolBoosterFactory.PoolBoosterEntry[]",
       "numberOfBytes": "32"
     },
-    "t_enum(PoolBoosterType)26946": {
+    "t_enum(PoolBoosterType)28257": {
       "label": "enum IPoolBoostCentralRegistry.PoolBoosterType",
       "members": [
         "SwapXDoubleBooster",
         "SwapXSingleBooster",
         "MetropolisBooster",
-        "MerklBooster"
+        "MerklBooster",
+        "CurvePoolBoosterPlain"
       ],
       "numberOfBytes": "1"
     },
-    "t_mapping(t_address,t_struct(PoolBoosterEntry)36430_storage)": {
+    "t_mapping(t_address,t_struct(PoolBoosterEntry)35879_storage)": {
       "label": "mapping(address => struct AbstractPoolBoosterFactory.PoolBoosterEntry)",
       "numberOfBytes": "32"
     },
-    "t_struct(PoolBoosterEntry)36430_storage": {
+    "t_struct(PoolBoosterEntry)35879_storage": {
       "label": "struct AbstractPoolBoosterFactory.PoolBoosterEntry",
       "members": [
         {
@@ -66,12 +67,13 @@
         },
         {
           "label": "boosterType",
-          "type": "t_enum(PoolBoosterType)26946",
+          "type": "t_enum(PoolBoosterType)28257",
           "offset": 20,
           "slot": "1"
         }
       ],
       "numberOfBytes": "64"
     }
-  }
+  },
+  "namespaces": {}
 }
