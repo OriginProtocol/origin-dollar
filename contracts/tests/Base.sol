@@ -25,11 +25,25 @@ import {WOSonic} from "contracts/token/WOSonic.sol";
 import {MockStrategy} from "contracts/mocks/MockStrategy.sol";
 import {MockNonRebasing} from "contracts/mocks/MockNonRebasing.sol";
 import {MockWETH} from "contracts/mocks/MockWETH.sol";
+import {MockCreateX} from "tests/mocks/MockCreateX.sol";
 
 import {OETHZapper} from "contracts/zapper/OETHZapper.sol";
 import {OETHBaseZapper} from "contracts/zapper/OETHBaseZapper.sol";
 import {OSonicZapper} from "contracts/zapper/OSonicZapper.sol";
 import {WOETHCCIPZapper} from "contracts/zapper/WOETHCCIPZapper.sol";
+
+import {PoolBoostCentralRegistry} from "contracts/poolBooster/PoolBoostCentralRegistry.sol";
+import {PoolBoosterFactorySwapxSingle} from "contracts/poolBooster/PoolBoosterFactorySwapxSingle.sol";
+import {PoolBoosterFactorySwapxDouble} from "contracts/poolBooster/PoolBoosterFactorySwapxDouble.sol";
+import {PoolBoosterFactoryMerkl} from "contracts/poolBooster/PoolBoosterFactoryMerkl.sol";
+import {PoolBoosterFactoryMetropolis} from "contracts/poolBooster/PoolBoosterFactoryMetropolis.sol";
+import {PoolBoosterSwapxSingle} from "contracts/poolBooster/PoolBoosterSwapxSingle.sol";
+import {PoolBoosterSwapxDouble} from "contracts/poolBooster/PoolBoosterSwapxDouble.sol";
+import {PoolBoosterMerkl} from "contracts/poolBooster/PoolBoosterMerkl.sol";
+import {PoolBoosterMetropolis} from "contracts/poolBooster/PoolBoosterMetropolis.sol";
+import {CurvePoolBooster} from "contracts/poolBooster/curve/CurvePoolBooster.sol";
+import {CurvePoolBoosterPlain} from "contracts/poolBooster/curve/CurvePoolBoosterPlain.sol";
+import {CurvePoolBoosterFactory} from "contracts/poolBooster/curve/CurvePoolBoosterFactory.sol";
 
 abstract contract Base is Test {
     //////////////////////////////////////////////////////
@@ -101,6 +115,7 @@ abstract contract Base is Test {
     //////////////////////////////////////////////////////
 
     MockWETH internal mockWeth;
+    MockCreateX internal mockCreateX;
     MockStrategy internal mockStrategy;
     MockNonRebasing internal mockNonRebasing;
 
@@ -109,8 +124,8 @@ abstract contract Base is Test {
     //////////////////////////////////////////////////////
 
     OETHZapper internal oethZapper;
-    OETHBaseZapper internal oethBaseZapper;
     OSonicZapper internal oSonicZapper;
+    OETHBaseZapper internal oethBaseZapper;
     WOETHCCIPZapper internal woethCcipZapper;
 
     //////////////////////////////////////////////////////
@@ -121,6 +136,25 @@ abstract contract Base is Test {
     IERC20 internal usdc;
     IERC20 internal usdt;
     IERC20 internal weth;
+
+    //////////////////////////////////////////////////////
+    /// --- POOL BOOSTER CONTRACTS
+    //////////////////////////////////////////////////////
+
+    PoolBoostCentralRegistry internal centralRegistry;
+    PoolBoosterFactorySwapxSingle internal factorySwapxSingle;
+    PoolBoosterFactorySwapxDouble internal factorySwapxDouble;
+    PoolBoosterFactoryMerkl internal factoryMerkl;
+    PoolBoosterFactoryMetropolis internal factoryMetropolis;
+
+    PoolBoosterSwapxSingle internal boosterSwapxSingle;
+    PoolBoosterSwapxDouble internal boosterSwapxDouble;
+    PoolBoosterMerkl internal boosterMerkl;
+    PoolBoosterMetropolis internal boosterMetropolis;
+
+    CurvePoolBooster internal curvePoolBooster;
+    CurvePoolBoosterPlain internal curvePoolBoosterPlain;
+    CurvePoolBoosterFactory internal curvePoolBoosterFactory;
 
     //////////////////////////////////////////////////////
     /// --- SETUP

@@ -104,11 +104,36 @@ If a function has many scenarios, you may add sub-sections (e.g. `/// --- FUNCTI
 | `test_<function>_RevertWhen_<condition>()` | Expected revert |
 | `test_<function>_emits<EventName>()` | Event emission check |
 
+**CRITICAL — Casing rules:**
+- `<function>`, `<behavior>`, and `<condition>` all use **camelCase** (lowercase first character).
+- `RevertWhen` is the **only** PascalCase token — everything else after `test_` starts lowercase.
+- `RevertWhen` always comes **after** the function name, never at the start.
+
+**Correct examples:**
+```
+test_mint()                                    // ✅ function = mint
+test_mint_toRebasingUser()                     // ✅ behavior = toRebasingUser
+test_mint_RevertWhen_notVault()                // ✅ RevertWhen after function, condition = notVault
+test_createCurvePoolBoosterPlain_storesEntry() // ✅ function + behavior, both camelCase
+test_approveFactory_RevertWhen_zeroAddress()   // ✅
+testFuzz_handleFee()                           // ✅ fuzz follows same rules
+testFuzz_bribeSplit_sumsCorrectly()            // ✅
+```
+
+**Wrong examples (DO NOT USE):**
+```
+test_Mint()                                    // ❌ uppercase M
+test_RevertWhen_Mint_NotVault()                // ❌ RevertWhen before function name
+test_CreatePoolBooster_StoresEntry()           // ❌ uppercase C and S
+test_RevertWhen_ApproveFactory_NotGovernor()   // ❌ RevertWhen before function name
+testFuzz_HandleFee()                           // ❌ uppercase H
+```
+
 ### Revert tests
 
 - Always use `vm.expectRevert("exact message")` right before the call.
 - Group reverts immediately after the happy-path tests for that function.
-- Test unauthorized access: `RevertWhen_unauthorized`, `RevertWhen_notGovernor`, etc.
+- Test unauthorized access: `RevertWhen_notGovernor`, `RevertWhen_notVault`, etc.
 
 ### Event tests
 
@@ -137,6 +162,8 @@ Unit_Fuzz_<ContractName>_<Feature>_Test
 /// @notice <english description of the property being tested>
 function testFuzz_<function>_<property>(uint256 amount) public { ... }
 ```
+
+Same casing rules as concrete tests: `<function>` and `<property>` use **camelCase** (lowercase first character). Example: `testFuzz_handleFee(uint256, uint16)`, not `testFuzz_HandleFee`.
 
 ### Input bounding
 
