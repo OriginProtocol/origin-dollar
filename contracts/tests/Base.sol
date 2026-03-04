@@ -16,7 +16,12 @@ import {OETHVault} from "contracts/vault/OETHVault.sol";
 import {OETHProxy} from "contracts/proxies/Proxies.sol";
 import {OETHVaultProxy} from "contracts/proxies/Proxies.sol";
 import {WOETHProxy} from "contracts/proxies/Proxies.sol";
+import {WrappedOUSDProxy} from "contracts/proxies/Proxies.sol";
 import {WOETH} from "contracts/token/WOETH.sol";
+import {WrappedOusd} from "contracts/token/WrappedOusd.sol";
+import {WOETHBase} from "contracts/token/WOETHBase.sol";
+import {WOETHPlume} from "contracts/token/WOETHPlume.sol";
+import {WOSonic} from "contracts/token/WOSonic.sol";
 import {MockStrategy} from "contracts/mocks/MockStrategy.sol";
 import {MockNonRebasing} from "contracts/mocks/MockNonRebasing.sol";
 
@@ -72,6 +77,18 @@ abstract contract Base is Test {
 
     WOETH internal woeth;
     WOETHProxy internal woethProxy;
+
+    WrappedOusd internal wrappedOusd;
+    WrappedOUSDProxy internal wrappedOusdProxy;
+
+    WOETHBase internal woethBase;
+    WOETHProxy internal woethBaseProxy;
+
+    WOETHPlume internal woethPlume;
+    WOETHProxy internal woethPlumeProxy;
+
+    WOSonic internal woSonic;
+    WOETHProxy internal woSonicProxy;
 
     //////////////////////////////////////////////////////
     /// --- MOCKS
