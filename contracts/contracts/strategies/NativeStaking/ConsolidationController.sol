@@ -333,11 +333,11 @@ contract ConsolidationController is Ownable {
     ) external {
         (, uint64 snappedTimestamp, ) = targetStrategy.snappedBalance();
         // Can not verify balances while consolidations are in progress
-        // but can if the snapped balance is the start of the consolidation process.
-        // That is, snappedTimestamp == consolidationStartTimestamp
+        // if the snap was taken after the consolidation process started.
+        // This still allows verifying a pre-existing snap.
         if (
             consolidationCount > 0 &&
-            snappedTimestamp != consolidationStartTimestamp
+            snappedTimestamp > consolidationStartTimestamp
         ) {
             revert("Consolidation in progress");
         }

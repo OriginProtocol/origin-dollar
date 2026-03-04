@@ -978,6 +978,59 @@ describe("ForkTest: Consolidation of Staking Strategies", function () {
 
       await expect(tx).to.emit(compoundingStakingStrategy, "BalancesVerified");
     });
+    it("Should verify a pre-existing snap taken before consolidation started (OGVC-03)", async () => {
+      await consolidationController
+        .connect(adminSigner)
+        .failConsolidation(sourceValidators);
+
+      // Take a valid snap first, then request consolidation before delay elapses
+      // so requestConsolidation does not take another snap.
+      const snapDelay = 35 * 12;
+      await advanceTime(snapDelay + 12);
+
+      const { timestamp: snapSetupTimestamp } = await ethers.provider.getBlock(
+        "latest"
+      );
+      await fixture.beaconRoots["setBeaconRoot(uint256,bytes32)"](
+        snapSetupTimestamp + 2,
+        balanceProofs.beaconBlockRoot
+      );
+      await consolidationController.connect(registratorSigner).snapBalances();
+
+      const { blockRoot: snappedBlockRoot, timestamp: snappedTimestamp } =
+        await compoundingStakingStrategy.snappedBalance();
+      expect(snappedBlockRoot).to.equal(balanceProofs.beaconBlockRoot);
+
+      await advanceTime(12);
+
+      const { timestamp: currentTimestamp } = await ethers.provider.getBlock(
+        "latest"
+      );
+      await fixture.beaconRoots["setBeaconRoot(uint256,bytes32)"](
+        currentTimestamp + 2,
+        balanceProofs.beaconBlockRoot
+      );
+
+      await consolidationController
+        .connect(adminSigner)
+        .requestConsolidation(
+          nativeStakingStrategy2.address,
+          sourceValidators,
+          activeTargetPubKey,
+          { value: consolidationFee * sourceValidators.length }
+        );
+
+      const consolidationStartTimestamp =
+        await consolidationController.consolidationStartTimestamp();
+
+      expect(snappedTimestamp).to.be.lt(consolidationStartTimestamp);
+
+      const tx = await consolidationController
+        .connect(registratorSigner)
+        .verifyBalances(balanceProofs, pendingDepositProofs);
+
+      await expect(tx).to.emit(compoundingStakingStrategy, "BalancesVerified");
+    });
     // Balance proofs after the deposit to validator 13498458 has been verified.
     it("Should call snapBalance on the Consolidation Controller by the Registrator after the consolidation has started", async () => {
       await advanceTime(12 * 40);
