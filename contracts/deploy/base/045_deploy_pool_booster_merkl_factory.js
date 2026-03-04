@@ -41,9 +41,7 @@ module.exports = deployOnBaseWithEOA(
     await cBeacon
       .connect(sDeployer)
       .transferOwnership(addresses.multichainStrategist);
-    console.log(
-      `UpgradeableBeacon deployed to ${dUpgradeableBeacon.address}`
-    );
+    console.log(`UpgradeableBeacon deployed to ${dUpgradeableBeacon.address}`);
 
     // ---------------------------------------------------------------------------------------------------------
     // --- 3. Deploy PoolBoosterFactoryMerkl
