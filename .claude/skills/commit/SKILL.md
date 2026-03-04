@@ -24,17 +24,23 @@ If there are no changes (nothing modified, nothing untracked), tell the user "No
 ### 2. Inspect Changes
 
 Run in parallel to understand what changed:
-- `git diff` (unstaged changes)
+- `git diff` (unstaged changes to tracked files)
 - `git diff --cached` (already staged changes)
+- `git status --porcelain` (all changes including untracked files — look for `??` lines)
 - `git log --oneline -5` (recent commits for style reference)
+
+**Important:** Untracked files (`??` in `git status`) are often newly created files from the current session. They MUST be included in the commit alongside modified files.
 
 ### 3. Pre-Commit Formatting
 
-Only run formatters relevant to the files that actually changed. Check which files are modified:
+Only run formatters relevant to the files that actually changed. Collect the full list of files to commit:
 
 ```bash
+# Modified tracked files (staged + unstaged)
 git diff --name-only
 git diff --name-only --cached
+# Untracked files (newly created)
+git ls-files --others --exclude-standard
 ```
 
 **If any `.sol` files under `contracts/tests/` changed:**
@@ -59,7 +65,11 @@ If formatting fails and can't auto-fix, tell the user what's wrong and ask wheth
 
 ### 4. Stage Files
 
-Stage all modified and untracked files individually. Do NOT use `git add -A` or `git add .`.
+Stage ALL modified and untracked files individually. This includes:
+- Modified tracked files (`M` in git status)
+- Newly created untracked files (`??` in git status)
+
+Do NOT use `git add -A` or `git add .`.
 
 **Skip files that look like secrets:**
 - `.env`, `.env.*` (environment files)
