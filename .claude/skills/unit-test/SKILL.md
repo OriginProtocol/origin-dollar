@@ -247,7 +247,52 @@ forge test --match-contract Unit_Concrete_OUSDVault_Mint_Test -vvvv
 
 All commands must be run from the `contracts/` directory.
 
-## 9. Checklist Before Submitting Tests
+## 9. Coverage Requirements
+
+After all tests compile and pass, you **must** verify coverage meets the minimum thresholds.
+
+### Minimum thresholds
+
+| Metric | Minimum | Target |
+|---|---|---|
+| **Functions** | **100%** | 100% (mandatory — every function must be called) |
+| **Branches** | **90%** | As close to 100% as possible |
+| **Lines** | **90%** | As close to 100% as possible |
+| **Statements** | **90%** | As close to 100% as possible |
+
+### How to check coverage
+
+Run the following command from the `contracts/` directory, filtering to only the target contract:
+
+```bash
+forge coverage --match-path "tests/unit/<category>/<ContractName>/**" --report summary --no-match-coverage "tests|mocks"
+```
+
+This produces a table like:
+
+```
+| File                  | % Lines | % Statements | % Branches | % Funcs |
+|-----------------------|---------|--------------|------------|---------|
+| contracts/MyContract.sol | 95.00% | 93.50%     | 91.20%     | 100%    |
+```
+
+### Iterative coverage improvement
+
+1. **Run coverage** after the initial test suite is written.
+2. **Identify gaps**: look at which lines/branches are uncovered. Use `forge coverage --report lcov` and inspect the lcov output if needed to pinpoint exact uncovered lines.
+3. **Add missing tests**: write additional concrete tests targeting the uncovered paths — edge cases, error branches, boundary conditions.
+4. **Re-run coverage** to verify improvements. Repeat until thresholds are met.
+5. **Always aim higher**: 90% is the floor, not the goal. Push for the highest coverage you can achieve.
+
+### When 100% is not reachable
+
+Some code paths may be genuinely unreachable in a unit-test context (e.g., assembly blocks, delegatecall-only paths, code guarded by external contract state that cannot be mocked). If any metric stays below 100%, you **must** explain why in a brief comment at the end of your response, listing:
+
+- The exact uncovered lines/branches
+- Why they cannot be covered in a unit test
+- Whether an integration or fork test would be needed instead
+
+## 10. Checklist Before Submitting Tests
 
 - [ ] `shared/Shared.sol` is `abstract` and inherits `Base`
 - [ ] All contract/proxy/token state variables are declared in `Base.sol`, not in `Shared.sol`
@@ -261,3 +306,5 @@ All commands must be run from the `contracts/` directory.
 - [ ] Section banners use `//////` style
 - [ ] Tests compile: `forge build`
 - [ ] Tests pass: `forge test --match-path "tests/unit/<category>/<ContractName>/**"`
+- [ ] Coverage meets thresholds: Functions = 100%, Branches/Lines/Statements ≥ 90%
+- [ ] If any metric is below 100%, an explanation is provided for the uncovered paths
