@@ -41,5 +41,6 @@
   "041_crosschain_strategy_proxies": 1770737618,
   "042_crosschain_strategy": 1770807435,
   "043_change_crosschain_strategy_operator": 1771403173,
-  "044_bridge_helper_module": 1772010908
+  "044_bridge_helper_module": 1772010908,
+  "045_deploy_pool_booster_merkl_factory": 1772622327
 }
