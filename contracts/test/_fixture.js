@@ -1304,7 +1304,16 @@ async function crossChainFixtureUnit() {
     .connect(governor)
     .setOperator(messageTransmitter.address);
 
-  const morphoVault = await ethers.getContract("MockERC4626Vault");
+  const morphoVault = await ethers.getContract("MockMorphoV1Vault");
+  const morphoVaultLiquidityAdapter = await ethers.getContract(
+    "MockMorphoV1VaultLiquidityAdapter"
+  );
+  await morphoVault
+    .connect(governor)
+    .setLiquidityAdapter(morphoVaultLiquidityAdapter.address);
+  await morphoVaultLiquidityAdapter
+    .connect(governor)
+    .setMockMorphoVault(morphoVault.address);
 
   // Impersonate the OUSD Vault
   fixture.vaultSigner = await impersonateAndFund(vault.address);
@@ -1324,6 +1333,7 @@ async function crossChainFixtureUnit() {
     messageTransmitter: messageTransmitter,
     tokenMessenger: tokenMessenger,
     morphoVault: morphoVault,
+    morphoVaultLiquidityAdapter: morphoVaultLiquidityAdapter,
   };
 }
 

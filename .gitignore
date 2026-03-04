@@ -90,3 +90,6 @@ unit-coverage
 
 # Certora #
 .certora_internal
+
+# Possible Agent.md file
+AGENTS.md
