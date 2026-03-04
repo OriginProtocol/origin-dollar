@@ -52,6 +52,15 @@ describe("ForkTest: Merkl Pool Booster", function () {
     // Get beacon from factory
     const beaconAddr = await poolBoosterMerklFactory.beacon();
     beacon = await ethers.getContractAt("UpgradeableBeacon", beaconAddr);
+
+    // Transfer beacon ownership to multichainStrategist if not already done
+    const beaconOwner = await beacon.owner();
+    if (beaconOwner !== addresses.multichainStrategist) {
+      const deployer = await impersonateAndFund(beaconOwner);
+      await beacon
+        .connect(deployer)
+        .transferOwnership(addresses.multichainStrategist);
+    }
   });
 
   // Helper: mint OETH by depositing WETH into the vault
@@ -59,7 +68,7 @@ describe("ForkTest: Merkl Pool Booster", function () {
     await hardhatSetBalance(recipient.address, "1000");
     await weth.connect(recipient).deposit({ value: amount });
     await weth.connect(recipient).approve(oethVault.address, amount);
-    await oethVault.connect(recipient).mint(weth.address, amount, 0);
+    await oethVault.connect(recipient).mint(amount);
   }
 
   // Helper to encode initialize calldata
