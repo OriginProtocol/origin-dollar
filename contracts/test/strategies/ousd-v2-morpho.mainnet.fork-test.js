@@ -245,7 +245,7 @@ describe("ForkTest: Yearn's Morpho OUSD v2 Strategy", function () {
 
       log("Before withdraw all from strategy");
 
-      // Now try to withdraw all the WETH from the strategy
+      // Now try to withdraw all the USDC from the strategy
       const tx = await morphoOUSDv2Strategy.connect(vaultSigner).withdrawAll();
 
       log("After withdraw all from strategy");
