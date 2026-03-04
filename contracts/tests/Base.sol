@@ -10,9 +10,13 @@ import {OUSDVault} from "contracts/vault/OUSDVault.sol";
 import {OUSDProxy} from "contracts/proxies/Proxies.sol";
 import {VaultProxy} from "contracts/proxies/Proxies.sol";
 import {OETH} from "contracts/token/OETH.sol";
+import {OETHBase} from "contracts/token/OETHBase.sol";
+import {OSonic} from "contracts/token/OSonic.sol";
 import {OETHVault} from "contracts/vault/OETHVault.sol";
 import {OETHProxy} from "contracts/proxies/Proxies.sol";
 import {OETHVaultProxy} from "contracts/proxies/Proxies.sol";
+import {WOETHProxy} from "contracts/proxies/Proxies.sol";
+import {WOETH} from "contracts/token/WOETH.sol";
 import {MockStrategy} from "contracts/mocks/MockStrategy.sol";
 import {MockNonRebasing} from "contracts/mocks/MockNonRebasing.sol";
 
@@ -60,9 +64,14 @@ abstract contract Base is Test {
     VaultProxy internal ousdVaultProxy;
 
     OETH internal oeth;
+    OSonic internal oSonic;
+    OETHBase internal oethBase;
     OETHVault internal oethVault;
     OETHProxy internal oethProxy;
     OETHVaultProxy internal oethVaultProxy;
+
+    WOETH internal woeth;
+    WOETHProxy internal woethProxy;
 
     //////////////////////////////////////////////////////
     /// --- MOCKS
