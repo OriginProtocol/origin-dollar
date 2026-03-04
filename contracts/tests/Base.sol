@@ -24,6 +24,12 @@ import {WOETHPlume} from "contracts/token/WOETHPlume.sol";
 import {WOSonic} from "contracts/token/WOSonic.sol";
 import {MockStrategy} from "contracts/mocks/MockStrategy.sol";
 import {MockNonRebasing} from "contracts/mocks/MockNonRebasing.sol";
+import {MockWETH} from "contracts/mocks/MockWETH.sol";
+
+import {OETHZapper} from "contracts/zapper/OETHZapper.sol";
+import {OETHBaseZapper} from "contracts/zapper/OETHBaseZapper.sol";
+import {OSonicZapper} from "contracts/zapper/OSonicZapper.sol";
+import {WOETHCCIPZapper} from "contracts/zapper/WOETHCCIPZapper.sol";
 
 abstract contract Base is Test {
     //////////////////////////////////////////////////////
@@ -94,8 +100,18 @@ abstract contract Base is Test {
     /// --- MOCKS
     //////////////////////////////////////////////////////
 
+    MockWETH internal mockWeth;
     MockStrategy internal mockStrategy;
     MockNonRebasing internal mockNonRebasing;
+
+    //////////////////////////////////////////////////////
+    /// --- ZAPPERS
+    //////////////////////////////////////////////////////
+
+    OETHZapper internal oethZapper;
+    OETHBaseZapper internal oethBaseZapper;
+    OSonicZapper internal oSonicZapper;
+    WOETHCCIPZapper internal woethCcipZapper;
 
     //////////////////////////////////////////////////////
     /// --- EXTERNAL TOKENS
