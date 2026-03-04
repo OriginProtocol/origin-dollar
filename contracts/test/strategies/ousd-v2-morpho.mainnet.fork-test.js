@@ -46,6 +46,9 @@ describe("ForkTest: Yearn's Morpho OUSD v2 Strategy", function () {
       expect(await morphoOUSDv2Strategy.governor()).to.equal(
         addresses.mainnet.Timelock
       );
+      expect(await morphoOUSDv2Strategy.harvesterAddress()).to.equal(
+        addresses.multichainStrategist
+      );
     });
     it("Should be able to check balance", async () => {
       const { usdc, josh, morphoOUSDv2Strategy } = fixture;

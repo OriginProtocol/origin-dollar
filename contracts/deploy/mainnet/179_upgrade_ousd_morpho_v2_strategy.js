@@ -23,6 +23,11 @@ module.exports = deploymentWithGovernanceProposal(
       ]
     );
 
+    const cMorphoV2Strategy = await ethers.getContractAt(
+      "MorphoV2Strategy",
+      cOUSDMorphoV2StrategyProxy.address
+    );
+
     return {
       name: "Upgrade OUSD Morpho V2 strategy implementation",
       actions: [
@@ -30,6 +35,11 @@ module.exports = deploymentWithGovernanceProposal(
           contract: cOUSDMorphoV2StrategyProxy,
           signature: "upgradeTo(address)",
           args: [dMorphoV2StrategyImpl.address],
+        },
+        {
+          contract: cMorphoV2Strategy,
+          signature: "setHarvesterAddress(address)",
+          args: [addresses.multichainStrategist],
         },
       ],
     };
