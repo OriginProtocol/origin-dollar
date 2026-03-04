@@ -5,7 +5,7 @@ const { getBlock } = require("../tasks/block");
 
 const morphoV1VaultAbi = require("../abi/morphoV1Vault.json");
 const { resolveContract } = require("./resolvers");
-
+const erc20Abi = require("../abi/erc20.json");
 const log = require("../utils/logger")("utils:morpho");
 
 async function canWithdrawAllFromMorphoOUSD() {
@@ -24,7 +24,7 @@ async function morphoWithdrawShortfall() {
     "Generalized4626Strategy"
   );
 
-  const maxWithdrawal = await morphoOUSDv1Vault.maxWithdraw(
+  let maxWithdrawal = await morphoOUSDv1Vault.maxWithdraw(
     addresses.mainnet.MorphoOUSDv2Adapter
   );
 
@@ -33,6 +33,13 @@ async function morphoWithdrawShortfall() {
     addresses.mainnet.USDC
   );
 
+  const usdc = await ethers.getContractAt(
+    erc20Abi,
+    addresses.mainnet.USDC
+  );
+  const vaultUSDCBalance = await usdc.balanceOf(addresses.mainnet.MorphoOUSDv2Vault);
+  
+  maxWithdrawal = maxWithdrawal.add(vaultUSDCBalance);
   log(
     `Morpho OUSD v2 Strategy USDC balance: ${formatUnits(
       strategyUSDCBalance,
