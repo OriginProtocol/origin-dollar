@@ -114,6 +114,13 @@ const deployMocks = async ({ getNamedAccounts, deployments }) => {
     from: deployerAddr,
     args: [usdc.address],
   });
+  await deploy("MockMorphoV1Vault", {
+    from: deployerAddr,
+    args: [usdc.address],
+  });
+  await deploy("MockMorphoV1VaultLiquidityAdapter", {
+    from: deployerAddr,
+  });
   // const tokenMessenger = await ethers.getContract("CCTPTokenMessengerMock");
   // await messageTransmitter
   //   .connect(sDeployer)

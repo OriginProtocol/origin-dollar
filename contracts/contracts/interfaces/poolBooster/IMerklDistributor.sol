@@ -39,6 +39,9 @@ interface IMerklDistributor {
 
     function sign(bytes memory _signature) external;
 
+    // This replace the `isValidSignature` function from IERC1271
+    function acceptConditions() external;
+
     function rewardTokenMinAmounts(address _rewardToken)
         external
         view

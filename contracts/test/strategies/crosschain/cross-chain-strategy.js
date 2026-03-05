@@ -89,6 +89,33 @@ describe("ForkTest: CrossChainRemoteStrategy", function () {
     await crossChainRemoteStrategy.connect(governor).sendBalanceUpdate();
   };
 
+  it("Should wire morpho vault and liquidity adapter in fixture", async function () {
+    const { morphoVault, morphoVaultLiquidityAdapter } = fixture;
+    await expect(await morphoVault.liquidityAdapter()).to.eq(
+      morphoVaultLiquidityAdapter.address
+    );
+    await expect(await morphoVaultLiquidityAdapter.morphoVaultV1()).to.eq(
+      morphoVault.address
+    );
+    await expect(await morphoVaultLiquidityAdapter.parentVault()).to.eq(
+      morphoVault.address
+    );
+  });
+
+  it("Should revert withdrawAll when morpho vault liquidity adapter is incompatible", async function () {
+    const { morphoVault } = fixture;
+
+    // Misconfigure adapter to an invalid value that does not implement IMorphoV2Adapter.
+    await morphoVault
+      .connect(governor)
+      .setLiquidityAdapter(morphoVault.address);
+
+    await expect(crossChainRemoteStrategy.connect(governor).withdrawAll())
+      .to.be.revertedWithCustomError(
+        "IncompatibleAdapter(address)"
+      );
+  });
+
   // Checks the diff in the total expected value in the vault
   // (plus accompanying strategy value)
   const assertVaultTotalValue = async (amountExpected) => {
@@ -340,6 +367,9 @@ describe("ForkTest: CrossChainRemoteStrategy", function () {
     await expect(
       await crossChainRemoteStrategy.checkBalance(usdc.address)
     ).to.eq(await units("0", usdc));
+
+    // calling withdrawAll a second time should not fail
+    await directWithdrawAllFromRemoteStrategy();
   });
 
   it("Should fail when a withdrawal too large is requested on the remote strategy", async function () {

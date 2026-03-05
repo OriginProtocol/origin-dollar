@@ -279,7 +279,7 @@ const bridgeHelperModuleFixture = deployments.createFixture(async () => {
   const bridgeHelperModule = await ethers.getContract("BaseBridgeHelperModule");
 
   const _mintWETH = async (user, amount) => {
-    await impersonateAndFund(user.address);
+    await impersonateAndFund(user.address, (Number(amount) + 1).toString());
     await fixture.weth.connect(user).deposit({ value: oethUnits(amount) });
   };
 

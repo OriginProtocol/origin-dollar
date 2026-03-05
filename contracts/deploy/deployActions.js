@@ -1129,7 +1129,7 @@ const deployCrossChainUnitTestStrategy = async (usdcAddress) => {
     "CCTPMessageTransmitterMock"
   );
   const tokenMessenger = await ethers.getContract("CCTPTokenMessengerMock");
-  const c4626Vault = await ethers.getContract("MockERC4626Vault");
+  const c4626Vault = await ethers.getContract("MockMorphoV1Vault");
 
   await deployCrossChainMasterStrategyImpl(
     dMasterProxy.address,
