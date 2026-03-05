@@ -125,29 +125,13 @@ perf(arm): reduce SLOAD count in swap path
 docs(skill): add commit automation skill
 ```
 
-### 6. Confirm and Commit
+### 6. Commit
 
-Before asking anything, check the user's original message for preferences they already stated:
+**CRITICAL: Always run `git commit` in this step. Never stop after staging — the user said "commit it" and expects the commit to be created. Do NOT ask questions before committing.**
+
+Check the user's original message for preferences:
 - **Co-Authored-By**: Look for "with co-author", "add trailer", "include co-author", etc. Default: no trailer.
 - **Push**: Look for "and push", "push it", "push too", etc. Default: don't push.
-
-If both preferences are clear from the prompt, present the commit message and proceed without asking:
-
-> Here's the commit message:
-> ```
-> type(scope): description
-> ```
-> Committing with Co-Authored-By trailer and pushing as requested.
-
-If preferences are NOT clear, present the message and ask only about what's unspecified:
-
-> Here's the commit message:
-> ```
-> type(scope): description
-> ```
-> Push after commit?
-
-Defaults: no trailer, don't push.
 
 Create the commit using a HEREDOC:
 
@@ -169,13 +153,17 @@ EOF
 )"
 ```
 
-Run `git status` after to verify success.
+Run `git status` after to verify the commit succeeded.
+
+Then present the result:
+
+> Committed `<short-hash>`: `type(scope): description`
 
 ### 7. Push (Only If Requested)
 
-If the user asked to push (either in the original prompt or in step 6), use `git push` (or `git push -u origin <branch>` if no upstream is set).
+If the user asked to push (either in the original message or after the commit), use `git push` (or `git push -u origin <branch>` if no upstream is set).
 
-If they didn't ask to push, don't ask again — the commit is done.
+If they didn't ask to push, don't ask — the commit is done.
 
 ## Safety Rules
 
