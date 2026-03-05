@@ -109,8 +109,15 @@ contract ConsolidationController is Ownable {
         }(sourcePubKeys, targetPubKey);
 
         // Snap the balances for the last time on the new Compounding Staking Strategy
-        // until the consolidations are confirmed
-        targetStrategy.snapBalances();
+        // if it hasn't been called recently. Otherwise skip to prevent a DoS
+        // attack where an attacker front-runs this call with the permissionless snapBalances().
+        (, uint64 lastSnapTimestamp, ) = targetStrategy.snappedBalance();
+        if (
+            uint64(block.timestamp) >
+            lastSnapTimestamp + targetStrategy.SNAP_BALANCES_DELAY()
+        ) {
+            targetStrategy.snapBalances();
+        }
 
         // No event emitted as ConsolidationRequested is emitted from the old Native Staking Strategy
     }
@@ -326,11 +333,11 @@ contract ConsolidationController is Ownable {
     ) external {
         (, uint64 snappedTimestamp, ) = targetStrategy.snappedBalance();
         // Can not verify balances while consolidations are in progress
-        // but can if the snapped balance is the start of the consolidation process.
-        // That is, snappedTimestamp == consolidationStartTimestamp
+        // if the snap was taken after the consolidation process started.
+        // This still allows verifying a pre-existing snap.
         if (
             consolidationCount > 0 &&
-            snappedTimestamp != consolidationStartTimestamp
+            snappedTimestamp > consolidationStartTimestamp
         ) {
             revert("Consolidation in progress");
         }

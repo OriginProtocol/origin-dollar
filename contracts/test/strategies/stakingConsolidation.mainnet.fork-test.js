@@ -480,6 +480,46 @@ describe("ForkTest: Consolidation of Staking Strategies", function () {
         )
       ).to.equal(3); // EXITING state
     });
+    it("Should skip snapBalances in requestConsolidation when a recent snap exists (OGVC-03)", async () => {
+      // After activateTargetValidators the snappedBalance.timestamp is 0 (cleared
+      // by verifyBalances), so we first take a legitimate snap and then call
+      // requestConsolidation before SNAP_BALANCES_DELAY elapses.
+
+      // SNAP_BALANCES_DELAY = 35 slots * 12 seconds = 420 seconds
+      const snapDelay = 35 * 12;
+      // Advance enough time for an initial snap to succeed
+      await advanceTime(snapDelay + 12);
+      await consolidationController.connect(registratorSigner).snapBalances();
+
+      // Record the timestamp of that snap
+      const { timestamp: timestampBefore } =
+        await compoundingStakingStrategy.snappedBalance();
+
+      // Advance only a few slots – still within SNAP_BALANCES_DELAY
+      await advanceTime(5 * 12); // 5 slots = 60 seconds
+
+      // requestConsolidation should succeed without emitting BalancesSnapped
+      const tx = await consolidationController
+        .connect(adminSigner)
+        .requestConsolidation(
+          nativeStakingStrategy2.address,
+          [secondClusterPubKeys[0]],
+          activeTargetPubKey,
+          { value: consolidationFee }
+        );
+
+      await expect(tx).to.not.emit(
+        compoundingStakingStrategy,
+        "BalancesSnapped"
+      );
+
+      // Record the timestamp of that snap
+      const { timestamp: timestampafter } =
+        await compoundingStakingStrategy.snappedBalance();
+
+      expect(timestampafter).to.equal(timestampBefore);
+      expect(await consolidationController.consolidationCount()).to.equal(1);
+    });
     it("Fail to request consolidation with duplicate source validators", async () => {
       const sourceValidators = [
         secondClusterPubKeys[0],
@@ -963,6 +1003,59 @@ describe("ForkTest: Consolidation of Staking Strategies", function () {
       await expect(tx).to.be.revertedWith("Consolidation in progress");
     });
     it("Should be able to verify balance when the consolidation was requested", async () => {
+      const tx = await consolidationController
+        .connect(registratorSigner)
+        .verifyBalances(balanceProofs, pendingDepositProofs);
+
+      await expect(tx).to.emit(compoundingStakingStrategy, "BalancesVerified");
+    });
+    it("Should verify a pre-existing snap taken before consolidation started (OGVC-03)", async () => {
+      await consolidationController
+        .connect(adminSigner)
+        .failConsolidation(sourceValidators);
+
+      // Take a valid snap first, then request consolidation before delay elapses
+      // so requestConsolidation does not take another snap.
+      const snapDelay = 35 * 12;
+      await advanceTime(snapDelay + 12);
+
+      const { timestamp: snapSetupTimestamp } = await ethers.provider.getBlock(
+        "latest"
+      );
+      await fixture.beaconRoots["setBeaconRoot(uint256,bytes32)"](
+        snapSetupTimestamp + 2,
+        balanceProofs.beaconBlockRoot
+      );
+      await consolidationController.connect(registratorSigner).snapBalances();
+
+      const { blockRoot: snappedBlockRoot, timestamp: snappedTimestamp } =
+        await compoundingStakingStrategy.snappedBalance();
+      expect(snappedBlockRoot).to.equal(balanceProofs.beaconBlockRoot);
+
+      await advanceTime(12);
+
+      const { timestamp: currentTimestamp } = await ethers.provider.getBlock(
+        "latest"
+      );
+      await fixture.beaconRoots["setBeaconRoot(uint256,bytes32)"](
+        currentTimestamp + 2,
+        balanceProofs.beaconBlockRoot
+      );
+
+      await consolidationController
+        .connect(adminSigner)
+        .requestConsolidation(
+          nativeStakingStrategy2.address,
+          sourceValidators,
+          activeTargetPubKey,
+          { value: consolidationFee * sourceValidators.length }
+        );
+
+      const consolidationStartTimestamp =
+        await consolidationController.consolidationStartTimestamp();
+
+      expect(snappedTimestamp).to.be.lt(consolidationStartTimestamp);
+
       const tx = await consolidationController
         .connect(registratorSigner)
         .verifyBalances(balanceProofs, pendingDepositProofs);
