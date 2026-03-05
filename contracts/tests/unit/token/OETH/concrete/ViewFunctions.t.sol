@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import {Base} from "tests/Base.sol";
+import {Base} from "tests/Base.t.sol";
 import {OETH} from "contracts/token/OETH.sol";
 
 contract Unit_Concrete_OETH_ViewFunctions_Test is Base {

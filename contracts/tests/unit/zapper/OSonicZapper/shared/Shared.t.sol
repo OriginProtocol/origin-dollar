@@ -1,51 +1,63 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import {Base} from "tests/Base.sol";
+import {Base} from "tests/Base.t.sol";
 
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
-import {MockERC20} from "@solmate/test/utils/mocks/MockERC20.sol";
 import {OSonic} from "contracts/token/OSonic.sol";
 import {OETHVault} from "contracts/vault/OETHVault.sol";
 import {OETHProxy} from "contracts/proxies/Proxies.sol";
 import {OETHVaultProxy} from "contracts/proxies/Proxies.sol";
 import {WOETHProxy} from "contracts/proxies/Proxies.sol";
 import {WOSonic} from "contracts/token/WOSonic.sol";
+import {OSonicZapper} from "contracts/zapper/OSonicZapper.sol";
+import {MockWETH} from "contracts/mocks/MockWETH.sol";
 
-abstract contract Unit_WOSonic_Shared_Test is Base {
+abstract contract Unit_OSonicZapper_Shared_Test is Base {
     //////////////////////////////////////////////////////
     /// --- CONSTANTS
     //////////////////////////////////////////////////////
-    uint256 internal constant DELAY_PERIOD = 600;
-    uint256 internal constant REBASE_RATE_MAX = 200e18;
+    address internal constant ETH_MARKER = 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE;
+    address internal constant WS_ADDRESS = 0x039e2fB66102314Ce7b64Ce5Ce3E5183bc94aD38;
 
     //////////////////////////////////////////////////////
     /// --- SETUP
     //////////////////////////////////////////////////////
     function setUp() public virtual override {
         super.setUp();
+
         vm.warp(7 days);
 
-        _deployMockContracts();
+        _deployMockWS();
         _deployContracts();
         _deployWOSonic();
+        _deployZapper();
         _configureContracts();
-        _fundInitialUsers();
         label();
     }
 
-    function _deployMockContracts() internal {
-        // wS (wrapped Sonic) is 18 decimals, like WETH
-        weth = IERC20(address(new MockERC20("Wrapped Sonic", "wS", 18)));
+    /// @dev Deploy MockWETH and etch its bytecode at the hardcoded wS address
+    function _deployMockWS() internal {
+        // Deploy MockWETH at a normal address first to get bytecode
+        MockWETH mockWethInstance = new MockWETH();
+        bytes memory code = address(mockWethInstance).code;
+
+        // Etch the bytecode at the hardcoded wS address
+        vm.etch(WS_ADDRESS, code);
+
+        // Fund the wS address with ETH so it can function as a wrapper
+        vm.deal(WS_ADDRESS, 1000 ether);
+
+        weth = IERC20(WS_ADDRESS);
     }
 
     function _deployContracts() internal {
         vm.startPrank(deployer);
 
         OSonic oSonicImpl = new OSonic();
-        OETHVault oethVaultImpl = new OETHVault(address(weth));
+        OETHVault vaultImpl = new OETHVault(WS_ADDRESS);
 
         oethProxy = new OETHProxy();
         oethVaultProxy = new OETHVaultProxy();
@@ -57,7 +69,9 @@ abstract contract Unit_WOSonic_Shared_Test is Base {
         );
 
         oethVaultProxy.initialize(
-            address(oethVaultImpl), governor, abi.encodeWithSignature("initialize(address)", address(oethProxy))
+            address(vaultImpl),
+            governor,
+            abi.encodeWithSignature("initialize(address)", address(oethProxy))
         );
 
         vm.stopPrank();
@@ -81,65 +95,49 @@ abstract contract Unit_WOSonic_Shared_Test is Base {
         woSonic.initialize();
     }
 
+    function _deployZapper() internal {
+        oSonicZapper = new OSonicZapper(
+            address(oSonic),
+            address(woSonic),
+            address(oethVault)
+        );
+    }
+
     function _configureContracts() internal {
         vm.startPrank(governor);
         oethVault.unpauseCapital();
         oethVault.setStrategistAddr(strategist);
         oethVault.setMaxSupplyDiff(5e16);
-        oethVault.setWithdrawalClaimDelay(DELAY_PERIOD);
+        oethVault.setWithdrawalClaimDelay(600);
         oethVault.setDripDuration(0);
-        oethVault.setRebaseRateMax(REBASE_RATE_MAX);
+        oethVault.setRebaseRateMax(200e18);
         vm.stopPrank();
-    }
-
-    function _fundInitialUsers() internal {
-        _mintOSonic(matt, 100e18);
-        _mintOSonic(josh, 100e18);
     }
 
     //////////////////////////////////////////////////////
     /// --- HELPERS
     //////////////////////////////////////////////////////
 
+    /// @dev Deal native S (ETH in test) to an address
+    function _dealS(address to, uint256 amount) internal {
+        vm.deal(to, amount);
+    }
+
+    /// @dev Deal wS to an address by depositing S
     function _dealWS(address to, uint256 amount) internal {
-        MockERC20(address(weth)).mint(to, amount);
-    }
-
-    function _mintOSonic(address user, uint256 wsAmount) internal {
-        _dealWS(user, wsAmount);
-        vm.startPrank(user);
-        weth.approve(address(oethVault), wsAmount);
-        oethVault.mint(wsAmount);
-        vm.stopPrank();
-    }
-
-    function _depositToWOSonic(address user, uint256 osAmount) internal returns (uint256 shares) {
-        vm.startPrank(user);
-        IERC20(address(oSonic)).approve(address(woSonic), osAmount);
-        shares = woSonic.deposit(osAmount, user);
-        vm.stopPrank();
-    }
-
-    function _mintAndDeposit(address user, uint256 wsAmount) internal returns (uint256 shares) {
-        _mintOSonic(user, wsAmount);
-        shares = _depositToWOSonic(user, IERC20(address(oSonic)).balanceOf(user));
-    }
-
-    function _rebase(uint256 yieldWS) internal {
-        _dealWS(address(oethVault), yieldWS);
-        vm.warp(block.timestamp + 1);
-        vm.prank(governor);
-        oethVault.rebase();
+        vm.deal(to, amount);
+        vm.prank(to);
+        MockWETH(WS_ADDRESS).deposit{value: amount}();
     }
 
     //////////////////////////////////////////////////////
     /// --- LABELS
     //////////////////////////////////////////////////////
     function label() public {
-        vm.label(address(weth), "wS");
+        vm.label(WS_ADDRESS, "wS");
         vm.label(address(oSonic), "OSonic");
         vm.label(address(oethVault), "OETHVault");
         vm.label(address(woSonic), "WOSonic");
-        vm.label(address(woSonicProxy), "WOSonicProxy");
+        vm.label(address(oSonicZapper), "OSonicZapper");
     }
 }

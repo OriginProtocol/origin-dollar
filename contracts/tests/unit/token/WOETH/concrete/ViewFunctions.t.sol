@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import {Unit_WOETH_Shared_Test} from "tests/unit/token/WOETH/shared/Shared.sol";
+import {Unit_WOETH_Shared_Test} from "tests/unit/token/WOETH/shared/Shared.t.sol";
 
 contract Unit_Concrete_WOETH_ViewFunctions_Test is Unit_WOETH_Shared_Test {
     //////////////////////////////////////////////////////

@@ -1,35 +1,34 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import {Base} from "tests/Base.sol";
+import {Base} from "tests/Base.t.sol";
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {MockERC20} from "@solmate/test/utils/mocks/MockERC20.sol";
 import {IPoolBoostCentralRegistry} from "contracts/interfaces/poolBooster/IPoolBoostCentralRegistry.sol";
 import {IPoolBooster} from "contracts/interfaces/poolBooster/IPoolBooster.sol";
-import {IMerklDistributor} from "contracts/interfaces/poolBooster/IMerklDistributor.sol";
+import {IBribe} from "contracts/interfaces/poolBooster/ISwapXAlgebraBribe.sol";
 
-import {OETH} from "contracts/token/OETH.sol";
+import {OSonic} from "contracts/token/OSonic.sol";
 import {PoolBoostCentralRegistry} from "contracts/poolBooster/PoolBoostCentralRegistry.sol";
-import {PoolBoosterFactoryMerkl} from "contracts/poolBooster/PoolBoosterFactoryMerkl.sol";
-import {PoolBoosterMerkl} from "contracts/poolBooster/PoolBoosterMerkl.sol";
+import {PoolBoosterFactorySwapxDouble} from "contracts/poolBooster/PoolBoosterFactorySwapxDouble.sol";
+import {PoolBoosterSwapxDouble} from "contracts/poolBooster/PoolBoosterSwapxDouble.sol";
 
-abstract contract Unit_Merkl_Shared_Test is Base {
+abstract contract Unit_SwapXDouble_Shared_Test is Base {
     //////////////////////////////////////////////////////
     /// --- CONSTANTS
     //////////////////////////////////////////////////////
 
     bytes32 internal constant GOVERNOR_SLOT = 0x7bea13895fa79d2831e0a9e28edede30099005a50d652d8957cf8a607ee6ca4a;
 
-    uint32 internal constant DEFAULT_CAMPAIGN_DURATION = 7200; // 2 hours
-    uint32 internal constant DEFAULT_CAMPAIGN_TYPE = 2;
-    bytes internal constant DEFAULT_CAMPAIGN_DATA = hex"deadbeef";
+    uint256 internal constant DEFAULT_SPLIT = 50e16; // 50%
 
     //////////////////////////////////////////////////////
     /// --- MOCK ADDRESSES
     //////////////////////////////////////////////////////
 
-    address internal mockMerklDistributor;
+    address internal mockBribeContractOS;
+    address internal mockBribeContractOther;
     address internal mockAmmPool;
 
     //////////////////////////////////////////////////////
@@ -40,7 +39,7 @@ abstract contract Unit_Merkl_Shared_Test is Base {
         super.setUp();
 
         _createMockAddresses();
-        _deployOETH();
+        _deployOSonic();
         _deployCentralRegistry();
         _deployFactory();
         _deployStandaloneBooster();
@@ -49,12 +48,13 @@ abstract contract Unit_Merkl_Shared_Test is Base {
     }
 
     function _createMockAddresses() internal {
-        mockMerklDistributor = makeAddr("MockMerklDistributor");
+        mockBribeContractOS = makeAddr("MockBribeContractOS");
+        mockBribeContractOther = makeAddr("MockBribeContractOther");
         mockAmmPool = makeAddr("MockAmmPool");
     }
 
-    function _deployOETH() internal {
-        oeth = OETH(address(new MockERC20("Origin Ether", "OETH", 18)));
+    function _deployOSonic() internal {
+        oSonic = OSonic(address(new MockERC20("Origin Sonic", "OS", 18)));
     }
 
     function _deployCentralRegistry() internal {
@@ -63,42 +63,32 @@ abstract contract Unit_Merkl_Shared_Test is Base {
     }
 
     function _deployFactory() internal {
-        factoryMerkl = new PoolBoosterFactoryMerkl(
-            address(oeth),
+        factorySwapxDouble = new PoolBoosterFactorySwapxDouble(
+            address(oSonic),
             governor,
-            address(centralRegistry),
-            mockMerklDistributor
+            address(centralRegistry)
         );
     }
 
     function _deployStandaloneBooster() internal {
-        // Mock rewardTokenMinAmounts for merkl distributor
-        vm.mockCall(
-            mockMerklDistributor,
-            abi.encodeWithSelector(IMerklDistributor.rewardTokenMinAmounts.selector, address(oeth)),
-            abi.encode(uint256(1e10))
-        );
-
-        boosterMerkl = new PoolBoosterMerkl(
-            address(oeth),
-            mockMerklDistributor,
-            DEFAULT_CAMPAIGN_DURATION,
-            DEFAULT_CAMPAIGN_TYPE,
-            governor,
-            DEFAULT_CAMPAIGN_DATA
+        boosterSwapxDouble = new PoolBoosterSwapxDouble(
+            mockBribeContractOS,
+            mockBribeContractOther,
+            address(oSonic),
+            DEFAULT_SPLIT
         );
     }
 
     function _approveFactoryOnRegistry() internal {
         vm.prank(governor);
-        centralRegistry.approveFactory(address(factoryMerkl));
+        centralRegistry.approveFactory(address(factorySwapxDouble));
     }
 
     function _labelContracts() internal {
-        vm.label(address(oeth), "OETH (MockERC20)");
+        vm.label(address(oSonic), "OSonic (MockERC20)");
         vm.label(address(centralRegistry), "CentralRegistry");
-        vm.label(address(factoryMerkl), "FactoryMerkl");
-        vm.label(address(boosterMerkl), "BoosterMerkl");
+        vm.label(address(factorySwapxDouble), "FactorySwapxDouble");
+        vm.label(address(boosterSwapxDouble), "BoosterSwapxDouble");
     }
 
     //////////////////////////////////////////////////////
@@ -109,20 +99,15 @@ abstract contract Unit_Merkl_Shared_Test is Base {
         vm.store(_contract, GOVERNOR_SLOT, bytes32(uint256(uint160(_governor))));
     }
 
-    function _dealOETH(address _to, uint256 _amount) internal {
-        MockERC20(address(oeth)).mint(_to, _amount);
+    function _dealOSonic(address _to, uint256 _amount) internal {
+        MockERC20(address(oSonic)).mint(_to, _amount);
     }
 
-    function _mockMerklDistributor(uint256 _minAmount) internal {
+    function _mockBribeNotifyRewardAmount(address _bribeContract) internal {
         vm.mockCall(
-            mockMerklDistributor,
-            abi.encodeWithSelector(IMerklDistributor.rewardTokenMinAmounts.selector, address(oeth)),
-            abi.encode(_minAmount)
-        );
-        vm.mockCall(
-            mockMerklDistributor,
-            abi.encodeWithSelector(IMerklDistributor.signAndCreateCampaign.selector),
-            abi.encode(bytes32(uint256(1)))
+            _bribeContract,
+            abi.encodeWithSelector(IBribe.notifyRewardAmount.selector),
+            abi.encode()
         );
     }
 }

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import {Unit_OETHZapper_Shared_Test} from "tests/unit/zapper/OETHZapper/shared/Shared.sol";
+import {Unit_OETHZapper_Shared_Test} from "tests/unit/zapper/OETHZapper/shared/Shared.t.sol";
 import {OETHBaseZapper} from "contracts/zapper/OETHBaseZapper.sol";
 import {MockWETH} from "contracts/mocks/MockWETH.sol";
 

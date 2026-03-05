@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import {Unit_Shared_Test} from "tests/unit/vault/OUSDVault/shared/Shared.sol";
+import {Unit_Shared_Test} from "tests/unit/vault/OUSDVault/shared/Shared.t.sol";
 import {Governable} from "contracts/governance/Governable.sol";
 
 contract Unit_Concrete_OUSDVault_Governance_Test is Unit_Shared_Test {

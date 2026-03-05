@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import {Unit_Merkl_Shared_Test} from "tests/unit/poolBooster/Merkl/shared/Shared.sol";
+import {Unit_Merkl_Shared_Test} from "tests/unit/poolBooster/Merkl/shared/Shared.t.sol";
 
 contract Unit_Concrete_PoolBoosterMerkl_IsValidSignature_Test is Unit_Merkl_Shared_Test {
     function test_isValidSignature() public {

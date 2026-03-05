@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import {Unit_OETHVault_Shared_Test} from "tests/unit/vault/OETHVault/shared/Shared.sol";
+import {Unit_OETHVault_Shared_Test} from "tests/unit/vault/OETHVault/shared/Shared.t.sol";
 import {MockStrategy} from "contracts/mocks/MockStrategy.sol";
 
 contract Unit_Concrete_OETHVault_ViewFunctions_Test is Unit_OETHVault_Shared_Test {

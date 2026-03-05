@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import {Unit_SwapXSingle_Shared_Test} from "tests/unit/poolBooster/SwapXSingle/shared/Shared.sol";
+import {Unit_SwapXSingle_Shared_Test} from "tests/unit/poolBooster/SwapXSingle/shared/Shared.t.sol";
 import {IPoolBooster} from "contracts/interfaces/poolBooster/IPoolBooster.sol";
 
 contract Unit_Concrete_AbstractPoolBoosterFactory_BribeAll_Test is Unit_SwapXSingle_Shared_Test {

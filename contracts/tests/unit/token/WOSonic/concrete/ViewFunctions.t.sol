@@ -3,7 +3,7 @@ pragma solidity ^0.8.0;
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
-import {Unit_WOSonic_Shared_Test} from "tests/unit/token/WOSonic/shared/Shared.sol";
+import {Unit_WOSonic_Shared_Test} from "tests/unit/token/WOSonic/shared/Shared.t.sol";
 
 contract Unit_Concrete_WOSonic_ViewFunctions_Test is Unit_WOSonic_Shared_Test {
     //////////////////////////////////////////////////////

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import {Unit_OSonicZapper_Shared_Test} from "tests/unit/zapper/OSonicZapper/shared/Shared.sol";
+import {Unit_OSonicZapper_Shared_Test} from "tests/unit/zapper/OSonicZapper/shared/Shared.t.sol";
 
 contract Unit_Concrete_OSonicZapper_DepositSForWrappedTokens_Test is Unit_OSonicZapper_Shared_Test {
     //////////////////////////////////////////////////////

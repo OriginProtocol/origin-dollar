@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import {Base} from "tests/Base.sol";
+import {Base} from "tests/Base.t.sol";
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
@@ -10,10 +10,9 @@ import {OUSD} from "contracts/token/OUSD.sol";
 import {OUSDVault} from "contracts/vault/OUSDVault.sol";
 import {OUSDProxy} from "contracts/proxies/Proxies.sol";
 import {VaultProxy} from "contracts/proxies/Proxies.sol";
-import {MockStrategy} from "contracts/mocks/MockStrategy.sol";
 import {MockNonRebasing} from "contracts/mocks/MockNonRebasing.sol";
 
-abstract contract Unit_Shared_Test is Base {
+abstract contract Unit_OUSD_Shared_Test is Base {
     //////////////////////////////////////////////////////
     /// --- CONSTANTS
     //////////////////////////////////////////////////////
@@ -111,13 +110,25 @@ abstract contract Unit_Shared_Test is Base {
         vm.stopPrank();
     }
 
-    /// @dev Deploy a MockStrategy, approve it on the vault, and configure withdrawAll
-    function _deployAndApproveStrategy() internal returns (MockStrategy strategy) {
-        strategy = new MockStrategy();
-        strategy.setWithdrawAll(address(usdc), address(ousdVault));
-
+    /// @dev Deal USDC to vault as yield, warp 1 second, then call vault.rebase()
+    function _rebase(uint256 yieldUSDC) internal {
+        _dealUSDC(address(ousdVault), yieldUSDC);
+        vm.warp(block.timestamp + 1);
         vm.prank(governor);
-        ousdVault.approveStrategy(address(strategy));
+        ousdVault.rebase();
+    }
+
+    /// @dev Call ousd.changeSupply() directly from the vault address
+    function _changeSupply(uint256 newTotalSupply) internal {
+        vm.prank(address(ousdVault));
+        ousd.changeSupply(newTotalSupply);
+    }
+
+    /// @dev Assert the supply invariant: rebasingSupply + nonRebasingSupply ≈ totalSupply
+    function _assertSupplyInvariant() internal view {
+        uint256 calculatedSupply = (ousd.rebasingCreditsHighres() * 1e18) / ousd.rebasingCreditsPerTokenHighres()
+            + ousd.nonRebasingSupply();
+        assertApproxEqAbs(calculatedSupply, ousd.totalSupply(), 1);
     }
 
     //////////////////////////////////////////////////////
@@ -129,7 +140,6 @@ abstract contract Unit_Shared_Test is Base {
         vm.label(address(ousdVault), "OUSDVault");
         vm.label(address(ousdProxy), "OUSDProxy");
         vm.label(address(ousdVaultProxy), "OUSDVaultProxy");
-        vm.label(address(mockStrategy), "MockStrategy");
         vm.label(address(mockNonRebasing), "MockNonRebasing");
     }
 }

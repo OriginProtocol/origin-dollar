@@ -1,19 +1,21 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import {Base} from "tests/Base.sol";
+import {Base} from "tests/Base.t.sol";
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {MockERC20} from "@solmate/test/utils/mocks/MockERC20.sol";
 import {IPoolBoostCentralRegistry} from "contracts/interfaces/poolBooster/IPoolBoostCentralRegistry.sol";
 import {IPoolBooster} from "contracts/interfaces/poolBooster/IPoolBooster.sol";
+import {IBribe} from "contracts/interfaces/poolBooster/ISwapXAlgebraBribe.sol";
 
 import {OSonic} from "contracts/token/OSonic.sol";
 import {PoolBoostCentralRegistry} from "contracts/poolBooster/PoolBoostCentralRegistry.sol";
-import {PoolBoosterFactoryMetropolis} from "contracts/poolBooster/PoolBoosterFactoryMetropolis.sol";
-import {PoolBoosterMetropolis} from "contracts/poolBooster/PoolBoosterMetropolis.sol";
+import {PoolBoosterFactorySwapxSingle} from "contracts/poolBooster/PoolBoosterFactorySwapxSingle.sol";
+import {PoolBoosterSwapxSingle} from "contracts/poolBooster/PoolBoosterSwapxSingle.sol";
+import {AbstractPoolBoosterFactory} from "contracts/poolBooster/AbstractPoolBoosterFactory.sol";
 
-abstract contract Unit_Metropolis_Shared_Test is Base {
+abstract contract Unit_SwapXSingle_Shared_Test is Base {
     //////////////////////////////////////////////////////
     /// --- CONSTANTS
     //////////////////////////////////////////////////////
@@ -24,10 +26,9 @@ abstract contract Unit_Metropolis_Shared_Test is Base {
     /// --- MOCK ADDRESSES
     //////////////////////////////////////////////////////
 
-    address internal mockRewardFactory;
-    address internal mockVoter;
+    address internal mockBribeContract;
     address internal mockAmmPool;
-    address internal mockRewarder;
+    address internal mockAmmPool2;
 
     //////////////////////////////////////////////////////
     /// --- SETUP
@@ -40,17 +41,15 @@ abstract contract Unit_Metropolis_Shared_Test is Base {
         _deployOSonic();
         _deployCentralRegistry();
         _deployFactory();
-        _mockMetropolisContracts();
         _deployStandaloneBooster();
         _approveFactoryOnRegistry();
         _labelContracts();
     }
 
     function _createMockAddresses() internal {
-        mockRewardFactory = makeAddr("MockRewardFactory");
-        mockVoter = makeAddr("MockVoter");
+        mockBribeContract = makeAddr("MockBribeContract");
         mockAmmPool = makeAddr("MockAmmPool");
-        mockRewarder = makeAddr("MockRewarder");
+        mockAmmPool2 = makeAddr("MockAmmPool2");
     }
 
     function _deployOSonic() internal {
@@ -63,34 +62,30 @@ abstract contract Unit_Metropolis_Shared_Test is Base {
     }
 
     function _deployFactory() internal {
-        factoryMetropolis = new PoolBoosterFactoryMetropolis(
+        factorySwapxSingle = new PoolBoosterFactorySwapxSingle(
             address(oSonic),
             governor,
-            address(centralRegistry),
-            mockRewardFactory,
-            mockVoter
+            address(centralRegistry)
         );
     }
 
     function _deployStandaloneBooster() internal {
-        boosterMetropolis = new PoolBoosterMetropolis(
-            address(oSonic),
-            mockRewardFactory,
-            mockAmmPool,
-            mockVoter
+        boosterSwapxSingle = new PoolBoosterSwapxSingle(
+            mockBribeContract,
+            address(oSonic)
         );
     }
 
     function _approveFactoryOnRegistry() internal {
         vm.prank(governor);
-        centralRegistry.approveFactory(address(factoryMetropolis));
+        centralRegistry.approveFactory(address(factorySwapxSingle));
     }
 
     function _labelContracts() internal {
         vm.label(address(oSonic), "OSonic (MockERC20)");
         vm.label(address(centralRegistry), "CentralRegistry");
-        vm.label(address(factoryMetropolis), "FactoryMetropolis");
-        vm.label(address(boosterMetropolis), "BoosterMetropolis");
+        vm.label(address(factorySwapxSingle), "FactorySwapxSingle");
+        vm.label(address(boosterSwapxSingle), "BoosterSwapxSingle");
     }
 
     //////////////////////////////////////////////////////
@@ -105,33 +100,23 @@ abstract contract Unit_Metropolis_Shared_Test is Base {
         MockERC20(address(oSonic)).mint(_to, _amount);
     }
 
-    function _mockMetropolisContracts() internal {
-        // Mock getWhitelistedTokenInfo
+    function _mockBribeNotifyRewardAmount(address _bribeContract) internal {
         vm.mockCall(
-            mockRewardFactory,
-            abi.encodeWithSelector(bytes4(keccak256("getWhitelistedTokenInfo(address)"))),
-            abi.encode(true, uint256(1e10))
-        );
-
-        // Mock getCurrentVotingPeriod
-        vm.mockCall(
-            mockVoter,
-            abi.encodeWithSelector(bytes4(keccak256("getCurrentVotingPeriod()"))),
-            abi.encode(uint256(5))
-        );
-
-        // Mock createBribeRewarder
-        vm.mockCall(
-            mockRewardFactory,
-            abi.encodeWithSelector(bytes4(keccak256("createBribeRewarder(address,address)"))),
-            abi.encode(mockRewarder)
-        );
-
-        // Mock fundAndBribe on the rewarder
-        vm.mockCall(
-            mockRewarder,
-            abi.encodeWithSelector(bytes4(keccak256("fundAndBribe(uint256,uint256,uint256)"))),
+            _bribeContract,
+            abi.encodeWithSelector(IBribe.notifyRewardAmount.selector),
             abi.encode()
         );
+    }
+
+    /// @dev Creates a pool booster via the SwapxSingle factory and returns its address
+    function _createSwapxSingleBooster(address _bribeAddress, address _pool, uint256 _salt)
+        internal
+        returns (address)
+    {
+        vm.prank(governor);
+        factorySwapxSingle.createPoolBoosterSwapxSingle(_bribeAddress, _pool, _salt);
+        uint256 len = factorySwapxSingle.poolBoosterLength();
+        (address boosterAddr,,) = factorySwapxSingle.poolBoosters(len - 1);
+        return boosterAddr;
     }
 }
