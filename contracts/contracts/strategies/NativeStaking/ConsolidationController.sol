@@ -81,6 +81,8 @@ contract ConsolidationController is Ownable {
     ) external payable onlyOwner {
         // Check no consolidations are already in progress
         require(consolidationCount == 0, "Consolidation in progress");
+        // Check at least one source validator is provided
+        require(sourcePubKeys.length > 0, "Empty source validators");
         // Check sourceStrategy is a valid old Native Staking Strategy
         _checkSourceStrategy(_sourceStrategy);
 
