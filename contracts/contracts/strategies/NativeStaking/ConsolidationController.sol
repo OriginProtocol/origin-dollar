@@ -38,6 +38,9 @@ contract ConsolidationController is Ownable {
     address public sourceStrategy;
     /// @notice The public key hash of the target validator on the new Compounding Staking Strategy
     bytes32 public targetPubKeyHash;
+    /// @dev Tracks source validators that were requested for a consolidation round.
+    /// Keyed by keccak256(sourcePubKeyHash, consolidationStartTimestamp).
+    mapping(bytes32 => bool) private pendingSourceInRound;
 
     /// @dev Throws if called by any account other than the Validator Registrator
     modifier onlyRegistrator() {
@@ -102,9 +105,23 @@ contract ConsolidationController is Ownable {
 
         // Store the state at the start of the consolidation process
         consolidationCount = SafeCast.toUint64(sourcePubKeys.length);
-        consolidationStartTimestamp = uint64(block.timestamp);
+        uint64 consolidationStartTimestampMem = uint64(block.timestamp);
+        consolidationStartTimestamp = consolidationStartTimestampMem;
         sourceStrategy = _sourceStrategy;
         targetPubKeyHash = targetPubKeyHashMem;
+
+        // Store source validators for this consolidation round.
+        for (uint256 i = 0; i < sourcePubKeys.length; ++i) {
+            bytes32 roundKey = _sourceValidatorRoundKey(
+                sourcePubKeys[i],
+                consolidationStartTimestampMem
+            );
+            require(
+                pendingSourceInRound[roundKey] == false,
+                "Duplicate source validator"
+            );
+            pendingSourceInRound[roundKey] = true;
+        }
 
         // Call requestConsolidation on the old Native Staking Strategy
         // to initiate the consolidations
@@ -139,10 +156,27 @@ contract ConsolidationController is Ownable {
     {
         // Check consolidations are in progress
         require(consolidationCount > 0, "No consolidation in progress");
+        // There a min time before a failed consolidation can be unwound.
+        // This gives the beacon chain time to process the request.
+        require(
+            block.timestamp >=
+                consolidationStartTimestamp + MIN_CONSOLIDATION_PERIOD,
+            "Source not withdrawable"
+        );
         require(
             sourcePubKeys.length <= consolidationCount,
             "Exceeds consolidation count"
         );
+        uint64 consolidationStartTimestampMem = consolidationStartTimestamp;
+
+        for (uint256 i = 0; i < sourcePubKeys.length; ++i) {
+            bytes32 roundKey = _sourceValidatorRoundKey(
+                sourcePubKeys[i],
+                consolidationStartTimestampMem
+            );
+            require(pendingSourceInRound[roundKey], "Unknown source validator");
+            pendingSourceInRound[roundKey] = false;
+        }
 
         // Read into memory in case it gets reset in storage before
         // the external call to the source strategy
@@ -436,6 +470,14 @@ contract ConsolidationController is Ownable {
     function _hashPubKey(bytes memory pubKey) internal pure returns (bytes32) {
         require(pubKey.length == 48, "Invalid public key");
         return sha256(abi.encodePacked(pubKey, bytes16(0)));
+    }
+
+    /// @dev Build a key for tracking source validators in a consolidation round.
+    function _sourceValidatorRoundKey(
+        bytes memory sourcePubKey,
+        uint64 roundTimestamp
+    ) internal pure returns (bytes32) {
+        return keccak256(abi.encode(_hashPubKey(sourcePubKey), roundTimestamp));
     }
 
     /// @dev Check source strategy is a valid old Native Staking Strategy
