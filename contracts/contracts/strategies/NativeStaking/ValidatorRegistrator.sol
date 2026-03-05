@@ -373,6 +373,7 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
         // This is different to the Beacon chain's method.
         bytes32 targetPubKeyHash = keccak256(targetPubKey);
         bytes32 sourcePubKeyHash;
+        uint256 totalConsolidationFees;
 
         // For each source validator
         for (uint256 i = 0; i < sourcePubKeys.length; ++i) {
@@ -389,8 +390,16 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
             validatorsStates[sourcePubKeyHash] = VALIDATOR_STATE.EXITING;
 
             // Request consolidation from source to target validator
-            BeaconConsolidation.request(sourcePubKeys[i], targetPubKey);
+            totalConsolidationFees += BeaconConsolidation.request(
+                sourcePubKeys[i],
+                targetPubKey
+            );
         }
+
+        require(
+            totalConsolidationFees <= msg.value,
+            "Insufficient consolidation fee"
+        );
 
         emit ConsolidationRequested(
             sourcePubKeys,
