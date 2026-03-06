@@ -60,6 +60,7 @@ contract CurvePoolBoosterBribesModule is AbstractSafeModule {
     ) AbstractSafeModule(_safeContract) {
         _grantRole(OPERATOR_ROLE, _operator);
         for (uint256 i = 0; i < _poolBoosters.length; i++) {
+            // slither-disable-next-line cache-array-length
             _addPoolBoosterAddress(_poolBoosters[i]);
         }
         _setBridgeFee(_bridgeFee);
@@ -112,12 +113,12 @@ contract CurvePoolBoosterBribesModule is AbstractSafeModule {
     /// @dev Calls `manageCampaign` on each pool booster via the Safe. The Safe must hold
     ///      enough ETH to cover `bridgeFee * poolBoosters.length`.
     function manageBribes() external onlyOperator {
-        uint256[] memory totalRewardAmounts = new uint256[](
-            poolBoosters.length
-        );
-        uint8[] memory extraDuration = new uint8[](poolBoosters.length);
-        uint256[] memory rewardsPerVote = new uint256[](poolBoosters.length);
-        for (uint256 i = 0; i < poolBoosters.length; i++) {
+        uint256 poolBoosterCount = poolBoosters.length;
+
+        uint256[] memory totalRewardAmounts = new uint256[](poolBoosterCount);
+        uint8[] memory extraDuration = new uint8[](poolBoosterCount);
+        uint256[] memory rewardsPerVote = new uint256[](poolBoosterCount);
+        for (uint256 i = 0; i < poolBoosterCount; i++) {
             totalRewardAmounts[i] = type(uint256).max; // use all available rewards
             extraDuration[i] = 1; // extend by 1 period (week)
             rewardsPerVote[i] = 0; // no update to maxRewardPerVote
@@ -166,8 +167,9 @@ contract CurvePoolBoosterBribesModule is AbstractSafeModule {
     /// @dev Reverts if the address is already in the poolBoosters array
     /// @param _pool Address to append to the poolBoosters array
     function _addPoolBoosterAddress(address _pool) internal {
+        uint256 poolBoosterCount = poolBoosters.length;
         require(_pool != address(0), "Zero address");
-        for (uint256 j = 0; j < poolBoosters.length; j++) {
+        for (uint256 j = 0; j < poolBoosterCount; j++) {
             require(poolBoosters[j] != _pool, "Pool already added");
         }
         poolBoosters.push(_pool);

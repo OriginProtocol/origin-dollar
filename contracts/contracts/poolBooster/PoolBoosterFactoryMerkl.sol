@@ -21,7 +21,7 @@ contract PoolBoosterFactoryMerkl is AbstractPoolBoosterFactory {
     ////////////////////////////////////////////////////
 
     /// @notice Address of the UpgradeableBeacon
-    address public beacon;
+    address public immutable beacon;
 
     ////////////////////////////////////////////////////
     /// --- CONSTRUCTOR
@@ -45,6 +45,7 @@ contract PoolBoosterFactoryMerkl is AbstractPoolBoosterFactory {
     /// --- CORE LOGIC
     ////////////////////////////////////////////////////
 
+    // slither-disable-start reentrancy-no-eth
     /// @notice Create a Pool Booster for Merkl using a BeaconProxy
     /// @param _ammPoolAddress Address of the AMM pool
     /// @param _initData Encoded call data for initializing the proxy
@@ -74,6 +75,8 @@ contract PoolBoosterFactoryMerkl is AbstractPoolBoosterFactory {
             IPoolBoostCentralRegistry.PoolBoosterType.MerklBooster
         );
     }
+
+    // slither-disable-end reentrancy-no-eth
 
     /// @notice Calls bribe() on all pool boosters, skipping those in the exclusion list
     /// @param _exclusionList A list of pool booster addresses to skip
