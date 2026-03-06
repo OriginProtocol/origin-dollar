@@ -714,7 +714,7 @@ describe("Base Fork Test: Curve AMO strategy", function () {
         curveAMOStrategy
           .connect(impersonatedAMOGovernor)
           .setMaxSlippage(oethUnits("0.51"))
-      ).to.be.revertedWith("Slippage must be less than 100%");
+      ).to.be.revertedWith("Slippage must be less than 5%");
     });
   });
 
