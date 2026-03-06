@@ -8,7 +8,7 @@ const { cctpDomainIds } = require("../../utils/cctp");
 
 module.exports = deployOnBase(
   {
-    deployName: "045_crosschain_upgrade_remote",
+    deployName: "046_crosschain_upgrade_remote",
   },
   async () => {
     const crossChainStrategyProxyAddress = await getCreate2ProxyAddress(
