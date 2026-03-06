@@ -20,6 +20,8 @@ contract PoolBoosterFactoryMerkl is AbstractPoolBoosterFactory {
     /// --- STORAGE
     ////////////////////////////////////////////////////
 
+    address private deprecated_beacon;
+    
     /// @notice Address of the UpgradeableBeacon
     address public immutable beacon;
 
