@@ -10,6 +10,10 @@ const {
 module.exports = deploymentWithGovernanceProposal(
   {
     deployName: "180_vault_upgrade_supernova_AMO",
+    forceDeploy: false,
+    reduceQueueTime: true,
+    deployerIsProposer: false,
+    proposalId: "16177445778432224472212272508299557275111595204509579362893638738519171283271",
   },
   async ({ ethers }) => {
     // 1. Deploy new OETH Vault Core and Admin implementations
