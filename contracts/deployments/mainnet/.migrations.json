@@ -66,5 +66,6 @@
   "173_improve_curve_pb_module": 1770818413,
   "175_deploy_pool_booster_merkl_factory": 1772620839,
   "177_change_crosschain_strategy_operator": 1771489463,
-  "178_ousd_auto_withdrawal_module": 1771922160
+  "178_ousd_auto_withdrawal_module": 1771922160,
+  "180_vault_upgrade_supernova_AMO": 1772814443
 }
