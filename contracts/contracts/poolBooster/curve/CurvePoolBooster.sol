@@ -171,7 +171,7 @@ contract CurvePoolBooster is Initializable, Strategizable {
     ) external payable nonReentrant onlyGovernorOrStrategist {
         require(campaignId != 0, "Campaign not created");
 
-        uint256 rewardAmount;
+        uint256 rewardAmount = 0;
 
         if (totalRewardAmount != 0) {
             uint256 amount = min(

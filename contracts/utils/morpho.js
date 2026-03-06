@@ -33,12 +33,11 @@ async function morphoWithdrawShortfall() {
     addresses.mainnet.USDC
   );
 
-  const usdc = await ethers.getContractAt(
-    erc20Abi,
-    addresses.mainnet.USDC
+  const usdc = await ethers.getContractAt(erc20Abi, addresses.mainnet.USDC);
+  const vaultUSDCBalance = await usdc.balanceOf(
+    addresses.mainnet.MorphoOUSDv2Vault
   );
-  const vaultUSDCBalance = await usdc.balanceOf(addresses.mainnet.MorphoOUSDv2Vault);
-  
+
   maxWithdrawal = maxWithdrawal.add(vaultUSDCBalance);
   log(
     `Morpho OUSD v2 Strategy USDC balance: ${formatUnits(

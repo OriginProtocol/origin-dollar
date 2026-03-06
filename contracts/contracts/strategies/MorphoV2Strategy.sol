@@ -12,7 +12,6 @@ import { IVaultV2 } from "../interfaces/morpho/IVaultV2.sol";
 import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
 
 contract MorphoV2Strategy is Generalized4626Strategy {
-
     /**
      * @param _baseConfig Base strategy config with Morpho V2 Vault and
      * vaultAddress (OToken Vault contract), eg VaultProxy or OETHVaultProxy
