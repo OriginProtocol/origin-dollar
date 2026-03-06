@@ -153,11 +153,7 @@ contract CrossChainRemoteStrategy is
         );
 
         if (amountToWithdraw > 0) {
-            _withdraw(
-                address(this),
-                usdcToken,
-                amountToWithdraw
-            );
+            _withdraw(address(this), usdcToken, amountToWithdraw);
         }
     }
 
