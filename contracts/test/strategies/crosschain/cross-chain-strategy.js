@@ -110,10 +110,9 @@ describe("ForkTest: CrossChainRemoteStrategy", function () {
       .connect(governor)
       .setLiquidityAdapter(morphoVault.address);
 
-    await expect(crossChainRemoteStrategy.connect(governor).withdrawAll())
-      .to.be.revertedWithCustomError(
-        "IncompatibleAdapter(address)"
-      );
+    await expect(
+      crossChainRemoteStrategy.connect(governor).withdrawAll()
+    ).to.be.revertedWithCustomError("IncompatibleAdapter(address)");
   });
 
   // Checks the diff in the total expected value in the vault
