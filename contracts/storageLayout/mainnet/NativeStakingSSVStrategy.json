@@ -39,7 +39,7 @@
       "slot": "51",
       "type": "t_address",
       "contract": "ValidatorRegistrator",
-      "src": "contracts/strategies/NativeStaking/ValidatorRegistrator.sol:39"
+      "src": "contracts/strategies/NativeStaking/ValidatorRegistrator.sol:40"
     },
     {
       "label": "activeDepositedValidators",
@@ -47,15 +47,15 @@
       "slot": "52",
       "type": "t_uint256",
       "contract": "ValidatorRegistrator",
-      "src": "contracts/strategies/NativeStaking/ValidatorRegistrator.sol:43"
+      "src": "contracts/strategies/NativeStaking/ValidatorRegistrator.sol:44"
     },
     {
       "label": "validatorsStates",
       "offset": 0,
       "slot": "53",
-      "type": "t_mapping(t_bytes32,t_enum(VALIDATOR_STATE)4055)",
+      "type": "t_mapping(t_bytes32,t_enum(VALIDATOR_STATE)49965)",
       "contract": "ValidatorRegistrator",
-      "src": "contracts/strategies/NativeStaking/ValidatorRegistrator.sol:45"
+      "src": "contracts/strategies/NativeStaking/ValidatorRegistrator.sol:46"
     },
     {
       "label": "stakingMonitor",
@@ -63,7 +63,7 @@
       "slot": "54",
       "type": "t_address",
       "contract": "ValidatorRegistrator",
-      "src": "contracts/strategies/NativeStaking/ValidatorRegistrator.sol:47"
+      "src": "contracts/strategies/NativeStaking/ValidatorRegistrator.sol:48"
     },
     {
       "label": "stakeETHThreshold",
@@ -71,7 +71,7 @@
       "slot": "55",
       "type": "t_uint256",
       "contract": "ValidatorRegistrator",
-      "src": "contracts/strategies/NativeStaking/ValidatorRegistrator.sol:50"
+      "src": "contracts/strategies/NativeStaking/ValidatorRegistrator.sol:51"
     },
     {
       "label": "stakeETHTally",
@@ -79,7 +79,7 @@
       "slot": "56",
       "type": "t_uint256",
       "contract": "ValidatorRegistrator",
-      "src": "contracts/strategies/NativeStaking/ValidatorRegistrator.sol:53"
+      "src": "contracts/strategies/NativeStaking/ValidatorRegistrator.sol:54"
     },
     {
       "label": "__gap",
@@ -87,7 +87,7 @@
       "slot": "57",
       "type": "t_array(t_uint256)47_storage",
       "contract": "ValidatorRegistrator",
-      "src": "contracts/strategies/NativeStaking/ValidatorRegistrator.sol:55"
+      "src": "contracts/strategies/NativeStaking/ValidatorRegistrator.sol:56"
     },
     {
       "label": "consensusRewards",
@@ -251,7 +251,7 @@
       "label": "bytes32",
       "numberOfBytes": "32"
     },
-    "t_enum(VALIDATOR_STATE)4055": {
+    "t_enum(VALIDATOR_STATE)49965": {
       "label": "enum ValidatorRegistrator.VALIDATOR_STATE",
       "members": [
         "NON_REGISTERED",
@@ -270,7 +270,7 @@
       "label": "mapping(address => address)",
       "numberOfBytes": "32"
     },
-    "t_mapping(t_bytes32,t_enum(VALIDATOR_STATE)4055)": {
+    "t_mapping(t_bytes32,t_enum(VALIDATOR_STATE)49965)": {
       "label": "mapping(bytes32 => enum ValidatorRegistrator.VALIDATOR_STATE)",
       "numberOfBytes": "32"
     },
@@ -278,5 +278,6 @@
       "label": "uint256",
       "numberOfBytes": "32"
     }
-  }
+  },
+  "namespaces": {}
 }
