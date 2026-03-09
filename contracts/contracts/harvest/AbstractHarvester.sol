@@ -472,6 +472,10 @@ abstract contract AbstractHarvester is Governable {
      * @param _rewardTo Address where to send the share of harvest rewards to
      * @param _priceProvider Oracle to get prices of the swap token
      */
+    // This function is called by the harvestAndSwap function, which is only called by
+    // functions that have the nonReentrant modifier. Therefore, this function is also non-reentrant.
+    // slither-disable-start reentrancy-eth,reentrancy-no-eth,reentrancy-benign
+    // slither-disable-start reentrancy-events,reentrancy-unlimited-gas,reentrancy-balance
     function _swap(
         address _swapToken,
         address _rewardTo,
@@ -574,6 +578,9 @@ abstract contract AbstractHarvester is Governable {
             farmerFee
         );
     }
+
+    // slither-disable-end reentrancy-events,reentrancy-unlimited-gas,reentrancy-balance
+    // slither-disable-end reentrancy-eth,reentrancy-no-eth,reentrancy-benign
 
     function _doSwap(
         SwapPlatform swapPlatform,

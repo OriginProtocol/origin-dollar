@@ -16,10 +16,11 @@ library MorphoV2VaultUtils {
      *      2) additional liquidity from the active adapter if it resolves to a Morpho V1 vault
      *         and, when provided, matches the expected adapter
      */
-    function maxWithdrawableAssets(
-        address platformAddress,
-        address assetToken
-    ) internal view returns (uint256 availableAssetLiquidity) {
+    function maxWithdrawableAssets(address platformAddress, address assetToken)
+        internal
+        view
+        returns (uint256 availableAssetLiquidity)
+    {
         availableAssetLiquidity = IERC20(assetToken).balanceOf(platformAddress);
 
         address liquidityAdapter = IVaultV2(platformAddress).liquidityAdapter();
@@ -34,5 +35,4 @@ library MorphoV2VaultUtils {
             revert IncompatibleAdapter(liquidityAdapter);
         }
     }
-
 }
