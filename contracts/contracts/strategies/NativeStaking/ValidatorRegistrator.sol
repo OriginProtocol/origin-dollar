@@ -365,6 +365,7 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
      * @param sourcePubKeys The full public keys of the source validators to be consolidated.
      * @param targetPubKey The full public key of the target validator to consolidate into.
      */
+    // slither-disable-start reentrancy-no-eth
     function requestConsolidation(
         bytes[] calldata sourcePubKeys,
         bytes calldata targetPubKey
@@ -373,7 +374,7 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
         // This is different to the Beacon chain's method.
         bytes32 targetPubKeyHash = keccak256(targetPubKey);
         bytes32 sourcePubKeyHash;
-        uint256 totalConsolidationFees;
+        uint256 totalConsolidationFees = 0;
 
         // For each source validator
         for (uint256 i = 0; i < sourcePubKeys.length; ++i) {
@@ -407,6 +408,8 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
             sourcePubKeys.length
         );
     }
+
+    // slither-disable-end reentrancy-no-eth
 
     /**
      * @notice A consolidation request can fail to be processed on the beacon chain
