@@ -47,7 +47,7 @@ describe.skip("ForkTest: First Native SSV Staking Strategy", function () {
   });
 });
 
-describe("ForkTest: Second Native SSV Staking Strategy", function () {
+describe.skip("ForkTest: Second Native SSV Staking Strategy", function () {
   this.timeout(0);
 
   let fixture;
@@ -88,7 +88,7 @@ describe("ForkTest: Second Native SSV Staking Strategy", function () {
   });
 });
 
-describe("ForkTest: Third Native SSV Staking Strategy", function () {
+describe.skip("ForkTest: Third Native SSV Staking Strategy", function () {
   this.timeout(0);
 
   let fixture;

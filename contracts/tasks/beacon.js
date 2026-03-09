@@ -435,10 +435,13 @@ async function verifyDeposit({
 async function verifyBalances({
   indexes,
   deposits,
+  overIds,
+  overBals,
   dryrun,
   test,
   signer,
   slot,
+  consol,
 }) {
   const strategy = test
     ? undefined
@@ -446,9 +449,7 @@ async function verifyBalances({
         "CompoundingStakingSSVStrategyProxy",
         "CompoundingStakingSSVStrategy"
       );
-  const strategyView = test
-    ? undefined
-    : await resolveContract("CompoundingStakingStrategyView");
+  const strategyView = await resolveContract("CompoundingStakingStrategyView");
 
   if (!slot) {
     if (!test) {
@@ -468,6 +469,23 @@ async function verifyBalances({
   );
   const verificationSlot = blockView.slot;
 
+  // Update validator balances so they become active
+  // Used to generated test data for fork tests
+  if (overIds) {
+    const validatorIndexes = overIds.split(",").map((index) => Number(index));
+    const validatorBalances = overBals
+      .split(",")
+      .map((balance) => parseUnits(balance, 9)); // in Gwei
+    if (overIds.split(",").length !== overBals.split(",").length) {
+      throw new Error("Mismatched lengths for overIds and overBals");
+    }
+    for (const [i, validatorIndex] of validatorIndexes.entries()) {
+      stateView.balances.set(validatorIndex, validatorBalances[i]);
+    }
+  }
+  const stateRootGindex = blockView.type.getPathInfo(["stateRoot"]).gindex;
+  blockTree.setNode(stateRootGindex, stateView.node);
+
   const {
     leaf: pendingDepositContainerRoot,
     proof: pendingDepositContainerProof,
@@ -480,10 +498,8 @@ async function verifyBalances({
   let pendingDepositIndexes = [];
   let pendingDepositRoots = [];
   let pendingDepositProofs = [];
-  if (test) {
-    const depositIndexes = (deposits || "")
-      .split(",")
-      .map((index) => Number(index));
+  if (test && deposits) {
+    const depositIndexes = deposits.split(",").map((index) => Number(index));
     for (const depositIndex of depositIndexes) {
       pendingDepositIndexes.push(depositIndex);
       const { proof, leaf } = await generatePendingDepositProof({
@@ -536,7 +552,7 @@ async function verifyBalances({
 
   let balancesContainerRoot = ZERO_BYTES32;
   let balancesContainerProof = "0x";
-  let blockRoot = ZERO_BYTES32;
+  let beaconBlockRoot = ZERO_BYTES32;
   if (verifiedValidators.length > 0) {
     const balancesContainerProofData = await generateBalancesContainerProof({
       blockView,
@@ -545,7 +561,7 @@ async function verifyBalances({
     });
     balancesContainerRoot = balancesContainerProofData.leaf;
     balancesContainerProof = balancesContainerProofData.proof;
-    blockRoot = balancesContainerProofData.root;
+    beaconBlockRoot = balancesContainerProofData.root;
   }
 
   const validatorBalanceLeaves = [];
@@ -570,44 +586,8 @@ async function verifyBalances({
     formatUnits(bal, 9)
   );
 
-  if (dryrun) {
-    console.log(`snapped slot                      : ${verificationSlot}`);
-    console.log(`snap balances block root          : ${blockRoot}`);
-    console.log(`\nbalancesContainerRoot           : ${balancesContainerRoot}`);
-    console.log(`\nbalancesContainerProof:\n${balancesContainerProof}`);
-    console.log(
-      `\nvalidatorBalanceLeaves:\n[${validatorBalanceLeaves
-        .map((leaf) => `"${leaf}"`)
-        .join(",\n")}]`
-    );
-    console.log(
-      `\nvalidatorBalanceProofs:\n[${validatorBalanceProofs
-        .map((proof) => `"${proof}"`)
-        .join(",\n")}]`
-    );
-    console.log(
-      `validatorBalances: [${validatorBalancesFormatted.join(", ")}]`
-    );
-    console.log(
-      `\npendingDepositsContainerRoot           : ${pendingDepositContainerRoot}`
-    );
-    console.log(
-      `\npendingDepositsContainerProof:\n${pendingDepositContainerProof}`
-    );
-    console.log(
-      `\npendingDepositIndexes:\n[${pendingDepositIndexes
-        .map((index) => `"${index}"`)
-        .join(",")}]`
-    );
-    console.log(
-      `\npendingDepositProofs:\n[${pendingDepositProofs
-        .map((proof) => `"${proof}"`)
-        .join(",\n")}]`
-    );
-    return;
-  }
-
   const balanceProofs = {
+    beaconBlockRoot,
     balancesContainerRoot,
     balancesContainerProof,
     validatorBalanceLeaves,
@@ -625,10 +605,9 @@ async function verifyBalances({
     console.log(
       JSON.stringify(
         {
-          blockRoot,
-          pendingDepositProofsData,
           balanceProofs,
           validatorBalances: validatorBalancesFormatted,
+          pendingDepositProofs: pendingDepositProofsData,
         },
         null,
         2
@@ -637,12 +616,55 @@ async function verifyBalances({
     return;
   }
 
+  if (dryrun) {
+    console.log(`snapped slot                      : ${verificationSlot}`);
+    console.log(`snap balances block root          : ${beaconBlockRoot}`);
+    console.log(`\nbalancesContainerRoot           : ${balancesContainerRoot}`);
+    console.log(`\nbalancesContainerProof:\n${balancesContainerProof}`);
+    console.log(
+      `\nvalidatorBalanceLeaves:\n[${validatorBalanceLeaves
+        .map((leaf) => `"${leaf}"`)
+        .join(",\n")}]`
+    );
+    console.log(
+      `\nvalidatorBalanceProofs:\n[${validatorBalanceProofs
+        .map((proof) => `"${proof}"`)
+        .join(",\n")}]`
+    );
+    console.log(
+      `validatorBalances: [${validatorBalancesFormatted.join(", ")}]`
+    );
+    console.log(
+      `\npendingDepositContainerRoot: ${pendingDepositContainerRoot}`
+    );
+    console.log(
+      `\npendingDepositContainerProof:\n${pendingDepositContainerProof}`
+    );
+    console.log(
+      `\npendingDepositIndexes:\n[${pendingDepositIndexes
+        .map((index) => `"${index}"`)
+        .join(",")}]`
+    );
+    console.log(
+      `\npendingDepositProofs:\n[${pendingDepositProofs
+        .map((proof) => `"${proof}"`)
+        .join(",\n")}]`
+    );
+
+    return { balanceProofs, pendingDepositProofs: pendingDepositProofsData };
+  }
+
   log(
-    `About to verify ${verifiedValidators.length} validator balances for slot ${verificationSlot} to beacon block root ${blockRoot}`
+    `About to verify ${verifiedValidators.length} validator balances for slot ${verificationSlot} to beacon block root ${beaconBlockRoot}`
   );
   log(balanceProofs);
   log(pendingDepositProofsData);
-  const tx = await strategy
+
+  const contract = consol
+    ? await resolveContract("ConsolidationController")
+    : strategy;
+
+  const tx = await contract
     .connect(signer)
     .verifyBalances(balanceProofs, pendingDepositProofsData);
   await logTxDetails(tx, "verifyBalances");

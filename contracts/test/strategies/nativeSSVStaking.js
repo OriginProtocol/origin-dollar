@@ -1110,7 +1110,7 @@ describe("Unit test: Native SSV Staking Strategy", function () {
           )
         ).to.equal(0, "Validator state not 0 (NON_REGISTERED)");
 
-        const ssvAmount = ethUnits("2");
+        const ethAmount = ethUnits("2");
         // Register a new validator with the SSV Network
         const regTx = await nativeStakingSSVStrategy
           .connect(validatorRegistrator)
@@ -1118,8 +1118,8 @@ describe("Unit test: Native SSV Staking Strategy", function () {
             [testPublicKeys[i]],
             testValidator.operatorIds,
             [testValidator.sharesData],
-            ssvAmount,
-            emptyCluster
+            emptyCluster,
+            { value: ethAmount }
           );
 
         await expect(regTx)
@@ -1182,7 +1182,7 @@ describe("Unit test: Native SSV Staking Strategy", function () {
       const sharesData = new Array(validators)
         .fill()
         .map(() => testValidator.sharesData);
-      const ssvAmount = ethUnits("2");
+      const ethAmount = ethUnits("2");
 
       // Register a new validator with the SSV Network
       const regTx = await nativeStakingSSVStrategy
@@ -1191,8 +1191,8 @@ describe("Unit test: Native SSV Staking Strategy", function () {
           publicKeys,
           testValidator.operatorIds,
           sharesData,
-          ssvAmount,
-          emptyCluster
+          emptyCluster,
+          { value: ethAmount }
         );
 
       for (const pubKey of publicKeys) {

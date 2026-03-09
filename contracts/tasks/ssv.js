@@ -3,20 +3,24 @@ const { parseUnits, formatUnits } = require("ethers/lib/utils");
 const addresses = require("../utils/addresses");
 const { resolveContract } = require("../utils/resolvers");
 const { getSigner } = require("../utils/signers");
-const { getClusterInfo, sortOperatorIds } = require("../utils/ssv");
+const {
+  getClusterInfo,
+  sortOperatorIds,
+  splitOperatorIds,
+} = require("../utils/ssv");
 const { getNetworkName } = require("../utils/hardhat-helpers");
 const { logTxDetails } = require("../utils/txLogger");
 const { resolveNativeStakingStrategyProxy } = require("./validator");
 
 const log = require("../utils/logger")("task:ssv");
 
-async function removeValidator({ index, pubkey, operatorids }) {
+async function removeValidator({ consol, index, pubkey, operatorids }) {
   const signer = await getSigner();
 
   log(`Splitting operator IDs ${operatorids}`);
   const operatorIds = operatorids.split(",").map((id) => parseInt(id));
 
-  const strategy = await resolveNativeStakingStrategyProxy(index);
+  const nativeStakingStrategy = await resolveNativeStakingStrategyProxy(index);
 
   const { chainId } = await ethers.provider.getNetwork();
 
@@ -25,13 +29,27 @@ async function removeValidator({ index, pubkey, operatorids }) {
     chainId,
     ssvNetwork: hre.network.name.toUpperCase(),
     operatorids,
-    ownerAddress: strategy.address,
+    ownerAddress: nativeStakingStrategy.address,
   });
 
+  const strategy = consol
+    ? await resolveContract("ConsolidationController")
+    : nativeStakingStrategy;
+
   log(`About to remove validator: ${pubkey}`);
-  const tx = await strategy
-    .connect(signer)
-    .removeSsvValidator(pubkey, operatorIds, cluster);
+  let tx = consol
+    ? await strategy
+        .connect(signer)
+        .removeSsvValidator(
+          nativeStakingStrategy.address,
+          pubkey,
+          operatorIds,
+          cluster
+        )
+    : await strategy
+        .connect(signer)
+        .removeSsvValidator(pubkey, operatorIds, cluster);
+
   await logTxDetails(tx, "removeSsvValidator");
 }
 
@@ -78,45 +96,47 @@ const depositSSV = async ({ amount, index, operatorids }) => {
   await logTxDetails(tx, "depositSSV");
 };
 
-const withdrawSSV = async ({ amount, index, operatorids }) => {
-  const amountBN = parseUnits(amount.toString(), 18);
+const migrateClusterToETH = async ({ type, amount, operatorids, index }) => {
+  const etherAmountBN = parseUnits(amount.toString(), 18);
   log(`Splitting operator IDs ${operatorids}`);
-  const operatorIds = await sortOperatorIds(operatorids);
+  const operatorIds = splitOperatorIds(operatorids);
 
   const signer = await getSigner();
 
-  const strategy = await resolveNativeStakingStrategyProxy(index);
+  const strategy =
+    type === "new"
+      ? await resolveContract(
+          "CompoundingStakingSSVStrategyProxy",
+          "CompoundingStakingSSVStrategy"
+        )
+      : await resolveNativeStakingStrategyProxy(index);
 
   const { chainId } = await ethers.provider.getNetwork();
-  const networkName = await getNetworkName();
-  const ssvNetworkAddress = addresses[networkName].SSVNetwork;
-  const ssvNetwork = await resolveContract(ssvNetworkAddress, "ISSVNetwork");
 
   // Cluster details
   const clusterInfo = await getClusterInfo({
     chainId,
-    ssvNetwork: ssvNetwork.address,
-    operatorids,
+    operatorids: operatorIds.join(","),
     ownerAddress: strategy.address,
   });
 
   log(
-    `About to withdraw ${formatUnits(
-      amountBN
-    )} SSV tokens from the SSV Network for native staking strategy ${
-      strategy.address
-    } with operator IDs ${operatorIds}`
+    `About to migrate cluster adding ${formatUnits(
+      etherAmountBN
+    )} ETH with operator IDs ${operatorIds}`
   );
   log(`Cluster: ${JSON.stringify(clusterInfo.cluster)}`);
   const tx = await strategy
     .connect(signer)
-    .withdrawSSV(operatorIds, amountBN, clusterInfo.cluster);
-  await logTxDetails(tx, "withdrawSSV");
+    .migrateClusterToETH(operatorIds, clusterInfo.cluster, {
+      value: etherAmountBN,
+    });
+  await logTxDetails(tx, "migrateClusterToETH");
 };
 
 module.exports = {
   printClusterInfo,
   depositSSV,
-  withdrawSSV,
+  migrateClusterToETH,
   removeValidator,
 };
