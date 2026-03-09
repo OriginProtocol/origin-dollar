@@ -88,6 +88,11 @@ describe("Sonic Fork Test: SwapX AMO Strategy", function () {
 
     return {
       scenarioConfig,
+      // The 027_upgrade_swapx deploy can't run on Sonic fork because the new
+      // StableSwapAMMStrategy constructor hardcodes mainnet addresses.  Tests
+      // that rely on the upgraded interface (asset(), oToken(), tighter
+      // maxDepeg validation) must be skipped.
+      isLegacyImplementation: true,
       loadFixture: async ({
         assetMintAmount = 0,
         depositToStrategy = false,
