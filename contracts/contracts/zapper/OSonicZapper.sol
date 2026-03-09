@@ -70,6 +70,7 @@ contract OSonicZapper {
         payable
         returns (uint256)
     {
+        // slither-disable-start reentrancy-balance
         uint256 balance = address(this).balance;
 
         emit Zap(msg.sender, ETH_MARKER, balance);
@@ -85,6 +86,7 @@ contract OSonicZapper {
 
         require(mintedWOS >= minReceived, "Zapper: not enough minted");
 
+        // slither-disable-end reentrancy-balance
         return mintedWOS;
     }
 
@@ -98,6 +100,7 @@ contract OSonicZapper {
         external
         returns (uint256)
     {
+        // slither-disable-start reentrancy-balance
         // slither-disable-next-line unchecked-transfer unused-return
         wS.transferFrom(msg.sender, address(this), wSAmount);
 
@@ -111,6 +114,7 @@ contract OSonicZapper {
 
         require(mintedWOS >= minReceived, "Zapper: not enough minted");
 
+        // slither-disable-end reentrancy-balance
         return mintedWOS;
     }
 

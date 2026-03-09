@@ -139,10 +139,17 @@ interface IVault {
 
     function getAllStrategies() external view returns (address[] memory);
 
-    /// @notice Deprecated.
+    function strategies(address _addr)
+        external
+        view
+        returns (VaultStorage.Strategy memory);
+
+    /// @notice Deprecated: use `asset()` instead.
     function isSupportedAsset(address _asset) external view returns (bool);
 
     function asset() external view returns (address);
+
+    function oToken() external view returns (address);
 
     function initialize(address) external;
 
