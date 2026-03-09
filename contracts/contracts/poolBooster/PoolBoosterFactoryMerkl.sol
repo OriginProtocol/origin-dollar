@@ -20,8 +20,10 @@ contract PoolBoosterFactoryMerkl is AbstractPoolBoosterFactory {
     /// --- STORAGE
     ////////////////////////////////////////////////////
 
+    // Keep this mutable storage slot to preserve layout compatibility.
+    // slither-disable-next-line constable-states
     address private deprecated_beacon;
-    
+
     /// @notice Address of the UpgradeableBeacon
     address public immutable beacon;
 

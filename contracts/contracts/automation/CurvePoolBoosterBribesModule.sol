@@ -59,8 +59,8 @@ contract CurvePoolBoosterBribesModule is AbstractSafeModule {
         uint256 _additionalGasLimit
     ) AbstractSafeModule(_safeContract) {
         _grantRole(OPERATOR_ROLE, _operator);
+        // slither-disable-next-line cache-array-length
         for (uint256 i = 0; i < _poolBoosters.length; i++) {
-            // slither-disable-next-line cache-array-length
             _addPoolBoosterAddress(_poolBoosters[i]);
         }
         _setBridgeFee(_bridgeFee);
