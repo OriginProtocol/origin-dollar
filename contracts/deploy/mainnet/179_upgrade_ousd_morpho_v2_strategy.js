@@ -7,7 +7,7 @@ module.exports = deploymentWithGovernanceProposal(
     forceDeploy: false,
     reduceQueueTime: true,
     deployerIsProposer: false,
-    proposalId: "",
+    proposalId: "38234265178409078333598297388552567945868201345097914935151040432111128029390",
   },
   async ({ deployWithConfirmation }) => {
     const cVaultProxy = await ethers.getContract("VaultProxy");
@@ -19,7 +19,7 @@ module.exports = deploymentWithGovernanceProposal(
       "MorphoV2Strategy",
       [
         [addresses.mainnet.MorphoOUSDv2Vault, cVaultProxy.address],
-        addresses.mainnet.USDC
+        addresses.mainnet.USDC,
       ]
     );
 

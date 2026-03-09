@@ -217,17 +217,20 @@ interface ISSVNetwork {
         bytes memory publicKey,
         uint64[] memory operatorIds,
         bytes memory sharesData,
-        uint256 amount,
         Cluster memory cluster
-    ) external;
+    ) external payable;
 
     function bulkRegisterValidator(
         bytes[] calldata publicKeys,
         uint64[] calldata operatorIds,
         bytes[] calldata sharesData,
-        uint256 amount,
         Cluster memory cluster
-    ) external;
+    ) external payable;
+
+    function migrateClusterToETH(
+        uint64[] calldata operatorIds,
+        Cluster memory cluster
+    ) external payable;
 
     function removeOperator(uint64 operatorId) external;
 

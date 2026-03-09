@@ -67,5 +67,6 @@
   "175_deploy_pool_booster_merkl_factory": 1772620839,
   "177_change_crosschain_strategy_operator": 1771489463,
   "178_ousd_auto_withdrawal_module": 1771922160,
+  "179_upgrade_ousd_morpho_v2_strategy": 1772658143,
   "180_vault_upgrade_supernova_AMO": 1772814443
 }

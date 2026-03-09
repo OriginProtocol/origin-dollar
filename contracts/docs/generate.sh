@@ -57,6 +57,12 @@ sol2uml storage .. -c NativeStakingSSVStrategy -o NativeStakingSSVStrategyStorag
 sol2uml .. -v -hv -hf -he -hs -hl -hi -b FeeAccumulator -o FeeAccumulatorHierarchy.svg
 sol2uml .. -s -d 0 -b FeeAccumulator -o FeeAccumulatorSquashed.svg
 
+sol2uml .. -v -hv -hf -he -hs -hl -hi -i prettier-plugin-solidity -b CompoundingStakingSSVStrategy -o CompoundingStakingSSVStrategyHierarchy.svg
+sol2uml .. -s -d 0 -i prettier-plugin-solidity -b CompoundingStakingSSVStrategy -o CompoundingStakingSSVStrategySquashed.svg
+sol2uml storage .. -i prettier-plugin-solidity -c CompoundingStakingSSVStrategy -o CompoundingStakingSSVStrategyStorage.svg --hideExpand __gap,______gap,_reserved
+
+sol2uml .. -s -d 0 -i prettier-plugin-solidity -b ConsolidationController -o ConsolidationControllerSquashed.svg
+
 sol2uml .. -v -hv -hf -he -hs -hl -hi -i prettier-plugin-solidity -b CurveAMOStrategy -o CurveAMOStrategyHierarchy.svg
 sol2uml .. -s -d 0 -b CurveAMOStrategy -i prettier-plugin-solidity -o CurveAMOStrategySquashed.svg
 sol2uml storage .. -c CurveAMOStrategy -i prettier-plugin-solidity -o CurveAMOStrategyStorage.svg --hideExpand ______gap,_reserved,__gap

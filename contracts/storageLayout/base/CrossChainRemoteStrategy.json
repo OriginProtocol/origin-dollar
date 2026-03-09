@@ -151,7 +151,7 @@
       "slot": "207",
       "type": "t_address",
       "contract": "Generalized4626Strategy",
-      "src": "contracts/strategies/Generalized4626Strategy.sol:20"
+      "src": "contracts/strategies/Generalized4626Strategy.sol:23"
     },
     {
       "label": "_deprecate_assetToken",
@@ -159,7 +159,7 @@
       "slot": "208",
       "type": "t_address",
       "contract": "Generalized4626Strategy",
-      "src": "contracts/strategies/Generalized4626Strategy.sol:23"
+      "src": "contracts/strategies/Generalized4626Strategy.sol:26"
     },
     {
       "label": "__gap",
@@ -167,7 +167,7 @@
       "slot": "209",
       "type": "t_array(t_uint256)50_storage",
       "contract": "Generalized4626Strategy",
-      "src": "contracts/strategies/Generalized4626Strategy.sol:29"
+      "src": "contracts/strategies/Generalized4626Strategy.sol:32"
     },
     {
       "label": "strategistAddr",
