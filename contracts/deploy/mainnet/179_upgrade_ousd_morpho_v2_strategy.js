@@ -7,7 +7,8 @@ module.exports = deploymentWithGovernanceProposal(
     forceDeploy: false,
     reduceQueueTime: true,
     deployerIsProposer: false,
-    proposalId: "38234265178409078333598297388552567945868201345097914935151040432111128029390",
+    proposalId:
+      "38234265178409078333598297388552567945868201345097914935151040432111128029390",
   },
   async ({ deployWithConfirmation }) => {
     const cVaultProxy = await ethers.getContract("VaultProxy");
