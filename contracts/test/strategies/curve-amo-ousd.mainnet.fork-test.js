@@ -1013,26 +1013,29 @@ describe("Fork Test: Curve AMO OUSD strategy", function () {
     const balanceOToken = balances[0];
     const balanceHardAsset = balances[1].mul(1e12); // Adjust decimals
 
-    if (balanceHardAsset.sub(balanceOToken) > 0) {
-      const amount = balanceHardAsset.sub(balanceOToken).div(1e12);
+    if (balanceHardAsset.gt(balanceOToken)) {
+      const diff18 = balanceHardAsset.sub(balanceOToken); // 18 decimals (OUSD)
+      const usdcAmount = diff18.div(1e12); // 6 decimals (USDC)
       const balance = await usdc.balanceOf(nick.address);
-      if (balance.lt(amount)) {
+      if (balance.lt(usdcAmount)) {
         await setERC20TokenBalance(
           nick.address,
           usdc,
-          amount.add(balance),
+          usdcAmount.add(balance),
           hre
         );
       }
       await usdc
         .connect(nick)
-        .approve(ousdVault.address, amount.mul(101).div(10));
-      await ousdVault.connect(nick).mint(amount.mul(101).div(10));
-      await ousd.connect(nick).approve(curvePool.address, amount);
+        .approve(ousdVault.address, usdcAmount.mul(101).div(10));
+      await ousdVault.connect(nick).mint(usdcAmount.mul(101).div(10));
+      await ousd
+        .connect(nick)
+        .approve(curvePool.address, ethers.constants.MaxUint256);
       // prettier-ignore
       await curvePool
-        .connect(nick)["add_liquidity(uint256[],uint256)"]([amount, 0], 0);
-    } else if (balanceHardAsset.sub(balanceOToken).lt(0)) {
+        .connect(nick)["add_liquidity(uint256[],uint256)"]([diff18, 0], 0);
+    } else if (balanceOToken.gt(balanceHardAsset)) {
       const amount = balanceOToken.sub(balanceHardAsset).div(1e12);
       const balance = await usdc.balanceOf(nick.address);
       if (balance.lt(amount)) {

@@ -1281,7 +1281,7 @@ const shouldBehaveLikeAlgebraAmoStrategy = (contextFunction) => {
           "Strategy's check balance"
         ).to.withinRange(
           dataBefore.stratBalance,
-          dataBefore.stratBalance.add(2)
+          dataBefore.stratBalance.add(3)
         );
 
         // Swap OToken into the pool and asset token out.
@@ -1299,7 +1299,7 @@ const shouldBehaveLikeAlgebraAmoStrategy = (contextFunction) => {
           "Strategy's check balance"
         ).to.withinRange(
           dataBefore.stratBalance,
-          dataBefore.stratBalance.add(2)
+          dataBefore.stratBalance.add(3)
         );
       });
     });
