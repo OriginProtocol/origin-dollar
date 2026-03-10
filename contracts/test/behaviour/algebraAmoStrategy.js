@@ -210,8 +210,7 @@ const shouldBehaveLikeAlgebraAmoStrategy = (contextFunction) => {
         context = await contextFunction();
         fixture = await context.loadFixture();
       });
-      it("Should have constants and immutables set", async function () {
-        if (context.isLegacyImplementation) return this.skip();
+      it("Should have constants and immutables set", async () => {
         const { amoStrategy, assetToken, oToken, pool, gauge, governor } =
           fixture;
 
@@ -274,8 +273,7 @@ const shouldBehaveLikeAlgebraAmoStrategy = (contextFunction) => {
           await expect(tx).to.be.revertedWith("Caller is not the Governor");
         }
       });
-      it("Governor should fail to set max depeg too small (1bp)", async function () {
-        if (context.isLegacyImplementation) return this.skip();
+      it("Governor should fail to set max depeg too small (1bp)", async () => {
         const { timelock, amoStrategy } = fixture;
 
         const tx = amoStrategy
@@ -283,8 +281,7 @@ const shouldBehaveLikeAlgebraAmoStrategy = (contextFunction) => {
           .setMaxDepeg(parseUnits("0.0001"));
         await expect(tx).to.be.revertedWith("Invalid max depeg range");
       });
-      it("Governor should fail to set max depeg too large (1100bp)", async function () {
-        if (context.isLegacyImplementation) return this.skip();
+      it("Governor should fail to set max depeg too large (1100bp)", async () => {
         const { timelock, amoStrategy } = fixture;
 
         const tx = amoStrategy

@@ -7,27 +7,10 @@ describe("ForkTest: Beacon Roots", function () {
 
   let provider;
   let beaconRoots;
-  let precompileAvailable;
-  beforeEach(async function () {
+  beforeEach(async () => {
     // Get provider to mainnet and not a local fork
     provider = new ethers.providers.JsonRpcProvider(process.env.PROVIDER_URL);
     beaconRoots = await ethers.getContract("MockBeaconRoots", provider);
-
-    // Check if the beacon roots precompile is available
-    if (precompileAvailable === undefined) {
-      try {
-        await beaconRoots.latestBlockRoot();
-        precompileAvailable = true;
-      } catch (e) {
-        precompileAvailable = false;
-      }
-    }
-    if (!precompileAvailable) {
-      console.log(
-        "Skipping: EIP-4788 beacon roots precompile not available on fork"
-      );
-      return this.skip();
-    }
   });
 
   it("Should get the latest beacon root", async () => {
