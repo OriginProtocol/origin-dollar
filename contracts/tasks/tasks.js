@@ -150,6 +150,7 @@ const {
 const { processCctpBridgeTransactions } = require("./crossChain");
 const { keyValueStoreLocalClient } = require("../utils/defender");
 const { configuration } = require("../utils/cctp");
+const { rebalancerTask } = require("./rebalancer");
 
 const log = require("../utils/logger")("tasks");
 
@@ -2550,6 +2551,15 @@ subtask("snapMorpho", "Get a snapshot of the Morpho OUSD v2 strategy.")
   )
   .setAction(snapMorpho);
 task("snapMorpho").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+// Rebalancer tasks
+subtask(
+  "computeAllocationsForRebalance",
+  "Show current vs recommended OUSD strategy allocations"
+).setAction(rebalancerTask);
+task("computeAllocationsForRebalance").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
 
