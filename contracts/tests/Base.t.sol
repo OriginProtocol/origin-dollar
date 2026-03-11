@@ -13,6 +13,7 @@ import {OETH} from "contracts/token/OETH.sol";
 import {OETHBase} from "contracts/token/OETHBase.sol";
 import {OSonic} from "contracts/token/OSonic.sol";
 import {OETHVault} from "contracts/vault/OETHVault.sol";
+import {OSVault} from "contracts/vault/OSVault.sol";
 import {OETHProxy} from "contracts/proxies/Proxies.sol";
 import {OETHVaultProxy} from "contracts/proxies/Proxies.sol";
 import {WOETHProxy} from "contracts/proxies/Proxies.sol";
@@ -26,6 +27,12 @@ import {MockStrategy} from "contracts/mocks/MockStrategy.sol";
 import {MockNonRebasing} from "contracts/mocks/MockNonRebasing.sol";
 import {MockWETH} from "contracts/mocks/MockWETH.sol";
 import {MockCreateX} from "tests/mocks/MockCreateX.sol";
+import {MockERC20} from "@solmate/test/utils/mocks/MockERC20.sol";
+import {MockWrappedSonic} from "tests/mocks/MockWrappedSonic.sol";
+import {MockSFC} from "contracts/mocks/MockSFC.sol";
+import {MockSwapXPair} from "tests/mocks/MockSwapXPair.sol";
+import {MockSwapXGauge} from "tests/mocks/MockSwapXGauge.sol";
+import {OSonicProxy, OSonicVaultProxy} from "contracts/proxies/SonicProxies.sol";
 
 import {OETHZapper} from "contracts/zapper/OETHZapper.sol";
 import {OETHBaseZapper} from "contracts/zapper/OETHBaseZapper.sol";
@@ -49,6 +56,8 @@ import {VaultValueChecker, OETHVaultValueChecker} from "contracts/strategies/Vau
 import {BridgedWOETHStrategy} from "contracts/strategies/BridgedWOETHStrategy.sol";
 import {CurveAMOStrategy} from "contracts/strategies/CurveAMOStrategy.sol";
 import {BaseCurveAMOStrategy} from "contracts/strategies/BaseCurveAMOStrategy.sol";
+import {SonicStakingStrategy} from "contracts/strategies/sonic/SonicStakingStrategy.sol";
+import {SonicSwapXAMOStrategy} from "contracts/strategies/sonic/SonicSwapXAMOStrategy.sol";
 
 abstract contract Base is Test {
     //////////////////////////////////////////////////////
@@ -115,6 +124,10 @@ abstract contract Base is Test {
     WOSonic internal woSonic;
     WOETHProxy internal woSonicProxy;
 
+    OSVault internal oSonicVault;
+    OSonicProxy internal oSonicProxy;
+    OSonicVaultProxy internal oSonicVaultProxy;
+
     //////////////////////////////////////////////////////
     /// --- MOCKS
     //////////////////////////////////////////////////////
@@ -123,6 +136,11 @@ abstract contract Base is Test {
     MockCreateX internal mockCreateX;
     MockStrategy internal mockStrategy;
     MockNonRebasing internal mockNonRebasing;
+    MockWrappedSonic internal mockWrappedSonic;
+    MockSFC internal mockSfc;
+    MockSwapXPair internal mockSwapXPair;
+    MockSwapXGauge internal mockSwapXGauge;
+    MockERC20 internal swpxToken;
 
     //////////////////////////////////////////////////////
     /// --- ZAPPERS
@@ -168,6 +186,8 @@ abstract contract Base is Test {
     BridgedWOETHStrategy internal bridgedWOETHStrategy;
     CurveAMOStrategy internal curveAMOStrategy;
     BaseCurveAMOStrategy internal baseCurveAMOStrategy;
+    SonicStakingStrategy internal sonicStakingStrategy;
+    SonicSwapXAMOStrategy internal sonicSwapXAMOStrategy;
 
     //////////////////////////////////////////////////////
     /// --- VAULT VALUE CHECKERS
