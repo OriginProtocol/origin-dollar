@@ -45,6 +45,9 @@ import {CurvePoolBooster} from "contracts/poolBooster/curve/CurvePoolBooster.sol
 import {CurvePoolBoosterPlain} from "contracts/poolBooster/curve/CurvePoolBoosterPlain.sol";
 import {CurvePoolBoosterFactory} from "contracts/poolBooster/curve/CurvePoolBoosterFactory.sol";
 
+import {VaultValueChecker, OETHVaultValueChecker} from "contracts/strategies/VaultValueChecker.sol";
+import {BridgedWOETHStrategy} from "contracts/strategies/BridgedWOETHStrategy.sol";
+
 abstract contract Base is Test {
     //////////////////////////////////////////////////////
     /// --- CONSTANTS
@@ -155,6 +158,19 @@ abstract contract Base is Test {
     CurvePoolBooster internal curvePoolBooster;
     CurvePoolBoosterPlain internal curvePoolBoosterPlain;
     CurvePoolBoosterFactory internal curvePoolBoosterFactory;
+
+    //////////////////////////////////////////////////////
+    /// --- STRATEGIES
+    //////////////////////////////////////////////////////
+
+    BridgedWOETHStrategy internal bridgedWOETHStrategy;
+
+    //////////////////////////////////////////////////////
+    /// --- VAULT VALUE CHECKERS
+    //////////////////////////////////////////////////////
+
+    VaultValueChecker internal ousdChecker;
+    OETHVaultValueChecker internal oethChecker;
 
     //////////////////////////////////////////////////////
     /// --- SETUP

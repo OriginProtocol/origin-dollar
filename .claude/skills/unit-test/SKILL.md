@@ -276,16 +276,16 @@ All commands must be run from the `contracts/` directory.
 
 ## 9. Coverage Requirements
 
-After all tests compile and pass, you **must** verify coverage meets the minimum thresholds.
+After all tests compile and pass, you **must** verify coverage meets the minimum thresholds. If any metric is below 100%, try to add more tests to cover the gaps. 
 
 ### Minimum thresholds
 
 | Metric | Minimum | Target |
 |---|---|---|
 | **Functions** | **100%** | 100% (mandatory — every function must be called) |
-| **Branches** | **90%** | As close to 100% as possible |
-| **Lines** | **90%** | As close to 100% as possible |
-| **Statements** | **90%** | As close to 100% as possible |
+| **Branches** | **98%** |100% |
+| **Lines** | **98%** |100% |
+| **Statements** | **98%** |100% |
 
 ### How to check coverage
 
