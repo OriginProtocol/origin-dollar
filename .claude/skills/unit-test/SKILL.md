@@ -289,7 +289,13 @@ After all tests compile and pass, you **must** verify coverage meets the minimum
 
 ### How to check coverage
 
-Run the following command from the `contracts/` directory, filtering to only the target contract:
+**IMPORTANT: NEVER use `--ir-minimum` with `forge coverage`.** The `--ir-minimum` flag causes `require()` revert branches to not be tracked (the revert rolls back coverage instrumentation), producing misleading branch coverage numbers. If `forge coverage` fails to compile without `--ir-minimum` (e.g., "stack too deep" errors from other project contracts), do NOT add `--ir-minimum` as a workaround. Instead, use `--skip` flags to exclude the problematic contracts. This solves the problem most of the time:
+
+```bash
+forge coverage --match-path "tests/unit/<category>/<ContractName>/**" --report summary --no-match-coverage "tests|mocks" --skip "*/strategies/aerodrome*" --skip "*/strategies/sonic*"
+```
+
+If it compiles without `--skip`, use the simpler command:
 
 ```bash
 forge coverage --match-path "tests/unit/<category>/<ContractName>/**" --report summary --no-match-coverage "tests|mocks"

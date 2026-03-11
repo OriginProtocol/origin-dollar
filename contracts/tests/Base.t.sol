@@ -47,6 +47,8 @@ import {CurvePoolBoosterFactory} from "contracts/poolBooster/curve/CurvePoolBoos
 
 import {VaultValueChecker, OETHVaultValueChecker} from "contracts/strategies/VaultValueChecker.sol";
 import {BridgedWOETHStrategy} from "contracts/strategies/BridgedWOETHStrategy.sol";
+import {CurveAMOStrategy} from "contracts/strategies/CurveAMOStrategy.sol";
+import {BaseCurveAMOStrategy} from "contracts/strategies/BaseCurveAMOStrategy.sol";
 
 abstract contract Base is Test {
     //////////////////////////////////////////////////////
@@ -164,6 +166,8 @@ abstract contract Base is Test {
     //////////////////////////////////////////////////////
 
     BridgedWOETHStrategy internal bridgedWOETHStrategy;
+    CurveAMOStrategy internal curveAMOStrategy;
+    BaseCurveAMOStrategy internal baseCurveAMOStrategy;
 
     //////////////////////////////////////////////////////
     /// --- VAULT VALUE CHECKERS
