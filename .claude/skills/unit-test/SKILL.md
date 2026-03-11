@@ -1,13 +1,10 @@
 ---
-description: Generate Foundry unit tests (concrete + fuzz) for a contract following our established conventions
-user_invocable: true
-argument: ContractName — the contract to generate tests for (e.g. OUSDVault, OUSD, AMO)
+description: Generate Foundry unit tests (concrete + fuzz) for a contract following our established conventions and patterns.
 ---
 
 # Unit Test Skill
 
-Generate Foundry unit tests for `$ARGUMENTS` following the project's established patterns.
-Before writing any code, read the existing tests under `contracts/tests/unit/vault/OUSDVault/` to absorb the exact style, then apply it to the target contract.
+Generate Foundry unit tests for a specific contract, adhering to our established directory structure, naming conventions, and best practices. The tests should include both concrete scenarios and property-based fuzz tests, with clear organization and comprehensive coverage. Follow the guidelines below to ensure consistency and maintainability across our test suite.
 
 ## 1. Directory Layout
 
@@ -46,7 +43,20 @@ forge-std/Test
             └─ Unit_Fuzz_<Contract>_<Feature>_Test      (fuzz/*.fuzz.t.sol)
 ```
 
-- `Base` creates actors (`alice`, `bobby`, …, `governor`, `strategist`, etc.) and declares **all contract state variables** (OUSD, OUSDVault, OETH, OETHVault, proxies, mocks, external tokens). **Never declare contract variables in `Shared.sol`** — all contract/token storage lives in `Base.sol` so it is shared across all test suites.
+- `Base` creates actors (`alice`, `bobby`, …, `governor`, `strategist`, etc.) and declares **all contract state variables** (OUSD, OUSDVault, OETH, OETHVault, OSonic, OSVault, proxies, mocks, external tokens). **NEVER declare contract variables in `Shared.sol`** — all contract/token storage lives in `Base.sol` so it is shared across all test suites.
+
+### Product-specific vault types
+
+Each product has its own vault contract. **Always use the correct vault type** — do not substitute one product's vault for another:
+
+| Product | Token | Vault | Proxy imports |
+|---------|-------|-------|---------------|
+| OUSD | `OUSD` | `OUSDVault` | `OUSDProxy`, `VaultProxy` from `contracts/proxies/Proxies.sol` |
+| OETH | `OETH` | `OETHVault` | `OETHProxy`, `OETHVaultProxy` from `contracts/proxies/Proxies.sol` |
+| OSonic | `OSonic` | **`OSVault`** | `OSonicProxy`, `OSonicVaultProxy` from `contracts/proxies/SonicProxies.sol` |
+| OETHBase | `OETHBase` | `OETHBaseVault` | `OETHBaseProxy`, `OETHBaseVaultProxy` from `contracts/proxies/BaseProxies.sol` |
+
+`OSVault` lives at `contracts/vault/OSVault.sol`. Never use `OETHVault` for Sonic products.
 - `Unit_Shared_Test` is **abstract** and owns all deployment + configuration logic. It assigns to the variables declared in `Base`, but does not re-declare them.
 - Concrete and fuzz test contracts inherit `Unit_Shared_Test` directly — no extra layers.
 
@@ -73,6 +83,20 @@ function setUp() public virtual override {
 - Configuration block uses `vm.startPrank(governor)` / `vm.stopPrank()`.
 - Funding uses the shared `_mintOToken` helper (see below).
 - `label()` at the bottom labels every deployed address for trace readability.
+
+## 3b. Mock Contracts
+
+- **Test-only mocks** (e.g. `MockSwapXPair`, `MockSwapXGauge`, `MockWrappedSonic`) go in `tests/mocks/`.
+- **Production mocks** (e.g. `MockSFC`, `MockStrategy`) that already exist under `contracts/mocks/` stay there — enhance them in-place if needed.
+- Mock state variables are declared in `Base.t.sol` like all other contracts.
+
+### Common mock pitfalls
+
+| Pitfall | Wrong | Correct |
+|---------|-------|---------|
+| Sending native ETH/S | `payable(to).transfer(amount)` (2300 gas limit — fails if receiver has storage reads in `receive()`) | `(bool ok,) = payable(to).call{value: amount}("");` |
+| Setting ERC20 balances | `deal(token, to, amount)` for wrapped tokens (sets balance slot but **not** `totalSupply` — causes `_burn` underflow) | Deposit via the actual `deposit()` flow when `_burn`/`withdraw` will be called later |
+| Pool reserve helpers | Minting more tokens each call (accumulates) | Make helpers **idempotent**: check current balance, mint/burn only the difference |
 
 ## 4. Concrete Test Naming
 
