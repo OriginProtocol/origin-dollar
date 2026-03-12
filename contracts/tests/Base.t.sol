@@ -63,6 +63,7 @@ import {SonicSwapXAMOStrategy} from "contracts/strategies/sonic/SonicSwapXAMOStr
 import {CrossChainMasterStrategy} from "contracts/strategies/crosschain/CrossChainMasterStrategy.sol";
 import {CrossChainRemoteStrategy} from "contracts/strategies/crosschain/CrossChainRemoteStrategy.sol";
 import {AerodromeAMOStrategy} from "contracts/strategies/aerodrome/AerodromeAMOStrategy.sol";
+import {AerodromeAMOQuoter, QuoterHelper} from "contracts/utils/AerodromeAMOQuoter.sol";
 import {CCTPMessageTransmitterMock} from "contracts/mocks/crosschain/CCTPMessageTransmitterMock.sol";
 import {CCTPTokenMessengerMock} from "contracts/mocks/crosschain/CCTPTokenMessengerMock.sol";
 import {MockERC4626Vault} from "contracts/mocks/MockERC4626Vault.sol";
@@ -232,6 +233,7 @@ abstract contract Base is Test {
     CrossChainMasterStrategy internal crossChainMasterStrategy;
     CrossChainRemoteStrategy internal crossChainRemoteStrategy;
     AerodromeAMOStrategy internal aerodromeAMOStrategy;
+    AerodromeAMOQuoter internal aerodromeAMOQuoter;
     NativeStakingSSVStrategy internal nativeStakingSSVStrategy;
     FeeAccumulator internal nativeStakingFeeAccumulator;
     CompoundingStakingSSVStrategy internal compoundingStakingSSVStrategy;
