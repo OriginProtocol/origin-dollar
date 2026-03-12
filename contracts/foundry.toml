@@ -38,6 +38,12 @@ remappings = [
 
 fs_permissions = [{ access = "read", path = "test/strategies" }]
 
+[rpc_endpoints]
+mainnet = "${MAINNET_PROVIDER_URL}"
+base = "${BASE_PROVIDER_URL}"
+sonic = "${SONIC_PROVIDER_URL}"
+arbitrum = "${ARBITRUM_PROVIDER_URL}"
+
 [fuzz]
 runs = 1024
 max_test_rejects = 65536
