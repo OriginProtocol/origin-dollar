@@ -293,7 +293,7 @@ function computeOptimalAllocation({
  * @param {object}    [constraintOverrides]
  * @returns {Array}
  */
-function filterFeasibleActions(
+function buildExecutableActions(
   allocations,
   shortfall = BigNumber.from(0),
   vaultBalance = BigNumber.from(0),
@@ -708,12 +708,12 @@ async function buildRebalancePlan(provider) {
     shortfall: state.shortfall,
   });
 
-  const filtered = filterFeasibleActions(
+  const executableActions = buildExecutableActions(
     optimalActions,
     state.shortfall,
     state.vaultBalance
   );
-  const actions = sortActions(filtered);
+  const actions = sortActions(executableActions);
 
   printAllocationTable({
     actions,
@@ -730,7 +730,7 @@ module.exports = {
   readOnChainState,
   fetchMorphoApys,
   computeOptimalAllocation,
-  filterFeasibleActions,
+  buildExecutableActions,
   sortActions,
   fmtUsd,
   printAllocationTable,
