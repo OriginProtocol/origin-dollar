@@ -6,6 +6,25 @@ description: Generate Foundry unit tests (concrete + fuzz) for a contract follow
 
 Generate Foundry unit tests for a specific contract, adhering to our established directory structure, naming conventions, and best practices. The tests should include both concrete scenarios and property-based fuzz tests, with clear organization and comprehensive coverage. Follow the guidelines below to ensure consistency and maintainability across our test suite.
 
+## 0. Check for Existing Hardhat Tests First
+
+**Before writing any Foundry test**, check if corresponding Hardhat tests already exist in `contracts/test/`. The Hardhat tests are organized by category (e.g. `contracts/test/strategies/`, `contracts/test/vault/`, `contracts/test/token/`).
+
+**How to find them:**
+1. Search `contracts/test/<category>/` for files matching the contract name or feature (e.g. `contracts/test/strategies/*crosschain*`, `contracts/test/strategies/*curve*`)
+2. Also check for fork tests: files ending in `.mainnet.fork-test.js`, `.base.fork-test.js`, `.sonic.fork-test.js`
+3. Look at `contracts/test/_fixture.js` and related fixture files for deployment/setup patterns
+
+**What to extract from Hardhat tests:**
+- **Test scenarios and edge cases**: The Hardhat tests document which scenarios the team considers important. Port all of them.
+- **Expected revert messages**: Copy the exact revert strings used in `expect(...).to.be.revertedWith("...")`.
+- **Setup patterns**: How the contract is deployed, configured, and what fixtures are used. Mirror this in the Foundry `Shared.t.sol`.
+- **Numeric values and boundaries**: Specific amounts, thresholds, and edge-case values used in assertions.
+- **Business logic flows**: Multi-step operations (e.g. deposit → bridge → confirm) that reveal how the contract is meant to be used.
+- **Access control tests**: Which roles are tested and which functions they can/cannot call.
+
+**Do NOT blindly copy Hardhat tests.** Adapt them to Foundry conventions (naming, structure, assertions). Add fuzz tests for properties that Hardhat tests only check with fixed values. The Hardhat tests are a **starting point and inspiration**, not a ceiling — always aim for higher coverage.
+
 ## 1. Directory Layout
 
 ```
@@ -351,6 +370,7 @@ Some code paths may be genuinely unreachable in a unit-test context (e.g., assem
 
 ## 10. Checklist Before Submitting Tests
 
+- [ ] Checked `contracts/test/` for existing Hardhat tests and drew inspiration from them
 - [ ] `shared/Shared.sol` is `abstract` and inherits `Base`
 - [ ] All contract/proxy/token state variables are declared in `Base.sol`, not in `Shared.sol`
 - [ ] `setUp()` follows the exact order: super → warp → mocks → contracts → config → fund → label

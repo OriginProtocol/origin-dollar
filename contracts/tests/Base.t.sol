@@ -58,6 +58,11 @@ import {CurveAMOStrategy} from "contracts/strategies/CurveAMOStrategy.sol";
 import {BaseCurveAMOStrategy} from "contracts/strategies/BaseCurveAMOStrategy.sol";
 import {SonicStakingStrategy} from "contracts/strategies/sonic/SonicStakingStrategy.sol";
 import {SonicSwapXAMOStrategy} from "contracts/strategies/sonic/SonicSwapXAMOStrategy.sol";
+import {CrossChainMasterStrategy} from "contracts/strategies/crosschain/CrossChainMasterStrategy.sol";
+import {CrossChainRemoteStrategy} from "contracts/strategies/crosschain/CrossChainRemoteStrategy.sol";
+import {CCTPMessageTransmitterMock} from "contracts/mocks/crosschain/CCTPMessageTransmitterMock.sol";
+import {CCTPTokenMessengerMock} from "contracts/mocks/crosschain/CCTPTokenMessengerMock.sol";
+import {MockERC4626Vault} from "contracts/mocks/MockERC4626Vault.sol";
 
 abstract contract Base is Test {
     //////////////////////////////////////////////////////
@@ -141,6 +146,9 @@ abstract contract Base is Test {
     MockSwapXPair internal mockSwapXPair;
     MockSwapXGauge internal mockSwapXGauge;
     MockERC20 internal swpxToken;
+    CCTPMessageTransmitterMock internal cctpMessageTransmitterMock;
+    CCTPTokenMessengerMock internal cctpTokenMessengerMock;
+    MockERC4626Vault internal mockERC4626Vault;
 
     //////////////////////////////////////////////////////
     /// --- ZAPPERS
@@ -188,6 +196,8 @@ abstract contract Base is Test {
     BaseCurveAMOStrategy internal baseCurveAMOStrategy;
     SonicStakingStrategy internal sonicStakingStrategy;
     SonicSwapXAMOStrategy internal sonicSwapXAMOStrategy;
+    CrossChainMasterStrategy internal crossChainMasterStrategy;
+    CrossChainRemoteStrategy internal crossChainRemoteStrategy;
 
     //////////////////////////////////////////////////////
     /// --- VAULT VALUE CHECKERS
