@@ -66,6 +66,14 @@ import {AerodromeAMOStrategy} from "contracts/strategies/aerodrome/AerodromeAMOS
 import {CCTPMessageTransmitterMock} from "contracts/mocks/crosschain/CCTPMessageTransmitterMock.sol";
 import {CCTPTokenMessengerMock} from "contracts/mocks/crosschain/CCTPTokenMessengerMock.sol";
 import {MockERC4626Vault} from "contracts/mocks/MockERC4626Vault.sol";
+import {MockSSVNetwork} from "contracts/mocks/MockSSVNetwork.sol";
+import {MockSSV} from "contracts/mocks/MockSSV.sol";
+import {MockDepositContract} from "contracts/mocks/MockDepositContract.sol";
+import {NativeStakingSSVStrategy} from "contracts/strategies/NativeStaking/NativeStakingSSVStrategy.sol";
+import {FeeAccumulator} from "contracts/strategies/NativeStaking/FeeAccumulator.sol";
+import {CompoundingStakingSSVStrategy} from "contracts/strategies/NativeStaking/CompoundingStakingSSVStrategy.sol";
+import {CompoundingStakingStrategyView} from "contracts/strategies/NativeStaking/CompoundingStakingView.sol";
+import {MockBeaconProofs} from "contracts/mocks/beacon/MockBeaconProofs.sol";
 
 abstract contract Base is Test {
     //////////////////////////////////////////////////////
@@ -156,6 +164,10 @@ abstract contract Base is Test {
     CCTPMessageTransmitterMock internal cctpMessageTransmitterMock;
     CCTPTokenMessengerMock internal cctpTokenMessengerMock;
     MockERC4626Vault internal mockERC4626Vault;
+    MockSSVNetwork internal mockSsvNetwork;
+    MockSSV internal mockSsv;
+    MockDepositContract internal mockDepositContract;
+    MockBeaconProofs internal mockBeaconProofs;
 
     //////////////////////////////////////////////////////
     /// --- ZAPPERS
@@ -206,6 +218,10 @@ abstract contract Base is Test {
     CrossChainMasterStrategy internal crossChainMasterStrategy;
     CrossChainRemoteStrategy internal crossChainRemoteStrategy;
     AerodromeAMOStrategy internal aerodromeAMOStrategy;
+    NativeStakingSSVStrategy internal nativeStakingSSVStrategy;
+    FeeAccumulator internal nativeStakingFeeAccumulator;
+    CompoundingStakingSSVStrategy internal compoundingStakingSSVStrategy;
+    CompoundingStakingStrategyView internal compoundingStakingView;
 
     //////////////////////////////////////////////////////
     /// --- VAULT VALUE CHECKERS

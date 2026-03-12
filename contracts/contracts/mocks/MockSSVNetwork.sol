@@ -38,5 +38,11 @@ contract MockSSVNetwork {
         Cluster memory cluster
     ) external {}
 
+    function withdraw(
+        uint64[] calldata operatorIds,
+        uint256 amount,
+        Cluster memory cluster
+    ) external {}
+
     function setFeeRecipientAddress(address recipient) external {}
 }

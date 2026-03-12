@@ -36,6 +36,8 @@ remappings = [
   "@solmate/=dependencies/solmate-89365b880c4f3c786bdd453d4b8e8fe410344a69/src/"
 ]
 
+fs_permissions = [{ access = "read", path = "test/strategies" }]
+
 [fuzz]
 runs = 1024
 max_test_rejects = 65536
