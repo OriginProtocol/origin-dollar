@@ -75,6 +75,17 @@ import {CompoundingStakingSSVStrategy} from "contracts/strategies/NativeStaking/
 import {CompoundingStakingStrategyView} from "contracts/strategies/NativeStaking/CompoundingStakingView.sol";
 import {MockBeaconProofs} from "contracts/mocks/beacon/MockBeaconProofs.sol";
 
+import {MockSafeContract} from "tests/mocks/MockSafeContract.sol";
+
+import {AbstractSafeModule} from "contracts/automation/AbstractSafeModule.sol";
+import {AutoWithdrawalModule} from "contracts/automation/AutoWithdrawalModule.sol";
+import {ClaimStrategyRewardsSafeModule} from "contracts/automation/ClaimStrategyRewardsSafeModule.sol";
+import {CollectXOGNRewardsModule} from "contracts/automation/CollectXOGNRewardsModule.sol";
+import {CurvePoolBoosterBribesModule} from "contracts/automation/CurvePoolBoosterBribesModule.sol";
+import {ClaimBribesSafeModule} from "contracts/automation/ClaimBribesSafeModule.sol";
+import {EthereumBridgeHelperModule} from "contracts/automation/EthereumBridgeHelperModule.sol";
+import {BaseBridgeHelperModule} from "contracts/automation/BaseBridgeHelperModule.sol";
+
 abstract contract Base is Test {
     //////////////////////////////////////////////////////
     /// --- CONSTANTS
@@ -108,6 +119,9 @@ abstract contract Base is Test {
     address internal governor;
     address internal guardian;
     address internal strategist;
+
+    // Automation operator
+    address internal operator;
 
     //////////////////////////////////////////////////////
     /// --- CONTRACTS
@@ -231,6 +245,28 @@ abstract contract Base is Test {
     OETHVaultValueChecker internal oethChecker;
 
     //////////////////////////////////////////////////////
+    /// --- AUTOMATION MODULES
+    //////////////////////////////////////////////////////
+
+    MockSafeContract internal mockSafe;
+    AutoWithdrawalModule internal autoWithdrawalModule;
+    ClaimStrategyRewardsSafeModule internal claimStrategyRewardsModule;
+    CollectXOGNRewardsModule internal collectXOGNRewardsModule;
+    CurvePoolBoosterBribesModule internal curvePoolBoosterBribesModule;
+    ClaimBribesSafeModule internal claimBribesModule;
+    EthereumBridgeHelperModule internal ethereumBridgeHelperModule;
+    BaseBridgeHelperModule internal baseBridgeHelperModule;
+
+    //////////////////////////////////////////////////////
+    /// --- FORK IDS
+    //////////////////////////////////////////////////////
+
+    uint256 internal forkIdMainnet;
+    uint256 internal forkIdBase;
+    uint256 internal forkIdSonic;
+    uint256 internal forkIdArbitrum;
+
+    //////////////////////////////////////////////////////
     /// --- SETUP
     //////////////////////////////////////////////////////
     function setUp() public virtual {
@@ -256,5 +292,8 @@ abstract contract Base is Test {
         governor = makeAddr("Governor");
         guardian = makeAddr("Guardian");
         strategist = makeAddr("Strategist");
+
+        // Create automation operator
+        operator = makeAddr("Operator");
     }
 }
