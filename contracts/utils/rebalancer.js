@@ -3,6 +3,11 @@ const { formatUnits } = require("ethers/lib/utils");
 
 const addresses = require("./addresses");
 
+const {
+  ousdStrategiesConfig,
+  ousdConstraints,
+} = require("./rebalancer-config");
+
 const log = require("./logger")("utils:rebalancer");
 
 const USDC_DECIMALS = 6;
@@ -22,46 +27,6 @@ const strategyAbi = [
 const erc20Abi = [
   "function balanceOf(address account) external view returns (uint256)",
 ];
-
-// Strategy config for OUSD
-const strategiesConfig = [
-  {
-    name: "Ethereum Morpho",
-    address: addresses.mainnet.MorphoOUSDv2StrategyProxy,
-    // Morpho V1 vault address for APY lookup (the V2 wrapper is not in Morpho's API)
-    morphoVaultAddress: addresses.mainnet.MorphoOUSDv1Vault,
-    morphoChainId: 1,
-    isCrossChain: false,
-    isDefault: true,
-  },
-  {
-    name: "Base Morpho",
-    address: addresses.mainnet.CrossChainMasterStrategy,
-    // Morpho V1 vault on Base for APY lookup
-    morphoVaultAddress: "0x581Cc9a73Ec7431723A4a80699B8f801205841F1",
-    morphoChainId: 8453,
-    isCrossChain: true,
-    isDefault: false,
-  },
-  {
-    name: "Curve AMO",
-    address: addresses.mainnet.CurveOUSDAMOStrategy,
-    morphoVaultAddress: null,
-    morphoChainId: null,
-    isCrossChain: false,
-    isAmo: true,
-  },
-];
-
-// Default constraints
-const defaultConstraints = {
-  minDefaultStrategyBps: 2000, // Default strategy always gets ≥ 20% of deployable
-  maxPerChainBps: 7000, // No single chain gets > 70%
-  minMoveAmount: 5_000_000_000, // $5K in USDC (6 decimals)
-  crossChainMinAmount: 25_000_000_000, // $25K in USDC (6 decimals)
-  minVaultBalance: 3_000_000_000, // $3K in USDC (6 decimals)
-  minApySpread: 0.005, // 0.5% minimum APY spread to trigger rebalancing
-};
 
 /**
  * Read on-chain state: strategy balances, vault idle USDC, withdrawal queue.
@@ -97,7 +62,7 @@ async function readOnChainState(provider) {
   }
 
   const strategies = await Promise.all(
-    strategiesConfig.map(async (cfg) => {
+    ousdStrategiesConfig.map(async (cfg) => {
       const strategy = new ethers.Contract(cfg.address, strategyAbi, provider);
 
       const [balance, isTransferPending] = await Promise.all([
@@ -177,14 +142,14 @@ async function fetchMorphoApys(vaults) {
  * @param {object} [params.constraints]
  * @returns {Array} allocation results
  */
-function computeAllocation({
+function computeOptimalAllocation({
   strategies,
   apys,
   vaultBalance,
   shortfall,
   constraints: overrides = {},
 }) {
-  const constraints = { ...defaultConstraints, ...overrides };
+  const constraints = { ...ousdConstraints, ...overrides };
 
   const amoStrategies = strategies.filter((s) => s.isAmo);
   const rebalancable = strategies.filter((s) => !s.isAmo);
@@ -322,19 +287,19 @@ function computeAllocation({
  * Pass B (deposits):   allocate from budget in APY-desc order, apply feasibility checks.
  * Pass 2 (fallbacks):  shortfall and surplus fallbacks run after both passes.
  *
- * @param {Array}     allocations - output of computeAllocation
+ * @param {Array}     allocations - output of computeOptimalAllocation
  * @param {BigNumber} shortfall   - vault withdrawal shortfall (after addWithdrawalQueueLiquidity offset)
  * @param {BigNumber} vaultBalance - vault idle USDC (after addWithdrawalQueueLiquidity offset)
  * @param {object}    [constraintOverrides]
  * @returns {Array}
  */
-function filterActions(
+function filterFeasibleActions(
   allocations,
   shortfall = BigNumber.from(0),
   vaultBalance = BigNumber.from(0),
   constraintOverrides = {}
 ) {
-  const constraints = { ...defaultConstraints, ...constraintOverrides };
+  const constraints = { ...ousdConstraints, ...constraintOverrides };
   const minVaultBalance = BigNumber.from(constraints.minVaultBalance);
 
   // Highest APY across all rebalancable strategies (used for APY spread check)
@@ -440,7 +405,7 @@ function filterActions(
     let coveredByDefault = false;
 
     if (defaultA && defaultA.balance.gt(0)) {
-      const originalDelta = defaultA.delta; // from computeAllocation, unchanged by Pass 1
+      const originalDelta = defaultA.delta; // from computeOptimalAllocation, unchanged by Pass 1
       const isOverallocated = originalDelta.lt(0);
 
       let withdrawAmt = null;
@@ -559,35 +524,35 @@ function fmtUsd(bn) {
  * Print a human-readable table of current vs recommended allocations.
  *
  * @param {object} params
- * @param {Array}  params.allocations    - filtered+sorted allocations (output of sortActions)
- * @param {Array}  params.rawAllocations - unfiltered allocations (output of computeAllocation)
+ * @param {Array}  params.actions         - filtered+sorted allocations (output of sortActions)
+ * @param {Array}  params.optimalActions  - unfiltered allocations (output of computeOptimalAllocation)
  * @param {BigNumber} params.vaultBalance
  * @param {BigNumber} params.shortfall
  * @param {BigNumber} params.totalValue
  * @param {object} [params.constraints]
  */
 function printAllocationTable({
-  allocations,
-  rawAllocations,
+  actions,
+  optimalActions,
   vaultBalance,
   shortfall,
   totalValue,
   constraints: overrides = {},
 }) {
-  const constraints = { ...defaultConstraints, ...overrides };
+  const constraints = { ...ousdConstraints, ...overrides };
 
-  // Use rawAllocations for the table (shows optimal targets); fall back to filtered if absent
-  const tableRows = (rawAllocations || allocations).filter((a) => !a.isAmo);
+  // Use optimalActions for the table (shows optimal targets); fall back to feasible if absent
+  const tableRows = (optimalActions || actions).filter((a) => !a.isAmo);
   const totalCapital = tableRows.reduce(
     (sum, a) => sum.add(a.balance),
     vaultBalance
   );
-  const amoBalance = (rawAllocations || allocations)
+  const amoBalance = (optimalActions || actions)
     .filter((a) => a.isAmo)
     .reduce((sum, a) => sum.add(a.balance), BigNumber.from(0));
 
-  // Build a lookup map: address → filtered allocation (for the actions sections)
-  const filteredByAddr = new Map(allocations.map((a) => [a.address, a]));
+  // Build a lookup map: address → feasible action (for the actions sections)
+  const filteredByAddr = new Map(actions.map((a) => [a.address, a]));
 
   // Format an 18-decimal BigNumber (OUSD) with commas and 2 decimal places
   const fmtOusd = (bn) => {
@@ -604,7 +569,7 @@ function printAllocationTable({
   console.log(`  Curve AMO balance  : ${fmtUsd(amoBalance)} USDC`);
   console.log(`Withdrawal shortfall : ${fmtUsd(shortfall)} USDC`);
 
-  // ── Allocations table: shows optimal targets from rawAllocations ────────────
+  // ── Allocations table: shows optimal targets from optimalActions ────────────
   console.log("\n--- Allocations ---\n");
   const COL = { name: 22, amt: 22, delta: 18, apy: 8 };
   console.log(
@@ -665,7 +630,7 @@ function printAllocationTable({
   console.log("  * = default strategy\n");
 
   // ── Section 1: All optimal allocation changes ──────────────────────────────
-  const rawChanges = (rawAllocations || allocations).filter(
+  const rawChanges = (optimalActions || actions).filter(
     (a) => !a.isAmo && !a.delta.isZero()
   );
 
@@ -699,7 +664,7 @@ function printAllocationTable({
   }
 
   // ── Section 2: Recommended actions ────────────────────────────────────────
-  const actionRows = allocations.filter((a) => !a.isAmo && a.action !== "none");
+  const actionRows = actions.filter((a) => !a.isAmo && a.action !== "none");
 
   console.log("--- Recommended Actions ---\n");
   if (actionRows.length === 0) {
@@ -722,7 +687,7 @@ function printAllocationTable({
 /**
  * Main entry: read state, fetch APYs, compute allocations, print table.
  */
-async function computeAllocationsForRebalance(provider) {
+async function buildRebalancePlan(provider) {
   log("Reading on-chain state...");
   const state = await readOnChainState(provider);
 
@@ -736,40 +701,40 @@ async function computeAllocationsForRebalance(provider) {
       }))
   );
 
-  const rawAllocations = computeAllocation({
+  const optimalActions = computeOptimalAllocation({
     strategies: state.strategies,
     apys,
     vaultBalance: state.vaultBalance,
     shortfall: state.shortfall,
   });
 
-  const filtered = filterActions(
-    rawAllocations,
+  const filtered = filterFeasibleActions(
+    optimalActions,
     state.shortfall,
     state.vaultBalance
   );
-  const sorted = sortActions(filtered);
+  const actions = sortActions(filtered);
 
   printAllocationTable({
-    allocations: sorted,
-    rawAllocations,
+    actions,
+    optimalActions,
     vaultBalance: state.vaultBalance,
     shortfall: state.shortfall,
     totalValue: state.totalValue,
   });
 
-  return { allocations: sorted, rawAllocations, state, apys };
+  return { actions, optimalActions, state, apys };
 }
 
 module.exports = {
   readOnChainState,
   fetchMorphoApys,
-  computeAllocation,
-  filterActions,
+  computeOptimalAllocation,
+  filterFeasibleActions,
   sortActions,
   fmtUsd,
   printAllocationTable,
-  computeAllocationsForRebalance,
-  strategiesConfig,
-  defaultConstraints,
+  buildRebalancePlan,
+  ousdStrategiesConfig,
+  ousdConstraints,
 };

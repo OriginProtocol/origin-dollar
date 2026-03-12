@@ -329,9 +329,11 @@ addresses.mainnet.LidoWithdrawalQueue =
 addresses.mainnet.DaiUsdsMigrationContract =
   "0x3225737a9bbb6473cb4a45b7244aca2befdb276a";
 
-// Safe Module
+// Safe Modules
 addresses.mainnet.ClaimStrategyRewardsSafeModule =
   "0x1b84E64279D63f48DdD88B9B2A7871e817152A44";
+addresses.mainnet.OUSDRebalancerModule =
+  "0x0000000000000000000000000000000000000000"; // TODO: populate after deployment
 
 // LayerZero
 addresses.mainnet.LayerZeroEndpointV2 =

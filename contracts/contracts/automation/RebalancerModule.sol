@@ -16,14 +16,15 @@ import { VaultStorage } from "../vault/VaultStorage.sol";
  *      1. Deploy this module
  *      2. Call `safe.enableModule(address(this))` to authorize it
  *
- *      An off-chain operator (e.g. Defender Action) calls `processWithdrawals`
- *      and/or `processDeposits` periodically with computed strategy/amount
- *      arrays. All intelligence (APY fetching, target allocation, constraint
- *      enforcement) lives off-chain. This contract is a dumb executor.
+ *      An off-chain operator (e.g. Defender Action) calls `processWithdrawals`,
+ *      `processDeposits`, or `processWithdrawalsAndDeposits` periodically with
+ *      computed strategy/amount arrays. All intelligence (APY fetching, target
+ *      allocation, constraint enforcement) lives off-chain. This contract is a
+ *      dumb executor.
  *
- *      Both functions use soft failures: if a single strategy call fails via
- *      the Safe, the module emits an event and continues to the next strategy
- *      rather than reverting the entire batch.
+ *      All three public functions use soft failures: if a single strategy call
+ *      fails via the Safe, the module emits an event and continues to the next
+ *      strategy rather than reverting the entire batch.
  *
  *      The Safe retains full control via `setPaused`.
  */
@@ -89,11 +90,10 @@ contract RebalancerModule is AbstractSafeModule {
         _;
     }
 
-    // ──────────────────────────────────────────────────── Core automation ──
+    // ──────────────────────────────────────────────── Core automation ──
 
     /**
      * @notice Withdraw from overallocated strategies to fund the withdrawal queue.
-     *         Called by the off-chain operator with pre-computed strategy/amount arrays.
      *
      * Steps:
      *   1. Absorb any idle vault asset into the withdrawal queue.
@@ -108,38 +108,13 @@ contract RebalancerModule is AbstractSafeModule {
         uint256[] calldata _amounts
     ) external onlyOperator whenNotPaused {
         require(_strategies.length == _amounts.length, "Array length mismatch");
-
-        // Absorb any idle asset the vault already holds.
         vault.addWithdrawalQueueLiquidity();
-
-        address[] memory assets = _toAddressArray(asset);
-
-        for (uint256 i = 0; i < _strategies.length; i++) {
-            if (_amounts[i] == 0) continue;
-
-            bool success = safeContract.execTransactionFromModule(
-                address(vault),
-                0,
-                abi.encodeWithSelector(
-                    IVault.withdrawFromStrategy.selector,
-                    _strategies[i],
-                    assets,
-                    _toUint256Array(_amounts[i])
-                ),
-                0 // Call (not delegatecall)
-            );
-
-            if (!success) {
-                emit WithdrawalFailed(_strategies[i], _amounts[i]);
-            }
-        }
-
+        _executeWithdrawals(_strategies, _amounts);
         emit WithdrawalsProcessed(_strategies, _amounts, pendingShortfall());
     }
 
     /**
      * @notice Deposit idle vault USDC into underallocated strategies.
-     *         Called by the off-chain operator with pre-computed strategy/amount arrays.
      *
      * @dev The vault's `depositToStrategy` already checks `_assetAvailable()`
      *      internally, which ensures the withdrawal queue is never underfunded.
@@ -154,33 +129,47 @@ contract RebalancerModule is AbstractSafeModule {
         uint256[] calldata _amounts
     ) external onlyOperator whenNotPaused {
         require(_strategies.length == _amounts.length, "Array length mismatch");
-
-        address[] memory assets = _toAddressArray(asset);
-
-        for (uint256 i = 0; i < _strategies.length; i++) {
-            if (_amounts[i] == 0) continue;
-
-            bool success = safeContract.execTransactionFromModule(
-                address(vault),
-                0,
-                abi.encodeWithSelector(
-                    IVault.depositToStrategy.selector,
-                    _strategies[i],
-                    assets,
-                    _toUint256Array(_amounts[i])
-                ),
-                0 // Call (not delegatecall)
-            );
-
-            if (!success) {
-                emit DepositFailed(_strategies[i], _amounts[i]);
-            }
-        }
-
+        _executeDeposits(_strategies, _amounts);
         emit DepositsProcessed(_strategies, _amounts);
     }
 
-    // ─────────────────────────────────────────────────── Guardian controls ──
+    /**
+     * @notice Withdraw from overallocated strategies then deposit to underallocated
+     *         ones in a single transaction. Use when all withdrawals are from
+     *         same-chain strategies so freed USDC is immediately available for
+     *         deposits.
+     *
+     * @param _withdrawStrategies Strategies to withdraw from.
+     * @param _withdrawAmounts    Amounts to withdraw from each strategy.
+     * @param _depositStrategies  Strategies to deposit into.
+     * @param _depositAmounts     Amounts to deposit into each strategy.
+     */
+    function processWithdrawalsAndDeposits(
+        address[] calldata _withdrawStrategies,
+        uint256[] calldata _withdrawAmounts,
+        address[] calldata _depositStrategies,
+        uint256[] calldata _depositAmounts
+    ) external onlyOperator whenNotPaused {
+        require(
+            _withdrawStrategies.length == _withdrawAmounts.length,
+            "Withdraw array length mismatch"
+        );
+        require(
+            _depositStrategies.length == _depositAmounts.length,
+            "Deposit array length mismatch"
+        );
+        vault.addWithdrawalQueueLiquidity();
+        _executeWithdrawals(_withdrawStrategies, _withdrawAmounts);
+        _executeDeposits(_depositStrategies, _depositAmounts);
+        emit WithdrawalsProcessed(
+            _withdrawStrategies,
+            _withdrawAmounts,
+            pendingShortfall()
+        );
+        emit DepositsProcessed(_depositStrategies, _depositAmounts);
+    }
+
+    // ─────────────────────────────────────── Guardian controls ──
 
     /**
      * @notice Pause or unpause the module.
@@ -208,6 +197,56 @@ contract RebalancerModule is AbstractSafeModule {
     }
 
     // ──────────────────────────────────────────────── Internal helpers ──
+
+    /// @dev Execute withdrawFromStrategy for each (strategy, amount) pair via the Safe.
+    function _executeWithdrawals(
+        address[] calldata _strategies,
+        uint256[] calldata _amounts
+    ) internal {
+        address[] memory assets = _toAddressArray(asset);
+        for (uint256 i = 0; i < _strategies.length; i++) {
+            if (_amounts[i] == 0) continue;
+            bool success = safeContract.execTransactionFromModule(
+                address(vault),
+                0,
+                abi.encodeWithSelector(
+                    IVault.withdrawFromStrategy.selector,
+                    _strategies[i],
+                    assets,
+                    _toUint256Array(_amounts[i])
+                ),
+                0
+            );
+            if (!success) {
+                emit WithdrawalFailed(_strategies[i], _amounts[i]);
+            }
+        }
+    }
+
+    /// @dev Execute depositToStrategy for each (strategy, amount) pair via the Safe.
+    function _executeDeposits(
+        address[] calldata _strategies,
+        uint256[] calldata _amounts
+    ) internal {
+        address[] memory assets = _toAddressArray(asset);
+        for (uint256 i = 0; i < _strategies.length; i++) {
+            if (_amounts[i] == 0) continue;
+            bool success = safeContract.execTransactionFromModule(
+                address(vault),
+                0,
+                abi.encodeWithSelector(
+                    IVault.depositToStrategy.selector,
+                    _strategies[i],
+                    assets,
+                    _toUint256Array(_amounts[i])
+                ),
+                0
+            );
+            if (!success) {
+                emit DepositFailed(_strategies[i], _amounts[i]);
+            }
+        }
+    }
 
     function _toAddressArray(address _addr)
         internal

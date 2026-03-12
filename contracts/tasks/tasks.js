@@ -2556,10 +2556,10 @@ task("snapMorpho").setAction(async (_, __, runSuper) => {
 
 // Rebalancer tasks
 subtask(
-  "computeAllocationsForRebalance",
+  "planRebalance",
   "Show current vs recommended OUSD strategy allocations"
 ).setAction(rebalancerTask);
-task("computeAllocationsForRebalance").setAction(async (_, __, runSuper) => {
+task("planRebalance").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
 

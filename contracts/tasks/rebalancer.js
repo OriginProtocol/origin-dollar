@@ -1,9 +1,9 @@
 const { getSigner } = require("../utils/signers");
-const { computeAllocationsForRebalance } = require("../utils/rebalancer");
+const { buildRebalancePlan } = require("../utils/rebalancer");
 
 async function rebalancerTask() {
   const signer = await getSigner();
-  await computeAllocationsForRebalance(signer);
+  await buildRebalancePlan(signer);
 }
 
 module.exports = {
