@@ -33,6 +33,8 @@ import {MockSFC} from "contracts/mocks/MockSFC.sol";
 import {MockSwapXPair} from "tests/mocks/MockSwapXPair.sol";
 import {MockSwapXGauge} from "tests/mocks/MockSwapXGauge.sol";
 import {OSonicProxy, OSonicVaultProxy} from "contracts/proxies/SonicProxies.sol";
+import {OETHBaseVault} from "contracts/vault/OETHBaseVault.sol";
+import {OETHBaseProxy, OETHBaseVaultProxy} from "contracts/proxies/BaseProxies.sol";
 
 import {OETHZapper} from "contracts/zapper/OETHZapper.sol";
 import {OETHBaseZapper} from "contracts/zapper/OETHBaseZapper.sol";
@@ -60,6 +62,7 @@ import {SonicStakingStrategy} from "contracts/strategies/sonic/SonicStakingStrat
 import {SonicSwapXAMOStrategy} from "contracts/strategies/sonic/SonicSwapXAMOStrategy.sol";
 import {CrossChainMasterStrategy} from "contracts/strategies/crosschain/CrossChainMasterStrategy.sol";
 import {CrossChainRemoteStrategy} from "contracts/strategies/crosschain/CrossChainRemoteStrategy.sol";
+import {AerodromeAMOStrategy} from "contracts/strategies/aerodrome/AerodromeAMOStrategy.sol";
 import {CCTPMessageTransmitterMock} from "contracts/mocks/crosschain/CCTPMessageTransmitterMock.sol";
 import {CCTPTokenMessengerMock} from "contracts/mocks/crosschain/CCTPTokenMessengerMock.sol";
 import {MockERC4626Vault} from "contracts/mocks/MockERC4626Vault.sol";
@@ -128,6 +131,10 @@ abstract contract Base is Test {
 
     WOSonic internal woSonic;
     WOETHProxy internal woSonicProxy;
+
+    OETHBaseVault internal oethBaseVault;
+    OETHBaseProxy internal oethBaseProxy;
+    OETHBaseVaultProxy internal oethBaseVaultProxy;
 
     OSVault internal oSonicVault;
     OSonicProxy internal oSonicProxy;
@@ -198,6 +205,7 @@ abstract contract Base is Test {
     SonicSwapXAMOStrategy internal sonicSwapXAMOStrategy;
     CrossChainMasterStrategy internal crossChainMasterStrategy;
     CrossChainRemoteStrategy internal crossChainRemoteStrategy;
+    AerodromeAMOStrategy internal aerodromeAMOStrategy;
 
     //////////////////////////////////////////////////////
     /// --- VAULT VALUE CHECKERS
