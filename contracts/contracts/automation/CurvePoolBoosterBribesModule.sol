@@ -262,5 +262,4 @@ contract CurvePoolBoosterBribesModule is AbstractSafeModule {
             );
         }
     }
-
 }

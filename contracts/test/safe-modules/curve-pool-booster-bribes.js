@@ -55,8 +55,13 @@ describe("Unit Test: Curve Pool Booster Bribes Module", function () {
   });
 
   it("Should manage selected pool boosters with default parameters", async () => {
-    const { bribesModule, poolBoosterA, poolBoosterB, poolBoosterC, safeSigner } =
-      f;
+    const {
+      bribesModule,
+      poolBoosterA,
+      poolBoosterB,
+      poolBoosterC,
+      safeSigner,
+    } = f;
     const operatorModule = bribesModule.connect(safeSigner);
 
     await operatorModule["manageBribes(address[])"]([
@@ -80,8 +85,13 @@ describe("Unit Test: Curve Pool Booster Bribes Module", function () {
   });
 
   it("Should manage only the selected registered pool boosters", async () => {
-    const { bribesModule, poolBoosterA, poolBoosterB, poolBoosterC, safeSigner } =
-      f;
+    const {
+      bribesModule,
+      poolBoosterA,
+      poolBoosterB,
+      poolBoosterC,
+      safeSigner,
+    } = f;
     const operatorModule = bribesModule.connect(safeSigner);
 
     await operatorModule["manageBribes(address[],uint256[],uint8[],uint256[])"](
@@ -144,7 +154,8 @@ describe("Unit Test: Curve Pool Booster Bribes Module", function () {
   });
 
   it("Should require ETH based on the selected pool booster count only", async () => {
-    const { bribesModule, mockSafe, poolBoosterA, poolBoosterB, safeSigner } = f;
+    const { bribesModule, mockSafe, poolBoosterA, poolBoosterB, safeSigner } =
+      f;
     const operatorModule = bribesModule.connect(safeSigner);
 
     await hre.ethers.provider.send("hardhat_setBalance", [

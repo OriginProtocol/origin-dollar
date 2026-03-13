@@ -435,7 +435,9 @@ async function manageBribes({
   for (let i = 0; i < chunks.length; i++) {
     const chunk = chunks[i];
     log(
-      `Submitting chunk ${i + 1}/${chunks.length} for pool boosters: ${chunk.pools.join(", ")}`
+      `Submitting chunk ${i + 1}/${
+        chunks.length
+      } for pool boosters: ${chunk.pools.join(", ")}`
     );
 
     let tx;
