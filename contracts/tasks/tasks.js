@@ -694,6 +694,12 @@ subtask(
     false,
     types.boolean
   )
+  .addOptionalParam(
+    "chunkSize",
+    "Number of pool boosters to manage per transaction",
+    4,
+    types.int
+  )
   .setAction(async (taskArgs) => {
     // This action only works with the Defender Relayer signer
     const signer = await getDefenderSigner();
@@ -702,6 +708,7 @@ subtask(
       provider: signer.provider,
       targetEfficiency: taskArgs.efficiency,
       skipRewardPerVote: taskArgs.skipRewardPerVote,
+      chunkSize: taskArgs.chunkSize,
     });
   });
 task("manageCurvePoolBoosterBribes").setAction(async (_, __, runSuper) => {

@@ -24,8 +24,8 @@ const SECONDS_PER_WEEK = 60 * 60 * 24 * 7;
 // Minimal ABIs
 const bribesModuleAbi = [
   "function getPoolBoosters() external view returns (address[])",
-  "function manageBribes() external",
-  "function manageBribes(uint256[] totalRewardAmounts, uint8[] extraDuration, uint256[] rewardsPerVote) external",
+  "function manageBribes(address[] selectedPoolBoosters) external",
+  "function manageBribes(address[] selectedPoolBoosters, uint256[] totalRewardAmounts, uint8[] extraDuration, uint256[] rewardsPerVote) external",
 ];
 
 const poolBoosterAbi = [
@@ -376,6 +376,7 @@ async function manageBribes({
   signer,
   targetEfficiency,
   skipRewardPerVote,
+  chunkSize = 4,
 }) {
   const { chainId } = await provider.getNetwork();
   if (chainId !== 1) {
@@ -401,37 +402,97 @@ async function manageBribes({
     return;
   }
 
+  const normalizedChunkSize = Number(chunkSize);
+  if (!Number.isInteger(normalizedChunkSize) || normalizedChunkSize <= 0) {
+    throw new Error(`Invalid chunkSize ${chunkSize}`);
+  }
+
   // Call manageBribes on the SafeModule
   log(`\n--- Calling manageBribes on BribesModule ---`);
 
-  let tx;
-  if (skipRewardPerVote) {
-    // Use the no-arg version (defaults: all rewards, +1 period, no reward rate update)
-    log("Using default parameters (no-arg manageBribes)");
-    tx = await bribesModuleContract["manageBribes()"]();
-  } else {
-    // Build default arrays for totalRewardAmounts and extraDuration
-    const totalRewardAmounts = pools.map(() => constants.MaxUint256);
-    const extraDuration = pools.map(() => 1);
+  const totalRewardAmounts = pools.map(() => constants.MaxUint256);
+  const extraDuration = pools.map(() => 1);
+  const chunks = buildManageBribesChunks({
+    pools,
+    rewardsPerVote,
+    totalRewardAmounts,
+    extraDuration,
+    chunkSize: normalizedChunkSize,
+  });
 
+  log(
+    `Managing ${pools.length} pool boosters in ${chunks.length} transaction(s) with chunk size ${normalizedChunkSize}`
+  );
+
+  if (!skipRewardPerVote) {
     log(
       `Rewards per vote: [${rewardsPerVote
         .map((r) => formatUnits(r, 18))
         .join(", ")}]`
     );
-    tx = await bribesModuleContract[
-      "manageBribes(uint256[],uint8[],uint256[])"
-    ](totalRewardAmounts, extraDuration, rewardsPerVote);
   }
-  const receipt = await logTxDetails(tx, "manageBribes");
 
-  // Final verification
-  if (receipt.status === 1) {
-    log("SUCCESS: Transaction executed successfully!");
-  } else {
-    log("FAILURE: Transaction reverted!");
-    throw new Error(`Transaction reverted - status: ${receipt.status}`);
+  for (let i = 0; i < chunks.length; i++) {
+    const chunk = chunks[i];
+    log(
+      `Submitting chunk ${i + 1}/${
+        chunks.length
+      } for pool boosters: ${chunk.pools.join(", ")}`
+    );
+
+    let tx;
+    if (skipRewardPerVote) {
+      tx = await bribesModuleContract["manageBribes(address[])"](chunk.pools);
+    } else {
+      tx = await bribesModuleContract[
+        "manageBribes(address[],uint256[],uint8[],uint256[])"
+      ](
+        chunk.pools,
+        chunk.totalRewardAmounts,
+        chunk.extraDuration,
+        chunk.rewardsPerVote
+      );
+    }
+
+    const receipt = await logTxDetails(tx, `manageBribes chunk ${i + 1}`);
+    if (receipt.status !== 1) {
+      log(`FAILURE: Chunk ${i + 1} reverted!`);
+      throw new Error(`Transaction reverted - status: ${receipt.status}`);
+    }
   }
+
+  log("SUCCESS: All manageBribes transactions executed successfully!");
+}
+
+function buildManageBribesChunks({
+  pools,
+  rewardsPerVote,
+  totalRewardAmounts,
+  extraDuration,
+  chunkSize,
+}) {
+  if (!Number.isInteger(chunkSize) || chunkSize <= 0) {
+    throw new Error(`Invalid chunk size ${chunkSize}`);
+  }
+  if (
+    pools.length !== rewardsPerVote.length ||
+    pools.length !== totalRewardAmounts.length ||
+    pools.length !== extraDuration.length
+  ) {
+    throw new Error("Length mismatch when building manageBribes chunks");
+  }
+
+  const chunks = [];
+  for (let i = 0; i < pools.length; i += chunkSize) {
+    const end = i + chunkSize;
+    chunks.push({
+      pools: pools.slice(i, end),
+      rewardsPerVote: rewardsPerVote.slice(i, end),
+      totalRewardAmounts: totalRewardAmounts.slice(i, end),
+      extraDuration: extraDuration.slice(i, end),
+    });
+  }
+  return chunks;
 }
 
 module.exports = {
@@ -441,4 +502,5 @@ module.exports = {
   calculateRewardsPerVote,
   // manage bribes action on the pool booster bribes module
   manageBribes,
+  buildManageBribesChunks,
 };
