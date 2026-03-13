@@ -1,5 +1,4 @@
 const fs = require("fs");
-const fetch = require("node-fetch");
 const ethers = require("ethers");
 const { createHash } = require("crypto");
 const { parseUnits } = require("ethers/lib/utils");
@@ -11,6 +10,12 @@ const {
 const { getNetworkName } = require("./hardhat-helpers");
 
 const log = require("./logger")("utils:beacon");
+
+const fetchImpl =
+  typeof globalThis.fetch === "function"
+    ? globalThis.fetch.bind(globalThis)
+    : (...args) =>
+        import("node-fetch").then(({ default: fetch }) => fetch(...args));
 
 /// They following use Lodestar API calls
 
@@ -89,11 +94,15 @@ const getBeaconBlock = async (slot = "head", networkName = "mainnet") => {
   const client = await configClient();
 
   const { ssz } = await import("@lodestar/types");
-  // Hoodie and Mainnet currently use the same types but this could change in the future
+  // Mainnet fixed-slot proof generation currently decodes against Electra-era beacon data.
   const BeaconBlock =
-    networkName === "mainnet" ? ssz.fulu.BeaconBlock : ssz.fulu.BeaconBlock;
+    networkName === "mainnet"
+      ? ssz.electra.BeaconBlock
+      : ssz.electra.BeaconBlock;
   const BeaconState =
-    networkName === "mainnet" ? ssz.fulu.BeaconState : ssz.fulu.BeaconState;
+    networkName === "mainnet"
+      ? ssz.electra.BeaconState
+      : ssz.electra.BeaconState;
 
   // Get the beacon block for the slot from the beacon node.
   log(`Fetching block for slot ${slot} from the beacon node`);
@@ -107,13 +116,8 @@ const getBeaconBlock = async (slot = "head", networkName = "mainnet") => {
 
   const blockView = BeaconBlock.toView(blockRes.value().message);
 
-  // Read the state from a local file or fetch it from the beacon node.
-  let stateSsz;
   const stateFilename = `./cache/state_${blockView.slot}.ssz`;
-  if (fs.existsSync(stateFilename)) {
-    log(`Loading state from file ${stateFilename}`);
-    stateSsz = fs.readFileSync(stateFilename);
-  } else {
+  const fetchStateSsz = async () => {
     log(`Fetching state for slot ${blockView.slot} from the beacon node`);
     const stateRes = await client.debug.getStateV2(
       { stateId: blockView.slot },
@@ -128,10 +132,32 @@ const getBeaconBlock = async (slot = "head", networkName = "mainnet") => {
 
     log(`Writing state to file ${stateFilename}`);
     fs.writeFileSync(stateFilename, stateRes.ssz());
-    stateSsz = stateRes.ssz();
+    return stateRes.ssz();
+  };
+
+  // Read the state from a local file or fetch it from the beacon node.
+  let stateSsz;
+  if (fs.existsSync(stateFilename)) {
+    log(`Loading state from file ${stateFilename}`);
+    stateSsz = fs.readFileSync(stateFilename);
+  } else {
+    stateSsz = await fetchStateSsz();
   }
 
-  const stateView = BeaconState.deserializeToView(stateSsz);
+  let stateView;
+  try {
+    stateView = BeaconState.deserializeToView(stateSsz);
+  } catch (err) {
+    if (!fs.existsSync(stateFilename)) {
+      throw err;
+    }
+
+    log(
+      `Failed to deserialize cached state ${stateFilename}, refetching fresh state`
+    );
+    stateSsz = await fetchStateSsz();
+    stateView = BeaconState.deserializeToView(stateSsz);
+  }
 
   const blockTree = blockView.tree.clone();
   const stateRootGIndex = blockView.type.getPropertyGindex("stateRoot");
@@ -232,7 +258,7 @@ const beaconchainRequest = async (endpoint, overrideProvider) => {
 
   log(`About to call Beacon API: ${url} `);
 
-  const rawResponse = await fetch(url, {
+  const rawResponse = await fetchImpl(url, {
     method: "GET",
     headers,
   });
