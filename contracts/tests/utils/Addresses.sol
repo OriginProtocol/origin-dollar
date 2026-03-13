@@ -297,11 +297,13 @@ library Sonic {
     address internal constant WOSonicProxy = 0x9F0dF7799f6FDAd409300080cfF680f5A23df4b1;
     address internal constant OSonicVaultProxy = 0xa3c0eCA00D2B76b4d1F170b0AB3FdeA16C180186;
     address internal constant SonicStakingStrategy = 0x596B0401479f6DfE1cAF8c12838311FeE742B95c;
+    address internal constant SonicSwapXAMOStrategyProxy = 0xbE19cC5654e30dAF04AD3B5E06213D70F4e882eE;
 
     // SwapX
     address internal constant SWPx = 0xA04BC7140c26fc9BB1F36B1A604C7A5a88fb0E70;
     address internal constant SwapXOwner = 0xAdB5A1518713095C39dBcA08Da6656af7249Dd20;
     address internal constant SwapXVoter = 0xC1AE2779903cfB84CB9DEe5c03EcEAc32dc407F2;
+    address internal constant SwapXPairFactory = 0x05c1be79d3aC21Cc4B727eeD58C9B2fF757F5663;
     address internal constant SwapXSWPxOSPool = 0x9Cb484FAD38D953bc79e2a39bBc93655256F0B16;
     address internal constant SwapXTreasury = 0x896c3f0b63a8DAE60aFCE7Bca73356A9b611f3c8;
 
@@ -315,6 +317,7 @@ library Sonic {
 
     address internal constant SwapXWSOS_pool = 0xcfE67b6c7B65c8d038e666b3241a161888B7f2b0;
     address internal constant SwapXWSOS_gauge = 0x083D761B2A3e1fb5914FA61c6Bf11A93dcb60709;
+    address internal constant SwapXWSOS_fees = 0x9532392268eEd87959A1Cf346b14569c82b11090;
 
     address internal constant SwapXOsUSDCeMultisigBooster = 0x4636269e7CDc253F6B0B210215C3601558FE80F6;
     address internal constant SwapXOsGEMSxMultisigBooster = 0xE2c01Cc951E8322992673Fa2302054375636F7DE;
