@@ -14,6 +14,8 @@ const isPlume = process.env.NETWORK_NAME === "plume";
 const isPlumeFork = process.env.FORK_NETWORK_NAME === "plume";
 const isHoodi = process.env.NETWORK_NAME === "hoodi";
 const isHoodiFork = process.env.FORK_NETWORK_NAME === "hoodi";
+const isHyperEVM = process.env.NETWORK_NAME === "hyperevm";
+const isHyperEVMFork = process.env.FORK_NETWORK_NAME === "hyperevm";
 
 const isForkTest = isFork && process.env.IS_TEST === "true";
 const isArbForkTest = isForkTest && isArbitrumFork;
@@ -25,6 +27,8 @@ const isSonicUnitTest = process.env.UNIT_TESTS_NETWORK === "sonic";
 const isPlumeForkTest = isForkTest && isPlumeFork;
 const isPlumeUnitTest = process.env.UNIT_TESTS_NETWORK === "plume";
 const isHoodiForkTest = isForkTest && isHoodiFork;
+const isHyperEVMForkTest = isForkTest && isHyperEVMFork;
+const isHyperEVMUnitTest = process.env.UNIT_TESTS_NETWORK === "hyperevm";
 
 const providerUrl = `${
   process.env.LOCAL_PROVIDER_URL || process.env.PROVIDER_URL
@@ -35,6 +39,7 @@ const baseProviderUrl = `${process.env.BASE_PROVIDER_URL}`;
 const sonicProviderUrl = `${process.env.SONIC_PROVIDER_URL}`;
 const plumeProviderUrl = `${process.env.PLUME_PROVIDER_URL}`;
 const hoodiProviderUrl = `${process.env.HOODI_PROVIDER_URL}`;
+const hyperEVMProviderUrl = `${process.env.HYPEREVM_PROVIDER_URL}`;
 const standaloneLocalNodeRunning = !!process.env.LOCAL_PROVIDER_URL;
 
 /**
@@ -70,6 +75,10 @@ const adjustTheForkBlockNumber = () => {
     } else if (isHoodiForkTest) {
       forkBlockNumber = process.env.HOODI_BLOCK_NUMBER
         ? Number(process.env.HOODI_BLOCK_NUMBER)
+        : undefined;
+    } else if (isHyperEVMForkTest) {
+      forkBlockNumber = process.env.HYPEREVM_BLOCK_NUMBER
+        ? Number(process.env.HYPEREVM_BLOCK_NUMBER)
         : undefined;
     } else {
       forkBlockNumber = process.env.BLOCK_NUMBER
@@ -141,6 +150,8 @@ const getHardhatNetworkProperties = () => {
     chainId = 98866;
   } else if (isHoodiFork && isFork) {
     chainId = 560048;
+  } else if (isHyperEVMFork && isFork) {
+    chainId = 999;
   } else if (isFork) {
     // is mainnet fork
     chainId = 1;
@@ -160,6 +171,8 @@ const getHardhatNetworkProperties = () => {
       provider = plumeProviderUrl;
     } else if (isHoodiForkTest) {
       provider = hoodiProviderUrl;
+    } else if (isHyperEVMForkTest) {
+      provider = hyperEVMProviderUrl;
     }
   }
 
@@ -175,6 +188,7 @@ const networkMap = {
   146: "sonic",
   98866: "plume",
   560048: "hoodi",
+  999: "hyperevm",
 };
 
 /**
@@ -220,6 +234,10 @@ module.exports = {
   isHoodi,
   isHoodiFork,
   isHoodiForkTest,
+  isHyperEVM,
+  isHyperEVMFork,
+  isHyperEVMForkTest,
+  isHyperEVMUnitTest,
   providerUrl,
   arbitrumProviderUrl,
   holeskyProviderUrl,
@@ -227,6 +245,7 @@ module.exports = {
   sonicProviderUrl,
   plumeProviderUrl,
   hoodiProviderUrl,
+  hyperEVMProviderUrl,
   adjustTheForkBlockNumber,
   getHardhatNetworkProperties,
 };

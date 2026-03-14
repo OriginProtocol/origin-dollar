@@ -23,12 +23,17 @@ const {
   isHoodi,
   isHoodiFork,
   isHoodiForkTest,
+  isHyperEVM,
+  isHyperEVMFork,
+  isHyperEVMForkTest,
+  isHyperEVMUnitTest,
   baseProviderUrl,
   sonicProviderUrl,
   arbitrumProviderUrl,
   holeskyProviderUrl,
   plumeProviderUrl,
   hoodiProviderUrl,
+  hyperEVMProviderUrl,
   adjustTheForkBlockNumber,
   getHardhatNetworkProperties,
 } = require("./utils/hardhat-helpers.js");
@@ -87,6 +92,11 @@ const HOODI_DEPLOYER = MAINNET_DEPLOYER;
 // Hoodi Relayer
 const HOODI_RELAYER = "0x419B6BdAE482f41b8B194515749F3A2Da26d583b";
 
+const HYPEREVM_DEPLOYER = MAINNET_DEPLOYER;
+// HyperEVM 5/8 multisig
+const HYPEREVM_ADMIN = "0x92A19381444A001d62cE67BaFF066fA1111d7202";
+const HYPEREVM_STRATEGIST = MULTICHAIN_STRATEGIST;
+
 const mnemonic =
   "replace hover unaware super where filter stone fine garlic address matrix basic";
 
@@ -119,6 +129,8 @@ if (isHolesky || isHoleskyForkTest || isHoleskyFork) {
   paths.deploy = "deploy/plume";
 } else if (isHoodi || isHoodiFork || isHoodiForkTest) {
   paths.deploy = "deploy/hoodi";
+} else if (isHyperEVM || isHyperEVMFork || isHyperEVMForkTest || isHyperEVMUnitTest) {
+  paths.deploy = "deploy/hyperevm";
 } else {
   // holesky deployment files are in contracts/deploy/mainnet
   paths.deploy = "deploy/mainnet";
@@ -142,6 +154,8 @@ const getDeployTags = () => {
     return ["sonic"];
   } else if (isPlumeFork) {
     return ["plume"];
+  } else if (isHyperEVMFork) {
+    return ["hyperevm"];
   }
 
   return undefined;
@@ -160,6 +174,8 @@ const localEnvDeployer =
       ? PLUME_DEPLOYER
       : isHoodiFork
       ? HOODI_DEPLOYER
+      : isHyperEVMFork
+      ? HYPEREVM_DEPLOYER
       : MAINNET_DEPLOYER
     : 0; // 0th signer fallback
 
@@ -175,6 +191,8 @@ const localEnvGovernor =
       ? PLUME_ADMIN
       : isHoodiFork
       ? HOODI_RELAYER
+      : isHyperEVMFork
+      ? HYPEREVM_ADMIN
       : MAINNET_GOVERNOR
     : 1; // signer at index 1
 
@@ -196,7 +214,7 @@ const localEnvStrategist =
       ? HOLESKY_DEPLOYER
       : isSonicFork
       ? SONIC_STRATEGIST
-      : // Base, Plume and Eth use Multichain Strategist
+      : // Base, Plume, HyperEVM and Eth use Multichain Strategist
       isHoodiFork
       ? HOODI_RELAYER
       : MULTICHAIN_STRATEGIST
@@ -308,6 +326,14 @@ module.exports = {
       live: true,
       saveDeployments: true,
     },
+    hyperevm: {
+      url: hyperEVMProviderUrl,
+      accounts: defaultAccounts,
+      chainId: 999,
+      tags: ["hyperevm"],
+      live: true,
+      saveDeployments: true,
+    },
   },
   mocha: {
     bail: process.env.BAIL === "true",
@@ -326,6 +352,7 @@ module.exports = {
       sonic: SONIC_DEPLOYER,
       plume: MAINNET_DEPLOYER,
       hoodi: HOODI_DEPLOYER,
+      hyperevm: HYPEREVM_DEPLOYER,
     },
     governorAddr: {
       default: 1,
@@ -338,6 +365,7 @@ module.exports = {
       sonic: SONIC_ADMIN,
       plume: PLUME_ADMIN,
       hoodi: HOODI_RELAYER,
+      hyperevm: HYPEREVM_ADMIN,
     },
     /* Local node environment currently has no access to Decentralized governance
      * address, since the contract is in another repo. Once we merge the ousd-governance
@@ -383,6 +411,8 @@ module.exports = {
       base: addresses.base.timelock,
       sonic: addresses.sonic.timelock,
       plume: addresses.plume.timelock,
+      // TODO: deploy a timelock on HyperEVM and update this address
+      hyperevm: ethers.constants.AddressZero,
     },
     guardianAddr: {
       default: 1,
@@ -394,6 +424,7 @@ module.exports = {
       sonic: SONIC_ADMIN,
       plume: PLUME_STRATEGIST,
       hoodi: HOODI_RELAYER,
+      hyperevm: HYPEREVM_STRATEGIST,
     },
     adjusterAddr: {
       default: 0,
@@ -411,6 +442,7 @@ module.exports = {
       sonic: SONIC_STRATEGIST,
       plume: PLUME_STRATEGIST,
       hoodi: HOODI_RELAYER,
+      hyperevm: HYPEREVM_STRATEGIST,
     },
     multichainStrategistAddr: {
       default: MULTICHAIN_STRATEGIST,
@@ -435,6 +467,7 @@ module.exports = {
       sonic: process.env.ETHERSCAN_API_KEY,
       hoodi: process.env.ETHERSCAN_API_KEY,
       plume: "empty", // this works for: npx hardhat verify...
+      hyperevm: process.env.ETHERSCAN_API_KEY,
     },
     customChains: [
       {
@@ -483,6 +516,14 @@ module.exports = {
         urls: {
           apiURL: "https://api.etherscan.io/v2/api?chainId=560048",
           browserURL: "https://hoodi.etherscan.io",
+        },
+      },
+      {
+        network: "hyperevm",
+        chainId: 999,
+        urls: {
+          apiURL: "https://api.hyperevmscan.io/v2/api?chainId=999",
+          browserURL: "https://hyperevmscan.io",
         },
       },
     ],
