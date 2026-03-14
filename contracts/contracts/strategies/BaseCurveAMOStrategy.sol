@@ -616,7 +616,7 @@ contract BaseCurveAMOStrategy is InitializableAbstractStrategy {
     }
 
     function _setMaxSlippage(uint256 _maxSlippage) internal {
-        require(_maxSlippage <= 5e16, "Slippage must be less than 100%");
+        require(_maxSlippage <= 5e16, "Slippage must be less than 5%");
         maxSlippage = _maxSlippage;
         emit MaxSlippageUpdated(_maxSlippage);
     }

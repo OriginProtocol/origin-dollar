@@ -941,7 +941,7 @@ describe("Fork Test: Curve AMO OUSD strategy", function () {
         curveAMOStrategy
           .connect(impersonatedAMOGovernor)
           .setMaxSlippage(ousdUnits("0.51"))
-      ).to.be.revertedWith("Slippage must be less than 100%");
+      ).to.be.revertedWith("Slippage must be less than 5%");
     });
   });
 
