@@ -21,6 +21,7 @@ addresses.sonic = {};
 addresses.holesky = {};
 addresses.hoodi = {};
 addresses.plume = {};
+addresses.hyperevm = {};
 addresses.unitTests = {};
 
 addresses.mainnet.ORIGINTEAM = "0x449e0b5564e0d141b3bc3829e74ffa0ea8c08ad5";
@@ -684,12 +685,24 @@ addresses.hoodi.beaconChainDepositContract =
 addresses.hoodi.defenderRelayer = "0x419B6BdAE482f41b8B194515749F3A2Da26d583b";
 addresses.hoodi.mockBeaconRoots = "0xdCfcAE4A084AA843eE446f400B23aA7B6340484b";
 
+// HyperEVM contracts
+addresses.hyperevm.USDC = "0xb88339CB7199b77E23DB6E890353E22632Ba630f";
+// TODO: fill in Morpho V2 vault address on HyperEVM once deployed
+addresses.hyperevm.MorphoOusdV2Vault = "TODO_MORPHO_V2_VAULT";
+addresses.hyperevm.strategist = addresses.multichainStrategist;
+// TODO: deploy a timelock on HyperEVM and set the address here
+addresses.hyperevm.timelock = "0x0000000000000000000000000000000000000000";
+// TODO: fill in after proxy is deployed via 183_crosschain_strategy_hyperevm_proxies.js
+addresses.hyperevm.CrossChainRemoteStrategy = "TODO_AFTER_DEPLOY";
+
 // Crosschain Strategy
 // TODO delete: master - remote test address: 0x1743658b284a843b47f555343dbb628d46d0c254
 addresses.base.CrossChainRemoteStrategy =
   "0xB1d624fc40824683e2bFBEfd19eB208DbBE00866";
 addresses.mainnet.CrossChainMasterStrategy =
   "0xB1d624fc40824683e2bFBEfd19eB208DbBE00866";
+// TODO: fill in after 183/184 deploy on mainnet
+addresses.mainnet.CrossChainHyperEVMMasterStrategy = "TODO_AFTER_DEPLOY";
 // CCTP Circle Contract addresses: https://developers.circle.com/cctp/references/contract-addresses
 addresses.CCTPTokenMessengerV2 = "0x28b5a0e9c621a5badaa536219b3a228c8168cf5d";
 addresses.CCTPMessageTransmitterV2 =

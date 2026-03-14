@@ -7,6 +7,7 @@ const {
   advanceTime,
   advanceBlocks,
 } = require("../test/helpers");
+const { isHyperEVMFork } = require("./hardhat-helpers");
 const {
   deployWithConfirmation,
   withConfirmation,
@@ -510,10 +511,29 @@ function deployOnPlume(opts, fn) {
   );
 }
 
+function deployOnHyperEVM(opts, fn) {
+  return deployOnL2WithGuardianOrTimelock(
+    {
+      ...opts,
+      useTimelock: false, // No timelock on HyperEVM yet — TODO: deploy timelock and set to true
+      forceSkip:
+        opts.forceSkip ||
+        !(
+          isHyperEVMFork ||
+          hre.network.name == "hyperevm" ||
+          hre.network.config.chainId == 999
+        ),
+    },
+    fn,
+    ["hyperevm"]
+  );
+}
+
 module.exports = {
   deployOnArb,
   deployOnBaseWithEOA,
   deployOnBase,
   deployOnSonic,
   deployOnPlume,
+  deployOnHyperEVM,
 };

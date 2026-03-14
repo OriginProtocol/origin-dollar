@@ -965,7 +965,8 @@ const deployProxyWithCreateX = async (
   salt,
   proxyName,
   verifyContract = false,
-  contractPath = null
+  contractPath = null,
+  storageKey = null // optional key to store the proxy address under (defaults to proxyName)
 ) => {
   const { deployerAddr } = await getNamedAccounts();
 
@@ -1012,7 +1013,7 @@ const deployProxyWithCreateX = async (
 
   log(`Deployed ${proxyName} at ${proxyAddress}`);
 
-  await storeCreate2ProxyAddress(proxyName, proxyAddress);
+  await storeCreate2ProxyAddress(storageKey || proxyName, proxyAddress);
 
   // Verify contract on Etherscan if requested and on a live network
   // Can be enabled via parameter or VERIFY_CONTRACTS environment variable
