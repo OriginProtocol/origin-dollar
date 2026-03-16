@@ -15,6 +15,12 @@ abstract contract BaseFork is Base {
         vm.selectFork(forkIdMainnet);
     }
 
+    function _createAndSelectForkMainnet(uint256 blockNumber) internal virtual {
+        require(vm.envExists("MAINNET_PROVIDER_URL"), "MAINNET_URL not set");
+        forkIdMainnet = vm.createFork("mainnet", blockNumber);
+        vm.selectFork(forkIdMainnet);
+    }
+
     function _createAndSelectForkBase() internal virtual {
         // Check if the BASE_URL is set.
         require(vm.envExists("BASE_PROVIDER_URL"), "BASE_URL not set");
