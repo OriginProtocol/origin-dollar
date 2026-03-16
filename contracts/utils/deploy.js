@@ -1312,9 +1312,11 @@ function encodeSaltForCreateX(deployer, crosschainProtectionFlag, salt) {
       ethers.utils.zeroPad(hashBytes.slice(0, 11), 11)
     );
   } else {
-    // For numbers or hex strings, pad to 11 bytes
-    const saltBytes = ethers.utils.hexlify(salt);
-    saltBytes11 = ethers.utils.hexlify(ethers.utils.zeroPad(saltBytes, 11));
+    // For numbers or hex strings, take first 11 bytes (truncate if longer, pad if shorter)
+    const saltBytes = ethers.utils.arrayify(ethers.utils.hexlify(salt));
+    saltBytes11 = ethers.utils.hexlify(
+      ethers.utils.zeroPad(saltBytes.slice(0, 11), 11)
+    );
   }
   // concat all bytes into a bytes32
   const encodedSalt = ethers.utils.hexlify(

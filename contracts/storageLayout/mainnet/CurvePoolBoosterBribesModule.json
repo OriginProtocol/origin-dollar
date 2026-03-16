@@ -26,20 +26,28 @@
       "src": "contracts/automation/CurvePoolBoosterBribesModule.sol:28"
     },
     {
-      "label": "bridgeFee",
+      "label": "isPoolBooster",
       "offset": 0,
       "slot": "3",
-      "type": "t_uint256",
+      "type": "t_mapping(t_address,t_bool)",
       "contract": "CurvePoolBoosterBribesModule",
       "src": "contracts/automation/CurvePoolBoosterBribesModule.sol:31"
     },
     {
-      "label": "additionalGasLimit",
+      "label": "bridgeFee",
       "offset": 0,
       "slot": "4",
       "type": "t_uint256",
       "contract": "CurvePoolBoosterBribesModule",
       "src": "contracts/automation/CurvePoolBoosterBribesModule.sol:34"
+    },
+    {
+      "label": "additionalGasLimit",
+      "offset": 0,
+      "slot": "5",
+      "type": "t_uint256",
+      "contract": "CurvePoolBoosterBribesModule",
+      "src": "contracts/automation/CurvePoolBoosterBribesModule.sol:37"
     }
   ],
   "types": {
