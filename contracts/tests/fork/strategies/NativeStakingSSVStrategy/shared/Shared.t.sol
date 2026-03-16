@@ -61,14 +61,10 @@ abstract contract Fork_NativeStakingSSVStrategy_Shared_Test is BaseFork {
     /// --- SETUP
     //////////////////////////////////////////////////////
 
-    // Pin to block where Strategy2 implementation still has registerSsvValidators.
-    // The strategy was upgraded after this block, removing that function.
-    uint256 internal constant FORK_BLOCK = 24640000;
-
     function setUp() public virtual override {
         super.setUp();
 
-        _createAndSelectForkMainnet(FORK_BLOCK);
+        _createAndSelectForkMainnet();
         _loadForkContracts();
         _fundTestAccounts();
         _labelContracts();
