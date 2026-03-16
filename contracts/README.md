@@ -360,6 +360,7 @@ pnpm hardhat setActionVars --id b1d831f1-29d4-4943-bb2e-8e625b76e82c
 pnpm hardhat setActionVars --id 6567d7c6-7ec7-44bd-b95b-470dd1ff780b
 pnpm hardhat setActionVars --id 6a633bb0-aff8-4b37-aaae-b4c6f244ed87
 pnpm hardhat setActionVars --id 076c59e4-4150-42c7-9ba0-9962069ac353
+pnpm hardhat setActionVars --id ca80b55c-f3f7-4e03-a2f5-ea444645f8d9
 
 # Mainnet
 pnpm hardhat updateAction --id e2929f53-db56-49b2-b054-35f7df7fc4fb --file doAccounting
@@ -370,6 +371,7 @@ pnpm hardhat updateAction --id b1d831f1-29d4-4943-bb2e-8e625b76e82c --file claim
 pnpm hardhat updateAction --id 6567d7c6-7ec7-44bd-b95b-470dd1ff780b --file manageBribeOnSonic
 pnpm hardhat updateAction --id 6a633bb0-aff8-4b37-aaae-b4c6f244ed87 --file managePassThrough
 pnpm hardhat updateAction --id 076c59e4-4150-42c7-9ba0-9962069ac353 --file manageBribes
+pnpm hardhat updateAction --id ca80b55c-f3f7-4e03-a2f5-ea444645f8d9 --file ousdRebalancer
 # These are Base -> Mainnet & Mainnet -> Base actions
 # they share the codebase. The direction of relaying attestations is defined by the
 # network of the relayer that is attached to the action

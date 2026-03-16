@@ -1,4 +1,4 @@
-const { BigNumber } = require("ethers");
+const { ethers, BigNumber } = require("ethers");
 const { formatUnits } = require("ethers/lib/utils");
 
 const addresses = require("./addresses");

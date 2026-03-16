@@ -41,7 +41,8 @@ const actions = [
   "sonicClaimWithdrawals",
   "claimBribes",
   "crossChainRelay",
-  "manageBribes"
+  "manageBribes",
+  "ousdRebalancer",
 ];
 
 module.exports = actions.map((action) => ({
