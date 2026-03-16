@@ -28,6 +28,63 @@ const erc20Abi = [
   "function balanceOf(address account) external view returns (uint256)",
 ];
 
+const ousdCurveAmoStrategyAbi = [
+  "function curvePool() external view returns (address)",
+  "function gauge() external view returns (address)",
+  "function hardAsset() external view returns (address)",
+  "function hardAssetCoinIndex() external view returns (uint256)",
+];
+
+const curveStableSwapAbi = [
+  "function balances(uint256 i) external view returns (uint256)",
+  "function totalSupply() external view returns (uint256)",
+];
+
+/**
+ * Returns the USDC balance of the OUSD Curve AMO strategy.
+ * Uses the strategy's proportional share of the pool's USDC balance rather than
+ * get_virtual_price(), which would inflate the value by including the OUSD side.
+ *
+ * @param {string} strategyAddress  CurveAMOStrategy proxy address
+ * @param {object} provider  ethers provider
+ * @returns {BigNumber} USDC balance in 6-decimal units
+ */
+async function getOusdCurveAmoUsdcBalance(strategyAddress, provider) {
+  const strategy = new ethers.Contract(
+    strategyAddress,
+    ousdCurveAmoStrategyAbi,
+    provider
+  );
+  const [curvePoolAddr, gaugeAddr, hardAssetAddr, hardAssetCoinIndex] =
+    await Promise.all([
+      strategy.curvePool(),
+      strategy.gauge(),
+      strategy.hardAsset(),
+      strategy.hardAssetCoinIndex(),
+    ]);
+
+  const curvePool = new ethers.Contract(
+    curvePoolAddr,
+    curveStableSwapAbi,
+    provider
+  );
+  const gauge = new ethers.Contract(gaugeAddr, erc20Abi, provider);
+  const hardAsset = new ethers.Contract(hardAssetAddr, erc20Abi, provider);
+
+  const [amoLPs, totalLPs, poolUsdc, directUsdc] = await Promise.all([
+    gauge.balanceOf(strategyAddress),
+    curvePool.totalSupply(),
+    curvePool.balances(hardAssetCoinIndex),
+    hardAsset.balanceOf(strategyAddress),
+  ]);
+
+  const lpShare = totalLPs.gt(0)
+    ? poolUsdc.mul(amoLPs).div(totalLPs)
+    : BigNumber.from(0);
+
+  return lpShare.add(directUsdc);
+}
+
 /**
  * Read on-chain state: strategy balances, vault idle USDC, withdrawal queue.
  * @param {object} provider - ethers provider
@@ -66,7 +123,9 @@ async function readOnChainState(provider) {
       const strategy = new ethers.Contract(cfg.address, strategyAbi, provider);
 
       const [balance, isTransferPending] = await Promise.all([
-        strategy.checkBalance(addresses.mainnet.USDC),
+        cfg.isAmo
+          ? getOusdCurveAmoUsdcBalance(cfg.address, provider)
+          : strategy.checkBalance(addresses.mainnet.USDC),
         cfg.isCrossChain ? strategy.isTransferPending() : false,
       ]);
 
