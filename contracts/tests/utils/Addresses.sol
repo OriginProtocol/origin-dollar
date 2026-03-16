@@ -135,6 +135,9 @@ library Mainnet {
     address internal constant MorphoGauntletPrimeUSDTVault = 0x8CB3649114051cA5119141a34C200D65dc0Faa73;
     address internal constant MorphoOUSDv2StrategyProxy = 0x3643cafA6eF3dd7Fcc2ADaD1cabf708075AFFf6e;
     address internal constant MorphoOUSDv1Vault = 0x5B8b9FA8e4145eE06025F642cAdB1B47e5F39F04;
+    address internal constant MorphoGauntletPrimeUSDCStrategyProxy = 0x2B8f37893EE713A4E9fF0cEb79F27539f20a32a1;
+    address internal constant MorphoGauntletPrimeUSDTStrategyProxy = 0xe3ae7C80a1B02Ccd3FB0227773553AEB14e32F26;
+    address internal constant MetaMorphoStrategyProxy = 0x603CDEAEC82A60E3C4A10dA6ab546459E5f64Fa0;
     address internal constant MorphoOUSDv2Adaptor = 0xD8F093dCE8504F10Ac798A978eF9E0C230B2f5fF;
     address internal constant MorphoOUSDv2Vault = 0xFB154c729A16802c4ad1E8f7FF539a8b9f49c960;
     address internal constant Morpho = 0x8888882f8f843896699869179fB6E4f7e3B58888;
@@ -273,6 +276,9 @@ library Base {
     address internal constant OETHb_WETH_gauge = 0x9da8420dbEEBDFc4902B356017610259ef7eeDD8;
     address internal constant childLiquidityGaugeFactory = 0xe35A879E5EfB4F1Bb7F70dCF3250f2e19f096bd8;
 
+    address internal constant OETHBaseVaultProxy = 0x98a0CbeF61bD2D21435f433bE4CD42B56B38CC93;
+    address internal constant OETHBaseProxy = 0xDBFeFD2e8460a6Ee4955A68582F85708BAEA60A3;
+    address internal constant BridgedWOETHStrategyProxy = 0x80c864704DD06C3693ed5179190786EE38ACf835;
     address internal constant CCIPRouter = 0x881e3A65B4d4a04dD529061dd0071cf975F58bCD;
     address internal constant MerklDistributor = 0x8BB4C975Ff3c250e0ceEA271728547f3802B36Fd;
     address internal constant USDC = 0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913;
