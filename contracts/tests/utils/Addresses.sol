@@ -373,6 +373,11 @@ library Sonic {
     // Shadow
     address internal constant Shadow_OsEco_pool = 0xFd0Cee796348Fd99AB792C471f4419b4c56cf6b8;
     address internal constant Shadow_OsEco_yf_treasury = 0x4B9919603170c77936D8ec2C08b604844E861699;
+    address internal constant Shadow_SWETH_pool = 0xB6d9B069F6B96A507243d501d1a23b3fCCFC85d3;
+    address internal constant Shadow_SWETH_gaugeV2 = 0xF5C7598C953E49755576CDA6b2B2A9dAaf89a837;
+
+    // Merkl
+    address internal constant MerklWhale = 0xA9DdD91249DFdd450E81E1c56Ab60E1A62651701;
 
     // Metropolis
     address internal constant Metropolis_Voter = 0x03A9896A464C515d13f2679df337bF95bc891fdA;

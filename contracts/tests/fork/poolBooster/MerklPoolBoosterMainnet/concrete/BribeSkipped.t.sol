@@ -1,0 +1,42 @@
+// SPDX-License-Identifier: BUSL-1.1
+pragma solidity ^0.8.0;
+
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+
+import {Fork_MerklPoolBoosterMainnet_Shared_Test} from
+    "tests/fork/poolBooster/MerklPoolBoosterMainnet/shared/Shared.t.sol";
+import {PoolBoosterMerkl} from "contracts/poolBooster/PoolBoosterMerkl.sol";
+
+contract Fork_Concrete_MerklPoolBoosterMainnet_BribeSkipped_Test is Fork_MerklPoolBoosterMainnet_Shared_Test {
+    function test_bribe_skippedBelowMinBribeAmount() public {
+        PoolBoosterMerkl booster = _createMerklBooster(1);
+
+        // Fund with 100 wei (below MIN_BRIBE_AMOUNT of 1e10)
+        _dealOETH(address(booster), 100);
+
+        booster.bribe();
+
+        // Balance should be unchanged
+        assertEq(IERC20(address(oeth)).balanceOf(address(booster)), 100);
+    }
+
+    function test_bribe_skippedBelowMerklMinAmount() public {
+        PoolBoosterMerkl booster = _createMerklBooster(1);
+
+        // Fund with 100 wei — below MIN_BRIBE_AMOUNT
+        _dealOETH(address(booster), 100);
+
+        booster.bribe();
+        assertEq(IERC20(address(oeth)).balanceOf(address(booster)), 100);
+
+        // Add more but still below the Merkl min threshold
+        // (balance * 1 hours must be >= minAmount * duration)
+        // minAmount = 1e18, duration = 86400 → need >= 86400e18 / 3600 = 24e18
+        _dealOETH(address(booster), 1e12);
+
+        booster.bribe();
+
+        // Balance should still be unchanged (100 + 1e12)
+        assertEq(IERC20(address(oeth)).balanceOf(address(booster)), 1e12 + 100);
+    }
+}
