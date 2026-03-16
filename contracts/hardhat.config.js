@@ -129,7 +129,12 @@ if (isHolesky || isHoleskyForkTest || isHoleskyFork) {
   paths.deploy = "deploy/plume";
 } else if (isHoodi || isHoodiFork || isHoodiForkTest) {
   paths.deploy = "deploy/hoodi";
-} else if (isHyperEVM || isHyperEVMFork || isHyperEVMForkTest || isHyperEVMUnitTest) {
+} else if (
+  isHyperEVM ||
+  isHyperEVMFork ||
+  isHyperEVMForkTest ||
+  isHyperEVMUnitTest
+) {
   paths.deploy = "deploy/hyperevm";
 } else {
   // holesky deployment files are in contracts/deploy/mainnet
