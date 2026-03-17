@@ -78,10 +78,9 @@ abstract contract Smoke_OUSD_Shared_Test is BaseSmoke {
         (uint256 queued, uint256 claimable,,) = ousdVault.withdrawalQueueMetadata();
         uint256 shortfall = queued > claimable ? queued - claimable : 0;
         uint256 needed = shortfall + extraUSDC;
-        uint256 currentBalance = usdc.balanceOf(address(ousdVault));
-        if (needed > currentBalance) {
-            deal(address(usdc), address(ousdVault), needed);
-        }
+        // Use additive deal: existing balance may be fully allocated to prior claimable
+        // requests, so we must add on top rather than replace.
+        deal(address(usdc), address(ousdVault), usdc.balanceOf(address(ousdVault)) + needed);
         ousdVault.addWithdrawalQueueLiquidity();
     }
 }
