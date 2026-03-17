@@ -117,6 +117,10 @@ contract DeployManager is Base {
             path = string(
                 abi.encodePacked(projectRoot, "/scripts/deploy/sonic/")
             );
+        } else if (chainId == 8453) {
+            path = string(
+                abi.encodePacked(projectRoot, "/scripts/deploy/base/")
+            );
         } else {
             revert("Unsupported chain");
         }

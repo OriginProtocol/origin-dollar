@@ -98,5 +98,6 @@ abstract contract Base {
     constructor() {
         chainNames[1] = "Ethereum Mainnet";
         chainNames[146] = "Sonic Mainnet";
+        chainNames[8453] = "Base Mainnet";
     }
 }
