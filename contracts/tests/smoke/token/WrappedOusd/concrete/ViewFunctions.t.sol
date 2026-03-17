@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import {Smoke_WrappedOusd_Shared_Test} from "tests/smoke/wrappedToken/WrappedOusd/shared/Shared.t.sol";
+import {Smoke_WrappedOusd_Shared_Test} from "tests/smoke/token/WrappedOusd/shared/Shared.t.sol";
 
 contract Smoke_Concrete_WrappedOusd_ViewFunctions_Test is Smoke_WrappedOusd_Shared_Test {
     function test_name() public view {
