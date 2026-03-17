@@ -254,7 +254,6 @@ addresses.mainnet.FraxETHRedeemStrategy =
   "0x95A8e45afCfBfEDd4A1d41836ED1897f3Ef40A9e";
 addresses.mainnet.OETHHarvesterProxy =
   "0x0D017aFA83EAce9F10A8EC5B6E13941664A6785C";
-// TODO add after deployment
 addresses.mainnet.OETHHarvesterSimpleProxy =
   "0x6D416E576eECBB9F897856a7c86007905274ed04";
 // OETH Tokens
@@ -687,22 +686,22 @@ addresses.hoodi.mockBeaconRoots = "0xdCfcAE4A084AA843eE446f400B23aA7B6340484b";
 
 // HyperEVM contracts
 addresses.hyperevm.USDC = "0xb88339CB7199b77E23DB6E890353E22632Ba630f";
-// TODO: fill in Morpho V2 vault address on HyperEVM once deployed
-addresses.hyperevm.MorphoOusdV2Vault = "TODO_MORPHO_V2_VAULT";
+// Morpho V2 vault address on HyperEVM once deployed
+addresses.hyperevm.MorphoOusdV2Vault =
+  "0xE90959cbE7E56b5eBFF9AD12de611A4976F2d2B1";
 addresses.hyperevm.strategist = addresses.multichainStrategist;
-// TODO: deploy a timelock on HyperEVM and set the address here
-addresses.hyperevm.timelock = "0x0000000000000000000000000000000000000000";
-// TODO: fill in after proxy is deployed via 183_crosschain_strategy_hyperevm_proxies.js
-addresses.hyperevm.CrossChainRemoteStrategy = "TODO_AFTER_DEPLOY";
+addresses.hyperevm.admin = "0x92A19381444A001d62cE67BaFF066fA1111d7202";
+addresses.hyperevm.timelock = "0x77121911A387c9e4Eae46345E0f831A6da8a1364";
+addresses.hyperevm.CrossChainRemoteStrategy =
+  "0xE0228DB13F8C4Eb00fD1e08e076b09eF5cD0EA1e";
 
 // Crosschain Strategy
-// TODO delete: master - remote test address: 0x1743658b284a843b47f555343dbb628d46d0c254
 addresses.base.CrossChainRemoteStrategy =
   "0xB1d624fc40824683e2bFBEfd19eB208DbBE00866";
 addresses.mainnet.CrossChainMasterStrategy =
   "0xB1d624fc40824683e2bFBEfd19eB208DbBE00866";
-// TODO: fill in after 183/184 deploy on mainnet
-addresses.mainnet.CrossChainHyperEVMMasterStrategy = "TODO_AFTER_DEPLOY";
+addresses.mainnet.CrossChainHyperEVMMasterStrategy =
+  "0xE0228DB13F8C4Eb00fD1e08e076b09eF5cD0EA1e";
 // CCTP Circle Contract addresses: https://developers.circle.com/cctp/references/contract-addresses
 addresses.CCTPTokenMessengerV2 = "0x28b5a0e9c621a5badaa536219b3a228c8168cf5d";
 addresses.CCTPMessageTransmitterV2 =

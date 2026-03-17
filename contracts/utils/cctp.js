@@ -43,7 +43,7 @@ const configuration = {
         addresses.hyperevm.CrossChainRemoteStrategy,
       cctpIntegrationContractAddressDestination:
         addresses.mainnet.CrossChainHyperEVMMasterStrategy,
-      blockLookback: 87600, // a bit over 2 days in block time on HyperEVM (adjust if needed)
+      blockLookback: 172800, // 2 days in block time on HyperEVM
     },
   },
 };

@@ -12,16 +12,14 @@ module.exports = deployOnHyperEVM(
   },
   async () => {
     const crossChainStrategyProxyAddress = await getCreate2ProxyAddress(
-      "CrossChainStrategyProxy"
+      "CrossChainStrategyHyperEVMProxy"
     );
     console.log(
       `CrossChainStrategyProxy address: ${crossChainStrategyProxyAddress}`
     );
 
-    // TODO: Once a timelock is deployed on HyperEVM, replace the governor
-    // argument below with addresses.hyperevm.timelock instead of the strategist.
     const implAddress = await deployCrossChainRemoteStrategyImpl(
-      addresses.hyperevm.MorphoOusdV2Vault, // TODO: fill in Morpho V2 vault address on HyperEVM
+      addresses.hyperevm.MorphoOusdV2Vault,
       crossChainStrategyProxyAddress,
       cctpDomainIds.Ethereum, // 0
       // The master strategy has the same address on mainnet thanks to Create2
@@ -31,7 +29,7 @@ module.exports = deployOnHyperEVM(
       "CrossChainRemoteStrategy",
       addresses.CCTPTokenMessengerV2,
       addresses.CCTPMessageTransmitterV2,
-      addresses.hyperevm.strategist // No timelock yet — using guardian as governor
+      addresses.hyperevm.timelock
     );
     console.log(`CrossChainRemoteStrategyImpl address: ${implAddress}`);
 

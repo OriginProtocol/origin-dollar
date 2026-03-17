@@ -208,6 +208,8 @@ const localEnvTimelock =
     ? addresses.sonic.timelock
     : process.env.FORK_NETWORK_NAME == "plume"
     ? addresses.plume.timelock
+    : process.env.FORK_NETWORK_NAME == "hyperevm"
+    ? addresses.hyperevm.timelock
     : process.env.FORK_NETWORK_NAME == "mainnet" ||
       (!process.env.FORK_NETWORK_NAME && process.env.FORK == "true")
     ? MAINNET_TIMELOCK
@@ -416,8 +418,7 @@ module.exports = {
       base: addresses.base.timelock,
       sonic: addresses.sonic.timelock,
       plume: addresses.plume.timelock,
-      // TODO: deploy a timelock on HyperEVM and update this address
-      hyperevm: ethers.constants.AddressZero,
+      hyperevm: addresses.hyperevm.timelock,
     },
     guardianAddr: {
       default: 1,
