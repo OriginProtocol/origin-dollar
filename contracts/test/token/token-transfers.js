@@ -64,13 +64,13 @@ describe("Account type variations", function () {
     expect(await ousd.rebaseState(nonrebase_contract_1.address)).to.equal(1); // rebaseState:StdNonRebasing
     await expect(nonrebase_contract_1).has.a.balanceOf("56", ousd);
 
-    expect(await ousd.rebaseState(nonrebase_contract_notSet_0.address)).to.equal(
-      0
-    ); // rebaseState:NotSet
+    expect(
+      await ousd.rebaseState(nonrebase_contract_notSet_0.address)
+    ).to.equal(0); // rebaseState:NotSet
     await expect(nonrebase_contract_notSet_0).has.a.balanceOf("0", ousd);
-    expect(await ousd.rebaseState(nonrebase_contract_notSet_1.address)).to.equal(
-      0
-    ); // rebaseState:NotSet
+    expect(
+      await ousd.rebaseState(nonrebase_contract_notSet_1.address)
+    ).to.equal(0); // rebaseState:NotSet
     await expect(nonrebase_contract_notSet_1).has.a.balanceOf("0", ousd);
 
     expect(
