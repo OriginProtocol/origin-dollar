@@ -59,6 +59,11 @@ module.exports = deploymentWithGovernanceProposal(
           signature: "approveStrategy(address)",
           args: [crossChainStrategyProxyAddress],
         },
+        {
+          contract: cCrossChainMasterStrategy,
+          signature: "setOperator(address)",
+          args: [addresses.mainnet.validatorRegistrator],
+        },
       ],
     };
   }
