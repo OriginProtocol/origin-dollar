@@ -37,6 +37,7 @@ import { Base } from "scripts/deploy/Base.s.sol";
 abstract contract AbstractDeployScript is Base {
     using Logger for bool;
     using GovHelper for bool;
+    using GovHelper for GovProposal;
 
     // ==================== State Variables ==================== //
 

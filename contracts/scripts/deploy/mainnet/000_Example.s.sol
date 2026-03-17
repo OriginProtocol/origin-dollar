@@ -3,6 +3,8 @@ pragma solidity ^0.8.0;
 
 // Deployment framework
 import { AbstractDeployScript } from "scripts/deploy/helpers/AbstractDeployScript.s.sol";
+import { GovHelper } from "scripts/deploy/helpers/GovHelper.sol";
+import { GovProposal } from "scripts/deploy/helpers/DeploymentTypes.sol";
 
 // Contracts
 import { OUSD } from "contracts/token/OUSD.sol";
@@ -19,6 +21,8 @@ import { InitializeGovernedUpgradeabilityProxy } from "contracts/proxies/Initial
 ///      skip() returns true, so this script is never executed by DeployManager.
 ///      Remove or override skip() to activate it in a real deployment.
 contract $000_Example is AbstractDeployScript("000_Example") {
+    using GovHelper for GovProposal;
+
     // ==================== Skip ==================== //
 
     bool public constant override skip = true; // Skip this example by default
@@ -61,7 +65,7 @@ contract $000_Example is AbstractDeployScript("000_Example") {
         address expectedImpl = resolver.resolve("OUSD_IMPL");
 
         // Verify implementation was updated
-        address currentImpl = InitializeGovernedUpgradeabilityProxy(ousdProxy)
+        address currentImpl = InitializeGovernedUpgradeabilityProxy(payable(ousdProxy))
             .implementation();
         require(
             currentImpl == expectedImpl,

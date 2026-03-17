@@ -1,6 +1,7 @@
 [profile.default]
 src = "contracts"
 test = "tests"
+script = "scripts"
 out = "out"
 libs = ["dependencies", "lib"]
 auto_detect_remappings = false
