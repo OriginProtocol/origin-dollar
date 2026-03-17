@@ -11,9 +11,10 @@ const addresses = require("../utils/addresses");
 const {
   getBeaconBlock,
   getValidator: getValidatorBeacon,
+  getValidators: getValidatorsBeacon,
   getSlot,
 } = require("../utils/beacon");
-const { bytes32 } = require("../utils/regex");
+const { bytes32, validatorKeys } = require("../utils/regex");
 const { resolveContract } = require("../utils/resolvers");
 const {
   generateValidatorPubKeyProof,
@@ -28,8 +29,95 @@ const { toHex } = require("../utils/units");
 const { logTxDetails } = require("../utils/txLogger");
 const { getNetworkName } = require("../utils/hardhat-helpers");
 const { ZERO_BYTES32 } = require("../utils/constants");
+const {
+  address: mainnetCompoundingStakingSSVStrategyProxy,
+} = require("../deployments/mainnet/CompoundingStakingSSVStrategyProxy.json");
+const {
+  address: hoodiNativeStakingSSVStrategyProxy,
+} = require("../deployments/hoodi/NativeStakingSSVStrategyProxy.json");
+const {
+  address: hoodiCompoundingStakingSSVStrategyProxy,
+} = require("../deployments/hoodi/CompoundingStakingSSVStrategyProxy.json");
 
 const log = require("../utils/logger")("task:beacon");
+
+const getStrategyNetworkName = async () => {
+  const networkName = await getNetworkName();
+  if (networkName === "hardhat") {
+    return process.env.FORK_NETWORK_NAME || process.env.NETWORK_NAME || "hardhat";
+  }
+  return networkName;
+};
+
+const getKnownWithdrawalStrategies = (networkName) => {
+  if (networkName === "mainnet") {
+    return [
+      {
+        label: "NativeStakingSSVStrategyProxy",
+        address: addresses.mainnet.NativeStakingSSVStrategyProxy,
+      },
+      {
+        label: "NativeStakingSSVStrategy2Proxy",
+        address: addresses.mainnet.NativeStakingSSVStrategy2Proxy,
+      },
+      {
+        label: "NativeStakingSSVStrategy3Proxy",
+        address: addresses.mainnet.NativeStakingSSVStrategy3Proxy,
+      },
+      {
+        label: "CompoundingStakingSSVStrategyProxy",
+        address: mainnetCompoundingStakingSSVStrategyProxy,
+      },
+    ];
+  }
+
+  if (networkName === "hoodi") {
+    return [
+      {
+        label: "NativeStakingSSVStrategyProxy",
+        address: hoodiNativeStakingSSVStrategyProxy,
+      },
+      {
+        label: "CompoundingStakingSSVStrategyProxy",
+        address: hoodiCompoundingStakingSSVStrategyProxy,
+      },
+    ];
+  }
+
+  if (networkName === "holesky") {
+    return [
+      {
+        label: "NativeStakingSSVStrategyProxy",
+        address: addresses.holesky.NativeStakingSSVStrategyProxy,
+      },
+    ];
+  }
+
+  return [];
+};
+
+const getLinkedStrategy = (withdrawalCredentials, networkName) => {
+  const credentialType = withdrawalCredentials.slice(0, 4).toLowerCase();
+  const linkedAddress = ethers.utils.getAddress(
+    `0x${withdrawalCredentials.slice(-40)}`
+  );
+  const knownStrategy = getKnownWithdrawalStrategies(networkName).find(
+    ({ address }) => address?.toLowerCase() === linkedAddress.toLowerCase()
+  );
+
+  if (knownStrategy) {
+    return knownStrategy.label;
+  }
+
+  if (credentialType === "0x01" || credentialType === "0x02") {
+    return `Unknown ${credentialType}`;
+  }
+
+  return `Type ${credentialType}`;
+};
+
+const getValidatorType = (withdrawalCredentials) =>
+  withdrawalCredentials.slice(0, 4).toLowerCase();
 
 /// Returns an ethers provider connected to the Ethereum mainnet or Hoodi.
 /// @param {Provider} [provider] - Optional ethers provider connected to local fork or live chain. Uses Hardhat provider if not supplied.
@@ -904,10 +992,88 @@ async function getValidator({ slot, index, pubkey }) {
   );
 }
 
+async function getValidators({ pubkeys, slot }) {
+  if (!pubkeys.match(validatorKeys)) {
+    throw Error(
+      `Public keys not a comma-separated list of public keys with 0x prefixes`
+    );
+  }
+
+  const networkName = await getStrategyNetworkName();
+  const { stateView } = await getBeaconBlock(slot, networkName);
+
+  const beaconValidators = await getValidatorsBeacon(pubkeys);
+  const beaconValidatorList = Array.isArray(beaconValidators)
+    ? beaconValidators
+    : [beaconValidators];
+  const validators = beaconValidatorList.map((beaconValidator) => ({
+    index: Number(beaconValidator.validatorindex),
+    pubkey: beaconValidator.pubkey,
+  }));
+
+  console.log(
+    `Validators at slot ${stateView.slot}, epoch ${BigInt(stateView.slot) / 32n}:`
+  );
+
+  const rows = [];
+  for (const { pubkey, index } of validators) {
+    const validator = stateView.validators.get(index);
+    if (
+      !validator ||
+      toHex(validator.node.root) ===
+        "0x0000000000000000000000000000000000000000000000000000000000000000"
+    ) {
+      throw new Error(
+        `Validator ${pubkey} at index ${index} not found for slot ${slot}`
+      );
+    }
+
+    const withdrawalCredentials = toHex(validator.withdrawalCredentials);
+    const validatorType = getValidatorType(withdrawalCredentials);
+    const linkedStrategy = getLinkedStrategy(withdrawalCredentials, networkName);
+    const balance = stateView.balances.get(index);
+
+    rows.push({
+      Pubkey: pubkey,
+      Type: validatorType,
+      Slashed: String(validator.slashed),
+      Balance: `${formatUnits(balance, 9)} ETH`,
+      ExitEpoch: String(validator.exitEpoch),
+      WithdrawableEpoch: String(validator.withdrawableEpoch),
+      LinkedStrategy: linkedStrategy,
+    });
+  }
+
+  const columns = [
+    "Pubkey",
+    "Type",
+    "Slashed",
+    "Balance",
+    "ExitEpoch",
+    "WithdrawableEpoch",
+    "LinkedStrategy",
+  ];
+  const widths = Object.fromEntries(
+    columns.map((column) => [
+      column,
+      Math.max(column.length, ...rows.map((row) => row[column].length)),
+    ])
+  );
+  const formatRow = (row) =>
+    columns.map((column) => row[column].padEnd(widths[column])).join("  ");
+
+  console.log(formatRow(Object.fromEntries(columns.map((column) => [column, column]))));
+  console.log(columns.map((column) => "-".repeat(widths[column])).join("  "));
+  for (const row of rows) {
+    console.log(formatRow(row));
+  }
+}
+
 module.exports = {
   requestValidatorWithdraw,
   beaconRoot,
   getValidator,
+  getValidators,
   verifyValidator,
   verifyDeposit,
   verifyDeposits,

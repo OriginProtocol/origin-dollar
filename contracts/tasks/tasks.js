@@ -128,6 +128,7 @@ const {
   requestValidatorWithdraw,
   beaconRoot,
   getValidator,
+  getValidators,
   verifyValidator,
   verifyDeposit,
   verifyDeposits,
@@ -2116,6 +2117,24 @@ subtask("getValidator", "Gets the details of a validator")
   )
   .setAction(getValidator);
 task("getValidator").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+subtask("getValidators", "Gets the details of multiple validators")
+  .addParam(
+    "pubkeys",
+    "Comma separated list of validator public keys in hex format with a 0x prefix",
+    undefined,
+    types.string
+  )
+  .addOptionalParam(
+    "slot",
+    "Beacon chain slot. Default head",
+    undefined,
+    types.int
+  )
+  .setAction(getValidators);
+task("getValidators").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
 

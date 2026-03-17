@@ -1,5 +1,4 @@
 const fs = require("fs");
-const fetch = require("node-fetch");
 const ethers = require("ethers");
 const { createHash } = require("crypto");
 const { parseUnits } = require("ethers/lib/utils");
@@ -8,28 +7,30 @@ const {
   beaconChainGenesisTimeMainnet,
   beaconChainGenesisTimeHoodi,
 } = require("./constants");
-const { getNetworkName } = require("./hardhat-helpers");
 
 const log = require("./logger")("utils:beacon");
+
+const SLOTS_PER_EPOCH = 32;
+
+const normalizeValidatorResponse = ({ index, balance, status, validator }) => ({
+  index: Number(index),
+  validatorindex: Number(index),
+  balance: Number(balance),
+  status,
+  pubkey: ethers.utils.hexlify(validator.pubkey),
+  withdrawalcredentials: ethers.utils.hexlify(validator.withdrawalCredentials),
+  effectivebalance: Number(validator.effectiveBalance),
+  slashed: validator.slashed,
+  activationepoch: Number(validator.activationEpoch),
+  activationeligibilityepoch: Number(validator.activationEligibilityEpoch),
+  exitepoch: Number(validator.exitEpoch),
+  withdrawableepoch: Number(validator.withdrawableEpoch),
+});
 
 /// They following use Lodestar API calls
 
 const getValidatorBalance = async (pubkey) => {
-  const client = await configClient();
-
-  log(`Fetching validator details for ${pubkey} from the beacon node`);
-  const validatorRes = await client.beacon.getStateValidator({
-    stateId: "head",
-    validatorId: pubkey,
-  });
-  if (!validatorRes.ok) {
-    console.error(validatorRes);
-    throw Error(
-      `Failed to get validator details for ${pubkey}. Status ${validatorRes.status} ${validatorRes.statusText}`
-    );
-  }
-
-  const values = validatorRes.value();
+  const values = await getValidator(pubkey);
   log(`Got balance ${values.balance} for validator ${values.index}`);
   return values.balance;
 };
@@ -181,74 +182,57 @@ const configClient = async () => {
   return client;
 };
 
-/// The following connect directly to the BeaconChain API
-/// They could be replaced with Lodestar API calls in the future.
-
 const getValidator = async (pubkey) => {
-  const networkName = await getNetworkName();
-  // some other beacon providers don't support fetching of the validator by pubkey
-  const beaconProvider = `https://${
-    networkName === "mainnet" ? "" : `${networkName}.`
-  }beaconcha.in/api/v1/`;
+  const client = await configClient();
 
-  return await beaconchainRequest(`validator/${pubkey}`, beaconProvider);
+  log(`Fetching validator details for ${pubkey} from the beacon node`);
+  const validatorRes = await client.beacon.getStateValidator({
+    stateId: "head",
+    validatorId: pubkey,
+  });
+  if (!validatorRes.ok) {
+    console.error(validatorRes);
+    throw Error(
+      `Failed to get validator details for ${pubkey}. Status ${validatorRes.status} ${validatorRes.statusText}`
+    );
+  }
+
+  return normalizeValidatorResponse(validatorRes.value());
 };
 
-const getValidators = async (pubkeys, beaconChainApiKey) => {
-  const encodedPubkeys = encodeURIComponent(pubkeys);
-  return await beaconchainRequest(
-    `validator/${encodedPubkeys}`,
-    beaconChainApiKey
+const getValidators = async (pubkeys) => {
+  const client = await configClient();
+  const validatorIds = Array.isArray(pubkeys) ? pubkeys : pubkeys.split(",");
+
+  log(
+    `Fetching ${validatorIds.length} validator details from the beacon node`
   );
+  const validatorsRes = await client.beacon.getStateValidators({
+    stateId: "head",
+    validatorIds,
+  });
+  if (!validatorsRes.ok) {
+    console.error(validatorsRes);
+    throw Error(
+      `Failed to get validator details for ${validatorIds.join(",")}. Status ${validatorsRes.status} ${validatorsRes.statusText}`
+    );
+  }
+
+  const validators = validatorsRes.value().map(normalizeValidatorResponse);
+  return validators.length === 1 ? validators[0] : validators;
 };
 
 const getEpoch = async (epochId = "latest") => {
-  return await beaconchainRequest(`epoch/${epochId}`);
-};
-
-const beaconchainRequest = async (endpoint, overrideProvider) => {
-  const networkName = await getNetworkName();
-
-  const API_URL =
-    overrideProvider ||
-    process.env.BEACON_PROVIDER_URL ||
-    `https://${
-      networkName === "mainnet" ? "" : `${networkName}.`
-    }beaconcha.in/api/v1/`;
-
-  const apikey = process.env.BEACONCHAIN_API_KEY;
-  const url = `${API_URL}${endpoint}`;
-  if (!apikey) {
-    throw new Error(
-      "Set BEACONCHAIN_API_KEY in order to be able to query the API"
-    );
+  if (epochId !== "latest") {
+    return {
+      epoch: Number(epochId),
+    };
   }
 
-  const headers = {
-    Accept: "application/json",
-    "Content-Type": "application/json",
-    apikey,
+  const slot = await getSlot("head");
+  return {
+    epoch: Math.floor(Number(slot) / SLOTS_PER_EPOCH),
   };
-
-  log(`About to call Beacon API: ${url} `);
-
-  const rawResponse = await fetch(url, {
-    method: "GET",
-    headers,
-  });
-
-  const response = await rawResponse.json();
-  if (response.status != "OK") {
-    log(`Call to Beacon API failed: ${url}`);
-    log(`response: `, response);
-    throw new Error(
-      `Call to Beacon API failed. Error: ${JSON.stringify(response.error)}`
-    );
-  } else {
-    log(`GET request to Beacon API succeeded. Response: `, response);
-  }
-
-  return response.data;
 };
 
 const serializeUint64 = async (value) => {
