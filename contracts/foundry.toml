@@ -8,6 +8,12 @@ solc_version = "0.8.28"
 optimizer = true
 optimizer_runs = 200
 ffi = true
+fs_permissions = [
+  { access = "read-write", path = "./build" },
+  { access = "read-write", path = "./out" },
+  { access = "read-write", path = "./scripts" },
+  { access = "read", path = "test/strategies" }
+]
 
 # Remappings order matters: transitive (inside deps) first, then root-level.
 remappings = [
@@ -36,8 +42,6 @@ remappings = [
   "tests/=tests/",
   "@solmate/=dependencies/solmate-89365b880c4f3c786bdd453d4b8e8fe410344a69/src/"
 ]
-
-fs_permissions = [{ access = "read", path = "test/strategies" }]
 
 [rpc_endpoints]
 mainnet = "${MAINNET_PROVIDER_URL}"
