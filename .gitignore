@@ -58,7 +58,9 @@ contracts/deployments/fork_*
 contracts/deployments/hardhat*
 contracts/coverage/
 contracts/coverage.json
-contracts/build/
+contracts/build/*
+!contracts/build/deployments-*.json
+contracts/build/deployments-fork-*.json
 contracts/dist/
 contracts/.localKeyValueStorage
 contracts/.localKeyValueStorage.mainnet

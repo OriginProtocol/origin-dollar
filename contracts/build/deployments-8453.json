@@ -1,0 +1,24 @@
+{
+    "contracts": [
+        {
+            "implementation": "0xDBFeFD2e8460a6Ee4955A68582F85708BAEA60A3",
+            "name": "OETHBASE_PROXY"
+        },
+        {
+            "implementation": "0x98a0CbeF61bD2D21435f433bE4CD42B56B38CC93",
+            "name": "OETHBASE_VAULT_PROXY"
+        },
+        {
+            "implementation": "0x7FcD174E80f264448ebeE8c88a7C4476AAF58Ea6",
+            "name": "WOETHBASE_PROXY"
+        }
+    ],
+    "executions": [
+        {
+            "name": "001_CoreBase",
+            "proposalId": 1,
+            "tsDeployment": 1723685111,
+            "tsGovernance": 1
+        }
+    ]
+}

@@ -1,0 +1,24 @@
+{
+    "contracts": [
+        {
+            "implementation": "0xb1e25689D55734FD3ffFc939c4C3Eb52DFf8A794",
+            "name": "OSONIC_PROXY"
+        },
+        {
+            "implementation": "0xa3c0eCA00D2B76b4d1F170b0AB3FdeA16C180186",
+            "name": "OSONIC_VAULT_PROXY"
+        },
+        {
+            "implementation": "0x9F0dF7799f6FDAd409300080cfF680f5A23df4b1",
+            "name": "WOSONIC_PROXY"
+        }
+    ],
+    "executions": [
+        {
+            "name": "001_CoreSonic",
+            "proposalId": 1,
+            "tsDeployment": 1723685111,
+            "tsGovernance": 1
+        }
+    ]
+}
