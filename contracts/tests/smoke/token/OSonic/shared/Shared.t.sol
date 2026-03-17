@@ -17,11 +17,6 @@ abstract contract Smoke_OSonic_Shared_Test is BaseSmoke {
     //////////////////////////////////////////////////////
 
     function setUp() public virtual override {
-        // TODO: The on-chain OSVault was deployed before the vault refactoring that introduced
-        // mint(uint256), asset(), and oToken(). A Sonic upgrade deploy script is needed before
-        // these smoke tests can run against the live deployment.
-        vm.skip(true);
-
         super.setUp();
         _createAndSelectForkSonic();
         _igniteDeployManager();
@@ -84,10 +79,9 @@ abstract contract Smoke_OSonic_Shared_Test is BaseSmoke {
         (uint256 queued, uint256 claimable,,) = oSonicVault.withdrawalQueueMetadata();
         uint256 shortfall = queued > claimable ? queued - claimable : 0;
         uint256 needed = shortfall + extraWS;
-        uint256 currentBalance = wrappedSonic.balanceOf(address(oSonicVault));
-        if (needed > currentBalance) {
-            deal(address(wrappedSonic), address(oSonicVault), needed);
-        }
+        // Use additive deal: existing balance may be fully allocated to prior claimable
+        // requests, so we must add on top rather than replace.
+        deal(address(wrappedSonic), address(oSonicVault), wrappedSonic.balanceOf(address(oSonicVault)) + needed);
         oSonicVault.addWithdrawalQueueLiquidity();
     }
 }
