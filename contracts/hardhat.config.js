@@ -528,7 +528,7 @@ module.exports = {
         network: "hyperevm",
         chainId: 999,
         urls: {
-          apiURL: "https://api.hyperevmscan.io/v2/api?chainId=999",
+          apiURL: "https://api.etherscan.io/v2/api?chainId=999",
           browserURL: "https://hyperevmscan.io",
         },
       },
