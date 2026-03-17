@@ -37,4 +37,25 @@ contract Smoke_Concrete_OUSD_Transfer_Test is Smoke_OUSD_Shared_Test {
 
         _assertSupplyInvariant();
     }
+
+    function test_transfer_fullBalance() public {
+        _mintOUSD(alice, 1000e6);
+        uint256 aliceBalance = ousd.balanceOf(alice);
+
+        vm.prank(alice);
+        ousd.transfer(bobby, aliceBalance);
+
+        assertApproxEqAbs(ousd.balanceOf(alice), 0, 1);
+        assertApproxEqAbs(ousd.balanceOf(bobby), aliceBalance, 1);
+    }
+
+    function test_transfer_toSelf() public {
+        _mintOUSD(alice, 1000e6);
+        uint256 aliceBalance = ousd.balanceOf(alice);
+
+        vm.prank(alice);
+        ousd.transfer(alice, 500e18);
+
+        assertApproxEqAbs(ousd.balanceOf(alice), aliceBalance, 1);
+    }
 }
