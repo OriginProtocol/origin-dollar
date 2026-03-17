@@ -1444,7 +1444,13 @@ subtask(
     undefined,
     types.int
   )
-  .setAction(async ({ index }) => {
+  .addOptionalParam(
+    "consol",
+    "Call the consolidation controller instead of the strategy",
+    false,
+    types.boolean
+  )
+  .setAction(async ({ index, consol }) => {
     const signer = await getSigner();
 
     const nativeStakingStrategy = await resolveNativeStakingStrategyProxy(
@@ -1452,6 +1458,7 @@ subtask(
     );
 
     await doAccounting({
+      consol,
       signer,
       nativeStakingStrategy,
     });
