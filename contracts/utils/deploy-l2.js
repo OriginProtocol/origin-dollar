@@ -515,7 +515,7 @@ function deployOnHyperEVM(opts, fn) {
   return deployOnL2WithGuardianOrTimelock(
     {
       ...opts,
-      useTimelock: false, // No timelock on HyperEVM yet — TODO: deploy timelock and set to true
+      useTimelock: true,
       forceSkip:
         opts.forceSkip ||
         !(

@@ -326,6 +326,10 @@ const isPlumeUnitTest = process.env.UNIT_TESTS_NETWORK === "plume";
 const isHoodi = hre.network.name == "hoodi";
 const isHoodiFork = isFork && process.env.FORK_NETWORK_NAME == "hoodi";
 const isHoodiOrFork = isHoodi || isHoodiFork;
+const isHyperEVM = hre.network.name == "hyperevm";
+const isHyperEVMFork = isFork && process.env.FORK_NETWORK_NAME == "hyperevm";
+const isHyperEVMOrFork = isHyperEVM || isHyperEVMFork;
+const isHyperEVMUnitTest = process.env.UNIT_TESTS_NETWORK === "hyperevm";
 
 /// Advances the EVM time by the given number of seconds
 const advanceTime = async (seconds) => {
@@ -662,6 +666,10 @@ module.exports = {
   isHoodi,
   isHoodiFork,
   isHoodiOrFork,
+  isHyperEVM,
+  isHyperEVMFork,
+  isHyperEVMOrFork,
+  isHyperEVMUnitTest,
   getAssetAddresses,
   governorArgs,
   proposeArgs,

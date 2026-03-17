@@ -690,8 +690,10 @@ addresses.hyperevm.USDC = "0xb88339CB7199b77E23DB6E890353E22632Ba630f";
 addresses.hyperevm.MorphoOusdV2Vault =
   "0xE90959cbE7E56b5eBFF9AD12de611A4976F2d2B1";
 addresses.hyperevm.strategist = addresses.multichainStrategist;
+addresses.hyperevm.admin = "0x92A19381444A001d62cE67BaFF066fA1111d7202";
 addresses.hyperevm.timelock = "0x77121911A387c9e4Eae46345E0f831A6da8a1364";
-addresses.hyperevm.CrossChainRemoteStrategy = "TODO_AFTER_DEPLOY";
+addresses.hyperevm.CrossChainRemoteStrategy =
+  "0xE0228DB13F8C4Eb00fD1e08e076b09eF5cD0EA1e";
 
 // Crosschain Strategy
 addresses.base.CrossChainRemoteStrategy =

@@ -45,6 +45,10 @@ main()
           PROVIDER_URL=$PLUME_PROVIDER_URL;
           BLOCK_NUMBER=$PLUME_BLOCK_NUMBER;
           params+=" --tags plume";
+        elif [[ $FORK_NETWORK_NAME == "hyperevm" ]]; then
+          PROVIDER_URL=$HYPEREVM_PROVIDER_URL;
+          BLOCK_NUMBER=$HYPEREVM_BLOCK_NUMBER;
+          params+=" --tags hyperevm";
         elif [[ $FORK_NETWORK_NAME == "hoodi" ]]; then
           PROVIDER_URL=$HOODI_PROVIDER_URL;
           BLOCK_NUMBER=$HOODI_BLOCK_NUMBER;
