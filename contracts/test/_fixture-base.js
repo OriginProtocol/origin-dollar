@@ -314,6 +314,7 @@ const crossChainFixture = deployments.createFixture(async () => {
 
   await deployWithConfirmation("CCTPMessageTransmitterMock2", [
     fixture.usdc.address,
+    6, // Base CCTP source domain
   ]);
   const mockMessageTransmitter = await ethers.getContract(
     "CCTPMessageTransmitterMock2"

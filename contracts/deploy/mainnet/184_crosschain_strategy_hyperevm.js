@@ -12,7 +12,8 @@ module.exports = deploymentWithGovernanceProposal(
     forceDeploy: false,
     reduceQueueTime: true,
     deployerIsProposer: false,
-    proposalId: "",
+    proposalId:
+      "104173658387164514102242627376769936605154939587861930223165791002445889578794",
   },
   async () => {
     const crossChainStrategyProxyAddress = await getCreate2ProxyAddress(
@@ -58,6 +59,11 @@ module.exports = deploymentWithGovernanceProposal(
           contract: cVault,
           signature: "approveStrategy(address)",
           args: [crossChainStrategyProxyAddress],
+        },
+        {
+          contract: cCrossChainMasterStrategy,
+          signature: "setOperator(address)",
+          args: [addresses.mainnet.validatorRegistrator],
         },
       ],
     };

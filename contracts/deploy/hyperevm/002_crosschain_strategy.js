@@ -53,6 +53,11 @@ module.exports = deployOnHyperEVM(
           signature: "setHarvesterAddress(address)",
           args: [addresses.multichainStrategist],
         },
+        {
+          contract: cCrossChainRemoteStrategy,
+          signature: "setOperator(address)",
+          args: [addresses.hyperevm.OZRelayerAddress],
+        },
       ],
     };
   }

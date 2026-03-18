@@ -224,7 +224,7 @@ const decodeBalanceCheckMessageBody = (message) => {
   };
 };
 
-const replaceMessageTransmitter = async () => {
+const replaceMessageTransmitter = async (peerDomainId = 6) => {
   const mockMessageTransmitter = await ethers.getContract(
     "CCTPMessageTransmitterMock2"
   );
@@ -239,6 +239,7 @@ const replaceMessageTransmitter = async () => {
   await replacedTransmitter.setCCTPTokenMessenger(
     addresses.CCTPTokenMessengerV2
   );
+  await replacedTransmitter.setPeerDomainId(peerDomainId);
 
   return replacedTransmitter;
 };
