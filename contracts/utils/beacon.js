@@ -204,9 +204,7 @@ const getValidators = async (pubkeys) => {
   const client = await configClient();
   const validatorIds = Array.isArray(pubkeys) ? pubkeys : pubkeys.split(",");
 
-  log(
-    `Fetching ${validatorIds.length} validator details from the beacon node`
-  );
+  log(`Fetching ${validatorIds.length} validator details from the beacon node`);
   const validatorsRes = await client.beacon.getStateValidators({
     stateId: "head",
     validatorIds,
@@ -214,7 +212,9 @@ const getValidators = async (pubkeys) => {
   if (!validatorsRes.ok) {
     console.error(validatorsRes);
     throw Error(
-      `Failed to get validator details for ${validatorIds.join(",")}. Status ${validatorsRes.status} ${validatorsRes.statusText}`
+      `Failed to get validator details for ${validatorIds.join(",")}. Status ${
+        validatorsRes.status
+      } ${validatorsRes.statusText}`
     );
   }
 

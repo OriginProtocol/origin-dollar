@@ -13,6 +13,7 @@ const {
   getValidator: getValidatorBeacon,
   getValidators: getValidatorsBeacon,
   getSlot,
+  calcBlockTimestamp,
 } = require("../utils/beacon");
 const { bytes32, validatorKeys } = require("../utils/regex");
 const { resolveContract } = require("../utils/resolvers");
@@ -40,11 +41,14 @@ const {
 } = require("../deployments/hoodi/CompoundingStakingSSVStrategyProxy.json");
 
 const log = require("../utils/logger")("task:beacon");
+const MAX_DATE_MS = 8640000000000000n;
 
 const getStrategyNetworkName = async () => {
   const networkName = await getNetworkName();
   if (networkName === "hardhat") {
-    return process.env.FORK_NETWORK_NAME || process.env.NETWORK_NAME || "hardhat";
+    return (
+      process.env.FORK_NETWORK_NAME || process.env.NETWORK_NAME || "hardhat"
+    );
   }
   return networkName;
 };
@@ -97,7 +101,6 @@ const getKnownWithdrawalStrategies = (networkName) => {
 };
 
 const getLinkedStrategy = (withdrawalCredentials, networkName) => {
-  const credentialType = withdrawalCredentials.slice(0, 4).toLowerCase();
   const linkedAddress = ethers.utils.getAddress(
     `0x${withdrawalCredentials.slice(-40)}`
   );
@@ -109,15 +112,51 @@ const getLinkedStrategy = (withdrawalCredentials, networkName) => {
     return knownStrategy.label;
   }
 
-  if (credentialType === "0x01" || credentialType === "0x02") {
-    return `Unknown ${credentialType}`;
-  }
-
-  return `Type ${credentialType}`;
+  return "Unknown";
 };
 
 const getValidatorType = (withdrawalCredentials) =>
   withdrawalCredentials.slice(0, 4).toLowerCase();
+
+const resolveBeaconSlot = ({ slot, epoch }) => {
+  if (slot !== undefined && epoch !== undefined) {
+    throw new Error("Pass either `slot` or `epoch`, not both");
+  }
+
+  if (epoch !== undefined) {
+    return epoch * 32;
+  }
+
+  return slot;
+};
+
+const formatEpochUtc = (epoch, networkName) => {
+  if (epoch === undefined || epoch === null) {
+    return "N/A";
+  }
+
+  if (typeof epoch === "number" && !Number.isFinite(epoch)) {
+    return "Infinity";
+  }
+
+  const slot = BigInt(epoch) * 32n;
+  const timestampMs = calcBlockTimestamp(slot, networkName) * 1000n;
+
+  if (timestampMs > MAX_DATE_MS) {
+    return "N/A";
+  }
+
+  const date = new Date(Number(timestampMs));
+  const day = String(date.getUTCDate()).padStart(2, "0");
+  const month = date.toLocaleString("en-GB", {
+    month: "short",
+    timeZone: "UTC",
+  });
+  const hours = String(date.getUTCHours()).padStart(2, "0");
+  const minutes = String(date.getUTCMinutes()).padStart(2, "0");
+
+  return `${day} ${month} ${hours}:${minutes}`;
+};
 
 /// Returns an ethers provider connected to the Ethereum mainnet or Hoodi.
 /// @param {Provider} [provider] - Optional ethers provider connected to local fork or live chain. Uses Hardhat provider if not supplied.
@@ -795,7 +834,7 @@ async function beaconRoot({ block, live, signer }) {
   return { root, timestamp };
 }
 
-async function getValidator({ slot, index, pubkey }) {
+async function getValidator({ slot, epoch, index, pubkey }) {
   if (!index && !pubkey) {
     throw new Error("Either `index` or `pubkey` parameter is required");
   }
@@ -806,8 +845,9 @@ async function getValidator({ slot, index, pubkey }) {
   }
 
   // Uses the latest slot if the slot is undefined
+  const blockId = resolveBeaconSlot({ slot, epoch });
   const networkName = await getNetworkName();
-  const { blockView, stateView } = await getBeaconBlock(slot, networkName);
+  const { blockView, stateView } = await getBeaconBlock(blockId, networkName);
 
   const validator = stateView.validators.get(index);
   if (
@@ -815,7 +855,9 @@ async function getValidator({ slot, index, pubkey }) {
     toHex(validator.node.root) ==
       "0x0000000000000000000000000000000000000000000000000000000000000000"
   ) {
-    throw new Error(`Validator at index ${index} not found for slot ${slot}`);
+    throw new Error(
+      `Validator at index ${index} not found for slot ${blockId}`
+    );
   }
 
   const balance = stateView.balances.get(index);
@@ -992,15 +1034,16 @@ async function getValidator({ slot, index, pubkey }) {
   );
 }
 
-async function getValidators({ pubkeys, slot }) {
+async function getValidators({ pubkeys, slot, epoch }) {
   if (!pubkeys.match(validatorKeys)) {
     throw Error(
       `Public keys not a comma-separated list of public keys with 0x prefixes`
     );
   }
 
+  const blockId = resolveBeaconSlot({ slot, epoch });
   const networkName = await getStrategyNetworkName();
-  const { stateView } = await getBeaconBlock(slot, networkName);
+  const { stateView } = await getBeaconBlock(blockId, networkName);
 
   const beaconValidators = await getValidatorsBeacon(pubkeys);
   const beaconValidatorList = Array.isArray(beaconValidators)
@@ -1012,7 +1055,9 @@ async function getValidators({ pubkeys, slot }) {
   }));
 
   console.log(
-    `Validators at slot ${stateView.slot}, epoch ${BigInt(stateView.slot) / 32n}:`
+    `Validators at slot ${stateView.slot}, epoch ${
+      BigInt(stateView.slot) / 32n
+    }:`
   );
 
   const rows = [];
@@ -1024,28 +1069,34 @@ async function getValidators({ pubkeys, slot }) {
         "0x0000000000000000000000000000000000000000000000000000000000000000"
     ) {
       throw new Error(
-        `Validator ${pubkey} at index ${index} not found for slot ${slot}`
+        `Validator ${pubkey} at index ${index} not found for slot ${blockId}`
       );
     }
 
     const withdrawalCredentials = toHex(validator.withdrawalCredentials);
     const validatorType = getValidatorType(withdrawalCredentials);
-    const linkedStrategy = getLinkedStrategy(withdrawalCredentials, networkName);
+    const linkedStrategy = getLinkedStrategy(
+      withdrawalCredentials,
+      networkName
+    );
     const balance = stateView.balances.get(index);
 
     rows.push({
-      Pubkey: pubkey,
+      Index: String(index),
       Type: validatorType,
       Slashed: String(validator.slashed),
       "Balance ETH": formatUnits(balance, 9),
-      ExitEpoch: String(validator.exitEpoch),
-      WithdrawableEpoch: String(validator.withdrawableEpoch),
+      ExitEpoch: formatEpochUtc(validator.exitEpoch, networkName),
+      WithdrawableEpoch: formatEpochUtc(
+        validator.withdrawableEpoch,
+        networkName
+      ),
       LinkedStrategy: linkedStrategy,
     });
   }
 
   const columns = [
-    "Pubkey",
+    "Index",
     "Type",
     "Slashed",
     "Balance ETH",
@@ -1062,7 +1113,9 @@ async function getValidators({ pubkeys, slot }) {
   const formatRow = (row) =>
     columns.map((column) => row[column].padEnd(widths[column])).join("  ");
 
-  console.log(formatRow(Object.fromEntries(columns.map((column) => [column, column]))));
+  console.log(
+    formatRow(Object.fromEntries(columns.map((column) => [column, column])))
+  );
   console.log(columns.map((column) => "-".repeat(widths[column])).join("  "));
   for (const row of rows) {
     console.log(formatRow(row));

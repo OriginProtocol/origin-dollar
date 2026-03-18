@@ -32,8 +32,8 @@ const handler = async (event) => {
     network.chainId === 1
       ? "mainnet"
       : network.chainId === 560048
-        ? "hoodi"
-        : undefined;
+      ? "hoodi"
+      : undefined;
   if (!networkName) {
     throw new Error(
       `Action only supports mainnet and hoodi, not chainId ${network.chainId}`

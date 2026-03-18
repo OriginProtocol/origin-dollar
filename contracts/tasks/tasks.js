@@ -2115,6 +2115,12 @@ subtask("getValidator", "Gets the details of a validator")
     undefined,
     types.int
   )
+  .addOptionalParam(
+    "epoch",
+    "Beacon chain epoch. Uses the first slot of the epoch",
+    undefined,
+    types.int
+  )
   .setAction(getValidator);
 task("getValidator").setAction(async (_, __, runSuper) => {
   return runSuper();
@@ -2130,6 +2136,12 @@ subtask("getValidators", "Gets the details of multiple validators")
   .addOptionalParam(
     "slot",
     "Beacon chain slot. Default head",
+    undefined,
+    types.int
+  )
+  .addOptionalParam(
+    "epoch",
+    "Beacon chain epoch. Uses the first slot of the epoch",
     undefined,
     types.int
   )
