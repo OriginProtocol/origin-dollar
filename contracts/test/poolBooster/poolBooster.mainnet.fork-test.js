@@ -42,12 +42,20 @@ describe("ForkTest: Merkl Pool Booster", function () {
     governor.address = addresses.multichainStrategist;
 
     // Complete governance transfer from script 176 (transferGovernance -> claimGovernance)
-    await poolBoosterCentralRegistry.connect(governor).claimGovernance();
+    const currentGovernor = await poolBoosterCentralRegistry.governor();
+    if (currentGovernor !== governor.address) {
+      await poolBoosterCentralRegistry.connect(governor).claimGovernance();
+    }
 
     // Approve new factory in registry (registry now governed by strategist)
-    await poolBoosterCentralRegistry
-      .connect(governor)
-      .approveFactory(poolBoosterMerklFactory.address);
+    const alreadyApproved = await poolBoosterCentralRegistry.isApprovedFactory(
+      poolBoosterMerklFactory.address
+    );
+    if (!alreadyApproved) {
+      await poolBoosterCentralRegistry
+        .connect(governor)
+        .approveFactory(poolBoosterMerklFactory.address);
+    }
 
     // Get beacon from factory
     const beaconAddr = await poolBoosterMerklFactory.beacon();
@@ -85,6 +93,18 @@ describe("ForkTest: Merkl Pool Booster", function () {
       overrides.strategist ?? addresses.multichainStrategist,
       overrides.campaignData ?? DEFAULT_CAMPAIGN_DATA,
     ]);
+  }
+
+  // Helper: collect addresses of all pool boosters currently in the factory.
+  // Used to exclude pre-existing mainnet pool boosters from bribeAll calls.
+  async function getExistingPoolBoosterAddresses() {
+    const length = await poolBoosterMerklFactory.poolBoosterLength();
+    const addrs = [];
+    for (let i = 0; i < length; i++) {
+      const entry = await poolBoosterMerklFactory.poolBoosters(i);
+      addrs.push(entry.boosterAddress);
+    }
+    return addrs;
   }
 
   // Helper to create a pool booster and return contract instance.
@@ -665,6 +685,9 @@ describe("ForkTest: Merkl Pool Booster", function () {
     });
 
     it("Should bribeAll and skip exclusion list", async () => {
+      // Collect pre-existing pool boosters to exclude from bribeAll
+      const existingBoosters = await getExistingPoolBoosterAddresses();
+
       const pool1 = "0x0000000000000000000000000000000000000003";
       const poolBooster = await createPoolBooster(803, pool1);
 
@@ -674,16 +697,20 @@ describe("ForkTest: Merkl Pool Booster", function () {
 
       const balanceBefore = await oeth.balanceOf(poolBooster.address);
 
-      // bribeAll with the pool booster on the exclusion list
+      // bribeAll with the pool booster AND pre-existing boosters on the exclusion list
       await poolBoosterMerklFactory
         .connect(governor)
-        .bribeAll([poolBooster.address]);
+        .bribeAll([...existingBoosters, poolBooster.address]);
 
       // Balance should remain the same (excluded from bribe)
       expect(await oeth.balanceOf(poolBooster.address)).to.equal(balanceBefore);
     });
 
     it("Should bribeAll and execute bribes on funded pool boosters", async () => {
+      // Exclude pre-existing pool boosters whose reward tokens may not be
+      // approved on the Merkl distributor in the current fork state
+      const existingBoosters = await getExistingPoolBoosterAddresses();
+
       const pool1 = "0x0000000000000000000000000000000000000005";
       const poolBooster = await createPoolBooster(805, pool1);
 
@@ -694,8 +721,10 @@ describe("ForkTest: Merkl Pool Booster", function () {
       const balance = await oeth.balanceOf(poolBooster.address);
       expect(balance).to.be.gt(0);
 
-      // bribeAll with empty exclusion list — should execute bribe
-      const tx = await poolBoosterMerklFactory.connect(governor).bribeAll([]);
+      // bribeAll excluding pre-existing boosters — should execute bribe on new one
+      const tx = await poolBoosterMerklFactory
+        .connect(governor)
+        .bribeAll(existingBoosters);
 
       await expect(tx).to.emit(poolBooster, "BribeExecuted").withArgs(balance);
       expect(await oeth.balanceOf(poolBooster.address)).to.equal(0);
@@ -769,6 +798,10 @@ describe("ForkTest: Merkl Pool Booster", function () {
   // -------------------------------------------------------------------
   describe("PoolBoosterMerklV2: bribe() via factory", () => {
     it("Should allow factory to call bribe()", async () => {
+      // Exclude pre-existing pool boosters whose reward tokens may not be
+      // approved on the Merkl distributor in the current fork state
+      const existingBoosters = await getExistingPoolBoosterAddresses();
+
       const pool1 = "0x0000000000000000000000000000000000000015";
       const poolBooster = await createPoolBooster(1201, pool1);
 
@@ -779,7 +812,9 @@ describe("ForkTest: Merkl Pool Booster", function () {
       const balance = await oeth.balanceOf(poolBooster.address);
 
       // bribeAll calls bribe() on the pool booster from the factory
-      const tx = await poolBoosterMerklFactory.connect(governor).bribeAll([]);
+      const tx = await poolBoosterMerklFactory
+        .connect(governor)
+        .bribeAll(existingBoosters);
 
       await expect(tx).to.emit(poolBooster, "BribeExecuted").withArgs(balance);
     });

@@ -7,6 +7,7 @@ const {
   advanceTime,
   advanceBlocks,
 } = require("../test/helpers");
+const { isHyperEVMFork } = require("./hardhat-helpers");
 const {
   deployWithConfirmation,
   withConfirmation,
@@ -225,7 +226,7 @@ async function simulateTimelockOperations(deployName) {
 }
 
 function deployOnArb(opts, fn) {
-  const { deployName, dependencies } = opts;
+  const { deployName, dependencies, forceSkip } = opts;
 
   const runDeployment = async (hre) => {
     const tools = {
@@ -258,12 +259,26 @@ function deployOnArb(opts, fn) {
 
   main.tags = ["arbitrumOne"];
 
-  main.skip = () =>
-    !(
-      isArbFork ||
-      hre.network.name == "arbitrumOne" ||
-      hre.network.config.chainId == 42161
-    );
+  const isArbNetwork =
+    isArbFork ||
+    hre.network.name == "arbitrumOne" ||
+    hre.network.config.chainId == 42161;
+
+  if (forceSkip || !isArbNetwork) {
+    main.skip = () => true;
+  } else if (isForkTest) {
+    main.skip = () => {
+      const networkName = isForkTest ? "hardhat" : "localhost";
+      const migrations = require(`./../deployments/${networkName}/.migrations.json`);
+      if (migrations[deployName]) {
+        console.log(`Skipping ${deployName} as it has already been deployed.`);
+        return true;
+      }
+      return false;
+    };
+  } else {
+    main.skip = () => !isArbNetwork;
+  }
 
   return main;
 }
@@ -496,10 +511,29 @@ function deployOnPlume(opts, fn) {
   );
 }
 
+function deployOnHyperEVM(opts, fn) {
+  return deployOnL2WithGuardianOrTimelock(
+    {
+      ...opts,
+      useTimelock: true,
+      forceSkip:
+        opts.forceSkip ||
+        !(
+          isHyperEVMFork ||
+          hre.network.name == "hyperevm" ||
+          hre.network.config.chainId == 999
+        ),
+    },
+    fn,
+    ["hyperevm"]
+  );
+}
+
 module.exports = {
   deployOnArb,
   deployOnBaseWithEOA,
   deployOnBase,
   deployOnSonic,
   deployOnPlume,
+  deployOnHyperEVM,
 };

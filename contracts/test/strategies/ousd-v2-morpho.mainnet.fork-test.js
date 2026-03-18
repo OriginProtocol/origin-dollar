@@ -395,11 +395,11 @@ describe("ForkTest: Yearn's Morpho OUSD v2 Strategy", function () {
         morphoOUSDv2Strategy.address
       );
 
-      const buyBackSigner = await impersonateAndFund(
-        addresses.multichainBuybackOperator
+      const harvesterSigner = await impersonateAndFund(
+        addresses.multichainStrategist
       );
       const tx = await morphoOUSDv2Strategy
-        .connect(buyBackSigner)
+        .connect(harvesterSigner)
         .collectRewardTokens();
 
       if (expectMorphoTransfer.gt(0)) {
@@ -408,7 +408,7 @@ describe("ForkTest: Yearn's Morpho OUSD v2 Strategy", function () {
           .to.emit(morphoToken, "Transfer")
           .withArgs(
             morphoOUSDv2Strategy.address,
-            await buyBackSigner.getAddress(),
+            await harvesterSigner.getAddress(),
             expectMorphoTransfer
           );
       }

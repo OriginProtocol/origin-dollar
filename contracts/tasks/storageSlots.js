@@ -28,6 +28,8 @@ const getStorageFileLocation = (hre, contractName) => {
   const isBaseFork = isFork && forkNetworkName == "base";
   const isHoodi = hre.network.name == "hoodi";
   const isHoodiFork = isFork && forkNetworkName == "hoodi";
+  const isHyperEVM = hre.network.name == "hyperevm";
+  const isHyperEVMFork = isFork && forkNetworkName == "hyperevm";
 
   let folder = "localhost";
   if (isMainnetFork || isMainnet) {
@@ -40,6 +42,8 @@ const getStorageFileLocation = (hre, contractName) => {
     folder = "plume";
   } else if (isHoodiFork || isHoodi) {
     folder = "hoodi";
+  } else if (isHyperEVMFork || isHyperEVM) {
+    folder = "hyperevm";
   } else if (isBaseFork || isBase) {
     folder = "base";
   }
