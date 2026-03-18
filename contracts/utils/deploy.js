@@ -31,6 +31,7 @@ const {
 } = require("../tasks/storageSlots");
 
 const addresses = require("../utils/addresses.js");
+const { buildSafeTransactionBuilderJson } = require("../utils/safe");
 const { getTxOpts } = require("../utils/tx");
 const { sleep } = require("../utils/time");
 const {
@@ -964,28 +965,16 @@ async function buildGnosisSafeJson(
   contractMethods,
   contractInputsValues
 ) {
-  const { chainId } = await ethers.provider.getNetwork();
-  const json = {
-    version: "1.0",
-    chainId: chainId.toString(),
-    createdAt: parseInt(Date.now() / 1000),
-    meta: {
-      name: "Transaction Batch",
-      description: "",
-      txBuilderVersion: "1.16.1",
-      createdFromSafeAddress: safeAddress || addresses.mainnet.Guardian,
-      createdFromOwnerAddress: "",
-    },
+  return buildSafeTransactionBuilderJson({
+    safeAddress: safeAddress || addresses.mainnet.Guardian,
+    name: "Transaction Batch",
     transactions: targets.map((target, i) => ({
       to: target,
       value: "0",
-      data: null,
       contractMethod: contractMethods[i],
       contractInputsValues: contractInputsValues[i],
     })),
-  };
-
-  return json;
+  });
 }
 
 async function simulateWithTimelockImpersonation(proposal) {

@@ -2636,9 +2636,14 @@ task("failConsol").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
 
-subtask("confirmConsol", "Confirm a validator consolidation").setAction(
-  confirmConsolidation
-);
+subtask("confirmConsol", "Confirm a validator consolidation")
+  .addOptionalParam(
+    "safe",
+    "Generate a Safe Transaction Builder file instead of sending the transaction",
+    false,
+    types.boolean
+  )
+  .setAction(confirmConsolidation);
 task("confirmConsol").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
