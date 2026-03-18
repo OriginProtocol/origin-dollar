@@ -15,7 +15,6 @@ const USDC_DECIMALS = 6;
 // Human-readable ABIs for contracts we interact with
 const vaultAbi = [
   "function withdrawalQueueMetadata() external view returns (tuple(uint128 queued, uint128 claimable, uint128 claimed, uint128 nextWithdrawalIndex))",
-  "function totalValue() external view returns (uint256)",
 ];
 
 const strategyAbi = [
@@ -28,67 +27,10 @@ const erc20Abi = [
   "function balanceOf(address account) external view returns (uint256)",
 ];
 
-const ousdCurveAmoStrategyAbi = [
-  "function curvePool() external view returns (address)",
-  "function gauge() external view returns (address)",
-  "function hardAsset() external view returns (address)",
-  "function hardAssetCoinIndex() external view returns (uint256)",
-];
-
-const curveStableSwapAbi = [
-  "function balances(uint256 i) external view returns (uint256)",
-  "function totalSupply() external view returns (uint256)",
-];
-
-/**
- * Returns the USDC balance of the OUSD Curve AMO strategy.
- * Uses the strategy's proportional share of the pool's USDC balance rather than
- * get_virtual_price(), which would inflate the value by including the OUSD side.
- *
- * @param {string} strategyAddress  CurveAMOStrategy proxy address
- * @param {object} provider  ethers provider
- * @returns {BigNumber} USDC balance in 6-decimal units
- */
-async function getOusdCurveAmoUsdcBalance(strategyAddress, provider) {
-  const strategy = new ethers.Contract(
-    strategyAddress,
-    ousdCurveAmoStrategyAbi,
-    provider
-  );
-  const [curvePoolAddr, gaugeAddr, hardAssetAddr, hardAssetCoinIndex] =
-    await Promise.all([
-      strategy.curvePool(),
-      strategy.gauge(),
-      strategy.hardAsset(),
-      strategy.hardAssetCoinIndex(),
-    ]);
-
-  const curvePool = new ethers.Contract(
-    curvePoolAddr,
-    curveStableSwapAbi,
-    provider
-  );
-  const gauge = new ethers.Contract(gaugeAddr, erc20Abi, provider);
-  const hardAsset = new ethers.Contract(hardAssetAddr, erc20Abi, provider);
-
-  const [amoLPs, totalLPs, poolUsdc, directUsdc] = await Promise.all([
-    gauge.balanceOf(strategyAddress),
-    curvePool.totalSupply(),
-    curvePool.balances(hardAssetCoinIndex),
-    hardAsset.balanceOf(strategyAddress),
-  ]);
-
-  const lpShare = totalLPs.gt(0)
-    ? poolUsdc.mul(amoLPs).div(totalLPs)
-    : BigNumber.from(0);
-
-  return lpShare.add(directUsdc);
-}
-
 /**
  * Read on-chain state: strategy balances, vault idle USDC, withdrawal queue.
  * @param {object} provider - ethers provider
- * @returns {object} { strategies, vaultBalance, shortfall, totalValue }
+ * @returns {object} { strategies, vaultBalance, shortfall }
  */
 async function readOnChainState(provider) {
   const vault = new ethers.Contract(
@@ -98,10 +40,9 @@ async function readOnChainState(provider) {
   );
   const usdc = new ethers.Contract(addresses.mainnet.USDC, erc20Abi, provider);
 
-  const [queueMeta, vaultBalance, totalValue] = await Promise.all([
+  const [queueMeta, vaultBalance] = await Promise.all([
     vault.withdrawalQueueMetadata(),
     usdc.balanceOf(addresses.mainnet.VaultProxy),
-    vault.totalValue(),
   ]);
 
   let shortfall = queueMeta.queued.sub(queueMeta.claimable);
@@ -123,9 +64,7 @@ async function readOnChainState(provider) {
       const strategy = new ethers.Contract(cfg.address, strategyAbi, provider);
 
       const [balance, isTransferPending] = await Promise.all([
-        cfg.isAmo
-          ? getOusdCurveAmoUsdcBalance(cfg.address, provider)
-          : strategy.checkBalance(addresses.mainnet.USDC),
+        strategy.checkBalance(addresses.mainnet.USDC),
         cfg.isCrossChain ? strategy.isTransferPending() : false,
       ]);
 
@@ -136,7 +75,6 @@ async function readOnChainState(provider) {
         morphoChainId: cfg.morphoChainId,
         isCrossChain: cfg.isCrossChain,
         isDefault: cfg.isDefault || false,
-        isAmo: cfg.isAmo || false,
         balance,
         isTransferPending,
       };
@@ -147,7 +85,6 @@ async function readOnChainState(provider) {
     strategies,
     vaultBalance: availableVaultBalance,
     shortfall,
-    totalValue,
   };
 }
 
@@ -190,7 +127,7 @@ async function fetchMorphoApys(vaults) {
  * Total capital = sum(rebalancableBalances) + vaultBalance - shortfall - minVaultBalance
  * Shortfall + minVaultBalance are pre-reserved for the vault, excluded from the allocation pie.
  *
- * Allocation: sort strategies by APY descending, fill each up to maxPerChainBps.
+ * Allocation: sort strategies by APY descending, fill each up to maxPerStrategyBps.
  * Default strategy is guaranteed at least minDefaultStrategyBps.
  *
  * @param {object} params
@@ -210,27 +147,8 @@ function computeOptimalAllocation({
 }) {
   const constraints = { ...ousdConstraints, ...overrides };
 
-  const amoStrategies = strategies.filter((s) => s.isAmo);
-  const rebalancable = strategies.filter((s) => !s.isAmo);
-
-  const amoResults = amoStrategies.map((s) => ({
-    name: s.name,
-    address: s.address,
-    isCrossChain: s.isCrossChain,
-    isTransferPending: s.isTransferPending,
-    isDefault: false,
-    isAmo: true,
-    morphoVaultAddress: s.morphoVaultAddress,
-    balance: s.balance,
-    apy: 0,
-    targetBalance: BigNumber.from(0),
-    delta: BigNumber.from(0),
-    action: "none",
-    reason: "AMO - not rebalanced",
-  }));
-
   // Deployable capital = everything minus what the vault must keep
-  const totalRebalancable = rebalancable.reduce(
+  const totalRebalancable = strategies.reduce(
     (sum, s) => sum.add(s.balance),
     vaultBalance
   );
@@ -240,44 +158,48 @@ function computeOptimalAllocation({
     ? totalRebalancable.sub(reserved)
     : BigNumber.from(0);
 
-  if (deployableCapital.isZero()) {
-    return [
-      ...rebalancable.map((s) => ({
-        name: s.name,
-        address: s.address,
-        isCrossChain: s.isCrossChain,
-        isTransferPending: s.isTransferPending,
-        isDefault: s.isDefault,
-        isAmo: false,
-        morphoVaultAddress: s.morphoVaultAddress,
-        balance: s.balance,
-        apy: apys[s.morphoVaultAddress] || 0,
-        targetBalance: BigNumber.from(0),
-        delta: s.balance.mul(-1),
-        action: s.balance.gt(0) ? "withdraw" : "none",
-      })),
-      ...amoResults,
-    ];
-  }
-
   // Sort by APY descending (highest APY strategy gets filled first)
   const strategyApyOf = (s) => apys[s.morphoVaultAddress] || 0;
-  const sorted = [...rebalancable].sort(
+
+  // Build a result object for a strategy given its computed target balance
+  const makeResult = (s, targetBalance) => {
+    const delta = targetBalance.sub(s.balance);
+    return {
+      name: s.name,
+      address: s.address,
+      isCrossChain: s.isCrossChain,
+      isTransferPending: s.isTransferPending,
+      isDefault: s.isDefault,
+      morphoVaultAddress: s.morphoVaultAddress,
+      balance: s.balance,
+      apy: strategyApyOf(s),
+      targetBalance,
+      delta,
+      action: delta.gt(0) ? "deposit" : delta.lt(0) ? "withdraw" : "none",
+    };
+  };
+
+  if (deployableCapital.isZero()) {
+    return strategies.map((s) => makeResult(s, BigNumber.from(0)));
+  }
+  const sorted = [...strategies].sort(
     (a, b) => strategyApyOf(b) - strategyApyOf(a)
   );
 
-  const maxPerChainAmt = deployableCapital
-    .mul(constraints.maxPerChainBps)
+  const maxPerStrategyAmt = deployableCapital
+    .mul(constraints.maxPerStrategyBps)
     .div(10000);
 
-  // Greedy fill: highest APY gets up to maxPerChainBps, then next, etc.
+  // Greedy fill: highest APY gets up to maxPerStrategyBps, then next, etc.
   const targets = new Map(
-    rebalancable.map((s) => [s.address, BigNumber.from(0)])
+    strategies.map((s) => [s.address, BigNumber.from(0)])
   );
   let remaining = deployableCapital;
 
   for (const s of sorted) {
-    const alloc = remaining.lt(maxPerChainAmt) ? remaining : maxPerChainAmt;
+    const alloc = remaining.lt(maxPerStrategyAmt)
+      ? remaining
+      : maxPerStrategyAmt;
     targets.set(s.address, alloc);
     remaining = remaining.sub(alloc);
     if (remaining.isZero()) break;
@@ -285,12 +207,12 @@ function computeOptimalAllocation({
 
   // Any dust from rounding goes to the default strategy
   if (remaining.gt(0)) {
-    const def = rebalancable.find((s) => s.isDefault);
+    const def = strategies.find((s) => s.isDefault);
     if (def) targets.set(def.address, targets.get(def.address).add(remaining));
   }
 
   // Enforce minimum for default strategy
-  const defaultStrategy = rebalancable.find((s) => s.isDefault);
+  const defaultStrategy = strategies.find((s) => s.isDefault);
   if (defaultStrategy) {
     const minAmt = deployableCapital
       .mul(constraints.minDefaultStrategyBps)
@@ -312,30 +234,7 @@ function computeOptimalAllocation({
     }
   }
 
-  const results = rebalancable.map((s) => {
-    const targetBalance = targets.get(s.address);
-    const delta = targetBalance.sub(s.balance);
-    let action = "none";
-    if (delta.gt(0)) action = "deposit";
-    else if (delta.lt(0)) action = "withdraw";
-
-    return {
-      name: s.name,
-      address: s.address,
-      isCrossChain: s.isCrossChain,
-      isTransferPending: s.isTransferPending,
-      isDefault: s.isDefault,
-      isAmo: false,
-      morphoVaultAddress: s.morphoVaultAddress,
-      balance: s.balance,
-      apy: strategyApyOf(s),
-      targetBalance,
-      delta,
-      action,
-    };
-  });
-
-  return [...results, ...amoResults];
+  return strategies.map((s) => makeResult(s, targets.get(s.address)));
 }
 
 /**
@@ -361,15 +260,15 @@ function buildExecutableActions(
   const constraints = { ...ousdConstraints, ...constraintOverrides };
   const minVaultBalance = BigNumber.from(constraints.minVaultBalance);
 
-  // Highest APY across all rebalancable strategies (used for APY spread check)
+  // Highest APY across all strategies (used for APY spread check)
   const validApys = allocations
-    .filter((a) => !a.isAmo && Number.isFinite(a.apy))
+    .filter((a) => Number.isFinite(a.apy))
     .map((a) => a.apy);
   const maxApy = validApys.length > 0 ? Math.max(...validApys) : 0;
 
   // --- Pass A: filter withdrawals ---
   const filtered = allocations.map((a) => {
-    if (a.isAmo || a.action !== "withdraw") return a;
+    if (a.action !== "withdraw") return a;
 
     const absDelta = a.delta.abs();
     if (absDelta.lt(constraints.minMoveAmount)) {
@@ -386,7 +285,7 @@ function buildExecutableActions(
 
   // --- Budget: approved withdrawals + vault surplus ---
   const approvedWithdrawTotal = filtered
-    .filter((a) => !a.isAmo && a.action === "withdraw")
+    .filter((a) => a.action === "withdraw")
     .reduce((sum, a) => sum.add(a.delta.abs()), BigNumber.from(0));
   const rawSurplus = vaultBalance.sub(shortfall).sub(minVaultBalance);
   const vaultSurplus = rawSurplus.gt(0) ? rawSurplus : BigNumber.from(0);
@@ -394,7 +293,7 @@ function buildExecutableActions(
 
   // --- Pass B: filter deposits, greedily allocate from budget (highest APY first) ---
   const depositCandidates = filtered
-    .filter((a) => !a.isAmo && a.action === "deposit")
+    .filter((a) => a.action === "deposit")
     .sort((a, b) => b.apy - a.apy);
 
   for (const candidate of depositCandidates) {
@@ -458,7 +357,7 @@ function buildExecutableActions(
   }
 
   // --- Pass 2: fallback if no withdraw was approved but shortfall exists ---
-  const hasWithdraw = filtered.some((a) => !a.isAmo && a.action === "withdraw");
+  const hasWithdraw = filtered.some((a) => a.action === "withdraw");
   if (!hasWithdraw && shortfall.gt(0)) {
     const defaultA = filtered.find((a) => a.isDefault);
     let coveredByDefault = false;
@@ -507,10 +406,7 @@ function buildExecutableActions(
     if (!coveredByDefault) {
       const crossChain = filtered
         .filter(
-          (a) =>
-            !a.isAmo &&
-            a.isCrossChain &&
-            a.balance.gt(constraints.crossChainMinAmount)
+          (a) => a.isCrossChain && a.balance.gt(constraints.crossChainMinAmount)
         )
         .sort((a, b) => a.apy - b.apy);
 
@@ -530,7 +426,7 @@ function buildExecutableActions(
   }
 
   // --- Pass 2: fallback if no deposit was approved but vault has surplus ---
-  const hasDeposit = filtered.some((a) => !a.isAmo && a.action === "deposit");
+  const hasDeposit = filtered.some((a) => a.action === "deposit");
   const surplus = vaultBalance.sub(shortfall).sub(minVaultBalance);
   if (!hasDeposit && surplus.gt(0)) {
     const defaultA = filtered.find((a) => a.isDefault);
@@ -587,7 +483,6 @@ function fmtUsd(bn) {
  * @param {Array}  params.optimalActions  - unfiltered allocations (output of computeOptimalAllocation)
  * @param {BigNumber} params.vaultBalance
  * @param {BigNumber} params.shortfall
- * @param {BigNumber} params.totalValue
  * @param {object} [params.constraints]
  */
 function printAllocationTable({
@@ -595,38 +490,23 @@ function printAllocationTable({
   optimalActions,
   vaultBalance,
   shortfall,
-  totalValue,
   constraints: overrides = {},
 }) {
   const constraints = { ...ousdConstraints, ...overrides };
 
   // Use optimalActions for the table (shows optimal targets); fall back to feasible if absent
-  const tableRows = (optimalActions || actions).filter((a) => !a.isAmo);
+  const tableRows = optimalActions || actions;
   const totalCapital = tableRows.reduce(
     (sum, a) => sum.add(a.balance),
     vaultBalance
   );
-  const amoBalance = (optimalActions || actions)
-    .filter((a) => a.isAmo)
-    .reduce((sum, a) => sum.add(a.balance), BigNumber.from(0));
 
   // Build a lookup map: address → feasible action (for the actions sections)
   const filteredByAddr = new Map(actions.map((a) => [a.address, a]));
 
-  // Format an 18-decimal BigNumber (OUSD) with commas and 2 decimal places
-  const fmtOusd = (bn) => {
-    const n = parseFloat(formatUnits(bn, 18));
-    return n.toLocaleString("en-US", {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    });
-  };
-
   console.log("\n=== OUSD Rebalancer Status ===\n");
-  console.log(`Total vault value    : ${fmtOusd(totalValue)} OUSD`);
-  console.log(`  (excl. Curve AMO)  : ${fmtUsd(totalCapital)} USDC`);
-  console.log(`  Curve AMO balance  : ${fmtUsd(amoBalance)} USDC`);
-  console.log(`Withdrawal shortfall : ${fmtUsd(shortfall)} USDC`);
+  console.log(`Total rebalancable capital : ${fmtUsd(totalCapital)} USDC`);
+  console.log(`Withdrawal shortfall       : ${fmtUsd(shortfall)} USDC`);
 
   // ── Allocations table: shows optimal targets from optimalActions ────────────
   console.log("\n--- Allocations ---\n");
@@ -690,7 +570,7 @@ function printAllocationTable({
 
   // ── Section 1: All optimal allocation changes ──────────────────────────────
   const rawChanges = (optimalActions || actions).filter(
-    (a) => !a.isAmo && !a.delta.isZero()
+    (a) => !a.delta.isZero()
   );
 
   console.log("--- Actions for Optimal Allocation ---\n");
@@ -706,7 +586,7 @@ function printAllocationTable({
 
       let suffix = "";
       if (!isApproved && filtered?.reason) {
-        suffix = ` [Not recommeneded: ${filtered.reason}]`;
+        suffix = ` [Not recommended: ${filtered.reason}]`;
       } else if (wasTrimmed) {
         suffix = ` [Infeasible unless adjusted to ${fmtUsd(
           filtered.delta.abs()
@@ -723,7 +603,7 @@ function printAllocationTable({
   }
 
   // ── Section 2: Recommended actions ────────────────────────────────────────
-  const actionRows = actions.filter((a) => !a.isAmo && a.action !== "none");
+  const actionRows = actions.filter((a) => a.action !== "none");
 
   console.log("--- Recommended Actions ---\n");
   if (actionRows.length === 0) {
@@ -779,7 +659,6 @@ async function buildRebalancePlan(provider) {
     optimalActions,
     vaultBalance: state.vaultBalance,
     shortfall: state.shortfall,
-    totalValue: state.totalValue,
   });
 
   return { actions, optimalActions, state, apys };

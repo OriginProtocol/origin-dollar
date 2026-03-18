@@ -32,7 +32,6 @@ function makeStrategy(
     isCrossChain,
     isDefault,
     isTransferPending,
-    isAmo: false,
     balance: usdc(balanceUsdc),
   };
 }
@@ -56,7 +55,7 @@ function twoStrategies(ethBalance, baseBalance) {
 
 describe("Rebalancer: computeOptimalAllocation", () => {
   it("should give highest APY strategy the max allocation (sort-and-fill)", () => {
-    // Base has higher APY → gets maxPerChainBps (70%), ETH gets 30%
+    // Base has higher APY → gets maxPerStrategyBps (70%), ETH gets 30%
     const strategies = twoStrategies(500000, 500000);
     const result = computeOptimalAllocation({
       strategies,
@@ -138,7 +137,7 @@ describe("Rebalancer: computeOptimalAllocation", () => {
     const total = result[0].targetBalance.add(result[1].targetBalance);
     const ethPct =
       result[0].targetBalance.mul(10000).div(total).toNumber() / 100;
-    // ETH fills first to 70% (maxPerChainBps), Base gets remaining 30%
+    // ETH fills first to 70% (maxPerStrategyBps), Base gets remaining 30%
     expect(ethPct).to.be.closeTo(70, 0.1);
   });
 
@@ -212,36 +211,6 @@ describe("Rebalancer: computeOptimalAllocation", () => {
     expect(result[1].action).to.equal("deposit");
   });
 
-  it("should exclude AMO from allocation", () => {
-    const strategies = [
-      ...twoStrategies(500000, 500000),
-      {
-        name: "Curve AMO",
-        address: "0xcurveamo",
-        isAmo: true,
-        isCrossChain: false,
-        isDefault: false,
-        balance: usdc(2000000),
-        morphoVaultAddress: null,
-      },
-    ];
-    const result = computeOptimalAllocation({
-      strategies,
-      apys: { [ETH_VAULT]: 0.05, [BASE_VAULT]: 0.05 },
-      vaultBalance: usdc(0),
-      shortfall: ZERO,
-    });
-
-    const amoRow = result.find((r) => r.isAmo);
-    expect(amoRow.action).to.equal("none");
-    expect(amoRow.targetBalance).to.equal(ZERO);
-    // AMO balance doesn't count in allocation pie
-    const rebalancableTotal = result
-      .filter((r) => !r.isAmo)
-      .reduce((s, r) => s.add(r.targetBalance), ZERO);
-    expect(rebalancableTotal).to.be.closeTo(usdc(997000), usdc(1));
-  });
-
   it("should output withdraw-all when shortfall exceeds total capital", () => {
     // ETH 100K + Base 50K = 150K total; shortfall 200K > 150K → deployable = 0
     const strategies = twoStrategies(100000, 50000);
@@ -283,7 +252,6 @@ describe("Rebalancer: buildExecutableActions", () => {
       isCrossChain,
       isDefault,
       isTransferPending,
-      isAmo: false,
       morphoVaultAddress: `0xVault_${name}`,
       balance: balanceBN,
       targetBalance: targetBN,
@@ -767,25 +735,4 @@ describe("Rebalancer: buildExecutableActions", () => {
   });
 
   // AMO rows pass through unchanged
-
-  it("should pass AMO rows through unchanged", () => {
-    const allocs = [
-      {
-        name: "Curve AMO",
-        address: "0xcurveamo",
-        isAmo: true,
-        isCrossChain: false,
-        isDefault: false,
-        isTransferPending: false,
-        balance: usdc(2000000),
-        targetBalance: ZERO,
-        delta: ZERO,
-        apy: 0,
-        action: "none",
-        reason: "AMO - not rebalanced",
-      },
-    ];
-    const result = buildExecutableActions(allocs, ZERO, usdc(0));
-    expect(result[0]).to.deep.equal(allocs[0]);
-  });
 });

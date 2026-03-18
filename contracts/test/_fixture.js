@@ -968,6 +968,11 @@ async function rebalancerModuleFixture() {
   // MockSafeContract is both safe and operator in the unit-test deployment.
   const safeSigner = await impersonateAndFund(mockSafe.address);
 
+  // Whitelist the mock strategy so the operator can call processWithdrawals/Deposits
+  await rebalancerModule
+    .connect(safeSigner)
+    .allowStrategy(mockStrategy.address);
+
   // A stranger with no roles
   const stranger = await impersonateAndFund(
     "0x0000000000000000000000000000000000000002"

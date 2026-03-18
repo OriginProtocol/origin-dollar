@@ -410,4 +410,88 @@ describe("Unit Test: OUSD Rebalancer Safe Module", function () {
       await expect(tx).to.emit(mockVault, "MockedWithdrawal");
     });
   });
+
+  describe("Strategy whitelist", () => {
+    it("Should start with mockStrategy allowed (set in fixture)", async () => {
+      const { rebalancerModule, mockStrategy } = f;
+      expect(await rebalancerModule.isAllowedStrategy(mockStrategy.address)).to
+        .be.true;
+    });
+
+    it("Should let the Safe allow a new strategy", async () => {
+      const { rebalancerModule, safeSigner } = f;
+      const newStrategy = "0x0000000000000000000000000000000000000099";
+      const tx = await rebalancerModule
+        .connect(safeSigner)
+        .allowStrategy(newStrategy);
+      await expect(tx)
+        .to.emit(rebalancerModule, "StrategyAllowed")
+        .withArgs(newStrategy);
+      expect(await rebalancerModule.isAllowedStrategy(newStrategy)).to.be.true;
+    });
+
+    it("Should let the Safe revoke a strategy", async () => {
+      const { rebalancerModule, mockStrategy, safeSigner } = f;
+      const tx = await rebalancerModule
+        .connect(safeSigner)
+        .revokeStrategy(mockStrategy.address);
+      await expect(tx)
+        .to.emit(rebalancerModule, "StrategyRevoked")
+        .withArgs(mockStrategy.address);
+      expect(await rebalancerModule.isAllowedStrategy(mockStrategy.address)).to
+        .be.false;
+    });
+
+    it("Should revert allowStrategy when called by non-Safe", async () => {
+      const { rebalancerModule, stranger } = f;
+      await expect(
+        rebalancerModule
+          .connect(stranger)
+          .allowStrategy("0x0000000000000000000000000000000000000099")
+      ).to.be.revertedWith("Caller is not the Safe");
+    });
+
+    it("Should revert revokeStrategy when called by non-Safe", async () => {
+      const { rebalancerModule, mockStrategy, stranger } = f;
+      await expect(
+        rebalancerModule.connect(stranger).revokeStrategy(mockStrategy.address)
+      ).to.be.revertedWith("Caller is not the Safe");
+    });
+
+    it("Should revert processWithdrawals for a non-whitelisted strategy", async () => {
+      const { rebalancerModule, safeSigner } = f;
+      const nonWhitelisted = "0x0000000000000000000000000000000000000099";
+      await expect(
+        rebalancerModule
+          .connect(safeSigner)
+          .processWithdrawals([nonWhitelisted], [ousdUnits("100")])
+      ).to.be.revertedWith("Strategy not allowed");
+    });
+
+    it("Should revert processDeposits for a non-whitelisted strategy", async () => {
+      const { rebalancerModule, safeSigner } = f;
+      const nonWhitelisted = "0x0000000000000000000000000000000000000099";
+      await expect(
+        rebalancerModule
+          .connect(safeSigner)
+          .processDeposits([nonWhitelisted], [ousdUnits("100")])
+      ).to.be.revertedWith("Strategy not allowed");
+    });
+
+    it("Should revert processWithdrawals after strategy is revoked", async () => {
+      const { rebalancerModule, mockStrategy, mockVault, safeSigner } = f;
+      await mockVault.setWithdrawalQueueMetadata(
+        ousdUnits("1000"),
+        ousdUnits("400")
+      );
+      await rebalancerModule
+        .connect(safeSigner)
+        .revokeStrategy(mockStrategy.address);
+      await expect(
+        rebalancerModule
+          .connect(safeSigner)
+          .processWithdrawals([mockStrategy.address], [ousdUnits("600")])
+      ).to.be.revertedWith("Strategy not allowed");
+    });
+  });
 });

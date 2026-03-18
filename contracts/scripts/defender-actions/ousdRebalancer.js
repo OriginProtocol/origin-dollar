@@ -56,10 +56,9 @@ const buildDiscordMessage = ({
 
   // Current allocations (from on-chain state)
   const currentLines = allActions.map((a) => {
-    const apy = a.isAmo ? "—  (AMO)" : `${(a.apy * 100).toFixed(2)}% APY`;
-    return `  ${a.name.padEnd(20)} ${formatUSDC(a.balance).padStart(
-      9
-    )}  ${apy}`;
+    return `  ${a.name.padEnd(20)} ${formatUSDC(a.balance).padStart(9)}  ${(
+      a.apy * 100
+    ).toFixed(2)}% APY`;
   });
   currentLines.push(
     `  ${"Vault idle".padEnd(20)} ${formatUSDC(state.vaultBalance).padStart(9)}`
@@ -67,10 +66,6 @@ const buildDiscordMessage = ({
 
   // Optimal allocations (from computeOptimalAllocation, before feasibility filtering)
   const optimalLines = optimalActions.map((a) => {
-    if (a.isAmo)
-      return `  ${a.name.padEnd(20)} ${formatUSDC(a.balance).padStart(
-        9
-      )}  (unchanged)`;
     const deltaStr = a.delta.isZero() ? "(unchanged)" : formatDelta(a.delta);
     return `  ${a.name.padEnd(20)} ${formatUSDC(a.targetBalance).padStart(
       9
@@ -78,9 +73,7 @@ const buildDiscordMessage = ({
   });
 
   // Recommended (feasible) actions
-  const executableActions = allActions.filter(
-    (a) => !a.isAmo && a.action !== "none"
-  );
+  const executableActions = allActions.filter((a) => a.action !== "none");
   let actionLines;
   if (executableActions.length === 0) {
     actionLines = ["  No rebalancing actions required"];
@@ -126,13 +119,14 @@ const handler = async (event) => {
     throw new Error(`Action must run on mainnet, not chainId ${chainId}`);
   }
 
+  const webhookUrl = event.secrets?.DISCORD_WEBHOOK_URL;
+
   // Compute off-chain recommendations (also prints the allocation table to logs)
   const plan = await buildRebalancePlan(provider);
   const { actions: allActions } = plan;
-  const actions = allActions.filter((a) => !a.isAmo && a.action !== "none");
+  const actions = allActions.filter((a) => a.action !== "none");
 
   // Post to Discord before executing so the alert appears even if the tx reverts
-  const webhookUrl = event.secrets?.DISCORD_WEBHOOK_URL;
   if (webhookUrl) {
     try {
       await postToDiscord(webhookUrl, buildDiscordMessage(plan));
@@ -155,74 +149,73 @@ const handler = async (event) => {
     signer
   );
 
+  // Run a contract call or log what would have been called in dry-run mode.
+  // On a live run, posts the tx hash to Discord after confirmation.
+  const execute = async (label, contractCall, dryRunDesc) => {
+    log(label);
+    if (IS_DRY_RUN) {
+      log(`[DRY RUN] would have called ${dryRunDesc}`);
+      return;
+    }
+    const tx = await contractCall();
+    await logTxDetails(tx, label);
+    if (webhookUrl) {
+      postToDiscord(webhookUrl, `✅ Rebalance Tx sent: \`${tx.hash}\``).catch(
+        (err) => log(`Discord tx hash post failed: ${err.message}`)
+      );
+    }
+  };
+
   const hasCrossChainWithdrawal = withdrawals.some((a) => a.isCrossChain);
 
   if (hasCrossChainWithdrawal) {
     // Cross-chain withdrawals are async (bridge settlement takes time).
     // Defer all deposits until the next run after the bridge confirms.
-    log("Cross-chain withdrawal present — queueing withdrawals only");
-    if (!IS_DRY_RUN) {
-      const tx = await rebalancerModule.processWithdrawals(
-        withdrawals.map((a) => a.address),
-        withdrawals.map(actionAmount)
-      );
-      await logTxDetails(tx, "processWithdrawals");
-    } else {
-      log(
-        `[DRY RUN] would have called processWithdrawals(${withdrawals.map(
-          (a) => a.address
-        )})`
-      );
-    }
+    await execute(
+      "Cross-chain withdrawal present — queueing withdrawals only",
+      () =>
+        rebalancerModule.processWithdrawals(
+          withdrawals.map((a) => a.address),
+          withdrawals.map(actionAmount)
+        ),
+      `processWithdrawals(${withdrawals.map((a) => a.address)})`
+    );
   } else if (withdrawals.length > 0 && deposits.length > 0) {
     // All withdrawals are same-chain: freed USDC lands in the vault immediately,
     // so withdrawals and deposits can be batched into a single transaction.
-    log("All-sync rebalance — processing withdrawals and deposits together");
-    if (!IS_DRY_RUN) {
-      const tx = await rebalancerModule.processWithdrawalsAndDeposits(
-        withdrawals.map((a) => a.address),
-        withdrawals.map(actionAmount),
-        deposits.map((a) => a.address),
-        deposits.map(actionAmount)
-      );
-      await logTxDetails(tx, "processWithdrawalsAndDeposits");
-    } else {
-      log(
-        `[DRY RUN] would have called processWithdrawalsAndDeposits(${withdrawals.map(
-          (a) => a.address
-        )}, ${deposits.map((a) => a.address)})`
-      );
-    }
+    await execute(
+      "All-sync rebalance — processing withdrawals and deposits together",
+      () =>
+        rebalancerModule.processWithdrawalsAndDeposits(
+          withdrawals.map((a) => a.address),
+          withdrawals.map(actionAmount),
+          deposits.map((a) => a.address),
+          deposits.map(actionAmount)
+        ),
+      `processWithdrawalsAndDeposits(${withdrawals.map(
+        (a) => a.address
+      )}, ${deposits.map((a) => a.address)})`
+    );
   } else if (withdrawals.length > 0) {
-    log("Queueing withdrawals only");
-    if (!IS_DRY_RUN) {
-      const tx = await rebalancerModule.processWithdrawals(
-        withdrawals.map((a) => a.address),
-        withdrawals.map(actionAmount)
-      );
-      await logTxDetails(tx, "processWithdrawals");
-    } else {
-      log(
-        `[DRY RUN] would have called processWithdrawals(${withdrawals.map(
-          (a) => a.address
-        )})`
-      );
-    }
+    await execute(
+      "Queueing withdrawals only",
+      () =>
+        rebalancerModule.processWithdrawals(
+          withdrawals.map((a) => a.address),
+          withdrawals.map(actionAmount)
+        ),
+      `processWithdrawals(${withdrawals.map((a) => a.address)})`
+    );
   } else {
-    log("Queueing deposits only");
-    if (!IS_DRY_RUN) {
-      const tx = await rebalancerModule.processDeposits(
-        deposits.map((a) => a.address),
-        deposits.map(actionAmount)
-      );
-      await logTxDetails(tx, "processDeposits");
-    } else {
-      log(
-        `[DRY RUN] would have called processDeposits(${deposits.map(
-          (a) => a.address
-        )})`
-      );
-    }
+    await execute(
+      "Queueing deposits only",
+      () =>
+        rebalancerModule.processDeposits(
+          deposits.map((a) => a.address),
+          deposits.map(actionAmount)
+        ),
+      `processDeposits(${deposits.map((a) => a.address)})`
+    );
   }
 };
 

@@ -3,6 +3,14 @@ const addresses = require("./addresses");
 /**
  * Strategy configuration for OUSD auto-rebalancing.
  * Each entry describes one strategy the rebalancer can move funds to/from.
+ *
+ * Fields:
+ *   name              – Human-readable label
+ *   address           – Strategy proxy address (on mainnet)
+ *   morphoVaultAddress – Morpho vault used for APY lookup via the Morpho API
+ *   morphoChainId     – Chain where that vault lives (1 = Ethereum, 8453 = Base)
+ *   isCrossChain      – True for strategies that bridge via CCTP
+ *   isDefault         – Fallback strategy; exactly one entry must have this set
  */
 const ousdStrategiesConfig = [
   {
@@ -23,14 +31,6 @@ const ousdStrategiesConfig = [
     isCrossChain: true,
     isDefault: false,
   },
-  {
-    name: "Curve AMO",
-    address: addresses.mainnet.CurveOUSDAMOStrategy,
-    morphoVaultAddress: null,
-    morphoChainId: null,
-    isCrossChain: false,
-    isAmo: true,
-  },
 ];
 
 /**
@@ -38,7 +38,7 @@ const ousdStrategiesConfig = [
  */
 const ousdConstraints = {
   minDefaultStrategyBps: 2000, // Default strategy always gets ≥ 20% of deployable
-  maxPerChainBps: 7000, // No single chain gets > 70%
+  maxPerStrategyBps: 7000, // No single strategy gets > 70%
   minMoveAmount: 5000000000, // $5K in USDC (6 decimals)
   crossChainMinAmount: 25000000000, // $25K in USDC (6 decimals)
   minVaultBalance: 3000000000, // $3K in USDC (6 decimals)

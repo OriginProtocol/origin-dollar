@@ -42,6 +42,9 @@ contract RebalancerModule is AbstractSafeModule {
     /// @notice When true, both processWithdrawals and processDeposits are blocked.
     bool public paused;
 
+    /// @notice Strategies that this module is permitted to withdraw from or deposit into.
+    mapping(address => bool) public isAllowedStrategy;
+
     // ─────────────────────────────────────────────────────────── Events ──
 
     /// @notice Emitted after processWithdrawals completes (even if some failed).
@@ -62,6 +65,12 @@ contract RebalancerModule is AbstractSafeModule {
 
     /// @notice Emitted when the paused state changes.
     event PausedStateChanged(bool paused);
+
+    /// @notice Emitted when a strategy is added to the whitelist.
+    event StrategyAllowed(address indexed strategy);
+
+    /// @notice Emitted when a strategy is removed from the whitelist.
+    event StrategyRevoked(address indexed strategy);
 
     // ─────────────────────────────────────────────────────── Constructor ──
 
@@ -180,6 +189,26 @@ contract RebalancerModule is AbstractSafeModule {
         emit PausedStateChanged(_paused);
     }
 
+    /**
+     * @notice Add a strategy to the whitelist, allowing the operator to move
+     *         funds into or out of it.
+     * @param _strategy Strategy address to allow.
+     */
+    function allowStrategy(address _strategy) external onlySafe {
+        require(_strategy != address(0), "Invalid strategy");
+        isAllowedStrategy[_strategy] = true;
+        emit StrategyAllowed(_strategy);
+    }
+
+    /**
+     * @notice Remove a strategy from the whitelist.
+     * @param _strategy Strategy address to revoke.
+     */
+    function revokeStrategy(address _strategy) external onlySafe {
+        isAllowedStrategy[_strategy] = false;
+        emit StrategyRevoked(_strategy);
+    }
+
     // ──────────────────────────────────────────────────────── View helpers ──
 
     /**
@@ -206,6 +235,7 @@ contract RebalancerModule is AbstractSafeModule {
         address[] memory assets = _toAddressArray(asset);
         for (uint256 i = 0; i < _strategies.length; i++) {
             if (_amounts[i] == 0) continue;
+            require(isAllowedStrategy[_strategies[i]], "Strategy not allowed");
             bool success = safeContract.execTransactionFromModule(
                 address(vault),
                 0,
@@ -231,6 +261,7 @@ contract RebalancerModule is AbstractSafeModule {
         address[] memory assets = _toAddressArray(asset);
         for (uint256 i = 0; i < _strategies.length; i++) {
             if (_amounts[i] == 0) continue;
+            require(isAllowedStrategy[_strategies[i]], "Strategy not allowed");
             bool success = safeContract.execTransactionFromModule(
                 address(vault),
                 0,
