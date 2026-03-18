@@ -1,9 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import {
-    CurvePoolBoosterFactory as CurvePoolBoosterFactoryContract
-} from "contracts/poolBooster/curve/CurvePoolBoosterFactory.sol";
+import {CurvePoolBoosterFactory} from "contracts/poolBooster/curve/CurvePoolBoosterFactory.sol";
 
 import {
     Smoke_CurvePoolBoosterFactory_Shared_Test
@@ -32,7 +30,7 @@ contract Smoke_Concrete_CurvePoolBoosterFactory_Test is Smoke_CurvePoolBoosterFa
     }
 
     function test_getPoolBoosters() public view {
-        CurvePoolBoosterFactoryContract.PoolBoosterEntry[] memory boosters = curvePoolBoosterFactory.getPoolBoosters();
+        CurvePoolBoosterFactory.PoolBoosterEntry[] memory boosters = curvePoolBoosterFactory.getPoolBoosters();
         assertGt(boosters.length, 0);
         for (uint256 i = 0; i < boosters.length; i++) {
             assertNotEq(boosters[i].boosterAddress, address(0));
@@ -41,17 +39,17 @@ contract Smoke_Concrete_CurvePoolBoosterFactory_Test is Smoke_CurvePoolBoosterFa
     }
 
     function test_poolBoosterFromPool() public view {
-        CurvePoolBoosterFactoryContract.PoolBoosterEntry[] memory boosters = curvePoolBoosterFactory.getPoolBoosters();
+        CurvePoolBoosterFactory.PoolBoosterEntry[] memory boosters = curvePoolBoosterFactory.getPoolBoosters();
         address firstAmmPool = boosters[0].ammPoolAddress;
         (address boosterAddress,,) = curvePoolBoosterFactory.poolBoosterFromPool(firstAmmPool);
         assertNotEq(boosterAddress, address(0));
     }
 
     function test_plainBoosterIsRegistered() public view {
-        CurvePoolBoosterFactoryContract.PoolBoosterEntry[] memory boosters = curvePoolBoosterFactory.getPoolBoosters();
+        CurvePoolBoosterFactory.PoolBoosterEntry[] memory boosters = curvePoolBoosterFactory.getPoolBoosters();
         bool found = false;
         for (uint256 i = 0; i < boosters.length; i++) {
-            if (boosters[i].boosterAddress == Mainnet.CurvePoolBoosterPlainOETH) {
+            if (boosters[i].boosterAddress == address(curvePoolBoosterPlain)) {
                 found = true;
                 break;
             }
@@ -71,7 +69,7 @@ contract Smoke_Concrete_CurvePoolBoosterFactory_Test is Smoke_CurvePoolBoosterFa
         bytes32 encodedSalt = curvePoolBoosterFactory.encodeSaltForCreateX(12345);
         // First 20 bytes of the encoded salt should equal the factory address
         address encodedDeployer = address(bytes20(encodedSalt));
-        assertEq(encodedDeployer, Mainnet.CurvePoolBoosterFactory);
+        assertEq(encodedDeployer, address(curvePoolBoosterFactory));
     }
 
     //////////////////////////////////////////////////////
@@ -87,7 +85,7 @@ contract Smoke_Concrete_CurvePoolBoosterFactory_Test is Smoke_CurvePoolBoosterFa
         assertEq(curvePoolBoosterFactory.poolBoosterLength(), lengthBefore + 1);
 
         // Verify it's in getPoolBoosters
-        CurvePoolBoosterFactoryContract.PoolBoosterEntry[] memory boosters = curvePoolBoosterFactory.getPoolBoosters();
+        CurvePoolBoosterFactory.PoolBoosterEntry[] memory boosters = curvePoolBoosterFactory.getPoolBoosters();
         bool found = false;
         for (uint256 i = 0; i < boosters.length; i++) {
             if (boosters[i].boosterAddress == boosterAddr) {
@@ -103,7 +101,7 @@ contract Smoke_Concrete_CurvePoolBoosterFactory_Test is Smoke_CurvePoolBoosterFa
     }
 
     function test_removePoolBooster() public {
-        CurvePoolBoosterFactoryContract.PoolBoosterEntry[] memory boosters = curvePoolBoosterFactory.getPoolBoosters();
+        CurvePoolBoosterFactory.PoolBoosterEntry[] memory boosters = curvePoolBoosterFactory.getPoolBoosters();
         address firstBooster = boosters[0].boosterAddress;
         uint256 lengthBefore = curvePoolBoosterFactory.poolBoosterLength();
 

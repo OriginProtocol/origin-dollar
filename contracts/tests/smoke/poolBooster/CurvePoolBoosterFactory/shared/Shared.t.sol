@@ -2,12 +2,9 @@
 pragma solidity ^0.8.0;
 
 import {BaseSmoke} from "tests/smoke/BaseSmoke.t.sol";
-import {
-    CurvePoolBoosterFactory as CurvePoolBoosterFactoryContract
-} from "contracts/poolBooster/curve/CurvePoolBoosterFactory.sol";
+import {CurvePoolBoosterFactory} from "contracts/poolBooster/curve/CurvePoolBoosterFactory.sol";
 import {CurvePoolBoosterPlain} from "contracts/poolBooster/curve/CurvePoolBoosterPlain.sol";
 import {Mainnet} from "tests/utils/Addresses.sol";
-import {CrossChain} from "tests/utils/Addresses.sol";
 
 abstract contract Smoke_CurvePoolBoosterFactory_Shared_Test is BaseSmoke {
     function setUp() public virtual override {
@@ -15,8 +12,9 @@ abstract contract Smoke_CurvePoolBoosterFactory_Shared_Test is BaseSmoke {
         _createAndSelectForkMainnet();
         _igniteDeployManager();
 
-        curvePoolBoosterFactory = CurvePoolBoosterFactoryContract(Mainnet.CurvePoolBoosterFactory);
-        curvePoolBoosterPlain = CurvePoolBoosterPlain(payable(Mainnet.CurvePoolBoosterPlainOETH));
+        require(address(resolver).code.length > 0, "Resolver not initialized on fork");
+        curvePoolBoosterFactory = CurvePoolBoosterFactory(resolver.resolve("CURVE_POOL_BOOSTER_FACTORY"));
+        curvePoolBoosterPlain = CurvePoolBoosterPlain(payable(resolver.resolve("CURVE_POOL_BOOSTER_PLAIN_ARM_OETH")));
 
         vm.label(address(curvePoolBoosterFactory), "CurvePoolBoosterFactory");
         vm.label(address(curvePoolBoosterPlain), "CurvePoolBoosterPlain");
