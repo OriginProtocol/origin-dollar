@@ -1735,6 +1735,7 @@ async function crossChainFixture() {
 
   await deployWithConfirmation("CCTPMessageTransmitterMock2", [
     fixture.usdc.address,
+    6, // Base CCTP domain (peer of Ethereum mainnet)
   ]);
   const mockMessageTransmitter = await ethers.getContract(
     "CCTPMessageTransmitterMock2"

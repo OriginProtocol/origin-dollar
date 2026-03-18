@@ -215,7 +215,8 @@ describe("ForkTest: Vault", function () {
         // Update this every time a new strategy is added. Below are mainnet addresses
         "0x26a02ec47ACC2A3442b757F45E0A82B8e993Ce11", // Curve AMO OUSD/USDC
         "0x3643cafA6eF3dd7Fcc2ADaD1cabf708075AFFf6e", // Morpho OUSD v2 Strategy
-        "0xB1d624fc40824683e2bFBEfd19eB208DbBE00866", // Cross-Chain Strategy
+        "0xB1d624fc40824683e2bFBEfd19eB208DbBE00866", // Cross-Chain Strategy (Base)
+        "0xE0228DB13F8C4Eb00fD1e08e076b09eF5cD0EA1e", // Cross-Chain Strategy (HyperEVM)
       ];
 
       for (const s of strategies) {
