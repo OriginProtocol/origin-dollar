@@ -5,6 +5,22 @@
             "name": "OETHBASE_PROXY"
         },
         {
+            "implementation": "0xe3B3b4Fc77505EcfAACf6dD21619a8Cc12fcc501",
+            "name": "BASE_BRIDGE_HELPER_MODULE"
+        },
+        {
+            "implementation": "0x5bd73897E92Ecf3E6295FFe5C1104E99000d2c98",
+            "name": "CLAIM_BRIBES_MODULE"
+        },
+        {
+            "implementation": "0xD8724322f44E5c58D7A815F542036fb17DbbF839",
+            "name": "BRIDGED_WOETH"
+        },
+        {
+            "implementation": "0x80c864704DD06C3693ed5179190786EE38ACf835",
+            "name": "BRIDGED_WOETH_STRATEGY_PROXY"
+        },
+        {
             "implementation": "0x98a0CbeF61bD2D21435f433bE4CD42B56B38CC93",
             "name": "OETHBASE_VAULT_PROXY"
         },
