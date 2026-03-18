@@ -102,7 +102,10 @@ async function main() {
       return;
     }
   }
-  console.log("Timed out waiting for verification. Check manually with GUID:", guid);
+  console.log(
+    "Timed out waiting for verification. Check manually with GUID:",
+    guid
+  );
 }
 
 main().catch(console.error);
