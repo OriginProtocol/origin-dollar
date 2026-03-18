@@ -51,6 +51,22 @@
         {
             "implementation": "0x1A43D2F1bb24aC262D1d7ac05D16823E526FcA32",
             "name": "CURVE_POOL_BOOSTER_PLAIN_ARM_OETH"
+        },
+        {
+            "implementation": "0xAA8af8Db4B6a827B51786334d26349eb03569731",
+            "name": "POOL_BOOST_CENTRAL_REGISTRY"
+        },
+        {
+            "implementation": "0x0FC66355B681503eFeE7741BD848080d809FD6db",
+            "name": "POOL_BOOSTER_FACTORY_MERKL"
+        },
+        {
+            "implementation": "0x266CDd690Ab3133C3FE532aaB3f48cE0FA5E19F5",
+            "name": "POOL_BOOSTER_MERKL_OETH_OGN"
+        },
+        {
+            "implementation": "0xB1d624fc40824683e2bFBEfd19eB208DbBE00866",
+            "name": "CROSS_CHAIN_MASTER_STRATEGY"
         }
     ],
     "executions": [

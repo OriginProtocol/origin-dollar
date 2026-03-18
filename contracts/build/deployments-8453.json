@@ -27,6 +27,18 @@
         {
             "implementation": "0x7FcD174E80f264448ebeE8c88a7C4476AAF58Ea6",
             "name": "WOETHBASE_PROXY"
+        },
+        {
+            "implementation": "0x1ADB902Ece465cA681C66187627a622a631a0a63",
+            "name": "POOL_BOOSTER_FACTORY_MERKL"
+        },
+        {
+            "implementation": "0x191F3aF419F0a131BfaC2781e2F37e80a8932B0c",
+            "name": "POOL_BOOSTER_MERKL_OETHB_USDC"
+        },
+        {
+            "implementation": "0xF611cC500eEE7E4e4763A05FE623E2363c86d2Af",
+            "name": "AERODROME_AMO_STRATEGY_PROXY"
         }
     ],
     "executions": [
