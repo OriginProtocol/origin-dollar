@@ -1,0 +1,86 @@
+{
+  "solcVersion": "0.8.28",
+  "storage": [
+    {
+      "label": "_owner",
+      "offset": 0,
+      "slot": "0",
+      "type": "t_address",
+      "contract": "Ownable",
+      "src": "@openzeppelin/contracts/access/Ownable.sol:21"
+    },
+    {
+      "label": "allowedBuyToken",
+      "offset": 0,
+      "slot": "1",
+      "type": "t_mapping(t_address,t_bool)",
+      "contract": "HarvestingEIP1271",
+      "src": "contracts/harvest/HarvestingEIP1271.sol:22"
+    },
+    {
+      "label": "allowedReceiver",
+      "offset": 0,
+      "slot": "2",
+      "type": "t_mapping(t_address,t_bool)",
+      "contract": "HarvestingEIP1271",
+      "src": "contracts/harvest/HarvestingEIP1271.sol:23"
+    },
+    {
+      "label": "bot",
+      "offset": 0,
+      "slot": "3",
+      "type": "t_address",
+      "contract": "HarvestingEIP1271",
+      "src": "contracts/harvest/HarvestingEIP1271.sol:59"
+    },
+    {
+      "label": "tokenConfigs",
+      "offset": 0,
+      "slot": "4",
+      "type": "t_mapping(t_address,t_struct(TokenConfig)787_storage)",
+      "contract": "HarvestingEIP1271",
+      "src": "contracts/harvest/HarvestingEIP1271.sol:63"
+    }
+  ],
+  "types": {
+    "t_address": {
+      "label": "address",
+      "numberOfBytes": "20"
+    },
+    "t_bool": {
+      "label": "bool",
+      "numberOfBytes": "1"
+    },
+    "t_mapping(t_address,t_bool)": {
+      "label": "mapping(address => bool)",
+      "numberOfBytes": "32"
+    },
+    "t_mapping(t_address,t_struct(TokenConfig)787_storage)": {
+      "label": "mapping(address => struct HarvestingEIP1271.TokenConfig)",
+      "numberOfBytes": "32"
+    },
+    "t_struct(TokenConfig)787_storage": {
+      "label": "struct HarvestingEIP1271.TokenConfig",
+      "members": [
+        {
+          "label": "enabled",
+          "type": "t_bool",
+          "offset": 0,
+          "slot": "0"
+        },
+        {
+          "label": "minSellAmount",
+          "type": "t_uint256",
+          "offset": 0,
+          "slot": "1"
+        }
+      ],
+      "numberOfBytes": "64"
+    },
+    "t_uint256": {
+      "label": "uint256",
+      "numberOfBytes": "32"
+    }
+  },
+  "namespaces": {}
+}

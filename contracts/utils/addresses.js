@@ -15,6 +15,10 @@ addresses.CCTPTokenMessengerV2 = "0x28b5a0e9C621a5BadaA536219b3a228C8168cf5d";
 addresses.CCTPMessageTransmitterV2 =
   "0x81D40F21F12A8F0E3252Bccb954D722d4c464B64";
 
+// Composable CoW
+addresses.composableCoW = "0xfdaFc9d1902f4e0b84f65F49f244b32b31013b74";
+addresses.GPv2VaultRelayer = "0xC92E8bdf79f0507f65a392b0ab4667716BFE0110";
+
 addresses.mainnet = {};
 addresses.base = {};
 addresses.sonic = {};

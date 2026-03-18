@@ -8,7 +8,7 @@ const {
 
 module.exports = deploymentWithGovernanceProposal(
   {
-    deployName: "184_crosschain_strategy_hyperevm",
+    deployName: "185_crosschain_strategy_hyperevm",
     forceDeploy: false,
     reduceQueueTime: true,
     deployerIsProposer: false,

@@ -53,7 +53,7 @@
       "label": "deposits",
       "offset": 0,
       "slot": "52",
-      "type": "t_mapping(t_bytes32,t_struct(DepositData)55415_storage)",
+      "type": "t_mapping(t_bytes32,t_struct(DepositData)46186_storage)",
       "contract": "CompoundingValidatorManager",
       "src": "contracts/strategies/NativeStaking/CompoundingValidatorManager.sol:111"
     },
@@ -77,7 +77,7 @@
       "label": "validator",
       "offset": 0,
       "slot": "55",
-      "type": "t_mapping(t_bytes32,t_struct(ValidatorData)55444_storage)",
+      "type": "t_mapping(t_bytes32,t_struct(ValidatorData)46215_storage)",
       "contract": "CompoundingValidatorManager",
       "src": "contracts/strategies/NativeStaking/CompoundingValidatorManager.sol:145"
     },
@@ -85,7 +85,7 @@
       "label": "snappedBalance",
       "offset": 0,
       "slot": "56",
-      "type": "t_struct(Balances)55462_storage",
+      "type": "t_struct(Balances)46233_storage",
       "contract": "CompoundingValidatorManager",
       "src": "contracts/strategies/NativeStaking/CompoundingValidatorManager.sol:156"
     },
@@ -191,7 +191,7 @@
       "slot": "207",
       "type": "t_array(t_uint256)50_storage",
       "contract": "CompoundingStakingSSVStrategy",
-      "src": "contracts/strategies/NativeStaking/CompoundingStakingSSVStrategy.sol:21"
+      "src": "contracts/strategies/NativeStaking/CompoundingStakingSSVStrategy.sol:18"
     }
   ],
   "types": {
@@ -227,7 +227,7 @@
       "label": "bytes32",
       "numberOfBytes": "32"
     },
-    "t_enum(DepositStatus)55402": {
+    "t_enum(DepositStatus)46173": {
       "label": "enum CompoundingValidatorManager.DepositStatus",
       "members": [
         "UNKNOWN",
@@ -236,7 +236,7 @@
       ],
       "numberOfBytes": "1"
     },
-    "t_enum(ValidatorState)55438": {
+    "t_enum(ValidatorState)46209": {
       "label": "enum CompoundingValidatorManager.ValidatorState",
       "members": [
         "NON_REGISTERED",
@@ -259,15 +259,15 @@
       "label": "mapping(address => address)",
       "numberOfBytes": "32"
     },
-    "t_mapping(t_bytes32,t_struct(DepositData)55415_storage)": {
+    "t_mapping(t_bytes32,t_struct(DepositData)46186_storage)": {
       "label": "mapping(bytes32 => struct CompoundingValidatorManager.DepositData)",
       "numberOfBytes": "32"
     },
-    "t_mapping(t_bytes32,t_struct(ValidatorData)55444_storage)": {
+    "t_mapping(t_bytes32,t_struct(ValidatorData)46215_storage)": {
       "label": "mapping(bytes32 => struct CompoundingValidatorManager.ValidatorData)",
       "numberOfBytes": "32"
     },
-    "t_struct(Balances)55462_storage": {
+    "t_struct(Balances)46233_storage": {
       "label": "struct CompoundingValidatorManager.Balances",
       "members": [
         {
@@ -291,7 +291,7 @@
       ],
       "numberOfBytes": "64"
     },
-    "t_struct(DepositData)55415_storage": {
+    "t_struct(DepositData)46186_storage": {
       "label": "struct CompoundingValidatorManager.DepositData",
       "members": [
         {
@@ -320,19 +320,19 @@
         },
         {
           "label": "status",
-          "type": "t_enum(DepositStatus)55402",
+          "type": "t_enum(DepositStatus)46173",
           "offset": 20,
           "slot": "1"
         }
       ],
       "numberOfBytes": "64"
     },
-    "t_struct(ValidatorData)55444_storage": {
+    "t_struct(ValidatorData)46215_storage": {
       "label": "struct CompoundingValidatorManager.ValidatorData",
       "members": [
         {
           "label": "state",
-          "type": "t_enum(ValidatorState)55438",
+          "type": "t_enum(ValidatorState)46209",
           "offset": 0,
           "slot": "0"
         },
