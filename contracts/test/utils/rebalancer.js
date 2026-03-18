@@ -733,6 +733,4 @@ describe("Rebalancer: buildExecutableActions", () => {
     expect(baseRow.action).to.equal("none");
     expect(baseRow.reason).to.include("cross-chain min");
   });
-
-  // AMO rows pass through unchanged
 });

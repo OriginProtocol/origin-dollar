@@ -3,7 +3,12 @@ const { Defender } = require("@openzeppelin/defender-sdk");
 
 const addresses = require("../../utils/addresses");
 const { logTxDetails } = require("../../utils/txLogger");
-const { buildRebalancePlan } = require("../../utils/rebalancer");
+const {
+  buildRebalancePlan,
+  ACTION_DEPOSIT,
+  ACTION_WITHDRAW,
+  ACTION_NONE,
+} = require("../../utils/rebalancer");
 const { postToDiscord } = require("../../utils/discord");
 const { CROSS_CHAIN_BRIDGE_LIMIT } = require("../../utils/cctp");
 
@@ -69,7 +74,7 @@ const buildDiscordMessage = ({
   });
 
   // Recommended (feasible) actions
-  const executableActions = allActions.filter((a) => a.action !== "none");
+  const executableActions = allActions.filter((a) => a.action !== ACTION_NONE);
   let actionLines;
   if (executableActions.length === 0) {
     actionLines = ["  No rebalancing actions required"];
@@ -120,7 +125,7 @@ const handler = async (event) => {
   // Compute off-chain recommendations (also prints the allocation table to logs)
   const plan = await buildRebalancePlan(provider);
   const { actions: allActions } = plan;
-  const actions = allActions.filter((a) => a.action !== "none");
+  const actions = allActions.filter((a) => a.action !== ACTION_NONE);
 
   // Post to Discord before executing so the alert appears even if the tx reverts
   if (webhookUrl) {
@@ -136,8 +141,8 @@ const handler = async (event) => {
     return;
   }
 
-  const withdrawals = actions.filter((a) => a.action === "withdraw");
-  const deposits = actions.filter((a) => a.action === "deposit");
+  const withdrawals = actions.filter((a) => a.action === ACTION_WITHDRAW);
+  const deposits = actions.filter((a) => a.action === ACTION_DEPOSIT);
 
   const rebalancerModule = new ethers.Contract(
     addresses.mainnet.OUSDRebalancerModule,

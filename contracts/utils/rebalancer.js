@@ -12,6 +12,11 @@ const log = require("./logger")("utils:rebalancer");
 
 const USDC_DECIMALS = 6;
 
+// Action constants shared with Defender Actions and tests
+const ACTION_DEPOSIT = "deposit";
+const ACTION_WITHDRAW = "withdraw";
+const ACTION_NONE = "none";
+
 // Human-readable ABIs for contracts we interact with
 const vaultAbi = [
   "function withdrawalQueueMetadata() external view returns (tuple(uint128 queued, uint128 claimable, uint128 claimed, uint128 nextWithdrawalIndex))",
@@ -141,6 +146,129 @@ async function fetchMorphoApys(vaults) {
  * @param {object} [params.constraints]
  * @returns {Array} allocation results
  */
+/**
+ * Compute total capital minus reserved amounts (shortfall + minVaultBalance).
+ */
+function _computeDeployableCapital(
+  strategies,
+  vaultBalance,
+  shortfall,
+  constraints
+) {
+  const totalRebalancable = strategies.reduce(
+    (sum, s) => sum.add(s.balance),
+    vaultBalance
+  );
+  const reserved = shortfall.add(BigNumber.from(constraints.minVaultBalance));
+  return totalRebalancable.gt(reserved)
+    ? totalRebalancable.sub(reserved)
+    : BigNumber.from(0);
+}
+
+/**
+ * Greedy fill: sort strategies by APY descending, fill each up to maxPerStrategyBps.
+ * Returns a plain object { [address]: BigNumber } of target balances.
+ */
+function _greedyFillByApy(
+  strategies,
+  deployableCapital,
+  constraints,
+  strategyApyOf
+) {
+  const sorted = [...strategies].sort(
+    (a, b) => strategyApyOf(b) - strategyApyOf(a)
+  );
+  const maxPerStrategyAmt = deployableCapital
+    .mul(constraints.maxPerStrategyBps)
+    .div(10000);
+
+  const targets = {};
+  for (const s of strategies) targets[s.address] = BigNumber.from(0);
+
+  let remaining = deployableCapital;
+  for (const s of sorted) {
+    const alloc = remaining.lt(maxPerStrategyAmt)
+      ? remaining
+      : maxPerStrategyAmt;
+    targets[s.address] = alloc;
+    remaining = remaining.sub(alloc);
+    if (remaining.isZero()) break;
+  }
+
+  // Dust from rounding goes to the default strategy
+  if (remaining.gt(0)) {
+    const defaultStrategy = strategies.find((s) => s.isDefault);
+    if (defaultStrategy) {
+      targets[defaultStrategy.address] =
+        targets[defaultStrategy.address].add(remaining);
+    }
+  }
+
+  return targets;
+}
+
+/**
+ * Ensure default strategy has at least minDefaultStrategyBps of deployable capital.
+ * Claws back deficit from highest-allocated non-default strategies.
+ */
+function _enforceDefaultMinimum(
+  targets,
+  strategies,
+  deployableCapital,
+  constraints
+) {
+  const defaultStrategy = strategies.find((s) => s.isDefault);
+  if (!defaultStrategy) return targets;
+
+  const minAmt = deployableCapital
+    .mul(constraints.minDefaultStrategyBps)
+    .div(10000);
+  const current = targets[defaultStrategy.address];
+  if (current.gte(minAmt)) return targets;
+
+  const deficit = minAmt.sub(current);
+  targets[defaultStrategy.address] = minAmt;
+
+  const sorted = [...strategies]
+    .filter((s) => s.address !== defaultStrategy.address)
+    .sort((a, b) => targets[b.address].sub(targets[a.address]));
+
+  let toReduce = deficit;
+  for (const s of sorted) {
+    const available = targets[s.address];
+    const take = available.lt(toReduce) ? available : toReduce;
+    targets[s.address] = available.sub(take);
+    toReduce = toReduce.sub(take);
+    if (toReduce.isZero()) break;
+  }
+
+  return targets;
+}
+
+/**
+ * Build an allocation row for a strategy given its computed target balance.
+ */
+function _buildAllocationRow(s, targetBalance, apy) {
+  const delta = targetBalance.sub(s.balance);
+  return {
+    name: s.name,
+    address: s.address,
+    isCrossChain: s.isCrossChain,
+    isTransferPending: s.isTransferPending,
+    isDefault: s.isDefault,
+    morphoVaultAddress: s.morphoVaultAddress,
+    balance: s.balance,
+    apy,
+    targetBalance,
+    delta,
+    action: delta.gt(0)
+      ? ACTION_DEPOSIT
+      : delta.lt(0)
+      ? ACTION_WITHDRAW
+      : ACTION_NONE,
+  };
+}
+
 function computeOptimalAllocation({
   strategies,
   apys,
@@ -149,95 +277,30 @@ function computeOptimalAllocation({
   constraints: overrides = {},
 }) {
   const constraints = { ...ousdConstraints, ...overrides };
-
-  // Deployable capital = everything minus what the vault must keep
-  const totalRebalancable = strategies.reduce(
-    (sum, s) => sum.add(s.balance),
-    vaultBalance
-  );
-  // Always prioritize the shortfall and minVaultBalance
-  const reserved = shortfall.add(BigNumber.from(constraints.minVaultBalance));
-  const deployableCapital = totalRebalancable.gt(reserved)
-    ? totalRebalancable.sub(reserved)
-    : BigNumber.from(0);
-
-  // Sort by APY descending (highest APY strategy gets filled first)
   const strategyApyOf = (s) => apys[s.morphoVaultAddress] || 0;
-
-  // Build a result object for a strategy given its computed target balance
-  const makeResult = (s, targetBalance) => {
-    const delta = targetBalance.sub(s.balance);
-    return {
-      name: s.name,
-      address: s.address,
-      isCrossChain: s.isCrossChain,
-      isTransferPending: s.isTransferPending,
-      isDefault: s.isDefault,
-      morphoVaultAddress: s.morphoVaultAddress,
-      balance: s.balance,
-      apy: strategyApyOf(s),
-      targetBalance,
-      delta,
-      action: delta.gt(0) ? "deposit" : delta.lt(0) ? "withdraw" : "none",
-    };
-  };
+  const deployableCapital = _computeDeployableCapital(
+    strategies,
+    vaultBalance,
+    shortfall,
+    constraints
+  );
 
   if (deployableCapital.isZero()) {
-    return strategies.map((s) => makeResult(s, BigNumber.from(0)));
+    return strategies.map((s) =>
+      _buildAllocationRow(s, BigNumber.from(0), strategyApyOf(s))
+    );
   }
-  const sorted = [...strategies].sort(
-    (a, b) => strategyApyOf(b) - strategyApyOf(a)
+
+  const targets = _greedyFillByApy(
+    strategies,
+    deployableCapital,
+    constraints,
+    strategyApyOf
   );
-
-  const maxPerStrategyAmt = deployableCapital
-    .mul(constraints.maxPerStrategyBps)
-    .div(10000);
-
-  // Greedy fill: highest APY gets up to maxPerStrategyBps, then next, etc.
-  const targets = new Map(
-    strategies.map((s) => [s.address, BigNumber.from(0)])
+  _enforceDefaultMinimum(targets, strategies, deployableCapital, constraints);
+  return strategies.map((s) =>
+    _buildAllocationRow(s, targets[s.address], strategyApyOf(s))
   );
-  let remaining = deployableCapital;
-
-  for (const s of sorted) {
-    const alloc = remaining.lt(maxPerStrategyAmt)
-      ? remaining
-      : maxPerStrategyAmt;
-    targets.set(s.address, alloc);
-    remaining = remaining.sub(alloc);
-    if (remaining.isZero()) break;
-  }
-
-  // Any dust from rounding goes to the default strategy
-  if (remaining.gt(0)) {
-    const def = strategies.find((s) => s.isDefault);
-    if (def) targets.set(def.address, targets.get(def.address).add(remaining));
-  }
-
-  // Enforce minimum for default strategy
-  const defaultStrategy = strategies.find((s) => s.isDefault);
-  if (defaultStrategy) {
-    const minAmt = deployableCapital
-      .mul(constraints.minDefaultStrategyBps)
-      .div(10000);
-    const current = targets.get(defaultStrategy.address);
-    if (current.lt(minAmt)) {
-      const deficit = minAmt.sub(current);
-      targets.set(defaultStrategy.address, minAmt);
-      // Claw back deficit from the highest-allocated non-default strategies
-      let toReduce = deficit;
-      for (const s of sorted) {
-        if (s.address === defaultStrategy.address) continue;
-        const available = targets.get(s.address);
-        const take = available.lt(toReduce) ? available : toReduce;
-        targets.set(s.address, available.sub(take));
-        toReduce = toReduce.sub(take);
-        if (toReduce.isZero()) break;
-      }
-    }
-  }
-
-  return strategies.map((s) => makeResult(s, targets.get(s.address)));
 }
 
 /**
@@ -254,6 +317,198 @@ function computeOptimalAllocation({
  * @param {object}    [constraintOverrides]
  * @returns {Array}
  */
+/**
+ * Highest APY across all strategies (used for APY spread check).
+ */
+function _computeMaxApy(allocations) {
+  const apys = allocations
+    .filter((a) => Number.isFinite(a.apy))
+    .map((a) => a.apy);
+  return apys.length > 0 ? Math.max(...apys) : 0;
+}
+
+/**
+ * Check whether a withdrawal is feasible. Mutates the item directly if not.
+ */
+function _checkWithdrawalFeasibility(withdrawal, maxApy, constraints) {
+  const absDelta = withdrawal.delta.abs();
+  if (absDelta.lt(constraints.minMoveAmount)) {
+    withdrawal.action = ACTION_NONE;
+    withdrawal.reason = "below min move";
+  } else if (
+    withdrawal.isCrossChain &&
+    absDelta.lt(constraints.crossChainMinAmount)
+  ) {
+    withdrawal.action = ACTION_NONE;
+    withdrawal.reason = "below cross-chain min";
+  } else if (maxApy - withdrawal.apy < constraints.minApySpread) {
+    withdrawal.action = ACTION_NONE;
+    withdrawal.reason = "APY spread too small";
+  }
+  return withdrawal;
+}
+
+/**
+ * Compute deposit budget: approved withdrawal total + vault surplus above reserves.
+ */
+function _computeDepositBudget(
+  allocations,
+  vaultBalance,
+  shortfall,
+  constraints
+) {
+  const approvedWithdrawals = allocations.filter(
+    (a) => a.action === ACTION_WITHDRAW
+  );
+  const approvedWithdrawTotal = approvedWithdrawals.reduce(
+    (sum, a) => sum.add(a.delta.abs()),
+    BigNumber.from(0)
+  );
+  const rawSurplus = vaultBalance
+    .sub(shortfall)
+    .sub(BigNumber.from(constraints.minVaultBalance));
+  return approvedWithdrawTotal.add(
+    rawSurplus.gt(0) ? rawSurplus : BigNumber.from(0)
+  );
+}
+
+/**
+ * Distribute deposit budget across candidates (pre-sorted by APY descending).
+ * Mutates items directly — skips or trims deposits as needed.
+ */
+function _distributeDepositBudget(deposits, initialBudget, constraints) {
+  let budget = initialBudget;
+
+  for (const c of deposits) {
+    if (c.isCrossChain && c.isTransferPending) {
+      c.action = ACTION_NONE;
+      c.reason = "transfer pending";
+      continue;
+    }
+    if (budget.isZero()) {
+      c.action = ACTION_NONE;
+      c.reason = "insufficient vault funds";
+      continue;
+    }
+
+    const amt = c.delta.gt(budget) ? budget : c.delta;
+    budget = budget.sub(amt);
+
+    if (amt.lt(constraints.minMoveAmount)) {
+      c.action = ACTION_NONE;
+      c.reason = "below min move";
+      budget = budget.add(amt);
+      continue;
+    }
+    if (c.isCrossChain && amt.lt(constraints.crossChainMinAmount)) {
+      c.action = ACTION_NONE;
+      c.reason = "below cross-chain min";
+      budget = budget.add(amt);
+      continue;
+    }
+    if (amt.lt(c.delta)) {
+      c.delta = amt;
+      c.targetBalance = c.balance.add(amt);
+      c.reason = "trimmed to available vault funds";
+    }
+  }
+
+  return deposits;
+}
+
+/**
+ * Compute how much the default strategy should withdraw for a shortfall.
+ * Returns null if it can't cover.
+ */
+function _computeShortfallWithdrawAmount(
+  defaultStrategy,
+  shortfall,
+  constraints
+) {
+  if (defaultStrategy.delta.lt(0)) {
+    const effectiveAmt = defaultStrategy.delta.abs().gt(shortfall)
+      ? defaultStrategy.delta.abs()
+      : shortfall;
+    return defaultStrategy.balance.lt(effectiveAmt)
+      ? defaultStrategy.balance
+      : effectiveAmt;
+  }
+  if (shortfall.lt(constraints.crossChainMinAmount)) {
+    return defaultStrategy.balance.lt(shortfall)
+      ? defaultStrategy.balance
+      : shortfall;
+  }
+  if (defaultStrategy.balance.gte(shortfall)) {
+    return shortfall;
+  }
+  return null;
+}
+
+/**
+ * Cover a withdrawal shortfall when no rebalancing withdrawals were approved.
+ * Tries the default (same-chain) strategy first, then lowest-APY cross-chain.
+ */
+function _coverShortfall(result, shortfall, constraints) {
+  // Try default (same-chain) strategy first
+  const defaultStrategy = result.find((a) => a.isDefault);
+  if (defaultStrategy && defaultStrategy.balance.gt(0)) {
+    const amt = _computeShortfallWithdrawAmount(
+      defaultStrategy,
+      shortfall,
+      constraints
+    );
+    if (amt && amt.gt(0)) {
+      defaultStrategy.delta = amt.mul(-1);
+      defaultStrategy.targetBalance = defaultStrategy.balance.sub(amt);
+      defaultStrategy.action = ACTION_WITHDRAW;
+      defaultStrategy.reason = "shortfall fallback";
+      return result;
+    }
+  }
+
+  // Default couldn't cover — try lowest-APY cross-chain strategy
+  const crossChainCandidates = result
+    .filter(
+      (a) => a.isCrossChain && a.balance.gt(constraints.crossChainMinAmount)
+    )
+    .sort((a, b) => a.apy - b.apy);
+
+  if (crossChainCandidates.length > 0) {
+    const s = crossChainCandidates[0];
+    const amt = s.balance.lt(shortfall) ? s.balance : shortfall;
+    s.delta = amt.mul(-1);
+    s.targetBalance = s.balance.sub(amt);
+    s.action = ACTION_WITHDRAW;
+    s.reason = "shortfall fallback (cross-chain)";
+  }
+
+  return result;
+}
+
+/**
+ * Vault surplus above reserves (shortfall + minVaultBalance).
+ */
+function _computeVaultSurplus(vaultBalance, shortfall, constraints) {
+  const raw = vaultBalance
+    .sub(shortfall)
+    .sub(BigNumber.from(constraints.minVaultBalance));
+  return raw.gt(0) ? raw : BigNumber.from(0);
+}
+
+/**
+ * Deploy idle vault surplus to the default strategy.
+ */
+function _deploySurplus(result, surplus) {
+  const defaultStrategy = result.find((a) => a.isDefault);
+  if (!defaultStrategy) return result;
+
+  defaultStrategy.delta = surplus;
+  defaultStrategy.targetBalance = defaultStrategy.balance.add(surplus);
+  defaultStrategy.action = ACTION_DEPOSIT;
+  defaultStrategy.reason = "vault surplus fallback";
+  return result;
+}
+
 function buildExecutableActions(
   allocations,
   shortfall = BigNumber.from(0),
@@ -261,191 +516,43 @@ function buildExecutableActions(
   constraintOverrides = {}
 ) {
   const constraints = { ...ousdConstraints, ...constraintOverrides };
-  const minVaultBalance = BigNumber.from(constraints.minVaultBalance);
+  let result = allocations.map((a) => ({ ...a }));
+  const maxApy = _computeMaxApy(result);
 
-  // Highest APY across all strategies (used for APY spread check)
-  const validApys = allocations
-    .filter((a) => Number.isFinite(a.apy))
-    .map((a) => a.apy);
-  const maxApy = validApys.length > 0 ? Math.max(...validApys) : 0;
+  // 1. Check each withdrawal for feasibility
+  const withdrawals = result.filter((a) => a.action === ACTION_WITHDRAW);
+  for (const w of withdrawals) {
+    _checkWithdrawalFeasibility(w, maxApy, constraints);
+  }
 
-  // --- Pass A: filter withdrawals ---
-  const filtered = allocations.map((a) => {
-    if (a.action !== "withdraw") return a;
-
-    const absDelta = a.delta.abs();
-    if (absDelta.lt(constraints.minMoveAmount)) {
-      return { ...a, action: "none", reason: "below min move" };
-    }
-    if (a.isCrossChain && absDelta.lt(constraints.crossChainMinAmount)) {
-      return { ...a, action: "none", reason: "below cross-chain min" };
-    }
-    if (maxApy - a.apy < constraints.minApySpread) {
-      return { ...a, action: "none", reason: "APY spread too small" };
-    }
-    return a;
-  });
-
-  // --- Budget: approved withdrawals + vault surplus ---
-  const approvedWithdrawTotal = filtered
-    .filter((a) => a.action === "withdraw")
-    .reduce((sum, a) => sum.add(a.delta.abs()), BigNumber.from(0));
-  const rawSurplus = vaultBalance.sub(shortfall).sub(minVaultBalance);
-  const vaultSurplus = rawSurplus.gt(0) ? rawSurplus : BigNumber.from(0);
-  let depositBudget = approvedWithdrawTotal.add(vaultSurplus);
-
-  // --- Pass B: filter deposits, greedily allocate from budget (highest APY first) ---
-  const depositCandidates = filtered
-    .filter((a) => a.action === "deposit")
+  // 2. Distribute available budget across deposits (highest APY first)
+  const budget = _computeDepositBudget(
+    result,
+    vaultBalance,
+    shortfall,
+    constraints
+  );
+  const deposits = result
+    .filter((a) => a.action === ACTION_DEPOSIT)
     .sort((a, b) => b.apy - a.apy);
+  _distributeDepositBudget(deposits, budget, constraints);
 
-  for (const candidate of depositCandidates) {
-    const idx = filtered.findIndex((a) => a.address === candidate.address);
-
-    // Cross-chain transfer already in flight → skip, don't consume budget
-    if (candidate.isCrossChain && candidate.isTransferPending) {
-      filtered[idx] = {
-        ...candidate,
-        action: "none",
-        reason: "transfer pending",
-      };
-      continue;
-    }
-
-    if (depositBudget.isZero()) {
-      filtered[idx] = {
-        ...candidate,
-        action: "none",
-        reason: "insufficient vault funds",
-      };
-      continue;
-    }
-
-    const depositAmt = candidate.delta.gt(depositBudget)
-      ? depositBudget
-      : candidate.delta;
-    depositBudget = depositBudget.sub(depositAmt);
-
-    if (depositAmt.lt(constraints.minMoveAmount)) {
-      filtered[idx] = {
-        ...candidate,
-        action: "none",
-        reason: "below min move",
-      };
-      depositBudget = depositBudget.add(depositAmt); // restore — money stays in vault
-      continue;
-    }
-    if (
-      candidate.isCrossChain &&
-      depositAmt.lt(constraints.crossChainMinAmount)
-    ) {
-      filtered[idx] = {
-        ...candidate,
-        action: "none",
-        reason: "below cross-chain min",
-      };
-      depositBudget = depositBudget.add(depositAmt); // restore
-      continue;
-    }
-    if (depositAmt.lt(candidate.delta)) {
-      // Trimmed to available budget — update delta and targetBalance
-      filtered[idx] = {
-        ...candidate,
-        delta: depositAmt,
-        targetBalance: candidate.balance.add(depositAmt),
-        reason: "trimmed to available vault funds",
-      };
-    }
-    // else: full amount fits — no change needed
+  // 3. Fallback: cover shortfall if no withdrawals were approved
+  const hasApprovedWithdrawals = result.some(
+    (a) => a.action === ACTION_WITHDRAW
+  );
+  if (!hasApprovedWithdrawals && shortfall.gt(0)) {
+    result = _coverShortfall(result, shortfall, constraints);
   }
 
-  // --- Pass 2: fallback if no withdraw was approved but shortfall exists ---
-  const hasWithdraw = filtered.some((a) => a.action === "withdraw");
-  if (!hasWithdraw && shortfall.gt(0)) {
-    const defaultA = filtered.find((a) => a.isDefault);
-    let coveredByDefault = false;
-
-    if (defaultA && defaultA.balance.gt(0)) {
-      const originalDelta = defaultA.delta; // from computeOptimalAllocation, unchanged by Pass 1
-      const isOverallocated = originalDelta.lt(0);
-
-      let withdrawAmt = null;
-
-      if (isOverallocated) {
-        // Withdraw max(rebalanceDelta, shortfall), capped at balance
-        const overAmt = originalDelta.abs();
-        const effectiveAmt = overAmt.gt(shortfall) ? overAmt : shortfall;
-        withdrawAmt = defaultA.balance.lt(effectiveAmt)
-          ? defaultA.balance
-          : effectiveAmt;
-      } else {
-        // Underallocated or at target: only fund if conditions are met
-        if (shortfall.lt(constraints.crossChainMinAmount)) {
-          // Small shortfall: always try, even if balance < shortfall
-          withdrawAmt = defaultA.balance.lt(shortfall)
-            ? defaultA.balance
-            : shortfall;
-        } else if (defaultA.balance.gte(shortfall)) {
-          // Large shortfall and default has enough
-          withdrawAmt = shortfall;
-        }
-        // else: large shortfall + insufficient balance → skip this round
-      }
-
-      if (withdrawAmt && withdrawAmt.gt(0)) {
-        const idx = filtered.indexOf(defaultA);
-        filtered[idx] = {
-          ...defaultA,
-          delta: withdrawAmt.mul(-1),
-          targetBalance: defaultA.balance.sub(withdrawAmt),
-          action: "withdraw",
-          reason: "shortfall fallback",
-        };
-        coveredByDefault = true;
-      }
-    }
-
-    // If default couldn't cover, try lowest-APY cross-chain strategy
-    if (!coveredByDefault) {
-      const crossChain = filtered
-        .filter(
-          (a) => a.isCrossChain && a.balance.gt(constraints.crossChainMinAmount)
-        )
-        .sort((a, b) => a.apy - b.apy);
-
-      if (crossChain.length > 0) {
-        const s = crossChain[0];
-        const withdrawAmt = s.balance.lt(shortfall) ? s.balance : shortfall;
-        const idx = filtered.indexOf(s);
-        filtered[idx] = {
-          ...s,
-          delta: withdrawAmt.mul(-1),
-          targetBalance: s.balance.sub(withdrawAmt),
-          action: "withdraw",
-          reason: "shortfall fallback (cross-chain)",
-        };
-      }
-    }
+  // 4. Fallback: deploy vault surplus if no deposits were approved
+  const hasApprovedDeposits = result.some((a) => a.action === ACTION_DEPOSIT);
+  const surplus = _computeVaultSurplus(vaultBalance, shortfall, constraints);
+  if (!hasApprovedDeposits && surplus.gt(0)) {
+    result = _deploySurplus(result, surplus);
   }
 
-  // --- Pass 2: fallback if no deposit was approved but vault has surplus ---
-  const hasDeposit = filtered.some((a) => a.action === "deposit");
-  const surplus = vaultBalance.sub(shortfall).sub(minVaultBalance);
-  if (!hasDeposit && surplus.gt(0)) {
-    const defaultA = filtered.find((a) => a.isDefault);
-    if (defaultA) {
-      const idx = filtered.indexOf(defaultA);
-      filtered[idx] = {
-        ...defaultA,
-        delta: surplus,
-        targetBalance: defaultA.balance.add(surplus),
-        action: "deposit",
-        reason: "vault surplus fallback",
-      };
-    }
-  }
-
-  return filtered;
+  return result;
 }
 
 /**
@@ -457,10 +564,10 @@ function buildExecutableActions(
  */
 function sortActions(allocations) {
   const priority = (a) => {
-    if (a.action === "withdraw" && a.reason && a.reason.includes("shortfall"))
+    if (a.action === ACTION_WITHDRAW && a.reason?.includes("shortfall"))
       return 0;
-    if (a.action === "withdraw") return 1;
-    if (a.action === "deposit") return 2;
+    if (a.action === ACTION_WITHDRAW) return 1;
+    if (a.action === ACTION_DEPOSIT) return 2;
     return 3;
   };
   return [...allocations].sort((a, b) => priority(a) - priority(b));
@@ -584,7 +691,7 @@ function printAllocationTable({
       const verb = raw.delta.lt(0) ? "WITHDRAW" : "DEPOSIT";
       const dir = raw.delta.lt(0) ? "from" : "to  ";
       const filtered = filteredByAddr.get(raw.address);
-      const isApproved = filtered && filtered.action !== "none";
+      const isApproved = filtered && filtered.action !== ACTION_NONE;
       const wasTrimmed = isApproved && filtered.delta.abs().lt(raw.delta.abs());
 
       let suffix = "";
@@ -606,7 +713,7 @@ function printAllocationTable({
   }
 
   // ── Section 2: Recommended actions ────────────────────────────────────────
-  const actionRows = actions.filter((a) => a.action !== "none");
+  const actionRows = actions.filter((a) => a.action !== ACTION_NONE);
 
   console.log("--- Recommended Actions ---\n");
   if (actionRows.length === 0) {
@@ -614,7 +721,7 @@ function printAllocationTable({
   } else {
     for (const a of actionRows) {
       const verb = a.action.toUpperCase();
-      const dir = a.action === "withdraw" ? "from" : "to  ";
+      const dir = a.action === ACTION_WITHDRAW ? "from" : "to  ";
       const note = a.reason ? ` (${a.reason})` : "";
       console.log(
         `  ${verb.padEnd(8)} $${fmtUsd(a.delta.abs()).padStart(16)}  ${dir}  ${
@@ -678,4 +785,7 @@ module.exports = {
   buildRebalancePlan,
   ousdStrategiesConfig,
   ousdConstraints,
+  ACTION_DEPOSIT,
+  ACTION_WITHDRAW,
+  ACTION_NONE,
 };
