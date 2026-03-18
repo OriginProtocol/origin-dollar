@@ -40,11 +40,13 @@ async function readOnChainState(provider) {
   );
   const usdc = new ethers.Contract(addresses.mainnet.USDC, erc20Abi, provider);
 
+  // Read the withdrawal queue metadata and the vault's USDC balance
   const [queueMeta, vaultBalance] = await Promise.all([
     vault.withdrawalQueueMetadata(),
     usdc.balanceOf(addresses.mainnet.VaultProxy),
   ]);
 
+  // Reserve any available vault balance for pending withdrawals
   let shortfall = queueMeta.queued.sub(queueMeta.claimable);
   let availableVaultBalance = vaultBalance;
   if (shortfall.gt(0) && vaultBalance.gt(0)) {
@@ -59,6 +61,7 @@ async function readOnChainState(provider) {
     }
   }
 
+  // Read the balances of the strategies
   const strategies = await Promise.all(
     ousdStrategiesConfig.map(async (cfg) => {
       const strategy = new ethers.Contract(cfg.address, strategyAbi, provider);

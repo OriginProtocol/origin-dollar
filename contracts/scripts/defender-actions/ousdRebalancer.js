@@ -1,19 +1,15 @@
 const { ethers } = require("ethers");
 const { Defender } = require("@openzeppelin/defender-sdk");
-const { parseUnits } = require("ethers/lib/utils");
 
 const addresses = require("../../utils/addresses");
 const { logTxDetails } = require("../../utils/txLogger");
 const { buildRebalancePlan } = require("../../utils/rebalancer");
 const { postToDiscord } = require("../../utils/discord");
+const { CROSS_CHAIN_BRIDGE_LIMIT } = require("../../utils/cctp");
 
 const log = require("../../utils/logger")("action:ousdRebalancer");
-
 // Set to true to run all computation and post Discord alerts without sending any txs
 const IS_DRY_RUN = true;
-
-// Maximum amount for any single cross-chain transfer (CCTP bridge limit)
-const CROSS_CHAIN_BRIDGE_LIMIT = parseUnits("10000000", 6); // 10M USDC
 
 const rebalancerModuleAbi = [
   "function processWithdrawals(address[] calldata, uint256[] calldata) external",
@@ -151,14 +147,13 @@ const handler = async (event) => {
 
   // Run a contract call or log what would have been called in dry-run mode.
   // On a live run, posts the tx hash to Discord after confirmation.
-  const execute = async (label, contractCall, dryRunDesc) => {
-    log(label);
+  const executeTx = async (contractCall) => {
     if (IS_DRY_RUN) {
-      log(`[DRY RUN] would have called ${dryRunDesc}`);
+      log(`[DRY RUN] Skipping contract calls in DRY MODE`);
       return;
     }
     const tx = await contractCall();
-    await logTxDetails(tx, label);
+    await logTxDetails(tx, "Rebalance Tx");
     if (webhookUrl) {
       postToDiscord(webhookUrl, `✅ Rebalance Tx sent: \`${tx.hash}\``).catch(
         (err) => log(`Discord tx hash post failed: ${err.message}`)
@@ -168,54 +163,44 @@ const handler = async (event) => {
 
   const hasCrossChainWithdrawal = withdrawals.some((a) => a.isCrossChain);
 
-  if (hasCrossChainWithdrawal) {
+  const withdrawalAddresses = withdrawals.map((a) => a.address);
+  const withdrawalAmounts = withdrawals.map(actionAmount);
+  const depositAddresses = deposits.map((a) => a.address);
+  const depositAmounts = deposits.map(actionAmount);
+
+  if (
+    hasCrossChainWithdrawal ||
+    (withdrawals.length > 0 && deposits.length == 0)
+  ) {
     // Cross-chain withdrawals are async (bridge settlement takes time).
-    // Defer all deposits until the next run after the bridge confirms.
-    await execute(
-      "Cross-chain withdrawal present — queueing withdrawals only",
-      () =>
-        rebalancerModule.processWithdrawals(
-          withdrawals.map((a) => a.address),
-          withdrawals.map(actionAmount)
-        ),
-      `processWithdrawals(${withdrawals.map((a) => a.address)})`
+    // Defer all deposits, if any, until the next run after the bridge confirms.
+    // Likewise, if there are no deposits, only queue withdrawals.
+    await executeTx(() =>
+      rebalancerModule.processWithdrawals(
+        withdrawalAddresses,
+        withdrawalAmounts
+      )
     );
   } else if (withdrawals.length > 0 && deposits.length > 0) {
     // All withdrawals are same-chain: freed USDC lands in the vault immediately,
     // so withdrawals and deposits can be batched into a single transaction.
-    await execute(
-      "All-sync rebalance — processing withdrawals and deposits together",
-      () =>
-        rebalancerModule.processWithdrawalsAndDeposits(
-          withdrawals.map((a) => a.address),
-          withdrawals.map(actionAmount),
-          deposits.map((a) => a.address),
-          deposits.map(actionAmount)
-        ),
-      `processWithdrawalsAndDeposits(${withdrawals.map(
-        (a) => a.address
-      )}, ${deposits.map((a) => a.address)})`
+    await executeTx(() =>
+      rebalancerModule.processWithdrawalsAndDeposits(
+        withdrawalAddresses,
+        withdrawalAmounts,
+        depositAddresses,
+        depositAmounts
+      )
     );
-  } else if (withdrawals.length > 0) {
-    await execute(
-      "Queueing withdrawals only",
-      () =>
-        rebalancerModule.processWithdrawals(
-          withdrawals.map((a) => a.address),
-          withdrawals.map(actionAmount)
-        ),
-      `processWithdrawals(${withdrawals.map((a) => a.address)})`
+  } else if (deposits.length > 0) {
+    // Queue deposits only.
+    await executeTx(() =>
+      rebalancerModule.processDeposits(depositAddresses, depositAmounts)
     );
   } else {
-    await execute(
-      "Queueing deposits only",
-      () =>
-        rebalancerModule.processDeposits(
-          deposits.map((a) => a.address),
-          deposits.map(actionAmount)
-        ),
-      `processDeposits(${deposits.map((a) => a.address)})`
-    );
+    // No actions to queue.
+    log("No actions to queue");
+    return;
   }
 };
 
