@@ -63,6 +63,7 @@ const {
   curvePoolTask,
 } = require("./curve");
 const { calculateMaxPricePerVoteTask, manageBribes } = require("./poolBooster");
+const { manageMerklBribesTask } = require("./merklPoolBooster");
 const {
   depositSSV,
   migrateClusterToETH,
@@ -713,6 +714,27 @@ subtask(
     });
   });
 task("manageCurvePoolBoosterBribes").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+subtask(
+  "manageMerklPoolBoosterBribes",
+  "Calls bribeAll on the MerklPoolBoosterBribesModule through the Gnosis Safe"
+)
+  .addOptionalParam(
+    "exclusionList",
+    "Comma-separated list of pool booster addresses to exclude",
+    "",
+    types.string
+  )
+  .addOptionalParam(
+    "moduleAddress",
+    "Override module address (default: resolved from chain)",
+    undefined,
+    types.string
+  )
+  .setAction(manageMerklBribesTask);
+task("manageMerklPoolBoosterBribes").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
 
