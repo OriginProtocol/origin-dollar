@@ -316,11 +316,14 @@ async function getProcessedDeposits(pendingDeposits) {
   return { processedDeposits, depositProcessedSlot };
 }
 
-async function verifyDeposits({ dryrun, signer }) {
+async function verifyDeposits({ dryrun, signer, consol = false }) {
   const stakingStrategy = await resolveContract(
     "CompoundingStakingSSVStrategyProxy",
     "CompoundingStakingSSVStrategy"
   );
+  const contract = consol
+    ? await resolveContract("ConsolidationController")
+    : stakingStrategy;
   const stakingStrategyView = await resolveContract(
     "CompoundingStakingStrategyView"
   );
@@ -343,7 +346,7 @@ async function verifyDeposits({ dryrun, signer }) {
   if (processedDeposits.length > 0) {
     log(`About to snap balances before verifying deposits`);
     if (!dryrun) {
-      await stakingStrategy.connect(signer).snapBalances();
+      await contract.connect(signer).snapBalances();
     }
   } else {
     console.log(

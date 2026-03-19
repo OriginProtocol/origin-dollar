@@ -2229,6 +2229,12 @@ subtask("verifyDeposits", "Verify any processed deposit on the Beacon chain")
     false,
     types.boolean
   )
+  .addOptionalParam(
+    "consol",
+    "Call the consolidation controller instead of the strategy",
+    false,
+    types.boolean
+  )
   .setAction(async (taskArgs) => {
     const signer = await getSigner();
     await verifyDeposits({ ...taskArgs, signer });
