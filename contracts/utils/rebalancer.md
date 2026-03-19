@@ -13,6 +13,7 @@ Determines the ideal target balance for each strategy, ignoring real-world const
 - Sorts strategies by APY descending and fills each up to `maxPerStrategyBps`
 - Ensures the default strategy always receives at least `minDefaultStrategyBps`
 - Reserves `shortfall + minVaultBalance` as idle vault cash — never deployed
+- Strategies with APY above `maxApyThreshold` are excluded from allocation (frozen at current balance) and flagged as suspicious
 
 ### 2. Filter Executable actions (`buildExecutableActions`)
 
@@ -76,3 +77,4 @@ Cross-chain amounts are capped at 10 M USDC (CCTP bridge limit).
 | `crossChainMinAmount` | $25 K USDC | Minimum for a cross-chain transfer (bridge overhead) |
 | `minVaultBalance` | $3 K USDC | Idle reserve always kept in the vault |
 | `minApySpread` | 0.5 % | Minimum APY improvement required to trigger a withdrawal |
+| `maxApyThreshold` | 50 % | APY above this is treated as suspicious — strategy is frozen in place |

@@ -724,6 +724,73 @@ describe("Rebalancer: buildExecutableActions", () => {
     expect(ethRow.action).to.equal(ACTION_NONE);
   });
 
+  // Excluded strategies (APY exceeds threshold) — frozen in place
+
+  it("excluded strategy passes through buildExecutableActions unchanged", () => {
+    const allocs = [
+      makeAllocation("Ethereum Morpho", 500000, 500000, 0.05, {
+        isDefault: true,
+      }),
+      makeAllocation("Base Morpho", 500000, 500000, 0.6, {
+        isCrossChain: true,
+      }),
+    ];
+    // Simulate exclusion: freeze Base in place (delta=0, action=none, reason set)
+    allocs[1].delta = ZERO;
+    allocs[1].targetBalance = allocs[1].balance;
+    allocs[1].action = ACTION_NONE;
+    allocs[1].reason = "APY exceeds threshold";
+
+    const result = buildExecutableActions(allocs, ZERO, usdc(0));
+    const baseRow = result.find((a) => a.isCrossChain);
+    expect(baseRow.action).to.equal(ACTION_NONE);
+    expect(baseRow.reason).to.equal("APY exceeds threshold");
+    expect(baseRow.delta).to.equal(ZERO);
+  });
+
+  it("excluded strategy is not picked for shortfall fallback", () => {
+    const allocs = [
+      makeAllocation("Ethereum Morpho", 0, 0, 0.05, { isDefault: true }),
+      makeAllocation("Base Morpho", 500000, 500000, 0.6, {
+        isCrossChain: true,
+      }),
+    ];
+    // Base is excluded (frozen) — should NOT be picked for shortfall withdrawal
+    allocs[1].delta = ZERO;
+    allocs[1].targetBalance = allocs[1].balance;
+    allocs[1].action = ACTION_NONE;
+    allocs[1].reason = "APY exceeds threshold";
+
+    const result = buildExecutableActions(allocs, usdc(80000), usdc(0));
+    const baseRow = result.find((a) => a.isCrossChain);
+    // Base stays frozen — shortfall fallback cannot pick it because its delta is 0
+    // and it has no withdrawal action for the fallback to consider
+    expect(baseRow.action).to.equal(ACTION_NONE);
+    expect(baseRow.reason).to.equal("APY exceeds threshold");
+  });
+
+  it("excluded default strategy does not receive surplus deposit fallback", () => {
+    const allocs = [
+      makeAllocation("Ethereum Morpho", 500000, 500000, 0.6, {
+        isDefault: true,
+      }),
+      makeAllocation("Base Morpho", 500000, 500000, 0.04, {
+        isCrossChain: true,
+      }),
+    ];
+    // Default is excluded (frozen)
+    allocs[0].delta = ZERO;
+    allocs[0].targetBalance = allocs[0].balance;
+    allocs[0].action = ACTION_NONE;
+    allocs[0].reason = "APY exceeds threshold";
+
+    // Vault surplus exists but default is frozen — surplus fallback skips it
+    const result = buildExecutableActions(allocs, ZERO, usdc(53000));
+    const ethRow = result.find((a) => a.isDefault);
+    expect(ethRow.action).to.equal(ACTION_NONE);
+    expect(ethRow.reason).to.equal("APY exceeds threshold");
+  });
+
   it("deposit discarded when trimmed amount falls below cross-chain min", () => {
     // Same setup but vault surplus = 10K < crossChainMinAmount (25K)
     const allocs = [

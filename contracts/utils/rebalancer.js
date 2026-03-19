@@ -465,8 +465,10 @@ function _computeShortfallWithdrawAmount(
  * Tries the default (same-chain) strategy first, then lowest-APY cross-chain.
  */
 function _coverShortfall(result, shortfall, constraints) {
-  // Try default (same-chain) strategy first
-  const defaultStrategy = result.find((a) => a.isDefault);
+  // Try default (same-chain) strategy first — skip if excluded (frozen)
+  const defaultStrategy = result.find(
+    (a) => a.isDefault && a.reason !== "APY exceeds threshold"
+  );
   if (defaultStrategy && defaultStrategy.balance.gt(0)) {
     const amt = _computeShortfallWithdrawAmount(
       defaultStrategy,
@@ -482,10 +484,13 @@ function _coverShortfall(result, shortfall, constraints) {
     }
   }
 
-  // Default couldn't cover — try lowest-APY cross-chain strategy
+  // Default couldn't cover — try lowest-APY cross-chain strategy (skip excluded)
   const crossChainCandidates = result
     .filter(
-      (a) => a.isCrossChain && a.balance.gt(constraints.crossChainMinAmount)
+      (a) =>
+        a.isCrossChain &&
+        a.balance.gt(constraints.crossChainMinAmount) &&
+        a.reason !== "APY exceeds threshold"
     )
     .sort((a, b) => a.apy - b.apy);
 
@@ -505,7 +510,9 @@ function _coverShortfall(result, shortfall, constraints) {
  * Deploy idle vault surplus to the default strategy.
  */
 function _deploySurplus(result, surplus) {
-  const defaultStrategy = result.find((a) => a.isDefault);
+  const defaultStrategy = result.find(
+    (a) => a.isDefault && a.reason !== "APY exceeds threshold"
+  );
   if (!defaultStrategy) return result;
 
   defaultStrategy.delta = surplus;
@@ -739,6 +746,30 @@ function printAllocationTable({
 }
 
 /**
+ * Separate strategies with suspiciously high APY from the active pool.
+ * Excluded strategies are frozen in place (no funds move to or from them).
+ */
+function _filterExcludedStrategies(strategies, apys, constraints) {
+  const active = [];
+  const excluded = [];
+  for (const s of strategies) {
+    const apy = apys[s.morphoVaultAddress] || 0;
+    if (apy > constraints.maxApyThreshold) {
+      log(
+        `WARNING: ${s.name} APY ${(apy * 100).toFixed(0)}% exceeds ` +
+          `threshold ${(constraints.maxApyThreshold * 100).toFixed(
+            0
+          )}% — excluding from allocation`
+      );
+      excluded.push(s);
+    } else {
+      active.push(s);
+    }
+  }
+  return { active, excluded };
+}
+
+/**
  * Main entry: read state, fetch APYs, compute allocations, print table.
  */
 async function buildRebalancePlan(provider) {
@@ -750,12 +781,33 @@ async function buildRebalancePlan(provider) {
     state.strategies.filter((s) => s.morphoVaultAddress)
   );
 
-  const optimalActions = computeOptimalAllocation({
-    strategies: state.strategies,
+  // Exclude strategies with suspiciously high APY
+  const { active, excluded } = _filterExcludedStrategies(
+    state.strategies,
+    apys,
+    ousdConstraints
+  );
+
+  // Compute optimal allocation for active strategies only
+  const optimalActive = computeOptimalAllocation({
+    strategies: active,
     apys,
     vaultBalance: state.vaultBalance,
     shortfall: state.shortfall,
   });
+
+  // Build frozen rows for excluded strategies
+  const optimalExcluded = excluded.map((s) => {
+    const row = _buildAllocationRow(
+      s,
+      s.balance,
+      apys[s.morphoVaultAddress] || 0
+    );
+    row.reason = "APY exceeds threshold";
+    return row;
+  });
+
+  const optimalActions = [...optimalActive, ...optimalExcluded];
 
   const executableActions = buildExecutableActions(
     optimalActions,

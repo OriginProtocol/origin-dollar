@@ -43,6 +43,7 @@ const ousdConstraints = {
   crossChainMinAmount: 25000000000, // $25K in USDC (6 decimals)
   minVaultBalance: 3000000000, // $3K in USDC (6 decimals)
   minApySpread: 0.005, // 0.5% minimum APY spread to trigger rebalancing
+  maxApyThreshold: 0.5, // 50% — APY above this is treated as suspicious
 };
 
 module.exports = { ousdStrategiesConfig, ousdConstraints };

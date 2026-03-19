@@ -88,7 +88,7 @@ const buildDiscordMessage = ({
     });
   }
 
-  return [
+  const lines = [
     header,
     "",
     "**Current Allocations**",
@@ -103,7 +103,27 @@ const buildDiscordMessage = ({
     "```",
     ...actionLines,
     "```",
-  ].join("\n");
+  ];
+
+  // Warnings (suspicious APY)
+  const warnings = allActions.filter(
+    (a) => a.reason === "APY exceeds threshold"
+  );
+  if (warnings.length > 0) {
+    lines.push("");
+    lines.push("**⚠️ Warnings**");
+    lines.push("```");
+    for (const w of warnings) {
+      lines.push(
+        `  ${w.name.padEnd(20)} APY ${(w.apy * 100).toFixed(
+          2
+        )}% — EXCLUDED (exceeds threshold)`
+      );
+    }
+    lines.push("```");
+  }
+
+  return lines.join("\n");
 };
 
 // Entrypoint for the Defender Action
