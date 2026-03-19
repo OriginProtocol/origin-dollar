@@ -5,6 +5,9 @@ const { parseUnits } = require("ethers/lib/utils");
 const {
   computeOptimalAllocation,
   buildExecutableActions,
+  ACTION_DEPOSIT,
+  ACTION_WITHDRAW,
+  ACTION_NONE,
 } = require("../../utils/rebalancer");
 
 const ZERO = BigNumber.from(0);
@@ -166,8 +169,8 @@ describe("Rebalancer: computeOptimalAllocation", () => {
       shortfall: ZERO,
     });
 
-    expect(result[0].action).to.equal("withdraw"); // ETH overallocated
-    expect(result[1].action).to.equal("deposit"); // Base underallocated
+    expect(result[0].action).to.equal(ACTION_WITHDRAW); // ETH overallocated
+    expect(result[1].action).to.equal(ACTION_DEPOSIT); // Base underallocated
   });
 
   it("should include APY in results", () => {
@@ -207,8 +210,8 @@ describe("Rebalancer: computeOptimalAllocation", () => {
 
     const total = result[0].targetBalance.add(result[1].targetBalance);
     expect(total).to.be.closeTo(usdc(997000), usdc(1)); // minus minVaultBalance
-    expect(result[0].action).to.equal("deposit");
-    expect(result[1].action).to.equal("deposit");
+    expect(result[0].action).to.equal(ACTION_DEPOSIT);
+    expect(result[1].action).to.equal(ACTION_DEPOSIT);
   });
 
   it("should output withdraw-all when shortfall exceeds total capital", () => {
@@ -224,15 +227,15 @@ describe("Rebalancer: computeOptimalAllocation", () => {
     const ethRow = result.find((r) => r.name === "Ethereum Morpho");
     const baseRow = result.find((r) => r.name === "Base Morpho");
     // Both strategies should be told to withdraw their full balance
-    expect(ethRow.action).to.equal("withdraw");
+    expect(ethRow.action).to.equal(ACTION_WITHDRAW);
     expect(ethRow.delta.abs()).to.equal(usdc(100000));
-    expect(baseRow.action).to.equal("withdraw");
+    expect(baseRow.action).to.equal(ACTION_WITHDRAW);
     expect(baseRow.delta.abs()).to.equal(usdc(50000));
   });
 });
 
 // ─────────────────────────────────────────────────────────
-// filterActions
+// buildExecutableActions
 // ─────────────────────────────────────────────────────────
 
 describe("Rebalancer: buildExecutableActions", () => {
@@ -257,7 +260,7 @@ describe("Rebalancer: buildExecutableActions", () => {
       targetBalance: targetBN,
       delta,
       apy,
-      action: delta.gt(0) ? "deposit" : delta.lt(0) ? "withdraw" : "none",
+      action: delta.gt(0) ? ACTION_DEPOSIT : delta.lt(0) ? ACTION_WITHDRAW : ACTION_NONE,
     };
   }
 
@@ -274,7 +277,7 @@ describe("Rebalancer: buildExecutableActions", () => {
     ];
     // delta = -100 USDC < $5K minMoveAmount
     const result = buildExecutableActions(allocs, ZERO, usdc(0));
-    expect(result[0].action).to.equal("none");
+    expect(result[0].action).to.equal(ACTION_NONE);
     expect(result[0].reason).to.equal("below min move");
   });
 
@@ -289,7 +292,7 @@ describe("Rebalancer: buildExecutableActions", () => {
     ];
     // Base overallocated by 10K, which is < $25K crossChainMinAmount
     const result = buildExecutableActions(allocs, ZERO, usdc(0));
-    expect(result[1].action).to.equal("none");
+    expect(result[1].action).to.equal(ACTION_NONE);
     expect(result[1].reason).to.equal("below cross-chain min");
   });
 
@@ -305,7 +308,7 @@ describe("Rebalancer: buildExecutableActions", () => {
     ];
     // maxApy = 0.054, ETH apy = 0.05, spread = 0.004 < 0.005 minApySpread
     const result = buildExecutableActions(allocs, ZERO, usdc(0));
-    expect(result[0].action).to.equal("none");
+    expect(result[0].action).to.equal(ACTION_NONE);
     expect(result[0].reason).to.equal("APY spread too small");
   });
 
@@ -320,7 +323,7 @@ describe("Rebalancer: buildExecutableActions", () => {
     ];
     // spread = 0.03, > 0.005 threshold, delta = 200K > minMoveAmount
     const result = buildExecutableActions(allocs, ZERO, usdc(0));
-    expect(result[0].action).to.equal("withdraw");
+    expect(result[0].action).to.equal(ACTION_WITHDRAW);
     expect(result[0].reason).to.be.undefined;
   });
 
@@ -337,7 +340,7 @@ describe("Rebalancer: buildExecutableActions", () => {
     // spread = maxApy(0.07) - baseApy(0.03) = 0.04 > 0.005
     const result = buildExecutableActions(allocs, ZERO, usdc(0));
     const baseRow = result.find((a) => a.isCrossChain);
-    expect(baseRow.action).to.equal("withdraw");
+    expect(baseRow.action).to.equal(ACTION_WITHDRAW);
     expect(baseRow.reason).to.be.undefined;
   });
 
@@ -353,7 +356,7 @@ describe("Rebalancer: buildExecutableActions", () => {
     // Base overallocated by 3K — below minMoveAmount (5K), so minMove fires before crossChainMin
     const result = buildExecutableActions(allocs, ZERO, usdc(0));
     const baseRow = result.find((a) => a.isCrossChain);
-    expect(baseRow.action).to.equal("none");
+    expect(baseRow.action).to.equal(ACTION_NONE);
     expect(baseRow.reason).to.equal("below min move");
   });
 
@@ -368,7 +371,7 @@ describe("Rebalancer: buildExecutableActions", () => {
       }),
     ];
     const result = buildExecutableActions(allocs, ZERO, usdc(0));
-    expect(result[1].action).to.equal("none");
+    expect(result[1].action).to.equal(ACTION_NONE);
     expect(result[1].reason).to.equal("transfer pending");
   });
 
@@ -384,7 +387,7 @@ describe("Rebalancer: buildExecutableActions", () => {
     // ETH at target → no withdrawal; vaultBalance = 0 → surplus = 0 → depositBudget = 0
     const result = buildExecutableActions(allocs, ZERO, usdc(0));
     const baseRow = result.find((a) => a.isCrossChain);
-    expect(baseRow.action).to.equal("none");
+    expect(baseRow.action).to.equal(ACTION_NONE);
     expect(baseRow.reason).to.equal("insufficient vault funds");
   });
 
@@ -401,9 +404,9 @@ describe("Rebalancer: buildExecutableActions", () => {
     const result = buildExecutableActions(allocs, ZERO, usdc(0));
     const ethRow = result.find((a) => a.isDefault);
     const baseRow = result.find((a) => a.isCrossChain);
-    expect(ethRow.action).to.equal("withdraw");
+    expect(ethRow.action).to.equal(ACTION_WITHDRAW);
     expect(ethRow.delta.abs()).to.equal(usdc(200000));
-    expect(baseRow.action).to.equal("deposit");
+    expect(baseRow.action).to.equal(ACTION_DEPOSIT);
     expect(baseRow.delta).to.equal(usdc(200000));
     expect(baseRow.reason).to.be.undefined;
   });
@@ -422,7 +425,7 @@ describe("Rebalancer: buildExecutableActions", () => {
     // ETH deposit: delta 1K → trimmed to min(1K, 200K) = 1K < minMoveAmount → discarded
     const result = buildExecutableActions(allocs, ZERO, usdc(0));
     const ethRow = result.find((a) => a.isDefault);
-    expect(ethRow.action).to.equal("none");
+    expect(ethRow.action).to.equal(ACTION_NONE);
     expect(ethRow.reason).to.equal("below min move");
   });
 
@@ -440,11 +443,11 @@ describe("Rebalancer: buildExecutableActions", () => {
     const highRow = result.find((a) => a.name === "Strategy High");
     const lowRow = result.find((a) => a.name === "Strategy Low");
     // High APY (0.07) funded first, trimmed to 60K
-    expect(highRow.action).to.equal("deposit");
+    expect(highRow.action).to.equal(ACTION_DEPOSIT);
     expect(highRow.delta).to.equal(usdc(60000));
     expect(highRow.reason).to.include("trimmed");
     // Low APY (0.03) gets nothing — budget exhausted
-    expect(lowRow.action).to.equal("none");
+    expect(lowRow.action).to.equal(ACTION_NONE);
     expect(lowRow.reason).to.equal("insufficient vault funds");
   });
 
@@ -461,7 +464,7 @@ describe("Rebalancer: buildExecutableActions", () => {
     ];
     // delta = 2K < minMoveAmount, no shortfall → filtered out in Pass 1
     const result = buildExecutableActions(allocs, ZERO, usdc(0));
-    expect(result[0].action).to.equal("none");
+    expect(result[0].action).to.equal(ACTION_NONE);
     expect(result[0].reason).to.equal("below min move");
   });
 
@@ -480,7 +483,7 @@ describe("Rebalancer: buildExecutableActions", () => {
     ];
     const result = buildExecutableActions(allocs, usdc(50000), usdc(0));
     const defaultRow = result.find((a) => a.isDefault);
-    expect(defaultRow.action).to.equal("withdraw");
+    expect(defaultRow.action).to.equal(ACTION_WITHDRAW);
     expect(defaultRow.delta.abs()).to.equal(usdc(50000));
     expect(defaultRow.reason).to.include("fallback");
   });
@@ -499,7 +502,7 @@ describe("Rebalancer: buildExecutableActions", () => {
     // APY spread = 0.004 < 0.005 → filtered in Pass 1
     const result = buildExecutableActions(allocs, usdc(50000), usdc(0));
     const defaultRow = result.find((a) => a.isDefault);
-    expect(defaultRow.action).to.equal("withdraw");
+    expect(defaultRow.action).to.equal(ACTION_WITHDRAW);
     // max(200K overallocation, 50K shortfall) = 200K, capped at balance (700K)
     expect(defaultRow.delta.abs()).to.equal(usdc(200000));
     expect(defaultRow.reason).to.include("fallback");
@@ -530,7 +533,7 @@ describe("Rebalancer: buildExecutableActions", () => {
     // shortfall = 10K < 25K crossChainMinAmount; Base filtered (cross-chain min); no withdraw approved
     const result = buildExecutableActions(allocs, usdc(10000), usdc(0));
     const defaultRow = result.find((a) => a.isDefault);
-    expect(defaultRow.action).to.equal("withdraw");
+    expect(defaultRow.action).to.equal(ACTION_WITHDRAW);
     expect(defaultRow.delta.abs()).to.equal(usdc(10000));
     expect(defaultRow.reason).to.include("fallback");
   });
@@ -546,7 +549,7 @@ describe("Rebalancer: buildExecutableActions", () => {
     const result = buildExecutableActions(allocs, usdc(100000), usdc(0));
     const defaultRow = result.find((a) => a.isDefault);
     // Default can't cover → fallback skips it. No cross-chain with sufficient balance either.
-    expect(defaultRow.action).to.equal("none");
+    expect(defaultRow.action).to.equal(ACTION_NONE);
   });
 
   it("fallback: withdraws shortfall from default when all withdrawals filtered in Pass 1", () => {
@@ -561,7 +564,7 @@ describe("Rebalancer: buildExecutableActions", () => {
     // Both at target → action "none" from computeAllocation; shortfall exists
     const result = buildExecutableActions(allocs, usdc(80000), usdc(0));
     const defaultRow = result.find((a) => a.isDefault);
-    expect(defaultRow.action).to.equal("withdraw");
+    expect(defaultRow.action).to.equal(ACTION_WITHDRAW);
     expect(defaultRow.reason).to.include("fallback");
     expect(defaultRow.delta.abs()).to.equal(usdc(80000));
   });
@@ -575,7 +578,7 @@ describe("Rebalancer: buildExecutableActions", () => {
     ];
     const result = buildExecutableActions(allocs, usdc(80000), usdc(0));
     const crossChainRow = result.find((a) => a.isCrossChain);
-    expect(crossChainRow.action).to.equal("withdraw");
+    expect(crossChainRow.action).to.equal(ACTION_WITHDRAW);
     expect(crossChainRow.reason).to.include("fallback");
   });
 
@@ -592,10 +595,10 @@ describe("Rebalancer: buildExecutableActions", () => {
     // hasWithdraw = true → shortfall fallback must NOT fire
     const result = buildExecutableActions(allocs, usdc(50000), usdc(0));
     const ethRow = result.find((a) => a.isDefault);
-    expect(ethRow.action).to.equal("withdraw");
+    expect(ethRow.action).to.equal(ACTION_WITHDRAW);
     expect(ethRow.reason).to.be.undefined; // pure rebalancing, not a fallback
     expect(ethRow.delta.abs()).to.equal(usdc(200000)); // rebalancing delta, not shortfall
-    const withdrawals = result.filter((a) => a.action === "withdraw");
+    const withdrawals = result.filter((a) => a.action === ACTION_WITHDRAW);
     expect(withdrawals).to.have.length(1);
   });
 
@@ -614,10 +617,10 @@ describe("Rebalancer: buildExecutableActions", () => {
     const highRow = result.find((a) => a.name === "Base High APY");
     const lowRow = result.find((a) => a.name === "Base Low APY");
     // Lowest APY (0.04) is selected for the fallback withdrawal
-    expect(lowRow.action).to.equal("withdraw");
+    expect(lowRow.action).to.equal(ACTION_WITHDRAW);
     expect(lowRow.reason).to.include("fallback");
     // Higher APY strategy is untouched
-    expect(highRow.action).to.equal("none");
+    expect(highRow.action).to.equal(ACTION_NONE);
   });
 
   // Fallback: no deposit actions but vault has surplus
@@ -635,7 +638,7 @@ describe("Rebalancer: buildExecutableActions", () => {
     const surplus = usdc(50000 + 3000); // surplus above minVaultBalance
     const result = buildExecutableActions(allocs, ZERO, surplus);
     const defaultRow = result.find((a) => a.isDefault);
-    expect(defaultRow.action).to.equal("deposit");
+    expect(defaultRow.action).to.equal(ACTION_DEPOSIT);
     expect(defaultRow.reason).to.include("surplus fallback");
     expect(defaultRow.delta).to.equal(usdc(50000)); // 50K surplus (3K is minVaultBalance)
   });
@@ -652,7 +655,7 @@ describe("Rebalancer: buildExecutableActions", () => {
     // ETH withdrawal 200K + vault surplus 47K → budget 247K; Base deposit 200K approved in Pass B
     // hasDeposit = true → surplus fallback must NOT fire
     const result = buildExecutableActions(allocs, ZERO, usdc(50000));
-    const deposits = result.filter((a) => a.action === "deposit");
+    const deposits = result.filter((a) => a.action === ACTION_DEPOSIT);
     expect(deposits).to.have.length(1);
     expect(deposits[0].name).to.equal("Base Morpho");
     const surplusDeposit = result.find(
@@ -670,7 +673,7 @@ describe("Rebalancer: buildExecutableActions", () => {
     // vaultBalance = 2K, shortfall = 0 → surplus = 2K - 0 - 3K = -1K ≤ 0 → no fallback
     const result = buildExecutableActions(allocs, ZERO, usdc(2000));
     const ethRow = result.find((a) => a.isDefault);
-    expect(ethRow.action).to.equal("none");
+    expect(ethRow.action).to.equal(ACTION_NONE);
   });
 
   it("budget uses only net vault surplus after shortfall deduction", () => {
@@ -686,7 +689,7 @@ describe("Rebalancer: buildExecutableActions", () => {
     ];
     const result = buildExecutableActions(allocs, usdc(50000), usdc(60000));
     const baseRow = result.find((a) => a.isCrossChain);
-    expect(baseRow.action).to.equal("deposit");
+    expect(baseRow.action).to.equal(ACTION_DEPOSIT);
     // 200K (withdrawal) + 7K (net vault surplus) = 207K, not 200K + 57K = 257K
     expect(baseRow.delta).to.equal(usdc(207000));
     expect(baseRow.reason).to.include("trimmed");
@@ -709,12 +712,12 @@ describe("Rebalancer: buildExecutableActions", () => {
     const result = buildExecutableActions(allocs, ZERO, usdc(53000));
     const baseRow = result.find((a) => a.isCrossChain);
     // ETH withdraw filtered → deposit budget = vaultSurplus = 50K
-    expect(baseRow.action).to.equal("deposit");
+    expect(baseRow.action).to.equal(ACTION_DEPOSIT);
     expect(baseRow.delta).to.equal(usdc(50000));
     expect(baseRow.reason).to.include("trimmed");
     // ETH stays filtered
     const ethRow = result.find((a) => a.isDefault);
-    expect(ethRow.action).to.equal("none");
+    expect(ethRow.action).to.equal(ACTION_NONE);
   });
 
   it("deposit discarded when trimmed amount falls below cross-chain min", () => {
@@ -730,7 +733,7 @@ describe("Rebalancer: buildExecutableActions", () => {
     // vaultBalance = 13K → surplus = 10K < 25K → deposit to cross-chain discarded
     const result = buildExecutableActions(allocs, ZERO, usdc(13000));
     const baseRow = result.find((a) => a.isCrossChain);
-    expect(baseRow.action).to.equal("none");
+    expect(baseRow.action).to.equal(ACTION_NONE);
     expect(baseRow.reason).to.include("cross-chain min");
   });
 });

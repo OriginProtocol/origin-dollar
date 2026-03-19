@@ -175,7 +175,7 @@ const handler = async (event) => {
 
   if (
     hasCrossChainWithdrawal ||
-    (withdrawals.length > 0 && deposits.length == 0)
+    (withdrawals.length > 0 && deposits.length === 0)
   ) {
     // Cross-chain withdrawals are async (bridge settlement takes time).
     // Defer all deposits, if any, until the next run after the bridge confirms.
