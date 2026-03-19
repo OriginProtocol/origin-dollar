@@ -53,7 +53,7 @@ function twoStrategies(ethBalance, baseBalance) {
 }
 
 // ─────────────────────────────────────────────────────────
-// computeAllocation
+// computeOptimalAllocation
 // ─────────────────────────────────────────────────────────
 
 describe("Rebalancer: computeOptimalAllocation", () => {
