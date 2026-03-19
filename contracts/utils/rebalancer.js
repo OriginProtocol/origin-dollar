@@ -56,11 +56,11 @@ async function readOnChainState(provider) {
   let availableVaultBalance = vaultBalance;
   if (shortfall.gt(0) && vaultBalance.gt(0)) {
     if (shortfall.lt(vaultBalance)) {
-      // This will reserved the next time `addWithdrawalQueueLiquidity` is called
+      // This will be reserved the next time `addWithdrawalQueueLiquidity` is called
       availableVaultBalance = vaultBalance.sub(shortfall);
       shortfall = BigNumber.from(0);
     } else {
-      // This will reserved the next time `addWithdrawalQueueLiquidity` is called
+      // This will be reserved the next time `addWithdrawalQueueLiquidity` is called
       availableVaultBalance = BigNumber.from(0);
       shortfall = shortfall.sub(vaultBalance);
     }
@@ -97,35 +97,48 @@ async function readOnChainState(provider) {
 }
 
 /**
- * Fetch APY from Morpho GraphQL API for a list of vaults.
- * @param {Array} vaults - [{morphoVaultAddress, morphoChainId}]
+ * Fetch a single vault's APY from the Morpho GraphQL API.
+ * Returns a numeric APY (e.g. 0.05 = 5%) or 0 on failure.
+ */
+async function _fetchMorphoVaultApy(morphoVaultAddress, morphoChainId) {
+  const query = `{
+    vaultByAddress(address: "${morphoVaultAddress}", chainId: ${morphoChainId}) {
+      state { netApy }
+    }
+  }`;
+
+  try {
+    const response = await fetch("https://api.morpho.org/graphql", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ query }),
+    });
+    const data = await response.json();
+    const netApy = data?.data?.vaultByAddress?.state?.netApy;
+    return netApy != null ? Number(netApy) : 0;
+  } catch (e) {
+    log(`Failed to fetch APY for ${morphoVaultAddress}: ${e.message}`);
+    return 0;
+  }
+}
+
+/**
+ * Fetch APYs for multiple vaults in parallel.
+ * @param {Array} vaults - objects with morphoVaultAddress and morphoChainId
  * @returns {object} map of morphoVaultAddress -> apy (float, e.g. 0.05 = 5%)
  */
 async function fetchMorphoApys(vaults) {
+  const entries = await Promise.all(
+    vaults.map(async (v) => [
+      v.morphoVaultAddress,
+      await _fetchMorphoVaultApy(v.morphoVaultAddress, v.morphoChainId),
+    ])
+  );
+
   const results = {};
-
-  for (const { morphoVaultAddress, morphoChainId } of vaults) {
-    const query = `{
-      vaultByAddress(address: "${morphoVaultAddress}", chainId: ${morphoChainId}) {
-        state { netApy }
-      }
-    }`;
-
-    try {
-      const response = await fetch("https://api.morpho.org/graphql", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ query }),
-      });
-      const data = await response.json();
-      const netApy = data?.data?.vaultByAddress?.state?.netApy;
-      results[morphoVaultAddress] = netApy != null ? Number(netApy) : 0;
-    } catch (e) {
-      log(`Failed to fetch APY for ${morphoVaultAddress}: ${e.message}`);
-      results[morphoVaultAddress] = 0;
-    }
+  for (const [addr, apy] of entries) {
+    results[addr] = apy;
   }
-
   return results;
 }
 
@@ -214,7 +227,7 @@ function _enforceDefaultMinimum(
 
   const sorted = [...strategies]
     .filter((s) => s.address !== defaultStrategy.address)
-    .sort((a, b) => targets[b.address].sub(targets[a.address]));
+    .sort((a, b) => (targets[b.address].gt(targets[a.address]) ? 1 : -1));
 
   let toReduce = deficit;
   for (const s of sorted) {
@@ -316,6 +329,16 @@ function _computeMaxApy(allocations) {
     .filter((a) => Number.isFinite(a.apy))
     .map((a) => a.apy);
   return apys.length > 0 ? Math.max(...apys) : 0;
+}
+
+/**
+ * Vault surplus above reserves (shortfall + minVaultBalance).
+ */
+function _computeVaultSurplus(vaultBalance, shortfall, constraints) {
+  const raw = vaultBalance
+    .sub(shortfall)
+    .sub(BigNumber.from(constraints.minVaultBalance));
+  return raw.gt(0) ? raw : BigNumber.from(0);
 }
 
 /**
@@ -476,16 +499,6 @@ function _coverShortfall(result, shortfall, constraints) {
   }
 
   return result;
-}
-
-/**
- * Vault surplus above reserves (shortfall + minVaultBalance).
- */
-function _computeVaultSurplus(vaultBalance, shortfall, constraints) {
-  const raw = vaultBalance
-    .sub(shortfall)
-    .sub(BigNumber.from(constraints.minVaultBalance));
-  return raw.gt(0) ? raw : BigNumber.from(0);
 }
 
 /**
@@ -673,7 +686,7 @@ function printAllocationTable({
   console.log("  * = default strategy\n");
 
   // ── Section 1: All optimal allocation changes ──────────────────────────────
-  const rawChanges = (optimalActions || actions).filter(
+  const rawChanges = tableRows.filter(
     (a) => !a.delta.isZero()
   );
 
@@ -736,12 +749,7 @@ async function buildRebalancePlan(provider) {
 
   log("Fetching Morpho APYs...");
   const apys = await fetchMorphoApys(
-    state.strategies
-      .filter((s) => s.morphoVaultAddress)
-      .map((s) => ({
-        morphoVaultAddress: s.morphoVaultAddress,
-        morphoChainId: s.morphoChainId,
-      }))
+    state.strategies.filter((s) => s.morphoVaultAddress)
   );
 
   const optimalActions = computeOptimalAllocation({
