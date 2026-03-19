@@ -260,7 +260,11 @@ describe("Rebalancer: buildExecutableActions", () => {
       targetBalance: targetBN,
       delta,
       apy,
-      action: delta.gt(0) ? ACTION_DEPOSIT : delta.lt(0) ? ACTION_WITHDRAW : ACTION_NONE,
+      action: delta.gt(0)
+        ? ACTION_DEPOSIT
+        : delta.lt(0)
+        ? ACTION_WITHDRAW
+        : ACTION_NONE,
     };
   }
 
