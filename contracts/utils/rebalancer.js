@@ -130,23 +130,6 @@ async function fetchMorphoApys(vaults) {
 }
 
 /**
- * Pure computation: given balances and APYs, compute target allocations.
- *
- * Total capital = sum(rebalancableBalances) + vaultBalance - shortfall - minVaultBalance
- * Shortfall + minVaultBalance are pre-reserved for the vault, excluded from the allocation pie.
- *
- * Allocation: sort strategies by APY descending, fill each up to maxPerStrategyBps.
- * Default strategy is guaranteed at least minDefaultStrategyBps.
- *
- * @param {object} params
- * @param {Array}  params.strategies
- * @param {object} params.apys - morphoVaultAddress -> apy (float)
- * @param {BigNumber} params.vaultBalance
- * @param {BigNumber} params.shortfall
- * @param {object} [params.constraints]
- * @returns {Array} allocation results
- */
-/**
  * Compute total capital minus reserved amounts (shortfall + minVaultBalance).
  */
 function _computeDeployableCapital(
@@ -269,6 +252,23 @@ function _buildAllocationRow(s, targetBalance, apy) {
   };
 }
 
+/**
+ * Pure computation: given balances and APYs, compute target allocations.
+ *
+ * Total capital = sum(rebalancableBalances) + vaultBalance - shortfall - minVaultBalance
+ * Shortfall + minVaultBalance are pre-reserved for the vault, excluded from the allocation pie.
+ *
+ * Allocation: sort strategies by APY descending, fill each up to maxPerStrategyBps.
+ * Default strategy is guaranteed at least minDefaultStrategyBps.
+ *
+ * @param {object} params
+ * @param {Array}  params.strategies
+ * @param {object} params.apys - morphoVaultAddress -> apy (float)
+ * @param {BigNumber} params.vaultBalance
+ * @param {BigNumber} params.shortfall
+ * @param {object} [params.constraints]
+ * @returns {Array} allocation results
+ */
 function computeOptimalAllocation({
   strategies,
   apys,
@@ -297,26 +297,17 @@ function computeOptimalAllocation({
     constraints,
     strategyApyOf
   );
-  _enforceDefaultMinimum(targets, strategies, deployableCapital, constraints);
+  const adjusted = _enforceDefaultMinimum(
+    targets,
+    strategies,
+    deployableCapital,
+    constraints
+  );
   return strategies.map((s) =>
-    _buildAllocationRow(s, targets[s.address], strategyApyOf(s))
+    _buildAllocationRow(s, adjusted[s.address], strategyApyOf(s))
   );
 }
 
-/**
- * Filter allocations: withdraw pass → budget calculation → deposit pass → fallbacks.
- *
- * Pass A (withdrawals): filter overallocated strategies by feasibility.
- * Budget:              approved withdrawals + vault surplus = max depositable.
- * Pass B (deposits):   allocate from budget in APY-desc order, apply feasibility checks.
- * Pass 2 (fallbacks):  shortfall and surplus fallbacks run after both passes.
- *
- * @param {Array}     allocations - output of computeOptimalAllocation
- * @param {BigNumber} shortfall   - vault withdrawal shortfall (after addWithdrawalQueueLiquidity offset)
- * @param {BigNumber} vaultBalance - vault idle USDC (after addWithdrawalQueueLiquidity offset)
- * @param {object}    [constraintOverrides]
- * @returns {Array}
- */
 /**
  * Highest APY across all strategies (used for APY spread check).
  */
@@ -328,56 +319,55 @@ function _computeMaxApy(allocations) {
 }
 
 /**
- * Check whether a withdrawal is feasible. Mutates the item directly if not.
+ * Filter withdrawals by feasibility: min move amount, cross-chain min, APY spread.
+ * Infeasible withdrawals are set to ACTION_NONE with a reason.
  */
-function _checkWithdrawalFeasibility(withdrawal, maxApy, constraints) {
-  const absDelta = withdrawal.delta.abs();
-  if (absDelta.lt(constraints.minMoveAmount)) {
-    withdrawal.action = ACTION_NONE;
-    withdrawal.reason = "below min move";
-  } else if (
-    withdrawal.isCrossChain &&
-    absDelta.lt(constraints.crossChainMinAmount)
-  ) {
-    withdrawal.action = ACTION_NONE;
-    withdrawal.reason = "below cross-chain min";
-  } else if (maxApy - withdrawal.apy < constraints.minApySpread) {
-    withdrawal.action = ACTION_NONE;
-    withdrawal.reason = "APY spread too small";
+function _filterWithdrawals(result, constraints) {
+  const maxApy = _computeMaxApy(result);
+  const withdrawals = result.filter((a) => a.action === ACTION_WITHDRAW);
+
+  for (const w of withdrawals) {
+    const absDelta = w.delta.abs();
+    if (absDelta.lt(constraints.minMoveAmount)) {
+      w.action = ACTION_NONE;
+      w.reason = "below min move";
+    } else if (w.isCrossChain && absDelta.lt(constraints.crossChainMinAmount)) {
+      w.action = ACTION_NONE;
+      w.reason = "below cross-chain min";
+    } else if (maxApy - w.apy < constraints.minApySpread) {
+      w.action = ACTION_NONE;
+      w.reason = "APY spread too small";
+    }
   }
-  return withdrawal;
+
+  return result;
 }
 
 /**
- * Compute deposit budget: approved withdrawal total + vault surplus above reserves.
+ * Compute deposit budget, then distribute across deposits in APY-descending order.
+ * Budget = approved withdrawal total + vault surplus above reserves.
+ * Infeasible deposits are set to ACTION_NONE with a reason.
  */
-function _computeDepositBudget(
-  allocations,
-  vaultBalance,
-  shortfall,
-  constraints
-) {
-  const approvedWithdrawals = allocations.filter(
+function _filterDeposits(result, vaultBalance, shortfall, constraints) {
+  // Budget = approved withdrawals + vault surplus above reserves
+  const approvedWithdrawals = result.filter(
     (a) => a.action === ACTION_WITHDRAW
   );
-  const approvedWithdrawTotal = approvedWithdrawals.reduce(
+  const withdrawTotal = approvedWithdrawals.reduce(
     (sum, a) => sum.add(a.delta.abs()),
     BigNumber.from(0)
   );
-  const rawSurplus = vaultBalance
-    .sub(shortfall)
-    .sub(BigNumber.from(constraints.minVaultBalance));
-  return approvedWithdrawTotal.add(
-    rawSurplus.gt(0) ? rawSurplus : BigNumber.from(0)
+  const vaultSurplus = _computeVaultSurplus(
+    vaultBalance,
+    shortfall,
+    constraints
   );
-}
+  let budget = withdrawTotal.add(vaultSurplus);
 
-/**
- * Distribute deposit budget across candidates (pre-sorted by APY descending).
- * Mutates items directly — skips or trims deposits as needed.
- */
-function _distributeDepositBudget(deposits, initialBudget, constraints) {
-  let budget = initialBudget;
+  // Distribute to deposits in APY-descending order
+  const deposits = result
+    .filter((a) => a.action === ACTION_DEPOSIT)
+    .sort((a, b) => b.apy - a.apy);
 
   for (const c of deposits) {
     if (c.isCrossChain && c.isTransferPending) {
@@ -413,7 +403,7 @@ function _distributeDepositBudget(deposits, initialBudget, constraints) {
     }
   }
 
-  return deposits;
+  return result;
 }
 
 /**
@@ -425,6 +415,7 @@ function _computeShortfallWithdrawAmount(
   shortfall,
   constraints
 ) {
+  // Default was already overallocated — withdraw the larger of delta and shortfall
   if (defaultStrategy.delta.lt(0)) {
     const effectiveAmt = defaultStrategy.delta.abs().gt(shortfall)
       ? defaultStrategy.delta.abs()
@@ -433,11 +424,13 @@ function _computeShortfallWithdrawAmount(
       ? defaultStrategy.balance
       : effectiveAmt;
   }
+  // Small shortfall (below cross-chain threshold) — withdraw from default regardless
   if (shortfall.lt(constraints.crossChainMinAmount)) {
     return defaultStrategy.balance.lt(shortfall)
       ? defaultStrategy.balance
       : shortfall;
   }
+  // Large shortfall — only withdraw if default can fully cover it
   if (defaultStrategy.balance.gte(shortfall)) {
     return shortfall;
   }
@@ -509,6 +502,20 @@ function _deploySurplus(result, surplus) {
   return result;
 }
 
+/**
+ * Filter allocations: withdraw pass → budget calculation → deposit pass → fallbacks.
+ *
+ * Pass A (withdrawals): filter overallocated strategies by feasibility.
+ * Budget:              approved withdrawals + vault surplus = max depositable.
+ * Pass B (deposits):   allocate from budget in APY-desc order, apply feasibility checks.
+ * Pass 2 (fallbacks):  shortfall and surplus fallbacks run after both passes.
+ *
+ * @param {Array}     allocations - output of computeOptimalAllocation
+ * @param {BigNumber} shortfall   - vault withdrawal shortfall (after addWithdrawalQueueLiquidity offset)
+ * @param {BigNumber} vaultBalance - vault idle USDC (after addWithdrawalQueueLiquidity offset)
+ * @param {object}    [constraintOverrides]
+ * @returns {Array}
+ */
 function buildExecutableActions(
   allocations,
   shortfall = BigNumber.from(0),
@@ -517,25 +524,12 @@ function buildExecutableActions(
 ) {
   const constraints = { ...ousdConstraints, ...constraintOverrides };
   let result = allocations.map((a) => ({ ...a }));
-  const maxApy = _computeMaxApy(result);
 
-  // 1. Check each withdrawal for feasibility
-  const withdrawals = result.filter((a) => a.action === ACTION_WITHDRAW);
-  for (const w of withdrawals) {
-    _checkWithdrawalFeasibility(w, maxApy, constraints);
-  }
+  // 1. Filter withdrawals by feasibility (min move, cross-chain min, APY spread)
+  result = _filterWithdrawals(result, constraints);
 
   // 2. Distribute available budget across deposits (highest APY first)
-  const budget = _computeDepositBudget(
-    result,
-    vaultBalance,
-    shortfall,
-    constraints
-  );
-  const deposits = result
-    .filter((a) => a.action === ACTION_DEPOSIT)
-    .sort((a, b) => b.apy - a.apy);
-  _distributeDepositBudget(deposits, budget, constraints);
+  result = _filterDeposits(result, vaultBalance, shortfall, constraints);
 
   // 3. Fallback: cover shortfall if no withdrawals were approved
   const hasApprovedWithdrawals = result.some(
