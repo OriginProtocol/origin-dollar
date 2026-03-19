@@ -686,9 +686,7 @@ function printAllocationTable({
   console.log("  * = default strategy\n");
 
   // ── Section 1: All optimal allocation changes ──────────────────────────────
-  const rawChanges = tableRows.filter(
-    (a) => !a.delta.isZero()
-  );
+  const rawChanges = tableRows.filter((a) => !a.delta.isZero());
 
   console.log("--- Actions for Optimal Allocation ---\n");
   if (rawChanges.length === 0) {
