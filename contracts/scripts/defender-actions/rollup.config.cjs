@@ -41,7 +41,8 @@ const actions = [
   "sonicClaimWithdrawals",
   "claimBribes",
   "crossChainRelay",
-  "manageBribes"
+  "manageBribes",
+  "updateVotemarketEpochs"
 ];
 
 module.exports = actions.map((action) => ({
