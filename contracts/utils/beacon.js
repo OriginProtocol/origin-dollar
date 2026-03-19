@@ -200,25 +200,76 @@ const getValidator = async (pubkey) => {
   return normalizeValidatorResponse(validatorRes.value());
 };
 
+const getValidatorsIndividually = async (client, validatorIds) => {
+  const validators = [];
+
+  for (const validatorId of validatorIds) {
+    log(`Falling back to single-validator lookup for ${validatorId}`);
+
+    const validatorRes = await client.beacon.getStateValidator({
+      stateId: "head",
+      validatorId,
+    });
+    if (!validatorRes.ok) {
+      console.error(validatorRes);
+      throw Error(
+        `Failed to get validator details for ${validatorId}. Status ${validatorRes.status} ${validatorRes.statusText}`
+      );
+    }
+
+    validators.push(validatorRes.value());
+  }
+
+  return validators;
+};
+
+const getValidatorsByPost = async (client, validatorIds, attempts = 2) => {
+  let lastError;
+
+  for (let attempt = 1; attempt <= attempts; attempt++) {
+    try {
+      const postValidatorsRes = await client.beacon.postStateValidators({
+        stateId: "head",
+        validatorIds,
+      });
+
+      if (postValidatorsRes.ok) {
+        return postValidatorsRes.value();
+      }
+
+      lastError = new Error(
+        `Bulk validator POST failed with status ${postValidatorsRes.status} ${postValidatorsRes.statusText}`
+      );
+      log(`${lastError.message}. Attempt ${attempt} of ${attempts}.`);
+    } catch (err) {
+      lastError = err;
+      log(
+        `Bulk validator POST threw ${err.name || "Error"}: ${
+          err.message
+        }. Attempt ${attempt} of ${attempts}.`
+      );
+    }
+  }
+
+  if (lastError) {
+    log(`Bulk validator POST failed after ${attempts} attempts.`);
+  }
+
+  return null;
+};
+
 const getValidators = async (pubkeys) => {
   const client = await configClient();
   const validatorIds = Array.isArray(pubkeys) ? pubkeys : pubkeys.split(",");
 
   log(`Fetching ${validatorIds.length} validator details from the beacon node`);
-  const validatorsRes = await client.beacon.getStateValidators({
-    stateId: "head",
-    validatorIds,
-  });
-  if (!validatorsRes.ok) {
-    console.error(validatorsRes);
-    throw Error(
-      `Failed to get validator details for ${validatorIds.join(",")}. Status ${
-        validatorsRes.status
-      } ${validatorsRes.statusText}`
-    );
+  let validators = await getValidatorsByPost(client, validatorIds);
+
+  if (!validators) {
+    validators = await getValidatorsIndividually(client, validatorIds);
   }
 
-  const validators = validatorsRes.value().map(normalizeValidatorResponse);
+  validators = validators.map(normalizeValidatorResponse);
   return validators.length === 1 ? validators[0] : validators;
 };
 
