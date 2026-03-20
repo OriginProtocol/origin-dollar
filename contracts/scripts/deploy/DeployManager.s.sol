@@ -133,9 +133,6 @@ contract DeployManager is Base {
 
         // Iterate through ALL files, skipping those that are fully complete
         for (uint256 i; i < files.length; i++) {
-            // Only process Solidity deploy scripts (*.s.sol)
-            if (!vm.contains(files[i].path, ".s.sol")) continue;
-
             // Split the full file path by "/" to extract the filename
             // e.g., "/path/to/scripts/deploy/mainnet/015_UpgradeEthenaARMScript.sol"
             // ->    ["path", "to", ..., "015_UpgradeEthenaARMScript.sol"]
