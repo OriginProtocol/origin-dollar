@@ -46,7 +46,7 @@ jobs:
         run: forge build
       - name: Check contract sizes
         working-directory: contracts
-        run: forge build --sizes --skip "test/**" --skip "script/**"
+        run: forge build --sizes --skip "test/**" --skip "tests/**" --skip "script/**"
 
   # ── Unit Tests ──────────────────────────────────────────────
   unit-tests:
