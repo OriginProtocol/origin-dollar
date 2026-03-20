@@ -71,7 +71,7 @@
   "180_vault_upgrade_supernova_AMO": 1772814443,
   "181_staking_consolidation": 1773053999,
   "182_chunk_curve_pb_module": 1773401379,
-  "183_harvesting_eip1271": 1773759138,
   "184_crosschain_strategy_hyperevm_proxies": 1773760661,
-  "185_crosschain_strategy_hyperevm": 1773764941
+  "185_crosschain_strategy_hyperevm": 1773764941,
+  "183_harvesting_eip1271": 1773933870
 }

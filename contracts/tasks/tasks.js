@@ -64,6 +64,7 @@ const {
 } = require("./curve");
 const { calculateMaxPricePerVoteTask, manageBribes } = require("./poolBooster");
 const { updateVotemarketEpochsTask } = require("./votemarket");
+const { manageMerklBribesTask } = require("./merklPoolBooster");
 const {
   depositSSV,
   migrateClusterToETH,
@@ -129,6 +130,7 @@ const {
   requestValidatorWithdraw,
   beaconRoot,
   getValidator,
+  getValidators,
   verifyValidator,
   verifyDeposit,
   verifyDeposits,
@@ -728,6 +730,27 @@ subtask(
   )
   .setAction(updateVotemarketEpochsTask);
 task("updateVotemarketEpochs").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+subtask(
+  "manageMerklPoolBoosterBribes",
+  "Calls bribeAll on the MerklPoolBoosterBribesModule through the Gnosis Safe"
+)
+  .addOptionalParam(
+    "exclusionList",
+    "Comma-separated list of pool booster addresses to exclude",
+    "",
+    types.string
+  )
+  .addOptionalParam(
+    "moduleAddress",
+    "Override module address (default: resolved from chain)",
+    undefined,
+    types.string
+  )
+  .setAction(manageMerklBribesTask);
+task("manageMerklPoolBoosterBribes").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
 
@@ -1460,7 +1483,13 @@ subtask(
     undefined,
     types.int
   )
-  .setAction(async ({ index }) => {
+  .addOptionalParam(
+    "consol",
+    "Call the consolidation controller instead of the strategy",
+    false,
+    types.boolean
+  )
+  .setAction(async ({ index, consol }) => {
     const signer = await getSigner();
 
     const nativeStakingStrategy = await resolveNativeStakingStrategyProxy(
@@ -1468,6 +1497,7 @@ subtask(
     );
 
     await doAccounting({
+      consol,
       signer,
       nativeStakingStrategy,
     });
@@ -1767,7 +1797,7 @@ task("depositRoot").setAction(async (_, __, runSuper) => {
 subtask(
   "encryptMasterPrivateKey",
   "Encrypt the master validator private key whose public key pair is used " +
-    "by the P2P service to encrypt each validator private key."
+  "by the P2P service to encrypt each validator private key."
 )
   .addParam(
     "privateKey",
@@ -1845,7 +1875,7 @@ task("decrypt").setAction(async (_, __, runSuper) => {
 subtask(
   "masterDecrypt",
   "Decrypt a message using a Elliptic-curve Diffie–Hellman (ECDH) key pair by using the " +
-    "master validator encoding key decrypted by AWS KMS service."
+  "master validator encoding key decrypted by AWS KMS service."
 )
   .addParam(
     "message",
@@ -2123,8 +2153,38 @@ subtask("getValidator", "Gets the details of a validator")
     undefined,
     types.int
   )
+  .addOptionalParam(
+    "epoch",
+    "Beacon chain epoch. Uses the first slot of the epoch",
+    undefined,
+    types.int
+  )
   .setAction(getValidator);
 task("getValidator").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+subtask("getValidators", "Gets the details of multiple validators")
+  .addParam(
+    "pubkeys",
+    "Comma separated list of validator public keys in hex format with a 0x prefix",
+    undefined,
+    types.string
+  )
+  .addOptionalParam(
+    "slot",
+    "Beacon chain slot. Default head",
+    undefined,
+    types.int
+  )
+  .addOptionalParam(
+    "epoch",
+    "Beacon chain epoch. Uses the first slot of the epoch",
+    undefined,
+    types.int
+  )
+  .setAction(getValidators);
+task("getValidators").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
 
@@ -2204,6 +2264,12 @@ subtask("verifyDeposits", "Verify any processed deposit on the Beacon chain")
   .addOptionalParam(
     "dryrun",
     "Do not call verifyDeposit on the strategy contract. Just log the params including the proofs",
+    false,
+    types.boolean
+  )
+  .addOptionalParam(
+    "consol",
+    "Call the consolidation controller instead of the strategy",
     false,
     types.boolean
   )
@@ -2614,9 +2680,14 @@ task("failConsol").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
 
-subtask("confirmConsol", "Confirm a validator consolidation").setAction(
-  confirmConsolidation
-);
+subtask("confirmConsol", "Confirm a validator consolidation")
+  .addOptionalParam(
+    "safe",
+    "Generate a Safe Transaction Builder file instead of sending the transaction",
+    false,
+    types.boolean
+  )
+  .setAction(confirmConsolidation);
 task("confirmConsol").setAction(async (_, __, runSuper) => {
   return runSuper();
 });

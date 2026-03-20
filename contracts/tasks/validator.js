@@ -169,9 +169,24 @@ async function exitValidator({ index, pubkey, operatorids, signer }) {
   await logTxDetails(tx, "exitSsvValidator");
 }
 
-async function doAccounting({ signer, nativeStakingStrategy }) {
-  log(`About to doAccounting`);
-  const tx = await nativeStakingStrategy.connect(signer).doAccounting();
+async function doAccounting({ signer, nativeStakingStrategy, consol = false }) {
+  let tx;
+
+  if (consol) {
+    const controller = await resolveContract("ConsolidationController");
+    log(
+      `About to doAccounting via ConsolidationController ${controller.address} for strategy ${nativeStakingStrategy.address}`
+    );
+    tx = await controller
+      .connect(signer)
+      .doAccounting(nativeStakingStrategy.address);
+  } else {
+    log(
+      `About to doAccounting directly on strategy ${nativeStakingStrategy.address}`
+    );
+    tx = await nativeStakingStrategy.connect(signer).doAccounting();
+  }
+
   await logTxDetails(tx, "doAccounting");
 }
 
