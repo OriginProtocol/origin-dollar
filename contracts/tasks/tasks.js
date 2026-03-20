@@ -129,6 +129,7 @@ const {
   requestValidatorWithdraw,
   beaconRoot,
   getValidator,
+  getValidators,
   verifyValidator,
   verifyDeposit,
   verifyDeposits,
@@ -1466,7 +1467,13 @@ subtask(
     undefined,
     types.int
   )
-  .setAction(async ({ index }) => {
+  .addOptionalParam(
+    "consol",
+    "Call the consolidation controller instead of the strategy",
+    false,
+    types.boolean
+  )
+  .setAction(async ({ index, consol }) => {
     const signer = await getSigner();
 
     const nativeStakingStrategy = await resolveNativeStakingStrategyProxy(
@@ -1474,6 +1481,7 @@ subtask(
     );
 
     await doAccounting({
+      consol,
       signer,
       nativeStakingStrategy,
     });
@@ -2129,8 +2137,38 @@ subtask("getValidator", "Gets the details of a validator")
     undefined,
     types.int
   )
+  .addOptionalParam(
+    "epoch",
+    "Beacon chain epoch. Uses the first slot of the epoch",
+    undefined,
+    types.int
+  )
   .setAction(getValidator);
 task("getValidator").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+subtask("getValidators", "Gets the details of multiple validators")
+  .addParam(
+    "pubkeys",
+    "Comma separated list of validator public keys in hex format with a 0x prefix",
+    undefined,
+    types.string
+  )
+  .addOptionalParam(
+    "slot",
+    "Beacon chain slot. Default head",
+    undefined,
+    types.int
+  )
+  .addOptionalParam(
+    "epoch",
+    "Beacon chain epoch. Uses the first slot of the epoch",
+    undefined,
+    types.int
+  )
+  .setAction(getValidators);
+task("getValidators").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
 
@@ -2210,6 +2248,12 @@ subtask("verifyDeposits", "Verify any processed deposit on the Beacon chain")
   .addOptionalParam(
     "dryrun",
     "Do not call verifyDeposit on the strategy contract. Just log the params including the proofs",
+    false,
+    types.boolean
+  )
+  .addOptionalParam(
+    "consol",
+    "Call the consolidation controller instead of the strategy",
     false,
     types.boolean
   )
@@ -2620,9 +2664,14 @@ task("failConsol").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
 
-subtask("confirmConsol", "Confirm a validator consolidation").setAction(
-  confirmConsolidation
-);
+subtask("confirmConsol", "Confirm a validator consolidation")
+  .addOptionalParam(
+    "safe",
+    "Generate a Safe Transaction Builder file instead of sending the transaction",
+    false,
+    types.boolean
+  )
+  .setAction(confirmConsolidation);
 task("confirmConsol").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
