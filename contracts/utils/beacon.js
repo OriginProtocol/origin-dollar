@@ -140,7 +140,9 @@ const getBeaconBlock = async (slot = "head", networkName = "mainnet") => {
     const headers = { Accept: "application/octet-stream" };
     // Preserve Basic auth credentials embedded in the provider URL
     if (parsedUrl.username || parsedUrl.password) {
-      const creds = `${decodeURIComponent(parsedUrl.username)}:${decodeURIComponent(parsedUrl.password)}`;
+      const creds = `${decodeURIComponent(
+        parsedUrl.username
+      )}:${decodeURIComponent(parsedUrl.password)}`;
       headers.Authorization = `Basic ${Buffer.from(creds).toString("base64")}`;
       parsedUrl.username = "";
       parsedUrl.password = "";
