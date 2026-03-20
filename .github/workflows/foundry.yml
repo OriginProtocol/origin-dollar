@@ -17,9 +17,9 @@ concurrency:
   group: foundry-${{ github.ref }}
 
 jobs:
-  # ── Formatting ──────────────────────────────────────────────
+  # ── Formatting & Lint ───────────────────────────────────────
   fmt:
-    name: Formatting
+    name: Formatting & Lint
     if: github.event_name != 'schedule'
     runs-on: ubuntu-latest
     steps:
@@ -27,9 +27,15 @@ jobs:
         with:
           submodules: recursive
       - uses: ./.github/actions/foundry-setup
-      - name: Check formatting
+      - name: Check Solidity formatting (forge)
         working-directory: contracts
         run: forge fmt --check scripts/ tests/
+      - name: Check JS formatting (prettier)
+        working-directory: contracts
+        run: npx prettier -c "*.js" "deploy/**/*.js" "scripts/**/*.js" "tasks/**/*.js" "test/**/*.js" "utils/**/*.js"
+      - name: Lint
+        working-directory: contracts
+        run: pnpm run lint
 
   # ── Build ───────────────────────────────────────────────────
   build:
