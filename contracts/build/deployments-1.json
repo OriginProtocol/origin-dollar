@@ -67,6 +67,14 @@
         {
             "implementation": "0xB1d624fc40824683e2bFBEfd19eB208DbBE00866",
             "name": "CROSS_CHAIN_MASTER_STRATEGY"
+        },
+        {
+            "implementation": "0xba0e352AB5c13861C26e4E773e7a833C3A223FE6",
+            "name": "OETH_CURVE_AMO_STRATEGY"
+        },
+        {
+            "implementation": "0x26a02ec47ACC2A3442b757F45E0A82B8e993Ce11",
+            "name": "OUSD_CURVE_AMO_STRATEGY"
         }
     ],
     "executions": [

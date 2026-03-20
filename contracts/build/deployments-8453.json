@@ -43,6 +43,10 @@
         {
             "implementation": "0xB1d624fc40824683e2bFBEfd19eB208DbBE00866",
             "name": "CROSS_CHAIN_REMOTE_STRATEGY"
+        },
+        {
+            "implementation": "0x9cfcAF81600155e01c63e4D2993A8A81A8205829",
+            "name": "OETHBASE_CURVE_AMO_STRATEGY"
         }
     ],
     "executions": [
