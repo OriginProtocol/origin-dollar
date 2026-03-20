@@ -17,21 +17,32 @@ contract Unit_Concrete_CurvePoolBoosterFactory_CreateCurvePoolBoosterPlain_Test 
     function test_createCurvePoolBoosterPlain() public {
         vm.prank(governor);
         curvePoolBoosterFactory.createCurvePoolBoosterPlain(
-            address(oeth), mockGauge, mockFeeCollector, DEFAULT_FEE, mockCampaignRemoteManager, mockVotemarket,
-            validSalt, address(0)
+            address(oeth),
+            mockGauge,
+            mockFeeCollector,
+            DEFAULT_FEE,
+            mockCampaignRemoteManager,
+            mockVotemarket,
+            validSalt,
+            address(0)
         );
 
         assertEq(curvePoolBoosterFactory.poolBoosterLength(), 1);
     }
 
     function test_createCurvePoolBoosterPlain_storesEntry() public {
-        address expectedAddr =
-            curvePoolBoosterFactory.computePoolBoosterAddress(address(oeth), mockGauge, validSalt);
+        address expectedAddr = curvePoolBoosterFactory.computePoolBoosterAddress(address(oeth), mockGauge, validSalt);
 
         vm.prank(governor);
         curvePoolBoosterFactory.createCurvePoolBoosterPlain(
-            address(oeth), mockGauge, mockFeeCollector, DEFAULT_FEE, mockCampaignRemoteManager, mockVotemarket,
-            validSalt, address(0)
+            address(oeth),
+            mockGauge,
+            mockFeeCollector,
+            DEFAULT_FEE,
+            mockCampaignRemoteManager,
+            mockVotemarket,
+            validSalt,
+            address(0)
         );
 
         // Verify poolBoosters array entry
@@ -47,8 +58,7 @@ contract Unit_Concrete_CurvePoolBoosterFactory_CreateCurvePoolBoosterPlain_Test 
     }
 
     function test_createCurvePoolBoosterPlain_emitsOnRegistry() public {
-        address expectedAddr =
-            curvePoolBoosterFactory.computePoolBoosterAddress(address(oeth), mockGauge, validSalt);
+        address expectedAddr = curvePoolBoosterFactory.computePoolBoosterAddress(address(oeth), mockGauge, validSalt);
 
         vm.expectEmit(true, true, true, true, address(centralRegistry));
         emit IPoolBoostCentralRegistry.PoolBoosterCreated(
@@ -60,20 +70,31 @@ contract Unit_Concrete_CurvePoolBoosterFactory_CreateCurvePoolBoosterPlain_Test 
 
         vm.prank(governor);
         curvePoolBoosterFactory.createCurvePoolBoosterPlain(
-            address(oeth), mockGauge, mockFeeCollector, DEFAULT_FEE, mockCampaignRemoteManager, mockVotemarket,
-            validSalt, address(0)
+            address(oeth),
+            mockGauge,
+            mockFeeCollector,
+            DEFAULT_FEE,
+            mockCampaignRemoteManager,
+            mockVotemarket,
+            validSalt,
+            address(0)
         );
     }
 
     function test_createCurvePoolBoosterPlain_expectedAddressMatch() public {
-        address expectedAddr =
-            curvePoolBoosterFactory.computePoolBoosterAddress(address(oeth), mockGauge, validSalt);
+        address expectedAddr = curvePoolBoosterFactory.computePoolBoosterAddress(address(oeth), mockGauge, validSalt);
 
         // Pass expectedAddress equal to the computed address -- should succeed
         vm.prank(governor);
         curvePoolBoosterFactory.createCurvePoolBoosterPlain(
-            address(oeth), mockGauge, mockFeeCollector, DEFAULT_FEE, mockCampaignRemoteManager, mockVotemarket,
-            validSalt, expectedAddr
+            address(oeth),
+            mockGauge,
+            mockFeeCollector,
+            DEFAULT_FEE,
+            mockCampaignRemoteManager,
+            mockVotemarket,
+            validSalt,
+            expectedAddr
         );
 
         assertEq(curvePoolBoosterFactory.poolBoosterLength(), 1);
@@ -83,8 +104,14 @@ contract Unit_Concrete_CurvePoolBoosterFactory_CreateCurvePoolBoosterPlain_Test 
         // Pass address(0) for expectedAddress -- should succeed (verification is skipped)
         vm.prank(governor);
         curvePoolBoosterFactory.createCurvePoolBoosterPlain(
-            address(oeth), mockGauge, mockFeeCollector, DEFAULT_FEE, mockCampaignRemoteManager, mockVotemarket,
-            validSalt, address(0)
+            address(oeth),
+            mockGauge,
+            mockFeeCollector,
+            DEFAULT_FEE,
+            mockCampaignRemoteManager,
+            mockVotemarket,
+            validSalt,
+            address(0)
         );
 
         assertEq(curvePoolBoosterFactory.poolBoosterLength(), 1);
@@ -93,8 +120,14 @@ contract Unit_Concrete_CurvePoolBoosterFactory_CreateCurvePoolBoosterPlain_Test 
     function test_createCurvePoolBoosterPlain_strategistCanCall() public {
         vm.prank(strategist);
         curvePoolBoosterFactory.createCurvePoolBoosterPlain(
-            address(oeth), mockGauge, mockFeeCollector, DEFAULT_FEE, mockCampaignRemoteManager, mockVotemarket,
-            validSalt, address(0)
+            address(oeth),
+            mockGauge,
+            mockFeeCollector,
+            DEFAULT_FEE,
+            mockCampaignRemoteManager,
+            mockVotemarket,
+            validSalt,
+            address(0)
         );
 
         assertEq(curvePoolBoosterFactory.poolBoosterLength(), 1);
@@ -104,8 +137,14 @@ contract Unit_Concrete_CurvePoolBoosterFactory_CreateCurvePoolBoosterPlain_Test 
         vm.prank(alice);
         vm.expectRevert("Caller is not the Strategist or Governor");
         curvePoolBoosterFactory.createCurvePoolBoosterPlain(
-            address(oeth), mockGauge, mockFeeCollector, DEFAULT_FEE, mockCampaignRemoteManager, mockVotemarket,
-            validSalt, address(0)
+            address(oeth),
+            mockGauge,
+            mockFeeCollector,
+            DEFAULT_FEE,
+            mockCampaignRemoteManager,
+            mockVotemarket,
+            validSalt,
+            address(0)
         );
     }
 
@@ -119,8 +158,14 @@ contract Unit_Concrete_CurvePoolBoosterFactory_CreateCurvePoolBoosterPlain_Test 
         vm.prank(strategist);
         vm.expectRevert("Governor not set");
         freshFactory.createCurvePoolBoosterPlain(
-            address(oeth), mockGauge, mockFeeCollector, DEFAULT_FEE, mockCampaignRemoteManager, mockVotemarket,
-            salt, address(0)
+            address(oeth),
+            mockGauge,
+            mockFeeCollector,
+            DEFAULT_FEE,
+            mockCampaignRemoteManager,
+            mockVotemarket,
+            salt,
+            address(0)
         );
     }
 
@@ -133,8 +178,14 @@ contract Unit_Concrete_CurvePoolBoosterFactory_CreateCurvePoolBoosterPlain_Test 
         vm.prank(governor);
         vm.expectRevert("Strategist not set");
         freshFactory.createCurvePoolBoosterPlain(
-            address(oeth), mockGauge, mockFeeCollector, DEFAULT_FEE, mockCampaignRemoteManager, mockVotemarket,
-            salt, address(0)
+            address(oeth),
+            mockGauge,
+            mockFeeCollector,
+            DEFAULT_FEE,
+            mockCampaignRemoteManager,
+            mockVotemarket,
+            salt,
+            address(0)
         );
     }
 
@@ -144,8 +195,14 @@ contract Unit_Concrete_CurvePoolBoosterFactory_CreateCurvePoolBoosterPlain_Test 
         vm.prank(governor);
         vm.expectRevert("Front-run protection failed");
         curvePoolBoosterFactory.createCurvePoolBoosterPlain(
-            address(oeth), mockGauge, mockFeeCollector, DEFAULT_FEE, mockCampaignRemoteManager, mockVotemarket,
-            badSalt, address(0)
+            address(oeth),
+            mockGauge,
+            mockFeeCollector,
+            DEFAULT_FEE,
+            mockCampaignRemoteManager,
+            mockVotemarket,
+            badSalt,
+            address(0)
         );
     }
 
@@ -155,8 +212,14 @@ contract Unit_Concrete_CurvePoolBoosterFactory_CreateCurvePoolBoosterPlain_Test 
         vm.prank(governor);
         vm.expectRevert("Pool booster deployed at unexpected address");
         curvePoolBoosterFactory.createCurvePoolBoosterPlain(
-            address(oeth), mockGauge, mockFeeCollector, DEFAULT_FEE, mockCampaignRemoteManager, mockVotemarket,
-            validSalt, wrongAddress
+            address(oeth),
+            mockGauge,
+            mockFeeCollector,
+            DEFAULT_FEE,
+            mockCampaignRemoteManager,
+            mockVotemarket,
+            validSalt,
+            wrongAddress
         );
     }
 }

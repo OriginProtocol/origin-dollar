@@ -67,27 +67,15 @@ abstract contract Unit_Curve_Shared_Test is Base {
     }
 
     function _deployCurvePoolBooster() internal {
-        curvePoolBoosterPlain = new CurvePoolBoosterPlain(
-            address(oeth),
-            mockGauge
-        );
+        curvePoolBoosterPlain = new CurvePoolBoosterPlain(address(oeth), mockGauge);
         curvePoolBoosterPlain.initialize(
-            governor,
-            strategist,
-            DEFAULT_FEE,
-            mockFeeCollector,
-            mockCampaignRemoteManager,
-            mockVotemarket
+            governor, strategist, DEFAULT_FEE, mockFeeCollector, mockCampaignRemoteManager, mockVotemarket
         );
     }
 
     function _deployCurvePoolBoosterFactory() internal {
         curvePoolBoosterFactory = new CurvePoolBoosterFactory();
-        curvePoolBoosterFactory.initialize(
-            governor,
-            strategist,
-            address(centralRegistry)
-        );
+        curvePoolBoosterFactory.initialize(governor, strategist, address(centralRegistry));
 
         _deployMockCreateX();
     }

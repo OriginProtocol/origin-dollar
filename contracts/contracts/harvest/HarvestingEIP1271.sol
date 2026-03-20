@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import { IERC1271 } from "@openzeppelin/contracts/interfaces/IERC1271.sol";
-import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
-import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import {IERC1271} from "@openzeppelin/contracts/interfaces/IERC1271.sol";
+import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 interface IComposableCoW {
     function domainSeparator() external view returns (bytes32);
@@ -17,8 +17,7 @@ contract HarvestingEIP1271 is IERC1271, Ownable {
     bytes4 public constant MAGICVALUE = 0x1626ba7e;
     bytes4 public constant INVALID_SIGNATURE = 0xffffffff;
     /// @dev Matches GPv2Order.TYPE_HASH (kind/balance are string types per EIP-712).
-    bytes32 private constant ORDER_TYPEHASH =
-        0xd5a25ba2e97094ad7d83dc28a6572da797d6b3e7fc6663bd93efb789fc17e489;
+    bytes32 private constant ORDER_TYPEHASH = 0xd5a25ba2e97094ad7d83dc28a6572da797d6b3e7fc6663bd93efb789fc17e489;
     mapping(address => bool) public allowedBuyToken;
     mapping(address => bool) public allowedReceiver;
 
@@ -42,12 +41,7 @@ contract HarvestingEIP1271 is IERC1271, Ownable {
         bytes32 buyTokenBalance;
     }
 
-    event Initialized(
-        address owner,
-        address bot,
-        address composableCoW,
-        bytes32 cowDomainSeparator
-    );
+    event Initialized(address owner, address bot, address composableCoW, bytes32 cowDomainSeparator);
     event BotUpdated(address indexed bot);
     event AllowedBuyTokenSet(address indexed buyToken, bool allowed);
     event AllowedReceiverSet(address indexed receiver, bool allowed);
@@ -66,17 +60,8 @@ contract HarvestingEIP1271 is IERC1271, Ownable {
     address public immutable VAULT_RELAYER;
     mapping(address => TokenConfig) public tokenConfigs;
 
-    constructor(
-        address initialOwner,
-        address initialBot,
-        address composableCoW_,
-        address vaultRelayer
-    ) Ownable() {
-        if (
-            initialBot == address(0) ||
-            composableCoW_ == address(0) ||
-            vaultRelayer == address(0)
-        ) {
+    constructor(address initialOwner, address initialBot, address composableCoW_, address vaultRelayer) Ownable() {
+        if (initialBot == address(0) || composableCoW_ == address(0) || vaultRelayer == address(0)) {
             revert ZeroAddress();
         }
         composableCoW = composableCoW_;
@@ -85,24 +70,12 @@ contract HarvestingEIP1271 is IERC1271, Ownable {
 
         bot = initialBot;
         _transferOwnership(initialOwner);
-        emit Initialized(
-            initialOwner,
-            initialBot,
-            composableCoW,
-            COW_DOMAIN_SEPARATOR
-        );
+        emit Initialized(initialOwner, initialBot, composableCoW, COW_DOMAIN_SEPARATOR);
     }
 
     /// @notice EIP-1271 signature check used by CoW Protocol's settlement.
-    function isValidSignature(bytes32 hash, bytes calldata signature)
-        external
-        view
-        returns (bytes4)
-    {
-        (Order memory order, bytes32 r, bytes32 s, uint8 v) = abi.decode(
-            signature,
-            (Order, bytes32, bytes32, uint8)
-        );
+    function isValidSignature(bytes32 hash, bytes calldata signature) external view returns (bytes4) {
+        (Order memory order, bytes32 r, bytes32 s, uint8 v) = abi.decode(signature, (Order, bytes32, bytes32, uint8));
 
         if (_hashOrder(order, COW_DOMAIN_SEPARATOR) != hash) {
             return INVALID_SIGNATURE;
@@ -122,23 +95,13 @@ contract HarvestingEIP1271 is IERC1271, Ownable {
         return _hashOrder(order, COW_DOMAIN_SEPARATOR);
     }
 
-    function _hashOrder(Order memory order, bytes32 domainSeparator)
-        internal
-        pure
-        returns (bytes32)
-    {
+    function _hashOrder(Order memory order, bytes32 domainSeparator) internal pure returns (bytes32) {
         bytes32 orderHash = keccak256(abi.encode(ORDER_TYPEHASH, order));
-        return
-            keccak256(abi.encodePacked("\x19\x01", domainSeparator, orderHash));
+        return keccak256(abi.encodePacked("\x19\x01", domainSeparator, orderHash));
     }
 
     /// @notice returns 0x0 address if the signature is invalid.
-    function getMessageSigner(
-        bytes32 orderDigest,
-        bytes32 r,
-        bytes32 s,
-        uint8 v
-    ) public pure returns (address) {
+    function getMessageSigner(bytes32 orderDigest, bytes32 r, bytes32 s, uint8 v) public pure returns (address) {
         bytes memory prefix = "\x19COWSWAP order digest:\n32";
         bytes32 messageHash = keccak256(abi.encodePacked(prefix, orderDigest));
         return ecrecover(messageHash, v, r, s);
@@ -165,28 +128,19 @@ contract HarvestingEIP1271 is IERC1271, Ownable {
         emit BotUpdated(newBot);
     }
 
-    function setAllowedBuyToken(address buyToken, bool allowed)
-        external
-        onlyOwner
-    {
+    function setAllowedBuyToken(address buyToken, bool allowed) external onlyOwner {
         if (buyToken == address(0)) revert ZeroAddress();
         allowedBuyToken[buyToken] = allowed;
         emit AllowedBuyTokenSet(buyToken, allowed);
     }
 
-    function setAllowedReceiver(address receiver, bool allowed)
-        external
-        onlyOwner
-    {
+    function setAllowedReceiver(address receiver, bool allowed) external onlyOwner {
         if (receiver == address(0)) revert ZeroAddress();
         allowedReceiver[receiver] = allowed;
         emit AllowedReceiverSet(receiver, allowed);
     }
 
-    function setTokenConfig(address sellToken, TokenConfig calldata config)
-        external
-        onlyOwner
-    {
+    function setTokenConfig(address sellToken, TokenConfig calldata config) external onlyOwner {
         if (sellToken == address(0)) revert ZeroAddress();
         if (!config.enabled) revert ConfigDisabled();
         IERC20(sellToken).safeApprove(VAULT_RELAYER, type(uint256).max);

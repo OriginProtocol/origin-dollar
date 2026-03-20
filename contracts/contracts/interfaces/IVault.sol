@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import { VaultStorage } from "../vault/VaultStorage.sol";
+import {VaultStorage} from "../vault/VaultStorage.sol";
 
 interface IVault {
     // slither-disable-start constable-states
@@ -29,16 +29,9 @@ interface IVault {
     event RebasePerSecondMaxChanged(uint256 rebaseRatePerSecond);
     event DripDurationChanged(uint256 dripDuration);
     event WithdrawalRequested(
-        address indexed _withdrawer,
-        uint256 indexed _requestId,
-        uint256 _amount,
-        uint256 _queued
+        address indexed _withdrawer, uint256 indexed _requestId, uint256 _amount, uint256 _queued
     );
-    event WithdrawalClaimed(
-        address indexed _withdrawer,
-        uint256 indexed _requestId,
-        uint256 _amount
-    );
+    event WithdrawalClaimed(address indexed _withdrawer, uint256 indexed _requestId, uint256 _amount);
     event WithdrawalClaimable(uint256 _claimable, uint256 _newClaimable);
     event WithdrawalClaimDelayUpdated(uint256 _newDelay);
 
@@ -104,17 +97,11 @@ interface IVault {
 
     function withdrawAllFromStrategies() external;
 
-    function withdrawFromStrategy(
-        address _strategyFromAddress,
-        address[] calldata _assets,
-        uint256[] calldata _amounts
-    ) external;
+    function withdrawFromStrategy(address _strategyFromAddress, address[] calldata _assets, uint256[] calldata _amounts)
+        external;
 
-    function depositToStrategy(
-        address _strategyToAddress,
-        address[] calldata _assets,
-        uint256[] calldata _amounts
-    ) external;
+    function depositToStrategy(address _strategyToAddress, address[] calldata _assets, uint256[] calldata _amounts)
+        external;
 
     // VaultCore.sol
     function mint(uint256 _amount) external;
@@ -139,10 +126,7 @@ interface IVault {
 
     function getAllStrategies() external view returns (address[] memory);
 
-    function strategies(address _addr)
-        external
-        view
-        returns (VaultStorage.Strategy memory);
+    function strategies(address _addr) external view returns (VaultStorage.Strategy memory);
 
     /// @notice Deprecated: use `asset()` instead.
     function isSupportedAsset(address _asset) external view returns (bool);
@@ -155,36 +139,23 @@ interface IVault {
 
     function addWithdrawalQueueLiquidity() external;
 
-    function requestWithdrawal(uint256 _amount)
-        external
-        returns (uint256 requestId, uint256 queued);
+    function requestWithdrawal(uint256 _amount) external returns (uint256 requestId, uint256 queued);
 
-    function claimWithdrawal(uint256 requestId)
-        external
-        returns (uint256 amount);
+    function claimWithdrawal(uint256 requestId) external returns (uint256 amount);
 
     function claimWithdrawals(uint256[] memory requestIds)
         external
         returns (uint256[] memory amounts, uint256 totalAmount);
 
-    function withdrawalQueueMetadata()
-        external
-        view
-        returns (VaultStorage.WithdrawalQueueMetadata memory);
+    function withdrawalQueueMetadata() external view returns (VaultStorage.WithdrawalQueueMetadata memory);
 
-    function withdrawalRequests(uint256 requestId)
-        external
-        view
-        returns (VaultStorage.WithdrawalRequest memory);
+    function withdrawalRequests(uint256 requestId) external view returns (VaultStorage.WithdrawalRequest memory);
 
     function addStrategyToMintWhitelist(address strategyAddr) external;
 
     function removeStrategyFromMintWhitelist(address strategyAddr) external;
 
-    function isMintWhitelistedStrategy(address strategyAddr)
-        external
-        view
-        returns (bool);
+    function isMintWhitelistedStrategy(address strategyAddr) external view returns (bool);
 
     function withdrawalClaimDelay() external view returns (uint256);
 

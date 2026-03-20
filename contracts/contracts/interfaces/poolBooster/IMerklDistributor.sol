@@ -28,22 +28,16 @@ interface IMerklDistributor {
         bytes campaignData;
     }
 
-    function createCampaign(CampaignParameters memory newCampaign)
+    function createCampaign(CampaignParameters memory newCampaign) external returns (bytes32);
+
+    function signAndCreateCampaign(CampaignParameters memory newCampaign, bytes memory _signature)
         external
         returns (bytes32);
-
-    function signAndCreateCampaign(
-        CampaignParameters memory newCampaign,
-        bytes memory _signature
-    ) external returns (bytes32);
 
     function sign(bytes memory _signature) external;
 
     // This replace the `isValidSignature` function from IERC1271
     function acceptConditions() external;
 
-    function rewardTokenMinAmounts(address _rewardToken)
-        external
-        view
-        returns (uint256);
+    function rewardTokenMinAmounts(address _rewardToken) external view returns (uint256);
 }

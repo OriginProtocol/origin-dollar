@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import { IERC20 } from "../../utils/InitializableAbstractStrategy.sol";
+import {IERC20} from "../../utils/InitializableAbstractStrategy.sol";
 
 interface IBalancerVault {
     enum WeightedPoolJoinKind {
@@ -51,12 +51,9 @@ interface IBalancerVault {
      *
      * Emits a `PoolBalanceChanged` event.
      */
-    function joinPool(
-        bytes32 poolId,
-        address sender,
-        address recipient,
-        JoinPoolRequest memory request
-    ) external payable;
+    function joinPool(bytes32 poolId, address sender, address recipient, JoinPoolRequest memory request)
+        external
+        payable;
 
     struct JoinPoolRequest {
         address[] assets;
@@ -100,12 +97,8 @@ interface IBalancerVault {
      *
      * Emits a `PoolBalanceChanged` event.
      */
-    function exitPool(
-        bytes32 poolId,
-        address sender,
-        address payable recipient,
-        ExitPoolRequest memory request
-    ) external;
+    function exitPool(bytes32 poolId, address sender, address payable recipient, ExitPoolRequest memory request)
+        external;
 
     struct ExitPoolRequest {
         address[] assets;
@@ -131,11 +124,7 @@ interface IBalancerVault {
     function getPoolTokens(bytes32 poolId)
         external
         view
-        returns (
-            IERC20[] memory tokens,
-            uint256[] memory balances,
-            uint256 lastChangeBlock
-        );
+        returns (IERC20[] memory tokens, uint256[] memory balances, uint256 lastChangeBlock);
 
     /**
      * @dev Performs a set of user balance operations, which involve Internal Balance (deposit, withdraw or transfer)
@@ -182,20 +171,12 @@ interface IBalancerVault {
         bool toInternalBalance;
     }
 
-    function swap(
-        SingleSwap calldata singleSwap,
-        FundManagement calldata funds,
-        uint256 limit,
-        uint256 deadline
-    ) external returns (uint256 amountCalculated);
+    function swap(SingleSwap calldata singleSwap, FundManagement calldata funds, uint256 limit, uint256 deadline)
+        external
+        returns (uint256 amountCalculated);
 
     function getPoolTokenInfo(bytes32 poolId, address token)
         external
         view
-        returns (
-            uint256 cash,
-            uint256 managed,
-            uint256 lastChangeBlock,
-            address assetManager
-        );
+        returns (uint256 cash, uint256 managed, uint256 lastChangeBlock, address assetManager);
 }

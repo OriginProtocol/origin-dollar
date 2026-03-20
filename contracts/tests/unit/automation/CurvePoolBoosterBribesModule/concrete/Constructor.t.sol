@@ -1,12 +1,11 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import {Unit_CurvePoolBoosterBribesModule_Shared_Test} from
-    "tests/unit/automation/CurvePoolBoosterBribesModule/shared/Shared.t.sol";
+import {
+    Unit_CurvePoolBoosterBribesModule_Shared_Test
+} from "tests/unit/automation/CurvePoolBoosterBribesModule/shared/Shared.t.sol";
 
-contract Unit_Concrete_CurvePoolBoosterBribesModule_Constructor_Test
-    is Unit_CurvePoolBoosterBribesModule_Shared_Test
-{
+contract Unit_Concrete_CurvePoolBoosterBribesModule_Constructor_Test is Unit_CurvePoolBoosterBribesModule_Shared_Test {
     //////////////////////////////////////////////////////
     /// --- CONSTRUCTOR
     //////////////////////////////////////////////////////
@@ -27,18 +26,12 @@ contract Unit_Concrete_CurvePoolBoosterBribesModule_Constructor_Test
     }
 
     function test_constructor_operatorRoleGranted() public view {
-        assertTrue(
-            curvePoolBoosterBribesModule.hasRole(
-                curvePoolBoosterBribesModule.OPERATOR_ROLE(), operator
-            )
-        );
+        assertTrue(curvePoolBoosterBribesModule.hasRole(curvePoolBoosterBribesModule.OPERATOR_ROLE(), operator));
     }
 
     function test_constructor_safeHasAdminRole() public view {
         assertTrue(
-            curvePoolBoosterBribesModule.hasRole(
-                curvePoolBoosterBribesModule.DEFAULT_ADMIN_ROLE(), address(mockSafe)
-            )
+            curvePoolBoosterBribesModule.hasRole(curvePoolBoosterBribesModule.DEFAULT_ADMIN_ROLE(), address(mockSafe))
         );
     }
 }

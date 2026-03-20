@@ -42,9 +42,7 @@ contract Smoke_Concrete_OUSDCurveAMOStrategy_ViewFunctions_Test is Smoke_OUSDCur
     }
 
     function test_immutables_curvePool() public view {
-        assertEq(
-            address(curveAMOStrategy.curvePool()), Mainnet.curve_OUSD_USDC_pool, "curvePool mismatch"
-        );
+        assertEq(address(curveAMOStrategy.curvePool()), Mainnet.curve_OUSD_USDC_pool, "curvePool mismatch");
     }
 
     function test_immutables_gauge() public view {

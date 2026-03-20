@@ -1,12 +1,11 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import {Unit_NativeStakingSSVStrategy_Shared_Test} from
-    "tests/unit/strategies/NativeStakingSSVStrategy/shared/Shared.t.sol";
+import {
+    Unit_NativeStakingSSVStrategy_Shared_Test
+} from "tests/unit/strategies/NativeStakingSSVStrategy/shared/Shared.t.sol";
 
-contract Unit_Fuzz_NativeStakingSSVStrategy_ManuallyFixAccounting_Test
-    is Unit_NativeStakingSSVStrategy_Shared_Test
-{
+contract Unit_Fuzz_NativeStakingSSVStrategy_ManuallyFixAccounting_Test is Unit_NativeStakingSSVStrategy_Shared_Test {
     /// @dev Fuzz validatorsDelta in [-3, 3]
     function testFuzz_manuallyFixAccounting_validatorsDelta(int8 rawDelta) public {
         int256 delta = bound(int256(rawDelta), -3, 3);

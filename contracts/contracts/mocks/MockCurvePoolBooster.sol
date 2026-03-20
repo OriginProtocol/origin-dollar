@@ -30,12 +30,6 @@ contract MockCurvePoolBooster {
         lastAdditionalGasLimit = additionalGasLimit;
         lastValue = msg.value;
 
-        emit CampaignManaged(
-            totalRewardAmount,
-            numberOfPeriods,
-            maxRewardPerVote,
-            additionalGasLimit,
-            msg.value
-        );
+        emit CampaignManaged(totalRewardAmount, numberOfPeriods, maxRewardPerVote, additionalGasLimit, msg.value);
     }
 }

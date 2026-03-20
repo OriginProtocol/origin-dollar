@@ -37,9 +37,7 @@ contract Fork_AerodromeAMOStrategy_Withdraw_Test is Fork_AerodromeAMOStrategy_Sh
 
         // Per Hardhat tolerance: ≤1e6 wei WETH residual
         assertLe(
-            IERC20(BaseAddresses.WETH).balanceOf(address(aerodromeAMOStrategy)),
-            1e6,
-            "WETH residual should be minimal"
+            IERC20(BaseAddresses.WETH).balanceOf(address(aerodromeAMOStrategy)), 1e6, "WETH residual should be minimal"
         );
 
         _verifyEndConditions(true);
@@ -59,9 +57,7 @@ contract Fork_AerodromeAMOStrategy_Withdraw_Test is Fork_AerodromeAMOStrategy_Sh
 
         // WETH residual may be higher due to rounding, but per Hardhat ≤1e6
         assertLe(
-            IERC20(BaseAddresses.WETH).balanceOf(address(aerodromeAMOStrategy)),
-            1e6,
-            "WETH residual should be minimal"
+            IERC20(BaseAddresses.WETH).balanceOf(address(aerodromeAMOStrategy)), 1e6, "WETH residual should be minimal"
         );
 
         _verifyEndConditions(true);
@@ -80,9 +76,7 @@ contract Fork_AerodromeAMOStrategy_Withdraw_Test is Fork_AerodromeAMOStrategy_Sh
         assertApproxEqRel(vaultBalanceAfter, vaultBalanceBefore + 1 ether, 0.01 ether, "Vault should receive ~1 WETH");
 
         assertLe(
-            IERC20(BaseAddresses.WETH).balanceOf(address(aerodromeAMOStrategy)),
-            1e6,
-            "WETH residual should be minimal"
+            IERC20(BaseAddresses.WETH).balanceOf(address(aerodromeAMOStrategy)), 1e6, "WETH residual should be minimal"
         );
 
         _verifyEndConditions(true);
@@ -109,9 +103,7 @@ contract Fork_AerodromeAMOStrategy_Withdraw_Test is Fork_AerodromeAMOStrategy_Sh
         vm.prank(address(oethBaseVault));
         aerodromeAMOStrategy.withdrawAll();
 
-        assertEq(
-            IERC20(BaseAddresses.WETH).balanceOf(address(aerodromeAMOStrategy)), 0, "No WETH should remain"
-        );
+        assertEq(IERC20(BaseAddresses.WETH).balanceOf(address(aerodromeAMOStrategy)), 0, "No WETH should remain");
         assertEq(oethBase.balanceOf(address(aerodromeAMOStrategy)), 0, "No OETHb should remain");
     }
 

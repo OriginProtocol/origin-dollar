@@ -11,8 +11,7 @@ contract Unit_Concrete_PoolBoosterSwapxSingle_Bribe_Test is Unit_SwapXSingle_Sha
         _mockBribeNotifyRewardAmount(mockBribeContract);
 
         vm.expectCall(
-            mockBribeContract,
-            abi.encodeWithSelector(IBribe.notifyRewardAmount.selector, address(oSonic), 1e18)
+            mockBribeContract, abi.encodeWithSelector(IBribe.notifyRewardAmount.selector, address(oSonic), 1e18)
         );
 
         boosterSwapxSingle.bribe();

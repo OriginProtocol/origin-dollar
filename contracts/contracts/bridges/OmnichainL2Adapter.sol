@@ -2,9 +2,9 @@
 
 pragma solidity ^0.8.0;
 
-import { MintBurnOFTAdapter } from "@layerzerolabs/oft-evm/contracts/MintBurnOFTAdapter.sol";
-import { IMintableBurnable } from "@layerzerolabs/oft-evm/contracts/interfaces/IMintableBurnable.sol";
-import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
+import {MintBurnOFTAdapter} from "@layerzerolabs/oft-evm/contracts/MintBurnOFTAdapter.sol";
+import {IMintableBurnable} from "@layerzerolabs/oft-evm/contracts/interfaces/IMintableBurnable.sol";
+import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
 /// NOTE: It's necessary to inherit from Ownable instead of Governable
 ///       because OFTCore uses Ownable to manage the governor.
@@ -18,39 +18,21 @@ import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 
 /// @title Omnichain L2 Adapter
 contract OmnichainL2Adapter is MintBurnOFTAdapter {
-    constructor(
-        address _token,
-        address _lzEndpoint,
-        address _governor
-    )
-        MintBurnOFTAdapter(
-            _token,
-            IMintableBurnable(_token),
-            _lzEndpoint,
-            _governor
-        )
+    constructor(address _token, address _lzEndpoint, address _governor)
+        MintBurnOFTAdapter(_token, IMintableBurnable(_token), _lzEndpoint, _governor)
         Ownable()
     {
         _transferOwnership(_governor);
     }
 
     /// @inheritdoc MintBurnOFTAdapter
-    function _debit(
-        address _from,
-        uint256 _amountLD,
-        uint256 _minAmountLD,
-        uint32 _dstEid
-    )
+    function _debit(address _from, uint256 _amountLD, uint256 _minAmountLD, uint32 _dstEid)
         internal
         virtual
         override
         returns (uint256 amountSentLD, uint256 amountReceivedLD)
     {
-        (amountSentLD, amountReceivedLD) = _debitView(
-            _amountLD,
-            _minAmountLD,
-            _dstEid
-        );
+        (amountSentLD, amountReceivedLD) = _debitView(_amountLD, _minAmountLD, _dstEid);
         // Burns tokens from the caller.
         IMintableERC20(address(minterBurner)).burn(_from, amountSentLD);
     }
@@ -60,7 +42,12 @@ contract OmnichainL2Adapter is MintBurnOFTAdapter {
         address _to,
         uint256 _amountLD,
         uint32 /* _srcEid */
-    ) internal virtual override returns (uint256 amountReceivedLD) {
+    )
+        internal
+        virtual
+        override
+        returns (uint256 amountReceivedLD)
+    {
         if (_to == address(0x0)) _to = address(0xdead); // _mint(...) does not support address(0x0)
         // Mints the tokens and transfers to the recipient.
         IMintableERC20(address(minterBurner)).mint(_to, _amountLD);

@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 import "../interfaces/chainlink/AggregatorV3Interface.sol";
-import { AbstractOracleRouter } from "./AbstractOracleRouter.sol";
+import {AbstractOracleRouter} from "./AbstractOracleRouter.sol";
 
 // @notice Oracle Router that denominates all prices in USD
 contract OracleRouter is AbstractOracleRouter {

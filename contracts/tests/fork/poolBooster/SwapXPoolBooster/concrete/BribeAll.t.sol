@@ -3,8 +3,7 @@ pragma solidity ^0.8.0;
 
 import {Vm} from "forge-std/Vm.sol";
 
-import {Fork_SwapXPoolBooster_Shared_Test} from
-    "tests/fork/poolBooster/SwapXPoolBooster/shared/Shared.t.sol";
+import {Fork_SwapXPoolBooster_Shared_Test} from "tests/fork/poolBooster/SwapXPoolBooster/shared/Shared.t.sol";
 import {PoolBoosterSwapxDouble} from "contracts/poolBooster/PoolBoosterSwapxDouble.sol";
 import {Sonic} from "tests/utils/Addresses.sol";
 
@@ -13,11 +12,7 @@ contract Fork_Concrete_SwapXPoolBooster_BribeAll_Test is Fork_SwapXPoolBooster_S
 
     function test_bribeAll() public {
         PoolBoosterSwapxDouble booster = _createDoubleBooster(
-            Sonic.SwapXOsUSDCe_extBribeOS,
-            Sonic.SwapXOsUSDCe_extBribeUSDC,
-            Sonic.SwapXOsUSDCe_pool,
-            0.7e18,
-            1
+            Sonic.SwapXOsUSDCe_extBribeOS, Sonic.SwapXOsUSDCe_extBribeUSDC, Sonic.SwapXOsUSDCe_pool, 0.7e18, 1
         );
 
         // Whitelist mock token on both bribe contracts
@@ -57,11 +52,7 @@ contract Fork_Concrete_SwapXPoolBooster_BribeAll_Test is Fork_SwapXPoolBooster_S
 
     function test_bribeAll_withExclusion() public {
         PoolBoosterSwapxDouble booster = _createDoubleBooster(
-            Sonic.SwapXOsUSDCe_extBribeOS,
-            Sonic.SwapXOsUSDCe_extBribeUSDC,
-            Sonic.SwapXOsUSDCe_pool,
-            0.7e18,
-            1
+            Sonic.SwapXOsUSDCe_extBribeOS, Sonic.SwapXOsUSDCe_extBribeUSDC, Sonic.SwapXOsUSDCe_pool, 0.7e18, 1
         );
 
         // Fund the booster

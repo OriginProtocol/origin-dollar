@@ -6,7 +6,7 @@ pragma solidity ^0.8.0;
  * @notice AMO strategy for the SwapX OS/wS stable pool
  * @author Origin Protocol Inc
  */
-import { StableSwapAMMStrategy } from "../algebra/StableSwapAMMStrategy.sol";
+import {StableSwapAMMStrategy} from "../algebra/StableSwapAMMStrategy.sol";
 
 contract SonicSwapXAMOStrategy is StableSwapAMMStrategy {
     /**
@@ -14,7 +14,5 @@ contract SonicSwapXAMOStrategy is StableSwapAMMStrategy {
      * The `vaultAddress` is the address of the Origin Sonic Vault.
      * @param _gauge Address of the SwapX gauge for the pool.
      */
-    constructor(BaseStrategyConfig memory _baseConfig, address _gauge)
-        StableSwapAMMStrategy(_baseConfig, _gauge)
-    {}
+    constructor(BaseStrategyConfig memory _baseConfig, address _gauge) StableSwapAMMStrategy(_baseConfig, _gauge) {}
 }

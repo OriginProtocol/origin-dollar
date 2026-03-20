@@ -42,15 +42,11 @@ contract Smoke_Concrete_BaseCurveAMOStrategy_ViewFunctions_Test is Smoke_BaseCur
     }
 
     function test_immutables_curvePool() public view {
-        assertEq(
-            address(baseCurveAMOStrategy.curvePool()), BaseAddresses.OETHb_WETH_pool, "curvePool mismatch"
-        );
+        assertEq(address(baseCurveAMOStrategy.curvePool()), BaseAddresses.OETHb_WETH_pool, "curvePool mismatch");
     }
 
     function test_immutables_gauge() public view {
-        assertEq(
-            address(baseCurveAMOStrategy.gauge()), BaseAddresses.OETHb_WETH_gauge, "gauge mismatch"
-        );
+        assertEq(address(baseCurveAMOStrategy.gauge()), BaseAddresses.OETHb_WETH_gauge, "gauge mismatch");
     }
 
     function test_immutables_gaugeFactory() public view {

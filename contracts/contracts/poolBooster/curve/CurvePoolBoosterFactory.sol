@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import { ICreateX } from "../../interfaces/ICreateX.sol";
-import { Initializable } from "../../utils/Initializable.sol";
-import { Strategizable } from "../../governance/Strategizable.sol";
-import { CurvePoolBoosterPlain } from "./CurvePoolBoosterPlain.sol";
-import { IPoolBoostCentralRegistry } from "../../interfaces/poolBooster/IPoolBoostCentralRegistry.sol";
+import {ICreateX} from "../../interfaces/ICreateX.sol";
+import {Initializable} from "../../utils/Initializable.sol";
+import {Strategizable} from "../../governance/Strategizable.sol";
+import {CurvePoolBoosterPlain} from "./CurvePoolBoosterPlain.sol";
+import {IPoolBoostCentralRegistry} from "../../interfaces/poolBooster/IPoolBoostCentralRegistry.sol";
 
 /// @title CurvePoolBoosterFactory
 /// @author Origin Protocol
@@ -25,8 +25,7 @@ contract CurvePoolBoosterFactory is Initializable, Strategizable {
     ////////////////////////////////////////////////////
 
     /// @notice Address of the CreateX contract
-    ICreateX public constant CREATEX =
-        ICreateX(0xba5Ed099633D3B313e4D5F7bdc1305d3c28ba5Ed);
+    ICreateX public constant CREATEX = ICreateX(0xba5Ed099633D3B313e4D5F7bdc1305d3c28ba5Ed);
 
     ////////////////////////////////////////////////////
     /// --- Storage
@@ -51,11 +50,7 @@ contract CurvePoolBoosterFactory is Initializable, Strategizable {
     /// @param _governor Address of the governor
     /// @param _strategist Address of the strategist
     /// @param _centralRegistry Address of the central registry
-    function initialize(
-        address _governor,
-        address _strategist,
-        address _centralRegistry
-    ) external initializer {
+    function initialize(address _governor, address _strategist, address _centralRegistry) external initializer {
         _setGovernor(_governor);
         _setStrategistAddr(_strategist);
         centralRegistry = IPoolBoostCentralRegistry(_centralRegistry);
@@ -95,25 +90,15 @@ contract CurvePoolBoosterFactory is Initializable, Strategizable {
         // the contract that calls the CreateX should be encoded in the salt to protect against front-running
         require(senderAddress == address(this), "Front-run protection failed");
 
-        address poolBoosterAddress = CREATEX.deployCreate2(
-            _salt,
-            _getInitCode(_rewardToken, _gauge)
-        );
+        address poolBoosterAddress = CREATEX.deployCreate2(_salt, _getInitCode(_rewardToken, _gauge));
 
         require(
-            _expectedAddress == address(0) ||
-                poolBoosterAddress == _expectedAddress,
+            _expectedAddress == address(0) || poolBoosterAddress == _expectedAddress,
             "Pool booster deployed at unexpected address"
         );
 
-        CurvePoolBoosterPlain(payable(poolBoosterAddress)).initialize(
-            governor(),
-            strategistAddr,
-            _fee,
-            _feeCollector,
-            _campaignRemoteManager,
-            _votemarket
-        );
+        CurvePoolBoosterPlain(payable(poolBoosterAddress))
+            .initialize(governor(), strategistAddr, _fee, _feeCollector, _campaignRemoteManager, _votemarket);
 
         _storePoolBoosterEntry(poolBoosterAddress, _gauge);
         return poolBoosterAddress;
@@ -123,10 +108,7 @@ contract CurvePoolBoosterFactory is Initializable, Strategizable {
     /// @dev This action does not destroy the pool booster contract nor does it
     ///      stop the yield delegation to it.
     /// @param _poolBoosterAddress address of the pool booster
-    function removePoolBooster(address _poolBoosterAddress)
-        external
-        onlyGovernor
-    {
+    function removePoolBooster(address _poolBoosterAddress) external onlyGovernor {
         uint256 boostersLen = poolBoosters.length;
         for (uint256 i = 0; i < boostersLen; ++i) {
             if (poolBoosters[i].boosterAddress == _poolBoosterAddress) {
@@ -154,18 +136,10 @@ contract CurvePoolBoosterFactory is Initializable, Strategizable {
     /// @notice Stores the pool booster entry in the internal list and mapping
     /// @param _poolBoosterAddress address of the pool booster
     /// @param _ammPoolAddress address of the AMM pool
-    function _storePoolBoosterEntry(
-        address _poolBoosterAddress,
-        address _ammPoolAddress
-    ) internal {
-        IPoolBoostCentralRegistry.PoolBoosterType _boosterType = IPoolBoostCentralRegistry
-                .PoolBoosterType
-                .CurvePoolBoosterPlain;
-        PoolBoosterEntry memory entry = PoolBoosterEntry(
-            _poolBoosterAddress,
-            _ammPoolAddress,
-            _boosterType
-        );
+    function _storePoolBoosterEntry(address _poolBoosterAddress, address _ammPoolAddress) internal {
+        IPoolBoostCentralRegistry.PoolBoosterType _boosterType =
+        IPoolBoostCentralRegistry.PoolBoosterType.CurvePoolBoosterPlain;
+        PoolBoosterEntry memory entry = PoolBoosterEntry(_poolBoosterAddress, _ammPoolAddress, _boosterType);
 
         poolBoosters.push(entry);
         poolBoosterFromPool[_ammPoolAddress] = entry;
@@ -173,11 +147,7 @@ contract CurvePoolBoosterFactory is Initializable, Strategizable {
         // emit the events of the pool booster created
         // centralRegistry can be address(0) on some chains
         if (address(centralRegistry) != address(0)) {
-            centralRegistry.emitPoolBoosterCreated(
-                _poolBoosterAddress,
-                _ammPoolAddress,
-                _boosterType
-            );
+            centralRegistry.emitPoolBoosterCreated(_poolBoosterAddress, _ammPoolAddress, _boosterType);
         }
     }
 
@@ -191,18 +161,14 @@ contract CurvePoolBoosterFactory is Initializable, Strategizable {
     /// @param _salt A unique number that affects the address of the pool booster created. Note: this number
     ///        should match the one from `createCurvePoolBoosterPlain` in order for the final deployed address
     ///        and pre-computed address to match
-    function computePoolBoosterAddress(
-        address _rewardToken,
-        address _gauge,
-        bytes32 _salt
-    ) external view returns (address) {
+    function computePoolBoosterAddress(address _rewardToken, address _gauge, bytes32 _salt)
+        external
+        view
+        returns (address)
+    {
         bytes32 guardedSalt = _computeGuardedSalt(_salt);
         return
-            CREATEX.computeCreate2Address(
-                guardedSalt,
-                keccak256(_getInitCode(_rewardToken, _gauge)),
-                address(CREATEX)
-            );
+            CREATEX.computeCreate2Address(guardedSalt, keccak256(_getInitCode(_rewardToken, _gauge)), address(CREATEX));
     }
 
     /// @notice Encodes a salt for CreateX by concatenating deployer address (bytes20), cross-chain protection flag
@@ -210,11 +176,7 @@ contract CurvePoolBoosterFactory is Initializable, Strategizable {
     /// for easier operations. For the salt value itself just use the epoch time when the operation is performed.
     /// @param salt The raw salt as uint256; converted to bytes32, then only the first 11 bytes (MSB) are used.
     /// @return encodedSalt The resulting 32-byte encoded salt.
-    function encodeSaltForCreateX(uint256 salt)
-        external
-        view
-        returns (bytes32 encodedSalt)
-    {
+    function encodeSaltForCreateX(uint256 salt) external view returns (bytes32 encodedSalt) {
         // only the right most 11 bytes are considered when encoding salt. Which is limited by the number in the below
         // require. If salt were higher, the higher bytes would need to be set to 0 to not affect the "or" way of
         // encoding the salt.
@@ -244,11 +206,7 @@ contract CurvePoolBoosterFactory is Initializable, Strategizable {
     }
 
     /// @notice Get the list of all pool boosters created by this factory
-    function getPoolBoosters()
-        external
-        view
-        returns (PoolBoosterEntry[] memory)
-    {
+    function getPoolBoosters() external view returns (PoolBoosterEntry[] memory) {
         return poolBoosters;
     }
 
@@ -257,38 +215,18 @@ contract CurvePoolBoosterFactory is Initializable, Strategizable {
     ////////////////////////////////////////////////////
 
     /// @notice Get the init code for the CurvePoolBoosterPlain contract
-    function _getInitCode(address _rewardToken, address _gauge)
-        internal
-        pure
-        returns (bytes memory)
-    {
-        return
-            abi.encodePacked(
-                type(CurvePoolBoosterPlain).creationCode,
-                abi.encode(_rewardToken, _gauge)
-            );
+    function _getInitCode(address _rewardToken, address _gauge) internal pure returns (bytes memory) {
+        return abi.encodePacked(type(CurvePoolBoosterPlain).creationCode, abi.encode(_rewardToken, _gauge));
     }
 
     /// @notice Compute the guarded salt for CreateX protections. This version of guarded
     ///         salt expects that this factory contract is the one doing calls to the CreateX contract.
-    function _computeGuardedSalt(bytes32 _salt)
-        internal
-        view
-        returns (bytes32)
-    {
-        return
-            _efficientHash({
-                a: bytes32(uint256(uint160(address(this)))),
-                b: _salt
-            });
+    function _computeGuardedSalt(bytes32 _salt) internal view returns (bytes32) {
+        return _efficientHash({a: bytes32(uint256(uint160(address(this)))), b: _salt});
     }
 
     /// @notice Efficiently hash two bytes32 values together
-    function _efficientHash(bytes32 a, bytes32 b)
-        internal
-        pure
-        returns (bytes32 hash)
-    {
+    function _efficientHash(bytes32 a, bytes32 b) internal pure returns (bytes32 hash) {
         // solhint-disable-next-line no-inline-assembly
         assembly {
             mstore(0x00, a)

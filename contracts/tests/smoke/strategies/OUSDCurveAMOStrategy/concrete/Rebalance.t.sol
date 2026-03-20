@@ -58,11 +58,7 @@ contract Smoke_Concrete_OUSDCurveAMOStrategy_Rebalance_Test is Smoke_OUSDCurveAM
         vm.prank(strategist);
         curveAMOStrategy.mintAndAddOTokens(500_000 ether);
 
-        assertEq(
-            IERC20(address(ousd)).balanceOf(address(curveAMOStrategy)),
-            0,
-            "No residual OUSD on strategy"
-        );
+        assertEq(IERC20(address(ousd)).balanceOf(address(curveAMOStrategy)), 0, "No residual OUSD on strategy");
         assertEq(usdc.balanceOf(address(curveAMOStrategy)), 0, "No residual USDC on strategy");
     }
 
@@ -204,10 +200,7 @@ contract Smoke_Concrete_OUSDCurveAMOStrategy_Rebalance_Test is Smoke_OUSDCurveAM
         curveAMOStrategy.withdrawAll();
 
         assertApproxEqAbs(
-            curveAMOStrategy.checkBalance(address(usdc)),
-            0,
-            1e6,
-            "checkBalance should be ~0 after full lifecycle"
+            curveAMOStrategy.checkBalance(address(usdc)), 0, 1e6, "checkBalance should be ~0 after full lifecycle"
         );
     }
 }

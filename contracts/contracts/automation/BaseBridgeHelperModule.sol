@@ -2,35 +2,27 @@
 pragma solidity ^0.8.0;
 
 // solhint-disable-next-line max-line-length
-import { AbstractCCIPBridgeHelperModule, AbstractSafeModule, IRouterClient } from "./AbstractCCIPBridgeHelperModule.sol";
+import {AbstractCCIPBridgeHelperModule, AbstractSafeModule, IRouterClient} from "./AbstractCCIPBridgeHelperModule.sol";
 
-import { AccessControlEnumerable } from "@openzeppelin/contracts/access/AccessControlEnumerable.sol";
+import {AccessControlEnumerable} from "@openzeppelin/contracts/access/AccessControlEnumerable.sol";
 
-import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import { IERC4626 } from "../../lib/openzeppelin/interfaces/IERC4626.sol";
-import { IWETH9 } from "../interfaces/IWETH9.sol";
-import { IVault } from "../interfaces/IVault.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {IERC4626} from "../../lib/openzeppelin/interfaces/IERC4626.sol";
+import {IWETH9} from "../interfaces/IWETH9.sol";
+import {IVault} from "../interfaces/IVault.sol";
 
-import { BridgedWOETHStrategy } from "../strategies/BridgedWOETHStrategy.sol";
+import {BridgedWOETHStrategy} from "../strategies/BridgedWOETHStrategy.sol";
 
-contract BaseBridgeHelperModule is
-    AccessControlEnumerable,
-    AbstractCCIPBridgeHelperModule
-{
-    IVault public constant vault =
-        IVault(0x98a0CbeF61bD2D21435f433bE4CD42B56B38CC93);
-    IWETH9 public constant weth =
-        IWETH9(0x4200000000000000000000000000000000000006);
-    IERC20 public constant oethb =
-        IERC20(0xDBFeFD2e8460a6Ee4955A68582F85708BAEA60A3);
-    IERC4626 public constant bridgedWOETH =
-        IERC4626(0xD8724322f44E5c58D7A815F542036fb17DbbF839);
+contract BaseBridgeHelperModule is AccessControlEnumerable, AbstractCCIPBridgeHelperModule {
+    IVault public constant vault = IVault(0x98a0CbeF61bD2D21435f433bE4CD42B56B38CC93);
+    IWETH9 public constant weth = IWETH9(0x4200000000000000000000000000000000000006);
+    IERC20 public constant oethb = IERC20(0xDBFeFD2e8460a6Ee4955A68582F85708BAEA60A3);
+    IERC4626 public constant bridgedWOETH = IERC4626(0xD8724322f44E5c58D7A815F542036fb17DbbF839);
 
     BridgedWOETHStrategy public constant bridgedWOETHStrategy =
         BridgedWOETHStrategy(0x80c864704DD06C3693ed5179190786EE38ACf835);
 
-    IRouterClient public constant CCIP_ROUTER =
-        IRouterClient(0x881e3A65B4d4a04dD529061dd0071cf975F58bCD);
+    IRouterClient public constant CCIP_ROUTER = IRouterClient(0x881e3A65B4d4a04dD529061dd0071cf975F58bCD);
 
     uint64 public constant CCIP_ETHEREUM_CHAIN_SELECTOR = 5009297550715157269;
 
@@ -40,34 +32,16 @@ contract BaseBridgeHelperModule is
      * @dev Bridges wOETH to Ethereum.
      * @param woethAmount Amount of wOETH to bridge.
      */
-    function bridgeWOETHToEthereum(uint256 woethAmount)
-        public
-        payable
-        onlyOperator
-    {
-        _bridgeTokenWithCCIP(
-            CCIP_ROUTER,
-            CCIP_ETHEREUM_CHAIN_SELECTOR,
-            IERC20(address(bridgedWOETH)),
-            woethAmount
-        );
+    function bridgeWOETHToEthereum(uint256 woethAmount) public payable onlyOperator {
+        _bridgeTokenWithCCIP(CCIP_ROUTER, CCIP_ETHEREUM_CHAIN_SELECTOR, IERC20(address(bridgedWOETH)), woethAmount);
     }
 
     /**
      * @dev Bridges WETH to Ethereum.
      * @param wethAmount Amount of WETH to bridge.
      */
-    function bridgeWETHToEthereum(uint256 wethAmount)
-        public
-        payable
-        onlyOperator
-    {
-        _bridgeTokenWithCCIP(
-            CCIP_ROUTER,
-            CCIP_ETHEREUM_CHAIN_SELECTOR,
-            IERC20(address(weth)),
-            wethAmount
-        );
+    function bridgeWETHToEthereum(uint256 wethAmount) public payable onlyOperator {
+        _bridgeTokenWithCCIP(CCIP_ROUTER, CCIP_ETHEREUM_CHAIN_SELECTOR, IERC20(address(weth)), wethAmount);
     }
 
     /**
@@ -93,11 +67,7 @@ contract BaseBridgeHelperModule is
      * @dev Claims a previously requested withdrawal and bridges WETH to Ethereum.
      * @param requestId The withdrawal request ID to claim.
      */
-    function claimAndBridgeWETH(uint256 requestId)
-        external
-        payable
-        onlyOperator
-    {
+    function claimAndBridgeWETH(uint256 requestId) external payable onlyOperator {
         uint256 wethAmount = _claimWithdrawal(requestId);
         bridgeWETHToEthereum(wethAmount);
     }
@@ -107,11 +77,7 @@ contract BaseBridgeHelperModule is
      * @param requestId The withdrawal request ID to claim.
      * @return wethAmount Amount of WETH received.
      */
-    function claimWithdrawal(uint256 requestId)
-        external
-        onlyOperator
-        returns (uint256 wethAmount)
-    {
+    function claimWithdrawal(uint256 requestId) external onlyOperator returns (uint256 wethAmount) {
         return _claimWithdrawal(requestId);
     }
 
@@ -120,10 +86,7 @@ contract BaseBridgeHelperModule is
      * @param woethAmount Amount of wOETH to deposit.
      * @return oethbAmount Amount of OETHb received.
      */
-    function _depositWOETH(uint256 woethAmount)
-        internal
-        returns (uint256 oethbAmount)
-    {
+    function _depositWOETH(uint256 woethAmount) internal returns (uint256 oethbAmount) {
         // Update oracle price
         bridgedWOETHStrategy.updateWOETHOraclePrice();
 
@@ -136,11 +99,7 @@ contract BaseBridgeHelperModule is
         bool success = safeContract.execTransactionFromModule(
             address(bridgedWOETH),
             0, // Value
-            abi.encodeWithSelector(
-                bridgedWOETH.approve.selector,
-                address(bridgedWOETHStrategy),
-                woethAmount
-            ),
+            abi.encodeWithSelector(bridgedWOETH.approve.selector, address(bridgedWOETHStrategy), woethAmount),
             0 // Call
         );
         require(success, "Failed to approve wOETH");
@@ -149,10 +108,7 @@ contract BaseBridgeHelperModule is
         success = safeContract.execTransactionFromModule(
             address(bridgedWOETHStrategy),
             0, // Value
-            abi.encodeWithSelector(
-                bridgedWOETHStrategy.depositBridgedWOETH.selector,
-                woethAmount
-            ),
+            abi.encodeWithSelector(bridgedWOETHStrategy.depositBridgedWOETH.selector, woethAmount),
             0 // Call
         );
         require(success, "Failed to deposit bridged WOETH");
@@ -169,10 +125,7 @@ contract BaseBridgeHelperModule is
      * @param oethbAmount Amount of OETHb to withdraw.
      * @return requestId The withdrawal request ID.
      */
-    function _requestWithdrawal(uint256 oethbAmount)
-        internal
-        returns (uint256 requestId)
-    {
+    function _requestWithdrawal(uint256 oethbAmount) internal returns (uint256 requestId) {
         // Read the next withdrawal index before requesting
         // (safe because requestWithdrawal is nonReentrant)
         requestId = vault.withdrawalQueueMetadata().nextWithdrawalIndex;
@@ -180,10 +133,7 @@ contract BaseBridgeHelperModule is
         bool success = safeContract.execTransactionFromModule(
             address(vault),
             0, // Value
-            abi.encodeWithSelector(
-                vault.requestWithdrawal.selector,
-                oethbAmount
-            ),
+            abi.encodeWithSelector(vault.requestWithdrawal.selector, oethbAmount),
             0 // Call
         );
         require(success, "Failed to request withdrawal");
@@ -194,10 +144,7 @@ contract BaseBridgeHelperModule is
      * @param requestId The withdrawal request ID to claim.
      * @return wethAmount Amount of WETH received.
      */
-    function _claimWithdrawal(uint256 requestId)
-        internal
-        returns (uint256 wethAmount)
-    {
+    function _claimWithdrawal(uint256 requestId) internal returns (uint256 wethAmount) {
         wethAmount = weth.balanceOf(address(safeContract));
 
         bool success = safeContract.execTransactionFromModule(
@@ -216,19 +163,11 @@ contract BaseBridgeHelperModule is
      * @param wethAmount Amount of WETH to deposit.
      * @return Amount of wOETH received.
      */
-    function depositWETHAndRedeemWOETH(uint256 wethAmount)
-        external
-        onlyOperator
-        returns (uint256)
-    {
+    function depositWETHAndRedeemWOETH(uint256 wethAmount) external onlyOperator returns (uint256) {
         return _withdrawWOETH(wethAmount);
     }
 
-    function depositWETHAndBridgeWOETH(uint256 wethAmount)
-        external
-        onlyOperator
-        returns (uint256)
-    {
+    function depositWETHAndBridgeWOETH(uint256 wethAmount) external onlyOperator returns (uint256) {
         uint256 woethAmount = _withdrawWOETH(wethAmount);
         bridgeWOETHToEthereum(woethAmount);
         return woethAmount;
@@ -244,11 +183,7 @@ contract BaseBridgeHelperModule is
         bool success = safeContract.execTransactionFromModule(
             address(weth),
             0, // Value
-            abi.encodeWithSelector(
-                weth.approve.selector,
-                address(vault),
-                wethAmount
-            ),
+            abi.encodeWithSelector(weth.approve.selector, address(vault), wethAmount),
             0 // Call
         );
         require(success, "Failed to approve WETH");
@@ -266,11 +201,7 @@ contract BaseBridgeHelperModule is
         success = safeContract.execTransactionFromModule(
             address(oethb),
             0, // Value
-            abi.encodeWithSelector(
-                oethb.approve.selector,
-                address(bridgedWOETHStrategy),
-                wethAmount
-            ),
+            abi.encodeWithSelector(oethb.approve.selector, address(bridgedWOETHStrategy), wethAmount),
             0 // Call
         );
         require(success, "Failed to approve OETHb");
@@ -281,17 +212,12 @@ contract BaseBridgeHelperModule is
         success = safeContract.execTransactionFromModule(
             address(bridgedWOETHStrategy),
             0, // Value
-            abi.encodeWithSelector(
-                bridgedWOETHStrategy.withdrawBridgedWOETH.selector,
-                wethAmount
-            ),
+            abi.encodeWithSelector(bridgedWOETHStrategy.withdrawBridgedWOETH.selector, wethAmount),
             0 // Call
         );
         require(success, "Failed to withdraw bridged WOETH");
 
-        woethAmount =
-            bridgedWOETH.balanceOf(address(safeContract)) -
-            woethAmount;
+        woethAmount = bridgedWOETH.balanceOf(address(safeContract)) - woethAmount;
 
         return woethAmount;
     }

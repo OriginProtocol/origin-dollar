@@ -2,12 +2,11 @@
 pragma solidity ^0.8.0;
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {Unit_NativeStakingSSVStrategy_Shared_Test} from
-    "tests/unit/strategies/NativeStakingSSVStrategy/shared/Shared.t.sol";
+import {
+    Unit_NativeStakingSSVStrategy_Shared_Test
+} from "tests/unit/strategies/NativeStakingSSVStrategy/shared/Shared.t.sol";
 
-contract Unit_Concrete_NativeStakingSSVStrategy_RewardCollection_Test
-    is Unit_NativeStakingSSVStrategy_Shared_Test
-{
+contract Unit_Concrete_NativeStakingSSVStrategy_RewardCollection_Test is Unit_NativeStakingSSVStrategy_Shared_Test {
     struct RewardTestCase {
         uint256 feeAccumulatorEth;
         uint256 consensusRewards;
@@ -147,10 +146,7 @@ contract Unit_Concrete_NativeStakingSSVStrategy_RewardCollection_Test
         });
         _setupRewardTest(tc);
 
-        assertEq(
-            nativeStakingSSVStrategy.checkBalance(address(mockWeth)),
-            tc.expectedBalance
-        );
+        assertEq(nativeStakingSSVStrategy.checkBalance(address(mockWeth)), tc.expectedBalance);
     }
 
     // Check balance with deposits + validators
@@ -165,9 +161,6 @@ contract Unit_Concrete_NativeStakingSSVStrategy_RewardCollection_Test
         });
         _setupRewardTest(tc);
 
-        assertEq(
-            nativeStakingSSVStrategy.checkBalance(address(mockWeth)),
-            tc.expectedBalance
-        );
+        assertEq(nativeStakingSSVStrategy.checkBalance(address(mockWeth)), tc.expectedBalance);
     }
 }

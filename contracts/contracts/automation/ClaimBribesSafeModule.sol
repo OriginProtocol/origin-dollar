@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import { AbstractSafeModule } from "./AbstractSafeModule.sol";
-import { ICLGauge } from "../interfaces/aerodrome/ICLGauge.sol";
-import { ICLPool } from "../interfaces/aerodrome/ICLPool.sol";
+import {AbstractSafeModule} from "./AbstractSafeModule.sol";
+import {ICLGauge} from "../interfaces/aerodrome/ICLGauge.sol";
+import {ICLPool} from "../interfaces/aerodrome/ICLPool.sol";
 
 struct BribePoolInfo {
     address poolAddress;
@@ -12,20 +12,13 @@ struct BribePoolInfo {
 }
 
 interface IAerodromeVoter {
-    function claimBribes(
-        address[] memory _bribes,
-        address[][] memory _tokens,
-        uint256 _tokenId
-    ) external;
+    function claimBribes(address[] memory _bribes, address[][] memory _tokens, uint256 _tokenId) external;
 }
 
 interface IVeNFT {
     function ownerOf(uint256 tokenId) external view returns (address);
 
-    function ownerToNFTokenIdList(address owner, uint256 index)
-        external
-        view
-        returns (uint256);
+    function ownerToNFTokenIdList(address owner, uint256 index) external view returns (uint256);
 }
 
 interface ICLRewardContract {
@@ -50,11 +43,7 @@ contract ClaimBribesSafeModule is AbstractSafeModule {
     event BribePoolAdded(address bribePool);
     event BribePoolRemoved(address bribePool);
 
-    constructor(
-        address _safeContract,
-        address _voter,
-        address _veNFT
-    ) AbstractSafeModule(_safeContract) {
+    constructor(address _safeContract, address _voter, address _veNFT) AbstractSafeModule(_safeContract) {
         voter = IAerodromeVoter(_voter);
         veNFT = _veNFT;
     }
@@ -65,21 +54,14 @@ contract ClaimBribesSafeModule is AbstractSafeModule {
      * @param nftIndexEnd The end index of the NFTs
      * @param silent Doesn't revert if the claim fails when true
      */
-    function claimBribes(
-        uint256 nftIndexStart,
-        uint256 nftIndexEnd,
-        bool silent
-    ) external onlyOperator {
+    function claimBribes(uint256 nftIndexStart, uint256 nftIndexEnd, bool silent) external onlyOperator {
         if (nftIndexEnd < nftIndexStart) {
             (nftIndexStart, nftIndexEnd) = (nftIndexEnd, nftIndexStart);
         }
         uint256 nftCount = nftIds.length;
         nftIndexEnd = nftCount < nftIndexEnd ? nftCount : nftIndexEnd;
 
-        (
-            address[] memory rewardContractAddresses,
-            address[][] memory rewardTokens
-        ) = _getRewardsInfoArray();
+        (address[] memory rewardContractAddresses, address[][] memory rewardTokens) = _getRewardsInfoArray();
 
         for (uint256 i = nftIndexStart; i < nftIndexEnd; i++) {
             uint256 nftId = nftIds[i];
@@ -87,10 +69,7 @@ contract ClaimBribesSafeModule is AbstractSafeModule {
                 address(voter),
                 0, // Value
                 abi.encodeWithSelector(
-                    IAerodromeVoter.claimBribes.selector,
-                    rewardContractAddresses,
-                    rewardTokens,
-                    nftId
+                    IAerodromeVoter.claimBribes.selector, rewardContractAddresses, rewardTokens, nftId
                 ),
                 0 // Call
             );
@@ -107,10 +86,7 @@ contract ClaimBribesSafeModule is AbstractSafeModule {
     function _getRewardsInfoArray()
         internal
         view
-        returns (
-            address[] memory rewardContractAddresses,
-            address[][] memory rewardTokens
-        )
+        returns (address[] memory rewardContractAddresses, address[][] memory rewardTokens)
     {
         BribePoolInfo[] memory _bribePools = bribePools;
         uint256 bribePoolCount = _bribePools.length;
@@ -139,10 +115,7 @@ contract ClaimBribesSafeModule is AbstractSafeModule {
             }
 
             // Make sure the NFT is owned by the Safe
-            require(
-                IVeNFT(veNFT).ownerOf(nftId) == address(safeContract),
-                "NFT not owned by safe"
-            );
+            require(IVeNFT(veNFT).ownerOf(nftId) == address(safeContract), "NFT not owned by safe");
 
             nftIdIndex[nftId] = nftIds.length;
             nftIds.push(nftId);
@@ -212,10 +185,7 @@ contract ClaimBribesSafeModule is AbstractSafeModule {
 
         uint256 i = 0;
         while (true) {
-            uint256 nftId = IVeNFT(veNFT).ownerToNFTokenIdList(
-                address(safeContract),
-                i
-            );
+            uint256 nftId = IVeNFT(veNFT).ownerToNFTokenIdList(address(safeContract), i);
             if (nftId == 0) {
                 break;
             }
@@ -245,10 +215,7 @@ contract ClaimBribesSafeModule is AbstractSafeModule {
     ****************************************/
     // @dev Whitelist a pool to claim bribes from
     // @param _poolAddress The address of the pool to whitelist
-    function addBribePool(address _poolAddress, bool _isVotingContract)
-        external
-        onlySafe
-    {
+    function addBribePool(address _poolAddress, bool _isVotingContract) external onlySafe {
         BribePoolInfo memory bribePool;
 
         if (_isVotingContract) {
@@ -261,8 +228,7 @@ contract ClaimBribesSafeModule is AbstractSafeModule {
             // Find the gauge address
             address _gaugeAddress = ICLPool(_poolAddress).gauge();
             // And the reward contract address
-            address _rewardContractAddress = ICLGauge(_gaugeAddress)
-                .feesVotingReward();
+            address _rewardContractAddress = ICLGauge(_gaugeAddress).feesVotingReward();
 
             bribePool = BribePoolInfo({
                 poolAddress: _poolAddress,
@@ -303,17 +269,10 @@ contract ClaimBribesSafeModule is AbstractSafeModule {
      * @param _rewardContractAddress The address of the reward contract
      * @return _rewardTokens The reward token addresses
      */
-    function _getRewardTokenAddresses(address _rewardContractAddress)
-        internal
-        view
-        returns (address[] memory)
-    {
-        address[] memory _rewardTokens = new address[](
-            ICLRewardContract(_rewardContractAddress).rewardsListLength()
-        );
+    function _getRewardTokenAddresses(address _rewardContractAddress) internal view returns (address[] memory) {
+        address[] memory _rewardTokens = new address[](ICLRewardContract(_rewardContractAddress).rewardsListLength());
         for (uint256 i = 0; i < _rewardTokens.length; i++) {
-            _rewardTokens[i] = ICLRewardContract(_rewardContractAddress)
-                .rewards(i);
+            _rewardTokens[i] = ICLRewardContract(_rewardContractAddress).rewards(i);
         }
 
         return _rewardTokens;
@@ -346,9 +305,7 @@ contract ClaimBribesSafeModule is AbstractSafeModule {
     function bribePoolExists(address bribePool) public view returns (bool) {
         BribePoolInfo[] memory _bribePools = bribePools;
         uint256 poolIndex = bribePoolIndex[bribePool];
-        return
-            poolIndex < _bribePools.length &&
-            _bribePools[poolIndex].poolAddress == bribePool;
+        return poolIndex < _bribePools.length && _bribePools[poolIndex].poolAddress == bribePool;
     }
 
     /**

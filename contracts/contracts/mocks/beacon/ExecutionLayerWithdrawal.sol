@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import { GeneralPurposeToConsensusLayerRequest } from "./GeneralPurposeToConsensusLayerRequest.sol";
+import {GeneralPurposeToConsensusLayerRequest} from "./GeneralPurposeToConsensusLayerRequest.sol";
 
 contract ExecutionLayerWithdrawal is GeneralPurposeToConsensusLayerRequest {
     event WithdrawalRequestIssued(bytes publicKey, uint64 amount);

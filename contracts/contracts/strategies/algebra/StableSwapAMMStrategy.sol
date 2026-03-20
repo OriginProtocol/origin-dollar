@@ -6,16 +6,16 @@ pragma solidity ^0.8.0;
  * @notice AMO strategy for the Algebra stable swap pool
  * @author Origin Protocol Inc
  */
-import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
-import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import {SafeCast} from "@openzeppelin/contracts/utils/math/SafeCast.sol";
+import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
-import { IERC20, InitializableAbstractStrategy } from "../../utils/InitializableAbstractStrategy.sol";
-import { StableMath } from "../../utils/StableMath.sol";
-import { sqrt } from "../../utils/PRBMath.sol";
-import { IBasicToken } from "../../interfaces/IBasicToken.sol";
-import { IPair } from "../../interfaces/algebra/IAlgebraPair.sol";
-import { IGauge } from "../../interfaces/algebra/IAlgebraGauge.sol";
-import { IVault } from "../../interfaces/IVault.sol";
+import {IERC20, InitializableAbstractStrategy} from "../../utils/InitializableAbstractStrategy.sol";
+import {StableMath} from "../../utils/StableMath.sol";
+import {sqrt} from "../../utils/PRBMath.sol";
+import {IBasicToken} from "../../interfaces/IBasicToken.sol";
+import {IPair} from "../../interfaces/algebra/IAlgebraPair.sol";
+import {IGauge} from "../../interfaces/algebra/IAlgebraGauge.sol";
+import {IVault} from "../../interfaces/IVault.sol";
 
 contract StableSwapAMMStrategy is InitializableAbstractStrategy {
     using SafeERC20 for IERC20;
@@ -55,26 +55,16 @@ contract StableSwapAMMStrategy is InitializableAbstractStrategy {
     uint256 public maxDepeg;
 
     event SwapOTokensToPool(
-        uint256 oTokenMinted,
-        uint256 assetDepositAmount,
-        uint256 oTokenDepositAmount,
-        uint256 lpTokens
+        uint256 oTokenMinted, uint256 assetDepositAmount, uint256 oTokenDepositAmount, uint256 lpTokens
     );
-    event SwapAssetsToPool(
-        uint256 assetSwapped,
-        uint256 lpTokens,
-        uint256 oTokenBurnt
-    );
+    event SwapAssetsToPool(uint256 assetSwapped, uint256 lpTokens, uint256 oTokenBurnt);
     event MaxDepegUpdated(uint256 maxDepeg);
 
     /**
      * @dev Verifies that the caller is the Strategist of the Vault.
      */
     modifier onlyStrategist() {
-        require(
-            msg.sender == IVault(vaultAddress).strategistAddr(),
-            "Caller is not the Strategist"
-        );
+        require(msg.sender == IVault(vaultAddress).strategistAddr(), "Caller is not the Strategist");
         _;
     }
 
@@ -106,10 +96,7 @@ contract StableSwapAMMStrategy is InitializableAbstractStrategy {
 
         uint256 pegPrice = 1e18;
 
-        require(
-            sellPrice >= pegPrice - maxDepeg && buyPrice <= pegPrice + maxDepeg,
-            "price out of range"
-        );
+        require(sellPrice >= pegPrice - maxDepeg && buyPrice <= pegPrice + maxDepeg, "price out of range");
         _;
     }
 
@@ -121,24 +108,16 @@ contract StableSwapAMMStrategy is InitializableAbstractStrategy {
      */
     modifier improvePoolBalance() {
         // Get the asset and OToken balances in the pool
-        (
-            uint256 assetReserveBefore,
-            uint256 oTokenReserveBefore
-        ) = _getPoolReserves();
+        (uint256 assetReserveBefore, uint256 oTokenReserveBefore) = _getPoolReserves();
         // diff = asset balance - OToken balance
-        int256 diffBefore = assetReserveBefore.toInt256() -
-            oTokenReserveBefore.toInt256();
+        int256 diffBefore = assetReserveBefore.toInt256() - oTokenReserveBefore.toInt256();
 
         _;
 
         // Get the asset and OToken balances in the pool
-        (
-            uint256 assetReserveAfter,
-            uint256 oTokenReserveAfter
-        ) = _getPoolReserves();
+        (uint256 assetReserveAfter, uint256 oTokenReserveAfter) = _getPoolReserves();
         // diff = asset balance - OToken balance
-        int256 diffAfter = assetReserveAfter.toInt256() -
-            oTokenReserveAfter.toInt256();
+        int256 diffAfter = assetReserveAfter.toInt256() - oTokenReserveAfter.toInt256();
 
         if (diffBefore == 0) {
             require(diffAfter == 0, "Position balance is worsened");
@@ -160,39 +139,25 @@ contract StableSwapAMMStrategy is InitializableAbstractStrategy {
      * The `vaultAddress` is the address of the Origin Vault.
      * @param _gauge Address of the Algebra gauge for the pool.
      */
-    constructor(BaseStrategyConfig memory _baseConfig, address _gauge)
-        InitializableAbstractStrategy(_baseConfig)
-    {
+    constructor(BaseStrategyConfig memory _baseConfig, address _gauge) InitializableAbstractStrategy(_baseConfig) {
         // Read the oToken address from the Vault
         address oTokenMem = IVault(_baseConfig.vaultAddress).oToken();
         address assetMem = IVault(_baseConfig.vaultAddress).asset();
 
         // Checked both tokens are to 18 decimals
         require(
-            IBasicToken(assetMem).decimals() == 18 &&
-                IBasicToken(oTokenMem).decimals() == 18,
+            IBasicToken(assetMem).decimals() == 18 && IBasicToken(oTokenMem).decimals() == 18,
             "Incorrect token decimals"
         );
         // Check the Algebra pool is a Stable AMM (sAMM)
-        require(
-            IPair(_baseConfig.platformAddress).isStable() == true,
-            "Pool not stable"
-        );
+        require(IPair(_baseConfig.platformAddress).isStable() == true, "Pool not stable");
         // Check the gauge is for the pool
-        require(
-            IGauge(_gauge).TOKEN() == _baseConfig.platformAddress,
-            "Incorrect gauge"
-        );
-        oTokenPoolIndex = IPair(_baseConfig.platformAddress).token0() ==
-            oTokenMem
-            ? 0
-            : 1;
+        require(IGauge(_gauge).TOKEN() == _baseConfig.platformAddress, "Incorrect gauge");
+        oTokenPoolIndex = IPair(_baseConfig.platformAddress).token0() == oTokenMem ? 0 : 1;
         // Check the pool tokens are correct
         require(
-            IPair(_baseConfig.platformAddress).token0() ==
-                (oTokenPoolIndex == 0 ? oTokenMem : assetMem) &&
-                IPair(_baseConfig.platformAddress).token1() ==
-                (oTokenPoolIndex == 0 ? assetMem : oTokenMem),
+            IPair(_baseConfig.platformAddress).token0() == (oTokenPoolIndex == 0 ? oTokenMem : assetMem)
+                && IPair(_baseConfig.platformAddress).token1() == (oTokenPoolIndex == 0 ? assetMem : oTokenMem),
             "Incorrect pool tokens"
         );
 
@@ -213,21 +178,14 @@ contract StableSwapAMMStrategy is InitializableAbstractStrategy {
      * @param _rewardTokenAddresses Array containing SWPx token address
      * @param _maxDepeg The max amount the OToken/asset price can deviate from peg (1e18) before deposits are reverted.
      */
-    function initialize(
-        address[] calldata _rewardTokenAddresses,
-        uint256 _maxDepeg
-    ) external onlyGovernor initializer {
+    function initialize(address[] calldata _rewardTokenAddresses, uint256 _maxDepeg) external onlyGovernor initializer {
         address[] memory pTokens = new address[](1);
         pTokens[0] = pool;
 
         address[] memory _assets = new address[](1);
         _assets[0] = asset;
 
-        InitializableAbstractStrategy._initialize(
-            _rewardTokenAddresses,
-            _assets,
-            pTokens
-        );
+        InitializableAbstractStrategy._initialize(_rewardTokenAddresses, _assets, pTokens);
 
         maxDepeg = _maxDepeg;
 
@@ -260,7 +218,7 @@ contract StableSwapAMMStrategy is InitializableAbstractStrategy {
         require(_asset == asset, "Unsupported asset");
         require(_assetAmount > 0, "Must deposit something");
 
-        (uint256 oTokenDepositAmount, ) = _deposit(_assetAmount);
+        (uint256 oTokenDepositAmount,) = _deposit(_assetAmount);
 
         // Ensure solvency of the vault
         _solvencyAssert();
@@ -280,17 +238,10 @@ contract StableSwapAMMStrategy is InitializableAbstractStrategy {
      * To minimize loses, the pool should be rebalanced before depositing.
      * The pool's oToken/asset price must be within the maxDepeg range.
      */
-    function depositAll()
-        external
-        override
-        onlyVault
-        nonReentrant
-        skimPool
-        nearBalancedPool
-    {
+    function depositAll() external override onlyVault nonReentrant skimPool nearBalancedPool {
         uint256 assetBalance = IERC20(asset).balanceOf(address(this));
         if (assetBalance > 0) {
-            (uint256 oTokenDepositAmount, ) = _deposit(assetBalance);
+            (uint256 oTokenDepositAmount,) = _deposit(assetBalance);
 
             // Ensure solvency of the vault
             _solvencyAssert();
@@ -310,10 +261,7 @@ contract StableSwapAMMStrategy is InitializableAbstractStrategy {
      * @return oTokenDepositAmount Amount of OToken tokens minted and deposited into the pool.
      * @return lpTokens Amount of Algebra pool LP tokens minted and deposited into the gauge.
      */
-    function _deposit(uint256 _assetAmount)
-        internal
-        returns (uint256 oTokenDepositAmount, uint256 lpTokens)
-    {
+    function _deposit(uint256 _assetAmount) internal returns (uint256 oTokenDepositAmount, uint256 lpTokens) {
         // Calculate the required amount of OToken to mint based on the asset amount.
         oTokenDepositAmount = _calcTokensToMint(_assetAmount);
 
@@ -335,11 +283,13 @@ contract StableSwapAMMStrategy is InitializableAbstractStrategy {
      * @param _asset Address of the asset token.
      * @param _assetAmount Amount of asset tokens to withdraw.
      */
-    function withdraw(
-        address _recipient,
-        address _asset,
-        uint256 _assetAmount
-    ) external override onlyVault nonReentrant skimPool {
+    function withdraw(address _recipient, address _asset, uint256 _assetAmount)
+        external
+        override
+        onlyVault
+        nonReentrant
+        skimPool
+    {
         require(_assetAmount > 0, "Must withdraw something");
         require(_asset == asset, "Unsupported asset");
         // This strategy can't be set as a default strategy for asset in the Vault.
@@ -359,10 +309,7 @@ contract StableSwapAMMStrategy is InitializableAbstractStrategy {
         // Transfer asset to the recipient
         // Note there can be a dust amount of asset left in the strategy as
         // the burn of the pool's LP tokens is rounded up
-        require(
-            IERC20(asset).balanceOf(address(this)) >= _assetAmount,
-            "Not enough asset removed"
-        );
+        require(IERC20(asset).balanceOf(address(this)) >= _assetAmount, "Not enough asset removed");
         IERC20(asset).safeTransfer(_recipient, _assetAmount);
 
         // Ensure solvency of the vault
@@ -382,13 +329,7 @@ contract StableSwapAMMStrategy is InitializableAbstractStrategy {
      * @dev There is no solvency check here as withdrawAll can be called to
      * quickly secure assets to the Vault in emergencies.
      */
-    function withdrawAll()
-        external
-        override
-        onlyVaultOrGovernor
-        nonReentrant
-        skimPool
-    {
+    function withdrawAll() external override onlyVaultOrGovernor nonReentrant skimPool {
         // Get all the pool LP tokens the strategy has staked in the gauge
         uint256 lpTokens = IGauge(gauge).balanceOf(address(this));
         // Can not withdraw zero LP tokens from the gauge
@@ -422,19 +363,14 @@ contract StableSwapAMMStrategy is InitializableAbstractStrategy {
                 Pool Rebalancing
     ****************************************/
 
-    /** @notice Used when there is more OToken than asset in the pool.
+    /**
+     * @notice Used when there is more OToken than asset in the pool.
      * asset and OToken is removed from the pool, the received asset is swapped for OToken
      * and the left over OToken in the strategy is burnt.
      * The OToken/asset price is < 1.0 so OToken is being bought at a discount.
      * @param _assetAmount Amount of asset tokens to swap into the pool.
      */
-    function swapAssetsToPool(uint256 _assetAmount)
-        external
-        onlyStrategist
-        nonReentrant
-        improvePoolBalance
-        skimPool
-    {
+    function swapAssetsToPool(uint256 _assetAmount) external onlyStrategist nonReentrant improvePoolBalance skimPool {
         require(_assetAmount > 0, "Must swap something");
 
         // 1. Partially remove liquidity so there’s enough asset for the swap
@@ -470,23 +406,14 @@ contract StableSwapAMMStrategy is InitializableAbstractStrategy {
      * The OToken/asset price is > 1.0 so OToken is being sold at a premium.
      * @param _oTokenAmount Amount of OToken to swap into the pool.
      */
-    function swapOTokensToPool(uint256 _oTokenAmount)
-        external
-        onlyStrategist
-        nonReentrant
-        improvePoolBalance
-        skimPool
-    {
+    function swapOTokensToPool(uint256 _oTokenAmount) external onlyStrategist nonReentrant improvePoolBalance skimPool {
         require(_oTokenAmount > 0, "Must swap something");
 
         // 1. Mint OToken so it can be swapped into the pool
 
         // There can be OToken in the strategy from skimming the pool
         uint256 oTokenInStrategy = IERC20(oToken).balanceOf(address(this));
-        require(
-            _oTokenAmount >= oTokenInStrategy,
-            "Too much OToken in strategy"
-        );
+        require(_oTokenAmount >= oTokenInStrategy, "Too much OToken in strategy");
         uint256 oTokenToMint = _oTokenAmount - oTokenInStrategy;
 
         // Mint the required OToken tokens to this strategy
@@ -499,9 +426,7 @@ contract StableSwapAMMStrategy is InitializableAbstractStrategy {
         uint256 assetDepositAmount = IERC20(asset).balanceOf(address(this));
 
         // 3. Add asset and OToken back to the pool in proportion to the pool's reserves
-        (uint256 oTokenDepositAmount, uint256 lpTokens) = _deposit(
-            assetDepositAmount
-        );
+        (uint256 oTokenDepositAmount, uint256 lpTokens) = _deposit(assetDepositAmount);
 
         // Ensure solvency of the vault
         _solvencyAssert();
@@ -509,12 +434,7 @@ contract StableSwapAMMStrategy is InitializableAbstractStrategy {
         // Emit event for the minted OToken tokens
         emit Deposit(oToken, pool, oTokenToMint + oTokenDepositAmount);
         // Emit event for the swap
-        emit SwapOTokensToPool(
-            oTokenToMint,
-            assetDepositAmount,
-            oTokenDepositAmount,
-            lpTokens
-        );
+        emit SwapOTokensToPool(oTokenToMint, assetDepositAmount, oTokenDepositAmount, lpTokens);
     }
 
     /***************************************
@@ -528,12 +448,7 @@ contract StableSwapAMMStrategy is InitializableAbstractStrategy {
      * @param _asset      Address of the asset token
      * @return balance    Total value in asset.
      */
-    function checkBalance(address _asset)
-        external
-        view
-        override
-        returns (uint256 balance)
-    {
+    function checkBalance(address _asset) external view override returns (uint256 balance) {
         require(_asset == asset, "Unsupported asset");
 
         // asset balance needed here for the balance check that happens from vault during depositing.
@@ -558,12 +473,7 @@ contract StableSwapAMMStrategy is InitializableAbstractStrategy {
     /**
      * @notice Collect accumulated SWPx (and other) rewards and send to the Harvester.
      */
-    function collectRewardTokens()
-        external
-        override
-        onlyHarvester
-        nonReentrant
-    {
+    function collectRewardTokens() external override onlyHarvester nonReentrant {
         // Collect SWPx rewards from the gauge
         IGauge(gauge).getReward();
 
@@ -582,11 +492,7 @@ contract StableSwapAMMStrategy is InitializableAbstractStrategy {
      * @param _assetAmount Amount of asset tokens to be added to the pool.
      * @return oTokenAmount Amount of OToken tokens to be minted and added to the pool.
      */
-    function _calcTokensToMint(uint256 _assetAmount)
-        internal
-        view
-        returns (uint256 oTokenAmount)
-    {
+    function _calcTokensToMint(uint256 _assetAmount) internal view returns (uint256 oTokenAmount) {
         (uint256 assetReserves, uint256 oTokenReserves) = _getPoolReserves();
         require(assetReserves > 0, "Empty pool");
 
@@ -600,11 +506,7 @@ contract StableSwapAMMStrategy is InitializableAbstractStrategy {
      * @param _assetAmount Amount of asset tokens to be removed from the pool.
      * @return lpTokens Amount of Algebra pool LP tokens to burn.
      */
-    function _calcTokensToBurn(uint256 _assetAmount)
-        internal
-        view
-        returns (uint256 lpTokens)
-    {
+    function _calcTokensToBurn(uint256 _assetAmount) internal view returns (uint256 lpTokens) {
         /* The Algebra pool proportionally returns the reserve tokens when removing liquidity.
          * First, calculate the proportion of required asset tokens against the pools asset reserves.
          * That same proportion is used to calculate the required amount of pool LP tokens.
@@ -620,7 +522,7 @@ contract StableSwapAMMStrategy is InitializableAbstractStrategy {
          * created is no longer valid.
          */
 
-        (uint256 assetReserves, ) = _getPoolReserves();
+        (uint256 assetReserves,) = _getPoolReserves();
         require(assetReserves > 0, "Empty pool");
 
         lpTokens = (_assetAmount * IPair(pool).totalSupply()) / assetReserves;
@@ -634,10 +536,7 @@ contract StableSwapAMMStrategy is InitializableAbstractStrategy {
      * @param _oTokenAmount Amount of OToken to deposit.
      * @return lpTokens Amount of Algebra pool LP tokens minted.
      */
-    function _depositToPoolAndGauge(uint256 _assetAmount, uint256 _oTokenAmount)
-        internal
-        returns (uint256 lpTokens)
-    {
+    function _depositToPoolAndGauge(uint256 _assetAmount, uint256 _oTokenAmount) internal returns (uint256 lpTokens) {
         // Transfer asset to the pool
         IERC20(asset).safeTransfer(pool, _assetAmount);
         // Transfer OToken to the pool
@@ -655,10 +554,7 @@ contract StableSwapAMMStrategy is InitializableAbstractStrategy {
      * @param _lpTokens Amount of Algebra pool LP tokens to withdraw from the gauge
      */
     function _withdrawFromGaugeAndPool(uint256 _lpTokens) internal {
-        require(
-            IGauge(gauge).balanceOf(address(this)) >= _lpTokens,
-            "Not enough LP tokens in gauge"
-        );
+        require(IGauge(gauge).balanceOf(address(this)) >= _lpTokens, "Not enough LP tokens in gauge");
 
         // Withdraw pool LP tokens from the gauge
         IGauge(gauge).withdraw(_lpTokens);
@@ -694,11 +590,7 @@ contract StableSwapAMMStrategy is InitializableAbstractStrategy {
      * @param _tokenIn Address of the token going into the pool.
      * @param _tokenOut Address of the token being swapped out of the pool.
      */
-    function _swapExactTokensForTokens(
-        uint256 _amountIn,
-        address _tokenIn,
-        address _tokenOut
-    ) internal {
+    function _swapExactTokensForTokens(uint256 _amountIn, address _tokenIn, address _tokenOut) internal {
         // Calculate how much out tokens we get from the swap
         uint256 amountOut = IPair(pool).getAmountOut(_amountIn, _tokenIn);
 
@@ -708,9 +600,7 @@ contract StableSwapAMMStrategy is InitializableAbstractStrategy {
 
         // Safety check that we are dealing with the correct pool tokens
         require(
-            (_tokenIn == asset && _tokenOut == oToken) ||
-                (_tokenIn == oToken && _tokenOut == asset),
-            "Unsupported swap"
+            (_tokenIn == asset && _tokenOut == oToken) || (_tokenIn == oToken && _tokenOut == asset), "Unsupported swap"
         );
 
         uint256 amount0;
@@ -782,11 +672,7 @@ contract StableSwapAMMStrategy is InitializableAbstractStrategy {
      * @param _y The amount of the OToken tokens in the pool
      * @return k The invariant of the Algebra stable pool
      */
-    function _invariant(uint256 _x, uint256 _y)
-        internal
-        pure
-        returns (uint256 k)
-    {
+    function _invariant(uint256 _x, uint256 _y) internal pure returns (uint256 k) {
         uint256 _a = (_x * _y) / PRECISION;
         uint256 _b = ((_x * _x) / PRECISION + (_y * _y) / PRECISION);
         // slither-disable-next-line divide-before-multiply
@@ -805,10 +691,7 @@ contract StableSwapAMMStrategy is InitializableAbstractStrategy {
         uint256 _totalVaultValue = IVault(vaultAddress).totalValue();
         uint256 _totalSupply = IERC20(oToken).totalSupply();
 
-        if (
-            _totalSupply > 0 &&
-            _totalVaultValue.divPrecisely(_totalSupply) < SOLVENCY_THRESHOLD
-        ) {
+        if (_totalSupply > 0 && _totalVaultValue.divPrecisely(_totalSupply) < SOLVENCY_THRESHOLD) {
             revert("Protocol insolvent");
         }
     }
@@ -819,12 +702,8 @@ contract StableSwapAMMStrategy is InitializableAbstractStrategy {
      * @return assetReserves The reserves of the asset token in the pool.
      * @return oTokenReserves The reserves of the OToken token in the pool.
      */
-    function _getPoolReserves()
-        internal
-        view
-        returns (uint256 assetReserves, uint256 oTokenReserves)
-    {
-        (uint256 reserve0, uint256 reserve1, ) = IPair(pool).getReserves();
+    function _getPoolReserves() internal view returns (uint256 assetReserves, uint256 oTokenReserves) {
+        (uint256 reserve0, uint256 reserve1,) = IPair(pool).getReserves();
         assetReserves = oTokenPoolIndex == 0 ? reserve1 : reserve0;
         oTokenReserves = oTokenPoolIndex == 0 ? reserve0 : reserve1;
     }
@@ -839,10 +718,7 @@ contract StableSwapAMMStrategy is InitializableAbstractStrategy {
      * eg 0.01e18 or 1e16 is 1% which is 100 basis points.
      */
     function setMaxDepeg(uint256 _maxDepeg) external onlyGovernor {
-        require(
-            _maxDepeg >= 0.001 ether && _maxDepeg <= 0.1 ether,
-            "Invalid max depeg range"
-        );
+        require(_maxDepeg >= 0.001 ether && _maxDepeg <= 0.1 ether, "Invalid max depeg range");
         maxDepeg = _maxDepeg;
 
         emit MaxDepegUpdated(_maxDepeg);
@@ -856,20 +732,12 @@ contract StableSwapAMMStrategy is InitializableAbstractStrategy {
      * @notice Approve the spending of all assets by their corresponding pool tokens,
      *      if for some reason is it necessary.
      */
-    function safeApproveAllTokens()
-        external
-        override
-        onlyGovernor
-        nonReentrant
-    {
+    function safeApproveAllTokens() external override onlyGovernor nonReentrant {
         _approveBase();
     }
 
     // solhint-disable-next-line no-unused-vars
-    function _abstractSetPToken(address _asset, address _pToken)
-        internal
-        override
-    {}
+    function _abstractSetPToken(address _asset, address _pToken) internal override {}
 
     function _approveBase() internal {
         // Approve Algebra gauge contract to transfer Algebra pool LP tokens

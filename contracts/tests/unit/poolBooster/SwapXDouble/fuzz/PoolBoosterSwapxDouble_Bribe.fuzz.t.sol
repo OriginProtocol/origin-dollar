@@ -14,9 +14,8 @@ contract Unit_Fuzz_PoolBoosterSwapxDouble_Bribe_Test is Unit_SwapXDouble_Shared_
         split = bound(split, 1e16 + 1, 99e16 - 1);
 
         // Deploy a new PoolBoosterSwapxDouble with the fuzzed split
-        PoolBoosterSwapxDouble fuzzedBooster = new PoolBoosterSwapxDouble(
-            mockBribeContractOS, mockBribeContractOther, address(oSonic), split
-        );
+        PoolBoosterSwapxDouble fuzzedBooster =
+            new PoolBoosterSwapxDouble(mockBribeContractOS, mockBribeContractOther, address(oSonic), split);
 
         // Deal oSonic to the booster
         _dealOSonic(address(fuzzedBooster), balance);

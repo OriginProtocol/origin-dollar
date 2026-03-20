@@ -1,8 +1,9 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import {Fork_NativeStakingSSVStrategy_Shared_Test} from
-    "tests/fork/strategies/NativeStakingSSVStrategy/shared/Shared.t.sol";
+import {
+    Fork_NativeStakingSSVStrategy_Shared_Test
+} from "tests/fork/strategies/NativeStakingSSVStrategy/shared/Shared.t.sol";
 
 contract Fork_Concrete_NativeStakingSSVStrategy_Deposit_Test is Fork_NativeStakingSSVStrategy_Shared_Test {
     /// @dev Test that the strategy accepts WETH allocation via deposit()
@@ -22,9 +23,7 @@ contract Fork_Concrete_NativeStakingSSVStrategy_Deposit_Test is Fork_NativeStaki
         nativeStakingSSVStrategy.deposit(address(weth), depositAmount);
 
         assertEq(
-            weth.balanceOf(address(nativeStakingSSVStrategy)),
-            wethBalanceBefore + depositAmount,
-            "WETH not transferred"
+            weth.balanceOf(address(nativeStakingSSVStrategy)), wethBalanceBefore + depositAmount, "WETH not transferred"
         );
         assertEq(
             nativeStakingSSVStrategy.checkBalance(address(weth)),

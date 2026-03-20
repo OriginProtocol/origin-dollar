@@ -66,9 +66,7 @@ abstract contract Unit_BaseCurveAMOStrategy_Shared_Test is Base {
         );
 
         oethVaultProxy.initialize(
-            address(oethVaultImpl),
-            governor,
-            abi.encodeWithSignature("initialize(address)", address(oethProxy))
+            address(oethVaultImpl), governor, abi.encodeWithSignature("initialize(address)", address(oethProxy))
         );
 
         vm.stopPrank();
@@ -95,15 +93,14 @@ abstract contract Unit_BaseCurveAMOStrategy_Shared_Test is Base {
         // Deploy BaseCurveAMOStrategy
         baseCurveAMOStrategy = new BaseCurveAMOStrategy(
             InitializableAbstractStrategy.BaseStrategyConfig({
-                platformAddress: address(curvePool),
-                vaultAddress: address(oethVault)
+                platformAddress: address(curvePool), vaultAddress: address(oethVault)
             }),
             address(oeth),
             address(mockWeth),
             address(curveGauge),
             address(curveGaugeFactory),
             1, // oethCoinIndex
-            0  // wethCoinIndex
+            0 // wethCoinIndex
         );
 
         // Set governor via slot

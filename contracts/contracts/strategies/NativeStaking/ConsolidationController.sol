@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
-import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
+import {SafeCast} from "@openzeppelin/contracts/utils/math/SafeCast.sol";
+import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
-import { CompoundingStakingSSVStrategy, CompoundingValidatorManager } from "./CompoundingStakingSSVStrategy.sol";
-import { ValidatorAccountant } from "./ValidatorAccountant.sol";
-import { Cluster } from "../../interfaces/ISSVNetwork.sol";
+import {CompoundingStakingSSVStrategy, CompoundingValidatorManager} from "./CompoundingStakingSSVStrategy.sol";
+import {ValidatorAccountant} from "./ValidatorAccountant.sol";
+import {Cluster} from "../../interfaces/ISSVNetwork.sol";
 
 /// @title Consolidation Controller
 /// @notice Orchestrates the consolidation of validators from old Native Staking Strategies
@@ -44,10 +44,7 @@ contract ConsolidationController is Ownable {
 
     /// @dev Throws if called by any account other than the Validator Registrator
     modifier onlyRegistrator() {
-        require(
-            msg.sender == validatorRegistrator,
-            "Caller is not the Registrator"
-        );
+        require(msg.sender == validatorRegistrator, "Caller is not the Registrator");
         _;
     }
 
@@ -65,9 +62,7 @@ contract ConsolidationController is Ownable {
         validatorRegistrator = _validatorRegistrator;
         nativeStakingStrategy2 = _nativeStakingStrategy2;
         nativeStakingStrategy3 = _nativeStakingStrategy3;
-        targetStrategy = CompoundingStakingSSVStrategy(
-            payable(_targetStrategy)
-        );
+        targetStrategy = CompoundingStakingSSVStrategy(payable(_targetStrategy));
     }
 
     /**
@@ -77,11 +72,11 @@ contract ConsolidationController is Ownable {
      * @param sourcePubKeys The public keys of the validators to be consolidated from the old Native Staking Strategy
      * @param targetPubKey The public key of the target validator on the new Compounding Staking Strategy
      */
-    function requestConsolidation(
-        address _sourceStrategy,
-        bytes[] calldata sourcePubKeys,
-        bytes calldata targetPubKey
-    ) external payable onlyOwner {
+    function requestConsolidation(address _sourceStrategy, bytes[] calldata sourcePubKeys, bytes calldata targetPubKey)
+        external
+        payable
+        onlyOwner
+    {
         // Check no consolidations are already in progress
         require(consolidationCount == 0, "Consolidation in progress");
         // Check at least one source validator is provided
@@ -91,17 +86,10 @@ contract ConsolidationController is Ownable {
 
         // Check target validator is Active on the new Compounding Staking Strategy
         bytes32 targetPubKeyHashMem = _hashPubKey(targetPubKey);
-        (CompoundingStakingSSVStrategy.ValidatorState state, ) = targetStrategy
-            .validator(targetPubKeyHashMem);
-        require(
-            state == CompoundingValidatorManager.ValidatorState.ACTIVE,
-            "Target validator not active"
-        );
+        (CompoundingStakingSSVStrategy.ValidatorState state,) = targetStrategy.validator(targetPubKeyHashMem);
+        require(state == CompoundingValidatorManager.ValidatorState.ACTIVE, "Target validator not active");
         // Check no pending deposits in the new target validator
-        require(
-            _hasPendingDeposit(targetPubKeyHashMem) == false,
-            "Target has pending deposit"
-        );
+        require(_hasPendingDeposit(targetPubKeyHashMem) == false, "Target has pending deposit");
 
         // Store the state at the start of the consolidation process
         consolidationCount = SafeCast.toUint64(sourcePubKeys.length);
@@ -112,31 +100,20 @@ contract ConsolidationController is Ownable {
 
         // Store source validators for this consolidation round.
         for (uint256 i = 0; i < sourcePubKeys.length; ++i) {
-            bytes32 roundKey = _sourceValidatorRoundKey(
-                sourcePubKeys[i],
-                consolidationStartTimestampMem
-            );
-            require(
-                pendingSourceInRound[roundKey] == false,
-                "Duplicate source validator"
-            );
+            bytes32 roundKey = _sourceValidatorRoundKey(sourcePubKeys[i], consolidationStartTimestampMem);
+            require(pendingSourceInRound[roundKey] == false, "Duplicate source validator");
             pendingSourceInRound[roundKey] = true;
         }
 
         // Call requestConsolidation on the old Native Staking Strategy
         // to initiate the consolidations
-        ValidatorAccountant(_sourceStrategy).requestConsolidation{
-            value: msg.value
-        }(sourcePubKeys, targetPubKey);
+        ValidatorAccountant(_sourceStrategy).requestConsolidation{value: msg.value}(sourcePubKeys, targetPubKey);
 
         // Snap the balances for the last time on the new Compounding Staking Strategy
         // if it hasn't been called recently. Otherwise skip to prevent a DoS
         // attack where an attacker front-runs this call with the permissionless snapBalances().
-        (, uint64 lastSnapTimestamp, ) = targetStrategy.snappedBalance();
-        if (
-            uint64(block.timestamp) >
-            lastSnapTimestamp + targetStrategy.SNAP_BALANCES_DELAY()
-        ) {
+        (, uint64 lastSnapTimestamp,) = targetStrategy.snappedBalance();
+        if (uint64(block.timestamp) > lastSnapTimestamp + targetStrategy.SNAP_BALANCES_DELAY()) {
             targetStrategy.snapBalances();
         }
 
@@ -150,30 +127,17 @@ contract ConsolidationController is Ownable {
      * This reduces the consolidation count and changes the validator state back to STAKED.
      * @param sourcePubKeys The public keys of the source validators that failed to be consolidated.
      */
-    function failConsolidation(bytes[] calldata sourcePubKeys)
-        external
-        onlyOwner
-    {
+    function failConsolidation(bytes[] calldata sourcePubKeys) external onlyOwner {
         // Check consolidations are in progress
         require(consolidationCount > 0, "No consolidation in progress");
         // There a min time before a failed consolidation can be unwound.
         // This gives the beacon chain time to process the request.
-        require(
-            block.timestamp >=
-                consolidationStartTimestamp + MIN_CONSOLIDATION_PERIOD,
-            "Source not withdrawable"
-        );
-        require(
-            sourcePubKeys.length <= consolidationCount,
-            "Exceeds consolidation count"
-        );
+        require(block.timestamp >= consolidationStartTimestamp + MIN_CONSOLIDATION_PERIOD, "Source not withdrawable");
+        require(sourcePubKeys.length <= consolidationCount, "Exceeds consolidation count");
         uint64 consolidationStartTimestampMem = consolidationStartTimestamp;
 
         for (uint256 i = 0; i < sourcePubKeys.length; ++i) {
-            bytes32 roundKey = _sourceValidatorRoundKey(
-                sourcePubKeys[i],
-                consolidationStartTimestampMem
-            );
+            bytes32 roundKey = _sourceValidatorRoundKey(sourcePubKeys[i], consolidationStartTimestampMem);
             require(pendingSourceInRound[roundKey], "Unknown source validator");
             pendingSourceInRound[roundKey] = false;
         }
@@ -219,17 +183,14 @@ contract ConsolidationController is Ownable {
      */
     function confirmConsolidation(
         CompoundingValidatorManager.BalanceProofs calldata balanceProofs,
-        CompoundingValidatorManager.PendingDepositProofs
-            calldata pendingDepositProofs
+        CompoundingValidatorManager.PendingDepositProofs calldata pendingDepositProofs
     ) external onlyOwner {
         // Check consolidations are in progress
         require(consolidationCount > 0, "No consolidation in progress");
         // There a min time before a consolidation can be processed on the beacon chain
-        (, uint64 snappedTimestamp, ) = targetStrategy.snappedBalance();
+        (, uint64 snappedTimestamp,) = targetStrategy.snappedBalance();
         require(
-            uint64(snappedTimestamp) >
-                consolidationStartTimestamp + MIN_CONSOLIDATION_PERIOD,
-            "Source not withdrawable"
+            uint64(snappedTimestamp) > consolidationStartTimestamp + MIN_CONSOLIDATION_PERIOD, "Source not withdrawable"
         );
 
         // Load into memory as the storage is about to be reset.
@@ -247,9 +208,7 @@ contract ConsolidationController is Ownable {
         targetStrategy.verifyBalances(balanceProofs, pendingDepositProofs);
 
         // Reduce the balance of the old Native Staking Strategy
-        ValidatorAccountant(sourceStrategyMem).confirmConsolidation(
-            consolidationCountMem
-        );
+        ValidatorAccountant(sourceStrategyMem).confirmConsolidation(consolidationCountMem);
 
         // No event emitted as ConsolidationConfirmed is emitted from the old Native Staking Strategy
     }
@@ -263,11 +222,7 @@ contract ConsolidationController is Ownable {
     /// @notice The validator registrator of the old Native Staking Strategy can call doAccounting
     /// @param _sourceStrategy The address of the old Native Staking Strategy
     /// @return accountingValid true if accounting was successful, false if fuse is blown
-    function doAccounting(address _sourceStrategy)
-        external
-        onlyRegistrator
-        returns (bool accountingValid)
-    {
+    function doAccounting(address _sourceStrategy) external onlyRegistrator returns (bool accountingValid) {
         // Check sourceStrategy is a valid old Native Staking Strategy
         _checkSourceStrategy(_sourceStrategy);
 
@@ -282,18 +237,14 @@ contract ConsolidationController is Ownable {
      * @param publicKey The public key of the validator to exit which must have STAKED state.
      * @param operatorIds The operator IDs for the source SSV cluster
      */
-    function exitSsvValidator(
-        address _sourceStrategy,
-        bytes calldata publicKey,
-        uint64[] calldata operatorIds
-    ) external onlyRegistrator {
+    function exitSsvValidator(address _sourceStrategy, bytes calldata publicKey, uint64[] calldata operatorIds)
+        external
+        onlyRegistrator
+    {
         // Check sourceStrategy is a valid old Native Staking Strategy
         _checkSourceStrategy(_sourceStrategy);
 
-        ValidatorAccountant(_sourceStrategy).exitSsvValidator(
-            publicKey,
-            operatorIds
-        );
+        ValidatorAccountant(_sourceStrategy).exitSsvValidator(publicKey, operatorIds);
     }
 
     /**
@@ -319,11 +270,7 @@ contract ConsolidationController is Ownable {
         // The exited validator can be removed after the consolidation process is complete.
         require(_sourceStrategy != sourceStrategy, "Consolidation in progress");
 
-        ValidatorAccountant(_sourceStrategy).removeSsvValidator(
-            publicKey,
-            operatorIds,
-            cluster
-        );
+        ValidatorAccountant(_sourceStrategy).removeSsvValidator(publicKey, operatorIds, cluster);
     }
 
     /**
@@ -340,11 +287,7 @@ contract ConsolidationController is Ownable {
             revert("Consolidation in progress");
         }
         if (consolidationCount > 0) {
-            require(
-                block.timestamp >
-                    consolidationStartTimestamp + MIN_CONSOLIDATION_PERIOD,
-                "Source not withdrawable"
-            );
+            require(block.timestamp > consolidationStartTimestamp + MIN_CONSOLIDATION_PERIOD, "Source not withdrawable");
         }
 
         targetStrategy.snapBalances();
@@ -373,17 +316,13 @@ contract ConsolidationController is Ownable {
      */
     function verifyBalances(
         CompoundingValidatorManager.BalanceProofs calldata balanceProofs,
-        CompoundingValidatorManager.PendingDepositProofs
-            calldata pendingDepositProofs
+        CompoundingValidatorManager.PendingDepositProofs calldata pendingDepositProofs
     ) external {
-        (, uint64 snappedTimestamp, ) = targetStrategy.snappedBalance();
+        (, uint64 snappedTimestamp,) = targetStrategy.snappedBalance();
         // Can not verify balances while consolidations are in progress
         // if the snap was taken after the consolidation process started.
         // This still allows verifying a pre-existing snap.
-        if (
-            consolidationCount > 0 &&
-            snappedTimestamp > consolidationStartTimestamp
-        ) {
+        if (consolidationCount > 0 && snappedTimestamp > consolidationStartTimestamp) {
             revert("Consolidation in progress");
         }
 
@@ -398,19 +337,12 @@ contract ConsolidationController is Ownable {
     /// @param publicKey The public key of the validator
     /// @param amountGwei The amount of ETH to be withdrawn from the validator in Gwei.
     /// A zero amount is not allowed.
-    function validatorWithdrawal(bytes calldata publicKey, uint64 amountGwei)
-        external
-        payable
-        onlyRegistrator
-    {
+    function validatorWithdrawal(bytes calldata publicKey, uint64 amountGwei) external payable onlyRegistrator {
         // Prevent full exits from any new compounding validators.
         // This includes when there is no consolidation in progress.
         // This reduces the risk of an exit request being processed before a consolidation request
         require(amountGwei > 0, "No exit during migration");
-        targetStrategy.validatorWithdrawal{ value: msg.value }(
-            publicKey,
-            amountGwei
-        );
+        targetStrategy.validatorWithdrawal{value: msg.value}(publicKey, amountGwei);
     }
 
     /**
@@ -422,14 +354,10 @@ contract ConsolidationController is Ownable {
      * @param depositAmountGwei The amount of WETH to stake to the validator in Gwei.
      */
     function stakeEth(
-        CompoundingValidatorManager.ValidatorStakeData
-            calldata validatorStakeData,
+        CompoundingValidatorManager.ValidatorStakeData calldata validatorStakeData,
         uint64 depositAmountGwei
     ) external onlyRegistrator {
-        require(
-            _hashPubKey(validatorStakeData.pubkey) != targetPubKeyHash,
-            "Stake to consolidation target"
-        );
+        require(_hashPubKey(validatorStakeData.pubkey) != targetPubKeyHash, "Stake to consolidation target");
 
         targetStrategy.stakeEth(validatorStakeData, depositAmountGwei);
     }
@@ -447,24 +375,12 @@ contract ConsolidationController is Ownable {
     /// @dev Check if there are any pending deposits for a validator with a given public key hash.
     /// Need to iterate over the target strategy’s `deposits`
     /// @return True if there is at least one pending deposit for the validator
-    function _hasPendingDeposit(bytes32 _targetPubKeyHash)
-        internal
-        view
-        returns (bool)
-    {
+    function _hasPendingDeposit(bytes32 _targetPubKeyHash) internal view returns (bool) {
         uint256 depositsCount = targetStrategy.depositListLength();
         for (uint256 i = 0; i < depositsCount; ++i) {
-            (
-                bytes32 depositPubKeyHash,
-                ,
-                ,
-                ,
-                CompoundingValidatorManager.DepositStatus status
-            ) = targetStrategy.deposits(targetStrategy.depositList(i));
-            if (
-                depositPubKeyHash == _targetPubKeyHash &&
-                status == CompoundingValidatorManager.DepositStatus.PENDING
-            ) {
+            (bytes32 depositPubKeyHash,,,, CompoundingValidatorManager.DepositStatus status) =
+                targetStrategy.deposits(targetStrategy.depositList(i));
+            if (depositPubKeyHash == _targetPubKeyHash && status == CompoundingValidatorManager.DepositStatus.PENDING) {
                 return true;
             }
         }
@@ -480,10 +396,11 @@ contract ConsolidationController is Ownable {
     }
 
     /// @dev Build a key for tracking source validators in a consolidation round.
-    function _sourceValidatorRoundKey(
-        bytes memory sourcePubKey,
-        uint64 roundTimestamp
-    ) internal pure returns (bytes32) {
+    function _sourceValidatorRoundKey(bytes memory sourcePubKey, uint64 roundTimestamp)
+        internal
+        pure
+        returns (bytes32)
+    {
         return keccak256(abi.encode(_hashPubKey(sourcePubKey), roundTimestamp));
     }
 
@@ -491,8 +408,7 @@ contract ConsolidationController is Ownable {
     /// @param _sourceStrategy The address of the old Native Staking Strategy
     function _checkSourceStrategy(address _sourceStrategy) internal view {
         require(
-            _sourceStrategy == nativeStakingStrategy2 ||
-                _sourceStrategy == nativeStakingStrategy3,
+            _sourceStrategy == nativeStakingStrategy2 || _sourceStrategy == nativeStakingStrategy3,
             "Invalid source strategy"
         );
     }

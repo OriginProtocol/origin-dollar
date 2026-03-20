@@ -76,7 +76,7 @@ jobs:
       - uses: ./.github/actions/foundry-setup
       - name: Generate coverage report
         working-directory: contracts
-        run: forge coverage --mp 'tests/unit/**' --report lcov --skip "*/strategies/aerodrome*"
+        run: forge coverage --mp 'tests/unit/**' --report lcov --skip "strategies/aerodrome"
       - name: Upload to Codecov
         uses: codecov/codecov-action@v5
         with:

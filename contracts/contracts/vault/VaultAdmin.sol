@@ -7,11 +7,11 @@ pragma solidity ^0.8.0;
  * @author Origin Protocol Inc
  */
 
-import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
-import { IVault } from "../interfaces/IVault.sol";
-import { StableMath } from "../utils/StableMath.sol";
-import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
+import {IVault} from "../interfaces/IVault.sol";
+import {StableMath} from "../utils/StableMath.sol";
+import {SafeCast} from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 
 import "./VaultCore.sol";
 
@@ -24,10 +24,7 @@ abstract contract VaultAdmin is VaultCore {
      * @dev Verifies that the caller is the Governor or Strategist.
      */
     modifier onlyGovernorOrStrategist() {
-        require(
-            msg.sender == strategistAddr || isGovernor(),
-            "Caller is not the Strategist or Governor"
-        );
+        require(msg.sender == strategistAddr || isGovernor(), "Caller is not the Strategist or Governor");
         _;
     }
 
@@ -41,10 +38,7 @@ abstract contract VaultAdmin is VaultCore {
      * redemptions without needing to spend gas unwinding asset from a Strategy.
      * @param _vaultBuffer Percentage using 18 decimals. 100% = 1e18.
      */
-    function setVaultBuffer(uint256 _vaultBuffer)
-        external
-        onlyGovernorOrStrategist
-    {
+    function setVaultBuffer(uint256 _vaultBuffer) external onlyGovernorOrStrategist {
         require(_vaultBuffer <= 1e18, "Invalid value");
         vaultBuffer = _vaultBuffer;
         emit VaultBufferUpdated(_vaultBuffer);
@@ -55,10 +49,7 @@ abstract contract VaultAdmin is VaultCore {
      * automatic allocation of funds afterwords.
      * @param _threshold OToken amount with 18 fixed decimals.
      */
-    function setAutoAllocateThreshold(uint256 _threshold)
-        external
-        onlyGovernor
-    {
+    function setAutoAllocateThreshold(uint256 _threshold) external onlyGovernor {
         autoAllocateThreshold = _threshold;
         emit AllocateThresholdUpdated(_threshold);
     }
@@ -87,20 +78,14 @@ abstract contract VaultAdmin is VaultCore {
      * the asset will be automatically allocated to and withdrawn from
      * @param _strategy Address of the Strategy
      */
-    function setDefaultStrategy(address _strategy)
-        external
-        onlyGovernorOrStrategist
-    {
+    function setDefaultStrategy(address _strategy) external onlyGovernorOrStrategist {
         emit DefaultStrategyUpdated(_strategy);
         // If its a zero address being passed for the strategy we are removing
         // the default strategy
         if (_strategy != address(0)) {
             // Make sure the strategy meets some criteria
             require(strategies[_strategy].isSupported, "Strategy not approved");
-            require(
-                IStrategy(_strategy).supportsAsset(asset),
-                "Asset not supported by Strategy"
-            );
+            require(IStrategy(_strategy).supportsAsset(asset), "Asset not supported by Strategy");
         }
         defaultStrategy = _strategy;
     }
@@ -111,10 +96,7 @@ abstract contract VaultAdmin is VaultCore {
      *          Set to 0 to disable async withdrawals
      */
     function setWithdrawalClaimDelay(uint256 _delay) external onlyGovernor {
-        require(
-            _delay == 0 || (_delay >= 10 minutes && _delay <= 15 days),
-            "Invalid claim delay period"
-        );
+        require(_delay == 0 || (_delay >= 10 minutes && _delay <= 15 days), "Invalid claim delay period");
         withdrawalClaimDelay = _delay;
         emit WithdrawalClaimDelayUpdated(_delay);
     }
@@ -144,10 +126,7 @@ abstract contract VaultAdmin is VaultCore {
      * @notice Set the drip duration period
      * @param _dripDuration Time in seconds to target a constant yield rate
      */
-    function setDripDuration(uint256 _dripDuration)
-        external
-        onlyGovernorOrStrategist
-    {
+    function setDripDuration(uint256 _dripDuration) external onlyGovernorOrStrategist {
         // The old yield will be at the old rate
         _rebase();
         dripDuration = _dripDuration.toUint64();
@@ -166,11 +145,8 @@ abstract contract VaultAdmin is VaultCore {
      */
     function approveStrategy(address _addr) external onlyGovernor {
         require(!strategies[_addr].isSupported, "Strategy already approved");
-        require(
-            IStrategy(_addr).supportsAsset(asset),
-            "Asset not supported by Strategy"
-        );
-        strategies[_addr] = Strategy({ isSupported: true, _deprecated: 0 });
+        require(IStrategy(_addr).supportsAsset(asset), "Asset not supported by Strategy");
+        strategies[_addr] = Strategy({isSupported: true, _deprecated: 0});
         allStrategies.push(_addr);
         emit StrategyApproved(_addr);
     }
@@ -214,10 +190,7 @@ abstract contract VaultAdmin is VaultCore {
              * Some strategies are not able to withdraw all of their funds in a synchronous call.
              * Prevent the possible accidental removal of such strategies before their funds are withdrawn.
              */
-            require(
-                strategy.checkBalance(asset) < maxDustBalance,
-                "Strategy has funds"
-            );
+            require(strategy.checkBalance(asset) < maxDustBalance, "Strategy has funds");
             emit StrategyRemoved(_addr);
         }
     }
@@ -227,16 +200,10 @@ abstract contract VaultAdmin is VaultCore {
      *          Reverts if strategy isn't approved on Vault.
      * @param strategyAddr Strategy address
      */
-    function addStrategyToMintWhitelist(address strategyAddr)
-        external
-        onlyGovernor
-    {
+    function addStrategyToMintWhitelist(address strategyAddr) external onlyGovernor {
         require(strategies[strategyAddr].isSupported, "Strategy not approved");
 
-        require(
-            !isMintWhitelistedStrategy[strategyAddr],
-            "Already whitelisted"
-        );
+        require(!isMintWhitelistedStrategy[strategyAddr], "Already whitelisted");
 
         isMintWhitelistedStrategy[strategyAddr] = true;
 
@@ -247,10 +214,7 @@ abstract contract VaultAdmin is VaultCore {
      * @notice Removes a strategy from the mint whitelist.
      * @param strategyAddr Strategy address
      */
-    function removeStrategyFromMintWhitelist(address strategyAddr)
-        external
-        onlyGovernor
-    {
+    function removeStrategyFromMintWhitelist(address strategyAddr) external onlyGovernor {
         // Intentionally skipping `strategies.isSupported` check since
         // we may wanna remove an address even after removing the strategy
 
@@ -271,34 +235,24 @@ abstract contract VaultAdmin is VaultCore {
      * @param _assets Array of asset address that will be deposited into the strategy.
      * @param _amounts Array of amounts of each corresponding asset to deposit.
      */
-    function depositToStrategy(
-        address _strategyToAddress,
-        address[] calldata _assets,
-        uint256[] calldata _amounts
-    ) external onlyGovernorOrStrategist nonReentrant {
+    function depositToStrategy(address _strategyToAddress, address[] calldata _assets, uint256[] calldata _amounts)
+        external
+        onlyGovernorOrStrategist
+        nonReentrant
+    {
         _depositToStrategy(_strategyToAddress, _assets, _amounts);
     }
 
-    function _depositToStrategy(
-        address _strategyToAddress,
-        address[] calldata _assets,
-        uint256[] calldata _amounts
-    ) internal virtual {
-        require(
-            strategies[_strategyToAddress].isSupported,
-            "Invalid to Strategy"
-        );
-        require(
-            _assets.length == 1 && _amounts.length == 1 && _assets[0] == asset,
-            "Only asset is supported"
-        );
+    function _depositToStrategy(address _strategyToAddress, address[] calldata _assets, uint256[] calldata _amounts)
+        internal
+        virtual
+    {
+        require(strategies[_strategyToAddress].isSupported, "Invalid to Strategy");
+        require(_assets.length == 1 && _amounts.length == 1 && _assets[0] == asset, "Only asset is supported");
 
         // Check the there is enough asset to transfer once the backing
         // asset reserved for the withdrawal queue is accounted for
-        require(
-            _amounts[0] <= _assetAvailable(),
-            "Not enough assets available"
-        );
+        require(_amounts[0] <= _assetAvailable(), "Not enough assets available");
 
         // Send required amount of funds to the strategy
         IERC20(asset).safeTransfer(_strategyToAddress, _amounts[0]);
@@ -313,17 +267,12 @@ abstract contract VaultAdmin is VaultCore {
      * @param _assets Array of asset address that will be withdrawn from the strategy.
      * @param _amounts Array of amounts of each corresponding asset to withdraw.
      */
-    function withdrawFromStrategy(
-        address _strategyFromAddress,
-        address[] calldata _assets,
-        uint256[] calldata _amounts
-    ) external onlyGovernorOrStrategist nonReentrant {
-        _withdrawFromStrategy(
-            address(this),
-            _strategyFromAddress,
-            _assets,
-            _amounts
-        );
+    function withdrawFromStrategy(address _strategyFromAddress, address[] calldata _assets, uint256[] calldata _amounts)
+        external
+        onlyGovernorOrStrategist
+        nonReentrant
+    {
+        _withdrawFromStrategy(address(this), _strategyFromAddress, _assets, _amounts);
     }
 
     /**
@@ -335,20 +284,13 @@ abstract contract VaultAdmin is VaultCore {
         address[] calldata _assets,
         uint256[] calldata _amounts
     ) internal virtual {
-        require(
-            strategies[_strategyFromAddress].isSupported,
-            "Invalid from Strategy"
-        );
+        require(strategies[_strategyFromAddress].isSupported, "Invalid from Strategy");
         require(_assets.length == _amounts.length, "Parameter length mismatch");
 
         uint256 assetCount = _assets.length;
         for (uint256 i = 0; i < assetCount; ++i) {
             // Withdraw from Strategy to the recipient
-            IStrategy(_strategyFromAddress).withdraw(
-                _recipient,
-                _assets[i],
-                _amounts[i]
-            );
+            IStrategy(_strategyFromAddress).withdraw(_recipient, _assets[i], _amounts[i]);
         }
 
         _addWithdrawalQueueLiquidity();
@@ -428,10 +370,7 @@ abstract contract VaultAdmin is VaultCore {
      * @param _asset Address for the asset
      * @param _amount Amount of the asset to transfer
      */
-    function transferToken(address _asset, uint256 _amount)
-        external
-        onlyGovernor
-    {
+    function transferToken(address _asset, uint256 _amount) external onlyGovernor {
         require(asset != _asset, "Only unsupported asset");
         IERC20(_asset).safeTransfer(governor(), _amount);
     }
@@ -444,18 +383,12 @@ abstract contract VaultAdmin is VaultCore {
      * @notice Withdraws all asset from the strategy and sends asset to the Vault.
      * @param _strategyAddr Strategy address.
      */
-    function withdrawAllFromStrategy(address _strategyAddr)
-        external
-        onlyGovernorOrStrategist
-    {
+    function withdrawAllFromStrategy(address _strategyAddr) external onlyGovernorOrStrategist {
         _withdrawAllFromStrategy(_strategyAddr);
     }
 
     function _withdrawAllFromStrategy(address _strategyAddr) internal virtual {
-        require(
-            strategies[_strategyAddr].isSupported,
-            "Strategy is not supported"
-        );
+        require(strategies[_strategyAddr].isSupported, "Strategy is not supported");
         IStrategy strategy = IStrategy(_strategyAddr);
         strategy.withdrawAll();
         _addWithdrawalQueueLiquidity();

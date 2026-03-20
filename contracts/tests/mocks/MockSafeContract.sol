@@ -19,10 +19,14 @@ contract MockSafeContract is ISafe {
         uint256 value,
         bytes memory data,
         uint8 /* operation */
-    ) external override returns (bool) {
+    )
+        external
+        override
+        returns (bool)
+    {
         if (shouldFail) return false;
 
-        (bool success, ) = to.call{value: value}(data);
+        (bool success,) = to.call{value: value}(data);
         return success;
     }
 

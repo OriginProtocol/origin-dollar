@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import { AbstractSafeModule } from "./AbstractSafeModule.sol";
+import {AbstractSafeModule} from "./AbstractSafeModule.sol";
 
 interface ICurvePoolBooster {
     function manageCampaign(
@@ -76,10 +76,7 @@ contract CurvePoolBoosterBribesModule is AbstractSafeModule {
 
     /// @notice Add new CurvePoolBooster addresses to the managed list
     /// @param _poolBoosters Addresses to add
-    function addPoolBoosterAddress(address[] calldata _poolBoosters)
-        external
-        onlyOperator
-    {
+    function addPoolBoosterAddress(address[] calldata _poolBoosters) external onlyOperator {
         for (uint256 i = 0; i < _poolBoosters.length; i++) {
             _addPoolBoosterAddress(_poolBoosters[i]);
         }
@@ -87,10 +84,7 @@ contract CurvePoolBoosterBribesModule is AbstractSafeModule {
 
     /// @notice Remove CurvePoolBooster addresses from the managed list
     /// @param _poolBoosters Addresses to remove
-    function removePoolBoosterAddress(address[] calldata _poolBoosters)
-        external
-        onlyOperator
-    {
+    function removePoolBoosterAddress(address[] calldata _poolBoosters) external onlyOperator {
         for (uint256 i = 0; i < _poolBoosters.length; i++) {
             _removePoolBoosterAddress(_poolBoosters[i]);
         }
@@ -114,10 +108,7 @@ contract CurvePoolBoosterBribesModule is AbstractSafeModule {
     ///           - numberOfPeriods = 1
     ///           - maxRewardPerVote = 0
     /// @param selectedPoolBoosters Explicit list of registered pool boosters to manage
-    function manageBribes(address[] calldata selectedPoolBoosters)
-        external
-        onlyOperator
-    {
+    function manageBribes(address[] calldata selectedPoolBoosters) external onlyOperator {
         uint256 selectedCount = selectedPoolBoosters.length;
         require(selectedCount > 0, "Empty pool list");
 
@@ -129,12 +120,7 @@ contract CurvePoolBoosterBribesModule is AbstractSafeModule {
             extraDuration[i] = 1;
             rewardsPerVote[i] = 0;
         }
-        _manageBribes(
-            selectedPoolBoosters,
-            totalRewardAmounts,
-            extraDuration,
-            rewardsPerVote
-        );
+        _manageBribes(selectedPoolBoosters, totalRewardAmounts, extraDuration, rewardsPerVote);
     }
 
     /// @notice Fully configurable bribe management for an explicit list of pool boosters.
@@ -153,12 +139,7 @@ contract CurvePoolBoosterBribesModule is AbstractSafeModule {
         require(selectedCount == totalRewardAmounts.length, "Length mismatch");
         require(selectedCount == extraDuration.length, "Length mismatch");
         require(selectedCount == rewardsPerVote.length, "Length mismatch");
-        _manageBribes(
-            selectedPoolBoosters,
-            totalRewardAmounts,
-            extraDuration,
-            rewardsPerVote
-        );
+        _manageBribes(selectedPoolBoosters, totalRewardAmounts, extraDuration, rewardsPerVote);
     }
 
     ////////////////////////////////////////////////////
@@ -232,18 +213,12 @@ contract CurvePoolBoosterBribesModule is AbstractSafeModule {
         uint256[] memory rewardsPerVote
     ) internal {
         uint256 pbCount = selectedPoolBoosters.length;
-        require(
-            address(safeContract).balance >= bridgeFee * pbCount,
-            "Not enough ETH for bridge fees"
-        );
+        require(address(safeContract).balance >= bridgeFee * pbCount, "Not enough ETH for bridge fees");
         for (uint256 i = 0; i < pbCount; i++) {
             address poolBoosterAddress = selectedPoolBoosters[i];
             require(isPoolBooster[poolBoosterAddress], "Invalid pool booster");
             for (uint256 j = i + 1; j < pbCount; j++) {
-                require(
-                    poolBoosterAddress != selectedPoolBoosters[j],
-                    "Duplicate pool booster"
-                );
+                require(poolBoosterAddress != selectedPoolBoosters[j], "Duplicate pool booster");
             }
             require(
                 safeContract.execTransactionFromModule(

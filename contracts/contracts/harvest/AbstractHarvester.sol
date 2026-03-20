@@ -1,20 +1,20 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import { SafeMath } from "@openzeppelin/contracts/utils/math/SafeMath.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import {SafeMath} from "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "@openzeppelin/contracts/utils/math/Math.sol";
 
-import { StableMath } from "../utils/StableMath.sol";
-import { Governable } from "../governance/Governable.sol";
-import { IVault } from "../interfaces/IVault.sol";
-import { IOracle } from "../interfaces/IOracle.sol";
-import { IStrategy } from "../interfaces/IStrategy.sol";
-import { IUniswapV2Router } from "../interfaces/uniswap/IUniswapV2Router02.sol";
-import { IUniswapV3Router } from "../interfaces/uniswap/IUniswapV3Router.sol";
-import { IBalancerVault } from "../interfaces/balancer/IBalancerVault.sol";
-import { ICurvePool } from "../strategies/ICurvePool.sol";
+import {StableMath} from "../utils/StableMath.sol";
+import {Governable} from "../governance/Governable.sol";
+import {IVault} from "../interfaces/IVault.sol";
+import {IOracle} from "../interfaces/IOracle.sol";
+import {IStrategy} from "../interfaces/IStrategy.sol";
+import {IUniswapV2Router} from "../interfaces/uniswap/IUniswapV2Router02.sol";
+import {IUniswapV3Router} from "../interfaces/uniswap/IUniswapV3Router.sol";
+import {IBalancerVault} from "../interfaces/balancer/IBalancerVault.sol";
+import {ICurvePool} from "../strategies/ICurvePool.sol";
 import "../utils/Helpers.sol";
 
 abstract contract AbstractHarvester is Governable {
@@ -47,12 +47,7 @@ abstract contract AbstractHarvester is Governable {
         uint256 amountIn,
         uint256 amountOut
     );
-    event RewardProceedsTransferred(
-        address indexed token,
-        address farmer,
-        uint256 protcolYield,
-        uint256 farmerFee
-    );
+    event RewardProceedsTransferred(address indexed token, address farmer, uint256 protcolYield, uint256 farmerFee);
     event RewardProceedsAddressChanged(address newProceedsAddress);
 
     error EmptyAddress();
@@ -100,13 +95,15 @@ abstract contract AbstractHarvester is Governable {
     /**
      * Address receiving rewards proceeds. Initially the Vault contract later will possibly
      * be replaced by another contract that eases out rewards distribution.
-     **/
+     *
+     */
     address public rewardProceedsAddress;
 
     /**
      * All tokens are swapped to this token before it gets transferred
      * to the `rewardProceedsAddress`. USDT for OUSD and WETH for OETH.
-     **/
+     *
+     */
     address public immutable baseTokenAddress;
     // Cached decimals for `baseTokenAddress`
     uint256 public immutable baseTokenDecimals;
@@ -145,10 +142,7 @@ abstract contract AbstractHarvester is Governable {
      * Set the Address receiving rewards proceeds.
      * @param _rewardProceedsAddress Address of the reward token
      */
-    function setRewardProceedsAddress(address _rewardProceedsAddress)
-        external
-        onlyGovernor
-    {
+    function setRewardProceedsAddress(address _rewardProceedsAddress) external onlyGovernor {
         if (_rewardProceedsAddress == address(0)) {
             revert EmptyAddress();
         }
@@ -192,8 +186,7 @@ abstract contract AbstractHarvester is Governable {
             revert EmptyAddress();
         }
 
-        address oldRouterAddress = rewardTokenConfigs[_tokenAddress]
-            .swapPlatformAddr;
+        address oldRouterAddress = rewardTokenConfigs[_tokenAddress].swapPlatformAddr;
         rewardTokenConfigs[_tokenAddress] = tokenConfig;
 
         // Revert if feed does not exist
@@ -205,8 +198,7 @@ abstract contract AbstractHarvester is Governable {
             /* oldRouterAddress == address(0) when there is no pre-existing
              * configuration for said rewards token
              */
-            oldRouterAddress != address(0) &&
-            oldRouterAddress != newRouterAddress
+            oldRouterAddress != address(0) && oldRouterAddress != newRouterAddress
         ) {
             token.safeApprove(oldRouterAddress, 0);
         }
@@ -219,27 +211,13 @@ abstract contract AbstractHarvester is Governable {
 
         SwapPlatform _platform = tokenConfig.swapPlatform;
         if (_platform == SwapPlatform.UniswapV2Compatible) {
-            uniswapV2Path[_tokenAddress] = _decodeUniswapV2Path(
-                swapData,
-                _tokenAddress
-            );
+            uniswapV2Path[_tokenAddress] = _decodeUniswapV2Path(swapData, _tokenAddress);
         } else if (_platform == SwapPlatform.UniswapV3) {
-            uniswapV3Path[_tokenAddress] = _decodeUniswapV3Path(
-                swapData,
-                _tokenAddress
-            );
+            uniswapV3Path[_tokenAddress] = _decodeUniswapV3Path(swapData, _tokenAddress);
         } else if (_platform == SwapPlatform.Balancer) {
-            balancerPoolId[_tokenAddress] = _decodeBalancerPoolId(
-                swapData,
-                newRouterAddress,
-                _tokenAddress
-            );
+            balancerPoolId[_tokenAddress] = _decodeBalancerPoolId(swapData, newRouterAddress, _tokenAddress);
         } else if (_platform == SwapPlatform.Curve) {
-            curvePoolIndices[_tokenAddress] = _decodeCurvePoolIndices(
-                swapData,
-                newRouterAddress,
-                _tokenAddress
-            );
+            curvePoolIndices[_tokenAddress] = _decodeCurvePoolIndices(swapData, newRouterAddress, _tokenAddress);
         } else {
             // Note: This code is unreachable since Solidity reverts when
             // the value is outside the range of defined values of the enum
@@ -267,11 +245,7 @@ abstract contract AbstractHarvester is Governable {
      * @param token The address of the reward token
      * @return path The validated Uniswap V2 path
      */
-    function _decodeUniswapV2Path(bytes calldata data, address token)
-        internal
-        view
-        returns (address[] memory path)
-    {
+    function _decodeUniswapV2Path(bytes calldata data, address token) internal view returns (address[] memory path) {
         (path) = abi.decode(data, (address[]));
         uint256 len = path.length;
 
@@ -298,11 +272,7 @@ abstract contract AbstractHarvester is Governable {
      * @param token The address of the reward token
      * @return path The validated Uniswap V3 path
      */
-    function _decodeUniswapV3Path(bytes calldata data, address token)
-        internal
-        view
-        returns (bytes calldata path)
-    {
+    function _decodeUniswapV3Path(bytes calldata data, address token) internal view returns (bytes calldata path) {
         path = data;
 
         address decodedAddress = address(uint160(bytes20(data[0:20])));
@@ -325,11 +295,11 @@ abstract contract AbstractHarvester is Governable {
      * @param data Ecnoded data passed to the `setRewardTokenConfig`
      * @return poolId The pool ID
      */
-    function _decodeBalancerPoolId(
-        bytes calldata data,
-        address balancerVault,
-        address token
-    ) internal view returns (bytes32 poolId) {
+    function _decodeBalancerPoolId(bytes calldata data, address balancerVault, address token)
+        internal
+        view
+        returns (bytes32 poolId)
+    {
         (poolId) = abi.decode(data, (bytes32));
 
         if (poolId == bytes32(0)) {
@@ -357,11 +327,11 @@ abstract contract AbstractHarvester is Governable {
      * @param token The address of the reward token
      * @return indices Packed pool asset indices
      */
-    function _decodeCurvePoolIndices(
-        bytes calldata data,
-        address poolAddress,
-        address token
-    ) internal view returns (CurvePoolIndices memory indices) {
+    function _decodeCurvePoolIndices(bytes calldata data, address poolAddress, address token)
+        internal
+        view
+        returns (CurvePoolIndices memory indices)
+    {
         indices = abi.decode(data, (CurvePoolIndices));
 
         ICurvePool pool = ICurvePool(poolAddress);
@@ -378,10 +348,7 @@ abstract contract AbstractHarvester is Governable {
      * @param _strategyAddress Address of the strategy
      * @param _isSupported Bool marking strategy as supported or not supported
      */
-    function setSupportedStrategy(address _strategyAddress, bool _isSupported)
-        external
-        onlyGovernor
-    {
+    function setSupportedStrategy(address _strategyAddress, bool _isSupported) external onlyGovernor {
         supportedStrategies[_strategyAddress] = _isSupported;
         emit SupportedStrategyUpdate(_strategyAddress, _isSupported);
     }
@@ -396,10 +363,7 @@ abstract contract AbstractHarvester is Governable {
      * @param _asset Address for the asset
      * @param _amount Amount of the asset to transfer
      */
-    function transferToken(address _asset, uint256 _amount)
-        external
-        onlyGovernor
-    {
+    function transferToken(address _asset, uint256 _amount) external onlyGovernor {
         IERC20(_asset).safeTransfer(governor(), _amount);
     }
 
@@ -421,10 +385,7 @@ abstract contract AbstractHarvester is Governable {
      * @param _rewardTo Address where to send a share of harvest rewards to as an incentive
      *      for executing this function
      */
-    function harvestAndSwap(address _strategyAddr, address _rewardTo)
-        external
-        nonReentrant
-    {
+    function harvestAndSwap(address _strategyAddr, address _rewardTo) external nonReentrant {
         // Remember _harvest function checks for the validity of _strategyAddr
         _harvestAndSwap(_strategyAddr, _rewardTo);
     }
@@ -436,9 +397,7 @@ abstract contract AbstractHarvester is Governable {
      * @param _rewardTo Address where to send a share of harvest rewards to as an incentive
      *      for executing this function
      */
-    function _harvestAndSwap(address _strategyAddr, address _rewardTo)
-        internal
-    {
+    function _harvestAndSwap(address _strategyAddr, address _rewardTo) internal {
         _harvest(_strategyAddr);
         IStrategy strategy = IStrategy(_strategyAddr);
         address[] memory rewardTokens = strategy.getRewardTokenAddresses();
@@ -476,11 +435,7 @@ abstract contract AbstractHarvester is Governable {
     // functions that have the nonReentrant modifier. Therefore, this function is also non-reentrant.
     // slither-disable-start reentrancy-eth,reentrancy-no-eth,reentrancy-benign
     // slither-disable-start reentrancy-events,reentrancy-unlimited-gas,reentrancy-balance
-    function _swap(
-        address _swapToken,
-        address _rewardTo,
-        IOracle _priceProvider
-    ) internal virtual {
+    function _swap(address _swapToken, address _rewardTo, IOracle _priceProvider) internal virtual {
         uint256 balance = IERC20(_swapToken).balanceOf(address(this));
 
         // No need to swap if the reward token is the base token. eg USDT or WETH.
@@ -489,12 +444,7 @@ abstract contract AbstractHarvester is Governable {
         if (_swapToken == baseTokenAddress) {
             IERC20(_swapToken).safeTransfer(rewardProceedsAddress, balance);
             // currently not paying the farmer any rewards as there is no swap
-            emit RewardProceedsTransferred(
-                baseTokenAddress,
-                address(0),
-                balance,
-                0
-            );
+            emit RewardProceedsTransferred(baseTokenAddress, address(0), balance, 0);
             return;
         }
 
@@ -520,35 +470,20 @@ abstract contract AbstractHarvester is Governable {
         uint256 oraclePrice = _priceProvider.price(_swapToken);
 
         // Oracle price is 1e18
-        uint256 minExpected = (balance *
-            (1e4 - tokenConfig.allowedSlippageBps) * // max allowed slippage
-            oraclePrice).scaleBy(
-                baseTokenDecimals,
-                Helpers.getDecimals(_swapToken)
-            ) /
-            1e4 / // fix the max slippage decimal position
-            1e18; // and oracle price decimals position
+        uint256 minExpected = (balance
+                    * (1e4 - tokenConfig.allowedSlippageBps) // max allowed slippage
+                    * oraclePrice).scaleBy(baseTokenDecimals, Helpers.getDecimals(_swapToken)) / 1e4 // fix the max slippage decimal position
+        / 1e18; // and oracle price decimals position
 
         // Do the swap
-        uint256 amountReceived = _doSwap(
-            tokenConfig.swapPlatform,
-            tokenConfig.swapPlatformAddr,
-            _swapToken,
-            balance,
-            minExpected
-        );
+        uint256 amountReceived =
+            _doSwap(tokenConfig.swapPlatform, tokenConfig.swapPlatformAddr, _swapToken, balance, minExpected);
 
         if (amountReceived < minExpected) {
             revert SlippageError(amountReceived, minExpected);
         }
 
-        emit RewardTokenSwapped(
-            _swapToken,
-            baseTokenAddress,
-            tokenConfig.swapPlatform,
-            balance,
-            amountReceived
-        );
+        emit RewardTokenSwapped(_swapToken, baseTokenAddress, tokenConfig.swapPlatform, balance, amountReceived);
 
         IERC20 baseToken = IERC20(baseTokenAddress);
         uint256 baseTokenBalance = baseToken.balanceOf(address(this));
@@ -563,20 +498,12 @@ abstract contract AbstractHarvester is Governable {
         // Farmer only gets fee from the base amount they helped farm,
         // They do not get anything from anything that already was there
         // on the Harvester
-        uint256 farmerFee = amountReceived.mulTruncateScale(
-            tokenConfig.harvestRewardBps,
-            1e4
-        );
+        uint256 farmerFee = amountReceived.mulTruncateScale(tokenConfig.harvestRewardBps, 1e4);
         uint256 protocolYield = baseTokenBalance - farmerFee;
 
         baseToken.safeTransfer(rewardProceedsAddress, protocolYield);
         baseToken.safeTransfer(_rewardTo, farmerFee);
-        emit RewardProceedsTransferred(
-            baseTokenAddress,
-            _rewardTo,
-            protocolYield,
-            farmerFee
-        );
+        emit RewardProceedsTransferred(baseTokenAddress, _rewardTo, protocolYield, farmerFee);
     }
 
     // slither-disable-end reentrancy-events,reentrancy-unlimited-gas,reentrancy-balance
@@ -590,37 +517,13 @@ abstract contract AbstractHarvester is Governable {
         uint256 minAmountOut
     ) internal returns (uint256 amountOut) {
         if (swapPlatform == SwapPlatform.UniswapV2Compatible) {
-            return
-                _swapWithUniswapV2(
-                    routerAddress,
-                    rewardTokenAddress,
-                    amountIn,
-                    minAmountOut
-                );
+            return _swapWithUniswapV2(routerAddress, rewardTokenAddress, amountIn, minAmountOut);
         } else if (swapPlatform == SwapPlatform.UniswapV3) {
-            return
-                _swapWithUniswapV3(
-                    routerAddress,
-                    rewardTokenAddress,
-                    amountIn,
-                    minAmountOut
-                );
+            return _swapWithUniswapV3(routerAddress, rewardTokenAddress, amountIn, minAmountOut);
         } else if (swapPlatform == SwapPlatform.Balancer) {
-            return
-                _swapWithBalancer(
-                    routerAddress,
-                    rewardTokenAddress,
-                    amountIn,
-                    minAmountOut
-                );
+            return _swapWithBalancer(routerAddress, rewardTokenAddress, amountIn, minAmountOut);
         } else if (swapPlatform == SwapPlatform.Curve) {
-            return
-                _swapWithCurve(
-                    routerAddress,
-                    rewardTokenAddress,
-                    amountIn,
-                    minAmountOut
-                );
+            return _swapWithCurve(routerAddress, rewardTokenAddress, amountIn, minAmountOut);
         } else {
             // Should never be invoked since we catch invalid values
             // in the `setRewardTokenConfig` function before it's set
@@ -638,22 +541,14 @@ abstract contract AbstractHarvester is Governable {
      *
      * @return amountOut Amount of `baseToken` received after the swap
      */
-    function _swapWithUniswapV2(
-        address routerAddress,
-        address swapToken,
-        uint256 amountIn,
-        uint256 minAmountOut
-    ) internal returns (uint256 amountOut) {
+    function _swapWithUniswapV2(address routerAddress, address swapToken, uint256 amountIn, uint256 minAmountOut)
+        internal
+        returns (uint256 amountOut)
+    {
         address[] memory path = uniswapV2Path[swapToken];
 
         uint256[] memory amounts = IUniswapV2Router(routerAddress)
-            .swapExactTokensForTokens(
-                amountIn,
-                minAmountOut,
-                path,
-                address(this),
-                block.timestamp
-            );
+            .swapExactTokensForTokens(amountIn, minAmountOut, path, address(this), block.timestamp);
 
         amountOut = amounts[amounts.length - 1];
     }
@@ -668,22 +563,19 @@ abstract contract AbstractHarvester is Governable {
      *
      * @return amountOut Amount of `baseToken` received after the swap
      */
-    function _swapWithUniswapV3(
-        address routerAddress,
-        address swapToken,
-        uint256 amountIn,
-        uint256 minAmountOut
-    ) internal returns (uint256 amountOut) {
+    function _swapWithUniswapV3(address routerAddress, address swapToken, uint256 amountIn, uint256 minAmountOut)
+        internal
+        returns (uint256 amountOut)
+    {
         bytes memory path = uniswapV3Path[swapToken];
 
-        IUniswapV3Router.ExactInputParams memory params = IUniswapV3Router
-            .ExactInputParams({
-                path: path,
-                recipient: address(this),
-                deadline: block.timestamp,
-                amountIn: amountIn,
-                amountOutMinimum: minAmountOut
-            });
+        IUniswapV3Router.ExactInputParams memory params = IUniswapV3Router.ExactInputParams({
+            path: path,
+            recipient: address(this),
+            deadline: block.timestamp,
+            amountIn: amountIn,
+            amountOutMinimum: minAmountOut
+        });
         amountOut = IUniswapV3Router(routerAddress).exactInput(params);
     }
 
@@ -697,38 +589,29 @@ abstract contract AbstractHarvester is Governable {
      *
      * @return amountOut Amount of `baseToken` received after the swap
      */
-    function _swapWithBalancer(
-        address balancerVaultAddress,
-        address swapToken,
-        uint256 amountIn,
-        uint256 minAmountOut
-    ) internal returns (uint256 amountOut) {
+    function _swapWithBalancer(address balancerVaultAddress, address swapToken, uint256 amountIn, uint256 minAmountOut)
+        internal
+        returns (uint256 amountOut)
+    {
         bytes32 poolId = balancerPoolId[swapToken];
 
-        IBalancerVault.SingleSwap memory singleSwap = IBalancerVault
-            .SingleSwap({
-                poolId: poolId,
-                kind: IBalancerVault.SwapKind.GIVEN_IN,
-                assetIn: swapToken,
-                assetOut: baseTokenAddress,
-                amount: amountIn,
-                userData: hex""
-            });
+        IBalancerVault.SingleSwap memory singleSwap = IBalancerVault.SingleSwap({
+            poolId: poolId,
+            kind: IBalancerVault.SwapKind.GIVEN_IN,
+            assetIn: swapToken,
+            assetOut: baseTokenAddress,
+            amount: amountIn,
+            userData: hex""
+        });
 
-        IBalancerVault.FundManagement memory fundMgmt = IBalancerVault
-            .FundManagement({
-                sender: address(this),
-                fromInternalBalance: false,
-                recipient: payable(address(this)),
-                toInternalBalance: false
-            });
+        IBalancerVault.FundManagement memory fundMgmt = IBalancerVault.FundManagement({
+            sender: address(this),
+            fromInternalBalance: false,
+            recipient: payable(address(this)),
+            toInternalBalance: false
+        });
 
-        amountOut = IBalancerVault(balancerVaultAddress).swap(
-            singleSwap,
-            fundMgmt,
-            minAmountOut,
-            block.timestamp
-        );
+        amountOut = IBalancerVault(balancerVaultAddress).swap(singleSwap, fundMgmt, minAmountOut, block.timestamp);
     }
 
     /**
@@ -741,22 +624,16 @@ abstract contract AbstractHarvester is Governable {
      *
      * @return amountOut Amount of `baseToken` received after the swap
      */
-    function _swapWithCurve(
-        address poolAddress,
-        address swapToken,
-        uint256 amountIn,
-        uint256 minAmountOut
-    ) internal returns (uint256 amountOut) {
+    function _swapWithCurve(address poolAddress, address swapToken, uint256 amountIn, uint256 minAmountOut)
+        internal
+        returns (uint256 amountOut)
+    {
         CurvePoolIndices memory indices = curvePoolIndices[swapToken];
 
         // Note: Not all CurvePools return the `amountOut`, make sure
         // to use only pool that do. Otherwise the swap would revert
         // always
-        amountOut = ICurvePool(poolAddress).exchange(
-            uint256(indices.rewardTokenIndex),
-            uint256(indices.baseTokenIndex),
-            amountIn,
-            minAmountOut
-        );
+        amountOut = ICurvePool(poolAddress)
+            .exchange(uint256(indices.rewardTokenIndex), uint256(indices.baseTokenIndex), amountIn, minAmountOut);
     }
 }

@@ -34,8 +34,7 @@ abstract contract Smoke_CrossChainMasterStrategy_Shared_Test is BaseSmoke {
         _igniteDeployManager();
 
         require(address(resolver).code.length > 0, "Resolver not initialized on fork");
-        crossChainMasterStrategy =
-            CrossChainMasterStrategy(resolver.resolve("CROSS_CHAIN_MASTER_STRATEGY"));
+        crossChainMasterStrategy = CrossChainMasterStrategy(resolver.resolve("CROSS_CHAIN_MASTER_STRATEGY"));
         vm.label(address(crossChainMasterStrategy), "CrossChainMasterStrategy");
 
         usdc = IERC20(Mainnet.USDC);

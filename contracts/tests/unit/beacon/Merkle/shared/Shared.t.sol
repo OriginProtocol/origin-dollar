@@ -15,11 +15,7 @@ abstract contract Unit_Merkle_Shared_Test is Base {
 
     /// @dev Build a valid merkle proof for a leaf at `index` in a tree of `leaves`.
     /// Leaves length must be a power of two.
-    function _buildMerkleProof(bytes32[] memory leaves, uint256 index)
-        internal
-        pure
-        returns (bytes memory proof)
-    {
+    function _buildMerkleProof(bytes32[] memory leaves, uint256 index) internal pure returns (bytes memory proof) {
         uint256 n = leaves.length;
         // Copy leaves so we don't mutate the original
         bytes32[] memory layer = new bytes32[](n);

@@ -1,12 +1,11 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import {Smoke_CurvePoolBoosterBribesModule_Shared_Test} from
-    "tests/smoke/automation/CurvePoolBoosterBribesModule/shared/Shared.t.sol";
-
-contract Smoke_Concrete_CurvePoolBoosterBribesModule_Test is
+import {
     Smoke_CurvePoolBoosterBribesModule_Shared_Test
-{
+} from "tests/smoke/automation/CurvePoolBoosterBribesModule/shared/Shared.t.sol";
+
+contract Smoke_Concrete_CurvePoolBoosterBribesModule_Test is Smoke_CurvePoolBoosterBribesModule_Shared_Test {
     function test_safeContract() public view {
         assertNotEq(address(curvePoolBoosterBribesModule.safeContract()), address(0));
     }

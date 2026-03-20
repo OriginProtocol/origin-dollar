@@ -10,23 +10,19 @@ pragma solidity ^0.8.0;
  *      and locally deposits the funds to a 4626 compatible vault.
  */
 
-import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
-import { IERC20 } from "../../utils/InitializableAbstractStrategy.sol";
-import { IERC4626 } from "../../../lib/openzeppelin/interfaces/IERC4626.sol";
-import { IVaultV2 } from "../../interfaces/morpho/IVaultV2.sol";
-import { Generalized4626Strategy } from "../Generalized4626Strategy.sol";
-import { AbstractCCTPIntegrator } from "./AbstractCCTPIntegrator.sol";
-import { CrossChainStrategyHelper } from "./CrossChainStrategyHelper.sol";
-import { InitializableAbstractStrategy } from "../../utils/InitializableAbstractStrategy.sol";
-import { Strategizable } from "../../governance/Strategizable.sol";
-import { MorphoV2VaultUtils } from "../MorphoV2VaultUtils.sol";
+import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
+import {IERC20} from "../../utils/InitializableAbstractStrategy.sol";
+import {IERC4626} from "../../../lib/openzeppelin/interfaces/IERC4626.sol";
+import {IVaultV2} from "../../interfaces/morpho/IVaultV2.sol";
+import {Generalized4626Strategy} from "../Generalized4626Strategy.sol";
+import {AbstractCCTPIntegrator} from "./AbstractCCTPIntegrator.sol";
+import {CrossChainStrategyHelper} from "./CrossChainStrategyHelper.sol";
+import {InitializableAbstractStrategy} from "../../utils/InitializableAbstractStrategy.sol";
+import {Strategizable} from "../../governance/Strategizable.sol";
+import {MorphoV2VaultUtils} from "../MorphoV2VaultUtils.sol";
 
-contract CrossChainRemoteStrategy is
-    AbstractCCTPIntegrator,
-    Generalized4626Strategy,
-    Strategizable
-{
+contract CrossChainRemoteStrategy is AbstractCCTPIntegrator, Generalized4626Strategy, Strategizable {
     using SafeERC20 for IERC20;
     using CrossChainStrategyHelper for bytes;
 
@@ -36,40 +32,25 @@ contract CrossChainRemoteStrategy is
 
     modifier onlyOperatorOrStrategistOrGovernor() {
         require(
-            msg.sender == operator ||
-                msg.sender == strategistAddr ||
-                isGovernor(),
+            msg.sender == operator || msg.sender == strategistAddr || isGovernor(),
             "Caller is not the Operator, Strategist or the Governor"
         );
         _;
     }
 
-    modifier onlyGovernorOrStrategist()
-        override(InitializableAbstractStrategy, Strategizable) {
-        require(
-            msg.sender == strategistAddr || isGovernor(),
-            "Caller is not the Strategist or Governor"
-        );
+    modifier onlyGovernorOrStrategist() override(InitializableAbstractStrategy, Strategizable) {
+        require(msg.sender == strategistAddr || isGovernor(), "Caller is not the Strategist or Governor");
         _;
     }
 
-    constructor(
-        BaseStrategyConfig memory _baseConfig,
-        CCTPIntegrationConfig memory _cctpConfig
-    )
+    constructor(BaseStrategyConfig memory _baseConfig, CCTPIntegrationConfig memory _cctpConfig)
         AbstractCCTPIntegrator(_cctpConfig)
         Generalized4626Strategy(_baseConfig, _cctpConfig.usdcToken)
     {
         require(usdcToken == address(assetToken), "Token mismatch");
-        require(
-            _baseConfig.platformAddress != address(0),
-            "Invalid platform address"
-        );
+        require(_baseConfig.platformAddress != address(0), "Invalid platform address");
         // Vault address must always be address(0) for the remote strategy
-        require(
-            _baseConfig.vaultAddress == address(0),
-            "Invalid vault address"
-        );
+        require(_baseConfig.vaultAddress == address(0), "Invalid vault address");
     }
 
     /**
@@ -79,12 +60,12 @@ contract CrossChainRemoteStrategy is
      * @param _minFinalityThreshold Minimum finality threshold
      * @param _feePremiumBps Fee premium in basis points
      */
-    function initialize(
-        address _strategist,
-        address _operator,
-        uint16 _minFinalityThreshold,
-        uint16 _feePremiumBps
-    ) external virtual onlyGovernor initializer {
+    function initialize(address _strategist, address _operator, uint16 _minFinalityThreshold, uint16 _feePremiumBps)
+        external
+        virtual
+        onlyGovernor
+        initializer
+    {
         _initialize(_operator, _minFinalityThreshold, _feePremiumBps);
         _setStrategistAddr(_strategist);
 
@@ -95,62 +76,37 @@ contract CrossChainRemoteStrategy is
         assets[0] = address(usdcToken);
         pTokens[0] = address(platformAddress);
 
-        InitializableAbstractStrategy._initialize(
-            rewardTokens,
-            assets,
-            pTokens
-        );
+        InitializableAbstractStrategy._initialize(rewardTokens, assets, pTokens);
     }
 
     /// @inheritdoc Generalized4626Strategy
-    function deposit(address _asset, uint256 _amount)
-        external
-        virtual
-        override
-        onlyGovernorOrStrategist
-        nonReentrant
-    {
+    function deposit(address _asset, uint256 _amount) external virtual override onlyGovernorOrStrategist nonReentrant {
         _deposit(_asset, _amount);
     }
 
     /// @inheritdoc Generalized4626Strategy
-    function depositAll()
-        external
-        virtual
-        override
-        onlyGovernorOrStrategist
-        nonReentrant
-    {
+    function depositAll() external virtual override onlyGovernorOrStrategist nonReentrant {
         _deposit(usdcToken, IERC20(usdcToken).balanceOf(address(this)));
     }
 
     /// @inheritdoc Generalized4626Strategy
     /// @dev Interface requires a recipient, but for compatibility it must be address(this).
-    function withdraw(
-        address _recipient,
-        address _asset,
-        uint256 _amount
-    ) external virtual override onlyGovernorOrStrategist nonReentrant {
-        _withdraw(_recipient, _asset, _amount);
-    }
-
-    /// @inheritdoc Generalized4626Strategy
-    function withdrawAll()
+    function withdraw(address _recipient, address _asset, uint256 _amount)
         external
         virtual
         override
         onlyGovernorOrStrategist
         nonReentrant
     {
+        _withdraw(_recipient, _asset, _amount);
+    }
+
+    /// @inheritdoc Generalized4626Strategy
+    function withdrawAll() external virtual override onlyGovernorOrStrategist nonReentrant {
         IERC4626 platform = IERC4626(platformAddress);
-        uint256 availableMorphoVault = MorphoV2VaultUtils.maxWithdrawableAssets(
-            platformAddress,
-            usdcToken
-        );
-        uint256 amountToWithdraw = Math.min(
-            availableMorphoVault,
-            platform.previewRedeem(platform.balanceOf(address(this)))
-        );
+        uint256 availableMorphoVault = MorphoV2VaultUtils.maxWithdrawableAssets(platformAddress, usdcToken);
+        uint256 amountToWithdraw =
+            Math.min(availableMorphoVault, platform.previewRedeem(platform.balanceOf(address(this))));
 
         if (amountToWithdraw > 0) {
             _withdraw(address(this), usdcToken, amountToWithdraw);
@@ -184,8 +140,11 @@ contract CrossChainRemoteStrategy is
         // solhint-disable-next-line no-unused-vars
         uint256 feeExecuted,
         bytes memory payload
-    ) internal virtual {
-        (uint64 nonce, ) = payload.decodeDepositMessage();
+    )
+        internal
+        virtual
+    {
+        (uint64 nonce,) = payload.decodeDepositMessage();
 
         // Replay protection is part of the _markNonceAsProcessed function
         _markNonceAsProcessed(nonce);
@@ -200,13 +159,9 @@ contract CrossChainRemoteStrategy is
         }
 
         // Send balance check message to the peer strategy
-        bytes memory message = CrossChainStrategyHelper
-            .encodeBalanceCheckMessage(
-                lastTransferNonce,
-                checkBalance(usdcToken),
-                true,
-                block.timestamp
-            );
+        bytes memory message = CrossChainStrategyHelper.encodeBalanceCheckMessage(
+            lastTransferNonce, checkBalance(usdcToken), true, block.timestamp
+        );
         _sendMessage(message);
     }
 
@@ -231,18 +186,11 @@ contract CrossChainRemoteStrategy is
         try IERC4626(platformAddress).deposit(_amount, address(this)) {
             emit Deposit(_asset, address(shareToken), _amount);
         } catch Error(string memory reason) {
-            emit DepositUnderlyingFailed(
-                string(abi.encodePacked("Deposit failed: ", reason))
-            );
+            emit DepositUnderlyingFailed(string(abi.encodePacked("Deposit failed: ", reason)));
         } catch (bytes memory lowLevelData) {
-            emit DepositUnderlyingFailed(
-                string(
-                    abi.encodePacked(
-                        "Deposit failed: low-level call failed with data ",
-                        lowLevelData
-                    )
-                )
-            );
+            emit DepositUnderlyingFailed(string(
+                    abi.encodePacked("Deposit failed: low-level call failed with data ", lowLevelData)
+                ));
         }
     }
 
@@ -251,8 +199,7 @@ contract CrossChainRemoteStrategy is
      * @param payload Payload of the message
      */
     function _processWithdrawMessage(bytes memory payload) internal virtual {
-        (uint64 nonce, uint256 withdrawAmount) = payload
-            .decodeWithdrawMessage();
+        (uint64 nonce, uint256 withdrawAmount) = payload.decodeWithdrawMessage();
 
         // Replay protection is part of the _markNonceAsProcessed function
         _markNonceAsProcessed(nonce);
@@ -277,32 +224,21 @@ contract CrossChainRemoteStrategy is
         // there is a possibility of USDC funds remaining on the contract.
         // A separate withdraw to extract or deposit to the Morpho vault needs to be
         // initiated from the peer Master strategy to utilise USDC funds.
-        if (
-            withdrawAmount >= MIN_TRANSFER_AMOUNT &&
-            usdcBalance >= withdrawAmount
-        ) {
+        if (withdrawAmount >= MIN_TRANSFER_AMOUNT && usdcBalance >= withdrawAmount) {
             // The new balance on the contract needs to have USDC subtracted from it as
             // that will be withdrawn in the next step
-            bytes memory message = CrossChainStrategyHelper
-                .encodeBalanceCheckMessage(
-                    lastTransferNonce,
-                    strategyBalance - withdrawAmount,
-                    true,
-                    block.timestamp
-                );
+            bytes memory message = CrossChainStrategyHelper.encodeBalanceCheckMessage(
+                lastTransferNonce, strategyBalance - withdrawAmount, true, block.timestamp
+            );
             _sendTokens(withdrawAmount, message);
         } else {
             // Contract either:
             // - only has small dust amount of USDC
             // - doesn't have sufficient funds to satisfy the withdrawal request
             // In both cases send the balance update message to the peer strategy.
-            bytes memory message = CrossChainStrategyHelper
-                .encodeBalanceCheckMessage(
-                    lastTransferNonce,
-                    strategyBalance,
-                    true,
-                    block.timestamp
-                );
+            bytes memory message = CrossChainStrategyHelper.encodeBalanceCheckMessage(
+                lastTransferNonce, strategyBalance, true, block.timestamp
+            );
             _sendMessage(message);
             emit WithdrawalFailed(withdrawAmount, usdcBalance);
         }
@@ -314,39 +250,23 @@ contract CrossChainRemoteStrategy is
      * @param _asset Address of asset to withdraw
      * @param _amount Amount of asset to withdraw
      */
-    function _withdraw(
-        address _recipient,
-        address _asset,
-        uint256 _amount
-    ) internal override {
+    function _withdraw(address _recipient, address _asset, uint256 _amount) internal override {
         require(_amount > 0, "Must withdraw something");
         require(_recipient == address(this), "Invalid recipient");
         require(_asset == address(usdcToken), "Unexpected asset address");
 
         // This call can fail, and the failure doesn't need to bubble up to the _processWithdrawMessage function
         // as the flow is not affected by the failure.
-        try
-            // slither-disable-next-line unused-return
-            IERC4626(platformAddress).withdraw(
-                _amount,
-                address(this),
-                address(this)
-            )
-        {
+        try 
+        // slither-disable-next-line unused-return
+        IERC4626(platformAddress).withdraw(_amount, address(this), address(this)) {
             emit Withdrawal(_asset, address(shareToken), _amount);
         } catch Error(string memory reason) {
-            emit WithdrawUnderlyingFailed(
-                string(abi.encodePacked("Withdrawal failed: ", reason))
-            );
+            emit WithdrawUnderlyingFailed(string(abi.encodePacked("Withdrawal failed: ", reason)));
         } catch (bytes memory lowLevelData) {
-            emit WithdrawUnderlyingFailed(
-                string(
-                    abi.encodePacked(
-                        "Withdrawal failed: low-level call failed with data ",
-                        lowLevelData
-                    )
-                )
-            );
+            emit WithdrawUnderlyingFailed(string(
+                    abi.encodePacked("Withdrawal failed: low-level call failed with data ", lowLevelData)
+                ));
         }
     }
 
@@ -356,17 +276,10 @@ contract CrossChainRemoteStrategy is
      * @param feeExecuted Fee executed
      * @param payload Payload of the message
      */
-    function _onTokenReceived(
-        uint256 tokenAmount,
-        uint256 feeExecuted,
-        bytes memory payload
-    ) internal override {
+    function _onTokenReceived(uint256 tokenAmount, uint256 feeExecuted, bytes memory payload) internal override {
         uint32 messageType = payload.getMessageType();
 
-        require(
-            messageType == CrossChainStrategyHelper.DEPOSIT_MESSAGE,
-            "Invalid message type"
-        );
+        require(messageType == CrossChainStrategyHelper.DEPOSIT_MESSAGE, "Invalid message type");
 
         _processDepositMessage(tokenAmount, feeExecuted, payload);
     }
@@ -374,19 +287,10 @@ contract CrossChainRemoteStrategy is
     /**
      * @dev Send balance update message to the peer strategy
      */
-    function sendBalanceUpdate()
-        external
-        virtual
-        onlyOperatorOrStrategistOrGovernor
-    {
+    function sendBalanceUpdate() external virtual onlyOperatorOrStrategistOrGovernor {
         uint256 balance = checkBalance(usdcToken);
-        bytes memory message = CrossChainStrategyHelper
-            .encodeBalanceCheckMessage(
-                lastTransferNonce,
-                balance,
-                false,
-                block.timestamp
-            );
+        bytes memory message =
+            CrossChainStrategyHelper.encodeBalanceCheckMessage(lastTransferNonce, balance, false, block.timestamp);
         _sendMessage(message);
     }
 
@@ -395,12 +299,7 @@ contract CrossChainRemoteStrategy is
      * @param _asset      Address of the asset
      * @return balance    Total value of the asset in the platform and contract
      */
-    function checkBalance(address _asset)
-        public
-        view
-        override
-        returns (uint256)
-    {
+    function checkBalance(address _asset) public view override returns (uint256) {
         require(_asset == usdcToken, "Unexpected asset address");
         /**
          * Balance of USDC on the contract is counted towards the total balance, since a deposit
@@ -410,8 +309,6 @@ contract CrossChainRemoteStrategy is
         uint256 balanceOnContract = IERC20(usdcToken).balanceOf(address(this));
 
         IERC4626 platform = IERC4626(platformAddress);
-        return
-            platform.previewRedeem(platform.balanceOf(address(this))) +
-            balanceOnContract;
+        return platform.previewRedeem(platform.balanceOf(address(this))) + balanceOnContract;
     }
 }

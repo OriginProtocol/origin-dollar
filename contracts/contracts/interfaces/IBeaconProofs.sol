@@ -57,8 +57,5 @@ interface IBeaconProofs {
         uint64 slot
     ) external pure returns (bytes32 root);
 
-    function merkleizeSignature(bytes calldata signature)
-        external
-        pure
-        returns (bytes32 root);
+    function merkleizeSignature(bytes calldata signature) external pure returns (bytes32 root);
 }

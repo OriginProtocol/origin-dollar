@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.7;
 
-import { ICLPool } from "../interfaces/aerodrome/ICLPool.sol";
-import { IQuoterV2 } from "../interfaces/aerodrome/IQuoterV2.sol";
-import { IAMOStrategy } from "../interfaces/aerodrome/IAMOStrategy.sol";
+import {ICLPool} from "../interfaces/aerodrome/ICLPool.sol";
+import {IQuoterV2} from "../interfaces/aerodrome/IQuoterV2.sol";
+import {IAMOStrategy} from "../interfaces/aerodrome/IAMOStrategy.sol";
 
 /// @title QuoterHelper
 /// @author Origin Protocol
@@ -58,11 +58,7 @@ contract QuoterHelper {
     ////////////////////////////////////////////////////////////////
     error UnexpectedError(string message);
     error OutOfIterations(uint256 iterations);
-    error ValidAmount(
-        uint256 amount,
-        uint256 iterations,
-        bool swapWETHForOETHB
-    );
+    error ValidAmount(uint256 amount, uint256 iterations, bool swapWETHForOETHB);
 
     ////////////////////////////////////////////////////////////////
     /// --- CONSTRUCTOR
@@ -77,14 +73,8 @@ contract QuoterHelper {
     /// --- FUNCTIONS
     ////////////////////////////////////////////////////////////////
     /// @notice This call can only end with a revert.
-    function getAmountToSwapBeforeRebalance(
-        uint256 overrideBottomWethShare,
-        uint256 overrideTopWethShare
-    ) public {
-        if (
-            overrideBottomWethShare != type(uint256).max ||
-            overrideTopWethShare != type(uint256).max
-        ) {
+    function getAmountToSwapBeforeRebalance(uint256 overrideBottomWethShare, uint256 overrideTopWethShare) public {
+        if (overrideBottomWethShare != type(uint256).max || overrideTopWethShare != type(uint256).max) {
             // Current values
             uint256 shareStart = strategy.allowedWethShareStart();
             uint256 shareEnd = strategy.allowedWethShareEnd();
@@ -103,7 +93,7 @@ contract QuoterHelper {
         uint256 iterations = 0;
         uint256 low = BINARY_MIN_AMOUNT;
         uint256 high;
-        (high, ) = strategy.getPositionPrincipal();
+        (high,) = strategy.getPositionPrincipal();
         int24 lowerTick = strategy.lowerTick();
         int24 upperTick = strategy.upperTick();
         bool swapWETHForOETHB = getSwapDirectionForRebalance();
@@ -111,10 +101,7 @@ contract QuoterHelper {
         while (low <= high && iterations < BINARY_MAX_ITERATIONS) {
             uint256 mid = (low + high) / 2;
 
-            RebalanceStatus memory status = getRebalanceStatus(
-                mid,
-                swapWETHForOETHB
-            );
+            RebalanceStatus memory status = getRebalanceStatus(mid, swapWETHForOETHB);
 
             // Best case, we found the `amount` that will reach the target pool share!
             // We can revert with the amount and the number of iterations
@@ -129,13 +116,9 @@ contract QuoterHelper {
             // If the pool is out of bounds, we need to adjust the amount to reach the target pool share
             if (status.reason == RevertReasons.RebalanceOutOfBounds) {
                 // If the current pool share is less than the target pool share, we need to increase the amount
-                if (
-                    swapWETHForOETHB
-                        ? status.currentPoolWETHShare <
-                            status.allowedWETHShareStart
-                        : status.currentPoolWETHShare >
-                            status.allowedWETHShareEnd
-                ) {
+                if (swapWETHForOETHB
+                        ? status.currentPoolWETHShare < status.allowedWETHShareStart
+                        : status.currentPoolWETHShare > status.allowedWETHShareEnd) {
                     low = mid + 1;
                 }
                 // Else we need to decrease the amount
@@ -152,11 +135,7 @@ contract QuoterHelper {
                 //we need to increase the amount in order to continue to push price down.
                 // If we are selling OETHb and the current tick is less than the upper tick,
                 // we need to increase the amount in order to continue to push price up.
-                if (
-                    swapWETHForOETHB
-                        ? status.currentTick > lowerTick
-                        : status.currentTick < upperTick
-                ) {
+                if (swapWETHForOETHB ? status.currentTick > lowerTick : status.currentTick < upperTick) {
                     low = mid + 1;
                 }
                 // Else we need to decrease the amount
@@ -197,10 +176,7 @@ contract QuoterHelper {
     /// @param amount The amount of token to swap
     /// @param swapWETH True if we need to swap WETH for OETHb, false otherwise
     /// @return status The status of the rebalance
-    function getRebalanceStatus(uint256 amount, bool swapWETH)
-        public
-        returns (RebalanceStatus memory status)
-    {
+    function getRebalanceStatus(uint256 amount, bool swapWETH) public returns (RebalanceStatus memory status) {
         try strategy.rebalance(amount, swapWETH, 0) {
             status.reason = RevertReasons.Found;
             return status;
@@ -211,10 +187,7 @@ contract QuoterHelper {
             bytes4 receivedSelector = bytes4(reason);
 
             // Case 1: Rebalance out of bounds
-            if (
-                receivedSelector ==
-                IAMOStrategy.PoolRebalanceOutOfBounds.selector
-            ) {
+            if (receivedSelector == IAMOStrategy.PoolRebalanceOutOfBounds.selector) {
                 uint256 currentPoolWETHShare;
                 uint256 allowedWETHShareStart;
                 uint256 allowedWETHShareEnd;
@@ -225,47 +198,40 @@ contract QuoterHelper {
                     allowedWETHShareStart := mload(add(reason, 0x44))
                     allowedWETHShareEnd := mload(add(reason, 0x64))
                 }
-                return
-                    RebalanceStatus({
-                        reason: RevertReasons.RebalanceOutOfBounds,
-                        currentPoolWETHShare: currentPoolWETHShare,
-                        allowedWETHShareStart: allowedWETHShareStart,
-                        allowedWETHShareEnd: allowedWETHShareEnd,
-                        currentTick: 0,
-                        balanceWETH: 0,
-                        amountWETH: 0,
-                        revertMessage: ""
-                    });
+                return RebalanceStatus({
+                    reason: RevertReasons.RebalanceOutOfBounds,
+                    currentPoolWETHShare: currentPoolWETHShare,
+                    allowedWETHShareStart: allowedWETHShareStart,
+                    allowedWETHShareEnd: allowedWETHShareEnd,
+                    currentTick: 0,
+                    balanceWETH: 0,
+                    amountWETH: 0,
+                    revertMessage: ""
+                });
             }
 
             // Case 2: Not in expected tick range
-            if (
-                receivedSelector ==
-                IAMOStrategy.OutsideExpectedTickRange.selector
-            ) {
+            if (receivedSelector == IAMOStrategy.OutsideExpectedTickRange.selector) {
                 int24 currentTick;
 
                 // solhint-disable-next-line no-inline-assembly
                 assembly {
                     currentTick := mload(add(reason, 0x24))
                 }
-                return
-                    RebalanceStatus({
-                        reason: RevertReasons.NotInExpectedTickRange,
-                        currentPoolWETHShare: 0,
-                        allowedWETHShareStart: 0,
-                        allowedWETHShareEnd: 0,
-                        currentTick: currentTick,
-                        balanceWETH: 0,
-                        amountWETH: 0,
-                        revertMessage: ""
-                    });
+                return RebalanceStatus({
+                    reason: RevertReasons.NotInExpectedTickRange,
+                    currentPoolWETHShare: 0,
+                    allowedWETHShareStart: 0,
+                    allowedWETHShareEnd: 0,
+                    currentTick: currentTick,
+                    balanceWETH: 0,
+                    amountWETH: 0,
+                    revertMessage: ""
+                });
             }
 
             // Case 3: Not enough WETH for swap
-            if (
-                receivedSelector == IAMOStrategy.NotEnoughWethForSwap.selector
-            ) {
+            if (receivedSelector == IAMOStrategy.NotEnoughWethForSwap.selector) {
                 uint256 balanceWETH;
                 uint256 amountWETH;
 
@@ -274,48 +240,43 @@ contract QuoterHelper {
                     balanceWETH := mload(add(reason, 0x24))
                     amountWETH := mload(add(reason, 0x44))
                 }
-                return
-                    RebalanceStatus({
-                        reason: RevertReasons.NotEnoughWethForSwap,
-                        currentPoolWETHShare: 0,
-                        allowedWETHShareStart: 0,
-                        allowedWETHShareEnd: 0,
-                        currentTick: 0,
-                        balanceWETH: balanceWETH,
-                        amountWETH: amountWETH,
-                        revertMessage: ""
-                    });
+                return RebalanceStatus({
+                    reason: RevertReasons.NotEnoughWethForSwap,
+                    currentPoolWETHShare: 0,
+                    allowedWETHShareStart: 0,
+                    allowedWETHShareEnd: 0,
+                    currentTick: 0,
+                    balanceWETH: balanceWETH,
+                    amountWETH: amountWETH,
+                    revertMessage: ""
+                });
             }
 
             // Case 4: Not enough WETH liquidity
-            if (
-                receivedSelector == IAMOStrategy.NotEnoughWethLiquidity.selector
-            ) {
-                return
-                    RebalanceStatus({
-                        reason: RevertReasons.NotEnoughWethLiquidity,
-                        currentPoolWETHShare: 0,
-                        allowedWETHShareStart: 0,
-                        allowedWETHShareEnd: 0,
-                        currentTick: 0,
-                        balanceWETH: 0,
-                        amountWETH: 0,
-                        revertMessage: ""
-                    });
-            }
-
-            // Case 5: Unexpected error
-            return
-                RebalanceStatus({
-                    reason: RevertReasons.UnexpectedError,
+            if (receivedSelector == IAMOStrategy.NotEnoughWethLiquidity.selector) {
+                return RebalanceStatus({
+                    reason: RevertReasons.NotEnoughWethLiquidity,
                     currentPoolWETHShare: 0,
                     allowedWETHShareStart: 0,
                     allowedWETHShareEnd: 0,
                     currentTick: 0,
                     balanceWETH: 0,
                     amountWETH: 0,
-                    revertMessage: abi.decode(reason, (string))
+                    revertMessage: ""
                 });
+            }
+
+            // Case 5: Unexpected error
+            return RebalanceStatus({
+                reason: RevertReasons.UnexpectedError,
+                currentPoolWETHShare: 0,
+                allowedWETHShareStart: 0,
+                allowedWETHShareEnd: 0,
+                currentTick: 0,
+                balanceWETH: 0,
+                amountWETH: 0,
+                revertMessage: abi.decode(reason, (string))
+            });
         }
     }
 
@@ -329,10 +290,7 @@ contract QuoterHelper {
         uint256 allowedWethShareEnd = strategy.allowedWethShareEnd();
         uint160 mid = uint160(allowedWethShareStart + allowedWethShareEnd) / 2;
         // slither-disable-start divide-before-multiply
-        uint160 targetPrice = (ticker0Price *
-            mid +
-            ticker1Price *
-            (1 ether - mid)) / 1 ether;
+        uint160 targetPrice = (ticker0Price * mid + ticker1Price * (1 ether - mid)) / 1 ether;
         // slither-disable-end divide-before-multiply
 
         return currentPrice > targetPrice;
@@ -341,8 +299,7 @@ contract QuoterHelper {
     // returns total amount in the position principal of the Aerodrome AMO strategy. Needed as a
     // separate function because of the limitation in local variable count in getAmountToSwapToReachPrice
     function getTotalStrategyPosition() internal returns (uint256) {
-        (uint256 wethAmount, uint256 oethBalance) = strategy
-            .getPositionPrincipal();
+        (uint256 wethAmount, uint256 oethBalance) = strategy.getPositionPrincipal();
         return wethAmount + oethBalance;
     }
 
@@ -356,15 +313,7 @@ contract QuoterHelper {
     /// @return iterations The number of iterations to find the amount.
     /// @return swapWETHForOETHB True if we need to swap WETH for OETHb, false otherwise.
     /// @return sqrtPriceX96After The price after the swap.
-    function getAmountToSwapToReachPrice(uint160 sqrtPriceTargetX96)
-        public
-        returns (
-            uint256,
-            uint256,
-            bool,
-            uint160
-        )
-    {
+    function getAmountToSwapToReachPrice(uint160 sqrtPriceTargetX96) public returns (uint256, uint256, bool, uint160) {
         uint256 iterations = 0;
         uint256 low = BINARY_MIN_AMOUNT;
         // high search start is twice the position principle of Aerodrome AMO strategy.
@@ -376,25 +325,19 @@ contract QuoterHelper {
             uint256 mid = (low + high) / 2;
 
             // Call QuoterV2 from SugarHelper
-            (uint256 amountOut, uint160 sqrtPriceX96After, , ) = quoterV2
-                .quoteExactInputSingle(
-                    IQuoterV2.QuoteExactInputSingleParams({
-                        tokenIn: swapWETHForOETHB
-                            ? clPool.token0()
-                            : clPool.token1(),
-                        tokenOut: swapWETHForOETHB
-                            ? clPool.token1()
-                            : clPool.token0(),
-                        amountIn: mid,
-                        tickSpacing: strategy.tickSpacing(),
-                        sqrtPriceLimitX96: sqrtPriceTargetX96
-                    })
-                );
+            (uint256 amountOut, uint160 sqrtPriceX96After,,) = quoterV2.quoteExactInputSingle(
+                IQuoterV2.QuoteExactInputSingleParams({
+                    tokenIn: swapWETHForOETHB ? clPool.token0() : clPool.token1(),
+                    tokenOut: swapWETHForOETHB ? clPool.token1() : clPool.token0(),
+                    amountIn: mid,
+                    tickSpacing: strategy.tickSpacing(),
+                    sqrtPriceLimitX96: sqrtPriceTargetX96
+                })
+            );
 
-            if (
-                isWithinAllowedVariance(sqrtPriceX96After, sqrtPriceTargetX96)
-            ) {
-                /** Very important to return `amountOut` instead of `mid` as the first return parameter.
+            if (isWithinAllowedVariance(sqrtPriceX96After, sqrtPriceTargetX96)) {
+                /**
+                 * Very important to return `amountOut` instead of `mid` as the first return parameter.
                  * The issues was that when quoting we impose a swap price limit (sqrtPriceLimitX96: sqrtPriceTargetX96)
                  * and in that case the `amountIn` acts like a maximum amount to swap. And we don't know how much
                  * of that amount was actually consumed. For that reason we "estimate" it by returning the
@@ -405,21 +348,14 @@ contract QuoterHelper {
                  * points apart (assuming that complete balance of amountIn has been consumed) but that might increase
                  * complexity too much in an already complex contract.
                  */
-                return (
-                    amountOut,
-                    iterations,
-                    swapWETHForOETHB,
-                    sqrtPriceX96After
-                );
+                return (amountOut, iterations, swapWETHForOETHB, sqrtPriceX96After);
             } else if (low == high) {
                 // target swap amount not found.
                 // might be that "high" amount is too low on start
                 revert("SwapAmountNotFound");
-            } else if (
-                swapWETHForOETHB
+            } else if (swapWETHForOETHB
                     ? sqrtPriceX96After > sqrtPriceTargetX96
-                    : sqrtPriceX96After < sqrtPriceTargetX96
-            ) {
+                    : sqrtPriceX96After < sqrtPriceTargetX96) {
                 low = mid + 1;
             } else {
                 high = mid;
@@ -432,31 +368,23 @@ contract QuoterHelper {
 
     /// @notice Check if the current price is within the allowed variance in comparison to the target price
     /// @return bool True if the current price is within the allowed variance, false otherwise
-    function isWithinAllowedVariance(
-        uint160 sqrtPriceCurrentX96,
-        uint160 sqrtPriceTargetX96
-    ) public view returns (bool) {
-        uint160 range = strategy.sqrtRatioX96TickHigher() -
-            strategy.sqrtRatioX96TickLower();
+    function isWithinAllowedVariance(uint160 sqrtPriceCurrentX96, uint160 sqrtPriceTargetX96)
+        public
+        view
+        returns (bool)
+    {
+        uint160 range = strategy.sqrtRatioX96TickHigher() - strategy.sqrtRatioX96TickLower();
         if (sqrtPriceCurrentX96 > sqrtPriceTargetX96) {
-            return
-                (sqrtPriceCurrentX96 - sqrtPriceTargetX96) <=
-                (ALLOWED_VARIANCE_PERCENTAGE * range) / PERCENTAGE_BASE;
+            return (sqrtPriceCurrentX96 - sqrtPriceTargetX96) <= (ALLOWED_VARIANCE_PERCENTAGE * range) / PERCENTAGE_BASE;
         } else {
-            return
-                (sqrtPriceTargetX96 - sqrtPriceCurrentX96) <=
-                (ALLOWED_VARIANCE_PERCENTAGE * range) / PERCENTAGE_BASE;
+            return (sqrtPriceTargetX96 - sqrtPriceCurrentX96) <= (ALLOWED_VARIANCE_PERCENTAGE * range) / PERCENTAGE_BASE;
         }
     }
 
     /// @notice Get the swap direction to reach the target price.
     /// @param sqrtPriceTargetX96 The target price to reach.
     /// @return bool True if we need to swap WETH for OETHb, false otherwise.
-    function getSwapDirection(uint160 sqrtPriceTargetX96)
-        public
-        view
-        returns (bool)
-    {
+    function getSwapDirection(uint160 sqrtPriceTargetX96) public view returns (bool) {
         uint160 currentPrice = strategy.getPoolX96Price();
         return currentPrice > sqrtPriceTargetX96;
     }
@@ -467,10 +395,7 @@ contract QuoterHelper {
     }
 
     function giveBackGovernanceOnAMO() public {
-        require(
-            originalGovernor != address(0),
-            "Quoter: Original governor not set"
-        );
+        require(originalGovernor != address(0), "Quoter: Original governor not set");
         strategy.transferGovernance(originalGovernor);
     }
 }
@@ -496,22 +421,14 @@ contract AerodromeAMOQuoter {
     /// --- CONSTRUCTOR
     ////////////////////////////////////////////////////////////////
     constructor(address _strategy, address _quoterV2) {
-        quoterHelper = new QuoterHelper(
-            IAMOStrategy(_strategy),
-            IQuoterV2(_quoterV2)
-        );
+        quoterHelper = new QuoterHelper(IAMOStrategy(_strategy), IQuoterV2(_quoterV2));
     }
 
     ////////////////////////////////////////////////////////////////
     /// --- ERRORS & EVENTS
     ////////////////////////////////////////////////////////////////
     event ValueFound(uint256 value, uint256 iterations, bool swapWETHForOETHB);
-    event ValueFoundBis(
-        uint256 value,
-        uint256 iterations,
-        bool swapWETHForOETHB,
-        uint160 sqrtPriceAfterX96
-    );
+    event ValueFoundBis(uint256 value, uint256 iterations, bool swapWETHForOETHB, uint160 sqrtPriceAfterX96);
     event ValueNotFound(string message);
 
     ////////////////////////////////////////////////////////////////
@@ -521,15 +438,8 @@ contract AerodromeAMOQuoter {
     /// @dev This call will only revert, check the logs to get returned values.
     /// @dev Need to perform this call while impersonating the governor or strategist of AMO.
     /// @return data Data struct with the amount and the number of iterations
-    function quoteAmountToSwapBeforeRebalance()
-        public
-        returns (Data memory data)
-    {
-        return
-            _quoteAmountToSwapBeforeRebalance(
-                type(uint256).max,
-                type(uint256).max
-            );
+    function quoteAmountToSwapBeforeRebalance() public returns (Data memory data) {
+        return _quoteAmountToSwapBeforeRebalance(type(uint256).max, type(uint256).max);
     }
 
     /// @notice Use this to get the amount to swap before rebalance and
@@ -541,28 +451,19 @@ contract AerodromeAMOQuoter {
     /// @param overrideTopWethShare New value for the allowedWethShareEnd on AMO.
     ///         Use type(uint256).max to keep same value.
     /// @return data Data struct with the amount and the number of iterations
-    function quoteAmountToSwapBeforeRebalance(
-        uint256 overrideBottomWethShare,
-        uint256 overrideTopWethShare
-    ) public returns (Data memory data) {
-        return
-            _quoteAmountToSwapBeforeRebalance(
-                overrideBottomWethShare,
-                overrideTopWethShare
-            );
+    function quoteAmountToSwapBeforeRebalance(uint256 overrideBottomWethShare, uint256 overrideTopWethShare)
+        public
+        returns (Data memory data)
+    {
+        return _quoteAmountToSwapBeforeRebalance(overrideBottomWethShare, overrideTopWethShare);
     }
 
     /// @notice Internal logic for quoteAmountToSwapBeforeRebalance.
-    function _quoteAmountToSwapBeforeRebalance(
-        uint256 overrideBottomWethShare,
-        uint256 overrideTopWethShare
-    ) internal returns (Data memory data) {
-        try
-            quoterHelper.getAmountToSwapBeforeRebalance(
-                overrideBottomWethShare,
-                overrideTopWethShare
-            )
-        {
+    function _quoteAmountToSwapBeforeRebalance(uint256 overrideBottomWethShare, uint256 overrideTopWethShare)
+        internal
+        returns (Data memory data)
+    {
+        try quoterHelper.getAmountToSwapBeforeRebalance(overrideBottomWethShare, overrideTopWethShare) {
             revert("Previous call should only revert, it cannot succeed");
         } catch (bytes memory reason) {
             bytes4 receivedSelector = bytes4(reason);
@@ -578,7 +479,7 @@ contract AerodromeAMOQuoter {
                     swapWETHForOETHB := mload(add(reason, 0x64))
                 }
                 emit ValueFound(value, iterations, swapWETHForOETHB);
-                return Data({ amount: value, iterations: iterations });
+                return Data({amount: value, iterations: iterations});
             }
 
             if (receivedSelector == QuoterHelper.OutOfIterations.selector) {
@@ -595,19 +496,10 @@ contract AerodromeAMOQuoter {
     /// @dev This call will only revert, check the logs to get returned values.
     /// @param sqrtPriceTargetX96 The target price to reach.
     function quoteAmountToSwapToReachPrice(uint160 sqrtPriceTargetX96) public {
-        (
-            uint256 amount,
-            uint256 iterations,
-            bool swapWETHForOETHB,
-            uint160 sqrtPriceAfterX96
-        ) = quoterHelper.getAmountToSwapToReachPrice(sqrtPriceTargetX96);
+        (uint256 amount, uint256 iterations, bool swapWETHForOETHB, uint160 sqrtPriceAfterX96) =
+            quoterHelper.getAmountToSwapToReachPrice(sqrtPriceTargetX96);
 
-        emit ValueFoundBis(
-            amount,
-            iterations,
-            swapWETHForOETHB,
-            sqrtPriceAfterX96
-        );
+        emit ValueFoundBis(amount, iterations, swapWETHForOETHB, sqrtPriceAfterX96);
     }
 
     function claimGovernance() public {

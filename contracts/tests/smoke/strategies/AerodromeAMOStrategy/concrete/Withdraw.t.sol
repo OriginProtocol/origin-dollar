@@ -18,10 +18,7 @@ contract Smoke_Concrete_AerodromeAMOStrategy_Withdraw_Test is Smoke_AerodromeAMO
 
         uint256 vaultBalanceAfter = weth.balanceOf(address(oethBaseVault));
         assertApproxEqAbs(
-            vaultBalanceAfter - vaultBalanceBefore,
-            withdrawAmount,
-            1e6,
-            "Vault should receive ~withdrawAmount WETH"
+            vaultBalanceAfter - vaultBalanceBefore, withdrawAmount, 1e6, "Vault should receive ~withdrawAmount WETH"
         );
     }
 
@@ -45,8 +42,7 @@ contract Smoke_Concrete_AerodromeAMOStrategy_Withdraw_Test is Smoke_AerodromeAMO
         aerodromeAMOStrategy.withdraw(address(oethBaseVault), address(weth), 1 ether);
 
         uint256 _tokenId = aerodromeAMOStrategy.tokenId();
-        INonfungiblePositionManager pm =
-            INonfungiblePositionManager(BaseAddresses.nonFungiblePositionManager);
+        INonfungiblePositionManager pm = INonfungiblePositionManager(BaseAddresses.nonFungiblePositionManager);
         assertEq(pm.ownerOf(_tokenId), BaseAddresses.aerodromeOETHbWETHClGauge, "LP should remain staked in gauge");
     }
 
@@ -77,8 +73,7 @@ contract Smoke_Concrete_AerodromeAMOStrategy_Withdraw_Test is Smoke_AerodromeAMO
         aerodromeAMOStrategy.withdrawAll();
 
         // After withdrawAll, liquidity is 0, so LP cannot be staked in gauge
-        INonfungiblePositionManager pm =
-            INonfungiblePositionManager(BaseAddresses.nonFungiblePositionManager);
+        INonfungiblePositionManager pm = INonfungiblePositionManager(BaseAddresses.nonFungiblePositionManager);
         assertNotEq(
             pm.ownerOf(_tokenId),
             BaseAddresses.aerodromeOETHbWETHClGauge,

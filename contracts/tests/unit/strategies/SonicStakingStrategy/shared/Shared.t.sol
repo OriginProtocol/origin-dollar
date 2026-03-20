@@ -50,9 +50,7 @@ abstract contract Unit_SonicStakingStrategy_Shared_Test is Base {
         );
 
         oSonicVaultProxy.initialize(
-            address(oSonicVaultImpl),
-            governor,
-            abi.encodeWithSignature("initialize(address)", address(oSonicProxy))
+            address(oSonicVaultImpl), governor, abi.encodeWithSignature("initialize(address)", address(oSonicProxy))
         );
 
         vm.stopPrank();
@@ -72,8 +70,7 @@ abstract contract Unit_SonicStakingStrategy_Shared_Test is Base {
         // Deploy SonicStakingStrategy
         sonicStakingStrategy = new SonicStakingStrategy(
             InitializableAbstractStrategy.BaseStrategyConfig({
-                platformAddress: address(mockSfc),
-                vaultAddress: address(oSonicVault)
+                platformAddress: address(mockSfc), vaultAddress: address(oSonicVault)
             }),
             address(mockWrappedSonic),
             address(mockSfc)

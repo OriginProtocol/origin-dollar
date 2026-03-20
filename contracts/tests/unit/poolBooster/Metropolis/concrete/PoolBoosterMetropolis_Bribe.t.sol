@@ -11,10 +11,7 @@ contract Unit_Concrete_PoolBoosterMetropolis_Bribe_Test is Unit_Metropolis_Share
         vm.expectCall(
             mockRewarder,
             abi.encodeWithSelector(
-                bytes4(keccak256("fundAndBribe(uint256,uint256,uint256)")),
-                uint256(6),
-                uint256(6),
-                uint256(1e18)
+                bytes4(keccak256("fundAndBribe(uint256,uint256,uint256)")), uint256(6), uint256(6), uint256(1e18)
             )
         );
 
@@ -38,10 +35,7 @@ contract Unit_Concrete_PoolBoosterMetropolis_Bribe_Test is Unit_Metropolis_Share
         vm.expectCall(
             mockRewarder,
             abi.encodeWithSelector(
-                bytes4(keccak256("fundAndBribe(uint256,uint256,uint256)")),
-                uint256(6),
-                uint256(6),
-                uint256(1e18)
+                bytes4(keccak256("fundAndBribe(uint256,uint256,uint256)")), uint256(6), uint256(6), uint256(1e18)
             )
         );
 

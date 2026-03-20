@@ -40,7 +40,10 @@ contract MockCurvePool is MockERC20 {
         return _virtualPrice;
     }
 
-    function add_liquidity(uint256[] memory amounts, uint256 /* minMintAmount */ )
+    function add_liquidity(
+        uint256[] memory amounts,
+        uint256 /* minMintAmount */
+    )
         external
         returns (uint256 lpMinted)
     {
@@ -63,7 +66,10 @@ contract MockCurvePool is MockERC20 {
         _mint(msg.sender, lpMinted);
     }
 
-    function remove_liquidity(uint256 burnAmount, uint256[] memory /* minAmounts */ )
+    function remove_liquidity(
+        uint256 burnAmount,
+        uint256[] memory /* minAmounts */
+    )
         external
         returns (uint256[] memory received)
     {
@@ -84,7 +90,13 @@ contract MockCurvePool is MockERC20 {
         IERC20(_coins[1]).transfer(msg.sender, received[1]);
     }
 
-    function remove_liquidity_one_coin(uint256 burnAmount, int128 i, uint256, /* minReceived */ address receiver)
+    function remove_liquidity_one_coin(
+        uint256 burnAmount,
+        int128 i,
+        uint256,
+        /* minReceived */
+        address receiver
+    )
         external
         returns (uint256 received)
     {

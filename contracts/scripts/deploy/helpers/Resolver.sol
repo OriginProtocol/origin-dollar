@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import { State, Execution, Contract, Position } from "scripts/deploy/helpers/DeploymentTypes.sol";
+import {State, Execution, Contract, Position} from "scripts/deploy/helpers/DeploymentTypes.sol";
 
 /// @title Resolver
 /// @notice Central registry for deployed contracts and execution history during deployments.
@@ -80,13 +80,8 @@ contract Resolver {
 
         if (!pos.exists) {
             // New contract: add to array and record its position
-            contracts.push(
-                Contract({ name: name, implementation: implementation })
-            );
-            inContracts[name] = Position({
-                index: contracts.length - 1,
-                exists: true
-            });
+            contracts.push(Contract({name: name, implementation: implementation}));
+            inContracts[name] = Position({index: contracts.length - 1, exists: true});
         } else {
             // Existing contract: update the address in place (e.g., after upgrade)
             contracts[pos.index].implementation = implementation;
@@ -107,23 +102,13 @@ contract Resolver {
     /// @param tsDeployment The block timestamp when the deployment was executed
     /// @param proposalId The governance proposal ID (0 = pending, 1 = no governance needed)
     /// @param tsGovernance The block timestamp when governance was executed (0 = pending, 1 = no governance)
-    function addExecution(
-        string memory name,
-        uint256 tsDeployment,
-        uint256 proposalId,
-        uint256 tsGovernance
-    ) external {
+    function addExecution(string memory name, uint256 tsDeployment, uint256 proposalId, uint256 tsGovernance) external {
         // Prevent duplicate execution records
         require(!executionExists[name], "Execution already exists");
 
         // Add to array for JSON serialization
         executions.push(
-            Execution({
-                name: name,
-                proposalId: proposalId,
-                tsDeployment: tsDeployment,
-                tsGovernance: tsGovernance
-            })
+            Execution({name: name, proposalId: proposalId, tsDeployment: tsDeployment, tsGovernance: tsGovernance})
         );
 
         // Mark as executed for quick lookups
@@ -158,10 +143,7 @@ contract Resolver {
     /// @return The deployed contract address
     function resolve(string memory name) external view returns (address) {
         address addr = implementations[name];
-        require(
-            addr != address(0),
-            string.concat('Resolver: unknown contract "', name, '"')
-        );
+        require(addr != address(0), string.concat('Resolver: unknown contract "', name, '"'));
         return addr;
     }
 

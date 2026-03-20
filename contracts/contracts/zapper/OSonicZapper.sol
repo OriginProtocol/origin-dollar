@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import { IVault } from "../interfaces/IVault.sol";
-import { IWrappedSonic } from "../interfaces/sonic/IWrappedSonic.sol";
-import { IERC4626 } from "../../lib/openzeppelin/interfaces/IERC4626.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {IVault} from "../interfaces/IVault.sol";
+import {IWrappedSonic} from "../interfaces/sonic/IWrappedSonic.sol";
+import {IERC4626} from "../../lib/openzeppelin/interfaces/IERC4626.sol";
 
 /**
  * @title Zapper for Origin Sonic (OS) tokens
@@ -15,18 +15,12 @@ contract OSonicZapper {
     IERC4626 public immutable wOS;
     IVault public immutable vault;
 
-    IWrappedSonic public constant wS =
-        IWrappedSonic(0x039e2fB66102314Ce7b64Ce5Ce3E5183bc94aD38);
-    address private constant ETH_MARKER =
-        0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE;
+    IWrappedSonic public constant wS = IWrappedSonic(0x039e2fB66102314Ce7b64Ce5Ce3E5183bc94aD38);
+    address private constant ETH_MARKER = 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE;
 
     event Zap(address indexed minter, address indexed asset, uint256 amount);
 
-    constructor(
-        address _OS,
-        address _wOS,
-        address _vault
-    ) {
+    constructor(address _OS, address _wOS, address _vault) {
         OS = IERC20(_OS);
         wOS = IERC4626(_wOS);
         vault = IVault(_vault);
@@ -54,7 +48,7 @@ contract OSonicZapper {
         emit Zap(msg.sender, ETH_MARKER, balance);
 
         // Wrap native S
-        wS.deposit{ value: balance }();
+        wS.deposit{value: balance}();
 
         // Mint Origin Sonic (OS) with Wrapped Sonic (wS)
         return _mint(balance, msg.sender);
@@ -65,18 +59,14 @@ contract OSonicZapper {
      * @param minReceived min amount of Wrapped Origin Sonic (wOS) to receive
      * @return Amount of Wrapped Origin Sonic (wOS) tokens sent to user
      */
-    function depositSForWrappedTokens(uint256 minReceived)
-        external
-        payable
-        returns (uint256)
-    {
+    function depositSForWrappedTokens(uint256 minReceived) external payable returns (uint256) {
         // slither-disable-start reentrancy-balance
         uint256 balance = address(this).balance;
 
         emit Zap(msg.sender, ETH_MARKER, balance);
 
         // Wrap S
-        wS.deposit{ value: balance }();
+        wS.deposit{value: balance}();
 
         // Mint with Wrapped Sonic
         uint256 mintOS = _mint(balance, address(this));
@@ -96,10 +86,7 @@ contract OSonicZapper {
      * @param minReceived min amount of Wrapped Origin Sonic (wOS) token to receive
      * @return Amount of Wrapped Origin Sonic (wOS) tokens sent to user
      */
-    function depositWSForWrappedTokens(uint256 wSAmount, uint256 minReceived)
-        external
-        returns (uint256)
-    {
+    function depositWSForWrappedTokens(uint256 wSAmount, uint256 minReceived) external returns (uint256) {
         // slither-disable-start reentrancy-balance
         // slither-disable-next-line unchecked-transfer unused-return
         wS.transferFrom(msg.sender, address(this), wSAmount);
@@ -124,10 +111,7 @@ contract OSonicZapper {
      * @param recipient Address that receives the tokens
      * @return Amount of Origin Sonic (OS) tokens sent to the recipient
      */
-    function _mint(uint256 minOS, address recipient)
-        internal
-        returns (uint256)
-    {
+    function _mint(uint256 minOS, address recipient) internal returns (uint256) {
         uint256 toMint = wS.balanceOf(address(this));
         vault.mint(toMint);
         uint256 mintedAmount = OS.balanceOf(address(this));

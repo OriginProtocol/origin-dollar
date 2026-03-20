@@ -18,9 +18,7 @@ contract Smoke_Concrete_PoolBoosterFactoryMetropolis_Test is Smoke_PoolBoosterMe
     }
 
     function test_oToken() public view {
-        (bool success, bytes memory data) = address(factoryMetropolis).staticcall(
-            abi.encodeWithSignature("oSonic()")
-        );
+        (bool success, bytes memory data) = address(factoryMetropolis).staticcall(abi.encodeWithSignature("oSonic()"));
         assertTrue(success, "oSonic() call failed");
         address oTokenAddr = abi.decode(data, (address));
         assertEq(oTokenAddr, Sonic.OSonicProxy);
@@ -53,9 +51,7 @@ contract Smoke_Concrete_PoolBoosterFactoryMetropolis_Test is Smoke_PoolBoosterMe
     }
 
     function test_computePoolBoosterAddress() public view {
-        address computed = factoryMetropolis.computePoolBoosterAddress(
-            address(1), 12345
-        );
+        address computed = factoryMetropolis.computePoolBoosterAddress(address(1), 12345);
         assertNotEq(computed, address(0));
     }
 
@@ -67,10 +63,7 @@ contract Smoke_Concrete_PoolBoosterFactoryMetropolis_Test is Smoke_PoolBoosterMe
         uint256 lengthBefore = factoryMetropolis.poolBoosterLength();
 
         vm.prank(factoryMetropolis.governor());
-        factoryMetropolis.createPoolBoosterMetropolis(
-            address(uint160(uint256(keccak256("newPool")))),
-            block.timestamp
-        );
+        factoryMetropolis.createPoolBoosterMetropolis(address(uint160(uint256(keccak256("newPool")))), block.timestamp);
 
         assertEq(factoryMetropolis.poolBoosterLength(), lengthBefore + 1);
     }

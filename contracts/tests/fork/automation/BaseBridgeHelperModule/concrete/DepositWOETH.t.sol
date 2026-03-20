@@ -1,8 +1,9 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import {Fork_BaseBridgeHelperModule_Shared_Test} from
-    "tests/fork/automation/BaseBridgeHelperModule/shared/Shared.t.sol";
+import {
+    Fork_BaseBridgeHelperModule_Shared_Test
+} from "tests/fork/automation/BaseBridgeHelperModule/shared/Shared.t.sol";
 import {VaultStorage} from "contracts/vault/VaultStorage.sol";
 
 contract Fork_Concrete_BaseBridgeHelperModule_DepositWOETH_Test is Fork_BaseBridgeHelperModule_Shared_Test {
@@ -47,9 +48,7 @@ contract Fork_Concrete_BaseBridgeHelperModule_DepositWOETH_Test is Fork_BaseBrid
 
         // wOETH should be transferred to strategy
         assertEq(
-            bridgedWoeth.balanceOf(safeSigner),
-            woethBalanceBefore - woethAmount,
-            "Safe wOETH balance should decrease"
+            bridgedWoeth.balanceOf(safeSigner), woethBalanceBefore - woethAmount, "Safe wOETH balance should decrease"
         );
         assertEq(
             bridgedWoeth.balanceOf(address(bridgedWOETHStrategy)),

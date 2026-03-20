@@ -13,10 +13,25 @@ runs:
         path: contracts/dependencies/
         key: deps-${{ hashFiles('contracts/soldeer.lock', 'contracts/install-deps.sh') }}
 
+    - name: Install pnpm
+      uses: pnpm/action-setup@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: "20"
+        cache: "pnpm"
+        cache-dependency-path: contracts/pnpm-lock.yaml
+
     - name: Install dependencies
       shell: bash
       working-directory: contracts
       run: bash install-deps.sh
+
+    - name: Install npm dependencies
+      shell: bash
+      working-directory: contracts
+      run: pnpm install --frozen-lockfile
 
     - name: Build all artifacts
       shell: bash

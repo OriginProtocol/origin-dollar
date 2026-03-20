@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import { OUSD } from "./OUSD.sol";
+import {OUSD} from "./OUSD.sol";
 
 /**
  * @title Super OETH (Plume) Token Contract

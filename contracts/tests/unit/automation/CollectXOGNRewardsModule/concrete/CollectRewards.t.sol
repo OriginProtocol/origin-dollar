@@ -3,12 +3,11 @@ pragma solidity ^0.8.0;
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
-import {Unit_CollectXOGNRewardsModule_Shared_Test} from
-    "tests/unit/automation/CollectXOGNRewardsModule/shared/Shared.t.sol";
+import {
+    Unit_CollectXOGNRewardsModule_Shared_Test
+} from "tests/unit/automation/CollectXOGNRewardsModule/shared/Shared.t.sol";
 
-contract Unit_Concrete_CollectXOGNRewardsModule_CollectRewards_Test
-    is Unit_CollectXOGNRewardsModule_Shared_Test
-{
+contract Unit_Concrete_CollectXOGNRewardsModule_CollectRewards_Test is Unit_CollectXOGNRewardsModule_Shared_Test {
     //////////////////////////////////////////////////////
     /// --- COLLECT REWARDS
     //////////////////////////////////////////////////////
@@ -65,9 +64,7 @@ contract Unit_Concrete_CollectXOGNRewardsModule_CollectRewards_Test
 
         // Mock the OGN transfer call to revert (the second safe exec)
         vm.mockCallRevert(
-            OGN_ADDRESS,
-            abi.encodeWithSelector(IERC20.transfer.selector, REWARDS_SOURCE, 100e18),
-            "transfer failed"
+            OGN_ADDRESS, abi.encodeWithSelector(IERC20.transfer.selector, REWARDS_SOURCE, 100e18), "transfer failed"
         );
 
         vm.prank(operator);

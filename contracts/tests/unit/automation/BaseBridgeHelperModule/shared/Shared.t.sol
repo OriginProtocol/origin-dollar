@@ -30,9 +30,7 @@ abstract contract Unit_BaseBridgeHelperModule_Shared_Test is Base {
             address(baseBridgeHelperModule),
             0,
             abi.encodeWithSelector(
-                baseBridgeHelperModule.grantRole.selector,
-                baseBridgeHelperModule.OPERATOR_ROLE(),
-                operator
+                baseBridgeHelperModule.grantRole.selector, baseBridgeHelperModule.OPERATOR_ROLE(), operator
             ),
             0
         );

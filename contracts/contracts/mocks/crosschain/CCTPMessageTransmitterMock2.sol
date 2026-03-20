@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import { IMessageHandlerV2 } from "../../interfaces/cctp/ICCTP.sol";
-import { BytesHelper } from "../../utils/BytesHelper.sol";
-import { CCTPMessageTransmitterMock } from "./CCTPMessageTransmitterMock.sol";
+import {IMessageHandlerV2} from "../../interfaces/cctp/ICCTP.sol";
+import {BytesHelper} from "../../utils/BytesHelper.sol";
+import {CCTPMessageTransmitterMock} from "./CCTPMessageTransmitterMock.sol";
 
 uint8 constant SOURCE_DOMAIN_INDEX = 4;
 uint8 constant RECIPIENT_INDEX = 76;
@@ -25,9 +25,7 @@ contract CCTPMessageTransmitterMock2 is CCTPMessageTransmitterMock {
     event MessageReceivedInMockTransmitter(bytes message);
     event MessageSent(bytes message);
 
-    constructor(address _usdc, uint32 _peerDomainId)
-        CCTPMessageTransmitterMock(_usdc)
-    {
+    constructor(address _usdc, uint32 _peerDomainId) CCTPMessageTransmitterMock(_usdc) {
         peerDomainId = _peerDomainId;
     }
 
@@ -61,20 +59,12 @@ contract CCTPMessageTransmitterMock2 is CCTPMessageTransmitterMock {
         emit MessageSent(message);
     }
 
-    function receiveMessage(bytes memory message, bytes memory attestation)
-        public
-        virtual
-        override
-        returns (bool)
-    {
+    function receiveMessage(bytes memory message, bytes memory attestation) public virtual override returns (bool) {
         uint32 sourceDomain = message.extractUint32(SOURCE_DOMAIN_INDEX);
         address recipient = message.extractAddress(RECIPIENT_INDEX);
         address sender = message.extractAddress(SENDER_INDEX);
 
-        bytes memory messageBody = message.extractSlice(
-            MESSAGE_BODY_INDEX,
-            message.length
-        );
+        bytes memory messageBody = message.extractSlice(MESSAGE_BODY_INDEX, message.length);
 
         bool isBurnMessage = recipient == cctpTokenMessenger;
 
@@ -83,12 +73,8 @@ contract CCTPMessageTransmitterMock2 is CCTPMessageTransmitterMock {
             // This step won't mint USDC, transfer it to the recipient address
             // in your tests
         } else {
-            IMessageHandlerV2(recipient).handleReceiveFinalizedMessage(
-                sourceDomain,
-                bytes32(uint256(uint160(sender))),
-                2000,
-                messageBody
-            );
+            IMessageHandlerV2(recipient)
+                .handleReceiveFinalizedMessage(sourceDomain, bytes32(uint256(uint160(sender))), 2000, messageBody);
         }
 
         // This step won't mint USDC, transfer it to the recipient address

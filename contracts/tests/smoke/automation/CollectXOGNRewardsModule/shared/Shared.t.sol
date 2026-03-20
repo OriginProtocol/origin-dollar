@@ -11,8 +11,7 @@ abstract contract Smoke_CollectXOGNRewardsModule_Shared_Test is BaseSmoke {
         _igniteDeployManager();
 
         require(address(resolver).code.length > 0, "Resolver not initialized on fork");
-        collectXOGNRewardsModule =
-            CollectXOGNRewardsModule(payable(resolver.resolve("COLLECT_XOGN_REWARDS_MODULE")));
+        collectXOGNRewardsModule = CollectXOGNRewardsModule(payable(resolver.resolve("COLLECT_XOGN_REWARDS_MODULE")));
         vm.label(address(collectXOGNRewardsModule), "CollectXOGNRewardsModule");
     }
 }

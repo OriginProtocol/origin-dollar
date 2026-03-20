@@ -1,12 +1,11 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import {Unit_EthereumBridgeHelperModule_Shared_Test} from
-    "tests/unit/automation/EthereumBridgeHelperModule/shared/Shared.t.sol";
+import {
+    Unit_EthereumBridgeHelperModule_Shared_Test
+} from "tests/unit/automation/EthereumBridgeHelperModule/shared/Shared.t.sol";
 
-contract Unit_Concrete_EthereumBridgeHelperModule_AccessControl_Test
-    is Unit_EthereumBridgeHelperModule_Shared_Test
-{
+contract Unit_Concrete_EthereumBridgeHelperModule_AccessControl_Test is Unit_EthereumBridgeHelperModule_Shared_Test {
     //////////////////////////////////////////////////////
     /// --- ACCESS CONTROL
     //////////////////////////////////////////////////////

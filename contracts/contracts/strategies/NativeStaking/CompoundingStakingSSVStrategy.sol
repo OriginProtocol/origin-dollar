@@ -1,19 +1,16 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
-import { InitializableAbstractStrategy } from "../../utils/InitializableAbstractStrategy.sol";
-import { IWETH9 } from "../../interfaces/IWETH9.sol";
-import { CompoundingValidatorManager } from "./CompoundingValidatorManager.sol";
+import {InitializableAbstractStrategy} from "../../utils/InitializableAbstractStrategy.sol";
+import {IWETH9} from "../../interfaces/IWETH9.sol";
+import {CompoundingValidatorManager} from "./CompoundingValidatorManager.sol";
 
 /// @title Compounding Staking SSV Strategy
 /// @notice Strategy to deploy funds into DVT validators powered by the SSV Network
 /// @author Origin Protocol Inc
-contract CompoundingStakingSSVStrategy is
-    CompoundingValidatorManager,
-    InitializableAbstractStrategy
-{
+contract CompoundingStakingSSVStrategy is CompoundingValidatorManager, InitializableAbstractStrategy {
     // For future use
     uint256[50] private __gap;
 
@@ -52,16 +49,12 @@ contract CompoundingStakingSSVStrategy is
     /// @param _rewardTokenAddresses Not used so empty array
     /// @param _assets Not used so empty array
     /// @param _pTokens Not used so empty array
-    function initialize(
-        address[] memory _rewardTokenAddresses,
-        address[] memory _assets,
-        address[] memory _pTokens
-    ) external onlyGovernor initializer {
-        InitializableAbstractStrategy._initialize(
-            _rewardTokenAddresses,
-            _assets,
-            _pTokens
-        );
+    function initialize(address[] memory _rewardTokenAddresses, address[] memory _assets, address[] memory _pTokens)
+        external
+        onlyGovernor
+        initializer
+    {
+        InitializableAbstractStrategy._initialize(_rewardTokenAddresses, _assets, _pTokens);
     }
 
     /// @notice Unlike other strategies, this does not deposit assets into the underlying platform.
@@ -69,12 +62,7 @@ contract CompoundingStakingSSVStrategy is
     /// To deposit WETH into validators, `registerSsvValidator` and `stakeEth` must be used.
     /// @param _asset Address of the WETH token.
     /// @param _amount Amount of WETH that was transferred to the strategy by the vault.
-    function deposit(address _asset, uint256 _amount)
-        external
-        override
-        onlyVault
-        nonReentrant
-    {
+    function deposit(address _asset, uint256 _amount) external override onlyVault nonReentrant {
         require(_asset == WETH, "Unsupported asset");
         require(_amount > 0, "Must deposit something");
 
@@ -103,25 +91,14 @@ contract CompoundingStakingSSVStrategy is
     /// @param _recipient Address to receive withdrawn assets.
     /// @param _asset Address of the WETH token.
     /// @param _amount Amount of WETH to withdraw.
-    function withdraw(
-        address _recipient,
-        address _asset,
-        uint256 _amount
-    ) external override nonReentrant {
+    function withdraw(address _recipient, address _asset, uint256 _amount) external override nonReentrant {
         require(_asset == WETH, "Unsupported asset");
-        require(
-            msg.sender == vaultAddress || msg.sender == validatorRegistrator,
-            "Caller not Vault or Registrator"
-        );
+        require(msg.sender == vaultAddress || msg.sender == validatorRegistrator, "Caller not Vault or Registrator");
 
         _withdraw(_recipient, _amount, address(this).balance);
     }
 
-    function _withdraw(
-        address _recipient,
-        uint256 _withdrawAmount,
-        uint256 _ethBalance
-    ) internal {
+    function _withdraw(address _recipient, uint256 _withdrawAmount, uint256 _ethBalance) internal {
         require(_withdrawAmount > 0, "Must withdraw something");
         require(_recipient == vaultAddress, "Recipient not Vault");
 
@@ -141,8 +118,7 @@ contract CompoundingStakingSSVStrategy is
     /// `validatorWithdrawal` operation.
     function withdrawAll() external override onlyVaultOrGovernor nonReentrant {
         uint256 ethBalance = address(this).balance;
-        uint256 withdrawAmount = IERC20(WETH).balanceOf(address(this)) +
-            ethBalance;
+        uint256 withdrawAmount = IERC20(WETH).balanceOf(address(this)) + ethBalance;
 
         if (withdrawAmount > 0) {
             _withdraw(vaultAddress, withdrawAmount, ethBalance);
@@ -154,19 +130,12 @@ contract CompoundingStakingSSVStrategy is
     /// 2. The last verified ETH balance, total deposits and total validator balances
     /// @param _asset      Address of WETH asset.
     /// @return balance    Total value in ETH
-    function checkBalance(address _asset)
-        external
-        view
-        override
-        returns (uint256 balance)
-    {
+    function checkBalance(address _asset) external view override returns (uint256 balance) {
         require(_asset == WETH, "Unsupported asset");
 
         // Load the last verified balance from the storage
         // and add to the latest WETH balance of this strategy.
-        balance =
-            lastVerifiedEthBalance +
-            IWETH9(WETH).balanceOf(address(this));
+        balance = lastVerifiedEthBalance + IWETH9(WETH).balanceOf(address(this));
     }
 
     /// @notice Returns bool indicating whether asset is supported by the strategy.

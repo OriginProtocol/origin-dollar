@@ -58,9 +58,7 @@ abstract contract Unit_OETHZapper_Shared_Test is Base {
         );
 
         oethVaultProxy.initialize(
-            address(oethVaultImpl),
-            governor,
-            abi.encodeWithSignature("initialize(address)", address(oethProxy))
+            address(oethVaultImpl), governor, abi.encodeWithSignature("initialize(address)", address(oethProxy))
         );
 
         vm.stopPrank();
@@ -85,12 +83,7 @@ abstract contract Unit_OETHZapper_Shared_Test is Base {
     }
 
     function _deployZapper() internal {
-        oethZapper = new OETHZapper(
-            address(oeth),
-            address(woeth),
-            address(oethVault),
-            address(weth)
-        );
+        oethZapper = new OETHZapper(address(oeth), address(woeth), address(oethVault), address(weth));
     }
 
     function _configureContracts() internal {

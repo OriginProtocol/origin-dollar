@@ -44,11 +44,7 @@ abstract contract Unit_ClaimBribesSafeModule_Shared_Test is Base {
         mockPool = new MockCLPoolForBribes(address(mockGauge));
 
         // Deploy ClaimBribesSafeModule
-        claimBribesModule = new ClaimBribesSafeModule(
-            address(mockSafe),
-            address(mockVoter),
-            address(mockVeNFT)
-        );
+        claimBribesModule = new ClaimBribesSafeModule(address(mockSafe), address(mockVoter), address(mockVeNFT));
 
         // Grant OPERATOR_ROLE to operator via safe (safe has DEFAULT_ADMIN_ROLE)
         bytes32 operatorRole = claimBribesModule.OPERATOR_ROLE();

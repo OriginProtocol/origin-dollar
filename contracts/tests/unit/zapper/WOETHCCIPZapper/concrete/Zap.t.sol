@@ -59,10 +59,5 @@ contract Unit_Concrete_WOETHCCIPZapper_Zap_Test is Unit_WOETHCCIPZapper_Shared_T
     //////////////////////////////////////////////////////
     /// --- EVENTS
     //////////////////////////////////////////////////////
-    event Zap(
-        bytes32 indexed messageId,
-        address sender,
-        address recipient,
-        uint256 amount
-    );
+    event Zap(bytes32 indexed messageId, address sender, address recipient, uint256 amount);
 }

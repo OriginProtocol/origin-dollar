@@ -1,8 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import {Unit_SonicStakingStrategy_Shared_Test} from
-    "tests/unit/strategies/SonicStakingStrategy/shared/Shared.t.sol";
+import {Unit_SonicStakingStrategy_Shared_Test} from "tests/unit/strategies/SonicStakingStrategy/shared/Shared.t.sol";
 import {SonicValidatorDelegator} from "contracts/strategies/sonic/SonicValidatorDelegator.sol";
 import {InitializableAbstractStrategy} from "contracts/utils/InitializableAbstractStrategy.sol";
 

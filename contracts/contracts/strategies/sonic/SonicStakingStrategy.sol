@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
-import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import { SonicValidatorDelegator } from "./SonicValidatorDelegator.sol";
-import { IWrappedSonic } from "../../interfaces/sonic/IWrappedSonic.sol";
+import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {SonicValidatorDelegator} from "./SonicValidatorDelegator.sol";
+import {IWrappedSonic} from "../../interfaces/sonic/IWrappedSonic.sol";
 
 /**
  * @title Staking Strategy for Sonic's native S currency
@@ -14,21 +14,14 @@ contract SonicStakingStrategy is SonicValidatorDelegator {
     // For future use
     uint256[50] private __gap;
 
-    constructor(
-        BaseStrategyConfig memory _baseConfig,
-        address _wrappedSonic,
-        address _sfc
-    ) SonicValidatorDelegator(_baseConfig, _wrappedSonic, _sfc) {}
+    constructor(BaseStrategyConfig memory _baseConfig, address _wrappedSonic, address _sfc)
+        SonicValidatorDelegator(_baseConfig, _wrappedSonic, _sfc)
+    {}
 
     /// @notice Deposit wrapped S asset into the underlying platform.
     /// @param _asset Address of asset to deposit. Has to be Wrapped Sonic (wS).
     /// @param _amount Amount of assets that were transferred to the strategy by the vault.
-    function deposit(address _asset, uint256 _amount)
-        external
-        override
-        onlyVault
-        nonReentrant
-    {
+    function deposit(address _asset, uint256 _amount) external override onlyVault nonReentrant {
         require(_asset == wrappedSonic, "Unsupported asset");
         _deposit(_asset, _amount);
     }
@@ -63,20 +56,12 @@ contract SonicStakingStrategy is SonicValidatorDelegator {
     /// @param _recipient Address to receive withdrawn assets
     /// @param _asset Address of the Wrapped Sonic (wS) token
     /// @param _amount Amount of Wrapped Sonic (wS) to withdraw
-    function withdraw(
-        address _recipient,
-        address _asset,
-        uint256 _amount
-    ) external override onlyVault nonReentrant {
+    function withdraw(address _recipient, address _asset, uint256 _amount) external override onlyVault nonReentrant {
         require(_asset == wrappedSonic, "Unsupported asset");
         _withdraw(_recipient, _asset, _amount);
     }
 
-    function _withdraw(
-        address _recipient,
-        address _asset,
-        uint256 _amount
-    ) internal override {
+    function _withdraw(address _recipient, address _asset, uint256 _amount) internal override {
         require(_amount > 0, "Must withdraw something");
         require(_recipient != address(0), "Must specify recipient");
 
@@ -92,7 +77,7 @@ contract SonicStakingStrategy is SonicValidatorDelegator {
     function withdrawAll() external override onlyVaultOrGovernor nonReentrant {
         uint256 balance = address(this).balance;
         if (balance > 0) {
-            IWrappedSonic(wrappedSonic).deposit{ value: balance }();
+            IWrappedSonic(wrappedSonic).deposit{value: balance}();
         }
         uint256 wSBalance = IERC20(wrappedSonic).balanceOf(address(this));
         if (wSBalance > 0) {
@@ -104,13 +89,7 @@ contract SonicStakingStrategy is SonicValidatorDelegator {
      * @dev Returns bool indicating whether asset is supported by strategy
      * @param _asset Address of the asset token
      */
-    function supportsAsset(address _asset)
-        public
-        view
-        virtual
-        override
-        returns (bool)
-    {
+    function supportsAsset(address _asset) public view virtual override returns (bool) {
         return _asset == wrappedSonic;
     }
 
@@ -118,12 +97,7 @@ contract SonicStakingStrategy is SonicValidatorDelegator {
      * @notice is not supported for this strategy as the
      * Wrapped Sonic (wS) token is set at deploy time.
      */
-    function setPTokenAddress(address, address)
-        external
-        view
-        override
-        onlyGovernor
-    {
+    function setPTokenAddress(address, address) external view override onlyGovernor {
         revert("unsupported function");
     }
 

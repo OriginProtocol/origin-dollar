@@ -3,8 +3,7 @@ pragma solidity ^0.8.0;
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {Sonic} from "tests/utils/Addresses.sol";
-import {Fork_SonicSwapXAMOStrategy_Shared_Test} from
-    "tests/fork/strategies/SonicSwapXAMOStrategy/shared/Shared.t.sol";
+import {Fork_SonicSwapXAMOStrategy_Shared_Test} from "tests/fork/strategies/SonicSwapXAMOStrategy/shared/Shared.t.sol";
 
 contract Fork_Concrete_SonicSwapXAMOStrategy_Deposit_Test is Fork_SonicSwapXAMOStrategy_Shared_Test {
     //////////////////////////////////////////////////////

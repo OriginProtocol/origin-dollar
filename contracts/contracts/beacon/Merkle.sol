@@ -28,12 +28,11 @@ library Merkle {
      *
      * Note this is for a Merkle tree using the sha256 hash function
      */
-    function verifyInclusionSha256(
-        bytes memory proof,
-        bytes32 root,
-        bytes32 leaf,
-        uint256 index
-    ) internal view returns (bool) {
+    function verifyInclusionSha256(bytes memory proof, bytes32 root, bytes32 leaf, uint256 index)
+        internal
+        view
+        returns (bool)
+    {
         return processInclusionProofSha256(proof, leaf, index) == root;
     }
 
@@ -47,15 +46,12 @@ library Merkle {
      *
      * Note this is for a Merkle tree using the sha256 hash function
      */
-    function processInclusionProofSha256(
-        bytes memory proof,
-        bytes32 leaf,
-        uint256 index
-    ) internal view returns (bytes32) {
-        require(
-            proof.length != 0 && proof.length % 32 == 0,
-            InvalidProofLength()
-        );
+    function processInclusionProofSha256(bytes memory proof, bytes32 leaf, uint256 index)
+        internal
+        view
+        returns (bytes32)
+    {
+        require(proof.length != 0 && proof.length % 32 == 0, InvalidProofLength());
         bytes32[1] memory computedHash = [leaf];
         for (uint256 i = 32; i <= proof.length; i += 32) {
             if (index % 2 == 0) {
@@ -64,16 +60,7 @@ library Merkle {
                 assembly {
                     mstore(0x00, mload(computedHash))
                     mstore(0x20, mload(add(proof, i)))
-                    if iszero(
-                        staticcall(
-                            sub(gas(), 2000),
-                            2,
-                            0x00,
-                            0x40,
-                            computedHash,
-                            0x20
-                        )
-                    ) {
+                    if iszero(staticcall(sub(gas(), 2000), 2, 0x00, 0x40, computedHash, 0x20)) {
                         revert(0, 0)
                     }
                 }
@@ -83,16 +70,7 @@ library Merkle {
                 assembly {
                     mstore(0x00, mload(add(proof, i)))
                     mstore(0x20, mload(computedHash))
-                    if iszero(
-                        staticcall(
-                            sub(gas(), 2000),
-                            2,
-                            0x00,
-                            0x40,
-                            computedHash,
-                            0x20
-                        )
-                    ) {
+                    if iszero(staticcall(sub(gas(), 2000), 2, 0x00, 0x40, computedHash, 0x20)) {
                         revert(0, 0)
                     }
                 }
@@ -109,20 +87,14 @@ library Merkle {
      *  @dev A pre-condition to this function is that leaves.length is a power of two.
      *  If not, the function will merkleize the inputs incorrectly.
      */
-    function merkleizeSha256(bytes32[] memory leaves)
-        internal
-        pure
-        returns (bytes32)
-    {
+    function merkleizeSha256(bytes32[] memory leaves) internal pure returns (bytes32) {
         //there are half as many nodes in the layer above the leaves
         uint256 numNodesInLayer = leaves.length / 2;
         //create a layer to store the internal nodes
         bytes32[] memory layer = new bytes32[](numNodesInLayer);
         //fill the layer with the pairwise hashes of the leaves
         for (uint256 i = 0; i < numNodesInLayer; i++) {
-            layer[i] = sha256(
-                abi.encodePacked(leaves[2 * i], leaves[2 * i + 1])
-            );
+            layer[i] = sha256(abi.encodePacked(leaves[2 * i], leaves[2 * i + 1]));
         }
         //the next layer above has half as many nodes
         numNodesInLayer /= 2;
@@ -130,9 +102,7 @@ library Merkle {
         while (numNodesInLayer != 0) {
             //overwrite the first numNodesInLayer nodes in layer with the pairwise hashes of their children
             for (uint256 i = 0; i < numNodesInLayer; i++) {
-                layer[i] = sha256(
-                    abi.encodePacked(layer[2 * i], layer[2 * i + 1])
-                );
+                layer[i] = sha256(abi.encodePacked(layer[2 * i], layer[2 * i + 1]));
             }
             //the next layer above has half as many nodes
             numNodesInLayer /= 2;

@@ -34,16 +34,14 @@ contract Unit_Concrete_PoolBoosterSwapxDouble_Constructor_Test is Unit_SwapXDoub
     }
 
     function test_constructor_splitMinValid() public {
-        PoolBoosterSwapxDouble booster = new PoolBoosterSwapxDouble(
-            mockBribeContractOS, mockBribeContractOther, address(oSonic), 1e16 + 1
-        );
+        PoolBoosterSwapxDouble booster =
+            new PoolBoosterSwapxDouble(mockBribeContractOS, mockBribeContractOther, address(oSonic), 1e16 + 1);
         assertEq(booster.split(), 1e16 + 1);
     }
 
     function test_constructor_splitMaxValid() public {
-        PoolBoosterSwapxDouble booster = new PoolBoosterSwapxDouble(
-            mockBribeContractOS, mockBribeContractOther, address(oSonic), 99e16 - 1
-        );
+        PoolBoosterSwapxDouble booster =
+            new PoolBoosterSwapxDouble(mockBribeContractOS, mockBribeContractOther, address(oSonic), 99e16 - 1);
         assertEq(booster.split(), 99e16 - 1);
     }
 }

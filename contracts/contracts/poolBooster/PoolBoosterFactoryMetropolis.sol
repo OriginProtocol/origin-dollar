@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import { PoolBoosterMetropolis } from "./PoolBoosterMetropolis.sol";
-import { AbstractPoolBoosterFactory, IPoolBoostCentralRegistry } from "./AbstractPoolBoosterFactory.sol";
+import {PoolBoosterMetropolis} from "./PoolBoosterMetropolis.sol";
+import {AbstractPoolBoosterFactory, IPoolBoostCentralRegistry} from "./AbstractPoolBoosterFactory.sol";
 
 /**
  * @title Pool booster factory for creating Metropolis pool boosters.
@@ -18,13 +18,9 @@ contract PoolBoosterFactoryMetropolis is AbstractPoolBoosterFactory {
     // @param address _centralRegistry address of the central registry
     // @param address _rewardFactory address of the Metropolis reward factory
     // @param address _voter address of the Metropolis voter
-    constructor(
-        address _oToken,
-        address _governor,
-        address _centralRegistry,
-        address _rewardFactory,
-        address _voter
-    ) AbstractPoolBoosterFactory(_oToken, _governor, _centralRegistry) {
+    constructor(address _oToken, address _governor, address _centralRegistry, address _rewardFactory, address _voter)
+        AbstractPoolBoosterFactory(_oToken, _governor, _centralRegistry)
+    {
         rewardFactory = _rewardFactory;
         voter = _voter;
     }
@@ -36,28 +32,19 @@ contract PoolBoosterFactoryMetropolis is AbstractPoolBoosterFactory {
      *        should match the one from `computePoolBoosterAddress` in order for the final deployed address
      *        and pre-computed address to match
      */
-    function createPoolBoosterMetropolis(address _ammPoolAddress, uint256 _salt)
-        external
-        onlyGovernor
-    {
-        require(
-            _ammPoolAddress != address(0),
-            "Invalid ammPoolAddress address"
-        );
+    function createPoolBoosterMetropolis(address _ammPoolAddress, uint256 _salt) external onlyGovernor {
+        require(_ammPoolAddress != address(0), "Invalid ammPoolAddress address");
         require(_salt > 0, "Invalid salt");
 
         address poolBoosterAddress = _deployContract(
             abi.encodePacked(
-                type(PoolBoosterMetropolis).creationCode,
-                abi.encode(oToken, rewardFactory, _ammPoolAddress, voter)
+                type(PoolBoosterMetropolis).creationCode, abi.encode(oToken, rewardFactory, _ammPoolAddress, voter)
             ),
             _salt
         );
 
         _storePoolBoosterEntry(
-            poolBoosterAddress,
-            _ammPoolAddress,
-            IPoolBoostCentralRegistry.PoolBoosterType.MetropolisBooster
+            poolBoosterAddress, _ammPoolAddress, IPoolBoostCentralRegistry.PoolBoosterType.MetropolisBooster
         );
     }
 
@@ -68,24 +55,15 @@ contract PoolBoosterFactoryMetropolis is AbstractPoolBoosterFactory {
      *        should match the one from `createPoolBoosterMetropolis` in order for the final deployed address
      *        and pre-computed address to match
      */
-    function computePoolBoosterAddress(address _ammPoolAddress, uint256 _salt)
-        external
-        view
-        returns (address)
-    {
-        require(
-            _ammPoolAddress != address(0),
-            "Invalid ammPoolAddress address"
-        );
+    function computePoolBoosterAddress(address _ammPoolAddress, uint256 _salt) external view returns (address) {
+        require(_ammPoolAddress != address(0), "Invalid ammPoolAddress address");
         require(_salt > 0, "Invalid salt");
 
-        return
-            _computeAddress(
-                abi.encodePacked(
-                    type(PoolBoosterMetropolis).creationCode,
-                    abi.encode(oToken, rewardFactory, _ammPoolAddress, voter)
-                ),
-                _salt
-            );
+        return _computeAddress(
+            abi.encodePacked(
+                type(PoolBoosterMetropolis).creationCode, abi.encode(oToken, rewardFactory, _ammPoolAddress, voter)
+            ),
+            _salt
+        );
     }
 }

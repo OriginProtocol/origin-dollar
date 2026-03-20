@@ -15,10 +15,7 @@ contract Smoke_Concrete_OUSDCurveAMOStrategy_Withdraw_Test is Smoke_OUSDCurveAMO
 
         uint256 vaultBalanceAfter = usdc.balanceOf(address(ousdVault));
         assertApproxEqAbs(
-            vaultBalanceAfter - vaultBalanceBefore,
-            withdrawAmount,
-            50e6,
-            "Vault should receive ~withdrawAmount USDC"
+            vaultBalanceAfter - vaultBalanceBefore, withdrawAmount, 50e6, "Vault should receive ~withdrawAmount USDC"
         );
     }
 

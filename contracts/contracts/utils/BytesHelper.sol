@@ -15,11 +15,7 @@ library BytesHelper {
      * @param end The end index (exclusive)
      * @return result A new bytes memory containing the slice
      */
-    function extractSlice(
-        bytes memory data,
-        uint256 start,
-        uint256 end
-    ) internal pure returns (bytes memory) {
+    function extractSlice(bytes memory data, uint256 start, uint256 end) internal pure returns (bytes memory) {
         require(end >= start, "Invalid slice range");
         require(end <= data.length, "Slice end exceeds data length");
 
@@ -50,11 +46,7 @@ library BytesHelper {
      * @param start The start index (inclusive)
      * @return uint32 The extracted uint32
      */
-    function extractUint32(bytes memory data, uint256 start)
-        internal
-        pure
-        returns (uint32)
-    {
+    function extractUint32(bytes memory data, uint256 start) internal pure returns (uint32) {
         return decodeUint32(extractSlice(data, start, start + UINT32_LENGTH));
     }
 
@@ -76,11 +68,7 @@ library BytesHelper {
      * @param start The start index (inclusive)
      * @return address The extracted address
      */
-    function extractAddress(bytes memory data, uint256 start)
-        internal
-        pure
-        returns (address)
-    {
+    function extractAddress(bytes memory data, uint256 start) internal pure returns (address) {
         return decodeAddress(extractSlice(data, start, start + ADDRESS_LENGTH));
     }
 
@@ -100,11 +88,7 @@ library BytesHelper {
      * @param start The start index (inclusive)
      * @return uint256 The extracted uint256
      */
-    function extractUint256(bytes memory data, uint256 start)
-        internal
-        pure
-        returns (uint256)
-    {
+    function extractUint256(bytes memory data, uint256 start) internal pure returns (uint256) {
         return decodeUint256(extractSlice(data, start, start + UINT256_LENGTH));
     }
 }

@@ -3,8 +3,7 @@ pragma solidity ^0.8.0;
 
 import {Vm} from "forge-std/Vm.sol";
 
-import {Fork_SwapXPoolBooster_Shared_Test} from
-    "tests/fork/poolBooster/SwapXPoolBooster/shared/Shared.t.sol";
+import {Fork_SwapXPoolBooster_Shared_Test} from "tests/fork/poolBooster/SwapXPoolBooster/shared/Shared.t.sol";
 import {PoolBoosterSwapxSingle} from "contracts/poolBooster/PoolBoosterSwapxSingle.sol";
 import {Sonic} from "tests/utils/Addresses.sol";
 
@@ -21,17 +20,12 @@ contract Fork_Concrete_SwapXPoolBooster_ShadowBribe_Test is Fork_SwapXPoolBooste
             _createSingleBooster(Sonic.Shadow_SWETH_gaugeV2, Sonic.Shadow_SWETH_pool, 12345e18);
 
         // Verify computed address matches
-        address computedAddr = factorySwapxSingle.computePoolBoosterAddress(
-            Sonic.Shadow_SWETH_gaugeV2, Sonic.Shadow_SWETH_pool, 12345e18
-        );
+        address computedAddr =
+            factorySwapxSingle.computePoolBoosterAddress(Sonic.Shadow_SWETH_gaugeV2, Sonic.Shadow_SWETH_pool, 12345e18);
         assertEq(address(booster), computedAddr);
 
         // Whitelist mock token on Shadow voter (gauge checks voter.isWhitelisted)
-        vm.mockCall(
-            SHADOW_VOTER,
-            abi.encodeWithSignature("isWhitelisted(address)", address(oSonic)),
-            abi.encode(true)
-        );
+        vm.mockCall(SHADOW_VOTER, abi.encodeWithSignature("isWhitelisted(address)", address(oSonic)), abi.encode(true));
 
         // Fund the booster
         _dealOSToken(address(booster), 10e18);

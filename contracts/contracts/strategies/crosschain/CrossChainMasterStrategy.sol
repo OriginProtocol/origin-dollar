@@ -9,15 +9,12 @@ pragma solidity ^0.8.0;
  *      reason it shouldn't be configured as an asset default strategy.
  */
 
-import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import { IERC20, InitializableAbstractStrategy } from "../../utils/InitializableAbstractStrategy.sol";
-import { AbstractCCTPIntegrator } from "./AbstractCCTPIntegrator.sol";
-import { CrossChainStrategyHelper } from "./CrossChainStrategyHelper.sol";
+import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import {IERC20, InitializableAbstractStrategy} from "../../utils/InitializableAbstractStrategy.sol";
+import {AbstractCCTPIntegrator} from "./AbstractCCTPIntegrator.sol";
+import {CrossChainStrategyHelper} from "./CrossChainStrategyHelper.sol";
 
-contract CrossChainMasterStrategy is
-    AbstractCCTPIntegrator,
-    InitializableAbstractStrategy
-{
+contract CrossChainMasterStrategy is AbstractCCTPIntegrator, InitializableAbstractStrategy {
     using SafeERC20 for IERC20;
     using CrossChainStrategyHelper for bytes;
 
@@ -42,21 +39,12 @@ contract CrossChainMasterStrategy is
     /**
      * @param _stratConfig The platform and OToken vault addresses
      */
-    constructor(
-        BaseStrategyConfig memory _stratConfig,
-        CCTPIntegrationConfig memory _cctpConfig
-    )
+    constructor(BaseStrategyConfig memory _stratConfig, CCTPIntegrationConfig memory _cctpConfig)
         InitializableAbstractStrategy(_stratConfig)
         AbstractCCTPIntegrator(_cctpConfig)
     {
-        require(
-            _stratConfig.platformAddress == address(0),
-            "Invalid platform address"
-        );
-        require(
-            _stratConfig.vaultAddress != address(0),
-            "Invalid Vault address"
-        );
+        require(_stratConfig.platformAddress == address(0), "Invalid platform address");
+        require(_stratConfig.vaultAddress != address(0), "Invalid Vault address");
     }
 
     /**
@@ -65,31 +53,23 @@ contract CrossChainMasterStrategy is
      * @param _minFinalityThreshold Minimum finality threshold
      * @param _feePremiumBps Fee premium in basis points
      */
-    function initialize(
-        address _operator,
-        uint16 _minFinalityThreshold,
-        uint16 _feePremiumBps
-    ) external virtual onlyGovernor initializer {
+    function initialize(address _operator, uint16 _minFinalityThreshold, uint16 _feePremiumBps)
+        external
+        virtual
+        onlyGovernor
+        initializer
+    {
         _initialize(_operator, _minFinalityThreshold, _feePremiumBps);
 
         address[] memory rewardTokens = new address[](0);
         address[] memory assets = new address[](0);
         address[] memory pTokens = new address[](0);
 
-        InitializableAbstractStrategy._initialize(
-            rewardTokens,
-            assets,
-            pTokens
-        );
+        InitializableAbstractStrategy._initialize(rewardTokens, assets, pTokens);
     }
 
     /// @inheritdoc InitializableAbstractStrategy
-    function deposit(address _asset, uint256 _amount)
-        external
-        override
-        onlyVault
-        nonReentrant
-    {
+    function deposit(address _asset, uint256 _amount) external override onlyVault nonReentrant {
         _deposit(_asset, _amount);
     }
 
@@ -103,11 +83,7 @@ contract CrossChainMasterStrategy is
     }
 
     /// @inheritdoc InitializableAbstractStrategy
-    function withdraw(
-        address _recipient,
-        address _asset,
-        uint256 _amount
-    ) external override onlyVault nonReentrant {
+    function withdraw(address _recipient, address _asset, uint256 _amount) external override onlyVault nonReentrant {
         require(_recipient == vaultAddress, "Only Vault can withdraw");
         _withdraw(_asset, _amount);
     }
@@ -129,12 +105,7 @@ contract CrossChainMasterStrategy is
             return;
         }
 
-        _withdraw(
-            usdcToken,
-            _remoteBalance > MAX_TRANSFER_AMOUNT
-                ? MAX_TRANSFER_AMOUNT
-                : _remoteBalance
-        );
+        _withdraw(usdcToken, _remoteBalance > MAX_TRANSFER_AMOUNT ? MAX_TRANSFER_AMOUNT : _remoteBalance);
     }
 
     /**
@@ -145,21 +116,13 @@ contract CrossChainMasterStrategy is
      * @param _asset Address of the asset to check
      * @return balance Total balance of the asset
      */
-    function checkBalance(address _asset)
-        public
-        view
-        override
-        returns (uint256 balance)
-    {
+    function checkBalance(address _asset) public view override returns (uint256 balance) {
         require(_asset == usdcToken, "Unsupported asset");
 
         // USDC balance on this contract
         // + USDC being bridged
         // + USDC cached in the corresponding Remote part of this contract
-        return
-            IERC20(usdcToken).balanceOf(address(this)) +
-            pendingAmount +
-            remoteStrategyBalance;
+        return IERC20(usdcToken).balanceOf(address(this)) + pendingAmount + remoteStrategyBalance;
     }
 
     /// @inheritdoc InitializableAbstractStrategy
@@ -168,30 +131,17 @@ contract CrossChainMasterStrategy is
     }
 
     /// @inheritdoc InitializableAbstractStrategy
-    function safeApproveAllTokens()
-        external
-        override
-        onlyGovernor
-        nonReentrant
-    {}
+    function safeApproveAllTokens() external override onlyGovernor nonReentrant {}
 
     /// @inheritdoc InitializableAbstractStrategy
     function _abstractSetPToken(address, address) internal override {}
 
     /// @inheritdoc InitializableAbstractStrategy
-    function collectRewardTokens()
-        external
-        override
-        onlyHarvester
-        nonReentrant
-    {}
+    function collectRewardTokens() external override onlyHarvester nonReentrant {}
 
     /// @inheritdoc AbstractCCTPIntegrator
     function _onMessageReceived(bytes memory payload) internal override {
-        if (
-            payload.getMessageType() ==
-            CrossChainStrategyHelper.BALANCE_CHECK_MESSAGE
-        ) {
+        if (payload.getMessageType() == CrossChainStrategyHelper.BALANCE_CHECK_MESSAGE) {
             // Received when Remote strategy checks the balance
             _processBalanceCheckMessage(payload);
             return;
@@ -206,7 +156,10 @@ contract CrossChainMasterStrategy is
         // solhint-disable-next-line no-unused-vars
         uint256 feeExecuted,
         bytes memory payload
-    ) internal override {
+    )
+        internal
+        override
+    {
         uint64 _nonce = lastTransferNonce;
 
         // Should be expecting an acknowledgement
@@ -243,14 +196,8 @@ contract CrossChainMasterStrategy is
         require(_asset == usdcToken, "Unsupported asset");
         require(pendingAmount == 0, "Unexpected pending amount");
         // Deposit at least 1 USDC
-        require(
-            depositAmount >= MIN_TRANSFER_AMOUNT,
-            "Deposit amount too small"
-        );
-        require(
-            depositAmount <= MAX_TRANSFER_AMOUNT,
-            "Deposit amount too high"
-        );
+        require(depositAmount >= MIN_TRANSFER_AMOUNT, "Deposit amount too small");
+        require(depositAmount <= MAX_TRANSFER_AMOUNT, "Deposit amount too high");
 
         // Get the next nonce
         // Note: reverts if a transfer is pending
@@ -260,10 +207,7 @@ contract CrossChainMasterStrategy is
         pendingAmount = depositAmount;
 
         // Build deposit message payload
-        bytes memory message = CrossChainStrategyHelper.encodeDepositMessage(
-            nonce,
-            depositAmount
-        );
+        bytes memory message = CrossChainStrategyHelper.encodeDepositMessage(nonce, depositAmount);
 
         // Send deposit message to the remote strategy
         _sendTokens(depositAmount, message);
@@ -281,24 +225,15 @@ contract CrossChainMasterStrategy is
         require(_asset == usdcToken, "Unsupported asset");
         // Withdraw at least 1 USDC
         require(_amount >= MIN_TRANSFER_AMOUNT, "Withdraw amount too small");
-        require(
-            _amount <= remoteStrategyBalance,
-            "Withdraw amount exceeds remote strategy balance"
-        );
-        require(
-            _amount <= MAX_TRANSFER_AMOUNT,
-            "Withdraw amount exceeds max transfer amount"
-        );
+        require(_amount <= remoteStrategyBalance, "Withdraw amount exceeds remote strategy balance");
+        require(_amount <= MAX_TRANSFER_AMOUNT, "Withdraw amount exceeds max transfer amount");
 
         // Get the next nonce
         // Note: reverts if a transfer is pending
         uint64 nonce = _getNextNonce();
 
         // Build and send withdrawal message with payload
-        bytes memory message = CrossChainStrategyHelper.encodeWithdrawMessage(
-            nonce,
-            _amount
-        );
+        bytes memory message = CrossChainStrategyHelper.encodeWithdrawMessage(nonce, _amount);
         _sendMessage(message);
 
         // Emit WithdrawRequested event here,
@@ -313,19 +248,12 @@ contract CrossChainMasterStrategy is
      *  - Updates the remote strategy balance
      * @param message The message containing the nonce and balance
      */
-    function _processBalanceCheckMessage(bytes memory message)
-        internal
-        virtual
-    {
+    function _processBalanceCheckMessage(bytes memory message) internal virtual {
         // Decode the message
         // When transferConfirmation is true, it means that the message is a result of a deposit or a withdrawal
         // process.
-        (
-            uint64 nonce,
-            uint256 balance,
-            bool transferConfirmation,
-            uint256 timestamp
-        ) = message.decodeBalanceCheckMessage();
+        (uint64 nonce, uint256 balance, bool transferConfirmation, uint256 timestamp) =
+            message.decodeBalanceCheckMessage();
         // Get the last cached nonce
         uint64 _lastCachedNonce = lastTransferNonce;
 

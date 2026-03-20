@@ -62,18 +62,11 @@ abstract contract Unit_SwapXSingle_Shared_Test is Base {
     }
 
     function _deployFactory() internal {
-        factorySwapxSingle = new PoolBoosterFactorySwapxSingle(
-            address(oSonic),
-            governor,
-            address(centralRegistry)
-        );
+        factorySwapxSingle = new PoolBoosterFactorySwapxSingle(address(oSonic), governor, address(centralRegistry));
     }
 
     function _deployStandaloneBooster() internal {
-        boosterSwapxSingle = new PoolBoosterSwapxSingle(
-            mockBribeContract,
-            address(oSonic)
-        );
+        boosterSwapxSingle = new PoolBoosterSwapxSingle(mockBribeContract, address(oSonic));
     }
 
     function _approveFactoryOnRegistry() internal {
@@ -101,18 +94,11 @@ abstract contract Unit_SwapXSingle_Shared_Test is Base {
     }
 
     function _mockBribeNotifyRewardAmount(address _bribeContract) internal {
-        vm.mockCall(
-            _bribeContract,
-            abi.encodeWithSelector(IBribe.notifyRewardAmount.selector),
-            abi.encode()
-        );
+        vm.mockCall(_bribeContract, abi.encodeWithSelector(IBribe.notifyRewardAmount.selector), abi.encode());
     }
 
     /// @dev Creates a pool booster via the SwapxSingle factory and returns its address
-    function _createSwapxSingleBooster(address _bribeAddress, address _pool, uint256 _salt)
-        internal
-        returns (address)
-    {
+    function _createSwapxSingleBooster(address _bribeAddress, address _pool, uint256 _salt) internal returns (address) {
         vm.prank(governor);
         factorySwapxSingle.createPoolBoosterSwapxSingle(_bribeAddress, _pool, _salt);
         uint256 len = factorySwapxSingle.poolBoosterLength();
