@@ -42,6 +42,7 @@ const actions = [
   "claimBribes",
   "crossChainRelay",
   "manageBribes",
+  "manageMerklBribes",
   "ousdRebalancer",
 ];
 

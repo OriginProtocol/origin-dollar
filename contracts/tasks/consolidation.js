@@ -1,11 +1,39 @@
+const path = require("path");
 const { getSigner } = require("../utils/signers");
 
 const addresses = require("../utils/addresses");
 const { verifyBalances } = require("./beacon");
 const { resolveContract } = require("../utils/resolvers");
+const { writeSafeTransactionBuilderFile } = require("../utils/safe");
 const { logTxDetails } = require("../utils/txLogger");
 
 const log = require("../utils/logger")("utils:consolidation");
+
+async function writeConfirmConsolidationSafeFile({
+  controller,
+  balanceProofs,
+  pendingDepositProofs,
+}) {
+  const tx = await controller.populateTransaction.confirmConsolidation(
+    balanceProofs,
+    pendingDepositProofs
+  );
+  const safeOwner = await controller.owner();
+  const safeFilePath = await writeSafeTransactionBuilderFile({
+    filePath: path.resolve(__dirname, "../../logs/confirmConsol-safe.json"),
+    safeAddress: safeOwner,
+    name: "confirmConsol",
+    transactions: [
+      {
+        to: controller.address,
+        value: "0",
+        data: tx.data,
+      },
+    ],
+  });
+
+  return { safeFilePath, safeOwner };
+}
 
 async function requestConsolidation({ source, target, cluster }) {
   const signer = await getSigner();
@@ -49,13 +77,30 @@ async function failConsolidation({ source }) {
   await logTxDetails(tx, "failConsolidation");
 }
 
-async function confirmConsolidation() {
+async function confirmConsolidation({ safe = false }) {
   const signer = await getSigner();
   const controller = await resolveContract("ConsolidationController");
 
   const { balanceProofs, pendingDepositProofs } = await verifyBalances({
     dryrun: true,
   });
+
+  if (safe) {
+    log(
+      `Generating Safe file for confirmConsolidation via ConsolidationController ${controller.address}`
+    );
+    const { safeFilePath, safeOwner } = await writeConfirmConsolidationSafeFile(
+      {
+        controller,
+        balanceProofs,
+        pendingDepositProofs,
+      }
+    );
+
+    console.log(`Safe owner                      : ${safeOwner}`);
+    console.log(`Safe file                       : ${safeFilePath}`);
+    return;
+  }
 
   log(`About to confirm validator consolidations`);
   const tx = await controller

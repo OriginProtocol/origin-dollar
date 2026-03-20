@@ -3,7 +3,13 @@ const { Defender } = require("@openzeppelin/defender-sdk");
 const addresses = require("../../utils/addresses");
 const { logTxDetails } = require("../../utils/txLogger");
 
-const nativeStakingStrategyAbi = require("../../abi/native_staking_SSV_strategy.json");
+const {
+  address: mainnetConsolidationControllerAddress,
+  abi: consolidationControllerAbi,
+} = require("../../deployments/mainnet/ConsolidationController.json");
+const {
+  address: hoodiConsolidationControllerAddress,
+} = require("../../deployments/hoodi/ConsolidationController.json");
 
 const log = require("../../utils/logger")("action:doAccounting");
 
@@ -22,26 +28,64 @@ const handler = async (event) => {
   });
 
   const network = await provider.getNetwork();
-  const networkName = network.chainId === 1 ? "mainnet" : "holesky";
+  const networkName =
+    network.chainId === 1
+      ? "mainnet"
+      : network.chainId === 560048
+      ? "hoodi"
+      : undefined;
+  if (!networkName) {
+    throw new Error(
+      `Action only supports mainnet and hoodi, not chainId ${network.chainId}`
+    );
+  }
   log(`Network: ${networkName} with chain id (${network.chainId})`);
 
-  // await doAccounting("NativeStakingSSVStrategyProxy", networkName, signer);
-  await doAccounting("NativeStakingSSVStrategy2Proxy", networkName, signer);
-  await doAccounting("NativeStakingSSVStrategy3Proxy", networkName, signer);
-};
-
-const doAccounting = async (proxyName, networkName, signer) => {
-  const nativeStakingProxyAddress = addresses[networkName][proxyName];
-  log(`Resolved ${proxyName} address to ${nativeStakingProxyAddress}`);
-
-  const nativeStakingStrategy = new ethers.Contract(
-    nativeStakingProxyAddress,
-    nativeStakingStrategyAbi,
+  const consolidationControllerAddress =
+    networkName === "mainnet"
+      ? mainnetConsolidationControllerAddress
+      : hoodiConsolidationControllerAddress;
+  log(
+    `Resolved ConsolidationController address to ${consolidationControllerAddress}`
+  );
+  const consolidationController = new ethers.Contract(
+    consolidationControllerAddress,
+    consolidationControllerAbi,
     signer
   );
 
-  const tx = await nativeStakingStrategy.connect(signer).doAccounting();
-  await logTxDetails(tx, `doAccounting for ${proxyName}`);
+  await doAccounting(
+    "NativeStakingSSVStrategy2Proxy",
+    networkName,
+    signer,
+    consolidationController
+  );
+  await doAccounting(
+    "NativeStakingSSVStrategy3Proxy",
+    networkName,
+    signer,
+    consolidationController
+  );
+};
+
+const doAccounting = async (
+  proxyName,
+  networkName,
+  signer,
+  consolidationController
+) => {
+  const nativeStakingProxyAddress = addresses[networkName][proxyName];
+  if (!nativeStakingProxyAddress) {
+    throw new Error(
+      `Failed to resolve ${proxyName} on the ${networkName} network`
+    );
+  }
+  log(`Resolved ${proxyName} address to ${nativeStakingProxyAddress}`);
+
+  const tx = await consolidationController
+    .connect(signer)
+    .doAccounting(nativeStakingProxyAddress);
+  await logTxDetails(tx, `doAccounting for ${proxyName} via controller`);
 };
 
 module.exports = { handler };

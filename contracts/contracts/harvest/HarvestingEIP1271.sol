@@ -56,6 +56,7 @@ contract HarvestingEIP1271 is IERC1271, Ownable {
 
     error ZeroAddress();
     error ConfigDisabled();
+    error NotAllowed();
     error FailedCall();
     error UnsupportedOperation();
 
@@ -188,7 +189,6 @@ contract HarvestingEIP1271 is IERC1271, Ownable {
     {
         if (sellToken == address(0)) revert ZeroAddress();
         if (!config.enabled) revert ConfigDisabled();
-        IERC20(sellToken).safeApprove(VAULT_RELAYER, 0);
         IERC20(sellToken).safeApprove(VAULT_RELAYER, type(uint256).max);
         tokenConfigs[sellToken] = config;
         emit TokenConfigSet(sellToken, config);
@@ -200,17 +200,14 @@ contract HarvestingEIP1271 is IERC1271, Ownable {
         emit TokenConfigDisabled(sellToken);
     }
 
-    // Execute arbirtraty function calls.
-    function execute(
-        address _to,
-        uint256 value,
-        bytes memory _data
-    ) external payable onlyOwner returns (bytes memory) {
-        (bool success, bytes memory result) = _to.call{ value: value }(_data);
-        if (success == false) {
-            revert FailedCall();
+    // Function to rescue non configured ERC20 tokens to the owner
+    function transferTokens(address token, uint256 amount) external onlyOwner {
+        TokenConfig memory config = tokenConfigs[token];
+        if (config.enabled) {
+            revert NotAllowed();
         }
-        return result;
+
+        IERC20(token).safeTransfer(owner(), amount);
     }
 
     function renounceOwnership() public override onlyOwner {
