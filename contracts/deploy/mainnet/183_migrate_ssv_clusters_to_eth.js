@@ -30,6 +30,7 @@ module.exports = deploymentWithGovernanceProposal(
   },
   async ({ ethers }) => {
     const ethValue = ethers.utils.parseEther("1");
+    const { chainId } = await ethers.provider.getNetwork();
     const actions = [];
 
     for (const strategyConfig of strategyConfigs) {
@@ -40,6 +41,7 @@ module.exports = deploymentWithGovernanceProposal(
       );
       const operatorIds = splitOperatorIds(strategyConfig.operatorids);
       const { cluster } = await getClusterInfo({
+        chainId,
         operatorids: operatorIds.join(","),
         ownerAddress: strategy.address,
       });
