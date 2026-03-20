@@ -3,8 +3,6 @@ pragma solidity ^0.8.0;
 
 import { IVault } from "../interfaces/IVault.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-// solhint-disable-next-line no-console
-import { console2 } from "forge-std/console2.sol";
 
 contract Sanctum {
     address public asset;
@@ -69,14 +67,10 @@ contract Sanctum {
 
 contract Reborner {
     Sanctum sanctum;
-    bool logging = false;
 
     constructor(address _sanctum) {
-        log("We are created...");
         sanctum = Sanctum(_sanctum);
         if (sanctum.shouldAttack()) {
-            log("We are attacking now...");
-
             uint256 target = sanctum.targetMethod();
 
             if (target == 1) {
@@ -94,37 +88,23 @@ contract Reborner {
     }
 
     function mint() public {
-        log("We are attempting to mint..");
         address asset = sanctum.asset();
         address vault = sanctum.vault();
         IERC20(asset).approve(vault, 1e6);
         IVault(vault).mint(1e6);
-        log("We are now minting..");
     }
 
     function redeem() public {
-        log("We are attempting to request withdrawal..");
         address vault = sanctum.vault();
         IVault(vault).requestWithdrawal(1e18);
-        log("We are now requesting withdrawal..");
     }
 
     function transfer() public {
-        log("We are attempting to transfer..");
         address ousd = sanctum.ousdContract();
         require(IERC20(ousd).transfer(address(1), 1e18), "transfer failed");
-        log("We are now transfering..");
     }
 
     function bye() public {
-        log("We are now destructing..");
         selfdestruct(payable(msg.sender));
-    }
-
-    function log(string memory message) internal view {
-        if (logging) {
-            // solhint-disable-next-line no-console
-            console2.log(message);
-        }
     }
 }
