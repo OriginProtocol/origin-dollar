@@ -8,7 +8,7 @@ set -euo pipefail
 cd "$(dirname "$0")"
 
 echo "==> Running soldeer install..."
-soldeer install
+forge soldeer install
 
 echo "==> Installing npm tgz packages..."
 
