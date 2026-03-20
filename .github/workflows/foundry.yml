@@ -33,6 +33,9 @@ jobs:
       - name: Check JS formatting (prettier)
         working-directory: contracts
         run: npx prettier -c "*.js" "deploy/**/*.js" "scripts/**/*.js" "tasks/**/*.js" "test/**/*.js" "utils/**/*.js"
+      - name: Check Solidity formatting (prettier)
+        working-directory: contracts
+        run: npx prettier -c --plugin=prettier-plugin-solidity "contracts/**/*.sol"
       - name: Lint
         working-directory: contracts
         run: pnpm run lint
