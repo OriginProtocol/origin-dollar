@@ -104,7 +104,7 @@ function setUp() public virtual override {
 ### Key rules
 
 - **No fresh deploys** — everything comes from the Resolver or fork state.
-- **Resolve contracts by name** using `resolver.resolve("OUSD_PROXY")`, `resolver.resolve("VAULT_PROXY")`, etc.
+- **Resolve contracts by name** using `resolver.resolve("OUSD_PROXY")`, `resolver.resolve("VAULT_PROXY")`, etc. **ALL** origin related contract addresses must come from the Resolver. **DO NOT** deploy new instances, use hardcoded addresses or fetch from Mainnet/Base/Sonic Addresses.sol book. In case one address is missing from the Resolver, add it to the deployment pipeline and re-run the smoke test. In case you don't have the address at all, ask the team for help.
 - **Resolve actors from contracts** — `governor = ousd.governor()`, `strategist = ousdVault.strategistAddr()`. Never use `makeAddr()` for governance actors.
 - **Sanity-check the Resolver** in `_fetchContracts()`:
   ```solidity
@@ -163,7 +163,7 @@ Use the `//////` banner at the top:
 **Correct examples:**
 ```
 test_mint_producesOUSD()                          // ✅
-test_mint_increasesTotalSupply()                   // ✅
+test_mint_increasesTotalSupply()                  // ✅
 test_requestWithdrawal_and_claim()                // ✅
 test_mint_supplyInvariant()                       // ✅
 ```
