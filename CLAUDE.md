@@ -93,9 +93,11 @@ Vaults (`contracts/vault/`) are the core of each OToken. They handle:
 - Rebalancing via `allocate()`
 - Yield accounting via `rebase()`
 
-Each chain/token has its own vault: `OUSDVault`, `OETHVault`, `OETHBVault` (Base), `OETHSVault` (Sonic), `OETPVault` (Plume).
+Each chain/token has its own vault: `OUSDVault`, `OETHVault`, `OETHBVault` (Base), `OETHSVault` (Sonic) and `OETPVault` (Plume). `OETPVault` is being shut down and will be removed from the repo after all funds are withdrawn.
 
 Vault logic is split across two implementation contracts: `VaultCore` (user-facing mint/redeem) and `VaultAdmin` (governance functions).
+`VaultCore` inherits from `VaultAdmin` and is now deployed as a single implementation contract for simplicity.
+Previously they were deployed as separate implementations with a shared proxy. This was because the contract was too big to deploy as a single implementation, but after the simplification, it can now be deployed as one.
 
 ### Strategies (Yield Generation)
 Located in `contracts/strategies/`. Each strategy:
@@ -124,9 +126,9 @@ Key strategies: Aave, Compound, Convex/Curve, Balancer, Morpho, Native Staking (
 Bundle with: `pnpm rollup -c ./scripts/defender-actions/rollup.config.cjs`
 
 ### Cross-Chain
-- LayerZero OApp for messaging
 - CCTP (Circle) for USDC bridging
 - Network-specific bridge contracts in `contracts/bridges/`
+- LayerZero OApp was planned to be used for Plume but is no longer going to be used.
 
 ### Pool Boosters
 `contracts/poolBooster/` - Merkl distribution contracts for incentivizing liquidity pools. `PoolBoostCentralRegistry` tracks all boosters.
