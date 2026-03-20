@@ -195,6 +195,8 @@ test_mint_supplyInvariant()                       // ✅
 | Edge cases / fuzz | Too slow on fork, not deployment-relevant | Unit tests |
 | Strategy internals | Smoke tests verify deployment, not strategy math | Fork tests |
 
+**NEVER write `RevertWhen` tests in smoke tests.** All `test_*_RevertWhen_*` patterns (e.g. `RevertWhen_notVault`, `RevertWhen_unsupportedAsset`, `RevertWhen_zeroAmount`, `RevertWhen_notHarvester`) are access control or input validation — they test code behavior, not deployment health. They belong exclusively in unit tests.
+
 ## 6. Smoke Test Patterns
 
 ### `deal()` for real tokens

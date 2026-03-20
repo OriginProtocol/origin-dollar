@@ -47,6 +47,10 @@
         {
             "implementation": "0x596B0401479f6DfE1cAF8c12838311FeE742B95c",
             "name": "SONIC_STAKING_STRATEGY"
+        },
+        {
+            "implementation": "0xbE19cC5654e30dAF04AD3B5E06213D70F4e882eE",
+            "name": "SONIC_SWAPX_AMO_STRATEGY_PROXY"
         }
     ],
     "executions": [

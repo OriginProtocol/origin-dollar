@@ -86,11 +86,6 @@ contract Smoke_Concrete_AerodromeAMOStrategy_Rebalance_Test is Smoke_AerodromeAM
         assertGt(balanceAfterSecond, balanceAfterFirst, "checkBalance should increase after second deposit");
     }
 
-    function test_rebalance_RevertWhen_notGovernorOrStrategist() public {
-        vm.expectRevert();
-        aerodromeAMOStrategy.rebalance(0, true, 0);
-    }
-
     function test_rebalance_succeeds() public {
         _depositToStrategy(1 ether);
 

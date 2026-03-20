@@ -2,7 +2,6 @@
 pragma solidity ^0.8.0;
 
 import {Smoke_AerodromeAMOStrategy_Shared_Test} from "../shared/Shared.t.sol";
-import {Base as BaseAddresses} from "tests/utils/Addresses.sol";
 
 contract Smoke_Concrete_AerodromeAMOStrategy_Deposit_Test is Smoke_AerodromeAMOStrategy_Shared_Test {
     function test_deposit_increasesCheckBalance() public {
@@ -46,21 +45,4 @@ contract Smoke_Concrete_AerodromeAMOStrategy_Deposit_Test is Smoke_AerodromeAMOS
         );
     }
 
-    function test_deposit_RevertWhen_notVault() public {
-        deal(address(weth), address(aerodromeAMOStrategy), 1 ether);
-        vm.expectRevert("Caller is not the Vault");
-        aerodromeAMOStrategy.deposit(address(weth), 1 ether);
-    }
-
-    function test_deposit_RevertWhen_unsupportedAsset() public {
-        vm.prank(address(oethBaseVault));
-        vm.expectRevert("Unsupported asset");
-        aerodromeAMOStrategy.deposit(BaseAddresses.AERO, 1 ether);
-    }
-
-    function test_deposit_RevertWhen_zeroAmount() public {
-        vm.prank(address(oethBaseVault));
-        vm.expectRevert("Must deposit something");
-        aerodromeAMOStrategy.deposit(address(weth), 0);
-    }
 }

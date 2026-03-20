@@ -9,9 +9,4 @@ contract Smoke_Concrete_AerodromeAMOStrategy_CollectRewards_Test is Smoke_Aerodr
         vm.prank(harvester);
         aerodromeAMOStrategy.collectRewardTokens();
     }
-
-    function test_collectRewardTokens_RevertWhen_notHarvester() public {
-        vm.expectRevert("Caller is not the Harvester");
-        aerodromeAMOStrategy.collectRewardTokens();
-    }
 }

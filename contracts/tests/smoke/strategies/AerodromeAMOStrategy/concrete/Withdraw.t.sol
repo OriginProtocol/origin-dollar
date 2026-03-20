@@ -50,17 +50,6 @@ contract Smoke_Concrete_AerodromeAMOStrategy_Withdraw_Test is Smoke_AerodromeAMO
         assertEq(pm.ownerOf(_tokenId), BaseAddresses.aerodromeOETHbWETHClGauge, "LP should remain staked in gauge");
     }
 
-    function test_withdraw_RevertWhen_notVault() public {
-        vm.expectRevert("Caller is not the Vault");
-        aerodromeAMOStrategy.withdraw(address(oethBaseVault), address(weth), 1 ether);
-    }
-
-    function test_withdraw_RevertWhen_unsupportedAsset() public {
-        vm.prank(address(oethBaseVault));
-        vm.expectRevert("Unsupported asset");
-        aerodromeAMOStrategy.withdraw(address(oethBaseVault), BaseAddresses.AERO, 1 ether);
-    }
-
     function test_withdrawAll_returnsAllWethToVault() public {
         // Push pool price into range so position has WETH that can be withdrawn
         _pushPoolPriceIntoRange();

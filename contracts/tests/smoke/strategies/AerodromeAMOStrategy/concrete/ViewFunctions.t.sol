@@ -20,11 +20,6 @@ contract Smoke_Concrete_AerodromeAMOStrategy_ViewFunctions_Test is Smoke_Aerodro
         assertGt(aerodromeAMOStrategy.checkBalance(address(weth)), 0, "checkBalance(WETH) should be > 0");
     }
 
-    function test_checkBalance_RevertWhen_nonWeth() public {
-        vm.expectRevert("Only WETH supported");
-        aerodromeAMOStrategy.checkBalance(BaseAddresses.AERO);
-    }
-
     function test_getPositionPrincipal_isNonZero() public view {
         (uint256 wethAmount, uint256 oethbAmount) = aerodromeAMOStrategy.getPositionPrincipal();
         // When pool is out of the strategy's tick range, one side can be zero
