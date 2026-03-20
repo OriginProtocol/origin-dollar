@@ -91,6 +91,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       MAINNET_PROVIDER_URL: ${{ secrets.PROVIDER_URL }}
+      BEACON_PROVIDER_URL: ${{ secrets.BEACON_PROVIDER_URL }}
     steps:
       - uses: actions/checkout@v4
         with:
