@@ -1,0 +1,19 @@
+name: "Foundry Setup"
+description: "Install Foundry, cache dependencies, and run install-deps.sh"
+
+runs:
+  using: "composite"
+  steps:
+    - name: Install Foundry
+      uses: foundry-rs/foundry-toolchain@v1
+
+    - name: Cache dependencies
+      uses: actions/cache@v4
+      with:
+        path: contracts/dependencies/
+        key: deps-${{ hashFiles('contracts/soldeer.lock', 'contracts/install-deps.sh') }}
+
+    - name: Install dependencies
+      shell: bash
+      working-directory: contracts
+      run: bash install-deps.sh

@@ -1,0 +1,230 @@
+name: Foundry
+
+on:
+  pull_request:
+    types: [opened, reopened, synchronize]
+  push:
+    branches:
+      - master
+      - staging
+      - stable
+  schedule:
+    - cron: "0 6 * * *"
+  workflow_dispatch:
+
+concurrency:
+  cancel-in-progress: true
+  group: foundry-${{ github.ref }}
+
+jobs:
+  # ── Formatting ──────────────────────────────────────────────
+  fmt:
+    name: Formatting
+    if: github.event_name != 'schedule'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - uses: ./.github/actions/foundry-setup
+      - name: Check formatting
+        working-directory: contracts
+        run: forge fmt --check
+
+  # ── Build ───────────────────────────────────────────────────
+  build:
+    name: Build
+    if: github.event_name != 'schedule'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - uses: ./.github/actions/foundry-setup
+      - name: Build contracts
+        working-directory: contracts
+        run: forge build
+      - name: Check contract sizes
+        working-directory: contracts
+        run: forge build --sizes --skip "test/**" --skip "script/**"
+
+  # ── Unit Tests ──────────────────────────────────────────────
+  unit-tests:
+    name: Unit Tests
+    if: github.event_name != 'schedule'
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - uses: ./.github/actions/foundry-setup
+      - name: Run unit tests
+        working-directory: contracts
+        run: forge test --summary --fail-fast --show-progress --mp 'tests/unit/**'
+
+  # ── Coverage ────────────────────────────────────────────────
+  coverage:
+    name: Coverage
+    if: github.event_name != 'schedule'
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - uses: ./.github/actions/foundry-setup
+      - name: Generate coverage report
+        working-directory: contracts
+        run: forge coverage --mp 'tests/unit/**' --report lcov
+      - name: Upload to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          files: contracts/lcov.info
+          flags: foundry
+
+  # ── Fork Tests ──────────────────────────────────────────────
+  fork-tests-mainnet:
+    name: Fork Tests (Mainnet)
+    needs: build
+    if: always() && (needs.build.result == 'success' || github.event_name == 'schedule')
+    runs-on: ubuntu-latest
+    env:
+      MAINNET_PROVIDER_URL: ${{ secrets.PROVIDER_URL }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - uses: ./.github/actions/foundry-setup
+      - name: Discover and run Mainnet fork tests
+        working-directory: contracts
+        run: |
+          DIRS=$(grep -rl "_createAndSelectForkMainnet" tests/fork/ --include="Shared.t.sol" | \
+            sed 's|/shared/Shared.t.sol||' | sort -u | tr '\n' ',' | sed 's/,$//')
+          if [ -n "$DIRS" ]; then
+            echo "Running fork tests for: $DIRS"
+            forge test --summary --fail-fast --show-progress --mp "{${DIRS}}/**"
+          else
+            echo "No Mainnet fork tests found"
+          fi
+
+  fork-tests-base:
+    name: Fork Tests (Base)
+    needs: build
+    if: always() && (needs.build.result == 'success' || github.event_name == 'schedule')
+    runs-on: ubuntu-latest
+    env:
+      BASE_PROVIDER_URL: ${{ secrets.BASE_PROVIDER_URL }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - uses: ./.github/actions/foundry-setup
+      - name: Discover and run Base fork tests
+        working-directory: contracts
+        run: |
+          DIRS=$(grep -rl "_createAndSelectForkBase" tests/fork/ --include="Shared.t.sol" | \
+            sed 's|/shared/Shared.t.sol||' | sort -u | tr '\n' ',' | sed 's/,$//')
+          if [ -n "$DIRS" ]; then
+            echo "Running fork tests for: $DIRS"
+            forge test --summary --fail-fast --show-progress --mp "{${DIRS}}/**"
+          else
+            echo "No Base fork tests found"
+          fi
+
+  fork-tests-sonic:
+    name: Fork Tests (Sonic)
+    needs: build
+    if: always() && (needs.build.result == 'success' || github.event_name == 'schedule')
+    runs-on: ubuntu-latest
+    env:
+      SONIC_PROVIDER_URL: ${{ secrets.SONIC_PROVIDER_URL }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - uses: ./.github/actions/foundry-setup
+      - name: Discover and run Sonic fork tests
+        working-directory: contracts
+        run: |
+          DIRS=$(grep -rl "_createAndSelectForkSonic" tests/fork/ --include="Shared.t.sol" | \
+            sed 's|/shared/Shared.t.sol||' | sort -u | tr '\n' ',' | sed 's/,$//')
+          if [ -n "$DIRS" ]; then
+            echo "Running fork tests for: $DIRS"
+            forge test --summary --fail-fast --show-progress --mp "{${DIRS}}/**"
+          else
+            echo "No Sonic fork tests found"
+          fi
+
+  # ── Smoke Tests ─────────────────────────────────────────────
+  smoke-tests-mainnet:
+    name: Smoke Tests (Mainnet)
+    needs: build
+    if: always() && (needs.build.result == 'success' || github.event_name == 'schedule')
+    runs-on: ubuntu-latest
+    env:
+      MAINNET_PROVIDER_URL: ${{ secrets.PROVIDER_URL }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - uses: ./.github/actions/foundry-setup
+      - name: Discover and run Mainnet smoke tests
+        working-directory: contracts
+        run: |
+          DIRS=$(grep -rl "_createAndSelectForkMainnet" tests/smoke/ --include="Shared.t.sol" | \
+            sed 's|/shared/Shared.t.sol||' | sort -u | tr '\n' ',' | sed 's/,$//')
+          if [ -n "$DIRS" ]; then
+            echo "Running smoke tests for: $DIRS"
+            forge test --summary --fail-fast --show-progress --mp "{${DIRS}}/**"
+          else
+            echo "No Mainnet smoke tests found"
+          fi
+
+  smoke-tests-base:
+    name: Smoke Tests (Base)
+    needs: build
+    if: always() && (needs.build.result == 'success' || github.event_name == 'schedule')
+    runs-on: ubuntu-latest
+    env:
+      BASE_PROVIDER_URL: ${{ secrets.BASE_PROVIDER_URL }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - uses: ./.github/actions/foundry-setup
+      - name: Discover and run Base smoke tests
+        working-directory: contracts
+        run: |
+          DIRS=$(grep -rl "_createAndSelectForkBase" tests/smoke/ --include="Shared.t.sol" | \
+            sed 's|/shared/Shared.t.sol||' | sort -u | tr '\n' ',' | sed 's/,$//')
+          if [ -n "$DIRS" ]; then
+            echo "Running smoke tests for: $DIRS"
+            forge test --summary --fail-fast --show-progress --mp "{${DIRS}}/**"
+          else
+            echo "No Base smoke tests found"
+          fi
+
+  smoke-tests-sonic:
+    name: Smoke Tests (Sonic)
+    needs: build
+    if: always() && (needs.build.result == 'success' || github.event_name == 'schedule')
+    runs-on: ubuntu-latest
+    env:
+      SONIC_PROVIDER_URL: ${{ secrets.SONIC_PROVIDER_URL }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - uses: ./.github/actions/foundry-setup
+      - name: Discover and run Sonic smoke tests
+        working-directory: contracts
+        run: |
+          DIRS=$(grep -rl "_createAndSelectForkSonic" tests/smoke/ --include="Shared.t.sol" | \
+            sed 's|/shared/Shared.t.sol||' | sort -u | tr '\n' ',' | sed 's/,$//')
+          if [ -n "$DIRS" ]; then
+            echo "Running smoke tests for: $DIRS"
+            forge test --summary --fail-fast --show-progress --mp "{${DIRS}}/**"
+          else
+            echo "No Sonic smoke tests found"
+          fi
