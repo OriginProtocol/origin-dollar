@@ -11,9 +11,11 @@ const addresses = require("../utils/addresses");
 const {
   getBeaconBlock,
   getValidator: getValidatorBeacon,
+  getValidators: getValidatorsBeacon,
   getSlot,
+  calcBlockTimestamp,
 } = require("../utils/beacon");
-const { bytes32 } = require("../utils/regex");
+const { bytes32, validatorKeys } = require("../utils/regex");
 const { resolveContract } = require("../utils/resolvers");
 const {
   generateValidatorPubKeyProof,
@@ -28,8 +30,133 @@ const { toHex } = require("../utils/units");
 const { logTxDetails } = require("../utils/txLogger");
 const { getNetworkName } = require("../utils/hardhat-helpers");
 const { ZERO_BYTES32 } = require("../utils/constants");
+const {
+  address: mainnetCompoundingStakingSSVStrategyProxy,
+} = require("../deployments/mainnet/CompoundingStakingSSVStrategyProxy.json");
+const {
+  address: hoodiNativeStakingSSVStrategyProxy,
+} = require("../deployments/hoodi/NativeStakingSSVStrategyProxy.json");
+const {
+  address: hoodiCompoundingStakingSSVStrategyProxy,
+} = require("../deployments/hoodi/CompoundingStakingSSVStrategyProxy.json");
 
 const log = require("../utils/logger")("task:beacon");
+const MAX_DATE_MS = 8640000000000000n;
+
+const getStrategyNetworkName = async () => {
+  const networkName = await getNetworkName();
+  if (networkName === "hardhat") {
+    return (
+      process.env.FORK_NETWORK_NAME || process.env.NETWORK_NAME || "hardhat"
+    );
+  }
+  return networkName;
+};
+
+const getKnownWithdrawalStrategies = (networkName) => {
+  if (networkName === "mainnet") {
+    return [
+      {
+        label: "NativeStakingSSVStrategyProxy",
+        address: addresses.mainnet.NativeStakingSSVStrategyProxy,
+      },
+      {
+        label: "NativeStakingSSVStrategy2Proxy",
+        address: addresses.mainnet.NativeStakingSSVStrategy2Proxy,
+      },
+      {
+        label: "NativeStakingSSVStrategy3Proxy",
+        address: addresses.mainnet.NativeStakingSSVStrategy3Proxy,
+      },
+      {
+        label: "CompoundingStakingSSVStrategyProxy",
+        address: mainnetCompoundingStakingSSVStrategyProxy,
+      },
+    ];
+  }
+
+  if (networkName === "hoodi") {
+    return [
+      {
+        label: "NativeStakingSSVStrategyProxy",
+        address: hoodiNativeStakingSSVStrategyProxy,
+      },
+      {
+        label: "CompoundingStakingSSVStrategyProxy",
+        address: hoodiCompoundingStakingSSVStrategyProxy,
+      },
+    ];
+  }
+
+  if (networkName === "holesky") {
+    return [
+      {
+        label: "NativeStakingSSVStrategyProxy",
+        address: addresses.holesky.NativeStakingSSVStrategyProxy,
+      },
+    ];
+  }
+
+  return [];
+};
+
+const getLinkedStrategy = (withdrawalCredentials, networkName) => {
+  const linkedAddress = ethers.utils.getAddress(
+    `0x${withdrawalCredentials.slice(-40)}`
+  );
+  const knownStrategy = getKnownWithdrawalStrategies(networkName).find(
+    ({ address }) => address?.toLowerCase() === linkedAddress.toLowerCase()
+  );
+
+  if (knownStrategy) {
+    return knownStrategy.label;
+  }
+
+  return "Unknown";
+};
+
+const getValidatorType = (withdrawalCredentials) =>
+  withdrawalCredentials.slice(0, 4).toLowerCase();
+
+const resolveBeaconSlot = ({ slot, epoch }) => {
+  if (slot !== undefined && epoch !== undefined) {
+    throw new Error("Pass either `slot` or `epoch`, not both");
+  }
+
+  if (epoch !== undefined) {
+    return epoch * 32;
+  }
+
+  return slot;
+};
+
+const formatEpochUtc = (epoch, networkName) => {
+  if (epoch === undefined || epoch === null) {
+    return "N/A";
+  }
+
+  if (typeof epoch === "number" && !Number.isFinite(epoch)) {
+    return "Infinity";
+  }
+
+  const slot = BigInt(epoch) * 32n;
+  const timestampMs = calcBlockTimestamp(slot, networkName) * 1000n;
+
+  if (timestampMs > MAX_DATE_MS) {
+    return "N/A";
+  }
+
+  const date = new Date(Number(timestampMs));
+  const day = String(date.getUTCDate()).padStart(2, "0");
+  const month = date.toLocaleString("en-GB", {
+    month: "short",
+    timeZone: "UTC",
+  });
+  const hours = String(date.getUTCHours()).padStart(2, "0");
+  const minutes = String(date.getUTCMinutes()).padStart(2, "0");
+
+  return `${day} ${month} ${hours}:${minutes}`;
+};
 
 /// Returns an ethers provider connected to the Ethereum mainnet or Hoodi.
 /// @param {Provider} [provider] - Optional ethers provider connected to local fork or live chain. Uses Hardhat provider if not supplied.
@@ -189,11 +316,14 @@ async function getProcessedDeposits(pendingDeposits) {
   return { processedDeposits, depositProcessedSlot };
 }
 
-async function verifyDeposits({ dryrun, signer }) {
+async function verifyDeposits({ dryrun, signer, consol = false }) {
   const stakingStrategy = await resolveContract(
     "CompoundingStakingSSVStrategyProxy",
     "CompoundingStakingSSVStrategy"
   );
+  const contract = consol
+    ? await resolveContract("ConsolidationController")
+    : stakingStrategy;
   const stakingStrategyView = await resolveContract(
     "CompoundingStakingStrategyView"
   );
@@ -216,7 +346,7 @@ async function verifyDeposits({ dryrun, signer }) {
   if (processedDeposits.length > 0) {
     log(`About to snap balances before verifying deposits`);
     if (!dryrun) {
-      await stakingStrategy.connect(signer).snapBalances();
+      await contract.connect(signer).snapBalances();
     }
   } else {
     console.log(
@@ -435,10 +565,13 @@ async function verifyDeposit({
 async function verifyBalances({
   indexes,
   deposits,
+  overIds,
+  overBals,
   dryrun,
   test,
   signer,
   slot,
+  consol,
 }) {
   const strategy = test
     ? undefined
@@ -446,9 +579,7 @@ async function verifyBalances({
         "CompoundingStakingSSVStrategyProxy",
         "CompoundingStakingSSVStrategy"
       );
-  const strategyView = test
-    ? undefined
-    : await resolveContract("CompoundingStakingStrategyView");
+  const strategyView = await resolveContract("CompoundingStakingStrategyView");
 
   if (!slot) {
     if (!test) {
@@ -468,6 +599,23 @@ async function verifyBalances({
   );
   const verificationSlot = blockView.slot;
 
+  // Update validator balances so they become active
+  // Used to generated test data for fork tests
+  if (overIds) {
+    const validatorIndexes = overIds.split(",").map((index) => Number(index));
+    const validatorBalances = overBals
+      .split(",")
+      .map((balance) => parseUnits(balance, 9)); // in Gwei
+    if (overIds.split(",").length !== overBals.split(",").length) {
+      throw new Error("Mismatched lengths for overIds and overBals");
+    }
+    for (const [i, validatorIndex] of validatorIndexes.entries()) {
+      stateView.balances.set(validatorIndex, validatorBalances[i]);
+    }
+  }
+  const stateRootGindex = blockView.type.getPathInfo(["stateRoot"]).gindex;
+  blockTree.setNode(stateRootGindex, stateView.node);
+
   const {
     leaf: pendingDepositContainerRoot,
     proof: pendingDepositContainerProof,
@@ -480,10 +628,8 @@ async function verifyBalances({
   let pendingDepositIndexes = [];
   let pendingDepositRoots = [];
   let pendingDepositProofs = [];
-  if (test) {
-    const depositIndexes = (deposits || "")
-      .split(",")
-      .map((index) => Number(index));
+  if (test && deposits) {
+    const depositIndexes = deposits.split(",").map((index) => Number(index));
     for (const depositIndex of depositIndexes) {
       pendingDepositIndexes.push(depositIndex);
       const { proof, leaf } = await generatePendingDepositProof({
@@ -536,7 +682,7 @@ async function verifyBalances({
 
   let balancesContainerRoot = ZERO_BYTES32;
   let balancesContainerProof = "0x";
-  let blockRoot = ZERO_BYTES32;
+  let beaconBlockRoot = ZERO_BYTES32;
   if (verifiedValidators.length > 0) {
     const balancesContainerProofData = await generateBalancesContainerProof({
       blockView,
@@ -545,7 +691,7 @@ async function verifyBalances({
     });
     balancesContainerRoot = balancesContainerProofData.leaf;
     balancesContainerProof = balancesContainerProofData.proof;
-    blockRoot = balancesContainerProofData.root;
+    beaconBlockRoot = balancesContainerProofData.root;
   }
 
   const validatorBalanceLeaves = [];
@@ -570,44 +716,8 @@ async function verifyBalances({
     formatUnits(bal, 9)
   );
 
-  if (dryrun) {
-    console.log(`snapped slot                      : ${verificationSlot}`);
-    console.log(`snap balances block root          : ${blockRoot}`);
-    console.log(`\nbalancesContainerRoot           : ${balancesContainerRoot}`);
-    console.log(`\nbalancesContainerProof:\n${balancesContainerProof}`);
-    console.log(
-      `\nvalidatorBalanceLeaves:\n[${validatorBalanceLeaves
-        .map((leaf) => `"${leaf}"`)
-        .join(",\n")}]`
-    );
-    console.log(
-      `\nvalidatorBalanceProofs:\n[${validatorBalanceProofs
-        .map((proof) => `"${proof}"`)
-        .join(",\n")}]`
-    );
-    console.log(
-      `validatorBalances: [${validatorBalancesFormatted.join(", ")}]`
-    );
-    console.log(
-      `\npendingDepositsContainerRoot           : ${pendingDepositContainerRoot}`
-    );
-    console.log(
-      `\npendingDepositsContainerProof:\n${pendingDepositContainerProof}`
-    );
-    console.log(
-      `\npendingDepositIndexes:\n[${pendingDepositIndexes
-        .map((index) => `"${index}"`)
-        .join(",")}]`
-    );
-    console.log(
-      `\npendingDepositProofs:\n[${pendingDepositProofs
-        .map((proof) => `"${proof}"`)
-        .join(",\n")}]`
-    );
-    return;
-  }
-
   const balanceProofs = {
+    beaconBlockRoot,
     balancesContainerRoot,
     balancesContainerProof,
     validatorBalanceLeaves,
@@ -625,10 +735,9 @@ async function verifyBalances({
     console.log(
       JSON.stringify(
         {
-          blockRoot,
-          pendingDepositProofsData,
           balanceProofs,
           validatorBalances: validatorBalancesFormatted,
+          pendingDepositProofs: pendingDepositProofsData,
         },
         null,
         2
@@ -637,12 +746,55 @@ async function verifyBalances({
     return;
   }
 
+  if (dryrun) {
+    console.log(`snapped slot                      : ${verificationSlot}`);
+    console.log(`snap balances block root          : ${beaconBlockRoot}`);
+    console.log(`\nbalancesContainerRoot           : ${balancesContainerRoot}`);
+    console.log(`\nbalancesContainerProof:\n${balancesContainerProof}`);
+    console.log(
+      `\nvalidatorBalanceLeaves:\n[${validatorBalanceLeaves
+        .map((leaf) => `"${leaf}"`)
+        .join(",\n")}]`
+    );
+    console.log(
+      `\nvalidatorBalanceProofs:\n[${validatorBalanceProofs
+        .map((proof) => `"${proof}"`)
+        .join(",\n")}]`
+    );
+    console.log(
+      `validatorBalances: [${validatorBalancesFormatted.join(", ")}]`
+    );
+    console.log(
+      `\npendingDepositContainerRoot: ${pendingDepositContainerRoot}`
+    );
+    console.log(
+      `\npendingDepositContainerProof:\n${pendingDepositContainerProof}`
+    );
+    console.log(
+      `\npendingDepositIndexes:\n[${pendingDepositIndexes
+        .map((index) => `"${index}"`)
+        .join(",")}]`
+    );
+    console.log(
+      `\npendingDepositProofs:\n[${pendingDepositProofs
+        .map((proof) => `"${proof}"`)
+        .join(",\n")}]`
+    );
+
+    return { balanceProofs, pendingDepositProofs: pendingDepositProofsData };
+  }
+
   log(
-    `About to verify ${verifiedValidators.length} validator balances for slot ${verificationSlot} to beacon block root ${blockRoot}`
+    `About to verify ${verifiedValidators.length} validator balances for slot ${verificationSlot} to beacon block root ${beaconBlockRoot}`
   );
   log(balanceProofs);
   log(pendingDepositProofsData);
-  const tx = await strategy
+
+  const contract = consol
+    ? await resolveContract("ConsolidationController")
+    : strategy;
+
+  const tx = await contract
     .connect(signer)
     .verifyBalances(balanceProofs, pendingDepositProofsData);
   await logTxDetails(tx, "verifyBalances");
@@ -685,7 +837,7 @@ async function beaconRoot({ block, live, signer }) {
   return { root, timestamp };
 }
 
-async function getValidator({ slot, index, pubkey }) {
+async function getValidator({ slot, epoch, index, pubkey }) {
   if (!index && !pubkey) {
     throw new Error("Either `index` or `pubkey` parameter is required");
   }
@@ -696,8 +848,9 @@ async function getValidator({ slot, index, pubkey }) {
   }
 
   // Uses the latest slot if the slot is undefined
+  const blockId = resolveBeaconSlot({ slot, epoch });
   const networkName = await getNetworkName();
-  const { blockView, stateView } = await getBeaconBlock(slot, networkName);
+  const { blockView, stateView } = await getBeaconBlock(blockId, networkName);
 
   const validator = stateView.validators.get(index);
   if (
@@ -705,7 +858,9 @@ async function getValidator({ slot, index, pubkey }) {
     toHex(validator.node.root) ==
       "0x0000000000000000000000000000000000000000000000000000000000000000"
   ) {
-    throw new Error(`Validator at index ${index} not found for slot ${slot}`);
+    throw new Error(
+      `Validator at index ${index} not found for slot ${blockId}`
+    );
   }
 
   const balance = stateView.balances.get(index);
@@ -882,10 +1037,99 @@ async function getValidator({ slot, index, pubkey }) {
   );
 }
 
+async function getValidators({ pubkeys, slot, epoch }) {
+  if (!pubkeys.match(validatorKeys)) {
+    throw Error(
+      `Public keys not a comma-separated list of public keys with 0x prefixes`
+    );
+  }
+
+  const blockId = resolveBeaconSlot({ slot, epoch });
+  const networkName = await getStrategyNetworkName();
+  const { stateView } = await getBeaconBlock(blockId, networkName);
+
+  const beaconValidators = await getValidatorsBeacon(pubkeys);
+  const beaconValidatorList = Array.isArray(beaconValidators)
+    ? beaconValidators
+    : [beaconValidators];
+  const validators = beaconValidatorList.map((beaconValidator) => ({
+    index: Number(beaconValidator.validatorindex),
+    pubkey: beaconValidator.pubkey,
+  }));
+
+  console.log(
+    `Validators at slot ${stateView.slot}, epoch ${
+      BigInt(stateView.slot) / 32n
+    }:`
+  );
+
+  const rows = [];
+  for (const { pubkey, index } of validators) {
+    const validator = stateView.validators.get(index);
+    if (
+      !validator ||
+      toHex(validator.node.root) ===
+        "0x0000000000000000000000000000000000000000000000000000000000000000"
+    ) {
+      throw new Error(
+        `Validator ${pubkey} at index ${index} not found for slot ${blockId}`
+      );
+    }
+
+    const withdrawalCredentials = toHex(validator.withdrawalCredentials);
+    const validatorType = getValidatorType(withdrawalCredentials);
+    const linkedStrategy = getLinkedStrategy(
+      withdrawalCredentials,
+      networkName
+    );
+    const balance = stateView.balances.get(index);
+
+    rows.push({
+      Index: String(index),
+      Type: validatorType,
+      Slashed: String(validator.slashed),
+      "Balance ETH": formatUnits(balance, 9),
+      ExitEpoch: formatEpochUtc(validator.exitEpoch, networkName),
+      WithdrawableEpoch: formatEpochUtc(
+        validator.withdrawableEpoch,
+        networkName
+      ),
+      LinkedStrategy: linkedStrategy,
+    });
+  }
+
+  const columns = [
+    "Index",
+    "Type",
+    "Slashed",
+    "Balance ETH",
+    "ExitEpoch",
+    "WithdrawableEpoch",
+    "LinkedStrategy",
+  ];
+  const widths = Object.fromEntries(
+    columns.map((column) => [
+      column,
+      Math.max(column.length, ...rows.map((row) => row[column].length)),
+    ])
+  );
+  const formatRow = (row) =>
+    columns.map((column) => row[column].padEnd(widths[column])).join("  ");
+
+  console.log(
+    formatRow(Object.fromEntries(columns.map((column) => [column, column])))
+  );
+  console.log(columns.map((column) => "-".repeat(widths[column])).join("  "));
+  for (const row of rows) {
+    console.log(formatRow(row));
+  }
+}
+
 module.exports = {
   requestValidatorWithdraw,
   beaconRoot,
   getValidator,
+  getValidators,
   verifyValidator,
   verifyDeposit,
   verifyDeposits,

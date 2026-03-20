@@ -249,6 +249,51 @@ describe("ForkTest: CrossChainRemoteStrategy", function () {
     expect(balanceAfter).to.approxEqual(expectedBalance);
   });
 
+  it("Should handle single withdrawAll", async function () {
+    const { crossChainRemoteStrategy, strategist, rafael, usdc } = fixture;
+    const fundedAmount = usdcUnits("1234.56");
+
+    const usdcBalanceBefore = await usdc.balanceOf(
+      crossChainRemoteStrategy.address
+    );
+
+    await usdc
+      .connect(rafael)
+      .transfer(crossChainRemoteStrategy.address, fundedAmount);
+
+    await expect(crossChainRemoteStrategy.connect(strategist).withdrawAll()).to
+      .not.be.reverted;
+
+    const usdcBalanceAfter = await usdc.balanceOf(
+      crossChainRemoteStrategy.address
+    );
+    expect(usdcBalanceAfter).to.gte(usdcBalanceBefore.add(fundedAmount));
+  });
+
+  it("Should allow calling withdrawAll twice", async function () {
+    const { crossChainRemoteStrategy, strategist, rafael, usdc } = fixture;
+    const fundedAmount = usdcUnits("1234.56");
+
+    await usdc
+      .connect(rafael)
+      .transfer(crossChainRemoteStrategy.address, fundedAmount);
+
+    await expect(crossChainRemoteStrategy.connect(strategist).withdrawAll()).to
+      .not.be.reverted;
+
+    const usdcBalanceAfterFirst = await usdc.balanceOf(
+      crossChainRemoteStrategy.address
+    );
+
+    await expect(crossChainRemoteStrategy.connect(strategist).withdrawAll()).to
+      .not.be.reverted;
+
+    const usdcBalanceAfterSecond = await usdc.balanceOf(
+      crossChainRemoteStrategy.address
+    );
+    expect(usdcBalanceAfterSecond).to.eq(usdcBalanceAfterFirst);
+  });
+
   it("Should revert if the burn token is not peer USDC", async function () {
     const { crossChainRemoteStrategy, relayer } = fixture;
 

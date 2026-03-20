@@ -33,18 +33,20 @@ const {
 
 const log = require("../utils/logger")("task:validator:compounding");
 
-async function snapBalances() {
+async function snapBalances({ consol = false }) {
   const signer = await getSigner();
 
   // TODO check the slot of the first pending deposit is not zero
 
-  const strategy = await resolveContract(
-    "CompoundingStakingSSVStrategyProxy",
-    "CompoundingStakingSSVStrategy"
-  );
+  const contract = consol
+    ? await resolveContract("ConsolidationController")
+    : await resolveContract(
+        "CompoundingStakingSSVStrategyProxy",
+        "CompoundingStakingSSVStrategy"
+      );
 
-  log(`About to snap balances for strategy ${strategy.address}`);
-  const tx = await strategy.connect(signer).snapBalances();
+  log(`About to snap balances on ${contract.address}`);
+  const tx = await contract.connect(signer).snapBalances();
   await logTxDetails(tx, "snapBalances");
 
   const receipt = await tx.wait();
@@ -826,13 +828,19 @@ function validatorStatus(status) {
   }
 }
 
-async function setRegistrator({ account }) {
+async function setRegistrator({ account, type }) {
   const signer = await getSigner();
 
-  const strategy = await resolveContract(
-    "CompoundingStakingSSVStrategyProxy",
-    "CompoundingStakingSSVStrategy"
-  );
+  const strategy =
+    type === "new"
+      ? await resolveContract(
+          "CompoundingStakingSSVStrategyProxy",
+          "CompoundingStakingSSVStrategy"
+        )
+      : await resolveContract(
+          "NativeStakingSSVStrategyProxy",
+          "NativeStakingSSVStrategy"
+        );
 
   const tx = await strategy.connect(signer).setRegistrator(account);
   await logTxDetails(tx, "setRegistrator");

@@ -9,12 +9,15 @@ actor "Anyone" as sender
 actor "Block\nBuilder\n(MEV)" as mev
 actor "Registrator\n(Relayer)" as reg <<Origin>>
 actor "Strategist\n(2/8 Safe)" as strategist <<Origin>>
+actor "Admin\n(5/8 Safe)" as admin <<Origin>>
 actor "Governor\n(Timelock)" as gov <<Origin>>
 actor "Treasury" as treasury <<Origin>>
 participant "API" as api <<P2P>>
 
 box "Execution Chain"
 participant "Vault" as vault <<Origin>>
+participant "Consolidation\nController" as consolCtrl <<Origin>>
+participant "Native\nStaking\nStrategy" as nativeStrat <<Origin>>
 participant "Compounding\nStaking\nStrategy" as compStrat <<Origin>>
 participant "SSV Network" as ssvNet <<SSV>>
 participant "Token" as ssv <<SSV>>
@@ -540,6 +543,157 @@ return
 
 ... wait for the validator to be swept on the Beacon chain\ncurrent time is every 9.5 days ...
 
+end group
+
+
+group Admin requests consolidation
+admin -> consolCtrl: requestConsolidation(\nsourceStrategy,\nsourcePubKeys,\ntargetPubKey)
+activate consolCtrl
+
+
+consolCtrl -> compStrat : validators(targetPubKeyHash)
+activate compStrat
+return state
+
+note over consolCtrl
+Check target is active.
+Check target has no pending deposits.
+end note
+consolCtrl -> compStrat : depositListLength()
+activate compStrat
+return number of pending deposits
+loop for each pending deposit
+consolCtrl -> compStrat : depositList(i)
+activate compStrat
+return depositHash
+consolCtrl -> compStrat : deposits(depositHash)
+activate compStrat
+return validator pub key hash
+end
+
+note over consolCtrl
+store count of consolidated validators
+store source starting strategy
+store timestamp of request
+store target pub key hash
+end note
+
+consolCtrl -> nativeStrat : requestConsolidation(\n  sourcePubKeys,\n  targetPubKey)
+activate nativeStrat
+
+loop for each sourcePubKey
+    note over nativeStrat: Check source validator is active
+    note over nativeStrat: Store source validator as EXITING
+    nativeStrat -> consol : sourcePubKey, targetPubKey
+    activate consol
+    return
+end
+return
+
+consolCtrl -> compStrat : snapBalances()
+activate compStrat
+compStrat -> roots : get(block timestamp)
+activate roots
+return parent block root
+note over compStrat
+Store ETH balance against the parent block root
+Store block timestamp of snap
+end note
+return
+
+return
+end group
+
+group Anyone verify balance at the start of the consolidation
+
+note over sender
+Optional to update compounding staking strategy balance
+for the last time until the consolidation has been processed.
+end note
+
+sender -> val : getBeaconState(slot)
+note left: slot of the request
+return beacon state
+
+sender -> sender : generatePendingDepositProofs(\n  beacon state)
+sender -> sender : generateBalanceProofs(\n  beacon state)
+
+sender -> consolCtrl : verifyBalances(\n  balances proofs,\n  pending deposit proofs)
+activate consolCtrl
+consolCtrl -> compStrat : verifyBalances(\n  balances proofs,\n  pending deposit proofs)
+activate compStrat
+return
+return
+
+end group
+
+group Admin fails validator consolidations
+
+admin -> consolCtrl : failConsolidation(\n  sourcePubKeys)
+activate consolCtrl
+
+note over consolCtrl
+Reduce consolidation count.
+Reset consolidation state if count is zero.
+end note
+
+consolCtrl -> nativeStrat : failConsolidation(\n  sourcePubKeys)
+activate nativeStrat
+
+loop for each source validator
+    note over nativeStrat: Restore state to STAKED
+end
+
+return
+
+return
+
+end group
+
+... wait 1-10 days for consolidation to be processed on the Beacon Chain ...
+
+group Admin confirms consolidation
+
+sender -> compStrat : snapBalances()
+activate compStrat
+compStrat -> roots : get(block timestamp)
+activate roots
+return parent block root
+note over compStrat
+Store ETH balance against the parent block root
+Store block timestamp of snap
+end note
+return
+
+admin -> val : getBeaconState(slot)
+note left : the slot balances were snapped
+activate val
+return beacon state
+
+admin -> admin : generatePendingDepositProofs(\n  beacon state)
+admin -> admin : generateBalanceProofs(\n  beacon state)
+
+admin -> consolCtrl : verifyConsolidation(\n  balances proofs,\n  pending deposit proofs)
+activate consolCtrl
+
+note over consolCtrl
+reset consolidation state
+end note
+
+consolCtrl -> compStrat : verifyBalances(\n  balances proofs,\n  pending deposit proofs)
+activate compStrat
+note over compStrat
+Increase the strategy balance
+end note
+return
+
+consolCtrl -> nativeStrat : confirmConsolidation(\n  consolidation count)
+activate nativeStrat
+note over nativeStrat
+Decrease the strategy balance
+end note
+return
+return
 end group
 
 @enduml

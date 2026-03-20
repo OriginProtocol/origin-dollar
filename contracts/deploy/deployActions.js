@@ -224,7 +224,6 @@ const upgradeCompoundingStakingSSVStrategy = async () => {
     [
       [addresses.zero, cOETHVaultProxy.address], //_baseConfig
       assetAddresses.WETH, // wethAddress
-      assetAddresses.SSV, // ssvToken
       assetAddresses.SSVNetwork, // ssvNetwork
       assetAddresses.beaconChainDepositContract, // depositContractMock
       cBeaconProofs.address, // BeaconProofs
@@ -446,7 +445,6 @@ const deployCompoundingStakingSSVStrategy = async () => {
     [
       [addresses.zero, cOETHVaultProxy.address], //_baseConfig
       assetAddresses.WETH, // wethAddress
-      assetAddresses.SSV, // ssvToken
       assetAddresses.SSVNetwork, // ssvNetwork
       assetAddresses.beaconChainDepositContract, // depositContractMock
       cBeaconProofs.address, // BeaconProofs
@@ -809,13 +807,6 @@ const getPlumeContracts = async () => {
 };
 
 const deploySonicSwapXAMOStrategyImplementation = async () => {
-  const { deployerAddr } = await getNamedAccounts();
-  const sDeployer = await ethers.provider.getSigner(deployerAddr);
-
-  const cSonicSwapXAMOStrategyProxy = await ethers.getContract(
-    "SonicSwapXAMOStrategyProxy"
-  );
-  const cOSonicProxy = await ethers.getContract("OSonicProxy");
   const cOSonicVaultProxy = await ethers.getContract("OSonicVaultProxy");
 
   // Deploy Sonic SwapX AMO Strategy implementation
@@ -823,11 +814,25 @@ const deploySonicSwapXAMOStrategyImplementation = async () => {
     "SonicSwapXAMOStrategy",
     [
       [addresses.sonic.SwapXWSOS.pool, cOSonicVaultProxy.address],
-      cOSonicProxy.address,
-      addresses.sonic.wS,
       addresses.sonic.SwapXWSOS.gauge,
     ]
   );
+
+  return dSonicSwapXAMOStrategy;
+};
+
+const deploySonicSwapXAMOStrategyImplementationAndInitialize = async () => {
+  const { deployerAddr } = await getNamedAccounts();
+  const sDeployer = await ethers.provider.getSigner(deployerAddr);
+
+  const cSonicSwapXAMOStrategyProxy = await ethers.getContract(
+    "SonicSwapXAMOStrategyProxy"
+  );
+
+  // Deploy Sonic SwapX AMO Strategy implementation
+  const dSonicSwapXAMOStrategy =
+    await deploySonicSwapXAMOStrategyImplementation();
+
   const cSonicSwapXAMOStrategy = await ethers.getContractAt(
     "SonicSwapXAMOStrategy",
     cSonicSwapXAMOStrategyProxy.address
@@ -849,6 +854,49 @@ const deploySonicSwapXAMOStrategyImplementation = async () => {
   );
 
   return cSonicSwapXAMOStrategy;
+};
+
+const deployOETHSupernovaAMOStrategyImplementation = async () => {
+  const { deployerAddr } = await getNamedAccounts();
+  const sDeployer = await ethers.provider.getSigner(deployerAddr);
+
+  const cOETHSupernovaAMOStrategyProxy = await ethers.getContract(
+    "OETHSupernovaAMOProxy"
+  );
+  const cOETHVaultProxy = await ethers.getContract("OETHVaultProxy");
+
+  // Deploy OETH Supernova AMO Strategy implementation that will serve
+  // OETH Supernova AMO
+  const dSupernovaAMOStrategy = await deployWithConfirmation(
+    "OETHSupernovaAMOStrategy",
+    [
+      [addresses.mainnet.SupernovaOETHWETH.pool, cOETHVaultProxy.address],
+      addresses.mainnet.SupernovaOETHWETH.gauge,
+    ]
+  );
+
+  const cOETHSupernovaAMOStrategy = await ethers.getContractAt(
+    "OETHSupernovaAMOStrategy",
+    cOETHSupernovaAMOStrategyProxy.address
+  );
+
+  // Initialize OETH Supernova AMO Strategy implementation
+  const depositPriceRange = parseUnits("0.01", 18); // 1% or 100 basis points
+  const initData = cOETHSupernovaAMOStrategy.interface.encodeFunctionData(
+    "initialize(address[],uint256)",
+    [[addresses.mainnet.supernovaToken], depositPriceRange]
+  );
+  await withConfirmation(
+    // prettier-ignore
+    cOETHSupernovaAMOStrategyProxy
+      .connect(sDeployer)["initialize(address,address,bytes)"](
+        dSupernovaAMOStrategy.address,
+        addresses.mainnet.Timelock,
+        initData
+      )
+  );
+
+  return cOETHSupernovaAMOStrategy;
 };
 
 const getCreate2ProxiesFilePath = async () => {
@@ -917,7 +965,8 @@ const deployProxyWithCreateX = async (
   salt,
   proxyName,
   verifyContract = false,
-  contractPath = null
+  contractPath = null,
+  storageKey = null // optional key to store the proxy address under (defaults to proxyName)
 ) => {
   const { deployerAddr } = await getNamedAccounts();
 
@@ -964,7 +1013,7 @@ const deployProxyWithCreateX = async (
 
   log(`Deployed ${proxyName} at ${proxyAddress}`);
 
-  await storeCreate2ProxyAddress(proxyName, proxyAddress);
+  await storeCreate2ProxyAddress(storageKey || proxyName, proxyAddress);
 
   // Verify contract on Etherscan if requested and on a live network
   // Can be enabled via parameter or VERIFY_CONTRACTS environment variable
@@ -1131,7 +1180,7 @@ const deployCrossChainUnitTestStrategy = async (usdcAddress) => {
     "CCTPMessageTransmitterMock"
   );
   const tokenMessenger = await ethers.getContract("CCTPTokenMessengerMock");
-  const c4626Vault = await ethers.getContract("MockERC4626Vault");
+  const c4626Vault = await ethers.getContract("MockMorphoV1Vault");
 
   await deployCrossChainMasterStrategyImpl(
     dMasterProxy.address,
@@ -1208,6 +1257,8 @@ module.exports = {
   deployBaseAerodromeAMOStrategyImplementation,
   getPlumeContracts,
   deploySonicSwapXAMOStrategyImplementation,
+  deploySonicSwapXAMOStrategyImplementationAndInitialize,
+  deployOETHSupernovaAMOStrategyImplementation,
   deployProxyWithCreateX,
   deployCrossChainMasterStrategyImpl,
   deployCrossChainRemoteStrategyImpl,

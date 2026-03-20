@@ -20,14 +20,23 @@ contract CCTPMessageTransmitterMock2 is CCTPMessageTransmitterMock {
     using BytesHelper for bytes;
 
     address public cctpTokenMessenger;
+    uint32 public peerDomainId;
 
     event MessageReceivedInMockTransmitter(bytes message);
     event MessageSent(bytes message);
 
-    constructor(address _usdc) CCTPMessageTransmitterMock(_usdc) {}
+    constructor(address _usdc, uint32 _peerDomainId)
+        CCTPMessageTransmitterMock(_usdc)
+    {
+        peerDomainId = _peerDomainId;
+    }
 
     function setCCTPTokenMessenger(address _cctpTokenMessenger) external {
         cctpTokenMessenger = _cctpTokenMessenger;
+    }
+
+    function setPeerDomainId(uint32 _peerDomainId) external {
+        peerDomainId = _peerDomainId;
     }
 
     function sendMessage(
@@ -39,7 +48,7 @@ contract CCTPMessageTransmitterMock2 is CCTPMessageTransmitterMock {
     ) external virtual override {
         bytes memory message = abi.encodePacked(
             uint32(1), // version
-            uint32(destinationDomain == 0 ? 6 : 0), // source domain
+            destinationDomain == 0 ? peerDomainId : 0, // source domain
             uint32(destinationDomain), // destination domain
             uint256(0),
             bytes32(uint256(uint160(msg.sender))), // sender

@@ -10,6 +10,8 @@ const {
   isSonicUnitTest,
   isPlumeFork,
   isPlumeUnitTest,
+  isHyperEVMFork,
+  isHyperEVMUnitTest,
 } = require("./helpers");
 
 const _chunkId = Number(process.env.CHUNK_ID);
@@ -54,6 +56,8 @@ mocha.before(function () {
     const isSonicUnitTestFile = s.file.endsWith(".sonic.js");
     const isPlumeTestFile = s.file.endsWith(".plume.fork-test.js");
     const isPlumeUnitTestFile = s.file.endsWith(".plume.js");
+    const isHyperEVMTestFile = s.file.endsWith(".hyperevm.fork-test.js");
+    const isHyperEVMUnitTestFile = s.file.endsWith(".hyperevm.js");
 
     const unitTest =
       !s.file.endsWith(".fork-test.js") &&
@@ -72,12 +76,16 @@ mocha.before(function () {
       return isHoleskyTestFile;
     } else if (isPlumeFork) {
       return isPlumeTestFile;
+    } else if (isHyperEVMFork) {
+      return isHyperEVMTestFile;
     } else if (isBaseUnitTest) {
       return isBaseUnitTestFile;
     } else if (isSonicUnitTest) {
       return isSonicUnitTestFile;
     } else if (isPlumeUnitTest) {
       return isPlumeUnitTestFile;
+    } else if (isHyperEVMUnitTest) {
+      return isHyperEVMUnitTestFile;
     } else {
       // else is unit test
       return unitTest;

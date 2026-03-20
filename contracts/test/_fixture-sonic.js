@@ -1,6 +1,6 @@
 const hre = require("hardhat");
 const { ethers } = hre;
-const { parseUnits } = ethers.utils;
+const { parseUnits, formatUnits } = ethers.utils;
 const mocha = require("mocha");
 const hhHelpers = require("@nomicfoundation/hardhat-network-helpers");
 
@@ -237,7 +237,8 @@ async function swapXAMOFixture(
 ) {
   const fixture = await defaultSonicFixture();
 
-  const { oSonic, oSonicVault, rafael, nick, strategist, wS } = fixture;
+  const { oSonic, oSonicVault, rafael, nick, strategist, governor, wS } =
+    fixture;
 
   let swapXAMOStrategy, swapXPool, swapXGauge, swpx;
 
@@ -271,23 +272,66 @@ async function swapXAMOFixture(
 
     // Calculate how much to mint based on the wS in the vault,
     // the withdrawal queue, and the wS to be sent to the strategy
-    const wsBalance = await wS.balanceOf(oSonicVault.address);
+    let wsBalance = await wS.balanceOf(oSonicVault.address);
+    const autoAllocateThreshold = await oSonicVault.autoAllocateThreshold();
     const queue = await oSonicVault.withdrawalQueueMetadata();
     const available = wsBalance.add(queue.claimed).sub(queue.queued);
     const mintAmount = wsAmount.sub(available).mul(10);
 
+    log(
+      `To deposit ${formatUnits(wsAmount)} wS to the strategy, ${formatUnits(
+        mintAmount
+      )} wS needs to be minted to the vault`
+    );
+    log(
+      `Vault has ${formatUnits(wsBalance)} wS in balance and ${formatUnits(
+        available
+      )} wS available considering async withdrawals`
+    );
+
     if (mintAmount.gt(0)) {
+      log(`Minting ${formatUnits(mintAmount)} wS to the vault and vault`);
+
       // Approve the Vault to transfer wS
       await wS.connect(nick).approve(oSonicVault.address, mintAmount);
 
+      const disableAutoAllocate = autoAllocateThreshold.lt(mintAmount);
+
+      // disable auto allocate for the next mint
+      if (disableAutoAllocate) {
+        log(
+          `Mint would trigger auto allocate. Disabling auto allocate for the next mint`
+        );
+        await oSonicVault
+          .connect(governor)
+          .setAutoAllocateThreshold(mintAmount.add(1));
+      }
       // Mint OS with wS
       // This will sit in the vault, not the strategy
       await oSonicVault.connect(nick).mint(mintAmount);
+
+      // revert the auto allocate setting
+      if (disableAutoAllocate) {
+        log(
+          `Setting auto allocate back to the previous value: ${formatUnits(
+            autoAllocateThreshold
+          )} wS`
+        );
+        await oSonicVault
+          .connect(governor)
+          .setAutoAllocateThreshold(autoAllocateThreshold);
+      }
     }
 
-    // Add ETH to the Metapool
+    // Add wS (Wrapped S) to a Sonic SwapX pool
     if (config?.depositToStrategy) {
-      // The strategist deposits the WETH to the AMO strategy
+      wsBalance = await wS.balanceOf(oSonicVault.address);
+      log(
+        `Depositing ${formatUnits(
+          wsAmount
+        )} wS to the strategy. Vault ${formatUnits(wsBalance)} wS balance`
+      );
+      // The strategist deposits wS (Wrapped S) to the AMO strategy
       await oSonicVault
         .connect(strategist)
         .depositToStrategy(swapXAMOStrategy.address, [wS.address], [wsAmount]);

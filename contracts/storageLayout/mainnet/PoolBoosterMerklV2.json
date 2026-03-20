@@ -1,0 +1,132 @@
+{
+  "solcVersion": "0.8.28",
+  "storage": [
+    {
+      "label": "strategistAddr",
+      "offset": 0,
+      "slot": "0",
+      "type": "t_address",
+      "contract": "Strategizable",
+      "src": "contracts/governance/Strategizable.sol:10"
+    },
+    {
+      "label": "__gap",
+      "offset": 0,
+      "slot": "1",
+      "type": "t_array(t_uint256)50_storage",
+      "contract": "Strategizable",
+      "src": "contracts/governance/Strategizable.sol:13"
+    },
+    {
+      "label": "initialized",
+      "offset": 0,
+      "slot": "51",
+      "type": "t_bool",
+      "contract": "Initializable",
+      "src": "contracts/utils/Initializable.sol:12"
+    },
+    {
+      "label": "initializing",
+      "offset": 1,
+      "slot": "51",
+      "type": "t_bool",
+      "contract": "Initializable",
+      "src": "contracts/utils/Initializable.sol:17"
+    },
+    {
+      "label": "______gap",
+      "offset": 0,
+      "slot": "52",
+      "type": "t_array(t_uint256)50_storage",
+      "contract": "Initializable",
+      "src": "contracts/utils/Initializable.sol:41"
+    },
+    {
+      "label": "campaignData",
+      "offset": 0,
+      "slot": "102",
+      "type": "t_bytes_storage",
+      "contract": "PoolBoosterMerklV2",
+      "src": "contracts/poolBooster/PoolBoosterMerklV2.sol:32"
+    },
+    {
+      "label": "duration",
+      "offset": 0,
+      "slot": "103",
+      "type": "t_uint32",
+      "contract": "PoolBoosterMerklV2",
+      "src": "contracts/poolBooster/PoolBoosterMerklV2.sol:35"
+    },
+    {
+      "label": "campaignType",
+      "offset": 4,
+      "slot": "103",
+      "type": "t_uint32",
+      "contract": "PoolBoosterMerklV2",
+      "src": "contracts/poolBooster/PoolBoosterMerklV2.sol:38"
+    },
+    {
+      "label": "rewardToken",
+      "offset": 8,
+      "slot": "103",
+      "type": "t_address",
+      "contract": "PoolBoosterMerklV2",
+      "src": "contracts/poolBooster/PoolBoosterMerklV2.sol:41"
+    },
+    {
+      "label": "factory",
+      "offset": 0,
+      "slot": "104",
+      "type": "t_address",
+      "contract": "PoolBoosterMerklV2",
+      "src": "contracts/poolBooster/PoolBoosterMerklV2.sol:44"
+    },
+    {
+      "label": "merklDistributor",
+      "offset": 0,
+      "slot": "105",
+      "type": "t_contract(IMerklDistributor)28248",
+      "contract": "PoolBoosterMerklV2",
+      "src": "contracts/poolBooster/PoolBoosterMerklV2.sol:47"
+    },
+    {
+      "label": "__gap",
+      "offset": 0,
+      "slot": "106",
+      "type": "t_array(t_uint256)50_storage",
+      "contract": "PoolBoosterMerklV2",
+      "src": "contracts/poolBooster/PoolBoosterMerklV2.sol:50"
+    }
+  ],
+  "types": {
+    "t_address": {
+      "label": "address",
+      "numberOfBytes": "20"
+    },
+    "t_array(t_uint256)50_storage": {
+      "label": "uint256[50]",
+      "numberOfBytes": "1600"
+    },
+    "t_bool": {
+      "label": "bool",
+      "numberOfBytes": "1"
+    },
+    "t_bytes_storage": {
+      "label": "bytes",
+      "numberOfBytes": "32"
+    },
+    "t_contract(IMerklDistributor)28248": {
+      "label": "contract IMerklDistributor",
+      "numberOfBytes": "20"
+    },
+    "t_uint256": {
+      "label": "uint256",
+      "numberOfBytes": "32"
+    },
+    "t_uint32": {
+      "label": "uint32",
+      "numberOfBytes": "4"
+    }
+  },
+  "namespaces": {}
+}

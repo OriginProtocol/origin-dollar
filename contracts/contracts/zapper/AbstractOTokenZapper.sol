@@ -68,6 +68,7 @@ abstract contract AbstractOTokenZapper {
         payable
         returns (uint256)
     {
+        // slither-disable-start reentrancy-balance
         uint256 balance = address(this).balance;
 
         emit Zap(msg.sender, ETH_MARKER, balance);
@@ -83,6 +84,7 @@ abstract contract AbstractOTokenZapper {
 
         require(mintedWOToken >= minReceived, "Zapper: not enough minted");
 
+        // slither-disable-end reentrancy-balance
         return mintedWOToken;
     }
 
@@ -96,6 +98,7 @@ abstract contract AbstractOTokenZapper {
         uint256 wethAmount,
         uint256 minReceived
     ) external returns (uint256) {
+        // slither-disable-start reentrancy-balance
         // slither-disable-next-line unchecked-transfer unused-return
         weth.transferFrom(msg.sender, address(this), wethAmount);
 
@@ -109,6 +112,7 @@ abstract contract AbstractOTokenZapper {
 
         require(mintedWOToken >= minReceived, "Zapper: not enough minted");
 
+        // slither-disable-end reentrancy-balance
         return mintedWOToken;
     }
 

@@ -23,6 +23,7 @@ const {
   isPlumeFork,
   isTest,
   isHoodi,
+  isHyperEVM,
 } = require("../test/helpers.js");
 
 const {
@@ -31,6 +32,7 @@ const {
 } = require("../tasks/storageSlots");
 
 const addresses = require("../utils/addresses.js");
+const { buildSafeTransactionBuilderJson } = require("../utils/safe");
 const { getTxOpts } = require("../utils/tx");
 const { sleep } = require("../utils/time");
 const {
@@ -247,7 +249,14 @@ const deployWithConfirmation = async (
   );
 
   // if upgrade happened on the mainnet save the new storage slot layout to the repo
-  if (isMainnet || isArbitrumOne || isBase || isSonic || isPlume) {
+  if (
+    isMainnet ||
+    isArbitrumOne ||
+    isBase ||
+    isSonic ||
+    isPlume ||
+    isHyperEVM
+  ) {
     await storeStorageLayoutForContract(hre, contractName, contract);
   }
 
@@ -286,6 +295,8 @@ const withConfirmation = async (
     ? process.env.PLUME_PROVIDER_URL
     : isHoodi
     ? process.env.HOODI_PROVIDER_URL
+    : isHyperEVM
+    ? process.env.HYPEREVM_PROVIDER_URL
     : process.env.PROVIDER_URL;
 
   if (providerUrl?.includes("rpc.tenderly.co") || (isTest && !isForkTest)) {
@@ -323,7 +334,7 @@ const withConfirmation = async (
 
 const _verifyProxyInitializedWithCorrectGovernor = (transactionData) => {
   if (isPlume || isPlumeFork) {
-    // TODO: Skip verification for Plume for now
+    // TODO: Skip verification for Plume — no timelock deployed yet
     return;
   }
 
@@ -341,6 +352,7 @@ const _verifyProxyInitializedWithCorrectGovernor = (transactionData) => {
       addresses.mainnet.OldTimelock.toLowerCase(),
       addresses.base.timelock.toLowerCase(),
       addresses.sonic.timelock.toLowerCase(),
+      addresses.hyperevm.timelock.toLowerCase(),
     ].includes(initProxyGovernor)
   ) {
     throw new Error(
@@ -964,28 +976,16 @@ async function buildGnosisSafeJson(
   contractMethods,
   contractInputsValues
 ) {
-  const { chainId } = await ethers.provider.getNetwork();
-  const json = {
-    version: "1.0",
-    chainId: chainId.toString(),
-    createdAt: parseInt(Date.now() / 1000),
-    meta: {
-      name: "Transaction Batch",
-      description: "",
-      txBuilderVersion: "1.16.1",
-      createdFromSafeAddress: safeAddress || addresses.mainnet.Guardian,
-      createdFromOwnerAddress: "",
-    },
+  return buildSafeTransactionBuilderJson({
+    safeAddress: safeAddress || addresses.mainnet.Guardian,
+    name: "Transaction Batch",
     transactions: targets.map((target, i) => ({
       to: target,
       value: "0",
-      data: null,
       contractMethod: contractMethods[i],
       contractInputsValues: contractInputsValues[i],
     })),
-  };
-
-  return json;
+  });
 }
 
 async function simulateWithTimelockImpersonation(proposal) {
@@ -1312,9 +1312,11 @@ function encodeSaltForCreateX(deployer, crosschainProtectionFlag, salt) {
       ethers.utils.zeroPad(hashBytes.slice(0, 11), 11)
     );
   } else {
-    // For numbers or hex strings, pad to 11 bytes
-    const saltBytes = ethers.utils.hexlify(salt);
-    saltBytes11 = ethers.utils.hexlify(ethers.utils.zeroPad(saltBytes, 11));
+    // For numbers or hex strings, take first 11 bytes (truncate if longer, pad if shorter)
+    const saltBytes = ethers.utils.arrayify(ethers.utils.hexlify(salt));
+    saltBytes11 = ethers.utils.hexlify(
+      ethers.utils.zeroPad(saltBytes.slice(0, 11), 11)
+    );
   }
   // concat all bytes into a bytes32
   const encodedSalt = ethers.utils.hexlify(

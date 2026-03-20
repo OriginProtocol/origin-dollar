@@ -63,9 +63,10 @@ const {
   curvePoolTask,
 } = require("./curve");
 const { calculateMaxPricePerVoteTask, manageBribes } = require("./poolBooster");
+const { manageMerklBribesTask } = require("./merklPoolBooster");
 const {
   depositSSV,
-  withdrawSSV,
+  migrateClusterToETH,
   printClusterInfo,
   removeValidator: removeOldValidator,
 } = require("./ssv");
@@ -94,6 +95,7 @@ const {
   manuallyFixAccounting,
   resetStakeETHTally,
   setStakeETHThreshold,
+  setStakingMonitor,
   fixAccounting,
   pauseStaking,
   snapStaking,
@@ -127,6 +129,7 @@ const {
   requestValidatorWithdraw,
   beaconRoot,
   getValidator,
+  getValidators,
   verifyValidator,
   verifyDeposit,
   verifyDeposits,
@@ -139,6 +142,12 @@ const {
   copyBeaconRoot,
 } = require("./beaconTesting");
 const { claimMerklRewards } = require("./merkl");
+const {
+  requestConsolidation,
+  failConsolidation,
+  confirmConsolidation,
+  getConsolidationFee,
+} = require("./consolidation");
 
 const { processCctpBridgeTransactions } = require("./crossChain");
 const { keyValueStoreLocalClient } = require("../utils/defender");
@@ -687,6 +696,12 @@ subtask(
     false,
     types.boolean
   )
+  .addOptionalParam(
+    "chunkSize",
+    "Number of pool boosters to manage per transaction",
+    4,
+    types.int
+  )
   .setAction(async (taskArgs) => {
     // This action only works with the Defender Relayer signer
     const signer = await getDefenderSigner();
@@ -695,9 +710,31 @@ subtask(
       provider: signer.provider,
       targetEfficiency: taskArgs.efficiency,
       skipRewardPerVote: taskArgs.skipRewardPerVote,
+      chunkSize: taskArgs.chunkSize,
     });
   });
 task("manageCurvePoolBoosterBribes").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+subtask(
+  "manageMerklPoolBoosterBribes",
+  "Calls bribeAll on the MerklPoolBoosterBribesModule through the Gnosis Safe"
+)
+  .addOptionalParam(
+    "exclusionList",
+    "Comma-separated list of pool booster addresses to exclude",
+    "",
+    types.string
+  )
+  .addOptionalParam(
+    "moduleAddress",
+    "Override module address (default: resolved from chain)",
+    undefined,
+    types.string
+  )
+  .setAction(manageMerklBribesTask);
+task("manageMerklPoolBoosterBribes").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
 
@@ -1103,15 +1140,14 @@ task("depositSSV").setAction(async (_, __, runSuper) => {
 });
 
 subtask(
-  "withdrawSSV",
-  "Withdraw SSV tokens from an SSV Cluster to the native staking strategy"
+  "migrateCluster",
+  "Migrate the SSV Cluster to ETH used by the CompoundingStakingSSVStrategy"
 )
-  .addParam("amount", "Amount of SSV tokens", undefined, types.float)
-  .addOptionalParam(
-    "index",
-    "The number of the Native Staking Contract deployed.",
+  .addParam(
+    "type",
+    "new for compounding staking strategy. old for old Native Staking Strategy",
     undefined,
-    types.int
+    types.string
   )
   .addParam(
     "operatorids",
@@ -1119,8 +1155,20 @@ subtask(
     undefined,
     types.string
   )
-  .setAction(withdrawSSV);
-task("withdrawSSV").setAction(async (_, __, runSuper) => {
+  .addParam(
+    "amount",
+    "Initial amount of ETH to add to the cluster",
+    undefined,
+    types.float
+  )
+  .addOptionalParam(
+    "index",
+    "The number of the Native Staking Contract deployed. Default to none for Hoodi",
+    undefined,
+    types.int
+  )
+  .setAction(migrateClusterToETH);
+task("migrateCluster").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
 
@@ -1167,8 +1215,8 @@ subtask(
   )
   .addOptionalParam("clear", "Clear storage", false, types.boolean)
   .addOptionalParam(
-    "ssv",
-    "Override the days option and set the amount of SSV to deposit to the cluster.",
+    "eth",
+    "Override the days option and set the amount of ETH to deposit to the cluster.",
     undefined,
     types.float
   )
@@ -1385,6 +1433,12 @@ subtask(
     30,
     types.int
   )
+  .addOptionalParam(
+    "consol",
+    "Call the consolidation controller instead of the strategy",
+    false,
+    types.boolean
+  )
   .setAction(async (taskArgs) => {
     const signer = await getSigner();
 
@@ -1413,7 +1467,13 @@ subtask(
     undefined,
     types.int
   )
-  .setAction(async ({ index }) => {
+  .addOptionalParam(
+    "consol",
+    "Call the consolidation controller instead of the strategy",
+    false,
+    types.boolean
+  )
+  .setAction(async ({ index, consol }) => {
     const signer = await getSigner();
 
     const nativeStakingStrategy = await resolveNativeStakingStrategyProxy(
@@ -1421,6 +1481,7 @@ subtask(
     );
 
     await doAccounting({
+      consol,
       signer,
       nativeStakingStrategy,
     });
@@ -1493,6 +1554,27 @@ subtask(
   await resetStakeETHTally({ signer });
 });
 task("resetStakeETHTally").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+subtask("setStakingMonitor", "Resets the amount of Ether staked back to zero")
+  .addOptionalParam(
+    "account",
+    "The account to set as the staking monitor.",
+    undefined,
+    types.string
+  )
+  .addOptionalParam(
+    "index",
+    "The number of the Native Staking Contract deployed.",
+    undefined,
+    types.int
+  )
+  .setAction(async (taskArgs) => {
+    const signer = await getSigner();
+    await setStakingMonitor({ ...taskArgs, signer });
+  });
+task("setStakingMonitor").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
 
@@ -1977,6 +2059,12 @@ subtask(
   "Set the registrator of the compounding staking strategy"
 )
   .addParam("account", "Address of the registrator", undefined, types.string)
+  .addOptionalParam(
+    "type",
+    "new for compounding staking strategy. old for old Native Staking Strategy",
+    "new",
+    types.string
+  )
   .setAction(setRegistrator);
 task("setRegistrator").setAction(async (_, __, runSuper) => {
   return runSuper();
@@ -2049,8 +2137,38 @@ subtask("getValidator", "Gets the details of a validator")
     undefined,
     types.int
   )
+  .addOptionalParam(
+    "epoch",
+    "Beacon chain epoch. Uses the first slot of the epoch",
+    undefined,
+    types.int
+  )
   .setAction(getValidator);
 task("getValidator").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+subtask("getValidators", "Gets the details of multiple validators")
+  .addParam(
+    "pubkeys",
+    "Comma separated list of validator public keys in hex format with a 0x prefix",
+    undefined,
+    types.string
+  )
+  .addOptionalParam(
+    "slot",
+    "Beacon chain slot. Default head",
+    undefined,
+    types.int
+  )
+  .addOptionalParam(
+    "epoch",
+    "Beacon chain epoch. Uses the first slot of the epoch",
+    undefined,
+    types.int
+  )
+  .setAction(getValidators);
+task("getValidators").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
 
@@ -2133,6 +2251,12 @@ subtask("verifyDeposits", "Verify any processed deposit on the Beacon chain")
     false,
     types.boolean
   )
+  .addOptionalParam(
+    "consol",
+    "Call the consolidation controller instead of the strategy",
+    false,
+    types.boolean
+  )
   .setAction(async (taskArgs) => {
     const signer = await getSigner();
     await verifyDeposits({ ...taskArgs, signer });
@@ -2169,6 +2293,24 @@ subtask("verifyBalances", "Verify validator balances on the Beacon chain")
   .addOptionalParam(
     "test",
     "Used for generating unit test data.",
+    false,
+    types.boolean
+  )
+  .addOptionalParam(
+    "overIds",
+    "A comma separated list of validator IDs to override balances.",
+    "",
+    types.string
+  )
+  .addOptionalParam(
+    "overBals",
+    "A comma separated list of validator balances to override in Gwei.",
+    "",
+    types.string
+  )
+  .addOptionalParam(
+    "consol",
+    "Call the consolidation controller instead of the strategy",
     false,
     types.boolean
   )
@@ -2411,10 +2553,14 @@ task("stakeValidator").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
 
-subtask(
-  "snapBalances",
-  "Takes a snapshot of the staking strategy's balance"
-).setAction(snapBalances);
+subtask("snapBalances", "Takes a snapshot of the staking strategy's balance")
+  .addOptionalParam(
+    "consol",
+    "Call the consolidation controller instead of the strategy",
+    false,
+    types.boolean
+  )
+  .setAction(snapBalances);
 task("snapBalances").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
@@ -2477,5 +2623,70 @@ subtask("snapMorpho", "Get a snapshot of the Morpho OUSD v2 strategy.")
   )
   .setAction(snapMorpho);
 task("snapMorpho").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+// Consolidation Tasks
+
+subtask("requestConsol", "Request validator consolidation")
+  .addOptionalParam(
+    "source",
+    "A comma-separated list of public keys of the validators to consolidate from in hex format with a 0x prefix",
+    undefined,
+    types.string
+  )
+  .addOptionalParam(
+    "cluster",
+    "An integer for the second or third cluster SSV cluster. Default none for Hoodi",
+    undefined,
+    types.int
+  )
+  .addOptionalParam(
+    "target",
+    "Public key of the validator to consolidate to in hex format with a 0x prefix",
+    undefined,
+    types.string
+  )
+  .setAction(requestConsolidation);
+task("requestConsol").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+subtask("failConsol", "Fail a validator consolidation")
+  .addOptionalParam(
+    "source",
+    "A comma-separated list of public keys of the validators to consolidate from in hex format with a 0x prefix",
+    undefined,
+    types.string
+  )
+  .setAction(failConsolidation);
+task("failConsol").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+subtask("confirmConsol", "Confirm a validator consolidation")
+  .addOptionalParam(
+    "safe",
+    "Generate a Safe Transaction Builder file instead of sending the transaction",
+    false,
+    types.boolean
+  )
+  .setAction(confirmConsolidation);
+task("confirmConsol").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+subtask(
+  "consolFee",
+  "Display the current consolidation request fee from the EIP-7251 precompile"
+)
+  .addOptionalParam(
+    "block",
+    "Block number to query the fee at",
+    undefined,
+    types.int
+  )
+  .setAction(getConsolidationFee);
+task("consolFee").setAction(async (_, __, runSuper) => {
   return runSuper();
 });

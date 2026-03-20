@@ -15,12 +15,17 @@ addresses.CCTPTokenMessengerV2 = "0x28b5a0e9C621a5BadaA536219b3a228C8168cf5d";
 addresses.CCTPMessageTransmitterV2 =
   "0x81D40F21F12A8F0E3252Bccb954D722d4c464B64";
 
+// Composable CoW
+addresses.composableCoW = "0xfdaFc9d1902f4e0b84f65F49f244b32b31013b74";
+addresses.GPv2VaultRelayer = "0xC92E8bdf79f0507f65a392b0ab4667716BFE0110";
+
 addresses.mainnet = {};
 addresses.base = {};
 addresses.sonic = {};
 addresses.holesky = {};
 addresses.hoodi = {};
 addresses.plume = {};
+addresses.hyperevm = {};
 addresses.unitTests = {};
 
 addresses.mainnet.ORIGINTEAM = "0x449e0b5564e0d141b3bc3829e74ffa0ea8c08ad5";
@@ -216,7 +221,8 @@ addresses.mainnet.MorphoOUSDv2StrategyProxy =
   "0x3643cafA6eF3dd7Fcc2ADaD1cabf708075AFFf6e";
 addresses.mainnet.MorphoOUSDv1Vault =
   "0x5B8b9FA8e4145eE06025F642cAdB1B47e5F39F04";
-addresses.mainnet.MorphoOUSDv2Adaptor =
+// Morpho V1 Vualt adapter used by the Morpho V2 Vault
+addresses.mainnet.MorphoOUSDv2Adapter =
   "0xD8F093dCE8504F10Ac798A978eF9E0C230B2f5fF";
 addresses.mainnet.MorphoOUSDv2Vault =
   "0xFB154c729A16802c4ad1E8f7FF539a8b9f49c960";
@@ -252,7 +258,6 @@ addresses.mainnet.FraxETHRedeemStrategy =
   "0x95A8e45afCfBfEDd4A1d41836ED1897f3Ef40A9e";
 addresses.mainnet.OETHHarvesterProxy =
   "0x0D017aFA83EAce9F10A8EC5B6E13941664A6785C";
-// TODO add after deployment
 addresses.mainnet.OETHHarvesterSimpleProxy =
   "0x6D416E576eECBB9F897856a7c86007905274ed04";
 // OETH Tokens
@@ -293,7 +298,9 @@ addresses.mainnet.CurveGaugeController =
 addresses.mainnet.CurvePoolBoosterOETH =
   "0x7B5e7aDEBC2da89912BffE55c86675CeCE59803E";
 addresses.mainnet.CurvePoolBoosterBribesModule =
-  "0x82447F7C3eF0a628B0c614A3eA0898a5bb7c18fe";
+  "0x6320Db7a3c1B95fD5684DC725C2cda9B82Fa20Fa";
+addresses.mainnet.MerklPoolBoosterBribesModule =
+  "0x6241f5e4ad5af39ef3aE54801E0AE431e0B70369";
 
 // SSV network
 addresses.mainnet.SSV = "0x9D65fF81a3c488d585bBfb0Bfe3c7707c7917f54";
@@ -359,6 +366,19 @@ addresses.mainnet.toConsensus.consolidation =
 addresses.mainnet.toConsensus.withdrawals =
   "0x00000961Ef480Eb55e80D19ad83579A64c007002";
 
+// Supernova AMM
+addresses.mainnet.supernovaPairFactory =
+  "0x5aef44edfc5a7edd30826c724ea12d7be15bdc30";
+addresses.mainnet.supernovaGaugeManager =
+  "0x19a410046Afc4203AEcE5fbFc7A6Ac1a4F517AE2";
+addresses.mainnet.supernovaToken = "0x00Da8466B296E382E5Da2Bf20962D0cB87200c78";
+
+addresses.mainnet.SupernovaOETHWETH = {};
+addresses.mainnet.SupernovaOETHWETH.pool =
+  "0x6c4ced4DE136538D10CD805ff68cdE69a52469Fd";
+addresses.mainnet.SupernovaOETHWETH.gauge =
+  "0xE9eAc35efB37Bd839413c5b29A26C6B32AdAE1De";
+
 // Mainnet Merkl
 addresses.mainnet.CampaignCreator =
   "0x8BB4C975Ff3c250e0ceEA271728547f3802B36Fd";
@@ -420,6 +440,8 @@ addresses.base.oethbBribesContract =
   "0x685ce0e36ca4b81f13b7551c76143d962568f6dd";
 
 addresses.base.OZRelayerAddress = "0xc0D6fa24D135c006dE5B8b2955935466A03D920a";
+addresses.base.MerklPoolBoosterBribesModule =
+  "0xf6B23291bF4993832b92A05c67d5f43eF3287C6a";
 
 // Base Curve
 addresses.base.CRV = "0x8Ee73c484A26e0A5df2Ee2a4960B789967dd0415";
@@ -671,13 +693,28 @@ addresses.hoodi.defenderRelayer = "0x419B6BdAE482f41b8B194515749F3A2Da26d583b";
 addresses.hoodi.mockBeaconRoots = "0xdCfcAE4A084AA843eE446f400B23aA7B6340484b";
 
 // Crosschain Strategy
-// TODO delete: master - remote test address: 0x1743658b284a843b47f555343dbb628d46d0c254
 addresses.base.CrossChainRemoteStrategy =
   "0xB1d624fc40824683e2bFBEfd19eB208DbBE00866";
 addresses.mainnet.CrossChainMasterStrategy =
   "0xB1d624fc40824683e2bFBEfd19eB208DbBE00866";
+addresses.mainnet.CrossChainHyperEVMMasterStrategy =
+  "0xE0228DB13F8C4Eb00fD1e08e076b09eF5cD0EA1e";
 // CCTP Circle Contract addresses: https://developers.circle.com/cctp/references/contract-addresses
 addresses.CCTPTokenMessengerV2 = "0x28b5a0e9c621a5badaa536219b3a228c8168cf5d";
 addresses.CCTPMessageTransmitterV2 =
   "0x81D40F21F12A8F0E3252Bccb954D722d4c464B64";
+
+// HyperEVM contracts
+addresses.hyperevm.USDC = "0xb88339CB7199b77E23DB6E890353E22632Ba630f";
+// Morpho V2 vault address on HyperEVM once deployed
+addresses.hyperevm.MorphoOusdV2Vault =
+  "0xE90959cbE7E56b5eBFF9AD12de611A4976F2d2B1";
+addresses.hyperevm.strategist = addresses.multichainStrategist;
+addresses.hyperevm.admin = "0x92A19381444A001d62cE67BaFF066fA1111d7202";
+addresses.hyperevm.timelock = "0x77121911A387c9e4Eae46345E0f831A6da8a1364";
+addresses.hyperevm.CrossChainRemoteStrategy =
+  "0xE0228DB13F8C4Eb00fD1e08e076b09eF5cD0EA1e";
+addresses.hyperevm.OZRelayerAddress =
+  "0xC79Ad862c66E140D1D1E3fE65D33f98d7b4a0517";
+
 module.exports = addresses;
