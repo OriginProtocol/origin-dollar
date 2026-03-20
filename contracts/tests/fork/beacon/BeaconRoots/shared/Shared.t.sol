@@ -30,8 +30,8 @@ abstract contract Fork_BeaconRoots_Shared_Test is BaseFork {
 
     function _blockTimestamp(uint256 blockNumber) internal returns (uint64) {
         string[] memory cmd = new string[](3);
-        cmd[0] = "/bin/zsh";
-        cmd[1] = "-lc";
+        cmd[0] = "/bin/bash";
+        cmd[1] = "-c";
         cmd[2] = string.concat("cast block ", vm.toString(blockNumber), " --json --rpc-url \"$MAINNET_PROVIDER_URL\"");
 
         string memory response = string(vm.ffi(cmd));
@@ -41,8 +41,8 @@ abstract contract Fork_BeaconRoots_Shared_Test is BaseFork {
 
     function _latestMainnetBlockNumber() internal returns (uint256) {
         string[] memory cmd = new string[](3);
-        cmd[0] = "/bin/zsh";
-        cmd[1] = "-lc";
+        cmd[0] = "/bin/bash";
+        cmd[1] = "-c";
         cmd[2] = "cast block latest --json --rpc-url \"$MAINNET_PROVIDER_URL\"";
 
         string memory response = string(vm.ffi(cmd));

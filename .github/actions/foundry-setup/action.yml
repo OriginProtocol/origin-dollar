@@ -17,3 +17,8 @@ runs:
       shell: bash
       working-directory: contracts
       run: bash install-deps.sh
+
+    - name: Build all artifacts
+      shell: bash
+      working-directory: contracts
+      run: forge build
