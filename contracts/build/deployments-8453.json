@@ -39,6 +39,10 @@
         {
             "implementation": "0xF611cC500eEE7E4e4763A05FE623E2363c86d2Af",
             "name": "AERODROME_AMO_STRATEGY_PROXY"
+        },
+        {
+            "implementation": "0xB1d624fc40824683e2bFBEfd19eB208DbBE00866",
+            "name": "CROSS_CHAIN_REMOTE_STRATEGY"
         }
     ],
     "executions": [
