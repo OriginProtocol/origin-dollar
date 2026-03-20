@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import {AbstractSafeModule} from "./AbstractSafeModule.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { AbstractSafeModule } from "./AbstractSafeModule.sol";
 
-import {ISafe} from "../interfaces/ISafe.sol";
-import {IStrategy} from "../interfaces/IStrategy.sol";
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { ISafe } from "../interfaces/ISafe.sol";
+import { IStrategy } from "../interfaces/IStrategy.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 contract ClaimStrategyRewardsSafeModule is AbstractSafeModule {
     using SafeERC20 for IERC20;
@@ -19,7 +19,11 @@ contract ClaimStrategyRewardsSafeModule is AbstractSafeModule {
 
     event ClaimRewardsFailed(address strategy);
 
-    constructor(address _safeAddress, address operator, address[] memory _strategies) AbstractSafeModule(_safeAddress) {
+    constructor(
+        address _safeAddress,
+        address operator,
+        address[] memory _strategies
+    ) AbstractSafeModule(_safeAddress) {
         _grantRole(OPERATOR_ROLE, operator);
 
         // Whitelist all strategies
@@ -57,12 +61,18 @@ contract ClaimStrategyRewardsSafeModule is AbstractSafeModule {
      * @dev Add a strategy to the whitelist
      * @param _strategy The address of the strategy to add
      */
-    function addStrategy(address _strategy) external onlyRole(DEFAULT_ADMIN_ROLE) {
+    function addStrategy(address _strategy)
+        external
+        onlyRole(DEFAULT_ADMIN_ROLE)
+    {
         _addStrategy(_strategy);
     }
 
     function _addStrategy(address _strategy) internal {
-        require(!isStrategyWhitelisted[_strategy], "Strategy already whitelisted");
+        require(
+            !isStrategyWhitelisted[_strategy],
+            "Strategy already whitelisted"
+        );
         isStrategyWhitelisted[_strategy] = true;
         strategies.push(_strategy);
         emit StrategyAdded(_strategy);
@@ -72,7 +82,10 @@ contract ClaimStrategyRewardsSafeModule is AbstractSafeModule {
      * @dev Remove a strategy from the whitelist
      * @param _strategy The address of the strategy to remove
      */
-    function removeStrategy(address _strategy) external onlyRole(DEFAULT_ADMIN_ROLE) {
+    function removeStrategy(address _strategy)
+        external
+        onlyRole(DEFAULT_ADMIN_ROLE)
+    {
         require(isStrategyWhitelisted[_strategy], "Strategy not whitelisted");
         isStrategyWhitelisted[_strategy] = false;
 

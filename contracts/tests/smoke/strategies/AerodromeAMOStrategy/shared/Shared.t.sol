@@ -77,19 +77,18 @@ abstract contract Smoke_AerodromeAMOStrategy_Shared_Test is BaseSmoke {
             uint256 amount = 10_000 ether;
             deal(address(weth), address(this), amount);
             IERC20(address(weth)).approve(BaseAddresses.swapRouter, amount);
-            ISwapRouter(BaseAddresses.swapRouter)
-                .exactInputSingle(
-                    ISwapRouter.ExactInputSingleParams({
-                        tokenIn: address(weth),
-                        tokenOut: address(oethBase),
-                        tickSpacing: int24(1),
-                        recipient: address(this),
-                        deadline: block.timestamp,
-                        amountIn: amount,
-                        amountOutMinimum: 0,
-                        sqrtPriceLimitX96: targetPrice
-                    })
-                );
+            ISwapRouter(BaseAddresses.swapRouter).exactInputSingle(
+                ISwapRouter.ExactInputSingleParams({
+                    tokenIn: address(weth),
+                    tokenOut: address(oethBase),
+                    tickSpacing: int24(1),
+                    recipient: address(this),
+                    deadline: block.timestamp,
+                    amountIn: amount,
+                    amountOutMinimum: 0,
+                    sqrtPriceLimitX96: targetPrice
+                })
+            );
         } else if (currentPrice < lowerPrice) {
             // Price is below range → swap OETHb in to push price up
             // Mint OETHb by dealing WETH to vault and minting
@@ -98,19 +97,18 @@ abstract contract Smoke_AerodromeAMOStrategy_Shared_Test is BaseSmoke {
             IERC20(address(weth)).approve(address(oethBaseVault), amount);
             oethBaseVault.mint(amount);
             IERC20(address(oethBase)).approve(BaseAddresses.swapRouter, amount);
-            ISwapRouter(BaseAddresses.swapRouter)
-                .exactInputSingle(
-                    ISwapRouter.ExactInputSingleParams({
-                        tokenIn: address(oethBase),
-                        tokenOut: address(weth),
-                        tickSpacing: int24(1),
-                        recipient: address(this),
-                        deadline: block.timestamp,
-                        amountIn: amount,
-                        amountOutMinimum: 0,
-                        sqrtPriceLimitX96: targetPrice
-                    })
-                );
+            ISwapRouter(BaseAddresses.swapRouter).exactInputSingle(
+                ISwapRouter.ExactInputSingleParams({
+                    tokenIn: address(oethBase),
+                    tokenOut: address(weth),
+                    tickSpacing: int24(1),
+                    recipient: address(this),
+                    deadline: block.timestamp,
+                    amountIn: amount,
+                    amountOutMinimum: 0,
+                    sqrtPriceLimitX96: targetPrice
+                })
+            );
         }
         // If already in range, do nothing
     }

@@ -35,7 +35,8 @@ abstract contract Smoke_BaseBridgeHelperModule_Shared_Test is BaseSmoke {
         _igniteDeployManager();
 
         require(address(resolver).code.length > 0, "Resolver not initialized on fork");
-        baseBridgeHelperModule = BaseBridgeHelperModule(payable(resolver.resolve("BASE_BRIDGE_HELPER_MODULE")));
+        baseBridgeHelperModule =
+            BaseBridgeHelperModule(payable(resolver.resolve("BASE_BRIDGE_HELPER_MODULE")));
         vm.label(address(baseBridgeHelperModule), "BaseBridgeHelperModule");
 
         vault = IVault(resolver.resolve("OETHBASE_VAULT_PROXY"));

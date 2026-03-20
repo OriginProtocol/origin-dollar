@@ -1,9 +1,8 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import {
-    Smoke_EthereumBridgeHelperModule_Shared_Test
-} from "tests/smoke/automation/EthereumBridgeHelperModule/shared/Shared.t.sol";
+import {Smoke_EthereumBridgeHelperModule_Shared_Test} from
+    "tests/smoke/automation/EthereumBridgeHelperModule/shared/Shared.t.sol";
 import {Mainnet} from "tests/utils/Addresses.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
@@ -99,4 +98,5 @@ contract Smoke_Concrete_EthereumBridgeHelperModule_Test is Smoke_EthereumBridgeH
         assertLt(weth.balanceOf(safe), safeWethBefore, "Safe WETH should decrease");
         assertEq(woeth.balanceOf(safe), safeWoethBefore, "Safe wOETH should be unchanged");
     }
+
 }

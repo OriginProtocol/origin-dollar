@@ -2,19 +2,13 @@
 pragma solidity ^0.8.0;
 
 // Helpers
-import {Logger} from "scripts/deploy/helpers/Logger.sol";
-import {Resolver} from "scripts/deploy/helpers/Resolver.sol";
-import {GovHelper} from "scripts/deploy/helpers/GovHelper.sol";
-import {
-    State,
-    Contract,
-    GovProposal,
-    NO_GOVERNANCE,
-    GOVERNANCE_PENDING
-} from "scripts/deploy/helpers/DeploymentTypes.sol";
+import { Logger } from "scripts/deploy/helpers/Logger.sol";
+import { Resolver } from "scripts/deploy/helpers/Resolver.sol";
+import { GovHelper } from "scripts/deploy/helpers/GovHelper.sol";
+import { State, Contract, GovProposal, NO_GOVERNANCE, GOVERNANCE_PENDING } from "scripts/deploy/helpers/DeploymentTypes.sol";
 
 // Script Base
-import {Base} from "scripts/deploy/Base.s.sol";
+import { Base } from "scripts/deploy/Base.s.sol";
 
 /// @title AbstractDeployScript
 /// @notice Base abstract contract for orchestrating smart contract deployments.
@@ -95,15 +89,21 @@ abstract contract AbstractDeployScript is Base {
         // ===== Step 2: Load Deployer Address =====
         // The deployer address must be set in the .env file
         if (!vm.envExists("DEPLOYER_ADDRESS")) {
-            require(state != State.REAL_DEPLOYING, "DEPLOYER_ADDRESS not set in .env");
-            log.warn("DEPLOYER_ADDRESS not set in .env, using address(0) for fork simulation");
+            require(
+                state != State.REAL_DEPLOYING,
+                "DEPLOYER_ADDRESS not set in .env"
+            );
+            log.warn(
+                "DEPLOYER_ADDRESS not set in .env, using address(0) for fork simulation"
+            );
             deployer = address(0x1);
         } else {
             deployer = vm.envAddress("DEPLOYER_ADDRESS");
         }
 
         // Log deployer info with simulation indicator for fork modes
-        bool isSimulation = state == State.FORK_TEST || state == State.FORK_DEPLOYING;
+        bool isSimulation = state == State.FORK_TEST ||
+            state == State.FORK_DEPLOYING;
         log.logDeployer(deployer, isSimulation);
 
         // ===== Step 3: Start Transaction Context =====
@@ -146,7 +146,10 @@ abstract contract AbstractDeployScript is Base {
             log.info("No governance proposal to handle");
         } else {
             // Ensure proposal has a description for clarity
-            require(bytes(govProposal.description).length != 0, "Governance proposal missing description");
+            require(
+                bytes(govProposal.description).length != 0,
+                "Governance proposal missing description"
+            );
 
             // Process governance proposal based on state
             if (state == State.REAL_DEPLOYING) {
@@ -179,9 +182,14 @@ abstract contract AbstractDeployScript is Base {
     ///      ```
     /// @param contractName Identifier for the contract (e.g., "LIDO_ARM", "ETHENA_ARM_IMPL")
     /// @param implementation The deployed contract address
-    function _recordDeployment(string memory contractName, address implementation) internal virtual {
+    function _recordDeployment(
+        string memory contractName,
+        address implementation
+    ) internal virtual {
         // Add to local array for batch persistence later
-        contracts.push(Contract({implementation: implementation, name: contractName}));
+        contracts.push(
+            Contract({ implementation: implementation, name: contractName })
+        );
 
         // Log the deployment for visibility
         log.logContractDeployed(contractName, implementation);
@@ -193,7 +201,10 @@ abstract contract AbstractDeployScript is Base {
     ///      registers them in the global Resolver for cross-script access.
     function _storeContracts() internal virtual {
         for (uint256 i = 0; i < contracts.length; i++) {
-            resolver.addContract(contracts[i].name, contracts[i].implementation);
+            resolver.addContract(
+                contracts[i].name,
+                contracts[i].implementation
+            );
         }
     }
 

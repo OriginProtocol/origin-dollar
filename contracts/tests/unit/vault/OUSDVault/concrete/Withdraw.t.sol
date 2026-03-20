@@ -350,7 +350,9 @@ contract Unit_Concrete_OUSDVault_Withdraw_Test is Unit_Shared_Test {
         // Try deposit 23 → should fail
         vm.prank(governor);
         vm.expectRevert("Not enough assets available");
-        ousdVault.depositToStrategy(address(strategy), _toArray(address(usdc)), _toArray(uint256(23e6)));
+        ousdVault.depositToStrategy(
+            address(strategy), _toArray(address(usdc)), _toArray(uint256(23e6))
+        );
     }
 
     function test_strategy_depositUnallocatedUSDC() public {
@@ -358,7 +360,9 @@ contract Unit_Concrete_OUSDVault_Withdraw_Test is Unit_Shared_Test {
 
         // 22 USDC available
         vm.prank(governor);
-        ousdVault.depositToStrategy(address(strategy), _toArray(address(usdc)), _toArray(uint256(22e6)));
+        ousdVault.depositToStrategy(
+            address(strategy), _toArray(address(usdc)), _toArray(uint256(22e6))
+        );
     }
 
     function test_strategy_allocateRespectsQueueAndBuffer() public {
@@ -389,7 +393,9 @@ contract Unit_Concrete_OUSDVault_Withdraw_Test is Unit_Shared_Test {
 
         // Withdraw 8 USDC from strategy
         vm.prank(strategist);
-        ousdVault.withdrawFromStrategy(address(strategy), _toArray(address(usdc)), _toArray(uint256(8e6)));
+        ousdVault.withdrawFromStrategy(
+            address(strategy), _toArray(address(usdc)), _toArray(uint256(8e6))
+        );
 
         vm.warp(block.timestamp + DELAY_PERIOD);
 
@@ -495,7 +501,9 @@ contract Unit_Concrete_OUSDVault_Withdraw_Test is Unit_Shared_Test {
         MockStrategy strategy = _deployAndApproveStrategy();
 
         vm.prank(governor);
-        ousdVault.depositToStrategy(address(strategy), _toArray(address(usdc)), _toArray(uint256(85e6)));
+        ousdVault.depositToStrategy(
+            address(strategy), _toArray(address(usdc)), _toArray(uint256(85e6))
+        );
 
         vm.prank(governor);
         ousdVault.setVaultBuffer(1e16); // 1%
@@ -548,7 +556,9 @@ contract Unit_Concrete_OUSDVault_Withdraw_Test is Unit_Shared_Test {
         MockStrategy strategy = _deployAndApproveStrategy();
 
         vm.prank(governor);
-        ousdVault.depositToStrategy(address(strategy), _toArray(address(usdc)), _toArray(uint256(85e6)));
+        ousdVault.depositToStrategy(
+            address(strategy), _toArray(address(usdc)), _toArray(uint256(85e6))
+        );
 
         vm.prank(governor);
         ousdVault.setVaultBuffer(1e16); // 1%
@@ -567,7 +577,9 @@ contract Unit_Concrete_OUSDVault_Withdraw_Test is Unit_Shared_Test {
 
         // Should be able to deposit 1 USDC to strategy
         vm.prank(governor);
-        ousdVault.depositToStrategy(address(strategy), _toArray(address(usdc)), _toArray(uint256(1e6)));
+        ousdVault.depositToStrategy(
+            address(strategy), _toArray(address(usdc)), _toArray(uint256(1e6))
+        );
     }
 
     //////////////////////////////////////////////////////
@@ -1041,7 +1053,9 @@ contract Unit_Concrete_OUSDVault_Withdraw_Test is Unit_Shared_Test {
 
         // Deposit 15 USDC to strategy (leaves 45 USDC in vault)
         vm.prank(governor);
-        ousdVault.depositToStrategy(address(strategy), _toArray(address(usdc)), _toArray(uint256(15e6)));
+        ousdVault.depositToStrategy(
+            address(strategy), _toArray(address(usdc)), _toArray(uint256(15e6))
+        );
 
         // Request 5 + 18 = 23 OUSD withdrawal (leaves 22 USDC unallocated)
         vm.prank(daniel);
@@ -1077,7 +1091,9 @@ contract Unit_Concrete_OUSDVault_Withdraw_Test is Unit_Shared_Test {
 
         // Withdraw 40 USDC from strategy to vault
         vm.prank(strategist);
-        ousdVault.withdrawFromStrategy(address(strategy), _toArray(address(usdc)), _toArray(uint256(40e6)));
+        ousdVault.withdrawFromStrategy(
+            address(strategy), _toArray(address(usdc)), _toArray(uint256(40e6))
+        );
 
         ousdVault.addWithdrawalQueueLiquidity();
 
@@ -1116,7 +1132,9 @@ contract Unit_Concrete_OUSDVault_Withdraw_Test is Unit_Shared_Test {
 
         // Withdraw 15 USDC to vault
         vm.prank(strategist);
-        ousdVault.withdrawFromStrategy(address(strategy), _toArray(address(usdc)), _toArray(uint256(15e6)));
+        ousdVault.withdrawFromStrategy(
+            address(strategy), _toArray(address(usdc)), _toArray(uint256(15e6))
+        );
 
         ousdVault.addWithdrawalQueueLiquidity();
 

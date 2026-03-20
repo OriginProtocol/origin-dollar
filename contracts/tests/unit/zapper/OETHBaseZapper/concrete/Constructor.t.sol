@@ -17,7 +17,11 @@ contract Unit_Concrete_OETHBaseZapper_Constructor_Test is Unit_OETHZapper_Shared
     function test_constructor_hardcodesBaseWETH() public {
         _etchBaseWETH();
 
-        oethBaseZapper = new OETHBaseZapper(address(oeth), address(woeth), address(oethVault));
+        oethBaseZapper = new OETHBaseZapper(
+            address(oeth),
+            address(woeth),
+            address(oethVault)
+        );
 
         assertEq(address(oethBaseZapper.weth()), BASE_WETH);
     }
@@ -25,7 +29,11 @@ contract Unit_Concrete_OETHBaseZapper_Constructor_Test is Unit_OETHZapper_Shared
     function test_constructor_setsImmutables() public {
         _etchBaseWETH();
 
-        oethBaseZapper = new OETHBaseZapper(address(oeth), address(woeth), address(oethVault));
+        oethBaseZapper = new OETHBaseZapper(
+            address(oeth),
+            address(woeth),
+            address(oethVault)
+        );
 
         assertEq(address(oethBaseZapper.oToken()), address(oeth));
         assertEq(address(oethBaseZapper.wOToken()), address(woeth));

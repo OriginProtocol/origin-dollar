@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import {Unit_SonicSwapXAMOStrategy_Shared_Test} from "tests/unit/strategies/SonicSwapXAMOStrategy/shared/Shared.t.sol";
+import {Unit_SonicSwapXAMOStrategy_Shared_Test} from
+    "tests/unit/strategies/SonicSwapXAMOStrategy/shared/Shared.t.sol";
 
 contract Unit_Concrete_SonicSwapXAMOStrategy_ViewFunctions_Test is Unit_SonicSwapXAMOStrategy_Shared_Test {
     function test_supportsAsset_trueForWS() public view {

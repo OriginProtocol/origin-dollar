@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import {Unit_BaseCurveAMOStrategy_Shared_Test} from "tests/unit/strategies/BaseCurveAMOStrategy/shared/Shared.t.sol";
+import {Unit_BaseCurveAMOStrategy_Shared_Test} from
+    "tests/unit/strategies/BaseCurveAMOStrategy/shared/Shared.t.sol";
 
 contract Unit_Fuzz_BaseCurveAMOStrategy_CheckBalance_Test is Unit_BaseCurveAMOStrategy_Shared_Test {
     /// @notice checkBalance matches expected: directBalance + (gaugeBalance * virtualPrice / 1e18)

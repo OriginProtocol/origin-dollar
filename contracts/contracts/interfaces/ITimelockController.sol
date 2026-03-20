@@ -8,7 +8,10 @@ interface ITimelockController {
 
     function renounceRole(bytes32 role, address account) external;
 
-    function hasRole(bytes32 role, address account) external view returns (bool);
+    function hasRole(bytes32 role, address account)
+        external
+        view
+        returns (bool);
 
     function executeBatch(
         address[] calldata targets,

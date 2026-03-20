@@ -101,7 +101,7 @@ contract Unit_Concrete_OUSD_ViewFunctions_Test is Unit_OUSD_Shared_Test {
     }
 
     function test_creditsBalanceOfHighres_alwaysReturnsTrue() public view {
-        (,, bool isUpgraded) = ousd.creditsBalanceOfHighres(alice);
+        (, , bool isUpgraded) = ousd.creditsBalanceOfHighres(alice);
         assertTrue(isUpgraded);
     }
 

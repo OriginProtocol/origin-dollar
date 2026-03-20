@@ -1,12 +1,13 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import {
-    Smoke_ClaimStrategyRewardsSafeModule_Shared_Test
-} from "tests/smoke/automation/ClaimStrategyRewardsSafeModule/shared/Shared.t.sol";
+import {Smoke_ClaimStrategyRewardsSafeModule_Shared_Test} from
+    "tests/smoke/automation/ClaimStrategyRewardsSafeModule/shared/Shared.t.sol";
 import {Vm} from "forge-std/Vm.sol";
 
-contract Smoke_Concrete_ClaimStrategyRewardsSafeModule_Test is Smoke_ClaimStrategyRewardsSafeModule_Shared_Test {
+contract Smoke_Concrete_ClaimStrategyRewardsSafeModule_Test is
+    Smoke_ClaimStrategyRewardsSafeModule_Shared_Test
+{
     function test_safeContract() public view {
         assertNotEq(address(claimStrategyRewardsModule.safeContract()), address(0));
     }

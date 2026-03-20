@@ -22,8 +22,9 @@ contract Unit_Concrete_Proxy_UpgradeToAndCall_Test is Unit_Proxies_Shared_Test {
         assertEq(proxy.implementation(), address(implV2));
 
         // Verify delegatecall executed
-        (bool success, bytes memory result) =
-            address(proxy).staticcall(abi.encodeWithSelector(MockImplementationV2.getVersion.selector));
+        (bool success, bytes memory result) = address(proxy).staticcall(
+            abi.encodeWithSelector(MockImplementationV2.getVersion.selector)
+        );
         assertTrue(success);
         assertEq(abi.decode(result, (uint256)), 2);
     }

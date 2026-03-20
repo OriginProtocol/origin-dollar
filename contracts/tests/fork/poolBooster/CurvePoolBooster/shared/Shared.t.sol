@@ -47,7 +47,10 @@ abstract contract Fork_CurvePoolBooster_Shared_Test is BaseFork {
         vm.store(address(centralRegistry), GOVERNOR_SLOT, bytes32(uint256(uint160(Mainnet.Timelock))));
 
         // 3. Deploy CurvePoolBoosterPlain
-        curvePoolBoosterPlain = new CurvePoolBoosterPlain(address(ousdToken), Mainnet.CurveOUSDUSDTGauge);
+        curvePoolBoosterPlain = new CurvePoolBoosterPlain(
+            address(ousdToken),
+            Mainnet.CurveOUSDUSDTGauge
+        );
         curvePoolBoosterPlain.initialize(
             Mainnet.Timelock,
             CrossChain.multichainStrategist,
@@ -59,7 +62,11 @@ abstract contract Fork_CurvePoolBooster_Shared_Test is BaseFork {
 
         // 4. Deploy CurvePoolBoosterFactory
         curvePoolBoosterFactory = new CurvePoolBoosterFactory();
-        curvePoolBoosterFactory.initialize(Mainnet.Timelock, CrossChain.multichainStrategist, address(centralRegistry));
+        curvePoolBoosterFactory.initialize(
+            Mainnet.Timelock,
+            CrossChain.multichainStrategist,
+            address(centralRegistry)
+        );
 
         // 5. Approve factory on registry
         vm.prank(Mainnet.Timelock);

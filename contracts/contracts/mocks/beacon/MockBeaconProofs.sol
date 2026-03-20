@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import {IBeaconProofs} from "../../interfaces/IBeaconProofs.sol";
+import { IBeaconProofs } from "../../interfaces/IBeaconProofs.sol";
 
 // solhint-disable no-unused-vars
 
@@ -20,7 +20,9 @@ contract MockBeaconProofs is IBeaconProofs {
     // mapping of validator indexes to validator balances
     mapping(uint40 => uint256) public validatorBalances;
 
-    function setValidatorBalance(uint40 index, uint256 validatorBalanceGwei) external {
+    function setValidatorBalance(uint40 index, uint256 validatorBalanceGwei)
+        external
+    {
         // set special max value instead of 0
         if (validatorBalanceGwei == 0) {
             validatorBalances[index] = type(uint256).max;
@@ -133,7 +135,10 @@ contract MockBeaconProofs is IBeaconProofs {
         uint64 slot,
         bytes calldata firstPendingDepositSlotProof
     ) external view returns (bool isEmptyDepositQueue) {
-        if (firstPendingDepositSlotProof.length == FIRST_PENDING_DEPOSIT_PROOF_LENGTH) {
+        if (
+            firstPendingDepositSlotProof.length ==
+            FIRST_PENDING_DEPOSIT_PROOF_LENGTH
+        ) {
             isEmptyDepositQueue = true;
         }
     }
@@ -145,10 +150,23 @@ contract MockBeaconProofs is IBeaconProofs {
         bytes calldata signature,
         uint64 slot
     ) external pure returns (bytes32) {
-        return keccak256(abi.encodePacked(pubKeyHash, withdrawalCredentials, amountGwei, signature, slot));
+        return
+            keccak256(
+                abi.encodePacked(
+                    pubKeyHash,
+                    withdrawalCredentials,
+                    amountGwei,
+                    signature,
+                    slot
+                )
+            );
     }
 
-    function merkleizeSignature(bytes calldata signature) external pure returns (bytes32 root) {
+    function merkleizeSignature(bytes calldata signature)
+        external
+        pure
+        returns (bytes32 root)
+    {
         return keccak256(abi.encodePacked(signature));
     }
 }

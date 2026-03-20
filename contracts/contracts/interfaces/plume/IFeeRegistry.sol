@@ -5,5 +5,9 @@
 pragma solidity ^0.8.25;
 
 interface IFeeRegistry {
-    function registerFee(bool isTokenA, uint32 binId, uint256 binFeeInQuote) external;
+    function registerFee(
+        bool isTokenA,
+        uint32 binId,
+        uint256 binFeeInQuote
+    ) external;
 }

@@ -126,8 +126,8 @@ abstract contract Unit_OUSD_Shared_Test is Base {
 
     /// @dev Assert the supply invariant: rebasingSupply + nonRebasingSupply ≈ totalSupply
     function _assertSupplyInvariant() internal view {
-        uint256 calculatedSupply =
-            (ousd.rebasingCreditsHighres() * 1e18) / ousd.rebasingCreditsPerTokenHighres() + ousd.nonRebasingSupply();
+        uint256 calculatedSupply = (ousd.rebasingCreditsHighres() * 1e18) / ousd.rebasingCreditsPerTokenHighres()
+            + ousd.nonRebasingSupply();
         assertApproxEqAbs(calculatedSupply, ousd.totalSupply(), 1);
     }
 

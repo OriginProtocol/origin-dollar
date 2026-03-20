@@ -70,7 +70,9 @@ abstract contract Unit_WOETHCCIPZapper_Shared_Test is Base {
         );
 
         oethVaultProxy.initialize(
-            address(oethVaultImpl), governor, abi.encodeWithSignature("initialize(address)", address(oethProxy))
+            address(oethVaultImpl),
+            governor,
+            abi.encodeWithSignature("initialize(address)", address(oethProxy))
         );
 
         vm.stopPrank();
@@ -95,7 +97,12 @@ abstract contract Unit_WOETHCCIPZapper_Shared_Test is Base {
     }
 
     function _deployOETHZapper() internal {
-        oethZapper = new OETHZapper(address(oeth), address(woeth), address(oethVault), address(weth));
+        oethZapper = new OETHZapper(
+            address(oeth),
+            address(woeth),
+            address(oethVault),
+            address(weth)
+        );
     }
 
     function _deployWOETHCCIPZapper() internal {
@@ -127,11 +134,19 @@ abstract contract Unit_WOETHCCIPZapper_Shared_Test is Base {
     }
 
     function _mockCCIPFee(uint256 fee) internal {
-        vm.mockCall(ccipRouter, abi.encodeWithSelector(IRouterClient.getFee.selector), abi.encode(fee));
+        vm.mockCall(
+            ccipRouter,
+            abi.encodeWithSelector(IRouterClient.getFee.selector),
+            abi.encode(fee)
+        );
     }
 
     function _mockCCIPSend(bytes32 messageId) internal {
-        vm.mockCall(ccipRouter, abi.encodeWithSelector(IRouterClient.ccipSend.selector), abi.encode(messageId));
+        vm.mockCall(
+            ccipRouter,
+            abi.encodeWithSelector(IRouterClient.ccipSend.selector),
+            abi.encode(messageId)
+        );
     }
 
     //////////////////////////////////////////////////////

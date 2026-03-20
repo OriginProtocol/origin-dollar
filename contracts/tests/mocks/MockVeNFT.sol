@@ -13,7 +13,11 @@ contract MockVeNFT {
         _ownerTokens[owner] = tokenIds;
     }
 
-    function ownerToNFTokenIdList(address owner, uint256 index) external view returns (uint256) {
+    function ownerToNFTokenIdList(address owner, uint256 index)
+        external
+        view
+        returns (uint256)
+    {
         if (index >= _ownerTokens[owner].length) return 0;
         return _ownerTokens[owner][index];
     }

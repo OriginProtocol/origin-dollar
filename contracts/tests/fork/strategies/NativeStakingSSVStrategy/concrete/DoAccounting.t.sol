@@ -1,12 +1,13 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import {
-    Fork_NativeStakingSSVStrategy_Shared_Test
-} from "tests/fork/strategies/NativeStakingSSVStrategy/shared/Shared.t.sol";
+import {Fork_NativeStakingSSVStrategy_Shared_Test} from
+    "tests/fork/strategies/NativeStakingSSVStrategy/shared/Shared.t.sol";
 import {ValidatorAccountant} from "contracts/strategies/NativeStaking/ValidatorAccountant.sol";
 
-contract Fork_Concrete_NativeStakingSSVStrategy_DoAccounting_Test is Fork_NativeStakingSSVStrategy_Shared_Test {
+contract Fork_Concrete_NativeStakingSSVStrategy_DoAccounting_Test
+    is Fork_NativeStakingSSVStrategy_Shared_Test
+{
     uint256 internal strategyBalanceBefore;
     uint256 internal consensusRewardsBefore;
     uint256 internal constant ACTIVE_VALIDATORS = 30_000;
@@ -23,7 +24,11 @@ contract Fork_Concrete_NativeStakingSSVStrategy_DoAccounting_Test is Fork_Native
         harvester.harvestAndTransfer(address(nativeStakingSSVStrategy));
 
         // Set activeDepositedValidators to a high number (slot 52)
-        vm.store(address(nativeStakingSSVStrategy), bytes32(uint256(52)), bytes32(uint256(ACTIVE_VALIDATORS)));
+        vm.store(
+            address(nativeStakingSSVStrategy),
+            bytes32(uint256(52)),
+            bytes32(uint256(ACTIVE_VALIDATORS))
+        );
 
         strategyBalanceBefore = nativeStakingSSVStrategy.checkBalance(address(weth));
         consensusRewardsBefore = nativeStakingSSVStrategy.consensusRewards();
@@ -87,12 +92,16 @@ contract Fork_Concrete_NativeStakingSSVStrategy_DoAccounting_Test is Fork_Native
 
         // activeDepositedValidators should decrease
         assertEq(
-            nativeStakingSSVStrategy.activeDepositedValidators(), ACTIVE_VALIDATORS - 2, "active validators decreases"
+            nativeStakingSSVStrategy.activeDepositedValidators(),
+            ACTIVE_VALIDATORS - 2,
+            "active validators decreases"
         );
 
         // Vault WETH should increase by withdrawal amount
         assertEq(
-            weth.balanceOf(address(oethVault)), vaultWethBalanceBefore + withdrawals, "WETH in vault should increase"
+            weth.balanceOf(address(oethVault)),
+            vaultWethBalanceBefore + withdrawals,
+            "WETH in vault should increase"
         );
     }
 }

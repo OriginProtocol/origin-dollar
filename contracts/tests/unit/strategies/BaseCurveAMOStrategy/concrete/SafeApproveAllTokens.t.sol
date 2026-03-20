@@ -2,7 +2,8 @@
 pragma solidity ^0.8.0;
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {Unit_BaseCurveAMOStrategy_Shared_Test} from "tests/unit/strategies/BaseCurveAMOStrategy/shared/Shared.t.sol";
+import {Unit_BaseCurveAMOStrategy_Shared_Test} from
+    "tests/unit/strategies/BaseCurveAMOStrategy/shared/Shared.t.sol";
 
 contract Unit_Concrete_BaseCurveAMOStrategy_SafeApproveAllTokens_Test is Unit_BaseCurveAMOStrategy_Shared_Test {
     function test_safeApproveAllTokens_setsApprovals() public {

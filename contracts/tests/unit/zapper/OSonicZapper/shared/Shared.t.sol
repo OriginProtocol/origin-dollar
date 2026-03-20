@@ -69,7 +69,9 @@ abstract contract Unit_OSonicZapper_Shared_Test is Base {
         );
 
         oethVaultProxy.initialize(
-            address(vaultImpl), governor, abi.encodeWithSignature("initialize(address)", address(oethProxy))
+            address(vaultImpl),
+            governor,
+            abi.encodeWithSignature("initialize(address)", address(oethProxy))
         );
 
         vm.stopPrank();
@@ -94,7 +96,11 @@ abstract contract Unit_OSonicZapper_Shared_Test is Base {
     }
 
     function _deployZapper() internal {
-        oSonicZapper = new OSonicZapper(address(oSonic), address(woSonic), address(oethVault));
+        oSonicZapper = new OSonicZapper(
+            address(oSonic),
+            address(woSonic),
+            address(oethVault)
+        );
     }
 
     function _configureContracts() internal {

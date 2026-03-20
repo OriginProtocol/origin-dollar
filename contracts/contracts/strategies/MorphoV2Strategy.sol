@@ -6,10 +6,10 @@ pragma solidity ^0.8.0;
  * @notice Investment strategy for ERC-4626 Tokenized Vaults for the Morpho V2 platform.
  * @author Origin Protocol Inc
  */
-import {Generalized4626Strategy} from "./Generalized4626Strategy.sol";
-import {MorphoV2VaultUtils} from "./MorphoV2VaultUtils.sol";
-import {IVaultV2} from "../interfaces/morpho/IVaultV2.sol";
-import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
+import { Generalized4626Strategy } from "./Generalized4626Strategy.sol";
+import { MorphoV2VaultUtils } from "./MorphoV2VaultUtils.sol";
+import { IVaultV2 } from "../interfaces/morpho/IVaultV2.sol";
+import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
 
 contract MorphoV2Strategy is Generalized4626Strategy {
     /**
@@ -31,23 +31,47 @@ contract MorphoV2Strategy is Generalized4626Strategy {
      *      liquid assets residing on the Vault V2 contract and the maxWithdraw
      *      amount that the Morpho V1 contract can supply.
      */
-    function withdrawAll() external virtual override onlyVaultOrGovernor nonReentrant {
+    function withdrawAll()
+        external
+        virtual
+        override
+        onlyVaultOrGovernor
+        nonReentrant
+    {
         uint256 availableMorphoVault = _maxWithdraw();
-        uint256 balanceToWithdraw = Math.min(availableMorphoVault, checkBalance(address(assetToken)));
+        uint256 balanceToWithdraw = Math.min(
+            availableMorphoVault,
+            checkBalance(address(assetToken))
+        );
 
         if (balanceToWithdraw > 0) {
             // slither-disable-next-line unused-return
-            IVaultV2(platformAddress).withdraw(balanceToWithdraw, vaultAddress, address(this));
+            IVaultV2(platformAddress).withdraw(
+                balanceToWithdraw,
+                vaultAddress,
+                address(this)
+            );
         }
 
-        emit Withdrawal(address(assetToken), address(shareToken), balanceToWithdraw);
+        emit Withdrawal(
+            address(assetToken),
+            address(shareToken),
+            balanceToWithdraw
+        );
     }
 
     function maxWithdraw() external view returns (uint256) {
         return _maxWithdraw();
     }
 
-    function _maxWithdraw() internal view returns (uint256 availableAssetLiquidity) {
-        availableAssetLiquidity = MorphoV2VaultUtils.maxWithdrawableAssets(platformAddress, address(assetToken));
+    function _maxWithdraw()
+        internal
+        view
+        returns (uint256 availableAssetLiquidity)
+    {
+        availableAssetLiquidity = MorphoV2VaultUtils.maxWithdrawableAssets(
+            platformAddress,
+            address(assetToken)
+        );
     }
 }

@@ -1,9 +1,12 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import {Unit_ClaimBribesSafeModule_Shared_Test} from "tests/unit/automation/ClaimBribesSafeModule/shared/Shared.t.sol";
+import {Unit_ClaimBribesSafeModule_Shared_Test} from
+    "tests/unit/automation/ClaimBribesSafeModule/shared/Shared.t.sol";
 
-contract Unit_Concrete_ClaimBribesSafeModule_UpdateRewardTokenAddresses_Test is Unit_ClaimBribesSafeModule_Shared_Test {
+contract Unit_Concrete_ClaimBribesSafeModule_UpdateRewardTokenAddresses_Test
+    is Unit_ClaimBribesSafeModule_Shared_Test
+{
     //////////////////////////////////////////////////////
     /// --- UPDATE REWARD TOKEN ADDRESSES
     //////////////////////////////////////////////////////

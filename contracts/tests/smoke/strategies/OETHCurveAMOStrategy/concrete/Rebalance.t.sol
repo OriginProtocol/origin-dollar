@@ -58,7 +58,11 @@ contract Smoke_Concrete_OETHCurveAMOStrategy_Rebalance_Test is Smoke_OETHCurveAM
         vm.prank(strategist);
         curveAMOStrategy.mintAndAddOTokens(500 ether);
 
-        assertEq(IERC20(address(oeth)).balanceOf(address(curveAMOStrategy)), 0, "No residual OETH on strategy");
+        assertEq(
+            IERC20(address(oeth)).balanceOf(address(curveAMOStrategy)),
+            0,
+            "No residual OETH on strategy"
+        );
         assertEq(weth.balanceOf(address(curveAMOStrategy)), 0, "No residual WETH on strategy");
     }
 

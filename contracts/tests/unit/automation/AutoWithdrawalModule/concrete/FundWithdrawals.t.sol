@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import {Unit_AutoWithdrawalModule_Shared_Test} from "tests/unit/automation/AutoWithdrawalModule/shared/Shared.t.sol";
+import {Unit_AutoWithdrawalModule_Shared_Test} from
+    "tests/unit/automation/AutoWithdrawalModule/shared/Shared.t.sol";
 
 import {AutoWithdrawalModule} from "contracts/automation/AutoWithdrawalModule.sol";
 
@@ -27,7 +28,9 @@ contract Unit_Concrete_AutoWithdrawalModule_FundWithdrawals_Test is Unit_AutoWit
         mockStrategy.setNextBalance(0);
 
         vm.expectEmit(true, false, false, true, address(autoWithdrawalModule));
-        emit AutoWithdrawalModule.InsufficientStrategyLiquidity(address(mockStrategy), 100e18, 0);
+        emit AutoWithdrawalModule.InsufficientStrategyLiquidity(
+            address(mockStrategy), 100e18, 0
+        );
 
         vm.prank(operator);
         autoWithdrawalModule.fundWithdrawals();
@@ -44,7 +47,9 @@ contract Unit_Concrete_AutoWithdrawalModule_FundWithdrawals_Test is Unit_AutoWit
         mockStrategy.setNextBalance(shortfall);
 
         vm.expectEmit(true, false, false, true, address(autoWithdrawalModule));
-        emit AutoWithdrawalModule.LiquidityWithdrawn(address(mockStrategy), shortfall, 0);
+        emit AutoWithdrawalModule.LiquidityWithdrawn(
+            address(mockStrategy), shortfall, 0
+        );
 
         vm.prank(operator);
         autoWithdrawalModule.fundWithdrawals();
@@ -83,7 +88,9 @@ contract Unit_Concrete_AutoWithdrawalModule_FundWithdrawals_Test is Unit_AutoWit
         mockSafe.setShouldFail(true);
 
         vm.expectEmit(true, false, false, true, address(autoWithdrawalModule));
-        emit AutoWithdrawalModule.WithdrawalFailed(address(mockStrategy), shortfall);
+        emit AutoWithdrawalModule.WithdrawalFailed(
+            address(mockStrategy), shortfall
+        );
 
         vm.prank(operator);
         autoWithdrawalModule.fundWithdrawals();

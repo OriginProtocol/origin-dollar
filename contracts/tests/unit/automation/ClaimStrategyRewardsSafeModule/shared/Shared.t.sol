@@ -41,7 +41,11 @@ abstract contract Unit_ClaimStrategyRewardsSafeModule_Shared_Test is Base {
         initialStrategies[0] = strategyA;
         initialStrategies[1] = strategyB;
 
-        claimStrategyRewardsModule = new ClaimStrategyRewardsSafeModule(address(mockSafe), operator, initialStrategies);
+        claimStrategyRewardsModule = new ClaimStrategyRewardsSafeModule(
+            address(mockSafe),
+            operator,
+            initialStrategies
+        );
     }
 
     //////////////////////////////////////////////////////

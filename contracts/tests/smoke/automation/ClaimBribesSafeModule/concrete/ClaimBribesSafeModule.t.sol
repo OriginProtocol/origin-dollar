@@ -1,9 +1,8 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import {
-    Smoke_ClaimBribesSafeModule_Shared_Test
-} from "tests/smoke/automation/ClaimBribesSafeModule/shared/Shared.t.sol";
+import {Smoke_ClaimBribesSafeModule_Shared_Test} from
+    "tests/smoke/automation/ClaimBribesSafeModule/shared/Shared.t.sol";
 import {Base} from "tests/utils/Addresses.sol";
 
 contract Smoke_Concrete_ClaimBribesSafeModule_Test is Smoke_ClaimBribesSafeModule_Shared_Test {

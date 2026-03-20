@@ -7,15 +7,15 @@ pragma solidity ^0.8.0;
  * @author Origin Protocol Inc
  */
 
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import {Address} from "@openzeppelin/contracts/utils/Address.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { Address } from "@openzeppelin/contracts/utils/Address.sol";
 
-import {IStrategy} from "../interfaces/IStrategy.sol";
-import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
-import {Governable} from "../governance/Governable.sol";
-import {OUSD} from "../token/OUSD.sol";
-import {Initializable} from "../utils/Initializable.sol";
+import { IStrategy } from "../interfaces/IStrategy.sol";
+import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
+import { Governable } from "../governance/Governable.sol";
+import { OUSD } from "../token/OUSD.sol";
+import { Initializable } from "../utils/Initializable.sol";
 import "../utils/Helpers.sol";
 
 abstract contract VaultStorage is Initializable, Governable {
@@ -44,9 +44,16 @@ abstract contract VaultStorage is Initializable, Governable {
     event RebasePerSecondMaxChanged(uint256 rebaseRatePerSecond);
     event DripDurationChanged(uint256 dripDuration);
     event WithdrawalRequested(
-        address indexed _withdrawer, uint256 indexed _requestId, uint256 _amount, uint256 _queued
+        address indexed _withdrawer,
+        uint256 indexed _requestId,
+        uint256 _amount,
+        uint256 _queued
     );
-    event WithdrawalClaimed(address indexed _withdrawer, uint256 indexed _requestId, uint256 _amount);
+    event WithdrawalClaimed(
+        address indexed _withdrawer,
+        uint256 indexed _requestId,
+        uint256 _amount
+    );
     event WithdrawalClaimable(uint256 _claimable, uint256 _newClaimable);
     event WithdrawalClaimDelayUpdated(uint256 _newDelay);
 
@@ -189,7 +196,8 @@ abstract contract VaultStorage is Initializable, Governable {
     uint64 public rebasePerSecondTarget;
 
     uint256 internal constant MAX_REBASE = 0.02 ether;
-    uint256 internal constant MAX_REBASE_PER_SECOND = uint256(0.05 ether) / 1 days;
+    uint256 internal constant MAX_REBASE_PER_SECOND =
+        uint256(0.05 ether) / 1 days;
 
     /// @notice Default strategy for asset
     address public defaultStrategy;

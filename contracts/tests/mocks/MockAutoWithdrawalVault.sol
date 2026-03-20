@@ -23,7 +23,11 @@ contract MockAutoWithdrawalVault {
         _queueMetadata.claimable = claimable;
     }
 
-    function withdrawalQueueMetadata() external view returns (VaultStorage.WithdrawalQueueMetadata memory) {
+    function withdrawalQueueMetadata()
+        external
+        view
+        returns (VaultStorage.WithdrawalQueueMetadata memory)
+    {
         return _queueMetadata;
     }
 
@@ -31,7 +35,11 @@ contract MockAutoWithdrawalVault {
         // noop in mock
     }
 
-    function withdrawFromStrategy(address _strategy, address[] calldata, uint256[] calldata _amounts) external {
+    function withdrawFromStrategy(
+        address _strategy,
+        address[] calldata,
+        uint256[] calldata _amounts
+    ) external {
         withdrawFromStrategyCalled = true;
         lastWithdrawStrategy = _strategy;
         lastWithdrawAmount = _amounts[0];

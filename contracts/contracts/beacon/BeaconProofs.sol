@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import {BeaconProofsLib} from "./BeaconProofsLib.sol";
-import {IBeaconProofs} from "../interfaces/IBeaconProofs.sol";
+import { BeaconProofsLib } from "./BeaconProofsLib.sol";
+import { IBeaconProofs } from "../interfaces/IBeaconProofs.sol";
 
 /**
  * @title Verifies merkle proofs of beacon chain data.
@@ -25,7 +25,13 @@ contract BeaconProofs is IBeaconProofs {
         uint40 validatorIndex,
         bytes32 withdrawalCredentials
     ) external view {
-        BeaconProofsLib.verifyValidator(beaconBlockRoot, pubKeyHash, proof, validatorIndex, withdrawalCredentials);
+        BeaconProofsLib.verifyValidator(
+            beaconBlockRoot,
+            pubKeyHash,
+            proof,
+            validatorIndex,
+            withdrawalCredentials
+        );
     }
 
     function verifyValidatorWithdrawable(
@@ -35,7 +41,10 @@ contract BeaconProofs is IBeaconProofs {
         bytes calldata withdrawableEpochProof
     ) external view {
         BeaconProofsLib.verifyValidatorWithdrawableEpoch(
-            beaconBlockRoot, validatorIndex, withdrawableEpoch, withdrawableEpochProof
+            beaconBlockRoot,
+            validatorIndex,
+            withdrawableEpoch,
+            withdrawableEpochProof
         );
     }
 
@@ -50,7 +59,11 @@ contract BeaconProofs is IBeaconProofs {
         bytes32 balancesContainerRoot,
         bytes calldata balancesContainerProof
     ) external view {
-        BeaconProofsLib.verifyBalancesContainer(beaconBlockRoot, balancesContainerRoot, balancesContainerProof);
+        BeaconProofsLib.verifyBalancesContainer(
+            beaconBlockRoot,
+            balancesContainerRoot,
+            balancesContainerProof
+        );
     }
 
     /// @notice Verifies the validator balance to the root of the Balances container.
@@ -67,7 +80,10 @@ contract BeaconProofs is IBeaconProofs {
         uint40 validatorIndex
     ) external view returns (uint256 validatorBalanceGwei) {
         validatorBalanceGwei = BeaconProofsLib.verifyValidatorBalance(
-            balancesContainerRoot, validatorBalanceLeaf, balanceProof, validatorIndex
+            balancesContainerRoot,
+            validatorBalanceLeaf,
+            balanceProof,
+            validatorIndex
         );
     }
 
@@ -82,7 +98,11 @@ contract BeaconProofs is IBeaconProofs {
         bytes32 pendingDepositsContainerRoot,
         bytes calldata proof
     ) external view {
-        BeaconProofsLib.verifyPendingDepositsContainer(beaconBlockRoot, pendingDepositsContainerRoot, proof);
+        BeaconProofsLib.verifyPendingDepositsContainer(
+            beaconBlockRoot,
+            pendingDepositsContainerRoot,
+            proof
+        );
     }
 
     /// @notice Verified a pending deposit to the root of the Pending Deposits container.
@@ -98,7 +118,10 @@ contract BeaconProofs is IBeaconProofs {
         uint32 pendingDepositIndex
     ) external view {
         BeaconProofsLib.verifyPendingDeposit(
-            pendingDepositsContainerRoot, pendingDepositRoot, proof, pendingDepositIndex
+            pendingDepositsContainerRoot,
+            pendingDepositRoot,
+            proof,
+            pendingDepositIndex
         );
     }
 
@@ -121,7 +144,9 @@ contract BeaconProofs is IBeaconProofs {
         bytes calldata firstPendingDepositSlotProof
     ) external view returns (bool isEmptyDepositQueue) {
         isEmptyDepositQueue = BeaconProofsLib.verifyFirstPendingDeposit(
-            beaconBlockRoot, slot, firstPendingDepositSlotProof
+            beaconBlockRoot,
+            slot,
+            firstPendingDepositSlotProof
         );
     }
 
@@ -139,13 +164,24 @@ contract BeaconProofs is IBeaconProofs {
         bytes calldata signature,
         uint64 slot
     ) external pure returns (bytes32) {
-        return BeaconProofsLib.merkleizePendingDeposit(pubKeyHash, withdrawalCredentials, amountGwei, signature, slot);
+        return
+            BeaconProofsLib.merkleizePendingDeposit(
+                pubKeyHash,
+                withdrawalCredentials,
+                amountGwei,
+                signature,
+                slot
+            );
     }
 
     /// @notice Merkleizes a BLS signature used for validator deposits.
     /// @param signature The 96 byte BLS signature.
     /// @return root The merkle root of the signature.
-    function merkleizeSignature(bytes calldata signature) external pure returns (bytes32 root) {
+    function merkleizeSignature(bytes calldata signature)
+        external
+        pure
+        returns (bytes32 root)
+    {
         return BeaconProofsLib.merkleizeSignature(signature);
     }
 }

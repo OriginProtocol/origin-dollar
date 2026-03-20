@@ -2,14 +2,14 @@
 pragma solidity ^0.8.0;
 
 // Foundry
-import {Vm} from "forge-std/Vm.sol";
+import { Vm } from "forge-std/Vm.sol";
 
 // Helpers
-import {Logger} from "scripts/deploy/helpers/Logger.sol";
-import {GovAction, GovProposal} from "scripts/deploy/helpers/DeploymentTypes.sol";
+import { Logger } from "scripts/deploy/helpers/Logger.sol";
+import { GovAction, GovProposal } from "scripts/deploy/helpers/DeploymentTypes.sol";
 
 // Utils
-import {Mainnet} from "tests/utils/Addresses.sol";
+import { Mainnet } from "tests/utils/Addresses.sol";
 
 /// @title GovHelper
 /// @notice Library for building, encoding, and simulating governance proposals.
@@ -37,7 +37,8 @@ library GovHelper {
 
     /// @notice Foundry's VM cheat code contract instance.
     /// @dev Used for fork manipulation (vm.prank, vm.roll, vm.warp) during simulation.
-    Vm internal constant vm = Vm(address(uint160(uint256(keccak256("hevm cheat code")))));
+    Vm internal constant vm =
+        Vm(address(uint160(uint256(keccak256("hevm cheat code")))));
 
     // ==================== Proposal ID Calculation ==================== //
 
@@ -46,15 +47,27 @@ library GovHelper {
     ///      This matches the OpenZeppelin Governor contract's proposal ID calculation.
     /// @param prop The governance proposal to compute the ID for
     /// @return proposalId The unique identifier for this proposal
-    function id(GovProposal memory prop) internal pure returns (uint256 proposalId) {
+    function id(GovProposal memory prop)
+        internal
+        pure
+        returns (uint256 proposalId)
+    {
         // Hash the description string for inclusion in proposal ID
         bytes32 descriptionHash = keccak256(bytes(prop.description));
 
         // Extract proposal parameters
-        (address[] memory targets, uint256[] memory values,,, bytes[] memory calldatas) = getParams(prop);
+        (
+            address[] memory targets,
+            uint256[] memory values,
+            ,
+            ,
+            bytes[] memory calldatas
+        ) = getParams(prop);
 
         // Compute the proposal ID matching on-chain calculation
-        proposalId = uint256(keccak256(abi.encode(targets, values, calldatas, descriptionHash)));
+        proposalId = uint256(
+            keccak256(abi.encode(targets, values, calldatas, descriptionHash))
+        );
     }
 
     // ==================== Parameter Extraction ==================== //
@@ -105,18 +118,20 @@ library GovHelper {
     /// @param signatures Array of function signatures
     /// @param calldatas Array of ABI-encoded parameters
     /// @return fullcalldatas Array of complete calldata (selector + params)
-    function _encodeCalldata(string[] memory signatures, bytes[] memory calldatas)
-        private
-        pure
-        returns (bytes[] memory)
-    {
+    function _encodeCalldata(
+        string[] memory signatures,
+        bytes[] memory calldatas
+    ) private pure returns (bytes[] memory) {
         bytes[] memory fullcalldatas = new bytes[](calldatas.length);
 
         for (uint256 i = 0; i < signatures.length; ++i) {
             // If signature is empty, use raw calldata; otherwise prepend selector
             fullcalldatas[i] = bytes(signatures[i]).length == 0
                 ? calldatas[i]
-                : abi.encodePacked(bytes4(keccak256(bytes(signatures[i]))), calldatas[i]);
+                : abi.encodePacked(
+                    bytes4(keccak256(bytes(signatures[i]))),
+                    calldatas[i]
+                );
         }
 
         return fullcalldatas;
@@ -128,7 +143,9 @@ library GovHelper {
     /// @dev The description is included in the on-chain proposal and affects the proposal ID.
     /// @param prop The proposal storage reference to modify
     /// @param description Human-readable description of the proposal
-    function setDescription(GovProposal storage prop, string memory description) internal {
+    function setDescription(GovProposal storage prop, string memory description)
+        internal
+    {
         prop.description = description;
     }
 
@@ -139,8 +156,20 @@ library GovHelper {
     /// @param target The contract address to call
     /// @param fullsig The function signature (e.g., "upgradeTo(address)")
     /// @param data ABI-encoded function parameters
-    function action(GovProposal storage prop, address target, string memory fullsig, bytes memory data) internal {
-        prop.actions.push(GovAction({target: target, fullsig: fullsig, data: data, value: 0}));
+    function action(
+        GovProposal storage prop,
+        address target,
+        string memory fullsig,
+        bytes memory data
+    ) internal {
+        prop.actions.push(
+            GovAction({
+                target: target,
+                fullsig: fullsig,
+                data: data,
+                value: 0
+            })
+        );
     }
 
     // ==================== Calldata Generation ==================== //
@@ -150,14 +179,28 @@ library GovHelper {
     ///      Can be used directly with cast or other tools for manual submission.
     /// @param prop The proposal to generate calldata for
     /// @return proposeCalldata The encoded propose() function call
-    function getProposeCalldata(GovProposal memory prop) internal pure returns (bytes memory proposeCalldata) {
+    function getProposeCalldata(GovProposal memory prop)
+        internal
+        pure
+        returns (bytes memory proposeCalldata)
+    {
         // Extract all proposal parameters
-        (address[] memory targets, uint256[] memory values, string[] memory sigs, bytes[] memory data,) =
-            getParams(prop);
+        (
+            address[] memory targets,
+            uint256[] memory values,
+            string[] memory sigs,
+            bytes[] memory data,
+
+        ) = getParams(prop);
 
         // Encode the propose function call
         proposeCalldata = abi.encodeWithSignature(
-            "propose(address[],uint256[],string[],bytes[],string)", targets, values, sigs, data, prop.description
+            "propose(address[],uint256[],string[],bytes[],string)",
+            targets,
+            values,
+            sigs,
+            data,
+            prop.description
         );
     }
 
@@ -172,7 +215,10 @@ library GovHelper {
         IGovernance governance = IGovernance(Mainnet.GovernorSix);
 
         // Ensure proposal doesn't already exist
-        require(governance.proposalSnapshot(id(prop)) == 0, "Proposal already exists");
+        require(
+            governance.proposalSnapshot(id(prop)) == 0,
+            "Proposal already exists"
+        );
 
         // Output the proposal calldata for manual submission
         log.logGovProposalHeader();
@@ -221,7 +267,7 @@ library GovHelper {
             log.info("Simulation of the governance proposal:");
             log.info("Creating proposal on fork...");
             vm.prank(govMultisig);
-            (bool success,) = address(governance).call(proposeData);
+            (bool success, ) = address(governance).call(proposeData);
             if (!success) {
                 revert("Fail to create proposal");
             }
@@ -326,12 +372,18 @@ interface IGovernance {
     /// @dev Returns 0 if the proposal doesn't exist.
     /// @param proposalId The unique identifier of the proposal
     /// @return The snapshot block number
-    function proposalSnapshot(uint256 proposalId) external view returns (uint256);
+    function proposalSnapshot(uint256 proposalId)
+        external
+        view
+        returns (uint256);
 
     /// @notice Returns the block number at which voting ends.
     /// @param proposalId The unique identifier of the proposal
     /// @return The deadline block number
-    function proposalDeadline(uint256 proposalId) external view returns (uint256);
+    function proposalDeadline(uint256 proposalId)
+        external
+        view
+        returns (uint256);
 
     /// @notice Returns the timestamp at which the proposal can be executed.
     /// @dev Only valid for queued proposals.
@@ -348,7 +400,9 @@ interface IGovernance {
     /// @param proposalId The unique identifier of the proposal
     /// @param support Vote type: 0 = Against, 1 = For, 2 = Abstain
     /// @return balance The voting weight of the voter
-    function castVote(uint256 proposalId, uint8 support) external returns (uint256 balance);
+    function castVote(uint256 proposalId, uint8 support)
+        external
+        returns (uint256 balance);
 
     /// @notice Queues a successful proposal in the timelock.
     /// @dev Can only be called after voting succeeds.

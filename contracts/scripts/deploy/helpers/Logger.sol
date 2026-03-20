@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import {Vm} from "forge-std/Vm.sol";
-import {console2} from "forge-std/console2.sol";
+import { Vm } from "forge-std/Vm.sol";
+import { console2 } from "forge-std/console2.sol";
 
 /// @title Logger - Styled console logging for deployment scripts
 /// @notice Provides colored and formatted logging using ANSI escape codes
@@ -92,27 +92,96 @@ library Logger {
     // Deployment Functions
     // ─────────────────────────────────────────────────────────────────────────────
 
-    function logSetup(bool log, string memory chainName, uint256 chainId) internal pure {
+    function logSetup(
+        bool log,
+        string memory chainName,
+        uint256 chainId
+    ) internal pure {
         if (!log) return;
         header(true, string.concat("Deploy Manager - ", chainName));
-        console2.log(string.concat("  ", DIM, "Chain ID: ", RESET, BOLD, vm.toString(chainId), RESET));
+        console2.log(
+            string.concat(
+                "  ",
+                DIM,
+                "Chain ID: ",
+                RESET,
+                BOLD,
+                vm.toString(chainId),
+                RESET
+            )
+        );
     }
 
-    function logContractDeployed(bool log, string memory name, address addr) internal pure {
+    function logContractDeployed(
+        bool log,
+        string memory name,
+        address addr
+    ) internal pure {
         if (!log) return;
-        console2.log(string.concat("  ", BRIGHT_GREEN, CHECK, RESET, " ", BOLD, name, RESET));
-        console2.log(string.concat("    ", DIM, "at ", RESET, CYAN, vm.toString(addr), RESET));
+        console2.log(
+            string.concat(
+                "  ",
+                BRIGHT_GREEN,
+                CHECK,
+                RESET,
+                " ",
+                BOLD,
+                name,
+                RESET
+            )
+        );
+        console2.log(
+            string.concat(
+                "    ",
+                DIM,
+                "at ",
+                RESET,
+                CYAN,
+                vm.toString(addr),
+                RESET
+            )
+        );
     }
 
-    function logSkip(bool log, string memory name, string memory reason) internal pure {
+    function logSkip(
+        bool log,
+        string memory name,
+        string memory reason
+    ) internal pure {
         if (!log) return;
-        console2.log(string.concat(DIM, "  ", BULLET, " Skipping ", name, ": ", reason, RESET));
+        console2.log(
+            string.concat(
+                DIM,
+                "  ",
+                BULLET,
+                " Skipping ",
+                name,
+                ": ",
+                reason,
+                RESET
+            )
+        );
     }
 
-    function logDeployer(bool log, address deployer, bool isFork) internal pure {
+    function logDeployer(
+        bool log,
+        address deployer,
+        bool isFork
+    ) internal pure {
         if (!log) return;
         string memory label = isFork ? "Fork Deployer" : "Deployer";
-        console2.log(string.concat("  ", DIM, label, ": ", RESET, CYAN, vm.toString(deployer), RESET));
+        console2.log(
+            string.concat(
+                "  ",
+                DIM,
+                label,
+                ": ",
+                RESET,
+                CYAN,
+                vm.toString(deployer),
+                RESET
+            )
+        );
     }
 
     // ─────────────────────────────────────────────────────────────────────────────
@@ -126,14 +195,46 @@ library Logger {
 
     function logProposalState(bool log, string memory state) internal pure {
         if (!log) return;
-        console2.log(string.concat("  ", DIM, "State: ", RESET, BOLD, YELLOW, state, RESET));
+        console2.log(
+            string.concat(
+                "  ",
+                DIM,
+                "State: ",
+                RESET,
+                BOLD,
+                YELLOW,
+                state,
+                RESET
+            )
+        );
     }
 
-    function logCalldata(bool log, address to, bytes memory data) internal pure {
+    function logCalldata(
+        bool log,
+        address to,
+        bytes memory data
+    ) internal pure {
         if (!log) return;
         console2.log("");
-        console2.log(string.concat(BOLD, YELLOW, "Create following tx on Governance:", RESET));
-        console2.log(string.concat("  ", DIM, "To: ", RESET, CYAN, vm.toString(to), RESET));
+        console2.log(
+            string.concat(
+                BOLD,
+                YELLOW,
+                "Create following tx on Governance:",
+                RESET
+            )
+        );
+        console2.log(
+            string.concat(
+                "  ",
+                DIM,
+                "To: ",
+                RESET,
+                CYAN,
+                vm.toString(to),
+                RESET
+            )
+        );
         console2.log(string.concat("  ", DIM, "Data:", RESET));
         console2.logBytes(data);
     }
@@ -142,24 +243,50 @@ library Logger {
     // Key-Value Logging
     // ─────────────────────────────────────────────────────────────────────────────
 
-    function logKeyValue(bool log, string memory key, string memory value) internal pure {
+    function logKeyValue(
+        bool log,
+        string memory key,
+        string memory value
+    ) internal pure {
         if (!log) return;
         console2.log(string.concat("  ", DIM, key, ": ", RESET, value));
     }
 
-    function logKeyValue(bool log, string memory key, address value) internal pure {
+    function logKeyValue(
+        bool log,
+        string memory key,
+        address value
+    ) internal pure {
         if (!log) return;
-        console2.log(string.concat("  ", DIM, key, ": ", RESET, CYAN, vm.toString(value), RESET));
+        console2.log(
+            string.concat(
+                "  ",
+                DIM,
+                key,
+                ": ",
+                RESET,
+                CYAN,
+                vm.toString(value),
+                RESET
+            )
+        );
     }
 
-    function logKeyValue(bool log, string memory key, uint256 value) internal pure {
+    function logKeyValue(
+        bool log,
+        string memory key,
+        uint256 value
+    ) internal pure {
         if (!log) return;
-        console2.log(string.concat("  ", DIM, key, ": ", RESET, vm.toString(value)));
+        console2.log(
+            string.concat("  ", DIM, key, ": ", RESET, vm.toString(value))
+        );
     }
 
     // ─────────────────────────────────────────────────────────────────────────────
     // VM Reference (for string conversion)
     // ─────────────────────────────────────────────────────────────────────────────
 
-    Vm private constant vm = Vm(address(uint160(uint256(keccak256("hevm cheat code")))));
+    Vm private constant vm =
+        Vm(address(uint160(uint256(keccak256("hevm cheat code")))));
 }

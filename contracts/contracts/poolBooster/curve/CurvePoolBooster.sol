@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import {Initializable} from "../../utils/Initializable.sol";
-import {Strategizable} from "../../governance/Strategizable.sol";
-import {ICampaignRemoteManager} from "../../interfaces/ICampaignRemoteManager.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { Initializable } from "../../utils/Initializable.sol";
+import { Strategizable } from "../../governance/Strategizable.sol";
+import { ICampaignRemoteManager } from "../../interfaces/ICampaignRemoteManager.sol";
 
 /// @title CurvePoolBooster
 /// @author Origin Protocol
@@ -55,7 +55,12 @@ contract CurvePoolBooster is Initializable, Strategizable {
     event FeeCollectorUpdated(address newFeeCollector);
     event VotemarketUpdated(address newVotemarket);
     event CampaignRemoteManagerUpdated(address newCampaignRemoteManager);
-    event CampaignCreated(address gauge, address rewardToken, uint256 maxRewardPerVote, uint256 totalRewardAmount);
+    event CampaignCreated(
+        address gauge,
+        address rewardToken,
+        uint256 maxRewardPerVote,
+        uint256 totalRewardAmount
+    );
     event CampaignIdUpdated(uint256 newId);
     event CampaignClosed(uint256 campaignId);
     event TotalRewardAmountUpdated(uint256 extraTotalRewardAmount);
@@ -120,7 +125,9 @@ contract CurvePoolBooster is Initializable, Strategizable {
         IERC20(rewardToken).safeApprove(campaignRemoteManager, balanceSubFee);
 
         // Create a new campaign
-        ICampaignRemoteManager(campaignRemoteManager).createCampaign{value: msg.value}(
+        ICampaignRemoteManager(campaignRemoteManager).createCampaign{
+            value: msg.value
+        }(
             ICampaignRemoteManager.CampaignCreationParams({
                 chainId: targetChainId,
                 gauge: gauge,
@@ -138,7 +145,12 @@ contract CurvePoolBooster is Initializable, Strategizable {
             votemarket
         );
 
-        emit CampaignCreated(gauge, rewardToken, maxRewardPerVote, balanceSubFee);
+        emit CampaignCreated(
+            gauge,
+            rewardToken,
+            maxRewardPerVote,
+            balanceSubFee
+        );
     }
 
     /// @notice Manage campaign parameters in a single call
@@ -162,7 +174,10 @@ contract CurvePoolBooster is Initializable, Strategizable {
         uint256 rewardAmount = 0;
 
         if (totalRewardAmount != 0) {
-            uint256 amount = min(IERC20(rewardToken).balanceOf(address(this)), totalRewardAmount);
+            uint256 amount = min(
+                IERC20(rewardToken).balanceOf(address(this)),
+                totalRewardAmount
+            );
 
             // Handle fee
             rewardAmount = _handleFee(amount);
@@ -170,11 +185,16 @@ contract CurvePoolBooster is Initializable, Strategizable {
 
             // Approve the reward amount to the campaign manager
             IERC20(rewardToken).safeApprove(campaignRemoteManager, 0);
-            IERC20(rewardToken).safeApprove(campaignRemoteManager, rewardAmount);
+            IERC20(rewardToken).safeApprove(
+                campaignRemoteManager,
+                rewardAmount
+            );
         }
 
         // Call remote manager
-        ICampaignRemoteManager(campaignRemoteManager).manageCampaign{value: msg.value}(
+        ICampaignRemoteManager(campaignRemoteManager).manageCampaign{
+            value: msg.value
+        }(
             ICampaignRemoteManager.CampaignManagementParams({
                 campaignId: campaignId,
                 rewardToken: rewardToken,
@@ -212,8 +232,12 @@ contract CurvePoolBooster is Initializable, Strategizable {
         nonReentrant
         onlyGovernorOrStrategist
     {
-        ICampaignRemoteManager(campaignRemoteManager).closeCampaign{value: msg.value}(
-            ICampaignRemoteManager.CampaignClosingParams({campaignId: campaignId}),
+        ICampaignRemoteManager(campaignRemoteManager).closeCampaign{
+            value: msg.value
+        }(
+            ICampaignRemoteManager.CampaignClosingParams({
+                campaignId: campaignId
+            }),
             targetChainId,
             additionalGasLimit,
             votemarket
@@ -257,7 +281,10 @@ contract CurvePoolBooster is Initializable, Strategizable {
     /// @notice Set the campaign id
     /// @dev Only callable by the governor or strategist
     /// @param _campaignId New campaign id
-    function setCampaignId(uint256 _campaignId) external onlyGovernorOrStrategist {
+    function setCampaignId(uint256 _campaignId)
+        external
+        onlyGovernorOrStrategist
+    {
         campaignId = _campaignId;
         emit CampaignIdUpdated(_campaignId);
     }
@@ -265,10 +292,14 @@ contract CurvePoolBooster is Initializable, Strategizable {
     /// @notice Rescue ETH from the contract
     /// @dev Only callable by the governor or strategist
     /// @param receiver Address to receive the ETH
-    function rescueETH(address receiver) external nonReentrant onlyGovernorOrStrategist {
+    function rescueETH(address receiver)
+        external
+        nonReentrant
+        onlyGovernorOrStrategist
+    {
         require(receiver != address(0), "Invalid receiver");
         uint256 balance = address(this).balance;
-        (bool success,) = receiver.call{value: balance}("");
+        (bool success, ) = receiver.call{ value: balance }("");
         require(success, "Transfer failed");
         emit TokensRescued(address(0), balance, receiver);
     }
@@ -276,7 +307,11 @@ contract CurvePoolBooster is Initializable, Strategizable {
     /// @notice Rescue ERC20 tokens from the contract
     /// @dev Only callable by the governor or strategist
     /// @param token Address of the token to rescue
-    function rescueToken(address token, address receiver) external nonReentrant onlyGovernor {
+    function rescueToken(address token, address receiver)
+        external
+        nonReentrant
+        onlyGovernor
+    {
         require(receiver != address(0), "Invalid receiver");
         uint256 balance = IERC20(token).balanceOf(address(this));
         IERC20(token).safeTransfer(receiver, balance);
@@ -313,14 +348,22 @@ contract CurvePoolBooster is Initializable, Strategizable {
 
     /// @notice Set the campaignRemoteManager
     /// @param _campaignRemoteManager New campaignRemoteManager address
-    function setCampaignRemoteManager(address _campaignRemoteManager) external onlyGovernor {
+    function setCampaignRemoteManager(address _campaignRemoteManager)
+        external
+        onlyGovernor
+    {
         _setCampaignRemoteManager(_campaignRemoteManager);
     }
 
     /// @notice Internal logic to set the campaignRemoteManager
     /// @param _campaignRemoteManager New campaignRemoteManager address
-    function _setCampaignRemoteManager(address _campaignRemoteManager) internal {
-        require(_campaignRemoteManager != address(0), "Invalid campaignRemoteManager");
+    function _setCampaignRemoteManager(address _campaignRemoteManager)
+        internal
+    {
+        require(
+            _campaignRemoteManager != address(0),
+            "Invalid campaignRemoteManager"
+        );
         campaignRemoteManager = _campaignRemoteManager;
         emit CampaignRemoteManagerUpdated(_campaignRemoteManager);
     }

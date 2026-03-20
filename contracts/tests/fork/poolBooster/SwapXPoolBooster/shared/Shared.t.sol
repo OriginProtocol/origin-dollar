@@ -79,10 +79,13 @@ abstract contract Fork_SwapXPoolBooster_Shared_Test is BaseFork {
         MockERC20(address(oSonic)).mint(_to, _amount);
     }
 
-    function _createDoubleBooster(address _bribeOS, address _bribeOther, address _pool, uint256 _split, uint256 _salt)
-        internal
-        returns (PoolBoosterSwapxDouble)
-    {
+    function _createDoubleBooster(
+        address _bribeOS,
+        address _bribeOther,
+        address _pool,
+        uint256 _split,
+        uint256 _salt
+    ) internal returns (PoolBoosterSwapxDouble) {
         vm.prank(Sonic.timelock);
         factorySwapxDouble.createPoolBoosterSwapxDouble(_bribeOS, _bribeOther, _pool, _split, _salt);
 

@@ -1,14 +1,13 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import {
-    Unit_ClaimStrategyRewardsSafeModule_Shared_Test
-} from "tests/unit/automation/ClaimStrategyRewardsSafeModule/shared/Shared.t.sol";
+import {Unit_ClaimStrategyRewardsSafeModule_Shared_Test} from
+    "tests/unit/automation/ClaimStrategyRewardsSafeModule/shared/Shared.t.sol";
 
 import {ClaimStrategyRewardsSafeModule} from "contracts/automation/ClaimStrategyRewardsSafeModule.sol";
 
-contract Unit_Concrete_ClaimStrategyRewardsSafeModule_ClaimRewards_Test is
-    Unit_ClaimStrategyRewardsSafeModule_Shared_Test
+contract Unit_Concrete_ClaimStrategyRewardsSafeModule_ClaimRewards_Test
+    is Unit_ClaimStrategyRewardsSafeModule_Shared_Test
 {
     //////////////////////////////////////////////////////
     /// --- CLAIM REWARDS

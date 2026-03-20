@@ -27,11 +27,19 @@ contract Smoke_Concrete_SonicStakingStrategy_ViewFunctions_Test is Smoke_SonicSt
     }
 
     function test_vaultAddress_matchesExpected() public view {
-        assertEq(sonicStakingStrategy.vaultAddress(), address(oSonicVault), "vaultAddress should match oSonicVault");
+        assertEq(
+            sonicStakingStrategy.vaultAddress(),
+            address(oSonicVault),
+            "vaultAddress should match oSonicVault"
+        );
     }
 
     function test_platformAddress_matchesSFC() public view {
-        assertEq(sonicStakingStrategy.platformAddress(), Sonic.SFC, "platformAddress should match SFC");
+        assertEq(
+            sonicStakingStrategy.platformAddress(),
+            Sonic.SFC,
+            "platformAddress should match SFC"
+        );
     }
 
     function test_governor_isNonZero() public view {
@@ -39,7 +47,11 @@ contract Smoke_Concrete_SonicStakingStrategy_ViewFunctions_Test is Smoke_SonicSt
     }
 
     function test_supportedValidators_isNonEmpty() public view {
-        assertGt(sonicStakingStrategy.supportedValidatorsLength(), 0, "supportedValidators should be non-empty");
+        assertGt(
+            sonicStakingStrategy.supportedValidatorsLength(),
+            0,
+            "supportedValidators should be non-empty"
+        );
     }
 
     function test_defaultValidatorId_isSupported() public view {

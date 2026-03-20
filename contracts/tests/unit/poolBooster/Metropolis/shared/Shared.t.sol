@@ -64,12 +64,21 @@ abstract contract Unit_Metropolis_Shared_Test is Base {
 
     function _deployFactory() internal {
         factoryMetropolis = new PoolBoosterFactoryMetropolis(
-            address(oSonic), governor, address(centralRegistry), mockRewardFactory, mockVoter
+            address(oSonic),
+            governor,
+            address(centralRegistry),
+            mockRewardFactory,
+            mockVoter
         );
     }
 
     function _deployStandaloneBooster() internal {
-        boosterMetropolis = new PoolBoosterMetropolis(address(oSonic), mockRewardFactory, mockAmmPool, mockVoter);
+        boosterMetropolis = new PoolBoosterMetropolis(
+            address(oSonic),
+            mockRewardFactory,
+            mockAmmPool,
+            mockVoter
+        );
     }
 
     function _approveFactoryOnRegistry() internal {
@@ -106,7 +115,9 @@ abstract contract Unit_Metropolis_Shared_Test is Base {
 
         // Mock getCurrentVotingPeriod
         vm.mockCall(
-            mockVoter, abi.encodeWithSelector(bytes4(keccak256("getCurrentVotingPeriod()"))), abi.encode(uint256(5))
+            mockVoter,
+            abi.encodeWithSelector(bytes4(keccak256("getCurrentVotingPeriod()"))),
+            abi.encode(uint256(5))
         );
 
         // Mock createBribeRewarder

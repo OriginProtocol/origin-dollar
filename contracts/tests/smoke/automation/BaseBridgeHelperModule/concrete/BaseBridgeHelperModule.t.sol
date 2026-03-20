@@ -1,9 +1,8 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import {
-    Smoke_BaseBridgeHelperModule_Shared_Test
-} from "tests/smoke/automation/BaseBridgeHelperModule/shared/Shared.t.sol";
+import {Smoke_BaseBridgeHelperModule_Shared_Test} from
+    "tests/smoke/automation/BaseBridgeHelperModule/shared/Shared.t.sol";
 import {Base} from "tests/utils/Addresses.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {VaultStorage} from "contracts/vault/VaultStorage.sol";

@@ -11,14 +11,8 @@ contract Unit_Concrete_CurvePoolBoosterFactory_RemovePoolBooster_Test is Unit_Cu
     function _createBoosterViaFactory(bytes32 _salt) internal returns (address) {
         vm.prank(governor);
         address deployed = curvePoolBoosterFactory.createCurvePoolBoosterPlain(
-            address(oeth),
-            mockGauge,
-            mockFeeCollector,
-            DEFAULT_FEE,
-            mockCampaignRemoteManager,
-            mockVotemarket,
-            _salt,
-            address(0)
+            address(oeth), mockGauge, mockFeeCollector, DEFAULT_FEE, mockCampaignRemoteManager, mockVotemarket,
+            _salt, address(0)
         );
         return deployed;
     }

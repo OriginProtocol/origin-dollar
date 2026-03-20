@@ -1,12 +1,11 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import {
-    Unit_CompoundingStakingSSVStrategy_Shared_Test
-} from "tests/unit/strategies/CompoundingStakingSSVStrategy/shared/Shared.t.sol";
+import {Unit_CompoundingStakingSSVStrategy_Shared_Test} from
+    "tests/unit/strategies/CompoundingStakingSSVStrategy/shared/Shared.t.sol";
 
-contract Unit_Concrete_CompoundingStakingSSVStrategy_CheckBalance_Test is
-    Unit_CompoundingStakingSSVStrategy_Shared_Test
+contract Unit_Concrete_CompoundingStakingSSVStrategy_CheckBalance_Test
+    is Unit_CompoundingStakingSSVStrategy_Shared_Test
 {
     function test_checkBalance_zero() public view {
         assertEq(compoundingStakingSSVStrategy.checkBalance(address(mockWeth)), 0);

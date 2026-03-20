@@ -3,7 +3,8 @@ pragma solidity ^0.8.0;
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {Sonic} from "tests/utils/Addresses.sol";
-import {Fork_SonicSwapXAMOStrategy_Shared_Test} from "tests/fork/strategies/SonicSwapXAMOStrategy/shared/Shared.t.sol";
+import {Fork_SonicSwapXAMOStrategy_Shared_Test} from
+    "tests/fork/strategies/SonicSwapXAMOStrategy/shared/Shared.t.sol";
 
 contract Fork_Concrete_SonicSwapXAMOStrategy_CollectRewards_Test is Fork_SonicSwapXAMOStrategy_Shared_Test {
     function setUp() public override {
@@ -14,7 +15,8 @@ contract Fork_Concrete_SonicSwapXAMOStrategy_CollectRewards_Test is Fork_SonicSw
 
     function test_collectRewardTokens() public {
         // Get the distribution address from the gauge
-        (, bytes memory distributorData) = address(swapXGauge).staticcall(abi.encodeWithSignature("DISTRIBUTION()"));
+        (, bytes memory distributorData) =
+            address(swapXGauge).staticcall(abi.encodeWithSignature("DISTRIBUTION()"));
         address distributor = abi.decode(distributorData, (address));
 
         // Fund distributor with SWPx and notify rewards
@@ -22,8 +24,9 @@ contract Fork_Concrete_SonicSwapXAMOStrategy_CollectRewards_Test is Fork_SonicSw
         deal(Sonic.SWPx, distributor, rewardAmount);
         vm.startPrank(distributor);
         IERC20(Sonic.SWPx).approve(address(swapXGauge), rewardAmount);
-        (bool success,) = address(swapXGauge)
-            .call(abi.encodeWithSignature("notifyRewardAmount(address,uint256)", Sonic.SWPx, rewardAmount));
+        (bool success,) = address(swapXGauge).call(
+            abi.encodeWithSignature("notifyRewardAmount(address,uint256)", Sonic.SWPx, rewardAmount)
+        );
         require(success, "notifyRewardAmount failed");
         vm.stopPrank();
 

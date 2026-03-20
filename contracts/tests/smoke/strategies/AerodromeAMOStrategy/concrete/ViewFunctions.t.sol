@@ -67,11 +67,19 @@ contract Smoke_Concrete_AerodromeAMOStrategy_ViewFunctions_Test is Smoke_Aerodro
     }
 
     function test_immutables_clPool() public view {
-        assertEq(address(aerodromeAMOStrategy.clPool()), BaseAddresses.aerodromeOETHbWETHClPool, "clPool mismatch");
+        assertEq(
+            address(aerodromeAMOStrategy.clPool()),
+            BaseAddresses.aerodromeOETHbWETHClPool,
+            "clPool mismatch"
+        );
     }
 
     function test_immutables_clGauge() public view {
-        assertEq(address(aerodromeAMOStrategy.clGauge()), BaseAddresses.aerodromeOETHbWETHClGauge, "clGauge mismatch");
+        assertEq(
+            address(aerodromeAMOStrategy.clGauge()),
+            BaseAddresses.aerodromeOETHbWETHClGauge,
+            "clGauge mismatch"
+        );
     }
 
     function test_immutables_swapRouter() public view {
@@ -122,7 +130,8 @@ contract Smoke_Concrete_AerodromeAMOStrategy_ViewFunctions_Test is Smoke_Aerodro
 
     function test_lpToken_isStakedInGauge() public view {
         uint256 _tokenId = aerodromeAMOStrategy.tokenId();
-        INonfungiblePositionManager pm = INonfungiblePositionManager(BaseAddresses.nonFungiblePositionManager);
+        INonfungiblePositionManager pm =
+            INonfungiblePositionManager(BaseAddresses.nonFungiblePositionManager);
         assertEq(pm.ownerOf(_tokenId), BaseAddresses.aerodromeOETHbWETHClGauge, "LP should be staked in gauge");
     }
 }

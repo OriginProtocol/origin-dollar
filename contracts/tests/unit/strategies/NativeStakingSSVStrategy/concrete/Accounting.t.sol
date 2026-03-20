@@ -1,9 +1,8 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import {
-    Unit_NativeStakingSSVStrategy_Shared_Test
-} from "tests/unit/strategies/NativeStakingSSVStrategy/shared/Shared.t.sol";
+import {Unit_NativeStakingSSVStrategy_Shared_Test} from
+    "tests/unit/strategies/NativeStakingSSVStrategy/shared/Shared.t.sol";
 
 contract Unit_Concrete_NativeStakingSSVStrategy_Accounting_Test is Unit_NativeStakingSSVStrategy_Shared_Test {
     // fuseStart 21.6 ether
@@ -36,7 +35,9 @@ contract Unit_Concrete_NativeStakingSSVStrategy_Accounting_Test is Unit_NativeSt
             uint256 ethWithdrawnToVault = 32 ether * tc.expectedValidatorsFullWithdrawals;
             vm.expectEmit(true, true, true, true);
             emit AccountingFullyWithdrawnValidator(
-                tc.expectedValidatorsFullWithdrawals, 30 - tc.expectedValidatorsFullWithdrawals, ethWithdrawnToVault
+                tc.expectedValidatorsFullWithdrawals,
+                30 - tc.expectedValidatorsFullWithdrawals,
+                ethWithdrawnToVault
             );
         }
 
@@ -469,9 +470,7 @@ contract Unit_Concrete_NativeStakingSSVStrategy_Accounting_Test is Unit_NativeSt
     // ----------------
 
     event Paused(address account);
-    event AccountingFullyWithdrawnValidator(
-        uint256 noOfValidators, uint256 remainingValidators, uint256 wethSentToVault
-    );
+    event AccountingFullyWithdrawnValidator(uint256 noOfValidators, uint256 remainingValidators, uint256 wethSentToVault);
     event AccountingConsensusRewards(uint256 amount);
     event AccountingValidatorSlashed(uint256 remainingValidators, uint256 wethSentToVault);
 }

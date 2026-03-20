@@ -1,15 +1,15 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/utils/math/Math.sol";
 
-import {InitializableAbstractStrategy} from "../../utils/InitializableAbstractStrategy.sol";
-import {IWETH9} from "../../interfaces/IWETH9.sol";
-import {FeeAccumulator} from "./FeeAccumulator.sol";
-import {ValidatorAccountant} from "./ValidatorAccountant.sol";
-import {ISSVNetwork} from "../../interfaces/ISSVNetwork.sol";
+import { InitializableAbstractStrategy } from "../../utils/InitializableAbstractStrategy.sol";
+import { IWETH9 } from "../../interfaces/IWETH9.sol";
+import { FeeAccumulator } from "./FeeAccumulator.sol";
+import { ValidatorAccountant } from "./ValidatorAccountant.sol";
+import { ISSVNetwork } from "../../interfaces/ISSVNetwork.sol";
 
 struct ValidatorStakeData {
     bytes pubkey;
@@ -40,7 +40,10 @@ struct ValidatorStakeData {
 /// Even though the strategy assets and rewards are a very similar asset the consensus layer rewards and the
 /// execution layer rewards are considered rewards and those are dripped to the Vault over a configurable time
 /// interval and not immediately.
-contract NativeStakingSSVStrategy is ValidatorAccountant, InitializableAbstractStrategy {
+contract NativeStakingSSVStrategy is
+    ValidatorAccountant,
+    InitializableAbstractStrategy
+{
     using SafeERC20 for IERC20;
 
     /// @notice SSV ERC20 token that serves as a payment for operating SSV validators
@@ -84,7 +87,11 @@ contract NativeStakingSSVStrategy is ValidatorAccountant, InitializableAbstractS
     )
         InitializableAbstractStrategy(_baseConfig)
         ValidatorAccountant(
-            _wethAddress, _baseConfig.vaultAddress, _beaconChainDepositContract, _ssvNetwork, _maxValidators
+            _wethAddress,
+            _baseConfig.vaultAddress,
+            _beaconChainDepositContract,
+            _ssvNetwork,
+            _maxValidators
         )
     {
         SSV_TOKEN = _ssvToken;
@@ -97,18 +104,24 @@ contract NativeStakingSSVStrategy is ValidatorAccountant, InitializableAbstractS
     /// @param _rewardTokenAddresses Address of reward token for platform
     /// @param _assets Addresses of initial supported assets
     /// @param _pTokens Platform Token corresponding addresses
-    function initialize(address[] memory _rewardTokenAddresses, address[] memory _assets, address[] memory _pTokens)
-        external
-        onlyGovernor
-        initializer
-    {
-        InitializableAbstractStrategy._initialize(_rewardTokenAddresses, _assets, _pTokens);
+    function initialize(
+        address[] memory _rewardTokenAddresses,
+        address[] memory _assets,
+        address[] memory _pTokens
+    ) external onlyGovernor initializer {
+        InitializableAbstractStrategy._initialize(
+            _rewardTokenAddresses,
+            _assets,
+            _pTokens
+        );
 
         // Approves the SSV Network contract to transfer SSV tokens for deposits
         IERC20(SSV_TOKEN).approve(SSV_NETWORK, type(uint256).max);
 
         // Set the FeeAccumulator as the address for SSV validators to send MEV rewards to
-        ISSVNetwork(SSV_NETWORK).setFeeRecipientAddress(FEE_ACCUMULATOR_ADDRESS);
+        ISSVNetwork(SSV_NETWORK).setFeeRecipientAddress(
+            FEE_ACCUMULATOR_ADDRESS
+        );
     }
 
     /// @notice Unlike other strategies, this does not deposit assets into the underlying platform.
@@ -117,7 +130,12 @@ contract NativeStakingSSVStrategy is ValidatorAccountant, InitializableAbstractS
     /// Will NOT revert if the strategy is paused from an accounting failure.
     /// @param _asset Address of asset to deposit. Has to be WETH.
     /// @param _amount Amount of assets that were transferred to the strategy by the vault.
-    function deposit(address _asset, uint256 _amount) external override onlyVault nonReentrant {
+    function deposit(address _asset, uint256 _amount)
+        external
+        override
+        onlyVault
+        nonReentrant
+    {
         require(_asset == WETH, "Unsupported asset");
         depositedWethAccountedFor += _amount;
         _deposit(_asset, _amount);
@@ -165,12 +183,20 @@ contract NativeStakingSSVStrategy is ValidatorAccountant, InitializableAbstractS
     /// @param _recipient Address to receive withdrawn assets
     /// @param _asset WETH to withdraw
     /// @param _amount Amount of WETH to withdraw
-    function withdraw(address _recipient, address _asset, uint256 _amount) external override onlyVault nonReentrant {
+    function withdraw(
+        address _recipient,
+        address _asset,
+        uint256 _amount
+    ) external override onlyVault nonReentrant {
         require(_asset == WETH, "Unsupported asset");
         _withdraw(_recipient, _asset, _amount);
     }
 
-    function _withdraw(address _recipient, address _asset, uint256 _amount) internal {
+    function _withdraw(
+        address _recipient,
+        address _asset,
+        uint256 _amount
+    ) internal {
         require(_amount > 0, "Must withdraw something");
         require(_recipient != address(0), "Must specify recipient");
 
@@ -202,12 +228,18 @@ contract NativeStakingSSVStrategy is ValidatorAccountant, InitializableAbstractS
     /// and sent to the Dripper so will eventually be sent to the Vault as WETH.
     /// @param _asset      Address of weth asset
     /// @return balance    Total value of (W)ETH
-    function checkBalance(address _asset) external view override returns (uint256 balance) {
+    function checkBalance(address _asset)
+        external
+        view
+        override
+        returns (uint256 balance)
+    {
         require(_asset == WETH, "Unsupported asset");
 
         balance =
-        // add the ETH that has been staked in validators
-         activeDepositedValidators * FULL_STAKE + 
+            // add the ETH that has been staked in validators
+            activeDepositedValidators *
+            FULL_STAKE +
             // add the WETH in the strategy from deposits that are still to be staked
             IERC20(WETH).balanceOf(address(this));
     }
@@ -230,7 +262,9 @@ contract NativeStakingSSVStrategy is ValidatorAccountant, InitializableAbstractS
 
     /// @notice Set the FeeAccumulator as the address for SSV validators to send MEV rewards to
     function setFeeRecipient() external {
-        ISSVNetwork(SSV_NETWORK).setFeeRecipientAddress(FEE_ACCUMULATOR_ADDRESS);
+        ISSVNetwork(SSV_NETWORK).setFeeRecipientAddress(
+            FEE_ACCUMULATOR_ADDRESS
+        );
     }
 
     /**
@@ -247,7 +281,10 @@ contract NativeStakingSSVStrategy is ValidatorAccountant, InitializableAbstractS
      * mess with the accounting of the consensus rewards and validator full withdrawals.
      */
     receive() external payable {
-        require(msg.sender == FEE_ACCUMULATOR_ADDRESS || msg.sender == WETH, "Eth not from allowed contracts");
+        require(
+            msg.sender == FEE_ACCUMULATOR_ADDRESS || msg.sender == WETH,
+            "Eth not from allowed contracts"
+        );
     }
 
     /***************************************
@@ -260,19 +297,23 @@ contract NativeStakingSSVStrategy is ValidatorAccountant, InitializableAbstractS
     /// Will revert if the strategy is paused for accounting.
     function _collectRewardTokens() internal override whenNotPaused {
         // collect ETH from execution rewards from the fee accumulator
-        uint256 executionRewards = FeeAccumulator(FEE_ACCUMULATOR_ADDRESS).collect();
+        uint256 executionRewards = FeeAccumulator(FEE_ACCUMULATOR_ADDRESS)
+            .collect();
 
         // total ETH rewards to be harvested = execution rewards + consensus rewards
         uint256 ethRewards = executionRewards + consensusRewards;
 
-        require(address(this).balance >= ethRewards, "Insufficient eth balance");
+        require(
+            address(this).balance >= ethRewards,
+            "Insufficient eth balance"
+        );
 
         if (ethRewards > 0) {
             // reset the counter keeping track of beacon chain consensus rewards
             consensusRewards = 0;
 
             // Convert ETH rewards to WETH
-            IWETH9(WETH).deposit{value: ethRewards}();
+            IWETH9(WETH).deposit{ value: ethRewards }();
 
             IERC20(WETH).safeTransfer(harvesterAddress, ethRewards);
             emit RewardTokenCollected(harvesterAddress, WETH, ethRewards);

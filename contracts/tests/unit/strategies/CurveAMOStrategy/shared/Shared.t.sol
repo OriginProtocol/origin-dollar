@@ -66,7 +66,9 @@ abstract contract Unit_CurveAMOStrategy_Shared_Test is Base {
         );
 
         oethVaultProxy.initialize(
-            address(oethVaultImpl), governor, abi.encodeWithSignature("initialize(address)", address(oethProxy))
+            address(oethVaultImpl),
+            governor,
+            abi.encodeWithSignature("initialize(address)", address(oethProxy))
         );
 
         vm.stopPrank();
@@ -93,7 +95,8 @@ abstract contract Unit_CurveAMOStrategy_Shared_Test is Base {
         // coin[0] = weth (hardAsset), coin[1] = oeth (oToken)
         curveAMOStrategy = new CurveAMOStrategy(
             InitializableAbstractStrategy.BaseStrategyConfig({
-                platformAddress: address(curvePool), vaultAddress: address(oethVault)
+                platformAddress: address(curvePool),
+                vaultAddress: address(oethVault)
             }),
             address(oeth),
             address(mockWeth),

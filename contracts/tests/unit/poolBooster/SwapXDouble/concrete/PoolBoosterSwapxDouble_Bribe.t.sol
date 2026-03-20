@@ -13,10 +13,12 @@ contract Unit_Concrete_PoolBoosterSwapxDouble_Bribe_Test is Unit_SwapXDouble_Sha
         _mockBribeNotifyRewardAmount(mockBribeContractOther);
 
         vm.expectCall(
-            mockBribeContractOS, abi.encodeWithSelector(IBribe.notifyRewardAmount.selector, address(oSonic), 5e17)
+            mockBribeContractOS,
+            abi.encodeWithSelector(IBribe.notifyRewardAmount.selector, address(oSonic), 5e17)
         );
         vm.expectCall(
-            mockBribeContractOther, abi.encodeWithSelector(IBribe.notifyRewardAmount.selector, address(oSonic), 5e17)
+            mockBribeContractOther,
+            abi.encodeWithSelector(IBribe.notifyRewardAmount.selector, address(oSonic), 5e17)
         );
 
         boosterSwapxDouble.bribe();
@@ -44,7 +46,8 @@ contract Unit_Concrete_PoolBoosterSwapxDouble_Bribe_Test is Unit_SwapXDouble_Sha
         uint256 expectedOther = 5e17;
 
         vm.expectCall(
-            mockBribeContractOS, abi.encodeWithSelector(IBribe.notifyRewardAmount.selector, address(oSonic), expectedOS)
+            mockBribeContractOS,
+            abi.encodeWithSelector(IBribe.notifyRewardAmount.selector, address(oSonic), expectedOS)
         );
         vm.expectCall(
             mockBribeContractOther,
@@ -56,8 +59,9 @@ contract Unit_Concrete_PoolBoosterSwapxDouble_Bribe_Test is Unit_SwapXDouble_Sha
 
     function test_bribe_asymmetricSplit() public {
         // Deploy new booster with 30% split
-        PoolBoosterSwapxDouble asymmetricBooster =
-            new PoolBoosterSwapxDouble(mockBribeContractOS, mockBribeContractOther, address(oSonic), 30e16);
+        PoolBoosterSwapxDouble asymmetricBooster = new PoolBoosterSwapxDouble(
+            mockBribeContractOS, mockBribeContractOther, address(oSonic), 30e16
+        );
 
         uint256 balance = 1e18;
         _dealOSonic(address(asymmetricBooster), balance);
@@ -69,7 +73,8 @@ contract Unit_Concrete_PoolBoosterSwapxDouble_Bribe_Test is Unit_SwapXDouble_Sha
         uint256 expectedOther = 7e17;
 
         vm.expectCall(
-            mockBribeContractOS, abi.encodeWithSelector(IBribe.notifyRewardAmount.selector, address(oSonic), expectedOS)
+            mockBribeContractOS,
+            abi.encodeWithSelector(IBribe.notifyRewardAmount.selector, address(oSonic), expectedOS)
         );
         vm.expectCall(
             mockBribeContractOther,

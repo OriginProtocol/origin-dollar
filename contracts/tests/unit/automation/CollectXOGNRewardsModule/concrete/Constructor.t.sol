@@ -1,11 +1,12 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import {
-    Unit_CollectXOGNRewardsModule_Shared_Test
-} from "tests/unit/automation/CollectXOGNRewardsModule/shared/Shared.t.sol";
+import {Unit_CollectXOGNRewardsModule_Shared_Test} from
+    "tests/unit/automation/CollectXOGNRewardsModule/shared/Shared.t.sol";
 
-contract Unit_Concrete_CollectXOGNRewardsModule_Constructor_Test is Unit_CollectXOGNRewardsModule_Shared_Test {
+contract Unit_Concrete_CollectXOGNRewardsModule_Constructor_Test
+    is Unit_CollectXOGNRewardsModule_Shared_Test
+{
     //////////////////////////////////////////////////////
     /// --- CONSTRUCTOR
     //////////////////////////////////////////////////////
@@ -23,10 +24,16 @@ contract Unit_Concrete_CollectXOGNRewardsModule_Constructor_Test is Unit_Collect
     }
 
     function test_constructor_operatorRoleGranted() public view {
-        assertTrue(collectXOGNRewardsModule.hasRole(collectXOGNRewardsModule.OPERATOR_ROLE(), operator));
+        assertTrue(
+            collectXOGNRewardsModule.hasRole(collectXOGNRewardsModule.OPERATOR_ROLE(), operator)
+        );
     }
 
     function test_constructor_safeHasAdminRole() public view {
-        assertTrue(collectXOGNRewardsModule.hasRole(collectXOGNRewardsModule.DEFAULT_ADMIN_ROLE(), address(mockSafe)));
+        assertTrue(
+            collectXOGNRewardsModule.hasRole(
+                collectXOGNRewardsModule.DEFAULT_ADMIN_ROLE(), address(mockSafe)
+            )
+        );
     }
 }

@@ -1,11 +1,12 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import {
-    Unit_NativeStakingSSVStrategy_Shared_Test
-} from "tests/unit/strategies/NativeStakingSSVStrategy/shared/Shared.t.sol";
+import {Unit_NativeStakingSSVStrategy_Shared_Test} from
+    "tests/unit/strategies/NativeStakingSSVStrategy/shared/Shared.t.sol";
 
-contract Unit_Concrete_NativeStakingSSVStrategy_ValidatorExit_Test is Unit_NativeStakingSSVStrategy_Shared_Test {
+contract Unit_Concrete_NativeStakingSSVStrategy_ValidatorExit_Test
+    is Unit_NativeStakingSSVStrategy_Shared_Test
+{
     function setUp() public override {
         super.setUp();
 
@@ -24,7 +25,9 @@ contract Unit_Concrete_NativeStakingSSVStrategy_ValidatorExit_Test is Unit_Nativ
         nativeStakingSSVStrategy.exitSsvValidator(testPublicKeys[0], _operatorIds());
 
         // State should be EXITING
-        assertEq(uint256(nativeStakingSSVStrategy.validatorsStates(keccak256(testPublicKeys[0]))), 3);
+        assertEq(
+            uint256(nativeStakingSSVStrategy.validatorsStates(keccak256(testPublicKeys[0]))), 3
+        );
     }
 
     function test_exitSsvValidator_RevertWhen_notStaked() public {
@@ -49,7 +52,9 @@ contract Unit_Concrete_NativeStakingSSVStrategy_ValidatorExit_Test is Unit_Nativ
         nativeStakingSSVStrategy.removeSsvValidator(testPublicKeys[0], _operatorIds(), _emptyCluster());
 
         // State should be EXIT_COMPLETE
-        assertEq(uint256(nativeStakingSSVStrategy.validatorsStates(keccak256(testPublicKeys[0]))), 4);
+        assertEq(
+            uint256(nativeStakingSSVStrategy.validatorsStates(keccak256(testPublicKeys[0]))), 4
+        );
     }
 
     function test_removeSsvValidator_fromRegistered() public {
@@ -59,7 +64,9 @@ contract Unit_Concrete_NativeStakingSSVStrategy_ValidatorExit_Test is Unit_Nativ
         nativeStakingSSVStrategy.removeSsvValidator(testPublicKeys[0], _operatorIds(), _emptyCluster());
 
         // State should be EXIT_COMPLETE
-        assertEq(uint256(nativeStakingSSVStrategy.validatorsStates(keccak256(testPublicKeys[0]))), 4);
+        assertEq(
+            uint256(nativeStakingSSVStrategy.validatorsStates(keccak256(testPublicKeys[0]))), 4
+        );
     }
 
     function test_removeSsvValidator_RevertWhen_staked() public {

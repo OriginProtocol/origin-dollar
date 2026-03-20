@@ -19,14 +19,8 @@ contract Unit_Concrete_CurvePoolBoosterFactory_ComputePoolBoosterAddress_Test is
 
         vm.prank(governor);
         address deployed = curvePoolBoosterFactory.createCurvePoolBoosterPlain(
-            address(oeth),
-            mockGauge,
-            mockFeeCollector,
-            DEFAULT_FEE,
-            mockCampaignRemoteManager,
-            mockVotemarket,
-            salt,
-            address(0)
+            address(oeth), mockGauge, mockFeeCollector, DEFAULT_FEE, mockCampaignRemoteManager, mockVotemarket,
+            salt, address(0)
         );
 
         assertEq(computed, deployed);

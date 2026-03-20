@@ -13,10 +13,15 @@ contract MockCreateX {
     /// @param salt The 32-byte salt (first 20 bytes = caller address for front-run protection).
     /// @param initCode The creation bytecode (constructor code + encoded constructor args).
     /// @return newContract The address of the deployed contract.
-    function deployCreate2(bytes32 salt, bytes memory initCode) external payable returns (address newContract) {
+    function deployCreate2(bytes32 salt, bytes memory initCode)
+        external
+        payable
+        returns (address newContract)
+    {
         bytes32 guardedSalt = _guard(salt);
         assembly {
-            newContract := create2(callvalue(), add(initCode, 0x20), mload(initCode), guardedSalt)
+            newContract :=
+                create2(callvalue(), add(initCode, 0x20), mload(initCode), guardedSalt)
         }
         require(newContract != address(0), "MockCreateX: CREATE2 deployment failed");
     }
@@ -26,13 +31,20 @@ contract MockCreateX {
     /// @param initCodeHash The keccak256 hash of the creation bytecode.
     /// @param deployer The deployer address (typically address(this), i.e. CreateX).
     /// @return computedAddress The deterministic address.
-    function computeCreate2Address(bytes32 salt, bytes32 initCodeHash, address deployer)
-        external
-        pure
-        returns (address computedAddress)
-    {
-        computedAddress =
-            address(uint160(uint256(keccak256(abi.encodePacked(bytes1(0xff), deployer, salt, initCodeHash)))));
+    function computeCreate2Address(
+        bytes32 salt,
+        bytes32 initCodeHash,
+        address deployer
+    ) external pure returns (address computedAddress) {
+        computedAddress = address(
+            uint160(
+                uint256(
+                    keccak256(
+                        abi.encodePacked(bytes1(0xff), deployer, salt, initCodeHash)
+                    )
+                )
+            )
+        );
     }
 
     /// @dev Replicate the CreateX guarded salt logic.

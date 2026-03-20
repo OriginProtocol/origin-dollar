@@ -7,7 +7,9 @@ import "../token/OUSD.sol";
 contract TestUpgradedOUSD is OUSD {
     constructor() OUSD() {}
 
-    function overwriteCreditBalances(address _account, uint256 _creditBalance) public {
+    function overwriteCreditBalances(address _account, uint256 _creditBalance)
+        public
+    {
         creditBalances[_account] = _creditBalance;
     }
 
@@ -15,7 +17,9 @@ contract TestUpgradedOUSD is OUSD {
         alternativeCreditsPerToken[_account] = _acpt;
     }
 
-    function overwriteRebaseState(address _account, RebaseOptions _rebaseOption) public {
+    function overwriteRebaseState(address _account, RebaseOptions _rebaseOption)
+        public
+    {
         rebaseState[_account] = _rebaseOption;
     }
 }

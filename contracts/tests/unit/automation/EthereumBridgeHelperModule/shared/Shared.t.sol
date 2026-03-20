@@ -30,7 +30,9 @@ abstract contract Unit_EthereumBridgeHelperModule_Shared_Test is Base {
             address(ethereumBridgeHelperModule),
             0,
             abi.encodeWithSelector(
-                ethereumBridgeHelperModule.grantRole.selector, ethereumBridgeHelperModule.OPERATOR_ROLE(), operator
+                ethereumBridgeHelperModule.grantRole.selector,
+                ethereumBridgeHelperModule.OPERATOR_ROLE(),
+                operator
             ),
             0
         );

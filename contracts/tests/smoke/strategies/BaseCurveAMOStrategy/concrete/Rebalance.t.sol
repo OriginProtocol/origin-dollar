@@ -58,7 +58,11 @@ contract Smoke_Concrete_BaseCurveAMOStrategy_Rebalance_Test is Smoke_BaseCurveAM
         vm.prank(strategist);
         baseCurveAMOStrategy.mintAndAddOTokens(500 ether);
 
-        assertEq(IERC20(address(oethBase)).balanceOf(address(baseCurveAMOStrategy)), 0, "No residual OETHb on strategy");
+        assertEq(
+            IERC20(address(oethBase)).balanceOf(address(baseCurveAMOStrategy)),
+            0,
+            "No residual OETHb on strategy"
+        );
         assertEq(weth.balanceOf(address(baseCurveAMOStrategy)), 0, "No residual WETH on strategy");
     }
 

@@ -5,7 +5,8 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SonicValidatorDelegator} from "contracts/strategies/sonic/SonicValidatorDelegator.sol";
 import {ISFC} from "contracts/interfaces/sonic/ISFC.sol";
 
-import {Fork_SonicStakingStrategy_Shared_Test} from "tests/fork/strategies/SonicStakingStrategy/shared/Shared.t.sol";
+import {Fork_SonicStakingStrategy_Shared_Test} from
+    "tests/fork/strategies/SonicStakingStrategy/shared/Shared.t.sol";
 
 contract Fork_Concrete_SonicStakingStrategy_WithdrawFromSFC_Test is Fork_SonicStakingStrategy_Shared_Test {
     function test_withdrawFromSFC() public {
@@ -41,7 +42,10 @@ contract Fork_Concrete_SonicStakingStrategy_WithdrawFromSFC_Test is Fork_SonicSt
 
         uint256 vaultBalanceAfter = IERC20(address(wrappedSonic)).balanceOf(address(oSonicVault));
         assertApproxEqAbs(
-            vaultBalanceAfter - vaultBalanceBefore, expectedAmount, 1, "vault balance mismatch after partial slash"
+            vaultBalanceAfter - vaultBalanceBefore,
+            expectedAmount,
+            1,
+            "vault balance mismatch after partial slash"
         );
     }
 

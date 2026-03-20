@@ -14,7 +14,11 @@ library Endian {
      * but it is immediately truncated to a uint64 (i.e. 64 bits)
      * through a right-shift/shr operation.
      */
-    function fromLittleEndianUint64(bytes32 lenum) internal pure returns (uint64 n) {
+    function fromLittleEndianUint64(bytes32 lenum)
+        internal
+        pure
+        returns (uint64 n)
+    {
         // the number needs to be stored in little-endian encoding (ie in bytes 0-8)
         n = uint64(uint256(lenum >> 192));
         // forgefmt: disable-next-item
@@ -29,12 +33,20 @@ library Endian {
             ((0x00000000000000FF & n) << 56);
     }
 
-    function toLittleEndianUint64(uint64 benum) internal pure returns (bytes32 n) {
+    function toLittleEndianUint64(uint64 benum)
+        internal
+        pure
+        returns (bytes32 n)
+    {
         // Convert to little-endian by reversing byte order
-        uint64 reversed = (benum >> 56) | ((0x00FF000000000000 & benum) >> 40) | ((0x0000FF0000000000 & benum) >> 24)
-            | ((0x000000FF00000000 & benum) >> 8) | ((0x00000000FF000000 & benum) << 8)
-            | ((0x0000000000FF0000 & benum) << 24) | ((0x000000000000FF00 & benum) << 40)
-            | ((0x00000000000000FF & benum) << 56);
+        uint64 reversed = (benum >> 56) |
+            ((0x00FF000000000000 & benum) >> 40) |
+            ((0x0000FF0000000000 & benum) >> 24) |
+            ((0x000000FF00000000 & benum) >> 8) |
+            ((0x00000000FF000000 & benum) << 8) |
+            ((0x0000000000FF0000 & benum) << 24) |
+            ((0x000000000000FF00 & benum) << 40) |
+            ((0x00000000000000FF & benum) << 56);
 
         // Store the little-endian uint64 in the least significant 64 bits of bytes32
         n = bytes32(uint256(reversed));

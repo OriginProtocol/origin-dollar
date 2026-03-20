@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import {InitializeGovernedUpgradeabilityProxy2} from "../InitializeGovernedUpgradeabilityProxy2.sol";
+import { InitializeGovernedUpgradeabilityProxy2 } from "../InitializeGovernedUpgradeabilityProxy2.sol";
 
 // ********************************************************
 // ********************************************************
@@ -17,5 +17,7 @@ import {InitializeGovernedUpgradeabilityProxy2} from "../InitializeGovernedUpgra
  * implementation contract.
  */
 contract CrossChainStrategyProxy is InitializeGovernedUpgradeabilityProxy2 {
-    constructor(address governor) InitializeGovernedUpgradeabilityProxy2(governor) {}
+    constructor(address governor)
+        InitializeGovernedUpgradeabilityProxy2(governor)
+    {}
 }

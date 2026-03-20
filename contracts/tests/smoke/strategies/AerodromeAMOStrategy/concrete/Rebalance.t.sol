@@ -22,9 +22,7 @@ contract Smoke_Concrete_AerodromeAMOStrategy_Rebalance_Test is Smoke_AerodromeAM
         uint256 balanceAfter = aerodromeAMOStrategy.checkBalance(address(weth));
 
         // Rebalance without swap just adds liquidity — checkBalance should be approximately the same
-        assertApproxEqRel(
-            balanceAfter, balanceBefore, 0.01 ether, "checkBalance should be stable after no-swap rebalance"
-        );
+        assertApproxEqRel(balanceAfter, balanceBefore, 0.01 ether, "checkBalance should be stable after no-swap rebalance");
     }
 
     function test_rebalance_withQuotedAmount() public {
@@ -45,7 +43,8 @@ contract Smoke_Concrete_AerodromeAMOStrategy_Rebalance_Test is Smoke_AerodromeAM
         aerodromeAMOStrategy.rebalance(0, true, 0);
 
         uint256 _tokenId = aerodromeAMOStrategy.tokenId();
-        INonfungiblePositionManager pm = INonfungiblePositionManager(BaseAddresses.nonFungiblePositionManager);
+        INonfungiblePositionManager pm =
+            INonfungiblePositionManager(BaseAddresses.nonFungiblePositionManager);
         assertEq(pm.ownerOf(_tokenId), BaseAddresses.aerodromeOETHbWETHClGauge, "LP should be staked in gauge");
     }
 
@@ -53,8 +52,16 @@ contract Smoke_Concrete_AerodromeAMOStrategy_Rebalance_Test is Smoke_AerodromeAM
         _depositToStrategy(5 ether);
         _quoteAndRebalance(type(uint256).max, type(uint256).max);
 
-        assertLe(weth.balanceOf(address(aerodromeAMOStrategy)), 0.00001 ether, "Residual WETH on strategy");
-        assertEq(IERC20(address(oethBase)).balanceOf(address(aerodromeAMOStrategy)), 0, "Residual OETHb on strategy");
+        assertLe(
+            weth.balanceOf(address(aerodromeAMOStrategy)),
+            0.00001 ether,
+            "Residual WETH on strategy"
+        );
+        assertEq(
+            IERC20(address(oethBase)).balanceOf(address(aerodromeAMOStrategy)),
+            0,
+            "Residual OETHb on strategy"
+        );
     }
 
     function test_rebalance_checkBalanceIncreases() public {

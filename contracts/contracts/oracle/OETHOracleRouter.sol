@@ -2,8 +2,8 @@
 pragma solidity ^0.8.0;
 
 import "../interfaces/chainlink/AggregatorV3Interface.sol";
-import {AbstractOracleRouter} from "./AbstractOracleRouter.sol";
-import {StableMath} from "../utils/StableMath.sol";
+import { AbstractOracleRouter } from "./AbstractOracleRouter.sol";
+import { StableMath } from "../utils/StableMath.sol";
 
 // @notice Oracle Router that denominates all prices in ETH
 contract OETHOracleRouter is AbstractOracleRouter {
@@ -18,7 +18,13 @@ contract OETHOracleRouter is AbstractOracleRouter {
      * @param asset address of the asset
      * @return uint256 unit price for 1 asset unit, in 18 decimal fixed
      */
-    function price(address asset) external view virtual override returns (uint256) {
+    function price(address asset)
+        external
+        view
+        virtual
+        override
+        returns (uint256)
+    {
         (address _feed, uint256 maxStaleness) = feedMetadata(asset);
         if (_feed == FIXED_PRICE) {
             return 1e18;
@@ -26,9 +32,13 @@ contract OETHOracleRouter is AbstractOracleRouter {
         require(_feed != address(0), "Asset not available");
 
         // slither-disable-next-line unused-return
-        (, int256 _iprice,, uint256 updatedAt,) = AggregatorV3Interface(_feed).latestRoundData();
+        (, int256 _iprice, , uint256 updatedAt, ) = AggregatorV3Interface(_feed)
+            .latestRoundData();
 
-        require(updatedAt + maxStaleness >= block.timestamp, "Oracle price too old");
+        require(
+            updatedAt + maxStaleness >= block.timestamp,
+            "Oracle price too old"
+        );
 
         uint8 decimals = getDecimals(_feed);
         uint256 _price = uint256(_iprice).scaleBy(18, decimals);

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import {VaultStorage} from "../vault/VaultStorage.sol";
+import { VaultStorage } from "../vault/VaultStorage.sol";
 
 contract MockAutoWithdrawalVault {
     address public asset;
@@ -16,7 +16,9 @@ contract MockAutoWithdrawalVault {
         asset = _asset;
     }
 
-    function setWithdrawalQueueMetadata(uint256 queued, uint256 claimable) external {
+    function setWithdrawalQueueMetadata(uint256 queued, uint256 claimable)
+        external
+    {
         withdrawalQueueMetadata.queued = uint128(queued);
         withdrawalQueueMetadata.claimable = uint128(claimable);
     }
@@ -29,7 +31,11 @@ contract MockAutoWithdrawalVault {
         // Do nothing
     }
 
-    function withdrawFromStrategy(address strategy, address[] memory assets, uint256[] memory amounts) external {
+    function withdrawFromStrategy(
+        address strategy,
+        address[] memory assets,
+        uint256[] memory amounts
+    ) external {
         if (_revertNextWithdraw) {
             _revertNextWithdraw = false;
             revert("Mocked withdrawal revert");

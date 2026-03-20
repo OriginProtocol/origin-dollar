@@ -19,7 +19,9 @@ contract Unit_Concrete_PoolBoostCentralRegistry_EmitPoolBoosterCreated_Test is U
 
         vm.prank(address(factorySwapxSingle));
         centralRegistry.emitPoolBoosterCreated(
-            boosterAddr, mockAmmPool, IPoolBoostCentralRegistry.PoolBoosterType.SwapXSingleBooster
+            boosterAddr,
+            mockAmmPool,
+            IPoolBoostCentralRegistry.PoolBoosterType.SwapXSingleBooster
         );
     }
 
@@ -27,12 +29,15 @@ contract Unit_Concrete_PoolBoostCentralRegistry_EmitPoolBoosterCreated_Test is U
         address boosterAddr = makeAddr("PoolBooster");
         address ammPool = makeAddr("AmmPool");
         IPoolBoostCentralRegistry.PoolBoosterType boosterType =
-        IPoolBoostCentralRegistry.PoolBoosterType.SwapXSingleBooster;
+            IPoolBoostCentralRegistry.PoolBoosterType.SwapXSingleBooster;
 
         // Verify all event fields: poolBoosterAddress, ammPoolAddress, poolBoosterType, factoryAddress
         vm.expectEmit(true, true, true, true, address(centralRegistry));
         emit IPoolBoostCentralRegistry.PoolBoosterCreated(
-            boosterAddr, ammPool, boosterType, address(factorySwapxSingle)
+            boosterAddr,
+            ammPool,
+            boosterType,
+            address(factorySwapxSingle)
         );
 
         vm.prank(address(factorySwapxSingle));
@@ -43,7 +48,9 @@ contract Unit_Concrete_PoolBoostCentralRegistry_EmitPoolBoosterCreated_Test is U
         vm.prank(alice);
         vm.expectRevert("Not an approved factory");
         centralRegistry.emitPoolBoosterCreated(
-            makeAddr("PoolBooster"), mockAmmPool, IPoolBoostCentralRegistry.PoolBoosterType.SwapXSingleBooster
+            makeAddr("PoolBooster"),
+            mockAmmPool,
+            IPoolBoostCentralRegistry.PoolBoosterType.SwapXSingleBooster
         );
     }
 }

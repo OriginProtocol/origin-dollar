@@ -19,7 +19,9 @@ contract Smoke_Concrete_PoolBoosterFactorySwapxDouble_Test is Smoke_PoolBoosterS
     }
 
     function test_oToken() public view {
-        (bool success, bytes memory data) = address(factorySwapxDouble).staticcall(abi.encodeWithSignature("oSonic()"));
+        (bool success, bytes memory data) = address(factorySwapxDouble).staticcall(
+            abi.encodeWithSignature("oSonic()")
+        );
         assertTrue(success, "oSonic() call failed");
         address oTokenAddr = abi.decode(data, (address));
         assertEq(oTokenAddr, Sonic.OSonicProxy);
@@ -44,8 +46,9 @@ contract Smoke_Concrete_PoolBoosterFactorySwapxDouble_Test is Smoke_PoolBoosterS
     }
 
     function test_computePoolBoosterAddress() public view {
-        address computed =
-            factorySwapxDouble.computePoolBoosterAddress(address(1), address(2), address(3), 50e16, 12345);
+        address computed = factorySwapxDouble.computePoolBoosterAddress(
+            address(1), address(2), address(3), 50e16, 12345
+        );
         assertNotEq(computed, address(0));
     }
 

@@ -70,7 +70,10 @@ abstract contract Unit_Proxies_Shared_Test is Base {
     //////////////////////////////////////////////////////
 
     /// @dev Initialize the proxy with the mock implementation and governor.
-    function _initializeProxy(InitializeGovernedUpgradeabilityProxy _proxy, address _governor) internal {
+    function _initializeProxy(
+        InitializeGovernedUpgradeabilityProxy _proxy,
+        address _governor
+    ) internal {
         address currentGovernor = _proxy.governor();
         vm.prank(currentGovernor);
         _proxy.initialize(address(impl), _governor, bytes(""));

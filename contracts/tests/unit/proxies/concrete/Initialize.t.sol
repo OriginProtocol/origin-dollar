@@ -30,8 +30,9 @@ contract Unit_Concrete_Proxy_Initialize_Test is Unit_Proxies_Shared_Test {
         proxy.initialize(address(impl), governor, data);
 
         // Verify delegatecall was made: read initialized state through proxy
-        (bool success, bytes memory result) =
-            address(proxy).staticcall(abi.encodeWithSelector(MockImplementation.getValue.selector));
+        (bool success, bytes memory result) = address(proxy).staticcall(
+            abi.encodeWithSelector(MockImplementation.getValue.selector)
+        );
         assertTrue(success);
         // getValue returns 0 (default) - the important thing is the delegatecall succeeded
         assertEq(abi.decode(result, (uint256)), 0);

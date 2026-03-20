@@ -4,17 +4,17 @@ pragma solidity ^0.8.0;
 /**
  * @title OToken VaultCore contract
  * @notice The Vault contract stores asset. On a deposit, OTokens will be minted
- *            and sent to the depositor. On a withdrawal, OTokens will be burned and
- *            asset will be sent to the withdrawer. The Vault accepts deposits of
- *            interest from yield bearing strategies which will modify the supply
- *            of OTokens.
+           and sent to the depositor. On a withdrawal, OTokens will be burned and
+           asset will be sent to the withdrawer. The Vault accepts deposits of
+           interest from yield bearing strategies which will modify the supply
+           of OTokens.
  * @author Origin Protocol Inc
  */
 
-import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import {SafeCast} from "@openzeppelin/contracts/utils/math/SafeCast.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 
-import {StableMath} from "../utils/StableMath.sol";
+import { StableMath } from "../utils/StableMath.sol";
 
 import "./VaultInitializer.sol";
 
@@ -50,7 +50,11 @@ abstract contract VaultCore is VaultInitializer {
      * @param _amount Amount of the asset being deposited
      * @dev Deprecated: param _minimumOusdAmount Minimum OTokens to mint
      */
-    function mint(address, uint256 _amount, uint256) external whenNotCapitalPaused nonReentrant {
+    function mint(
+        address,
+        uint256 _amount,
+        uint256
+    ) external whenNotCapitalPaused nonReentrant {
         _mint(_amount);
     }
 
@@ -109,9 +113,19 @@ abstract contract VaultCore is VaultInitializer {
      * that are moving funds between the Vault and end user wallets can influence strategies
      * utilizing this function.
      */
-    function mintForStrategy(uint256 _amount) external virtual whenNotCapitalPaused {
-        require(strategies[msg.sender].isSupported == true, "Unsupported strategy");
-        require(isMintWhitelistedStrategy[msg.sender] == true, "Not whitelisted strategy");
+    function mintForStrategy(uint256 _amount)
+        external
+        virtual
+        whenNotCapitalPaused
+    {
+        require(
+            strategies[msg.sender].isSupported == true,
+            "Unsupported strategy"
+        );
+        require(
+            isMintWhitelistedStrategy[msg.sender] == true,
+            "Not whitelisted strategy"
+        );
 
         emit Mint(msg.sender, _amount);
         // Mint matching amount of OTokens
@@ -131,9 +145,19 @@ abstract contract VaultCore is VaultInitializer {
      * that are moving funds between the Vault and end user wallets can influence strategies
      * utilizing this function.
      */
-    function burnForStrategy(uint256 _amount) external virtual whenNotCapitalPaused {
-        require(strategies[msg.sender].isSupported == true, "Unsupported strategy");
-        require(isMintWhitelistedStrategy[msg.sender] == true, "Not whitelisted strategy");
+    function burnForStrategy(uint256 _amount)
+        external
+        virtual
+        whenNotCapitalPaused
+    {
+        require(
+            strategies[msg.sender].isSupported == true,
+            "Unsupported strategy"
+        );
+        require(
+            isMintWhitelistedStrategy[msg.sender] == true,
+            "Not whitelisted strategy"
+        );
 
         emit Redeem(msg.sender, _amount);
 
@@ -169,10 +193,14 @@ abstract contract VaultCore is VaultInitializer {
         // The check that the requester has enough OToken is done in to later burn call
 
         requestId = withdrawalQueueMetadata.nextWithdrawalIndex;
-        queued = withdrawalQueueMetadata.queued + _amount.scaleBy(assetDecimals, 18);
+        queued =
+            withdrawalQueueMetadata.queued +
+            _amount.scaleBy(assetDecimals, 18);
 
         // Store the next withdrawal request
-        withdrawalQueueMetadata.nextWithdrawalIndex = SafeCast.toUint128(requestId + 1);
+        withdrawalQueueMetadata.nextWithdrawalIndex = SafeCast.toUint128(
+            requestId + 1
+        );
         // Store the updated queued amount which reserves asset in the withdrawal queue
         // and reduces the vault's total asset
         withdrawalQueueMetadata.queued = SafeCast.toUint128(queued);
@@ -214,7 +242,10 @@ abstract contract VaultCore is VaultInitializer {
         returns (uint256 amount)
     {
         // Try and get more liquidity if there is not enough available
-        if (withdrawalRequests[_requestId].queued > withdrawalQueueMetadata.claimable) {
+        if (
+            withdrawalRequests[_requestId].queued >
+            withdrawalQueueMetadata.claimable
+        ) {
             // Add any asset to the withdrawal queue
             // this needs to remain here as:
             //  - Vault can be funded and `addWithdrawalQueueLiquidity` is not externally called
@@ -277,14 +308,20 @@ abstract contract VaultCore is VaultInitializer {
         return (amounts, totalAmount);
     }
 
-    function _claimWithdrawal(uint256 requestId) internal returns (uint256 amount) {
+    function _claimWithdrawal(uint256 requestId)
+        internal
+        returns (uint256 amount)
+    {
         require(withdrawalClaimDelay > 0, "Async withdrawals not enabled");
 
         // Load the structs from storage into memory
         WithdrawalRequest memory request = withdrawalRequests[requestId];
         WithdrawalQueueMetadata memory queue = withdrawalQueueMetadata;
 
-        require(request.timestamp + withdrawalClaimDelay <= block.timestamp, "Claim delay not met");
+        require(
+            request.timestamp + withdrawalClaimDelay <= block.timestamp,
+            "Claim delay not met"
+        );
         // If there isn't enough reserved liquidity in the queue to claim
         require(request.queued <= queue.claimable, "Queue pending liquidity");
         require(request.withdrawer == msg.sender, "Not requester");
@@ -294,7 +331,10 @@ abstract contract VaultCore is VaultInitializer {
         withdrawalRequests[requestId].claimed = true;
         // Store the updated claimed amount
         withdrawalQueueMetadata.claimed =
-            queue.claimed + SafeCast.toUint128(StableMath.scaleBy(request.amount, assetDecimals, 18));
+            queue.claimed +
+            SafeCast.toUint128(
+                StableMath.scaleBy(request.amount, assetDecimals, 18)
+            );
 
         emit WithdrawalClaimed(msg.sender, requestId, request.amount);
 
@@ -323,7 +363,10 @@ abstract contract VaultCore is VaultInitializer {
             // Allow a max difference of maxSupplyDiff% between
             // asset value and OUSD total supply
             uint256 diff = oToken.totalSupply().divPrecisely(totalUnits);
-            require((diff > 1e18 ? diff - 1e18 : 1e18 - diff) <= maxSupplyDiff, "Backing supply liquidity error");
+            require(
+                (diff > 1e18 ? diff - 1e18 : 1e18 - diff) <= maxSupplyDiff,
+                "Backing supply liquidity error"
+            );
         }
     }
 
@@ -355,7 +398,10 @@ abstract contract VaultCore is VaultInitializer {
         // Calculate the target buffer for the vault using the total supply
         uint256 totalSupply = oToken.totalSupply();
         // Scaled to asset decimals
-        uint256 targetBuffer = totalSupply.mulTruncate(vaultBuffer).scaleBy(assetDecimals, 18);
+        uint256 targetBuffer = totalSupply.mulTruncate(vaultBuffer).scaleBy(
+            assetDecimals,
+            18
+        );
 
         // If available asset in the Vault is below or equal the target buffer then there's nothing to allocate
         if (assetAvailableInVault <= targetBuffer) return;
@@ -430,7 +476,7 @@ abstract contract VaultCore is VaultInitializer {
      * @return yield amount of expected yield
      */
     function previewYield() external view returns (uint256 yield) {
-        (yield,) = _nextYield(oToken.totalSupply(), _totalValue());
+        (yield, ) = _nextYield(oToken.totalSupply(), _totalValue());
         return yield;
     }
 
@@ -451,10 +497,10 @@ abstract contract VaultCore is VaultInitializer {
         targetRate = rebasePerSecondTarget;
 
         if (
-            elapsed == 0 // Yield only once per block.
-                || rebasing == 0 // No yield if there are no rebasing tokens to give it to.
-                || supply > vaultValue // No yield if we do not have yield to give.
-                || block.timestamp >= type(uint64).max // No yield if we are too far in the future to calculate it correctly.
+            elapsed == 0 || // Yield only once per block.
+            rebasing == 0 || // No yield if there are no rebasing tokens to give it to.
+            supply > vaultValue || // No yield if we do not have yield to give.
+            block.timestamp >= type(uint64).max // No yield if we are too far in the future to calculate it correctly.
         ) {
             return (0, targetRate);
         }
@@ -530,7 +576,12 @@ abstract contract VaultCore is VaultInitializer {
      * @param _asset Address of asset
      * @return balance Balance of asset in decimals of asset
      */
-    function _checkBalance(address _asset) internal view virtual returns (uint256 balance) {
+    function _checkBalance(address _asset)
+        internal
+        view
+        virtual
+        returns (uint256 balance)
+    {
         if (_asset != asset) return 0;
 
         // Get the asset in the vault and the strategies
@@ -570,7 +621,10 @@ abstract contract VaultCore is VaultInitializer {
      * @dev Adds asset (eg. WETH or USDC) to the withdrawal queue if there is a funding shortfall.
      * This assumes 1 asset equal 1 corresponding OToken.
      */
-    function _addWithdrawalQueueLiquidity() internal returns (uint256 addedClaimable) {
+    function _addWithdrawalQueueLiquidity()
+        internal
+        returns (uint256 addedClaimable)
+    {
         WithdrawalQueueMetadata memory queue = withdrawalQueueMetadata;
 
         // Check if the claimable asset is less than the queued amount
@@ -594,7 +648,9 @@ abstract contract VaultCore is VaultInitializer {
 
         uint256 unallocatedBaseAsset = assetBalance - allocatedBaseAsset;
         // the new claimable amount is the smaller of the queue shortfall or unallocated asset
-        addedClaimable = queueShortfall < unallocatedBaseAsset ? queueShortfall : unallocatedBaseAsset;
+        addedClaimable = queueShortfall < unallocatedBaseAsset
+            ? queueShortfall
+            : unallocatedBaseAsset;
         uint256 newClaimable = queue.claimable + addedClaimable;
 
         // Store the new claimable amount back to storage

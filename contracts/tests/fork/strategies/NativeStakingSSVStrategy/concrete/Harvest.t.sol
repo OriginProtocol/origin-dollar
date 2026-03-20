@@ -1,9 +1,8 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import {
-    Fork_NativeStakingSSVStrategy_Shared_Test
-} from "tests/fork/strategies/NativeStakingSSVStrategy/shared/Shared.t.sol";
+import {Fork_NativeStakingSSVStrategy_Shared_Test} from
+    "tests/fork/strategies/NativeStakingSSVStrategy/shared/Shared.t.sol";
 import {OETHHarvesterSimple} from "contracts/harvest/OETHHarvesterSimple.sol";
 
 contract Fork_Concrete_NativeStakingSSVStrategy_Harvest_Test is Fork_NativeStakingSSVStrategy_Shared_Test {
@@ -33,7 +32,10 @@ contract Fork_Concrete_NativeStakingSSVStrategy_Harvest_Test is Fork_NativeStaki
         // Harvest and transfer rewards to dripper
         vm.expectEmit(true, true, true, true, address(harvester));
         emit OETHHarvesterSimple.Harvested(
-            address(nativeStakingSSVStrategy), address(weth), executionRewards + consensusRewards, dripperAddr
+            address(nativeStakingSSVStrategy),
+            address(weth),
+            executionRewards + consensusRewards,
+            dripperAddr
         );
         vm.prank(josh);
         harvester.harvestAndTransfer(address(nativeStakingSSVStrategy));

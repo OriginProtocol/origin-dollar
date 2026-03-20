@@ -83,7 +83,9 @@ abstract contract Fork_AerodromeAMOStrategy_Shared_Test is BaseFork {
         );
 
         oethBaseVaultProxy.initialize(
-            address(oethBaseVaultImpl), governor, abi.encodeWithSignature("initialize(address)", address(oethBaseProxy))
+            address(oethBaseVaultImpl),
+            governor,
+            abi.encodeWithSignature("initialize(address)", address(oethBaseProxy))
         );
 
         vm.stopPrank();
@@ -104,29 +106,36 @@ abstract contract Fork_AerodromeAMOStrategy_Shared_Test is BaseFork {
         // WETH (0x4200...0006) < fresh OETHBase address → token0=WETH, token1=OETHBase
         require(BaseAddresses.WETH < address(oethBase), "WETH must be token0");
 
-        (bool success, bytes memory data) = BaseAddresses.slipstreamPoolFactory
-            .call(
-                abi.encodeWithSignature(
-                    "createPool(address,address,int24,uint160)",
-                    BaseAddresses.WETH,
-                    address(oethBase),
-                    int24(1),
-                    DEFAULT_POOL_PRICE
-                )
-            );
+        (bool success, bytes memory data) = BaseAddresses.slipstreamPoolFactory.call(
+            abi.encodeWithSignature(
+                "createPool(address,address,int24,uint160)",
+                BaseAddresses.WETH,
+                address(oethBase),
+                int24(1),
+                DEFAULT_POOL_PRICE
+            )
+        );
         require(success, "Pool creation failed");
         clPool = abi.decode(data, (address));
 
         // Create gauge via Voter
         // Try permissionless first, prank as gauge governor if restricted
-        (success, data) = BaseAddresses.aeroVoterAddress
-            .call(abi.encodeWithSignature("createGauge(address,address)", BaseAddresses.slipstreamPoolFactory, clPool));
+        (success, data) = BaseAddresses.aeroVoterAddress.call(
+            abi.encodeWithSignature(
+                "createGauge(address,address)",
+                BaseAddresses.slipstreamPoolFactory,
+                clPool
+            )
+        );
         if (!success) {
             vm.prank(BaseAddresses.aeroGaugeGovernorAddress);
-            (success, data) = BaseAddresses.aeroVoterAddress
-                .call(
-                    abi.encodeWithSignature("createGauge(address,address)", BaseAddresses.slipstreamPoolFactory, clPool)
-                );
+            (success, data) = BaseAddresses.aeroVoterAddress.call(
+                abi.encodeWithSignature(
+                    "createGauge(address,address)",
+                    BaseAddresses.slipstreamPoolFactory,
+                    clPool
+                )
+            );
             require(success, "Gauge creation failed");
         }
         address gaugeAddr = abi.decode(data, (address));
@@ -135,7 +144,8 @@ abstract contract Fork_AerodromeAMOStrategy_Shared_Test is BaseFork {
         // Deploy AerodromeAMOStrategy
         aerodromeAMOStrategy = new AerodromeAMOStrategy(
             InitializableAbstractStrategy.BaseStrategyConfig({
-                platformAddress: clPool, vaultAddress: address(oethBaseVault)
+                platformAddress: clPool,
+                vaultAddress: address(oethBaseVault)
             }),
             BaseAddresses.WETH,
             address(oethBase),
@@ -164,7 +174,7 @@ abstract contract Fork_AerodromeAMOStrategy_Shared_Test is BaseFork {
         // Configure wide allowed WETH share interval for initial setup
         // Fresh pool starts at ~50% WETH share; we narrow after establishing position
         vm.prank(governor);
-        aerodromeAMOStrategy.setAllowedPoolWethShareInterval(0.010000001 ether, 0.6 ether);
+        aerodromeAMOStrategy.setAllowedPoolWethShareInterval(0.010000001 ether, 0.60 ether);
 
         // Approve all tokens
         vm.prank(governor);

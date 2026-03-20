@@ -1,12 +1,11 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import {
-    Unit_NativeStakingSSVStrategy_Shared_Test
-} from "tests/unit/strategies/NativeStakingSSVStrategy/shared/Shared.t.sol";
+import {Unit_NativeStakingSSVStrategy_Shared_Test} from
+    "tests/unit/strategies/NativeStakingSSVStrategy/shared/Shared.t.sol";
 
-contract Unit_Concrete_NativeStakingSSVStrategy_ManuallyFixAccounting_Test is
-    Unit_NativeStakingSSVStrategy_Shared_Test
+contract Unit_Concrete_NativeStakingSSVStrategy_ManuallyFixAccounting_Test
+    is Unit_NativeStakingSSVStrategy_Shared_Test
 {
     // ----------------
     // Access control
@@ -135,7 +134,10 @@ contract Unit_Concrete_NativeStakingSSVStrategy_ManuallyFixAccounting_Test is
         emit AccountingManuallyFixed(delta, 0, 0);
         nativeStakingSSVStrategy.manuallyFixAccounting(delta, 0, 0);
 
-        assertEq(nativeStakingSSVStrategy.activeDepositedValidators(), uint256(int256(validatorsBefore) + delta));
+        assertEq(
+            nativeStakingSSVStrategy.activeDepositedValidators(),
+            uint256(int256(validatorsBefore) + delta)
+        );
     }
 
     // ----------------
@@ -186,7 +188,10 @@ contract Unit_Concrete_NativeStakingSSVStrategy_ManuallyFixAccounting_Test is
         emit AccountingManuallyFixed(0, consensusRewardsDelta, 0);
         nativeStakingSSVStrategy.manuallyFixAccounting(0, consensusRewardsDelta, 0);
 
-        assertEq(nativeStakingSSVStrategy.consensusRewards(), address(nativeStakingSSVStrategy).balance);
+        assertEq(
+            nativeStakingSSVStrategy.consensusRewards(),
+            address(nativeStakingSSVStrategy).balance
+        );
     }
 
     // ----------------
@@ -239,7 +244,10 @@ contract Unit_Concrete_NativeStakingSSVStrategy_ManuallyFixAccounting_Test is
         nativeStakingSSVStrategy.manuallyFixAccounting(0, 0, wethToVault);
 
         assertEq(address(nativeStakingSSVStrategy).balance, ethBefore - wethToVault);
-        assertEq(nativeStakingSSVStrategy.consensusRewards(), address(nativeStakingSSVStrategy).balance);
+        assertEq(
+            nativeStakingSSVStrategy.consensusRewards(),
+            address(nativeStakingSSVStrategy).balance
+        );
     }
 
     // ----------------

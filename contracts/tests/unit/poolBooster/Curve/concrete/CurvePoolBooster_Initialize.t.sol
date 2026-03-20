@@ -28,9 +28,7 @@ contract Unit_Concrete_CurvePoolBooster_Initialize_Test is Unit_Curve_Shared_Tes
         vm.expectEmit(true, true, true, true);
         emit CurvePoolBooster.VotemarketUpdated(mockVotemarket);
 
-        freshPlain.initialize(
-            governor, strategist, DEFAULT_FEE, mockFeeCollector, mockCampaignRemoteManager, mockVotemarket
-        );
+        freshPlain.initialize(governor, strategist, DEFAULT_FEE, mockFeeCollector, mockCampaignRemoteManager, mockVotemarket);
     }
 
     function test_initialize_RevertWhen_notGovernor() public {
@@ -74,9 +72,7 @@ contract Unit_Concrete_CurvePoolBooster_Initialize_Test is Unit_Curve_Shared_Tes
         CurvePoolBoosterPlain freshPlain = new CurvePoolBoosterPlain(address(oeth), mockGauge);
 
         vm.expectRevert("Invalid votemarket");
-        freshPlain.initialize(
-            governor, strategist, DEFAULT_FEE, mockFeeCollector, mockCampaignRemoteManager, address(0)
-        );
+        freshPlain.initialize(governor, strategist, DEFAULT_FEE, mockFeeCollector, mockCampaignRemoteManager, address(0));
     }
 
     /// @notice Test CurvePoolBooster.initialize (not CurvePoolBoosterPlain)

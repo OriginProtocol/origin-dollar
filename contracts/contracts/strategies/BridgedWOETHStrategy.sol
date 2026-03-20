@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import {IERC20, SafeERC20, InitializableAbstractStrategy} from "../utils/InitializableAbstractStrategy.sol";
-import {IWETH9} from "../interfaces/IWETH9.sol";
-import {IVault} from "../interfaces/IVault.sol";
-import {AggregatorV3Interface} from "../interfaces/chainlink/AggregatorV3Interface.sol";
-import {StableMath} from "../utils/StableMath.sol";
-import {SafeCast} from "@openzeppelin/contracts/utils/math/SafeCast.sol";
-import {IOracle} from "../interfaces/IOracle.sol";
+import { IERC20, SafeERC20, InitializableAbstractStrategy } from "../utils/InitializableAbstractStrategy.sol";
+import { IWETH9 } from "../interfaces/IWETH9.sol";
+import { IVault } from "../interfaces/IVault.sol";
+import { AggregatorV3Interface } from "../interfaces/chainlink/AggregatorV3Interface.sol";
+import { StableMath } from "../utils/StableMath.sol";
+import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
+import { IOracle } from "../interfaces/IOracle.sol";
 
 contract BridgedWOETHStrategy is InitializableAbstractStrategy {
     using StableMath for uint256;
@@ -39,7 +39,11 @@ contract BridgedWOETHStrategy is InitializableAbstractStrategy {
         oracle = IOracle(_oracle);
     }
 
-    function initialize(uint128 _maxPriceDiffBps) external onlyGovernor initializer {
+    function initialize(uint128 _maxPriceDiffBps)
+        external
+        onlyGovernor
+        initializer
+    {
         InitializableAbstractStrategy._initialize(
             new address[](0), // No reward tokens
             new address[](0), // No assets
@@ -53,7 +57,10 @@ contract BridgedWOETHStrategy is InitializableAbstractStrategy {
      * @dev Sets the max price diff bps for the wOETH value appreciation
      * @param _maxPriceDiffBps Bps value, 10k == 100%
      */
-    function setMaxPriceDiffBps(uint128 _maxPriceDiffBps) external onlyGovernor {
+    function setMaxPriceDiffBps(uint128 _maxPriceDiffBps)
+        external
+        onlyGovernor
+    {
         _setMaxPriceDiffBps(_maxPriceDiffBps);
     }
 
@@ -62,7 +69,10 @@ contract BridgedWOETHStrategy is InitializableAbstractStrategy {
      * @param _maxPriceDiffBps Bps value, 10k == 100%
      */
     function _setMaxPriceDiffBps(uint128 _maxPriceDiffBps) internal {
-        require(_maxPriceDiffBps > 0 && _maxPriceDiffBps <= 10000, "Invalid bps value");
+        require(
+            _maxPriceDiffBps > 0 && _maxPriceDiffBps <= 10000,
+            "Invalid bps value"
+        );
 
         emit MaxPriceDiffBpsUpdated(maxPriceDiffBps, _maxPriceDiffBps);
 
@@ -104,7 +114,8 @@ contract BridgedWOETHStrategy is InitializableAbstractStrategy {
             require(oraclePrice128 >= lastOraclePrice, "Negative wOETH yield");
 
             // lastOraclePrice * (1 + maxPriceDiffBps)
-            uint256 maxPrice = (lastOraclePrice * (1e4 + maxPriceDiffBps)) / 1e4;
+            uint256 maxPrice = (lastOraclePrice * (1e4 + maxPriceDiffBps)) /
+                1e4;
 
             // And that it's within the bounds.
             require(oraclePrice128 <= maxPrice, "Price diff beyond threshold");
@@ -123,7 +134,11 @@ contract BridgedWOETHStrategy is InitializableAbstractStrategy {
      * @param woethAmount Amount of wOETH
      * @return Value of wOETH in WETH (using the last stored oracle price)
      */
-    function getBridgedWOETHValue(uint256 woethAmount) public view returns (uint256) {
+    function getBridgedWOETHValue(uint256 woethAmount)
+        public
+        view
+        returns (uint256)
+    {
         return (woethAmount * lastOraclePrice) / 1 ether;
     }
 
@@ -132,7 +147,11 @@ contract BridgedWOETHStrategy is InitializableAbstractStrategy {
      *      equivalent amount of OETHb.
      * @param woethAmount Amount of bridged wOETH to transfer in
      */
-    function depositBridgedWOETH(uint256 woethAmount) external onlyGovernorOrStrategist nonReentrant {
+    function depositBridgedWOETH(uint256 woethAmount)
+        external
+        onlyGovernorOrStrategist
+        nonReentrant
+    {
         // Update wOETH price
         uint256 oraclePrice = _updateWOETHOraclePrice();
 
@@ -161,7 +180,11 @@ contract BridgedWOETHStrategy is InitializableAbstractStrategy {
      *      equivalent amount of bridged wOETH.
      * @param oethToBurn Amount of OETHb to burn
      */
-    function withdrawBridgedWOETH(uint256 oethToBurn) external onlyGovernorOrStrategist nonReentrant {
+    function withdrawBridgedWOETH(uint256 oethToBurn)
+        external
+        onlyGovernorOrStrategist
+        nonReentrant
+    {
         // Update wOETH price
         uint256 oraclePrice = _updateWOETHOraclePrice();
 
@@ -190,7 +213,12 @@ contract BridgedWOETHStrategy is InitializableAbstractStrategy {
      * @param _asset      Address of the asset
      * @return balance    Total value of the asset in the platform
      */
-    function checkBalance(address _asset) external view override returns (uint256 balance) {
+    function checkBalance(address _asset)
+        external
+        view
+        override
+        returns (uint256 balance)
+    {
         require(_asset == address(weth), "Unsupported asset");
 
         // Figure out how much wOETH is worth at the time.
@@ -205,7 +233,9 @@ contract BridgedWOETHStrategy is InitializableAbstractStrategy {
         // If `updateWOETHOraclePrice()` hasn't been called in a while,
         // the strategy will underreport its holdings but never overreport it.
 
-        balance = (bridgedWOETH.balanceOf(address(this)) * lastOraclePrice) / 1 ether;
+        balance =
+            (bridgedWOETH.balanceOf(address(this)) * lastOraclePrice) /
+            1 ether;
     }
 
     /**
@@ -226,8 +256,15 @@ contract BridgedWOETHStrategy is InitializableAbstractStrategy {
     /**
      * @inheritdoc InitializableAbstractStrategy
      */
-    function transferToken(address _asset, uint256 _amount) public override onlyGovernor {
-        require(_asset != address(bridgedWOETH) && _asset != address(weth), "Cannot transfer supported asset");
+    function transferToken(address _asset, uint256 _amount)
+        public
+        override
+        onlyGovernor
+    {
+        require(
+            _asset != address(bridgedWOETH) && _asset != address(weth),
+            "Cannot transfer supported asset"
+        );
         // Use SafeERC20 only for rescuing unknown assets; core tokens are standard.
         IERC20(_asset).safeTransfer(governor(), _amount);
     }
@@ -235,7 +272,12 @@ contract BridgedWOETHStrategy is InitializableAbstractStrategy {
     /**
      * @notice deposit() function not used for this strategy
      */
-    function deposit(address, uint256) external override onlyVault nonReentrant {
+    function deposit(address, uint256)
+        external
+        override
+        onlyVault
+        nonReentrant
+    {
         // Use depositBridgedWOETH() instead
         require(false, "Deposit disabled");
     }
@@ -258,12 +300,7 @@ contract BridgedWOETHStrategy is InitializableAbstractStrategy {
         address _asset,
         // solhint-disable-next-line no-unused-vars
         uint256 _amount
-    )
-        external
-        override
-        onlyVault
-        nonReentrant
-    {
+    ) external override onlyVault nonReentrant {
         require(false, "Withdrawal disabled");
     }
 

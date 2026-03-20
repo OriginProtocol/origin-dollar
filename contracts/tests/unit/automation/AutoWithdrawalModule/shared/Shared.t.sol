@@ -42,8 +42,12 @@ abstract contract Unit_AutoWithdrawalModule_Shared_Test is Base {
         mockStrategy = new MockStrategy();
 
         // Deploy AutoWithdrawalModule
-        autoWithdrawalModule =
-            new AutoWithdrawalModule(address(mockSafe), operator, address(mockVault), address(mockStrategy));
+        autoWithdrawalModule = new AutoWithdrawalModule(
+            address(mockSafe),
+            operator,
+            address(mockVault),
+            address(mockStrategy)
+        );
     }
 
     //////////////////////////////////////////////////////

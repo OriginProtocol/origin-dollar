@@ -1,13 +1,12 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import {
-    Unit_CompoundingStakingSSVStrategy_Shared_Test
-} from "tests/unit/strategies/CompoundingStakingSSVStrategy/shared/Shared.t.sol";
+import {Unit_CompoundingStakingSSVStrategy_Shared_Test} from
+    "tests/unit/strategies/CompoundingStakingSSVStrategy/shared/Shared.t.sol";
 import {CompoundingValidatorManager} from "contracts/strategies/NativeStaking/CompoundingValidatorManager.sol";
 
-contract Unit_Concrete_CompoundingStakingSSVStrategy_SlashedValidatorDeposit_Test is
-    Unit_CompoundingStakingSSVStrategy_Shared_Test
+contract Unit_Concrete_CompoundingStakingSSVStrategy_SlashedValidatorDeposit_Test
+    is Unit_CompoundingStakingSSVStrategy_Shared_Test
 {
     bytes32 internal pendingDepositRoot;
     uint64 internal withdrawableEpoch;
@@ -35,8 +34,9 @@ contract Unit_Concrete_CompoundingStakingSSVStrategy_SlashedValidatorDeposit_Tes
         compoundingStakingSSVStrategy.stakeEth(stakeData, uint64(3 ether / 1 gwei));
 
         // Get the pending deposit info
-        pendingDepositRoot =
-            compoundingStakingSSVStrategy.depositList(compoundingStakingSSVStrategy.depositListLength() - 1);
+        pendingDepositRoot = compoundingStakingSSVStrategy.depositList(
+            compoundingStakingSSVStrategy.depositListLength() - 1
+        );
 
         // Calculate withdrawable epoch and slot
         withdrawableEpoch = uint64((block.timestamp - BEACON_GENESIS_TIMESTAMP) / (SLOT_DURATION * SLOTS_PER_EPOCH)) + 4;
@@ -50,12 +50,14 @@ contract Unit_Concrete_CompoundingStakingSSVStrategy_SlashedValidatorDeposit_Tes
 
         CompoundingValidatorManager.FirstPendingDepositSlotProofData memory firstPending =
             CompoundingValidatorManager.FirstPendingDepositSlotProofData({
-                slot: withdrawableSlot - 1, proof: nonEmptyQueueProof
+                slot: withdrawableSlot - 1,
+                proof: nonEmptyQueueProof
             });
 
         CompoundingValidatorManager.StrategyValidatorProofData memory strategyValidator =
             CompoundingValidatorManager.StrategyValidatorProofData({
-                withdrawableEpoch: withdrawableEpoch, withdrawableEpochProof: hex"00"
+                withdrawableEpoch: withdrawableEpoch,
+                withdrawableEpochProof: hex"00"
             });
 
         vm.expectRevert("Exit Deposit likely not proc.");
@@ -70,11 +72,15 @@ contract Unit_Concrete_CompoundingStakingSSVStrategy_SlashedValidatorDeposit_Tes
         bytes memory emptyQueueProof = new bytes(1184);
 
         CompoundingValidatorManager.FirstPendingDepositSlotProofData memory firstPending =
-            CompoundingValidatorManager.FirstPendingDepositSlotProofData({slot: 1, proof: emptyQueueProof});
+            CompoundingValidatorManager.FirstPendingDepositSlotProofData({
+                slot: 1,
+                proof: emptyQueueProof
+            });
 
         CompoundingValidatorManager.StrategyValidatorProofData memory strategyValidator =
             CompoundingValidatorManager.StrategyValidatorProofData({
-                withdrawableEpoch: withdrawableEpoch, withdrawableEpochProof: hex"00"
+                withdrawableEpoch: withdrawableEpoch,
+                withdrawableEpochProof: hex"00"
             });
 
         vm.expectEmit(true, false, false, true, address(compoundingStakingSSVStrategy));
@@ -92,12 +98,14 @@ contract Unit_Concrete_CompoundingStakingSSVStrategy_SlashedValidatorDeposit_Tes
 
         CompoundingValidatorManager.FirstPendingDepositSlotProofData memory firstPending =
             CompoundingValidatorManager.FirstPendingDepositSlotProofData({
-                slot: withdrawableSlot, proof: nonEmptyQueueProof
+                slot: withdrawableSlot,
+                proof: nonEmptyQueueProof
             });
 
         CompoundingValidatorManager.StrategyValidatorProofData memory strategyValidator =
             CompoundingValidatorManager.StrategyValidatorProofData({
-                withdrawableEpoch: withdrawableEpoch, withdrawableEpochProof: hex"00"
+                withdrawableEpoch: withdrawableEpoch,
+                withdrawableEpochProof: hex"00"
             });
 
         vm.expectEmit(true, false, false, true, address(compoundingStakingSSVStrategy));
@@ -115,12 +123,14 @@ contract Unit_Concrete_CompoundingStakingSSVStrategy_SlashedValidatorDeposit_Tes
 
         CompoundingValidatorManager.FirstPendingDepositSlotProofData memory firstPending =
             CompoundingValidatorManager.FirstPendingDepositSlotProofData({
-                slot: withdrawableSlot + 1, proof: nonEmptyQueueProof
+                slot: withdrawableSlot + 1,
+                proof: nonEmptyQueueProof
             });
 
         CompoundingValidatorManager.StrategyValidatorProofData memory strategyValidator =
             CompoundingValidatorManager.StrategyValidatorProofData({
-                withdrawableEpoch: withdrawableEpoch, withdrawableEpochProof: hex"00"
+                withdrawableEpoch: withdrawableEpoch,
+                withdrawableEpochProof: hex"00"
             });
 
         vm.expectEmit(true, false, false, true, address(compoundingStakingSSVStrategy));

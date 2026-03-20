@@ -24,7 +24,9 @@ contract Unit_Concrete_OUSDVault_ViewFunctions_Test is Unit_Shared_Test {
 
         // Deposit 50 USDC to strategy
         vm.prank(governor);
-        ousdVault.depositToStrategy(address(strategy), _toArray(address(usdc)), _toArray(uint256(50e6)));
+        ousdVault.depositToStrategy(
+            address(strategy), _toArray(address(usdc)), _toArray(uint256(50e6))
+        );
 
         // Total value should remain the same (asset moved from vault to strategy)
         assertEq(ousdVault.totalValue(), 200e18, "Total value should not change with strategy deposit");
@@ -55,7 +57,9 @@ contract Unit_Concrete_OUSDVault_ViewFunctions_Test is Unit_Shared_Test {
         MockStrategy strategy = _deployAndApproveStrategy();
 
         vm.prank(governor);
-        ousdVault.depositToStrategy(address(strategy), _toArray(address(usdc)), _toArray(uint256(80e6)));
+        ousdVault.depositToStrategy(
+            address(strategy), _toArray(address(usdc)), _toArray(uint256(80e6))
+        );
 
         // Balance includes both vault and strategy holdings minus withdrawal queue
         assertEq(ousdVault.checkBalance(address(usdc)), 200e6, "Check balance should include strategy");

@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import {
-    Fork_ClaimStrategyRewardsSafeModule_Shared_Test
-} from "tests/fork/automation/ClaimStrategyRewardsSafeModule/shared/Shared.t.sol";
+import {Fork_ClaimStrategyRewardsSafeModule_Shared_Test} from
+    "tests/fork/automation/ClaimStrategyRewardsSafeModule/shared/Shared.t.sol";
 
-contract Fork_Concrete_ClaimStrategyRewardsSafeModule_ClaimRewards_Test is
+contract Fork_Concrete_ClaimStrategyRewardsSafeModule_ClaimRewards_Test
+    is
     Fork_ClaimStrategyRewardsSafeModule_Shared_Test
 {
     function test_claimCRVRewards() public {

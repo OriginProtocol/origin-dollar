@@ -2,7 +2,8 @@
 pragma solidity ^0.8.0;
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {Unit_CurveAMOStrategy_Shared_Test} from "tests/unit/strategies/CurveAMOStrategy/shared/Shared.t.sol";
+import {Unit_CurveAMOStrategy_Shared_Test} from
+    "tests/unit/strategies/CurveAMOStrategy/shared/Shared.t.sol";
 import {CurveAMOStrategy} from "contracts/strategies/CurveAMOStrategy.sol";
 import {InitializableAbstractStrategy} from "contracts/utils/InitializableAbstractStrategy.sol";
 
@@ -21,15 +22,14 @@ contract Unit_Concrete_CurveAMOStrategy_Initialize_Test is Unit_CurveAMOStrategy
         // hardAsset approved for pool
         assertEq(weth.allowance(address(curveAMOStrategy), address(curvePool)), type(uint256).max);
         // lpToken approved for gauge
-        assertEq(
-            IERC20(address(curvePool)).allowance(address(curveAMOStrategy), address(curveGauge)), type(uint256).max
-        );
+        assertEq(IERC20(address(curvePool)).allowance(address(curveAMOStrategy), address(curveGauge)), type(uint256).max);
     }
 
     function test_initialize_RevertWhen_calledByNonGovernor() public {
         CurveAMOStrategy freshStrategy = new CurveAMOStrategy(
             InitializableAbstractStrategy.BaseStrategyConfig({
-                platformAddress: address(curvePool), vaultAddress: address(oethVault)
+                platformAddress: address(curvePool),
+                vaultAddress: address(oethVault)
             }),
             address(oeth),
             address(mockWeth),

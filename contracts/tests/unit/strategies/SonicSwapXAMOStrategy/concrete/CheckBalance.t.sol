@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import {Unit_SonicSwapXAMOStrategy_Shared_Test} from "tests/unit/strategies/SonicSwapXAMOStrategy/shared/Shared.t.sol";
+import {Unit_SonicSwapXAMOStrategy_Shared_Test} from
+    "tests/unit/strategies/SonicSwapXAMOStrategy/shared/Shared.t.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 contract Unit_Concrete_SonicSwapXAMOStrategy_CheckBalance_Test is Unit_SonicSwapXAMOStrategy_Shared_Test {
@@ -42,7 +43,9 @@ contract Unit_Concrete_SonicSwapXAMOStrategy_CheckBalance_Test is Unit_SonicSwap
 
         // Mock pool totalSupply to return 0 (edge case: _lpValue early return)
         vm.mockCall(
-            address(mockSwapXPair), abi.encodeWithSelector(mockSwapXPair.totalSupply.selector), abi.encode(uint256(0))
+            address(mockSwapXPair),
+            abi.encodeWithSelector(mockSwapXPair.totalSupply.selector),
+            abi.encode(uint256(0))
         );
 
         uint256 balance = sonicSwapXAMOStrategy.checkBalance(address(mockWrappedSonic));

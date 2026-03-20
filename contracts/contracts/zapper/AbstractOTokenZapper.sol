@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {IVault} from "../interfaces/IVault.sol";
-import {IWETH9} from "../interfaces/IWETH9.sol";
-import {IERC4626} from "../../lib/openzeppelin/interfaces/IERC4626.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { IVault } from "../interfaces/IVault.sol";
+import { IWETH9 } from "../interfaces/IWETH9.sol";
+import { IERC4626 } from "../../lib/openzeppelin/interfaces/IERC4626.sol";
 
 abstract contract AbstractOTokenZapper {
     IERC20 public immutable oToken;
@@ -13,11 +13,17 @@ abstract contract AbstractOTokenZapper {
 
     IWETH9 public immutable weth;
 
-    address private constant ETH_MARKER = 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE;
+    address private constant ETH_MARKER =
+        0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE;
 
     event Zap(address indexed minter, address indexed asset, uint256 amount);
 
-    constructor(address _oToken, address _wOToken, address _vault, address _weth) {
+    constructor(
+        address _oToken,
+        address _wOToken,
+        address _vault,
+        address _weth
+    ) {
         oToken = IERC20(_oToken);
         wOToken = IERC4626(_wOToken);
         vault = IVault(_vault);
@@ -46,7 +52,7 @@ abstract contract AbstractOTokenZapper {
         emit Zap(msg.sender, ETH_MARKER, balance);
 
         // Wrap ETH
-        weth.deposit{value: balance}();
+        weth.deposit{ value: balance }();
 
         // Mint with WETH
         return _mint(balance, msg.sender);
@@ -57,14 +63,18 @@ abstract contract AbstractOTokenZapper {
      * @param minReceived min amount of wsuperOETHb to receive
      * @return Amount of wsuperOETHb sent to user
      */
-    function depositETHForWrappedTokens(uint256 minReceived) external payable returns (uint256) {
+    function depositETHForWrappedTokens(uint256 minReceived)
+        external
+        payable
+        returns (uint256)
+    {
         // slither-disable-start reentrancy-balance
         uint256 balance = address(this).balance;
 
         emit Zap(msg.sender, ETH_MARKER, balance);
 
         // Wrap ETH
-        weth.deposit{value: balance}();
+        weth.deposit{ value: balance }();
 
         // Mint with WETH
         uint256 mintedOToken = _mint(balance, address(this));
@@ -84,7 +94,10 @@ abstract contract AbstractOTokenZapper {
      * @param minReceived min amount of wsuperOETHb to receive
      * @return Amount of wsuperOETHb sent to user
      */
-    function depositWETHForWrappedTokens(uint256 wethAmount, uint256 minReceived) external returns (uint256) {
+    function depositWETHForWrappedTokens(
+        uint256 wethAmount,
+        uint256 minReceived
+    ) external returns (uint256) {
         // slither-disable-start reentrancy-balance
         // slither-disable-next-line unchecked-transfer unused-return
         weth.transferFrom(msg.sender, address(this), wethAmount);
@@ -109,7 +122,10 @@ abstract contract AbstractOTokenZapper {
      * @param recipient Address that receives the tokens
      * @return Amount of OToken sent to user
      */
-    function _mint(uint256 minOToken, address recipient) internal returns (uint256) {
+    function _mint(uint256 minOToken, address recipient)
+        internal
+        returns (uint256)
+    {
         uint256 toMint = weth.balanceOf(address(this));
         vault.mint(toMint);
         uint256 mintedAmount = oToken.balanceOf(address(this));

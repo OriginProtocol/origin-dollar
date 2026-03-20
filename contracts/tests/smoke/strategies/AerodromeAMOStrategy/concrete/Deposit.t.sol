@@ -22,7 +22,9 @@ contract Smoke_Concrete_AerodromeAMOStrategy_Deposit_Test is Smoke_AerodromeAMOS
         uint256 balanceAfter = aerodromeAMOStrategy.checkBalance(address(weth));
         // When pool is out of range, deposit parks WETH on the contract, so checkBalance increases by exactly the amount
         // When in range, auto-rebalance adds to position, but checkBalance still increases
-        assertApproxEqAbs(balanceAfter - balanceBefore, amount, 0.01 ether, "checkBalance should increase by ~amount");
+        assertApproxEqAbs(
+            balanceAfter - balanceBefore, amount, 0.01 ether, "checkBalance should increase by ~amount"
+        );
     }
 
     function test_deposit_triggersRebalanceWhenInRange() public {
@@ -42,4 +44,5 @@ contract Smoke_Concrete_AerodromeAMOStrategy_Deposit_Test is Smoke_AerodromeAMOS
             "WETH should be deployed to position (not sitting on contract)"
         );
     }
+
 }

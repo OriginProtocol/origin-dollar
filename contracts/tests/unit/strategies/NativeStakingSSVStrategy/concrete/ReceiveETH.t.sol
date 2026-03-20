@@ -1,9 +1,8 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import {
-    Unit_NativeStakingSSVStrategy_Shared_Test
-} from "tests/unit/strategies/NativeStakingSSVStrategy/shared/Shared.t.sol";
+import {Unit_NativeStakingSSVStrategy_Shared_Test} from
+    "tests/unit/strategies/NativeStakingSSVStrategy/shared/Shared.t.sol";
 
 contract Unit_Concrete_NativeStakingSSVStrategy_ReceiveETH_Test is Unit_NativeStakingSSVStrategy_Shared_Test {
     function test_receiveETH_RevertWhen_senderNotAllowed() public {

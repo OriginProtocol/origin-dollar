@@ -12,7 +12,10 @@ contract MockSwapXPair is MockERC20 {
     bool public _isStable;
     uint256 public _amountOutOverride;
 
-    constructor(address token0_, address token1_) MockERC20("SwapX LP", "sLP", 18) {
+    constructor(
+        address token0_,
+        address token1_
+    ) MockERC20("SwapX LP", "sLP", 18) {
         _token0 = token0_;
         _token1 = token1_;
         _isStable = true;
@@ -31,11 +34,18 @@ contract MockSwapXPair is MockERC20 {
         return _isStable;
     }
 
-    function getReserves() external view returns (uint256, uint256, uint256) {
+    function getReserves()
+        external
+        view
+        returns (uint256, uint256, uint256)
+    {
         return (_reserve0, _reserve1, block.timestamp);
     }
 
-    function getAmountOut(uint256 amountIn, address tokenIn) external view returns (uint256) {
+    function getAmountOut(
+        uint256 amountIn,
+        address tokenIn
+    ) external view returns (uint256) {
         if (_amountOutOverride > 0) return _amountOutOverride;
         // Default ~1:1 stable pricing
         return amountIn;
@@ -65,7 +75,9 @@ contract MockSwapXPair is MockERC20 {
     }
 
     // burn(address to) - proportional removal
-    function burn(address to) external returns (uint256 amount0, uint256 amount1) {
+    function burn(
+        address to
+    ) external returns (uint256 amount0, uint256 amount1) {
         uint256 liquidity = balanceOf[address(this)];
         uint256 _totalSupply = totalSupply;
 
@@ -83,7 +95,12 @@ contract MockSwapXPair is MockERC20 {
 
     // swap(amount0Out, amount1Out, to, data) - transfers out,
     // reads in via balance delta
-    function swap(uint256 amount0Out, uint256 amount1Out, address to, bytes calldata) external {
+    function swap(
+        uint256 amount0Out,
+        uint256 amount1Out,
+        address to,
+        bytes calldata
+    ) external {
         if (amount0Out > 0) IERC20(_token0).transfer(to, amount0Out);
         if (amount1Out > 0) IERC20(_token1).transfer(to, amount1Out);
 
@@ -95,12 +112,10 @@ contract MockSwapXPair is MockERC20 {
     function skim(address to) external {
         uint256 balance0 = IERC20(_token0).balanceOf(address(this));
         uint256 balance1 = IERC20(_token1).balanceOf(address(this));
-        if (balance0 > _reserve0) {
+        if (balance0 > _reserve0)
             IERC20(_token0).transfer(to, balance0 - _reserve0);
-        }
-        if (balance1 > _reserve1) {
+        if (balance1 > _reserve1)
             IERC20(_token1).transfer(to, balance1 - _reserve1);
-        }
     }
 
     // Test setters

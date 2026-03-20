@@ -35,7 +35,8 @@ contract Unit_Fuzz_BeaconProofsLib_BalanceAtIndex_Test is Unit_BeaconProofsLib_S
 
     function _reverseBytes64(uint64 v) internal pure returns (uint64) {
         return (v >> 56) | ((0x00FF000000000000 & v) >> 40) | ((0x0000FF0000000000 & v) >> 24)
-            | ((0x000000FF00000000 & v) >> 8) | ((0x00000000FF000000 & v) << 8) | ((0x0000000000FF0000 & v) << 24)
-            | ((0x000000000000FF00 & v) << 40) | ((0x00000000000000FF & v) << 56);
+            | ((0x000000FF00000000 & v) >> 8) | ((0x00000000FF000000 & v) << 8)
+            | ((0x0000000000FF0000 & v) << 24) | ((0x000000000000FF00 & v) << 40)
+            | ((0x00000000000000FF & v) << 56);
     }
 }

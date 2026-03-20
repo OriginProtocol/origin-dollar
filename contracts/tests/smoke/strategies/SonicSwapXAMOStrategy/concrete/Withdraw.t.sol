@@ -16,7 +16,10 @@ contract Smoke_Concrete_SonicSwapXAMOStrategy_Withdraw_Test is Smoke_SonicSwapXA
 
         uint256 vaultBalanceAfter = wrappedSonic.balanceOf(address(oSonicVault));
         assertApproxEqAbs(
-            vaultBalanceAfter - vaultBalanceBefore, withdrawAmount, 1e6, "Vault should receive ~withdrawAmount wS"
+            vaultBalanceAfter - vaultBalanceBefore,
+            withdrawAmount,
+            1e6,
+            "Vault should receive ~withdrawAmount wS"
         );
     }
 

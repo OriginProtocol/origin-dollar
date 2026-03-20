@@ -2,16 +2,16 @@
 pragma solidity ^0.8.0;
 
 // Foundry
-import {Vm} from "forge-std/Vm.sol";
-import {VmSafe} from "forge-std/Vm.sol";
+import { Vm } from "forge-std/Vm.sol";
+import { VmSafe } from "forge-std/Vm.sol";
 
 // Helpers
-import {Logger} from "scripts/deploy/helpers/Logger.sol";
-import {AbstractDeployScript} from "scripts/deploy/helpers/AbstractDeployScript.s.sol";
-import {State, Execution, Contract, Root, NO_GOVERNANCE} from "scripts/deploy/helpers/DeploymentTypes.sol";
+import { Logger } from "scripts/deploy/helpers/Logger.sol";
+import { AbstractDeployScript } from "scripts/deploy/helpers/AbstractDeployScript.s.sol";
+import { State, Execution, Contract, Root, NO_GOVERNANCE } from "scripts/deploy/helpers/DeploymentTypes.sol";
 
 // Script Base
-import {Base} from "scripts/deploy/Base.s.sol";
+import { Base } from "scripts/deploy/Base.s.sol";
 
 /// @title DeployManager
 /// @notice Manages the deployment of contracts across multiple chains (Mainnet, Sonic).
@@ -59,7 +59,9 @@ contract DeployManager is Base {
         // This ensures we always have a valid JSON structure to parse
         if (!vm.isFile(deployFilePath)) {
             vm.writeFile(deployFilePath, '{"contracts": [], "executions": []}');
-            log.info(string.concat("Created deployment file at: ", deployFilePath));
+            log.info(
+                string.concat("Created deployment file at: ", deployFilePath)
+            );
             deployment = vm.readFile(deployFilePath);
         }
 
@@ -108,11 +110,17 @@ contract DeployManager is Base {
         uint256 chainId = block.chainid;
         string memory path;
         if (chainId == 1) {
-            path = string(abi.encodePacked(projectRoot, "/scripts/deploy/mainnet/"));
+            path = string(
+                abi.encodePacked(projectRoot, "/scripts/deploy/mainnet/")
+            );
         } else if (chainId == 146) {
-            path = string(abi.encodePacked(projectRoot, "/scripts/deploy/sonic/"));
+            path = string(
+                abi.encodePacked(projectRoot, "/scripts/deploy/sonic/")
+            );
         } else if (chainId == 8453) {
-            path = string(abi.encodePacked(projectRoot, "/scripts/deploy/base/"));
+            path = string(
+                abi.encodePacked(projectRoot, "/scripts/deploy/base/")
+            );
         } else {
             revert("Unsupported chain");
         }
@@ -132,7 +140,10 @@ contract DeployManager is Base {
             // e.g., "/path/to/scripts/deploy/mainnet/015_UpgradeEthenaARMScript.sol"
             // ->    ["path", "to", ..., "015_UpgradeEthenaARMScript.sol"]
             string[] memory splitted = vm.split(files[i].path, "/");
-            string memory onlyName = vm.split(splitted[splitted.length - 1], ".")[0];
+            string memory onlyName = vm.split(
+                splitted[splitted.length - 1],
+                "."
+            )[0];
 
             // Skip files that are fully complete (deployed + governance executed)
             if (_canSkipDeployFile(onlyName)) continue;
@@ -140,8 +151,16 @@ contract DeployManager is Base {
             // Deploy the script contract using vm.deployCode with just the filename
             // vm.deployCode compiles and deploys the contract, returning its address
             // Then call _runDeployFile to execute the deployment logic
-            string memory contractName =
-                string(abi.encodePacked(projectRoot, "/out/", onlyName, ".s.sol/$", onlyName, ".json"));
+            string memory contractName = string(
+                abi.encodePacked(
+                    projectRoot,
+                    "/out/",
+                    onlyName,
+                    ".s.sol/$",
+                    onlyName,
+                    ".json"
+                )
+            );
             _runDeployFile(address(vm.deployCode(contractName)));
         }
         vm.resumeTracing();
@@ -184,7 +203,8 @@ contract DeployManager is Base {
             // are already skipped by _canSkipDeployFile for speed.
             // The _fork() implementation should be idempotent — checking on-chain state
             // (e.g., proxy.implementation()) before acting, so it's safe to call repeatedly.
-            bool isSimulation = state == State.FORK_TEST || state == State.FORK_DEPLOYING;
+            bool isSimulation = state == State.FORK_TEST ||
+                state == State.FORK_DEPLOYING;
             if (isSimulation) {
                 log.section(string.concat("Running fork: ", deployFileName));
                 deployFile.runFork();
@@ -196,7 +216,12 @@ contract DeployManager is Base {
         // proposalId == 0: governance pending (not yet submitted)
         if (proposalId == 0) {
             log.logSkip(deployFileName, "deployment already executed");
-            log.info(string.concat("Handling governance proposal for ", deployFileName));
+            log.info(
+                string.concat(
+                    "Handling governance proposal for ",
+                    deployFileName
+                )
+            );
             deployFile.handleGovernanceProposal();
             return;
         }
@@ -210,7 +235,9 @@ contract DeployManager is Base {
 
         // Governance not yet executed at this fork point
         log.logSkip(deployFileName, "deployment already executed");
-        log.info(string.concat("Handling governance proposal for ", deployFileName));
+        log.info(
+            string.concat("Handling governance proposal for ", deployFileName)
+        );
         deployFile.handleGovernanceProposal();
     }
 
@@ -227,7 +254,11 @@ contract DeployManager is Base {
     ///      in the deployment JSON to avoid unnecessary compilation in future fork tests.
     /// @param scriptName The unique name of the deployment script
     /// @return True if the file can be skipped (no need to compile/deploy)
-    function _canSkipDeployFile(string memory scriptName) internal view returns (bool) {
+    function _canSkipDeployFile(string memory scriptName)
+        internal
+        view
+        returns (bool)
+    {
         if (!resolver.executionExists(scriptName)) return false;
         uint256 tsGovernance = resolver.tsGovernances(scriptName);
         return tsGovernance != 0 && block.timestamp >= tsGovernance;
@@ -247,7 +278,10 @@ contract DeployManager is Base {
         // Load all deployed contract addresses into the Resolver
         // This allows scripts to lookup addresses via resolver.resolve("CONTRACT_NAME")
         for (uint256 i = 0; i < root.contracts.length; i++) {
-            resolver.addContract(root.contracts[i].name, root.contracts[i].implementation);
+            resolver.addContract(
+                root.contracts[i].name,
+                root.contracts[i].implementation
+            );
         }
 
         // Load execution records into the Resolver with timestamp-based filtering
@@ -259,11 +293,18 @@ contract DeployManager is Base {
 
             // Adjust tsGovernance: if governance happened after current block, treat as pending
             uint256 tsGovernance = exec.tsGovernance;
-            if (tsGovernance > NO_GOVERNANCE && tsGovernance > block.timestamp) {
+            if (
+                tsGovernance > NO_GOVERNANCE && tsGovernance > block.timestamp
+            ) {
                 tsGovernance = 0;
             }
 
-            resolver.addExecution(exec.name, exec.tsDeployment, exec.proposalId, tsGovernance);
+            resolver.addExecution(
+                exec.name,
+                exec.tsDeployment,
+                exec.proposalId,
+                tsGovernance
+            );
         }
     }
 
@@ -284,20 +325,36 @@ contract DeployManager is Base {
         // Serialize each contract as a JSON object: {"name": "...", "implementation": "0x..."}
         for (uint256 i = 0; i < contracts.length; i++) {
             vm.serializeString("c_obj", "name", contracts[i].name);
-            serializedContracts[i] = vm.serializeAddress("c_obj", "implementation", contracts[i].implementation);
+            serializedContracts[i] = vm.serializeAddress(
+                "c_obj",
+                "implementation",
+                contracts[i].implementation
+            );
         }
 
         // Serialize each execution with timestamp-based metadata
         for (uint256 i = 0; i < executions.length; i++) {
             vm.serializeString("e_obj", "name", executions[i].name);
             vm.serializeUint("e_obj", "proposalId", executions[i].proposalId);
-            vm.serializeUint("e_obj", "tsDeployment", executions[i].tsDeployment);
-            serializedExecutions[i] = vm.serializeUint("e_obj", "tsGovernance", executions[i].tsGovernance);
+            vm.serializeUint(
+                "e_obj",
+                "tsDeployment",
+                executions[i].tsDeployment
+            );
+            serializedExecutions[i] = vm.serializeUint(
+                "e_obj",
+                "tsGovernance",
+                executions[i].tsGovernance
+            );
         }
 
         // Build the root JSON object with both arrays
         vm.serializeString("root", "contracts", serializedContracts);
-        string memory finalJson = vm.serializeString("root", "executions", serializedExecutions);
+        string memory finalJson = vm.serializeString(
+            "root",
+            "executions",
+            serializedExecutions
+        );
 
         // Write to the appropriate file (fork file or real deployment file)
         vm.writeFile(getDeploymentFilePath(), finalJson);
@@ -360,7 +417,15 @@ contract DeployManager is Base {
     /// @return The full path to the deployment JSON file
     function getChainDeploymentFilePath() public view returns (string memory) {
         string memory chainIdStr = vm.toString(block.chainid);
-        return string(abi.encodePacked(projectRoot, "/build/deployments-", chainIdStr, ".json"));
+        return
+            string(
+                abi.encodePacked(
+                    projectRoot,
+                    "/build/deployments-",
+                    chainIdStr,
+                    ".json"
+                )
+            );
     }
 
     /// @notice Returns the path to the fork-specific deployment file.
@@ -368,7 +433,15 @@ contract DeployManager is Base {
     ///      Used during fork tests to avoid modifying the real deployment history.
     /// @return The full path to the fork deployment JSON file
     function getForkDeploymentFilePath() public view returns (string memory) {
-        return string(abi.encodePacked(projectRoot, "/build/deployments-fork-", forkFileId, ".json"));
+        return
+            string(
+                abi.encodePacked(
+                    projectRoot,
+                    "/build/deployments-fork-",
+                    forkFileId,
+                    ".json"
+                )
+            );
     }
 
     /// @notice Returns the appropriate deployment file path based on current state.
@@ -390,7 +463,11 @@ contract DeployManager is Base {
     /// @dev Used for logging and debugging purposes.
     /// @param _state The state to convert
     /// @return Human-readable string representation of the state
-    function _stateToString(State _state) internal pure returns (string memory) {
+    function _stateToString(State _state)
+        internal
+        pure
+        returns (string memory)
+    {
         if (_state == State.FORK_TEST) return "FORK_TEST";
         if (_state == State.FORK_DEPLOYING) return "FORK_DEPLOYING";
         if (_state == State.REAL_DEPLOYING) return "REAL_DEPLOYING";

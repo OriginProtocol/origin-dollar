@@ -1,12 +1,11 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import {
-    Unit_CurvePoolBoosterBribesModule_Shared_Test
-} from "tests/unit/automation/CurvePoolBoosterBribesModule/shared/Shared.t.sol";
+import {Unit_CurvePoolBoosterBribesModule_Shared_Test} from
+    "tests/unit/automation/CurvePoolBoosterBribesModule/shared/Shared.t.sol";
 
-contract Unit_Concrete_CurvePoolBoosterBribesModule_ViewFunctions_Test is
-    Unit_CurvePoolBoosterBribesModule_Shared_Test
+contract Unit_Concrete_CurvePoolBoosterBribesModule_ViewFunctions_Test
+    is Unit_CurvePoolBoosterBribesModule_Shared_Test
 {
     //////////////////////////////////////////////////////
     /// --- VIEW FUNCTIONS

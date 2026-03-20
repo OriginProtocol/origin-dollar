@@ -1,13 +1,12 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import {
-    Unit_CompoundingStakingSSVStrategy_Shared_Test
-} from "tests/unit/strategies/CompoundingStakingSSVStrategy/shared/Shared.t.sol";
+import {Unit_CompoundingStakingSSVStrategy_Shared_Test} from
+    "tests/unit/strategies/CompoundingStakingSSVStrategy/shared/Shared.t.sol";
 import {CompoundingValidatorManager} from "contracts/strategies/NativeStaking/CompoundingValidatorManager.sol";
 
-contract Unit_Concrete_CompoundingStakingSSVStrategy_VerifyDeposit_Test is
-    Unit_CompoundingStakingSSVStrategy_Shared_Test
+contract Unit_Concrete_CompoundingStakingSSVStrategy_VerifyDeposit_Test
+    is Unit_CompoundingStakingSSVStrategy_Shared_Test
 {
     function setUp() public override {
         super.setUp();
@@ -40,7 +39,8 @@ contract Unit_Concrete_CompoundingStakingSSVStrategy_VerifyDeposit_Test is
 
         CompoundingValidatorManager.StrategyValidatorProofData memory strategyValidator =
             CompoundingValidatorManager.StrategyValidatorProofData({
-                withdrawableEpoch: type(uint64).max, withdrawableEpochProof: hex"00"
+                withdrawableEpoch: type(uint64).max,
+                withdrawableEpochProof: hex"00"
             });
 
         vm.expectRevert("Deposit not pending");
@@ -61,7 +61,8 @@ contract Unit_Concrete_CompoundingStakingSSVStrategy_VerifyDeposit_Test is
 
         CompoundingValidatorManager.StrategyValidatorProofData memory strategyValidator =
             CompoundingValidatorManager.StrategyValidatorProofData({
-                withdrawableEpoch: type(uint64).max, withdrawableEpochProof: hex"00"
+                withdrawableEpoch: type(uint64).max,
+                withdrawableEpochProof: hex"00"
             });
 
         vm.expectRevert("Zero 1st pending deposit slot");
@@ -83,7 +84,8 @@ contract Unit_Concrete_CompoundingStakingSSVStrategy_VerifyDeposit_Test is
 
         CompoundingValidatorManager.StrategyValidatorProofData memory strategyValidator =
             CompoundingValidatorManager.StrategyValidatorProofData({
-                withdrawableEpoch: type(uint64).max, withdrawableEpochProof: hex"00"
+                withdrawableEpoch: type(uint64).max,
+                withdrawableEpochProof: hex"00"
             });
 
         vm.expectRevert("Slot not after deposit");
@@ -107,7 +109,8 @@ contract Unit_Concrete_CompoundingStakingSSVStrategy_VerifyDeposit_Test is
 
         CompoundingValidatorManager.StrategyValidatorProofData memory strategyValidator =
             CompoundingValidatorManager.StrategyValidatorProofData({
-                withdrawableEpoch: type(uint64).max, withdrawableEpochProof: hex"00"
+                withdrawableEpoch: type(uint64).max,
+                withdrawableEpochProof: hex"00"
             });
 
         vm.expectRevert("Deposit not pending");
@@ -197,7 +200,8 @@ contract Unit_Concrete_CompoundingStakingSSVStrategy_VerifyDeposit_Test is
 
         CompoundingValidatorManager.StrategyValidatorProofData memory strategyValidator =
             CompoundingValidatorManager.StrategyValidatorProofData({
-                withdrawableEpoch: type(uint64).max, withdrawableEpochProof: hex"00"
+                withdrawableEpoch: type(uint64).max,
+                withdrawableEpochProof: hex"00"
             });
 
         vm.expectRevert("Deposit after balance snapshot");

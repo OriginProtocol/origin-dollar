@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import {Pausable} from "@openzeppelin/contracts/security/Pausable.sol";
-import {Governable} from "../../governance/Governable.sol";
-import {IDepositContract} from "../../interfaces/IDepositContract.sol";
-import {IVault} from "../../interfaces/IVault.sol";
-import {IWETH9} from "../../interfaces/IWETH9.sol";
-import {ISSVNetwork, Cluster} from "../../interfaces/ISSVNetwork.sol";
-import {BeaconConsolidation} from "../../beacon/BeaconConsolidation.sol";
+import { Pausable } from "@openzeppelin/contracts/security/Pausable.sol";
+import { Governable } from "../../governance/Governable.sol";
+import { IDepositContract } from "../../interfaces/IDepositContract.sol";
+import { IVault } from "../../interfaces/IVault.sol";
+import { IWETH9 } from "../../interfaces/IWETH9.sol";
+import { ISSVNetwork, Cluster } from "../../interfaces/ISSVNetwork.sol";
+import { BeaconConsolidation } from "../../beacon/BeaconConsolidation.sol";
 
 struct ValidatorStakeData {
     bytes pubkey;
@@ -66,18 +66,43 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
     event RegistratorChanged(address indexed newAddress);
     event StakingMonitorChanged(address indexed newAddress);
     event ETHStaked(bytes32 indexed pubKeyHash, bytes pubKey, uint256 amount);
-    event SSVValidatorRegistered(bytes32 indexed pubKeyHash, bytes pubKey, uint64[] operatorIds);
-    event SSVValidatorExitInitiated(bytes32 indexed pubKeyHash, bytes pubKey, uint64[] operatorIds);
-    event SSVValidatorExitCompleted(bytes32 indexed pubKeyHash, bytes pubKey, uint64[] operatorIds);
-    event ConsolidationRequested(bytes[] sourcePubKeys, bytes targetPubKey, uint256 consolidationCount);
-    event ConsolidationFailed(bytes[] sourcePubKeys, uint256 consolidationCount);
-    event ConsolidationConfirmed(uint256 consolidationCount, uint256 activeDepositedValidators);
+    event SSVValidatorRegistered(
+        bytes32 indexed pubKeyHash,
+        bytes pubKey,
+        uint64[] operatorIds
+    );
+    event SSVValidatorExitInitiated(
+        bytes32 indexed pubKeyHash,
+        bytes pubKey,
+        uint64[] operatorIds
+    );
+    event SSVValidatorExitCompleted(
+        bytes32 indexed pubKeyHash,
+        bytes pubKey,
+        uint64[] operatorIds
+    );
+    event ConsolidationRequested(
+        bytes[] sourcePubKeys,
+        bytes targetPubKey,
+        uint256 consolidationCount
+    );
+    event ConsolidationFailed(
+        bytes[] sourcePubKeys,
+        uint256 consolidationCount
+    );
+    event ConsolidationConfirmed(
+        uint256 consolidationCount,
+        uint256 activeDepositedValidators
+    );
     event StakeETHThresholdChanged(uint256 amount);
     event StakeETHTallyReset();
 
     /// @dev Throws if called by any account other than the Registrator
     modifier onlyRegistrator() {
-        require(msg.sender == validatorRegistrator, "Caller is not the Registrator");
+        require(
+            msg.sender == validatorRegistrator,
+            "Caller is not the Registrator"
+        );
         _;
     }
 
@@ -89,7 +114,10 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
 
     /// @dev Throws if called by any account other than the Strategist
     modifier onlyStrategist() {
-        require(msg.sender == IVault(VAULT_ADDRESS).strategistAddr(), "Caller is not the Strategist");
+        require(
+            msg.sender == IVault(VAULT_ADDRESS).strategistAddr(),
+            "Caller is not the Strategist"
+        );
         _;
     }
 
@@ -142,14 +170,28 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
     /// The `ValidatorStakeData` struct contains the pubkey, signature and depositDataRoot.
     /// Only the registrator can call this function.
     // slither-disable-start reentrancy-eth
-    function stakeEth(ValidatorStakeData[] calldata validators) external onlyRegistrator whenNotPaused nonReentrant {
+    function stakeEth(ValidatorStakeData[] calldata validators)
+        external
+        onlyRegistrator
+        whenNotPaused
+        nonReentrant
+    {
         uint256 requiredETH = validators.length * FULL_STAKE;
 
         // Check there is enough WETH from the deposits sitting in this strategy contract
-        require(requiredETH <= IWETH9(WETH).balanceOf(address(this)), "Insufficient WETH");
-        require(activeDepositedValidators + validators.length <= MAX_VALIDATORS, "Max validators reached");
+        require(
+            requiredETH <= IWETH9(WETH).balanceOf(address(this)),
+            "Insufficient WETH"
+        );
+        require(
+            activeDepositedValidators + validators.length <= MAX_VALIDATORS,
+            "Max validators reached"
+        );
 
-        require(stakeETHTally + requiredETH <= stakeETHThreshold, "Staking ETH over threshold");
+        require(
+            stakeETHTally + requiredETH <= stakeETHThreshold,
+            "Staking ETH over threshold"
+        );
         stakeETHTally += requiredETH;
 
         // Convert required ETH from WETH
@@ -161,16 +203,28 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
          * bytes11(0) to fill up the required zeros
          * remaining bytes20 are for the address
          */
-        bytes memory withdrawalCredentials = abi.encodePacked(bytes1(0x01), bytes11(0), address(this));
+        bytes memory withdrawalCredentials = abi.encodePacked(
+            bytes1(0x01),
+            bytes11(0),
+            address(this)
+        );
 
         // For each validator
         for (uint256 i = 0; i < validators.length; ++i) {
             bytes32 pubKeyHash = keccak256(validators[i].pubkey);
 
-            require(validatorsStates[pubKeyHash] == VALIDATOR_STATE.REGISTERED, "Validator not registered");
+            require(
+                validatorsStates[pubKeyHash] == VALIDATOR_STATE.REGISTERED,
+                "Validator not registered"
+            );
 
-            IDepositContract(BEACON_CHAIN_DEPOSIT_CONTRACT).deposit{value: FULL_STAKE}(
-                validators[i].pubkey, withdrawalCredentials, validators[i].signature, validators[i].depositDataRoot
+            IDepositContract(BEACON_CHAIN_DEPOSIT_CONTRACT).deposit{
+                value: FULL_STAKE
+            }(
+                validators[i].pubkey,
+                withdrawalCredentials,
+                validators[i].signature,
+                validators[i].depositDataRoot
             );
 
             validatorsStates[pubKeyHash] = VALIDATOR_STATE.STAKED;
@@ -196,21 +250,32 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
         bytes[] calldata sharesData,
         Cluster calldata cluster
     ) external payable onlyRegistrator whenNotPaused {
-        require(publicKeys.length == sharesData.length, "Pubkey sharesData mismatch");
+        require(
+            publicKeys.length == sharesData.length,
+            "Pubkey sharesData mismatch"
+        );
         // Check each public key has not already been used
         bytes32 pubKeyHash;
         VALIDATOR_STATE currentState;
         for (uint256 i = 0; i < publicKeys.length; ++i) {
             pubKeyHash = keccak256(publicKeys[i]);
             currentState = validatorsStates[pubKeyHash];
-            require(currentState == VALIDATOR_STATE.NON_REGISTERED, "Validator already registered");
+            require(
+                currentState == VALIDATOR_STATE.NON_REGISTERED,
+                "Validator already registered"
+            );
 
             validatorsStates[pubKeyHash] = VALIDATOR_STATE.REGISTERED;
 
             emit SSVValidatorRegistered(pubKeyHash, publicKeys[i], operatorIds);
         }
 
-        ISSVNetwork(SSV_NETWORK).bulkRegisterValidator{value: msg.value}(publicKeys, operatorIds, sharesData, cluster);
+        ISSVNetwork(SSV_NETWORK).bulkRegisterValidator{ value: msg.value }(
+            publicKeys,
+            operatorIds,
+            sharesData,
+            cluster
+        );
     }
 
     // slither-disable-end reentrancy-no-eth
@@ -221,11 +286,10 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
     /// @param publicKey The public key of the validator
     /// @param operatorIds The operator IDs of the SSV Cluster
     // slither-disable-start reentrancy-no-eth
-    function exitSsvValidator(bytes calldata publicKey, uint64[] calldata operatorIds)
-        external
-        onlyRegistrator
-        whenNotPaused
-    {
+    function exitSsvValidator(
+        bytes calldata publicKey,
+        uint64[] calldata operatorIds
+    ) external onlyRegistrator whenNotPaused {
         bytes32 pubKeyHash = keccak256(publicKey);
         VALIDATOR_STATE currentState = validatorsStates[pubKeyHash];
         require(currentState == VALIDATOR_STATE.STAKED, "Validator not staked");
@@ -247,20 +311,25 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
     /// @param operatorIds The operator IDs of the SSV Cluster
     /// @param cluster The SSV cluster details including the validator count and SSV balance
     // slither-disable-start reentrancy-no-eth
-    function removeSsvValidator(bytes calldata publicKey, uint64[] calldata operatorIds, Cluster calldata cluster)
-        external
-        onlyRegistrator
-        whenNotPaused
-    {
+    function removeSsvValidator(
+        bytes calldata publicKey,
+        uint64[] calldata operatorIds,
+        Cluster calldata cluster
+    ) external onlyRegistrator whenNotPaused {
         bytes32 pubKeyHash = keccak256(publicKey);
         VALIDATOR_STATE currentState = validatorsStates[pubKeyHash];
         // Can remove SSV validators that were incorrectly registered and can not be deposited to.
         require(
-            currentState == VALIDATOR_STATE.EXITING || currentState == VALIDATOR_STATE.REGISTERED,
+            currentState == VALIDATOR_STATE.EXITING ||
+                currentState == VALIDATOR_STATE.REGISTERED,
             "Validator not regd or exiting"
         );
 
-        ISSVNetwork(SSV_NETWORK).removeValidator(publicKey, operatorIds, cluster);
+        ISSVNetwork(SSV_NETWORK).removeValidator(
+            publicKey,
+            operatorIds,
+            cluster
+        );
 
         validatorsStates[pubKeyHash] = VALIDATOR_STATE.EXIT_COMPLETE;
 
@@ -272,8 +341,14 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
     /// @notice Migrate the SSV cluster to use ETH for payment instead of SSV tokens.
     /// @param operatorIds The operator IDs of the SSV Cluster
     /// @param cluster The SSV cluster details including the validator count and SSV balance
-    function migrateClusterToETH(uint64[] memory operatorIds, Cluster memory cluster) external payable onlyGovernor {
-        ISSVNetwork(SSV_NETWORK).migrateClusterToETH{value: msg.value}(operatorIds, cluster);
+    function migrateClusterToETH(
+        uint64[] memory operatorIds,
+        Cluster memory cluster
+    ) external payable onlyGovernor {
+        ISSVNetwork(SSV_NETWORK).migrateClusterToETH{ value: msg.value }(
+            operatorIds,
+            cluster
+        );
 
         // The SSV Network emits
         // ClusterMigratedToETH(msg.sender, operatorIds, msg.value, ssvClusterBalance, effectiveBalance, cluster)
@@ -291,13 +366,10 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
      * @param targetPubKey The full public key of the target validator to consolidate into.
      */
     // slither-disable-start reentrancy-no-eth
-    function requestConsolidation(bytes[] calldata sourcePubKeys, bytes calldata targetPubKey)
-        external
-        payable
-        nonReentrant
-        whenNotPaused
-        onlyRegistrator
-    {
+    function requestConsolidation(
+        bytes[] calldata sourcePubKeys,
+        bytes calldata targetPubKey
+    ) external payable nonReentrant whenNotPaused onlyRegistrator {
         // Hash using the Native Staking Strategy's hashing method.
         // This is different to the Beacon chain's method.
         bytes32 targetPubKeyHash = keccak256(targetPubKey);
@@ -309,19 +381,32 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
             sourcePubKeyHash = keccak256(sourcePubKeys[i]);
             require(sourcePubKeys[i].length == 48, "Invalid source public key");
             require(sourcePubKeyHash != targetPubKeyHash, "Self consolidation");
-            require(validatorsStates[sourcePubKeyHash] == VALIDATOR_STATE.STAKED, "Source validator not staked");
+            require(
+                validatorsStates[sourcePubKeyHash] == VALIDATOR_STATE.STAKED,
+                "Source validator not staked"
+            );
 
             // Store the state of the source validator as exiting so it can be removed
             // after the consolidation is confirmed
             validatorsStates[sourcePubKeyHash] = VALIDATOR_STATE.EXITING;
 
             // Request consolidation from source to target validator
-            totalConsolidationFees += BeaconConsolidation.request(sourcePubKeys[i], targetPubKey);
+            totalConsolidationFees += BeaconConsolidation.request(
+                sourcePubKeys[i],
+                targetPubKey
+            );
         }
 
-        require(totalConsolidationFees <= msg.value, "Insufficient consolidation fee");
+        require(
+            totalConsolidationFees <= msg.value,
+            "Insufficient consolidation fee"
+        );
 
-        emit ConsolidationRequested(sourcePubKeys, targetPubKey, sourcePubKeys.length);
+        emit ConsolidationRequested(
+            sourcePubKeys,
+            targetPubKey,
+            sourcePubKeys.length
+        );
     }
 
     // slither-disable-end reentrancy-no-eth
@@ -332,14 +417,22 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
      * This restores the validator states back to STAKED so they can be consolidated again or exited.
      * @param sourcePubKeys The full public keys of the source validators that failed to be consolidated.
      */
-    function failConsolidation(bytes[] calldata sourcePubKeys) external nonReentrant whenNotPaused onlyRegistrator {
+    function failConsolidation(bytes[] calldata sourcePubKeys)
+        external
+        nonReentrant
+        whenNotPaused
+        onlyRegistrator
+    {
         bytes32 sourcePubKeyHash;
 
         // For each failed source validator
         for (uint256 i = 0; i < sourcePubKeys.length; ++i) {
             require(sourcePubKeys[i].length == 48, "Invalid source public key");
             sourcePubKeyHash = keccak256(sourcePubKeys[i]);
-            require(validatorsStates[sourcePubKeyHash] == VALIDATOR_STATE.EXITING, "Source validator not exiting");
+            require(
+                validatorsStates[sourcePubKeyHash] == VALIDATOR_STATE.EXITING,
+                "Source validator not exiting"
+            );
 
             // Store the state of the source validator back to staked
             validatorsStates[sourcePubKeyHash] = VALIDATOR_STATE.STAKED;
@@ -354,12 +447,20 @@ abstract contract ValidatorRegistrator is Governable, Pausable {
      * reduces the strategy's balance.
      * @param consolidationCount The number of source validators that were consolidated.
      */
-    function confirmConsolidation(uint256 consolidationCount) external nonReentrant whenNotPaused onlyRegistrator {
+    function confirmConsolidation(uint256 consolidationCount)
+        external
+        nonReentrant
+        whenNotPaused
+        onlyRegistrator
+    {
         // Store the reduced number of active deposited validators
         // managed by this strategy
         activeDepositedValidators -= consolidationCount;
 
-        emit ConsolidationConfirmed(consolidationCount, activeDepositedValidators);
+        emit ConsolidationConfirmed(
+            consolidationCount,
+            activeDepositedValidators
+        );
     }
 
     /***************************************
