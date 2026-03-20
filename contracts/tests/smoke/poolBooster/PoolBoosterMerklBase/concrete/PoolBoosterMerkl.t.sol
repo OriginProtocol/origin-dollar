@@ -4,9 +4,7 @@ pragma solidity ^0.8.0;
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {Base} from "tests/utils/Addresses.sol";
 
-import {
-    Smoke_PoolBoosterMerklBase_Shared_Test
-} from "tests/smoke/poolBooster/PoolBoosterMerklBase/shared/Shared.t.sol";
+import {Smoke_PoolBoosterMerklBase_Shared_Test} from "tests/smoke/poolBooster/PoolBoosterMerklBase/shared/Shared.t.sol";
 
 contract Smoke_Concrete_PoolBoosterMerklBase_Test is Smoke_PoolBoosterMerklBase_Shared_Test {
     //////////////////////////////////////////////////////
@@ -18,7 +16,10 @@ contract Smoke_Concrete_PoolBoosterMerklBase_Test is Smoke_PoolBoosterMerklBase_
     }
 
     function test_rewardToken() public view {
-        assertEq(address(boosterMerkl.rewardToken()), Base.OETHBaseProxy);
+        (bool success, bytes memory data) = address(boosterMerkl).staticcall(abi.encodeWithSignature("rewardToken()"));
+        assertTrue(success);
+        address token = abi.decode(data, (address));
+        assertEq(token, Base.OETHBaseProxy);
     }
 
     function test_duration() public view {
@@ -27,10 +28,6 @@ contract Smoke_Concrete_PoolBoosterMerklBase_Test is Smoke_PoolBoosterMerklBase_
 
     function test_campaignType() public view {
         boosterMerkl.campaignType();
-    }
-
-    function test_creator() public view {
-        assertNotEq(boosterMerkl.creator(), address(0));
     }
 
     function test_campaignData() public view {
@@ -46,12 +43,6 @@ contract Smoke_Concrete_PoolBoosterMerklBase_Test is Smoke_PoolBoosterMerklBase_
         assertGt(boosterMerkl.getNextPeriodStartTime(), block.timestamp);
     }
 
-    function test_isValidSignature() public {
-        vm.prank(Base.MerklDistributor);
-        bytes4 magicValue = boosterMerkl.isValidSignature(bytes32(0), "");
-        assertEq(magicValue, bytes4(0x1626ba7e));
-    }
-
     //////////////////////////////////////////////////////
     /// --- MUTATIVE FUNCTIONS
     //////////////////////////////////////////////////////
@@ -60,7 +51,14 @@ contract Smoke_Concrete_PoolBoosterMerklBase_Test is Smoke_PoolBoosterMerklBase_
         _mintAndFundBooster(address(boosterMerkl), 1 ether);
         assertGt(IERC20(Base.OETHBaseProxy).balanceOf(address(boosterMerkl)), 0);
 
-        boosterMerkl.bribe();
+        // V1: anyone can call. V2: needs governor. Try governor first, fallback to direct.
+        (bool hasGovernor, bytes memory govData) =
+            address(boosterMerkl).staticcall(abi.encodeWithSignature("governor()"));
+        if (hasGovernor && govData.length >= 32) {
+            vm.prank(abi.decode(govData, (address)));
+        }
+        (bool success,) = address(boosterMerkl).call(abi.encodeWithSignature("bribe()"));
+        assertTrue(success, "bribe() failed");
 
         assertEq(IERC20(Base.OETHBaseProxy).balanceOf(address(boosterMerkl)), 0);
     }

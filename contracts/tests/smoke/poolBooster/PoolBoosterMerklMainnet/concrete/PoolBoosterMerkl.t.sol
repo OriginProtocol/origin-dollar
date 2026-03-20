@@ -18,7 +18,11 @@ contract Smoke_Concrete_PoolBoosterMerklMainnet_Test is Smoke_PoolBoosterMerklMa
     }
 
     function test_rewardToken() public view {
-        assertEq(address(boosterMerkl.rewardToken()), Mainnet.OETHProxy);
+        // V1: rewardToken() returns IERC20, V2: returns address — both work via ABI
+        (bool success, bytes memory data) = address(boosterMerkl).staticcall(abi.encodeWithSignature("rewardToken()"));
+        assertTrue(success);
+        address token = abi.decode(data, (address));
+        assertEq(token, Mainnet.OETHProxy);
     }
 
     function test_duration() public view {
@@ -27,10 +31,6 @@ contract Smoke_Concrete_PoolBoosterMerklMainnet_Test is Smoke_PoolBoosterMerklMa
 
     function test_campaignType() public view {
         boosterMerkl.campaignType();
-    }
-
-    function test_creator() public view {
-        assertNotEq(boosterMerkl.creator(), address(0));
     }
 
     function test_campaignData() public view {
@@ -46,12 +46,6 @@ contract Smoke_Concrete_PoolBoosterMerklMainnet_Test is Smoke_PoolBoosterMerklMa
         assertGt(boosterMerkl.getNextPeriodStartTime(), block.timestamp);
     }
 
-    function test_isValidSignature() public {
-        vm.prank(Mainnet.CampaignCreator);
-        bytes4 magicValue = boosterMerkl.isValidSignature(bytes32(0), "");
-        assertEq(magicValue, bytes4(0x1626ba7e));
-    }
-
     //////////////////////////////////////////////////////
     /// --- MUTATIVE FUNCTIONS
     //////////////////////////////////////////////////////
@@ -60,6 +54,14 @@ contract Smoke_Concrete_PoolBoosterMerklMainnet_Test is Smoke_PoolBoosterMerklMa
         _fundBooster(address(boosterMerkl), 10 ether);
         assertGt(IERC20(Mainnet.OETHProxy).balanceOf(address(boosterMerkl)), 0);
 
+        // V1: anyone can call bribe(), V2: needs governor/strategist
+        // Try as governor first, fall back to direct call
+        (bool success,) = address(boosterMerkl).staticcall(abi.encodeWithSignature("governor()"));
+        if (success) {
+            (, bytes memory govData) = address(boosterMerkl).staticcall(abi.encodeWithSignature("governor()"));
+            address gov = abi.decode(govData, (address));
+            vm.prank(gov);
+        }
         boosterMerkl.bribe();
 
         assertEq(IERC20(Mainnet.OETHProxy).balanceOf(address(boosterMerkl)), 0);

@@ -5,6 +5,8 @@ import {Base} from "tests/Base.t.sol";
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {MockERC20} from "@solmate/test/utils/mocks/MockERC20.sol";
+import {BeaconProxy} from "@openzeppelin/contracts/proxy/beacon/BeaconProxy.sol";
+import {UpgradeableBeacon} from "@openzeppelin/contracts/proxy/beacon/UpgradeableBeacon.sol";
 import {IPoolBoostCentralRegistry} from "contracts/interfaces/poolBooster/IPoolBoostCentralRegistry.sol";
 import {IPoolBooster} from "contracts/interfaces/poolBooster/IPoolBooster.sol";
 import {IMerklDistributor} from "contracts/interfaces/poolBooster/IMerklDistributor.sol";
@@ -12,7 +14,7 @@ import {IMerklDistributor} from "contracts/interfaces/poolBooster/IMerklDistribu
 import {OETH} from "contracts/token/OETH.sol";
 import {PoolBoostCentralRegistry} from "contracts/poolBooster/PoolBoostCentralRegistry.sol";
 import {PoolBoosterFactoryMerkl} from "contracts/poolBooster/PoolBoosterFactoryMerkl.sol";
-import {PoolBoosterMerkl} from "contracts/poolBooster/PoolBoosterMerkl.sol";
+import {PoolBoosterMerklV2} from "contracts/poolBooster/PoolBoosterMerklV2.sol";
 
 abstract contract Unit_Merkl_Shared_Test is Base {
     //////////////////////////////////////////////////////
@@ -31,6 +33,7 @@ abstract contract Unit_Merkl_Shared_Test is Base {
 
     address internal mockMerklDistributor;
     address internal mockAmmPool;
+    UpgradeableBeacon internal beacon;
 
     //////////////////////////////////////////////////////
     /// --- SETUP
@@ -42,6 +45,7 @@ abstract contract Unit_Merkl_Shared_Test is Base {
         _createMockAddresses();
         _deployOETH();
         _deployCentralRegistry();
+        _deployBeacon();
         _deployFactory();
         _deployStandaloneBooster();
         _approveFactoryOnRegistry();
@@ -62,13 +66,13 @@ abstract contract Unit_Merkl_Shared_Test is Base {
         _setGovernorViaSlot(address(centralRegistry), governor);
     }
 
+    function _deployBeacon() internal {
+        PoolBoosterMerklV2 impl = new PoolBoosterMerklV2();
+        beacon = new UpgradeableBeacon(address(impl));
+    }
+
     function _deployFactory() internal {
-        factoryMerkl = new PoolBoosterFactoryMerkl(
-            address(oeth),
-            governor,
-            address(centralRegistry),
-            mockMerklDistributor
-        );
+        factoryMerkl = new PoolBoosterFactoryMerkl(address(oeth), governor, address(centralRegistry), address(beacon));
     }
 
     function _deployStandaloneBooster() internal {
@@ -79,14 +83,25 @@ abstract contract Unit_Merkl_Shared_Test is Base {
             abi.encode(uint256(1e10))
         );
 
-        boosterMerkl = new PoolBoosterMerkl(
-            address(oeth),
-            mockMerklDistributor,
+        // Mock acceptConditions on merkl distributor (called during initialize)
+        vm.mockCall(
+            mockMerklDistributor, abi.encodeWithSelector(IMerklDistributor.acceptConditions.selector), abi.encode()
+        );
+
+        // Deploy via BeaconProxy with initialize data
+        bytes memory initData = abi.encodeWithSelector(
+            PoolBoosterMerklV2.initialize.selector,
             DEFAULT_CAMPAIGN_DURATION,
             DEFAULT_CAMPAIGN_TYPE,
+            address(oeth),
+            mockMerklDistributor,
             governor,
+            strategist,
             DEFAULT_CAMPAIGN_DATA
         );
+
+        address proxy = address(new BeaconProxy(address(beacon), initData));
+        boosterMerkl = PoolBoosterMerklV2(proxy);
     }
 
     function _approveFactoryOnRegistry() internal {
@@ -121,8 +136,22 @@ abstract contract Unit_Merkl_Shared_Test is Base {
         );
         vm.mockCall(
             mockMerklDistributor,
-            abi.encodeWithSelector(IMerklDistributor.signAndCreateCampaign.selector),
+            abi.encodeWithSelector(IMerklDistributor.createCampaign.selector),
             abi.encode(bytes32(uint256(1)))
+        );
+    }
+
+    /// @dev Build the default init data for factory-created boosters
+    function _defaultInitData() internal view returns (bytes memory) {
+        return abi.encodeWithSelector(
+            PoolBoosterMerklV2.initialize.selector,
+            DEFAULT_CAMPAIGN_DURATION,
+            DEFAULT_CAMPAIGN_TYPE,
+            address(oeth),
+            mockMerklDistributor,
+            governor,
+            strategist,
+            DEFAULT_CAMPAIGN_DATA
         );
     }
 }

@@ -1,11 +1,12 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import {Unit_NativeStakingSSVStrategy_Shared_Test} from
-    "tests/unit/strategies/NativeStakingSSVStrategy/shared/Shared.t.sol";
+import {
+    Unit_NativeStakingSSVStrategy_Shared_Test
+} from "tests/unit/strategies/NativeStakingSSVStrategy/shared/Shared.t.sol";
 
-contract Unit_Concrete_NativeStakingSSVStrategy_ValidatorRegistration_Test
-    is Unit_NativeStakingSSVStrategy_Shared_Test
+contract Unit_Concrete_NativeStakingSSVStrategy_ValidatorRegistration_Test is
+    Unit_NativeStakingSSVStrategy_Shared_Test
 {
     function setUp() public override {
         super.setUp();
@@ -23,21 +24,15 @@ contract Unit_Concrete_NativeStakingSSVStrategy_ValidatorRegistration_Test
         sharesData[0] = TEST_SHARES_DATA;
 
         // State should be NON_REGISTERED before
-        assertEq(
-            uint256(nativeStakingSSVStrategy.validatorsStates(keccak256(testPublicKeys[0]))), 0
-        );
+        assertEq(uint256(nativeStakingSSVStrategy.validatorsStates(keccak256(testPublicKeys[0]))), 0);
 
         vm.prank(governor);
         vm.expectEmit(true, true, true, true);
         emit SSVValidatorRegistered(keccak256(testPublicKeys[0]), testPublicKeys[0], _operatorIds());
-        nativeStakingSSVStrategy.registerSsvValidators(
-            pubKeys, _operatorIds(), sharesData, 2 ether, _emptyCluster()
-        );
+        nativeStakingSSVStrategy.registerSsvValidators(pubKeys, _operatorIds(), sharesData, _emptyCluster());
 
         // State should be REGISTERED
-        assertEq(
-            uint256(nativeStakingSSVStrategy.validatorsStates(keccak256(testPublicKeys[0]))), 1
-        );
+        assertEq(uint256(nativeStakingSSVStrategy.validatorsStates(keccak256(testPublicKeys[0]))), 1);
     }
 
     function test_registerSsvValidators_bulk() public {
@@ -49,16 +44,10 @@ contract Unit_Concrete_NativeStakingSSVStrategy_ValidatorRegistration_Test
         sharesData[1] = TEST_SHARES_DATA;
 
         vm.prank(governor);
-        nativeStakingSSVStrategy.registerSsvValidators(
-            pubKeys, _operatorIds(), sharesData, 2 ether, _emptyCluster()
-        );
+        nativeStakingSSVStrategy.registerSsvValidators(pubKeys, _operatorIds(), sharesData, _emptyCluster());
 
-        assertEq(
-            uint256(nativeStakingSSVStrategy.validatorsStates(keccak256(testPublicKeys[0]))), 1
-        );
-        assertEq(
-            uint256(nativeStakingSSVStrategy.validatorsStates(keccak256(testPublicKeys[1]))), 1
-        );
+        assertEq(uint256(nativeStakingSSVStrategy.validatorsStates(keccak256(testPublicKeys[0]))), 1);
+        assertEq(uint256(nativeStakingSSVStrategy.validatorsStates(keccak256(testPublicKeys[1]))), 1);
     }
 
     function test_registerSsvValidators_RevertWhen_duplicate() public {
@@ -71,9 +60,7 @@ contract Unit_Concrete_NativeStakingSSVStrategy_ValidatorRegistration_Test
 
         vm.prank(governor);
         vm.expectRevert("Validator already registered");
-        nativeStakingSSVStrategy.registerSsvValidators(
-            pubKeys, _operatorIds(), sharesData, 2 ether, _emptyCluster()
-        );
+        nativeStakingSSVStrategy.registerSsvValidators(pubKeys, _operatorIds(), sharesData, _emptyCluster());
     }
 
     function test_registerSsvValidators_RevertWhen_nonRegistrator() public {
@@ -84,9 +71,7 @@ contract Unit_Concrete_NativeStakingSSVStrategy_ValidatorRegistration_Test
 
         vm.prank(alice);
         vm.expectRevert("Caller is not the Registrator");
-        nativeStakingSSVStrategy.registerSsvValidators(
-            pubKeys, _operatorIds(), sharesData, 2 ether, _emptyCluster()
-        );
+        nativeStakingSSVStrategy.registerSsvValidators(pubKeys, _operatorIds(), sharesData, _emptyCluster());
     }
 
     // ----------------

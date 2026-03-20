@@ -1,11 +1,12 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import {Unit_CompoundingStakingSSVStrategy_Shared_Test} from
-    "tests/unit/strategies/CompoundingStakingSSVStrategy/shared/Shared.t.sol";
+import {
+    Unit_CompoundingStakingSSVStrategy_Shared_Test
+} from "tests/unit/strategies/CompoundingStakingSSVStrategy/shared/Shared.t.sol";
 
-contract Unit_Concrete_CompoundingStakingSSVStrategy_Configuration_Test
-    is Unit_CompoundingStakingSSVStrategy_Shared_Test
+contract Unit_Concrete_CompoundingStakingSSVStrategy_Configuration_Test is
+    Unit_CompoundingStakingSSVStrategy_Shared_Test
 {
     function test_setRegistrator() public {
         vm.prank(governor);
@@ -30,15 +31,15 @@ contract Unit_Concrete_CompoundingStakingSSVStrategy_Configuration_Test
         assertFalse(compoundingStakingSSVStrategy.supportsAsset(address(mockSsv)));
     }
 
-    function test_withdrawSSV_RevertWhen_notGovernor() public {
+    function test_migrateClusterToETH_RevertWhen_notGovernor() public {
         vm.prank(strategist);
         vm.expectRevert("Caller is not the Governor");
-        compoundingStakingSSVStrategy.withdrawSSV(_operatorIds(), 1 ether, _emptyCluster());
+        compoundingStakingSSVStrategy.migrateClusterToETH(_operatorIds(), _emptyCluster());
     }
 
-    function test_withdrawSSV_onlyGovernor() public {
+    function test_migrateClusterToETH_onlyGovernor() public {
         vm.prank(governor);
-        compoundingStakingSSVStrategy.withdrawSSV(_operatorIds(), 1 ether, _emptyCluster());
+        compoundingStakingSSVStrategy.migrateClusterToETH(_operatorIds(), _emptyCluster());
     }
 
     function test_resetFirstDeposit_RevertWhen_notGovernor() public {
@@ -101,17 +102,9 @@ contract Unit_Concrete_CompoundingStakingSSVStrategy_Configuration_Test
         assertFalse(compoundingStakingSSVStrategy.paused());
     }
 
-    function test_ssvAllowance() public view {
-        assertEq(
-            mockSsv.allowance(address(compoundingStakingSSVStrategy), address(mockSsvNetwork)), type(uint256).max
-        );
-    }
-
-    function test_safeApproveAllTokens() public {
+    function test_safeApproveAllTokens_isNoOp() public {
+        // safeApproveAllTokens is now a no-op in CompoundingStakingSSVStrategy
         compoundingStakingSSVStrategy.safeApproveAllTokens();
-        assertEq(
-            mockSsv.allowance(address(compoundingStakingSSVStrategy), address(mockSsvNetwork)), type(uint256).max
-        );
     }
 
     // ----------------

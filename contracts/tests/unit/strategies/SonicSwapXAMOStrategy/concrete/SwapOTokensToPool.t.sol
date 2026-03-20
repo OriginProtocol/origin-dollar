@@ -1,10 +1,9 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import {Unit_SonicSwapXAMOStrategy_Shared_Test} from
-    "tests/unit/strategies/SonicSwapXAMOStrategy/shared/Shared.t.sol";
+import {Unit_SonicSwapXAMOStrategy_Shared_Test} from "tests/unit/strategies/SonicSwapXAMOStrategy/shared/Shared.t.sol";
 import {InitializableAbstractStrategy} from "contracts/utils/InitializableAbstractStrategy.sol";
-import {SonicSwapXAMOStrategy} from "contracts/strategies/sonic/SonicSwapXAMOStrategy.sol";
+import {StableSwapAMMStrategy} from "contracts/strategies/algebra/StableSwapAMMStrategy.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 contract Unit_Concrete_SonicSwapXAMOStrategy_SwapOTokensToPool_Test is Unit_SonicSwapXAMOStrategy_Shared_Test {
@@ -35,7 +34,7 @@ contract Unit_Concrete_SonicSwapXAMOStrategy_SwapOTokensToPool_Test is Unit_Soni
 
         // Expect SwapOTokensToPool event
         vm.expectEmit(false, false, false, false);
-        emit SonicSwapXAMOStrategy.SwapOTokensToPool(0, 0, 0, 0);
+        emit StableSwapAMMStrategy.SwapOTokensToPool(0, 0, 0, 0);
 
         vm.prank(strategist);
         sonicSwapXAMOStrategy.swapOTokensToPool(5 ether);
@@ -51,7 +50,7 @@ contract Unit_Concrete_SonicSwapXAMOStrategy_SwapOTokensToPool_Test is Unit_Soni
         uint256 totalValue = oSonicVault.totalValue();
         uint256 totalSupply = oSonic.totalSupply();
         if (totalSupply > 0) {
-            assertGe(totalValue * 1e18 / totalSupply, 0.998 ether);
+            assertGe((totalValue * 1e18) / totalSupply, 0.998 ether);
         }
     }
 
@@ -76,7 +75,7 @@ contract Unit_Concrete_SonicSwapXAMOStrategy_SwapOTokensToPool_Test is Unit_Soni
 
         // Try to swap less than what is already in strategy
         vm.prank(strategist);
-        vm.expectRevert("Too much OS in strategy");
+        vm.expectRevert("Too much OToken in strategy");
         sonicSwapXAMOStrategy.swapOTokensToPool(5 ether);
     }
 

@@ -1,13 +1,14 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import {Fork_NativeStakingSSVStrategy_Shared_Test} from
-    "tests/fork/strategies/NativeStakingSSVStrategy/shared/Shared.t.sol";
+import {
+    Fork_NativeStakingSSVStrategy_Shared_Test
+} from "tests/fork/strategies/NativeStakingSSVStrategy/shared/Shared.t.sol";
 import {Cluster} from "contracts/interfaces/ISSVNetwork.sol";
 import {Vm} from "forge-std/Vm.sol";
 
-contract Fork_Concrete_NativeStakingSSVStrategy_ValidatorRegistration_Test
-    is Fork_NativeStakingSSVStrategy_Shared_Test
+contract Fork_Concrete_NativeStakingSSVStrategy_ValidatorRegistration_Test is
+    Fork_NativeStakingSSVStrategy_Shared_Test
 {
     function setUp() public override {
         super.setUp();
@@ -44,9 +45,8 @@ contract Fork_Concrete_NativeStakingSSVStrategy_ValidatorRegistration_Test
         vm.recordLogs();
 
         // Register first time
-        uint256 ssvAmount = 3 ether;
         vm.prank(validatorRegistratorAddr);
-        nativeStakingSSVStrategy.registerSsvValidators(pubkeys, operatorIds, sharesData, ssvAmount, cluster);
+        nativeStakingSSVStrategy.registerSsvValidators(pubkeys, operatorIds, sharesData, cluster);
 
         // Get updated cluster from logs
         Cluster memory updatedCluster = _extractClusterFromLogs();
@@ -60,9 +60,7 @@ contract Fork_Concrete_NativeStakingSSVStrategy_ValidatorRegistration_Test
 
         vm.prank(validatorRegistratorAddr);
         vm.expectRevert("Validator already registered");
-        nativeStakingSSVStrategy.registerSsvValidators(
-            pubkeys, differentOperators, sharesData, ssvAmount, updatedCluster
-        );
+        nativeStakingSSVStrategy.registerSsvValidators(pubkeys, differentOperators, sharesData, updatedCluster);
     }
 
     /// @dev Test that deposit emits correct values when WETH already exists on the strategy

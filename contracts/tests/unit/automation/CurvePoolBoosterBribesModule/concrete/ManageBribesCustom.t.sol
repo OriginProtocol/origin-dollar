@@ -1,15 +1,23 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import {Unit_CurvePoolBoosterBribesModule_Shared_Test} from
-    "tests/unit/automation/CurvePoolBoosterBribesModule/shared/Shared.t.sol";
+import {
+    Unit_CurvePoolBoosterBribesModule_Shared_Test
+} from "tests/unit/automation/CurvePoolBoosterBribesModule/shared/Shared.t.sol";
 
-contract Unit_Concrete_CurvePoolBoosterBribesModule_ManageBribesCustom_Test
-    is Unit_CurvePoolBoosterBribesModule_Shared_Test
+contract Unit_Concrete_CurvePoolBoosterBribesModule_ManageBribesCustom_Test is
+    Unit_CurvePoolBoosterBribesModule_Shared_Test
 {
     //////////////////////////////////////////////////////
     /// --- MANAGE BRIBES (CUSTOM PARAMS)
     //////////////////////////////////////////////////////
+
+    function _allPoolBoosters() internal view returns (address[] memory) {
+        address[] memory boosters = new address[](2);
+        boosters[0] = poolBooster1;
+        boosters[1] = poolBooster2;
+        return boosters;
+    }
 
     function test_manageBribesCustom_callsWithCustomParams() public {
         uint256[] memory totalRewardAmounts = new uint256[](2);
@@ -25,7 +33,7 @@ contract Unit_Concrete_CurvePoolBoosterBribesModule_ManageBribesCustom_Test
         rewardsPerVote[1] = 1 ether;
 
         vm.prank(operator);
-        curvePoolBoosterBribesModule.manageBribes(totalRewardAmounts, extraDuration, rewardsPerVote);
+        curvePoolBoosterBribesModule.manageBribes(_allPoolBoosters(), totalRewardAmounts, extraDuration, rewardsPerVote);
     }
 
     function test_manageBribesCustom_RevertWhen_totalRewardAmountsLengthMismatch() public {
@@ -35,7 +43,7 @@ contract Unit_Concrete_CurvePoolBoosterBribesModule_ManageBribesCustom_Test
 
         vm.prank(operator);
         vm.expectRevert("Length mismatch");
-        curvePoolBoosterBribesModule.manageBribes(totalRewardAmounts, extraDuration, rewardsPerVote);
+        curvePoolBoosterBribesModule.manageBribes(_allPoolBoosters(), totalRewardAmounts, extraDuration, rewardsPerVote);
     }
 
     function test_manageBribesCustom_RevertWhen_extraDurationLengthMismatch() public {
@@ -45,7 +53,7 @@ contract Unit_Concrete_CurvePoolBoosterBribesModule_ManageBribesCustom_Test
 
         vm.prank(operator);
         vm.expectRevert("Length mismatch");
-        curvePoolBoosterBribesModule.manageBribes(totalRewardAmounts, extraDuration, rewardsPerVote);
+        curvePoolBoosterBribesModule.manageBribes(_allPoolBoosters(), totalRewardAmounts, extraDuration, rewardsPerVote);
     }
 
     function test_manageBribesCustom_RevertWhen_rewardsPerVoteLengthMismatch() public {
@@ -55,7 +63,7 @@ contract Unit_Concrete_CurvePoolBoosterBribesModule_ManageBribesCustom_Test
 
         vm.prank(operator);
         vm.expectRevert("Length mismatch");
-        curvePoolBoosterBribesModule.manageBribes(totalRewardAmounts, extraDuration, rewardsPerVote);
+        curvePoolBoosterBribesModule.manageBribes(_allPoolBoosters(), totalRewardAmounts, extraDuration, rewardsPerVote);
     }
 
     function test_manageBribesCustom_RevertWhen_notOperator() public {
@@ -65,6 +73,6 @@ contract Unit_Concrete_CurvePoolBoosterBribesModule_ManageBribesCustom_Test
 
         vm.prank(josh);
         vm.expectRevert();
-        curvePoolBoosterBribesModule.manageBribes(totalRewardAmounts, extraDuration, rewardsPerVote);
+        curvePoolBoosterBribesModule.manageBribes(_allPoolBoosters(), totalRewardAmounts, extraDuration, rewardsPerVote);
     }
 }

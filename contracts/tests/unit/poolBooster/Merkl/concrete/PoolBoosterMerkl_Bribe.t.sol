@@ -10,11 +10,9 @@ contract Unit_Concrete_PoolBoosterMerkl_Bribe_Test is Unit_Merkl_Shared_Test {
         _dealOETH(address(boosterMerkl), 1e18);
         _mockMerklDistributor(1e10);
 
-        vm.expectCall(
-            mockMerklDistributor,
-            abi.encodeWithSelector(IMerklDistributor.signAndCreateCampaign.selector)
-        );
+        vm.expectCall(mockMerklDistributor, abi.encodeWithSelector(IMerklDistributor.createCampaign.selector));
 
+        vm.prank(governor);
         boosterMerkl.bribe();
     }
 
@@ -25,6 +23,7 @@ contract Unit_Concrete_PoolBoosterMerkl_Bribe_Test is Unit_Merkl_Shared_Test {
         vm.expectEmit(true, true, true, true);
         emit IPoolBooster.BribeExecuted(1e18);
 
+        vm.prank(governor);
         boosterMerkl.bribe();
     }
 
@@ -32,6 +31,7 @@ contract Unit_Concrete_PoolBoosterMerkl_Bribe_Test is Unit_Merkl_Shared_Test {
         _dealOETH(address(boosterMerkl), 1e18);
         _mockMerklDistributor(1e10);
 
+        vm.prank(governor);
         boosterMerkl.bribe();
 
         uint256 allowance = oeth.allowance(address(boosterMerkl), mockMerklDistributor);
@@ -43,6 +43,7 @@ contract Unit_Concrete_PoolBoosterMerkl_Bribe_Test is Unit_Merkl_Shared_Test {
         _dealOETH(address(boosterMerkl), amount);
         _mockMerklDistributor(1e10);
 
+        vm.prank(governor);
         boosterMerkl.bribe();
 
         assertEq(oeth.balanceOf(address(boosterMerkl)), amount);
@@ -55,6 +56,7 @@ contract Unit_Concrete_PoolBoosterMerkl_Bribe_Test is Unit_Merkl_Shared_Test {
         _dealOETH(address(boosterMerkl), 1e18);
         _mockMerklDistributor(1e18);
 
+        vm.prank(governor);
         boosterMerkl.bribe();
 
         assertEq(oeth.balanceOf(address(boosterMerkl)), 1e18);
@@ -64,19 +66,28 @@ contract Unit_Concrete_PoolBoosterMerkl_Bribe_Test is Unit_Merkl_Shared_Test {
         _dealOETH(address(boosterMerkl), 1e18);
         _mockMerklDistributor(0);
 
+        vm.prank(governor);
         vm.expectRevert("Min reward amount must be > 0");
         boosterMerkl.bribe();
     }
 
-    function test_bribe_anyoneCanCall() public {
+    function test_bribe_strategistCanCall() public {
+        _dealOETH(address(boosterMerkl), 1e18);
+        _mockMerklDistributor(1e10);
+
+        vm.prank(strategist);
+        boosterMerkl.bribe();
+
+        uint256 allowance = oeth.allowance(address(boosterMerkl), mockMerklDistributor);
+        assertEq(allowance, 1e18);
+    }
+
+    function test_bribe_RevertWhen_unauthorizedCaller() public {
         _dealOETH(address(boosterMerkl), 1e18);
         _mockMerklDistributor(1e10);
 
         vm.prank(alice);
+        vm.expectRevert("Not governor, strategist, fctry");
         boosterMerkl.bribe();
-
-        // Verify bribe executed by checking approval was set
-        uint256 allowance = oeth.allowance(address(boosterMerkl), mockMerklDistributor);
-        assertEq(allowance, 1e18);
     }
 }

@@ -1,8 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import {Unit_SonicSwapXAMOStrategy_Shared_Test} from
-    "tests/unit/strategies/SonicSwapXAMOStrategy/shared/Shared.t.sol";
+import {Unit_SonicSwapXAMOStrategy_Shared_Test} from "tests/unit/strategies/SonicSwapXAMOStrategy/shared/Shared.t.sol";
 import {InitializableAbstractStrategy} from "contracts/utils/InitializableAbstractStrategy.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
@@ -18,10 +17,7 @@ contract Unit_Concrete_SonicSwapXAMOStrategy_Withdraw_Test is Unit_SonicSwapXAMO
         vm.prank(address(oSonicVault));
         sonicSwapXAMOStrategy.withdraw(address(oSonicVault), address(mockWrappedSonic), withdrawAmount);
 
-        assertEq(
-            IERC20(address(mockWrappedSonic)).balanceOf(address(oSonicVault)) - vaultBalBefore,
-            withdrawAmount
-        );
+        assertEq(IERC20(address(mockWrappedSonic)).balanceOf(address(oSonicVault)) - vaultBalBefore, withdrawAmount);
     }
 
     function test_withdraw_burnsOS() public {
@@ -127,7 +123,7 @@ contract Unit_Concrete_SonicSwapXAMOStrategy_Withdraw_Test is Unit_SonicSwapXAMO
         );
 
         vm.prank(address(oSonicVault));
-        vm.expectRevert("Not enough wS removed from pool");
+        vm.expectRevert("Not enough asset removed");
         sonicSwapXAMOStrategy.withdraw(address(oSonicVault), address(mockWrappedSonic), 5 ether);
     }
 }

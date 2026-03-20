@@ -59,7 +59,7 @@ abstract contract Fork_CrossChainRemoteStrategy_Shared_Test is BaseFork {
 
     /// @dev Replace the real MessageTransmitter with a mock that routes messages locally
     function _replaceMessageTransmitter() internal returns (CCTPMessageTransmitterMock2) {
-        CCTPMessageTransmitterMock2 temp = new CCTPMessageTransmitterMock2(BaseAddresses.USDC);
+        CCTPMessageTransmitterMock2 temp = new CCTPMessageTransmitterMock2(BaseAddresses.USDC, 0);
         vm.etch(CrossChain.CCTPMessageTransmitterV2, address(temp).code);
 
         CCTPMessageTransmitterMock2 mock = CCTPMessageTransmitterMock2(CrossChain.CCTPMessageTransmitterV2);

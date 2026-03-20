@@ -1,15 +1,14 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import {Fork_NativeStakingSSVStrategy_Shared_Test} from
-    "tests/fork/strategies/NativeStakingSSVStrategy/shared/Shared.t.sol";
+import {
+    Fork_NativeStakingSSVStrategy_Shared_Test
+} from "tests/fork/strategies/NativeStakingSSVStrategy/shared/Shared.t.sol";
 import {Cluster} from "contracts/interfaces/ISSVNetwork.sol";
 import {ValidatorRegistrator} from "contracts/strategies/NativeStaking/ValidatorRegistrator.sol";
 import {ValidatorStakeData} from "contracts/strategies/NativeStaking/ValidatorRegistrator.sol";
 
-contract Fork_Concrete_NativeStakingSSVStrategy_ValidatorExit_Test
-    is Fork_NativeStakingSSVStrategy_Shared_Test
-{
+contract Fork_Concrete_NativeStakingSSVStrategy_ValidatorExit_Test is Fork_NativeStakingSSVStrategy_Shared_Test {
     function setUp() public override {
         super.setUp();
 
@@ -61,9 +60,8 @@ contract Fork_Concrete_NativeStakingSSVStrategy_ValidatorExit_Test
         vm.recordLogs();
 
         // Register only (no stake)
-        uint256 ssvAmount = 4 ether;
         vm.prank(validatorRegistratorAddr);
-        nativeStakingSSVStrategy.registerSsvValidators(pubkeys, operatorIds, sharesData, ssvAmount, cluster);
+        nativeStakingSSVStrategy.registerSsvValidators(pubkeys, operatorIds, sharesData, cluster);
 
         Cluster memory updatedCluster = _extractClusterFromLogs();
 

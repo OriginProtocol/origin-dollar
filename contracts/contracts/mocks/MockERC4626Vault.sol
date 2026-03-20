@@ -163,5 +163,17 @@ contract MockERC4626Vault is IERC4626, ERC20 {
         super._burn(account, amount);
     }
 
+    // --- Morpho V2 compatibility stubs ---
+
+    /// @dev Returns self as the liquidity adapter (satisfies IVaultV2)
+    function liquidityAdapter() external view virtual returns (address) {
+        return address(this);
+    }
+
+    /// @dev Returns self as the Morpho V1 vault (satisfies IMorphoV2Adapter)
+    function morphoVaultV1() external view virtual returns (address) {
+        return address(this);
+    }
+
     // Inherited from ERC20
 }

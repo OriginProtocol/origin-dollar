@@ -1,12 +1,13 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import {Unit_CompoundingStakingSSVStrategy_Shared_Test} from
-    "tests/unit/strategies/CompoundingStakingSSVStrategy/shared/Shared.t.sol";
+import {
+    Unit_CompoundingStakingSSVStrategy_Shared_Test
+} from "tests/unit/strategies/CompoundingStakingSSVStrategy/shared/Shared.t.sol";
 import {CompoundingValidatorManager} from "contracts/strategies/NativeStaking/CompoundingValidatorManager.sol";
 
-contract Unit_Concrete_CompoundingStakingSSVStrategy_ValidatorRegistration_Test
-    is Unit_CompoundingStakingSSVStrategy_Shared_Test
+contract Unit_Concrete_CompoundingStakingSSVStrategy_ValidatorRegistration_Test is
+    Unit_CompoundingStakingSSVStrategy_Shared_Test
 {
     function setUp() public override {
         super.setUp();
@@ -21,7 +22,7 @@ contract Unit_Concrete_CompoundingStakingSSVStrategy_ValidatorRegistration_Test
         vm.expectEmit(true, false, false, true);
         emit SSVValidatorRegistered(pubKeyHash, _operatorIds());
         compoundingStakingSSVStrategy.registerSsvValidator(
-            testValidators[0].publicKey, _operatorIds(), testValidators[0].sharesData, 0, _emptyCluster()
+            testValidators[0].publicKey, _operatorIds(), testValidators[0].sharesData, _emptyCluster()
         );
 
         // State should be REGISTERED (1)
@@ -35,7 +36,7 @@ contract Unit_Concrete_CompoundingStakingSSVStrategy_ValidatorRegistration_Test
         vm.prank(governor);
         vm.expectRevert("Validator already registered");
         compoundingStakingSSVStrategy.registerSsvValidator(
-            testValidators[0].publicKey, _operatorIds(), testValidators[0].sharesData, 0, _emptyCluster()
+            testValidators[0].publicKey, _operatorIds(), testValidators[0].sharesData, _emptyCluster()
         );
     }
 
@@ -43,7 +44,7 @@ contract Unit_Concrete_CompoundingStakingSSVStrategy_ValidatorRegistration_Test
         vm.prank(josh);
         vm.expectRevert("Not Registrator");
         compoundingStakingSSVStrategy.registerSsvValidator(
-            testValidators[0].publicKey, _operatorIds(), testValidators[0].sharesData, 0, _emptyCluster()
+            testValidators[0].publicKey, _operatorIds(), testValidators[0].sharesData, _emptyCluster()
         );
     }
 
@@ -54,7 +55,7 @@ contract Unit_Concrete_CompoundingStakingSSVStrategy_ValidatorRegistration_Test
         vm.prank(governor);
         vm.expectRevert("Pausable: paused");
         compoundingStakingSSVStrategy.registerSsvValidator(
-            testValidators[0].publicKey, _operatorIds(), testValidators[0].sharesData, 0, _emptyCluster()
+            testValidators[0].publicKey, _operatorIds(), testValidators[0].sharesData, _emptyCluster()
         );
     }
 
@@ -107,9 +108,7 @@ contract Unit_Concrete_CompoundingStakingSSVStrategy_ValidatorRegistration_Test
         uint64 nextBlockTimestamp = uint64(block.timestamp);
         bytes32 wrongCredentials = bytes32(abi.encodePacked(bytes1(0x02), bytes11(0), josh));
 
-        compoundingStakingSSVStrategy.verifyValidator(
-            nextBlockTimestamp, 100, pubKeyHash, wrongCredentials, hex"00"
-        );
+        compoundingStakingSSVStrategy.verifyValidator(nextBlockTimestamp, 100, pubKeyHash, wrongCredentials, hex"00");
 
         // Validator should now be INVALID (8)
         (CompoundingValidatorManager.ValidatorState state,) = compoundingStakingSSVStrategy.validator(pubKeyHash);
@@ -139,9 +138,7 @@ contract Unit_Concrete_CompoundingStakingSSVStrategy_ValidatorRegistration_Test
         // Advance time, snap, verifyBalances → validator becomes EXITED (6)
         vm.warp(block.timestamp + 500);
         _snapBalances();
-        compoundingStakingSSVStrategy.verifyBalances(
-            _emptyBalanceProofs(1), _emptyPendingDepositProofs(0)
-        );
+        _verifyBalances(_emptyBalanceProofs(1), _emptyPendingDepositProofs(0));
 
         bytes32 pubKeyHash = _hashPubKey(testValidators[0].publicKey);
 
@@ -195,9 +192,7 @@ contract Unit_Concrete_CompoundingStakingSSVStrategy_ValidatorRegistration_Test
     function _activateValidator() internal {
         vm.warp(block.timestamp + 500);
         _snapBalances();
-        compoundingStakingSSVStrategy.verifyBalances(
-            _emptyBalanceProofs(1), _emptyPendingDepositProofs(0)
-        );
+        _verifyBalances(_emptyBalanceProofs(1), _emptyPendingDepositProofs(0));
     }
 
     // ----------------

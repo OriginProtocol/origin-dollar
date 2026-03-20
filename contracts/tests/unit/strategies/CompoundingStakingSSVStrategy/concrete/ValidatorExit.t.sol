@@ -1,12 +1,13 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import {Unit_CompoundingStakingSSVStrategy_Shared_Test} from
-    "tests/unit/strategies/CompoundingStakingSSVStrategy/shared/Shared.t.sol";
+import {
+    Unit_CompoundingStakingSSVStrategy_Shared_Test
+} from "tests/unit/strategies/CompoundingStakingSSVStrategy/shared/Shared.t.sol";
 import {CompoundingValidatorManager} from "contracts/strategies/NativeStaking/CompoundingValidatorManager.sol";
 
-contract Unit_Concrete_CompoundingStakingSSVStrategy_ValidatorExit_Test
-    is Unit_CompoundingStakingSSVStrategy_Shared_Test
+contract Unit_Concrete_CompoundingStakingSSVStrategy_ValidatorExit_Test is
+    Unit_CompoundingStakingSSVStrategy_Shared_Test
 {
     function setUp() public override {
         super.setUp();
@@ -177,8 +178,7 @@ contract Unit_Concrete_CompoundingStakingSSVStrategy_ValidatorExit_Test
         );
 
         // State should remain ACTIVE (4)
-        (CompoundingValidatorManager.ValidatorState stateAfter,) =
-            compoundingStakingSSVStrategy.validator(pubKeyHash);
+        (CompoundingValidatorManager.ValidatorState stateAfter,) = compoundingStakingSSVStrategy.validator(pubKeyHash);
         assertEq(uint8(stateAfter), 4, "Should remain ACTIVE after partial withdrawal");
     }
 
@@ -192,9 +192,7 @@ contract Unit_Concrete_CompoundingStakingSSVStrategy_ValidatorExit_Test
         _snapBalances();
 
         // verifyBalances with 1 verified validator - default balance is 33 ETH (> 32.25)
-        compoundingStakingSSVStrategy.verifyBalances(
-            _emptyBalanceProofs(1), _emptyPendingDepositProofs(0)
-        );
+        _verifyBalances(_emptyBalanceProofs(1), _emptyPendingDepositProofs(0));
 
         bytes32 pubKeyHash = _hashPubKey(testValidators[index].publicKey);
         (CompoundingValidatorManager.ValidatorState state,) = compoundingStakingSSVStrategy.validator(pubKeyHash);
@@ -202,12 +200,11 @@ contract Unit_Concrete_CompoundingStakingSSVStrategy_ValidatorExit_Test
     }
 
     function _stakeTopUp(uint256 index, uint256 amount) internal {
-        CompoundingValidatorManager.ValidatorStakeData memory stakeData = CompoundingValidatorManager
-            .ValidatorStakeData({
-                pubkey: testValidators[index].publicKey,
-                signature: testValidators[index].signature,
-                depositDataRoot: testValidators[index].depositDataRoot
-            });
+        CompoundingValidatorManager.ValidatorStakeData memory stakeData = CompoundingValidatorManager.ValidatorStakeData({
+            pubkey: testValidators[index].publicKey,
+            signature: testValidators[index].signature,
+            depositDataRoot: testValidators[index].depositDataRoot
+        });
 
         vm.prank(governor);
         compoundingStakingSSVStrategy.stakeEth(stakeData, uint64(amount / 1 gwei));

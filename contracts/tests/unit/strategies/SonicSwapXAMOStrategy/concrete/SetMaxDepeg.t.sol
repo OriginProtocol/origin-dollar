@@ -1,9 +1,8 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import {Unit_SonicSwapXAMOStrategy_Shared_Test} from
-    "tests/unit/strategies/SonicSwapXAMOStrategy/shared/Shared.t.sol";
-import {SonicSwapXAMOStrategy} from "contracts/strategies/sonic/SonicSwapXAMOStrategy.sol";
+import {Unit_SonicSwapXAMOStrategy_Shared_Test} from "tests/unit/strategies/SonicSwapXAMOStrategy/shared/Shared.t.sol";
+import {StableSwapAMMStrategy} from "contracts/strategies/algebra/StableSwapAMMStrategy.sol";
 
 contract Unit_Concrete_SonicSwapXAMOStrategy_SetMaxDepeg_Test is Unit_SonicSwapXAMOStrategy_Shared_Test {
     function test_setMaxDepeg_updatesValue() public {
@@ -19,7 +18,7 @@ contract Unit_Concrete_SonicSwapXAMOStrategy_SetMaxDepeg_Test is Unit_SonicSwapX
         uint256 newMaxDepeg = 0.03e18;
 
         vm.expectEmit(true, true, true, true);
-        emit SonicSwapXAMOStrategy.MaxDepegUpdated(newMaxDepeg);
+        emit StableSwapAMMStrategy.MaxDepegUpdated(newMaxDepeg);
 
         vm.prank(governor);
         sonicSwapXAMOStrategy.setMaxDepeg(newMaxDepeg);

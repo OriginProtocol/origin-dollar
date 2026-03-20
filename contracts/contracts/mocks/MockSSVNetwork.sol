@@ -43,4 +43,9 @@ contract MockSSVNetwork {
     ) external {}
 
     function setFeeRecipientAddress(address recipient) external {}
+
+    function migrateClusterToETH(
+        uint64[] calldata operatorIds,
+        Cluster memory cluster
+    ) external payable {}
 }

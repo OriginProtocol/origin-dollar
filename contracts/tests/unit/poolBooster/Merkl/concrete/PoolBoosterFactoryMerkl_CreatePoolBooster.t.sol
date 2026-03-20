@@ -3,13 +3,12 @@ pragma solidity ^0.8.0;
 
 import {Unit_Merkl_Shared_Test} from "tests/unit/poolBooster/Merkl/shared/Shared.t.sol";
 import {IPoolBoostCentralRegistry} from "contracts/interfaces/poolBooster/IPoolBoostCentralRegistry.sol";
+import {PoolBoosterMerklV2} from "contracts/poolBooster/PoolBoosterMerklV2.sol";
 
 contract Unit_Concrete_PoolBoosterFactoryMerkl_CreatePoolBooster_Test is Unit_Merkl_Shared_Test {
     function test_createPoolBooster() public {
         vm.prank(governor);
-        factoryMerkl.createPoolBoosterMerkl(
-            DEFAULT_CAMPAIGN_TYPE, mockAmmPool, DEFAULT_CAMPAIGN_DURATION, DEFAULT_CAMPAIGN_DATA, 1
-        );
+        factoryMerkl.createPoolBoosterMerkl(mockAmmPool, _defaultInitData(), 1);
 
         assertEq(factoryMerkl.poolBoosterLength(), 1);
 
@@ -19,43 +18,30 @@ contract Unit_Concrete_PoolBoosterFactoryMerkl_CreatePoolBooster_Test is Unit_Me
     }
 
     function test_createPoolBooster_matchesComputed() public {
-        address computed = factoryMerkl.computePoolBoosterAddress(
-            DEFAULT_CAMPAIGN_TYPE, mockAmmPool, DEFAULT_CAMPAIGN_DURATION, DEFAULT_CAMPAIGN_DATA, 1
-        );
+        address computed = factoryMerkl.computePoolBoosterAddress(1, _defaultInitData());
 
         vm.prank(governor);
-        factoryMerkl.createPoolBoosterMerkl(
-            DEFAULT_CAMPAIGN_TYPE, mockAmmPool, DEFAULT_CAMPAIGN_DURATION, DEFAULT_CAMPAIGN_DATA, 1
-        );
+        factoryMerkl.createPoolBoosterMerkl(mockAmmPool, _defaultInitData(), 1);
 
         (address deployed,,) = factoryMerkl.poolBoosters(0);
         assertEq(deployed, computed);
     }
 
     function test_createPoolBooster_event() public {
-        address computed = factoryMerkl.computePoolBoosterAddress(
-            DEFAULT_CAMPAIGN_TYPE, mockAmmPool, DEFAULT_CAMPAIGN_DURATION, DEFAULT_CAMPAIGN_DATA, 1
-        );
+        address computed = factoryMerkl.computePoolBoosterAddress(1, _defaultInitData());
 
         vm.expectEmit(true, true, true, true, address(centralRegistry));
         emit IPoolBoostCentralRegistry.PoolBoosterCreated(
-            computed,
-            mockAmmPool,
-            IPoolBoostCentralRegistry.PoolBoosterType.MerklBooster,
-            address(factoryMerkl)
+            computed, mockAmmPool, IPoolBoostCentralRegistry.PoolBoosterType.MerklBooster, address(factoryMerkl)
         );
 
         vm.prank(governor);
-        factoryMerkl.createPoolBoosterMerkl(
-            DEFAULT_CAMPAIGN_TYPE, mockAmmPool, DEFAULT_CAMPAIGN_DURATION, DEFAULT_CAMPAIGN_DATA, 1
-        );
+        factoryMerkl.createPoolBoosterMerkl(mockAmmPool, _defaultInitData(), 1);
     }
 
     function test_createPoolBooster_correctType() public {
         vm.prank(governor);
-        factoryMerkl.createPoolBoosterMerkl(
-            DEFAULT_CAMPAIGN_TYPE, mockAmmPool, DEFAULT_CAMPAIGN_DURATION, DEFAULT_CAMPAIGN_DATA, 1
-        );
+        factoryMerkl.createPoolBoosterMerkl(mockAmmPool, _defaultInitData(), 1);
 
         (,, IPoolBoostCentralRegistry.PoolBoosterType boosterType) = factoryMerkl.poolBoosters(0);
         assertEq(uint256(boosterType), uint256(IPoolBoostCentralRegistry.PoolBoosterType.MerklBooster));
@@ -64,40 +50,18 @@ contract Unit_Concrete_PoolBoosterFactoryMerkl_CreatePoolBooster_Test is Unit_Me
     function test_createPoolBooster_RevertWhen_notGovernor() public {
         vm.prank(alice);
         vm.expectRevert("Caller is not the Governor");
-        factoryMerkl.createPoolBoosterMerkl(
-            DEFAULT_CAMPAIGN_TYPE, mockAmmPool, DEFAULT_CAMPAIGN_DURATION, DEFAULT_CAMPAIGN_DATA, 1
-        );
+        factoryMerkl.createPoolBoosterMerkl(mockAmmPool, _defaultInitData(), 1);
     }
 
     function test_createPoolBooster_RevertWhen_zeroPool() public {
         vm.prank(governor);
         vm.expectRevert("Invalid ammPoolAddress address");
-        factoryMerkl.createPoolBoosterMerkl(
-            DEFAULT_CAMPAIGN_TYPE, address(0), DEFAULT_CAMPAIGN_DURATION, DEFAULT_CAMPAIGN_DATA, 1
-        );
+        factoryMerkl.createPoolBoosterMerkl(address(0), _defaultInitData(), 1);
     }
 
     function test_createPoolBooster_RevertWhen_zeroSalt() public {
         vm.prank(governor);
         vm.expectRevert("Invalid salt");
-        factoryMerkl.createPoolBoosterMerkl(
-            DEFAULT_CAMPAIGN_TYPE, mockAmmPool, DEFAULT_CAMPAIGN_DURATION, DEFAULT_CAMPAIGN_DATA, 0
-        );
-    }
-
-    function test_createPoolBooster_RevertWhen_invalidDuration() public {
-        vm.prank(governor);
-        vm.expectRevert("Invalid campaign duration");
-        factoryMerkl.createPoolBoosterMerkl(
-            DEFAULT_CAMPAIGN_TYPE, mockAmmPool, 3600, DEFAULT_CAMPAIGN_DATA, 1
-        );
-    }
-
-    function test_createPoolBooster_RevertWhen_emptyData() public {
-        vm.prank(governor);
-        vm.expectRevert("Invalid campaign data");
-        factoryMerkl.createPoolBoosterMerkl(
-            DEFAULT_CAMPAIGN_TYPE, mockAmmPool, DEFAULT_CAMPAIGN_DURATION, "", 1
-        );
+        factoryMerkl.createPoolBoosterMerkl(mockAmmPool, _defaultInitData(), 0);
     }
 }

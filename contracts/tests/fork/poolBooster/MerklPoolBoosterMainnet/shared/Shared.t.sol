@@ -5,11 +5,12 @@ import {BaseFork} from "tests/fork/BaseFork.t.sol";
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {MockERC20} from "@solmate/test/utils/mocks/MockERC20.sol";
+import {UpgradeableBeacon} from "@openzeppelin/contracts/proxy/beacon/UpgradeableBeacon.sol";
 import {OETH} from "contracts/token/OETH.sol";
 
 import {PoolBoostCentralRegistry} from "contracts/poolBooster/PoolBoostCentralRegistry.sol";
 import {PoolBoosterFactoryMerkl} from "contracts/poolBooster/PoolBoosterFactoryMerkl.sol";
-import {PoolBoosterMerkl} from "contracts/poolBooster/PoolBoosterMerkl.sol";
+import {PoolBoosterMerklV2} from "contracts/poolBooster/PoolBoosterMerklV2.sol";
 import {IMerklDistributor} from "contracts/interfaces/poolBooster/IMerklDistributor.sol";
 
 import {Mainnet} from "tests/utils/Addresses.sol";
@@ -35,6 +36,7 @@ abstract contract Fork_MerklPoolBoosterMainnet_Shared_Test is BaseFork {
     //////////////////////////////////////////////////////
 
     IMerklDistributor internal merklDistributor;
+    UpgradeableBeacon internal beacon;
 
     //////////////////////////////////////////////////////
     /// --- SETUP
@@ -57,10 +59,12 @@ abstract contract Fork_MerklPoolBoosterMainnet_Shared_Test is BaseFork {
         centralRegistry = new PoolBoostCentralRegistry();
         vm.store(address(centralRegistry), GOVERNOR_SLOT, bytes32(uint256(uint160(Mainnet.Timelock))));
 
-        // 3. Deploy Merkl factory
-        factoryMerkl = new PoolBoosterFactoryMerkl(
-            address(oeth), Mainnet.Timelock, address(centralRegistry), Mainnet.CampaignCreator
-        );
+        // 3. Deploy beacon + factory
+        PoolBoosterMerklV2 impl = new PoolBoosterMerklV2();
+        beacon = new UpgradeableBeacon(address(impl));
+
+        factoryMerkl =
+            new PoolBoosterFactoryMerkl(address(oeth), Mainnet.Timelock, address(centralRegistry), address(beacon));
 
         // 4. Approve factory on registry
         vm.prank(Mainnet.Timelock);
@@ -98,14 +102,25 @@ abstract contract Fork_MerklPoolBoosterMainnet_Shared_Test is BaseFork {
         MockERC20(address(oeth)).mint(_to, _amount);
     }
 
-    function _createMerklBooster(uint256 _salt) internal returns (PoolBoosterMerkl) {
-        vm.prank(Mainnet.Timelock);
-        factoryMerkl.createPoolBoosterMerkl(
-            DEFAULT_CAMPAIGN_ID, DEFAULT_AMM_ADDRESS, DEFAULT_DURATION, DEFAULT_CAMPAIGN_DATA, _salt
+    function _defaultInitData() internal view returns (bytes memory) {
+        return abi.encodeWithSelector(
+            PoolBoosterMerklV2.initialize.selector,
+            DEFAULT_DURATION,
+            DEFAULT_CAMPAIGN_ID,
+            address(oeth),
+            Mainnet.CampaignCreator,
+            Mainnet.Timelock,
+            Mainnet.Timelock, // strategist = timelock for simplicity
+            DEFAULT_CAMPAIGN_DATA
         );
+    }
+
+    function _createMerklBooster(uint256 _salt) internal returns (PoolBoosterMerklV2) {
+        vm.prank(Mainnet.Timelock);
+        factoryMerkl.createPoolBoosterMerkl(DEFAULT_AMM_ADDRESS, _defaultInitData(), _salt);
 
         uint256 count = factoryMerkl.poolBoosterLength();
         (address boosterAddr,,) = factoryMerkl.poolBoosters(count - 1);
-        return PoolBoosterMerkl(boosterAddr);
+        return PoolBoosterMerklV2(boosterAddr);
     }
 }

@@ -10,8 +10,8 @@ import {OSVault} from "contracts/vault/OSVault.sol";
 import {OSonicProxy, OSonicVaultProxy} from "contracts/proxies/SonicProxies.sol";
 import {SonicSwapXAMOStrategy} from "contracts/strategies/sonic/SonicSwapXAMOStrategy.sol";
 import {InitializableAbstractStrategy} from "contracts/utils/InitializableAbstractStrategy.sol";
-import {IPair} from "contracts/interfaces/sonic/ISwapXPair.sol";
-import {IGauge} from "contracts/interfaces/sonic/ISwapXGauge.sol";
+import {IPair} from "contracts/interfaces/algebra/IAlgebraPair.sol";
+import {IGauge} from "contracts/interfaces/algebra/IAlgebraGauge.sol";
 import {IWrappedSonic} from "contracts/interfaces/sonic/IWrappedSonic.sol";
 
 abstract contract Fork_SonicSwapXAMOStrategy_Shared_Test is BaseFork {
@@ -65,9 +65,7 @@ abstract contract Fork_SonicSwapXAMOStrategy_Shared_Test is BaseFork {
         );
 
         oSonicVaultProxy.initialize(
-            address(oSonicVaultImpl),
-            governor,
-            abi.encodeWithSignature("initialize(address)", address(oSonicProxy))
+            address(oSonicVaultImpl), governor, abi.encodeWithSignature("initialize(address)", address(oSonicProxy))
         );
 
         vm.stopPrank();
@@ -93,21 +91,18 @@ abstract contract Fork_SonicSwapXAMOStrategy_Shared_Test is BaseFork {
         // wS (0x039e...) should be lower than fresh OSonic proxy → token0=wS, token1=OS
         require(Sonic.wS < address(oSonic), "wS must be token0");
 
-        (bool success, bytes memory data) = Sonic.SwapXPairFactory.call(
-            abi.encodeWithSignature("createPair(address,address,bool)", Sonic.wS, address(oSonic), true)
-        );
+        (bool success, bytes memory data) = Sonic.SwapXPairFactory
+            .call(abi.encodeWithSignature("createPair(address,address,bool)", Sonic.wS, address(oSonic), true));
         require(success, "Pool creation failed");
         swapXPool = IPair(abi.decode(data, (address)));
 
         // Create fresh gauge via Voter
-        (success, data) = Sonic.SwapXVoter.call(
-            abi.encodeWithSignature("createGauge(address,uint256)", address(swapXPool), uint256(0))
-        );
+        (success, data) = Sonic.SwapXVoter
+            .call(abi.encodeWithSignature("createGauge(address,uint256)", address(swapXPool), uint256(0)));
         if (!success) {
             vm.prank(Sonic.SwapXOwner);
-            (success, data) = Sonic.SwapXVoter.call(
-                abi.encodeWithSignature("createGauge(address,uint256)", address(swapXPool), uint256(0))
-            );
+            (success, data) = Sonic.SwapXVoter
+                .call(abi.encodeWithSignature("createGauge(address,uint256)", address(swapXPool), uint256(0)));
             require(success, "Gauge creation failed");
         }
         (address gaugeAddr,,) = abi.decode(data, (address, address, address));
@@ -124,11 +119,8 @@ abstract contract Fork_SonicSwapXAMOStrategy_Shared_Test is BaseFork {
         // Deploy fresh SonicSwapXAMOStrategy
         sonicSwapXAMOStrategy = new SonicSwapXAMOStrategy(
             InitializableAbstractStrategy.BaseStrategyConfig({
-                platformAddress: address(swapXPool),
-                vaultAddress: address(oSonicVault)
+                platformAddress: address(swapXPool), vaultAddress: address(oSonicVault)
             }),
-            address(oSonic),
-            Sonic.wS,
             address(swapXGauge)
         );
 

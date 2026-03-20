@@ -57,17 +57,17 @@ abstract contract Unit_NativeStakingSSVStrategy_Shared_Test is Base {
 
     function _initTestPublicKeys() internal {
         testPublicKeys[0] =
-            hex"aba6acd335d524a89fb89b9977584afdb23f34a6742547fa9ec1c656fbd2bfc0e7a234460328c2731828c9a43be06e25";
+        hex"aba6acd335d524a89fb89b9977584afdb23f34a6742547fa9ec1c656fbd2bfc0e7a234460328c2731828c9a43be06e25";
         testPublicKeys[1] =
-            hex"a8adaec39a6738b09053a3ed9d44e481d5b2dfafefe0059da48756db951adf4f2956c1149f3bd0634e4cde009a770afb";
+        hex"a8adaec39a6738b09053a3ed9d44e481d5b2dfafefe0059da48756db951adf4f2956c1149f3bd0634e4cde009a770afb";
         testPublicKeys[2] =
-            hex"aa8cdeb9efe0cb2f703332a46051214464796e7de7b882abd243c175b2d96250ad227846f713876445f864b2e2f695c1";
+        hex"aa8cdeb9efe0cb2f703332a46051214464796e7de7b882abd243c175b2d96250ad227846f713876445f864b2e2f695c1";
         testPublicKeys[3] =
-            hex"b22b68e2a4f524e96c7818dbfca3de0f7fb4e87449fe8166fd310bea3e3e4295db41b21e65612d1d4bd8a14f2d47e49a";
+        hex"b22b68e2a4f524e96c7818dbfca3de0f7fb4e87449fe8166fd310bea3e3e4295db41b21e65612d1d4bd8a14f2d47e49a";
         testPublicKeys[4] =
-            hex"92fe1f554b8110fa5c74af8181ca2afaad12f6d22cad933ef1978b5d4d099d75045e4d6d15066c290aee29990858cb90";
+        hex"92fe1f554b8110fa5c74af8181ca2afaad12f6d22cad933ef1978b5d4d099d75045e4d6d15066c290aee29990858cb90";
         testPublicKeys[5] =
-            hex"b27b34f6931ba70a11c2ba82f194e9b98093a5a482bb035a836df9aa4b5f57542354da453538b651c18eefc0ea3a7689";
+        hex"b27b34f6931ba70a11c2ba82f194e9b98093a5a482bb035a836df9aa4b5f57542354da453538b651c18eefc0ea3a7689";
     }
 
     function _deployContracts() internal {
@@ -93,9 +93,7 @@ abstract contract Unit_NativeStakingSSVStrategy_Shared_Test is Base {
         );
 
         oethVaultProxy.initialize(
-            address(oethVaultImpl),
-            governor,
-            abi.encodeWithSignature("initialize(address)", address(oethProxy))
+            address(oethVaultImpl), governor, abi.encodeWithSignature("initialize(address)", address(oethProxy))
         );
 
         vm.stopPrank();
@@ -122,8 +120,7 @@ abstract contract Unit_NativeStakingSSVStrategy_Shared_Test is Base {
         // Deploy NativeStakingSSVStrategy
         nativeStakingSSVStrategy = new NativeStakingSSVStrategy(
             InitializableAbstractStrategy.BaseStrategyConfig({
-                platformAddress: address(0),
-                vaultAddress: address(oethVault)
+                platformAddress: address(0), vaultAddress: address(oethVault)
             }),
             address(mockWeth),
             address(mockSsv),
@@ -184,21 +181,13 @@ abstract contract Unit_NativeStakingSSVStrategy_Shared_Test is Base {
 
     /// @dev Set activeDepositedValidators via storage slot
     function _setActiveDepositedValidators(uint256 _validators) internal {
-        vm.store(
-            address(nativeStakingSSVStrategy),
-            bytes32(ACTIVE_DEPOSITED_VALIDATORS_SLOT),
-            bytes32(_validators)
-        );
+        vm.store(address(nativeStakingSSVStrategy), bytes32(ACTIVE_DEPOSITED_VALIDATORS_SLOT), bytes32(_validators));
         assertEq(nativeStakingSSVStrategy.activeDepositedValidators(), _validators);
     }
 
     /// @dev Set consensusRewards via storage slot
     function _setConsensusRewards(uint256 _rewards) internal {
-        vm.store(
-            address(nativeStakingSSVStrategy),
-            bytes32(CONSENSUS_REWARDS_SLOT),
-            bytes32(_rewards)
-        );
+        vm.store(address(nativeStakingSSVStrategy), bytes32(CONSENSUS_REWARDS_SLOT), bytes32(_rewards));
         assertEq(nativeStakingSSVStrategy.consensusRewards(), _rewards);
     }
 
@@ -227,9 +216,7 @@ abstract contract Unit_NativeStakingSSVStrategy_Shared_Test is Base {
         operatorIds[3] = testOperatorIds[3];
 
         vm.prank(governor);
-        nativeStakingSSVStrategy.registerSsvValidators(
-            pubKeys, operatorIds, sharesData, 2 ether, _emptyCluster()
-        );
+        nativeStakingSSVStrategy.registerSsvValidators(pubKeys, operatorIds, sharesData, _emptyCluster());
     }
 
     /// @dev Register and stake a single validator
@@ -239,9 +226,7 @@ abstract contract Unit_NativeStakingSSVStrategy_Shared_Test is Base {
         // Build stake data
         ValidatorStakeData[] memory stakeData = new ValidatorStakeData[](1);
         stakeData[0] = ValidatorStakeData({
-            pubkey: testPublicKeys[index],
-            signature: TEST_SIGNATURE,
-            depositDataRoot: TEST_DEPOSIT_DATA_ROOT
+            pubkey: testPublicKeys[index], signature: TEST_SIGNATURE, depositDataRoot: TEST_DEPOSIT_DATA_ROOT
         });
 
         vm.prank(governor);

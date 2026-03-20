@@ -48,7 +48,7 @@ import {PoolBoosterFactoryMerkl} from "contracts/poolBooster/PoolBoosterFactoryM
 import {PoolBoosterFactoryMetropolis} from "contracts/poolBooster/PoolBoosterFactoryMetropolis.sol";
 import {PoolBoosterSwapxSingle} from "contracts/poolBooster/PoolBoosterSwapxSingle.sol";
 import {PoolBoosterSwapxDouble} from "contracts/poolBooster/PoolBoosterSwapxDouble.sol";
-import {PoolBoosterMerkl} from "contracts/poolBooster/PoolBoosterMerkl.sol";
+import {PoolBoosterMerklV2} from "contracts/poolBooster/PoolBoosterMerklV2.sol";
 import {PoolBoosterMetropolis} from "contracts/poolBooster/PoolBoosterMetropolis.sol";
 import {CurvePoolBooster} from "contracts/poolBooster/curve/CurvePoolBooster.sol";
 import {CurvePoolBoosterPlain} from "contracts/poolBooster/curve/CurvePoolBoosterPlain.sol";
@@ -214,7 +214,7 @@ abstract contract Base is Test {
 
     PoolBoosterSwapxSingle internal boosterSwapxSingle;
     PoolBoosterSwapxDouble internal boosterSwapxDouble;
-    PoolBoosterMerkl internal boosterMerkl;
+    PoolBoosterMerklV2 internal boosterMerkl;
     PoolBoosterMetropolis internal boosterMetropolis;
 
     CurvePoolBooster internal curvePoolBooster;

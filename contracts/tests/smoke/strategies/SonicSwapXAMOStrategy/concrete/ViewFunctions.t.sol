@@ -8,11 +8,7 @@ contract Smoke_Concrete_SonicSwapXAMOStrategy_ViewFunctions_Test is Smoke_SonicS
     // --- checkBalance ---
 
     function test_checkBalance_isNonZero() public view {
-        assertGt(
-            sonicSwapXAMOStrategy.checkBalance(address(wrappedSonic)),
-            0,
-            "checkBalance(wS) should be > 0"
-        );
+        assertGt(sonicSwapXAMOStrategy.checkBalance(address(wrappedSonic)), 0, "checkBalance(wS) should be > 0");
     }
 
     // --- supportsAsset ---
@@ -27,12 +23,26 @@ contract Smoke_Concrete_SonicSwapXAMOStrategy_ViewFunctions_Test is Smoke_SonicS
 
     // --- Immutables ---
 
-    function test_immutables_ws() public view {
-        assertEq(sonicSwapXAMOStrategy.ws(), Sonic.wS, "ws mismatch");
+    function test_immutables_asset() public view {
+        // V1 uses ws(), V2 uses asset()
+        (bool success, bytes memory data) =
+            address(sonicSwapXAMOStrategy).staticcall(abi.encodeWithSignature("asset()"));
+        if (!success) {
+            (success, data) = address(sonicSwapXAMOStrategy).staticcall(abi.encodeWithSignature("ws()"));
+        }
+        assertTrue(success, "asset/ws mismatch");
+        assertEq(abi.decode(data, (address)), Sonic.wS, "asset mismatch");
     }
 
-    function test_immutables_os() public view {
-        assertEq(sonicSwapXAMOStrategy.os(), Sonic.OSonicProxy, "os mismatch");
+    function test_immutables_oToken() public view {
+        // V1 uses os(), V2 uses oToken()
+        (bool success, bytes memory data) =
+            address(sonicSwapXAMOStrategy).staticcall(abi.encodeWithSignature("oToken()"));
+        if (!success) {
+            (success, data) = address(sonicSwapXAMOStrategy).staticcall(abi.encodeWithSignature("os()"));
+        }
+        assertTrue(success, "oToken/os mismatch");
+        assertEq(abi.decode(data, (address)), Sonic.OSonicProxy, "oToken mismatch");
     }
 
     function test_immutables_pool() public view {
@@ -46,11 +56,7 @@ contract Smoke_Concrete_SonicSwapXAMOStrategy_ViewFunctions_Test is Smoke_SonicS
     // --- Configuration ---
 
     function test_vaultAddress_matchesExpected() public view {
-        assertEq(
-            sonicSwapXAMOStrategy.vaultAddress(),
-            address(oSonicVault),
-            "Vault address mismatch"
-        );
+        assertEq(sonicSwapXAMOStrategy.vaultAddress(), address(oSonicVault), "Vault address mismatch");
     }
 
     function test_governor_isNonZero() public view {
@@ -58,11 +64,7 @@ contract Smoke_Concrete_SonicSwapXAMOStrategy_ViewFunctions_Test is Smoke_SonicS
     }
 
     function test_SOLVENCY_THRESHOLD() public view {
-        assertEq(
-            sonicSwapXAMOStrategy.SOLVENCY_THRESHOLD(),
-            0.998 ether,
-            "SOLVENCY_THRESHOLD mismatch"
-        );
+        assertEq(sonicSwapXAMOStrategy.SOLVENCY_THRESHOLD(), 0.998 ether, "SOLVENCY_THRESHOLD mismatch");
     }
 
     function test_maxDepeg_isSet() public view {

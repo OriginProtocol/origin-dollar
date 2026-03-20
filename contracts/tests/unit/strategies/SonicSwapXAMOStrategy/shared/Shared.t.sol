@@ -58,9 +58,7 @@ abstract contract Unit_SonicSwapXAMOStrategy_Shared_Test is Base {
         );
 
         oSonicVaultProxy.initialize(
-            address(oSonicVaultImpl),
-            governor,
-            abi.encodeWithSignature("initialize(address)", address(oSonicProxy))
+            address(oSonicVaultImpl), governor, abi.encodeWithSignature("initialize(address)", address(oSonicProxy))
         );
 
         vm.stopPrank();
@@ -85,11 +83,8 @@ abstract contract Unit_SonicSwapXAMOStrategy_Shared_Test is Base {
         // Deploy SonicSwapXAMOStrategy
         sonicSwapXAMOStrategy = new SonicSwapXAMOStrategy(
             InitializableAbstractStrategy.BaseStrategyConfig({
-                platformAddress: address(mockSwapXPair),
-                vaultAddress: address(oSonicVault)
+                platformAddress: address(mockSwapXPair), vaultAddress: address(oSonicVault)
             }),
-            address(oSonic),
-            address(mockWrappedSonic),
             address(mockSwapXGauge)
         );
 

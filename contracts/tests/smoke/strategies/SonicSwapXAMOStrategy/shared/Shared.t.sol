@@ -8,8 +8,8 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SonicSwapXAMOStrategy} from "contracts/strategies/sonic/SonicSwapXAMOStrategy.sol";
 import {OSVault} from "contracts/vault/OSVault.sol";
 import {OSonic} from "contracts/token/OSonic.sol";
-import {IPair} from "contracts/interfaces/sonic/ISwapXPair.sol";
-import {IGauge} from "contracts/interfaces/sonic/ISwapXGauge.sol";
+import {IPair} from "contracts/interfaces/algebra/IAlgebraPair.sol";
+import {IGauge} from "contracts/interfaces/algebra/IAlgebraGauge.sol";
 
 abstract contract Smoke_SonicSwapXAMOStrategy_Shared_Test is BaseSmoke {
     //////////////////////////////////////////////////////
@@ -39,8 +39,7 @@ abstract contract Smoke_SonicSwapXAMOStrategy_Shared_Test is BaseSmoke {
 
         oSonic = OSonic(resolver.resolve("OSONIC_PROXY"));
         oSonicVault = OSVault(payable(resolver.resolve("OSONIC_VAULT_PROXY")));
-        sonicSwapXAMOStrategy =
-            SonicSwapXAMOStrategy(resolver.resolve("SONIC_SWAPX_AMO_STRATEGY_PROXY"));
+        sonicSwapXAMOStrategy = SonicSwapXAMOStrategy(resolver.resolve("SONIC_SWAPX_AMO_STRATEGY_PROXY"));
 
         wrappedSonic = IERC20(Sonic.wS);
         swapXPool = IPair(sonicSwapXAMOStrategy.pool());

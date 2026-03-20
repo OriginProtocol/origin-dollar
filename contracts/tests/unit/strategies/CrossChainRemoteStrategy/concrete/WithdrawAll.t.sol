@@ -37,10 +37,11 @@ contract Unit_Concrete_CrossChainRemoteStrategy_WithdrawAll_Test is Unit_CrossCh
         crossChainRemoteStrategy.withdrawAll();
     }
 
-    function test_withdrawAll_RevertWhen_noShares() public {
-        // No deposit, so previewRedeem(0) == 0, which triggers "Must withdraw something"
+    function test_withdrawAll_noOp_whenNoShares() public {
+        // No deposit — withdrawAll silently returns (amountToWithdraw == 0)
         vm.prank(governor);
-        vm.expectRevert("Must withdraw something");
         crossChainRemoteStrategy.withdrawAll();
+
+        assertEq(mockERC4626Vault.balanceOf(address(crossChainRemoteStrategy)), 0);
     }
 }

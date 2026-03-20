@@ -55,7 +55,8 @@ abstract contract Fork_NativeStakingSSVStrategy_Shared_Test is BaseFork {
     bytes internal constant TEST_SIGNATURE =
         hex"90157a1c1b26384f0b4d41bec867d1a000f75e7b634ac7c4c6d8dfc0b0eaeb73bcc99586333d42df98c6b0a8c5ef0d8d071c68991afcd8fbbaa8b423e3632ee4fe0782bc03178a30a8bc6261f64f84a6c833fb96a0f29de1c34ede42c4a859b0";
 
-    bytes32 internal constant TEST_DEPOSIT_DATA_ROOT = 0x6f9cc503009ceb0960637bbf2482b19a62153144ab091f0b9f66d5800f02cc2c;
+    bytes32 internal constant TEST_DEPOSIT_DATA_ROOT =
+        0x6f9cc503009ceb0960637bbf2482b19a62153144ab091f0b9f66d5800f02cc2c;
 
     //////////////////////////////////////////////////////
     /// --- SETUP
@@ -80,10 +81,8 @@ abstract contract Fork_NativeStakingSSVStrategy_Shared_Test is BaseFork {
 
     function _loadForkContracts() internal {
         // Strategy 2
-        nativeStakingSSVStrategy =
-            NativeStakingSSVStrategy(payable(Mainnet.NativeStakingSSVStrategy2Proxy));
-        nativeStakingFeeAccumulator =
-            FeeAccumulator(payable(nativeStakingSSVStrategy.FEE_ACCUMULATOR_ADDRESS()));
+        nativeStakingSSVStrategy = NativeStakingSSVStrategy(payable(Mainnet.NativeStakingSSVStrategy2Proxy));
+        nativeStakingFeeAccumulator = FeeAccumulator(payable(nativeStakingSSVStrategy.FEE_ACCUMULATOR_ADDRESS()));
         oeth = OETH(Mainnet.OETHProxy);
         oethVault = OETHVault(payable(Mainnet.OETHVaultProxy));
 
@@ -175,9 +174,8 @@ abstract contract Fork_NativeStakingSSVStrategy_Shared_Test is BaseFork {
         vm.recordLogs();
 
         // Register validator with SSV Network
-        uint256 ssvAmount = 2 ether;
         vm.prank(validatorRegistratorAddr);
-        nativeStakingSSVStrategy.registerSsvValidators(pubkeys, operatorIds, sharesData, ssvAmount, cluster);
+        nativeStakingSSVStrategy.registerSsvValidators(pubkeys, operatorIds, sharesData, cluster);
 
         // Extract updated cluster from ValidatorAdded event
         Cluster memory updatedCluster = _extractClusterFromLogs();
@@ -192,9 +190,7 @@ abstract contract Fork_NativeStakingSSVStrategy_Shared_Test is BaseFork {
         // Stake 32 ETH
         ValidatorStakeData[] memory stakeData = new ValidatorStakeData[](1);
         stakeData[0] = ValidatorStakeData({
-            pubkey: TEST_VALIDATOR_PUBKEY,
-            signature: TEST_SIGNATURE,
-            depositDataRoot: TEST_DEPOSIT_DATA_ROOT
+            pubkey: TEST_VALIDATOR_PUBKEY, signature: TEST_SIGNATURE, depositDataRoot: TEST_DEPOSIT_DATA_ROOT
         });
 
         vm.prank(validatorRegistratorAddr);
@@ -251,16 +247,14 @@ abstract contract Fork_NativeStakingSSVStrategy_Shared_Test is BaseFork {
     /// The ValidatorAdded event signature:
     ///   ValidatorAdded(address indexed owner, uint64[] operatorIds, bytes publicKey, bytes shares, Cluster cluster)
     function _extractClusterFromLogs() internal returns (Cluster memory) {
-        bytes32 validatorAddedTopic = keccak256(
-            "ValidatorAdded(address,uint64[],bytes,bytes,(uint32,uint64,uint64,bool,uint256))"
-        );
+        bytes32 validatorAddedTopic =
+            keccak256("ValidatorAdded(address,uint64[],bytes,bytes,(uint32,uint64,uint64,bool,uint256))");
 
         Vm.Log[] memory logs = vm.getRecordedLogs();
         for (uint256 i = 0; i < logs.length; i++) {
             if (logs[i].topics.length > 0 && logs[i].topics[0] == validatorAddedTopic) {
                 // Decode the non-indexed data: (uint64[] operatorIds, bytes publicKey, bytes shares, Cluster cluster)
-                (, , , Cluster memory cluster) =
-                    abi.decode(logs[i].data, (uint64[], bytes, bytes, Cluster));
+                (,,, Cluster memory cluster) = abi.decode(logs[i].data, (uint64[], bytes, bytes, Cluster));
                 return cluster;
             }
         }
