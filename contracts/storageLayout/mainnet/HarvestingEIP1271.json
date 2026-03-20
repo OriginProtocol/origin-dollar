@@ -31,7 +31,7 @@
       "slot": "3",
       "type": "t_address",
       "contract": "HarvestingEIP1271",
-      "src": "contracts/harvest/HarvestingEIP1271.sol:59"
+      "src": "contracts/harvest/HarvestingEIP1271.sol:63"
     },
     {
       "label": "tokenConfigs",
@@ -39,7 +39,7 @@
       "slot": "4",
       "type": "t_mapping(t_address,t_struct(TokenConfig)787_storage)",
       "contract": "HarvestingEIP1271",
-      "src": "contracts/harvest/HarvestingEIP1271.sol:63"
+      "src": "contracts/harvest/HarvestingEIP1271.sol:67"
     }
   ],
   "types": {
