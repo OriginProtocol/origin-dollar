@@ -47,7 +47,7 @@ async function proposeGovernanceArgs(governorArgsArray) {
 
   return [
     targets,
-    Array(governorArgsArray.length).fill(BigNumber.from(0)),
+    governorArgsArray.map((action) => BigNumber.from(action.value ?? 0)),
     sigs,
     calldata,
   ];

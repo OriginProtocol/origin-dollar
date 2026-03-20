@@ -595,7 +595,10 @@ const executeGovernanceProposalOnFork = async ({
     // Don't ask me why but this seems to force hardhat to
     // update state and cause the random failures to stop
     await getProposalState(proposalIdBn);
-    await governorSix.getActions(proposalIdBn);
+    const executionValue = await getProposalExecutionValue(
+      governorSix,
+      proposalIdBn
+    );
 
     executionRetries = executionRetries - 1;
     try {
@@ -604,6 +607,7 @@ const executeGovernanceProposalOnFork = async ({
         "execute(uint256)"
       ](proposalIdBn, {
         gasLimit: executeGasLimit || undefined,
+        ...(executionValue.gt(0) ? { value: executionValue } : {}),
       });
     } catch (e) {
       console.error(e);
@@ -963,18 +967,31 @@ async function buildGnosisSafeJson(
   safeAddress,
   targets,
   contractMethods,
-  contractInputsValues
+  contractInputsValues,
+  values = []
 ) {
   return buildSafeTransactionBuilderJson({
     safeAddress: safeAddress || addresses.mainnet.Guardian,
     name: "Transaction Batch",
     transactions: targets.map((target, i) => ({
       to: target,
-      value: "0",
+      value: BigNumber.from(values[i] ?? 0).toString(),
       contractMethod: contractMethods[i],
       contractInputsValues: contractInputsValues[i],
     })),
   });
+}
+
+async function getProposalExecutionValue(governor, proposalId) {
+  const actions = await governor.getActions(proposalId);
+  const rawValues =
+    actions[1] || (typeof actions.values === "function" ? [] : actions.values);
+  const values = Array.from(rawValues || []);
+
+  return values.reduce(
+    (sum, value) => sum.add(BigNumber.from(value)),
+    BigNumber.from(0)
+  );
 }
 
 async function simulateWithTimelockImpersonation(proposal) {
@@ -983,10 +1000,14 @@ async function simulateWithTimelockImpersonation(proposal) {
   const timelock = await impersonateAndFund(timelockAddr);
 
   for (const action of proposal.actions) {
-    const { contract, signature, args } = action;
+    const { contract, signature, args, value } = action;
+    const txOpts = {
+      ...(await getTxOpts()),
+      ...(value ? { value } : {}),
+    };
 
     log(`Sending governance action ${signature} to ${contract.address}`);
-    await contract.connect(timelock)[signature](...args, await getTxOpts());
+    await contract.connect(timelock)[signature](...args, txOpts);
 
     console.log(`... ${signature} completed`);
   }
@@ -1221,18 +1242,22 @@ function deploymentWithGuardianGovernor(opts, fn) {
 
       const guardianActions = [];
       for (const action of proposal.actions) {
-        const { contract, signature, args } = action;
+        const { contract, signature, args, value } = action;
+        const txOpts = {
+          ...(await getTxOpts()),
+          ...(value ? { value } : {}),
+        };
 
         log(`Sending governance action ${signature} to ${contract.address}`);
         const result = await withConfirmation(
-          contract.connect(sGuardian)[signature](...args, await getTxOpts())
+          contract.connect(sGuardian)[signature](...args, txOpts)
         );
         guardianActions.push({
           sig: signature,
           args: args,
           to: contract.address,
           data: result.data,
-          value: result.value.toString(),
+          value: BigNumber.from(value ?? result.value ?? 0).toString(),
         });
 
         console.log(`... ${signature} completed`);
@@ -1438,6 +1463,7 @@ module.exports = {
 
   constructContractMethod,
   buildGnosisSafeJson,
+  getProposalExecutionValue,
 
   encodeSaltForCreateX,
   createPoolBoosterSonic,
