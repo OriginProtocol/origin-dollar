@@ -43,6 +43,10 @@
         {
             "implementation": "0x493eea7fb8cc6010055f937f8c85aa4d70ed5d94",
             "name": "POOL_BOOSTER_METROPOLIS_WS_OS"
+        },
+        {
+            "implementation": "0x596B0401479f6DfE1cAF8c12838311FeE742B95c",
+            "name": "SONIC_STAKING_STRATEGY"
         }
     ],
     "executions": [
