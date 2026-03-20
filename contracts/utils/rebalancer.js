@@ -615,6 +615,7 @@ function printAllocationTable({
   vaultBalance,
   shortfall,
   constraints: overrides = {},
+  warnings = [],
 }) {
   const constraints = { ...ousdConstraints, ...overrides };
 
@@ -743,6 +744,13 @@ function printAllocationTable({
     }
     console.log();
   }
+
+  if (warnings.length > 0) {
+    log("\n⚠️  Warnings:");
+    for (const w of warnings) {
+      log(`  ${w}`);
+    }
+  }
 }
 
 /**
@@ -752,21 +760,23 @@ function printAllocationTable({
 function _filterExcludedStrategies(strategies, apys, constraints) {
   const active = [];
   const excluded = [];
+  const warnings = [];
   for (const s of strategies) {
     const apy = apys[s.morphoVaultAddress] || 0;
     if (apy > constraints.maxApyThreshold) {
-      log(
-        `WARNING: ${s.name} APY ${(apy * 100).toFixed(0)}% exceeds ` +
-          `threshold ${(constraints.maxApyThreshold * 100).toFixed(
-            0
-          )}% — excluding from allocation`
-      );
+      const msg =
+        `${s.name} APY ${(apy * 100).toFixed(0)}% exceeds ` +
+        `threshold ${(constraints.maxApyThreshold * 100).toFixed(
+          0
+        )}% — excluded from allocation`;
+      log(`WARNING: ${msg}`);
+      warnings.push(msg);
       excluded.push(s);
     } else {
       active.push(s);
     }
   }
-  return { active, excluded };
+  return { active, excluded, warnings };
 }
 
 /**
@@ -782,7 +792,7 @@ async function buildRebalancePlan(provider) {
   );
 
   // Exclude strategies with suspiciously high APY
-  const { active, excluded } = _filterExcludedStrategies(
+  const { active, excluded, warnings } = _filterExcludedStrategies(
     state.strategies,
     apys,
     ousdConstraints
@@ -821,9 +831,10 @@ async function buildRebalancePlan(provider) {
     optimalActions,
     vaultBalance: state.vaultBalance,
     shortfall: state.shortfall,
+    warnings,
   });
 
-  return { actions, optimalActions, state, apys };
+  return { actions, optimalActions, state, apys, warnings };
 }
 
 module.exports = {

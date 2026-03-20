@@ -49,6 +49,7 @@ const buildDiscordMessage = ({
   actions: allActions,
   optimalActions,
   state,
+  warnings = [],
 }) => {
   const timestamp = new Date().toUTCString().replace(/ GMT$/, " UTC");
   const header = IS_DRY_RUN
@@ -105,20 +106,12 @@ const buildDiscordMessage = ({
     "```",
   ];
 
-  // Warnings (suspicious APY)
-  const warnings = allActions.filter(
-    (a) => a.reason === "APY exceeds threshold"
-  );
   if (warnings.length > 0) {
     lines.push("");
     lines.push("**⚠️ Warnings**");
     lines.push("```");
     for (const w of warnings) {
-      lines.push(
-        `  ${w.name.padEnd(20)} APY ${(w.apy * 100).toFixed(
-          2
-        )}% — EXCLUDED (exceeds threshold)`
-      );
+      lines.push(`  ${w}`);
     }
     lines.push("```");
   }
