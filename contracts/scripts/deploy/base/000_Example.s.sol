@@ -2,13 +2,13 @@
 pragma solidity ^0.8.0;
 
 // Deployment framework
-import { AbstractDeployScript } from "scripts/deploy/helpers/AbstractDeployScript.s.sol";
-import { GovHelper } from "scripts/deploy/helpers/GovHelper.sol";
-import { GovProposal } from "scripts/deploy/helpers/DeploymentTypes.sol";
+import {AbstractDeployScript} from "scripts/deploy/helpers/AbstractDeployScript.s.sol";
+import {GovHelper} from "scripts/deploy/helpers/GovHelper.sol";
+import {GovProposal} from "scripts/deploy/helpers/DeploymentTypes.sol";
 
 // Contracts
-import { OETHBase } from "contracts/token/OETHBase.sol";
-import { InitializeGovernedUpgradeabilityProxy } from "contracts/proxies/InitializeGovernedUpgradeabilityProxy.sol";
+import {OETHBase} from "contracts/token/OETHBase.sol";
+import {InitializeGovernedUpgradeabilityProxy} from "contracts/proxies/InitializeGovernedUpgradeabilityProxy.sol";
 
 /// @title 000_Example
 /// @notice Example deployment script demonstrating an OETHBase implementation upgrade.
@@ -47,11 +47,7 @@ contract $000_Example is AbstractDeployScript("000_Example") {
         address newImpl = resolver.resolve("OETHB_IMPL");
 
         govProposal.setDescription("Upgrade OETHBase implementation");
-        govProposal.action(
-            oethbProxy,
-            "upgradeTo(address)",
-            abi.encode(newImpl)
-        );
+        govProposal.action(oethbProxy, "upgradeTo(address)", abi.encode(newImpl));
     }
 
     // ==================== Fork Verification ==================== //
@@ -65,23 +61,13 @@ contract $000_Example is AbstractDeployScript("000_Example") {
         address expectedImpl = resolver.resolve("OETHB_IMPL");
 
         // Verify implementation was updated
-        address currentImpl = InitializeGovernedUpgradeabilityProxy(payable(oethbProxy))
-            .implementation();
-        require(
-            currentImpl == expectedImpl,
-            "OETHBase proxy implementation not updated"
-        );
+        address currentImpl = InitializeGovernedUpgradeabilityProxy(payable(oethbProxy)).implementation();
+        require(currentImpl == expectedImpl, "OETHBase proxy implementation not updated");
 
         // Verify basic OETHBase state via the proxy
         OETHBase oethb = OETHBase(oethbProxy);
-        require(
-            keccak256(bytes(oethb.name())) == keccak256(bytes("OETH")),
-            "Unexpected OETHBase name"
-        );
-        require(
-            keccak256(bytes(oethb.symbol())) == keccak256(bytes("OETH")),
-            "Unexpected OETHBase symbol"
-        );
+        require(keccak256(bytes(oethb.name())) == keccak256(bytes("OETH")), "Unexpected OETHBase name");
+        require(keccak256(bytes(oethb.symbol())) == keccak256(bytes("OETH")), "Unexpected OETHBase symbol");
         require(oethb.totalSupply() > 0, "OETHBase totalSupply is zero");
     }
 }

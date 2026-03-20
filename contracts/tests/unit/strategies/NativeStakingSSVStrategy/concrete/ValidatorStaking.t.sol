@@ -1,13 +1,12 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import {Unit_NativeStakingSSVStrategy_Shared_Test} from
-    "tests/unit/strategies/NativeStakingSSVStrategy/shared/Shared.t.sol";
+import {
+    Unit_NativeStakingSSVStrategy_Shared_Test
+} from "tests/unit/strategies/NativeStakingSSVStrategy/shared/Shared.t.sol";
 import {ValidatorStakeData} from "contracts/strategies/NativeStaking/ValidatorRegistrator.sol";
 
-contract Unit_Concrete_NativeStakingSSVStrategy_ValidatorStaking_Test
-    is Unit_NativeStakingSSVStrategy_Shared_Test
-{
+contract Unit_Concrete_NativeStakingSSVStrategy_ValidatorStaking_Test is Unit_NativeStakingSSVStrategy_Shared_Test {
     function setUp() public override {
         super.setUp();
 
@@ -26,9 +25,7 @@ contract Unit_Concrete_NativeStakingSSVStrategy_ValidatorStaking_Test
 
         ValidatorStakeData[] memory stakeData = new ValidatorStakeData[](1);
         stakeData[0] = ValidatorStakeData({
-            pubkey: testPublicKeys[0],
-            signature: TEST_SIGNATURE,
-            depositDataRoot: TEST_DEPOSIT_DATA_ROOT
+            pubkey: testPublicKeys[0], signature: TEST_SIGNATURE, depositDataRoot: TEST_DEPOSIT_DATA_ROOT
         });
 
         vm.prank(governor);
@@ -37,9 +34,7 @@ contract Unit_Concrete_NativeStakingSSVStrategy_ValidatorStaking_Test
         nativeStakingSSVStrategy.stakeEth(stakeData);
 
         // State should be STAKED
-        assertEq(
-            uint256(nativeStakingSSVStrategy.validatorsStates(keccak256(testPublicKeys[0]))), 2
-        );
+        assertEq(uint256(nativeStakingSSVStrategy.validatorsStates(keccak256(testPublicKeys[0]))), 2);
     }
 
     function test_stakeEth_twoValidators() public {
@@ -49,24 +44,18 @@ contract Unit_Concrete_NativeStakingSSVStrategy_ValidatorStaking_Test
         // Stake both one at a time
         ValidatorStakeData[] memory stakeData = new ValidatorStakeData[](1);
         stakeData[0] = ValidatorStakeData({
-            pubkey: testPublicKeys[0],
-            signature: TEST_SIGNATURE,
-            depositDataRoot: TEST_DEPOSIT_DATA_ROOT
+            pubkey: testPublicKeys[0], signature: TEST_SIGNATURE, depositDataRoot: TEST_DEPOSIT_DATA_ROOT
         });
         vm.prank(governor);
         nativeStakingSSVStrategy.stakeEth(stakeData);
 
         stakeData[0] = ValidatorStakeData({
-            pubkey: testPublicKeys[1],
-            signature: TEST_SIGNATURE,
-            depositDataRoot: TEST_DEPOSIT_DATA_ROOT
+            pubkey: testPublicKeys[1], signature: TEST_SIGNATURE, depositDataRoot: TEST_DEPOSIT_DATA_ROOT
         });
         vm.prank(governor);
         nativeStakingSSVStrategy.stakeEth(stakeData);
 
-        assertEq(
-            uint256(nativeStakingSSVStrategy.validatorsStates(keccak256(testPublicKeys[1]))), 2
-        );
+        assertEq(uint256(nativeStakingSSVStrategy.validatorsStates(keccak256(testPublicKeys[1]))), 2);
     }
 
     function test_stakeEth_RevertWhen_thresholdExceeded() public {
@@ -78,9 +67,7 @@ contract Unit_Concrete_NativeStakingSSVStrategy_ValidatorStaking_Test
         for (uint256 i = 0; i < 2; i++) {
             ValidatorStakeData[] memory stakeData = new ValidatorStakeData[](1);
             stakeData[0] = ValidatorStakeData({
-                pubkey: testPublicKeys[i],
-                signature: TEST_SIGNATURE,
-                depositDataRoot: TEST_DEPOSIT_DATA_ROOT
+                pubkey: testPublicKeys[i], signature: TEST_SIGNATURE, depositDataRoot: TEST_DEPOSIT_DATA_ROOT
             });
             vm.prank(governor);
             nativeStakingSSVStrategy.stakeEth(stakeData);
@@ -89,9 +76,7 @@ contract Unit_Concrete_NativeStakingSSVStrategy_ValidatorStaking_Test
         // Third should fail (96 > 64 threshold)
         ValidatorStakeData[] memory stakeData3 = new ValidatorStakeData[](1);
         stakeData3[0] = ValidatorStakeData({
-            pubkey: testPublicKeys[2],
-            signature: TEST_SIGNATURE,
-            depositDataRoot: TEST_DEPOSIT_DATA_ROOT
+            pubkey: testPublicKeys[2], signature: TEST_SIGNATURE, depositDataRoot: TEST_DEPOSIT_DATA_ROOT
         });
 
         vm.prank(governor);
@@ -102,9 +87,7 @@ contract Unit_Concrete_NativeStakingSSVStrategy_ValidatorStaking_Test
     function test_stakeEth_RevertWhen_validatorNotRegistered() public {
         ValidatorStakeData[] memory stakeData = new ValidatorStakeData[](1);
         stakeData[0] = ValidatorStakeData({
-            pubkey: TEST_PUBLIC_KEY,
-            signature: TEST_SIGNATURE,
-            depositDataRoot: TEST_DEPOSIT_DATA_ROOT
+            pubkey: TEST_PUBLIC_KEY, signature: TEST_SIGNATURE, depositDataRoot: TEST_DEPOSIT_DATA_ROOT
         });
 
         vm.prank(governor);
@@ -124,9 +107,7 @@ contract Unit_Concrete_NativeStakingSSVStrategy_ValidatorStaking_Test
                 uint256 idx = batch * 2 + i;
                 ValidatorStakeData[] memory stakeData = new ValidatorStakeData[](1);
                 stakeData[0] = ValidatorStakeData({
-                    pubkey: testPublicKeys[idx],
-                    signature: TEST_SIGNATURE,
-                    depositDataRoot: TEST_DEPOSIT_DATA_ROOT
+                    pubkey: testPublicKeys[idx], signature: TEST_SIGNATURE, depositDataRoot: TEST_DEPOSIT_DATA_ROOT
                 });
                 vm.prank(governor);
                 nativeStakingSSVStrategy.stakeEth(stakeData);
@@ -140,9 +121,7 @@ contract Unit_Concrete_NativeStakingSSVStrategy_ValidatorStaking_Test
 
         // All 6 should be staked
         for (uint256 i = 0; i < 6; i++) {
-            assertEq(
-                uint256(nativeStakingSSVStrategy.validatorsStates(keccak256(testPublicKeys[i]))), 2
-            );
+            assertEq(uint256(nativeStakingSSVStrategy.validatorsStates(keccak256(testPublicKeys[i]))), 2);
         }
     }
 

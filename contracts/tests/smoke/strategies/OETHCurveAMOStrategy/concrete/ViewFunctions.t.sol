@@ -42,9 +42,7 @@ contract Smoke_Concrete_OETHCurveAMOStrategy_ViewFunctions_Test is Smoke_OETHCur
     }
 
     function test_immutables_curvePool() public view {
-        assertEq(
-            address(curveAMOStrategy.curvePool()), Mainnet.curve_OETH_WETH_pool, "curvePool mismatch"
-        );
+        assertEq(address(curveAMOStrategy.curvePool()), Mainnet.curve_OETH_WETH_pool, "curvePool mismatch");
     }
 
     function test_immutables_gauge() public view {

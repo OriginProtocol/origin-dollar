@@ -128,8 +128,7 @@ contract Unit_Fuzz_OUSD_Transfer_Test is Unit_OUSD_Shared_Test {
         _rebase(yieldUSDC);
 
         // Invariant: rebasingCreditsHighres * 1e18 / rebasingCreditsPerTokenHighres + nonRebasingSupply ≈ totalSupply
-        uint256 rebasingSupply =
-            (ousd.rebasingCreditsHighres() * 1e18) / ousd.rebasingCreditsPerTokenHighres();
+        uint256 rebasingSupply = (ousd.rebasingCreditsHighres() * 1e18) / ousd.rebasingCreditsPerTokenHighres();
         uint256 calculatedSupply = rebasingSupply + ousd.nonRebasingSupply();
 
         assertApproxEqAbs(calculatedSupply, ousd.totalSupply(), 1);

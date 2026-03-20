@@ -1,8 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import {Unit_CurveAMOStrategy_Shared_Test} from
-    "tests/unit/strategies/CurveAMOStrategy/shared/Shared.t.sol";
+import {Unit_CurveAMOStrategy_Shared_Test} from "tests/unit/strategies/CurveAMOStrategy/shared/Shared.t.sol";
 import {CurveAMOStrategy} from "contracts/strategies/CurveAMOStrategy.sol";
 import {InitializableAbstractStrategy} from "contracts/utils/InitializableAbstractStrategy.sol";
 import {MockCurvePool} from "tests/mocks/MockCurvePool.sol";
@@ -38,8 +37,7 @@ contract Unit_Concrete_CurveAMOStrategy_Constructor_Test is Unit_CurveAMOStrateg
         vm.expectRevert("Invalid coin indexes");
         new CurveAMOStrategy(
             InitializableAbstractStrategy.BaseStrategyConfig({
-                platformAddress: address(mismatchPool),
-                vaultAddress: address(oethVault)
+                platformAddress: address(mismatchPool), vaultAddress: address(oethVault)
             }),
             address(oeth),
             address(mockWeth),
@@ -55,8 +53,7 @@ contract Unit_Concrete_CurveAMOStrategy_Constructor_Test is Unit_CurveAMOStrateg
         vm.expectRevert("Invalid pool");
         new CurveAMOStrategy(
             InitializableAbstractStrategy.BaseStrategyConfig({
-                platformAddress: address(curvePool),
-                vaultAddress: address(oethVault)
+                platformAddress: address(curvePool), vaultAddress: address(oethVault)
             }),
             address(oeth),
             address(mockWeth),

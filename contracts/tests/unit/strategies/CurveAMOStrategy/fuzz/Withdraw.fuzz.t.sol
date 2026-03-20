@@ -1,8 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import {Unit_CurveAMOStrategy_Shared_Test} from
-    "tests/unit/strategies/CurveAMOStrategy/shared/Shared.t.sol";
+import {Unit_CurveAMOStrategy_Shared_Test} from "tests/unit/strategies/CurveAMOStrategy/shared/Shared.t.sol";
 
 contract Unit_Fuzz_CurveAMOStrategy_Withdraw_Test is Unit_CurveAMOStrategy_Shared_Test {
     /// @notice Deposit then partial withdraw: recipient gets exact requested amount

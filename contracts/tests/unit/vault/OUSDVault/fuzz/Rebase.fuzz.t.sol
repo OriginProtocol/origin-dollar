@@ -106,11 +106,7 @@ contract Unit_Fuzz_OUSDVault_Rebase_Test is Unit_Shared_Test {
     }
 
     /// @notice yield distribution is proportional to user balances
-    function testFuzz_rebase_proportionalDistribution(
-        uint256 yield_,
-        uint256 aliceMint,
-        uint256 bobbyMint
-    ) public {
+    function testFuzz_rebase_proportionalDistribution(uint256 yield_, uint256 aliceMint, uint256 bobbyMint) public {
         yield_ = bound(yield_, 1e4, 3e5);
         aliceMint = bound(aliceMint, 1e6, 1e9);
         bobbyMint = bound(bobbyMint, 1e6, 1e9);

@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import { AbstractDeployScript } from "scripts/deploy/helpers/AbstractDeployScript.s.sol";
-import { OSVault } from "contracts/vault/OSVault.sol";
-import { IVault } from "contracts/interfaces/IVault.sol";
-import { InitializeGovernedUpgradeabilityProxy } from "contracts/proxies/InitializeGovernedUpgradeabilityProxy.sol";
-import { Sonic } from "tests/utils/Addresses.sol";
+import {AbstractDeployScript} from "scripts/deploy/helpers/AbstractDeployScript.s.sol";
+import {OSVault} from "contracts/vault/OSVault.sol";
+import {IVault} from "contracts/interfaces/IVault.sol";
+import {InitializeGovernedUpgradeabilityProxy} from "contracts/proxies/InitializeGovernedUpgradeabilityProxy.sol";
+import {Sonic} from "tests/utils/Addresses.sol";
 
 /// @title 026_VaultUpgrade
 /// @notice Upgrades the OSonic Vault to a new implementation and sets a default strategy.

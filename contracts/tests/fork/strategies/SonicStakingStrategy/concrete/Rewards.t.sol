@@ -3,8 +3,7 @@ pragma solidity ^0.8.0;
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
-import {Fork_SonicStakingStrategy_Shared_Test} from
-    "tests/fork/strategies/SonicStakingStrategy/shared/Shared.t.sol";
+import {Fork_SonicStakingStrategy_Shared_Test} from "tests/fork/strategies/SonicStakingStrategy/shared/Shared.t.sol";
 
 contract Fork_Concrete_SonicStakingStrategy_Rewards_Test is Fork_SonicStakingStrategy_Shared_Test {
     function test_earnRewards() public {
@@ -30,11 +29,7 @@ contract Fork_Concrete_SonicStakingStrategy_Rewards_Test is Fork_SonicStakingStr
 
         sonicStakingStrategy.restakeRewards(testValidatorIds);
 
-        assertGt(
-            sfc.getStake(address(sonicStakingStrategy), defaultValidatorId),
-            stakeBefore,
-            "No rewards restaked"
-        );
+        assertGt(sfc.getStake(address(sonicStakingStrategy), defaultValidatorId), stakeBefore, "No rewards restaked");
         assertEq(
             sonicStakingStrategy.checkBalance(address(wrappedSonic)),
             stratBalanceBefore,

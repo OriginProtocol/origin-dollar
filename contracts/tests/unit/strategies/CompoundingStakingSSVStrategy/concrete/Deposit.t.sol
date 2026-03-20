@@ -1,12 +1,11 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import {Unit_CompoundingStakingSSVStrategy_Shared_Test} from
-    "tests/unit/strategies/CompoundingStakingSSVStrategy/shared/Shared.t.sol";
+import {
+    Unit_CompoundingStakingSSVStrategy_Shared_Test
+} from "tests/unit/strategies/CompoundingStakingSSVStrategy/shared/Shared.t.sol";
 
-contract Unit_Concrete_CompoundingStakingSSVStrategy_Deposit_Test
-    is Unit_CompoundingStakingSSVStrategy_Shared_Test
-{
+contract Unit_Concrete_CompoundingStakingSSVStrategy_Deposit_Test is Unit_CompoundingStakingSSVStrategy_Shared_Test {
     function test_deposit() public {
         uint256 amount = 10 ether;
         vm.prank(josh);

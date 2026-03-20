@@ -57,7 +57,7 @@ contract Fork_AerodromeAMOStrategy_Rebalance_Test is Fork_AerodromeAMOStrategy_S
     function test_rebalance_RevertWhen_poolRebalanceOutOfBounds() public {
         // Set very narrow allowed interval that won't match current pool state
         vm.prank(governor);
-        aerodromeAMOStrategy.setAllowedPoolWethShareInterval(0.90 ether, 0.94 ether);
+        aerodromeAMOStrategy.setAllowedPoolWethShareInterval(0.9 ether, 0.94 ether);
 
         _depositAsVault(5 ether);
 

@@ -1,8 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import {Fork_MetropolisPoolBooster_Shared_Test} from
-    "tests/fork/poolBooster/MetropolisPoolBooster/shared/Shared.t.sol";
+import {Fork_MetropolisPoolBooster_Shared_Test} from "tests/fork/poolBooster/MetropolisPoolBooster/shared/Shared.t.sol";
 import {PoolBoosterMetropolis} from "contracts/poolBooster/PoolBoosterMetropolis.sol";
 import {Sonic} from "tests/utils/Addresses.sol";
 

@@ -1,16 +1,12 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import {Unit_SonicSwapXAMOStrategy_Shared_Test} from
-    "tests/unit/strategies/SonicSwapXAMOStrategy/shared/Shared.t.sol";
+import {Unit_SonicSwapXAMOStrategy_Shared_Test} from "tests/unit/strategies/SonicSwapXAMOStrategy/shared/Shared.t.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 contract Unit_Fuzz_SonicSwapXAMOStrategy_Withdraw_Test is Unit_SonicSwapXAMOStrategy_Shared_Test {
     /// @notice Deposit then partial withdraw: vault receives exact requested wS amount
-    function testFuzz_withdraw_vaultReceivesExactAmount(
-        uint128 depositAmount,
-        uint128 withdrawPct
-    ) public {
+    function testFuzz_withdraw_vaultReceivesExactAmount(uint128 depositAmount, uint128 withdrawPct) public {
         vm.assume(depositAmount >= 1 ether && depositAmount <= 100_000 ether);
         // withdrawPct from 1 to 50 (percent)
         withdrawPct = uint128(bound(withdrawPct, 1, 50));
@@ -26,9 +22,6 @@ contract Unit_Fuzz_SonicSwapXAMOStrategy_Withdraw_Test is Unit_SonicSwapXAMOStra
         vm.prank(address(oSonicVault));
         sonicSwapXAMOStrategy.withdraw(address(oSonicVault), address(mockWrappedSonic), withdrawAmount);
 
-        assertEq(
-            IERC20(address(mockWrappedSonic)).balanceOf(address(oSonicVault)) - vaultBalBefore,
-            withdrawAmount
-        );
+        assertEq(IERC20(address(mockWrappedSonic)).balanceOf(address(oSonicVault)) - vaultBalBefore, withdrawAmount);
     }
 }

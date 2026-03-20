@@ -2,8 +2,7 @@
 pragma solidity ^0.8.0;
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {Unit_BaseCurveAMOStrategy_Shared_Test} from
-    "tests/unit/strategies/BaseCurveAMOStrategy/shared/Shared.t.sol";
+import {Unit_BaseCurveAMOStrategy_Shared_Test} from "tests/unit/strategies/BaseCurveAMOStrategy/shared/Shared.t.sol";
 import {InitializableAbstractStrategy} from "contracts/utils/InitializableAbstractStrategy.sol";
 import {BaseCurveAMOStrategy} from "contracts/strategies/BaseCurveAMOStrategy.sol";
 
@@ -26,9 +25,8 @@ contract Unit_Concrete_BaseCurveAMOStrategy_BranchCoverage_Test is Unit_BaseCurv
 
     function test_branch_onlyStrategist_fail() public {
         vm.prank(alice);
-        (bool success,) = address(baseCurveAMOStrategy).call(
-            abi.encodeWithSelector(baseCurveAMOStrategy.mintAndAddOTokens.selector, 10 ether)
-        );
+        (bool success,) = address(baseCurveAMOStrategy)
+            .call(abi.encodeWithSelector(baseCurveAMOStrategy.mintAndAddOTokens.selector, 10 ether));
         assertFalse(success);
     }
 
@@ -47,9 +45,8 @@ contract Unit_Concrete_BaseCurveAMOStrategy_BranchCoverage_Test is Unit_BaseCurv
 
         // mintAndAddOTokens on balanced pool → diffAfter != 0 → revert
         vm.prank(strategist);
-        (bool success,) = address(baseCurveAMOStrategy).call(
-            abi.encodeWithSelector(baseCurveAMOStrategy.mintAndAddOTokens.selector, 10 ether)
-        );
+        (bool success,) = address(baseCurveAMOStrategy)
+            .call(abi.encodeWithSelector(baseCurveAMOStrategy.mintAndAddOTokens.selector, 10 ether));
         assertFalse(success);
     }
 
@@ -80,9 +77,8 @@ contract Unit_Concrete_BaseCurveAMOStrategy_BranchCoverage_Test is Unit_BaseCurv
 
         // Removing lots of OTokens overshoots → diffAfter > 0 → "OTokens overshot peg"
         vm.prank(strategist);
-        (bool success,) = address(baseCurveAMOStrategy).call(
-            abi.encodeWithSelector(baseCurveAMOStrategy.removeAndBurnOTokens.selector, lpToRemove)
-        );
+        (bool success,) = address(baseCurveAMOStrategy)
+            .call(abi.encodeWithSelector(baseCurveAMOStrategy.removeAndBurnOTokens.selector, lpToRemove));
         assertFalse(success);
     }
 
@@ -97,9 +93,8 @@ contract Unit_Concrete_BaseCurveAMOStrategy_BranchCoverage_Test is Unit_BaseCurv
 
         // removeOnlyAssets on OToken-tilted pool worsens the OToken balance
         vm.prank(strategist);
-        (bool success,) = address(baseCurveAMOStrategy).call(
-            abi.encodeWithSelector(baseCurveAMOStrategy.removeOnlyAssets.selector, lpToRemove)
-        );
+        (bool success,) = address(baseCurveAMOStrategy)
+            .call(abi.encodeWithSelector(baseCurveAMOStrategy.removeOnlyAssets.selector, lpToRemove));
         assertFalse(success);
     }
 
@@ -130,9 +125,8 @@ contract Unit_Concrete_BaseCurveAMOStrategy_BranchCoverage_Test is Unit_BaseCurv
 
         // Removing lots of WETH overshoots → diffAfter < 0 → "Assets overshot peg"
         vm.prank(strategist);
-        (bool success,) = address(baseCurveAMOStrategy).call(
-            abi.encodeWithSelector(baseCurveAMOStrategy.removeOnlyAssets.selector, lpToRemove)
-        );
+        (bool success,) = address(baseCurveAMOStrategy)
+            .call(abi.encodeWithSelector(baseCurveAMOStrategy.removeOnlyAssets.selector, lpToRemove));
         assertFalse(success);
     }
 
@@ -147,9 +141,8 @@ contract Unit_Concrete_BaseCurveAMOStrategy_BranchCoverage_Test is Unit_BaseCurv
 
         // removeAndBurnOTokens on WETH-tilted pool worsens balance
         vm.prank(strategist);
-        (bool success,) = address(baseCurveAMOStrategy).call(
-            abi.encodeWithSelector(baseCurveAMOStrategy.removeAndBurnOTokens.selector, lpToRemove)
-        );
+        (bool success,) = address(baseCurveAMOStrategy)
+            .call(abi.encodeWithSelector(baseCurveAMOStrategy.removeAndBurnOTokens.selector, lpToRemove));
         assertFalse(success);
     }
 
@@ -160,17 +153,15 @@ contract Unit_Concrete_BaseCurveAMOStrategy_BranchCoverage_Test is Unit_BaseCurv
 
     function test_branch_deposit_amountZero() public {
         vm.prank(address(oethVault));
-        (bool success,) = address(baseCurveAMOStrategy).call(
-            abi.encodeWithSelector(baseCurveAMOStrategy.deposit.selector, address(weth), 0)
-        );
+        (bool success,) = address(baseCurveAMOStrategy)
+            .call(abi.encodeWithSelector(baseCurveAMOStrategy.deposit.selector, address(weth), 0));
         assertFalse(success);
     }
 
     function test_branch_deposit_wrongAsset() public {
         vm.prank(address(oethVault));
-        (bool success,) = address(baseCurveAMOStrategy).call(
-            abi.encodeWithSelector(baseCurveAMOStrategy.deposit.selector, address(oeth), 1 ether)
-        );
+        (bool success,) = address(baseCurveAMOStrategy)
+            .call(abi.encodeWithSelector(baseCurveAMOStrategy.deposit.selector, address(oeth), 1 ether));
         assertFalse(success);
     }
 
@@ -180,9 +171,8 @@ contract Unit_Concrete_BaseCurveAMOStrategy_BranchCoverage_Test is Unit_BaseCurv
         deal(address(weth), address(baseCurveAMOStrategy), 10 ether);
 
         vm.prank(address(oethVault));
-        (bool success,) = address(baseCurveAMOStrategy).call(
-            abi.encodeWithSelector(baseCurveAMOStrategy.deposit.selector, address(weth), 10 ether)
-        );
+        (bool success,) = address(baseCurveAMOStrategy)
+            .call(abi.encodeWithSelector(baseCurveAMOStrategy.deposit.selector, address(weth), 10 ether));
         assertFalse(success);
     }
 
@@ -217,21 +207,19 @@ contract Unit_Concrete_BaseCurveAMOStrategy_BranchCoverage_Test is Unit_BaseCurv
 
     function test_branch_withdraw_amountZero() public {
         vm.prank(address(oethVault));
-        (bool success,) = address(baseCurveAMOStrategy).call(
-            abi.encodeWithSelector(
-                baseCurveAMOStrategy.withdraw.selector, address(oethVault), address(weth), 0
-            )
-        );
+        (bool success,) = address(baseCurveAMOStrategy)
+            .call(abi.encodeWithSelector(baseCurveAMOStrategy.withdraw.selector, address(oethVault), address(weth), 0));
         assertFalse(success);
     }
 
     function test_branch_withdraw_wrongAsset() public {
         vm.prank(address(oethVault));
-        (bool success,) = address(baseCurveAMOStrategy).call(
-            abi.encodeWithSelector(
-                baseCurveAMOStrategy.withdraw.selector, address(oethVault), address(oeth), 1 ether
-            )
-        );
+        (bool success,) = address(baseCurveAMOStrategy)
+            .call(
+                abi.encodeWithSelector(
+                    baseCurveAMOStrategy.withdraw.selector, address(oethVault), address(oeth), 1 ether
+                )
+            );
         assertFalse(success);
     }
 
@@ -249,17 +237,16 @@ contract Unit_Concrete_BaseCurveAMOStrategy_BranchCoverage_Test is Unit_BaseCurv
 
         // Mock weth.transfer to vault to return false
         vm.mockCall(
-            address(weth),
-            abi.encodeWithSelector(IERC20.transfer.selector, address(oethVault)),
-            abi.encode(false)
+            address(weth), abi.encodeWithSelector(IERC20.transfer.selector, address(oethVault)), abi.encode(false)
         );
 
         vm.prank(address(oethVault));
-        (bool success,) = address(baseCurveAMOStrategy).call(
-            abi.encodeWithSelector(
-                baseCurveAMOStrategy.withdraw.selector, address(oethVault), address(weth), 5 ether
-            )
-        );
+        (bool success,) = address(baseCurveAMOStrategy)
+            .call(
+                abi.encodeWithSelector(
+                    baseCurveAMOStrategy.withdraw.selector, address(oethVault), address(weth), 5 ether
+                )
+            );
         assertFalse(success);
 
         vm.clearMockedCalls();
@@ -291,15 +278,12 @@ contract Unit_Concrete_BaseCurveAMOStrategy_BranchCoverage_Test is Unit_BaseCurv
 
         // Mock weth.transfer to vault to return false
         vm.mockCall(
-            address(weth),
-            abi.encodeWithSelector(IERC20.transfer.selector, address(oethVault)),
-            abi.encode(false)
+            address(weth), abi.encodeWithSelector(IERC20.transfer.selector, address(oethVault)), abi.encode(false)
         );
 
         vm.prank(address(oethVault));
-        (bool success,) = address(baseCurveAMOStrategy).call(
-            abi.encodeWithSelector(baseCurveAMOStrategy.withdrawAll.selector)
-        );
+        (bool success,) =
+            address(baseCurveAMOStrategy).call(abi.encodeWithSelector(baseCurveAMOStrategy.withdrawAll.selector));
         assertFalse(success);
 
         vm.clearMockedCalls();
@@ -317,9 +301,8 @@ contract Unit_Concrete_BaseCurveAMOStrategy_BranchCoverage_Test is Unit_BaseCurv
         curvePool.setSlippageBps(500);
 
         vm.prank(strategist);
-        (bool success,) = address(baseCurveAMOStrategy).call(
-            abi.encodeWithSelector(baseCurveAMOStrategy.mintAndAddOTokens.selector, 10 ether)
-        );
+        (bool success,) = address(baseCurveAMOStrategy)
+            .call(abi.encodeWithSelector(baseCurveAMOStrategy.mintAndAddOTokens.selector, 10 ether));
         assertFalse(success);
     }
 
@@ -345,15 +328,12 @@ contract Unit_Concrete_BaseCurveAMOStrategy_BranchCoverage_Test is Unit_BaseCurv
 
         // Mock weth.transfer to vault to return false
         vm.mockCall(
-            address(weth),
-            abi.encodeWithSelector(IERC20.transfer.selector, address(oethVault)),
-            abi.encode(false)
+            address(weth), abi.encodeWithSelector(IERC20.transfer.selector, address(oethVault)), abi.encode(false)
         );
 
         vm.prank(strategist);
-        (bool success,) = address(baseCurveAMOStrategy).call(
-            abi.encodeWithSelector(baseCurveAMOStrategy.removeOnlyAssets.selector, lpToRemove)
-        );
+        (bool success,) = address(baseCurveAMOStrategy)
+            .call(abi.encodeWithSelector(baseCurveAMOStrategy.removeOnlyAssets.selector, lpToRemove));
         assertFalse(success);
 
         vm.clearMockedCalls();
@@ -377,9 +357,8 @@ contract Unit_Concrete_BaseCurveAMOStrategy_BranchCoverage_Test is Unit_BaseCurv
         deal(address(weth), address(baseCurveAMOStrategy), 1 ether);
 
         vm.prank(address(oethVault));
-        (bool success,) = address(baseCurveAMOStrategy).call(
-            abi.encodeWithSelector(baseCurveAMOStrategy.deposit.selector, address(weth), 1 ether)
-        );
+        (bool success,) = address(baseCurveAMOStrategy)
+            .call(abi.encodeWithSelector(baseCurveAMOStrategy.deposit.selector, address(weth), 1 ether));
         assertFalse(success);
     }
 
@@ -389,9 +368,8 @@ contract Unit_Concrete_BaseCurveAMOStrategy_BranchCoverage_Test is Unit_BaseCurv
     // -------------------------------------------------------
 
     function test_branch_checkBalance_wrongAsset() public {
-        (bool success,) = address(baseCurveAMOStrategy).call(
-            abi.encodeWithSelector(baseCurveAMOStrategy.checkBalance.selector, address(oeth))
-        );
+        (bool success,) = address(baseCurveAMOStrategy)
+            .call(abi.encodeWithSelector(baseCurveAMOStrategy.checkBalance.selector, address(oeth)));
         assertFalse(success);
     }
 
@@ -424,9 +402,8 @@ contract Unit_Concrete_BaseCurveAMOStrategy_BranchCoverage_Test is Unit_BaseCurv
 
     function test_branch_setMaxSlippage_tooHigh() public {
         vm.prank(governor);
-        (bool success,) = address(baseCurveAMOStrategy).call(
-            abi.encodeWithSelector(baseCurveAMOStrategy.setMaxSlippage.selector, 5e16 + 1)
-        );
+        (bool success,) = address(baseCurveAMOStrategy)
+            .call(abi.encodeWithSelector(baseCurveAMOStrategy.setMaxSlippage.selector, 5e16 + 1));
         assertFalse(success);
     }
 
@@ -441,9 +418,8 @@ contract Unit_Concrete_BaseCurveAMOStrategy_BranchCoverage_Test is Unit_BaseCurv
 
     function test_branch_collectRewardTokens_notHarvester() public {
         vm.prank(alice);
-        (bool success,) = address(baseCurveAMOStrategy).call(
-            abi.encodeWithSelector(baseCurveAMOStrategy.collectRewardTokens.selector)
-        );
+        (bool success,) = address(baseCurveAMOStrategy)
+            .call(abi.encodeWithSelector(baseCurveAMOStrategy.collectRewardTokens.selector));
         assertFalse(success);
     }
 
@@ -453,9 +429,8 @@ contract Unit_Concrete_BaseCurveAMOStrategy_BranchCoverage_Test is Unit_BaseCurv
 
     function test_branch_onlyVault_fail() public {
         vm.prank(alice);
-        (bool success,) = address(baseCurveAMOStrategy).call(
-            abi.encodeWithSelector(baseCurveAMOStrategy.deposit.selector, address(weth), 1 ether)
-        );
+        (bool success,) = address(baseCurveAMOStrategy)
+            .call(abi.encodeWithSelector(baseCurveAMOStrategy.deposit.selector, address(weth), 1 ether));
         assertFalse(success);
     }
 
@@ -475,9 +450,8 @@ contract Unit_Concrete_BaseCurveAMOStrategy_BranchCoverage_Test is Unit_BaseCurv
 
     function test_branch_onlyVaultOrGovernor_fail() public {
         vm.prank(alice);
-        (bool success,) = address(baseCurveAMOStrategy).call(
-            abi.encodeWithSelector(baseCurveAMOStrategy.withdrawAll.selector)
-        );
+        (bool success,) =
+            address(baseCurveAMOStrategy).call(abi.encodeWithSelector(baseCurveAMOStrategy.withdrawAll.selector));
         assertFalse(success);
     }
 
@@ -487,9 +461,8 @@ contract Unit_Concrete_BaseCurveAMOStrategy_BranchCoverage_Test is Unit_BaseCurv
 
     function test_branch_onlyGovernor_fail() public {
         vm.prank(alice);
-        (bool success,) = address(baseCurveAMOStrategy).call(
-            abi.encodeWithSelector(baseCurveAMOStrategy.safeApproveAllTokens.selector)
-        );
+        (bool success,) = address(baseCurveAMOStrategy)
+            .call(abi.encodeWithSelector(baseCurveAMOStrategy.safeApproveAllTokens.selector));
         assertFalse(success);
     }
 }

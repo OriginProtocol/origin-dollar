@@ -38,9 +38,7 @@ contract Fork_AerodromeAMOStrategy_Deposit_Test is Fork_AerodromeAMOStrategy_Sha
         aerodromeAMOStrategy.rebalance(0, true, 0);
 
         assertLe(
-            IERC20(BaseAddresses.WETH).balanceOf(address(aerodromeAMOStrategy)),
-            0.00001 ether,
-            "Too much WETH residual"
+            IERC20(BaseAddresses.WETH).balanceOf(address(aerodromeAMOStrategy)), 0.00001 ether, "Too much WETH residual"
         );
         assertEq(oethBase.balanceOf(address(aerodromeAMOStrategy)), 0, "OETHb residual should be 0");
     }

@@ -6,10 +6,7 @@ import {Base as BaseAddresses, CrossChain} from "tests/utils/Addresses.sol";
 
 contract Smoke_CrossChainRemoteStrategy_ViewFunctions_Test is Smoke_CrossChainRemoteStrategy_Shared_Test {
     function test_platformAddress() public view {
-        assertTrue(
-            crossChainRemoteStrategy.platformAddress() != address(0),
-            "platformAddress should not be address(0)"
-        );
+        assertTrue(crossChainRemoteStrategy.platformAddress() != address(0), "platformAddress should not be address(0)");
     }
 
     function test_supportsAsset() public view {
@@ -19,9 +16,7 @@ contract Smoke_CrossChainRemoteStrategy_ViewFunctions_Test is Smoke_CrossChainRe
 
     function test_usdcToken() public view {
         assertEq(
-            address(crossChainRemoteStrategy.usdcToken()),
-            BaseAddresses.USDC,
-            "usdcToken should be BaseAddresses.USDC"
+            address(crossChainRemoteStrategy.usdcToken()), BaseAddresses.USDC, "usdcToken should be BaseAddresses.USDC"
         );
     }
 
@@ -60,9 +55,7 @@ contract Smoke_CrossChainRemoteStrategy_ViewFunctions_Test is Smoke_CrossChainRe
 
     function test_vaultAddress() public view {
         assertEq(
-            crossChainRemoteStrategy.vaultAddress(),
-            address(0),
-            "vaultAddress should be address(0) for remote strategy"
+            crossChainRemoteStrategy.vaultAddress(), address(0), "vaultAddress should be address(0) for remote strategy"
         );
     }
 }

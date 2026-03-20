@@ -36,9 +36,7 @@ contract Smoke_Concrete_SonicStakingStrategy_Withdraw_Test is Smoke_SonicStaking
 
         uint256 vaultBalanceAfter = IERC20(address(wrappedSonic)).balanceOf(address(oSonicVault));
         assertEq(
-            vaultBalanceAfter - vaultBalanceBefore,
-            amount + 500 ether,
-            "Vault should receive all wS + wrapped native S"
+            vaultBalanceAfter - vaultBalanceBefore, amount + 500 ether, "Vault should receive all wS + wrapped native S"
         );
     }
 }

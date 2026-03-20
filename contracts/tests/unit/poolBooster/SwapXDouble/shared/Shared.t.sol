@@ -63,20 +63,12 @@ abstract contract Unit_SwapXDouble_Shared_Test is Base {
     }
 
     function _deployFactory() internal {
-        factorySwapxDouble = new PoolBoosterFactorySwapxDouble(
-            address(oSonic),
-            governor,
-            address(centralRegistry)
-        );
+        factorySwapxDouble = new PoolBoosterFactorySwapxDouble(address(oSonic), governor, address(centralRegistry));
     }
 
     function _deployStandaloneBooster() internal {
-        boosterSwapxDouble = new PoolBoosterSwapxDouble(
-            mockBribeContractOS,
-            mockBribeContractOther,
-            address(oSonic),
-            DEFAULT_SPLIT
-        );
+        boosterSwapxDouble =
+            new PoolBoosterSwapxDouble(mockBribeContractOS, mockBribeContractOther, address(oSonic), DEFAULT_SPLIT);
     }
 
     function _approveFactoryOnRegistry() internal {
@@ -104,10 +96,6 @@ abstract contract Unit_SwapXDouble_Shared_Test is Base {
     }
 
     function _mockBribeNotifyRewardAmount(address _bribeContract) internal {
-        vm.mockCall(
-            _bribeContract,
-            abi.encodeWithSelector(IBribe.notifyRewardAmount.selector),
-            abi.encode()
-        );
+        vm.mockCall(_bribeContract, abi.encodeWithSelector(IBribe.notifyRewardAmount.selector), abi.encode());
     }
 }

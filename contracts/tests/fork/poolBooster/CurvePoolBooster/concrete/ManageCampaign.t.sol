@@ -1,8 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import {Fork_CurvePoolBooster_Shared_Test} from
-    "tests/fork/poolBooster/CurvePoolBooster/shared/Shared.t.sol";
+import {Fork_CurvePoolBooster_Shared_Test} from "tests/fork/poolBooster/CurvePoolBooster/shared/Shared.t.sol";
 
 import {CrossChain} from "tests/utils/Addresses.sol";
 

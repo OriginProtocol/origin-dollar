@@ -59,11 +59,7 @@ contract Unit_Concrete_OETHZapper_Deposit_Test is Unit_OETHZapper_Shared_Test {
         _dealETH(alice, 1 ether);
 
         // Mock vault.mint to be a no-op (doesn't actually mint oTokens)
-        vm.mockCall(
-            address(oethVault),
-            abi.encodeWithSignature("mint(uint256)"),
-            abi.encode()
-        );
+        vm.mockCall(address(oethVault), abi.encodeWithSignature("mint(uint256)"), abi.encode());
 
         vm.prank(alice);
         vm.expectRevert("Zapper: not enough minted");
@@ -74,11 +70,7 @@ contract Unit_Concrete_OETHZapper_Deposit_Test is Unit_OETHZapper_Shared_Test {
         _dealETH(alice, 1 ether);
 
         // Mock oToken.transfer to return false
-        vm.mockCall(
-            address(oeth),
-            abi.encodeWithSelector(oeth.transfer.selector),
-            abi.encode(false)
-        );
+        vm.mockCall(address(oeth), abi.encodeWithSelector(oeth.transfer.selector), abi.encode(false));
 
         vm.prank(alice);
         vm.expectRevert();

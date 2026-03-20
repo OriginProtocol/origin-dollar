@@ -55,11 +55,7 @@ contract Unit_Concrete_OSonicZapper_Deposit_Test is Unit_OSonicZapper_Shared_Tes
         _dealS(alice, 1 ether);
 
         // Mock vault.mint to be a no-op (doesn't actually mint oTokens)
-        vm.mockCall(
-            address(oethVault),
-            abi.encodeWithSignature("mint(uint256)"),
-            abi.encode()
-        );
+        vm.mockCall(address(oethVault), abi.encodeWithSignature("mint(uint256)"), abi.encode());
 
         vm.prank(alice);
         vm.expectRevert("Zapper: not enough minted");
@@ -70,11 +66,7 @@ contract Unit_Concrete_OSonicZapper_Deposit_Test is Unit_OSonicZapper_Shared_Tes
         _dealS(alice, 1 ether);
 
         // Mock OS.transfer to return false
-        vm.mockCall(
-            address(oSonic),
-            abi.encodeWithSelector(oSonic.transfer.selector),
-            abi.encode(false)
-        );
+        vm.mockCall(address(oSonic), abi.encodeWithSelector(oSonic.transfer.selector), abi.encode(false));
 
         vm.prank(alice);
         vm.expectRevert();

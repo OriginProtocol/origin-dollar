@@ -2,13 +2,13 @@
 pragma solidity ^0.8.0;
 
 // Deployment framework
-import { AbstractDeployScript } from "scripts/deploy/helpers/AbstractDeployScript.s.sol";
-import { GovHelper } from "scripts/deploy/helpers/GovHelper.sol";
-import { GovProposal } from "scripts/deploy/helpers/DeploymentTypes.sol";
+import {AbstractDeployScript} from "scripts/deploy/helpers/AbstractDeployScript.s.sol";
+import {GovHelper} from "scripts/deploy/helpers/GovHelper.sol";
+import {GovProposal} from "scripts/deploy/helpers/DeploymentTypes.sol";
 
 // Contracts
-import { OUSD } from "contracts/token/OUSD.sol";
-import { InitializeGovernedUpgradeabilityProxy } from "contracts/proxies/InitializeGovernedUpgradeabilityProxy.sol";
+import {OUSD} from "contracts/token/OUSD.sol";
+import {InitializeGovernedUpgradeabilityProxy} from "contracts/proxies/InitializeGovernedUpgradeabilityProxy.sol";
 
 /// @title 000_Example
 /// @notice Example deployment script demonstrating an OUSD implementation upgrade.
@@ -47,11 +47,7 @@ contract $000_Example is AbstractDeployScript("000_Example") {
         address newImpl = resolver.resolve("OUSD_IMPL");
 
         govProposal.setDescription("Upgrade OUSD implementation");
-        govProposal.action(
-            ousdProxy,
-            "upgradeTo(address)",
-            abi.encode(newImpl)
-        );
+        govProposal.action(ousdProxy, "upgradeTo(address)", abi.encode(newImpl));
     }
 
     // ==================== Fork Verification ==================== //
@@ -65,23 +61,13 @@ contract $000_Example is AbstractDeployScript("000_Example") {
         address expectedImpl = resolver.resolve("OUSD_IMPL");
 
         // Verify implementation was updated
-        address currentImpl = InitializeGovernedUpgradeabilityProxy(payable(ousdProxy))
-            .implementation();
-        require(
-            currentImpl == expectedImpl,
-            "OUSD proxy implementation not updated"
-        );
+        address currentImpl = InitializeGovernedUpgradeabilityProxy(payable(ousdProxy)).implementation();
+        require(currentImpl == expectedImpl, "OUSD proxy implementation not updated");
 
         // Verify basic OUSD state via the proxy
         OUSD ousd = OUSD(ousdProxy);
-        require(
-            keccak256(bytes(ousd.name())) == keccak256(bytes("Origin Dollar")),
-            "Unexpected OUSD name"
-        );
-        require(
-            keccak256(bytes(ousd.symbol())) == keccak256(bytes("OUSD")),
-            "Unexpected OUSD symbol"
-        );
+        require(keccak256(bytes(ousd.name())) == keccak256(bytes("Origin Dollar")), "Unexpected OUSD name");
+        require(keccak256(bytes(ousd.symbol())) == keccak256(bytes("OUSD")), "Unexpected OUSD symbol");
         require(ousd.totalSupply() > 0, "OUSD totalSupply is zero");
     }
 }

@@ -16,9 +16,7 @@ contract Unit_Concrete_PoolBoosterFactoryMetropolis_Constructor_Test is Unit_Met
 
     function test_constructor_RevertWhen_zeroOToken() public {
         vm.expectRevert("Invalid oToken address");
-        new PoolBoosterFactoryMetropolis(
-            address(0), governor, address(centralRegistry), mockRewardFactory, mockVoter
-        );
+        new PoolBoosterFactoryMetropolis(address(0), governor, address(centralRegistry), mockRewardFactory, mockVoter);
     }
 
     function test_constructor_RevertWhen_zeroGovernor() public {
@@ -30,8 +28,6 @@ contract Unit_Concrete_PoolBoosterFactoryMetropolis_Constructor_Test is Unit_Met
 
     function test_constructor_RevertWhen_zeroCentralRegistry() public {
         vm.expectRevert("Invalid central registry address");
-        new PoolBoosterFactoryMetropolis(
-            address(oSonic), governor, address(0), mockRewardFactory, mockVoter
-        );
+        new PoolBoosterFactoryMetropolis(address(oSonic), governor, address(0), mockRewardFactory, mockVoter);
     }
 }

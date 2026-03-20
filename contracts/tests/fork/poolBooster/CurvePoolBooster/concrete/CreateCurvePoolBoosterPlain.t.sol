@@ -1,8 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import {Fork_CurvePoolBooster_Shared_Test} from
-    "tests/fork/poolBooster/CurvePoolBooster/shared/Shared.t.sol";
+import {Fork_CurvePoolBooster_Shared_Test} from "tests/fork/poolBooster/CurvePoolBooster/shared/Shared.t.sol";
 
 import {Mainnet} from "tests/utils/Addresses.sol";
 import {CrossChain} from "tests/utils/Addresses.sol";
@@ -30,9 +29,7 @@ contract Fork_Concrete_CurvePoolBooster_CreateCurvePoolBoosterPlain_Test is Fork
         bytes32 encodedSalt = curvePoolBoosterFactory.encodeSaltForCreateX(12345);
 
         address expectedAddress = curvePoolBoosterFactory.computePoolBoosterAddress(
-            address(ousdToken),
-            Mainnet.CurveOUSDUSDTGauge,
-            encodedSalt
+            address(ousdToken), Mainnet.CurveOUSDUSDTGauge, encodedSalt
         );
 
         vm.prank(CrossChain.multichainStrategist);
