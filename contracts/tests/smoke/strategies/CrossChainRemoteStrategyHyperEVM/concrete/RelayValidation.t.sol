@@ -1,19 +1,25 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import {Smoke_CrossChainRemoteStrategy_Shared_Test} from "../shared/Shared.t.sol";
-import {Mainnet, Base as BaseAddresses, CrossChain} from "tests/utils/Addresses.sol";
-import {CrossChainStrategyHelper} from "contracts/strategies/crosschain/CrossChainStrategyHelper.sol";
+import { Smoke_CrossChainRemoteStrategyHyperEVM_Shared_Test } from "../shared/Shared.t.sol";
+import { Mainnet, HyperEVM, CrossChain } from "tests/utils/Addresses.sol";
+import { CrossChainStrategyHelper } from "contracts/strategies/crosschain/CrossChainStrategyHelper.sol";
 
-contract Smoke_CrossChainRemoteStrategy_RelayValidation_Test is Smoke_CrossChainRemoteStrategy_Shared_Test {
+contract Smoke_CrossChainRemoteStrategyHyperEVM_RelayValidation_Test is
+    Smoke_CrossChainRemoteStrategyHyperEVM_Shared_Test
+{
     /// @dev relay() reverts when called by a non-operator
     function test_revert_relay_onlyOperator() public {
         _replaceMessageTransmitter();
 
         uint64 nonceBefore = crossChainRemoteStrategy.lastTransferNonce();
-        bytes memory withdrawPayload = CrossChainStrategyHelper.encodeWithdrawMessage(nonceBefore + 1, 1000e6);
+        bytes memory withdrawPayload = CrossChainStrategyHelper
+            .encodeWithdrawMessage(nonceBefore + 1, 1000e6);
         bytes memory message = _encodeCCTPMessage(
-            0, address(crossChainRemoteStrategy), address(crossChainRemoteStrategy), withdrawPayload
+            0,
+            address(crossChainRemoteStrategy),
+            address(crossChainRemoteStrategy),
+            withdrawPayload
         );
 
         vm.prank(matt);
@@ -26,11 +32,15 @@ contract Smoke_CrossChainRemoteStrategy_RelayValidation_Test is Smoke_CrossChain
         _replaceMessageTransmitter();
 
         uint64 nonceBefore = crossChainRemoteStrategy.lastTransferNonce();
-        bytes memory withdrawPayload = CrossChainStrategyHelper.encodeWithdrawMessage(nonceBefore + 1, 1000e6);
+        bytes memory withdrawPayload = CrossChainStrategyHelper
+            .encodeWithdrawMessage(nonceBefore + 1, 1000e6);
 
         // Use sourceDomain=6 (Base) instead of 0 (Ethereum)
         bytes memory message = _encodeCCTPMessage(
-            6, address(crossChainRemoteStrategy), address(crossChainRemoteStrategy), withdrawPayload
+            6,
+            address(crossChainRemoteStrategy),
+            address(crossChainRemoteStrategy),
+            withdrawPayload
         );
 
         vm.prank(relayer);
@@ -43,7 +53,8 @@ contract Smoke_CrossChainRemoteStrategy_RelayValidation_Test is Smoke_CrossChain
         _replaceMessageTransmitter();
 
         uint64 nonceBefore = crossChainRemoteStrategy.lastTransferNonce();
-        bytes memory withdrawPayload = CrossChainStrategyHelper.encodeWithdrawMessage(nonceBefore + 1, 1000e6);
+        bytes memory withdrawPayload = CrossChainStrategyHelper
+            .encodeWithdrawMessage(nonceBefore + 1, 1000e6);
 
         bytes memory message = _encodeCCTPMessage(
             0,
@@ -62,7 +73,8 @@ contract Smoke_CrossChainRemoteStrategy_RelayValidation_Test is Smoke_CrossChain
         _replaceMessageTransmitter();
 
         uint64 nonceBefore = crossChainRemoteStrategy.lastTransferNonce();
-        bytes memory withdrawPayload = CrossChainStrategyHelper.encodeWithdrawMessage(nonceBefore + 1, 1000e6);
+        bytes memory withdrawPayload = CrossChainStrategyHelper
+            .encodeWithdrawMessage(nonceBefore + 1, 1000e6);
 
         bytes memory message = _encodeCCTPMessage(
             0,

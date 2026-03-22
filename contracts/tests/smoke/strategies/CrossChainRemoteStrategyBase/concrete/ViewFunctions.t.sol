@@ -1,27 +1,44 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import {Smoke_CrossChainRemoteStrategy_Shared_Test} from "../shared/Shared.t.sol";
-import {Base as BaseAddresses, CrossChain} from "tests/utils/Addresses.sol";
+import { Smoke_CrossChainRemoteStrategyBase_Shared_Test } from "../shared/Shared.t.sol";
+import { Base as BaseAddresses, CrossChain } from "tests/utils/Addresses.sol";
 
-contract Smoke_CrossChainRemoteStrategy_ViewFunctions_Test is Smoke_CrossChainRemoteStrategy_Shared_Test {
+contract Smoke_CrossChainRemoteStrategyBase_ViewFunctions_Test is
+    Smoke_CrossChainRemoteStrategyBase_Shared_Test
+{
     function test_platformAddress() public view {
-        assertTrue(crossChainRemoteStrategy.platformAddress() != address(0), "platformAddress should not be address(0)");
+        assertTrue(
+            crossChainRemoteStrategy.platformAddress() != address(0),
+            "platformAddress should not be address(0)"
+        );
     }
 
     function test_supportsAsset() public view {
-        assertTrue(crossChainRemoteStrategy.supportsAsset(BaseAddresses.USDC), "Should support USDC");
-        assertFalse(crossChainRemoteStrategy.supportsAsset(BaseAddresses.WETH), "Should not support WETH");
+        assertTrue(
+            crossChainRemoteStrategy.supportsAsset(BaseAddresses.USDC),
+            "Should support USDC"
+        );
+        assertFalse(
+            crossChainRemoteStrategy.supportsAsset(BaseAddresses.WETH),
+            "Should not support WETH"
+        );
     }
 
     function test_usdcToken() public view {
         assertEq(
-            address(crossChainRemoteStrategy.usdcToken()), BaseAddresses.USDC, "usdcToken should be BaseAddresses.USDC"
+            address(crossChainRemoteStrategy.usdcToken()),
+            BaseAddresses.USDC,
+            "usdcToken should be BaseAddresses.USDC"
         );
     }
 
     function test_peerDomainID() public view {
-        assertEq(crossChainRemoteStrategy.peerDomainID(), 0, "peerDomainID should be 0 (Ethereum)");
+        assertEq(
+            crossChainRemoteStrategy.peerDomainID(),
+            0,
+            "peerDomainID should be 0 (Ethereum)"
+        );
     }
 
     function test_peerStrategy() public view {
@@ -55,7 +72,9 @@ contract Smoke_CrossChainRemoteStrategy_ViewFunctions_Test is Smoke_CrossChainRe
 
     function test_vaultAddress() public view {
         assertEq(
-            crossChainRemoteStrategy.vaultAddress(), address(0), "vaultAddress should be address(0) for remote strategy"
+            crossChainRemoteStrategy.vaultAddress(),
+            address(0),
+            "vaultAddress should be address(0) for remote strategy"
         );
     }
 }

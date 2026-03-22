@@ -146,6 +146,30 @@ jobs:
             echo "No Sonic fork tests found"
           fi
 
+  fork-tests-hyperevm:
+    name: Fork Tests (HyperEVM)
+    needs: build
+    if: always() && (needs.build.result == 'success' || github.event_name == 'schedule')
+    runs-on: ubuntu-latest
+    env:
+      HYPEREVM_PROVIDER_URL: ${{ secrets.HYPEREVM_PROVIDER_URL }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - uses: ./.github/actions/foundry-setup
+      - name: Discover and run HyperEVM fork tests
+        working-directory: contracts
+        run: |
+          DIRS=$(grep -rl "_createAndSelectForkHyperEVM" tests/fork/ --include="Shared.t.sol" | \
+            sed 's|/shared/Shared.t.sol||' | sort -u | tr '\n' ',' | sed 's/,$//')
+          if [ -n "$DIRS" ]; then
+            echo "Running fork tests for: $DIRS"
+            forge test --summary --fail-fast --show-progress --mp "{${DIRS}}/**"
+          else
+            echo "No HyperEVM fork tests found"
+          fi
+
   # ── Smoke Tests ─────────────────────────────────────────────
   smoke-tests-mainnet:
     name: Smoke Tests (Mainnet)
@@ -217,4 +241,28 @@ jobs:
             forge test --summary --fail-fast --show-progress --mp "{${DIRS}}/**"
           else
             echo "No Sonic smoke tests found"
+          fi
+
+  smoke-tests-hyperevm:
+    name: Smoke Tests (HyperEVM)
+    needs: build
+    if: always() && (needs.build.result == 'success' || github.event_name == 'schedule')
+    runs-on: ubuntu-latest
+    env:
+      HYPEREVM_PROVIDER_URL: ${{ secrets.HYPEREVM_PROVIDER_URL }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - uses: ./.github/actions/foundry-setup
+      - name: Discover and run HyperEVM smoke tests
+        working-directory: contracts
+        run: |
+          DIRS=$(grep -rl "_createAndSelectForkHyperEVM" tests/smoke/ --include="Shared.t.sol" | \
+            sed 's|/shared/Shared.t.sol||' | sort -u | tr '\n' ',' | sed 's/,$//')
+          if [ -n "$DIRS" ]; then
+            echo "Running smoke tests for: $DIRS"
+            forge test --summary --fail-fast --show-progress --mp "{${DIRS}}/**"
+          else
+            echo "No HyperEVM smoke tests found"
           fi
