@@ -18,6 +18,10 @@ contract EnhancedBeaconProofs is BeaconProofs {
         pure
         returns (uint256)
     {
-        return BeaconProofsLib.balanceAtIndex(validatorBalanceLeaf, validatorIndex);
+        return
+            BeaconProofsLib.balanceAtIndex(
+                validatorBalanceLeaf,
+                validatorIndex
+            );
     }
 }
