@@ -75,6 +75,10 @@
         {
             "implementation": "0x26a02ec47ACC2A3442b757F45E0A82B8e993Ce11",
             "name": "OUSD_CURVE_AMO_STRATEGY"
+        },
+        {
+            "implementation": "0xf9E04C36CC7e6065cBBcc972613e8Dd75D6B5967",
+            "name": "OETH_SUPERNOVA_AMO_STRATEGY_PROXY"
         }
     ],
     "executions": [
