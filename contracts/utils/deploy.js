@@ -23,6 +23,7 @@ const {
   isPlumeFork,
   isTest,
   isHoodi,
+  isHyperEVM,
 } = require("../test/helpers.js");
 
 const {
@@ -248,7 +249,14 @@ const deployWithConfirmation = async (
   );
 
   // if upgrade happened on the mainnet save the new storage slot layout to the repo
-  if (isMainnet || isArbitrumOne || isBase || isSonic || isPlume) {
+  if (
+    isMainnet ||
+    isArbitrumOne ||
+    isBase ||
+    isSonic ||
+    isPlume ||
+    isHyperEVM
+  ) {
     await storeStorageLayoutForContract(hre, contractName, contract);
   }
 
@@ -287,6 +295,8 @@ const withConfirmation = async (
     ? process.env.PLUME_PROVIDER_URL
     : isHoodi
     ? process.env.HOODI_PROVIDER_URL
+    : isHyperEVM
+    ? process.env.HYPEREVM_PROVIDER_URL
     : process.env.PROVIDER_URL;
 
   if (providerUrl?.includes("rpc.tenderly.co") || (isTest && !isForkTest)) {
@@ -324,11 +334,11 @@ const withConfirmation = async (
 
 const _verifyProxyInitializedWithCorrectGovernor = (transactionData) => {
   if (isPlume || isPlumeFork) {
-    // TODO: Skip verification for Plume for now
+    // TODO: Skip verification for Plume — no timelock deployed yet
     return;
   }
 
-  if (isMainnet || isBase || isFork || isBaseFork) {
+  if (isMainnet || isBase || isFork) {
     // TODO: Skip verification for Fork for now
     return;
   }
@@ -342,6 +352,7 @@ const _verifyProxyInitializedWithCorrectGovernor = (transactionData) => {
       addresses.mainnet.OldTimelock.toLowerCase(),
       addresses.base.timelock.toLowerCase(),
       addresses.sonic.timelock.toLowerCase(),
+      addresses.hyperevm.timelock.toLowerCase(),
     ].includes(initProxyGovernor)
   ) {
     throw new Error(
