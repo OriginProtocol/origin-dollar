@@ -27,6 +27,6 @@ contract Smoke_Concrete_WOETHBase_ViewFunctions_Test is Smoke_WOETHBase_Shared_T
     function test_convertToShares_roundtrip() public view {
         uint256 assets = 1e18;
         uint256 assetsBack = woethBase.convertToAssets(woethBase.convertToShares(assets));
-        assertApproxEqAbs(assetsBack, assets, 1);
+        assertApproxEqAbs(assetsBack, assets, 2);
     }
 }

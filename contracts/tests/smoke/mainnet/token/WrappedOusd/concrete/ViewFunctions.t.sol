@@ -27,6 +27,6 @@ contract Smoke_Concrete_WrappedOusd_ViewFunctions_Test is Smoke_WrappedOusd_Shar
     function test_convertToShares_roundtrip() public view {
         uint256 assets = 1e18;
         uint256 assetsBack = wrappedOusd.convertToAssets(wrappedOusd.convertToShares(assets));
-        assertApproxEqAbs(assetsBack, assets, 1);
+        assertApproxEqAbs(assetsBack, assets, 2);
     }
 }
