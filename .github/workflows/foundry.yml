@@ -74,7 +74,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        chunk_id: [0, 1, 2]
+        chunk_id: [0, 1]
     env:
       MAINNET_PROVIDER_URL: ${{ secrets.PROVIDER_URL }}
       BEACON_PROVIDER_URL: ${{ secrets.BEACON_PROVIDER_URL }}
@@ -90,7 +90,7 @@ jobs:
             sed 's|/shared/Shared.t.sol||' | sort -u))
           SELECTED=()
           for i in "${!DIRS_ARRAY[@]}"; do
-            if (( i % 3 == ${{ matrix.chunk_id }} )); then
+            if (( i % 2 == ${{ matrix.chunk_id }} )); then
               SELECTED+=("${DIRS_ARRAY[$i]}")
             fi
           done

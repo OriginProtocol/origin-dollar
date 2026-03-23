@@ -41,7 +41,7 @@ runs:
       with:
         path: |
           contracts/out/
-          contracts/cache/
+          contracts/cache/solidity-files-cache.json
         key: forge-build-${{ hashFiles('contracts/**/*.sol', 'contracts/foundry.toml') }}
         restore-keys: forge-build-
 

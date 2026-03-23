@@ -92,12 +92,22 @@ abstract contract Fork_BeaconProofs_Shared_Test is BaseFork {
     function _loadProofFixture() internal {
         uint256 slot = vm.envExists("BEACON_PROOFS_SLOT") ? vm.envUint("BEACON_PROOFS_SLOT") : DEFAULT_SLOT;
 
-        string[] memory cmd = new string[](3);
-        cmd[0] = "node";
-        cmd[1] = string.concat(vm.projectRoot(), "/test/scripts/beaconProofsFixture.js");
-        cmd[2] = vm.toString(slot);
+        // Try reading a pre-generated fixture file first (avoids slow beacon RPC calls).
+        // Falls back to FFI generation for non-cached slots.
+        string memory fixturePath = string.concat(
+            vm.projectRoot(), "/tests/fork/beacon/BeaconProofs/fixtures/slot_", vm.toString(slot), ".json"
+        );
 
-        string memory json = string(vm.ffi(cmd));
+        string memory json;
+        if (vm.isFile(fixturePath)) {
+            json = vm.readFile(fixturePath);
+        } else {
+            string[] memory cmd = new string[](3);
+            cmd[0] = "node";
+            cmd[1] = string.concat(vm.projectRoot(), "/test/scripts/beaconProofsFixture.js");
+            cmd[2] = vm.toString(slot);
+            json = string(vm.ffi(cmd));
+        }
 
         proofSlot = vm.parseUint(json.readString(".slot"));
         beaconBlockRoot = json.readBytes32(".beaconBlockRoot");
