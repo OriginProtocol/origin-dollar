@@ -14,7 +14,7 @@ fs_permissions = [
   { access = "read-write", path = "./out" },
   { access = "read-write", path = "./scripts" },
   { access = "read", path = "test/strategies" },
-  { access = "read", path = "tests/fork/beacon/BeaconProofs/fixtures" }
+  { access = "read", path = "tests/fork/mainnet/beacon/BeaconProofs/fixtures" }
 ]
 
 # Remappings order matters: transitive (inside deps) first, then root-level.
