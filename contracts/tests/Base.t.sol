@@ -64,6 +64,7 @@ import {OETHSupernovaAMOStrategy} from "contracts/strategies/algebra/OETHSuperno
 import {CrossChainMasterStrategy} from "contracts/strategies/crosschain/CrossChainMasterStrategy.sol";
 import {CrossChainRemoteStrategy} from "contracts/strategies/crosschain/CrossChainRemoteStrategy.sol";
 import {AerodromeAMOStrategy} from "contracts/strategies/aerodrome/AerodromeAMOStrategy.sol";
+import {MorphoV2Strategy} from "contracts/strategies/MorphoV2Strategy.sol";
 import {AerodromeAMOQuoter, QuoterHelper} from "contracts/utils/AerodromeAMOQuoter.sol";
 import {CCTPMessageTransmitterMock} from "contracts/mocks/crosschain/CCTPMessageTransmitterMock.sol";
 import {CCTPTokenMessengerMock} from "contracts/mocks/crosschain/CCTPTokenMessengerMock.sol";
@@ -75,6 +76,7 @@ import {NativeStakingSSVStrategy} from "contracts/strategies/NativeStaking/Nativ
 import {FeeAccumulator} from "contracts/strategies/NativeStaking/FeeAccumulator.sol";
 import {CompoundingStakingSSVStrategy} from "contracts/strategies/NativeStaking/CompoundingStakingSSVStrategy.sol";
 import {CompoundingStakingStrategyView} from "contracts/strategies/NativeStaking/CompoundingStakingView.sol";
+import {ConsolidationController} from "contracts/strategies/NativeStaking/ConsolidationController.sol";
 import {MockBeaconProofs} from "contracts/mocks/beacon/MockBeaconProofs.sol";
 
 import {MockSafeContract} from "tests/mocks/MockSafeContract.sol";
@@ -237,9 +239,13 @@ abstract contract Base is Test {
     AerodromeAMOStrategy internal aerodromeAMOStrategy;
     AerodromeAMOQuoter internal aerodromeAMOQuoter;
     NativeStakingSSVStrategy internal nativeStakingSSVStrategy;
+    NativeStakingSSVStrategy internal nativeStakingSSVStrategy2;
+    NativeStakingSSVStrategy internal nativeStakingSSVStrategy3;
     FeeAccumulator internal nativeStakingFeeAccumulator;
     CompoundingStakingSSVStrategy internal compoundingStakingSSVStrategy;
     CompoundingStakingStrategyView internal compoundingStakingView;
+    ConsolidationController internal consolidationController;
+    MorphoV2Strategy internal morphoV2Strategy;
 
     //////////////////////////////////////////////////////
     /// --- VAULT VALUE CHECKERS
