@@ -1,4 +1,8 @@
-const { subtask, task, types } = require("hardhat/config");
+const {
+  subtask: baseSubtask,
+  task: baseTask,
+  types,
+} = require("hardhat/config");
 const { env } = require("./env");
 const { setActionVars, updateAction } = require("./defender");
 const { execute, executeOnFork, proposal, governors } = require("./governance");
@@ -152,8 +156,65 @@ const {
 const { processCctpBridgeTransactions } = require("./crossChain");
 const { keyValueStoreLocalClient } = require("../utils/defender");
 const { configuration } = require("../utils/cctp");
+const {
+  withTaskSignerContext,
+  DEFAULT_KMS_RELAYER_ID,
+} = require("../utils/signersNoHardhat");
 
 const log = require("../utils/logger")("tasks");
+const RELAYER_ID_PARAM = "relayerId";
+
+const withTaskContext = (taskName, action) => {
+  return async (taskArgs, hre, runSuper) => {
+    return withTaskSignerContext(
+      {
+        relayerId: taskArgs?.[RELAYER_ID_PARAM],
+        taskName,
+      },
+      async () => action(taskArgs, hre, runSuper)
+    );
+  };
+};
+
+const decorateTaskDefinition = (definition, taskName) => {
+  const originalSetAction = definition.setAction.bind(definition);
+  definition.setAction = (action) => {
+    return originalSetAction(withTaskContext(taskName, action));
+  };
+
+  if (definition.paramDefinitions?.[RELAYER_ID_PARAM] === undefined) {
+    definition.addOptionalParam(
+      RELAYER_ID_PARAM,
+      "KMS relayer id. Defaults to task map override or origin-relayer-production-evm",
+      DEFAULT_KMS_RELAYER_ID,
+      types.string
+    );
+  }
+  return definition;
+};
+
+const buildTask = (factory) => (name, descriptionOrAction, maybeAction) => {
+  let description = descriptionOrAction;
+  let action = maybeAction;
+
+  if (typeof descriptionOrAction === "function" && action === undefined) {
+    action = descriptionOrAction;
+    description = undefined;
+  }
+
+  const definition =
+    description === undefined ? factory(name) : factory(name, description);
+  const decorated = decorateTaskDefinition(definition, name);
+
+  if (action) {
+    decorated.setAction(action);
+  }
+
+  return decorated;
+};
+
+const task = buildTask(baseTask);
+const subtask = buildTask(baseSubtask);
 
 // Environment tasks.
 task("env", "Check env vars are properly set for a Mainnet deployment", env);

@@ -72,7 +72,7 @@
   "author": "Origin Protocol Inc <support@originprotocol.com>",
   "license": "MIT",
   "devDependencies": {
-    "@aws-sdk/client-kms": "3.598.0",
+    "@aws-sdk/client-kms": "^3.675.0",
     "@aws-sdk/client-s3": "3.600.0",
     "@chainsafe/persistent-merkle-tree": "^1.2.1",
     "@layerzerolabs/oft-evm": "3.1.4",
@@ -84,6 +84,7 @@
     "@openzeppelin/contracts": "4.4.2",
     "@openzeppelin/defender-sdk": "2.7.0",
     "@openzeppelin/hardhat-upgrades": "1.27.0",
+    "@lastdotnet/purrikey": "^1.0.0",
     "@rigidity/bls-signatures": "2.0.5",
     "@rollup/plugin-commonjs": "29.0.0",
     "@rollup/plugin-json": "6.1.0",
