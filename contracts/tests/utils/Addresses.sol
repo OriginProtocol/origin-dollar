@@ -764,7 +764,3 @@ library HyperEVM {
         0xC79Ad862c66E140D1D1E3fE65D33f98d7b4a0517;
 }
 
-library UnitTests {
-    address internal constant CompoundingStakingStrategyProxy =
-        0x840081c97256d553A8F234D469D797B9535a3B49;
-}
