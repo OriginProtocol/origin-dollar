@@ -266,3 +266,41 @@ jobs:
           else
             echo "No HyperEVM smoke tests found"
           fi
+
+  # ── Static Analysis ────────────────────────────────────────
+  slither:
+    name: Slither
+    if: github.event_name != 'schedule'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - uses: ./.github/actions/foundry-setup
+      - name: Set up Python 3.10
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+      - name: Install Slither
+        run: |
+          wget https://github.com/ethereum/solidity/releases/download/v0.8.7/solc-static-linux
+          chmod +x solc-static-linux
+          sudo mv solc-static-linux /usr/local/bin/solc
+          pip3 install slither-analyzer
+      - name: Run Slither
+        working-directory: contracts
+        run: slither . --config-file slither.config.json
+
+  snyk:
+    name: Snyk
+    if: github.event_name != 'schedule'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@master
+      - name: Run Snyk to check for vulnerabilities
+        uses: snyk/actions/node@master
+        continue-on-error: true
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        with:
+          args: --severity-threshold=high  --all-projects
