@@ -50,9 +50,6 @@ jobs:
         with:
           submodules: recursive
       - uses: ./.github/actions/foundry-setup
-      - name: Build contracts
-        working-directory: contracts
-        run: forge build
       - name: Check contract sizes
         working-directory: contracts
         run: forge build --sizes --skip "test/**" --skip "tests/**" --skip "script/**" --skip "scripts/**"
@@ -61,7 +58,6 @@ jobs:
   unit-tests:
     name: Unit Tests
     if: github.event_name != 'schedule'
-    needs: build
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -74,10 +70,11 @@ jobs:
 
   # ── Fork Tests ──────────────────────────────────────────────
   fork-tests-mainnet:
-    name: Fork Tests (Mainnet)
-    needs: build
-    if: always() && (needs.build.result == 'success' || github.event_name == 'schedule')
+    name: Fork Tests (Mainnet ${{ matrix.chunk_id }})
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        chunk_id: [0, 1, 2]
     env:
       MAINNET_PROVIDER_URL: ${{ secrets.PROVIDER_URL }}
       BEACON_PROVIDER_URL: ${{ secrets.BEACON_PROVIDER_URL }}
@@ -85,23 +82,32 @@ jobs:
       - uses: actions/checkout@v4
         with:
           submodules: recursive
-      - uses: ./.github/actions/foundry-setup
-      - name: Discover and run Mainnet fork tests
+      - name: Discover tests for chunk
+        id: discover
         working-directory: contracts
         run: |
-          DIRS=$(grep -rl "_createAndSelectForkMainnet" tests/fork/ --include="Shared.t.sol" | \
-            sed 's|/shared/Shared.t.sol||' | sort -u | tr '\n' ',' | sed 's/,$//')
-          if [ -n "$DIRS" ]; then
-            echo "Running fork tests for: $DIRS"
-            forge test --summary --fail-fast --show-progress --mp "{${DIRS}}/**"
-          else
-            echo "No Mainnet fork tests found"
-          fi
+          DIRS_ARRAY=($(grep -rl "_createAndSelectForkMainnet" tests/fork/ --include="Shared.t.sol" | \
+            sed 's|/shared/Shared.t.sol||' | sort -u))
+          SELECTED=()
+          for i in "${!DIRS_ARRAY[@]}"; do
+            if (( i % 3 == ${{ matrix.chunk_id }} )); then
+              SELECTED+=("${DIRS_ARRAY[$i]}")
+            fi
+          done
+          DIRS=$(IFS=','; echo "${SELECTED[*]}")
+          echo "dirs=$DIRS" >> $GITHUB_OUTPUT
+          if [ -n "$DIRS" ]; then echo "has_tests=true" >> $GITHUB_OUTPUT; else echo "has_tests=false" >> $GITHUB_OUTPUT; fi
+      - uses: ./.github/actions/foundry-setup
+        if: steps.discover.outputs.has_tests == 'true'
+      - name: Run Mainnet fork tests
+        if: steps.discover.outputs.has_tests == 'true'
+        working-directory: contracts
+        run: |
+          echo "Running fork tests for chunk ${{ matrix.chunk_id }}: ${{ steps.discover.outputs.dirs }}"
+          forge test --summary --fail-fast --show-progress --mp "{${{ steps.discover.outputs.dirs }}}/**"
 
   fork-tests-base:
     name: Fork Tests (Base)
-    needs: build
-    if: always() && (needs.build.result == 'success' || github.event_name == 'schedule')
     runs-on: ubuntu-latest
     env:
       BASE_PROVIDER_URL: ${{ secrets.BASE_PROVIDER_URL }}
@@ -109,23 +115,25 @@ jobs:
       - uses: actions/checkout@v4
         with:
           submodules: recursive
-      - uses: ./.github/actions/foundry-setup
-      - name: Discover and run Base fork tests
+      - name: Discover tests
+        id: discover
         working-directory: contracts
         run: |
           DIRS=$(grep -rl "_createAndSelectForkBase" tests/fork/ --include="Shared.t.sol" | \
             sed 's|/shared/Shared.t.sol||' | sort -u | tr '\n' ',' | sed 's/,$//')
-          if [ -n "$DIRS" ]; then
-            echo "Running fork tests for: $DIRS"
-            forge test --summary --fail-fast --show-progress --mp "{${DIRS}}/**"
-          else
-            echo "No Base fork tests found"
-          fi
+          echo "dirs=$DIRS" >> $GITHUB_OUTPUT
+          if [ -n "$DIRS" ]; then echo "has_tests=true" >> $GITHUB_OUTPUT; else echo "has_tests=false" >> $GITHUB_OUTPUT; fi
+      - uses: ./.github/actions/foundry-setup
+        if: steps.discover.outputs.has_tests == 'true'
+      - name: Run Base fork tests
+        if: steps.discover.outputs.has_tests == 'true'
+        working-directory: contracts
+        run: |
+          echo "Running fork tests for: ${{ steps.discover.outputs.dirs }}"
+          forge test --summary --fail-fast --show-progress --mp "{${{ steps.discover.outputs.dirs }}}/**"
 
   fork-tests-sonic:
     name: Fork Tests (Sonic)
-    needs: build
-    if: always() && (needs.build.result == 'success' || github.event_name == 'schedule')
     runs-on: ubuntu-latest
     env:
       SONIC_PROVIDER_URL: ${{ secrets.SONIC_PROVIDER_URL }}
@@ -133,23 +141,25 @@ jobs:
       - uses: actions/checkout@v4
         with:
           submodules: recursive
-      - uses: ./.github/actions/foundry-setup
-      - name: Discover and run Sonic fork tests
+      - name: Discover tests
+        id: discover
         working-directory: contracts
         run: |
           DIRS=$(grep -rl "_createAndSelectForkSonic" tests/fork/ --include="Shared.t.sol" | \
             sed 's|/shared/Shared.t.sol||' | sort -u | tr '\n' ',' | sed 's/,$//')
-          if [ -n "$DIRS" ]; then
-            echo "Running fork tests for: $DIRS"
-            forge test --summary --fail-fast --show-progress --mp "{${DIRS}}/**"
-          else
-            echo "No Sonic fork tests found"
-          fi
+          echo "dirs=$DIRS" >> $GITHUB_OUTPUT
+          if [ -n "$DIRS" ]; then echo "has_tests=true" >> $GITHUB_OUTPUT; else echo "has_tests=false" >> $GITHUB_OUTPUT; fi
+      - uses: ./.github/actions/foundry-setup
+        if: steps.discover.outputs.has_tests == 'true'
+      - name: Run Sonic fork tests
+        if: steps.discover.outputs.has_tests == 'true'
+        working-directory: contracts
+        run: |
+          echo "Running fork tests for: ${{ steps.discover.outputs.dirs }}"
+          forge test --summary --fail-fast --show-progress --mp "{${{ steps.discover.outputs.dirs }}}/**"
 
   fork-tests-hyperevm:
     name: Fork Tests (HyperEVM)
-    needs: build
-    if: always() && (needs.build.result == 'success' || github.event_name == 'schedule')
     runs-on: ubuntu-latest
     env:
       HYPEREVM_PROVIDER_URL: ${{ secrets.HYPEREVM_PROVIDER_URL }}
@@ -157,24 +167,26 @@ jobs:
       - uses: actions/checkout@v4
         with:
           submodules: recursive
-      - uses: ./.github/actions/foundry-setup
-      - name: Discover and run HyperEVM fork tests
+      - name: Discover tests
+        id: discover
         working-directory: contracts
         run: |
           DIRS=$(grep -rl "_createAndSelectForkHyperEVM" tests/fork/ --include="Shared.t.sol" | \
             sed 's|/shared/Shared.t.sol||' | sort -u | tr '\n' ',' | sed 's/,$//')
-          if [ -n "$DIRS" ]; then
-            echo "Running fork tests for: $DIRS"
-            forge test --summary --fail-fast --show-progress --mp "{${DIRS}}/**"
-          else
-            echo "No HyperEVM fork tests found"
-          fi
+          echo "dirs=$DIRS" >> $GITHUB_OUTPUT
+          if [ -n "$DIRS" ]; then echo "has_tests=true" >> $GITHUB_OUTPUT; else echo "has_tests=false" >> $GITHUB_OUTPUT; fi
+      - uses: ./.github/actions/foundry-setup
+        if: steps.discover.outputs.has_tests == 'true'
+      - name: Run HyperEVM fork tests
+        if: steps.discover.outputs.has_tests == 'true'
+        working-directory: contracts
+        run: |
+          echo "Running fork tests for: ${{ steps.discover.outputs.dirs }}"
+          forge test --summary --fail-fast --show-progress --mp "{${{ steps.discover.outputs.dirs }}}/**"
 
   # ── Smoke Tests ─────────────────────────────────────────────
   smoke-tests-mainnet:
     name: Smoke Tests (Mainnet)
-    needs: build
-    if: always() && (needs.build.result == 'success' || github.event_name == 'schedule')
     runs-on: ubuntu-latest
     env:
       MAINNET_PROVIDER_URL: ${{ secrets.PROVIDER_URL }}
@@ -182,23 +194,25 @@ jobs:
       - uses: actions/checkout@v4
         with:
           submodules: recursive
-      - uses: ./.github/actions/foundry-setup
-      - name: Discover and run Mainnet smoke tests
+      - name: Discover tests
+        id: discover
         working-directory: contracts
         run: |
           DIRS=$(grep -rl "_createAndSelectForkMainnet" tests/smoke/ --include="Shared.t.sol" | \
             sed 's|/shared/Shared.t.sol||' | sort -u | tr '\n' ',' | sed 's/,$//')
-          if [ -n "$DIRS" ]; then
-            echo "Running smoke tests for: $DIRS"
-            forge test --summary --fail-fast --show-progress --mp "{${DIRS}}/**"
-          else
-            echo "No Mainnet smoke tests found"
-          fi
+          echo "dirs=$DIRS" >> $GITHUB_OUTPUT
+          if [ -n "$DIRS" ]; then echo "has_tests=true" >> $GITHUB_OUTPUT; else echo "has_tests=false" >> $GITHUB_OUTPUT; fi
+      - uses: ./.github/actions/foundry-setup
+        if: steps.discover.outputs.has_tests == 'true'
+      - name: Run Mainnet smoke tests
+        if: steps.discover.outputs.has_tests == 'true'
+        working-directory: contracts
+        run: |
+          echo "Running smoke tests for: ${{ steps.discover.outputs.dirs }}"
+          forge test --summary --fail-fast --show-progress --mp "{${{ steps.discover.outputs.dirs }}}/**"
 
   smoke-tests-base:
     name: Smoke Tests (Base)
-    needs: build
-    if: always() && (needs.build.result == 'success' || github.event_name == 'schedule')
     runs-on: ubuntu-latest
     env:
       BASE_PROVIDER_URL: ${{ secrets.BASE_PROVIDER_URL }}
@@ -206,23 +220,25 @@ jobs:
       - uses: actions/checkout@v4
         with:
           submodules: recursive
-      - uses: ./.github/actions/foundry-setup
-      - name: Discover and run Base smoke tests
+      - name: Discover tests
+        id: discover
         working-directory: contracts
         run: |
           DIRS=$(grep -rl "_createAndSelectForkBase" tests/smoke/ --include="Shared.t.sol" | \
             sed 's|/shared/Shared.t.sol||' | sort -u | tr '\n' ',' | sed 's/,$//')
-          if [ -n "$DIRS" ]; then
-            echo "Running smoke tests for: $DIRS"
-            forge test --summary --fail-fast --show-progress --mp "{${DIRS}}/**"
-          else
-            echo "No Base smoke tests found"
-          fi
+          echo "dirs=$DIRS" >> $GITHUB_OUTPUT
+          if [ -n "$DIRS" ]; then echo "has_tests=true" >> $GITHUB_OUTPUT; else echo "has_tests=false" >> $GITHUB_OUTPUT; fi
+      - uses: ./.github/actions/foundry-setup
+        if: steps.discover.outputs.has_tests == 'true'
+      - name: Run Base smoke tests
+        if: steps.discover.outputs.has_tests == 'true'
+        working-directory: contracts
+        run: |
+          echo "Running smoke tests for: ${{ steps.discover.outputs.dirs }}"
+          forge test --summary --fail-fast --show-progress --mp "{${{ steps.discover.outputs.dirs }}}/**"
 
   smoke-tests-sonic:
     name: Smoke Tests (Sonic)
-    needs: build
-    if: always() && (needs.build.result == 'success' || github.event_name == 'schedule')
     runs-on: ubuntu-latest
     env:
       SONIC_PROVIDER_URL: ${{ secrets.SONIC_PROVIDER_URL }}
@@ -230,23 +246,25 @@ jobs:
       - uses: actions/checkout@v4
         with:
           submodules: recursive
-      - uses: ./.github/actions/foundry-setup
-      - name: Discover and run Sonic smoke tests
+      - name: Discover tests
+        id: discover
         working-directory: contracts
         run: |
           DIRS=$(grep -rl "_createAndSelectForkSonic" tests/smoke/ --include="Shared.t.sol" | \
             sed 's|/shared/Shared.t.sol||' | sort -u | tr '\n' ',' | sed 's/,$//')
-          if [ -n "$DIRS" ]; then
-            echo "Running smoke tests for: $DIRS"
-            forge test --summary --fail-fast --show-progress --mp "{${DIRS}}/**"
-          else
-            echo "No Sonic smoke tests found"
-          fi
+          echo "dirs=$DIRS" >> $GITHUB_OUTPUT
+          if [ -n "$DIRS" ]; then echo "has_tests=true" >> $GITHUB_OUTPUT; else echo "has_tests=false" >> $GITHUB_OUTPUT; fi
+      - uses: ./.github/actions/foundry-setup
+        if: steps.discover.outputs.has_tests == 'true'
+      - name: Run Sonic smoke tests
+        if: steps.discover.outputs.has_tests == 'true'
+        working-directory: contracts
+        run: |
+          echo "Running smoke tests for: ${{ steps.discover.outputs.dirs }}"
+          forge test --summary --fail-fast --show-progress --mp "{${{ steps.discover.outputs.dirs }}}/**"
 
   smoke-tests-hyperevm:
     name: Smoke Tests (HyperEVM)
-    needs: build
-    if: always() && (needs.build.result == 'success' || github.event_name == 'schedule')
     runs-on: ubuntu-latest
     env:
       HYPEREVM_PROVIDER_URL: ${{ secrets.HYPEREVM_PROVIDER_URL }}
@@ -254,18 +272,22 @@ jobs:
       - uses: actions/checkout@v4
         with:
           submodules: recursive
-      - uses: ./.github/actions/foundry-setup
-      - name: Discover and run HyperEVM smoke tests
+      - name: Discover tests
+        id: discover
         working-directory: contracts
         run: |
           DIRS=$(grep -rl "_createAndSelectForkHyperEVM" tests/smoke/ --include="Shared.t.sol" | \
             sed 's|/shared/Shared.t.sol||' | sort -u | tr '\n' ',' | sed 's/,$//')
-          if [ -n "$DIRS" ]; then
-            echo "Running smoke tests for: $DIRS"
-            forge test --summary --fail-fast --show-progress --mp "{${DIRS}}/**"
-          else
-            echo "No HyperEVM smoke tests found"
-          fi
+          echo "dirs=$DIRS" >> $GITHUB_OUTPUT
+          if [ -n "$DIRS" ]; then echo "has_tests=true" >> $GITHUB_OUTPUT; else echo "has_tests=false" >> $GITHUB_OUTPUT; fi
+      - uses: ./.github/actions/foundry-setup
+        if: steps.discover.outputs.has_tests == 'true'
+      - name: Run HyperEVM smoke tests
+        if: steps.discover.outputs.has_tests == 'true'
+        working-directory: contracts
+        run: |
+          echo "Running smoke tests for: ${{ steps.discover.outputs.dirs }}"
+          forge test --summary --fail-fast --show-progress --mp "{${{ steps.discover.outputs.dirs }}}/**"
 
   # ── Static Analysis ────────────────────────────────────────
   slither:

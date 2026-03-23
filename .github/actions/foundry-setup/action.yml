@@ -36,6 +36,15 @@ runs:
       working-directory: contracts
       run: pnpm install --frozen-lockfile
 
+    - name: Cache forge build
+      uses: actions/cache@v4
+      with:
+        path: |
+          contracts/out/
+          contracts/cache/
+        key: forge-build-${{ hashFiles('contracts/**/*.sol', 'contracts/foundry.toml') }}
+        restore-keys: forge-build-
+
     - name: Build all artifacts
       shell: bash
       working-directory: contracts
