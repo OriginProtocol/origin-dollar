@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import { Base } from "tests/Base.t.sol";
+import {Base} from "tests/Base.t.sol";
 
 abstract contract BaseFork is Base {
     function _createAndSelectForkMainnet() internal virtual {
@@ -43,10 +43,7 @@ abstract contract BaseFork is Base {
 
         // Create and select a fork.
         forkIdArbitrum = vm.envExists("FORK_BLOCK_NUMBER_ARBITRUM")
-            ? vm.createFork(
-                "arbitrum",
-                vm.envUint("FORK_BLOCK_NUMBER_ARBITRUM")
-            )
+            ? vm.createFork("arbitrum", vm.envUint("FORK_BLOCK_NUMBER_ARBITRUM"))
             : vm.createFork("arbitrum");
         vm.selectFork(forkIdArbitrum);
     }
@@ -57,10 +54,7 @@ abstract contract BaseFork is Base {
 
         // Create and select a fork.
         forkIdHyperEVM = vm.envExists("FORK_BLOCK_NUMBER_HYPEREVM")
-            ? vm.createFork(
-                "hyperevm",
-                vm.envUint("FORK_BLOCK_NUMBER_HYPEREVM")
-            )
+            ? vm.createFork("hyperevm", vm.envUint("FORK_BLOCK_NUMBER_HYPEREVM"))
             : vm.createFork("hyperevm");
         vm.selectFork(forkIdHyperEVM);
     }

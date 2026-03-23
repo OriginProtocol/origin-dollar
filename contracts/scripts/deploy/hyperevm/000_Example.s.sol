@@ -2,15 +2,15 @@
 pragma solidity ^0.8.0;
 
 // Deployment framework
-import { AbstractDeployScript } from "scripts/deploy/helpers/AbstractDeployScript.s.sol";
-import { GovHelper } from "scripts/deploy/helpers/GovHelper.sol";
-import { GovProposal } from "scripts/deploy/helpers/DeploymentTypes.sol";
+import {AbstractDeployScript} from "scripts/deploy/helpers/AbstractDeployScript.s.sol";
+import {GovHelper} from "scripts/deploy/helpers/GovHelper.sol";
+import {GovProposal} from "scripts/deploy/helpers/DeploymentTypes.sol";
 
 // Contracts
-import { CrossChainRemoteStrategy } from "contracts/strategies/crosschain/CrossChainRemoteStrategy.sol";
-import { InitializableAbstractStrategy } from "contracts/utils/InitializableAbstractStrategy.sol";
-import { AbstractCCTPIntegrator } from "contracts/strategies/crosschain/AbstractCCTPIntegrator.sol";
-import { InitializeGovernedUpgradeabilityProxy } from "contracts/proxies/InitializeGovernedUpgradeabilityProxy.sol";
+import {CrossChainRemoteStrategy} from "contracts/strategies/crosschain/CrossChainRemoteStrategy.sol";
+import {InitializableAbstractStrategy} from "contracts/utils/InitializableAbstractStrategy.sol";
+import {AbstractCCTPIntegrator} from "contracts/strategies/crosschain/AbstractCCTPIntegrator.sol";
+import {InitializeGovernedUpgradeabilityProxy} from "contracts/proxies/InitializeGovernedUpgradeabilityProxy.sol";
 
 /// @title 000_Example
 /// @notice Example deployment script demonstrating a CrossChainRemoteStrategy upgrade on HyperEVM.
@@ -37,18 +37,8 @@ contract $000_Example is AbstractDeployScript("000_Example") {
     ///      Replace the placeholder constructor arguments with actual values when activating.
     function _execute() internal override {
         CrossChainRemoteStrategy newImpl = new CrossChainRemoteStrategy(
-            InitializableAbstractStrategy.BaseStrategyConfig(
-                address(0),
-                address(0)
-            ),
-            AbstractCCTPIntegrator.CCTPIntegrationConfig(
-                address(0),
-                address(0),
-                0,
-                address(0),
-                address(0),
-                address(0)
-            )
+            InitializableAbstractStrategy.BaseStrategyConfig(address(0), address(0)),
+            AbstractCCTPIntegrator.CCTPIntegrationConfig(address(0), address(0), 0, address(0), address(0), address(0))
         );
         _recordDeployment("CROSS_CHAIN_REMOTE_STRATEGY_IMPL", address(newImpl));
     }
@@ -62,9 +52,7 @@ contract $000_Example is AbstractDeployScript("000_Example") {
         address proxy = resolver.resolve("CROSS_CHAIN_REMOTE_STRATEGY");
         address newImpl = resolver.resolve("CROSS_CHAIN_REMOTE_STRATEGY_IMPL");
 
-        govProposal.setDescription(
-            "Upgrade CrossChainRemoteStrategy implementation on HyperEVM"
-        );
+        govProposal.setDescription("Upgrade CrossChainRemoteStrategy implementation on HyperEVM");
         govProposal.action(proxy, "upgradeTo(address)", abi.encode(newImpl));
     }
 
@@ -74,17 +62,10 @@ contract $000_Example is AbstractDeployScript("000_Example") {
     /// @dev Checks that the proxy's implementation slot points to the new implementation.
     function _fork() internal override {
         address proxy = resolver.resolve("CROSS_CHAIN_REMOTE_STRATEGY");
-        address expectedImpl = resolver.resolve(
-            "CROSS_CHAIN_REMOTE_STRATEGY_IMPL"
-        );
+        address expectedImpl = resolver.resolve("CROSS_CHAIN_REMOTE_STRATEGY_IMPL");
 
         // Verify implementation was updated
-        address currentImpl = InitializeGovernedUpgradeabilityProxy(
-            payable(proxy)
-        ).implementation();
-        require(
-            currentImpl == expectedImpl,
-            "CrossChainRemoteStrategy proxy implementation not updated"
-        );
+        address currentImpl = InitializeGovernedUpgradeabilityProxy(payable(proxy)).implementation();
+        require(currentImpl == expectedImpl, "CrossChainRemoteStrategy proxy implementation not updated");
     }
 }

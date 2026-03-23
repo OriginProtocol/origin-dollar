@@ -1,40 +1,26 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import { Smoke_CrossChainRemoteStrategyHyperEVM_Shared_Test } from "../shared/Shared.t.sol";
-import { HyperEVM, CrossChain } from "tests/utils/Addresses.sol";
+import {Smoke_CrossChainRemoteStrategyHyperEVM_Shared_Test} from "../shared/Shared.t.sol";
+import {HyperEVM, CrossChain} from "tests/utils/Addresses.sol";
 
 contract Smoke_CrossChainRemoteStrategyHyperEVM_ViewFunctions_Test is
     Smoke_CrossChainRemoteStrategyHyperEVM_Shared_Test
 {
     function test_platformAddress() public view {
-        assertTrue(
-            crossChainRemoteStrategy.platformAddress() != address(0),
-            "platformAddress should not be address(0)"
-        );
+        assertTrue(crossChainRemoteStrategy.platformAddress() != address(0), "platformAddress should not be address(0)");
     }
 
     function test_supportsAsset() public view {
-        assertTrue(
-            crossChainRemoteStrategy.supportsAsset(HyperEVM.USDC),
-            "Should support USDC"
-        );
+        assertTrue(crossChainRemoteStrategy.supportsAsset(HyperEVM.USDC), "Should support USDC");
     }
 
     function test_usdcToken() public view {
-        assertEq(
-            address(crossChainRemoteStrategy.usdcToken()),
-            HyperEVM.USDC,
-            "usdcToken should be HyperEVM USDC"
-        );
+        assertEq(address(crossChainRemoteStrategy.usdcToken()), HyperEVM.USDC, "usdcToken should be HyperEVM USDC");
     }
 
     function test_peerDomainID() public view {
-        assertEq(
-            crossChainRemoteStrategy.peerDomainID(),
-            0,
-            "peerDomainID should be 0 (Ethereum)"
-        );
+        assertEq(crossChainRemoteStrategy.peerDomainID(), 0, "peerDomainID should be 0 (Ethereum)");
     }
 
     function test_peerStrategy() public view {
@@ -68,9 +54,7 @@ contract Smoke_CrossChainRemoteStrategyHyperEVM_ViewFunctions_Test is
 
     function test_vaultAddress() public view {
         assertEq(
-            crossChainRemoteStrategy.vaultAddress(),
-            address(0),
-            "vaultAddress should be address(0) for remote strategy"
+            crossChainRemoteStrategy.vaultAddress(), address(0), "vaultAddress should be address(0) for remote strategy"
         );
     }
 }

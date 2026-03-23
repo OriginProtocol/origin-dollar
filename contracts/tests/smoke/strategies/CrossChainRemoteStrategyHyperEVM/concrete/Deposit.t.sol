@@ -1,18 +1,14 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import { Smoke_CrossChainRemoteStrategyHyperEVM_Shared_Test } from "../shared/Shared.t.sol";
-import { Mainnet, HyperEVM, CrossChain } from "tests/utils/Addresses.sol";
-import { CrossChainStrategyHelper } from "contracts/strategies/crosschain/CrossChainStrategyHelper.sol";
-import { Vm } from "forge-std/Vm.sol";
+import {Smoke_CrossChainRemoteStrategyHyperEVM_Shared_Test} from "../shared/Shared.t.sol";
+import {Mainnet, HyperEVM, CrossChain} from "tests/utils/Addresses.sol";
+import {CrossChainStrategyHelper} from "contracts/strategies/crosschain/CrossChainStrategyHelper.sol";
+import {Vm} from "forge-std/Vm.sol";
 
-contract Smoke_CrossChainRemoteStrategyHyperEVM_Deposit_Test is
-    Smoke_CrossChainRemoteStrategyHyperEVM_Shared_Test
-{
+contract Smoke_CrossChainRemoteStrategyHyperEVM_Deposit_Test is Smoke_CrossChainRemoteStrategyHyperEVM_Shared_Test {
     function test_deposit_handlesIncomingDeposit() public {
-        uint256 balanceBefore = crossChainRemoteStrategy.checkBalance(
-            HyperEVM.USDC
-        );
+        uint256 balanceBefore = crossChainRemoteStrategy.checkBalance(HyperEVM.USDC);
         uint64 nonceBefore = crossChainRemoteStrategy.lastTransferNonce();
         uint64 nextNonce = nonceBefore + 1;
 
@@ -22,8 +18,7 @@ contract Smoke_CrossChainRemoteStrategyHyperEVM_Deposit_Test is
         _replaceMessageTransmitter();
 
         // Build deposit message
-        bytes memory depositPayload = CrossChainStrategyHelper
-            .encodeDepositMessage(nextNonce, depositAmount);
+        bytes memory depositPayload = CrossChainStrategyHelper.encodeDepositMessage(nextNonce, depositAmount);
 
         // Wrap in burn message (burnToken = Mainnet.USDC = peer USDC for HyperEVM)
         bytes memory burnPayload = _encodeBurnMessageBody(
@@ -35,12 +30,8 @@ contract Smoke_CrossChainRemoteStrategyHyperEVM_Deposit_Test is
         );
 
         // Wrap in CCTP message (sourceDomain=0 for Ethereum)
-        bytes memory message = _encodeCCTPMessage(
-            0,
-            CrossChain.CCTPTokenMessengerV2,
-            CrossChain.CCTPTokenMessengerV2,
-            burnPayload
-        );
+        bytes memory message =
+            _encodeCCTPMessage(0, CrossChain.CCTPTokenMessengerV2, CrossChain.CCTPTokenMessengerV2, burnPayload);
 
         // Simulate token transfer (CCTP mint)
         vm.prank(rafael);
@@ -53,9 +44,7 @@ contract Smoke_CrossChainRemoteStrategyHyperEVM_Deposit_Test is
 
         // Verify balance check was sent back
         Vm.Log[] memory entries = vm.getRecordedLogs();
-        bytes32 messageTransmittedTopic = keccak256(
-            "MessageTransmitted(uint32,address,uint32,bytes)"
-        );
+        bytes32 messageTransmittedTopic = keccak256("MessageTransmitted(uint32,address,uint32,bytes)");
 
         bool found = false;
         for (uint256 i = 0; i < entries.length; i++) {
@@ -67,21 +56,12 @@ contract Smoke_CrossChainRemoteStrategyHyperEVM_Deposit_Test is
         assertTrue(found, "Balance check MessageTransmitted event not found");
 
         // Verify nonce updated
-        assertEq(
-            crossChainRemoteStrategy.lastTransferNonce(),
-            nextNonce,
-            "nonce should be updated"
-        );
+        assertEq(crossChainRemoteStrategy.lastTransferNonce(), nextNonce, "nonce should be updated");
 
         // Verify checkBalance increased
-        uint256 balanceAfter = crossChainRemoteStrategy.checkBalance(
-            HyperEVM.USDC
-        );
+        uint256 balanceAfter = crossChainRemoteStrategy.checkBalance(HyperEVM.USDC);
         assertApproxEqAbs(
-            balanceAfter,
-            balanceBefore + depositAmount,
-            1e6,
-            "checkBalance should increase by deposit amount"
+            balanceAfter, balanceBefore + depositAmount, 1e6, "checkBalance should increase by deposit amount"
         );
     }
 
@@ -94,8 +74,7 @@ contract Smoke_CrossChainRemoteStrategyHyperEVM_Deposit_Test is
         _replaceMessageTransmitter();
 
         // Build deposit message
-        bytes memory depositPayload = CrossChainStrategyHelper
-            .encodeDepositMessage(nextNonce, depositAmount);
+        bytes memory depositPayload = CrossChainStrategyHelper.encodeDepositMessage(nextNonce, depositAmount);
 
         // Wrap in burn message with WRONG burn token
         bytes memory burnPayload = _encodeBurnMessageBody(
@@ -107,12 +86,8 @@ contract Smoke_CrossChainRemoteStrategyHyperEVM_Deposit_Test is
         );
 
         // Wrap in CCTP message
-        bytes memory message = _encodeCCTPMessage(
-            0,
-            CrossChain.CCTPTokenMessengerV2,
-            CrossChain.CCTPTokenMessengerV2,
-            burnPayload
-        );
+        bytes memory message =
+            _encodeCCTPMessage(0, CrossChain.CCTPTokenMessengerV2, CrossChain.CCTPTokenMessengerV2, burnPayload);
 
         // Relay should revert
         vm.prank(relayer);
