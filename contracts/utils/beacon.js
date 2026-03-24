@@ -223,28 +223,28 @@ const getValidatorsIndividually = async (client, validatorIds) => {
   return validators;
 };
 
-const getValidatorsByPost = async (client, validatorIds, attempts = 2) => {
+const getValidatorsByGet = async (client, validatorIds, attempts = 2) => {
   let lastError;
 
   for (let attempt = 1; attempt <= attempts; attempt++) {
     try {
-      const postValidatorsRes = await client.beacon.postStateValidators({
+      const getValidatorsRes = await client.beacon.getStateValidators({
         stateId: "head",
         validatorIds,
       });
 
-      if (postValidatorsRes.ok) {
-        return postValidatorsRes.value();
+      if (getValidatorsRes.ok) {
+        return getValidatorsRes.value();
       }
 
       lastError = new Error(
-        `Bulk validator POST failed with status ${postValidatorsRes.status} ${postValidatorsRes.statusText}`
+        `Bulk validator GET failed with status ${getValidatorsRes.status} ${getValidatorsRes.statusText}`
       );
       log(`${lastError.message}. Attempt ${attempt} of ${attempts}.`);
     } catch (err) {
       lastError = err;
       log(
-        `Bulk validator POST threw ${err.name || "Error"}: ${
+        `Bulk validator GET threw ${err.name || "Error"}: ${
           err.message
         }. Attempt ${attempt} of ${attempts}.`
       );
@@ -252,7 +252,7 @@ const getValidatorsByPost = async (client, validatorIds, attempts = 2) => {
   }
 
   if (lastError) {
-    log(`Bulk validator POST failed after ${attempts} attempts.`);
+    log(`Bulk validator GET failed after ${attempts} attempts.`);
   }
 
   return null;
@@ -263,7 +263,7 @@ const getValidators = async (pubkeys) => {
   const validatorIds = Array.isArray(pubkeys) ? pubkeys : pubkeys.split(",");
 
   log(`Fetching ${validatorIds.length} validator details from the beacon node`);
-  let validators = await getValidatorsByPost(client, validatorIds);
+  let validators = await getValidatorsByGet(client, validatorIds);
 
   if (!validators) {
     validators = await getValidatorsIndividually(client, validatorIds);
