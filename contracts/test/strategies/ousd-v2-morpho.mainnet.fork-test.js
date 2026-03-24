@@ -8,6 +8,8 @@ const { units, isCI } = require("../helpers");
 
 const { createFixtureLoader, morphoOUSDv2Fixture } = require("../_fixture");
 const { impersonateAndFund } = require("../../utils/signers");
+const { setERC20TokenBalance } = require("../_fund");
+const hre = require("hardhat");
 
 const log = require("../../utils/logger")("test:fork:ousd-v2-morpho");
 
@@ -412,6 +414,102 @@ describe("ForkTest: Yearn's Morpho OUSD v2 Strategy", function () {
             expectMorphoTransfer
           );
       }
+    });
+  });
+
+  describe("Harvester pause and CoW Harvester", () => {
+    const loadFixture = createFixtureLoader(morphoOUSDv2Fixture);
+    let impersonatedGov, impersonatedStrategist;
+
+    beforeEach(async () => {
+      fixture = await loadFixture();
+      const { morphoOUSDv2Strategy } = fixture;
+
+      impersonatedGov = await impersonateAndFund(
+        await morphoOUSDv2Strategy.governor()
+      );
+      impersonatedStrategist = await impersonateAndFund(
+        addresses.multichainStrategist
+      );
+
+      // Simulate post-deploy state: set harvester to CoW Harvester
+      await morphoOUSDv2Strategy
+        .connect(impersonatedGov)
+        .setHarvesterAddress(addresses.mainnet.CoWHarvester);
+    });
+
+    it("Should have CoW Harvester set as harvesterAddress", async () => {
+      const { morphoOUSDv2Strategy } = fixture;
+      expect(await morphoOUSDv2Strategy.harvesterAddress()).to.equal(
+        addresses.mainnet.CoWHarvester
+      );
+    });
+
+    it("Strategist can call collectRewardTokens directly", async () => {
+      const { morphoOUSDv2Strategy } = fixture;
+      await morphoOUSDv2Strategy
+        .connect(impersonatedStrategist)
+        .collectRewardTokens();
+    });
+
+    it("Should pause and stop reward transfers, then unpause to resume", async () => {
+      const { morphoOUSDv2Strategy, morphoToken } = fixture;
+
+      // Seed strategy with MORPHO tokens
+      await setERC20TokenBalance(
+        morphoOUSDv2Strategy.address,
+        morphoToken,
+        "1000",
+        hre
+      );
+
+      const cowHarvesterAddress = addresses.mainnet.CoWHarvester;
+      const cowBalBefore = await morphoToken.balanceOf(cowHarvesterAddress);
+
+      // Strategist pauses
+      await expect(
+        morphoOUSDv2Strategy.connect(impersonatedStrategist).pauseHarvester()
+      )
+        .to.emit(morphoOUSDv2Strategy, "HarvesterPaused")
+        .withArgs(impersonatedStrategist.address);
+      expect(await morphoOUSDv2Strategy.harvesterPaused()).to.be.true;
+
+      // collectRewardTokens succeeds but rewards stay in strategy
+      await morphoOUSDv2Strategy
+        .connect(impersonatedStrategist)
+        .collectRewardTokens();
+      expect(await morphoToken.balanceOf(cowHarvesterAddress)).to.equal(
+        cowBalBefore
+      );
+      expect(
+        await morphoToken.balanceOf(morphoOUSDv2Strategy.address)
+      ).to.be.gt(0);
+
+      // Governor unpauses
+      await expect(
+        morphoOUSDv2Strategy.connect(impersonatedGov).unpauseHarvester()
+      )
+        .to.emit(morphoOUSDv2Strategy, "HarvesterUnpaused")
+        .withArgs(impersonatedGov.address);
+      expect(await morphoOUSDv2Strategy.harvesterPaused()).to.be.false;
+
+      // Next collect sends MORPHO to CoW Harvester
+      await morphoOUSDv2Strategy
+        .connect(impersonatedStrategist)
+        .collectRewardTokens();
+      expect(await morphoToken.balanceOf(cowHarvesterAddress)).to.be.gt(
+        cowBalBefore
+      );
+    });
+
+    it("Strategist cannot unpause", async () => {
+      const { morphoOUSDv2Strategy } = fixture;
+      await morphoOUSDv2Strategy
+        .connect(impersonatedStrategist)
+        .pauseHarvester();
+      await expect(
+        morphoOUSDv2Strategy.connect(impersonatedStrategist).unpauseHarvester()
+      ).to.be.revertedWith("Caller is not the Governor");
     });
   });
 });

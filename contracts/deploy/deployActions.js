@@ -1236,12 +1236,10 @@ const deploySafeModulesForUnitTests = async () => {
     addresses.dead,
   ]);
 
-  await deployWithConfirmation("MockClaimableStrategy");
   await deployWithConfirmation("ClaimStrategyRewardsSafeModule", [
     cSafeContract.address, // safe
     cSafeContract.address, // operator
     [], // strategies — added per-test via addStrategy
-    addresses.dead, // rewardsTo placeholder — overridden in tests via setRewardsTo
   ]);
 };
 

@@ -930,39 +930,6 @@ async function claimRewardsModuleFixture() {
   };
 }
 
-async function claimStrategyRewardsModuleFixture() {
-  const fixture = await defaultFixture();
-
-  const claimRewardsModule = await ethers.getContract(
-    "ClaimStrategyRewardsSafeModule"
-  );
-  const mockSafe = await ethers.getContract("MockSafeContract");
-  const mockClaimableStrategy = await ethers.getContract(
-    "MockClaimableStrategy"
-  );
-  const mockUSDC = await ethers.getContract("MockUSDC");
-  const mockDAI = await ethers.getContract("MockDAI");
-
-  // MockSafeContract is both safe and operator in the unit-test deployment.
-  const safeSigner = await impersonateAndFund(mockSafe.address);
-
-  // A stranger with no roles
-  const stranger = await impersonateAndFund(
-    "0x0000000000000000000000000000000000000002"
-  );
-
-  return {
-    ...fixture,
-    claimRewardsModule,
-    mockSafe,
-    mockClaimableStrategy,
-    mockUSDC,
-    mockDAI,
-    safeSigner,
-    stranger,
-  };
-}
-
 async function autoWithdrawalModuleFixture() {
   const fixture = await defaultFixture();
 
@@ -1872,7 +1839,6 @@ module.exports = {
   bridgeHelperModuleFixture,
   beaconChainFixture,
   claimRewardsModuleFixture,
-  claimStrategyRewardsModuleFixture,
   autoWithdrawalModuleFixture,
   crossChainFixtureUnit,
   crossChainFixture,
