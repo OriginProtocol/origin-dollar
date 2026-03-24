@@ -405,18 +405,15 @@ function _filterDeposits(result, vaultBalance, shortfall, constraints) {
     }
 
     const amt = c.delta.gt(budget) ? budget : c.delta;
-    budget = budget.sub(amt);
 
     if (amt.lt(constraints.minMoveAmount)) {
       c.action = ACTION_NONE;
       c.reason = "below min move";
-      budget = budget.add(amt);
       continue;
     }
     if (c.isCrossChain && amt.lt(constraints.crossChainMinAmount)) {
       c.action = ACTION_NONE;
       c.reason = "below cross-chain min";
-      budget = budget.add(amt);
       continue;
     }
     if (amt.lt(c.delta)) {
@@ -424,6 +421,8 @@ function _filterDeposits(result, vaultBalance, shortfall, constraints) {
       c.targetBalance = c.balance.add(amt);
       c.reason = "trimmed to available vault funds";
     }
+
+    budget = budget.sub(amt);
   }
 
   return result;
