@@ -382,6 +382,11 @@ pnpm hardhat updateAction --id 65b53496-e426-4850-8349-059e63eb2120 --file manag
 # network of the relayer that is attached to the action
 pnpm hardhat updateAction --id bb43e5da-f936-4185-84da-253394583665 --file crossChainRelay
 pnpm hardhat updateAction --id e571409b-5399-48e4-bfb2-50b7af9903aa --file crossChainRelay
+
+# OUSD Ethereum -> HyperEVM actions
+pnpm hardhat updateAction --id 0b852456-96a0-4f1d-9d6c-39e1c6ae9dfc --file crossChainRelayHyperEVM
+pnpm hardhat updateAction --id 65f04f74-8da7-4fc5-94b3-96be31bac03b --file crossChainRelayHyperEVM
+
 ```
 
 `rollup` can be installed globally to avoid the `npx` prefix.
