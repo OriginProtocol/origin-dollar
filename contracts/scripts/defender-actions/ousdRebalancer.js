@@ -23,7 +23,7 @@ const rebalancerModuleAbi = [
 ];
 
 // Return the action amount, capping cross-chain moves at the bridge limit
-const actionAmount = (a) => {
+const cappedAmount = (a) => {
   const amt = a.delta.abs();
   return a.isCrossChain && amt.gt(CROSS_CHAIN_BRIDGE_LIMIT)
     ? CROSS_CHAIN_BRIDGE_LIMIT
@@ -84,7 +84,7 @@ const buildDiscordMessage = ({
       const label = a.action.toUpperCase().padEnd(8);
       const chain = a.isCrossChain ? "(cross-chain)" : "(same-chain)";
       return `  ${label}  ${a.name.padEnd(20)} ${formatUSDC(
-        actionAmount(a)
+        cappedAmount(a)
       ).padStart(9)}  ${chain}`;
     });
   }
@@ -182,9 +182,9 @@ const handler = async (event) => {
   const hasCrossChainWithdrawal = withdrawals.some((a) => a.isCrossChain);
 
   const withdrawalAddresses = withdrawals.map((a) => a.address);
-  const withdrawalAmounts = withdrawals.map(actionAmount);
+  const withdrawalAmounts = withdrawals.map(cappedAmount);
   const depositAddresses = deposits.map((a) => a.address);
-  const depositAmounts = deposits.map(actionAmount);
+  const depositAmounts = deposits.map(cappedAmount);
 
   if (
     hasCrossChainWithdrawal ||
