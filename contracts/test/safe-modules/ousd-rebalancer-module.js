@@ -53,15 +53,20 @@ describe("Unit Test: OUSD Rebalancer Safe Module", function () {
     });
   });
 
-  // ─────────────────────────── processWithdrawals — access control ──
+  // ─────────────────────── processWithdrawalsAndDeposits — access control ──
 
-  describe("processWithdrawals() - access control", () => {
+  describe("processWithdrawalsAndDeposits() - access control", () => {
     it("Should revert if called by a non-operator", async () => {
       const { rebalancerModule, mockStrategy, stranger } = f;
       await expect(
         rebalancerModule
           .connect(stranger)
-          .processWithdrawals([mockStrategy.address], [ousdUnits("100")])
+          .processWithdrawalsAndDeposits(
+            [mockStrategy.address],
+            [ousdUnits("100")],
+            [],
+            []
+          )
       ).to.be.revertedWith("Caller is not an operator");
     });
 
@@ -71,26 +76,47 @@ describe("Unit Test: OUSD Rebalancer Safe Module", function () {
       await expect(
         rebalancerModule
           .connect(safeSigner)
-          .processWithdrawals([mockStrategy.address], [ousdUnits("100")])
+          .processWithdrawalsAndDeposits(
+            [mockStrategy.address],
+            [ousdUnits("100")],
+            [],
+            []
+          )
       ).to.be.revertedWith("Module is paused");
     });
 
-    it("Should revert on array length mismatch", async () => {
+    it("Should revert on withdraw array length mismatch", async () => {
       const { rebalancerModule, mockStrategy, safeSigner } = f;
       await expect(
         rebalancerModule
           .connect(safeSigner)
-          .processWithdrawals(
+          .processWithdrawalsAndDeposits(
+            [mockStrategy.address],
+            [ousdUnits("100"), ousdUnits("200")],
+            [],
+            []
+          )
+      ).to.be.revertedWith("Withdraw array length mismatch");
+    });
+
+    it("Should revert on deposit array length mismatch", async () => {
+      const { rebalancerModule, mockStrategy, safeSigner } = f;
+      await expect(
+        rebalancerModule
+          .connect(safeSigner)
+          .processWithdrawalsAndDeposits(
+            [],
+            [],
             [mockStrategy.address],
             [ousdUnits("100"), ousdUnits("200")]
           )
-      ).to.be.revertedWith("Array length mismatch");
+      ).to.be.revertedWith("Deposit array length mismatch");
     });
   });
 
-  // ─────────────────────────── processWithdrawals — functionality ──
+  // ────────────────────────── withdrawals — functionality ──
 
-  describe("processWithdrawals() - single strategy", () => {
+  describe("processWithdrawalsAndDeposits() - single withdrawal", () => {
     it("Should withdraw from a single strategy", async () => {
       const { rebalancerModule, mockVault, mockStrategy, safeSigner } = f;
 
@@ -101,7 +127,12 @@ describe("Unit Test: OUSD Rebalancer Safe Module", function () {
 
       const tx = await rebalancerModule
         .connect(safeSigner)
-        .processWithdrawals([mockStrategy.address], [ousdUnits("600")]);
+        .processWithdrawalsAndDeposits(
+          [mockStrategy.address],
+          [ousdUnits("600")],
+          [],
+          []
+        );
 
       await expect(tx)
         .to.emit(mockVault, "MockedWithdrawal")
@@ -115,11 +146,10 @@ describe("Unit Test: OUSD Rebalancer Safe Module", function () {
     });
   });
 
-  describe("processWithdrawals() - multiple strategies", () => {
+  describe("processWithdrawalsAndDeposits() - multiple withdrawals", () => {
     it("Should withdraw from two strategies in one call", async () => {
       const { rebalancerModule, mockVault, mockStrategy, safeSigner } = f;
 
-      // Deploy a second mock strategy
       const MockStrategy = await ethers.getContractFactory("MockStrategy");
       const mockStrategy2 = await MockStrategy.deploy();
       await mockStrategy2.deployed();
@@ -131,9 +161,11 @@ describe("Unit Test: OUSD Rebalancer Safe Module", function () {
 
       const tx = await rebalancerModule
         .connect(safeSigner)
-        .processWithdrawals(
+        .processWithdrawalsAndDeposits(
           [mockStrategy.address, mockStrategy2.address],
-          [ousdUnits("400"), ousdUnits("300")]
+          [ousdUnits("400"), ousdUnits("300")],
+          [],
+          []
         );
 
       const asset = await rebalancerModule.asset();
@@ -146,7 +178,7 @@ describe("Unit Test: OUSD Rebalancer Safe Module", function () {
     });
   });
 
-  describe("processWithdrawals() - skips zero amounts", () => {
+  describe("processWithdrawalsAndDeposits() - skips zero withdrawal amounts", () => {
     it("Should skip strategies with amount 0", async () => {
       const { rebalancerModule, mockVault, mockStrategy, safeSigner } = f;
 
@@ -157,16 +189,14 @@ describe("Unit Test: OUSD Rebalancer Safe Module", function () {
 
       const tx = await rebalancerModule
         .connect(safeSigner)
-        .processWithdrawals([mockStrategy.address], [0]);
+        .processWithdrawalsAndDeposits([mockStrategy.address], [0], [], []);
 
-      // No MockedWithdrawal emitted since amount was 0
       await expect(tx).to.not.emit(mockVault, "MockedWithdrawal");
-      // But WithdrawalsProcessed is always emitted
       await expect(tx).to.emit(rebalancerModule, "WithdrawalsProcessed");
     });
   });
 
-  describe("processWithdrawals() - Safe exec failure", () => {
+  describe("processWithdrawalsAndDeposits() - withdrawal Safe exec failure", () => {
     it("Should emit WithdrawalFailed and continue when vault reverts", async () => {
       const { rebalancerModule, mockVault, mockStrategy, safeSigner } = f;
 
@@ -178,81 +208,36 @@ describe("Unit Test: OUSD Rebalancer Safe Module", function () {
 
       const tx = await rebalancerModule
         .connect(safeSigner)
-        .processWithdrawals([mockStrategy.address], [ousdUnits("600")]);
+        .processWithdrawalsAndDeposits(
+          [mockStrategy.address],
+          [ousdUnits("600")],
+          [],
+          []
+        );
 
       await expect(tx)
         .to.emit(rebalancerModule, "WithdrawalFailed")
         .withArgs(mockStrategy.address, ousdUnits("600"));
 
-      // WithdrawalsProcessed should still be emitted
-      await expect(tx).to.emit(rebalancerModule, "WithdrawalsProcessed");
-      // No MockedWithdrawal emitted (the call reverted)
-      await expect(tx).to.not.emit(mockVault, "MockedWithdrawal");
-    });
-  });
-
-  describe("processWithdrawals() - empty arrays", () => {
-    it("Should handle empty arrays gracefully", async () => {
-      const { rebalancerModule, mockVault, safeSigner } = f;
-
-      await mockVault.setWithdrawalQueueMetadata(
-        ousdUnits("1000"),
-        ousdUnits("400")
-      );
-
-      const tx = await rebalancerModule
-        .connect(safeSigner)
-        .processWithdrawals([], []);
-
       await expect(tx).to.emit(rebalancerModule, "WithdrawalsProcessed");
       await expect(tx).to.not.emit(mockVault, "MockedWithdrawal");
     });
   });
 
-  // ─────────────────────────── processDeposits — access control ──
+  // ────────────────────────── deposits — functionality ──
 
-  describe("processDeposits() - access control", () => {
-    it("Should revert if called by a non-operator", async () => {
-      const { rebalancerModule, mockStrategy, stranger } = f;
-      await expect(
-        rebalancerModule
-          .connect(stranger)
-          .processDeposits([mockStrategy.address], [ousdUnits("100")])
-      ).to.be.revertedWith("Caller is not an operator");
-    });
-
-    it("Should revert when paused", async () => {
-      const { rebalancerModule, mockStrategy, safeSigner } = f;
-      await rebalancerModule.connect(safeSigner).setPaused(true);
-      await expect(
-        rebalancerModule
-          .connect(safeSigner)
-          .processDeposits([mockStrategy.address], [ousdUnits("100")])
-      ).to.be.revertedWith("Module is paused");
-    });
-
-    it("Should revert on array length mismatch", async () => {
-      const { rebalancerModule, mockStrategy, safeSigner } = f;
-      await expect(
-        rebalancerModule
-          .connect(safeSigner)
-          .processDeposits(
-            [mockStrategy.address],
-            [ousdUnits("100"), ousdUnits("200")]
-          )
-      ).to.be.revertedWith("Array length mismatch");
-    });
-  });
-
-  // ─────────────────────────── processDeposits — functionality ──
-
-  describe("processDeposits() - single strategy", () => {
+  describe("processWithdrawalsAndDeposits() - single deposit", () => {
     it("Should deposit to a single strategy", async () => {
       const { rebalancerModule, mockVault, mockStrategy, safeSigner } = f;
 
       const tx = await rebalancerModule
         .connect(safeSigner)
-        .processDeposits([mockStrategy.address], [ousdUnits("500")]);
+        .processWithdrawalsAndDeposits(
+          [],
+          [],
+          [mockStrategy.address],
+          [ousdUnits("500")]
+        );
 
       await expect(tx)
         .to.emit(mockVault, "MockedDeposit")
@@ -266,7 +251,7 @@ describe("Unit Test: OUSD Rebalancer Safe Module", function () {
     });
   });
 
-  describe("processDeposits() - multiple strategies", () => {
+  describe("processWithdrawalsAndDeposits() - multiple deposits", () => {
     it("Should deposit to two strategies in one call", async () => {
       const { rebalancerModule, mockVault, mockStrategy, safeSigner } = f;
 
@@ -276,7 +261,9 @@ describe("Unit Test: OUSD Rebalancer Safe Module", function () {
 
       const tx = await rebalancerModule
         .connect(safeSigner)
-        .processDeposits(
+        .processWithdrawalsAndDeposits(
+          [],
+          [],
           [mockStrategy.address, mockStrategy2.address],
           [ousdUnits("300"), ousdUnits("200")]
         );
@@ -291,20 +278,20 @@ describe("Unit Test: OUSD Rebalancer Safe Module", function () {
     });
   });
 
-  describe("processDeposits() - skips zero amounts", () => {
+  describe("processWithdrawalsAndDeposits() - skips zero deposit amounts", () => {
     it("Should skip strategies with amount 0", async () => {
       const { rebalancerModule, mockVault, mockStrategy, safeSigner } = f;
 
       const tx = await rebalancerModule
         .connect(safeSigner)
-        .processDeposits([mockStrategy.address], [0]);
+        .processWithdrawalsAndDeposits([], [], [mockStrategy.address], [0]);
 
       await expect(tx).to.not.emit(mockVault, "MockedDeposit");
       await expect(tx).to.emit(rebalancerModule, "DepositsProcessed");
     });
   });
 
-  describe("processDeposits() - Safe exec failure", () => {
+  describe("processWithdrawalsAndDeposits() - deposit Safe exec failure", () => {
     it("Should emit DepositFailed and continue when vault reverts", async () => {
       const { rebalancerModule, mockVault, mockStrategy, safeSigner } = f;
 
@@ -312,7 +299,12 @@ describe("Unit Test: OUSD Rebalancer Safe Module", function () {
 
       const tx = await rebalancerModule
         .connect(safeSigner)
-        .processDeposits([mockStrategy.address], [ousdUnits("500")]);
+        .processWithdrawalsAndDeposits(
+          [],
+          [],
+          [mockStrategy.address],
+          [ousdUnits("500")]
+        );
 
       await expect(tx)
         .to.emit(rebalancerModule, "DepositFailed")
@@ -323,15 +315,23 @@ describe("Unit Test: OUSD Rebalancer Safe Module", function () {
     });
   });
 
-  describe("processDeposits() - empty arrays", () => {
-    it("Should handle empty arrays gracefully", async () => {
-      const { rebalancerModule, safeSigner } = f;
+  describe("processWithdrawalsAndDeposits() - empty arrays", () => {
+    it("Should handle all-empty arrays gracefully", async () => {
+      const { rebalancerModule, mockVault, safeSigner } = f;
+
+      await mockVault.setWithdrawalQueueMetadata(
+        ousdUnits("1000"),
+        ousdUnits("400")
+      );
 
       const tx = await rebalancerModule
         .connect(safeSigner)
-        .processDeposits([], []);
+        .processWithdrawalsAndDeposits([], [], [], []);
 
+      await expect(tx).to.emit(rebalancerModule, "WithdrawalsProcessed");
       await expect(tx).to.emit(rebalancerModule, "DepositsProcessed");
+      await expect(tx).to.not.emit(mockVault, "MockedWithdrawal");
+      await expect(tx).to.not.emit(mockVault, "MockedDeposit");
     });
   });
 
@@ -367,7 +367,7 @@ describe("Unit Test: OUSD Rebalancer Safe Module", function () {
       expect(await rebalancerModule.paused()).to.eq(false);
     });
 
-    it("Should block processWithdrawals when paused", async () => {
+    it("Should block processWithdrawalsAndDeposits when paused", async () => {
       const { rebalancerModule, mockStrategy, safeSigner } = f;
 
       await rebalancerModule.connect(safeSigner).setPaused(true);
@@ -375,19 +375,12 @@ describe("Unit Test: OUSD Rebalancer Safe Module", function () {
       await expect(
         rebalancerModule
           .connect(safeSigner)
-          .processWithdrawals([mockStrategy.address], [ousdUnits("100")])
-      ).to.be.revertedWith("Module is paused");
-    });
-
-    it("Should block processDeposits when paused", async () => {
-      const { rebalancerModule, mockStrategy, safeSigner } = f;
-
-      await rebalancerModule.connect(safeSigner).setPaused(true);
-
-      await expect(
-        rebalancerModule
-          .connect(safeSigner)
-          .processDeposits([mockStrategy.address], [ousdUnits("100")])
+          .processWithdrawalsAndDeposits(
+            [mockStrategy.address],
+            [ousdUnits("100")],
+            [],
+            []
+          )
       ).to.be.revertedWith("Module is paused");
     });
 
@@ -402,10 +395,14 @@ describe("Unit Test: OUSD Rebalancer Safe Module", function () {
         ousdUnits("400")
       );
 
-      // Should not revert
       const tx = await rebalancerModule
         .connect(safeSigner)
-        .processWithdrawals([mockStrategy.address], [ousdUnits("600")]);
+        .processWithdrawalsAndDeposits(
+          [mockStrategy.address],
+          [ousdUnits("600")],
+          [],
+          []
+        );
 
       await expect(tx).to.emit(mockVault, "MockedWithdrawal");
     });
@@ -458,27 +455,37 @@ describe("Unit Test: OUSD Rebalancer Safe Module", function () {
       ).to.be.revertedWith("Caller is not the Safe");
     });
 
-    it("Should revert processWithdrawals for a non-whitelisted strategy", async () => {
+    it("Should revert processWithdrawalsAndDeposits for a non-whitelisted withdrawal strategy", async () => {
       const { rebalancerModule, safeSigner } = f;
       const nonWhitelisted = "0x0000000000000000000000000000000000000099";
       await expect(
         rebalancerModule
           .connect(safeSigner)
-          .processWithdrawals([nonWhitelisted], [ousdUnits("100")])
+          .processWithdrawalsAndDeposits(
+            [nonWhitelisted],
+            [ousdUnits("100")],
+            [],
+            []
+          )
       ).to.be.revertedWith("Strategy not allowed");
     });
 
-    it("Should revert processDeposits for a non-whitelisted strategy", async () => {
+    it("Should revert processWithdrawalsAndDeposits for a non-whitelisted deposit strategy", async () => {
       const { rebalancerModule, safeSigner } = f;
       const nonWhitelisted = "0x0000000000000000000000000000000000000099";
       await expect(
         rebalancerModule
           .connect(safeSigner)
-          .processDeposits([nonWhitelisted], [ousdUnits("100")])
+          .processWithdrawalsAndDeposits(
+            [],
+            [],
+            [nonWhitelisted],
+            [ousdUnits("100")]
+          )
       ).to.be.revertedWith("Strategy not allowed");
     });
 
-    it("Should revert processWithdrawals after strategy is revoked", async () => {
+    it("Should revert processWithdrawalsAndDeposits after strategy is revoked", async () => {
       const { rebalancerModule, mockStrategy, mockVault, safeSigner } = f;
       await mockVault.setWithdrawalQueueMetadata(
         ousdUnits("1000"),
@@ -490,7 +497,12 @@ describe("Unit Test: OUSD Rebalancer Safe Module", function () {
       await expect(
         rebalancerModule
           .connect(safeSigner)
-          .processWithdrawals([mockStrategy.address], [ousdUnits("600")])
+          .processWithdrawalsAndDeposits(
+            [mockStrategy.address],
+            [ousdUnits("600")],
+            [],
+            []
+          )
       ).to.be.revertedWith("Strategy not allowed");
     });
   });

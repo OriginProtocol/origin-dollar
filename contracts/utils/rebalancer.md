@@ -41,14 +41,11 @@ below the minimum size. Skip cross-chain if a transfer is already pending.
 
 ### 3. Execute (`RebalancerModule.sol`)
 
-The Defender Action picks the right module call:
+The Defender Action always calls `processWithdrawalsAndDeposits`. Either array may be
+empty — the contract loops over zero entries without reverting.
 
-| Situation | Call |
-|-----------|------|
-| Any cross-chain withdrawal | `processWithdrawals` only — deposits deferred until bridge settles |
-| All same-chain, both directions | `processWithdrawalsAndDeposits` (single tx) |
-| Withdrawals only | `processWithdrawals` |
-| Deposits only | `processDeposits` |
+If there is a cross-chain withdrawal, deposit arrays are passed empty so deposits are
+deferred until the bridge settles on the next run.
 
 Cross-chain amounts are capped at 10 M USDC (CCTP bridge limit).
 

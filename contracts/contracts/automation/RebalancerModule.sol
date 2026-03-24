@@ -16,15 +16,15 @@ import { VaultStorage } from "../vault/VaultStorage.sol";
  *      1. Deploy this module
  *      2. Call `safe.enableModule(address(this))` to authorize it
  *
- *      An off-chain operator (e.g. Defender Action) calls `processWithdrawals`,
- *      `processDeposits`, or `processWithdrawalsAndDeposits` periodically with
- *      computed strategy/amount arrays. All intelligence (APY fetching, target
+ *      An off-chain operator (e.g. Defender Action) calls
+ *      `processWithdrawalsAndDeposits` periodically with computed strategy/amount
+ *      arrays. Either array may be empty. All intelligence (APY fetching, target
  *      allocation, constraint enforcement) lives off-chain. This contract is a
  *      dumb executor.
  *
- *      All three public functions use soft failures: if a single strategy call
- *      fails via the Safe, the module emits an event and continues to the next
- *      strategy rather than reverting the entire batch.
+ *      The function uses soft failures: if a single strategy call fails via the
+ *      Safe, the module emits an event and continues to the next strategy rather
+ *      than reverting the entire batch.
  *
  *      The Safe retains full control via `setPaused`.
  */
@@ -39,7 +39,7 @@ contract RebalancerModule is AbstractSafeModule {
 
     // ────────────────────────────────────────────────────── Mutable config ──
 
-    /// @notice When true, both processWithdrawals and processDeposits are blocked.
+    /// @notice When true, processWithdrawalsAndDeposits is blocked.
     bool public paused;
 
     /// @notice Strategies that this module is permitted to withdraw from or deposit into.
@@ -102,51 +102,9 @@ contract RebalancerModule is AbstractSafeModule {
     // ──────────────────────────────────────────────── Core automation ──
 
     /**
-     * @notice Withdraw from overallocated strategies to fund the withdrawal queue.
-     *
-     * Steps:
-     *   1. Absorb any idle vault asset into the withdrawal queue.
-     *   2. For each strategy, execute withdrawFromStrategy via the Safe.
-     *   3. Emit results (including any individual failures).
-     *
-     * @param _strategies Array of strategy addresses to withdraw from.
-     * @param _amounts    Array of asset amounts to withdraw from each strategy.
-     */
-    function processWithdrawals(
-        address[] calldata _strategies,
-        uint256[] calldata _amounts
-    ) external onlyOperator whenNotPaused {
-        require(_strategies.length == _amounts.length, "Array length mismatch");
-        vault.addWithdrawalQueueLiquidity();
-        _executeWithdrawals(_strategies, _amounts);
-        emit WithdrawalsProcessed(_strategies, _amounts, pendingShortfall());
-    }
-
-    /**
-     * @notice Deposit idle vault USDC into underallocated strategies.
-     *
-     * @dev The vault's `depositToStrategy` already checks `_assetAvailable()`
-     *      internally, which ensures the withdrawal queue is never underfunded.
-     *      If there isn't enough idle asset, the vault call will revert and this
-     *      module will emit DepositFailed for that strategy.
-     *
-     * @param _strategies Array of strategy addresses to deposit into.
-     * @param _amounts    Array of asset amounts to deposit into each strategy.
-     */
-    function processDeposits(
-        address[] calldata _strategies,
-        uint256[] calldata _amounts
-    ) external onlyOperator whenNotPaused {
-        require(_strategies.length == _amounts.length, "Array length mismatch");
-        _executeDeposits(_strategies, _amounts);
-        emit DepositsProcessed(_strategies, _amounts);
-    }
-
-    /**
      * @notice Withdraw from overallocated strategies then deposit to underallocated
-     *         ones in a single transaction. Use when all withdrawals are from
-     *         same-chain strategies so freed USDC is immediately available for
-     *         deposits.
+     *         ones. Either array may be empty — the contract loops over zero entries
+     *         without reverting.
      *
      * @param _withdrawStrategies Strategies to withdraw from.
      * @param _withdrawAmounts    Amounts to withdraw from each strategy.

@@ -17,8 +17,6 @@ const log = require("../../utils/logger")("action:ousdRebalancer");
 const IS_DRY_RUN = true;
 
 const rebalancerModuleAbi = [
-  "function processWithdrawals(address[] calldata, uint256[] calldata) external",
-  "function processDeposits(address[] calldata, uint256[] calldata) external",
   "function processWithdrawalsAndDeposits(address[] calldata, uint256[] calldata, address[] calldata, uint256[] calldata) external",
 ];
 
@@ -179,47 +177,19 @@ const handler = async (event) => {
     }
   };
 
+  // Cross-chain withdrawals need bridge settlement before deposits are safe.
+  // Pass empty deposit arrays to defer them until the next run.
   const hasCrossChainWithdrawal = withdrawals.some((a) => a.isCrossChain);
+  const deferDeposits = hasCrossChainWithdrawal;
 
-  const withdrawalAddresses = withdrawals.map((a) => a.address);
-  const withdrawalAmounts = withdrawals.map(cappedAmount);
-  const depositAddresses = deposits.map((a) => a.address);
-  const depositAmounts = deposits.map(cappedAmount);
-
-  if (
-    hasCrossChainWithdrawal ||
-    (withdrawals.length > 0 && deposits.length === 0)
-  ) {
-    // Cross-chain withdrawals are async (bridge settlement takes time).
-    // Defer all deposits, if any, until the next run after the bridge confirms.
-    // Likewise, if there are no deposits, only queue withdrawals.
-    await executeTx(() =>
-      rebalancerModule.processWithdrawals(
-        withdrawalAddresses,
-        withdrawalAmounts
-      )
-    );
-  } else if (withdrawals.length > 0 && deposits.length > 0) {
-    // All withdrawals are same-chain: freed USDC lands in the vault immediately,
-    // so withdrawals and deposits can be batched into a single transaction.
-    await executeTx(() =>
-      rebalancerModule.processWithdrawalsAndDeposits(
-        withdrawalAddresses,
-        withdrawalAmounts,
-        depositAddresses,
-        depositAmounts
-      )
-    );
-  } else if (deposits.length > 0) {
-    // Queue deposits only.
-    await executeTx(() =>
-      rebalancerModule.processDeposits(depositAddresses, depositAmounts)
-    );
-  } else {
-    // No actions to queue.
-    log("No actions to queue");
-    return;
-  }
+  await executeTx(() =>
+    rebalancerModule.processWithdrawalsAndDeposits(
+      withdrawals.map((a) => a.address),
+      withdrawals.map(cappedAmount),
+      deferDeposits ? [] : deposits.map((a) => a.address),
+      deferDeposits ? [] : deposits.map(cappedAmount)
+    )
+  );
 };
 
 module.exports = { handler };
