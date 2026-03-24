@@ -392,34 +392,34 @@ function _filterDeposits(result, vaultBalance, shortfall, constraints) {
     .filter((a) => a.action === ACTION_DEPOSIT)
     .sort((a, b) => b.apy - a.apy);
 
-  for (const c of deposits) {
-    if (c.isCrossChain && c.isTransferPending) {
-      c.action = ACTION_NONE;
-      c.reason = "transfer pending";
+  for (const deposit of deposits) {
+    if (deposit.isCrossChain && deposit.isTransferPending) {
+      deposit.action = ACTION_NONE;
+      deposit.reason = "transfer pending";
       continue;
     }
     if (budget.isZero()) {
-      c.action = ACTION_NONE;
-      c.reason = "insufficient vault funds";
+      deposit.action = ACTION_NONE;
+      deposit.reason = "insufficient vault funds";
       continue;
     }
 
-    const amt = c.delta.gt(budget) ? budget : c.delta;
+    const amt = deposit.delta.gt(budget) ? budget : deposit.delta;
 
     if (amt.lt(constraints.minMoveAmount)) {
-      c.action = ACTION_NONE;
-      c.reason = "below min move";
+      deposit.action = ACTION_NONE;
+      deposit.reason = "below min move";
       continue;
     }
-    if (c.isCrossChain && amt.lt(constraints.crossChainMinAmount)) {
-      c.action = ACTION_NONE;
-      c.reason = "below cross-chain min";
+    if (deposit.isCrossChain && amt.lt(constraints.crossChainMinAmount)) {
+      deposit.action = ACTION_NONE;
+      deposit.reason = "below cross-chain min";
       continue;
     }
-    if (amt.lt(c.delta)) {
-      c.delta = amt;
-      c.targetBalance = c.balance.add(amt);
-      c.reason = "trimmed to available vault funds";
+    if (amt.lt(deposit.delta)) {
+      deposit.delta = amt;
+      deposit.targetBalance = deposit.balance.add(amt);
+      deposit.reason = "trimmed to available vault funds";
     }
 
     budget = budget.sub(amt);
