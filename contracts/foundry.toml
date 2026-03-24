@@ -75,6 +75,10 @@ solmate = "89365b880c4f3c786bdd453d4b8e8fe410344a69"
 # "@layerzerolabs-lz-evm-messagelib-v2" v3.0.160
 # "solidity-bytes-utils" v0.8.4
 
+[profile.test]
+optimizer = false
+dynamic_test_linking = true
+
 [soldeer]
 recursive_deps = false
 remappings_generate = false

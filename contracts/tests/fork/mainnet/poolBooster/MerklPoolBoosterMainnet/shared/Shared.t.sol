@@ -21,6 +21,14 @@ interface IMerklDistributorAdmin {
 
 abstract contract Fork_MerklPoolBoosterMainnet_Shared_Test is BaseFork {
     //////////////////////////////////////////////////////
+    /// --- CONTRACTS
+    //////////////////////////////////////////////////////
+
+    OETH internal oeth;
+    PoolBoostCentralRegistry internal centralRegistry;
+    PoolBoosterFactoryMerkl internal factoryMerkl;
+
+    //////////////////////////////////////////////////////
     /// --- CONSTANTS
     //////////////////////////////////////////////////////
 

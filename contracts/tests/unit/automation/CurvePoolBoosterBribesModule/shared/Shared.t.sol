@@ -8,9 +8,11 @@ import {CurvePoolBoosterBribesModule} from "contracts/automation/CurvePoolBooste
 
 abstract contract Unit_CurvePoolBoosterBribesModule_Shared_Test is Base {
     //////////////////////////////////////////////////////
-    /// --- CONTRACTS
+    /// --- CONTRACTS & MOCKS
     //////////////////////////////////////////////////////
 
+    MockSafeContract internal mockSafe;
+    CurvePoolBoosterBribesModule internal curvePoolBoosterBribesModule;
     address internal poolBooster1;
     address internal poolBooster2;
 

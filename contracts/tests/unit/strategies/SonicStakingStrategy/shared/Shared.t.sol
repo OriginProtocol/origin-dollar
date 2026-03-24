@@ -13,6 +13,18 @@ import {InitializableAbstractStrategy} from "contracts/utils/InitializableAbstra
 
 abstract contract Unit_SonicStakingStrategy_Shared_Test is Base {
     //////////////////////////////////////////////////////
+    /// --- CONTRACTS & PROXIES (moved from Base)
+    //////////////////////////////////////////////////////
+
+    MockWrappedSonic internal mockWrappedSonic;
+    MockSFC internal mockSfc;
+    OSonic internal oSonic;
+    OSVault internal oSonicVault;
+    OSonicProxy internal oSonicProxy;
+    OSonicVaultProxy internal oSonicVaultProxy;
+    SonicStakingStrategy internal sonicStakingStrategy;
+
+    //////////////////////////////////////////////////////
     /// --- CONSTANTS
     //////////////////////////////////////////////////////
 

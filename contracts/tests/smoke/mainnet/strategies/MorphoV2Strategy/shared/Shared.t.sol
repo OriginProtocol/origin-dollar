@@ -11,6 +11,10 @@ import {MorphoV2Strategy} from "contracts/strategies/MorphoV2Strategy.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 abstract contract Smoke_MorphoV2Strategy_Shared_Test is BaseSmoke {
+    OUSD internal ousd;
+    OUSDVault internal ousdVault;
+    MorphoV2Strategy internal morphoV2Strategy;
+
     //////////////////////////////////////////////////////
     /// --- SETUP
     //////////////////////////////////////////////////////

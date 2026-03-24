@@ -8,6 +8,12 @@ import {BaseBridgeHelperModule} from "contracts/automation/BaseBridgeHelperModul
 
 abstract contract Unit_BaseBridgeHelperModule_Shared_Test is Base {
     //////////////////////////////////////////////////////
+    /// --- CONTRACTS & MOCKS
+    //////////////////////////////////////////////////////
+    MockSafeContract internal mockSafe;
+    BaseBridgeHelperModule internal baseBridgeHelperModule;
+
+    //////////////////////////////////////////////////////
     /// --- SETUP
     //////////////////////////////////////////////////////
 

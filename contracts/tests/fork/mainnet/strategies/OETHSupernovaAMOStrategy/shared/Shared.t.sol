@@ -25,6 +25,11 @@ abstract contract Fork_OETHSupernovaAMOStrategy_Shared_Test is BaseFork {
     /// --- CONTRACTS
     //////////////////////////////////////////////////////
 
+    OETH internal oeth;
+    OETHVault internal oethVault;
+    OETHProxy internal oethProxy;
+    OETHVaultProxy internal oethVaultProxy;
+    OETHSupernovaAMOStrategy internal oethSupernovaAMOStrategy;
     IPair internal supernovaPool;
     IGauge internal supernovaGauge;
     IERC20 internal wethToken;

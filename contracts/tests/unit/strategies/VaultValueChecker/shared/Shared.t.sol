@@ -18,6 +18,22 @@ import {VaultValueChecker, OETHVaultValueChecker} from "contracts/strategies/Vau
 
 abstract contract Unit_VaultValueChecker_Shared_Test is Base {
     //////////////////////////////////////////////////////
+    /// --- CONTRACTS & PROXIES (moved from Base)
+    //////////////////////////////////////////////////////
+
+    MockWETH internal mockWeth;
+    OUSD internal ousd;
+    OUSDVault internal ousdVault;
+    OUSDProxy internal ousdProxy;
+    VaultProxy internal ousdVaultProxy;
+    OETH internal oeth;
+    OETHVault internal oethVault;
+    OETHProxy internal oethProxy;
+    OETHVaultProxy internal oethVaultProxy;
+    VaultValueChecker internal ousdChecker;
+    OETHVaultValueChecker internal oethChecker;
+
+    //////////////////////////////////////////////////////
     /// --- SETUP
     //////////////////////////////////////////////////////
 

@@ -16,6 +16,17 @@ import {WOETHPlume} from "contracts/token/WOETHPlume.sol";
 
 abstract contract Unit_WOETHPlume_Shared_Test is Base {
     //////////////////////////////////////////////////////
+    /// --- CONTRACTS
+    //////////////////////////////////////////////////////
+    OETH internal oeth;
+    OETHVault internal oethVault;
+    OETHProxy internal oethProxy;
+    OETHVaultProxy internal oethVaultProxy;
+
+    WOETHPlume internal woethPlume;
+    WOETHProxy internal woethPlumeProxy;
+
+    //////////////////////////////////////////////////////
     /// --- CONSTANTS
     //////////////////////////////////////////////////////
     uint256 internal constant DELAY_PERIOD = 600;

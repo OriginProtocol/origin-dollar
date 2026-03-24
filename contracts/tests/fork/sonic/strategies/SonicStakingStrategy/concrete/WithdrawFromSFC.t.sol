@@ -38,7 +38,7 @@ contract Fork_Concrete_SonicStakingStrategy_WithdrawFromSFC_Test is Fork_SonicSt
         uint256 withdrawnAmount = sonicStakingStrategy.withdrawFromSFC(withdrawalId);
 
         // Should receive approximately 95% of the undelegated amount
-        uint256 expectedAmount = amount * slashingRefundRatio / 1e18;
+        uint256 expectedAmount = (amount * slashingRefundRatio) / 1e18;
         assertApproxEqAbs(withdrawnAmount, expectedAmount, 1, "withdrawn amount mismatch after partial slash");
 
         uint256 vaultBalanceAfter = IERC20(address(wrappedSonic)).balanceOf(address(oSonicVault));

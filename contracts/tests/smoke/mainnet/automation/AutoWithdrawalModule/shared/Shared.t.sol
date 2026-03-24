@@ -5,6 +5,8 @@ import {BaseSmoke} from "tests/smoke/BaseSmoke.t.sol";
 import {AutoWithdrawalModule} from "contracts/automation/AutoWithdrawalModule.sol";
 
 abstract contract Smoke_AutoWithdrawalModule_Shared_Test is BaseSmoke {
+    AutoWithdrawalModule internal autoWithdrawalModule;
+
     function setUp() public virtual override {
         super.setUp();
         _createAndSelectForkMainnet();

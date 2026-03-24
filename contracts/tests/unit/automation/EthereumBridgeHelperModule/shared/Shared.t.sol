@@ -8,6 +8,12 @@ import {EthereumBridgeHelperModule} from "contracts/automation/EthereumBridgeHel
 
 abstract contract Unit_EthereumBridgeHelperModule_Shared_Test is Base {
     //////////////////////////////////////////////////////
+    /// --- CONTRACTS & MOCKS
+    //////////////////////////////////////////////////////
+    MockSafeContract internal mockSafe;
+    EthereumBridgeHelperModule internal ethereumBridgeHelperModule;
+
+    //////////////////////////////////////////////////////
     /// --- SETUP
     //////////////////////////////////////////////////////
 

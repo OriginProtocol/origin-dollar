@@ -15,6 +15,8 @@ abstract contract Smoke_BaseBridgeHelperModule_Shared_Test is BaseSmoke {
     /// --- CONTRACTS
     //////////////////////////////////////////////////////
 
+    BaseBridgeHelperModule internal baseBridgeHelperModule;
+    BridgedWOETHStrategy internal bridgedWOETHStrategy;
     IVault internal vault;
     IERC4626 internal bridgedWoeth;
 

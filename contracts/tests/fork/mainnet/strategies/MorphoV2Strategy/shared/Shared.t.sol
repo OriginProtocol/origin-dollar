@@ -28,6 +28,10 @@ abstract contract Fork_MorphoV2Strategy_Shared_Test is BaseFork {
     /// --- CONTRACTS
     //////////////////////////////////////////////////////
 
+    OUSD internal ousd;
+    OUSDVault internal ousdVault;
+    OUSDProxy internal ousdProxy;
+    VaultProxy internal ousdVaultProxy;
     MorphoV2Strategy internal strategy;
 
     //////////////////////////////////////////////////////

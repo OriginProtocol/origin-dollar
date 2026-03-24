@@ -15,6 +15,20 @@ import {InitializableAbstractStrategy} from "contracts/utils/InitializableAbstra
 
 abstract contract Unit_OETHSupernovaAMOStrategy_Shared_Test is Base {
     //////////////////////////////////////////////////////
+    /// --- CONTRACTS & PROXIES (moved from Base)
+    //////////////////////////////////////////////////////
+
+    MockWETH internal mockWeth;
+    MockSwapXPair internal mockSwapXPair;
+    MockSwapXGauge internal mockSwapXGauge;
+    MockERC20 internal swpxToken;
+    OETH internal oeth;
+    OETHVault internal oethVault;
+    OETHProxy internal oethProxy;
+    OETHVaultProxy internal oethVaultProxy;
+    OETHSupernovaAMOStrategy internal oethSupernovaAMOStrategy;
+
+    //////////////////////////////////////////////////////
     /// --- CONSTANTS
     //////////////////////////////////////////////////////
 

@@ -36,7 +36,7 @@ contract Fork_Concrete_SonicSwapXAMOStrategy_Rebalance_Test is Fork_SonicSwapXAM
         (uint256 wsReserves, uint256 osReserves,) = swapXPool.getReserves();
         // 5% of the extra OS
         uint256 extraOS = osReserves - wsReserves;
-        uint256 wsAmount = extraOS * 5 / 100 * wsReserves / osReserves;
+        uint256 wsAmount = (((extraOS * 5) / 100) * wsReserves) / osReserves;
 
         vm.prank(strategist);
         sonicSwapXAMOStrategy.swapAssetsToPool(wsAmount);
@@ -181,7 +181,7 @@ contract Fork_Concrete_SonicSwapXAMOStrategy_Rebalance_Test is Fork_SonicSwapXAM
 
         (uint256 wsReserves, uint256 osReserves,) = swapXPool.getReserves();
         // 32% of the extra wS gets close to balanced
-        uint256 osAmount = (wsReserves - osReserves) * 32 / 100;
+        uint256 osAmount = ((wsReserves - osReserves) * 32) / 100;
 
         vm.prank(strategist);
         sonicSwapXAMOStrategy.swapOTokensToPool(osAmount);
@@ -278,7 +278,7 @@ contract Fork_Concrete_SonicSwapXAMOStrategy_Rebalance_Test is Fork_SonicSwapXAM
         (uint256 wsReserves, uint256 osReserves,) = swapXPool.getReserves();
         // 50% of the extra OS gets close to balanced
         uint256 extraOS = osReserves - wsReserves;
-        uint256 wsAmount = extraOS * 50 / 100 * wsReserves / osReserves;
+        uint256 wsAmount = (((extraOS * 50) / 100) * wsReserves) / osReserves;
 
         vm.prank(strategist);
         sonicSwapXAMOStrategy.swapAssetsToPool(wsAmount);

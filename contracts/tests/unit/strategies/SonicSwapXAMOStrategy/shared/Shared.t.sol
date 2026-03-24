@@ -15,6 +15,20 @@ import {InitializableAbstractStrategy} from "contracts/utils/InitializableAbstra
 
 abstract contract Unit_SonicSwapXAMOStrategy_Shared_Test is Base {
     //////////////////////////////////////////////////////
+    /// --- CONTRACTS & PROXIES (moved from Base)
+    //////////////////////////////////////////////////////
+
+    MockWrappedSonic internal mockWrappedSonic;
+    MockSwapXPair internal mockSwapXPair;
+    MockSwapXGauge internal mockSwapXGauge;
+    MockERC20 internal swpxToken;
+    OSonic internal oSonic;
+    OSVault internal oSonicVault;
+    OSonicProxy internal oSonicProxy;
+    OSonicVaultProxy internal oSonicVaultProxy;
+    SonicSwapXAMOStrategy internal sonicSwapXAMOStrategy;
+
+    //////////////////////////////////////////////////////
     /// --- CONSTANTS
     //////////////////////////////////////////////////////
 

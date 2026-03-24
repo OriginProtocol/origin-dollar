@@ -8,6 +8,9 @@ import {PoolBoostCentralRegistry} from "contracts/poolBooster/PoolBoostCentralRe
 import {PoolBoosterFactorySwapxSingle} from "contracts/poolBooster/PoolBoosterFactorySwapxSingle.sol";
 
 abstract contract Smoke_PoolBoostCentralRegistrySonic_Shared_Test is BaseSmoke {
+    PoolBoostCentralRegistry internal centralRegistry;
+    PoolBoosterFactorySwapxSingle internal factorySwapxSingle;
+
     function setUp() public virtual override {
         super.setUp();
         _createAndSelectForkSonic();

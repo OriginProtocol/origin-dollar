@@ -15,6 +15,17 @@ import {InitializableAbstractStrategy} from "contracts/utils/InitializableAbstra
 
 abstract contract Unit_BridgedWOETHStrategy_Shared_Test is Base {
     //////////////////////////////////////////////////////
+    /// --- CONTRACTS & PROXIES (moved from Base)
+    //////////////////////////////////////////////////////
+
+    MockWETH internal mockWeth;
+    OETH internal oeth;
+    OETHVault internal oethVault;
+    OETHProxy internal oethProxy;
+    OETHVaultProxy internal oethVaultProxy;
+    BridgedWOETHStrategy internal bridgedWOETHStrategy;
+
+    //////////////////////////////////////////////////////
     /// --- CONSTANTS
     //////////////////////////////////////////////////////
 

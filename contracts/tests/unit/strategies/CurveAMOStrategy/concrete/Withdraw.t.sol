@@ -112,7 +112,7 @@ contract Unit_Concrete_CurveAMOStrategy_Withdraw_Test is Unit_CurveAMOStrategy_S
         // Verify solvency maintained
         uint256 totalValue = oethVault.totalValue();
         uint256 totalSupply = oeth.totalSupply();
-        assertGe(totalValue * 1e18 / totalSupply, 0.998 ether);
+        assertGe((totalValue * 1e18) / totalSupply, 0.998 ether);
     }
 
     function test_withdraw_calcTokenToBurn_computesCorrectly() public {

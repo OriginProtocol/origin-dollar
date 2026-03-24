@@ -72,7 +72,7 @@ contract Fork_Concrete_CurveAMOStrategy_Rebalance_Test is Fork_CurveAMOStrategy_
         // Solvency check: totalValue / totalSupply >= 0.998
         uint256 totalValue = oethVault.totalValue();
         uint256 totalSupply = oeth.totalSupply();
-        assertGe(totalValue * 1e18 / totalSupply, 0.998 ether);
+        assertGe((totalValue * 1e18) / totalSupply, 0.998 ether);
     }
 
     function test_mintAndAddOTokens_RevertWhen_poolBalanced() public {
@@ -207,7 +207,7 @@ contract Fork_Concrete_CurveAMOStrategy_Rebalance_Test is Fork_CurveAMOStrategy_
 
         uint256 totalValue = oethVault.totalValue();
         uint256 totalSupply = oeth.totalSupply();
-        assertGe(totalValue * 1e18 / totalSupply, 0.998 ether);
+        assertGe((totalValue * 1e18) / totalSupply, 0.998 ether);
     }
 
     function test_removeAndBurnOTokens_RevertWhen_poolTiltedToHardAsset() public {

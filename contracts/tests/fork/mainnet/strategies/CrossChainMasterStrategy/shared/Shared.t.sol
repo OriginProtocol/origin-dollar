@@ -21,6 +21,7 @@ abstract contract Fork_CrossChainMasterStrategy_Shared_Test is BaseFork {
     /// --- CONTRACTS
     //////////////////////////////////////////////////////
 
+    CrossChainMasterStrategy internal crossChainMasterStrategy;
     address internal relayer;
     address internal vaultAddr;
 

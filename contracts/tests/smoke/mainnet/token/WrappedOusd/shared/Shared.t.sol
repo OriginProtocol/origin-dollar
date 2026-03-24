@@ -6,6 +6,8 @@ import {Smoke_OUSD_Shared_Test} from "tests/smoke/mainnet/token/OUSD/shared/Shar
 import {WrappedOusd} from "contracts/token/WrappedOusd.sol";
 
 abstract contract Smoke_WrappedOusd_Shared_Test is Smoke_OUSD_Shared_Test {
+    WrappedOusd internal wrappedOusd;
+
     //////////////////////////////////////////////////////
     /// --- SETUP
     //////////////////////////////////////////////////////

@@ -11,6 +11,10 @@ import {BaseCurveAMOStrategy} from "contracts/strategies/BaseCurveAMOStrategy.so
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 abstract contract Smoke_BaseCurveAMOStrategy_Shared_Test is BaseSmoke {
+    OETHBase internal oethBase;
+    OETHBaseVault internal oethBaseVault;
+    BaseCurveAMOStrategy internal baseCurveAMOStrategy;
+
     //////////////////////////////////////////////////////
     /// --- SETUP
     //////////////////////////////////////////////////////

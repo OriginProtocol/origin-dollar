@@ -5,6 +5,8 @@ import {BaseSmoke} from "tests/smoke/BaseSmoke.t.sol";
 import {ClaimStrategyRewardsSafeModule} from "contracts/automation/ClaimStrategyRewardsSafeModule.sol";
 
 abstract contract Smoke_ClaimStrategyRewardsSafeModule_Shared_Test is BaseSmoke {
+    ClaimStrategyRewardsSafeModule internal claimStrategyRewardsModule;
+
     function setUp() public virtual override {
         super.setUp();
         _createAndSelectForkMainnet();

@@ -5,91 +5,6 @@ import {Test} from "forge-std/Test.sol";
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
-import {OUSD} from "contracts/token/OUSD.sol";
-import {OUSDVault} from "contracts/vault/OUSDVault.sol";
-import {OUSDProxy} from "contracts/proxies/Proxies.sol";
-import {VaultProxy} from "contracts/proxies/Proxies.sol";
-import {OETH} from "contracts/token/OETH.sol";
-import {OETHBase} from "contracts/token/OETHBase.sol";
-import {OSonic} from "contracts/token/OSonic.sol";
-import {OETHVault} from "contracts/vault/OETHVault.sol";
-import {OSVault} from "contracts/vault/OSVault.sol";
-import {OETHProxy} from "contracts/proxies/Proxies.sol";
-import {OETHVaultProxy} from "contracts/proxies/Proxies.sol";
-import {WOETHProxy} from "contracts/proxies/Proxies.sol";
-import {WrappedOUSDProxy} from "contracts/proxies/Proxies.sol";
-import {WOETH} from "contracts/token/WOETH.sol";
-import {WrappedOusd} from "contracts/token/WrappedOusd.sol";
-import {WOETHBase} from "contracts/token/WOETHBase.sol";
-import {WOETHPlume} from "contracts/token/WOETHPlume.sol";
-import {WOSonic} from "contracts/token/WOSonic.sol";
-import {MockStrategy} from "contracts/mocks/MockStrategy.sol";
-import {MockNonRebasing} from "contracts/mocks/MockNonRebasing.sol";
-import {MockWETH} from "contracts/mocks/MockWETH.sol";
-import {MockCreateX} from "tests/mocks/MockCreateX.sol";
-import {MockERC20} from "@solmate/test/utils/mocks/MockERC20.sol";
-import {MockWrappedSonic} from "tests/mocks/MockWrappedSonic.sol";
-import {MockSFC} from "contracts/mocks/MockSFC.sol";
-import {MockSwapXPair} from "tests/mocks/MockSwapXPair.sol";
-import {MockSwapXGauge} from "tests/mocks/MockSwapXGauge.sol";
-import {OSonicProxy, OSonicVaultProxy} from "contracts/proxies/SonicProxies.sol";
-import {OETHBaseVault} from "contracts/vault/OETHBaseVault.sol";
-import {OETHBaseProxy, OETHBaseVaultProxy} from "contracts/proxies/BaseProxies.sol";
-
-import {OETHZapper} from "contracts/zapper/OETHZapper.sol";
-import {OETHBaseZapper} from "contracts/zapper/OETHBaseZapper.sol";
-import {OSonicZapper} from "contracts/zapper/OSonicZapper.sol";
-import {WOETHCCIPZapper} from "contracts/zapper/WOETHCCIPZapper.sol";
-
-import {PoolBoostCentralRegistry} from "contracts/poolBooster/PoolBoostCentralRegistry.sol";
-import {PoolBoosterFactorySwapxSingle} from "contracts/poolBooster/PoolBoosterFactorySwapxSingle.sol";
-import {PoolBoosterFactorySwapxDouble} from "contracts/poolBooster/PoolBoosterFactorySwapxDouble.sol";
-import {PoolBoosterFactoryMerkl} from "contracts/poolBooster/PoolBoosterFactoryMerkl.sol";
-import {PoolBoosterFactoryMetropolis} from "contracts/poolBooster/PoolBoosterFactoryMetropolis.sol";
-import {PoolBoosterSwapxSingle} from "contracts/poolBooster/PoolBoosterSwapxSingle.sol";
-import {PoolBoosterSwapxDouble} from "contracts/poolBooster/PoolBoosterSwapxDouble.sol";
-import {PoolBoosterMerklV2} from "contracts/poolBooster/PoolBoosterMerklV2.sol";
-import {PoolBoosterMetropolis} from "contracts/poolBooster/PoolBoosterMetropolis.sol";
-import {CurvePoolBooster} from "contracts/poolBooster/curve/CurvePoolBooster.sol";
-import {CurvePoolBoosterPlain} from "contracts/poolBooster/curve/CurvePoolBoosterPlain.sol";
-import {CurvePoolBoosterFactory} from "contracts/poolBooster/curve/CurvePoolBoosterFactory.sol";
-
-import {VaultValueChecker, OETHVaultValueChecker} from "contracts/strategies/VaultValueChecker.sol";
-import {BridgedWOETHStrategy} from "contracts/strategies/BridgedWOETHStrategy.sol";
-import {CurveAMOStrategy} from "contracts/strategies/CurveAMOStrategy.sol";
-import {BaseCurveAMOStrategy} from "contracts/strategies/BaseCurveAMOStrategy.sol";
-import {SonicStakingStrategy} from "contracts/strategies/sonic/SonicStakingStrategy.sol";
-import {SonicSwapXAMOStrategy} from "contracts/strategies/sonic/SonicSwapXAMOStrategy.sol";
-import {OETHSupernovaAMOStrategy} from "contracts/strategies/algebra/OETHSupernovaAMOStrategy.sol";
-import {CrossChainMasterStrategy} from "contracts/strategies/crosschain/CrossChainMasterStrategy.sol";
-import {CrossChainRemoteStrategy} from "contracts/strategies/crosschain/CrossChainRemoteStrategy.sol";
-import {AerodromeAMOStrategy} from "contracts/strategies/aerodrome/AerodromeAMOStrategy.sol";
-import {MorphoV2Strategy} from "contracts/strategies/MorphoV2Strategy.sol";
-import {AerodromeAMOQuoter, QuoterHelper} from "contracts/utils/AerodromeAMOQuoter.sol";
-import {CCTPMessageTransmitterMock} from "contracts/mocks/crosschain/CCTPMessageTransmitterMock.sol";
-import {CCTPTokenMessengerMock} from "contracts/mocks/crosschain/CCTPTokenMessengerMock.sol";
-import {MockERC4626Vault} from "contracts/mocks/MockERC4626Vault.sol";
-import {MockSSVNetwork} from "contracts/mocks/MockSSVNetwork.sol";
-import {MockSSV} from "contracts/mocks/MockSSV.sol";
-import {MockDepositContract} from "contracts/mocks/MockDepositContract.sol";
-import {NativeStakingSSVStrategy} from "contracts/strategies/NativeStaking/NativeStakingSSVStrategy.sol";
-import {FeeAccumulator} from "contracts/strategies/NativeStaking/FeeAccumulator.sol";
-import {CompoundingStakingSSVStrategy} from "contracts/strategies/NativeStaking/CompoundingStakingSSVStrategy.sol";
-import {CompoundingStakingStrategyView} from "contracts/strategies/NativeStaking/CompoundingStakingView.sol";
-import {ConsolidationController} from "contracts/strategies/NativeStaking/ConsolidationController.sol";
-import {MockBeaconProofs} from "contracts/mocks/beacon/MockBeaconProofs.sol";
-
-import {MockSafeContract} from "tests/mocks/MockSafeContract.sol";
-
-import {AbstractSafeModule} from "contracts/automation/AbstractSafeModule.sol";
-import {AutoWithdrawalModule} from "contracts/automation/AutoWithdrawalModule.sol";
-import {ClaimStrategyRewardsSafeModule} from "contracts/automation/ClaimStrategyRewardsSafeModule.sol";
-import {CollectXOGNRewardsModule} from "contracts/automation/CollectXOGNRewardsModule.sol";
-import {CurvePoolBoosterBribesModule} from "contracts/automation/CurvePoolBoosterBribesModule.sol";
-import {ClaimBribesSafeModule} from "contracts/automation/ClaimBribesSafeModule.sol";
-import {EthereumBridgeHelperModule} from "contracts/automation/EthereumBridgeHelperModule.sol";
-import {BaseBridgeHelperModule} from "contracts/automation/BaseBridgeHelperModule.sol";
-
 abstract contract Base is Test {
     //////////////////////////////////////////////////////
     /// --- CONSTANTS
@@ -122,79 +37,8 @@ abstract contract Base is Test {
     address internal deployer;
     address internal governor;
     address internal guardian;
-    address internal strategist;
-
-    // Automation operator
     address internal operator;
-
-    //////////////////////////////////////////////////////
-    /// --- CONTRACTS
-    //////////////////////////////////////////////////////
-
-    OUSD internal ousd;
-    OUSDVault internal ousdVault;
-    OUSDProxy internal ousdProxy;
-    VaultProxy internal ousdVaultProxy;
-
-    OETH internal oeth;
-    OSonic internal oSonic;
-    OETHBase internal oethBase;
-    OETHVault internal oethVault;
-    OETHProxy internal oethProxy;
-    OETHVaultProxy internal oethVaultProxy;
-
-    WOETH internal woeth;
-    WOETHProxy internal woethProxy;
-
-    WrappedOusd internal wrappedOusd;
-    WrappedOUSDProxy internal wrappedOusdProxy;
-
-    WOETHBase internal woethBase;
-    WOETHProxy internal woethBaseProxy;
-
-    WOETHPlume internal woethPlume;
-    WOETHProxy internal woethPlumeProxy;
-
-    WOSonic internal woSonic;
-    WOETHProxy internal woSonicProxy;
-
-    OETHBaseVault internal oethBaseVault;
-    OETHBaseProxy internal oethBaseProxy;
-    OETHBaseVaultProxy internal oethBaseVaultProxy;
-
-    OSVault internal oSonicVault;
-    OSonicProxy internal oSonicProxy;
-    OSonicVaultProxy internal oSonicVaultProxy;
-
-    //////////////////////////////////////////////////////
-    /// --- MOCKS
-    //////////////////////////////////////////////////////
-
-    MockWETH internal mockWeth;
-    MockCreateX internal mockCreateX;
-    MockStrategy internal mockStrategy;
-    MockNonRebasing internal mockNonRebasing;
-    MockWrappedSonic internal mockWrappedSonic;
-    MockSFC internal mockSfc;
-    MockSwapXPair internal mockSwapXPair;
-    MockSwapXGauge internal mockSwapXGauge;
-    MockERC20 internal swpxToken;
-    CCTPMessageTransmitterMock internal cctpMessageTransmitterMock;
-    CCTPTokenMessengerMock internal cctpTokenMessengerMock;
-    MockERC4626Vault internal mockERC4626Vault;
-    MockSSVNetwork internal mockSsvNetwork;
-    MockSSV internal mockSsv;
-    MockDepositContract internal mockDepositContract;
-    MockBeaconProofs internal mockBeaconProofs;
-
-    //////////////////////////////////////////////////////
-    /// --- ZAPPERS
-    //////////////////////////////////////////////////////
-
-    OETHZapper internal oethZapper;
-    OSonicZapper internal oSonicZapper;
-    OETHBaseZapper internal oethBaseZapper;
-    WOETHCCIPZapper internal woethCcipZapper;
+    address internal strategist;
 
     //////////////////////////////////////////////////////
     /// --- EXTERNAL TOKENS
@@ -204,68 +48,6 @@ abstract contract Base is Test {
     IERC20 internal usdc;
     IERC20 internal usdt;
     IERC20 internal weth;
-
-    //////////////////////////////////////////////////////
-    /// --- POOL BOOSTER CONTRACTS
-    //////////////////////////////////////////////////////
-
-    PoolBoostCentralRegistry internal centralRegistry;
-    PoolBoosterFactorySwapxSingle internal factorySwapxSingle;
-    PoolBoosterFactorySwapxDouble internal factorySwapxDouble;
-    PoolBoosterFactoryMerkl internal factoryMerkl;
-    PoolBoosterFactoryMetropolis internal factoryMetropolis;
-
-    PoolBoosterSwapxSingle internal boosterSwapxSingle;
-    PoolBoosterSwapxDouble internal boosterSwapxDouble;
-    PoolBoosterMerklV2 internal boosterMerkl;
-    PoolBoosterMetropolis internal boosterMetropolis;
-
-    CurvePoolBooster internal curvePoolBooster;
-    CurvePoolBoosterPlain internal curvePoolBoosterPlain;
-    CurvePoolBoosterFactory internal curvePoolBoosterFactory;
-
-    //////////////////////////////////////////////////////
-    /// --- STRATEGIES
-    //////////////////////////////////////////////////////
-
-    BridgedWOETHStrategy internal bridgedWOETHStrategy;
-    CurveAMOStrategy internal curveAMOStrategy;
-    BaseCurveAMOStrategy internal baseCurveAMOStrategy;
-    SonicStakingStrategy internal sonicStakingStrategy;
-    SonicSwapXAMOStrategy internal sonicSwapXAMOStrategy;
-    OETHSupernovaAMOStrategy internal oethSupernovaAMOStrategy;
-    CrossChainMasterStrategy internal crossChainMasterStrategy;
-    CrossChainRemoteStrategy internal crossChainRemoteStrategy;
-    AerodromeAMOStrategy internal aerodromeAMOStrategy;
-    AerodromeAMOQuoter internal aerodromeAMOQuoter;
-    NativeStakingSSVStrategy internal nativeStakingSSVStrategy;
-    NativeStakingSSVStrategy internal nativeStakingSSVStrategy2;
-    NativeStakingSSVStrategy internal nativeStakingSSVStrategy3;
-    FeeAccumulator internal nativeStakingFeeAccumulator;
-    CompoundingStakingSSVStrategy internal compoundingStakingSSVStrategy;
-    CompoundingStakingStrategyView internal compoundingStakingView;
-    ConsolidationController internal consolidationController;
-    MorphoV2Strategy internal morphoV2Strategy;
-
-    //////////////////////////////////////////////////////
-    /// --- VAULT VALUE CHECKERS
-    //////////////////////////////////////////////////////
-
-    VaultValueChecker internal ousdChecker;
-    OETHVaultValueChecker internal oethChecker;
-
-    //////////////////////////////////////////////////////
-    /// --- AUTOMATION MODULES
-    //////////////////////////////////////////////////////
-
-    MockSafeContract internal mockSafe;
-    AutoWithdrawalModule internal autoWithdrawalModule;
-    ClaimStrategyRewardsSafeModule internal claimStrategyRewardsModule;
-    CollectXOGNRewardsModule internal collectXOGNRewardsModule;
-    CurvePoolBoosterBribesModule internal curvePoolBoosterBribesModule;
-    ClaimBribesSafeModule internal claimBribesModule;
-    EthereumBridgeHelperModule internal ethereumBridgeHelperModule;
-    BaseBridgeHelperModule internal baseBridgeHelperModule;
 
     //////////////////////////////////////////////////////
     /// --- FORK IDS
@@ -302,9 +84,7 @@ abstract contract Base is Test {
         deployer = makeAddr("Deployer");
         governor = makeAddr("Governor");
         guardian = makeAddr("Guardian");
-        strategist = makeAddr("Strategist");
-
-        // Create automation operator
         operator = makeAddr("Operator");
+        strategist = makeAddr("Strategist");
     }
 }

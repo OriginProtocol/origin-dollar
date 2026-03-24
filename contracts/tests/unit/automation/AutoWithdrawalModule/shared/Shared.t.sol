@@ -11,9 +11,12 @@ import {AutoWithdrawalModule} from "contracts/automation/AutoWithdrawalModule.so
 
 abstract contract Unit_AutoWithdrawalModule_Shared_Test is Base {
     //////////////////////////////////////////////////////
-    /// --- CONTRACTS
+    /// --- CONTRACTS & MOCKS
     //////////////////////////////////////////////////////
 
+    MockSafeContract internal mockSafe;
+    MockStrategy internal mockStrategy;
+    AutoWithdrawalModule internal autoWithdrawalModule;
     MockERC20 internal assetToken;
     MockAutoWithdrawalVault internal mockVault;
 

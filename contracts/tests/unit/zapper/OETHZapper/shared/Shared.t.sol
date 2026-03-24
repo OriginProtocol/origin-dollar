@@ -13,9 +13,23 @@ import {OETHVaultProxy} from "contracts/proxies/Proxies.sol";
 import {WOETHProxy} from "contracts/proxies/Proxies.sol";
 import {WOETH} from "contracts/token/WOETH.sol";
 import {OETHZapper} from "contracts/zapper/OETHZapper.sol";
+import {OETHBaseZapper} from "contracts/zapper/OETHBaseZapper.sol";
 import {MockWETH} from "contracts/mocks/MockWETH.sol";
 
 abstract contract Unit_OETHZapper_Shared_Test is Base {
+    //////////////////////////////////////////////////////
+    /// --- CONTRACTS & MOCKS
+    //////////////////////////////////////////////////////
+    OETH internal oeth;
+    OETHVault internal oethVault;
+    OETHProxy internal oethProxy;
+    OETHVaultProxy internal oethVaultProxy;
+    WOETH internal woeth;
+    WOETHProxy internal woethProxy;
+    OETHZapper internal oethZapper;
+    OETHBaseZapper internal oethBaseZapper;
+    MockWETH internal mockWeth;
+
     //////////////////////////////////////////////////////
     /// --- CONSTANTS
     //////////////////////////////////////////////////////

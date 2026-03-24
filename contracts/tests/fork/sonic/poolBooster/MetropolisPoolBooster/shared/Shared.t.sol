@@ -38,6 +38,14 @@ abstract contract Fork_MetropolisPoolBooster_Shared_Test is BaseFork {
     uint256 internal constant METROPOLIS_MIN_BRIBE_AMOUNT = 200e18;
 
     //////////////////////////////////////////////////////
+    /// --- CONTRACTS
+    //////////////////////////////////////////////////////
+
+    OSonic internal oSonic;
+    PoolBoostCentralRegistry internal centralRegistry;
+    PoolBoosterFactoryMetropolis internal factoryMetropolis;
+
+    //////////////////////////////////////////////////////
     /// --- LOCAL VARIABLES
     //////////////////////////////////////////////////////
 

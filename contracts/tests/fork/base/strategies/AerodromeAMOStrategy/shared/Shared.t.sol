@@ -39,6 +39,12 @@ abstract contract Fork_AerodromeAMOStrategy_Shared_Test is BaseFork {
     /// --- CONTRACTS
     //////////////////////////////////////////////////////
 
+    OETHBase internal oethBase;
+    OETHBaseVault internal oethBaseVault;
+    OETHBaseProxy internal oethBaseProxy;
+    OETHBaseVaultProxy internal oethBaseVaultProxy;
+    AerodromeAMOStrategy internal aerodromeAMOStrategy;
+    AerodromeAMOQuoter internal aerodromeAMOQuoter;
     INonfungiblePositionManager internal positionManager;
     ISwapRouter internal swapRouter;
     ISugarHelper internal sugarHelper;
@@ -413,7 +419,7 @@ abstract contract Fork_AerodromeAMOStrategy_Shared_Test is BaseFork {
 
         // Execute rebalance with quoted amount
         bool swapWeth = quoterHelper.getSwapDirectionForRebalance();
-        uint256 minAmount = data.amount * 99 / 100;
+        uint256 minAmount = (data.amount * 99) / 100;
         vm.prank(strategist);
         aerodromeAMOStrategy.rebalance(data.amount, swapWeth, minAmount);
     }

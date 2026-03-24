@@ -5,6 +5,8 @@ import {BaseSmoke} from "tests/smoke/BaseSmoke.t.sol";
 import {CurvePoolBoosterBribesModule} from "contracts/automation/CurvePoolBoosterBribesModule.sol";
 
 abstract contract Smoke_CurvePoolBoosterBribesModule_Shared_Test is BaseSmoke {
+    CurvePoolBoosterBribesModule internal curvePoolBoosterBribesModule;
+
     function setUp() public virtual override {
         super.setUp();
         _createAndSelectForkMainnet();

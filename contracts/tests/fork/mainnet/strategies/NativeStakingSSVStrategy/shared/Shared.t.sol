@@ -23,6 +23,10 @@ abstract contract Fork_NativeStakingSSVStrategy_Shared_Test is BaseFork {
     /// --- CONTRACTS
     //////////////////////////////////////////////////////
 
+    OETH internal oeth;
+    OETHVault internal oethVault;
+    NativeStakingSSVStrategy internal nativeStakingSSVStrategy;
+    FeeAccumulator internal nativeStakingFeeAccumulator;
     ISSVNetwork internal ssvNetwork;
     IERC20 internal ssv;
     OETHHarvesterSimple internal harvester;

@@ -12,6 +12,7 @@ abstract contract Fork_ClaimStrategyRewardsSafeModule_Shared_Test is BaseFork {
     /// --- CONTRACTS
     //////////////////////////////////////////////////////
 
+    ClaimStrategyRewardsSafeModule internal claimStrategyRewardsModule;
     IERC20 internal morphoToken;
 
     //////////////////////////////////////////////////////

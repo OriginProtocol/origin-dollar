@@ -18,6 +18,15 @@ import {MockCreateX} from "tests/mocks/MockCreateX.sol";
 
 abstract contract Unit_Curve_Shared_Test is Base {
     //////////////////////////////////////////////////////
+    /// --- CONTRACTS & MOCKS
+    //////////////////////////////////////////////////////
+    OETH internal oeth;
+    PoolBoostCentralRegistry internal centralRegistry;
+    CurvePoolBoosterPlain internal curvePoolBoosterPlain;
+    CurvePoolBoosterFactory internal curvePoolBoosterFactory;
+    MockCreateX internal mockCreateX;
+
+    //////////////////////////////////////////////////////
     /// --- CONSTANTS
     //////////////////////////////////////////////////////
 

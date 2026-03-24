@@ -17,6 +17,9 @@ abstract contract Smoke_SonicStakingStrategy_Shared_Test is BaseSmoke {
     /// --- CONTRACTS
     //////////////////////////////////////////////////////
 
+    OSonic internal oSonic;
+    OSVault internal oSonicVault;
+    SonicStakingStrategy internal sonicStakingStrategy;
     ISFC internal sfc;
     IWrappedSonic internal wrappedSonic;
     address internal validatorRegistrator;

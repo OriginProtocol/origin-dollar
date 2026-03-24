@@ -19,6 +19,21 @@ import {Cluster} from "contracts/interfaces/ISSVNetwork.sol";
 
 abstract contract Unit_NativeStakingSSVStrategy_Shared_Test is Base {
     //////////////////////////////////////////////////////
+    /// --- CONTRACTS & PROXIES (moved from Base)
+    //////////////////////////////////////////////////////
+
+    MockWETH internal mockWeth;
+    MockSSVNetwork internal mockSsvNetwork;
+    MockSSV internal mockSsv;
+    MockDepositContract internal mockDepositContract;
+    OETH internal oeth;
+    OETHVault internal oethVault;
+    OETHProxy internal oethProxy;
+    OETHVaultProxy internal oethVaultProxy;
+    NativeStakingSSVStrategy internal nativeStakingSSVStrategy;
+    FeeAccumulator internal nativeStakingFeeAccumulator;
+
+    //////////////////////////////////////////////////////
     /// --- CONSTANTS
     //////////////////////////////////////////////////////
 

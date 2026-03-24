@@ -16,6 +16,17 @@ import {WrappedOusd} from "contracts/token/WrappedOusd.sol";
 
 abstract contract Unit_WrappedOusd_Shared_Test is Base {
     //////////////////////////////////////////////////////
+    /// --- CONTRACTS
+    //////////////////////////////////////////////////////
+    OUSD internal ousd;
+    OUSDVault internal ousdVault;
+    OUSDProxy internal ousdProxy;
+    VaultProxy internal ousdVaultProxy;
+
+    WrappedOusd internal wrappedOusd;
+    WrappedOUSDProxy internal wrappedOusdProxy;
+
+    //////////////////////////////////////////////////////
     /// --- CONSTANTS
     //////////////////////////////////////////////////////
     uint256 internal constant DELAY_PERIOD = 600;

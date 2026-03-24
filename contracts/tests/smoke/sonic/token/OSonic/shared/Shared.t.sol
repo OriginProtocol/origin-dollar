@@ -10,6 +10,8 @@ import {OSVault} from "contracts/vault/OSVault.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 abstract contract Smoke_OSonic_Shared_Test is BaseSmoke {
+    OSonic internal oSonic;
+    OSVault internal oSonicVault;
     IERC20 internal wrappedSonic;
 
     //////////////////////////////////////////////////////

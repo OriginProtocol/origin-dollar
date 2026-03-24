@@ -15,6 +15,15 @@ import {InitializableAbstractStrategy} from "contracts/utils/InitializableAbstra
 
 abstract contract Unit_Generalized4626Strategy_Shared_Test is Base {
     //////////////////////////////////////////////////////
+    /// --- CONTRACTS & PROXIES (moved from Base)
+    //////////////////////////////////////////////////////
+
+    OUSD internal ousd;
+    OUSDVault internal ousdVault;
+    OUSDProxy internal ousdProxy;
+    VaultProxy internal ousdVaultProxy;
+
+    //////////////////////////////////////////////////////
     /// --- CONSTANTS
     //////////////////////////////////////////////////////
 

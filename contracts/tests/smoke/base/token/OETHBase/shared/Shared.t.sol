@@ -10,6 +10,9 @@ import {OETHBaseVault} from "contracts/vault/OETHBaseVault.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 abstract contract Smoke_OETHBase_Shared_Test is BaseSmoke {
+    OETHBase internal oethBase;
+    OETHBaseVault internal oethBaseVault;
+
     //////////////////////////////////////////////////////
     /// --- SETUP
     //////////////////////////////////////////////////////

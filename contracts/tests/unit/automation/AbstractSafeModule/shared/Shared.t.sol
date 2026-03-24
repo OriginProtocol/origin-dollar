@@ -14,9 +14,10 @@ contract ConcreteAbstractSafeModule is AbstractSafeModule {
 
 abstract contract Unit_AbstractSafeModule_Shared_Test is Base {
     //////////////////////////////////////////////////////
-    /// --- CONTRACTS
+    /// --- CONTRACTS & MOCKS
     //////////////////////////////////////////////////////
 
+    MockSafeContract internal mockSafe;
     ConcreteAbstractSafeModule internal module;
     MockERC20 internal mockToken;
 

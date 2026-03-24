@@ -16,6 +16,17 @@ import {WOETH} from "contracts/token/WOETH.sol";
 
 abstract contract Unit_WOETH_Shared_Test is Base {
     //////////////////////////////////////////////////////
+    /// --- CONTRACTS
+    //////////////////////////////////////////////////////
+    OETH internal oeth;
+    OETHVault internal oethVault;
+    OETHProxy internal oethProxy;
+    OETHVaultProxy internal oethVaultProxy;
+
+    WOETH internal woeth;
+    WOETHProxy internal woethProxy;
+
+    //////////////////////////////////////////////////////
     /// --- CONSTANTS
     //////////////////////////////////////////////////////
     uint256 internal constant DELAY_PERIOD = 600; // 10 minutes

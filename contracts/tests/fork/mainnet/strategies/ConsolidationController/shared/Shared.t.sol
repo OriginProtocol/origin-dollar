@@ -40,6 +40,14 @@ abstract contract Fork_ConsolidationController_Shared_Test is BaseFork {
     /// --- CONTRACTS
     //////////////////////////////////////////////////////
 
+    OETH internal oeth;
+    OETHVault internal oethVault;
+    OETHProxy internal oethProxy;
+    OETHVaultProxy internal oethVaultProxy;
+    ConsolidationController internal consolidationController;
+    CompoundingStakingSSVStrategy internal compoundingStakingSSVStrategy;
+    NativeStakingSSVStrategy internal nativeStakingSSVStrategy2;
+    NativeStakingSSVStrategy internal nativeStakingSSVStrategy3;
     MockBeaconRoots internal beaconRoots;
 
     //////////////////////////////////////////////////////

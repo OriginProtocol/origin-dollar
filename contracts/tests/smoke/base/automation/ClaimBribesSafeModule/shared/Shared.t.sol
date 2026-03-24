@@ -5,6 +5,8 @@ import {BaseSmoke} from "tests/smoke/BaseSmoke.t.sol";
 import {ClaimBribesSafeModule} from "contracts/automation/ClaimBribesSafeModule.sol";
 
 abstract contract Smoke_ClaimBribesSafeModule_Shared_Test is BaseSmoke {
+    ClaimBribesSafeModule internal claimBribesModule;
+
     //////////////////////////////////////////////////////
     /// --- ADDRESSES
     //////////////////////////////////////////////////////

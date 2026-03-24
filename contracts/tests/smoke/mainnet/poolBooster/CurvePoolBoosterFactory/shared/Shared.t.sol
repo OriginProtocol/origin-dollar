@@ -7,6 +7,9 @@ import {CurvePoolBoosterPlain} from "contracts/poolBooster/curve/CurvePoolBooste
 import {Mainnet} from "tests/utils/Addresses.sol";
 
 abstract contract Smoke_CurvePoolBoosterFactory_Shared_Test is BaseSmoke {
+    CurvePoolBoosterFactory internal curvePoolBoosterFactory;
+    CurvePoolBoosterPlain internal curvePoolBoosterPlain;
+
     function setUp() public virtual override {
         super.setUp();
         _createAndSelectForkMainnet();

@@ -5,6 +5,8 @@ import {Base} from "tests/Base.t.sol";
 import {OETHBase} from "contracts/token/OETHBase.sol";
 
 contract Unit_Concrete_OETHBase_ViewFunctions_Test is Base {
+    OETHBase internal oethBase;
+
     //////////////////////////////////////////////////////
     /// --- SETUP
     //////////////////////////////////////////////////////

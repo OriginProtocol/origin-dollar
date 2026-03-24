@@ -127,8 +127,8 @@ contract Unit_Concrete_WOETH_Redeem_Test is Unit_WOETH_Shared_Test {
         uint256 aliceRedeemed = woeth.redeem(aliceShares, alice, alice);
 
         // Compute yield rates (scaled by 1e18)
-        uint256 oethYieldRate = (bobbyOethAfter - bobbyOethBefore) * 1e18 / bobbyOethBefore;
-        uint256 woethYieldRate = (aliceRedeemed - initialDeposit) * 1e18 / initialDeposit;
+        uint256 oethYieldRate = ((bobbyOethAfter - bobbyOethBefore) * 1e18) / bobbyOethBefore;
+        uint256 woethYieldRate = ((aliceRedeemed - initialDeposit) * 1e18) / initialDeposit;
 
         // WOETH yield rate should match OETH yield rate (within 2 wei of 1e18-scaled rate)
         assertApproxEqAbs(oethYieldRate, woethYieldRate, 2);

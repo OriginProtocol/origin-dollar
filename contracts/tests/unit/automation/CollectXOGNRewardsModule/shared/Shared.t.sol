@@ -10,9 +10,11 @@ import {CollectXOGNRewardsModule} from "contracts/automation/CollectXOGNRewardsM
 
 abstract contract Unit_CollectXOGNRewardsModule_Shared_Test is Base {
     //////////////////////////////////////////////////////
-    /// --- CONTRACTS
+    /// --- CONTRACTS & MOCKS
     //////////////////////////////////////////////////////
 
+    MockSafeContract internal mockSafe;
+    CollectXOGNRewardsModule internal collectXOGNRewardsModule;
     MockERC20 internal ognToken;
     MockXOGN internal xognMock;
 

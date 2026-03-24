@@ -126,8 +126,8 @@ contract Fork_Concrete_SonicSwapXAMOStrategy_FrontRunning_Test is Fork_SonicSwap
         // Calculate profit: change in vault value + burnt OS
         uint256 vaultValueAfter = oSonicVault.totalValue();
         uint256 osSupplyAfter = oSonic.totalSupply();
-        int256 profit =
-            int256(vaultValueAfter) - int256(vaultValueBefore) + int256(osSupplyBefore) - int256(osSupplyAfter);
+        int256 profit = int256(vaultValueAfter) - int256(vaultValueBefore) + int256(osSupplyBefore)
+            - int256(osSupplyAfter);
 
         // Vault should have positive profit (attacker lost, protocol gained)
         assertGt(profit, 0, "Vault should profit from attacker's tilt");
@@ -157,8 +157,8 @@ contract Fork_Concrete_SonicSwapXAMOStrategy_FrontRunning_Test is Fork_SonicSwap
         // Calculate profit
         uint256 vaultValueAfter = oSonicVault.totalValue();
         uint256 osSupplyAfter = oSonic.totalSupply();
-        int256 profit =
-            int256(vaultValueAfter) - int256(vaultValueBefore) + int256(osSupplyBefore) - int256(osSupplyAfter);
+        int256 profit = int256(vaultValueAfter) - int256(vaultValueBefore) + int256(osSupplyBefore)
+            - int256(osSupplyAfter);
 
         assertGt(profit, 0, "Vault should profit from attacker's tilt");
     }

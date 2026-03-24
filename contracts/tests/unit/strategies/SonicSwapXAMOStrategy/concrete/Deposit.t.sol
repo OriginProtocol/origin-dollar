@@ -52,7 +52,7 @@ contract Unit_Concrete_SonicSwapXAMOStrategy_Deposit_Test is Unit_SonicSwapXAMOS
         // Verify solvency maintained
         uint256 totalValue = oSonicVault.totalValue();
         uint256 totalSupply = oSonic.totalSupply();
-        assertGe(totalValue * 1e18 / totalSupply, 0.998 ether);
+        assertGe((totalValue * 1e18) / totalSupply, 0.998 ether);
     }
 
     function test_deposit_RevertWhen_wrongAsset() public {

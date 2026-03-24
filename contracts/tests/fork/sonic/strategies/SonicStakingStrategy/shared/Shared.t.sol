@@ -24,6 +24,9 @@ abstract contract Fork_SonicStakingStrategy_Shared_Test is BaseFork {
     /// --- CONTRACTS
     //////////////////////////////////////////////////////
 
+    SonicStakingStrategy internal sonicStakingStrategy;
+    OSonic internal oSonic;
+    OSVault internal oSonicVault;
     ISFC internal sfc;
     IWrappedSonic internal wrappedSonic;
     address internal validatorRegistrator;

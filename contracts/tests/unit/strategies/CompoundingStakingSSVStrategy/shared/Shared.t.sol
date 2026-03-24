@@ -25,6 +25,22 @@ abstract contract Unit_CompoundingStakingSSVStrategy_Shared_Test is Base {
     using stdJson for string;
 
     //////////////////////////////////////////////////////
+    /// --- CONTRACTS & PROXIES (moved from Base)
+    //////////////////////////////////////////////////////
+
+    MockWETH internal mockWeth;
+    MockSSVNetwork internal mockSsvNetwork;
+    MockSSV internal mockSsv;
+    MockDepositContract internal mockDepositContract;
+    MockBeaconProofs internal mockBeaconProofs;
+    OETH internal oeth;
+    OETHVault internal oethVault;
+    OETHProxy internal oethProxy;
+    OETHVaultProxy internal oethVaultProxy;
+    CompoundingStakingSSVStrategy internal compoundingStakingSSVStrategy;
+    CompoundingStakingStrategyView internal compoundingStakingView;
+
+    //////////////////////////////////////////////////////
     /// --- CONSTANTS
     //////////////////////////////////////////////////////
 

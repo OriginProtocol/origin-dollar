@@ -16,6 +16,9 @@ abstract contract Smoke_SonicSwapXAMOStrategy_Shared_Test is BaseSmoke {
     /// --- CONTRACTS
     //////////////////////////////////////////////////////
 
+    OSonic internal oSonic;
+    OSVault internal oSonicVault;
+    SonicSwapXAMOStrategy internal sonicSwapXAMOStrategy;
     IERC20 internal wrappedSonic;
     IPair internal swapXPool;
     IGauge internal swapXGauge;

@@ -14,6 +14,8 @@ abstract contract Smoke_EthereumBridgeHelperModule_Shared_Test is BaseSmoke {
     /// --- CONTRACTS
     //////////////////////////////////////////////////////
 
+    EthereumBridgeHelperModule internal ethereumBridgeHelperModule;
+    WOETH internal woeth;
     IVault internal vault;
 
     //////////////////////////////////////////////////////

@@ -5,6 +5,8 @@ import {Base} from "tests/Base.t.sol";
 import {OSonic} from "contracts/token/OSonic.sol";
 
 contract Unit_Concrete_OSonic_ViewFunctions_Test is Base {
+    OSonic internal oSonic;
+
     //////////////////////////////////////////////////////
     /// --- SETUP
     //////////////////////////////////////////////////////

@@ -11,6 +11,10 @@ import {CurveAMOStrategy} from "contracts/strategies/CurveAMOStrategy.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 abstract contract Smoke_OUSDCurveAMOStrategy_Shared_Test is BaseSmoke {
+    OUSD internal ousd;
+    OUSDVault internal ousdVault;
+    CurveAMOStrategy internal curveAMOStrategy;
+
     //////////////////////////////////////////////////////
     /// --- SETUP
     //////////////////////////////////////////////////////

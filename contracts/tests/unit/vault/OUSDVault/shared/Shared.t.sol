@@ -15,6 +15,17 @@ import {MockNonRebasing} from "contracts/mocks/MockNonRebasing.sol";
 
 abstract contract Unit_Shared_Test is Base {
     //////////////////////////////////////////////////////
+    /// --- CONTRACTS
+    //////////////////////////////////////////////////////
+    OUSD internal ousd;
+    OUSDVault internal ousdVault;
+    OUSDProxy internal ousdProxy;
+    VaultProxy internal ousdVaultProxy;
+
+    MockStrategy internal mockStrategy;
+    MockNonRebasing internal mockNonRebasing;
+
+    //////////////////////////////////////////////////////
     /// --- CONSTANTS
     //////////////////////////////////////////////////////
     uint256 internal constant DELAY_PERIOD = 600; // 10 minutes

@@ -23,6 +23,15 @@ abstract contract Fork_SwapXPoolBooster_Shared_Test is BaseFork {
     bytes32 internal constant GOVERNOR_SLOT = 0x7bea13895fa79d2831e0a9e28edede30099005a50d652d8957cf8a607ee6ca4a;
 
     //////////////////////////////////////////////////////
+    /// --- CONTRACTS
+    //////////////////////////////////////////////////////
+
+    OSonic internal oSonic;
+    PoolBoostCentralRegistry internal centralRegistry;
+    PoolBoosterFactorySwapxDouble internal factorySwapxDouble;
+    PoolBoosterFactorySwapxSingle internal factorySwapxSingle;
+
+    //////////////////////////////////////////////////////
     /// --- SETUP
     //////////////////////////////////////////////////////
 

@@ -69,7 +69,7 @@ contract Unit_Fuzz_WOETH_Deposit_Test is Unit_WOETH_Shared_Test {
         assertEq(woeth.balanceOf(alice), shares);
 
         // Each share worth more after rebase
-        assertGt(woeth.convertToAssets(1e18), woeth.convertToAssets(1e18) * totalAssetsBefore / woeth.totalAssets());
+        assertGt(woeth.convertToAssets(1e18), (woeth.convertToAssets(1e18) * totalAssetsBefore) / woeth.totalAssets());
     }
 
     //////////////////////////////////////////////////////

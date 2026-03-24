@@ -28,6 +28,11 @@ abstract contract Fork_CurveAMOStrategy_Shared_Test is BaseFork {
     /// --- CONTRACTS
     //////////////////////////////////////////////////////
 
+    OETH internal oeth;
+    OETHVault internal oethVault;
+    OETHProxy internal oethProxy;
+    OETHVaultProxy internal oethVaultProxy;
+    CurveAMOStrategy internal curveAMOStrategy;
     ICurveStableSwapNG internal curvePool;
     ICurveLiquidityGaugeV6 internal curveGauge;
     ICurveMinter internal curveMinter;

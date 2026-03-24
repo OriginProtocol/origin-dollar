@@ -6,6 +6,8 @@ import {Smoke_OSonic_Shared_Test} from "tests/smoke/sonic/token/OSonic/shared/Sh
 import {WOSonic} from "contracts/token/WOSonic.sol";
 
 abstract contract Smoke_WOSonic_Shared_Test is Smoke_OSonic_Shared_Test {
+    WOSonic internal woSonic;
+
     //////////////////////////////////////////////////////
     /// --- SETUP
     //////////////////////////////////////////////////////

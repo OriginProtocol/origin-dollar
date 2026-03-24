@@ -10,6 +10,9 @@ import {OUSDVault} from "contracts/vault/OUSDVault.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 abstract contract Smoke_OUSD_Shared_Test is BaseSmoke {
+    OUSD internal ousd;
+    OUSDVault internal ousdVault;
+
     //////////////////////////////////////////////////////
     /// --- SETUP
     //////////////////////////////////////////////////////

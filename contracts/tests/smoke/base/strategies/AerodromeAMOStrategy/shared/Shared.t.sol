@@ -14,6 +14,11 @@ import {ISwapRouter} from "contracts/interfaces/aerodrome/ISwapRouter.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 abstract contract Smoke_AerodromeAMOStrategy_Shared_Test is BaseSmoke {
+    OETHBase internal oethBase;
+    OETHBaseVault internal oethBaseVault;
+    AerodromeAMOStrategy internal aerodromeAMOStrategy;
+    AerodromeAMOQuoter internal aerodromeAMOQuoter;
+
     //////////////////////////////////////////////////////
     /// --- SETUP
     //////////////////////////////////////////////////////
@@ -144,7 +149,7 @@ abstract contract Smoke_AerodromeAMOStrategy_Shared_Test is BaseSmoke {
 
         // Execute rebalance with quoted amount
         bool swapWeth = quoterHelper.getSwapDirectionForRebalance();
-        uint256 minAmount = data.amount * 99 / 100;
+        uint256 minAmount = (data.amount * 99) / 100;
         vm.prank(strategist);
         aerodromeAMOStrategy.rebalance(data.amount, swapWeth, minAmount);
     }

@@ -19,6 +19,8 @@ contract Unit_Concrete_CrossChainRemoteStrategy_DepositFailure_Test is Base {
 
     bytes32 internal constant GOVERNOR_SLOT = 0x7bea13895fa79d2831e0a9e28edede30099005a50d652d8957cf8a607ee6ca4a;
 
+    CCTPMessageTransmitterMock internal cctpMessageTransmitterMock;
+    CCTPTokenMessengerMock internal cctpTokenMessengerMock;
     MockERC20 internal mockUsdc;
     MockERC20 internal peerUsdc;
     MockFailableERC4626Vault internal failableVault;

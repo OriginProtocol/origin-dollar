@@ -16,6 +16,14 @@ import {PoolBoosterSwapxDouble} from "contracts/poolBooster/PoolBoosterSwapxDoub
 
 abstract contract Unit_SwapXDouble_Shared_Test is Base {
     //////////////////////////////////////////////////////
+    /// --- CONTRACTS & MOCKS
+    //////////////////////////////////////////////////////
+    OSonic internal oSonic;
+    PoolBoostCentralRegistry internal centralRegistry;
+    PoolBoosterFactorySwapxDouble internal factorySwapxDouble;
+    PoolBoosterSwapxDouble internal boosterSwapxDouble;
+
+    //////////////////////////////////////////////////////
     /// --- CONSTANTS
     //////////////////////////////////////////////////////
 

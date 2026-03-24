@@ -5,6 +5,8 @@ import {BaseSmoke} from "tests/smoke/BaseSmoke.t.sol";
 import {CollectXOGNRewardsModule} from "contracts/automation/CollectXOGNRewardsModule.sol";
 
 abstract contract Smoke_CollectXOGNRewardsModule_Shared_Test is BaseSmoke {
+    CollectXOGNRewardsModule internal collectXOGNRewardsModule;
+
     function setUp() public virtual override {
         super.setUp();
         _createAndSelectForkMainnet();

@@ -18,6 +18,17 @@ import {MockCurveGaugeFactory} from "tests/mocks/MockCurveGaugeFactory.sol";
 
 abstract contract Unit_BaseCurveAMOStrategy_Shared_Test is Base {
     //////////////////////////////////////////////////////
+    /// --- CONTRACTS & PROXIES (moved from Base)
+    //////////////////////////////////////////////////////
+
+    MockWETH internal mockWeth;
+    OETH internal oeth;
+    OETHVault internal oethVault;
+    OETHProxy internal oethProxy;
+    OETHVaultProxy internal oethVaultProxy;
+    BaseCurveAMOStrategy internal baseCurveAMOStrategy;
+
+    //////////////////////////////////////////////////////
     /// --- CONSTANTS
     //////////////////////////////////////////////////////
 

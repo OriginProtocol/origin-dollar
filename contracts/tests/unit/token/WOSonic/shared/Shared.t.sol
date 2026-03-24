@@ -16,6 +16,17 @@ import {WOSonic} from "contracts/token/WOSonic.sol";
 
 abstract contract Unit_WOSonic_Shared_Test is Base {
     //////////////////////////////////////////////////////
+    /// --- CONTRACTS
+    //////////////////////////////////////////////////////
+    OSonic internal oSonic;
+    OETHVault internal oethVault;
+    OETHProxy internal oethProxy;
+    OETHVaultProxy internal oethVaultProxy;
+
+    WOSonic internal woSonic;
+    WOETHProxy internal woSonicProxy;
+
+    //////////////////////////////////////////////////////
     /// --- CONSTANTS
     //////////////////////////////////////////////////////
     uint256 internal constant DELAY_PERIOD = 600;

@@ -15,6 +15,14 @@ import {PoolBoosterMetropolis} from "contracts/poolBooster/PoolBoosterMetropolis
 
 abstract contract Unit_Metropolis_Shared_Test is Base {
     //////////////////////////////////////////////////////
+    /// --- CONTRACTS & MOCKS
+    //////////////////////////////////////////////////////
+    OSonic internal oSonic;
+    PoolBoostCentralRegistry internal centralRegistry;
+    PoolBoosterFactoryMetropolis internal factoryMetropolis;
+    PoolBoosterMetropolis internal boosterMetropolis;
+
+    //////////////////////////////////////////////////////
     /// --- CONSTANTS
     //////////////////////////////////////////////////////
 

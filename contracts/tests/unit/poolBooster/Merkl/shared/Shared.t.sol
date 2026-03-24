@@ -18,6 +18,14 @@ import {PoolBoosterMerklV2} from "contracts/poolBooster/PoolBoosterMerklV2.sol";
 
 abstract contract Unit_Merkl_Shared_Test is Base {
     //////////////////////////////////////////////////////
+    /// --- CONTRACTS & MOCKS
+    //////////////////////////////////////////////////////
+    OETH internal oeth;
+    PoolBoostCentralRegistry internal centralRegistry;
+    PoolBoosterFactoryMerkl internal factoryMerkl;
+    PoolBoosterMerklV2 internal boosterMerkl;
+
+    //////////////////////////////////////////////////////
     /// --- CONSTANTS
     //////////////////////////////////////////////////////
 

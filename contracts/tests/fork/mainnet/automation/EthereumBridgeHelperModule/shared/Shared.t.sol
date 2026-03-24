@@ -13,6 +13,15 @@ import {EthereumBridgeHelperModule} from "contracts/automation/EthereumBridgeHel
 
 abstract contract Fork_EthereumBridgeHelperModule_Shared_Test is BaseFork {
     //////////////////////////////////////////////////////
+    /// --- CONTRACTS
+    //////////////////////////////////////////////////////
+
+    OETH internal oeth;
+    OETHVault internal oethVault;
+    WOETH internal woeth;
+    EthereumBridgeHelperModule internal ethereumBridgeHelperModule;
+
+    //////////////////////////////////////////////////////
     /// --- ADDRESSES
     //////////////////////////////////////////////////////
 

@@ -17,6 +17,9 @@ abstract contract Fork_BaseBridgeHelperModule_Shared_Test is BaseFork {
     /// --- CONTRACTS
     //////////////////////////////////////////////////////
 
+    OETHBase internal oethBase;
+    BridgedWOETHStrategy internal bridgedWOETHStrategy;
+    BaseBridgeHelperModule internal baseBridgeHelperModule;
     IVault internal vault;
     IERC4626 internal bridgedWoeth;
 

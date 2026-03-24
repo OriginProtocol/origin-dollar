@@ -168,6 +168,6 @@ contract Unit_Concrete_CurveAMOStrategy_Deposit_Test is Unit_CurveAMOStrategy_Sh
         // Verify solvency is maintained (totalValue / totalSupply >= 0.998)
         uint256 totalValue = oethVault.totalValue();
         uint256 totalSupply = oeth.totalSupply();
-        assertGe(totalValue * 1e18 / totalSupply, 0.998 ether);
+        assertGe((totalValue * 1e18) / totalSupply, 0.998 ether);
     }
 }

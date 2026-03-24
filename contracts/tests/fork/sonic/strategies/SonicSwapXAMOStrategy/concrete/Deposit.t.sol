@@ -16,7 +16,7 @@ contract Fork_Concrete_SonicSwapXAMOStrategy_Deposit_Test is Fork_SonicSwapXAMOS
         uint256 amount = 2000 ether;
 
         (uint256 wsReservesBefore, uint256 osReservesBefore,) = swapXPool.getReserves();
-        uint256 expectedOS = amount * osReservesBefore / wsReservesBefore;
+        uint256 expectedOS = (amount * osReservesBefore) / wsReservesBefore;
 
         _depositAsVault(amount);
 
@@ -167,7 +167,7 @@ contract Fork_Concrete_SonicSwapXAMOStrategy_Deposit_Test is Fork_SonicSwapXAMOS
         uint256 amount = 5000 ether;
 
         (uint256 wsReserves, uint256 osReserves,) = swapXPool.getReserves();
-        uint256 expectedOS = amount * osReserves / wsReserves;
+        uint256 expectedOS = (amount * osReserves) / wsReserves;
         uint256 osSupplyBefore = oSonic.totalSupply();
 
         _depositAsVault(amount);

@@ -11,6 +11,9 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {OETHBaseVault} from "contracts/vault/OETHBaseVault.sol";
 
 abstract contract Smoke_PoolBoosterMerklBase_Shared_Test is BaseSmoke {
+    PoolBoosterFactoryMerkl internal factoryMerkl;
+    PoolBoosterMerklV2 internal boosterMerkl;
+
     function setUp() public virtual override {
         super.setUp();
         _createAndSelectForkBase();

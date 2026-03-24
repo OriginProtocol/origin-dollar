@@ -17,6 +17,17 @@ import {MockWETH} from "contracts/mocks/MockWETH.sol";
 
 abstract contract Unit_OSonicZapper_Shared_Test is Base {
     //////////////////////////////////////////////////////
+    /// --- CONTRACTS & MOCKS
+    //////////////////////////////////////////////////////
+    OSonic internal oSonic;
+    OETHVault internal oethVault;
+    OETHProxy internal oethProxy;
+    OETHVaultProxy internal oethVaultProxy;
+    WOSonic internal woSonic;
+    WOETHProxy internal woSonicProxy;
+    OSonicZapper internal oSonicZapper;
+
+    //////////////////////////////////////////////////////
     /// --- CONSTANTS
     //////////////////////////////////////////////////////
     address internal constant ETH_MARKER = 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE;

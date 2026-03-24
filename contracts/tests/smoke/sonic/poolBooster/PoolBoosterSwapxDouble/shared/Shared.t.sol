@@ -11,6 +11,9 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {OSVault} from "contracts/vault/OSVault.sol";
 
 abstract contract Smoke_PoolBoosterSwapxDouble_Shared_Test is BaseSmoke {
+    PoolBoosterFactorySwapxDouble internal factorySwapxDouble;
+    PoolBoosterSwapxDouble internal boosterSwapxDouble;
+
     function setUp() public virtual override {
         super.setUp();
         _createAndSelectForkSonic();

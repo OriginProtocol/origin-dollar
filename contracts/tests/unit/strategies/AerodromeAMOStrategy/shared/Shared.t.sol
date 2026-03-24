@@ -22,6 +22,17 @@ import {MockSugarHelper} from "tests/mocks/aerodrome/MockSugarHelper.sol";
 
 abstract contract Unit_AerodromeAMOStrategy_Shared_Test is Base {
     //////////////////////////////////////////////////////
+    /// --- CONTRACTS & PROXIES (moved from Base)
+    //////////////////////////////////////////////////////
+
+    MockWETH internal mockWeth;
+    OETHBase internal oethBase;
+    OETHBaseVault internal oethBaseVault;
+    OETHBaseProxy internal oethBaseProxy;
+    OETHBaseVaultProxy internal oethBaseVaultProxy;
+    AerodromeAMOStrategy internal aerodromeAMOStrategy;
+
+    //////////////////////////////////////////////////////
     /// --- CONSTANTS
     //////////////////////////////////////////////////////
 

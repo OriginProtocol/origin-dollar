@@ -11,6 +11,8 @@ import {CrossChainStrategyHelper} from "contracts/strategies/crosschain/CrossCha
 import {CCTPMessageTransmitterMock2} from "contracts/mocks/crosschain/CCTPMessageTransmitterMock2.sol";
 
 abstract contract Smoke_CrossChainRemoteStrategyBase_Shared_Test is BaseSmoke {
+    CrossChainRemoteStrategy internal crossChainRemoteStrategy;
+
     //////////////////////////////////////////////////////
     /// --- ADDRESSES
     //////////////////////////////////////////////////////

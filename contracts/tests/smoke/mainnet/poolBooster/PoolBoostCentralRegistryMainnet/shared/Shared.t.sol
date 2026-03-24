@@ -8,6 +8,9 @@ import {PoolBoostCentralRegistry} from "contracts/poolBooster/PoolBoostCentralRe
 import {PoolBoosterFactoryMerkl} from "contracts/poolBooster/PoolBoosterFactoryMerkl.sol";
 
 abstract contract Smoke_PoolBoostCentralRegistryMainnet_Shared_Test is BaseSmoke {
+    PoolBoostCentralRegistry internal centralRegistry;
+    PoolBoosterFactoryMerkl internal factoryMerkl;
+
     function setUp() public virtual override {
         super.setUp();
         _createAndSelectForkMainnet();

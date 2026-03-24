@@ -12,9 +12,11 @@ import {ClaimBribesSafeModule} from "contracts/automation/ClaimBribesSafeModule.
 
 abstract contract Unit_ClaimBribesSafeModule_Shared_Test is Base {
     //////////////////////////////////////////////////////
-    /// --- CONTRACTS
+    /// --- CONTRACTS & MOCKS
     //////////////////////////////////////////////////////
 
+    MockSafeContract internal mockSafe;
+    ClaimBribesSafeModule internal claimBribesModule;
     MockAerodromeVoter internal mockVoter;
     MockVeNFT internal mockVeNFT;
     MockCLRewardContract internal mockRewardContract;

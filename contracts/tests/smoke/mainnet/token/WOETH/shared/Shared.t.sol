@@ -6,6 +6,8 @@ import {Smoke_OETH_Shared_Test} from "tests/smoke/mainnet/token/OETH/shared/Shar
 import {WOETH} from "contracts/token/WOETH.sol";
 
 abstract contract Smoke_WOETH_Shared_Test is Smoke_OETH_Shared_Test {
+    WOETH internal woeth;
+
     //////////////////////////////////////////////////////
     /// --- SETUP
     //////////////////////////////////////////////////////

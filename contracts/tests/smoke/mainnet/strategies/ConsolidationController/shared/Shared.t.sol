@@ -11,6 +11,13 @@ import {OETH} from "contracts/token/OETH.sol";
 import {OETHVault} from "contracts/vault/OETHVault.sol";
 
 abstract contract Smoke_ConsolidationController_Shared_Test is BaseSmoke {
+    ConsolidationController internal consolidationController;
+    NativeStakingSSVStrategy internal nativeStakingSSVStrategy2;
+    NativeStakingSSVStrategy internal nativeStakingSSVStrategy3;
+    CompoundingStakingSSVStrategy internal compoundingStakingSSVStrategy;
+    OETH internal oeth;
+    OETHVault internal oethVault;
+
     //////////////////////////////////////////////////////
     /// --- SETUP
     //////////////////////////////////////////////////////

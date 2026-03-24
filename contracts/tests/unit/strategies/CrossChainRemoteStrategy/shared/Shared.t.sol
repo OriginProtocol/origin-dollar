@@ -15,6 +15,15 @@ import {InitializableAbstractStrategy} from "contracts/utils/InitializableAbstra
 
 abstract contract Unit_CrossChainRemoteStrategy_Shared_Test is Base {
     //////////////////////////////////////////////////////
+    /// --- CONTRACTS & PROXIES (moved from Base)
+    //////////////////////////////////////////////////////
+
+    CrossChainRemoteStrategy internal crossChainRemoteStrategy;
+    CCTPMessageTransmitterMock internal cctpMessageTransmitterMock;
+    CCTPTokenMessengerMock internal cctpTokenMessengerMock;
+    MockERC4626Vault internal mockERC4626Vault;
+
+    //////////////////////////////////////////////////////
     /// --- CONSTANTS
     //////////////////////////////////////////////////////
 

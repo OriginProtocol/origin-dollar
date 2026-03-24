@@ -9,9 +9,11 @@ import {ClaimStrategyRewardsSafeModule} from "contracts/automation/ClaimStrategy
 
 abstract contract Unit_ClaimStrategyRewardsSafeModule_Shared_Test is Base {
     //////////////////////////////////////////////////////
-    /// --- CONTRACTS
+    /// --- CONTRACTS & MOCKS
     //////////////////////////////////////////////////////
 
+    MockSafeContract internal mockSafe;
+    ClaimStrategyRewardsSafeModule internal claimStrategyRewardsModule;
     address internal strategyA;
     address internal strategyB;
 

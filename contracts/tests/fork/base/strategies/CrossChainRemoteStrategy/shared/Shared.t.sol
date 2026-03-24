@@ -15,6 +15,7 @@ abstract contract Fork_CrossChainRemoteStrategy_Shared_Test is BaseFork {
     /// --- CONTRACTS
     //////////////////////////////////////////////////////
 
+    CrossChainRemoteStrategy internal crossChainRemoteStrategy;
     address internal relayer;
     address internal strategistAddr;
     address internal rafael;

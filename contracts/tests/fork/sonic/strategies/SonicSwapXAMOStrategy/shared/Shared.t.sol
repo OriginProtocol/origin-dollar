@@ -26,6 +26,11 @@ abstract contract Fork_SonicSwapXAMOStrategy_Shared_Test is BaseFork {
     /// --- CONTRACTS
     //////////////////////////////////////////////////////
 
+    OSonic internal oSonic;
+    OSVault internal oSonicVault;
+    OSonicProxy internal oSonicProxy;
+    OSonicVaultProxy internal oSonicVaultProxy;
+    SonicSwapXAMOStrategy internal sonicSwapXAMOStrategy;
     IPair internal swapXPool;
     IGauge internal swapXGauge;
     IERC20 internal wrappedSonic;

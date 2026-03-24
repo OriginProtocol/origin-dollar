@@ -17,6 +17,14 @@ import {AbstractPoolBoosterFactory} from "contracts/poolBooster/AbstractPoolBoos
 
 abstract contract Unit_SwapXSingle_Shared_Test is Base {
     //////////////////////////////////////////////////////
+    /// --- CONTRACTS & MOCKS
+    //////////////////////////////////////////////////////
+    OSonic internal oSonic;
+    PoolBoostCentralRegistry internal centralRegistry;
+    PoolBoosterFactorySwapxSingle internal factorySwapxSingle;
+    PoolBoosterSwapxSingle internal boosterSwapxSingle;
+
+    //////////////////////////////////////////////////////
     /// --- CONSTANTS
     //////////////////////////////////////////////////////
 

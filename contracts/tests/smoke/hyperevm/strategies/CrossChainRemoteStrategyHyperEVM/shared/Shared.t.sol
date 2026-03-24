@@ -12,6 +12,8 @@ import {CCTPMessageTransmitterMock2} from "contracts/mocks/crosschain/CCTPMessag
 import {CCTPTokenMessengerMock} from "contracts/mocks/crosschain/CCTPTokenMessengerMock.sol";
 
 abstract contract Smoke_CrossChainRemoteStrategyHyperEVM_Shared_Test is BaseSmoke {
+    CrossChainRemoteStrategy internal crossChainRemoteStrategy;
+
     //////////////////////////////////////////////////////
     /// --- ADDRESSES
     //////////////////////////////////////////////////////

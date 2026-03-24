@@ -21,6 +21,19 @@ import {Client} from "@chainlink/contracts-ccip/src/v0.8/ccip/libraries/Client.s
 
 abstract contract Unit_WOETHCCIPZapper_Shared_Test is Base {
     //////////////////////////////////////////////////////
+    /// --- CONTRACTS & MOCKS
+    //////////////////////////////////////////////////////
+    OETH internal oeth;
+    OETHVault internal oethVault;
+    OETHProxy internal oethProxy;
+    OETHVaultProxy internal oethVaultProxy;
+    WOETH internal woeth;
+    WOETHProxy internal woethProxy;
+    OETHZapper internal oethZapper;
+    WOETHCCIPZapper internal woethCcipZapper;
+    MockWETH internal mockWeth;
+
+    //////////////////////////////////////////////////////
     /// --- CONSTANTS
     //////////////////////////////////////////////////////
     uint64 internal constant DEST_CHAIN_SELECTOR = 4949039107694359620; // Arbitrum

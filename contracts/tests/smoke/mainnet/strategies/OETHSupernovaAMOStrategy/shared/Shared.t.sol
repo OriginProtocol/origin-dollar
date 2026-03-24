@@ -16,6 +16,9 @@ abstract contract Smoke_OETHSupernovaAMOStrategy_Shared_Test is BaseSmoke {
     /// --- CONTRACTS
     //////////////////////////////////////////////////////
 
+    OETH internal oeth;
+    OETHVault internal oethVault;
+    OETHSupernovaAMOStrategy internal oethSupernovaAMOStrategy;
     IERC20 internal wrappedEther;
     IPair internal supernovaPool;
     IGauge internal supernovaGauge;

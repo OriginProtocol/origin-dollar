@@ -18,6 +18,18 @@ import {InitializableAbstractStrategy} from "contracts/utils/InitializableAbstra
 
 abstract contract Unit_CrossChainMasterStrategy_Shared_Test is Base {
     //////////////////////////////////////////////////////
+    /// --- CONTRACTS & PROXIES (moved from Base)
+    //////////////////////////////////////////////////////
+
+    OUSD internal ousd;
+    OUSDVault internal ousdVault;
+    OUSDProxy internal ousdProxy;
+    VaultProxy internal ousdVaultProxy;
+    CrossChainMasterStrategy internal crossChainMasterStrategy;
+    CCTPMessageTransmitterMock internal cctpMessageTransmitterMock;
+    CCTPTokenMessengerMock internal cctpTokenMessengerMock;
+
+    //////////////////////////////////////////////////////
     /// --- CONSTANTS
     //////////////////////////////////////////////////////
 
