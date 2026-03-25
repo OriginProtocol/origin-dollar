@@ -41,6 +41,7 @@ const actions = [
   "sonicClaimWithdrawals",
   "claimBribes",
   "crossChainRelay",
+  "crossChainRelayHyperEVM",
   "manageBribes", 
   "manageMerklBribes"
 ];
