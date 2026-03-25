@@ -44,6 +44,7 @@ const ousdConstraints = {
   minVaultBalance: 3000000000, // $3K in USDC (6 decimals)
   minApySpread: 0.005, // 0.5% minimum APY spread to trigger rebalancing
   maxApyThreshold: 0.5, // 50% — APY above this is treated as suspicious
+  maxApyImpactBps: 50, // Skip deposit if it would drop vault APY by > 0.5%
 };
 
 module.exports = { ousdMorphoStrategiesConfig, ousdConstraints };

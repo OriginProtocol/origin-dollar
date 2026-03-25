@@ -7,6 +7,7 @@ const {
   ousdMorphoStrategiesConfig,
   ousdConstraints,
 } = require("./rebalancer-config");
+const { estimateVaultApy, estimateDepositImpact } = require("./morpho-apy");
 
 const log = require("./logger")("utils:rebalancer");
 
@@ -125,22 +126,51 @@ async function _fetchMorphoVaultApy(morphoVaultAddress, morphoChainId) {
 
 /**
  * Fetch APYs for multiple vaults in parallel.
+ * Returns both on-chain (authoritative) and GraphQL (display-only) APYs.
+ *
  * @param {Array} vaults - objects with morphoVaultAddress and morphoChainId
- * @returns {object} map of morphoVaultAddress -> apy (float, e.g. 0.05 = 5%)
+ * @param {object} providers - { [chainId]: ethersProvider }
+ * @returns {object} { apys: { addr: number }, graphqlApys: { addr: number } }
  */
-async function fetchMorphoApys(vaults) {
+async function fetchMorphoApys(vaults, providers) {
   const entries = await Promise.all(
-    vaults.map(async (v) => [
-      v.morphoVaultAddress,
-      await _fetchMorphoVaultApy(v.morphoVaultAddress, v.morphoChainId),
-    ])
+    vaults.map(async (v) => {
+      const provider = providers[v.morphoChainId];
+
+      // Fetch on-chain and GraphQL APYs in parallel
+      const onChainApyPromise = provider
+        ? estimateVaultApy(
+            provider,
+            v.morphoChainId,
+            v.morphoVaultAddress
+          ).catch((err) => {
+            console.error(
+              `[rebalancer] On-chain APY failed for ${v.morphoVaultAddress} on chain ${v.morphoChainId}: ${err.message}`
+            );
+            return 0;
+          })
+        : Promise.resolve(0);
+
+      const [onChainApy, graphqlApy] = await Promise.all([
+        onChainApyPromise,
+        _fetchMorphoVaultApy(v.morphoVaultAddress, v.morphoChainId),
+      ]);
+
+      return {
+        addr: v.morphoVaultAddress,
+        onChainApy,
+        graphqlApy,
+      };
+    })
   );
 
-  const results = {};
-  for (const [addr, apy] of entries) {
-    results[addr] = apy;
+  const apys = {};
+  const graphqlApys = {};
+  for (const { addr, onChainApy, graphqlApy } of entries) {
+    apys[addr] = onChainApy;
+    graphqlApys[addr] = graphqlApy;
   }
-  return results;
+  return { apys, graphqlApys };
 }
 
 /**
@@ -245,7 +275,7 @@ function _enforceDefaultMinimum(
 /**
  * Build an allocation row for a strategy given its computed target balance.
  */
-function _buildAllocationRow(s, targetBalance, apy) {
+function _buildAllocationRow(s, targetBalance, apy, graphqlApy = 0) {
   const delta = targetBalance.sub(s.balance);
   return {
     name: s.name,
@@ -254,8 +284,10 @@ function _buildAllocationRow(s, targetBalance, apy) {
     isTransferPending: s.isTransferPending,
     isDefault: s.isDefault,
     morphoVaultAddress: s.morphoVaultAddress,
+    morphoChainId: s.morphoChainId,
     balance: s.balance,
     apy,
+    graphqlApy,
     targetBalance,
     delta,
     action: delta.gt(0)
@@ -277,7 +309,8 @@ function _buildAllocationRow(s, targetBalance, apy) {
  *
  * @param {object} params
  * @param {Array}  params.strategies
- * @param {object} params.apys - morphoVaultAddress -> apy (float)
+ * @param {object} params.apys - morphoVaultAddress -> apy (float, on-chain)
+ * @param {object} [params.graphqlApys] - morphoVaultAddress -> apy (float, GraphQL display-only)
  * @param {BigNumber} params.vaultBalance
  * @param {BigNumber} params.shortfall
  * @param {object} [params.constraints]
@@ -286,12 +319,14 @@ function _buildAllocationRow(s, targetBalance, apy) {
 function computeOptimalAllocation({
   strategies,
   apys,
+  graphqlApys = {},
   vaultBalance,
   shortfall,
   constraints: overrides = {},
 }) {
   const constraints = { ...ousdConstraints, ...overrides };
   const strategyApyOf = (s) => apys[s.morphoVaultAddress] || 0;
+  const strategyGraphqlApyOf = (s) => graphqlApys[s.morphoVaultAddress] || 0;
   const deployableCapital = _computeDeployableCapital(
     strategies,
     vaultBalance,
@@ -301,7 +336,12 @@ function computeOptimalAllocation({
 
   if (deployableCapital.isZero()) {
     return strategies.map((s) =>
-      _buildAllocationRow(s, BigNumber.from(0), strategyApyOf(s))
+      _buildAllocationRow(
+        s,
+        BigNumber.from(0),
+        strategyApyOf(s),
+        strategyGraphqlApyOf(s)
+      )
     );
   }
 
@@ -318,7 +358,12 @@ function computeOptimalAllocation({
     constraints
   );
   return strategies.map((s) =>
-    _buildAllocationRow(s, adjusted[s.address], strategyApyOf(s))
+    _buildAllocationRow(
+      s,
+      adjusted[s.address],
+      strategyApyOf(s),
+      strategyGraphqlApyOf(s)
+    )
   );
 }
 
@@ -371,8 +416,17 @@ function _filterWithdrawals(result, constraints) {
  * Compute deposit budget, then distribute across deposits in APY-descending order.
  * Budget = approved withdrawal total + vault surplus above reserves.
  * Infeasible deposits are set to ACTION_NONE with a reason.
+ *
+ * @param {object} [providers] - { [chainId]: ethersProvider } for APY impact checks.
+ *   Skipped when process.env.IS_TEST is set.
  */
-function _filterDeposits(result, vaultBalance, shortfall, constraints) {
+async function _filterDeposits(
+  result,
+  vaultBalance,
+  shortfall,
+  constraints,
+  providers = {}
+) {
   // Budget = approved withdrawals + vault surplus above reserves
   const approvedWithdrawals = result.filter(
     (a) => a.action === ACTION_WITHDRAW
@@ -421,6 +475,34 @@ function _filterDeposits(result, vaultBalance, shortfall, constraints) {
       deposit.delta = amt;
       deposit.targetBalance = deposit.balance.add(amt);
       deposit.reason = "trimmed to available vault funds";
+    }
+
+    // APY impact check: skip if deposit would drop vault APY by more than maxApyImpactBps.
+    // Skipped in unit tests (IS_TEST=true) since it requires live provider calls.
+    if (
+      !process.env.IS_TEST &&
+      constraints.maxApyImpactBps &&
+      deposit.morphoVaultAddress &&
+      deposit.morphoChainId
+    ) {
+      const provider = providers[deposit.morphoChainId];
+      if (provider) {
+        try {
+          const { impactBps } = await estimateDepositImpact(
+            provider,
+            deposit.morphoChainId,
+            deposit.morphoVaultAddress,
+            amt
+          );
+          if (impactBps > constraints.maxApyImpactBps) {
+            deposit.action = ACTION_NONE;
+            deposit.reason = `APY impact ${impactBps}bps > max ${constraints.maxApyImpactBps}bps`;
+            continue;
+          }
+        } catch (err) {
+          log(`APY impact check failed for ${deposit.name}: ${err.message}`);
+        }
+      }
     }
 
     budget = budget.sub(amt);
@@ -534,13 +616,15 @@ function _deploySurplus(result, surplus) {
  * @param {BigNumber} shortfall   - vault withdrawal shortfall (after addWithdrawalQueueLiquidity offset)
  * @param {BigNumber} vaultBalance - vault idle USDC (after addWithdrawalQueueLiquidity offset)
  * @param {object}    [constraintOverrides]
- * @returns {Array}
+ * @param {object}    [providers] - { [chainId]: ethersProvider } forwarded to _filterDeposits
+ * @returns {Promise<Array>}
  */
-function buildExecutableActions(
+async function buildExecutableActions(
   allocations,
   shortfall = BigNumber.from(0),
   vaultBalance = BigNumber.from(0),
-  constraintOverrides = {}
+  constraintOverrides = {},
+  providers = {}
 ) {
   const constraints = { ...ousdConstraints, ...constraintOverrides };
   let result = allocations.map((a) => ({ ...a }));
@@ -549,7 +633,13 @@ function buildExecutableActions(
   result = _filterWithdrawals(result, constraints);
 
   // 2. Distribute available budget across deposits (highest APY first)
-  result = _filterDeposits(result, vaultBalance, shortfall, constraints);
+  result = await _filterDeposits(
+    result,
+    vaultBalance,
+    shortfall,
+    constraints,
+    providers
+  );
 
   // 3. Fallback: cover shortfall if no withdrawals were approved
   const hasApprovedWithdrawals = result.some(
@@ -653,7 +743,11 @@ function printAllocationTable({
     current: `${fmtUsd(a.balance)}${pct(a.balance)}`,
     target: `${fmtUsd(a.targetBalance)}${pct(a.targetBalance)}`,
     delta: `${sign(a.delta)}${fmtUsd(a.delta.abs())}`,
-    apy: `${(a.apy * 100).toFixed(2)}%`,
+    apy: a.graphqlApy
+      ? `${(a.apy * 100).toFixed(2)}% (API: ${(a.graphqlApy * 100).toFixed(
+          2
+        )}%)`
+      : `${(a.apy * 100).toFixed(2)}%`,
   }));
   const vaultRow = {
     name: "Vault (idle)",
@@ -820,14 +914,19 @@ function _filterExcludedStrategies(strategies, apys, constraints) {
 
 /**
  * Main entry: read state, fetch APYs, compute allocations, print table.
+ *
+ * @param {object} providers - { [chainId]: ethersProvider }
+ *   providers[1] is used for mainnet vault/strategy reads.
+ *   providers[cfg.morphoChainId] is used for on-chain Morpho APY reads.
  */
-async function buildRebalancePlan(provider) {
+async function buildRebalancePlan(providers) {
   log("Reading on-chain state...");
-  const state = await readOnChainState(provider);
+  const state = await readOnChainState(providers[1]);
 
-  log("Fetching Morpho APYs...");
-  const apys = await fetchMorphoApys(
-    state.strategies.filter((s) => s.morphoVaultAddress)
+  log("Fetching Morpho APYs (on-chain + GraphQL)...");
+  const { apys, graphqlApys } = await fetchMorphoApys(
+    state.strategies.filter((s) => s.morphoVaultAddress),
+    providers
   );
 
   // Exclude strategies with suspiciously high APY
@@ -841,6 +940,7 @@ async function buildRebalancePlan(provider) {
   const optimalActive = computeOptimalAllocation({
     strategies: active,
     apys,
+    graphqlApys,
     vaultBalance: state.vaultBalance,
     shortfall: state.shortfall,
   });
@@ -850,7 +950,8 @@ async function buildRebalancePlan(provider) {
     const row = _buildAllocationRow(
       s,
       s.balance,
-      apys[s.morphoVaultAddress] || 0
+      apys[s.morphoVaultAddress] || 0,
+      graphqlApys[s.morphoVaultAddress] || 0
     );
     row.reason = "APY exceeds threshold";
     return row;
@@ -858,10 +959,12 @@ async function buildRebalancePlan(provider) {
 
   const optimalActions = [...optimalActive, ...optimalExcluded];
 
-  const executableActions = buildExecutableActions(
+  const executableActions = await buildExecutableActions(
     optimalActions,
     state.shortfall,
-    state.vaultBalance
+    state.vaultBalance,
+    {},
+    providers
   );
   const actions = sortActions(executableActions);
 
@@ -873,7 +976,7 @@ async function buildRebalancePlan(provider) {
     warnings,
   });
 
-  return { actions, optimalActions, state, apys, warnings };
+  return { actions, optimalActions, state, apys, graphqlApys, warnings };
 }
 
 module.exports = {

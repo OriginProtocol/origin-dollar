@@ -56,9 +56,14 @@ const buildDiscordMessage = ({
 
   // Current allocations (from on-chain state)
   const currentLines = allActions.map((a) => {
-    return `  ${a.name.padEnd(20)} ${formatUSDC(a.balance).padStart(9)}  ${(
-      a.apy * 100
-    ).toFixed(2)}% APY`;
+    const apyStr = a.graphqlApy
+      ? `${(a.apy * 100).toFixed(2)}% APY (API: ${(a.graphqlApy * 100).toFixed(
+          2
+        )}%)`
+      : `${(a.apy * 100).toFixed(2)}% APY`;
+    return `  ${a.name.padEnd(20)} ${formatUSDC(a.balance).padStart(
+      9
+    )}  ${apyStr}`;
   });
   currentLines.push(
     `  ${"Vault idle".padEnd(20)} ${formatUSDC(state.vaultBalance).padStart(9)}`
@@ -133,8 +138,13 @@ const handler = async (event) => {
 
   const webhookUrl = event.secrets?.DISCORD_WEBHOOK_URL;
 
+  // Build Base provider for cross-chain APY reads
+  const baseProvider = new ethers.providers.JsonRpcProvider(
+    event.secrets.BASE_PROVIDER_URL
+  );
+
   // Compute off-chain recommendations (also prints the allocation table to logs)
-  const plan = await buildRebalancePlan(provider);
+  const plan = await buildRebalancePlan({ 1: provider, 8453: baseProvider });
   const { actions: allActions } = plan;
   const actions = allActions.filter((a) => a.action !== ACTION_NONE);
 
