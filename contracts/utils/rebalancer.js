@@ -4,7 +4,7 @@ const { formatUnits } = require("ethers/lib/utils");
 const addresses = require("./addresses");
 
 const {
-  ousdStrategiesConfig,
+  ousdMorphoStrategiesConfig,
   ousdConstraints,
 } = require("./rebalancer-config");
 
@@ -33,7 +33,7 @@ const erc20Abi = [
 ];
 
 /**
- * Read on-chain state: strategy balances, vault idle USDC, withdrawal queue.
+ * Read on-chain state: Morpho strategy balances, vault idle USDC, withdrawal queue.
  * @param {object} provider - ethers provider
  * @returns {object} { strategies, vaultBalance, shortfall }
  */
@@ -66,9 +66,9 @@ async function readOnChainState(provider) {
     }
   }
 
-  // Read the balances of the strategies
+  // Read the balances of the configured Morpho strategies
   const strategies = await Promise.all(
-    ousdStrategiesConfig.map(async (cfg) => {
+    ousdMorphoStrategiesConfig.map(async (cfg) => {
       const strategy = new ethers.Contract(cfg.address, strategyAbi, provider);
 
       const [balance, isTransferPending] = await Promise.all([
@@ -846,7 +846,7 @@ module.exports = {
   fmtUsd,
   printAllocationTable,
   buildRebalancePlan,
-  ousdStrategiesConfig,
+  ousdMorphoStrategiesConfig,
   ousdConstraints,
   ACTION_DEPOSIT,
   ACTION_WITHDRAW,

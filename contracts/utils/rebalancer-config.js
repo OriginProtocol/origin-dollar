@@ -1,8 +1,8 @@
 const addresses = require("./addresses");
 
 /**
- * Strategy configuration for OUSD auto-rebalancing.
- * Each entry describes one strategy the rebalancer can move funds to/from.
+ * Morpho strategy configuration for OUSD auto-rebalancing.
+ * Each entry describes one Morpho strategy the rebalancer can move funds to/from.
  *
  * Fields:
  *   name              – Human-readable label
@@ -12,7 +12,7 @@ const addresses = require("./addresses");
  *   isCrossChain      – True for strategies that bridge via CCTP
  *   isDefault         – Fallback strategy; exactly one entry must have this set
  */
-const ousdStrategiesConfig = [
+const ousdMorphoStrategiesConfig = [
   {
     name: "Ethereum Morpho",
     address: addresses.mainnet.MorphoOUSDv2StrategyProxy,
@@ -46,4 +46,4 @@ const ousdConstraints = {
   maxApyThreshold: 0.5, // 50% — APY above this is treated as suspicious
 };
 
-module.exports = { ousdStrategiesConfig, ousdConstraints };
+module.exports = { ousdMorphoStrategiesConfig, ousdConstraints };
