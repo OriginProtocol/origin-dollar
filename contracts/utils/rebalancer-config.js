@@ -8,7 +8,7 @@ const addresses = require("./addresses");
  *   name              – Human-readable label
  *   address           – Strategy proxy address (on mainnet)
  *   morphoVaultAddress – Morpho vault used for APY lookup via the Morpho API
- *   morphoChainId     – Chain where that vault lives (1 = Ethereum, 8453 = Base)
+ *   morphoChainId     – Chain where that vault lives (1 = Ethereum, 8453 = Base, 999 = HyperEVM)
  *   isCrossChain      – True for strategies that bridge via CCTP
  *   isDefault         – Fallback strategy; exactly one entry must have this set
  */
@@ -28,6 +28,14 @@ const ousdMorphoStrategiesConfig = [
     // Morpho V1 vault on Base for APY lookup
     morphoVaultAddress: "0x581Cc9a73Ec7431723A4a80699B8f801205841F1",
     morphoChainId: 8453,
+    isCrossChain: true,
+    isDefault: false,
+  },
+  {
+    name: "HyperEVM Morpho",
+    address: addresses.mainnet.CrossChainHyperEVMMasterStrategy,
+    morphoVaultAddress: addresses.hyperevm.MorphoOusdV2Vault,
+    morphoChainId: 999,
     isCrossChain: true,
     isDefault: false,
   },
