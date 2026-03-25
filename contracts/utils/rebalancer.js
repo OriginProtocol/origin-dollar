@@ -97,7 +97,8 @@ async function readOnChainState(provider) {
 }
 
 /**
- * Fetch a single vault's APY from the Morpho GraphQL API.
+ * Fetch a single vault's current net APY after fees from the Morpho GraphQL API.
+ * The APY is a weighted average based on the liquidity allocated in each market.
  * Returns a numeric APY (e.g. 0.05 = 5%) or 0 on failure.
  */
 async function _fetchMorphoVaultApy(morphoVaultAddress, morphoChainId) {
