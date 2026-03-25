@@ -4,7 +4,7 @@ const { formatUnits } = require("ethers/lib/utils");
 const addresses = require("./addresses");
 
 const {
-  ousdStrategiesConfig,
+  ousdMorphoStrategiesConfig,
   ousdConstraints,
 } = require("./rebalancer-config");
 
@@ -33,7 +33,7 @@ const erc20Abi = [
 ];
 
 /**
- * Read on-chain state: strategy balances, vault idle USDC, withdrawal queue.
+ * Read on-chain state: Morpho strategy balances, vault idle USDC, withdrawal queue.
  * @param {object} provider - ethers provider
  * @returns {object} { strategies, vaultBalance, shortfall }
  */
@@ -66,9 +66,9 @@ async function readOnChainState(provider) {
     }
   }
 
-  // Read the balances of the strategies
+  // Read the balances of the configured Morpho strategies
   const strategies = await Promise.all(
-    ousdStrategiesConfig.map(async (cfg) => {
+    ousdMorphoStrategiesConfig.map(async (cfg) => {
       const strategy = new ethers.Contract(cfg.address, strategyAbi, provider);
 
       const [balance, isTransferPending] = await Promise.all([
@@ -97,7 +97,8 @@ async function readOnChainState(provider) {
 }
 
 /**
- * Fetch a single vault's APY from the Morpho GraphQL API.
+ * Fetch a single vault's current net APY after fees from the Morpho GraphQL API.
+ * The APY is a weighted average based on the liquidity allocated in each market.
  * Returns a numeric APY (e.g. 0.05 = 5%) or 0 on failure.
  */
 async function _fetchMorphoVaultApy(morphoVaultAddress, morphoChainId) {
@@ -616,6 +617,7 @@ function printAllocationTable({
   constraints: overrides = {},
   warnings = [],
 }) {
+  const COL_SEP = "  ";
   const constraints = { ...ousdConstraints, ...overrides };
 
   // Use optimalActions for the table (shows optimal targets); fall back to feasible if absent
@@ -634,38 +636,11 @@ function printAllocationTable({
 
   // ── Allocations table: shows optimal targets from optimalActions ────────────
   console.log("\n--- Allocations ---\n");
-  const COL = { name: 22, amt: 22, delta: 18, apy: 8 };
-  console.log(
-    `${"Strategy".padEnd(COL.name)} ${"Current".padStart(
-      COL.amt
-    )} ${"Target (optimal)".padStart(COL.amt)} ${"Delta".padStart(
-      COL.delta
-    )} ${"APY".padStart(COL.apy)}`
-  );
-  console.log("-".repeat(COL.name + COL.amt * 2 + COL.delta + COL.apy + 4));
-
   const pct = (bn) =>
     totalCapital.gt(0)
       ? ` (${(Number(bn.mul(10000).div(totalCapital)) / 100).toFixed(1)}%)`
       : "";
   const sign = (bn) => (bn.gte(0) ? "+" : "-");
-
-  for (const a of tableRows) {
-    const apyStr = `${(a.apy * 100).toFixed(2)}%`;
-    const tag = a.isDefault ? " *" : "";
-
-    console.log(
-      `${(a.name + tag).padEnd(COL.name)} ` +
-        `${(fmtUsd(a.balance) + pct(a.balance)).padStart(
-          COL.amt + pct(a.balance).length
-        )} ` +
-        `${(fmtUsd(a.targetBalance) + pct(a.targetBalance)).padStart(
-          COL.amt + pct(a.targetBalance).length
-        )} ` +
-        `${(sign(a.delta) + fmtUsd(a.delta.abs())).padStart(COL.delta)} ` +
-        `${apyStr.padStart(COL.apy)}`
-    );
-  }
 
   // Vault (idle) row
   const vaultTarget = shortfall.add(
@@ -673,22 +648,87 @@ function printAllocationTable({
   );
   const vaultDelta = vaultTarget.sub(vaultBalance);
   const vaultDeltaSign = sign(vaultDelta);
+  const formattedRows = tableRows.map((a) => ({
+    name: `${a.name}${a.isDefault ? " *" : ""}`,
+    current: `${fmtUsd(a.balance)}${pct(a.balance)}`,
+    target: `${fmtUsd(a.targetBalance)}${pct(a.targetBalance)}`,
+    delta: `${sign(a.delta)}${fmtUsd(a.delta.abs())}`,
+    apy: `${(a.apy * 100).toFixed(2)}%`,
+  }));
+  const vaultRow = {
+    name: "Vault (idle)",
+    current: `${fmtUsd(vaultBalance)}${pct(vaultBalance)}`,
+    target: `${fmtUsd(vaultTarget)}${pct(vaultTarget)}`,
+    delta: `${vaultDeltaSign}${fmtUsd(vaultDelta.abs())}`,
+    apy: "—",
+  };
+  const allRows = [...formattedRows, vaultRow];
+  const COL = {
+    name: Math.max("Strategy".length, ...allRows.map((row) => row.name.length)),
+    current: Math.max(
+      "Current".length,
+      ...allRows.map((row) => row.current.length)
+    ),
+    target: Math.max(
+      "Target (optimal)".length,
+      ...allRows.map((row) => row.target.length)
+    ),
+    delta: Math.max("Delta".length, ...allRows.map((row) => row.delta.length)),
+    apy: Math.max("APY".length, ...allRows.map((row) => row.apy.length)),
+  };
 
   console.log(
-    `${"Vault (idle)".padEnd(COL.name)} ` +
-      `${(fmtUsd(vaultBalance) + pct(vaultBalance)).padStart(
-        COL.amt + pct(vaultBalance).length
-      )} ` +
-      `${(fmtUsd(vaultTarget) + pct(vaultTarget)).padStart(
-        COL.amt + pct(vaultTarget).length
-      )} ` +
-      `${(vaultDeltaSign + fmtUsd(vaultDelta.abs())).padStart(COL.delta)} ` +
-      `${"—".padStart(COL.apy)}`
+    `${"Strategy".padEnd(COL.name)}${COL_SEP}${"Current".padStart(
+      COL.current
+    )}${COL_SEP}${"Target (optimal)".padStart(
+      COL.target
+    )}${COL_SEP}${"Delta".padStart(COL.delta)}${COL_SEP}${"APY".padStart(
+      COL.apy
+    )}`
+  );
+  console.log(
+    "-".repeat(
+      COL.name +
+        COL.current +
+        COL.target +
+        COL.delta +
+        COL.apy +
+        COL_SEP.length * 4
+    )
   );
 
-  console.log("-".repeat(COL.name + COL.amt * 2 + COL.delta + COL.apy + 4));
+  for (const row of formattedRows) {
+    console.log(
+      `${row.name.padEnd(COL.name)}${COL_SEP}` +
+        `${row.current.padStart(COL.current)}${COL_SEP}` +
+        `${row.target.padStart(COL.target)}${COL_SEP}` +
+        `${row.delta.padStart(COL.delta)}${COL_SEP}` +
+        `${row.apy.padStart(COL.apy)}`
+    );
+  }
+
   console.log(
-    `${"Total".padEnd(COL.name)} ${fmtUsd(totalCapital).padStart(COL.amt)}`
+    `${vaultRow.name.padEnd(COL.name)}${COL_SEP}` +
+      `${vaultRow.current.padStart(COL.current)}${COL_SEP}` +
+      `${vaultRow.target.padStart(COL.target)}${COL_SEP}` +
+      `${vaultRow.delta.padStart(COL.delta)}${COL_SEP}` +
+      `${vaultRow.apy.padStart(COL.apy)}`
+  );
+
+  console.log(
+    "-".repeat(
+      COL.name +
+        COL.current +
+        COL.target +
+        COL.delta +
+        COL.apy +
+        COL_SEP.length * 4
+    )
+  );
+  console.log(
+    `${"Total".padEnd(COL.name)}${COL_SEP}${fmtUsd(totalCapital).padStart(
+      COL.current
+    )}`
   );
   console.log("  * = default strategy\n");
 
@@ -845,7 +885,7 @@ module.exports = {
   fmtUsd,
   printAllocationTable,
   buildRebalancePlan,
-  ousdStrategiesConfig,
+  ousdMorphoStrategiesConfig,
   ousdConstraints,
   ACTION_DEPOSIT,
   ACTION_WITHDRAW,
