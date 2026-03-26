@@ -80,7 +80,7 @@ async function readOnChainState(provider) {
       return {
         name: cfg.name,
         address: cfg.address,
-        morphoVaultAddress: cfg.morphoVaultAddress,
+        metaMorphoVaultAddress: cfg.metaMorphoVaultAddress,
         morphoChainId: cfg.morphoChainId,
         isCrossChain: cfg.isCrossChain,
         isDefault: cfg.isDefault || false,
@@ -102,9 +102,9 @@ async function readOnChainState(provider) {
  * The APY is a weighted average based on the liquidity allocated in each market.
  * Returns a numeric APY (e.g. 0.05 = 5%) or 0 on failure.
  */
-async function _fetchMorphoVaultApy(morphoVaultAddress, morphoChainId) {
+async function _fetchMorphoVaultApy(metaMorphoVaultAddress, morphoChainId) {
   const query = `{
-    vaultByAddress(address: "${morphoVaultAddress}", chainId: ${morphoChainId}) {
+    vaultByAddress(address: "${metaMorphoVaultAddress}", chainId: ${morphoChainId}) {
       state { netApy }
     }
   }`;
@@ -119,7 +119,7 @@ async function _fetchMorphoVaultApy(morphoVaultAddress, morphoChainId) {
     const netApy = data?.data?.vaultByAddress?.state?.netApy;
     return netApy != null ? Number(netApy) : 0;
   } catch (e) {
-    log(`Failed to fetch APY for ${morphoVaultAddress}: ${e.message}`);
+    log(`Failed to fetch APY for ${metaMorphoVaultAddress}: ${e.message}`);
     return 0;
   }
 }
@@ -128,7 +128,7 @@ async function _fetchMorphoVaultApy(morphoVaultAddress, morphoChainId) {
  * Fetch APYs for multiple vaults in parallel.
  * Returns both on-chain (authoritative) and GraphQL (display-only) APYs.
  *
- * @param {Array} vaults - objects with morphoVaultAddress and morphoChainId
+ * @param {Array} vaults - objects with metaMorphoVaultAddress and morphoChainId
  * @param {object} providers - { [chainId]: ethersProvider }
  * @returns {object} { apys: { addr: number }, graphqlApys: { addr: number } }
  */
@@ -142,10 +142,10 @@ async function fetchMorphoApys(vaults, providers) {
         ? estimateVaultApy(
             provider,
             v.morphoChainId,
-            v.morphoVaultAddress
+            v.metaMorphoVaultAddress
           ).catch((err) => {
-            console.error(
-              `[rebalancer] On-chain APY failed for ${v.morphoVaultAddress} on chain ${v.morphoChainId}: ${err.message}`
+            log(
+              `on-chain APY failed for ${v.metaMorphoVaultAddress} on chain ${v.morphoChainId}: ${err.message}`
             );
             return 0;
           })
@@ -153,11 +153,11 @@ async function fetchMorphoApys(vaults, providers) {
 
       const [onChainApy, graphqlApy] = await Promise.all([
         onChainApyPromise,
-        _fetchMorphoVaultApy(v.morphoVaultAddress, v.morphoChainId),
+        _fetchMorphoVaultApy(v.metaMorphoVaultAddress, v.morphoChainId),
       ]);
 
       return {
-        addr: v.morphoVaultAddress,
+        addr: v.metaMorphoVaultAddress,
         onChainApy,
         graphqlApy,
       };
@@ -283,7 +283,7 @@ function _buildAllocationRow(s, targetBalance, apy, graphqlApy = 0) {
     isCrossChain: s.isCrossChain,
     isTransferPending: s.isTransferPending,
     isDefault: s.isDefault,
-    morphoVaultAddress: s.morphoVaultAddress,
+    metaMorphoVaultAddress: s.metaMorphoVaultAddress,
     morphoChainId: s.morphoChainId,
     balance: s.balance,
     apy,
@@ -309,8 +309,8 @@ function _buildAllocationRow(s, targetBalance, apy, graphqlApy = 0) {
  *
  * @param {object} params
  * @param {Array}  params.strategies
- * @param {object} params.apys - morphoVaultAddress -> apy (float, on-chain)
- * @param {object} [params.graphqlApys] - morphoVaultAddress -> apy (float, GraphQL display-only)
+ * @param {object} params.apys - metaMorphoVaultAddress -> apy (float, on-chain)
+ * @param {object} [params.graphqlApys] - metaMorphoVaultAddress -> apy (float, GraphQL display-only)
  * @param {BigNumber} params.vaultBalance
  * @param {BigNumber} params.shortfall
  * @param {object} [params.constraints]
@@ -325,8 +325,9 @@ function computeOptimalAllocation({
   constraints: overrides = {},
 }) {
   const constraints = { ...ousdConstraints, ...overrides };
-  const strategyApyOf = (s) => apys[s.morphoVaultAddress] || 0;
-  const strategyGraphqlApyOf = (s) => graphqlApys[s.morphoVaultAddress] || 0;
+  const strategyApyOf = (s) => apys[s.metaMorphoVaultAddress] || 0;
+  const strategyGraphqlApyOf = (s) =>
+    graphqlApys[s.metaMorphoVaultAddress] || 0;
   const deployableCapital = _computeDeployableCapital(
     strategies,
     vaultBalance,
@@ -482,7 +483,7 @@ async function _filterDeposits(
     if (
       !process.env.IS_TEST &&
       constraints.maxApyImpactBps &&
-      deposit.morphoVaultAddress &&
+      deposit.metaMorphoVaultAddress &&
       deposit.morphoChainId
     ) {
       const provider = providers[deposit.morphoChainId];
@@ -491,7 +492,7 @@ async function _filterDeposits(
           const { impactBps } = await estimateDepositImpact(
             provider,
             deposit.morphoChainId,
-            deposit.morphoVaultAddress,
+            deposit.metaMorphoVaultAddress,
             amt
           );
           if (impactBps > constraints.maxApyImpactBps) {
@@ -895,7 +896,7 @@ function _filterExcludedStrategies(strategies, apys, constraints) {
   const excluded = [];
   const warnings = [];
   for (const s of strategies) {
-    const apy = apys[s.morphoVaultAddress] || 0;
+    const apy = apys[s.metaMorphoVaultAddress] || 0;
     if (apy > constraints.maxApyThreshold) {
       const msg =
         `${s.name} APY ${(apy * 100).toFixed(0)}% exceeds ` +
@@ -925,7 +926,7 @@ async function buildRebalancePlan(providers) {
 
   log("Fetching Morpho APYs (on-chain + GraphQL)...");
   const { apys, graphqlApys } = await fetchMorphoApys(
-    state.strategies.filter((s) => s.morphoVaultAddress),
+    state.strategies.filter((s) => s.metaMorphoVaultAddress),
     providers
   );
 
@@ -950,8 +951,8 @@ async function buildRebalancePlan(providers) {
     const row = _buildAllocationRow(
       s,
       s.balance,
-      apys[s.morphoVaultAddress] || 0,
-      graphqlApys[s.morphoVaultAddress] || 0
+      apys[s.metaMorphoVaultAddress] || 0,
+      graphqlApys[s.metaMorphoVaultAddress] || 0
     );
     row.reason = "APY exceeds threshold";
     return row;

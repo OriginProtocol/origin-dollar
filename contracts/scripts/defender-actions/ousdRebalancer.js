@@ -138,13 +138,21 @@ const handler = async (event) => {
 
   const webhookUrl = event.secrets?.DISCORD_WEBHOOK_URL;
 
-  // Build Base provider for cross-chain APY reads
-  const baseProvider = new ethers.providers.JsonRpcProvider(
-    event.secrets.BASE_PROVIDER_URL
-  );
+  // Build chain providers for cross-chain APY reads
+  const providers = { 1: provider };
+  if (event.secrets.BASE_PROVIDER_URL) {
+    providers[8453] = new ethers.providers.JsonRpcProvider(
+      event.secrets.BASE_PROVIDER_URL
+    );
+  }
+  if (event.secrets.HYPEREVM_PROVIDER_URL) {
+    providers[999] = new ethers.providers.JsonRpcProvider(
+      event.secrets.HYPEREVM_PROVIDER_URL
+    );
+  }
 
   // Compute off-chain recommendations (also prints the allocation table to logs)
-  const plan = await buildRebalancePlan({ 1: provider, 8453: baseProvider });
+  const plan = await buildRebalancePlan(providers);
   const { actions: allActions } = plan;
   const actions = allActions.filter((a) => a.action !== ACTION_NONE);
 

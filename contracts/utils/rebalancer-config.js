@@ -5,19 +5,22 @@ const addresses = require("./addresses");
  * Each entry describes one Morpho strategy the rebalancer can move funds to/from.
  *
  * Fields:
- *   name              – Human-readable label
- *   address           – Strategy proxy address (on mainnet)
- *   morphoVaultAddress – Morpho vault used for APY lookup via the Morpho API
- *   morphoChainId     – Chain where that vault lives (1 = Ethereum, 8453 = Base, 999 = HyperEVM)
- *   isCrossChain      – True for strategies that bridge via CCTP
- *   isDefault         – Fallback strategy; exactly one entry must have this set
+ *   name                  – Human-readable label
+ *   address               – Strategy proxy address (on mainnet)
+ *   metaMorphoVaultAddress – The inner MetaMorpho V1.1 vault (has supplyQueueLength).
+ *                           All OUSD vaults are VaultV2; this is the inner vault that
+ *                           VaultV2 delegates to. Find it with:
+ *                             VaultV2(outerVaultAddr).adapters(0)  → adapterAddr
+ *                             Adapter(adapterAddr).morphoVaultV1() → metaMorphoVaultAddress
+ *   morphoChainId         – Chain where that vault lives (1 = Ethereum, 8453 = Base, 999 = HyperEVM)
+ *   isCrossChain          – True for strategies that bridge via CCTP
+ *   isDefault             – Fallback strategy; exactly one entry must have this set
  */
 const ousdMorphoStrategiesConfig = [
   {
     name: "Ethereum Morpho",
     address: addresses.mainnet.MorphoOUSDv2StrategyProxy,
-    // Morpho V1 vault address for APY lookup (the V2 wrapper is not in Morpho's API)
-    morphoVaultAddress: addresses.mainnet.MorphoOUSDv1Vault,
+    metaMorphoVaultAddress: addresses.mainnet.MorphoOUSDv1Vault,
     morphoChainId: 1,
     isCrossChain: false,
     isDefault: true,
@@ -25,8 +28,7 @@ const ousdMorphoStrategiesConfig = [
   {
     name: "Base Morpho",
     address: addresses.mainnet.CrossChainMasterStrategy,
-    // Morpho V1 vault on Base for APY lookup
-    morphoVaultAddress: "0x581Cc9a73Ec7431723A4a80699B8f801205841F1",
+    metaMorphoVaultAddress: addresses.base.MorphoOusdV1Vault,
     morphoChainId: 8453,
     isCrossChain: true,
     isDefault: false,
@@ -34,7 +36,7 @@ const ousdMorphoStrategiesConfig = [
   {
     name: "HyperEVM Morpho",
     address: addresses.mainnet.CrossChainHyperEVMMasterStrategy,
-    morphoVaultAddress: addresses.hyperevm.MorphoOusdV2Vault,
+    metaMorphoVaultAddress: addresses.hyperevm.MorphoOusdV1Vault,
     morphoChainId: 999,
     isCrossChain: true,
     isDefault: false,

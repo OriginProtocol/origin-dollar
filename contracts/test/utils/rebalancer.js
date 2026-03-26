@@ -24,14 +24,14 @@ function makeStrategy(
     isCrossChain = false,
     isDefault = false,
     isTransferPending = false,
-    morphoVaultAddress,
+    metaMorphoVaultAddress,
   } = {}
 ) {
   return {
     name,
     address: `0x${name.replace(/\s/g, "").toLowerCase()}`,
-    morphoVaultAddress:
-      morphoVaultAddress || `0xMorpho_${name.replace(/\s/g, "")}`,
+    metaMorphoVaultAddress:
+      metaMorphoVaultAddress || `0xMorpho_${name.replace(/\s/g, "")}`,
     isCrossChain,
     isDefault,
     isTransferPending,
@@ -43,11 +43,11 @@ function twoStrategies(ethBalance, baseBalance) {
   return [
     makeStrategy("Ethereum Morpho", ethBalance, {
       isDefault: true,
-      morphoVaultAddress: ETH_VAULT,
+      metaMorphoVaultAddress: ETH_VAULT,
     }),
     makeStrategy("Base Morpho", baseBalance, {
       isCrossChain: true,
-      morphoVaultAddress: BASE_VAULT,
+      metaMorphoVaultAddress: BASE_VAULT,
     }),
   ];
 }
@@ -255,7 +255,7 @@ describe("Rebalancer: buildExecutableActions", () => {
       isCrossChain,
       isDefault,
       isTransferPending,
-      morphoVaultAddress: `0xVault_${name}`,
+      metaMorphoVaultAddress: `0xVault_${name}`,
       balance: balanceBN,
       targetBalance: targetBN,
       delta,
