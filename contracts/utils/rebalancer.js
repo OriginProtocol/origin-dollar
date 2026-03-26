@@ -32,6 +32,17 @@ const erc20Abi = [
   "function balanceOf(address account) external view returns (uint256)",
 ];
 
+// ABIs for withdrawable-liquidity reads
+const maxWithdrawAbi = [
+  "function maxWithdraw() external view returns (uint256)",
+];
+const platformAddressAbi = [
+  "function platformAddress() external view returns (address)",
+];
+const erc4626MaxWithdrawAbi = [
+  "function maxWithdraw(address owner) external view returns (uint256)",
+];
+
 /**
  * Read on-chain state: Morpho strategy balances, vault idle USDC, withdrawal queue.
  * @param {object} provider - ethers provider
@@ -255,6 +266,8 @@ function _buildAllocationRow(s, targetBalance, apy) {
     isDefault: s.isDefault,
     morphoVaultAddress: s.morphoVaultAddress,
     balance: s.balance,
+    // Populated later by fetchMaxWithdrawals; null means unknown (no constraint applied)
+    withdrawableLiquidity: null,
     apy,
     targetBalance,
     delta,
@@ -351,11 +364,28 @@ function _filterWithdrawals(result, constraints) {
   const withdrawals = result.filter((a) => a.action === ACTION_WITHDRAW);
 
   for (const w of withdrawals) {
-    const absDelta = w.delta.abs();
-    if (absDelta.lt(constraints.minMoveAmount)) {
+    let amt = w.delta.abs();
+
+    // Cap to available liquidity first so subsequent size checks use the capped amount
+    if (w.withdrawableLiquidity !== null) {
+      const liq = w.withdrawableLiquidity;
+      if (liq.lt(constraints.minMoveAmount)) {
+        w.action = ACTION_NONE;
+        w.reason = `insufficient liquidity: ${fmtUsd(liq)} available`;
+        continue;
+      }
+      if (amt.gt(liq)) {
+        amt = liq;
+        w.delta = amt.mul(-1);
+        w.targetBalance = w.balance.sub(amt);
+        w.reason = `capped to available liquidity: ${fmtUsd(liq)}`;
+      }
+    }
+
+    if (amt.lt(constraints.minMoveAmount)) {
       w.action = ACTION_NONE;
       w.reason = "below min move";
-    } else if (w.isCrossChain && absDelta.lt(constraints.crossChainMinAmount)) {
+    } else if (w.isCrossChain && amt.lt(constraints.crossChainMinAmount)) {
       w.action = ACTION_NONE;
       w.reason = "below cross-chain min";
     } else if (maxApy - w.apy < constraints.minApySpread) {
@@ -651,6 +681,10 @@ function printAllocationTable({
   const formattedRows = tableRows.map((a) => ({
     name: `${a.name}${a.isDefault ? " *" : ""}`,
     current: `${fmtUsd(a.balance)}${pct(a.balance)}`,
+    avail:
+      a.withdrawableLiquidity !== null
+        ? fmtUsd(a.withdrawableLiquidity)
+        : "n/a",
     target: `${fmtUsd(a.targetBalance)}${pct(a.targetBalance)}`,
     delta: `${sign(a.delta)}${fmtUsd(a.delta.abs())}`,
     apy: `${(a.apy * 100).toFixed(2)}%`,
@@ -658,6 +692,7 @@ function printAllocationTable({
   const vaultRow = {
     name: "Vault (idle)",
     current: `${fmtUsd(vaultBalance)}${pct(vaultBalance)}`,
+    avail: "—",
     target: `${fmtUsd(vaultTarget)}${pct(vaultTarget)}`,
     delta: `${vaultDeltaSign}${fmtUsd(vaultDelta.abs())}`,
     apy: "—",
@@ -668,6 +703,10 @@ function printAllocationTable({
     current: Math.max(
       "Current".length,
       ...allRows.map((row) => row.current.length)
+    ),
+    avail: Math.max(
+      "Avail.".length,
+      ...allRows.map((row) => row.avail.length)
     ),
     target: Math.max(
       "Target (optimal)".length,
@@ -680,7 +719,7 @@ function printAllocationTable({
   console.log(
     `${"Strategy".padEnd(COL.name)}${COL_SEP}${"Current".padStart(
       COL.current
-    )}${COL_SEP}${"Target (optimal)".padStart(
+    )}${COL_SEP}${"Avail.".padStart(COL.avail)}${COL_SEP}${"Target (optimal)".padStart(
       COL.target
     )}${COL_SEP}${"Delta".padStart(COL.delta)}${COL_SEP}${"APY".padStart(
       COL.apy
@@ -690,10 +729,11 @@ function printAllocationTable({
     "-".repeat(
       COL.name +
         COL.current +
+        COL.avail +
         COL.target +
         COL.delta +
         COL.apy +
-        COL_SEP.length * 4
+        COL_SEP.length * 5
     )
   );
 
@@ -701,6 +741,7 @@ function printAllocationTable({
     console.log(
       `${row.name.padEnd(COL.name)}${COL_SEP}` +
         `${row.current.padStart(COL.current)}${COL_SEP}` +
+        `${row.avail.padStart(COL.avail)}${COL_SEP}` +
         `${row.target.padStart(COL.target)}${COL_SEP}` +
         `${row.delta.padStart(COL.delta)}${COL_SEP}` +
         `${row.apy.padStart(COL.apy)}`
@@ -710,6 +751,7 @@ function printAllocationTable({
   console.log(
     `${vaultRow.name.padEnd(COL.name)}${COL_SEP}` +
       `${vaultRow.current.padStart(COL.current)}${COL_SEP}` +
+      `${vaultRow.avail.padStart(COL.avail)}${COL_SEP}` +
       `${vaultRow.target.padStart(COL.target)}${COL_SEP}` +
       `${vaultRow.delta.padStart(COL.delta)}${COL_SEP}` +
       `${vaultRow.apy.padStart(COL.apy)}`
@@ -719,10 +761,11 @@ function printAllocationTable({
     "-".repeat(
       COL.name +
         COL.current +
+        COL.avail +
         COL.target +
         COL.delta +
         COL.apy +
-        COL_SEP.length * 4
+        COL_SEP.length * 5
     )
   );
   console.log(
@@ -819,6 +862,61 @@ function _filterExcludedStrategies(strategies, apys, constraints) {
 }
 
 /**
+ * Fetch the immediately withdrawable amount for each strategy.
+ *
+ * - Same-chain (Ethereum Morpho V2): call strategy.maxWithdraw() on the mainnet provider.
+ * - Cross-chain: the master and remote strategy share the same address (CREATE2 deployment).
+ *   Use the remote-chain provider, call remoteStrategy.platformAddress() to get the Morpho
+ *   V2 vault address, then call vault.maxWithdraw(strategyAddress) (ERC-4626).
+ * - If the required provider is unavailable, the entry is omitted and no constraint is applied.
+ *
+ * @param {Array}  strategies - strategy config objects (from ousdMorphoStrategiesConfig)
+ * @param {object} providers  - { [chainId]: ethers.providers.Provider }
+ * @returns {object} { [strategyAddress]: BigNumber } map of withdrawable amounts
+ */
+async function fetchMaxWithdrawals(strategies, providers = {}) {
+  const results = {};
+  await Promise.all(
+    strategies.map(async (s) => {
+      try {
+        if (!s.isCrossChain) {
+          const provider = providers[1];
+          if (!provider) return;
+          const contract = new ethers.Contract(
+            s.address,
+            maxWithdrawAbi,
+            provider
+          );
+          results[s.address] = await contract.maxWithdraw();
+        } else {
+          // Master and remote strategy share the same address via CREATE2
+          const provider = providers[s.morphoChainId];
+          if (!provider) return;
+          const remoteStrategy = new ethers.Contract(
+            s.address,
+            platformAddressAbi,
+            provider
+          );
+          const vaultAddress = await remoteStrategy.platformAddress();
+          const vault = new ethers.Contract(
+            vaultAddress,
+            erc4626MaxWithdrawAbi,
+            provider
+          );
+          results[s.address] = await vault.maxWithdraw(s.address);
+        }
+      } catch (err) {
+        console.error(
+          `fetchMaxWithdrawals failed for ${s.name}: ${err.message}`
+        );
+        // Entry omitted — no liquidity constraint applied for this strategy
+      }
+    })
+  );
+  return results;
+}
+
+/**
  * Main entry: read state, fetch APYs, compute allocations, print table.
  * @param {object|import('ethers').providers.Provider} providers - Either a map of
  *   chainId → provider (e.g. { 1: mainnetProvider, 8453: baseProvider, 999: hyperevmProvider })
@@ -837,6 +935,12 @@ async function buildRebalancePlan(providers) {
   log("Fetching Morpho APYs...");
   const apys = await fetchMorphoApys(
     state.strategies.filter((s) => s.morphoVaultAddress)
+  );
+
+  log("Fetching withdrawable liquidity...");
+  const maxWithdrawals = await fetchMaxWithdrawals(
+    state.strategies,
+    providerMap
   );
 
   // Exclude strategies with suspiciously high APY
@@ -867,6 +971,13 @@ async function buildRebalancePlan(providers) {
 
   const optimalActions = [...optimalActive, ...optimalExcluded];
 
+  // Merge withdrawable liquidity into rows before feasibility filtering
+  for (const row of optimalActions) {
+    if (maxWithdrawals[row.address] !== undefined) {
+      row.withdrawableLiquidity = maxWithdrawals[row.address];
+    }
+  }
+
   const executableActions = buildExecutableActions(
     optimalActions,
     state.shortfall,
@@ -888,6 +999,7 @@ async function buildRebalancePlan(providers) {
 module.exports = {
   readOnChainState,
   fetchMorphoApys,
+  fetchMaxWithdrawals,
   computeOptimalAllocation,
   buildExecutableActions,
   sortActions,
