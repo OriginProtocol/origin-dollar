@@ -1,32 +1,27 @@
+import { GetPublicKeyCommand, KMSClient, SignCommand } from "@aws-sdk/client-kms";
+import { DirectKmsTransactionSigner } from "@lastdotnet/purrikey";
+import { ethers } from "ethers";
 import {
   type Hex,
-  type LocalAccount,
-  type TransactionSerializable,
-  type TypedDataDefinition,
   hashMessage,
   hashTypedData,
+  hexToBytes,
   keccak256,
+  type LocalAccount,
+  recoverAddress,
   serializeTransaction,
   signatureToHex,
-  recoverAddress,
-  hexToBytes,
+  type TransactionSerializable,
+  type TypedDataDefinition,
 } from "viem";
 import { toAccount } from "viem/accounts";
-import { ethers } from "ethers";
-import { DirectKmsTransactionSigner } from "@lastdotnet/purrikey";
-import {
-  KMSClient,
-  SignCommand,
-  GetPublicKeyCommand,
-} from "@aws-sdk/client-kms";
 import { optionalEnv } from "./env";
 
 const DEFAULT_KMS_RELAYER_ID = "mrk-248128595151466bb7f7b9a56501a98f";
 const AWS_KMS_REGION = "us-east-1";
 
 // secp256k1 curve order
-const SECP256K1_N =
-  0xfffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364141n;
+const SECP256K1_N = 0xfffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364141n;
 
 function getKmsKeyId(): string {
   return optionalEnv("KMS_RELAYER_ID") ?? DEFAULT_KMS_RELAYER_ID;
@@ -38,18 +33,15 @@ function getKmsKeyId(): string {
 function decodeDerSignature(der: Uint8Array): { r: bigint; s: bigint } {
   let pos = 0;
 
-  if (der[pos++] !== 0x30)
-    throw new Error("Invalid DER: expected SEQUENCE (0x30)");
+  if (der[pos++] !== 0x30) throw new Error("Invalid DER: expected SEQUENCE (0x30)");
   pos++; // skip sequence length
 
-  if (der[pos++] !== 0x02)
-    throw new Error("Invalid DER: expected INTEGER (0x02) for r");
+  if (der[pos++] !== 0x02) throw new Error("Invalid DER: expected INTEGER (0x02) for r");
   const rLen = der[pos++];
   let rBytes = der.slice(pos, pos + rLen);
   pos += rLen;
 
-  if (der[pos++] !== 0x02)
-    throw new Error("Invalid DER: expected INTEGER (0x02) for s");
+  if (der[pos++] !== 0x02) throw new Error("Invalid DER: expected INTEGER (0x02) for s");
   const sLen = der[pos++];
   let sBytes = der.slice(pos, pos + sLen);
 
@@ -57,8 +49,8 @@ function decodeDerSignature(der: Uint8Array): { r: bigint; s: bigint } {
   while (rBytes.length > 1 && rBytes[0] === 0x00) rBytes = rBytes.slice(1);
   while (sBytes.length > 1 && sBytes[0] === 0x00) sBytes = sBytes.slice(1);
 
-  const r = BigInt("0x" + Buffer.from(rBytes).toString("hex"));
-  const s = BigInt("0x" + Buffer.from(sBytes).toString("hex"));
+  const r = BigInt(`0x${Buffer.from(rBytes).toString("hex")}`);
+  const s = BigInt(`0x${Buffer.from(sBytes).toString("hex")}`);
 
   return { r, s };
 }
@@ -77,7 +69,7 @@ function extractPublicKeyFromDer(der: Uint8Array): Uint8Array {
   const pubKey = der.slice(-65);
   if (pubKey[0] !== 0x04) {
     throw new Error(
-      `Expected uncompressed public key prefix 0x04, got 0x${pubKey[0].toString(16)}`
+      `Expected uncompressed public key prefix 0x04, got 0x${pubKey[0].toString(16)}`,
     );
   }
   return pubKey;
@@ -90,22 +82,17 @@ function extractPublicKeyFromDer(der: Uint8Array): Uint8Array {
 function publicKeyToAddress(uncompressedKey: Uint8Array): `0x${string}` {
   // Strip the 0x04 prefix — keccak256 the raw 64-byte (x, y)
   const xy = uncompressedKey.slice(1);
-  const xyHex = ("0x" + Buffer.from(xy).toString("hex")) as Hex;
+  const xyHex = `0x${Buffer.from(xy).toString("hex")}` as Hex;
   const hash = keccak256(xyHex);
   // Last 20 bytes of the hash
-  return ("0x" + hash.slice(-40)) as `0x${string}`;
+  return `0x${hash.slice(-40)}` as `0x${string}`;
 }
 
 /**
  * Resolve the Ethereum address for a KMS key via GetPublicKey.
  */
-async function resolveKmsAddress(
-  kmsClient: KMSClient,
-  keyId: string
-): Promise<`0x${string}`> {
-  const response = await kmsClient.send(
-    new GetPublicKeyCommand({ KeyId: keyId })
-  );
+async function resolveKmsAddress(kmsClient: KMSClient, keyId: string): Promise<`0x${string}`> {
+  const response = await kmsClient.send(new GetPublicKeyCommand({ KeyId: keyId }));
   if (!response.PublicKey) {
     throw new Error("No public key returned from KMS");
   }
@@ -114,7 +101,7 @@ async function resolveKmsAddress(
 }
 
 function bigintToHex32(value: bigint): Hex {
-  return ("0x" + value.toString(16).padStart(64, "0")) as Hex;
+  return `0x${value.toString(16).padStart(64, "0")}` as Hex;
 }
 
 /**
@@ -125,7 +112,7 @@ async function kmsSign(
   kmsClient: KMSClient,
   keyId: string,
   digest: Hex,
-  expectedAddress: `0x${string}`
+  expectedAddress: `0x${string}`,
 ): Promise<{ r: Hex; s: Hex; yParity: 0 | 1 }> {
   const response = await kmsClient.send(
     new SignCommand({
@@ -133,7 +120,7 @@ async function kmsSign(
       Message: Buffer.from(hexToBytes(digest)),
       MessageType: "DIGEST",
       SigningAlgorithm: "ECDSA_SHA_256",
-    })
+    }),
   );
 
   if (!response.Signature) {
@@ -162,9 +149,7 @@ async function kmsSign(
     }
   }
 
-  throw new Error(
-    `KMS signature recovery failed: could not recover ${expectedAddress}`
-  );
+  throw new Error(`KMS signature recovery failed: could not recover ${expectedAddress}`);
 }
 
 /**
@@ -218,7 +203,7 @@ export async function getKmsAccount(): Promise<LocalAccount> {
  * Used for contracts/ utility functions that expect ethers.Signer.
  */
 export function getEthersSigner(
-  provider: ethers.providers.JsonRpcProvider
+  provider: ethers.providers.JsonRpcProvider,
 ): DirectKmsTransactionSigner {
   const keyId = getKmsKeyId();
   return new DirectKmsTransactionSigner(keyId, provider, AWS_KMS_REGION);
@@ -227,8 +212,6 @@ export function getEthersSigner(
 /**
  * Create an ethers v5 JsonRpcProvider from an RPC URL.
  */
-export function getEthersProvider(
-  rpcUrl: string
-): ethers.providers.JsonRpcProvider {
+export function getEthersProvider(rpcUrl: string): ethers.providers.JsonRpcProvider {
   return new ethers.providers.JsonRpcProvider(rpcUrl);
 }

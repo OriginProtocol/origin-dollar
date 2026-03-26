@@ -1,18 +1,5 @@
-import {
-  createPublicClient,
-  createWalletClient,
-  http,
-  type Chain,
-  type LocalAccount,
-} from "viem";
-import {
-  mainnet,
-  base,
-  sonic,
-  hoodi,
-  holesky,
-  hyperEvm,
-} from "viem/chains";
+import { type Chain, createPublicClient, createWalletClient, http, type LocalAccount } from "viem";
+import { base, holesky, hoodi, hyperEvm, mainnet, sonic } from "viem/chains";
 import { requireEnv } from "./env";
 
 const CHAIN_CONFIG = {
@@ -28,7 +15,7 @@ export function getChain(network: keyof typeof CHAIN_CONFIG): Chain {
   const config = CHAIN_CONFIG[network];
   if (!config) {
     throw new Error(
-      `Unknown network "${network}". Supported: ${Object.keys(CHAIN_CONFIG).join(", ")}`
+      `Unknown network "${network}". Supported: ${Object.keys(CHAIN_CONFIG).join(", ")}`,
     );
   }
   return config.chain;
@@ -39,14 +26,12 @@ export function getRpcUrl(networkOrChain: keyof typeof CHAIN_CONFIG | Chain): st
     const config = CHAIN_CONFIG[networkOrChain];
     if (!config) {
       throw new Error(
-        `Unknown network "${networkOrChain}". Supported: ${Object.keys(CHAIN_CONFIG).join(", ")}`
+        `Unknown network "${networkOrChain}". Supported: ${Object.keys(CHAIN_CONFIG).join(", ")}`,
       );
     }
     return requireEnv(config.envVar);
   }
-  const config = Object.values(CHAIN_CONFIG).find(
-    (c) => c.chain.id === networkOrChain.id
-  );
+  const config = Object.values(CHAIN_CONFIG).find((c) => c.chain.id === networkOrChain.id);
   if (!config) {
     throw new Error(`No RPC config for chain id ${networkOrChain.id}`);
   }
@@ -54,9 +39,7 @@ export function getRpcUrl(networkOrChain: keyof typeof CHAIN_CONFIG | Chain): st
 }
 
 export function getPublicClient(chain: Chain) {
-  const config = Object.values(CHAIN_CONFIG).find(
-    (c) => c.chain.id === chain.id
-  );
+  const config = Object.values(CHAIN_CONFIG).find((c) => c.chain.id === chain.id);
   if (!config) {
     throw new Error(`No RPC config for chain id ${chain.id}`);
   }
@@ -68,9 +51,7 @@ export function getPublicClient(chain: Chain) {
 }
 
 export function getWalletClient(chain: Chain, account: LocalAccount) {
-  const config = Object.values(CHAIN_CONFIG).find(
-    (c) => c.chain.id === chain.id
-  );
+  const config = Object.values(CHAIN_CONFIG).find((c) => c.chain.id === chain.id);
   if (!config) {
     throw new Error(`No RPC config for chain id ${chain.id}`);
   }

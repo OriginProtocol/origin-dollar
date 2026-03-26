@@ -1,11 +1,11 @@
-import { type Chain, type Hash, type TransactionReceipt } from "viem";
+import type { ethers } from "ethers";
+import type { Chain, Hash, TransactionReceipt } from "viem";
 import type { Logger } from "winston";
-import { ethers } from "ethers";
 
-import { getPublicClient, getWalletClient, getRpcUrl } from "./client";
-import { getKmsAccount, getEthersSigner, getEthersProvider } from "./signer";
-import { logTxDetails as _logTxDetails } from "./txLogger";
+import { getPublicClient, getRpcUrl, getWalletClient } from "./client";
 import rootLogger from "./logger";
+import { getEthersProvider, getEthersSigner, getKmsAccount } from "./signer";
+import { logTxDetails as _logTxDetails } from "./txLogger";
 
 export interface ActionContext {
   log: Logger;
@@ -35,8 +35,7 @@ export function action(params: {
     const ethersProvider = getEthersProvider(rpcUrl);
     const ethersSigner = getEthersSigner(ethersProvider);
 
-    const logTx = (hash: Hash, method: string) =>
-      _logTxDetails(publicClient, hash, method, log);
+    const logTx = (hash: Hash, method: string) => _logTxDetails(publicClient, hash, method, log);
 
     await fn({
       log,

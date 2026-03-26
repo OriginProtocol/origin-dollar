@@ -9,7 +9,7 @@ const logger = createLogger({
       const prefix = action ? `[${action}] ` : "";
       const extra = Object.keys(rest).length ? ` ${JSON.stringify(rest)}` : "";
       return `${timestamp} ${level}: ${prefix}${message}${extra}`;
-    })
+    }),
   ),
   transports: [new transports.Console()],
 });

@@ -16,7 +16,10 @@
     "manageMerklBribes": "bun run src/manageMerklBribes.ts",
     "manageBribeOnSonic": "bun run src/manageBribeOnSonic.ts",
     "managePassThrough": "bun run src/managePassThrough.ts",
-    "typecheck": "bun run tsc --noEmit"
+    "typecheck": "bun run tsc --noEmit",
+    "lint": "biome check src/",
+    "lint:fix": "biome check --write src/",
+    "format": "biome format --write src/"
   },
   "dependencies": {
     "@aws-sdk/client-kms": "^3.675.0",
@@ -27,6 +30,7 @@
     "winston": "^3.19.0"
   },
   "devDependencies": {
+    "@biomejs/biome": "^2.4.9",
     "@types/bun": "latest",
     "typescript": "^5.7.0"
   }
