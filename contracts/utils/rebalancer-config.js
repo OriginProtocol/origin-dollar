@@ -47,8 +47,8 @@ const ousdMorphoStrategiesConfig = [
  * Rebalancing constraints for OUSD.
  */
 const ousdConstraints = {
-  minDefaultStrategyBps: 2000, // Default strategy always gets ≥ 20% of deployable
-  maxPerStrategyBps: 7000, // No single strategy gets > 70%
+  minDefaultStrategyBps: 500, // Default strategy always gets ≥ 5% of deployable
+  maxPerStrategyBps: 9500, // No single strategy gets > 95%
   minMoveAmount: 5000000000, // $5K in USDC (6 decimals)
   crossChainMinAmount: 25000000000, // $25K in USDC (6 decimals)
   minVaultBalance: 3000000000, // $3K in USDC (6 decimals)

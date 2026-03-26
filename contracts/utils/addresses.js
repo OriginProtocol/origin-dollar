@@ -722,7 +722,7 @@ addresses.CCTPMessageTransmitterV2 =
 
 // HyperEVM contracts
 addresses.hyperevm.USDC = "0xb88339CB7199b77E23DB6E890353E22632Ba630f";
-// MorphoBlue on HyperEVM is deployed at a different address than other chains
+// HyperEVM deploys MorphoBlue at a different address than the canonical 0xBBBBBbbBBb9cC5e90e3b3Af64bdAF62C37EEFFCb
 addresses.hyperevm.MorphoBlue = "0x68e37dE8d93d3496ae143F2E900490f6280C57cD";
 addresses.hyperevm.MorphoOusdV2Vault =
   "0xE90959cbE7E56b5eBFF9AD12de611A4976F2d2B1";

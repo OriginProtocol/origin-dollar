@@ -45,7 +45,7 @@ const formatDelta = (bn) => {
 // Build the Discord message from a completed buildRebalancePlan result
 const buildDiscordMessage = ({
   actions: allActions,
-  optimalActions,
+  idealActions,
   state,
   warnings = [],
 }) => {
@@ -54,23 +54,23 @@ const buildDiscordMessage = ({
     ? `🔄 **OUSD Rebalancer** — ${timestamp}  \`[DRY RUN]\``
     : `🔄 **OUSD Rebalancer** — ${timestamp}`;
 
-  // Current allocations (from on-chain state)
+  // Current allocations (from on-chain state): name | balance | avail. liquidity | APY
   const currentLines = allActions.map((a) => {
+    const avail =
+      a.withdrawableLiquidity != null
+        ? formatUSDC(a.withdrawableLiquidity)
+        : "  n/a ";
     const apyStr = a.graphqlApy
-      ? `${(a.apy * 100).toFixed(2)}% APY (API: ${(a.graphqlApy * 100).toFixed(
-          2
-        )}%)`
+      ? `${(a.apy * 100).toFixed(2)}% APY (API: ${(a.graphqlApy * 100).toFixed(2)}%)`
       : `${(a.apy * 100).toFixed(2)}% APY`;
-    return `  ${a.name.padEnd(20)} ${formatUSDC(a.balance).padStart(
-      9
-    )}  ${apyStr}`;
+    return `  ${a.name.padEnd(20)} ${formatUSDC(a.balance).padStart(9)}  ${avail.padStart(9)}  ${apyStr}`;
   });
   currentLines.push(
     `  ${"Vault idle".padEnd(20)} ${formatUSDC(state.vaultBalance).padStart(9)}`
   );
 
-  // Optimal allocations (from computeOptimalAllocation, before feasibility filtering)
-  const optimalLines = optimalActions.map((a) => {
+  // Ideal allocations (from computeIdealAllocation, before feasibility filtering)
+  const idealLines = idealActions.map((a) => {
     const deltaStr = a.delta.isZero() ? "(unchanged)" : formatDelta(a.delta);
     return `  ${a.name.padEnd(20)} ${formatUSDC(a.targetBalance).padStart(
       9
@@ -99,9 +99,9 @@ const buildDiscordMessage = ({
     "```",
     ...currentLines,
     "```",
-    "**Optimal Allocations**",
+    "**Ideal Allocations**",
     "```",
-    ...optimalLines,
+    ...idealLines,
     "```",
     "**Recommended Actions**",
     "```",

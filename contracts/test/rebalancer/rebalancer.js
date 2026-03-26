@@ -3,7 +3,7 @@ const { BigNumber } = require("ethers");
 const { parseUnits } = require("ethers/lib/utils");
 
 const {
-  computeOptimalAllocation,
+  computeIdealAllocation,
   buildExecutableActions,
   ACTION_DEPOSIT,
   ACTION_WITHDRAW,
@@ -53,14 +53,14 @@ function twoStrategies(ethBalance, baseBalance) {
 }
 
 // ─────────────────────────────────────────────────────────
-// computeOptimalAllocation
+// computeIdealAllocation
 // ─────────────────────────────────────────────────────────
 
-describe("Rebalancer: computeOptimalAllocation", () => {
+describe("Rebalancer: computeIdealAllocation", () => {
   it("should give highest APY strategy the max allocation (sort-and-fill)", () => {
     // Base has higher APY → gets maxPerStrategyBps (70%), ETH gets 30%
     const strategies = twoStrategies(500000, 500000);
-    const result = computeOptimalAllocation({
+    const result = computeIdealAllocation({
       strategies,
       apys: { [ETH_VAULT]: 0.03, [BASE_VAULT]: 0.06 },
       vaultBalance: usdc(0),
@@ -78,7 +78,7 @@ describe("Rebalancer: computeOptimalAllocation", () => {
 
   it("should give highest APY strategy the max allocation when ETH has higher APY", () => {
     const strategies = twoStrategies(500000, 500000);
-    const result = computeOptimalAllocation({
+    const result = computeIdealAllocation({
       strategies,
       apys: { [ETH_VAULT]: 0.08, [BASE_VAULT]: 0.03 },
       vaultBalance: usdc(0),
@@ -94,7 +94,7 @@ describe("Rebalancer: computeOptimalAllocation", () => {
   it("should enforce minimum for default strategy when it has lower APY", () => {
     // Base has very high APY; without min constraint, ETH would get near 0
     const strategies = twoStrategies(500000, 500000);
-    const result = computeOptimalAllocation({
+    const result = computeIdealAllocation({
       strategies,
       apys: { [ETH_VAULT]: 0.001, [BASE_VAULT]: 0.2 },
       vaultBalance: usdc(0),
@@ -114,7 +114,7 @@ describe("Rebalancer: computeOptimalAllocation", () => {
 
   it("should reserve shortfall + minVaultBalance from deployable capital", () => {
     const strategies = twoStrategies(400000, 400000);
-    const result = computeOptimalAllocation({
+    const result = computeIdealAllocation({
       strategies,
       apys: { [ETH_VAULT]: 0.05, [BASE_VAULT]: 0.05 },
       vaultBalance: usdc(200000),
@@ -130,7 +130,7 @@ describe("Rebalancer: computeOptimalAllocation", () => {
   it("should give first strategy in sorted order the max cap when APYs are equal", () => {
     // Equal APYs → sort is stable → ETH (index 0) fills first to 70% cap
     const strategies = twoStrategies(500000, 500000);
-    const result = computeOptimalAllocation({
+    const result = computeIdealAllocation({
       strategies,
       apys: { [ETH_VAULT]: 0.05, [BASE_VAULT]: 0.05 },
       vaultBalance: usdc(0),
@@ -146,7 +146,7 @@ describe("Rebalancer: computeOptimalAllocation", () => {
 
   it("should give first strategy the max cap when APYs are zero", () => {
     const strategies = twoStrategies(1000000, 0);
-    const result = computeOptimalAllocation({
+    const result = computeIdealAllocation({
       strategies,
       apys: { [ETH_VAULT]: 0, [BASE_VAULT]: 0 },
       vaultBalance: usdc(0),
@@ -162,7 +162,7 @@ describe("Rebalancer: computeOptimalAllocation", () => {
   it("should set correct action for over/under allocated strategies", () => {
     // All in ETH, Base has higher APY → move some to Base
     const strategies = twoStrategies(1000000, 0);
-    const result = computeOptimalAllocation({
+    const result = computeIdealAllocation({
       strategies,
       apys: { [ETH_VAULT]: 0.03, [BASE_VAULT]: 0.06 },
       vaultBalance: usdc(0),
@@ -175,7 +175,7 @@ describe("Rebalancer: computeOptimalAllocation", () => {
 
   it("should include APY in results", () => {
     const strategies = twoStrategies(500000, 500000);
-    const result = computeOptimalAllocation({
+    const result = computeIdealAllocation({
       strategies,
       apys: { [ETH_VAULT]: 0.042, [BASE_VAULT]: 0.073 },
       vaultBalance: usdc(0),
@@ -188,7 +188,7 @@ describe("Rebalancer: computeOptimalAllocation", () => {
 
   it("should handle zero total capital", () => {
     const strategies = twoStrategies(0, 0);
-    const result = computeOptimalAllocation({
+    const result = computeIdealAllocation({
       strategies,
       apys: { [ETH_VAULT]: 0.05, [BASE_VAULT]: 0.05 },
       vaultBalance: usdc(0),
@@ -201,7 +201,7 @@ describe("Rebalancer: computeOptimalAllocation", () => {
 
   it("should treat vault idle USDC as deployable capital", () => {
     const strategies = twoStrategies(0, 0);
-    const result = computeOptimalAllocation({
+    const result = computeIdealAllocation({
       strategies,
       apys: { [ETH_VAULT]: 0.05, [BASE_VAULT]: 0.05 },
       vaultBalance: usdc(1000000),
@@ -217,7 +217,7 @@ describe("Rebalancer: computeOptimalAllocation", () => {
   it("should output withdraw-all when shortfall exceeds total capital", () => {
     // ETH 100K + Base 50K = 150K total; shortfall 200K > 150K → deployable = 0
     const strategies = twoStrategies(100000, 50000);
-    const result = computeOptimalAllocation({
+    const result = computeIdealAllocation({
       strategies,
       apys: { [ETH_VAULT]: 0.05, [BASE_VAULT]: 0.04 },
       vaultBalance: usdc(0),

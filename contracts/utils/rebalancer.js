@@ -33,6 +33,17 @@ const erc20Abi = [
   "function balanceOf(address account) external view returns (uint256)",
 ];
 
+// ABIs for withdrawable-liquidity reads
+const maxWithdrawAbi = [
+  "function maxWithdraw() external view returns (uint256)",
+];
+const platformAddressAbi = [
+  "function platformAddress() external view returns (address)",
+];
+const erc4626MaxWithdrawAbi = [
+  "function maxWithdraw(address owner) external view returns (uint256)",
+];
+
 /**
  * Read on-chain state: Morpho strategy balances, vault idle USDC, withdrawal queue.
  * @param {object} provider - ethers provider
@@ -287,6 +298,8 @@ function _buildAllocationRow(s, targetBalance, apy, graphqlApy = 0) {
     metaMorphoVaultAddress: s.metaMorphoVaultAddress,
     morphoChainId: s.morphoChainId,
     balance: s.balance,
+    // Populated later by fetchMaxWithdrawals; null means unknown (no constraint applied)
+    withdrawableLiquidity: null,
     apy,
     graphqlApy,
     targetBalance,
@@ -317,7 +330,7 @@ function _buildAllocationRow(s, targetBalance, apy, graphqlApy = 0) {
  * @param {object} [params.constraints]
  * @returns {Array} allocation results
  */
-function computeOptimalAllocation({
+function computeIdealAllocation({
   strategies,
   apys,
   graphqlApys = {},
@@ -398,11 +411,28 @@ function _filterWithdrawals(result, constraints) {
   const withdrawals = result.filter((a) => a.action === ACTION_WITHDRAW);
 
   for (const w of withdrawals) {
-    const absDelta = w.delta.abs();
-    if (absDelta.lt(constraints.minMoveAmount)) {
+    let amt = w.delta.abs();
+
+    // Cap to available liquidity first so subsequent size checks use the capped amount
+    if (w.withdrawableLiquidity !== null) {
+      const liq = w.withdrawableLiquidity;
+      if (liq.lt(constraints.minMoveAmount)) {
+        w.action = ACTION_NONE;
+        w.reason = `insufficient liquidity: ${fmtUsd(liq)} available`;
+        continue;
+      }
+      if (amt.gt(liq)) {
+        amt = liq;
+        w.delta = amt.mul(-1);
+        w.targetBalance = w.balance.sub(amt);
+        w.reason = `capped to available liquidity: ${fmtUsd(liq)}`;
+      }
+    }
+
+    if (amt.lt(constraints.minMoveAmount)) {
       w.action = ACTION_NONE;
       w.reason = "below min move";
-    } else if (w.isCrossChain && absDelta.lt(constraints.crossChainMinAmount)) {
+    } else if (w.isCrossChain && amt.lt(constraints.crossChainMinAmount)) {
       w.action = ACTION_NONE;
       w.reason = "below cross-chain min";
     } else if (maxApy - w.apy < constraints.minApySpread) {
@@ -614,7 +644,7 @@ function _deploySurplus(result, surplus) {
  * Pass B (deposits):   allocate from budget in APY-desc order, apply feasibility checks.
  * Pass 2 (fallbacks):  shortfall and surplus fallbacks run after both passes.
  *
- * @param {Array}     allocations - output of computeOptimalAllocation
+ * @param {Array}     allocations - output of computeIdealAllocation
  * @param {BigNumber} shortfall   - vault withdrawal shortfall (after addWithdrawalQueueLiquidity offset)
  * @param {BigNumber} vaultBalance - vault idle USDC (after addWithdrawalQueueLiquidity offset)
  * @param {object}    [constraintOverrides]
@@ -696,14 +726,14 @@ function fmtUsd(bn) {
  *
  * @param {object} params
  * @param {Array}  params.actions         - filtered+sorted allocations (output of sortActions)
- * @param {Array}  params.optimalActions  - unfiltered allocations (output of computeOptimalAllocation)
+ * @param {Array}  params.idealActions  - ideal (unconstrained) allocations (output of computeIdealAllocation)
  * @param {BigNumber} params.vaultBalance
  * @param {BigNumber} params.shortfall
  * @param {object} [params.constraints]
  */
 function printAllocationTable({
   actions,
-  optimalActions,
+  idealActions,
   vaultBalance,
   shortfall,
   constraints: overrides = {},
@@ -712,8 +742,8 @@ function printAllocationTable({
   const COL_SEP = "  ";
   const constraints = { ...ousdConstraints, ...overrides };
 
-  // Use optimalActions for the table (shows optimal targets); fall back to feasible if absent
-  const tableRows = optimalActions || actions;
+  // Use idealActions for the table (shows ideal balances/APYs); fall back to feasible if absent
+  const tableRows = idealActions || actions;
   const totalCapital = tableRows.reduce(
     (sum, a) => sum.add(a.balance),
     vaultBalance
@@ -726,7 +756,7 @@ function printAllocationTable({
   console.log(`Total rebalancable capital : ${fmtUsd(totalCapital)} USDC`);
   console.log(`Withdrawal shortfall       : ${fmtUsd(shortfall)} USDC`);
 
-  // ── Allocations table: shows optimal targets from optimalActions ────────────
+  // ── Allocations table: shows recommended targets from actions ────────────
   console.log("\n--- Allocations ---\n");
   const pct = (bn) =>
     totalCapital.gt(0)
@@ -740,20 +770,32 @@ function printAllocationTable({
   );
   const vaultDelta = vaultTarget.sub(vaultBalance);
   const vaultDeltaSign = sign(vaultDelta);
-  const formattedRows = tableRows.map((a) => ({
-    name: `${a.name}${a.isDefault ? " *" : ""}`,
-    current: `${fmtUsd(a.balance)}${pct(a.balance)}`,
-    target: `${fmtUsd(a.targetBalance)}${pct(a.targetBalance)}`,
-    delta: `${sign(a.delta)}${fmtUsd(a.delta.abs())}`,
-    apy: a.graphqlApy
-      ? `${(a.apy * 100).toFixed(2)}% (API: ${(a.graphqlApy * 100).toFixed(
-          2
-        )}%)`
-      : `${(a.apy * 100).toFixed(2)}%`,
-  }));
+  const formattedRows = tableRows.map((a) => {
+    const rec = filteredByAddr.get(a.address);
+    // Recommended target: use the feasible action's target if an action is approved,
+    // otherwise fall back to the current balance (no change recommended)
+    const recTarget =
+      rec && rec.action !== ACTION_NONE ? rec.targetBalance : a.balance;
+    const recDelta = recTarget.sub(a.balance);
+    const apyStr = a.graphqlApy
+      ? `${(a.apy * 100).toFixed(2)}% (API: ${(a.graphqlApy * 100).toFixed(2)}%)`
+      : `${(a.apy * 100).toFixed(2)}%`;
+    return {
+      name: `${a.name}${a.isDefault ? " *" : ""}`,
+      current: `${fmtUsd(a.balance)}${pct(a.balance)}`,
+      avail:
+        a.withdrawableLiquidity !== null
+          ? fmtUsd(a.withdrawableLiquidity)
+          : "n/a",
+      target: `${fmtUsd(recTarget)}${pct(recTarget)}`,
+      delta: `${sign(recDelta)}${fmtUsd(recDelta.abs())}`,
+      apy: apyStr,
+    };
+  });
   const vaultRow = {
     name: "Vault (idle)",
     current: `${fmtUsd(vaultBalance)}${pct(vaultBalance)}`,
+    avail: "—",
     target: `${fmtUsd(vaultTarget)}${pct(vaultTarget)}`,
     delta: `${vaultDeltaSign}${fmtUsd(vaultDelta.abs())}`,
     apy: "—",
@@ -765,8 +807,12 @@ function printAllocationTable({
       "Current".length,
       ...allRows.map((row) => row.current.length)
     ),
+    avail: Math.max(
+      "Avail.".length,
+      ...allRows.map((row) => row.avail.length)
+    ),
     target: Math.max(
-      "Target (optimal)".length,
+      "Target (rec.)".length,
       ...allRows.map((row) => row.target.length)
     ),
     delta: Math.max("Delta".length, ...allRows.map((row) => row.delta.length)),
@@ -776,7 +822,7 @@ function printAllocationTable({
   console.log(
     `${"Strategy".padEnd(COL.name)}${COL_SEP}${"Current".padStart(
       COL.current
-    )}${COL_SEP}${"Target (optimal)".padStart(
+    )}${COL_SEP}${"Avail.".padStart(COL.avail)}${COL_SEP}${"Target (rec.)".padStart(
       COL.target
     )}${COL_SEP}${"Delta".padStart(COL.delta)}${COL_SEP}${"APY".padStart(
       COL.apy
@@ -786,10 +832,11 @@ function printAllocationTable({
     "-".repeat(
       COL.name +
         COL.current +
+        COL.avail +
         COL.target +
         COL.delta +
         COL.apy +
-        COL_SEP.length * 4
+        COL_SEP.length * 5
     )
   );
 
@@ -797,6 +844,7 @@ function printAllocationTable({
     console.log(
       `${row.name.padEnd(COL.name)}${COL_SEP}` +
         `${row.current.padStart(COL.current)}${COL_SEP}` +
+        `${row.avail.padStart(COL.avail)}${COL_SEP}` +
         `${row.target.padStart(COL.target)}${COL_SEP}` +
         `${row.delta.padStart(COL.delta)}${COL_SEP}` +
         `${row.apy.padStart(COL.apy)}`
@@ -806,6 +854,7 @@ function printAllocationTable({
   console.log(
     `${vaultRow.name.padEnd(COL.name)}${COL_SEP}` +
       `${vaultRow.current.padStart(COL.current)}${COL_SEP}` +
+      `${vaultRow.avail.padStart(COL.avail)}${COL_SEP}` +
       `${vaultRow.target.padStart(COL.target)}${COL_SEP}` +
       `${vaultRow.delta.padStart(COL.delta)}${COL_SEP}` +
       `${vaultRow.apy.padStart(COL.apy)}`
@@ -815,10 +864,11 @@ function printAllocationTable({
     "-".repeat(
       COL.name +
         COL.current +
+        COL.avail +
         COL.target +
         COL.delta +
         COL.apy +
-        COL_SEP.length * 4
+        COL_SEP.length * 5
     )
   );
   console.log(
@@ -828,10 +878,10 @@ function printAllocationTable({
   );
   console.log("  * = default strategy\n");
 
-  // ── Section 1: All optimal allocation changes ──────────────────────────────
+  // ── Section 1: All ideal allocation changes ──────────────────────────────
   const rawChanges = tableRows.filter((a) => !a.delta.isZero());
 
-  console.log("--- Actions for Optimal Allocation ---\n");
+  console.log("--- Actions for Ideal Allocation ---\n");
   if (rawChanges.length === 0) {
     console.log("  All strategies at target.\n");
   } else {
@@ -915,6 +965,61 @@ function _filterExcludedStrategies(strategies, apys, constraints) {
 }
 
 /**
+ * Fetch the immediately withdrawable amount for each strategy.
+ *
+ * - Same-chain (Ethereum Morpho V2): call strategy.maxWithdraw() on the mainnet provider.
+ * - Cross-chain: the master and remote strategy share the same address (CREATE2 deployment).
+ *   Use the remote-chain provider, call remoteStrategy.platformAddress() to get the Morpho
+ *   V2 vault address, then call vault.maxWithdraw(strategyAddress) (ERC-4626).
+ * - If the required provider is unavailable, the entry is omitted and no constraint is applied.
+ *
+ * @param {Array}  strategies - strategy config objects (from ousdMorphoStrategiesConfig)
+ * @param {object} providers  - { [chainId]: ethers.providers.Provider }
+ * @returns {object} { [strategyAddress]: BigNumber } map of withdrawable amounts
+ */
+async function fetchMaxWithdrawals(strategies, providers = {}) {
+  const results = {};
+  await Promise.all(
+    strategies.map(async (s) => {
+      try {
+        if (!s.isCrossChain) {
+          const provider = providers[1];
+          if (!provider) return;
+          const contract = new ethers.Contract(
+            s.address,
+            maxWithdrawAbi,
+            provider
+          );
+          results[s.address] = await contract.maxWithdraw();
+        } else {
+          // Master and remote strategy share the same address via CREATE2
+          const provider = providers[s.morphoChainId];
+          if (!provider) return;
+          const remoteStrategy = new ethers.Contract(
+            s.address,
+            platformAddressAbi,
+            provider
+          );
+          const vaultAddress = await remoteStrategy.platformAddress();
+          const vault = new ethers.Contract(
+            vaultAddress,
+            erc4626MaxWithdrawAbi,
+            provider
+          );
+          results[s.address] = await vault.maxWithdraw(s.address);
+        }
+      } catch (err) {
+        console.error(
+          `fetchMaxWithdrawals failed for ${s.name}: ${err.message}`
+        );
+        // Entry omitted — no liquidity constraint applied for this strategy
+      }
+    })
+  );
+  return results;
+}
+
+/**
  * Main entry: read state, fetch APYs, compute allocations, print table.
  *
  * @param {object} providers - { [chainId]: ethersProvider }
@@ -922,13 +1027,25 @@ function _filterExcludedStrategies(strategies, apys, constraints) {
  *   providers[cfg.morphoChainId] is used for on-chain Morpho APY reads.
  */
 async function buildRebalancePlan(providers) {
+  // Accept either a providers map { [chainId]: provider } or a legacy single provider
+  const providerMap =
+    providers && typeof providers.getNetwork === "function"
+      ? { 1: providers }
+      : providers || {};
+
   log("Reading on-chain state...");
-  const state = await readOnChainState(providers[1]);
+  const state = await readOnChainState(providerMap[1] || providerMap);
 
   log("Fetching Morpho APYs (on-chain + GraphQL)...");
   const { apys, graphqlApys } = await fetchMorphoApys(
     state.strategies.filter((s) => s.metaMorphoVaultAddress),
-    providers
+    providerMap
+  );
+
+  log("Fetching withdrawable liquidity...");
+  const maxWithdrawals = await fetchMaxWithdrawals(
+    state.strategies,
+    providerMap
   );
 
   // Exclude strategies with suspiciously high APY
@@ -938,8 +1055,8 @@ async function buildRebalancePlan(providers) {
     ousdConstraints
   );
 
-  // Compute optimal allocation for active strategies only
-  const optimalActive = computeOptimalAllocation({
+  // Compute ideal (unconstrained) allocation for active strategies only
+  const idealActive = computeIdealAllocation({
     strategies: active,
     apys,
     graphqlApys,
@@ -948,7 +1065,7 @@ async function buildRebalancePlan(providers) {
   });
 
   // Build frozen rows for excluded strategies
-  const optimalExcluded = excluded.map((s) => {
+  const idealExcluded = excluded.map((s) => {
     const row = _buildAllocationRow(
       s,
       s.balance,
@@ -959,32 +1076,40 @@ async function buildRebalancePlan(providers) {
     return row;
   });
 
-  const optimalActions = [...optimalActive, ...optimalExcluded];
+  const idealActions = [...idealActive, ...idealExcluded];
+
+  // Merge withdrawable liquidity into rows before feasibility filtering
+  for (const row of idealActions) {
+    if (maxWithdrawals[row.address] !== undefined) {
+      row.withdrawableLiquidity = maxWithdrawals[row.address];
+    }
+  }
 
   const executableActions = await buildExecutableActions(
-    optimalActions,
+    idealActions,
     state.shortfall,
     state.vaultBalance,
     {},
-    providers
+    providerMap
   );
   const actions = sortActions(executableActions);
 
   printAllocationTable({
     actions,
-    optimalActions,
+    idealActions,
     vaultBalance: state.vaultBalance,
     shortfall: state.shortfall,
     warnings,
   });
 
-  return { actions, optimalActions, state, apys, graphqlApys, warnings };
+  return { actions, idealActions, state, apys, graphqlApys, warnings };
 }
 
 module.exports = {
   readOnChainState,
   fetchMorphoApys,
-  computeOptimalAllocation,
+  fetchMaxWithdrawals,
+  computeIdealAllocation,
   buildExecutableActions,
   sortActions,
   fmtUsd,
