@@ -460,6 +460,10 @@ addresses.base.MerklDistributor = "0x8BB4C975Ff3c250e0ceEA271728547f3802B36Fd";
 addresses.base.USDC = "0x833589fcd6edb6e08f4c7c32d4f71b54bda02913";
 
 addresses.base.MorphoOusdV2Vault = "0x2Ba14b2e1E7D2189D3550b708DFCA01f899f33c1";
+// Derived via: VaultV2(MorphoOusdV2Vault).adapters(0) → adapter; adapter.morphoVaultV1()
+addresses.base.MorphoOusdV2Adapter =
+  "0xFE4ccb1f0d9634F3191cA45B7f3413c4ca85086E";
+addresses.base.MorphoOusdV1Vault = "0x581Cc9a73Ec7431723A4a80699B8f801205841F1";
 
 // Sonic
 addresses.sonic.wS = "0x039e2fB66102314Ce7b64Ce5Ce3E5183bc94aD38";
@@ -708,9 +712,15 @@ addresses.CCTPMessageTransmitterV2 =
 
 // HyperEVM contracts
 addresses.hyperevm.USDC = "0xb88339CB7199b77E23DB6E890353E22632Ba630f";
-// Morpho V2 vault address on HyperEVM once deployed
+// HyperEVM deploys MorphoBlue at a different address than the canonical 0xBBBBBbbBBb9cC5e90e3b3Af64bdAF62C37EEFFCb
+addresses.hyperevm.MorphoBlue = "0x68e37dE8d93d3496ae143F2E900490f6280C57cD";
 addresses.hyperevm.MorphoOusdV2Vault =
   "0xE90959cbE7E56b5eBFF9AD12de611A4976F2d2B1";
+// Derived via: VaultV2(MorphoOusdV2Vault).adapters(0) → adapter; adapter.morphoVaultV1()
+addresses.hyperevm.MorphoOusdV2Adapter =
+  "0xF912d9489DEc1593D888eb680a4074f84c44413c";
+addresses.hyperevm.MorphoOusdV1Vault =
+  "0x0fb7e41A0A85Eb0BcA55172b73942cc6685e2B2E";
 addresses.hyperevm.strategist = addresses.multichainStrategist;
 addresses.hyperevm.admin = "0x92A19381444A001d62cE67BaFF066fA1111d7202";
 addresses.hyperevm.timelock = "0x77121911A387c9e4Eae46345E0f831A6da8a1364";

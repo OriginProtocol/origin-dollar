@@ -820,10 +820,19 @@ function _filterExcludedStrategies(strategies, apys, constraints) {
 
 /**
  * Main entry: read state, fetch APYs, compute allocations, print table.
+ * @param {object|import('ethers').providers.Provider} providers - Either a map of
+ *   chainId → provider (e.g. { 1: mainnetProvider, 8453: baseProvider, 999: hyperevmProvider })
+ *   or a single mainnet provider for backwards compatibility.
  */
-async function buildRebalancePlan(provider) {
+async function buildRebalancePlan(providers) {
+  // Accept either a providers map { [chainId]: provider } or a legacy single provider
+  const providerMap =
+    providers && typeof providers.getNetwork === "function"
+      ? { 1: providers }
+      : providers || {};
+
   log("Reading on-chain state...");
-  const state = await readOnChainState(provider);
+  const state = await readOnChainState(providerMap[1] || providerMap);
 
   log("Fetching Morpho APYs...");
   const apys = await fetchMorphoApys(

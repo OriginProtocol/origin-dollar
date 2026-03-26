@@ -7,7 +7,11 @@ const addresses = require("./addresses");
  * Fields:
  *   name              – Human-readable label
  *   address           – Strategy proxy address (on mainnet)
- *   morphoVaultAddress – Morpho vault used for APY lookup via the Morpho API
+ *   morphoVaultAddress – MetaMorpho V1 vault for APY lookup via the Morpho GraphQL API.
+ *                        Must be the inner MetaMorpho V1 vault, not a VaultV2 wrapper —
+ *                        the Morpho API does not index VaultV2.
+ *                        Derived via: VaultV2(outerVaultAddr).adapters(0) → adapter;
+ *                        adapter.morphoVaultV1()
  *   morphoChainId     – Chain where that vault lives (1 = Ethereum, 8453 = Base, 999 = HyperEVM)
  *   isCrossChain      – True for strategies that bridge via CCTP
  *   isDefault         – Fallback strategy; exactly one entry must have this set
@@ -25,8 +29,8 @@ const ousdMorphoStrategiesConfig = [
   {
     name: "Base Morpho",
     address: addresses.mainnet.CrossChainMasterStrategy,
-    // Morpho V1 vault on Base for APY lookup
-    morphoVaultAddress: "0x581Cc9a73Ec7431723A4a80699B8f801205841F1",
+    // MetaMorpho V1 vault on Base for APY lookup (VaultV2 is not indexed by Morpho API)
+    morphoVaultAddress: addresses.base.MorphoOusdV1Vault,
     morphoChainId: 8453,
     isCrossChain: true,
     isDefault: false,
@@ -34,7 +38,8 @@ const ousdMorphoStrategiesConfig = [
   {
     name: "HyperEVM Morpho",
     address: addresses.mainnet.CrossChainHyperEVMMasterStrategy,
-    morphoVaultAddress: addresses.hyperevm.MorphoOusdV2Vault,
+    // MetaMorpho V1 vault on HyperEVM for APY lookup (VaultV2 is not indexed by Morpho API)
+    morphoVaultAddress: addresses.hyperevm.MorphoOusdV1Vault,
     morphoChainId: 999,
     isCrossChain: true,
     isDefault: false,
@@ -45,8 +50,8 @@ const ousdMorphoStrategiesConfig = [
  * Rebalancing constraints for OUSD.
  */
 const ousdConstraints = {
-  minDefaultStrategyBps: 2000, // Default strategy always gets ≥ 20% of deployable
-  maxPerStrategyBps: 7000, // No single strategy gets > 70%
+  minDefaultStrategyBps: 500, // Default strategy always gets ≥ 5% of deployable
+  maxPerStrategyBps: 9500, // No single strategy gets > 95%
   minMoveAmount: 5000000000, // $5K in USDC (6 decimals)
   crossChainMinAmount: 25000000000, // $25K in USDC (6 decimals)
   minVaultBalance: 3000000000, // $3K in USDC (6 decimals)
