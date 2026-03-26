@@ -75,20 +75,41 @@ function removeWorktree(dir) {
 // ─── Forge helpers ───────────────────────────────────────────────────────────
 
 function forgeBuild(contractsDir) {
+  console.log(`  Installing dependencies in ${contractsDir}...`);
+  try {
+    execSync("forge soldeer install", {
+      cwd: contractsDir,
+      stdio: "inherit",
+      timeout: 120_000,
+    });
+  } catch {
+    console.warn("  Warning: soldeer install had issues, continuing...");
+  }
   console.log(`  Building in ${contractsDir}...`);
-  execSync("forge build", {
-    cwd: contractsDir,
-    stdio: "inherit",
-    timeout: 300_000,
-  });
+  try {
+    execSync("forge build", {
+      cwd: contractsDir,
+      stdio: "inherit",
+      timeout: 300_000,
+    });
+  } catch {
+    console.warn(
+      "  Warning: forge build had errors (some contracts may still be inspectable)"
+    );
+  }
 }
 
 function forgeInspect(contractsDir, contractName) {
   const output = execSync(
-    `forge inspect "${contractName}" storageLayout`,
+    `forge inspect "${contractName}" storageLayout --json`,
     { cwd: contractsDir, encoding: "utf8", stdio: ["pipe", "pipe", "pipe"] }
   );
-  return JSON.parse(output);
+  // forge may print tracing logs before the JSON — extract the JSON object
+  const jsonStart = output.indexOf("{");
+  if (jsonStart === -1) {
+    throw new Error("No JSON found in forge inspect output");
+  }
+  return JSON.parse(output.slice(jsonStart));
 }
 
 function getLayout(contractsDir, contractName) {
@@ -156,7 +177,36 @@ function compareLayouts(oldLayout, newLayout, contractName) {
       const oldSize = getTypeSize(oldLayout, oldEntry.type);
       const newSize = getTypeSize(newLayout, newEntry.type);
 
-      // Check if it's a gap being resized
+      // Gap replaced by a new variable — valid "carving from gap" pattern
+      if (isGapVariable(oldEntry) && !isGapVariable(newEntry)) {
+        const oldGapSlots = gapSlotCount(oldLayout, oldEntry);
+        // Find the new gap in the new layout (should be right after the new variables)
+        const newGap = newStorage.find(
+          (e) =>
+            isGapVariable(e) &&
+            e.contract === oldEntry.contract &&
+            parseInt(e.slot, 10) > parseInt(oldEntry.slot, 10)
+        );
+        if (newGap) {
+          const newGapSlots = gapSlotCount(newLayout, newGap);
+          const newGapStart = parseInt(newGap.slot, 10);
+          const oldGapStart = parseInt(oldEntry.slot, 10);
+          const slotsUsed = newGapStart - oldGapStart;
+          if (slotsUsed + newGapSlots === oldGapSlots) {
+            infos.push(
+              `__gap (${oldEntry.contract}) reduced from ${oldGapSlots} to ${newGapSlots} slots (${slotsUsed} slot(s) used by new variables)`
+            );
+            continue;
+          }
+        }
+        // If we can't find a matching shrunk gap, flag it
+        infos.push(
+          `Gap at slot ${oldEntry.slot} replaced by "${newEntry.label}" — verify gap was properly shrunk`
+        );
+        continue;
+      }
+
+      // Check if it's a gap being resized (same slot, both gaps)
       if (isGapVariable(oldEntry) && isGapVariable(newEntry)) {
         const oldGapSlots = gapSlotCount(oldLayout, oldEntry);
         const newGapSlots = gapSlotCount(newLayout, newEntry);
