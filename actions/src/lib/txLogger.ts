@@ -4,7 +4,7 @@ import {
   type TransactionReceipt,
   formatEther,
 } from "viem";
-import logger from "./logger";
+import type { Logger } from "winston";
 
 /**
  * Log transaction details after the tx has been sent.
@@ -12,14 +12,14 @@ import logger from "./logger";
 export async function logTxDetails(
   client: PublicClient,
   hash: Hash,
-  method: string
+  method: string,
+  log: Logger
 ): Promise<TransactionReceipt> {
   const tx = await client.getTransaction({ hash });
-  logger.info(
+  log.info(
     `Sent ${method} tx ${hash} from ${tx.from} (${
       tx.gasPrice ? Number(tx.gasPrice) / 1e9 : "unknown"
-    } Gwei)`,
-    { label: "tx" }
+    } Gwei)`
   );
 
   const receipt = await client.waitForTransactionReceipt({ hash });
@@ -30,9 +30,8 @@ export async function logTxDetails(
 
   const txCost =
     receipt.gasUsed * (receipt.effectiveGasPrice ?? tx.gasPrice ?? 0n);
-  logger.info(
-    `Processed ${method} in block ${receipt.blockNumber}, ${receipt.gasUsed} gas, ${formatEther(txCost)} ETH`,
-    { label: "tx" }
+  log.info(
+    `Processed ${method} in block ${receipt.blockNumber}, ${receipt.gasUsed} gas, ${formatEther(txCost)} ETH`
   );
 
   return receipt;

@@ -5,8 +5,8 @@ const logger = createLogger({
   format: format.combine(
     format.timestamp(),
     format.errors({ stack: true }),
-    format.printf(({ timestamp, level, message, label, ...rest }) => {
-      const prefix = label ? `[${label}] ` : "";
+    format.printf(({ timestamp, level, message, action, ...rest }) => {
+      const prefix = action ? `[${action}] ` : "";
       const extra = Object.keys(rest).length ? ` ${JSON.stringify(rest)}` : "";
       return `${timestamp} ${level}: ${prefix}${message}${extra}`;
     })

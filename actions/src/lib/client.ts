@@ -34,12 +34,21 @@ export function getChain(network: keyof typeof CHAIN_CONFIG): Chain {
   return config.chain;
 }
 
-export function getRpcUrl(network: keyof typeof CHAIN_CONFIG): string {
-  const config = CHAIN_CONFIG[network];
+export function getRpcUrl(networkOrChain: keyof typeof CHAIN_CONFIG | Chain): string {
+  if (typeof networkOrChain === "string") {
+    const config = CHAIN_CONFIG[networkOrChain];
+    if (!config) {
+      throw new Error(
+        `Unknown network "${networkOrChain}". Supported: ${Object.keys(CHAIN_CONFIG).join(", ")}`
+      );
+    }
+    return requireEnv(config.envVar);
+  }
+  const config = Object.values(CHAIN_CONFIG).find(
+    (c) => c.chain.id === networkOrChain.id
+  );
   if (!config) {
-    throw new Error(
-      `Unknown network "${network}". Supported: ${Object.keys(CHAIN_CONFIG).join(", ")}`
-    );
+    throw new Error(`No RPC config for chain id ${networkOrChain.id}`);
   }
   return requireEnv(config.envVar);
 }
