@@ -204,8 +204,6 @@ async function fetchVaultMarkets(provider, chainId, vaultAddress) {
  * @param {object} depositSim       - optional { [marketId]: BigNumber addedSupply }
  */
 function _weightedApy(markets, depositSim = {}) {
-  const anyVaultAlloc = markets.some((m) => m.vaultSupplyAssets.gt(0));
-
   const suspiciousMarkets = markets.filter(
     (m) => m.rateAtTarget.isZero() && m.totalBorrowAssets.gt(0)
   );
@@ -235,8 +233,7 @@ function _weightedApy(markets, depositSim = {}) {
 
     const { supplyApy } = estimateMarketApy(0, supply, borrows, fee, rate);
 
-    const rawWeight = anyVaultAlloc ? m.vaultSupplyAssets : m.totalSupplyAssets;
-    const weight = Number(rawWeight.toString()) / scale;
+    const weight = Number(m.vaultSupplyAssets.toString()) / scale;
 
     if (weight <= 0) continue;
 
@@ -251,7 +248,15 @@ function _weightedApy(markets, depositSim = {}) {
     totalWeight += weight;
   }
 
-  return totalWeight > 0 ? weightedSum / totalWeight : 0;
+  if (totalWeight <= 0) {
+    throw new Error(
+      `Vault has ${markets.length} market(s) in its supply queue but zero ` +
+        `supply position in all of them. Check that the vault address passed ` +
+        `to fetchVaultMarkets is the MetaMorpho V1 vault, not a VaultV2 wrapper.`
+    );
+  }
+
+  return weightedSum / totalWeight;
 }
 
 // ─── Public API ───────────────────────────────────────────────────────────────
