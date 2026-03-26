@@ -74,7 +74,7 @@ function removeWorktree(dir) {
 
 // ─── Forge helpers ───────────────────────────────────────────────────────────
 
-function forgeBuild(contractsDir) {
+function installDeps(contractsDir) {
   console.log(`  Installing dependencies in ${contractsDir}...`);
   try {
     execSync("bash install-deps.sh", {
@@ -85,28 +85,22 @@ function forgeBuild(contractsDir) {
   } catch {
     console.warn("  Warning: dependency install had issues, continuing...");
   }
-  console.log(`  Building in ${contractsDir}...`);
   execSync("forge clean", {
     cwd: contractsDir,
     stdio: "pipe",
   });
-  try {
-    execSync("forge build", {
-      cwd: contractsDir,
-      stdio: "inherit",
-      timeout: 300_000,
-    });
-  } catch {
-    console.warn(
-      "  Warning: forge build had errors (some contracts may still be inspectable)"
-    );
-  }
 }
 
 function forgeInspect(contractsDir, contractName) {
+  // forge inspect compiles only the target contract + dependencies, not the whole repo
   const output = execSync(
-    `forge inspect "${contractName}" storageLayout --json`,
-    { cwd: contractsDir, encoding: "utf8", stdio: ["pipe", "pipe", "pipe"] }
+    `forge inspect "${contractName}" storageLayout --json --force`,
+    {
+      cwd: contractsDir,
+      encoding: "utf8",
+      stdio: ["pipe", "pipe", "pipe"],
+      timeout: 300_000,
+    }
   );
   // forge may print tracing logs before the JSON — extract the JSON object
   const jsonStart = output.indexOf("{");
@@ -293,7 +287,7 @@ async function main() {
   const repoRoot = path.resolve(__dirname, "../..");
   const currentContractsDir = path.resolve(__dirname, "..");
 
-  // ── Build and extract layouts for the new version ──
+  // ── Set up head (new version) ──
 
   let headContractsDir;
   let headWorktreeDir = null;
@@ -302,19 +296,17 @@ async function main() {
     console.log(`Creating worktree for head ref (${args.head})...`);
     headWorktreeDir = createWorktree(args.head);
     headContractsDir = path.join(headWorktreeDir, "contracts");
-    forgeBuild(headContractsDir);
+    installDeps(headContractsDir);
   } else {
     headContractsDir = currentContractsDir;
-    console.log("Building current branch...");
-    forgeBuild(headContractsDir);
   }
 
-  // ── Build the base ref in a worktree ──
+  // ── Set up base (old version) in a worktree ──
 
-  console.log(`\nCreating worktree for base ref (${args.base})...`);
+  console.log(`Creating worktree for base ref (${args.base})...`);
   const baseWorktreeDir = createWorktree(args.base);
   const baseContractsDir = path.join(baseWorktreeDir, "contracts");
-  forgeBuild(baseContractsDir);
+  installDeps(baseContractsDir);
 
   console.log();
 
