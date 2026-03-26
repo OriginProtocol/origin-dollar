@@ -3,13 +3,11 @@
 const fs = require("node:fs");
 const path = require("node:path");
 
-const configPath = process.env.CRON_CONFIG_PATH || "/app/cron/cron-jobs.json";
-const outputPath = process.env.CRON_OUTPUT_PATH || "/etc/cronjob";
+const DEFAULT_CONFIG_PATH =
+  process.env.CRON_CONFIG_PATH || "/app/cron/cron-jobs.json";
+const DEFAULT_OUTPUT_PATH = process.env.CRON_OUTPUT_PATH || "/etc/cronjob";
 
-const fail = (message) => {
-  console.error(`[render-crontab] ${message}`);
-  process.exit(1);
-};
+class RenderCrontabError extends Error {}
 
 const isNonEmptyString = (value) =>
   typeof value === "string" && value.trim().length > 0;
@@ -19,48 +17,63 @@ const hasFiveCronFields = (value) =>
 
 const validateJob = (job, index, names) => {
   if (!job || typeof job !== "object" || Array.isArray(job)) {
-    fail(`jobs[${index}] must be an object`);
+    throw new RenderCrontabError(`jobs[${index}] must be an object`);
   }
   if (!isNonEmptyString(job.name)) {
-    fail(`jobs[${index}].name must be a non-empty string`);
+    throw new RenderCrontabError(
+      `jobs[${index}].name must be a non-empty string`
+    );
   }
   if (names.has(job.name)) {
-    fail(`duplicate job name "${job.name}"`);
+    throw new RenderCrontabError(`duplicate job name "${job.name}"`);
   }
   names.add(job.name);
   if (!hasFiveCronFields(job.schedule)) {
-    fail(`jobs[${index}].schedule must be a valid 5-field cron expression`);
+    throw new RenderCrontabError(
+      `jobs[${index}].schedule must be a valid 5-field cron expression`
+    );
   }
   if (typeof job.enabled !== "boolean") {
-    fail(`jobs[${index}].enabled must be a boolean`);
+    throw new RenderCrontabError(`jobs[${index}].enabled must be a boolean`);
   }
   if (!isNonEmptyString(job.command)) {
-    fail(`jobs[${index}].command must be a non-empty string`);
+    throw new RenderCrontabError(
+      `jobs[${index}].command must be a non-empty string`
+    );
   }
 };
 
-const main = () => {
+const loadCronConfig = (configPath = DEFAULT_CONFIG_PATH) => {
   let parsed;
   try {
     const raw = fs.readFileSync(configPath, "utf8");
     parsed = JSON.parse(raw);
   } catch (error) {
-    fail(`failed to read or parse config "${configPath}": ${error.message}`);
+    throw new RenderCrontabError(
+      `failed to read or parse config "${configPath}": ${error.message}`
+    );
   }
 
   if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
-    fail("config root must be an object");
+    throw new RenderCrontabError("config root must be an object");
   }
   if (!Array.isArray(parsed.jobs)) {
-    fail('config must include a "jobs" array');
+    throw new RenderCrontabError('config must include a "jobs" array');
   }
 
   const names = new Set();
   parsed.jobs.forEach((job, index) => validateJob(job, index, names));
+  return parsed;
+};
 
-  const enabledJobs = parsed.jobs.filter((job) => job.enabled);
+const renderCrontab = ({
+  configPath = DEFAULT_CONFIG_PATH,
+  outputPath = DEFAULT_OUTPUT_PATH,
+} = {}) => {
+  const config = loadCronConfig(configPath);
+  const enabledJobs = config.jobs.filter((job) => job.enabled);
   if (enabledJobs.length === 0) {
-    fail("config has zero enabled jobs");
+    throw new RenderCrontabError("config has zero enabled jobs");
   }
 
   const lines = [];
@@ -72,9 +85,31 @@ const main = () => {
   fs.mkdirSync(path.dirname(outputPath), { recursive: true });
   fs.writeFileSync(outputPath, `${lines.join("\n")}\n`, "utf8");
 
-  console.log(
-    `[render-crontab] wrote ${enabledJobs.length} enabled jobs to ${outputPath}`
-  );
+  return {
+    config,
+    enabledJobs,
+    outputPath,
+  };
 };
 
-main();
+const main = () => {
+  try {
+    const result = renderCrontab();
+    console.log(
+      `[render-crontab] wrote ${result.enabledJobs.length} enabled jobs to ${result.outputPath}`
+    );
+  } catch (error) {
+    console.error(`[render-crontab] ${error.message}`);
+    process.exit(1);
+  }
+};
+
+if (require.main === module) {
+  main();
+}
+
+module.exports = {
+  RenderCrontabError,
+  loadCronConfig,
+  renderCrontab,
+};

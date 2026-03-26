@@ -3,31 +3,31 @@
     {
       "name": "hourly_snap_balances",
       "schedule": "0 * * * *",
-      "enabled": true,
+      "enabled": false,
       "command": "cd /app && pnpm hardhat snapBalances --network ${HARDHAT_NETWORK:-mainnet}"
     },
     {
       "name": "hourly_verify_balances",
       "schedule": "8 * * * *",
-      "enabled": true,
+      "enabled": false,
       "command": "cd /app && pnpm hardhat verifyBalances --network ${HARDHAT_NETWORK:-mainnet}"
     },
     {
       "name": "hourly_verify_deposits",
       "schedule": "10 * * * *",
-      "enabled": true,
+      "enabled": false,
       "command": "cd /app && pnpm hardhat verifyDeposits --network ${HARDHAT_NETWORK:-mainnet}"
     },
     {
       "name": "hourly_auto_validator_deposits",
       "schedule": "12 * * * *",
-      "enabled": true,
+      "enabled": false,
       "command": "cd /app && pnpm hardhat autoValidatorDeposits --network ${HARDHAT_NETWORK:-mainnet}"
     },
     {
       "name": "hourly_auto_validator_withdrawals",
       "schedule": "14 * * * *",
-      "enabled": true,
+      "enabled": false,
       "command": "cd /app && pnpm hardhat autoValidatorWithdrawals --network ${HARDHAT_NETWORK:-mainnet}"
     },
     {
