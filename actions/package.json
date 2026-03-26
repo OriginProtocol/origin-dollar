@@ -1,0 +1,33 @@
+{
+  "name": "@origin/actions",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "doAccounting": "bun run src/doAccounting.ts",
+    "harvest": "bun run src/harvest.ts",
+    "crossChainRelay": "bun run src/crossChainRelay.ts",
+    "crossChainRelayHyperEVM": "bun run src/crossChainRelayHyperEVM.ts",
+    "sonicRequestWithdrawal": "bun run src/sonicRequestWithdrawal.ts",
+    "sonicClaimWithdrawals": "bun run src/sonicClaimWithdrawals.ts",
+    "stakeValidators": "bun run src/stakeValidators.ts",
+    "registerValidators": "bun run src/registerValidators.ts",
+    "claimBribes": "bun run src/claimBribes.ts",
+    "manageBribes": "bun run src/manageBribes.ts",
+    "manageMerklBribes": "bun run src/manageMerklBribes.ts",
+    "manageBribeOnSonic": "bun run src/manageBribeOnSonic.ts",
+    "managePassThrough": "bun run src/managePassThrough.ts",
+    "typecheck": "bun run tsc --noEmit"
+  },
+  "dependencies": {
+    "@aws-sdk/client-kms": "^3.675.0",
+    "@aws-sdk/client-s3": "^3.600.0",
+    "@lastdotnet/purrikey": "^1.0.0",
+    "ethers": "^5.7.2",
+    "viem": "^2.27.0",
+    "winston": "^3.19.0"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "typescript": "^5.7.0"
+  }
+}
