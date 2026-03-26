@@ -144,8 +144,9 @@ async function fetchMorphoApys(vaults, providers) {
             v.morphoChainId,
             v.metaMorphoVaultAddress
           ).catch((err) => {
-            log(
-              `on-chain APY failed for ${v.metaMorphoVaultAddress} on chain ${v.morphoChainId}: ${err.message}`
+            console.error(
+              `[rebalancer] On-chain APY failed for ${v.metaMorphoVaultAddress} ` +
+                `on chain ${v.morphoChainId}: ${err.message}`
             );
             return 0;
           })

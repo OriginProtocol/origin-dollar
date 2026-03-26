@@ -158,20 +158,10 @@ async function fetchVaultMarkets(provider, chainId, vaultAddress) {
 
       // Read rateAtTarget from the market's own IRM (each market can use a
       // different IRM — do not rely on a hardcoded address).
-      // Wrapped in try/catch: markets not using AdaptiveCurveIRM will revert.
       let rateAtTarget = BigNumber.from(0);
       if (marketIrm !== ethers.constants.AddressZero) {
-        try {
-          const irmContract = new ethers.Contract(marketIrm, irmAbi, provider);
-          rateAtTarget = BigNumber.from(
-            await irmContract.rateAtTarget(marketId)
-          );
-        } catch (err) {
-          log(
-            `rateAtTarget failed for market ${marketId.slice(0, 10)}… ` +
-              `(IRM ${marketIrm}): ${err.message}`
-          );
-        }
+        const irmContract = new ethers.Contract(marketIrm, irmAbi, provider);
+        rateAtTarget = BigNumber.from(await irmContract.rateAtTarget(marketId));
       }
 
       const erc20 = new ethers.Contract(loanToken, erc20Abi, provider);
@@ -215,6 +205,19 @@ async function fetchVaultMarkets(provider, chainId, vaultAddress) {
  */
 function _weightedApy(markets, depositSim = {}) {
   const anyVaultAlloc = markets.some((m) => m.vaultSupplyAssets.gt(0));
+
+  const suspiciousMarkets = markets.filter(
+    (m) => m.rateAtTarget.isZero() && m.totalBorrowAssets.gt(0)
+  );
+  if (suspiciousMarkets.length > 0) {
+    log(
+      `WARNING: ${suspiciousMarkets.length} market(s) have active borrows but ` +
+        `rateAtTarget=0 — IRM may not implement rateAtTarget(). ` +
+        `Market IDs: ${suspiciousMarkets
+          .map((m) => m.marketId.slice(0, 10))
+          .join(", ")}`
+    );
+  }
 
   let weightedSum = 0;
   let totalWeight = 0;
