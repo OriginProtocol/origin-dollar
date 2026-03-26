@@ -77,15 +77,19 @@ function removeWorktree(dir) {
 function forgeBuild(contractsDir) {
   console.log(`  Installing dependencies in ${contractsDir}...`);
   try {
-    execSync("forge soldeer install", {
+    execSync("bash install-deps.sh", {
       cwd: contractsDir,
       stdio: "inherit",
       timeout: 120_000,
     });
   } catch {
-    console.warn("  Warning: soldeer install had issues, continuing...");
+    console.warn("  Warning: dependency install had issues, continuing...");
   }
   console.log(`  Building in ${contractsDir}...`);
+  execSync("forge clean", {
+    cwd: contractsDir,
+    stdio: "pipe",
+  });
   try {
     execSync("forge build", {
       cwd: contractsDir,
