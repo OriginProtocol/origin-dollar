@@ -28,6 +28,8 @@ const irmAbi = [
 const metaMorphoAbi = [
   "function supplyQueue(uint256 index) external view returns (bytes32)",
   "function supplyQueueLength() external view returns (uint256)",
+  "function withdrawQueue(uint256 index) external view returns (bytes32)",
+  "function withdrawQueueLength() external view returns (uint256)",
   // Returns (cap, enabled, removableAt)
   "function config(bytes32 id) external view returns (uint184, bool, uint64)",
 ];
@@ -96,14 +98,17 @@ function estimateMarketApy(
 // ─── On-chain reads ───────────────────────────────────────────────────────────
 
 /**
- * Fetch all markets in a MetaMorpho vault's supply queue with their current
- * on-chain state and the vault's position in each market.
+ * Fetch all markets in a MetaMorpho vault's supply AND withdrawal queues with
+ * their current on-chain state and the vault's position in each market.
+ * Returns the union of both queues (deduplicated). Each market includes an
+ * `inSupplyQueue` flag so callers can filter for deposit simulation.
  *
  * @param {object} provider
  * @param {number} chainId
  * @param {string} vaultAddress
  * @returns {Promise<Array<{
  *   marketId: string,
+ *   inSupplyQueue: boolean,
  *   cap: BigNumber,
  *   vaultSupplyAssets: BigNumber,
  *   totalSupplyAssets: BigNumber,
@@ -121,16 +126,31 @@ async function fetchVaultMarkets(provider, chainId, vaultAddress) {
     provider
   );
 
-  const queueLen = await vault.supplyQueueLength();
-  const len = queueLen.toNumber();
-  if (len === 0) return [];
+  // Fetch both queue lengths in parallel — active positions may be in either
+  const [supplyLen, withdrawLen] = await Promise.all([
+    vault.supplyQueueLength().then((n) => n.toNumber()),
+    vault.withdrawQueueLength().then((n) => n.toNumber()),
+  ]);
 
-  const marketIds = await Promise.all(
-    Array.from({ length: len }, (_, i) => vault.supplyQueue(i))
-  );
+  if (supplyLen === 0 && withdrawLen === 0) return [];
+
+  // Fetch both queues in parallel
+  const [supplyIds, withdrawIds] = await Promise.all([
+    Promise.all(Array.from({ length: supplyLen }, (_, i) => vault.supplyQueue(i))),
+    Promise.all(
+      Array.from({ length: withdrawLen }, (_, i) => vault.withdrawQueue(i))
+    ),
+  ]);
+
+  // Union: deduplicate by market ID, track supply-queue membership for deposit sim
+  const supplySet = new Set(supplyIds);
+  const allIds = [...supplyIds];
+  for (const id of withdrawIds) {
+    if (!supplySet.has(id)) allIds.push(id);
+  }
 
   const markets = await Promise.all(
-    marketIds.map(async (marketId) => {
+    allIds.map(async (marketId) => {
       const [config, position, marketState, params] = await Promise.all([
         vault.config(marketId),
         morpho.position(marketId, vaultAddress),
@@ -171,11 +191,13 @@ async function fetchVaultMarkets(provider, chainId, vaultAddress) {
         `  market ${marketId.slice(0, 10)}… ` +
           `supply=${totalSupplyAssets} borrow=${totalBorrowAssets} ` +
           `fee=${fee} rate=${rateAtTarget} ` +
-          `vaultAlloc=${vaultSupplyAssets} cap=${cap}`
+          `vaultAlloc=${vaultSupplyAssets} cap=${cap} ` +
+          `inSupplyQueue=${supplySet.has(marketId)}`
       );
 
       return {
         marketId,
+        inSupplyQueue: supplySet.has(marketId),
         cap,
         vaultSupplyAssets,
         totalSupplyAssets,
@@ -250,9 +272,9 @@ function _weightedApy(markets, depositSim = {}) {
 
   if (totalWeight <= 0) {
     throw new Error(
-      `Vault has ${markets.length} market(s) in its supply queue but zero ` +
-        `supply position in all of them. Check that the vault address passed ` +
-        `to fetchVaultMarkets is the MetaMorpho V1 vault, not a VaultV2 wrapper.`
+      `Vault has ${markets.length} market(s) across supply+withdrawal queues but zero ` +
+        `supply position in all of them. Check that the vault address is the MetaMorpho ` +
+        `V1 vault (not a VaultV2 wrapper) and that it has deployed funds.`
     );
   }
 
@@ -304,11 +326,12 @@ async function estimateDepositImpact(
   const markets = await fetchVaultMarkets(provider, chainId, vaultAddress);
   const currentApy = _weightedApy(markets);
 
-  // Simulate deposit flowing through supply queue in order, filling up to cap
+  // Simulate deposit flowing through supply queue in order, filling up to cap.
+  // Only supply-queue markets receive new deposits (MetaMorpho ignores the rest).
   const sim = {}; // marketId → BigNumber increase in totalSupplyAssets
   let remaining = depositAmount;
 
-  for (const m of markets) {
+  for (const m of markets.filter((m) => m.inSupplyQueue)) {
     if (remaining.isZero()) break;
     const available = m.cap.gt(m.vaultSupplyAssets)
       ? m.cap.sub(m.vaultSupplyAssets)
