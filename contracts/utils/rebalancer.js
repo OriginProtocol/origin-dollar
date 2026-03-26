@@ -296,7 +296,7 @@ function _buildAllocationRow(s, targetBalance, apy) {
  * @param {object} [params.constraints]
  * @returns {Array} allocation results
  */
-function computeOptimalAllocation({
+function computeIdealAllocation({
   strategies,
   apys,
   vaultBalance,
@@ -560,7 +560,7 @@ function _deploySurplus(result, surplus) {
  * Pass B (deposits):   allocate from budget in APY-desc order, apply feasibility checks.
  * Pass 2 (fallbacks):  shortfall and surplus fallbacks run after both passes.
  *
- * @param {Array}     allocations - output of computeOptimalAllocation
+ * @param {Array}     allocations - output of computeIdealAllocation
  * @param {BigNumber} shortfall   - vault withdrawal shortfall (after addWithdrawalQueueLiquidity offset)
  * @param {BigNumber} vaultBalance - vault idle USDC (after addWithdrawalQueueLiquidity offset)
  * @param {object}    [constraintOverrides]
@@ -634,14 +634,14 @@ function fmtUsd(bn) {
  *
  * @param {object} params
  * @param {Array}  params.actions         - filtered+sorted allocations (output of sortActions)
- * @param {Array}  params.optimalActions  - unfiltered allocations (output of computeOptimalAllocation)
+ * @param {Array}  params.idealActions  - ideal (unconstrained) allocations (output of computeIdealAllocation)
  * @param {BigNumber} params.vaultBalance
  * @param {BigNumber} params.shortfall
  * @param {object} [params.constraints]
  */
 function printAllocationTable({
   actions,
-  optimalActions,
+  idealActions,
   vaultBalance,
   shortfall,
   constraints: overrides = {},
@@ -650,8 +650,8 @@ function printAllocationTable({
   const COL_SEP = "  ";
   const constraints = { ...ousdConstraints, ...overrides };
 
-  // Use optimalActions for the table (shows optimal targets); fall back to feasible if absent
-  const tableRows = optimalActions || actions;
+  // Use idealActions for the table (shows ideal balances/APYs); fall back to feasible if absent
+  const tableRows = idealActions || actions;
   const totalCapital = tableRows.reduce(
     (sum, a) => sum.add(a.balance),
     vaultBalance
@@ -664,7 +664,7 @@ function printAllocationTable({
   console.log(`Total rebalancable capital : ${fmtUsd(totalCapital)} USDC`);
   console.log(`Withdrawal shortfall       : ${fmtUsd(shortfall)} USDC`);
 
-  // ── Allocations table: shows optimal targets from optimalActions ────────────
+  // ── Allocations table: shows recommended targets from actions ────────────
   console.log("\n--- Allocations ---\n");
   const pct = (bn) =>
     totalCapital.gt(0)
@@ -678,17 +678,25 @@ function printAllocationTable({
   );
   const vaultDelta = vaultTarget.sub(vaultBalance);
   const vaultDeltaSign = sign(vaultDelta);
-  const formattedRows = tableRows.map((a) => ({
-    name: `${a.name}${a.isDefault ? " *" : ""}`,
-    current: `${fmtUsd(a.balance)}${pct(a.balance)}`,
-    avail:
-      a.withdrawableLiquidity !== null
-        ? fmtUsd(a.withdrawableLiquidity)
-        : "n/a",
-    target: `${fmtUsd(a.targetBalance)}${pct(a.targetBalance)}`,
-    delta: `${sign(a.delta)}${fmtUsd(a.delta.abs())}`,
-    apy: `${(a.apy * 100).toFixed(2)}%`,
-  }));
+  const formattedRows = tableRows.map((a) => {
+    const rec = filteredByAddr.get(a.address);
+    // Recommended target: use the feasible action's target if an action is approved,
+    // otherwise fall back to the current balance (no change recommended)
+    const recTarget =
+      rec && rec.action !== ACTION_NONE ? rec.targetBalance : a.balance;
+    const recDelta = recTarget.sub(a.balance);
+    return {
+      name: `${a.name}${a.isDefault ? " *" : ""}`,
+      current: `${fmtUsd(a.balance)}${pct(a.balance)}`,
+      avail:
+        a.withdrawableLiquidity !== null
+          ? fmtUsd(a.withdrawableLiquidity)
+          : "n/a",
+      target: `${fmtUsd(recTarget)}${pct(recTarget)}`,
+      delta: `${sign(recDelta)}${fmtUsd(recDelta.abs())}`,
+      apy: `${(a.apy * 100).toFixed(2)}%`,
+    };
+  });
   const vaultRow = {
     name: "Vault (idle)",
     current: `${fmtUsd(vaultBalance)}${pct(vaultBalance)}`,
@@ -709,7 +717,7 @@ function printAllocationTable({
       ...allRows.map((row) => row.avail.length)
     ),
     target: Math.max(
-      "Target (optimal)".length,
+      "Target (rec.)".length,
       ...allRows.map((row) => row.target.length)
     ),
     delta: Math.max("Delta".length, ...allRows.map((row) => row.delta.length)),
@@ -719,7 +727,7 @@ function printAllocationTable({
   console.log(
     `${"Strategy".padEnd(COL.name)}${COL_SEP}${"Current".padStart(
       COL.current
-    )}${COL_SEP}${"Avail.".padStart(COL.avail)}${COL_SEP}${"Target (optimal)".padStart(
+    )}${COL_SEP}${"Avail.".padStart(COL.avail)}${COL_SEP}${"Target (rec.)".padStart(
       COL.target
     )}${COL_SEP}${"Delta".padStart(COL.delta)}${COL_SEP}${"APY".padStart(
       COL.apy
@@ -775,10 +783,10 @@ function printAllocationTable({
   );
   console.log("  * = default strategy\n");
 
-  // ── Section 1: All optimal allocation changes ──────────────────────────────
+  // ── Section 1: All ideal allocation changes ──────────────────────────────
   const rawChanges = tableRows.filter((a) => !a.delta.isZero());
 
-  console.log("--- Actions for Optimal Allocation ---\n");
+  console.log("--- Actions for Ideal Allocation ---\n");
   if (rawChanges.length === 0) {
     console.log("  All strategies at target.\n");
   } else {
@@ -950,8 +958,8 @@ async function buildRebalancePlan(providers) {
     ousdConstraints
   );
 
-  // Compute optimal allocation for active strategies only
-  const optimalActive = computeOptimalAllocation({
+  // Compute ideal (unconstrained) allocation for active strategies only
+  const idealActive = computeIdealAllocation({
     strategies: active,
     apys,
     vaultBalance: state.vaultBalance,
@@ -959,7 +967,7 @@ async function buildRebalancePlan(providers) {
   });
 
   // Build frozen rows for excluded strategies
-  const optimalExcluded = excluded.map((s) => {
+  const idealExcluded = excluded.map((s) => {
     const row = _buildAllocationRow(
       s,
       s.balance,
@@ -969,17 +977,17 @@ async function buildRebalancePlan(providers) {
     return row;
   });
 
-  const optimalActions = [...optimalActive, ...optimalExcluded];
+  const idealActions = [...idealActive, ...idealExcluded];
 
   // Merge withdrawable liquidity into rows before feasibility filtering
-  for (const row of optimalActions) {
+  for (const row of idealActions) {
     if (maxWithdrawals[row.address] !== undefined) {
       row.withdrawableLiquidity = maxWithdrawals[row.address];
     }
   }
 
   const executableActions = buildExecutableActions(
-    optimalActions,
+    idealActions,
     state.shortfall,
     state.vaultBalance
   );
@@ -987,20 +995,20 @@ async function buildRebalancePlan(providers) {
 
   printAllocationTable({
     actions,
-    optimalActions,
+    idealActions,
     vaultBalance: state.vaultBalance,
     shortfall: state.shortfall,
     warnings,
   });
 
-  return { actions, optimalActions, state, apys, warnings };
+  return { actions, idealActions, state, apys, warnings };
 }
 
 module.exports = {
   readOnChainState,
   fetchMorphoApys,
   fetchMaxWithdrawals,
-  computeOptimalAllocation,
+  computeIdealAllocation,
   buildExecutableActions,
   sortActions,
   fmtUsd,

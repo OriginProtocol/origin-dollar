@@ -6,7 +6,7 @@ then submits the resulting strategy/amount arrays to the on-chain `RebalancerMod
 
 ## How it works
 
-### 1. Compute optimal allocation (`computeOptimalAllocation`)
+### 1. Compute ideal allocation (`computeIdealAllocation`)
 
 Determines the ideal target balance for each strategy, ignoring real-world constraints.
 
@@ -15,13 +15,18 @@ Determines the ideal target balance for each strategy, ignoring real-world const
 - Reserves `shortfall + minVaultBalance` as idle vault cash — never deployed
 - Strategies with APY above `maxApyThreshold` are excluded from allocation (frozen at current balance) and flagged as suspicious
 
-### 2. Filter Executable actions (`buildExecutableActions`)
+### 2. Filter executable actions (`buildExecutableActions`)
 
 Applies constraints to produce only executable moves.
 
 **Withdrawal filtering**
 Drop any move that is:
-- Below `minMoveAmount`
+- Blocked by insufficient on-chain liquidity. Withdrawable amounts are fetched via
+  `IStrategy.maxWithdraw()` for same-chain strategies and via
+  `IStrategy.platformAddress().maxWithdraw(vaultAddress)` for cross-chain strategies.
+  If the withdrawable amount is below `minMoveAmount` the move is dropped entirely;
+  otherwise the withdrawal is capped at the available liquidity.
+- Below `minMoveAmount` (after any liquidity cap)
 - Cross-chain and below `crossChainMinAmount`
 - From a strategy whose APY underperforms the best by less than `minApySpread`
 
@@ -61,6 +66,10 @@ Cross-chain amounts are capped at 10 M USDC (CCTP bridge limit).
 | `morphoChainId` | Chain where the Morpho vault lives (1 = Ethereum, 8453 = Base, 999 = HyperEVM) |
 | `isCrossChain` | If it's a CrossChain strategy using CCTP |
 | `isDefault` | Fallback strategy — exactly one per config |
+
+The allocations table printed at runtime includes an `Avail.` column showing the
+withdrawable liquidity fetched from each strategy, and a `Target (rec.)` column showing
+the recommended (feasible) target balance after all constraints are applied.
 
 ---
 

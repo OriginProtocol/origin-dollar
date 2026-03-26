@@ -45,7 +45,7 @@ const formatDelta = (bn) => {
 // Build the Discord message from a completed buildRebalancePlan result
 const buildDiscordMessage = ({
   actions: allActions,
-  optimalActions,
+  idealActions,
   state,
   warnings = [],
 }) => {
@@ -66,8 +66,8 @@ const buildDiscordMessage = ({
     `  ${"Vault idle".padEnd(20)} ${formatUSDC(state.vaultBalance).padStart(9)}`
   );
 
-  // Optimal allocations (from computeOptimalAllocation, before feasibility filtering)
-  const optimalLines = optimalActions.map((a) => {
+  // Ideal allocations (from computeIdealAllocation, before feasibility filtering)
+  const idealLines = idealActions.map((a) => {
     const deltaStr = a.delta.isZero() ? "(unchanged)" : formatDelta(a.delta);
     return `  ${a.name.padEnd(20)} ${formatUSDC(a.targetBalance).padStart(
       9
@@ -96,9 +96,9 @@ const buildDiscordMessage = ({
     "```",
     ...currentLines,
     "```",
-    "**Optimal Allocations**",
+    "**Ideal Allocations**",
     "```",
-    ...optimalLines,
+    ...idealLines,
     "```",
     "**Recommended Actions**",
     "```",
