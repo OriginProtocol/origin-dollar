@@ -1,0 +1,52 @@
+{
+  "jobs": [
+    {
+      "name": "hourly_snap_balances",
+      "schedule": "0 * * * *",
+      "enabled": false,
+      "command": "cd /app && pnpm hardhat snapBalances --network ${HARDHAT_NETWORK:-mainnet}"
+    },
+    {
+      "name": "hourly_verify_balances",
+      "schedule": "8 * * * *",
+      "enabled": false,
+      "command": "cd /app && pnpm hardhat verifyBalances --network ${HARDHAT_NETWORK:-mainnet}"
+    },
+    {
+      "name": "hourly_verify_deposits",
+      "schedule": "10 * * * *",
+      "enabled": false,
+      "command": "cd /app && pnpm hardhat verifyDeposits --network ${HARDHAT_NETWORK:-mainnet}"
+    },
+    {
+      "name": "hourly_auto_validator_deposits",
+      "schedule": "12 * * * *",
+      "enabled": false,
+      "command": "cd /app && pnpm hardhat autoValidatorDeposits --network ${HARDHAT_NETWORK:-mainnet}"
+    },
+    {
+      "name": "hourly_auto_validator_withdrawals",
+      "schedule": "14 * * * *",
+      "enabled": false,
+      "command": "cd /app && pnpm hardhat autoValidatorWithdrawals --network ${HARDHAT_NETWORK:-mainnet}"
+    },
+    {
+      "name": "daily_rebase_mainnet_oeth",
+      "schedule": "0 0 * * *",
+      "enabled": true,
+      "command": "cd /app && pnpm hardhat rebase --network mainnet --symbol OETH"
+    },
+    {
+      "name": "daily_rebase_mainnet_ousd",
+      "schedule": "10 0 * * *",
+      "enabled": true,
+      "command": "cd /app && pnpm hardhat rebase --network mainnet --symbol OUSD"
+    },
+    {
+      "name": "daily_rebase_base_oeth",
+      "schedule": "20 0 * * *",
+      "enabled": true,
+      "command": "cd /app && pnpm hardhat rebase --network base --symbol OETH"
+    }
+  ]
+}
