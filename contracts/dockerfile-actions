@@ -1,4 +1,4 @@
-FROM node:22
+FROM public.ecr.aws/docker/library/node:22
 
 ENV DEBIAN_FRONTEND=noninteractive \
   DEBUG=origin* \
@@ -13,7 +13,7 @@ RUN apt-get update \
   build-essential \
   python3 \
   bsdutils \
-  && rm -rf /var/lib/apt/lists/*◄
+  && rm -rf /var/lib/apt/lists/*
 
 # Preload GitHub host key for SSH-based dependencies.
 RUN mkdir -p /root/.ssh \
