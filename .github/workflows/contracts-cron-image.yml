@@ -27,7 +27,7 @@ jobs:
       - name: Prepare image metadata
         id: prep
         run: |
-          IMAGE_NAME="ghcr.io/${{ github.repository_owner }}/contracts-automaton-prod"
+          IMAGE_NAME="ghcr.io/${{ github.repository_owner }}/contracts-cron"
           IMAGE_NAME="$(echo "${IMAGE_NAME}" | tr '[:upper:]' '[:lower:]')"
           echo "image_name=${IMAGE_NAME}" >> "${GITHUB_OUTPUT}"
 
