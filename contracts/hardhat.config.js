@@ -1,5 +1,8 @@
 require("ts-node").register({
   transpileOnly: true,
+  // Use inline compilerOptions instead of tsconfig.json to avoid
+  // interfering with ESM-only packages (e.g. @lodestar/types).
+  skipProject: true,
   compilerOptions: {
     module: "CommonJS",
     target: "ES2020",

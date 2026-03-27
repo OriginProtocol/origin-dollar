@@ -7,6 +7,7 @@ export interface KeyValueStore {
   del(key: string): Promise<void>;
 }
 
+// WARNING
 // TODO: Replace with persistent KV storage.
 
 /**

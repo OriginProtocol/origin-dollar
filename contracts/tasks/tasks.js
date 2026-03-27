@@ -66,8 +66,7 @@ const {
   curveSwapTask,
   curvePoolTask,
 } = require("./curve");
-const { calculateMaxPricePerVoteTask, manageBribes } = require("./poolBooster");
-const { manageMerklBribesTask } = require("./merklPoolBooster");
+const { calculateMaxPricePerVoteTask } = require("./poolBooster");
 const {
   depositSSV,
   migrateClusterToETH,
@@ -93,9 +92,7 @@ const {
   transferToken,
 } = require("./strategy");
 const {
-  validatorOperationsConfig,
   exitValidator,
-  doAccounting,
   manuallyFixAccounting,
   resetStakeETHTally,
   setStakeETHThreshold,
@@ -120,12 +117,6 @@ const {
 } = require("./validatorCompound");
 const { tenderlySync, tenderlyUpload } = require("./tenderly");
 const { setDefaultValidator, snapSonicStaking } = require("../utils/sonic");
-const {
-  undelegateValidator,
-  withdrawFromSFC,
-} = require("../utils/sonicActions");
-const { registerValidators, stakeValidators } = require("../utils/validator");
-const { harvestAndSwap } = require("./harvest");
 const { deployForceEtherSender, forceSend } = require("./simulation");
 const { sleep } = require("../utils/time");
 const { lzBridgeToken, lzSetConfig } = require("./layerzero");

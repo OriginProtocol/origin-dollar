@@ -1,4 +1,9 @@
-import { formatEther, type Hash, type PublicClient, type TransactionReceipt } from "viem";
+import {
+  formatEther,
+  type Hash,
+  type PublicClient,
+  type TransactionReceipt,
+} from "viem";
 import type { Logger } from "winston";
 
 /**
@@ -8,13 +13,13 @@ export async function validateTransaction(
   client: PublicClient,
   hash: Hash,
   method: string,
-  log: Logger,
+  log: Logger
 ): Promise<TransactionReceipt> {
   const tx = await client.getTransaction({ hash });
   log.info(
     `Sent ${method} tx ${hash} from ${tx.from} (${
       tx.gasPrice ? Number(tx.gasPrice) / 1e9 : "unknown"
-    } Gwei)`,
+    } Gwei)`
   );
 
   const receipt = await client.waitForTransactionReceipt({ hash });
@@ -23,9 +28,12 @@ export async function validateTransaction(
     throw new Error(`Transaction ${method} failed`);
   }
 
-  const txCost = receipt.gasUsed * (receipt.effectiveGasPrice ?? tx.gasPrice ?? 0n);
+  const txCost =
+    receipt.gasUsed * (receipt.effectiveGasPrice ?? tx.gasPrice ?? 0n);
   log.info(
-    `Processed ${method} in block ${receipt.blockNumber}, ${receipt.gasUsed} gas, ${formatEther(txCost)} ETH`,
+    `Processed ${method} in block ${receipt.blockNumber}, ${
+      receipt.gasUsed
+    } gas, ${formatEther(txCost)} ETH`
   );
 
   return receipt;

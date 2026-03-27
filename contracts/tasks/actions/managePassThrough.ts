@@ -1,16 +1,11 @@
-import { subtask, task } from "hardhat/config";
-
 import { transferTokens } from "../../utils/managePassThrough";
-import { getSigner } from "../../utils/signers";
+import { action } from "../lib/action";
 
-subtask(
-  "managePassThrough",
-  "Transfer tokens via pass-through mechanism"
-).setAction(async () => {
-  const signer = await getSigner();
-  await transferTokens({ signer });
-});
-
-task("managePassThrough").setAction(async (_, __, runSuper) => {
-  return runSuper();
+action({
+  name: "managePassThrough",
+  description: "Transfer tokens via pass-through mechanism",
+  chains: [1],
+  run: async ({ signer }) => {
+    await transferTokens({ signer });
+  },
 });

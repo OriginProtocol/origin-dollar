@@ -1,4 +1,10 @@
-import { type Chain, createPublicClient, createWalletClient, http, type LocalAccount } from "viem";
+import {
+  type Chain,
+  createPublicClient,
+  createWalletClient,
+  http,
+  type LocalAccount,
+} from "viem";
 import { base, holesky, hoodi, hyperEvm, mainnet, sonic } from "viem/chains";
 import { requireEnv } from "./env";
 
@@ -12,10 +18,10 @@ const CHAIN_CONFIG: Record<number, { chain: Chain; envVar: string }> = {
 };
 
 const CHAIN_BY_NAME: Record<string, Chain> = Object.fromEntries(
-  Object.values(CHAIN_CONFIG).map((c) => [c.chain.name.toLowerCase(), c.chain]),
+  Object.values(CHAIN_CONFIG).map((c) => [c.chain.name.toLowerCase(), c.chain])
 );
 const CHAIN_BY_ID: Record<number, Chain> = Object.fromEntries(
-  Object.values(CHAIN_CONFIG).map((c) => [c.chain.id, c.chain]),
+  Object.values(CHAIN_CONFIG).map((c) => [c.chain.id, c.chain])
 );
 
 /**

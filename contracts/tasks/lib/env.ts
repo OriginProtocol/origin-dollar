@@ -10,6 +10,9 @@ export function requireEnv(name: string): string {
   return value;
 }
 
-export function optionalEnv(name: string, fallback?: string): string | undefined {
+export function optionalEnv(
+  name: string,
+  fallback?: string
+): string | undefined {
   return process.env[name] ?? fallback;
 }

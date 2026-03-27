@@ -1,4 +1,4 @@
 #!/bin/sh
 set -eu
 
-exec node /app/scripts/cron-supervisor.js
+exec node -r ts-node/register /app/scripts/cron-supervisor.ts

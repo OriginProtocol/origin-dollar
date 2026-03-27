@@ -1,17 +1,21 @@
-import { type ChildProcess, spawn } from "node:child_process";
+import { spawn } from "node:child_process";
 import { randomUUID, timingSafeEqual } from "node:crypto";
 import fs from "node:fs";
 import http from "node:http";
-import { type CronConfig, type CronJob, renderCrontab } from "./render-crontab";
+import { type CronJob, renderCrontab } from "./render-crontab";
 
 // --- Configuration ---
 
 const host = process.env.HOST || "0.0.0.0";
 const port = Number.parseInt(process.env.PORT || "8080", 10);
-const cronConfigPath = process.env.CRON_CONFIG_PATH || "/app/cron/cron-jobs.json";
+const cronConfigPath =
+  process.env.CRON_CONFIG_PATH || "/app/cron/cron-jobs.json";
 const cronOutputPath = process.env.CRON_OUTPUT_PATH || "/etc/cronjob";
 const supercronicBin = process.env.SUPERCRONIC_BIN || "supercronic";
-const runHistoryLimit = Number.parseInt(process.env.ACTION_RUN_HISTORY_LIMIT || "500", 10);
+const runHistoryLimit = Number.parseInt(
+  process.env.ACTION_RUN_HISTORY_LIMIT || "500",
+  10
+);
 const actionApiToken = process.env.ACTION_API_BEARER_TOKEN;
 const configuredActionWorkdir = process.env.ACTION_WORKDIR || "/app";
 
@@ -20,12 +24,14 @@ if (!Number.isInteger(port) || port < 1 || port > 65535) {
   process.exit(1);
 }
 if (!actionApiToken || actionApiToken.trim().length === 0) {
-  console.error("[cron-supervisor] ACTION_API_BEARER_TOKEN must be set and non-empty");
+  console.error(
+    "[cron-supervisor] ACTION_API_BEARER_TOKEN must be set and non-empty"
+  );
   process.exit(1);
 }
 if (!Number.isInteger(runHistoryLimit) || runHistoryLimit < 1) {
   console.error(
-    `[cron-supervisor] Invalid ACTION_RUN_HISTORY_LIMIT value "${process.env.ACTION_RUN_HISTORY_LIMIT}"`,
+    `[cron-supervisor] Invalid ACTION_RUN_HISTORY_LIMIT value "${process.env.ACTION_RUN_HISTORY_LIMIT}"`
   );
   process.exit(1);
 }
@@ -37,36 +43,35 @@ const actionWorkdir = fs.existsSync(configuredActionWorkdir)
 
 if (!fs.existsSync(configuredActionWorkdir)) {
   console.warn(
-    `[cron-supervisor] ACTION_WORKDIR "${configuredActionWorkdir}" does not exist, using "${actionWorkdir}" instead`,
+    `[cron-supervisor] ACTION_WORKDIR "${configuredActionWorkdir}" does not exist, using "${actionWorkdir}" instead`
   );
 }
 
 // --- HTTP helpers ---
 
-const json = (
+function json(
   res: http.ServerResponse,
   statusCode: number,
-  payload: unknown,
-  extraHeaders: Record<string, string> = {},
-) => {
-  res.writeHead(statusCode, { "Content-Type": "application/json", ...extraHeaders });
+  payload: any,
+  extraHeaders: Record<string, string> = {}
+) {
+  res.writeHead(statusCode, {
+    "Content-Type": "application/json",
+    ...extraHeaders,
+  });
   res.end(JSON.stringify(payload));
-};
+}
 
-const expectedTokenBuffer = Buffer.from(actionApiToken!);
-const isAuthorized = (headerValue: string | string[] | undefined): boolean => {
+const expectedTokenBuffer = Buffer.from(actionApiToken);
+function isAuthorized(headerValue: string | string[] | undefined): boolean {
   if (typeof headerValue !== "string") return false;
-  const prefix = "Bearer ";
-  if (!headerValue.startsWith(prefix)) return false;
-  const provided = headerValue.slice(prefix.length).trim();
-  const providedBuffer = Buffer.from(provided);
+  if (!headerValue.startsWith("Bearer ")) return false;
+  const providedBuffer = Buffer.from(headerValue.slice(7).trim());
   if (providedBuffer.length !== expectedTokenBuffer.length) return false;
   return timingSafeEqual(providedBuffer, expectedTokenBuffer);
-};
+}
 
 // --- Run tracking ---
-
-type RunStatus = "queued" | "running" | "succeeded" | "failed";
 
 interface ActionRun {
   runId: string;
@@ -74,7 +79,7 @@ interface ActionRun {
   schedule: string;
   enabled: boolean;
   command?: string;
-  status: RunStatus;
+  status: "queued" | "running" | "succeeded" | "failed";
   queuedAt: string;
   startedAt: string;
   finishedAt: string | null;
@@ -86,44 +91,52 @@ interface ActionRun {
 
 const runStore = new Map<string, ActionRun>();
 const runOrder: string[] = [];
-const storeRun = (run: ActionRun) => {
+
+function storeRun(run: ActionRun) {
   runStore.set(run.runId, run);
   runOrder.push(run.runId);
   while (runOrder.length > runHistoryLimit) {
-    const removedRunId = runOrder.shift()!;
-    runStore.delete(removedRunId);
+    runStore.delete(runOrder.shift()!);
   }
-};
+}
 
 // --- Cron setup ---
 
-let renderedConfig: CronConfig;
-let enabledJobs: CronJob[];
-try {
-  const renderResult = renderCrontab({ configPath: cronConfigPath, outputPath: cronOutputPath });
-  renderedConfig = renderResult.config;
-  enabledJobs = renderResult.enabledJobs;
-} catch (error) {
-  console.error(`[cron-supervisor] ${(error as Error).message}`);
-  process.exit(1);
+function initCron() {
+  try {
+    const result = renderCrontab({
+      configPath: cronConfigPath,
+      outputPath: cronOutputPath,
+    });
+    return result;
+  } catch (e: any) {
+    console.error(`[cron-supervisor] ${e.message}`);
+    process.exit(1);
+  }
 }
 
+const { config: renderedConfig, enabledJobs } = initCron();
+
 console.log(
-  `[cron-supervisor] Generated ${enabledJobs!.length} enabled cron jobs at ${cronOutputPath}`,
+  `[cron-supervisor] Generated ${enabledJobs.length} enabled cron jobs at ${cronOutputPath}`
 );
 console.log("[cron-supervisor] Generated /etc/cronjob:");
 console.log(fs.readFileSync(cronOutputPath, "utf8"));
 
-const jobsByName = new Map<string, CronJob>(renderedConfig!.jobs.map((job) => [job.name, job]));
+const jobsByName = new Map<string, CronJob>(
+  renderedConfig.jobs.map((job) => [job.name, job])
+);
 
 // --- Action execution ---
 
-const runAction = (action: CronJob, run: ActionRun) => {
+function runAction(action: CronJob, run: ActionRun) {
   run.status = "running";
   run.startedAt = nowIso();
   run.command = action.command;
 
-  console.log(`[cron-supervisor] Starting run ${run.runId} for action "${action.name}"`);
+  console.log(
+    `[cron-supervisor] Starting run ${run.runId} for action "${action.name}"`
+  );
 
   const child = spawn("/bin/sh", ["-lc", action.command], {
     cwd: actionWorkdir,
@@ -132,13 +145,15 @@ const runAction = (action: CronJob, run: ActionRun) => {
   });
   run.pid = child.pid ?? null;
 
-  child.on("error", (error) => {
+  child.on("error", (err) => {
     run.status = "failed";
     run.finishedAt = nowIso();
     run.exitCode = null;
     run.signal = null;
-    run.error = error.message;
-    console.error(`[cron-supervisor] Run ${run.runId} failed to start: ${error.message}`);
+    run.error = err.message;
+    console.error(
+      `[cron-supervisor] Run ${run.runId} failed to start: ${err.message}`
+    );
   });
 
   child.on("exit", (code, signal) => {
@@ -147,12 +162,12 @@ const runAction = (action: CronJob, run: ActionRun) => {
     run.signal = signal;
     run.status = code === 0 ? "succeeded" : "failed";
     console.log(
-      `[cron-supervisor] Run ${run.runId} for "${action.name}" finished with status=${run.status}, code=${code}, signal=${signal}`,
+      `[cron-supervisor] Run ${run.runId} for "${action.name}" finished with status=${run.status}, code=${code}, signal=${signal}`
     );
   });
-};
+}
 
-const triggerAction = (actionName: string): ActionRun | undefined => {
+function triggerAction(actionName: string): ActionRun | undefined {
   const action = jobsByName.get(actionName);
   if (!action) return undefined;
 
@@ -173,34 +188,35 @@ const triggerAction = (actionName: string): ActionRun | undefined => {
   storeRun(run);
   setImmediate(() => runAction(action, run));
   return run;
-};
+}
 
 // --- Supercronic process ---
 
-const supercronic: ChildProcess = spawn(supercronicBin, [cronOutputPath], {
+const supercronic = spawn(supercronicBin, [cronOutputPath], {
   env: process.env,
   stdio: "inherit",
 });
 let supercronicAlive = true;
 
-supercronic.on("error", (error) => {
-  console.error(`[cron-supervisor] supercronic start error: ${error.message}`);
+supercronic.on("error", (err) => {
+  console.error(`[cron-supervisor] supercronic start error: ${err.message}`);
   process.exit(1);
 });
 
 let shuttingDown = false;
 let serverClosed = false;
 let supercronicClosed = false;
-const maybeExit = () => {
+
+function maybeExit() {
   if (shuttingDown && serverClosed && supercronicClosed) process.exit(0);
-};
+}
 
 supercronic.on("exit", (code, signal) => {
   supercronicAlive = false;
   supercronicClosed = true;
   if (!shuttingDown) {
     console.error(
-      `[cron-supervisor] supercronic exited unexpectedly (code=${code}, signal=${signal})`,
+      `[cron-supervisor] supercronic exited unexpectedly (code=${code}, signal=${signal})`
     );
     process.exit(typeof code === "number" ? code : 1);
   }
@@ -218,49 +234,46 @@ const server = http.createServer((req, res) => {
       : "http";
   const reqHost = req.headers.host || `${host}:${port}`;
   const origin = `${proto}://${reqHost}`;
-  const requestUrl = new URL(req.url || "/", origin);
+  const url = new URL(req.url || "/", origin);
 
   // Health check (unauthenticated)
-  if (method === "GET" && requestUrl.pathname === "/healthz") {
-    json(res, 200, {
+  if (method === "GET" && url.pathname === "/healthz") {
+    return json(res, 200, {
       status: "ok",
       api: "up",
       supercronic: { running: supercronicAlive, pid: supercronic.pid ?? null },
     });
-    return;
   }
 
   // Auth gate for /api/v1/*
-  if (requestUrl.pathname.startsWith("/api/v1/")) {
-    if (!isAuthorized(req.headers.authorization)) {
-      json(res, 401, { error: "Unauthorized" });
-      return;
-    }
+  if (
+    url.pathname.startsWith("/api/v1/") &&
+    !isAuthorized(req.headers.authorization)
+  ) {
+    return json(res, 401, { error: "Unauthorized" });
   }
 
   // List actions
-  if (method === "GET" && requestUrl.pathname === "/api/v1/actions") {
-    json(res, 200, {
-      actions: renderedConfig!.jobs.map((job) => ({
+  if (method === "GET" && url.pathname === "/api/v1/actions") {
+    return json(res, 200, {
+      actions: renderedConfig.jobs.map((job) => ({
         name: job.name,
         schedule: job.schedule,
         enabled: job.enabled,
       })),
     });
-    return;
   }
 
-  // Trigger action
-  const runTriggerMatch = requestUrl.pathname.match(/^\/api\/v1\/actions\/([^/]+)\/runs$/);
-  if (method === "POST" && runTriggerMatch) {
-    const actionName = decodeURIComponent(runTriggerMatch[1]);
-    const run = triggerAction(actionName);
-    if (!run) {
-      json(res, 404, { error: `Unknown action "${actionName}"` });
-      return;
-    }
+  // Trigger action run
+  const triggerMatch = url.pathname.match(
+    /^\/api\/v1\/actions\/([^/]+)\/runs$/
+  );
+  if (method === "POST" && triggerMatch) {
+    const run = triggerAction(decodeURIComponent(triggerMatch[1]));
+    if (!run)
+      return json(res, 404, { error: `Unknown action "${triggerMatch[1]}"` });
     const statusUrl = `${origin}/api/v1/runs/${encodeURIComponent(run.runId)}`;
-    json(
+    return json(
       res,
       202,
       {
@@ -270,21 +283,16 @@ const server = http.createServer((req, res) => {
         statusUrl,
         startedAt: run.startedAt,
       },
-      { Location: statusUrl },
+      { Location: statusUrl }
     );
-    return;
   }
 
-  // Run status
-  const runStatusMatch = requestUrl.pathname.match(/^\/api\/v1\/runs\/([^/]+)$/);
-  if (method === "GET" && runStatusMatch) {
-    const runId = decodeURIComponent(runStatusMatch[1]);
-    const run = runStore.get(runId);
-    if (!run) {
-      json(res, 404, { error: `Run "${runId}" not found` });
-      return;
-    }
-    json(res, 200, {
+  // Get run status
+  const statusMatch = url.pathname.match(/^\/api\/v1\/runs\/([^/]+)$/);
+  if (method === "GET" && statusMatch) {
+    const run = runStore.get(decodeURIComponent(statusMatch[1]));
+    if (!run) return json(res, 404, { error: `Run not found` });
+    return json(res, 200, {
       runId: run.runId,
       action: run.action,
       status: run.status,
@@ -293,14 +301,13 @@ const server = http.createServer((req, res) => {
       exitCode: run.exitCode,
       signal: run.signal,
     });
-    return;
   }
 
   json(res, 404, { error: "Not found" });
 });
 
-server.on("error", (error) => {
-  console.error(`[cron-supervisor] HTTP server error: ${error.message}`);
+server.on("error", (err) => {
+  console.error(`[cron-supervisor] HTTP server error: ${err.message}`);
   process.exit(1);
 });
 
@@ -311,7 +318,7 @@ server.on("close", () => {
 
 // --- Graceful shutdown ---
 
-const shutdown = (signal: string) => {
+function shutdown(signal: string) {
   if (shuttingDown) return;
   shuttingDown = true;
 
@@ -326,7 +333,7 @@ const shutdown = (signal: string) => {
   }
 
   setTimeout(() => process.exit(0), 12_000).unref();
-};
+}
 
 process.on("SIGTERM", () => shutdown("SIGTERM"));
 process.on("SIGINT", () => shutdown("SIGINT"));

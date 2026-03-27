@@ -1,6 +1,12 @@
 {
   "jobs": [
     {
+      "name": "healthcheck",
+      "schedule": "*/5 * * * *",
+      "enabled": true,
+      "command": "cd /app && pnpm hardhat healthcheck"
+    },
+    {
       "name": "hourly_snap_balances",
       "schedule": "0 * * * *",
       "enabled": false,

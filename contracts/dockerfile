@@ -1,4 +1,4 @@
-FROM node:22
+FROM node:20
 
 ENV DEBIAN_FRONTEND=noninteractive \
   DEBUG=origin* \
@@ -21,15 +21,21 @@ RUN mkdir -p /root/.ssh \
 
 RUN git config --global url."https://github.com/".insteadOf "git@github.com:"
 
-ENV SUPERCRONIC_URL=https://github.com/aptible/supercronic/releases/download/v0.2.39/supercronic-linux-amd64 \
-  SUPERCRONIC_SHA1SUM=c98bbf82c5f648aaac8708c182cc83046fe48423 \
-  SUPERCRONIC=supercronic-linux-amd64
+ARG TARGETARCH
+ENV SUPERCRONIC_URL=https://github.com/aptible/supercronic/releases/download/v0.2.39/supercronic-linux-${TARGETARCH} \
+  SUPERCRONIC=supercronic-linux-${TARGETARCH}
+
+# sha1sums from https://github.com/aptible/supercronic/releases/tag/v0.2.39
+COPY <<'EOF' /tmp/supercronic-checksums.txt
+c98bbf82c5f648aaac8708c182cc83046fe48423  supercronic-linux-amd64
+5ef4ccc3d43f12d0f6c3763758bc37cc4e5af76e  supercronic-linux-arm64
+EOF
 
 RUN curl -fsSLO "$SUPERCRONIC_URL" \
-  && echo "${SUPERCRONIC_SHA1SUM}  ${SUPERCRONIC}" | sha1sum -c - \
+  && grep "$SUPERCRONIC" /tmp/supercronic-checksums.txt | sha1sum -c - \
   && chmod +x "$SUPERCRONIC" \
-  && mv "$SUPERCRONIC" "/usr/local/bin/${SUPERCRONIC}" \
-  && ln -s "/usr/local/bin/${SUPERCRONIC}" /usr/local/bin/supercronic
+  && mv "$SUPERCRONIC" /usr/local/bin/supercronic \
+  && rm /tmp/supercronic-checksums.txt
 
 WORKDIR /app
 
@@ -41,7 +47,8 @@ RUN corepack enable \
 # Copy the rest of the contracts workspace.
 COPY . .
 
-RUN pnpm hardhat compile
+# Compile contracts on amd64 (production). Skip on arm64 (Mac) where solcjs WASM crashes.
+RUN if [ "$TARGETARCH" = "amd64" ]; then pnpm hardhat compile; else echo "Skipping compile on $TARGETARCH"; fi
 
 ENV PROVIDER_URL="" \
   SONIC_PROVIDER_URL="" \
