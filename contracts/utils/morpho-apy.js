@@ -136,7 +136,9 @@ async function fetchVaultMarkets(provider, chainId, vaultAddress) {
 
   // Fetch both queues in parallel
   const [supplyIds, withdrawIds] = await Promise.all([
-    Promise.all(Array.from({ length: supplyLen }, (_, i) => vault.supplyQueue(i))),
+    Promise.all(
+      Array.from({ length: supplyLen }, (_, i) => vault.supplyQueue(i))
+    ),
     Promise.all(
       Array.from({ length: withdrawLen }, (_, i) => vault.withdrawQueue(i))
     ),

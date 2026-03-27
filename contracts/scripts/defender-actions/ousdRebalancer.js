@@ -61,9 +61,13 @@ const buildDiscordMessage = ({
         ? formatUSDC(a.withdrawableLiquidity)
         : "  n/a ";
     const apyStr = a.graphqlApy
-      ? `${(a.apy * 100).toFixed(2)}% APY (API: ${(a.graphqlApy * 100).toFixed(2)}%)`
+      ? `${(a.apy * 100).toFixed(2)}% APY (API: ${(a.graphqlApy * 100).toFixed(
+          2
+        )}%)`
       : `${(a.apy * 100).toFixed(2)}% APY`;
-    return `  ${a.name.padEnd(20)} ${formatUSDC(a.balance).padStart(9)}  ${avail.padStart(9)}  ${apyStr}`;
+    return `  ${a.name.padEnd(20)} ${formatUSDC(a.balance).padStart(
+      9
+    )}  ${avail.padStart(9)}  ${apyStr}`;
   });
   currentLines.push(
     `  ${"Vault idle".padEnd(20)} ${formatUSDC(state.vaultBalance).padStart(9)}`

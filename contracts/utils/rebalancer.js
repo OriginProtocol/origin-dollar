@@ -526,9 +526,10 @@ async function _filterDeposits(
             deposit.metaMorphoVaultAddress,
             amt
           );
+          deposit.impactBps = impactBps;
           if (impactBps > constraints.maxApyImpactBps) {
             deposit.action = ACTION_NONE;
-            deposit.reason = `APY impact ${impactBps}bps > max ${constraints.maxApyImpactBps}bps`;
+            deposit.reason = `APY impact ${(impactBps / 100).toFixed(2)}% > max ${(constraints.maxApyImpactBps / 100).toFixed(2)}%`;
             continue;
           }
         } catch (err) {
@@ -637,11 +638,103 @@ function _deploySurplus(result, surplus) {
 }
 
 /**
+ * After deposit filtering, cancel or reduce withdrawals whose total exceeds
+ * what is actually needed: approved deposits + vault deficit.
+ *
+ * vault deficit = max(0, shortfall + minVaultBalance − vaultBalance)
+ *
+ * Safety invariant: a withdrawal is only cancelled when its full amount falls
+ * within the excess (amt ≤ excess). If trimming would put it below minMoveAmount
+ * but amt > excess, the withdrawal is left unchanged and a small residual excess
+ * (< minMoveAmount) is accepted rather than over-cancelling and leaving deposits
+ * without budget.
+ *
+ * @param {Array}     result      - allocations array
+ * @param {BigNumber} vaultBalance
+ * @param {BigNumber} shortfall
+ * @param {object}    constraints - merged constraints
+ * @returns {Array}
+ */
+function _trimExcessWithdrawals(result, vaultBalance, shortfall, constraints) {
+  const totalApprovedDeposits = result
+    .filter((a) => a.action === ACTION_DEPOSIT)
+    .reduce((sum, a) => sum.add(a.delta.abs()), BigNumber.from(0));
+
+  const vaultTarget = shortfall.add(
+    BigNumber.from(constraints.minVaultBalance)
+  );
+  const vaultDeficit = vaultTarget.gt(vaultBalance)
+    ? vaultTarget.sub(vaultBalance)
+    : BigNumber.from(0);
+
+  const totalNeeded = totalApprovedDeposits.add(vaultDeficit);
+
+  const withdrawals = result.filter((a) => a.action === ACTION_WITHDRAW);
+  const totalApprovedWithdrawals = withdrawals.reduce(
+    (sum, a) => sum.add(a.delta.abs()),
+    BigNumber.from(0)
+  );
+
+  let excess = totalApprovedWithdrawals.sub(totalNeeded);
+  if (excess.lte(0)) return result;
+
+  const vaultSurplus = vaultBalance.gt(vaultTarget)
+    ? vaultBalance.sub(vaultTarget)
+    : BigNumber.from(0);
+
+  // Process smallest withdrawal first — prefer cancelling small withdrawals
+  // over trimming large ones.
+  const sorted = [...withdrawals].sort((a, b) =>
+    a.delta.abs().lt(b.delta.abs()) ? -1 : 1
+  );
+
+  let runningTotal = totalApprovedWithdrawals;
+
+  for (const w of sorted) {
+    if (excess.lte(0)) break;
+    const amt = w.delta.abs();
+
+    if (amt.lte(excess)) {
+      // Entire withdrawal is within excess — safe to cancel (deposits stay funded).
+      excess = excess.sub(amt);
+      runningTotal = runningTotal.sub(amt);
+      w.action = ACTION_NONE;
+      w.reason = "no approved deposits to fund";
+    } else {
+      // Only part of this withdrawal is excess.
+      const newAmt = amt.sub(excess);
+      if (newAmt.gte(BigNumber.from(constraints.minMoveAmount))) {
+        // Safe to trim.
+        w.delta = newAmt.mul(-1);
+        w.targetBalance = w.balance.sub(newAmt);
+        w.reason = "trimmed to match approved deposits";
+        runningTotal = runningTotal.sub(excess);
+        excess = BigNumber.from(0);
+      } else {
+        // Trimming goes below minMoveAmount. Cancel only if remaining withdrawals
+        // + vault surplus still cover all approved deposits.
+        const budgetAfterCancel = runningTotal.sub(amt).add(vaultSurplus);
+        if (budgetAfterCancel.gte(totalApprovedDeposits)) {
+          runningTotal = runningTotal.sub(amt);
+          w.action = ACTION_NONE;
+          w.reason = "no approved deposits to fund";
+          excess = BigNumber.from(0);
+        }
+        // else: cancelling would under-fund deposits — leave as-is
+      }
+    }
+  }
+
+  return result;
+}
+
+/**
  * Filter allocations: withdraw pass → budget calculation → deposit pass → fallbacks.
  *
  * Pass A (withdrawals): filter overallocated strategies by feasibility.
  * Budget:              approved withdrawals + vault surplus = max depositable.
  * Pass B (deposits):   allocate from budget in APY-desc order, apply feasibility checks.
+ * Pass C (trim):       cancel/reduce withdrawals that no longer have deposits to fund.
  * Pass 2 (fallbacks):  shortfall and surplus fallbacks run after both passes.
  *
  * @param {Array}     allocations - output of computeIdealAllocation
@@ -673,7 +766,10 @@ async function buildExecutableActions(
     providers
   );
 
-  // 3. Fallback: cover shortfall if no withdrawals were approved
+  // 3. Cancel/trim withdrawals that exceed what approved deposits + vault deficit need
+  result = _trimExcessWithdrawals(result, vaultBalance, shortfall, constraints);
+
+  // 4. Fallback: cover shortfall if no withdrawals were approved
   const hasApprovedWithdrawals = result.some(
     (a) => a.action === ACTION_WITHDRAW
   );
@@ -681,7 +777,7 @@ async function buildExecutableActions(
     result = _coverShortfall(result, shortfall, constraints);
   }
 
-  // 4. Fallback: deploy vault surplus if no deposits were approved
+  // 5. Fallback: deploy vault surplus if no deposits were approved
   const hasApprovedDeposits = result.some((a) => a.action === ACTION_DEPOSIT);
   const surplus = _computeVaultSurplus(vaultBalance, shortfall, constraints);
   if (!hasApprovedDeposits && surplus.gt(0)) {
@@ -778,8 +874,14 @@ function printAllocationTable({
       rec && rec.action !== ACTION_NONE ? rec.targetBalance : a.balance;
     const recDelta = recTarget.sub(a.balance);
     const apyStr = a.graphqlApy
-      ? `${(a.apy * 100).toFixed(2)}% (API: ${(a.graphqlApy * 100).toFixed(2)}%)`
+      ? `${(a.apy * 100).toFixed(2)}% (API: ${(a.graphqlApy * 100).toFixed(
+          2
+        )}%)`
       : `${(a.apy * 100).toFixed(2)}%`;
+    const impact =
+      rec?.action === ACTION_DEPOSIT && rec?.impactBps != null
+        ? `${(rec.impactBps / 100).toFixed(2)}%`
+        : "—";
     return {
       name: `${a.name}${a.isDefault ? " *" : ""}`,
       current: `${fmtUsd(a.balance)}${pct(a.balance)}`,
@@ -790,6 +892,7 @@ function printAllocationTable({
       target: `${fmtUsd(recTarget)}${pct(recTarget)}`,
       delta: `${sign(recDelta)}${fmtUsd(recDelta.abs())}`,
       apy: apyStr,
+      impact,
     };
   });
   const vaultRow = {
@@ -799,6 +902,7 @@ function printAllocationTable({
     target: `${fmtUsd(vaultTarget)}${pct(vaultTarget)}`,
     delta: `${vaultDeltaSign}${fmtUsd(vaultDelta.abs())}`,
     apy: "—",
+    impact: "—",
   };
   const allRows = [...formattedRows, vaultRow];
   const COL = {
@@ -807,26 +911,29 @@ function printAllocationTable({
       "Current".length,
       ...allRows.map((row) => row.current.length)
     ),
-    avail: Math.max(
-      "Avail.".length,
-      ...allRows.map((row) => row.avail.length)
-    ),
+    avail: Math.max("Avail.".length, ...allRows.map((row) => row.avail.length)),
     target: Math.max(
       "Target (rec.)".length,
       ...allRows.map((row) => row.target.length)
     ),
     delta: Math.max("Delta".length, ...allRows.map((row) => row.delta.length)),
     apy: Math.max("APY".length, ...allRows.map((row) => row.apy.length)),
+    impact: Math.max(
+      "Impact".length,
+      ...allRows.map((row) => row.impact.length)
+    ),
   };
 
   console.log(
     `${"Strategy".padEnd(COL.name)}${COL_SEP}${"Current".padStart(
       COL.current
-    )}${COL_SEP}${"Avail.".padStart(COL.avail)}${COL_SEP}${"Target (rec.)".padStart(
+    )}${COL_SEP}${"Avail.".padStart(
+      COL.avail
+    )}${COL_SEP}${"Target (rec.)".padStart(
       COL.target
     )}${COL_SEP}${"Delta".padStart(COL.delta)}${COL_SEP}${"APY".padStart(
       COL.apy
-    )}`
+    )}${COL_SEP}${"Impact".padStart(COL.impact)}`
   );
   console.log(
     "-".repeat(
@@ -836,7 +943,8 @@ function printAllocationTable({
         COL.target +
         COL.delta +
         COL.apy +
-        COL_SEP.length * 5
+        COL.impact +
+        COL_SEP.length * 6
     )
   );
 
@@ -847,7 +955,8 @@ function printAllocationTable({
         `${row.avail.padStart(COL.avail)}${COL_SEP}` +
         `${row.target.padStart(COL.target)}${COL_SEP}` +
         `${row.delta.padStart(COL.delta)}${COL_SEP}` +
-        `${row.apy.padStart(COL.apy)}`
+        `${row.apy.padStart(COL.apy)}${COL_SEP}` +
+        `${row.impact.padStart(COL.impact)}`
     );
   }
 
@@ -857,7 +966,8 @@ function printAllocationTable({
       `${vaultRow.avail.padStart(COL.avail)}${COL_SEP}` +
       `${vaultRow.target.padStart(COL.target)}${COL_SEP}` +
       `${vaultRow.delta.padStart(COL.delta)}${COL_SEP}` +
-      `${vaultRow.apy.padStart(COL.apy)}`
+      `${vaultRow.apy.padStart(COL.apy)}${COL_SEP}` +
+      `${vaultRow.impact.padStart(COL.impact)}`
   );
 
   console.log(
@@ -868,7 +978,8 @@ function printAllocationTable({
         COL.target +
         COL.delta +
         COL.apy +
-        COL_SEP.length * 5
+        COL.impact +
+        COL_SEP.length * 6
     )
   );
   console.log(
@@ -881,7 +992,7 @@ function printAllocationTable({
   // ── Section 1: All ideal allocation changes ──────────────────────────────
   const rawChanges = tableRows.filter((a) => !a.delta.isZero());
 
-  console.log("--- Actions for Ideal Allocation ---\n");
+  console.log("--- Actions for max APY ---\n");
   if (rawChanges.length === 0) {
     console.log("  All strategies at target.\n");
   } else {
@@ -899,6 +1010,8 @@ function printAllocationTable({
         suffix = ` [Infeasible unless adjusted to ${fmtUsd(
           filtered.delta.abs()
         )}]`;
+      } else if (raw.delta.gt(0) && filtered?.impactBps != null) {
+        suffix = ` (APY impact: ${(filtered.impactBps / 100).toFixed(2)}%)`;
       }
 
       console.log(
