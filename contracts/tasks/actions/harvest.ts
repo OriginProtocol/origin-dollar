@@ -42,9 +42,10 @@ action({
     }
 
     if (strategiesToHarvest.length > 0) {
-      const tx = await harvester
-        .connect(signer)
-        ["harvestAndTransfer(address[])"](strategiesToHarvest);
+      const connection = harvester.connect(signer);
+      const tx = await connection["harvestAndTransfer(address[])"](
+        strategiesToHarvest
+      );
       await logTxDetails(tx, "harvestAndTransfer");
     } else {
       log.info("No native staking strategies require harvesting at this time");
