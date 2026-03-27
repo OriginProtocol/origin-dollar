@@ -1,25 +1,35 @@
-const { Defender } = require("@openzeppelin/defender-sdk");
+import { subtask, task, types } from "hardhat/config";
+import { getSigner } from "../../utils/signers";
+import { undelegateValidator } from "../../utils/sonicActions";
 
-const { undelegateValidator } = require("../../utils/sonicActions");
-
-// Entrypoint for the Defender Action
-const handler = async (event) => {
-  console.log(
-    `DEBUG env var in handler before being set: "${process.env.DEBUG}"`
-  );
-
-  // Initialize defender relayer provider and signer
-  const client = new Defender(event);
-  const provider = client.relaySigner.getProvider({ ethersVersion: "v5" });
-  const signer = await client.relaySigner.getSigner(provider, {
-    speed: "fastest",
-    ethersVersion: "v5",
+subtask("sonicUndelegate", "Remove liquidity from a Sonic validator")
+  .addOptionalParam(
+    "id",
+    "Validator identifier. 15, 16, 17 or 18",
+    undefined,
+    types.int
+  )
+  .addOptionalParam(
+    "amount",
+    "Amount of liquidity to remove",
+    undefined,
+    types.float
+  )
+  .addOptionalParam(
+    "buffer",
+    "Percentage of total assets to keep as buffer in basis points. 100 = 1%",
+    50,
+    types.float
+  )
+  .setAction(async (taskArgs: any) => {
+    const signer = await getSigner();
+    await undelegateValidator({
+      ...taskArgs,
+      bufferPct: taskArgs.buffer,
+      signer,
+    });
   });
 
-  // The vault buffer in basis points, so 100 = 1%
-  const bufferPct = 50;
-
-  await undelegateValidator({ signer, bufferPct });
-};
-
-module.exports = { handler };
+task("sonicUndelegate").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});

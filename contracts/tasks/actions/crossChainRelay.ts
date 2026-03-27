@@ -1,42 +1,35 @@
-const { ethers } = require("ethers");
-const { Defender } = require("@openzeppelin/defender-sdk");
-const { processCctpBridgeTransactions } = require("../../tasks/crossChain");
-const { getNetworkName } = require("../../utils/hardhat-helpers");
-const { configuration } = require("../../utils/cctp");
+import { ethers } from "ethers";
+import { subtask, task } from "hardhat/config";
+import { configuration } from "../../utils/cctp";
+import { keyValueStoreLocalClient } from "../../utils/defender";
+import { getNetworkName } from "../../utils/hardhat-helpers";
+import { getSigner } from "../../utils/signers";
+import { processCctpBridgeTransactions } from "../crossChain";
 
-// Entrypoint for the Defender Action
-const handler = async (event) => {
-  console.log(
-    `DEBUG env var in handler before being set: "${process.env.DEBUG}"`
-  );
+const log = require("../../utils/logger")("action:crossChainRelay");
 
-  // Initialize defender relayer provider and signer
-  const client = new Defender(event);
-  // Chain ID of the target contract relayer signer
-  const provider = client.relaySigner.getProvider({ ethersVersion: "v5" });
-  const { chainId } = await provider.getNetwork();
-  let sourceProvider;
-  const signer = await client.relaySigner.getSigner(provider, {
-    speed: "fastest",
-    ethersVersion: "v5",
-  });
+subtask(
+  "crossChainRelay",
+  "Relay CCTP bridge transactions between mainnet and Base"
+).setAction(async () => {
+  const signer = await getSigner();
+  const { chainId } = await signer.provider?.getNetwork();
 
-  // destinatino chain is mainnet, source chain is base
+  let sourceProvider: ethers.providers.JsonRpcProvider;
+
   if (chainId === 1) {
-    if (!event.secrets.BASE_PROVIDER_URL) {
+    if (!process.env.BASE_PROVIDER_URL) {
       throw new Error("BASE_PROVIDER_URL env var required");
     }
     sourceProvider = new ethers.providers.JsonRpcProvider(
-      event.secrets.BASE_PROVIDER_URL
+      process.env.BASE_PROVIDER_URL
     );
-  }
-  // destination chain is base, source chain is mainnet
-  else if (chainId === 8453) {
-    if (!event.secrets.PROVIDER_URL) {
+  } else if (chainId === 8453) {
+    if (!process.env.PROVIDER_URL) {
       throw new Error("PROVIDER_URL env var required");
     }
     sourceProvider = new ethers.providers.JsonRpcProvider(
-      event.secrets.PROVIDER_URL
+      process.env.PROVIDER_URL
     );
   } else {
     throw new Error(`Unsupported chain id: ${chainId}`);
@@ -46,7 +39,7 @@ const handler = async (event) => {
   const isMainnet = networkName === "mainnet";
   const isBase = networkName === "base";
 
-  let config;
+  let config: any;
   if (isMainnet) {
     config = configuration.mainnetBaseMorpho.mainnet;
   } else if (isBase) {
@@ -55,10 +48,15 @@ const handler = async (event) => {
     throw new Error(`Unsupported network name: ${networkName}`);
   }
 
+  log(`Relaying CCTP from ${networkName}`);
+  const store = keyValueStoreLocalClient({
+    _storePath: ".store/crossChainRelay.json",
+  });
+
   await processCctpBridgeTransactions({
     destinationChainSigner: signer,
     sourceChainProvider: sourceProvider,
-    store: client.keyValueStore,
+    store,
     networkName,
     blockLookback: config.blockLookback,
     cctpDestinationDomainId: config.cctpDestinationDomainId,
@@ -67,6 +65,8 @@ const handler = async (event) => {
     cctpIntegrationContractAddressDestination:
       config.cctpIntegrationContractAddressDestination,
   });
-};
+});
 
-module.exports = { handler };
+task("crossChainRelay").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});

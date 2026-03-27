@@ -1,21 +1,16 @@
-const { Defender } = require("@openzeppelin/defender-sdk");
-const { transferTokens } = require("../../utils/managePassThrough");
+import { subtask, task } from "hardhat/config";
 
-// Entrypoint for the Defender Action
-const handler = async (event) => {
-  console.log(
-    `DEBUG env var in handler before being set: "${process.env.DEBUG}"`
-  );
+import { transferTokens } from "../../utils/managePassThrough";
+import { getSigner } from "../../utils/signers";
 
-  // Initialize defender relayer provider and signer
-  const client = new Defender(event);
-  const provider = client.relaySigner.getProvider({ ethersVersion: "v5" });
-  const signer = await client.relaySigner.getSigner(provider, {
-    speed: "fastest",
-    ethersVersion: "v5",
-  });
-
+subtask(
+  "managePassThrough",
+  "Transfer tokens via pass-through mechanism"
+).setAction(async () => {
+  const signer = await getSigner();
   await transferTokens({ signer });
-};
+});
 
-module.exports = { handler };
+task("managePassThrough").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});

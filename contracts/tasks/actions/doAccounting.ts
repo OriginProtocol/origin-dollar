@@ -1,84 +1,25 @@
-const { ethers } = require("ethers");
-const { Defender } = require("@openzeppelin/defender-sdk");
-const addresses = require("../../utils/addresses");
-const { logTxDetails } = require("../../utils/txLogger");
-
-const {
-  address: mainnetConsolidationControllerAddress,
-  abi: consolidationControllerAbi,
-} = require("../../deployments/mainnet/ConsolidationController.json");
-const {
-  address: hoodiConsolidationControllerAddress,
-} = require("../../deployments/hoodi/ConsolidationController.json");
+import { ethers } from "ethers";
+import { subtask, task, types } from "hardhat/config";
+import { address as hoodiConsolidationControllerAddress } from "../../deployments/hoodi/ConsolidationController.json";
+import {
+  abi as consolidationControllerAbi,
+  address as mainnetConsolidationControllerAddress,
+} from "../../deployments/mainnet/ConsolidationController.json";
+import addresses from "../../utils/addresses";
+import { getSigner } from "../../utils/signers";
+import { logTxDetails } from "../../utils/txLogger";
 
 const log = require("../../utils/logger")("action:doAccounting");
 
-// Entrypoint for the Defender Action
-const handler = async (event) => {
-  console.log(
-    `DEBUG env var in handler before being set: "${process.env.DEBUG}"`
-  );
-
-  // Initialize defender relayer provider and signer
-  const client = new Defender(event);
-  const provider = client.relaySigner.getProvider({ ethersVersion: "v5" });
-  const signer = await client.relaySigner.getSigner(provider, {
-    speed: "fastest",
-    ethersVersion: "v5",
-  });
-
-  const network = await provider.getNetwork();
-  const networkName =
-    network.chainId === 1
-      ? "mainnet"
-      : network.chainId === 560048
-      ? "hoodi"
-      : undefined;
-  if (!networkName) {
-    throw new Error(
-      `Action only supports mainnet and hoodi, not chainId ${network.chainId}`
-    );
-  }
-  log(`Network: ${networkName} with chain id (${network.chainId})`);
-
-  const consolidationControllerAddress =
-    networkName === "mainnet"
-      ? mainnetConsolidationControllerAddress
-      : hoodiConsolidationControllerAddress;
-  log(
-    `Resolved ConsolidationController address to ${consolidationControllerAddress}`
-  );
-  const consolidationController = new ethers.Contract(
-    consolidationControllerAddress,
-    consolidationControllerAbi,
-    signer
-  );
-
-  await doAccounting(
-    "NativeStakingSSVStrategy2Proxy",
-    networkName,
-    signer,
-    consolidationController
-  );
-  await doAccounting(
-    "NativeStakingSSVStrategy3Proxy",
-    networkName,
-    signer,
-    consolidationController
-  );
-};
-
-const doAccounting = async (
-  proxyName,
-  networkName,
-  signer,
-  consolidationController
-) => {
-  const nativeStakingProxyAddress = addresses[networkName][proxyName];
+async function doAccountingForProxy(
+  proxyName: string,
+  networkName: string,
+  signer: ethers.Signer,
+  consolidationController: ethers.Contract
+) {
+  const nativeStakingProxyAddress = (addresses as any)[networkName][proxyName];
   if (!nativeStakingProxyAddress) {
-    throw new Error(
-      `Failed to resolve ${proxyName} on the ${networkName} network`
-    );
+    throw new Error(`Failed to resolve ${proxyName} on ${networkName}`);
   }
   log(`Resolved ${proxyName} address to ${nativeStakingProxyAddress}`);
 
@@ -86,6 +27,63 @@ const doAccounting = async (
     .connect(signer)
     .doAccounting(nativeStakingProxyAddress);
   await logTxDetails(tx, `doAccounting for ${proxyName} via controller`);
-};
+}
 
-module.exports = { handler };
+subtask(
+  "doAccounting",
+  "Account for consensus rewards and validator exits in the Native Staking Strategy"
+)
+  .addOptionalParam(
+    "index",
+    "The number of the Native Staking Contract deployed.",
+    undefined,
+    types.int
+  )
+  .addOptionalParam(
+    "consol",
+    "Call the consolidation controller instead of the strategy",
+    false,
+    types.boolean
+  )
+  .setAction(async () => {
+    const signer = await getSigner();
+    const { chainId } = await signer.provider?.getNetwork();
+
+    const networkName =
+      chainId === 1 ? "mainnet" : chainId === 560048 ? "hoodi" : undefined;
+    if (!networkName) {
+      throw new Error(
+        `Action only supports mainnet and hoodi, not chainId ${chainId}`
+      );
+    }
+    log(`Network: ${networkName} (${chainId})`);
+
+    const controllerAddress =
+      networkName === "mainnet"
+        ? mainnetConsolidationControllerAddress
+        : hoodiConsolidationControllerAddress;
+    log(`ConsolidationController: ${controllerAddress}`);
+
+    const consolidationController = new ethers.Contract(
+      controllerAddress,
+      consolidationControllerAbi,
+      signer
+    );
+
+    await doAccountingForProxy(
+      "NativeStakingSSVStrategy2Proxy",
+      networkName,
+      signer,
+      consolidationController
+    );
+    await doAccountingForProxy(
+      "NativeStakingSSVStrategy3Proxy",
+      networkName,
+      signer,
+      consolidationController
+    );
+  });
+
+task("doAccounting").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});

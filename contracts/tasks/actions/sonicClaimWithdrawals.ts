@@ -1,22 +1,15 @@
-const { Defender } = require("@openzeppelin/defender-sdk");
+import { subtask, task } from "hardhat/config";
+import { getSigner } from "../../utils/signers";
+import { withdrawFromSFC } from "../../utils/sonicActions";
 
-const { withdrawFromSFC } = require("../../utils/sonicActions");
-
-// Entrypoint for the Defender Action
-const handler = async (event) => {
-  console.log(
-    `DEBUG env var in handler before being set: "${process.env.DEBUG}"`
-  );
-
-  // Initialize defender relayer provider and signer
-  const client = new Defender(event);
-  const provider = client.relaySigner.getProvider({ ethersVersion: "v5" });
-  const signer = await client.relaySigner.getSigner(provider, {
-    speed: "fastest",
-    ethersVersion: "v5",
-  });
-
+subtask(
+  "sonicWithdraw",
+  "Withdraw native S from a previously undelegated validator"
+).setAction(async () => {
+  const signer = await getSigner();
   await withdrawFromSFC({ signer });
-};
+});
 
-module.exports = { handler };
+task("sonicWithdraw").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});

@@ -33,10 +33,13 @@
     "lint": "yarn run lint:js && yarn run lint:sol",
     "lint:js": "eslint \"test/**/*.js\" \"tasks/**/*.js\" \"deploy/**/*.js\"",
     "lint:sol": "solhint \"contracts/**/*.sol\"",
+    "lint:ts": "biome check tasks/actions/ tasks/lib/",
     "prettier": "yarn run prettier:js && yarn run prettier:sol",
     "prettier:check": "prettier -c \"*.js\" \"deploy/**/*.js\"  \"scripts/**/*.js\" \"scripts/**/*.js\" \"tasks/**/*.js\" \"test/**/*.js\" \"utils/**/*.js\"",
     "prettier:js": "prettier --write \"*.js\" \"deploy/**/*.js\"  \"scripts/**/*.js\" \"scripts/**/*.js\" \"tasks/**/*.js\" \"test/**/*.js\" \"utils/**/*.js\"",
     "prettier:sol": "prettier --write --plugin=prettier-plugin-solidity \"contracts/**/*.sol\"",
+    "prettier:ts": "biome format --write tasks/actions/ tasks/lib/",
+    "typecheck": "tsc --noEmit",
     "test": "rm -rf deployments/hardhat && IS_TEST=true npx hardhat test",
     "test:base": "rm -rf deployments/hardhat && UNIT_TESTS_NETWORK=base IS_TEST=true npx hardhat test",
     "test:sonic": "rm -rf deployments/hardhat && UNIT_TESTS_NETWORK=sonic IS_TEST=true npx hardhat test",
@@ -72,6 +75,7 @@
   "author": "Origin Protocol Inc <support@originprotocol.com>",
   "license": "MIT",
   "devDependencies": {
+    "@biomejs/biome": "^2.4.9",
     "@aws-sdk/client-kms": "^3.675.0",
     "@aws-sdk/client-s3": "3.600.0",
     "@chainsafe/persistent-merkle-tree": "^1.2.1",
@@ -119,9 +123,13 @@
     "solidity-bytes-utils": "0.8.4",
     "solidity-coverage": "0.8.14",
     "ssv-keys": "1.1.0",
-    "ssv-scanner": "github:bloxapp/ssv-scanner#v1.0.5",
+    "ssv-scanner": "github:ssvlabs/ssv-scanner#v1.0.5",
     "sync-fetch": "0.5.2",
-    "uuid": "9.0.1"
+    "ts-node": "^10.9.2",
+    "typescript": "^5.7.0",
+    "uuid": "9.0.1",
+    "viem": "^2.27.0",
+    "winston": "^3.19.0"
   },
   "husky": {
     "hooks": {

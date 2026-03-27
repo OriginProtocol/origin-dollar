@@ -1,38 +1,46 @@
-const { Defender } = require("@openzeppelin/defender-sdk");
-
-const { manageBribes } = require("../../tasks/poolBooster");
+import { subtask, task, types } from "hardhat/config";
+import { getSigner } from "../../utils/signers";
+import { manageBribes } from "../poolBooster";
 
 const log = require("../../utils/logger")("action:manageBribes");
 
-// Entrypoint for the Defender Action
-const handler = async (event) => {
-  console.log(
-    `DEBUG env var in handler before being set: "${process.env.DEBUG}"`
-  );
+subtask(
+  "manageCurvePoolBoosterBribes",
+  "Calls manageBribes on the CurvePoolBoosterBribesModule and calculates the rewards per vote based on the target efficiency"
+)
+  .addOptionalParam(
+    "efficiency",
+    "Target efficiency (0-10, e.g. 1 for 100%, 0.5 for 50%)",
+    "1",
+    types.string
+  )
+  .addOptionalParam(
+    "skipRewardPerVote",
+    "Skip setting RewardPerVote (pass array of zeros)",
+    false,
+    types.boolean
+  )
+  .addOptionalParam(
+    "chunkSize",
+    "Number of pool boosters to manage per transaction",
+    4,
+    types.int
+  )
+  .setAction(async (taskArgs: any) => {
+    const signer = await getSigner();
 
-  // Initialize defender relayer provider and signer
-  const client = new Defender(event);
-  const provider = client.relaySigner.getProvider({ ethersVersion: "v5" });
-  const signer = await client.relaySigner.getSigner(provider, {
-    speed: "fastest",
-    ethersVersion: "v5",
+    log(
+      `Managing max reward per vote with target efficiency ${taskArgs.efficiency}, skip reward per vote ${taskArgs.skipRewardPerVote}, and chunk size ${taskArgs.chunkSize}`
+    );
+    await manageBribes({
+      signer,
+      provider: signer.provider!,
+      targetEfficiency: taskArgs.efficiency,
+      skipRewardPerVote: taskArgs.skipRewardPerVote,
+      chunkSize: taskArgs.chunkSize,
+    });
   });
 
-  // Parse options from event
-  const skipRewardPerVote = event.request?.body?.skipRewardPerVote ?? false;
-  const targetEfficiency = event.request?.body?.targetEfficiency ?? 1;
-  const chunkSize = event.request?.body?.chunkSize ?? 4;
-
-  log(
-    `Managing max reward per vote with target efficiency ${targetEfficiency}, skip reward per vote ${skipRewardPerVote}, and chunk size ${chunkSize}`
-  );
-  await manageBribes({
-    provider,
-    signer,
-    targetEfficiency,
-    skipRewardPerVote,
-    chunkSize,
-  });
-};
-
-module.exports = { handler };
+task("manageCurvePoolBoosterBribes").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
