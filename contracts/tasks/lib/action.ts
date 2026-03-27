@@ -4,7 +4,7 @@ import type { ConfigurableTaskDefinition } from "hardhat/types";
 import type { Logger } from "winston";
 
 import { getSigner } from "../../utils/signers";
-import logger from "./logger";
+import logger, { flushLogger } from "./logger";
 
 export interface ActionContext {
   signer: ethers.Signer;
@@ -71,6 +71,8 @@ export function action(config: ActionConfig) {
       const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
       log.error(`Failed after ${elapsed}s: ${err.message}`);
       throw err;
+    } finally {
+      await flushLogger();
     }
   });
 
