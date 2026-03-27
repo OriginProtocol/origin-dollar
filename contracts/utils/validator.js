@@ -57,7 +57,7 @@ const registerValidators = async ({
   maxValidatorsToRegister,
   ethAmount,
   awsS3AccessKeyId,
-  awsS3SexcretAccessKeyId,
+  awsS3SecretAccessKeyId,
   s3BucketName,
 }) => {
   if (uuid && clear) {
@@ -135,7 +135,7 @@ const registerValidators = async ({
           p2p_api_key,
           p2p_base_url,
           awsS3AccessKeyId,
-          awsS3SexcretAccessKeyId,
+          awsS3SecretAccessKeyId,
           s3BucketName
         );
         currentState = await getState(store);

@@ -66,8 +66,7 @@ const {
   curveSwapTask,
   curvePoolTask,
 } = require("./curve");
-const { calculateMaxPricePerVoteTask, manageBribes } = require("./poolBooster");
-const { manageMerklBribesTask } = require("./merklPoolBooster");
+const { calculateMaxPricePerVoteTask } = require("./poolBooster");
 const {
   depositSSV,
   migrateClusterToETH,
@@ -93,9 +92,7 @@ const {
   transferToken,
 } = require("./strategy");
 const {
-  validatorOperationsConfig,
   exitValidator,
-  doAccounting,
   manuallyFixAccounting,
   resetStakeETHTally,
   setStakeETHThreshold,
@@ -120,12 +117,6 @@ const {
 } = require("./validatorCompound");
 const { tenderlySync, tenderlyUpload } = require("./tenderly");
 const { setDefaultValidator, snapSonicStaking } = require("../utils/sonic");
-const {
-  undelegateValidator,
-  withdrawFromSFC,
-} = require("../utils/sonicActions");
-const { registerValidators, stakeValidators } = require("../utils/validator");
-const { harvestAndSwap } = require("./harvest");
 const { deployForceEtherSender, forceSend } = require("./simulation");
 const { sleep } = require("../utils/time");
 const { lzBridgeToken, lzSetConfig } = require("./layerzero");
@@ -741,64 +732,6 @@ task("calculateMaxPricePerVote").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
 
-subtask(
-  "manageCurvePoolBoosterBribes",
-  "Calls manageBribes on the CurvePoolBoosterBribesModule and calculates the rewards per vote based on the target efficiency"
-)
-  .addOptionalParam(
-    "efficiency",
-    "Target efficiency (0-10, e.g. 1 for 100%, 0.5 for 50%)",
-    "1",
-    types.string
-  )
-  .addOptionalParam(
-    "skipRewardPerVote",
-    "Skip setting RewardPerVote (pass array of zeros)",
-    false,
-    types.boolean
-  )
-  .addOptionalParam(
-    "chunkSize",
-    "Number of pool boosters to manage per transaction",
-    4,
-    types.int
-  )
-  .setAction(async (taskArgs) => {
-    // This action only works with the Defender Relayer signer
-    const signer = await getDefenderSigner();
-    await manageBribes({
-      signer,
-      provider: signer.provider,
-      targetEfficiency: taskArgs.efficiency,
-      skipRewardPerVote: taskArgs.skipRewardPerVote,
-      chunkSize: taskArgs.chunkSize,
-    });
-  });
-task("manageCurvePoolBoosterBribes").setAction(async (_, __, runSuper) => {
-  return runSuper();
-});
-
-subtask(
-  "manageMerklPoolBoosterBribes",
-  "Calls bribeAll on the MerklPoolBoosterBribesModule through the Gnosis Safe"
-)
-  .addOptionalParam(
-    "exclusionList",
-    "Comma-separated list of pool booster addresses to exclude",
-    "",
-    types.string
-  )
-  .addOptionalParam(
-    "moduleAddress",
-    "Override module address (default: resolved from chain)",
-    undefined,
-    types.string
-  )
-  .setAction(manageMerklBribesTask);
-task("manageMerklPoolBoosterBribes").setAction(async (_, __, runSuper) => {
-  return runSuper();
-});
-
 // Curve Pools
 subtask("amoStrat", "Dumps the current state of an AMO strategy")
   .addParam("pool", "Symbol of the curve Metapool. OUSD or OETH")
@@ -1129,21 +1062,6 @@ task("setRewardTokenAddresses", "Sets the reward token of a strategy")
 
 // Harvester
 
-task("harvest", "Harvest and swap rewards for a strategy")
-  .addParam(
-    "strategy",
-    "Name of the strategy proxy contract or address. eg NativeStakingSSVStrategyProxy",
-    undefined,
-    types.string
-  )
-  .addOptionalParam(
-    "harvester",
-    "Name of the harvester proxy contract or address",
-    "OETHHarvesterProxy",
-    types.string
-  )
-  .setAction(harvestAndSwap);
-
 // SSV
 
 subtask("getClusterInfo", "Print out information regarding SSV cluster")
@@ -1257,75 +1175,6 @@ task("deployStakingProxy").setAction(async (_, __, runSuper) => {
 });
 
 // Validator Operations
-
-subtask(
-  "registerValidators",
-  "Creates the required amount of new SSV validators and stakes ETH"
-)
-  .addOptionalParam(
-    "days",
-    "SSV Cluster operational time in days",
-    2,
-    types.int
-  )
-  .addOptionalParam(
-    "validators",
-    "The number of validators to register. defaults to the max that can be registered",
-    undefined,
-    types.int
-  )
-  .addOptionalParam("clear", "Clear storage", false, types.boolean)
-  .addOptionalParam(
-    "eth",
-    "Override the days option and set the amount of ETH to deposit to the cluster.",
-    undefined,
-    types.float
-  )
-  .addOptionalParam(
-    "uuid",
-    "uuid of P2P's request SSV validator API call. Used to reprocess a registration that failed to get the SSV request status.",
-    undefined,
-    types.string
-  )
-  .addOptionalParam(
-    "index",
-    "The number of the Native Staking Contract deployed.",
-    undefined,
-    types.int
-  )
-  .setAction(async (taskArgs) => {
-    const config = await validatorOperationsConfig(taskArgs);
-    const signer = await getSigner();
-    await registerValidators({ ...config, signer });
-  });
-task("registerValidators").setAction(async (_, __, runSuper) => {
-  return runSuper();
-});
-
-subtask(
-  "stakeValidators",
-  "Creates the required amount of new SSV validators and stakes ETH"
-)
-  .addOptionalParam(
-    "uuid",
-    "uuid of P2P's request SSV validator API call",
-    undefined,
-    types.string
-  )
-  .addOptionalParam(
-    "index",
-    "The number of the Native Staking Contract deployed.",
-    undefined,
-    types.int
-  )
-  .setAction(async (taskArgs) => {
-    const config = await validatorOperationsConfig(taskArgs);
-    const signer = await getSigner();
-    await stakeValidators({ ...config, signer });
-  });
-task("stakeValidators").setAction(async (_, __, runSuper) => {
-  return runSuper();
-});
 
 /**
  * This function relays the messages between mainnet and base networks.
@@ -1515,39 +1364,6 @@ subtask(
     }
   });
 task("removeValidators").setAction(async (_, __, runSuper) => {
-  return runSuper();
-});
-
-subtask(
-  "doAccounting",
-  "Account for consensus rewards and validator exits in the Native Staking Strategy"
-)
-  .addOptionalParam(
-    "index",
-    "The number of the Native Staking Contract deployed.",
-    undefined,
-    types.int
-  )
-  .addOptionalParam(
-    "consol",
-    "Call the consolidation controller instead of the strategy",
-    false,
-    types.boolean
-  )
-  .setAction(async ({ index, consol }) => {
-    const signer = await getSigner();
-
-    const nativeStakingStrategy = await resolveNativeStakingStrategyProxy(
-      index
-    );
-
-    await doAccounting({
-      consol,
-      signer,
-      nativeStakingStrategy,
-    });
-  });
-task("doAccounting").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
 
@@ -2016,50 +1832,6 @@ subtask(
   .addParam("id", "Validator identifier. eg 18", undefined, types.int)
   .setAction(setDefaultValidator);
 task("sonicDefaultValidator").setAction(async (_, __, runSuper) => {
-  return runSuper();
-});
-
-subtask("sonicUndelegate", "Remove liquidity from a Sonic validator")
-  .addOptionalParam(
-    "id",
-    "Validator identifier. 15, 16, 17 or 18",
-    undefined,
-    types.int
-  )
-  .addOptionalParam(
-    "amount",
-    "Amount of liquidity to remove",
-    undefined,
-    types.float
-  )
-  .addOptionalParam(
-    "buffer",
-    "Percentage of total assets to keep as buffer in basis points. 100 = 1%",
-    50,
-    types.float
-  )
-  .setAction(async (taskArgs) => {
-    const signer = await getSigner();
-
-    await undelegateValidator({
-      ...taskArgs,
-      bufferPct: taskArgs.buffer,
-      signer,
-    });
-  });
-task("sonicUndelegate").setAction(async (_, __, runSuper) => {
-  return runSuper();
-});
-
-subtask(
-  "sonicWithdraw",
-  "Withdraw native S from a previously undelegated validator"
-).setAction(async () => {
-  const signer = await getSigner();
-
-  await withdrawFromSFC({ signer });
-});
-task("sonicWithdraw").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
 

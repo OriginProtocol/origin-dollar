@@ -1,3 +1,18 @@
+require("ts-node").register({
+  transpileOnly: true,
+  // Use inline compilerOptions instead of tsconfig.json to avoid
+  // interfering with ESM-only packages (e.g. @lodestar/types).
+  skipProject: true,
+  compilerOptions: {
+    module: "CommonJS",
+    target: "ES2020",
+    esModuleInterop: true,
+    allowSyntheticDefaultImports: true,
+    resolveJsonModule: true,
+    strict: false,
+  },
+});
+
 const ethers = require("ethers");
 const { task } = require("hardhat/config");
 const {
@@ -50,6 +65,19 @@ require("solidity-coverage");
 require("@openzeppelin/hardhat-upgrades");
 
 require("./tasks/tasks");
+
+// Auto-load TypeScript action files — each self-registers as a hardhat task
+const fs = require("fs");
+const path = require("path");
+const actionsDir = path.join(__dirname, "tasks", "actions");
+if (fs.existsSync(actionsDir)) {
+  for (const file of fs.readdirSync(actionsDir).sort()) {
+    if (file.endsWith(".ts")) {
+      require(path.join(actionsDir, file));
+    }
+  }
+}
+
 const { accounts } = require("./tasks/account");
 
 const addresses = require("./utils/addresses.js");
