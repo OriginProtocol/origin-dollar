@@ -26,9 +26,19 @@ if (lokiUrl) {
     basicAuth: lokiUrl && lokiApiKey ? `${lokiUser}:${lokiApiKey}` : undefined,
     labels: { app: "origin-dollar" },
     json: true,
-    format: format.json(),
+    format: format.combine(
+      // Promote "action" from metadata to a Loki label
+      format((info) => {
+        if (info.action) {
+          info.labels = { ...(info.labels || {}), action: info.action };
+        }
+        return info;
+      })(),
+      format.json()
+    ),
     replaceTimestamp: true,
     batching: true,
+    interval: 5,
     onConnectionError: (err: unknown) => {
       console.error("Loki connection error:", err);
     },
