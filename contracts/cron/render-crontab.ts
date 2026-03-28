@@ -1,9 +1,10 @@
 import fs from "node:fs";
 import path from "node:path";
 
+// Default to local paths
 const DEFAULT_CONFIG_PATH =
-  process.env.CRON_CONFIG_PATH || "/app/cron/cron-jobs.json";
-const DEFAULT_OUTPUT_PATH = process.env.CRON_OUTPUT_PATH || "/etc/cronjob";
+  process.env.CRON_CONFIG_PATH || "./cron/cron-jobs.json";
+const DEFAULT_OUTPUT_PATH = process.env.CRON_OUTPUT_PATH || "./cron/cronjob";
 
 export class RenderCrontabError extends Error {}
 

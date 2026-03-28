@@ -12,6 +12,6 @@
     "outDir": "dist",
     "types": ["node"]
   },
-  "include": ["tasks/actions/**/*.ts", "tasks/lib/**/*.ts", "scripts/**/*.ts"],
+  "include": ["tasks/actions/**/*.ts", "tasks/lib/**/*.ts", "scripts/**/*.ts", "cron/cron-supervisor.ts", "cron/render-crontab.ts"],
   "exclude": ["node_modules", "dist"]
 }
