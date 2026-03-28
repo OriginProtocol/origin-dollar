@@ -118,7 +118,7 @@ const { config: renderedConfig, enabledJobs } = initCron();
 console.log(
   `[cron-supervisor] Generated ${enabledJobs.length} enabled cron jobs at ${cronOutputPath}`
 );
-console.log("[cron-supervisor] Generated /etc/cronjob:");
+console.log(`[cron-supervisor] Generated ${cronOutputPath}:`);
 console.log(fs.readFileSync(cronOutputPath, "utf8"));
 
 const jobsByName = new Map<string, CronJob>(
