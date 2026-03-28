@@ -7,8 +7,8 @@ import { type CronJob, renderCrontab } from "./render-crontab";
 // --- Configuration ---
 const host = process.env.HOST || "0.0.0.0";
 const port = Number.parseInt(process.env.PORT || "8080", 10);
-const cronConfigPath = process.env.CRON_CONFIG_PATH || "./cron/cron-jobs.json";
-const cronOutputPath = process.env.CRON_OUTPUT_PATH || "./cron/cronjob";
+const cronConfigPath = process.env.CRON_CONFIG_PATH || "/app/cron/cron-jobs.json";
+const cronOutputPath = process.env.CRON_OUTPUT_PATH || "/app/cron/cronjob";
 const supercronicBin = process.env.SUPERCRONIC_BIN || "supercronic";
 const runHistoryLimit = Number.parseInt(
   process.env.ACTION_RUN_HISTORY_LIMIT || "500",

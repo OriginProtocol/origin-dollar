@@ -18,4 +18,6 @@ services:
       - LOKI_API_KEY=${LOKI_API_KEY:-}
       - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID:-}
       - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY:-}
+      - CRON_CONFIG_PATH=./cron/cron-jobs.json
+      - CRON_OUTPUT_PATH=./cron/cronjob
       - DEBUG=origin*
