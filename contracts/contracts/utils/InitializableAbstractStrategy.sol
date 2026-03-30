@@ -32,8 +32,6 @@ abstract contract InitializableAbstractStrategy is Initializable, Governable {
         address _oldHarvesterAddress,
         address _newHarvesterAddress
     );
-    event HarvesterPaused(address pausedBy);
-    event HarvesterUnpaused(address unpausedBy);
 
     /// @notice Address of the underlying platform
     address public immutable platformAddress;
@@ -68,17 +66,12 @@ abstract contract InitializableAbstractStrategy is Initializable, Governable {
     /// @notice Address of the reward tokens. eg CRV, BAL, CVX, AURA
     address[] public rewardTokenAddresses;
 
-    /// @notice Whether the harvester is paused. When true, collectRewardTokens
-    ///         will not transfer rewards to the harvester address.
-    bool public harvesterPaused;
-
     /* Reserved for future expansion. Used to be 100 storage slots
      * and has decreased to accommodate:
      * - harvesterAddress
      * - rewardTokenAddresses
-     * - harvesterPaused
      */
-    int256[97] private _reserved;
+    int256[98] private _reserved;
 
     struct BaseStrategyConfig {
         address platformAddress; // Address of the underlying platform
@@ -126,11 +119,10 @@ abstract contract InitializableAbstractStrategy is Initializable, Governable {
 
     /**
      * @notice Collect accumulated reward token and send to Vault.
-     *         No-ops when the harvester is not set or is paused — rewards
-     *         remain in the strategy until the harvester is unpaused or reset.
+     *         No-ops when the harvester address is not set.
      */
     function collectRewardTokens() external virtual onlyHarvester nonReentrant {
-        if (harvesterAddress == address(0) || harvesterPaused) {
+        if (harvesterAddress == address(0)) {
             return;
         }
         _collectRewardTokens();
@@ -141,10 +133,7 @@ abstract contract InitializableAbstractStrategy is Initializable, Governable {
      * Implementing strategies need to add custom logic to collect the rewards.
      */
     function _collectRewardTokens() internal virtual {
-        // The harvester check is intentionally repeated here (it also exists in the
-        // external collectRewardTokens) because strategies may override the external
-        // function without calling super, bypassing that check.
-        if (harvesterAddress == address(0) || harvesterPaused) {
+        if (harvesterAddress == address(0)) {
             return;
         }
         uint256 rewardTokenCount = rewardTokenAddresses.length;
@@ -317,31 +306,10 @@ abstract contract InitializableAbstractStrategy is Initializable, Governable {
      */
     function setHarvesterAddress(address _harvesterAddress)
         external
-        onlyGovernor
+        onlyGovernorOrStrategist
     {
         emit HarvesterAddressesUpdated(harvesterAddress, _harvesterAddress);
         harvesterAddress = _harvesterAddress;
-    }
-
-    /**
-     * @notice Pause reward token transfers to the Harvester.
-     *         Callable by the Strategist for a fast response to a rogue harvester.
-     *         While paused, collectRewardTokens() still runs but rewards remain
-     *         in the strategy contract.
-     */
-    function pauseHarvester() external onlyGovernorOrStrategist {
-        harvesterPaused = true;
-        emit HarvesterPaused(msg.sender);
-    }
-
-    /**
-     * @notice Unpause reward token transfers to the Harvester.
-     *         Governor only — intended to be called after setting a new
-     *         harvester address via setHarvesterAddress().
-     */
-    function unpauseHarvester() external onlyGovernor {
-        harvesterPaused = false;
-        emit HarvesterUnpaused(msg.sender);
     }
 
     /***************************************

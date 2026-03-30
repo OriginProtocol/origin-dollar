@@ -43,13 +43,13 @@ module.exports = deploymentWithGovernanceProposal(
           addresses.mainnet.curve.OUSD_USDC.pool, // platformAddress (Curve pool = LP token)
           addresses.mainnet.VaultProxy, // vaultAddress
         ],
-        addresses.mainnet.OUSD, // _otoken
+        addresses.mainnet.OUSDProxy, // _otoken
         addresses.mainnet.USDC, // _hardAsset
         addresses.mainnet.curve.OUSD_USDC.gauge, // _gauge
         addresses.mainnet.CRVMinter, // _minter
       ],
       "CurveAMOStrategy", // actual contract to compile
-      true // skipUpgradeSafety — storage layout change (harvesterPaused) is intentional
+      true
     );
 
     // 2. OETH/WETH Curve AMO
@@ -93,11 +93,11 @@ module.exports = deploymentWithGovernanceProposal(
           signature: "upgradeTo(address)",
           args: [dOUSDCurveAMO.address],
         },
-        // 2. Set CoW Harvester on OUSD Curve AMO
+        // 2. Set Multichain Strategist on OUSD Curve AMO
         {
           contract: cOUSDCurveAMO,
           signature: "setHarvesterAddress(address)",
-          args: [addresses.mainnet.CoWHarvester],
+          args: [addresses.multichainStrategist],
         },
         // 3. Upgrade OETH Curve AMO
         {
@@ -105,11 +105,11 @@ module.exports = deploymentWithGovernanceProposal(
           signature: "upgradeTo(address)",
           args: [dOETHCurveAMO.address],
         },
-        // 4. Set CoW Harvester on OETH Curve AMO
+        // 4. Set Multichain Strategist on OETH Curve AMO
         {
           contract: cOETHCurveAMO,
           signature: "setHarvesterAddress(address)",
-          args: [addresses.mainnet.CoWHarvester],
+          args: [addresses.multichainStrategist],
         },
         // 5. Upgrade OUSD Morpho V2
         {
