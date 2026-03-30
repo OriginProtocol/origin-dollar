@@ -7,10 +7,12 @@ const { impersonateAndFund } = require("../../utils/signers");
  * @param {*} context a function that returns a fixture with the additional properties:
  * - harvester: the OUSD or OETH harvester contract.
  * - strategy: the strategy to test
+ * - newBehavior: (optional, default false) set true for strategies upgraded with
+ *   the new onlyHarvester modifier that also accepts the strategist.
  * @example
     shouldBehaveLikeHarvester(() => ({
       ...fixture,
-      harvester: fixture.oethHarvester
+      harvester: fixture.oethHarvester,
       strategy: fixture.nativeStakingSSVStrategy,
     }));
  */
@@ -24,17 +26,22 @@ const shouldBehaveLikeHarvestable = (context) => {
     });
 
     it("Should allow strategist to collect rewards", async () => {
-      const { strategist, strategy } = context();
+      const { newBehavior, strategist, strategy } = context();
+      if (!newBehavior) return;
       await strategy.connect(strategist).collectRewardTokens();
     });
 
     it("Should NOT allow rewards to be collected by non-harvester", async () => {
-      const { anna, governor, strategy } = context();
+      const { newBehavior, anna, governor, strategy } = context();
+
+      const errMsg = newBehavior
+        ? "Caller is not the Harvester or Strategist"
+        : "Caller is not the Harvester";
 
       for (const signer of [anna, governor]) {
         await expect(
           strategy.connect(signer).collectRewardTokens()
-        ).to.be.revertedWith("Caller is not the Harvester or Strategist");
+        ).to.be.revertedWith(errMsg);
       }
     });
 

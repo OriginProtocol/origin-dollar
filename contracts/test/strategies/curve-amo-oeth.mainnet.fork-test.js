@@ -952,6 +952,7 @@ describe("Curve AMO OETH strategy", function () {
     governor: governor,
     strategist: rafael,
     harvester: harvester,
+    newBehavior: true,
 
     beforeEach: async () => {
       await balancePool();
@@ -972,6 +973,7 @@ describe("Curve AMO OETH strategy", function () {
     oeth: oeth,
     harvester: harvester,
     strategist: impersonatedStrategist,
+    newBehavior: true,
   }));
 
   const mintAndDepositToStrategy = async ({

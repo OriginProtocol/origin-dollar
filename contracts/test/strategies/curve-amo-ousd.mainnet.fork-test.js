@@ -956,6 +956,7 @@ describe("Fork Test: Curve AMO OUSD strategy", function () {
     governor: governor,
     strategist: rafael,
     harvester: harvester,
+    newBehavior: true,
 
     beforeEach: async () => {
       await balancePool();
@@ -976,6 +977,7 @@ describe("Fork Test: Curve AMO OUSD strategy", function () {
     oeth: ousd,
     harvester: harvester,
     strategist: impersonatedStrategist,
+    newBehavior: true,
   }));
 
   const mintAndDepositToStrategy = async ({
