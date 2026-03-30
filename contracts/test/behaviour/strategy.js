@@ -403,16 +403,16 @@ const shouldBehaveLikeStrategy = (context) => {
       expect(await strategy.harvesterAddress()).to.equal(randomAddress);
     });
     it("Should not allow the harvester to be set by non-governor", async () => {
-      const { strategy, strategist, matt, harvester, vault } = context();
+      const { strategy, matt, harvester, vault } = context();
       const randomAddress = Wallet.createRandom().address;
 
       const vaultSigner = await impersonateAndFund(vault.address);
       const harvesterSigner = await impersonateAndFund(harvester.address);
 
-      for (const signer of [strategist, matt, harvesterSigner, vaultSigner]) {
+      for (const signer of [matt, harvesterSigner, vaultSigner]) {
         await expect(
           strategy.connect(signer).setHarvesterAddress(randomAddress)
-        ).to.revertedWith("Caller is not the Governor");
+        ).to.revertedWith("Caller is not the Strategist or Governor");
       }
     });
     it("Should allow reward tokens to be set by the governor", async () => {
