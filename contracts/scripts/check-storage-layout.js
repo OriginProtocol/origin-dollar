@@ -114,9 +114,7 @@ function getLayout(contractsDir, contractName) {
   try {
     return forgeInspect(contractsDir, contractName);
   } catch (e) {
-    console.error(
-      `  Error: could not get storage layout for ${contractName}`
-    );
+    console.error(`  Error: could not get storage layout for ${contractName}`);
     console.error(`  ${e.stderr || e.message}`);
     return null;
   }
@@ -335,12 +333,8 @@ async function main() {
       continue;
     }
 
-    console.log(
-      `  Old: ${oldLayout.storage.length} storage entries`
-    );
-    console.log(
-      `  New: ${newLayout.storage.length} storage entries`
-    );
+    console.log(`  Old: ${oldLayout.storage.length} storage entries`);
+    console.log(`  New: ${newLayout.storage.length} storage entries`);
 
     const { errors, infos } = compareLayouts(
       oldLayout,
