@@ -162,7 +162,7 @@ abstract contract InitializableAbstractStrategy is Initializable, Governable {
     /**
      * @dev Verifies that the caller is the Harvester or Strategist.
      */
-    modifier onlyHarvester() {
+    modifier onlyHarvesterOrStrategist() {
         require(
             msg.sender == harvesterAddress ||
                 msg.sender == IVault(vaultAddress).strategistAddr(),
