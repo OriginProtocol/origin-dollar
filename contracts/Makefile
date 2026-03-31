@@ -9,14 +9,15 @@ MAKEFLAGS += --no-print-directory
 
 DEPLOY_SCRIPT   := scripts/deploy/DeployManager.s.sol
 DEPLOY_BASE     := --account deployerKey --sender $(DEPLOYER_ADDRESS) --broadcast --slow
+DEPLOY_BUILD    := contracts/ scripts/deploy/
 
 # ╔══════════════════════════════════════════════════════════════════════════════╗
 # ║                                  DEFAULT                                     ║
 # ╚══════════════════════════════════════════════════════════════════════════════╝
 
 default:
-	forge fmt
-	forge build
+	forge fmt scripts/ tests/
+	$(MAKE) build
 
 install:
 	foundryup --version stable
@@ -35,6 +36,27 @@ clean:
 
 clean-all: clean
 	rm -rf dependencies node_modules soldeer.lock lcov.info coverage
+
+# ╔══════════════════════════════════════════════════════════════════════════════╗
+# ║                                    Build                                     ║
+# ╚══════════════════════════════════════════════════════════════════════════════╝
+
+# Build everything: make build
+build:
+	forge build
+
+# Prefer targeted builds while iterating: compiling only the subtree you need
+# can reduce compilation time significantly by avoiding unrelated sources.
+# Build a specific subtree by converting "-" in the target suffix to "/".
+# Examples:
+#   make build-contracts   -> forge build contracts/
+#   make build-tests       -> forge build tests/
+#   make build-tests-unit  -> forge build tests/unit/
+#   make build-tests-fork  -> forge build tests/fork/
+#   make build-tests-smoke -> forge build tests/smoke/
+#   make build-scripts     -> forge build scripts/
+build-%:
+	forge build $(subst -,/,$*)/
 
 # ╔══════════════════════════════════════════════════════════════════════════════╗
 # ║                                   TESTS                                      ║
@@ -57,43 +79,32 @@ test-c-%:
 	FOUNDRY_MATCH_CONTRACT=$* $(MAKE) test-base
 
 # Run tests by category
+# Examples:
+#   make test-unit               -> run all unit tests
+#   make test-fork               -> run all fork tests
+#   make test-fork-mainnet       -> run fork tests for mainnet
+#   make test-fork-sonic         -> run fork tests for sonic
+#   make test-smoke              -> run all smoke tests
+#   make test-smoke-base         -> run smoke tests for base
 test-unit:
+	forge build contracts/ tests/unit/
 	FOUNDRY_MATCH_PATH='tests/unit/**' $(MAKE) test-base
 
 test-fork:
+	forge build contracts/ tests/fork/
 	FOUNDRY_MATCH_PATH='tests/fork/**' $(MAKE) test-base
 
-test-fork-mainnet:
-	FOUNDRY_MATCH_PATH='tests/fork/mainnet/**' $(MAKE) test-base
-
-test-fork-base:
-	FOUNDRY_MATCH_PATH='tests/fork/base/**' $(MAKE) test-base
-
-test-fork-sonic:
-	FOUNDRY_MATCH_PATH='tests/fork/sonic/**' $(MAKE) test-base
-
-test-fork-hyperevm:
-	FOUNDRY_MATCH_PATH='tests/fork/hyperevm/**' $(MAKE) test-base
+test-fork-%:
+	forge build contracts/ tests/fork/$*/
+	FOUNDRY_MATCH_PATH='tests/fork/$*/**' $(MAKE) test-base
 
 test-smoke:
-	forge build
+	forge build contracts/ tests/smoke/ scripts/
 	FOUNDRY_MATCH_PATH='tests/smoke/**' $(MAKE) test-base
 
-test-smoke-mainnet:
-	forge build
-	FOUNDRY_MATCH_PATH='tests/smoke/mainnet/**' $(MAKE) test-base
-
-test-smoke-base:
-	forge build
-	FOUNDRY_MATCH_PATH='tests/smoke/base/**' $(MAKE) test-base
-
-test-smoke-sonic:
-	forge build
-	FOUNDRY_MATCH_PATH='tests/smoke/sonic/**' $(MAKE) test-base
-
-test-smoke-hyperevm:
-	forge build
-	FOUNDRY_MATCH_PATH='tests/smoke/hyperevm/**' $(MAKE) test-base
+test-smoke-%:
+	forge build contracts/ tests/smoke/$*/ scripts/
+	FOUNDRY_MATCH_PATH='tests/smoke/$*/**' $(MAKE) test-base
 
 # ╔══════════════════════════════════════════════════════════════════════════════╗
 # ║                                 COVERAGE                                     ║
@@ -119,36 +130,45 @@ snapshot:
 # ║                                  DEPLOY                                      ║
 # ╚══════════════════════════════════════════════════════════════════════════════╝
 
+# Examples:
+#   make deploy-mainnet          -> deploy to mainnet with verification
+#   make deploy-base             -> deploy to base with verification
+#   make deploy-sonic            -> deploy to sonic with verification
+#   make deploy-local            -> deploy to local node (no verification)
 deploy-mainnet:
-	forge build
+	forge build $(DEPLOY_BUILD)
 	@forge script $(DEPLOY_SCRIPT) --rpc-url $(MAINNET_PROVIDER_URL) $(DEPLOY_BASE) --verify -vvvv
 
 deploy-base:
-	forge build
+	forge build $(DEPLOY_BUILD)
 	@forge script $(DEPLOY_SCRIPT) --rpc-url $(BASE_PROVIDER_URL) $(DEPLOY_BASE) --verify -vvvv
 
 deploy-sonic:
-	forge build
+	forge build $(DEPLOY_BUILD)
 	@forge script $(DEPLOY_SCRIPT) --rpc-url $(SONIC_PROVIDER_URL) $(DEPLOY_BASE) --verify -vvv
 
 deploy-hyperevm:
-	forge build
+	forge build $(DEPLOY_BUILD)
 	@forge script $(DEPLOY_SCRIPT) --rpc-url $(HYPEREVM_PROVIDER_URL) $(DEPLOY_BASE) --verify -vvvv
 
 deploy-local:
-	forge build
+	forge build $(DEPLOY_BUILD)
 	@forge script $(DEPLOY_SCRIPT) --rpc-url $(LOCAL_URL) $(DEPLOY_BASE) -vvvv
 
 # ╔══════════════════════════════════════════════════════════════════════════════╗
 # ║                                 SIMULATE                                     ║
 # ╚══════════════════════════════════════════════════════════════════════════════╝
 
-# Simulate deployment: make simulate (mainnet) or make simulate NETWORK=sonic
+# Simulate deployment without broadcasting
+# Examples:
+#   make simulate                -> simulate on mainnet (default)
+#   make simulate NETWORK=base   -> simulate on base
+#   make simulate NETWORK=sonic  -> simulate on sonic
 NETWORK ?= mainnet
 RPC_URL = $(if $(filter sonic,$(NETWORK)),$(SONIC_PROVIDER_URL),$(if $(filter base,$(NETWORK)),$(BASE_PROVIDER_URL),$(if $(filter hyperevm,$(NETWORK)),$(HYPEREVM_PROVIDER_URL),$(MAINNET_PROVIDER_URL))))
 
 simulate:
-	forge build
+	forge build $(DEPLOY_BUILD)
 	@forge script $(DEPLOY_SCRIPT) --fork-url $(RPC_URL) -vvvv
 
 # ╔══════════════════════════════════════════════════════════════════════════════╗
@@ -197,9 +217,7 @@ frame:
 # ║                                  PHONY                                       ║
 # ╚══════════════════════════════════════════════════════════════════════════════╝
 
-.PHONY: test test-base test-unit test-fork test-fork-mainnet test-fork-base \
-        test-fork-sonic test-fork-hyperevm test-smoke test-smoke-mainnet \
-        test-smoke-base test-smoke-sonic test-smoke-hyperevm \
-        coverage coverage-html gas snapshot \
+.PHONY: test test-base test-unit test-fork test-fork-% test-smoke test-smoke-% \
+        coverage coverage-html gas snapshot build build-% \
         deploy-mainnet deploy-base deploy-sonic deploy-hyperevm deploy-local simulate \
         match clean clean-all install frame
