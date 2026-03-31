@@ -76,13 +76,20 @@ abstract contract Smoke_OETHBase_Shared_Test is BaseSmoke {
     }
 
     /// @dev Ensure the vault has enough WETH liquidity to cover the withdrawal queue plus an extra amount.
+    /// Deals WETH to the vault and widens maxSupplyDiff to accommodate the artificial
+    /// totalValue increase that `deal` introduces (the drip-limited rebase cannot
+    /// close the gap in a single block).
     function _ensureVaultLiquidity(uint256 extraWETH) internal {
         (uint256 queued, uint256 claimable,,) = oethBaseVault.withdrawalQueueMetadata();
         uint256 shortfall = queued > claimable ? queued - claimable : 0;
         uint256 needed = shortfall + extraWETH;
-        // Use additive deal: existing balance may be fully allocated to prior claimable
-        // requests, so we must add on top rather than replace.
         deal(address(weth), address(oethBaseVault), weth.balanceOf(address(oethBaseVault)) + needed);
+
+        // Widen the backing tolerance so the artificial WETH injection doesn't trip
+        // the _postRedeem check during claimWithdrawal.
+        vm.prank(governor);
+        oethBaseVault.setMaxSupplyDiff(0.1e18); // 10% — test-only, accommodates artificial deal
+
         oethBaseVault.addWithdrawalQueueLiquidity();
     }
 }
