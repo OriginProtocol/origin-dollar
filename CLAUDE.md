@@ -44,6 +44,7 @@ pnpm test                      # Mainnet unit tests
 pnpm test:base                 # Base network unit tests
 pnpm test:sonic                # Sonic network unit tests
 pnpm test:coverage             # Mainnet unit tests with coverage
+pnpm test test/**/FILE_NAME.js # Running a specific test file
 ```
 
 ### Fork Tests (require `PROVIDER_URL` in `.env`)

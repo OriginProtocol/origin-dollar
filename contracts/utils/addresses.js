@@ -388,6 +388,8 @@ addresses.mainnet.CampaignCreator =
 addresses.mainnet.MorphoOethUsdcMarket =
   "0xb8fef900b383db2dbbf4458c7f46acf5b140f26d603a6d1829963f241b82510e";
 
+addresses.mainnet.CoWHarvester = "0xD400341aEfED0BC75176714cFdE82e8BDAA2D3b8";
+
 // Arbitrum One
 addresses.arbitrumOne = {};
 addresses.arbitrumOne.WOETHProxy = "0xD8724322f44E5c58D7A815F542036fb17DbbF839";
