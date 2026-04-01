@@ -49,7 +49,7 @@ export function action(config: ActionConfig) {
 
     const signer = await getSigner();
     const network = await signer.provider!.getNetwork();
-    const chainId = network.chainId;
+    const chainId = Number(network.chainId);
     const networkName = CHAIN_NAMES[chainId] ?? `unknown-${chainId}`;
 
     if (chains && !chains.includes(chainId)) {

@@ -4,7 +4,7 @@
       "name": "healthcheck",
       "schedule": "*/5 * * * *",
       "enabled": true,
-      "command": "cd /app && pnpm hardhat healthcheck"
+      "command": "cd /app && pnpm hardhat healthcheck --network ${HARDHAT_NETWORK:-mainnet}"
     },
     {
       "name": "hourly_snap_balances",
