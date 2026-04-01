@@ -42,8 +42,9 @@ const actions = [
   "claimBribes",
   "crossChainRelay",
   "crossChainRelayHyperEVM",
-  "manageBribes", 
-  "manageMerklBribes"
+  "manageBribes",
+  "manageMerklBribes",
+  "claimSSVRewards"
 ];
 
 module.exports = actions.map((action) => ({
