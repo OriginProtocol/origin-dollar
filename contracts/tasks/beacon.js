@@ -842,13 +842,14 @@ async function getValidator({ slot, epoch, index, pubkey }) {
     throw new Error("Either `index` or `pubkey` parameter is required");
   }
 
+  // Uses the latest slot if the slot is undefined
+  const blockId = resolveBeaconSlot({ slot, epoch });
+
   if (pubkey) {
-    const apiValidator = await getValidatorBeacon(pubkey);
+    const apiValidator = await getValidatorBeacon(pubkey, blockId);
     index = apiValidator.validatorindex;
   }
 
-  // Uses the latest slot if the slot is undefined
-  const blockId = resolveBeaconSlot({ slot, epoch });
   const networkName = await getNetworkName();
   const { blockView, stateView } = await getBeaconBlock(blockId, networkName);
 
@@ -1048,7 +1049,7 @@ async function getValidators({ pubkeys, slot, epoch }) {
   const networkName = await getStrategyNetworkName();
   const { stateView } = await getBeaconBlock(blockId, networkName);
 
-  const beaconValidators = await getValidatorsBeacon(pubkeys);
+  const beaconValidators = await getValidatorsBeacon(pubkeys, blockId);
   const beaconValidatorList = Array.isArray(beaconValidators)
     ? beaconValidators
     : [beaconValidators];
