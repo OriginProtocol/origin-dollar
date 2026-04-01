@@ -121,7 +121,12 @@ abstract contract InitializableAbstractStrategy is Initializable, Governable {
      * @notice Collect accumulated reward token and send to Vault.
      *         No-ops when the harvester address is not set.
      */
-    function collectRewardTokens() external virtual onlyHarvester nonReentrant {
+    function collectRewardTokens()
+        external
+        virtual
+        onlyHarvesterOrStrategist
+        nonReentrant
+    {
         if (harvesterAddress == address(0)) {
             return;
         }
