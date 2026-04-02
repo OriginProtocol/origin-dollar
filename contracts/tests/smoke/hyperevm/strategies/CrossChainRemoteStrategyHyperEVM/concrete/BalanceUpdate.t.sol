@@ -3,7 +3,6 @@ pragma solidity ^0.8.0;
 
 import {Smoke_CrossChainRemoteStrategyHyperEVM_Shared_Test} from "../shared/Shared.t.sol";
 import {HyperEVM, CrossChain} from "tests/utils/Addresses.sol";
-import {CrossChainStrategyHelper} from "contracts/strategies/crosschain/CrossChainStrategyHelper.sol";
 import {Vm} from "forge-std/Vm.sol";
 
 contract Smoke_CrossChainRemoteStrategyHyperEVM_BalanceUpdate_Test is
@@ -41,8 +40,7 @@ contract Smoke_CrossChainRemoteStrategyHyperEVM_BalanceUpdate_Test is
                 assertEq(minFinalityThreshold, 2000, "minFinalityThreshold should be 2000");
 
                 // Decode balance check message
-                (uint64 nonce, uint256 balance, bool transferConfirmation,) =
-                    CrossChainStrategyHelper.decodeBalanceCheckMessage(message);
+                (uint64 nonce, uint256 balance, bool transferConfirmation,) = _decodeBalanceCheckMessage(message);
 
                 assertEq(nonce, nonceBefore, "nonce should match");
                 assertApproxEqAbs(balance, balanceBefore, 1e6, "balance should match");

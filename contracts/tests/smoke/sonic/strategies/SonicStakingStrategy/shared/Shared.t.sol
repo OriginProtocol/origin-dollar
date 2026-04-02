@@ -4,22 +4,20 @@ pragma solidity ^0.8.0;
 import {BaseSmoke} from "tests/smoke/BaseSmoke.t.sol";
 import {Sonic} from "tests/utils/Addresses.sol";
 
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {SonicStakingStrategy} from "contracts/strategies/sonic/SonicStakingStrategy.sol";
-import {SonicValidatorDelegator} from "contracts/strategies/sonic/SonicValidatorDelegator.sol";
-import {OSVault} from "contracts/vault/OSVault.sol";
-import {OSonic} from "contracts/token/OSonic.sol";
+import {IOToken} from "contracts/interfaces/IOToken.sol";
+import {IVault} from "contracts/interfaces/IVault.sol";
 import {ISFC} from "contracts/interfaces/sonic/ISFC.sol";
 import {IWrappedSonic} from "contracts/interfaces/sonic/IWrappedSonic.sol";
+import {ISonicStakingStrategy} from "contracts/interfaces/strategies/ISonicStakingStrategy.sol";
 
 abstract contract Smoke_SonicStakingStrategy_Shared_Test is BaseSmoke {
     //////////////////////////////////////////////////////
     /// --- CONTRACTS
     //////////////////////////////////////////////////////
 
-    OSonic internal oSonic;
-    OSVault internal oSonicVault;
-    SonicStakingStrategy internal sonicStakingStrategy;
+    IOToken internal oSonic;
+    IVault internal oSonicVault;
+    ISonicStakingStrategy internal sonicStakingStrategy;
     ISFC internal sfc;
     IWrappedSonic internal wrappedSonic;
     address internal validatorRegistrator;
@@ -41,9 +39,9 @@ abstract contract Smoke_SonicStakingStrategy_Shared_Test is BaseSmoke {
     function _fetchContracts() internal {
         require(address(resolver).code.length > 0, "Resolver not initialized on fork");
 
-        oSonic = OSonic(resolver.resolve("OSONIC_PROXY"));
-        oSonicVault = OSVault(payable(resolver.resolve("OSONIC_VAULT_PROXY")));
-        sonicStakingStrategy = SonicStakingStrategy(payable(resolver.resolve("SONIC_STAKING_STRATEGY")));
+        oSonic = IOToken(resolver.resolve("OSONIC_PROXY"));
+        oSonicVault = IVault(resolver.resolve("OSONIC_VAULT_PROXY"));
+        sonicStakingStrategy = ISonicStakingStrategy(resolver.resolve("SONIC_STAKING_STRATEGY"));
 
         sfc = ISFC(Sonic.SFC);
         wrappedSonic = IWrappedSonic(Sonic.wS);

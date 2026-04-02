@@ -12,12 +12,14 @@ contract Smoke_Concrete_OSVault_WithdrawalQueue_Test is Smoke_OSVault_Shared_Tes
         _mintOSonic(alice, 1000 ether);
         uint256 oSonicBalance = oSonic.balanceOf(alice);
 
-        (uint256 queuedBefore,,, uint256 nextIndexBefore) = oSonicVault.withdrawalQueueMetadata();
+        uint256 queuedBefore = oSonicVault.withdrawalQueueMetadata().queued;
+        uint256 nextIndexBefore = oSonicVault.withdrawalQueueMetadata().nextWithdrawalIndex;
 
         vm.prank(alice);
         oSonicVault.requestWithdrawal(oSonicBalance);
 
-        (uint256 queuedAfter,,, uint256 nextIndexAfter) = oSonicVault.withdrawalQueueMetadata();
+        uint256 queuedAfter = oSonicVault.withdrawalQueueMetadata().queued;
+        uint256 nextIndexAfter = oSonicVault.withdrawalQueueMetadata().nextWithdrawalIndex;
 
         assertGt(queuedAfter, queuedBefore);
         assertEq(nextIndexAfter, nextIndexBefore + 1);
@@ -67,13 +69,14 @@ contract Smoke_Concrete_OSVault_WithdrawalQueue_Test is Smoke_OSVault_Shared_Tes
         vm.prank(alice);
         oSonicVault.requestWithdrawal(oSonicBalance);
 
-        (uint256 queued, uint256 claimableBefore,,) = oSonicVault.withdrawalQueueMetadata();
+        uint256 queued = oSonicVault.withdrawalQueueMetadata().queued;
+        uint256 claimableBefore = oSonicVault.withdrawalQueueMetadata().claimable;
 
         if (queued > claimableBefore) {
             deal(address(wrappedSonic), address(oSonicVault), wrappedSonic.balanceOf(address(oSonicVault)) + 1000 ether);
             oSonicVault.addWithdrawalQueueLiquidity();
 
-            (, uint256 claimableAfter,,) = oSonicVault.withdrawalQueueMetadata();
+            uint256 claimableAfter = oSonicVault.withdrawalQueueMetadata().claimable;
             assertGt(claimableAfter, claimableBefore);
         }
     }
@@ -85,7 +88,9 @@ contract Smoke_Concrete_OSVault_WithdrawalQueue_Test is Smoke_OSVault_Shared_Tes
         vm.prank(alice);
         (uint256 requestId,) = oSonicVault.requestWithdrawal(oSonicBalance);
 
-        (address withdrawer, bool claimed, uint40 timestamp,,) = oSonicVault.withdrawalRequests(requestId);
+        address withdrawer = oSonicVault.withdrawalRequests(requestId).withdrawer;
+        bool claimed = oSonicVault.withdrawalRequests(requestId).claimed;
+        uint40 timestamp = oSonicVault.withdrawalRequests(requestId).timestamp;
 
         assertEq(withdrawer, alice);
         assertFalse(claimed);

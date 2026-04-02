@@ -28,8 +28,7 @@ contract Smoke_Concrete_OETHBaseVault_ViewFunctions_Test is Smoke_OETHBaseVault_
     function test_allStrategies_areSupported() public view {
         address[] memory strats = oethBaseVault.getAllStrategies();
         for (uint256 i = 0; i < strats.length; i++) {
-            (bool isSupported,) = oethBaseVault.strategies(strats[i]);
-            assertTrue(isSupported);
+            assertTrue(oethBaseVault.strategies(strats[i]).isSupported);
         }
     }
 

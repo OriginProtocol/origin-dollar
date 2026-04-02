@@ -3,7 +3,6 @@ pragma solidity ^0.8.0;
 
 import {Smoke_CrossChainRemoteStrategyHyperEVM_Shared_Test} from "../shared/Shared.t.sol";
 import {Mainnet, HyperEVM, CrossChain} from "tests/utils/Addresses.sol";
-import {CrossChainStrategyHelper} from "contracts/strategies/crosschain/CrossChainStrategyHelper.sol";
 import {Vm} from "forge-std/Vm.sol";
 
 contract Smoke_CrossChainRemoteStrategyHyperEVM_Deposit_Test is Smoke_CrossChainRemoteStrategyHyperEVM_Shared_Test {
@@ -18,7 +17,7 @@ contract Smoke_CrossChainRemoteStrategyHyperEVM_Deposit_Test is Smoke_CrossChain
         _replaceMessageTransmitter();
 
         // Build deposit message
-        bytes memory depositPayload = CrossChainStrategyHelper.encodeDepositMessage(nextNonce, depositAmount);
+        bytes memory depositPayload = _encodeDepositMessage(nextNonce, depositAmount);
 
         // Wrap in burn message (burnToken = Mainnet.USDC = peer USDC for HyperEVM)
         bytes memory burnPayload = _encodeBurnMessageBody(
@@ -74,7 +73,7 @@ contract Smoke_CrossChainRemoteStrategyHyperEVM_Deposit_Test is Smoke_CrossChain
         _replaceMessageTransmitter();
 
         // Build deposit message
-        bytes memory depositPayload = CrossChainStrategyHelper.encodeDepositMessage(nextNonce, depositAmount);
+        bytes memory depositPayload = _encodeDepositMessage(nextNonce, depositAmount);
 
         // Wrap in burn message with WRONG burn token
         bytes memory burnPayload = _encodeBurnMessageBody(

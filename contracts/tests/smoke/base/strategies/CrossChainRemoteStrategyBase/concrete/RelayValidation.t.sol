@@ -3,7 +3,6 @@ pragma solidity ^0.8.0;
 
 import {Smoke_CrossChainRemoteStrategyBase_Shared_Test} from "../shared/Shared.t.sol";
 import {Mainnet, Base as BaseAddresses, CrossChain} from "tests/utils/Addresses.sol";
-import {CrossChainStrategyHelper} from "contracts/strategies/crosschain/CrossChainStrategyHelper.sol";
 
 contract Smoke_CrossChainRemoteStrategyBase_RelayValidation_Test is Smoke_CrossChainRemoteStrategyBase_Shared_Test {
     /// @dev relay() reverts when called by a non-operator
@@ -11,7 +10,7 @@ contract Smoke_CrossChainRemoteStrategyBase_RelayValidation_Test is Smoke_CrossC
         _replaceMessageTransmitter();
 
         uint64 nonceBefore = crossChainRemoteStrategy.lastTransferNonce();
-        bytes memory withdrawPayload = CrossChainStrategyHelper.encodeWithdrawMessage(nonceBefore + 1, 1000e6);
+        bytes memory withdrawPayload = _encodeWithdrawMessage(nonceBefore + 1, 1000e6);
         bytes memory message = _encodeCCTPMessage(
             0, address(crossChainRemoteStrategy), address(crossChainRemoteStrategy), withdrawPayload
         );
@@ -26,7 +25,7 @@ contract Smoke_CrossChainRemoteStrategyBase_RelayValidation_Test is Smoke_CrossC
         _replaceMessageTransmitter();
 
         uint64 nonceBefore = crossChainRemoteStrategy.lastTransferNonce();
-        bytes memory withdrawPayload = CrossChainStrategyHelper.encodeWithdrawMessage(nonceBefore + 1, 1000e6);
+        bytes memory withdrawPayload = _encodeWithdrawMessage(nonceBefore + 1, 1000e6);
 
         // Use sourceDomain=6 (Base) instead of 0 (Ethereum)
         bytes memory message = _encodeCCTPMessage(
@@ -43,7 +42,7 @@ contract Smoke_CrossChainRemoteStrategyBase_RelayValidation_Test is Smoke_CrossC
         _replaceMessageTransmitter();
 
         uint64 nonceBefore = crossChainRemoteStrategy.lastTransferNonce();
-        bytes memory withdrawPayload = CrossChainStrategyHelper.encodeWithdrawMessage(nonceBefore + 1, 1000e6);
+        bytes memory withdrawPayload = _encodeWithdrawMessage(nonceBefore + 1, 1000e6);
 
         bytes memory message = _encodeCCTPMessage(
             0,
@@ -62,7 +61,7 @@ contract Smoke_CrossChainRemoteStrategyBase_RelayValidation_Test is Smoke_CrossC
         _replaceMessageTransmitter();
 
         uint64 nonceBefore = crossChainRemoteStrategy.lastTransferNonce();
-        bytes memory withdrawPayload = CrossChainStrategyHelper.encodeWithdrawMessage(nonceBefore + 1, 1000e6);
+        bytes memory withdrawPayload = _encodeWithdrawMessage(nonceBefore + 1, 1000e6);
 
         bytes memory message = _encodeCCTPMessage(
             0,

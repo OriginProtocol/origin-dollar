@@ -3,8 +3,6 @@ pragma solidity ^0.8.0;
 
 import {Smoke_SonicStakingStrategy_Shared_Test} from "../shared/Shared.t.sol";
 
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-
 contract Smoke_Concrete_SonicStakingStrategy_Deposit_Test is Smoke_SonicStakingStrategy_Shared_Test {
     function test_deposit_increasesCheckBalance() public {
         uint256 balanceBefore = sonicStakingStrategy.checkBalance(address(wrappedSonic));
