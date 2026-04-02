@@ -58,13 +58,33 @@ forge-std/Test
                       └─ Smoke_Concrete_<Product>_<Feature>_Test  (concrete/*.t.sol)
 ```
 
-- `Base` creates actors (`alice`, `bobby`, …) and declares **all contract state variables**. **NEVER declare contract variables in `Shared.t.sol`**.
+- `Base` creates actors (`alice`, `bobby`, …) and declares constants, IERC20 external token refs, and fork IDs. **`Base` only contains actors, constants, IERC20 external tokens, fork IDs, and setUp().** All typed contract/proxy state variables are declared in each `Shared.t.sol` file using interface types.
 - `BaseFork` provides `_createAndSelectFork<Chain>()` helpers.
 - `BaseSmoke` provides:
   - `resolver` — deterministic address: `Resolver(address(uint160(uint256(keccak256("Resolver")))))`
   - `deployManager` — `DeployManager` instance
   - `_igniteDeployManager()` — runs the full deployment pipeline: parses JSON, etches Resolver, replays scripts, simulates governance
-- `Smoke_<Product>_Shared_Test` is **abstract** and owns contract resolution + helpers. It assigns to variables declared in `Base`, but does not re-declare them.
+- `Smoke_<Product>_Shared_Test` is **abstract** and owns contract resolution + helpers.
+
+### Interface-only testing
+
+Smoke tests follow the same interface-only pattern as unit and fork tests — see `contracts/tests/README.md` for full details.
+
+**Available interfaces:**
+
+| Interface | File | Used for |
+|-----------|------|----------|
+| `IVault` | `contracts/interfaces/IVault.sol` | All vault contracts |
+| `IOToken` | `contracts/interfaces/IOToken.sol` | All rebasing tokens (OUSD, OETH, OETHBase, OSonic) |
+| `IWOToken` | `contracts/interfaces/IWOToken.sol` | All wrapped tokens |
+| `IProxy` | `contracts/interfaces/IProxy.sol` | All proxy instances |
+| Strategy interfaces | `contracts/interfaces/strategies/` | Per-strategy interfaces |
+
+**Key rules:**
+- Declare state variables with interface types: `IVault internal ousdVault;`, `IOToken internal ousd;`
+- Resolve contracts from Resolver and cast to interfaces: `ousd = IOToken(resolver.resolve("OUSD_PROXY"));`
+- Reference events from the interface: `emit IVault.YieldDistribution(...);`
+- Access struct return values by field name: `ousdVault.withdrawalQueueMetadata().claimable`
 
 ### Product-specific vault types
 
@@ -105,6 +125,7 @@ function setUp() public virtual override {
 
 - **No fresh deploys** — everything comes from the Resolver or fork state.
 - **Resolve contracts by name** using `resolver.resolve("OUSD_PROXY")`, `resolver.resolve("VAULT_PROXY")`, etc. **ALL** origin related contract addresses must come from the Resolver. **DO NOT** deploy new instances, use hardcoded addresses or fetch from Mainnet/Base/Sonic Addresses.sol book. In case one address is missing from the Resolver, add it to the deployment pipeline and re-run the smoke test. In case you don't have the address at all, ask the team for help.
+- **Cast resolved addresses to interfaces** — `ousd = IOToken(resolver.resolve("OUSD_PROXY"))`, not concrete types.
 - **Resolve actors from contracts** — `governor = ousd.governor()`, `strategist = ousdVault.strategistAddr()`. Never use `makeAddr()` for governance actors.
 - **Sanity-check the Resolver** in `_fetchContracts()`:
   ```solidity
@@ -116,8 +137,8 @@ function setUp() public virtual override {
 ```solidity
 function _fetchContracts() internal virtual {
     require(address(resolver).code.length > 0, "Resolver not initialized on fork");
-    ousd = OUSD(resolver.resolve("OUSD_PROXY"));
-    ousdVault = OUSDVault(payable(resolver.resolve("VAULT_PROXY")));
+    ousd = IOToken(resolver.resolve("OUSD_PROXY"));
+    ousdVault = IVault(payable(resolver.resolve("VAULT_PROXY")));
     usdc = IERC20(Mainnet.USDC);
 }
 
@@ -315,9 +336,10 @@ Coverage is the domain of unit tests (and to a lesser extent, fork tests). Do no
 ## 10. Checklist Before Submitting Tests
 
 - [ ] `shared/Shared.t.sol` is `abstract` and inherits `BaseSmoke`
-- [ ] All contract/proxy/token state variables are declared in `Base.t.sol`, not in `Shared.t.sol`
+- [ ] All typed contract/proxy state variables are declared in `Shared.t.sol` using interface types (not in `Base.t.sol`)
+- [ ] No concrete contract imports — only interfaces (`IVault`, `IOToken`, `IProxy`, etc.)
 - [ ] `setUp()` follows the exact order: super → fork creation → `_igniteDeployManager()` → fetch contracts → resolve actors → label
-- [ ] Contracts are resolved via `resolver.resolve("NAME")`, not deployed fresh
+- [ ] Contracts are resolved via `resolver.resolve("NAME")` and cast to interfaces, not deployed fresh
 - [ ] Actors are resolved from live contracts (`ousd.governor()`), not `makeAddr()`
 - [ ] `deal()` is used for token funding, not mock minting
 - [ ] Yield simulation uses additive deal (`currentBalance + yield`), not absolute
