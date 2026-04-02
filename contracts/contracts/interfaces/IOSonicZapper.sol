@@ -12,7 +12,12 @@ interface IOSonicZapper {
 
     function deposit() external payable returns (uint256);
 
-    function depositSForWrappedTokens(uint256 minReceived) external payable returns (uint256);
+    function depositSForWrappedTokens(uint256 minReceived)
+        external
+        payable
+        returns (uint256);
 
-    function depositWSForWrappedTokens(uint256 wSAmount, uint256 minReceived) external returns (uint256);
+    function depositWSForWrappedTokens(uint256 wSAmount, uint256 minReceived)
+        external
+        returns (uint256);
 }

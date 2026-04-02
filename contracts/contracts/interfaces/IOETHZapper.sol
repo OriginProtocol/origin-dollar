@@ -14,7 +14,13 @@ interface IOETHZapper {
 
     function deposit() external payable returns (uint256);
 
-    function depositETHForWrappedTokens(uint256 minReceived) external payable returns (uint256);
+    function depositETHForWrappedTokens(uint256 minReceived)
+        external
+        payable
+        returns (uint256);
 
-    function depositWETHForWrappedTokens(uint256 wethAmount, uint256 minReceived) external returns (uint256);
+    function depositWETHForWrappedTokens(
+        uint256 wethAmount,
+        uint256 minReceived
+    ) external returns (uint256);
 }
