@@ -3,7 +3,7 @@ const { deploymentWithGovernanceProposal } = require("../../utils/deploy");
 
 module.exports = deploymentWithGovernanceProposal(
   {
-    deployName: "188_harvesting_eip1271_ogn",
+    deployName: "189_harvesting_eip1271_ogn",
     forceDeploy: true,
     reduceQueueTime: true,
     deployerIsProposer: false,
