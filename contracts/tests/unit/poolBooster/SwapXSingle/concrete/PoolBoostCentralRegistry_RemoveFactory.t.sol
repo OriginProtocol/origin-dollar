@@ -2,12 +2,13 @@
 pragma solidity ^0.8.0;
 
 import {Unit_SwapXSingle_Shared_Test} from "tests/unit/poolBooster/SwapXSingle/shared/Shared.t.sol";
-import {IPoolBoostCentralRegistry} from "contracts/interfaces/poolBooster/IPoolBoostCentralRegistry.sol";
-import {PoolBoostCentralRegistry} from "contracts/poolBooster/PoolBoostCentralRegistry.sol";
+import {IPoolBoostCentralRegistryFull} from "contracts/interfaces/poolBooster/IPoolBoostCentralRegistryFull.sol";
 
 contract Unit_Concrete_PoolBoostCentralRegistry_RemoveFactory_Test is Unit_SwapXSingle_Shared_Test {
     function test_removeFactory() public {
-        PoolBoostCentralRegistry freshRegistry = new PoolBoostCentralRegistry();
+        IPoolBoostCentralRegistryFull freshRegistry = IPoolBoostCentralRegistryFull(
+            vm.deployCode("contracts/poolBooster/PoolBoostCentralRegistry.sol:PoolBoostCentralRegistry")
+        );
         _setGovernorViaSlot(address(freshRegistry), governor);
 
         address factory = makeAddr("Factory");
@@ -23,7 +24,9 @@ contract Unit_Concrete_PoolBoostCentralRegistry_RemoveFactory_Test is Unit_SwapX
     }
 
     function test_removeFactory_swapAndPop() public {
-        PoolBoostCentralRegistry freshRegistry = new PoolBoostCentralRegistry();
+        IPoolBoostCentralRegistryFull freshRegistry = IPoolBoostCentralRegistryFull(
+            vm.deployCode("contracts/poolBooster/PoolBoostCentralRegistry.sol:PoolBoostCentralRegistry")
+        );
         _setGovernorViaSlot(address(freshRegistry), governor);
 
         address factoryA = makeAddr("FactoryA");
@@ -47,7 +50,9 @@ contract Unit_Concrete_PoolBoostCentralRegistry_RemoveFactory_Test is Unit_SwapX
     }
 
     function test_removeFactory_lastElement() public {
-        PoolBoostCentralRegistry freshRegistry = new PoolBoostCentralRegistry();
+        IPoolBoostCentralRegistryFull freshRegistry = IPoolBoostCentralRegistryFull(
+            vm.deployCode("contracts/poolBooster/PoolBoostCentralRegistry.sol:PoolBoostCentralRegistry")
+        );
         _setGovernorViaSlot(address(freshRegistry), governor);
 
         address factoryA = makeAddr("FactoryA");
@@ -69,7 +74,9 @@ contract Unit_Concrete_PoolBoostCentralRegistry_RemoveFactory_Test is Unit_SwapX
 
     function test_removeFactory_emitsEventTwice() public {
         // Known bug: removeFactory emits FactoryRemoved twice (line 60 and 66)
-        PoolBoostCentralRegistry freshRegistry = new PoolBoostCentralRegistry();
+        IPoolBoostCentralRegistryFull freshRegistry = IPoolBoostCentralRegistryFull(
+            vm.deployCode("contracts/poolBooster/PoolBoostCentralRegistry.sol:PoolBoostCentralRegistry")
+        );
         _setGovernorViaSlot(address(freshRegistry), governor);
 
         address factory = makeAddr("Factory");
@@ -79,9 +86,9 @@ contract Unit_Concrete_PoolBoostCentralRegistry_RemoveFactory_Test is Unit_SwapX
 
         // Expect the event to be emitted twice due to the known bug
         vm.expectEmit(address(freshRegistry));
-        emit PoolBoostCentralRegistry.FactoryRemoved(factory);
+        emit IPoolBoostCentralRegistryFull.FactoryRemoved(factory);
         vm.expectEmit(address(freshRegistry));
-        emit PoolBoostCentralRegistry.FactoryRemoved(factory);
+        emit IPoolBoostCentralRegistryFull.FactoryRemoved(factory);
 
         vm.prank(governor);
         freshRegistry.removeFactory(factory);

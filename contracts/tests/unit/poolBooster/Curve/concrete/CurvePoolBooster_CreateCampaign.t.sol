@@ -2,9 +2,7 @@
 pragma solidity ^0.8.0;
 
 import {Unit_Curve_Shared_Test} from "tests/unit/poolBooster/Curve/shared/Shared.t.sol";
-import {CurvePoolBooster} from "contracts/poolBooster/curve/CurvePoolBooster.sol";
-import {CurvePoolBoosterPlain} from "contracts/poolBooster/curve/CurvePoolBoosterPlain.sol";
-import {ICampaignRemoteManager} from "contracts/interfaces/ICampaignRemoteManager.sol";
+import {ICurvePoolBooster} from "contracts/interfaces/poolBooster/ICurvePoolBooster.sol";
 
 contract Unit_Concrete_CurvePoolBooster_CreateCampaign_Test is Unit_Curve_Shared_Test {
     function setUp() public override {
@@ -33,7 +31,7 @@ contract Unit_Concrete_CurvePoolBooster_CreateCampaign_Test is Unit_Curve_Shared
 
         // Fee is 10% of 1e18 = 1e17, balance after fee = 9e17
         vm.expectEmit(true, true, true, true);
-        emit CurvePoolBooster.CampaignCreated(mockGauge, address(oeth), 1e15, 9e17);
+        emit ICurvePoolBooster.CampaignCreated(mockGauge, address(oeth), 1e15, 9e17);
 
         vm.prank(governor);
         curvePoolBoosterPlain.createCampaign(2, 1e15, blacklist, 0);
@@ -45,7 +43,7 @@ contract Unit_Concrete_CurvePoolBooster_CreateCampaign_Test is Unit_Curve_Shared
         address[] memory blacklist = new address[](0);
 
         vm.expectEmit(true, true, true, true);
-        emit CurvePoolBooster.FeeCollected(mockFeeCollector, 1e17);
+        emit ICurvePoolBooster.FeeCollected(mockFeeCollector, 1e17);
 
         vm.prank(governor);
         curvePoolBoosterPlain.createCampaign(2, 1e15, blacklist, 0);
@@ -65,7 +63,7 @@ contract Unit_Concrete_CurvePoolBooster_CreateCampaign_Test is Unit_Curve_Shared
 
     function test_createCampaign_zeroFee() public {
         // Deploy a fresh booster with 0 fee
-        CurvePoolBoosterPlain freshPlain = new CurvePoolBoosterPlain(address(oeth), mockGauge);
+        ICurvePoolBooster freshPlain = _deployFreshCurvePoolBoosterPlain();
         freshPlain.initialize(governor, strategist, 0, mockFeeCollector, mockCampaignRemoteManager, mockVotemarket);
 
         _dealOETH(address(freshPlain), 1e18);

@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 import {Unit_SwapXDouble_Shared_Test} from "tests/unit/poolBooster/SwapXDouble/shared/Shared.t.sol";
-import {PoolBoosterSwapxDouble} from "contracts/poolBooster/PoolBoosterSwapxDouble.sol";
+import {IPoolBoosterSwapxDouble} from "contracts/interfaces/poolBooster/IPoolBoosterSwapxDouble.sol";
 import {IBribe} from "contracts/interfaces/poolBooster/ISwapXAlgebraBribe.sol";
 import {StableMath} from "contracts/utils/StableMath.sol";
 
@@ -14,8 +14,12 @@ contract Unit_Fuzz_PoolBoosterSwapxDouble_Bribe_Test is Unit_SwapXDouble_Shared_
         split = bound(split, 1e16 + 1, 99e16 - 1);
 
         // Deploy a new PoolBoosterSwapxDouble with the fuzzed split
-        PoolBoosterSwapxDouble fuzzedBooster =
-            new PoolBoosterSwapxDouble(mockBribeContractOS, mockBribeContractOther, address(oSonic), split);
+        IPoolBoosterSwapxDouble fuzzedBooster = IPoolBoosterSwapxDouble(
+            vm.deployCode(
+                "contracts/poolBooster/PoolBoosterSwapxDouble.sol:PoolBoosterSwapxDouble",
+                abi.encode(mockBribeContractOS, mockBribeContractOther, address(oSonic), split)
+            )
+        );
 
         // Deal oSonic to the booster
         _dealOSonic(address(fuzzedBooster), balance);

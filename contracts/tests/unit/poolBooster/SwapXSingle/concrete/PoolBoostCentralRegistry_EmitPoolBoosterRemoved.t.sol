@@ -3,7 +3,6 @@ pragma solidity ^0.8.0;
 
 import {Unit_SwapXSingle_Shared_Test} from "tests/unit/poolBooster/SwapXSingle/shared/Shared.t.sol";
 import {IPoolBoostCentralRegistry} from "contracts/interfaces/poolBooster/IPoolBoostCentralRegistry.sol";
-import {PoolBoostCentralRegistry} from "contracts/poolBooster/PoolBoostCentralRegistry.sol";
 
 contract Unit_Concrete_PoolBoostCentralRegistry_EmitPoolBoosterRemoved_Test is Unit_SwapXSingle_Shared_Test {
     function test_emitPoolBoosterRemoved() public {

@@ -7,23 +7,19 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {MockERC20} from "@solmate/test/utils/mocks/MockERC20.sol";
 import {BeaconProxy} from "@openzeppelin/contracts/proxy/beacon/BeaconProxy.sol";
 import {UpgradeableBeacon} from "@openzeppelin/contracts/proxy/beacon/UpgradeableBeacon.sol";
-import {IPoolBoostCentralRegistry} from "contracts/interfaces/poolBooster/IPoolBoostCentralRegistry.sol";
-import {IPoolBooster} from "contracts/interfaces/poolBooster/IPoolBooster.sol";
+import {IPoolBoostCentralRegistryFull} from "contracts/interfaces/poolBooster/IPoolBoostCentralRegistryFull.sol";
 import {IMerklDistributor} from "contracts/interfaces/poolBooster/IMerklDistributor.sol";
-
-import {OETH} from "contracts/token/OETH.sol";
-import {PoolBoostCentralRegistry} from "contracts/poolBooster/PoolBoostCentralRegistry.sol";
-import {PoolBoosterFactoryMerkl} from "contracts/poolBooster/PoolBoosterFactoryMerkl.sol";
-import {PoolBoosterMerklV2} from "contracts/poolBooster/PoolBoosterMerklV2.sol";
+import {IPoolBoosterFactoryMerkl} from "contracts/interfaces/poolBooster/IPoolBoosterFactoryMerkl.sol";
+import {IPoolBoosterMerkl} from "contracts/interfaces/poolBooster/IPoolBoosterMerkl.sol";
 
 abstract contract Unit_Merkl_Shared_Test is Base {
     //////////////////////////////////////////////////////
     /// --- CONTRACTS & MOCKS
     //////////////////////////////////////////////////////
-    OETH internal oeth;
-    PoolBoostCentralRegistry internal centralRegistry;
-    PoolBoosterFactoryMerkl internal factoryMerkl;
-    PoolBoosterMerklV2 internal boosterMerkl;
+    IERC20 internal oeth;
+    IPoolBoostCentralRegistryFull internal centralRegistry;
+    IPoolBoosterFactoryMerkl internal factoryMerkl;
+    IPoolBoosterMerkl internal boosterMerkl;
 
     //////////////////////////////////////////////////////
     /// --- CONSTANTS
@@ -66,21 +62,28 @@ abstract contract Unit_Merkl_Shared_Test is Base {
     }
 
     function _deployOETH() internal {
-        oeth = OETH(address(new MockERC20("Origin Ether", "OETH", 18)));
+        oeth = IERC20(address(new MockERC20("Origin Ether", "OETH", 18)));
     }
 
     function _deployCentralRegistry() internal {
-        centralRegistry = new PoolBoostCentralRegistry();
+        centralRegistry = IPoolBoostCentralRegistryFull(
+            vm.deployCode("contracts/poolBooster/PoolBoostCentralRegistry.sol:PoolBoostCentralRegistry")
+        );
         _setGovernorViaSlot(address(centralRegistry), governor);
     }
 
     function _deployBeacon() internal {
-        PoolBoosterMerklV2 impl = new PoolBoosterMerklV2();
-        beacon = new UpgradeableBeacon(address(impl));
+        address impl = vm.deployCode("contracts/poolBooster/PoolBoosterMerklV2.sol:PoolBoosterMerklV2");
+        beacon = new UpgradeableBeacon(impl);
     }
 
     function _deployFactory() internal {
-        factoryMerkl = new PoolBoosterFactoryMerkl(address(oeth), governor, address(centralRegistry), address(beacon));
+        factoryMerkl = IPoolBoosterFactoryMerkl(
+            vm.deployCode(
+                "contracts/poolBooster/PoolBoosterFactoryMerkl.sol:PoolBoosterFactoryMerkl",
+                abi.encode(address(oeth), governor, address(centralRegistry), address(beacon))
+            )
+        );
     }
 
     function _deployStandaloneBooster() internal {
@@ -98,7 +101,7 @@ abstract contract Unit_Merkl_Shared_Test is Base {
 
         // Deploy via BeaconProxy with initialize data
         bytes memory initData = abi.encodeWithSelector(
-            PoolBoosterMerklV2.initialize.selector,
+            IPoolBoosterMerkl.initialize.selector,
             DEFAULT_CAMPAIGN_DURATION,
             DEFAULT_CAMPAIGN_TYPE,
             address(oeth),
@@ -109,7 +112,7 @@ abstract contract Unit_Merkl_Shared_Test is Base {
         );
 
         address proxy = address(new BeaconProxy(address(beacon), initData));
-        boosterMerkl = PoolBoosterMerklV2(proxy);
+        boosterMerkl = IPoolBoosterMerkl(proxy);
     }
 
     function _approveFactoryOnRegistry() internal {
@@ -152,7 +155,7 @@ abstract contract Unit_Merkl_Shared_Test is Base {
     /// @dev Build the default init data for factory-created boosters
     function _defaultInitData() internal view returns (bytes memory) {
         return abi.encodeWithSelector(
-            PoolBoosterMerklV2.initialize.selector,
+            IPoolBoosterMerkl.initialize.selector,
             DEFAULT_CAMPAIGN_DURATION,
             DEFAULT_CAMPAIGN_TYPE,
             address(oeth),

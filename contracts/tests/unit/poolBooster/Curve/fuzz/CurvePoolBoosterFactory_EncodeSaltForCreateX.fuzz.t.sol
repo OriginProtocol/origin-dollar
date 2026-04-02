@@ -2,7 +2,6 @@
 pragma solidity ^0.8.0;
 
 import {Unit_Curve_Shared_Test} from "tests/unit/poolBooster/Curve/shared/Shared.t.sol";
-import {CurvePoolBoosterFactory} from "contracts/poolBooster/curve/CurvePoolBoosterFactory.sol";
 
 contract Unit_Fuzz_CurvePoolBoosterFactory_EncodeSaltForCreateX_Test is Unit_Curve_Shared_Test {
     /// @notice Max allowed salt value: 309485009821345068724781055 == type(uint88).max

@@ -2,16 +2,14 @@
 pragma solidity ^0.8.0;
 
 import {Unit_Curve_Shared_Test} from "tests/unit/poolBooster/Curve/shared/Shared.t.sol";
-import {CurvePoolBooster} from "contracts/poolBooster/curve/CurvePoolBooster.sol";
-import {CurvePoolBoosterPlain} from "contracts/poolBooster/curve/CurvePoolBoosterPlain.sol";
-import {ICampaignRemoteManager} from "contracts/interfaces/ICampaignRemoteManager.sol";
+import {ICurvePoolBooster} from "contracts/interfaces/poolBooster/ICurvePoolBooster.sol";
 
 contract Unit_Concrete_CurvePoolBooster_Constructor_Test is Unit_Curve_Shared_Test {
-    CurvePoolBooster internal freshBooster;
+    ICurvePoolBooster internal freshBooster;
 
     function setUp() public override {
         super.setUp();
-        freshBooster = new CurvePoolBooster(address(oeth), mockGauge);
+        freshBooster = _deployFreshCurvePoolBooster();
     }
 
     function test_constructor() public view {

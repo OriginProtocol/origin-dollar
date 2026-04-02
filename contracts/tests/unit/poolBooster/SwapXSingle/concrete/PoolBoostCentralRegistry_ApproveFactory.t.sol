@@ -2,13 +2,13 @@
 pragma solidity ^0.8.0;
 
 import {Unit_SwapXSingle_Shared_Test} from "tests/unit/poolBooster/SwapXSingle/shared/Shared.t.sol";
-import {IPoolBoostCentralRegistry} from "contracts/interfaces/poolBooster/IPoolBoostCentralRegistry.sol";
-import {PoolBoostCentralRegistry} from "contracts/poolBooster/PoolBoostCentralRegistry.sol";
+import {IPoolBoostCentralRegistryFull} from "contracts/interfaces/poolBooster/IPoolBoostCentralRegistryFull.sol";
 
 contract Unit_Concrete_PoolBoostCentralRegistry_ApproveFactory_Test is Unit_SwapXSingle_Shared_Test {
     function test_approveFactory() public {
-        // Deploy a fresh registry to test approval from scratch
-        PoolBoostCentralRegistry freshRegistry = new PoolBoostCentralRegistry();
+        IPoolBoostCentralRegistryFull freshRegistry = IPoolBoostCentralRegistryFull(
+            vm.deployCode("contracts/poolBooster/PoolBoostCentralRegistry.sol:PoolBoostCentralRegistry")
+        );
         _setGovernorViaSlot(address(freshRegistry), governor);
 
         address newFactory = makeAddr("NewFactory");
@@ -20,7 +20,9 @@ contract Unit_Concrete_PoolBoostCentralRegistry_ApproveFactory_Test is Unit_Swap
     }
 
     function test_approveMultipleFactories() public {
-        PoolBoostCentralRegistry freshRegistry = new PoolBoostCentralRegistry();
+        IPoolBoostCentralRegistryFull freshRegistry = IPoolBoostCentralRegistryFull(
+            vm.deployCode("contracts/poolBooster/PoolBoostCentralRegistry.sol:PoolBoostCentralRegistry")
+        );
         _setGovernorViaSlot(address(freshRegistry), governor);
 
         address factoryA = makeAddr("FactoryA");
@@ -41,13 +43,15 @@ contract Unit_Concrete_PoolBoostCentralRegistry_ApproveFactory_Test is Unit_Swap
     }
 
     function test_approveFactory_event() public {
-        PoolBoostCentralRegistry freshRegistry = new PoolBoostCentralRegistry();
+        IPoolBoostCentralRegistryFull freshRegistry = IPoolBoostCentralRegistryFull(
+            vm.deployCode("contracts/poolBooster/PoolBoostCentralRegistry.sol:PoolBoostCentralRegistry")
+        );
         _setGovernorViaSlot(address(freshRegistry), governor);
 
         address newFactory = makeAddr("NewFactory");
 
         vm.expectEmit(address(freshRegistry));
-        emit PoolBoostCentralRegistry.FactoryApproved(newFactory);
+        emit IPoolBoostCentralRegistryFull.FactoryApproved(newFactory);
 
         vm.prank(governor);
         freshRegistry.approveFactory(newFactory);

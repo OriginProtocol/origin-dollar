@@ -2,9 +2,7 @@
 pragma solidity ^0.8.0;
 
 import {Unit_Curve_Shared_Test} from "tests/unit/poolBooster/Curve/shared/Shared.t.sol";
-import {CurvePoolBooster} from "contracts/poolBooster/curve/CurvePoolBooster.sol";
-import {CurvePoolBoosterPlain} from "contracts/poolBooster/curve/CurvePoolBoosterPlain.sol";
-import {ICampaignRemoteManager} from "contracts/interfaces/ICampaignRemoteManager.sol";
+import {ICurvePoolBooster} from "contracts/interfaces/poolBooster/ICurvePoolBooster.sol";
 
 contract Unit_Concrete_CurvePoolBooster_ManageCampaign_Test is Unit_Curve_Shared_Test {
     function setUp() public override {
@@ -41,11 +39,11 @@ contract Unit_Concrete_CurvePoolBooster_ManageCampaign_Test is Unit_Curve_Shared
         _dealOETH(address(curvePoolBoosterPlain), 1e18);
 
         vm.expectEmit(true, true, true, true);
-        emit CurvePoolBooster.TotalRewardAmountUpdated(9e17);
+        emit ICurvePoolBooster.TotalRewardAmountUpdated(9e17);
         vm.expectEmit(true, true, true, true);
-        emit CurvePoolBooster.NumberOfPeriodsUpdated(3);
+        emit ICurvePoolBooster.NumberOfPeriodsUpdated(3);
         vm.expectEmit(true, true, true, true);
-        emit CurvePoolBooster.RewardPerVoteUpdated(1e15);
+        emit ICurvePoolBooster.RewardPerVoteUpdated(1e15);
 
         vm.prank(governor);
         curvePoolBoosterPlain.manageCampaign(type(uint256).max, 3, 1e15, 0);
@@ -53,9 +51,9 @@ contract Unit_Concrete_CurvePoolBooster_ManageCampaign_Test is Unit_Curve_Shared
 
     function test_manageCampaign_noRewardUpdate() public {
         vm.expectEmit(true, true, true, true);
-        emit CurvePoolBooster.NumberOfPeriodsUpdated(3);
+        emit ICurvePoolBooster.NumberOfPeriodsUpdated(3);
         vm.expectEmit(true, true, true, true);
-        emit CurvePoolBooster.RewardPerVoteUpdated(1e15);
+        emit ICurvePoolBooster.RewardPerVoteUpdated(1e15);
 
         vm.prank(governor);
         curvePoolBoosterPlain.manageCampaign(0, 3, 1e15, 0);
@@ -82,7 +80,7 @@ contract Unit_Concrete_CurvePoolBooster_ManageCampaign_Test is Unit_Curve_Shared
         _dealOETH(address(curvePoolBoosterPlain), 1e18);
 
         vm.expectEmit(true, true, true, true);
-        emit CurvePoolBooster.TotalRewardAmountUpdated(9e17);
+        emit ICurvePoolBooster.TotalRewardAmountUpdated(9e17);
 
         vm.prank(governor);
         curvePoolBoosterPlain.manageCampaign(type(uint256).max, 0, 0, 0);
@@ -92,7 +90,7 @@ contract Unit_Concrete_CurvePoolBooster_ManageCampaign_Test is Unit_Curve_Shared
         _dealOETH(address(curvePoolBoosterPlain), 1e18);
 
         vm.expectEmit(true, true, true, true);
-        emit CurvePoolBooster.FeeCollected(mockFeeCollector, 1e17);
+        emit ICurvePoolBooster.FeeCollected(mockFeeCollector, 1e17);
 
         vm.prank(governor);
         curvePoolBoosterPlain.manageCampaign(type(uint256).max, 0, 0, 0);
@@ -144,7 +142,7 @@ contract Unit_Concrete_CurvePoolBooster_ManageCampaign_Test is Unit_Curve_Shared
 
     /// @notice Test with zero fee to cover feeAmount == 0 branch in _handleFee
     function test_manageCampaign_zeroFee() public {
-        CurvePoolBoosterPlain freshPlain = new CurvePoolBoosterPlain(address(oeth), mockGauge);
+        ICurvePoolBooster freshPlain = _deployFreshCurvePoolBoosterPlain();
         freshPlain.initialize(governor, strategist, 0, mockFeeCollector, mockCampaignRemoteManager, mockVotemarket);
 
         _dealOETH(address(freshPlain), 1e18);

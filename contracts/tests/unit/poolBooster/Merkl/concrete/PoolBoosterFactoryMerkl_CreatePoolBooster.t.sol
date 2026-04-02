@@ -3,7 +3,6 @@ pragma solidity ^0.8.0;
 
 import {Unit_Merkl_Shared_Test} from "tests/unit/poolBooster/Merkl/shared/Shared.t.sol";
 import {IPoolBoostCentralRegistry} from "contracts/interfaces/poolBooster/IPoolBoostCentralRegistry.sol";
-import {PoolBoosterMerklV2} from "contracts/poolBooster/PoolBoosterMerklV2.sol";
 
 contract Unit_Concrete_PoolBoosterFactoryMerkl_CreatePoolBooster_Test is Unit_Merkl_Shared_Test {
     function test_createPoolBooster() public {

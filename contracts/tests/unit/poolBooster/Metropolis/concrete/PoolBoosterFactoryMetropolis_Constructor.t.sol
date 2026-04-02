@@ -2,7 +2,6 @@
 pragma solidity ^0.8.0;
 
 import {Unit_Metropolis_Shared_Test} from "tests/unit/poolBooster/Metropolis/shared/Shared.t.sol";
-import {PoolBoosterFactoryMetropolis} from "contracts/poolBooster/PoolBoosterFactoryMetropolis.sol";
 
 contract Unit_Concrete_PoolBoosterFactoryMetropolis_Constructor_Test is Unit_Metropolis_Shared_Test {
     function test_constructor() public view {
@@ -16,18 +15,25 @@ contract Unit_Concrete_PoolBoosterFactoryMetropolis_Constructor_Test is Unit_Met
 
     function test_constructor_RevertWhen_zeroOToken() public {
         vm.expectRevert("Invalid oToken address");
-        new PoolBoosterFactoryMetropolis(address(0), governor, address(centralRegistry), mockRewardFactory, mockVoter);
+        vm.deployCode(
+            "contracts/poolBooster/PoolBoosterFactoryMetropolis.sol:PoolBoosterFactoryMetropolis",
+            abi.encode(address(0), governor, address(centralRegistry), mockRewardFactory, mockVoter)
+        );
     }
 
     function test_constructor_RevertWhen_zeroGovernor() public {
         vm.expectRevert("Invalid governor address");
-        new PoolBoosterFactoryMetropolis(
-            address(oSonic), address(0), address(centralRegistry), mockRewardFactory, mockVoter
+        vm.deployCode(
+            "contracts/poolBooster/PoolBoosterFactoryMetropolis.sol:PoolBoosterFactoryMetropolis",
+            abi.encode(address(oSonic), address(0), address(centralRegistry), mockRewardFactory, mockVoter)
         );
     }
 
     function test_constructor_RevertWhen_zeroCentralRegistry() public {
         vm.expectRevert("Invalid central registry address");
-        new PoolBoosterFactoryMetropolis(address(oSonic), governor, address(0), mockRewardFactory, mockVoter);
+        vm.deployCode(
+            "contracts/poolBooster/PoolBoosterFactoryMetropolis.sol:PoolBoosterFactoryMetropolis",
+            abi.encode(address(oSonic), governor, address(0), mockRewardFactory, mockVoter)
+        );
     }
 }

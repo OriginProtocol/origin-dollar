@@ -2,9 +2,7 @@
 pragma solidity ^0.8.0;
 
 import {Unit_Curve_Shared_Test} from "tests/unit/poolBooster/Curve/shared/Shared.t.sol";
-import {CurvePoolBooster} from "contracts/poolBooster/curve/CurvePoolBooster.sol";
-import {CurvePoolBoosterPlain} from "contracts/poolBooster/curve/CurvePoolBoosterPlain.sol";
-import {ICampaignRemoteManager} from "contracts/interfaces/ICampaignRemoteManager.sol";
+import {ICurvePoolBooster} from "contracts/interfaces/poolBooster/ICurvePoolBooster.sol";
 
 contract Unit_Concrete_CurvePoolBooster_CloseCampaign_Test is Unit_Curve_Shared_Test {
     function setUp() public override {
@@ -25,7 +23,7 @@ contract Unit_Concrete_CurvePoolBooster_CloseCampaign_Test is Unit_Curve_Shared_
 
     function test_closeCampaign_event() public {
         vm.expectEmit(true, true, true, true);
-        emit CurvePoolBooster.CampaignClosed(5);
+        emit ICurvePoolBooster.CampaignClosed(5);
 
         vm.prank(governor);
         curvePoolBoosterPlain.closeCampaign(5, 0);
@@ -59,7 +57,7 @@ contract Unit_Concrete_CurvePoolBooster_CloseCampaign_Test is Unit_Curve_Shared_
         // State campaignId is 5 (set in setUp)
         // Pass different _campaignId parameter (99)
         vm.expectEmit(true, true, true, true);
-        emit CurvePoolBooster.CampaignClosed(99); // Event uses _campaignId parameter
+        emit ICurvePoolBooster.CampaignClosed(99); // Event uses _campaignId parameter
 
         vm.prank(governor);
         curvePoolBoosterPlain.closeCampaign(99, 0);
