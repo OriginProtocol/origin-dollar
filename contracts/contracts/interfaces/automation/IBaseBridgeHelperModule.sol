@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import {IAbstractSafeModule} from "contracts/interfaces/automation/IAbstractSafeModule.sol";
+import { IAbstractSafeModule } from "contracts/interfaces/automation/IAbstractSafeModule.sol";
 
 interface IBaseBridgeHelperModule is IAbstractSafeModule {
     function vault() external view returns (address);
@@ -28,9 +28,15 @@ interface IBaseBridgeHelperModule is IAbstractSafeModule {
 
     function claimAndBridgeWETH(uint256 requestId) external payable;
 
-    function claimWithdrawal(uint256 requestId) external returns (uint256 wethAmount);
+    function claimWithdrawal(uint256 requestId)
+        external
+        returns (uint256 wethAmount);
 
-    function depositWETHAndRedeemWOETH(uint256 wethAmount) external returns (uint256);
+    function depositWETHAndRedeemWOETH(uint256 wethAmount)
+        external
+        returns (uint256);
 
-    function depositWETHAndBridgeWOETH(uint256 wethAmount) external returns (uint256);
+    function depositWETHAndBridgeWOETH(uint256 wethAmount)
+        external
+        returns (uint256);
 }

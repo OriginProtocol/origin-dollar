@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import {IPoolBoostCentralRegistry} from "contracts/interfaces/poolBooster/IPoolBoostCentralRegistry.sol";
+import { IPoolBoostCentralRegistry } from "contracts/interfaces/poolBooster/IPoolBoostCentralRegistry.sol";
 
 interface IPoolBoostCentralRegistryFull is IPoolBoostCentralRegistry {
     event FactoryApproved(address factoryAddress);
@@ -19,7 +19,10 @@ interface IPoolBoostCentralRegistryFull is IPoolBoostCentralRegistry {
 
     function removeFactory(address _factoryAddress) external;
 
-    function isApprovedFactory(address _factoryAddress) external view returns (bool);
+    function isApprovedFactory(address _factoryAddress)
+        external
+        view
+        returns (bool);
 
     function getAllFactories() external view returns (address[] memory);
 }

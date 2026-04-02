@@ -32,10 +32,7 @@ interface IOToken {
 
     function nonRebasingSupply() external view returns (uint256);
 
-    function rebasingCreditsPerTokenHighres()
-        external
-        view
-        returns (uint256);
+    function rebasingCreditsPerTokenHighres() external view returns (uint256);
 
     function rebasingCreditsPerToken() external view returns (uint256);
 
@@ -87,9 +84,7 @@ interface IOToken {
         uint256 _value
     ) external returns (bool);
 
-    function approve(address _spender, uint256 _value)
-        external
-        returns (bool);
+    function approve(address _spender, uint256 _value) external returns (bool);
 
     function mint(address _account, uint256 _amount) external;
 

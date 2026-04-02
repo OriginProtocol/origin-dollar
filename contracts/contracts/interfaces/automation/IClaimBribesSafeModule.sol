@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import {IAbstractSafeModule} from "contracts/interfaces/automation/IAbstractSafeModule.sol";
+import { IAbstractSafeModule } from "contracts/interfaces/automation/IAbstractSafeModule.sol";
 
 interface IClaimBribesSafeModule is IAbstractSafeModule {
     event NFTIdAdded(uint256 nftId);
@@ -13,7 +13,11 @@ interface IClaimBribesSafeModule is IAbstractSafeModule {
 
     function veNFT() external view returns (address);
 
-    function claimBribes(uint256 nftIndexStart, uint256 nftIndexEnd, bool silent) external;
+    function claimBribes(
+        uint256 nftIndexStart,
+        uint256 nftIndexEnd,
+        bool silent
+    ) external;
 
     function addNFTIds(uint256[] memory _nftIds) external;
 
@@ -29,7 +33,8 @@ interface IClaimBribesSafeModule is IAbstractSafeModule {
 
     function removeAllNFTIds() external;
 
-    function addBribePool(address _poolAddress, bool _isVotingContract) external;
+    function addBribePool(address _poolAddress, bool _isVotingContract)
+        external;
 
     function updateRewardTokenAddresses() external;
 

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import {IPoolBoostCentralRegistry} from "contracts/interfaces/poolBooster/IPoolBoostCentralRegistry.sol";
+import { IPoolBoostCentralRegistry } from "contracts/interfaces/poolBooster/IPoolBoostCentralRegistry.sol";
 
 interface IAbstractPoolBoosterFactory {
     struct PoolBoosterEntry {
@@ -25,14 +25,23 @@ interface IAbstractPoolBoosterFactory {
     function poolBoosters(uint256 index)
         external
         view
-        returns (address boosterAddress, address ammPoolAddress, IPoolBoostCentralRegistry.PoolBoosterType boosterType);
+        returns (
+            address boosterAddress,
+            address ammPoolAddress,
+            IPoolBoostCentralRegistry.PoolBoosterType boosterType
+        );
 
     function poolBoosterFromPool(address ammPoolAddress)
         external
         view
-        returns (address boosterAddress, address poolAddress, IPoolBoostCentralRegistry.PoolBoosterType boosterType);
+        returns (
+            address boosterAddress,
+            address poolAddress,
+            IPoolBoostCentralRegistry.PoolBoosterType boosterType
+        );
 
-    function bribeAll(address[] calldata _excludedPoolBoosterAddresses) external;
+    function bribeAll(address[] calldata _excludedPoolBoosterAddresses)
+        external;
 
     function removePoolBooster(address _poolBoosterAddress) external;
 

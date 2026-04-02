@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import {IAbstractSafeModule} from "contracts/interfaces/automation/IAbstractSafeModule.sol";
+import { IAbstractSafeModule } from "contracts/interfaces/automation/IAbstractSafeModule.sol";
 
 interface ICurvePoolBoosterBribesModule is IAbstractSafeModule {
     event BridgeFeeUpdated(uint256 newFee);
@@ -19,7 +19,8 @@ interface ICurvePoolBoosterBribesModule is IAbstractSafeModule {
 
     function addPoolBoosterAddress(address[] calldata _poolBoosters) external;
 
-    function removePoolBoosterAddress(address[] calldata _poolBoosters) external;
+    function removePoolBoosterAddress(address[] calldata _poolBoosters)
+        external;
 
     function setBridgeFee(uint256 newFee) external;
 

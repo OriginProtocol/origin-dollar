@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import {IPoolBoostCentralRegistry} from "contracts/interfaces/poolBooster/IPoolBoostCentralRegistry.sol";
+import { IPoolBoostCentralRegistry } from "contracts/interfaces/poolBooster/IPoolBoostCentralRegistry.sol";
 
 interface ICurvePoolBoosterFactory {
     struct PoolBoosterEntry {
@@ -10,7 +10,11 @@ interface ICurvePoolBoosterFactory {
         IPoolBoostCentralRegistry.PoolBoosterType boosterType;
     }
 
-    function initialize(address _governor, address _strategist, address _centralRegistry) external;
+    function initialize(
+        address _governor,
+        address _strategist,
+        address _centralRegistry
+    ) external;
 
     function governor() external view returns (address);
 
@@ -37,24 +41,39 @@ interface ICurvePoolBoosterFactory {
 
     function removePoolBooster(address _poolBoosterAddress) external;
 
-    function computePoolBoosterAddress(address _rewardToken, address _gauge, bytes32 _salt)
+    function computePoolBoosterAddress(
+        address _rewardToken,
+        address _gauge,
+        bytes32 _salt
+    ) external view returns (address);
+
+    function encodeSaltForCreateX(uint256 salt)
         external
         view
-        returns (address);
-
-    function encodeSaltForCreateX(uint256 salt) external view returns (bytes32 encodedSalt);
+        returns (bytes32 encodedSalt);
 
     function poolBoosterLength() external view returns (uint256);
 
-    function getPoolBoosters() external view returns (PoolBoosterEntry[] memory);
+    function getPoolBoosters()
+        external
+        view
+        returns (PoolBoosterEntry[] memory);
 
     function poolBoosters(uint256 index)
         external
         view
-        returns (address boosterAddress, address ammPoolAddress, IPoolBoostCentralRegistry.PoolBoosterType boosterType);
+        returns (
+            address boosterAddress,
+            address ammPoolAddress,
+            IPoolBoostCentralRegistry.PoolBoosterType boosterType
+        );
 
     function poolBoosterFromPool(address ammPoolAddress)
         external
         view
-        returns (address boosterAddress, address poolAddress, IPoolBoostCentralRegistry.PoolBoosterType boosterType);
+        returns (
+            address boosterAddress,
+            address poolAddress,
+            IPoolBoostCentralRegistry.PoolBoosterType boosterType
+        );
 }
