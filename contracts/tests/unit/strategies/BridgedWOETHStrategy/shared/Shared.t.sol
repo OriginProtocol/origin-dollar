@@ -3,27 +3,28 @@ pragma solidity ^0.8.0;
 
 import {Base} from "tests/Base.t.sol";
 
+// Interfaces
+import {IVault} from "contracts/interfaces/IVault.sol";
+import {IProxy} from "contracts/interfaces/IProxy.sol";
+import {IOToken} from "contracts/interfaces/IOToken.sol";
+import {IBridgedWOETHStrategy} from "contracts/interfaces/strategies/IBridgedWOETHStrategy.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+
+// Mocks
 import {MockWETH} from "contracts/mocks/MockWETH.sol";
 import {MockERC20} from "@solmate/test/utils/mocks/MockERC20.sol";
-import {OETH} from "contracts/token/OETH.sol";
-import {OETHVault} from "contracts/vault/OETHVault.sol";
-import {OETHProxy} from "contracts/proxies/Proxies.sol";
-import {OETHVaultProxy} from "contracts/proxies/Proxies.sol";
-import {BridgedWOETHStrategy} from "contracts/strategies/BridgedWOETHStrategy.sol";
-import {InitializableAbstractStrategy} from "contracts/utils/InitializableAbstractStrategy.sol";
 
 abstract contract Unit_BridgedWOETHStrategy_Shared_Test is Base {
     //////////////////////////////////////////////////////
-    /// --- CONTRACTS & PROXIES (moved from Base)
+    /// --- CONTRACTS & PROXIES
     //////////////////////////////////////////////////////
 
     MockWETH internal mockWeth;
-    OETH internal oeth;
-    OETHVault internal oethVault;
-    OETHProxy internal oethProxy;
-    OETHVaultProxy internal oethVaultProxy;
-    BridgedWOETHStrategy internal bridgedWOETHStrategy;
+    IOToken internal oeth;
+    IVault internal oethVault;
+    IProxy internal oethProxy;
+    IProxy internal oethVaultProxy;
+    IBridgedWOETHStrategy internal bridgedWOETHStrategy;
 
     //////////////////////////////////////////////////////
     /// --- CONSTANTS
@@ -64,11 +65,19 @@ abstract contract Unit_BridgedWOETHStrategy_Shared_Test is Base {
         // Deploy real OETH + OETHVault
         vm.startPrank(deployer);
 
-        OETH oethImpl = new OETH();
-        OETHVault oethVaultImpl = new OETHVault(address(mockWeth));
+        IOToken oethImpl = IOToken(vm.deployCode("contracts/token/OETH.sol:OETH"));
+        address oethVaultImpl = vm.deployCode("contracts/vault/OETHVault.sol:OETHVault", abi.encode(address(mockWeth)));
 
-        oethProxy = new OETHProxy();
-        oethVaultProxy = new OETHVaultProxy();
+        oethProxy = IProxy(
+            vm.deployCode(
+                "contracts/proxies/InitializeGovernedUpgradeabilityProxy.sol:InitializeGovernedUpgradeabilityProxy"
+            )
+        );
+        oethVaultProxy = IProxy(
+            vm.deployCode(
+                "contracts/proxies/InitializeGovernedUpgradeabilityProxy.sol:InitializeGovernedUpgradeabilityProxy"
+            )
+        );
 
         oethProxy.initialize(
             address(oethImpl),
@@ -82,8 +91,8 @@ abstract contract Unit_BridgedWOETHStrategy_Shared_Test is Base {
 
         vm.stopPrank();
 
-        oeth = OETH(address(oethProxy));
-        oethVault = OETHVault(address(oethVaultProxy));
+        oeth = IOToken(address(oethProxy));
+        oethVault = IVault(address(oethVaultProxy));
 
         // Configure vault
         vm.startPrank(governor);
@@ -95,14 +104,18 @@ abstract contract Unit_BridgedWOETHStrategy_Shared_Test is Base {
         vm.stopPrank();
 
         // Deploy strategy with real vault
-        bridgedWOETHStrategy = new BridgedWOETHStrategy(
-            InitializableAbstractStrategy.BaseStrategyConfig({
-                platformAddress: address(0), vaultAddress: address(oethVault)
-            }),
-            address(mockWeth),
-            address(bridgedWOETH),
-            address(oeth), // oethb is the real OETH token
-            mockOracle
+        bridgedWOETHStrategy = IBridgedWOETHStrategy(
+            vm.deployCode(
+                "contracts/strategies/BridgedWOETHStrategy.sol:BridgedWOETHStrategy",
+                abi.encode(
+                    address(0),
+                    address(oethVault),
+                    address(mockWeth),
+                    address(bridgedWOETH),
+                    address(oeth), // oethb is the real OETH token
+                    mockOracle
+                )
+            )
         );
 
         // Set governor via slot

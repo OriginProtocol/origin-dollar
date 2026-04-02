@@ -3,8 +3,7 @@ pragma solidity ^0.8.0;
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {Unit_BaseCurveAMOStrategy_Shared_Test} from "tests/unit/strategies/BaseCurveAMOStrategy/shared/Shared.t.sol";
-import {BaseCurveAMOStrategy} from "contracts/strategies/BaseCurveAMOStrategy.sol";
-import {InitializableAbstractStrategy} from "contracts/utils/InitializableAbstractStrategy.sol";
+import {IBaseCurveAMOStrategy} from "contracts/interfaces/strategies/IBaseCurveAMOStrategy.sol";
 
 contract Unit_Concrete_BaseCurveAMOStrategy_Initialize_Test is Unit_BaseCurveAMOStrategy_Shared_Test {
     function test_initialize_setsRewardTokens() public view {
@@ -27,16 +26,20 @@ contract Unit_Concrete_BaseCurveAMOStrategy_Initialize_Test is Unit_BaseCurveAMO
     }
 
     function test_initialize_RevertWhen_calledByNonGovernor() public {
-        BaseCurveAMOStrategy freshStrategy = new BaseCurveAMOStrategy(
-            InitializableAbstractStrategy.BaseStrategyConfig({
-                platformAddress: address(curvePool), vaultAddress: address(oethVault)
-            }),
-            address(oeth),
-            address(mockWeth),
-            address(curveGauge),
-            address(curveGaugeFactory),
-            1,
-            0
+        IBaseCurveAMOStrategy freshStrategy = IBaseCurveAMOStrategy(
+            vm.deployCode(
+                "contracts/strategies/BaseCurveAMOStrategy.sol:BaseCurveAMOStrategy",
+                abi.encode(
+                    address(curvePool),
+                    address(oethVault),
+                    address(oeth),
+                    address(mockWeth),
+                    address(curveGauge),
+                    address(curveGaugeFactory),
+                    uint128(1),
+                    uint128(0)
+                )
+            )
         );
         vm.store(address(freshStrategy), GOVERNOR_SLOT, bytes32(uint256(uint160(governor))));
 

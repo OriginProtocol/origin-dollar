@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 import {Unit_SonicSwapXAMOStrategy_Shared_Test} from "tests/unit/strategies/SonicSwapXAMOStrategy/shared/Shared.t.sol";
-import {StableSwapAMMStrategy} from "contracts/strategies/algebra/StableSwapAMMStrategy.sol";
+import {ISonicSwapXAMOStrategy} from "contracts/interfaces/strategies/ISonicSwapXAMOStrategy.sol";
 
 contract Unit_Concrete_SonicSwapXAMOStrategy_SetMaxDepeg_Test is Unit_SonicSwapXAMOStrategy_Shared_Test {
     function test_setMaxDepeg_updatesValue() public {
@@ -18,7 +18,7 @@ contract Unit_Concrete_SonicSwapXAMOStrategy_SetMaxDepeg_Test is Unit_SonicSwapX
         uint256 newMaxDepeg = 0.03e18;
 
         vm.expectEmit(true, true, true, true);
-        emit StableSwapAMMStrategy.MaxDepegUpdated(newMaxDepeg);
+        emit ISonicSwapXAMOStrategy.MaxDepegUpdated(newMaxDepeg);
 
         vm.prank(governor);
         sonicSwapXAMOStrategy.setMaxDepeg(newMaxDepeg);

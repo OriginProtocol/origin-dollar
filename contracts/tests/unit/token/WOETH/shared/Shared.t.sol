@@ -25,7 +25,6 @@ abstract contract Unit_WOETH_Shared_Test is Base {
     IProxy internal woethProxy;
     IProxy internal oethVaultProxy;
 
-
     //////////////////////////////////////////////////////
     /// --- CONSTANTS
     //////////////////////////////////////////////////////

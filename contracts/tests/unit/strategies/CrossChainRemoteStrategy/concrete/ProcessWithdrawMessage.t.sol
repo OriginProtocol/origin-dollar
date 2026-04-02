@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 import {Unit_CrossChainRemoteStrategy_Shared_Test} from "../shared/Shared.t.sol";
-import {CrossChainRemoteStrategy} from "contracts/strategies/crosschain/CrossChainRemoteStrategy.sol";
+import {ICrossChainRemoteStrategy} from "contracts/interfaces/strategies/ICrossChainRemoteStrategy.sol";
 import {CrossChainStrategyHelper} from "contracts/strategies/crosschain/CrossChainStrategyHelper.sol";
 
 contract Unit_Concrete_CrossChainRemoteStrategy_ProcessWithdrawMessage_Test is
@@ -94,7 +94,7 @@ contract Unit_Concrete_CrossChainRemoteStrategy_ProcessWithdrawMessage_Test is
         _mintUsdc(address(crossChainRemoteStrategy), 5e5); // Only 0.5 USDC (below MIN)
 
         vm.expectEmit(true, true, true, true);
-        emit CrossChainRemoteStrategy.WithdrawalFailed(1000e6, 5e5);
+        emit ICrossChainRemoteStrategy.WithdrawalFailed(1000e6, 5e5);
 
         _sendWithdrawMessage(nonce, 1000e6);
     }

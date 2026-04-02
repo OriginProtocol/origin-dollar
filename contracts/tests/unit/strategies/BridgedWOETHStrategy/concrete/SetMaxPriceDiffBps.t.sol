@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 import {Unit_BridgedWOETHStrategy_Shared_Test} from "tests/unit/strategies/BridgedWOETHStrategy/shared/Shared.t.sol";
-import {BridgedWOETHStrategy} from "contracts/strategies/BridgedWOETHStrategy.sol";
+import {IBridgedWOETHStrategy} from "contracts/interfaces/strategies/IBridgedWOETHStrategy.sol";
 
 contract Unit_Concrete_BridgedWOETHStrategy_SetMaxPriceDiffBps_Test is Unit_BridgedWOETHStrategy_Shared_Test {
     function test_setMaxPriceDiffBps_updatesValue() public {
@@ -14,7 +14,7 @@ contract Unit_Concrete_BridgedWOETHStrategy_SetMaxPriceDiffBps_Test is Unit_Brid
 
     function test_setMaxPriceDiffBps_emitsMaxPriceDiffBpsUpdated() public {
         vm.expectEmit(true, true, true, true);
-        emit BridgedWOETHStrategy.MaxPriceDiffBpsUpdated(DEFAULT_MAX_PRICE_DIFF_BPS, 500);
+        emit IBridgedWOETHStrategy.MaxPriceDiffBpsUpdated(DEFAULT_MAX_PRICE_DIFF_BPS, 500);
 
         vm.prank(governor);
         bridgedWOETHStrategy.setMaxPriceDiffBps(500);

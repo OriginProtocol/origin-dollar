@@ -4,8 +4,7 @@ pragma solidity ^0.8.0;
 import {
     Unit_OETHSupernovaAMOStrategy_Shared_Test
 } from "tests/unit/strategies/OETHSupernovaAMOStrategy/shared/Shared.t.sol";
-import {InitializableAbstractStrategy} from "contracts/utils/InitializableAbstractStrategy.sol";
-import {StableSwapAMMStrategy} from "contracts/strategies/algebra/StableSwapAMMStrategy.sol";
+import {IOETHSupernovaAMOStrategy} from "contracts/interfaces/strategies/IOETHSupernovaAMOStrategy.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 contract Unit_Concrete_OETHSupernovaAMOStrategy_SwapAssetsToPool_Test is Unit_OETHSupernovaAMOStrategy_Shared_Test {
@@ -50,7 +49,7 @@ contract Unit_Concrete_OETHSupernovaAMOStrategy_SwapAssetsToPool_Test is Unit_OE
 
         // Expect SwapAssetsToPool event
         vm.expectEmit(false, false, false, false);
-        emit StableSwapAMMStrategy.SwapAssetsToPool(0, 0, 0);
+        emit IOETHSupernovaAMOStrategy.SwapAssetsToPool(0, 0, 0);
 
         vm.prank(strategist);
         oethSupernovaAMOStrategy.swapAssetsToPool(5 ether);

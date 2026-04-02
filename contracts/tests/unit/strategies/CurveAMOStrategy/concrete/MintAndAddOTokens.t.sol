@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 import {Unit_CurveAMOStrategy_Shared_Test} from "tests/unit/strategies/CurveAMOStrategy/shared/Shared.t.sol";
-import {InitializableAbstractStrategy} from "contracts/utils/InitializableAbstractStrategy.sol";
+import {ICurveAMOStrategy} from "contracts/interfaces/strategies/ICurveAMOStrategy.sol";
 
 contract Unit_Concrete_CurveAMOStrategy_MintAndAddOTokens_Test is Unit_CurveAMOStrategy_Shared_Test {
     function test_mintAndAddOTokens_mintsAndAddsToPool() public {
@@ -40,7 +40,7 @@ contract Unit_Concrete_CurveAMOStrategy_MintAndAddOTokens_Test is Unit_CurveAMOS
         _setupPoolBalances(200 ether, 100 ether);
 
         vm.expectEmit(true, true, true, true);
-        emit InitializableAbstractStrategy.Deposit(address(oeth), address(curvePool), oTokenAmount);
+        emit ICurveAMOStrategy.Deposit(address(oeth), address(curvePool), oTokenAmount);
 
         vm.prank(strategist);
         curveAMOStrategy.mintAndAddOTokens(oTokenAmount);

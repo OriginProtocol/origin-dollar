@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 import {Unit_CurveAMOStrategy_Shared_Test} from "tests/unit/strategies/CurveAMOStrategy/shared/Shared.t.sol";
-import {InitializableAbstractStrategy} from "contracts/utils/InitializableAbstractStrategy.sol";
+import {ICurveAMOStrategy} from "contracts/interfaces/strategies/ICurveAMOStrategy.sol";
 
 /// @title Swap Interaction Tests
 /// @notice Tests how external swaps on the CurvePool affect strategy operations.

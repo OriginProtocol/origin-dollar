@@ -4,7 +4,7 @@ pragma solidity ^0.8.0;
 import {
     Unit_NativeStakingSSVStrategy_Shared_Test
 } from "tests/unit/strategies/NativeStakingSSVStrategy/shared/Shared.t.sol";
-import {ValidatorStakeData} from "contracts/strategies/NativeStaking/ValidatorRegistrator.sol";
+import {ValidatorStakeData} from "contracts/interfaces/strategies/INativeStakingSSVStrategy.sol";
 
 contract Unit_Concrete_NativeStakingSSVStrategy_ValidatorStaking_Test is Unit_NativeStakingSSVStrategy_Shared_Test {
     function setUp() public override {

@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 import {Unit_CurveAMOStrategy_Shared_Test} from "tests/unit/strategies/CurveAMOStrategy/shared/Shared.t.sol";
-import {CurveAMOStrategy} from "contracts/strategies/CurveAMOStrategy.sol";
+import {ICurveAMOStrategy} from "contracts/interfaces/strategies/ICurveAMOStrategy.sol";
 
 contract Unit_Concrete_CurveAMOStrategy_SetMaxSlippage_Test is Unit_CurveAMOStrategy_Shared_Test {
     function test_setMaxSlippage_updatesSlippage() public {
@@ -14,7 +14,7 @@ contract Unit_Concrete_CurveAMOStrategy_SetMaxSlippage_Test is Unit_CurveAMOStra
 
     function test_setMaxSlippage_emitsEvent() public {
         vm.expectEmit(true, true, true, true);
-        emit CurveAMOStrategy.MaxSlippageUpdated(3e16);
+        emit ICurveAMOStrategy.MaxSlippageUpdated(3e16);
 
         vm.prank(governor);
         curveAMOStrategy.setMaxSlippage(3e16);

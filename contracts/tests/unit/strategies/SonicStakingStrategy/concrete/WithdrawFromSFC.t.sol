@@ -2,7 +2,6 @@
 pragma solidity ^0.8.0;
 
 import {Unit_SonicStakingStrategy_Shared_Test} from "tests/unit/strategies/SonicStakingStrategy/shared/Shared.t.sol";
-import {SonicValidatorDelegator} from "contracts/strategies/sonic/SonicValidatorDelegator.sol";
 import {MockSFC} from "contracts/mocks/MockSFC.sol";
 
 contract Unit_Concrete_SonicStakingStrategy_WithdrawFromSFC_Test is Unit_SonicStakingStrategy_Shared_Test {

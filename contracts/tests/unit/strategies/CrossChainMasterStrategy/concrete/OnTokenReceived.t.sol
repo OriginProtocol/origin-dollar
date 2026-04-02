@@ -2,9 +2,8 @@
 pragma solidity ^0.8.0;
 
 import {Unit_CrossChainMasterStrategy_Shared_Test} from "../shared/Shared.t.sol";
-import {CrossChainMasterStrategy} from "contracts/strategies/crosschain/CrossChainMasterStrategy.sol";
+import {ICrossChainMasterStrategy} from "contracts/interfaces/strategies/ICrossChainMasterStrategy.sol";
 import {CrossChainStrategyHelper} from "contracts/strategies/crosschain/CrossChainStrategyHelper.sol";
-import {InitializableAbstractStrategy} from "contracts/utils/InitializableAbstractStrategy.sol";
 
 contract Unit_Concrete_CrossChainMasterStrategy_OnTokenReceived_Test is Unit_CrossChainMasterStrategy_Shared_Test {
     //////////////////////////////////////////////////////
@@ -82,7 +81,7 @@ contract Unit_Concrete_CrossChainMasterStrategy_OnTokenReceived_Test is Unit_Cro
         );
 
         vm.expectEmit(true, true, true, true);
-        emit InitializableAbstractStrategy.Withdrawal(address(mockUsdc), address(mockUsdc), 500e6);
+        emit ICrossChainMasterStrategy.Withdrawal(address(mockUsdc), address(mockUsdc), 500e6);
 
         // processBack because withdraw() queued a message to peerStrategy at front
         cctpMessageTransmitterMock.processBack();

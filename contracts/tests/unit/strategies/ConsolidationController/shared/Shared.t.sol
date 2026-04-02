@@ -11,22 +11,23 @@ import {MockBeaconProofs} from "contracts/mocks/beacon/MockBeaconProofs.sol";
 import {MockBeaconRoots} from "tests/mocks/MockBeaconRoots.sol";
 import {MockWithdrawalRequest} from "tests/mocks/MockWithdrawalRequest.sol";
 import {MockConsolidationRequest} from "tests/mocks/MockConsolidationRequest.sol";
-import {OETH} from "contracts/token/OETH.sol";
-import {OETHVault} from "contracts/vault/OETHVault.sol";
-import {OETHProxy} from "contracts/proxies/Proxies.sol";
-import {OETHVaultProxy} from "contracts/proxies/Proxies.sol";
-import {NativeStakingSSVStrategy} from "contracts/strategies/NativeStaking/NativeStakingSSVStrategy.sol";
-import {ValidatorStakeData} from "contracts/strategies/NativeStaking/ValidatorRegistrator.sol";
+import {IVault} from "contracts/interfaces/IVault.sol";
+import {IProxy} from "contracts/interfaces/IProxy.sol";
+import {IOToken} from "contracts/interfaces/IOToken.sol";
+import {
+    INativeStakingSSVStrategy,
+    ValidatorStakeData
+} from "contracts/interfaces/strategies/INativeStakingSSVStrategy.sol";
 import {FeeAccumulator} from "contracts/strategies/NativeStaking/FeeAccumulator.sol";
-import {CompoundingStakingSSVStrategy} from "contracts/strategies/NativeStaking/CompoundingStakingSSVStrategy.sol";
+import {ICompoundingStakingSSVStrategy} from "contracts/interfaces/strategies/ICompoundingStakingSSVStrategy.sol";
 import {CompoundingValidatorManager} from "contracts/strategies/NativeStaking/CompoundingValidatorManager.sol";
+import {IConsolidationController} from "contracts/interfaces/strategies/IConsolidationController.sol";
 import {ConsolidationController} from "contracts/strategies/NativeStaking/ConsolidationController.sol";
-import {InitializableAbstractStrategy} from "contracts/utils/InitializableAbstractStrategy.sol";
 import {Cluster} from "contracts/interfaces/ISSVNetwork.sol";
 
 abstract contract Unit_ConsolidationController_Shared_Test is Base {
     //////////////////////////////////////////////////////
-    /// --- CONTRACTS & PROXIES (moved from Base)
+    /// --- CONTRACTS & PROXIES
     //////////////////////////////////////////////////////
 
     MockWETH internal mockWeth;
@@ -34,14 +35,14 @@ abstract contract Unit_ConsolidationController_Shared_Test is Base {
     MockSSV internal mockSsv;
     MockDepositContract internal mockDepositContract;
     MockBeaconProofs internal mockBeaconProofs;
-    OETH internal oeth;
-    OETHVault internal oethVault;
-    OETHProxy internal oethProxy;
-    OETHVaultProxy internal oethVaultProxy;
-    NativeStakingSSVStrategy internal nativeStakingSSVStrategy2;
-    NativeStakingSSVStrategy internal nativeStakingSSVStrategy3;
-    CompoundingStakingSSVStrategy internal compoundingStakingSSVStrategy;
-    ConsolidationController internal consolidationController;
+    IOToken internal oeth;
+    IVault internal oethVault;
+    IProxy internal oethProxy;
+    IProxy internal oethVaultProxy;
+    INativeStakingSSVStrategy internal nativeStakingSSVStrategy2;
+    INativeStakingSSVStrategy internal nativeStakingSSVStrategy3;
+    ICompoundingStakingSSVStrategy internal compoundingStakingSSVStrategy;
+    IConsolidationController internal consolidationController;
 
     //////////////////////////////////////////////////////
     /// --- CONSTANTS
@@ -139,11 +140,19 @@ abstract contract Unit_ConsolidationController_Shared_Test is Base {
         // Deploy OETH + OETHVault through proxies
         vm.startPrank(deployer);
 
-        OETH oethImpl = new OETH();
-        OETHVault oethVaultImpl = new OETHVault(address(mockWeth));
+        IOToken oethImpl = IOToken(vm.deployCode("contracts/token/OETH.sol:OETH"));
+        address oethVaultImpl = vm.deployCode("contracts/vault/OETHVault.sol:OETHVault", abi.encode(address(mockWeth)));
 
-        oethProxy = new OETHProxy();
-        oethVaultProxy = new OETHVaultProxy();
+        oethProxy = IProxy(
+            vm.deployCode(
+                "contracts/proxies/InitializeGovernedUpgradeabilityProxy.sol:InitializeGovernedUpgradeabilityProxy"
+            )
+        );
+        oethVaultProxy = IProxy(
+            vm.deployCode(
+                "contracts/proxies/InitializeGovernedUpgradeabilityProxy.sol:InitializeGovernedUpgradeabilityProxy"
+            )
+        );
 
         oethProxy.initialize(
             address(oethImpl),
@@ -157,8 +166,8 @@ abstract contract Unit_ConsolidationController_Shared_Test is Base {
 
         vm.stopPrank();
 
-        oeth = OETH(address(oethProxy));
-        oethVault = OETHVault(address(oethVaultProxy));
+        oeth = IOToken(address(oethProxy));
+        oethVault = IVault(address(oethVaultProxy));
 
         // Configure vault
         vm.startPrank(governor);
@@ -179,12 +188,16 @@ abstract contract Unit_ConsolidationController_Shared_Test is Base {
         _deployCompoundingStakingStrategy();
 
         // Deploy ConsolidationController
-        consolidationController = new ConsolidationController(
-            guardian, // owner (admin multisig)
-            governor, // validatorRegistrator
-            address(nativeStakingSSVStrategy2),
-            address(nativeStakingSSVStrategy3),
-            address(compoundingStakingSSVStrategy)
+        consolidationController = IConsolidationController(
+            address(
+                new ConsolidationController(
+                    guardian, // owner (admin multisig)
+                    governor, // validatorRegistrator
+                    address(nativeStakingSSVStrategy2),
+                    address(nativeStakingSSVStrategy3),
+                    address(compoundingStakingSSVStrategy)
+                )
+            )
         );
 
         // Wire up: set registrator on old strategies to ConsolidationController
@@ -213,16 +226,20 @@ abstract contract Unit_ConsolidationController_Shared_Test is Base {
         nativeStakingFeeAccumulator2 = new FeeAccumulator(predictedStrategy);
 
         // Deploy NativeStakingSSVStrategy2
-        nativeStakingSSVStrategy2 = new NativeStakingSSVStrategy(
-            InitializableAbstractStrategy.BaseStrategyConfig({
-                platformAddress: address(0), vaultAddress: address(oethVault)
-            }),
-            address(mockWeth),
-            address(mockSsv),
-            address(mockSsvNetwork),
-            256,
-            address(nativeStakingFeeAccumulator2),
-            address(mockDepositContract)
+        nativeStakingSSVStrategy2 = INativeStakingSSVStrategy(
+            vm.deployCode(
+                "contracts/strategies/NativeStaking/NativeStakingSSVStrategy.sol:NativeStakingSSVStrategy",
+                abi.encode(
+                    address(0),
+                    address(oethVault),
+                    address(mockWeth),
+                    address(mockSsv),
+                    address(mockSsvNetwork),
+                    uint256(256),
+                    address(nativeStakingFeeAccumulator2),
+                    address(mockDepositContract)
+                )
+            )
         );
 
         // Set governor via storage slot
@@ -255,16 +272,20 @@ abstract contract Unit_ConsolidationController_Shared_Test is Base {
         nativeStakingFeeAccumulator3 = new FeeAccumulator(predictedStrategy);
 
         // Deploy NativeStakingSSVStrategy3
-        nativeStakingSSVStrategy3 = new NativeStakingSSVStrategy(
-            InitializableAbstractStrategy.BaseStrategyConfig({
-                platformAddress: address(0), vaultAddress: address(oethVault)
-            }),
-            address(mockWeth),
-            address(mockSsv),
-            address(mockSsvNetwork),
-            256,
-            address(nativeStakingFeeAccumulator3),
-            address(mockDepositContract)
+        nativeStakingSSVStrategy3 = INativeStakingSSVStrategy(
+            vm.deployCode(
+                "contracts/strategies/NativeStaking/NativeStakingSSVStrategy.sol:NativeStakingSSVStrategy",
+                abi.encode(
+                    address(0),
+                    address(oethVault),
+                    address(mockWeth),
+                    address(mockSsv),
+                    address(mockSsvNetwork),
+                    uint256(256),
+                    address(nativeStakingFeeAccumulator3),
+                    address(mockDepositContract)
+                )
+            )
         );
 
         // Set governor via storage slot
@@ -289,15 +310,19 @@ abstract contract Unit_ConsolidationController_Shared_Test is Base {
     }
 
     function _deployCompoundingStakingStrategy() internal {
-        compoundingStakingSSVStrategy = new CompoundingStakingSSVStrategy(
-            InitializableAbstractStrategy.BaseStrategyConfig({
-                platformAddress: address(0), vaultAddress: address(oethVault)
-            }),
-            address(mockWeth),
-            address(mockSsvNetwork),
-            address(mockDepositContract),
-            address(mockBeaconProofs),
-            BEACON_GENESIS_TIMESTAMP
+        compoundingStakingSSVStrategy = ICompoundingStakingSSVStrategy(
+            vm.deployCode(
+                "contracts/strategies/NativeStaking/CompoundingStakingSSVStrategy.sol:CompoundingStakingSSVStrategy",
+                abi.encode(
+                    address(0),
+                    address(oethVault),
+                    address(mockWeth),
+                    address(mockSsvNetwork),
+                    address(mockDepositContract),
+                    address(mockBeaconProofs),
+                    BEACON_GENESIS_TIMESTAMP
+                )
+            )
         );
 
         // Set governor via storage slot (constructor sets it to address(0))
@@ -359,8 +384,7 @@ abstract contract Unit_ConsolidationController_Shared_Test is Base {
     }
 
     /// @dev Register and stake a validator on the given NativeStakingSSVStrategy
-    /// to set it to STAKED state. Called before the registrator is set to ConsolidationController.
-    function _registerAndStakeOnNative(NativeStakingSSVStrategy strategy, bytes memory pubKey) internal {
+    function _registerAndStakeOnNative(INativeStakingSSVStrategy strategy, bytes memory pubKey) internal {
         // Temporarily set registrator back to governor for registration
         address currentRegistrator = strategy.validatorRegistrator();
         vm.prank(governor);
@@ -401,7 +425,6 @@ abstract contract Unit_ConsolidationController_Shared_Test is Base {
     }
 
     /// @dev Register, stake, and fully activate a validator on the CompoundingStakingSSVStrategy
-    /// so it reaches ACTIVE state (required for consolidation target)
     function _activateCompoundingValidator(bytes memory pubKey) internal {
         // Temporarily set registrator back to governor
         address currentRegistrator = compoundingStakingSSVStrategy.validatorRegistrator();
@@ -548,7 +571,6 @@ abstract contract Unit_ConsolidationController_Shared_Test is Base {
     }
 
     /// @dev Activate target validator + register/stake source validators
-    /// This is the common setup for tests that need consolidation to be possible.
     function _setupForConsolidation() internal {
         // Activate a validator on the compounding strategy
         _activateCompoundingValidator(TARGET_PUB_KEY);

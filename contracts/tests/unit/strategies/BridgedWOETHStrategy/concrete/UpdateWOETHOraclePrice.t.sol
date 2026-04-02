@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 import {Unit_BridgedWOETHStrategy_Shared_Test} from "tests/unit/strategies/BridgedWOETHStrategy/shared/Shared.t.sol";
-import {BridgedWOETHStrategy} from "contracts/strategies/BridgedWOETHStrategy.sol";
+import {IBridgedWOETHStrategy} from "contracts/interfaces/strategies/IBridgedWOETHStrategy.sol";
 
 contract Unit_Concrete_BridgedWOETHStrategy_UpdateWOETHOraclePrice_Test is Unit_BridgedWOETHStrategy_Shared_Test {
     function test_updateWOETHOraclePrice_storesPrice() public {
@@ -23,7 +23,7 @@ contract Unit_Concrete_BridgedWOETHStrategy_UpdateWOETHOraclePrice_Test is Unit_
         _mockOraclePrice(1.1e18);
 
         vm.expectEmit(true, true, true, true);
-        emit BridgedWOETHStrategy.WOETHPriceUpdated(0, 1.1e18);
+        emit IBridgedWOETHStrategy.WOETHPriceUpdated(0, 1.1e18);
 
         bridgedWOETHStrategy.updateWOETHOraclePrice();
     }

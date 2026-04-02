@@ -2,7 +2,6 @@
 pragma solidity ^0.8.0;
 
 import {Unit_BaseCurveAMOStrategy_Shared_Test} from "tests/unit/strategies/BaseCurveAMOStrategy/shared/Shared.t.sol";
-import {InitializableAbstractStrategy} from "contracts/utils/InitializableAbstractStrategy.sol";
 
 contract Unit_Concrete_BaseCurveAMOStrategy_SwapInteractions_Test is Unit_BaseCurveAMOStrategy_Shared_Test {
     /// @dev Helper: perform an external swap of WETH->OETH on the pool

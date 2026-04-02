@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 import {Unit_SonicStakingStrategy_Shared_Test} from "tests/unit/strategies/SonicStakingStrategy/shared/Shared.t.sol";
-import {SonicValidatorDelegator} from "contracts/strategies/sonic/SonicValidatorDelegator.sol";
+import {ISonicStakingStrategy} from "contracts/interfaces/strategies/ISonicStakingStrategy.sol";
 
 contract Unit_Concrete_SonicStakingStrategy_ValidatorManagement_Test is Unit_SonicStakingStrategy_Shared_Test {
     function test_supportValidator() public {
@@ -62,7 +62,7 @@ contract Unit_Concrete_SonicStakingStrategy_ValidatorManagement_Test is Unit_Son
 
     function test_supportValidator_emitsEvent() public {
         vm.expectEmit(true, false, false, true);
-        emit SonicValidatorDelegator.SupportedValidator(42);
+        emit ISonicStakingStrategy.SupportedValidator(42);
 
         vm.prank(governor);
         sonicStakingStrategy.supportValidator(42);
@@ -73,7 +73,7 @@ contract Unit_Concrete_SonicStakingStrategy_ValidatorManagement_Test is Unit_Son
         sonicStakingStrategy.supportValidator(42);
 
         vm.expectEmit(true, false, false, true);
-        emit SonicValidatorDelegator.UnsupportedValidator(42);
+        emit ISonicStakingStrategy.UnsupportedValidator(42);
 
         vm.prank(governor);
         sonicStakingStrategy.unsupportValidator(42);
@@ -84,7 +84,7 @@ contract Unit_Concrete_SonicStakingStrategy_ValidatorManagement_Test is Unit_Son
         sonicStakingStrategy.supportValidator(42);
 
         vm.expectEmit(true, false, false, true);
-        emit SonicValidatorDelegator.DefaultValidatorIdChanged(42);
+        emit ISonicStakingStrategy.DefaultValidatorIdChanged(42);
 
         vm.prank(strategist);
         sonicStakingStrategy.setDefaultValidatorId(42);
@@ -92,7 +92,7 @@ contract Unit_Concrete_SonicStakingStrategy_ValidatorManagement_Test is Unit_Son
 
     function test_setRegistrator_emitsEvent() public {
         vm.expectEmit(true, false, false, true);
-        emit SonicValidatorDelegator.RegistratorChanged(bobby);
+        emit ISonicStakingStrategy.RegistratorChanged(bobby);
 
         vm.prank(governor);
         sonicStakingStrategy.setRegistrator(bobby);

@@ -2,7 +2,6 @@
 pragma solidity ^0.8.0;
 
 import {Unit_CrossChainRemoteStrategy_Shared_Test} from "../shared/Shared.t.sol";
-import {CrossChainRemoteStrategy} from "contracts/strategies/crosschain/CrossChainRemoteStrategy.sol";
 import {CrossChainStrategyHelper} from "contracts/strategies/crosschain/CrossChainStrategyHelper.sol";
 
 contract Unit_Concrete_CrossChainRemoteStrategy_Relay_Test is Unit_CrossChainRemoteStrategy_Shared_Test {

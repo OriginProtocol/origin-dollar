@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 import {Unit_MorphoV2Strategy_Shared_Test} from "tests/unit/strategies/MorphoV2Strategy/shared/Shared.t.sol";
-import {InitializableAbstractStrategy} from "contracts/utils/InitializableAbstractStrategy.sol";
+import {IMorphoV2Strategy} from "contracts/interfaces/strategies/IMorphoV2Strategy.sol";
 
 contract Unit_Concrete_MorphoV2Strategy_Deposit_Test is Unit_MorphoV2Strategy_Shared_Test {
     function test_deposit_depositsToERC4626Vault() public {
@@ -21,7 +21,7 @@ contract Unit_Concrete_MorphoV2Strategy_Deposit_Test is Unit_MorphoV2Strategy_Sh
         asset.mint(address(strategy), 100e18);
 
         vm.expectEmit(true, true, true, true);
-        emit InitializableAbstractStrategy.Deposit(address(asset), address(shareVault), 100e18);
+        emit IMorphoV2Strategy.Deposit(address(asset), address(shareVault), 100e18);
 
         vm.prank(address(ousdVault));
         strategy.deposit(address(asset), 100e18);

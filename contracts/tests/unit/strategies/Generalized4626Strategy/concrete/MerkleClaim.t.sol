@@ -4,7 +4,7 @@ pragma solidity ^0.8.0;
 import {
     Unit_Generalized4626Strategy_Shared_Test
 } from "tests/unit/strategies/Generalized4626Strategy/shared/Shared.t.sol";
-import {Generalized4626Strategy} from "contracts/strategies/Generalized4626Strategy.sol";
+import {IGeneralized4626Strategy} from "contracts/interfaces/strategies/IGeneralized4626Strategy.sol";
 import {IDistributor} from "contracts/interfaces/IMerkl.sol";
 
 contract Unit_Concrete_Generalized4626Strategy_MerkleClaim_Test is Unit_Generalized4626Strategy_Shared_Test {
@@ -53,7 +53,7 @@ contract Unit_Concrete_Generalized4626Strategy_MerkleClaim_Test is Unit_Generali
         vm.mockCall(MERKLE_DISTRIBUTOR, abi.encodeWithSelector(IDistributor.claim.selector), abi.encode());
 
         vm.expectEmit(true, true, true, true);
-        emit Generalized4626Strategy.ClaimedRewards(token, amount);
+        emit IGeneralized4626Strategy.ClaimedRewards(token, amount);
 
         strategy.merkleClaim(token, amount, proof);
     }

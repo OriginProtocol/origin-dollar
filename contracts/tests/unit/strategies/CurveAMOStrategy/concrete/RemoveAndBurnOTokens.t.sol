@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 import {Unit_CurveAMOStrategy_Shared_Test} from "tests/unit/strategies/CurveAMOStrategy/shared/Shared.t.sol";
-import {InitializableAbstractStrategy} from "contracts/utils/InitializableAbstractStrategy.sol";
+import {ICurveAMOStrategy} from "contracts/interfaces/strategies/ICurveAMOStrategy.sol";
 
 contract Unit_Concrete_CurveAMOStrategy_RemoveAndBurnOTokens_Test is Unit_CurveAMOStrategy_Shared_Test {
     function test_removeAndBurnOTokens_removesAndBurns() public {
@@ -48,7 +48,7 @@ contract Unit_Concrete_CurveAMOStrategy_RemoveAndBurnOTokens_Test is Unit_CurveA
 
         // The exact amount emitted depends on pool math, just check event is emitted
         vm.expectEmit(true, true, false, false);
-        emit InitializableAbstractStrategy.Withdrawal(address(oeth), address(curvePool), 0);
+        emit ICurveAMOStrategy.Withdrawal(address(oeth), address(curvePool), 0);
 
         vm.prank(strategist);
         curveAMOStrategy.removeAndBurnOTokens(lpToRemove);

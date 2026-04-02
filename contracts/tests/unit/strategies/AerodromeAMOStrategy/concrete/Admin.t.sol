@@ -3,7 +3,7 @@ pragma solidity ^0.8.0;
 
 import {Unit_AerodromeAMOStrategy_Shared_Test} from "tests/unit/strategies/AerodromeAMOStrategy/shared/Shared.t.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {AerodromeAMOStrategy} from "contracts/strategies/aerodrome/AerodromeAMOStrategy.sol";
+import {IAerodromeAMOStrategy} from "contracts/interfaces/strategies/IAerodromeAMOStrategy.sol";
 
 contract Unit_Concrete_AerodromeAMOStrategy_Admin_Test is Unit_AerodromeAMOStrategy_Shared_Test {
     //////////////////////////////////////////////////////
@@ -20,7 +20,7 @@ contract Unit_Concrete_AerodromeAMOStrategy_Admin_Test is Unit_AerodromeAMOStrat
 
     function test_setAllowedPoolWethShareInterval_emitsEvent() public {
         vm.expectEmit(true, true, true, true);
-        emit AerodromeAMOStrategy.PoolWethShareIntervalUpdated(0.1 ether, 0.9 ether);
+        emit IAerodromeAMOStrategy.PoolWethShareIntervalUpdated(0.1 ether, 0.9 ether);
 
         vm.prank(governor);
         aerodromeAMOStrategy.setAllowedPoolWethShareInterval(0.1 ether, 0.9 ether);

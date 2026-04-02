@@ -2,8 +2,7 @@
 pragma solidity ^0.8.0;
 
 import {Unit_CrossChainRemoteStrategy_Shared_Test} from "../shared/Shared.t.sol";
-import {CrossChainRemoteStrategy} from "contracts/strategies/crosschain/CrossChainRemoteStrategy.sol";
-import {InitializableAbstractStrategy} from "contracts/utils/InitializableAbstractStrategy.sol";
+import {ICrossChainRemoteStrategy} from "contracts/interfaces/strategies/ICrossChainRemoteStrategy.sol";
 
 contract Unit_Concrete_CrossChainRemoteStrategy_Deposit_Test is Unit_CrossChainRemoteStrategy_Shared_Test {
     //////////////////////////////////////////////////////
@@ -29,7 +28,7 @@ contract Unit_Concrete_CrossChainRemoteStrategy_Deposit_Test is Unit_CrossChainR
         _mintUsdc(address(crossChainRemoteStrategy), amount);
 
         vm.expectEmit(true, true, true, true);
-        emit InitializableAbstractStrategy.Deposit(address(mockUsdc), address(mockERC4626Vault), amount);
+        emit ICrossChainRemoteStrategy.Deposit(address(mockUsdc), address(mockERC4626Vault), amount);
 
         vm.prank(governor);
         crossChainRemoteStrategy.deposit(address(mockUsdc), amount);

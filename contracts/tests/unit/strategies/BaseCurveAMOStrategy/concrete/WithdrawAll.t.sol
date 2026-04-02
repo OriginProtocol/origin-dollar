@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 import {Unit_BaseCurveAMOStrategy_Shared_Test} from "tests/unit/strategies/BaseCurveAMOStrategy/shared/Shared.t.sol";
-import {InitializableAbstractStrategy} from "contracts/utils/InitializableAbstractStrategy.sol";
+import {IBaseCurveAMOStrategy} from "contracts/interfaces/strategies/IBaseCurveAMOStrategy.sol";
 
 contract Unit_Concrete_BaseCurveAMOStrategy_WithdrawAll_Test is Unit_BaseCurveAMOStrategy_Shared_Test {
     function test_withdrawAll_withdrawsEverything() public {
@@ -53,7 +53,7 @@ contract Unit_Concrete_BaseCurveAMOStrategy_WithdrawAll_Test is Unit_BaseCurveAM
         _depositAsVault(10 ether);
 
         vm.expectEmit(true, true, false, false);
-        emit InitializableAbstractStrategy.Withdrawal(address(weth), address(curvePool), 0);
+        emit IBaseCurveAMOStrategy.Withdrawal(address(weth), address(curvePool), 0);
 
         vm.prank(address(oethVault));
         baseCurveAMOStrategy.withdrawAll();
@@ -64,7 +64,7 @@ contract Unit_Concrete_BaseCurveAMOStrategy_WithdrawAll_Test is Unit_BaseCurveAM
         _depositAsVault(10 ether);
 
         vm.expectEmit(true, true, false, false);
-        emit InitializableAbstractStrategy.Withdrawal(address(oeth), address(curvePool), 0);
+        emit IBaseCurveAMOStrategy.Withdrawal(address(oeth), address(curvePool), 0);
 
         vm.prank(address(oethVault));
         baseCurveAMOStrategy.withdrawAll();

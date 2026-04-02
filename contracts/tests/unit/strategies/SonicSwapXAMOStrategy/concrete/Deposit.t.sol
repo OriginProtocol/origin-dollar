@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 import {Unit_SonicSwapXAMOStrategy_Shared_Test} from "tests/unit/strategies/SonicSwapXAMOStrategy/shared/Shared.t.sol";
-import {InitializableAbstractStrategy} from "contracts/utils/InitializableAbstractStrategy.sol";
+import {ISonicSwapXAMOStrategy} from "contracts/interfaces/strategies/ISonicSwapXAMOStrategy.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 contract Unit_Concrete_SonicSwapXAMOStrategy_Deposit_Test is Unit_SonicSwapXAMOStrategy_Shared_Test {
@@ -39,7 +39,7 @@ contract Unit_Concrete_SonicSwapXAMOStrategy_Deposit_Test is Unit_SonicSwapXAMOS
 
         // Expect Deposit event for wS
         vm.expectEmit(true, true, true, true);
-        emit InitializableAbstractStrategy.Deposit(address(mockWrappedSonic), address(mockSwapXPair), amount);
+        emit ISonicSwapXAMOStrategy.Deposit(address(mockWrappedSonic), address(mockSwapXPair), amount);
 
         vm.prank(address(oSonicVault));
         sonicSwapXAMOStrategy.deposit(address(mockWrappedSonic), amount);

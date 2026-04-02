@@ -5,27 +5,24 @@ import {Base} from "tests/Base.t.sol";
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {MockERC20} from "@solmate/test/utils/mocks/MockERC20.sol";
-import {OUSD} from "contracts/token/OUSD.sol";
-import {OUSDVault} from "contracts/vault/OUSDVault.sol";
-import {OUSDProxy} from "contracts/proxies/Proxies.sol";
-import {VaultProxy} from "contracts/proxies/Proxies.sol";
-import {CrossChainMasterStrategy} from "contracts/strategies/crosschain/CrossChainMasterStrategy.sol";
-import {AbstractCCTPIntegrator} from "contracts/strategies/crosschain/AbstractCCTPIntegrator.sol";
+import {IVault} from "contracts/interfaces/IVault.sol";
+import {IProxy} from "contracts/interfaces/IProxy.sol";
+import {IOToken} from "contracts/interfaces/IOToken.sol";
+import {ICrossChainMasterStrategy} from "contracts/interfaces/strategies/ICrossChainMasterStrategy.sol";
 import {CrossChainStrategyHelper} from "contracts/strategies/crosschain/CrossChainStrategyHelper.sol";
 import {CCTPMessageTransmitterMock} from "contracts/mocks/crosschain/CCTPMessageTransmitterMock.sol";
 import {CCTPTokenMessengerMock} from "contracts/mocks/crosschain/CCTPTokenMessengerMock.sol";
-import {InitializableAbstractStrategy} from "contracts/utils/InitializableAbstractStrategy.sol";
 
 abstract contract Unit_CrossChainMasterStrategy_Shared_Test is Base {
     //////////////////////////////////////////////////////
-    /// --- CONTRACTS & PROXIES (moved from Base)
+    /// --- CONTRACTS & PROXIES
     //////////////////////////////////////////////////////
 
-    OUSD internal ousd;
-    OUSDVault internal ousdVault;
-    OUSDProxy internal ousdProxy;
-    VaultProxy internal ousdVaultProxy;
-    CrossChainMasterStrategy internal crossChainMasterStrategy;
+    IOToken internal ousd;
+    IVault internal ousdVault;
+    IProxy internal ousdProxy;
+    IProxy internal ousdVaultProxy;
+    ICrossChainMasterStrategy internal crossChainMasterStrategy;
     CCTPMessageTransmitterMock internal cctpMessageTransmitterMock;
     CCTPTokenMessengerMock internal cctpTokenMessengerMock;
 
@@ -65,11 +62,19 @@ abstract contract Unit_CrossChainMasterStrategy_Shared_Test is Base {
         // Deploy OUSD + OUSDVault through proxies
         vm.startPrank(deployer);
 
-        OUSD ousdImpl = new OUSD();
-        OUSDVault ousdVaultImpl = new OUSDVault(address(mockUsdc));
+        IOToken ousdImpl = IOToken(vm.deployCode("contracts/token/OUSD.sol:OUSD"));
+        address ousdVaultImpl = vm.deployCode("contracts/vault/OUSDVault.sol:OUSDVault", abi.encode(address(mockUsdc)));
 
-        ousdProxy = new OUSDProxy();
-        ousdVaultProxy = new VaultProxy();
+        ousdProxy = IProxy(
+            vm.deployCode(
+                "contracts/proxies/InitializeGovernedUpgradeabilityProxy.sol:InitializeGovernedUpgradeabilityProxy"
+            )
+        );
+        ousdVaultProxy = IProxy(
+            vm.deployCode(
+                "contracts/proxies/InitializeGovernedUpgradeabilityProxy.sol:InitializeGovernedUpgradeabilityProxy"
+            )
+        );
 
         ousdProxy.initialize(
             address(ousdImpl),
@@ -83,8 +88,8 @@ abstract contract Unit_CrossChainMasterStrategy_Shared_Test is Base {
 
         vm.stopPrank();
 
-        ousd = OUSD(address(ousdProxy));
-        ousdVault = OUSDVault(address(ousdVaultProxy));
+        ousd = IOToken(address(ousdProxy));
+        ousdVault = IVault(address(ousdVaultProxy));
 
         // Configure vault
         vm.startPrank(governor);
@@ -104,18 +109,20 @@ abstract contract Unit_CrossChainMasterStrategy_Shared_Test is Base {
         operatorAddr = address(cctpMessageTransmitterMock);
 
         // Deploy CrossChainMasterStrategy
-        crossChainMasterStrategy = new CrossChainMasterStrategy(
-            InitializableAbstractStrategy.BaseStrategyConfig({
-                platformAddress: address(0), vaultAddress: address(ousdVault)
-            }),
-            AbstractCCTPIntegrator.CCTPIntegrationConfig({
-                cctpTokenMessenger: address(cctpTokenMessengerMock),
-                cctpMessageTransmitter: address(cctpMessageTransmitterMock),
-                peerDomainID: 6,
-                peerStrategy: peerStrategy,
-                usdcToken: address(mockUsdc),
-                peerUsdcToken: address(peerUsdc)
-            })
+        crossChainMasterStrategy = ICrossChainMasterStrategy(
+            vm.deployCode(
+                "contracts/strategies/crosschain/CrossChainMasterStrategy.sol:CrossChainMasterStrategy",
+                abi.encode(
+                    address(0), // platformAddress
+                    address(ousdVault), // vaultAddress
+                    address(cctpTokenMessengerMock), // cctpTokenMessenger
+                    address(cctpMessageTransmitterMock), // cctpMessageTransmitter
+                    uint32(6), // peerDomainID
+                    peerStrategy, // peerStrategy
+                    address(mockUsdc), // usdcToken
+                    address(peerUsdc) // peerUsdcToken
+                )
+            )
         );
 
         // Set governor via slot

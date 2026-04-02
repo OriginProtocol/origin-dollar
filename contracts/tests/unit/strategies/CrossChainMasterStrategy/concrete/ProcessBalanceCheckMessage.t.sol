@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 import {Unit_CrossChainMasterStrategy_Shared_Test} from "../shared/Shared.t.sol";
-import {CrossChainMasterStrategy} from "contracts/strategies/crosschain/CrossChainMasterStrategy.sol";
+import {ICrossChainMasterStrategy} from "contracts/interfaces/strategies/ICrossChainMasterStrategy.sol";
 import {CrossChainStrategyHelper} from "contracts/strategies/crosschain/CrossChainStrategyHelper.sol";
 
 contract Unit_Concrete_CrossChainMasterStrategy_ProcessBalanceCheckMessage_Test is
@@ -36,7 +36,7 @@ contract Unit_Concrete_CrossChainMasterStrategy_ProcessBalanceCheckMessage_Test 
         uint64 nonce = crossChainMasterStrategy.lastTransferNonce();
 
         vm.expectEmit(true, true, true, true);
-        emit CrossChainMasterStrategy.RemoteStrategyBalanceUpdated(amount);
+        emit ICrossChainMasterStrategy.RemoteStrategyBalanceUpdated(amount);
 
         _sendBalanceCheck(nonce, amount, true, block.timestamp);
     }
@@ -58,7 +58,7 @@ contract Unit_Concrete_CrossChainMasterStrategy_ProcessBalanceCheckMessage_Test 
 
         // Send non-confirmation balance check (transferConfirmation = false)
         vm.expectEmit(true, true, true, true);
-        emit CrossChainMasterStrategy.BalanceCheckIgnored(nonce, block.timestamp, false);
+        emit ICrossChainMasterStrategy.BalanceCheckIgnored(nonce, block.timestamp, false);
 
         _sendBalanceCheck(nonce, 2000e6, false, block.timestamp);
 
@@ -77,7 +77,7 @@ contract Unit_Concrete_CrossChainMasterStrategy_ProcessBalanceCheckMessage_Test 
         uint256 oldTimestamp = block.timestamp - 1 days - 1;
 
         vm.expectEmit(true, true, true, true);
-        emit CrossChainMasterStrategy.BalanceCheckIgnored(nonce, oldTimestamp, true);
+        emit ICrossChainMasterStrategy.BalanceCheckIgnored(nonce, oldTimestamp, true);
 
         _sendBalanceCheck(nonce, 9999e6, false, oldTimestamp);
 

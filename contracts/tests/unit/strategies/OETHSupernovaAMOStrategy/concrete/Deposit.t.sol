@@ -4,7 +4,7 @@ pragma solidity ^0.8.0;
 import {
     Unit_OETHSupernovaAMOStrategy_Shared_Test
 } from "tests/unit/strategies/OETHSupernovaAMOStrategy/shared/Shared.t.sol";
-import {InitializableAbstractStrategy} from "contracts/utils/InitializableAbstractStrategy.sol";
+import {IOETHSupernovaAMOStrategy} from "contracts/interfaces/strategies/IOETHSupernovaAMOStrategy.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 contract Unit_Concrete_OETHSupernovaAMOStrategy_Deposit_Test is Unit_OETHSupernovaAMOStrategy_Shared_Test {
@@ -41,7 +41,7 @@ contract Unit_Concrete_OETHSupernovaAMOStrategy_Deposit_Test is Unit_OETHSuperno
 
         // Expect Deposit event for WETH
         vm.expectEmit(true, true, true, true);
-        emit InitializableAbstractStrategy.Deposit(address(mockWeth), address(mockSwapXPair), amount);
+        emit IOETHSupernovaAMOStrategy.Deposit(address(mockWeth), address(mockSwapXPair), amount);
 
         vm.prank(address(oethVault));
         oethSupernovaAMOStrategy.deposit(address(mockWeth), amount);

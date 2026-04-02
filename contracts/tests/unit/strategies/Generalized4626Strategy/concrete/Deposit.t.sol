@@ -4,7 +4,7 @@ pragma solidity ^0.8.0;
 import {
     Unit_Generalized4626Strategy_Shared_Test
 } from "tests/unit/strategies/Generalized4626Strategy/shared/Shared.t.sol";
-import {InitializableAbstractStrategy} from "contracts/utils/InitializableAbstractStrategy.sol";
+import {IGeneralized4626Strategy} from "contracts/interfaces/strategies/IGeneralized4626Strategy.sol";
 
 contract Unit_Concrete_Generalized4626Strategy_Deposit_Test is Unit_Generalized4626Strategy_Shared_Test {
     function test_deposit_depositsToERC4626Vault() public {
@@ -23,7 +23,7 @@ contract Unit_Concrete_Generalized4626Strategy_Deposit_Test is Unit_Generalized4
         asset.mint(address(strategy), 100e18);
 
         vm.expectEmit(true, true, true, true);
-        emit InitializableAbstractStrategy.Deposit(address(asset), address(shareVault), 100e18);
+        emit IGeneralized4626Strategy.Deposit(address(asset), address(shareVault), 100e18);
 
         vm.prank(address(ousdVault));
         strategy.deposit(address(asset), 100e18);

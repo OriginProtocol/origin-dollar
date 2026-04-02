@@ -4,7 +4,7 @@ pragma solidity ^0.8.0;
 import {
     Unit_OETHSupernovaAMOStrategy_Shared_Test
 } from "tests/unit/strategies/OETHSupernovaAMOStrategy/shared/Shared.t.sol";
-import {StableSwapAMMStrategy} from "contracts/strategies/algebra/StableSwapAMMStrategy.sol";
+import {IOETHSupernovaAMOStrategy} from "contracts/interfaces/strategies/IOETHSupernovaAMOStrategy.sol";
 
 contract Unit_Concrete_OETHSupernovaAMOStrategy_SetMaxDepeg_Test is Unit_OETHSupernovaAMOStrategy_Shared_Test {
     function test_setMaxDepeg_updatesValue() public {
@@ -20,7 +20,7 @@ contract Unit_Concrete_OETHSupernovaAMOStrategy_SetMaxDepeg_Test is Unit_OETHSup
         uint256 newMaxDepeg = 0.03e18;
 
         vm.expectEmit(true, true, true, true);
-        emit StableSwapAMMStrategy.MaxDepegUpdated(newMaxDepeg);
+        emit IOETHSupernovaAMOStrategy.MaxDepegUpdated(newMaxDepeg);
 
         vm.prank(governor);
         oethSupernovaAMOStrategy.setMaxDepeg(newMaxDepeg);

@@ -2,8 +2,7 @@
 pragma solidity ^0.8.0;
 
 import {Unit_AerodromeAMOStrategy_Shared_Test} from "tests/unit/strategies/AerodromeAMOStrategy/shared/Shared.t.sol";
-import {AerodromeAMOStrategy} from "contracts/strategies/aerodrome/AerodromeAMOStrategy.sol";
-import {InitializableAbstractStrategy} from "contracts/utils/InitializableAbstractStrategy.sol";
+import {IAerodromeAMOStrategy} from "contracts/interfaces/strategies/IAerodromeAMOStrategy.sol";
 
 contract Unit_Concrete_AerodromeAMOStrategy_Rebalance_Test is Unit_AerodromeAMOStrategy_Shared_Test {
     function test_rebalance_noSwap() public {
@@ -55,7 +54,7 @@ contract Unit_Concrete_AerodromeAMOStrategy_Rebalance_Test is Unit_AerodromeAMOS
         deal(address(weth), address(aerodromeAMOStrategy), 10 ether);
 
         vm.expectEmit(false, false, false, false);
-        emit AerodromeAMOStrategy.PoolRebalanced(0);
+        emit IAerodromeAMOStrategy.PoolRebalanced(0);
 
         vm.prank(governor);
         aerodromeAMOStrategy.rebalance(0, false, 0);
@@ -87,7 +86,7 @@ contract Unit_Concrete_AerodromeAMOStrategy_Rebalance_Test is Unit_AerodromeAMOS
         vm.prank(governor);
         vm.expectRevert(
             abi.encodeWithSelector(
-                AerodromeAMOStrategy.PoolRebalanceOutOfBounds.selector,
+                IAerodromeAMOStrategy.PoolRebalanceOutOfBounds.selector,
                 0.0099009900990099 ether, // ~1% WETH share (1/(1+100))
                 0.02 ether,
                 0.5 ether
@@ -103,7 +102,7 @@ contract Unit_Concrete_AerodromeAMOStrategy_Rebalance_Test is Unit_AerodromeAMOS
         _setPoolPriceOutOfRange();
 
         vm.prank(governor);
-        vm.expectRevert(abi.encodeWithSelector(AerodromeAMOStrategy.OutsideExpectedTickRange.selector, int24(-2)));
+        vm.expectRevert(abi.encodeWithSelector(IAerodromeAMOStrategy.OutsideExpectedTickRange.selector, int24(-2)));
         aerodromeAMOStrategy.rebalance(0, false, 0);
     }
 
@@ -139,20 +138,24 @@ contract Unit_Concrete_AerodromeAMOStrategy_Rebalance_Test is Unit_AerodromeAMOS
 
     function test_rebalance_RevertWhen_wethShareIntervalNotSet() public {
         // Deploy a fresh strategy without setting the interval
-        AerodromeAMOStrategy freshStrategy = new AerodromeAMOStrategy(
-            InitializableAbstractStrategy.BaseStrategyConfig({
-                platformAddress: address(mockCLPool), vaultAddress: address(oethBaseVault)
-            }),
-            address(mockWeth),
-            address(oethBase),
-            address(mockSwapRouter),
-            address(mockPositionManager),
-            address(mockCLPool),
-            address(mockCLGauge),
-            address(mockSugarHelper),
-            int24(-1),
-            int24(0),
-            int24(0)
+        IAerodromeAMOStrategy freshStrategy = IAerodromeAMOStrategy(
+            vm.deployCode(
+                "contracts/strategies/aerodrome/AerodromeAMOStrategy.sol:AerodromeAMOStrategy",
+                abi.encode(
+                    address(mockCLPool),
+                    address(oethBaseVault),
+                    address(mockWeth),
+                    address(oethBase),
+                    address(mockSwapRouter),
+                    address(mockPositionManager),
+                    address(mockCLPool),
+                    address(mockCLGauge),
+                    address(mockSugarHelper),
+                    int24(-1),
+                    int24(0),
+                    int24(0)
+                )
+            )
         );
 
         // Reset initialization state (constructor uses `initializer` modifier)

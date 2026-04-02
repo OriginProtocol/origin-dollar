@@ -2,8 +2,7 @@
 pragma solidity ^0.8.0;
 
 import {Unit_CurveAMOStrategy_Shared_Test} from "tests/unit/strategies/CurveAMOStrategy/shared/Shared.t.sol";
-import {CurveAMOStrategy} from "contracts/strategies/CurveAMOStrategy.sol";
-import {InitializableAbstractStrategy} from "contracts/utils/InitializableAbstractStrategy.sol";
+import {ICurveAMOStrategy} from "contracts/interfaces/strategies/ICurveAMOStrategy.sol";
 import {MockCurvePool} from "tests/mocks/MockCurvePool.sol";
 import {MockCurveGauge} from "tests/mocks/MockCurveGauge.sol";
 import {MockCurveMinter} from "tests/mocks/MockCurveMinter.sol";
@@ -35,14 +34,16 @@ contract Unit_Concrete_CurveAMOStrategy_Constructor_Test is Unit_CurveAMOStrateg
         MockCurveGauge mismatchGauge = new MockCurveGauge(address(mismatchPool));
 
         vm.expectRevert("Invalid coin indexes");
-        new CurveAMOStrategy(
-            InitializableAbstractStrategy.BaseStrategyConfig({
-                platformAddress: address(mismatchPool), vaultAddress: address(oethVault)
-            }),
-            address(oeth),
-            address(mockWeth),
-            address(mismatchGauge),
-            address(curveMinter)
+        vm.deployCode(
+            "contracts/strategies/CurveAMOStrategy.sol:CurveAMOStrategy",
+            abi.encode(
+                address(mismatchPool),
+                address(oethVault),
+                address(oeth),
+                address(mockWeth),
+                address(mismatchGauge),
+                address(curveMinter)
+            )
         );
     }
 
@@ -51,14 +52,16 @@ contract Unit_Concrete_CurveAMOStrategy_Constructor_Test is Unit_CurveAMOStrateg
         MockCurveGauge badGauge = new MockCurveGauge(address(1));
 
         vm.expectRevert("Invalid pool");
-        new CurveAMOStrategy(
-            InitializableAbstractStrategy.BaseStrategyConfig({
-                platformAddress: address(curvePool), vaultAddress: address(oethVault)
-            }),
-            address(oeth),
-            address(mockWeth),
-            address(badGauge),
-            address(curveMinter)
+        vm.deployCode(
+            "contracts/strategies/CurveAMOStrategy.sol:CurveAMOStrategy",
+            abi.encode(
+                address(curvePool),
+                address(oethVault),
+                address(oeth),
+                address(mockWeth),
+                address(badGauge),
+                address(curveMinter)
+            )
         );
     }
 }

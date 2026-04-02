@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 import {Unit_CurveAMOStrategy_Shared_Test} from "tests/unit/strategies/CurveAMOStrategy/shared/Shared.t.sol";
-import {InitializableAbstractStrategy} from "contracts/utils/InitializableAbstractStrategy.sol";
+import {ICurveAMOStrategy} from "contracts/interfaces/strategies/ICurveAMOStrategy.sol";
 
 contract Unit_Concrete_CurveAMOStrategy_Deposit_Test is Unit_CurveAMOStrategy_Shared_Test {
     function test_deposit_depositsToPoolAndGauge() public {
@@ -95,7 +95,7 @@ contract Unit_Concrete_CurveAMOStrategy_Deposit_Test is Unit_CurveAMOStrategy_Sh
 
         // Expect two Deposit events: one for hardAsset, one for oToken
         vm.expectEmit(true, true, true, true);
-        emit InitializableAbstractStrategy.Deposit(address(weth), address(curvePool), amount);
+        emit ICurveAMOStrategy.Deposit(address(weth), address(curvePool), amount);
 
         vm.prank(address(oethVault));
         curveAMOStrategy.deposit(address(weth), amount);
@@ -154,7 +154,7 @@ contract Unit_Concrete_CurveAMOStrategy_Deposit_Test is Unit_CurveAMOStrategy_Sh
 
         // Expect second Deposit event for OToken
         vm.expectEmit(true, true, false, false);
-        emit InitializableAbstractStrategy.Deposit(address(oeth), address(curvePool), 0);
+        emit ICurveAMOStrategy.Deposit(address(oeth), address(curvePool), 0);
 
         vm.prank(address(oethVault));
         curveAMOStrategy.deposit(address(weth), amount);
