@@ -4,8 +4,7 @@ pragma solidity ^0.8.0;
 import {
     Unit_ClaimStrategyRewardsSafeModule_Shared_Test
 } from "tests/unit/automation/ClaimStrategyRewardsSafeModule/shared/Shared.t.sol";
-
-import {ClaimStrategyRewardsSafeModule} from "contracts/automation/ClaimStrategyRewardsSafeModule.sol";
+import {IClaimStrategyRewardsSafeModule} from "contracts/interfaces/automation/IClaimStrategyRewardsSafeModule.sol";
 
 contract Unit_Concrete_ClaimStrategyRewardsSafeModule_RemoveStrategy_Test is
     Unit_ClaimStrategyRewardsSafeModule_Shared_Test
@@ -17,7 +16,7 @@ contract Unit_Concrete_ClaimStrategyRewardsSafeModule_RemoveStrategy_Test is
     function test_removeStrategy_removesAndUnwhitelistsStrategy() public {
         vm.prank(address(mockSafe));
         vm.expectEmit(true, true, true, true);
-        emit ClaimStrategyRewardsSafeModule.StrategyRemoved(strategyA);
+        emit IClaimStrategyRewardsSafeModule.StrategyRemoved(strategyA);
         claimStrategyRewardsModule.removeStrategy(strategyA);
 
         assertFalse(claimStrategyRewardsModule.isStrategyWhitelisted(strategyA));

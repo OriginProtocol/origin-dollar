@@ -4,8 +4,7 @@ pragma solidity ^0.8.0;
 import {
     Unit_CurvePoolBoosterBribesModule_Shared_Test
 } from "tests/unit/automation/CurvePoolBoosterBribesModule/shared/Shared.t.sol";
-
-import {CurvePoolBoosterBribesModule} from "contracts/automation/CurvePoolBoosterBribesModule.sol";
+import {ICurvePoolBoosterBribesModule} from "contracts/interfaces/automation/ICurvePoolBoosterBribesModule.sol";
 
 contract Unit_Concrete_CurvePoolBoosterBribesModule_SetAdditionalGasLimit_Test is
     Unit_CurvePoolBoosterBribesModule_Shared_Test
@@ -19,7 +18,7 @@ contract Unit_Concrete_CurvePoolBoosterBribesModule_SetAdditionalGasLimit_Test i
 
         vm.prank(operator);
         vm.expectEmit(true, true, true, true);
-        emit CurvePoolBoosterBribesModule.AdditionalGasLimitUpdated(newLimit);
+        emit ICurvePoolBoosterBribesModule.AdditionalGasLimitUpdated(newLimit);
         curvePoolBoosterBribesModule.setAdditionalGasLimit(newLimit);
 
         assertEq(curvePoolBoosterBribesModule.additionalGasLimit(), newLimit);

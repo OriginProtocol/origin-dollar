@@ -4,8 +4,7 @@ pragma solidity ^0.8.0;
 import {
     Unit_ClaimStrategyRewardsSafeModule_Shared_Test
 } from "tests/unit/automation/ClaimStrategyRewardsSafeModule/shared/Shared.t.sol";
-
-import {ClaimStrategyRewardsSafeModule} from "contracts/automation/ClaimStrategyRewardsSafeModule.sol";
+import {IClaimStrategyRewardsSafeModule} from "contracts/interfaces/automation/IClaimStrategyRewardsSafeModule.sol";
 
 contract Unit_Concrete_ClaimStrategyRewardsSafeModule_ClaimRewards_Test is
     Unit_ClaimStrategyRewardsSafeModule_Shared_Test
@@ -44,7 +43,7 @@ contract Unit_Concrete_ClaimStrategyRewardsSafeModule_ClaimRewards_Test is
 
         vm.prank(operator);
         vm.expectEmit(true, true, true, true);
-        emit ClaimStrategyRewardsSafeModule.ClaimRewardsFailed(strategyA);
+        emit IClaimStrategyRewardsSafeModule.ClaimRewardsFailed(strategyA);
         claimStrategyRewardsModule.claimRewards(true);
     }
 

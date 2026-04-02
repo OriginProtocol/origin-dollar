@@ -2,8 +2,7 @@
 pragma solidity ^0.8.0;
 
 import {Unit_ClaimBribesSafeModule_Shared_Test} from "tests/unit/automation/ClaimBribesSafeModule/shared/Shared.t.sol";
-
-import {ClaimBribesSafeModule} from "contracts/automation/ClaimBribesSafeModule.sol";
+import {IClaimBribesSafeModule} from "contracts/interfaces/automation/IClaimBribesSafeModule.sol";
 
 contract Unit_Concrete_ClaimBribesSafeModule_AddNFTIds_Test is Unit_ClaimBribesSafeModule_Shared_Test {
     //////////////////////////////////////////////////////
@@ -34,7 +33,7 @@ contract Unit_Concrete_ClaimBribesSafeModule_AddNFTIds_Test is Unit_ClaimBribesS
 
         vm.prank(operator);
         vm.expectEmit(true, true, true, true);
-        emit ClaimBribesSafeModule.NFTIdAdded(1);
+        emit IClaimBribesSafeModule.NFTIdAdded(1);
         claimBribesModule.addNFTIds(ids);
     }
 

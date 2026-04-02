@@ -5,12 +5,7 @@ import {Base} from "tests/Base.t.sol";
 
 import {MockSafeContract} from "tests/mocks/MockSafeContract.sol";
 import {MockERC20} from "@solmate/test/utils/mocks/MockERC20.sol";
-import {AbstractSafeModule} from "contracts/automation/AbstractSafeModule.sol";
-
-/// @notice Concrete implementation of AbstractSafeModule used as a test harness.
-contract ConcreteAbstractSafeModule is AbstractSafeModule {
-    constructor(address _safeContract) AbstractSafeModule(_safeContract) {}
-}
+import {IAbstractSafeModule} from "contracts/interfaces/automation/IAbstractSafeModule.sol";
 
 abstract contract Unit_AbstractSafeModule_Shared_Test is Base {
     //////////////////////////////////////////////////////
@@ -18,7 +13,7 @@ abstract contract Unit_AbstractSafeModule_Shared_Test is Base {
     //////////////////////////////////////////////////////
 
     MockSafeContract internal mockSafe;
-    ConcreteAbstractSafeModule internal module;
+    IAbstractSafeModule internal module;
     MockERC20 internal mockToken;
 
     //////////////////////////////////////////////////////
@@ -36,8 +31,11 @@ abstract contract Unit_AbstractSafeModule_Shared_Test is Base {
         // Deploy mock safe
         mockSafe = new MockSafeContract();
 
-        // Deploy concrete module with mock safe as the safe contract
-        module = new ConcreteAbstractSafeModule(address(mockSafe));
+        module = IAbstractSafeModule(
+            vm.deployCode(
+                "tests/mocks/ConcreteAbstractSafeModule.sol:ConcreteAbstractSafeModule", abi.encode(address(mockSafe))
+            )
+        );
 
         // Deploy a mock ERC20 token
         mockToken = new MockERC20("Mock Token", "MTK", 18);

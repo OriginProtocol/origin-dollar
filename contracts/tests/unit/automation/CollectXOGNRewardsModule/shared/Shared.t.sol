@@ -6,7 +6,7 @@ import {Base} from "tests/Base.t.sol";
 import {MockSafeContract} from "tests/mocks/MockSafeContract.sol";
 import {MockERC20} from "@solmate/test/utils/mocks/MockERC20.sol";
 import {MockXOGN} from "tests/mocks/MockXOGN.sol";
-import {CollectXOGNRewardsModule} from "contracts/automation/CollectXOGNRewardsModule.sol";
+import {ICollectXOGNRewardsModule} from "contracts/interfaces/automation/ICollectXOGNRewardsModule.sol";
 
 abstract contract Unit_CollectXOGNRewardsModule_Shared_Test is Base {
     //////////////////////////////////////////////////////
@@ -14,7 +14,7 @@ abstract contract Unit_CollectXOGNRewardsModule_Shared_Test is Base {
     //////////////////////////////////////////////////////
 
     MockSafeContract internal mockSafe;
-    CollectXOGNRewardsModule internal collectXOGNRewardsModule;
+    ICollectXOGNRewardsModule internal collectXOGNRewardsModule;
     MockERC20 internal ognToken;
     MockXOGN internal xognMock;
 
@@ -56,7 +56,12 @@ abstract contract Unit_CollectXOGNRewardsModule_Shared_Test is Base {
         vm.store(XOGN_ADDRESS, bytes32(uint256(0)), bytes32(uint256(uint160(OGN_ADDRESS))));
 
         // Deploy CollectXOGNRewardsModule
-        collectXOGNRewardsModule = new CollectXOGNRewardsModule(address(mockSafe), operator);
+        collectXOGNRewardsModule = ICollectXOGNRewardsModule(
+            vm.deployCode(
+                "contracts/automation/CollectXOGNRewardsModule.sol:CollectXOGNRewardsModule",
+                abi.encode(address(mockSafe), operator)
+            )
+        );
     }
 
     //////////////////////////////////////////////////////

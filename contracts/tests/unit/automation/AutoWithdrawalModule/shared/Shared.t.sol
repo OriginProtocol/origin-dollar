@@ -7,7 +7,7 @@ import {MockSafeContract} from "tests/mocks/MockSafeContract.sol";
 import {MockAutoWithdrawalVault} from "tests/mocks/MockAutoWithdrawalVault.sol";
 import {MockERC20} from "@solmate/test/utils/mocks/MockERC20.sol";
 import {MockStrategy} from "contracts/mocks/MockStrategy.sol";
-import {AutoWithdrawalModule} from "contracts/automation/AutoWithdrawalModule.sol";
+import {IAutoWithdrawalModule} from "contracts/interfaces/automation/IAutoWithdrawalModule.sol";
 
 abstract contract Unit_AutoWithdrawalModule_Shared_Test is Base {
     //////////////////////////////////////////////////////
@@ -16,7 +16,7 @@ abstract contract Unit_AutoWithdrawalModule_Shared_Test is Base {
 
     MockSafeContract internal mockSafe;
     MockStrategy internal mockStrategy;
-    AutoWithdrawalModule internal autoWithdrawalModule;
+    IAutoWithdrawalModule internal autoWithdrawalModule;
     MockERC20 internal assetToken;
     MockAutoWithdrawalVault internal mockVault;
 
@@ -45,8 +45,12 @@ abstract contract Unit_AutoWithdrawalModule_Shared_Test is Base {
         mockStrategy = new MockStrategy();
 
         // Deploy AutoWithdrawalModule
-        autoWithdrawalModule =
-            new AutoWithdrawalModule(address(mockSafe), operator, address(mockVault), address(mockStrategy));
+        autoWithdrawalModule = IAutoWithdrawalModule(
+            vm.deployCode(
+                "contracts/automation/AutoWithdrawalModule.sol:AutoWithdrawalModule",
+                abi.encode(address(mockSafe), operator, address(mockVault), address(mockStrategy))
+            )
+        );
     }
 
     //////////////////////////////////////////////////////

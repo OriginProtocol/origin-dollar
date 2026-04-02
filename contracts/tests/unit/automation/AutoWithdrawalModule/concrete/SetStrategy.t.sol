@@ -2,8 +2,7 @@
 pragma solidity ^0.8.0;
 
 import {Unit_AutoWithdrawalModule_Shared_Test} from "tests/unit/automation/AutoWithdrawalModule/shared/Shared.t.sol";
-
-import {AutoWithdrawalModule} from "contracts/automation/AutoWithdrawalModule.sol";
+import {IAutoWithdrawalModule} from "contracts/interfaces/automation/IAutoWithdrawalModule.sol";
 
 contract Unit_Concrete_AutoWithdrawalModule_SetStrategy_Test is Unit_AutoWithdrawalModule_Shared_Test {
     //////////////////////////////////////////////////////
@@ -23,7 +22,7 @@ contract Unit_Concrete_AutoWithdrawalModule_SetStrategy_Test is Unit_AutoWithdra
         address newStrategy = makeAddr("NewStrategy");
 
         vm.expectEmit(false, false, false, true, address(autoWithdrawalModule));
-        emit AutoWithdrawalModule.StrategyUpdated(address(mockStrategy), newStrategy);
+        emit IAutoWithdrawalModule.StrategyUpdated(address(mockStrategy), newStrategy);
 
         vm.prank(address(mockSafe));
         autoWithdrawalModule.setStrategy(newStrategy);

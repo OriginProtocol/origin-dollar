@@ -4,14 +4,14 @@ pragma solidity ^0.8.0;
 import {Base} from "tests/Base.t.sol";
 
 import {MockSafeContract} from "tests/mocks/MockSafeContract.sol";
-import {BaseBridgeHelperModule} from "contracts/automation/BaseBridgeHelperModule.sol";
+import {IBaseBridgeHelperModule} from "contracts/interfaces/automation/IBaseBridgeHelperModule.sol";
 
 abstract contract Unit_BaseBridgeHelperModule_Shared_Test is Base {
     //////////////////////////////////////////////////////
     /// --- CONTRACTS & MOCKS
     //////////////////////////////////////////////////////
     MockSafeContract internal mockSafe;
-    BaseBridgeHelperModule internal baseBridgeHelperModule;
+    IBaseBridgeHelperModule internal baseBridgeHelperModule;
 
     //////////////////////////////////////////////////////
     /// --- SETUP
@@ -29,7 +29,11 @@ abstract contract Unit_BaseBridgeHelperModule_Shared_Test is Base {
         mockSafe = new MockSafeContract();
 
         // Deploy BaseBridgeHelperModule
-        baseBridgeHelperModule = new BaseBridgeHelperModule(address(mockSafe));
+        baseBridgeHelperModule = IBaseBridgeHelperModule(
+            vm.deployCode(
+                "contracts/automation/BaseBridgeHelperModule.sol:BaseBridgeHelperModule", abi.encode(address(mockSafe))
+            )
+        );
 
         // Grant OPERATOR_ROLE to operator via safe
         mockSafe.execTransactionFromModule(
