@@ -6,7 +6,7 @@ action({
   name: "manageMerklBribes",
   description:
     "Calls bribeAll on the MerklPoolBoosterBribesModule through the Gnosis Safe",
-  chains: [1],
+  chains: [1, 8453],
   params: (t) => {
     t.addOptionalParam(
       "exclusionList",
