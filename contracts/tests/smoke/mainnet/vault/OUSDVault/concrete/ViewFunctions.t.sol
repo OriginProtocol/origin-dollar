@@ -37,7 +37,7 @@ contract Smoke_Concrete_OUSDVault_ViewFunctions_Test is Smoke_OUSDVault_Shared_T
     function test_allStrategies_areSupported() public view {
         address[] memory strats = ousdVault.getAllStrategies();
         for (uint256 i = 0; i < strats.length; i++) {
-            (bool isSupported,) = ousdVault.strategies(strats[i]);
+            bool isSupported = ousdVault.strategies(strats[i]).isSupported;
             assertTrue(isSupported);
         }
     }

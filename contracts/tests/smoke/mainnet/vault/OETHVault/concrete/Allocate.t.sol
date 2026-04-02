@@ -9,9 +9,8 @@ contract Smoke_Concrete_OETHVault_Allocate_Test is Smoke_OETHVault_Shared_Test {
     //////////////////////////////////////////////////////
 
     function test_depositToStrategy_movesWethFromVault() public {
-        // Mint to ensure vault has available WETH
         _mintOETH(alice, 100 ether);
-        deal(address(weth), address(oethVault), weth.balanceOf(address(oethVault)) + 10 ether);
+        _ensureAssetAvailable(10 ether);
 
         uint256 vaultWethBefore = weth.balanceOf(address(oethVault));
         uint256 stratBalanceBefore = curveAMOStrategy.checkBalance(address(weth));
@@ -30,7 +29,7 @@ contract Smoke_Concrete_OETHVault_Allocate_Test is Smoke_OETHVault_Shared_Test {
 
     function test_withdrawFromStrategy_movesWethToVault() public {
         _mintOETH(alice, 100 ether);
-        deal(address(weth), address(oethVault), weth.balanceOf(address(oethVault)) + 10 ether);
+        _ensureAssetAvailable(10 ether);
 
         address[] memory assets = new address[](1);
         assets[0] = address(weth);
@@ -55,7 +54,7 @@ contract Smoke_Concrete_OETHVault_Allocate_Test is Smoke_OETHVault_Shared_Test {
 
     function test_depositAndWithdraw_totalValuePreserved() public {
         _mintOETH(alice, 100 ether);
-        deal(address(weth), address(oethVault), weth.balanceOf(address(oethVault)) + 10 ether);
+        _ensureAssetAvailable(10 ether);
         uint256 totalValueBefore = oethVault.totalValue();
 
         address[] memory assets = new address[](1);

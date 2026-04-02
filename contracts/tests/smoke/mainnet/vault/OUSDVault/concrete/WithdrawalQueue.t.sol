@@ -12,12 +12,14 @@ contract Smoke_Concrete_OUSDVault_WithdrawalQueue_Test is Smoke_OUSDVault_Shared
         _mintOUSD(alice, 1000e6);
         uint256 ousdBalance = ousd.balanceOf(alice);
 
-        (uint256 queuedBefore,,, uint256 nextIndexBefore) = ousdVault.withdrawalQueueMetadata();
+        uint256 queuedBefore = ousdVault.withdrawalQueueMetadata().queued;
+        uint256 nextIndexBefore = ousdVault.withdrawalQueueMetadata().nextWithdrawalIndex;
 
         vm.prank(alice);
         ousdVault.requestWithdrawal(ousdBalance);
 
-        (uint256 queuedAfter,,, uint256 nextIndexAfter) = ousdVault.withdrawalQueueMetadata();
+        uint256 queuedAfter = ousdVault.withdrawalQueueMetadata().queued;
+        uint256 nextIndexAfter = ousdVault.withdrawalQueueMetadata().nextWithdrawalIndex;
 
         assertGt(queuedAfter, queuedBefore);
         assertEq(nextIndexAfter, nextIndexBefore + 1);
@@ -73,14 +75,15 @@ contract Smoke_Concrete_OUSDVault_WithdrawalQueue_Test is Smoke_OUSDVault_Shared
         vm.prank(alice);
         ousdVault.requestWithdrawal(ousdBalance);
 
-        (uint256 queued, uint256 claimableBefore,,) = ousdVault.withdrawalQueueMetadata();
+        uint256 queued = ousdVault.withdrawalQueueMetadata().queued;
+        uint256 claimableBefore = ousdVault.withdrawalQueueMetadata().claimable;
 
         // If there's already a shortfall, deal USDC to vault and add liquidity
         if (queued > claimableBefore) {
             deal(address(usdc), address(ousdVault), usdc.balanceOf(address(ousdVault)) + 1000e6);
             ousdVault.addWithdrawalQueueLiquidity();
 
-            (, uint256 claimableAfter,,) = ousdVault.withdrawalQueueMetadata();
+            uint256 claimableAfter = ousdVault.withdrawalQueueMetadata().claimable;
             assertGt(claimableAfter, claimableBefore);
         }
     }
@@ -92,7 +95,9 @@ contract Smoke_Concrete_OUSDVault_WithdrawalQueue_Test is Smoke_OUSDVault_Shared
         vm.prank(alice);
         (uint256 requestId,) = ousdVault.requestWithdrawal(ousdBalance);
 
-        (address withdrawer, bool claimed, uint40 timestamp,,) = ousdVault.withdrawalRequests(requestId);
+        address withdrawer = ousdVault.withdrawalRequests(requestId).withdrawer;
+        bool claimed = ousdVault.withdrawalRequests(requestId).claimed;
+        uint40 timestamp = ousdVault.withdrawalRequests(requestId).timestamp;
 
         assertEq(withdrawer, alice);
         assertFalse(claimed);
