@@ -1,21 +1,30 @@
-const { Defender } = require("@openzeppelin/defender-sdk");
+import { encodeFunctionData, parseAbi } from "viem";
 
-exports.handler = async function (credentials) {
-  const client = new Defender(credentials);
+import { action } from "../lib/action";
 
-  const txRes = await client.relaySigner.sendTransaction({
-    // calls the SonicStakingStrategyProxy
-    to: "0x596B0401479f6DfE1cAF8c12838311FeE742B95c",
-    value: 0,
-    speed: "fast",
-    gasLimit: "300000",
-    // calls restakeRewards for validator 18
-    data: "0xdc25cf9200000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000000000005000000000000000000000000000000000000000000000000000000000000000f000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000000000000000000000000110000000000000000000000000000000000000000000000000000000000000012000000000000000000000000000000000000000000000000000000000000002D",
-  });
+const SONIC_STAKING_STRATEGY = "0x596B0401479f6DfE1cAF8c12838311FeE742B95c";
+const VALIDATOR_IDS = [15n, 16n, 17n, 18n, 45n];
 
-  console.log(txRes);
+const abi = parseAbi([
+  "function restakeRewards(uint256[] validatorIds) external",
+]);
 
-  return txRes.hash;
-};
-
-// https://defender.openzeppelin.com/#/actions/automatic/81fad098-1ca4-4407-8053-dc665c877641
+action({
+  name: "otoken-os-sonicRestakeRewards",
+  description: "Restake rewards for Sonic validators",
+  chains: [146],
+  run: async ({ signer, log }) => {
+    log.info(`Restaking rewards for validators: ${VALIDATOR_IDS.join(", ")}`);
+    const tx = await signer.sendTransaction({
+      to: SONIC_STAKING_STRATEGY,
+      data: encodeFunctionData({
+        abi,
+        functionName: "restakeRewards",
+        args: [VALIDATOR_IDS],
+      }),
+      gasLimit: 300000,
+    });
+    log.info(`restakeRewards tx: ${tx.hash}`);
+    await tx.wait();
+  },
+});

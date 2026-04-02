@@ -1,18 +1,24 @@
-const { Defender } = require("@openzeppelin/defender-sdk");
+import { encodeFunctionData, parseAbi } from "viem";
 
-exports.handler = async function (credentials) {
-  const client = new Defender(credentials);
+import { action } from "../lib/action";
 
-  const tx = await client.relaySigner.sendTransaction({
-    to: "0xc8c8F8bEA5631A8AF26440AF32a55002138cB76a",
-    value: 0,
-    speed: "fast",
-    gasLimit: "400000",
-    data: "0xb9b17f9f",
-  });
+const VAULT = "0xc8c8F8bEA5631A8AF26440AF32a55002138cB76a";
+const abi = parseAbi(["function addWithdrawalQueueLiquidity() external"]);
 
-  console.log(tx);
-  return tx.hash;
-};
-
-// https://defender.openzeppelin.com/#/actions/automatic/4fc4372d-05b3-4e6b-ad29-8fcff117737e
+action({
+  name: "otoken-oethp-addWithdrawalQueueLiquidity",
+  description: "Add liquidity to Plume OETH withdrawal queue",
+  chains: [1],
+  run: async ({ signer, log }) => {
+    const tx = await signer.sendTransaction({
+      to: VAULT,
+      data: encodeFunctionData({
+        abi,
+        functionName: "addWithdrawalQueueLiquidity",
+      }),
+      gasLimit: 400000,
+    });
+    log.info(`addWithdrawalQueueLiquidity tx: ${tx.hash}`);
+    await tx.wait();
+  },
+});

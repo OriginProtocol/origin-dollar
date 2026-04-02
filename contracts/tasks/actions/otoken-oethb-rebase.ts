@@ -1,19 +1,21 @@
-const { Defender } = require("@openzeppelin/defender-sdk");
+import { encodeFunctionData, parseAbi } from "viem";
 
-exports.handler = async function (credentials) {
-  const client = new Defender(credentials);
+import { action } from "../lib/action";
 
-  const txRes = await client.relaySigner.sendTransaction({
-    to: "0x98a0CbeF61bD2D21435f433bE4CD42B56B38CC93",
-    value: 0,
-    speed: "fast",
-    gasLimit: 300000,
-    data: "0xaf14052c",
-  });
+const VAULT = "0x98a0CbeF61bD2D21435f433bE4CD42B56B38CC93";
+const abi = parseAbi(["function rebase() external"]);
 
-  console.log(txRes);
-
-  return txRes.hash;
-};
-
-// https://defender.openzeppelin.com/#/actions/automatic/7d91be37-1cdf-4481-9f79-fb1e0a43277a
+action({
+  name: "otoken-oethb-rebase",
+  description: "Rebase OETHb vault on Base",
+  chains: [8453],
+  run: async ({ signer, log }) => {
+    const tx = await signer.sendTransaction({
+      to: VAULT,
+      data: encodeFunctionData({ abi, functionName: "rebase" }),
+      gasLimit: 300000,
+    });
+    log.info(`rebase tx: ${tx.hash}`);
+    await tx.wait();
+  },
+});

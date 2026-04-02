@@ -1,17 +1,21 @@
-const { Defender } = require("@openzeppelin/defender-sdk");
+import { encodeFunctionData, parseAbi } from "viem";
 
-exports.handler = async function (credentials) {
-  const client = new Defender(credentials);
+import { action } from "../lib/action";
 
-  const txRes = await client.relaySigner.sendTransaction({
-    to: "0xE0228DB13F8C4Eb00fD1e08e076b09eF5cD0EA1e",
-    value: 0,
-    speed: "fast",
-    gasLimit: "1000000",
-    // sendBalanceUpdate()
-    data: "0x3335ad7f",
-  });
+const CROSS_CHAIN_CONTROLLER = "0xE0228DB13F8C4Eb00fD1e08e076b09eF5cD0EA1e";
+const abi = parseAbi(["function sendBalanceUpdate() external"]);
 
-  console.log(txRes);
-  return txRes.hash;
-};
+action({
+  name: "hyperevm-crossChainBalanceUpdate",
+  description: "Send cross-chain balance update from HyperEVM",
+  chains: [999],
+  run: async ({ signer, log }) => {
+    const tx = await signer.sendTransaction({
+      to: CROSS_CHAIN_CONTROLLER,
+      data: encodeFunctionData({ abi, functionName: "sendBalanceUpdate" }),
+      gasLimit: 1000000,
+    });
+    log.info(`sendBalanceUpdate tx: ${tx.hash}`);
+    await tx.wait();
+  },
+});

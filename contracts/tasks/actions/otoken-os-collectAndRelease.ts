@@ -1,29 +1,41 @@
-const { Defender } = require("@openzeppelin/defender-sdk");
+import { encodeFunctionData, parseAbi } from "viem";
 
-exports.handler = async function (credentials) {
-  const client = new Defender(credentials);
+import { action } from "../lib/action";
 
-  // Rebase on the Vault
-  const txRes = await client.relaySigner.sendTransaction({
-    to: "0xa3c0eca00d2b76b4d1f170b0ab3fdea16c180186",
-    value: 0,
-    speed: "fast",
-    gasLimit: "400000",
-    data: "0xaf14052c",
-  });
-  console.log(txRes);
+const OS_VAULT = "0xa3c0eca00d2b76b4d1f170b0ab3fdea16c180186";
+const OS_HARVESTER = "0x7B0383b31C7662E3f6B6E9C743Bc87b93C1f4498";
+const SONIC_STAKING_STRATEGY = "0xbe19cc5654e30daf04ad3b5e06213d70f4e882ee";
 
-  // Harvet and transfer
-  const harvestTx = await client.relaySigner.sendTransaction({
-    to: "0x7B0383b31C7662E3f6B6E9C743Bc87b93C1f4498",
-    value: 0,
-    speed: "fast",
-    gasLimit: "400000",
-    data: "0x08765741000000000000000000000000be19cc5654e30daf04ad3b5e06213d70f4e882ee",
-  });
-  console.log(harvestTx);
+const vaultAbi = parseAbi(["function rebase() external"]);
+const harvesterAbi = parseAbi([
+  "function harvestAndTransfer(address strategy) external",
+]);
 
-  return txRes.hash;
-};
+action({
+  name: "otoken-os-collectAndRelease",
+  description: "Rebase OS vault and harvest on Sonic",
+  chains: [146],
+  run: async ({ signer, log }) => {
+    // Rebase the vault
+    const rebaseTx = await signer.sendTransaction({
+      to: OS_VAULT,
+      data: encodeFunctionData({ abi: vaultAbi, functionName: "rebase" }),
+      gasLimit: 400000,
+    });
+    log.info(`rebase tx: ${rebaseTx.hash}`);
+    await rebaseTx.wait();
 
-// https://defender.openzeppelin.com/#/actions/automatic/f558b0a0-45d5-4a7e-b0a8-c6fa8b3c19e5
+    // Harvest and transfer
+    const harvestTx = await signer.sendTransaction({
+      to: OS_HARVESTER,
+      data: encodeFunctionData({
+        abi: harvesterAbi,
+        functionName: "harvestAndTransfer",
+        args: [SONIC_STAKING_STRATEGY],
+      }),
+      gasLimit: 400000,
+    });
+    log.info(`harvestAndTransfer tx: ${harvestTx.hash}`);
+    await harvestTx.wait();
+  },
+});

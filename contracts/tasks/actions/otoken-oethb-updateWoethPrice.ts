@@ -1,18 +1,21 @@
-const { Defender } = require("@openzeppelin/defender-sdk");
+import { encodeFunctionData, parseAbi } from "viem";
 
-exports.handler = async function (credentials) {
-  const client = new Defender(credentials);
+import { action } from "../lib/action";
 
-  const txRes = await client.relaySigner.sendTransaction({
-    to: "0x80c864704DD06C3693ed5179190786EE38ACf835",
-    value: 0,
-    speed: "fast",
-    gasLimit: "200000",
-    data: "0x6c713833",
-  });
+const WOETH_ON_BASE = "0x80c864704DD06C3693ed5179190786EE38ACf835";
+const abi = parseAbi(["function updateWOETHPrice() external"]);
 
-  console.log(txRes);
-  return txRes.hash;
-};
-
-// https://defender.openzeppelin.com/#/actions/automatic/55082b52-4878-450c-8b5e-918bf7e27dc4
+action({
+  name: "otoken-oethb-updateWoethPrice",
+  description: "Update WOETH price on Base",
+  chains: [8453],
+  run: async ({ signer, log }) => {
+    const tx = await signer.sendTransaction({
+      to: WOETH_ON_BASE,
+      data: encodeFunctionData({ abi, functionName: "updateWOETHPrice" }),
+      gasLimit: 200000,
+    });
+    log.info(`updateWOETHPrice tx: ${tx.hash}`);
+    await tx.wait();
+  },
+});
