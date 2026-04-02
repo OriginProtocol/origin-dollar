@@ -103,4 +103,5 @@ module.exports = {
   impersonateAccount,
   impersonateAndFund,
   getDefenderSigner,
+  getKmsSigner,
 };

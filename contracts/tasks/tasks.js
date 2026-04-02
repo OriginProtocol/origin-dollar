@@ -20,7 +20,7 @@ const {
   encryptMasterPrivateKey,
   decryptMasterPrivateKey,
 } = require("./amazon");
-const { getSigner, getDefenderSigner } = require("../utils/signers");
+const { getSigner, getDefenderSigner, getKmsSigner } = require("../utils/signers");
 const { snapMorpho } = require("../utils/morpho");
 const { snapAero } = require("./aero");
 const {
@@ -1210,8 +1210,9 @@ task(
       `.localKeyValueStorage.${networkName}`
     );
 
-    // This action only works with the Defender Relayer signer
-    const signer = await getDefenderSigner();
+    // This action used to only work with defender relayer signer,
+    // in future it will work with KMS signer
+    const signer = await getKmsSigner();
     const store = keyValueStoreLocalClient({ _storePath: storeFilePath });
 
     const isMainnet = networkName === "mainnet";
