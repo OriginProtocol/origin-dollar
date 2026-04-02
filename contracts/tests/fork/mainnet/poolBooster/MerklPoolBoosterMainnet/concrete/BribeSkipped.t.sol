@@ -6,12 +6,12 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {
     Fork_MerklPoolBoosterMainnet_Shared_Test
 } from "tests/fork/mainnet/poolBooster/MerklPoolBoosterMainnet/shared/Shared.t.sol";
-import {PoolBoosterMerklV2} from "contracts/poolBooster/PoolBoosterMerklV2.sol";
+import {IPoolBoosterMerkl} from "contracts/interfaces/poolBooster/IPoolBoosterMerkl.sol";
 import {Mainnet} from "tests/utils/Addresses.sol";
 
 contract Fork_Concrete_MerklPoolBoosterMainnet_BribeSkipped_Test is Fork_MerklPoolBoosterMainnet_Shared_Test {
     function test_bribe_skippedBelowMinBribeAmount() public {
-        PoolBoosterMerklV2 booster = _createMerklBooster(1);
+        IPoolBoosterMerkl booster = _createMerklBooster(1);
 
         // Fund with 100 wei (below MIN_BRIBE_AMOUNT of 1e10)
         _dealOETH(address(booster), 100);
@@ -24,7 +24,7 @@ contract Fork_Concrete_MerklPoolBoosterMainnet_BribeSkipped_Test is Fork_MerklPo
     }
 
     function test_bribe_skippedBelowMerklMinAmount() public {
-        PoolBoosterMerklV2 booster = _createMerklBooster(1);
+        IPoolBoosterMerkl booster = _createMerklBooster(1);
 
         // Fund with 100 wei — below MIN_BRIBE_AMOUNT
         _dealOETH(address(booster), 100);
