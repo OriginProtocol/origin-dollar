@@ -6,21 +6,22 @@ import {Mainnet, Base as BaseAddresses, CrossChain} from "tests/utils/Addresses.
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
-import {CrossChainMasterStrategy} from "contracts/strategies/crosschain/CrossChainMasterStrategy.sol";
-import {CrossChainStrategyHelper} from "contracts/strategies/crosschain/CrossChainStrategyHelper.sol";
+import {ICrossChainMasterStrategy} from "contracts/interfaces/strategies/ICrossChainMasterStrategy.sol";
 
 abstract contract Smoke_CrossChainMasterStrategy_Shared_Test is BaseSmoke {
     //////////////////////////////////////////////////////
     /// --- CONTRACTS
     //////////////////////////////////////////////////////
 
-    CrossChainMasterStrategy internal crossChainMasterStrategy;
+    ICrossChainMasterStrategy internal crossChainMasterStrategy;
 
     //////////////////////////////////////////////////////
     /// --- CONSTANTS
     //////////////////////////////////////////////////////
 
     uint256 internal constant REMOTE_STRATEGY_BALANCE_SLOT = 207;
+    uint32 internal constant ORIGIN_MESSAGE_VERSION = 1010;
+    uint32 internal constant BALANCE_CHECK_MESSAGE = 3;
 
     //////////////////////////////////////////////////////
     /// --- ADDRESSES
@@ -40,7 +41,7 @@ abstract contract Smoke_CrossChainMasterStrategy_Shared_Test is BaseSmoke {
         _igniteDeployManager();
 
         require(address(resolver).code.length > 0, "Resolver not initialized on fork");
-        crossChainMasterStrategy = CrossChainMasterStrategy(resolver.resolve("CROSS_CHAIN_MASTER_STRATEGY"));
+        crossChainMasterStrategy = ICrossChainMasterStrategy(resolver.resolve("CROSS_CHAIN_MASTER_STRATEGY"));
         vm.label(address(crossChainMasterStrategy), "CrossChainMasterStrategy");
 
         usdc = IERC20(Mainnet.USDC);
@@ -91,7 +92,7 @@ abstract contract Smoke_CrossChainMasterStrategy_Shared_Test is BaseSmoke {
         );
     }
 
-    /// @dev Encode a CCTP message matching the byte offsets in CrossChainStrategyHelper.decodeMessageHeader()
+    /// @dev Encode a CCTP message matching the byte offsets expected by the strategy.
     function _encodeCCTPMessage(uint32 sourceDomain, address sender, address recipient, bytes memory messageBody)
         internal
         pure
@@ -108,6 +109,17 @@ abstract contract Smoke_CrossChainMasterStrategy_Shared_Test is BaseSmoke {
             uint32(0), // min finality threshold (140..143)
             uint32(0), // padding (144..147)
             messageBody // body (148+)
+        );
+    }
+
+    /// @dev Encode the balance-check payload used by the CrossChain smoke tests.
+    function _encodeBalanceCheckMessage(uint64 nonce, uint256 balance, bool transferConfirmation, uint256 timestamp)
+        internal
+        pure
+        returns (bytes memory)
+    {
+        return abi.encodePacked(
+            ORIGIN_MESSAGE_VERSION, BALANCE_CHECK_MESSAGE, abi.encode(nonce, balance, transferConfirmation, timestamp)
         );
     }
 

@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import {PoolBoosterFactoryMerkl} from "contracts/poolBooster/PoolBoosterFactoryMerkl.sol";
 import {Mainnet} from "tests/utils/Addresses.sol";
 
 import {
@@ -27,7 +26,7 @@ contract Smoke_Concrete_PoolBoosterFactoryMerklMainnet_Test is Smoke_PoolBooster
 
     function test_version() public view {
         // V1 has version() returning uint256, V2 has VERSION() returning string
-        (bool success, bytes memory data) = address(factoryMerkl).staticcall(abi.encodeWithSignature("version()"));
+        (bool success,) = address(factoryMerkl).staticcall(abi.encodeWithSignature("version()"));
         assertTrue(success, "version() call failed");
     }
 

@@ -4,7 +4,15 @@ pragma solidity ^0.8.0;
 import {
     Unit_CompoundingStakingSSVStrategy_Shared_Test
 } from "tests/unit/strategies/CompoundingStakingSSVStrategy/shared/Shared.t.sol";
-import {CompoundingValidatorManager} from "contracts/strategies/NativeStaking/CompoundingValidatorManager.sol";
+import {ICompoundingStakingSSVStrategy} from "contracts/interfaces/strategies/ICompoundingStakingSSVStrategy.sol";
+import {
+    CompoundingBalanceProofs as BalanceProofs,
+    CompoundingFirstPendingDepositSlotProofData as FirstPendingDepositSlotProofData,
+    CompoundingPendingDepositProofs as PendingDepositProofs,
+    CompoundingStrategyValidatorProofData as StrategyValidatorProofData,
+    CompoundingValidatorStakeData as ValidatorStakeData,
+    CompoundingValidatorState as ValidatorState
+} from "contracts/interfaces/strategies/CompoundingStakingTypes.sol";
 
 contract Unit_Concrete_CompoundingStakingSSVStrategy_ValidatorRegistration_Test is
     Unit_CompoundingStakingSSVStrategy_Shared_Test
@@ -20,13 +28,13 @@ contract Unit_Concrete_CompoundingStakingSSVStrategy_ValidatorRegistration_Test 
 
         vm.prank(governor);
         vm.expectEmit(true, false, false, true);
-        emit SSVValidatorRegistered(pubKeyHash, _operatorIds());
+        emit ICompoundingStakingSSVStrategy.SSVValidatorRegistered(pubKeyHash, _operatorIds());
         compoundingStakingSSVStrategy.registerSsvValidator(
             testValidators[0].publicKey, _operatorIds(), testValidators[0].sharesData, _emptyCluster()
         );
 
         // State should be REGISTERED (1)
-        (CompoundingValidatorManager.ValidatorState state,) = compoundingStakingSSVStrategy.validator(pubKeyHash);
+        (ValidatorState state,) = compoundingStakingSSVStrategy.validator(pubKeyHash);
         assertEq(uint8(state), 1);
     }
 
@@ -66,11 +74,11 @@ contract Unit_Concrete_CompoundingStakingSSVStrategy_ValidatorRegistration_Test 
 
         vm.prank(governor);
         vm.expectEmit(true, false, false, true);
-        emit SSVValidatorRemoved(pubKeyHash, _operatorIds());
+        emit ICompoundingStakingSSVStrategy.SSVValidatorRemoved(pubKeyHash, _operatorIds());
         compoundingStakingSSVStrategy.removeSsvValidator(testValidators[0].publicKey, _operatorIds(), _emptyCluster());
 
         // State should be REMOVED (7)
-        (CompoundingValidatorManager.ValidatorState state,) = compoundingStakingSSVStrategy.validator(pubKeyHash);
+        (ValidatorState state,) = compoundingStakingSSVStrategy.validator(pubKeyHash);
         assertEq(uint8(state), 7);
     }
 
@@ -111,17 +119,17 @@ contract Unit_Concrete_CompoundingStakingSSVStrategy_ValidatorRegistration_Test 
         compoundingStakingSSVStrategy.verifyValidator(nextBlockTimestamp, 100, pubKeyHash, wrongCredentials, hex"00");
 
         // Validator should now be INVALID (8)
-        (CompoundingValidatorManager.ValidatorState state,) = compoundingStakingSSVStrategy.validator(pubKeyHash);
+        (ValidatorState state,) = compoundingStakingSSVStrategy.validator(pubKeyHash);
         assertEq(uint8(state), 8, "Should be INVALID");
 
         // Remove the invalid validator - should succeed (INVALID → REMOVED)
         vm.prank(governor);
         vm.expectEmit(true, false, false, true);
-        emit SSVValidatorRemoved(pubKeyHash, _operatorIds());
+        emit ICompoundingStakingSSVStrategy.SSVValidatorRemoved(pubKeyHash, _operatorIds());
         compoundingStakingSSVStrategy.removeSsvValidator(publicKey, _operatorIds(), _emptyCluster());
 
         // State should be REMOVED (7)
-        (CompoundingValidatorManager.ValidatorState stateAfter,) = compoundingStakingSSVStrategy.validator(pubKeyHash);
+        (ValidatorState stateAfter,) = compoundingStakingSSVStrategy.validator(pubKeyHash);
         assertEq(uint8(stateAfter), 7, "Should be REMOVED");
     }
 
@@ -143,7 +151,7 @@ contract Unit_Concrete_CompoundingStakingSSVStrategy_ValidatorRegistration_Test 
         bytes32 pubKeyHash = _hashPubKey(testValidators[0].publicKey);
 
         // Validator should be EXITED (6)
-        (CompoundingValidatorManager.ValidatorState stateExited,) = compoundingStakingSSVStrategy.validator(pubKeyHash);
+        (ValidatorState stateExited,) = compoundingStakingSSVStrategy.validator(pubKeyHash);
         assertEq(uint8(stateExited), 6, "Should be EXITED");
 
         // Verified validators list should be empty
@@ -152,11 +160,11 @@ contract Unit_Concrete_CompoundingStakingSSVStrategy_ValidatorRegistration_Test 
         // Remove the exited validator as governor → should succeed
         vm.prank(governor);
         vm.expectEmit(true, false, false, true);
-        emit SSVValidatorRemoved(pubKeyHash, _operatorIds());
+        emit ICompoundingStakingSSVStrategy.SSVValidatorRemoved(pubKeyHash, _operatorIds());
         compoundingStakingSSVStrategy.removeSsvValidator(testValidators[0].publicKey, _operatorIds(), _emptyCluster());
 
         // State should be REMOVED (7)
-        (CompoundingValidatorManager.ValidatorState stateRemoved,) = compoundingStakingSSVStrategy.validator(pubKeyHash);
+        (ValidatorState stateRemoved,) = compoundingStakingSSVStrategy.validator(pubKeyHash);
         assertEq(uint8(stateRemoved), 7, "Should be REMOVED");
     }
 
@@ -165,7 +173,7 @@ contract Unit_Concrete_CompoundingStakingSSVStrategy_ValidatorRegistration_Test 
         _processValidator(0, 100);
 
         bytes32 pubKeyHash = _hashPubKey(testValidators[0].publicKey);
-        (CompoundingValidatorManager.ValidatorState state,) = compoundingStakingSSVStrategy.validator(pubKeyHash);
+        (ValidatorState state,) = compoundingStakingSSVStrategy.validator(pubKeyHash);
         assertEq(uint8(state), 3, "Should be VERIFIED");
 
         // Try removeSsvValidator → should revert

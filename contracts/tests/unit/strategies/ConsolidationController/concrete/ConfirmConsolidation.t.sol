@@ -2,7 +2,10 @@
 pragma solidity ^0.8.0;
 
 import {Unit_ConsolidationController_Shared_Test} from "../shared/Shared.t.sol";
-import {CompoundingValidatorManager} from "contracts/strategies/NativeStaking/CompoundingValidatorManager.sol";
+import {
+    CompoundingBalanceProofs,
+    CompoundingPendingDepositProofs
+} from "contracts/interfaces/strategies/CompoundingStakingTypes.sol";
 
 contract Unit_ConsolidationController_ConfirmConsolidation_Test is Unit_ConsolidationController_Shared_Test {
     bytes[] internal sourcePubKeys;
@@ -78,8 +81,8 @@ contract Unit_ConsolidationController_ConfirmConsolidation_Test is Unit_Consolid
         uint256 verifiedCount = compoundingStakingSSVStrategy.verifiedValidatorsLength();
         uint256 depositCount = compoundingStakingSSVStrategy.depositListLength();
 
-        CompoundingValidatorManager.BalanceProofs memory balProofs = _emptyBalanceProofs(verifiedCount);
-        CompoundingValidatorManager.PendingDepositProofs memory pendingProofs = _emptyPendingDepositProofs(depositCount);
+        CompoundingBalanceProofs memory balProofs = _emptyBalanceProofs(verifiedCount);
+        CompoundingPendingDepositProofs memory pendingProofs = _emptyPendingDepositProofs(depositCount);
 
         // First confirm succeeds
         vm.prank(guardian);
@@ -107,8 +110,8 @@ contract Unit_ConsolidationController_ConfirmConsolidation_Test is Unit_Consolid
         uint256 verifiedCount = compoundingStakingSSVStrategy.verifiedValidatorsLength();
         uint256 depositCount = compoundingStakingSSVStrategy.depositListLength();
 
-        CompoundingValidatorManager.BalanceProofs memory balProofs = _emptyBalanceProofs(verifiedCount);
-        CompoundingValidatorManager.PendingDepositProofs memory pendingProofs = _emptyPendingDepositProofs(depositCount);
+        CompoundingBalanceProofs memory balProofs = _emptyBalanceProofs(verifiedCount);
+        CompoundingPendingDepositProofs memory pendingProofs = _emptyPendingDepositProofs(depositCount);
 
         uint256 activeValidatorsBefore = nativeStakingSSVStrategy2.activeDepositedValidators();
 

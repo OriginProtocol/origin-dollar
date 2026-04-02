@@ -5,9 +5,9 @@ import {BaseSmoke} from "tests/smoke/BaseSmoke.t.sol";
 import {Mainnet} from "tests/utils/Addresses.sol";
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {OETHSupernovaAMOStrategy} from "contracts/strategies/algebra/OETHSupernovaAMOStrategy.sol";
-import {OETHVault} from "contracts/vault/OETHVault.sol";
-import {OETH} from "contracts/token/OETH.sol";
+import {IOToken} from "contracts/interfaces/IOToken.sol";
+import {IVault} from "contracts/interfaces/IVault.sol";
+import {IOETHSupernovaAMOStrategy} from "contracts/interfaces/strategies/IOETHSupernovaAMOStrategy.sol";
 import {IPair} from "contracts/interfaces/algebra/IAlgebraPair.sol";
 import {IGauge} from "contracts/interfaces/algebra/IAlgebraGauge.sol";
 
@@ -16,9 +16,9 @@ abstract contract Smoke_OETHSupernovaAMOStrategy_Shared_Test is BaseSmoke {
     /// --- CONTRACTS
     //////////////////////////////////////////////////////
 
-    OETH internal oeth;
-    OETHVault internal oethVault;
-    OETHSupernovaAMOStrategy internal oethSupernovaAMOStrategy;
+    IOToken internal oeth;
+    IVault internal oethVault;
+    IOETHSupernovaAMOStrategy internal oethSupernovaAMOStrategy;
     IERC20 internal wrappedEther;
     IPair internal supernovaPool;
     IGauge internal supernovaGauge;
@@ -40,9 +40,9 @@ abstract contract Smoke_OETHSupernovaAMOStrategy_Shared_Test is BaseSmoke {
     function _fetchContracts() internal {
         require(address(resolver).code.length > 0, "Resolver not initialized on fork");
 
-        oeth = OETH(resolver.resolve("OETH_PROXY"));
-        oethVault = OETHVault(payable(resolver.resolve("OETH_VAULT_PROXY")));
-        oethSupernovaAMOStrategy = OETHSupernovaAMOStrategy(resolver.resolve("OETH_SUPERNOVA_AMO_STRATEGY_PROXY"));
+        oeth = IOToken(resolver.resolve("OETH_PROXY"));
+        oethVault = IVault(resolver.resolve("OETH_VAULT_PROXY"));
+        oethSupernovaAMOStrategy = IOETHSupernovaAMOStrategy(resolver.resolve("OETH_SUPERNOVA_AMO_STRATEGY_PROXY"));
 
         wrappedEther = IERC20(Mainnet.WETH);
         supernovaPool = IPair(oethSupernovaAMOStrategy.pool());

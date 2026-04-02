@@ -4,16 +4,20 @@ pragma solidity ^0.8.0;
 import {BaseSmoke} from "tests/smoke/BaseSmoke.t.sol";
 import {Mainnet} from "tests/utils/Addresses.sol";
 
-import {OETH} from "contracts/token/OETH.sol";
-import {OETHVault} from "contracts/vault/OETHVault.sol";
-import {CurveAMOStrategy} from "contracts/strategies/CurveAMOStrategy.sol";
+import {IOToken} from "contracts/interfaces/IOToken.sol";
+import {IVault} from "contracts/interfaces/IVault.sol";
+import {ICurveAMOStrategy} from "contracts/interfaces/strategies/ICurveAMOStrategy.sol";
+import {ICurveStableSwapNG} from "contracts/interfaces/ICurveStableSwapNG.sol";
+import {ICurveLiquidityGaugeV6} from "contracts/interfaces/ICurveLiquidityGaugeV6.sol";
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 abstract contract Smoke_OETHCurveAMOStrategy_Shared_Test is BaseSmoke {
-    OETH internal oeth;
-    OETHVault internal oethVault;
-    CurveAMOStrategy internal curveAMOStrategy;
+    IOToken internal oeth;
+    IVault internal oethVault;
+    ICurveAMOStrategy internal curveAMOStrategy;
+    ICurveStableSwapNG internal curvePool;
+    ICurveLiquidityGaugeV6 internal gauge;
 
     //////////////////////////////////////////////////////
     /// --- SETUP
@@ -31,9 +35,11 @@ abstract contract Smoke_OETHCurveAMOStrategy_Shared_Test is BaseSmoke {
     function _fetchContracts() internal virtual {
         require(address(resolver).code.length > 0, "Resolver not initialized on fork");
 
-        oeth = OETH(resolver.resolve("OETH_PROXY"));
-        oethVault = OETHVault(payable(resolver.resolve("OETH_VAULT_PROXY")));
-        curveAMOStrategy = CurveAMOStrategy(resolver.resolve("OETH_CURVE_AMO_STRATEGY"));
+        oeth = IOToken(resolver.resolve("OETH_PROXY"));
+        oethVault = IVault(resolver.resolve("OETH_VAULT_PROXY"));
+        curveAMOStrategy = ICurveAMOStrategy(resolver.resolve("OETH_CURVE_AMO_STRATEGY"));
+        curvePool = ICurveStableSwapNG(curveAMOStrategy.curvePool());
+        gauge = ICurveLiquidityGaugeV6(curveAMOStrategy.gauge());
         weth = IERC20(Mainnet.WETH);
         crv = IERC20(Mainnet.CRV);
     }
@@ -47,6 +53,8 @@ abstract contract Smoke_OETHCurveAMOStrategy_Shared_Test is BaseSmoke {
         vm.label(address(oeth), "OETH");
         vm.label(address(oethVault), "OETHVault");
         vm.label(address(curveAMOStrategy), "CurveAMOStrategy");
+        vm.label(address(curvePool), "CurvePool");
+        vm.label(address(gauge), "CurveGauge");
         vm.label(address(weth), "WETH");
         vm.label(address(crv), "CRV");
     }
@@ -65,10 +73,10 @@ abstract contract Smoke_OETHCurveAMOStrategy_Shared_Test is BaseSmoke {
     /// @dev Tilt pool toward hardAsset (more WETH, less OETH)
     function _tiltPoolToHardAsset(uint256 swapAmount) internal {
         deal(address(weth), address(this), swapAmount);
-        weth.approve(address(curveAMOStrategy.curvePool()), swapAmount);
+        weth.approve(address(curvePool), swapAmount);
         uint128 hardIdx = curveAMOStrategy.hardAssetCoinIndex();
         uint128 otokenIdx = curveAMOStrategy.otokenCoinIndex();
-        curveAMOStrategy.curvePool().exchange(int128(hardIdx), int128(otokenIdx), swapAmount, 0);
+        curvePool.exchange(int128(hardIdx), int128(otokenIdx), swapAmount, 0);
     }
 
     /// @dev Tilt pool toward oToken (more OETH, less WETH)
@@ -76,16 +84,16 @@ abstract contract Smoke_OETHCurveAMOStrategy_Shared_Test is BaseSmoke {
         deal(address(weth), address(this), swapAmount);
         weth.approve(address(oethVault), swapAmount);
         oethVault.mint(swapAmount);
-        IERC20(address(oeth)).approve(address(curveAMOStrategy.curvePool()), swapAmount);
+        IERC20(address(oeth)).approve(address(curvePool), swapAmount);
         uint128 hardIdx = curveAMOStrategy.hardAssetCoinIndex();
         uint128 otokenIdx = curveAMOStrategy.otokenCoinIndex();
-        curveAMOStrategy.curvePool().exchange(int128(otokenIdx), int128(hardIdx), swapAmount, 0);
+        curvePool.exchange(int128(otokenIdx), int128(hardIdx), swapAmount, 0);
     }
 
     /// @dev Ensure pool has excess hardAsset by tilting if needed.
     ///      Reads current pool balance and swaps enough to create targetExcess.
     function _ensurePoolExcessHardAsset(uint256 targetExcess) internal {
-        uint256[] memory balances = curveAMOStrategy.curvePool().get_balances();
+        uint256[] memory balances = curvePool.get_balances();
         uint128 hardIdx = curveAMOStrategy.hardAssetCoinIndex();
         uint128 otokenIdx = curveAMOStrategy.otokenCoinIndex();
         int256 diff = int256(balances[hardIdx]) - int256(balances[otokenIdx]);
@@ -99,7 +107,7 @@ abstract contract Smoke_OETHCurveAMOStrategy_Shared_Test is BaseSmoke {
 
     /// @dev Ensure pool has excess oToken by tilting if needed.
     function _ensurePoolExcessOToken(uint256 targetExcess) internal {
-        uint256[] memory balances = curveAMOStrategy.curvePool().get_balances();
+        uint256[] memory balances = curvePool.get_balances();
         uint128 hardIdx = curveAMOStrategy.hardAssetCoinIndex();
         uint128 otokenIdx = curveAMOStrategy.otokenCoinIndex();
         int256 diff = int256(balances[otokenIdx]) - int256(balances[hardIdx]);

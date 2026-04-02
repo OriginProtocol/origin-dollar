@@ -15,7 +15,14 @@ import {IVault} from "contracts/interfaces/IVault.sol";
 import {IProxy} from "contracts/interfaces/IProxy.sol";
 import {IOToken} from "contracts/interfaces/IOToken.sol";
 import {ICompoundingStakingSSVStrategy} from "contracts/interfaces/strategies/ICompoundingStakingSSVStrategy.sol";
-import {CompoundingValidatorManager} from "contracts/strategies/NativeStaking/CompoundingValidatorManager.sol";
+import {
+    CompoundingBalanceProofs as BalanceProofs,
+    CompoundingFirstPendingDepositSlotProofData as FirstPendingDepositSlotProofData,
+    CompoundingPendingDepositProofs as PendingDepositProofs,
+    CompoundingStrategyValidatorProofData as StrategyValidatorProofData,
+    CompoundingValidatorStakeData as ValidatorStakeData,
+    CompoundingValidatorState as ValidatorState
+} from "contracts/interfaces/strategies/CompoundingStakingTypes.sol";
 import {CompoundingStakingStrategyView} from "contracts/strategies/NativeStaking/CompoundingStakingView.sol";
 import {Cluster} from "contracts/interfaces/ISSVNetwork.sol";
 
@@ -299,9 +306,8 @@ abstract contract Unit_CompoundingStakingSSVStrategy_Shared_Test is Base {
         TestValidator storage v = testValidators[index];
         _depositToStrategy(1 ether);
 
-        CompoundingValidatorManager.ValidatorStakeData memory stakeData = CompoundingValidatorManager.ValidatorStakeData({
-            pubkey: v.publicKey, signature: v.signature, depositDataRoot: v.depositDataRoot
-        });
+        ValidatorStakeData memory stakeData =
+            ValidatorStakeData({pubkey: v.publicKey, signature: v.signature, depositDataRoot: v.depositDataRoot});
 
         vm.prank(governor);
         compoundingStakingSSVStrategy.stakeEth(stakeData, uint64(1 ether / 1 gwei));
@@ -336,13 +342,11 @@ abstract contract Unit_CompoundingStakingSSVStrategy_Shared_Test is Base {
         // Empty deposit queue proof (37 * 32 = 1184 bytes)
         bytes memory emptyQueueProof = new bytes(1184);
 
-        CompoundingValidatorManager.FirstPendingDepositSlotProofData memory firstPending =
-            CompoundingValidatorManager.FirstPendingDepositSlotProofData({slot: 1, proof: emptyQueueProof});
+        FirstPendingDepositSlotProofData memory firstPending =
+            FirstPendingDepositSlotProofData({slot: 1, proof: emptyQueueProof});
 
-        CompoundingValidatorManager.StrategyValidatorProofData memory strategyValidator =
-            CompoundingValidatorManager.StrategyValidatorProofData({
-                withdrawableEpoch: type(uint64).max, withdrawableEpochProof: hex"00"
-            });
+        StrategyValidatorProofData memory strategyValidator =
+            StrategyValidatorProofData({withdrawableEpoch: type(uint64).max, withdrawableEpochProof: hex"00"});
 
         compoundingStakingSSVStrategy.verifyDeposit(pendingDepositRoot, processedSlot, firstPending, strategyValidator);
     }
@@ -362,18 +366,14 @@ abstract contract Unit_CompoundingStakingSSVStrategy_Shared_Test is Base {
     }
 
     /// @dev Empty balance proofs for verifyBalances
-    function _emptyBalanceProofs(uint256 validatorCount)
-        internal
-        pure
-        returns (CompoundingValidatorManager.BalanceProofs memory)
-    {
+    function _emptyBalanceProofs(uint256 validatorCount) internal pure returns (BalanceProofs memory) {
         bytes32[] memory leaves = new bytes32[](validatorCount);
         bytes[] memory proofs = new bytes[](validatorCount);
         for (uint256 i = 0; i < validatorCount; i++) {
             leaves[i] = bytes32(0);
             proofs[i] = hex"00";
         }
-        return CompoundingValidatorManager.BalanceProofs({
+        return BalanceProofs({
             balancesContainerRoot: bytes32(0),
             balancesContainerProof: hex"00",
             validatorBalanceLeaves: leaves,
@@ -382,18 +382,14 @@ abstract contract Unit_CompoundingStakingSSVStrategy_Shared_Test is Base {
     }
 
     /// @dev Empty pending deposit proofs for verifyBalances
-    function _emptyPendingDepositProofs(uint256 depositCount)
-        internal
-        pure
-        returns (CompoundingValidatorManager.PendingDepositProofs memory)
-    {
+    function _emptyPendingDepositProofs(uint256 depositCount) internal pure returns (PendingDepositProofs memory) {
         uint32[] memory indexes = new uint32[](depositCount);
         bytes[] memory proofs = new bytes[](depositCount);
         for (uint256 i = 0; i < depositCount; i++) {
             indexes[i] = uint32(i);
             proofs[i] = hex"00";
         }
-        return CompoundingValidatorManager.PendingDepositProofs({
+        return PendingDepositProofs({
             pendingDepositContainerRoot: bytes32(0),
             pendingDepositContainerProof: hex"00",
             pendingDepositIndexes: indexes,
@@ -402,10 +398,9 @@ abstract contract Unit_CompoundingStakingSSVStrategy_Shared_Test is Base {
     }
 
     /// @dev Verify balances as registrator (governor)
-    function _verifyBalances(
-        CompoundingValidatorManager.BalanceProofs memory balanceProofs,
-        CompoundingValidatorManager.PendingDepositProofs memory pendingDepositProofs
-    ) internal {
+    function _verifyBalances(BalanceProofs memory balanceProofs, PendingDepositProofs memory pendingDepositProofs)
+        internal
+    {
         vm.prank(governor);
         compoundingStakingSSVStrategy.verifyBalances(balanceProofs, pendingDepositProofs);
     }

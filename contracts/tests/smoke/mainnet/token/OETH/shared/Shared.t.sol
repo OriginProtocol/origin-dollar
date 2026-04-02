@@ -4,14 +4,14 @@ pragma solidity ^0.8.0;
 import {BaseSmoke} from "tests/smoke/BaseSmoke.t.sol";
 import {Mainnet} from "tests/utils/Addresses.sol";
 
-import {OETH} from "contracts/token/OETH.sol";
-import {OETHVault} from "contracts/vault/OETHVault.sol";
+import {IOToken} from "contracts/interfaces/IOToken.sol";
+import {IVault} from "contracts/interfaces/IVault.sol";
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 abstract contract Smoke_OETH_Shared_Test is BaseSmoke {
-    OETH internal oeth;
-    OETHVault internal oethVault;
+    IOToken internal oeth;
+    IVault internal oethVault;
 
     //////////////////////////////////////////////////////
     /// --- SETUP
@@ -31,13 +31,13 @@ abstract contract Smoke_OETH_Shared_Test is BaseSmoke {
         require(address(resolver).code.length > 0, "Resolver not initialized on fork");
 
         // Fetch the latest implementations
-        oeth = OETH(resolver.resolve("OETH_PROXY"));
-        oethVault = OETHVault(payable(resolver.resolve("OETH_VAULT_PROXY")));
+        oeth = IOToken(resolver.resolve("OETH_PROXY"));
+        oethVault = IVault(resolver.resolve("OETH_VAULT_PROXY"));
         weth = IERC20(Mainnet.WETH);
     }
 
     function _resolveActors() internal virtual {
-        governor = oeth.governor();
+        governor = oethVault.governor();
         strategist = oethVault.strategistAddr();
     }
 
@@ -77,12 +77,17 @@ abstract contract Smoke_OETH_Shared_Test is BaseSmoke {
 
     /// @dev Ensure the vault has enough WETH liquidity to cover the withdrawal queue plus an extra amount.
     function _ensureVaultLiquidity(uint256 extraWETH) internal {
-        (uint256 queued, uint256 claimable,,) = oethVault.withdrawalQueueMetadata();
+        uint256 queued = oethVault.withdrawalQueueMetadata().queued;
+        uint256 claimable = oethVault.withdrawalQueueMetadata().claimable;
         uint256 shortfall = queued > claimable ? queued - claimable : 0;
         uint256 needed = shortfall + extraWETH;
         // Use additive deal: existing balance may be fully allocated to prior claimable
         // requests, so we must add on top rather than replace.
         deal(address(weth), address(oethVault), weth.balanceOf(address(oethVault)) + needed);
+
+        vm.prank(governor);
+        oethVault.setMaxSupplyDiff(0.1e18);
+
         oethVault.addWithdrawalQueueLiquidity();
     }
 }

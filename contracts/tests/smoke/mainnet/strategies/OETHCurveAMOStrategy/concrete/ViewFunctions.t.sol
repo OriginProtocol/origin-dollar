@@ -42,11 +42,11 @@ contract Smoke_Concrete_OETHCurveAMOStrategy_ViewFunctions_Test is Smoke_OETHCur
     }
 
     function test_immutables_curvePool() public view {
-        assertEq(address(curveAMOStrategy.curvePool()), Mainnet.curve_OETH_WETH_pool, "curvePool mismatch");
+        assertEq(address(curvePool), Mainnet.curve_OETH_WETH_pool, "curvePool mismatch");
     }
 
     function test_immutables_gauge() public view {
-        assertNotEq(address(curveAMOStrategy.gauge()), address(0), "gauge should not be zero");
+        assertNotEq(address(gauge), address(0), "gauge should not be zero");
     }
 
     function test_immutables_minter() public view {
@@ -71,7 +71,7 @@ contract Smoke_Concrete_OETHCurveAMOStrategy_ViewFunctions_Test is Smoke_OETHCur
     // --- Gauge Staking ---
 
     function test_lpToken_isStakedInGauge() public view {
-        uint256 gaugeBalance = curveAMOStrategy.gauge().balanceOf(address(curveAMOStrategy));
+        uint256 gaugeBalance = gauge.balanceOf(address(curveAMOStrategy));
         assertGt(gaugeBalance, 0, "LP should be staked in gauge");
     }
 }

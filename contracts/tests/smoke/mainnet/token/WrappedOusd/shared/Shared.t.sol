@@ -3,10 +3,10 @@ pragma solidity ^0.8.0;
 
 import {Smoke_OUSD_Shared_Test} from "tests/smoke/mainnet/token/OUSD/shared/Shared.t.sol";
 
-import {WrappedOusd} from "contracts/token/WrappedOusd.sol";
+import {IWOToken} from "contracts/interfaces/IWOToken.sol";
 
 abstract contract Smoke_WrappedOusd_Shared_Test is Smoke_OUSD_Shared_Test {
-    WrappedOusd internal wrappedOusd;
+    IWOToken internal wrappedOusd;
 
     //////////////////////////////////////////////////////
     /// --- SETUP
@@ -14,7 +14,7 @@ abstract contract Smoke_WrappedOusd_Shared_Test is Smoke_OUSD_Shared_Test {
 
     function _fetchContracts() internal virtual override {
         super._fetchContracts();
-        wrappedOusd = WrappedOusd(resolver.resolve("WRAPPED_OUSD_PROXY"));
+        wrappedOusd = IWOToken(resolver.resolve("WRAPPED_OUSD_PROXY"));
     }
 
     function _labelContracts() internal virtual override {

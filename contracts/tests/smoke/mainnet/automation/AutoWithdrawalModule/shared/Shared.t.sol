@@ -2,10 +2,10 @@
 pragma solidity ^0.8.0;
 
 import {BaseSmoke} from "tests/smoke/BaseSmoke.t.sol";
-import {AutoWithdrawalModule} from "contracts/automation/AutoWithdrawalModule.sol";
+import {IAutoWithdrawalModule} from "contracts/interfaces/automation/IAutoWithdrawalModule.sol";
 
 abstract contract Smoke_AutoWithdrawalModule_Shared_Test is BaseSmoke {
-    AutoWithdrawalModule internal autoWithdrawalModule;
+    IAutoWithdrawalModule internal autoWithdrawalModule;
 
     function setUp() public virtual override {
         super.setUp();
@@ -13,7 +13,7 @@ abstract contract Smoke_AutoWithdrawalModule_Shared_Test is BaseSmoke {
         _igniteDeployManager();
 
         require(address(resolver).code.length > 0, "Resolver not initialized on fork");
-        autoWithdrawalModule = AutoWithdrawalModule(payable(resolver.resolve("AUTO_WITHDRAWAL_MODULE")));
+        autoWithdrawalModule = IAutoWithdrawalModule(payable(resolver.resolve("AUTO_WITHDRAWAL_MODULE")));
         vm.label(address(autoWithdrawalModule), "AutoWithdrawalModule");
     }
 }

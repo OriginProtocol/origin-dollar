@@ -3,7 +3,6 @@ pragma solidity ^0.8.0;
 
 import {Smoke_CrossChainMasterStrategy_Shared_Test} from "../shared/Shared.t.sol";
 import {Mainnet, Base as BaseAddresses, CrossChain} from "tests/utils/Addresses.sol";
-import {CrossChainStrategyHelper} from "contracts/strategies/crosschain/CrossChainStrategyHelper.sol";
 
 contract Smoke_CrossChainMasterStrategy_TokenReceived_Test is Smoke_CrossChainMasterStrategy_Shared_Test {
     function test_tokenReceived_acceptsWithdrawalTokens() public {
@@ -20,8 +19,7 @@ contract Smoke_CrossChainMasterStrategy_TokenReceived_Test is Smoke_CrossChainMa
         _mockReceiveMessage();
 
         // Build balance check payload (withdrawal confirmation)
-        bytes memory balancePayload =
-            CrossChainStrategyHelper.encodeBalanceCheckMessage(lastNonce, 12345e6, true, block.timestamp);
+        bytes memory balancePayload = _encodeBalanceCheckMessage(lastNonce, 12345e6, true, block.timestamp);
 
         // Wrap in burn message body (burnToken = Base.USDC = peer USDC)
         bytes memory burnPayload = _encodeBurnMessageBody(

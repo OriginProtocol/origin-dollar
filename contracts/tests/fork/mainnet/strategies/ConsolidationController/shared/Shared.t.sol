@@ -14,10 +14,8 @@ import {
     CompoundingBalanceProofs,
     CompoundingPendingDepositProofs
 } from "contracts/interfaces/strategies/CompoundingStakingTypes.sol";
-import {
-    ICompoundingStakingSSVStrategyFork
-} from "contracts/interfaces/strategies/ICompoundingStakingSSVStrategyFork.sol";
-import {IConsolidationControllerFork} from "contracts/interfaces/strategies/IConsolidationControllerFork.sol";
+import {ICompoundingStakingSSVStrategy} from "contracts/interfaces/strategies/ICompoundingStakingSSVStrategy.sol";
+import {IConsolidationController} from "contracts/interfaces/strategies/IConsolidationController.sol";
 import {INativeStakingSSVStrategyFork} from "contracts/interfaces/strategies/INativeStakingSSVStrategyFork.sol";
 
 // solhint-disable max-states-count
@@ -51,8 +49,8 @@ abstract contract Fork_ConsolidationController_Shared_Test is BaseFork {
     IVault internal oethVault;
     IProxy internal oethProxy;
     IProxy internal oethVaultProxy;
-    IConsolidationControllerFork internal consolidationController;
-    ICompoundingStakingSSVStrategyFork internal compoundingStakingSSVStrategy;
+    IConsolidationController internal consolidationController;
+    ICompoundingStakingSSVStrategy internal compoundingStakingSSVStrategy;
     INativeStakingSSVStrategyFork internal nativeStakingSSVStrategy2;
     INativeStakingSSVStrategyFork internal nativeStakingSSVStrategy3;
     IBeaconRoots internal beaconRoots;
@@ -178,7 +176,7 @@ abstract contract Fork_ConsolidationController_Shared_Test is BaseFork {
         );
 
         // ConsolidationController
-        consolidationController = IConsolidationControllerFork(
+        consolidationController = IConsolidationController(
             vm.deployCode(
                 "contracts/strategies/NativeStaking/ConsolidationController.sol:ConsolidationController",
                 abi.encode(
@@ -205,7 +203,7 @@ abstract contract Fork_ConsolidationController_Shared_Test is BaseFork {
 
         // Set registrators to the new ConsolidationController
         compoundingStakingSSVStrategy =
-            ICompoundingStakingSSVStrategyFork(payable(Mainnet.CompoundingStakingSSVStrategyProxy));
+            ICompoundingStakingSSVStrategy(payable(Mainnet.CompoundingStakingSSVStrategyProxy));
         compoundingStakingSSVStrategy.setRegistrator(address(consolidationController));
 
         nativeStakingSSVStrategy2 = INativeStakingSSVStrategyFork(payable(Mainnet.NativeStakingSSVStrategy2Proxy));

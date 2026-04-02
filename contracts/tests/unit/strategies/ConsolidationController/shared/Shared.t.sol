@@ -20,7 +20,14 @@ import {
 } from "contracts/interfaces/strategies/INativeStakingSSVStrategy.sol";
 import {FeeAccumulator} from "contracts/strategies/NativeStaking/FeeAccumulator.sol";
 import {ICompoundingStakingSSVStrategy} from "contracts/interfaces/strategies/ICompoundingStakingSSVStrategy.sol";
-import {CompoundingValidatorManager} from "contracts/strategies/NativeStaking/CompoundingValidatorManager.sol";
+import {
+    CompoundingBalanceProofs,
+    CompoundingFirstPendingDepositSlotProofData,
+    CompoundingPendingDepositProofs,
+    CompoundingStrategyValidatorProofData,
+    CompoundingValidatorStakeData,
+    CompoundingValidatorState
+} from "contracts/interfaces/strategies/CompoundingStakingTypes.sol";
 import {IConsolidationController} from "contracts/interfaces/strategies/IConsolidationController.sol";
 import {ConsolidationController} from "contracts/strategies/NativeStaking/ConsolidationController.sol";
 import {Cluster} from "contracts/interfaces/ISSVNetwork.sol";
@@ -481,7 +488,7 @@ abstract contract Unit_ConsolidationController_Shared_Test is Base {
 
     /// @dev Stake ETH to compounding strategy
     function _compoundingStakeEth(bytes memory pubKey, uint64 amountGwei) internal {
-        CompoundingValidatorManager.ValidatorStakeData memory stakeData = CompoundingValidatorManager.ValidatorStakeData({
+        CompoundingValidatorStakeData memory stakeData = CompoundingValidatorStakeData({
             pubkey: pubKey, signature: TEST_SIGNATURE, depositDataRoot: TEST_DEPOSIT_DATA_ROOT
         });
         vm.prank(governor);
@@ -498,13 +505,12 @@ abstract contract Unit_ConsolidationController_Shared_Test is Base {
         // Empty deposit queue proof (37 * 32 = 1184 bytes)
         bytes memory emptyQueueProof = new bytes(1184);
 
-        CompoundingValidatorManager.FirstPendingDepositSlotProofData memory firstPending =
-            CompoundingValidatorManager.FirstPendingDepositSlotProofData({slot: 1, proof: emptyQueueProof});
+        CompoundingFirstPendingDepositSlotProofData memory firstPending =
+            CompoundingFirstPendingDepositSlotProofData({slot: 1, proof: emptyQueueProof});
 
-        CompoundingValidatorManager.StrategyValidatorProofData memory strategyValidator =
-            CompoundingValidatorManager.StrategyValidatorProofData({
-                withdrawableEpoch: type(uint64).max, withdrawableEpochProof: hex"00"
-            });
+        CompoundingStrategyValidatorProofData memory strategyValidator = CompoundingStrategyValidatorProofData({
+            withdrawableEpoch: type(uint64).max, withdrawableEpochProof: hex"00"
+        });
 
         compoundingStakingSSVStrategy.verifyDeposit(
             pendingDepositRoot, depositSlot + 10_000, firstPending, strategyValidator
@@ -526,23 +532,19 @@ abstract contract Unit_ConsolidationController_Shared_Test is Base {
         );
 
         // Confirm the validator is ACTIVE
-        (CompoundingValidatorManager.ValidatorState state,) = compoundingStakingSSVStrategy.validator(pubKeyHash);
-        require(state == CompoundingValidatorManager.ValidatorState.ACTIVE, "Target not ACTIVE");
+        (CompoundingValidatorState state,) = compoundingStakingSSVStrategy.validator(pubKeyHash);
+        require(state == CompoundingValidatorState.ACTIVE, "Target not ACTIVE");
     }
 
     /// @dev Empty balance proofs for verifyBalances
-    function _emptyBalanceProofs(uint256 validatorCount)
-        internal
-        pure
-        returns (CompoundingValidatorManager.BalanceProofs memory)
-    {
+    function _emptyBalanceProofs(uint256 validatorCount) internal pure returns (CompoundingBalanceProofs memory) {
         bytes32[] memory leaves = new bytes32[](validatorCount);
         bytes[] memory proofs = new bytes[](validatorCount);
         for (uint256 i = 0; i < validatorCount; i++) {
             leaves[i] = bytes32(0);
             proofs[i] = hex"00";
         }
-        return CompoundingValidatorManager.BalanceProofs({
+        return CompoundingBalanceProofs({
             balancesContainerRoot: bytes32(0),
             balancesContainerProof: hex"00",
             validatorBalanceLeaves: leaves,
@@ -554,7 +556,7 @@ abstract contract Unit_ConsolidationController_Shared_Test is Base {
     function _emptyPendingDepositProofs(uint256 depositCount)
         internal
         pure
-        returns (CompoundingValidatorManager.PendingDepositProofs memory)
+        returns (CompoundingPendingDepositProofs memory)
     {
         uint32[] memory indexes = new uint32[](depositCount);
         bytes[] memory proofs = new bytes[](depositCount);
@@ -562,7 +564,7 @@ abstract contract Unit_ConsolidationController_Shared_Test is Base {
             indexes[i] = uint32(i);
             proofs[i] = hex"00";
         }
-        return CompoundingValidatorManager.PendingDepositProofs({
+        return CompoundingPendingDepositProofs({
             pendingDepositContainerRoot: bytes32(0),
             pendingDepositContainerProof: hex"00",
             pendingDepositIndexes: indexes,

@@ -4,7 +4,14 @@ pragma solidity ^0.8.0;
 import {
     Unit_CompoundingStakingSSVStrategy_Shared_Test
 } from "tests/unit/strategies/CompoundingStakingSSVStrategy/shared/Shared.t.sol";
-import {CompoundingValidatorManager} from "contracts/strategies/NativeStaking/CompoundingValidatorManager.sol";
+import {
+    CompoundingBalanceProofs as BalanceProofs,
+    CompoundingFirstPendingDepositSlotProofData as FirstPendingDepositSlotProofData,
+    CompoundingPendingDepositProofs as PendingDepositProofs,
+    CompoundingStrategyValidatorProofData as StrategyValidatorProofData,
+    CompoundingValidatorStakeData as ValidatorStakeData,
+    CompoundingValidatorState as ValidatorState
+} from "contracts/interfaces/strategies/CompoundingStakingTypes.sol";
 
 contract Unit_Concrete_CompoundingStakingSSVStrategy_ValidatorStaking_Test is
     Unit_CompoundingStakingSSVStrategy_Shared_Test
@@ -21,7 +28,7 @@ contract Unit_Concrete_CompoundingStakingSSVStrategy_ValidatorStaking_Test is
 
         bytes32 pubKeyHash = _hashPubKey(testValidators[0].publicKey);
 
-        CompoundingValidatorManager.ValidatorStakeData memory stakeData = CompoundingValidatorManager.ValidatorStakeData({
+        ValidatorStakeData memory stakeData = ValidatorStakeData({
             pubkey: testValidators[0].publicKey,
             signature: testValidators[0].signature,
             depositDataRoot: testValidators[0].depositDataRoot
@@ -31,7 +38,7 @@ contract Unit_Concrete_CompoundingStakingSSVStrategy_ValidatorStaking_Test is
         compoundingStakingSSVStrategy.stakeEth(stakeData, uint64(1 ether / 1 gwei));
 
         // State should be STAKED (2)
-        (CompoundingValidatorManager.ValidatorState state,) = compoundingStakingSSVStrategy.validator(pubKeyHash);
+        (ValidatorState state,) = compoundingStakingSSVStrategy.validator(pubKeyHash);
         assertEq(uint8(state), 2);
 
         // firstDeposit should be true
@@ -45,7 +52,7 @@ contract Unit_Concrete_CompoundingStakingSSVStrategy_ValidatorStaking_Test is
         _registerValidator(0);
         _depositToStrategy(2 ether);
 
-        CompoundingValidatorManager.ValidatorStakeData memory stakeData = CompoundingValidatorManager.ValidatorStakeData({
+        ValidatorStakeData memory stakeData = ValidatorStakeData({
             pubkey: testValidators[0].publicKey,
             signature: testValidators[0].signature,
             depositDataRoot: testValidators[0].depositDataRoot
@@ -65,7 +72,7 @@ contract Unit_Concrete_CompoundingStakingSSVStrategy_ValidatorStaking_Test is
         _registerValidator(1);
         _depositToStrategy(1 ether);
 
-        CompoundingValidatorManager.ValidatorStakeData memory stakeData = CompoundingValidatorManager.ValidatorStakeData({
+        ValidatorStakeData memory stakeData = ValidatorStakeData({
             pubkey: testValidators[1].publicKey,
             signature: testValidators[1].signature,
             depositDataRoot: testValidators[1].depositDataRoot
@@ -79,7 +86,7 @@ contract Unit_Concrete_CompoundingStakingSSVStrategy_ValidatorStaking_Test is
     function test_stakeEth_RevertWhen_notRegistered() public {
         _depositToStrategy(1 ether);
 
-        CompoundingValidatorManager.ValidatorStakeData memory stakeData = CompoundingValidatorManager.ValidatorStakeData({
+        ValidatorStakeData memory stakeData = ValidatorStakeData({
             pubkey: testValidators[0].publicKey,
             signature: testValidators[0].signature,
             depositDataRoot: testValidators[0].depositDataRoot
@@ -94,7 +101,7 @@ contract Unit_Concrete_CompoundingStakingSSVStrategy_ValidatorStaking_Test is
         _registerValidator(0);
         // Don't deposit WETH
 
-        CompoundingValidatorManager.ValidatorStakeData memory stakeData = CompoundingValidatorManager.ValidatorStakeData({
+        ValidatorStakeData memory stakeData = ValidatorStakeData({
             pubkey: testValidators[0].publicKey,
             signature: testValidators[0].signature,
             depositDataRoot: testValidators[0].depositDataRoot
@@ -112,7 +119,7 @@ contract Unit_Concrete_CompoundingStakingSSVStrategy_ValidatorStaking_Test is
         vm.prank(governor);
         compoundingStakingSSVStrategy.pause();
 
-        CompoundingValidatorManager.ValidatorStakeData memory stakeData = CompoundingValidatorManager.ValidatorStakeData({
+        ValidatorStakeData memory stakeData = ValidatorStakeData({
             pubkey: testValidators[0].publicKey,
             signature: testValidators[0].signature,
             depositDataRoot: testValidators[0].depositDataRoot
@@ -124,7 +131,7 @@ contract Unit_Concrete_CompoundingStakingSSVStrategy_ValidatorStaking_Test is
     }
 
     function test_stakeEth_RevertWhen_notRegistrator() public {
-        CompoundingValidatorManager.ValidatorStakeData memory stakeData = CompoundingValidatorManager.ValidatorStakeData({
+        ValidatorStakeData memory stakeData = ValidatorStakeData({
             pubkey: testValidators[0].publicKey,
             signature: testValidators[0].signature,
             depositDataRoot: testValidators[0].depositDataRoot
@@ -142,7 +149,7 @@ contract Unit_Concrete_CompoundingStakingSSVStrategy_ValidatorStaking_Test is
         // Top up with 31 ETH
         _depositToStrategy(31 ether);
 
-        CompoundingValidatorManager.ValidatorStakeData memory stakeData = CompoundingValidatorManager.ValidatorStakeData({
+        ValidatorStakeData memory stakeData = ValidatorStakeData({
             pubkey: testValidators[0].publicKey,
             signature: testValidators[0].signature,
             depositDataRoot: testValidators[0].depositDataRoot
@@ -158,7 +165,7 @@ contract Unit_Concrete_CompoundingStakingSSVStrategy_ValidatorStaking_Test is
         _processValidator(0, 100);
         _depositToStrategy(1 ether);
 
-        CompoundingValidatorManager.ValidatorStakeData memory stakeData = CompoundingValidatorManager.ValidatorStakeData({
+        ValidatorStakeData memory stakeData = ValidatorStakeData({
             pubkey: testValidators[0].publicKey,
             signature: testValidators[0].signature,
             depositDataRoot: testValidators[0].depositDataRoot
@@ -178,7 +185,7 @@ contract Unit_Concrete_CompoundingStakingSSVStrategy_ValidatorStaking_Test is
         // 2. Deposit 1 ETH and stake (first deposit)
         _depositToStrategy(1 ether);
 
-        CompoundingValidatorManager.ValidatorStakeData memory stakeData = CompoundingValidatorManager.ValidatorStakeData({
+        ValidatorStakeData memory stakeData = ValidatorStakeData({
             pubkey: testValidators[0].publicKey,
             signature: testValidators[0].signature,
             depositDataRoot: testValidators[0].depositDataRoot
@@ -190,7 +197,7 @@ contract Unit_Concrete_CompoundingStakingSSVStrategy_ValidatorStaking_Test is
         bytes32 pubKeyHash = _hashPubKey(testValidators[0].publicKey);
 
         // 3. Verify state is STAKED (2), firstDeposit is true, depositListLength == 1
-        (CompoundingValidatorManager.ValidatorState state,) = compoundingStakingSSVStrategy.validator(pubKeyHash);
+        (ValidatorState state,) = compoundingStakingSSVStrategy.validator(pubKeyHash);
         assertEq(uint8(state), 2, "State should be STAKED");
         assertTrue(compoundingStakingSSVStrategy.firstDeposit(), "firstDeposit should be true");
         assertEq(compoundingStakingSSVStrategy.depositListLength(), 1, "depositListLength should be 1");
@@ -219,12 +226,11 @@ contract Unit_Concrete_CompoundingStakingSSVStrategy_ValidatorStaking_Test is
         _depositToStrategy(31 ether);
 
         // 8. Stake 31 ETH as top-up
-        CompoundingValidatorManager.ValidatorStakeData memory topUpStakeData =
-            CompoundingValidatorManager.ValidatorStakeData({
-                pubkey: testValidators[0].publicKey,
-                signature: testValidators[0].signature,
-                depositDataRoot: testValidators[0].depositDataRoot
-            });
+        ValidatorStakeData memory topUpStakeData = ValidatorStakeData({
+            pubkey: testValidators[0].publicKey,
+            signature: testValidators[0].signature,
+            depositDataRoot: testValidators[0].depositDataRoot
+        });
 
         vm.prank(governor);
         compoundingStakingSSVStrategy.stakeEth(topUpStakeData, uint64(31 ether / 1 gwei));

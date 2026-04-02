@@ -2,21 +2,19 @@
 pragma solidity ^0.8.0;
 
 import {BaseSmoke} from "tests/smoke/BaseSmoke.t.sol";
-import {Mainnet} from "tests/utils/Addresses.sol";
-
-import {ConsolidationController} from "contracts/strategies/NativeStaking/ConsolidationController.sol";
-import {NativeStakingSSVStrategy} from "contracts/strategies/NativeStaking/NativeStakingSSVStrategy.sol";
-import {CompoundingStakingSSVStrategy} from "contracts/strategies/NativeStaking/CompoundingStakingSSVStrategy.sol";
-import {OETH} from "contracts/token/OETH.sol";
-import {OETHVault} from "contracts/vault/OETHVault.sol";
+import {IConsolidationController} from "contracts/interfaces/strategies/IConsolidationController.sol";
+import {INativeStakingSSVStrategy} from "contracts/interfaces/strategies/INativeStakingSSVStrategy.sol";
+import {ICompoundingStakingSSVStrategy} from "contracts/interfaces/strategies/ICompoundingStakingSSVStrategy.sol";
+import {IOToken} from "contracts/interfaces/IOToken.sol";
+import {IVault} from "contracts/interfaces/IVault.sol";
 
 abstract contract Smoke_ConsolidationController_Shared_Test is BaseSmoke {
-    ConsolidationController internal consolidationController;
-    NativeStakingSSVStrategy internal nativeStakingSSVStrategy2;
-    NativeStakingSSVStrategy internal nativeStakingSSVStrategy3;
-    CompoundingStakingSSVStrategy internal compoundingStakingSSVStrategy;
-    OETH internal oeth;
-    OETHVault internal oethVault;
+    IConsolidationController internal consolidationController;
+    INativeStakingSSVStrategy internal nativeStakingSSVStrategy2;
+    INativeStakingSSVStrategy internal nativeStakingSSVStrategy3;
+    ICompoundingStakingSSVStrategy internal compoundingStakingSSVStrategy;
+    IOToken internal oeth;
+    IVault internal oethVault;
 
     //////////////////////////////////////////////////////
     /// --- SETUP
@@ -35,15 +33,15 @@ abstract contract Smoke_ConsolidationController_Shared_Test is BaseSmoke {
     function _fetchContracts() internal {
         require(address(resolver).code.length > 0, "Resolver not initialized on fork");
 
-        consolidationController = ConsolidationController(resolver.resolve("CONSOLIDATION_CONTROLLER"));
+        consolidationController = IConsolidationController(resolver.resolve("CONSOLIDATION_CONTROLLER"));
         nativeStakingSSVStrategy2 =
-            NativeStakingSSVStrategy(payable(resolver.resolve("NATIVE_STAKING_SSV_STRATEGY_2_PROXY")));
+            INativeStakingSSVStrategy(payable(resolver.resolve("NATIVE_STAKING_SSV_STRATEGY_2_PROXY")));
         nativeStakingSSVStrategy3 =
-            NativeStakingSSVStrategy(payable(resolver.resolve("NATIVE_STAKING_SSV_STRATEGY_3_PROXY")));
+            INativeStakingSSVStrategy(payable(resolver.resolve("NATIVE_STAKING_SSV_STRATEGY_3_PROXY")));
         compoundingStakingSSVStrategy =
-            CompoundingStakingSSVStrategy(payable(resolver.resolve("COMPOUNDING_STAKING_SSV_STRATEGY_PROXY")));
-        oeth = OETH(resolver.resolve("OETH_PROXY"));
-        oethVault = OETHVault(payable(resolver.resolve("OETH_VAULT_PROXY")));
+            ICompoundingStakingSSVStrategy(payable(resolver.resolve("COMPOUNDING_STAKING_SSV_STRATEGY_PROXY")));
+        oeth = IOToken(resolver.resolve("OETH_PROXY"));
+        oethVault = IVault(resolver.resolve("OETH_VAULT_PROXY"));
     }
 
     function _resolveActors() internal {

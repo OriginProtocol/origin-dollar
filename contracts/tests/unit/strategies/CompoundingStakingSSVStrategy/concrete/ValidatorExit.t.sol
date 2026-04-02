@@ -4,7 +4,15 @@ pragma solidity ^0.8.0;
 import {
     Unit_CompoundingStakingSSVStrategy_Shared_Test
 } from "tests/unit/strategies/CompoundingStakingSSVStrategy/shared/Shared.t.sol";
-import {CompoundingValidatorManager} from "contracts/strategies/NativeStaking/CompoundingValidatorManager.sol";
+import {ICompoundingStakingSSVStrategy} from "contracts/interfaces/strategies/ICompoundingStakingSSVStrategy.sol";
+import {
+    CompoundingBalanceProofs as BalanceProofs,
+    CompoundingFirstPendingDepositSlotProofData as FirstPendingDepositSlotProofData,
+    CompoundingPendingDepositProofs as PendingDepositProofs,
+    CompoundingStrategyValidatorProofData as StrategyValidatorProofData,
+    CompoundingValidatorStakeData as ValidatorStakeData,
+    CompoundingValidatorState as ValidatorState
+} from "contracts/interfaces/strategies/CompoundingStakingTypes.sol";
 
 contract Unit_Concrete_CompoundingStakingSSVStrategy_ValidatorExit_Test is
     Unit_CompoundingStakingSSVStrategy_Shared_Test
@@ -24,11 +32,11 @@ contract Unit_Concrete_CompoundingStakingSSVStrategy_ValidatorExit_Test is
 
         vm.prank(governor);
         vm.expectEmit(true, false, false, true);
-        emit ValidatorWithdraw(pubKeyHash, 0);
+        emit ICompoundingStakingSSVStrategy.ValidatorWithdraw(pubKeyHash, 0);
         compoundingStakingSSVStrategy.validatorWithdrawal{value: 1 wei}(testValidators[0].publicKey, 0);
 
         // State should be EXITING (5)
-        (CompoundingValidatorManager.ValidatorState state,) = compoundingStakingSSVStrategy.validator(pubKeyHash);
+        (ValidatorState state,) = compoundingStakingSSVStrategy.validator(pubKeyHash);
         assertEq(uint8(state), 5);
     }
 
@@ -44,7 +52,7 @@ contract Unit_Concrete_CompoundingStakingSSVStrategy_ValidatorExit_Test is
         );
 
         // State should still be ACTIVE (4)
-        (CompoundingValidatorManager.ValidatorState state,) = compoundingStakingSSVStrategy.validator(pubKeyHash);
+        (ValidatorState state,) = compoundingStakingSSVStrategy.validator(pubKeyHash);
         assertEq(uint8(state), 4);
     }
 
@@ -88,19 +96,19 @@ contract Unit_Concrete_CompoundingStakingSSVStrategy_ValidatorExit_Test is
         // First full withdrawal call: ACTIVE (4) → EXITING (5)
         vm.prank(governor);
         vm.expectEmit(true, false, false, true);
-        emit ValidatorWithdraw(pubKeyHash, 0);
+        emit ICompoundingStakingSSVStrategy.ValidatorWithdraw(pubKeyHash, 0);
         compoundingStakingSSVStrategy.validatorWithdrawal{value: 1 wei}(publicKey, 0);
 
-        (CompoundingValidatorManager.ValidatorState state1,) = compoundingStakingSSVStrategy.validator(pubKeyHash);
+        (ValidatorState state1,) = compoundingStakingSSVStrategy.validator(pubKeyHash);
         assertEq(uint8(state1), 5, "Should be EXITING after first call");
 
         // Second full withdrawal call: still EXITING (5)
         vm.prank(governor);
         vm.expectEmit(true, false, false, true);
-        emit ValidatorWithdraw(pubKeyHash, 0);
+        emit ICompoundingStakingSSVStrategy.ValidatorWithdraw(pubKeyHash, 0);
         compoundingStakingSSVStrategy.validatorWithdrawal{value: 1 wei}(publicKey, 0);
 
-        (CompoundingValidatorManager.ValidatorState state2,) = compoundingStakingSSVStrategy.validator(pubKeyHash);
+        (ValidatorState state2,) = compoundingStakingSSVStrategy.validator(pubKeyHash);
         assertEq(uint8(state2), 5, "Should remain EXITING after second call");
     }
 
@@ -110,7 +118,7 @@ contract Unit_Concrete_CompoundingStakingSSVStrategy_ValidatorExit_Test is
         _processValidator(0, 100);
 
         bytes32 pubKeyHash = _hashPubKey(testValidators[0].publicKey);
-        (CompoundingValidatorManager.ValidatorState state,) = compoundingStakingSSVStrategy.validator(pubKeyHash);
+        (ValidatorState state,) = compoundingStakingSSVStrategy.validator(pubKeyHash);
         assertEq(uint8(state), 3, "Should be VERIFIED");
 
         vm.prank(governor);
@@ -123,7 +131,7 @@ contract Unit_Concrete_CompoundingStakingSSVStrategy_ValidatorExit_Test is
         _processValidator(0, 100);
 
         bytes32 pubKeyHash = _hashPubKey(testValidators[0].publicKey);
-        (CompoundingValidatorManager.ValidatorState state,) = compoundingStakingSSVStrategy.validator(pubKeyHash);
+        (ValidatorState state,) = compoundingStakingSSVStrategy.validator(pubKeyHash);
         assertEq(uint8(state), 3, "Should be VERIFIED");
 
         vm.prank(governor);
@@ -138,7 +146,7 @@ contract Unit_Concrete_CompoundingStakingSSVStrategy_ValidatorExit_Test is
         _processValidator(0, 100);
 
         bytes32 pubKeyHash = _hashPubKey(testValidators[0].publicKey);
-        (CompoundingValidatorManager.ValidatorState state,) = compoundingStakingSSVStrategy.validator(pubKeyHash);
+        (ValidatorState state,) = compoundingStakingSSVStrategy.validator(pubKeyHash);
         assertEq(uint8(state), 3, "Should be VERIFIED");
 
         // Top up with 31 ETH (stake but validator is still VERIFIED, not ACTIVE)
@@ -163,8 +171,7 @@ contract Unit_Concrete_CompoundingStakingSSVStrategy_ValidatorExit_Test is
         _activateValidator(0);
 
         bytes32 pubKeyHash = _hashPubKey(testValidators[0].publicKey);
-        (CompoundingValidatorManager.ValidatorState stateBeforeTopUp,) =
-            compoundingStakingSSVStrategy.validator(pubKeyHash);
+        (ValidatorState stateBeforeTopUp,) = compoundingStakingSSVStrategy.validator(pubKeyHash);
         assertEq(uint8(stateBeforeTopUp), 4, "Should be ACTIVE before top-up");
 
         // Top up with 5 ETH (stake but don't verify deposit - creates pending deposit)
@@ -178,7 +185,7 @@ contract Unit_Concrete_CompoundingStakingSSVStrategy_ValidatorExit_Test is
         );
 
         // State should remain ACTIVE (4)
-        (CompoundingValidatorManager.ValidatorState stateAfter,) = compoundingStakingSSVStrategy.validator(pubKeyHash);
+        (ValidatorState stateAfter,) = compoundingStakingSSVStrategy.validator(pubKeyHash);
         assertEq(uint8(stateAfter), 4, "Should remain ACTIVE after partial withdrawal");
     }
 
@@ -195,12 +202,12 @@ contract Unit_Concrete_CompoundingStakingSSVStrategy_ValidatorExit_Test is
         _verifyBalances(_emptyBalanceProofs(1), _emptyPendingDepositProofs(0));
 
         bytes32 pubKeyHash = _hashPubKey(testValidators[index].publicKey);
-        (CompoundingValidatorManager.ValidatorState state,) = compoundingStakingSSVStrategy.validator(pubKeyHash);
+        (ValidatorState state,) = compoundingStakingSSVStrategy.validator(pubKeyHash);
         assertEq(uint8(state), 4, "Validator should be ACTIVE");
     }
 
     function _stakeTopUp(uint256 index, uint256 amount) internal {
-        CompoundingValidatorManager.ValidatorStakeData memory stakeData = CompoundingValidatorManager.ValidatorStakeData({
+        ValidatorStakeData memory stakeData = ValidatorStakeData({
             pubkey: testValidators[index].publicKey,
             signature: testValidators[index].signature,
             depositDataRoot: testValidators[index].depositDataRoot

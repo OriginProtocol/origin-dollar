@@ -4,7 +4,15 @@ pragma solidity ^0.8.0;
 import {
     Unit_CompoundingStakingSSVStrategy_Shared_Test
 } from "tests/unit/strategies/CompoundingStakingSSVStrategy/shared/Shared.t.sol";
-import {CompoundingValidatorManager} from "contracts/strategies/NativeStaking/CompoundingValidatorManager.sol";
+import {ICompoundingStakingSSVStrategy} from "contracts/interfaces/strategies/ICompoundingStakingSSVStrategy.sol";
+import {
+    CompoundingBalanceProofs as BalanceProofs,
+    CompoundingFirstPendingDepositSlotProofData as FirstPendingDepositSlotProofData,
+    CompoundingPendingDepositProofs as PendingDepositProofs,
+    CompoundingStrategyValidatorProofData as StrategyValidatorProofData,
+    CompoundingValidatorStakeData as ValidatorStakeData,
+    CompoundingValidatorState as ValidatorState
+} from "contracts/interfaces/strategies/CompoundingStakingTypes.sol";
 
 contract Unit_Concrete_CompoundingStakingSSVStrategy_FrontRunAndInvalid_Test is
     Unit_CompoundingStakingSSVStrategy_Shared_Test
@@ -40,13 +48,13 @@ contract Unit_Concrete_CompoundingStakingSSVStrategy_FrontRunAndInvalid_Test is
         uint40 validatorIndex = uint40(testValidators[3].index);
 
         vm.expectEmit(true, false, false, false);
-        emit ValidatorInvalid(pubKeyHash);
+        emit ICompoundingStakingSSVStrategy.ValidatorInvalid(pubKeyHash);
         compoundingStakingSSVStrategy.verifyValidator(
             nextBlockTimestamp, validatorIndex, pubKeyHash, attackerCredentials, hex"00"
         );
 
         // Validator should be INVALID (8)
-        (CompoundingValidatorManager.ValidatorState state,) = compoundingStakingSSVStrategy.validator(pubKeyHash);
+        (ValidatorState state,) = compoundingStakingSSVStrategy.validator(pubKeyHash);
         assertEq(uint8(state), 8, "Should be INVALID");
 
         // Pending deposit should be removed
@@ -75,13 +83,13 @@ contract Unit_Concrete_CompoundingStakingSSVStrategy_FrontRunAndInvalid_Test is
         uint40 validatorIndex = uint40(testValidators[3].index);
 
         vm.expectEmit(true, false, false, false);
-        emit ValidatorInvalid(pubKeyHash);
+        emit ICompoundingStakingSSVStrategy.ValidatorInvalid(pubKeyHash);
         compoundingStakingSSVStrategy.verifyValidator(
             nextBlockTimestamp, validatorIndex, pubKeyHash, wrongTypeCredentials, hex"00"
         );
 
         // Validator should be INVALID (8)
-        (CompoundingValidatorManager.ValidatorState state,) = compoundingStakingSSVStrategy.validator(pubKeyHash);
+        (ValidatorState state,) = compoundingStakingSSVStrategy.validator(pubKeyHash);
         assertEq(uint8(state), 8, "Should be INVALID");
     }
 
@@ -99,13 +107,13 @@ contract Unit_Concrete_CompoundingStakingSSVStrategy_FrontRunAndInvalid_Test is
         uint40 validatorIndex = uint40(testValidators[3].index);
 
         vm.expectEmit(true, false, false, false);
-        emit ValidatorInvalid(pubKeyHash);
+        emit ICompoundingStakingSSVStrategy.ValidatorInvalid(pubKeyHash);
         compoundingStakingSSVStrategy.verifyValidator(
             nextBlockTimestamp, validatorIndex, pubKeyHash, malformedCredentials, hex"00"
         );
 
         // Validator should be INVALID (8)
-        (CompoundingValidatorManager.ValidatorState state,) = compoundingStakingSSVStrategy.validator(pubKeyHash);
+        (ValidatorState state,) = compoundingStakingSSVStrategy.validator(pubKeyHash);
         assertEq(uint8(state), 8, "Should be INVALID");
     }
 
@@ -131,13 +139,11 @@ contract Unit_Concrete_CompoundingStakingSSVStrategy_FrontRunAndInvalid_Test is
         uint64 processedSlot = depositSlot + 10_000;
 
         bytes memory emptyQueueProof = new bytes(1184);
-        CompoundingValidatorManager.FirstPendingDepositSlotProofData memory firstPending =
-            CompoundingValidatorManager.FirstPendingDepositSlotProofData({slot: 1, proof: emptyQueueProof});
+        FirstPendingDepositSlotProofData memory firstPending =
+            FirstPendingDepositSlotProofData({slot: 1, proof: emptyQueueProof});
 
-        CompoundingValidatorManager.StrategyValidatorProofData memory strategyValidator =
-            CompoundingValidatorManager.StrategyValidatorProofData({
-                withdrawableEpoch: type(uint64).max, withdrawableEpochProof: hex"00"
-            });
+        StrategyValidatorProofData memory strategyValidator =
+            StrategyValidatorProofData({withdrawableEpoch: type(uint64).max, withdrawableEpochProof: hex"00"});
 
         vm.expectRevert("Deposit not pending");
         compoundingStakingSSVStrategy.verifyDeposit(pendingDepositRoot, processedSlot, firstPending, strategyValidator);
@@ -163,7 +169,7 @@ contract Unit_Concrete_CompoundingStakingSSVStrategy_FrontRunAndInvalid_Test is
         // Governor resets firstDeposit
         vm.prank(governor);
         vm.expectEmit(false, false, false, true);
-        emit FirstDepositReset();
+        emit ICompoundingStakingSSVStrategy.FirstDepositReset();
         compoundingStakingSSVStrategy.resetFirstDeposit();
 
         // firstDeposit should now be false
@@ -185,17 +191,17 @@ contract Unit_Concrete_CompoundingStakingSSVStrategy_FrontRunAndInvalid_Test is
         );
 
         // Confirm INVALID state
-        (CompoundingValidatorManager.ValidatorState state,) = compoundingStakingSSVStrategy.validator(pubKeyHash);
+        (ValidatorState state,) = compoundingStakingSSVStrategy.validator(pubKeyHash);
         assertEq(uint8(state), 8, "Should be INVALID before removal");
 
         // Remove the invalid validator as governor
         vm.prank(governor);
         vm.expectEmit(true, false, false, true);
-        emit SSVValidatorRemoved(pubKeyHash, _operatorIds(3));
+        emit ICompoundingStakingSSVStrategy.SSVValidatorRemoved(pubKeyHash, _operatorIds(3));
         compoundingStakingSSVStrategy.removeSsvValidator(testValidators[3].publicKey, _operatorIds(3), _emptyCluster());
 
         // State should be REMOVED (7)
-        (CompoundingValidatorManager.ValidatorState stateAfter,) = compoundingStakingSSVStrategy.validator(pubKeyHash);
+        (ValidatorState stateAfter,) = compoundingStakingSSVStrategy.validator(pubKeyHash);
         assertEq(uint8(stateAfter), 7, "Should be REMOVED after removal");
     }
 

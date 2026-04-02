@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 import { Cluster } from "../ISSVNetwork.sol";
-import { CompoundingValidatorManager } from "../../strategies/NativeStaking/CompoundingValidatorManager.sol";
+import { CompoundingBalanceProofs, CompoundingPendingDepositProofs, CompoundingValidatorStakeData } from "./CompoundingStakingTypes.sol";
 
 interface IConsolidationController {
     // Ownable
@@ -31,12 +31,11 @@ interface IConsolidationController {
     function failConsolidation(bytes[] calldata sourcePubKeys) external;
 
     function confirmConsolidation(
-        CompoundingValidatorManager.BalanceProofs calldata balanceProofs,
-        CompoundingValidatorManager.PendingDepositProofs
-            calldata pendingDepositProofs
+        CompoundingBalanceProofs calldata balanceProofs,
+        CompoundingPendingDepositProofs calldata pendingDepositProofs
     ) external;
 
-    function doAccounting(address _sourceStrategy) external;
+    function doAccounting(address _sourceStrategy) external returns (bool);
 
     function exitSsvValidator(
         address _sourceStrategy,
@@ -54,9 +53,8 @@ interface IConsolidationController {
     function snapBalances() external;
 
     function verifyBalances(
-        CompoundingValidatorManager.BalanceProofs calldata balanceProofs,
-        CompoundingValidatorManager.PendingDepositProofs
-            calldata pendingDepositProofs
+        CompoundingBalanceProofs calldata balanceProofs,
+        CompoundingPendingDepositProofs calldata pendingDepositProofs
     ) external;
 
     function validatorWithdrawal(bytes calldata publicKey, uint64 amountGwei)
@@ -64,7 +62,7 @@ interface IConsolidationController {
         payable;
 
     function stakeEth(
-        CompoundingValidatorManager.ValidatorStakeData calldata stakeData,
+        CompoundingValidatorStakeData calldata stakeData,
         uint64 amountGwei
     ) external;
 }

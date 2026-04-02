@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 import { Cluster } from "../ISSVNetwork.sol";
-import { CompoundingValidatorManager } from "../../strategies/NativeStaking/CompoundingValidatorManager.sol";
+import { CompoundingBalanceProofs, CompoundingFirstPendingDepositSlotProofData, CompoundingPendingDepositProofs, CompoundingStrategyValidatorProofData, CompoundingValidatorStakeData, CompoundingValidatorState } from "./CompoundingStakingTypes.sol";
 
 interface ICompoundingStakingSSVStrategy {
     // Events (from InitializableAbstractStrategy)
@@ -34,10 +34,14 @@ interface ICompoundingStakingSSVStrategy {
     event SSVValidatorRemoved(bytes32 indexed pubKeyHash, uint64[] operatorIds);
     event ETHStaked(
         bytes32 indexed pubKeyHash,
-        uint64 amountGwei,
-        uint256 depositIndex
+        bytes32 indexed pendingDepositRoot,
+        bytes pubKey,
+        uint256 amountWei
     );
-    event ValidatorVerified(bytes32 indexed pubKeyHash, uint40 validatorIndex);
+    event ValidatorVerified(
+        bytes32 indexed pubKeyHash,
+        uint40 indexed validatorIndex
+    );
     event ValidatorInvalid(bytes32 indexed pubKeyHash);
     event DepositVerified(
         bytes32 indexed pendingDepositRoot,
@@ -46,10 +50,10 @@ interface ICompoundingStakingSSVStrategy {
     event ValidatorWithdraw(bytes32 indexed pubKeyHash, uint256 amountWei);
     event BalancesSnapped(bytes32 indexed blockRoot, uint256 ethBalance);
     event BalancesVerified(
-        uint64 snapTimestamp,
-        uint256 totalBalance,
-        uint256 depositedBalance,
-        uint256 pendingBalance
+        uint64 indexed timestamp,
+        uint256 totalDepositsWei,
+        uint256 totalValidatorBalance,
+        uint256 ethBalance
     );
 
     // IStrategy functions
@@ -148,7 +152,7 @@ interface ICompoundingStakingSSVStrategy {
     ) external;
 
     function stakeEth(
-        CompoundingValidatorManager.ValidatorStakeData calldata stakeData,
+        CompoundingValidatorStakeData calldata stakeData,
         uint64 amountGwei
     ) external;
 
@@ -163,18 +167,15 @@ interface ICompoundingStakingSSVStrategy {
     function verifyDeposit(
         bytes32 pendingDepositRoot,
         uint64 processedSlot,
-        CompoundingValidatorManager.FirstPendingDepositSlotProofData
-            calldata firstPending,
-        CompoundingValidatorManager.StrategyValidatorProofData
-            calldata strategyValidator
+        CompoundingFirstPendingDepositSlotProofData calldata firstPending,
+        CompoundingStrategyValidatorProofData calldata strategyValidator
     ) external;
 
     function snapBalances() external;
 
     function verifyBalances(
-        CompoundingValidatorManager.BalanceProofs calldata balanceProofs,
-        CompoundingValidatorManager.PendingDepositProofs
-            calldata pendingDepositProofs
+        CompoundingBalanceProofs calldata balanceProofs,
+        CompoundingPendingDepositProofs calldata pendingDepositProofs
     ) external;
 
     function validatorWithdrawal(bytes calldata publicKey, uint64 amountGwei)
@@ -184,7 +185,7 @@ interface ICompoundingStakingSSVStrategy {
     function validator(bytes32 pubKeyHash)
         external
         view
-        returns (CompoundingValidatorManager.ValidatorState, uint40);
+        returns (CompoundingValidatorState, uint40);
 
     function verifiedValidatorsLength() external view returns (uint256);
 

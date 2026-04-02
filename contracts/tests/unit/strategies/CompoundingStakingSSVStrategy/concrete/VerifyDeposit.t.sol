@@ -4,7 +4,15 @@ pragma solidity ^0.8.0;
 import {
     Unit_CompoundingStakingSSVStrategy_Shared_Test
 } from "tests/unit/strategies/CompoundingStakingSSVStrategy/shared/Shared.t.sol";
-import {CompoundingValidatorManager} from "contracts/strategies/NativeStaking/CompoundingValidatorManager.sol";
+import {ICompoundingStakingSSVStrategy} from "contracts/interfaces/strategies/ICompoundingStakingSSVStrategy.sol";
+import {
+    CompoundingBalanceProofs as BalanceProofs,
+    CompoundingFirstPendingDepositSlotProofData as FirstPendingDepositSlotProofData,
+    CompoundingPendingDepositProofs as PendingDepositProofs,
+    CompoundingStrategyValidatorProofData as StrategyValidatorProofData,
+    CompoundingValidatorStakeData as ValidatorStakeData,
+    CompoundingValidatorState as ValidatorState
+} from "contracts/interfaces/strategies/CompoundingStakingTypes.sol";
 
 contract Unit_Concrete_CompoundingStakingSSVStrategy_VerifyDeposit_Test is
     Unit_CompoundingStakingSSVStrategy_Shared_Test
@@ -35,13 +43,11 @@ contract Unit_Concrete_CompoundingStakingSSVStrategy_VerifyDeposit_Test is
 
         bytes memory emptyQueueProof = new bytes(1184);
 
-        CompoundingValidatorManager.FirstPendingDepositSlotProofData memory firstPending =
-            CompoundingValidatorManager.FirstPendingDepositSlotProofData({slot: 1, proof: emptyQueueProof});
+        FirstPendingDepositSlotProofData memory firstPending =
+            FirstPendingDepositSlotProofData({slot: 1, proof: emptyQueueProof});
 
-        CompoundingValidatorManager.StrategyValidatorProofData memory strategyValidator =
-            CompoundingValidatorManager.StrategyValidatorProofData({
-                withdrawableEpoch: type(uint64).max, withdrawableEpochProof: hex"00"
-            });
+        StrategyValidatorProofData memory strategyValidator =
+            StrategyValidatorProofData({withdrawableEpoch: type(uint64).max, withdrawableEpochProof: hex"00"});
 
         vm.expectRevert("Deposit not pending");
         compoundingStakingSSVStrategy.verifyDeposit(pendingDepositRoot, processedSlot, firstPending, strategyValidator);
@@ -56,13 +62,11 @@ contract Unit_Concrete_CompoundingStakingSSVStrategy_VerifyDeposit_Test is
 
         bytes memory emptyQueueProof = new bytes(1184);
 
-        CompoundingValidatorManager.FirstPendingDepositSlotProofData memory firstPending =
-            CompoundingValidatorManager.FirstPendingDepositSlotProofData({slot: 0, proof: emptyQueueProof});
+        FirstPendingDepositSlotProofData memory firstPending =
+            FirstPendingDepositSlotProofData({slot: 0, proof: emptyQueueProof});
 
-        CompoundingValidatorManager.StrategyValidatorProofData memory strategyValidator =
-            CompoundingValidatorManager.StrategyValidatorProofData({
-                withdrawableEpoch: type(uint64).max, withdrawableEpochProof: hex"00"
-            });
+        StrategyValidatorProofData memory strategyValidator =
+            StrategyValidatorProofData({withdrawableEpoch: type(uint64).max, withdrawableEpochProof: hex"00"});
 
         vm.expectRevert("Zero 1st pending deposit slot");
         compoundingStakingSSVStrategy.verifyDeposit(pendingDepositRoot, processedSlot, firstPending, strategyValidator);
@@ -78,13 +82,11 @@ contract Unit_Concrete_CompoundingStakingSSVStrategy_VerifyDeposit_Test is
 
         bytes memory emptyQueueProof = new bytes(1184);
 
-        CompoundingValidatorManager.FirstPendingDepositSlotProofData memory firstPending =
-            CompoundingValidatorManager.FirstPendingDepositSlotProofData({slot: 1, proof: emptyQueueProof});
+        FirstPendingDepositSlotProofData memory firstPending =
+            FirstPendingDepositSlotProofData({slot: 1, proof: emptyQueueProof});
 
-        CompoundingValidatorManager.StrategyValidatorProofData memory strategyValidator =
-            CompoundingValidatorManager.StrategyValidatorProofData({
-                withdrawableEpoch: type(uint64).max, withdrawableEpochProof: hex"00"
-            });
+        StrategyValidatorProofData memory strategyValidator =
+            StrategyValidatorProofData({withdrawableEpoch: type(uint64).max, withdrawableEpochProof: hex"00"});
 
         vm.expectRevert("Slot not after deposit");
         compoundingStakingSSVStrategy.verifyDeposit(pendingDepositRoot, processedSlot, firstPending, strategyValidator);
@@ -102,13 +104,11 @@ contract Unit_Concrete_CompoundingStakingSSVStrategy_VerifyDeposit_Test is
 
         bytes memory emptyQueueProof = new bytes(1184);
 
-        CompoundingValidatorManager.FirstPendingDepositSlotProofData memory firstPending =
-            CompoundingValidatorManager.FirstPendingDepositSlotProofData({slot: 1, proof: emptyQueueProof});
+        FirstPendingDepositSlotProofData memory firstPending =
+            FirstPendingDepositSlotProofData({slot: 1, proof: emptyQueueProof});
 
-        CompoundingValidatorManager.StrategyValidatorProofData memory strategyValidator =
-            CompoundingValidatorManager.StrategyValidatorProofData({
-                withdrawableEpoch: type(uint64).max, withdrawableEpochProof: hex"00"
-            });
+        StrategyValidatorProofData memory strategyValidator =
+            StrategyValidatorProofData({withdrawableEpoch: type(uint64).max, withdrawableEpochProof: hex"00"});
 
         vm.expectRevert("Deposit not pending");
         compoundingStakingSSVStrategy.verifyDeposit(invalidRoot, processedSlot, firstPending, strategyValidator);
@@ -122,7 +122,7 @@ contract Unit_Concrete_CompoundingStakingSSVStrategy_VerifyDeposit_Test is
         // Verify deposit WITHOUT calling _snapBalances() first
         // Should succeed because snappedBalance.timestamp == 0 means no snap constraint
         vm.expectEmit(true, false, false, true, address(compoundingStakingSSVStrategy));
-        emit CompoundingValidatorManager.DepositVerified(pendingDepositRoot, 1 ether);
+        emit ICompoundingStakingSSVStrategy.DepositVerified(pendingDepositRoot, 1 ether);
 
         _verifyDeposit(pendingDepositRoot);
 
@@ -147,7 +147,7 @@ contract Unit_Concrete_CompoundingStakingSSVStrategy_VerifyDeposit_Test is
         _snapBalances();
 
         vm.expectEmit(true, false, false, true, address(compoundingStakingSSVStrategy));
-        emit CompoundingValidatorManager.DepositVerified(pendingDepositRoot, 1 ether);
+        emit ICompoundingStakingSSVStrategy.DepositVerified(pendingDepositRoot, 1 ether);
 
         _verifyDeposit(pendingDepositRoot);
 
@@ -169,7 +169,7 @@ contract Unit_Concrete_CompoundingStakingSSVStrategy_VerifyDeposit_Test is
         _snapBalances();
 
         vm.expectEmit(true, false, false, true, address(compoundingStakingSSVStrategy));
-        emit CompoundingValidatorManager.DepositVerified(pendingDepositRoot, 1 ether);
+        emit ICompoundingStakingSSVStrategy.DepositVerified(pendingDepositRoot, 1 ether);
 
         _verifyDeposit(pendingDepositRoot);
 
@@ -192,13 +192,11 @@ contract Unit_Concrete_CompoundingStakingSSVStrategy_VerifyDeposit_Test is
 
         bytes memory emptyQueueProof = new bytes(1184);
 
-        CompoundingValidatorManager.FirstPendingDepositSlotProofData memory firstPending =
-            CompoundingValidatorManager.FirstPendingDepositSlotProofData({slot: 1, proof: emptyQueueProof});
+        FirstPendingDepositSlotProofData memory firstPending =
+            FirstPendingDepositSlotProofData({slot: 1, proof: emptyQueueProof});
 
-        CompoundingValidatorManager.StrategyValidatorProofData memory strategyValidator =
-            CompoundingValidatorManager.StrategyValidatorProofData({
-                withdrawableEpoch: type(uint64).max, withdrawableEpochProof: hex"00"
-            });
+        StrategyValidatorProofData memory strategyValidator =
+            StrategyValidatorProofData({withdrawableEpoch: type(uint64).max, withdrawableEpochProof: hex"00"});
 
         vm.expectRevert("Deposit after balance snapshot");
         compoundingStakingSSVStrategy.verifyDeposit(pendingDepositRoot, processedSlot, firstPending, strategyValidator);
