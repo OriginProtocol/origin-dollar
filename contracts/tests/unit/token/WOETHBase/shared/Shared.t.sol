@@ -1,30 +1,30 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
+// Base test contract
 import {Base} from "tests/Base.t.sol";
 
-import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+// Interfaces
+import {IVault} from "contracts/interfaces/IVault.sol";
+import {IProxy} from "contracts/interfaces/IProxy.sol";
+import {IOToken} from "contracts/interfaces/IOToken.sol";
+import {IWOToken} from "contracts/interfaces/IWOToken.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
+// Mocks
 import {MockERC20} from "@solmate/test/utils/mocks/MockERC20.sol";
-import {OETHBase} from "contracts/token/OETHBase.sol";
-import {OETHVault} from "contracts/vault/OETHVault.sol";
-import {OETHProxy} from "contracts/proxies/Proxies.sol";
-import {OETHVaultProxy} from "contracts/proxies/Proxies.sol";
-import {WOETHProxy} from "contracts/proxies/Proxies.sol";
-import {WOETHBase} from "contracts/token/WOETHBase.sol";
 
 abstract contract Unit_WOETHBase_Shared_Test is Base {
     //////////////////////////////////////////////////////
     /// --- CONTRACTS
     //////////////////////////////////////////////////////
-    OETHBase internal oethBase;
-    OETHVault internal oethVault;
-    OETHProxy internal oethProxy;
-    OETHVaultProxy internal oethVaultProxy;
+    IOToken internal oethBase;
+    IVault internal oethVault;
+    IProxy internal oethProxy;
+    IProxy internal oethVaultProxy;
 
-    WOETHBase internal woethBase;
-    WOETHProxy internal woethBaseProxy;
+    IWOToken internal woethBase;
+    IProxy internal woethBaseProxy;
 
     //////////////////////////////////////////////////////
     /// --- CONSTANTS
@@ -54,11 +54,19 @@ abstract contract Unit_WOETHBase_Shared_Test is Base {
     function _deployContracts() internal {
         vm.startPrank(deployer);
 
-        OETHBase oethBaseImpl = new OETHBase();
-        OETHVault oethVaultImpl = new OETHVault(address(weth));
+        IOToken oethBaseImpl = IOToken(vm.deployCode("contracts/token/OETHBase.sol:OETHBase"));
+        address oethVaultImpl = vm.deployCode("contracts/vault/OETHVault.sol:OETHVault", abi.encode(address(weth)));
 
-        oethProxy = new OETHProxy();
-        oethVaultProxy = new OETHVaultProxy();
+        oethProxy = IProxy(
+            vm.deployCode(
+                "contracts/proxies/InitializeGovernedUpgradeabilityProxy.sol:InitializeGovernedUpgradeabilityProxy"
+            )
+        );
+        oethVaultProxy = IProxy(
+            vm.deployCode(
+                "contracts/proxies/InitializeGovernedUpgradeabilityProxy.sol:InitializeGovernedUpgradeabilityProxy"
+            )
+        );
 
         oethProxy.initialize(
             address(oethBaseImpl),
@@ -72,20 +80,24 @@ abstract contract Unit_WOETHBase_Shared_Test is Base {
 
         vm.stopPrank();
 
-        oethBase = OETHBase(address(oethProxy));
-        oethVault = OETHVault(address(oethVaultProxy));
+        oethBase = IOToken(address(oethProxy));
+        oethVault = IVault(address(oethVaultProxy));
     }
 
     function _deployWOETHBase() internal {
         vm.startPrank(deployer);
 
-        WOETHBase woethBaseImpl = new WOETHBase(ERC20(address(oethBase)));
-        woethBaseProxy = new WOETHProxy();
+        address woethBaseImpl = vm.deployCode("contracts/token/WOETHBase.sol:WOETHBase", abi.encode(address(oethBase)));
+        woethBaseProxy = IProxy(
+            vm.deployCode(
+                "contracts/proxies/InitializeGovernedUpgradeabilityProxy.sol:InitializeGovernedUpgradeabilityProxy"
+            )
+        );
         woethBaseProxy.initialize(address(woethBaseImpl), governor, "");
 
         vm.stopPrank();
 
-        woethBase = WOETHBase(address(woethBaseProxy));
+        woethBase = IWOToken(address(woethBaseProxy));
 
         vm.prank(governor);
         woethBase.initialize();
