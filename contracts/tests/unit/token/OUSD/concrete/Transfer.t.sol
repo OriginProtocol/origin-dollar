@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 import {Unit_OUSD_Shared_Test} from "tests/unit/token/OUSD/shared/Shared.t.sol";
-import {OUSD} from "contracts/token/OUSD.sol";
+import {IOToken} from "contracts/interfaces/IOToken.sol";
 
 contract Unit_Concrete_OUSD_Transfer_Test is Unit_OUSD_Shared_Test {
     //////////////////////////////////////////////////////
@@ -19,7 +19,7 @@ contract Unit_Concrete_OUSD_Transfer_Test is Unit_OUSD_Shared_Test {
 
     function test_transfer_emitsEvent() public {
         vm.expectEmit(true, true, false, true);
-        emit OUSD.Transfer(matt, alice, 1e18);
+        emit IOToken.Transfer(matt, alice, 1e18);
 
         vm.prank(matt);
         ousd.transfer(alice, 1e18);
@@ -260,13 +260,11 @@ contract Unit_Concrete_OUSD_Transfer_Test is Unit_OUSD_Shared_Test {
 }
 
 /// @dev Helper contract: a second MockNonRebasing for testing inter-contract transfers
-import {OUSD} from "contracts/token/OUSD.sol";
-
 contract MockNonRebasingTwo {
-    OUSD private immutable _ousd;
+    IOToken private immutable _ousd;
 
     constructor(address ousd_) {
-        _ousd = OUSD(ousd_);
+        _ousd = IOToken(ousd_);
     }
 
     function transfer(address to, uint256 amount) external {

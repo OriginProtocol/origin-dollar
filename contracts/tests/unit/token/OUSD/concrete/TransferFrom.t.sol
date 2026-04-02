@@ -2,7 +2,6 @@
 pragma solidity ^0.8.0;
 
 import {Unit_OUSD_Shared_Test} from "tests/unit/token/OUSD/shared/Shared.t.sol";
-import {OUSD} from "contracts/token/OUSD.sol";
 
 contract Unit_Concrete_OUSD_TransferFrom_Test is Unit_OUSD_Shared_Test {
     //////////////////////////////////////////////////////

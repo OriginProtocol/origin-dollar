@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 import {Unit_OUSD_Shared_Test} from "tests/unit/token/OUSD/shared/Shared.t.sol";
-import {OUSD} from "contracts/token/OUSD.sol";
+import {IOToken} from "contracts/interfaces/IOToken.sol";
 
 contract Unit_Concrete_OUSD_Rebasing_Test is Unit_OUSD_Shared_Test {
     //////////////////////////////////////////////////////
@@ -37,7 +37,7 @@ contract Unit_Concrete_OUSD_Rebasing_Test is Unit_OUSD_Shared_Test {
         ousd.transfer(address(mockNonRebasing), 50e18);
 
         vm.expectEmit(false, false, false, true);
-        emit OUSD.AccountRebasingEnabled(address(mockNonRebasing));
+        emit IOToken.AccountRebasingEnabled(address(mockNonRebasing));
 
         mockNonRebasing.rebaseOptIn();
     }
@@ -120,7 +120,7 @@ contract Unit_Concrete_OUSD_Rebasing_Test is Unit_OUSD_Shared_Test {
 
     function test_rebaseOptOut_emitsEvent() public {
         vm.expectEmit(false, false, false, true);
-        emit OUSD.AccountRebasingDisabled(matt);
+        emit IOToken.AccountRebasingDisabled(matt);
 
         vm.prank(matt);
         ousd.rebaseOptOut();
@@ -247,7 +247,7 @@ contract Unit_Concrete_OUSD_Rebasing_Test is Unit_OUSD_Shared_Test {
 
     function test_changeSupply_noChange_emitsEvent() public {
         vm.expectEmit(false, false, false, true);
-        emit OUSD.TotalSupplyUpdatedHighres(
+        emit IOToken.TotalSupplyUpdatedHighres(
             ousd.totalSupply(), ousd.rebasingCreditsHighres(), ousd.rebasingCreditsPerTokenHighres()
         );
 

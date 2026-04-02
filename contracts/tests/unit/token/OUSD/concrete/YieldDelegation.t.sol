@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 import {Unit_OUSD_Shared_Test} from "tests/unit/token/OUSD/shared/Shared.t.sol";
-import {OUSD} from "contracts/token/OUSD.sol";
+import {IOToken} from "contracts/interfaces/IOToken.sol";
 
 contract Unit_Concrete_OUSD_YieldDelegation_Test is Unit_OUSD_Shared_Test {
     //////////////////////////////////////////////////////
@@ -38,7 +38,7 @@ contract Unit_Concrete_OUSD_YieldDelegation_Test is Unit_OUSD_Shared_Test {
 
     function test_delegateYield_emitsEvent() public {
         vm.expectEmit(false, false, false, true);
-        emit OUSD.YieldDelegated(matt, alice);
+        emit IOToken.YieldDelegated(matt, alice);
 
         vm.prank(governor);
         ousd.delegateYield(matt, alice);
@@ -229,7 +229,7 @@ contract Unit_Concrete_OUSD_YieldDelegation_Test is Unit_OUSD_Shared_Test {
         ousd.delegateYield(matt, alice);
 
         vm.expectEmit(false, false, false, true);
-        emit OUSD.YieldUndelegated(matt, alice);
+        emit IOToken.YieldUndelegated(matt, alice);
 
         vm.prank(governor);
         ousd.undelegateYield(matt);
