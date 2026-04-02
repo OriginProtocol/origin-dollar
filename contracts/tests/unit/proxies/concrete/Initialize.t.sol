@@ -2,8 +2,7 @@
 pragma solidity ^0.8.0;
 
 import {Unit_Proxies_Shared_Test} from "tests/unit/proxies/shared/Shared.t.sol";
-import {Governable} from "contracts/governance/Governable.sol";
-import {InitializeGovernedUpgradeabilityProxy} from "contracts/proxies/InitializeGovernedUpgradeabilityProxy.sol";
+import {IProxy} from "contracts/interfaces/IProxy.sol";
 import {MockImplementation} from "tests/mocks/MockImplementation.sol";
 
 contract Unit_Concrete_Proxy_Initialize_Test is Unit_Proxies_Shared_Test {
@@ -29,12 +28,7 @@ contract Unit_Concrete_Proxy_Initialize_Test is Unit_Proxies_Shared_Test {
         vm.prank(deployer);
         proxy.initialize(address(impl), governor, data);
 
-        // Verify delegatecall was made: read initialized state through proxy
-        (bool success, bytes memory result) =
-            address(proxy).staticcall(abi.encodeWithSelector(MockImplementation.getValue.selector));
-        assertTrue(success);
-        // getValue returns 0 (default) - the important thing is the delegatecall succeeded
-        assertEq(abi.decode(result, (uint256)), 0);
+        assertEq(MockImplementation(payable(address(proxy))).getValue(), 0);
     }
 
     function test_initialize_emptyData_skipsDelegatecall() public {
@@ -47,7 +41,7 @@ contract Unit_Concrete_Proxy_Initialize_Test is Unit_Proxies_Shared_Test {
 
     function test_initialize_emitsGovernorshipTransferred() public {
         vm.expectEmit(true, true, true, true);
-        emit Governable.GovernorshipTransferred(deployer, governor);
+        emit IProxy.GovernorshipTransferred(deployer, governor);
 
         vm.prank(deployer);
         proxy.initialize(address(impl), governor, bytes(""));

@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 import {Unit_Proxies_Shared_Test} from "tests/unit/proxies/shared/Shared.t.sol";
-import {Governable} from "contracts/governance/Governable.sol";
+import {IProxy} from "contracts/interfaces/IProxy.sol";
 
 contract Unit_Concrete_Proxy_Governance_Test is Unit_Proxies_Shared_Test {
     function setUp() public override {
@@ -22,7 +22,7 @@ contract Unit_Concrete_Proxy_Governance_Test is Unit_Proxies_Shared_Test {
 
     function test_transferGovernance_emitsPendingGovernorshipTransfer() public {
         vm.expectEmit(true, true, true, true);
-        emit Governable.PendingGovernorshipTransfer(governor, alice);
+        emit IProxy.PendingGovernorshipTransfer(governor, alice);
 
         vm.prank(governor);
         proxy.transferGovernance(alice);
@@ -51,7 +51,7 @@ contract Unit_Concrete_Proxy_Governance_Test is Unit_Proxies_Shared_Test {
         proxy.transferGovernance(alice);
 
         vm.expectEmit(true, true, true, true);
-        emit Governable.GovernorshipTransferred(governor, alice);
+        emit IProxy.GovernorshipTransferred(governor, alice);
 
         vm.prank(alice);
         proxy.claimGovernance();
