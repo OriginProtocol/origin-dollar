@@ -31,12 +31,14 @@ contract Unit_Fuzz_OETHVault_Withdraw_Test is Unit_OETHVault_Shared_Test {
 
         _mintOETH(alice, amount);
 
-        (uint128 queuedBefore,,,) = oethVault.withdrawalQueueMetadata();
+        uint128 queuedBefore = oethVault.withdrawalQueueMetadata().queued;
 
         vm.prank(alice);
         oethVault.requestWithdrawal(amount);
 
-        (uint128 queued, uint128 claimable, uint128 claimed,) = oethVault.withdrawalQueueMetadata();
+        uint128 queued = oethVault.withdrawalQueueMetadata().queued;
+        uint128 claimable = oethVault.withdrawalQueueMetadata().claimable;
+        uint128 claimed = oethVault.withdrawalQueueMetadata().claimed;
 
         // No scaling — WETH and OETH both 18 decimals
         assertEq(queued, queuedBefore + uint128(amount));
@@ -74,12 +76,12 @@ contract Unit_Fuzz_OETHVault_Withdraw_Test is Unit_OETHVault_Shared_Test {
 
         vm.warp(block.timestamp + DELAY_PERIOD);
 
-        (,, uint128 claimedBefore,) = oethVault.withdrawalQueueMetadata();
+        uint128 claimedBefore = oethVault.withdrawalQueueMetadata().claimed;
 
         vm.prank(alice);
         oethVault.claimWithdrawal(requestId);
 
-        (,, uint128 claimedAfter,) = oethVault.withdrawalQueueMetadata();
+        uint128 claimedAfter = oethVault.withdrawalQueueMetadata().claimed;
         // No scaling — claimed increases by exact amount
         assertEq(claimedAfter, claimedBefore + uint128(amount));
     }
@@ -111,7 +113,9 @@ contract Unit_Fuzz_OETHVault_Withdraw_Test is Unit_OETHVault_Shared_Test {
         assertEq(weth.balanceOf(bobby) - bobbyWethBefore, a2);
 
         // Queue consistency: claimed <= claimable <= queued
-        (uint128 queued, uint128 claimable, uint128 claimed,) = oethVault.withdrawalQueueMetadata();
+        uint128 queued = oethVault.withdrawalQueueMetadata().queued;
+        uint128 claimable = oethVault.withdrawalQueueMetadata().claimable;
+        uint128 claimed = oethVault.withdrawalQueueMetadata().claimed;
         assertLe(claimed, claimable);
         assertLe(claimable, queued);
     }

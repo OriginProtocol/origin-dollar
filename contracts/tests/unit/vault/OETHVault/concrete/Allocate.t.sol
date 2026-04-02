@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 import {Unit_OETHVault_Shared_Test} from "tests/unit/vault/OETHVault/shared/Shared.t.sol";
-import {VaultStorage} from "contracts/vault/VaultStorage.sol";
+import {IVault} from "contracts/interfaces/IVault.sol";
 import {MockStrategy} from "contracts/mocks/MockStrategy.sol";
 
 contract Unit_Concrete_OETHVault_Allocate_Test is Unit_OETHVault_Shared_Test {
@@ -86,7 +86,7 @@ contract Unit_Concrete_OETHVault_Allocate_Test is Unit_OETHVault_Shared_Test {
 
         vm.prank(governor);
         vm.expectEmit(true, true, true, true);
-        emit VaultStorage.AssetAllocated(address(weth), address(strategy), 200e18);
+        emit IVault.AssetAllocated(address(weth), address(strategy), 200e18);
         oethVault.allocate();
     }
 
@@ -330,13 +330,13 @@ contract Unit_Concrete_OETHVault_Allocate_Test is Unit_OETHVault_Shared_Test {
         vm.prank(matt);
         oethVault.requestWithdrawal(80e18);
 
-        (, uint128 claimableBefore,,) = oethVault.withdrawalQueueMetadata();
+        uint128 claimableBefore = oethVault.withdrawalQueueMetadata().claimable;
 
         // Withdraw from strategy adds liquidity to queue
         vm.prank(governor);
         oethVault.withdrawFromStrategy(address(strategy), _toArray(address(weth)), _toArray(uint256(100e18)));
 
-        (, uint128 claimableAfter,,) = oethVault.withdrawalQueueMetadata();
+        uint128 claimableAfter = oethVault.withdrawalQueueMetadata().claimable;
         assertGt(claimableAfter, claimableBefore, "Claimable should increase after strategy withdrawal");
     }
 

@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 import {Unit_OETHVault_Shared_Test} from "tests/unit/vault/OETHVault/shared/Shared.t.sol";
-import {VaultStorage} from "contracts/vault/VaultStorage.sol";
+import {IVault} from "contracts/interfaces/IVault.sol";
 import {MockStrategy} from "contracts/mocks/MockStrategy.sol";
 
 contract Unit_Concrete_OETHVault_Mint_Test is Unit_OETHVault_Shared_Test {
@@ -49,7 +49,7 @@ contract Unit_Concrete_OETHVault_Mint_Test is Unit_OETHVault_Shared_Test {
         weth.approve(address(oethVault), wethAmount);
 
         vm.expectEmit(true, true, true, true);
-        emit VaultStorage.Mint(alice, wethAmount);
+        emit IVault.Mint(alice, wethAmount);
         oethVault.mint(wethAmount);
         vm.stopPrank();
     }
@@ -66,7 +66,7 @@ contract Unit_Concrete_OETHVault_Mint_Test is Unit_OETHVault_Shared_Test {
 
         vm.startPrank(alice);
         weth.approve(address(oethVault), wethAmount);
-        oethVault.mint(address(weth), wethAmount, 0);
+        oethVault.mint(wethAmount);
         vm.stopPrank();
 
         assertEq(oeth.balanceOf(alice), expectedOETH, "Deprecated mint OETH mismatch");
@@ -172,7 +172,7 @@ contract Unit_Concrete_OETHVault_Mint_Test is Unit_OETHVault_Shared_Test {
 
         vm.prank(governor);
         vm.expectEmit(true, true, true, true);
-        emit VaultStorage.StrategyRemovedFromMintWhitelist(address(strategy));
+        emit IVault.StrategyRemovedFromMintWhitelist(address(strategy));
         oethVault.removeStrategyFromMintWhitelist(address(strategy));
 
         assertFalse(oethVault.isMintWhitelistedStrategy(address(strategy)));

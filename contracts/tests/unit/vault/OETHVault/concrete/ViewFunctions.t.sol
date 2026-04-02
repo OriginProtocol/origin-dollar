@@ -121,7 +121,7 @@ contract Unit_Concrete_OETHVault_ViewFunctions_Test is Unit_OETHVault_Shared_Tes
 
     function test_oUSD_returnsOToken() public view {
         // oUSD() should return the same as oToken()
-        assertEq(address(oethVault.oUSD()), address(oethVault.oToken()));
+        assertEq(address(oethVault.oToken()), address(oeth));
     }
 
     //////////////////////////////////////////////////////
@@ -129,11 +129,10 @@ contract Unit_Concrete_OETHVault_ViewFunctions_Test is Unit_OETHVault_Shared_Tes
     //////////////////////////////////////////////////////
 
     function test_withdrawalQueueMetadata_initial() public view {
-        (uint128 queued, uint128 claimable, uint128 claimed, uint128 nextIdx) = oethVault.withdrawalQueueMetadata();
-        assertEq(queued, 0);
-        assertEq(claimable, 0);
-        assertEq(claimed, 0);
-        assertEq(nextIdx, 0);
+        assertEq(oethVault.withdrawalQueueMetadata().queued, 0);
+        assertEq(oethVault.withdrawalQueueMetadata().claimable, 0);
+        assertEq(oethVault.withdrawalQueueMetadata().claimed, 0);
+        assertEq(oethVault.withdrawalQueueMetadata().nextWithdrawalIndex, 0);
     }
 
     //////////////////////////////////////////////////////
@@ -144,14 +143,11 @@ contract Unit_Concrete_OETHVault_ViewFunctions_Test is Unit_OETHVault_Shared_Tes
         vm.prank(matt);
         oethVault.requestWithdrawal(50e18);
 
-        (address withdrawer, bool claimed, uint40 timestamp, uint128 amount, uint128 queued) =
-            oethVault.withdrawalRequests(0);
-
-        assertEq(withdrawer, matt);
-        assertFalse(claimed);
-        assertEq(timestamp, block.timestamp);
-        assertEq(amount, 50e18);
-        assertEq(queued, 50e18);
+        assertEq(oethVault.withdrawalRequests(0).withdrawer, matt);
+        assertFalse(oethVault.withdrawalRequests(0).claimed);
+        assertEq(oethVault.withdrawalRequests(0).timestamp, block.timestamp);
+        assertEq(oethVault.withdrawalRequests(0).amount, 50e18);
+        assertEq(oethVault.withdrawalRequests(0).queued, 50e18);
     }
 
     //////////////////////////////////////////////////////
@@ -160,13 +156,11 @@ contract Unit_Concrete_OETHVault_ViewFunctions_Test is Unit_OETHVault_Shared_Tes
 
     function test_strategies_mapping() public {
         MockStrategy strategy = _deployAndApproveStrategy();
-        (bool isSupported,) = oethVault.strategies(address(strategy));
-        assertTrue(isSupported);
+        assertTrue(oethVault.strategies(address(strategy)).isSupported);
     }
 
     function test_strategies_mapping_unsupported() public view {
-        (bool isSupported,) = oethVault.strategies(alice);
-        assertFalse(isSupported);
+        assertFalse(oethVault.strategies(alice).isSupported);
     }
 
     //////////////////////////////////////////////////////
