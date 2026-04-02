@@ -2,10 +2,10 @@
 pragma solidity ^0.8.0;
 
 import {Base} from "tests/Base.t.sol";
-import {OETH} from "contracts/token/OETH.sol";
+import {IOToken} from "contracts/interfaces/IOToken.sol";
 
 contract Unit_Concrete_OETH_ViewFunctions_Test is Base {
-    OETH internal oeth;
+    IOToken internal oeth;
 
     //////////////////////////////////////////////////////
     /// --- SETUP
@@ -13,7 +13,7 @@ contract Unit_Concrete_OETH_ViewFunctions_Test is Base {
 
     function setUp() public override {
         super.setUp();
-        oeth = new OETH();
+        oeth = IOToken(vm.deployCode("contracts/token/OETH.sol:OETH"));
     }
 
     //////////////////////////////////////////////////////
