@@ -586,7 +586,7 @@ contract CurveAMOStrategy is InitializableAbstractStrategy {
     function collectRewardTokens()
         external
         override
-        onlyHarvester
+        onlyHarvesterOrStrategist
         nonReentrant
     {
         // Collect CRV rewards from inflation

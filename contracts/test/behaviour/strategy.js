@@ -403,16 +403,31 @@ const shouldBehaveLikeStrategy = (context) => {
       expect(await strategy.harvesterAddress()).to.equal(randomAddress);
     });
     it("Should not allow the harvester to be set by non-governor", async () => {
-      const { strategy, strategist, matt, harvester, vault } = context();
+      const { newBehavior, strategy, strategist, matt, harvester, vault } =
+        context();
       const randomAddress = Wallet.createRandom().address;
 
       const vaultSigner = await impersonateAndFund(vault.address);
-      const harvesterSigner = await impersonateAndFund(harvester.address);
 
-      for (const signer of [strategist, matt, harvesterSigner, vaultSigner]) {
-        await expect(
-          strategy.connect(signer).setHarvesterAddress(randomAddress)
-        ).to.revertedWith("Caller is not the Governor");
+      if (newBehavior) {
+        // Upgraded contracts: strategist CAN set harvester — use a random address
+        // that is definitely not the governor or strategist.
+        const randomSigner = await impersonateAndFund(
+          Wallet.createRandom().address
+        );
+        for (const signer of [matt, randomSigner, vaultSigner]) {
+          await expect(
+            strategy.connect(signer).setHarvesterAddress(randomAddress)
+          ).to.revertedWith("Caller is not the Strategist or Governor");
+        }
+      } else {
+        // Old contracts: only governor can set harvester.
+        const harvesterSigner = await impersonateAndFund(harvester.address);
+        for (const signer of [strategist, matt, harvesterSigner, vaultSigner]) {
+          await expect(
+            strategy.connect(signer).setHarvesterAddress(randomAddress)
+          ).to.revertedWith("Caller is not the Governor");
+        }
       }
     });
     it("Should allow reward tokens to be set by the governor", async () => {

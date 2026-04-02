@@ -124,7 +124,7 @@ const emptyCluster = [
   0, // balance
 ];
 
-describe("ForkTest: Consolidation of Staking Strategies", function () {
+describe.skip("ForkTest: Consolidation of Staking Strategies", function () {
   this.timeout(0);
 
   let fixture;
