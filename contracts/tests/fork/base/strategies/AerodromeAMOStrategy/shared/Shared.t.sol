@@ -7,17 +7,36 @@ import {Base as BaseAddresses} from "tests/utils/Addresses.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 
-import {OETHBase} from "contracts/token/OETHBase.sol";
-import {OETHBaseVault} from "contracts/vault/OETHBaseVault.sol";
-import {OETHBaseProxy, OETHBaseVaultProxy} from "contracts/proxies/BaseProxies.sol";
-
-import {AerodromeAMOStrategy} from "contracts/strategies/aerodrome/AerodromeAMOStrategy.sol";
-import {AerodromeAMOQuoter, QuoterHelper} from "contracts/utils/AerodromeAMOQuoter.sol";
 import {InitializableAbstractStrategy} from "contracts/utils/InitializableAbstractStrategy.sol";
+import {IOToken} from "contracts/interfaces/IOToken.sol";
+import {IProxy} from "contracts/interfaces/IProxy.sol";
+import {IVault} from "contracts/interfaces/IVault.sol";
 import {INonfungiblePositionManager} from "contracts/interfaces/aerodrome/INonfungiblePositionManager.sol";
+import {ICLGauge} from "contracts/interfaces/aerodrome/ICLGauge.sol";
 import {ISwapRouter} from "contracts/interfaces/aerodrome/ISwapRouter.sol";
 import {ISugarHelper} from "contracts/interfaces/aerodrome/ISugarHelper.sol";
-import {ICLGauge} from "contracts/interfaces/aerodrome/ICLGauge.sol";
+import {IAerodromeAMOStrategy} from "contracts/interfaces/strategies/IAerodromeAMOStrategy.sol";
+
+interface IAerodromeAMOQuoterHelper {
+    function getSwapDirectionForRebalance() external view returns (bool);
+}
+
+interface IAerodromeAMOQuoter {
+    struct Data {
+        uint256 amount;
+        uint256 iterations;
+    }
+
+    function quoterHelper() external view returns (IAerodromeAMOQuoterHelper);
+
+    function quoteAmountToSwapBeforeRebalance(uint256 overrideBottomWethShare, uint256 overrideTopWethShare)
+        external
+        returns (Data memory data);
+
+    function claimGovernance() external;
+
+    function giveBackGovernance() external;
+}
 
 abstract contract Fork_AerodromeAMOStrategy_Shared_Test is BaseFork {
     //////////////////////////////////////////////////////
@@ -39,12 +58,12 @@ abstract contract Fork_AerodromeAMOStrategy_Shared_Test is BaseFork {
     /// --- CONTRACTS
     //////////////////////////////////////////////////////
 
-    OETHBase internal oethBase;
-    OETHBaseVault internal oethBaseVault;
-    OETHBaseProxy internal oethBaseProxy;
-    OETHBaseVaultProxy internal oethBaseVaultProxy;
-    AerodromeAMOStrategy internal aerodromeAMOStrategy;
-    AerodromeAMOQuoter internal aerodromeAMOQuoter;
+    IOToken internal oethBase;
+    IVault internal oethBaseVault;
+    IProxy internal oethBaseProxy;
+    IProxy internal oethBaseVaultProxy;
+    IAerodromeAMOStrategy internal aerodromeAMOStrategy;
+    IAerodromeAMOQuoter internal aerodromeAMOQuoter;
     INonfungiblePositionManager internal positionManager;
     ISwapRouter internal swapRouter;
     ISugarHelper internal sugarHelper;
@@ -73,29 +92,37 @@ abstract contract Fork_AerodromeAMOStrategy_Shared_Test is BaseFork {
         swapRouter = ISwapRouter(BaseAddresses.swapRouter);
         sugarHelper = ISugarHelper(BaseAddresses.sugarHelper);
 
-        // Deploy fresh OETHBase + OETHBaseVault
         vm.startPrank(deployer);
 
-        OETHBase oethBaseImpl = new OETHBase();
-        OETHBaseVault oethBaseVaultImpl = new OETHBaseVault(BaseAddresses.WETH);
+        address oethBaseImpl = vm.deployCode("contracts/token/OETHBase.sol:OETHBase");
+        address oethBaseVaultImpl =
+            vm.deployCode("contracts/vault/OETHBaseVault.sol:OETHBaseVault", abi.encode(BaseAddresses.WETH));
 
-        oethBaseProxy = new OETHBaseProxy();
-        oethBaseVaultProxy = new OETHBaseVaultProxy();
+        oethBaseProxy = IProxy(
+            vm.deployCode(
+                "contracts/proxies/InitializeGovernedUpgradeabilityProxy.sol:InitializeGovernedUpgradeabilityProxy"
+            )
+        );
+        oethBaseVaultProxy = IProxy(
+            vm.deployCode(
+                "contracts/proxies/InitializeGovernedUpgradeabilityProxy.sol:InitializeGovernedUpgradeabilityProxy"
+            )
+        );
 
         oethBaseProxy.initialize(
-            address(oethBaseImpl),
+            oethBaseImpl,
             governor,
             abi.encodeWithSignature("initialize(address,uint256)", address(oethBaseVaultProxy), 1e27)
         );
 
         oethBaseVaultProxy.initialize(
-            address(oethBaseVaultImpl), governor, abi.encodeWithSignature("initialize(address)", address(oethBaseProxy))
+            oethBaseVaultImpl, governor, abi.encodeWithSignature("initialize(address)", address(oethBaseProxy))
         );
 
         vm.stopPrank();
 
-        oethBase = OETHBase(address(oethBaseProxy));
-        oethBaseVault = OETHBaseVault(address(oethBaseVaultProxy));
+        oethBase = IOToken(address(oethBaseProxy));
+        oethBaseVault = IVault(address(oethBaseVaultProxy));
 
         // Configure vault
         vm.startPrank(governor);
@@ -138,21 +165,25 @@ abstract contract Fork_AerodromeAMOStrategy_Shared_Test is BaseFork {
         address gaugeAddr = abi.decode(data, (address));
         clGauge = ICLGauge(gaugeAddr);
 
-        // Deploy AerodromeAMOStrategy
-        aerodromeAMOStrategy = new AerodromeAMOStrategy(
-            InitializableAbstractStrategy.BaseStrategyConfig({
-                platformAddress: clPool, vaultAddress: address(oethBaseVault)
-            }),
-            BaseAddresses.WETH,
-            address(oethBase),
-            address(swapRouter),
-            address(positionManager),
-            clPool,
-            gaugeAddr,
-            address(sugarHelper),
-            int24(-1), // lowerBoundingTick
-            int24(0), // upperBoundingTick
-            int24(0) // tickClosestToParity (OETHb is token1 → upper tick)
+        aerodromeAMOStrategy = IAerodromeAMOStrategy(
+            vm.deployCode(
+                "contracts/strategies/aerodrome/AerodromeAMOStrategy.sol:AerodromeAMOStrategy",
+                abi.encode(
+                    InitializableAbstractStrategy.BaseStrategyConfig({
+                        platformAddress: clPool, vaultAddress: address(oethBaseVault)
+                    }),
+                    BaseAddresses.WETH,
+                    address(oethBase),
+                    address(swapRouter),
+                    address(positionManager),
+                    clPool,
+                    gaugeAddr,
+                    address(sugarHelper),
+                    int24(-1),
+                    int24(0),
+                    int24(0)
+                )
+            )
         );
 
         // Reset initializer (constructor marks implementation as initialized)
@@ -187,8 +218,12 @@ abstract contract Fork_AerodromeAMOStrategy_Shared_Test is BaseFork {
         vm.prank(governor);
         aerodromeAMOStrategy.setHarvesterAddress(harvester);
 
-        // Deploy AerodromeAMOQuoter
-        aerodromeAMOQuoter = new AerodromeAMOQuoter(address(aerodromeAMOStrategy), BaseAddresses.quoterV2);
+        aerodromeAMOQuoter = IAerodromeAMOQuoter(
+            vm.deployCode(
+                "contracts/utils/AerodromeAMOQuoter.sol:AerodromeAMOQuoter",
+                abi.encode(address(aerodromeAMOStrategy), BaseAddresses.quoterV2)
+            )
+        );
 
         // Seed dead-address liquidity (precondition for strategy)
         _seedDeadAddressLiquidity();
@@ -401,7 +436,7 @@ abstract contract Fork_AerodromeAMOStrategy_Shared_Test is BaseFork {
     /// @param overrideBottom New allowedWethShareStart (type(uint256).max to keep current)
     /// @param overrideTop New allowedWethShareEnd (type(uint256).max to keep current)
     function _quoteAndRebalance(uint256 overrideBottom, uint256 overrideTop) internal {
-        QuoterHelper quoterHelper = aerodromeAMOQuoter.quoterHelper();
+        IAerodromeAMOQuoterHelper quoterHelper = aerodromeAMOQuoter.quoterHelper();
 
         // Transfer governance to quoterHelper so it can call rebalance in try/catch
         vm.prank(governor);
@@ -409,7 +444,7 @@ abstract contract Fork_AerodromeAMOStrategy_Shared_Test is BaseFork {
         aerodromeAMOQuoter.claimGovernance();
 
         // Quote the amount
-        AerodromeAMOQuoter.Data memory data =
+        IAerodromeAMOQuoter.Data memory data =
             aerodromeAMOQuoter.quoteAmountToSwapBeforeRebalance(overrideBottom, overrideTop);
 
         // Give back governance

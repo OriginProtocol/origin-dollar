@@ -4,7 +4,7 @@ pragma solidity ^0.8.0;
 import {Fork_AerodromeAMOStrategy_Shared_Test} from "../shared/Shared.t.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {Base as BaseAddresses} from "tests/utils/Addresses.sol";
-import {AerodromeAMOStrategy} from "contracts/strategies/aerodrome/AerodromeAMOStrategy.sol";
+import {IAerodromeAMOStrategy} from "contracts/interfaces/strategies/IAerodromeAMOStrategy.sol";
 
 contract Fork_AerodromeAMOStrategy_Rebalance_Test is Fork_AerodromeAMOStrategy_Shared_Test {
     function test_rebalance_emitsPoolRebalanced() public {
@@ -12,7 +12,7 @@ contract Fork_AerodromeAMOStrategy_Rebalance_Test is Fork_AerodromeAMOStrategy_S
 
         vm.prank(strategist);
         vm.expectEmit(false, false, false, false, address(aerodromeAMOStrategy));
-        emit AerodromeAMOStrategy.PoolRebalanced(0);
+        emit IAerodromeAMOStrategy.PoolRebalanced(0);
         aerodromeAMOStrategy.rebalance(0, true, 0);
     }
 

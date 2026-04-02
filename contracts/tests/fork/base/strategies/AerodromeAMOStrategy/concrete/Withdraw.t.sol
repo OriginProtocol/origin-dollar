@@ -4,7 +4,6 @@ pragma solidity ^0.8.0;
 import {Fork_AerodromeAMOStrategy_Shared_Test} from "../shared/Shared.t.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {Base as BaseAddresses} from "tests/utils/Addresses.sol";
-import {AerodromeAMOStrategy} from "contracts/strategies/aerodrome/AerodromeAMOStrategy.sol";
 
 contract Fork_AerodromeAMOStrategy_Withdraw_Test is Fork_AerodromeAMOStrategy_Shared_Test {
     function test_withdraw() public {
