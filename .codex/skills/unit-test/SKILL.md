@@ -58,14 +58,38 @@ forge-std/Test
             └─ Unit_Fuzz_<Contract>_<Feature>_Test
 ```
 
-`Base` owns shared actors, constants, and state variables. Do not redeclare contract storage in `Shared.sol`.
+`Base` owns shared actors, constants, and IERC20 external token refs. All typed contract/proxy/mock state variables are declared in each `Shared.t.sol` file (not in `Base`). This keeps `Base` lightweight so changes don't invalidate the entire Forge cache.
 
-Use the correct product-specific vault type:
+### Interface-only testing
 
-- `OUSD` -> `OUSDVault`
-- `OETH` -> `OETHVault`
-- `OSonic` -> `OSVault`
-- `OETHBase` -> `OETHBaseVault`
+Tests must interact with contracts through **interfaces**, not concrete implementations. See `contracts/tests/README.md` for full details.
+
+Available interfaces:
+
+| Interface | File | Used for |
+|-----------|------|----------|
+| `IVault` | `contracts/interfaces/IVault.sol` | All vault contracts |
+| `IOToken` | `contracts/interfaces/IOToken.sol` | All rebasing tokens (OUSD, OETH, OETHBase, OSonic) |
+| `IWOToken` | `contracts/interfaces/IWOToken.sol` | All wrapped tokens (WOETH, WOETHBase, WOETHPlume, WOSonic, WrappedOusd) |
+| `IProxy` | `contracts/interfaces/IProxy.sol` | All proxy instances |
+| Strategy interfaces | `contracts/interfaces/strategies/` | Per-strategy interfaces (ICurveAMOStrategy, ISonicStakingStrategy, etc.) |
+
+Key rules:
+
+- import interfaces, not concrete contracts
+- declare state variables with interface types
+- deploy with `vm.deployCode` instead of `new` (except mocks)
+- reference events from the interface: `emit IVault.CapitalPaused();`
+- access struct return values by field name: `vault.withdrawalQueueMetadata().claimable`
+
+### Product-specific vault types
+
+| Product | Token | Vault | `vm.deployCode` path |
+|---------|-------|-------|----------------------|
+| OUSD | `OUSD` | `OUSDVault` | `contracts/vault/OUSDVault.sol:OUSDVault` |
+| OETH | `OETH` | `OETHVault` | `contracts/vault/OETHVault.sol:OETHVault` |
+| OSonic | `OSonic` | `OSVault` | `contracts/vault/OSVault.sol:OSVault` |
+| OETHBase | `OETHBase` | `OETHBaseVault` | `contracts/vault/OETHBaseVault.sol:OETHBaseVault` |
 
 Never use `OETHVault` for Sonic tests.
 
@@ -87,11 +111,12 @@ function setUp() public virtual override {
 
 Key rules:
 
-- deploy implementations before ERC1967 proxies
-- initialize proxies explicitly
-- cast proxies to typed references
+- deploy implementations with `vm.deployCode`, then proxies with `vm.deployCode("contracts/proxies/InitializeGovernedUpgradeabilityProxy.sol:InitializeGovernedUpgradeabilityProxy")`
+- initialize proxies via `proxy.initialize(impl, governor, initData)`
+- cast proxies to interface types: `ousd = IOToken(address(ousdProxy))`
 - use `vm.startPrank(governor)` for config blocks
 - put labels at the end
+- **gotcha**: `vm.deployCode` loads from compiled artifacts; always run `forge build contracts/` before `forge test` after modifying contract source
 
 Mocks:
 
@@ -120,6 +145,13 @@ Casing rules:
 - `RevertWhen` is the only PascalCase token in the test name
 
 Use exact revert strings with `vm.expectRevert("...")`.
+
+Emit events from interfaces, not concrete contracts:
+
+```solidity
+vm.expectEmit(true, true, true, true);
+emit IVault.EventName(arg1, arg2);
+```
 
 ## 5. Fuzz tests
 
@@ -158,6 +190,8 @@ Match the repository's fuzz configuration in `contracts/foundry.toml` when relev
 
 When implementing tests:
 
+- use interface-only imports; no concrete contract imports except mocks
+- deploy contracts with `vm.deployCode`, not `new` (mocks are fine with `new`)
 - mirror the existing local test style before inventing new patterns
 - prefer coverage that matches real business logic paths over cosmetic line coverage
 - add both concrete and fuzz coverage when the function has stateful logic or arithmetic properties
