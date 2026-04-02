@@ -2,9 +2,9 @@
 pragma solidity ^0.8.0;
 
 import {Unit_Shared_Test} from "tests/unit/vault/OUSDVault/shared/Shared.t.sol";
-import {VaultStorage} from "contracts/vault/VaultStorage.sol";
 import {MockStrategy} from "contracts/mocks/MockStrategy.sol";
 import {MockERC20} from "@solmate/test/utils/mocks/MockERC20.sol";
+import {IVault} from "contracts/interfaces/IVault.sol";
 
 contract Unit_Concrete_OUSDVault_Admin_Test is Unit_Shared_Test {
     //////////////////////////////////////////////////////
@@ -30,7 +30,7 @@ contract Unit_Concrete_OUSDVault_Admin_Test is Unit_Shared_Test {
     function test_pauseCapital_emitsEvent() public {
         vm.prank(governor);
         vm.expectEmit(true, true, true, true);
-        emit VaultStorage.CapitalPaused();
+        emit IVault.CapitalPaused();
         ousdVault.pauseCapital();
     }
 
@@ -64,7 +64,7 @@ contract Unit_Concrete_OUSDVault_Admin_Test is Unit_Shared_Test {
 
         vm.prank(governor);
         vm.expectEmit(true, true, true, true);
-        emit VaultStorage.CapitalUnpaused();
+        emit IVault.CapitalUnpaused();
         ousdVault.unpauseCapital();
     }
 
@@ -124,7 +124,7 @@ contract Unit_Concrete_OUSDVault_Admin_Test is Unit_Shared_Test {
     function test_pauseRebase_emitsEvent() public {
         vm.prank(governor);
         vm.expectEmit(true, true, true, true);
-        emit VaultStorage.RebasePaused();
+        emit IVault.RebasePaused();
         ousdVault.pauseRebase();
     }
 
@@ -158,7 +158,7 @@ contract Unit_Concrete_OUSDVault_Admin_Test is Unit_Shared_Test {
 
         vm.prank(governor);
         vm.expectEmit(true, true, true, true);
-        emit VaultStorage.RebaseUnpaused();
+        emit IVault.RebaseUnpaused();
         ousdVault.unpauseRebase();
     }
 
@@ -187,7 +187,7 @@ contract Unit_Concrete_OUSDVault_Admin_Test is Unit_Shared_Test {
     function test_setVaultBuffer_emitsEvent() public {
         vm.prank(governor);
         vm.expectEmit(true, true, true, true);
-        emit VaultStorage.VaultBufferUpdated(5e17);
+        emit IVault.VaultBufferUpdated(5e17);
         ousdVault.setVaultBuffer(5e17);
     }
 
@@ -222,7 +222,7 @@ contract Unit_Concrete_OUSDVault_Admin_Test is Unit_Shared_Test {
     function test_setAutoAllocateThreshold_emitsEvent() public {
         vm.prank(governor);
         vm.expectEmit(true, true, true, true);
-        emit VaultStorage.AllocateThresholdUpdated(5000e18);
+        emit IVault.AllocateThresholdUpdated(5000e18);
         ousdVault.setAutoAllocateThreshold(5000e18);
     }
 
@@ -251,7 +251,7 @@ contract Unit_Concrete_OUSDVault_Admin_Test is Unit_Shared_Test {
     function test_setRebaseThreshold_emitsEvent() public {
         vm.prank(governor);
         vm.expectEmit(true, true, true, true);
-        emit VaultStorage.RebaseThresholdUpdated(500e18);
+        emit IVault.RebaseThresholdUpdated(500e18);
         ousdVault.setRebaseThreshold(500e18);
     }
 
@@ -274,7 +274,7 @@ contract Unit_Concrete_OUSDVault_Admin_Test is Unit_Shared_Test {
     function test_setStrategistAddr_emitsEvent() public {
         vm.prank(governor);
         vm.expectEmit(true, true, true, true);
-        emit VaultStorage.StrategistUpdated(alice);
+        emit IVault.StrategistUpdated(alice);
         ousdVault.setStrategistAddr(alice);
     }
 
@@ -309,7 +309,7 @@ contract Unit_Concrete_OUSDVault_Admin_Test is Unit_Shared_Test {
 
         vm.prank(governor);
         vm.expectEmit(true, true, true, true);
-        emit VaultStorage.DefaultStrategyUpdated(address(strategy));
+        emit IVault.DefaultStrategyUpdated(address(strategy));
         ousdVault.setDefaultStrategy(address(strategy));
     }
 
@@ -350,7 +350,7 @@ contract Unit_Concrete_OUSDVault_Admin_Test is Unit_Shared_Test {
     function test_setWithdrawalClaimDelay_emitsEvent() public {
         vm.prank(governor);
         vm.expectEmit(true, true, true, true);
-        emit VaultStorage.WithdrawalClaimDelayUpdated(1200);
+        emit IVault.WithdrawalClaimDelayUpdated(1200);
         ousdVault.setWithdrawalClaimDelay(1200);
     }
 
@@ -410,7 +410,7 @@ contract Unit_Concrete_OUSDVault_Admin_Test is Unit_Shared_Test {
 
         vm.prank(governor);
         vm.expectEmit(true, true, true, true);
-        emit VaultStorage.RebasePerSecondMaxChanged(expectedPerSecond);
+        emit IVault.RebasePerSecondMaxChanged(expectedPerSecond);
         ousdVault.setRebaseRateMax(apr);
     }
 
@@ -448,7 +448,7 @@ contract Unit_Concrete_OUSDVault_Admin_Test is Unit_Shared_Test {
     function test_setDripDuration_emitsEvent() public {
         vm.prank(governor);
         vm.expectEmit(true, true, true, true);
-        emit VaultStorage.DripDurationChanged(86400);
+        emit IVault.DripDurationChanged(86400);
         ousdVault.setDripDuration(86400);
     }
 
@@ -471,7 +471,7 @@ contract Unit_Concrete_OUSDVault_Admin_Test is Unit_Shared_Test {
     function test_setMaxSupplyDiff_emitsEvent() public {
         vm.prank(governor);
         vm.expectEmit(true, true, true, true);
-        emit VaultStorage.MaxSupplyDiffChanged(1e16);
+        emit IVault.MaxSupplyDiffChanged(1e16);
         ousdVault.setMaxSupplyDiff(1e16);
     }
 
@@ -494,7 +494,7 @@ contract Unit_Concrete_OUSDVault_Admin_Test is Unit_Shared_Test {
     function test_setTrusteeAddress_emitsEvent() public {
         vm.prank(governor);
         vm.expectEmit(true, true, true, true);
-        emit VaultStorage.TrusteeAddressChanged(alice);
+        emit IVault.TrusteeAddressChanged(alice);
         ousdVault.setTrusteeAddress(alice);
     }
 
@@ -526,7 +526,7 @@ contract Unit_Concrete_OUSDVault_Admin_Test is Unit_Shared_Test {
     function test_setTrusteeFeeBps_emitsEvent() public {
         vm.prank(governor);
         vm.expectEmit(true, true, true, true);
-        emit VaultStorage.TrusteeFeeBpsChanged(2000);
+        emit IVault.TrusteeFeeBpsChanged(2000);
         ousdVault.setTrusteeFeeBps(2000);
     }
 
@@ -558,8 +558,7 @@ contract Unit_Concrete_OUSDVault_Admin_Test is Unit_Shared_Test {
         vm.prank(governor);
         ousdVault.approveStrategy(address(strategy));
 
-        (bool isSupported,) = ousdVault.strategies(address(strategy));
-        assertTrue(isSupported);
+        assertTrue(ousdVault.strategies(address(strategy)).isSupported);
     }
 
     function test_approveStrategy_emitsEvent() public {
@@ -567,7 +566,7 @@ contract Unit_Concrete_OUSDVault_Admin_Test is Unit_Shared_Test {
 
         vm.prank(governor);
         vm.expectEmit(true, true, true, true);
-        emit VaultStorage.StrategyApproved(address(strategy));
+        emit IVault.StrategyApproved(address(strategy));
         ousdVault.approveStrategy(address(strategy));
     }
 
@@ -615,8 +614,7 @@ contract Unit_Concrete_OUSDVault_Admin_Test is Unit_Shared_Test {
         vm.prank(governor);
         ousdVault.removeStrategy(address(strategy));
 
-        (bool isSupported,) = ousdVault.strategies(address(strategy));
-        assertFalse(isSupported);
+        assertFalse(ousdVault.strategies(address(strategy)).isSupported);
         assertEq(ousdVault.getStrategyCount(), 0);
     }
 
@@ -625,7 +623,7 @@ contract Unit_Concrete_OUSDVault_Admin_Test is Unit_Shared_Test {
 
         vm.prank(governor);
         vm.expectEmit(true, true, true, true);
-        emit VaultStorage.StrategyRemoved(address(strategy));
+        emit IVault.StrategyRemoved(address(strategy));
         ousdVault.removeStrategy(address(strategy));
     }
 
@@ -682,7 +680,7 @@ contract Unit_Concrete_OUSDVault_Admin_Test is Unit_Shared_Test {
 
         vm.prank(governor);
         vm.expectEmit(true, true, true, true);
-        emit VaultStorage.StrategyAddedToMintWhitelist(address(strategy));
+        emit IVault.StrategyAddedToMintWhitelist(address(strategy));
         ousdVault.addStrategyToMintWhitelist(address(strategy));
     }
 
@@ -730,7 +728,7 @@ contract Unit_Concrete_OUSDVault_Admin_Test is Unit_Shared_Test {
         ousdVault.addStrategyToMintWhitelist(address(strategy));
 
         vm.expectEmit(true, true, true, true);
-        emit VaultStorage.StrategyRemovedFromMintWhitelist(address(strategy));
+        emit IVault.StrategyRemovedFromMintWhitelist(address(strategy));
         ousdVault.removeStrategyFromMintWhitelist(address(strategy));
         vm.stopPrank();
     }

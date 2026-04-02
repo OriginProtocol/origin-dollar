@@ -2,8 +2,8 @@
 pragma solidity ^0.8.0;
 
 import {Unit_Shared_Test} from "tests/unit/vault/OUSDVault/shared/Shared.t.sol";
-import {VaultStorage} from "contracts/vault/VaultStorage.sol";
 import {MockStrategy} from "contracts/mocks/MockStrategy.sol";
+import {IVault} from "contracts/interfaces/IVault.sol";
 
 contract Unit_Concrete_OUSDVault_Mint_Test is Unit_Shared_Test {
     //////////////////////////////////////////////////////
@@ -50,7 +50,7 @@ contract Unit_Concrete_OUSDVault_Mint_Test is Unit_Shared_Test {
         usdc.approve(address(ousdVault), usdcAmount);
 
         vm.expectEmit(true, true, true, true);
-        emit VaultStorage.Mint(alice, scaledAmount);
+        emit IVault.Mint(alice, scaledAmount);
         ousdVault.mint(usdcAmount);
         vm.stopPrank();
     }
@@ -82,7 +82,7 @@ contract Unit_Concrete_OUSDVault_Mint_Test is Unit_Shared_Test {
 
         vm.startPrank(alice);
         usdc.approve(address(ousdVault), usdcAmount);
-        ousdVault.mint(address(usdc), usdcAmount, 0);
+        ousdVault.mint(usdcAmount);
         vm.stopPrank();
 
         assertEq(ousd.balanceOf(alice), expectedOUSD, "Deprecated mint OUSD mismatch");

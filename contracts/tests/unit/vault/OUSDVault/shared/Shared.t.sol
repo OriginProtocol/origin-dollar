@@ -1,15 +1,17 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
+// Base test contract
 import {Base} from "tests/Base.t.sol";
 
+// Interfaces
+import {IVault} from "contracts/interfaces/IVault.sol";
+import {IProxy} from "contracts/interfaces/IProxy.sol";
+import {IOToken} from "contracts/interfaces/IOToken.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
+// Mocks
 import {MockERC20} from "@solmate/test/utils/mocks/MockERC20.sol";
-import {OUSD} from "contracts/token/OUSD.sol";
-import {OUSDVault} from "contracts/vault/OUSDVault.sol";
-import {OUSDProxy} from "contracts/proxies/Proxies.sol";
-import {VaultProxy} from "contracts/proxies/Proxies.sol";
 import {MockStrategy} from "contracts/mocks/MockStrategy.sol";
 import {MockNonRebasing} from "contracts/mocks/MockNonRebasing.sol";
 
@@ -17,10 +19,10 @@ abstract contract Unit_Shared_Test is Base {
     //////////////////////////////////////////////////////
     /// --- CONTRACTS
     //////////////////////////////////////////////////////
-    OUSD internal ousd;
-    OUSDVault internal ousdVault;
-    OUSDProxy internal ousdProxy;
-    VaultProxy internal ousdVaultProxy;
+    IOToken internal ousd;
+    IVault internal ousdVault;
+    IProxy internal ousdProxy;
+    IProxy internal ousdVaultProxy;
 
     MockStrategy internal mockStrategy;
     MockNonRebasing internal mockNonRebasing;
@@ -58,12 +60,20 @@ abstract contract Unit_Shared_Test is Base {
         vm.startPrank(deployer);
 
         // -- Deploy implementations
-        OUSD ousdImpl = new OUSD();
-        OUSDVault ousdVaultImpl = new OUSDVault(address(usdc));
+        IOToken ousdImpl = IOToken(vm.deployCode("contracts/token/OUSD.sol:OUSD", abi.encode(address(usdc))));
+        address ousdVaultImpl = vm.deployCode("contracts/vault/OUSDVault.sol:OUSDVault", abi.encode(address(usdc)));
 
         // -- Deploy Proxies
-        ousdProxy = new OUSDProxy();
-        ousdVaultProxy = new VaultProxy();
+        ousdProxy = IProxy(
+            vm.deployCode(
+                "contracts/proxies/InitializeGovernedUpgradeabilityProxy.sol:InitializeGovernedUpgradeabilityProxy"
+            )
+        );
+        ousdVaultProxy = IProxy(
+            vm.deployCode(
+                "contracts/proxies/InitializeGovernedUpgradeabilityProxy.sol:InitializeGovernedUpgradeabilityProxy"
+            )
+        );
 
         // -- Initialize OUSD Proxy
         ousdProxy.initialize(
@@ -80,8 +90,8 @@ abstract contract Unit_Shared_Test is Base {
         vm.stopPrank();
 
         // -- Cast proxies to their types
-        ousd = OUSD(address(ousdProxy));
-        ousdVault = OUSDVault(address(ousdVaultProxy));
+        ousd = IOToken(address(ousdProxy));
+        ousdVault = IVault(address(ousdVaultProxy));
 
         // -- Configure MockNonRebasing with deployed OUSD
         mockNonRebasing.setOUSD(address(ousd));
