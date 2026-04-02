@@ -2,7 +2,9 @@
 pragma solidity ^0.8.0;
 
 import { Cluster } from "../ISSVNetwork.sol";
-import { CompoundingBalanceProofs, CompoundingPendingDepositProofs, CompoundingValidatorStakeData } from "./CompoundingStakingTypes.sol";
+import { CompoundingBalanceProofs } from "./CompoundingStakingTypes.sol";
+import { CompoundingValidatorStakeData } from "./CompoundingStakingTypes.sol";
+import { CompoundingPendingDepositProofs } from "./CompoundingStakingTypes.sol";
 
 interface IConsolidationController {
     // Ownable

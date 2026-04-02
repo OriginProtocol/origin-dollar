@@ -2,7 +2,12 @@
 pragma solidity ^0.8.0;
 
 import { Cluster } from "../ISSVNetwork.sol";
-import { CompoundingBalanceProofs, CompoundingFirstPendingDepositSlotProofData, CompoundingPendingDepositProofs, CompoundingStrategyValidatorProofData, CompoundingValidatorStakeData, CompoundingValidatorState } from "./CompoundingStakingTypes.sol";
+import { CompoundingBalanceProofs } from "./CompoundingStakingTypes.sol";
+import { CompoundingValidatorState } from "./CompoundingStakingTypes.sol";
+import { CompoundingValidatorStakeData } from "./CompoundingStakingTypes.sol";
+import { CompoundingPendingDepositProofs } from "./CompoundingStakingTypes.sol";
+import { CompoundingStrategyValidatorProofData } from "./CompoundingStakingTypes.sol";
+import { CompoundingFirstPendingDepositSlotProofData } from "./CompoundingStakingTypes.sol";
 
 interface ICompoundingStakingSSVStrategy {
     // Events (from InitializableAbstractStrategy)
