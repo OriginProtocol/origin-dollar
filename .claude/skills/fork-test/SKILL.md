@@ -60,21 +60,42 @@ forge-std/Test
                  └─ Fork_Concrete_<Contract>_<Feature>_Test  (concrete/*.t.sol)
 ```
 
-- `Base` creates actors (`alice`, `bobby`, …, `governor`, `strategist`, etc.) and declares **all contract state variables and fork IDs** (`forkIdMainnet`, `forkIdBase`, `forkIdSonic`, `forkIdArbitrum`). **NEVER declare contract variables in `Shared.t.sol`** — all contract/token storage lives in `Base.t.sol`.
+- `Base` creates actors (`alice`, `bobby`, …, `governor`, `strategist`, etc.) and declares constants, IERC20 external token refs, and fork IDs (`forkIdMainnet`, `forkIdBase`, `forkIdSonic`, `forkIdArbitrum`). **`Base` only contains actors, constants, IERC20 external tokens, fork IDs, and setUp().** All typed contract/proxy/mock state variables are declared in each `Shared.t.sol` file.
 - `BaseFork` provides `_createAndSelectFork<Chain>()` helpers that read RPC URLs from environment variables and create Foundry forks.
-- `Fork_<Contract>_Shared_Test` is **abstract** and owns all deployment + configuration logic on top of the fork. It assigns to the variables declared in `Base`, but does not re-declare them.
+- `Fork_<Contract>_Shared_Test` is **abstract** and owns all deployment + configuration logic on top of the fork.
 - Concrete test contracts inherit `Fork_<Contract>_Shared_Test` directly — no extra layers.
+
+### Interface-only testing
+
+Tests must interact with contracts through **interfaces**, not concrete implementations. This applies to fork tests the same as unit tests — see `contracts/tests/README.md` for full details.
+
+**Available interfaces:**
+
+| Interface | File | Used for |
+|-----------|------|----------|
+| `IVault` | `contracts/interfaces/IVault.sol` | All vault contracts |
+| `IOToken` | `contracts/interfaces/IOToken.sol` | All rebasing tokens (OUSD, OETH, OETHBase, OSonic) |
+| `IWOToken` | `contracts/interfaces/IWOToken.sol` | All wrapped tokens |
+| `IProxy` | `contracts/interfaces/IProxy.sol` | All proxy instances |
+| Strategy interfaces | `contracts/interfaces/strategies/` | Per-strategy interfaces |
+
+**Key rules:**
+- Import interfaces, not concrete contracts: `import {IVault} from "contracts/interfaces/IVault.sol";`
+- Declare state variables with interface types: `IVault internal oethVault;`
+- Deploy fresh contracts with `vm.deployCode` instead of `new`: `vm.deployCode("contracts/vault/OETHVault.sol:OETHVault", abi.encode(address(weth)))`
+- Reference events from the interface: `emit IVault.CapitalPaused();`
+- For forked contracts, cast the address to the interface: `oethVault = IVault(Mainnet.OETH_VAULT);`
 
 ### Product-specific vault types
 
 Each product has its own vault contract. **Always use the correct vault type**:
 
-| Product | Token | Vault | Chain |
-|---------|-------|-------|-------|
-| OUSD | `OUSD` | `OUSDVault` | Mainnet |
-| OETH | `OETH` | `OETHVault` | Mainnet |
-| OSonic | `OSonic` | **`OSVault`** | Sonic |
-| OETHBase | `OETHBase` | `OETHBaseVault` | Base |
+| Product | Token | Vault | Chain | `vm.deployCode` path |
+|---------|-------|-------|-------|----------------------|
+| OUSD | `OUSD` | `OUSDVault` | Mainnet | `contracts/vault/OUSDVault.sol:OUSDVault` |
+| OETH | `OETH` | `OETHVault` | Mainnet | `contracts/vault/OETHVault.sol:OETHVault` |
+| OSonic | `OSonic` | **`OSVault`** | Sonic | `contracts/vault/OSVault.sol:OSVault` |
+| OETHBase | `OETHBase` | `OETHBaseVault` | Base | `contracts/vault/OETHBaseVault.sol:OETHBaseVault` |
 
 `OSVault` lives at `contracts/vault/OSVault.sol`. **NEVER use `OETHVault` for Sonic products.**
 
@@ -118,10 +139,13 @@ address pool = Sonic.SwapXWSOS_pool;
 
 ### Key rules
 
-- Deploy **implementations** then **ERC1967 proxies** for fresh contracts, initialize via `proxy.initialize(impl, governor, initData)`.
-- Cast proxies to their interface types (`oSonic = OSonic(address(oSonicProxy))`).
+- Deploy fresh **implementations** with `vm.deployCode`, then **proxies** with `vm.deployCode("contracts/proxies/InitializeGovernedUpgradeabilityProxy.sol:InitializeGovernedUpgradeabilityProxy")`.
+- Initialize via `proxy.initialize(impl, governor, initData)`.
+- Cast proxies to interface types: `oSonic = IOToken(address(oSonicProxy))`.
+- Cast forked addresses to interfaces: `oethVault = IVault(Mainnet.OETH_VAULT)`.
 - Configuration block uses `vm.startPrank(governor)` / `vm.stopPrank()`.
 - `label()` at the bottom labels every deployed address **and** key forked addresses for trace readability.
+- **Gotcha:** `vm.deployCode` loads from compiled artifacts. Always run `forge build contracts/` before `forge test` after modifying contract source.
 
 ## 4. Concrete Test Naming
 
@@ -173,7 +197,7 @@ test_rebalance_movesLiquidityToPool()            // behavior description
 
 ```solidity
 vm.expectEmit(true, true, true, true);
-emit ContractStorage.EventName(arg1, arg2);
+emit IVault.EventName(arg1, arg2);  // Always reference events from the interface
 contractCall();
 ```
 
@@ -381,7 +405,10 @@ After writing fork tests, re-run coverage to see if previously uncovered integra
 
 - [ ] Checked `contracts/test/` for existing Hardhat fork tests (`*.<chain>.fork-test.js`) and drew inspiration from them
 - [ ] `shared/Shared.t.sol` is `abstract` and inherits `BaseFork`
-- [ ] All contract/proxy/token state variables and fork IDs are declared in `Base.t.sol`, not in `Shared.t.sol`
+- [ ] All typed contract/proxy/mock state variables are declared in `Shared.t.sol` using interface types (not in `Base.t.sol`)
+- [ ] No concrete contract imports — only interfaces (`IVault`, `IOToken`, `IProxy`, strategy interfaces) and mocks
+- [ ] Fresh deployments use `vm.deployCode`, not `new` (except mocks)
+- [ ] Forked contracts cast to interfaces: `IVault(Mainnet.OETH_VAULT)`
 - [ ] `setUp()` follows the exact order: super → fork creation → fresh deploy → configure → label
 - [ ] Fresh vs fork decision is correct: contract under test is fresh, external infrastructure is from fork
 - [ ] Address constants use the correct library from `tests/utils/Addresses.sol`
