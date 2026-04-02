@@ -64,7 +64,7 @@ build-%:
 
 # Base test command
 test-base:
-	forge test --summary --fail-fast --show-progress -vvv
+	forge test --summary -vvv
 
 # Run all tests
 test:
@@ -87,23 +87,23 @@ test-c-%:
 #   make test-smoke              -> run all smoke tests
 #   make test-smoke-base         -> run smoke tests for base
 test-unit:
-	forge build contracts/ tests/unit/
+	forge build contracts/ tests/unit/ tests/mocks/
 	FOUNDRY_MATCH_PATH='tests/unit/**' $(MAKE) test-base
 
 test-fork:
-	forge build contracts/ tests/fork/
+	forge build contracts/ tests/fork/ tests/mocks/
 	FOUNDRY_MATCH_PATH='tests/fork/**' $(MAKE) test-base
 
 test-fork-%:
-	forge build contracts/ tests/fork/$*/
+	forge build contracts/ tests/fork/$*/ tests/mocks/
 	FOUNDRY_MATCH_PATH='tests/fork/$*/**' $(MAKE) test-base
 
 test-smoke:
-	forge build contracts/ tests/smoke/ scripts/
+	forge build contracts/ tests/smoke/ scripts/ tests/mocks/
 	FOUNDRY_MATCH_PATH='tests/smoke/**' $(MAKE) test-base
 
 test-smoke-%:
-	forge build contracts/ tests/smoke/$*/ scripts/
+	forge build contracts/ tests/smoke/$*/ scripts/ tests/mocks/
 	FOUNDRY_MATCH_PATH='tests/smoke/$*/**' $(MAKE) test-base
 
 # ╔══════════════════════════════════════════════════════════════════════════════╗
