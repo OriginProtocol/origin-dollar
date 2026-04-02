@@ -16,27 +16,7 @@ import {ICLGauge} from "contracts/interfaces/aerodrome/ICLGauge.sol";
 import {ISwapRouter} from "contracts/interfaces/aerodrome/ISwapRouter.sol";
 import {ISugarHelper} from "contracts/interfaces/aerodrome/ISugarHelper.sol";
 import {IAerodromeAMOStrategy} from "contracts/interfaces/strategies/IAerodromeAMOStrategy.sol";
-
-interface IAerodromeAMOQuoterHelper {
-    function getSwapDirectionForRebalance() external view returns (bool);
-}
-
-interface IAerodromeAMOQuoter {
-    struct Data {
-        uint256 amount;
-        uint256 iterations;
-    }
-
-    function quoterHelper() external view returns (IAerodromeAMOQuoterHelper);
-
-    function quoteAmountToSwapBeforeRebalance(uint256 overrideBottomWethShare, uint256 overrideTopWethShare)
-        external
-        returns (Data memory data);
-
-    function claimGovernance() external;
-
-    function giveBackGovernance() external;
-}
+import {AerodromeAMOQuoter, QuoterHelper} from "contracts/utils/AerodromeAMOQuoter.sol";
 
 abstract contract Fork_AerodromeAMOStrategy_Shared_Test is BaseFork {
     //////////////////////////////////////////////////////
@@ -63,7 +43,7 @@ abstract contract Fork_AerodromeAMOStrategy_Shared_Test is BaseFork {
     IProxy internal oethBaseProxy;
     IProxy internal oethBaseVaultProxy;
     IAerodromeAMOStrategy internal aerodromeAMOStrategy;
-    IAerodromeAMOQuoter internal aerodromeAMOQuoter;
+    AerodromeAMOQuoter internal aerodromeAMOQuoter;
     INonfungiblePositionManager internal positionManager;
     ISwapRouter internal swapRouter;
     ISugarHelper internal sugarHelper;
@@ -218,12 +198,7 @@ abstract contract Fork_AerodromeAMOStrategy_Shared_Test is BaseFork {
         vm.prank(governor);
         aerodromeAMOStrategy.setHarvesterAddress(harvester);
 
-        aerodromeAMOQuoter = IAerodromeAMOQuoter(
-            vm.deployCode(
-                "contracts/utils/AerodromeAMOQuoter.sol:AerodromeAMOQuoter",
-                abi.encode(address(aerodromeAMOStrategy), BaseAddresses.quoterV2)
-            )
-        );
+        aerodromeAMOQuoter = new AerodromeAMOQuoter(address(aerodromeAMOStrategy), BaseAddresses.quoterV2);
 
         // Seed dead-address liquidity (precondition for strategy)
         _seedDeadAddressLiquidity();
@@ -436,7 +411,7 @@ abstract contract Fork_AerodromeAMOStrategy_Shared_Test is BaseFork {
     /// @param overrideBottom New allowedWethShareStart (type(uint256).max to keep current)
     /// @param overrideTop New allowedWethShareEnd (type(uint256).max to keep current)
     function _quoteAndRebalance(uint256 overrideBottom, uint256 overrideTop) internal {
-        IAerodromeAMOQuoterHelper quoterHelper = aerodromeAMOQuoter.quoterHelper();
+        QuoterHelper quoterHelper = aerodromeAMOQuoter.quoterHelper();
 
         // Transfer governance to quoterHelper so it can call rebalance in try/catch
         vm.prank(governor);
@@ -444,7 +419,7 @@ abstract contract Fork_AerodromeAMOStrategy_Shared_Test is BaseFork {
         aerodromeAMOQuoter.claimGovernance();
 
         // Quote the amount
-        IAerodromeAMOQuoter.Data memory data =
+        AerodromeAMOQuoter.Data memory data =
             aerodromeAMOQuoter.quoteAmountToSwapBeforeRebalance(overrideBottom, overrideTop);
 
         // Give back governance
