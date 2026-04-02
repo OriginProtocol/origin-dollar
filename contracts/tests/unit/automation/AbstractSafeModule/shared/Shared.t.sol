@@ -3,9 +3,10 @@ pragma solidity ^0.8.0;
 
 import {Base} from "tests/Base.t.sol";
 
-import {MockSafeContract} from "tests/mocks/MockSafeContract.sol";
-import {MockERC20} from "@solmate/test/utils/mocks/MockERC20.sol";
 import {IAbstractSafeModule} from "contracts/interfaces/automation/IAbstractSafeModule.sol";
+import {MockSafeContract} from "tests/mocks/MockSafeContract.sol";
+import {ConcreteAbstractSafeModule} from "tests/mocks/ConcreteAbstractSafeModule.sol";
+import {MockERC20} from "@solmate/test/utils/mocks/MockERC20.sol";
 
 abstract contract Unit_AbstractSafeModule_Shared_Test is Base {
     //////////////////////////////////////////////////////
@@ -31,11 +32,7 @@ abstract contract Unit_AbstractSafeModule_Shared_Test is Base {
         // Deploy mock safe
         mockSafe = new MockSafeContract();
 
-        module = IAbstractSafeModule(
-            vm.deployCode(
-                "tests/mocks/ConcreteAbstractSafeModule.sol:ConcreteAbstractSafeModule", abi.encode(address(mockSafe))
-            )
-        );
+        module = IAbstractSafeModule(address(new ConcreteAbstractSafeModule(address(mockSafe))));
 
         // Deploy a mock ERC20 token
         mockToken = new MockERC20("Mock Token", "MTK", 18);
