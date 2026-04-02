@@ -105,6 +105,8 @@ interface ISonicStakingStrategy {
     // SonicValidatorDelegator functions
     function wrappedSonic() external view returns (address);
 
+    function sfc() external view returns (address);
+
     function nextWithdrawId() external view returns (uint256);
 
     function pendingWithdrawals() external view returns (uint256);

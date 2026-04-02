@@ -5,11 +5,9 @@ import {BaseFork} from "tests/fork/BaseFork.t.sol";
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {MockERC20} from "@solmate/test/utils/mocks/MockERC20.sol";
-import {OSonic} from "contracts/token/OSonic.sol";
-
-import {PoolBoostCentralRegistry} from "contracts/poolBooster/PoolBoostCentralRegistry.sol";
-import {PoolBoosterFactoryMetropolis} from "contracts/poolBooster/PoolBoosterFactoryMetropolis.sol";
-import {PoolBoosterMetropolis} from "contracts/poolBooster/PoolBoosterMetropolis.sol";
+import {IPoolBoostCentralRegistryFull} from "contracts/interfaces/poolBooster/IPoolBoostCentralRegistryFull.sol";
+import {IPoolBoosterFactoryMetropolis} from "contracts/interfaces/poolBooster/IPoolBoosterFactoryMetropolis.sol";
+import {IPoolBoosterMetropolis} from "contracts/interfaces/poolBooster/IPoolBoosterMetropolis.sol";
 
 import {Sonic} from "tests/utils/Addresses.sol";
 
@@ -41,9 +39,9 @@ abstract contract Fork_MetropolisPoolBooster_Shared_Test is BaseFork {
     /// --- CONTRACTS
     //////////////////////////////////////////////////////
 
-    OSonic internal oSonic;
-    PoolBoostCentralRegistry internal centralRegistry;
-    PoolBoosterFactoryMetropolis internal factoryMetropolis;
+    IERC20 internal oSonic;
+    IPoolBoostCentralRegistryFull internal centralRegistry;
+    IPoolBoosterFactoryMetropolis internal factoryMetropolis;
 
     //////////////////////////////////////////////////////
     /// --- LOCAL VARIABLES
@@ -65,7 +63,7 @@ abstract contract Fork_MetropolisPoolBooster_Shared_Test is BaseFork {
 
     function _deployFreshContracts() internal {
         // 1. Deploy fresh MockERC20 cast into the Base-declared oSonic variable
-        oSonic = OSonic(address(new MockERC20("Origin Sonic", "OS", 18)));
+        oSonic = IERC20(address(new MockERC20("Origin Sonic", "OS", 18)));
 
         // 2. Deploy mock rewarder for bribe calls
         mockRewarder = new MockBribeRewarder(address(oSonic));
@@ -83,16 +81,23 @@ abstract contract Fork_MetropolisPoolBooster_Shared_Test is BaseFork {
         );
 
         // 4. Deploy PoolBoostCentralRegistry and set governor via storage slot
-        centralRegistry = new PoolBoostCentralRegistry();
+        centralRegistry = IPoolBoostCentralRegistryFull(
+            vm.deployCode("contracts/poolBooster/PoolBoostCentralRegistry.sol:PoolBoostCentralRegistry")
+        );
         vm.store(address(centralRegistry), GOVERNOR_SLOT, bytes32(uint256(uint160(Sonic.timelock))));
 
         // 5. Deploy Metropolis factory
-        factoryMetropolis = new PoolBoosterFactoryMetropolis(
-            address(oSonic),
-            Sonic.timelock,
-            address(centralRegistry),
-            Sonic.Metropolis_RewarderFactory,
-            Sonic.Metropolis_Voter
+        factoryMetropolis = IPoolBoosterFactoryMetropolis(
+            vm.deployCode(
+                "contracts/poolBooster/PoolBoosterFactoryMetropolis.sol:PoolBoosterFactoryMetropolis",
+                abi.encode(
+                    address(oSonic),
+                    Sonic.timelock,
+                    address(centralRegistry),
+                    Sonic.Metropolis_RewarderFactory,
+                    Sonic.Metropolis_Voter
+                )
+            )
         );
 
         // 6. Approve factory on registry
@@ -114,12 +119,12 @@ abstract contract Fork_MetropolisPoolBooster_Shared_Test is BaseFork {
         MockERC20(address(oSonic)).mint(_to, _amount);
     }
 
-    function _createMetropolisBooster(address _pool, uint256 _salt) internal returns (PoolBoosterMetropolis) {
+    function _createMetropolisBooster(address _pool, uint256 _salt) internal returns (IPoolBoosterMetropolis) {
         vm.prank(Sonic.timelock);
         factoryMetropolis.createPoolBoosterMetropolis(_pool, _salt);
 
         uint256 count = factoryMetropolis.poolBoosterLength();
         (address boosterAddr,,) = factoryMetropolis.poolBoosters(count - 1);
-        return PoolBoosterMetropolis(boosterAddr);
+        return IPoolBoosterMetropolis(boosterAddr);
     }
 }

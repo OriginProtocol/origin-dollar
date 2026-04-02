@@ -2,8 +2,8 @@
 pragma solidity ^0.8.0;
 
 import {Fork_SwapXPoolBooster_Shared_Test} from "tests/fork/sonic/poolBooster/SwapXPoolBooster/shared/Shared.t.sol";
-import {PoolBoosterSwapxSingle} from "contracts/poolBooster/PoolBoosterSwapxSingle.sol";
 import {IPoolBoostCentralRegistry} from "contracts/interfaces/poolBooster/IPoolBoostCentralRegistry.sol";
+import {IPoolBoosterSwapxSingle} from "contracts/interfaces/poolBooster/IPoolBoosterSwapxSingle.sol";
 import {Sonic} from "tests/utils/Addresses.sol";
 
 contract Fork_Concrete_SwapXPoolBooster_CreateSingle_Test is Fork_SwapXPoolBooster_Shared_Test {
@@ -19,7 +19,7 @@ contract Fork_Concrete_SwapXPoolBooster_CreateSingle_Test is Fork_SwapXPoolBoost
         factorySwapxSingle.createPoolBoosterSwapxSingle(Sonic.SwapXOsUSDCe_extBribeOS, Sonic.SwapXOsGEMSx_pool, 1e18);
 
         (address boosterAddr,,) = factorySwapxSingle.poolBoosters(factorySwapxSingle.poolBoosterLength() - 1);
-        PoolBoosterSwapxSingle booster = PoolBoosterSwapxSingle(boosterAddr);
+        IPoolBoosterSwapxSingle booster = IPoolBoosterSwapxSingle(boosterAddr);
 
         assertEq(address(booster.osToken()), address(oSonic));
         assertEq(address(booster.bribeContract()), Sonic.SwapXOsUSDCe_extBribeOS);

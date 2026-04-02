@@ -5,7 +5,7 @@ import {
     Fork_SonicSwapXAMOStrategy_Shared_Test
 } from "tests/fork/sonic/strategies/SonicSwapXAMOStrategy/shared/Shared.t.sol";
 import {Sonic} from "tests/utils/Addresses.sol";
-import {StableSwapAMMStrategy} from "contracts/strategies/algebra/StableSwapAMMStrategy.sol";
+import {ISonicSwapXAMOStrategy} from "contracts/interfaces/strategies/ISonicSwapXAMOStrategy.sol";
 
 contract Fork_Concrete_SonicSwapXAMOStrategy_InitialState_Test is Fork_SonicSwapXAMOStrategy_Shared_Test {
     function test_constantsAndImmutables() public view {
@@ -44,7 +44,7 @@ contract Fork_Concrete_SonicSwapXAMOStrategy_InitialState_Test is Fork_SonicSwap
         // Timelock can update
         vm.prank(governor);
         vm.expectEmit(address(sonicSwapXAMOStrategy));
-        emit StableSwapAMMStrategy.MaxDepegUpdated(newMaxDepeg);
+        emit ISonicSwapXAMOStrategy.MaxDepegUpdated(newMaxDepeg);
         sonicSwapXAMOStrategy.setMaxDepeg(newMaxDepeg);
 
         assertEq(sonicSwapXAMOStrategy.maxDepeg(), newMaxDepeg);
