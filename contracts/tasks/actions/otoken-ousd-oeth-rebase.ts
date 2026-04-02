@@ -13,7 +13,7 @@ const abi = [
 const GAS_MULTIPLIER = 1.1;
 
 action({
-  name: "otoken_ousd_oeth_rebase",
+  name: "otoken-ousd-oeth-rebase",
   description:
     "Rebase both OETH (collectAndRebase) and OUSD (rebase) on mainnet",
   chains: [1],

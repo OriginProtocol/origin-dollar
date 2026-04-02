@@ -3,7 +3,7 @@ import { action } from "../lib/action";
 import { manageBribes } from "../poolBooster";
 
 action({
-  name: "manageCurvePoolBoosterBribes",
+  name: "manageBribes",
   description:
     "Calls manageBribes on the CurvePoolBoosterBribesModule and calculates the rewards per vote based on the target efficiency",
   chains: [1],

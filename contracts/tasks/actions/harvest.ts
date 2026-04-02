@@ -25,6 +25,7 @@ action({
 
     const nativeStakingStrategies = [
       addresses.mainnet.NativeStakingSSVStrategy2Proxy,
+      // TODO: NativeStakingSSVStrategy3Proxy will soon be obsolete
       addresses.mainnet.NativeStakingSSVStrategy3Proxy,
     ];
 

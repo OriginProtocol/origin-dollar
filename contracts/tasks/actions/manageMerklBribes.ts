@@ -3,7 +3,7 @@ import { action } from "../lib/action";
 import { manageMerklBribes } from "../merklPoolBooster";
 
 action({
-  name: "manageMerklPoolBoosterBribes",
+  name: "manageMerklBribes",
   description:
     "Calls bribeAll on the MerklPoolBoosterBribesModule through the Gnosis Safe",
   chains: [1],
