@@ -202,6 +202,7 @@ abstract contract VaultAdmin is VaultCore {
             // Withdraw all assets BEFORE marking as unsupported so that AMO
             // strategies can call burnForStrategy/mintForStrategy during withdrawAll
             IStrategy strategy = IStrategy(_addr);
+            // slither-disable-next-line reentrancy-no-eth
             strategy.withdrawAll();
 
             // Mark the strategy as not supported
