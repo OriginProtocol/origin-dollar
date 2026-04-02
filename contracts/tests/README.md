@@ -70,12 +70,37 @@ When a test file imports a concrete contract (e.g. `OUSDVault`), Forge pulls its
 ```diff
 - OUSDVault ousdVaultImpl = new OUSDVault(address(usdc));
 + address ousdVaultImpl = vm.deployCode(
-+     "contracts/vault/OUSDVault/OUSDVault.sol:OUSDVault",
++     "contracts/vault/OUSDVault.sol:OUSDVault",
 +     abi.encode(address(usdc))
 + );
 ```
 
 The path format is `"<source-path>:<ContractName>"`. Constructor arguments are ABI-encoded in the second parameter.
+
+**Proxies** use the same pattern — the path is long but consistent:
+
+```solidity
+IProxy proxy = IProxy(
+    vm.deployCode(
+        "contracts/proxies/InitializeGovernedUpgradeabilityProxy.sol:InitializeGovernedUpgradeabilityProxy"
+    )
+);
+```
+
+**Contracts without constructor args** (e.g. token implementations) omit the second parameter:
+
+```solidity
+IOToken ousdImpl = IOToken(vm.deployCode("contracts/token/OUSD.sol:OUSD"));
+```
+
+**Wrapped tokens** pass the underlying token address as a constructor arg:
+
+```solidity
+address woethImpl = vm.deployCode(
+    "contracts/token/WOETH.sol:WOETH",
+    abi.encode(address(oeth))
+);
+```
 
 #### 4. Cast proxies to the interface
 
@@ -117,6 +142,15 @@ forge test ...
 ### Interface Maintenance
 
 When adding new vault functionality (functions, events, or public state variables), add the corresponding signature to the interface (e.g. `IVault.sol`) so tests can use it without importing the concrete contract.
+
+### Available Interfaces
+
+| Interface | File | Used for |
+|-----------|------|----------|
+| `IVault` | `contracts/interfaces/IVault.sol` | All vault contracts (OUSDVault, OETHVault, etc.) |
+| `IOToken` | `contracts/interfaces/IOToken.sol` | All rebasing tokens (OUSD, OETH, OETHBase, OSonic) |
+| `IWOToken` | `contracts/interfaces/IWOToken.sol` | All wrapped tokens (WOETH, WOETHBase, WOETHPlume, WOSonic, WrappedOusd) |
+| `IProxy` | `contracts/interfaces/IProxy.sol` | All InitializeGovernedUpgradeabilityProxy instances |
 
 ### Scope
 
