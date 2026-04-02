@@ -286,6 +286,71 @@ describe("OETH Vault", function () {
     });
   });
 
+  describe("Remove AMO Strategy", () => {
+    it("Should allow removing an AMO strategy that has no oToken balance", async () => {
+      const { oethVault, oeth, weth, governor } = fixture;
+
+      const dMockAMO = await deployWithConfirmation("MockAMOStrategy");
+      const mockAMO = await ethers.getContractAt(
+        "MockAMOStrategy",
+        dMockAMO.address
+      );
+      await mockAMO.initialize(oethVault.address, oeth.address, weth.address);
+
+      await oethVault.connect(governor).approveStrategy(mockAMO.address);
+      await oethVault
+        .connect(governor)
+        .addStrategyToMintWhitelist(mockAMO.address);
+
+      // removeStrategy should succeed with no oToken balance
+      await oethVault.connect(governor).removeStrategy(mockAMO.address);
+
+      expect(await oethVault.isMintWhitelistedStrategy(mockAMO.address)).to.be
+        .false;
+    });
+
+    it("Should allow removing an AMO strategy that calls burnForStrategy in withdrawAll", async () => {
+      const { oethVault, oeth, weth, governor } = fixture;
+
+      const dMockAMO = await deployWithConfirmation("MockAMOStrategy");
+      const mockAMO = await ethers.getContractAt(
+        "MockAMOStrategy",
+        dMockAMO.address
+      );
+      await mockAMO.initialize(oethVault.address, oeth.address, weth.address);
+
+      await oethVault.connect(governor).approveStrategy(mockAMO.address);
+      await oethVault
+        .connect(governor)
+        .addStrategyToMintWhitelist(mockAMO.address);
+
+      // Fund the strategy with WETH and mint oETH to simulate AMO state
+      const strategySigner = await impersonateAndFund(mockAMO.address);
+      await weth.connect(governor).transfer(mockAMO.address, oethUnits("5"));
+      await weth
+        .connect(strategySigner)
+        .approve(oethVault.address, oethUnits("5"));
+      await oethVault.connect(strategySigner).mint(oethUnits("5"));
+
+      expect(await oeth.balanceOf(mockAMO.address)).to.equal(oethUnits("5"));
+
+      const totalSupplyBefore = await oeth.totalSupply();
+
+      // removeStrategy should succeed even though withdrawAll calls burnForStrategy
+      await oethVault.connect(governor).removeStrategy(mockAMO.address);
+
+      // oTokens were burned during withdrawAll
+      expect(await oeth.totalSupply()).to.equal(
+        totalSupplyBefore.sub(oethUnits("5"))
+      );
+      expect(await oeth.balanceOf(mockAMO.address)).to.equal(oethUnits("0"));
+
+      // Strategy flags cleared
+      expect(await oethVault.isMintWhitelistedStrategy(mockAMO.address)).to.be
+        .false;
+    });
+  });
+
   describe("Remove Asset", () => {
     it("Should allow strategy to burnForStrategy", async () => {
       const { oethVault, oeth, weth, governor, mockStrategy } = fixture;
