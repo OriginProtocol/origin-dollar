@@ -286,6 +286,16 @@ module.exports = {
       allowUnlimitedContractSize: true,
       chainId,
       tags: getDeployTags(),
+      chains: {
+        999: {
+          hardforkHistory: {
+            london: 0,
+            merge: 0,
+            shanghai: 0,
+            cancun: 0,
+          },
+        },
+      },
       ...(isForkTest
         ? {
             timeout: 0,

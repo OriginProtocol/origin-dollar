@@ -561,7 +561,7 @@ contract StableSwapAMMStrategy is InitializableAbstractStrategy {
     function collectRewardTokens()
         external
         override
-        onlyHarvester
+        onlyHarvesterOrStrategist
         nonReentrant
     {
         // Collect SWPx rewards from the gauge

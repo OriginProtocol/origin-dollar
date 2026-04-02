@@ -74,6 +74,7 @@ describe("Unit test: Native SSV Staking Strategy", function () {
     ...fixture,
     harvester: fixture.oethHarvester,
     strategy: fixture.nativeStakingSSVStrategy,
+    newBehavior: true,
   }));
 
   shouldBehaveLikeStrategy(() => ({
@@ -83,6 +84,7 @@ describe("Unit test: Native SSV Staking Strategy", function () {
     valueAssets: [],
     harvester: fixture.oethHarvester,
     vault: fixture.oethVault,
+    newBehavior: true,
   }));
 
   describe("Initial setup", function () {

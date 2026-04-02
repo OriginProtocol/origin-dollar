@@ -381,6 +381,7 @@ pnpm hardhat setActionVars --id 6a633bb0-aff8-4b37-aaae-b4c6f244ed87
 pnpm hardhat setActionVars --id 076c59e4-4150-42c7-9ba0-9962069ac353
 pnpm hardhat setActionVars --id aa194c13-0dbf-49d2-8e87-70e61f3d71a8
 pnpm hardhat setActionVars --id 65b53496-e426-4850-8349-059e63eb2120
+pnpm hardhat setActionVars --id a4f8ca5f-7144-469b-b84a-58b30fed72ce
 
 # Mainnet
 pnpm hardhat updateAction --id e2929f53-db56-49b2-b054-35f7df7fc4fb --file doAccounting
@@ -393,6 +394,7 @@ pnpm hardhat updateAction --id 6a633bb0-aff8-4b37-aaae-b4c6f244ed87 --file manag
 pnpm hardhat updateAction --id 076c59e4-4150-42c7-9ba0-9962069ac353 --file manageBribes
 pnpm hardhat updateAction --id aa194c13-0dbf-49d2-8e87-70e61f3d71a8 --file manageMerklBribes # Mainnet
 pnpm hardhat updateAction --id 65b53496-e426-4850-8349-059e63eb2120 --file manageMerklBribes # Base
+pnpm hardhat updateAction --id a4f8ca5f-7144-469b-b84a-58b30fed72ce --file claimSSVRewards
 
 # These are Base -> Mainnet & Mainnet -> Base actions
 # they share the codebase. The direction of relaying attestations is defined by the

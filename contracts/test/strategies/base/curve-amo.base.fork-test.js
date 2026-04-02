@@ -91,6 +91,21 @@ describe("Base Fork Test: Curve AMO strategy", function () {
       .setHarvesterAddress(harvester.address);
 
     await curveAMOStrategy.connect(impersonatedVaultSigner).withdrawAll();
+
+    // Mint enough via the vault to cover any withdrawal queue shortfall
+    // so that depositToStrategy doesn't revert with "Not enough assets available"
+    const vaultWethBal = await weth.balanceOf(oethbVault.address);
+    const queueMeta = await oethbVault.withdrawalQueueMetadata();
+    const outstanding = queueMeta.queued.sub(queueMeta.claimed);
+    if (vaultWethBal.lt(outstanding)) {
+      const deficit = outstanding.sub(vaultWethBal).add(oethUnits("100"));
+      const balance = await weth.balanceOf(nick.address);
+      if (balance.lt(deficit)) {
+        await setERC20TokenBalance(nick.address, weth, deficit, hre);
+      }
+      await weth.connect(nick).approve(oethbVault.address, deficit);
+      await oethbVault.connect(nick).mint(deficit);
+    }
   });
 
   describe("Initial parameters", () => {
