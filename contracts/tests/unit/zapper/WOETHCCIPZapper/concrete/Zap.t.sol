@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 import {Unit_WOETHCCIPZapper_Shared_Test} from "tests/unit/zapper/WOETHCCIPZapper/shared/Shared.t.sol";
-import {WOETHCCIPZapper} from "contracts/zapper/WOETHCCIPZapper.sol";
+import {IWOETHCCIPZapper} from "contracts/interfaces/IWOETHCCIPZapper.sol";
 
 contract Unit_Concrete_WOETHCCIPZapper_Zap_Test is Unit_WOETHCCIPZapper_Shared_Test {
     //////////////////////////////////////////////////////
@@ -24,7 +24,7 @@ contract Unit_Concrete_WOETHCCIPZapper_Zap_Test is Unit_WOETHCCIPZapper_Shared_T
 
         vm.prank(alice);
         vm.expectEmit(true, false, false, true, address(woethCcipZapper));
-        emit Zap(MOCK_MESSAGE_ID, alice, alice, expectedAmount);
+        emit IWOETHCCIPZapper.Zap(MOCK_MESSAGE_ID, alice, alice, expectedAmount);
         woethCcipZapper.zap{value: 1 ether}(alice);
     }
 
@@ -34,7 +34,7 @@ contract Unit_Concrete_WOETHCCIPZapper_Zap_Test is Unit_WOETHCCIPZapper_Shared_T
 
         vm.prank(alice);
         vm.expectEmit(true, false, false, true, address(woethCcipZapper));
-        emit Zap(MOCK_MESSAGE_ID, alice, bobby, expectedAmount);
+        emit IWOETHCCIPZapper.Zap(MOCK_MESSAGE_ID, alice, bobby, expectedAmount);
         bytes32 messageId = woethCcipZapper.zap{value: 1 ether}(bobby);
 
         assertEq(messageId, MOCK_MESSAGE_ID);
@@ -44,7 +44,7 @@ contract Unit_Concrete_WOETHCCIPZapper_Zap_Test is Unit_WOETHCCIPZapper_Shared_T
         _dealETH(alice, 0.005 ether);
 
         vm.prank(alice);
-        vm.expectRevert(WOETHCCIPZapper.AmountLessThanFee.selector);
+        vm.expectRevert(IWOETHCCIPZapper.AmountLessThanFee.selector);
         woethCcipZapper.zap{value: 0.005 ether}(alice);
     }
 
@@ -55,9 +55,4 @@ contract Unit_Concrete_WOETHCCIPZapper_Zap_Test is Unit_WOETHCCIPZapper_Shared_T
         (bool success,) = address(woethCcipZapper).call{value: 1 ether}("");
         assertTrue(success);
     }
-
-    //////////////////////////////////////////////////////
-    /// --- EVENTS
-    //////////////////////////////////////////////////////
-    event Zap(bytes32 indexed messageId, address sender, address recipient, uint256 amount);
 }

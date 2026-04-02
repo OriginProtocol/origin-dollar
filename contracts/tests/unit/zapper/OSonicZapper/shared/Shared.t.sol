@@ -5,27 +5,24 @@ import {Base} from "tests/Base.t.sol";
 
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-
-import {OSonic} from "contracts/token/OSonic.sol";
-import {OETHVault} from "contracts/vault/OETHVault.sol";
-import {OETHProxy} from "contracts/proxies/Proxies.sol";
-import {OETHVaultProxy} from "contracts/proxies/Proxies.sol";
-import {WOETHProxy} from "contracts/proxies/Proxies.sol";
-import {WOSonic} from "contracts/token/WOSonic.sol";
-import {OSonicZapper} from "contracts/zapper/OSonicZapper.sol";
+import {IOToken} from "contracts/interfaces/IOToken.sol";
+import {IVault} from "contracts/interfaces/IVault.sol";
+import {IProxy} from "contracts/interfaces/IProxy.sol";
+import {IWOToken} from "contracts/interfaces/IWOToken.sol";
+import {IOSonicZapper} from "contracts/interfaces/IOSonicZapper.sol";
 import {MockWETH} from "contracts/mocks/MockWETH.sol";
 
 abstract contract Unit_OSonicZapper_Shared_Test is Base {
     //////////////////////////////////////////////////////
     /// --- CONTRACTS & MOCKS
     //////////////////////////////////////////////////////
-    OSonic internal oSonic;
-    OETHVault internal oethVault;
-    OETHProxy internal oethProxy;
-    OETHVaultProxy internal oethVaultProxy;
-    WOSonic internal woSonic;
-    WOETHProxy internal woSonicProxy;
-    OSonicZapper internal oSonicZapper;
+    IOToken internal oSonic;
+    IVault internal oethVault;
+    IProxy internal oethProxy;
+    IProxy internal oethVaultProxy;
+    IWOToken internal woSonic;
+    IProxy internal woSonicProxy;
+    IOSonicZapper internal oSonicZapper;
 
     //////////////////////////////////////////////////////
     /// --- CONSTANTS
@@ -67,45 +64,48 @@ abstract contract Unit_OSonicZapper_Shared_Test is Base {
     function _deployContracts() internal {
         vm.startPrank(deployer);
 
-        OSonic oSonicImpl = new OSonic();
-        OETHVault vaultImpl = new OETHVault(WS_ADDRESS);
+        address oSonicImpl = vm.deployCode("contracts/token/OSonic.sol:OSonic");
+        address vaultImpl = vm.deployCode("contracts/vault/OETHVault.sol:OETHVault", abi.encode(WS_ADDRESS));
 
-        oethProxy = new OETHProxy();
-        oethVaultProxy = new OETHVaultProxy();
+        oethProxy = IProxy(vm.deployCode("contracts/proxies/Proxies.sol:OETHProxy"));
+        oethVaultProxy = IProxy(vm.deployCode("contracts/proxies/Proxies.sol:OETHVaultProxy"));
 
         oethProxy.initialize(
-            address(oSonicImpl),
-            governor,
-            abi.encodeWithSignature("initialize(address,uint256)", address(oethVaultProxy), 1e27)
+            oSonicImpl, governor, abi.encodeWithSignature("initialize(address,uint256)", address(oethVaultProxy), 1e27)
         );
 
         oethVaultProxy.initialize(
-            address(vaultImpl), governor, abi.encodeWithSignature("initialize(address)", address(oethProxy))
+            vaultImpl, governor, abi.encodeWithSignature("initialize(address)", address(oethProxy))
         );
 
         vm.stopPrank();
 
-        oSonic = OSonic(address(oethProxy));
-        oethVault = OETHVault(address(oethVaultProxy));
+        oSonic = IOToken(address(oethProxy));
+        oethVault = IVault(address(oethVaultProxy));
     }
 
     function _deployWOSonic() internal {
         vm.startPrank(deployer);
 
-        WOSonic woSonicImpl = new WOSonic(ERC20(address(oSonic)));
-        woSonicProxy = new WOETHProxy();
-        woSonicProxy.initialize(address(woSonicImpl), governor, "");
+        address woSonicImpl = vm.deployCode("contracts/token/WOSonic.sol:WOSonic", abi.encode(ERC20(address(oSonic))));
+        woSonicProxy = IProxy(vm.deployCode("contracts/proxies/Proxies.sol:WOETHProxy"));
+        woSonicProxy.initialize(woSonicImpl, governor, "");
 
         vm.stopPrank();
 
-        woSonic = WOSonic(address(woSonicProxy));
+        woSonic = IWOToken(address(woSonicProxy));
 
         vm.prank(governor);
         woSonic.initialize();
     }
 
     function _deployZapper() internal {
-        oSonicZapper = new OSonicZapper(address(oSonic), address(woSonic), address(oethVault));
+        oSonicZapper = IOSonicZapper(
+            vm.deployCode(
+                "contracts/zapper/OSonicZapper.sol:OSonicZapper",
+                abi.encode(address(oSonic), address(woSonic), address(oethVault))
+            )
+        );
     }
 
     function _configureContracts() internal {

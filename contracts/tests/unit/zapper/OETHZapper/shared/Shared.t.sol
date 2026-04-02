@@ -5,29 +5,25 @@ import {Base} from "tests/Base.t.sol";
 
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-
-import {OETH} from "contracts/token/OETH.sol";
-import {OETHVault} from "contracts/vault/OETHVault.sol";
-import {OETHProxy} from "contracts/proxies/Proxies.sol";
-import {OETHVaultProxy} from "contracts/proxies/Proxies.sol";
-import {WOETHProxy} from "contracts/proxies/Proxies.sol";
-import {WOETH} from "contracts/token/WOETH.sol";
-import {OETHZapper} from "contracts/zapper/OETHZapper.sol";
-import {OETHBaseZapper} from "contracts/zapper/OETHBaseZapper.sol";
+import {IOToken} from "contracts/interfaces/IOToken.sol";
+import {IVault} from "contracts/interfaces/IVault.sol";
+import {IProxy} from "contracts/interfaces/IProxy.sol";
+import {IWOToken} from "contracts/interfaces/IWOToken.sol";
+import {IOETHZapper} from "contracts/interfaces/IOETHZapper.sol";
 import {MockWETH} from "contracts/mocks/MockWETH.sol";
 
 abstract contract Unit_OETHZapper_Shared_Test is Base {
     //////////////////////////////////////////////////////
     /// --- CONTRACTS & MOCKS
     //////////////////////////////////////////////////////
-    OETH internal oeth;
-    OETHVault internal oethVault;
-    OETHProxy internal oethProxy;
-    OETHVaultProxy internal oethVaultProxy;
-    WOETH internal woeth;
-    WOETHProxy internal woethProxy;
-    OETHZapper internal oethZapper;
-    OETHBaseZapper internal oethBaseZapper;
+    IOToken internal oeth;
+    IVault internal oethVault;
+    IProxy internal oethProxy;
+    IProxy internal oethVaultProxy;
+    IWOToken internal woeth;
+    IProxy internal woethProxy;
+    IOETHZapper internal oethZapper;
+    IOETHZapper internal oethBaseZapper;
     MockWETH internal mockWeth;
 
     //////////////////////////////////////////////////////
@@ -59,45 +55,48 @@ abstract contract Unit_OETHZapper_Shared_Test is Base {
     function _deployContracts() internal {
         vm.startPrank(deployer);
 
-        OETH oethImpl = new OETH();
-        OETHVault oethVaultImpl = new OETHVault(address(weth));
+        address oethImpl = vm.deployCode("contracts/token/OETH.sol:OETH");
+        address oethVaultImpl = vm.deployCode("contracts/vault/OETHVault.sol:OETHVault", abi.encode(address(weth)));
 
-        oethProxy = new OETHProxy();
-        oethVaultProxy = new OETHVaultProxy();
+        oethProxy = IProxy(vm.deployCode("contracts/proxies/Proxies.sol:OETHProxy"));
+        oethVaultProxy = IProxy(vm.deployCode("contracts/proxies/Proxies.sol:OETHVaultProxy"));
 
         oethProxy.initialize(
-            address(oethImpl),
-            governor,
-            abi.encodeWithSignature("initialize(address,uint256)", address(oethVaultProxy), 1e27)
+            oethImpl, governor, abi.encodeWithSignature("initialize(address,uint256)", address(oethVaultProxy), 1e27)
         );
 
         oethVaultProxy.initialize(
-            address(oethVaultImpl), governor, abi.encodeWithSignature("initialize(address)", address(oethProxy))
+            oethVaultImpl, governor, abi.encodeWithSignature("initialize(address)", address(oethProxy))
         );
 
         vm.stopPrank();
 
-        oeth = OETH(address(oethProxy));
-        oethVault = OETHVault(address(oethVaultProxy));
+        oeth = IOToken(address(oethProxy));
+        oethVault = IVault(address(oethVaultProxy));
     }
 
     function _deployWOETH() internal {
         vm.startPrank(deployer);
 
-        WOETH woethImpl = new WOETH(ERC20(address(oeth)));
-        woethProxy = new WOETHProxy();
-        woethProxy.initialize(address(woethImpl), governor, "");
+        address woethImpl = vm.deployCode("contracts/token/WOETH.sol:WOETH", abi.encode(ERC20(address(oeth))));
+        woethProxy = IProxy(vm.deployCode("contracts/proxies/Proxies.sol:WOETHProxy"));
+        woethProxy.initialize(woethImpl, governor, "");
 
         vm.stopPrank();
 
-        woeth = WOETH(address(woethProxy));
+        woeth = IWOToken(address(woethProxy));
 
         vm.prank(governor);
         woeth.initialize();
     }
 
     function _deployZapper() internal {
-        oethZapper = new OETHZapper(address(oeth), address(woeth), address(oethVault), address(weth));
+        oethZapper = IOETHZapper(
+            vm.deployCode(
+                "contracts/zapper/OETHZapper.sol:OETHZapper",
+                abi.encode(address(oeth), address(woeth), address(oethVault), address(weth))
+            )
+        );
     }
 
     function _configureContracts() internal {

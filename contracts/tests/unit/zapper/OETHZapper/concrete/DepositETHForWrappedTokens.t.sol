@@ -2,6 +2,7 @@
 pragma solidity ^0.8.0;
 
 import {Unit_OETHZapper_Shared_Test} from "tests/unit/zapper/OETHZapper/shared/Shared.t.sol";
+import {IOETHZapper} from "contracts/interfaces/IOETHZapper.sol";
 
 contract Unit_Concrete_OETHZapper_DepositETHForWrappedTokens_Test is Unit_OETHZapper_Shared_Test {
     //////////////////////////////////////////////////////
@@ -24,7 +25,7 @@ contract Unit_Concrete_OETHZapper_DepositETHForWrappedTokens_Test is Unit_OETHZa
 
         vm.prank(alice);
         vm.expectEmit(true, true, false, true, address(oethZapper));
-        emit Zap(alice, ETH_MARKER, 1 ether);
+        emit IOETHZapper.Zap(alice, ETH_MARKER, 1 ether);
         oethZapper.depositETHForWrappedTokens{value: 1 ether}(0);
     }
 
@@ -35,9 +36,4 @@ contract Unit_Concrete_OETHZapper_DepositETHForWrappedTokens_Test is Unit_OETHZa
         vm.expectRevert("Zapper: not enough minted");
         oethZapper.depositETHForWrappedTokens{value: 1 ether}(2 ether);
     }
-
-    //////////////////////////////////////////////////////
-    /// --- EVENTS
-    //////////////////////////////////////////////////////
-    event Zap(address indexed minter, address indexed asset, uint256 amount);
 }
