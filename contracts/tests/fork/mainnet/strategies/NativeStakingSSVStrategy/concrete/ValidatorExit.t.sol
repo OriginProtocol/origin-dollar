@@ -5,8 +5,7 @@ import {
     Fork_NativeStakingSSVStrategy_Shared_Test
 } from "tests/fork/mainnet/strategies/NativeStakingSSVStrategy/shared/Shared.t.sol";
 import {Cluster} from "contracts/interfaces/ISSVNetwork.sol";
-import {ValidatorRegistrator} from "contracts/strategies/NativeStaking/ValidatorRegistrator.sol";
-import {ValidatorStakeData} from "contracts/strategies/NativeStaking/ValidatorRegistrator.sol";
+import {INativeStakingSSVStrategy} from "contracts/interfaces/strategies/INativeStakingSSVStrategy.sol";
 
 contract Fork_Concrete_NativeStakingSSVStrategy_ValidatorExit_Test is Fork_NativeStakingSSVStrategy_Shared_Test {
     function setUp() public override {
@@ -31,13 +30,13 @@ contract Fork_Concrete_NativeStakingSSVStrategy_ValidatorExit_Test is Fork_Nativ
         // Exit validator from SSV network
         vm.prank(validatorRegistratorAddr);
         vm.expectEmit(true, true, true, true, address(nativeStakingSSVStrategy));
-        emit ValidatorRegistrator.SSVValidatorExitInitiated(pubKeyHash, TEST_VALIDATOR_PUBKEY, operatorIds);
+        emit INativeStakingSSVStrategy.SSVValidatorExitInitiated(pubKeyHash, TEST_VALIDATOR_PUBKEY, operatorIds);
         nativeStakingSSVStrategy.exitSsvValidator(TEST_VALIDATOR_PUBKEY, operatorIds);
 
         // Remove validator from SSV network
         vm.prank(validatorRegistratorAddr);
         vm.expectEmit(true, true, true, true, address(nativeStakingSSVStrategy));
-        emit ValidatorRegistrator.SSVValidatorExitCompleted(pubKeyHash, TEST_VALIDATOR_PUBKEY, operatorIds);
+        emit INativeStakingSSVStrategy.SSVValidatorExitCompleted(pubKeyHash, TEST_VALIDATOR_PUBKEY, operatorIds);
         nativeStakingSSVStrategy.removeSsvValidator(TEST_VALIDATOR_PUBKEY, operatorIds, updatedCluster);
     }
 
@@ -70,7 +69,7 @@ contract Fork_Concrete_NativeStakingSSVStrategy_ValidatorExit_Test is Fork_Nativ
         // Remove the registered validator directly (without staking)
         vm.prank(validatorRegistratorAddr);
         vm.expectEmit(true, true, true, true, address(nativeStakingSSVStrategy));
-        emit ValidatorRegistrator.SSVValidatorExitCompleted(pubKeyHash, TEST_VALIDATOR_PUBKEY, operatorIds);
+        emit INativeStakingSSVStrategy.SSVValidatorExitCompleted(pubKeyHash, TEST_VALIDATOR_PUBKEY, operatorIds);
         nativeStakingSSVStrategy.removeSsvValidator(TEST_VALIDATOR_PUBKEY, operatorIds, updatedCluster);
     }
 }

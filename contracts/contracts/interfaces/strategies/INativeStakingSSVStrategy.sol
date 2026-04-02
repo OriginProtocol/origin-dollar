@@ -139,6 +139,10 @@ interface INativeStakingSSVStrategy {
 
     function validatorRegistrator() external view returns (address);
 
+    function stakingMonitor() external view returns (address);
+
+    function FEE_ACCUMULATOR_ADDRESS() external view returns (address);
+
     function setRegistrator(address _address) external;
 
     function setFuseInterval(uint256 _start, uint256 _end) external;

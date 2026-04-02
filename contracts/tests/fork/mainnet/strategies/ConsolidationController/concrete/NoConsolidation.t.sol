@@ -2,8 +2,12 @@
 pragma solidity ^0.8.0;
 
 import {Fork_ConsolidationController_Shared_Test} from "../shared/Shared.t.sol";
-import {CompoundingValidatorManager} from "contracts/strategies/NativeStaking/CompoundingValidatorManager.sol";
 import {Cluster} from "contracts/interfaces/ISSVNetwork.sol";
+import {
+    CompoundingBalanceProofs,
+    CompoundingPendingDepositProofs,
+    CompoundingValidatorState
+} from "contracts/interfaces/strategies/CompoundingStakingTypes.sol";
 import {Mainnet} from "tests/utils/Addresses.sol";
 
 // solhint-disable max-states-count
@@ -33,7 +37,7 @@ contract Fork_ConsolidationController_NoConsolidation_Test is Fork_Consolidation
 
         // Target validator pre-conditions: Active state (4)
         bytes32 targetPubKeyHash = _hashPubKey(ACTIVE_TARGET_PUB_KEY());
-        (CompoundingValidatorManager.ValidatorState state,) = compoundingStakingSSVStrategy.validator(targetPubKeyHash);
+        (CompoundingValidatorState state,) = compoundingStakingSSVStrategy.validator(targetPubKeyHash);
         assertEq(uint256(state), 4, "Target validator not Active");
 
         vm.prank(adminAddr);
@@ -284,7 +288,7 @@ contract Fork_ConsolidationController_NoConsolidation_Test is Fork_Consolidation
 
         // Target validator is UNKNOWN (0)
         bytes32 targetPubKeyHash = _hashPubKey(unknownValidatorPubKey);
-        (CompoundingValidatorManager.ValidatorState state,) = compoundingStakingSSVStrategy.validator(targetPubKeyHash);
+        (CompoundingValidatorState state,) = compoundingStakingSSVStrategy.validator(targetPubKeyHash);
         assertEq(uint256(state), 0, "Target not Unknown");
 
         bytes[] memory secondClusterPubKeys = _getSecondClusterPubKeys();
@@ -332,7 +336,7 @@ contract Fork_ConsolidationController_NoConsolidation_Test is Fork_Consolidation
 
         // Target is in Staked state (2)
         bytes32 targetPubKeyHash = _hashPubKey(stakedCompoundingValidatorPubKey);
-        (CompoundingValidatorManager.ValidatorState state,) = compoundingStakingSSVStrategy.validator(targetPubKeyHash);
+        (CompoundingValidatorState state,) = compoundingStakingSSVStrategy.validator(targetPubKeyHash);
         assertEq(uint256(state), 2, "Target not Staked");
 
         bytes[] memory secondClusterPubKeys = _getSecondClusterPubKeys();
@@ -352,7 +356,7 @@ contract Fork_ConsolidationController_NoConsolidation_Test is Fork_Consolidation
 
         // Target is Active (4) but has pending deposit
         bytes32 targetPubKeyHash = _hashPubKey(activeWithDepositCompoundingValidatorPubKey);
-        (CompoundingValidatorManager.ValidatorState state,) = compoundingStakingSSVStrategy.validator(targetPubKeyHash);
+        (CompoundingValidatorState state,) = compoundingStakingSSVStrategy.validator(targetPubKeyHash);
         assertEq(uint256(state), 4, "Target not Active");
 
         bytes[] memory secondClusterPubKeys = _getSecondClusterPubKeys();
@@ -433,8 +437,8 @@ contract Fork_ConsolidationController_NoConsolidation_Test is Fork_Consolidation
         vm.prank(validatorRegistratorAddr);
         consolidationController.snapBalances();
 
-        CompoundingValidatorManager.BalanceProofs memory bProofs = _getBalanceProofs();
-        CompoundingValidatorManager.PendingDepositProofs memory pdProofs = _getPendingDepositProofs();
+        CompoundingBalanceProofs memory bProofs = _getBalanceProofs();
+        CompoundingPendingDepositProofs memory pdProofs = _getPendingDepositProofs();
 
         vm.prank(validatorRegistratorAddr);
         vm.expectRevert("Not Registrator");

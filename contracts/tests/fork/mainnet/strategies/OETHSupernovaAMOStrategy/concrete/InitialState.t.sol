@@ -5,7 +5,7 @@ import {
     Fork_OETHSupernovaAMOStrategy_Shared_Test
 } from "tests/fork/mainnet/strategies/OETHSupernovaAMOStrategy/shared/Shared.t.sol";
 import {Mainnet} from "tests/utils/Addresses.sol";
-import {StableSwapAMMStrategy} from "contracts/strategies/algebra/StableSwapAMMStrategy.sol";
+import {IOETHSupernovaAMOStrategy} from "contracts/interfaces/strategies/IOETHSupernovaAMOStrategy.sol";
 
 contract Fork_Concrete_OETHSupernovaAMOStrategy_InitialState_Test is Fork_OETHSupernovaAMOStrategy_Shared_Test {
     function test_constantsAndImmutables() public view {
@@ -44,7 +44,7 @@ contract Fork_Concrete_OETHSupernovaAMOStrategy_InitialState_Test is Fork_OETHSu
         // Timelock can update
         vm.prank(governor);
         vm.expectEmit(address(oethSupernovaAMOStrategy));
-        emit StableSwapAMMStrategy.MaxDepegUpdated(newMaxDepeg);
+        emit IOETHSupernovaAMOStrategy.MaxDepegUpdated(newMaxDepeg);
         oethSupernovaAMOStrategy.setMaxDepeg(newMaxDepeg);
 
         assertEq(oethSupernovaAMOStrategy.maxDepeg(), newMaxDepeg);

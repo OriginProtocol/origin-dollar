@@ -3,7 +3,6 @@ pragma solidity ^0.8.0;
 
 import {Fork_CrossChainMasterStrategy_Shared_Test} from "../shared/Shared.t.sol";
 import {Mainnet, Base as BaseAddresses, CrossChain} from "tests/utils/Addresses.sol";
-import {CrossChainStrategyHelper} from "contracts/strategies/crosschain/CrossChainStrategyHelper.sol";
 
 contract Fork_CrossChainMasterStrategy_TokenReceived_Test is Fork_CrossChainMasterStrategy_Shared_Test {
     function test_tokenReceived_acceptsWithdrawalTokens() public {
@@ -21,8 +20,7 @@ contract Fork_CrossChainMasterStrategy_TokenReceived_Test is Fork_CrossChainMast
         _replaceMessageTransmitter();
 
         // Build balance check payload (withdrawal confirmation)
-        bytes memory balancePayload =
-            CrossChainStrategyHelper.encodeBalanceCheckMessage(lastNonce, 12345e6, true, block.timestamp);
+        bytes memory balancePayload = _encodeBalanceCheckMessage(lastNonce, 12345e6, true, block.timestamp);
 
         // Wrap in burn message body (burnToken = Base.USDC = peer USDC)
         bytes memory burnPayload = _encodeBurnMessageBody(
@@ -64,8 +62,7 @@ contract Fork_CrossChainMasterStrategy_TokenReceived_Test is Fork_CrossChainMast
         _replaceMessageTransmitter();
 
         // Build balance check payload
-        bytes memory balancePayload =
-            CrossChainStrategyHelper.encodeBalanceCheckMessage(lastNonce, 12345e6, true, block.timestamp);
+        bytes memory balancePayload = _encodeBalanceCheckMessage(lastNonce, 12345e6, true, block.timestamp);
 
         // Wrap in burn message with WRONG burn token (WETH instead of peer USDC)
         bytes memory burnPayload = _encodeBurnMessageBody(

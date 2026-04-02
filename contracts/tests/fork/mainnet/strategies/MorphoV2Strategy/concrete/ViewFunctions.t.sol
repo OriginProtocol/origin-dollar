@@ -35,6 +35,6 @@ contract Fork_Concrete_MorphoV2Strategy_ViewFunctions_Test is Fork_MorphoV2Strat
     }
 
     function test_assetToken() public view {
-        assertEq(address(strategy.assetToken()), Mainnet.USDC);
+        assertEq(strategy.assetToken(), Mainnet.USDC);
     }
 }

@@ -4,6 +4,7 @@ pragma solidity ^0.8.0;
 import {
     Fork_NativeStakingSSVStrategy_Shared_Test
 } from "tests/fork/mainnet/strategies/NativeStakingSSVStrategy/shared/Shared.t.sol";
+import {INativeStakingSSVStrategy} from "contracts/interfaces/strategies/INativeStakingSSVStrategy.sol";
 
 contract Fork_Concrete_NativeStakingSSVStrategy_Deposit_Test is Fork_NativeStakingSSVStrategy_Shared_Test {
     /// @dev Test that the strategy accepts WETH allocation via deposit()
@@ -19,7 +20,7 @@ contract Fork_Concrete_NativeStakingSSVStrategy_Deposit_Test is Fork_NativeStaki
         // Call deposit by impersonating the Vault
         vm.prank(address(oethVault));
         vm.expectEmit(true, false, false, true, address(nativeStakingSSVStrategy));
-        emit Deposit(address(weth), address(0), depositAmount);
+        emit INativeStakingSSVStrategy.Deposit(address(weth), address(0), depositAmount);
         nativeStakingSSVStrategy.deposit(address(weth), depositAmount);
 
         assertEq(
@@ -49,6 +50,4 @@ contract Fork_Concrete_NativeStakingSSVStrategy_Deposit_Test is Fork_NativeStaki
         // Should be able to register and stake the full 32 ETH
         _registerAndStakeEth();
     }
-
-    event Deposit(address indexed _asset, address _pToken, uint256 _amount);
 }

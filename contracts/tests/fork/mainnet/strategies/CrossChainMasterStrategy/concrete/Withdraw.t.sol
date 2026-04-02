@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 import {Fork_CrossChainMasterStrategy_Shared_Test} from "../shared/Shared.t.sol";
-import {Mainnet, CrossChain} from "tests/utils/Addresses.sol";
+import {Mainnet} from "tests/utils/Addresses.sol";
 import {Vm} from "forge-std/Vm.sol";
 
 contract Fork_CrossChainMasterStrategy_Withdraw_Test is Fork_CrossChainMasterStrategy_Shared_Test {
@@ -27,7 +27,7 @@ contract Fork_CrossChainMasterStrategy_Withdraw_Test is Fork_CrossChainMasterStr
                 found = true;
 
                 // The MessageSent event emits the full CCTP message as bytes
-                bytes memory message = abi.decode(entries[i].data, (bytes));
+                abi.decode(entries[i].data, (bytes));
 
                 // Extract the message body (starts at offset 148 in CCTP message)
                 // But the MessageSent from our mock emits the raw sendMessage params
@@ -42,7 +42,7 @@ contract Fork_CrossChainMasterStrategy_Withdraw_Test is Fork_CrossChainMasterStr
             if (entries[i].topics[0] == messageTransmittedTopic) {
                 found = true;
 
-                (uint32 destinationDomain, address peerStrategy, uint32 minFinalityThreshold, bytes memory message) =
+                (uint32 destinationDomain,, uint32 minFinalityThreshold, bytes memory message) =
                     abi.decode(entries[i].data, (uint32, address, uint32, bytes));
 
                 assertEq(destinationDomain, 6, "destinationDomain should be Base (6)");

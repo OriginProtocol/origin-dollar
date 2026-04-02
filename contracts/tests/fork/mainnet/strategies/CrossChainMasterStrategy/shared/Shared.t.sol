@@ -2,13 +2,27 @@
 pragma solidity ^0.8.0;
 
 import {BaseFork} from "tests/fork/BaseFork.t.sol";
-import {Mainnet, Base as BaseAddresses, CrossChain} from "tests/utils/Addresses.sol";
+import {Base as BaseAddresses, Mainnet, CrossChain} from "tests/utils/Addresses.sol";
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
-import {CrossChainMasterStrategy} from "contracts/strategies/crosschain/CrossChainMasterStrategy.sol";
-import {CrossChainStrategyHelper} from "contracts/strategies/crosschain/CrossChainStrategyHelper.sol";
-import {CCTPMessageTransmitterMock2} from "contracts/mocks/crosschain/CCTPMessageTransmitterMock2.sol";
+import {IProxy} from "contracts/interfaces/IProxy.sol";
+import {ICrossChainMasterStrategy} from "contracts/interfaces/strategies/ICrossChainMasterStrategy.sol";
+import {ICCTPMessageTransmitterMock2} from "contracts/interfaces/cctp/ICCTPMessageTransmitterMock2.sol";
+
+struct BaseStrategyConfig {
+    address platformAddress;
+    address vaultAddress;
+}
+
+struct CCTPIntegrationConfig {
+    address cctpTokenMessenger;
+    address cctpMessageTransmitter;
+    uint32 peerDomainID;
+    address peerStrategy;
+    address usdcToken;
+    address peerUsdcToken;
+}
 
 abstract contract Fork_CrossChainMasterStrategy_Shared_Test is BaseFork {
     //////////////////////////////////////////////////////
@@ -21,7 +35,10 @@ abstract contract Fork_CrossChainMasterStrategy_Shared_Test is BaseFork {
     /// --- CONTRACTS
     //////////////////////////////////////////////////////
 
-    CrossChainMasterStrategy internal crossChainMasterStrategy;
+    uint32 internal constant BALANCE_CHECK_MESSAGE = 3;
+    uint32 internal constant ORIGIN_MESSAGE_VERSION = 1010;
+
+    ICrossChainMasterStrategy internal crossChainMasterStrategy;
     address internal relayer;
     address internal vaultAddr;
 
@@ -33,20 +50,52 @@ abstract contract Fork_CrossChainMasterStrategy_Shared_Test is BaseFork {
         super.setUp();
 
         _createAndSelectForkMainnet();
-
-        // Attach to deployed contracts
-        crossChainMasterStrategy = CrossChainMasterStrategy(Mainnet.CrossChainMasterStrategy);
         usdc = IERC20(Mainnet.USDC);
-
-        // Read state from deployed contract
-        relayer = crossChainMasterStrategy.operator();
-        vaultAddr = crossChainMasterStrategy.vaultAddress();
+        _deployFreshContracts();
+        _configureContracts();
 
         // Fund test user with USDC
         deal(Mainnet.USDC, matt, 1_000_000e6);
 
         _labelContracts();
     }
+
+    function _deployFreshContracts() internal {
+        relayer = makeAddr("Relayer");
+        vaultAddr = makeAddr("Vault");
+
+        IProxy crossChainStrategyProxy = IProxy(
+            vm.deployCode(
+                "contracts/proxies/create2/CrossChainStrategyProxy.sol:CrossChainStrategyProxy", abi.encode(governor)
+            )
+        );
+
+        address crossChainStrategyImpl = vm.deployCode(
+            "contracts/strategies/crosschain/CrossChainMasterStrategy.sol:CrossChainMasterStrategy",
+            abi.encode(
+                BaseStrategyConfig({platformAddress: address(0), vaultAddress: vaultAddr}),
+                CCTPIntegrationConfig({
+                    cctpTokenMessenger: CrossChain.CCTPTokenMessengerV2,
+                    cctpMessageTransmitter: CrossChain.CCTPMessageTransmitterV2,
+                    peerDomainID: 6,
+                    peerStrategy: address(crossChainStrategyProxy),
+                    usdcToken: Mainnet.USDC,
+                    peerUsdcToken: BaseAddresses.USDC
+                })
+            )
+        );
+
+        vm.prank(governor);
+        crossChainStrategyProxy.initialize(
+            crossChainStrategyImpl,
+            governor,
+            abi.encodeWithSignature("initialize(address,uint16,uint16)", relayer, uint16(2000), uint16(0))
+        );
+
+        crossChainMasterStrategy = ICrossChainMasterStrategy(address(crossChainStrategyProxy));
+    }
+
+    function _configureContracts() internal {}
 
     function _labelContracts() internal {
         vm.label(address(crossChainMasterStrategy), "CrossChainMasterStrategy");
@@ -60,11 +109,14 @@ abstract contract Fork_CrossChainMasterStrategy_Shared_Test is BaseFork {
     //////////////////////////////////////////////////////
 
     /// @dev Replace the real MessageTransmitter with a mock that routes messages locally
-    function _replaceMessageTransmitter() internal returns (CCTPMessageTransmitterMock2) {
-        CCTPMessageTransmitterMock2 temp = new CCTPMessageTransmitterMock2(Mainnet.USDC, 6);
+    function _replaceMessageTransmitter() internal returns (ICCTPMessageTransmitterMock2) {
+        address temp = vm.deployCode(
+            "contracts/mocks/crosschain/CCTPMessageTransmitterMock2.sol:CCTPMessageTransmitterMock2",
+            abi.encode(Mainnet.USDC, uint32(6))
+        );
         vm.etch(CrossChain.CCTPMessageTransmitterV2, address(temp).code);
 
-        CCTPMessageTransmitterMock2 mock = CCTPMessageTransmitterMock2(CrossChain.CCTPMessageTransmitterV2);
+        ICCTPMessageTransmitterMock2 mock = ICCTPMessageTransmitterMock2(CrossChain.CCTPMessageTransmitterV2);
         mock.setCCTPTokenMessenger(CrossChain.CCTPTokenMessengerV2);
 
         return mock;
@@ -73,6 +125,16 @@ abstract contract Fork_CrossChainMasterStrategy_Shared_Test is BaseFork {
     /// @dev Set the remote strategy balance via storage slot 207
     function _setRemoteStrategyBalance(uint256 balance) internal {
         vm.store(address(crossChainMasterStrategy), bytes32(uint256(REMOTE_STRATEGY_BALANCE_SLOT)), bytes32(balance));
+    }
+
+    function _encodeBalanceCheckMessage(uint64 nonce, uint256 balance, bool transferConfirmation, uint256 timestamp)
+        internal
+        pure
+        returns (bytes memory)
+    {
+        return abi.encodePacked(
+            ORIGIN_MESSAGE_VERSION, BALANCE_CHECK_MESSAGE, abi.encode(nonce, balance, transferConfirmation, timestamp)
+        );
     }
 
     /// @dev Encode a CCTP message matching the byte offsets in CrossChainStrategyHelper.decodeMessageHeader()

@@ -6,7 +6,6 @@ import {Mainnet} from "tests/utils/Addresses.sol";
 import {
     Fork_OETHSupernovaAMOStrategy_Shared_Test
 } from "tests/fork/mainnet/strategies/OETHSupernovaAMOStrategy/shared/Shared.t.sol";
-import {OETHSupernovaAMOStrategy} from "contracts/strategies/algebra/OETHSupernovaAMOStrategy.sol";
 
 contract Fork_Concrete_OETHSupernovaAMOStrategy_Rebalance_Test is Fork_OETHSupernovaAMOStrategy_Shared_Test {
     //////////////////////////////////////////////////////

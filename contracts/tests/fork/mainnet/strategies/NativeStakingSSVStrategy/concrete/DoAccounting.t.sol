@@ -4,7 +4,7 @@ pragma solidity ^0.8.0;
 import {
     Fork_NativeStakingSSVStrategy_Shared_Test
 } from "tests/fork/mainnet/strategies/NativeStakingSSVStrategy/shared/Shared.t.sol";
-import {ValidatorAccountant} from "contracts/strategies/NativeStaking/ValidatorAccountant.sol";
+import {INativeStakingSSVStrategy} from "contracts/interfaces/strategies/INativeStakingSSVStrategy.sol";
 
 contract Fork_Concrete_NativeStakingSSVStrategy_DoAccounting_Test is Fork_NativeStakingSSVStrategy_Shared_Test {
     uint256 internal strategyBalanceBefore;
@@ -38,7 +38,7 @@ contract Fork_Concrete_NativeStakingSSVStrategy_DoAccounting_Test is Fork_Native
 
         vm.prank(validatorRegistratorAddr);
         vm.expectEmit(true, true, true, true, address(nativeStakingSSVStrategy));
-        emit ValidatorAccountant.AccountingConsensusRewards(rewards);
+        emit INativeStakingSSVStrategy.AccountingConsensusRewards(rewards);
         nativeStakingSSVStrategy.doAccounting();
 
         // checkBalance should not change (consensus rewards don't affect it until harvested)
@@ -68,7 +68,7 @@ contract Fork_Concrete_NativeStakingSSVStrategy_DoAccounting_Test is Fork_Native
 
         vm.prank(validatorRegistratorAddr);
         vm.expectEmit(true, true, true, true, address(nativeStakingSSVStrategy));
-        emit ValidatorAccountant.AccountingFullyWithdrawnValidator(2, ACTIVE_VALIDATORS - 2, withdrawals);
+        emit INativeStakingSSVStrategy.AccountingFullyWithdrawnValidator(2, ACTIVE_VALIDATORS - 2, withdrawals);
         nativeStakingSSVStrategy.doAccounting();
 
         // checkBalance should decrease by withdrawal amount

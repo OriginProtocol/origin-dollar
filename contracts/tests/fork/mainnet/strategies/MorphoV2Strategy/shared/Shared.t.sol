@@ -5,12 +5,10 @@ import {BaseFork} from "tests/fork/BaseFork.t.sol";
 import {Mainnet} from "tests/utils/Addresses.sol";
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {OUSD} from "contracts/token/OUSD.sol";
-import {OUSDVault} from "contracts/vault/OUSDVault.sol";
-import {OUSDProxy} from "contracts/proxies/Proxies.sol";
-import {VaultProxy} from "contracts/proxies/Proxies.sol";
-import {MorphoV2Strategy} from "contracts/strategies/MorphoV2Strategy.sol";
-import {InitializableAbstractStrategy} from "contracts/utils/InitializableAbstractStrategy.sol";
+import {IOToken} from "contracts/interfaces/IOToken.sol";
+import {IVault} from "contracts/interfaces/IVault.sol";
+import {IProxy} from "contracts/interfaces/IProxy.sol";
+import {IMorphoV2Strategy} from "contracts/interfaces/strategies/IMorphoV2Strategy.sol";
 
 abstract contract Fork_MorphoV2Strategy_Shared_Test is BaseFork {
     //////////////////////////////////////////////////////
@@ -28,11 +26,11 @@ abstract contract Fork_MorphoV2Strategy_Shared_Test is BaseFork {
     /// --- CONTRACTS
     //////////////////////////////////////////////////////
 
-    OUSD internal ousd;
-    OUSDVault internal ousdVault;
-    OUSDProxy internal ousdProxy;
-    VaultProxy internal ousdVaultProxy;
-    MorphoV2Strategy internal strategy;
+    IOToken internal ousd;
+    IVault internal ousdVault;
+    IProxy internal ousdProxy;
+    IProxy internal ousdVaultProxy;
+    IMorphoV2Strategy internal strategy;
 
     //////////////////////////////////////////////////////
     /// --- SETUP
@@ -53,26 +51,32 @@ abstract contract Fork_MorphoV2Strategy_Shared_Test is BaseFork {
         // Deploy fresh OUSD + OUSDVault
         vm.startPrank(deployer);
 
-        OUSD ousdImpl = new OUSD();
-        OUSDVault ousdVaultImpl = new OUSDVault(Mainnet.USDC);
+        address ousdImpl = vm.deployCode("contracts/token/OUSD.sol:OUSD");
+        address ousdVaultImpl = vm.deployCode("contracts/vault/OUSDVault.sol:OUSDVault", abi.encode(Mainnet.USDC));
 
-        ousdProxy = new OUSDProxy();
-        ousdVaultProxy = new VaultProxy();
+        ousdProxy = IProxy(
+            vm.deployCode(
+                "contracts/proxies/InitializeGovernedUpgradeabilityProxy.sol:InitializeGovernedUpgradeabilityProxy"
+            )
+        );
+        ousdVaultProxy = IProxy(
+            vm.deployCode(
+                "contracts/proxies/InitializeGovernedUpgradeabilityProxy.sol:InitializeGovernedUpgradeabilityProxy"
+            )
+        );
 
         ousdProxy.initialize(
-            address(ousdImpl),
-            governor,
-            abi.encodeWithSignature("initialize(address,uint256)", address(ousdVaultProxy), 1e27)
+            ousdImpl, governor, abi.encodeWithSignature("initialize(address,uint256)", address(ousdVaultProxy), 1e27)
         );
 
         ousdVaultProxy.initialize(
-            address(ousdVaultImpl), governor, abi.encodeWithSignature("initialize(address)", address(ousdProxy))
+            ousdVaultImpl, governor, abi.encodeWithSignature("initialize(address)", address(ousdProxy))
         );
 
         vm.stopPrank();
 
-        ousd = OUSD(address(ousdProxy));
-        ousdVault = OUSDVault(address(ousdVaultProxy));
+        ousd = IOToken(address(ousdProxy));
+        ousdVault = IVault(address(ousdVaultProxy));
 
         // Configure vault
         vm.startPrank(governor);
@@ -84,11 +88,11 @@ abstract contract Fork_MorphoV2Strategy_Shared_Test is BaseFork {
         vm.stopPrank();
 
         // Deploy MorphoV2Strategy pointing at real Morpho V2 Vault
-        strategy = new MorphoV2Strategy(
-            InitializableAbstractStrategy.BaseStrategyConfig({
-                platformAddress: Mainnet.MorphoOUSDv2Vault, vaultAddress: address(ousdVault)
-            }),
-            Mainnet.USDC
+        strategy = IMorphoV2Strategy(
+            vm.deployCode(
+                "contracts/strategies/MorphoV2Strategy.sol:MorphoV2Strategy",
+                abi.encode(Mainnet.MorphoOUSDv2Vault, address(ousdVault), Mainnet.USDC)
+            )
         );
 
         // Set governor via storage slot
