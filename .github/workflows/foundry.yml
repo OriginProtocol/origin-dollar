@@ -39,6 +39,9 @@ jobs:
       - name: Lint
         working-directory: contracts
         run: pnpm run lint
+      - name: Check unused imports
+        working-directory: contracts
+        run: make lint-imports
 
   # ── Build ───────────────────────────────────────────────────
   build:

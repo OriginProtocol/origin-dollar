@@ -214,10 +214,17 @@ frame:
 	}'
 
 # ╔══════════════════════════════════════════════════════════════════════════════╗
+# ║                                   LINT                                       ║
+# ╚══════════════════════════════════════════════════════════════════════════════╝
+
+lint-imports:
+	forge lint --only-lint unused-import -D notes -- scripts/ tests/
+
+# ╔══════════════════════════════════════════════════════════════════════════════╗
 # ║                                  PHONY                                       ║
 # ╚══════════════════════════════════════════════════════════════════════════════╝
 
 .PHONY: test test-base test-unit test-fork test-fork-% test-smoke test-smoke-% \
         coverage coverage-html gas snapshot build build-% \
         deploy-mainnet deploy-base deploy-sonic deploy-hyperevm deploy-local simulate \
-        match clean clean-all install frame
+        match clean clean-all install frame lint-imports
