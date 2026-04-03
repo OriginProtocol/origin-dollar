@@ -4,12 +4,7 @@ pragma solidity ^0.8.0;
 // Helpers
 import {Logger} from "scripts/deploy/helpers/Logger.sol";
 import {GovHelper} from "scripts/deploy/helpers/GovHelper.sol";
-import {
-    State,
-    Contract,
-    GovProposal,
-    NO_GOVERNANCE
-} from "scripts/deploy/helpers/DeploymentTypes.sol";
+import {State, Contract, GovProposal, NO_GOVERNANCE} from "scripts/deploy/helpers/DeploymentTypes.sol";
 
 // Script Base
 import {Base} from "scripts/deploy/Base.s.sol";
