@@ -1,6 +1,69 @@
 {
   "jobs": [
     {
+      "name": "manage_merkle_morpho_bribe",
+      "schedule": "0 13 * * 3",
+      "enabled": false,
+      "permmissioned": true,
+      "command": "cd /app && pnpm hardhat manageMerklBribes --network mainnet"
+    },
+    {
+      "name": "manage_curve_pb_mainnet",
+      "schedule": "0 09 * * 5",
+      "enabled": false,
+      "permmissioned": true,
+      "command": "cd /app && pnpm hardhat manageBribes --network mainnet"
+    },
+    {
+      "name": "OETHandOUSD_harvest_CRV_MOPRHO_native_staking",
+      "schedule": "40 11,23 * * *",
+      "enabled": false,
+      "permmissioned": false,
+      "command": "cd /app && pnpm hardhat harvest --network mainnet"
+    },
+    {
+      "name": "OETH_native_staking_accounting",
+      "schedule": "430 23 * * *",
+      "enabled": false,
+      "permmissioned": true,
+      "command": "cd /app && pnpm hardhat doAccounting --network mainnet"
+    },
+    {
+      "name": "manage_pass_through",
+      "schedule": "0 12 * * 0",
+      "enabled": false,
+      "permmissioned": false,
+      "command": "cd /app && pnpm hardhat managePassThrough --network mainnet"
+    },
+    {
+      "name": "claim_bribes_base",
+      "schedule": "00 10 * * 4",
+      "enabled": false,
+      "permmissioned": true,
+      "command": "cd /app && pnpm hardhat claimBribes --network base"
+    },
+    {
+      "name": "manage_bribes_base",
+      "schedule": "0 13 * * 3",
+      "enabled": false,
+      "permmissioned": true,
+      "command": "cd /app && pnpm hardhat manageMerklBribes --network base"
+    },
+    {
+      "name": "sonic_staking_request_withdraw",
+      "schedule": "50 3,9,15,21 * * *",
+      "enabled": false,
+      "permmissioned": true,
+      "command": "cd /app && pnpm hardhat sonicUndelegate --network sonic"
+    },
+    {
+      "name": "sonic_staking_claim_withdraw",
+      "schedule": "58 */2 * * *",
+      "enabled": false,
+      "permmissioned": true,
+      "command": "cd /app && pnpm hardhat sonicClaimWithdrawals --network sonic"
+    },
+    {
       "name": "healthcheck",
       "schedule": "*/5 * * * *",
       "enabled": true,
