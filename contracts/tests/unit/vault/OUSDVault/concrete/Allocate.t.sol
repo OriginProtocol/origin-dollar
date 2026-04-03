@@ -1,9 +1,12 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
+// --- Test base
 import {Unit_Shared_Test} from "tests/unit/vault/OUSDVault/shared/Shared.t.sol";
-import {MockStrategy} from "contracts/mocks/MockStrategy.sol";
+
+// --- Project imports
 import {IVault} from "contracts/interfaces/IVault.sol";
+import {MockStrategy} from "contracts/mocks/MockStrategy.sol";
 
 contract Unit_Concrete_OUSDVault_Allocate_Test is Unit_Shared_Test {
     //////////////////////////////////////////////////////
@@ -88,6 +91,37 @@ contract Unit_Concrete_OUSDVault_Allocate_Test is Unit_Shared_Test {
         vm.expectEmit(true, true, true, true);
         emit IVault.AssetAllocated(address(usdc), address(strategy), 200e6);
         ousdVault.allocate();
+    }
+
+    function test_allocate_RevertWhen_capitalPaused() public {
+        vm.prank(governor);
+        ousdVault.pauseCapital();
+
+        vm.prank(governor);
+        vm.expectRevert("Capital paused");
+        ousdVault.allocate();
+    }
+
+    function test_allocate_returnsEarlyWhenNoAssetAvailable() public {
+        MockStrategy strategy = _deployAndApproveStrategy();
+
+        vm.startPrank(governor);
+        ousdVault.setDefaultStrategy(address(strategy));
+        // Disable solvency check — requesting all OUSD makes totalValue = 0
+        ousdVault.setMaxSupplyDiff(0);
+        vm.stopPrank();
+
+        // Request withdrawal of all USDC so _assetAvailable() returns 0
+        vm.prank(matt);
+        ousdVault.requestWithdrawal(100e18);
+        vm.prank(josh);
+        ousdVault.requestWithdrawal(100e18);
+
+        vm.prank(governor);
+        ousdVault.allocate();
+
+        // Strategy should receive nothing — all USDC reserved for withdrawal queue
+        assertEq(usdc.balanceOf(address(strategy)), 0, "Strategy should receive nothing");
     }
 
     //////////////////////////////////////////////////////
@@ -259,41 +293,6 @@ contract Unit_Concrete_OUSDVault_Allocate_Test is Unit_Shared_Test {
         vm.prank(alice);
         vm.expectRevert("Caller is not the Strategist or Governor");
         ousdVault.withdrawAllFromStrategies();
-    }
-
-    //////////////////////////////////////////////////////
-    /// --- ALLOCATE() — CAPITAL PAUSED & NO AVAILABLE ASSET
-    //////////////////////////////////////////////////////
-
-    function test_allocate_RevertWhen_capitalPaused() public {
-        vm.prank(governor);
-        ousdVault.pauseCapital();
-
-        vm.prank(governor);
-        vm.expectRevert("Capital paused");
-        ousdVault.allocate();
-    }
-
-    function test_allocate_returnsEarlyWhenNoAssetAvailable() public {
-        MockStrategy strategy = _deployAndApproveStrategy();
-
-        vm.startPrank(governor);
-        ousdVault.setDefaultStrategy(address(strategy));
-        // Disable solvency check — requesting all OUSD makes totalValue = 0
-        ousdVault.setMaxSupplyDiff(0);
-        vm.stopPrank();
-
-        // Request withdrawal of all USDC so _assetAvailable() returns 0
-        vm.prank(matt);
-        ousdVault.requestWithdrawal(100e18);
-        vm.prank(josh);
-        ousdVault.requestWithdrawal(100e18);
-
-        vm.prank(governor);
-        ousdVault.allocate();
-
-        // Strategy should receive nothing — all USDC reserved for withdrawal queue
-        assertEq(usdc.balanceOf(address(strategy)), 0, "Strategy should receive nothing");
     }
 
     //////////////////////////////////////////////////////

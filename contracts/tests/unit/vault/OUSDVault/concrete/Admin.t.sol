@@ -1,10 +1,15 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
+// --- Test base
 import {Unit_Shared_Test} from "tests/unit/vault/OUSDVault/shared/Shared.t.sol";
-import {MockStrategy} from "contracts/mocks/MockStrategy.sol";
+
+// --- External libraries
 import {MockERC20} from "@solmate/test/utils/mocks/MockERC20.sol";
+
+// --- Project imports
 import {IVault} from "contracts/interfaces/IVault.sol";
+import {MockStrategy} from "contracts/mocks/MockStrategy.sol";
 
 contract Unit_Concrete_OUSDVault_Admin_Test is Unit_Shared_Test {
     //////////////////////////////////////////////////////
@@ -337,6 +342,17 @@ contract Unit_Concrete_OUSDVault_Admin_Test is Unit_Shared_Test {
         ousdVault.setDefaultStrategy(address(fakeStrategy));
     }
 
+    function test_setDefaultStrategy_RevertWhen_assetNotSupported() public {
+        MockStrategy strategy = _deployAndApproveStrategy();
+
+        // Make strategy report that it doesn't support the asset
+        strategy.setShouldSupportAsset(false);
+
+        vm.prank(governor);
+        vm.expectRevert("Asset not supported by Strategy");
+        ousdVault.setDefaultStrategy(address(strategy));
+    }
+
     //////////////////////////////////////////////////////
     /// --- SETWITHDRAWALCLAIMDELAY
     //////////////////////////////////////////////////////
@@ -662,6 +678,17 @@ contract Unit_Concrete_OUSDVault_Admin_Test is Unit_Shared_Test {
         vm.stopPrank();
     }
 
+    function test_removeStrategy_RevertWhen_strategyHasFunds() public {
+        MockStrategy strategy = _deployAndApproveStrategy();
+
+        // Make checkBalance report a large amount even after withdrawAll
+        strategy.setNextBalance(1e18);
+
+        vm.prank(governor);
+        vm.expectRevert("Strategy has funds");
+        ousdVault.removeStrategy(address(strategy));
+    }
+
     //////////////////////////////////////////////////////
     /// --- ADDSTRATEGYTOMINTWHITELIST
     //////////////////////////////////////////////////////
@@ -774,37 +801,7 @@ contract Unit_Concrete_OUSDVault_Admin_Test is Unit_Shared_Test {
     }
 
     //////////////////////////////////////////////////////
-    /// --- SETDEFAULTSTRATEGY — "ASSET NOT SUPPORTED BY STRATEGY"
-    //////////////////////////////////////////////////////
-
-    function test_setDefaultStrategy_RevertWhen_assetNotSupported() public {
-        MockStrategy strategy = _deployAndApproveStrategy();
-
-        // Make strategy report that it doesn't support the asset
-        strategy.setShouldSupportAsset(false);
-
-        vm.prank(governor);
-        vm.expectRevert("Asset not supported by Strategy");
-        ousdVault.setDefaultStrategy(address(strategy));
-    }
-
-    //////////////////////////////////////////////////////
-    /// --- REMOVESTRATEGY — "STRATEGY HAS FUNDS"
-    //////////////////////////////////////////////////////
-
-    function test_removeStrategy_RevertWhen_strategyHasFunds() public {
-        MockStrategy strategy = _deployAndApproveStrategy();
-
-        // Make checkBalance report a large amount even after withdrawAll
-        strategy.setNextBalance(1e18);
-
-        vm.prank(governor);
-        vm.expectRevert("Strategy has funds");
-        ousdVault.removeStrategy(address(strategy));
-    }
-
-    //////////////////////////////////////////////////////
-    /// --- _WITHDRAWFROMSTRATEGY — "PARAMETER LENGTH MISMATCH"
+    /// --- WITHDRAWFROMSTRATEGY
     //////////////////////////////////////////////////////
 
     function test_withdrawFromStrategy_RevertWhen_parameterLengthMismatch() public {

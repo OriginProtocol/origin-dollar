@@ -1,9 +1,12 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
+// --- Test base
 import {Unit_Shared_Test} from "tests/unit/vault/OUSDVault/shared/Shared.t.sol";
-import {MockStrategy} from "contracts/mocks/MockStrategy.sol";
+
+// --- Project imports
 import {IVault} from "contracts/interfaces/IVault.sol";
+import {MockStrategy} from "contracts/mocks/MockStrategy.sol";
 
 contract Unit_Concrete_OUSDVault_Mint_Test is Unit_Shared_Test {
     //////////////////////////////////////////////////////

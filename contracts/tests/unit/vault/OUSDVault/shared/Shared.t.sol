@@ -1,24 +1,32 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-// Base test contract
+// --- Test base
 import {Base} from "tests/Base.t.sol";
 
-// Interfaces
-import {IVault} from "contracts/interfaces/IVault.sol";
-import {IProxy} from "contracts/interfaces/IProxy.sol";
-import {IOToken} from "contracts/interfaces/IOToken.sol";
+// --- External libraries
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-
-// Mocks
 import {MockERC20} from "@solmate/test/utils/mocks/MockERC20.sol";
-import {MockStrategy} from "contracts/mocks/MockStrategy.sol";
+
+// --- Project imports
+import {IOToken} from "contracts/interfaces/IOToken.sol";
+import {IProxy} from "contracts/interfaces/IProxy.sol";
+import {IVault} from "contracts/interfaces/IVault.sol";
 import {MockNonRebasing} from "contracts/mocks/MockNonRebasing.sol";
+import {MockStrategy} from "contracts/mocks/MockStrategy.sol";
 
 abstract contract Unit_Shared_Test is Base {
     //////////////////////////////////////////////////////
-    /// --- CONTRACTS
+    /// --- CONSTANTS
     //////////////////////////////////////////////////////
+
+    uint256 internal constant DELAY_PERIOD = 600; // 10 minutes
+    uint256 internal constant REBASE_RATE_MAX = 200e18; // 200% APR
+
+    //////////////////////////////////////////////////////
+    /// --- CONTRACTS & MOCKS
+    //////////////////////////////////////////////////////
+
     IOToken internal ousd;
     IVault internal ousdVault;
     IProxy internal ousdProxy;
@@ -26,12 +34,6 @@ abstract contract Unit_Shared_Test is Base {
 
     MockStrategy internal mockStrategy;
     MockNonRebasing internal mockNonRebasing;
-
-    //////////////////////////////////////////////////////
-    /// --- CONSTANTS
-    //////////////////////////////////////////////////////
-    uint256 internal constant DELAY_PERIOD = 600; // 10 minutes
-    uint256 internal constant REBASE_RATE_MAX = 200e18; // 200% APR
 
     //////////////////////////////////////////////////////
     /// --- SETUP
