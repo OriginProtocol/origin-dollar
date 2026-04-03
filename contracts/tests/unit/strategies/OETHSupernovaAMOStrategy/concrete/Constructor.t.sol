@@ -11,7 +11,6 @@ import {IOToken} from "contracts/interfaces/IOToken.sol";
 import {MockSwapXPair} from "tests/mocks/MockSwapXPair.sol";
 import {MockSwapXGauge} from "tests/mocks/MockSwapXGauge.sol";
 import {MockERC20} from "@solmate/test/utils/mocks/MockERC20.sol";
-import {MockWETH} from "contracts/mocks/MockWETH.sol";
 
 contract Unit_Concrete_OETHSupernovaAMOStrategy_Constructor_Test is Unit_OETHSupernovaAMOStrategy_Shared_Test {
     function test_constructor_setsImmutables() public view {

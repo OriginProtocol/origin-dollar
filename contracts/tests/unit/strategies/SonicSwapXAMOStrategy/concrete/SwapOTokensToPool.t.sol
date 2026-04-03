@@ -3,7 +3,6 @@ pragma solidity ^0.8.0;
 
 import {Unit_SonicSwapXAMOStrategy_Shared_Test} from "tests/unit/strategies/SonicSwapXAMOStrategy/shared/Shared.t.sol";
 import {ISonicSwapXAMOStrategy} from "contracts/interfaces/strategies/ISonicSwapXAMOStrategy.sol";
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 contract Unit_Concrete_SonicSwapXAMOStrategy_SwapOTokensToPool_Test is Unit_SonicSwapXAMOStrategy_Shared_Test {
     /// @dev Setup imbalanced pool (more wS than OS) and deposit LP for the strategy

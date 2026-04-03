@@ -2,7 +2,6 @@
 pragma solidity ^0.8.0;
 
 import {Unit_ConsolidationController_Shared_Test} from "../shared/Shared.t.sol";
-import {Cluster} from "contracts/interfaces/ISSVNetwork.sol";
 import {CompoundingValidatorStakeData} from "contracts/interfaces/strategies/CompoundingStakingTypes.sol";
 
 contract Unit_ConsolidationController_Operations_Test is Unit_ConsolidationController_Shared_Test {

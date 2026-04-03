@@ -2,7 +2,6 @@
 pragma solidity ^0.8.0;
 
 import {VaultStorage} from "contracts/vault/VaultStorage.sol";
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 /// @notice Minimal mock vault for AutoWithdrawalModule tests.
 ///         Exposes setters for withdrawal queue metadata and asset.

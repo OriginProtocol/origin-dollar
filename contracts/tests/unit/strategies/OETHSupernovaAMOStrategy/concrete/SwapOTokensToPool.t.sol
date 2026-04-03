@@ -5,7 +5,6 @@ import {
     Unit_OETHSupernovaAMOStrategy_Shared_Test
 } from "tests/unit/strategies/OETHSupernovaAMOStrategy/shared/Shared.t.sol";
 import {IOETHSupernovaAMOStrategy} from "contracts/interfaces/strategies/IOETHSupernovaAMOStrategy.sol";
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 contract Unit_Concrete_OETHSupernovaAMOStrategy_SwapOTokensToPool_Test is Unit_OETHSupernovaAMOStrategy_Shared_Test {
     /// @dev Setup imbalanced pool (more WETH than OETH) and deposit LP for the strategy

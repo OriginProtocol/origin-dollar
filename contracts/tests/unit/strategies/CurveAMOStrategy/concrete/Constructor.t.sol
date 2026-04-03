@@ -2,10 +2,8 @@
 pragma solidity ^0.8.0;
 
 import {Unit_CurveAMOStrategy_Shared_Test} from "tests/unit/strategies/CurveAMOStrategy/shared/Shared.t.sol";
-import {ICurveAMOStrategy} from "contracts/interfaces/strategies/ICurveAMOStrategy.sol";
 import {MockCurvePool} from "tests/mocks/MockCurvePool.sol";
 import {MockCurveGauge} from "tests/mocks/MockCurveGauge.sol";
-import {MockCurveMinter} from "tests/mocks/MockCurveMinter.sol";
 import {MockERC20} from "@solmate/test/utils/mocks/MockERC20.sol";
 
 contract Unit_Concrete_CurveAMOStrategy_Constructor_Test is Unit_CurveAMOStrategy_Shared_Test {

@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 import {BaseSmoke} from "tests/smoke/BaseSmoke.t.sol";
-import {Mainnet, Base as BaseAddresses, CrossChain} from "tests/utils/Addresses.sol";
+import {Base as BaseAddresses, CrossChain} from "tests/utils/Addresses.sol";
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 

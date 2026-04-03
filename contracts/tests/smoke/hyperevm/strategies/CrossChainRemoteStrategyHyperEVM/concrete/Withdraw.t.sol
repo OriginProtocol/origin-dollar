@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 import {Smoke_CrossChainRemoteStrategyHyperEVM_Shared_Test} from "../shared/Shared.t.sol";
-import {Mainnet, HyperEVM, CrossChain} from "tests/utils/Addresses.sol";
+import {HyperEVM} from "tests/utils/Addresses.sol";
 import {Vm} from "forge-std/Vm.sol";
 
 contract Smoke_CrossChainRemoteStrategyHyperEVM_Withdraw_Test is Smoke_CrossChainRemoteStrategyHyperEVM_Shared_Test {

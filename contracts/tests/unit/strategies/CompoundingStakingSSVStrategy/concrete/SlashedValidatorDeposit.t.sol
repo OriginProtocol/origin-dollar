@@ -6,12 +6,9 @@ import {
 } from "tests/unit/strategies/CompoundingStakingSSVStrategy/shared/Shared.t.sol";
 import {ICompoundingStakingSSVStrategy} from "contracts/interfaces/strategies/ICompoundingStakingSSVStrategy.sol";
 import {
-    CompoundingBalanceProofs as BalanceProofs,
     CompoundingFirstPendingDepositSlotProofData as FirstPendingDepositSlotProofData,
-    CompoundingPendingDepositProofs as PendingDepositProofs,
     CompoundingStrategyValidatorProofData as StrategyValidatorProofData,
-    CompoundingValidatorStakeData as ValidatorStakeData,
-    CompoundingValidatorState as ValidatorState
+    CompoundingValidatorStakeData as ValidatorStakeData
 } from "contracts/interfaces/strategies/CompoundingStakingTypes.sol";
 
 contract Unit_Concrete_CompoundingStakingSSVStrategy_SlashedValidatorDeposit_Test is

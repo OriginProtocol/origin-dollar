@@ -2,7 +2,6 @@
 pragma solidity ^0.8.0;
 
 import {Smoke_CrossChainRemoteStrategyBase_Shared_Test} from "../shared/Shared.t.sol";
-import {Mainnet, Base as BaseAddresses, CrossChain} from "tests/utils/Addresses.sol";
 
 contract Smoke_CrossChainRemoteStrategyBase_RelayValidation_Test is Smoke_CrossChainRemoteStrategyBase_Shared_Test {
     /// @dev relay() reverts when called by a non-operator

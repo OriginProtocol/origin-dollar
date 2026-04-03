@@ -8,7 +8,6 @@ import {ICompoundingStakingSSVStrategy} from "contracts/interfaces/strategies/IC
 import {
     CompoundingBalanceProofs as BalanceProofs,
     CompoundingFirstPendingDepositSlotProofData as FirstPendingDepositSlotProofData,
-    CompoundingPendingDepositProofs as PendingDepositProofs,
     CompoundingStrategyValidatorProofData as StrategyValidatorProofData,
     CompoundingValidatorStakeData as ValidatorStakeData,
     CompoundingValidatorState as ValidatorState

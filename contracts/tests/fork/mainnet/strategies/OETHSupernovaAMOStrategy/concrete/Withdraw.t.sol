@@ -6,7 +6,6 @@ import {Mainnet} from "tests/utils/Addresses.sol";
 import {
     Fork_OETHSupernovaAMOStrategy_Shared_Test
 } from "tests/fork/mainnet/strategies/OETHSupernovaAMOStrategy/shared/Shared.t.sol";
-import {IGauge} from "contracts/interfaces/algebra/IAlgebraGauge.sol";
 import {IOETHSupernovaAMOStrategy} from "contracts/interfaces/strategies/IOETHSupernovaAMOStrategy.sol";
 
 contract Fork_Concrete_OETHSupernovaAMOStrategy_Withdraw_Test is Fork_OETHSupernovaAMOStrategy_Shared_Test {

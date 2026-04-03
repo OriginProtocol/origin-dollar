@@ -20,8 +20,7 @@ import {
     CompoundingFirstPendingDepositSlotProofData as FirstPendingDepositSlotProofData,
     CompoundingPendingDepositProofs as PendingDepositProofs,
     CompoundingStrategyValidatorProofData as StrategyValidatorProofData,
-    CompoundingValidatorStakeData as ValidatorStakeData,
-    CompoundingValidatorState as ValidatorState
+    CompoundingValidatorStakeData as ValidatorStakeData
 } from "contracts/interfaces/strategies/CompoundingStakingTypes.sol";
 import {CompoundingStakingStrategyView} from "contracts/strategies/NativeStaking/CompoundingStakingView.sol";
 import {Cluster} from "contracts/interfaces/ISSVNetwork.sol";

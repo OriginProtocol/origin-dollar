@@ -6,7 +6,6 @@ import {Sonic} from "tests/utils/Addresses.sol";
 import {
     Fork_SonicSwapXAMOStrategy_Shared_Test
 } from "tests/fork/sonic/strategies/SonicSwapXAMOStrategy/shared/Shared.t.sol";
-import {IGauge} from "contracts/interfaces/algebra/IAlgebraGauge.sol";
 import {ISonicSwapXAMOStrategy} from "contracts/interfaces/strategies/ISonicSwapXAMOStrategy.sol";
 
 contract Fork_Concrete_SonicSwapXAMOStrategy_Withdraw_Test is Fork_SonicSwapXAMOStrategy_Shared_Test {

@@ -3,8 +3,6 @@ pragma solidity ^0.8.0;
 
 import {Unit_ClaimBribesSafeModule_Shared_Test} from "tests/unit/automation/ClaimBribesSafeModule/shared/Shared.t.sol";
 
-import {MockCLRewardContract} from "tests/mocks/MockCLRewardContract.sol";
-import {MockCLPoolForBribes, MockCLGaugeForBribes} from "tests/mocks/MockCLPoolForBribes.sol";
 import {IClaimBribesSafeModule} from "contracts/interfaces/automation/IClaimBribesSafeModule.sol";
 
 contract Unit_Concrete_ClaimBribesSafeModule_AddBribePool_Test is Unit_ClaimBribesSafeModule_Shared_Test {

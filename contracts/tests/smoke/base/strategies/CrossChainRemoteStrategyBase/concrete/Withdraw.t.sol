@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 import {Smoke_CrossChainRemoteStrategyBase_Shared_Test} from "../shared/Shared.t.sol";
-import {Mainnet, Base as BaseAddresses, CrossChain} from "tests/utils/Addresses.sol";
+import {Base as BaseAddresses} from "tests/utils/Addresses.sol";
 import {Vm} from "forge-std/Vm.sol";
 
 contract Smoke_CrossChainRemoteStrategyBase_Withdraw_Test is Smoke_CrossChainRemoteStrategyBase_Shared_Test {

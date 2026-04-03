@@ -2,7 +2,6 @@
 pragma solidity ^0.8.0;
 
 import {Unit_AerodromeAMOStrategy_Shared_Test} from "tests/unit/strategies/AerodromeAMOStrategy/shared/Shared.t.sol";
-import {IAerodromeAMOStrategy} from "contracts/interfaces/strategies/IAerodromeAMOStrategy.sol";
 import {MockCLPool} from "tests/mocks/aerodrome/MockCLPool.sol";
 
 contract Unit_Concrete_AerodromeAMOStrategy_Initialize_Test is Unit_AerodromeAMOStrategy_Shared_Test {

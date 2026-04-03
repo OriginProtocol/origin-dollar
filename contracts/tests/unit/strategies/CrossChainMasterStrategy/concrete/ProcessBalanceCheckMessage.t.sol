@@ -3,7 +3,6 @@ pragma solidity ^0.8.0;
 
 import {Unit_CrossChainMasterStrategy_Shared_Test} from "../shared/Shared.t.sol";
 import {ICrossChainMasterStrategy} from "contracts/interfaces/strategies/ICrossChainMasterStrategy.sol";
-import {CrossChainStrategyHelper} from "contracts/strategies/crosschain/CrossChainStrategyHelper.sol";
 
 contract Unit_Concrete_CrossChainMasterStrategy_ProcessBalanceCheckMessage_Test is
     Unit_CrossChainMasterStrategy_Shared_Test

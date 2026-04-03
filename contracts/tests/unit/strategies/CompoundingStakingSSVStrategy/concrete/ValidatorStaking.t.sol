@@ -5,10 +5,6 @@ import {
     Unit_CompoundingStakingSSVStrategy_Shared_Test
 } from "tests/unit/strategies/CompoundingStakingSSVStrategy/shared/Shared.t.sol";
 import {
-    CompoundingBalanceProofs as BalanceProofs,
-    CompoundingFirstPendingDepositSlotProofData as FirstPendingDepositSlotProofData,
-    CompoundingPendingDepositProofs as PendingDepositProofs,
-    CompoundingStrategyValidatorProofData as StrategyValidatorProofData,
     CompoundingValidatorStakeData as ValidatorStakeData,
     CompoundingValidatorState as ValidatorState
 } from "contracts/interfaces/strategies/CompoundingStakingTypes.sol";

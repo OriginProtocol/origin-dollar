@@ -9,7 +9,7 @@ import {IBeaconRoots} from "contracts/interfaces/IBeaconRoots.sol";
 import {IOToken} from "contracts/interfaces/IOToken.sol";
 import {IVault} from "contracts/interfaces/IVault.sol";
 import {IProxy} from "contracts/interfaces/IProxy.sol";
-import {ISSVNetwork, Cluster} from "contracts/interfaces/ISSVNetwork.sol";
+import {Cluster} from "contracts/interfaces/ISSVNetwork.sol";
 import {
     CompoundingBalanceProofs,
     CompoundingPendingDepositProofs
