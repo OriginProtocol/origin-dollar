@@ -4,8 +4,8 @@ Containerized scheduler for running hardhat tasks on a schedule. Replaces OpenZe
 
 ## How it works
 
-1. **`cron-jobs.json`** — Defines all scheduled jobs (name, cron schedule, command, enabled flag)
-2. **`render-crontab.ts`** — Reads `cron-jobs.json`, filters to enabled jobs, writes a supercronic-compatible crontab file
+1. **`cron-jobs.ts`** — Defines all scheduled jobs (name, cron schedule, command, enabled flag) with full TypeScript typing
+2. **`render-crontab.ts`** — Imports jobs from `cron-jobs.ts`, filters to enabled jobs, writes a supercronic-compatible crontab file
 3. **`cron-supervisor.ts`** — Starts supercronic with the generated crontab, runs an HTTP API for triggering actions on-demand and checking run status
 4. **`cron-entrypoint.sh`** — Docker entrypoint that boots the supervisor
 
@@ -41,14 +41,14 @@ curl -H 'Authorization: Bearer $ACTION_API_BEARER_TOKEN' \
 
 ## Adding a new job
 
-Add an entry to `cron-jobs.json`:
+Add an entry to the `cronJobs` array in `cron-jobs.ts`:
 
-```json
+```ts
 {
-  "name": "my_new_job",
-  "schedule": "0 */6 * * *",
-  "enabled": true,
-  "command": "cd /app && pnpm hardhat myTask --network mainnet"
+  name: "my_new_job",
+  schedule: "0 */6 * * *",
+  enabled: true,
+  command: "cd /app && pnpm hardhat myTask --network mainnet",
 }
 ```
 

@@ -2,13 +2,12 @@ import { spawn } from "node:child_process";
 import { randomUUID, timingSafeEqual } from "node:crypto";
 import fs from "node:fs";
 import http from "node:http";
+import { cronJobs } from "./cron-jobs";
 import { type CronJob, renderCrontab } from "./render-crontab";
 
 // --- Configuration ---
 const host = process.env.HOST || "0.0.0.0";
 const port = Number.parseInt(process.env.PORT || "8080", 10);
-const cronConfigPath =
-  process.env.CRON_CONFIG_PATH || "/app/cron/cron-jobs.json";
 const cronOutputPath = process.env.CRON_OUTPUT_PATH || "/app/cron/cronjob";
 const supercronicBin = process.env.SUPERCRONIC_BIN || "supercronic";
 const runHistoryLimit = Number.parseInt(
@@ -104,7 +103,7 @@ function storeRun(run: ActionRun) {
 function initCron() {
   try {
     const result = renderCrontab({
-      configPath: cronConfigPath,
+      jobs: cronJobs,
       outputPath: cronOutputPath,
     });
     return result;
@@ -114,7 +113,7 @@ function initCron() {
   }
 }
 
-const { config: renderedConfig, enabledJobs } = initCron();
+const { jobs: allJobs, enabledJobs } = initCron();
 
 console.log(
   `[cron-supervisor] Generated ${enabledJobs.length} enabled cron jobs at ${cronOutputPath}`
@@ -123,7 +122,7 @@ console.log(`[cron-supervisor] Generated ${cronOutputPath}:`);
 console.log(fs.readFileSync(cronOutputPath, "utf8"));
 
 const jobsByName = new Map<string, CronJob>(
-  renderedConfig.jobs.map((job) => [job.name, job])
+  allJobs.map((job) => [job.name, job])
 );
 
 // --- Action execution ---
@@ -255,7 +254,7 @@ const server = http.createServer((req, res) => {
   // List actions
   if (method === "GET" && url.pathname === "/api/v1/actions") {
     return json(res, 200, {
-      actions: renderedConfig.jobs.map((job) => ({
+      actions: allJobs.map((job) => ({
         name: job.name,
         schedule: job.schedule,
         enabled: job.enabled,
