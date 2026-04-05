@@ -2458,8 +2458,19 @@ subtask(
     false,
     types.boolean
   )
+  .addOptionalParam(
+    "consol",
+    "Call the consolidation controller instead of the strategy",
+    false,
+    types.boolean
+  )
   .setAction(async (taskArgs) => {
     const signer = await getSigner();
+    if (taskArgs.direct && taskArgs.consol) {
+      throw new Error(
+        "The consol option can not be used with direct withdrawals"
+      );
+    }
     if (taskArgs.direct) {
       await requestValidatorWithdraw({ ...taskArgs, signer });
     } else {

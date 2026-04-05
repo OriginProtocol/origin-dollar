@@ -410,16 +410,23 @@ async function autoValidatorDeposits({
   }
 }
 
-async function withdrawValidator({ pubkey, amount, signer }) {
-  const strategy = await resolveContract(
-    "CompoundingStakingSSVStrategyProxy",
-    "CompoundingStakingSSVStrategy"
-  );
+async function withdrawValidator({ pubkey, amount, signer, consol = false }) {
+  const strategy = consol
+    ? await resolveContract("ConsolidationController")
+    : await resolveContract(
+        "CompoundingStakingSSVStrategyProxy",
+        "CompoundingStakingSSVStrategy"
+      );
 
   /// Get the validator's balance
   const balance = await getValidatorBalance(pubkey);
 
   const isFullExit = amount === undefined || amount === 0;
+  if (consol && isFullExit) {
+    throw new Error(
+      "The ConsolidationController only supports partial withdrawals. Set a non-zero amount."
+    );
+  }
   const amountGwei = isFullExit ? 0 : parseUnits(amount.toString(), 9);
   if (isFullExit) {
     log(
@@ -430,13 +437,9 @@ async function withdrawValidator({ pubkey, amount, signer }) {
     );
   } else {
     log(
-      `About to partially withdraw ${formatUnits(
-        amountGwei,
-        9
-      )} ETH from validator with balance ${formatUnits(
-        balance,
-        9
-      )} ETH and pubkey ${pubkey}`
+      `About to partially withdraw ${formatUnits(amountGwei, 9)} ETH from ${
+        consol ? "ConsolidationController" : "validator"
+      } with balance ${formatUnits(balance, 9)} ETH and pubkey ${pubkey}`
     );
   }
   // Send 1 wei of value to cover the request withdrawal fee
