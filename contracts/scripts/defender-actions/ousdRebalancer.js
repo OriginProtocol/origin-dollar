@@ -142,7 +142,12 @@ const handler = async (event) => {
 
   const webhookUrl = event.secrets?.DISCORD_WEBHOOK_URL;
 
-  // Build chain providers for cross-chain APY reads
+  // Configure subsquid endpoint for APY reads
+  process.env.ORIGIN_SUBSQUID_SERVER =
+    event.secrets?.ORIGIN_SUBSQUID_SERVER ||
+    "https://origin.squids.live/origin-squid:prod/api/graphql";
+
+  // Build chain providers for on-chain reads (balances, max withdrawals)
   const providers = { 1: provider };
   if (event.secrets.BASE_PROVIDER_URL) {
     providers[8453] = new ethers.providers.JsonRpcProvider(

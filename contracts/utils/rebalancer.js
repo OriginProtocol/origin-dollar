@@ -7,7 +7,10 @@ const {
   ousdMorphoStrategiesConfig,
   ousdConstraints,
 } = require("./rebalancer-config");
-const { estimateVaultApy, estimateDepositImpact } = require("./morpho-apy");
+const {
+  fetchMorphoApys,
+  fetchSubsquidDepositImpact,
+} = require("./morpho-apy");
 
 const log = require("./logger")("utils:rebalancer");
 
@@ -106,83 +109,6 @@ async function readOnChainState(provider) {
     vaultBalance: availableVaultBalance,
     shortfall,
   };
-}
-
-/**
- * Fetch a single vault's current net APY after fees from the Morpho GraphQL API.
- * The APY is a weighted average based on the liquidity allocated in each market.
- * Returns a numeric APY (e.g. 0.05 = 5%) or 0 on failure.
- */
-async function _fetchMorphoVaultApy(metaMorphoVaultAddress, morphoChainId) {
-  const query = `{
-    vaultByAddress(address: "${metaMorphoVaultAddress}", chainId: ${morphoChainId}) {
-      state { netApy }
-    }
-  }`;
-
-  try {
-    const response = await fetch("https://api.morpho.org/graphql", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ query }),
-    });
-    const data = await response.json();
-    const netApy = data?.data?.vaultByAddress?.state?.netApy;
-    return netApy != null ? Number(netApy) : 0;
-  } catch (e) {
-    log(`Failed to fetch APY for ${metaMorphoVaultAddress}: ${e.message}`);
-    return 0;
-  }
-}
-
-/**
- * Fetch APYs for multiple vaults in parallel.
- * Returns both on-chain (authoritative) and GraphQL (display-only) APYs.
- *
- * @param {Array} vaults - objects with metaMorphoVaultAddress and morphoChainId
- * @param {object} providers - { [chainId]: ethersProvider }
- * @returns {object} { apys: { addr: number }, graphqlApys: { addr: number } }
- */
-async function fetchMorphoApys(vaults, providers) {
-  const entries = await Promise.all(
-    vaults.map(async (v) => {
-      const provider = providers[v.morphoChainId];
-
-      // Fetch on-chain and GraphQL APYs in parallel
-      const onChainApyPromise = provider
-        ? estimateVaultApy(
-            provider,
-            v.morphoChainId,
-            v.metaMorphoVaultAddress
-          ).catch((err) => {
-            console.error(
-              `[rebalancer] On-chain APY failed for ${v.metaMorphoVaultAddress} ` +
-                `on chain ${v.morphoChainId}: ${err.message}`
-            );
-            return 0;
-          })
-        : Promise.resolve(0);
-
-      const [onChainApy, graphqlApy] = await Promise.all([
-        onChainApyPromise,
-        _fetchMorphoVaultApy(v.metaMorphoVaultAddress, v.morphoChainId),
-      ]);
-
-      return {
-        addr: v.metaMorphoVaultAddress,
-        onChainApy,
-        graphqlApy,
-      };
-    })
-  );
-
-  const apys = {};
-  const graphqlApys = {};
-  for (const { addr, onChainApy, graphqlApy } of entries) {
-    apys[addr] = onChainApy;
-    graphqlApys[addr] = graphqlApy;
-  }
-  return { apys, graphqlApys };
 }
 
 /**
@@ -414,7 +340,7 @@ function _filterWithdrawals(result, constraints) {
     let amt = w.delta.abs();
 
     // Cap to available liquidity first so subsequent size checks use the capped amount
-    if (w.withdrawableLiquidity !== null) {
+    if (w.withdrawableLiquidity != null) {
       const liq = w.withdrawableLiquidity;
       if (liq.lt(constraints.minMoveAmount)) {
         w.action = ACTION_NONE;
@@ -449,16 +375,8 @@ function _filterWithdrawals(result, constraints) {
  * Budget = approved withdrawal total + vault surplus above reserves.
  * Infeasible deposits are set to ACTION_NONE with a reason.
  *
- * @param {object} [providers] - { [chainId]: ethersProvider } for APY impact checks.
- *   Skipped when process.env.IS_TEST is set.
  */
-async function _filterDeposits(
-  result,
-  vaultBalance,
-  shortfall,
-  constraints,
-  providers = {}
-) {
+async function _filterDeposits(result, vaultBalance, shortfall, constraints) {
   // Budget = approved withdrawals + vault surplus above reserves
   const approvedWithdrawals = result.filter(
     (a) => a.action === ACTION_WITHDRAW
@@ -510,31 +428,27 @@ async function _filterDeposits(
     }
 
     // APY impact check: skip if deposit would drop vault APY by more than maxApyImpactBps.
-    // Skipped in unit tests (IS_TEST=true) since it requires live provider calls.
+    // Skipped in unit tests (IS_TEST=true) since it requires live API calls.
     if (
       !process.env.IS_TEST &&
       constraints.maxApyImpactBps &&
       deposit.metaMorphoVaultAddress &&
       deposit.morphoChainId
     ) {
-      const provider = providers[deposit.morphoChainId];
-      if (provider) {
-        try {
-          const { impactBps } = await estimateDepositImpact(
-            provider,
-            deposit.morphoChainId,
-            deposit.metaMorphoVaultAddress,
-            amt
-          );
-          deposit.impactBps = impactBps;
-          if (impactBps > constraints.maxApyImpactBps) {
-            deposit.action = ACTION_NONE;
-            deposit.reason = `APY impact ${(impactBps / 100).toFixed(2)}% > max ${(constraints.maxApyImpactBps / 100).toFixed(2)}%`;
-            continue;
-          }
-        } catch (err) {
-          log(`APY impact check failed for ${deposit.name}: ${err.message}`);
+      try {
+        const { impactBps } = await fetchSubsquidDepositImpact(
+          deposit.metaMorphoVaultAddress,
+          deposit.morphoChainId,
+          amt
+        );
+        deposit.impactBps = impactBps;
+        if (impactBps > constraints.maxApyImpactBps) {
+          deposit.action = ACTION_NONE;
+          deposit.reason = `APY impact ${(impactBps / 100).toFixed(2)}% > max ${(constraints.maxApyImpactBps / 100).toFixed(2)}%`;
+          continue;
         }
+      } catch (err) {
+        log(`APY impact check failed for ${deposit.name}: ${err.message}`);
       }
     }
 
@@ -741,15 +655,13 @@ function _trimExcessWithdrawals(result, vaultBalance, shortfall, constraints) {
  * @param {BigNumber} shortfall   - vault withdrawal shortfall (after addWithdrawalQueueLiquidity offset)
  * @param {BigNumber} vaultBalance - vault idle USDC (after addWithdrawalQueueLiquidity offset)
  * @param {object}    [constraintOverrides]
- * @param {object}    [providers] - { [chainId]: ethersProvider } forwarded to _filterDeposits
  * @returns {Promise<Array>}
  */
 async function buildExecutableActions(
   allocations,
   shortfall = BigNumber.from(0),
   vaultBalance = BigNumber.from(0),
-  constraintOverrides = {},
-  providers = {}
+  constraintOverrides = {}
 ) {
   const constraints = { ...ousdConstraints, ...constraintOverrides };
   let result = allocations.map((a) => ({ ...a }));
@@ -758,13 +670,7 @@ async function buildExecutableActions(
   result = _filterWithdrawals(result, constraints);
 
   // 2. Distribute available budget across deposits (highest APY first)
-  result = await _filterDeposits(
-    result,
-    vaultBalance,
-    shortfall,
-    constraints,
-    providers
-  );
+  result = await _filterDeposits(result, vaultBalance, shortfall, constraints);
 
   // 3. Cancel/trim withdrawals that exceed what approved deposits + vault deficit need
   result = _trimExcessWithdrawals(result, vaultBalance, shortfall, constraints);
@@ -1149,10 +1055,9 @@ async function buildRebalancePlan(providers) {
   log("Reading on-chain state...");
   const state = await readOnChainState(providerMap[1] || providerMap);
 
-  log("Fetching Morpho APYs (on-chain + GraphQL)...");
+  log("Fetching Morpho APYs...");
   const { apys, graphqlApys } = await fetchMorphoApys(
-    state.strategies.filter((s) => s.metaMorphoVaultAddress),
-    providerMap
+    state.strategies.filter((s) => s.metaMorphoVaultAddress)
   );
 
   log("Fetching withdrawable liquidity...");
@@ -1201,9 +1106,7 @@ async function buildRebalancePlan(providers) {
   const executableActions = await buildExecutableActions(
     idealActions,
     state.shortfall,
-    state.vaultBalance,
-    {},
-    providerMap
+    state.vaultBalance
   );
   const actions = sortActions(executableActions);
 
@@ -1220,7 +1123,6 @@ async function buildRebalancePlan(providers) {
 
 module.exports = {
   readOnChainState,
-  fetchMorphoApys,
   fetchMaxWithdrawals,
   computeIdealAllocation,
   buildExecutableActions,

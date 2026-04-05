@@ -58,7 +58,7 @@ function twoStrategies(ethBalance, baseBalance) {
 
 describe("Rebalancer: computeIdealAllocation", () => {
   it("should give highest APY strategy the max allocation (sort-and-fill)", () => {
-    // Base has higher APY → gets maxPerStrategyBps (70%), ETH gets 30%
+    // Base has higher APY → gets maxPerStrategyBps (95%), ETH gets 5%
     const strategies = twoStrategies(500000, 500000);
     const result = computeIdealAllocation({
       strategies,
@@ -70,10 +70,10 @@ describe("Rebalancer: computeIdealAllocation", () => {
     const total = result[0].targetBalance.add(result[1].targetBalance);
     // deployable = 1M - 0 (shortfall) - 3K (minVaultBalance) ≈ 997K
     expect(total).to.be.closeTo(usdc(997000), usdc(1));
-    // Base gets the 70% cap since it has higher APY
+    // Base gets the 95% cap since it has higher APY
     const basePct =
       result[1].targetBalance.mul(10000).div(total).toNumber() / 100;
-    expect(basePct).to.be.closeTo(70, 0.1);
+    expect(basePct).to.be.closeTo(95, 0.1);
   });
 
   it("should give highest APY strategy the max allocation when ETH has higher APY", () => {
@@ -88,7 +88,7 @@ describe("Rebalancer: computeIdealAllocation", () => {
     const total = result[0].targetBalance.add(result[1].targetBalance);
     const ethPct =
       result[0].targetBalance.mul(10000).div(total).toNumber() / 100;
-    expect(ethPct).to.be.closeTo(70, 0.1);
+    expect(ethPct).to.be.closeTo(95, 0.1);
   });
 
   it("should enforce minimum for default strategy when it has lower APY", () => {
@@ -104,12 +104,12 @@ describe("Rebalancer: computeIdealAllocation", () => {
     const total = result[0].targetBalance.add(result[1].targetBalance);
     const ethPct =
       result[0].targetBalance.mul(10000).div(total).toNumber() / 100;
-    // Default (ETH) must get at least 20%
-    expect(ethPct).to.be.gte(20);
-    // Base cannot exceed 70% (capped, remainder goes to ETH)
+    // Default (ETH) must get at least 5% (minDefaultStrategyBps = 500)
+    expect(ethPct).to.be.gte(5);
+    // Base cannot exceed 95% (capped, remainder goes to ETH)
     const basePct =
       result[1].targetBalance.mul(10000).div(total).toNumber() / 100;
-    expect(basePct).to.be.lte(70.1);
+    expect(basePct).to.be.lte(95.1);
   });
 
   it("should reserve shortfall + minVaultBalance from deployable capital", () => {
@@ -140,8 +140,8 @@ describe("Rebalancer: computeIdealAllocation", () => {
     const total = result[0].targetBalance.add(result[1].targetBalance);
     const ethPct =
       result[0].targetBalance.mul(10000).div(total).toNumber() / 100;
-    // ETH fills first to 70% (maxPerStrategyBps), Base gets remaining 30%
-    expect(ethPct).to.be.closeTo(70, 0.1);
+    // ETH fills first to 95% (maxPerStrategyBps), Base gets remaining 5%
+    expect(ethPct).to.be.closeTo(95, 0.1);
   });
 
   it("should give first strategy the max cap when APYs are zero", () => {
@@ -156,7 +156,7 @@ describe("Rebalancer: computeIdealAllocation", () => {
     const total = result[0].targetBalance.add(result[1].targetBalance);
     const ethPct =
       result[0].targetBalance.mul(10000).div(total).toNumber() / 100;
-    expect(ethPct).to.be.closeTo(70, 0.1);
+    expect(ethPct).to.be.closeTo(95, 0.1);
   });
 
   it("should set correct action for over/under allocated strategies", () => {
