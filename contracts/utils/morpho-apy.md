@@ -262,3 +262,9 @@ only supply-queue markets.
 protocol fee. MetaMorpho vaults can charge an additional performance fee on yield. The
 indexer computes gross supply APY. For net-of-fees display, use Morpho's own API
 (`api.morpho.org/graphql` → `vaultByAddress.state.netApy`).
+
+**Withdrawal APY impact not modeled**: When the rebalancer withdraws from a Morpho vault,
+the remaining depositors see slightly higher APY (less supply competing for the same borrow
+demand). This effect is intentionally not modeled — the rebalancer uses pre-withdrawal APYs
+for source strategies. This is a conservative simplification: if the move looks worthwhile
+using current APYs, it's at least as worthwhile after the source APY improves.

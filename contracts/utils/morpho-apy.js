@@ -143,16 +143,15 @@ async function fetchMorphoApys(vaults) {
   const entries = await Promise.all(
     vaults.map(async (v) => {
       const [subsquidApy, morphoApy] = await Promise.all([
-        fetchSubsquidVaultApy(
-          v.metaMorphoVaultAddress,
-          v.morphoChainId
-        ).catch((err) => {
-          console.error(
-            `[morpho-apy] Subsquid APY failed for ${v.metaMorphoVaultAddress} ` +
-              `on chain ${v.morphoChainId}: ${err.message}`
-          );
-          return 0;
-        }),
+        fetchSubsquidVaultApy(v.metaMorphoVaultAddress, v.morphoChainId).catch(
+          (err) => {
+            console.error(
+              `[morpho-apy] Subsquid APY failed for ${v.metaMorphoVaultAddress} ` +
+                `on chain ${v.morphoChainId}: ${err.message}`
+            );
+            return 0;
+          }
+        ),
         _fetchMorphoVaultApy(v.metaMorphoVaultAddress, v.morphoChainId),
       ]);
 

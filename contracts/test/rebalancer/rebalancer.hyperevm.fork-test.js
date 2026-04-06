@@ -12,9 +12,6 @@ describe("ForkTest: Rebalancer APY — HyperEVM", function () {
       },
     ]);
     const apy = apys[addresses.hyperevm.MorphoOusdV1Vault];
-    expect(apy).to.be.gt(
-      0,
-      `Expected APY > 0, got ${(apy * 100).toFixed(4)}%`
-    );
+    expect(apy).to.be.gt(0, `Expected APY > 0, got ${(apy * 100).toFixed(4)}%`);
   });
 });
