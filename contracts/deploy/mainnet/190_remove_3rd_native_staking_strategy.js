@@ -2,7 +2,7 @@ const { deploymentWithGovernanceProposal } = require("../../utils/deploy");
 
 module.exports = deploymentWithGovernanceProposal(
   {
-    deployName: "188_remove_3rd_native_staking_strategy",
+    deployName: "190_remove_3rd_native_staking_strategy",
     forceDeploy: false,
     // forceSkip: true,
     reduceQueueTime: true,
