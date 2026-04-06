@@ -41,7 +41,7 @@ const handler = async (event) => {
   const nativeStakingStrategies = [
     // addresses[networkName].NativeStakingSSVStrategyProxy,
     addresses.mainnet.NativeStakingSSVStrategy2Proxy,
-    addresses.mainnet.NativeStakingSSVStrategy3Proxy,
+    // addresses.mainnet.NativeStakingSSVStrategy3Proxy,
   ];
 
   const strategiesToHarvest = [];
