@@ -152,20 +152,35 @@ async function snapValidators({ pubkeys }) {
   }
 }
 
-async function exitValidator({ index, pubkey, operatorids, signer }) {
+async function exitValidator({
+  index,
+  pubkey,
+  operatorids,
+  signer,
+  consol = false,
+}) {
   await verifyMinActivationTime({ pubkey });
 
   log(`Splitting operator IDs ${operatorids}`);
   const operatorIds = operatorids.split(",").map((id) => parseInt(id));
 
   const strategy = await resolveNativeStakingStrategyProxy(index);
+  const contract = consol
+    ? await resolveContract("ConsolidationController")
+    : strategy;
 
   pubkey = checkPubkeyFormat(pubkey);
 
-  log(`About to exit validator ${pubkey}`);
-  const tx = await strategy
-    .connect(signer)
-    .exitSsvValidator(pubkey, operatorIds);
+  log(
+    `About to exit validator ${pubkey} via ${
+      consol ? "ConsolidationController" : "strategy"
+    }`
+  );
+  const tx = consol
+    ? await contract
+        .connect(signer)
+        .exitSsvValidator(strategy.address, pubkey, operatorIds)
+    : await contract.connect(signer).exitSsvValidator(pubkey, operatorIds);
   await logTxDetails(tx, "exitSsvValidator");
 }
 

@@ -1424,6 +1424,12 @@ subtask("exitValidators", "Starts the exit process from a list of validators")
     30,
     types.int
   )
+  .addOptionalParam(
+    "consol",
+    "Call the consolidation controller instead of the strategy",
+    false,
+    types.boolean
+  )
   .setAction(async (taskArgs) => {
     const signer = await getSigner();
 
