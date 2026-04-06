@@ -82,14 +82,14 @@ object "FeeAccumulator2" as feeAcc2 <<Origin>><<Proxy>> #$originColor {
     assets: ETH
 }
 
-object "NativeStakingStrategy3" as nativeStrat3 <<Origin>><<Proxy>> #$originColor {
-    assets: WETH, ETH
-    Rewards: ETH, SSV
-}
+' object "NativeStakingStrategy3" as nativeStrat3 <<Origin>><<Proxy>> #$originColor {
+'     assets: WETH, ETH
+'     Rewards: ETH, SSV
+' }
 
-object "FeeAccumulator3" as feeAcc3 <<Origin>><<Proxy>> #$originColor {
-    assets: ETH
-}
+' object "FeeAccumulator3" as feeAcc3 <<Origin>><<Proxy>> #$originColor {
+'     assets: ETH
+' }
 
 object "CompoundingStakingSSVStrategy" as compStrat <<Origin>><<Proxy>> #$originColor {
     assets: WETH, ETH
@@ -211,9 +211,9 @@ nativeStrat2 <..> feeAcc2
 ' nativeStrat2 ...> ssvNet
 ' nativeStrat2 ...> deposit
 
-harv <..> nativeStrat3
-oethv <...> nativeStrat3
-nativeStrat3 <..> feeAcc3
+' harv <..> nativeStrat3
+' oethv <...> nativeStrat3
+' nativeStrat3 <..> feeAcc3
 ' nativeStrat2 ...> ssvNet
 ' nativeStrat2 ...> deposit
 
