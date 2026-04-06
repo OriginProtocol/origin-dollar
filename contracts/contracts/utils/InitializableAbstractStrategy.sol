@@ -119,16 +119,28 @@ abstract contract InitializableAbstractStrategy is Initializable, Governable {
 
     /**
      * @notice Collect accumulated reward token and send to Vault.
+     *         No-ops when the harvester address is not set.
      */
-    function collectRewardTokens() external virtual onlyHarvester nonReentrant {
+    function collectRewardTokens()
+        external
+        virtual
+        onlyHarvesterOrStrategist
+        nonReentrant
+    {
+        if (harvesterAddress == address(0)) {
+            return;
+        }
         _collectRewardTokens();
     }
 
     /**
-     * @dev Default implementation that transfers reward tokens to the Harvester
+     * @dev Default implementation that transfers reward tokens to the Harvester.
      * Implementing strategies need to add custom logic to collect the rewards.
      */
     function _collectRewardTokens() internal virtual {
+        if (harvesterAddress == address(0)) {
+            return;
+        }
         uint256 rewardTokenCount = rewardTokenAddresses.length;
         for (uint256 i = 0; i < rewardTokenCount; ++i) {
             IERC20 rewardToken = IERC20(rewardTokenAddresses[i]);
@@ -153,10 +165,14 @@ abstract contract InitializableAbstractStrategy is Initializable, Governable {
     }
 
     /**
-     * @dev Verifies that the caller is the Harvester.
+     * @dev Verifies that the caller is the Harvester or Strategist.
      */
-    modifier onlyHarvester() {
-        require(msg.sender == harvesterAddress, "Caller is not the Harvester");
+    modifier onlyHarvesterOrStrategist() {
+        require(
+            msg.sender == harvesterAddress ||
+                msg.sender == IVault(vaultAddress).strategistAddr(),
+            "Caller is not the Harvester or Strategist"
+        );
         _;
     }
 
@@ -295,7 +311,7 @@ abstract contract InitializableAbstractStrategy is Initializable, Governable {
      */
     function setHarvesterAddress(address _harvesterAddress)
         external
-        onlyGovernor
+        onlyGovernorOrStrategist
     {
         emit HarvesterAddressesUpdated(harvesterAddress, _harvesterAddress);
         harvesterAddress = _harvesterAddress;

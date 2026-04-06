@@ -45,6 +45,7 @@ const actions = [
   "manageBribes",
   "manageMerklBribes",
   "ousdRebalancer",
+  "claimSSVRewards"
 ];
 
 module.exports = actions.map((action) => ({

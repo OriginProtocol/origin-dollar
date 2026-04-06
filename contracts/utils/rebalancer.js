@@ -712,10 +712,7 @@ function printAllocationTable({
       "Current".length,
       ...allRows.map((row) => row.current.length)
     ),
-    avail: Math.max(
-      "Avail.".length,
-      ...allRows.map((row) => row.avail.length)
-    ),
+    avail: Math.max("Avail.".length, ...allRows.map((row) => row.avail.length)),
     target: Math.max(
       "Target (rec.)".length,
       ...allRows.map((row) => row.target.length)
@@ -727,7 +724,9 @@ function printAllocationTable({
   console.log(
     `${"Strategy".padEnd(COL.name)}${COL_SEP}${"Current".padStart(
       COL.current
-    )}${COL_SEP}${"Avail.".padStart(COL.avail)}${COL_SEP}${"Target (rec.)".padStart(
+    )}${COL_SEP}${"Avail.".padStart(
+      COL.avail
+    )}${COL_SEP}${"Target (rec.)".padStart(
       COL.target
     )}${COL_SEP}${"Delta".padStart(COL.delta)}${COL_SEP}${"APY".padStart(
       COL.apy

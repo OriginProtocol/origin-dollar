@@ -305,6 +305,8 @@ addresses.mainnet.MerklPoolBoosterBribesModule =
 // SSV network
 addresses.mainnet.SSV = "0x9D65fF81a3c488d585bBfb0Bfe3c7707c7917f54";
 addresses.mainnet.SSVNetwork = "0xDD9BC35aE942eF0cFa76930954a156B3fF30a4E1";
+addresses.mainnet.SSVRewardsDistributor =
+  "0xe16d6138B1D2aD4fD6603ACdb329ad1A6cD26D9f";
 
 // Beacon chain contracts
 addresses.mainnet.beaconChainDepositContract =
@@ -389,6 +391,8 @@ addresses.mainnet.CampaignCreator =
 // OETH is supply asset - USDC borrowing asset
 addresses.mainnet.MorphoOethUsdcMarket =
   "0xb8fef900b383db2dbbf4458c7f46acf5b140f26d603a6d1829963f241b82510e";
+
+addresses.mainnet.CoWHarvester = "0xD400341aEfED0BC75176714cFdE82e8BDAA2D3b8";
 
 // Arbitrum One
 addresses.arbitrumOne = {};

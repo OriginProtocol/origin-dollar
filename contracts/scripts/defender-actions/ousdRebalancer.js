@@ -60,7 +60,9 @@ const buildDiscordMessage = ({
       a.withdrawableLiquidity != null
         ? formatUSDC(a.withdrawableLiquidity)
         : "  n/a ";
-    return `  ${a.name.padEnd(20)} ${formatUSDC(a.balance).padStart(9)}  ${avail.padStart(9)}  ${(a.apy * 100).toFixed(2)}% APY`;
+    return `  ${a.name.padEnd(20)} ${formatUSDC(a.balance).padStart(
+      9
+    )}  ${avail.padStart(9)}  ${(a.apy * 100).toFixed(2)}% APY`;
   });
   currentLines.push(
     `  ${"Vault idle".padEnd(20)} ${formatUSDC(state.vaultBalance).padStart(9)}`
