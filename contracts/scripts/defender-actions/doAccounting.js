@@ -60,12 +60,6 @@ const handler = async (event) => {
     signer,
     consolidationController
   );
-  await doAccounting(
-    "NativeStakingSSVStrategy3Proxy",
-    networkName,
-    signer,
-    consolidationController
-  );
 };
 
 const doAccounting = async (
