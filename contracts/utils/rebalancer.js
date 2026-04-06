@@ -13,6 +13,13 @@ const log = require("./logger")("utils:rebalancer");
 
 const USDC_DECIMALS = 6;
 
+// USDC token address per chain (used by fetchMaxWithdrawals for cross-chain liquidity reads)
+const USDC_BY_CHAIN = {
+  1: addresses.mainnet.USDC,
+  8453: addresses.base.USDC,
+  999: addresses.hyperevm.USDC,
+};
+
 // Action constants shared with Defender Actions and tests
 const ACTION_DEPOSIT = "deposit";
 const ACTION_WITHDRAW = "withdraw";
@@ -42,6 +49,9 @@ const platformAddressAbi = [
 ];
 const erc4626MaxWithdrawAbi = [
   "function maxWithdraw(address owner) external view returns (uint256)",
+];
+const liquidityAdapterAbi = [
+  "function liquidityAdapter() external view returns (address)",
 ];
 
 /**
@@ -1128,9 +1138,9 @@ function _filterExcludedStrategies(strategies, apys, constraints) {
  * Fetch the immediately withdrawable amount for each strategy.
  *
  * - Same-chain (Ethereum Morpho V2): call strategy.maxWithdraw() on the mainnet provider.
- * - Cross-chain: the master and remote strategy share the same address (CREATE2 deployment).
- *   Use the remote-chain provider, call remoteStrategy.platformAddress() to get the Morpho
- *   V2 vault address, then call vault.maxWithdraw(strategyAddress) (ERC-4626).
+ * - Cross-chain: replicate MorphoV2VaultUtils.maxWithdrawableAssets() — sum USDC idle on
+ *   VaultV2 + MetaMorphoV1.1.maxWithdraw(adapter). VaultV2's ERC-4626 maxWithdraw(owner)
+ *   does not traverse the adapter chain, so we must query each layer separately.
  * - If the required provider is unavailable, the entry is omitted and no constraint is applied.
  *
  * @param {Array}  strategies - strategy config objects (from ousdMorphoStrategiesConfig)
@@ -1152,7 +1162,9 @@ async function fetchMaxWithdrawals(strategies, providers = {}) {
           );
           results[s.address] = await contract.maxWithdraw();
         } else {
-          // Master and remote strategy share the same address via CREATE2
+          // Cross-chain: replicate MorphoV2VaultUtils.maxWithdrawableAssets()
+          // VaultV2's ERC-4626 maxWithdraw(owner) doesn't traverse the adapter
+          // chain, so we manually sum idle USDC + adapter's MetaMorpho V1.1 liquidity.
           const provider = providers[s.morphoChainId];
           if (!provider) return;
           const remoteStrategy = new ethers.Contract(
@@ -1160,13 +1172,30 @@ async function fetchMaxWithdrawals(strategies, providers = {}) {
             platformAddressAbi,
             provider
           );
-          const vaultAddress = await remoteStrategy.platformAddress();
-          const vault = new ethers.Contract(
-            vaultAddress,
+          const vaultV2Addr = await remoteStrategy.platformAddress();
+
+          // 1. USDC idle on VaultV2
+          const usdcAddr = USDC_BY_CHAIN[s.morphoChainId];
+          const usdcOnVault = await new ethers.Contract(
+            usdcAddr,
+            erc20Abi,
+            provider
+          ).balanceOf(vaultV2Addr);
+
+          // 2. Adapter's available liquidity from MetaMorpho V1.1
+          const adapter = await new ethers.Contract(
+            vaultV2Addr,
+            liquidityAdapterAbi,
+            provider
+          ).liquidityAdapter();
+          const adapterLiquidity = await new ethers.Contract(
+            s.metaMorphoVaultAddress,
             erc4626MaxWithdrawAbi,
             provider
-          );
-          results[s.address] = await vault.maxWithdraw(s.address);
+          ).maxWithdraw(adapter);
+
+          // 3. Total available = idle + adapter liquidity (matches on-chain logic)
+          results[s.address] = usdcOnVault.add(adapterLiquidity);
         }
       } catch (err) {
         console.error(
