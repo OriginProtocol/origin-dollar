@@ -1,41 +1,44 @@
-import { encodeFunctionData, parseAbi } from "viem";
+/// <reference types="hardhat/types/runtime" />
 
 import { action } from "../lib/action";
+import { logTxDetails } from "../../utils/txLogger";
 
-const OS_VAULT = "0xa3c0eca00d2b76b4d1f170b0ab3fdea16c180186";
-const OS_HARVESTER = "0x7B0383b31C7662E3f6B6E9C743Bc87b93C1f4498";
-const SONIC_STAKING_STRATEGY = "0xbe19cc5654e30daf04ad3b5e06213d70f4e882ee";
-
-const vaultAbi = parseAbi(["function rebase() external"]);
-const harvesterAbi = parseAbi([
-  "function harvestAndTransfer(address strategy) external",
-]);
+const OS_VAULT_PROXY_DEPLOYMENT = "OSonicVaultProxy";
+const OS_HARVESTER_PROXY_DEPLOYMENT = "OSonicHarvesterProxy";
+const STRATEGY_PROXY_DEPLOYMENT = "SonicSwapXAMOStrategyProxy";
 
 action({
   name: "otokenOsCollectAndRelease",
   description: "Rebase OS vault and harvest on Sonic",
   chains: [146],
   run: async ({ signer, log }) => {
-    // Rebase the vault
-    const rebaseTx = await signer.sendTransaction({
-      to: OS_VAULT,
-      data: encodeFunctionData({ abi: vaultAbi, functionName: "rebase" }),
-      gasLimit: 400000,
-    });
-    log.info(`rebase tx: ${rebaseTx.hash}`);
-    await rebaseTx.wait();
+    const ethers = hre.ethers;
+    const vaultProxy = await ethers.getContract(OS_VAULT_PROXY_DEPLOYMENT);
+    const vault = await ethers.getContractAt("IVault", vaultProxy.address);
 
-    // Harvest and transfer
-    const harvestTx = await signer.sendTransaction({
-      to: OS_HARVESTER,
-      data: encodeFunctionData({
-        abi: harvesterAbi,
-        functionName: "harvestAndTransfer",
-        args: [SONIC_STAKING_STRATEGY],
-      }),
-      gasLimit: 400000,
-    });
-    log.info(`harvestAndTransfer tx: ${harvestTx.hash}`);
-    await harvestTx.wait();
+    const harvesterProxy = await ethers.getContract(
+      OS_HARVESTER_PROXY_DEPLOYMENT
+    );
+    const harvester = await ethers.getContractAt(
+      "OSonicHarvester",
+      harvesterProxy.address
+    );
+    const strategyProxy = await ethers.getContract(STRATEGY_PROXY_DEPLOYMENT);
+
+    log.info(
+      `Calling rebase on ${OS_VAULT_PROXY_DEPLOYMENT} at ${vault.address}`
+    );
+    const rebaseTx = await vault.connect(signer).rebase({ gasLimit: 400000 });
+    await logTxDetails(rebaseTx, "rebase");
+
+    log.info(
+      `Calling harvestAndTransfer on ${OS_HARVESTER_PROXY_DEPLOYMENT} at ${harvester.address} for strategy ${strategyProxy.address}`
+    );
+    const harvestTx = await harvester
+      .connect(signer)
+      ["harvestAndTransfer(address)"](strategyProxy.address, {
+        gasLimit: 400000,
+      });
+    await logTxDetails(harvestTx, "harvestAndTransfer");
   },
 });

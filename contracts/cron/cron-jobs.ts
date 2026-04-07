@@ -128,6 +128,7 @@ export const cronJobs: CronJob[] = [
     name: "otoken_os_collectAndRelease",
     schedule: "50 23 * * *",
     enabled: false,
+    permmissioned: false,
     command:
       "cd /app && pnpm hardhat otokenOsCollectAndRelease --network sonic",
   },
@@ -198,6 +199,7 @@ export const cronJobs: CronJob[] = [
     name: "otoken_oethb_harvest",
     schedule: "50 11 * * *",
     enabled: false,
+    permmissioned: false,
     command: "cd /app && pnpm hardhat otokenOethbHarvest --network base",
   },
 ];

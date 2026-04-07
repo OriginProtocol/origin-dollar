@@ -1,32 +1,38 @@
-import { encodeFunctionData, parseAbi } from "viem";
+/// <reference types="hardhat/types/runtime" />
 
 import { action } from "../lib/action";
+import { logTxDetails } from "../../utils/txLogger";
 
-const HARVESTER = "0x0CbEAcf86232fC04050cD679d860516F7254c22E";
-const STRATEGIES = [
-  "0x9cfcaf81600155e01c63e4d2993a8a81a8205829",
-  "0xf611cc500eee7e4e4763a05fe623e2363c86d2af",
+const HARVESTER_PROXY_DEPLOYMENT = "OETHBaseHarvesterProxy";
+const STRATEGY_PROXY_DEPLOYMENTS = [
+  "OETHBaseCurveAMOProxy",
+  "AerodromeAMOStrategyProxy",
 ] as const;
-
-const abi = parseAbi([
-  "function harvestAndTransfer(address[] strategies) external",
-]);
 
 action({
   name: "otokenOethbHarvest",
   description: "Harvest strategies on Base OETHb",
   chains: [8453],
   run: async ({ signer, log }) => {
-    const tx = await signer.sendTransaction({
-      to: HARVESTER,
-      data: encodeFunctionData({
-        abi,
-        functionName: "harvestAndTransfer",
-        args: [[...STRATEGIES]],
-      }),
-      gasLimit: 800000,
-    });
-    log.info(`harvestAndTransfer tx: ${tx.hash}`);
-    await tx.wait();
+    const ethers = hre.ethers;
+    const harvesterProxy = await ethers.getContract(HARVESTER_PROXY_DEPLOYMENT);
+    const harvester = await ethers.getContractAt(
+      "SuperOETHHarvester",
+      harvesterProxy.address
+    );
+    const strategies = await Promise.all(
+      STRATEGY_PROXY_DEPLOYMENTS.map(async (deploymentName) => {
+        const strategy = await ethers.getContract(deploymentName);
+        return strategy.address;
+      })
+    );
+
+    log.info(
+      `Calling harvestAndTransfer on ${HARVESTER_PROXY_DEPLOYMENT} at ${harvester.address} for ${strategies.length} strategy(ies)`
+    );
+    const tx = await harvester
+      .connect(signer)
+      ["harvestAndTransfer(address[])"](strategies, { gasLimit: 800000 });
+    await logTxDetails(tx, "harvestAndTransfer");
   },
 });
