@@ -12,12 +12,14 @@ contract Smoke_Concrete_OETHBaseVault_WithdrawalQueue_Test is Smoke_OETHBaseVaul
         _mintOETHBase(alice, 1 ether);
         uint256 oethbBalance = oethBase.balanceOf(alice);
 
-        (uint256 queuedBefore,,, uint256 nextIndexBefore) = oethBaseVault.withdrawalQueueMetadata();
+        uint256 queuedBefore = oethBaseVault.withdrawalQueueMetadata().queued;
+        uint256 nextIndexBefore = oethBaseVault.withdrawalQueueMetadata().nextWithdrawalIndex;
 
         vm.prank(alice);
         oethBaseVault.requestWithdrawal(oethbBalance);
 
-        (uint256 queuedAfter,,, uint256 nextIndexAfter) = oethBaseVault.withdrawalQueueMetadata();
+        uint256 queuedAfter = oethBaseVault.withdrawalQueueMetadata().queued;
+        uint256 nextIndexAfter = oethBaseVault.withdrawalQueueMetadata().nextWithdrawalIndex;
 
         assertGt(queuedAfter, queuedBefore);
         assertEq(nextIndexAfter, nextIndexBefore + 1);
@@ -67,13 +69,14 @@ contract Smoke_Concrete_OETHBaseVault_WithdrawalQueue_Test is Smoke_OETHBaseVaul
         vm.prank(alice);
         oethBaseVault.requestWithdrawal(oethbBalance);
 
-        (uint256 queued, uint256 claimableBefore,,) = oethBaseVault.withdrawalQueueMetadata();
+        uint256 queued = oethBaseVault.withdrawalQueueMetadata().queued;
+        uint256 claimableBefore = oethBaseVault.withdrawalQueueMetadata().claimable;
 
         if (queued > claimableBefore) {
             deal(address(weth), address(oethBaseVault), weth.balanceOf(address(oethBaseVault)) + 1 ether);
             oethBaseVault.addWithdrawalQueueLiquidity();
 
-            (, uint256 claimableAfter,,) = oethBaseVault.withdrawalQueueMetadata();
+            uint256 claimableAfter = oethBaseVault.withdrawalQueueMetadata().claimable;
             assertGt(claimableAfter, claimableBefore);
         }
     }
@@ -85,7 +88,9 @@ contract Smoke_Concrete_OETHBaseVault_WithdrawalQueue_Test is Smoke_OETHBaseVaul
         vm.prank(alice);
         (uint256 requestId,) = oethBaseVault.requestWithdrawal(oethbBalance);
 
-        (address withdrawer, bool claimed, uint40 timestamp,,) = oethBaseVault.withdrawalRequests(requestId);
+        address withdrawer = oethBaseVault.withdrawalRequests(requestId).withdrawer;
+        bool claimed = oethBaseVault.withdrawalRequests(requestId).claimed;
+        uint40 timestamp = oethBaseVault.withdrawalRequests(requestId).timestamp;
 
         assertEq(withdrawer, alice);
         assertFalse(claimed);

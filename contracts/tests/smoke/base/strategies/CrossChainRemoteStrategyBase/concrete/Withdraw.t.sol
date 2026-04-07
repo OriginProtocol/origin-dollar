@@ -2,8 +2,7 @@
 pragma solidity ^0.8.0;
 
 import {Smoke_CrossChainRemoteStrategyBase_Shared_Test} from "../shared/Shared.t.sol";
-import {Mainnet, Base as BaseAddresses, CrossChain} from "tests/utils/Addresses.sol";
-import {CrossChainStrategyHelper} from "contracts/strategies/crosschain/CrossChainStrategyHelper.sol";
+import {Base as BaseAddresses} from "tests/utils/Addresses.sol";
 import {Vm} from "forge-std/Vm.sol";
 
 contract Smoke_CrossChainRemoteStrategyBase_Withdraw_Test is Smoke_CrossChainRemoteStrategyBase_Shared_Test {
@@ -23,7 +22,7 @@ contract Smoke_CrossChainRemoteStrategyBase_Withdraw_Test is Smoke_CrossChainRem
         uint64 nextNonce = nonceBefore + 1;
 
         // Build withdraw message (no burn wrapper, just Origin message in CCTP envelope)
-        bytes memory withdrawPayload = CrossChainStrategyHelper.encodeWithdrawMessage(nextNonce, withdrawalAmount);
+        bytes memory withdrawPayload = _encodeWithdrawMessage(nextNonce, withdrawalAmount);
         bytes memory message = _encodeCCTPMessage(
             0, address(crossChainRemoteStrategy), address(crossChainRemoteStrategy), withdrawPayload
         );

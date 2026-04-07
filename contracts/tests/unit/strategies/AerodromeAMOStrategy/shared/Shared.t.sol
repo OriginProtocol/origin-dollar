@@ -3,16 +3,14 @@ pragma solidity ^0.8.0;
 
 import {Base} from "tests/Base.t.sol";
 
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {MockERC20} from "@solmate/test/utils/mocks/MockERC20.sol";
 import {MockWETH} from "contracts/mocks/MockWETH.sol";
 
-import {OETHBase} from "contracts/token/OETHBase.sol";
-import {OETHBaseVault} from "contracts/vault/OETHBaseVault.sol";
-import {OETHBaseProxy, OETHBaseVaultProxy} from "contracts/proxies/BaseProxies.sol";
-
-import {AerodromeAMOStrategy} from "contracts/strategies/aerodrome/AerodromeAMOStrategy.sol";
-import {InitializableAbstractStrategy} from "contracts/utils/InitializableAbstractStrategy.sol";
+import {IVault} from "contracts/interfaces/IVault.sol";
+import {IProxy} from "contracts/interfaces/IProxy.sol";
+import {IOToken} from "contracts/interfaces/IOToken.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {IAerodromeAMOStrategy} from "contracts/interfaces/strategies/IAerodromeAMOStrategy.sol";
 
 import {MockCLPool} from "tests/mocks/aerodrome/MockCLPool.sol";
 import {MockNonfungiblePositionManager} from "tests/mocks/aerodrome/MockNonfungiblePositionManager.sol";
@@ -26,11 +24,11 @@ abstract contract Unit_AerodromeAMOStrategy_Shared_Test is Base {
     //////////////////////////////////////////////////////
 
     MockWETH internal mockWeth;
-    OETHBase internal oethBase;
-    OETHBaseVault internal oethBaseVault;
-    OETHBaseProxy internal oethBaseProxy;
-    OETHBaseVaultProxy internal oethBaseVaultProxy;
-    AerodromeAMOStrategy internal aerodromeAMOStrategy;
+    IOToken internal oethBase;
+    IVault internal oethBaseVault;
+    IProxy internal oethBaseProxy;
+    IProxy internal oethBaseVaultProxy;
+    IAerodromeAMOStrategy internal aerodromeAMOStrategy;
 
     //////////////////////////////////////////////////////
     /// --- CONSTANTS
@@ -77,11 +75,20 @@ abstract contract Unit_AerodromeAMOStrategy_Shared_Test is Base {
         // Deploy real OETHBase + OETHBaseVault
         vm.startPrank(deployer);
 
-        OETHBase oethBaseImpl = new OETHBase();
-        OETHBaseVault oethBaseVaultImpl = new OETHBaseVault(address(mockWeth));
+        IOToken oethBaseImpl = IOToken(vm.deployCode("contracts/token/OETHBase.sol:OETHBase"));
+        address oethBaseVaultImpl =
+            vm.deployCode("contracts/vault/OETHBaseVault.sol:OETHBaseVault", abi.encode(address(mockWeth)));
 
-        oethBaseProxy = new OETHBaseProxy();
-        oethBaseVaultProxy = new OETHBaseVaultProxy();
+        oethBaseProxy = IProxy(
+            vm.deployCode(
+                "contracts/proxies/InitializeGovernedUpgradeabilityProxy.sol:InitializeGovernedUpgradeabilityProxy"
+            )
+        );
+        oethBaseVaultProxy = IProxy(
+            vm.deployCode(
+                "contracts/proxies/InitializeGovernedUpgradeabilityProxy.sol:InitializeGovernedUpgradeabilityProxy"
+            )
+        );
 
         oethBaseProxy.initialize(
             address(oethBaseImpl),
@@ -95,8 +102,8 @@ abstract contract Unit_AerodromeAMOStrategy_Shared_Test is Base {
 
         vm.stopPrank();
 
-        oethBase = OETHBase(address(oethBaseProxy));
-        oethBaseVault = OETHBaseVault(address(oethBaseVaultProxy));
+        oethBase = IOToken(address(oethBaseProxy));
+        oethBaseVault = IVault(address(oethBaseVaultProxy));
 
         // Configure vault
         vm.startPrank(governor);
@@ -123,20 +130,24 @@ abstract contract Unit_AerodromeAMOStrategy_Shared_Test is Base {
         // Deploy AerodromeAMOStrategy
         // token0 = WETH, token1 = OETHb (constructor requires this ordering)
         // lowerBoundingTick = -1, upperBoundingTick = 0, tickClosestToParity = 0
-        aerodromeAMOStrategy = new AerodromeAMOStrategy(
-            InitializableAbstractStrategy.BaseStrategyConfig({
-                platformAddress: address(mockCLPool), vaultAddress: address(oethBaseVault)
-            }),
-            address(mockWeth), // WETH
-            address(oethBase), // OETHb
-            address(mockSwapRouter),
-            address(mockPositionManager),
-            address(mockCLPool),
-            address(mockCLGauge),
-            address(mockSugarHelper),
-            int24(-1), // lowerBoundingTick
-            int24(0), // upperBoundingTick
-            int24(0) // tickClosestToParity (OETHb is token1, so upper tick is closest)
+        aerodromeAMOStrategy = IAerodromeAMOStrategy(
+            vm.deployCode(
+                "contracts/strategies/aerodrome/AerodromeAMOStrategy.sol:AerodromeAMOStrategy",
+                abi.encode(
+                    address(mockCLPool),
+                    address(oethBaseVault),
+                    address(mockWeth),
+                    address(oethBase),
+                    address(mockSwapRouter),
+                    address(mockPositionManager),
+                    address(mockCLPool),
+                    address(mockCLGauge),
+                    address(mockSugarHelper),
+                    int24(-1),
+                    int24(0),
+                    int24(0)
+                )
+            )
         );
 
         // Reset initialization state (constructor uses `initializer` modifier

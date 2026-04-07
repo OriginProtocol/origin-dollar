@@ -5,14 +5,13 @@ import {BaseFork} from "tests/fork/BaseFork.t.sol";
 import {Sonic} from "tests/utils/Addresses.sol";
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {OSonic} from "contracts/token/OSonic.sol";
-import {OSVault} from "contracts/vault/OSVault.sol";
-import {OSonicProxy, OSonicVaultProxy} from "contracts/proxies/SonicProxies.sol";
-import {SonicSwapXAMOStrategy} from "contracts/strategies/sonic/SonicSwapXAMOStrategy.sol";
-import {InitializableAbstractStrategy} from "contracts/utils/InitializableAbstractStrategy.sol";
+import {IOToken} from "contracts/interfaces/IOToken.sol";
+import {IVault} from "contracts/interfaces/IVault.sol";
+import {IProxy} from "contracts/interfaces/IProxy.sol";
 import {IPair} from "contracts/interfaces/algebra/IAlgebraPair.sol";
 import {IGauge} from "contracts/interfaces/algebra/IAlgebraGauge.sol";
 import {IWrappedSonic} from "contracts/interfaces/sonic/IWrappedSonic.sol";
+import {ISonicSwapXAMOStrategy} from "contracts/interfaces/strategies/ISonicSwapXAMOStrategy.sol";
 
 abstract contract Fork_SonicSwapXAMOStrategy_Shared_Test is BaseFork {
     //////////////////////////////////////////////////////
@@ -26,11 +25,11 @@ abstract contract Fork_SonicSwapXAMOStrategy_Shared_Test is BaseFork {
     /// --- CONTRACTS
     //////////////////////////////////////////////////////
 
-    OSonic internal oSonic;
-    OSVault internal oSonicVault;
-    OSonicProxy internal oSonicProxy;
-    OSonicVaultProxy internal oSonicVaultProxy;
-    SonicSwapXAMOStrategy internal sonicSwapXAMOStrategy;
+    IOToken internal oSonic;
+    IVault internal oSonicVault;
+    IProxy internal oSonicProxy;
+    IProxy internal oSonicVaultProxy;
+    ISonicSwapXAMOStrategy internal sonicSwapXAMOStrategy;
     IPair internal swapXPool;
     IGauge internal swapXGauge;
     IERC20 internal wrappedSonic;
@@ -57,11 +56,11 @@ abstract contract Fork_SonicSwapXAMOStrategy_Shared_Test is BaseFork {
         // Deploy fresh OSonic + OSVault
         vm.startPrank(deployer);
 
-        OSonic oSonicImpl = new OSonic();
-        OSVault oSonicVaultImpl = new OSVault(Sonic.wS);
+        IOToken oSonicImpl = IOToken(vm.deployCode("contracts/token/OSonic.sol:OSonic"));
+        address oSonicVaultImpl = vm.deployCode("contracts/vault/OSVault.sol:OSVault", abi.encode(Sonic.wS));
 
-        oSonicProxy = new OSonicProxy();
-        oSonicVaultProxy = new OSonicVaultProxy();
+        oSonicProxy = IProxy(vm.deployCode("contracts/proxies/SonicProxies.sol:OSonicProxy"));
+        oSonicVaultProxy = IProxy(vm.deployCode("contracts/proxies/SonicProxies.sol:OSonicVaultProxy"));
 
         oSonicProxy.initialize(
             address(oSonicImpl),
@@ -75,8 +74,8 @@ abstract contract Fork_SonicSwapXAMOStrategy_Shared_Test is BaseFork {
 
         vm.stopPrank();
 
-        oSonic = OSonic(address(oSonicProxy));
-        oSonicVault = OSVault(payable(address(oSonicVaultProxy)));
+        oSonic = IOToken(address(oSonicProxy));
+        oSonicVault = IVault(address(oSonicVaultProxy));
 
         // Configure vault
         vm.startPrank(governor);
@@ -122,11 +121,11 @@ abstract contract Fork_SonicSwapXAMOStrategy_Shared_Test is BaseFork {
         swapXPool.mint(address(0xdead)); // Mint base LP to dead address
 
         // Deploy fresh SonicSwapXAMOStrategy
-        sonicSwapXAMOStrategy = new SonicSwapXAMOStrategy(
-            InitializableAbstractStrategy.BaseStrategyConfig({
-                platformAddress: address(swapXPool), vaultAddress: address(oSonicVault)
-            }),
-            address(swapXGauge)
+        sonicSwapXAMOStrategy = ISonicSwapXAMOStrategy(
+            vm.deployCode(
+                "contracts/strategies/sonic/SonicSwapXAMOStrategy.sol:SonicSwapXAMOStrategy",
+                abi.encode(address(swapXPool), address(oSonicVault), address(swapXGauge))
+            )
         );
 
         // Set governor via storage slot

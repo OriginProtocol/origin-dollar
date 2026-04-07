@@ -6,11 +6,10 @@ import {BaseFork} from "tests/fork/BaseFork.t.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {MockERC20} from "@solmate/test/utils/mocks/MockERC20.sol";
 import {UpgradeableBeacon} from "@openzeppelin/contracts/proxy/beacon/UpgradeableBeacon.sol";
-import {OETH} from "contracts/token/OETH.sol";
 
-import {PoolBoostCentralRegistry} from "contracts/poolBooster/PoolBoostCentralRegistry.sol";
-import {PoolBoosterFactoryMerkl} from "contracts/poolBooster/PoolBoosterFactoryMerkl.sol";
-import {PoolBoosterMerklV2} from "contracts/poolBooster/PoolBoosterMerklV2.sol";
+import {IPoolBoostCentralRegistryFull} from "contracts/interfaces/poolBooster/IPoolBoostCentralRegistryFull.sol";
+import {IPoolBoosterFactoryMerkl} from "contracts/interfaces/poolBooster/IPoolBoosterFactoryMerkl.sol";
+import {IPoolBoosterMerkl} from "contracts/interfaces/poolBooster/IPoolBoosterMerkl.sol";
 import {IMerklDistributor} from "contracts/interfaces/poolBooster/IMerklDistributor.sol";
 
 import {Mainnet} from "tests/utils/Addresses.sol";
@@ -24,9 +23,9 @@ abstract contract Fork_MerklPoolBoosterMainnet_Shared_Test is BaseFork {
     /// --- CONTRACTS
     //////////////////////////////////////////////////////
 
-    OETH internal oeth;
-    PoolBoostCentralRegistry internal centralRegistry;
-    PoolBoosterFactoryMerkl internal factoryMerkl;
+    IERC20 internal oeth;
+    IPoolBoostCentralRegistryFull internal centralRegistry;
+    IPoolBoosterFactoryMerkl internal factoryMerkl;
 
     //////////////////////////////////////////////////////
     /// --- CONSTANTS
@@ -60,19 +59,25 @@ abstract contract Fork_MerklPoolBoosterMainnet_Shared_Test is BaseFork {
     }
 
     function _deployFreshContracts() internal {
-        // 1. Deploy fresh MockERC20 cast into the Base-declared oeth variable
-        oeth = OETH(address(new MockERC20("Origin Ether", "OETH", 18)));
+        // 1. Deploy fresh MockERC20 as OETH
+        oeth = IERC20(address(new MockERC20("Origin Ether", "OETH", 18)));
 
         // 2. Deploy PoolBoostCentralRegistry and set governor via storage slot
-        centralRegistry = new PoolBoostCentralRegistry();
+        centralRegistry = IPoolBoostCentralRegistryFull(
+            vm.deployCode("contracts/poolBooster/PoolBoostCentralRegistry.sol:PoolBoostCentralRegistry")
+        );
         vm.store(address(centralRegistry), GOVERNOR_SLOT, bytes32(uint256(uint160(Mainnet.Timelock))));
 
         // 3. Deploy beacon + factory
-        PoolBoosterMerklV2 impl = new PoolBoosterMerklV2();
-        beacon = new UpgradeableBeacon(address(impl));
+        address impl = vm.deployCode("contracts/poolBooster/PoolBoosterMerklV2.sol:PoolBoosterMerklV2");
+        beacon = new UpgradeableBeacon(impl);
 
-        factoryMerkl =
-            new PoolBoosterFactoryMerkl(address(oeth), Mainnet.Timelock, address(centralRegistry), address(beacon));
+        factoryMerkl = IPoolBoosterFactoryMerkl(
+            vm.deployCode(
+                "contracts/poolBooster/PoolBoosterFactoryMerkl.sol:PoolBoosterFactoryMerkl",
+                abi.encode(address(oeth), Mainnet.Timelock, address(centralRegistry), address(beacon))
+            )
+        );
 
         // 4. Approve factory on registry
         vm.prank(Mainnet.Timelock);
@@ -112,7 +117,7 @@ abstract contract Fork_MerklPoolBoosterMainnet_Shared_Test is BaseFork {
 
     function _defaultInitData() internal view returns (bytes memory) {
         return abi.encodeWithSelector(
-            PoolBoosterMerklV2.initialize.selector,
+            IPoolBoosterMerkl.initialize.selector,
             DEFAULT_DURATION,
             DEFAULT_CAMPAIGN_ID,
             address(oeth),
@@ -123,12 +128,12 @@ abstract contract Fork_MerklPoolBoosterMainnet_Shared_Test is BaseFork {
         );
     }
 
-    function _createMerklBooster(uint256 _salt) internal returns (PoolBoosterMerklV2) {
+    function _createMerklBooster(uint256 _salt) internal returns (IPoolBoosterMerkl) {
         vm.prank(Mainnet.Timelock);
         factoryMerkl.createPoolBoosterMerkl(DEFAULT_AMM_ADDRESS, _defaultInitData(), _salt);
 
         uint256 count = factoryMerkl.poolBoosterLength();
         (address boosterAddr,,) = factoryMerkl.poolBoosters(count - 1);
-        return PoolBoosterMerklV2(boosterAddr);
+        return IPoolBoosterMerkl(boosterAddr);
     }
 }

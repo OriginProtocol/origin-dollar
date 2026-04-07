@@ -2,7 +2,6 @@
 pragma solidity ^0.8.0;
 
 import {Unit_SonicSwapXAMOStrategy_Shared_Test} from "tests/unit/strategies/SonicSwapXAMOStrategy/shared/Shared.t.sol";
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 contract Unit_Fuzz_SonicSwapXAMOStrategy_CheckBalance_Test is Unit_SonicSwapXAMOStrategy_Shared_Test {
     /// @notice checkBalance should include both direct wS balance and LP value

@@ -6,7 +6,7 @@ import {Vm} from "forge-std/Vm.sol";
 import {
     Fork_MerklPoolBoosterMainnet_Shared_Test
 } from "tests/fork/mainnet/poolBooster/MerklPoolBoosterMainnet/shared/Shared.t.sol";
-import {PoolBoosterMerklV2} from "contracts/poolBooster/PoolBoosterMerklV2.sol";
+import {IPoolBoosterMerkl} from "contracts/interfaces/poolBooster/IPoolBoosterMerkl.sol";
 import {IMerklDistributor} from "contracts/interfaces/poolBooster/IMerklDistributor.sol";
 import {Mainnet} from "tests/utils/Addresses.sol";
 
@@ -14,7 +14,7 @@ contract Fork_Concrete_MerklPoolBoosterMainnet_CreateAndBribe_Test is Fork_Merkl
     bytes32 internal constant BRIBE_EXECUTED_TOPIC = keccak256("BribeExecuted(uint256)");
 
     function test_createPoolBoosterMerkl() public {
-        PoolBoosterMerklV2 booster = _createMerklBooster(1);
+        IPoolBoosterMerkl booster = _createMerklBooster(1);
 
         assertEq(factoryMerkl.poolBoosterLength(), 1);
         assertEq(booster.campaignType(), DEFAULT_CAMPAIGN_ID);
@@ -22,7 +22,7 @@ contract Fork_Concrete_MerklPoolBoosterMainnet_CreateAndBribe_Test is Fork_Merkl
     }
 
     function test_bribe_twiceInARow() public {
-        PoolBoosterMerklV2 booster = _createMerklBooster(1);
+        IPoolBoosterMerkl booster = _createMerklBooster(1);
 
         // Mock the createCampaign call on the Merkl distributor.
         vm.mockCall(

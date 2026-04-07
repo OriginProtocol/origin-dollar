@@ -5,20 +5,20 @@ import {BaseSmoke} from "tests/smoke/BaseSmoke.t.sol";
 import {Sonic} from "tests/utils/Addresses.sol";
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {SonicSwapXAMOStrategy} from "contracts/strategies/sonic/SonicSwapXAMOStrategy.sol";
-import {OSVault} from "contracts/vault/OSVault.sol";
-import {OSonic} from "contracts/token/OSonic.sol";
 import {IPair} from "contracts/interfaces/algebra/IAlgebraPair.sol";
 import {IGauge} from "contracts/interfaces/algebra/IAlgebraGauge.sol";
+import {IOToken} from "contracts/interfaces/IOToken.sol";
+import {IVault} from "contracts/interfaces/IVault.sol";
+import {ISonicSwapXAMOStrategy} from "contracts/interfaces/strategies/ISonicSwapXAMOStrategy.sol";
 
 abstract contract Smoke_SonicSwapXAMOStrategy_Shared_Test is BaseSmoke {
     //////////////////////////////////////////////////////
     /// --- CONTRACTS
     //////////////////////////////////////////////////////
 
-    OSonic internal oSonic;
-    OSVault internal oSonicVault;
-    SonicSwapXAMOStrategy internal sonicSwapXAMOStrategy;
+    IOToken internal oSonic;
+    IVault internal oSonicVault;
+    ISonicSwapXAMOStrategy internal sonicSwapXAMOStrategy;
     IERC20 internal wrappedSonic;
     IPair internal swapXPool;
     IGauge internal swapXGauge;
@@ -40,9 +40,9 @@ abstract contract Smoke_SonicSwapXAMOStrategy_Shared_Test is BaseSmoke {
     function _fetchContracts() internal {
         require(address(resolver).code.length > 0, "Resolver not initialized on fork");
 
-        oSonic = OSonic(resolver.resolve("OSONIC_PROXY"));
-        oSonicVault = OSVault(payable(resolver.resolve("OSONIC_VAULT_PROXY")));
-        sonicSwapXAMOStrategy = SonicSwapXAMOStrategy(resolver.resolve("SONIC_SWAPX_AMO_STRATEGY_PROXY"));
+        oSonic = IOToken(resolver.resolve("OSONIC_PROXY"));
+        oSonicVault = IVault(resolver.resolve("OSONIC_VAULT_PROXY"));
+        sonicSwapXAMOStrategy = ISonicSwapXAMOStrategy(resolver.resolve("SONIC_SWAPX_AMO_STRATEGY_PROXY"));
 
         wrappedSonic = IERC20(Sonic.wS);
         swapXPool = IPair(sonicSwapXAMOStrategy.pool());

@@ -4,7 +4,7 @@ pragma solidity ^0.8.0;
 import {
     Unit_NativeStakingSSVStrategy_Shared_Test
 } from "tests/unit/strategies/NativeStakingSSVStrategy/shared/Shared.t.sol";
-import {InitializableAbstractStrategy} from "contracts/utils/InitializableAbstractStrategy.sol";
+import {INativeStakingSSVStrategy} from "contracts/interfaces/strategies/INativeStakingSSVStrategy.sol";
 
 contract Unit_Concrete_NativeStakingSSVStrategy_Withdraw_Test is Unit_NativeStakingSSVStrategy_Shared_Test {
     function test_withdraw() public {
@@ -14,7 +14,7 @@ contract Unit_Concrete_NativeStakingSSVStrategy_Withdraw_Test is Unit_NativeStak
 
         vm.prank(address(oethVault));
         vm.expectEmit(true, true, true, true);
-        emit InitializableAbstractStrategy.Withdrawal(address(mockWeth), address(0), 5 ether);
+        emit INativeStakingSSVStrategy.Withdrawal(address(mockWeth), address(0), 5 ether);
         nativeStakingSSVStrategy.withdraw(address(oethVault), address(mockWeth), 5 ether);
 
         assertEq(weth.balanceOf(address(oethVault)) - vaultBefore, 5 ether);

@@ -7,30 +7,30 @@ import {MockWETH} from "contracts/mocks/MockWETH.sol";
 import {MockSSVNetwork} from "contracts/mocks/MockSSVNetwork.sol";
 import {MockSSV} from "contracts/mocks/MockSSV.sol";
 import {MockDepositContract} from "contracts/mocks/MockDepositContract.sol";
-import {OETH} from "contracts/token/OETH.sol";
-import {OETHVault} from "contracts/vault/OETHVault.sol";
-import {OETHProxy} from "contracts/proxies/Proxies.sol";
-import {OETHVaultProxy} from "contracts/proxies/Proxies.sol";
-import {NativeStakingSSVStrategy} from "contracts/strategies/NativeStaking/NativeStakingSSVStrategy.sol";
-import {ValidatorStakeData} from "contracts/strategies/NativeStaking/ValidatorRegistrator.sol";
+import {IVault} from "contracts/interfaces/IVault.sol";
+import {IProxy} from "contracts/interfaces/IProxy.sol";
+import {IOToken} from "contracts/interfaces/IOToken.sol";
+import {
+    INativeStakingSSVStrategy,
+    ValidatorStakeData
+} from "contracts/interfaces/strategies/INativeStakingSSVStrategy.sol";
 import {FeeAccumulator} from "contracts/strategies/NativeStaking/FeeAccumulator.sol";
-import {InitializableAbstractStrategy} from "contracts/utils/InitializableAbstractStrategy.sol";
 import {Cluster} from "contracts/interfaces/ISSVNetwork.sol";
 
 abstract contract Unit_NativeStakingSSVStrategy_Shared_Test is Base {
     //////////////////////////////////////////////////////
-    /// --- CONTRACTS & PROXIES (moved from Base)
+    /// --- CONTRACTS & PROXIES
     //////////////////////////////////////////////////////
 
     MockWETH internal mockWeth;
     MockSSVNetwork internal mockSsvNetwork;
     MockSSV internal mockSsv;
     MockDepositContract internal mockDepositContract;
-    OETH internal oeth;
-    OETHVault internal oethVault;
-    OETHProxy internal oethProxy;
-    OETHVaultProxy internal oethVaultProxy;
-    NativeStakingSSVStrategy internal nativeStakingSSVStrategy;
+    IOToken internal oeth;
+    IVault internal oethVault;
+    IProxy internal oethProxy;
+    IProxy internal oethVaultProxy;
+    INativeStakingSSVStrategy internal nativeStakingSSVStrategy;
     FeeAccumulator internal nativeStakingFeeAccumulator;
 
     //////////////////////////////////////////////////////
@@ -95,11 +95,19 @@ abstract contract Unit_NativeStakingSSVStrategy_Shared_Test is Base {
         // Deploy OETH + OETHVault through proxies
         vm.startPrank(deployer);
 
-        OETH oethImpl = new OETH();
-        OETHVault oethVaultImpl = new OETHVault(address(mockWeth));
+        IOToken oethImpl = IOToken(vm.deployCode("contracts/token/OETH.sol:OETH"));
+        address oethVaultImpl = vm.deployCode("contracts/vault/OETHVault.sol:OETHVault", abi.encode(address(mockWeth)));
 
-        oethProxy = new OETHProxy();
-        oethVaultProxy = new OETHVaultProxy();
+        oethProxy = IProxy(
+            vm.deployCode(
+                "contracts/proxies/InitializeGovernedUpgradeabilityProxy.sol:InitializeGovernedUpgradeabilityProxy"
+            )
+        );
+        oethVaultProxy = IProxy(
+            vm.deployCode(
+                "contracts/proxies/InitializeGovernedUpgradeabilityProxy.sol:InitializeGovernedUpgradeabilityProxy"
+            )
+        );
 
         oethProxy.initialize(
             address(oethImpl),
@@ -113,8 +121,8 @@ abstract contract Unit_NativeStakingSSVStrategy_Shared_Test is Base {
 
         vm.stopPrank();
 
-        oeth = OETH(address(oethProxy));
-        oethVault = OETHVault(address(oethVaultProxy));
+        oeth = IOToken(address(oethProxy));
+        oethVault = IVault(address(oethVaultProxy));
 
         // Configure vault
         vm.startPrank(governor);
@@ -133,16 +141,20 @@ abstract contract Unit_NativeStakingSSVStrategy_Shared_Test is Base {
         nativeStakingFeeAccumulator = new FeeAccumulator(predictedStrategy);
 
         // Deploy NativeStakingSSVStrategy
-        nativeStakingSSVStrategy = new NativeStakingSSVStrategy(
-            InitializableAbstractStrategy.BaseStrategyConfig({
-                platformAddress: address(0), vaultAddress: address(oethVault)
-            }),
-            address(mockWeth),
-            address(mockSsv),
-            address(mockSsvNetwork),
-            256,
-            address(nativeStakingFeeAccumulator),
-            address(mockDepositContract)
+        nativeStakingSSVStrategy = INativeStakingSSVStrategy(
+            vm.deployCode(
+                "contracts/strategies/NativeStaking/NativeStakingSSVStrategy.sol:NativeStakingSSVStrategy",
+                abi.encode(
+                    address(0), // platformAddress
+                    address(oethVault), // vaultAddress
+                    address(mockWeth),
+                    address(mockSsv),
+                    address(mockSsvNetwork),
+                    uint256(256),
+                    address(nativeStakingFeeAccumulator),
+                    address(mockDepositContract)
+                )
+            )
         );
 
         // Verify FeeAccumulator points to the correct strategy

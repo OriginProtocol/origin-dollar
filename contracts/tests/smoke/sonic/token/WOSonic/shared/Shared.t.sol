@@ -3,10 +3,10 @@ pragma solidity ^0.8.0;
 
 import {Smoke_OSonic_Shared_Test} from "tests/smoke/sonic/token/OSonic/shared/Shared.t.sol";
 
-import {WOSonic} from "contracts/token/WOSonic.sol";
+import {IWOToken} from "contracts/interfaces/IWOToken.sol";
 
 abstract contract Smoke_WOSonic_Shared_Test is Smoke_OSonic_Shared_Test {
-    WOSonic internal woSonic;
+    IWOToken internal woSonic;
 
     //////////////////////////////////////////////////////
     /// --- SETUP
@@ -14,7 +14,7 @@ abstract contract Smoke_WOSonic_Shared_Test is Smoke_OSonic_Shared_Test {
 
     function _fetchContracts() internal virtual override {
         super._fetchContracts();
-        woSonic = WOSonic(resolver.resolve("WOSONIC_PROXY"));
+        woSonic = IWOToken(resolver.resolve("WOSONIC_PROXY"));
     }
 
     function _labelContracts() internal virtual override {

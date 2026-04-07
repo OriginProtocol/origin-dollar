@@ -2,8 +2,7 @@
 pragma solidity ^0.8.0;
 
 import {Fork_SwapXPoolBooster_Shared_Test} from "tests/fork/sonic/poolBooster/SwapXPoolBooster/shared/Shared.t.sol";
-import {PoolBoosterSwapxDouble} from "contracts/poolBooster/PoolBoosterSwapxDouble.sol";
-import {IPoolBoostCentralRegistry} from "contracts/interfaces/poolBooster/IPoolBoostCentralRegistry.sol";
+import {IPoolBoosterSwapxDouble} from "contracts/interfaces/poolBooster/IPoolBoosterSwapxDouble.sol";
 import {Sonic} from "tests/utils/Addresses.sol";
 
 contract Fork_Concrete_SwapXPoolBooster_RemovePoolBooster_Test is Fork_SwapXPoolBooster_Shared_Test {
@@ -11,7 +10,7 @@ contract Fork_Concrete_SwapXPoolBooster_RemovePoolBooster_Test is Fork_SwapXPool
 
     function test_removePoolBooster() public {
         // Create first booster
-        PoolBoosterSwapxDouble booster1 = _createDoubleBooster(
+        IPoolBoosterSwapxDouble booster1 = _createDoubleBooster(
             Sonic.SwapXOsUSDCe_extBribeOS, Sonic.SwapXOsUSDCe_extBribeUSDC, Sonic.SwapXOsUSDCe_pool, 0.7e18, 1
         );
 

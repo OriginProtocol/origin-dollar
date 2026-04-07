@@ -2,9 +2,7 @@
 pragma solidity ^0.8.0;
 
 import {Unit_Curve_Shared_Test} from "tests/unit/poolBooster/Curve/shared/Shared.t.sol";
-import {CurvePoolBooster} from "contracts/poolBooster/curve/CurvePoolBooster.sol";
-import {CurvePoolBoosterPlain} from "contracts/poolBooster/curve/CurvePoolBoosterPlain.sol";
-import {ICampaignRemoteManager} from "contracts/interfaces/ICampaignRemoteManager.sol";
+import {ICurvePoolBooster} from "contracts/interfaces/poolBooster/ICurvePoolBooster.sol";
 
 contract Unit_Concrete_CurvePoolBooster_SetFeeCollector_Test is Unit_Curve_Shared_Test {
     function test_setFeeCollector() public {
@@ -16,7 +14,7 @@ contract Unit_Concrete_CurvePoolBooster_SetFeeCollector_Test is Unit_Curve_Share
 
     function test_setFeeCollector_event() public {
         vm.expectEmit(true, true, true, true);
-        emit CurvePoolBooster.FeeCollectorUpdated(alice);
+        emit ICurvePoolBooster.FeeCollectorUpdated(alice);
 
         vm.prank(governor);
         curvePoolBoosterPlain.setFeeCollector(alice);

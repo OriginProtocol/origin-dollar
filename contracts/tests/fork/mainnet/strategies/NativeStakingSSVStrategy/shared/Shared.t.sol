@@ -5,16 +5,14 @@ import {BaseFork} from "tests/fork/BaseFork.t.sol";
 import {Mainnet} from "tests/utils/Addresses.sol";
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {NativeStakingSSVStrategy} from "contracts/strategies/NativeStaking/NativeStakingSSVStrategy.sol";
-import {ValidatorStakeData} from "contracts/strategies/NativeStaking/ValidatorRegistrator.sol";
-import {ValidatorAccountant} from "contracts/strategies/NativeStaking/ValidatorAccountant.sol";
-import {ValidatorRegistrator} from "contracts/strategies/NativeStaking/ValidatorRegistrator.sol";
-import {FeeAccumulator} from "contracts/strategies/NativeStaking/FeeAccumulator.sol";
-import {OETH} from "contracts/token/OETH.sol";
-import {OETHVault} from "contracts/vault/OETHVault.sol";
-import {ISSVNetwork, Cluster} from "contracts/interfaces/ISSVNetwork.sol";
-import {OETHHarvesterSimple} from "contracts/harvest/OETHHarvesterSimple.sol";
+import {IOToken} from "contracts/interfaces/IOToken.sol";
 import {IVault} from "contracts/interfaces/IVault.sol";
+import {ISSVNetwork, Cluster} from "contracts/interfaces/ISSVNetwork.sol";
+import {IOETHHarvesterSimple} from "contracts/interfaces/harvest/IOETHHarvesterSimple.sol";
+import {
+    INativeStakingSSVStrategy,
+    ValidatorStakeData
+} from "contracts/interfaces/strategies/INativeStakingSSVStrategy.sol";
 
 import {Vm} from "forge-std/Vm.sol";
 
@@ -23,13 +21,13 @@ abstract contract Fork_NativeStakingSSVStrategy_Shared_Test is BaseFork {
     /// --- CONTRACTS
     //////////////////////////////////////////////////////
 
-    OETH internal oeth;
-    OETHVault internal oethVault;
-    NativeStakingSSVStrategy internal nativeStakingSSVStrategy;
-    FeeAccumulator internal nativeStakingFeeAccumulator;
+    IOToken internal oeth;
+    IVault internal oethVault;
+    INativeStakingSSVStrategy internal nativeStakingSSVStrategy;
+    address internal nativeStakingFeeAccumulator;
     ISSVNetwork internal ssvNetwork;
     IERC20 internal ssv;
-    OETHHarvesterSimple internal harvester;
+    IOETHHarvesterSimple internal harvester;
 
     //////////////////////////////////////////////////////
     /// --- ADDRESSES
@@ -85,21 +83,21 @@ abstract contract Fork_NativeStakingSSVStrategy_Shared_Test is BaseFork {
 
     function _loadForkContracts() internal {
         // Strategy 2
-        nativeStakingSSVStrategy = NativeStakingSSVStrategy(payable(Mainnet.NativeStakingSSVStrategy2Proxy));
-        nativeStakingFeeAccumulator = FeeAccumulator(payable(nativeStakingSSVStrategy.FEE_ACCUMULATOR_ADDRESS()));
-        oeth = OETH(Mainnet.OETHProxy);
-        oethVault = OETHVault(payable(Mainnet.OETHVaultProxy));
+        nativeStakingSSVStrategy = INativeStakingSSVStrategy(payable(Mainnet.NativeStakingSSVStrategy2Proxy));
+        nativeStakingFeeAccumulator = nativeStakingSSVStrategy.FEE_ACCUMULATOR_ADDRESS();
+        oeth = IOToken(Mainnet.OETHProxy);
+        oethVault = IVault(payable(Mainnet.OETHVaultProxy));
 
         ssvNetwork = ISSVNetwork(Mainnet.SSVNetwork);
         ssv = IERC20(Mainnet.SSV);
         weth = IERC20(Mainnet.WETH);
-        harvester = OETHHarvesterSimple(Mainnet.OETHHarvesterSimpleProxy);
+        harvester = IOETHHarvesterSimple(Mainnet.OETHHarvesterSimpleProxy);
 
         // Read on-chain addresses
         validatorRegistratorAddr = nativeStakingSSVStrategy.validatorRegistrator();
         stakingMonitorAddr = nativeStakingSSVStrategy.stakingMonitor();
         strategistAddr = IVault(address(oethVault)).strategistAddr();
-        feeAccumulatorAddr = address(nativeStakingFeeAccumulator);
+        feeAccumulatorAddr = nativeStakingFeeAccumulator;
     }
 
     function _fundTestAccounts() internal {
@@ -108,7 +106,7 @@ abstract contract Fork_NativeStakingSSVStrategy_Shared_Test is BaseFork {
 
     function _labelContracts() internal {
         vm.label(address(nativeStakingSSVStrategy), "NativeStakingSSVStrategy2");
-        vm.label(address(nativeStakingFeeAccumulator), "FeeAccumulator");
+        vm.label(nativeStakingFeeAccumulator, "FeeAccumulator");
         vm.label(address(oeth), "OETH");
         vm.label(address(oethVault), "OETHVault");
         vm.label(address(ssvNetwork), "SSVNetwork");
@@ -130,8 +128,8 @@ abstract contract Fork_NativeStakingSSVStrategy_Shared_Test is BaseFork {
         // Vault needs: assetBalance > outstandingWithdrawals + amount
         // (the check is amount <= assetBalance - outstandingWithdrawals)
         uint256 vaultWethBalance = weth.balanceOf(address(oethVault));
-        (uint128 queued,, uint128 claimed,) = oethVault.withdrawalQueueMetadata();
-        uint256 outstandingWithdrawals = uint256(queued) - uint256(claimed);
+        uint256 outstandingWithdrawals =
+            uint256(oethVault.withdrawalQueueMetadata().queued) - uint256(oethVault.withdrawalQueueMetadata().claimed);
         // Need vaultWethBalance + transferAmount > outstandingWithdrawals + amount
         uint256 needed = outstandingWithdrawals + amount;
         if (vaultWethBalance < needed + 1) {

@@ -6,8 +6,7 @@ import {Mainnet} from "tests/utils/Addresses.sol";
 import {
     Fork_OETHSupernovaAMOStrategy_Shared_Test
 } from "tests/fork/mainnet/strategies/OETHSupernovaAMOStrategy/shared/Shared.t.sol";
-import {InitializableAbstractStrategy} from "contracts/utils/InitializableAbstractStrategy.sol";
-import {IGauge} from "contracts/interfaces/algebra/IAlgebraGauge.sol";
+import {IOETHSupernovaAMOStrategy} from "contracts/interfaces/strategies/IOETHSupernovaAMOStrategy.sol";
 
 contract Fork_Concrete_OETHSupernovaAMOStrategy_Withdraw_Test is Fork_OETHSupernovaAMOStrategy_Shared_Test {
     uint256 internal constant DEPOSIT_AMOUNT = 100_000 ether;
@@ -114,7 +113,7 @@ contract Fork_Concrete_OETHSupernovaAMOStrategy_Withdraw_Test is Fork_OETHSupern
         uint256 checkBalBefore = oethSupernovaAMOStrategy.checkBalance(Mainnet.WETH);
 
         vm.expectEmit(address(oethSupernovaAMOStrategy));
-        emit InitializableAbstractStrategy.Withdrawal(Mainnet.WETH, address(supernovaPool), withdrawAmount);
+        emit IOETHSupernovaAMOStrategy.Withdrawal(Mainnet.WETH, address(supernovaPool), withdrawAmount);
 
         vm.prank(address(oethVault));
         oethSupernovaAMOStrategy.withdraw(address(oethVault), Mainnet.WETH, withdrawAmount);

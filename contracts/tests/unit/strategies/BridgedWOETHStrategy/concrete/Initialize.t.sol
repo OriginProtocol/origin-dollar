@@ -2,8 +2,7 @@
 pragma solidity ^0.8.0;
 
 import {Unit_BridgedWOETHStrategy_Shared_Test} from "tests/unit/strategies/BridgedWOETHStrategy/shared/Shared.t.sol";
-import {BridgedWOETHStrategy} from "contracts/strategies/BridgedWOETHStrategy.sol";
-import {InitializableAbstractStrategy} from "contracts/utils/InitializableAbstractStrategy.sol";
+import {IBridgedWOETHStrategy} from "contracts/interfaces/strategies/IBridgedWOETHStrategy.sol";
 
 contract Unit_Concrete_BridgedWOETHStrategy_Initialize_Test is Unit_BridgedWOETHStrategy_Shared_Test {
     function test_initialize_setsMaxPriceDiffBps() public view {
@@ -19,19 +18,18 @@ contract Unit_Concrete_BridgedWOETHStrategy_Initialize_Test is Unit_BridgedWOETH
 
     function test_initialize_emitsMaxPriceDiffBpsUpdated() public {
         // Deploy a fresh strategy to test event emission
-        BridgedWOETHStrategy freshStrategy = new BridgedWOETHStrategy(
-            InitializableAbstractStrategy.BaseStrategyConfig({
-                platformAddress: address(0), vaultAddress: address(oethVault)
-            }),
-            address(mockWeth),
-            address(bridgedWOETH),
-            address(oeth),
-            mockOracle
+        IBridgedWOETHStrategy freshStrategy = IBridgedWOETHStrategy(
+            vm.deployCode(
+                "contracts/strategies/BridgedWOETHStrategy.sol:BridgedWOETHStrategy",
+                abi.encode(
+                    address(0), address(oethVault), address(mockWeth), address(bridgedWOETH), address(oeth), mockOracle
+                )
+            )
         );
         vm.store(address(freshStrategy), GOVERNOR_SLOT, bytes32(uint256(uint160(governor))));
 
         vm.expectEmit(true, true, true, true);
-        emit BridgedWOETHStrategy.MaxPriceDiffBpsUpdated(0, 200);
+        emit IBridgedWOETHStrategy.MaxPriceDiffBpsUpdated(0, 200);
 
         vm.prank(governor);
         freshStrategy.initialize(200);
@@ -44,14 +42,13 @@ contract Unit_Concrete_BridgedWOETHStrategy_Initialize_Test is Unit_BridgedWOETH
     }
 
     function test_initialize_RevertWhen_calledByNonGovernor() public {
-        BridgedWOETHStrategy freshStrategy = new BridgedWOETHStrategy(
-            InitializableAbstractStrategy.BaseStrategyConfig({
-                platformAddress: address(0), vaultAddress: address(oethVault)
-            }),
-            address(mockWeth),
-            address(bridgedWOETH),
-            address(oeth),
-            mockOracle
+        IBridgedWOETHStrategy freshStrategy = IBridgedWOETHStrategy(
+            vm.deployCode(
+                "contracts/strategies/BridgedWOETHStrategy.sol:BridgedWOETHStrategy",
+                abi.encode(
+                    address(0), address(oethVault), address(mockWeth), address(bridgedWOETH), address(oeth), mockOracle
+                )
+            )
         );
         vm.store(address(freshStrategy), GOVERNOR_SLOT, bytes32(uint256(uint160(governor))));
 
@@ -61,14 +58,13 @@ contract Unit_Concrete_BridgedWOETHStrategy_Initialize_Test is Unit_BridgedWOETH
     }
 
     function test_initialize_RevertWhen_zeroBps() public {
-        BridgedWOETHStrategy freshStrategy = new BridgedWOETHStrategy(
-            InitializableAbstractStrategy.BaseStrategyConfig({
-                platformAddress: address(0), vaultAddress: address(oethVault)
-            }),
-            address(mockWeth),
-            address(bridgedWOETH),
-            address(oeth),
-            mockOracle
+        IBridgedWOETHStrategy freshStrategy = IBridgedWOETHStrategy(
+            vm.deployCode(
+                "contracts/strategies/BridgedWOETHStrategy.sol:BridgedWOETHStrategy",
+                abi.encode(
+                    address(0), address(oethVault), address(mockWeth), address(bridgedWOETH), address(oeth), mockOracle
+                )
+            )
         );
         vm.store(address(freshStrategy), GOVERNOR_SLOT, bytes32(uint256(uint160(governor))));
 
@@ -78,14 +74,13 @@ contract Unit_Concrete_BridgedWOETHStrategy_Initialize_Test is Unit_BridgedWOETH
     }
 
     function test_initialize_RevertWhen_bpsExceeds10000() public {
-        BridgedWOETHStrategy freshStrategy = new BridgedWOETHStrategy(
-            InitializableAbstractStrategy.BaseStrategyConfig({
-                platformAddress: address(0), vaultAddress: address(oethVault)
-            }),
-            address(mockWeth),
-            address(bridgedWOETH),
-            address(oeth),
-            mockOracle
+        IBridgedWOETHStrategy freshStrategy = IBridgedWOETHStrategy(
+            vm.deployCode(
+                "contracts/strategies/BridgedWOETHStrategy.sol:BridgedWOETHStrategy",
+                abi.encode(
+                    address(0), address(oethVault), address(mockWeth), address(bridgedWOETH), address(oeth), mockOracle
+                )
+            )
         );
         vm.store(address(freshStrategy), GOVERNOR_SLOT, bytes32(uint256(uint160(governor))));
 

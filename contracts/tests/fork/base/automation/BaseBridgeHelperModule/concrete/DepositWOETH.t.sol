@@ -4,7 +4,6 @@ pragma solidity ^0.8.0;
 import {
     Fork_BaseBridgeHelperModule_Shared_Test
 } from "tests/fork/base/automation/BaseBridgeHelperModule/shared/Shared.t.sol";
-import {VaultStorage} from "contracts/vault/VaultStorage.sol";
 
 contract Fork_Concrete_BaseBridgeHelperModule_DepositWOETH_Test is Fork_BaseBridgeHelperModule_Shared_Test {
     function test_depositWOETHAndAsyncWithdraw() public {
@@ -39,8 +38,7 @@ contract Fork_Concrete_BaseBridgeHelperModule_DepositWOETH_Test is Fork_BaseBrid
         uint256 woethStrategyValueBefore = bridgedWOETHStrategy.checkBalance(address(weth));
 
         // Get next withdrawal index
-        VaultStorage.WithdrawalQueueMetadata memory queueMeta = vault.withdrawalQueueMetadata();
-        uint256 nextWithdrawalIndex = uint256(queueMeta.nextWithdrawalIndex);
+        uint256 nextWithdrawalIndex = uint256(vault.withdrawalQueueMetadata().nextWithdrawalIndex);
 
         // Deposit wOETH and request async withdrawal
         vm.prank(safeSigner);

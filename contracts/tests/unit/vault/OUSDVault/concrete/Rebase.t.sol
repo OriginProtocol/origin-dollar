@@ -1,9 +1,14 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
+// --- Test base
 import {Unit_Shared_Test} from "tests/unit/vault/OUSDVault/shared/Shared.t.sol";
-import {VaultStorage} from "contracts/vault/VaultStorage.sol";
+
+// --- External libraries
 import {MockERC20} from "@solmate/test/utils/mocks/MockERC20.sol";
+
+// --- Project imports
+import {IVault} from "contracts/interfaces/IVault.sol";
 
 contract Unit_Concrete_OUSDVault_Rebase_Test is Unit_Shared_Test {
     //////////////////////////////////////////////////////
@@ -183,7 +188,7 @@ contract Unit_Concrete_OUSDVault_Rebase_Test is Unit_Shared_Test {
 
         // With no trustee, fee = 0
         vm.expectEmit(true, true, true, false);
-        emit VaultStorage.YieldDistribution(address(0), 2e18, 0);
+        emit IVault.YieldDistribution(address(0), 2e18, 0);
         ousdVault.rebase();
     }
 

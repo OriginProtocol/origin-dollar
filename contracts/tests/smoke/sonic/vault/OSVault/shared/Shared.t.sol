@@ -4,16 +4,17 @@ pragma solidity ^0.8.0;
 import {BaseSmoke} from "tests/smoke/BaseSmoke.t.sol";
 import {Sonic} from "tests/utils/Addresses.sol";
 
-import {OSonic} from "contracts/token/OSonic.sol";
-import {OSVault} from "contracts/vault/OSVault.sol";
+import {IOToken} from "contracts/interfaces/IOToken.sol";
+import {IVault} from "contracts/interfaces/IVault.sol";
 import {IStrategy} from "contracts/interfaces/IStrategy.sol";
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 abstract contract Smoke_OSVault_Shared_Test is BaseSmoke {
-    OSonic internal oSonic;
-    OSVault internal oSonicVault;
+    IOToken internal oSonic;
+    IVault internal oSonicVault;
     IStrategy internal sonicSwapXAMOStrategy;
+    address internal sonicStakingStrategy;
     IERC20 internal wrappedSonic;
 
     //////////////////////////////////////////////////////
@@ -32,20 +33,22 @@ abstract contract Smoke_OSVault_Shared_Test is BaseSmoke {
     function _fetchContracts() internal virtual {
         require(address(resolver).code.length > 0, "Resolver not initialized on fork");
 
-        oSonic = OSonic(resolver.resolve("OSONIC_PROXY"));
-        oSonicVault = OSVault(payable(resolver.resolve("OSONIC_VAULT_PROXY")));
+        oSonic = IOToken(resolver.resolve("OSONIC_PROXY"));
+        oSonicVault = IVault(resolver.resolve("OSONIC_VAULT_PROXY"));
+        sonicStakingStrategy = resolver.resolve("SONIC_STAKING_STRATEGY");
         sonicSwapXAMOStrategy = IStrategy(resolver.resolve("SONIC_SWAPX_AMO_STRATEGY_PROXY"));
         wrappedSonic = IERC20(Sonic.wS);
     }
 
     function _resolveActors() internal virtual {
-        governor = oSonic.governor();
+        governor = oSonicVault.governor();
         strategist = oSonicVault.strategistAddr();
     }
 
     function _labelContracts() internal virtual {
         vm.label(address(oSonic), "OSonic");
         vm.label(address(oSonicVault), "OSVault");
+        vm.label(sonicStakingStrategy, "SonicStakingStrategy");
         vm.label(address(sonicSwapXAMOStrategy), "SonicSwapXAMOStrategy");
         vm.label(address(wrappedSonic), "wS");
     }
@@ -73,7 +76,8 @@ abstract contract Smoke_OSVault_Shared_Test is BaseSmoke {
 
     /// @dev Ensure the vault has enough wS liquidity to cover the withdrawal queue plus an extra amount.
     function _ensureVaultLiquidity(uint256 extraWS) internal {
-        (uint256 queued, uint256 claimable,,) = oSonicVault.withdrawalQueueMetadata();
+        uint256 queued = oSonicVault.withdrawalQueueMetadata().queued;
+        uint256 claimable = oSonicVault.withdrawalQueueMetadata().claimable;
         uint256 shortfall = queued > claimable ? queued - claimable : 0;
         uint256 needed = shortfall + extraWS;
         deal(address(wrappedSonic), address(oSonicVault), wrappedSonic.balanceOf(address(oSonicVault)) + needed);

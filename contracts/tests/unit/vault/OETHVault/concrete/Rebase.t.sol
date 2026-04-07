@@ -2,9 +2,7 @@
 pragma solidity ^0.8.0;
 
 import {Unit_OETHVault_Shared_Test} from "tests/unit/vault/OETHVault/shared/Shared.t.sol";
-import {VaultStorage} from "contracts/vault/VaultStorage.sol";
-import {MockERC20} from "@solmate/test/utils/mocks/MockERC20.sol";
-import {MockNonRebasing} from "contracts/mocks/MockNonRebasing.sol";
+import {IVault} from "contracts/interfaces/IVault.sol";
 
 contract Unit_Concrete_OETHVault_Rebase_Test is Unit_OETHVault_Shared_Test {
     //////////////////////////////////////////////////////
@@ -32,7 +30,7 @@ contract Unit_Concrete_OETHVault_Rebase_Test is Unit_OETHVault_Shared_Test {
 
         // Should emit YieldDistribution event
         vm.expectEmit(false, false, false, false);
-        emit VaultStorage.YieldDistribution(address(0), 0, 0);
+        emit IVault.YieldDistribution(address(0), 0, 0);
         oethVault.rebase();
     }
 
@@ -102,7 +100,7 @@ contract Unit_Concrete_OETHVault_Rebase_Test is Unit_OETHVault_Shared_Test {
 
         // Should emit YieldDistribution with trustee address and non-zero fee
         vm.expectEmit(true, false, false, false);
-        emit VaultStorage.YieldDistribution(alice, 0, 0);
+        emit IVault.YieldDistribution(alice, 0, 0);
         oethVault.rebase();
     }
 

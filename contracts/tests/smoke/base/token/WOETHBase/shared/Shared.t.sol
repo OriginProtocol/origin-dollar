@@ -3,10 +3,10 @@ pragma solidity ^0.8.0;
 
 import {Smoke_OETHBase_Shared_Test} from "tests/smoke/base/token/OETHBase/shared/Shared.t.sol";
 
-import {WOETHBase} from "contracts/token/WOETHBase.sol";
+import {IWOToken} from "contracts/interfaces/IWOToken.sol";
 
 abstract contract Smoke_WOETHBase_Shared_Test is Smoke_OETHBase_Shared_Test {
-    WOETHBase internal woethBase;
+    IWOToken internal woethBase;
 
     //////////////////////////////////////////////////////
     /// --- SETUP
@@ -14,7 +14,7 @@ abstract contract Smoke_WOETHBase_Shared_Test is Smoke_OETHBase_Shared_Test {
 
     function _fetchContracts() internal virtual override {
         super._fetchContracts();
-        woethBase = WOETHBase(resolver.resolve("WOETHBASE_PROXY"));
+        woethBase = IWOToken(resolver.resolve("WOETHBASE_PROXY"));
     }
 
     function _labelContracts() internal virtual override {

@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 import {Unit_BridgedWOETHStrategy_Shared_Test} from "tests/unit/strategies/BridgedWOETHStrategy/shared/Shared.t.sol";
-import {InitializableAbstractStrategy} from "contracts/utils/InitializableAbstractStrategy.sol";
+import {IBridgedWOETHStrategy} from "contracts/interfaces/strategies/IBridgedWOETHStrategy.sol";
 
 contract Unit_Concrete_BridgedWOETHStrategy_DepositBridgedWOETH_Test is Unit_BridgedWOETHStrategy_Shared_Test {
     function test_depositBridgedWOETH_mintsAndTransfers() public {
@@ -29,7 +29,7 @@ contract Unit_Concrete_BridgedWOETHStrategy_DepositBridgedWOETH_Test is Unit_Bri
         _setupDeposit(governor, woethAmount, oraclePrice);
 
         vm.expectEmit(true, true, true, true);
-        emit InitializableAbstractStrategy.Deposit(address(mockWeth), address(bridgedWOETH), expectedOeth);
+        emit IBridgedWOETHStrategy.Deposit(address(mockWeth), address(bridgedWOETH), expectedOeth);
 
         vm.prank(governor);
         bridgedWOETHStrategy.depositBridgedWOETH(woethAmount);

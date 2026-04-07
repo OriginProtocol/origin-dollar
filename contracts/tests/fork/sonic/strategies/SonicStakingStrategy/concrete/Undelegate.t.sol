@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import {SonicValidatorDelegator} from "contracts/strategies/sonic/SonicValidatorDelegator.sol";
+import {ISonicStakingStrategy} from "contracts/interfaces/strategies/ISonicStakingStrategy.sol";
 
 import {
     Fork_SonicStakingStrategy_Shared_Test
@@ -22,7 +22,7 @@ contract Fork_Concrete_SonicStakingStrategy_Undelegate_Test is Fork_SonicStaking
         uint256 stakedAmount = sfc.getStake(address(sonicStakingStrategy), defaultValidatorId);
 
         vm.expectEmit(true, true, true, true, address(sonicStakingStrategy));
-        emit SonicValidatorDelegator.Undelegated(expectedWithdrawId, defaultValidatorId, stakedAmount);
+        emit ISonicStakingStrategy.Undelegated(expectedWithdrawId, defaultValidatorId, stakedAmount);
 
         vm.prank(timelockAddr);
         sonicStakingStrategy.unsupportValidator(defaultValidatorId);

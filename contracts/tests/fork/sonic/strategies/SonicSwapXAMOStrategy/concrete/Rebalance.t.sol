@@ -6,7 +6,6 @@ import {Sonic} from "tests/utils/Addresses.sol";
 import {
     Fork_SonicSwapXAMOStrategy_Shared_Test
 } from "tests/fork/sonic/strategies/SonicSwapXAMOStrategy/shared/Shared.t.sol";
-import {SonicSwapXAMOStrategy} from "contracts/strategies/sonic/SonicSwapXAMOStrategy.sol";
 
 contract Fork_Concrete_SonicSwapXAMOStrategy_Rebalance_Test is Fork_SonicSwapXAMOStrategy_Shared_Test {
     //////////////////////////////////////////////////////

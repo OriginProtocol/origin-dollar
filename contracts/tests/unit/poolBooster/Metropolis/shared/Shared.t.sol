@@ -5,22 +5,18 @@ import {Base} from "tests/Base.t.sol";
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {MockERC20} from "@solmate/test/utils/mocks/MockERC20.sol";
-import {IPoolBoostCentralRegistry} from "contracts/interfaces/poolBooster/IPoolBoostCentralRegistry.sol";
-import {IPoolBooster} from "contracts/interfaces/poolBooster/IPoolBooster.sol";
-
-import {OSonic} from "contracts/token/OSonic.sol";
-import {PoolBoostCentralRegistry} from "contracts/poolBooster/PoolBoostCentralRegistry.sol";
-import {PoolBoosterFactoryMetropolis} from "contracts/poolBooster/PoolBoosterFactoryMetropolis.sol";
-import {PoolBoosterMetropolis} from "contracts/poolBooster/PoolBoosterMetropolis.sol";
+import {IPoolBoostCentralRegistryFull} from "contracts/interfaces/poolBooster/IPoolBoostCentralRegistryFull.sol";
+import {IPoolBoosterFactoryMetropolis} from "contracts/interfaces/poolBooster/IPoolBoosterFactoryMetropolis.sol";
+import {IPoolBoosterMetropolis} from "contracts/interfaces/poolBooster/IPoolBoosterMetropolis.sol";
 
 abstract contract Unit_Metropolis_Shared_Test is Base {
     //////////////////////////////////////////////////////
     /// --- CONTRACTS & MOCKS
     //////////////////////////////////////////////////////
-    OSonic internal oSonic;
-    PoolBoostCentralRegistry internal centralRegistry;
-    PoolBoosterFactoryMetropolis internal factoryMetropolis;
-    PoolBoosterMetropolis internal boosterMetropolis;
+    IERC20 internal oSonic;
+    IPoolBoostCentralRegistryFull internal centralRegistry;
+    IPoolBoosterFactoryMetropolis internal factoryMetropolis;
+    IPoolBoosterMetropolis internal boosterMetropolis;
 
     //////////////////////////////////////////////////////
     /// --- CONSTANTS
@@ -62,22 +58,32 @@ abstract contract Unit_Metropolis_Shared_Test is Base {
     }
 
     function _deployOSonic() internal {
-        oSonic = OSonic(address(new MockERC20("Origin Sonic", "OS", 18)));
+        oSonic = IERC20(address(new MockERC20("Origin Sonic", "OS", 18)));
     }
 
     function _deployCentralRegistry() internal {
-        centralRegistry = new PoolBoostCentralRegistry();
+        centralRegistry = IPoolBoostCentralRegistryFull(
+            vm.deployCode("contracts/poolBooster/PoolBoostCentralRegistry.sol:PoolBoostCentralRegistry")
+        );
         _setGovernorViaSlot(address(centralRegistry), governor);
     }
 
     function _deployFactory() internal {
-        factoryMetropolis = new PoolBoosterFactoryMetropolis(
-            address(oSonic), governor, address(centralRegistry), mockRewardFactory, mockVoter
+        factoryMetropolis = IPoolBoosterFactoryMetropolis(
+            vm.deployCode(
+                "contracts/poolBooster/PoolBoosterFactoryMetropolis.sol:PoolBoosterFactoryMetropolis",
+                abi.encode(address(oSonic), governor, address(centralRegistry), mockRewardFactory, mockVoter)
+            )
         );
     }
 
     function _deployStandaloneBooster() internal {
-        boosterMetropolis = new PoolBoosterMetropolis(address(oSonic), mockRewardFactory, mockAmmPool, mockVoter);
+        boosterMetropolis = IPoolBoosterMetropolis(
+            vm.deployCode(
+                "contracts/poolBooster/PoolBoosterMetropolis.sol:PoolBoosterMetropolis",
+                abi.encode(address(oSonic), mockRewardFactory, mockAmmPool, mockVoter)
+            )
+        );
     }
 
     function _approveFactoryOnRegistry() internal {

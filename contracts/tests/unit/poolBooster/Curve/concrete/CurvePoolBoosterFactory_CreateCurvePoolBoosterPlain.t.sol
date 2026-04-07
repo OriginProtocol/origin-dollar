@@ -2,8 +2,7 @@
 pragma solidity ^0.8.0;
 
 import {Unit_Curve_Shared_Test} from "tests/unit/poolBooster/Curve/shared/Shared.t.sol";
-import {CurvePoolBoosterFactory} from "contracts/poolBooster/curve/CurvePoolBoosterFactory.sol";
-import {CurvePoolBoosterPlain} from "contracts/poolBooster/curve/CurvePoolBoosterPlain.sol";
+import {ICurvePoolBoosterFactory} from "contracts/interfaces/poolBooster/ICurvePoolBoosterFactory.sol";
 import {IPoolBoostCentralRegistry} from "contracts/interfaces/poolBooster/IPoolBoostCentralRegistry.sol";
 
 contract Unit_Concrete_CurvePoolBoosterFactory_CreateCurvePoolBoosterPlain_Test is Unit_Curve_Shared_Test {
@@ -149,7 +148,7 @@ contract Unit_Concrete_CurvePoolBoosterFactory_CreateCurvePoolBoosterPlain_Test 
     }
 
     function test_createCurvePoolBoosterPlain_RevertWhen_governorNotSet() public {
-        CurvePoolBoosterFactory freshFactory = new CurvePoolBoosterFactory();
+        ICurvePoolBoosterFactory freshFactory = _deployFreshCurvePoolBoosterFactory();
         freshFactory.initialize(governor, strategist, address(centralRegistry));
 
         vm.store(address(freshFactory), GOVERNOR_SLOT, bytes32(0));
@@ -170,7 +169,7 @@ contract Unit_Concrete_CurvePoolBoosterFactory_CreateCurvePoolBoosterPlain_Test 
     }
 
     function test_createCurvePoolBoosterPlain_RevertWhen_strategistNotSet() public {
-        CurvePoolBoosterFactory freshFactory = new CurvePoolBoosterFactory();
+        ICurvePoolBoosterFactory freshFactory = _deployFreshCurvePoolBoosterFactory();
         freshFactory.initialize(governor, address(0), address(centralRegistry));
 
         bytes32 salt = freshFactory.encodeSaltForCreateX(1);

@@ -1,10 +1,15 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
+// --- Test base
 import {Unit_Shared_Test} from "tests/unit/vault/OUSDVault/shared/Shared.t.sol";
-import {VaultStorage} from "contracts/vault/VaultStorage.sol";
-import {MockStrategy} from "contracts/mocks/MockStrategy.sol";
+
+// --- External libraries
 import {MockERC20} from "@solmate/test/utils/mocks/MockERC20.sol";
+
+// --- Project imports
+import {IVault} from "contracts/interfaces/IVault.sol";
+import {MockStrategy} from "contracts/mocks/MockStrategy.sol";
 
 contract Unit_Concrete_OUSDVault_Withdraw_Test is Unit_Shared_Test {
     //////////////////////////////////////////////////////
@@ -33,7 +38,7 @@ contract Unit_Concrete_OUSDVault_Withdraw_Test is Unit_Shared_Test {
         // queued = 200e6 (from drain) + 5e6 = 205e6
         vm.prank(daniel);
         vm.expectEmit(true, true, true, true);
-        emit VaultStorage.WithdrawalRequested(daniel, 2, 5e18, 205e6);
+        emit IVault.WithdrawalRequested(daniel, 2, 5e18, 205e6);
         ousdVault.requestWithdrawal(5e18);
     }
 
@@ -107,7 +112,7 @@ contract Unit_Concrete_OUSDVault_Withdraw_Test is Unit_Shared_Test {
         vm.prank(josh);
         ousdVault.addWithdrawalQueueLiquidity();
 
-        (, uint128 claimable,,) = ousdVault.withdrawalQueueMetadata();
+        uint128 claimable = ousdVault.withdrawalQueueMetadata().claimable;
         // 200e6 (from initial drain claims) + 5e6 + 18e6 = 223e6
         assertEq(claimable, 223e6, "Claimable should cover all requests");
     }
@@ -119,7 +124,7 @@ contract Unit_Concrete_OUSDVault_Withdraw_Test is Unit_Shared_Test {
         ousdVault.requestWithdrawal(5e18);
 
         vm.expectEmit(true, true, true, true);
-        emit VaultStorage.WithdrawalClaimable(205e6, 5e6);
+        emit IVault.WithdrawalClaimable(205e6, 5e6);
         ousdVault.addWithdrawalQueueLiquidity();
     }
 
@@ -128,10 +133,10 @@ contract Unit_Concrete_OUSDVault_Withdraw_Test is Unit_Shared_Test {
 
         // No pending withdrawals beyond what's already claimable
         ousdVault.addWithdrawalQueueLiquidity();
-        (, uint128 claimableBefore,,) = ousdVault.withdrawalQueueMetadata();
+        uint128 claimableBefore = ousdVault.withdrawalQueueMetadata().claimable;
 
         ousdVault.addWithdrawalQueueLiquidity();
-        (, uint128 claimableAfter,,) = ousdVault.withdrawalQueueMetadata();
+        uint128 claimableAfter = ousdVault.withdrawalQueueMetadata().claimable;
 
         assertEq(claimableBefore, claimableAfter, "Should not change");
     }
@@ -170,7 +175,7 @@ contract Unit_Concrete_OUSDVault_Withdraw_Test is Unit_Shared_Test {
 
         vm.prank(daniel);
         vm.expectEmit(true, true, true, true);
-        emit VaultStorage.WithdrawalClaimed(daniel, 2, 5e18);
+        emit IVault.WithdrawalClaimed(daniel, 2, 5e18);
         ousdVault.claimWithdrawal(2);
     }
 
@@ -262,7 +267,7 @@ contract Unit_Concrete_OUSDVault_Withdraw_Test is Unit_Shared_Test {
 
         vm.prank(matt);
         vm.expectEmit(true, true, true, true);
-        emit VaultStorage.WithdrawalClaimed(matt, 2, 30e18);
+        emit IVault.WithdrawalClaimed(matt, 2, 30e18);
         ousdVault.claimWithdrawal(2);
 
         // Total supply and value should not change after claim (OUSD already burned during request)
@@ -985,7 +990,10 @@ contract Unit_Concrete_OUSDVault_Withdraw_Test is Unit_Shared_Test {
         s.userOusd = ousd.balanceOf(user);
         s.userUsdc = usdc.balanceOf(user);
         s.vaultUsdc = usdc.balanceOf(address(ousdVault));
-        (s.queued, s.claimable, s.claimed, s.nextWithdrawalIndex) = ousdVault.withdrawalQueueMetadata();
+        s.queued = ousdVault.withdrawalQueueMetadata().queued;
+        s.claimable = ousdVault.withdrawalQueueMetadata().claimable;
+        s.claimed = ousdVault.withdrawalQueueMetadata().claimed;
+        s.nextWithdrawalIndex = ousdVault.withdrawalQueueMetadata().nextWithdrawalIndex;
     }
 
     function _toArray(address a) internal pure returns (address[] memory arr) {

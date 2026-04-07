@@ -2,7 +2,6 @@
 pragma solidity ^0.8.0;
 
 // Foundry
-import {Vm} from "forge-std/Vm.sol";
 import {VmSafe} from "forge-std/Vm.sol";
 
 // Helpers

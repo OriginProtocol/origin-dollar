@@ -3,6 +3,7 @@ pragma solidity ^0.8.0;
 
 import {Smoke_BaseCurveAMOStrategy_Shared_Test} from "../shared/Shared.t.sol";
 import {Base as BaseAddresses} from "tests/utils/Addresses.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 contract Smoke_Concrete_BaseCurveAMOStrategy_ViewFunctions_Test is Smoke_BaseCurveAMOStrategy_Shared_Test {
     // --- checkBalance ---
@@ -70,7 +71,7 @@ contract Smoke_Concrete_BaseCurveAMOStrategy_ViewFunctions_Test is Smoke_BaseCur
     // --- Gauge Staking ---
 
     function test_lpToken_isStakedInGauge() public view {
-        uint256 gaugeBalance = baseCurveAMOStrategy.gauge().balanceOf(address(baseCurveAMOStrategy));
+        uint256 gaugeBalance = IERC20(baseCurveAMOStrategy.gauge()).balanceOf(address(baseCurveAMOStrategy));
         assertGt(gaugeBalance, 0, "LP should be staked in gauge");
     }
 }

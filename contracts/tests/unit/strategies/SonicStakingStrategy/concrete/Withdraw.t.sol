@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 import {Unit_SonicStakingStrategy_Shared_Test} from "tests/unit/strategies/SonicStakingStrategy/shared/Shared.t.sol";
-import {InitializableAbstractStrategy} from "contracts/utils/InitializableAbstractStrategy.sol";
+import {ISonicStakingStrategy} from "contracts/interfaces/strategies/ISonicStakingStrategy.sol";
 
 contract Unit_Concrete_SonicStakingStrategy_Withdraw_Test is Unit_SonicStakingStrategy_Shared_Test {
     function test_withdraw_transfersWSToRecipient() public {
@@ -22,7 +22,7 @@ contract Unit_Concrete_SonicStakingStrategy_Withdraw_Test is Unit_SonicStakingSt
         _mintWS(address(sonicStakingStrategy), amount);
 
         vm.expectEmit(true, true, true, true);
-        emit InitializableAbstractStrategy.Withdrawal(address(mockWrappedSonic), address(0), amount);
+        emit ISonicStakingStrategy.Withdrawal(address(mockWrappedSonic), address(0), amount);
 
         vm.prank(address(oSonicVault));
         sonicStakingStrategy.withdraw(alice, address(mockWrappedSonic), amount);

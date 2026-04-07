@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 import {Unit_Curve_Shared_Test} from "tests/unit/poolBooster/Curve/shared/Shared.t.sol";
-import {CurvePoolBoosterFactory} from "contracts/poolBooster/curve/CurvePoolBoosterFactory.sol";
+import {ICurvePoolBoosterFactory} from "contracts/interfaces/poolBooster/ICurvePoolBoosterFactory.sol";
 
 contract Unit_Concrete_CurvePoolBoosterFactory_ViewFunctions_Test is Unit_Curve_Shared_Test {
     function test_poolBoosterLength() public view {
@@ -10,7 +10,7 @@ contract Unit_Concrete_CurvePoolBoosterFactory_ViewFunctions_Test is Unit_Curve_
     }
 
     function test_getPoolBoosters() public view {
-        CurvePoolBoosterFactory.PoolBoosterEntry[] memory entries = curvePoolBoosterFactory.getPoolBoosters();
+        ICurvePoolBoosterFactory.PoolBoosterEntry[] memory entries = curvePoolBoosterFactory.getPoolBoosters();
         assertEq(entries.length, 0);
     }
 }

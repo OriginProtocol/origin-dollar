@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 import {Unit_BaseCurveAMOStrategy_Shared_Test} from "tests/unit/strategies/BaseCurveAMOStrategy/shared/Shared.t.sol";
-import {InitializableAbstractStrategy} from "contracts/utils/InitializableAbstractStrategy.sol";
+import {IBaseCurveAMOStrategy} from "contracts/interfaces/strategies/IBaseCurveAMOStrategy.sol";
 
 contract Unit_Concrete_BaseCurveAMOStrategy_RemoveAndBurnOTokens_Test is Unit_BaseCurveAMOStrategy_Shared_Test {
     function test_removeAndBurnOTokens_removesAndBurns() public {
@@ -44,7 +44,7 @@ contract Unit_Concrete_BaseCurveAMOStrategy_RemoveAndBurnOTokens_Test is Unit_Ba
         uint256 lpToRemove = curveGauge.balanceOf(address(baseCurveAMOStrategy)) / 4;
 
         vm.expectEmit(true, true, false, false);
-        emit InitializableAbstractStrategy.Withdrawal(address(oeth), address(curvePool), 0);
+        emit IBaseCurveAMOStrategy.Withdrawal(address(oeth), address(curvePool), 0);
 
         vm.prank(strategist);
         baseCurveAMOStrategy.removeAndBurnOTokens(lpToRemove);

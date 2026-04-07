@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import {PoolBoostCentralRegistry} from "contracts/poolBooster/PoolBoostCentralRegistry.sol";
-
 import {
     Smoke_PoolBoostCentralRegistrySonic_Shared_Test
 } from "tests/smoke/sonic/poolBooster/PoolBoostCentralRegistrySonic/shared/Shared.t.sol";

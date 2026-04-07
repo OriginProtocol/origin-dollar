@@ -3,6 +3,7 @@ pragma solidity ^0.8.0;
 
 import {Unit_OSonicZapper_Shared_Test} from "tests/unit/zapper/OSonicZapper/shared/Shared.t.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {IOSonicZapper} from "contracts/interfaces/IOSonicZapper.sol";
 
 contract Unit_Concrete_OSonicZapper_DepositWSForWrappedTokens_Test is Unit_OSonicZapper_Shared_Test {
     //////////////////////////////////////////////////////
@@ -29,7 +30,7 @@ contract Unit_Concrete_OSonicZapper_DepositWSForWrappedTokens_Test is Unit_OSoni
         IERC20(WS_ADDRESS).approve(address(oSonicZapper), 1 ether);
 
         vm.expectEmit(true, true, false, true, address(oSonicZapper));
-        emit Zap(alice, WS_ADDRESS, 1 ether);
+        emit IOSonicZapper.Zap(alice, WS_ADDRESS, 1 ether);
         oSonicZapper.depositWSForWrappedTokens(1 ether, 0);
         vm.stopPrank();
     }
@@ -52,9 +53,4 @@ contract Unit_Concrete_OSonicZapper_DepositWSForWrappedTokens_Test is Unit_OSoni
         vm.expectRevert();
         oSonicZapper.depositWSForWrappedTokens(1 ether, 0);
     }
-
-    //////////////////////////////////////////////////////
-    /// --- EVENTS
-    //////////////////////////////////////////////////////
-    event Zap(address indexed minter, address indexed asset, uint256 amount);
 }

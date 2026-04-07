@@ -3,8 +3,9 @@ pragma solidity ^0.8.0;
 
 import {Unit_CrossChainMasterStrategy_Shared_Test} from "../shared/Shared.t.sol";
 import {MockERC20} from "@solmate/test/utils/mocks/MockERC20.sol";
-import {AbstractCCTPIntegrator} from "contracts/strategies/crosschain/AbstractCCTPIntegrator.sol";
+import {ICrossChainMasterStrategy} from "contracts/interfaces/strategies/ICrossChainMasterStrategy.sol";
 import {CrossChainMasterStrategy} from "contracts/strategies/crosschain/CrossChainMasterStrategy.sol";
+import {AbstractCCTPIntegrator} from "contracts/strategies/crosschain/AbstractCCTPIntegrator.sol";
 import {InitializableAbstractStrategy} from "contracts/utils/InitializableAbstractStrategy.sol";
 
 contract Unit_Concrete_CrossChainMasterStrategy_Admin_Test is Unit_CrossChainMasterStrategy_Shared_Test {
@@ -69,7 +70,7 @@ contract Unit_Concrete_CrossChainMasterStrategy_Admin_Test is Unit_CrossChainMas
 
     function test_setOperator_emitsOperatorChanged() public {
         vm.expectEmit(true, true, true, true);
-        emit AbstractCCTPIntegrator.OperatorChanged(alice);
+        emit ICrossChainMasterStrategy.OperatorChanged(alice);
 
         vm.prank(governor);
         crossChainMasterStrategy.setOperator(alice);
@@ -105,7 +106,7 @@ contract Unit_Concrete_CrossChainMasterStrategy_Admin_Test is Unit_CrossChainMas
 
     function test_setMinFinalityThreshold_emitsEvent() public {
         vm.expectEmit(true, true, true, true);
-        emit AbstractCCTPIntegrator.CCTPMinFinalityThresholdSet(1000);
+        emit ICrossChainMasterStrategy.CCTPMinFinalityThresholdSet(1000);
 
         vm.prank(governor);
         crossChainMasterStrategy.setMinFinalityThreshold(1000);
@@ -136,7 +137,7 @@ contract Unit_Concrete_CrossChainMasterStrategy_Admin_Test is Unit_CrossChainMas
 
     function test_setFeePremiumBps_emitsEvent() public {
         vm.expectEmit(true, true, true, true);
-        emit AbstractCCTPIntegrator.CCTPFeePremiumBpsSet(500);
+        emit ICrossChainMasterStrategy.CCTPFeePremiumBpsSet(500);
 
         vm.prank(governor);
         crossChainMasterStrategy.setFeePremiumBps(500);

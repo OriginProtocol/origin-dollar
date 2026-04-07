@@ -2,10 +2,9 @@
 pragma solidity ^0.8.0;
 
 import {Unit_CrossChainRemoteStrategy_Shared_Test} from "../shared/Shared.t.sol";
-import {MockERC20} from "@solmate/test/utils/mocks/MockERC20.sol";
-import {MockERC4626Vault} from "contracts/mocks/MockERC4626Vault.sol";
-import {AbstractCCTPIntegrator} from "contracts/strategies/crosschain/AbstractCCTPIntegrator.sol";
+import {ICrossChainRemoteStrategy} from "contracts/interfaces/strategies/ICrossChainRemoteStrategy.sol";
 import {CrossChainRemoteStrategy} from "contracts/strategies/crosschain/CrossChainRemoteStrategy.sol";
+import {AbstractCCTPIntegrator} from "contracts/strategies/crosschain/AbstractCCTPIntegrator.sol";
 import {InitializableAbstractStrategy} from "contracts/utils/InitializableAbstractStrategy.sol";
 
 contract Unit_Concrete_CrossChainRemoteStrategy_Admin_Test is Unit_CrossChainRemoteStrategy_Shared_Test {
@@ -79,7 +78,7 @@ contract Unit_Concrete_CrossChainRemoteStrategy_Admin_Test is Unit_CrossChainRem
 
     function test_setOperator_emitsOperatorChanged() public {
         vm.expectEmit(true, true, true, true);
-        emit AbstractCCTPIntegrator.OperatorChanged(alice);
+        emit ICrossChainRemoteStrategy.OperatorChanged(alice);
 
         vm.prank(governor);
         crossChainRemoteStrategy.setOperator(alice);
@@ -114,7 +113,7 @@ contract Unit_Concrete_CrossChainRemoteStrategy_Admin_Test is Unit_CrossChainRem
 
     function test_setMinFinalityThreshold_emitsEvent() public {
         vm.expectEmit(true, true, true, true);
-        emit AbstractCCTPIntegrator.CCTPMinFinalityThresholdSet(1000);
+        emit ICrossChainRemoteStrategy.CCTPMinFinalityThresholdSet(1000);
 
         vm.prank(governor);
         crossChainRemoteStrategy.setMinFinalityThreshold(1000);
@@ -145,7 +144,7 @@ contract Unit_Concrete_CrossChainRemoteStrategy_Admin_Test is Unit_CrossChainRem
 
     function test_setFeePremiumBps_emitsEvent() public {
         vm.expectEmit(true, true, true, true);
-        emit AbstractCCTPIntegrator.CCTPFeePremiumBpsSet(1000);
+        emit ICrossChainRemoteStrategy.CCTPFeePremiumBpsSet(1000);
 
         vm.prank(governor);
         crossChainRemoteStrategy.setFeePremiumBps(1000);

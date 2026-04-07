@@ -4,16 +4,16 @@ pragma solidity ^0.8.0;
 import {BaseSmoke} from "tests/smoke/BaseSmoke.t.sol";
 import {Mainnet} from "tests/utils/Addresses.sol";
 
-import {OUSD} from "contracts/token/OUSD.sol";
-import {OUSDVault} from "contracts/vault/OUSDVault.sol";
-import {MorphoV2Strategy} from "contracts/strategies/MorphoV2Strategy.sol";
+import {IOToken} from "contracts/interfaces/IOToken.sol";
+import {IVault} from "contracts/interfaces/IVault.sol";
+import {IMorphoV2Strategy} from "contracts/interfaces/strategies/IMorphoV2Strategy.sol";
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 abstract contract Smoke_MorphoV2Strategy_Shared_Test is BaseSmoke {
-    OUSD internal ousd;
-    OUSDVault internal ousdVault;
-    MorphoV2Strategy internal morphoV2Strategy;
+    IOToken internal ousd;
+    IVault internal ousdVault;
+    IMorphoV2Strategy internal morphoV2Strategy;
 
     //////////////////////////////////////////////////////
     /// --- SETUP
@@ -31,9 +31,9 @@ abstract contract Smoke_MorphoV2Strategy_Shared_Test is BaseSmoke {
     function _fetchContracts() internal virtual {
         require(address(resolver).code.length > 0, "Resolver not initialized on fork");
 
-        ousd = OUSD(resolver.resolve("OUSD_PROXY"));
-        ousdVault = OUSDVault(payable(resolver.resolve("OUSD_VAULT_PROXY")));
-        morphoV2Strategy = MorphoV2Strategy(resolver.resolve("MORPHO_OUSD_V2_STRATEGY_PROXY"));
+        ousd = IOToken(resolver.resolve("OUSD_PROXY"));
+        ousdVault = IVault(resolver.resolve("OUSD_VAULT_PROXY"));
+        morphoV2Strategy = IMorphoV2Strategy(resolver.resolve("MORPHO_OUSD_V2_STRATEGY_PROXY"));
         usdc = IERC20(Mainnet.USDC);
     }
 

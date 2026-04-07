@@ -2,8 +2,8 @@
 pragma solidity ^0.8.0;
 
 import {Unit_OUSD_Shared_Test} from "tests/unit/token/OUSD/shared/Shared.t.sol";
-import {OUSD} from "contracts/token/OUSD.sol";
-import {OUSDProxy} from "contracts/proxies/Proxies.sol";
+import {IOToken} from "contracts/interfaces/IOToken.sol";
+import {IProxy} from "contracts/interfaces/IProxy.sol";
 
 contract Unit_Concrete_OUSD_Initialize_Test is Unit_OUSD_Shared_Test {
     //////////////////////////////////////////////////////
@@ -12,14 +12,18 @@ contract Unit_Concrete_OUSD_Initialize_Test is Unit_OUSD_Shared_Test {
 
     function test_initialize_RevertWhen_zeroVaultAddress() public {
         // Deploy a fresh OUSD implementation and proxy (uninitialized)
-        OUSD freshImpl = new OUSD();
-        OUSDProxy freshProxy = new OUSDProxy();
+        IOToken freshImpl = IOToken(vm.deployCode("contracts/token/OUSD.sol:OUSD"));
+        IProxy freshProxy = IProxy(
+            vm.deployCode(
+                "contracts/proxies/InitializeGovernedUpgradeabilityProxy.sol:InitializeGovernedUpgradeabilityProxy"
+            )
+        );
 
         // Initialize proxy with governor but no OUSD init data
         freshProxy.initialize(address(freshImpl), governor, "");
 
         // Now call OUSD.initialize with zero vault address
-        OUSD freshOusd = OUSD(address(freshProxy));
+        IOToken freshOusd = IOToken(address(freshProxy));
         vm.prank(governor);
         vm.expectRevert("Zero vault address");
         freshOusd.initialize(address(0), 1e27);

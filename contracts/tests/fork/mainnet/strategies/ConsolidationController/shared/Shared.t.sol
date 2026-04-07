@@ -5,20 +5,25 @@ import {BaseFork} from "tests/fork/BaseFork.t.sol";
 import {Mainnet} from "tests/utils/Addresses.sol";
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {NativeStakingSSVStrategy} from "contracts/strategies/NativeStaking/NativeStakingSSVStrategy.sol";
-import {CompoundingStakingSSVStrategy} from "contracts/strategies/NativeStaking/CompoundingStakingSSVStrategy.sol";
-import {CompoundingValidatorManager} from "contracts/strategies/NativeStaking/CompoundingValidatorManager.sol";
-import {ConsolidationController} from "contracts/strategies/NativeStaking/ConsolidationController.sol";
-import {OETH} from "contracts/token/OETH.sol";
-import {OETHVault} from "contracts/vault/OETHVault.sol";
-import {OETHProxy} from "contracts/proxies/Proxies.sol";
-import {OETHVaultProxy} from "contracts/proxies/Proxies.sol";
-import {ISSVNetwork, Cluster} from "contracts/interfaces/ISSVNetwork.sol";
-import {MockBeaconRoots} from "contracts/mocks/beacon/MockBeaconRoots.sol";
-import {InitializeGovernedUpgradeabilityProxy} from "contracts/proxies/InitializeGovernedUpgradeabilityProxy.sol";
-import {InitializableAbstractStrategy} from "contracts/utils/InitializableAbstractStrategy.sol";
+import {IBeaconRoots} from "contracts/interfaces/IBeaconRoots.sol";
+import {IOToken} from "contracts/interfaces/IOToken.sol";
+import {IVault} from "contracts/interfaces/IVault.sol";
+import {IProxy} from "contracts/interfaces/IProxy.sol";
+import {Cluster} from "contracts/interfaces/ISSVNetwork.sol";
+import {
+    CompoundingBalanceProofs,
+    CompoundingPendingDepositProofs
+} from "contracts/interfaces/strategies/CompoundingStakingTypes.sol";
+import {ICompoundingStakingSSVStrategy} from "contracts/interfaces/strategies/ICompoundingStakingSSVStrategy.sol";
+import {IConsolidationController} from "contracts/interfaces/strategies/IConsolidationController.sol";
+import {INativeStakingSSVStrategyFork} from "contracts/interfaces/strategies/INativeStakingSSVStrategyFork.sol";
 
 // solhint-disable max-states-count
+
+struct BaseStrategyConfig {
+    address platformAddress;
+    address vaultAddress;
+}
 
 abstract contract Fork_ConsolidationController_Shared_Test is BaseFork {
     //////////////////////////////////////////////////////
@@ -40,15 +45,15 @@ abstract contract Fork_ConsolidationController_Shared_Test is BaseFork {
     /// --- CONTRACTS
     //////////////////////////////////////////////////////
 
-    OETH internal oeth;
-    OETHVault internal oethVault;
-    OETHProxy internal oethProxy;
-    OETHVaultProxy internal oethVaultProxy;
-    ConsolidationController internal consolidationController;
-    CompoundingStakingSSVStrategy internal compoundingStakingSSVStrategy;
-    NativeStakingSSVStrategy internal nativeStakingSSVStrategy2;
-    NativeStakingSSVStrategy internal nativeStakingSSVStrategy3;
-    MockBeaconRoots internal beaconRoots;
+    IOToken internal oeth;
+    IVault internal oethVault;
+    IProxy internal oethProxy;
+    IProxy internal oethVaultProxy;
+    IConsolidationController internal consolidationController;
+    ICompoundingStakingSSVStrategy internal compoundingStakingSSVStrategy;
+    INativeStakingSSVStrategyFork internal nativeStakingSSVStrategy2;
+    INativeStakingSSVStrategyFork internal nativeStakingSSVStrategy3;
+    IBeaconRoots internal beaconRoots;
 
     //////////////////////////////////////////////////////
     /// --- ADDRESSES
@@ -101,26 +106,24 @@ abstract contract Fork_ConsolidationController_Shared_Test is BaseFork {
         // --- Deploy fresh OETH + OETHVault ---
         vm.startPrank(deployer);
 
-        OETH oethImpl = new OETH();
-        OETHVault oethVaultImpl = new OETHVault(Mainnet.WETH);
+        address oethImpl = vm.deployCode("contracts/token/OETH.sol:OETH");
+        address oethVaultImpl = vm.deployCode("contracts/vault/OETHVault.sol:OETHVault", abi.encode(Mainnet.WETH));
 
-        oethProxy = new OETHProxy();
-        oethVaultProxy = new OETHVaultProxy();
+        oethProxy = IProxy(vm.deployCode("contracts/proxies/Proxies.sol:OETHProxy"));
+        oethVaultProxy = IProxy(vm.deployCode("contracts/proxies/Proxies.sol:OETHVaultProxy"));
 
         oethProxy.initialize(
-            address(oethImpl),
-            governor,
-            abi.encodeWithSignature("initialize(address,uint256)", address(oethVaultProxy), 1e27)
+            oethImpl, governor, abi.encodeWithSignature("initialize(address,uint256)", address(oethVaultProxy), 1e27)
         );
 
         oethVaultProxy.initialize(
-            address(oethVaultImpl), governor, abi.encodeWithSignature("initialize(address)", address(oethProxy))
+            oethVaultImpl, governor, abi.encodeWithSignature("initialize(address)", address(oethProxy))
         );
 
         vm.stopPrank();
 
-        oeth = OETH(address(oethProxy));
-        oethVault = OETHVault(address(oethVaultProxy));
+        oeth = IOToken(address(oethProxy));
+        oethVault = IVault(address(oethVaultProxy));
 
         // Configure vault
         vm.startPrank(governor);
@@ -134,42 +137,56 @@ abstract contract Fork_ConsolidationController_Shared_Test is BaseFork {
         // --- Deploy fresh strategy implementations pointing to fresh vault ---
 
         // CompoundingStakingSSVStrategy implementation
-        CompoundingStakingSSVStrategy compoundingImpl = new CompoundingStakingSSVStrategy(
-            InitializableAbstractStrategy.BaseStrategyConfig(address(0), address(oethVault)),
-            Mainnet.WETH,
-            Mainnet.SSVNetwork,
-            Mainnet.beaconChainDepositContract,
-            Mainnet.BeaconProofs,
-            1606824023 // beaconChainGenesisTimeMainnet
+        address compoundingImpl = vm.deployCode(
+            "contracts/strategies/NativeStaking/CompoundingStakingSSVStrategy.sol:CompoundingStakingSSVStrategy",
+            abi.encode(
+                BaseStrategyConfig({platformAddress: address(0), vaultAddress: address(oethVault)}),
+                Mainnet.WETH,
+                Mainnet.SSVNetwork,
+                Mainnet.beaconChainDepositContract,
+                Mainnet.BeaconProofs,
+                uint64(1606824023)
+            )
         );
 
         // NativeStakingSSVStrategy implementations (one per cluster)
-        NativeStakingSSVStrategy nativeImpl2 = new NativeStakingSSVStrategy(
-            InitializableAbstractStrategy.BaseStrategyConfig(address(0), address(oethVault)),
-            Mainnet.WETH,
-            Mainnet.SSV,
-            Mainnet.SSVNetwork,
-            500,
-            Mainnet.NativeStakingFeeAccumulator2Proxy,
-            Mainnet.beaconChainDepositContract
+        address nativeImpl2 = vm.deployCode(
+            "contracts/strategies/NativeStaking/NativeStakingSSVStrategy.sol:NativeStakingSSVStrategy",
+            abi.encode(
+                BaseStrategyConfig({platformAddress: address(0), vaultAddress: address(oethVault)}),
+                Mainnet.WETH,
+                Mainnet.SSV,
+                Mainnet.SSVNetwork,
+                500,
+                Mainnet.NativeStakingFeeAccumulator2Proxy,
+                Mainnet.beaconChainDepositContract
+            )
         );
-        NativeStakingSSVStrategy nativeImpl3 = new NativeStakingSSVStrategy(
-            InitializableAbstractStrategy.BaseStrategyConfig(address(0), address(oethVault)),
-            Mainnet.WETH,
-            Mainnet.SSV,
-            Mainnet.SSVNetwork,
-            500,
-            Mainnet.NativeStakingFeeAccumulator3Proxy,
-            Mainnet.beaconChainDepositContract
+        address nativeImpl3 = vm.deployCode(
+            "contracts/strategies/NativeStaking/NativeStakingSSVStrategy.sol:NativeStakingSSVStrategy",
+            abi.encode(
+                BaseStrategyConfig({platformAddress: address(0), vaultAddress: address(oethVault)}),
+                Mainnet.WETH,
+                Mainnet.SSV,
+                Mainnet.SSVNetwork,
+                500,
+                Mainnet.NativeStakingFeeAccumulator3Proxy,
+                Mainnet.beaconChainDepositContract
+            )
         );
 
         // ConsolidationController
-        consolidationController = new ConsolidationController(
-            adminAddr, // owner = Guardian
-            validatorRegistratorAddr,
-            Mainnet.NativeStakingSSVStrategy2Proxy,
-            Mainnet.NativeStakingSSVStrategy3Proxy,
-            Mainnet.CompoundingStakingSSVStrategyProxy
+        consolidationController = IConsolidationController(
+            vm.deployCode(
+                "contracts/strategies/NativeStaking/ConsolidationController.sol:ConsolidationController",
+                abi.encode(
+                    adminAddr,
+                    validatorRegistratorAddr,
+                    Mainnet.NativeStakingSSVStrategy2Proxy,
+                    Mainnet.NativeStakingSSVStrategy3Proxy,
+                    Mainnet.CompoundingStakingSSVStrategyProxy
+                )
+            )
         );
 
         // --- Upgrade existing strategy proxies to new implementations ---
@@ -178,32 +195,29 @@ abstract contract Fork_ConsolidationController_Shared_Test is BaseFork {
         vm.deal(timelockAddr, 1 ether);
         vm.startPrank(timelockAddr);
 
-        InitializeGovernedUpgradeabilityProxy(payable(Mainnet.CompoundingStakingSSVStrategyProxy))
-            .upgradeTo(address(compoundingImpl));
+        IProxy(payable(Mainnet.CompoundingStakingSSVStrategyProxy)).upgradeTo(compoundingImpl);
 
-        InitializeGovernedUpgradeabilityProxy(payable(Mainnet.NativeStakingSSVStrategy2Proxy))
-            .upgradeTo(address(nativeImpl2));
+        IProxy(payable(Mainnet.NativeStakingSSVStrategy2Proxy)).upgradeTo(nativeImpl2);
 
-        InitializeGovernedUpgradeabilityProxy(payable(Mainnet.NativeStakingSSVStrategy3Proxy))
-            .upgradeTo(address(nativeImpl3));
+        IProxy(payable(Mainnet.NativeStakingSSVStrategy3Proxy)).upgradeTo(nativeImpl3);
 
         // Set registrators to the new ConsolidationController
         compoundingStakingSSVStrategy =
-            CompoundingStakingSSVStrategy(payable(Mainnet.CompoundingStakingSSVStrategyProxy));
+            ICompoundingStakingSSVStrategy(payable(Mainnet.CompoundingStakingSSVStrategyProxy));
         compoundingStakingSSVStrategy.setRegistrator(address(consolidationController));
 
-        nativeStakingSSVStrategy2 = NativeStakingSSVStrategy(payable(Mainnet.NativeStakingSSVStrategy2Proxy));
+        nativeStakingSSVStrategy2 = INativeStakingSSVStrategyFork(payable(Mainnet.NativeStakingSSVStrategy2Proxy));
         nativeStakingSSVStrategy2.setRegistrator(address(consolidationController));
 
-        nativeStakingSSVStrategy3 = NativeStakingSSVStrategy(payable(Mainnet.NativeStakingSSVStrategy3Proxy));
+        nativeStakingSSVStrategy3 = INativeStakingSSVStrategyFork(payable(Mainnet.NativeStakingSSVStrategy3Proxy));
         nativeStakingSSVStrategy3.setRegistrator(address(consolidationController));
 
         vm.stopPrank();
 
         // --- Deploy MockBeaconRoots at the real precompile address ---
-        MockBeaconRoots mockImpl = new MockBeaconRoots();
-        vm.etch(Mainnet.beaconRoots, address(mockImpl).code);
-        beaconRoots = MockBeaconRoots(Mainnet.beaconRoots);
+        address mockImpl = vm.deployCode("contracts/mocks/beacon/MockBeaconRoots.sol:MockBeaconRoots");
+        vm.etch(Mainnet.beaconRoots, mockImpl.code);
+        beaconRoots = IBeaconRoots(Mainnet.beaconRoots);
     }
 
     /// @dev After fresh deployment, some validators may have been exited on-chain
@@ -309,7 +323,7 @@ abstract contract Fork_ConsolidationController_Shared_Test is BaseFork {
     /// --- BALANCE PROOFS (pre-consolidation)
     //////////////////////////////////////////////////////
 
-    function _getBalanceProofs() internal pure returns (CompoundingValidatorManager.BalanceProofs memory) {
+    function _getBalanceProofs() internal pure returns (CompoundingBalanceProofs memory) {
         bytes32[] memory leaves = new bytes32[](5);
         leaves[0] = 0xfd7c8373070000008984d5b626000000dba68373070000002e054f8207000000;
         leaves[1] = 0x7bc26d8107000000a9b15ccc0e0000004b9e8073070000000000000000000000;
@@ -329,7 +343,7 @@ abstract contract Fork_ConsolidationController_Shared_Test is BaseFork {
         proofs[4] =
             hex"c14ded8209000000d3399f7507000000c35c74730700000052547473070000003fd8a8a3abe91daabbcefb46c12679757b5ef84a1d1a86f88ff4f72108743082c16a90f3122651c46b9fe13ad5fa9039689f8f8310bd87fede796de7ae7e6b8b26e8b864ab910e64fac8d21420305ac13d40ff60b337734cbed410b74d045b4b191c8a834a78383c882c63cd73b5ec3045147d6866b03d668926675421d9dd9430059267161313dd5d8078f97681146f8ad9699662294f8d96838c1a02eb55950ba94ee41400881a940e82b104faa44ea94de3aafc6708bdfdfad612e5f8b3b17db9f9b3303b7fb8910a42ac46832ad3dbc1122ff9b81ce8343aea02b9dd4f08b85f6f22463648903c3e2c93d738ec5c5bbabc7969d350c5fb65538711c7651da9758deaadab0eda5cf7047a9b4cf76f32ba76d0f410e2eb0979f709ef7c3a875c6c2088e2ae731e9e64583785467c21b800cf320d9807a45210ef86d0b70e44efa206455c565617f73c5a3a4cd1b98c93d21d398f2bc25a63c5ea5095c8fd3905383a708f1ae8e6cdfef5a2aabf0fa4bf39ab9c9dd8aca35c9fd45ea283df683a83c2524a66c24e653e6fa354bbba4050ce12082d94df4108e75baf1b125bfe6db4c812b0451988f4ee7061bc49e1f7fe37e1a2548469e13db07d9f235e9023daeeea7a208232bf77025a6e81e886e674b3aadc3931bc8f0268e2b8350d63608fe6b1689256c0d385f42f5bbe2027a22c1996e110ba97c171d3e5948de92beb8d0d63c39ebade8509e0ae3c9c3876fb5fa112be18f905ecacfecb92057603ab95eec8b2e541cad4e91de38385f2e046619f54496c2382cb6cacd5b98c26f5a43e251b9aa4f9097ef23129626b849648d24e38fb1f16829559482a9d5da28473cddba7b592e3133393c16194fac7431abf2f5485ed711db282183c819e08ebaa8a8d7fe3af8caa085a7639a832001457dfb9128a8061142ad0335629ff23ff9cfeb3c337d7a51a6fbf00b9e34c52e1c9195c969bd4e7a0bfd51d5c5bed9c1167e71f0aa83cc32edfbefa9f4d3e0174ca85182eec9f3a09f6a6c0df6377a510d731206fa80a50bb6abe29085058f16212212a60eec8f049fecb92d8c8e0a84bc021352bfecbeddde993839f614c3dac0a3ee37543f9b412b16199dc158e23b544619e312724bb6d7c3153ed9de791d764a366b389af13c58bf8a8d90481a467657cdd2986268250628d0c10e385c58c6191e6fbe05191bcc04f133f2cea72c1c4848930bd7ba8cac54661072113fb278869e07bb8587f91392933374d017bcbe18869ff2c22b28cc10510d9853292803328be4fb0e80495e8bb8d271f5b889636b5fe28e79f1b850f8658246ce9b6a1e7b49fc06db7143e8fe0b4f2b0c5523a5c985e929f70af28d0bdd1a90a808f977f597c7c778c489e98d3bd8910d31ac0f7c6f67e02e6e4e1bdefb994c6098953f34636ba2b6ca20a4721d2b26a886722ff1c9a7e5ff1cf48b4ad1582d3f4e4a1004f3b20d8c5a2b71387a4254ad933ebc52f075ae229646b6f6aed19a5e372cf295081401eb893ff599b3f9acc0c0d3e7d328921deb59612076801e8cd61592107b5c67c79b846595cc6320c395b46362cbfb909fdb236ad2411b4e4883810a074b840464689986c3f8a8091827e17c32755d8fb3687ba3ba49f342c77f5a1f89bec83d811446e1a467139213d640b6a748d18220000000000000000000000000000000000000000000000000000000000";
 
-        return CompoundingValidatorManager.BalanceProofs({
+        return CompoundingBalanceProofs({
             balancesContainerRoot: 0x8f27c7c7ce2f490662a385bd0e1f8cff0edbefae993e39ca2f21205429b3814a,
             balancesContainerProof: hex"85324c52a14d47585124af7b122fb4e5dc95a328195a69cdbd2ac467a380087bde78b6f9afdee27c83dcab795db1174fb31809c3e18ccd101c45ca92146a34ba0fe39f130e2611965f830d94a77f38cd694b1c92c82bb1426082fd11974bf67429a18eca977c27b0c22f5df812b50554ee42926f66b70fe930751eaee9e5577c88cbdc15d22d62cf98507f4ec9c2859d7a3604a8712b3a4696e8ca42eca1293c35ecb1dce6bdc3af85bd9cf2f1f03cb8a04d217a199b03abd30d462a261fe2e7445fd94dbbc7e4c1e17974c0745d82a97865458517ec4d426b861f9c4e90e9d0b53e114879b41538e556e5d6a209127efcd4b0fe59e0bf64de8357cdc2273d6ec0cdabace9443f7ec6183c3a82e1762c339d8dfbbd1dfca1ba16967b4f2e6e8a",
             validatorBalanceLeaves: leaves,
@@ -339,11 +353,7 @@ abstract contract Fork_ConsolidationController_Shared_Test is BaseFork {
 
     bytes32 internal constant BEACON_BLOCK_ROOT = 0x93f545e9c23550f0934192e433a74438e65beec7c90f92a771b5e611ae494dfc;
 
-    function _getPendingDepositProofs()
-        internal
-        pure
-        returns (CompoundingValidatorManager.PendingDepositProofs memory)
-    {
+    function _getPendingDepositProofs() internal pure returns (CompoundingPendingDepositProofs memory) {
         uint32[] memory indexes = new uint32[](6);
         indexes[0] = 6791;
         indexes[1] = 33011;
@@ -366,7 +376,7 @@ abstract contract Fork_ConsolidationController_Shared_Test is BaseFork {
         proofs[5] =
             hex"308dba54c2444e4683aa4c92c423532dae274d39dc0a95a2871b90006b41a357f48cf215d71cd05cb4214ebac67ba013270cc2c9b3e9cd3764671f1461135947ff01249f12eebda99afdc7882e5a0b55955740fe202576daabaf7fd026a0d73e44e3aedd9b6413b72e62e221a47feac65b8b61639e4d8c3f9595cb28f5a2ed0928f91fd42bd629d13ea3d088dc7684890efb7bd6982995cb06b993262d317fe481cb939e8682f2529ac5b34889c745c9c3d451c6acae5603acd9e750b81054e588a198201c81b745cd183dc6b095f0281c04ec988c9d9e5a372e145eb5f03a4936392d008637fb405334e3793bcd032cec028bbfcf3de88b34bd4c893d350dc8fa58dccb16086ce949d26e8061c375a96ab0aa4dbc7d0ba7340a2732faab6dd749aee54ff9f9e931158eaca9fd12e915a1f7c205b499d7cf98fb2c9b70b55cfdff2cf7a711c6d0a64a4c0819b47e1e8c98534a134bf0a46773151d8ca393f25cfcb86c8f337e89e710accfcacd13518797b5f871b33f5f8a522d1070b5dd3851fb301c44c748be1402321a538f1f3d0ec0ed99161b33c8d7ab778e58ea4013f2ed12cb9bcd9bbcb04e046d6ae4c230f7a759e0c88be26bb8f34c33e0fa1d121dab1875e7cf07f93e85275fc8eb4755076cd072cb30830890c57ccc0ac57fec3d1bb0ac320fc57a100f5f395873579aed371896e8be97a52c5f03809c5f2aceb08fe6b1689256c0d385f42f5bbe2027a22c1996e110ba97c171d3e5948de92beb8d0d63c39ebade8509e0ae3c9c3876fb5fa112be18f905ecacfecb92057603ab95eec8b2e541cad4e91de38385f2e046619f54496c2382cb6cacd5b98c26f5a4f893e908917775b62bff23294dbbe3a1cd8e6cc1c35b4801887b646a6f81f17fcddba7b592e3133393c16194fac7431abf2f5485ed711db282183c819e08ebaa8a8d7fe3af8caa085a7639a832001457dfb9128a8061142ad0335629ff23ff9cfeb3c337d7a51a6fbf00b9e34c52e1c9195c969bd4e7a0bfd51d5c5bed9c1167e71f0aa83cc32edfbefa9f4d3e0174ca85182eec9f3a09f6a6c0df6377a510d731206fa80a50bb6abe29085058f16212212a60eec8f049fecb92d8c8e0a84bc021352bfecbeddde993839f614c3dac0a3ee37543f9b412b16199dc158e23b544619e312724bb6d7c3153ed9de791d764a366b389af13c58bf8a8d90481a467659aa5000000000000000000000000000000000000000000000000000000000000";
 
-        return CompoundingValidatorManager.PendingDepositProofs({
+        return CompoundingPendingDepositProofs({
             pendingDepositContainerRoot: 0x8e9a353f5d80d749c0f322bc97530477e6c5a3ca14b253d0a26264872b45bdcf,
             pendingDepositContainerProof: hex"c5a691c90b1e5a4b98433a0f4bd86eba8048f63b7d3a1b4fb66ba0c7ae8812773db8d01d9495a3bbeb4f3d22d6a373692bbbf60c638fa615738f83ac08f464c9f7507516e2aa2af211bec2d8c99165b7fad41b628ba3483ae4538d0297e9959bc78009fdf07fc56a11f122370658a353aaa542ed63e44c4bc15ff4cd105ab33c536d98837f2dd165a55d5eeae91485954472d56f246df256bf3cae19352a123ce0ef6aa1d629eca8a8ec78c2649b889f0c585e16e92862010bb41d58afd7df61445fd94dbbc7e4c1e17974c0745d82a97865458517ec4d426b861f9c4e90e9d0b53e114879b41538e556e5d6a209127efcd4b0fe59e0bf64de8357cdc2273d6ec0cdabace9443f7ec6183c3a82e1762c339d8dfbbd1dfca1ba16967b4f2e6e8a",
             pendingDepositIndexes: indexes,
@@ -393,8 +403,8 @@ abstract contract Fork_ConsolidationController_Shared_Test is BaseFork {
         // Set beacon root at the current block.timestamp so snapBalances() finds it.
         beaconRoots.setBeaconRoot(block.timestamp, BEACON_BLOCK_ROOT);
 
-        CompoundingValidatorManager.BalanceProofs memory bProofs = _getBalanceProofs();
-        CompoundingValidatorManager.PendingDepositProofs memory pdProofs = _getPendingDepositProofs();
+        CompoundingBalanceProofs memory bProofs = _getBalanceProofs();
+        CompoundingPendingDepositProofs memory pdProofs = _getPendingDepositProofs();
 
         vm.prank(validatorRegistratorAddr);
         consolidationController.snapBalances();

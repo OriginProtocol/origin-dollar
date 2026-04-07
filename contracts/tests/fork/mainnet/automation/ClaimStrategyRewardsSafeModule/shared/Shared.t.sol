@@ -5,14 +5,14 @@ import {BaseFork} from "tests/fork/BaseFork.t.sol";
 import {CrossChain, Mainnet} from "tests/utils/Addresses.sol";
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {ClaimStrategyRewardsSafeModule} from "contracts/automation/ClaimStrategyRewardsSafeModule.sol";
+import {IClaimStrategyRewardsSafeModule} from "contracts/interfaces/automation/IClaimStrategyRewardsSafeModule.sol";
 
 abstract contract Fork_ClaimStrategyRewardsSafeModule_Shared_Test is BaseFork {
     //////////////////////////////////////////////////////
     /// --- CONTRACTS
     //////////////////////////////////////////////////////
 
-    ClaimStrategyRewardsSafeModule internal claimStrategyRewardsModule;
+    IClaimStrategyRewardsSafeModule internal claimStrategyRewardsModule;
     IERC20 internal morphoToken;
 
     //////////////////////////////////////////////////////
@@ -66,7 +66,12 @@ abstract contract Fork_ClaimStrategyRewardsSafeModule_Shared_Test is BaseFork {
         strategies[3] = morphoGauntletUSDTProxy;
         strategies[4] = metaMorphoProxy;
 
-        claimStrategyRewardsModule = new ClaimStrategyRewardsSafeModule(safeSigner, safeSigner, strategies);
+        claimStrategyRewardsModule = IClaimStrategyRewardsSafeModule(
+            vm.deployCode(
+                "contracts/automation/ClaimStrategyRewardsSafeModule.sol:ClaimStrategyRewardsSafeModule",
+                abi.encode(safeSigner, safeSigner, strategies)
+            )
+        );
     }
 
     function _enableModuleOnSafe() internal {

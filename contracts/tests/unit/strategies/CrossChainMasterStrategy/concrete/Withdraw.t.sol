@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 import {Unit_CrossChainMasterStrategy_Shared_Test} from "../shared/Shared.t.sol";
-import {CrossChainMasterStrategy} from "contracts/strategies/crosschain/CrossChainMasterStrategy.sol";
+import {ICrossChainMasterStrategy} from "contracts/interfaces/strategies/ICrossChainMasterStrategy.sol";
 
 contract Unit_Concrete_CrossChainMasterStrategy_Withdraw_Test is Unit_CrossChainMasterStrategy_Shared_Test {
     //////////////////////////////////////////////////////
@@ -38,7 +38,7 @@ contract Unit_Concrete_CrossChainMasterStrategy_Withdraw_Test is Unit_CrossChain
         uint256 amount = 1000e6;
 
         vm.expectEmit(true, true, true, true);
-        emit CrossChainMasterStrategy.WithdrawRequested(address(mockUsdc), amount);
+        emit ICrossChainMasterStrategy.WithdrawRequested(address(mockUsdc), amount);
 
         vm.prank(address(ousdVault));
         crossChainMasterStrategy.withdraw(address(ousdVault), address(mockUsdc), amount);

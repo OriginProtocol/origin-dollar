@@ -4,7 +4,7 @@ pragma solidity ^0.8.0;
 import {
     Unit_NativeStakingSSVStrategy_Shared_Test
 } from "tests/unit/strategies/NativeStakingSSVStrategy/shared/Shared.t.sol";
-import {InitializableAbstractStrategy} from "contracts/utils/InitializableAbstractStrategy.sol";
+import {INativeStakingSSVStrategy} from "contracts/interfaces/strategies/INativeStakingSSVStrategy.sol";
 
 contract Unit_Concrete_NativeStakingSSVStrategy_Deposit_Test is Unit_NativeStakingSSVStrategy_Shared_Test {
     function test_deposit() public {
@@ -13,7 +13,7 @@ contract Unit_Concrete_NativeStakingSSVStrategy_Deposit_Test is Unit_NativeStaki
 
         vm.prank(address(oethVault));
         vm.expectEmit(true, true, true, true);
-        emit InitializableAbstractStrategy.Deposit(address(mockWeth), address(0), amount);
+        emit INativeStakingSSVStrategy.Deposit(address(mockWeth), address(0), amount);
         nativeStakingSSVStrategy.deposit(address(mockWeth), amount);
 
         assertEq(nativeStakingSSVStrategy.depositedWethAccountedFor(), amount);
@@ -44,7 +44,7 @@ contract Unit_Concrete_NativeStakingSSVStrategy_Deposit_Test is Unit_NativeStaki
 
         vm.prank(address(oethVault));
         vm.expectEmit(true, true, true, true);
-        emit InitializableAbstractStrategy.Deposit(address(mockWeth), address(0), 10 ether);
+        emit INativeStakingSSVStrategy.Deposit(address(mockWeth), address(0), 10 ether);
         nativeStakingSSVStrategy.depositAll();
 
         assertEq(nativeStakingSSVStrategy.depositedWethAccountedFor(), 10 ether);

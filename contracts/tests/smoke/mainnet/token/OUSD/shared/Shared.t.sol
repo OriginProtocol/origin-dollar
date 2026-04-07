@@ -4,14 +4,14 @@ pragma solidity ^0.8.0;
 import {BaseSmoke} from "tests/smoke/BaseSmoke.t.sol";
 import {Mainnet} from "tests/utils/Addresses.sol";
 
-import {OUSD} from "contracts/token/OUSD.sol";
-import {OUSDVault} from "contracts/vault/OUSDVault.sol";
+import {IOToken} from "contracts/interfaces/IOToken.sol";
+import {IVault} from "contracts/interfaces/IVault.sol";
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 abstract contract Smoke_OUSD_Shared_Test is BaseSmoke {
-    OUSD internal ousd;
-    OUSDVault internal ousdVault;
+    IOToken internal ousd;
+    IVault internal ousdVault;
 
     //////////////////////////////////////////////////////
     /// --- SETUP
@@ -31,13 +31,13 @@ abstract contract Smoke_OUSD_Shared_Test is BaseSmoke {
         require(address(resolver).code.length > 0, "Resolver not initialized on fork");
 
         // Fetch the latest implementations
-        ousd = OUSD(resolver.resolve("OUSD_PROXY"));
-        ousdVault = OUSDVault(payable(resolver.resolve("OUSD_VAULT_PROXY")));
+        ousd = IOToken(resolver.resolve("OUSD_PROXY"));
+        ousdVault = IVault(resolver.resolve("OUSD_VAULT_PROXY"));
         usdc = IERC20(Mainnet.USDC);
     }
 
     function _resolveActors() internal virtual {
-        governor = ousd.governor();
+        governor = ousdVault.governor();
         strategist = ousdVault.strategistAddr();
     }
 
@@ -78,7 +78,8 @@ abstract contract Smoke_OUSD_Shared_Test is BaseSmoke {
     /// @dev Ensure the vault has enough USDC liquidity to cover the withdrawal queue plus an extra amount.
     ///      On mainnet fork, most USDC may be deployed in strategies, leaving the vault short for claims.
     function _ensureVaultLiquidity(uint256 extraUSDC) internal {
-        (uint256 queued, uint256 claimable,,) = ousdVault.withdrawalQueueMetadata();
+        uint256 queued = ousdVault.withdrawalQueueMetadata().queued;
+        uint256 claimable = ousdVault.withdrawalQueueMetadata().claimable;
         uint256 shortfall = queued > claimable ? queued - claimable : 0;
         uint256 needed = shortfall + extraUSDC;
         // Use additive deal: existing balance may be fully allocated to prior claimable

@@ -5,12 +5,9 @@ import {Base} from "tests/Base.t.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {MockERC20} from "@solmate/test/utils/mocks/MockERC20.sol";
 import {MockFailableERC4626Vault} from "tests/mocks/MockFailableERC4626Vault.sol";
-import {CrossChainRemoteStrategy} from "contracts/strategies/crosschain/CrossChainRemoteStrategy.sol";
-import {AbstractCCTPIntegrator} from "contracts/strategies/crosschain/AbstractCCTPIntegrator.sol";
-import {CrossChainStrategyHelper} from "contracts/strategies/crosschain/CrossChainStrategyHelper.sol";
+import {ICrossChainRemoteStrategy} from "contracts/interfaces/strategies/ICrossChainRemoteStrategy.sol";
 import {CCTPMessageTransmitterMock} from "contracts/mocks/crosschain/CCTPMessageTransmitterMock.sol";
 import {CCTPTokenMessengerMock} from "contracts/mocks/crosschain/CCTPTokenMessengerMock.sol";
-import {InitializableAbstractStrategy} from "contracts/utils/InitializableAbstractStrategy.sol";
 
 contract Unit_Concrete_CrossChainRemoteStrategy_DepositFailure_Test is Base {
     //////////////////////////////////////////////////////
@@ -24,7 +21,7 @@ contract Unit_Concrete_CrossChainRemoteStrategy_DepositFailure_Test is Base {
     MockERC20 internal mockUsdc;
     MockERC20 internal peerUsdc;
     MockFailableERC4626Vault internal failableVault;
-    CrossChainRemoteStrategy internal strategy;
+    ICrossChainRemoteStrategy internal strategy;
     address internal peerStrategy;
 
     function setUp() public virtual override {
@@ -41,18 +38,20 @@ contract Unit_Concrete_CrossChainRemoteStrategy_DepositFailure_Test is Base {
         cctpTokenMessengerMock = new CCTPTokenMessengerMock(address(mockUsdc), address(cctpMessageTransmitterMock));
         peerStrategy = makeAddr("MasterStrategy");
 
-        strategy = new CrossChainRemoteStrategy(
-            InitializableAbstractStrategy.BaseStrategyConfig({
-                platformAddress: address(failableVault), vaultAddress: address(0)
-            }),
-            AbstractCCTPIntegrator.CCTPIntegrationConfig({
-                cctpTokenMessenger: address(cctpTokenMessengerMock),
-                cctpMessageTransmitter: address(cctpMessageTransmitterMock),
-                peerDomainID: 0,
-                peerStrategy: peerStrategy,
-                usdcToken: address(mockUsdc),
-                peerUsdcToken: address(peerUsdc)
-            })
+        strategy = ICrossChainRemoteStrategy(
+            vm.deployCode(
+                "contracts/strategies/crosschain/CrossChainRemoteStrategy.sol:CrossChainRemoteStrategy",
+                abi.encode(
+                    address(failableVault), // platformAddress
+                    address(0), // vaultAddress
+                    address(cctpTokenMessengerMock), // cctpTokenMessenger
+                    address(cctpMessageTransmitterMock), // cctpMessageTransmitter
+                    uint32(0), // peerDomainID
+                    peerStrategy, // peerStrategy
+                    address(mockUsdc), // usdcToken
+                    address(peerUsdc) // peerUsdcToken
+                )
+            )
         );
 
         vm.store(address(strategy), GOVERNOR_SLOT, bytes32(uint256(uint160(governor))));
@@ -69,7 +68,7 @@ contract Unit_Concrete_CrossChainRemoteStrategy_DepositFailure_Test is Base {
         failableVault.setDepositFail(true);
 
         vm.expectEmit(false, false, false, false);
-        emit CrossChainRemoteStrategy.DepositUnderlyingFailed("");
+        emit ICrossChainRemoteStrategy.DepositUnderlyingFailed("");
 
         vm.prank(governor);
         strategy.deposit(address(mockUsdc), amount);
@@ -87,7 +86,7 @@ contract Unit_Concrete_CrossChainRemoteStrategy_DepositFailure_Test is Base {
         failableVault.setRevertLowLevel(true);
 
         vm.expectEmit(false, false, false, false);
-        emit CrossChainRemoteStrategy.DepositUnderlyingFailed("");
+        emit ICrossChainRemoteStrategy.DepositUnderlyingFailed("");
 
         vm.prank(governor);
         strategy.deposit(address(mockUsdc), amount);
@@ -106,7 +105,7 @@ contract Unit_Concrete_CrossChainRemoteStrategy_DepositFailure_Test is Base {
         failableVault.setWithdrawFail(true);
 
         vm.expectEmit(false, false, false, false);
-        emit CrossChainRemoteStrategy.WithdrawUnderlyingFailed("");
+        emit ICrossChainRemoteStrategy.WithdrawUnderlyingFailed("");
 
         vm.prank(governor);
         strategy.withdraw(address(strategy), address(mockUsdc), 500e6);
@@ -122,7 +121,7 @@ contract Unit_Concrete_CrossChainRemoteStrategy_DepositFailure_Test is Base {
         failableVault.setRevertLowLevel(true);
 
         vm.expectEmit(false, false, false, false);
-        emit CrossChainRemoteStrategy.WithdrawUnderlyingFailed("");
+        emit ICrossChainRemoteStrategy.WithdrawUnderlyingFailed("");
 
         vm.prank(governor);
         strategy.withdraw(address(strategy), address(mockUsdc), 500e6);

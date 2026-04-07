@@ -3,25 +3,26 @@ pragma solidity ^0.8.0;
 
 import {Base} from "tests/Base.t.sol";
 
+// Interfaces
+import {IVault} from "contracts/interfaces/IVault.sol";
+import {IProxy} from "contracts/interfaces/IProxy.sol";
+import {IOToken} from "contracts/interfaces/IOToken.sol";
+import {IGeneralized4626Strategy} from "contracts/interfaces/strategies/IGeneralized4626Strategy.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+
+// Mocks
 import {MockERC20} from "@solmate/test/utils/mocks/MockERC20.sol";
 import {MockERC4626Vault} from "contracts/mocks/MockERC4626Vault.sol";
-import {OUSD} from "contracts/token/OUSD.sol";
-import {OUSDVault} from "contracts/vault/OUSDVault.sol";
-import {OUSDProxy} from "contracts/proxies/Proxies.sol";
-import {VaultProxy} from "contracts/proxies/Proxies.sol";
-import {Generalized4626Strategy} from "contracts/strategies/Generalized4626Strategy.sol";
-import {InitializableAbstractStrategy} from "contracts/utils/InitializableAbstractStrategy.sol";
 
 abstract contract Unit_Generalized4626Strategy_Shared_Test is Base {
     //////////////////////////////////////////////////////
-    /// --- CONTRACTS & PROXIES (moved from Base)
+    /// --- CONTRACTS & PROXIES
     //////////////////////////////////////////////////////
 
-    OUSD internal ousd;
-    OUSDVault internal ousdVault;
-    OUSDProxy internal ousdProxy;
-    VaultProxy internal ousdVaultProxy;
+    IOToken internal ousd;
+    IVault internal ousdVault;
+    IProxy internal ousdProxy;
+    IProxy internal ousdVaultProxy;
 
     //////////////////////////////////////////////////////
     /// --- CONSTANTS
@@ -34,7 +35,7 @@ abstract contract Unit_Generalized4626Strategy_Shared_Test is Base {
     /// --- CONTRACTS
     //////////////////////////////////////////////////////
 
-    Generalized4626Strategy internal strategy;
+    IGeneralized4626Strategy internal strategy;
     MockERC20 internal asset;
     MockERC4626Vault internal shareVault;
 
@@ -60,11 +61,19 @@ abstract contract Unit_Generalized4626Strategy_Shared_Test is Base {
 
         vm.startPrank(deployer);
 
-        OUSD ousdImpl = new OUSD();
-        OUSDVault ousdVaultImpl = new OUSDVault(address(asset));
+        IOToken ousdImpl = IOToken(vm.deployCode("contracts/token/OUSD.sol:OUSD"));
+        address ousdVaultImpl = vm.deployCode("contracts/vault/OUSDVault.sol:OUSDVault", abi.encode(address(asset)));
 
-        ousdProxy = new OUSDProxy();
-        ousdVaultProxy = new VaultProxy();
+        ousdProxy = IProxy(
+            vm.deployCode(
+                "contracts/proxies/InitializeGovernedUpgradeabilityProxy.sol:InitializeGovernedUpgradeabilityProxy"
+            )
+        );
+        ousdVaultProxy = IProxy(
+            vm.deployCode(
+                "contracts/proxies/InitializeGovernedUpgradeabilityProxy.sol:InitializeGovernedUpgradeabilityProxy"
+            )
+        );
 
         ousdProxy.initialize(
             address(ousdImpl),
@@ -78,8 +87,8 @@ abstract contract Unit_Generalized4626Strategy_Shared_Test is Base {
 
         vm.stopPrank();
 
-        ousd = OUSD(address(ousdProxy));
-        ousdVault = OUSDVault(address(ousdVaultProxy));
+        ousd = IOToken(address(ousdProxy));
+        ousdVault = IVault(address(ousdVaultProxy));
 
         // Configure vault
         vm.startPrank(governor);
@@ -91,11 +100,11 @@ abstract contract Unit_Generalized4626Strategy_Shared_Test is Base {
         vm.stopPrank();
 
         // Deploy strategy with real vault
-        strategy = new Generalized4626Strategy(
-            InitializableAbstractStrategy.BaseStrategyConfig({
-                platformAddress: address(shareVault), vaultAddress: address(ousdVault)
-            }),
-            address(asset)
+        strategy = IGeneralized4626Strategy(
+            vm.deployCode(
+                "contracts/strategies/Generalized4626Strategy.sol:Generalized4626Strategy",
+                abi.encode(address(shareVault), address(ousdVault), address(asset))
+            )
         );
 
         // Set governor via slot

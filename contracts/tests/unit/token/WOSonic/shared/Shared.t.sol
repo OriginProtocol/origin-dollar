@@ -1,30 +1,30 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
+// Base test contract
 import {Base} from "tests/Base.t.sol";
 
-import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+// Interfaces
+import {IVault} from "contracts/interfaces/IVault.sol";
+import {IProxy} from "contracts/interfaces/IProxy.sol";
+import {IOToken} from "contracts/interfaces/IOToken.sol";
+import {IWOToken} from "contracts/interfaces/IWOToken.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
+// Mocks
 import {MockERC20} from "@solmate/test/utils/mocks/MockERC20.sol";
-import {OSonic} from "contracts/token/OSonic.sol";
-import {OETHVault} from "contracts/vault/OETHVault.sol";
-import {OETHProxy} from "contracts/proxies/Proxies.sol";
-import {OETHVaultProxy} from "contracts/proxies/Proxies.sol";
-import {WOETHProxy} from "contracts/proxies/Proxies.sol";
-import {WOSonic} from "contracts/token/WOSonic.sol";
 
 abstract contract Unit_WOSonic_Shared_Test is Base {
     //////////////////////////////////////////////////////
     /// --- CONTRACTS
     //////////////////////////////////////////////////////
-    OSonic internal oSonic;
-    OETHVault internal oethVault;
-    OETHProxy internal oethProxy;
-    OETHVaultProxy internal oethVaultProxy;
+    IOToken internal oSonic;
+    IVault internal oethVault;
+    IProxy internal oethProxy;
+    IProxy internal oethVaultProxy;
 
-    WOSonic internal woSonic;
-    WOETHProxy internal woSonicProxy;
+    IWOToken internal woSonic;
+    IProxy internal woSonicProxy;
 
     //////////////////////////////////////////////////////
     /// --- CONSTANTS
@@ -55,11 +55,19 @@ abstract contract Unit_WOSonic_Shared_Test is Base {
     function _deployContracts() internal {
         vm.startPrank(deployer);
 
-        OSonic oSonicImpl = new OSonic();
-        OETHVault oethVaultImpl = new OETHVault(address(weth));
+        IOToken oSonicImpl = IOToken(vm.deployCode("contracts/token/OSonic.sol:OSonic"));
+        address oethVaultImpl = vm.deployCode("contracts/vault/OETHVault.sol:OETHVault", abi.encode(address(weth)));
 
-        oethProxy = new OETHProxy();
-        oethVaultProxy = new OETHVaultProxy();
+        oethProxy = IProxy(
+            vm.deployCode(
+                "contracts/proxies/InitializeGovernedUpgradeabilityProxy.sol:InitializeGovernedUpgradeabilityProxy"
+            )
+        );
+        oethVaultProxy = IProxy(
+            vm.deployCode(
+                "contracts/proxies/InitializeGovernedUpgradeabilityProxy.sol:InitializeGovernedUpgradeabilityProxy"
+            )
+        );
 
         oethProxy.initialize(
             address(oSonicImpl),
@@ -73,20 +81,24 @@ abstract contract Unit_WOSonic_Shared_Test is Base {
 
         vm.stopPrank();
 
-        oSonic = OSonic(address(oethProxy));
-        oethVault = OETHVault(address(oethVaultProxy));
+        oSonic = IOToken(address(oethProxy));
+        oethVault = IVault(address(oethVaultProxy));
     }
 
     function _deployWOSonic() internal {
         vm.startPrank(deployer);
 
-        WOSonic woSonicImpl = new WOSonic(ERC20(address(oSonic)));
-        woSonicProxy = new WOETHProxy();
+        address woSonicImpl = vm.deployCode("contracts/token/WOSonic.sol:WOSonic", abi.encode(address(oSonic)));
+        woSonicProxy = IProxy(
+            vm.deployCode(
+                "contracts/proxies/InitializeGovernedUpgradeabilityProxy.sol:InitializeGovernedUpgradeabilityProxy"
+            )
+        );
         woSonicProxy.initialize(address(woSonicImpl), governor, "");
 
         vm.stopPrank();
 
-        woSonic = WOSonic(address(woSonicProxy));
+        woSonic = IWOToken(address(woSonicProxy));
 
         vm.prank(governor);
         woSonic.initialize();

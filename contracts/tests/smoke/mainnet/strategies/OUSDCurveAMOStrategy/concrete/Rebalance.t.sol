@@ -11,14 +11,14 @@ contract Smoke_Concrete_OUSDCurveAMOStrategy_Rebalance_Test is Smoke_OUSDCurveAM
         _seedVaultForSolvency(10_000_000e6);
         _ensurePoolExcessHardAsset(1_000_000 ether);
 
-        uint256[] memory balancesBefore = curveAMOStrategy.curvePool().get_balances();
+        uint256[] memory balancesBefore = curvePool.get_balances();
         int256 diffBefore = int256(balancesBefore[curveAMOStrategy.hardAssetCoinIndex()] * 1e12)
             - int256(balancesBefore[curveAMOStrategy.otokenCoinIndex()]);
 
         vm.prank(strategist);
         curveAMOStrategy.mintAndAddOTokens(500_000 ether);
 
-        uint256[] memory balancesAfter = curveAMOStrategy.curvePool().get_balances();
+        uint256[] memory balancesAfter = curvePool.get_balances();
         int256 diffAfter = int256(balancesAfter[curveAMOStrategy.hardAssetCoinIndex()] * 1e12)
             - int256(balancesAfter[curveAMOStrategy.otokenCoinIndex()]);
 
@@ -29,12 +29,12 @@ contract Smoke_Concrete_OUSDCurveAMOStrategy_Rebalance_Test is Smoke_OUSDCurveAM
         _seedVaultForSolvency(10_000_000e6);
         _ensurePoolExcessHardAsset(1_000_000 ether);
 
-        uint256 gaugeBefore = curveAMOStrategy.gauge().balanceOf(address(curveAMOStrategy));
+        uint256 gaugeBefore = gauge.balanceOf(address(curveAMOStrategy));
 
         vm.prank(strategist);
         curveAMOStrategy.mintAndAddOTokens(500_000 ether);
 
-        uint256 gaugeAfter = curveAMOStrategy.gauge().balanceOf(address(curveAMOStrategy));
+        uint256 gaugeAfter = gauge.balanceOf(address(curveAMOStrategy));
         assertGt(gaugeAfter, gaugeBefore, "Gauge balance should increase after mintAndAddOTokens");
     }
 
@@ -68,17 +68,17 @@ contract Smoke_Concrete_OUSDCurveAMOStrategy_Rebalance_Test is Smoke_OUSDCurveAM
         _depositToStrategy(500_000e6);
         _ensurePoolExcessOToken(1_000_000 ether);
 
-        uint256[] memory balancesBefore = curveAMOStrategy.curvePool().get_balances();
+        uint256[] memory balancesBefore = curvePool.get_balances();
         int256 diffBefore = int256(balancesBefore[curveAMOStrategy.otokenCoinIndex()])
             - int256(balancesBefore[curveAMOStrategy.hardAssetCoinIndex()] * 1e12);
 
-        uint256 gaugeBalance = curveAMOStrategy.gauge().balanceOf(address(curveAMOStrategy));
+        uint256 gaugeBalance = gauge.balanceOf(address(curveAMOStrategy));
         uint256 lpToRemove = gaugeBalance / 10;
 
         vm.prank(strategist);
         curveAMOStrategy.removeAndBurnOTokens(lpToRemove);
 
-        uint256[] memory balancesAfter = curveAMOStrategy.curvePool().get_balances();
+        uint256[] memory balancesAfter = curvePool.get_balances();
         int256 diffAfter = int256(balancesAfter[curveAMOStrategy.otokenCoinIndex()])
             - int256(balancesAfter[curveAMOStrategy.hardAssetCoinIndex()] * 1e12);
 
@@ -91,7 +91,7 @@ contract Smoke_Concrete_OUSDCurveAMOStrategy_Rebalance_Test is Smoke_OUSDCurveAM
 
         uint256 supplyBefore = IERC20(address(ousd)).totalSupply();
 
-        uint256 gaugeBalance = curveAMOStrategy.gauge().balanceOf(address(curveAMOStrategy));
+        uint256 gaugeBalance = gauge.balanceOf(address(curveAMOStrategy));
         uint256 lpToRemove = gaugeBalance / 10;
 
         vm.prank(strategist);
@@ -105,13 +105,13 @@ contract Smoke_Concrete_OUSDCurveAMOStrategy_Rebalance_Test is Smoke_OUSDCurveAM
         _depositToStrategy(500_000e6);
         _ensurePoolExcessOToken(1_000_000 ether);
 
-        uint256 gaugeBefore = curveAMOStrategy.gauge().balanceOf(address(curveAMOStrategy));
+        uint256 gaugeBefore = gauge.balanceOf(address(curveAMOStrategy));
         uint256 lpToRemove = gaugeBefore / 10;
 
         vm.prank(strategist);
         curveAMOStrategy.removeAndBurnOTokens(lpToRemove);
 
-        uint256 gaugeAfter = curveAMOStrategy.gauge().balanceOf(address(curveAMOStrategy));
+        uint256 gaugeAfter = gauge.balanceOf(address(curveAMOStrategy));
         assertLt(gaugeAfter, gaugeBefore, "Gauge balance should decrease after removeAndBurnOTokens");
     }
 
@@ -121,17 +121,17 @@ contract Smoke_Concrete_OUSDCurveAMOStrategy_Rebalance_Test is Smoke_OUSDCurveAM
         _depositToStrategy(500_000e6);
         _ensurePoolExcessHardAsset(1_000_000 ether);
 
-        uint256[] memory balancesBefore = curveAMOStrategy.curvePool().get_balances();
+        uint256[] memory balancesBefore = curvePool.get_balances();
         int256 diffBefore = int256(balancesBefore[curveAMOStrategy.hardAssetCoinIndex()] * 1e12)
             - int256(balancesBefore[curveAMOStrategy.otokenCoinIndex()]);
 
-        uint256 gaugeBalance = curveAMOStrategy.gauge().balanceOf(address(curveAMOStrategy));
+        uint256 gaugeBalance = gauge.balanceOf(address(curveAMOStrategy));
         uint256 lpToRemove = gaugeBalance / 20;
 
         vm.prank(strategist);
         curveAMOStrategy.removeOnlyAssets(lpToRemove);
 
-        uint256[] memory balancesAfter = curveAMOStrategy.curvePool().get_balances();
+        uint256[] memory balancesAfter = curvePool.get_balances();
         int256 diffAfter = int256(balancesAfter[curveAMOStrategy.hardAssetCoinIndex()] * 1e12)
             - int256(balancesAfter[curveAMOStrategy.otokenCoinIndex()]);
 
@@ -144,7 +144,7 @@ contract Smoke_Concrete_OUSDCurveAMOStrategy_Rebalance_Test is Smoke_OUSDCurveAM
 
         uint256 vaultBalanceBefore = usdc.balanceOf(address(ousdVault));
 
-        uint256 gaugeBalance = curveAMOStrategy.gauge().balanceOf(address(curveAMOStrategy));
+        uint256 gaugeBalance = gauge.balanceOf(address(curveAMOStrategy));
         uint256 lpToRemove = gaugeBalance / 20;
 
         vm.prank(strategist);
@@ -160,7 +160,7 @@ contract Smoke_Concrete_OUSDCurveAMOStrategy_Rebalance_Test is Smoke_OUSDCurveAM
 
         uint256 balanceBefore = curveAMOStrategy.checkBalance(address(usdc));
 
-        uint256 gaugeBalance = curveAMOStrategy.gauge().balanceOf(address(curveAMOStrategy));
+        uint256 gaugeBalance = gauge.balanceOf(address(curveAMOStrategy));
         uint256 lpToRemove = gaugeBalance / 20;
 
         vm.prank(strategist);
@@ -176,7 +176,7 @@ contract Smoke_Concrete_OUSDCurveAMOStrategy_Rebalance_Test is Smoke_OUSDCurveAM
 
         uint256 supplyBefore = IERC20(address(ousd)).totalSupply();
 
-        uint256 gaugeBalance = curveAMOStrategy.gauge().balanceOf(address(curveAMOStrategy));
+        uint256 gaugeBalance = gauge.balanceOf(address(curveAMOStrategy));
         uint256 lpToRemove = gaugeBalance / 20;
 
         vm.prank(strategist);

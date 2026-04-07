@@ -18,8 +18,7 @@ contract Smoke_Concrete_OSVault_ViewFunctions_Test is Smoke_OSVault_Shared_Test 
     }
 
     function test_defaultStrategy_isSet() public view {
-        address sonicStaking = resolver.resolve("SONIC_STAKING_STRATEGY");
-        assertEq(oSonicVault.defaultStrategy(), sonicStaking);
+        assertEq(oSonicVault.defaultStrategy(), sonicStakingStrategy);
     }
 
     function test_vaultBuffer_isSet() public view {
@@ -37,8 +36,7 @@ contract Smoke_Concrete_OSVault_ViewFunctions_Test is Smoke_OSVault_Shared_Test 
     function test_allStrategies_areSupported() public view {
         address[] memory strats = oSonicVault.getAllStrategies();
         for (uint256 i = 0; i < strats.length; i++) {
-            (bool isSupported,) = oSonicVault.strategies(strats[i]);
-            assertTrue(isSupported);
+            assertTrue(oSonicVault.strategies(strats[i]).isSupported);
         }
     }
 

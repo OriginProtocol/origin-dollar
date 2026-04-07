@@ -2,8 +2,12 @@
 pragma solidity ^0.8.0;
 
 import {Fork_ConsolidationController_Shared_Test} from "../shared/Shared.t.sol";
-import {CompoundingValidatorManager} from "contracts/strategies/NativeStaking/CompoundingValidatorManager.sol";
 import {Cluster} from "contracts/interfaces/ISSVNetwork.sol";
+import {
+    CompoundingBalanceProofs,
+    CompoundingPendingDepositProofs,
+    CompoundingValidatorStakeData
+} from "contracts/interfaces/strategies/CompoundingStakingTypes.sol";
 
 // solhint-disable max-states-count
 
@@ -55,8 +59,8 @@ contract Fork_ConsolidationController_InProgress_Test is Fork_ConsolidationContr
     // ---------------------------------------------------------------
 
     function test_VerifyBalancesAfterConsolidationRequested() public {
-        CompoundingValidatorManager.BalanceProofs memory bProofs = _getBalanceProofs();
-        CompoundingValidatorManager.PendingDepositProofs memory pdProofs = _getPendingDepositProofs();
+        CompoundingBalanceProofs memory bProofs = _getBalanceProofs();
+        CompoundingPendingDepositProofs memory pdProofs = _getPendingDepositProofs();
 
         // The snap was taken before consolidation started, so verifyBalances should work
         vm.prank(validatorRegistratorAddr);
@@ -94,8 +98,8 @@ contract Fork_ConsolidationController_InProgress_Test is Fork_ConsolidationContr
         uint64 consolidationStartTimestamp = consolidationController.consolidationStartTimestamp();
         assertTrue(snappedTimestamp < consolidationStartTimestamp, "Snap not before consolidation start");
 
-        CompoundingValidatorManager.BalanceProofs memory bProofs = _getBalanceProofs();
-        CompoundingValidatorManager.PendingDepositProofs memory pdProofs = _getPendingDepositProofs();
+        CompoundingBalanceProofs memory bProofs = _getBalanceProofs();
+        CompoundingPendingDepositProofs memory pdProofs = _getPendingDepositProofs();
 
         vm.prank(validatorRegistratorAddr);
         consolidationController.verifyBalances(bProofs, pdProofs);
@@ -142,8 +146,8 @@ contract Fork_ConsolidationController_InProgress_Test is Fork_ConsolidationContr
         vm.prank(validatorRegistratorAddr);
         consolidationController.snapBalances();
 
-        CompoundingValidatorManager.BalanceProofs memory bProofs = _getBalanceProofs();
-        CompoundingValidatorManager.PendingDepositProofs memory pdProofs = _getPendingDepositProofs();
+        CompoundingBalanceProofs memory bProofs = _getBalanceProofs();
+        CompoundingPendingDepositProofs memory pdProofs = _getPendingDepositProofs();
 
         vm.prank(validatorRegistratorAddr);
         vm.expectRevert("Consolidation in progress");
@@ -283,7 +287,7 @@ contract Fork_ConsolidationController_InProgress_Test is Fork_ConsolidationContr
         bytes memory emptySignature = new bytes(96);
 
         // Use a dummy deposit data root (will fail before the root is checked)
-        CompoundingValidatorManager.ValidatorStakeData memory stakeData = CompoundingValidatorManager.ValidatorStakeData({
+        CompoundingValidatorStakeData memory stakeData = CompoundingValidatorStakeData({
             pubkey: ACTIVE_TARGET_PUB_KEY(), signature: emptySignature, depositDataRoot: bytes32(0)
         });
 
@@ -297,8 +301,8 @@ contract Fork_ConsolidationController_InProgress_Test is Fork_ConsolidationContr
     // ---------------------------------------------------------------
 
     function test_RevertWhen_ConfirmConsolidationTooSoon() public {
-        CompoundingValidatorManager.BalanceProofs memory bProofs = _getBalanceProofs();
-        CompoundingValidatorManager.PendingDepositProofs memory pdProofs = _getPendingDepositProofs();
+        CompoundingBalanceProofs memory bProofs = _getBalanceProofs();
+        CompoundingPendingDepositProofs memory pdProofs = _getPendingDepositProofs();
 
         vm.prank(adminAddr);
         vm.expectRevert("Source not withdrawable");

@@ -2,7 +2,6 @@
 pragma solidity ^0.8.0;
 
 import {Unit_BeaconProofsLib_Shared_Test} from "tests/unit/beacon/BeaconProofsLib/shared/Shared.t.sol";
-import {Endian} from "contracts/beacon/Endian.sol";
 
 contract Unit_Fuzz_BeaconProofsLib_BalanceAtIndex_Test is Unit_BeaconProofsLib_Shared_Test {
     /// @dev Pack 4 LE uint64 balances into a bytes32 leaf and verify extraction

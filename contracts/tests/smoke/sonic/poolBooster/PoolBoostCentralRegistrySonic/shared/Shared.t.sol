@@ -2,24 +2,29 @@
 pragma solidity ^0.8.0;
 
 import {BaseSmoke} from "tests/smoke/BaseSmoke.t.sol";
-import {Sonic} from "tests/utils/Addresses.sol";
-
-import {PoolBoostCentralRegistry} from "contracts/poolBooster/PoolBoostCentralRegistry.sol";
-import {PoolBoosterFactorySwapxSingle} from "contracts/poolBooster/PoolBoosterFactorySwapxSingle.sol";
+import {IPoolBoostCentralRegistryFull} from "contracts/interfaces/poolBooster/IPoolBoostCentralRegistryFull.sol";
+import {IPoolBoosterFactorySwapxSingle} from "contracts/interfaces/poolBooster/IPoolBoosterFactorySwapxSingle.sol";
 
 abstract contract Smoke_PoolBoostCentralRegistrySonic_Shared_Test is BaseSmoke {
-    PoolBoostCentralRegistry internal centralRegistry;
-    PoolBoosterFactorySwapxSingle internal factorySwapxSingle;
+    IPoolBoostCentralRegistryFull internal centralRegistry;
+    IPoolBoosterFactorySwapxSingle internal factorySwapxSingle;
 
     function setUp() public virtual override {
         super.setUp();
         _createAndSelectForkSonic();
         _igniteDeployManager();
+        _fetchContracts();
+        _labelContracts();
+    }
 
+    function _fetchContracts() internal virtual {
         require(address(resolver).code.length > 0, "Resolver not initialized on fork");
-        centralRegistry = PoolBoostCentralRegistry(resolver.resolve("POOL_BOOST_CENTRAL_REGISTRY"));
-        factorySwapxSingle = PoolBoosterFactorySwapxSingle(resolver.resolve("POOL_BOOSTER_FACTORY_SWAPX_SINGLE"));
+        centralRegistry = IPoolBoostCentralRegistryFull(resolver.resolve("POOL_BOOST_CENTRAL_REGISTRY"));
+        factorySwapxSingle = IPoolBoosterFactorySwapxSingle(resolver.resolve("POOL_BOOSTER_FACTORY_SWAPX_SINGLE"));
+    }
 
+    function _labelContracts() internal virtual {
         vm.label(address(centralRegistry), "PoolBoostCentralRegistry");
+        vm.label(address(factorySwapxSingle), "PoolBoosterFactorySwapxSingle");
     }
 }

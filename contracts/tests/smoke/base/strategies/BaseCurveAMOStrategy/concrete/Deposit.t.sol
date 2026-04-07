@@ -2,6 +2,7 @@
 pragma solidity ^0.8.0;
 
 import {Smoke_BaseCurveAMOStrategy_Shared_Test} from "../shared/Shared.t.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 contract Smoke_Concrete_BaseCurveAMOStrategy_Deposit_Test is Smoke_BaseCurveAMOStrategy_Shared_Test {
     function test_deposit_increasesCheckBalance() public {
@@ -30,9 +31,9 @@ contract Smoke_Concrete_BaseCurveAMOStrategy_Deposit_Test is Smoke_BaseCurveAMOS
     }
 
     function test_deposit_gaugeBalanceIncreases() public {
-        uint256 gaugeBefore = baseCurveAMOStrategy.gauge().balanceOf(address(baseCurveAMOStrategy));
+        uint256 gaugeBefore = IERC20(baseCurveAMOStrategy.gauge()).balanceOf(address(baseCurveAMOStrategy));
         _depositToStrategy(10 ether);
-        uint256 gaugeAfter = baseCurveAMOStrategy.gauge().balanceOf(address(baseCurveAMOStrategy));
+        uint256 gaugeAfter = IERC20(baseCurveAMOStrategy.gauge()).balanceOf(address(baseCurveAMOStrategy));
         assertGt(gaugeAfter, gaugeBefore, "Gauge balance should increase after deposit");
     }
 }

@@ -2,8 +2,7 @@
 pragma solidity ^0.8.0;
 
 import {Fork_CrossChainMasterStrategy_Shared_Test} from "../shared/Shared.t.sol";
-import {Mainnet, CrossChain} from "tests/utils/Addresses.sol";
-import {CrossChainStrategyHelper} from "contracts/strategies/crosschain/CrossChainStrategyHelper.sol";
+import {Mainnet} from "tests/utils/Addresses.sol";
 
 contract Fork_CrossChainMasterStrategy_BalanceCheck_Test is Fork_CrossChainMasterStrategy_Shared_Test {
     function test_balanceCheck_updatesRemoteBalance() public {
@@ -15,8 +14,7 @@ contract Fork_CrossChainMasterStrategy_BalanceCheck_Test is Fork_CrossChainMaste
         _replaceMessageTransmitter();
 
         // Build balance check message
-        bytes memory balancePayload =
-            CrossChainStrategyHelper.encodeBalanceCheckMessage(lastNonce, 12345e6, false, block.timestamp);
+        bytes memory balancePayload = _encodeBalanceCheckMessage(lastNonce, 12345e6, false, block.timestamp);
         bytes memory message =
             _encodeCCTPMessage(6, address(crossChainMasterStrategy), address(crossChainMasterStrategy), balancePayload);
 
@@ -43,8 +41,7 @@ contract Fork_CrossChainMasterStrategy_BalanceCheck_Test is Fork_CrossChainMaste
         _replaceMessageTransmitter();
 
         // Build balance check with transferConfirmation=true
-        bytes memory balancePayload =
-            CrossChainStrategyHelper.encodeBalanceCheckMessage(lastNonce, 10000e6, true, block.timestamp);
+        bytes memory balancePayload = _encodeBalanceCheckMessage(lastNonce, 10000e6, true, block.timestamp);
         bytes memory message =
             _encodeCCTPMessage(6, address(crossChainMasterStrategy), address(crossChainMasterStrategy), balancePayload);
 
@@ -75,8 +72,7 @@ contract Fork_CrossChainMasterStrategy_BalanceCheck_Test is Fork_CrossChainMaste
         _replaceMessageTransmitter();
 
         // Build balance check with transferConfirmation=false (not a confirmation)
-        bytes memory balancePayload =
-            CrossChainStrategyHelper.encodeBalanceCheckMessage(lastNonce, 10000e6, false, block.timestamp);
+        bytes memory balancePayload = _encodeBalanceCheckMessage(lastNonce, 10000e6, false, block.timestamp);
         bytes memory message =
             _encodeCCTPMessage(6, address(crossChainMasterStrategy), address(crossChainMasterStrategy), balancePayload);
 
@@ -109,8 +105,7 @@ contract Fork_CrossChainMasterStrategy_BalanceCheck_Test is Fork_CrossChainMaste
         _replaceMessageTransmitter();
 
         // Build balance check with OLD nonce (before deposit)
-        bytes memory balancePayload =
-            CrossChainStrategyHelper.encodeBalanceCheckMessage(nonceBefore, 123244e6, false, block.timestamp);
+        bytes memory balancePayload = _encodeBalanceCheckMessage(nonceBefore, 123244e6, false, block.timestamp);
         bytes memory message =
             _encodeCCTPMessage(6, address(crossChainMasterStrategy), address(crossChainMasterStrategy), balancePayload);
 
@@ -136,8 +131,7 @@ contract Fork_CrossChainMasterStrategy_BalanceCheck_Test is Fork_CrossChainMaste
         _replaceMessageTransmitter();
 
         // Build balance check with nonce + 2 (higher than expected)
-        bytes memory balancePayload =
-            CrossChainStrategyHelper.encodeBalanceCheckMessage(lastNonce + 2, 123244e6, false, block.timestamp);
+        bytes memory balancePayload = _encodeBalanceCheckMessage(lastNonce + 2, 123244e6, false, block.timestamp);
         bytes memory message =
             _encodeCCTPMessage(6, address(crossChainMasterStrategy), address(crossChainMasterStrategy), balancePayload);
 
@@ -165,8 +159,7 @@ contract Fork_CrossChainMasterStrategy_BalanceCheck_Test is Fork_CrossChainMaste
 
         // Build balance check with a timestamp > 1 day in the past
         uint256 oldTimestamp = block.timestamp - 1 days - 1;
-        bytes memory balancePayload =
-            CrossChainStrategyHelper.encodeBalanceCheckMessage(lastNonce, 99999e6, false, oldTimestamp);
+        bytes memory balancePayload = _encodeBalanceCheckMessage(lastNonce, 99999e6, false, oldTimestamp);
         bytes memory message =
             _encodeCCTPMessage(6, address(crossChainMasterStrategy), address(crossChainMasterStrategy), balancePayload);
 

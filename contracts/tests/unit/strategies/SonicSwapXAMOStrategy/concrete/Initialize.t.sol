@@ -3,8 +3,7 @@ pragma solidity ^0.8.0;
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {Unit_SonicSwapXAMOStrategy_Shared_Test} from "tests/unit/strategies/SonicSwapXAMOStrategy/shared/Shared.t.sol";
-import {SonicSwapXAMOStrategy} from "contracts/strategies/sonic/SonicSwapXAMOStrategy.sol";
-import {InitializableAbstractStrategy} from "contracts/utils/InitializableAbstractStrategy.sol";
+import {ISonicSwapXAMOStrategy} from "contracts/interfaces/strategies/ISonicSwapXAMOStrategy.sol";
 
 contract Unit_Concrete_SonicSwapXAMOStrategy_Initialize_Test is Unit_SonicSwapXAMOStrategy_Shared_Test {
     function test_initialize_setsMaxDepeg() public view {
@@ -31,11 +30,11 @@ contract Unit_Concrete_SonicSwapXAMOStrategy_Initialize_Test is Unit_SonicSwapXA
     }
 
     function test_initialize_RevertWhen_nonGovernor() public {
-        SonicSwapXAMOStrategy freshStrategy = new SonicSwapXAMOStrategy(
-            InitializableAbstractStrategy.BaseStrategyConfig({
-                platformAddress: address(mockSwapXPair), vaultAddress: address(oSonicVault)
-            }),
-            address(mockSwapXGauge)
+        ISonicSwapXAMOStrategy freshStrategy = ISonicSwapXAMOStrategy(
+            vm.deployCode(
+                "contracts/strategies/sonic/SonicSwapXAMOStrategy.sol:SonicSwapXAMOStrategy",
+                abi.encode(address(mockSwapXPair), address(oSonicVault), address(mockSwapXGauge))
+            )
         );
         vm.store(address(freshStrategy), GOVERNOR_SLOT, bytes32(uint256(uint160(governor))));
 

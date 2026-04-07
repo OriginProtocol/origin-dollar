@@ -2,6 +2,7 @@
 pragma solidity ^0.8.0;
 
 import {Unit_OSonicZapper_Shared_Test} from "tests/unit/zapper/OSonicZapper/shared/Shared.t.sol";
+import {IOSonicZapper} from "contracts/interfaces/IOSonicZapper.sol";
 
 contract Unit_Concrete_OSonicZapper_DepositSForWrappedTokens_Test is Unit_OSonicZapper_Shared_Test {
     //////////////////////////////////////////////////////
@@ -24,7 +25,7 @@ contract Unit_Concrete_OSonicZapper_DepositSForWrappedTokens_Test is Unit_OSonic
 
         vm.prank(alice);
         vm.expectEmit(true, true, false, true, address(oSonicZapper));
-        emit Zap(alice, ETH_MARKER, 1 ether);
+        emit IOSonicZapper.Zap(alice, ETH_MARKER, 1 ether);
         oSonicZapper.depositSForWrappedTokens{value: 1 ether}(0);
     }
 
@@ -35,9 +36,4 @@ contract Unit_Concrete_OSonicZapper_DepositSForWrappedTokens_Test is Unit_OSonic
         vm.expectRevert("Zapper: not enough minted");
         oSonicZapper.depositSForWrappedTokens{value: 1 ether}(2 ether);
     }
-
-    //////////////////////////////////////////////////////
-    /// --- EVENTS
-    //////////////////////////////////////////////////////
-    event Zap(address indexed minter, address indexed asset, uint256 amount);
 }

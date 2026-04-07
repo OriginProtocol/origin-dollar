@@ -3,30 +3,31 @@ pragma solidity ^0.8.0;
 
 import {Base} from "tests/Base.t.sol";
 
+// Interfaces
+import {IVault} from "contracts/interfaces/IVault.sol";
+import {IProxy} from "contracts/interfaces/IProxy.sol";
+import {IOToken} from "contracts/interfaces/IOToken.sol";
+import {IBaseCurveAMOStrategy} from "contracts/interfaces/strategies/IBaseCurveAMOStrategy.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+
+// Mocks
 import {MockERC20} from "@solmate/test/utils/mocks/MockERC20.sol";
 import {MockWETH} from "contracts/mocks/MockWETH.sol";
-import {OETH} from "contracts/token/OETH.sol";
-import {OETHVault} from "contracts/vault/OETHVault.sol";
-import {OETHProxy} from "contracts/proxies/Proxies.sol";
-import {OETHVaultProxy} from "contracts/proxies/Proxies.sol";
-import {BaseCurveAMOStrategy} from "contracts/strategies/BaseCurveAMOStrategy.sol";
-import {InitializableAbstractStrategy} from "contracts/utils/InitializableAbstractStrategy.sol";
 import {MockCurvePool} from "tests/mocks/MockCurvePool.sol";
 import {MockCurveGauge} from "tests/mocks/MockCurveGauge.sol";
 import {MockCurveGaugeFactory} from "tests/mocks/MockCurveGaugeFactory.sol";
 
 abstract contract Unit_BaseCurveAMOStrategy_Shared_Test is Base {
     //////////////////////////////////////////////////////
-    /// --- CONTRACTS & PROXIES (moved from Base)
+    /// --- CONTRACTS & PROXIES
     //////////////////////////////////////////////////////
 
     MockWETH internal mockWeth;
-    OETH internal oeth;
-    OETHVault internal oethVault;
-    OETHProxy internal oethProxy;
-    OETHVaultProxy internal oethVaultProxy;
-    BaseCurveAMOStrategy internal baseCurveAMOStrategy;
+    IOToken internal oeth;
+    IVault internal oethVault;
+    IProxy internal oethProxy;
+    IProxy internal oethVaultProxy;
+    IBaseCurveAMOStrategy internal baseCurveAMOStrategy;
 
     //////////////////////////////////////////////////////
     /// --- CONSTANTS
@@ -64,11 +65,19 @@ abstract contract Unit_BaseCurveAMOStrategy_Shared_Test is Base {
         // Deploy real OETH + OETHVault
         vm.startPrank(deployer);
 
-        OETH oethImpl = new OETH();
-        OETHVault oethVaultImpl = new OETHVault(address(mockWeth));
+        IOToken oethImpl = IOToken(vm.deployCode("contracts/token/OETH.sol:OETH"));
+        address oethVaultImpl = vm.deployCode("contracts/vault/OETHVault.sol:OETHVault", abi.encode(address(mockWeth)));
 
-        oethProxy = new OETHProxy();
-        oethVaultProxy = new OETHVaultProxy();
+        oethProxy = IProxy(
+            vm.deployCode(
+                "contracts/proxies/InitializeGovernedUpgradeabilityProxy.sol:InitializeGovernedUpgradeabilityProxy"
+            )
+        );
+        oethVaultProxy = IProxy(
+            vm.deployCode(
+                "contracts/proxies/InitializeGovernedUpgradeabilityProxy.sol:InitializeGovernedUpgradeabilityProxy"
+            )
+        );
 
         oethProxy.initialize(
             address(oethImpl),
@@ -82,8 +91,8 @@ abstract contract Unit_BaseCurveAMOStrategy_Shared_Test is Base {
 
         vm.stopPrank();
 
-        oeth = OETH(address(oethProxy));
-        oethVault = OETHVault(address(oethVaultProxy));
+        oeth = IOToken(address(oethProxy));
+        oethVault = IVault(address(oethVaultProxy));
 
         // Configure vault
         vm.startPrank(governor);
@@ -102,16 +111,20 @@ abstract contract Unit_BaseCurveAMOStrategy_Shared_Test is Base {
         crvToken = new MockERC20("Curve DAO Token", "CRV", 18);
 
         // Deploy BaseCurveAMOStrategy
-        baseCurveAMOStrategy = new BaseCurveAMOStrategy(
-            InitializableAbstractStrategy.BaseStrategyConfig({
-                platformAddress: address(curvePool), vaultAddress: address(oethVault)
-            }),
-            address(oeth),
-            address(mockWeth),
-            address(curveGauge),
-            address(curveGaugeFactory),
-            1, // oethCoinIndex
-            0 // wethCoinIndex
+        baseCurveAMOStrategy = IBaseCurveAMOStrategy(
+            vm.deployCode(
+                "contracts/strategies/BaseCurveAMOStrategy.sol:BaseCurveAMOStrategy",
+                abi.encode(
+                    address(curvePool),
+                    address(oethVault),
+                    address(oeth),
+                    address(mockWeth),
+                    address(curveGauge),
+                    address(curveGaugeFactory),
+                    uint128(1), // oethCoinIndex
+                    uint128(0) // wethCoinIndex
+                )
+            )
         );
 
         // Set governor via slot

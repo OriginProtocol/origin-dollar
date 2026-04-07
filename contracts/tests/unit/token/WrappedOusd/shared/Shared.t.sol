@@ -1,30 +1,30 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
+// Base test contract
 import {Base} from "tests/Base.t.sol";
 
-import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+// Interfaces
+import {IVault} from "contracts/interfaces/IVault.sol";
+import {IProxy} from "contracts/interfaces/IProxy.sol";
+import {IOToken} from "contracts/interfaces/IOToken.sol";
+import {IWOToken} from "contracts/interfaces/IWOToken.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
+// Mocks
 import {MockERC20} from "@solmate/test/utils/mocks/MockERC20.sol";
-import {OUSD} from "contracts/token/OUSD.sol";
-import {OUSDVault} from "contracts/vault/OUSDVault.sol";
-import {OUSDProxy} from "contracts/proxies/Proxies.sol";
-import {VaultProxy} from "contracts/proxies/Proxies.sol";
-import {WrappedOUSDProxy} from "contracts/proxies/Proxies.sol";
-import {WrappedOusd} from "contracts/token/WrappedOusd.sol";
 
 abstract contract Unit_WrappedOusd_Shared_Test is Base {
     //////////////////////////////////////////////////////
     /// --- CONTRACTS
     //////////////////////////////////////////////////////
-    OUSD internal ousd;
-    OUSDVault internal ousdVault;
-    OUSDProxy internal ousdProxy;
-    VaultProxy internal ousdVaultProxy;
+    IOToken internal ousd;
+    IVault internal ousdVault;
+    IProxy internal ousdProxy;
+    IProxy internal ousdVaultProxy;
 
-    WrappedOusd internal wrappedOusd;
-    WrappedOUSDProxy internal wrappedOusdProxy;
+    IWOToken internal wrappedOusd;
+    IProxy internal wrappedOusdProxy;
 
     //////////////////////////////////////////////////////
     /// --- CONSTANTS
@@ -54,11 +54,19 @@ abstract contract Unit_WrappedOusd_Shared_Test is Base {
     function _deployContracts() internal {
         vm.startPrank(deployer);
 
-        OUSD ousdImpl = new OUSD();
-        OUSDVault ousdVaultImpl = new OUSDVault(address(usdc));
+        IOToken ousdImpl = IOToken(vm.deployCode("contracts/token/OUSD.sol:OUSD"));
+        address ousdVaultImpl = vm.deployCode("contracts/vault/OUSDVault.sol:OUSDVault", abi.encode(address(usdc)));
 
-        ousdProxy = new OUSDProxy();
-        ousdVaultProxy = new VaultProxy();
+        ousdProxy = IProxy(
+            vm.deployCode(
+                "contracts/proxies/InitializeGovernedUpgradeabilityProxy.sol:InitializeGovernedUpgradeabilityProxy"
+            )
+        );
+        ousdVaultProxy = IProxy(
+            vm.deployCode(
+                "contracts/proxies/InitializeGovernedUpgradeabilityProxy.sol:InitializeGovernedUpgradeabilityProxy"
+            )
+        );
 
         ousdProxy.initialize(
             address(ousdImpl),
@@ -72,20 +80,25 @@ abstract contract Unit_WrappedOusd_Shared_Test is Base {
 
         vm.stopPrank();
 
-        ousd = OUSD(address(ousdProxy));
-        ousdVault = OUSDVault(address(ousdVaultProxy));
+        ousd = IOToken(address(ousdProxy));
+        ousdVault = IVault(address(ousdVaultProxy));
     }
 
     function _deployWrappedOusd() internal {
         vm.startPrank(deployer);
 
-        WrappedOusd wrappedOusdImpl = new WrappedOusd(ERC20(address(ousd)));
-        wrappedOusdProxy = new WrappedOUSDProxy();
+        address wrappedOusdImpl =
+            vm.deployCode("contracts/token/WrappedOusd.sol:WrappedOusd", abi.encode(address(ousd)));
+        wrappedOusdProxy = IProxy(
+            vm.deployCode(
+                "contracts/proxies/InitializeGovernedUpgradeabilityProxy.sol:InitializeGovernedUpgradeabilityProxy"
+            )
+        );
         wrappedOusdProxy.initialize(address(wrappedOusdImpl), governor, "");
 
         vm.stopPrank();
 
-        wrappedOusd = WrappedOusd(address(wrappedOusdProxy));
+        wrappedOusd = IWOToken(address(wrappedOusdProxy));
 
         vm.prank(governor);
         wrappedOusd.initialize();

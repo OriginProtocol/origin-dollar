@@ -2,8 +2,7 @@
 pragma solidity ^0.8.0;
 
 import {Smoke_CrossChainRemoteStrategyBase_Shared_Test} from "../shared/Shared.t.sol";
-import {Base as BaseAddresses, CrossChain} from "tests/utils/Addresses.sol";
-import {CrossChainStrategyHelper} from "contracts/strategies/crosschain/CrossChainStrategyHelper.sol";
+import {Base as BaseAddresses} from "tests/utils/Addresses.sol";
 import {Vm} from "forge-std/Vm.sol";
 
 contract Smoke_CrossChainRemoteStrategyBase_BalanceUpdate_Test is Smoke_CrossChainRemoteStrategyBase_Shared_Test {
@@ -36,8 +35,7 @@ contract Smoke_CrossChainRemoteStrategyBase_BalanceUpdate_Test is Smoke_CrossCha
                 assertEq(minFinalityThreshold, 2000, "minFinalityThreshold should be 2000");
 
                 // Decode balance check message
-                (uint64 nonce, uint256 balance, bool transferConfirmation,) =
-                    CrossChainStrategyHelper.decodeBalanceCheckMessage(message);
+                (uint64 nonce, uint256 balance, bool transferConfirmation,) = _decodeBalanceCheckMessage(message);
 
                 assertEq(nonce, nonceBefore, "nonce should match");
                 assertApproxEqAbs(balance, balanceBefore, 1e6, "balance should match");

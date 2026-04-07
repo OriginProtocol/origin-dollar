@@ -4,16 +4,16 @@ pragma solidity ^0.8.0;
 import {BaseSmoke} from "tests/smoke/BaseSmoke.t.sol";
 import {Base as BaseAddresses} from "tests/utils/Addresses.sol";
 
-import {OETHBase} from "contracts/token/OETHBase.sol";
-import {OETHBaseVault} from "contracts/vault/OETHBaseVault.sol";
-import {BaseCurveAMOStrategy} from "contracts/strategies/BaseCurveAMOStrategy.sol";
-
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {IOToken} from "contracts/interfaces/IOToken.sol";
+import {IVault} from "contracts/interfaces/IVault.sol";
+import {IBaseCurveAMOStrategy} from "contracts/interfaces/strategies/IBaseCurveAMOStrategy.sol";
+import {ICurveStableSwapNG} from "contracts/interfaces/ICurveStableSwapNG.sol";
 
 abstract contract Smoke_BaseCurveAMOStrategy_Shared_Test is BaseSmoke {
-    OETHBase internal oethBase;
-    OETHBaseVault internal oethBaseVault;
-    BaseCurveAMOStrategy internal baseCurveAMOStrategy;
+    IOToken internal oethBase;
+    IVault internal oethBaseVault;
+    IBaseCurveAMOStrategy internal baseCurveAMOStrategy;
 
     //////////////////////////////////////////////////////
     /// --- SETUP
@@ -31,9 +31,9 @@ abstract contract Smoke_BaseCurveAMOStrategy_Shared_Test is BaseSmoke {
     function _fetchContracts() internal virtual {
         require(address(resolver).code.length > 0, "Resolver not initialized on fork");
 
-        oethBase = OETHBase(resolver.resolve("OETHBASE_PROXY"));
-        oethBaseVault = OETHBaseVault(payable(resolver.resolve("OETHBASE_VAULT_PROXY")));
-        baseCurveAMOStrategy = BaseCurveAMOStrategy(resolver.resolve("OETHBASE_CURVE_AMO_STRATEGY"));
+        oethBase = IOToken(resolver.resolve("OETHBASE_PROXY"));
+        oethBaseVault = IVault(resolver.resolve("OETHBASE_VAULT_PROXY"));
+        baseCurveAMOStrategy = IBaseCurveAMOStrategy(resolver.resolve("OETHBASE_CURVE_AMO_STRATEGY"));
         weth = IERC20(BaseAddresses.WETH);
         crv = IERC20(BaseAddresses.CRV);
     }
@@ -64,27 +64,30 @@ abstract contract Smoke_BaseCurveAMOStrategy_Shared_Test is BaseSmoke {
 
     /// @dev Tilt pool toward WETH (more WETH, less OETHb)
     function _tiltPoolToWeth(uint256 swapAmount) internal {
+        ICurveStableSwapNG curvePool = ICurveStableSwapNG(baseCurveAMOStrategy.curvePool());
         deal(address(weth), address(this), swapAmount);
-        weth.approve(address(baseCurveAMOStrategy.curvePool()), swapAmount);
+        weth.approve(address(curvePool), swapAmount);
         uint128 wethIdx = baseCurveAMOStrategy.wethCoinIndex();
         uint128 oethIdx = baseCurveAMOStrategy.oethCoinIndex();
-        baseCurveAMOStrategy.curvePool().exchange(int128(wethIdx), int128(oethIdx), swapAmount, 0);
+        curvePool.exchange(int128(wethIdx), int128(oethIdx), swapAmount, 0);
     }
 
     /// @dev Tilt pool toward OETHb (more OETHb, less WETH)
     function _tiltPoolToOeth(uint256 swapAmount) internal {
+        ICurveStableSwapNG curvePool = ICurveStableSwapNG(baseCurveAMOStrategy.curvePool());
         deal(address(weth), address(this), swapAmount);
         weth.approve(address(oethBaseVault), swapAmount);
         oethBaseVault.mint(swapAmount);
-        IERC20(address(oethBase)).approve(address(baseCurveAMOStrategy.curvePool()), swapAmount);
+        oethBase.approve(address(curvePool), swapAmount);
         uint128 wethIdx = baseCurveAMOStrategy.wethCoinIndex();
         uint128 oethIdx = baseCurveAMOStrategy.oethCoinIndex();
-        baseCurveAMOStrategy.curvePool().exchange(int128(oethIdx), int128(wethIdx), swapAmount, 0);
+        curvePool.exchange(int128(oethIdx), int128(wethIdx), swapAmount, 0);
     }
 
     /// @dev Ensure pool has excess WETH by tilting if needed.
     function _ensurePoolExcessWeth(uint256 targetExcess) internal {
-        uint256[] memory balances = baseCurveAMOStrategy.curvePool().get_balances();
+        ICurveStableSwapNG curvePool = ICurveStableSwapNG(baseCurveAMOStrategy.curvePool());
+        uint256[] memory balances = curvePool.get_balances();
         uint128 wethIdx = baseCurveAMOStrategy.wethCoinIndex();
         uint128 oethIdx = baseCurveAMOStrategy.oethCoinIndex();
         int256 diff = int256(balances[wethIdx]) - int256(balances[oethIdx]);
@@ -97,7 +100,8 @@ abstract contract Smoke_BaseCurveAMOStrategy_Shared_Test is BaseSmoke {
 
     /// @dev Ensure pool has excess OETHb by tilting if needed.
     function _ensurePoolExcessOeth(uint256 targetExcess) internal {
-        uint256[] memory balances = baseCurveAMOStrategy.curvePool().get_balances();
+        ICurveStableSwapNG curvePool = ICurveStableSwapNG(baseCurveAMOStrategy.curvePool());
+        uint256[] memory balances = curvePool.get_balances();
         uint128 wethIdx = baseCurveAMOStrategy.wethCoinIndex();
         uint128 oethIdx = baseCurveAMOStrategy.oethCoinIndex();
         int256 diff = int256(balances[oethIdx]) - int256(balances[wethIdx]);

@@ -2,9 +2,7 @@
 pragma solidity ^0.8.0;
 
 import {Unit_SonicSwapXAMOStrategy_Shared_Test} from "tests/unit/strategies/SonicSwapXAMOStrategy/shared/Shared.t.sol";
-import {InitializableAbstractStrategy} from "contracts/utils/InitializableAbstractStrategy.sol";
-import {StableSwapAMMStrategy} from "contracts/strategies/algebra/StableSwapAMMStrategy.sol";
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {ISonicSwapXAMOStrategy} from "contracts/interfaces/strategies/ISonicSwapXAMOStrategy.sol";
 
 contract Unit_Concrete_SonicSwapXAMOStrategy_SwapAssetsToPool_Test is Unit_SonicSwapXAMOStrategy_Shared_Test {
     /// @dev Setup imbalanced pool (more OS than wS) and deposit LP for the strategy
@@ -48,7 +46,7 @@ contract Unit_Concrete_SonicSwapXAMOStrategy_SwapAssetsToPool_Test is Unit_Sonic
 
         // Expect SwapAssetsToPool event
         vm.expectEmit(false, false, false, false);
-        emit StableSwapAMMStrategy.SwapAssetsToPool(0, 0, 0);
+        emit ISonicSwapXAMOStrategy.SwapAssetsToPool(0, 0, 0);
 
         vm.prank(strategist);
         sonicSwapXAMOStrategy.swapAssetsToPool(5 ether);

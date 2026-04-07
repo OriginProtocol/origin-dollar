@@ -2,31 +2,34 @@
 pragma solidity ^0.8.0;
 
 import {Base} from "tests/Base.t.sol";
+
+// Interfaces
+import {IVault} from "contracts/interfaces/IVault.sol";
+import {IProxy} from "contracts/interfaces/IProxy.sol";
+import {IOToken} from "contracts/interfaces/IOToken.sol";
+import {IOETHSupernovaAMOStrategy} from "contracts/interfaces/strategies/IOETHSupernovaAMOStrategy.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+
+// Mocks
 import {MockERC20} from "@solmate/test/utils/mocks/MockERC20.sol";
 import {MockWETH} from "contracts/mocks/MockWETH.sol";
 import {MockSwapXPair} from "tests/mocks/MockSwapXPair.sol";
 import {MockSwapXGauge} from "tests/mocks/MockSwapXGauge.sol";
-import {OETH} from "contracts/token/OETH.sol";
-import {OETHVault} from "contracts/vault/OETHVault.sol";
-import {OETHProxy, OETHVaultProxy} from "contracts/proxies/Proxies.sol";
-import {OETHSupernovaAMOStrategy} from "contracts/strategies/algebra/OETHSupernovaAMOStrategy.sol";
-import {InitializableAbstractStrategy} from "contracts/utils/InitializableAbstractStrategy.sol";
 
 abstract contract Unit_OETHSupernovaAMOStrategy_Shared_Test is Base {
     //////////////////////////////////////////////////////
-    /// --- CONTRACTS & PROXIES (moved from Base)
+    /// --- CONTRACTS & PROXIES
     //////////////////////////////////////////////////////
 
     MockWETH internal mockWeth;
     MockSwapXPair internal mockSwapXPair;
     MockSwapXGauge internal mockSwapXGauge;
     MockERC20 internal swpxToken;
-    OETH internal oeth;
-    OETHVault internal oethVault;
-    OETHProxy internal oethProxy;
-    OETHVaultProxy internal oethVaultProxy;
-    OETHSupernovaAMOStrategy internal oethSupernovaAMOStrategy;
+    IOToken internal oeth;
+    IVault internal oethVault;
+    IProxy internal oethProxy;
+    IProxy internal oethVaultProxy;
+    IOETHSupernovaAMOStrategy internal oethSupernovaAMOStrategy;
 
     //////////////////////////////////////////////////////
     /// --- CONSTANTS
@@ -59,11 +62,19 @@ abstract contract Unit_OETHSupernovaAMOStrategy_Shared_Test is Base {
         // Deploy OETH + OETHVault through proxies
         vm.startPrank(deployer);
 
-        OETH oethImpl = new OETH();
-        OETHVault oethVaultImpl = new OETHVault(address(mockWeth));
+        IOToken oethImpl = IOToken(vm.deployCode("contracts/token/OETH.sol:OETH"));
+        address oethVaultImpl = vm.deployCode("contracts/vault/OETHVault.sol:OETHVault", abi.encode(address(mockWeth)));
 
-        oethProxy = new OETHProxy();
-        oethVaultProxy = new OETHVaultProxy();
+        oethProxy = IProxy(
+            vm.deployCode(
+                "contracts/proxies/InitializeGovernedUpgradeabilityProxy.sol:InitializeGovernedUpgradeabilityProxy"
+            )
+        );
+        oethVaultProxy = IProxy(
+            vm.deployCode(
+                "contracts/proxies/InitializeGovernedUpgradeabilityProxy.sol:InitializeGovernedUpgradeabilityProxy"
+            )
+        );
 
         oethProxy.initialize(
             address(oethImpl),
@@ -77,8 +88,8 @@ abstract contract Unit_OETHSupernovaAMOStrategy_Shared_Test is Base {
 
         vm.stopPrank();
 
-        oeth = OETH(address(oethProxy));
-        oethVault = OETHVault(address(oethVaultProxy));
+        oeth = IOToken(address(oethProxy));
+        oethVault = IVault(address(oethVaultProxy));
 
         // Configure vault
         vm.startPrank(governor);
@@ -95,11 +106,11 @@ abstract contract Unit_OETHSupernovaAMOStrategy_Shared_Test is Base {
         mockSwapXGauge = new MockSwapXGauge(address(mockSwapXPair), address(swpxToken));
 
         // Deploy OETHSupernovaAMOStrategy
-        oethSupernovaAMOStrategy = new OETHSupernovaAMOStrategy(
-            InitializableAbstractStrategy.BaseStrategyConfig({
-                platformAddress: address(mockSwapXPair), vaultAddress: address(oethVault)
-            }),
-            address(mockSwapXGauge)
+        oethSupernovaAMOStrategy = IOETHSupernovaAMOStrategy(
+            vm.deployCode(
+                "contracts/strategies/algebra/OETHSupernovaAMOStrategy.sol:OETHSupernovaAMOStrategy",
+                abi.encode(address(mockSwapXPair), address(oethVault), address(mockSwapXGauge))
+            )
         );
 
         // Set governor via slot

@@ -2,8 +2,6 @@
 pragma solidity ^0.8.0;
 
 import {Unit_AerodromeAMOStrategy_Shared_Test} from "tests/unit/strategies/AerodromeAMOStrategy/shared/Shared.t.sol";
-import {AerodromeAMOStrategy} from "contracts/strategies/aerodrome/AerodromeAMOStrategy.sol";
-import {InitializableAbstractStrategy} from "contracts/utils/InitializableAbstractStrategy.sol";
 import {MockCLPool} from "tests/mocks/aerodrome/MockCLPool.sol";
 
 contract Unit_Concrete_AerodromeAMOStrategy_Initialize_Test is Unit_AerodromeAMOStrategy_Shared_Test {
@@ -56,20 +54,22 @@ contract Unit_Concrete_AerodromeAMOStrategy_Initialize_Test is Unit_AerodromeAMO
 
     function test_initialize_RevertWhen_misconfiguredTickClosestToParity() public {
         vm.expectRevert("Misconfigured tickClosestToParity");
-        new AerodromeAMOStrategy(
-            InitializableAbstractStrategy.BaseStrategyConfig({
-                platformAddress: address(mockCLPool), vaultAddress: address(oethBaseVault)
-            }),
-            address(mockWeth),
-            address(oethBase),
-            address(mockSwapRouter),
-            address(mockPositionManager),
-            address(mockCLPool),
-            address(mockCLGauge),
-            address(mockSugarHelper),
-            int24(-1),
-            int24(0),
-            int24(-2) // neither lowerTick (-1) nor upperTick (0)
+        vm.deployCode(
+            "contracts/strategies/aerodrome/AerodromeAMOStrategy.sol:AerodromeAMOStrategy",
+            abi.encode(
+                address(mockCLPool),
+                address(oethBaseVault),
+                address(mockWeth),
+                address(oethBase),
+                address(mockSwapRouter),
+                address(mockPositionManager),
+                address(mockCLPool),
+                address(mockCLGauge),
+                address(mockSugarHelper),
+                int24(-1),
+                int24(0),
+                int24(-2) // neither lowerTick (-1) nor upperTick (0)
+            )
         );
     }
 
@@ -79,20 +79,22 @@ contract Unit_Concrete_AerodromeAMOStrategy_Initialize_Test is Unit_AerodromeAMO
         wrongPool.setSlot0(DEFAULT_POOL_PRICE, -1);
 
         vm.expectRevert("Only WETH supported as token0");
-        new AerodromeAMOStrategy(
-            InitializableAbstractStrategy.BaseStrategyConfig({
-                platformAddress: address(wrongPool), vaultAddress: address(oethBaseVault)
-            }),
-            address(mockWeth),
-            address(oethBase),
-            address(mockSwapRouter),
-            address(mockPositionManager),
-            address(wrongPool),
-            address(mockCLGauge),
-            address(mockSugarHelper),
-            int24(-1),
-            int24(0),
-            int24(0)
+        vm.deployCode(
+            "contracts/strategies/aerodrome/AerodromeAMOStrategy.sol:AerodromeAMOStrategy",
+            abi.encode(
+                address(wrongPool),
+                address(oethBaseVault),
+                address(mockWeth),
+                address(oethBase),
+                address(mockSwapRouter),
+                address(mockPositionManager),
+                address(wrongPool),
+                address(mockCLGauge),
+                address(mockSugarHelper),
+                int24(-1),
+                int24(0),
+                int24(0)
+            )
         );
     }
 
@@ -102,20 +104,22 @@ contract Unit_Concrete_AerodromeAMOStrategy_Initialize_Test is Unit_AerodromeAMO
         wrongPool.setSlot0(DEFAULT_POOL_PRICE, -1);
 
         vm.expectRevert("Only OETHb supported as token1");
-        new AerodromeAMOStrategy(
-            InitializableAbstractStrategy.BaseStrategyConfig({
-                platformAddress: address(wrongPool), vaultAddress: address(oethBaseVault)
-            }),
-            address(mockWeth),
-            address(oethBase),
-            address(mockSwapRouter),
-            address(mockPositionManager),
-            address(wrongPool),
-            address(mockCLGauge),
-            address(mockSugarHelper),
-            int24(-1),
-            int24(0),
-            int24(0)
+        vm.deployCode(
+            "contracts/strategies/aerodrome/AerodromeAMOStrategy.sol:AerodromeAMOStrategy",
+            abi.encode(
+                address(wrongPool),
+                address(oethBaseVault),
+                address(mockWeth),
+                address(oethBase),
+                address(mockSwapRouter),
+                address(mockPositionManager),
+                address(wrongPool),
+                address(mockCLGauge),
+                address(mockSugarHelper),
+                int24(-1),
+                int24(0),
+                int24(0)
+            )
         );
     }
 
@@ -126,20 +130,22 @@ contract Unit_Concrete_AerodromeAMOStrategy_Initialize_Test is Unit_AerodromeAMO
         wrongPool.setTickSpacing(2);
 
         vm.expectRevert("Unsupported tickSpacing");
-        new AerodromeAMOStrategy(
-            InitializableAbstractStrategy.BaseStrategyConfig({
-                platformAddress: address(wrongPool), vaultAddress: address(oethBaseVault)
-            }),
-            address(mockWeth),
-            address(oethBase),
-            address(mockSwapRouter),
-            address(mockPositionManager),
-            address(wrongPool),
-            address(mockCLGauge),
-            address(mockSugarHelper),
-            int24(-1),
-            int24(0),
-            int24(0)
+        vm.deployCode(
+            "contracts/strategies/aerodrome/AerodromeAMOStrategy.sol:AerodromeAMOStrategy",
+            abi.encode(
+                address(wrongPool),
+                address(oethBaseVault),
+                address(mockWeth),
+                address(oethBase),
+                address(mockSwapRouter),
+                address(mockPositionManager),
+                address(wrongPool),
+                address(mockCLGauge),
+                address(mockSugarHelper),
+                int24(-1),
+                int24(0),
+                int24(0)
+            )
         );
     }
 }

@@ -4,7 +4,7 @@ pragma solidity ^0.8.0;
 import {Base} from "tests/Base.t.sol";
 
 import {MockSafeContract} from "tests/mocks/MockSafeContract.sol";
-import {CurvePoolBoosterBribesModule} from "contracts/automation/CurvePoolBoosterBribesModule.sol";
+import {ICurvePoolBoosterBribesModule} from "contracts/interfaces/automation/ICurvePoolBoosterBribesModule.sol";
 
 abstract contract Unit_CurvePoolBoosterBribesModule_Shared_Test is Base {
     //////////////////////////////////////////////////////
@@ -12,7 +12,7 @@ abstract contract Unit_CurvePoolBoosterBribesModule_Shared_Test is Base {
     //////////////////////////////////////////////////////
 
     MockSafeContract internal mockSafe;
-    CurvePoolBoosterBribesModule internal curvePoolBoosterBribesModule;
+    ICurvePoolBoosterBribesModule internal curvePoolBoosterBribesModule;
     address internal poolBooster1;
     address internal poolBooster2;
 
@@ -40,12 +40,11 @@ abstract contract Unit_CurvePoolBoosterBribesModule_Shared_Test is Base {
         initialPoolBoosters[0] = poolBooster1;
         initialPoolBoosters[1] = poolBooster2;
 
-        curvePoolBoosterBribesModule = new CurvePoolBoosterBribesModule(
-            address(mockSafe),
-            operator,
-            initialPoolBoosters,
-            0.001 ether, // bridgeFee
-            200_000 // additionalGasLimit
+        curvePoolBoosterBribesModule = ICurvePoolBoosterBribesModule(
+            vm.deployCode(
+                "contracts/automation/CurvePoolBoosterBribesModule.sol:CurvePoolBoosterBribesModule",
+                abi.encode(address(mockSafe), operator, initialPoolBoosters, 0.001 ether, 200_000)
+            )
         );
 
         // Fund the safe with ETH to cover bridge fees

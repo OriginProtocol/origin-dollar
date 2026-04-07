@@ -3,8 +3,6 @@ pragma solidity ^0.8.0;
 
 import {Unit_ClaimBribesSafeModule_Shared_Test} from "tests/unit/automation/ClaimBribesSafeModule/shared/Shared.t.sol";
 
-import {ClaimBribesSafeModule} from "contracts/automation/ClaimBribesSafeModule.sol";
-
 contract Unit_Concrete_ClaimBribesSafeModule_ClaimBribes_Test is Unit_ClaimBribesSafeModule_Shared_Test {
     function setUp() public override {
         super.setUp();

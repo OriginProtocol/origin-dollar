@@ -4,14 +4,15 @@ pragma solidity ^0.8.0;
 import {Vm} from "forge-std/Vm.sol";
 
 import {Fork_SwapXPoolBooster_Shared_Test} from "tests/fork/sonic/poolBooster/SwapXPoolBooster/shared/Shared.t.sol";
-import {PoolBoosterSwapxSingle} from "contracts/poolBooster/PoolBoosterSwapxSingle.sol";
+import {IPoolBoosterSwapxSingle} from "contracts/interfaces/poolBooster/IPoolBoosterSwapxSingle.sol";
 import {Sonic} from "tests/utils/Addresses.sol";
 
 contract Fork_Concrete_SwapXPoolBooster_BribeSingle_Test is Fork_SwapXPoolBooster_Shared_Test {
     bytes32 internal constant REWARD_ADDED_TOPIC = keccak256("RewardAdded(address,uint256,uint256)");
 
     function test_bribe() public {
-        PoolBoosterSwapxSingle booster = _createSingleBooster(Sonic.SwapXOsUSDCe_extBribeOS, Sonic.SwapXOsUSDCe_pool, 1);
+        IPoolBoosterSwapxSingle booster =
+            _createSingleBooster(Sonic.SwapXOsUSDCe_extBribeOS, Sonic.SwapXOsUSDCe_pool, 1);
 
         // Whitelist mock token on bribe contract
         _whitelistOnBribe(Sonic.SwapXOsUSDCe_extBribeOS);

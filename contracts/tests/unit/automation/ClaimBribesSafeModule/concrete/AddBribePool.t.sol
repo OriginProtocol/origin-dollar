@@ -3,9 +3,7 @@ pragma solidity ^0.8.0;
 
 import {Unit_ClaimBribesSafeModule_Shared_Test} from "tests/unit/automation/ClaimBribesSafeModule/shared/Shared.t.sol";
 
-import {MockCLRewardContract} from "tests/mocks/MockCLRewardContract.sol";
-import {MockCLPoolForBribes, MockCLGaugeForBribes} from "tests/mocks/MockCLPoolForBribes.sol";
-import {ClaimBribesSafeModule} from "contracts/automation/ClaimBribesSafeModule.sol";
+import {IClaimBribesSafeModule} from "contracts/interfaces/automation/IClaimBribesSafeModule.sol";
 
 contract Unit_Concrete_ClaimBribesSafeModule_AddBribePool_Test is Unit_ClaimBribesSafeModule_Shared_Test {
     //////////////////////////////////////////////////////
@@ -65,7 +63,7 @@ contract Unit_Concrete_ClaimBribesSafeModule_AddBribePool_Test is Unit_ClaimBrib
 
         vm.prank(address(mockSafe));
         vm.expectEmit(true, true, true, true);
-        emit ClaimBribesSafeModule.BribePoolAdded(address(mockRewardContract));
+        emit IClaimBribesSafeModule.BribePoolAdded(address(mockRewardContract));
         claimBribesModule.addBribePool(address(mockRewardContract), true);
     }
 

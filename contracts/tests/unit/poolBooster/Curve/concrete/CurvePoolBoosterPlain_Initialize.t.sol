@@ -2,12 +2,12 @@
 pragma solidity ^0.8.0;
 
 import {Unit_Curve_Shared_Test} from "tests/unit/poolBooster/Curve/shared/Shared.t.sol";
-import {CurvePoolBoosterPlain} from "contracts/poolBooster/curve/CurvePoolBoosterPlain.sol";
+import {ICurvePoolBooster} from "contracts/interfaces/poolBooster/ICurvePoolBooster.sol";
 
 contract Unit_Concrete_CurvePoolBoosterPlain_Initialize_Test is Unit_Curve_Shared_Test {
     function test_initialize() public {
         // Deploy a fresh CurvePoolBoosterPlain and initialize it
-        CurvePoolBoosterPlain freshPlain = new CurvePoolBoosterPlain(address(oeth), mockGauge);
+        ICurvePoolBooster freshPlain = _deployFreshCurvePoolBoosterPlain();
 
         // Before initialize, governor is address(0) because parent constructor calls _setGovernor(address(0))
         assertEq(freshPlain.governor(), address(0));
@@ -28,7 +28,7 @@ contract Unit_Concrete_CurvePoolBoosterPlain_Initialize_Test is Unit_Curve_Share
     function test_initialize_noRoleCheck() public {
         // Anyone can call initialize (no onlyGovernor modifier) -- it's expected to be called
         // in the same transaction as deployment
-        CurvePoolBoosterPlain freshPlain = new CurvePoolBoosterPlain(address(oeth), mockGauge);
+        ICurvePoolBooster freshPlain = _deployFreshCurvePoolBoosterPlain();
 
         // Call initialize as alice (not governor) -- should succeed
         vm.prank(alice);
@@ -48,14 +48,14 @@ contract Unit_Concrete_CurvePoolBoosterPlain_Initialize_Test is Unit_Curve_Share
     }
 
     function test_initialize_RevertWhen_feeTooHigh() public {
-        CurvePoolBoosterPlain freshPlain = new CurvePoolBoosterPlain(address(oeth), mockGauge);
+        ICurvePoolBooster freshPlain = _deployFreshCurvePoolBoosterPlain();
 
         vm.expectRevert("Fee too high");
         freshPlain.initialize(governor, strategist, 5001, mockFeeCollector, mockCampaignRemoteManager, mockVotemarket);
     }
 
     function test_initialize_RevertWhen_zeroFeeCollector() public {
-        CurvePoolBoosterPlain freshPlain = new CurvePoolBoosterPlain(address(oeth), mockGauge);
+        ICurvePoolBooster freshPlain = _deployFreshCurvePoolBoosterPlain();
 
         vm.expectRevert("Invalid fee collector");
         freshPlain.initialize(governor, strategist, DEFAULT_FEE, address(0), mockCampaignRemoteManager, mockVotemarket);

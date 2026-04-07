@@ -2,11 +2,11 @@
 pragma solidity ^0.8.0;
 
 import {BaseSmoke} from "tests/smoke/BaseSmoke.t.sol";
-import {EthereumBridgeHelperModule} from "contracts/automation/EthereumBridgeHelperModule.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IWETH9} from "contracts/interfaces/IWETH9.sol";
 import {IVault} from "contracts/interfaces/IVault.sol";
-import {WOETH} from "contracts/token/WOETH.sol";
+import {IWOToken} from "contracts/interfaces/IWOToken.sol";
+import {IEthereumBridgeHelperModule} from "contracts/interfaces/automation/IEthereumBridgeHelperModule.sol";
 import {Mainnet} from "tests/utils/Addresses.sol";
 
 abstract contract Smoke_EthereumBridgeHelperModule_Shared_Test is BaseSmoke {
@@ -14,8 +14,8 @@ abstract contract Smoke_EthereumBridgeHelperModule_Shared_Test is BaseSmoke {
     /// --- CONTRACTS
     //////////////////////////////////////////////////////
 
-    EthereumBridgeHelperModule internal ethereumBridgeHelperModule;
-    WOETH internal woeth;
+    IEthereumBridgeHelperModule internal ethereumBridgeHelperModule;
+    IWOToken internal woeth;
     IVault internal vault;
 
     //////////////////////////////////////////////////////
@@ -36,11 +36,11 @@ abstract contract Smoke_EthereumBridgeHelperModule_Shared_Test is BaseSmoke {
 
         require(address(resolver).code.length > 0, "Resolver not initialized on fork");
         ethereumBridgeHelperModule =
-            EthereumBridgeHelperModule(payable(resolver.resolve("ETHEREUM_BRIDGE_HELPER_MODULE")));
+            IEthereumBridgeHelperModule(payable(resolver.resolve("ETHEREUM_BRIDGE_HELPER_MODULE")));
         vm.label(address(ethereumBridgeHelperModule), "EthereumBridgeHelperModule");
 
         vault = IVault(resolver.resolve("OETH_VAULT_PROXY"));
-        woeth = WOETH(resolver.resolve("WOETH_PROXY"));
+        woeth = IWOToken(ethereumBridgeHelperModule.woeth());
         weth = IERC20(Mainnet.WETH);
         safe = address(ethereumBridgeHelperModule.safeContract());
         operator = ethereumBridgeHelperModule.getRoleMember(ethereumBridgeHelperModule.OPERATOR_ROLE(), 0);

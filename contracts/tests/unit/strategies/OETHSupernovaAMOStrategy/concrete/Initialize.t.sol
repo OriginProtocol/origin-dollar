@@ -5,8 +5,7 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {
     Unit_OETHSupernovaAMOStrategy_Shared_Test
 } from "tests/unit/strategies/OETHSupernovaAMOStrategy/shared/Shared.t.sol";
-import {OETHSupernovaAMOStrategy} from "contracts/strategies/algebra/OETHSupernovaAMOStrategy.sol";
-import {InitializableAbstractStrategy} from "contracts/utils/InitializableAbstractStrategy.sol";
+import {IOETHSupernovaAMOStrategy} from "contracts/interfaces/strategies/IOETHSupernovaAMOStrategy.sol";
 
 contract Unit_Concrete_OETHSupernovaAMOStrategy_Initialize_Test is Unit_OETHSupernovaAMOStrategy_Shared_Test {
     function test_initialize_setsMaxDepeg() public view {
@@ -33,11 +32,11 @@ contract Unit_Concrete_OETHSupernovaAMOStrategy_Initialize_Test is Unit_OETHSupe
     }
 
     function test_initialize_RevertWhen_nonGovernor() public {
-        OETHSupernovaAMOStrategy freshStrategy = new OETHSupernovaAMOStrategy(
-            InitializableAbstractStrategy.BaseStrategyConfig({
-                platformAddress: address(mockSwapXPair), vaultAddress: address(oethVault)
-            }),
-            address(mockSwapXGauge)
+        IOETHSupernovaAMOStrategy freshStrategy = IOETHSupernovaAMOStrategy(
+            vm.deployCode(
+                "contracts/strategies/algebra/OETHSupernovaAMOStrategy.sol:OETHSupernovaAMOStrategy",
+                abi.encode(address(mockSwapXPair), address(oethVault), address(mockSwapXGauge))
+            )
         );
         vm.store(address(freshStrategy), GOVERNOR_SLOT, bytes32(uint256(uint160(governor))));
 

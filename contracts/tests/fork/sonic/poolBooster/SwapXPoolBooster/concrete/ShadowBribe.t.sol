@@ -4,7 +4,7 @@ pragma solidity ^0.8.0;
 import {Vm} from "forge-std/Vm.sol";
 
 import {Fork_SwapXPoolBooster_Shared_Test} from "tests/fork/sonic/poolBooster/SwapXPoolBooster/shared/Shared.t.sol";
-import {PoolBoosterSwapxSingle} from "contracts/poolBooster/PoolBoosterSwapxSingle.sol";
+import {IPoolBoosterSwapxSingle} from "contracts/interfaces/poolBooster/IPoolBoosterSwapxSingle.sol";
 import {Sonic} from "tests/utils/Addresses.sol";
 
 contract Fork_Concrete_SwapXPoolBooster_ShadowBribe_Test is Fork_SwapXPoolBooster_Shared_Test {
@@ -16,7 +16,7 @@ contract Fork_Concrete_SwapXPoolBooster_ShadowBribe_Test is Fork_SwapXPoolBooste
 
     function test_bribe() public {
         // Create single booster using Shadow gauge as bribe target
-        PoolBoosterSwapxSingle booster =
+        IPoolBoosterSwapxSingle booster =
             _createSingleBooster(Sonic.Shadow_SWETH_gaugeV2, Sonic.Shadow_SWETH_pool, 12345e18);
 
         // Verify computed address matches

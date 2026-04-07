@@ -2,7 +2,6 @@
 pragma solidity ^0.8.0;
 
 import {Fork_CrossChainRemoteStrategy_Shared_Test} from "../shared/Shared.t.sol";
-import {Mainnet, Base as BaseAddresses, CrossChain} from "tests/utils/Addresses.sol";
 import {CrossChainStrategyHelper} from "contracts/strategies/crosschain/CrossChainStrategyHelper.sol";
 
 contract Fork_CrossChainRemoteStrategy_RelayValidation_Test is Fork_CrossChainRemoteStrategy_Shared_Test {

@@ -8,7 +8,7 @@ import {MockAerodromeVoter} from "tests/mocks/MockAerodromeVoter.sol";
 import {MockVeNFT} from "tests/mocks/MockVeNFT.sol";
 import {MockCLRewardContract} from "tests/mocks/MockCLRewardContract.sol";
 import {MockCLPoolForBribes, MockCLGaugeForBribes} from "tests/mocks/MockCLPoolForBribes.sol";
-import {ClaimBribesSafeModule} from "contracts/automation/ClaimBribesSafeModule.sol";
+import {IClaimBribesSafeModule} from "contracts/interfaces/automation/IClaimBribesSafeModule.sol";
 
 abstract contract Unit_ClaimBribesSafeModule_Shared_Test is Base {
     //////////////////////////////////////////////////////
@@ -16,7 +16,7 @@ abstract contract Unit_ClaimBribesSafeModule_Shared_Test is Base {
     //////////////////////////////////////////////////////
 
     MockSafeContract internal mockSafe;
-    ClaimBribesSafeModule internal claimBribesModule;
+    IClaimBribesSafeModule internal claimBribesModule;
     MockAerodromeVoter internal mockVoter;
     MockVeNFT internal mockVeNFT;
     MockCLRewardContract internal mockRewardContract;
@@ -46,7 +46,12 @@ abstract contract Unit_ClaimBribesSafeModule_Shared_Test is Base {
         mockPool = new MockCLPoolForBribes(address(mockGauge));
 
         // Deploy ClaimBribesSafeModule
-        claimBribesModule = new ClaimBribesSafeModule(address(mockSafe), address(mockVoter), address(mockVeNFT));
+        claimBribesModule = IClaimBribesSafeModule(
+            vm.deployCode(
+                "contracts/automation/ClaimBribesSafeModule.sol:ClaimBribesSafeModule",
+                abi.encode(address(mockSafe), address(mockVoter), address(mockVeNFT))
+            )
+        );
 
         // Grant OPERATOR_ROLE to operator via safe (safe has DEFAULT_ADMIN_ROLE)
         bytes32 operatorRole = claimBribesModule.OPERATOR_ROLE();

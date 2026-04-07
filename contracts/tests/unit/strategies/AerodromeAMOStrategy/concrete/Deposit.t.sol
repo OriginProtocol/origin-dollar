@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 import {Unit_AerodromeAMOStrategy_Shared_Test} from "tests/unit/strategies/AerodromeAMOStrategy/shared/Shared.t.sol";
-import {InitializableAbstractStrategy} from "contracts/utils/InitializableAbstractStrategy.sol";
+import {IAerodromeAMOStrategy} from "contracts/interfaces/strategies/IAerodromeAMOStrategy.sol";
 
 contract Unit_Concrete_AerodromeAMOStrategy_Deposit_Test is Unit_AerodromeAMOStrategy_Shared_Test {
     function test_deposit() public {
@@ -22,7 +22,7 @@ contract Unit_Concrete_AerodromeAMOStrategy_Deposit_Test is Unit_AerodromeAMOStr
         deal(address(weth), address(aerodromeAMOStrategy), amount);
 
         vm.expectEmit(true, true, true, true);
-        emit InitializableAbstractStrategy.Deposit(address(weth), address(0), amount);
+        emit IAerodromeAMOStrategy.Deposit(address(weth), address(0), amount);
 
         vm.prank(address(oethBaseVault));
         aerodromeAMOStrategy.deposit(address(weth), amount);

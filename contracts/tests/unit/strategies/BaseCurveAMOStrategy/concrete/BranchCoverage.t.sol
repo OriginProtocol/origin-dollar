@@ -3,8 +3,6 @@ pragma solidity ^0.8.0;
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {Unit_BaseCurveAMOStrategy_Shared_Test} from "tests/unit/strategies/BaseCurveAMOStrategy/shared/Shared.t.sol";
-import {InitializableAbstractStrategy} from "contracts/utils/InitializableAbstractStrategy.sol";
-import {BaseCurveAMOStrategy} from "contracts/strategies/BaseCurveAMOStrategy.sol";
 
 /// @title Branch Coverage Tests
 /// @notice Uses low-level calls to ensure require revert branches are recorded

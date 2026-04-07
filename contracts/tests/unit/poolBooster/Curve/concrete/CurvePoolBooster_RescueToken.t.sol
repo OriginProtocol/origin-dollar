@@ -2,9 +2,7 @@
 pragma solidity ^0.8.0;
 
 import {Unit_Curve_Shared_Test} from "tests/unit/poolBooster/Curve/shared/Shared.t.sol";
-import {CurvePoolBooster} from "contracts/poolBooster/curve/CurvePoolBooster.sol";
-import {CurvePoolBoosterPlain} from "contracts/poolBooster/curve/CurvePoolBoosterPlain.sol";
-import {ICampaignRemoteManager} from "contracts/interfaces/ICampaignRemoteManager.sol";
+import {ICurvePoolBooster} from "contracts/interfaces/poolBooster/ICurvePoolBooster.sol";
 
 contract Unit_Concrete_CurvePoolBooster_RescueToken_Test is Unit_Curve_Shared_Test {
     function test_rescueToken() public {
@@ -21,7 +19,7 @@ contract Unit_Concrete_CurvePoolBooster_RescueToken_Test is Unit_Curve_Shared_Te
         _dealOETH(address(curvePoolBoosterPlain), 1e18);
 
         vm.expectEmit(true, true, true, true);
-        emit CurvePoolBooster.TokensRescued(address(oeth), 1e18, alice);
+        emit ICurvePoolBooster.TokensRescued(address(oeth), 1e18, alice);
 
         vm.prank(governor);
         curvePoolBoosterPlain.rescueToken(address(oeth), alice);
@@ -53,7 +51,7 @@ contract Unit_Concrete_CurvePoolBooster_RescueToken_Test is Unit_Curve_Shared_Te
 
     function test_rescueToken_zeroBalance() public {
         vm.expectEmit(true, true, true, true);
-        emit CurvePoolBooster.TokensRescued(address(oeth), 0, alice);
+        emit ICurvePoolBooster.TokensRescued(address(oeth), 0, alice);
 
         vm.prank(governor);
         curvePoolBoosterPlain.rescueToken(address(oeth), alice);

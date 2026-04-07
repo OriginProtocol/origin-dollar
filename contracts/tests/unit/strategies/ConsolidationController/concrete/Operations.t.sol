@@ -2,8 +2,7 @@
 pragma solidity ^0.8.0;
 
 import {Unit_ConsolidationController_Shared_Test} from "../shared/Shared.t.sol";
-import {Cluster} from "contracts/interfaces/ISSVNetwork.sol";
-import {CompoundingValidatorManager} from "contracts/strategies/NativeStaking/CompoundingValidatorManager.sol";
+import {CompoundingValidatorStakeData} from "contracts/interfaces/strategies/CompoundingStakingTypes.sol";
 
 contract Unit_ConsolidationController_Operations_Test is Unit_ConsolidationController_Shared_Test {
     function setUp() public override {
@@ -271,7 +270,7 @@ contract Unit_ConsolidationController_Operations_Test is Unit_ConsolidationContr
     //////////////////////////////////////////////////////
 
     function test_RevertWhen_StakeEth_CalledByNonRegistrator() public {
-        CompoundingValidatorManager.ValidatorStakeData memory stakeData = CompoundingValidatorManager.ValidatorStakeData({
+        CompoundingValidatorStakeData memory stakeData = CompoundingValidatorStakeData({
             pubkey: TARGET_PUB_KEY, signature: TEST_SIGNATURE, depositDataRoot: TEST_DEPOSIT_DATA_ROOT
         });
 
@@ -289,7 +288,7 @@ contract Unit_ConsolidationController_Operations_Test is Unit_ConsolidationContr
         _requestConsolidation(address(nativeStakingSSVStrategy2), sourcePubKeys, TARGET_PUB_KEY);
 
         // Try to stake to the target validator
-        CompoundingValidatorManager.ValidatorStakeData memory stakeData = CompoundingValidatorManager.ValidatorStakeData({
+        CompoundingValidatorStakeData memory stakeData = CompoundingValidatorStakeData({
             pubkey: TARGET_PUB_KEY, signature: TEST_SIGNATURE, depositDataRoot: TEST_DEPOSIT_DATA_ROOT
         });
 

@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 import {Fork_CrossChainRemoteStrategy_Shared_Test} from "../shared/Shared.t.sol";
-import {Base as BaseAddresses, CrossChain} from "tests/utils/Addresses.sol";
+import {Base as BaseAddresses} from "tests/utils/Addresses.sol";
 import {CrossChainStrategyHelper} from "contracts/strategies/crosschain/CrossChainStrategyHelper.sol";
 import {Vm} from "forge-std/Vm.sol";
 

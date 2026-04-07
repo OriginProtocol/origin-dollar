@@ -2,7 +2,6 @@
 pragma solidity ^0.8.0;
 
 import {Smoke_SonicSwapXAMOStrategy_Shared_Test} from "../shared/Shared.t.sol";
-import {Sonic} from "tests/utils/Addresses.sol";
 
 contract Smoke_Concrete_SonicSwapXAMOStrategy_Withdraw_Test is Smoke_SonicSwapXAMOStrategy_Shared_Test {
     function test_withdraw_sendsWSToVault() public {

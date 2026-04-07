@@ -50,19 +50,32 @@ forge-std/Test
                       └─ Smoke_Concrete_<Product>_<Feature>_Test
 ```
 
-`Base` owns shared actors and contract state variables. Do not redeclare contract storage in `Shared.t.sol`.
+`Base` owns shared actors, constants, IERC20 external token refs, and fork IDs. All typed contract/proxy state variables are declared in each `Shared.t.sol` using interface types.
 
 `BaseSmoke` provides:
 
 - `resolver` — deterministic address: `Resolver(address(uint160(uint256(keccak256("Resolver")))))`
 - `_igniteDeployManager()` — runs the full deployment pipeline: parse JSON, etch Resolver, replay scripts, simulate governance
 
-Use the correct product-specific vault type:
+### Interface-only testing
 
-- `OUSD` -> `OUSDVault` on Mainnet
-- `OETH` -> `OETHVault` on Mainnet
-- `OSonic` -> `OSVault` on Sonic
-- `OETHBase` -> `OETHBaseVault` on Base
+Same rules as unit and fork tests — use interfaces, not concrete contracts:
+
+- Declare state variables with interface types: `IVault internal ousdVault;`
+- Resolve and cast to interfaces: `ousd = IOToken(resolver.resolve("OUSD_PROXY"));`
+- Reference events from interfaces: `emit IVault.YieldDistribution(...);`
+- Available interfaces: `IVault`, `IOToken`, `IWOToken`, `IProxy`, plus strategy interfaces in `contracts/interfaces/strategies/`
+
+### Product-specific vault types
+
+| Product | Token | Vault | Chain |
+|---------|-------|-------|-------|
+| OUSD | `OUSD` | `OUSDVault` | Mainnet |
+| OETH | `OETH` | `OETHVault` | Mainnet |
+| OSonic | `OSonic` | `OSVault` | Sonic |
+| OETHBase | `OETHBase` | `OETHBaseVault` | Base |
+
+Never use `OETHVault` for Sonic tests.
 
 ## 3. Shared setup contract
 
@@ -82,7 +95,7 @@ function setUp() public virtual override {
 Critical rules:
 
 - no fresh deploys — everything comes from the Resolver or fork state
-- resolve contracts by name: `resolver.resolve("OUSD_PROXY")`
+- resolve contracts by name and cast to interfaces: `ousd = IOToken(resolver.resolve("OUSD_PROXY"))`
 - resolve actors from live contracts: `governor = ousd.governor()`
 - sanity-check the Resolver: `require(address(resolver).code.length > 0, "Resolver not initialized")`
 
@@ -178,5 +191,7 @@ When implementing smoke tests:
 
 - keep tests focused on deployment health verification
 - use tolerant assertions throughout — live state has accumulated rounding
+- use interface-only imports; no concrete contract imports
+- cast resolved addresses to interfaces, not concrete types
 - mirror the existing OUSD smoke test structure before introducing new patterns
 - prefer a few strong invariant checks over broad but shallow coverage

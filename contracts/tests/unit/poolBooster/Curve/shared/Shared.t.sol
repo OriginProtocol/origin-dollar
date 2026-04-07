@@ -5,25 +5,20 @@ import {Base} from "tests/Base.t.sol";
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {MockERC20} from "@solmate/test/utils/mocks/MockERC20.sol";
-import {IPoolBoostCentralRegistry} from "contracts/interfaces/poolBooster/IPoolBoostCentralRegistry.sol";
+import {IPoolBoostCentralRegistryFull} from "contracts/interfaces/poolBooster/IPoolBoostCentralRegistryFull.sol";
+import {ICurvePoolBooster} from "contracts/interfaces/poolBooster/ICurvePoolBooster.sol";
+import {ICurvePoolBoosterFactory} from "contracts/interfaces/poolBooster/ICurvePoolBoosterFactory.sol";
 import {ICampaignRemoteManager} from "contracts/interfaces/ICampaignRemoteManager.sol";
-import {ICreateX} from "contracts/interfaces/ICreateX.sol";
-
-import {OETH} from "contracts/token/OETH.sol";
-import {PoolBoostCentralRegistry} from "contracts/poolBooster/PoolBoostCentralRegistry.sol";
-import {CurvePoolBooster} from "contracts/poolBooster/curve/CurvePoolBooster.sol";
-import {CurvePoolBoosterPlain} from "contracts/poolBooster/curve/CurvePoolBoosterPlain.sol";
-import {CurvePoolBoosterFactory} from "contracts/poolBooster/curve/CurvePoolBoosterFactory.sol";
 import {MockCreateX} from "tests/mocks/MockCreateX.sol";
 
 abstract contract Unit_Curve_Shared_Test is Base {
     //////////////////////////////////////////////////////
     /// --- CONTRACTS & MOCKS
     //////////////////////////////////////////////////////
-    OETH internal oeth;
-    PoolBoostCentralRegistry internal centralRegistry;
-    CurvePoolBoosterPlain internal curvePoolBoosterPlain;
-    CurvePoolBoosterFactory internal curvePoolBoosterFactory;
+    IERC20 internal oeth;
+    IPoolBoostCentralRegistryFull internal centralRegistry;
+    ICurvePoolBooster internal curvePoolBoosterPlain;
+    ICurvePoolBoosterFactory internal curvePoolBoosterFactory;
     MockCreateX internal mockCreateX;
 
     //////////////////////////////////////////////////////
@@ -67,23 +62,32 @@ abstract contract Unit_Curve_Shared_Test is Base {
     }
 
     function _deployOETH() internal {
-        oeth = OETH(address(new MockERC20("Origin Ether", "OETH", 18)));
+        oeth = IERC20(address(new MockERC20("Origin Ether", "OETH", 18)));
     }
 
     function _deployCentralRegistry() internal {
-        centralRegistry = new PoolBoostCentralRegistry();
+        centralRegistry = IPoolBoostCentralRegistryFull(
+            vm.deployCode("contracts/poolBooster/PoolBoostCentralRegistry.sol:PoolBoostCentralRegistry")
+        );
         _setGovernorViaSlot(address(centralRegistry), governor);
     }
 
     function _deployCurvePoolBooster() internal {
-        curvePoolBoosterPlain = new CurvePoolBoosterPlain(address(oeth), mockGauge);
+        curvePoolBoosterPlain = ICurvePoolBooster(
+            vm.deployCode(
+                "contracts/poolBooster/curve/CurvePoolBoosterPlain.sol:CurvePoolBoosterPlain",
+                abi.encode(address(oeth), mockGauge)
+            )
+        );
         curvePoolBoosterPlain.initialize(
             governor, strategist, DEFAULT_FEE, mockFeeCollector, mockCampaignRemoteManager, mockVotemarket
         );
     }
 
     function _deployCurvePoolBoosterFactory() internal {
-        curvePoolBoosterFactory = new CurvePoolBoosterFactory();
+        curvePoolBoosterFactory = ICurvePoolBoosterFactory(
+            vm.deployCode("contracts/poolBooster/curve/CurvePoolBoosterFactory.sol:CurvePoolBoosterFactory")
+        );
         curvePoolBoosterFactory.initialize(governor, strategist, address(centralRegistry));
 
         _deployMockCreateX();
@@ -135,5 +139,29 @@ abstract contract Unit_Curve_Shared_Test is Base {
         address createXAddr = 0xba5Ed099633D3B313e4D5F7bdc1305d3c28ba5Ed;
         mockCreateX = new MockCreateX();
         vm.etch(createXAddr, address(mockCreateX).code);
+    }
+
+    function _deployFreshCurvePoolBooster() internal returns (ICurvePoolBooster) {
+        return ICurvePoolBooster(
+            vm.deployCode(
+                "contracts/poolBooster/curve/CurvePoolBooster.sol:CurvePoolBooster",
+                abi.encode(address(oeth), mockGauge)
+            )
+        );
+    }
+
+    function _deployFreshCurvePoolBoosterPlain() internal returns (ICurvePoolBooster) {
+        return ICurvePoolBooster(
+            vm.deployCode(
+                "contracts/poolBooster/curve/CurvePoolBoosterPlain.sol:CurvePoolBoosterPlain",
+                abi.encode(address(oeth), mockGauge)
+            )
+        );
+    }
+
+    function _deployFreshCurvePoolBoosterFactory() internal returns (ICurvePoolBoosterFactory) {
+        return ICurvePoolBoosterFactory(
+            vm.deployCode("contracts/poolBooster/curve/CurvePoolBoosterFactory.sol:CurvePoolBoosterFactory")
+        );
     }
 }

@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 import {Unit_OUSD_Shared_Test} from "tests/unit/token/OUSD/shared/Shared.t.sol";
-import {OUSD} from "contracts/token/OUSD.sol";
+import {IOToken} from "contracts/interfaces/IOToken.sol";
 
 contract Unit_Concrete_OUSD_Burn_Test is Unit_OUSD_Shared_Test {
     //////////////////////////////////////////////////////
@@ -49,7 +49,7 @@ contract Unit_Concrete_OUSD_Burn_Test is Unit_OUSD_Shared_Test {
 
     function test_burn_emitsEvent() public {
         vm.expectEmit(true, true, false, true);
-        emit OUSD.Transfer(matt, address(0), 50e18);
+        emit IOToken.Transfer(matt, address(0), 50e18);
 
         vm.prank(address(ousdVault));
         ousd.burn(matt, 50e18);

@@ -5,23 +5,19 @@ import {Base} from "tests/Base.t.sol";
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {MockERC20} from "@solmate/test/utils/mocks/MockERC20.sol";
-import {IPoolBoostCentralRegistry} from "contracts/interfaces/poolBooster/IPoolBoostCentralRegistry.sol";
-import {IPoolBooster} from "contracts/interfaces/poolBooster/IPoolBooster.sol";
+import {IPoolBoostCentralRegistryFull} from "contracts/interfaces/poolBooster/IPoolBoostCentralRegistryFull.sol";
+import {IPoolBoosterFactorySwapxDouble} from "contracts/interfaces/poolBooster/IPoolBoosterFactorySwapxDouble.sol";
+import {IPoolBoosterSwapxDouble} from "contracts/interfaces/poolBooster/IPoolBoosterSwapxDouble.sol";
 import {IBribe} from "contracts/interfaces/poolBooster/ISwapXAlgebraBribe.sol";
-
-import {OSonic} from "contracts/token/OSonic.sol";
-import {PoolBoostCentralRegistry} from "contracts/poolBooster/PoolBoostCentralRegistry.sol";
-import {PoolBoosterFactorySwapxDouble} from "contracts/poolBooster/PoolBoosterFactorySwapxDouble.sol";
-import {PoolBoosterSwapxDouble} from "contracts/poolBooster/PoolBoosterSwapxDouble.sol";
 
 abstract contract Unit_SwapXDouble_Shared_Test is Base {
     //////////////////////////////////////////////////////
     /// --- CONTRACTS & MOCKS
     //////////////////////////////////////////////////////
-    OSonic internal oSonic;
-    PoolBoostCentralRegistry internal centralRegistry;
-    PoolBoosterFactorySwapxDouble internal factorySwapxDouble;
-    PoolBoosterSwapxDouble internal boosterSwapxDouble;
+    IERC20 internal oSonic;
+    IPoolBoostCentralRegistryFull internal centralRegistry;
+    IPoolBoosterFactorySwapxDouble internal factorySwapxDouble;
+    IPoolBoosterSwapxDouble internal boosterSwapxDouble;
 
     //////////////////////////////////////////////////////
     /// --- CONSTANTS
@@ -62,21 +58,32 @@ abstract contract Unit_SwapXDouble_Shared_Test is Base {
     }
 
     function _deployOSonic() internal {
-        oSonic = OSonic(address(new MockERC20("Origin Sonic", "OS", 18)));
+        oSonic = IERC20(address(new MockERC20("Origin Sonic", "OS", 18)));
     }
 
     function _deployCentralRegistry() internal {
-        centralRegistry = new PoolBoostCentralRegistry();
+        centralRegistry = IPoolBoostCentralRegistryFull(
+            vm.deployCode("contracts/poolBooster/PoolBoostCentralRegistry.sol:PoolBoostCentralRegistry")
+        );
         _setGovernorViaSlot(address(centralRegistry), governor);
     }
 
     function _deployFactory() internal {
-        factorySwapxDouble = new PoolBoosterFactorySwapxDouble(address(oSonic), governor, address(centralRegistry));
+        factorySwapxDouble = IPoolBoosterFactorySwapxDouble(
+            vm.deployCode(
+                "contracts/poolBooster/PoolBoosterFactorySwapxDouble.sol:PoolBoosterFactorySwapxDouble",
+                abi.encode(address(oSonic), governor, address(centralRegistry))
+            )
+        );
     }
 
     function _deployStandaloneBooster() internal {
-        boosterSwapxDouble =
-            new PoolBoosterSwapxDouble(mockBribeContractOS, mockBribeContractOther, address(oSonic), DEFAULT_SPLIT);
+        boosterSwapxDouble = IPoolBoosterSwapxDouble(
+            vm.deployCode(
+                "contracts/poolBooster/PoolBoosterSwapxDouble.sol:PoolBoosterSwapxDouble",
+                abi.encode(mockBribeContractOS, mockBribeContractOther, address(oSonic), DEFAULT_SPLIT)
+            )
+        );
     }
 
     function _approveFactoryOnRegistry() internal {

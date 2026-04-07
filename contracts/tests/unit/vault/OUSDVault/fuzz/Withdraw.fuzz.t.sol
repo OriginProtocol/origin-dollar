@@ -1,7 +1,10 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
+// --- Test base
 import {Unit_Shared_Test} from "tests/unit/vault/OUSDVault/shared/Shared.t.sol";
+
+// --- Project imports
 import {MockStrategy} from "contracts/mocks/MockStrategy.sol";
 
 contract Unit_Fuzz_OUSDVault_Withdraw_Test is Unit_Shared_Test {
@@ -38,12 +41,14 @@ contract Unit_Fuzz_OUSDVault_Withdraw_Test is Unit_Shared_Test {
         uint256 usdcNeeded = (amount / 1e12) + 1;
         _mintOUSD(alice, usdcNeeded);
 
-        (uint128 queuedBefore,,,) = ousdVault.withdrawalQueueMetadata();
+        uint128 queuedBefore = ousdVault.withdrawalQueueMetadata().queued;
 
         vm.prank(alice);
         ousdVault.requestWithdrawal(amount);
 
-        (uint128 queued, uint128 claimable, uint128 claimed,) = ousdVault.withdrawalQueueMetadata();
+        uint128 queued = ousdVault.withdrawalQueueMetadata().queued;
+        uint128 claimable = ousdVault.withdrawalQueueMetadata().claimable;
+        uint128 claimed = ousdVault.withdrawalQueueMetadata().claimed;
 
         assertEq(queued, queuedBefore + uint128(amount / 1e12));
         assertLe(claimed, claimable);
@@ -81,12 +86,12 @@ contract Unit_Fuzz_OUSDVault_Withdraw_Test is Unit_Shared_Test {
 
         vm.warp(block.timestamp + DELAY_PERIOD);
 
-        (,, uint128 claimedBefore,) = ousdVault.withdrawalQueueMetadata();
+        uint128 claimedBefore = ousdVault.withdrawalQueueMetadata().claimed;
 
         vm.prank(alice);
         ousdVault.claimWithdrawal(requestId);
 
-        (,, uint128 claimedAfter,) = ousdVault.withdrawalQueueMetadata();
+        uint128 claimedAfter = ousdVault.withdrawalQueueMetadata().claimed;
         assertEq(claimedAfter, claimedBefore + uint128(amount / 1e12));
     }
 
@@ -119,7 +124,9 @@ contract Unit_Fuzz_OUSDVault_Withdraw_Test is Unit_Shared_Test {
         assertEq(usdc.balanceOf(bobby) - bobbyUsdcBefore, a2 / 1e12);
 
         // Queue consistency: claimed <= claimable <= queued
-        (uint128 queued, uint128 claimable, uint128 claimed,) = ousdVault.withdrawalQueueMetadata();
+        uint128 queued = ousdVault.withdrawalQueueMetadata().queued;
+        uint128 claimable = ousdVault.withdrawalQueueMetadata().claimable;
+        uint128 claimed = ousdVault.withdrawalQueueMetadata().claimed;
         assertLe(claimed, claimable);
         assertLe(claimable, queued);
     }

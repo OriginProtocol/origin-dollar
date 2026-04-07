@@ -30,9 +30,9 @@ contract Smoke_Concrete_OETHCurveAMOStrategy_Deposit_Test is Smoke_OETHCurveAMOS
     }
 
     function test_deposit_gaugeBalanceIncreases() public {
-        uint256 gaugeBefore = curveAMOStrategy.gauge().balanceOf(address(curveAMOStrategy));
+        uint256 gaugeBefore = gauge.balanceOf(address(curveAMOStrategy));
         _depositToStrategy(10 ether);
-        uint256 gaugeAfter = curveAMOStrategy.gauge().balanceOf(address(curveAMOStrategy));
+        uint256 gaugeAfter = gauge.balanceOf(address(curveAMOStrategy));
         assertGt(gaugeAfter, gaugeBefore, "Gauge balance should increase after deposit");
     }
 }

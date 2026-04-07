@@ -6,32 +6,27 @@ import {Base} from "tests/Base.t.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {MockERC20} from "@solmate/test/utils/mocks/MockERC20.sol";
 import {MockWETH} from "contracts/mocks/MockWETH.sol";
-import {OUSD} from "contracts/token/OUSD.sol";
-import {OUSDVault} from "contracts/vault/OUSDVault.sol";
-import {OUSDProxy} from "contracts/proxies/Proxies.sol";
-import {VaultProxy} from "contracts/proxies/Proxies.sol";
-import {OETH} from "contracts/token/OETH.sol";
-import {OETHVault} from "contracts/vault/OETHVault.sol";
-import {OETHProxy} from "contracts/proxies/Proxies.sol";
-import {OETHVaultProxy} from "contracts/proxies/Proxies.sol";
-import {VaultValueChecker, OETHVaultValueChecker} from "contracts/strategies/VaultValueChecker.sol";
+import {IVault} from "contracts/interfaces/IVault.sol";
+import {IProxy} from "contracts/interfaces/IProxy.sol";
+import {IOToken} from "contracts/interfaces/IOToken.sol";
+import {IVaultValueChecker} from "contracts/interfaces/strategies/IVaultValueChecker.sol";
 
 abstract contract Unit_VaultValueChecker_Shared_Test is Base {
     //////////////////////////////////////////////////////
-    /// --- CONTRACTS & PROXIES (moved from Base)
+    /// --- CONTRACTS & PROXIES
     //////////////////////////////////////////////////////
 
     MockWETH internal mockWeth;
-    OUSD internal ousd;
-    OUSDVault internal ousdVault;
-    OUSDProxy internal ousdProxy;
-    VaultProxy internal ousdVaultProxy;
-    OETH internal oeth;
-    OETHVault internal oethVault;
-    OETHProxy internal oethProxy;
-    OETHVaultProxy internal oethVaultProxy;
-    VaultValueChecker internal ousdChecker;
-    OETHVaultValueChecker internal oethChecker;
+    IOToken internal ousd;
+    IVault internal ousdVault;
+    IProxy internal ousdProxy;
+    IProxy internal ousdVaultProxy;
+    IOToken internal oeth;
+    IVault internal oethVault;
+    IProxy internal oethProxy;
+    IProxy internal oethVaultProxy;
+    IVaultValueChecker internal ousdChecker;
+    IVaultValueChecker internal oethChecker;
 
     //////////////////////////////////////////////////////
     /// --- SETUP
@@ -53,11 +48,19 @@ abstract contract Unit_VaultValueChecker_Shared_Test is Base {
 
         vm.startPrank(deployer);
 
-        OUSD ousdImpl = new OUSD();
-        OUSDVault ousdVaultImpl = new OUSDVault(address(usdc));
+        IOToken ousdImpl = IOToken(vm.deployCode("contracts/token/OUSD.sol:OUSD"));
+        address ousdVaultImpl = vm.deployCode("contracts/vault/OUSDVault.sol:OUSDVault", abi.encode(address(usdc)));
 
-        ousdProxy = new OUSDProxy();
-        ousdVaultProxy = new VaultProxy();
+        ousdProxy = IProxy(
+            vm.deployCode(
+                "contracts/proxies/InitializeGovernedUpgradeabilityProxy.sol:InitializeGovernedUpgradeabilityProxy"
+            )
+        );
+        ousdVaultProxy = IProxy(
+            vm.deployCode(
+                "contracts/proxies/InitializeGovernedUpgradeabilityProxy.sol:InitializeGovernedUpgradeabilityProxy"
+            )
+        );
 
         ousdProxy.initialize(
             address(ousdImpl),
@@ -71,8 +74,8 @@ abstract contract Unit_VaultValueChecker_Shared_Test is Base {
 
         vm.stopPrank();
 
-        ousd = OUSD(address(ousdProxy));
-        ousdVault = OUSDVault(address(ousdVaultProxy));
+        ousd = IOToken(address(ousdProxy));
+        ousdVault = IVault(address(ousdVaultProxy));
 
         vm.startPrank(governor);
         ousdVault.unpauseCapital();
@@ -87,11 +90,19 @@ abstract contract Unit_VaultValueChecker_Shared_Test is Base {
 
         vm.startPrank(deployer);
 
-        OETH oethImpl = new OETH();
-        OETHVault oethVaultImpl = new OETHVault(address(mockWeth));
+        IOToken oethImpl = IOToken(vm.deployCode("contracts/token/OETH.sol:OETH"));
+        address oethVaultImpl = vm.deployCode("contracts/vault/OETHVault.sol:OETHVault", abi.encode(address(mockWeth)));
 
-        oethProxy = new OETHProxy();
-        oethVaultProxy = new OETHVaultProxy();
+        oethProxy = IProxy(
+            vm.deployCode(
+                "contracts/proxies/InitializeGovernedUpgradeabilityProxy.sol:InitializeGovernedUpgradeabilityProxy"
+            )
+        );
+        oethVaultProxy = IProxy(
+            vm.deployCode(
+                "contracts/proxies/InitializeGovernedUpgradeabilityProxy.sol:InitializeGovernedUpgradeabilityProxy"
+            )
+        );
 
         oethProxy.initialize(
             address(oethImpl),
@@ -105,8 +116,8 @@ abstract contract Unit_VaultValueChecker_Shared_Test is Base {
 
         vm.stopPrank();
 
-        oeth = OETH(address(oethProxy));
-        oethVault = OETHVault(address(oethVaultProxy));
+        oeth = IOToken(address(oethProxy));
+        oethVault = IVault(address(oethVaultProxy));
 
         vm.startPrank(governor);
         oethVault.unpauseCapital();
@@ -116,10 +127,18 @@ abstract contract Unit_VaultValueChecker_Shared_Test is Base {
         vm.stopPrank();
 
         // --- Deploy checkers ---
-        // ousdChecker uses real OUSD + OUSDVault
-        ousdChecker = new VaultValueChecker(address(ousdVault), address(ousd));
-        // oethChecker uses real OETH + OETHVault
-        oethChecker = new OETHVaultValueChecker(address(oethVault), address(oeth));
+        ousdChecker = IVaultValueChecker(
+            vm.deployCode(
+                "contracts/strategies/VaultValueChecker.sol:VaultValueChecker",
+                abi.encode(address(ousdVault), address(ousd))
+            )
+        );
+        oethChecker = IVaultValueChecker(
+            vm.deployCode(
+                "contracts/strategies/VaultValueChecker.sol:OETHVaultValueChecker",
+                abi.encode(address(oethVault), address(oeth))
+            )
+        );
     }
 
     function _labelContracts() internal {
@@ -154,19 +173,13 @@ abstract contract Unit_VaultValueChecker_Shared_Test is Base {
     }
 
     /// @dev Set up vault with known totalValue and totalSupply, then take snapshot.
-    ///      Mints OUSD first (creating rebasing supply), then adjusts vault value
-    ///      and supply independently.
     function _takeSnapshotAs(address _user, uint256 _vaultValue, uint256 _supply) internal {
-        // Ensure there is rebasing supply (mint if totalSupply == 0)
-        // Must mint to an EOA so OUSD counts it as rebasing (contracts auto-opt-out)
         if (ousd.totalSupply() == 0) {
             _mintOUSD(nick, 1e6);
         }
 
-        // Set vault value by dealing USDC
         _setVaultValue(_vaultValue);
 
-        // Set supply via changeSupply
         vm.prank(address(ousdVault));
         ousd.changeSupply(_supply);
 

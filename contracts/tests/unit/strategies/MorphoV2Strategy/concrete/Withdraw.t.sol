@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 import {Unit_MorphoV2Strategy_Shared_Test} from "tests/unit/strategies/MorphoV2Strategy/shared/Shared.t.sol";
-import {InitializableAbstractStrategy} from "contracts/utils/InitializableAbstractStrategy.sol";
+import {IMorphoV2Strategy} from "contracts/interfaces/strategies/IMorphoV2Strategy.sol";
 
 contract Unit_Concrete_MorphoV2Strategy_Withdraw_Test is Unit_MorphoV2Strategy_Shared_Test {
     function test_withdraw_withdrawsFromERC4626Vault() public {
@@ -19,7 +19,7 @@ contract Unit_Concrete_MorphoV2Strategy_Withdraw_Test is Unit_MorphoV2Strategy_S
         _depositAsVault(100e18);
 
         vm.expectEmit(true, true, true, true);
-        emit InitializableAbstractStrategy.Withdrawal(address(asset), address(shareVault), 50e18);
+        emit IMorphoV2Strategy.Withdrawal(address(asset), address(shareVault), 50e18);
 
         vm.prank(address(ousdVault));
         strategy.withdraw(alice, address(asset), 50e18);

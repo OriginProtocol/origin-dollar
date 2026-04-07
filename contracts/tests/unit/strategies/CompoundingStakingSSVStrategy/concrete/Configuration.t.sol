@@ -4,6 +4,7 @@ pragma solidity ^0.8.0;
 import {
     Unit_CompoundingStakingSSVStrategy_Shared_Test
 } from "tests/unit/strategies/CompoundingStakingSSVStrategy/shared/Shared.t.sol";
+import {ICompoundingStakingSSVStrategy} from "contracts/interfaces/strategies/ICompoundingStakingSSVStrategy.sol";
 
 contract Unit_Concrete_CompoundingStakingSSVStrategy_Configuration_Test is
     Unit_CompoundingStakingSSVStrategy_Shared_Test
@@ -11,7 +12,7 @@ contract Unit_Concrete_CompoundingStakingSSVStrategy_Configuration_Test is
     function test_setRegistrator() public {
         vm.prank(governor);
         vm.expectEmit(true, false, false, false);
-        emit RegistratorChanged(strategist);
+        emit ICompoundingStakingSSVStrategy.RegistratorChanged(strategist);
         compoundingStakingSSVStrategy.setRegistrator(strategist);
 
         assertEq(compoundingStakingSSVStrategy.validatorRegistrator(), strategist);
@@ -61,7 +62,7 @@ contract Unit_Concrete_CompoundingStakingSSVStrategy_Configuration_Test is
 
         vm.prank(governor);
         vm.expectEmit(false, false, false, false);
-        emit FirstDepositReset();
+        emit ICompoundingStakingSSVStrategy.FirstDepositReset();
         compoundingStakingSSVStrategy.resetFirstDeposit();
 
         assertFalse(compoundingStakingSSVStrategy.firstDeposit());

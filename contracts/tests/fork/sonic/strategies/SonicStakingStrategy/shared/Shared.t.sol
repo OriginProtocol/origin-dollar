@@ -5,13 +5,11 @@ import {BaseFork} from "tests/fork/BaseFork.t.sol";
 import {Sonic} from "tests/utils/Addresses.sol";
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {SonicStakingStrategy} from "contracts/strategies/sonic/SonicStakingStrategy.sol";
-import {SonicValidatorDelegator} from "contracts/strategies/sonic/SonicValidatorDelegator.sol";
-import {OSVault} from "contracts/vault/OSVault.sol";
-import {OSonic} from "contracts/token/OSonic.sol";
+import {IOToken} from "contracts/interfaces/IOToken.sol";
+import {IVault} from "contracts/interfaces/IVault.sol";
 import {ISFC} from "contracts/interfaces/sonic/ISFC.sol";
 import {IWrappedSonic} from "contracts/interfaces/sonic/IWrappedSonic.sol";
-import {IVault} from "contracts/interfaces/IVault.sol";
+import {ISonicStakingStrategy} from "contracts/interfaces/strategies/ISonicStakingStrategy.sol";
 
 abstract contract Fork_SonicStakingStrategy_Shared_Test is BaseFork {
     //////////////////////////////////////////////////////
@@ -24,9 +22,9 @@ abstract contract Fork_SonicStakingStrategy_Shared_Test is BaseFork {
     /// --- CONTRACTS
     //////////////////////////////////////////////////////
 
-    SonicStakingStrategy internal sonicStakingStrategy;
-    OSonic internal oSonic;
-    OSVault internal oSonicVault;
+    ISonicStakingStrategy internal sonicStakingStrategy;
+    IOToken internal oSonic;
+    IVault internal oSonicVault;
     ISFC internal sfc;
     IWrappedSonic internal wrappedSonic;
     address internal validatorRegistrator;
@@ -48,9 +46,9 @@ abstract contract Fork_SonicStakingStrategy_Shared_Test is BaseFork {
     }
 
     function _loadForkContracts() internal {
-        sonicStakingStrategy = SonicStakingStrategy(payable(Sonic.SonicStakingStrategy));
-        oSonic = OSonic(Sonic.OSonicProxy);
-        oSonicVault = OSVault(payable(Sonic.OSonicVaultProxy));
+        sonicStakingStrategy = ISonicStakingStrategy(Sonic.SonicStakingStrategy);
+        oSonic = IOToken(Sonic.OSonicProxy);
+        oSonicVault = IVault(Sonic.OSonicVaultProxy);
         sfc = ISFC(Sonic.SFC);
         wrappedSonic = IWrappedSonic(Sonic.wS);
     }
@@ -109,11 +107,11 @@ abstract contract Fork_SonicStakingStrategy_Shared_Test is BaseFork {
         vm.startPrank(address(oSonicVault));
         if (useDepositAll) {
             vm.expectEmit(true, true, true, true, address(sonicStakingStrategy));
-            emit SonicValidatorDelegator.Delegated(defaultValidatorId, amount);
+            emit ISonicStakingStrategy.Delegated(defaultValidatorId, amount);
             sonicStakingStrategy.depositAll();
         } else {
             vm.expectEmit(true, true, true, true, address(sonicStakingStrategy));
-            emit SonicValidatorDelegator.Delegated(defaultValidatorId, amount);
+            emit ISonicStakingStrategy.Delegated(defaultValidatorId, amount);
             sonicStakingStrategy.deposit(address(wrappedSonic), amount);
         }
         vm.stopPrank();
@@ -166,7 +164,7 @@ abstract contract Fork_SonicStakingStrategy_Shared_Test is BaseFork {
         uint256 pendingWithdrawalsBefore = sonicStakingStrategy.pendingWithdrawals();
 
         vm.expectEmit(true, true, true, true, address(sonicStakingStrategy));
-        emit SonicValidatorDelegator.Undelegated(expectedWithdrawId, validatorId, amount);
+        emit ISonicStakingStrategy.Undelegated(expectedWithdrawId, validatorId, amount);
 
         vm.prank(validatorRegistrator);
         withdrawId = sonicStakingStrategy.undelegate(validatorId, amount);
@@ -194,7 +192,7 @@ abstract contract Fork_SonicStakingStrategy_Shared_Test is BaseFork {
         (uint256 wdValidatorId,,) = sonicStakingStrategy.withdrawals(withdrawalId);
 
         vm.expectEmit(true, true, false, false, address(sonicStakingStrategy));
-        emit SonicValidatorDelegator.Withdrawn(withdrawalId, wdValidatorId, 0, 0);
+        emit ISonicStakingStrategy.Withdrawn(withdrawalId, wdValidatorId, 0, 0);
 
         vm.prank(validatorRegistrator);
         uint256 withdrawnAmount = sonicStakingStrategy.withdrawFromSFC(withdrawalId);

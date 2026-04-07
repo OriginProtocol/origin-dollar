@@ -5,13 +5,12 @@ import {BaseFork} from "tests/fork/BaseFork.t.sol";
 import {Mainnet} from "tests/utils/Addresses.sol";
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {OETH} from "contracts/token/OETH.sol";
-import {OETHVault} from "contracts/vault/OETHVault.sol";
-import {OETHProxy, OETHVaultProxy} from "contracts/proxies/Proxies.sol";
-import {OETHSupernovaAMOStrategy} from "contracts/strategies/algebra/OETHSupernovaAMOStrategy.sol";
-import {InitializableAbstractStrategy} from "contracts/utils/InitializableAbstractStrategy.sol";
+import {IOToken} from "contracts/interfaces/IOToken.sol";
+import {IVault} from "contracts/interfaces/IVault.sol";
+import {IProxy} from "contracts/interfaces/IProxy.sol";
 import {IPair} from "contracts/interfaces/algebra/IAlgebraPair.sol";
 import {IGauge} from "contracts/interfaces/algebra/IAlgebraGauge.sol";
+import {IOETHSupernovaAMOStrategy} from "contracts/interfaces/strategies/IOETHSupernovaAMOStrategy.sol";
 
 abstract contract Fork_OETHSupernovaAMOStrategy_Shared_Test is BaseFork {
     //////////////////////////////////////////////////////
@@ -25,11 +24,11 @@ abstract contract Fork_OETHSupernovaAMOStrategy_Shared_Test is BaseFork {
     /// --- CONTRACTS
     //////////////////////////////////////////////////////
 
-    OETH internal oeth;
-    OETHVault internal oethVault;
-    OETHProxy internal oethProxy;
-    OETHVaultProxy internal oethVaultProxy;
-    OETHSupernovaAMOStrategy internal oethSupernovaAMOStrategy;
+    IOToken internal oeth;
+    IVault internal oethVault;
+    IProxy internal oethProxy;
+    IProxy internal oethVaultProxy;
+    IOETHSupernovaAMOStrategy internal oethSupernovaAMOStrategy;
     IPair internal supernovaPool;
     IGauge internal supernovaGauge;
     IERC20 internal wethToken;
@@ -56,26 +55,32 @@ abstract contract Fork_OETHSupernovaAMOStrategy_Shared_Test is BaseFork {
         // Deploy fresh OETH + OETHVault
         vm.startPrank(deployer);
 
-        OETH oethImpl = new OETH();
-        OETHVault oethVaultImpl = new OETHVault(Mainnet.WETH);
+        address oethImpl = vm.deployCode("contracts/token/OETH.sol:OETH");
+        address oethVaultImpl = vm.deployCode("contracts/vault/OETHVault.sol:OETHVault", abi.encode(Mainnet.WETH));
 
-        oethProxy = new OETHProxy();
-        oethVaultProxy = new OETHVaultProxy();
+        oethProxy = IProxy(
+            vm.deployCode(
+                "contracts/proxies/InitializeGovernedUpgradeabilityProxy.sol:InitializeGovernedUpgradeabilityProxy"
+            )
+        );
+        oethVaultProxy = IProxy(
+            vm.deployCode(
+                "contracts/proxies/InitializeGovernedUpgradeabilityProxy.sol:InitializeGovernedUpgradeabilityProxy"
+            )
+        );
 
         oethProxy.initialize(
-            address(oethImpl),
-            governor,
-            abi.encodeWithSignature("initialize(address,uint256)", address(oethVaultProxy), 1e27)
+            oethImpl, governor, abi.encodeWithSignature("initialize(address,uint256)", address(oethVaultProxy), 1e27)
         );
 
         oethVaultProxy.initialize(
-            address(oethVaultImpl), governor, abi.encodeWithSignature("initialize(address)", address(oethProxy))
+            oethVaultImpl, governor, abi.encodeWithSignature("initialize(address)", address(oethProxy))
         );
 
         vm.stopPrank();
 
-        oeth = OETH(address(oethProxy));
-        oethVault = OETHVault(payable(address(oethVaultProxy)));
+        oeth = IOToken(address(oethProxy));
+        oethVault = IVault(address(oethVaultProxy));
 
         // Configure vault
         vm.startPrank(governor);
@@ -149,11 +154,11 @@ abstract contract Fork_OETHSupernovaAMOStrategy_Shared_Test is BaseFork {
         supernovaPool.mint(address(0xdead)); // Mint base LP to dead address
 
         // Deploy fresh OETHSupernovaAMOStrategy
-        oethSupernovaAMOStrategy = new OETHSupernovaAMOStrategy(
-            InitializableAbstractStrategy.BaseStrategyConfig({
-                platformAddress: address(supernovaPool), vaultAddress: address(oethVault)
-            }),
-            address(supernovaGauge)
+        oethSupernovaAMOStrategy = IOETHSupernovaAMOStrategy(
+            vm.deployCode(
+                "contracts/strategies/algebra/OETHSupernovaAMOStrategy.sol:OETHSupernovaAMOStrategy",
+                abi.encode(address(supernovaPool), address(oethVault), address(supernovaGauge))
+            )
         );
 
         // Set governor via storage slot

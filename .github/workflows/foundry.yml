@@ -39,6 +39,9 @@ jobs:
       - name: Lint
         working-directory: contracts
         run: pnpm run lint
+      - name: Check unused imports
+        working-directory: contracts
+        run: make lint-imports
 
   # ── Build ───────────────────────────────────────────────────
   build:
@@ -66,7 +69,7 @@ jobs:
       - uses: ./.github/actions/foundry-setup
       - name: Run unit tests
         working-directory: contracts
-        run: forge test --summary --fail-fast --show-progress --mp 'tests/unit/**'
+        run: make test-unit
 
   # ── Fork Tests ──────────────────────────────────────────────
   fork-tests-mainnet:
@@ -102,7 +105,9 @@ jobs:
       - name: Run Mainnet fork tests
         if: steps.discover.outputs.has_tests == 'true'
         working-directory: contracts
-        run: forge test --summary --fail-fast --show-progress --mp "{${{ steps.discover.outputs.dirs }}}/**"
+        run: |
+          forge build contracts/ tests/fork/mainnet/
+          FOUNDRY_MATCH_PATH="{${{ steps.discover.outputs.dirs }}}/**" make test-base
 
   fork-tests-base:
     name: Fork Tests (Base)
@@ -116,7 +121,7 @@ jobs:
       - uses: ./.github/actions/foundry-setup
       - name: Run Base fork tests
         working-directory: contracts
-        run: forge test --summary --fail-fast --show-progress --mp 'tests/fork/base/**'
+        run: make test-fork-base
 
   fork-tests-sonic:
     name: Fork Tests (Sonic)
@@ -130,7 +135,7 @@ jobs:
       - uses: ./.github/actions/foundry-setup
       - name: Run Sonic fork tests
         working-directory: contracts
-        run: forge test --summary --fail-fast --show-progress --mp 'tests/fork/sonic/**'
+        run: make test-fork-sonic
 
   fork-tests-hyperevm:
     name: Fork Tests (HyperEVM)
@@ -144,7 +149,7 @@ jobs:
       - uses: ./.github/actions/foundry-setup
       - name: Run HyperEVM fork tests
         working-directory: contracts
-        run: forge test --summary --fail-fast --show-progress --mp 'tests/fork/hyperevm/**'
+        run: make test-fork-hyperevm
 
   # ── Smoke Tests ─────────────────────────────────────────────
   smoke-tests-mainnet:
@@ -159,7 +164,7 @@ jobs:
       - uses: ./.github/actions/foundry-setup
       - name: Run Mainnet smoke tests
         working-directory: contracts
-        run: forge test --summary --fail-fast --show-progress --mp 'tests/smoke/mainnet/**'
+        run: make test-smoke-mainnet
 
   smoke-tests-base:
     name: Smoke Tests (Base)
@@ -173,7 +178,7 @@ jobs:
       - uses: ./.github/actions/foundry-setup
       - name: Run Base smoke tests
         working-directory: contracts
-        run: forge test --summary --fail-fast --show-progress --mp 'tests/smoke/base/**'
+        run: make test-smoke-base
 
   smoke-tests-sonic:
     name: Smoke Tests (Sonic)
@@ -187,7 +192,7 @@ jobs:
       - uses: ./.github/actions/foundry-setup
       - name: Run Sonic smoke tests
         working-directory: contracts
-        run: forge test --summary --fail-fast --show-progress --mp 'tests/smoke/sonic/**'
+        run: make test-smoke-sonic
 
   smoke-tests-hyperevm:
     name: Smoke Tests (HyperEVM)
@@ -201,7 +206,7 @@ jobs:
       - uses: ./.github/actions/foundry-setup
       - name: Run HyperEVM smoke tests
         working-directory: contracts
-        run: forge test --summary --fail-fast --show-progress --mp 'tests/smoke/hyperevm/**'
+        run: make test-smoke-hyperevm
 
   # ── Static Analysis ────────────────────────────────────────
   slither:
@@ -216,7 +221,7 @@ jobs:
       - name: Set up Python 3.10
         uses: actions/setup-python@v5
         with:
-          python-version: '3.10'
+          python-version: "3.10"
       - name: Install Slither
         run: |
           wget https://github.com/ethereum/solidity/releases/download/v0.8.7/solc-static-linux

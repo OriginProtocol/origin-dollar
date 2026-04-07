@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 import {Unit_Proxies_Shared_Test} from "tests/unit/proxies/shared/Shared.t.sol";
-import {InitializeGovernedUpgradeabilityProxy} from "contracts/proxies/InitializeGovernedUpgradeabilityProxy.sol";
+import {IProxy} from "contracts/interfaces/IProxy.sol";
 import {MockImplementation, MockImplementationV2} from "tests/mocks/MockImplementation.sol";
 
 contract Unit_Concrete_Proxy_UpgradeTo_Test is Unit_Proxies_Shared_Test {
@@ -22,27 +22,20 @@ contract Unit_Concrete_Proxy_UpgradeTo_Test is Unit_Proxies_Shared_Test {
 
     function test_upgradeTo_emitsUpgraded() public {
         vm.expectEmit(true, true, true, true);
-        emit InitializeGovernedUpgradeabilityProxy.Upgraded(address(implV2));
+        emit IProxy.Upgraded(address(implV2));
 
         vm.prank(governor);
         proxy.upgradeTo(address(implV2));
     }
 
     function test_upgradeTo_preservesState() public {
-        // Set value through proxy using V1
         vm.prank(alice);
-        (bool success,) = address(proxy).call(abi.encodeWithSelector(MockImplementation.setValue.selector, 42));
-        assertTrue(success);
+        MockImplementation(payable(address(proxy))).setValue(42);
 
-        // Upgrade to V2
         vm.prank(governor);
         proxy.upgradeTo(address(implV2));
 
-        // Read value through proxy using V2 — state preserved
-        (bool success2, bytes memory result) =
-            address(proxy).staticcall(abi.encodeWithSelector(MockImplementationV2.getValue.selector));
-        assertTrue(success2);
-        assertEq(abi.decode(result, (uint256)), 42);
+        assertEq(MockImplementationV2(payable(address(proxy))).getValue(), 42);
     }
 
     // --- Revert cases ---

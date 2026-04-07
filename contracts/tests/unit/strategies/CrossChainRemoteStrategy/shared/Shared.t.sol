@@ -6,19 +6,17 @@ import {Base} from "tests/Base.t.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {MockERC20} from "@solmate/test/utils/mocks/MockERC20.sol";
 import {MockERC4626Vault} from "contracts/mocks/MockERC4626Vault.sol";
-import {CrossChainRemoteStrategy} from "contracts/strategies/crosschain/CrossChainRemoteStrategy.sol";
-import {AbstractCCTPIntegrator} from "contracts/strategies/crosschain/AbstractCCTPIntegrator.sol";
+import {ICrossChainRemoteStrategy} from "contracts/interfaces/strategies/ICrossChainRemoteStrategy.sol";
 import {CrossChainStrategyHelper} from "contracts/strategies/crosschain/CrossChainStrategyHelper.sol";
 import {CCTPMessageTransmitterMock} from "contracts/mocks/crosschain/CCTPMessageTransmitterMock.sol";
 import {CCTPTokenMessengerMock} from "contracts/mocks/crosschain/CCTPTokenMessengerMock.sol";
-import {InitializableAbstractStrategy} from "contracts/utils/InitializableAbstractStrategy.sol";
 
 abstract contract Unit_CrossChainRemoteStrategy_Shared_Test is Base {
     //////////////////////////////////////////////////////
-    /// --- CONTRACTS & PROXIES (moved from Base)
+    /// --- CONTRACTS & PROXIES
     //////////////////////////////////////////////////////
 
-    CrossChainRemoteStrategy internal crossChainRemoteStrategy;
+    ICrossChainRemoteStrategy internal crossChainRemoteStrategy;
     CCTPMessageTransmitterMock internal cctpMessageTransmitterMock;
     CCTPTokenMessengerMock internal cctpTokenMessengerMock;
     MockERC4626Vault internal mockERC4626Vault;
@@ -68,18 +66,20 @@ abstract contract Unit_CrossChainRemoteStrategy_Shared_Test is Base {
         operatorAddr = address(cctpMessageTransmitterMock);
 
         // Deploy CrossChainRemoteStrategy
-        crossChainRemoteStrategy = new CrossChainRemoteStrategy(
-            InitializableAbstractStrategy.BaseStrategyConfig({
-                platformAddress: address(mockERC4626Vault), vaultAddress: address(0)
-            }),
-            AbstractCCTPIntegrator.CCTPIntegrationConfig({
-                cctpTokenMessenger: address(cctpTokenMessengerMock),
-                cctpMessageTransmitter: address(cctpMessageTransmitterMock),
-                peerDomainID: 0,
-                peerStrategy: peerStrategy,
-                usdcToken: address(mockUsdc),
-                peerUsdcToken: address(peerUsdc)
-            })
+        crossChainRemoteStrategy = ICrossChainRemoteStrategy(
+            vm.deployCode(
+                "contracts/strategies/crosschain/CrossChainRemoteStrategy.sol:CrossChainRemoteStrategy",
+                abi.encode(
+                    address(mockERC4626Vault), // platformAddress
+                    address(0), // vaultAddress
+                    address(cctpTokenMessengerMock), // cctpTokenMessenger
+                    address(cctpMessageTransmitterMock), // cctpMessageTransmitter
+                    uint32(0), // peerDomainID
+                    peerStrategy, // peerStrategy
+                    address(mockUsdc), // usdcToken
+                    address(peerUsdc) // peerUsdcToken
+                )
+            )
         );
 
         // Set governor via slot

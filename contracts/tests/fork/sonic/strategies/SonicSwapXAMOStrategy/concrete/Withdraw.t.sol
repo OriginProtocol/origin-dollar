@@ -6,8 +6,7 @@ import {Sonic} from "tests/utils/Addresses.sol";
 import {
     Fork_SonicSwapXAMOStrategy_Shared_Test
 } from "tests/fork/sonic/strategies/SonicSwapXAMOStrategy/shared/Shared.t.sol";
-import {InitializableAbstractStrategy} from "contracts/utils/InitializableAbstractStrategy.sol";
-import {IGauge} from "contracts/interfaces/algebra/IAlgebraGauge.sol";
+import {ISonicSwapXAMOStrategy} from "contracts/interfaces/strategies/ISonicSwapXAMOStrategy.sol";
 
 contract Fork_Concrete_SonicSwapXAMOStrategy_Withdraw_Test is Fork_SonicSwapXAMOStrategy_Shared_Test {
     uint256 internal constant DEPOSIT_AMOUNT = 100_000 ether;
@@ -114,7 +113,7 @@ contract Fork_Concrete_SonicSwapXAMOStrategy_Withdraw_Test is Fork_SonicSwapXAMO
         uint256 checkBalBefore = sonicSwapXAMOStrategy.checkBalance(Sonic.wS);
 
         vm.expectEmit(address(sonicSwapXAMOStrategy));
-        emit InitializableAbstractStrategy.Withdrawal(Sonic.wS, address(swapXPool), withdrawAmount);
+        emit ISonicSwapXAMOStrategy.Withdrawal(Sonic.wS, address(swapXPool), withdrawAmount);
 
         vm.prank(address(oSonicVault));
         sonicSwapXAMOStrategy.withdraw(address(oSonicVault), Sonic.wS, withdrawAmount);

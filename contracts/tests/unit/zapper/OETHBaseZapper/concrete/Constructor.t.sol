@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 import {Unit_OETHZapper_Shared_Test} from "tests/unit/zapper/OETHZapper/shared/Shared.t.sol";
-import {OETHBaseZapper} from "contracts/zapper/OETHBaseZapper.sol";
+import {IOETHZapper} from "contracts/interfaces/IOETHZapper.sol";
 import {MockWETH} from "contracts/mocks/MockWETH.sol";
 
 contract Unit_Concrete_OETHBaseZapper_Constructor_Test is Unit_OETHZapper_Shared_Test {
@@ -17,7 +17,12 @@ contract Unit_Concrete_OETHBaseZapper_Constructor_Test is Unit_OETHZapper_Shared
     function test_constructor_hardcodesBaseWETH() public {
         _etchBaseWETH();
 
-        oethBaseZapper = new OETHBaseZapper(address(oeth), address(woeth), address(oethVault));
+        oethBaseZapper = IOETHZapper(
+            vm.deployCode(
+                "contracts/zapper/OETHBaseZapper.sol:OETHBaseZapper",
+                abi.encode(address(oeth), address(woeth), address(oethVault))
+            )
+        );
 
         assertEq(address(oethBaseZapper.weth()), BASE_WETH);
     }
@@ -25,7 +30,12 @@ contract Unit_Concrete_OETHBaseZapper_Constructor_Test is Unit_OETHZapper_Shared
     function test_constructor_setsImmutables() public {
         _etchBaseWETH();
 
-        oethBaseZapper = new OETHBaseZapper(address(oeth), address(woeth), address(oethVault));
+        oethBaseZapper = IOETHZapper(
+            vm.deployCode(
+                "contracts/zapper/OETHBaseZapper.sol:OETHBaseZapper",
+                abi.encode(address(oeth), address(woeth), address(oethVault))
+            )
+        );
 
         assertEq(address(oethBaseZapper.oToken()), address(oeth));
         assertEq(address(oethBaseZapper.wOToken()), address(woeth));

@@ -48,14 +48,27 @@ forge-std/Test
                  └─ Fork_Concrete_<Contract>_<Feature>_Test
 ```
 
-`Base` owns shared actors, fork IDs, and contract references. `BaseFork` owns chain fork helpers. Do not redeclare contract storage in `Shared.t.sol`.
+`Base` owns shared actors, constants, IERC20 external token refs, and fork IDs. All typed contract/proxy/mock state variables are declared in each `Shared.t.sol` using interface types. `BaseFork` owns chain fork helpers.
 
-Use the correct product-specific vault type:
+### Interface-only testing
 
-- `OUSD` -> `OUSDVault` on Mainnet
-- `OETH` -> `OETHVault` on Mainnet
-- `OSonic` -> `OSVault` on Sonic
-- `OETHBase` -> `OETHBaseVault` on Base
+Same rules as unit tests — use interfaces, not concrete contracts:
+
+- Import interfaces: `IVault`, `IOToken`, `IProxy`, strategy interfaces from `contracts/interfaces/strategies/`
+- Deploy fresh contracts with `vm.deployCode` instead of `new` (except mocks)
+- Cast forked addresses to interfaces: `oethVault = IVault(Mainnet.OETH_VAULT)`
+- Reference events from interfaces: `emit IVault.EventName(...)`
+
+### Product-specific vault types
+
+| Product | Token | Vault | Chain | `vm.deployCode` path |
+|---------|-------|-------|-------|----------------------|
+| OUSD | `OUSD` | `OUSDVault` | Mainnet | `contracts/vault/OUSDVault.sol:OUSDVault` |
+| OETH | `OETH` | `OETHVault` | Mainnet | `contracts/vault/OETHVault.sol:OETHVault` |
+| OSonic | `OSonic` | `OSVault` | Sonic | `contracts/vault/OSVault.sol:OSVault` |
+| OETHBase | `OETHBase` | `OETHBaseVault` | Base | `contracts/vault/OETHBaseVault.sol:OETHBaseVault` |
+
+Never use `OETHVault` for Sonic tests.
 
 ## 3. Shared setup contract
 
@@ -141,4 +154,6 @@ When implementing fork tests:
 - keep them narrowly focused on real integration value
 - prefer a few strong end-to-end tests over broad but redundant coverage
 - label both fresh and forked contracts for readable traces
+- use interface-only imports; no concrete contract imports except mocks
+- deploy fresh contracts with `vm.deployCode`, not `new` (mocks are fine with `new`)
 - mirror existing fork test structure in the nearest comparable test suite before introducing a new pattern

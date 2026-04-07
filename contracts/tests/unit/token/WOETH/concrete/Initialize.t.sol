@@ -2,9 +2,8 @@
 pragma solidity ^0.8.0;
 
 import {Unit_WOETH_Shared_Test} from "tests/unit/token/WOETH/shared/Shared.t.sol";
-import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import {WOETH} from "contracts/token/WOETH.sol";
-import {WOETHProxy} from "contracts/proxies/Proxies.sol";
+import {IWOToken} from "contracts/interfaces/IWOToken.sol";
+import {IProxy} from "contracts/interfaces/IProxy.sol";
 
 contract Unit_Concrete_WOETH_Initialize_Test is Unit_WOETH_Shared_Test {
     //////////////////////////////////////////////////////
@@ -25,12 +24,16 @@ contract Unit_Concrete_WOETH_Initialize_Test is Unit_WOETH_Shared_Test {
     function test_initialize_RevertWhen_notGovernor() public {
         // Deploy fresh WOETH with deployer as proxy governor
         vm.startPrank(deployer);
-        WOETH freshImpl = new WOETH(ERC20(address(oeth)));
-        WOETHProxy freshProxy = new WOETHProxy();
+        address freshImpl = vm.deployCode("contracts/token/WOETH.sol:WOETH", abi.encode(address(oeth)));
+        IProxy freshProxy = IProxy(
+            vm.deployCode(
+                "contracts/proxies/InitializeGovernedUpgradeabilityProxy.sol:InitializeGovernedUpgradeabilityProxy"
+            )
+        );
         freshProxy.initialize(address(freshImpl), governor, "");
         vm.stopPrank();
 
-        WOETH freshWoeth = WOETH(address(freshProxy));
+        IWOToken freshWoeth = IWOToken(address(freshProxy));
 
         vm.prank(matt);
         vm.expectRevert("Caller is not the Governor");
@@ -64,12 +67,16 @@ contract Unit_Concrete_WOETH_Initialize_Test is Unit_WOETH_Shared_Test {
     function test_initialize2_withExistingSupply() public {
         // Deploy a fresh WOETH where we can manipulate state
         vm.startPrank(deployer);
-        WOETH freshImpl = new WOETH(ERC20(address(oeth)));
-        WOETHProxy freshProxy = new WOETHProxy();
+        address freshImpl = vm.deployCode("contracts/token/WOETH.sol:WOETH", abi.encode(address(oeth)));
+        IProxy freshProxy = IProxy(
+            vm.deployCode(
+                "contracts/proxies/InitializeGovernedUpgradeabilityProxy.sol:InitializeGovernedUpgradeabilityProxy"
+            )
+        );
         freshProxy.initialize(address(freshImpl), governor, "");
         vm.stopPrank();
 
-        WOETH freshWoeth = WOETH(address(freshProxy));
+        IWOToken freshWoeth = IWOToken(address(freshProxy));
 
         // First initialize to enable rebasing and set adjuster
         vm.prank(governor);

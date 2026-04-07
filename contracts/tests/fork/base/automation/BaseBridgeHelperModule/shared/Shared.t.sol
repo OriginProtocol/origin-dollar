@@ -7,19 +7,19 @@ import {CrossChain, Base} from "tests/utils/Addresses.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IERC4626} from "lib/openzeppelin/interfaces/IERC4626.sol";
 import {IWETH9} from "contracts/interfaces/IWETH9.sol";
+import {IOToken} from "contracts/interfaces/IOToken.sol";
 import {IVault} from "contracts/interfaces/IVault.sol";
-import {OETHBase} from "contracts/token/OETHBase.sol";
-import {BridgedWOETHStrategy} from "contracts/strategies/BridgedWOETHStrategy.sol";
-import {BaseBridgeHelperModule} from "contracts/automation/BaseBridgeHelperModule.sol";
+import {IBaseBridgeHelperModule} from "contracts/interfaces/automation/IBaseBridgeHelperModule.sol";
+import {IBridgedWOETHStrategy} from "contracts/interfaces/strategies/IBridgedWOETHStrategy.sol";
 
 abstract contract Fork_BaseBridgeHelperModule_Shared_Test is BaseFork {
     //////////////////////////////////////////////////////
     /// --- CONTRACTS
     //////////////////////////////////////////////////////
 
-    OETHBase internal oethBase;
-    BridgedWOETHStrategy internal bridgedWOETHStrategy;
-    BaseBridgeHelperModule internal baseBridgeHelperModule;
+    IOToken internal oethBase;
+    IBridgedWOETHStrategy internal bridgedWOETHStrategy;
+    IBaseBridgeHelperModule internal baseBridgeHelperModule;
     IVault internal vault;
     IERC4626 internal bridgedWoeth;
 
@@ -48,15 +48,19 @@ abstract contract Fork_BaseBridgeHelperModule_Shared_Test is BaseFork {
     function _loadForkContracts() internal {
         safeSigner = CrossChain.multichainStrategist;
         vault = IVault(Base.OETHBaseVaultProxy);
-        oethBase = OETHBase(Base.OETHBaseProxy);
+        oethBase = IOToken(Base.OETHBaseProxy);
         bridgedWoeth = IERC4626(Base.BridgedWOETH);
-        bridgedWOETHStrategy = BridgedWOETHStrategy(Base.BridgedWOETHStrategyProxy);
+        bridgedWOETHStrategy = IBridgedWOETHStrategy(Base.BridgedWOETHStrategyProxy);
         weth = IERC20(Base.WETH);
         baseGovernor = Base.governor;
     }
 
     function _deployModule() internal {
-        baseBridgeHelperModule = new BaseBridgeHelperModule(safeSigner);
+        baseBridgeHelperModule = IBaseBridgeHelperModule(
+            vm.deployCode(
+                "contracts/automation/BaseBridgeHelperModule.sol:BaseBridgeHelperModule", abi.encode(safeSigner)
+            )
+        );
     }
 
     function _enableModuleOnSafe() internal {

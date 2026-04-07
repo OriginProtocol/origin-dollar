@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 import {Unit_OETHVault_Shared_Test} from "tests/unit/vault/OETHVault/shared/Shared.t.sol";
-import {VaultStorage} from "contracts/vault/VaultStorage.sol";
+import {IVault} from "contracts/interfaces/IVault.sol";
 import {MockStrategy} from "contracts/mocks/MockStrategy.sol";
 import {MockERC20} from "@solmate/test/utils/mocks/MockERC20.sol";
 
@@ -33,7 +33,7 @@ contract Unit_Concrete_OETHVault_Withdraw_Test is Unit_OETHVault_Shared_Test {
         // queued = 200e18 (from drain) + 5e18 = 205e18
         vm.prank(daniel);
         vm.expectEmit(true, true, true, true);
-        emit VaultStorage.WithdrawalRequested(daniel, 2, 5e18, 205e18);
+        emit IVault.WithdrawalRequested(daniel, 2, 5e18, 205e18);
         oethVault.requestWithdrawal(5e18);
     }
 
@@ -107,7 +107,7 @@ contract Unit_Concrete_OETHVault_Withdraw_Test is Unit_OETHVault_Shared_Test {
         vm.prank(josh);
         oethVault.addWithdrawalQueueLiquidity();
 
-        (, uint128 claimable,,) = oethVault.withdrawalQueueMetadata();
+        uint128 claimable = oethVault.withdrawalQueueMetadata().claimable;
         // 200e18 (from initial drain claims) + 5e18 + 18e18 = 223e18
         assertEq(claimable, 223e18, "Claimable should cover all requests");
     }
@@ -119,7 +119,7 @@ contract Unit_Concrete_OETHVault_Withdraw_Test is Unit_OETHVault_Shared_Test {
         oethVault.requestWithdrawal(5e18);
 
         vm.expectEmit(true, true, true, true);
-        emit VaultStorage.WithdrawalClaimable(205e18, 5e18);
+        emit IVault.WithdrawalClaimable(205e18, 5e18);
         oethVault.addWithdrawalQueueLiquidity();
     }
 
@@ -128,10 +128,10 @@ contract Unit_Concrete_OETHVault_Withdraw_Test is Unit_OETHVault_Shared_Test {
 
         // No pending withdrawals beyond what's already claimable
         oethVault.addWithdrawalQueueLiquidity();
-        (, uint128 claimableBefore,,) = oethVault.withdrawalQueueMetadata();
+        uint128 claimableBefore = oethVault.withdrawalQueueMetadata().claimable;
 
         oethVault.addWithdrawalQueueLiquidity();
-        (, uint128 claimableAfter,,) = oethVault.withdrawalQueueMetadata();
+        uint128 claimableAfter = oethVault.withdrawalQueueMetadata().claimable;
 
         assertEq(claimableBefore, claimableAfter, "Should not change");
     }
@@ -170,7 +170,7 @@ contract Unit_Concrete_OETHVault_Withdraw_Test is Unit_OETHVault_Shared_Test {
 
         vm.prank(daniel);
         vm.expectEmit(true, true, true, true);
-        emit VaultStorage.WithdrawalClaimed(daniel, 2, 5e18);
+        emit IVault.WithdrawalClaimed(daniel, 2, 5e18);
         oethVault.claimWithdrawal(2);
     }
 
@@ -262,7 +262,7 @@ contract Unit_Concrete_OETHVault_Withdraw_Test is Unit_OETHVault_Shared_Test {
 
         vm.prank(matt);
         vm.expectEmit(true, true, true, true);
-        emit VaultStorage.WithdrawalClaimed(matt, 2, 30e18);
+        emit IVault.WithdrawalClaimed(matt, 2, 30e18);
         oethVault.claimWithdrawal(2);
 
         // Total supply and value should not change after claim (OETH already burned during request)
@@ -985,7 +985,10 @@ contract Unit_Concrete_OETHVault_Withdraw_Test is Unit_OETHVault_Shared_Test {
         s.userOeth = oeth.balanceOf(user);
         s.userWeth = weth.balanceOf(user);
         s.vaultWeth = weth.balanceOf(address(oethVault));
-        (s.queued, s.claimable, s.claimed, s.nextWithdrawalIndex) = oethVault.withdrawalQueueMetadata();
+        s.queued = oethVault.withdrawalQueueMetadata().queued;
+        s.claimable = oethVault.withdrawalQueueMetadata().claimable;
+        s.claimed = oethVault.withdrawalQueueMetadata().claimed;
+        s.nextWithdrawalIndex = oethVault.withdrawalQueueMetadata().nextWithdrawalIndex;
     }
 
     function _toArray(address a) internal pure returns (address[] memory arr) {

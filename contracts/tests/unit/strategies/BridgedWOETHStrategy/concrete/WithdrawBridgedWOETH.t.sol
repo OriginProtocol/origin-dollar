@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 import {Unit_BridgedWOETHStrategy_Shared_Test} from "tests/unit/strategies/BridgedWOETHStrategy/shared/Shared.t.sol";
-import {InitializableAbstractStrategy} from "contracts/utils/InitializableAbstractStrategy.sol";
+import {IBridgedWOETHStrategy} from "contracts/interfaces/strategies/IBridgedWOETHStrategy.sol";
 
 contract Unit_Concrete_BridgedWOETHStrategy_WithdrawBridgedWOETH_Test is Unit_BridgedWOETHStrategy_Shared_Test {
     function test_withdrawBridgedWOETH_burnsAndTransfers() public {
@@ -26,7 +26,7 @@ contract Unit_Concrete_BridgedWOETHStrategy_WithdrawBridgedWOETH_Test is Unit_Br
         _setupWithdraw(governor, oethToBurn, oraclePrice);
 
         vm.expectEmit(true, true, true, true);
-        emit InitializableAbstractStrategy.Withdrawal(address(mockWeth), address(bridgedWOETH), oethToBurn);
+        emit IBridgedWOETHStrategy.Withdrawal(address(mockWeth), address(bridgedWOETH), oethToBurn);
 
         vm.prank(governor);
         bridgedWOETHStrategy.withdrawBridgedWOETH(oethToBurn);

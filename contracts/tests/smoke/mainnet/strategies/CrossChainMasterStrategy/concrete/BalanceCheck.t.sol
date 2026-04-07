@@ -3,7 +3,6 @@ pragma solidity ^0.8.0;
 
 import {Smoke_CrossChainMasterStrategy_Shared_Test} from "../shared/Shared.t.sol";
 import {Mainnet} from "tests/utils/Addresses.sol";
-import {CrossChainStrategyHelper} from "contracts/strategies/crosschain/CrossChainStrategyHelper.sol";
 
 contract Smoke_CrossChainMasterStrategy_BalanceCheck_Test is Smoke_CrossChainMasterStrategy_Shared_Test {
     function test_balanceCheck_updatesRemoteBalance() public {
@@ -12,8 +11,7 @@ contract Smoke_CrossChainMasterStrategy_BalanceCheck_Test is Smoke_CrossChainMas
         uint64 lastNonce = crossChainMasterStrategy.lastTransferNonce();
 
         // Build balance check message and relay directly via handleReceiveFinalizedMessage
-        bytes memory balancePayload =
-            CrossChainStrategyHelper.encodeBalanceCheckMessage(lastNonce, 12345e6, false, block.timestamp);
+        bytes memory balancePayload = _encodeBalanceCheckMessage(lastNonce, 12345e6, false, block.timestamp);
         _relayBalanceCheck(balancePayload);
 
         assertEq(crossChainMasterStrategy.remoteStrategyBalance(), 12345e6, "remoteStrategyBalance should be updated");
@@ -32,8 +30,7 @@ contract Smoke_CrossChainMasterStrategy_BalanceCheck_Test is Smoke_CrossChainMas
         uint64 lastNonce = crossChainMasterStrategy.lastTransferNonce();
 
         // Build balance check with transferConfirmation=true
-        bytes memory balancePayload =
-            CrossChainStrategyHelper.encodeBalanceCheckMessage(lastNonce, 10000e6, true, block.timestamp);
+        bytes memory balancePayload = _encodeBalanceCheckMessage(lastNonce, 10000e6, true, block.timestamp);
         _relayBalanceCheck(balancePayload);
 
         assertEq(
@@ -56,8 +53,7 @@ contract Smoke_CrossChainMasterStrategy_BalanceCheck_Test is Smoke_CrossChainMas
         uint64 lastNonce = crossChainMasterStrategy.lastTransferNonce();
 
         // Build balance check with transferConfirmation=false (not a confirmation)
-        bytes memory balancePayload =
-            CrossChainStrategyHelper.encodeBalanceCheckMessage(lastNonce, 10000e6, false, block.timestamp);
+        bytes memory balancePayload = _encodeBalanceCheckMessage(lastNonce, 10000e6, false, block.timestamp);
         _relayBalanceCheck(balancePayload);
 
         // Balance should be unchanged — message ignored during pending withdrawal
@@ -82,8 +78,7 @@ contract Smoke_CrossChainMasterStrategy_BalanceCheck_Test is Smoke_CrossChainMas
         uint256 remoteBalanceBefore = crossChainMasterStrategy.remoteStrategyBalance();
 
         // Build balance check with OLD nonce (before deposit)
-        bytes memory balancePayload =
-            CrossChainStrategyHelper.encodeBalanceCheckMessage(nonceBefore, 123244e6, false, block.timestamp);
+        bytes memory balancePayload = _encodeBalanceCheckMessage(nonceBefore, 123244e6, false, block.timestamp);
         _relayBalanceCheck(balancePayload);
 
         // Balance should be unchanged
@@ -101,8 +96,7 @@ contract Smoke_CrossChainMasterStrategy_BalanceCheck_Test is Smoke_CrossChainMas
         uint256 remoteBalanceBefore = crossChainMasterStrategy.remoteStrategyBalance();
 
         // Build balance check with nonce + 2 (higher than expected)
-        bytes memory balancePayload =
-            CrossChainStrategyHelper.encodeBalanceCheckMessage(lastNonce + 2, 123244e6, false, block.timestamp);
+        bytes memory balancePayload = _encodeBalanceCheckMessage(lastNonce + 2, 123244e6, false, block.timestamp);
         _relayBalanceCheck(balancePayload);
 
         // Balance should be unchanged
@@ -122,8 +116,7 @@ contract Smoke_CrossChainMasterStrategy_BalanceCheck_Test is Smoke_CrossChainMas
 
         // Build balance check with a timestamp > 1 day in the past
         uint256 oldTimestamp = block.timestamp - 1 days - 1;
-        bytes memory balancePayload =
-            CrossChainStrategyHelper.encodeBalanceCheckMessage(lastNonce, 99999e6, false, oldTimestamp);
+        bytes memory balancePayload = _encodeBalanceCheckMessage(lastNonce, 99999e6, false, oldTimestamp);
         _relayBalanceCheck(balancePayload);
 
         // Balance should be unchanged — message too old

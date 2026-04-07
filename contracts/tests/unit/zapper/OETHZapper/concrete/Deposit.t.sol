@@ -2,6 +2,7 @@
 pragma solidity ^0.8.0;
 
 import {Unit_OETHZapper_Shared_Test} from "tests/unit/zapper/OETHZapper/shared/Shared.t.sol";
+import {IOETHZapper} from "contracts/interfaces/IOETHZapper.sol";
 
 contract Unit_Concrete_OETHZapper_Deposit_Test is Unit_OETHZapper_Shared_Test {
     //////////////////////////////////////////////////////
@@ -23,7 +24,7 @@ contract Unit_Concrete_OETHZapper_Deposit_Test is Unit_OETHZapper_Shared_Test {
 
         vm.prank(alice);
         vm.expectEmit(true, true, false, true, address(oethZapper));
-        emit Zap(alice, ETH_MARKER, 1 ether);
+        emit IOETHZapper.Zap(alice, ETH_MARKER, 1 ether);
         oethZapper.deposit{value: 1 ether}();
     }
 
@@ -41,6 +42,7 @@ contract Unit_Concrete_OETHZapper_Deposit_Test is Unit_OETHZapper_Shared_Test {
         // Send some ETH to zapper first (simulating leftover)
         _dealETH(address(this), 0.5 ether);
         (bool success,) = address(oethZapper).call{value: 0.5 ether}("");
+        assertTrue(success);
         // receive() will deposit, but let's use a different approach:
         // deal ETH directly to the contract
         vm.deal(address(oethZapper), 0.5 ether);
@@ -76,9 +78,4 @@ contract Unit_Concrete_OETHZapper_Deposit_Test is Unit_OETHZapper_Shared_Test {
         vm.expectRevert();
         oethZapper.deposit{value: 1 ether}();
     }
-
-    //////////////////////////////////////////////////////
-    /// --- EVENTS
-    //////////////////////////////////////////////////////
-    event Zap(address indexed minter, address indexed asset, uint256 amount);
 }

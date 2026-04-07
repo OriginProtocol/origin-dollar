@@ -62,21 +62,41 @@ forge-std/Test
             └─ Unit_Fuzz_<Contract>_<Feature>_Test      (fuzz/*.fuzz.t.sol)
 ```
 
-- `Base` creates actors (`alice`, `bobby`, …, `governor`, `strategist`, etc.) and declares **all contract state variables** (OUSD, OUSDVault, OETH, OETHVault, OSonic, OSVault, proxies, mocks, external tokens). **NEVER declare contract variables in `Shared.sol`** — all contract/token storage lives in `Base.sol` so it is shared across all test suites.
+- `Base` creates actors (`alice`, `bobby`, …, `governor`, `strategist`, etc.) and declares constants, external token refs (`IERC20 usdc`, `IERC20 weth`), fork IDs, and `setUp()`. **`Base` only contains actors, constants, IERC20 external tokens, fork IDs, and setUp().** All typed contract/proxy/mock state variables are declared in each `Shared.t.sol` file. This keeps `Base` lightweight so changes to it don't invalidate the entire Forge cache.
+
+### Interface-only testing
+
+Tests must interact with contracts through **interfaces**, not concrete implementations. This is critical for Forge cache efficiency — see `contracts/tests/README.md` for full details.
+
+**Available interfaces:**
+
+| Interface | File | Used for |
+|-----------|------|----------|
+| `IVault` | `contracts/interfaces/IVault.sol` | All vault contracts |
+| `IOToken` | `contracts/interfaces/IOToken.sol` | All rebasing tokens (OUSD, OETH, OETHBase, OSonic) |
+| `IWOToken` | `contracts/interfaces/IWOToken.sol` | All wrapped tokens (WOETH, WOETHBase, WOETHPlume, WOSonic, WrappedOusd) |
+| `IProxy` | `contracts/interfaces/IProxy.sol` | All proxy instances |
+
+**Key rules:**
+- Import interfaces, not concrete contracts: `import {IVault} from "contracts/interfaces/IVault.sol";`
+- Declare state variables with interface types: `IVault internal ousdVault;`
+- Deploy with `vm.deployCode` instead of `new`: `vm.deployCode("contracts/vault/OUSDVault.sol:OUSDVault", abi.encode(address(usdc)))`
+- Reference events from the interface: `emit IVault.CapitalPaused();`
+- Access struct return values by field name: `ousdVault.withdrawalQueueMetadata().claimable`
 
 ### Product-specific vault types
 
 Each product has its own vault contract. **Always use the correct vault type** — do not substitute one product's vault for another:
 
-| Product | Token | Vault | Proxy imports |
-|---------|-------|-------|---------------|
-| OUSD | `OUSD` | `OUSDVault` | `OUSDProxy`, `VaultProxy` from `contracts/proxies/Proxies.sol` |
-| OETH | `OETH` | `OETHVault` | `OETHProxy`, `OETHVaultProxy` from `contracts/proxies/Proxies.sol` |
-| OSonic | `OSonic` | **`OSVault`** | `OSonicProxy`, `OSonicVaultProxy` from `contracts/proxies/SonicProxies.sol` |
-| OETHBase | `OETHBase` | `OETHBaseVault` | `OETHBaseProxy`, `OETHBaseVaultProxy` from `contracts/proxies/BaseProxies.sol` |
+| Product | Token | Vault source | `vm.deployCode` path |
+|---------|-------|-------------|----------------------|
+| OUSD | `OUSD` | `OUSDVault` | `contracts/vault/OUSDVault.sol:OUSDVault` |
+| OETH | `OETH` | `OETHVault` | `contracts/vault/OETHVault.sol:OETHVault` |
+| OSonic | `OSonic` | **`OSVault`** | `contracts/vault/OSVault.sol:OSVault` |
+| OETHBase | `OETHBase` | `OETHBaseVault` | `contracts/vault/OETHBaseVault.sol:OETHBaseVault` |
 
 `OSVault` lives at `contracts/vault/OSVault.sol`. Never use `OETHVault` for Sonic products.
-- `Unit_Shared_Test` is **abstract** and owns all deployment + configuration logic. It assigns to the variables declared in `Base`, but does not re-declare them.
+- `Unit_Shared_Test` is **abstract** and owns all deployment + configuration logic.
 - Concrete and fuzz test contracts inherit `Unit_Shared_Test` directly — no extra layers.
 
 ## 3. Shared Test Contract (`shared/Shared.sol`)
@@ -97,11 +117,13 @@ function setUp() public virtual override {
 
 ### Key rules
 
-- Deploy **implementations** then **ERC1967 proxies**, initialize via `proxy.initialize(impl, governor, initData)`.
-- Cast proxies to their interface types (`ousd = OUSD(address(ousdProxy))`).
+- Deploy **implementations** with `vm.deployCode`, then **proxies** with `vm.deployCode("contracts/proxies/InitializeGovernedUpgradeabilityProxy.sol:InitializeGovernedUpgradeabilityProxy")`.
+- Initialize via `proxy.initialize(impl, governor, initData)`.
+- Cast proxies to their interface types (`ousd = IOToken(address(ousdProxy))`).
 - Configuration block uses `vm.startPrank(governor)` / `vm.stopPrank()`.
 - Funding uses the shared `_mintOToken` helper (see below).
 - `label()` at the bottom labels every deployed address for trace readability.
+- **Gotcha:** Because `vm.deployCode` loads from compiled artifacts and the contract source is not in the test's dependency tree, `forge test` alone will **not** recompile modified contracts. Always run `forge build contracts/` before `forge test` after modifying contract source.
 
 ## 3b. Mock Contracts
 
@@ -182,7 +204,7 @@ testFuzz_HandleFee()                           // ❌ uppercase H
 
 ```solidity
 vm.expectEmit(true, true, true, true);
-emit ContractStorage.EventName(arg1, arg2);
+emit IVault.EventName(arg1, arg2);  // Always reference events from the interface
 contractCall();
 ```
 
@@ -374,7 +396,9 @@ Some code paths may be genuinely unreachable in a unit-test context (e.g., assem
 
 - [ ] Checked `contracts/test/` for existing Hardhat tests and drew inspiration from them
 - [ ] `shared/Shared.sol` is `abstract` and inherits `Base`
-- [ ] All contract/proxy/token state variables are declared in `Base.sol`, not in `Shared.sol`
+- [ ] All typed contract/proxy/mock state variables are declared in `Shared.sol` using interface types (not in `Base.sol`)
+- [ ] No concrete contract imports — only interfaces (`IVault`, `IOToken`, `IWOToken`, `IProxy`) and mocks
+- [ ] All deployments use `vm.deployCode`, not `new` (except mocks which are fine to use `new`)
 - [ ] `setUp()` follows the exact order: super → warp → mocks → contracts → config → fund → label
 - [ ] **One file per function**: each state-changing function has its own `.t.sol` file (only views/setters may be grouped)
 - [ ] Concrete contracts use `Unit_Concrete_<Contract>_<Function>_Test`

@@ -45,7 +45,7 @@ contract Smoke_Concrete_OETHVault_ViewFunctions_Test is Smoke_OETHVault_Shared_T
     function test_allStrategies_areSupported() public view {
         address[] memory strats = oethVault.getAllStrategies();
         for (uint256 i = 0; i < strats.length; i++) {
-            (bool isSupported,) = oethVault.strategies(strats[i]);
+            bool isSupported = oethVault.strategies(strats[i]).isSupported;
             assertTrue(isSupported);
         }
     }

@@ -2,8 +2,7 @@
 pragma solidity ^0.8.0;
 
 import {Unit_CrossChainMasterStrategy_Shared_Test} from "../shared/Shared.t.sol";
-import {CrossChainMasterStrategy} from "contracts/strategies/crosschain/CrossChainMasterStrategy.sol";
-import {InitializableAbstractStrategy} from "contracts/utils/InitializableAbstractStrategy.sol";
+import {ICrossChainMasterStrategy} from "contracts/interfaces/strategies/ICrossChainMasterStrategy.sol";
 
 contract Unit_Concrete_CrossChainMasterStrategy_Deposit_Test is Unit_CrossChainMasterStrategy_Shared_Test {
     //////////////////////////////////////////////////////
@@ -58,7 +57,7 @@ contract Unit_Concrete_CrossChainMasterStrategy_Deposit_Test is Unit_CrossChainM
         _mintUsdc(address(crossChainMasterStrategy), amount);
 
         vm.expectEmit(true, true, true, true);
-        emit InitializableAbstractStrategy.Deposit(address(mockUsdc), address(mockUsdc), amount);
+        emit ICrossChainMasterStrategy.Deposit(address(mockUsdc), address(mockUsdc), amount);
 
         vm.prank(address(ousdVault));
         crossChainMasterStrategy.deposit(address(mockUsdc), amount);

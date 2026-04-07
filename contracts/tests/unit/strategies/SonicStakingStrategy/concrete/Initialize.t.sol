@@ -2,8 +2,6 @@
 pragma solidity ^0.8.0;
 
 import {Unit_SonicStakingStrategy_Shared_Test} from "tests/unit/strategies/SonicStakingStrategy/shared/Shared.t.sol";
-import {InitializableAbstractStrategy} from "contracts/utils/InitializableAbstractStrategy.sol";
-import {SonicStakingStrategy} from "contracts/strategies/sonic/SonicStakingStrategy.sol";
 
 contract Unit_Concrete_SonicStakingStrategy_Initialize_Test is Unit_SonicStakingStrategy_Shared_Test {
     function test_initialize_setsAssets() public view {

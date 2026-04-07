@@ -5,8 +5,6 @@ import {
     Smoke_BaseBridgeHelperModule_Shared_Test
 } from "tests/smoke/base/automation/BaseBridgeHelperModule/shared/Shared.t.sol";
 import {Base} from "tests/utils/Addresses.sol";
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {VaultStorage} from "contracts/vault/VaultStorage.sol";
 
 contract Smoke_Concrete_BaseBridgeHelperModule_Test is Smoke_BaseBridgeHelperModule_Shared_Test {
     //////////////////////////////////////////////////////
@@ -83,8 +81,7 @@ contract Smoke_Concrete_BaseBridgeHelperModule_Test is Smoke_BaseBridgeHelperMod
         deal(address(bridgedWoeth), safe, woethAmount);
 
         uint256 expectedWETH = bridgedWOETHStrategy.getBridgedWOETHValue(woethAmount);
-        VaultStorage.WithdrawalQueueMetadata memory queueMeta = vault.withdrawalQueueMetadata();
-        uint256 nextWithdrawalIndex = uint256(queueMeta.nextWithdrawalIndex);
+        uint256 nextWithdrawalIndex = uint256(vault.withdrawalQueueMetadata().nextWithdrawalIndex);
 
         uint256 safeWethBefore = weth.balanceOf(safe);
 
@@ -176,8 +173,7 @@ contract Smoke_Concrete_BaseBridgeHelperModule_Test is Smoke_BaseBridgeHelperMod
         deal(address(bridgedWoeth), safe, woethAmount);
         vm.deal(safe, 1 ether); // for CCIP gas fee
 
-        VaultStorage.WithdrawalQueueMetadata memory queueMeta = vault.withdrawalQueueMetadata();
-        uint256 nextWithdrawalIndex = uint256(queueMeta.nextWithdrawalIndex);
+        uint256 nextWithdrawalIndex = uint256(vault.withdrawalQueueMetadata().nextWithdrawalIndex);
 
         vm.prank(operator);
         baseBridgeHelperModule.depositWOETH(woethAmount, true);

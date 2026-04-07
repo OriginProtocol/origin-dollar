@@ -6,8 +6,7 @@ import {Vm} from "forge-std/Vm.sol";
 import {
     Fork_MetropolisPoolBooster_Shared_Test
 } from "tests/fork/sonic/poolBooster/MetropolisPoolBooster/shared/Shared.t.sol";
-import {PoolBoosterMetropolis} from "contracts/poolBooster/PoolBoosterMetropolis.sol";
-import {IPoolBooster} from "contracts/interfaces/poolBooster/IPoolBooster.sol";
+import {IPoolBoosterMetropolis} from "contracts/interfaces/poolBooster/IPoolBoosterMetropolis.sol";
 import {Sonic} from "tests/utils/Addresses.sol";
 
 contract Fork_Concrete_MetropolisPoolBooster_CreateAndBribe_Test is Fork_MetropolisPoolBooster_Shared_Test {
@@ -20,7 +19,7 @@ contract Fork_Concrete_MetropolisPoolBooster_CreateAndBribe_Test is Fork_Metropo
     }
 
     function test_bribe_twiceInARow() public {
-        PoolBoosterMetropolis booster = _createMetropolisBooster(Sonic.Metropolis_Pools_OsMoon, 1);
+        IPoolBoosterMetropolis booster = _createMetropolisBooster(Sonic.Metropolis_Pools_OsMoon, 1);
 
         // First bribe: 100,000e18
         _dealOSToken(address(booster), 100_000e18);

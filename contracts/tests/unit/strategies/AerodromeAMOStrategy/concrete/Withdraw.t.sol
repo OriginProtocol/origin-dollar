@@ -2,8 +2,7 @@
 pragma solidity ^0.8.0;
 
 import {Unit_AerodromeAMOStrategy_Shared_Test} from "tests/unit/strategies/AerodromeAMOStrategy/shared/Shared.t.sol";
-import {AerodromeAMOStrategy} from "contracts/strategies/aerodrome/AerodromeAMOStrategy.sol";
-import {InitializableAbstractStrategy} from "contracts/utils/InitializableAbstractStrategy.sol";
+import {IAerodromeAMOStrategy} from "contracts/interfaces/strategies/IAerodromeAMOStrategy.sol";
 
 contract Unit_Concrete_AerodromeAMOStrategy_Withdraw_Test is Unit_AerodromeAMOStrategy_Shared_Test {
     function test_withdraw() public {
@@ -26,7 +25,7 @@ contract Unit_Concrete_AerodromeAMOStrategy_Withdraw_Test is Unit_AerodromeAMOSt
         mockSugarHelper.setPrincipal(5 ether, 5 ether);
 
         vm.expectEmit(true, true, true, true);
-        emit InitializableAbstractStrategy.Withdrawal(address(weth), address(0), 3 ether);
+        emit IAerodromeAMOStrategy.Withdrawal(address(weth), address(0), 3 ether);
 
         vm.prank(address(oethBaseVault));
         aerodromeAMOStrategy.withdraw(address(oethBaseVault), address(weth), 3 ether);
@@ -83,7 +82,7 @@ contract Unit_Concrete_AerodromeAMOStrategy_Withdraw_Test is Unit_AerodromeAMOSt
         // Strategy has no WETH on hand (all in position)
         vm.prank(address(oethBaseVault));
         vm.expectRevert(
-            abi.encodeWithSelector(AerodromeAMOStrategy.NotEnoughWethLiquidity.selector, 0.1 ether, 5 ether)
+            abi.encodeWithSelector(IAerodromeAMOStrategy.NotEnoughWethLiquidity.selector, 0.1 ether, 5 ether)
         );
         aerodromeAMOStrategy.withdraw(address(oethBaseVault), address(weth), 5 ether);
     }

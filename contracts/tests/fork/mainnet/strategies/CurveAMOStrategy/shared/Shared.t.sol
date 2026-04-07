@@ -5,16 +5,14 @@ import {BaseFork} from "tests/fork/BaseFork.t.sol";
 import {Mainnet} from "tests/utils/Addresses.sol";
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {OETH} from "contracts/token/OETH.sol";
-import {OETHVault} from "contracts/vault/OETHVault.sol";
-import {OETHProxy} from "contracts/proxies/Proxies.sol";
-import {OETHVaultProxy} from "contracts/proxies/Proxies.sol";
-import {CurveAMOStrategy} from "contracts/strategies/CurveAMOStrategy.sol";
-import {InitializableAbstractStrategy} from "contracts/utils/InitializableAbstractStrategy.sol";
+import {IOToken} from "contracts/interfaces/IOToken.sol";
+import {IVault} from "contracts/interfaces/IVault.sol";
+import {IProxy} from "contracts/interfaces/IProxy.sol";
 import {ICurveStableSwapNG} from "contracts/interfaces/ICurveStableSwapNG.sol";
 import {ICurveLiquidityGaugeV6} from "contracts/interfaces/ICurveLiquidityGaugeV6.sol";
 import {ICurveMinter} from "contracts/interfaces/ICurveMinter.sol";
 import {ICurveStableSwapFactoryNG} from "contracts/interfaces/ICurveStableSwapFactoryNG.sol";
+import {ICurveAMOStrategy} from "contracts/interfaces/strategies/ICurveAMOStrategy.sol";
 
 abstract contract Fork_CurveAMOStrategy_Shared_Test is BaseFork {
     //////////////////////////////////////////////////////
@@ -28,11 +26,11 @@ abstract contract Fork_CurveAMOStrategy_Shared_Test is BaseFork {
     /// --- CONTRACTS
     //////////////////////////////////////////////////////
 
-    OETH internal oeth;
-    OETHVault internal oethVault;
-    OETHProxy internal oethProxy;
-    OETHVaultProxy internal oethVaultProxy;
-    CurveAMOStrategy internal curveAMOStrategy;
+    IOToken internal oeth;
+    IVault internal oethVault;
+    IProxy internal oethProxy;
+    IProxy internal oethVaultProxy;
+    ICurveAMOStrategy internal curveAMOStrategy;
     ICurveStableSwapNG internal curvePool;
     ICurveLiquidityGaugeV6 internal curveGauge;
     ICurveMinter internal curveMinter;
@@ -59,26 +57,32 @@ abstract contract Fork_CurveAMOStrategy_Shared_Test is BaseFork {
         // Deploy fresh OETH + OETHVault
         vm.startPrank(deployer);
 
-        OETH oethImpl = new OETH();
-        OETHVault oethVaultImpl = new OETHVault(Mainnet.WETH);
+        address oethImpl = vm.deployCode("contracts/token/OETH.sol:OETH");
+        address oethVaultImpl = vm.deployCode("contracts/vault/OETHVault.sol:OETHVault", abi.encode(Mainnet.WETH));
 
-        oethProxy = new OETHProxy();
-        oethVaultProxy = new OETHVaultProxy();
+        oethProxy = IProxy(
+            vm.deployCode(
+                "contracts/proxies/InitializeGovernedUpgradeabilityProxy.sol:InitializeGovernedUpgradeabilityProxy"
+            )
+        );
+        oethVaultProxy = IProxy(
+            vm.deployCode(
+                "contracts/proxies/InitializeGovernedUpgradeabilityProxy.sol:InitializeGovernedUpgradeabilityProxy"
+            )
+        );
 
         oethProxy.initialize(
-            address(oethImpl),
-            governor,
-            abi.encodeWithSignature("initialize(address,uint256)", address(oethVaultProxy), 1e27)
+            oethImpl, governor, abi.encodeWithSignature("initialize(address,uint256)", address(oethVaultProxy), 1e27)
         );
 
         oethVaultProxy.initialize(
-            address(oethVaultImpl), governor, abi.encodeWithSignature("initialize(address)", address(oethProxy))
+            oethVaultImpl, governor, abi.encodeWithSignature("initialize(address)", address(oethProxy))
         );
 
         vm.stopPrank();
 
-        oeth = OETH(address(oethProxy));
-        oethVault = OETHVault(address(oethVaultProxy));
+        oeth = IOToken(address(oethProxy));
+        oethVault = IVault(address(oethVaultProxy));
 
         // Configure vault
         vm.startPrank(governor);
@@ -129,14 +133,11 @@ abstract contract Fork_CurveAMOStrategy_Shared_Test is BaseFork {
         curveGauge = ICurveLiquidityGaugeV6(gaugeAddr);
 
         // Deploy CurveAMOStrategy
-        curveAMOStrategy = new CurveAMOStrategy(
-            InitializableAbstractStrategy.BaseStrategyConfig({
-                platformAddress: poolAddr, vaultAddress: address(oethVault)
-            }),
-            address(oeth),
-            Mainnet.WETH,
-            gaugeAddr,
-            Mainnet.CRVMinter
+        curveAMOStrategy = ICurveAMOStrategy(
+            vm.deployCode(
+                "contracts/strategies/CurveAMOStrategy.sol:CurveAMOStrategy",
+                abi.encode(poolAddr, address(oethVault), address(oeth), Mainnet.WETH, gaugeAddr, Mainnet.CRVMinter)
+            )
         );
 
         // Set governor via storage slot

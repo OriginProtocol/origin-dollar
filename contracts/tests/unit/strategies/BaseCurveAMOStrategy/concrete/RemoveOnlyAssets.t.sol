@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 import {Unit_BaseCurveAMOStrategy_Shared_Test} from "tests/unit/strategies/BaseCurveAMOStrategy/shared/Shared.t.sol";
-import {InitializableAbstractStrategy} from "contracts/utils/InitializableAbstractStrategy.sol";
+import {IBaseCurveAMOStrategy} from "contracts/interfaces/strategies/IBaseCurveAMOStrategy.sol";
 
 contract Unit_Concrete_BaseCurveAMOStrategy_RemoveOnlyAssets_Test is Unit_BaseCurveAMOStrategy_Shared_Test {
     function test_removeOnlyAssets_removesAndTransfersToVault() public {
@@ -42,7 +42,7 @@ contract Unit_Concrete_BaseCurveAMOStrategy_RemoveOnlyAssets_Test is Unit_BaseCu
         uint256 lpToRemove = curveGauge.balanceOf(address(baseCurveAMOStrategy)) / 4;
 
         vm.expectEmit(true, true, false, false);
-        emit InitializableAbstractStrategy.Withdrawal(address(weth), address(curvePool), 0);
+        emit IBaseCurveAMOStrategy.Withdrawal(address(weth), address(curvePool), 0);
 
         vm.prank(strategist);
         baseCurveAMOStrategy.removeOnlyAssets(lpToRemove);

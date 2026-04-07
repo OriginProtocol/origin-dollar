@@ -5,13 +5,11 @@ import {BaseFork} from "tests/fork/BaseFork.t.sol";
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {MockERC20} from "@solmate/test/utils/mocks/MockERC20.sol";
-import {OSonic} from "contracts/token/OSonic.sol";
-
-import {PoolBoostCentralRegistry} from "contracts/poolBooster/PoolBoostCentralRegistry.sol";
-import {PoolBoosterFactorySwapxDouble} from "contracts/poolBooster/PoolBoosterFactorySwapxDouble.sol";
-import {PoolBoosterFactorySwapxSingle} from "contracts/poolBooster/PoolBoosterFactorySwapxSingle.sol";
-import {PoolBoosterSwapxDouble} from "contracts/poolBooster/PoolBoosterSwapxDouble.sol";
-import {PoolBoosterSwapxSingle} from "contracts/poolBooster/PoolBoosterSwapxSingle.sol";
+import {IPoolBoostCentralRegistryFull} from "contracts/interfaces/poolBooster/IPoolBoostCentralRegistryFull.sol";
+import {IPoolBoosterFactorySwapxDouble} from "contracts/interfaces/poolBooster/IPoolBoosterFactorySwapxDouble.sol";
+import {IPoolBoosterFactorySwapxSingle} from "contracts/interfaces/poolBooster/IPoolBoosterFactorySwapxSingle.sol";
+import {IPoolBoosterSwapxDouble} from "contracts/interfaces/poolBooster/IPoolBoosterSwapxDouble.sol";
+import {IPoolBoosterSwapxSingle} from "contracts/interfaces/poolBooster/IPoolBoosterSwapxSingle.sol";
 
 import {Sonic} from "tests/utils/Addresses.sol";
 
@@ -26,10 +24,10 @@ abstract contract Fork_SwapXPoolBooster_Shared_Test is BaseFork {
     /// --- CONTRACTS
     //////////////////////////////////////////////////////
 
-    OSonic internal oSonic;
-    PoolBoostCentralRegistry internal centralRegistry;
-    PoolBoosterFactorySwapxDouble internal factorySwapxDouble;
-    PoolBoosterFactorySwapxSingle internal factorySwapxSingle;
+    IERC20 internal oSonic;
+    IPoolBoostCentralRegistryFull internal centralRegistry;
+    IPoolBoosterFactorySwapxDouble internal factorySwapxDouble;
+    IPoolBoosterFactorySwapxSingle internal factorySwapxSingle;
 
     //////////////////////////////////////////////////////
     /// --- SETUP
@@ -45,19 +43,29 @@ abstract contract Fork_SwapXPoolBooster_Shared_Test is BaseFork {
 
     function _deployFreshContracts() internal {
         // 1. Deploy fresh MockERC20 cast into the Base-declared oSonic variable
-        oSonic = OSonic(address(new MockERC20("Origin Sonic", "OS", 18)));
+        oSonic = IERC20(address(new MockERC20("Origin Sonic", "OS", 18)));
 
         // 2. Deploy PoolBoostCentralRegistry and set governor via storage slot
-        centralRegistry = new PoolBoostCentralRegistry();
+        centralRegistry = IPoolBoostCentralRegistryFull(
+            vm.deployCode("contracts/poolBooster/PoolBoostCentralRegistry.sol:PoolBoostCentralRegistry")
+        );
         vm.store(address(centralRegistry), GOVERNOR_SLOT, bytes32(uint256(uint160(Sonic.timelock))));
 
         // 3. Deploy SwapX Double factory
-        factorySwapxDouble =
-            new PoolBoosterFactorySwapxDouble(address(oSonic), Sonic.timelock, address(centralRegistry));
+        factorySwapxDouble = IPoolBoosterFactorySwapxDouble(
+            vm.deployCode(
+                "contracts/poolBooster/PoolBoosterFactorySwapxDouble.sol:PoolBoosterFactorySwapxDouble",
+                abi.encode(address(oSonic), Sonic.timelock, address(centralRegistry))
+            )
+        );
 
         // 4. Deploy SwapX Single factory
-        factorySwapxSingle =
-            new PoolBoosterFactorySwapxSingle(address(oSonic), Sonic.timelock, address(centralRegistry));
+        factorySwapxSingle = IPoolBoosterFactorySwapxSingle(
+            vm.deployCode(
+                "contracts/poolBooster/PoolBoosterFactorySwapxSingle.sol:PoolBoosterFactorySwapxSingle",
+                abi.encode(address(oSonic), Sonic.timelock, address(centralRegistry))
+            )
+        );
 
         // 5. Approve both factories on registry
         vm.startPrank(Sonic.timelock);
@@ -90,25 +98,25 @@ abstract contract Fork_SwapXPoolBooster_Shared_Test is BaseFork {
 
     function _createDoubleBooster(address _bribeOS, address _bribeOther, address _pool, uint256 _split, uint256 _salt)
         internal
-        returns (PoolBoosterSwapxDouble)
+        returns (IPoolBoosterSwapxDouble)
     {
         vm.prank(Sonic.timelock);
         factorySwapxDouble.createPoolBoosterSwapxDouble(_bribeOS, _bribeOther, _pool, _split, _salt);
 
         uint256 count = factorySwapxDouble.poolBoosterLength();
         (address boosterAddr,,) = factorySwapxDouble.poolBoosters(count - 1);
-        return PoolBoosterSwapxDouble(boosterAddr);
+        return IPoolBoosterSwapxDouble(boosterAddr);
     }
 
     function _createSingleBooster(address _bribe, address _pool, uint256 _salt)
         internal
-        returns (PoolBoosterSwapxSingle)
+        returns (IPoolBoosterSwapxSingle)
     {
         vm.prank(Sonic.timelock);
         factorySwapxSingle.createPoolBoosterSwapxSingle(_bribe, _pool, _salt);
 
         uint256 count = factorySwapxSingle.poolBoosterLength();
         (address boosterAddr,,) = factorySwapxSingle.poolBoosters(count - 1);
-        return PoolBoosterSwapxSingle(boosterAddr);
+        return IPoolBoosterSwapxSingle(boosterAddr);
     }
 }

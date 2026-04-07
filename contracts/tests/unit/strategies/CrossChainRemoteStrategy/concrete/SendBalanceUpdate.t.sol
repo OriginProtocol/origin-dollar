@@ -2,7 +2,6 @@
 pragma solidity ^0.8.0;
 
 import {Unit_CrossChainRemoteStrategy_Shared_Test} from "../shared/Shared.t.sol";
-import {AbstractCCTPIntegrator} from "contracts/strategies/crosschain/AbstractCCTPIntegrator.sol";
 
 contract Unit_Concrete_CrossChainRemoteStrategy_SendBalanceUpdate_Test is Unit_CrossChainRemoteStrategy_Shared_Test {
     //////////////////////////////////////////////////////

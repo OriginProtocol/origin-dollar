@@ -2,7 +2,6 @@
 pragma solidity ^0.8.0;
 
 import {Smoke_SonicSwapXAMOStrategy_Shared_Test} from "../shared/Shared.t.sol";
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 contract Smoke_Concrete_SonicSwapXAMOStrategy_Rebalance_Test is Smoke_SonicSwapXAMOStrategy_Shared_Test {
     function test_swapOTokensToPool_improvesBalance() public {

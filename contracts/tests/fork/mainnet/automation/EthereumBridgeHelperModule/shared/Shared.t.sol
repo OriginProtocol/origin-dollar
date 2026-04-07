@@ -5,21 +5,21 @@ import {BaseFork} from "tests/fork/BaseFork.t.sol";
 import {CrossChain, Mainnet} from "tests/utils/Addresses.sol";
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {IOToken} from "contracts/interfaces/IOToken.sol";
+import {IVault} from "contracts/interfaces/IVault.sol";
 import {IWETH9} from "contracts/interfaces/IWETH9.sol";
-import {OETH} from "contracts/token/OETH.sol";
-import {OETHVault} from "contracts/vault/OETHVault.sol";
-import {WOETH} from "contracts/token/WOETH.sol";
-import {EthereumBridgeHelperModule} from "contracts/automation/EthereumBridgeHelperModule.sol";
+import {IWOToken} from "contracts/interfaces/IWOToken.sol";
+import {IEthereumBridgeHelperModule} from "contracts/interfaces/automation/IEthereumBridgeHelperModule.sol";
 
 abstract contract Fork_EthereumBridgeHelperModule_Shared_Test is BaseFork {
     //////////////////////////////////////////////////////
     /// --- CONTRACTS
     //////////////////////////////////////////////////////
 
-    OETH internal oeth;
-    OETHVault internal oethVault;
-    WOETH internal woeth;
-    EthereumBridgeHelperModule internal ethereumBridgeHelperModule;
+    IOToken internal oeth;
+    IWOToken internal woeth;
+    IVault internal oethVault;
+    IEthereumBridgeHelperModule internal ethereumBridgeHelperModule;
 
     //////////////////////////////////////////////////////
     /// --- ADDRESSES
@@ -44,14 +44,18 @@ abstract contract Fork_EthereumBridgeHelperModule_Shared_Test is BaseFork {
 
     function _loadForkContracts() internal {
         safeSigner = CrossChain.multichainStrategist;
-        oeth = OETH(Mainnet.OETHProxy);
-        oethVault = OETHVault(payable(Mainnet.OETHVaultProxy));
-        woeth = WOETH(Mainnet.WOETHProxy);
+        oeth = IOToken(Mainnet.OETHProxy);
+        oethVault = IVault(Mainnet.OETHVaultProxy);
+        woeth = IWOToken(Mainnet.WOETHProxy);
         weth = IERC20(Mainnet.WETH);
     }
 
     function _deployModule() internal {
-        ethereumBridgeHelperModule = new EthereumBridgeHelperModule(safeSigner);
+        ethereumBridgeHelperModule = IEthereumBridgeHelperModule(
+            vm.deployCode(
+                "contracts/automation/EthereumBridgeHelperModule.sol:EthereumBridgeHelperModule", abi.encode(safeSigner)
+            )
+        );
     }
 
     function _enableModuleOnSafe() internal {

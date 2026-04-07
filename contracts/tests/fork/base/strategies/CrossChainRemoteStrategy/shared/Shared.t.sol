@@ -6,16 +6,30 @@ import {Mainnet, Base as BaseAddresses, CrossChain} from "tests/utils/Addresses.
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
-import {CrossChainRemoteStrategy} from "contracts/strategies/crosschain/CrossChainRemoteStrategy.sol";
-import {CrossChainStrategyHelper} from "contracts/strategies/crosschain/CrossChainStrategyHelper.sol";
+import {IProxy} from "contracts/interfaces/IProxy.sol";
+import {ICrossChainRemoteStrategy} from "contracts/interfaces/strategies/ICrossChainRemoteStrategy.sol";
 import {CCTPMessageTransmitterMock2} from "contracts/mocks/crosschain/CCTPMessageTransmitterMock2.sol";
+
+struct BaseStrategyConfig {
+    address platformAddress;
+    address vaultAddress;
+}
+
+struct CCTPIntegrationConfig {
+    address cctpTokenMessenger;
+    address cctpMessageTransmitter;
+    uint32 peerDomainID;
+    address peerStrategy;
+    address usdcToken;
+    address peerUsdcToken;
+}
 
 abstract contract Fork_CrossChainRemoteStrategy_Shared_Test is BaseFork {
     //////////////////////////////////////////////////////
     /// --- CONTRACTS
     //////////////////////////////////////////////////////
 
-    CrossChainRemoteStrategy internal crossChainRemoteStrategy;
+    ICrossChainRemoteStrategy internal crossChainRemoteStrategy;
     address internal relayer;
     address internal strategistAddr;
     address internal rafael;
@@ -28,23 +42,59 @@ abstract contract Fork_CrossChainRemoteStrategy_Shared_Test is BaseFork {
         super.setUp();
 
         _createAndSelectForkBase();
+        _deployFreshContracts();
+        _configureContracts();
+        _fundTestAccounts();
+        _labelContracts();
+    }
 
-        // Attach to deployed contracts
-        crossChainRemoteStrategy = CrossChainRemoteStrategy(BaseAddresses.CrossChainRemoteStrategy);
+    function _deployFreshContracts() internal {
         usdc = IERC20(BaseAddresses.USDC);
+        relayer = CrossChain.multichainStrategist;
+        strategistAddr = CrossChain.multichainStrategist;
 
-        // Read state from deployed contract
-        relayer = crossChainRemoteStrategy.operator();
-        strategistAddr = crossChainRemoteStrategy.strategistAddr();
+        IProxy crossChainRemoteStrategyProxy = IProxy(
+            vm.deployCode(
+                "contracts/proxies/create2/CrossChainStrategyProxy.sol:CrossChainStrategyProxy", abi.encode(governor)
+            )
+        );
 
-        // Create additional test user
+        address crossChainRemoteStrategyImpl = vm.deployCode(
+            "contracts/strategies/crosschain/CrossChainRemoteStrategy.sol:CrossChainRemoteStrategy",
+            abi.encode(
+                BaseStrategyConfig({platformAddress: BaseAddresses.MorphoOusdV2Vault, vaultAddress: address(0)}),
+                CCTPIntegrationConfig({
+                    cctpTokenMessenger: CrossChain.CCTPTokenMessengerV2,
+                    cctpMessageTransmitter: CrossChain.CCTPMessageTransmitterV2,
+                    peerDomainID: 0,
+                    peerStrategy: address(crossChainRemoteStrategyProxy),
+                    usdcToken: BaseAddresses.USDC,
+                    peerUsdcToken: Mainnet.USDC
+                })
+            )
+        );
+
+        vm.prank(governor);
+        crossChainRemoteStrategyProxy.initialize(
+            crossChainRemoteStrategyImpl,
+            governor,
+            abi.encodeWithSignature(
+                "initialize(address,address,uint16,uint16)", strategistAddr, relayer, uint16(2000), uint16(0)
+            )
+        );
+
+        crossChainRemoteStrategy = ICrossChainRemoteStrategy(address(crossChainRemoteStrategyProxy));
+    }
+
+    function _configureContracts() internal {
+        vm.prank(governor);
+        crossChainRemoteStrategy.safeApproveAllTokens();
+    }
+
+    function _fundTestAccounts() internal {
         rafael = makeAddr("Rafael");
-
-        // Fund test users with USDC
         deal(BaseAddresses.USDC, matt, 1_000_000e6);
         deal(BaseAddresses.USDC, rafael, 1_000_000e6);
-
-        _labelContracts();
     }
 
     function _labelContracts() internal {

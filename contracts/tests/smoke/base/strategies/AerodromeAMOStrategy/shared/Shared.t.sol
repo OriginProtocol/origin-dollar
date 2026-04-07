@@ -4,19 +4,18 @@ pragma solidity ^0.8.0;
 import {BaseSmoke} from "tests/smoke/BaseSmoke.t.sol";
 import {Base as BaseAddresses} from "tests/utils/Addresses.sol";
 
-import {OETHBase} from "contracts/token/OETHBase.sol";
-import {OETHBaseVault} from "contracts/vault/OETHBaseVault.sol";
-
-import {AerodromeAMOStrategy} from "contracts/strategies/aerodrome/AerodromeAMOStrategy.sol";
 import {AerodromeAMOQuoter, QuoterHelper} from "contracts/utils/AerodromeAMOQuoter.sol";
 import {ISwapRouter} from "contracts/interfaces/aerodrome/ISwapRouter.sol";
+import {IOToken} from "contracts/interfaces/IOToken.sol";
+import {IVault} from "contracts/interfaces/IVault.sol";
+import {IAerodromeAMOStrategy} from "contracts/interfaces/strategies/IAerodromeAMOStrategy.sol";
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 abstract contract Smoke_AerodromeAMOStrategy_Shared_Test is BaseSmoke {
-    OETHBase internal oethBase;
-    OETHBaseVault internal oethBaseVault;
-    AerodromeAMOStrategy internal aerodromeAMOStrategy;
+    IOToken internal oethBase;
+    IVault internal oethBaseVault;
+    IAerodromeAMOStrategy internal aerodromeAMOStrategy;
     AerodromeAMOQuoter internal aerodromeAMOQuoter;
 
     //////////////////////////////////////////////////////
@@ -35,9 +34,9 @@ abstract contract Smoke_AerodromeAMOStrategy_Shared_Test is BaseSmoke {
     function _fetchContracts() internal virtual {
         require(address(resolver).code.length > 0, "Resolver not initialized on fork");
 
-        oethBase = OETHBase(resolver.resolve("OETHBASE_PROXY"));
-        oethBaseVault = OETHBaseVault(payable(resolver.resolve("OETHBASE_VAULT_PROXY")));
-        aerodromeAMOStrategy = AerodromeAMOStrategy(resolver.resolve("AERODROME_AMO_STRATEGY_PROXY"));
+        oethBase = IOToken(resolver.resolve("OETHBASE_PROXY"));
+        oethBaseVault = IVault(resolver.resolve("OETHBASE_VAULT_PROXY"));
+        aerodromeAMOStrategy = IAerodromeAMOStrategy(resolver.resolve("AERODROME_AMO_STRATEGY_PROXY"));
         weth = IERC20(BaseAddresses.WETH);
 
         // Deploy fresh quoter as test helper

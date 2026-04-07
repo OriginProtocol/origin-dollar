@@ -4,8 +4,7 @@ pragma solidity ^0.8.0;
 import {
     Unit_ClaimStrategyRewardsSafeModule_Shared_Test
 } from "tests/unit/automation/ClaimStrategyRewardsSafeModule/shared/Shared.t.sol";
-
-import {ClaimStrategyRewardsSafeModule} from "contracts/automation/ClaimStrategyRewardsSafeModule.sol";
+import {IClaimStrategyRewardsSafeModule} from "contracts/interfaces/automation/IClaimStrategyRewardsSafeModule.sol";
 
 contract Unit_Concrete_ClaimStrategyRewardsSafeModule_AddStrategy_Test is
     Unit_ClaimStrategyRewardsSafeModule_Shared_Test
@@ -19,7 +18,7 @@ contract Unit_Concrete_ClaimStrategyRewardsSafeModule_AddStrategy_Test is
 
         vm.prank(address(mockSafe));
         vm.expectEmit(true, true, true, true);
-        emit ClaimStrategyRewardsSafeModule.StrategyAdded(newStrategy);
+        emit IClaimStrategyRewardsSafeModule.StrategyAdded(newStrategy);
         claimStrategyRewardsModule.addStrategy(newStrategy);
 
         assertTrue(claimStrategyRewardsModule.isStrategyWhitelisted(newStrategy));

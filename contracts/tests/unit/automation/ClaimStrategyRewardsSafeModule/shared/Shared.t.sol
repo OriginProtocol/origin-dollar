@@ -5,7 +5,7 @@ import {Base} from "tests/Base.t.sol";
 
 import {MockSafeContract} from "tests/mocks/MockSafeContract.sol";
 import {MockStrategy} from "contracts/mocks/MockStrategy.sol";
-import {ClaimStrategyRewardsSafeModule} from "contracts/automation/ClaimStrategyRewardsSafeModule.sol";
+import {IClaimStrategyRewardsSafeModule} from "contracts/interfaces/automation/IClaimStrategyRewardsSafeModule.sol";
 
 abstract contract Unit_ClaimStrategyRewardsSafeModule_Shared_Test is Base {
     //////////////////////////////////////////////////////
@@ -13,7 +13,7 @@ abstract contract Unit_ClaimStrategyRewardsSafeModule_Shared_Test is Base {
     //////////////////////////////////////////////////////
 
     MockSafeContract internal mockSafe;
-    ClaimStrategyRewardsSafeModule internal claimStrategyRewardsModule;
+    IClaimStrategyRewardsSafeModule internal claimStrategyRewardsModule;
     address internal strategyA;
     address internal strategyB;
 
@@ -43,7 +43,12 @@ abstract contract Unit_ClaimStrategyRewardsSafeModule_Shared_Test is Base {
         initialStrategies[0] = strategyA;
         initialStrategies[1] = strategyB;
 
-        claimStrategyRewardsModule = new ClaimStrategyRewardsSafeModule(address(mockSafe), operator, initialStrategies);
+        claimStrategyRewardsModule = IClaimStrategyRewardsSafeModule(
+            vm.deployCode(
+                "contracts/automation/ClaimStrategyRewardsSafeModule.sol:ClaimStrategyRewardsSafeModule",
+                abi.encode(address(mockSafe), operator, initialStrategies)
+            )
+        );
     }
 
     //////////////////////////////////////////////////////

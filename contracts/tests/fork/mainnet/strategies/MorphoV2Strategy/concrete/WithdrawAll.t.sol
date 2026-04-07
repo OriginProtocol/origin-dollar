@@ -3,7 +3,7 @@ pragma solidity ^0.8.0;
 
 import {Mainnet} from "tests/utils/Addresses.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {InitializableAbstractStrategy} from "contracts/utils/InitializableAbstractStrategy.sol";
+import {IMorphoV2Strategy} from "contracts/interfaces/strategies/IMorphoV2Strategy.sol";
 
 import {Fork_MorphoV2Strategy_Shared_Test} from "tests/fork/mainnet/strategies/MorphoV2Strategy/shared/Shared.t.sol";
 
@@ -29,7 +29,7 @@ contract Fork_Concrete_MorphoV2Strategy_WithdrawAll_Test is Fork_MorphoV2Strateg
 
         vm.prank(address(ousdVault));
         vm.expectEmit(true, false, false, false, address(strategy));
-        emit InitializableAbstractStrategy.Withdrawal(Mainnet.USDC, Mainnet.MorphoOUSDv2Vault, 0);
+        emit IMorphoV2Strategy.Withdrawal(Mainnet.USDC, Mainnet.MorphoOUSDv2Vault, 0);
         strategy.withdrawAll();
     }
 

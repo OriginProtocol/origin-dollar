@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 import {Unit_Proxies_Shared_Test} from "tests/unit/proxies/shared/Shared.t.sol";
-import {InitializeGovernedUpgradeabilityProxy} from "contracts/proxies/InitializeGovernedUpgradeabilityProxy.sol";
+import {IProxy} from "contracts/interfaces/IProxy.sol";
 
 contract Unit_Concrete_Proxy_Admin_Test is Unit_Proxies_Shared_Test {
     function setUp() public override {
@@ -23,9 +23,12 @@ contract Unit_Concrete_Proxy_Admin_Test is Unit_Proxies_Shared_Test {
     }
 
     function test_implementation_beforeInitialize() public {
-        // Fresh uninitialized proxy2 we test with deployer as governor
         vm.prank(deployer);
-        proxy = new InitializeGovernedUpgradeabilityProxy();
+        proxy = IProxy(
+            vm.deployCode(
+                "contracts/proxies/InitializeGovernedUpgradeabilityProxy.sol:InitializeGovernedUpgradeabilityProxy"
+            )
+        );
         assertEq(proxy.implementation(), address(0));
     }
 

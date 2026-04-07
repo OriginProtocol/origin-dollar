@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 import {Unit_BaseCurveAMOStrategy_Shared_Test} from "tests/unit/strategies/BaseCurveAMOStrategy/shared/Shared.t.sol";
-import {InitializableAbstractStrategy} from "contracts/utils/InitializableAbstractStrategy.sol";
+import {IBaseCurveAMOStrategy} from "contracts/interfaces/strategies/IBaseCurveAMOStrategy.sol";
 
 contract Unit_Concrete_BaseCurveAMOStrategy_Withdraw_Test is Unit_BaseCurveAMOStrategy_Shared_Test {
     function test_withdraw_removesLiquidityAndTransfers() public {
@@ -41,7 +41,7 @@ contract Unit_Concrete_BaseCurveAMOStrategy_Withdraw_Test is Unit_BaseCurveAMOSt
         _depositAsVault(depositAmount);
 
         vm.expectEmit(true, true, true, true);
-        emit InitializableAbstractStrategy.Withdrawal(address(weth), address(curvePool), withdrawAmount);
+        emit IBaseCurveAMOStrategy.Withdrawal(address(weth), address(curvePool), withdrawAmount);
 
         vm.prank(address(oethVault));
         baseCurveAMOStrategy.withdraw(address(oethVault), address(weth), withdrawAmount);
@@ -52,7 +52,7 @@ contract Unit_Concrete_BaseCurveAMOStrategy_Withdraw_Test is Unit_BaseCurveAMOSt
         _depositAsVault(10 ether);
 
         vm.expectEmit(true, true, false, false);
-        emit InitializableAbstractStrategy.Withdrawal(address(oeth), address(curvePool), 0);
+        emit IBaseCurveAMOStrategy.Withdrawal(address(oeth), address(curvePool), 0);
 
         vm.prank(address(oethVault));
         baseCurveAMOStrategy.withdraw(address(oethVault), address(weth), 5 ether);

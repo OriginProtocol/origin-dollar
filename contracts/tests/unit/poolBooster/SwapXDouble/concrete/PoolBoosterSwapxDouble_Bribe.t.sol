@@ -4,7 +4,7 @@ pragma solidity ^0.8.0;
 import {Unit_SwapXDouble_Shared_Test} from "tests/unit/poolBooster/SwapXDouble/shared/Shared.t.sol";
 import {IPoolBooster} from "contracts/interfaces/poolBooster/IPoolBooster.sol";
 import {IBribe} from "contracts/interfaces/poolBooster/ISwapXAlgebraBribe.sol";
-import {PoolBoosterSwapxDouble} from "contracts/poolBooster/PoolBoosterSwapxDouble.sol";
+import {IPoolBoosterSwapxDouble} from "contracts/interfaces/poolBooster/IPoolBoosterSwapxDouble.sol";
 
 contract Unit_Concrete_PoolBoosterSwapxDouble_Bribe_Test is Unit_SwapXDouble_Shared_Test {
     function test_bribe() public {
@@ -56,8 +56,12 @@ contract Unit_Concrete_PoolBoosterSwapxDouble_Bribe_Test is Unit_SwapXDouble_Sha
 
     function test_bribe_asymmetricSplit() public {
         // Deploy new booster with 30% split
-        PoolBoosterSwapxDouble asymmetricBooster =
-            new PoolBoosterSwapxDouble(mockBribeContractOS, mockBribeContractOther, address(oSonic), 30e16);
+        IPoolBoosterSwapxDouble asymmetricBooster = IPoolBoosterSwapxDouble(
+            vm.deployCode(
+                "contracts/poolBooster/PoolBoosterSwapxDouble.sol:PoolBoosterSwapxDouble",
+                abi.encode(mockBribeContractOS, mockBribeContractOther, address(oSonic), 30e16)
+            )
+        );
 
         uint256 balance = 1e18;
         _dealOSonic(address(asymmetricBooster), balance);

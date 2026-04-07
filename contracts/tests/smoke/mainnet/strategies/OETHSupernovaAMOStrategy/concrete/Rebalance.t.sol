@@ -2,16 +2,10 @@
 pragma solidity ^0.8.0;
 
 import {Smoke_OETHSupernovaAMOStrategy_Shared_Test} from "../shared/Shared.t.sol";
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 contract Smoke_Concrete_OETHSupernovaAMOStrategy_Rebalance_Test is Smoke_OETHSupernovaAMOStrategy_Shared_Test {
     function test_swapOTokensToPool_improvesBalance() public {
-        // Tilt pool to have more WETH
-        _tiltPoolToMoreWETH(2 ether);
-
-        (uint256 assetBefore, uint256 oethBefore) = _getPoolReserves();
-        int256 diffBefore = int256(assetBefore) - int256(oethBefore);
-        // Pool should be tilted to more WETH (asset)
+        int256 diffBefore = _tiltPoolToMoreWETHUntilPositive();
         assertGt(diffBefore, 0, "Pool should have more WETH before rebalance");
 
         // Small swap to improve balance without overshooting
@@ -54,5 +48,23 @@ contract Smoke_Concrete_OETHSupernovaAMOStrategy_Rebalance_Test is Smoke_OETHSup
         uint256 oTokenPoolIndex = oethSupernovaAMOStrategy.oTokenPoolIndex();
         assetReserves = oTokenPoolIndex == 0 ? reserve1 : reserve0;
         oTokenReserves = oTokenPoolIndex == 0 ? reserve0 : reserve1;
+    }
+
+    function _tiltPoolToMoreWETHUntilPositive() internal returns (int256 diffAfterTilt) {
+        uint256 amount = 2 ether;
+
+        for (uint256 i = 0; i < 4; ++i) {
+            _tiltPoolToMoreWETH(amount);
+
+            (uint256 assetReserves, uint256 oTokenReserves) = _getPoolReserves();
+            diffAfterTilt = int256(assetReserves) - int256(oTokenReserves);
+            if (diffAfterTilt > 0) {
+                return diffAfterTilt;
+            }
+
+            amount *= 2;
+        }
+
+        revert("Failed to tilt pool to more WETH");
     }
 }

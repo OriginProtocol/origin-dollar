@@ -3,7 +3,6 @@ pragma solidity ^0.8.0;
 
 import {Unit_Governance_Shared_Test} from "tests/unit/governance/shared/Shared.t.sol";
 import {Governable} from "contracts/governance/Governable.sol";
-import {MockInitializableGovernable} from "tests/mocks/MockGovernable.sol";
 
 contract Unit_Concrete_Governance_InitializableGovernable_Test is Unit_Governance_Shared_Test {
     // --- _initialize (via exposed initialize) ---

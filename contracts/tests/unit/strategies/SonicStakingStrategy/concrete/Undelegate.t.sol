@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 import {Unit_SonicStakingStrategy_Shared_Test} from "tests/unit/strategies/SonicStakingStrategy/shared/Shared.t.sol";
-import {SonicValidatorDelegator} from "contracts/strategies/sonic/SonicValidatorDelegator.sol";
+import {ISonicStakingStrategy} from "contracts/interfaces/strategies/ISonicStakingStrategy.sol";
 
 contract Unit_Concrete_SonicStakingStrategy_Undelegate_Test is Unit_SonicStakingStrategy_Shared_Test {
     function test_undelegate_createsRequest() public {
@@ -49,7 +49,7 @@ contract Unit_Concrete_SonicStakingStrategy_Undelegate_Test is Unit_SonicStaking
         uint256 expectedWithdrawId = sonicStakingStrategy.nextWithdrawId();
 
         vm.expectEmit(true, true, false, true);
-        emit SonicValidatorDelegator.Undelegated(expectedWithdrawId, 18, amount);
+        emit ISonicStakingStrategy.Undelegated(expectedWithdrawId, 18, amount);
 
         vm.prank(strategist);
         sonicStakingStrategy.undelegate(18, amount);
