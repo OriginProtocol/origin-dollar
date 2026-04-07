@@ -157,6 +157,7 @@ export const cronJobs: CronJob[] = [
     name: "otoken_oethb_rebase",
     schedule: "25 9,21 * * *",
     enabled: false,
+    permmissioned: false,
     command: "cd /app && pnpm hardhat otokenOethbRebase --network base",
   },
   {
