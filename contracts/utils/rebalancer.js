@@ -349,13 +349,19 @@ async function _findMaxDeposit(vaultAddress, chainId, maxAmt, constraints) {
     };
   }
 
-  // Binary search
-  let lo = BigNumber.from(constraints.minMoveAmount);
+  const minMove = BigNumber.from(constraints.minMoveAmount);
+
+  // For narrow ranges (maxAmt < 2×step), step-aligned rounding collapses mid to 0.
+  // Fall back to minMoveAmount as the step so the search can still make progress.
+  const effectiveStep = maxAmt.lt(step.mul(2)) ? minMove : step;
+
+  // Binary search for the largest deposit within the APY impact threshold
+  let lo = minMove;
   let hi = maxAmt;
   let best = { maxDeposit: BigNumber.from(0), impactBps: 0, postDepositApy: 0 };
 
-  while (hi.sub(lo).gt(step)) {
-    const mid = lo.add(hi).div(2).div(step).mul(step); // round to step
+  while (hi.sub(lo).gte(effectiveStep)) {
+    const mid = lo.add(hi).div(2).div(effectiveStep).mul(effectiveStep);
     if (mid.lt(lo)) break;
 
     const { impactBps, newApy } = await fetchSubsquidDepositImpact(
@@ -365,9 +371,21 @@ async function _findMaxDeposit(vaultAddress, chainId, maxAmt, constraints) {
     );
     if (impactBps <= constraints.maxApyImpactBps) {
       best = { maxDeposit: mid, impactBps, postDepositApy: newApy };
-      lo = mid.add(step);
+      lo = mid.add(effectiveStep);
     } else {
       hi = mid;
+    }
+  }
+
+  // Probe minMoveAmount if search found nothing — verifies feasibility at the floor
+  if (best.maxDeposit.isZero()) {
+    const { impactBps, newApy } = await fetchSubsquidDepositImpact(
+      vaultAddress,
+      chainId,
+      minMove
+    );
+    if (impactBps <= constraints.maxApyImpactBps) {
+      best = { maxDeposit: minMove, impactBps, postDepositApy: newApy };
     }
   }
   return best;
@@ -420,7 +438,13 @@ async function discoverDepositCapacities(
         );
       } catch (err) {
         log(`Deposit capacity discovery failed for ${s.name}: ${err.message}`);
-        // No capacity constraint applied — fallback to full amount
+        // Fail-closed: if we can't determine capacity, don't allow deposits.
+        // A partial Subsquid outage should not bypass the APY impact guard.
+        capacities[s.metaMorphoVaultAddress] = {
+          maxDeposit: BigNumber.from(0),
+          postDepositApy: 0,
+          impactBps: 0,
+        };
       }
     })
   );
@@ -739,8 +763,16 @@ function _trimExcessWithdrawals(result, vaultBalance, shortfall, constraints) {
     ? vaultBalance.sub(vaultTarget)
     : BigNumber.from(0);
 
-  // Process smallest withdrawal first — prefer cancelling small withdrawals
-  // over trimming large ones.
+  // Process smallest-first: cancelling a small withdrawal entirely (1 fewer bridge tx)
+  // is cheaper than trimming a large one (which still requires the bridge). With two
+  // approved withdrawals (e.g. Base $30K, HyperEVM $300K) and excess = $30K,
+  // smallest-first cancels the $30K entirely → 1 bridge tx. Largest-first would trim
+  // the $300K to $270K → 2 bridge txs.
+  //
+  // Safety: in the full-cancel branch (amt ≤ excess), no budget check is needed because
+  // excess = totalWithdrawals − totalNeeded, so cancelling any single withdrawal whose
+  // amount ≤ excess cannot underfund approved deposits. The partial-trim and cancel-below-
+  // minMoveAmount branches do check budgetAfterCancel.
   const sorted = [...withdrawals].sort((a, b) =>
     a.delta.abs().lt(b.delta.abs()) ? -1 : 1
   );
