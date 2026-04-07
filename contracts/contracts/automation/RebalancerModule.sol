@@ -125,6 +125,7 @@ contract RebalancerModule is AbstractSafeModule {
             _depositStrategies.length == _depositAmounts.length,
             "Deposit array length mismatch"
         );
+        // This is a permissionless call; no Safe exec needed.
         vault.addWithdrawalQueueLiquidity();
         _executeWithdrawals(_withdrawStrategies, _withdrawAmounts);
         _executeDeposits(_depositStrategies, _depositAmounts);
