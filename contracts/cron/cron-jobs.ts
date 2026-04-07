@@ -142,8 +142,9 @@ export const cronJobs: CronJob[] = [
     name: "otoken_oethb_updateWoethPrice",
     schedule: "10 21 * * *",
     enabled: false,
+    permmissioned: false,
     command:
-      "cd /app && pnpm hardhat otokenOethbUpdateWoethPrice --network mainnet",
+      "cd /app && pnpm hardhat otokenOethbUpdateWoethPrice --network base",
   },
   {
     name: "otoken_oethp_addWithdrawalQueueLiquidity",

@@ -35,6 +35,27 @@ description: Use this skill when migrating cron actions in contracts/tasks/actio
 7. Keep explicit `chains: [...]` guardrails for each action.
 8. Prefer `logTxDetails` from `../../utils/txLogger` for transaction logging/confirmation instead of manual `log.info(tx.hash)` + `await tx.wait()`.
 9. When replacing a hard-coded contract address with `ethers.getContract("<Name>")`, verify the old address equals the deployment address for that contract on the target chain; if it does not match, stop and flag it.
+10. If only a 4-byte selector/call-data hash is available, resolve it using 4byte API, then confirm the resolved text signature exists in the target contract ABI before coding the method call.
+
+## 4byte Selector Resolution (Proposal)
+
+Use this when migrating a raw `sendTransaction({ to, data })` call and the method name is unclear.
+
+1. Extract selector:
+   - Selector is the first 4 bytes of calldata (first 10 hex chars including `0x`), e.g. `0x80bef06d`.
+2. Query 4byte:
+   - `GET https://www.4byte.directory/api/v1/signatures/?hex_signature=<selector>`
+   - Parse `results[].text_signature`.
+3. Handle ambiguity:
+   - If multiple candidates are returned, treat them as hypotheses only.
+   - Narrow using expected argument count/types from calldata length and usage context.
+4. Verify against local ABI (required):
+   - Check `contracts/deployments/<network>/<ContractName>.json` ABI for exact method presence.
+   - Recompute selector locally from candidate text signature and ensure exact match.
+5. Only then migrate:
+   - Replace raw calldata call with `contract.connect(signer).methodName(...)`.
+6. If unresolved:
+   - Keep the raw call and leave a TODO with selector + 4byte candidates, or stop and flag.
 
 ## Preferred Pattern
 
@@ -72,3 +93,4 @@ Fallback only (if contract cannot be fetched by deployment name):
 - If a hard-coded address was migrated, its value was checked against the deployment address for the chosen contract name and chain.
 - Method name reflects protocol intent (better than raw selector calls).
 - Transaction logging uses `logTxDetails` (or an equivalent shared helper), not ad-hoc hash logging and manual waits.
+- For selector-based migrations, 4byte lookup was used and final method choice was validated against the local deployment ABI.
