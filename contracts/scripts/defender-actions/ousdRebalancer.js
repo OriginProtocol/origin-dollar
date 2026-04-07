@@ -13,8 +13,9 @@ const { postToDiscord } = require("../../utils/discord");
 const { CROSS_CHAIN_BRIDGE_LIMIT } = require("../../utils/cctp");
 
 const log = require("../../utils/logger")("action:ousdRebalancer");
-// Set to true to run all computation and post Discord alerts without sending any txs
-const IS_DRY_RUN = true;
+// When false (default), runs all computation and posts Discord alerts without sending txs.
+// Set BROADCAST_REBALANCER_TX=true in Defender secrets to send real transactions.
+let isBroadcast = false;
 
 const rebalancerModuleAbi = [
   "function processWithdrawalsAndDeposits(address[] calldata, uint256[] calldata, address[] calldata, uint256[] calldata) external",
@@ -50,7 +51,7 @@ const buildDiscordMessage = ({
   warnings = [],
 }) => {
   const timestamp = new Date().toUTCString().replace(/ GMT$/, " UTC");
-  const header = IS_DRY_RUN
+  const header = !isBroadcast
     ? `🔄 **OUSD Rebalancer** — ${timestamp}  \`[DRY RUN]\``
     : `🔄 **OUSD Rebalancer** — ${timestamp}`;
 
@@ -123,6 +124,7 @@ const buildDiscordMessage = ({
 
 // Entrypoint for the Defender Action
 const handler = async (event) => {
+  isBroadcast = event?.secrets?.BROADCAST_REBALANCER_TX === "true";
   const client = new Defender(event);
   const provider = client.relaySigner.getProvider({ ethersVersion: "v5" });
   const signer = await client.relaySigner.getSigner(provider, {
@@ -181,7 +183,7 @@ const handler = async (event) => {
   // Run a contract call or log what would have been called in dry-run mode.
   // On a live run, posts the tx hash to Discord after confirmation.
   const executeTx = async (contractCall) => {
-    if (IS_DRY_RUN) {
+    if (!isBroadcast) {
       log(`[DRY RUN] Skipping contract calls in DRY MODE`);
       return;
     }
