@@ -62,7 +62,7 @@ Cross-chain amounts are capped at 10 M USDC (CCTP bridge limit).
 |-------|-------------|
 | `name` | Human-readable label |
 | `address` | Strategy address on mainnet |
-| `morphoVaultAddress` | MetaMorpho V1 vault address used for APY lookup via the Morpho GraphQL API. Must be the inner MetaMorpho V1 vault, **not** a VaultV2 wrapper — the Morpho API does not index VaultV2. Derived via: `VaultV2(outerVaultAddr).adapters(0)` → adapter; `adapter.morphoVaultV1()`. |
+| `metaMorphoVaultAddress` | The inner MetaMorpho V1.1 vault. All OUSD Morpho deployments are VaultV2 wrappers; this is the underlying vault that actually holds Morpho Blue positions and has `supplyQueueLength()`. Used for on-chain APY reads and Morpho GraphQL API lookups. Derived via: `VaultV2(outerVaultAddr).adapters(0)` → adapter; `adapter.morphoVaultV1()`. |
 | `morphoChainId` | Chain where the Morpho vault lives (1 = Ethereum, 8453 = Base, 999 = HyperEVM) |
 | `isCrossChain` | If it's a CrossChain strategy using CCTP |
 | `isDefault` | Fallback strategy — exactly one per config |
@@ -84,3 +84,4 @@ the recommended (feasible) target balance after all constraints are applied.
 | `minVaultBalance` | $3 K USDC | Idle reserve always kept in the vault |
 | `minApySpread` | 0.5 % | Minimum APY improvement required to trigger a withdrawal |
 | `maxApyThreshold` | 50 % | APY above this is treated as suspicious — strategy is frozen in place |
+| `maxApyImpactBps` | 50 bps | Skip a deposit if it would reduce the vault's on-chain APY by more than this amount |

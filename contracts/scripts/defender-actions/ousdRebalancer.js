@@ -61,9 +61,14 @@ const buildDiscordMessage = ({
       a.withdrawableLiquidity != null
         ? formatUSDC(a.withdrawableLiquidity)
         : "  n/a ";
+    const apyStr = a.graphqlApy
+      ? `${(a.apy * 100).toFixed(2)}% APY (API: ${(a.graphqlApy * 100).toFixed(
+          2
+        )}%)`
+      : `${(a.apy * 100).toFixed(2)}% APY`;
     return `  ${a.name.padEnd(20)} ${formatUSDC(a.balance).padStart(
       9
-    )}  ${avail.padStart(9)}  ${(a.apy * 100).toFixed(2)}% APY`;
+    )}  ${avail.padStart(9)}  ${apyStr}`;
   });
   currentLines.push(
     `  ${"Vault idle".padEnd(20)} ${formatUSDC(state.vaultBalance).padStart(9)}`
@@ -139,7 +144,12 @@ const handler = async (event) => {
 
   const webhookUrl = event.secrets?.DISCORD_WEBHOOK_URL;
 
-  // Build chain providers for cross-chain APY reads
+  // Configure subsquid endpoint for APY reads
+  process.env.ORIGIN_SUBSQUID_SERVER =
+    event.secrets?.ORIGIN_SUBSQUID_SERVER ||
+    "https://origin.squids.live/origin-squid:prod/api/graphql";
+
+  // Build chain providers for on-chain reads (balances, max withdrawals)
   const providers = { 1: provider };
   if (event.secrets.BASE_PROVIDER_URL) {
     providers[8453] = new ethers.providers.JsonRpcProvider(

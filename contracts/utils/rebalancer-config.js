@@ -5,44 +5,49 @@ const addresses = require("./addresses");
  * Each entry describes one Morpho strategy the rebalancer can move funds to/from.
  *
  * Fields:
- *   name              – Human-readable label
- *   address           – Strategy proxy address (on mainnet)
- *   morphoVaultAddress – MetaMorpho V1 vault for APY lookup via the Morpho GraphQL API.
- *                        Must be the inner MetaMorpho V1 vault, not a VaultV2 wrapper —
- *                        the Morpho API does not index VaultV2.
- *                        Derived via: VaultV2(outerVaultAddr).adapters(0) → adapter;
- *                        adapter.morphoVaultV1()
- *   morphoChainId     – Chain where that vault lives (1 = Ethereum, 8453 = Base, 999 = HyperEVM)
- *   isCrossChain      – True for strategies that bridge via CCTP
- *   isDefault         – Fallback strategy; exactly one entry must have this set
+ *   name                  – Human-readable label
+ *   address               – Strategy proxy address (on mainnet)
+ *   metaMorphoVaultAddress – The inner MetaMorpho V1.1 vault (has supplyQueueLength).
+ *                           All OUSD vaults are VaultV2; this is the inner vault that
+ *                           VaultV2 delegates to. Find it with:
+ *                             VaultV2(outerVaultAddr).adapters(0)  → adapterAddr
+ *                             Adapter(adapterAddr).morphoVaultV1() → metaMorphoVaultAddress
+ *   morphoChainId         – Chain where that vault lives (1 = Ethereum, 8453 = Base, 999 = HyperEVM)
+ *   isCrossChain          – True for strategies that bridge via CCTP
+ *   isDefault             – Fallback strategy; exactly one entry must have this set
+ *   minAllocationBps      – Minimum allocation in basis points (e.g. 500 = 5%)
+ *   maxAllocationBps      – Maximum allocation in basis points (e.g. 9500 = 95%)
  */
 const ousdMorphoStrategiesConfig = [
   {
     name: "Ethereum Morpho",
     address: addresses.mainnet.MorphoOUSDv2StrategyProxy,
-    // Morpho V1 vault address for APY lookup (the V2 wrapper is not in Morpho's API)
-    morphoVaultAddress: addresses.mainnet.MorphoOUSDv1Vault,
+    metaMorphoVaultAddress: addresses.mainnet.MorphoOUSDv1Vault,
     morphoChainId: 1,
     isCrossChain: false,
     isDefault: true,
+    minAllocationBps: 500, // ≥5%
+    maxAllocationBps: 10000, // 100% — default strategy can hold everything
   },
   {
     name: "Base Morpho",
     address: addresses.mainnet.CrossChainMasterStrategy,
-    // MetaMorpho V1 vault on Base for APY lookup (VaultV2 is not indexed by Morpho API)
-    morphoVaultAddress: addresses.base.MorphoOusdV1Vault,
+    metaMorphoVaultAddress: addresses.base.MorphoOusdV1Vault,
     morphoChainId: 8453,
     isCrossChain: true,
     isDefault: false,
+    minAllocationBps: 0,
+    maxAllocationBps: 9500, // ≤95%
   },
   {
     name: "HyperEVM Morpho",
     address: addresses.mainnet.CrossChainHyperEVMMasterStrategy,
-    // MetaMorpho V1 vault on HyperEVM for APY lookup (VaultV2 is not indexed by Morpho API)
-    morphoVaultAddress: addresses.hyperevm.MorphoOusdV1Vault,
+    metaMorphoVaultAddress: addresses.hyperevm.MorphoOusdV1Vault,
     morphoChainId: 999,
     isCrossChain: true,
     isDefault: false,
+    minAllocationBps: 0,
+    maxAllocationBps: 9500, // ≤95%
   },
 ];
 
@@ -50,13 +55,13 @@ const ousdMorphoStrategiesConfig = [
  * Rebalancing constraints for OUSD.
  */
 const ousdConstraints = {
-  minDefaultStrategyBps: 500, // Default strategy always gets ≥ 5% of deployable
-  maxPerStrategyBps: 9500, // No single strategy gets > 95%
   minMoveAmount: 5000000000, // $5K in USDC (6 decimals)
   crossChainMinAmount: 25000000000, // $25K in USDC (6 decimals)
   minVaultBalance: 3000000000, // $3K in USDC (6 decimals)
-  minApySpread: 0.005, // 0.5% minimum APY spread to trigger rebalancing
+  minApySpread: 0.005, // 0.5% — post-deposit spread check (destination vs source)
   maxApyThreshold: 0.5, // 50% — APY above this is treated as suspicious
+  maxApyImpactBps: 50, // Max APY degradation per deposit (0.5%)
+  depositStepSize: 100000000000, // $100K USDC — binary search granularity
 };
 
 module.exports = { ousdMorphoStrategiesConfig, ousdConstraints };

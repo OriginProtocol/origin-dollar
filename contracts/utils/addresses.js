@@ -227,6 +227,12 @@ addresses.mainnet.MorphoOUSDv2Adapter =
 addresses.mainnet.MorphoOUSDv2Vault =
   "0xFB154c729A16802c4ad1E8f7FF539a8b9f49c960";
 
+// Morpho Blue singleton (same address on mainnet and Base)
+addresses.mainnet.MorphoBlue = "0xBBBBBbbBBb9cC5e90e3b3Af64bdAF62C37EEFFCb";
+// Morpho Adaptive Curve IRM
+addresses.mainnet.MorphoAdaptiveCurveIRM =
+  "0x870aC11D48B15DB9a138Cf899d20F13F79Ba00BC";
+
 addresses.mainnet.UniswapOracle = "0xc15169Bad17e676b3BaDb699DEe327423cE6178e";
 addresses.mainnet.CompensationClaims =
   "0x9C94df9d594BA1eb94430C006c269C314B1A8281";
@@ -400,6 +406,10 @@ addresses.arbitrumOne.WOETHProxy = "0xD8724322f44E5c58D7A815F542036fb17DbbF839";
 addresses.arbitrumOne.admin = "0xfD1383fb4eE74ED9D83F2cbC67507bA6Eac2896a";
 
 // Base
+addresses.base.MorphoBlue = "0xBBBBBbbBBb9cC5e90e3b3Af64bdAF62C37EEFFCb";
+addresses.base.MorphoAdaptiveCurveIRM =
+  "0x46415998764C29aB2a25CbeA6254146D50D22687";
+
 addresses.base.HarvesterProxy = "0x247872f58f2fF11f9E8f89C1C48e460CfF0c6b29";
 addresses.base.BridgedWOETH = "0xD8724322f44E5c58D7A815F542036fb17DbbF839";
 addresses.base.AERO = "0x940181a94A35A4569E4529A3CDfB74e38FD98631";
