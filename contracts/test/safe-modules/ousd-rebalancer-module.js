@@ -445,14 +445,14 @@ describe("Unit Test: OUSD Rebalancer Safe Module", function () {
         rebalancerModule
           .connect(stranger)
           .allowStrategy("0x0000000000000000000000000000000000000099")
-      ).to.be.revertedWith("Caller is not the Safe");
+      ).to.be.revertedWith("Caller is not the safe contract");
     });
 
     it("Should revert revokeStrategy when called by non-Safe", async () => {
       const { rebalancerModule, mockStrategy, stranger } = f;
       await expect(
         rebalancerModule.connect(stranger).revokeStrategy(mockStrategy.address)
-      ).to.be.revertedWith("Caller is not the Safe");
+      ).to.be.revertedWith("Caller is not the safe contract");
     });
 
     it("Should revert processWithdrawalsAndDeposits for a non-whitelisted withdrawal strategy", async () => {
