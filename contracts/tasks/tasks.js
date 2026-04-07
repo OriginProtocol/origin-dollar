@@ -2597,6 +2597,12 @@ subtask(
     types.string
   )
   .addOptionalParam(
+    "consol",
+    "Call the consolidation controller instead of the strategy",
+    false,
+    types.boolean
+  )
+  .addOptionalParam(
     "dryrun",
     "Do not call stakeEth on the strategy contract. Just log the params and verify the deposit signature",
     false,

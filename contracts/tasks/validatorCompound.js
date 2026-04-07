@@ -128,6 +128,7 @@ async function stakeValidator({
   depositMessageRoot,
   forkVersion,
   uuid,
+  consol = false,
 }) {
   const signer = await getSigner();
 
@@ -152,6 +153,9 @@ async function stakeValidator({
     "CompoundingStakingSSVStrategyProxy",
     "CompoundingStakingSSVStrategy"
   );
+  const contract = consol
+    ? await resolveContract("ConsolidationController")
+    : strategy;
 
   if (!withdrawalCredentials) {
     withdrawalCredentials = calcWithdrawalCredential("0x02", strategy.address);
@@ -196,9 +200,11 @@ async function stakeValidator({
   }
 
   log(
-    `About to stake ${amount} ETH to validator with pubkey ${pubkey}, deposit root ${depositDataRoot} and signature ${sig}`
+    `About to stake ${amount} ETH to validator with pubkey ${pubkey}, deposit root ${depositDataRoot} and signature ${sig} via ${
+      consol ? "ConsolidationController" : "strategy"
+    }`
   );
-  const tx = await strategy
+  const tx = await contract
     .connect(signer)
     .stakeEth({ pubkey, signature: sig, depositDataRoot }, amountGwei);
   const receipt = await logTxDetails(tx, "stakeETH");
