@@ -22,12 +22,12 @@ action({
     for (const deploymentName of MODULE_DEPLOYMENTS) {
       const module = await ethers.getContract(deploymentName);
       log.info(
-        `Calling claimAndForward on ${deploymentName} at ${module.address}`
+        `Calling collectRewards on ${deploymentName} at ${module.address}`
       );
-      const tx = await module.connect(signer).claimAndForward({
+      const tx = await module.connect(signer).collectRewards({
         gasLimit: 500000,
       });
-      await logTxDetails(tx, `claimAndForward on ${deploymentName}`);
+      await logTxDetails(tx, `collectRewards on ${deploymentName}`);
     }
   },
 });
