@@ -11,6 +11,12 @@ description: Use this skill when migrating cron actions in contracts/tasks/actio
 - Replacing raw calldata + `signer.sendTransaction` patterns
 - Standardizing actions on Hardhat deployments + ethers `Contract` calls
 
+## Naming Conventions
+
+- Action task `name` values should stay `kebab-case` (dash-separated), e.g. `otoken-ousd-oeth-rebase`.
+- Variables, functions, and local identifiers should use `camelCase`.
+- Contract/deployment names passed to `ethers.getContract("<Name>")` should use the existing deployment name casing (usually `PascalCase` with suffixes like `Proxy`).
+
 ## Target State
 
 - Keep the `action({ ... })` wrapper and chain restrictions.
