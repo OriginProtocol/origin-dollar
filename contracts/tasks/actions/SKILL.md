@@ -33,7 +33,7 @@ description: Use this skill when migrating cron actions in contracts/tasks/actio
 5. Use `new ethers.Contract(address, abi, signer)` only as fallback when no deployment name is available.
 6. For proxy contracts, check existing patterns in `contracts/deploy/<network>/*.js` (mainnet/base/sonic/etc.) and `contracts/test/**/*.js` to choose the correct binding style (`getContract`, `getContractAt("I...")`, or implementation ABI at proxy address).
 7. Keep explicit `chains: [...]` guardrails for each action.
-8. Keep waits (`await tx.wait()`) and useful tx hash logging.
+8. Prefer `logTxDetails` from `../../utils/txLogger` for transaction logging/confirmation instead of manual `log.info(tx.hash)` + `await tx.wait()`.
 9. When replacing a hard-coded contract address with `ethers.getContract("<Name>")`, verify the old address equals the deployment address for that contract on the target chain; if it does not match, stop and flag it.
 
 ## Preferred Pattern
@@ -41,6 +41,7 @@ description: Use this skill when migrating cron actions in contracts/tasks/actio
 ```ts
 import { ethers } from "hardhat";
 import { action } from "../lib/action";
+import { logTxDetails } from "../../utils/txLogger";
 
 action({
   name: "example-action",
@@ -49,8 +50,7 @@ action({
   run: async ({ signer, log }) => {
     const contract = await ethers.getContract("MyContractProxy");
     const tx = await contract.connect(signer).myMethod();
-    log.info(`myMethod tx: ${tx.hash}`);
-    await tx.wait();
+    await logTxDetails(tx, "myMethod");
   },
 });
 ```
@@ -71,4 +71,4 @@ Fallback only (if contract cannot be fetched by deployment name):
 - For proxy targets, contract binding style matches existing deploy/test patterns for that proxy and network.
 - If a hard-coded address was migrated, its value was checked against the deployment address for the chosen contract name and chain.
 - Method name reflects protocol intent (better than raw selector calls).
-- Logging includes enough context to debug failures.
+- Transaction logging uses `logTxDetails` (or an equivalent shared helper), not ad-hoc hash logging and manual waits.

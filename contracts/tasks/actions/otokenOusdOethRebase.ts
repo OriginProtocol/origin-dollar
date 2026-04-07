@@ -1,4 +1,5 @@
 import { action } from "../lib/action";
+import { logTxDetails } from "../../utils/txLogger";
 
 const GAS_MULTIPLIER = 1.1;
 
@@ -29,17 +30,16 @@ action({
     const oethTx = await oethDripperWithSigner.collectAndRebase({
       gasLimit: oethGasLimit,
     });
-    log.info(
-      `OETH collectAndRebase tx: ${oethTx.hash} (gasLimit: ${oethGasLimit})`
+    await logTxDetails(
+      oethTx,
+      `collectAndRebase (gasLimit: ${oethGasLimit.toString()})`
     );
-    await oethTx.wait();
 
     // OUSD rebase with gas estimation + 10% buffer
     log.info("Estimating gas for OUSD rebase");
     const ousdGas = await ousdVaultWithSigner.estimateGas.rebase();
     const ousdGasLimit = ousdGas.mul(Math.floor(GAS_MULTIPLIER * 100)).div(100);
     const ousdTx = await ousdVaultWithSigner.rebase({ gasLimit: ousdGasLimit });
-    log.info(`OUSD rebase tx: ${ousdTx.hash} (gasLimit: ${ousdGasLimit})`);
-    await ousdTx.wait();
+    await logTxDetails(ousdTx, `rebase (gasLimit: ${ousdGasLimit.toString()})`);
   },
 });
