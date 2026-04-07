@@ -6,7 +6,7 @@ const {
 
 module.exports = deploymentWithGovernanceProposal(
   {
-    deployName: "182_ousd_rebalancer_module",
+    deployName: "191_ousd_rebalancer_module",
     forceDeploy: false,
     reduceQueueTime: true,
     deployerIsProposer: false,
