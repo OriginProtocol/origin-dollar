@@ -151,8 +151,9 @@ export const cronJobs: CronJob[] = [
     name: "otoken_oethp_addWithdrawalQueueLiquidity",
     schedule: "5 0 * * *",
     enabled: false,
+    permmissioned: false,
     command:
-      "cd /app && pnpm hardhat otokenOethpAddWithdrawalQueueLiquidity --network mainnet",
+      "cd /app && pnpm hardhat otokenOethpAddWithdrawalQueueLiquidity --network plume",
   },
   {
     name: "otoken_oethb_rebase",
@@ -181,6 +182,12 @@ export const cronJobs: CronJob[] = [
     enabled: false,
     command:
       "cd /app && pnpm hardhat crossChainBalanceUpdateHyperevm --network hyperevm",
+  },
+  {
+    name: "claim_ssv_rewards",
+    schedule: "0 0 1 * *",
+    enabled: false,
+    command: "cd /app && pnpm hardhat claimSSVRewards --network mainnet",
   },
   {
     name: "otoken_ousd_oeth_rebase",
