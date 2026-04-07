@@ -13,7 +13,7 @@ const abi = parseAbi([
 ]);
 
 action({
-  name: "otoken-oethb-harvest",
+  name: "otokenOethbHarvest",
   description: "Harvest strategies on Base OETHb",
   chains: [8453],
   run: async ({ signer, log }) => {

@@ -13,7 +13,7 @@ description: Use this skill when migrating cron actions in contracts/tasks/actio
 
 ## Naming Conventions
 
-- Action task `name` values should stay `kebab-case` (dash-separated), e.g. `otoken-ousd-oeth-rebase`.
+- Action task `name` values should be `camelCase` and match the action filename (without `.ts`), e.g. `otokenOusdOethRebase`.
 - Variables, functions, and local identifiers should use `camelCase`.
 - Contract/deployment names passed to `ethers.getContract("<Name>")` should use the existing deployment name casing (usually `PascalCase` with suffixes like `Proxy`).
 

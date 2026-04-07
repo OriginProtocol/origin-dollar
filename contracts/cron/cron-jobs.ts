@@ -129,74 +129,73 @@ export const cronJobs: CronJob[] = [
     schedule: "50 23 * * *",
     enabled: false,
     command:
-      "cd /app && pnpm hardhat otoken-os-collectAndRelease --network sonic",
+      "cd /app && pnpm hardhat otokenOsCollectAndRelease --network sonic",
   },
   {
     name: "otoken_ousd_autoWithdrawal",
     schedule: "40 11,23 * * *",
     enabled: false,
     command:
-      "cd /app && pnpm hardhat otoken-ousd-autoWithdrawal --network mainnet",
+      "cd /app && pnpm hardhat otokenOusdAutoWithdrawal --network mainnet",
   },
   {
     name: "otoken_oethb_updateWoethPrice",
     schedule: "10 21 * * *",
     enabled: false,
     command:
-      "cd /app && pnpm hardhat otoken-oethb-updateWoethPrice --network mainnet",
+      "cd /app && pnpm hardhat otokenOethbUpdateWoethPrice --network mainnet",
   },
   {
     name: "otoken_oethp_addWithdrawalQueueLiquidity",
     schedule: "5 0 * * *",
     enabled: false,
     command:
-      "cd /app && pnpm hardhat otoken-oethp-addWithdrawalQueueLiquidity --network mainnet",
+      "cd /app && pnpm hardhat otokenOethpAddWithdrawalQueueLiquidity --network mainnet",
   },
   {
     name: "otoken_oethb_rebase",
     schedule: "25 9,21 * * *",
     enabled: false,
-    command: "cd /app && pnpm hardhat otoken-oethb-rebase --network base",
+    command: "cd /app && pnpm hardhat otokenOethbRebase --network base",
   },
   {
     name: "otoken_os_sonicRestakeRewards",
     schedule: "55 23 * * *",
     enabled: false,
     command:
-      "cd /app && pnpm hardhat otoken-os-sonicRestakeRewards --network sonic",
+      "cd /app && pnpm hardhat otokenOsSonicRestakeRewards --network sonic",
   },
   {
     name: "crossChainBalanceUpdate-base",
     schedule: "15 7,15,23 * * *",
     enabled: false,
     command:
-      "cd /app && pnpm hardhat crossChainBalanceUpdate-base --network base",
+      "cd /app && pnpm hardhat crossChainBalanceUpdateBase --network base",
   },
   {
     name: "crossChainBalanceUpdate-hyperevm",
     schedule: "15 7,15,23 * * *",
     enabled: false,
     command:
-      "cd /app && pnpm hardhat hyperevm-crossChainBalanceUpdate --network hyperevm",
+      "cd /app && pnpm hardhat crossChainBalanceUpdateHyperevm --network hyperevm",
   },
   {
     name: "otoken_ousd_oeth_rebase",
     schedule: "50 11,23 * * *",
     enabled: false,
-    command:
-      "cd /app && pnpm hardhat otoken_ousd_oeth_rebase --network mainnet",
+    command: "cd /app && pnpm hardhat otokenOusdOethRebase --network mainnet",
   },
   {
     name: "ogn_claimAndForwardRewards",
     schedule: "0 0 * * 2",
     enabled: false,
     command:
-      "cd /app && pnpm hardhat ogn-claimAndForwardRewards --network mainnet",
+      "cd /app && pnpm hardhat ognClaimAndForwardRewards --network mainnet",
   },
   {
     name: "otoken_oethb_harvest",
     schedule: "50 11 * * *",
     enabled: false,
-    command: "cd /app && pnpm hardhat otoken-oethb-harvest --network base",
+    command: "cd /app && pnpm hardhat otokenOethbHarvest --network base",
   },
 ];

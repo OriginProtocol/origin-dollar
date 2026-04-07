@@ -3,13 +3,15 @@ import { action } from "../lib/action";
 const GAS_MULTIPLIER = 1.1;
 
 action({
-  name: "otoken-ousd-oeth-rebase",
+  name: "otokenOusdOethRebase",
   description:
     "Rebase both OETH (collectAndRebase) and OUSD (rebase) on mainnet",
   chains: [1],
   run: async ({ signer, log }) => {
     const ethers = hre.ethers;
-    const oethDripperProxy = await ethers.getContract("OETHFixedRateDripperProxy");
+    const oethDripperProxy = await ethers.getContract(
+      "OETHFixedRateDripperProxy"
+    );
     const vaultProxy = await ethers.getContract("VaultProxy");
     const oethDripper = await ethers.getContractAt(
       "IDripper",

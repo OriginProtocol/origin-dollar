@@ -6,7 +6,7 @@ const VAULT = "0xc8c8F8bEA5631A8AF26440AF32a55002138cB76a";
 const abi = parseAbi(["function addWithdrawalQueueLiquidity() external"]);
 
 action({
-  name: "otoken-oethp-addWithdrawalQueueLiquidity",
+  name: "otokenOethpAddWithdrawalQueueLiquidity",
   description: "Add liquidity to Plume OETH withdrawal queue",
   chains: [1],
   run: async ({ signer, log }) => {

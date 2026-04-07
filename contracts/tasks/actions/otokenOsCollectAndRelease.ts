@@ -12,7 +12,7 @@ const harvesterAbi = parseAbi([
 ]);
 
 action({
-  name: "otoken-os-collectAndRelease",
+  name: "otokenOsCollectAndRelease",
   description: "Rebase OS vault and harvest on Sonic",
   chains: [146],
   run: async ({ signer, log }) => {

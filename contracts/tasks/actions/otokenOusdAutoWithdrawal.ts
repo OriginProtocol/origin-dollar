@@ -6,7 +6,7 @@ const VAULT = "0x90d588fc0eC3DB9c4b417dB4537fE08e063D2ae5";
 const abi = parseAbi(["function autoWithdraw() external"]);
 
 action({
-  name: "otoken-ousd-autoWithdrawal",
+  name: "otokenOusdAutoWithdrawal",
   description: "Auto-process OUSD withdrawals",
   chains: [1],
   run: async ({ signer, log }) => {

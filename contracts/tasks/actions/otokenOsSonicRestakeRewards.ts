@@ -10,7 +10,7 @@ const abi = parseAbi([
 ]);
 
 action({
-  name: "otoken-os-sonicRestakeRewards",
+  name: "otokenOsSonicRestakeRewards",
   description: "Restake rewards for Sonic validators",
   chains: [146],
   run: async ({ signer, log }) => {

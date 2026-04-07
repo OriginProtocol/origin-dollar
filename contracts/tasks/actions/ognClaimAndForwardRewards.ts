@@ -14,7 +14,7 @@ const MODULE_ADDRESSES = [
 const abi = parseAbi(["function claimAndForward() external"]);
 
 action({
-  name: "ogn-claimAndForwardRewards",
+  name: "ognClaimAndForwardRewards",
   description: "Claim and forward OGN rewards from all modules",
   chains: [1],
   run: async ({ signer, log }) => {
