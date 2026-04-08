@@ -36,6 +36,7 @@ description: Use this skill when migrating cron actions in contracts/tasks/actio
 8. Prefer `logTxDetails` from `../../utils/txLogger` for transaction logging/confirmation instead of manual `log.info(tx.hash)` + `await tx.wait()`.
 9. When replacing a hard-coded contract address with `ethers.getContract("<Name>")`, verify the old address equals the deployment address for that contract on the target chain; if it does not match, stop and flag it.
 10. If only a 4-byte selector/call-data hash is available, resolve it using 4byte API, then confirm the resolved text signature exists in the target contract ABI before coding the method call.
+11. Cron nonce safety: assume action tasks share a single signer/EOA unless explicitly configured otherwise. When adding or modifying cron jobs in `contracts/cron/cron-jobs.ts`, avoid scheduling two transaction-writing actions in the same 5-minute window to reduce nonce contention/race conditions.
 
 ## 4byte Selector Resolution (Proposal)
 
@@ -94,3 +95,4 @@ Fallback only (if contract cannot be fetched by deployment name):
 - Method name reflects protocol intent (better than raw selector calls).
 - Transaction logging uses `logTxDetails` (or an equivalent shared helper), not ad-hoc hash logging and manual waits.
 - For selector-based migrations, 4byte lookup was used and final method choice was validated against the local deployment ABI.
+- For cron wiring changes, transaction-writing actions are not co-scheduled in the same 5-minute window; check `contracts/cron/cron-jobs.ts` for collisions before finalizing.

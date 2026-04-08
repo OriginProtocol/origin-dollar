@@ -106,14 +106,11 @@ const {
 } = require("./validator");
 const {
   snapStakingStrategy,
-  snapBalances,
   registerValidatorCreateRequest,
   registerValidator,
   stakeValidator,
-  autoValidatorDeposits,
   withdrawValidator,
   removeValidator,
-  autoValidatorWithdrawals,
   setRegistrator,
 } = require("./validatorCompound");
 const { tenderlySync, tenderlyUpload } = require("./tenderly");
@@ -128,8 +125,6 @@ const {
   getValidators,
   verifyValidator,
   verifyDeposit,
-  verifyDeposits,
-  verifyBalances,
 } = require("./beacon");
 const {
   calcDepositRoot,
@@ -2115,84 +2110,6 @@ task("verifyDeposit").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
 
-subtask("verifyDeposits", "Verify any processed deposit on the Beacon chain")
-  .addOptionalParam(
-    "dryrun",
-    "Do not call verifyDeposit on the strategy contract. Just log the params including the proofs",
-    false,
-    types.boolean
-  )
-  .addOptionalParam(
-    "consol",
-    "Call the consolidation controller instead of the strategy",
-    false,
-    types.boolean
-  )
-  .setAction(async (taskArgs) => {
-    const signer = await getSigner();
-    await verifyDeposits({ ...taskArgs, signer });
-  });
-task("verifyDeposits").setAction(async (_, __, runSuper) => {
-  return runSuper();
-});
-
-subtask("verifyBalances", "Verify validator balances on the Beacon chain")
-  .addOptionalParam(
-    "slot",
-    "The slot snapBalances was executed. Default: last balances snapshot",
-    undefined,
-    types.int
-  )
-  .addOptionalParam(
-    "indexes",
-    "Comma separated list of validator indexes. Default: strategy's active validators",
-    undefined,
-    types.string
-  )
-  .addOptionalParam(
-    "deposits",
-    "Comma separated list of indexes to beacon chain pending deposits used for generating unit test data",
-    undefined,
-    types.string
-  )
-  .addOptionalParam(
-    "dryrun",
-    "Do not call verifyBalances on the strategy contract. Just log the params including the proofs",
-    false,
-    types.boolean
-  )
-  .addOptionalParam(
-    "test",
-    "Used for generating unit test data.",
-    false,
-    types.boolean
-  )
-  .addOptionalParam(
-    "overIds",
-    "A comma separated list of validator IDs to override balances.",
-    "",
-    types.string
-  )
-  .addOptionalParam(
-    "overBals",
-    "A comma separated list of validator balances to override in Gwei.",
-    "",
-    types.string
-  )
-  .addOptionalParam(
-    "consol",
-    "Call the consolidation controller instead of the strategy",
-    false,
-    types.boolean
-  )
-  .setAction(async (taskArgs) => {
-    const signer = await getSigner();
-    await verifyBalances({ ...taskArgs, signer });
-  });
-task("verifyBalances").setAction(async (_, __, runSuper) => {
-  return runSuper();
-});
-
 subtask(
   "requestNewValidator",
   "Calls P2P's Create SSV Request to prepare a new SSV compounding (0x02) validator"
@@ -2253,24 +2170,6 @@ task("registerValidator").setAction(async (_, __, runSuper) => {
 });
 
 subtask(
-  "autoValidatorDeposits",
-  "Automatically withdraw ETH/WETH from the strategy if needed for withdrawals, then deposit WETH to validators with a balance under 2030 ETH from the largest balance to the smallest"
-)
-  .addParam(
-    "dryrun",
-    "Do not send any txs to the staking strategy contract",
-    false,
-    types.boolean
-  )
-  .setAction(async (taskArgs) => {
-    const signer = await getSigner();
-    await autoValidatorDeposits({ ...taskArgs, signer });
-  });
-task("autoValidatorDeposits").setAction(async (_, __, runSuper) => {
-  return runSuper();
-});
-
-subtask(
   "withdrawValidator",
   "Requests a partial or full withdrawal from a compounding validator"
 )
@@ -2325,30 +2224,6 @@ subtask(
     await removeValidator({ ...taskArgs, signer });
   });
 task("removeValidator").setAction(async (_, __, runSuper) => {
-  return runSuper();
-});
-
-subtask(
-  "autoValidatorWithdrawals",
-  "Automatically withdraw ETH from a validators if the Vault needs WETH for user withdrawals. Start with the validator with the smallest balance over 42.25 ETH."
-)
-  .addOptionalParam(
-    "buffer",
-    "Withdrawal buffer in basis points. 100 = 1%",
-    100,
-    types.int
-  )
-  .addParam(
-    "dryrun",
-    "Do not send any txs to the staking strategy contract",
-    false,
-    types.boolean
-  )
-  .setAction(async (taskArgs) => {
-    const signer = await getSigner();
-    await autoValidatorWithdrawals({ ...taskArgs, signer });
-  });
-task("autoValidatorWithdrawals").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
 
@@ -2421,18 +2296,6 @@ subtask(
   )
   .setAction(stakeValidator);
 task("stakeValidator").setAction(async (_, __, runSuper) => {
-  return runSuper();
-});
-
-subtask("snapBalances", "Takes a snapshot of the staking strategy's balance")
-  .addOptionalParam(
-    "consol",
-    "Call the consolidation controller instead of the strategy",
-    false,
-    types.boolean
-  )
-  .setAction(snapBalances);
-task("snapBalances").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
 
