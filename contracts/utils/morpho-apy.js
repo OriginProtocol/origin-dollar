@@ -35,7 +35,7 @@ async function _fetchFromSubsquid(query) {
   return json.data;
 }
 
-// ─── Subsquid APY (authoritative — used for rebalancer decisions) ─────────────
+// ─── Subsquid APY ────────────────────────────────────────────────────────────
 
 /**
  * Fetch the current vault APY from the Origin Subsquid indexer.
@@ -98,6 +98,40 @@ async function fetchSubsquidDepositImpact(
   };
 }
 
+/**
+ * Fetch the time-weighted average APY from the Origin Subsquid indexer.
+ * Used as the authoritative APY for allocation decisions (less noisy than spot).
+ *
+ * @param {string} vaultAddress - MetaMorpho V1.1 vault address
+ * @param {number} chainId - 1, 8453, or 999
+ * @param {string} [timeWindow="1h"] - e.g. "1h", "6h", "24h"
+ * @returns {Promise<number>} APY as a decimal (0.035 = 3.5%)
+ */
+async function fetchSubsquidVaultApyAverage(
+  vaultAddress,
+  chainId,
+  timeWindow = "1h"
+) {
+  const data = await _fetchFromSubsquid(`{
+    morphoVaultApyAverage(
+      chainId: ${chainId},
+      vaultAddress: "${vaultAddress.toLowerCase()}",
+      timeWindow: "${timeWindow}"
+    ) {
+      averageApy
+      timeWindowHours
+    }
+  }`);
+  const result = data?.morphoVaultApyAverage;
+  const apy = result?.averageApy;
+  log(
+    `subsquid ${timeWindow} avg APY for ${vaultAddress} on chain ${chainId}: ${
+      apy != null ? (apy * 100).toFixed(2) + "%" : "null"
+    }`
+  );
+  return apy != null ? Number(apy) : 0;
+}
+
 // ─── Morpho API (display-only — NOT used for rebalancer decisions) ────────────
 
 /**
@@ -134,42 +168,60 @@ async function _fetchMorphoVaultApy(vaultAddress, chainId) {
 
 /**
  * Fetch APYs for multiple vaults in parallel.
- * Returns both subsquid (authoritative) and Morpho API (display-only) APYs.
+ * Returns spot (instantaneous), 6h average, and Morpho API APYs.
  *
  * @param {Array} vaults - objects with { metaMorphoVaultAddress, morphoChainId }
- * @returns {Promise<{ apys: Object<string, number>, graphqlApys: Object<string, number> }>}
+ * @returns {Promise<{ apys: Object<string, number>, avgApys: Object<string, number>, graphqlApys: Object<string, number> }>}
  */
-async function fetchMorphoApys(vaults) {
+async function fetchMorphoApys(vaults, { timeWindow = "1h" } = {}) {
   const entries = await Promise.all(
     vaults.map(async (v) => {
-      const [subsquidApy, morphoApy] = await Promise.all([
+      const [subsquidApy, avgApy, morphoApy] = await Promise.all([
         fetchSubsquidVaultApy(v.metaMorphoVaultAddress, v.morphoChainId).catch(
           (err) => {
             console.error(
-              `[morpho-apy] Subsquid APY failed for ${v.metaMorphoVaultAddress} ` +
+              `[morpho-apy] Subsquid spot APY failed for ${v.metaMorphoVaultAddress} ` +
                 `on chain ${v.morphoChainId}: ${err.message}`
             );
             return 0;
           }
         ),
+        fetchSubsquidVaultApyAverage(
+          v.metaMorphoVaultAddress,
+          v.morphoChainId,
+          timeWindow
+        ).catch((err) => {
+          console.error(
+            `[morpho-apy] Subsquid avg APY failed for ${v.metaMorphoVaultAddress} ` +
+              `on chain ${v.morphoChainId}: ${err.message}`
+          );
+          return 0;
+        }),
         _fetchMorphoVaultApy(v.metaMorphoVaultAddress, v.morphoChainId),
       ]);
 
       return {
         addr: v.metaMorphoVaultAddress,
         subsquidApy,
+        avgApy,
         morphoApy,
       };
     })
   );
 
   const apys = {};
+  const avgApys = {};
   const graphqlApys = {};
-  for (const { addr, subsquidApy, morphoApy } of entries) {
+  for (const { addr, subsquidApy, avgApy, morphoApy } of entries) {
     apys[addr] = subsquidApy;
+    avgApys[addr] = avgApy;
     graphqlApys[addr] = morphoApy;
   }
-  return { apys, graphqlApys };
+  return { apys, avgApys, graphqlApys };
 }
 
-module.exports = { fetchMorphoApys, fetchSubsquidDepositImpact };
+module.exports = {
+  fetchMorphoApys,
+  fetchSubsquidDepositImpact,
+  fetchSubsquidVaultApyAverage,
+};

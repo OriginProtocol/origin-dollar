@@ -229,7 +229,7 @@ function _enforceStrategyMinimums(targets, strategies, deployableCapital) {
 /**
  * Build an allocation row for a strategy given its computed target balance.
  */
-function _buildAllocationRow(s, targetBalance, apy, graphqlApy = 0) {
+function _buildAllocationRow(s, targetBalance, apy, spotApy = 0) {
   const delta = targetBalance.sub(s.balance);
   return {
     name: s.name,
@@ -243,7 +243,7 @@ function _buildAllocationRow(s, targetBalance, apy, graphqlApy = 0) {
     // Populated later by fetchMaxWithdrawals; null means unknown (no constraint applied)
     withdrawableLiquidity: null,
     apy,
-    graphqlApy,
+    spotApy,
     targetBalance,
     delta,
     action: delta.gt(0)
@@ -267,7 +267,7 @@ function _buildAllocationRow(s, targetBalance, apy, graphqlApy = 0) {
  * @param {object} params
  * @param {Array}  params.strategies
  * @param {object} params.apys - metaMorphoVaultAddress -> apy (float, on-chain)
- * @param {object} [params.graphqlApys] - metaMorphoVaultAddress -> apy (float, GraphQL display-only)
+ * @param {object} [params.spotApys] - metaMorphoVaultAddress -> spot apy (float, instantaneous)
  * @param {BigNumber} params.vaultBalance
  * @param {BigNumber} params.shortfall
  * @param {object} [params.constraints]
@@ -277,7 +277,7 @@ function _buildAllocationRow(s, targetBalance, apy, graphqlApy = 0) {
 function computeIdealAllocation({
   strategies,
   apys,
-  graphqlApys = {},
+  spotApys = {},
   vaultBalance,
   shortfall,
   constraints: overrides = {},
@@ -285,8 +285,7 @@ function computeIdealAllocation({
 }) {
   const constraints = { ...ousdConstraints, ...overrides };
   const strategyApyOf = (s) => apys[s.metaMorphoVaultAddress] || 0;
-  const strategyGraphqlApyOf = (s) =>
-    graphqlApys[s.metaMorphoVaultAddress] || 0;
+  const strategySpotApyOf = (s) => spotApys[s.metaMorphoVaultAddress] || 0;
   const deployableCapital = _computeDeployableCapital(
     strategies,
     vaultBalance,
@@ -300,7 +299,7 @@ function computeIdealAllocation({
         s,
         BigNumber.from(0),
         strategyApyOf(s),
-        strategyGraphqlApyOf(s)
+        strategySpotApyOf(s)
       )
     );
   }
@@ -321,7 +320,7 @@ function computeIdealAllocation({
       s,
       adjusted[s.address],
       strategyApyOf(s),
-      strategyGraphqlApyOf(s)
+      strategySpotApyOf(s)
     )
   );
 }
@@ -518,7 +517,8 @@ async function _filterDeposits(
   vaultBalance,
   shortfall,
   constraints,
-  depositCapacities = {}
+  depositCapacities = {},
+  warnings = []
 ) {
   // Budget = approved withdrawals + vault surplus above reserves
   const approvedWithdrawals = result.filter(
@@ -554,6 +554,24 @@ async function _filterDeposits(
       deposit.action = ACTION_NONE;
       deposit.reason = "transfer pending";
       continue;
+    }
+
+    // Spot APY divergence guard: if the instantaneous APY has dropped significantly
+    // below the 6h average, the strategy may be deteriorating — skip the deposit.
+    if (constraints.maxSpotBelowAvgBps && deposit.spotApy < deposit.apy) {
+      const divergenceBps = Math.round((deposit.apy - deposit.spotApy) * 10000);
+      if (divergenceBps > constraints.maxSpotBelowAvgBps) {
+        deposit.action = ACTION_NONE;
+        deposit.reason =
+          `spot APY ${(deposit.spotApy * 100).toFixed(
+            2
+          )}% is ${divergenceBps}bps ` +
+          `below ${constraints.apyAverageWindow || "1h"} avg ${(
+            deposit.apy * 100
+          ).toFixed(2)}% — deposit blocked`;
+        warnings.push(`${deposit.name}: ${deposit.reason}`);
+        continue;
+      }
     }
     if (budget.isZero()) {
       deposit.action = ACTION_NONE;
@@ -838,7 +856,8 @@ async function buildExecutableActions(
   shortfall = BigNumber.from(0),
   vaultBalance = BigNumber.from(0),
   constraintOverrides = {},
-  depositCapacities = {}
+  depositCapacities = {},
+  warnings = []
 ) {
   const constraints = { ...ousdConstraints, ...constraintOverrides };
   let result = allocations.map((a) => ({ ...a }));
@@ -852,7 +871,8 @@ async function buildExecutableActions(
     vaultBalance,
     shortfall,
     constraints,
-    depositCapacities
+    depositCapacities,
+    warnings
   );
 
   // 3. Cancel/trim withdrawals that exceed what approved deposits + vault deficit need
@@ -962,11 +982,8 @@ function printAllocationTable({
     const recTarget =
       rec && rec.action !== ACTION_NONE ? rec.targetBalance : a.balance;
     const recDelta = recTarget.sub(a.balance);
-    const apyStr = a.graphqlApy
-      ? `${(a.apy * 100).toFixed(2)}% (API: ${(a.graphqlApy * 100).toFixed(
-          2
-        )}%)`
-      : `${(a.apy * 100).toFixed(2)}%`;
+    const avgApyStr = `${(a.apy * 100).toFixed(2)}%`;
+    const spotApyStr = `${(a.spotApy * 100).toFixed(2)}%`;
     const impact =
       rec?.action === ACTION_DEPOSIT && rec?.impactBps != null
         ? `${(rec.impactBps / 100).toFixed(2)}%`
@@ -980,7 +997,8 @@ function printAllocationTable({
           : "n/a",
       target: `${fmtUsd(recTarget)}${pct(recTarget)}`,
       delta: `${sign(recDelta)}${fmtUsd(recDelta.abs())}`,
-      apy: apyStr,
+      avgApy: avgApyStr,
+      spotApy: spotApyStr,
       impact,
     };
   });
@@ -990,7 +1008,8 @@ function printAllocationTable({
     avail: "—",
     target: `${fmtUsd(vaultTarget)}${pct(vaultTarget)}`,
     delta: `${vaultDeltaSign}${fmtUsd(vaultDelta.abs())}`,
-    apy: "—",
+    avgApy: "—",
+    spotApy: "—",
     impact: "—",
   };
   const allRows = [...formattedRows, vaultRow];
@@ -1006,12 +1025,30 @@ function printAllocationTable({
       ...allRows.map((row) => row.target.length)
     ),
     delta: Math.max("Delta".length, ...allRows.map((row) => row.delta.length)),
-    apy: Math.max("APY".length, ...allRows.map((row) => row.apy.length)),
+    avgApy: Math.max(
+      `${constraints.apyAverageWindow} APY`.length,
+      ...allRows.map((row) => row.avgApy.length)
+    ),
+    spotApy: Math.max(
+      "Spot APY".length,
+      ...allRows.map((row) => row.spotApy.length)
+    ),
     impact: Math.max(
       "Impact".length,
       ...allRows.map((row) => row.impact.length)
     ),
   };
+
+  const totalWidth =
+    COL.name +
+    COL.current +
+    COL.avail +
+    COL.target +
+    COL.delta +
+    COL.avgApy +
+    COL.spotApy +
+    COL.impact +
+    COL_SEP.length * 7;
 
   console.log(
     `${"Strategy".padEnd(COL.name)}${COL_SEP}${"Current".padStart(
@@ -1020,22 +1057,15 @@ function printAllocationTable({
       COL.avail
     )}${COL_SEP}${"Target (rec.)".padStart(
       COL.target
-    )}${COL_SEP}${"Delta".padStart(COL.delta)}${COL_SEP}${"APY".padStart(
-      COL.apy
+    )}${COL_SEP}${"Delta".padStart(
+      COL.delta
+    )}${COL_SEP}${`${constraints.apyAverageWindow} APY`.padStart(
+      COL.avgApy
+    )}${COL_SEP}${"Spot APY".padStart(
+      COL.spotApy
     )}${COL_SEP}${"Impact".padStart(COL.impact)}`
   );
-  console.log(
-    "-".repeat(
-      COL.name +
-        COL.current +
-        COL.avail +
-        COL.target +
-        COL.delta +
-        COL.apy +
-        COL.impact +
-        COL_SEP.length * 6
-    )
-  );
+  console.log("-".repeat(totalWidth));
 
   for (const row of formattedRows) {
     console.log(
@@ -1044,7 +1074,8 @@ function printAllocationTable({
         `${row.avail.padStart(COL.avail)}${COL_SEP}` +
         `${row.target.padStart(COL.target)}${COL_SEP}` +
         `${row.delta.padStart(COL.delta)}${COL_SEP}` +
-        `${row.apy.padStart(COL.apy)}${COL_SEP}` +
+        `${row.avgApy.padStart(COL.avgApy)}${COL_SEP}` +
+        `${row.spotApy.padStart(COL.spotApy)}${COL_SEP}` +
         `${row.impact.padStart(COL.impact)}`
     );
   }
@@ -1055,22 +1086,12 @@ function printAllocationTable({
       `${vaultRow.avail.padStart(COL.avail)}${COL_SEP}` +
       `${vaultRow.target.padStart(COL.target)}${COL_SEP}` +
       `${vaultRow.delta.padStart(COL.delta)}${COL_SEP}` +
-      `${vaultRow.apy.padStart(COL.apy)}${COL_SEP}` +
+      `${vaultRow.avgApy.padStart(COL.avgApy)}${COL_SEP}` +
+      `${vaultRow.spotApy.padStart(COL.spotApy)}${COL_SEP}` +
       `${vaultRow.impact.padStart(COL.impact)}`
   );
 
-  console.log(
-    "-".repeat(
-      COL.name +
-        COL.current +
-        COL.avail +
-        COL.target +
-        COL.delta +
-        COL.apy +
-        COL.impact +
-        COL_SEP.length * 6
-    )
-  );
+  console.log("-".repeat(totalWidth));
   console.log(
     `${"Total".padEnd(COL.name)}${COL_SEP}${fmtUsd(totalCapital).padStart(
       COL.current
@@ -1258,8 +1279,9 @@ async function buildRebalancePlan(providers) {
   const state = await readOnChainState(providerMap[1] || providerMap);
 
   log("Fetching Morpho APYs...");
-  const { apys, graphqlApys } = await fetchMorphoApys(
-    state.strategies.filter((s) => s.metaMorphoVaultAddress)
+  const { apys: spotApys, avgApys } = await fetchMorphoApys(
+    state.strategies.filter((s) => s.metaMorphoVaultAddress),
+    { timeWindow: ousdConstraints.apyAverageWindow }
   );
 
   log("Fetching withdrawable liquidity...");
@@ -1268,10 +1290,10 @@ async function buildRebalancePlan(providers) {
     providerMap
   );
 
-  // Exclude strategies with suspiciously high APY
+  // Exclude strategies with suspiciously high APY (based on 6h average)
   const { active, excluded, warnings } = _filterExcludedStrategies(
     state.strategies,
-    apys,
+    avgApys,
     ousdConstraints
   );
 
@@ -1293,10 +1315,11 @@ async function buildRebalancePlan(providers) {
   }
 
   // Compute ideal allocation for active strategies (capacity-aware)
+  // Uses 6h average APY for allocation decisions; spot APY for display/divergence guard
   const idealActive = computeIdealAllocation({
     strategies: active,
-    apys,
-    graphqlApys,
+    apys: avgApys,
+    spotApys,
     vaultBalance: state.vaultBalance,
     shortfall: state.shortfall,
     depositCapacities,
@@ -1307,8 +1330,8 @@ async function buildRebalancePlan(providers) {
     const row = _buildAllocationRow(
       s,
       s.balance,
-      apys[s.metaMorphoVaultAddress] || 0,
-      graphqlApys[s.metaMorphoVaultAddress] || 0
+      avgApys[s.metaMorphoVaultAddress] || 0,
+      spotApys[s.metaMorphoVaultAddress] || 0
     );
     row.reason = "APY exceeds threshold";
     return row;
@@ -1328,7 +1351,8 @@ async function buildRebalancePlan(providers) {
     state.shortfall,
     state.vaultBalance,
     {},
-    depositCapacities
+    depositCapacities,
+    warnings
   );
   const actions = sortActions(executableActions);
 
@@ -1340,7 +1364,7 @@ async function buildRebalancePlan(providers) {
     warnings,
   });
 
-  return { actions, idealActions, state, apys, graphqlApys, warnings };
+  return { actions, idealActions, state, apys: avgApys, spotApys, warnings };
 }
 
 module.exports = {

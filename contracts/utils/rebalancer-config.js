@@ -62,6 +62,8 @@ const ousdConstraints = {
   maxApyThreshold: 0.5, // 50% — APY above this is treated as suspicious
   maxApyImpactBps: 50, // Max APY degradation per deposit (0.5%)
   depositStepSize: 100000000000, // $100K USDC — binary search granularity
+  maxSpotBelowAvgBps: 200, // Block deposits if spot APY is significantly below the average
+  apyAverageWindow: "1h", // Time window for the average APY used in allocation decisions
 };
 
 module.exports = { ousdMorphoStrategiesConfig, ousdConstraints };

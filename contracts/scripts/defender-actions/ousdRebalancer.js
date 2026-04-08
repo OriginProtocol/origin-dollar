@@ -55,20 +55,17 @@ const buildDiscordMessage = ({
     ? `🔄 **OUSD Rebalancer** — ${timestamp}  \`[DRY RUN]\``
     : `🔄 **OUSD Rebalancer** — ${timestamp}`;
 
-  // Current allocations (from on-chain state): name | balance | avail. liquidity | APY
+  // Current allocations (from on-chain state): name | balance | avail. liquidity | APYs
   const currentLines = allActions.map((a) => {
     const avail =
       a.withdrawableLiquidity != null
         ? formatUSDC(a.withdrawableLiquidity)
         : "  n/a ";
-    const apyStr = a.graphqlApy
-      ? `${(a.apy * 100).toFixed(2)}% APY (API: ${(a.graphqlApy * 100).toFixed(
-          2
-        )}%)`
-      : `${(a.apy * 100).toFixed(2)}% APY`;
+    const avgStr = `${(a.apy * 100).toFixed(2)}%`;
+    const spotStr = `${((a.spotApy || 0) * 100).toFixed(2)}%`;
     return `  ${a.name.padEnd(20)} ${formatUSDC(a.balance).padStart(
       9
-    )}  ${avail.padStart(9)}  ${apyStr}`;
+    )}  ${avail.padStart(9)}  ${avgStr} 1h  ${spotStr} spot`;
   });
   currentLines.push(
     `  ${"Vault idle".padEnd(20)} ${formatUSDC(state.vaultBalance).padStart(9)}`
