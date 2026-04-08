@@ -13,7 +13,9 @@ const handler = async (event) => {
 
   // Initialize defender relayer provider and signer (Arbitrum relayer)
   const client = new Defender(event);
-  const arbitrumProvider = client.relaySigner.getProvider({ ethersVersion: "v5" });
+  const arbitrumProvider = client.relaySigner.getProvider({
+    ethersVersion: "v5",
+  });
   const { chainId } = await arbitrumProvider.getNetwork();
 
   if (chainId !== 42161) {

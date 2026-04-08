@@ -41,9 +41,7 @@ async function updateVotemarketEpochs({
 }) {
   const { chainId } = await arbitrumProvider.getNetwork();
   if (chainId !== 42161) {
-    throw new Error(
-      `Arbitrum provider must be on chain 42161, got ${chainId}`
-    );
+    throw new Error(`Arbitrum provider must be on chain 42161, got ${chainId}`);
   }
 
   log(`VOTEMARKET address: ${VOTEMARKET}`);
@@ -51,7 +49,11 @@ async function updateVotemarketEpochs({
   log(`dryRun: ${dryRun}`);
 
   // Fetch pool boosters from BribesModule on Mainnet
-  const bribesModule = new Contract(BRIBES_MODULE, bribesModuleAbi, mainnetProvider);
+  const bribesModule = new Contract(
+    BRIBES_MODULE,
+    bribesModuleAbi,
+    mainnetProvider
+  );
   const poolBoosters = await bribesModule.getPoolBoosters();
   log(`Found ${poolBoosters.length} pool boosters`);
 
@@ -119,7 +121,11 @@ async function updateVotemarketEpochs({
 
     try {
       const votemarketWithSigner = votemarket.connect(arbitrumSigner);
-      const tx = await votemarketWithSigner.updateEpoch(campaignId, epoch, "0x");
+      const tx = await votemarketWithSigner.updateEpoch(
+        campaignId,
+        epoch,
+        "0x"
+      );
       log(`Sent updateEpoch tx for campaignId ${campaignId}: ${tx.hash}`);
       const receipt = await tx.wait();
       if (receipt.status !== 1) {
@@ -167,7 +173,9 @@ async function updateVotemarketEpochsTask(taskArguments) {
   }
 
   const { ethers: ethersLib } = require("ethers");
-  const arbitrumProvider = new ethersLib.providers.JsonRpcProvider(arbitrumRpcUrl);
+  const arbitrumProvider = new ethersLib.providers.JsonRpcProvider(
+    arbitrumRpcUrl
+  );
 
   let arbitrumSigner = null;
   if (!dryRun) {

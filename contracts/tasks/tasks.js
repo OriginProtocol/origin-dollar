@@ -1834,7 +1834,7 @@ task("depositRoot").setAction(async (_, __, runSuper) => {
 subtask(
   "encryptMasterPrivateKey",
   "Encrypt the master validator private key whose public key pair is used " +
-  "by the P2P service to encrypt each validator private key."
+    "by the P2P service to encrypt each validator private key."
 )
   .addParam(
     "privateKey",
@@ -1912,7 +1912,7 @@ task("decrypt").setAction(async (_, __, runSuper) => {
 subtask(
   "masterDecrypt",
   "Decrypt a message using a Elliptic-curve Diffie–Hellman (ECDH) key pair by using the " +
-  "master validator encoding key decrypted by AWS KMS service."
+    "master validator encoding key decrypted by AWS KMS service."
 )
   .addParam(
     "message",
