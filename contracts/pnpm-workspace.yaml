@@ -1,5 +1,7 @@
+minimumReleaseAge: 10080
+
 ignoredBuiltDependencies:
-  - '@arbitrum/nitro-contracts'
+  - "@arbitrum/nitro-contracts"
   - core-js-pure
   - es5-ext
   - secp256k1
@@ -9,7 +11,7 @@ ignoredBuiltDependencies:
   - web3-shh
 
 onlyBuiltDependencies:
-  - '@trufflesuite/bigint-buffer'
+  - "@trufflesuite/bigint-buffer"
   - bigint-buffer
   - bufferutil
   - keccak

@@ -1235,6 +1235,12 @@ const deploySafeModulesForUnitTests = async () => {
     mockAutoWithdrawalVault.address,
     addresses.dead,
   ]);
+
+  await deployWithConfirmation("ClaimStrategyRewardsSafeModule", [
+    cSafeContract.address, // safe
+    cSafeContract.address, // operator
+    [], // strategies — added per-test via addStrategy
+  ]);
 };
 
 module.exports = {

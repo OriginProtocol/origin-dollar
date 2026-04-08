@@ -123,6 +123,7 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
     valueAssets: [],
     harvester: fixture.oethHarvester,
     vault: fixture.oethVault,
+    newBehavior: true,
   }));
 
   describe("Initial setup", () => {
