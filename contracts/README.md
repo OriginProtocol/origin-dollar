@@ -360,6 +360,7 @@ pnpm hardhat setActionVars --id b1d831f1-29d4-4943-bb2e-8e625b76e82c
 pnpm hardhat setActionVars --id 6567d7c6-7ec7-44bd-b95b-470dd1ff780b
 pnpm hardhat setActionVars --id 6a633bb0-aff8-4b37-aaae-b4c6f244ed87
 pnpm hardhat setActionVars --id 076c59e4-4150-42c7-9ba0-9962069ac353
+pnpm hardhat setActionVars --id f74f24b4-d98b-4181-89cc-6608369b6f91
 pnpm hardhat setActionVars --id aa194c13-0dbf-49d2-8e87-70e61f3d71a8
 pnpm hardhat setActionVars --id 65b53496-e426-4850-8349-059e63eb2120
 pnpm hardhat setActionVars --id a4f8ca5f-7144-469b-b84a-58b30fed72ce
@@ -373,6 +374,7 @@ pnpm hardhat updateAction --id b1d831f1-29d4-4943-bb2e-8e625b76e82c --file claim
 pnpm hardhat updateAction --id 6567d7c6-7ec7-44bd-b95b-470dd1ff780b --file manageBribeOnSonic
 pnpm hardhat updateAction --id 6a633bb0-aff8-4b37-aaae-b4c6f244ed87 --file managePassThrough
 pnpm hardhat updateAction --id 076c59e4-4150-42c7-9ba0-9962069ac353 --file manageBribes
+pnpm hardhat updateAction --id f74f24b4-d98b-4181-89cc-6608369b6f91 --file updateVotemarketEpochs
 pnpm hardhat updateAction --id aa194c13-0dbf-49d2-8e87-70e61f3d71a8 --file manageMerklBribes # Mainnet
 pnpm hardhat updateAction --id 65b53496-e426-4850-8349-059e63eb2120 --file manageMerklBribes # Base
 pnpm hardhat updateAction --id a4f8ca5f-7144-469b-b84a-58b30fed72ce --file claimSSVRewards
