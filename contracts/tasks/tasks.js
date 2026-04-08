@@ -63,6 +63,7 @@ const {
   curvePoolTask,
 } = require("./curve");
 const { calculateMaxPricePerVoteTask, manageBribes } = require("./poolBooster");
+const { updateVotemarketEpochsTask } = require("./votemarket");
 const { manageMerklBribesTask } = require("./merklPoolBooster");
 const {
   depositSSV,
@@ -716,6 +717,21 @@ subtask(
     });
   });
 task("manageCurvePoolBoosterBribes").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+subtask(
+  "updateVotemarketEpochs",
+  "Update Votemarket epochs for all Curve Pool Booster campaigns on Arbitrum"
+)
+  .addOptionalParam(
+    "dryRun",
+    "If true, log actions but do not send transactions",
+    true,
+    types.boolean
+  )
+  .setAction(updateVotemarketEpochsTask);
+task("updateVotemarketEpochs").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
 
