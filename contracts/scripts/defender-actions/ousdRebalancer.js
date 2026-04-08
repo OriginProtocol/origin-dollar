@@ -19,6 +19,7 @@ let isBroadcast = false;
 
 const rebalancerModuleAbi = [
   "function processWithdrawalsAndDeposits(address[] calldata, uint256[] calldata, address[] calldata, uint256[] calldata) external",
+  "function remainingDailyLimit() external view returns (uint256)",
 ];
 
 // Return the action amount, capping cross-chain moves at the bridge limit
@@ -178,14 +179,27 @@ const handler = async (event) => {
     return;
   }
 
-  const withdrawals = actions.filter((a) => a.action === ACTION_WITHDRAW);
-  const deposits = actions.filter((a) => a.action === ACTION_DEPOSIT);
-
   const rebalancerModule = new ethers.Contract(
     addresses.mainnet.OUSDRebalancerModule,
     rebalancerModuleAbi,
     signer
   );
+
+  // Check if daily movement limit is exhausted
+  const remaining = await rebalancerModule.remainingDailyLimit();
+  if (remaining.isZero()) {
+    log("Daily movement limit reached — skipping execution");
+    if (webhookUrl) {
+      postToDiscord(
+        webhookUrl,
+        "⚠️ **OUSD Rebalancer** — Daily movement limit reached, skipping execution"
+      ).catch((err) => log(`Discord post failed: ${err.message}`));
+    }
+    return;
+  }
+
+  const withdrawals = actions.filter((a) => a.action === ACTION_WITHDRAW);
+  const deposits = actions.filter((a) => a.action === ACTION_DEPOSIT);
 
   // Run a contract call or log what would have been called in dry-run mode.
   // On a live run, posts the tx hash to Discord after confirmation.

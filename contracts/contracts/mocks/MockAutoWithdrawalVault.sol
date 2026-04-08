@@ -8,6 +8,7 @@ contract MockAutoWithdrawalVault {
 
     VaultStorage.WithdrawalQueueMetadata public withdrawalQueueMetadata;
 
+    uint256 private _totalValue;
     bool private _revertNextWithdraw;
     bool private _revertNextDeposit;
 
@@ -31,6 +32,14 @@ contract MockAutoWithdrawalVault {
 
     function revertNextDeposit() external {
         _revertNextDeposit = true;
+    }
+
+    function setTotalValue(uint256 val) external {
+        _totalValue = val;
+    }
+
+    function totalValue() external view returns (uint256) {
+        return _totalValue;
     }
 
     function addWithdrawalQueueLiquidity() external {

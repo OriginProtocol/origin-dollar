@@ -973,6 +973,9 @@ async function rebalancerModuleFixture() {
     .connect(safeSigner)
     .allowStrategy(mockStrategy.address);
 
+  // Set a default totalValue so the daily movement limit doesn't block operations
+  await mockVault.setTotalValue(ousdUnits("10000000")); // $10M
+
   // A stranger with no roles
   const stranger = await impersonateAndFund(
     "0x0000000000000000000000000000000000000002"

@@ -45,6 +45,14 @@ contract RebalancerModule is AbstractSafeModule {
     /// @notice Strategies that this module is permitted to withdraw from or deposit into.
     mapping(address => bool) public isAllowedStrategy;
 
+    /// @notice Cumulative amount moved (withdrawals + deposits) per calendar day.
+    /// Day key = block.timestamp / 1 days (i.e. days since Unix epoch).
+    mapping(uint256 => uint256) public amountMovedPerDay;
+
+    /// @notice Max percentage of vault TVL that can be moved in a single day.
+    /// In basis points (e.g. 20000 = 200%).
+    uint256 public maxDailyMovementBps;
+
     // ─────────────────────────────────────────────────────────── Events ──
 
     /// @notice Emitted after processWithdrawals completes (even if some failed).
@@ -72,6 +80,9 @@ contract RebalancerModule is AbstractSafeModule {
     /// @notice Emitted when a strategy is removed from the whitelist.
     event StrategyRevoked(address indexed strategy);
 
+    /// @notice Emitted when the daily movement limit is updated.
+    event MaxDailyMovementBpsSet(uint256 maxDailyMovementBps);
+
     // ─────────────────────────────────────────────────────── Constructor ──
 
     /**
@@ -88,6 +99,7 @@ contract RebalancerModule is AbstractSafeModule {
 
         vault = IVault(_vault);
         asset = IVault(_vault).asset();
+        maxDailyMovementBps = 20000; // 200%
 
         _grantRole(OPERATOR_ROLE, _operator);
     }
@@ -127,8 +139,9 @@ contract RebalancerModule is AbstractSafeModule {
         );
         // This is a permissionless call; no Safe exec needed.
         vault.addWithdrawalQueueLiquidity();
-        _executeWithdrawals(_withdrawStrategies, _withdrawAmounts);
-        _executeDeposits(_depositStrategies, _depositAmounts);
+        uint256 _limit = dailyLimit();
+        _executeWithdrawals(_withdrawStrategies, _withdrawAmounts, _limit);
+        _executeDeposits(_depositStrategies, _depositAmounts, _limit);
         emit WithdrawalsProcessed(
             _withdrawStrategies,
             _withdrawAmounts,
@@ -168,6 +181,19 @@ contract RebalancerModule is AbstractSafeModule {
         emit StrategyRevoked(_strategy);
     }
 
+    /**
+     * @notice Set the maximum percentage of vault TVL that can be moved per day.
+     * @param _maxDailyMovementBps Limit in basis points (e.g. 20000 = 200%).
+     *        Set to 0 to block all movements.
+     */
+    function setMaxDailyMovementBps(uint256 _maxDailyMovementBps)
+        external
+        onlySafe
+    {
+        maxDailyMovementBps = _maxDailyMovementBps;
+        emit MaxDailyMovementBpsSet(_maxDailyMovementBps);
+    }
+
     // ──────────────────────────────────────────────────────── View helpers ──
 
     /**
@@ -184,17 +210,56 @@ contract RebalancerModule is AbstractSafeModule {
         shortfall = meta.queued - meta.claimable;
     }
 
+    /**
+     * @notice The daily movement limit based on current vault TVL.
+     * @dev    vault.totalValue() includes AMO (Automated Market Operations)
+     *         value. Excluding AMO would add significant complexity for minimal
+     *         accuracy gain, so the limit is slightly more generous than intended.
+     *         Additionally, if the vault's TVL changes significantly mid-day (e.g.
+     *         large mint/redeem), the limit will reflect the TVL at call time —
+     *         this is acceptable since the limit is a safety backstop, not a
+     *         precise cap.
+     * @return limit Amount in asset units (vault asset decimals).
+     */
+    function dailyLimit() public view returns (uint256 limit) {
+        limit = (vault.totalValue() * maxDailyMovementBps) / 10000;
+    }
+
+    /**
+     * @notice The remaining amount that can be moved today before hitting the
+     *         daily movement limit.
+     * @return remaining Amount in asset units (vault asset decimals).
+     */
+    function remainingDailyLimit() public view returns (uint256 remaining) {
+        uint256 limit = dailyLimit();
+        uint256 used = amountMovedPerDay[block.timestamp / 1 days];
+        remaining = used >= limit ? 0 : limit - used;
+    }
+
     // ──────────────────────────────────────────────── Internal helpers ──
+
+    /// @dev Track cumulative daily movement and revert if the limit is exceeded.
+    function _trackMovement(uint256 _amount, uint256 _dailyLimit) internal {
+        uint256 dayKey = block.timestamp / 1 days;
+        amountMovedPerDay[dayKey] += _amount;
+
+        require(
+            amountMovedPerDay[dayKey] <= _dailyLimit,
+            "Daily movement limit exceeded"
+        );
+    }
 
     /// @dev Execute withdrawFromStrategy for each (strategy, amount) pair via the Safe.
     function _executeWithdrawals(
         address[] calldata _strategies,
-        uint256[] calldata _amounts
+        uint256[] calldata _amounts,
+        uint256 _dailyLimit
     ) internal {
         address[] memory assets = _toAddressArray(asset);
         for (uint256 i = 0; i < _strategies.length; i++) {
             if (_amounts[i] == 0) continue;
             require(isAllowedStrategy[_strategies[i]], "Strategy not allowed");
+            _trackMovement(_amounts[i], _dailyLimit);
             bool success = safeContract.execTransactionFromModule(
                 address(vault),
                 0,
@@ -215,12 +280,14 @@ contract RebalancerModule is AbstractSafeModule {
     /// @dev Execute depositToStrategy for each (strategy, amount) pair via the Safe.
     function _executeDeposits(
         address[] calldata _strategies,
-        uint256[] calldata _amounts
+        uint256[] calldata _amounts,
+        uint256 _dailyLimit
     ) internal {
         address[] memory assets = _toAddressArray(asset);
         for (uint256 i = 0; i < _strategies.length; i++) {
             if (_amounts[i] == 0) continue;
             require(isAllowedStrategy[_strategies[i]], "Strategy not allowed");
+            _trackMovement(_amounts[i], _dailyLimit);
             bool success = safeContract.execTransactionFromModule(
                 address(vault),
                 0,
