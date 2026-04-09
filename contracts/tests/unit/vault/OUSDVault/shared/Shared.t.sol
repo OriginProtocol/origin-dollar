@@ -4,6 +4,9 @@ pragma solidity ^0.8.0;
 // --- Test base
 import {Base} from "tests/Base.t.sol";
 
+// --- Test utilities
+import {Proxies, Tokens, Vaults} from "tests/utils/Artifacts.sol";
+
 // --- External libraries
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {MockERC20} from "@solmate/test/utils/mocks/MockERC20.sol";
@@ -62,20 +65,12 @@ abstract contract Unit_Shared_Test is Base {
         vm.startPrank(deployer);
 
         // -- Deploy implementations
-        IOToken ousdImpl = IOToken(vm.deployCode("contracts/token/OUSD.sol:OUSD", abi.encode(address(usdc))));
-        address ousdVaultImpl = vm.deployCode("contracts/vault/OUSDVault.sol:OUSDVault", abi.encode(address(usdc)));
+        IOToken ousdImpl = IOToken(vm.deployCode(Tokens.OUSD, abi.encode(address(usdc))));
+        address ousdVaultImpl = vm.deployCode(Vaults.OUSD, abi.encode(address(usdc)));
 
         // -- Deploy Proxies
-        ousdProxy = IProxy(
-            vm.deployCode(
-                "contracts/proxies/InitializeGovernedUpgradeabilityProxy.sol:InitializeGovernedUpgradeabilityProxy"
-            )
-        );
-        ousdVaultProxy = IProxy(
-            vm.deployCode(
-                "contracts/proxies/InitializeGovernedUpgradeabilityProxy.sol:InitializeGovernedUpgradeabilityProxy"
-            )
-        );
+        ousdProxy = IProxy(vm.deployCode(Proxies.IG_PROXY));
+        ousdVaultProxy = IProxy(vm.deployCode(Proxies.IG_PROXY));
 
         // -- Initialize OUSD Proxy
         ousdProxy.initialize(
