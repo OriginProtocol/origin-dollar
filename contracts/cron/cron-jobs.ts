@@ -186,6 +186,7 @@ export const cronJobs: CronJob[] = [
     name: "crossChainBalanceUpdate-base",
     schedule: "40 7,15,23 * * *",
     enabled: false,
+    permmissioned: true,
     command:
       "cd /app && pnpm hardhat crossChainBalanceUpdateBase --network base",
   },
@@ -193,6 +194,7 @@ export const cronJobs: CronJob[] = [
     name: "crossChainBalanceUpdate-hyperevm",
     schedule: "50 7,15,23 * * *",
     enabled: false,
+    permmissioned: true,
     command:
       "cd /app && pnpm hardhat crossChainBalanceUpdateHyperevm --network hyperevm",
   },
