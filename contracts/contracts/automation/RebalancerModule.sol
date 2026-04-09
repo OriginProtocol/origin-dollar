@@ -259,7 +259,6 @@ contract RebalancerModule is AbstractSafeModule {
         for (uint256 i = 0; i < _strategies.length; i++) {
             if (_amounts[i] == 0) continue;
             require(isAllowedStrategy[_strategies[i]], "Strategy not allowed");
-            _trackMovement(_amounts[i], _dailyLimit);
             bool success = safeContract.execTransactionFromModule(
                 address(vault),
                 0,
@@ -271,7 +270,9 @@ contract RebalancerModule is AbstractSafeModule {
                 ),
                 0
             );
-            if (!success) {
+            if (success) {
+                _trackMovement(_amounts[i], _dailyLimit);
+            } else {
                 emit WithdrawalFailed(_strategies[i], _amounts[i]);
             }
         }
@@ -287,7 +288,6 @@ contract RebalancerModule is AbstractSafeModule {
         for (uint256 i = 0; i < _strategies.length; i++) {
             if (_amounts[i] == 0) continue;
             require(isAllowedStrategy[_strategies[i]], "Strategy not allowed");
-            _trackMovement(_amounts[i], _dailyLimit);
             bool success = safeContract.execTransactionFromModule(
                 address(vault),
                 0,
@@ -299,7 +299,9 @@ contract RebalancerModule is AbstractSafeModule {
                 ),
                 0
             );
-            if (!success) {
+            if (success) {
+                _trackMovement(_amounts[i], _dailyLimit);
+            } else {
                 emit DepositFailed(_strategies[i], _amounts[i]);
             }
         }

@@ -669,6 +669,56 @@ describe("Unit Test: OUSD Rebalancer Safe Module", function () {
       expect(await rebalancerModule.remainingDailyLimit()).to.eq(0);
     });
 
+    it("Should not consume quota for failed withdrawal", async () => {
+      const { rebalancerModule, mockVault, mockStrategy, safeSigner } = f;
+      // TVL = $10M, limit 1% = $100K
+      await rebalancerModule.connect(safeSigner).setMaxDailyMovementBps(100);
+
+      await mockVault.setWithdrawalQueueMetadata(
+        ousdUnits("1000000"),
+        ousdUnits("0")
+      );
+
+      // Make the withdrawal fail (Safe returns false)
+      await mockVault.revertNextWithdraw();
+
+      await rebalancerModule
+        .connect(safeSigner)
+        .processWithdrawalsAndDeposits(
+          [mockStrategy.address],
+          [ousdUnits("60000")],
+          [],
+          []
+        );
+
+      // Failed withdrawal should NOT consume quota — full $100K still available
+      expect(await rebalancerModule.remainingDailyLimit()).to.eq(
+        ousdUnits("100000")
+      );
+    });
+
+    it("Should not consume quota for failed deposit", async () => {
+      const { rebalancerModule, mockVault, mockStrategy, safeSigner } = f;
+      await rebalancerModule.connect(safeSigner).setMaxDailyMovementBps(100);
+
+      // Make the deposit fail
+      await mockVault.revertNextDeposit();
+
+      await rebalancerModule
+        .connect(safeSigner)
+        .processWithdrawalsAndDeposits(
+          [],
+          [],
+          [mockStrategy.address],
+          [ousdUnits("60000")]
+        );
+
+      // Failed deposit should NOT consume quota
+      expect(await rebalancerModule.remainingDailyLimit()).to.eq(
+        ousdUnits("100000")
+      );
+    });
+
     it("Should block all movements when maxDailyMovementBps is 0", async () => {
       const { rebalancerModule, mockVault, mockStrategy, safeSigner } = f;
       await rebalancerModule.connect(safeSigner).setMaxDailyMovementBps(0);

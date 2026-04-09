@@ -185,21 +185,33 @@ const handler = async (event) => {
     signer
   );
 
-  // Check if daily movement limit is exhausted
+  const withdrawals = actions.filter((a) => a.action === ACTION_WITHDRAW);
+  const deposits = actions.filter((a) => a.action === ACTION_DEPOSIT);
+
+  // Check if planned movement fits within remaining daily limit
   const remaining = await rebalancerModule.remainingDailyLimit();
-  if (remaining.isZero()) {
-    log("Daily movement limit reached — skipping execution");
+  const totalPlanned = actions.reduce(
+    (sum, a) => sum.add(cappedAmount(a)),
+    ethers.BigNumber.from(0)
+  );
+
+  if (totalPlanned.gt(remaining)) {
+    log(
+      `Daily limit too low for batch: need ${formatUSDC(totalPlanned)}, ` +
+        `remaining ${formatUSDC(remaining)}`
+    );
     if (webhookUrl) {
       postToDiscord(
         webhookUrl,
-        "⚠️ **OUSD Rebalancer** — Daily movement limit reached, skipping execution"
+        `⚠️ **OUSD Rebalancer** — Planned movement ${formatUSDC(
+          totalPlanned
+        )} exceeds remaining daily limit ${formatUSDC(
+          remaining
+        )}, skipping execution`
       ).catch((err) => log(`Discord post failed: ${err.message}`));
     }
     return;
   }
-
-  const withdrawals = actions.filter((a) => a.action === ACTION_WITHDRAW);
-  const deposits = actions.filter((a) => a.action === ACTION_DEPOSIT);
 
   // Run a contract call or log what would have been called in dry-run mode.
   // On a live run, posts the tx hash to Discord after confirmation.
