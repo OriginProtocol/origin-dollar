@@ -464,7 +464,7 @@ function _computeVaultSurplus(vaultBalance, shortfall, constraints) {
  * Filter withdrawals by feasibility: min move amount, cross-chain min, liquidity.
  * Infeasible withdrawals are set to ACTION_NONE with a reason.
  *
- * Note: APY spread check has moved to _filterDeposits (post-impact spread).
+ * Note: APY spread check has moved to _resolveDeposit (post-impact spread).
  * Per-strategy minAllocationBps prevents over-withdrawing from important strategies.
  */
 function _filterWithdrawals(result, constraints) {
@@ -502,25 +502,151 @@ function _filterWithdrawals(result, constraints) {
 }
 
 /**
- * Compute deposit budget, then distribute across deposits in APY-descending order.
- * Budget = approved withdrawal total + vault surplus above reserves.
+ * Resolve a single deposit: early-exit checks, cap, split surplus/withdrawal,
+ * spread-check, min-check. Returns result without mutating deposit.
  *
- * Two checks replace the old binary accept/reject:
- * A. Deposit capacity cap — caps amount to what the strategy can absorb without
- *    exceeding maxApyImpactBps. Remaining budget spills to the next strategy.
- * B. Post-impact APY spread — for withdrawal-funded deposits, verifies the
- *    destination's post-deposit APY still beats the source by minApySpread.
- *    Vault-surplus-funded deposits skip this check (any positive APY > 0% idle).
+ * @returns {{ rejected: boolean, amt?, reason?, surplusUsed?, impactBps?, warn? }}
  */
-async function _filterDeposits(
+function _resolveDeposit(
+  deposit,
+  budget,
+  surplusBudget,
+  highestWithdrawalApy,
+  constraints,
+  capacity
+) {
+  // Early exits
+  if (deposit.isCrossChain && deposit.isTransferPending) {
+    return { rejected: true, reason: "transfer pending" };
+  }
+  if (constraints.maxSpotBelowAvgBps && deposit.spotApy < deposit.apy) {
+    const divergenceBps = Math.round((deposit.apy - deposit.spotApy) * 10000);
+    if (divergenceBps > constraints.maxSpotBelowAvgBps) {
+      return {
+        rejected: true,
+        warn: true,
+        reason:
+          `spot APY ${(deposit.spotApy * 100).toFixed(
+            2
+          )}% is ${divergenceBps}bps ` +
+          `below ${constraints.apyAverageWindow || "1h"} avg ${(
+            deposit.apy * 100
+          ).toFixed(2)}% — deposit blocked`,
+      };
+    }
+  }
+  if (budget.isZero()) {
+    return { rejected: true, reason: "insufficient vault funds" };
+  }
+
+  // Cap to available budget and deposit capacity
+  let amt = deposit.delta.gt(budget) ? budget : deposit.delta;
+  let reason = null;
+
+  if (capacity && capacity.maxDeposit.gt(0) && amt.gt(capacity.maxDeposit)) {
+    amt = capacity.maxDeposit;
+    reason = `capped to deposit capacity: ${fmtUsd(amt)}`;
+  }
+
+  // Split into surplus-funded and withdrawal-funded portions
+  const surplusPortion = surplusBudget.lt(amt) ? surplusBudget : amt;
+
+  // Spread check on withdrawal-funded portion only
+  // Surplus earns 0% in the vault — any positive APY is a win, no spread needed.
+  let spreadNarrowed = false;
+  if (
+    amt.gt(surplusPortion) &&
+    highestWithdrawalApy != null &&
+    constraints.minApySpread
+  ) {
+    const postDepositApy = capacity?.postDepositApy;
+    if (postDepositApy != null) {
+      const spread = postDepositApy - highestWithdrawalApy;
+      if (spread < constraints.minApySpread) {
+        amt = surplusPortion;
+        spreadNarrowed = true;
+      }
+    }
+  }
+
+  // Format spread reason (reused for both rejection and approval paths)
+  const spreadReason =
+    spreadNarrowed && capacity?.postDepositApy != null
+      ? `post-impact spread ${(
+          (capacity.postDepositApy - highestWithdrawalApy) *
+          100
+        ).toFixed(2)}% < min ${(constraints.minApySpread * 100).toFixed(2)}%`
+      : null;
+
+  // Single min-amount check
+  if (amt.lt(constraints.minMoveAmount)) {
+    if (capacity && capacity.maxDeposit.isZero()) {
+      return {
+        rejected: true,
+        reason: "APY impact too high even at minimum amount",
+      };
+    }
+    return { rejected: true, reason: spreadReason || "below min move" };
+  }
+  if (deposit.isCrossChain && amt.lt(constraints.crossChainMinAmount)) {
+    return { rejected: true, reason: spreadReason || "below cross-chain min" };
+  }
+
+  // Approved — determine reason
+  if (amt.lt(deposit.delta)) {
+    if (spreadNarrowed) {
+      reason = `trimmed to vault surplus (${spreadReason})`;
+    } else if (!reason) {
+      reason = "trimmed to available vault funds";
+    }
+  }
+
+  const surplusUsed = amt.gt(surplusBudget) ? surplusBudget : amt;
+  return {
+    rejected: false,
+    amt,
+    reason,
+    surplusUsed,
+    impactBps: capacity?.impactBps,
+  };
+}
+
+/**
+ * Deploy remaining vault surplus to the default strategy.
+ */
+function _deployRemainingSurplus(result, surplus) {
+  const defaultStrategy = result.find(
+    (a) => a.isDefault && a.reason !== "APY exceeds threshold"
+  );
+  if (!defaultStrategy) return;
+
+  if (defaultStrategy.action === ACTION_DEPOSIT) {
+    defaultStrategy.delta = defaultStrategy.delta.add(surplus);
+    defaultStrategy.targetBalance = defaultStrategy.targetBalance.add(surplus);
+    defaultStrategy.reason = defaultStrategy.reason
+      ? `${defaultStrategy.reason}; +vault surplus fallback`
+      : "vault surplus fallback";
+  } else if (defaultStrategy.action !== ACTION_WITHDRAW) {
+    defaultStrategy.delta = surplus;
+    defaultStrategy.targetBalance = defaultStrategy.balance.add(surplus);
+    defaultStrategy.action = ACTION_DEPOSIT;
+    defaultStrategy.reason = "vault surplus fallback";
+  }
+}
+
+/**
+ * Allocate deposit budget across strategies in APY-descending order.
+ * Budget = approved withdrawal total + vault surplus above reserves.
+ * After allocation, any remaining surplus is deployed to the default strategy.
+ */
+async function _allocateDeposits(
   result,
   vaultBalance,
   shortfall,
   constraints,
-  depositCapacities = {},
-  warnings = []
+  depositCapacities,
+  warnings
 ) {
-  // Budget = approved withdrawals + vault surplus above reserves
   const approvedWithdrawals = result.filter(
     (a) => a.action === ACTION_WITHDRAW
   );
@@ -534,129 +660,49 @@ async function _filterDeposits(
     constraints
   );
   let budget = withdrawTotal.add(vaultSurplus);
-
-  // Track surplus budget separately for spread check exemption
   let surplusBudget = vaultSurplus;
 
-  // Highest APY among approved withdrawal sources (for post-impact spread check)
   const highestWithdrawalApy =
     approvedWithdrawals.length > 0
       ? Math.max(...approvedWithdrawals.map((w) => w.apy))
       : null;
 
-  // Distribute to deposits in APY-descending order
   const deposits = result
     .filter((a) => a.action === ACTION_DEPOSIT)
     .sort((a, b) => b.apy - a.apy);
 
   for (const deposit of deposits) {
-    if (deposit.isCrossChain && deposit.isTransferPending) {
-      deposit.action = ACTION_NONE;
-      deposit.reason = "transfer pending";
-      continue;
-    }
-
-    // Spot APY divergence guard: if the instantaneous APY has dropped significantly
-    // below the 6h average, the strategy may be deteriorating — skip the deposit.
-    if (constraints.maxSpotBelowAvgBps && deposit.spotApy < deposit.apy) {
-      const divergenceBps = Math.round((deposit.apy - deposit.spotApy) * 10000);
-      if (divergenceBps > constraints.maxSpotBelowAvgBps) {
-        deposit.action = ACTION_NONE;
-        deposit.reason =
-          `spot APY ${(deposit.spotApy * 100).toFixed(
-            2
-          )}% is ${divergenceBps}bps ` +
-          `below ${constraints.apyAverageWindow || "1h"} avg ${(
-            deposit.apy * 100
-          ).toFixed(2)}% — deposit blocked`;
-        warnings.push(`${deposit.name}: ${deposit.reason}`);
-        continue;
-      }
-    }
-    if (budget.isZero()) {
-      deposit.action = ACTION_NONE;
-      deposit.reason = "insufficient vault funds";
-      continue;
-    }
-
-    let amt = deposit.delta.gt(budget) ? budget : deposit.delta;
-
-    // A. Cap to deposit capacity (from upfront discovery)
     const capacity = depositCapacities[deposit.metaMorphoVaultAddress];
-    if (capacity && capacity.maxDeposit.gt(0) && amt.gt(capacity.maxDeposit)) {
-      amt = capacity.maxDeposit;
-      deposit.reason = `capped to deposit capacity: ${fmtUsd(amt)}`;
-    }
+    const res = _resolveDeposit(
+      deposit,
+      budget,
+      surplusBudget,
+      highestWithdrawalApy,
+      constraints,
+      capacity
+    );
 
-    if (amt.lt(constraints.minMoveAmount)) {
+    if (res.rejected) {
       deposit.action = ACTION_NONE;
-      deposit.reason =
-        capacity && capacity.maxDeposit.isZero()
-          ? "APY impact too high even at minimum amount"
-          : "below min move";
-      continue;
-    }
-    if (deposit.isCrossChain && amt.lt(constraints.crossChainMinAmount)) {
-      deposit.action = ACTION_NONE;
-      deposit.reason = "below cross-chain min";
+      deposit.reason = res.reason;
+      if (res.warn) warnings.push(`${deposit.name}: ${res.reason}`);
       continue;
     }
 
-    // Update delta/target if amount was trimmed
-    if (amt.lt(deposit.delta)) {
-      deposit.delta = amt;
-      deposit.targetBalance = deposit.balance.add(amt);
-      if (!deposit.reason) deposit.reason = "trimmed to available vault funds";
+    // Apply approved result
+    if (res.amt.lt(deposit.delta)) {
+      deposit.delta = res.amt;
+      deposit.targetBalance = deposit.balance.add(res.amt);
     }
+    if (res.reason) deposit.reason = res.reason;
+    if (res.impactBps != null) deposit.impactBps = res.impactBps;
+    budget = budget.sub(res.amt);
+    surplusBudget = surplusBudget.sub(res.surplusUsed);
+  }
 
-    // Store impact data from capacity discovery
-    if (capacity) {
-      deposit.impactBps = capacity.impactBps;
-    }
-
-    // B. Post-impact APY spread check (withdrawal-funded deposits only)
-    // Vault surplus gets no spread check — any positive APY beats 0% idle
-    if (
-      highestWithdrawalApy != null &&
-      !surplusBudget.gte(amt) &&
-      constraints.minApySpread
-    ) {
-      const postDepositApy = capacity?.postDepositApy;
-      if (postDepositApy != null) {
-        const spread = postDepositApy - highestWithdrawalApy;
-        if (spread < constraints.minApySpread) {
-          const surplusMeetsMin =
-            surplusBudget.gte(BigNumber.from(constraints.minMoveAmount)) &&
-            (!deposit.isCrossChain ||
-              surplusBudget.gte(
-                BigNumber.from(constraints.crossChainMinAmount)
-              ));
-
-          if (surplusBudget.gt(0) && surplusMeetsMin) {
-            // Trim to surplus-funded portion — any APY > 0% idle is a win
-            amt = surplusBudget;
-            deposit.delta = amt;
-            deposit.targetBalance = deposit.balance.add(amt);
-            deposit.reason =
-              `trimmed to vault surplus (spread ${(spread * 100).toFixed(
-                2
-              )}% ` + `< min ${(constraints.minApySpread * 100).toFixed(2)}%)`;
-            // Fall through to budget update
-          } else {
-            deposit.action = ACTION_NONE;
-            deposit.reason =
-              `post-impact spread ${(spread * 100).toFixed(2)}% ` +
-              `< min ${(constraints.minApySpread * 100).toFixed(2)}%`;
-            continue;
-          }
-        }
-      }
-    }
-
-    budget = budget.sub(amt);
-    surplusBudget = surplusBudget.sub(amt).lt(0)
-      ? BigNumber.from(0)
-      : surplusBudget.sub(amt);
+  // Deploy remaining surplus to default strategy
+  if (surplusBudget.gte(BigNumber.from(constraints.minMoveAmount))) {
+    _deployRemainingSurplus(result, surplusBudget);
   }
 
   return result;
@@ -736,32 +782,6 @@ function _coverShortfall(result, shortfall, constraints) {
     s.reason = "shortfall fallback (cross-chain)";
   }
 
-  return result;
-}
-
-/**
- * Deploy idle vault surplus to the default strategy.
- */
-function _deploySurplus(result, surplus) {
-  const defaultStrategy = result.find(
-    (a) => a.isDefault && a.reason !== "APY exceeds threshold"
-  );
-  if (!defaultStrategy) return result;
-
-  if (defaultStrategy.action === ACTION_DEPOSIT) {
-    // Add to existing deposit rather than overwriting
-    defaultStrategy.delta = defaultStrategy.delta.add(surplus);
-    defaultStrategy.targetBalance = defaultStrategy.targetBalance.add(surplus);
-    defaultStrategy.reason = defaultStrategy.reason
-      ? `${defaultStrategy.reason}; +vault surplus fallback`
-      : "vault surplus fallback";
-  } else if (defaultStrategy.action !== ACTION_WITHDRAW) {
-    defaultStrategy.delta = surplus;
-    defaultStrategy.targetBalance = defaultStrategy.balance.add(surplus);
-    defaultStrategy.action = ACTION_DEPOSIT;
-    defaultStrategy.reason = "vault surplus fallback";
-  }
-  // If ACTION_WITHDRAW, skip — the withdrawal is needed
   return result;
 }
 
@@ -865,13 +885,13 @@ function _trimExcessWithdrawals(result, vaultBalance, shortfall, constraints) {
 }
 
 /**
- * Filter allocations: withdraw pass → budget calculation → deposit pass → fallbacks.
+ * Filter allocations: withdraw → allocate deposits → trim withdrawals → fallbacks.
  *
- * Pass A (withdrawals): filter overallocated strategies by feasibility.
- * Budget:              approved withdrawals + vault surplus = max depositable.
- * Pass B (deposits):   allocate from budget in APY-desc order, apply feasibility checks.
- * Pass C (trim):       cancel/reduce withdrawals that no longer have deposits to fund.
- * Pass 2 (fallbacks):  shortfall and surplus fallbacks run after both passes.
+ * Step 1 (withdrawals): filter overallocated strategies by feasibility.
+ * Step 2 (deposits):    allocate budget (withdrawals + surplus) in APY-desc order,
+ *                       then deploy remaining surplus to default strategy.
+ * Step 3 (trim):        cancel/reduce withdrawals that no longer have deposits to fund.
+ * Step 4 (fallback):    cover shortfall if no withdrawals were approved.
  *
  * @param {Array}     allocations - output of computeIdealAllocation
  * @param {BigNumber} shortfall   - vault withdrawal shortfall (after addWithdrawalQueueLiquidity offset)
@@ -894,8 +914,8 @@ async function buildExecutableActions(
   // 1. Filter withdrawals by feasibility (min move, cross-chain min, liquidity)
   result = _filterWithdrawals(result, constraints);
 
-  // 2. Distribute available budget across deposits (highest APY first, capacity-aware)
-  result = await _filterDeposits(
+  // 2. Allocate deposits from available budget + deploy remaining surplus
+  result = await _allocateDeposits(
     result,
     vaultBalance,
     shortfall,
@@ -913,20 +933,6 @@ async function buildExecutableActions(
   );
   if (!hasApprovedWithdrawals && shortfall.gt(0)) {
     result = _coverShortfall(result, shortfall, constraints);
-  }
-
-  // 5. Fallback: deploy remaining vault surplus to default strategy
-  const surplus = _computeVaultSurplus(vaultBalance, shortfall, constraints);
-  if (surplus.gt(0)) {
-    const totalApprovedDeposits = result
-      .filter((a) => a.action === ACTION_DEPOSIT)
-      .reduce((sum, a) => sum.add(a.delta), BigNumber.from(0));
-    const remainingSurplus = surplus.gt(totalApprovedDeposits)
-      ? surplus.sub(totalApprovedDeposits)
-      : BigNumber.from(0);
-    if (remainingSurplus.gte(BigNumber.from(constraints.minMoveAmount))) {
-      result = _deploySurplus(result, remainingSurplus);
-    }
   }
 
   return result;

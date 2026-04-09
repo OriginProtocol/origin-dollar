@@ -1084,4 +1084,36 @@ describe("Rebalancer: buildExecutableActions", () => {
     expect(highRow.action).to.equal(ACTION_NONE);
     expect(highRow.reason).to.include("spread");
   });
+
+  it("fully surplus-funded deposit skips spread check", async () => {
+    const allocs = [
+      makeAllocation("Ethereum Morpho", 700000, 500000, 0.04, {
+        isDefault: true,
+      }),
+      makeAllocation("Base Morpho", 100000, 150000, 0.05, {
+        isCrossChain: true,
+      }),
+    ];
+    // ETH withdrawal 200K; surplus = 53K - 3K = 50K
+    // Base deposit 50K ≤ surplusBudget → fully surplus-funded → spread skipped
+    // Spread WOULD fail (0.003 < 0.005) but deposit is surplus-funded
+    const caps = {
+      "0xVault_Base Morpho": {
+        maxDeposit: usdc(500000),
+        postDepositApy: 0.043,
+        impactBps: 30,
+      },
+    };
+    const result = await buildExecutableActions(
+      allocs,
+      ZERO,
+      usdc(53000),
+      {},
+      caps
+    );
+    const baseRow = result.find((a) => a.isCrossChain);
+    expect(baseRow.action).to.equal(ACTION_DEPOSIT);
+    expect(baseRow.delta).to.equal(usdc(50000));
+    expect(baseRow.reason || "").not.to.include("spread");
+  });
 });
