@@ -1,4 +1,8 @@
-const { subtask, task, types } = require("hardhat/config");
+const {
+  subtask: baseSubtask,
+  task: baseTask,
+  types,
+} = require("hardhat/config");
 const { env } = require("./env");
 const { setActionVars, updateAction } = require("./defender");
 const { execute, executeOnFork, proposal, governors } = require("./governance");
@@ -16,7 +20,7 @@ const {
   encryptMasterPrivateKey,
   decryptMasterPrivateKey,
 } = require("./amazon");
-const { getSigner, getDefenderSigner } = require("../utils/signers");
+const { getSigner } = require("../utils/signers");
 const { snapMorpho } = require("../utils/morpho");
 const { snapAero } = require("./aero");
 const {
@@ -62,8 +66,7 @@ const {
   curveSwapTask,
   curvePoolTask,
 } = require("./curve");
-const { calculateMaxPricePerVoteTask, manageBribes } = require("./poolBooster");
-const { updateVotemarketEpochsTask } = require("./votemarket");
+const { calculateMaxPricePerVoteTask } = require("./poolBooster");
 const { manageMerklBribesTask } = require("./merklPoolBooster");
 const {
   depositSSV,
@@ -91,9 +94,7 @@ const {
   transferToken,
 } = require("./strategy");
 const {
-  validatorOperationsConfig,
   exitValidator,
-  doAccounting,
   manuallyFixAccounting,
   resetStakeETHTally,
   setStakeETHThreshold,
@@ -106,24 +107,15 @@ const {
 } = require("./validator");
 const {
   snapStakingStrategy,
-  snapBalances,
   registerValidatorCreateRequest,
   registerValidator,
   stakeValidator,
-  autoValidatorDeposits,
   withdrawValidator,
   removeValidator,
-  autoValidatorWithdrawals,
   setRegistrator,
 } = require("./validatorCompound");
 const { tenderlySync, tenderlyUpload } = require("./tenderly");
 const { setDefaultValidator, snapSonicStaking } = require("../utils/sonic");
-const {
-  undelegateValidator,
-  withdrawFromSFC,
-} = require("../utils/sonicActions");
-const { registerValidators, stakeValidators } = require("../utils/validator");
-const { harvestAndSwap } = require("./harvest");
 const { deployForceEtherSender, forceSend } = require("./simulation");
 const { sleep } = require("../utils/time");
 const { lzBridgeToken, lzSetConfig } = require("./layerzero");
@@ -134,8 +126,6 @@ const {
   getValidators,
   verifyValidator,
   verifyDeposit,
-  verifyDeposits,
-  verifyBalances,
 } = require("./beacon");
 const {
   calcDepositRoot,
@@ -151,11 +141,65 @@ const {
   getConsolidationFee,
 } = require("./consolidation");
 
-const { processCctpBridgeTransactions } = require("./crossChain");
-const { keyValueStoreLocalClient } = require("../utils/defender");
-const { configuration } = require("../utils/cctp");
+const {
+  withTaskSignerContext,
+  DEFAULT_KMS_RELAYER_ID,
+} = require("../utils/signersNoHardhat");
 
 const log = require("../utils/logger")("tasks");
+const RELAYER_ID_PARAM = "relayerId";
+
+const withTaskContext = (taskName, action) => {
+  return async (taskArgs, hre, runSuper) => {
+    return withTaskSignerContext(
+      {
+        relayerId: taskArgs?.[RELAYER_ID_PARAM],
+        taskName,
+      },
+      async () => action(taskArgs, hre, runSuper)
+    );
+  };
+};
+
+const decorateTaskDefinition = (definition, taskName) => {
+  const originalSetAction = definition.setAction.bind(definition);
+  definition.setAction = (action) => {
+    return originalSetAction(withTaskContext(taskName, action));
+  };
+
+  if (definition.paramDefinitions?.[RELAYER_ID_PARAM] === undefined) {
+    definition.addOptionalParam(
+      RELAYER_ID_PARAM,
+      "KMS relayer id. Defaults to task map override or origin-relayer-production-evm",
+      DEFAULT_KMS_RELAYER_ID,
+      types.string
+    );
+  }
+  return definition;
+};
+
+const buildTask = (factory) => (name, descriptionOrAction, maybeAction) => {
+  let description = descriptionOrAction;
+  let action = maybeAction;
+
+  if (typeof descriptionOrAction === "function" && action === undefined) {
+    action = descriptionOrAction;
+    description = undefined;
+  }
+
+  const definition =
+    description === undefined ? factory(name) : factory(name, description);
+  const decorated = decorateTaskDefinition(definition, name);
+
+  if (action) {
+    decorated.setAction(action);
+  }
+
+  return decorated;
+};
+
+const task = buildTask(baseTask);
+const subtask = buildTask(baseSubtask);
 
 // Environment tasks.
 task("env", "Check env vars are properly set for a Mainnet deployment", env);
@@ -683,58 +727,6 @@ task("calculateMaxPricePerVote").setAction(async (_, __, runSuper) => {
 });
 
 subtask(
-  "manageCurvePoolBoosterBribes",
-  "Calls manageBribes on the CurvePoolBoosterBribesModule and calculates the rewards per vote based on the target efficiency"
-)
-  .addOptionalParam(
-    "efficiency",
-    "Target efficiency (0-10, e.g. 1 for 100%, 0.5 for 50%)",
-    "1",
-    types.string
-  )
-  .addOptionalParam(
-    "skipRewardPerVote",
-    "Skip setting RewardPerVote (pass array of zeros)",
-    false,
-    types.boolean
-  )
-  .addOptionalParam(
-    "chunkSize",
-    "Number of pool boosters to manage per transaction",
-    4,
-    types.int
-  )
-  .setAction(async (taskArgs) => {
-    // This action only works with the Defender Relayer signer
-    const signer = await getDefenderSigner();
-    await manageBribes({
-      signer,
-      provider: signer.provider,
-      targetEfficiency: taskArgs.efficiency,
-      skipRewardPerVote: taskArgs.skipRewardPerVote,
-      chunkSize: taskArgs.chunkSize,
-    });
-  });
-task("manageCurvePoolBoosterBribes").setAction(async (_, __, runSuper) => {
-  return runSuper();
-});
-
-subtask(
-  "updateVotemarketEpochs",
-  "Update Votemarket epochs for all Curve Pool Booster campaigns on Arbitrum"
-)
-  .addOptionalParam(
-    "dryRun",
-    "If true, log actions but do not send transactions",
-    true,
-    types.boolean
-  )
-  .setAction(updateVotemarketEpochsTask);
-task("updateVotemarketEpochs").setAction(async (_, __, runSuper) => {
-  return runSuper();
-});
-
-subtask(
   "manageMerklPoolBoosterBribes",
   "Calls bribeAll on the MerklPoolBoosterBribesModule through the Gnosis Safe"
 )
@@ -1085,21 +1077,6 @@ task("setRewardTokenAddresses", "Sets the reward token of a strategy")
 
 // Harvester
 
-task("harvest", "Harvest and swap rewards for a strategy")
-  .addParam(
-    "strategy",
-    "Name of the strategy proxy contract or address. eg NativeStakingSSVStrategyProxy",
-    undefined,
-    types.string
-  )
-  .addOptionalParam(
-    "harvester",
-    "Name of the harvester proxy contract or address",
-    "OETHHarvesterProxy",
-    types.string
-  )
-  .setAction(harvestAndSwap);
-
 // SSV
 
 subtask("getClusterInfo", "Print out information regarding SSV cluster")
@@ -1250,144 +1227,6 @@ task("deployStakingProxy").setAction(async (_, __, runSuper) => {
 
 // Validator Operations
 
-subtask(
-  "registerValidators",
-  "Creates the required amount of new SSV validators and stakes ETH"
-)
-  .addOptionalParam(
-    "days",
-    "SSV Cluster operational time in days",
-    2,
-    types.int
-  )
-  .addOptionalParam(
-    "validators",
-    "The number of validators to register. defaults to the max that can be registered",
-    undefined,
-    types.int
-  )
-  .addOptionalParam("clear", "Clear storage", false, types.boolean)
-  .addOptionalParam(
-    "eth",
-    "Override the days option and set the amount of ETH to deposit to the cluster.",
-    undefined,
-    types.float
-  )
-  .addOptionalParam(
-    "uuid",
-    "uuid of P2P's request SSV validator API call. Used to reprocess a registration that failed to get the SSV request status.",
-    undefined,
-    types.string
-  )
-  .addOptionalParam(
-    "index",
-    "The number of the Native Staking Contract deployed.",
-    undefined,
-    types.int
-  )
-  .setAction(async (taskArgs) => {
-    const config = await validatorOperationsConfig(taskArgs);
-    const signer = await getSigner();
-    await registerValidators({ ...config, signer });
-  });
-task("registerValidators").setAction(async (_, __, runSuper) => {
-  return runSuper();
-});
-
-subtask(
-  "stakeValidators",
-  "Creates the required amount of new SSV validators and stakes ETH"
-)
-  .addOptionalParam(
-    "uuid",
-    "uuid of P2P's request SSV validator API call",
-    undefined,
-    types.string
-  )
-  .addOptionalParam(
-    "index",
-    "The number of the Native Staking Contract deployed.",
-    undefined,
-    types.int
-  )
-  .setAction(async (taskArgs) => {
-    const config = await validatorOperationsConfig(taskArgs);
-    const signer = await getSigner();
-    await stakeValidators({ ...config, signer });
-  });
-task("stakeValidators").setAction(async (_, __, runSuper) => {
-  return runSuper();
-});
-
-/**
- * This function relays the messages between mainnet and base networks.
- *
- * IMPORTANT!!!
- * If possible please use the defender action and not local execution. The defender action stores into the cloud
- * key-value store the transaction hashes that have already been relayed. Relaying the transaction via this task
- * will make the defender relayer continuously fail relaying the transaction that has already been processed.
- * If the action is ran every ~12 hours and looks back for ~1 day worth of blocks it might fail to run 2-3 times and
- * then skip some pending transactions that would need relaying.
- */
-task(
-  "relayCCTPMessage",
-  "Fetches CCTP attested Messages via Circle Gateway API and relays it to the integrator contract"
-)
-  .addOptionalParam(
-    "block",
-    "Override the block number at which the message emission transaction happened",
-    undefined,
-    types.int
-  )
-  .addOptionalParam(
-    "dryrun",
-    "Do not call verifyBalances on the strategy contract. Just log the params including the proofs",
-    false,
-    types.boolean
-  )
-  .setAction(async (taskArgs) => {
-    const networkName = await getNetworkName();
-    const storeFilePath = require("path").join(
-      __dirname,
-      "..",
-      `.localKeyValueStorage.${networkName}`
-    );
-
-    // This action only works with the Defender Relayer signer
-    const signer = await getDefenderSigner();
-    const store = keyValueStoreLocalClient({ _storePath: storeFilePath });
-
-    const isMainnet = networkName === "mainnet";
-    const isBase = networkName === "base";
-
-    let config;
-    if (isMainnet) {
-      config = configuration.mainnetBaseMorpho.mainnet;
-    } else if (isBase) {
-      config = configuration.mainnetBaseMorpho.base;
-    } else {
-      throw new Error(`Unsupported network name: ${networkName}`);
-    }
-
-    await processCctpBridgeTransactions({
-      ...taskArgs,
-      destinationChainSigner: signer,
-      sourceChainProvider: ethers.provider,
-      store,
-      networkName,
-      blockLookback: config.blockLookback,
-      cctpDestinationDomainId: config.cctpDestinationDomainId,
-      cctpSourceDomainId: config.cctpSourceDomainId,
-      cctpIntegrationContractAddress: config.cctpIntegrationContractAddress,
-      cctpIntegrationContractAddressDestination:
-        config.cctpIntegrationContractAddressDestination,
-    });
-  });
-
-task("relayCCTPMessage").setAction(async (_, __, runSuper) => {
-  return runSuper();
-});
-
 subtask("exitValidator", "Starts the exit process from a validator")
   .addParam(
     "pubkey",
@@ -1507,39 +1346,6 @@ subtask(
     }
   });
 task("removeValidators").setAction(async (_, __, runSuper) => {
-  return runSuper();
-});
-
-subtask(
-  "doAccounting",
-  "Account for consensus rewards and validator exits in the Native Staking Strategy"
-)
-  .addOptionalParam(
-    "index",
-    "The number of the Native Staking Contract deployed.",
-    undefined,
-    types.int
-  )
-  .addOptionalParam(
-    "consol",
-    "Call the consolidation controller instead of the strategy",
-    false,
-    types.boolean
-  )
-  .setAction(async ({ index, consol }) => {
-    const signer = await getSigner();
-
-    const nativeStakingStrategy = await resolveNativeStakingStrategyProxy(
-      index
-    );
-
-    await doAccounting({
-      consol,
-      signer,
-      nativeStakingStrategy,
-    });
-  });
-task("doAccounting").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
 
@@ -2011,50 +1817,6 @@ task("sonicDefaultValidator").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
 
-subtask("sonicUndelegate", "Remove liquidity from a Sonic validator")
-  .addOptionalParam(
-    "id",
-    "Validator identifier. 15, 16, 17 or 18",
-    undefined,
-    types.int
-  )
-  .addOptionalParam(
-    "amount",
-    "Amount of liquidity to remove",
-    undefined,
-    types.float
-  )
-  .addOptionalParam(
-    "buffer",
-    "Percentage of total assets to keep as buffer in basis points. 100 = 1%",
-    50,
-    types.float
-  )
-  .setAction(async (taskArgs) => {
-    const signer = await getSigner();
-
-    await undelegateValidator({
-      ...taskArgs,
-      bufferPct: taskArgs.buffer,
-      signer,
-    });
-  });
-task("sonicUndelegate").setAction(async (_, __, runSuper) => {
-  return runSuper();
-});
-
-subtask(
-  "sonicWithdraw",
-  "Withdraw native S from a previously undelegated validator"
-).setAction(async () => {
-  const signer = await getSigner();
-
-  await withdrawFromSFC({ signer });
-});
-task("sonicWithdraw").setAction(async (_, __, runSuper) => {
-  return runSuper();
-});
-
 subtask("sonicStaking", "Snap of the Sonic Staking Strategy")
   .addOptionalParam(
     "block",
@@ -2297,84 +2059,6 @@ task("verifyDeposit").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
 
-subtask("verifyDeposits", "Verify any processed deposit on the Beacon chain")
-  .addOptionalParam(
-    "dryrun",
-    "Do not call verifyDeposit on the strategy contract. Just log the params including the proofs",
-    false,
-    types.boolean
-  )
-  .addOptionalParam(
-    "consol",
-    "Call the consolidation controller instead of the strategy",
-    false,
-    types.boolean
-  )
-  .setAction(async (taskArgs) => {
-    const signer = await getSigner();
-    await verifyDeposits({ ...taskArgs, signer });
-  });
-task("verifyDeposits").setAction(async (_, __, runSuper) => {
-  return runSuper();
-});
-
-subtask("verifyBalances", "Verify validator balances on the Beacon chain")
-  .addOptionalParam(
-    "slot",
-    "The slot snapBalances was executed. Default: last balances snapshot",
-    undefined,
-    types.int
-  )
-  .addOptionalParam(
-    "indexes",
-    "Comma separated list of validator indexes. Default: strategy's active validators",
-    undefined,
-    types.string
-  )
-  .addOptionalParam(
-    "deposits",
-    "Comma separated list of indexes to beacon chain pending deposits used for generating unit test data",
-    undefined,
-    types.string
-  )
-  .addOptionalParam(
-    "dryrun",
-    "Do not call verifyBalances on the strategy contract. Just log the params including the proofs",
-    false,
-    types.boolean
-  )
-  .addOptionalParam(
-    "test",
-    "Used for generating unit test data.",
-    false,
-    types.boolean
-  )
-  .addOptionalParam(
-    "overIds",
-    "A comma separated list of validator IDs to override balances.",
-    "",
-    types.string
-  )
-  .addOptionalParam(
-    "overBals",
-    "A comma separated list of validator balances to override in Gwei.",
-    "",
-    types.string
-  )
-  .addOptionalParam(
-    "consol",
-    "Call the consolidation controller instead of the strategy",
-    false,
-    types.boolean
-  )
-  .setAction(async (taskArgs) => {
-    const signer = await getSigner();
-    await verifyBalances({ ...taskArgs, signer });
-  });
-task("verifyBalances").setAction(async (_, __, runSuper) => {
-  return runSuper();
-});
-
 subtask(
   "requestNewValidator",
   "Calls P2P's Create SSV Request to prepare a new SSV compounding (0x02) validator"
@@ -2435,24 +2119,6 @@ task("registerValidator").setAction(async (_, __, runSuper) => {
 });
 
 subtask(
-  "autoValidatorDeposits",
-  "Automatically withdraw ETH/WETH from the strategy if needed for withdrawals, then deposit WETH to validators with a balance under 2030 ETH from the largest balance to the smallest"
-)
-  .addParam(
-    "dryrun",
-    "Do not send any txs to the staking strategy contract",
-    false,
-    types.boolean
-  )
-  .setAction(async (taskArgs) => {
-    const signer = await getSigner();
-    await autoValidatorDeposits({ ...taskArgs, signer });
-  });
-task("autoValidatorDeposits").setAction(async (_, __, runSuper) => {
-  return runSuper();
-});
-
-subtask(
   "withdrawValidator",
   "Requests a partial or full withdrawal from a compounding validator"
 )
@@ -2507,30 +2173,6 @@ subtask(
     await removeValidator({ ...taskArgs, signer });
   });
 task("removeValidator").setAction(async (_, __, runSuper) => {
-  return runSuper();
-});
-
-subtask(
-  "autoValidatorWithdrawals",
-  "Automatically withdraw ETH from a validators if the Vault needs WETH for user withdrawals. Start with the validator with the smallest balance over 42.25 ETH."
-)
-  .addOptionalParam(
-    "buffer",
-    "Withdrawal buffer in basis points. 100 = 1%",
-    100,
-    types.int
-  )
-  .addParam(
-    "dryrun",
-    "Do not send any txs to the staking strategy contract",
-    false,
-    types.boolean
-  )
-  .setAction(async (taskArgs) => {
-    const signer = await getSigner();
-    await autoValidatorWithdrawals({ ...taskArgs, signer });
-  });
-task("autoValidatorWithdrawals").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
 
@@ -2603,18 +2245,6 @@ subtask(
   )
   .setAction(stakeValidator);
 task("stakeValidator").setAction(async (_, __, runSuper) => {
-  return runSuper();
-});
-
-subtask("snapBalances", "Takes a snapshot of the staking strategy's balance")
-  .addOptionalParam(
-    "consol",
-    "Call the consolidation controller instead of the strategy",
-    false,
-    types.boolean
-  )
-  .setAction(snapBalances);
-task("snapBalances").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
 

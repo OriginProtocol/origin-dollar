@@ -246,8 +246,9 @@ If enabled, the gas usage will be output in a table after the tests have execute
 When using Hardhat tasks, there are a few options for specifying the wallet to send transactions from.
 
 1. Primary key
-2. Impersonate
-3. Defender Relayer
+2. AWS KMS signer
+3. Impersonate
+4. Defender Relayer
 
 ### Primary Key
 
@@ -261,6 +262,24 @@ When finished, you can unset the `DEPLOYER_PK` and `GOVERNOR_PK` environment var
 unset DEPLOYER_PK
 unset GOVERNOR_PK
 ```
+
+### AWS KMS Signer
+
+Hardhat tasks can sign transactions with AWS KMS when both `AWS_ACCESS_KEY_ID` and
+`AWS_SECRET_ACCESS_KEY` are set.
+
+The default `relayer-id` is `origin-relayer-production-evm`. Some tasks can be mapped
+to different defaults in code, and a user-provided task parameter always wins:
+
+```
+npx hardhat <task> --network <network> --relayer-id <kms-key-id-or-alias>
+```
+
+The relayer resolution precedence is:
+
+1. `--relayer-id`
+2. task-name based override map
+3. global default (`origin-relayer-production-evm`)
 
 ### Impersonate
 

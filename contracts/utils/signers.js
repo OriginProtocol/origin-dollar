@@ -1,7 +1,12 @@
 const { Wallet } = require("ethers");
 const { parseEther } = require("ethers/lib/utils");
 const hhHelpers = require("@nomicfoundation/hardhat-network-helpers");
-const { getDefenderSigner } = require("./signersNoHardhat");
+const {
+  getDefenderSigner,
+  getKmsAddress,
+  getKmsSigner,
+  hasAwsKmsCredentials,
+} = require("./signersNoHardhat");
 const { ethereumAddress, privateKey } = require("./regex");
 
 const log = require("./logger")("utils:signers");
@@ -9,6 +14,7 @@ const log = require("./logger")("utils:signers");
 /**
  * Signer factory that gets a signer for a hardhat test or task
  * If address is passed, use that address as signer.
+ * If AWS IAM KMS credentials are set, use a KMS-backed signer.
  * If DEPLOYER_PK or GOVERNOR_PK is set, use that private key as signer.
  * If a fork and IMPERSONATE is set, impersonate that account.
  * else get the first signer from the hardhat node.
@@ -22,6 +28,13 @@ async function getSigner(address = undefined) {
     }
     return await hre.ethers.provider.getSigner(address);
   }
+
+  if (hasAwsKmsCredentials()) {
+    const address = await getKmsAddress({ provider: hre.ethers.provider });
+    log(`Using KMS signer ${address}`);
+    return await getKmsSigner(hre);
+  }
+
   const pk = process.env.DEPLOYER_PK || process.env.GOVERNOR_PK;
   if (pk) {
     if (!pk.match(privateKey)) {
@@ -90,4 +103,5 @@ module.exports = {
   impersonateAccount,
   impersonateAndFund,
   getDefenderSigner,
+  getKmsSigner,
 };

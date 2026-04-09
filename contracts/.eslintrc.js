@@ -24,4 +24,25 @@ module.exports = {
     "no-only-tests/no-only-tests": "error",
     "no-unused-vars": [2, { vars: "all", args: "after-used" }],
   },
+  overrides: [
+    {
+      files: ["**/*.ts"],
+      parser: "@typescript-eslint/parser",
+      parserOptions: {
+        project: "./tsconfig.json",
+        sourceType: "module",
+      },
+      plugins: ["@typescript-eslint"],
+      extends: ["eslint:recommended", "plugin:@typescript-eslint/recommended"],
+      rules: {
+        "no-unused-vars": "off",
+        "@typescript-eslint/no-unused-vars": [
+          2,
+          { vars: "all", args: "after-used" },
+        ],
+        "@typescript-eslint/no-explicit-any": "off",
+        "@typescript-eslint/no-require-imports": "off",
+      },
+    },
+  ],
 };
