@@ -13,6 +13,7 @@ export interface CronJob {
   enabled: boolean;
   permmissioned?: boolean;
   command: string;
+  comment?: string;
 }
 
 export interface CronConfig {

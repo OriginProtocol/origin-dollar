@@ -80,39 +80,44 @@ export const cronJobs: CronJob[] = [
       "cd /app && pnpm hardhat healthcheck --network ${HARDHAT_NETWORK:-mainnet}",
   },
   {
-    name: "hourly_snap_balances",
-    schedule: "2 * * * *",
+    name: "daily_snap_balances",
+    schedule: "2 0 * * *",
     enabled: false,
+    comment: "Remove --consol true once the consolidation is finished",
     command:
-      "cd /app && pnpm hardhat snapBalances --network ${HARDHAT_NETWORK:-mainnet}",
+      "cd /app && pnpm hardhat snapBalances --network mainnet --consol true",
   },
   {
-    name: "hourly_verify_balances",
-    schedule: "6 * * * *",
+    name: "daily_verify_balances",
+    schedule: "6 0 * * *",
     enabled: false,
+    comment: "Remove --consol true once the consolidation is finished",
     command:
-      "cd /app && pnpm hardhat verifyBalances --network ${HARDHAT_NETWORK:-mainnet}",
+      "cd /app && pnpm hardhat verifyBalances --network mainnet --consol true",
   },
   {
-    name: "hourly_verify_deposits",
-    schedule: "11 * * * *",
+    name: "daily_verify_deposits",
+    schedule: "11 */4 * * *",
     enabled: false,
-    command:
-      "cd /app && pnpm hardhat verifyDeposits --network ${HARDHAT_NETWORK:-mainnet}",
+    comment: "This is disabled until we are finished with consolidations",
+    command: "cd /app && pnpm hardhat verifyDeposits --network mainnet",
   },
   {
-    name: "hourly_auto_validator_deposits",
-    schedule: "16 * * * *",
+    name: "daily_auto_validator_deposits",
+    schedule: "14 1 * * *",
     enabled: false,
-    command:
-      "cd /app && pnpm hardhat autoValidatorDeposits --network ${HARDHAT_NETWORK:-mainnet}",
+    comment:
+      "Don't enable this in the near future as deposit queue is 50 days long.",
+    command: "cd /app && pnpm hardhat autoValidatorDeposits --network mainnet",
   },
   {
-    name: "hourly_auto_validator_withdrawals",
-    schedule: "21 * * * *",
+    name: "daily_auto_validator_withdrawals",
+    schedule: "24 1 * * *",
     enabled: false,
+    comment:
+      "Don't enable this in the near future as deposit queue is 50 days long and we rather use AMO for the liquidity",
     command:
-      "cd /app && pnpm hardhat autoValidatorWithdrawals --network ${HARDHAT_NETWORK:-mainnet}",
+      "cd /app && pnpm hardhat autoValidatorWithdrawals --network mainnet",
   },
   {
     name: "daily_rebase_mainnet_oeth",
@@ -195,12 +200,14 @@ export const cronJobs: CronJob[] = [
     name: "cross_chain_base_mainnet",
     schedule: "27 2,8,14,20 * * *",
     enabled: false,
+    permmissioned: true,
     command: "cd /app && pnpm hardhat relayCCTPMessage --network base",
   },
   {
     name: "cross_chain_mainnet_base",
     schedule: "43 4,10,16,22 * * *",
     enabled: false,
+    permmissioned: true,
     command: "cd /app && pnpm hardhat relayCCTPMessage --network mainnet",
   },
   {
