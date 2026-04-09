@@ -2,6 +2,10 @@
 pragma solidity ^0.8.0;
 
 import {Unit_SwapXSingle_Shared_Test} from "tests/unit/poolBooster/SwapXSingle/shared/Shared.t.sol";
+
+// --- Test utilities
+import {PoolBoosters} from "tests/utils/Artifacts.sol";
+
 import {IPoolBoostCentralRegistryFull} from "contracts/interfaces/poolBooster/IPoolBoostCentralRegistryFull.sol";
 
 contract Unit_Concrete_PoolBoostCentralRegistry_ViewFunctions_Test is Unit_SwapXSingle_Shared_Test {
@@ -15,9 +19,8 @@ contract Unit_Concrete_PoolBoostCentralRegistry_ViewFunctions_Test is Unit_SwapX
     }
 
     function test_getAllFactories_empty() public {
-        IPoolBoostCentralRegistryFull freshRegistry = IPoolBoostCentralRegistryFull(
-            vm.deployCode("contracts/poolBooster/PoolBoostCentralRegistry.sol:PoolBoostCentralRegistry")
-        );
+        IPoolBoostCentralRegistryFull freshRegistry =
+            IPoolBoostCentralRegistryFull(vm.deployCode(PoolBoosters.POOL_BOOST_CENTRAL_REGISTRY));
 
         address[] memory factories = freshRegistry.getAllFactories();
         assertEq(factories.length, 0);

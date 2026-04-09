@@ -3,6 +3,9 @@ pragma solidity ^0.8.0;
 
 import {Unit_Metropolis_Shared_Test} from "tests/unit/poolBooster/Metropolis/shared/Shared.t.sol";
 
+// --- Test utilities
+import {PoolBoosters} from "tests/utils/Artifacts.sol";
+
 contract Unit_Concrete_PoolBoosterMetropolis_Constructor_Test is Unit_Metropolis_Shared_Test {
     function test_constructor() public view {
         assertEq(address(boosterMetropolis.osToken()), address(oSonic));
@@ -15,8 +18,7 @@ contract Unit_Concrete_PoolBoosterMetropolis_Constructor_Test is Unit_Metropolis
     function test_constructor_RevertWhen_zeroPool() public {
         vm.expectRevert("Invalid pool address");
         vm.deployCode(
-            "contracts/poolBooster/PoolBoosterMetropolis.sol:PoolBoosterMetropolis",
-            abi.encode(address(oSonic), mockRewardFactory, address(0), mockVoter)
+            PoolBoosters.POOL_BOOSTER_METROPOLIS, abi.encode(address(oSonic), mockRewardFactory, address(0), mockVoter)
         );
     }
 }

@@ -3,6 +3,9 @@ pragma solidity ^0.8.0;
 
 import {Base} from "tests/Base.t.sol";
 
+// --- Test utilities
+import {PoolBoosters} from "tests/utils/Artifacts.sol";
+
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {MockERC20} from "@solmate/test/utils/mocks/MockERC20.sol";
 import {BeaconProxy} from "@openzeppelin/contracts/proxy/beacon/BeaconProxy.sol";
@@ -66,21 +69,19 @@ abstract contract Unit_Merkl_Shared_Test is Base {
     }
 
     function _deployCentralRegistry() internal {
-        centralRegistry = IPoolBoostCentralRegistryFull(
-            vm.deployCode("contracts/poolBooster/PoolBoostCentralRegistry.sol:PoolBoostCentralRegistry")
-        );
+        centralRegistry = IPoolBoostCentralRegistryFull(vm.deployCode(PoolBoosters.POOL_BOOST_CENTRAL_REGISTRY));
         _setGovernorViaSlot(address(centralRegistry), governor);
     }
 
     function _deployBeacon() internal {
-        address impl = vm.deployCode("contracts/poolBooster/PoolBoosterMerklV2.sol:PoolBoosterMerklV2");
+        address impl = vm.deployCode(PoolBoosters.POOL_BOOSTER_MERKL_V2);
         beacon = new UpgradeableBeacon(impl);
     }
 
     function _deployFactory() internal {
         factoryMerkl = IPoolBoosterFactoryMerkl(
             vm.deployCode(
-                "contracts/poolBooster/PoolBoosterFactoryMerkl.sol:PoolBoosterFactoryMerkl",
+                PoolBoosters.POOL_BOOSTER_FACTORY_MERKL,
                 abi.encode(address(oeth), governor, address(centralRegistry), address(beacon))
             )
         );

@@ -1,9 +1,14 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
+// --- Test base
 import {BaseFork} from "tests/fork/BaseFork.t.sol";
-import {Sonic} from "tests/utils/Addresses.sol";
 
+// --- Test utilities
+import {Sonic} from "tests/utils/Addresses.sol";
+import {Proxies, Strategies, Tokens, Vaults} from "tests/utils/Artifacts.sol";
+
+// --- External libraries
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IOToken} from "contracts/interfaces/IOToken.sol";
 import {IVault} from "contracts/interfaces/IVault.sol";
@@ -56,11 +61,11 @@ abstract contract Fork_SonicSwapXAMOStrategy_Shared_Test is BaseFork {
         // Deploy fresh OSonic + OSVault
         vm.startPrank(deployer);
 
-        IOToken oSonicImpl = IOToken(vm.deployCode("contracts/token/OSonic.sol:OSonic"));
-        address oSonicVaultImpl = vm.deployCode("contracts/vault/OSVault.sol:OSVault", abi.encode(Sonic.wS));
+        IOToken oSonicImpl = IOToken(vm.deployCode(Tokens.OS));
+        address oSonicVaultImpl = vm.deployCode(Vaults.OS, abi.encode(Sonic.wS));
 
-        oSonicProxy = IProxy(vm.deployCode("contracts/proxies/SonicProxies.sol:OSonicProxy"));
-        oSonicVaultProxy = IProxy(vm.deployCode("contracts/proxies/SonicProxies.sol:OSonicVaultProxy"));
+        oSonicProxy = IProxy(vm.deployCode(Proxies.OS_PROXY));
+        oSonicVaultProxy = IProxy(vm.deployCode(Proxies.OS_VAULT_PROXY));
 
         oSonicProxy.initialize(
             address(oSonicImpl),
@@ -123,7 +128,7 @@ abstract contract Fork_SonicSwapXAMOStrategy_Shared_Test is BaseFork {
         // Deploy fresh SonicSwapXAMOStrategy
         sonicSwapXAMOStrategy = ISonicSwapXAMOStrategy(
             vm.deployCode(
-                "contracts/strategies/sonic/SonicSwapXAMOStrategy.sol:SonicSwapXAMOStrategy",
+                Strategies.SONIC_SWAPX_AMO_STRATEGY,
                 abi.encode(address(swapXPool), address(oSonicVault), address(swapXGauge))
             )
         );

@@ -1,7 +1,12 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
+// --- Test base
 import {Base} from "tests/Base.t.sol";
+
+// --- Test utilities
+import {Proxies, Strategies, Tokens, Vaults} from "tests/utils/Artifacts.sol";
+
 import {stdJson} from "forge-std/StdJson.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {MockWETH} from "contracts/mocks/MockWETH.sol";
@@ -146,19 +151,11 @@ abstract contract Unit_CompoundingStakingSSVStrategy_Shared_Test is Base {
         // Deploy OETH + OETHVault through proxies
         vm.startPrank(deployer);
 
-        IOToken oethImpl = IOToken(vm.deployCode("contracts/token/OETH.sol:OETH"));
-        address oethVaultImpl = vm.deployCode("contracts/vault/OETHVault.sol:OETHVault", abi.encode(address(mockWeth)));
+        IOToken oethImpl = IOToken(vm.deployCode(Tokens.OETH));
+        address oethVaultImpl = vm.deployCode(Vaults.OETH, abi.encode(address(mockWeth)));
 
-        oethProxy = IProxy(
-            vm.deployCode(
-                "contracts/proxies/InitializeGovernedUpgradeabilityProxy.sol:InitializeGovernedUpgradeabilityProxy"
-            )
-        );
-        oethVaultProxy = IProxy(
-            vm.deployCode(
-                "contracts/proxies/InitializeGovernedUpgradeabilityProxy.sol:InitializeGovernedUpgradeabilityProxy"
-            )
-        );
+        oethProxy = IProxy(vm.deployCode(Proxies.IG_PROXY));
+        oethVaultProxy = IProxy(vm.deployCode(Proxies.IG_PROXY));
 
         oethProxy.initialize(
             address(oethImpl),
@@ -187,7 +184,7 @@ abstract contract Unit_CompoundingStakingSSVStrategy_Shared_Test is Base {
         // Deploy CompoundingStakingSSVStrategy
         compoundingStakingSSVStrategy = ICompoundingStakingSSVStrategy(
             vm.deployCode(
-                "contracts/strategies/NativeStaking/CompoundingStakingSSVStrategy.sol:CompoundingStakingSSVStrategy",
+                Strategies.COMPOUNDING_STAKING_SSV_STRATEGY,
                 abi.encode(
                     address(0), // platformAddress
                     address(oethVault), // vaultAddress

@@ -1,7 +1,11 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
+// --- Test base
 import {Base} from "tests/Base.t.sol";
+
+// --- Test utilities
+import {Automation} from "tests/utils/Artifacts.sol";
 
 import {MockSafeContract} from "tests/mocks/MockSafeContract.sol";
 import {MockStrategy} from "contracts/mocks/MockStrategy.sol";
@@ -45,7 +49,7 @@ abstract contract Unit_ClaimStrategyRewardsSafeModule_Shared_Test is Base {
 
         claimStrategyRewardsModule = IClaimStrategyRewardsSafeModule(
             vm.deployCode(
-                "contracts/automation/ClaimStrategyRewardsSafeModule.sol:ClaimStrategyRewardsSafeModule",
+                Automation.CLAIM_STRATEGY_REWARDS_SAFE_MODULE,
                 abi.encode(address(mockSafe), operator, initialStrategies)
             )
         );

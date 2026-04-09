@@ -1,7 +1,11 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
+// --- Test base
 import {Base} from "tests/Base.t.sol";
+
+// --- Test utilities
+import {Automation} from "tests/utils/Artifacts.sol";
 
 import {MockSafeContract} from "tests/mocks/MockSafeContract.sol";
 import {MockERC20} from "@solmate/test/utils/mocks/MockERC20.sol";
@@ -57,10 +61,7 @@ abstract contract Unit_CollectXOGNRewardsModule_Shared_Test is Base {
 
         // Deploy CollectXOGNRewardsModule
         collectXOGNRewardsModule = ICollectXOGNRewardsModule(
-            vm.deployCode(
-                "contracts/automation/CollectXOGNRewardsModule.sol:CollectXOGNRewardsModule",
-                abi.encode(address(mockSafe), operator)
-            )
+            vm.deployCode(Automation.COLLECT_XOGN_REWARDS_MODULE, abi.encode(address(mockSafe), operator))
         );
     }
 

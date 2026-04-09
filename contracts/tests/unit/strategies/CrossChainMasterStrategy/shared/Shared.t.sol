@@ -1,7 +1,11 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
+// --- Test base
 import {Base} from "tests/Base.t.sol";
+
+// --- Test utilities
+import {Proxies, Strategies, Tokens, Vaults} from "tests/utils/Artifacts.sol";
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {MockERC20} from "@solmate/test/utils/mocks/MockERC20.sol";
@@ -62,19 +66,11 @@ abstract contract Unit_CrossChainMasterStrategy_Shared_Test is Base {
         // Deploy OUSD + OUSDVault through proxies
         vm.startPrank(deployer);
 
-        IOToken ousdImpl = IOToken(vm.deployCode("contracts/token/OUSD.sol:OUSD"));
-        address ousdVaultImpl = vm.deployCode("contracts/vault/OUSDVault.sol:OUSDVault", abi.encode(address(mockUsdc)));
+        IOToken ousdImpl = IOToken(vm.deployCode(Tokens.OUSD));
+        address ousdVaultImpl = vm.deployCode(Vaults.OUSD, abi.encode(address(mockUsdc)));
 
-        ousdProxy = IProxy(
-            vm.deployCode(
-                "contracts/proxies/InitializeGovernedUpgradeabilityProxy.sol:InitializeGovernedUpgradeabilityProxy"
-            )
-        );
-        ousdVaultProxy = IProxy(
-            vm.deployCode(
-                "contracts/proxies/InitializeGovernedUpgradeabilityProxy.sol:InitializeGovernedUpgradeabilityProxy"
-            )
-        );
+        ousdProxy = IProxy(vm.deployCode(Proxies.IG_PROXY));
+        ousdVaultProxy = IProxy(vm.deployCode(Proxies.IG_PROXY));
 
         ousdProxy.initialize(
             address(ousdImpl),
@@ -111,7 +107,7 @@ abstract contract Unit_CrossChainMasterStrategy_Shared_Test is Base {
         // Deploy CrossChainMasterStrategy
         crossChainMasterStrategy = ICrossChainMasterStrategy(
             vm.deployCode(
-                "contracts/strategies/crosschain/CrossChainMasterStrategy.sol:CrossChainMasterStrategy",
+                Strategies.CROSS_CHAIN_MASTER_STRATEGY,
                 abi.encode(
                     address(0), // platformAddress
                     address(ousdVault), // vaultAddress

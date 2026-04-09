@@ -1,7 +1,11 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
+// --- Test base
 import {BaseFork} from "tests/fork/BaseFork.t.sol";
+
+// --- Test utilities
+import {Proxies, Strategies, Tokens, Vaults} from "tests/utils/Artifacts.sol";
 import {Mainnet} from "tests/utils/Addresses.sol";
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
@@ -57,19 +61,11 @@ abstract contract Fork_CurveAMOStrategy_Shared_Test is BaseFork {
         // Deploy fresh OETH + OETHVault
         vm.startPrank(deployer);
 
-        address oethImpl = vm.deployCode("contracts/token/OETH.sol:OETH");
-        address oethVaultImpl = vm.deployCode("contracts/vault/OETHVault.sol:OETHVault", abi.encode(Mainnet.WETH));
+        address oethImpl = vm.deployCode(Tokens.OETH);
+        address oethVaultImpl = vm.deployCode(Vaults.OETH, abi.encode(Mainnet.WETH));
 
-        oethProxy = IProxy(
-            vm.deployCode(
-                "contracts/proxies/InitializeGovernedUpgradeabilityProxy.sol:InitializeGovernedUpgradeabilityProxy"
-            )
-        );
-        oethVaultProxy = IProxy(
-            vm.deployCode(
-                "contracts/proxies/InitializeGovernedUpgradeabilityProxy.sol:InitializeGovernedUpgradeabilityProxy"
-            )
-        );
+        oethProxy = IProxy(vm.deployCode(Proxies.IG_PROXY));
+        oethVaultProxy = IProxy(vm.deployCode(Proxies.IG_PROXY));
 
         oethProxy.initialize(
             oethImpl, governor, abi.encodeWithSignature("initialize(address,uint256)", address(oethVaultProxy), 1e27)
@@ -135,7 +131,7 @@ abstract contract Fork_CurveAMOStrategy_Shared_Test is BaseFork {
         // Deploy CurveAMOStrategy
         curveAMOStrategy = ICurveAMOStrategy(
             vm.deployCode(
-                "contracts/strategies/CurveAMOStrategy.sol:CurveAMOStrategy",
+                Strategies.CURVE_AMO_STRATEGY,
                 abi.encode(poolAddr, address(oethVault), address(oeth), Mainnet.WETH, gaugeAddr, Mainnet.CRVMinter)
             )
         );

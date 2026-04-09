@@ -1,7 +1,11 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
+// --- Test base
 import {Base} from "tests/Base.t.sol";
+
+// --- Test utilities
+import {Proxies, Strategies, Tokens, Vaults} from "tests/utils/Artifacts.sol";
 
 // Interfaces
 import {IVault} from "contracts/interfaces/IVault.sol";
@@ -61,19 +65,11 @@ abstract contract Unit_Generalized4626Strategy_Shared_Test is Base {
 
         vm.startPrank(deployer);
 
-        IOToken ousdImpl = IOToken(vm.deployCode("contracts/token/OUSD.sol:OUSD"));
-        address ousdVaultImpl = vm.deployCode("contracts/vault/OUSDVault.sol:OUSDVault", abi.encode(address(asset)));
+        IOToken ousdImpl = IOToken(vm.deployCode(Tokens.OUSD));
+        address ousdVaultImpl = vm.deployCode(Vaults.OUSD, abi.encode(address(asset)));
 
-        ousdProxy = IProxy(
-            vm.deployCode(
-                "contracts/proxies/InitializeGovernedUpgradeabilityProxy.sol:InitializeGovernedUpgradeabilityProxy"
-            )
-        );
-        ousdVaultProxy = IProxy(
-            vm.deployCode(
-                "contracts/proxies/InitializeGovernedUpgradeabilityProxy.sol:InitializeGovernedUpgradeabilityProxy"
-            )
-        );
+        ousdProxy = IProxy(vm.deployCode(Proxies.IG_PROXY));
+        ousdVaultProxy = IProxy(vm.deployCode(Proxies.IG_PROXY));
 
         ousdProxy.initialize(
             address(ousdImpl),
@@ -102,7 +98,7 @@ abstract contract Unit_Generalized4626Strategy_Shared_Test is Base {
         // Deploy strategy with real vault
         strategy = IGeneralized4626Strategy(
             vm.deployCode(
-                "contracts/strategies/Generalized4626Strategy.sol:Generalized4626Strategy",
+                Strategies.GENERALIZED_4626_STRATEGY,
                 abi.encode(address(shareVault), address(ousdVault), address(asset))
             )
         );

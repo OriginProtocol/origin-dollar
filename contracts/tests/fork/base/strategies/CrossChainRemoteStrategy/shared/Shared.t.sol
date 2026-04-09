@@ -1,9 +1,14 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
+// --- Test base
 import {BaseFork} from "tests/fork/BaseFork.t.sol";
-import {Mainnet, Base as BaseAddresses, CrossChain} from "tests/utils/Addresses.sol";
 
+// --- Test utilities
+import {Mainnet, Base as BaseAddresses, CrossChain} from "tests/utils/Addresses.sol";
+import {Mocks, Proxies, Strategies} from "tests/utils/Artifacts.sol";
+
+// --- External libraries
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 import {IProxy} from "contracts/interfaces/IProxy.sol";
@@ -53,14 +58,11 @@ abstract contract Fork_CrossChainRemoteStrategy_Shared_Test is BaseFork {
         relayer = CrossChain.multichainStrategist;
         strategistAddr = CrossChain.multichainStrategist;
 
-        IProxy crossChainRemoteStrategyProxy = IProxy(
-            vm.deployCode(
-                "contracts/proxies/create2/CrossChainStrategyProxy.sol:CrossChainStrategyProxy", abi.encode(governor)
-            )
-        );
+        IProxy crossChainRemoteStrategyProxy =
+            IProxy(vm.deployCode(Proxies.CROSS_CHAIN_STRATEGY_PROXY, abi.encode(governor)));
 
         address crossChainRemoteStrategyImpl = vm.deployCode(
-            "contracts/strategies/crosschain/CrossChainRemoteStrategy.sol:CrossChainRemoteStrategy",
+            Strategies.CROSS_CHAIN_REMOTE_STRATEGY,
             abi.encode(
                 BaseStrategyConfig({platformAddress: BaseAddresses.MorphoOusdV2Vault, vaultAddress: address(0)}),
                 CCTPIntegrationConfig({

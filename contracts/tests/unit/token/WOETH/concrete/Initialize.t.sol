@@ -4,6 +4,7 @@ pragma solidity ^0.8.0;
 import {Unit_WOETH_Shared_Test} from "tests/unit/token/WOETH/shared/Shared.t.sol";
 import {IWOToken} from "contracts/interfaces/IWOToken.sol";
 import {IProxy} from "contracts/interfaces/IProxy.sol";
+import {Proxies, Tokens} from "tests/utils/Artifacts.sol";
 
 contract Unit_Concrete_WOETH_Initialize_Test is Unit_WOETH_Shared_Test {
     //////////////////////////////////////////////////////
@@ -24,12 +25,8 @@ contract Unit_Concrete_WOETH_Initialize_Test is Unit_WOETH_Shared_Test {
     function test_initialize_RevertWhen_notGovernor() public {
         // Deploy fresh WOETH with deployer as proxy governor
         vm.startPrank(deployer);
-        address freshImpl = vm.deployCode("contracts/token/WOETH.sol:WOETH", abi.encode(address(oeth)));
-        IProxy freshProxy = IProxy(
-            vm.deployCode(
-                "contracts/proxies/InitializeGovernedUpgradeabilityProxy.sol:InitializeGovernedUpgradeabilityProxy"
-            )
-        );
+        address freshImpl = vm.deployCode(Tokens.WOETH, abi.encode(address(oeth)));
+        IProxy freshProxy = IProxy(vm.deployCode(Proxies.IG_PROXY));
         freshProxy.initialize(address(freshImpl), governor, "");
         vm.stopPrank();
 
@@ -67,12 +64,8 @@ contract Unit_Concrete_WOETH_Initialize_Test is Unit_WOETH_Shared_Test {
     function test_initialize2_withExistingSupply() public {
         // Deploy a fresh WOETH where we can manipulate state
         vm.startPrank(deployer);
-        address freshImpl = vm.deployCode("contracts/token/WOETH.sol:WOETH", abi.encode(address(oeth)));
-        IProxy freshProxy = IProxy(
-            vm.deployCode(
-                "contracts/proxies/InitializeGovernedUpgradeabilityProxy.sol:InitializeGovernedUpgradeabilityProxy"
-            )
-        );
+        address freshImpl = vm.deployCode(Tokens.WOETH, abi.encode(address(oeth)));
+        IProxy freshProxy = IProxy(vm.deployCode(Proxies.IG_PROXY));
         freshProxy.initialize(address(freshImpl), governor, "");
         vm.stopPrank();
 

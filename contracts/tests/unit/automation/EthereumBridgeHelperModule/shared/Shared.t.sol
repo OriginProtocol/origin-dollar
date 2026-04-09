@@ -1,7 +1,11 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
+// --- Test base
 import {Base} from "tests/Base.t.sol";
+
+// --- Test utilities
+import {Automation} from "tests/utils/Artifacts.sol";
 
 import {MockSafeContract} from "tests/mocks/MockSafeContract.sol";
 import {IEthereumBridgeHelperModule} from "contracts/interfaces/automation/IEthereumBridgeHelperModule.sol";
@@ -30,10 +34,7 @@ abstract contract Unit_EthereumBridgeHelperModule_Shared_Test is Base {
 
         // Deploy EthereumBridgeHelperModule
         ethereumBridgeHelperModule = IEthereumBridgeHelperModule(
-            vm.deployCode(
-                "contracts/automation/EthereumBridgeHelperModule.sol:EthereumBridgeHelperModule",
-                abi.encode(address(mockSafe))
-            )
+            vm.deployCode(Automation.ETHEREUM_BRIDGE_HELPER_MODULE, abi.encode(address(mockSafe)))
         );
 
         // Grant OPERATOR_ROLE to operator via safe

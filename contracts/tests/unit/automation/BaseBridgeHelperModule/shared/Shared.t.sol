@@ -1,7 +1,11 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
+// --- Test base
 import {Base} from "tests/Base.t.sol";
+
+// --- Test utilities
+import {Automation} from "tests/utils/Artifacts.sol";
 
 import {MockSafeContract} from "tests/mocks/MockSafeContract.sol";
 import {IBaseBridgeHelperModule} from "contracts/interfaces/automation/IBaseBridgeHelperModule.sol";
@@ -29,11 +33,8 @@ abstract contract Unit_BaseBridgeHelperModule_Shared_Test is Base {
         mockSafe = new MockSafeContract();
 
         // Deploy BaseBridgeHelperModule
-        baseBridgeHelperModule = IBaseBridgeHelperModule(
-            vm.deployCode(
-                "contracts/automation/BaseBridgeHelperModule.sol:BaseBridgeHelperModule", abi.encode(address(mockSafe))
-            )
-        );
+        baseBridgeHelperModule =
+            IBaseBridgeHelperModule(vm.deployCode(Automation.BASE_BRIDGE_HELPER_MODULE, abi.encode(address(mockSafe))));
 
         // Grant OPERATOR_ROLE to operator via safe
         mockSafe.execTransactionFromModule(

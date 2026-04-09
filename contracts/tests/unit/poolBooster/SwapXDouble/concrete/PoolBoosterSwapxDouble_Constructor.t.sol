@@ -2,6 +2,10 @@
 pragma solidity ^0.8.0;
 
 import {Unit_SwapXDouble_Shared_Test} from "tests/unit/poolBooster/SwapXDouble/shared/Shared.t.sol";
+
+// --- Test utilities
+import {PoolBoosters} from "tests/utils/Artifacts.sol";
+
 import {IPoolBoosterSwapxDouble} from "contracts/interfaces/poolBooster/IPoolBoosterSwapxDouble.sol";
 
 contract Unit_Concrete_PoolBoosterSwapxDouble_Constructor_Test is Unit_SwapXDouble_Shared_Test {
@@ -16,7 +20,7 @@ contract Unit_Concrete_PoolBoosterSwapxDouble_Constructor_Test is Unit_SwapXDoub
     function test_constructor_RevertWhen_zeroBribeContractOS() public {
         vm.expectRevert("Invalid bribeContractOS address");
         vm.deployCode(
-            "contracts/poolBooster/PoolBoosterSwapxDouble.sol:PoolBoosterSwapxDouble",
+            PoolBoosters.POOL_BOOSTER_SWAPX_DOUBLE,
             abi.encode(address(0), mockBribeContractOther, address(oSonic), DEFAULT_SPLIT)
         );
     }
@@ -24,7 +28,7 @@ contract Unit_Concrete_PoolBoosterSwapxDouble_Constructor_Test is Unit_SwapXDoub
     function test_constructor_RevertWhen_zeroBribeContractOther() public {
         vm.expectRevert("Invalid bribeContractOther address");
         vm.deployCode(
-            "contracts/poolBooster/PoolBoosterSwapxDouble.sol:PoolBoosterSwapxDouble",
+            PoolBoosters.POOL_BOOSTER_SWAPX_DOUBLE,
             abi.encode(mockBribeContractOS, address(0), address(oSonic), DEFAULT_SPLIT)
         );
     }
@@ -32,7 +36,7 @@ contract Unit_Concrete_PoolBoosterSwapxDouble_Constructor_Test is Unit_SwapXDoub
     function test_constructor_RevertWhen_splitTooLow() public {
         vm.expectRevert("Unexpected split amount");
         vm.deployCode(
-            "contracts/poolBooster/PoolBoosterSwapxDouble.sol:PoolBoosterSwapxDouble",
+            PoolBoosters.POOL_BOOSTER_SWAPX_DOUBLE,
             abi.encode(mockBribeContractOS, mockBribeContractOther, address(oSonic), 1e16)
         );
     }
@@ -40,7 +44,7 @@ contract Unit_Concrete_PoolBoosterSwapxDouble_Constructor_Test is Unit_SwapXDoub
     function test_constructor_RevertWhen_splitTooHigh() public {
         vm.expectRevert("Unexpected split amount");
         vm.deployCode(
-            "contracts/poolBooster/PoolBoosterSwapxDouble.sol:PoolBoosterSwapxDouble",
+            PoolBoosters.POOL_BOOSTER_SWAPX_DOUBLE,
             abi.encode(mockBribeContractOS, mockBribeContractOther, address(oSonic), 99e16)
         );
     }
@@ -48,7 +52,7 @@ contract Unit_Concrete_PoolBoosterSwapxDouble_Constructor_Test is Unit_SwapXDoub
     function test_constructor_splitMinValid() public {
         IPoolBoosterSwapxDouble booster = IPoolBoosterSwapxDouble(
             vm.deployCode(
-                "contracts/poolBooster/PoolBoosterSwapxDouble.sol:PoolBoosterSwapxDouble",
+                PoolBoosters.POOL_BOOSTER_SWAPX_DOUBLE,
                 abi.encode(mockBribeContractOS, mockBribeContractOther, address(oSonic), 1e16 + 1)
             )
         );
@@ -58,7 +62,7 @@ contract Unit_Concrete_PoolBoosterSwapxDouble_Constructor_Test is Unit_SwapXDoub
     function test_constructor_splitMaxValid() public {
         IPoolBoosterSwapxDouble booster = IPoolBoosterSwapxDouble(
             vm.deployCode(
-                "contracts/poolBooster/PoolBoosterSwapxDouble.sol:PoolBoosterSwapxDouble",
+                PoolBoosters.POOL_BOOSTER_SWAPX_DOUBLE,
                 abi.encode(mockBribeContractOS, mockBribeContractOther, address(oSonic), 99e16 - 1)
             )
         );

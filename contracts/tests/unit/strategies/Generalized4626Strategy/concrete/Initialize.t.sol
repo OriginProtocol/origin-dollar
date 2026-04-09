@@ -1,9 +1,14 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
+// --- Test base
 import {
     Unit_Generalized4626Strategy_Shared_Test
 } from "tests/unit/strategies/Generalized4626Strategy/shared/Shared.t.sol";
+
+// --- Test utilities
+import {Strategies} from "tests/utils/Artifacts.sol";
+
 import {IGeneralized4626Strategy} from "contracts/interfaces/strategies/IGeneralized4626Strategy.sol";
 
 contract Unit_Concrete_Generalized4626Strategy_Initialize_Test is Unit_Generalized4626Strategy_Shared_Test {
@@ -25,7 +30,7 @@ contract Unit_Concrete_Generalized4626Strategy_Initialize_Test is Unit_Generaliz
     function test_initialize_RevertWhen_calledByNonGovernor() public {
         IGeneralized4626Strategy freshStrategy = IGeneralized4626Strategy(
             vm.deployCode(
-                "contracts/strategies/Generalized4626Strategy.sol:Generalized4626Strategy",
+                Strategies.GENERALIZED_4626_STRATEGY,
                 abi.encode(address(shareVault), address(ousdVault), address(asset))
             )
         );

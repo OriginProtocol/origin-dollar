@@ -1,9 +1,14 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
+// --- Test base
 import {BaseFork} from "tests/fork/BaseFork.t.sol";
-import {Base as BaseAddresses} from "tests/utils/Addresses.sol";
 
+// --- Test utilities
+import {Base as BaseAddresses} from "tests/utils/Addresses.sol";
+import {Proxies, Strategies, Tokens, Vaults} from "tests/utils/Artifacts.sol";
+
+// --- External libraries
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 
@@ -74,20 +79,11 @@ abstract contract Fork_AerodromeAMOStrategy_Shared_Test is BaseFork {
 
         vm.startPrank(deployer);
 
-        address oethBaseImpl = vm.deployCode("contracts/token/OETHBase.sol:OETHBase");
-        address oethBaseVaultImpl =
-            vm.deployCode("contracts/vault/OETHBaseVault.sol:OETHBaseVault", abi.encode(BaseAddresses.WETH));
+        address oethBaseImpl = vm.deployCode(Tokens.OETH_BASE);
+        address oethBaseVaultImpl = vm.deployCode(Vaults.OETH_BASE, abi.encode(BaseAddresses.WETH));
 
-        oethBaseProxy = IProxy(
-            vm.deployCode(
-                "contracts/proxies/InitializeGovernedUpgradeabilityProxy.sol:InitializeGovernedUpgradeabilityProxy"
-            )
-        );
-        oethBaseVaultProxy = IProxy(
-            vm.deployCode(
-                "contracts/proxies/InitializeGovernedUpgradeabilityProxy.sol:InitializeGovernedUpgradeabilityProxy"
-            )
-        );
+        oethBaseProxy = IProxy(vm.deployCode(Proxies.IG_PROXY));
+        oethBaseVaultProxy = IProxy(vm.deployCode(Proxies.IG_PROXY));
 
         oethBaseProxy.initialize(
             oethBaseImpl,
@@ -147,7 +143,7 @@ abstract contract Fork_AerodromeAMOStrategy_Shared_Test is BaseFork {
 
         aerodromeAMOStrategy = IAerodromeAMOStrategy(
             vm.deployCode(
-                "contracts/strategies/aerodrome/AerodromeAMOStrategy.sol:AerodromeAMOStrategy",
+                Strategies.AERODROME_AMO_STRATEGY,
                 abi.encode(
                     InitializableAbstractStrategy.BaseStrategyConfig({
                         platformAddress: clPool, vaultAddress: address(oethBaseVault)

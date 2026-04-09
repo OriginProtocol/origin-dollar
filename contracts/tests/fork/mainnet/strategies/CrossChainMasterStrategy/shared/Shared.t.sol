@@ -1,7 +1,11 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
+// --- Test base
 import {BaseFork} from "tests/fork/BaseFork.t.sol";
+
+// --- Test utilities
+import {Mocks, Proxies, Strategies} from "tests/utils/Artifacts.sol";
 import {Base as BaseAddresses, Mainnet, CrossChain} from "tests/utils/Addresses.sol";
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
@@ -64,14 +68,10 @@ abstract contract Fork_CrossChainMasterStrategy_Shared_Test is BaseFork {
         relayer = makeAddr("Relayer");
         vaultAddr = makeAddr("Vault");
 
-        IProxy crossChainStrategyProxy = IProxy(
-            vm.deployCode(
-                "contracts/proxies/create2/CrossChainStrategyProxy.sol:CrossChainStrategyProxy", abi.encode(governor)
-            )
-        );
+        IProxy crossChainStrategyProxy = IProxy(vm.deployCode(Proxies.CROSS_CHAIN_STRATEGY_PROXY, abi.encode(governor)));
 
         address crossChainStrategyImpl = vm.deployCode(
-            "contracts/strategies/crosschain/CrossChainMasterStrategy.sol:CrossChainMasterStrategy",
+            Strategies.CROSS_CHAIN_MASTER_STRATEGY,
             abi.encode(
                 BaseStrategyConfig({platformAddress: address(0), vaultAddress: vaultAddr}),
                 CCTPIntegrationConfig({
@@ -110,10 +110,7 @@ abstract contract Fork_CrossChainMasterStrategy_Shared_Test is BaseFork {
 
     /// @dev Replace the real MessageTransmitter with a mock that routes messages locally
     function _replaceMessageTransmitter() internal returns (ICCTPMessageTransmitterMock2) {
-        address temp = vm.deployCode(
-            "contracts/mocks/crosschain/CCTPMessageTransmitterMock2.sol:CCTPMessageTransmitterMock2",
-            abi.encode(Mainnet.USDC, uint32(6))
-        );
+        address temp = vm.deployCode(Mocks.CCTP_MESSAGE_TRANSMITTER_MOCK_2, abi.encode(Mainnet.USDC, uint32(6)));
         vm.etch(CrossChain.CCTPMessageTransmitterV2, address(temp).code);
 
         ICCTPMessageTransmitterMock2 mock = ICCTPMessageTransmitterMock2(CrossChain.CCTPMessageTransmitterV2);

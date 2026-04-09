@@ -1,9 +1,14 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
+// --- Test base
 import {BaseFork} from "tests/fork/BaseFork.t.sol";
-import {CrossChain, Base} from "tests/utils/Addresses.sol";
 
+// --- Test utilities
+import {CrossChain, Base} from "tests/utils/Addresses.sol";
+import {Automation} from "tests/utils/Artifacts.sol";
+
+// --- External libraries
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IERC4626} from "lib/openzeppelin/interfaces/IERC4626.sol";
 import {IWETH9} from "contracts/interfaces/IWETH9.sol";
@@ -56,11 +61,8 @@ abstract contract Fork_BaseBridgeHelperModule_Shared_Test is BaseFork {
     }
 
     function _deployModule() internal {
-        baseBridgeHelperModule = IBaseBridgeHelperModule(
-            vm.deployCode(
-                "contracts/automation/BaseBridgeHelperModule.sol:BaseBridgeHelperModule", abi.encode(safeSigner)
-            )
-        );
+        baseBridgeHelperModule =
+            IBaseBridgeHelperModule(vm.deployCode(Automation.BASE_BRIDGE_HELPER_MODULE, abi.encode(safeSigner)));
     }
 
     function _enableModuleOnSafe() internal {

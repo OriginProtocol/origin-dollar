@@ -1,7 +1,11 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
+// --- Test base
 import {Base} from "tests/Base.t.sol";
+
+// --- Test utilities
+import {Automation} from "tests/utils/Artifacts.sol";
 
 import {MockSafeContract} from "tests/mocks/MockSafeContract.sol";
 import {MockAutoWithdrawalVault} from "tests/mocks/MockAutoWithdrawalVault.sol";
@@ -47,7 +51,7 @@ abstract contract Unit_AutoWithdrawalModule_Shared_Test is Base {
         // Deploy AutoWithdrawalModule
         autoWithdrawalModule = IAutoWithdrawalModule(
             vm.deployCode(
-                "contracts/automation/AutoWithdrawalModule.sol:AutoWithdrawalModule",
+                Automation.AUTO_WITHDRAWAL_MODULE,
                 abi.encode(address(mockSafe), operator, address(mockVault), address(mockStrategy))
             )
         );

@@ -2,6 +2,8 @@
 pragma solidity ^0.8.0;
 
 import {Base} from "tests/Base.t.sol";
+import {Tokens} from "tests/utils/Artifacts.sol";
+
 import {IOToken} from "contracts/interfaces/IOToken.sol";
 
 contract Unit_Concrete_OSonic_ViewFunctions_Test is Base {
@@ -13,7 +15,7 @@ contract Unit_Concrete_OSonic_ViewFunctions_Test is Base {
 
     function setUp() public override {
         super.setUp();
-        oSonic = IOToken(vm.deployCode("contracts/token/OSonic.sol:OSonic"));
+        oSonic = IOToken(vm.deployCode(Tokens.OS));
     }
 
     //////////////////////////////////////////////////////

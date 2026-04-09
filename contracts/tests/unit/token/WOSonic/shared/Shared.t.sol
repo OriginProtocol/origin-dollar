@@ -1,9 +1,13 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-// Base test contract
+// --- Test base
 import {Base} from "tests/Base.t.sol";
 
+// --- Test utilities
+import {Proxies, Tokens, Vaults} from "tests/utils/Artifacts.sol";
+
+// --- External libraries
 // Interfaces
 import {IVault} from "contracts/interfaces/IVault.sol";
 import {IProxy} from "contracts/interfaces/IProxy.sol";
@@ -55,19 +59,11 @@ abstract contract Unit_WOSonic_Shared_Test is Base {
     function _deployContracts() internal {
         vm.startPrank(deployer);
 
-        IOToken oSonicImpl = IOToken(vm.deployCode("contracts/token/OSonic.sol:OSonic"));
-        address oethVaultImpl = vm.deployCode("contracts/vault/OETHVault.sol:OETHVault", abi.encode(address(weth)));
+        IOToken oSonicImpl = IOToken(vm.deployCode(Tokens.OS));
+        address oethVaultImpl = vm.deployCode(Vaults.OETH, abi.encode(address(weth)));
 
-        oethProxy = IProxy(
-            vm.deployCode(
-                "contracts/proxies/InitializeGovernedUpgradeabilityProxy.sol:InitializeGovernedUpgradeabilityProxy"
-            )
-        );
-        oethVaultProxy = IProxy(
-            vm.deployCode(
-                "contracts/proxies/InitializeGovernedUpgradeabilityProxy.sol:InitializeGovernedUpgradeabilityProxy"
-            )
-        );
+        oethProxy = IProxy(vm.deployCode(Proxies.IG_PROXY));
+        oethVaultProxy = IProxy(vm.deployCode(Proxies.IG_PROXY));
 
         oethProxy.initialize(
             address(oSonicImpl),
@@ -88,12 +84,8 @@ abstract contract Unit_WOSonic_Shared_Test is Base {
     function _deployWOSonic() internal {
         vm.startPrank(deployer);
 
-        address woSonicImpl = vm.deployCode("contracts/token/WOSonic.sol:WOSonic", abi.encode(address(oSonic)));
-        woSonicProxy = IProxy(
-            vm.deployCode(
-                "contracts/proxies/InitializeGovernedUpgradeabilityProxy.sol:InitializeGovernedUpgradeabilityProxy"
-            )
-        );
+        address woSonicImpl = vm.deployCode(Tokens.WOSONIC, abi.encode(address(oSonic)));
+        woSonicProxy = IProxy(vm.deployCode(Proxies.IG_PROXY));
         woSonicProxy.initialize(address(woSonicImpl), governor, "");
 
         vm.stopPrank();

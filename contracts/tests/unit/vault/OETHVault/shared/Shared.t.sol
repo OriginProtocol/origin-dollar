@@ -1,9 +1,13 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-// Base test contract
+// --- Test base
 import {Base} from "tests/Base.t.sol";
 
+// --- Test utilities
+import {Proxies, Tokens, Vaults} from "tests/utils/Artifacts.sol";
+
+// --- External libraries
 // Interfaces
 import {IVault} from "contracts/interfaces/IVault.sol";
 import {IProxy} from "contracts/interfaces/IProxy.sol";
@@ -60,20 +64,12 @@ abstract contract Unit_OETHVault_Shared_Test is Base {
         vm.startPrank(deployer);
 
         // -- Deploy implementations
-        IOToken oethImpl = IOToken(vm.deployCode("contracts/token/OETH.sol:OETH"));
-        address oethVaultImpl = vm.deployCode("contracts/vault/OETHVault.sol:OETHVault", abi.encode(address(weth)));
+        IOToken oethImpl = IOToken(vm.deployCode(Tokens.OETH));
+        address oethVaultImpl = vm.deployCode(Vaults.OETH, abi.encode(address(weth)));
 
         // -- Deploy Proxies
-        oethProxy = IProxy(
-            vm.deployCode(
-                "contracts/proxies/InitializeGovernedUpgradeabilityProxy.sol:InitializeGovernedUpgradeabilityProxy"
-            )
-        );
-        oethVaultProxy = IProxy(
-            vm.deployCode(
-                "contracts/proxies/InitializeGovernedUpgradeabilityProxy.sol:InitializeGovernedUpgradeabilityProxy"
-            )
-        );
+        oethProxy = IProxy(vm.deployCode(Proxies.IG_PROXY));
+        oethVaultProxy = IProxy(vm.deployCode(Proxies.IG_PROXY));
 
         // -- Initialize OETH Proxy
         oethProxy.initialize(

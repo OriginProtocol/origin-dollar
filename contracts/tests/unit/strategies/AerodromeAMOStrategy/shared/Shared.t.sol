@@ -1,7 +1,11 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
+// --- Test base
 import {Base} from "tests/Base.t.sol";
+
+// --- Test utilities
+import {Proxies, Strategies, Tokens, Vaults} from "tests/utils/Artifacts.sol";
 
 import {MockERC20} from "@solmate/test/utils/mocks/MockERC20.sol";
 import {MockWETH} from "contracts/mocks/MockWETH.sol";
@@ -75,20 +79,11 @@ abstract contract Unit_AerodromeAMOStrategy_Shared_Test is Base {
         // Deploy real OETHBase + OETHBaseVault
         vm.startPrank(deployer);
 
-        IOToken oethBaseImpl = IOToken(vm.deployCode("contracts/token/OETHBase.sol:OETHBase"));
-        address oethBaseVaultImpl =
-            vm.deployCode("contracts/vault/OETHBaseVault.sol:OETHBaseVault", abi.encode(address(mockWeth)));
+        IOToken oethBaseImpl = IOToken(vm.deployCode(Tokens.OETH_BASE));
+        address oethBaseVaultImpl = vm.deployCode(Vaults.OETH_BASE, abi.encode(address(mockWeth)));
 
-        oethBaseProxy = IProxy(
-            vm.deployCode(
-                "contracts/proxies/InitializeGovernedUpgradeabilityProxy.sol:InitializeGovernedUpgradeabilityProxy"
-            )
-        );
-        oethBaseVaultProxy = IProxy(
-            vm.deployCode(
-                "contracts/proxies/InitializeGovernedUpgradeabilityProxy.sol:InitializeGovernedUpgradeabilityProxy"
-            )
-        );
+        oethBaseProxy = IProxy(vm.deployCode(Proxies.IG_PROXY));
+        oethBaseVaultProxy = IProxy(vm.deployCode(Proxies.IG_PROXY));
 
         oethBaseProxy.initialize(
             address(oethBaseImpl),
@@ -132,7 +127,7 @@ abstract contract Unit_AerodromeAMOStrategy_Shared_Test is Base {
         // lowerBoundingTick = -1, upperBoundingTick = 0, tickClosestToParity = 0
         aerodromeAMOStrategy = IAerodromeAMOStrategy(
             vm.deployCode(
-                "contracts/strategies/aerodrome/AerodromeAMOStrategy.sol:AerodromeAMOStrategy",
+                Strategies.AERODROME_AMO_STRATEGY,
                 abi.encode(
                     address(mockCLPool),
                     address(oethBaseVault),

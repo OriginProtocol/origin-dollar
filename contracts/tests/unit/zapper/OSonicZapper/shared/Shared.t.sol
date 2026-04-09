@@ -3,6 +3,9 @@ pragma solidity ^0.8.0;
 
 import {Base} from "tests/Base.t.sol";
 
+// --- Test utilities
+import {Proxies, Tokens, Vaults, Zappers} from "tests/utils/Artifacts.sol";
+
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IOToken} from "contracts/interfaces/IOToken.sol";
@@ -64,11 +67,11 @@ abstract contract Unit_OSonicZapper_Shared_Test is Base {
     function _deployContracts() internal {
         vm.startPrank(deployer);
 
-        address oSonicImpl = vm.deployCode("contracts/token/OSonic.sol:OSonic");
-        address vaultImpl = vm.deployCode("contracts/vault/OETHVault.sol:OETHVault", abi.encode(WS_ADDRESS));
+        address oSonicImpl = vm.deployCode(Tokens.OS);
+        address vaultImpl = vm.deployCode(Vaults.OETH, abi.encode(WS_ADDRESS));
 
-        oethProxy = IProxy(vm.deployCode("contracts/proxies/Proxies.sol:OETHProxy"));
-        oethVaultProxy = IProxy(vm.deployCode("contracts/proxies/Proxies.sol:OETHVaultProxy"));
+        oethProxy = IProxy(vm.deployCode(Proxies.OETH_PROXY));
+        oethVaultProxy = IProxy(vm.deployCode(Proxies.OETH_VAULT_PROXY));
 
         oethProxy.initialize(
             oSonicImpl, governor, abi.encodeWithSignature("initialize(address,uint256)", address(oethVaultProxy), 1e27)
@@ -87,8 +90,8 @@ abstract contract Unit_OSonicZapper_Shared_Test is Base {
     function _deployWOSonic() internal {
         vm.startPrank(deployer);
 
-        address woSonicImpl = vm.deployCode("contracts/token/WOSonic.sol:WOSonic", abi.encode(ERC20(address(oSonic))));
-        woSonicProxy = IProxy(vm.deployCode("contracts/proxies/Proxies.sol:WOETHProxy"));
+        address woSonicImpl = vm.deployCode(Tokens.WOSONIC, abi.encode(ERC20(address(oSonic))));
+        woSonicProxy = IProxy(vm.deployCode(Proxies.WOETH_PROXY));
         woSonicProxy.initialize(woSonicImpl, governor, "");
 
         vm.stopPrank();
@@ -101,10 +104,7 @@ abstract contract Unit_OSonicZapper_Shared_Test is Base {
 
     function _deployZapper() internal {
         oSonicZapper = IOSonicZapper(
-            vm.deployCode(
-                "contracts/zapper/OSonicZapper.sol:OSonicZapper",
-                abi.encode(address(oSonic), address(woSonic), address(oethVault))
-            )
+            vm.deployCode(Zappers.OS_ZAPPER, abi.encode(address(oSonic), address(woSonic), address(oethVault)))
         );
     }
 

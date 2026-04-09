@@ -1,7 +1,12 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
+// --- Test base
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+
+// --- Test utilities
+import {Strategies} from "tests/utils/Artifacts.sol";
+
 import {
     Unit_OETHSupernovaAMOStrategy_Shared_Test
 } from "tests/unit/strategies/OETHSupernovaAMOStrategy/shared/Shared.t.sol";
@@ -34,7 +39,7 @@ contract Unit_Concrete_OETHSupernovaAMOStrategy_Initialize_Test is Unit_OETHSupe
     function test_initialize_RevertWhen_nonGovernor() public {
         IOETHSupernovaAMOStrategy freshStrategy = IOETHSupernovaAMOStrategy(
             vm.deployCode(
-                "contracts/strategies/algebra/OETHSupernovaAMOStrategy.sol:OETHSupernovaAMOStrategy",
+                Strategies.OETH_SUPERNOVA_AMO_STRATEGY,
                 abi.encode(address(mockSwapXPair), address(oethVault), address(mockSwapXGauge))
             )
         );

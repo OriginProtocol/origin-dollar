@@ -1,17 +1,18 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-// Base test contract
+// --- Test base
 import {Base} from "tests/Base.t.sol";
 
-// Interfaces
+// --- Test utilities
+import {Proxies, Strategies, Tokens, Vaults} from "tests/utils/Artifacts.sol";
+
 import {IVault} from "contracts/interfaces/IVault.sol";
 import {IProxy} from "contracts/interfaces/IProxy.sol";
 import {IOToken} from "contracts/interfaces/IOToken.sol";
 import {ICurveAMOStrategy} from "contracts/interfaces/strategies/ICurveAMOStrategy.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
-// Mocks
 import {MockERC20} from "@solmate/test/utils/mocks/MockERC20.sol";
 import {MockWETH} from "contracts/mocks/MockWETH.sol";
 import {MockCurvePool} from "tests/mocks/MockCurvePool.sol";
@@ -66,19 +67,11 @@ abstract contract Unit_CurveAMOStrategy_Shared_Test is Base {
         // Deploy real OETH + OETHVault
         vm.startPrank(deployer);
 
-        IOToken oethImpl = IOToken(vm.deployCode("contracts/token/OETH.sol:OETH"));
-        address oethVaultImpl = vm.deployCode("contracts/vault/OETHVault.sol:OETHVault", abi.encode(address(mockWeth)));
+        IOToken oethImpl = IOToken(vm.deployCode(Tokens.OETH));
+        address oethVaultImpl = vm.deployCode(Vaults.OETH, abi.encode(address(mockWeth)));
 
-        oethProxy = IProxy(
-            vm.deployCode(
-                "contracts/proxies/InitializeGovernedUpgradeabilityProxy.sol:InitializeGovernedUpgradeabilityProxy"
-            )
-        );
-        oethVaultProxy = IProxy(
-            vm.deployCode(
-                "contracts/proxies/InitializeGovernedUpgradeabilityProxy.sol:InitializeGovernedUpgradeabilityProxy"
-            )
-        );
+        oethProxy = IProxy(vm.deployCode(Proxies.IG_PROXY));
+        oethVaultProxy = IProxy(vm.deployCode(Proxies.IG_PROXY));
 
         oethProxy.initialize(
             address(oethImpl),
@@ -114,7 +107,7 @@ abstract contract Unit_CurveAMOStrategy_Shared_Test is Base {
         // coin[0] = weth (hardAsset), coin[1] = oeth (oToken)
         curveAMOStrategy = ICurveAMOStrategy(
             vm.deployCode(
-                "contracts/strategies/CurveAMOStrategy.sol:CurveAMOStrategy",
+                Strategies.CURVE_AMO_STRATEGY,
                 abi.encode(
                     address(curvePool),
                     address(oethVault),

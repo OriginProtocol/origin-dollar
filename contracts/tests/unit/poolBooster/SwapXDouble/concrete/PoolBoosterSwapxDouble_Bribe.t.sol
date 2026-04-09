@@ -2,6 +2,10 @@
 pragma solidity ^0.8.0;
 
 import {Unit_SwapXDouble_Shared_Test} from "tests/unit/poolBooster/SwapXDouble/shared/Shared.t.sol";
+
+// --- Test utilities
+import {PoolBoosters} from "tests/utils/Artifacts.sol";
+
 import {IPoolBooster} from "contracts/interfaces/poolBooster/IPoolBooster.sol";
 import {IBribe} from "contracts/interfaces/poolBooster/ISwapXAlgebraBribe.sol";
 import {IPoolBoosterSwapxDouble} from "contracts/interfaces/poolBooster/IPoolBoosterSwapxDouble.sol";
@@ -58,7 +62,7 @@ contract Unit_Concrete_PoolBoosterSwapxDouble_Bribe_Test is Unit_SwapXDouble_Sha
         // Deploy new booster with 30% split
         IPoolBoosterSwapxDouble asymmetricBooster = IPoolBoosterSwapxDouble(
             vm.deployCode(
-                "contracts/poolBooster/PoolBoosterSwapxDouble.sol:PoolBoosterSwapxDouble",
+                PoolBoosters.POOL_BOOSTER_SWAPX_DOUBLE,
                 abi.encode(mockBribeContractOS, mockBribeContractOther, address(oSonic), 30e16)
             )
         );

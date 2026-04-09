@@ -1,7 +1,11 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
+// --- Test base
 import {Base} from "tests/Base.t.sol";
+
+// --- Test utilities
+import {Proxies, Strategies, Tokens, Vaults} from "tests/utils/Artifacts.sol";
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {MockERC20} from "@solmate/test/utils/mocks/MockERC20.sol";
@@ -48,19 +52,11 @@ abstract contract Unit_VaultValueChecker_Shared_Test is Base {
 
         vm.startPrank(deployer);
 
-        IOToken ousdImpl = IOToken(vm.deployCode("contracts/token/OUSD.sol:OUSD"));
-        address ousdVaultImpl = vm.deployCode("contracts/vault/OUSDVault.sol:OUSDVault", abi.encode(address(usdc)));
+        IOToken ousdImpl = IOToken(vm.deployCode(Tokens.OUSD));
+        address ousdVaultImpl = vm.deployCode(Vaults.OUSD, abi.encode(address(usdc)));
 
-        ousdProxy = IProxy(
-            vm.deployCode(
-                "contracts/proxies/InitializeGovernedUpgradeabilityProxy.sol:InitializeGovernedUpgradeabilityProxy"
-            )
-        );
-        ousdVaultProxy = IProxy(
-            vm.deployCode(
-                "contracts/proxies/InitializeGovernedUpgradeabilityProxy.sol:InitializeGovernedUpgradeabilityProxy"
-            )
-        );
+        ousdProxy = IProxy(vm.deployCode(Proxies.IG_PROXY));
+        ousdVaultProxy = IProxy(vm.deployCode(Proxies.IG_PROXY));
 
         ousdProxy.initialize(
             address(ousdImpl),
@@ -90,19 +86,11 @@ abstract contract Unit_VaultValueChecker_Shared_Test is Base {
 
         vm.startPrank(deployer);
 
-        IOToken oethImpl = IOToken(vm.deployCode("contracts/token/OETH.sol:OETH"));
-        address oethVaultImpl = vm.deployCode("contracts/vault/OETHVault.sol:OETHVault", abi.encode(address(mockWeth)));
+        IOToken oethImpl = IOToken(vm.deployCode(Tokens.OETH));
+        address oethVaultImpl = vm.deployCode(Vaults.OETH, abi.encode(address(mockWeth)));
 
-        oethProxy = IProxy(
-            vm.deployCode(
-                "contracts/proxies/InitializeGovernedUpgradeabilityProxy.sol:InitializeGovernedUpgradeabilityProxy"
-            )
-        );
-        oethVaultProxy = IProxy(
-            vm.deployCode(
-                "contracts/proxies/InitializeGovernedUpgradeabilityProxy.sol:InitializeGovernedUpgradeabilityProxy"
-            )
-        );
+        oethProxy = IProxy(vm.deployCode(Proxies.IG_PROXY));
+        oethVaultProxy = IProxy(vm.deployCode(Proxies.IG_PROXY));
 
         oethProxy.initialize(
             address(oethImpl),
@@ -128,16 +116,10 @@ abstract contract Unit_VaultValueChecker_Shared_Test is Base {
 
         // --- Deploy checkers ---
         ousdChecker = IVaultValueChecker(
-            vm.deployCode(
-                "contracts/strategies/VaultValueChecker.sol:VaultValueChecker",
-                abi.encode(address(ousdVault), address(ousd))
-            )
+            vm.deployCode(Strategies.VAULT_VALUE_CHECKER, abi.encode(address(ousdVault), address(ousd)))
         );
         oethChecker = IVaultValueChecker(
-            vm.deployCode(
-                "contracts/strategies/VaultValueChecker.sol:OETHVaultValueChecker",
-                abi.encode(address(oethVault), address(oeth))
-            )
+            vm.deployCode(Strategies.OETH_VAULT_VALUE_CHECKER, abi.encode(address(oethVault), address(oeth)))
         );
     }
 

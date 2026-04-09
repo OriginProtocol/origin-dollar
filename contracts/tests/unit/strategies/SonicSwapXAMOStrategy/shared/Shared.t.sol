@@ -1,7 +1,12 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
+// --- Test base
 import {Base} from "tests/Base.t.sol";
+
+// --- Test utilities
+import {Proxies, Strategies, Tokens, Vaults} from "tests/utils/Artifacts.sol";
+
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {MockERC20} from "@solmate/test/utils/mocks/MockERC20.sol";
 import {MockWrappedSonic} from "tests/mocks/MockWrappedSonic.sol";
@@ -58,20 +63,11 @@ abstract contract Unit_SonicSwapXAMOStrategy_Shared_Test is Base {
         // Deploy OSonic + OSVault through proxies
         vm.startPrank(deployer);
 
-        IOToken oSonicImpl = IOToken(vm.deployCode("contracts/token/OSonic.sol:OSonic"));
-        address oSonicVaultImpl =
-            vm.deployCode("contracts/vault/OSVault.sol:OSVault", abi.encode(address(mockWrappedSonic)));
+        IOToken oSonicImpl = IOToken(vm.deployCode(Tokens.OS));
+        address oSonicVaultImpl = vm.deployCode(Vaults.OS, abi.encode(address(mockWrappedSonic)));
 
-        oSonicProxy = IProxy(
-            vm.deployCode(
-                "contracts/proxies/InitializeGovernedUpgradeabilityProxy.sol:InitializeGovernedUpgradeabilityProxy"
-            )
-        );
-        oSonicVaultProxy = IProxy(
-            vm.deployCode(
-                "contracts/proxies/InitializeGovernedUpgradeabilityProxy.sol:InitializeGovernedUpgradeabilityProxy"
-            )
-        );
+        oSonicProxy = IProxy(vm.deployCode(Proxies.IG_PROXY));
+        oSonicVaultProxy = IProxy(vm.deployCode(Proxies.IG_PROXY));
 
         oSonicProxy.initialize(
             address(oSonicImpl),
@@ -105,7 +101,7 @@ abstract contract Unit_SonicSwapXAMOStrategy_Shared_Test is Base {
         // Deploy SonicSwapXAMOStrategy
         sonicSwapXAMOStrategy = ISonicSwapXAMOStrategy(
             vm.deployCode(
-                "contracts/strategies/sonic/SonicSwapXAMOStrategy.sol:SonicSwapXAMOStrategy",
+                Strategies.SONIC_SWAPX_AMO_STRATEGY,
                 abi.encode(address(mockSwapXPair), address(oSonicVault), address(mockSwapXGauge))
             )
         );

@@ -1,7 +1,12 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
+// --- Test base
 import {Base} from "tests/Base.t.sol";
+
+// --- Test utilities
+import {Strategies} from "tests/utils/Artifacts.sol";
+
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {MockERC20} from "@solmate/test/utils/mocks/MockERC20.sol";
 import {MockFailableERC4626Vault} from "tests/mocks/MockFailableERC4626Vault.sol";
@@ -40,7 +45,7 @@ contract Unit_Concrete_CrossChainRemoteStrategy_DepositFailure_Test is Base {
 
         strategy = ICrossChainRemoteStrategy(
             vm.deployCode(
-                "contracts/strategies/crosschain/CrossChainRemoteStrategy.sol:CrossChainRemoteStrategy",
+                Strategies.CROSS_CHAIN_REMOTE_STRATEGY,
                 abi.encode(
                     address(failableVault), // platformAddress
                     address(0), // vaultAddress

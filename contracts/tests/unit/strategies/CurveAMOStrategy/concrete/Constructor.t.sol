@@ -1,7 +1,12 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
+// --- Test base
 import {Unit_CurveAMOStrategy_Shared_Test} from "tests/unit/strategies/CurveAMOStrategy/shared/Shared.t.sol";
+
+// --- Test utilities
+import {Strategies} from "tests/utils/Artifacts.sol";
+
 import {MockCurvePool} from "tests/mocks/MockCurvePool.sol";
 import {MockCurveGauge} from "tests/mocks/MockCurveGauge.sol";
 import {MockERC20} from "@solmate/test/utils/mocks/MockERC20.sol";
@@ -33,7 +38,7 @@ contract Unit_Concrete_CurveAMOStrategy_Constructor_Test is Unit_CurveAMOStrateg
 
         vm.expectRevert("Invalid coin indexes");
         vm.deployCode(
-            "contracts/strategies/CurveAMOStrategy.sol:CurveAMOStrategy",
+            Strategies.CURVE_AMO_STRATEGY,
             abi.encode(
                 address(mismatchPool),
                 address(oethVault),
@@ -51,7 +56,7 @@ contract Unit_Concrete_CurveAMOStrategy_Constructor_Test is Unit_CurveAMOStrateg
 
         vm.expectRevert("Invalid pool");
         vm.deployCode(
-            "contracts/strategies/CurveAMOStrategy.sol:CurveAMOStrategy",
+            Strategies.CURVE_AMO_STRATEGY,
             abi.encode(
                 address(curvePool),
                 address(oethVault),
