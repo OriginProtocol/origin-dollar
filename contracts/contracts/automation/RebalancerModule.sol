@@ -184,7 +184,7 @@ contract RebalancerModule is AbstractSafeModule {
     /**
      * @notice Set the maximum percentage of vault TVL that can be moved per day.
      * @param _maxDailyMovementBps Limit in basis points (e.g. 20000 = 200%).
-     *        Set to 0 to block all movements.
+     *        Set to 0 for unlimited daily movement.
      */
     function setMaxDailyMovementBps(uint256 _maxDailyMovementBps)
         external
@@ -219,9 +219,14 @@ contract RebalancerModule is AbstractSafeModule {
      *         large mint/redeem), the limit will reflect the TVL at call time —
      *         this is acceptable since the limit is a safety backstop, not a
      *         precise cap.
+     *         If maxDailyMovementBps is set to 0, this returns type(uint256).max
+     *         as a sentinel value to represent an unlimited cap.
      * @return limit Amount in asset units (vault asset decimals).
      */
     function dailyLimit() public view returns (uint256 limit) {
+        if (maxDailyMovementBps == 0) {
+            return type(uint256).max;
+        }
         limit = (vault.totalValue() * maxDailyMovementBps) / 10000;
     }
 

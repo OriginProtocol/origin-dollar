@@ -617,6 +617,14 @@ describe("Unit Test: OUSD Rebalancer Safe Module", function () {
       expect(await rebalancerModule.dailyLimit()).to.eq(ousdUnits("10000000"));
     });
 
+    it("Should return unlimited dailyLimit when maxDailyMovementBps is 0", async () => {
+      const { rebalancerModule, safeSigner } = f;
+      await rebalancerModule.connect(safeSigner).setMaxDailyMovementBps(0);
+      expect(await rebalancerModule.dailyLimit()).to.eq(
+        ethers.constants.MaxUint256
+      );
+    });
+
     it("Should return correct remainingDailyLimit after movements", async () => {
       const { rebalancerModule, mockVault, mockStrategy, safeSigner } = f;
       // TVL = $10M, limit 1% = $100K
@@ -719,25 +727,62 @@ describe("Unit Test: OUSD Rebalancer Safe Module", function () {
       );
     });
 
-    it("Should block all movements when maxDailyMovementBps is 0", async () => {
+    it("Should keep remainingDailyLimit effectively unlimited when maxDailyMovementBps is 0", async () => {
       const { rebalancerModule, mockVault, mockStrategy, safeSigner } = f;
       await rebalancerModule.connect(safeSigner).setMaxDailyMovementBps(0);
 
       await mockVault.setWithdrawalQueueMetadata(
-        ousdUnits("1000"),
+        ousdUnits("1000000"),
         ousdUnits("0")
       );
 
+      const moveAmount = ousdUnits("60000");
+      await rebalancerModule
+        .connect(safeSigner)
+        .processWithdrawalsAndDeposits(
+          [mockStrategy.address],
+          [moveAmount],
+          [],
+          []
+        );
+
+      expect(await rebalancerModule.remainingDailyLimit()).to.eq(
+        ethers.constants.MaxUint256.sub(moveAmount)
+      );
+    });
+
+    it("Should allow movement above finite cap after switching maxDailyMovementBps to 0", async () => {
+      const { rebalancerModule, mockVault, mockStrategy, safeSigner } = f;
+      // TVL = $10M, set finite cap to 1% = $100K
+      await rebalancerModule.connect(safeSigner).setMaxDailyMovementBps(100);
+
+      await mockVault.setWithdrawalQueueMetadata(
+        ousdUnits("1000000"),
+        ousdUnits("0")
+      );
+
+      const largeMove = ousdUnits("200000");
       await expect(
         rebalancerModule
           .connect(safeSigner)
           .processWithdrawalsAndDeposits(
             [mockStrategy.address],
-            [ousdUnits("1")],
+            [largeMove],
             [],
             []
           )
       ).to.be.revertedWith("Daily movement limit exceeded");
+
+      await rebalancerModule.connect(safeSigner).setMaxDailyMovementBps(0);
+      const tx = await rebalancerModule
+        .connect(safeSigner)
+        .processWithdrawalsAndDeposits(
+          [mockStrategy.address],
+          [largeMove],
+          [],
+          []
+        );
+      await expect(tx).to.emit(mockVault, "MockedWithdrawal");
     });
   });
 });
