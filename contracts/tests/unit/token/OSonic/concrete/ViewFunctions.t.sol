@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 import {Base} from "tests/Base.t.sol";
-import {Tokens} from "tests/utils/Artifacts.sol";
+import {Tokens} from "tests/utils/artifacts/Tokens.sol";
 
 import {IOToken} from "contracts/interfaces/IOToken.sol";
 

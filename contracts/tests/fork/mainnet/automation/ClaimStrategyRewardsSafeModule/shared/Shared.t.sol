@@ -5,7 +5,7 @@ pragma solidity ^0.8.0;
 import {BaseFork} from "tests/fork/BaseFork.t.sol";
 
 // --- Test utilities
-import {Automation} from "tests/utils/Artifacts.sol";
+import {Automation} from "tests/utils/artifacts/Automation.sol";
 import {CrossChain, Mainnet} from "tests/utils/Addresses.sol";
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";

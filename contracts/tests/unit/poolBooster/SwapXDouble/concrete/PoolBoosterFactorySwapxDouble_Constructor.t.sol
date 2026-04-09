@@ -4,7 +4,7 @@ pragma solidity ^0.8.0;
 import {Unit_SwapXDouble_Shared_Test} from "tests/unit/poolBooster/SwapXDouble/shared/Shared.t.sol";
 
 // --- Test utilities
-import {PoolBoosters} from "tests/utils/Artifacts.sol";
+import {PoolBoosters} from "tests/utils/artifacts/PoolBoosters.sol";
 
 contract Unit_Concrete_PoolBoosterFactorySwapxDouble_Constructor_Test is Unit_SwapXDouble_Shared_Test {
     function test_constructor() public view {

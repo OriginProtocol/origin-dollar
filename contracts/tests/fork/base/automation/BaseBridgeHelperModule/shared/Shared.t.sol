@@ -6,7 +6,7 @@ import {BaseFork} from "tests/fork/BaseFork.t.sol";
 
 // --- Test utilities
 import {CrossChain, Base} from "tests/utils/Addresses.sol";
-import {Automation} from "tests/utils/Artifacts.sol";
+import {Automation} from "tests/utils/artifacts/Automation.sol";
 
 // --- External libraries
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";

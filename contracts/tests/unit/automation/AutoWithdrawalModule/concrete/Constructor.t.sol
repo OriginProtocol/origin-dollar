@@ -5,7 +5,7 @@ pragma solidity ^0.8.0;
 import {Unit_AutoWithdrawalModule_Shared_Test} from "tests/unit/automation/AutoWithdrawalModule/shared/Shared.t.sol";
 
 // --- Test utilities
-import {Automation} from "tests/utils/Artifacts.sol";
+import {Automation} from "tests/utils/artifacts/Automation.sol";
 
 contract Unit_Concrete_AutoWithdrawalModule_Constructor_Test is Unit_AutoWithdrawalModule_Shared_Test {
     //////////////////////////////////////////////////////

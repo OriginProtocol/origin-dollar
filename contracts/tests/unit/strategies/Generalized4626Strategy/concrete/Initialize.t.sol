@@ -7,7 +7,7 @@ import {
 } from "tests/unit/strategies/Generalized4626Strategy/shared/Shared.t.sol";
 
 // --- Test utilities
-import {Strategies} from "tests/utils/Artifacts.sol";
+import {Strategies} from "tests/utils/artifacts/Strategies.sol";
 
 import {IGeneralized4626Strategy} from "contracts/interfaces/strategies/IGeneralized4626Strategy.sol";
 

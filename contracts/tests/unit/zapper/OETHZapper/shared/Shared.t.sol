@@ -4,7 +4,10 @@ pragma solidity ^0.8.0;
 import {Base} from "tests/Base.t.sol";
 
 // --- Test utilities
-import {Proxies, Tokens, Vaults, Zappers} from "tests/utils/Artifacts.sol";
+import {Proxies} from "tests/utils/artifacts/Proxies.sol";
+import {Tokens} from "tests/utils/artifacts/Tokens.sol";
+import {Vaults} from "tests/utils/artifacts/Vaults.sol";
+import {Zappers} from "tests/utils/artifacts/Zappers.sol";
 
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";

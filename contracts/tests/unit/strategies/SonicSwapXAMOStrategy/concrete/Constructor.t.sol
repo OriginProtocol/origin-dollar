@@ -5,7 +5,10 @@ pragma solidity ^0.8.0;
 import {Unit_SonicSwapXAMOStrategy_Shared_Test} from "tests/unit/strategies/SonicSwapXAMOStrategy/shared/Shared.t.sol";
 
 // --- Test utilities
-import {Proxies, Strategies, Tokens, Vaults} from "tests/utils/Artifacts.sol";
+import {Proxies} from "tests/utils/artifacts/Proxies.sol";
+import {Strategies} from "tests/utils/artifacts/Strategies.sol";
+import {Tokens} from "tests/utils/artifacts/Tokens.sol";
+import {Vaults} from "tests/utils/artifacts/Vaults.sol";
 
 import {ISonicSwapXAMOStrategy} from "contracts/interfaces/strategies/ISonicSwapXAMOStrategy.sol";
 import {IVault} from "contracts/interfaces/IVault.sol";

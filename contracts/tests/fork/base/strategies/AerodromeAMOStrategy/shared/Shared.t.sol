@@ -6,7 +6,10 @@ import {BaseFork} from "tests/fork/BaseFork.t.sol";
 
 // --- Test utilities
 import {Base as BaseAddresses} from "tests/utils/Addresses.sol";
-import {Proxies, Strategies, Tokens, Vaults} from "tests/utils/Artifacts.sol";
+import {Proxies} from "tests/utils/artifacts/Proxies.sol";
+import {Strategies} from "tests/utils/artifacts/Strategies.sol";
+import {Tokens} from "tests/utils/artifacts/Tokens.sol";
+import {Vaults} from "tests/utils/artifacts/Vaults.sol";
 
 // --- External libraries
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";

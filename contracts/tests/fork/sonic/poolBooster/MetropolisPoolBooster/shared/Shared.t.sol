@@ -6,7 +6,7 @@ import {BaseFork} from "tests/fork/BaseFork.t.sol";
 
 // --- Test utilities
 import {Sonic} from "tests/utils/Addresses.sol";
-import {PoolBoosters} from "tests/utils/Artifacts.sol";
+import {PoolBoosters} from "tests/utils/artifacts/PoolBoosters.sol";
 
 // --- External libraries
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";

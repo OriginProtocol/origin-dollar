@@ -4,7 +4,8 @@ pragma solidity ^0.8.0;
 import {Unit_OUSD_Shared_Test} from "tests/unit/token/OUSD/shared/Shared.t.sol";
 import {IOToken} from "contracts/interfaces/IOToken.sol";
 import {IProxy} from "contracts/interfaces/IProxy.sol";
-import {Proxies, Tokens} from "tests/utils/Artifacts.sol";
+import {Proxies} from "tests/utils/artifacts/Proxies.sol";
+import {Tokens} from "tests/utils/artifacts/Tokens.sol";
 
 contract Unit_Concrete_OUSD_Initialize_Test is Unit_OUSD_Shared_Test {
     //////////////////////////////////////////////////////

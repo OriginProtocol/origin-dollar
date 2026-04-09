@@ -5,7 +5,7 @@ pragma solidity ^0.8.0;
 import {Unit_BridgedWOETHStrategy_Shared_Test} from "tests/unit/strategies/BridgedWOETHStrategy/shared/Shared.t.sol";
 
 // --- Test utilities
-import {Strategies} from "tests/utils/Artifacts.sol";
+import {Strategies} from "tests/utils/artifacts/Strategies.sol";
 
 import {IBridgedWOETHStrategy} from "contracts/interfaces/strategies/IBridgedWOETHStrategy.sol";
 

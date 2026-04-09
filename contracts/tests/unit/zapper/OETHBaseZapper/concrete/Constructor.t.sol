@@ -4,7 +4,7 @@ pragma solidity ^0.8.0;
 import {Unit_OETHZapper_Shared_Test} from "tests/unit/zapper/OETHZapper/shared/Shared.t.sol";
 
 // --- Test utilities
-import {Zappers} from "tests/utils/Artifacts.sol";
+import {Zappers} from "tests/utils/artifacts/Zappers.sol";
 
 import {IOETHZapper} from "contracts/interfaces/IOETHZapper.sol";
 import {MockWETH} from "contracts/mocks/MockWETH.sol";

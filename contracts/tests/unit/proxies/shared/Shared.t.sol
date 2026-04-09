@@ -5,7 +5,7 @@ pragma solidity ^0.8.0;
 import {Base} from "tests/Base.t.sol";
 
 // --- Test utilities
-import {Proxies} from "tests/utils/Artifacts.sol";
+import {Proxies} from "tests/utils/artifacts/Proxies.sol";
 
 import {IProxy} from "contracts/interfaces/IProxy.sol";
 import {MockImplementation, MockImplementationV2} from "tests/mocks/MockImplementation.sol";

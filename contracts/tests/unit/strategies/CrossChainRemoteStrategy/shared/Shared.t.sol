@@ -5,7 +5,7 @@ pragma solidity ^0.8.0;
 import {Base} from "tests/Base.t.sol";
 
 // --- Test utilities
-import {Strategies} from "tests/utils/Artifacts.sol";
+import {Strategies} from "tests/utils/artifacts/Strategies.sol";
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {MockERC20} from "@solmate/test/utils/mocks/MockERC20.sol";

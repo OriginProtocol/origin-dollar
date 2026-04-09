@@ -4,7 +4,7 @@ pragma solidity ^0.8.0;
 import {Unit_SwapXSingle_Shared_Test} from "tests/unit/poolBooster/SwapXSingle/shared/Shared.t.sol";
 
 // --- Test utilities
-import {PoolBoosters} from "tests/utils/Artifacts.sol";
+import {PoolBoosters} from "tests/utils/artifacts/PoolBoosters.sol";
 
 import {IPoolBoostCentralRegistryFull} from "contracts/interfaces/poolBooster/IPoolBoostCentralRegistryFull.sol";
 

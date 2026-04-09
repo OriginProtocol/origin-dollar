@@ -7,7 +7,10 @@ import {
 } from "tests/unit/strategies/OETHSupernovaAMOStrategy/shared/Shared.t.sol";
 
 // --- Test utilities
-import {Proxies, Strategies, Tokens, Vaults} from "tests/utils/Artifacts.sol";
+import {Proxies} from "tests/utils/artifacts/Proxies.sol";
+import {Strategies} from "tests/utils/artifacts/Strategies.sol";
+import {Tokens} from "tests/utils/artifacts/Tokens.sol";
+import {Vaults} from "tests/utils/artifacts/Vaults.sol";
 
 import {IOETHSupernovaAMOStrategy} from "contracts/interfaces/strategies/IOETHSupernovaAMOStrategy.sol";
 import {IVault} from "contracts/interfaces/IVault.sol";

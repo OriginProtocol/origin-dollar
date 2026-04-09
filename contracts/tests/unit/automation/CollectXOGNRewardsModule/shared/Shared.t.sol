@@ -5,7 +5,7 @@ pragma solidity ^0.8.0;
 import {Base} from "tests/Base.t.sol";
 
 // --- Test utilities
-import {Automation} from "tests/utils/Artifacts.sol";
+import {Automation} from "tests/utils/artifacts/Automation.sol";
 
 import {MockSafeContract} from "tests/mocks/MockSafeContract.sol";
 import {MockERC20} from "@solmate/test/utils/mocks/MockERC20.sol";

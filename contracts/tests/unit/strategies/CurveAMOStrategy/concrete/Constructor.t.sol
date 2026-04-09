@@ -5,7 +5,7 @@ pragma solidity ^0.8.0;
 import {Unit_CurveAMOStrategy_Shared_Test} from "tests/unit/strategies/CurveAMOStrategy/shared/Shared.t.sol";
 
 // --- Test utilities
-import {Strategies} from "tests/utils/Artifacts.sol";
+import {Strategies} from "tests/utils/artifacts/Strategies.sol";
 
 import {MockCurvePool} from "tests/mocks/MockCurvePool.sol";
 import {MockCurveGauge} from "tests/mocks/MockCurveGauge.sol";
