@@ -187,6 +187,15 @@ const processCctpBridgeTransactions = async ({
     blockLookback,
   });
   for (const txHash of allTxHashes) {
+    const txStoreKey = `cctp_message_${txHash}`;
+    const txStoredValue = await store.get(txStoreKey);
+    if (txStoredValue === "processed") {
+      console.log(
+        `Transaction with hash ${txHash} has already been processed via legacy tx-level key ${txStoreKey}. Skipping...`
+      );
+      continue;
+    }
+
     const cctpMessages = await fetchAttestations({
       transactionHash: txHash,
       cctpChainId: cctpSourceDomainId,
@@ -198,6 +207,8 @@ const processCctpBridgeTransactions = async ({
 
     const destinationAddress =
       config.cctpIntegrationContractDestination.address || "";
+    let hasEligibleMessage = false;
+    let hasEligibleMessageProcessed = false;
 
     for (const cctpMessage of cctpMessages) {
       const messageId =
@@ -205,23 +216,24 @@ const processCctpBridgeTransactions = async ({
       const storeKey = `cctp_message_${messageId}`;
       const storedValue = await store.get(storeKey);
 
+      const messageTargetsDestination = isMessageForDestination({
+        decodedMessage: cctpMessage.decodedMessage,
+        destinationCaller: destinationAddress,
+        destinationDomainId: cctpDestinationDomainId,
+      });
+      if (!messageTargetsDestination) {
+        console.log(
+          `Skipping message ${messageId} from tx ${txHash} because it does not target destination caller ${destinationAddress} on domain ${cctpDestinationDomainId}`
+        );
+        continue;
+      }
+      hasEligibleMessage = true;
+
       if (storedValue === "processed") {
         console.log(
           `Message with key ${storeKey} has already been processed. Skipping...`
         );
-        continue;
-      }
-
-      if (
-        !isMessageForDestination({
-          decodedMessage: cctpMessage.decodedMessage,
-          destinationCaller: destinationAddress,
-          destinationDomainId: cctpDestinationDomainId,
-        })
-      ) {
-        console.log(
-          `Skipping message ${messageId} from tx ${txHash} because it does not target destination caller ${destinationAddress} on domain ${cctpDestinationDomainId}`
-        );
+        hasEligibleMessageProcessed = true;
         continue;
       }
 
@@ -264,10 +276,24 @@ const processCctpBridgeTransactions = async ({
       if (receipt.status === 1) {
         console.log("SUCCESS: Transaction executed successfully!");
         await store.put(storeKey, "processed");
+        hasEligibleMessageProcessed = true;
       } else {
         console.log("FAILURE: Transaction reverted!");
         throw new Error(`Transaction reverted - status: ${receipt.status}`);
       }
+    }
+
+    const shouldMarkTxProcessed =
+      !hasEligibleMessage || hasEligibleMessageProcessed;
+    if (shouldMarkTxProcessed) {
+      await store.put(txStoreKey, "processed");
+      console.log(
+        `Marked tx ${txHash} as processed using tx-level key ${txStoreKey}`
+      );
+    } else {
+      console.log(
+        `Did not mark tx-level key ${txStoreKey} because eligible messages exist but none were fully processed for tx ${txHash}`
+      );
     }
   }
 };
