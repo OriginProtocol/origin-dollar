@@ -208,13 +208,22 @@ const processCctpBridgeTransactions = async ({
     const destinationAddress =
       config.cctpIntegrationContractDestination.address || "";
     let hasEligibleMessage = false;
-    let hasEligibleMessageProcessed = false;
+    let hasUnprocessedEligibleMessages = false;
 
     for (const cctpMessage of cctpMessages) {
       const messageId =
         cctpMessage.eventNonce || `${txHash}_index_${cctpMessage.index}`;
       const storeKey = `cctp_message_${messageId}`;
       const storedValue = await store.get(storeKey);
+
+      if (cctpMessage.status !== "complete") {
+        console.log(
+          `Message ${messageId} from tx ${txHash} is not attested yet (status: ${cctpMessage.status}). Skipping...`
+        );
+        hasEligibleMessage = true;
+        hasUnprocessedEligibleMessages = true;
+        continue;
+      }
 
       const messageTargetsDestination = isMessageForDestination({
         decodedMessage: cctpMessage.decodedMessage,
@@ -233,14 +242,6 @@ const processCctpBridgeTransactions = async ({
         console.log(
           `Message with key ${storeKey} has already been processed. Skipping...`
         );
-        hasEligibleMessageProcessed = true;
-        continue;
-      }
-
-      if (cctpMessage.status !== "complete") {
-        console.log(
-          `Message ${messageId} from tx ${txHash} is not attested yet (status: ${cctpMessage.status}). Skipping...`
-        );
         continue;
       }
 
@@ -248,6 +249,7 @@ const processCctpBridgeTransactions = async ({
         console.log(
           `Message ${messageId} from tx ${txHash} is missing message payload or attestation. Skipping...`
         );
+        hasUnprocessedEligibleMessages = true;
         continue;
       }
 
@@ -276,7 +278,6 @@ const processCctpBridgeTransactions = async ({
       if (receipt.status === 1) {
         console.log("SUCCESS: Transaction executed successfully!");
         await store.put(storeKey, "processed");
-        hasEligibleMessageProcessed = true;
       } else {
         console.log("FAILURE: Transaction reverted!");
         throw new Error(`Transaction reverted - status: ${receipt.status}`);
@@ -284,7 +285,7 @@ const processCctpBridgeTransactions = async ({
     }
 
     const shouldMarkTxProcessed =
-      !hasEligibleMessage || hasEligibleMessageProcessed;
+      !hasEligibleMessage || !hasUnprocessedEligibleMessages;
     if (shouldMarkTxProcessed) {
       await store.put(txStoreKey, "processed");
       console.log(
