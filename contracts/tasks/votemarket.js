@@ -1,8 +1,7 @@
 const { Contract } = require("ethers");
 
-const { Wallet } = require("ethers");
-
 const addresses = require("../utils/addresses");
+const { getSigner } = require("../utils/signers");
 const log = require("../utils/logger")("task:votemarket");
 
 // Contract addresses
@@ -160,15 +159,11 @@ async function updateVotemarketEpochs({
 async function updateVotemarketEpochsTask(taskArguments) {
   const dryRun = taskArguments.dryRun !== false;
 
-  // Detect mainnet vs fork from hardhat's ethers provider
-  const mainnetProvider = ethers.provider;
-
   // Create Arbitrum provider from env var
-  const arbitrumRpcUrl =
-    process.env.ARBITRUM_PROVIDER_URL || process.env.PROVIDER_URL;
+  const arbitrumRpcUrl = process.env.ARBITRUM_PROVIDER_URL;
   if (!arbitrumRpcUrl) {
     throw new Error(
-      "ARBITRUM_PROVIDER_URL or PROVIDER_URL env var required for Arbitrum connection"
+      "ARBITRUM_PROVIDER_URL env var required for Arbitrum connection"
     );
   }
 
@@ -176,16 +171,23 @@ async function updateVotemarketEpochsTask(taskArguments) {
   const arbitrumProvider = new ethersLib.providers.JsonRpcProvider(
     arbitrumRpcUrl
   );
+  const mainnetProvider = new ethersLib.providers.JsonRpcProvider(
+    process.env.PROVIDER_URL
+  );
+
 
   let arbitrumSigner = null;
   if (!dryRun) {
-    const pk = process.env.DEPLOYER_PK || process.env.GOVERNOR_PK;
-    if (!pk) {
+    const signer = await getSigner();
+    console.log("signer", await signer.getAddress());
+    try {
+      arbitrumSigner = signer;
+      log(`Using signer ${await signer.getAddress()} for Arbitrum`);
+    } catch (err) {
       throw new Error(
-        "DEPLOYER_PK or GOVERNOR_PK env var required for non-dry-run mode"
+        `Failed to bind signer to Arbitrum provider: ${err.message}`
       );
     }
-    arbitrumSigner = new Wallet(pk, arbitrumProvider);
   }
 
   await updateVotemarketEpochs({

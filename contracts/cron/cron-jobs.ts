@@ -16,6 +16,14 @@ export const cronJobs: CronJob[] = [
     command: "cd /app && pnpm hardhat manageBribes --network mainnet",
   },
   {
+    name: "update_votemarket_epochs",
+    schedule: "0 6 * * 5",
+    enabled: false,
+    permmissioned: true,
+    command:
+      "cd /app && pnpm hardhat updateVotemarketEpochs --network arbitrumOne",
+  },
+  {
     name: "OETHandOUSD_harvest_CRV_MOPRHO_native_staking",
     schedule: "25 11,23 * * *",
     enabled: false,
@@ -73,7 +81,7 @@ export const cronJobs: CronJob[] = [
   },
   {
     name: "hourly_snap_balances",
-    schedule: "0 * * * *",
+    schedule: "2 * * * *",
     enabled: false,
     command:
       "cd /app && pnpm hardhat snapBalances --network ${HARDHAT_NETWORK:-mainnet}",

@@ -66,8 +66,7 @@ const {
   curveSwapTask,
   curvePoolTask,
 } = require("./curve");
-const { calculateMaxPricePerVoteTask, manageBribes } = require("./poolBooster");
-const { updateVotemarketEpochsTask } = require("./votemarket");
+const { calculateMaxPricePerVoteTask } = require("./poolBooster");
 const { manageMerklBribesTask } = require("./merklPoolBooster");
 const {
   depositSSV,
@@ -727,58 +726,6 @@ subtask(
   )
   .setAction(calculateMaxPricePerVoteTask);
 task("calculateMaxPricePerVote").setAction(async (_, __, runSuper) => {
-  return runSuper();
-});
-
-subtask(
-  "manageCurvePoolBoosterBribes",
-  "Calls manageBribes on the CurvePoolBoosterBribesModule and calculates the rewards per vote based on the target efficiency"
-)
-  .addOptionalParam(
-    "efficiency",
-    "Target efficiency (0-10, e.g. 1 for 100%, 0.5 for 50%)",
-    "1",
-    types.string
-  )
-  .addOptionalParam(
-    "skipRewardPerVote",
-    "Skip setting RewardPerVote (pass array of zeros)",
-    false,
-    types.boolean
-  )
-  .addOptionalParam(
-    "chunkSize",
-    "Number of pool boosters to manage per transaction",
-    4,
-    types.int
-  )
-  .setAction(async (taskArgs) => {
-    // This action only works with the Defender Relayer signer
-    const signer = await getDefenderSigner();
-    await manageBribes({
-      signer,
-      provider: signer.provider,
-      targetEfficiency: taskArgs.efficiency,
-      skipRewardPerVote: taskArgs.skipRewardPerVote,
-      chunkSize: taskArgs.chunkSize,
-    });
-  });
-task("manageCurvePoolBoosterBribes").setAction(async (_, __, runSuper) => {
-  return runSuper();
-});
-
-subtask(
-  "updateVotemarketEpochs",
-  "Update Votemarket epochs for all Curve Pool Booster campaigns on Arbitrum"
-)
-  .addOptionalParam(
-    "dryRun",
-    "If true, log actions but do not send transactions",
-    true,
-    types.boolean
-  )
-  .setAction(updateVotemarketEpochsTask);
-task("updateVotemarketEpochs").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
 
