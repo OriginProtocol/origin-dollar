@@ -1,8 +1,10 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
+// --- Test base
 import {Smoke_OSonic_Shared_Test} from "tests/smoke/sonic/token/OSonic/shared/Shared.t.sol";
 
+// --- Project imports
 import {IWOToken} from "contracts/interfaces/IWOToken.sol";
 
 abstract contract Smoke_WOSonic_Shared_Test is Smoke_OSonic_Shared_Test {

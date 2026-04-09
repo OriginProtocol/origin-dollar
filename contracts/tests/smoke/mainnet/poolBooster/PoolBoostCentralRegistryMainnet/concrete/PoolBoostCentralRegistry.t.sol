@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
+// --- Test base
 import {
     Smoke_PoolBoostCentralRegistryMainnet_Shared_Test
 } from "tests/smoke/mainnet/poolBooster/PoolBoostCentralRegistryMainnet/shared/Shared.t.sol";

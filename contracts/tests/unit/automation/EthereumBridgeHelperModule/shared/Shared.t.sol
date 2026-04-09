@@ -7,8 +7,9 @@ import {Base} from "tests/Base.t.sol";
 // --- Test utilities
 import {Automation} from "tests/utils/artifacts/Automation.sol";
 
-import {MockSafeContract} from "tests/mocks/MockSafeContract.sol";
+// --- Project imports
 import {IEthereumBridgeHelperModule} from "contracts/interfaces/automation/IEthereumBridgeHelperModule.sol";
+import {MockSafeContract} from "tests/mocks/MockSafeContract.sol";
 
 abstract contract Unit_EthereumBridgeHelperModule_Shared_Test is Base {
     //////////////////////////////////////////////////////

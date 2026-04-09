@@ -5,21 +5,23 @@ pragma solidity ^0.8.0;
 import {BaseFork} from "tests/fork/BaseFork.t.sol";
 
 // --- Test utilities
-import {Sonic} from "tests/utils/Addresses.sol";
 import {Proxies} from "tests/utils/artifacts/Proxies.sol";
+import {Sonic} from "tests/utils/Addresses.sol";
 import {Strategies} from "tests/utils/artifacts/Strategies.sol";
 import {Tokens} from "tests/utils/artifacts/Tokens.sol";
 import {Vaults} from "tests/utils/artifacts/Vaults.sol";
 
 // --- External libraries
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {IOToken} from "contracts/interfaces/IOToken.sol";
-import {IVault} from "contracts/interfaces/IVault.sol";
-import {IProxy} from "contracts/interfaces/IProxy.sol";
-import {IPair} from "contracts/interfaces/algebra/IAlgebraPair.sol";
+
+// --- Project imports
 import {IGauge} from "contracts/interfaces/algebra/IAlgebraGauge.sol";
-import {IWrappedSonic} from "contracts/interfaces/sonic/IWrappedSonic.sol";
+import {IOToken} from "contracts/interfaces/IOToken.sol";
+import {IPair} from "contracts/interfaces/algebra/IAlgebraPair.sol";
+import {IProxy} from "contracts/interfaces/IProxy.sol";
 import {ISonicSwapXAMOStrategy} from "contracts/interfaces/strategies/ISonicSwapXAMOStrategy.sol";
+import {IVault} from "contracts/interfaces/IVault.sol";
+import {IWrappedSonic} from "contracts/interfaces/sonic/IWrappedSonic.sol";
 
 abstract contract Fork_SonicSwapXAMOStrategy_Shared_Test is BaseFork {
     //////////////////////////////////////////////////////

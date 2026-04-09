@@ -1,17 +1,21 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
+// --- Test base
 import {Base} from "tests/Base.t.sol";
 
 // --- Test utilities
 import {PoolBoosters} from "tests/utils/artifacts/PoolBoosters.sol";
 
+// --- External libraries
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {MockERC20} from "@solmate/test/utils/mocks/MockERC20.sol";
-import {IPoolBoostCentralRegistryFull} from "contracts/interfaces/poolBooster/IPoolBoostCentralRegistryFull.sol";
+
+// --- Project imports
+import {ICampaignRemoteManager} from "contracts/interfaces/ICampaignRemoteManager.sol";
 import {ICurvePoolBooster} from "contracts/interfaces/poolBooster/ICurvePoolBooster.sol";
 import {ICurvePoolBoosterFactory} from "contracts/interfaces/poolBooster/ICurvePoolBoosterFactory.sol";
-import {ICampaignRemoteManager} from "contracts/interfaces/ICampaignRemoteManager.sol";
+import {IPoolBoostCentralRegistryFull} from "contracts/interfaces/poolBooster/IPoolBoostCentralRegistryFull.sol";
 import {MockCreateX} from "tests/mocks/MockCreateX.sol";
 
 abstract contract Unit_Curve_Shared_Test is Base {

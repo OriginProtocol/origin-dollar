@@ -7,11 +7,14 @@ import {Base} from "tests/Base.t.sol";
 // --- Test utilities
 import {Automation} from "tests/utils/artifacts/Automation.sol";
 
-import {MockSafeContract} from "tests/mocks/MockSafeContract.sol";
-import {MockAutoWithdrawalVault} from "tests/mocks/MockAutoWithdrawalVault.sol";
+// --- External libraries
 import {MockERC20} from "@solmate/test/utils/mocks/MockERC20.sol";
-import {MockStrategy} from "contracts/mocks/MockStrategy.sol";
+
+// --- Project imports
 import {IAutoWithdrawalModule} from "contracts/interfaces/automation/IAutoWithdrawalModule.sol";
+import {MockAutoWithdrawalVault} from "tests/mocks/MockAutoWithdrawalVault.sol";
+import {MockSafeContract} from "tests/mocks/MockSafeContract.sol";
+import {MockStrategy} from "contracts/mocks/MockStrategy.sol";
 
 abstract contract Unit_AutoWithdrawalModule_Shared_Test is Base {
     //////////////////////////////////////////////////////

@@ -1,15 +1,21 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
+// --- Test base
 import {BaseSmoke} from "tests/smoke/BaseSmoke.t.sol";
+
+// --- Test utilities
 import {Mainnet} from "tests/utils/Addresses.sol";
 
+// --- External libraries
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {IOToken} from "contracts/interfaces/IOToken.sol";
-import {IVault} from "contracts/interfaces/IVault.sol";
-import {IOETHSupernovaAMOStrategy} from "contracts/interfaces/strategies/IOETHSupernovaAMOStrategy.sol";
-import {IPair} from "contracts/interfaces/algebra/IAlgebraPair.sol";
+
+// --- Project imports
 import {IGauge} from "contracts/interfaces/algebra/IAlgebraGauge.sol";
+import {IOETHSupernovaAMOStrategy} from "contracts/interfaces/strategies/IOETHSupernovaAMOStrategy.sol";
+import {IOToken} from "contracts/interfaces/IOToken.sol";
+import {IPair} from "contracts/interfaces/algebra/IAlgebraPair.sol";
+import {IVault} from "contracts/interfaces/IVault.sol";
 
 abstract contract Smoke_OETHSupernovaAMOStrategy_Shared_Test is BaseSmoke {
     //////////////////////////////////////////////////////

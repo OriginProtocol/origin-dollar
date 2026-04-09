@@ -1,14 +1,21 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
+// --- Test base
 import {BaseSmoke} from "tests/smoke/BaseSmoke.t.sol";
+
+// --- Test utilities
+import {Base} from "tests/utils/Addresses.sol";
+
+// --- External libraries
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IERC4626} from "lib/openzeppelin/interfaces/IERC4626.sol";
-import {IWETH9} from "contracts/interfaces/IWETH9.sol";
-import {IVault} from "contracts/interfaces/IVault.sol";
+
+// --- Project imports
 import {IBaseBridgeHelperModule} from "contracts/interfaces/automation/IBaseBridgeHelperModule.sol";
 import {IBridgedWOETHStrategy} from "contracts/interfaces/strategies/IBridgedWOETHStrategy.sol";
-import {Base} from "tests/utils/Addresses.sol";
+import {IVault} from "contracts/interfaces/IVault.sol";
+import {IWETH9} from "contracts/interfaces/IWETH9.sol";
 
 abstract contract Smoke_BaseBridgeHelperModule_Shared_Test is BaseSmoke {
     //////////////////////////////////////////////////////

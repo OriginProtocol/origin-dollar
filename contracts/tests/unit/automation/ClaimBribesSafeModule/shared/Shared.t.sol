@@ -7,12 +7,13 @@ import {Base} from "tests/Base.t.sol";
 // --- Test utilities
 import {Automation} from "tests/utils/artifacts/Automation.sol";
 
-import {MockSafeContract} from "tests/mocks/MockSafeContract.sol";
-import {MockAerodromeVoter} from "tests/mocks/MockAerodromeVoter.sol";
-import {MockVeNFT} from "tests/mocks/MockVeNFT.sol";
-import {MockCLRewardContract} from "tests/mocks/MockCLRewardContract.sol";
-import {MockCLPoolForBribes, MockCLGaugeForBribes} from "tests/mocks/MockCLPoolForBribes.sol";
+// --- Project imports
 import {IClaimBribesSafeModule} from "contracts/interfaces/automation/IClaimBribesSafeModule.sol";
+import {MockAerodromeVoter} from "tests/mocks/MockAerodromeVoter.sol";
+import {MockCLPoolForBribes, MockCLGaugeForBribes} from "tests/mocks/MockCLPoolForBribes.sol";
+import {MockCLRewardContract} from "tests/mocks/MockCLRewardContract.sol";
+import {MockSafeContract} from "tests/mocks/MockSafeContract.sol";
+import {MockVeNFT} from "tests/mocks/MockVeNFT.sol";
 
 abstract contract Unit_ClaimBribesSafeModule_Shared_Test is Base {
     //////////////////////////////////////////////////////

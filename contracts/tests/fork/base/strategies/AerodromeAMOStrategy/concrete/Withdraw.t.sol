@@ -1,9 +1,14 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
+// --- Test base
 import {Fork_AerodromeAMOStrategy_Shared_Test} from "../shared/Shared.t.sol";
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+
+// --- Test utilities
 import {Base as BaseAddresses} from "tests/utils/Addresses.sol";
+
+// --- External libraries
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 contract Fork_AerodromeAMOStrategy_Withdraw_Test is Fork_AerodromeAMOStrategy_Shared_Test {
     function test_withdraw() public {

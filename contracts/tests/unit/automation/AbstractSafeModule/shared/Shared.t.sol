@@ -1,12 +1,16 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
+// --- Test base
 import {Base} from "tests/Base.t.sol";
 
+// --- External libraries
+import {MockERC20} from "@solmate/test/utils/mocks/MockERC20.sol";
+
+// --- Project imports
+import {ConcreteAbstractSafeModule} from "tests/mocks/ConcreteAbstractSafeModule.sol";
 import {IAbstractSafeModule} from "contracts/interfaces/automation/IAbstractSafeModule.sol";
 import {MockSafeContract} from "tests/mocks/MockSafeContract.sol";
-import {ConcreteAbstractSafeModule} from "tests/mocks/ConcreteAbstractSafeModule.sol";
-import {MockERC20} from "@solmate/test/utils/mocks/MockERC20.sol";
 
 abstract contract Unit_AbstractSafeModule_Shared_Test is Base {
     //////////////////////////////////////////////////////

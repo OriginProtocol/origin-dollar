@@ -12,13 +12,16 @@ import {Strategies} from "tests/utils/artifacts/Strategies.sol";
 import {Tokens} from "tests/utils/artifacts/Tokens.sol";
 import {Vaults} from "tests/utils/artifacts/Vaults.sol";
 
-import {IOETHSupernovaAMOStrategy} from "contracts/interfaces/strategies/IOETHSupernovaAMOStrategy.sol";
-import {IVault} from "contracts/interfaces/IVault.sol";
-import {IProxy} from "contracts/interfaces/IProxy.sol";
-import {IOToken} from "contracts/interfaces/IOToken.sol";
-import {MockSwapXPair} from "tests/mocks/MockSwapXPair.sol";
-import {MockSwapXGauge} from "tests/mocks/MockSwapXGauge.sol";
+// --- External libraries
 import {MockERC20} from "@solmate/test/utils/mocks/MockERC20.sol";
+
+// --- Project imports
+import {IOETHSupernovaAMOStrategy} from "contracts/interfaces/strategies/IOETHSupernovaAMOStrategy.sol";
+import {IOToken} from "contracts/interfaces/IOToken.sol";
+import {IProxy} from "contracts/interfaces/IProxy.sol";
+import {IVault} from "contracts/interfaces/IVault.sol";
+import {MockSwapXGauge} from "tests/mocks/MockSwapXGauge.sol";
+import {MockSwapXPair} from "tests/mocks/MockSwapXPair.sol";
 
 contract Unit_Concrete_OETHSupernovaAMOStrategy_Constructor_Test is Unit_OETHSupernovaAMOStrategy_Shared_Test {
     function test_constructor_setsImmutables() public view {

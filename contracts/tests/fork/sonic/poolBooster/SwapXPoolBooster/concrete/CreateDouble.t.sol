@@ -1,10 +1,15 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
+// --- Test base
 import {Fork_SwapXPoolBooster_Shared_Test} from "tests/fork/sonic/poolBooster/SwapXPoolBooster/shared/Shared.t.sol";
+
+// --- Test utilities
+import {Sonic} from "tests/utils/Addresses.sol";
+
+// --- Project imports
 import {IPoolBoostCentralRegistry} from "contracts/interfaces/poolBooster/IPoolBoostCentralRegistry.sol";
 import {IPoolBoosterSwapxDouble} from "contracts/interfaces/poolBooster/IPoolBoosterSwapxDouble.sol";
-import {Sonic} from "tests/utils/Addresses.sol";
 
 contract Fork_Concrete_SwapXPoolBooster_CreateDouble_Test is Fork_SwapXPoolBooster_Shared_Test {
     event PoolBoosterCreated(

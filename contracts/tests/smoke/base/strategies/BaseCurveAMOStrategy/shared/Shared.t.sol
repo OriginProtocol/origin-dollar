@@ -1,14 +1,20 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
+// --- Test base
 import {BaseSmoke} from "tests/smoke/BaseSmoke.t.sol";
+
+// --- Test utilities
 import {Base as BaseAddresses} from "tests/utils/Addresses.sol";
 
+// --- External libraries
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {IOToken} from "contracts/interfaces/IOToken.sol";
-import {IVault} from "contracts/interfaces/IVault.sol";
+
+// --- Project imports
 import {IBaseCurveAMOStrategy} from "contracts/interfaces/strategies/IBaseCurveAMOStrategy.sol";
 import {ICurveStableSwapNG} from "contracts/interfaces/ICurveStableSwapNG.sol";
+import {IOToken} from "contracts/interfaces/IOToken.sol";
+import {IVault} from "contracts/interfaces/IVault.sol";
 
 abstract contract Smoke_BaseCurveAMOStrategy_Shared_Test is BaseSmoke {
     IOToken internal oethBase;

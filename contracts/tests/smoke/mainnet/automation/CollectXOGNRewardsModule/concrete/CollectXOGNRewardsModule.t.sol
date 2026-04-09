@@ -1,10 +1,15 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
+// --- Test base
 import {
     Smoke_CollectXOGNRewardsModule_Shared_Test
 } from "tests/smoke/mainnet/automation/CollectXOGNRewardsModule/shared/Shared.t.sol";
+
+// --- Test utilities
 import {Mainnet} from "tests/utils/Addresses.sol";
+
+// --- External libraries
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 contract Smoke_Concrete_CollectXOGNRewardsModule_Test is Smoke_CollectXOGNRewardsModule_Shared_Test {

@@ -1,10 +1,15 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
+// --- Test base
 import {BaseSmoke} from "tests/smoke/BaseSmoke.t.sol";
-import {ICurvePoolBoosterFactory} from "contracts/interfaces/poolBooster/ICurvePoolBoosterFactory.sol";
-import {ICurvePoolBooster} from "contracts/interfaces/poolBooster/ICurvePoolBooster.sol";
+
+// --- Test utilities
 import {Mainnet} from "tests/utils/Addresses.sol";
+
+// --- Project imports
+import {ICurvePoolBooster} from "contracts/interfaces/poolBooster/ICurvePoolBooster.sol";
+import {ICurvePoolBoosterFactory} from "contracts/interfaces/poolBooster/ICurvePoolBoosterFactory.sol";
 
 abstract contract Smoke_CurvePoolBoosterFactory_Shared_Test is BaseSmoke {
     ICurvePoolBoosterFactory internal curvePoolBoosterFactory;

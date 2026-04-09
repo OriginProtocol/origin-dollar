@@ -1,9 +1,12 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
+// --- Test base
 import {
     Smoke_AutoWithdrawalModule_Shared_Test
 } from "tests/smoke/mainnet/automation/AutoWithdrawalModule/shared/Shared.t.sol";
+
+// --- Test utilities
 import {Mainnet} from "tests/utils/Addresses.sol";
 
 contract Smoke_Concrete_AutoWithdrawalModule_Test is Smoke_AutoWithdrawalModule_Shared_Test {

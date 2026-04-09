@@ -2,12 +2,15 @@
 pragma solidity ^0.8.0;
 
 // --- Test base
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {Unit_SonicSwapXAMOStrategy_Shared_Test} from "tests/unit/strategies/SonicSwapXAMOStrategy/shared/Shared.t.sol";
 
 // --- Test utilities
 import {Strategies} from "tests/utils/artifacts/Strategies.sol";
 
-import {Unit_SonicSwapXAMOStrategy_Shared_Test} from "tests/unit/strategies/SonicSwapXAMOStrategy/shared/Shared.t.sol";
+// --- External libraries
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+
+// --- Project imports
 import {ISonicSwapXAMOStrategy} from "contracts/interfaces/strategies/ISonicSwapXAMOStrategy.sol";
 
 contract Unit_Concrete_SonicSwapXAMOStrategy_Initialize_Test is Unit_SonicSwapXAMOStrategy_Shared_Test {

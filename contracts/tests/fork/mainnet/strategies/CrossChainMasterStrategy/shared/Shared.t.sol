@@ -5,16 +5,18 @@ pragma solidity ^0.8.0;
 import {BaseFork} from "tests/fork/BaseFork.t.sol";
 
 // --- Test utilities
+import {Base as BaseAddresses, Mainnet, CrossChain} from "tests/utils/Addresses.sol";
 import {Mocks} from "tests/utils/artifacts/Mocks.sol";
 import {Proxies} from "tests/utils/artifacts/Proxies.sol";
 import {Strategies} from "tests/utils/artifacts/Strategies.sol";
-import {Base as BaseAddresses, Mainnet, CrossChain} from "tests/utils/Addresses.sol";
 
+// --- External libraries
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
-import {IProxy} from "contracts/interfaces/IProxy.sol";
-import {ICrossChainMasterStrategy} from "contracts/interfaces/strategies/ICrossChainMasterStrategy.sol";
+// --- Project imports
 import {ICCTPMessageTransmitterMock2} from "contracts/interfaces/cctp/ICCTPMessageTransmitterMock2.sol";
+import {ICrossChainMasterStrategy} from "contracts/interfaces/strategies/ICrossChainMasterStrategy.sol";
+import {IProxy} from "contracts/interfaces/IProxy.sol";
 
 struct BaseStrategyConfig {
     address platformAddress;

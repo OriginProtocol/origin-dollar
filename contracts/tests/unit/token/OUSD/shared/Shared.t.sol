@@ -9,7 +9,6 @@ import {Proxies} from "tests/utils/artifacts/Proxies.sol";
 import {Tokens} from "tests/utils/artifacts/Tokens.sol";
 import {Vaults} from "tests/utils/artifacts/Vaults.sol";
 
-// --- External libraries
 // Interfaces
 import {IVault} from "contracts/interfaces/IVault.sol";
 import {IProxy} from "contracts/interfaces/IProxy.sol";

@@ -1,9 +1,12 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
+// --- Test base
 import {Unit_CrossChainMasterStrategy_Shared_Test} from "../shared/Shared.t.sol";
-import {ICrossChainMasterStrategy} from "contracts/interfaces/strategies/ICrossChainMasterStrategy.sol";
+
+// --- Project imports
 import {CrossChainStrategyHelper} from "contracts/strategies/crosschain/CrossChainStrategyHelper.sol";
+import {ICrossChainMasterStrategy} from "contracts/interfaces/strategies/ICrossChainMasterStrategy.sol";
 
 contract Unit_Concrete_CrossChainMasterStrategy_OnTokenReceived_Test is Unit_CrossChainMasterStrategy_Shared_Test {
     //////////////////////////////////////////////////////

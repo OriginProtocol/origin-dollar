@@ -10,17 +10,19 @@ import {Strategies} from "tests/utils/artifacts/Strategies.sol";
 import {Tokens} from "tests/utils/artifacts/Tokens.sol";
 import {Vaults} from "tests/utils/artifacts/Vaults.sol";
 
-import {IVault} from "contracts/interfaces/IVault.sol";
-import {IProxy} from "contracts/interfaces/IProxy.sol";
-import {IOToken} from "contracts/interfaces/IOToken.sol";
-import {ICurveAMOStrategy} from "contracts/interfaces/strategies/ICurveAMOStrategy.sol";
+// --- External libraries
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-
 import {MockERC20} from "@solmate/test/utils/mocks/MockERC20.sol";
-import {MockWETH} from "contracts/mocks/MockWETH.sol";
-import {MockCurvePool} from "tests/mocks/MockCurvePool.sol";
+
+// --- Project imports
+import {ICurveAMOStrategy} from "contracts/interfaces/strategies/ICurveAMOStrategy.sol";
+import {IOToken} from "contracts/interfaces/IOToken.sol";
+import {IProxy} from "contracts/interfaces/IProxy.sol";
+import {IVault} from "contracts/interfaces/IVault.sol";
 import {MockCurveGauge} from "tests/mocks/MockCurveGauge.sol";
 import {MockCurveMinter} from "tests/mocks/MockCurveMinter.sol";
+import {MockCurvePool} from "tests/mocks/MockCurvePool.sol";
+import {MockWETH} from "contracts/mocks/MockWETH.sol";
 
 abstract contract Unit_CurveAMOStrategy_Shared_Test is Base {
     //////////////////////////////////////////////////////

@@ -1,9 +1,12 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
+// --- Test base
 import {Unit_CrossChainRemoteStrategy_Shared_Test} from "../shared/Shared.t.sol";
-import {ICrossChainRemoteStrategy} from "contracts/interfaces/strategies/ICrossChainRemoteStrategy.sol";
+
+// --- Project imports
 import {CrossChainStrategyHelper} from "contracts/strategies/crosschain/CrossChainStrategyHelper.sol";
+import {ICrossChainRemoteStrategy} from "contracts/interfaces/strategies/ICrossChainRemoteStrategy.sol";
 
 contract Unit_Concrete_CrossChainRemoteStrategy_ProcessWithdrawMessage_Test is
     Unit_CrossChainRemoteStrategy_Shared_Test

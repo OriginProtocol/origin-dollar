@@ -10,20 +10,21 @@ import {Strategies} from "tests/utils/artifacts/Strategies.sol";
 import {Tokens} from "tests/utils/artifacts/Tokens.sol";
 import {Vaults} from "tests/utils/artifacts/Vaults.sol";
 
-import {MockERC20} from "@solmate/test/utils/mocks/MockERC20.sol";
-import {MockWETH} from "contracts/mocks/MockWETH.sol";
-
-import {IVault} from "contracts/interfaces/IVault.sol";
-import {IProxy} from "contracts/interfaces/IProxy.sol";
-import {IOToken} from "contracts/interfaces/IOToken.sol";
+// --- External libraries
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {IAerodromeAMOStrategy} from "contracts/interfaces/strategies/IAerodromeAMOStrategy.sol";
+import {MockERC20} from "@solmate/test/utils/mocks/MockERC20.sol";
 
+// --- Project imports
+import {IAerodromeAMOStrategy} from "contracts/interfaces/strategies/IAerodromeAMOStrategy.sol";
+import {IOToken} from "contracts/interfaces/IOToken.sol";
+import {IProxy} from "contracts/interfaces/IProxy.sol";
+import {IVault} from "contracts/interfaces/IVault.sol";
+import {MockCLGauge} from "tests/mocks/aerodrome/MockCLGauge.sol";
 import {MockCLPool} from "tests/mocks/aerodrome/MockCLPool.sol";
 import {MockNonfungiblePositionManager} from "tests/mocks/aerodrome/MockNonfungiblePositionManager.sol";
-import {MockCLGauge} from "tests/mocks/aerodrome/MockCLGauge.sol";
-import {MockSwapRouter} from "tests/mocks/aerodrome/MockSwapRouter.sol";
 import {MockSugarHelper} from "tests/mocks/aerodrome/MockSugarHelper.sol";
+import {MockSwapRouter} from "tests/mocks/aerodrome/MockSwapRouter.sol";
+import {MockWETH} from "contracts/mocks/MockWETH.sol";
 
 abstract contract Unit_AerodromeAMOStrategy_Shared_Test is Base {
     //////////////////////////////////////////////////////

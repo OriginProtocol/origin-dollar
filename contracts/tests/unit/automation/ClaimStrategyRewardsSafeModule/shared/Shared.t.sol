@@ -7,9 +7,10 @@ import {Base} from "tests/Base.t.sol";
 // --- Test utilities
 import {Automation} from "tests/utils/artifacts/Automation.sol";
 
+// --- Project imports
+import {IClaimStrategyRewardsSafeModule} from "contracts/interfaces/automation/IClaimStrategyRewardsSafeModule.sol";
 import {MockSafeContract} from "tests/mocks/MockSafeContract.sol";
 import {MockStrategy} from "contracts/mocks/MockStrategy.sol";
-import {IClaimStrategyRewardsSafeModule} from "contracts/interfaces/automation/IClaimStrategyRewardsSafeModule.sol";
 
 abstract contract Unit_ClaimStrategyRewardsSafeModule_Shared_Test is Base {
     //////////////////////////////////////////////////////

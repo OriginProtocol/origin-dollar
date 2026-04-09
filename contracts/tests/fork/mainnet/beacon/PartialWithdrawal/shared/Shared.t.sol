@@ -1,10 +1,15 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
+// --- Test base
 import {BaseFork} from "tests/fork/BaseFork.t.sol";
+
+// --- Test utilities
 import {Mainnet} from "tests/utils/Addresses.sol";
-import {MockPartialWithdrawal} from "contracts/mocks/MockPartialWithdrawal.sol";
+
+// --- Project imports
 import {ExecutionLayerWithdrawal} from "contracts/mocks/beacon/ExecutionLayerWithdrawal.sol";
+import {MockPartialWithdrawal} from "contracts/mocks/MockPartialWithdrawal.sol";
 
 abstract contract Fork_PartialWithdrawal_Shared_Test is BaseFork {
     bytes internal constant SWEEPING_VALIDATOR_PUBKEY =

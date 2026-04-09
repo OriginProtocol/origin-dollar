@@ -1,11 +1,16 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
+// --- Test base
 import {Unit_CrossChainMasterStrategy_Shared_Test} from "../shared/Shared.t.sol";
+
+// --- External libraries
 import {MockERC20} from "@solmate/test/utils/mocks/MockERC20.sol";
-import {ICrossChainMasterStrategy} from "contracts/interfaces/strategies/ICrossChainMasterStrategy.sol";
-import {CrossChainMasterStrategy} from "contracts/strategies/crosschain/CrossChainMasterStrategy.sol";
+
+// --- Project imports
 import {AbstractCCTPIntegrator} from "contracts/strategies/crosschain/AbstractCCTPIntegrator.sol";
+import {CrossChainMasterStrategy} from "contracts/strategies/crosschain/CrossChainMasterStrategy.sol";
+import {ICrossChainMasterStrategy} from "contracts/interfaces/strategies/ICrossChainMasterStrategy.sol";
 import {InitializableAbstractStrategy} from "contracts/utils/InitializableAbstractStrategy.sol";
 
 contract Unit_Concrete_CrossChainMasterStrategy_Admin_Test is Unit_CrossChainMasterStrategy_Shared_Test {

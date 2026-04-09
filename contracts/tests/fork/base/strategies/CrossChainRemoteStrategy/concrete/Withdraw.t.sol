@@ -1,10 +1,17 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
+// --- Test base
 import {Fork_CrossChainRemoteStrategy_Shared_Test} from "../shared/Shared.t.sol";
+
+// --- Test utilities
 import {Base as BaseAddresses} from "tests/utils/Addresses.sol";
-import {CrossChainStrategyHelper} from "contracts/strategies/crosschain/CrossChainStrategyHelper.sol";
+
+// --- External libraries
 import {Vm} from "forge-std/Vm.sol";
+
+// --- Project imports
+import {CrossChainStrategyHelper} from "contracts/strategies/crosschain/CrossChainStrategyHelper.sol";
 
 contract Fork_CrossChainRemoteStrategy_Withdraw_Test is Fork_CrossChainRemoteStrategy_Shared_Test {
     function test_withdraw_handlesIncomingWithdraw() public {

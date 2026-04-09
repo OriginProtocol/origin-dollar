@@ -5,21 +5,24 @@ pragma solidity ^0.8.0;
 import {BaseFork} from "tests/fork/BaseFork.t.sol";
 
 // --- Test utilities
+import {Mainnet} from "tests/utils/Addresses.sol";
 import {Proxies} from "tests/utils/artifacts/Proxies.sol";
 import {Strategies} from "tests/utils/artifacts/Strategies.sol";
 import {Tokens} from "tests/utils/artifacts/Tokens.sol";
 import {Vaults} from "tests/utils/artifacts/Vaults.sol";
-import {Mainnet} from "tests/utils/Addresses.sol";
 
+// --- External libraries
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {IOToken} from "contracts/interfaces/IOToken.sol";
-import {IVault} from "contracts/interfaces/IVault.sol";
-import {IProxy} from "contracts/interfaces/IProxy.sol";
-import {ICurveStableSwapNG} from "contracts/interfaces/ICurveStableSwapNG.sol";
+
+// --- Project imports
+import {ICurveAMOStrategy} from "contracts/interfaces/strategies/ICurveAMOStrategy.sol";
 import {ICurveLiquidityGaugeV6} from "contracts/interfaces/ICurveLiquidityGaugeV6.sol";
 import {ICurveMinter} from "contracts/interfaces/ICurveMinter.sol";
 import {ICurveStableSwapFactoryNG} from "contracts/interfaces/ICurveStableSwapFactoryNG.sol";
-import {ICurveAMOStrategy} from "contracts/interfaces/strategies/ICurveAMOStrategy.sol";
+import {ICurveStableSwapNG} from "contracts/interfaces/ICurveStableSwapNG.sol";
+import {IOToken} from "contracts/interfaces/IOToken.sol";
+import {IProxy} from "contracts/interfaces/IProxy.sol";
+import {IVault} from "contracts/interfaces/IVault.sol";
 
 abstract contract Fork_CurveAMOStrategy_Shared_Test is BaseFork {
     //////////////////////////////////////////////////////

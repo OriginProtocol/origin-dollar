@@ -5,18 +5,19 @@ pragma solidity ^0.8.0;
 import {BaseFork} from "tests/fork/BaseFork.t.sol";
 
 // --- Test utilities
+import {Mainnet} from "tests/utils/Addresses.sol";
 import {PoolBoosters} from "tests/utils/artifacts/PoolBoosters.sol";
 
+// --- External libraries
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {MockERC20} from "@solmate/test/utils/mocks/MockERC20.sol";
 import {UpgradeableBeacon} from "@openzeppelin/contracts/proxy/beacon/UpgradeableBeacon.sol";
 
+// --- Project imports
+import {IMerklDistributor} from "contracts/interfaces/poolBooster/IMerklDistributor.sol";
 import {IPoolBoostCentralRegistryFull} from "contracts/interfaces/poolBooster/IPoolBoostCentralRegistryFull.sol";
 import {IPoolBoosterFactoryMerkl} from "contracts/interfaces/poolBooster/IPoolBoosterFactoryMerkl.sol";
 import {IPoolBoosterMerkl} from "contracts/interfaces/poolBooster/IPoolBoosterMerkl.sol";
-import {IMerklDistributor} from "contracts/interfaces/poolBooster/IMerklDistributor.sol";
-
-import {Mainnet} from "tests/utils/Addresses.sol";
 
 interface IMerklDistributorAdmin {
     function setRewardTokenMinAmounts(address[] calldata tokens, uint256[] calldata amounts) external;

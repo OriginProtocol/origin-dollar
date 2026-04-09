@@ -7,12 +7,15 @@ import {Base} from "tests/Base.t.sol";
 // --- Test utilities
 import {Strategies} from "tests/utils/artifacts/Strategies.sol";
 
+// --- External libraries
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {MockERC20} from "@solmate/test/utils/mocks/MockERC20.sol";
-import {MockFailableERC4626Vault} from "tests/mocks/MockFailableERC4626Vault.sol";
-import {ICrossChainRemoteStrategy} from "contracts/interfaces/strategies/ICrossChainRemoteStrategy.sol";
+
+// --- Project imports
 import {CCTPMessageTransmitterMock} from "contracts/mocks/crosschain/CCTPMessageTransmitterMock.sol";
 import {CCTPTokenMessengerMock} from "contracts/mocks/crosschain/CCTPTokenMessengerMock.sol";
+import {ICrossChainRemoteStrategy} from "contracts/interfaces/strategies/ICrossChainRemoteStrategy.sol";
+import {MockFailableERC4626Vault} from "tests/mocks/MockFailableERC4626Vault.sol";
 
 contract Unit_Concrete_CrossChainRemoteStrategy_DepositFailure_Test is Base {
     //////////////////////////////////////////////////////

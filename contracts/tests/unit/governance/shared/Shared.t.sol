@@ -1,8 +1,10 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
+// --- Test base
 import {Base} from "tests/Base.t.sol";
 
+// --- Project imports
 import {MockGovernable, MockStrategizable, MockInitializableGovernable} from "tests/mocks/MockGovernable.sol";
 
 abstract contract Unit_Governance_Shared_Test is Base {

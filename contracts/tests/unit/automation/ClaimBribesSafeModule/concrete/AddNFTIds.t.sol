@@ -1,7 +1,10 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
+// --- Test base
 import {Unit_ClaimBribesSafeModule_Shared_Test} from "tests/unit/automation/ClaimBribesSafeModule/shared/Shared.t.sol";
+
+// --- Project imports
 import {IClaimBribesSafeModule} from "contracts/interfaces/automation/IClaimBribesSafeModule.sol";
 
 contract Unit_Concrete_ClaimBribesSafeModule_AddNFTIds_Test is Unit_ClaimBribesSafeModule_Shared_Test {

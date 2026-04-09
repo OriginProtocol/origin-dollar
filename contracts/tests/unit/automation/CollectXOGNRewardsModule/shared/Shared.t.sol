@@ -7,10 +7,13 @@ import {Base} from "tests/Base.t.sol";
 // --- Test utilities
 import {Automation} from "tests/utils/artifacts/Automation.sol";
 
-import {MockSafeContract} from "tests/mocks/MockSafeContract.sol";
+// --- External libraries
 import {MockERC20} from "@solmate/test/utils/mocks/MockERC20.sol";
-import {MockXOGN} from "tests/mocks/MockXOGN.sol";
+
+// --- Project imports
 import {ICollectXOGNRewardsModule} from "contracts/interfaces/automation/ICollectXOGNRewardsModule.sol";
+import {MockSafeContract} from "tests/mocks/MockSafeContract.sol";
+import {MockXOGN} from "tests/mocks/MockXOGN.sol";
 
 abstract contract Unit_CollectXOGNRewardsModule_Shared_Test is Base {
     //////////////////////////////////////////////////////

@@ -1,14 +1,17 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
+// --- Test base
 import {
     Unit_CompoundingStakingSSVStrategy_Shared_Test
 } from "tests/unit/strategies/CompoundingStakingSSVStrategy/shared/Shared.t.sol";
-import {ICompoundingStakingSSVStrategy} from "contracts/interfaces/strategies/ICompoundingStakingSSVStrategy.sol";
+
+// --- Project imports
 import {
     CompoundingFirstPendingDepositSlotProofData as FirstPendingDepositSlotProofData,
     CompoundingStrategyValidatorProofData as StrategyValidatorProofData
 } from "contracts/interfaces/strategies/CompoundingStakingTypes.sol";
+import {ICompoundingStakingSSVStrategy} from "contracts/interfaces/strategies/ICompoundingStakingSSVStrategy.sol";
 
 contract Unit_Concrete_CompoundingStakingSSVStrategy_VerifyDeposit_Test is
     Unit_CompoundingStakingSSVStrategy_Shared_Test

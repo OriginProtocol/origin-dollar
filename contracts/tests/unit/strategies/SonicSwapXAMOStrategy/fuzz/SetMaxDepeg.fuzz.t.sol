@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
+// --- Test base
 import {Unit_SonicSwapXAMOStrategy_Shared_Test} from "tests/unit/strategies/SonicSwapXAMOStrategy/shared/Shared.t.sol";
 
 contract Unit_Fuzz_SonicSwapXAMOStrategy_SetMaxDepeg_Test is Unit_SonicSwapXAMOStrategy_Shared_Test {

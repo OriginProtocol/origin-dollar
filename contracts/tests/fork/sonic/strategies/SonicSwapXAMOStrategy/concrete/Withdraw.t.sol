@@ -1,11 +1,18 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {Sonic} from "tests/utils/Addresses.sol";
+// --- Test base
 import {
     Fork_SonicSwapXAMOStrategy_Shared_Test
 } from "tests/fork/sonic/strategies/SonicSwapXAMOStrategy/shared/Shared.t.sol";
+
+// --- Test utilities
+import {Sonic} from "tests/utils/Addresses.sol";
+
+// --- External libraries
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+
+// --- Project imports
 import {ISonicSwapXAMOStrategy} from "contracts/interfaces/strategies/ISonicSwapXAMOStrategy.sol";
 
 contract Fork_Concrete_SonicSwapXAMOStrategy_Withdraw_Test is Fork_SonicSwapXAMOStrategy_Shared_Test {

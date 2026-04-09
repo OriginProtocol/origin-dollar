@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
+// --- Test base
 import {Unit_Merkle_Shared_Test} from "tests/unit/beacon/Merkle/shared/Shared.t.sol";
 
 contract Unit_Fuzz_Merkle_VerifyInclusionSha256_Test is Unit_Merkle_Shared_Test {

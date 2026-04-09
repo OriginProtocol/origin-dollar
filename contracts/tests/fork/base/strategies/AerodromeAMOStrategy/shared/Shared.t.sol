@@ -15,16 +15,17 @@ import {Vaults} from "tests/utils/artifacts/Vaults.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 
-import {InitializableAbstractStrategy} from "contracts/utils/InitializableAbstractStrategy.sol";
+// --- Project imports
+import {AerodromeAMOQuoter, QuoterHelper} from "contracts/utils/AerodromeAMOQuoter.sol";
+import {IAerodromeAMOStrategy} from "contracts/interfaces/strategies/IAerodromeAMOStrategy.sol";
+import {ICLGauge} from "contracts/interfaces/aerodrome/ICLGauge.sol";
+import {INonfungiblePositionManager} from "contracts/interfaces/aerodrome/INonfungiblePositionManager.sol";
 import {IOToken} from "contracts/interfaces/IOToken.sol";
 import {IProxy} from "contracts/interfaces/IProxy.sol";
-import {IVault} from "contracts/interfaces/IVault.sol";
-import {INonfungiblePositionManager} from "contracts/interfaces/aerodrome/INonfungiblePositionManager.sol";
-import {ICLGauge} from "contracts/interfaces/aerodrome/ICLGauge.sol";
-import {ISwapRouter} from "contracts/interfaces/aerodrome/ISwapRouter.sol";
 import {ISugarHelper} from "contracts/interfaces/aerodrome/ISugarHelper.sol";
-import {IAerodromeAMOStrategy} from "contracts/interfaces/strategies/IAerodromeAMOStrategy.sol";
-import {AerodromeAMOQuoter, QuoterHelper} from "contracts/utils/AerodromeAMOQuoter.sol";
+import {ISwapRouter} from "contracts/interfaces/aerodrome/ISwapRouter.sol";
+import {IVault} from "contracts/interfaces/IVault.sol";
+import {InitializableAbstractStrategy} from "contracts/utils/InitializableAbstractStrategy.sol";
 
 abstract contract Fork_AerodromeAMOStrategy_Shared_Test is BaseFork {
     //////////////////////////////////////////////////////

@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
+// --- Test base
 import {Base} from "tests/Base.t.sol";
 
 // --- Test utilities
@@ -9,16 +10,19 @@ import {Tokens} from "tests/utils/artifacts/Tokens.sol";
 import {Vaults} from "tests/utils/artifacts/Vaults.sol";
 import {Zappers} from "tests/utils/artifacts/Zappers.sol";
 
+// --- External libraries
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {IOToken} from "contracts/interfaces/IOToken.sol";
-import {IVault} from "contracts/interfaces/IVault.sol";
-import {IProxy} from "contracts/interfaces/IProxy.sol";
-import {IWOToken} from "contracts/interfaces/IWOToken.sol";
-import {IOETHZapper} from "contracts/interfaces/IOETHZapper.sol";
-import {IWOETHCCIPZapper} from "contracts/interfaces/IWOETHCCIPZapper.sol";
-import {MockWETH} from "contracts/mocks/MockWETH.sol";
 import {IRouterClient} from "@chainlink/contracts-ccip/src/v0.8/ccip/interfaces/IRouterClient.sol";
+
+// --- Project imports
+import {IOETHZapper} from "contracts/interfaces/IOETHZapper.sol";
+import {IOToken} from "contracts/interfaces/IOToken.sol";
+import {IProxy} from "contracts/interfaces/IProxy.sol";
+import {IVault} from "contracts/interfaces/IVault.sol";
+import {IWOETHCCIPZapper} from "contracts/interfaces/IWOETHCCIPZapper.sol";
+import {IWOToken} from "contracts/interfaces/IWOToken.sol";
+import {MockWETH} from "contracts/mocks/MockWETH.sol";
 
 abstract contract Unit_WOETHCCIPZapper_Shared_Test is Base {
     //////////////////////////////////////////////////////

@@ -13,9 +13,10 @@ import {Strategies} from "tests/utils/artifacts/Strategies.sol";
 // --- External libraries
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
-import {IProxy} from "contracts/interfaces/IProxy.sol";
-import {ICrossChainRemoteStrategy} from "contracts/interfaces/strategies/ICrossChainRemoteStrategy.sol";
+// --- Project imports
 import {CCTPMessageTransmitterMock2} from "contracts/mocks/crosschain/CCTPMessageTransmitterMock2.sol";
+import {ICrossChainRemoteStrategy} from "contracts/interfaces/strategies/ICrossChainRemoteStrategy.sol";
+import {IProxy} from "contracts/interfaces/IProxy.sol";
 
 struct BaseStrategyConfig {
     address platformAddress;

@@ -1,11 +1,18 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {Mainnet} from "tests/utils/Addresses.sol";
+// --- Test base
 import {
     Fork_OETHSupernovaAMOStrategy_Shared_Test
 } from "tests/fork/mainnet/strategies/OETHSupernovaAMOStrategy/shared/Shared.t.sol";
+
+// --- Test utilities
+import {Mainnet} from "tests/utils/Addresses.sol";
+
+// --- External libraries
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+
+// --- Project imports
 import {IOETHSupernovaAMOStrategy} from "contracts/interfaces/strategies/IOETHSupernovaAMOStrategy.sol";
 
 contract Fork_Concrete_OETHSupernovaAMOStrategy_Withdraw_Test is Fork_OETHSupernovaAMOStrategy_Shared_Test {

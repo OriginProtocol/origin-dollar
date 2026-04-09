@@ -10,19 +10,12 @@ import {Strategies} from "tests/utils/artifacts/Strategies.sol";
 import {Tokens} from "tests/utils/artifacts/Tokens.sol";
 import {Vaults} from "tests/utils/artifacts/Vaults.sol";
 
-import {stdJson} from "forge-std/StdJson.sol";
+// --- External libraries
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {MockWETH} from "contracts/mocks/MockWETH.sol";
-import {MockSSVNetwork} from "contracts/mocks/MockSSVNetwork.sol";
-import {MockSSV} from "contracts/mocks/MockSSV.sol";
-import {MockDepositContract} from "contracts/mocks/MockDepositContract.sol";
-import {MockBeaconProofs} from "contracts/mocks/beacon/MockBeaconProofs.sol";
-import {MockBeaconRoots} from "tests/mocks/MockBeaconRoots.sol";
-import {MockWithdrawalRequest} from "tests/mocks/MockWithdrawalRequest.sol";
-import {IVault} from "contracts/interfaces/IVault.sol";
-import {IProxy} from "contracts/interfaces/IProxy.sol";
-import {IOToken} from "contracts/interfaces/IOToken.sol";
-import {ICompoundingStakingSSVStrategy} from "contracts/interfaces/strategies/ICompoundingStakingSSVStrategy.sol";
+import {stdJson} from "forge-std/StdJson.sol";
+
+// --- Project imports
+import {Cluster} from "contracts/interfaces/ISSVNetwork.sol";
 import {
     CompoundingBalanceProofs as BalanceProofs,
     CompoundingFirstPendingDepositSlotProofData as FirstPendingDepositSlotProofData,
@@ -31,7 +24,17 @@ import {
     CompoundingValidatorStakeData as ValidatorStakeData
 } from "contracts/interfaces/strategies/CompoundingStakingTypes.sol";
 import {CompoundingStakingStrategyView} from "contracts/strategies/NativeStaking/CompoundingStakingView.sol";
-import {Cluster} from "contracts/interfaces/ISSVNetwork.sol";
+import {ICompoundingStakingSSVStrategy} from "contracts/interfaces/strategies/ICompoundingStakingSSVStrategy.sol";
+import {IOToken} from "contracts/interfaces/IOToken.sol";
+import {IProxy} from "contracts/interfaces/IProxy.sol";
+import {IVault} from "contracts/interfaces/IVault.sol";
+import {MockBeaconProofs} from "contracts/mocks/beacon/MockBeaconProofs.sol";
+import {MockBeaconRoots} from "tests/mocks/MockBeaconRoots.sol";
+import {MockDepositContract} from "contracts/mocks/MockDepositContract.sol";
+import {MockSSV} from "contracts/mocks/MockSSV.sol";
+import {MockSSVNetwork} from "contracts/mocks/MockSSVNetwork.sol";
+import {MockWETH} from "contracts/mocks/MockWETH.sol";
+import {MockWithdrawalRequest} from "tests/mocks/MockWithdrawalRequest.sol";
 
 abstract contract Unit_CompoundingStakingSSVStrategy_Shared_Test is Base {
     using stdJson for string;

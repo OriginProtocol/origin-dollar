@@ -7,9 +7,12 @@ import {Unit_CurveAMOStrategy_Shared_Test} from "tests/unit/strategies/CurveAMOS
 // --- Test utilities
 import {Strategies} from "tests/utils/artifacts/Strategies.sol";
 
-import {MockCurvePool} from "tests/mocks/MockCurvePool.sol";
-import {MockCurveGauge} from "tests/mocks/MockCurveGauge.sol";
+// --- External libraries
 import {MockERC20} from "@solmate/test/utils/mocks/MockERC20.sol";
+
+// --- Project imports
+import {MockCurveGauge} from "tests/mocks/MockCurveGauge.sol";
+import {MockCurvePool} from "tests/mocks/MockCurvePool.sol";
 
 contract Unit_Concrete_CurveAMOStrategy_Constructor_Test is Unit_CurveAMOStrategy_Shared_Test {
     function test_constructor_setsImmutables() public view {

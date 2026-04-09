@@ -10,15 +10,18 @@ import {Strategies} from "tests/utils/artifacts/Strategies.sol";
 import {Tokens} from "tests/utils/artifacts/Tokens.sol";
 import {Vaults} from "tests/utils/artifacts/Vaults.sol";
 
+// --- External libraries
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {MockERC20} from "@solmate/test/utils/mocks/MockERC20.sol";
-import {MockWrappedSonic} from "tests/mocks/MockWrappedSonic.sol";
-import {MockSwapXPair} from "tests/mocks/MockSwapXPair.sol";
-import {MockSwapXGauge} from "tests/mocks/MockSwapXGauge.sol";
+
+// --- Project imports
 import {IOToken} from "contracts/interfaces/IOToken.sol";
-import {IVault} from "contracts/interfaces/IVault.sol";
 import {IProxy} from "contracts/interfaces/IProxy.sol";
 import {ISonicSwapXAMOStrategy} from "contracts/interfaces/strategies/ISonicSwapXAMOStrategy.sol";
+import {IVault} from "contracts/interfaces/IVault.sol";
+import {MockSwapXGauge} from "tests/mocks/MockSwapXGauge.sol";
+import {MockSwapXPair} from "tests/mocks/MockSwapXPair.sol";
+import {MockWrappedSonic} from "tests/mocks/MockWrappedSonic.sol";
 
 abstract contract Unit_SonicSwapXAMOStrategy_Shared_Test is Base {
     //////////////////////////////////////////////////////

@@ -5,17 +5,20 @@ pragma solidity ^0.8.0;
 import {BaseFork} from "tests/fork/BaseFork.t.sol";
 
 // --- Test utilities
+import {Mainnet} from "tests/utils/Addresses.sol";
 import {Proxies} from "tests/utils/artifacts/Proxies.sol";
 import {Strategies} from "tests/utils/artifacts/Strategies.sol";
 import {Tokens} from "tests/utils/artifacts/Tokens.sol";
 import {Vaults} from "tests/utils/artifacts/Vaults.sol";
-import {Mainnet} from "tests/utils/Addresses.sol";
 
+// --- External libraries
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {IOToken} from "contracts/interfaces/IOToken.sol";
-import {IVault} from "contracts/interfaces/IVault.sol";
-import {IProxy} from "contracts/interfaces/IProxy.sol";
+
+// --- Project imports
 import {IMorphoV2Strategy} from "contracts/interfaces/strategies/IMorphoV2Strategy.sol";
+import {IOToken} from "contracts/interfaces/IOToken.sol";
+import {IProxy} from "contracts/interfaces/IProxy.sol";
+import {IVault} from "contracts/interfaces/IVault.sol";
 
 abstract contract Fork_MorphoV2Strategy_Shared_Test is BaseFork {
     //////////////////////////////////////////////////////

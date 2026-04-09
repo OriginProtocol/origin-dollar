@@ -1,13 +1,19 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-
+// --- Test base
 import {
     Fork_MerklPoolBoosterMainnet_Shared_Test
 } from "tests/fork/mainnet/poolBooster/MerklPoolBoosterMainnet/shared/Shared.t.sol";
-import {IPoolBoosterMerkl} from "contracts/interfaces/poolBooster/IPoolBoosterMerkl.sol";
+
+// --- Test utilities
 import {Mainnet} from "tests/utils/Addresses.sol";
+
+// --- External libraries
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+
+// --- Project imports
+import {IPoolBoosterMerkl} from "contracts/interfaces/poolBooster/IPoolBoosterMerkl.sol";
 
 contract Fork_Concrete_MerklPoolBoosterMainnet_BribeSkipped_Test is Fork_MerklPoolBoosterMainnet_Shared_Test {
     function test_bribe_skippedBelowMinBribeAmount() public {

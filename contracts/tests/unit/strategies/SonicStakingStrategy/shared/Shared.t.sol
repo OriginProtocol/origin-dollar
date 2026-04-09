@@ -10,13 +10,16 @@ import {Strategies} from "tests/utils/artifacts/Strategies.sol";
 import {Tokens} from "tests/utils/artifacts/Tokens.sol";
 import {Vaults} from "tests/utils/artifacts/Vaults.sol";
 
+// --- External libraries
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {MockWrappedSonic} from "tests/mocks/MockWrappedSonic.sol";
-import {MockSFC} from "contracts/mocks/MockSFC.sol";
+
+// --- Project imports
 import {IOToken} from "contracts/interfaces/IOToken.sol";
-import {IVault} from "contracts/interfaces/IVault.sol";
 import {IProxy} from "contracts/interfaces/IProxy.sol";
 import {ISonicStakingStrategy} from "contracts/interfaces/strategies/ISonicStakingStrategy.sol";
+import {IVault} from "contracts/interfaces/IVault.sol";
+import {MockSFC} from "contracts/mocks/MockSFC.sol";
+import {MockWrappedSonic} from "tests/mocks/MockWrappedSonic.sol";
 
 abstract contract Unit_SonicStakingStrategy_Shared_Test is Base {
     //////////////////////////////////////////////////////

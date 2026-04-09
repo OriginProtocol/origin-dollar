@@ -9,6 +9,7 @@ import {
 // --- Test utilities
 import {Strategies} from "tests/utils/artifacts/Strategies.sol";
 
+// --- Project imports
 import {IGeneralized4626Strategy} from "contracts/interfaces/strategies/IGeneralized4626Strategy.sol";
 
 contract Unit_Concrete_Generalized4626Strategy_Initialize_Test is Unit_Generalized4626Strategy_Shared_Test {

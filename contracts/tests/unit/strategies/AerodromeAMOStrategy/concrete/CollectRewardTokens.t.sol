@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
+// --- Test base
 import {Unit_AerodromeAMOStrategy_Shared_Test} from "tests/unit/strategies/AerodromeAMOStrategy/shared/Shared.t.sol";
 
 contract Unit_Concrete_AerodromeAMOStrategy_CollectRewardTokens_Test is Unit_AerodromeAMOStrategy_Shared_Test {

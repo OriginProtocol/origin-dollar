@@ -1,7 +1,10 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
+// --- Test base
 import {Unit_AutoWithdrawalModule_Shared_Test} from "tests/unit/automation/AutoWithdrawalModule/shared/Shared.t.sol";
+
+// --- Project imports
 import {IAutoWithdrawalModule} from "contracts/interfaces/automation/IAutoWithdrawalModule.sol";
 
 contract Unit_Concrete_AutoWithdrawalModule_FundWithdrawals_Test is Unit_AutoWithdrawalModule_Shared_Test {

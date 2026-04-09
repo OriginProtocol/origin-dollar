@@ -7,6 +7,7 @@ import {Unit_Proxies_Shared_Test} from "tests/unit/proxies/shared/Shared.t.sol";
 // --- Test utilities
 import {Proxies} from "tests/utils/artifacts/Proxies.sol";
 
+// --- Project imports
 import {IProxy} from "contracts/interfaces/IProxy.sol";
 
 contract Unit_Fuzz_Proxy_Initialize_Test is Unit_Proxies_Shared_Test {

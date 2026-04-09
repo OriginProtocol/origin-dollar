@@ -1,8 +1,11 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import {Mainnet} from "tests/utils/Addresses.sol";
+// --- Test base
 import {Smoke_OUSDVault_Shared_Test} from "tests/smoke/mainnet/vault/OUSDVault/shared/Shared.t.sol";
+
+// --- Test utilities
+import {Mainnet} from "tests/utils/Addresses.sol";
 
 contract Smoke_Concrete_OUSDVault_ViewFunctions_Test is Smoke_OUSDVault_Shared_Test {
     //////////////////////////////////////////////////////

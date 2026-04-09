@@ -1,7 +1,10 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
+// --- Test base
 import {Unit_OUSD_Shared_Test} from "tests/unit/token/OUSD/shared/Shared.t.sol";
+
+// --- Project imports
 import {IOToken} from "contracts/interfaces/IOToken.sol";
 
 contract Unit_Concrete_OUSD_Approve_Test is Unit_OUSD_Shared_Test {

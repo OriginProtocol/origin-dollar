@@ -8,7 +8,10 @@ import {BaseFork} from "tests/fork/BaseFork.t.sol";
 import {Automation} from "tests/utils/artifacts/Automation.sol";
 import {CrossChain, Mainnet} from "tests/utils/Addresses.sol";
 
+// --- External libraries
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+
+// --- Project imports
 import {IClaimStrategyRewardsSafeModule} from "contracts/interfaces/automation/IClaimStrategyRewardsSafeModule.sol";
 
 abstract contract Fork_ClaimStrategyRewardsSafeModule_Shared_Test is BaseFork {

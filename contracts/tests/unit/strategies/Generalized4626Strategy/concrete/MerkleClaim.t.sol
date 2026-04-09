@@ -1,11 +1,14 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
+// --- Test base
 import {
     Unit_Generalized4626Strategy_Shared_Test
 } from "tests/unit/strategies/Generalized4626Strategy/shared/Shared.t.sol";
-import {IGeneralized4626Strategy} from "contracts/interfaces/strategies/IGeneralized4626Strategy.sol";
+
+// --- Project imports
 import {IDistributor} from "contracts/interfaces/IMerkl.sol";
+import {IGeneralized4626Strategy} from "contracts/interfaces/strategies/IGeneralized4626Strategy.sol";
 
 contract Unit_Concrete_Generalized4626Strategy_MerkleClaim_Test is Unit_Generalized4626Strategy_Shared_Test {
     function test_merkleClaim_callsDistributor() public {

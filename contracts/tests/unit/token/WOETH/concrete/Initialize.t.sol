@@ -1,11 +1,16 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
+// --- Test base
 import {Unit_WOETH_Shared_Test} from "tests/unit/token/WOETH/shared/Shared.t.sol";
-import {IWOToken} from "contracts/interfaces/IWOToken.sol";
-import {IProxy} from "contracts/interfaces/IProxy.sol";
+
+// --- Test utilities
 import {Proxies} from "tests/utils/artifacts/Proxies.sol";
 import {Tokens} from "tests/utils/artifacts/Tokens.sol";
+
+// --- Project imports
+import {IProxy} from "contracts/interfaces/IProxy.sol";
+import {IWOToken} from "contracts/interfaces/IWOToken.sol";
 
 contract Unit_Concrete_WOETH_Initialize_Test is Unit_WOETH_Shared_Test {
     //////////////////////////////////////////////////////

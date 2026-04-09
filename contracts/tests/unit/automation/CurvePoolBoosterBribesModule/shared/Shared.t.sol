@@ -7,8 +7,9 @@ import {Base} from "tests/Base.t.sol";
 // --- Test utilities
 import {Automation} from "tests/utils/artifacts/Automation.sol";
 
-import {MockSafeContract} from "tests/mocks/MockSafeContract.sol";
+// --- Project imports
 import {ICurvePoolBoosterBribesModule} from "contracts/interfaces/automation/ICurvePoolBoosterBribesModule.sol";
+import {MockSafeContract} from "tests/mocks/MockSafeContract.sol";
 
 abstract contract Unit_CurvePoolBoosterBribesModule_Shared_Test is Base {
     //////////////////////////////////////////////////////

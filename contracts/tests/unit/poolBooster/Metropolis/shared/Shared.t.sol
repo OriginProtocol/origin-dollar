@@ -1,13 +1,17 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
+// --- Test base
 import {Base} from "tests/Base.t.sol";
 
 // --- Test utilities
 import {PoolBoosters} from "tests/utils/artifacts/PoolBoosters.sol";
 
+// --- External libraries
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {MockERC20} from "@solmate/test/utils/mocks/MockERC20.sol";
+
+// --- Project imports
 import {IPoolBoostCentralRegistryFull} from "contracts/interfaces/poolBooster/IPoolBoostCentralRegistryFull.sol";
 import {IPoolBoosterFactoryMetropolis} from "contracts/interfaces/poolBooster/IPoolBoosterFactoryMetropolis.sol";
 import {IPoolBoosterMetropolis} from "contracts/interfaces/poolBooster/IPoolBoosterMetropolis.sol";

@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
+// --- Test base
 import {Unit_SwapXSingle_Shared_Test} from "tests/unit/poolBooster/SwapXSingle/shared/Shared.t.sol";
 
 contract Unit_Concrete_PoolBoosterFactorySwapxSingle_ComputeAddress_Test is Unit_SwapXSingle_Shared_Test {
