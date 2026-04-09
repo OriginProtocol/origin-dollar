@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
+// --- Test base
 import {Smoke_OETHBaseVault_Shared_Test} from "tests/smoke/base/vault/OETHBaseVault/shared/Shared.t.sol";
 
 contract Smoke_Concrete_OETHBaseVault_Allocate_Test is Smoke_OETHBaseVault_Shared_Test {

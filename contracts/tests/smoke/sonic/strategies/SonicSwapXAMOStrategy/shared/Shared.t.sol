@@ -1,15 +1,21 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
+// --- Test base
 import {BaseSmoke} from "tests/smoke/BaseSmoke.t.sol";
+
+// --- Test utilities
 import {Sonic} from "tests/utils/Addresses.sol";
 
+// --- External libraries
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {IPair} from "contracts/interfaces/algebra/IAlgebraPair.sol";
+
+// --- Project imports
 import {IGauge} from "contracts/interfaces/algebra/IAlgebraGauge.sol";
 import {IOToken} from "contracts/interfaces/IOToken.sol";
-import {IVault} from "contracts/interfaces/IVault.sol";
+import {IPair} from "contracts/interfaces/algebra/IAlgebraPair.sol";
 import {ISonicSwapXAMOStrategy} from "contracts/interfaces/strategies/ISonicSwapXAMOStrategy.sol";
+import {IVault} from "contracts/interfaces/IVault.sol";
 
 abstract contract Smoke_SonicSwapXAMOStrategy_Shared_Test is BaseSmoke {
     //////////////////////////////////////////////////////

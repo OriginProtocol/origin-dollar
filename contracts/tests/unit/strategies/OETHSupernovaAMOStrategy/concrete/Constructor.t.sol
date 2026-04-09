@@ -1,16 +1,27 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
+// --- Test base
 import {
     Unit_OETHSupernovaAMOStrategy_Shared_Test
 } from "tests/unit/strategies/OETHSupernovaAMOStrategy/shared/Shared.t.sol";
-import {IOETHSupernovaAMOStrategy} from "contracts/interfaces/strategies/IOETHSupernovaAMOStrategy.sol";
-import {IVault} from "contracts/interfaces/IVault.sol";
-import {IProxy} from "contracts/interfaces/IProxy.sol";
-import {IOToken} from "contracts/interfaces/IOToken.sol";
-import {MockSwapXPair} from "tests/mocks/MockSwapXPair.sol";
-import {MockSwapXGauge} from "tests/mocks/MockSwapXGauge.sol";
+
+// --- Test utilities
+import {Proxies} from "tests/utils/artifacts/Proxies.sol";
+import {Strategies} from "tests/utils/artifacts/Strategies.sol";
+import {Tokens} from "tests/utils/artifacts/Tokens.sol";
+import {Vaults} from "tests/utils/artifacts/Vaults.sol";
+
+// --- External libraries
 import {MockERC20} from "@solmate/test/utils/mocks/MockERC20.sol";
+
+// --- Project imports
+import {IOETHSupernovaAMOStrategy} from "contracts/interfaces/strategies/IOETHSupernovaAMOStrategy.sol";
+import {IOToken} from "contracts/interfaces/IOToken.sol";
+import {IProxy} from "contracts/interfaces/IProxy.sol";
+import {IVault} from "contracts/interfaces/IVault.sol";
+import {MockSwapXGauge} from "tests/mocks/MockSwapXGauge.sol";
+import {MockSwapXPair} from "tests/mocks/MockSwapXPair.sol";
 
 contract Unit_Concrete_OETHSupernovaAMOStrategy_Constructor_Test is Unit_OETHSupernovaAMOStrategy_Shared_Test {
     function test_constructor_setsImmutables() public view {
@@ -27,7 +38,7 @@ contract Unit_Concrete_OETHSupernovaAMOStrategy_Constructor_Test is Unit_OETHSup
 
         IOETHSupernovaAMOStrategy strat = IOETHSupernovaAMOStrategy(
             vm.deployCode(
-                "contracts/strategies/algebra/OETHSupernovaAMOStrategy.sol:OETHSupernovaAMOStrategy",
+                Strategies.OETH_SUPERNOVA_AMO_STRATEGY,
                 abi.encode(address(reversedPool), address(oethVault), address(gauge_))
             )
         );
@@ -43,8 +54,7 @@ contract Unit_Concrete_OETHSupernovaAMOStrategy_Constructor_Test is Unit_OETHSup
 
         vm.expectRevert("Incorrect pool tokens");
         vm.deployCode(
-            "contracts/strategies/algebra/OETHSupernovaAMOStrategy.sol:OETHSupernovaAMOStrategy",
-            abi.encode(address(wrongPool), address(oethVault), address(gauge_))
+            Strategies.OETH_SUPERNOVA_AMO_STRATEGY, abi.encode(address(wrongPool), address(oethVault), address(gauge_))
         );
     }
 
@@ -59,8 +69,7 @@ contract Unit_Concrete_OETHSupernovaAMOStrategy_Constructor_Test is Unit_OETHSup
 
         vm.expectRevert("Incorrect token decimals");
         vm.deployCode(
-            "contracts/strategies/algebra/OETHSupernovaAMOStrategy.sol:OETHSupernovaAMOStrategy",
-            abi.encode(address(pool_), address(badVault), address(gauge_))
+            Strategies.OETH_SUPERNOVA_AMO_STRATEGY, abi.encode(address(pool_), address(badVault), address(gauge_))
         );
     }
 
@@ -71,7 +80,7 @@ contract Unit_Concrete_OETHSupernovaAMOStrategy_Constructor_Test is Unit_OETHSup
 
         vm.expectRevert("Pool not stable");
         vm.deployCode(
-            "contracts/strategies/algebra/OETHSupernovaAMOStrategy.sol:OETHSupernovaAMOStrategy",
+            Strategies.OETH_SUPERNOVA_AMO_STRATEGY,
             abi.encode(address(unstablePool), address(oethVault), address(gauge_))
         );
     }
@@ -83,26 +92,17 @@ contract Unit_Concrete_OETHSupernovaAMOStrategy_Constructor_Test is Unit_OETHSup
 
         vm.expectRevert("Incorrect gauge");
         vm.deployCode(
-            "contracts/strategies/algebra/OETHSupernovaAMOStrategy.sol:OETHSupernovaAMOStrategy",
-            abi.encode(address(pool_), address(oethVault), address(wrongGauge))
+            Strategies.OETH_SUPERNOVA_AMO_STRATEGY, abi.encode(address(pool_), address(oethVault), address(wrongGauge))
         );
     }
 
     /// @dev Helper to deploy a fresh vault with a custom asset
     function _deployVaultWithAsset(address _asset) internal returns (IVault) {
         vm.startPrank(deployer);
-        IOToken impl = IOToken(vm.deployCode("contracts/token/OETH.sol:OETH"));
-        address vaultImpl = vm.deployCode("contracts/vault/OETHVault.sol:OETHVault", abi.encode(_asset));
-        IProxy proxy = IProxy(
-            vm.deployCode(
-                "contracts/proxies/InitializeGovernedUpgradeabilityProxy.sol:InitializeGovernedUpgradeabilityProxy"
-            )
-        );
-        IProxy vaultProxy_ = IProxy(
-            vm.deployCode(
-                "contracts/proxies/InitializeGovernedUpgradeabilityProxy.sol:InitializeGovernedUpgradeabilityProxy"
-            )
-        );
+        IOToken impl = IOToken(vm.deployCode(Tokens.OETH));
+        address vaultImpl = vm.deployCode(Vaults.OETH, abi.encode(_asset));
+        IProxy proxy = IProxy(vm.deployCode(Proxies.IG_PROXY));
+        IProxy vaultProxy_ = IProxy(vm.deployCode(Proxies.IG_PROXY));
 
         proxy.initialize(
             address(impl), governor, abi.encodeWithSignature("initialize(address,uint256)", address(vaultProxy_), 1e27)

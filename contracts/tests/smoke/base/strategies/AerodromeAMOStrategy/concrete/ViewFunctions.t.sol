@@ -1,8 +1,13 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
+// --- Test base
 import {Smoke_AerodromeAMOStrategy_Shared_Test} from "../shared/Shared.t.sol";
+
+// --- Test utilities
 import {Base as BaseAddresses} from "tests/utils/Addresses.sol";
+
+// --- Project imports
 import {INonfungiblePositionManager} from "contracts/interfaces/aerodrome/INonfungiblePositionManager.sol";
 
 contract Smoke_Concrete_AerodromeAMOStrategy_ViewFunctions_Test is Smoke_AerodromeAMOStrategy_Shared_Test {

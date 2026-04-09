@@ -1,14 +1,18 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
+// --- Test base
 import {BaseSmoke} from "tests/smoke/BaseSmoke.t.sol";
+
+// --- Test utilities
 import {Sonic} from "tests/utils/Addresses.sol";
 
+// --- Project imports
 import {IOToken} from "contracts/interfaces/IOToken.sol";
-import {IVault} from "contracts/interfaces/IVault.sol";
 import {ISFC} from "contracts/interfaces/sonic/ISFC.sol";
-import {IWrappedSonic} from "contracts/interfaces/sonic/IWrappedSonic.sol";
 import {ISonicStakingStrategy} from "contracts/interfaces/strategies/ISonicStakingStrategy.sol";
+import {IVault} from "contracts/interfaces/IVault.sol";
+import {IWrappedSonic} from "contracts/interfaces/sonic/IWrappedSonic.sol";
 
 abstract contract Smoke_SonicStakingStrategy_Shared_Test is BaseSmoke {
     //////////////////////////////////////////////////////

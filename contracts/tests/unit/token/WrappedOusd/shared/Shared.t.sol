@@ -1,8 +1,13 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-// Base test contract
+// --- Test base
 import {Base} from "tests/Base.t.sol";
+
+// --- Test utilities
+import {Proxies} from "tests/utils/artifacts/Proxies.sol";
+import {Tokens} from "tests/utils/artifacts/Tokens.sol";
+import {Vaults} from "tests/utils/artifacts/Vaults.sol";
 
 // Interfaces
 import {IVault} from "contracts/interfaces/IVault.sol";
@@ -54,19 +59,11 @@ abstract contract Unit_WrappedOusd_Shared_Test is Base {
     function _deployContracts() internal {
         vm.startPrank(deployer);
 
-        IOToken ousdImpl = IOToken(vm.deployCode("contracts/token/OUSD.sol:OUSD"));
-        address ousdVaultImpl = vm.deployCode("contracts/vault/OUSDVault.sol:OUSDVault", abi.encode(address(usdc)));
+        IOToken ousdImpl = IOToken(vm.deployCode(Tokens.OUSD));
+        address ousdVaultImpl = vm.deployCode(Vaults.OUSD, abi.encode(address(usdc)));
 
-        ousdProxy = IProxy(
-            vm.deployCode(
-                "contracts/proxies/InitializeGovernedUpgradeabilityProxy.sol:InitializeGovernedUpgradeabilityProxy"
-            )
-        );
-        ousdVaultProxy = IProxy(
-            vm.deployCode(
-                "contracts/proxies/InitializeGovernedUpgradeabilityProxy.sol:InitializeGovernedUpgradeabilityProxy"
-            )
-        );
+        ousdProxy = IProxy(vm.deployCode(Proxies.IG_PROXY));
+        ousdVaultProxy = IProxy(vm.deployCode(Proxies.IG_PROXY));
 
         ousdProxy.initialize(
             address(ousdImpl),
@@ -87,13 +84,8 @@ abstract contract Unit_WrappedOusd_Shared_Test is Base {
     function _deployWrappedOusd() internal {
         vm.startPrank(deployer);
 
-        address wrappedOusdImpl =
-            vm.deployCode("contracts/token/WrappedOusd.sol:WrappedOusd", abi.encode(address(ousd)));
-        wrappedOusdProxy = IProxy(
-            vm.deployCode(
-                "contracts/proxies/InitializeGovernedUpgradeabilityProxy.sol:InitializeGovernedUpgradeabilityProxy"
-            )
-        );
+        address wrappedOusdImpl = vm.deployCode(Tokens.WRAPPED_OUSD, abi.encode(address(ousd)));
+        wrappedOusdProxy = IProxy(vm.deployCode(Proxies.IG_PROXY));
         wrappedOusdProxy.initialize(address(wrappedOusdImpl), governor, "");
 
         vm.stopPrank();

@@ -1,11 +1,17 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
+// --- Test base
+import {Fork_SwapXPoolBooster_Shared_Test} from "tests/fork/sonic/poolBooster/SwapXPoolBooster/shared/Shared.t.sol";
+
+// --- Test utilities
+import {Sonic} from "tests/utils/Addresses.sol";
+
+// --- External libraries
 import {Vm} from "forge-std/Vm.sol";
 
-import {Fork_SwapXPoolBooster_Shared_Test} from "tests/fork/sonic/poolBooster/SwapXPoolBooster/shared/Shared.t.sol";
+// --- Project imports
 import {IPoolBoosterSwapxSingle} from "contracts/interfaces/poolBooster/IPoolBoosterSwapxSingle.sol";
-import {Sonic} from "tests/utils/Addresses.sol";
 
 contract Fork_Concrete_SwapXPoolBooster_ShadowBribe_Test is Fork_SwapXPoolBooster_Shared_Test {
     // Shadow gauge event: NotifyReward(address from, address reward, uint256 epoch, uint256 amount)

@@ -1,7 +1,13 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
+// --- Test base
 import {Unit_OETHZapper_Shared_Test} from "tests/unit/zapper/OETHZapper/shared/Shared.t.sol";
+
+// --- Test utilities
+import {Zappers} from "tests/utils/artifacts/Zappers.sol";
+
+// --- Project imports
 import {IOETHZapper} from "contracts/interfaces/IOETHZapper.sol";
 import {MockWETH} from "contracts/mocks/MockWETH.sol";
 
@@ -18,10 +24,7 @@ contract Unit_Concrete_OETHBaseZapper_Constructor_Test is Unit_OETHZapper_Shared
         _etchBaseWETH();
 
         oethBaseZapper = IOETHZapper(
-            vm.deployCode(
-                "contracts/zapper/OETHBaseZapper.sol:OETHBaseZapper",
-                abi.encode(address(oeth), address(woeth), address(oethVault))
-            )
+            vm.deployCode(Zappers.OETH_BASE_ZAPPER, abi.encode(address(oeth), address(woeth), address(oethVault)))
         );
 
         assertEq(address(oethBaseZapper.weth()), BASE_WETH);
@@ -31,10 +34,7 @@ contract Unit_Concrete_OETHBaseZapper_Constructor_Test is Unit_OETHZapper_Shared
         _etchBaseWETH();
 
         oethBaseZapper = IOETHZapper(
-            vm.deployCode(
-                "contracts/zapper/OETHBaseZapper.sol:OETHBaseZapper",
-                abi.encode(address(oeth), address(woeth), address(oethVault))
-            )
+            vm.deployCode(Zappers.OETH_BASE_ZAPPER, abi.encode(address(oeth), address(woeth), address(oethVault)))
         );
 
         assertEq(address(oethBaseZapper.oToken()), address(oeth));

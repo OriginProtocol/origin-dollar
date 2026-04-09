@@ -1,13 +1,17 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-
+// --- Test base
 import {
     Smoke_CurvePoolBoosterFactory_Shared_Test
 } from "tests/smoke/mainnet/poolBooster/CurvePoolBoosterFactory/shared/Shared.t.sol";
-import {Mainnet} from "tests/utils/Addresses.sol";
+
+// --- Test utilities
 import {CrossChain} from "tests/utils/Addresses.sol";
+import {Mainnet} from "tests/utils/Addresses.sol";
+
+// --- External libraries
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 contract Smoke_Concrete_CurvePoolBoosterPlain_Test is Smoke_CurvePoolBoosterFactory_Shared_Test {
     //////////////////////////////////////////////////////

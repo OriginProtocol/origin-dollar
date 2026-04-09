@@ -1,11 +1,13 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-
+// --- Test base
 import {
     Fork_SonicStakingStrategy_Shared_Test
 } from "tests/fork/sonic/strategies/SonicStakingStrategy/shared/Shared.t.sol";
+
+// --- External libraries
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 contract Fork_Concrete_SonicStakingStrategy_Rewards_Test is Fork_SonicStakingStrategy_Shared_Test {
     function test_earnRewards() public {

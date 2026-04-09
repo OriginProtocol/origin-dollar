@@ -1,22 +1,31 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
+// --- Test base
 import {BaseFork} from "tests/fork/BaseFork.t.sol";
-import {Base as BaseAddresses} from "tests/utils/Addresses.sol";
 
+// --- Test utilities
+import {Base as BaseAddresses} from "tests/utils/Addresses.sol";
+import {Proxies} from "tests/utils/artifacts/Proxies.sol";
+import {Strategies} from "tests/utils/artifacts/Strategies.sol";
+import {Tokens} from "tests/utils/artifacts/Tokens.sol";
+import {Vaults} from "tests/utils/artifacts/Vaults.sol";
+
+// --- External libraries
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 
-import {InitializableAbstractStrategy} from "contracts/utils/InitializableAbstractStrategy.sol";
+// --- Project imports
+import {AerodromeAMOQuoter, QuoterHelper} from "contracts/utils/AerodromeAMOQuoter.sol";
+import {IAerodromeAMOStrategy} from "contracts/interfaces/strategies/IAerodromeAMOStrategy.sol";
+import {ICLGauge} from "contracts/interfaces/aerodrome/ICLGauge.sol";
+import {INonfungiblePositionManager} from "contracts/interfaces/aerodrome/INonfungiblePositionManager.sol";
 import {IOToken} from "contracts/interfaces/IOToken.sol";
 import {IProxy} from "contracts/interfaces/IProxy.sol";
-import {IVault} from "contracts/interfaces/IVault.sol";
-import {INonfungiblePositionManager} from "contracts/interfaces/aerodrome/INonfungiblePositionManager.sol";
-import {ICLGauge} from "contracts/interfaces/aerodrome/ICLGauge.sol";
-import {ISwapRouter} from "contracts/interfaces/aerodrome/ISwapRouter.sol";
 import {ISugarHelper} from "contracts/interfaces/aerodrome/ISugarHelper.sol";
-import {IAerodromeAMOStrategy} from "contracts/interfaces/strategies/IAerodromeAMOStrategy.sol";
-import {AerodromeAMOQuoter, QuoterHelper} from "contracts/utils/AerodromeAMOQuoter.sol";
+import {ISwapRouter} from "contracts/interfaces/aerodrome/ISwapRouter.sol";
+import {IVault} from "contracts/interfaces/IVault.sol";
+import {InitializableAbstractStrategy} from "contracts/utils/InitializableAbstractStrategy.sol";
 
 abstract contract Fork_AerodromeAMOStrategy_Shared_Test is BaseFork {
     //////////////////////////////////////////////////////
@@ -74,20 +83,11 @@ abstract contract Fork_AerodromeAMOStrategy_Shared_Test is BaseFork {
 
         vm.startPrank(deployer);
 
-        address oethBaseImpl = vm.deployCode("contracts/token/OETHBase.sol:OETHBase");
-        address oethBaseVaultImpl =
-            vm.deployCode("contracts/vault/OETHBaseVault.sol:OETHBaseVault", abi.encode(BaseAddresses.WETH));
+        address oethBaseImpl = vm.deployCode(Tokens.OETH_BASE);
+        address oethBaseVaultImpl = vm.deployCode(Vaults.OETH_BASE, abi.encode(BaseAddresses.WETH));
 
-        oethBaseProxy = IProxy(
-            vm.deployCode(
-                "contracts/proxies/InitializeGovernedUpgradeabilityProxy.sol:InitializeGovernedUpgradeabilityProxy"
-            )
-        );
-        oethBaseVaultProxy = IProxy(
-            vm.deployCode(
-                "contracts/proxies/InitializeGovernedUpgradeabilityProxy.sol:InitializeGovernedUpgradeabilityProxy"
-            )
-        );
+        oethBaseProxy = IProxy(vm.deployCode(Proxies.IG_PROXY));
+        oethBaseVaultProxy = IProxy(vm.deployCode(Proxies.IG_PROXY));
 
         oethBaseProxy.initialize(
             oethBaseImpl,
@@ -147,7 +147,7 @@ abstract contract Fork_AerodromeAMOStrategy_Shared_Test is BaseFork {
 
         aerodromeAMOStrategy = IAerodromeAMOStrategy(
             vm.deployCode(
-                "contracts/strategies/aerodrome/AerodromeAMOStrategy.sol:AerodromeAMOStrategy",
+                Strategies.AERODROME_AMO_STRATEGY,
                 abi.encode(
                     InitializableAbstractStrategy.BaseStrategyConfig({
                         platformAddress: clPool, vaultAddress: address(oethBaseVault)

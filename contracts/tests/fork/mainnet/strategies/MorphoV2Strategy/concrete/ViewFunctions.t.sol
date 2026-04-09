@@ -1,9 +1,11 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import {Mainnet} from "tests/utils/Addresses.sol";
-
+// --- Test base
 import {Fork_MorphoV2Strategy_Shared_Test} from "tests/fork/mainnet/strategies/MorphoV2Strategy/shared/Shared.t.sol";
+
+// --- Test utilities
+import {Mainnet} from "tests/utils/Addresses.sol";
 
 contract Fork_Concrete_MorphoV2Strategy_ViewFunctions_Test is Fork_MorphoV2Strategy_Shared_Test {
     function test_checkBalance_afterDeposit() public {

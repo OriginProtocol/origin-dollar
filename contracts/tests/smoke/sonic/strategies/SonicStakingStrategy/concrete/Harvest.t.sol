@@ -1,8 +1,10 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
+// --- Test base
 import {Smoke_SonicStakingStrategy_Shared_Test} from "../shared/Shared.t.sol";
 
+// --- External libraries
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 contract Smoke_Concrete_SonicStakingStrategy_Harvest_Test is Smoke_SonicStakingStrategy_Shared_Test {

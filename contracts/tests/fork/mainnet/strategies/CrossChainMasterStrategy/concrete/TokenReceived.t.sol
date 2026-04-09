@@ -1,7 +1,10 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
+// --- Test base
 import {Fork_CrossChainMasterStrategy_Shared_Test} from "../shared/Shared.t.sol";
+
+// --- Test utilities
 import {Mainnet, Base as BaseAddresses, CrossChain} from "tests/utils/Addresses.sol";
 
 contract Fork_CrossChainMasterStrategy_TokenReceived_Test is Fork_CrossChainMasterStrategy_Shared_Test {

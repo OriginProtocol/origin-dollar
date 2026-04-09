@@ -1,14 +1,25 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
+// --- Test base
 import {Base} from "tests/Base.t.sol";
+
+// --- Test utilities
+import {Proxies} from "tests/utils/artifacts/Proxies.sol";
+import {Strategies} from "tests/utils/artifacts/Strategies.sol";
+import {Tokens} from "tests/utils/artifacts/Tokens.sol";
+import {Vaults} from "tests/utils/artifacts/Vaults.sol";
+
+// --- External libraries
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {MockWrappedSonic} from "tests/mocks/MockWrappedSonic.sol";
-import {MockSFC} from "contracts/mocks/MockSFC.sol";
+
+// --- Project imports
 import {IOToken} from "contracts/interfaces/IOToken.sol";
-import {IVault} from "contracts/interfaces/IVault.sol";
 import {IProxy} from "contracts/interfaces/IProxy.sol";
 import {ISonicStakingStrategy} from "contracts/interfaces/strategies/ISonicStakingStrategy.sol";
+import {IVault} from "contracts/interfaces/IVault.sol";
+import {MockSFC} from "contracts/mocks/MockSFC.sol";
+import {MockWrappedSonic} from "tests/mocks/MockWrappedSonic.sol";
 
 abstract contract Unit_SonicStakingStrategy_Shared_Test is Base {
     //////////////////////////////////////////////////////
@@ -48,20 +59,11 @@ abstract contract Unit_SonicStakingStrategy_Shared_Test is Base {
         // Deploy OSonic + OSVault through proxies
         vm.startPrank(deployer);
 
-        IOToken oSonicImpl = IOToken(vm.deployCode("contracts/token/OSonic.sol:OSonic"));
-        address oSonicVaultImpl =
-            vm.deployCode("contracts/vault/OSVault.sol:OSVault", abi.encode(address(mockWrappedSonic)));
+        IOToken oSonicImpl = IOToken(vm.deployCode(Tokens.OS));
+        address oSonicVaultImpl = vm.deployCode(Vaults.OS, abi.encode(address(mockWrappedSonic)));
 
-        oSonicProxy = IProxy(
-            vm.deployCode(
-                "contracts/proxies/InitializeGovernedUpgradeabilityProxy.sol:InitializeGovernedUpgradeabilityProxy"
-            )
-        );
-        oSonicVaultProxy = IProxy(
-            vm.deployCode(
-                "contracts/proxies/InitializeGovernedUpgradeabilityProxy.sol:InitializeGovernedUpgradeabilityProxy"
-            )
-        );
+        oSonicProxy = IProxy(vm.deployCode(Proxies.IG_PROXY));
+        oSonicVaultProxy = IProxy(vm.deployCode(Proxies.IG_PROXY));
 
         oSonicProxy.initialize(
             address(oSonicImpl),
@@ -90,7 +92,7 @@ abstract contract Unit_SonicStakingStrategy_Shared_Test is Base {
         // Deploy SonicStakingStrategy
         sonicStakingStrategy = ISonicStakingStrategy(
             vm.deployCode(
-                "contracts/strategies/sonic/SonicStakingStrategy.sol:SonicStakingStrategy",
+                Strategies.SONIC_STAKING_STRATEGY,
                 abi.encode(address(mockSfc), address(oSonicVault), address(mockWrappedSonic), address(mockSfc))
             )
         );

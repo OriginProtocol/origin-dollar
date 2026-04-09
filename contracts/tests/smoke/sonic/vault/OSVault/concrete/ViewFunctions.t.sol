@@ -1,8 +1,11 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import {Sonic} from "tests/utils/Addresses.sol";
+// --- Test base
 import {Smoke_OSVault_Shared_Test} from "tests/smoke/sonic/vault/OSVault/shared/Shared.t.sol";
+
+// --- Test utilities
+import {Sonic} from "tests/utils/Addresses.sol";
 
 contract Smoke_Concrete_OSVault_ViewFunctions_Test is Smoke_OSVault_Shared_Test {
     //////////////////////////////////////////////////////

@@ -1,10 +1,15 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
+// --- Test base
 import {
     Fork_SonicSwapXAMOStrategy_Shared_Test
 } from "tests/fork/sonic/strategies/SonicSwapXAMOStrategy/shared/Shared.t.sol";
+
+// --- Test utilities
 import {Sonic} from "tests/utils/Addresses.sol";
+
+// --- Project imports
 import {ISonicSwapXAMOStrategy} from "contracts/interfaces/strategies/ISonicSwapXAMOStrategy.sol";
 
 contract Fork_Concrete_SonicSwapXAMOStrategy_InitialState_Test is Fork_SonicSwapXAMOStrategy_Shared_Test {

@@ -1,7 +1,10 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
+// --- Test base
 import {Unit_Proxies_Shared_Test} from "tests/unit/proxies/shared/Shared.t.sol";
+
+// --- Project imports
 import {IProxy} from "contracts/interfaces/IProxy.sol";
 
 contract Unit_Concrete_Proxy_Governance_Test is Unit_Proxies_Shared_Test {

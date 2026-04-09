@@ -1,7 +1,14 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
+// --- Test base
 import {Base} from "tests/Base.t.sol";
+
+// --- Test utilities
+import {Proxies} from "tests/utils/artifacts/Proxies.sol";
+import {Strategies} from "tests/utils/artifacts/Strategies.sol";
+import {Tokens} from "tests/utils/artifacts/Tokens.sol";
+import {Vaults} from "tests/utils/artifacts/Vaults.sol";
 
 // Interfaces
 import {IVault} from "contracts/interfaces/IVault.sol";
@@ -73,19 +80,11 @@ abstract contract Unit_MorphoV2Strategy_Shared_Test is Base {
 
         vm.startPrank(deployer);
 
-        IOToken ousdImpl = IOToken(vm.deployCode("contracts/token/OUSD.sol:OUSD"));
-        address ousdVaultImpl = vm.deployCode("contracts/vault/OUSDVault.sol:OUSDVault", abi.encode(address(asset)));
+        IOToken ousdImpl = IOToken(vm.deployCode(Tokens.OUSD));
+        address ousdVaultImpl = vm.deployCode(Vaults.OUSD, abi.encode(address(asset)));
 
-        ousdProxy = IProxy(
-            vm.deployCode(
-                "contracts/proxies/InitializeGovernedUpgradeabilityProxy.sol:InitializeGovernedUpgradeabilityProxy"
-            )
-        );
-        ousdVaultProxy = IProxy(
-            vm.deployCode(
-                "contracts/proxies/InitializeGovernedUpgradeabilityProxy.sol:InitializeGovernedUpgradeabilityProxy"
-            )
-        );
+        ousdProxy = IProxy(vm.deployCode(Proxies.IG_PROXY));
+        ousdVaultProxy = IProxy(vm.deployCode(Proxies.IG_PROXY));
 
         ousdProxy.initialize(
             address(ousdImpl),
@@ -114,8 +113,7 @@ abstract contract Unit_MorphoV2Strategy_Shared_Test is Base {
         // Deploy strategy with real vault
         strategy = IMorphoV2Strategy(
             vm.deployCode(
-                "contracts/strategies/MorphoV2Strategy.sol:MorphoV2Strategy",
-                abi.encode(address(shareVault), address(ousdVault), address(asset))
+                Strategies.MORPHO_V2_STRATEGY, abi.encode(address(shareVault), address(ousdVault), address(asset))
             )
         );
 

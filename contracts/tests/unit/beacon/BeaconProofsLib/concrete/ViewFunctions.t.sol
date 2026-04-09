@@ -1,7 +1,10 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
+// --- Test base
 import {Unit_BeaconProofsLib_Shared_Test} from "tests/unit/beacon/BeaconProofsLib/shared/Shared.t.sol";
+
+// --- Project imports
 import {Endian} from "contracts/beacon/Endian.sol";
 
 contract Unit_Concrete_BeaconProofsLib_ViewFunctions_Test is Unit_BeaconProofsLib_Shared_Test {

@@ -1,9 +1,15 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
+// --- Test base
 import {Unit_SwapXDouble_Shared_Test} from "tests/unit/poolBooster/SwapXDouble/shared/Shared.t.sol";
-import {IPoolBoosterSwapxDouble} from "contracts/interfaces/poolBooster/IPoolBoosterSwapxDouble.sol";
+
+// --- Test utilities
+import {PoolBoosters} from "tests/utils/artifacts/PoolBoosters.sol";
+
+// --- Project imports
 import {IBribe} from "contracts/interfaces/poolBooster/ISwapXAlgebraBribe.sol";
+import {IPoolBoosterSwapxDouble} from "contracts/interfaces/poolBooster/IPoolBoosterSwapxDouble.sol";
 import {StableMath} from "contracts/utils/StableMath.sol";
 
 contract Unit_Fuzz_PoolBoosterSwapxDouble_Bribe_Test is Unit_SwapXDouble_Shared_Test {
@@ -16,7 +22,7 @@ contract Unit_Fuzz_PoolBoosterSwapxDouble_Bribe_Test is Unit_SwapXDouble_Shared_
         // Deploy a new PoolBoosterSwapxDouble with the fuzzed split
         IPoolBoosterSwapxDouble fuzzedBooster = IPoolBoosterSwapxDouble(
             vm.deployCode(
-                "contracts/poolBooster/PoolBoosterSwapxDouble.sol:PoolBoosterSwapxDouble",
+                PoolBoosters.POOL_BOOSTER_SWAPX_DOUBLE,
                 abi.encode(mockBribeContractOS, mockBribeContractOther, address(oSonic), split)
             )
         );

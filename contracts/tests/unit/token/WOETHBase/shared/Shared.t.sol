@@ -1,8 +1,13 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-// Base test contract
+// --- Test base
 import {Base} from "tests/Base.t.sol";
+
+// --- Test utilities
+import {Proxies} from "tests/utils/artifacts/Proxies.sol";
+import {Tokens} from "tests/utils/artifacts/Tokens.sol";
+import {Vaults} from "tests/utils/artifacts/Vaults.sol";
 
 // Interfaces
 import {IVault} from "contracts/interfaces/IVault.sol";
@@ -54,19 +59,11 @@ abstract contract Unit_WOETHBase_Shared_Test is Base {
     function _deployContracts() internal {
         vm.startPrank(deployer);
 
-        IOToken oethBaseImpl = IOToken(vm.deployCode("contracts/token/OETHBase.sol:OETHBase"));
-        address oethVaultImpl = vm.deployCode("contracts/vault/OETHVault.sol:OETHVault", abi.encode(address(weth)));
+        IOToken oethBaseImpl = IOToken(vm.deployCode(Tokens.OETH_BASE));
+        address oethVaultImpl = vm.deployCode(Vaults.OETH, abi.encode(address(weth)));
 
-        oethProxy = IProxy(
-            vm.deployCode(
-                "contracts/proxies/InitializeGovernedUpgradeabilityProxy.sol:InitializeGovernedUpgradeabilityProxy"
-            )
-        );
-        oethVaultProxy = IProxy(
-            vm.deployCode(
-                "contracts/proxies/InitializeGovernedUpgradeabilityProxy.sol:InitializeGovernedUpgradeabilityProxy"
-            )
-        );
+        oethProxy = IProxy(vm.deployCode(Proxies.IG_PROXY));
+        oethVaultProxy = IProxy(vm.deployCode(Proxies.IG_PROXY));
 
         oethProxy.initialize(
             address(oethBaseImpl),
@@ -87,12 +84,8 @@ abstract contract Unit_WOETHBase_Shared_Test is Base {
     function _deployWOETHBase() internal {
         vm.startPrank(deployer);
 
-        address woethBaseImpl = vm.deployCode("contracts/token/WOETHBase.sol:WOETHBase", abi.encode(address(oethBase)));
-        woethBaseProxy = IProxy(
-            vm.deployCode(
-                "contracts/proxies/InitializeGovernedUpgradeabilityProxy.sol:InitializeGovernedUpgradeabilityProxy"
-            )
-        );
+        address woethBaseImpl = vm.deployCode(Tokens.WOETH_BASE, abi.encode(address(oethBase)));
+        woethBaseProxy = IProxy(vm.deployCode(Proxies.IG_PROXY));
         woethBaseProxy.initialize(address(woethBaseImpl), governor, "");
 
         vm.stopPrank();

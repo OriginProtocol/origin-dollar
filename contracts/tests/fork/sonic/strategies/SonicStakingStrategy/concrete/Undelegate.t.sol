@@ -1,11 +1,13 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import {ISonicStakingStrategy} from "contracts/interfaces/strategies/ISonicStakingStrategy.sol";
-
+// --- Test base
 import {
     Fork_SonicStakingStrategy_Shared_Test
 } from "tests/fork/sonic/strategies/SonicStakingStrategy/shared/Shared.t.sol";
+
+// --- Project imports
+import {ISonicStakingStrategy} from "contracts/interfaces/strategies/ISonicStakingStrategy.sol";
 
 contract Fork_Concrete_SonicStakingStrategy_Undelegate_Test is Fork_SonicStakingStrategy_Shared_Test {
     function test_undelegate() public {

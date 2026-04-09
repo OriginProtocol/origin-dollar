@@ -1,7 +1,14 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
+// --- Test base
 import {Base} from "tests/Base.t.sol";
+
+// --- Test utilities
+import {Proxies} from "tests/utils/artifacts/Proxies.sol";
+import {Strategies} from "tests/utils/artifacts/Strategies.sol";
+import {Tokens} from "tests/utils/artifacts/Tokens.sol";
+import {Vaults} from "tests/utils/artifacts/Vaults.sol";
 
 // Interfaces
 import {IVault} from "contracts/interfaces/IVault.sol";
@@ -65,19 +72,11 @@ abstract contract Unit_BaseCurveAMOStrategy_Shared_Test is Base {
         // Deploy real OETH + OETHVault
         vm.startPrank(deployer);
 
-        IOToken oethImpl = IOToken(vm.deployCode("contracts/token/OETH.sol:OETH"));
-        address oethVaultImpl = vm.deployCode("contracts/vault/OETHVault.sol:OETHVault", abi.encode(address(mockWeth)));
+        IOToken oethImpl = IOToken(vm.deployCode(Tokens.OETH));
+        address oethVaultImpl = vm.deployCode(Vaults.OETH, abi.encode(address(mockWeth)));
 
-        oethProxy = IProxy(
-            vm.deployCode(
-                "contracts/proxies/InitializeGovernedUpgradeabilityProxy.sol:InitializeGovernedUpgradeabilityProxy"
-            )
-        );
-        oethVaultProxy = IProxy(
-            vm.deployCode(
-                "contracts/proxies/InitializeGovernedUpgradeabilityProxy.sol:InitializeGovernedUpgradeabilityProxy"
-            )
-        );
+        oethProxy = IProxy(vm.deployCode(Proxies.IG_PROXY));
+        oethVaultProxy = IProxy(vm.deployCode(Proxies.IG_PROXY));
 
         oethProxy.initialize(
             address(oethImpl),
@@ -113,7 +112,7 @@ abstract contract Unit_BaseCurveAMOStrategy_Shared_Test is Base {
         // Deploy BaseCurveAMOStrategy
         baseCurveAMOStrategy = IBaseCurveAMOStrategy(
             vm.deployCode(
-                "contracts/strategies/BaseCurveAMOStrategy.sol:BaseCurveAMOStrategy",
+                Strategies.BASE_CURVE_AMO_STRATEGY,
                 abi.encode(
                     address(curvePool),
                     address(oethVault),

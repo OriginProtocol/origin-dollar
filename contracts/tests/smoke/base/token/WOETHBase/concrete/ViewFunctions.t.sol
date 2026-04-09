@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
+// --- Test base
 import {Smoke_WOETHBase_Shared_Test} from "tests/smoke/base/token/WOETHBase/shared/Shared.t.sol";
 
 contract Smoke_Concrete_WOETHBase_ViewFunctions_Test is Smoke_WOETHBase_Shared_Test {

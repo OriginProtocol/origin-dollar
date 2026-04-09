@@ -1,8 +1,13 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
+// --- Test base
 import {Smoke_CrossChainRemoteStrategyBase_Shared_Test} from "../shared/Shared.t.sol";
+
+// --- Test utilities
 import {Mainnet, Base as BaseAddresses, CrossChain} from "tests/utils/Addresses.sol";
+
+// --- External libraries
 import {Vm} from "forge-std/Vm.sol";
 
 contract Smoke_CrossChainRemoteStrategyBase_Deposit_Test is Smoke_CrossChainRemoteStrategyBase_Shared_Test {

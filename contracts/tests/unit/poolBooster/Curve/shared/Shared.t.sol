@@ -1,14 +1,21 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
+// --- Test base
 import {Base} from "tests/Base.t.sol";
 
+// --- Test utilities
+import {PoolBoosters} from "tests/utils/artifacts/PoolBoosters.sol";
+
+// --- External libraries
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {MockERC20} from "@solmate/test/utils/mocks/MockERC20.sol";
-import {IPoolBoostCentralRegistryFull} from "contracts/interfaces/poolBooster/IPoolBoostCentralRegistryFull.sol";
+
+// --- Project imports
+import {ICampaignRemoteManager} from "contracts/interfaces/ICampaignRemoteManager.sol";
 import {ICurvePoolBooster} from "contracts/interfaces/poolBooster/ICurvePoolBooster.sol";
 import {ICurvePoolBoosterFactory} from "contracts/interfaces/poolBooster/ICurvePoolBoosterFactory.sol";
-import {ICampaignRemoteManager} from "contracts/interfaces/ICampaignRemoteManager.sol";
+import {IPoolBoostCentralRegistryFull} from "contracts/interfaces/poolBooster/IPoolBoostCentralRegistryFull.sol";
 import {MockCreateX} from "tests/mocks/MockCreateX.sol";
 
 abstract contract Unit_Curve_Shared_Test is Base {
@@ -66,18 +73,13 @@ abstract contract Unit_Curve_Shared_Test is Base {
     }
 
     function _deployCentralRegistry() internal {
-        centralRegistry = IPoolBoostCentralRegistryFull(
-            vm.deployCode("contracts/poolBooster/PoolBoostCentralRegistry.sol:PoolBoostCentralRegistry")
-        );
+        centralRegistry = IPoolBoostCentralRegistryFull(vm.deployCode(PoolBoosters.POOL_BOOST_CENTRAL_REGISTRY));
         _setGovernorViaSlot(address(centralRegistry), governor);
     }
 
     function _deployCurvePoolBooster() internal {
         curvePoolBoosterPlain = ICurvePoolBooster(
-            vm.deployCode(
-                "contracts/poolBooster/curve/CurvePoolBoosterPlain.sol:CurvePoolBoosterPlain",
-                abi.encode(address(oeth), mockGauge)
-            )
+            vm.deployCode(PoolBoosters.CURVE_POOL_BOOSTER_PLAIN, abi.encode(address(oeth), mockGauge))
         );
         curvePoolBoosterPlain.initialize(
             governor, strategist, DEFAULT_FEE, mockFeeCollector, mockCampaignRemoteManager, mockVotemarket
@@ -85,9 +87,7 @@ abstract contract Unit_Curve_Shared_Test is Base {
     }
 
     function _deployCurvePoolBoosterFactory() internal {
-        curvePoolBoosterFactory = ICurvePoolBoosterFactory(
-            vm.deployCode("contracts/poolBooster/curve/CurvePoolBoosterFactory.sol:CurvePoolBoosterFactory")
-        );
+        curvePoolBoosterFactory = ICurvePoolBoosterFactory(vm.deployCode(PoolBoosters.CURVE_POOL_BOOSTER_FACTORY));
         curvePoolBoosterFactory.initialize(governor, strategist, address(centralRegistry));
 
         _deployMockCreateX();
@@ -142,26 +142,17 @@ abstract contract Unit_Curve_Shared_Test is Base {
     }
 
     function _deployFreshCurvePoolBooster() internal returns (ICurvePoolBooster) {
-        return ICurvePoolBooster(
-            vm.deployCode(
-                "contracts/poolBooster/curve/CurvePoolBooster.sol:CurvePoolBooster",
-                abi.encode(address(oeth), mockGauge)
-            )
-        );
+        return ICurvePoolBooster(vm.deployCode(PoolBoosters.CURVE_POOL_BOOSTER, abi.encode(address(oeth), mockGauge)));
     }
 
     function _deployFreshCurvePoolBoosterPlain() internal returns (ICurvePoolBooster) {
-        return ICurvePoolBooster(
-            vm.deployCode(
-                "contracts/poolBooster/curve/CurvePoolBoosterPlain.sol:CurvePoolBoosterPlain",
-                abi.encode(address(oeth), mockGauge)
-            )
-        );
+        return
+            ICurvePoolBooster(
+                vm.deployCode(PoolBoosters.CURVE_POOL_BOOSTER_PLAIN, abi.encode(address(oeth), mockGauge))
+            );
     }
 
     function _deployFreshCurvePoolBoosterFactory() internal returns (ICurvePoolBoosterFactory) {
-        return ICurvePoolBoosterFactory(
-            vm.deployCode("contracts/poolBooster/curve/CurvePoolBoosterFactory.sol:CurvePoolBoosterFactory")
-        );
+        return ICurvePoolBoosterFactory(vm.deployCode(PoolBoosters.CURVE_POOL_BOOSTER_FACTORY));
     }
 }

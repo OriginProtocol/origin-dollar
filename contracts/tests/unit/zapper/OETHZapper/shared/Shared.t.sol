@@ -1,15 +1,25 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
+// --- Test base
 import {Base} from "tests/Base.t.sol";
 
+// --- Test utilities
+import {Proxies} from "tests/utils/artifacts/Proxies.sol";
+import {Tokens} from "tests/utils/artifacts/Tokens.sol";
+import {Vaults} from "tests/utils/artifacts/Vaults.sol";
+import {Zappers} from "tests/utils/artifacts/Zappers.sol";
+
+// --- External libraries
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {IOToken} from "contracts/interfaces/IOToken.sol";
-import {IVault} from "contracts/interfaces/IVault.sol";
-import {IProxy} from "contracts/interfaces/IProxy.sol";
-import {IWOToken} from "contracts/interfaces/IWOToken.sol";
+
+// --- Project imports
 import {IOETHZapper} from "contracts/interfaces/IOETHZapper.sol";
+import {IOToken} from "contracts/interfaces/IOToken.sol";
+import {IProxy} from "contracts/interfaces/IProxy.sol";
+import {IVault} from "contracts/interfaces/IVault.sol";
+import {IWOToken} from "contracts/interfaces/IWOToken.sol";
 import {MockWETH} from "contracts/mocks/MockWETH.sol";
 
 abstract contract Unit_OETHZapper_Shared_Test is Base {
@@ -55,11 +65,11 @@ abstract contract Unit_OETHZapper_Shared_Test is Base {
     function _deployContracts() internal {
         vm.startPrank(deployer);
 
-        address oethImpl = vm.deployCode("contracts/token/OETH.sol:OETH");
-        address oethVaultImpl = vm.deployCode("contracts/vault/OETHVault.sol:OETHVault", abi.encode(address(weth)));
+        address oethImpl = vm.deployCode(Tokens.OETH);
+        address oethVaultImpl = vm.deployCode(Vaults.OETH, abi.encode(address(weth)));
 
-        oethProxy = IProxy(vm.deployCode("contracts/proxies/Proxies.sol:OETHProxy"));
-        oethVaultProxy = IProxy(vm.deployCode("contracts/proxies/Proxies.sol:OETHVaultProxy"));
+        oethProxy = IProxy(vm.deployCode(Proxies.OETH_PROXY));
+        oethVaultProxy = IProxy(vm.deployCode(Proxies.OETH_VAULT_PROXY));
 
         oethProxy.initialize(
             oethImpl, governor, abi.encodeWithSignature("initialize(address,uint256)", address(oethVaultProxy), 1e27)
@@ -78,8 +88,8 @@ abstract contract Unit_OETHZapper_Shared_Test is Base {
     function _deployWOETH() internal {
         vm.startPrank(deployer);
 
-        address woethImpl = vm.deployCode("contracts/token/WOETH.sol:WOETH", abi.encode(ERC20(address(oeth))));
-        woethProxy = IProxy(vm.deployCode("contracts/proxies/Proxies.sol:WOETHProxy"));
+        address woethImpl = vm.deployCode(Tokens.WOETH, abi.encode(ERC20(address(oeth))));
+        woethProxy = IProxy(vm.deployCode(Proxies.WOETH_PROXY));
         woethProxy.initialize(woethImpl, governor, "");
 
         vm.stopPrank();
@@ -93,8 +103,7 @@ abstract contract Unit_OETHZapper_Shared_Test is Base {
     function _deployZapper() internal {
         oethZapper = IOETHZapper(
             vm.deployCode(
-                "contracts/zapper/OETHZapper.sol:OETHZapper",
-                abi.encode(address(oeth), address(woeth), address(oethVault), address(weth))
+                Zappers.OETH_ZAPPER, abi.encode(address(oeth), address(woeth), address(oethVault), address(weth))
             )
         );
     }

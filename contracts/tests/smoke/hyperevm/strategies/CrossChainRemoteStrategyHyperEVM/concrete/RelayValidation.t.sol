@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
+// --- Test base
 import {Smoke_CrossChainRemoteStrategyHyperEVM_Shared_Test} from "../shared/Shared.t.sol";
 
 contract Smoke_CrossChainRemoteStrategyHyperEVM_RelayValidation_Test is

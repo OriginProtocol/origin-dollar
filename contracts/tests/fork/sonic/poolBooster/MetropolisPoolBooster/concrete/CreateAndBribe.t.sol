@@ -1,13 +1,19 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import {Vm} from "forge-std/Vm.sol";
-
+// --- Test base
 import {
     Fork_MetropolisPoolBooster_Shared_Test
 } from "tests/fork/sonic/poolBooster/MetropolisPoolBooster/shared/Shared.t.sol";
-import {IPoolBoosterMetropolis} from "contracts/interfaces/poolBooster/IPoolBoosterMetropolis.sol";
+
+// --- Test utilities
 import {Sonic} from "tests/utils/Addresses.sol";
+
+// --- External libraries
+import {Vm} from "forge-std/Vm.sol";
+
+// --- Project imports
+import {IPoolBoosterMetropolis} from "contracts/interfaces/poolBooster/IPoolBoosterMetropolis.sol";
 
 contract Fork_Concrete_MetropolisPoolBooster_CreateAndBribe_Test is Fork_MetropolisPoolBooster_Shared_Test {
     bytes32 internal constant BRIBE_EXECUTED_TOPIC = keccak256("BribeExecuted(uint256)");

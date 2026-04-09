@@ -1,7 +1,13 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
+// --- Test base
 import {Unit_BridgedWOETHStrategy_Shared_Test} from "tests/unit/strategies/BridgedWOETHStrategy/shared/Shared.t.sol";
+
+// --- Test utilities
+import {Strategies} from "tests/utils/artifacts/Strategies.sol";
+
+// --- Project imports
 import {IBridgedWOETHStrategy} from "contracts/interfaces/strategies/IBridgedWOETHStrategy.sol";
 
 contract Unit_Concrete_BridgedWOETHStrategy_Initialize_Test is Unit_BridgedWOETHStrategy_Shared_Test {
@@ -20,7 +26,7 @@ contract Unit_Concrete_BridgedWOETHStrategy_Initialize_Test is Unit_BridgedWOETH
         // Deploy a fresh strategy to test event emission
         IBridgedWOETHStrategy freshStrategy = IBridgedWOETHStrategy(
             vm.deployCode(
-                "contracts/strategies/BridgedWOETHStrategy.sol:BridgedWOETHStrategy",
+                Strategies.BRIDGED_WOETH_STRATEGY,
                 abi.encode(
                     address(0), address(oethVault), address(mockWeth), address(bridgedWOETH), address(oeth), mockOracle
                 )
@@ -44,7 +50,7 @@ contract Unit_Concrete_BridgedWOETHStrategy_Initialize_Test is Unit_BridgedWOETH
     function test_initialize_RevertWhen_calledByNonGovernor() public {
         IBridgedWOETHStrategy freshStrategy = IBridgedWOETHStrategy(
             vm.deployCode(
-                "contracts/strategies/BridgedWOETHStrategy.sol:BridgedWOETHStrategy",
+                Strategies.BRIDGED_WOETH_STRATEGY,
                 abi.encode(
                     address(0), address(oethVault), address(mockWeth), address(bridgedWOETH), address(oeth), mockOracle
                 )
@@ -60,7 +66,7 @@ contract Unit_Concrete_BridgedWOETHStrategy_Initialize_Test is Unit_BridgedWOETH
     function test_initialize_RevertWhen_zeroBps() public {
         IBridgedWOETHStrategy freshStrategy = IBridgedWOETHStrategy(
             vm.deployCode(
-                "contracts/strategies/BridgedWOETHStrategy.sol:BridgedWOETHStrategy",
+                Strategies.BRIDGED_WOETH_STRATEGY,
                 abi.encode(
                     address(0), address(oethVault), address(mockWeth), address(bridgedWOETH), address(oeth), mockOracle
                 )
@@ -76,7 +82,7 @@ contract Unit_Concrete_BridgedWOETHStrategy_Initialize_Test is Unit_BridgedWOETH
     function test_initialize_RevertWhen_bpsExceeds10000() public {
         IBridgedWOETHStrategy freshStrategy = IBridgedWOETHStrategy(
             vm.deployCode(
-                "contracts/strategies/BridgedWOETHStrategy.sol:BridgedWOETHStrategy",
+                Strategies.BRIDGED_WOETH_STRATEGY,
                 abi.encode(
                     address(0), address(oethVault), address(mockWeth), address(bridgedWOETH), address(oeth), mockOracle
                 )

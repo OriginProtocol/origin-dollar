@@ -1,12 +1,16 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {Base} from "tests/utils/Addresses.sol";
-
+// --- Test base
 import {
     Smoke_PoolBoosterMerklBase_Shared_Test
 } from "tests/smoke/base/poolBooster/PoolBoosterMerklBase/shared/Shared.t.sol";
+
+// --- Test utilities
+import {Base} from "tests/utils/Addresses.sol";
+
+// --- External libraries
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 contract Smoke_Concrete_PoolBoosterMerklBase_Test is Smoke_PoolBoosterMerklBase_Shared_Test {
     //////////////////////////////////////////////////////

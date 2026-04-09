@@ -1,7 +1,13 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
+// --- Test base
 import {Unit_AerodromeAMOStrategy_Shared_Test} from "tests/unit/strategies/AerodromeAMOStrategy/shared/Shared.t.sol";
+
+// --- Test utilities
+import {Strategies} from "tests/utils/artifacts/Strategies.sol";
+
+// --- Project imports
 import {MockCLPool} from "tests/mocks/aerodrome/MockCLPool.sol";
 
 contract Unit_Concrete_AerodromeAMOStrategy_Initialize_Test is Unit_AerodromeAMOStrategy_Shared_Test {
@@ -55,7 +61,7 @@ contract Unit_Concrete_AerodromeAMOStrategy_Initialize_Test is Unit_AerodromeAMO
     function test_initialize_RevertWhen_misconfiguredTickClosestToParity() public {
         vm.expectRevert("Misconfigured tickClosestToParity");
         vm.deployCode(
-            "contracts/strategies/aerodrome/AerodromeAMOStrategy.sol:AerodromeAMOStrategy",
+            Strategies.AERODROME_AMO_STRATEGY,
             abi.encode(
                 address(mockCLPool),
                 address(oethBaseVault),
@@ -80,7 +86,7 @@ contract Unit_Concrete_AerodromeAMOStrategy_Initialize_Test is Unit_AerodromeAMO
 
         vm.expectRevert("Only WETH supported as token0");
         vm.deployCode(
-            "contracts/strategies/aerodrome/AerodromeAMOStrategy.sol:AerodromeAMOStrategy",
+            Strategies.AERODROME_AMO_STRATEGY,
             abi.encode(
                 address(wrongPool),
                 address(oethBaseVault),
@@ -105,7 +111,7 @@ contract Unit_Concrete_AerodromeAMOStrategy_Initialize_Test is Unit_AerodromeAMO
 
         vm.expectRevert("Only OETHb supported as token1");
         vm.deployCode(
-            "contracts/strategies/aerodrome/AerodromeAMOStrategy.sol:AerodromeAMOStrategy",
+            Strategies.AERODROME_AMO_STRATEGY,
             abi.encode(
                 address(wrongPool),
                 address(oethBaseVault),
@@ -131,7 +137,7 @@ contract Unit_Concrete_AerodromeAMOStrategy_Initialize_Test is Unit_AerodromeAMO
 
         vm.expectRevert("Unsupported tickSpacing");
         vm.deployCode(
-            "contracts/strategies/aerodrome/AerodromeAMOStrategy.sol:AerodromeAMOStrategy",
+            Strategies.AERODROME_AMO_STRATEGY,
             abi.encode(
                 address(wrongPool),
                 address(oethBaseVault),

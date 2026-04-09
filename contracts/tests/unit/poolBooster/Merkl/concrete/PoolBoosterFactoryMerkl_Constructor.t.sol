@@ -1,7 +1,11 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
+// --- Test base
 import {Unit_Merkl_Shared_Test} from "tests/unit/poolBooster/Merkl/shared/Shared.t.sol";
+
+// --- Test utilities
+import {PoolBoosters} from "tests/utils/artifacts/PoolBoosters.sol";
 
 contract Unit_Concrete_PoolBoosterFactoryMerkl_Constructor_Test is Unit_Merkl_Shared_Test {
     function test_constructor() public view {
@@ -14,7 +18,7 @@ contract Unit_Concrete_PoolBoosterFactoryMerkl_Constructor_Test is Unit_Merkl_Sh
     function test_constructor_RevertWhen_zeroOToken() public {
         vm.expectRevert("Invalid oToken address");
         vm.deployCode(
-            "contracts/poolBooster/PoolBoosterFactoryMerkl.sol:PoolBoosterFactoryMerkl",
+            PoolBoosters.POOL_BOOSTER_FACTORY_MERKL,
             abi.encode(address(0), governor, address(centralRegistry), address(beacon))
         );
     }
@@ -22,7 +26,7 @@ contract Unit_Concrete_PoolBoosterFactoryMerkl_Constructor_Test is Unit_Merkl_Sh
     function test_constructor_RevertWhen_zeroGovernor() public {
         vm.expectRevert("Invalid governor address");
         vm.deployCode(
-            "contracts/poolBooster/PoolBoosterFactoryMerkl.sol:PoolBoosterFactoryMerkl",
+            PoolBoosters.POOL_BOOSTER_FACTORY_MERKL,
             abi.encode(address(oeth), address(0), address(centralRegistry), address(beacon))
         );
     }
@@ -30,15 +34,14 @@ contract Unit_Concrete_PoolBoosterFactoryMerkl_Constructor_Test is Unit_Merkl_Sh
     function test_constructor_RevertWhen_zeroCentralRegistry() public {
         vm.expectRevert("Invalid central registry address");
         vm.deployCode(
-            "contracts/poolBooster/PoolBoosterFactoryMerkl.sol:PoolBoosterFactoryMerkl",
-            abi.encode(address(oeth), governor, address(0), address(beacon))
+            PoolBoosters.POOL_BOOSTER_FACTORY_MERKL, abi.encode(address(oeth), governor, address(0), address(beacon))
         );
     }
 
     function test_constructor_RevertWhen_zeroBeacon() public {
         vm.expectRevert("Invalid beacon address");
         vm.deployCode(
-            "contracts/poolBooster/PoolBoosterFactoryMerkl.sol:PoolBoosterFactoryMerkl",
+            PoolBoosters.POOL_BOOSTER_FACTORY_MERKL,
             abi.encode(address(oeth), governor, address(centralRegistry), address(0))
         );
     }

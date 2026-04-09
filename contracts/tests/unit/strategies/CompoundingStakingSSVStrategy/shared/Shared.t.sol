@@ -1,20 +1,21 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
+// --- Test base
 import {Base} from "tests/Base.t.sol";
-import {stdJson} from "forge-std/StdJson.sol";
+
+// --- Test utilities
+import {Proxies} from "tests/utils/artifacts/Proxies.sol";
+import {Strategies} from "tests/utils/artifacts/Strategies.sol";
+import {Tokens} from "tests/utils/artifacts/Tokens.sol";
+import {Vaults} from "tests/utils/artifacts/Vaults.sol";
+
+// --- External libraries
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {MockWETH} from "contracts/mocks/MockWETH.sol";
-import {MockSSVNetwork} from "contracts/mocks/MockSSVNetwork.sol";
-import {MockSSV} from "contracts/mocks/MockSSV.sol";
-import {MockDepositContract} from "contracts/mocks/MockDepositContract.sol";
-import {MockBeaconProofs} from "contracts/mocks/beacon/MockBeaconProofs.sol";
-import {MockBeaconRoots} from "tests/mocks/MockBeaconRoots.sol";
-import {MockWithdrawalRequest} from "tests/mocks/MockWithdrawalRequest.sol";
-import {IVault} from "contracts/interfaces/IVault.sol";
-import {IProxy} from "contracts/interfaces/IProxy.sol";
-import {IOToken} from "contracts/interfaces/IOToken.sol";
-import {ICompoundingStakingSSVStrategy} from "contracts/interfaces/strategies/ICompoundingStakingSSVStrategy.sol";
+import {stdJson} from "forge-std/StdJson.sol";
+
+// --- Project imports
+import {Cluster} from "contracts/interfaces/ISSVNetwork.sol";
 import {
     CompoundingBalanceProofs as BalanceProofs,
     CompoundingFirstPendingDepositSlotProofData as FirstPendingDepositSlotProofData,
@@ -23,7 +24,17 @@ import {
     CompoundingValidatorStakeData as ValidatorStakeData
 } from "contracts/interfaces/strategies/CompoundingStakingTypes.sol";
 import {CompoundingStakingStrategyView} from "contracts/strategies/NativeStaking/CompoundingStakingView.sol";
-import {Cluster} from "contracts/interfaces/ISSVNetwork.sol";
+import {ICompoundingStakingSSVStrategy} from "contracts/interfaces/strategies/ICompoundingStakingSSVStrategy.sol";
+import {IOToken} from "contracts/interfaces/IOToken.sol";
+import {IProxy} from "contracts/interfaces/IProxy.sol";
+import {IVault} from "contracts/interfaces/IVault.sol";
+import {MockBeaconProofs} from "contracts/mocks/beacon/MockBeaconProofs.sol";
+import {MockBeaconRoots} from "tests/mocks/MockBeaconRoots.sol";
+import {MockDepositContract} from "contracts/mocks/MockDepositContract.sol";
+import {MockSSV} from "contracts/mocks/MockSSV.sol";
+import {MockSSVNetwork} from "contracts/mocks/MockSSVNetwork.sol";
+import {MockWETH} from "contracts/mocks/MockWETH.sol";
+import {MockWithdrawalRequest} from "tests/mocks/MockWithdrawalRequest.sol";
 
 abstract contract Unit_CompoundingStakingSSVStrategy_Shared_Test is Base {
     using stdJson for string;
@@ -146,19 +157,11 @@ abstract contract Unit_CompoundingStakingSSVStrategy_Shared_Test is Base {
         // Deploy OETH + OETHVault through proxies
         vm.startPrank(deployer);
 
-        IOToken oethImpl = IOToken(vm.deployCode("contracts/token/OETH.sol:OETH"));
-        address oethVaultImpl = vm.deployCode("contracts/vault/OETHVault.sol:OETHVault", abi.encode(address(mockWeth)));
+        IOToken oethImpl = IOToken(vm.deployCode(Tokens.OETH));
+        address oethVaultImpl = vm.deployCode(Vaults.OETH, abi.encode(address(mockWeth)));
 
-        oethProxy = IProxy(
-            vm.deployCode(
-                "contracts/proxies/InitializeGovernedUpgradeabilityProxy.sol:InitializeGovernedUpgradeabilityProxy"
-            )
-        );
-        oethVaultProxy = IProxy(
-            vm.deployCode(
-                "contracts/proxies/InitializeGovernedUpgradeabilityProxy.sol:InitializeGovernedUpgradeabilityProxy"
-            )
-        );
+        oethProxy = IProxy(vm.deployCode(Proxies.IG_PROXY));
+        oethVaultProxy = IProxy(vm.deployCode(Proxies.IG_PROXY));
 
         oethProxy.initialize(
             address(oethImpl),
@@ -187,7 +190,7 @@ abstract contract Unit_CompoundingStakingSSVStrategy_Shared_Test is Base {
         // Deploy CompoundingStakingSSVStrategy
         compoundingStakingSSVStrategy = ICompoundingStakingSSVStrategy(
             vm.deployCode(
-                "contracts/strategies/NativeStaking/CompoundingStakingSSVStrategy.sol:CompoundingStakingSSVStrategy",
+                Strategies.COMPOUNDING_STAKING_SSV_STRATEGY,
                 abi.encode(
                     address(0), // platformAddress
                     address(oethVault), // vaultAddress

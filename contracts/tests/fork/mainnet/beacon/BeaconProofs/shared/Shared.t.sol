@@ -1,8 +1,13 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
+// --- Test base
 import {BaseFork} from "tests/fork/BaseFork.t.sol";
+
+// --- External libraries
 import {stdJson} from "forge-std/StdJson.sol";
+
+// --- Project imports
 import {EnhancedBeaconProofs} from "contracts/mocks/beacon/EnhancedBeaconProofs.sol";
 
 abstract contract Fork_BeaconProofs_Shared_Test is BaseFork {

@@ -1,9 +1,12 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
+// --- Test base
 import {
     Smoke_BaseBridgeHelperModule_Shared_Test
 } from "tests/smoke/base/automation/BaseBridgeHelperModule/shared/Shared.t.sol";
+
+// --- Test utilities
 import {Base} from "tests/utils/Addresses.sol";
 
 contract Smoke_Concrete_BaseBridgeHelperModule_Test is Smoke_BaseBridgeHelperModule_Shared_Test {

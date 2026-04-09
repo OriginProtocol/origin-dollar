@@ -1,7 +1,13 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
+// --- Test base
 import {Unit_Proxies_Shared_Test} from "tests/unit/proxies/shared/Shared.t.sol";
+
+// --- Test utilities
+import {Proxies} from "tests/utils/artifacts/Proxies.sol";
+
+// --- Project imports
 import {IProxy} from "contracts/interfaces/IProxy.sol";
 
 contract Unit_Concrete_Proxy_Admin_Test is Unit_Proxies_Shared_Test {
@@ -24,11 +30,7 @@ contract Unit_Concrete_Proxy_Admin_Test is Unit_Proxies_Shared_Test {
 
     function test_implementation_beforeInitialize() public {
         vm.prank(deployer);
-        proxy = IProxy(
-            vm.deployCode(
-                "contracts/proxies/InitializeGovernedUpgradeabilityProxy.sol:InitializeGovernedUpgradeabilityProxy"
-            )
-        );
+        proxy = IProxy(vm.deployCode(Proxies.IG_PROXY));
         assertEq(proxy.implementation(), address(0));
     }
 

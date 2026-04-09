@@ -1,17 +1,22 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
+// --- Test base
 import {BaseFork} from "tests/fork/BaseFork.t.sol";
 
+// --- Test utilities
+import {CrossChain} from "tests/utils/Addresses.sol";
+import {Mainnet} from "tests/utils/Addresses.sol";
+import {PoolBoosters} from "tests/utils/artifacts/PoolBoosters.sol";
+
+// --- External libraries
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {MockERC20} from "@solmate/test/utils/mocks/MockERC20.sol";
 
+// --- Project imports
 import {ICurvePoolBooster} from "contracts/interfaces/poolBooster/ICurvePoolBooster.sol";
 import {ICurvePoolBoosterFactory} from "contracts/interfaces/poolBooster/ICurvePoolBoosterFactory.sol";
 import {IPoolBoostCentralRegistryFull} from "contracts/interfaces/poolBooster/IPoolBoostCentralRegistryFull.sol";
-
-import {Mainnet} from "tests/utils/Addresses.sol";
-import {CrossChain} from "tests/utils/Addresses.sol";
 
 abstract contract Fork_CurvePoolBooster_Shared_Test is BaseFork {
     //////////////////////////////////////////////////////
@@ -51,16 +56,13 @@ abstract contract Fork_CurvePoolBooster_Shared_Test is BaseFork {
         ousdToken = IERC20(address(new MockERC20("Origin Dollar", "OUSD", 18)));
 
         // 2. Deploy PoolBoostCentralRegistry and set governor via storage slot
-        centralRegistry = IPoolBoostCentralRegistryFull(
-            vm.deployCode("contracts/poolBooster/PoolBoostCentralRegistry.sol:PoolBoostCentralRegistry")
-        );
+        centralRegistry = IPoolBoostCentralRegistryFull(vm.deployCode(PoolBoosters.POOL_BOOST_CENTRAL_REGISTRY));
         vm.store(address(centralRegistry), GOVERNOR_SLOT, bytes32(uint256(uint160(Mainnet.Timelock))));
 
         // 3. Deploy CurvePoolBoosterPlain
         curvePoolBoosterPlain = ICurvePoolBooster(
             vm.deployCode(
-                "contracts/poolBooster/curve/CurvePoolBoosterPlain.sol:CurvePoolBoosterPlain",
-                abi.encode(address(ousdToken), Mainnet.CurveOUSDUSDTGauge)
+                PoolBoosters.CURVE_POOL_BOOSTER_PLAIN, abi.encode(address(ousdToken), Mainnet.CurveOUSDUSDTGauge)
             )
         );
         curvePoolBoosterPlain.initialize(
@@ -73,9 +75,7 @@ abstract contract Fork_CurvePoolBooster_Shared_Test is BaseFork {
         );
 
         // 4. Deploy CurvePoolBoosterFactory
-        curvePoolBoosterFactory = ICurvePoolBoosterFactory(
-            vm.deployCode("contracts/poolBooster/curve/CurvePoolBoosterFactory.sol:CurvePoolBoosterFactory")
-        );
+        curvePoolBoosterFactory = ICurvePoolBoosterFactory(vm.deployCode(PoolBoosters.CURVE_POOL_BOOSTER_FACTORY));
         curvePoolBoosterFactory.initialize(Mainnet.Timelock, CrossChain.multichainStrategist, address(centralRegistry));
 
         // 5. Approve factory on registry

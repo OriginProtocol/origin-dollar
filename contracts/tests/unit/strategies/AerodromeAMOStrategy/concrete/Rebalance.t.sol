@@ -1,7 +1,13 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
+// --- Test base
 import {Unit_AerodromeAMOStrategy_Shared_Test} from "tests/unit/strategies/AerodromeAMOStrategy/shared/Shared.t.sol";
+
+// --- Test utilities
+import {Strategies} from "tests/utils/artifacts/Strategies.sol";
+
+// --- Project imports
 import {IAerodromeAMOStrategy} from "contracts/interfaces/strategies/IAerodromeAMOStrategy.sol";
 
 contract Unit_Concrete_AerodromeAMOStrategy_Rebalance_Test is Unit_AerodromeAMOStrategy_Shared_Test {
@@ -140,7 +146,7 @@ contract Unit_Concrete_AerodromeAMOStrategy_Rebalance_Test is Unit_AerodromeAMOS
         // Deploy a fresh strategy without setting the interval
         IAerodromeAMOStrategy freshStrategy = IAerodromeAMOStrategy(
             vm.deployCode(
-                "contracts/strategies/aerodrome/AerodromeAMOStrategy.sol:AerodromeAMOStrategy",
+                Strategies.AERODROME_AMO_STRATEGY,
                 abi.encode(
                     address(mockCLPool),
                     address(oethBaseVault),

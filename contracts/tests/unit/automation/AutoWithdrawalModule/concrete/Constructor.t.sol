@@ -1,7 +1,11 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
+// --- Test base
 import {Unit_AutoWithdrawalModule_Shared_Test} from "tests/unit/automation/AutoWithdrawalModule/shared/Shared.t.sol";
+
+// --- Test utilities
+import {Automation} from "tests/utils/artifacts/Automation.sol";
 
 contract Unit_Concrete_AutoWithdrawalModule_Constructor_Test is Unit_AutoWithdrawalModule_Shared_Test {
     //////////////////////////////////////////////////////
@@ -35,7 +39,7 @@ contract Unit_Concrete_AutoWithdrawalModule_Constructor_Test is Unit_AutoWithdra
     function test_constructor_RevertWhen_zeroVault() public {
         vm.expectRevert("Invalid vault");
         vm.deployCode(
-            "contracts/automation/AutoWithdrawalModule.sol:AutoWithdrawalModule",
+            Automation.AUTO_WITHDRAWAL_MODULE,
             abi.encode(address(mockSafe), operator, address(0), address(mockStrategy))
         );
     }
@@ -43,8 +47,7 @@ contract Unit_Concrete_AutoWithdrawalModule_Constructor_Test is Unit_AutoWithdra
     function test_constructor_RevertWhen_zeroStrategy() public {
         vm.expectRevert("Invalid strategy");
         vm.deployCode(
-            "contracts/automation/AutoWithdrawalModule.sol:AutoWithdrawalModule",
-            abi.encode(address(mockSafe), operator, address(mockVault), address(0))
+            Automation.AUTO_WITHDRAWAL_MODULE, abi.encode(address(mockSafe), operator, address(mockVault), address(0))
         );
     }
 }

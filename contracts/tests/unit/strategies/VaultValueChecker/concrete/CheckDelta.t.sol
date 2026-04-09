@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
+// --- Test base
 import {Unit_VaultValueChecker_Shared_Test} from "tests/unit/strategies/VaultValueChecker/shared/Shared.t.sol";
 
 contract Unit_Concrete_VaultValueChecker_CheckDelta_Test is Unit_VaultValueChecker_Shared_Test {

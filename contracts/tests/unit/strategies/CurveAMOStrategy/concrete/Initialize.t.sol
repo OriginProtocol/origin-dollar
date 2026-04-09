@@ -1,8 +1,16 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+// --- Test base
 import {Unit_CurveAMOStrategy_Shared_Test} from "tests/unit/strategies/CurveAMOStrategy/shared/Shared.t.sol";
+
+// --- Test utilities
+import {Strategies} from "tests/utils/artifacts/Strategies.sol";
+
+// --- External libraries
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+
+// --- Project imports
 import {ICurveAMOStrategy} from "contracts/interfaces/strategies/ICurveAMOStrategy.sol";
 
 contract Unit_Concrete_CurveAMOStrategy_Initialize_Test is Unit_CurveAMOStrategy_Shared_Test {
@@ -28,7 +36,7 @@ contract Unit_Concrete_CurveAMOStrategy_Initialize_Test is Unit_CurveAMOStrategy
     function test_initialize_RevertWhen_calledByNonGovernor() public {
         ICurveAMOStrategy freshStrategy = ICurveAMOStrategy(
             vm.deployCode(
-                "contracts/strategies/CurveAMOStrategy.sol:CurveAMOStrategy",
+                Strategies.CURVE_AMO_STRATEGY,
                 abi.encode(
                     address(curvePool),
                     address(oethVault),

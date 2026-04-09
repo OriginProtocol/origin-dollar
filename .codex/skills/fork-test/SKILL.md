@@ -55,18 +55,20 @@ forge-std/Test
 Same rules as unit tests — use interfaces, not concrete contracts:
 
 - Import interfaces: `IVault`, `IOToken`, `IProxy`, strategy interfaces from `contracts/interfaces/strategies/`
-- Deploy fresh contracts with `vm.deployCode` instead of `new` (except mocks)
+- Deploy fresh contracts with `vm.deployCode` instead of `new` (except mocks), and always reference artifact paths through `tests/utils/Artifacts.sol` (e.g. `vm.deployCode(Vaults.OETH, abi.encode(address(weth)))`); add the entry to the relevant sub-library if it does not exist yet
 - Cast forked addresses to interfaces: `oethVault = IVault(Mainnet.OETH_VAULT)`
 - Reference events from interfaces: `emit IVault.EventName(...)`
 
 ### Product-specific vault types
 
-| Product | Token | Vault | Chain | `vm.deployCode` path |
-|---------|-------|-------|-------|----------------------|
-| OUSD | `OUSD` | `OUSDVault` | Mainnet | `contracts/vault/OUSDVault.sol:OUSDVault` |
-| OETH | `OETH` | `OETHVault` | Mainnet | `contracts/vault/OETHVault.sol:OETHVault` |
-| OSonic | `OSonic` | `OSVault` | Sonic | `contracts/vault/OSVault.sol:OSVault` |
-| OETHBase | `OETHBase` | `OETHBaseVault` | Base | `contracts/vault/OETHBaseVault.sol:OETHBaseVault` |
+| Product | Token | Vault | Chain | Artifacts reference |
+|---------|-------|-------|-------|---------------------|
+| OUSD | `OUSD` | `OUSDVault` | Mainnet | `Vaults.OUSD` |
+| OETH | `OETH` | `OETHVault` | Mainnet | `Vaults.OETH` |
+| OSonic | `OSonic` | `OSVault` | Sonic | `Vaults.OS` |
+| OETHBase | `OETHBase` | `OETHBaseVault` | Base | `Vaults.OETH_BASE` |
+
+Add the entry to `tests/utils/Artifacts.sol` if it does not exist yet.
 
 Never use `OETHVault` for Sonic tests.
 
@@ -155,5 +157,5 @@ When implementing fork tests:
 - prefer a few strong end-to-end tests over broad but redundant coverage
 - label both fresh and forked contracts for readable traces
 - use interface-only imports; no concrete contract imports except mocks
-- deploy fresh contracts with `vm.deployCode`, not `new` (mocks are fine with `new`)
+- deploy fresh contracts with `vm.deployCode`, not `new` (mocks are fine with `new`), and reference all artifact paths through `tests/utils/Artifacts.sol` — no inline `"contracts/...sol:Name"` strings
 - mirror existing fork test structure in the nearest comparable test suite before introducing a new pattern

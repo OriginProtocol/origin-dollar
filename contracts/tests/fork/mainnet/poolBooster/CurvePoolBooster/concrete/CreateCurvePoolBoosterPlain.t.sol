@@ -1,10 +1,12 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
+// --- Test base
 import {Fork_CurvePoolBooster_Shared_Test} from "tests/fork/mainnet/poolBooster/CurvePoolBooster/shared/Shared.t.sol";
 
-import {Mainnet} from "tests/utils/Addresses.sol";
+// --- Test utilities
 import {CrossChain} from "tests/utils/Addresses.sol";
+import {Mainnet} from "tests/utils/Addresses.sol";
 
 contract Fork_Concrete_CurvePoolBooster_CreateCurvePoolBoosterPlain_Test is Fork_CurvePoolBooster_Shared_Test {
     function test_createPoolBoosterInstance() public {

@@ -1,13 +1,20 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
+// --- Test base
 import {Base} from "tests/Base.t.sol";
 
-import {MockSafeContract} from "tests/mocks/MockSafeContract.sol";
-import {MockAutoWithdrawalVault} from "tests/mocks/MockAutoWithdrawalVault.sol";
+// --- Test utilities
+import {Automation} from "tests/utils/artifacts/Automation.sol";
+
+// --- External libraries
 import {MockERC20} from "@solmate/test/utils/mocks/MockERC20.sol";
-import {MockStrategy} from "contracts/mocks/MockStrategy.sol";
+
+// --- Project imports
 import {IAutoWithdrawalModule} from "contracts/interfaces/automation/IAutoWithdrawalModule.sol";
+import {MockAutoWithdrawalVault} from "tests/mocks/MockAutoWithdrawalVault.sol";
+import {MockSafeContract} from "tests/mocks/MockSafeContract.sol";
+import {MockStrategy} from "contracts/mocks/MockStrategy.sol";
 
 abstract contract Unit_AutoWithdrawalModule_Shared_Test is Base {
     //////////////////////////////////////////////////////
@@ -47,7 +54,7 @@ abstract contract Unit_AutoWithdrawalModule_Shared_Test is Base {
         // Deploy AutoWithdrawalModule
         autoWithdrawalModule = IAutoWithdrawalModule(
             vm.deployCode(
-                "contracts/automation/AutoWithdrawalModule.sol:AutoWithdrawalModule",
+                Automation.AUTO_WITHDRAWAL_MODULE,
                 abi.encode(address(mockSafe), operator, address(mockVault), address(mockStrategy))
             )
         );

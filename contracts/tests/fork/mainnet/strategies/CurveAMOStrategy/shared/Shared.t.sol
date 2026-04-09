@@ -1,18 +1,28 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
+// --- Test base
 import {BaseFork} from "tests/fork/BaseFork.t.sol";
-import {Mainnet} from "tests/utils/Addresses.sol";
 
+// --- Test utilities
+import {Mainnet} from "tests/utils/Addresses.sol";
+import {Proxies} from "tests/utils/artifacts/Proxies.sol";
+import {Strategies} from "tests/utils/artifacts/Strategies.sol";
+import {Tokens} from "tests/utils/artifacts/Tokens.sol";
+import {Vaults} from "tests/utils/artifacts/Vaults.sol";
+
+// --- External libraries
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {IOToken} from "contracts/interfaces/IOToken.sol";
-import {IVault} from "contracts/interfaces/IVault.sol";
-import {IProxy} from "contracts/interfaces/IProxy.sol";
-import {ICurveStableSwapNG} from "contracts/interfaces/ICurveStableSwapNG.sol";
+
+// --- Project imports
+import {ICurveAMOStrategy} from "contracts/interfaces/strategies/ICurveAMOStrategy.sol";
 import {ICurveLiquidityGaugeV6} from "contracts/interfaces/ICurveLiquidityGaugeV6.sol";
 import {ICurveMinter} from "contracts/interfaces/ICurveMinter.sol";
 import {ICurveStableSwapFactoryNG} from "contracts/interfaces/ICurveStableSwapFactoryNG.sol";
-import {ICurveAMOStrategy} from "contracts/interfaces/strategies/ICurveAMOStrategy.sol";
+import {ICurveStableSwapNG} from "contracts/interfaces/ICurveStableSwapNG.sol";
+import {IOToken} from "contracts/interfaces/IOToken.sol";
+import {IProxy} from "contracts/interfaces/IProxy.sol";
+import {IVault} from "contracts/interfaces/IVault.sol";
 
 abstract contract Fork_CurveAMOStrategy_Shared_Test is BaseFork {
     //////////////////////////////////////////////////////
@@ -57,19 +67,11 @@ abstract contract Fork_CurveAMOStrategy_Shared_Test is BaseFork {
         // Deploy fresh OETH + OETHVault
         vm.startPrank(deployer);
 
-        address oethImpl = vm.deployCode("contracts/token/OETH.sol:OETH");
-        address oethVaultImpl = vm.deployCode("contracts/vault/OETHVault.sol:OETHVault", abi.encode(Mainnet.WETH));
+        address oethImpl = vm.deployCode(Tokens.OETH);
+        address oethVaultImpl = vm.deployCode(Vaults.OETH, abi.encode(Mainnet.WETH));
 
-        oethProxy = IProxy(
-            vm.deployCode(
-                "contracts/proxies/InitializeGovernedUpgradeabilityProxy.sol:InitializeGovernedUpgradeabilityProxy"
-            )
-        );
-        oethVaultProxy = IProxy(
-            vm.deployCode(
-                "contracts/proxies/InitializeGovernedUpgradeabilityProxy.sol:InitializeGovernedUpgradeabilityProxy"
-            )
-        );
+        oethProxy = IProxy(vm.deployCode(Proxies.IG_PROXY));
+        oethVaultProxy = IProxy(vm.deployCode(Proxies.IG_PROXY));
 
         oethProxy.initialize(
             oethImpl, governor, abi.encodeWithSignature("initialize(address,uint256)", address(oethVaultProxy), 1e27)
@@ -135,7 +137,7 @@ abstract contract Fork_CurveAMOStrategy_Shared_Test is BaseFork {
         // Deploy CurveAMOStrategy
         curveAMOStrategy = ICurveAMOStrategy(
             vm.deployCode(
-                "contracts/strategies/CurveAMOStrategy.sol:CurveAMOStrategy",
+                Strategies.CURVE_AMO_STRATEGY,
                 abi.encode(poolAddr, address(oethVault), address(oeth), Mainnet.WETH, gaugeAddr, Mainnet.CRVMinter)
             )
         );

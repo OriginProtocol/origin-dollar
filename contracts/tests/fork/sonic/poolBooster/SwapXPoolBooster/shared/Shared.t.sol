@@ -1,17 +1,23 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
+// --- Test base
 import {BaseFork} from "tests/fork/BaseFork.t.sol";
 
+// --- Test utilities
+import {PoolBoosters} from "tests/utils/artifacts/PoolBoosters.sol";
+import {Sonic} from "tests/utils/Addresses.sol";
+
+// --- External libraries
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {MockERC20} from "@solmate/test/utils/mocks/MockERC20.sol";
+
+// --- Project imports
 import {IPoolBoostCentralRegistryFull} from "contracts/interfaces/poolBooster/IPoolBoostCentralRegistryFull.sol";
 import {IPoolBoosterFactorySwapxDouble} from "contracts/interfaces/poolBooster/IPoolBoosterFactorySwapxDouble.sol";
 import {IPoolBoosterFactorySwapxSingle} from "contracts/interfaces/poolBooster/IPoolBoosterFactorySwapxSingle.sol";
 import {IPoolBoosterSwapxDouble} from "contracts/interfaces/poolBooster/IPoolBoosterSwapxDouble.sol";
 import {IPoolBoosterSwapxSingle} from "contracts/interfaces/poolBooster/IPoolBoosterSwapxSingle.sol";
-
-import {Sonic} from "tests/utils/Addresses.sol";
 
 abstract contract Fork_SwapXPoolBooster_Shared_Test is BaseFork {
     //////////////////////////////////////////////////////
@@ -46,15 +52,13 @@ abstract contract Fork_SwapXPoolBooster_Shared_Test is BaseFork {
         oSonic = IERC20(address(new MockERC20("Origin Sonic", "OS", 18)));
 
         // 2. Deploy PoolBoostCentralRegistry and set governor via storage slot
-        centralRegistry = IPoolBoostCentralRegistryFull(
-            vm.deployCode("contracts/poolBooster/PoolBoostCentralRegistry.sol:PoolBoostCentralRegistry")
-        );
+        centralRegistry = IPoolBoostCentralRegistryFull(vm.deployCode(PoolBoosters.POOL_BOOST_CENTRAL_REGISTRY));
         vm.store(address(centralRegistry), GOVERNOR_SLOT, bytes32(uint256(uint160(Sonic.timelock))));
 
         // 3. Deploy SwapX Double factory
         factorySwapxDouble = IPoolBoosterFactorySwapxDouble(
             vm.deployCode(
-                "contracts/poolBooster/PoolBoosterFactorySwapxDouble.sol:PoolBoosterFactorySwapxDouble",
+                PoolBoosters.POOL_BOOSTER_FACTORY_SWAPX_DOUBLE,
                 abi.encode(address(oSonic), Sonic.timelock, address(centralRegistry))
             )
         );
@@ -62,7 +66,7 @@ abstract contract Fork_SwapXPoolBooster_Shared_Test is BaseFork {
         // 4. Deploy SwapX Single factory
         factorySwapxSingle = IPoolBoosterFactorySwapxSingle(
             vm.deployCode(
-                "contracts/poolBooster/PoolBoosterFactorySwapxSingle.sol:PoolBoosterFactorySwapxSingle",
+                PoolBoosters.POOL_BOOSTER_FACTORY_SWAPX_SINGLE,
                 abi.encode(address(oSonic), Sonic.timelock, address(centralRegistry))
             )
         );

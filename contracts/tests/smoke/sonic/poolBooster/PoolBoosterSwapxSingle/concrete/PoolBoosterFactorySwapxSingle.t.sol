@@ -1,11 +1,13 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import {Sonic} from "tests/utils/Addresses.sol";
-
+// --- Test base
 import {
     Smoke_PoolBoosterSwapxSingle_Shared_Test
 } from "tests/smoke/sonic/poolBooster/PoolBoosterSwapxSingle/shared/Shared.t.sol";
+
+// --- Test utilities
+import {Sonic} from "tests/utils/Addresses.sol";
 
 contract Smoke_Concrete_PoolBoosterFactorySwapxSingle_Test is Smoke_PoolBoosterSwapxSingle_Shared_Test {
     //////////////////////////////////////////////////////

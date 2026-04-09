@@ -1,15 +1,22 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
+// --- Test base
 import {Base} from "tests/Base.t.sol";
 
+// --- Test utilities
+import {Strategies} from "tests/utils/artifacts/Strategies.sol";
+
+// --- External libraries
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {MockERC20} from "@solmate/test/utils/mocks/MockERC20.sol";
-import {MockERC4626Vault} from "contracts/mocks/MockERC4626Vault.sol";
-import {ICrossChainRemoteStrategy} from "contracts/interfaces/strategies/ICrossChainRemoteStrategy.sol";
-import {CrossChainStrategyHelper} from "contracts/strategies/crosschain/CrossChainStrategyHelper.sol";
+
+// --- Project imports
 import {CCTPMessageTransmitterMock} from "contracts/mocks/crosschain/CCTPMessageTransmitterMock.sol";
 import {CCTPTokenMessengerMock} from "contracts/mocks/crosschain/CCTPTokenMessengerMock.sol";
+import {CrossChainStrategyHelper} from "contracts/strategies/crosschain/CrossChainStrategyHelper.sol";
+import {ICrossChainRemoteStrategy} from "contracts/interfaces/strategies/ICrossChainRemoteStrategy.sol";
+import {MockERC4626Vault} from "contracts/mocks/MockERC4626Vault.sol";
 
 abstract contract Unit_CrossChainRemoteStrategy_Shared_Test is Base {
     //////////////////////////////////////////////////////
@@ -68,7 +75,7 @@ abstract contract Unit_CrossChainRemoteStrategy_Shared_Test is Base {
         // Deploy CrossChainRemoteStrategy
         crossChainRemoteStrategy = ICrossChainRemoteStrategy(
             vm.deployCode(
-                "contracts/strategies/crosschain/CrossChainRemoteStrategy.sol:CrossChainRemoteStrategy",
+                Strategies.CROSS_CHAIN_REMOTE_STRATEGY,
                 abi.encode(
                     address(mockERC4626Vault), // platformAddress
                     address(0), // vaultAddress

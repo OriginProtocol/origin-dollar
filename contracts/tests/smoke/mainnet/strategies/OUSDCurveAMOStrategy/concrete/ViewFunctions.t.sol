@@ -1,7 +1,10 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
+// --- Test base
 import {Smoke_OUSDCurveAMOStrategy_Shared_Test} from "../shared/Shared.t.sol";
+
+// --- Test utilities
 import {Mainnet} from "tests/utils/Addresses.sol";
 
 contract Smoke_Concrete_OUSDCurveAMOStrategy_ViewFunctions_Test is Smoke_OUSDCurveAMOStrategy_Shared_Test {

@@ -82,7 +82,7 @@ Tests must interact with contracts through **interfaces**, not concrete implemen
 **Key rules:**
 - Import interfaces, not concrete contracts: `import {IVault} from "contracts/interfaces/IVault.sol";`
 - Declare state variables with interface types: `IVault internal oethVault;`
-- Deploy fresh contracts with `vm.deployCode` instead of `new`: `vm.deployCode("contracts/vault/OETHVault.sol:OETHVault", abi.encode(address(weth)))`
+- Deploy fresh contracts with `vm.deployCode` instead of `new`, and **always reference artifact paths through `tests/utils/Artifacts.sol`** rather than inline string literals: `vm.deployCode(Vaults.OETH, abi.encode(address(weth)))`. If the artifact you need is not yet declared in `Artifacts.sol`, add it to the relevant sub-library (`Tokens`, `Vaults`, `Proxies`, `Strategies`, ...) first.
 - Reference events from the interface: `emit IVault.CapitalPaused();`
 - For forked contracts, cast the address to the interface: `oethVault = IVault(Mainnet.OETH_VAULT);`
 
@@ -90,12 +90,14 @@ Tests must interact with contracts through **interfaces**, not concrete implemen
 
 Each product has its own vault contract. **Always use the correct vault type**:
 
-| Product | Token | Vault | Chain | `vm.deployCode` path |
-|---------|-------|-------|-------|----------------------|
-| OUSD | `OUSD` | `OUSDVault` | Mainnet | `contracts/vault/OUSDVault.sol:OUSDVault` |
-| OETH | `OETH` | `OETHVault` | Mainnet | `contracts/vault/OETHVault.sol:OETHVault` |
-| OSonic | `OSonic` | **`OSVault`** | Sonic | `contracts/vault/OSVault.sol:OSVault` |
-| OETHBase | `OETHBase` | `OETHBaseVault` | Base | `contracts/vault/OETHBaseVault.sol:OETHBaseVault` |
+| Product | Token | Vault | Chain | Artifacts reference |
+|---------|-------|-------|-------|---------------------|
+| OUSD | `OUSD` | `OUSDVault` | Mainnet | `Vaults.OUSD` |
+| OETH | `OETH` | `OETHVault` | Mainnet | `Vaults.OETH` |
+| OSonic | `OSonic` | **`OSVault`** | Sonic | `Vaults.OS` |
+| OETHBase | `OETHBase` | `OETHBaseVault` | Base | `Vaults.OETH_BASE` |
+
+Add the entry to `tests/utils/Artifacts.sol` if it does not exist yet.
 
 `OSVault` lives at `contracts/vault/OSVault.sol`. **NEVER use `OETHVault` for Sonic products.**
 
@@ -139,7 +141,7 @@ address pool = Sonic.SwapXWSOS_pool;
 
 ### Key rules
 
-- Deploy fresh **implementations** with `vm.deployCode`, then **proxies** with `vm.deployCode("contracts/proxies/InitializeGovernedUpgradeabilityProxy.sol:InitializeGovernedUpgradeabilityProxy")`.
+- Deploy fresh **implementations** with `vm.deployCode`, then **proxies** with `vm.deployCode(Proxies.IG_PROXY)`. All artifact paths (including the proxy) come from `tests/utils/Artifacts.sol` — never inline a `"contracts/...sol:Name"` string in a test file.
 - Initialize via `proxy.initialize(impl, governor, initData)`.
 - Cast proxies to interface types: `oSonic = IOToken(address(oSonicProxy))`.
 - Cast forked addresses to interfaces: `oethVault = IVault(Mainnet.OETH_VAULT)`.
@@ -408,6 +410,7 @@ After writing fork tests, re-run coverage to see if previously uncovered integra
 - [ ] All typed contract/proxy/mock state variables are declared in `Shared.t.sol` using interface types (not in `Base.t.sol`)
 - [ ] No concrete contract imports — only interfaces (`IVault`, `IOToken`, `IProxy`, strategy interfaces) and mocks
 - [ ] Fresh deployments use `vm.deployCode`, not `new` (except mocks)
+- [ ] All artifact paths are referenced through `tests/utils/Artifacts.sol` (e.g. `Vaults.OETH`, `Proxies.IG_PROXY`) — no inline `"contracts/...sol:Name"` strings
 - [ ] Forked contracts cast to interfaces: `IVault(Mainnet.OETH_VAULT)`
 - [ ] `setUp()` follows the exact order: super → fork creation → fresh deploy → configure → label
 - [ ] Fresh vs fork decision is correct: contract under test is fresh, external infrastructure is from fork

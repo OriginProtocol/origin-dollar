@@ -1,10 +1,15 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
+// --- Test base
 import {Base} from "tests/Base.t.sol";
 
-import {MockSafeContract} from "tests/mocks/MockSafeContract.sol";
+// --- Test utilities
+import {Automation} from "tests/utils/artifacts/Automation.sol";
+
+// --- Project imports
 import {ICurvePoolBoosterBribesModule} from "contracts/interfaces/automation/ICurvePoolBoosterBribesModule.sol";
+import {MockSafeContract} from "tests/mocks/MockSafeContract.sol";
 
 abstract contract Unit_CurvePoolBoosterBribesModule_Shared_Test is Base {
     //////////////////////////////////////////////////////
@@ -42,7 +47,7 @@ abstract contract Unit_CurvePoolBoosterBribesModule_Shared_Test is Base {
 
         curvePoolBoosterBribesModule = ICurvePoolBoosterBribesModule(
             vm.deployCode(
-                "contracts/automation/CurvePoolBoosterBribesModule.sol:CurvePoolBoosterBribesModule",
+                Automation.CURVE_POOL_BOOSTER_BRIBES_MODULE,
                 abi.encode(address(mockSafe), operator, initialPoolBoosters, 0.001 ether, 200_000)
             )
         );

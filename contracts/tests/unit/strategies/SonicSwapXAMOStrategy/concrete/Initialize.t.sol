@@ -1,8 +1,16 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+// --- Test base
 import {Unit_SonicSwapXAMOStrategy_Shared_Test} from "tests/unit/strategies/SonicSwapXAMOStrategy/shared/Shared.t.sol";
+
+// --- Test utilities
+import {Strategies} from "tests/utils/artifacts/Strategies.sol";
+
+// --- External libraries
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+
+// --- Project imports
 import {ISonicSwapXAMOStrategy} from "contracts/interfaces/strategies/ISonicSwapXAMOStrategy.sol";
 
 contract Unit_Concrete_SonicSwapXAMOStrategy_Initialize_Test is Unit_SonicSwapXAMOStrategy_Shared_Test {
@@ -32,7 +40,7 @@ contract Unit_Concrete_SonicSwapXAMOStrategy_Initialize_Test is Unit_SonicSwapXA
     function test_initialize_RevertWhen_nonGovernor() public {
         ISonicSwapXAMOStrategy freshStrategy = ISonicSwapXAMOStrategy(
             vm.deployCode(
-                "contracts/strategies/sonic/SonicSwapXAMOStrategy.sol:SonicSwapXAMOStrategy",
+                Strategies.SONIC_SWAPX_AMO_STRATEGY,
                 abi.encode(address(mockSwapXPair), address(oSonicVault), address(mockSwapXGauge))
             )
         );

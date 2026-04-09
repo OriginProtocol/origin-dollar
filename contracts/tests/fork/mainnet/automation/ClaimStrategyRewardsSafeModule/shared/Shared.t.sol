@@ -1,10 +1,17 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
+// --- Test base
 import {BaseFork} from "tests/fork/BaseFork.t.sol";
+
+// --- Test utilities
+import {Automation} from "tests/utils/artifacts/Automation.sol";
 import {CrossChain, Mainnet} from "tests/utils/Addresses.sol";
 
+// --- External libraries
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+
+// --- Project imports
 import {IClaimStrategyRewardsSafeModule} from "contracts/interfaces/automation/IClaimStrategyRewardsSafeModule.sol";
 
 abstract contract Fork_ClaimStrategyRewardsSafeModule_Shared_Test is BaseFork {
@@ -67,10 +74,7 @@ abstract contract Fork_ClaimStrategyRewardsSafeModule_Shared_Test is BaseFork {
         strategies[4] = metaMorphoProxy;
 
         claimStrategyRewardsModule = IClaimStrategyRewardsSafeModule(
-            vm.deployCode(
-                "contracts/automation/ClaimStrategyRewardsSafeModule.sol:ClaimStrategyRewardsSafeModule",
-                abi.encode(safeSigner, safeSigner, strategies)
-            )
+            vm.deployCode(Automation.CLAIM_STRATEGY_REWARDS_SAFE_MODULE, abi.encode(safeSigner, safeSigner, strategies))
         );
     }
 

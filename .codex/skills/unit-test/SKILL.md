@@ -78,18 +78,20 @@ Key rules:
 
 - import interfaces, not concrete contracts
 - declare state variables with interface types
-- deploy with `vm.deployCode` instead of `new` (except mocks)
+- deploy with `vm.deployCode` instead of `new` (except mocks), and always reference artifact paths through `tests/utils/Artifacts.sol` (e.g. `vm.deployCode(Vaults.OUSD, abi.encode(address(usdc)))`); add the entry to the relevant sub-library if it does not exist yet
 - reference events from the interface: `emit IVault.CapitalPaused();`
 - access struct return values by field name: `vault.withdrawalQueueMetadata().claimable`
 
 ### Product-specific vault types
 
-| Product | Token | Vault | `vm.deployCode` path |
-|---------|-------|-------|----------------------|
-| OUSD | `OUSD` | `OUSDVault` | `contracts/vault/OUSDVault.sol:OUSDVault` |
-| OETH | `OETH` | `OETHVault` | `contracts/vault/OETHVault.sol:OETHVault` |
-| OSonic | `OSonic` | `OSVault` | `contracts/vault/OSVault.sol:OSVault` |
-| OETHBase | `OETHBase` | `OETHBaseVault` | `contracts/vault/OETHBaseVault.sol:OETHBaseVault` |
+| Product | Token | Vault | Artifacts reference |
+|---------|-------|-------|---------------------|
+| OUSD | `OUSD` | `OUSDVault` | `Vaults.OUSD` |
+| OETH | `OETH` | `OETHVault` | `Vaults.OETH` |
+| OSonic | `OSonic` | `OSVault` | `Vaults.OS` |
+| OETHBase | `OETHBase` | `OETHBaseVault` | `Vaults.OETH_BASE` |
+
+Add the entry to `tests/utils/Artifacts.sol` if it does not exist yet.
 
 Never use `OETHVault` for Sonic tests.
 
@@ -111,7 +113,7 @@ function setUp() public virtual override {
 
 Key rules:
 
-- deploy implementations with `vm.deployCode`, then proxies with `vm.deployCode("contracts/proxies/InitializeGovernedUpgradeabilityProxy.sol:InitializeGovernedUpgradeabilityProxy")`
+- deploy implementations with `vm.deployCode`, then proxies with `vm.deployCode(Proxies.IG_PROXY)`; all artifact paths (including the proxy) come from `tests/utils/Artifacts.sol` — never inline a `"contracts/...sol:Name"` string in a test file
 - initialize proxies via `proxy.initialize(impl, governor, initData)`
 - cast proxies to interface types: `ousd = IOToken(address(ousdProxy))`
 - use `vm.startPrank(governor)` for config blocks
@@ -191,7 +193,7 @@ Match the repository's fuzz configuration in `contracts/foundry.toml` when relev
 When implementing tests:
 
 - use interface-only imports; no concrete contract imports except mocks
-- deploy contracts with `vm.deployCode`, not `new` (mocks are fine with `new`)
+- deploy contracts with `vm.deployCode`, not `new` (mocks are fine with `new`), and reference all artifact paths through `tests/utils/Artifacts.sol` — no inline `"contracts/...sol:Name"` strings
 - mirror the existing local test style before inventing new patterns
 - prefer coverage that matches real business logic paths over cosmetic line coverage
 - add both concrete and fuzz coverage when the function has stateful logic or arithmetic properties

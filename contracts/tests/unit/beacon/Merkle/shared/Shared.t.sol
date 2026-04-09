@@ -1,7 +1,10 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
+// --- Test base
 import {Base} from "tests/Base.t.sol";
+
+// --- Project imports
 import {MerkleWrapper} from "tests/mocks/MerkleWrapper.sol";
 
 abstract contract Unit_Merkle_Shared_Test is Base {

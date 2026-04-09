@@ -1,14 +1,21 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
+// --- Test base
 import {Base} from "tests/Base.t.sol";
 
+// --- Test utilities
+import {PoolBoosters} from "tests/utils/artifacts/PoolBoosters.sol";
+
+// --- External libraries
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {MockERC20} from "@solmate/test/utils/mocks/MockERC20.sol";
+
+// --- Project imports
+import {IBribe} from "contracts/interfaces/poolBooster/ISwapXAlgebraBribe.sol";
 import {IPoolBoostCentralRegistryFull} from "contracts/interfaces/poolBooster/IPoolBoostCentralRegistryFull.sol";
 import {IPoolBoosterFactorySwapxSingle} from "contracts/interfaces/poolBooster/IPoolBoosterFactorySwapxSingle.sol";
 import {IPoolBoosterSwapxSingle} from "contracts/interfaces/poolBooster/IPoolBoosterSwapxSingle.sol";
-import {IBribe} from "contracts/interfaces/poolBooster/ISwapXAlgebraBribe.sol";
 
 abstract contract Unit_SwapXSingle_Shared_Test is Base {
     //////////////////////////////////////////////////////
@@ -60,16 +67,14 @@ abstract contract Unit_SwapXSingle_Shared_Test is Base {
     }
 
     function _deployCentralRegistry() internal {
-        centralRegistry = IPoolBoostCentralRegistryFull(
-            vm.deployCode("contracts/poolBooster/PoolBoostCentralRegistry.sol:PoolBoostCentralRegistry")
-        );
+        centralRegistry = IPoolBoostCentralRegistryFull(vm.deployCode(PoolBoosters.POOL_BOOST_CENTRAL_REGISTRY));
         _setGovernorViaSlot(address(centralRegistry), governor);
     }
 
     function _deployFactory() internal {
         factorySwapxSingle = IPoolBoosterFactorySwapxSingle(
             vm.deployCode(
-                "contracts/poolBooster/PoolBoosterFactorySwapxSingle.sol:PoolBoosterFactorySwapxSingle",
+                PoolBoosters.POOL_BOOSTER_FACTORY_SWAPX_SINGLE,
                 abi.encode(address(oSonic), governor, address(centralRegistry))
             )
         );
@@ -77,10 +82,7 @@ abstract contract Unit_SwapXSingle_Shared_Test is Base {
 
     function _deployStandaloneBooster() internal {
         boosterSwapxSingle = IPoolBoosterSwapxSingle(
-            vm.deployCode(
-                "contracts/poolBooster/PoolBoosterSwapxSingle.sol:PoolBoosterSwapxSingle",
-                abi.encode(mockBribeContract, address(oSonic))
-            )
+            vm.deployCode(PoolBoosters.POOL_BOOSTER_SWAPX_SINGLE, abi.encode(mockBribeContract, address(oSonic)))
         );
     }
 

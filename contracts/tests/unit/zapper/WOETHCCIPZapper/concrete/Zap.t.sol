@@ -1,7 +1,10 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
+// --- Test base
 import {Unit_WOETHCCIPZapper_Shared_Test} from "tests/unit/zapper/WOETHCCIPZapper/shared/Shared.t.sol";
+
+// --- Project imports
 import {IWOETHCCIPZapper} from "contracts/interfaces/IWOETHCCIPZapper.sol";
 
 contract Unit_Concrete_WOETHCCIPZapper_Zap_Test is Unit_WOETHCCIPZapper_Shared_Test {

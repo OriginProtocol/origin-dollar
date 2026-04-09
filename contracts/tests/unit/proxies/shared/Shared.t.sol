@@ -1,7 +1,13 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
+// --- Test base
 import {Base} from "tests/Base.t.sol";
+
+// --- Test utilities
+import {Proxies} from "tests/utils/artifacts/Proxies.sol";
+
+// --- Project imports
 import {IProxy} from "contracts/interfaces/IProxy.sol";
 import {MockImplementation, MockImplementationV2} from "tests/mocks/MockImplementation.sol";
 
@@ -36,25 +42,12 @@ abstract contract Unit_Proxies_Shared_Test is Base {
 
     function _deployProxies() internal {
         vm.startPrank(deployer);
-        proxy = IProxy(
-            vm.deployCode(
-                "contracts/proxies/InitializeGovernedUpgradeabilityProxy.sol:InitializeGovernedUpgradeabilityProxy"
-            )
-        );
+        proxy = IProxy(vm.deployCode(Proxies.IG_PROXY));
         vm.stopPrank();
 
-        proxy2 = IProxy(
-            vm.deployCode(
-                "contracts/proxies/InitializeGovernedUpgradeabilityProxy2.sol:InitializeGovernedUpgradeabilityProxy2",
-                abi.encode(governor)
-            )
-        );
+        proxy2 = IProxy(vm.deployCode(Proxies.IG_PROXY_2, abi.encode(governor)));
 
-        crossChainProxy = IProxy(
-            vm.deployCode(
-                "contracts/proxies/create2/CrossChainStrategyProxy.sol:CrossChainStrategyProxy", abi.encode(governor)
-            )
-        );
+        crossChainProxy = IProxy(vm.deployCode(Proxies.CROSS_CHAIN_STRATEGY_PROXY, abi.encode(governor)));
     }
 
     function _labelContracts() internal {

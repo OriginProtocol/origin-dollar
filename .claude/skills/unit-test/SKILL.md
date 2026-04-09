@@ -80,7 +80,7 @@ Tests must interact with contracts through **interfaces**, not concrete implemen
 **Key rules:**
 - Import interfaces, not concrete contracts: `import {IVault} from "contracts/interfaces/IVault.sol";`
 - Declare state variables with interface types: `IVault internal ousdVault;`
-- Deploy with `vm.deployCode` instead of `new`: `vm.deployCode("contracts/vault/OUSDVault.sol:OUSDVault", abi.encode(address(usdc)))`
+- Deploy with `vm.deployCode` instead of `new`, and **always reference artifact paths through `tests/utils/Artifacts.sol`** rather than inline string literals: `vm.deployCode(Vaults.OUSD, abi.encode(address(usdc)))`. If the artifact you need is not yet declared in `Artifacts.sol`, add it to the relevant sub-library (`Tokens`, `Vaults`, `Proxies`, `Strategies`, ...) first.
 - Reference events from the interface: `emit IVault.CapitalPaused();`
 - Access struct return values by field name: `ousdVault.withdrawalQueueMetadata().claimable`
 
@@ -88,12 +88,14 @@ Tests must interact with contracts through **interfaces**, not concrete implemen
 
 Each product has its own vault contract. **Always use the correct vault type** — do not substitute one product's vault for another:
 
-| Product | Token | Vault source | `vm.deployCode` path |
-|---------|-------|-------------|----------------------|
-| OUSD | `OUSD` | `OUSDVault` | `contracts/vault/OUSDVault.sol:OUSDVault` |
-| OETH | `OETH` | `OETHVault` | `contracts/vault/OETHVault.sol:OETHVault` |
-| OSonic | `OSonic` | **`OSVault`** | `contracts/vault/OSVault.sol:OSVault` |
-| OETHBase | `OETHBase` | `OETHBaseVault` | `contracts/vault/OETHBaseVault.sol:OETHBaseVault` |
+| Product | Token | Vault source | Artifacts reference |
+|---------|-------|-------------|---------------------|
+| OUSD | `OUSD` | `OUSDVault` | `Vaults.OUSD` |
+| OETH | `OETH` | `OETHVault` | `Vaults.OETH` |
+| OSonic | `OSonic` | **`OSVault`** | `Vaults.OS` |
+| OETHBase | `OETHBase` | `OETHBaseVault` | `Vaults.OETH_BASE` |
+
+Add the entry to `tests/utils/Artifacts.sol` if it does not exist yet.
 
 `OSVault` lives at `contracts/vault/OSVault.sol`. Never use `OETHVault` for Sonic products.
 - `Unit_Shared_Test` is **abstract** and owns all deployment + configuration logic.
@@ -117,7 +119,7 @@ function setUp() public virtual override {
 
 ### Key rules
 
-- Deploy **implementations** with `vm.deployCode`, then **proxies** with `vm.deployCode("contracts/proxies/InitializeGovernedUpgradeabilityProxy.sol:InitializeGovernedUpgradeabilityProxy")`.
+- Deploy **implementations** with `vm.deployCode`, then **proxies** with `vm.deployCode(Proxies.IG_PROXY)`. All artifact paths (including the proxy) come from `tests/utils/Artifacts.sol` — never inline a `"contracts/...sol:Name"` string in a test file.
 - Initialize via `proxy.initialize(impl, governor, initData)`.
 - Cast proxies to their interface types (`ousd = IOToken(address(ousdProxy))`).
 - Configuration block uses `vm.startPrank(governor)` / `vm.stopPrank()`.
@@ -399,6 +401,7 @@ Some code paths may be genuinely unreachable in a unit-test context (e.g., assem
 - [ ] All typed contract/proxy/mock state variables are declared in `Shared.sol` using interface types (not in `Base.sol`)
 - [ ] No concrete contract imports — only interfaces (`IVault`, `IOToken`, `IWOToken`, `IProxy`) and mocks
 - [ ] All deployments use `vm.deployCode`, not `new` (except mocks which are fine to use `new`)
+- [ ] All artifact paths are referenced through `tests/utils/Artifacts.sol` (e.g. `Vaults.OUSD`, `Proxies.IG_PROXY`) — no inline `"contracts/...sol:Name"` strings
 - [ ] `setUp()` follows the exact order: super → warp → mocks → contracts → config → fund → label
 - [ ] **One file per function**: each state-changing function has its own `.t.sol` file (only views/setters may be grouped)
 - [ ] Concrete contracts use `Unit_Concrete_<Contract>_<Function>_Test`

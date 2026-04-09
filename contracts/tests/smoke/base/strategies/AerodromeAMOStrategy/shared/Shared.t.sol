@@ -1,16 +1,21 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
+// --- Test base
 import {BaseSmoke} from "tests/smoke/BaseSmoke.t.sol";
+
+// --- Test utilities
 import {Base as BaseAddresses} from "tests/utils/Addresses.sol";
 
-import {AerodromeAMOQuoter, QuoterHelper} from "contracts/utils/AerodromeAMOQuoter.sol";
-import {ISwapRouter} from "contracts/interfaces/aerodrome/ISwapRouter.sol";
-import {IOToken} from "contracts/interfaces/IOToken.sol";
-import {IVault} from "contracts/interfaces/IVault.sol";
-import {IAerodromeAMOStrategy} from "contracts/interfaces/strategies/IAerodromeAMOStrategy.sol";
-
+// --- External libraries
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+
+// --- Project imports
+import {AerodromeAMOQuoter, QuoterHelper} from "contracts/utils/AerodromeAMOQuoter.sol";
+import {IAerodromeAMOStrategy} from "contracts/interfaces/strategies/IAerodromeAMOStrategy.sol";
+import {IOToken} from "contracts/interfaces/IOToken.sol";
+import {ISwapRouter} from "contracts/interfaces/aerodrome/ISwapRouter.sol";
+import {IVault} from "contracts/interfaces/IVault.sol";
 
 abstract contract Smoke_AerodromeAMOStrategy_Shared_Test is BaseSmoke {
     IOToken internal oethBase;

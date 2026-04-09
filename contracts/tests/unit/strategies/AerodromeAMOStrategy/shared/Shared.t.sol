@@ -1,22 +1,30 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
+// --- Test base
 import {Base} from "tests/Base.t.sol";
 
-import {MockERC20} from "@solmate/test/utils/mocks/MockERC20.sol";
-import {MockWETH} from "contracts/mocks/MockWETH.sol";
+// --- Test utilities
+import {Proxies} from "tests/utils/artifacts/Proxies.sol";
+import {Strategies} from "tests/utils/artifacts/Strategies.sol";
+import {Tokens} from "tests/utils/artifacts/Tokens.sol";
+import {Vaults} from "tests/utils/artifacts/Vaults.sol";
 
-import {IVault} from "contracts/interfaces/IVault.sol";
-import {IProxy} from "contracts/interfaces/IProxy.sol";
-import {IOToken} from "contracts/interfaces/IOToken.sol";
+// --- External libraries
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {IAerodromeAMOStrategy} from "contracts/interfaces/strategies/IAerodromeAMOStrategy.sol";
+import {MockERC20} from "@solmate/test/utils/mocks/MockERC20.sol";
 
+// --- Project imports
+import {IAerodromeAMOStrategy} from "contracts/interfaces/strategies/IAerodromeAMOStrategy.sol";
+import {IOToken} from "contracts/interfaces/IOToken.sol";
+import {IProxy} from "contracts/interfaces/IProxy.sol";
+import {IVault} from "contracts/interfaces/IVault.sol";
+import {MockCLGauge} from "tests/mocks/aerodrome/MockCLGauge.sol";
 import {MockCLPool} from "tests/mocks/aerodrome/MockCLPool.sol";
 import {MockNonfungiblePositionManager} from "tests/mocks/aerodrome/MockNonfungiblePositionManager.sol";
-import {MockCLGauge} from "tests/mocks/aerodrome/MockCLGauge.sol";
-import {MockSwapRouter} from "tests/mocks/aerodrome/MockSwapRouter.sol";
 import {MockSugarHelper} from "tests/mocks/aerodrome/MockSugarHelper.sol";
+import {MockSwapRouter} from "tests/mocks/aerodrome/MockSwapRouter.sol";
+import {MockWETH} from "contracts/mocks/MockWETH.sol";
 
 abstract contract Unit_AerodromeAMOStrategy_Shared_Test is Base {
     //////////////////////////////////////////////////////
@@ -75,20 +83,11 @@ abstract contract Unit_AerodromeAMOStrategy_Shared_Test is Base {
         // Deploy real OETHBase + OETHBaseVault
         vm.startPrank(deployer);
 
-        IOToken oethBaseImpl = IOToken(vm.deployCode("contracts/token/OETHBase.sol:OETHBase"));
-        address oethBaseVaultImpl =
-            vm.deployCode("contracts/vault/OETHBaseVault.sol:OETHBaseVault", abi.encode(address(mockWeth)));
+        IOToken oethBaseImpl = IOToken(vm.deployCode(Tokens.OETH_BASE));
+        address oethBaseVaultImpl = vm.deployCode(Vaults.OETH_BASE, abi.encode(address(mockWeth)));
 
-        oethBaseProxy = IProxy(
-            vm.deployCode(
-                "contracts/proxies/InitializeGovernedUpgradeabilityProxy.sol:InitializeGovernedUpgradeabilityProxy"
-            )
-        );
-        oethBaseVaultProxy = IProxy(
-            vm.deployCode(
-                "contracts/proxies/InitializeGovernedUpgradeabilityProxy.sol:InitializeGovernedUpgradeabilityProxy"
-            )
-        );
+        oethBaseProxy = IProxy(vm.deployCode(Proxies.IG_PROXY));
+        oethBaseVaultProxy = IProxy(vm.deployCode(Proxies.IG_PROXY));
 
         oethBaseProxy.initialize(
             address(oethBaseImpl),
@@ -132,7 +131,7 @@ abstract contract Unit_AerodromeAMOStrategy_Shared_Test is Base {
         // lowerBoundingTick = -1, upperBoundingTick = 0, tickClosestToParity = 0
         aerodromeAMOStrategy = IAerodromeAMOStrategy(
             vm.deployCode(
-                "contracts/strategies/aerodrome/AerodromeAMOStrategy.sol:AerodromeAMOStrategy",
+                Strategies.AERODROME_AMO_STRATEGY,
                 abi.encode(
                     address(mockCLPool),
                     address(oethBaseVault),

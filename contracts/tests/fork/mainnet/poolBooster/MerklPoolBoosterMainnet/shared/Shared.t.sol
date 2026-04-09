@@ -1,18 +1,23 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
+// --- Test base
 import {BaseFork} from "tests/fork/BaseFork.t.sol";
 
+// --- Test utilities
+import {Mainnet} from "tests/utils/Addresses.sol";
+import {PoolBoosters} from "tests/utils/artifacts/PoolBoosters.sol";
+
+// --- External libraries
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {MockERC20} from "@solmate/test/utils/mocks/MockERC20.sol";
 import {UpgradeableBeacon} from "@openzeppelin/contracts/proxy/beacon/UpgradeableBeacon.sol";
 
+// --- Project imports
+import {IMerklDistributor} from "contracts/interfaces/poolBooster/IMerklDistributor.sol";
 import {IPoolBoostCentralRegistryFull} from "contracts/interfaces/poolBooster/IPoolBoostCentralRegistryFull.sol";
 import {IPoolBoosterFactoryMerkl} from "contracts/interfaces/poolBooster/IPoolBoosterFactoryMerkl.sol";
 import {IPoolBoosterMerkl} from "contracts/interfaces/poolBooster/IPoolBoosterMerkl.sol";
-import {IMerklDistributor} from "contracts/interfaces/poolBooster/IMerklDistributor.sol";
-
-import {Mainnet} from "tests/utils/Addresses.sol";
 
 interface IMerklDistributorAdmin {
     function setRewardTokenMinAmounts(address[] calldata tokens, uint256[] calldata amounts) external;
@@ -63,18 +68,16 @@ abstract contract Fork_MerklPoolBoosterMainnet_Shared_Test is BaseFork {
         oeth = IERC20(address(new MockERC20("Origin Ether", "OETH", 18)));
 
         // 2. Deploy PoolBoostCentralRegistry and set governor via storage slot
-        centralRegistry = IPoolBoostCentralRegistryFull(
-            vm.deployCode("contracts/poolBooster/PoolBoostCentralRegistry.sol:PoolBoostCentralRegistry")
-        );
+        centralRegistry = IPoolBoostCentralRegistryFull(vm.deployCode(PoolBoosters.POOL_BOOST_CENTRAL_REGISTRY));
         vm.store(address(centralRegistry), GOVERNOR_SLOT, bytes32(uint256(uint160(Mainnet.Timelock))));
 
         // 3. Deploy beacon + factory
-        address impl = vm.deployCode("contracts/poolBooster/PoolBoosterMerklV2.sol:PoolBoosterMerklV2");
+        address impl = vm.deployCode(PoolBoosters.POOL_BOOSTER_MERKL_V2);
         beacon = new UpgradeableBeacon(impl);
 
         factoryMerkl = IPoolBoosterFactoryMerkl(
             vm.deployCode(
-                "contracts/poolBooster/PoolBoosterFactoryMerkl.sol:PoolBoosterFactoryMerkl",
+                PoolBoosters.POOL_BOOSTER_FACTORY_MERKL,
                 abi.encode(address(oeth), Mainnet.Timelock, address(centralRegistry), address(beacon))
             )
         );

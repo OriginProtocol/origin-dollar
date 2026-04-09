@@ -1,14 +1,24 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
+// --- Test base
 import {BaseFork} from "tests/fork/BaseFork.t.sol";
-import {Mainnet} from "tests/utils/Addresses.sol";
 
+// --- Test utilities
+import {Mainnet} from "tests/utils/Addresses.sol";
+import {Proxies} from "tests/utils/artifacts/Proxies.sol";
+import {Strategies} from "tests/utils/artifacts/Strategies.sol";
+import {Tokens} from "tests/utils/artifacts/Tokens.sol";
+import {Vaults} from "tests/utils/artifacts/Vaults.sol";
+
+// --- External libraries
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {IOToken} from "contracts/interfaces/IOToken.sol";
-import {IVault} from "contracts/interfaces/IVault.sol";
-import {IProxy} from "contracts/interfaces/IProxy.sol";
+
+// --- Project imports
 import {IMorphoV2Strategy} from "contracts/interfaces/strategies/IMorphoV2Strategy.sol";
+import {IOToken} from "contracts/interfaces/IOToken.sol";
+import {IProxy} from "contracts/interfaces/IProxy.sol";
+import {IVault} from "contracts/interfaces/IVault.sol";
 
 abstract contract Fork_MorphoV2Strategy_Shared_Test is BaseFork {
     //////////////////////////////////////////////////////
@@ -51,19 +61,11 @@ abstract contract Fork_MorphoV2Strategy_Shared_Test is BaseFork {
         // Deploy fresh OUSD + OUSDVault
         vm.startPrank(deployer);
 
-        address ousdImpl = vm.deployCode("contracts/token/OUSD.sol:OUSD");
-        address ousdVaultImpl = vm.deployCode("contracts/vault/OUSDVault.sol:OUSDVault", abi.encode(Mainnet.USDC));
+        address ousdImpl = vm.deployCode(Tokens.OUSD);
+        address ousdVaultImpl = vm.deployCode(Vaults.OUSD, abi.encode(Mainnet.USDC));
 
-        ousdProxy = IProxy(
-            vm.deployCode(
-                "contracts/proxies/InitializeGovernedUpgradeabilityProxy.sol:InitializeGovernedUpgradeabilityProxy"
-            )
-        );
-        ousdVaultProxy = IProxy(
-            vm.deployCode(
-                "contracts/proxies/InitializeGovernedUpgradeabilityProxy.sol:InitializeGovernedUpgradeabilityProxy"
-            )
-        );
+        ousdProxy = IProxy(vm.deployCode(Proxies.IG_PROXY));
+        ousdVaultProxy = IProxy(vm.deployCode(Proxies.IG_PROXY));
 
         ousdProxy.initialize(
             ousdImpl, governor, abi.encodeWithSignature("initialize(address,uint256)", address(ousdVaultProxy), 1e27)
@@ -90,8 +92,7 @@ abstract contract Fork_MorphoV2Strategy_Shared_Test is BaseFork {
         // Deploy MorphoV2Strategy pointing at real Morpho V2 Vault
         strategy = IMorphoV2Strategy(
             vm.deployCode(
-                "contracts/strategies/MorphoV2Strategy.sol:MorphoV2Strategy",
-                abi.encode(Mainnet.MorphoOUSDv2Vault, address(ousdVault), Mainnet.USDC)
+                Strategies.MORPHO_V2_STRATEGY, abi.encode(Mainnet.MorphoOUSDv2Vault, address(ousdVault), Mainnet.USDC)
             )
         );
 
