@@ -113,6 +113,7 @@ contract RebalancerModule is AbstractSafeModule {
 
     // ──────────────────────────────────────────────── Core automation ──
 
+    // slither-disable-start reentrancy-no-eth
     /**
      * @notice Withdraw from overallocated strategies then deposit to underallocated
      *         ones. Either array may be empty — the contract loops over zero entries
@@ -311,6 +312,8 @@ contract RebalancerModule is AbstractSafeModule {
             }
         }
     }
+
+    // slither-disable-end reentrancy-no-eth
 
     function _toAddressArray(address _addr)
         internal
