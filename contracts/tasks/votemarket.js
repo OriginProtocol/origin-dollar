@@ -175,7 +175,6 @@ async function updateVotemarketEpochsTask(taskArguments) {
     process.env.PROVIDER_URL
   );
 
-
   let arbitrumSigner = null;
   if (!dryRun) {
     const signer = await getSigner();
