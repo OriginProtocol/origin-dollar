@@ -213,6 +213,22 @@ export const cronJobs: CronJob[] = [
     command: "cd /app && pnpm hardhat relayCCTPMessage --network mainnet",
   },
   {
+    name: "cross_chain_hyper_mainnet",
+    schedule: "17 1,6,11,16,21 * * *",
+    enabled: false,
+    permmissioned: true,
+    command:
+      "cd /app && pnpm hardhat crossChainRelayHyperEVM --network hyperevm",
+  },
+  {
+    name: "cross_chain_mainnet_hyper",
+    schedule: "7 3,8,13,18,23 * * *",
+    enabled: false,
+    permmissioned: true,
+    command:
+      "cd /app && pnpm hardhat crossChainRelayHyperEVM --network mainnet",
+  },
+  {
     name: "claim_ssv_rewards",
     schedule: "45 0 1 * *",
     enabled: false,
