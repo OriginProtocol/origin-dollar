@@ -253,7 +253,7 @@ const processCctpBridgeTransactions = async ({
       const relayTx = await config.cctpIntegrationContractDestination.relay(
         cctpMessage.message,
         cctpMessage.attestation,
-        { gasLimit: 4000000 }
+        { gasLimit: 2000000 }
       );
       console.log(
         `Relay transaction with hash ${relayTx.hash} sent to cctp chain id: ${cctpDestinationDomainId}`
