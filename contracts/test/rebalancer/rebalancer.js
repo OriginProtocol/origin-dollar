@@ -821,4 +821,267 @@ describe("Rebalancer: buildExecutableActions", () => {
     expect(baseRow.action).to.equal(ACTION_NONE);
     expect(baseRow.reason).to.include("cross-chain min");
   });
+
+  // Spread check + surplus trimming (Fix 1)
+
+  it("deposit trimmed to surplus when spread check fails", async () => {
+    const allocs = [
+      makeAllocation("Ethereum Morpho", 700000, 500000, 0.04, {
+        isDefault: true,
+      }),
+      makeAllocation("Base Morpho", 100000, 500000, 0.05, {
+        isCrossChain: true,
+      }),
+    ];
+    // ETH withdrawal 200K approved; vaultBalance 203K → surplus 200K
+    // Spread = 0.043 - 0.04 = 0.003 < 0.005 → fails, but surplus 200K ≥ 25K → trim
+    const caps = {
+      "0xVault_Base Morpho": {
+        maxDeposit: usdc(500000),
+        postDepositApy: 0.043,
+        impactBps: 30,
+      },
+    };
+    const result = await buildExecutableActions(
+      allocs,
+      ZERO,
+      usdc(203000),
+      {},
+      caps
+    );
+    const baseRow = result.find((a) => a.isCrossChain);
+    expect(baseRow.action).to.equal(ACTION_DEPOSIT);
+    expect(baseRow.delta).to.equal(usdc(200000));
+    expect(baseRow.reason).to.include("trimmed to vault surplus");
+  });
+
+  it("spread rejection stands when surplus below cross-chain min", async () => {
+    const allocs = [
+      makeAllocation("Ethereum Morpho", 700000, 500000, 0.04, {
+        isDefault: true,
+      }),
+      makeAllocation("Base Morpho", 100000, 500000, 0.05, {
+        isCrossChain: true,
+      }),
+    ];
+    // surplus = 23K - 3K = 20K < crossChainMinAmount (25K) → can't trim
+    const caps = {
+      "0xVault_Base Morpho": {
+        maxDeposit: usdc(500000),
+        postDepositApy: 0.043,
+        impactBps: 30,
+      },
+    };
+    const result = await buildExecutableActions(
+      allocs,
+      ZERO,
+      usdc(23000),
+      {},
+      caps
+    );
+    const baseRow = result.find((a) => a.isCrossChain);
+    expect(baseRow.action).to.equal(ACTION_NONE);
+    expect(baseRow.reason).to.include("spread");
+  });
+
+  it("spread rejection stands when no surplus", async () => {
+    const allocs = [
+      makeAllocation("Ethereum Morpho", 700000, 500000, 0.04, {
+        isDefault: true,
+      }),
+      makeAllocation("Base Morpho", 100000, 500000, 0.05, {
+        isCrossChain: true,
+      }),
+    ];
+    // surplus = 3K - 3K = 0 → no surplus at all
+    const caps = {
+      "0xVault_Base Morpho": {
+        maxDeposit: usdc(500000),
+        postDepositApy: 0.043,
+        impactBps: 30,
+      },
+    };
+    const result = await buildExecutableActions(
+      allocs,
+      ZERO,
+      usdc(3000),
+      {},
+      caps
+    );
+    const baseRow = result.find((a) => a.isCrossChain);
+    expect(baseRow.action).to.equal(ACTION_NONE);
+    expect(baseRow.reason).to.include("spread");
+  });
+
+  // Surplus fallback (Fix 2)
+
+  it("remaining surplus deployed to default via fallback (adds to existing deposit)", async () => {
+    const allocs = [
+      makeAllocation("Ethereum Morpho", 300000, 310000, 0.05, {
+        isDefault: true,
+      }),
+      makeAllocation("Base Morpho", 500000, 500000, 0.04, {
+        isCrossChain: true,
+      }),
+    ];
+    // ETH deposit 10K approved; surplus = 903K - 3K = 900K; remaining = 900K - 10K = 890K
+    const result = await buildExecutableActions(allocs, ZERO, usdc(903000));
+    const ethRow = result.find((a) => a.isDefault);
+    expect(ethRow.action).to.equal(ACTION_DEPOSIT);
+    expect(ethRow.delta).to.equal(usdc(900000)); // 10K + 890K fallback
+    expect(ethRow.reason).to.include("vault surplus fallback");
+  });
+
+  it("spread check trim works for same-chain deposit", async () => {
+    const allocs = [
+      makeAllocation("Ethereum Morpho", 700000, 500000, 0.04, {
+        isDefault: true,
+      }),
+      makeAllocation("Strategy High", 100000, 400000, 0.05),
+    ];
+    // surplus = 13K - 3K = 10K ≥ 5K minMoveAmount (same-chain, no cross-chain check)
+    const caps = {
+      "0xVault_Strategy High": {
+        maxDeposit: usdc(500000),
+        postDepositApy: 0.043,
+        impactBps: 30,
+      },
+    };
+    const result = await buildExecutableActions(
+      allocs,
+      ZERO,
+      usdc(13000),
+      {},
+      caps
+    );
+    const highRow = result.find((a) => a.name === "Strategy High");
+    expect(highRow.action).to.equal(ACTION_DEPOSIT);
+    expect(highRow.delta).to.equal(usdc(10000));
+    expect(highRow.reason).to.include("trimmed to vault surplus");
+  });
+
+  it("spread trim exhausts surplus — next deposit gets no surplus exemption", async () => {
+    const allocs = [
+      makeAllocation("Ethereum Morpho", 700000, 500000, 0.04, {
+        isDefault: true,
+      }),
+      makeAllocation("Strategy A", 100000, 300000, 0.052),
+      makeAllocation("Strategy B", 100000, 200000, 0.05),
+    ];
+    // surplus = 33K - 3K = 30K; Strategy A trims to 30K, surplus exhausted; B rejected
+    const caps = {
+      "0xVault_Strategy A": {
+        maxDeposit: usdc(500000),
+        postDepositApy: 0.043,
+        impactBps: 30,
+      },
+      "0xVault_Strategy B": {
+        maxDeposit: usdc(500000),
+        postDepositApy: 0.043,
+        impactBps: 30,
+      },
+    };
+    const result = await buildExecutableActions(
+      allocs,
+      ZERO,
+      usdc(33000),
+      {},
+      caps
+    );
+    const aRow = result.find((a) => a.name === "Strategy A");
+    const bRow = result.find((a) => a.name === "Strategy B");
+    expect(aRow.action).to.equal(ACTION_DEPOSIT);
+    expect(aRow.delta).to.equal(usdc(30000));
+    expect(aRow.reason).to.include("trimmed to vault surplus");
+    expect(bRow.action).to.equal(ACTION_NONE);
+    expect(bRow.reason).to.include("spread");
+  });
+
+  it("all surplus consumed by deposits — no remaining surplus for fallback", async () => {
+    const allocs = [
+      makeAllocation("Ethereum Morpho", 700000, 500000, 0.03, {
+        isDefault: true,
+      }),
+      makeAllocation("Base Morpho", 300000, 500000, 0.06, {
+        isCrossChain: true,
+      }),
+    ];
+    // ETH withdrawal 200K + surplus 47K = budget 247K; Base deposit 200K approved
+    // surplus (47K) < totalDeposits (200K) → remainingSurplus = 0 → no fallback
+    const result = await buildExecutableActions(allocs, ZERO, usdc(50000));
+    const deposits = result.filter((a) => a.action === ACTION_DEPOSIT);
+    expect(deposits).to.have.length(1);
+    expect(deposits[0].name).to.equal("Base Morpho");
+    const surplusDeposit = result.find(
+      (a) => a.reason && a.reason.includes("surplus fallback")
+    );
+    expect(surplusDeposit).to.be.undefined;
+  });
+
+  it("remaining surplus below minMoveAmount — fallback skips", async () => {
+    const allocs = [
+      makeAllocation("Ethereum Morpho", 300000, 310000, 0.05, {
+        isDefault: true,
+      }),
+      makeAllocation("Base Morpho", 500000, 500000, 0.04, {
+        isCrossChain: true,
+      }),
+    ];
+    // surplus = 17K - 3K = 14K; ETH deposit 10K approved; remaining = 4K < 5K minMoveAmount
+    const result = await buildExecutableActions(allocs, ZERO, usdc(17000));
+    const ethRow = result.find((a) => a.isDefault);
+    expect(ethRow.action).to.equal(ACTION_DEPOSIT);
+    expect(ethRow.delta).to.equal(usdc(10000));
+    const surplusFallback = result.find(
+      (a) => a.reason && a.reason.includes("surplus fallback")
+    );
+    expect(surplusFallback).to.be.undefined;
+  });
+
+  it("surplus fallback skips when default has withdraw action", async () => {
+    // ETH withdrawal (100K) is justified by Base deposit (100K) so it survives trimming
+    // Vault surplus exists (300K) but default has ACTION_WITHDRAW → _deploySurplus skips
+    const allocs = [
+      makeAllocation("Ethereum Morpho", 500000, 400000, 0.03, {
+        isDefault: true,
+      }),
+      makeAllocation("Base Morpho", 200000, 300000, 0.06, {
+        isCrossChain: true,
+      }),
+    ];
+    const result = await buildExecutableActions(allocs, ZERO, usdc(303000));
+    const ethRow = result.find((a) => a.isDefault);
+    expect(ethRow.action).to.equal(ACTION_WITHDRAW);
+    const surplusFallback = result.find(
+      (a) => a.reason && a.reason.includes("surplus fallback")
+    );
+    expect(surplusFallback).to.be.undefined;
+  });
+
+  it("spread rejection stands when surplus below same-chain minMoveAmount", async () => {
+    const allocs = [
+      makeAllocation("Ethereum Morpho", 700000, 500000, 0.04, {
+        isDefault: true,
+      }),
+      makeAllocation("Strategy High", 100000, 400000, 0.05),
+    ];
+    // surplus = 6K - 3K = 3K < 5K minMoveAmount → can't trim
+    const caps = {
+      "0xVault_Strategy High": {
+        maxDeposit: usdc(500000),
+        postDepositApy: 0.043,
+        impactBps: 30,
+      },
+    };
+    const result = await buildExecutableActions(
+      allocs,
+      ZERO,
+      usdc(6000),
+      {},
+      caps
+    );
+    const highRow = result.find((a) => a.name === "Strategy High");
+    expect(highRow.action).to.equal(ACTION_NONE);
+    expect(highRow.reason).to.include("spread");
+  });
 });

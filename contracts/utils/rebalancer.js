@@ -625,11 +625,30 @@ async function _filterDeposits(
       if (postDepositApy != null) {
         const spread = postDepositApy - highestWithdrawalApy;
         if (spread < constraints.minApySpread) {
-          deposit.action = ACTION_NONE;
-          deposit.reason =
-            `post-impact spread ${(spread * 100).toFixed(2)}% ` +
-            `< min ${(constraints.minApySpread * 100).toFixed(2)}%`;
-          continue;
+          const surplusMeetsMin =
+            surplusBudget.gte(BigNumber.from(constraints.minMoveAmount)) &&
+            (!deposit.isCrossChain ||
+              surplusBudget.gte(
+                BigNumber.from(constraints.crossChainMinAmount)
+              ));
+
+          if (surplusBudget.gt(0) && surplusMeetsMin) {
+            // Trim to surplus-funded portion — any APY > 0% idle is a win
+            amt = surplusBudget;
+            deposit.delta = amt;
+            deposit.targetBalance = deposit.balance.add(amt);
+            deposit.reason =
+              `trimmed to vault surplus (spread ${(spread * 100).toFixed(
+                2
+              )}% ` + `< min ${(constraints.minApySpread * 100).toFixed(2)}%)`;
+            // Fall through to budget update
+          } else {
+            deposit.action = ACTION_NONE;
+            deposit.reason =
+              `post-impact spread ${(spread * 100).toFixed(2)}% ` +
+              `< min ${(constraints.minApySpread * 100).toFixed(2)}%`;
+            continue;
+          }
         }
       }
     }
@@ -729,10 +748,20 @@ function _deploySurplus(result, surplus) {
   );
   if (!defaultStrategy) return result;
 
-  defaultStrategy.delta = surplus;
-  defaultStrategy.targetBalance = defaultStrategy.balance.add(surplus);
-  defaultStrategy.action = ACTION_DEPOSIT;
-  defaultStrategy.reason = "vault surplus fallback";
+  if (defaultStrategy.action === ACTION_DEPOSIT) {
+    // Add to existing deposit rather than overwriting
+    defaultStrategy.delta = defaultStrategy.delta.add(surplus);
+    defaultStrategy.targetBalance = defaultStrategy.targetBalance.add(surplus);
+    defaultStrategy.reason = defaultStrategy.reason
+      ? `${defaultStrategy.reason}; +vault surplus fallback`
+      : "vault surplus fallback";
+  } else if (defaultStrategy.action !== ACTION_WITHDRAW) {
+    defaultStrategy.delta = surplus;
+    defaultStrategy.targetBalance = defaultStrategy.balance.add(surplus);
+    defaultStrategy.action = ACTION_DEPOSIT;
+    defaultStrategy.reason = "vault surplus fallback";
+  }
+  // If ACTION_WITHDRAW, skip — the withdrawal is needed
   return result;
 }
 
@@ -886,11 +915,18 @@ async function buildExecutableActions(
     result = _coverShortfall(result, shortfall, constraints);
   }
 
-  // 5. Fallback: deploy vault surplus if no deposits were approved
-  const hasApprovedDeposits = result.some((a) => a.action === ACTION_DEPOSIT);
+  // 5. Fallback: deploy remaining vault surplus to default strategy
   const surplus = _computeVaultSurplus(vaultBalance, shortfall, constraints);
-  if (!hasApprovedDeposits && surplus.gt(0)) {
-    result = _deploySurplus(result, surplus);
+  if (surplus.gt(0)) {
+    const totalApprovedDeposits = result
+      .filter((a) => a.action === ACTION_DEPOSIT)
+      .reduce((sum, a) => sum.add(a.delta), BigNumber.from(0));
+    const remainingSurplus = surplus.gt(totalApprovedDeposits)
+      ? surplus.sub(totalApprovedDeposits)
+      : BigNumber.from(0);
+    if (remainingSurplus.gte(BigNumber.from(constraints.minMoveAmount))) {
+      result = _deploySurplus(result, remainingSurplus);
+    }
   }
 
   return result;
