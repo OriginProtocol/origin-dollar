@@ -51,7 +51,7 @@ const fetchAttestation = async ({ transactionHash, cctpChainId }) => {
   const resultJson = await response.json();
 
   console.log("resultJson", resultJson);
-  
+
   if (resultJson.messages.length !== 1) {
     throw new Error(
       `Expected 1 attestation, got ${resultJson.messages.length}`

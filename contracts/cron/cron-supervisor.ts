@@ -3,6 +3,7 @@ import { randomUUID, timingSafeEqual } from "node:crypto";
 import fs from "node:fs";
 import http from "node:http";
 import { flushLogger } from "../tasks/lib/logger";
+import { getNoncePool } from "../tasks/lib/nonceQueue";
 import { cronJobs } from "./cron-jobs";
 import {
   emitActionExit,
@@ -353,6 +354,12 @@ async function shutdown(signal: string) {
     await flushLogger();
   } catch (err: any) {
     console.error(`[cron-supervisor] flushLogger failed: ${err?.message}`);
+  }
+  try {
+    const pool = getNoncePool();
+    if (pool) await pool.end();
+  } catch (err: any) {
+    console.error(`[cron-supervisor] noncePool close failed: ${err?.message}`);
   }
   server.close();
 

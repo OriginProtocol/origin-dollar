@@ -5,6 +5,7 @@ import type { Logger } from "winston";
 
 import { getSigner } from "../../utils/signers";
 import logger, { flushLogger } from "./logger";
+import { wrapWithNonceQueue } from "./nonceQueue";
 
 export interface ActionContext {
   signer: ethers.Signer;
@@ -52,9 +53,10 @@ export function action(config: ActionConfig) {
     let networkName: string | undefined;
 
     try {
-      const signer = await getSigner();
-      const network = await signer.provider!.getNetwork();
+      const rawSigner = await getSigner();
+      const network = await rawSigner.provider!.getNetwork();
       chainId = Number(network.chainId);
+      const signer = wrapWithNonceQueue(rawSigner, chainId);
       networkName = CHAIN_NAMES[chainId] ?? `unknown-${chainId}`;
 
       if (chains && !chains.includes(chainId)) {

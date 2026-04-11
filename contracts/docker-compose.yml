@@ -1,11 +1,29 @@
 services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: nonce_queue
+      POSTGRES_USER: nonce
+      POSTGRES_PASSWORD: nonce
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U nonce -d nonce_queue"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
   actions:
     build:
       context: .
       dockerfile: dockerfile-actions
+    depends_on:
+      postgres:
+        condition: service_healthy
     ports:
       - "8080:8080"
     environment:
+      - DATABASE_URL=${DATABASE_URL:-postgresql://nonce:nonce@postgres:5432/nonce_queue}
       - PROVIDER_URL=${PROVIDER_URL:-}
       - SONIC_PROVIDER_URL=${SONIC_PROVIDER_URL:-}
       - PLUME_PROVIDER_URL=${PLUME_PROVIDER_URL:-}
@@ -20,3 +38,6 @@ services:
       - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY:-}
       - CRON_OUTPUT_PATH=./cron/cronjob
       - DEBUG=origin*
+
+volumes:
+  pgdata:
