@@ -9,6 +9,7 @@ const {
   ACTION_WITHDRAW,
   ACTION_NONE,
 } = require("../../utils/rebalancer");
+const { initSecrets } = require("../../utils/rebalancer-config");
 const { postToDiscord } = require("../../utils/discord");
 const { CROSS_CHAIN_BRIDGE_LIMIT } = require("../../utils/cctp");
 
@@ -142,26 +143,11 @@ const handler = async (event) => {
 
   const webhookUrl = event.secrets?.DISCORD_WEBHOOK_URL;
 
-  // Configure subsquid endpoint for APY reads
-  process.env.ORIGIN_SUBSQUID_SERVER =
-    event.secrets?.ORIGIN_SUBSQUID_SERVER ||
-    "https://origin.squids.live/origin-squid:prod/api/graphql";
-
-  // Build chain providers for on-chain reads (balances, max withdrawals)
-  const providers = { 1: provider };
-  if (event.secrets.BASE_PROVIDER_URL) {
-    providers[8453] = new ethers.providers.JsonRpcProvider(
-      event.secrets.BASE_PROVIDER_URL
-    );
-  }
-  if (event.secrets.HYPEREVM_PROVIDER_URL) {
-    providers[999] = new ethers.providers.JsonRpcProvider(
-      event.secrets.HYPEREVM_PROVIDER_URL
-    );
-  }
+  // Make Defender secrets available to rebalancer config (RPC URLs, Subsquid, etc.)
+  initSecrets(event.secrets);
 
   // Compute off-chain recommendations (also prints the allocation table to logs)
-  const plan = await buildRebalancePlan(providers);
+  const plan = await buildRebalancePlan();
   const { actions: allActions } = plan;
   const actions = allActions.filter((a) => a.action !== ACTION_NONE);
 

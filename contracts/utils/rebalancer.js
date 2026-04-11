@@ -6,8 +6,11 @@ const addresses = require("./addresses");
 const {
   ousdMorphoStrategiesConfig,
   ousdConstraints,
+  getRpcUrl,
+  getProvider,
 } = require("./rebalancer-config");
-const { fetchMorphoApys, fetchSubsquidDepositImpact } = require("./morpho-apy");
+const { fetchMorphoApys } = require("./morpho-apy");
+const { findMaxDepositRpc } = require("origin-morpho-utils");
 
 const log = require("./logger")("utils:rebalancer");
 
@@ -56,10 +59,10 @@ const liquidityAdapterAbi = [
 
 /**
  * Read on-chain state: Morpho strategy balances, vault idle USDC, withdrawal queue.
- * @param {object} provider - ethers provider
  * @returns {object} { strategies, vaultBalance, shortfall }
  */
-async function readOnChainState(provider) {
+async function readOnChainState() {
+  const provider = getProvider(1);
   const vault = new ethers.Contract(
     addresses.mainnet.VaultProxy,
     vaultAbi,
@@ -326,73 +329,8 @@ function computeIdealAllocation({
 }
 
 /**
- * Binary search for the maximum deposit amount where impactBps ≤ maxApyImpactBps.
- * Rounds to depositStepSize increments. ~4-5 API calls per strategy.
- *
- * @param {string}    vaultAddress - MetaMorpho vault address
- * @param {number}    chainId
- * @param {BigNumber} maxAmt      - upper bound (from allocation cap)
- * @param {object}    constraints
- * @returns {{ maxDeposit: BigNumber, impactBps: number, postDepositApy: number }}
- */
-async function _findMaxDeposit(vaultAddress, chainId, maxAmt, constraints) {
-  const step = BigNumber.from(constraints.depositStepSize);
-
-  // Fast path: check full amount first
-  const full = await fetchSubsquidDepositImpact(vaultAddress, chainId, maxAmt);
-  if (full.impactBps <= constraints.maxApyImpactBps) {
-    return {
-      maxDeposit: maxAmt,
-      impactBps: full.impactBps,
-      postDepositApy: full.newApy,
-    };
-  }
-
-  const minMove = BigNumber.from(constraints.minMoveAmount);
-
-  // For narrow ranges (maxAmt < 2×step), step-aligned rounding collapses mid to 0.
-  // Fall back to minMoveAmount as the step so the search can still make progress.
-  const effectiveStep = maxAmt.lt(step.mul(2)) ? minMove : step;
-
-  // Binary search for the largest deposit within the APY impact threshold
-  let lo = minMove;
-  let hi = maxAmt;
-  let best = { maxDeposit: BigNumber.from(0), impactBps: 0, postDepositApy: 0 };
-
-  while (hi.sub(lo).gte(effectiveStep)) {
-    const mid = lo.add(hi).div(2).div(effectiveStep).mul(effectiveStep);
-    if (mid.lt(lo)) break;
-
-    const { impactBps, newApy } = await fetchSubsquidDepositImpact(
-      vaultAddress,
-      chainId,
-      mid
-    );
-    if (impactBps <= constraints.maxApyImpactBps) {
-      best = { maxDeposit: mid, impactBps, postDepositApy: newApy };
-      lo = mid.add(effectiveStep);
-    } else {
-      hi = mid;
-    }
-  }
-
-  // Probe minMoveAmount if search found nothing — verifies feasibility at the floor
-  if (best.maxDeposit.isZero()) {
-    const { impactBps, newApy } = await fetchSubsquidDepositImpact(
-      vaultAddress,
-      chainId,
-      minMove
-    );
-    if (impactBps <= constraints.maxApyImpactBps) {
-      best = { maxDeposit: minMove, impactBps, postDepositApy: newApy };
-    }
-  }
-  return best;
-}
-
-/**
  * Discover the maximum deposit amount per strategy that keeps APY impact within
- * the threshold. Called before allocation so capacities can be factored in.
+ * the threshold. Uses origin-morpho-utils to binary-search via RPC.
  *
  * @param {Array}     strategies       - strategy config objects with balance
  * @param {BigNumber} deployableCapital
@@ -408,6 +346,18 @@ async function discoverDepositCapacities(
   await Promise.all(
     strategies.map(async (s) => {
       if (!s.metaMorphoVaultAddress || !s.morphoChainId) return;
+      const rpcUrl = getRpcUrl(s.morphoChainId);
+      if (!rpcUrl) {
+        log(
+          `No RPC URL for chain ${s.morphoChainId}, skipping capacity for ${s.name}`
+        );
+        capacities[s.metaMorphoVaultAddress] = {
+          maxDeposit: BigNumber.from(0),
+          postDepositApy: 0,
+          impactBps: 0,
+        };
+        return;
+      }
       try {
         const maxBps = s.maxAllocationBps != null ? s.maxAllocationBps : 10000;
         const maxPossible = deployableCapital
@@ -422,23 +372,30 @@ async function discoverDepositCapacities(
           };
           return;
         }
-        const result = await _findMaxDeposit(
-          s.metaMorphoVaultAddress,
+        const result = await findMaxDepositRpc(
+          rpcUrl,
           s.morphoChainId,
-          maxPossible,
-          constraints
+          s.metaMorphoVaultAddress,
+          maxPossible.toBigInt(),
+          constraints.maxApyImpactBps,
+          { precision: BigInt(constraints.depositStepSize) }
         );
-        capacities[s.metaMorphoVaultAddress] = result;
+        const maxDeposit = BigNumber.from(result.amount.toString());
+        capacities[s.metaMorphoVaultAddress] = {
+          maxDeposit,
+          impactBps: result.impact.impactBps,
+          postDepositApy: result.impact.newApy,
+        };
         log(
-          `Deposit capacity for ${s.name}: ${fmtUsd(result.maxDeposit)} ` +
-            `(impact ${result.impactBps}bps, post-deposit APY ${(
-              result.postDepositApy * 100
+          `Deposit capacity for ${s.name}: ${fmtUsd(maxDeposit)} ` +
+            `(impact ${result.impact.impactBps}bps, post-deposit APY ${(
+              result.impact.newApy * 100
             ).toFixed(2)}%)`
         );
       } catch (err) {
         log(`Deposit capacity discovery failed for ${s.name}: ${err.message}`);
         // Fail-closed: if we can't determine capacity, don't allow deposits.
-        // A partial Subsquid outage should not bypass the APY impact guard.
+        // An RPC failure should not bypass the APY impact guard.
         capacities[s.metaMorphoVaultAddress] = {
           maxDeposit: BigNumber.from(0),
           postDepositApy: 0,
@@ -1239,16 +1196,15 @@ function _filterExcludedStrategies(strategies, apys, constraints) {
  * - If the required provider is unavailable, the entry is omitted and no constraint is applied.
  *
  * @param {Array}  strategies - strategy config objects (from ousdMorphoStrategiesConfig)
- * @param {object} providers  - { [chainId]: ethers.providers.Provider }
  * @returns {object} { [strategyAddress]: BigNumber } map of withdrawable amounts
  */
-async function fetchMaxWithdrawals(strategies, providers = {}) {
+async function fetchMaxWithdrawals(strategies) {
   const results = {};
   await Promise.all(
     strategies.map(async (s) => {
       try {
         if (!s.isCrossChain) {
-          const provider = providers[1];
+          const provider = getProvider(1);
           if (!provider) return;
           const contract = new ethers.Contract(
             s.address,
@@ -1260,7 +1216,7 @@ async function fetchMaxWithdrawals(strategies, providers = {}) {
           // Cross-chain: replicate MorphoV2VaultUtils.maxWithdrawableAssets()
           // VaultV2's ERC-4626 maxWithdraw(owner) doesn't traverse the adapter
           // chain, so we manually sum idle USDC + adapter's MetaMorpho V1.1 liquidity.
-          const provider = providers[s.morphoChainId];
+          const provider = getProvider(s.morphoChainId);
           if (!provider) return;
           const remoteStrategy = new ethers.Contract(
             s.address,
@@ -1306,19 +1262,11 @@ async function fetchMaxWithdrawals(strategies, providers = {}) {
 /**
  * Main entry: read state, fetch APYs, compute allocations, print table.
  *
- * @param {object} providers - { [chainId]: ethersProvider }
- *   providers[1] is used for mainnet vault/strategy reads.
- *   providers[cfg.morphoChainId] is used for on-chain Morpho APY reads.
+ * Reads RPC URLs and providers from rebalancer-config (via initSecrets / process.env).
  */
-async function buildRebalancePlan(providers) {
-  // Accept either a providers map { [chainId]: provider } or a legacy single provider
-  const providerMap =
-    providers && typeof providers.getNetwork === "function"
-      ? { 1: providers }
-      : providers || {};
-
+async function buildRebalancePlan() {
   log("Reading on-chain state...");
-  const state = await readOnChainState(providerMap[1] || providerMap);
+  const state = await readOnChainState();
 
   log("Fetching Morpho APYs...");
   const { apys: spotApys, avgApys } = await fetchMorphoApys(
@@ -1327,10 +1275,7 @@ async function buildRebalancePlan(providers) {
   );
 
   log("Fetching withdrawable liquidity...");
-  const maxWithdrawals = await fetchMaxWithdrawals(
-    state.strategies,
-    providerMap
-  );
+  const maxWithdrawals = await fetchMaxWithdrawals(state.strategies);
 
   // Exclude strategies with suspiciously high APY (based on 6h average)
   const { active, excluded, warnings } = _filterExcludedStrategies(
@@ -1410,9 +1355,6 @@ async function buildRebalancePlan(providers) {
 }
 
 module.exports = {
-  readOnChainState,
-  fetchMaxWithdrawals,
-  discoverDepositCapacities,
   computeIdealAllocation,
   buildExecutableActions,
   sortActions,

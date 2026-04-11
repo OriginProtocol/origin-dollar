@@ -1,3 +1,5 @@
+const { ethers } = require("ethers");
+
 const addresses = require("./addresses");
 
 /**
@@ -66,4 +68,45 @@ const ousdConstraints = {
   apyAverageWindow: "1h", // Time window for the average APY used in allocation decisions
 };
 
-module.exports = { ousdMorphoStrategiesConfig, ousdConstraints };
+// ─── Secrets / RPC config ────────────────────────────────────────────────────
+// Defender Actions call initSecrets(event.secrets) once at startup.
+// Hardhat tasks fall through to process.env (loaded from .env by hardhat config).
+
+let _secrets = {};
+
+function initSecrets(secrets) {
+  _secrets = secrets || {};
+}
+
+const _rpcEnvVars = {
+  1: "PROVIDER_URL",
+  8453: "BASE_PROVIDER_URL",
+  999: "HYPEREVM_PROVIDER_URL",
+};
+
+function getRpcUrl(chainId) {
+  const envVar = _rpcEnvVars[chainId];
+  return _secrets[envVar] || process.env[envVar];
+}
+
+function getProvider(chainId) {
+  const url = getRpcUrl(chainId);
+  return url ? new ethers.providers.JsonRpcProvider(url) : null;
+}
+
+function getSubsquidUrl() {
+  return (
+    _secrets.ORIGIN_SUBSQUID_SERVER ||
+    process.env.ORIGIN_SUBSQUID_SERVER ||
+    "https://origin.squids.live/origin-squid:prod/api/graphql"
+  );
+}
+
+module.exports = {
+  ousdMorphoStrategiesConfig,
+  ousdConstraints,
+  initSecrets,
+  getRpcUrl,
+  getProvider,
+  getSubsquidUrl,
+};

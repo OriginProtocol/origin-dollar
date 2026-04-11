@@ -1,4 +1,6 @@
 minimumReleaseAge: 10080
+minimumReleaseAgeExclude:
+- "origin-morpho-utils"
 
 ignoredBuiltDependencies:
   - "@arbitrum/nitro-contracts"
