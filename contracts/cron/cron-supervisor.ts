@@ -2,7 +2,13 @@ import { spawn } from "node:child_process";
 import { randomUUID, timingSafeEqual } from "node:crypto";
 import fs from "node:fs";
 import http from "node:http";
+import { flushLogger } from "../tasks/lib/logger";
 import { cronJobs } from "./cron-jobs";
+import {
+  emitActionExit,
+  emitActionStart,
+  emitSpawnFailure,
+} from "./log-events";
 import { type CronJob, renderCrontab } from "./render-crontab";
 
 // --- Configuration ---
@@ -131,14 +137,21 @@ function runAction(action: CronJob, run: ActionRun) {
   run.status = "running";
   run.startedAt = nowIso();
   run.command = action.command;
+  const startMs = Date.now();
 
   console.log(
     `[cron-supervisor] Starting run ${run.runId} for action "${action.name}"`
   );
+  emitActionStart({
+    action: action.name,
+    runId: run.runId,
+    schedule: action.schedule,
+    command: action.command,
+  });
 
   const child = spawn("/bin/sh", ["-lc", action.command], {
     cwd: actionWorkdir,
-    env: process.env,
+    env: { ...process.env, AUTOMATON_RUN_ID: run.runId },
     stdio: "inherit",
   });
   run.pid = child.pid ?? null;
@@ -152,6 +165,13 @@ function runAction(action: CronJob, run: ActionRun) {
     console.error(
       `[cron-supervisor] Run ${run.runId} failed to start: ${err.message}`
     );
+    emitSpawnFailure({
+      action: action.name,
+      runId: run.runId,
+      durationMs: Date.now() - startMs,
+      errorMessage: err.message,
+    });
+    void flushLogger();
   });
 
   child.on("exit", (code, signal) => {
@@ -162,6 +182,14 @@ function runAction(action: CronJob, run: ActionRun) {
     console.log(
       `[cron-supervisor] Run ${run.runId} for "${action.name}" finished with status=${run.status}, code=${code}, signal=${signal}`
     );
+    emitActionExit({
+      action: action.name,
+      runId: run.runId,
+      durationMs: Date.now() - startMs,
+      exitCode: code,
+      signal,
+    });
+    void flushLogger();
   });
 }
 
@@ -316,11 +344,16 @@ server.on("close", () => {
 
 // --- Graceful shutdown ---
 
-function shutdown(signal: string) {
+async function shutdown(signal: string) {
   if (shuttingDown) return;
   shuttingDown = true;
 
   console.log(`[cron-supervisor] Shutting down (signal=${signal})`);
+  try {
+    await flushLogger();
+  } catch (err: any) {
+    console.error(`[cron-supervisor] flushLogger failed: ${err?.message}`);
+  }
   server.close();
 
   if (supercronicAlive && supercronic.exitCode === null) {
@@ -333,8 +366,12 @@ function shutdown(signal: string) {
   setTimeout(() => process.exit(0), 12_000).unref();
 }
 
-process.on("SIGTERM", () => shutdown("SIGTERM"));
-process.on("SIGINT", () => shutdown("SIGINT"));
+process.on("SIGTERM", () => {
+  void shutdown("SIGTERM");
+});
+process.on("SIGINT", () => {
+  void shutdown("SIGINT");
+});
 
 server.listen(port, host, () => {
   console.log(`[cron-supervisor] API listening on ${host}:${port}`);

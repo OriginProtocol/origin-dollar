@@ -1,0 +1,13 @@
+{"event":"action.start","source":"supervisor","action":"test_action","run_id":"11111111-1111-1111-1111-111111111111","schedule":"*/5 * * * *","command":"npx ts-node <test-action>","level":"info","message":"Started run 11111111-1111-1111-1111-111111111111"}
+{"level":"info","action":"test_action","message":"Running on testnet (31337)","run_id":"11111111-1111-1111-1111-111111111111"}
+{"level":"info","action":"test_action","message":"Checking balances","run_id":"11111111-1111-1111-1111-111111111111"}
+{"level":"info","action":"test_action","message":"Balance: 1000000000000000000 wei","run_id":"11111111-1111-1111-1111-111111111111"}
+{"level":"info","action":"test_action","message":"Test action passed","run_id":"11111111-1111-1111-1111-111111111111"}
+{"event":"action.success","source":"supervisor","action":"test_action","run_id":"11111111-1111-1111-1111-111111111111","duration_ms":42,"exit_code":0,"signal":null,"level":"info","message":"Completed in 0.0s"}
+{"event":"action.start","source":"supervisor","action":"test_action","run_id":"22222222-2222-2222-2222-222222222222","schedule":"0 0 * * *","command":"npx ts-node <test-action> --fail","level":"info","message":"Started run 22222222-2222-2222-2222-222222222222"}
+{"level":"info","action":"test_action","message":"Running on testnet (31337)","run_id":"22222222-2222-2222-2222-222222222222"}
+{"level":"info","action":"test_action","message":"Checking balances","run_id":"22222222-2222-2222-2222-222222222222"}
+{"level":"info","action":"test_action","message":"Balance: 1000000000000000000 wei","run_id":"22222222-2222-2222-2222-222222222222"}
+{"level":"error","action":"test_action","message":"Error: Simulated failure for testing","run_id":"22222222-2222-2222-2222-222222222222","event":"action.error","source":"task","chain_id":31337,"network":"testnet","duration_ms":"<number>","error_name":"Error","error_message":"Simulated failure for testing"}
+{"event":"action.failure","source":"supervisor","action":"test_action","run_id":"22222222-2222-2222-2222-222222222222","duration_ms":11398,"exit_code":1,"signal":null,"level":"error","message":"Failed after 11.4s (exit=1)"}
+{"event":"action.failure","source":"supervisor","action":"test_action","run_id":"33333333-3333-3333-3333-333333333333","duration_ms":5,"spawn_failed":true,"error_message":"ENOENT: no such file or directory, posix_spawn '/bin/sh'","level":"error","message":"Failed to spawn: ENOENT: no such file or directory, posix_spawn '/bin/sh'"}

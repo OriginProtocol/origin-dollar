@@ -42,34 +42,43 @@ export function action(config: ActionConfig) {
   }
 
   definition.setAction(async (taskArgs: Record<string, any>) => {
-    const log = logger.child({ action: name });
+    const runId = process.env.AUTOMATON_RUN_ID;
+    const log = logger.child({
+      action: name,
+      ...(runId ? { run_id: runId } : {}),
+    });
     const startTime = Date.now();
-
-    log.info("Starting");
-
-    const signer = await getSigner();
-    const network = await signer.provider!.getNetwork();
-    const chainId = Number(network.chainId);
-    const networkName = CHAIN_NAMES[chainId] ?? `unknown-${chainId}`;
-
-    if (chains && !chains.includes(chainId)) {
-      const valid = chains
-        .map((id) => `${CHAIN_NAMES[id] ?? id} (${id})`)
-        .join(", ");
-      throw new Error(
-        `${name} only supports ${valid}, not ${networkName} (${chainId})`
-      );
-    }
-
-    log.info(`Running on ${networkName} (${chainId})`);
+    let chainId: number | undefined;
+    let networkName: string | undefined;
 
     try {
+      const signer = await getSigner();
+      const network = await signer.provider!.getNetwork();
+      chainId = Number(network.chainId);
+      networkName = CHAIN_NAMES[chainId] ?? `unknown-${chainId}`;
+
+      if (chains && !chains.includes(chainId)) {
+        const valid = chains
+          .map((id) => `${CHAIN_NAMES[id] ?? id} (${id})`)
+          .join(", ");
+        throw new Error(
+          `${name} only supports ${valid}, not ${networkName} (${chainId})`
+        );
+      }
+
+      log.info(`Running on ${networkName} (${chainId})`);
       await run({ signer, chainId, networkName, log, args: taskArgs });
-      const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
-      log.info(`Completed in ${elapsed}s`);
     } catch (err: any) {
-      const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
-      log.error(`Failed after ${elapsed}s: ${err.message}`);
+      log.error(`${err?.name ?? "Error"}: ${err?.message ?? String(err)}`, {
+        event: "action.error",
+        source: "task",
+        chain_id: chainId,
+        network: networkName,
+        duration_ms: Date.now() - startTime,
+        error_name: err?.name ?? "Error",
+        error_message: err?.message ?? String(err),
+        error_stack: err?.stack,
+      });
       throw err;
     } finally {
       await flushLogger();

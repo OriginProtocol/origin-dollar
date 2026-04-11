@@ -27,10 +27,17 @@ if (lokiUrl) {
     labels: { app: "origin-dollar" },
     json: true,
     format: format.combine(
-      // Promote "action" from metadata to a Loki label
+      // Promote select low-cardinality fields from metadata to Loki labels.
+      // Keep high-cardinality fields (run_id, error_*, duration_ms, chain_id)
+      // as JSON fields — they're still queryable via `| json`.
       format((info) => {
-        if (info.action) {
-          info.labels = { ...(info.labels || {}), action: info.action };
+        const LABEL_FIELDS = ["action", "event", "source"] as const;
+        const labels: Record<string, string> = {};
+        for (const k of LABEL_FIELDS) {
+          if (info[k]) labels[k] = String(info[k]);
+        }
+        if (Object.keys(labels).length) {
+          info.labels = { ...(info.labels || {}), ...labels };
         }
         return info;
       })(),

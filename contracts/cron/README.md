@@ -1,6 +1,6 @@
-# Cron Actions
+# Cron Actions (Automaton)
 
-Containerized scheduler for running hardhat tasks on a schedule. Replaces OpenZeppelin Defender actions.
+Containerized scheduler for running hardhat tasks on a schedule. Replaces OpenZeppelin Defender actions. Internally referred to as **Automaton**; a sibling Automaton with the same shape and log schema lives in the `arm-oeth` repo. Keep field names (`event`, `source`, `action`, `run_id`, `duration_ms`, `error_*`) in sync across both so a single Grafana dashboard can serve both.
 
 ## How it works
 
@@ -66,3 +66,10 @@ Set `enabled: false` to define a job that can only be triggered via the API.
 | `LOKI_API_KEY` | Loki basic auth key (optional) |
 | `AWS_ACCESS_KEY_ID` | For KMS signer (optional) |
 | `AWS_SECRET_ACCESS_KEY` | For KMS signer (optional) |
+| `AUTOMATON_RUN_ID` | Set automatically by the supervisor when spawning a job; correlates task-side logs with the supervisor's lifecycle events |
+
+## Observability
+
+Every scheduled invocation produces exactly one `action.start` and exactly one terminal event (`action.success` or `action.failure`) from the supervisor, plus an `action.error` (with stack, chain, network) from the task wrapper if it threw. All four events share a `run_id` for correlation.
+
+See [`OBSERVABILITY.md`](./OBSERVABILITY.md) for the field schema, the LogQL cookbook, and the recipe for debugging a single failed run end-to-end.
