@@ -5,6 +5,7 @@ const addresses = require("../../utils/addresses");
 const { logTxDetails } = require("../../utils/txLogger");
 const {
   buildRebalancePlan,
+  formatAllocationTable,
   ACTION_DEPOSIT,
   ACTION_WITHDRAW,
   ACTION_NONE,
@@ -39,93 +40,6 @@ const formatUSDC = (bn) => {
   return `$${n.toFixed(2)}`;
 };
 
-// Format a delta BigNumber as a signed dollar string, e.g. "+$1.20M" or "-$0.50K"
-const formatDelta = (bn) => {
-  const sign = bn.gte(0) ? "+" : "-";
-  return `${sign}${formatUSDC(bn.abs())}`;
-};
-
-// Build the Discord message from a completed buildRebalancePlan result
-const buildDiscordMessage = ({
-  actions: allActions,
-  idealActions,
-  state,
-  warnings = [],
-}) => {
-  const timestamp = new Date().toUTCString().replace(/ GMT$/, " UTC");
-  const header = !isBroadcast
-    ? `🔄 **OUSD Rebalancer** — ${timestamp}  \`[DRY RUN]\``
-    : `🔄 **OUSD Rebalancer** — ${timestamp}`;
-
-  // Current allocations (from on-chain state): name | balance | avail. liquidity | APYs
-  const currentLines = allActions.map((a) => {
-    const avail =
-      a.withdrawableLiquidity != null
-        ? formatUSDC(a.withdrawableLiquidity)
-        : "  n/a ";
-    const avgStr = `${(a.apy * 100).toFixed(2)}%`;
-    const spotStr = `${((a.spotApy || 0) * 100).toFixed(2)}%`;
-    return `  ${a.name.padEnd(20)} ${formatUSDC(a.balance).padStart(
-      9
-    )}  ${avail.padStart(9)}  ${avgStr} 1h  ${spotStr} spot`;
-  });
-  currentLines.push(
-    `  ${"Vault idle".padEnd(20)} ${formatUSDC(state.vaultBalance).padStart(9)}`
-  );
-
-  // Ideal allocations (from computeIdealAllocation, before feasibility filtering)
-  const idealLines = idealActions.map((a) => {
-    const deltaStr = a.delta.isZero() ? "(unchanged)" : formatDelta(a.delta);
-    return `  ${a.name.padEnd(20)} ${formatUSDC(a.targetBalance).padStart(
-      9
-    )}  ${deltaStr}`;
-  });
-
-  // Recommended (feasible) actions
-  const executableActions = allActions.filter((a) => a.action !== ACTION_NONE);
-  let actionLines;
-  if (executableActions.length === 0) {
-    actionLines = ["  No rebalancing actions required"];
-  } else {
-    actionLines = executableActions.map((a) => {
-      const label = a.action.toUpperCase().padEnd(8);
-      const chain = a.isCrossChain ? "(cross-chain)" : "(same-chain)";
-      return `  ${label}  ${a.name.padEnd(20)} ${formatUSDC(
-        cappedAmount(a)
-      ).padStart(9)}  ${chain}`;
-    });
-  }
-
-  const lines = [
-    header,
-    "",
-    "**Current Allocations**",
-    "```",
-    ...currentLines,
-    "```",
-    "**Ideal Allocations**",
-    "```",
-    ...idealLines,
-    "```",
-    "**Recommended Actions**",
-    "```",
-    ...actionLines,
-    "```",
-  ];
-
-  if (warnings.length > 0) {
-    lines.push("");
-    lines.push("**⚠️ Warnings**");
-    lines.push("```");
-    for (const w of warnings) {
-      lines.push(`  ${w}`);
-    }
-    lines.push("```");
-  }
-
-  return lines.join("\n");
-};
-
 // Entrypoint for the Defender Action
 const handler = async (event) => {
   isBroadcast = event?.secrets?.BROADCAST_REBALANCER_TX === "true";
@@ -154,7 +68,18 @@ const handler = async (event) => {
   // Post to Discord before executing so the alert appears even if the tx reverts
   if (webhookUrl) {
     try {
-      await postToDiscord(webhookUrl, buildDiscordMessage(plan));
+      const timestamp = new Date().toUTCString().replace(/ GMT$/, " UTC");
+      const dryTag = !isBroadcast ? "  `[DRY RUN]`" : "";
+      const header = `🔄 **OUSD Rebalancer** — ${timestamp}${dryTag}`;
+      const table = formatAllocationTable({
+        actions: allActions,
+        idealActions: plan.idealActions,
+        vaultBalance: plan.state.vaultBalance,
+        shortfall: plan.state.shortfall,
+        warnings: plan.warnings,
+        compact: true,
+      });
+      await postToDiscord(webhookUrl, `${header}\n\`\`\`\n${table}\n\`\`\``);
     } catch (err) {
       log(`Discord notification failed: ${err.message}`);
     }

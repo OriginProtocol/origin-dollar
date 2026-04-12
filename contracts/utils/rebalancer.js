@@ -1058,25 +1058,44 @@ function fmtUsd(bn) {
 }
 
 /**
- * Print a human-readable table of current vs recommended allocations.
+ * Format a USDC BigNumber as a short string for compact output (e.g. Discord).
+ * e.g. BigNumber(1234567890000) → "$1.23M"
+ */
+function fmtUsdCompact(bn) {
+  const n = parseFloat(formatUnits(bn, USDC_DECIMALS));
+  const abs = Math.abs(n);
+  if (abs >= 1e6) return `$${(n / 1e6).toFixed(2)}M`;
+  if (abs >= 1e3) return `$${(n / 1e3).toFixed(2)}K`;
+  return `$${n.toFixed(2)}`;
+}
+
+/**
+ * Format a human-readable table of current vs recommended allocations.
+ * Returns the formatted string (caller decides whether to console.log or post to Discord).
  *
  * @param {object} params
- * @param {Array}  params.actions         - filtered+sorted allocations (output of sortActions)
+ * @param {Array}  params.actions       - filtered+sorted allocations (output of sortActions)
  * @param {Array}  params.idealActions  - ideal (unconstrained) allocations (output of computeIdealAllocation)
  * @param {BigNumber} params.vaultBalance
  * @param {BigNumber} params.shortfall
- * @param {object} [params.constraints]
+ * @param {object}  [params.constraints]
+ * @param {Array}   [params.warnings]
+ * @param {boolean} [params.compact]    - if true, narrow 6-column output for Discord
+ * @returns {string}
  */
-function printAllocationTable({
+function formatAllocationTable({
   actions,
   idealActions,
   vaultBalance,
   shortfall,
   constraints: overrides = {},
   warnings = [],
+  compact = false,
 }) {
   const COL_SEP = "  ";
   const constraints = { ...ousdConstraints, ...overrides };
+  const fmt = compact ? fmtUsdCompact : (bn) => fmtUsd(bn);
+  const lines = [];
 
   // Use idealActions for the table (shows ideal balances/APYs); fall back to feasible if absent
   const tableRows = idealActions || actions;
@@ -1088,28 +1107,29 @@ function printAllocationTable({
   // Build a lookup map: address → feasible action (for the actions sections)
   const filteredByAddr = new Map(actions.map((a) => [a.address, a]));
 
-  console.log("\n=== OUSD Rebalancer Status ===\n");
-  console.log(`Total rebalancable capital : ${fmtUsd(totalCapital)} USDC`);
-  console.log(`Withdrawal shortfall       : ${fmtUsd(shortfall)} USDC`);
+  lines.push("=== OUSD Rebalancer Status ===");
+  lines.push("");
+  lines.push(`Total rebalancable capital : ${fmtUsd(totalCapital)} USDC`);
+  lines.push(`Withdrawal shortfall       : ${fmtUsd(shortfall)} USDC`);
 
-  // ── Allocations table: shows recommended targets from actions ────────────
-  console.log("\n--- Allocations ---\n");
+  // ── Allocations table ────────────────────────────────────────────────────
+  lines.push("");
+  lines.push("--- Allocations ---");
+  lines.push("");
+
   const pct = (bn) =>
     totalCapital.gt(0)
       ? ` (${(Number(bn.mul(10000).div(totalCapital)) / 100).toFixed(1)}%)`
       : "";
   const sign = (bn) => (bn.gte(0) ? "+" : "-");
 
-  // Vault (idle) row
   const vaultTarget = shortfall.add(
     BigNumber.from(constraints.minVaultBalance)
   );
   const vaultDelta = vaultTarget.sub(vaultBalance);
-  const vaultDeltaSign = sign(vaultDelta);
+
   const formattedRows = tableRows.map((a) => {
     const rec = filteredByAddr.get(a.address);
-    // Recommended target: use the feasible action's target if an action is approved,
-    // otherwise fall back to the current balance (no change recommended)
     const recTarget =
       rec && rec.action !== ACTION_NONE ? rec.targetBalance : a.balance;
     const recDelta = recTarget.sub(a.balance);
@@ -1124,206 +1144,188 @@ function printAllocationTable({
       rec?.expectedApy != null ? `${(rec.expectedApy * 100).toFixed(2)}%` : "—";
     return {
       name: `${a.name}${a.isDefault ? " *" : ""}`,
-      current: `${fmtUsd(a.balance)}${pct(a.balance)}`,
+      current: `${fmt(a.balance)}${pct(a.balance)}`,
       avail:
-        a.withdrawableLiquidity !== null
-          ? fmtUsd(a.withdrawableLiquidity)
-          : "n/a",
-      target: `${fmtUsd(recTarget)}${pct(recTarget)}`,
-      delta: `${sign(recDelta)}${fmtUsd(recDelta.abs())}`,
+        a.withdrawableLiquidity !== null ? fmt(a.withdrawableLiquidity) : "n/a",
+      target: `${fmt(recTarget)}${pct(recTarget)}`,
+      delta: `${sign(recDelta)}${fmt(recDelta.abs())}`,
       avgApy: avgApyStr,
       spotApy: spotApyStr,
       expectedApy,
       impact,
     };
   });
+
   const vaultRow = {
     name: "Vault (idle)",
-    current: `${fmtUsd(vaultBalance)}${pct(vaultBalance)}`,
+    current: `${fmt(vaultBalance)}${pct(vaultBalance)}`,
     avail: "—",
-    target: `${fmtUsd(vaultTarget)}${pct(vaultTarget)}`,
-    delta: `${vaultDeltaSign}${fmtUsd(vaultDelta.abs())}`,
+    target: `${fmt(vaultTarget)}${pct(vaultTarget)}`,
+    delta: `${sign(vaultDelta)}${fmt(vaultDelta.abs())}`,
     avgApy: "—",
     spotApy: "—",
     expectedApy: "—",
     impact: "—",
   };
+
   const allRows = [...formattedRows, vaultRow];
-  const COL = {
-    name: Math.max("Strategy".length, ...allRows.map((row) => row.name.length)),
-    current: Math.max(
-      "Current".length,
-      ...allRows.map((row) => row.current.length)
-    ),
-    avail: Math.max("Avail.".length, ...allRows.map((row) => row.avail.length)),
-    target: Math.max(
-      "Target (rec.)".length,
-      ...allRows.map((row) => row.target.length)
-    ),
-    delta: Math.max("Delta".length, ...allRows.map((row) => row.delta.length)),
-    avgApy: Math.max(
-      `${constraints.apyAverageWindow} APY`.length,
-      ...allRows.map((row) => row.avgApy.length)
-    ),
-    spotApy: Math.max(
-      "Spot APY".length,
-      ...allRows.map((row) => row.spotApy.length)
-    ),
-    expectedApy: Math.max(
-      "Exp. APY".length,
-      ...allRows.map((row) => row.expectedApy.length)
-    ),
-    impact: Math.max(
-      "Impact".length,
-      ...allRows.map((row) => row.impact.length)
-    ),
-  };
 
-  const totalWidth =
-    COL.name +
-    COL.current +
-    COL.avail +
-    COL.target +
-    COL.delta +
-    COL.avgApy +
-    COL.spotApy +
-    COL.expectedApy +
-    COL.impact +
-    COL_SEP.length * 8;
+  // Column definitions: compact uses fewer columns
+  const apyLabel = `${constraints.apyAverageWindow} APY`;
+  const colDefs = compact
+    ? [
+        { key: "name", header: "Strategy", align: "left" },
+        { key: "current", header: "Current", align: "right" },
+        { key: "target", header: "Target", align: "right" },
+        { key: "delta", header: "Delta", align: "right" },
+        { key: "avgApy", header: apyLabel, align: "right" },
+        { key: "spotApy", header: "Spot APY", align: "right" },
+      ]
+    : [
+        { key: "name", header: "Strategy", align: "left" },
+        { key: "current", header: "Current", align: "right" },
+        { key: "avail", header: "Avail.", align: "right" },
+        { key: "target", header: "Target (rec.)", align: "right" },
+        { key: "delta", header: "Delta", align: "right" },
+        { key: "avgApy", header: apyLabel, align: "right" },
+        { key: "spotApy", header: "Spot APY", align: "right" },
+        { key: "expectedApy", header: "Exp. APY", align: "right" },
+        { key: "impact", header: "Impact", align: "right" },
+      ];
 
-  console.log(
-    `${"Strategy".padEnd(COL.name)}${COL_SEP}${"Current".padStart(
-      COL.current
-    )}${COL_SEP}${"Avail.".padStart(
-      COL.avail
-    )}${COL_SEP}${"Target (rec.)".padStart(
-      COL.target
-    )}${COL_SEP}${"Delta".padStart(
-      COL.delta
-    )}${COL_SEP}${`${constraints.apyAverageWindow} APY`.padStart(
-      COL.avgApy
-    )}${COL_SEP}${"Spot APY".padStart(
-      COL.spotApy
-    )}${COL_SEP}${"Exp. APY".padStart(
-      COL.expectedApy
-    )}${COL_SEP}${"Impact".padStart(COL.impact)}`
-  );
-  console.log("-".repeat(totalWidth));
-
-  for (const row of formattedRows) {
-    console.log(
-      `${row.name.padEnd(COL.name)}${COL_SEP}` +
-        `${row.current.padStart(COL.current)}${COL_SEP}` +
-        `${row.avail.padStart(COL.avail)}${COL_SEP}` +
-        `${row.target.padStart(COL.target)}${COL_SEP}` +
-        `${row.delta.padStart(COL.delta)}${COL_SEP}` +
-        `${row.avgApy.padStart(COL.avgApy)}${COL_SEP}` +
-        `${row.spotApy.padStart(COL.spotApy)}${COL_SEP}` +
-        `${row.expectedApy.padStart(COL.expectedApy)}${COL_SEP}` +
-        `${row.impact.padStart(COL.impact)}`
+  // Compute column widths
+  const COL = {};
+  for (const col of colDefs) {
+    COL[col.key] = Math.max(
+      col.header.length,
+      ...allRows.map((row) => row[col.key].length)
     );
   }
 
-  console.log(
-    `${vaultRow.name.padEnd(COL.name)}${COL_SEP}` +
-      `${vaultRow.current.padStart(COL.current)}${COL_SEP}` +
-      `${vaultRow.avail.padStart(COL.avail)}${COL_SEP}` +
-      `${vaultRow.target.padStart(COL.target)}${COL_SEP}` +
-      `${vaultRow.delta.padStart(COL.delta)}${COL_SEP}` +
-      `${vaultRow.avgApy.padStart(COL.avgApy)}${COL_SEP}` +
-      `${vaultRow.spotApy.padStart(COL.spotApy)}${COL_SEP}` +
-      `${vaultRow.expectedApy.padStart(COL.expectedApy)}${COL_SEP}` +
-      `${vaultRow.impact.padStart(COL.impact)}`
-  );
+  const totalWidth =
+    colDefs.reduce((sum, col) => sum + COL[col.key], 0) +
+    COL_SEP.length * (colDefs.length - 1);
 
-  console.log("-".repeat(totalWidth));
-  console.log(
-    `${"Total".padEnd(COL.name)}${COL_SEP}${fmtUsd(totalCapital).padStart(
-      COL.current
-    )}`
-  );
-  console.log("  * = default strategy\n");
+  // Render a single row using the column definitions
+  const renderRow = (row) =>
+    colDefs
+      .map((col) =>
+        col.align === "left"
+          ? row[col.key].padEnd(COL[col.key])
+          : row[col.key].padStart(COL[col.key])
+      )
+      .join(COL_SEP);
+
+  // Header
+  const headerRow = {};
+  for (const col of colDefs) headerRow[col.key] = col.header;
+  lines.push(renderRow(headerRow));
+  lines.push("-".repeat(totalWidth));
+
+  // Data rows
+  for (const row of formattedRows) lines.push(renderRow(row));
+  lines.push(renderRow(vaultRow));
+
+  // Footer
+  lines.push("-".repeat(totalWidth));
+  const totalRow = {};
+  for (const col of colDefs) totalRow[col.key] = "";
+  totalRow.name = "Total";
+  totalRow.current = fmt(totalCapital);
+  lines.push(renderRow(totalRow));
+  lines.push("  * = default strategy");
 
   // ── Recommended actions ─────────────────────────────────────────────────
   const actionRows = actions.filter((a) => a.action !== ACTION_NONE);
 
-  console.log("--- Recommended Actions ---\n");
+  lines.push("");
+  lines.push("--- Recommended Actions ---");
+  lines.push("");
   if (actionRows.length === 0) {
-    console.log("  No actions required.\n");
+    lines.push("  No actions required.");
   } else {
     for (const a of actionRows) {
       const verb = a.action.toUpperCase();
       const dir = a.action === ACTION_WITHDRAW ? "from" : "to  ";
       const note = a.reason ? ` (${a.reason})` : "";
-      console.log(
-        `  ${verb.padEnd(8)} $${fmtUsd(a.delta.abs()).padStart(16)}  ${dir}  ${
+      const amount = compact
+        ? fmtUsdCompact(a.delta.abs())
+        : `$${fmtUsd(a.delta.abs())}`;
+      lines.push(
+        `  ${verb.padEnd(8)} ${amount.padStart(compact ? 9 : 17)}  ${dir}  ${
           a.name
         }${note}`
       );
     }
-    console.log();
   }
 
-  // ── Ethereum Morpho market details (when available) ──────────────────────
-  const marketAction = actions.find((a) => a.markets && a.markets.length > 0);
-  if (marketAction) {
-    const oeth = marketAction.markets.find(
-      (m) => m.marketId === OETH_USDC_MARKET_ID
-    );
-    const wsteth = marketAction.markets.find(
-      (m) => m.marketId === WSTETH_USDC_MARKET_ID
-    );
-    if (oeth || wsteth) {
-      const fmtPct = (v) => (v != null ? `${(v * 100).toFixed(2)}%` : "—");
-      const MC = { name: 14, cur: 10, sim: 10, curApy: 10, simApy: 10 };
-      const MS = "  ";
-
-      console.log("--- Ethereum Morpho Market Details ---\n");
-      console.log(
-        `  ${"Market".padEnd(MC.name)}${MS}${"Cur Util".padStart(
-          MC.cur
-        )}${MS}${"Post Util".padStart(MC.sim)}${MS}${"Cur APY".padStart(
-          MC.curApy
-        )}${MS}${"Post APY".padStart(MC.simApy)}`
+  // ── Ethereum Morpho market details (full mode only) ─────────────────────
+  if (!compact) {
+    const marketAction = actions.find((a) => a.markets && a.markets.length > 0);
+    if (marketAction) {
+      const oeth = marketAction.markets.find(
+        (m) => m.marketId === OETH_USDC_MARKET_ID
       );
+      const wsteth = marketAction.markets.find(
+        (m) => m.marketId === WSTETH_USDC_MARKET_ID
+      );
+      if (oeth || wsteth) {
+        const fmtPct = (v) => (v != null ? `${(v * 100).toFixed(2)}%` : "—");
+        const MC = { name: 14, cur: 10, sim: 10, curApy: 10, simApy: 10 };
+        const MS = "  ";
 
-      for (const [label, m] of [
-        ["OETH/USDC", oeth],
-        ["wstETH/USDC", wsteth],
-      ]) {
-        if (!m) continue;
-        console.log(
-          `  ${label.padEnd(MC.name)}${MS}${fmtPct(
-            m.current.utilization
-          ).padStart(MC.cur)}${MS}${fmtPct(m.simulated.utilization).padStart(
-            MC.sim
-          )}${MS}${fmtPct(m.current.supplyApy).padStart(
-            MC.curApy
-          )}${MS}${fmtPct(m.simulated.supplyApy).padStart(MC.simApy)}`
-        );
-      }
-
-      if (oeth && wsteth) {
-        const curSpread = oeth.current.supplyApy - wsteth.current.supplyApy;
-        const simSpread = oeth.simulated.supplyApy - wsteth.simulated.supplyApy;
-        console.log(
-          `  ${"Spread".padEnd(MC.name)}${MS}${"".padStart(
+        lines.push("");
+        lines.push("--- Ethereum Morpho Market Details ---");
+        lines.push("");
+        lines.push(
+          `  ${"Market".padEnd(MC.name)}${MS}${"Cur Util".padStart(
             MC.cur
-          )}${MS}${"".padStart(MC.sim)}${MS}${fmtPct(curSpread).padStart(
+          )}${MS}${"Post Util".padStart(MC.sim)}${MS}${"Cur APY".padStart(
             MC.curApy
-          )}${MS}${fmtPct(simSpread).padStart(MC.simApy)}`
+          )}${MS}${"Post APY".padStart(MC.simApy)}`
         );
+
+        for (const [label, m] of [
+          ["OETH/USDC", oeth],
+          ["wstETH/USDC", wsteth],
+        ]) {
+          if (!m) continue;
+          lines.push(
+            `  ${label.padEnd(MC.name)}${MS}${fmtPct(
+              m.current.utilization
+            ).padStart(MC.cur)}${MS}${fmtPct(m.simulated.utilization).padStart(
+              MC.sim
+            )}${MS}${fmtPct(m.current.supplyApy).padStart(
+              MC.curApy
+            )}${MS}${fmtPct(m.simulated.supplyApy).padStart(MC.simApy)}`
+          );
+        }
+
+        if (oeth && wsteth) {
+          const curSpread = oeth.current.supplyApy - wsteth.current.supplyApy;
+          const simSpread =
+            oeth.simulated.supplyApy - wsteth.simulated.supplyApy;
+          lines.push(
+            `  ${"Spread".padEnd(MC.name)}${MS}${"".padStart(
+              MC.cur
+            )}${MS}${"".padStart(MC.sim)}${MS}${fmtPct(curSpread).padStart(
+              MC.curApy
+            )}${MS}${fmtPct(simSpread).padStart(MC.simApy)}`
+          );
+        }
       }
-      console.log();
     }
   }
 
   if (warnings.length > 0) {
-    log("\n⚠️  Warnings:");
+    lines.push("");
+    lines.push("Warnings:");
     for (const w of warnings) {
-      log(`  ${w}`);
+      lines.push(`  ${w}`);
     }
   }
+
+  return lines.join("\n");
 }
 
 /**
@@ -1518,13 +1520,15 @@ async function buildRebalancePlan() {
   );
   const actions = sortActions(executableActions);
 
-  printAllocationTable({
-    actions,
-    idealActions,
-    vaultBalance: state.vaultBalance,
-    shortfall: state.shortfall,
-    warnings,
-  });
+  console.log(
+    formatAllocationTable({
+      actions,
+      idealActions,
+      vaultBalance: state.vaultBalance,
+      shortfall: state.shortfall,
+      warnings,
+    })
+  );
 
   return { actions, idealActions, state, apys: avgApys, spotApys, warnings };
 }
@@ -1534,7 +1538,7 @@ module.exports = {
   buildExecutableActions,
   sortActions,
   fmtUsd,
-  printAllocationTable,
+  formatAllocationTable,
   buildRebalancePlan,
   ousdMorphoStrategiesConfig,
   ousdConstraints,
