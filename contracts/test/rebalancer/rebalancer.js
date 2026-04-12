@@ -91,8 +91,8 @@ describe("Rebalancer: computeIdealAllocation", () => {
     });
 
     const total = result[0].targetBalance.add(result[1].targetBalance);
-    // deployable = 1M - 0 (shortfall) - 3K (minVaultBalance) ≈ 997K
-    expect(total).to.be.closeTo(usdc(997000), usdc(1));
+    // deployable = 1M - 0 (shortfall) = 1M
+    expect(total).to.be.closeTo(usdc(1000000), usdc(1));
     // Base gets the 95% cap since it has higher APY
     const basePct =
       result[1].targetBalance.mul(10000).div(total).toNumber() / 100;
@@ -135,7 +135,7 @@ describe("Rebalancer: computeIdealAllocation", () => {
     expect(basePct).to.be.lte(95.1);
   });
 
-  it("should reserve shortfall + minVaultBalance from deployable capital", () => {
+  it("should reserve shortfall from deployable capital", () => {
     const strategies = twoStrategies(400000, 400000);
     const result = computeIdealAllocation({
       strategies,
@@ -144,10 +144,10 @@ describe("Rebalancer: computeIdealAllocation", () => {
       shortfall: usdc(100000),
     });
 
-    // total = 1M, reserved = 100K (shortfall) + 3K (minVault) = 103K
-    // deployable = 897K
+    // total = 1M, reserved = 100K (shortfall)
+    // deployable = 900K
     const total = result[0].targetBalance.add(result[1].targetBalance);
-    expect(total).to.be.closeTo(usdc(897000), usdc(1));
+    expect(total).to.be.closeTo(usdc(900000), usdc(1));
   });
 
   it("should give first strategy in sorted order the max cap when APYs are equal", () => {
@@ -232,7 +232,7 @@ describe("Rebalancer: computeIdealAllocation", () => {
     });
 
     const total = result[0].targetBalance.add(result[1].targetBalance);
-    expect(total).to.be.closeTo(usdc(997000), usdc(1)); // minus minVaultBalance
+    expect(total).to.be.closeTo(usdc(1000000), usdc(1));
     expect(result[0].action).to.equal(ACTION_DEPOSIT);
     expect(result[1].action).to.equal(ACTION_DEPOSIT);
   });
@@ -273,7 +273,7 @@ describe("Rebalancer: computeIdealAllocation", () => {
     });
 
     // Base: balance 300K + maxDeposit 200K = 500K cap
-    // Without cap, Base would get 95% of ~797K ≈ 757K
+    // Without cap, Base would get 95% of ~800K ≈ 760K
     // With cap, Base gets 500K; remainder flows to ETH
     const baseRow = result.find((r) => r.name === "Base Morpho");
     expect(baseRow.targetBalance).to.equal(usdc(500000));
@@ -293,12 +293,12 @@ describe("Rebalancer: computeIdealAllocation", () => {
       depositCapacities,
     });
 
-    // Base gets 200K (capped), ETH gets the rest (~797K)
+    // Base gets 200K (capped), ETH gets the rest (~800K)
     const baseRow = result.find((r) => r.name === "Base Morpho");
     const ethRow = result.find((r) => r.name === "Ethereum Morpho");
     expect(baseRow.targetBalance).to.equal(usdc(200000));
-    // ETH gets remainder: 997K - 200K = 797K
-    expect(ethRow.targetBalance).to.be.closeTo(usdc(797000), usdc(1));
+    // ETH gets remainder: 1M - 200K = 800K
+    expect(ethRow.targetBalance).to.be.closeTo(usdc(800000), usdc(1));
   });
 
   // ── 3-strategy allocation scenarios ──
@@ -356,8 +356,68 @@ describe("Rebalancer: computeIdealAllocation", () => {
     expect(hyperRow.targetBalance).to.equal(usdc(200000));
     // Base capped at 100K
     expect(baseRow.targetBalance).to.equal(usdc(100000));
-    // ETH gets the rest: 997K - 200K - 100K = 697K
-    expect(ethRow.targetBalance).to.be.closeTo(usdc(697000), usdc(1));
+    // ETH gets the rest: 1M - 200K - 100K = 700K
+    expect(ethRow.targetBalance).to.be.closeTo(usdc(700000), usdc(1));
+  });
+
+  // ── Withdrawal capacity constraints ──
+
+  it("should enforce withdrawal capacity floor in ideal allocation", () => {
+    // Base has 600K balance but can only withdraw 100K (capacity floor = 500K)
+    // ETH has higher APY → greedy fill wants to move capital to ETH
+    // But withdrawal capacity limits how much can leave Base
+    const strategies = twoStrategies(200000, 600000);
+    const withdrawalCapacities = {
+      [BASE_VAULT]: { maxWithdraw: usdc(100000) },
+    };
+    const result = computeIdealAllocation({
+      strategies,
+      apys: { [ETH_VAULT]: 0.08, [BASE_VAULT]: 0.03 },
+      vaultBalance: usdc(0),
+      shortfall: ZERO,
+      withdrawalCapacities,
+    });
+
+    const baseRow = result.find((r) => r.name === "Base Morpho");
+    // Base cannot go below 500K (600K balance - 100K maxWithdraw)
+    expect(baseRow.targetBalance).to.be.gte(usdc(500000).toBigInt());
+  });
+
+  it("withdrawal capacity floor interacts with minAllocationBps", () => {
+    // ETH (default, minAllocationBps=500) has 100K balance, can only withdraw 10K
+    // Capacity floor = 90K; policy min = 5% of ~800K ≈ 40K; floor wins
+    const strategies = twoStrategies(100000, 700000);
+    const withdrawalCapacities = {
+      [ETH_VAULT]: { maxWithdraw: usdc(10000) },
+    };
+    const result = computeIdealAllocation({
+      strategies,
+      apys: { [ETH_VAULT]: 0.02, [BASE_VAULT]: 0.08 },
+      vaultBalance: usdc(0),
+      shortfall: ZERO,
+      withdrawalCapacities,
+    });
+
+    const ethRow = result.find((r) => r.name === "Ethereum Morpho");
+    // Capacity floor (90K) is higher than policy min (~40K), so 90K is enforced
+    expect(ethRow.targetBalance).to.be.gte(usdc(90000).toBigInt());
+  });
+
+  it("no withdrawal capacity → no floor (existing behavior unchanged)", () => {
+    // Same setup as above but without withdrawalCapacities
+    const strategies = twoStrategies(100000, 700000);
+    const result = computeIdealAllocation({
+      strategies,
+      apys: { [ETH_VAULT]: 0.02, [BASE_VAULT]: 0.08 },
+      vaultBalance: usdc(0),
+      shortfall: ZERO,
+    });
+
+    const ethRow = result.find((r) => r.name === "Ethereum Morpho");
+    const total = result[0].targetBalance.add(result[1].targetBalance);
+    // Without capacity floor, ETH gets only its policy min (5% of deployable)
+    const ethPct = ethRow.targetBalance.mul(10000).div(total).toNumber() / 100;
+    expect(ethPct).to.be.closeTo(5, 0.5);
   });
 });
 
@@ -569,8 +629,8 @@ describe("Rebalancer: buildExecutableActions", () => {
       makeAllocation("Strategy High", 300000, 500000, 0.07, {}),
       makeAllocation("Strategy Low", 400000, 500000, 0.03, {}),
     ];
-    // vaultBalance = 63K → surplus = 63K - 0 - 3K = 60K = depositBudget
-    const result = await buildExecutableActions(allocs, ZERO, usdc(63000));
+    // vaultBalance = 60K → surplus = 60K = depositBudget
+    const result = await buildExecutableActions(allocs, ZERO, usdc(60000));
     const highRow = result.find((a) => a.name === "Strategy High");
     const lowRow = result.find((a) => a.name === "Strategy Low");
     // High APY (0.07) funded first, trimmed to 60K
@@ -766,13 +826,12 @@ describe("Rebalancer: buildExecutableActions", () => {
         isCrossChain: true,
       }),
     ];
-    // No actions, vault has 50K surplus beyond shortfall + minVaultBalance
-    const surplus = usdc(50000 + 3000); // surplus above minVaultBalance
-    const result = await buildExecutableActions(allocs, ZERO, surplus);
+    // No actions, vault has 50K surplus
+    const result = await buildExecutableActions(allocs, ZERO, usdc(50000));
     const defaultRow = result.find((a) => a.isDefault);
     expect(defaultRow.action).to.equal(ACTION_DEPOSIT);
     expect(defaultRow.reason).to.include("surplus fallback");
-    expect(defaultRow.delta).to.equal(usdc(50000)); // 50K surplus (3K is minVaultBalance)
+    expect(defaultRow.delta).to.equal(usdc(50000));
   });
 
   it("surplus fallback does not fire when a deposit is already approved in Pass B", async () => {
@@ -784,7 +843,7 @@ describe("Rebalancer: buildExecutableActions", () => {
         isCrossChain: true,
       }),
     ];
-    // ETH withdrawal 200K + vault surplus 47K → budget 247K; Base deposit 200K approved in Pass B
+    // ETH withdrawal 200K + vault surplus 50K → budget 250K; Base deposit 200K approved in Pass B
     // hasDeposit = true → surplus fallback must NOT fire
     const result = await buildExecutableActions(allocs, ZERO, usdc(50000));
     const deposits = result.filter((a) => a.action === ACTION_DEPOSIT);
@@ -796,20 +855,8 @@ describe("Rebalancer: buildExecutableActions", () => {
     expect(surplusDeposit).to.be.undefined;
   });
 
-  it("surplus fallback does not fire when vault balance is consumed by shortfall+minVault", async () => {
-    const allocs = [
-      makeAllocation("Ethereum Morpho", 500000, 500000, 0.05, {
-        isDefault: true,
-      }),
-    ];
-    // vaultBalance = 2K, shortfall = 0 → surplus = 2K - 0 - 3K = -1K ≤ 0 → no fallback
-    const result = await buildExecutableActions(allocs, ZERO, usdc(2000));
-    const ethRow = result.find((a) => a.isDefault);
-    expect(ethRow.action).to.equal(ACTION_NONE);
-  });
-
   it("budget uses only net vault surplus after shortfall deduction", async () => {
-    // ETH withdrawal 200K approved; vault = 60K but shortfall = 50K → net surplus = 7K
+    // ETH withdrawal 200K approved; vault = 57K but shortfall = 50K → net surplus = 7K
     // Budget = 200K + 7K = 207K; Base deposit 300K trimmed to 207K
     const allocs = [
       makeAllocation("Ethereum Morpho", 700000, 500000, 0.03, {
@@ -822,11 +869,11 @@ describe("Rebalancer: buildExecutableActions", () => {
     const result = await buildExecutableActions(
       allocs,
       usdc(50000),
-      usdc(60000)
+      usdc(57000)
     );
     const baseRow = result.find((a) => a.isCrossChain);
     expect(baseRow.action).to.equal(ACTION_DEPOSIT);
-    // 200K (withdrawal) + 7K (net vault surplus) = 207K, not 200K + 57K = 257K
+    // 200K (withdrawal) + 7K (net vault surplus) = 207K
     expect(baseRow.delta).to.equal(usdc(207000));
     expect(baseRow.reason).to.include("trimmed");
   });
@@ -846,8 +893,8 @@ describe("Rebalancer: buildExecutableActions", () => {
     ];
     // Liquidity too low → filtered in Pass A
     allocs[0].withdrawableLiquidity = usdc(1);
-    // vaultBalance = 53K → surplus = 53K - 0 (shortfall) - 3K (minVaultBalance) = 50K
-    const result = await buildExecutableActions(allocs, ZERO, usdc(53000));
+    // vaultBalance = 50K → surplus = 50K
+    const result = await buildExecutableActions(allocs, ZERO, usdc(50000));
     const baseRow = result.find((a) => a.isCrossChain);
     // ETH withdraw filtered → deposit budget = vaultSurplus = 50K
     expect(baseRow.action).to.equal(ACTION_DEPOSIT);
@@ -937,8 +984,8 @@ describe("Rebalancer: buildExecutableActions", () => {
     ];
     // Liquidity too low → filtered in Pass A
     allocs[0].withdrawableLiquidity = usdc(1);
-    // vaultBalance = 13K → surplus = 10K < 25K → deposit to cross-chain discarded
-    const result = await buildExecutableActions(allocs, ZERO, usdc(13000));
+    // vaultBalance = 10K → surplus = 10K < 25K → deposit to cross-chain discarded
+    const result = await buildExecutableActions(allocs, ZERO, usdc(10000));
     const baseRow = result.find((a) => a.isCrossChain);
     expect(baseRow.action).to.equal(ACTION_NONE);
     expect(baseRow.reason).to.include("cross-chain min");
@@ -955,7 +1002,7 @@ describe("Rebalancer: buildExecutableActions", () => {
         isCrossChain: true,
       }),
     ];
-    // ETH withdrawal 200K approved; vaultBalance 203K → surplus 200K
+    // ETH withdrawal 200K approved; vaultBalance 200K → surplus 200K
     // Spread = 0.043 - 0.04 = 0.003 < 0.005 → fails, but surplus 200K ≥ 25K → trim
     const caps = {
       "0xVault_Base Morpho": {
@@ -967,7 +1014,7 @@ describe("Rebalancer: buildExecutableActions", () => {
     const result = await buildExecutableActions(
       allocs,
       ZERO,
-      usdc(203000),
+      usdc(200000),
       {},
       caps
     );
@@ -986,7 +1033,7 @@ describe("Rebalancer: buildExecutableActions", () => {
         isCrossChain: true,
       }),
     ];
-    // surplus = 23K - 3K = 20K < crossChainMinAmount (25K) → can't trim
+    // surplus = 20K < crossChainMinAmount (25K) → can't trim
     const caps = {
       "0xVault_Base Morpho": {
         maxDeposit: usdc(500000),
@@ -997,7 +1044,7 @@ describe("Rebalancer: buildExecutableActions", () => {
     const result = await buildExecutableActions(
       allocs,
       ZERO,
-      usdc(23000),
+      usdc(20000),
       {},
       caps
     );
@@ -1015,7 +1062,7 @@ describe("Rebalancer: buildExecutableActions", () => {
         isCrossChain: true,
       }),
     ];
-    // surplus = 3K - 3K = 0 → no surplus at all
+    // surplus = 0 → no surplus at all
     const caps = {
       "0xVault_Base Morpho": {
         maxDeposit: usdc(500000),
@@ -1026,7 +1073,7 @@ describe("Rebalancer: buildExecutableActions", () => {
     const result = await buildExecutableActions(
       allocs,
       ZERO,
-      usdc(3000),
+      usdc(0),
       {},
       caps
     );
@@ -1046,8 +1093,8 @@ describe("Rebalancer: buildExecutableActions", () => {
         isCrossChain: true,
       }),
     ];
-    // ETH deposit 10K approved; surplus = 903K - 3K = 900K; remaining = 900K - 10K = 890K
-    const result = await buildExecutableActions(allocs, ZERO, usdc(903000));
+    // ETH deposit 10K approved; surplus = 900K; remaining = 900K - 10K = 890K
+    const result = await buildExecutableActions(allocs, ZERO, usdc(900000));
     const ethRow = result.find((a) => a.isDefault);
     expect(ethRow.action).to.equal(ACTION_DEPOSIT);
     expect(ethRow.delta).to.equal(usdc(900000)); // 10K + 890K fallback
@@ -1061,7 +1108,7 @@ describe("Rebalancer: buildExecutableActions", () => {
       }),
       makeAllocation("Strategy High", 100000, 400000, 0.05),
     ];
-    // surplus = 13K - 3K = 10K ≥ 5K minMoveAmount (same-chain, no cross-chain check)
+    // surplus = 10K ≥ 5K minMoveAmount (same-chain, no cross-chain check)
     const caps = {
       "0xVault_Strategy High": {
         maxDeposit: usdc(500000),
@@ -1072,7 +1119,7 @@ describe("Rebalancer: buildExecutableActions", () => {
     const result = await buildExecutableActions(
       allocs,
       ZERO,
-      usdc(13000),
+      usdc(10000),
       {},
       caps
     );
@@ -1090,7 +1137,7 @@ describe("Rebalancer: buildExecutableActions", () => {
       makeAllocation("Strategy A", 100000, 300000, 0.052),
       makeAllocation("Strategy B", 100000, 200000, 0.05),
     ];
-    // surplus = 33K - 3K = 30K; Strategy A trims to 30K, surplus exhausted; B rejected
+    // surplus = 30K; Strategy A trims to 30K, surplus exhausted; B rejected
     const caps = {
       "0xVault_Strategy A": {
         maxDeposit: usdc(500000),
@@ -1106,7 +1153,7 @@ describe("Rebalancer: buildExecutableActions", () => {
     const result = await buildExecutableActions(
       allocs,
       ZERO,
-      usdc(33000),
+      usdc(30000),
       {},
       caps
     );
@@ -1128,8 +1175,8 @@ describe("Rebalancer: buildExecutableActions", () => {
         isCrossChain: true,
       }),
     ];
-    // ETH withdrawal 200K + surplus 47K = budget 247K; Base deposit 200K approved
-    // surplus (47K) < totalDeposits (200K) → remainingSurplus = 0 → no fallback
+    // ETH withdrawal 200K + surplus 50K = budget 250K; Base deposit 200K approved
+    // surplus (50K) < totalDeposits (200K) → remainingSurplus = 0 → no fallback
     const result = await buildExecutableActions(allocs, ZERO, usdc(50000));
     const deposits = result.filter((a) => a.action === ACTION_DEPOSIT);
     expect(deposits).to.have.length(1);
@@ -1149,8 +1196,8 @@ describe("Rebalancer: buildExecutableActions", () => {
         isCrossChain: true,
       }),
     ];
-    // surplus = 17K - 3K = 14K; ETH deposit 10K approved; remaining = 4K < 5K minMoveAmount
-    const result = await buildExecutableActions(allocs, ZERO, usdc(17000));
+    // surplus = 14K; ETH deposit 10K approved; remaining = 4K < 5K minMoveAmount
+    const result = await buildExecutableActions(allocs, ZERO, usdc(14000));
     const ethRow = result.find((a) => a.isDefault);
     expect(ethRow.action).to.equal(ACTION_DEPOSIT);
     expect(ethRow.delta).to.equal(usdc(10000));
@@ -1160,9 +1207,10 @@ describe("Rebalancer: buildExecutableActions", () => {
     expect(surplusFallback).to.be.undefined;
   });
 
-  it("surplus fallback skips when default has withdraw action", async () => {
-    // ETH withdrawal (100K) is justified by Base deposit (100K) so it survives trimming
-    // Vault surplus exists (300K) but default has ACTION_WITHDRAW → _deploySurplus skips
+  it("surplus nets against default withdraw and converts to deposit", async () => {
+    // ETH withdrawal (100K) is justified by Base deposit (100K).
+    // Vault surplus = 300K. Surplus (200K remaining after Base deposit) is netted
+    // against the 100K withdrawal → flips to a 100K deposit on the default strategy.
     const allocs = [
       makeAllocation("Ethereum Morpho", 500000, 400000, 0.03, {
         isDefault: true,
@@ -1171,13 +1219,10 @@ describe("Rebalancer: buildExecutableActions", () => {
         isCrossChain: true,
       }),
     ];
-    const result = await buildExecutableActions(allocs, ZERO, usdc(303000));
+    const result = await buildExecutableActions(allocs, ZERO, usdc(300000));
     const ethRow = result.find((a) => a.isDefault);
-    expect(ethRow.action).to.equal(ACTION_WITHDRAW);
-    const surplusFallback = result.find(
-      (a) => a.reason && a.reason.includes("surplus fallback")
-    );
-    expect(surplusFallback).to.be.undefined;
+    expect(ethRow.action).to.equal(ACTION_DEPOSIT);
+    expect(ethRow.reason).to.include("net of cancelled withdrawal");
   });
 
   it("spread rejection stands when surplus below same-chain minMoveAmount", async () => {
@@ -1187,7 +1232,7 @@ describe("Rebalancer: buildExecutableActions", () => {
       }),
       makeAllocation("Strategy High", 100000, 400000, 0.05),
     ];
-    // surplus = 6K - 3K = 3K < 5K minMoveAmount → can't trim
+    // surplus = 3K < 5K minMoveAmount → can't trim
     const caps = {
       "0xVault_Strategy High": {
         maxDeposit: usdc(500000),
@@ -1198,7 +1243,7 @@ describe("Rebalancer: buildExecutableActions", () => {
     const result = await buildExecutableActions(
       allocs,
       ZERO,
-      usdc(6000),
+      usdc(3000),
       {},
       caps
     );
@@ -1237,79 +1282,6 @@ describe("Rebalancer: buildExecutableActions", () => {
     expect(baseRow.action).to.equal(ACTION_DEPOSIT);
     expect(baseRow.delta).to.equal(usdc(50000));
     expect(baseRow.reason || "").not.to.include("spread");
-  });
-
-  // ── Withdrawal impact awareness ────────────────────────────
-  // These tests validate that withdrawal capacity constraints (APY impact
-  // and strategy-specific constraints) are applied correctly.
-
-  it("withdrawal capped to withdrawal capacity (APY impact)", async () => {
-    // ETH overallocated by $500K, but withdrawal capacity is only $300K
-    const allocs = [
-      makeAllocation("Ethereum Morpho", 700000, 200000, 0.03, {
-        isDefault: true,
-      }),
-      makeAllocation("Base Morpho", 300000, 800000, 0.06, {
-        isCrossChain: true,
-      }),
-    ];
-    const withdrawalCaps = {
-      "0xVault_Ethereum Morpho": {
-        maxWithdraw: usdc(300000),
-        impactBps: 45,
-        postWithdrawalApy: 0.035,
-      },
-    };
-    const depositCaps = {
-      "0xVault_Base Morpho": {
-        maxDeposit: usdc(600000),
-        postDepositApy: 0.055,
-        impactBps: 20,
-      },
-    };
-    const result = await buildExecutableActions(
-      allocs,
-      ZERO,
-      usdc(3000),
-      {},
-      depositCaps,
-      withdrawalCaps
-    );
-    const ethRow = result.find((a) => a.isDefault);
-    expect(ethRow.action).to.equal(ACTION_WITHDRAW);
-    // Withdrawal should be capped to $300K (not the ideal $500K)
-    expect(ethRow.delta.abs()).to.equal(usdc(300000));
-    expect(ethRow.reason).to.include("capped to withdrawal capacity");
-  });
-
-  it("withdrawal blocked when capacity below minMoveAmount", async () => {
-    // ETH overallocated by $100K, but withdrawal capacity is only $2K (below $5K min)
-    const allocs = [
-      makeAllocation("Ethereum Morpho", 600000, 500000, 0.03, {
-        isDefault: true,
-      }),
-      makeAllocation("Base Morpho", 400000, 500000, 0.06, {
-        isCrossChain: true,
-      }),
-    ];
-    const withdrawalCaps = {
-      "0xVault_Ethereum Morpho": {
-        maxWithdraw: usdc(2000),
-        impactBps: 49,
-        postWithdrawalApy: 0.04,
-      },
-    };
-    const result = await buildExecutableActions(
-      allocs,
-      ZERO,
-      usdc(3000),
-      {},
-      {},
-      withdrawalCaps
-    );
-    const ethRow = result.find((a) => a.isDefault);
-    expect(ethRow.action).to.equal(ACTION_NONE);
-    expect(ethRow.reason).to.include("APY impact threshold");
   });
 
   it("spread check uses post-withdrawal APY (tighter spread)", async () => {
@@ -1579,7 +1551,7 @@ describe("Rebalancer: buildExecutableActions", () => {
         isCrossChain: true,
       }),
     ];
-    const result = await buildExecutableActions(allocs, ZERO, usdc(3000));
+    const result = await buildExecutableActions(allocs, ZERO, usdc(0));
     const baseRow = result.find((a) => a.name === "Base Morpho");
     const hyperRow = result.find((a) => a.name === "HyperEVM Morpho");
 
@@ -1619,8 +1591,7 @@ describe("Rebalancer: buildExecutableActions", () => {
   it("3-strategy trim: two small withdrawals cancelled before trimming the large one", async () => {
     // Three withdrawals: ETH 10K, Base 30K, HyperEVM 300K
     // One deposit: Strategy X 200K
-    // vaultBalance covers minVaultBalance → vaultDeficit = 0
-    // totalNeeded = 200K, totalWithdrawals = 340K, excess = 140K
+    // vaultDeficit = 0; totalNeeded = 200K, totalWithdrawals = 340K, excess = 140K
     // Smallest-first: ETH 10K ≤ 140K → cancel (excess 130K);
     //                 Base 30K ≤ 130K → cancel (excess 100K);
     //                 HyperEVM 300K > 100K → trim to 200K
@@ -1636,7 +1607,7 @@ describe("Rebalancer: buildExecutableActions", () => {
       }),
       makeAllocation("Strategy X", 100000, 300000, 0.07),
     ];
-    const result = await buildExecutableActions(allocs, ZERO, usdc(3000));
+    const result = await buildExecutableActions(allocs, ZERO, usdc(0));
     const ethRow = result.find((a) => a.isDefault);
     const baseRow = result.find((a) => a.name === "Base Morpho");
     const hyperRow = result.find((a) => a.name === "HyperEVM Morpho");

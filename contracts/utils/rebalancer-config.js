@@ -59,7 +59,7 @@ const ousdMorphoStrategiesConfig = [
 const ousdConstraints = {
   minMoveAmount: 5000000000, // $5K in USDC (6 decimals)
   crossChainMinAmount: 25000000000, // $25K in USDC (6 decimals)
-  minVaultBalance: 3000000000, // $3K in USDC (6 decimals)
+  minVaultBalance: 0, // no minimum vault reserve
   minApySpread: 0.005, // 0.5% — post-deposit spread check (destination vs source)
   maxApyThreshold: 0.5, // 50% — APY above this is treated as suspicious
   maxApyImpactBps: 50, // Max APY degradation per deposit (0.5%)
