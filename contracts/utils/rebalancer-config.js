@@ -63,9 +63,23 @@ const ousdConstraints = {
   minApySpread: 0.005, // 0.5% — post-deposit spread check (destination vs source)
   maxApyThreshold: 0.5, // 50% — APY above this is treated as suspicious
   maxApyImpactBps: 50, // Max APY degradation per deposit (0.5%)
+  maxWithdrawalApyImpactBps: 50, // Max APY increase on source per withdrawal (0.5%)
   depositStepSize: 100000000000, // $100K USDC — binary search granularity
+  withdrawalStepSize: 100000000000, // $100K USDC — binary search granularity
   maxSpotBelowAvgBps: 200, // Block deposits if spot APY is significantly below the average
   apyAverageWindow: "1h", // Time window for the average APY used in allocation decisions
+};
+
+// ─── Morpho market IDs ──────────────────────────────────────────────────────
+const OETH_USDC_MARKET_ID =
+  "0xb8fef900b383db2dbbf4458c7f46acf5b140f26d603a6d1829963f241b82510e";
+const WSTETH_USDC_MARKET_ID =
+  "0xb323495f7e4148be5643a4ea4a8221eef163e4bccfdedc2a6f4696baacbc86cc";
+
+// ─── Ethereum Morpho vault withdrawal constraints ────────────────────────────
+const ethMorphoConstraints = {
+  maxOethUtilization: 0.90, // OETH/USDC utilization must stay under 90%
+  minOethWstethSpread: 0.005, // OETH/USDC supply rate ≥ 0.5% above wstETH/USDC
 };
 
 // ─── Secrets / RPC config ────────────────────────────────────────────────────
@@ -105,6 +119,9 @@ function getSubsquidUrl() {
 module.exports = {
   ousdMorphoStrategiesConfig,
   ousdConstraints,
+  OETH_USDC_MARKET_ID,
+  WSTETH_USDC_MARKET_ID,
+  ethMorphoConstraints,
   initSecrets,
   getRpcUrl,
   getProvider,

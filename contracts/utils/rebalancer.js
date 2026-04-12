@@ -6,11 +6,17 @@ const addresses = require("./addresses");
 const {
   ousdMorphoStrategiesConfig,
   ousdConstraints,
+  OETH_USDC_MARKET_ID,
+  WSTETH_USDC_MARKET_ID,
+  ethMorphoConstraints,
   getRpcUrl,
   getProvider,
 } = require("./rebalancer-config");
 const { fetchMorphoApys } = require("./morpho-apy");
-const { findMaxDepositRpc } = require("origin-morpho-utils");
+const {
+  findMaxDepositRpc,
+  findMaxWithdrawalRpc,
+} = require("origin-morpho-utils");
 
 const log = require("./logger")("utils:rebalancer");
 
@@ -56,6 +62,39 @@ const erc4626MaxWithdrawAbi = [
 const liquidityAdapterAbi = [
   "function liquidityAdapter() external view returns (address)",
 ];
+
+/**
+ * Constraint callback for Ethereum Morpho vault withdrawals.
+ * Passed to findMaxWithdrawalRpc to enforce market-level health checks.
+ *
+ * @param {object} state - FindMaxConstraintState from origin-morpho-utils
+ * @returns {boolean} true if the withdrawal is acceptable
+ */
+function ethMorphoWithdrawalConstraint(state) {
+  const oethMarket = state.markets.find(
+    (m) => m.marketId === OETH_USDC_MARKET_ID
+  );
+  const wstethMarket = state.markets.find(
+    (m) => m.marketId === WSTETH_USDC_MARKET_ID
+  );
+
+  if (
+    oethMarket &&
+    oethMarket.simulated.utilization > ethMorphoConstraints.maxOethUtilization
+  ) {
+    return false;
+  }
+
+  if (oethMarket && wstethMarket) {
+    const spread =
+      oethMarket.simulated.supplyApy - wstethMarket.simulated.supplyApy;
+    if (spread < ethMorphoConstraints.minOethWstethSpread) {
+      return false;
+    }
+  }
+
+  return true;
+}
 
 /**
  * Read on-chain state: Morpho strategy balances, vault idle USDC, withdrawal queue.
@@ -108,6 +147,10 @@ async function readOnChainState() {
         morphoChainId: cfg.morphoChainId,
         isCrossChain: cfg.isCrossChain,
         isDefault: cfg.isDefault || false,
+        withdrawalConstraint:
+          !cfg.isCrossChain && cfg.morphoChainId === 1
+            ? ethMorphoWithdrawalConstraint
+            : undefined,
         balance,
         isTransferPending,
       };
@@ -408,6 +451,63 @@ async function discoverDepositCapacities(
 }
 
 /**
+ * Discover the maximum withdrawal amount per strategy that keeps APY impact
+ * within the threshold and satisfies strategy-specific constraints.
+ *
+ * @param {Array}  strategies  - strategy config objects with balance
+ * @param {object} constraints
+ * @returns {object} { [metaMorphoVaultAddress]: { maxWithdraw, postWithdrawalApy, impactBps } }
+ */
+async function discoverWithdrawalCapacities(strategies, constraints) {
+  const capacities = {};
+  await Promise.all(
+    strategies.map(async (s) => {
+      if (!s.metaMorphoVaultAddress || !s.morphoChainId) return;
+      const rpcUrl = getRpcUrl(s.morphoChainId);
+      if (!rpcUrl) {
+        return; // No constraint applied — withdrawal allowed up to liquidity
+      }
+      try {
+        if (s.balance.lt(constraints.minMoveAmount)) return;
+        const result = await findMaxWithdrawalRpc(
+          rpcUrl,
+          s.morphoChainId,
+          s.metaMorphoVaultAddress,
+          s.balance.toBigInt(),
+          constraints.maxWithdrawalApyImpactBps,
+          {
+            precision: BigInt(constraints.withdrawalStepSize),
+            includeMarkets: !!s.withdrawalConstraint,
+            constraint: s.withdrawalConstraint,
+          }
+        );
+        const maxWithdraw = BigNumber.from(result.amount.toString());
+        capacities[s.metaMorphoVaultAddress] = {
+          maxWithdraw,
+          impactBps: result.impact.impactBps,
+          postWithdrawalApy: result.impact.newApy,
+          markets: result.impact.markets,
+        };
+        log(
+          `Withdrawal capacity for ${s.name}: ${fmtUsd(maxWithdraw)} ` +
+            `(impact ${result.impact.impactBps}bps, post-withdrawal APY ${(
+              result.impact.newApy * 100
+            ).toFixed(2)}%)`
+        );
+      } catch (err) {
+        log(
+          `Withdrawal capacity discovery failed for ${s.name}: ${err.message}`
+        );
+        // Fail-open: if we can't determine capacity, allow withdrawal up to liquidity.
+        // Withdrawal constraints are protective but not critical — better to rebalance
+        // than to freeze funds due to an RPC error.
+      }
+    })
+  );
+  return capacities;
+}
+
+/**
  * Vault surplus above reserves (shortfall + minVaultBalance).
  */
 function _computeVaultSurplus(vaultBalance, shortfall, constraints) {
@@ -418,13 +518,14 @@ function _computeVaultSurplus(vaultBalance, shortfall, constraints) {
 }
 
 /**
- * Filter withdrawals by feasibility: min move amount, cross-chain min, liquidity.
+ * Filter withdrawals by feasibility: min move amount, cross-chain min, liquidity,
+ * and withdrawal capacity (APY impact + strategy-specific constraints).
  * Infeasible withdrawals are set to ACTION_NONE with a reason.
  *
  * Note: APY spread check has moved to _resolveDeposit (post-impact spread).
  * Per-strategy minAllocationBps prevents over-withdrawing from important strategies.
  */
-function _filterWithdrawals(result, constraints) {
+function _filterWithdrawals(result, constraints, withdrawalCapacities = {}) {
   const withdrawals = result.filter((a) => a.action === ACTION_WITHDRAW);
 
   for (const w of withdrawals) {
@@ -444,6 +545,25 @@ function _filterWithdrawals(result, constraints) {
         w.targetBalance = w.balance.sub(amt);
         w.reason = `capped to available liquidity: ${fmtUsd(liq)}`;
       }
+    }
+
+    // Cap to withdrawal capacity (APY impact + strategy constraints)
+    const cap = withdrawalCapacities[w.metaMorphoVaultAddress];
+    if (cap && amt.gt(cap.maxWithdraw)) {
+      if (cap.maxWithdraw.lt(constraints.minMoveAmount)) {
+        w.action = ACTION_NONE;
+        w.reason = "withdrawal would exceed APY impact threshold";
+        continue;
+      }
+      amt = cap.maxWithdraw;
+      w.delta = amt.mul(-1);
+      w.targetBalance = w.balance.sub(amt);
+      w.reason = `capped to withdrawal capacity: ${fmtUsd(amt)}`;
+    }
+    if (cap) {
+      w.impactBps = cap.impactBps;
+      w.expectedApy = cap.postWithdrawalApy;
+      if (cap.markets) w.markets = cap.markets;
     }
 
     if (amt.lt(constraints.minMoveAmount)) {
@@ -565,6 +685,7 @@ function _resolveDeposit(
     reason,
     surplusUsed,
     impactBps: capacity?.impactBps,
+    expectedApy: capacity?.postDepositApy,
   };
 }
 
@@ -602,6 +723,7 @@ async function _allocateDeposits(
   shortfall,
   constraints,
   depositCapacities,
+  withdrawalCapacities,
   warnings
 ) {
   const approvedWithdrawals = result.filter(
@@ -619,9 +741,16 @@ async function _allocateDeposits(
   let budget = withdrawTotal.add(vaultSurplus);
   let surplusBudget = vaultSurplus;
 
+  // Use post-withdrawal APY when available (more accurate than current APY
+  // because withdrawals push source vault APY up, shrinking the real spread)
   const highestWithdrawalApy =
     approvedWithdrawals.length > 0
-      ? Math.max(...approvedWithdrawals.map((w) => w.apy))
+      ? Math.max(
+          ...approvedWithdrawals.map((w) => {
+            const cap = withdrawalCapacities[w.metaMorphoVaultAddress];
+            return cap?.postWithdrawalApy ?? w.apy;
+          })
+        )
       : null;
 
   const deposits = result
@@ -653,6 +782,7 @@ async function _allocateDeposits(
     }
     if (res.reason) deposit.reason = res.reason;
     if (res.impactBps != null) deposit.impactBps = res.impactBps;
+    if (res.expectedApy != null) deposit.expectedApy = res.expectedApy;
     budget = budget.sub(res.amt);
     surplusBudget = surplusBudget.sub(res.surplusUsed);
   }
@@ -863,13 +993,14 @@ async function buildExecutableActions(
   vaultBalance = BigNumber.from(0),
   constraintOverrides = {},
   depositCapacities = {},
+  withdrawalCapacities = {},
   warnings = []
 ) {
   const constraints = { ...ousdConstraints, ...constraintOverrides };
   let result = allocations.map((a) => ({ ...a }));
 
-  // 1. Filter withdrawals by feasibility (min move, cross-chain min, liquidity)
-  result = _filterWithdrawals(result, constraints);
+  // 1. Filter withdrawals by feasibility (min move, cross-chain min, liquidity, APY impact)
+  result = _filterWithdrawals(result, constraints, withdrawalCapacities);
 
   // 2. Allocate deposits from available budget + deploy remaining surplus
   result = await _allocateDeposits(
@@ -878,6 +1009,7 @@ async function buildExecutableActions(
     shortfall,
     constraints,
     depositCapacities,
+    withdrawalCapacities,
     warnings
   );
 
@@ -984,9 +1116,12 @@ function printAllocationTable({
     const avgApyStr = `${(a.apy * 100).toFixed(2)}%`;
     const spotApyStr = `${(a.spotApy * 100).toFixed(2)}%`;
     const impact =
-      rec?.action === ACTION_DEPOSIT && rec?.impactBps != null
+      (rec?.action === ACTION_DEPOSIT || rec?.action === ACTION_WITHDRAW) &&
+      rec?.impactBps != null
         ? `${(rec.impactBps / 100).toFixed(2)}%`
         : "—";
+    const expectedApy =
+      rec?.expectedApy != null ? `${(rec.expectedApy * 100).toFixed(2)}%` : "—";
     return {
       name: `${a.name}${a.isDefault ? " *" : ""}`,
       current: `${fmtUsd(a.balance)}${pct(a.balance)}`,
@@ -998,6 +1133,7 @@ function printAllocationTable({
       delta: `${sign(recDelta)}${fmtUsd(recDelta.abs())}`,
       avgApy: avgApyStr,
       spotApy: spotApyStr,
+      expectedApy,
       impact,
     };
   });
@@ -1009,6 +1145,7 @@ function printAllocationTable({
     delta: `${vaultDeltaSign}${fmtUsd(vaultDelta.abs())}`,
     avgApy: "—",
     spotApy: "—",
+    expectedApy: "—",
     impact: "—",
   };
   const allRows = [...formattedRows, vaultRow];
@@ -1032,6 +1169,10 @@ function printAllocationTable({
       "Spot APY".length,
       ...allRows.map((row) => row.spotApy.length)
     ),
+    expectedApy: Math.max(
+      "Exp. APY".length,
+      ...allRows.map((row) => row.expectedApy.length)
+    ),
     impact: Math.max(
       "Impact".length,
       ...allRows.map((row) => row.impact.length)
@@ -1046,8 +1187,9 @@ function printAllocationTable({
     COL.delta +
     COL.avgApy +
     COL.spotApy +
+    COL.expectedApy +
     COL.impact +
-    COL_SEP.length * 7;
+    COL_SEP.length * 8;
 
   console.log(
     `${"Strategy".padEnd(COL.name)}${COL_SEP}${"Current".padStart(
@@ -1062,6 +1204,8 @@ function printAllocationTable({
       COL.avgApy
     )}${COL_SEP}${"Spot APY".padStart(
       COL.spotApy
+    )}${COL_SEP}${"Exp. APY".padStart(
+      COL.expectedApy
     )}${COL_SEP}${"Impact".padStart(COL.impact)}`
   );
   console.log("-".repeat(totalWidth));
@@ -1075,6 +1219,7 @@ function printAllocationTable({
         `${row.delta.padStart(COL.delta)}${COL_SEP}` +
         `${row.avgApy.padStart(COL.avgApy)}${COL_SEP}` +
         `${row.spotApy.padStart(COL.spotApy)}${COL_SEP}` +
+        `${row.expectedApy.padStart(COL.expectedApy)}${COL_SEP}` +
         `${row.impact.padStart(COL.impact)}`
     );
   }
@@ -1087,6 +1232,7 @@ function printAllocationTable({
       `${vaultRow.delta.padStart(COL.delta)}${COL_SEP}` +
       `${vaultRow.avgApy.padStart(COL.avgApy)}${COL_SEP}` +
       `${vaultRow.spotApy.padStart(COL.spotApy)}${COL_SEP}` +
+      `${vaultRow.expectedApy.padStart(COL.expectedApy)}${COL_SEP}` +
       `${vaultRow.impact.padStart(COL.impact)}`
   );
 
@@ -1098,41 +1244,7 @@ function printAllocationTable({
   );
   console.log("  * = default strategy\n");
 
-  // ── Section 1: All ideal allocation changes ──────────────────────────────
-  const rawChanges = tableRows.filter((a) => !a.delta.isZero());
-
-  console.log("--- Actions for max APY ---\n");
-  if (rawChanges.length === 0) {
-    console.log("  All strategies at target.\n");
-  } else {
-    for (const raw of rawChanges) {
-      const verb = raw.delta.lt(0) ? "WITHDRAW" : "DEPOSIT";
-      const dir = raw.delta.lt(0) ? "from" : "to  ";
-      const filtered = filteredByAddr.get(raw.address);
-      const isApproved = filtered && filtered.action !== ACTION_NONE;
-      const wasTrimmed = isApproved && filtered.delta.abs().lt(raw.delta.abs());
-
-      let suffix = "";
-      if (!isApproved && filtered?.reason) {
-        suffix = ` [Not recommended: ${filtered.reason}]`;
-      } else if (wasTrimmed) {
-        suffix = ` [Infeasible unless adjusted to ${fmtUsd(
-          filtered.delta.abs()
-        )}]`;
-      } else if (raw.delta.gt(0) && filtered?.impactBps != null) {
-        suffix = ` (APY impact: ${(filtered.impactBps / 100).toFixed(2)}%)`;
-      }
-
-      console.log(
-        `  ${verb.padEnd(8)} $${fmtUsd(raw.delta.abs()).padStart(
-          16
-        )}  ${dir}  ${raw.name}${suffix}`
-      );
-    }
-    console.log();
-  }
-
-  // ── Section 2: Recommended actions ────────────────────────────────────────
+  // ── Recommended actions ─────────────────────────────────────────────────
   const actionRows = actions.filter((a) => a.action !== ACTION_NONE);
 
   console.log("--- Recommended Actions ---\n");
@@ -1150,6 +1262,60 @@ function printAllocationTable({
       );
     }
     console.log();
+  }
+
+  // ── Ethereum Morpho market details (when available) ──────────────────────
+  const marketAction = actions.find((a) => a.markets && a.markets.length > 0);
+  if (marketAction) {
+    const oeth = marketAction.markets.find(
+      (m) => m.marketId === OETH_USDC_MARKET_ID
+    );
+    const wsteth = marketAction.markets.find(
+      (m) => m.marketId === WSTETH_USDC_MARKET_ID
+    );
+    if (oeth || wsteth) {
+      const fmtPct = (v) => (v != null ? `${(v * 100).toFixed(2)}%` : "—");
+      const MC = { name: 14, cur: 10, sim: 10, curApy: 10, simApy: 10 };
+      const MS = "  ";
+
+      console.log("--- Ethereum Morpho Market Details ---\n");
+      console.log(
+        `  ${"Market".padEnd(MC.name)}${MS}${"Cur Util".padStart(
+          MC.cur
+        )}${MS}${"Post Util".padStart(MC.sim)}${MS}${"Cur APY".padStart(
+          MC.curApy
+        )}${MS}${"Post APY".padStart(MC.simApy)}`
+      );
+
+      for (const [label, m] of [
+        ["OETH/USDC", oeth],
+        ["wstETH/USDC", wsteth],
+      ]) {
+        if (!m) continue;
+        console.log(
+          `  ${label.padEnd(MC.name)}${MS}${fmtPct(
+            m.current.utilization
+          ).padStart(MC.cur)}${MS}${fmtPct(m.simulated.utilization).padStart(
+            MC.sim
+          )}${MS}${fmtPct(m.current.supplyApy).padStart(
+            MC.curApy
+          )}${MS}${fmtPct(m.simulated.supplyApy).padStart(MC.simApy)}`
+        );
+      }
+
+      if (oeth && wsteth) {
+        const curSpread = oeth.current.supplyApy - wsteth.current.supplyApy;
+        const simSpread = oeth.simulated.supplyApy - wsteth.simulated.supplyApy;
+        console.log(
+          `  ${"Spread".padEnd(MC.name)}${MS}${"".padStart(
+            MC.cur
+          )}${MS}${"".padStart(MC.sim)}${MS}${fmtPct(curSpread).padStart(
+            MC.curApy
+          )}${MS}${fmtPct(simSpread).padStart(MC.simApy)}`
+        );
+      }
+      console.log();
+    }
   }
 
   if (warnings.length > 0) {
@@ -1333,12 +1499,23 @@ async function buildRebalancePlan() {
     }
   }
 
+  // Discover withdrawal capacities (binary search for max withdrawal per strategy)
+  log("Discovering withdrawal capacities...");
+  let withdrawalCapacities = {};
+  if (!process.env.IS_TEST) {
+    withdrawalCapacities = await discoverWithdrawalCapacities(
+      active,
+      ousdConstraints
+    );
+  }
+
   const executableActions = await buildExecutableActions(
     idealActions,
     state.shortfall,
     state.vaultBalance,
     {},
     depositCapacities,
+    withdrawalCapacities,
     warnings
   );
   const actions = sortActions(executableActions);

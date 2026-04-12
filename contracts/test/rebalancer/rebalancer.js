@@ -1116,4 +1116,149 @@ describe("Rebalancer: buildExecutableActions", () => {
     expect(baseRow.delta).to.equal(usdc(50000));
     expect(baseRow.reason || "").not.to.include("spread");
   });
+
+  // ── Withdrawal impact awareness ────────────────────────────
+  // These tests validate that withdrawal capacity constraints (APY impact
+  // and strategy-specific constraints) are applied correctly.
+
+  it("withdrawal capped to withdrawal capacity (APY impact)", async () => {
+    // ETH overallocated by $500K, but withdrawal capacity is only $300K
+    const allocs = [
+      makeAllocation("Ethereum Morpho", 700000, 200000, 0.03, {
+        isDefault: true,
+      }),
+      makeAllocation("Base Morpho", 300000, 800000, 0.06, {
+        isCrossChain: true,
+      }),
+    ];
+    const withdrawalCaps = {
+      "0xVault_Ethereum Morpho": {
+        maxWithdraw: usdc(300000),
+        impactBps: 45,
+        postWithdrawalApy: 0.035,
+      },
+    };
+    const depositCaps = {
+      "0xVault_Base Morpho": {
+        maxDeposit: usdc(600000),
+        postDepositApy: 0.055,
+        impactBps: 20,
+      },
+    };
+    const result = await buildExecutableActions(
+      allocs,
+      ZERO,
+      usdc(3000),
+      {},
+      depositCaps,
+      withdrawalCaps
+    );
+    const ethRow = result.find((a) => a.isDefault);
+    expect(ethRow.action).to.equal(ACTION_WITHDRAW);
+    // Withdrawal should be capped to $300K (not the ideal $500K)
+    expect(ethRow.delta.abs()).to.equal(usdc(300000));
+    expect(ethRow.reason).to.include("capped to withdrawal capacity");
+  });
+
+  it("withdrawal blocked when capacity below minMoveAmount", async () => {
+    // ETH overallocated by $100K, but withdrawal capacity is only $2K (below $5K min)
+    const allocs = [
+      makeAllocation("Ethereum Morpho", 600000, 500000, 0.03, {
+        isDefault: true,
+      }),
+      makeAllocation("Base Morpho", 400000, 500000, 0.06, {
+        isCrossChain: true,
+      }),
+    ];
+    const withdrawalCaps = {
+      "0xVault_Ethereum Morpho": {
+        maxWithdraw: usdc(2000),
+        impactBps: 49,
+        postWithdrawalApy: 0.04,
+      },
+    };
+    const result = await buildExecutableActions(
+      allocs,
+      ZERO,
+      usdc(3000),
+      {},
+      {},
+      withdrawalCaps
+    );
+    const ethRow = result.find((a) => a.isDefault);
+    expect(ethRow.action).to.equal(ACTION_NONE);
+    expect(ethRow.reason).to.include("APY impact threshold");
+  });
+
+  it("spread check uses post-withdrawal APY (tighter spread)", async () => {
+    // ETH (source): current APY 3%, post-withdrawal APY 3.6%
+    // Base (dest):  post-deposit APY 4.0%
+    // Spread with current APY:        4.0% - 3.0% = 1.0% → passes (≥0.5%)
+    // Spread with post-withdrawal APY: 4.0% - 3.6% = 0.4% → fails (<0.5%)
+    const allocs = [
+      makeAllocation("Ethereum Morpho", 600000, 500000, 0.03, {
+        isDefault: true,
+      }),
+      makeAllocation("Base Morpho", 400000, 500000, 0.04, {
+        isCrossChain: true,
+      }),
+    ];
+    const withdrawalCaps = {
+      "0xVault_Ethereum Morpho": {
+        maxWithdraw: usdc(200000),
+        impactBps: 40,
+        postWithdrawalApy: 0.036,
+      },
+    };
+    const depositCaps = {
+      "0xVault_Base Morpho": {
+        maxDeposit: usdc(200000),
+        postDepositApy: 0.04,
+        impactBps: 10,
+      },
+    };
+    const result = await buildExecutableActions(
+      allocs,
+      ZERO,
+      usdc(3000),
+      {},
+      depositCaps,
+      withdrawalCaps
+    );
+    const baseRow = result.find((a) => a.isCrossChain);
+    // Deposit should be rejected because post-deposit spread (0.4%) < minApySpread (0.5%)
+    expect(baseRow.action).to.equal(ACTION_NONE);
+    expect(baseRow.reason).to.include("spread");
+  });
+
+  it("spread check passes when post-withdrawal APY is not available", async () => {
+    // Same setup but without withdrawal capacities — spread uses current APY (3%)
+    // Spread: 4.0% - 3.0% = 1.0% → passes
+    const allocs = [
+      makeAllocation("Ethereum Morpho", 600000, 500000, 0.03, {
+        isDefault: true,
+      }),
+      makeAllocation("Base Morpho", 400000, 500000, 0.04, {
+        isCrossChain: true,
+      }),
+    ];
+    const depositCaps = {
+      "0xVault_Base Morpho": {
+        maxDeposit: usdc(200000),
+        postDepositApy: 0.04,
+        impactBps: 10,
+      },
+    };
+    // No withdrawal capacities — fall through to current APY
+    const result = await buildExecutableActions(
+      allocs,
+      ZERO,
+      usdc(3000),
+      {},
+      depositCaps,
+      {}
+    );
+    const baseRow = result.find((a) => a.isCrossChain);
+    expect(baseRow.action).to.equal(ACTION_DEPOSIT);
+  });
 });
