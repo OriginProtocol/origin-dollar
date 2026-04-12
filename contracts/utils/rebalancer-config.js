@@ -78,7 +78,7 @@ const WSTETH_USDC_MARKET_ID =
 
 // ─── Ethereum Morpho vault withdrawal constraints ────────────────────────────
 const ethMorphoConstraints = {
-  maxOethUtilization: 0.90, // OETH/USDC utilization must stay under 90%
+  maxOethUtilization: 0.9, // OETH/USDC utilization must stay under 90%
   minOethWstethSpread: 0.005, // OETH/USDC supply rate ≥ 0.5% above wstETH/USDC
 };
 

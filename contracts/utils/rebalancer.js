@@ -1415,9 +1415,7 @@ async function fetchMaxWithdrawals(strategies) {
           results[s.address] = usdcOnVault.add(adapterLiquidity);
         }
       } catch (err) {
-        console.error(
-          `fetchMaxWithdrawals failed for ${s.name}: ${err.message}`
-        );
+        log(`fetchMaxWithdrawals failed for ${s.name}: ${err.message}`);
         // Entry omitted — no liquidity constraint applied for this strategy
       }
     })

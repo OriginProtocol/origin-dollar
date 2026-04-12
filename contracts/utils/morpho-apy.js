@@ -89,8 +89,8 @@ async function fetchMorphoApys(vaults, { timeWindow = "1h" } = {}) {
           ? fetchVaultApy(rpcUrl, v.morphoChainId, v.metaMorphoVaultAddress)
               .then((r) => r?.apy ?? 0)
               .catch((err) => {
-                console.error(
-                  `[morpho-apy] RPC spot APY failed for ${v.metaMorphoVaultAddress} ` +
+                log(
+                  `RPC spot APY failed for ${v.metaMorphoVaultAddress} ` +
                     `on chain ${v.morphoChainId}: ${err.message}`
                 );
                 return 0;
@@ -101,8 +101,8 @@ async function fetchMorphoApys(vaults, { timeWindow = "1h" } = {}) {
           v.morphoChainId,
           timeWindow
         ).catch((err) => {
-          console.error(
-            `[morpho-apy] Subsquid avg APY failed for ${v.metaMorphoVaultAddress} ` +
+          log(
+            `Subsquid avg APY failed for ${v.metaMorphoVaultAddress} ` +
               `on chain ${v.morphoChainId}: ${err.message}`
           );
           return 0;
@@ -112,11 +112,14 @@ async function fetchMorphoApys(vaults, { timeWindow = "1h" } = {}) {
     })
   );
 
+  // Guard against corrupted responses (NaN, negative, Infinity).
+  const sanitize = (v) => (Number.isFinite(v) && v >= 0 ? v : 0);
+
   const apys = {};
   const avgApys = {};
   for (const { addr, spotApy, avgApy } of entries) {
-    apys[addr] = spotApy;
-    avgApys[addr] = avgApy;
+    apys[addr] = sanitize(spotApy);
+    avgApys[addr] = sanitize(avgApy);
   }
   return { apys, avgApys };
 }

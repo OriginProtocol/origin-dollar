@@ -16,6 +16,7 @@ const usdc = (n) => parseUnits(n.toString(), 6);
 // Vault addresses used as keys in the apys map
 const ETH_VAULT = "0xMorphoEth";
 const BASE_VAULT = "0xMorphoBase";
+const HYPER_VAULT = "0xMorphoHyper";
 
 function makeStrategy(
   name,
@@ -53,6 +54,23 @@ function twoStrategies(ethBalance, baseBalance) {
     makeStrategy("Base Morpho", baseBalance, {
       isCrossChain: true,
       metaMorphoVaultAddress: BASE_VAULT,
+    }),
+  ];
+}
+
+function threeStrategies(ethBalance, baseBalance, hyperBalance) {
+  return [
+    makeStrategy("Ethereum Morpho", ethBalance, {
+      isDefault: true,
+      metaMorphoVaultAddress: ETH_VAULT,
+    }),
+    makeStrategy("Base Morpho", baseBalance, {
+      isCrossChain: true,
+      metaMorphoVaultAddress: BASE_VAULT,
+    }),
+    makeStrategy("HyperEVM Morpho", hyperBalance, {
+      isCrossChain: true,
+      metaMorphoVaultAddress: HYPER_VAULT,
     }),
   ];
 }
@@ -236,6 +254,110 @@ describe("Rebalancer: computeIdealAllocation", () => {
     expect(ethRow.delta.abs()).to.equal(usdc(100000));
     expect(baseRow.action).to.equal(ACTION_WITHDRAW);
     expect(baseRow.delta.abs()).to.equal(usdc(50000));
+  });
+
+  // ── Deposit capacity constraints ──
+
+  it("should cap allocation when deposit capacity limits it", () => {
+    // Base has higher APY, but deposit capacity only allows 200K additional
+    const strategies = twoStrategies(500000, 300000);
+    const depositCapacities = {
+      [BASE_VAULT]: { maxDeposit: usdc(200000) },
+    };
+    const result = computeIdealAllocation({
+      strategies,
+      apys: { [ETH_VAULT]: 0.03, [BASE_VAULT]: 0.06 },
+      vaultBalance: usdc(0),
+      shortfall: ZERO,
+      depositCapacities,
+    });
+
+    // Base: balance 300K + maxDeposit 200K = 500K cap
+    // Without cap, Base would get 95% of ~797K ≈ 757K
+    // With cap, Base gets 500K; remainder flows to ETH
+    const baseRow = result.find((r) => r.name === "Base Morpho");
+    expect(baseRow.targetBalance).to.equal(usdc(500000));
+  });
+
+  it("should overflow to next strategy when first is capacity-capped", () => {
+    // Base has higher APY but capped at 200K deposit; overflow goes to ETH
+    const strategies = twoStrategies(0, 0);
+    const depositCapacities = {
+      [BASE_VAULT]: { maxDeposit: usdc(200000) },
+    };
+    const result = computeIdealAllocation({
+      strategies,
+      apys: { [ETH_VAULT]: 0.03, [BASE_VAULT]: 0.06 },
+      vaultBalance: usdc(1000000),
+      shortfall: ZERO,
+      depositCapacities,
+    });
+
+    // Base gets 200K (capped), ETH gets the rest (~797K)
+    const baseRow = result.find((r) => r.name === "Base Morpho");
+    const ethRow = result.find((r) => r.name === "Ethereum Morpho");
+    expect(baseRow.targetBalance).to.equal(usdc(200000));
+    // ETH gets remainder: 997K - 200K = 797K
+    expect(ethRow.targetBalance).to.be.closeTo(usdc(797000), usdc(1));
+  });
+
+  // ── 3-strategy allocation scenarios ──
+
+  it("3-strategy: highest APY fills first, remainder cascades down", () => {
+    // HyperEVM 8% > Base 5% > ETH 3%
+    // Greedy fill: HyperEVM fills to 95% cap (~947K), Base gets remainder (~50K), ETH gets 0.
+    // Min enforcement: ETH needs 5% (~50K), clawed from HyperEVM (~947K → ~897K).
+    const strategies = threeStrategies(500000, 300000, 200000);
+    const result = computeIdealAllocation({
+      strategies,
+      apys: { [ETH_VAULT]: 0.03, [BASE_VAULT]: 0.05, [HYPER_VAULT]: 0.08 },
+      vaultBalance: usdc(0),
+      shortfall: ZERO,
+    });
+
+    const total = result.reduce((s, r) => s.add(r.targetBalance), ZERO);
+    const hyperRow = result.find((r) => r.name === "HyperEVM Morpho");
+    const baseRow = result.find((r) => r.name === "Base Morpho");
+    const ethRow = result.find((r) => r.name === "Ethereum Morpho");
+
+    // HyperEVM (highest APY) gets the lion's share (~90% after min enforcement)
+    const hyperPct =
+      hyperRow.targetBalance.mul(10000).div(total).toNumber() / 100;
+    expect(hyperPct).to.be.closeTo(90, 0.5);
+    // Base gets the greedy-fill remainder (~5%)
+    const basePct =
+      baseRow.targetBalance.mul(10000).div(total).toNumber() / 100;
+    expect(basePct).to.be.closeTo(5, 0.5);
+    // ETH (default) gets at least 5% min
+    const ethPct = ethRow.targetBalance.mul(10000).div(total).toNumber() / 100;
+    expect(ethPct).to.be.closeTo(5, 0.5);
+  });
+
+  it("3-strategy: deposit capacity limits cascade overflow through all strategies", () => {
+    // HyperEVM 8% (cap 200K deposit), Base 5% (cap 100K deposit), ETH 3% (default)
+    const strategies = threeStrategies(0, 0, 0);
+    const depositCapacities = {
+      [HYPER_VAULT]: { maxDeposit: usdc(200000) },
+      [BASE_VAULT]: { maxDeposit: usdc(100000) },
+    };
+    const result = computeIdealAllocation({
+      strategies,
+      apys: { [ETH_VAULT]: 0.03, [BASE_VAULT]: 0.05, [HYPER_VAULT]: 0.08 },
+      vaultBalance: usdc(1000000),
+      shortfall: ZERO,
+      depositCapacities,
+    });
+
+    const hyperRow = result.find((r) => r.name === "HyperEVM Morpho");
+    const baseRow = result.find((r) => r.name === "Base Morpho");
+    const ethRow = result.find((r) => r.name === "Ethereum Morpho");
+
+    // HyperEVM capped at 200K
+    expect(hyperRow.targetBalance).to.equal(usdc(200000));
+    // Base capped at 100K
+    expect(baseRow.targetBalance).to.equal(usdc(100000));
+    // ETH gets the rest: 997K - 200K - 100K = 697K
+    expect(ethRow.targetBalance).to.be.closeTo(usdc(697000), usdc(1));
   });
 });
 
@@ -1260,5 +1382,273 @@ describe("Rebalancer: buildExecutableActions", () => {
     );
     const baseRow = result.find((a) => a.isCrossChain);
     expect(baseRow.action).to.equal(ACTION_DEPOSIT);
+  });
+
+  // ── Withdrawal trimming (Pass 3) ──────────────────────────
+
+  it("trim: smallest withdrawal cancelled when excess exists", async () => {
+    // Two withdrawals approved: Base 30K, HyperEVM 300K
+    // One deposit approved: ETH 200K
+    // Total withdrawals = 330K, needed = 200K → excess = 130K
+    // Smallest-first: Base 30K ≤ 130K → cancel; remaining excess = 100K
+    // HyperEVM 300K > 100K → trim to 200K
+    const allocs = [
+      makeAllocation("Ethereum Morpho", 200000, 400000, 0.07, {
+        isDefault: true,
+      }),
+      makeAllocation("Base Morpho", 530000, 500000, 0.04, {
+        isCrossChain: true,
+      }),
+      makeAllocation("HyperEVM Morpho", 800000, 500000, 0.03, {
+        isCrossChain: true,
+      }),
+    ];
+    const result = await buildExecutableActions(allocs, ZERO, usdc(0));
+    const baseRow = result.find((a) => a.name === "Base Morpho");
+    const hyperRow = result.find((a) => a.name === "HyperEVM Morpho");
+    // Base (30K) should be cancelled — smaller than excess
+    expect(baseRow.action).to.equal(ACTION_NONE);
+    expect(baseRow.reason).to.include("no approved deposits");
+    // HyperEVM should be trimmed to match deposit need
+    expect(hyperRow.action).to.equal(ACTION_WITHDRAW);
+    expect(hyperRow.delta.abs()).to.be.lte(usdc(300000));
+  });
+
+  it("trim: withdrawal partially trimmed stays above minMoveAmount", async () => {
+    // ETH withdrawal 200K approved; one small deposit 50K
+    // vaultBalance covers minVaultBalance (3K) → vaultDeficit = 0
+    // totalNeeded = 50K deposits + 0 deficit = 50K
+    // excess = 200K - 50K = 150K; trimmed to 50K ≥ 5K minMoveAmount → safe
+    const allocs = [
+      makeAllocation("Ethereum Morpho", 700000, 500000, 0.03, {
+        isDefault: true,
+      }),
+      makeAllocation("Base Morpho", 300000, 350000, 0.06, {
+        isCrossChain: true,
+      }),
+    ];
+    const result = await buildExecutableActions(allocs, ZERO, usdc(3000));
+    const ethRow = result.find((a) => a.isDefault);
+    // ETH withdrawal should be trimmed to match deposit need (50K)
+    expect(ethRow.action).to.equal(ACTION_WITHDRAW);
+    expect(ethRow.delta.abs()).to.equal(usdc(50000));
+    expect(ethRow.reason).to.include("trimmed to match");
+  });
+
+  it("trim: no trimming when deposits consume full budget", async () => {
+    // ETH withdrawal 200K, Base deposit 200K — exact match, no excess
+    const allocs = [
+      makeAllocation("Ethereum Morpho", 700000, 500000, 0.03, {
+        isDefault: true,
+      }),
+      makeAllocation("Base Morpho", 300000, 500000, 0.06, {
+        isCrossChain: true,
+      }),
+    ];
+    const result = await buildExecutableActions(allocs, ZERO, usdc(0));
+    const ethRow = result.find((a) => a.isDefault);
+    // No trimming — withdrawal matches deposit exactly
+    expect(ethRow.action).to.equal(ACTION_WITHDRAW);
+    expect(ethRow.delta.abs()).to.equal(usdc(200000));
+    expect(ethRow.reason).to.be.undefined;
+  });
+
+  // ── Spot APY divergence guard ─────────────────────────────
+
+  it("deposit blocked when spot APY diverges > maxSpotBelowAvgBps below average", async () => {
+    // Base avg APY 5%, spot APY 2% → divergence = 300bps > 200bps threshold
+    const allocs = [
+      makeAllocation("Ethereum Morpho", 700000, 500000, 0.03, {
+        isDefault: true,
+      }),
+      makeAllocation("Base Morpho", 300000, 500000, 0.05, {
+        isCrossChain: true,
+      }),
+    ];
+    allocs[1].spotApy = 0.02; // 300bps below avg
+    const result = await buildExecutableActions(allocs, ZERO, usdc(0));
+    const baseRow = result.find((a) => a.isCrossChain);
+    expect(baseRow.action).to.equal(ACTION_NONE);
+    expect(baseRow.reason).to.include("spot APY");
+    expect(baseRow.reason).to.include("deposit blocked");
+  });
+
+  it("deposit allowed when spot APY is close to average (within threshold)", async () => {
+    // Base avg APY 5%, spot APY 4% → divergence = 100bps < 200bps threshold
+    const allocs = [
+      makeAllocation("Ethereum Morpho", 700000, 500000, 0.03, {
+        isDefault: true,
+      }),
+      makeAllocation("Base Morpho", 300000, 500000, 0.05, {
+        isCrossChain: true,
+      }),
+    ];
+    allocs[1].spotApy = 0.04; // 100bps below avg — within threshold
+    const result = await buildExecutableActions(allocs, ZERO, usdc(0));
+    const baseRow = result.find((a) => a.isCrossChain);
+    expect(baseRow.action).to.equal(ACTION_DEPOSIT);
+  });
+
+  it("deposit allowed when spot APY is above average", async () => {
+    // Base avg APY 5%, spot APY 6% → no divergence (spot > avg)
+    const allocs = [
+      makeAllocation("Ethereum Morpho", 700000, 500000, 0.03, {
+        isDefault: true,
+      }),
+      makeAllocation("Base Morpho", 300000, 500000, 0.05, {
+        isCrossChain: true,
+      }),
+    ];
+    allocs[1].spotApy = 0.06;
+    const result = await buildExecutableActions(allocs, ZERO, usdc(0));
+    const baseRow = result.find((a) => a.isCrossChain);
+    expect(baseRow.action).to.equal(ACTION_DEPOSIT);
+  });
+
+  // ── Deposit capacity = 0 ──────────────────────────────────
+
+  it("deposit rejected when capacity is zero (APY impact too high)", async () => {
+    const allocs = [
+      makeAllocation("Ethereum Morpho", 700000, 500000, 0.03, {
+        isDefault: true,
+      }),
+      makeAllocation("Base Morpho", 300000, 500000, 0.06, {
+        isCrossChain: true,
+      }),
+    ];
+    const depositCaps = {
+      "0xVault_Base Morpho": {
+        maxDeposit: ZERO,
+        postDepositApy: 0,
+        impactBps: 0,
+      },
+    };
+    const result = await buildExecutableActions(
+      allocs,
+      ZERO,
+      usdc(0),
+      {},
+      depositCaps
+    );
+    const baseRow = result.find((a) => a.isCrossChain);
+    expect(baseRow.action).to.equal(ACTION_NONE);
+    expect(baseRow.reason).to.include("APY impact too high");
+  });
+
+  // ── 3-strategy scenarios (production-like config) ─────────
+
+  it("3-strategy: budget from one withdrawal split across two deposits by APY", async () => {
+    // ETH overallocated by 400K; Base (7%) and HyperEVM (5%) both underallocated
+    // Higher APY (Base) gets funded first; HyperEVM gets remainder
+    const allocs = [
+      makeAllocation("Ethereum Morpho", 800000, 400000, 0.03, {
+        isDefault: true,
+      }),
+      makeAllocation("Base Morpho", 100000, 300000, 0.07, {
+        isCrossChain: true,
+      }),
+      makeAllocation("HyperEVM Morpho", 100000, 300000, 0.05, {
+        isCrossChain: true,
+      }),
+    ];
+    const result = await buildExecutableActions(allocs, ZERO, usdc(3000));
+    const ethRow = result.find((a) => a.isDefault);
+    const baseRow = result.find((a) => a.name === "Base Morpho");
+    const hyperRow = result.find((a) => a.name === "HyperEVM Morpho");
+
+    expect(ethRow.action).to.equal(ACTION_WITHDRAW);
+    // Base (higher APY) gets funded first
+    expect(baseRow.action).to.equal(ACTION_DEPOSIT);
+    expect(baseRow.delta).to.equal(usdc(200000));
+    // HyperEVM gets remainder: 400K withdrawal - 200K Base = 200K
+    expect(hyperRow.action).to.equal(ACTION_DEPOSIT);
+    expect(hyperRow.delta).to.equal(usdc(200000));
+  });
+
+  it("3-strategy: budget partially covers second deposit", async () => {
+    // ETH withdrawal 200K; Base wants 150K, HyperEVM wants 150K
+    // Budget = 200K; Base (higher APY) gets 150K; HyperEVM gets remaining 50K
+    const allocs = [
+      makeAllocation("Ethereum Morpho", 700000, 500000, 0.03, {
+        isDefault: true,
+      }),
+      makeAllocation("Base Morpho", 150000, 300000, 0.07, {
+        isCrossChain: true,
+      }),
+      makeAllocation("HyperEVM Morpho", 150000, 300000, 0.05, {
+        isCrossChain: true,
+      }),
+    ];
+    const result = await buildExecutableActions(allocs, ZERO, usdc(3000));
+    const baseRow = result.find((a) => a.name === "Base Morpho");
+    const hyperRow = result.find((a) => a.name === "HyperEVM Morpho");
+
+    // Base gets full 150K
+    expect(baseRow.action).to.equal(ACTION_DEPOSIT);
+    expect(baseRow.delta).to.equal(usdc(150000));
+    // HyperEVM gets remaining budget: 200K - 150K = 50K
+    expect(hyperRow.action).to.equal(ACTION_DEPOSIT);
+    expect(hyperRow.delta).to.equal(usdc(50000));
+    expect(hyperRow.reason).to.include("trimmed");
+  });
+
+  it("3-strategy: shortfall fallback selects lowest-APY cross-chain (production config)", async () => {
+    // Default has no balance; two cross-chain: Base 6%, HyperEVM 4%
+    // Shortfall fallback should pick HyperEVM (lowest APY)
+    const allocs = [
+      makeAllocation("Ethereum Morpho", 0, 0, 0.05, { isDefault: true }),
+      makeAllocation("Base Morpho", 500000, 500000, 0.06, {
+        isCrossChain: true,
+      }),
+      makeAllocation("HyperEVM Morpho", 500000, 500000, 0.04, {
+        isCrossChain: true,
+      }),
+    ];
+    const result = await buildExecutableActions(allocs, usdc(80000), usdc(0));
+    const baseRow = result.find((a) => a.name === "Base Morpho");
+    const hyperRow = result.find((a) => a.name === "HyperEVM Morpho");
+
+    // HyperEVM (lowest APY 4%) selected for fallback withdrawal
+    expect(hyperRow.action).to.equal(ACTION_WITHDRAW);
+    expect(hyperRow.reason).to.include("fallback");
+    expect(hyperRow.delta.abs()).to.equal(usdc(80000));
+    // Base (higher APY 6%) left untouched
+    expect(baseRow.action).to.equal(ACTION_NONE);
+  });
+
+  it("3-strategy trim: two small withdrawals cancelled before trimming the large one", async () => {
+    // Three withdrawals: ETH 10K, Base 30K, HyperEVM 300K
+    // One deposit: Strategy X 200K
+    // vaultBalance covers minVaultBalance → vaultDeficit = 0
+    // totalNeeded = 200K, totalWithdrawals = 340K, excess = 140K
+    // Smallest-first: ETH 10K ≤ 140K → cancel (excess 130K);
+    //                 Base 30K ≤ 130K → cancel (excess 100K);
+    //                 HyperEVM 300K > 100K → trim to 200K
+    const allocs = [
+      makeAllocation("Ethereum Morpho", 510000, 500000, 0.04, {
+        isDefault: true,
+      }),
+      makeAllocation("Base Morpho", 530000, 500000, 0.03, {
+        isCrossChain: true,
+      }),
+      makeAllocation("HyperEVM Morpho", 800000, 500000, 0.02, {
+        isCrossChain: true,
+      }),
+      makeAllocation("Strategy X", 100000, 300000, 0.07),
+    ];
+    const result = await buildExecutableActions(allocs, ZERO, usdc(3000));
+    const ethRow = result.find((a) => a.isDefault);
+    const baseRow = result.find((a) => a.name === "Base Morpho");
+    const hyperRow = result.find((a) => a.name === "HyperEVM Morpho");
+
+    // ETH (10K) and Base (30K) both cancelled — too small vs excess
+    expect(ethRow.action).to.equal(ACTION_NONE);
+    expect(ethRow.reason).to.include("no approved deposits");
+    expect(baseRow.action).to.equal(ACTION_NONE);
+    expect(baseRow.reason).to.include("no approved deposits");
+    // HyperEVM trimmed to match deposit need
+    expect(hyperRow.action).to.equal(ACTION_WITHDRAW);
+    expect(hyperRow.delta.abs()).to.equal(usdc(200000));
+    expect(hyperRow.reason).to.include("trimmed to match");
   });
 });
