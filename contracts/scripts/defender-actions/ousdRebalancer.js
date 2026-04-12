@@ -100,7 +100,9 @@ const handler = async (event) => {
   const deposits = actions.filter((a) => a.action === ACTION_DEPOSIT);
 
   // Check if planned movement fits within remaining daily limit
-  const remaining = await rebalancerModule.remainingDailyLimit();
+  const remaining = isBroadcast
+    ? await rebalancerModule.remainingDailyLimit()
+    : ethers.constants.MaxUint256;
   const totalPlanned = actions.reduce(
     (sum, a) => sum.add(cappedAmount(a)),
     ethers.BigNumber.from(0)
