@@ -141,7 +141,7 @@
     "@lodestar/state-transition": "^1.41.0",
     "@lodestar/types": "^1.41.0",
     "@lodestar/utils": "^1.41.0",
-    "origin-morpho-utils": "^0.1.0"
+    "origin-morpho-utils": "^0.1.1"
   },
   "resolutions": {
     "@openzeppelin/contracts": "4.4.2"

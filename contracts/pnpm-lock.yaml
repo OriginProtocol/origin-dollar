@@ -7,6 +7,8 @@ settings:
 overrides:
   '@openzeppelin/contracts': 4.4.2
 
+packageExtensionsChecksum: sha256-XqTvWOMzylkoPTQL7ORAUASdFVgDf3zZ7Of7pXkud58=
+
 importers:
 
   .:
@@ -51,8 +53,8 @@ importers:
         specifier: ^1.41.0
         version: 1.41.0
       origin-morpho-utils:
-        specifier: ^0.1.0
-        version: 0.1.0(viem@2.43.3(bufferutil@4.1.0)(typescript@4.9.5)(utf-8-validate@5.0.10)(zod@3.25.76))
+        specifier: ^0.1.1
+        version: 0.1.1(viem@2.43.3(bufferutil@4.1.0)(typescript@4.9.5)(utf-8-validate@5.0.10)(zod@3.25.76))
     devDependencies:
       '@aws-sdk/client-kms':
         specifier: 3.598.0
@@ -1207,6 +1209,9 @@ packages:
       '@chainsafe/ssz': ^1.2.2
       '@lodestar/types': ^1.41.0
       vitest: 'catalog:'
+    peerDependenciesMeta:
+      vitest:
+        optional: true
 
   '@lodestar/state-transition@1.41.0':
     resolution: {integrity: sha512-QDfZE++H5EFZ8Tw/6k7ZEVGSFRb+s7yITZlu636TGtqhTkXOamNcokBF3BickdonX58t2FMEuCLcyCf4IYX13g==}
@@ -4727,13 +4732,16 @@ packages:
     resolution: {integrity: sha512-6IpQ7mKUxRcZNLIObR0hz7lxsapSSIYNZJwXPGeF0mTVqGKFIXj1DQcMoT22S3ROcLyY/rz0PWaWZ9ayWmad9g==}
     engines: {node: '>= 0.8.0'}
 
-  origin-morpho-utils@0.1.0:
-    resolution: {integrity: sha512-mgCk8HaQb7XgdR/t4DwCCJr0VdqebTjamnwUZ4WinYJwK8uA0my+5Vvohy1ThSndZ4P2jNDrZ1qObKfDfoNfqQ==}
+  origin-morpho-utils@0.1.1:
+    resolution: {integrity: sha512-HXZ8KKhs2wwWF1Zm6r0Z3nkU1WwMyAaXyue6wWWOB8rr4pAsnjwusTuf8j6zJGFbwwqykN/6iUwSBk6DE+jENg==}
     hasBin: true
     peerDependencies:
       viem: '>=2.0.0'
+      vitest: '*'
     peerDependenciesMeta:
       viem:
+        optional: true
+      vitest:
         optional: true
 
   os-locale@1.4.0:
@@ -6402,8 +6410,8 @@ snapshots:
       '@aws-crypto/sha1-browser': 5.2.0
       '@aws-crypto/sha256-browser': 5.2.0
       '@aws-crypto/sha256-js': 5.2.0
-      '@aws-sdk/client-sso-oidc': 3.600.0
-      '@aws-sdk/client-sts': 3.600.0(@aws-sdk/client-sso-oidc@3.600.0)
+      '@aws-sdk/client-sso-oidc': 3.600.0(@aws-sdk/client-sts@3.600.0)
+      '@aws-sdk/client-sts': 3.600.0
       '@aws-sdk/core': 3.598.0
       '@aws-sdk/credential-provider-node': 3.600.0(@aws-sdk/client-sso-oidc@3.600.0)(@aws-sdk/client-sts@3.600.0)
       '@aws-sdk/middleware-bucket-endpoint': 3.598.0
@@ -6505,11 +6513,11 @@ snapshots:
     transitivePeerDependencies:
       - aws-crt
 
-  '@aws-sdk/client-sso-oidc@3.600.0':
+  '@aws-sdk/client-sso-oidc@3.600.0(@aws-sdk/client-sts@3.600.0)':
     dependencies:
       '@aws-crypto/sha256-browser': 5.2.0
       '@aws-crypto/sha256-js': 5.2.0
-      '@aws-sdk/client-sts': 3.600.0(@aws-sdk/client-sso-oidc@3.600.0)
+      '@aws-sdk/client-sts': 3.600.0
       '@aws-sdk/core': 3.598.0
       '@aws-sdk/credential-provider-node': 3.600.0(@aws-sdk/client-sso-oidc@3.600.0)(@aws-sdk/client-sts@3.600.0)
       '@aws-sdk/middleware-host-header': 3.598.0
@@ -6548,6 +6556,7 @@ snapshots:
       '@smithy/util-utf8': 3.0.0
       tslib: 2.8.1
     transitivePeerDependencies:
+      - '@aws-sdk/client-sts'
       - aws-crt
 
   '@aws-sdk/client-sso@3.598.0':
@@ -6682,11 +6691,11 @@ snapshots:
       - '@aws-sdk/client-sso-oidc'
       - aws-crt
 
-  '@aws-sdk/client-sts@3.600.0(@aws-sdk/client-sso-oidc@3.600.0)':
+  '@aws-sdk/client-sts@3.600.0':
     dependencies:
       '@aws-crypto/sha256-browser': 5.2.0
       '@aws-crypto/sha256-js': 5.2.0
-      '@aws-sdk/client-sso-oidc': 3.600.0
+      '@aws-sdk/client-sso-oidc': 3.600.0(@aws-sdk/client-sts@3.600.0)
       '@aws-sdk/core': 3.598.0
       '@aws-sdk/credential-provider-node': 3.600.0(@aws-sdk/client-sso-oidc@3.600.0)(@aws-sdk/client-sts@3.600.0)
       '@aws-sdk/middleware-host-header': 3.598.0
@@ -6725,7 +6734,6 @@ snapshots:
       '@smithy/util-utf8': 3.0.0
       tslib: 2.8.1
     transitivePeerDependencies:
-      - '@aws-sdk/client-sso-oidc'
       - aws-crt
 
   '@aws-sdk/core@3.598.0':
@@ -6814,7 +6822,7 @@ snapshots:
 
   '@aws-sdk/credential-provider-ini@3.598.0(@aws-sdk/client-sso-oidc@3.600.0)(@aws-sdk/client-sts@3.600.0)':
     dependencies:
-      '@aws-sdk/client-sts': 3.600.0(@aws-sdk/client-sso-oidc@3.600.0)
+      '@aws-sdk/client-sts': 3.600.0
       '@aws-sdk/credential-provider-env': 3.598.0
       '@aws-sdk/credential-provider-http': 3.598.0
       '@aws-sdk/credential-provider-process': 3.598.0
@@ -6983,7 +6991,7 @@ snapshots:
 
   '@aws-sdk/credential-provider-web-identity@3.598.0(@aws-sdk/client-sts@3.600.0)':
     dependencies:
-      '@aws-sdk/client-sts': 3.600.0(@aws-sdk/client-sso-oidc@3.600.0)
+      '@aws-sdk/client-sts': 3.600.0
       '@aws-sdk/types': 3.598.0
       '@smithy/property-provider': 3.1.11
       '@smithy/types': 3.7.2
@@ -7202,7 +7210,7 @@ snapshots:
 
   '@aws-sdk/token-providers@3.598.0(@aws-sdk/client-sso-oidc@3.600.0)':
     dependencies:
-      '@aws-sdk/client-sso-oidc': 3.600.0
+      '@aws-sdk/client-sso-oidc': 3.600.0(@aws-sdk/client-sts@3.600.0)
       '@aws-sdk/types': 3.598.0
       '@smithy/property-provider': 3.1.11
       '@smithy/shared-ini-file-loader': 3.1.12
@@ -12751,7 +12759,7 @@ snapshots:
       type-check: 0.4.0
       word-wrap: 1.2.5
 
-  origin-morpho-utils@0.1.0(viem@2.43.3(bufferutil@4.1.0)(typescript@4.9.5)(utf-8-validate@5.0.10)(zod@3.25.76)):
+  origin-morpho-utils@0.1.1(viem@2.43.3(bufferutil@4.1.0)(typescript@4.9.5)(utf-8-validate@5.0.10)(zod@3.25.76)):
     optionalDependencies:
       viem: 2.43.3(bufferutil@4.1.0)(typescript@4.9.5)(utf-8-validate@5.0.10)(zod@3.25.76)
 
