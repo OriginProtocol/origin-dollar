@@ -1180,6 +1180,8 @@ function formatAllocationTable({
         { key: "delta", header: "Delta", align: "right" },
         { key: "avgApy", header: apyLabel, align: "right" },
         { key: "spotApy", header: "Spot APY", align: "right" },
+        { key: "expectedApy", header: "Exp. APY", align: "right" },
+        { key: "impact", header: "Impact", align: "right" },
       ]
     : [
         { key: "name", header: "Strategy", align: "left" },
@@ -1260,59 +1262,44 @@ function formatAllocationTable({
   }
 
   // ── Ethereum Morpho market details (full mode only) ─────────────────────
-  if (!compact) {
-    const marketAction = actions.find((a) => a.markets && a.markets.length > 0);
-    if (marketAction) {
-      const oeth = marketAction.markets.find(
-        (m) => m.marketId === OETH_USDC_MARKET_ID
-      );
-      const wsteth = marketAction.markets.find(
-        (m) => m.marketId === WSTETH_USDC_MARKET_ID
-      );
-      if (oeth || wsteth) {
-        const fmtPct = (v) => (v != null ? `${(v * 100).toFixed(2)}%` : "—");
-        const MC = { name: 14, cur: 10, sim: 10, curApy: 10, simApy: 10 };
-        const MS = "  ";
+  const marketAction = actions.find((a) => a.markets && a.markets.length > 0);
+  if (marketAction) {
+    const oeth = marketAction.markets.find(
+      (m) => m.marketId === OETH_USDC_MARKET_ID
+    );
+    const wsteth = marketAction.markets.find(
+      (m) => m.marketId === WSTETH_USDC_MARKET_ID
+    );
+    if (oeth || wsteth) {
+      const fmtPct = (v) => (v != null ? `${(v * 100).toFixed(2)}%` : "—");
+      const MC = { name: 14, cur: 10, sim: 10, curApy: 10, simApy: 10 };
+      const MS = "  ";
 
-        lines.push("");
-        lines.push("--- Ethereum Morpho Market Details ---");
-        lines.push("");
+      lines.push("");
+      lines.push("--- Ethereum Morpho Market Details ---");
+      lines.push("");
+      lines.push(
+        `  ${"Market".padEnd(MC.name)}${MS}${"Cur Util".padStart(
+          MC.cur
+        )}${MS}${"Post Util".padStart(MC.sim)}${MS}${"Cur APY".padStart(
+          MC.curApy
+        )}${MS}${"Post APY".padStart(MC.simApy)}`
+      );
+
+      for (const [label, m] of [
+        ["OETH/USDC", oeth],
+        ["wstETH/USDC", wsteth],
+      ]) {
+        if (!m) continue;
         lines.push(
-          `  ${"Market".padEnd(MC.name)}${MS}${"Cur Util".padStart(
-            MC.cur
-          )}${MS}${"Post Util".padStart(MC.sim)}${MS}${"Cur APY".padStart(
+          `  ${label.padEnd(MC.name)}${MS}${fmtPct(
+            m.current.utilization
+          ).padStart(MC.cur)}${MS}${fmtPct(m.simulated.utilization).padStart(
+            MC.sim
+          )}${MS}${fmtPct(m.current.supplyApy).padStart(
             MC.curApy
-          )}${MS}${"Post APY".padStart(MC.simApy)}`
+          )}${MS}${fmtPct(m.simulated.supplyApy).padStart(MC.simApy)}`
         );
-
-        for (const [label, m] of [
-          ["OETH/USDC", oeth],
-          ["wstETH/USDC", wsteth],
-        ]) {
-          if (!m) continue;
-          lines.push(
-            `  ${label.padEnd(MC.name)}${MS}${fmtPct(
-              m.current.utilization
-            ).padStart(MC.cur)}${MS}${fmtPct(m.simulated.utilization).padStart(
-              MC.sim
-            )}${MS}${fmtPct(m.current.supplyApy).padStart(
-              MC.curApy
-            )}${MS}${fmtPct(m.simulated.supplyApy).padStart(MC.simApy)}`
-          );
-        }
-
-        if (oeth && wsteth) {
-          const curSpread = oeth.current.supplyApy - wsteth.current.supplyApy;
-          const simSpread =
-            oeth.simulated.supplyApy - wsteth.simulated.supplyApy;
-          lines.push(
-            `  ${"Spread".padEnd(MC.name)}${MS}${"".padStart(
-              MC.cur
-            )}${MS}${"".padStart(MC.sim)}${MS}${fmtPct(curSpread).padStart(
-              MC.curApy
-            )}${MS}${fmtPct(simSpread).padStart(MC.simApy)}`
-          );
-        }
       }
     }
   }
