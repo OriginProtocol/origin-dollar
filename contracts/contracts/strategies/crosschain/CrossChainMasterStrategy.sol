@@ -182,7 +182,7 @@ contract CrossChainMasterStrategy is
     function collectRewardTokens()
         external
         override
-        onlyHarvester
+        onlyHarvesterOrStrategist
         nonReentrant
     {}
 

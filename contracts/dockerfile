@@ -55,11 +55,11 @@ ENV PROVIDER_URL="" \
 # Cron configuration for supercronic.
 # Each Hardhat task runs with a 7 minute offset, ensuring sequential execution.
 RUN cat <<'EOF' > /etc/cronjob
-0 * * * * cd /app && pnpm hardhat snapBalances --network ${HARDHAT_NETWORK:-mainnet}
-8 * * * * cd /app && pnpm hardhat verifyBalances --network ${HARDHAT_NETWORK:-mainnet}
-10 * * * * cd /app && pnpm hardhat verifyDeposits --network ${HARDHAT_NETWORK:-mainnet}
-12 * * * * cd /app && pnpm hardhat autoValidatorDeposits --network ${HARDHAT_NETWORK:-mainnet}
-14 * * * * cd /app && pnpm hardhat autoValidatorWithdrawals --network ${HARDHAT_NETWORK:-mainnet}
+0 0 * * * cd /app && pnpm hardhat snapBalances --network ${HARDHAT_NETWORK:-mainnet} --consol true
+8 0 * * * cd /app && pnpm hardhat verifyBalances --network ${HARDHAT_NETWORK:-mainnet} --consol true
+#10 * * * * cd /app && pnpm hardhat verifyDeposits --network ${HARDHAT_NETWORK:-mainnet}
+#12 * * * * cd /app && pnpm hardhat autoValidatorDeposits --network ${HARDHAT_NETWORK:-mainnet}
+#14 * * * * cd /app && pnpm hardhat autoValidatorWithdrawals --network ${HARDHAT_NETWORK:-mainnet}
 EOF
 
 ENTRYPOINT ["supercronic", "/etc/cronjob"]

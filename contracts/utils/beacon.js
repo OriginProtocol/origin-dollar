@@ -248,38 +248,42 @@ const configClient = async () => {
   return client;
 };
 
-const getValidator = async (pubkey) => {
+const getValidator = async (pubkey, stateId = "head") => {
   const client = await configClient();
 
-  log(`Fetching validator details for ${pubkey} from the beacon node`);
+  log(
+    `Fetching validator details for ${pubkey} at state ${stateId} from the beacon node`
+  );
   const validatorRes = await client.beacon.getStateValidator({
-    stateId: "head",
+    stateId,
     validatorId: pubkey,
   });
   if (!validatorRes.ok) {
     console.error(validatorRes);
     throw Error(
-      `Failed to get validator details for ${pubkey}. Status ${validatorRes.status} ${validatorRes.statusText}`
+      `Failed to get validator details for ${pubkey} at state ${stateId}. Status ${validatorRes.status} ${validatorRes.statusText}`
     );
   }
 
   return normalizeValidatorResponse(validatorRes.value());
 };
 
-const getValidatorsIndividually = async (client, validatorIds) => {
+const getValidatorsIndividually = async (client, validatorIds, stateId) => {
   const validators = [];
 
   for (const validatorId of validatorIds) {
-    log(`Falling back to single-validator lookup for ${validatorId}`);
+    log(
+      `Falling back to single-validator lookup for ${validatorId} at state ${stateId}`
+    );
 
     const validatorRes = await client.beacon.getStateValidator({
-      stateId: "head",
+      stateId,
       validatorId,
     });
     if (!validatorRes.ok) {
       console.error(validatorRes);
       throw Error(
-        `Failed to get validator details for ${validatorId}. Status ${validatorRes.status} ${validatorRes.statusText}`
+        `Failed to get validator details for ${validatorId} at state ${stateId}. Status ${validatorRes.status} ${validatorRes.statusText}`
       );
     }
 
@@ -289,13 +293,18 @@ const getValidatorsIndividually = async (client, validatorIds) => {
   return validators;
 };
 
-const getValidatorsByPost = async (client, validatorIds, attempts = 2) => {
+const getValidatorsByPost = async (
+  client,
+  validatorIds,
+  stateId,
+  attempts = 2
+) => {
   let lastError;
 
   for (let attempt = 1; attempt <= attempts; attempt++) {
     try {
       const postValidatorsRes = await client.beacon.postStateValidators({
-        stateId: "head",
+        stateId,
         validatorIds,
       });
 
@@ -324,15 +333,17 @@ const getValidatorsByPost = async (client, validatorIds, attempts = 2) => {
   return null;
 };
 
-const getValidators = async (pubkeys) => {
+const getValidators = async (pubkeys, stateId = "head") => {
   const client = await configClient();
   const validatorIds = Array.isArray(pubkeys) ? pubkeys : pubkeys.split(",");
 
-  log(`Fetching ${validatorIds.length} validator details from the beacon node`);
-  let validators = await getValidatorsByPost(client, validatorIds);
+  log(
+    `Fetching ${validatorIds.length} validator details at state ${stateId} from the beacon node`
+  );
+  let validators = await getValidatorsByPost(client, validatorIds, stateId);
 
   if (!validators) {
-    validators = await getValidatorsIndividually(client, validatorIds);
+    validators = await getValidatorsIndividually(client, validatorIds, stateId);
   }
 
   validators = validators.map(normalizeValidatorResponse);

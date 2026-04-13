@@ -47,7 +47,7 @@ describe("ForkTest: Yearn's Morpho OUSD v2 Strategy", function () {
         addresses.mainnet.Timelock
       );
       expect(await morphoOUSDv2Strategy.harvesterAddress()).to.equal(
-        addresses.multichainStrategist
+        addresses.mainnet.CoWHarvester
       );
     });
     it("Should be able to check balance", async () => {
