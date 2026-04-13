@@ -35,7 +35,7 @@ contract Unit_Concrete_OETHSupernovaAMOStrategy_CollectRewardTokens_Test is Unit
 
     function test_collectRewardTokens_RevertWhen_calledByNonHarvester() public {
         vm.prank(alice);
-        vm.expectRevert("Caller is not the Harvester");
+        vm.expectRevert("Caller is not the Harvester or Strategist");
         oethSupernovaAMOStrategy.collectRewardTokens();
     }
 }

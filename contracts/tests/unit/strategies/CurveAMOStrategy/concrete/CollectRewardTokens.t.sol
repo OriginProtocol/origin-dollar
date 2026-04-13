@@ -29,7 +29,7 @@ contract Unit_Concrete_CurveAMOStrategy_CollectRewardTokens_Test is Unit_CurveAM
 
     function test_collectRewardTokens_RevertWhen_calledByNonHarvester() public {
         vm.prank(alice);
-        vm.expectRevert("Caller is not the Harvester");
+        vm.expectRevert("Caller is not the Harvester or Strategist");
         curveAMOStrategy.collectRewardTokens();
     }
 
@@ -41,15 +41,18 @@ contract Unit_Concrete_CurveAMOStrategy_CollectRewardTokens_Test is Unit_CurveAM
         assertEq(crvToken.balanceOf(harvester), 0);
     }
 
-    function test_collectRewardTokens_RevertWhen_calledByStrategist() public {
+    function test_collectRewardTokens_succeeds_calledByStrategist() public {
+        crvToken.mint(address(curveAMOStrategy), 5 ether);
+
         vm.prank(strategist);
-        vm.expectRevert("Caller is not the Harvester");
         curveAMOStrategy.collectRewardTokens();
+
+        assertEq(crvToken.balanceOf(harvester), 5 ether);
     }
 
     function test_collectRewardTokens_RevertWhen_calledByGovernor() public {
         vm.prank(governor);
-        vm.expectRevert("Caller is not the Harvester");
+        vm.expectRevert("Caller is not the Harvester or Strategist");
         curveAMOStrategy.collectRewardTokens();
     }
 }

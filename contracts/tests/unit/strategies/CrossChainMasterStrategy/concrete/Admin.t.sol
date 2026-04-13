@@ -203,7 +203,7 @@ contract Unit_Concrete_CrossChainMasterStrategy_Admin_Test is Unit_CrossChainMas
 
     function test_collectRewardTokens_RevertWhen_calledByNonHarvester() public {
         vm.prank(alice);
-        vm.expectRevert("Caller is not the Harvester");
+        vm.expectRevert("Caller is not the Harvester or Strategist");
         crossChainMasterStrategy.collectRewardTokens();
     }
 

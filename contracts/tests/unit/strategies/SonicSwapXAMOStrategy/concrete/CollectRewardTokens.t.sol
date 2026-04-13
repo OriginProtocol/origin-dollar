@@ -33,7 +33,7 @@ contract Unit_Concrete_SonicSwapXAMOStrategy_CollectRewardTokens_Test is Unit_So
 
     function test_collectRewardTokens_RevertWhen_calledByNonHarvester() public {
         vm.prank(alice);
-        vm.expectRevert("Caller is not the Harvester");
+        vm.expectRevert("Caller is not the Harvester or Strategist");
         sonicSwapXAMOStrategy.collectRewardTokens();
     }
 }

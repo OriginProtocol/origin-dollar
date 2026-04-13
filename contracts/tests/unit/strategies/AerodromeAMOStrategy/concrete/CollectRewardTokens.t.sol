@@ -34,7 +34,7 @@ contract Unit_Concrete_AerodromeAMOStrategy_CollectRewardTokens_Test is Unit_Aer
 
     function test_collectRewardTokens_RevertWhen_notHarvester() public {
         vm.prank(alice);
-        vm.expectRevert("Caller is not the Harvester");
+        vm.expectRevert("Caller is not the Harvester or Strategist");
         aerodromeAMOStrategy.collectRewardTokens();
     }
 
