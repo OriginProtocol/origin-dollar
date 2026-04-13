@@ -2082,4 +2082,42 @@ describe("Rebalancer: formatAllocationTable", () => {
     expect(output).to.include("85.00%");
     expect(output).to.include("4.00%");
   });
+
+  it("should show # indicator for strategies with pending transfer", () => {
+    const actions = [
+      makeAllocation("Ethereum Morpho", 500000, 500000, 0.05, {
+        isDefault: true,
+      }),
+      makeAllocation("Base Morpho", 200000, 200000, 0.04, {
+        isCrossChain: true,
+        isTransferPending: true,
+      }),
+    ];
+    const output = formatAllocationTable({
+      actions,
+      vaultBalance: ZERO,
+      shortfall: ZERO,
+    });
+    expect(output).to.include("Base Morpho #");
+    expect(output).to.include("# = transfer pending");
+    // Default strategy should not have #
+    expect(output).to.not.include("Ethereum Morpho *  #");
+  });
+
+  it("should not show # legend when no transfers are pending", () => {
+    const actions = [
+      makeAllocation("Ethereum Morpho", 500000, 500000, 0.05, {
+        isDefault: true,
+      }),
+      makeAllocation("Base Morpho", 200000, 200000, 0.04, {
+        isCrossChain: true,
+      }),
+    ];
+    const output = formatAllocationTable({
+      actions,
+      vaultBalance: ZERO,
+      shortfall: ZERO,
+    });
+    expect(output).to.not.include("# = transfer pending");
+  });
 });

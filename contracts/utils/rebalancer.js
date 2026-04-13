@@ -1,5 +1,5 @@
 const { ethers, BigNumber } = require("ethers");
-const { formatUnits } = require("ethers/lib/utils");
+const { formatUnits, parseUnits } = require("ethers/lib/utils");
 
 const addresses = require("./addresses");
 
@@ -1247,7 +1247,9 @@ function formatAllocationTable({
     const expectedApy =
       rec?.expectedApy != null ? `${(rec.expectedApy * 100).toFixed(2)}%` : "—";
     return {
-      name: `${a.name}${a.isDefault ? " *" : ""}`,
+      name: `${a.name}${a.isDefault ? " *" : ""}${
+        a.isTransferPending ? " #" : ""
+      }`,
       current: `${fmt(a.balance)}${pct(a.balance)}`,
       avail:
         a.withdrawableLiquidity !== null ? fmt(a.withdrawableLiquidity) : "n/a",
@@ -1334,6 +1336,9 @@ function formatAllocationTable({
   totalRow.current = fmt(totalCapital);
   lines.push(renderRow(totalRow));
   lines.push("  * = default strategy");
+  if (tableRows.some((a) => a.isTransferPending)) {
+    lines.push("  # = transfer pending (deposits blocked)");
+  }
 
   // ── Recommended actions ─────────────────────────────────────────────────
   const actionRows = actions.filter((a) => a.action !== ACTION_NONE);
@@ -1546,9 +1551,38 @@ async function fetchMaxWithdrawals(strategies) {
  *
  * Reads RPC URLs and providers from rebalancer-config (via initSecrets / process.env).
  */
-async function buildRebalancePlan() {
+async function buildRebalancePlan(simulation) {
   log("Reading on-chain state...");
   const state = await readOnChainState();
+
+  // Apply simulation overrides (balance adjustments in whole-dollar USDC)
+  if (simulation) {
+    const parts = [];
+    if (simulation.vault != null) {
+      const delta = parseUnits(
+        Math.abs(simulation.vault).toString(),
+        USDC_DECIMALS
+      );
+      state.vaultBalance =
+        simulation.vault >= 0
+          ? state.vaultBalance.add(delta)
+          : state.vaultBalance.sub(delta);
+      parts.push(`Vault ${simulation.vault >= 0 ? "+" : "-"}$${fmtUsd(delta)}`);
+    }
+    for (const s of state.strategies) {
+      if (simulation[s.name] != null) {
+        const amt = simulation[s.name];
+        const delta = parseUnits(Math.abs(amt).toString(), USDC_DECIMALS);
+        s.balance = amt >= 0 ? s.balance.add(delta) : s.balance.sub(delta);
+        parts.push(`${s.name} ${amt >= 0 ? "+" : "-"}$${fmtUsd(delta)}`);
+      }
+    }
+    if (parts.length > 0) {
+      console.log(
+        `\nSIMULATION MODE — balances adjusted: ${parts.join(", ")}\n`
+      );
+    }
+  }
 
   log("Fetching Morpho APYs...");
   const {

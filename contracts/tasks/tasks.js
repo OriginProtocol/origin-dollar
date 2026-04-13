@@ -2684,9 +2684,34 @@ task("snapMorpho").setAction(async (_, __, runSuper) => {
 subtask(
   "planRebalance",
   "Show current vs recommended OUSD strategy allocations"
-).setAction(rebalancerTask);
-task("planRebalance").setAction(async (_, __, runSuper) => {
-  return runSuper();
+)
+  .addOptionalParam(
+    "simVault",
+    "Simulate additional USDC in vault (whole dollars, negative to remove)",
+    undefined,
+    types.int
+  )
+  .addOptionalParam(
+    "simEth",
+    "Simulate additional USDC in Ethereum Morpho (whole dollars)",
+    undefined,
+    types.int
+  )
+  .addOptionalParam(
+    "simBase",
+    "Simulate additional USDC in Base Morpho (whole dollars)",
+    undefined,
+    types.int
+  )
+  .addOptionalParam(
+    "simHyper",
+    "Simulate additional USDC in HyperEVM Morpho (whole dollars)",
+    undefined,
+    types.int
+  )
+  .setAction(rebalancerTask);
+task("planRebalance").setAction(async (taskArgs, _, runSuper) => {
+  return runSuper(taskArgs);
 });
 
 // Consolidation Tasks
