@@ -78,6 +78,7 @@ const handler = async (event) => {
         shortfall: plan.state.shortfall,
         warnings: plan.warnings,
         compact: true,
+        baselineMarkets: plan.baselineMarkets,
       });
       await postToDiscord(webhookUrl, `${header}\n\`\`\`\n${table}\n\`\`\``);
     } catch (err) {

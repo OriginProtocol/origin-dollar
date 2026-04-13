@@ -11,6 +11,10 @@ const {
   ACTION_WITHDRAW,
   ACTION_NONE,
 } = require("../../utils/rebalancer");
+const {
+  OETH_USDC_MARKET_ID,
+  WSTETH_USDC_MARKET_ID,
+} = require("../../utils/rebalancer-config");
 
 const ZERO = BigNumber.from(0);
 const usdc = (n) => parseUnits(n.toString(), 6);
@@ -2022,5 +2026,37 @@ describe("Rebalancer: formatAllocationTable", () => {
       .split("\n")
       .find((l) => l.includes("Vault (idle)"));
     expect(vaultLine).to.include("-100.00");
+  });
+
+  it("should show market details even when no action is active", () => {
+    const actions = [
+      makeAllocation("Ethereum Morpho", 500000, 500000, 0.05, {
+        isDefault: true,
+      }),
+      makeAllocation("Base Morpho", 500000, 500000, 0.04, {
+        isCrossChain: true,
+      }),
+    ];
+    const baselineMarkets = [
+      {
+        marketId: OETH_USDC_MARKET_ID,
+        current: { supplyApy: 0.04, utilization: 0.85 },
+        simulated: { supplyApy: 0.04, utilization: 0.85 },
+      },
+      {
+        marketId: WSTETH_USDC_MARKET_ID,
+        current: { supplyApy: 0.02, utilization: 0.7 },
+        simulated: { supplyApy: 0.02, utilization: 0.7 },
+      },
+    ];
+    const output = formatAllocationTable({
+      actions,
+      vaultBalance: ZERO,
+      shortfall: ZERO,
+      baselineMarkets,
+    });
+    expect(output).to.include("Ethereum Morpho Market Details");
+    expect(output).to.include("85.00%");
+    expect(output).to.include("4.00%");
   });
 });

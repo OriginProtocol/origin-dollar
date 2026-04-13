@@ -1183,6 +1183,7 @@ function formatAllocationTable({
   constraints: overrides = {},
   warnings = [],
   compact = false,
+  baselineMarkets = [],
 }) {
   const COL_SEP = "  ";
   const constraints = { ...ousdConstraints, ...overrides };
@@ -1351,11 +1352,12 @@ function formatAllocationTable({
   }
 
   // ── Ethereum Morpho market details ──────────────────────────────────────
-  // Show current market data always; show Post columns only when there's an action.
-  // Baseline market data is attached to the Ethereum Morpho row during APY fetch;
-  // _computeActualImpacts overwrites with proper current/simulated when there's an action.
+  // Use impact data from an active action if available, otherwise fall back
+  // to baseline APY data so market details always appear.
   const marketAction = actions.find((a) => a.markets && a.markets.length > 0);
-  const markets = marketAction?.markets;
+  const markets =
+    marketAction?.markets ||
+    (baselineMarkets.length > 0 ? baselineMarkets : null);
   if (markets && markets.length > 0) {
     const oeth = markets.find((m) => m.marketId === OETH_USDC_MARKET_ID);
     const wsteth = markets.find((m) => m.marketId === WSTETH_USDC_MARKET_ID);
@@ -1604,22 +1606,15 @@ async function buildRebalancePlan() {
 
   const idealActions = [...idealActive, ...idealExcluded];
 
-  // Attach baseline market details for Ethereum Morpho (for display when no action).
-  // _computeActualImpacts overwrites these with proper current/simulated data when
-  // there is an active deposit or withdrawal.
+  // Build baseline market data for display fallback (when no action has impact data).
   const ethMd = marketDetails[addresses.mainnet.MorphoOUSDv1Vault];
-  if (ethMd) {
-    const ethRow = idealActions.find(
-      (a) => a.metaMorphoVaultAddress === addresses.mainnet.MorphoOUSDv1Vault
-    );
-    if (ethRow) {
-      ethRow.markets = ethMd.map((d) => ({
+  const baselineMarkets = ethMd
+    ? ethMd.map((d) => ({
         marketId: d.marketId,
         current: { supplyApy: d.supplyApy, utilization: d.utilization },
         simulated: { supplyApy: d.supplyApy, utilization: d.utilization },
-      }));
-    }
-  }
+      }))
+    : [];
 
   // Merge withdrawable liquidity into rows before feasibility filtering
   for (const row of idealActions) {
@@ -1652,6 +1647,7 @@ async function buildRebalancePlan() {
       vaultBalance: state.vaultBalance,
       shortfall: state.shortfall,
       warnings,
+      baselineMarkets,
     })
   );
 
@@ -1663,6 +1659,7 @@ async function buildRebalancePlan() {
     spotApys,
     warnings,
     withdrawalCapacities,
+    baselineMarkets,
   };
 }
 
