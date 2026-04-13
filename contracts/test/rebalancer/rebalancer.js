@@ -1967,12 +1967,13 @@ describe("Rebalancer: formatAllocationTable", () => {
     expect(vaultLine).to.include("-10,000.00");
   });
 
-  it("should always show vault shortfall delta even when small", () => {
+  it("should show zero vault delta when shortfall exists but no action approved", () => {
     const actions = [
       makeAllocation("Ethereum Morpho", 500000, 500000, 0.05, {
         isDefault: true,
       }),
     ];
+    // Shortfall shown separately; no action changes vault balance → delta = 0
     const output = formatAllocationTable({
       actions,
       vaultBalance: ZERO,
@@ -1981,7 +1982,7 @@ describe("Rebalancer: formatAllocationTable", () => {
     const vaultLine = output
       .split("\n")
       .find((l) => l.includes("Vault (idle)"));
-    expect(vaultLine).to.include("+100.00");
+    expect(vaultLine).to.include("+0.00");
   });
 
   it("should show vault delta when surplus equals minMoveAmount", () => {
@@ -1999,5 +2000,27 @@ describe("Rebalancer: formatAllocationTable", () => {
       .split("\n")
       .find((l) => l.includes("Vault (idle)"));
     expect(vaultLine).to.include("-5,000.00");
+  });
+
+  it("should show vault surplus consumed by active actions", () => {
+    // Deposit exceeds withdrawal by $100 (the vault surplus).
+    // Net strategy delta = -10K + 10.1K = +$100 → vault target = $100 - $100 = $0
+    const actions = [
+      makeAllocation("Ethereum Morpho", 500000, 490000, 0.03, {
+        isDefault: true,
+      }),
+      makeAllocation("HyperEVM Morpho", 0, 10100, 0.06, {
+        isCrossChain: true,
+      }),
+    ];
+    const output = formatAllocationTable({
+      actions,
+      vaultBalance: usdc(100),
+      shortfall: ZERO,
+    });
+    const vaultLine = output
+      .split("\n")
+      .find((l) => l.includes("Vault (idle)"));
+    expect(vaultLine).to.include("-100.00");
   });
 });

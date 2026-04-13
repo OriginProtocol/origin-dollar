@@ -1215,17 +1215,13 @@ function formatAllocationTable({
       : "";
   const sign = (bn) => (bn.gte(0) ? "+" : "-");
 
-  let vaultTarget = shortfall.add(BigNumber.from(constraints.minVaultBalance));
-  let vaultDelta = vaultTarget.sub(vaultBalance);
-  // Suppress phantom surplus delta when it's below minMoveAmount (nothing will deploy it).
-  // Only suppress negative delta (surplus); positive delta (shortfall) is always meaningful.
-  if (
-    vaultDelta.lt(0) &&
-    vaultDelta.abs().lt(BigNumber.from(constraints.minMoveAmount))
-  ) {
-    vaultTarget = vaultBalance;
-    vaultDelta = BigNumber.from(0);
-  }
+  // Vault post-action balance: current balance minus net strategy movement.
+  // Derived from the actions (core logic output), not computed independently.
+  const netStrategyDelta = actions
+    .filter((a) => a.action === ACTION_DEPOSIT || a.action === ACTION_WITHDRAW)
+    .reduce((sum, a) => sum.add(a.delta), BigNumber.from(0));
+  const vaultTarget = vaultBalance.sub(netStrategyDelta);
+  const vaultDelta = vaultTarget.sub(vaultBalance);
 
   const formattedRows = tableRows.map((a) => {
     const rec = filteredByAddr.get(a.address);
@@ -1271,7 +1267,7 @@ function formatAllocationTable({
 
   // Column definitions: compact uses fewer columns
   const apyLabel = `${constraints.apyAverageWindow} APY`;
-  const allCols = [
+  const colDefs = [
     { key: "name", header: "Strategy", align: "left" },
     { key: "current", header: "Current", align: "right" },
     { key: "avail", header: "Avail.", align: "right" },
@@ -1286,7 +1282,7 @@ function formatAllocationTable({
     { key: "expectedApy", header: "Exp. APY", align: "right" },
     { key: "impact", header: "Impact", align: "right" },
   ];
-  const colDefs = compact ? allCols.filter((c) => c.key !== "avail") : allCols;
+  // const colDefs = compact ? allCols.filter((c) => c.key !== "avail") : allCols;
 
   // Compute column widths
   const COL = {};
