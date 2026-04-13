@@ -84,18 +84,18 @@ async function fetchMorphoApys(vaults, { timeWindow = "1h" } = {}) {
   const entries = await Promise.all(
     vaults.map(async (v) => {
       const rpcUrl = getRpcUrl(v.morphoChainId);
-      const [spotApy, avgApy] = await Promise.all([
+      const [spotResult, avgApy] = await Promise.all([
         rpcUrl
-          ? fetchVaultApy(rpcUrl, v.morphoChainId, v.metaMorphoVaultAddress)
-              .then((r) => r?.apy ?? 0)
-              .catch((err) => {
-                log(
-                  `RPC spot APY failed for ${v.metaMorphoVaultAddress} ` +
-                    `on chain ${v.morphoChainId}: ${err.message}`
-                );
-                return 0;
-              })
-          : Promise.resolve(0),
+          ? fetchVaultApy(rpcUrl, v.morphoChainId, v.metaMorphoVaultAddress, {
+              includeMarkets: v.morphoChainId === 1,
+            }).catch((err) => {
+              log(
+                `RPC spot APY failed for ${v.metaMorphoVaultAddress} ` +
+                  `on chain ${v.morphoChainId}: ${err.message}`
+              );
+              return null;
+            })
+          : Promise.resolve(null),
         fetchSubsquidVaultApyAverage(
           v.metaMorphoVaultAddress,
           v.morphoChainId,
@@ -108,7 +108,12 @@ async function fetchMorphoApys(vaults, { timeWindow = "1h" } = {}) {
           return 0;
         }),
       ]);
-      return { addr: v.metaMorphoVaultAddress, spotApy, avgApy };
+      return {
+        addr: v.metaMorphoVaultAddress,
+        spotApy: spotResult?.apy ?? 0,
+        avgApy,
+        marketDetails: spotResult?.marketDetails ?? [],
+      };
     })
   );
 
@@ -117,11 +122,13 @@ async function fetchMorphoApys(vaults, { timeWindow = "1h" } = {}) {
 
   const apys = {};
   const avgApys = {};
-  for (const { addr, spotApy, avgApy } of entries) {
+  const marketDetails = {};
+  for (const { addr, spotApy, avgApy, marketDetails: md } of entries) {
     apys[addr] = sanitize(spotApy);
     avgApys[addr] = sanitize(avgApy);
+    if (md.length > 0) marketDetails[addr] = md;
   }
-  return { apys, avgApys };
+  return { apys, avgApys, marketDetails };
 }
 
 module.exports = {

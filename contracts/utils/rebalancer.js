@@ -1183,7 +1183,6 @@ function formatAllocationTable({
   constraints: overrides = {},
   warnings = [],
   compact = false,
-  withdrawalCapacities = {},
 }) {
   const COL_SEP = "  ";
   const constraints = { ...ousdConstraints, ...overrides };
@@ -1356,11 +1355,11 @@ function formatAllocationTable({
   }
 
   // ── Ethereum Morpho market details ──────────────────────────────────────
-  // Show current market data always; show Post columns only when there's an action
+  // Show current market data always; show Post columns only when there's an action.
+  // Baseline market data is attached to the Ethereum Morpho row during APY fetch;
+  // _computeActualImpacts overwrites with proper current/simulated when there's an action.
   const marketAction = actions.find((a) => a.markets && a.markets.length > 0);
-  const ethMorphoVaultAddr = addresses.mainnet.MorphoOUSDv1Vault;
-  const markets =
-    marketAction?.markets || withdrawalCapacities[ethMorphoVaultAddr]?.markets;
+  const markets = marketAction?.markets;
   if (markets && markets.length > 0) {
     const oeth = markets.find((m) => m.marketId === OETH_USDC_MARKET_ID);
     const wsteth = markets.find((m) => m.marketId === WSTETH_USDC_MARKET_ID);
@@ -1546,7 +1545,11 @@ async function buildRebalancePlan() {
   const state = await readOnChainState();
 
   log("Fetching Morpho APYs...");
-  const { apys: spotApys, avgApys } = await fetchMorphoApys(
+  const {
+    apys: spotApys,
+    avgApys,
+    marketDetails,
+  } = await fetchMorphoApys(
     state.strategies.filter((s) => s.metaMorphoVaultAddress),
     { timeWindow: ousdConstraints.apyAverageWindow }
   );
@@ -1605,6 +1608,23 @@ async function buildRebalancePlan() {
 
   const idealActions = [...idealActive, ...idealExcluded];
 
+  // Attach baseline market details for Ethereum Morpho (for display when no action).
+  // _computeActualImpacts overwrites these with proper current/simulated data when
+  // there is an active deposit or withdrawal.
+  const ethMd = marketDetails[addresses.mainnet.MorphoOUSDv1Vault];
+  if (ethMd) {
+    const ethRow = idealActions.find(
+      (a) => a.metaMorphoVaultAddress === addresses.mainnet.MorphoOUSDv1Vault
+    );
+    if (ethRow) {
+      ethRow.markets = ethMd.map((d) => ({
+        marketId: d.marketId,
+        current: { supplyApy: d.supplyApy, utilization: d.utilization },
+        simulated: { supplyApy: d.supplyApy, utilization: d.utilization },
+      }));
+    }
+  }
+
   // Merge withdrawable liquidity into rows before feasibility filtering
   for (const row of idealActions) {
     if (maxWithdrawals[row.address] !== undefined) {
@@ -1636,7 +1656,6 @@ async function buildRebalancePlan() {
       vaultBalance: state.vaultBalance,
       shortfall: state.shortfall,
       warnings,
-      withdrawalCapacities,
     })
   );
 
