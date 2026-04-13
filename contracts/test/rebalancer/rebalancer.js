@@ -3,6 +3,7 @@ const { BigNumber } = require("ethers");
 const { parseUnits } = require("ethers/lib/utils");
 
 const {
+  computeAvailableBalance,
   computeIdealAllocation,
   buildExecutableActions,
   ACTION_DEPOSIT,
@@ -418,6 +419,96 @@ describe("Rebalancer: computeIdealAllocation", () => {
     // Without capacity floor, ETH gets only its policy min (5% of deployable)
     const ethPct = ethRow.targetBalance.mul(10000).div(total).toNumber() / 100;
     expect(ethPct).to.be.closeTo(5, 0.5);
+  });
+
+  it("should enforce minimums for multiple strategies simultaneously", () => {
+    // 3 strategies: HyperEVM has highest APY → gets lion's share
+    // ETH (default, min 5%) needs claw-back from HyperEVM
+    const strategies = threeStrategies(10000, 10000, 980000);
+    const result = computeIdealAllocation({
+      strategies,
+      apys: { [ETH_VAULT]: 0.01, [BASE_VAULT]: 0.02, [HYPER_VAULT]: 0.1 },
+      vaultBalance: usdc(0),
+      shortfall: ZERO,
+    });
+
+    const ethRow = result.find((r) => r.name === "Ethereum Morpho");
+    const total = result.reduce((s, r) => s.add(r.targetBalance), ZERO);
+    const ethPct = ethRow.targetBalance.mul(10000).div(total).toNumber() / 100;
+    expect(ethPct).to.be.gte(5);
+  });
+
+  it("should allocate minimum to zero-balance default strategy", () => {
+    const strategies = twoStrategies(0, 1000000);
+    const result = computeIdealAllocation({
+      strategies,
+      apys: { [ETH_VAULT]: 0.02, [BASE_VAULT]: 0.08 },
+      vaultBalance: usdc(0),
+      shortfall: ZERO,
+    });
+
+    const ethRow = result.find((r) => r.name === "Ethereum Morpho");
+    const total = result.reduce((s, r) => s.add(r.targetBalance), ZERO);
+    const ethPct = ethRow.targetBalance.mul(10000).div(total).toNumber() / 100;
+    expect(ethPct).to.be.gte(5);
+    expect(ethRow.action).to.equal(ACTION_DEPOSIT);
+  });
+});
+
+// ─────────────────────────────────────────────────────────
+// computeAvailableBalance
+// ─────────────────────────────────────────────────────────
+
+describe("Rebalancer: computeAvailableBalance", () => {
+  it("should reserve claimable-but-unclaimed funds from vault balance", () => {
+    // queued=100K, claimable=80K, claimed=60K
+    // funded-unclaimed = 20K (in vault USDC), unfunded = 20K, total owed = 40K
+    // vault=50K → available = 50K - 40K = 10K, shortfall = 0
+    const result = computeAvailableBalance(
+      { queued: usdc(100000), claimable: usdc(80000), claimed: usdc(60000) },
+      usdc(50000)
+    );
+    expect(result.availableVaultBalance).to.equal(usdc(10000));
+    expect(result.shortfall).to.equal(ZERO);
+  });
+
+  it("should handle vault balance insufficient for total owed", () => {
+    // total owed = 100K - 60K = 40K, vault = 30K → available = 0, shortfall = 10K
+    const result = computeAvailableBalance(
+      { queued: usdc(100000), claimable: usdc(80000), claimed: usdc(60000) },
+      usdc(30000)
+    );
+    expect(result.availableVaultBalance).to.equal(ZERO);
+    expect(result.shortfall).to.equal(usdc(10000));
+  });
+
+  it("should handle fully claimed queue", () => {
+    // queued=100K, claimed=100K → owed=0, all vault balance available
+    const result = computeAvailableBalance(
+      { queued: usdc(100000), claimable: usdc(100000), claimed: usdc(100000) },
+      usdc(50000)
+    );
+    expect(result.availableVaultBalance).to.equal(usdc(50000));
+    expect(result.shortfall).to.equal(ZERO);
+  });
+
+  it("should handle no queue activity", () => {
+    const result = computeAvailableBalance(
+      { queued: ZERO, claimable: ZERO, claimed: ZERO },
+      usdc(50000)
+    );
+    expect(result.availableVaultBalance).to.equal(usdc(50000));
+    expect(result.shortfall).to.equal(ZERO);
+  });
+
+  it("should handle zero vault balance with outstanding shortfall", () => {
+    // owed = 100K - 50K = 50K, vault = 0 → available = 0, shortfall = 50K
+    const result = computeAvailableBalance(
+      { queued: usdc(100000), claimable: usdc(80000), claimed: usdc(50000) },
+      ZERO
+    );
+    expect(result.availableVaultBalance).to.equal(ZERO);
+    expect(result.shortfall).to.equal(usdc(50000));
   });
 });
 
@@ -1621,5 +1712,201 @@ describe("Rebalancer: buildExecutableActions", () => {
     expect(hyperRow.action).to.equal(ACTION_WITHDRAW);
     expect(hyperRow.delta.abs()).to.equal(usdc(200000));
     expect(hyperRow.reason).to.include("trimmed to match");
+  });
+
+  // ── Surplus netting edge cases ──────────────────────────
+
+  it("surplus netting: net deposit below minMoveAmount creates sub-minimum deposit", async () => {
+    // ETH withdrawal 100K, surplus = 103K → net deposit = 3K < 5K minMoveAmount
+    const allocs = [
+      makeAllocation("Ethereum Morpho", 500000, 400000, 0.03, {
+        isDefault: true,
+      }),
+      makeAllocation("Base Morpho", 300000, 300000, 0.06, {
+        isCrossChain: true,
+      }),
+    ];
+    const result = await buildExecutableActions(allocs, ZERO, usdc(103000));
+    const ethRow = result.find((a) => a.isDefault);
+    // Surplus fallback doesn't check minMoveAmount — net $3K deposit is created
+    expect(ethRow.action).to.equal(ACTION_DEPOSIT);
+    expect(ethRow.delta).to.equal(usdc(3000));
+    expect(ethRow.reason).to.include("net of cancelled withdrawal");
+  });
+
+  it("surplus netting: surplus exactly equals withdrawal → action becomes none", async () => {
+    const allocs = [
+      makeAllocation("Ethereum Morpho", 500000, 400000, 0.03, {
+        isDefault: true,
+      }),
+      makeAllocation("Base Morpho", 300000, 300000, 0.06, {
+        isCrossChain: true,
+      }),
+    ];
+    // ETH withdrawal 100K, surplus = 100K → net = 0 → ACTION_NONE
+    const result = await buildExecutableActions(allocs, ZERO, usdc(100000));
+    const ethRow = result.find((a) => a.isDefault);
+    expect(ethRow.action).to.equal(ACTION_NONE);
+    expect(ethRow.reason).to.include("surplus offsets withdrawal");
+  });
+
+  // ── Surplus fallback safety bypass ──────────────────────
+
+  it("surplus fallback deploys to default even when deposit capacity is zero", async () => {
+    // Default has maxDeposit=0 (APY impact too high), but surplus fallback bypasses check
+    const allocs = [
+      makeAllocation("Ethereum Morpho", 500000, 500000, 0.05, {
+        isDefault: true,
+      }),
+      makeAllocation("Base Morpho", 500000, 500000, 0.04, {
+        isCrossChain: true,
+      }),
+    ];
+    const depositCaps = {
+      "0xVault_Ethereum Morpho": {
+        maxDeposit: ZERO,
+        postDepositApy: 0,
+        impactBps: 0,
+      },
+    };
+    // Vault surplus 50K → surplus fallback → deployed to default despite capacity=0
+    const result = await buildExecutableActions(
+      allocs,
+      ZERO,
+      usdc(50000),
+      {},
+      depositCaps
+    );
+    const ethRow = result.find((a) => a.isDefault);
+    // Surplus fallback doesn't check deposit capacity
+    expect(ethRow.action).to.equal(ACTION_DEPOSIT);
+    expect(ethRow.delta).to.equal(usdc(50000));
+    expect(ethRow.reason).to.include("surplus fallback");
+  });
+
+  // ── Withdrawal trim interactions ────────────────────────
+
+  it("trim: withdrawal capped by liquidity then further trimmed by excess", async () => {
+    // ETH has 200K overallocation but only 100K liquidity → capped to 100K
+    // Base deposit = 50K → excess = 100K - 50K = 50K → trim ETH to 50K
+    const allocs = [
+      makeAllocation("Ethereum Morpho", 700000, 500000, 0.03, {
+        isDefault: true,
+      }),
+      makeAllocation("Base Morpho", 300000, 350000, 0.06, {
+        isCrossChain: true,
+      }),
+    ];
+    allocs[0].withdrawableLiquidity = usdc(100000);
+    const result = await buildExecutableActions(allocs, ZERO, usdc(0));
+    const ethRow = result.find((a) => a.isDefault);
+    expect(ethRow.action).to.equal(ACTION_WITHDRAW);
+    // Capped to 100K by liquidity, then trimmed to 50K to match deposit
+    expect(ethRow.delta.abs()).to.equal(usdc(50000));
+    expect(ethRow.reason).to.include("trimmed to match");
+  });
+
+  // ── All strategies excluded ─────────────────────────────
+
+  it("all strategies excluded: vault surplus has nowhere to go", async () => {
+    const allocs = [
+      makeAllocation("Ethereum Morpho", 500000, 500000, 0.6, {
+        isDefault: true,
+      }),
+      makeAllocation("Base Morpho", 500000, 500000, 0.7, {
+        isCrossChain: true,
+      }),
+    ];
+    // Both excluded — freeze in place
+    for (const a of allocs) {
+      a.delta = ZERO;
+      a.targetBalance = a.balance;
+      a.action = ACTION_NONE;
+      a.reason = "APY exceeds threshold";
+    }
+    // Vault surplus exists but all strategies excluded — surplus stays in vault
+    const result = await buildExecutableActions(allocs, ZERO, usdc(50000));
+    const deposits = result.filter((a) => a.action === ACTION_DEPOSIT);
+    expect(deposits).to.have.length(0);
+  });
+
+  // ── Equal-APY deposit ordering ──────────────────────────
+
+  it("equal-APY deposits: both funded when budget allows", async () => {
+    const allocs = [
+      makeAllocation("Ethereum Morpho", 700000, 500000, 0.03, {
+        isDefault: true,
+      }),
+      makeAllocation("Base Morpho", 100000, 200000, 0.06, {
+        isCrossChain: true,
+      }),
+      makeAllocation("Strategy Local", 100000, 200000, 0.06),
+    ];
+    // ETH withdrawal 200K → budget 200K
+    // Base and Local both want 100K at same APY (0.06)
+    const result = await buildExecutableActions(allocs, ZERO, usdc(0));
+    const baseRow = result.find((a) => a.name === "Base Morpho");
+    const localRow = result.find((a) => a.name === "Strategy Local");
+    expect(baseRow.action).to.equal(ACTION_DEPOSIT);
+    expect(localRow.action).to.equal(ACTION_DEPOSIT);
+  });
+
+  // ── Shortfall boundary cases ────────────────────────────
+
+  it("fallback: shortfall exactly at crossChainMinAmount — default covers it", async () => {
+    // shortfall = 25K = crossChainMinAmount → "large shortfall" branch
+    // default must fully cover it (balance >= shortfall)
+    const allocs = [
+      makeAllocation("Ethereum Morpho", 30000, 30000, 0.05, {
+        isDefault: true,
+      }),
+      makeAllocation("Base Morpho", 500000, 500000, 0.04, {
+        isCrossChain: true,
+      }),
+    ];
+    const result = await buildExecutableActions(allocs, usdc(25000), usdc(0));
+    const ethRow = result.find((a) => a.isDefault);
+    expect(ethRow.action).to.equal(ACTION_WITHDRAW);
+    expect(ethRow.delta.abs()).to.equal(usdc(25000));
+    expect(ethRow.reason).to.include("fallback");
+  });
+
+  it("fallback: shortfall at crossChainMinAmount, default can't cover → cross-chain", async () => {
+    // shortfall = 25K, default balance = 20K < 25K → can't fully cover
+    // Falls to lowest-APY cross-chain
+    const allocs = [
+      makeAllocation("Ethereum Morpho", 20000, 20000, 0.05, {
+        isDefault: true,
+      }),
+      makeAllocation("Base Morpho", 500000, 500000, 0.04, {
+        isCrossChain: true,
+      }),
+    ];
+    const result = await buildExecutableActions(allocs, usdc(25000), usdc(0));
+    const ethRow = result.find((a) => a.isDefault);
+    const baseRow = result.find((a) => a.isCrossChain);
+    // Default skipped (can't fully cover), cross-chain picks up
+    expect(ethRow.action).to.equal(ACTION_NONE);
+    expect(baseRow.action).to.equal(ACTION_WITHDRAW);
+    expect(baseRow.delta.abs()).to.equal(usdc(25000));
+    expect(baseRow.reason).to.include("fallback");
+  });
+
+  // ── Spot APY boundary ───────────────────────────────────
+
+  it("deposit allowed when spot APY divergence is exactly at threshold (200bps)", async () => {
+    const allocs = [
+      makeAllocation("Ethereum Morpho", 700000, 500000, 0.03, {
+        isDefault: true,
+      }),
+      makeAllocation("Base Morpho", 300000, 500000, 0.05, {
+        isCrossChain: true,
+      }),
+    ];
+    // avg 5%, spot 3% → divergence = exactly 200bps = threshold → allowed (> not >=)
+    allocs[1].spotApy = 0.03;
+    const result = await buildExecutableActions(allocs, ZERO, usdc(0));
+    const baseRow = result.find((a) => a.isCrossChain);
+    expect(baseRow.action).to.equal(ACTION_DEPOSIT);
   });
 });

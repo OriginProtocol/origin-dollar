@@ -99,6 +99,32 @@ function ethMorphoWithdrawalConstraint(state) {
 }
 
 /**
+ * Compute available vault balance and remaining shortfall from withdrawal queue state.
+ *
+ * The vault's USDC balance includes funds that are claimable but not yet claimed
+ * (queued withdrawals waiting for users to pick up). These must be reserved.
+ *
+ * @param {object}    queueMeta    - { queued, claimable, claimed }
+ * @param {BigNumber} vaultBalance - raw USDC.balanceOf(vault)
+ * @returns {{ availableVaultBalance: BigNumber, shortfall: BigNumber }}
+ */
+function computeAvailableBalance(queueMeta, vaultBalance) {
+  // Total owed to the queue = requested minus what users already took
+  let shortfall = queueMeta.queued.sub(queueMeta.claimed);
+  let availableVaultBalance = vaultBalance;
+  if (shortfall.gt(0) && vaultBalance.gt(0)) {
+    if (shortfall.lt(vaultBalance)) {
+      availableVaultBalance = vaultBalance.sub(shortfall);
+      shortfall = BigNumber.from(0);
+    } else {
+      availableVaultBalance = BigNumber.from(0);
+      shortfall = shortfall.sub(vaultBalance);
+    }
+  }
+  return { availableVaultBalance, shortfall };
+}
+
+/**
  * Read on-chain state: Morpho strategy balances, vault idle USDC, withdrawal queue.
  * @returns {object} { strategies, vaultBalance, shortfall }
  */
@@ -117,20 +143,11 @@ async function readOnChainState() {
     usdc.balanceOf(addresses.mainnet.VaultProxy),
   ]);
 
-  // Reserve any available vault balance for pending withdrawals
-  let shortfall = queueMeta.queued.sub(queueMeta.claimable);
-  let availableVaultBalance = vaultBalance;
-  if (shortfall.gt(0) && vaultBalance.gt(0)) {
-    if (shortfall.lt(vaultBalance)) {
-      // This will be reserved the next time `addWithdrawalQueueLiquidity` is called
-      availableVaultBalance = vaultBalance.sub(shortfall);
-      shortfall = BigNumber.from(0);
-    } else {
-      // This will be reserved the next time `addWithdrawalQueueLiquidity` is called
-      availableVaultBalance = BigNumber.from(0);
-      shortfall = shortfall.sub(vaultBalance);
-    }
-  }
+  // Reserve vault balance for pending withdrawals (includes claimable-but-unclaimed)
+  const { availableVaultBalance, shortfall } = computeAvailableBalance(
+    queueMeta,
+    vaultBalance
+  );
 
   // Read the balances of the configured Morpho strategies
   const strategies = await Promise.all(
@@ -1639,6 +1656,7 @@ async function buildRebalancePlan() {
 }
 
 module.exports = {
+  computeAvailableBalance,
   computeIdealAllocation,
   buildExecutableActions,
   sortActions,
