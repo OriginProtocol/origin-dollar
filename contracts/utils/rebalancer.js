@@ -946,7 +946,19 @@ function _trimExcessWithdrawals(result, vaultBalance, shortfall, constraints) {
     ? vaultTarget.sub(vaultBalance)
     : BigNumber.from(0);
 
-  const totalNeeded = totalApprovedDeposits.add(vaultDeficit);
+  const vaultSurplus = vaultBalance.gt(vaultTarget)
+    ? vaultBalance.sub(vaultTarget)
+    : BigNumber.from(0);
+
+  // Vault surplus already funds deposits without needing withdrawals.
+  // Subtract the surplus-funded portion so we only keep withdrawals that
+  // are actually required.
+  const surplusFunding = vaultSurplus.gt(totalApprovedDeposits)
+    ? totalApprovedDeposits
+    : vaultSurplus;
+  const totalNeeded = totalApprovedDeposits
+    .sub(surplusFunding)
+    .add(vaultDeficit);
 
   const withdrawals = result.filter((a) => a.action === ACTION_WITHDRAW);
   const totalApprovedWithdrawals = withdrawals.reduce(
@@ -956,10 +968,6 @@ function _trimExcessWithdrawals(result, vaultBalance, shortfall, constraints) {
 
   let excess = totalApprovedWithdrawals.sub(totalNeeded);
   if (excess.lte(0)) return result;
-
-  const vaultSurplus = vaultBalance.gt(vaultTarget)
-    ? vaultBalance.sub(vaultTarget)
-    : BigNumber.from(0);
 
   // Process smallest-first: cancelling a small withdrawal entirely (1 fewer bridge tx)
   // is cheaper than trimming a large one (which still requires the bridge). With two

@@ -1513,9 +1513,9 @@ describe("Rebalancer: buildExecutableActions", () => {
 
   it("trim: withdrawal partially trimmed stays above minMoveAmount", async () => {
     // ETH withdrawal 200K approved; one small deposit 50K
-    // vaultBalance covers minVaultBalance (3K) → vaultDeficit = 0
-    // totalNeeded = 50K deposits + 0 deficit = 50K
-    // excess = 200K - 50K = 150K; trimmed to 50K ≥ 5K minMoveAmount → safe
+    // vaultBalance = 3K, shortfall = 0, minVaultBalance = 0 → surplus = 3K
+    // totalNeeded = 50K deposits - 3K surplus + 0 deficit = 47K
+    // excess = 200K - 47K = 153K; trimmed to 47K ≥ 5K minMoveAmount → safe
     const allocs = [
       makeAllocation("Ethereum Morpho", 700000, 500000, 0.03, {
         isDefault: true,
@@ -1526,9 +1526,9 @@ describe("Rebalancer: buildExecutableActions", () => {
     ];
     const result = await buildExecutableActions(allocs, ZERO, usdc(3000));
     const ethRow = result.find((a) => a.isDefault);
-    // ETH withdrawal should be trimmed to match deposit need (50K)
+    // ETH withdrawal trimmed: deposit 50K minus 3K vault surplus = 47K needed
     expect(ethRow.action).to.equal(ACTION_WITHDRAW);
-    expect(ethRow.delta.abs()).to.equal(usdc(50000));
+    expect(ethRow.delta.abs()).to.equal(usdc(47000));
     expect(ethRow.reason).to.include("trimmed to match");
   });
 
@@ -1548,6 +1548,29 @@ describe("Rebalancer: buildExecutableActions", () => {
     expect(ethRow.action).to.equal(ACTION_WITHDRAW);
     expect(ethRow.delta.abs()).to.equal(usdc(200000));
     expect(ethRow.reason).to.be.undefined;
+  });
+
+  it("trim: vault surplus fully covers deposit — withdrawal cancelled", async () => {
+    // ETH overallocated by 200K → withdrawal; Base underallocated by 50K → deposit
+    // Vault surplus = 60K (> 50K deposit) → deposit is fully surplus-funded
+    // No withdrawal needed to fund the deposit → ETH withdrawal should be cancelled
+    const allocs = [
+      makeAllocation("Ethereum Morpho", 700000, 500000, 0.03, {
+        isDefault: true,
+      }),
+      makeAllocation("Base Morpho", 300000, 350000, 0.06, {
+        isCrossChain: true,
+      }),
+    ];
+    const result = await buildExecutableActions(allocs, ZERO, usdc(60000));
+    const ethRow = result.find((a) => a.isDefault);
+    const baseRow = result.find((a) => a.isCrossChain);
+    // Deposit is approved (surplus-funded)
+    expect(baseRow.action).to.equal(ACTION_DEPOSIT);
+    expect(baseRow.delta).to.equal(usdc(50000));
+    // Withdrawal should be cancelled — vault surplus covers the entire deposit
+    expect(ethRow.action).to.equal(ACTION_NONE);
+    expect(ethRow.reason).to.include("no approved deposits");
   });
 
   // ── Spot APY divergence guard ─────────────────────────────
