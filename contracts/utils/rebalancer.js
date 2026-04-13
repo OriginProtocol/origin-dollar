@@ -1221,10 +1221,17 @@ function formatAllocationTable({
       : "";
   const sign = (bn) => (bn.gte(0) ? "+" : "-");
 
-  const vaultTarget = shortfall.add(
-    BigNumber.from(constraints.minVaultBalance)
-  );
-  const vaultDelta = vaultTarget.sub(vaultBalance);
+  let vaultTarget = shortfall.add(BigNumber.from(constraints.minVaultBalance));
+  let vaultDelta = vaultTarget.sub(vaultBalance);
+  // Suppress phantom surplus delta when it's below minMoveAmount (nothing will deploy it).
+  // Only suppress negative delta (surplus); positive delta (shortfall) is always meaningful.
+  if (
+    vaultDelta.lt(0) &&
+    vaultDelta.abs().lt(BigNumber.from(constraints.minMoveAmount))
+  ) {
+    vaultTarget = vaultBalance;
+    vaultDelta = BigNumber.from(0);
+  }
 
   const formattedRows = tableRows.map((a) => {
     const rec = filteredByAddr.get(a.address);

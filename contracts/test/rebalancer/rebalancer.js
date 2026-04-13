@@ -6,6 +6,7 @@ const {
   computeAvailableBalance,
   computeIdealAllocation,
   buildExecutableActions,
+  formatAllocationTable,
   ACTION_DEPOSIT,
   ACTION_WITHDRAW,
   ACTION_NONE,
@@ -1908,5 +1909,104 @@ describe("Rebalancer: buildExecutableActions", () => {
     const result = await buildExecutableActions(allocs, ZERO, usdc(0));
     const baseRow = result.find((a) => a.isCrossChain);
     expect(baseRow.action).to.equal(ACTION_DEPOSIT);
+  });
+});
+
+// ─────────────────────────────────────────────────────────
+// formatAllocationTable
+// ─────────────────────────────────────────────────────────
+
+describe("Rebalancer: formatAllocationTable", () => {
+  function makeDisplayAction(name, balance, target, apy, opts = {}) {
+    const balanceBN = usdc(balance);
+    const targetBN = usdc(target);
+    const delta = targetBN.sub(balanceBN);
+    return {
+      name,
+      address: `0x${name.replace(/\s/g, "").toLowerCase()}`,
+      balance: balanceBN,
+      targetBalance: targetBN,
+      delta,
+      action: delta.gt(0)
+        ? ACTION_DEPOSIT
+        : delta.lt(0)
+        ? ACTION_WITHDRAW
+        : ACTION_NONE,
+      apy: apy,
+      spotApy: opts.spotApy || apy,
+      isDefault: opts.isDefault || false,
+      isCrossChain: opts.isCrossChain || false,
+      withdrawableLiquidity: null,
+    };
+  }
+
+  it("should suppress vault delta when surplus is below minMoveAmount", () => {
+    const actions = [
+      makeDisplayAction("Ethereum Morpho", 500000, 500000, 0.05, {
+        isDefault: true,
+      }),
+    ];
+    const output = formatAllocationTable({
+      actions,
+      vaultBalance: usdc(19.5),
+      shortfall: ZERO,
+    });
+    expect(output).to.include("Vault (idle)");
+    expect(output).to.not.include("-19.50");
+    const vaultLine = output
+      .split("\n")
+      .find((l) => l.includes("Vault (idle)"));
+    expect(vaultLine).to.include("+0.00");
+  });
+
+  it("should show vault delta when surplus exceeds minMoveAmount", () => {
+    const actions = [
+      makeDisplayAction("Ethereum Morpho", 500000, 510000, 0.05, {
+        isDefault: true,
+      }),
+    ];
+    const output = formatAllocationTable({
+      actions,
+      vaultBalance: usdc(10000),
+      shortfall: ZERO,
+    });
+    const vaultLine = output
+      .split("\n")
+      .find((l) => l.includes("Vault (idle)"));
+    expect(vaultLine).to.include("-10,000.00");
+  });
+
+  it("should always show vault shortfall delta even when small", () => {
+    const actions = [
+      makeDisplayAction("Ethereum Morpho", 500000, 500000, 0.05, {
+        isDefault: true,
+      }),
+    ];
+    const output = formatAllocationTable({
+      actions,
+      vaultBalance: ZERO,
+      shortfall: usdc(100),
+    });
+    const vaultLine = output
+      .split("\n")
+      .find((l) => l.includes("Vault (idle)"));
+    expect(vaultLine).to.include("+100.00");
+  });
+
+  it("should show vault delta when surplus equals minMoveAmount", () => {
+    const actions = [
+      makeDisplayAction("Ethereum Morpho", 500000, 505000, 0.05, {
+        isDefault: true,
+      }),
+    ];
+    const output = formatAllocationTable({
+      actions,
+      vaultBalance: usdc(5000),
+      shortfall: ZERO,
+    });
+    const vaultLine = output
+      .split("\n")
+      .find((l) => l.includes("Vault (idle)"));
+    expect(vaultLine).to.include("-5,000.00");
   });
 });
