@@ -957,6 +957,41 @@ async function autoWithdrawalModuleFixture() {
   };
 }
 
+async function rebalancerModuleFixture() {
+  const fixture = await defaultFixture();
+
+  const rebalancerModule = await ethers.getContract("RebalancerModule");
+  const mockVault = await ethers.getContract("MockAutoWithdrawalVault");
+  const mockSafe = await ethers.getContract("MockSafeContract");
+  const mockStrategy = await ethers.getContract("MockStrategy");
+
+  // MockSafeContract is both safe and operator in the unit-test deployment.
+  const safeSigner = await impersonateAndFund(mockSafe.address);
+
+  // Whitelist the mock strategy so the operator can call processWithdrawals/Deposits
+  await rebalancerModule
+    .connect(safeSigner)
+    .allowStrategy(mockStrategy.address);
+
+  // Set a default totalValue so the daily movement limit doesn't block operations
+  await mockVault.setTotalValue(ousdUnits("10000000")); // $10M
+
+  // A stranger with no roles
+  const stranger = await impersonateAndFund(
+    "0x0000000000000000000000000000000000000002"
+  );
+
+  return {
+    ...fixture,
+    rebalancerModule,
+    mockVault,
+    mockSafe,
+    mockStrategy,
+    safeSigner,
+    stranger,
+  };
+}
+
 /**
  * Configure a Vault with default USDC strategy to Yearn's Morpho OUSD v2 Vault.
  */
@@ -1840,6 +1875,7 @@ module.exports = {
   beaconChainFixture,
   claimRewardsModuleFixture,
   autoWithdrawalModuleFixture,
+  rebalancerModuleFixture,
   crossChainFixtureUnit,
   crossChainFixture,
   supernovaOETHAMOFixture,

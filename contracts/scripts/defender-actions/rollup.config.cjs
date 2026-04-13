@@ -45,6 +45,7 @@ const actions = [
   "crossChainRelayHyperEVM",
   "manageBribes",
   "manageMerklBribes",
+  "ousdRebalancer",
   "claimSSVRewards"
 ];
 

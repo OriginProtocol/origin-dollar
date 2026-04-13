@@ -8,9 +8,12 @@ contract MockAutoWithdrawalVault {
 
     VaultStorage.WithdrawalQueueMetadata public withdrawalQueueMetadata;
 
+    uint256 private _totalValue;
     bool private _revertNextWithdraw;
+    bool private _revertNextDeposit;
 
     event MockedWithdrawal(address strategy, address asset, uint256 amount);
+    event MockedDeposit(address strategy, address asset, uint256 amount);
 
     constructor(address _asset) {
         asset = _asset;
@@ -27,6 +30,18 @@ contract MockAutoWithdrawalVault {
         _revertNextWithdraw = true;
     }
 
+    function revertNextDeposit() external {
+        _revertNextDeposit = true;
+    }
+
+    function setTotalValue(uint256 val) external {
+        _totalValue = val;
+    }
+
+    function totalValue() external view returns (uint256) {
+        return _totalValue;
+    }
+
     function addWithdrawalQueueLiquidity() external {
         // Do nothing
     }
@@ -41,5 +56,17 @@ contract MockAutoWithdrawalVault {
             revert("Mocked withdrawal revert");
         }
         emit MockedWithdrawal(strategy, assets[0], amounts[0]);
+    }
+
+    function depositToStrategy(
+        address strategy,
+        address[] memory assets,
+        uint256[] memory amounts
+    ) external {
+        if (_revertNextDeposit) {
+            _revertNextDeposit = false;
+            revert("Mocked deposit revert");
+        }
+        emit MockedDeposit(strategy, assets[0], amounts[0]);
     }
 }

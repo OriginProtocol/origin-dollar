@@ -1,10 +1,15 @@
 const addresses = require("./addresses");
+const { parseUnits } = require("ethers/lib/utils");
+
+// Maximum amount for any single cross-chain transfer (CCTP bridge limit)
+const CROSS_CHAIN_BRIDGE_LIMIT = parseUnits("10000000", 6); // 10M USDC
 
 const cctpDomainIds = {
   Ethereum: 0,
   Base: 6,
   HyperEVM: 19,
 };
+
 const api = "https://iris-api.circle.com";
 const configuration = {
   mainnetBaseMorpho: {
@@ -52,4 +57,5 @@ module.exports = {
   cctpDomainIds,
   api,
   configuration,
+  CROSS_CHAIN_BRIDGE_LIMIT,
 };
