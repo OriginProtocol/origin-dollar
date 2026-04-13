@@ -461,92 +461,121 @@ describe("Rebalancer: computeIdealAllocation", () => {
 // ─────────────────────────────────────────────────────────
 
 describe("Rebalancer: computeAvailableBalance", () => {
-  it("should reserve claimable-but-unclaimed funds from vault balance", () => {
-    // queued=100K, claimable=80K, claimed=60K
-    // funded-unclaimed = 20K (in vault USDC), unfunded = 20K, total owed = 40K
-    // vault=50K → available = 50K - 40K = 10K, shortfall = 0
-    const result = computeAvailableBalance(
-      { queued: usdc(100000), claimable: usdc(80000), claimed: usdc(60000) },
-      usdc(50000)
-    );
-    expect(result.availableVaultBalance).to.equal(usdc(10000));
-    expect(result.shortfall).to.equal(ZERO);
-  });
+  const cases = [
+    {
+      name: "should reserve claimable-but-unclaimed funds from vault balance",
+      queue: {
+        queued: usdc(100000),
+        claimable: usdc(80000),
+        claimed: usdc(60000),
+      },
+      vault: usdc(50000),
+      expectedAvailable: usdc(10000),
+      expectedShortfall: ZERO,
+    },
+    {
+      name: "should handle vault balance insufficient for total owed",
+      queue: {
+        queued: usdc(100000),
+        claimable: usdc(80000),
+        claimed: usdc(60000),
+      },
+      vault: usdc(30000),
+      expectedAvailable: ZERO,
+      expectedShortfall: usdc(10000),
+    },
+    {
+      name: "should handle fully claimed queue",
+      queue: {
+        queued: usdc(100000),
+        claimable: usdc(100000),
+        claimed: usdc(100000),
+      },
+      vault: usdc(50000),
+      expectedAvailable: usdc(50000),
+      expectedShortfall: ZERO,
+    },
+    {
+      name: "should handle no queue activity",
+      queue: { queued: ZERO, claimable: ZERO, claimed: ZERO },
+      vault: usdc(50000),
+      expectedAvailable: usdc(50000),
+      expectedShortfall: ZERO,
+    },
+    {
+      name: "should handle zero vault balance with outstanding shortfall",
+      queue: {
+        queued: usdc(100000),
+        claimable: usdc(80000),
+        claimed: usdc(50000),
+      },
+      vault: ZERO,
+      expectedAvailable: ZERO,
+      expectedShortfall: usdc(50000),
+    },
+  ];
 
-  it("should handle vault balance insufficient for total owed", () => {
-    // total owed = 100K - 60K = 40K, vault = 30K → available = 0, shortfall = 10K
-    const result = computeAvailableBalance(
-      { queued: usdc(100000), claimable: usdc(80000), claimed: usdc(60000) },
-      usdc(30000)
-    );
-    expect(result.availableVaultBalance).to.equal(ZERO);
-    expect(result.shortfall).to.equal(usdc(10000));
-  });
-
-  it("should handle fully claimed queue", () => {
-    // queued=100K, claimed=100K → owed=0, all vault balance available
-    const result = computeAvailableBalance(
-      { queued: usdc(100000), claimable: usdc(100000), claimed: usdc(100000) },
-      usdc(50000)
-    );
-    expect(result.availableVaultBalance).to.equal(usdc(50000));
-    expect(result.shortfall).to.equal(ZERO);
-  });
-
-  it("should handle no queue activity", () => {
-    const result = computeAvailableBalance(
-      { queued: ZERO, claimable: ZERO, claimed: ZERO },
-      usdc(50000)
-    );
-    expect(result.availableVaultBalance).to.equal(usdc(50000));
-    expect(result.shortfall).to.equal(ZERO);
-  });
-
-  it("should handle zero vault balance with outstanding shortfall", () => {
-    // owed = 100K - 50K = 50K, vault = 0 → available = 0, shortfall = 50K
-    const result = computeAvailableBalance(
-      { queued: usdc(100000), claimable: usdc(80000), claimed: usdc(50000) },
-      ZERO
-    );
-    expect(result.availableVaultBalance).to.equal(ZERO);
-    expect(result.shortfall).to.equal(usdc(50000));
-  });
+  for (const {
+    name,
+    queue,
+    vault,
+    expectedAvailable,
+    expectedShortfall,
+  } of cases) {
+    it(name, () => {
+      const result = computeAvailableBalance(queue, vault);
+      expect(result.availableVaultBalance).to.equal(expectedAvailable);
+      expect(result.shortfall).to.equal(expectedShortfall);
+    });
+  }
 });
+
+// ─────────────────────────────────────────────────────────
+// Shared test helper: builds allocation/action objects
+// ─────────────────────────────────────────────────────────
+
+function makeAllocation(
+  name,
+  balance,
+  target,
+  apy,
+  {
+    isCrossChain = false,
+    isDefault = false,
+    isTransferPending = false,
+    spotApy = null,
+    withdrawableLiquidity = null,
+  } = {}
+) {
+  const balanceBN = usdc(balance);
+  const targetBN = usdc(target);
+  const delta = targetBN.sub(balanceBN);
+  return {
+    name,
+    address: `0x${name.replace(/\s/g, "").toLowerCase()}`,
+    isCrossChain,
+    isDefault,
+    isTransferPending,
+    metaMorphoVaultAddress: `0xVault_${name}`,
+    balance: balanceBN,
+    targetBalance: targetBN,
+    delta,
+    apy,
+    spotApy: spotApy != null ? spotApy : apy,
+    withdrawableLiquidity,
+    action: delta.gt(0)
+      ? ACTION_DEPOSIT
+      : delta.lt(0)
+      ? ACTION_WITHDRAW
+      : ACTION_NONE,
+  };
+}
 
 // ─────────────────────────────────────────────────────────
 // buildExecutableActions
 // ─────────────────────────────────────────────────────────
 
 describe("Rebalancer: buildExecutableActions", () => {
-  function makeAllocation(
-    name,
-    balance,
-    target,
-    apy,
-    { isCrossChain = false, isDefault = false, isTransferPending = false } = {}
-  ) {
-    const balanceBN = usdc(balance);
-    const targetBN = usdc(target);
-    const delta = targetBN.sub(balanceBN);
-    return {
-      name,
-      address: `0x${name.replace(/\s/g, "").toLowerCase()}`,
-      isCrossChain,
-      isDefault,
-      isTransferPending,
-      metaMorphoVaultAddress: `0xVault_${name}`,
-      balance: balanceBN,
-      targetBalance: targetBN,
-      delta,
-      apy,
-      action: delta.gt(0)
-        ? ACTION_DEPOSIT
-        : delta.lt(0)
-        ? ACTION_WITHDRAW
-        : ACTION_NONE,
-    };
-  }
-
   // Standard filtering
 
   it("should skip withdrawals below minMoveAmount", async () => {
@@ -1519,54 +1548,39 @@ describe("Rebalancer: buildExecutableActions", () => {
 
   // ── Spot APY divergence guard ─────────────────────────────
 
-  it("deposit blocked when spot APY diverges > maxSpotBelowAvgBps below average", async () => {
-    // Base avg APY 5%, spot APY 2% → divergence = 300bps > 200bps threshold
-    const allocs = [
-      makeAllocation("Ethereum Morpho", 700000, 500000, 0.03, {
-        isDefault: true,
-      }),
-      makeAllocation("Base Morpho", 300000, 500000, 0.05, {
-        isCrossChain: true,
-      }),
-    ];
-    allocs[1].spotApy = 0.02; // 300bps below avg
-    const result = await buildExecutableActions(allocs, ZERO, usdc(0));
-    const baseRow = result.find((a) => a.isCrossChain);
-    expect(baseRow.action).to.equal(ACTION_NONE);
-    expect(baseRow.reason).to.include("spot APY");
-    expect(baseRow.reason).to.include("deposit blocked");
-  });
-
-  it("deposit allowed when spot APY is close to average (within threshold)", async () => {
-    // Base avg APY 5%, spot APY 4% → divergence = 100bps < 200bps threshold
-    const allocs = [
-      makeAllocation("Ethereum Morpho", 700000, 500000, 0.03, {
-        isDefault: true,
-      }),
-      makeAllocation("Base Morpho", 300000, 500000, 0.05, {
-        isCrossChain: true,
-      }),
-    ];
-    allocs[1].spotApy = 0.04; // 100bps below avg — within threshold
-    const result = await buildExecutableActions(allocs, ZERO, usdc(0));
-    const baseRow = result.find((a) => a.isCrossChain);
-    expect(baseRow.action).to.equal(ACTION_DEPOSIT);
-  });
-
-  it("deposit allowed when spot APY is above average", async () => {
-    // Base avg APY 5%, spot APY 6% → no divergence (spot > avg)
-    const allocs = [
-      makeAllocation("Ethereum Morpho", 700000, 500000, 0.03, {
-        isDefault: true,
-      }),
-      makeAllocation("Base Morpho", 300000, 500000, 0.05, {
-        isCrossChain: true,
-      }),
-    ];
-    allocs[1].spotApy = 0.06;
-    const result = await buildExecutableActions(allocs, ZERO, usdc(0));
-    const baseRow = result.find((a) => a.isCrossChain);
-    expect(baseRow.action).to.equal(ACTION_DEPOSIT);
+  [
+    {
+      name: "deposit blocked when spot APY diverges > maxSpotBelowAvgBps below average",
+      spotApy: 0.02,
+      expectedAction: ACTION_NONE,
+      checkReason: "spot APY",
+    },
+    {
+      name: "deposit allowed when spot APY is close to average (within threshold)",
+      spotApy: 0.04,
+      expectedAction: ACTION_DEPOSIT,
+    },
+    {
+      name: "deposit allowed when spot APY is above average",
+      spotApy: 0.06,
+      expectedAction: ACTION_DEPOSIT,
+    },
+  ].forEach(({ name, spotApy, expectedAction, checkReason }) => {
+    it(name, async () => {
+      const allocs = [
+        makeAllocation("Ethereum Morpho", 700000, 500000, 0.03, {
+          isDefault: true,
+        }),
+        makeAllocation("Base Morpho", 300000, 500000, 0.05, {
+          isCrossChain: true,
+        }),
+      ];
+      allocs[1].spotApy = spotApy;
+      const result = await buildExecutableActions(allocs, ZERO, usdc(0));
+      const baseRow = result.find((a) => a.isCrossChain);
+      expect(baseRow.action).to.equal(expectedAction);
+      if (checkReason) expect(baseRow.reason).to.include(checkReason);
+    });
   });
 
   // ── Deposit capacity = 0 ──────────────────────────────────
@@ -1917,32 +1931,9 @@ describe("Rebalancer: buildExecutableActions", () => {
 // ─────────────────────────────────────────────────────────
 
 describe("Rebalancer: formatAllocationTable", () => {
-  function makeDisplayAction(name, balance, target, apy, opts = {}) {
-    const balanceBN = usdc(balance);
-    const targetBN = usdc(target);
-    const delta = targetBN.sub(balanceBN);
-    return {
-      name,
-      address: `0x${name.replace(/\s/g, "").toLowerCase()}`,
-      balance: balanceBN,
-      targetBalance: targetBN,
-      delta,
-      action: delta.gt(0)
-        ? ACTION_DEPOSIT
-        : delta.lt(0)
-        ? ACTION_WITHDRAW
-        : ACTION_NONE,
-      apy: apy,
-      spotApy: opts.spotApy || apy,
-      isDefault: opts.isDefault || false,
-      isCrossChain: opts.isCrossChain || false,
-      withdrawableLiquidity: null,
-    };
-  }
-
   it("should suppress vault delta when surplus is below minMoveAmount", () => {
     const actions = [
-      makeDisplayAction("Ethereum Morpho", 500000, 500000, 0.05, {
+      makeAllocation("Ethereum Morpho", 500000, 500000, 0.05, {
         isDefault: true,
       }),
     ];
@@ -1961,7 +1952,7 @@ describe("Rebalancer: formatAllocationTable", () => {
 
   it("should show vault delta when surplus exceeds minMoveAmount", () => {
     const actions = [
-      makeDisplayAction("Ethereum Morpho", 500000, 510000, 0.05, {
+      makeAllocation("Ethereum Morpho", 500000, 510000, 0.05, {
         isDefault: true,
       }),
     ];
@@ -1978,7 +1969,7 @@ describe("Rebalancer: formatAllocationTable", () => {
 
   it("should always show vault shortfall delta even when small", () => {
     const actions = [
-      makeDisplayAction("Ethereum Morpho", 500000, 500000, 0.05, {
+      makeAllocation("Ethereum Morpho", 500000, 500000, 0.05, {
         isDefault: true,
       }),
     ];
@@ -1995,7 +1986,7 @@ describe("Rebalancer: formatAllocationTable", () => {
 
   it("should show vault delta when surplus equals minMoveAmount", () => {
     const actions = [
-      makeDisplayAction("Ethereum Morpho", 500000, 505000, 0.05, {
+      makeAllocation("Ethereum Morpho", 500000, 505000, 0.05, {
         isDefault: true,
       }),
     ];

@@ -423,6 +423,11 @@ async function discoverDepositCapacities(
   constraints
 ) {
   const capacities = {};
+  const zeroCap = () => ({
+    maxDeposit: BigNumber.from(0),
+    postDepositApy: 0,
+    impactBps: 0,
+  });
   await Promise.all(
     strategies.map(async (s) => {
       if (!s.metaMorphoVaultAddress || !s.morphoChainId) return;
@@ -431,11 +436,7 @@ async function discoverDepositCapacities(
         log(
           `No RPC URL for chain ${s.morphoChainId}, skipping capacity for ${s.name}`
         );
-        capacities[s.metaMorphoVaultAddress] = {
-          maxDeposit: BigNumber.from(0),
-          postDepositApy: 0,
-          impactBps: 0,
-        };
+        capacities[s.metaMorphoVaultAddress] = zeroCap();
         return;
       }
       try {
@@ -445,11 +446,7 @@ async function discoverDepositCapacities(
           .div(10000)
           .sub(s.balance);
         if (maxPossible.lt(constraints.minMoveAmount)) {
-          capacities[s.metaMorphoVaultAddress] = {
-            maxDeposit: BigNumber.from(0),
-            postDepositApy: 0,
-            impactBps: 0,
-          };
+          capacities[s.metaMorphoVaultAddress] = zeroCap();
           return;
         }
         const result = await findMaxDepositRpc(
@@ -476,11 +473,7 @@ async function discoverDepositCapacities(
         log(`Deposit capacity discovery failed for ${s.name}: ${err.message}`);
         // Fail-closed: if we can't determine capacity, don't allow deposits.
         // An RPC failure should not bypass the APY impact guard.
-        capacities[s.metaMorphoVaultAddress] = {
-          maxDeposit: BigNumber.from(0),
-          postDepositApy: 0,
-          impactBps: 0,
-        };
+        capacities[s.metaMorphoVaultAddress] = zeroCap();
       }
     })
   );
@@ -542,6 +535,15 @@ async function discoverWithdrawalCapacities(strategies, constraints) {
     })
   );
   return capacities;
+}
+
+/**
+ * Strip withdrawal-only metadata from an action that is no longer a withdrawal.
+ */
+function _clearWithdrawalFields(w) {
+  delete w.expectedApy;
+  delete w.impactBps;
+  delete w.markets;
 }
 
 /**
@@ -747,10 +749,7 @@ function _deployRemainingSurplus(result, surplus) {
         ? `${defaultStrategy.reason}; reduced by vault surplus`
         : "reduced by vault surplus";
     }
-    // Clear withdrawal-derived fields that no longer apply
-    delete defaultStrategy.expectedApy;
-    delete defaultStrategy.impactBps;
-    delete defaultStrategy.markets;
+    _clearWithdrawalFields(defaultStrategy);
   } else {
     defaultStrategy.delta = surplus;
     defaultStrategy.targetBalance = defaultStrategy.balance.add(surplus);
@@ -988,9 +987,7 @@ function _trimExcessWithdrawals(result, vaultBalance, shortfall, constraints) {
       runningTotal = runningTotal.sub(amt);
       w.action = ACTION_NONE;
       w.reason = "no approved deposits to fund";
-      delete w.expectedApy;
-      delete w.impactBps;
-      delete w.markets;
+      _clearWithdrawalFields(w);
     } else {
       // Only part of this withdrawal is excess.
       const newAmt = amt.sub(excess);
@@ -1009,9 +1006,7 @@ function _trimExcessWithdrawals(result, vaultBalance, shortfall, constraints) {
           runningTotal = runningTotal.sub(amt);
           w.action = ACTION_NONE;
           w.reason = "no approved deposits to fund";
-          delete w.expectedApy;
-          delete w.impactBps;
-          delete w.markets;
+          _clearWithdrawalFields(w);
           excess = BigNumber.from(0);
         }
         // else: cancelling would under-fund deposits — leave as-is
@@ -1277,28 +1272,22 @@ function formatAllocationTable({
 
   // Column definitions: compact uses fewer columns
   const apyLabel = `${constraints.apyAverageWindow} APY`;
-  const colDefs = compact
-    ? [
-        { key: "name", header: "Strategy", align: "left" },
-        { key: "current", header: "Current", align: "right" },
-        { key: "target", header: "Target", align: "right" },
-        { key: "delta", header: "Delta", align: "right" },
-        { key: "avgApy", header: apyLabel, align: "right" },
-        { key: "spotApy", header: "Spot APY", align: "right" },
-        { key: "expectedApy", header: "Exp. APY", align: "right" },
-        { key: "impact", header: "Impact", align: "right" },
-      ]
-    : [
-        { key: "name", header: "Strategy", align: "left" },
-        { key: "current", header: "Current", align: "right" },
-        { key: "avail", header: "Avail.", align: "right" },
-        { key: "target", header: "Target (rec.)", align: "right" },
-        { key: "delta", header: "Delta", align: "right" },
-        { key: "avgApy", header: apyLabel, align: "right" },
-        { key: "spotApy", header: "Spot APY", align: "right" },
-        { key: "expectedApy", header: "Exp. APY", align: "right" },
-        { key: "impact", header: "Impact", align: "right" },
-      ];
+  const allCols = [
+    { key: "name", header: "Strategy", align: "left" },
+    { key: "current", header: "Current", align: "right" },
+    { key: "avail", header: "Avail.", align: "right" },
+    {
+      key: "target",
+      header: compact ? "Target" : "Target (rec.)",
+      align: "right",
+    },
+    { key: "delta", header: "Delta", align: "right" },
+    { key: "avgApy", header: apyLabel, align: "right" },
+    { key: "spotApy", header: "Spot APY", align: "right" },
+    { key: "expectedApy", header: "Exp. APY", align: "right" },
+    { key: "impact", header: "Impact", align: "right" },
+  ];
+  const colDefs = compact ? allCols.filter((c) => c.key !== "avail") : allCols;
 
   // Compute column widths
   const COL = {};
