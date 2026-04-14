@@ -68,7 +68,7 @@ function writeJsonOutput(result, outputPath) {
   const vaultTargetNum = parseFloat(formatUnits(vaultTarget, USDC_DECIMALS));
 
   const output = {
-    timestamp: new Date().toISOString(),
+    timestamp: Date.now(),
     totalCapital: totalNum,
     strategies,
     vault: {
