@@ -1,10 +1,11 @@
 const { expect } = require("chai");
 const { BigNumber } = require("ethers");
-const { parseUnits } = require("ethers/lib/utils");
+const { parseUnits, formatUnits } = require("ethers/lib/utils");
 
 const {
   computeAvailableBalance,
   computeIdealAllocation,
+  computeImpactAwareAllocation,
   buildExecutableActions,
   formatAllocationTable,
   ACTION_DEPOSIT,
@@ -2119,5 +2120,246 @@ describe("Rebalancer: formatAllocationTable", () => {
       shortfall: ZERO,
     });
     expect(output).to.not.include("# = transfer pending");
+  });
+});
+
+// ─────────────────────────────────────────────────────────
+// computeImpactAwareAllocation (step-wise marginal APY)
+// ─────────────────────────────────────────────────────────
+
+describe("Rebalancer: computeImpactAwareAllocation", () => {
+  /**
+   * Mock APY model: linear decay of decayPerChunk per $50K deposited,
+   * linear increase of decayPerChunk per $50K withdrawn.
+   * apyByVault = { metaMorphoVaultAddress: { base, decayPerChunk } }
+   */
+  function createMockApyFn(apyByVault) {
+    return async (strategy, delta, currentApys) => {
+      const cfg = apyByVault[strategy.metaMorphoVaultAddress];
+      if (!cfg) return currentApys[strategy.metaMorphoVaultAddress] || 0;
+      const deltaUsdc = parseFloat(formatUnits(delta, 6));
+      const chunks = deltaUsdc / 50000;
+      // Positive delta = deposit = APY drops; negative = withdrawal = APY rises
+      return Math.max(0, cfg.base - chunks * cfg.decayPerChunk);
+    };
+  }
+
+  it("equalizes marginal APYs across two strategies", async () => {
+    // HyperEVM: 10% base, decays 1% per $50K → reaches 6% at $200K deposit
+    // Base: 6% base, decays 0.5% per $50K → reaches 4% at $200K deposit
+    // With $400K to deploy, HyperEVM should get more than Base
+    const strategies = [
+      makeStrategy("Ethereum Morpho", 0, {
+        isDefault: true,
+        metaMorphoVaultAddress: ETH_VAULT,
+      }),
+      makeStrategy("Base Morpho", 0, {
+        isCrossChain: true,
+        metaMorphoVaultAddress: BASE_VAULT,
+      }),
+      makeStrategy("HyperEVM Morpho", 0, {
+        isCrossChain: true,
+        metaMorphoVaultAddress: HYPER_VAULT,
+      }),
+    ];
+    const apys = {
+      [ETH_VAULT]: 0.037,
+      [BASE_VAULT]: 0.06,
+      [HYPER_VAULT]: 0.1,
+    };
+    const mockApy = createMockApyFn({
+      [ETH_VAULT]: { base: 0.037, decayPerChunk: 0.003 },
+      [BASE_VAULT]: { base: 0.06, decayPerChunk: 0.005 },
+      [HYPER_VAULT]: { base: 0.1, decayPerChunk: 0.01 },
+    });
+
+    const result = await computeImpactAwareAllocation({
+      strategies,
+      apys,
+      vaultBalance: usdc(400000),
+      shortfall: ZERO,
+      constraints: { allocationChunkSize: usdc(50000).toNumber() },
+      computeApy: mockApy,
+    });
+
+    const hyperRow = result.find((r) => r.name === "HyperEVM Morpho");
+    const baseRow = result.find((r) => r.name === "Base Morpho");
+    const ethRow = result.find((r) => r.name === "Ethereum Morpho");
+
+    // HyperEVM should get the most (highest base APY)
+    expect(hyperRow.targetBalance.gt(baseRow.targetBalance)).to.be.true;
+    // Base should get some too (second highest)
+    expect(baseRow.targetBalance.gt(0)).to.be.true;
+    // Ethereum gets least (lowest APY with fastest relative decay)
+    expect(ethRow.targetBalance.lte(baseRow.targetBalance)).to.be.true;
+    // Total should equal deployable capital
+    const total = result.reduce((s, r) => s.add(r.targetBalance), ZERO);
+    expect(total).to.equal(usdc(400000));
+  });
+
+  it("respects maxAllocationBps cap", async () => {
+    // Single high-APY strategy capped at 60%
+    const strategies = [
+      makeStrategy("Ethereum Morpho", 0, {
+        isDefault: true,
+        metaMorphoVaultAddress: ETH_VAULT,
+      }),
+      makeStrategy("HyperEVM Morpho", 0, {
+        isCrossChain: true,
+        metaMorphoVaultAddress: HYPER_VAULT,
+        maxAllocationBps: 6000,
+      }),
+    ];
+    const apys = { [ETH_VAULT]: 0.03, [HYPER_VAULT]: 0.1 };
+    const mockApy = createMockApyFn({
+      [ETH_VAULT]: { base: 0.03, decayPerChunk: 0.001 },
+      [HYPER_VAULT]: { base: 0.1, decayPerChunk: 0.001 },
+    });
+
+    const result = await computeImpactAwareAllocation({
+      strategies,
+      apys,
+      vaultBalance: usdc(1000000),
+      shortfall: ZERO,
+      constraints: { allocationChunkSize: usdc(50000).toNumber() },
+      computeApy: mockApy,
+    });
+
+    const hyperRow = result.find((r) => r.name === "HyperEVM Morpho");
+    // Should be capped at 60% of $1M = $600K
+    expect(hyperRow.targetBalance).to.equal(usdc(600000));
+  });
+
+  it("respects withdrawal capacity floor", async () => {
+    // Ethereum Morpho has $500K, but can only withdraw $100K (market constraints)
+    // → floor = $400K; this should be pre-allocated
+    const strategies = [
+      makeStrategy("Ethereum Morpho", 500000, {
+        isDefault: true,
+        metaMorphoVaultAddress: ETH_VAULT,
+      }),
+      makeStrategy("HyperEVM Morpho", 0, {
+        isCrossChain: true,
+        metaMorphoVaultAddress: HYPER_VAULT,
+      }),
+    ];
+    const apys = { [ETH_VAULT]: 0.037, [HYPER_VAULT]: 0.1 };
+    const mockApy = createMockApyFn({
+      [ETH_VAULT]: { base: 0.037, decayPerChunk: 0.001 },
+      [HYPER_VAULT]: { base: 0.1, decayPerChunk: 0.005 },
+    });
+    const withdrawalCapacities = {
+      [ETH_VAULT]: { maxWithdraw: usdc(100000) },
+    };
+
+    const result = await computeImpactAwareAllocation({
+      strategies,
+      apys,
+      vaultBalance: ZERO,
+      shortfall: ZERO,
+      withdrawalCapacities,
+      constraints: { allocationChunkSize: usdc(50000).toNumber() },
+      computeApy: mockApy,
+    });
+
+    const ethRow = result.find((r) => r.name === "Ethereum Morpho");
+    // Ethereum Morpho must keep at least $400K (floor = 500K - 100K maxWithdraw)
+    expect(ethRow.targetBalance.gte(usdc(400000))).to.be.true;
+  });
+
+  it("deploys all capital when single strategy dominates", async () => {
+    // Only HyperEVM has positive APY; Ethereum at 0%
+    const strategies = [
+      makeStrategy("Ethereum Morpho", 0, {
+        isDefault: true,
+        metaMorphoVaultAddress: ETH_VAULT,
+      }),
+      makeStrategy("HyperEVM Morpho", 0, {
+        isCrossChain: true,
+        metaMorphoVaultAddress: HYPER_VAULT,
+      }),
+    ];
+    const apys = { [ETH_VAULT]: 0, [HYPER_VAULT]: 0.08 };
+    const mockApy = createMockApyFn({
+      [ETH_VAULT]: { base: 0, decayPerChunk: 0 },
+      [HYPER_VAULT]: { base: 0.08, decayPerChunk: 0.002 },
+    });
+
+    const result = await computeImpactAwareAllocation({
+      strategies,
+      apys,
+      vaultBalance: usdc(300000),
+      shortfall: ZERO,
+      constraints: { allocationChunkSize: usdc(50000).toNumber() },
+      computeApy: mockApy,
+    });
+
+    const hyperRow = result.find((r) => r.name === "HyperEVM Morpho");
+    // HyperEVM should get everything (up to maxAllocationBps = 95%)
+    expect(hyperRow.targetBalance).to.equal(usdc(285000)); // 95% of 300K
+  });
+
+  it("handles shortfall by reducing deployable capital", async () => {
+    const strategies = [
+      makeStrategy("Ethereum Morpho", 200000, {
+        isDefault: true,
+        metaMorphoVaultAddress: ETH_VAULT,
+      }),
+      makeStrategy("HyperEVM Morpho", 100000, {
+        isCrossChain: true,
+        metaMorphoVaultAddress: HYPER_VAULT,
+      }),
+    ];
+    const apys = { [ETH_VAULT]: 0.04, [HYPER_VAULT]: 0.08 };
+    const mockApy = createMockApyFn({
+      [ETH_VAULT]: { base: 0.04, decayPerChunk: 0.001 },
+      [HYPER_VAULT]: { base: 0.08, decayPerChunk: 0.002 },
+    });
+
+    const result = await computeImpactAwareAllocation({
+      strategies,
+      apys,
+      vaultBalance: usdc(50000),
+      shortfall: usdc(20000),
+      constraints: { allocationChunkSize: usdc(50000).toNumber() },
+      computeApy: mockApy,
+    });
+
+    // Total deployed = 200K + 100K + 50K - 20K shortfall = 330K
+    const total = result.reduce((s, r) => s.add(r.targetBalance), ZERO);
+    expect(total).to.equal(usdc(330000));
+  });
+
+  it("respects minAllocationBps floor", async () => {
+    // Ethereum Morpho has minAllocationBps = 500 (5% minimum)
+    const strategies = [
+      makeStrategy("Ethereum Morpho", 0, {
+        isDefault: true,
+        metaMorphoVaultAddress: ETH_VAULT,
+        minAllocationBps: 500,
+      }),
+      makeStrategy("HyperEVM Morpho", 0, {
+        isCrossChain: true,
+        metaMorphoVaultAddress: HYPER_VAULT,
+      }),
+    ];
+    const apys = { [ETH_VAULT]: 0.02, [HYPER_VAULT]: 0.1 };
+    const mockApy = createMockApyFn({
+      [ETH_VAULT]: { base: 0.02, decayPerChunk: 0.001 },
+      [HYPER_VAULT]: { base: 0.1, decayPerChunk: 0.002 },
+    });
+
+    const result = await computeImpactAwareAllocation({
+      strategies,
+      apys,
+      vaultBalance: usdc(1000000),
+      shortfall: ZERO,
+      constraints: { allocationChunkSize: usdc(50000).toNumber() },
+      computeApy: mockApy,
+    });
+
+    const ethRow = result.find((r) => r.name === "Ethereum Morpho");
+    // Should get at least 5% of $1M = $50K
+    expect(ethRow.targetBalance.gte(usdc(50000))).to.be.true;
   });
 });

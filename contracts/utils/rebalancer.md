@@ -64,14 +64,27 @@ When simulation is active, a header is printed showing the adjustments applied.
 
 ## How it works
 
-### 1. Compute ideal allocation (`computeIdealAllocation`)
+### 1. Compute allocation (`computeImpactAwareAllocation`)
 
-Determines the ideal target balance for each strategy, ignoring real-world constraints.
+Allocates capital across strategies using step-wise marginal APY optimization.
+Instead of computing targets from static APYs and then capping by impact, the
+allocator distributes capital in chunks ($50K), always to the strategy with the
+highest post-deposit APY at that point.
 
-- Sorts strategies by APY descending and fills each up to `maxPerStrategyBps`
-- Ensures the default strategy always receives at least `minDefaultStrategyBps`
-- Reserves `shortfall + minVaultBalance` as idle vault cash — never deployed
-- Strategies with APY above `maxApyThreshold` are excluded from allocation (frozen at current balance) and flagged as suspicious
+1. **Pre-allocate floors**: each strategy gets at least its `minAllocationBps` share
+   and respects its withdrawal capacity floor (e.g., Ethereum Morpho can't go below
+   `balance - maxWithdraw`, where `maxWithdraw` is constrained by OETH/USDC
+   utilization <= 90% and OETH/wstETH spread >= 0.5%).
+2. **Step-wise fill**: allocate $50K chunks, each to the highest marginal APY
+   strategy. After each chunk, recompute the winner's APY via RPC
+   (`computeDepositImpactRpc`). As a strategy fills, its APY drops, eventually
+   yielding to the next-best.
+3. **Natural equilibrium**: capital flows to the highest-APY vault until its APY
+   drops to the next-best level, then splits between them. This maximizes
+   portfolio yield without arbitrary impact caps.
+
+- Reserves `shortfall + minVaultBalance` as idle vault cash
+- Strategies with APY above `maxApyThreshold` are excluded (frozen at current balance)
 
 ### 2. Filter executable actions (`buildExecutableActions`)
 
@@ -141,9 +154,10 @@ Cross-chain amounts are capped at 10 M USDC (CCTP bridge limit).
 | `minVaultBalance` | $0 USDC | Idle reserve always kept in the vault |
 | `minApySpread` | 0.5% | Minimum APY improvement required to trigger a withdrawal |
 | `maxApyThreshold` | 50% | APY above this is treated as suspicious — strategy is frozen in place |
-| `maxApyImpactBps` | 50 bps | Skip a deposit if it would reduce the vault's on-chain APY by more than this |
+| `maxApyImpactBps` | 50 bps | Max APY degradation per deposit (used by legacy capacity discovery) |
 | `maxWithdrawalApyImpactBps` | 50 bps | Max APY increase on source per withdrawal |
 | `maxSpotBelowAvgBps` | 200 bps | Block deposits when spot APY diverges below avg |
+| `allocationChunkSize` | $50K USDC | Step-wise allocation granularity |
 
 ## Files
 
