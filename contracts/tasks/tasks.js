@@ -2709,6 +2709,12 @@ subtask(
     undefined,
     types.int
   )
+  .addOptionalParam(
+    "json",
+    "Write structured JSON output to this file path",
+    undefined,
+    types.string
+  )
   .setAction(rebalancerTask);
 task("planRebalance").setAction(async (taskArgs, _, runSuper) => {
   return runSuper(taskArgs);
