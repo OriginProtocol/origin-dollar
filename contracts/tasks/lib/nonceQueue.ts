@@ -1,19 +1,24 @@
 import type { Pool, PoolClient } from "pg";
 import type { ethers } from "ethers";
+import {
+  isNonceMismatchError,
+  recoverNonceFromChain,
+  submitNonceQueuedTransaction,
+} from "./nonceQueueTxLifecycle";
 
 const log = require("../../utils/logger")("utils:nonceQueue");
 
 let pool: Pool | null = null;
 let tableEnsurePromise: Promise<void> | null = null;
 
-function getNonceQueueLockTimeoutMs(): number {
-  const value = process.env.NONCE_QUEUE_LOCK_TIMEOUT_MS;
+function getNonceQueueLockTimeoutSeconds(): number {
+  const value = process.env.NONCE_QUEUE_LOCK_TIMEOUT_S;
   if (!value) return 0;
 
   const parsed = Number(value);
   if (!Number.isInteger(parsed) || parsed < 0) {
     log(
-      `Invalid NONCE_QUEUE_LOCK_TIMEOUT_MS="${value}" (expected integer >= 0). Falling back to 0 (wait forever).`
+      `Invalid NONCE_QUEUE_LOCK_TIMEOUT_S="${value}" (expected integer >= 0). Falling back to 0 (wait forever).`
     );
     return 0;
   }
@@ -79,15 +84,6 @@ async function ensureNonceRow(
   }
 }
 
-function isNonceMismatchError(err: any): boolean {
-  const msg = (err?.message ?? "").toLowerCase();
-  return (
-    msg.includes("nonce too low") ||
-    msg.includes("nonce has already been used") ||
-    msg.includes("replacement transaction underpriced")
-  );
-}
-
 function isLockTimeoutError(err: any): boolean {
   const msg = (err?.message ?? "").toLowerCase();
   return (
@@ -109,12 +105,12 @@ async function withNonceLock<T>(
 
   for (let attempt = 0; attempt < maxRetries; attempt++) {
     const client = await p.connect();
-    const lockTimeoutMs = getNonceQueueLockTimeoutMs();
+    const lockTimeoutSeconds = getNonceQueueLockTimeoutSeconds();
     try {
       await client.query("BEGIN");
-      if (lockTimeoutMs > 0) {
+      if (lockTimeoutSeconds > 0) {
         await client.query("SELECT set_config('lock_timeout', $1, true)", [
-          `${lockTimeoutMs}ms`,
+          `${lockTimeoutSeconds}s`,
         ]);
       }
       await ensureNonceRow(client, signerAddress, chainId, getOnChainNonce);
@@ -147,7 +143,9 @@ async function withNonceLock<T>(
 
       if (isLockTimeoutError(err)) {
         const configuredTimeout =
-          lockTimeoutMs > 0 ? `${lockTimeoutMs}ms` : "Postgres default";
+          lockTimeoutSeconds > 0
+            ? `${lockTimeoutSeconds}s`
+            : "Postgres default";
         log(
           `Nonce lock timeout: unable to acquire lock for address=${signerAddress} chain=${chainId} within ${configuredTimeout}.`
         );
@@ -157,19 +155,12 @@ async function withNonceLock<T>(
         log(
           `Nonce mismatch (attempt ${attempt + 1}/${maxRetries}), recovering from chain…`
         );
-        const onChainNonce = await getOnChainNonce();
-        const recovery = await p.connect();
-        try {
-          await recovery.query(
-            "UPDATE nonce_queue SET nonce = $1, updated_at = NOW() WHERE signer_address = $2 AND chain_id = $3",
-            [onChainNonce, signerAddress, chainId]
-          );
-          log(
-            `Recovered nonce from chain: address=${signerAddress} chain=${chainId} nonce=${onChainNonce}`
-          );
-        } finally {
-          recovery.release();
-        }
+        await recoverNonceFromChain({
+          pool: p,
+          signerAddress,
+          chainId,
+          getOnChainNonce,
+        });
         if (attempt < maxRetries - 1) continue;
       }
 
@@ -217,12 +208,14 @@ export function wrapWithNonceQueue(
       chainId,
       getOnChainNonce,
       async (nonce) => {
-        const response = await originalSendTransaction({
-          ...transaction,
+        return submitNonceQueuedTransaction({
+          sendTransaction: originalSendTransaction,
+          provider: signer.provider ?? undefined,
+          transaction,
           nonce,
+          signerAddress,
+          chainId,
         });
-        await response.wait();
-        return response;
       }
     );
   };
