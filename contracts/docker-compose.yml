@@ -24,6 +24,7 @@ services:
       - "8080:8080"
     environment:
       - DATABASE_URL=${DATABASE_URL:-postgresql://nonce:nonce@postgres:5432/nonce_queue}
+      - NONCE_QUEUE_LOCK_TIMEOUT_MS=${NONCE_QUEUE_LOCK_TIMEOUT_MS:-0}
       - PROVIDER_URL=${PROVIDER_URL:-}
       - SONIC_PROVIDER_URL=${SONIC_PROVIDER_URL:-}
       - PLUME_PROVIDER_URL=${PLUME_PROVIDER_URL:-}

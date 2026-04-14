@@ -6,6 +6,21 @@ const log = require("../../utils/logger")("utils:nonceQueue");
 let pool: Pool | null = null;
 let tableEnsurePromise: Promise<void> | null = null;
 
+function getNonceQueueLockTimeoutMs(): number {
+  const value = process.env.NONCE_QUEUE_LOCK_TIMEOUT_MS;
+  if (!value) return 0;
+
+  const parsed = Number(value);
+  if (!Number.isInteger(parsed) || parsed < 0) {
+    log(
+      `Invalid NONCE_QUEUE_LOCK_TIMEOUT_MS="${value}" (expected integer >= 0). Falling back to 0 (wait forever).`
+    );
+    return 0;
+  }
+
+  return parsed;
+}
+
 export function getNoncePool(): Pool | null {
   if (!process.env.DATABASE_URL) return null;
   if (!pool) {
@@ -73,6 +88,15 @@ function isNonceMismatchError(err: any): boolean {
   );
 }
 
+function isLockTimeoutError(err: any): boolean {
+  const msg = (err?.message ?? "").toLowerCase();
+  return (
+    err?.code === "55P03" ||
+    msg.includes("lock timeout") ||
+    msg.includes("canceling statement due to lock timeout")
+  );
+}
+
 async function withNonceLock<T>(
   p: Pool,
   signerAddress: string,
@@ -85,8 +109,14 @@ async function withNonceLock<T>(
 
   for (let attempt = 0; attempt < maxRetries; attempt++) {
     const client = await p.connect();
+    const lockTimeoutMs = getNonceQueueLockTimeoutMs();
     try {
       await client.query("BEGIN");
+      if (lockTimeoutMs > 0) {
+        await client.query("SELECT set_config('lock_timeout', $1, true)", [
+          `${lockTimeoutMs}ms`,
+        ]);
+      }
       await ensureNonceRow(client, signerAddress, chainId, getOnChainNonce);
 
       const { rows } = await client.query(
@@ -114,6 +144,14 @@ async function withNonceLock<T>(
       return result;
     } catch (err: any) {
       await client.query("ROLLBACK").catch(() => {});
+
+      if (isLockTimeoutError(err)) {
+        const configuredTimeout =
+          lockTimeoutMs > 0 ? `${lockTimeoutMs}ms` : "Postgres default";
+        log(
+          `Nonce lock timeout: unable to acquire lock for address=${signerAddress} chain=${chainId} within ${configuredTimeout}.`
+        );
+      }
 
       if (isNonceMismatchError(err)) {
         log(
