@@ -68,6 +68,7 @@ const ousdConstraints = {
   withdrawalStepSize: 100000000000, // $100K USDC — binary search granularity
   maxSpotBelowAvgBps: 200, // Block deposits if spot APY is significantly below the average
   apyAverageWindow: "1h", // Time window for the average APY used in allocation decisions
+  allocationChunkSize: 50000000000, // $50K USDC — step-wise allocation granularity
 };
 
 // ─── Morpho market IDs ──────────────────────────────────────────────────────
