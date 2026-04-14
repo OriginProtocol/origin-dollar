@@ -49,6 +49,7 @@ async function ensureNonceRow(
     "SELECT 1 FROM nonce_queue WHERE signer_address = $1 AND chain_id = $2",
     [signerAddress, chainId]
   );
+  // fetching the on-chain nonce only if there is no signer & chain id combination in the database
   if (rows.length === 0) {
     const onChainNonce = await getOnChainNonce();
     log(
