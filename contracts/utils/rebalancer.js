@@ -14,7 +14,6 @@ const {
 } = require("./rebalancer-config");
 const { fetchMorphoApys } = require("./morpho-apy");
 const {
-  findMaxDepositRpc,
   findMaxWithdrawalRpc,
   computeDepositImpactRpc,
   computeWithdrawalImpactRpc,
@@ -204,15 +203,10 @@ function _computeDeployableCapital(
 
 /**
  * Greedy fill: sort strategies by APY descending, fill each up to its per-strategy
- * maxAllocationBps (and deposit capacity if known).
+ * maxAllocationBps.
  * Returns a plain object { [address]: BigNumber } of target balances.
  */
-function _greedyFillByApy(
-  strategies,
-  deployableCapital,
-  strategyApyOf,
-  depositCapacities = {}
-) {
+function _greedyFillByApy(strategies, deployableCapital, strategyApyOf) {
   const sorted = [...strategies].sort(
     (a, b) => strategyApyOf(b) - strategyApyOf(a)
   );
@@ -225,17 +219,7 @@ function _greedyFillByApy(
     const maxBps = s.maxAllocationBps != null ? s.maxAllocationBps : 10000;
     const maxAllocationAmt = deployableCapital.mul(maxBps).div(10000);
 
-    // Cap to deposit capacity: current balance + maxDeposit
-    const cap = depositCapacities[s.metaMorphoVaultAddress];
-    let effectiveMax = maxAllocationAmt;
-    if (cap && cap.maxDeposit) {
-      const capacityCap = s.balance.add(cap.maxDeposit);
-      if (capacityCap.lt(effectiveMax)) {
-        effectiveMax = capacityCap;
-      }
-    }
-
-    const alloc = remaining.lt(effectiveMax) ? remaining : effectiveMax;
+    const alloc = remaining.lt(maxAllocationAmt) ? remaining : maxAllocationAmt;
     targets[s.address] = alloc;
     remaining = remaining.sub(alloc);
     if (remaining.isZero()) break;
@@ -560,7 +544,6 @@ function _buildAllocationRow(s, targetBalance, apy, spotApy = 0) {
  *
  * Allocation: sort strategies by APY descending, fill each up to per-strategy maxAllocationBps.
  * Each strategy is guaranteed at least its minAllocationBps.
- * Deposit capacity (from discoverDepositCapacities) further constrains allocation.
  *
  * @param {object} params
  * @param {Array}  params.strategies
@@ -569,7 +552,6 @@ function _buildAllocationRow(s, targetBalance, apy, spotApy = 0) {
  * @param {BigNumber} params.vaultBalance
  * @param {BigNumber} params.shortfall
  * @param {object} [params.constraints]
- * @param {object} [params.depositCapacities] - from discoverDepositCapacities()
  * @returns {Array} allocation results
  */
 function computeIdealAllocation({
@@ -579,7 +561,6 @@ function computeIdealAllocation({
   vaultBalance,
   shortfall,
   constraints: overrides = {},
-  depositCapacities = {},
   withdrawalCapacities = {},
 }) {
   const constraints = { ...ousdConstraints, ...overrides };
@@ -606,8 +587,7 @@ function computeIdealAllocation({
   const targets = _greedyFillByApy(
     strategies,
     deployableCapital,
-    strategyApyOf,
-    depositCapacities
+    strategyApyOf
   );
   const adjusted = _enforceMinimums(
     targets,
@@ -623,78 +603,6 @@ function computeIdealAllocation({
       strategySpotApyOf(s)
     )
   );
-}
-
-/**
- * Discover the maximum deposit amount per strategy that keeps APY impact within
- * the threshold. Uses origin-morpho-utils to binary-search via RPC.
- *
- * @param {Array}     strategies       - strategy config objects with balance
- * @param {BigNumber} deployableCapital
- * @param {object}    constraints
- * @returns {object} { [metaMorphoVaultAddress]: { maxDeposit, postDepositApy, impactBps } }
- */
-async function discoverDepositCapacities(
-  strategies,
-  deployableCapital,
-  constraints
-) {
-  const capacities = {};
-  const zeroCap = () => ({
-    maxDeposit: BigNumber.from(0),
-    postDepositApy: 0,
-    impactBps: 0,
-  });
-  await Promise.all(
-    strategies.map(async (s) => {
-      if (!s.metaMorphoVaultAddress || !s.morphoChainId) return;
-      const rpcUrl = getRpcUrl(s.morphoChainId);
-      if (!rpcUrl) {
-        log(
-          `No RPC URL for chain ${s.morphoChainId}, skipping capacity for ${s.name}`
-        );
-        capacities[s.metaMorphoVaultAddress] = zeroCap();
-        return;
-      }
-      try {
-        const maxBps = s.maxAllocationBps != null ? s.maxAllocationBps : 10000;
-        const maxPossible = deployableCapital
-          .mul(maxBps)
-          .div(10000)
-          .sub(s.balance);
-        if (maxPossible.lt(constraints.minMoveAmount)) {
-          capacities[s.metaMorphoVaultAddress] = zeroCap();
-          return;
-        }
-        const result = await findMaxDepositRpc(
-          rpcUrl,
-          s.morphoChainId,
-          s.metaMorphoVaultAddress,
-          maxPossible.toBigInt(),
-          constraints.maxApyImpactBps,
-          { precision: BigInt(constraints.depositStepSize) }
-        );
-        const maxDeposit = BigNumber.from(result.amount.toString());
-        capacities[s.metaMorphoVaultAddress] = {
-          maxDeposit,
-          impactBps: result.impact.impactBps,
-          postDepositApy: result.impact.newApy,
-        };
-        log(
-          `Deposit capacity for ${s.name}: ${fmtUsd(maxDeposit)} ` +
-            `(impact ${result.impact.impactBps}bps, post-deposit APY ${(
-              result.impact.newApy * 100
-            ).toFixed(2)}%)`
-        );
-      } catch (err) {
-        log(`Deposit capacity discovery failed for ${s.name}: ${err.message}`);
-        // Fail-closed: if we can't determine capacity, don't allow deposits.
-        // An RPC failure should not bypass the APY impact guard.
-        capacities[s.metaMorphoVaultAddress] = zeroCap();
-      }
-    })
-  );
-  return capacities;
 }
 
 /**
@@ -822,19 +730,12 @@ function _filterWithdrawals(result, constraints, withdrawalCapacities = {}) {
 }
 
 /**
- * Resolve a single deposit: early-exit checks, cap, split surplus/withdrawal,
- * spread-check, min-check. Returns result without mutating deposit.
+ * Resolve a single deposit: early-exit checks, budget cap, min-check.
+ * Returns result without mutating deposit.
  *
- * @returns {{ rejected: boolean, amt?, reason?, surplusUsed?, impactBps?, warn? }}
+ * @returns {{ rejected: boolean, amt?, reason?, surplusUsed?, warn? }}
  */
-function _resolveDeposit(
-  deposit,
-  budget,
-  surplusBudget,
-  highestWithdrawalApy,
-  constraints,
-  capacity
-) {
+function _resolveDeposit(deposit, budget, surplusBudget, constraints) {
   // Early exits
   if (deposit.isCrossChain && deposit.isTransferPending) {
     return { rejected: true, reason: "transfer pending" };
@@ -859,66 +760,21 @@ function _resolveDeposit(
     return { rejected: true, reason: "insufficient vault funds" };
   }
 
-  // Cap to available budget and deposit capacity
+  // Cap to available budget
   let amt = deposit.delta.gt(budget) ? budget : deposit.delta;
   let reason = null;
 
-  if (capacity && capacity.maxDeposit.gt(0) && amt.gt(capacity.maxDeposit)) {
-    amt = capacity.maxDeposit;
-    reason = `capped to deposit capacity: ${fmtUsd(amt)}`;
-  }
-
-  // Split into surplus-funded and withdrawal-funded portions
-  const surplusPortion = surplusBudget.lt(amt) ? surplusBudget : amt;
-
-  // Spread check on withdrawal-funded portion only
-  // Surplus earns 0% in the vault — any positive APY is a win, no spread needed.
-  let spreadNarrowed = false;
-  if (
-    amt.gt(surplusPortion) &&
-    highestWithdrawalApy != null &&
-    constraints.minApySpread
-  ) {
-    const postDepositApy = capacity?.postDepositApy;
-    if (postDepositApy != null) {
-      const spread = postDepositApy - highestWithdrawalApy;
-      if (spread < constraints.minApySpread) {
-        amt = surplusPortion;
-        spreadNarrowed = true;
-      }
-    }
-  }
-
-  // Format spread reason (reused for both rejection and approval paths)
-  const spreadReason =
-    spreadNarrowed && capacity?.postDepositApy != null
-      ? `post-impact spread ${(
-          (capacity.postDepositApy - highestWithdrawalApy) *
-          100
-        ).toFixed(2)}% < min ${(constraints.minApySpread * 100).toFixed(2)}%`
-      : null;
-
   // Single min-amount check
   if (amt.lt(constraints.minMoveAmount)) {
-    if (capacity && capacity.maxDeposit.isZero()) {
-      return {
-        rejected: true,
-        reason: "APY impact too high even at minimum amount",
-      };
-    }
-    return { rejected: true, reason: spreadReason || "below min move" };
+    return { rejected: true, reason: "below min move" };
   }
   if (deposit.isCrossChain && amt.lt(constraints.crossChainMinAmount)) {
-    return { rejected: true, reason: spreadReason || "below cross-chain min" };
+    return { rejected: true, reason: "below cross-chain min" };
   }
 
   // Approved — determine reason
   if (amt.lt(deposit.delta)) {
-    if (spreadNarrowed) {
-      reason = `trimmed to vault surplus (${spreadReason})`;
-    } else if (!reason) {
-      reason = "trimmed to available vault funds";
-    }
+    reason = "trimmed to available vault funds";
   }
 
   const surplusUsed = amt.gt(surplusBudget) ? surplusBudget : amt;
@@ -985,8 +841,6 @@ async function _allocateDeposits(
   vaultBalance,
   shortfall,
   constraints,
-  depositCapacities,
-  withdrawalCapacities,
   warnings
 ) {
   const approvedWithdrawals = result.filter(
@@ -1004,32 +858,12 @@ async function _allocateDeposits(
   let budget = withdrawTotal.add(vaultSurplus);
   let surplusBudget = vaultSurplus;
 
-  // Use post-withdrawal APY when available (more accurate than current APY
-  // because withdrawals push source vault APY up, shrinking the real spread)
-  const highestWithdrawalApy =
-    approvedWithdrawals.length > 0
-      ? Math.max(
-          ...approvedWithdrawals.map((w) => {
-            const cap = withdrawalCapacities[w.metaMorphoVaultAddress];
-            return cap?.postWithdrawalApy ?? w.apy;
-          })
-        )
-      : null;
-
   const deposits = result
     .filter((a) => a.action === ACTION_DEPOSIT)
     .sort((a, b) => b.apy - a.apy);
 
   for (const deposit of deposits) {
-    const capacity = depositCapacities[deposit.metaMorphoVaultAddress];
-    const res = _resolveDeposit(
-      deposit,
-      budget,
-      surplusBudget,
-      highestWithdrawalApy,
-      constraints,
-      capacity
-    );
+    const res = _resolveDeposit(deposit, budget, surplusBudget, constraints);
 
     if (res.rejected) {
       deposit.action = ACTION_NONE;
@@ -1255,7 +1089,7 @@ function _trimExcessWithdrawals(result, vaultBalance, shortfall, constraints) {
  * @param {BigNumber} shortfall   - vault withdrawal shortfall (after addWithdrawalQueueLiquidity offset)
  * @param {BigNumber} vaultBalance - vault idle USDC (after addWithdrawalQueueLiquidity offset)
  * @param {object}    [constraintOverrides]
- * @param {object}    [depositCapacities] - from discoverDepositCapacities()
+ * @param {object}    [withdrawalCapacities] - from discoverWithdrawalCapacities()
  * @returns {Promise<Array>}
  */
 
@@ -1308,7 +1142,6 @@ async function buildExecutableActions(
   shortfall = BigNumber.from(0),
   vaultBalance = BigNumber.from(0),
   constraintOverrides = {},
-  depositCapacities = {},
   withdrawalCapacities = {},
   warnings = []
 ) {
@@ -1324,8 +1157,6 @@ async function buildExecutableActions(
     vaultBalance,
     shortfall,
     constraints,
-    depositCapacities,
-    withdrawalCapacities,
     warnings
   );
 
@@ -1889,7 +1720,6 @@ async function buildRebalancePlan(simulation) {
     idealActions,
     state.shortfall,
     state.vaultBalance,
-    {},
     {},
     withdrawalCapacities,
     warnings
