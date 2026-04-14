@@ -214,7 +214,9 @@ jobs:
         env:
           DATABASE_URL: postgresql://test:test@localhost:5432/nonce_test
         working-directory: ./contracts
-        run: pnpm exec ts-node tasks/lib/nonceQueue.test.ts
+        run: |
+          pnpm exec ts-node tasks/lib/nonceQueue.test.ts
+          pnpm exec ts-node tasks/lib/nonceQueueTxLifecycle.test.ts
   
   contracts-forktest:
     name: "Mainnet Fork Tests ${{ matrix.chunk_id }}"
