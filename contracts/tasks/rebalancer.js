@@ -45,6 +45,7 @@ function writeJsonOutput(result, outputPath) {
 
     return {
       name: a.name,
+      address: a.address,
       currentBalance: balanceNum,
       currentPct: totalNum > 0 ? (balanceNum / totalNum) * 100 : 0,
       targetBalance: targetNum,
@@ -76,6 +77,7 @@ function writeJsonOutput(result, outputPath) {
       currentPct: totalNum > 0 ? (vaultBalanceNum / totalNum) * 100 : 0,
       targetBalance: vaultTargetNum,
       targetPct: totalNum > 0 ? (vaultTargetNum / totalNum) * 100 : 0,
+      delta: vaultTargetNum - vaultBalanceNum,
     },
   };
 
