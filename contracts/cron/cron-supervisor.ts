@@ -1,6 +1,7 @@
 import { spawn } from "node:child_process";
 import fs from "node:fs";
 import baseLogger, { flushLogger } from "../tasks/lib/logger";
+import { getNoncePool } from "../tasks/lib/nonceQueue";
 import { createApi } from "./api";
 import { cronJobs } from "./cron-jobs";
 import { renderCrontab } from "./render-crontab";
@@ -136,6 +137,12 @@ async function shutdown(signal: string) {
     await flushLogger();
   } catch (err: any) {
     log.error(`flushLogger failed: ${err?.message}`);
+  }
+  try {
+    const pool = getNoncePool();
+    if (pool) await pool.end();
+  } catch (err: any) {
+    log.error(`noncePool close failed: ${err?.message}`);
   }
   server.close();
 

@@ -34,11 +34,11 @@ action({
     log.info(
       `Calling harvestAndTransfer on ${OS_HARVESTER_PROXY_DEPLOYMENT} at ${harvester.address} for strategy ${strategyProxy.address}`
     );
-    const harvestTx = await harvester
-      .connect(signer)
-      ["harvestAndTransfer(address)"](strategyProxy.address, {
-        gasLimit: 400000,
-      });
+    const connectedHarvester = harvester.connect(signer);
+    const harvestTx = await connectedHarvester["harvestAndTransfer(address)"](
+      strategyProxy.address,
+      { gasLimit: 400000 }
+    );
     await logTxDetails(harvestTx, "harvestAndTransfer");
   },
 });
