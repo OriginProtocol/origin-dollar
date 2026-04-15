@@ -154,6 +154,14 @@ async function applyGasLimitBuffer({
     ? maxBigNumber(configuredGasLimit, bufferedGasLimit)
     : bufferedGasLimit;
 
+  log(
+    `Applied gas-limit buffer: stage=${stage} address=${signerAddress} chain=${chainId} nonce=${nonce} estimatedGas=${estimatedGas.toString()} bufferPct=${gasLimitBufferPct} bufferedGas=${bufferedGasLimit.toString()} finalGasLimit=${finalGasLimit.toString()}${
+      configuredGasLimit
+        ? ` configuredGasLimit=${configuredGasLimit.toString()}`
+        : ""
+    }`
+  );
+
   if (configuredGasLimit && finalGasLimit.eq(configuredGasLimit)) {
     return transaction;
   }
