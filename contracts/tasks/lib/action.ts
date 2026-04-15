@@ -1,9 +1,10 @@
+import { randomUUID } from "node:crypto";
 import type { ethers } from "ethers";
 import { subtask, task } from "hardhat/config";
 import type { ConfigurableTaskDefinition } from "hardhat/types";
 import type { Logger } from "winston";
 
-import { getSigner } from "../../utils/signers";
+import { getSigner as defaultGetSigner } from "../../utils/signers";
 import logger, { flushLogger } from "./logger";
 import { wrapWithNonceQueue } from "./nonceQueue";
 
@@ -15,12 +16,16 @@ export interface ActionContext {
   args: Record<string, any>;
 }
 
-interface ActionConfig {
+export interface ActionConfig {
   name: string;
   description: string;
   chains?: number[];
   params?: (t: ConfigurableTaskDefinition) => void;
   run: (ctx: ActionContext) => Promise<void>;
+}
+
+export interface ActionDeps {
+  getSigner?: () => Promise<ethers.Signer>;
 }
 
 const CHAIN_NAMES: Record<number, string> = {
@@ -33,21 +38,16 @@ const CHAIN_NAMES: Record<number, string> = {
   42161: "arbitrum",
 };
 
-export function action(config: ActionConfig) {
-  const { name, description, chains, params, run } = config;
+export function createActionHandler(
+  config: ActionConfig,
+  deps: ActionDeps = {},
+) {
+  const { name, chains, run } = config;
+  const getSigner = deps.getSigner ?? defaultGetSigner;
 
-  const definition = subtask(name, description);
-
-  if (params) {
-    params(definition);
-  }
-
-  definition.setAction(async (taskArgs: Record<string, any>) => {
-    const runId = process.env.AUTOMATON_RUN_ID;
-    const log = logger.child({
-      action: name,
-      ...(runId ? { run_id: runId } : {}),
-    });
+  return async (taskArgs: Record<string, any>) => {
+    const runId = randomUUID();
+    const log = logger.child({ action: name, run_id: runId });
     const startTime = Date.now();
     let chainId: number | undefined;
     let networkName: string | undefined;
@@ -59,17 +59,33 @@ export function action(config: ActionConfig) {
       const signer = wrapWithNonceQueue(rawSigner, chainId);
       networkName = CHAIN_NAMES[chainId] ?? `unknown-${chainId}`;
 
+      log.info(`Running on ${networkName} (${chainId})`, {
+        event: "action.start",
+        source: "task",
+        chain_id: chainId,
+        network: networkName,
+      });
+
       if (chains && !chains.includes(chainId)) {
         const valid = chains
           .map((id) => `${CHAIN_NAMES[id] ?? id} (${id})`)
           .join(", ");
         throw new Error(
-          `${name} only supports ${valid}, not ${networkName} (${chainId})`
+          `${name} only supports ${valid}, not ${networkName} (${chainId})`,
         );
       }
 
-      log.info(`Running on ${networkName} (${chainId})`);
       await run({ signer, chainId, networkName, log, args: taskArgs });
+      log.info(
+        `Completed in ${((Date.now() - startTime) / 1000).toFixed(1)}s`,
+        {
+          event: "action.success",
+          source: "task",
+          chain_id: chainId,
+          network: networkName,
+          duration_ms: Date.now() - startTime,
+        },
+      );
     } catch (err: any) {
       log.error(`${err?.name ?? "Error"}: ${err?.message ?? String(err)}`, {
         event: "action.error",
@@ -85,9 +101,19 @@ export function action(config: ActionConfig) {
     } finally {
       await flushLogger();
     }
-  });
+  };
+}
 
-  task(name).setAction(async (_, __, runSuper) => {
+export function action(config: ActionConfig) {
+  const handler = createActionHandler(config);
+
+  const definition = subtask(config.name, config.description);
+  if (config.params) {
+    config.params(definition);
+  }
+  definition.setAction(handler);
+
+  task(config.name).setAction(async (_, __, runSuper) => {
     return runSuper();
   });
 }

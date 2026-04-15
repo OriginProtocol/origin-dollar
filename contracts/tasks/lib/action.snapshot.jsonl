@@ -1,0 +1,8 @@
+{"action":"test_harvest","run_id":"<uuid>","event":"action.start","source":"task","chain_id":1,"network":"mainnet","level":"info","message":"Running on mainnet (1)"}
+{"action":"test_harvest","run_id":"<uuid>","message":"Harvesting rewards","level":"info"}
+{"action":"test_harvest","run_id":"<uuid>","message":"Swapped 100 CRV -> 0.5 ETH","level":"info"}
+{"action":"test_harvest","run_id":"<uuid>","event":"action.success","source":"task","chain_id":1,"network":"mainnet","duration_ms":"<number>","level":"info","message":"Completed in 0.0s"}
+{"action":"test_harvest","run_id":"<uuid>","event":"action.start","source":"task","chain_id":1,"network":"mainnet","level":"info","message":"Running on mainnet (1)"}
+{"action":"test_harvest","run_id":"<uuid>","event":"action.error","source":"task","chain_id":1,"network":"mainnet","duration_ms":"<number>","error_name":"Error","error_message":"insufficient funds for gas","error_stack":"Error: insufficient funds for gas","level":"error","message":"Error: insufficient funds for gas"}
+{"action":"sonic_only_action","run_id":"<uuid>","event":"action.start","source":"task","chain_id":1,"network":"mainnet","level":"info","message":"Running on mainnet (1)"}
+{"action":"sonic_only_action","run_id":"<uuid>","event":"action.error","source":"task","chain_id":1,"network":"mainnet","duration_ms":"<number>","error_name":"Error","error_message":"sonic_only_action only supports sonic (146), not mainnet (1)","error_stack":"Error: sonic_only_action only supports sonic (146), not mainnet (1)","level":"error","message":"Error: sonic_only_action only supports sonic (146), not mainnet (1)"}
