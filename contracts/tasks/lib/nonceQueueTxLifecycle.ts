@@ -1,5 +1,5 @@
 import type { Pool, PoolClient } from "pg";
-import { BigNumber } from "ethers";
+import { BigNumber, utils } from "ethers";
 import type { ethers } from "ethers";
 
 const log = require("../../utils/logger")("utils:nonceQueueTxLifecycle");
@@ -79,11 +79,154 @@ function asBigNumber(value: any): BigNumber | undefined {
 
 function bumpByPercent(value: BigNumber, percent: number): BigNumber {
   if (percent === 0) return value;
-  return value.mul(100 + percent).add(99).div(100);
+  return value
+    .mul(100 + percent)
+    .add(99)
+    .div(100);
 }
 
 function maxBigNumber(a: BigNumber, b: BigNumber): BigNumber {
   return a.gte(b) ? a : b;
+}
+
+function getTxCapComparableGasPrice(
+  transaction: Parameters<ethers.Signer["sendTransaction"]>[0]
+): BigNumber | undefined {
+  // For EIP-1559, maxFeePerGas is the effective ceiling; for legacy tx use gasPrice.
+  return (
+    asBigNumber(transaction.maxFeePerGas) ?? asBigNumber(transaction.gasPrice)
+  );
+}
+
+function getPerChainMaxGasPriceEnvKey(chainId: number): string {
+  return `NONCE_QUEUE_MAX_GAS_PRICE_GWEI_CHAIN_${chainId}`;
+}
+
+function resolveMaxGasPriceWeiForChain(chainId: number): BigNumber | null {
+  const envKey = getPerChainMaxGasPriceEnvKey(chainId);
+  const value = process.env[envKey];
+  if (!value) return null;
+
+  const parsed = Number(value);
+  if (!Number.isInteger(parsed) || parsed < 0) {
+    log(
+      `Invalid ${envKey}="${value}" (expected integer >= 0). Gas cap disabled for chain ${chainId}.`
+    );
+    return null;
+  }
+  if (parsed === 0) return null;
+  return GWEI.mul(parsed);
+}
+
+function assertWithinGasPriceCap({
+  priceWei,
+  maxGasPriceWei,
+  maxGasPriceEnvKey,
+  stage,
+  signerAddress,
+  chainId,
+  nonce,
+}: {
+  priceWei: BigNumber;
+  maxGasPriceWei: BigNumber;
+  maxGasPriceEnvKey: string;
+  stage: "initial submission" | "rebroadcast" | "replacement";
+  signerAddress: string;
+  chainId: number;
+  nonce: number;
+}) {
+  if (priceWei.lte(maxGasPriceWei)) return;
+  throw new Error(
+    `Nonce queue gas price cap exceeded during ${stage}: address=${signerAddress} chain=${chainId} nonce=${nonce} gasPrice=${priceWei.toString()} wei cap=${maxGasPriceWei.toString()} wei (set by ${maxGasPriceEnvKey})`
+  );
+}
+
+async function enforceSubmissionGasPriceCap({
+  transaction,
+  provider,
+  maxGasPriceWei,
+  maxGasPriceEnvKey,
+  stage,
+  signerAddress,
+  chainId,
+  nonce,
+}: {
+  transaction: Parameters<ethers.Signer["sendTransaction"]>[0];
+  provider?: ethers.providers.Provider;
+  maxGasPriceWei: BigNumber | null;
+  maxGasPriceEnvKey: string;
+  stage: "initial submission" | "replacement";
+  signerAddress: string;
+  chainId: number;
+  nonce: number;
+}) {
+  if (!maxGasPriceWei) return;
+
+  // Prefer explicit tx fee fields. If missing, query network fee data so the cap
+  // still applies to transactions where callers omitted fee overrides.
+  let comparableGasPrice = getTxCapComparableGasPrice(transaction);
+  if (!comparableGasPrice && provider) {
+    const feeData = await provider.getFeeData().catch(() => null);
+    comparableGasPrice =
+      asBigNumber(feeData?.maxFeePerGas) ?? asBigNumber(feeData?.gasPrice);
+  }
+
+  if (!comparableGasPrice) {
+    throw new Error(
+      `Unable to enforce ${maxGasPriceEnvKey} for ${stage}: address=${signerAddress} chain=${chainId} nonce=${nonce} transaction has no gasPrice/maxFeePerGas and provider fee data is unavailable`
+    );
+  }
+
+  assertWithinGasPriceCap({
+    priceWei: comparableGasPrice,
+    maxGasPriceWei,
+    maxGasPriceEnvKey,
+    stage,
+    signerAddress,
+    chainId,
+    nonce,
+  });
+}
+
+function enforceRebroadcastGasPriceCap({
+  rawTransaction,
+  maxGasPriceWei,
+  maxGasPriceEnvKey,
+  signerAddress,
+  chainId,
+  nonce,
+}: {
+  rawTransaction: string;
+  maxGasPriceWei: BigNumber | null;
+  maxGasPriceEnvKey: string;
+  signerAddress: string;
+  chainId: number;
+  nonce: number;
+}) {
+  if (!maxGasPriceWei) return;
+
+  // Rebroadcast path operates on raw signed tx bytes. Parse them to recover
+  // gas settings and enforce the same cap policy before re-sending.
+  const parsedTransaction = utils.parseTransaction(rawTransaction);
+  const comparableGasPrice =
+    asBigNumber(parsedTransaction.maxFeePerGas) ??
+    asBigNumber(parsedTransaction.gasPrice);
+
+  if (!comparableGasPrice) {
+    throw new Error(
+      `Unable to enforce ${maxGasPriceEnvKey} for rebroadcast: address=${signerAddress} chain=${chainId} nonce=${nonce} raw transaction has no gasPrice/maxFeePerGas`
+    );
+  }
+
+  assertWithinGasPriceCap({
+    priceWei: comparableGasPrice,
+    maxGasPriceWei,
+    maxGasPriceEnvKey,
+    stage: "rebroadcast",
+    signerAddress,
+    chainId,
+    nonce,
+  });
 }
 
 function extractRawTransaction(
@@ -131,6 +274,8 @@ async function buildReplacementTransaction(
     nextTx.type === 2;
 
   if (hasEip1559Fees) {
+    // Keep replacement monotonic: bump previous fee settings and never go below
+    // current network recommendations.
     const basePriority =
       asBigNumber(nextTx.maxPriorityFeePerGas) ??
       asBigNumber(feeData?.maxPriorityFeePerGas) ??
@@ -168,6 +313,7 @@ async function buildReplacementTransaction(
     asBigNumber(nextTx.gasPrice) ??
     asBigNumber(feeData?.gasPrice) ??
     DEFAULT_GAS_PRICE;
+  // Legacy path: bump prior gasPrice and floor at current network gasPrice.
   const networkGasPrice = asBigNumber(feeData?.gasPrice);
   let finalGasPrice = bumpByPercent(baseGasPrice, feeBumpPct);
   if (networkGasPrice) {
@@ -190,14 +336,31 @@ export async function submitNonceQueuedTransaction({
   chainId,
 }: SubmitNonceQueuedTxParams): Promise<ethers.providers.TransactionResponse> {
   const config = getTxLifecycleConfig();
+  const maxGasPriceEnvKey = getPerChainMaxGasPriceEnvKey(chainId);
+  // The lifecycle intentionally ignores the legacy global cap and only reads
+  // per-chain caps, so operators can tune limits independently per network.
+  const maxGasPriceWei = resolveMaxGasPriceWeiForChain(chainId);
   const initialTx: Parameters<ethers.Signer["sendTransaction"]>[0] = {
     ...transaction,
     nonce,
   };
+
+  // Enforce fee cap before any on-chain submission.
+  await enforceSubmissionGasPriceCap({
+    transaction: initialTx,
+    provider,
+    maxGasPriceWei,
+    maxGasPriceEnvKey,
+    stage: "initial submission",
+    signerAddress,
+    chainId,
+    nonce,
+  });
+
   const firstResponse = await sendTransaction(initialTx);
-  const responsesByHash = new Map<string, ethers.providers.TransactionResponse>([
-    [firstResponse.hash, firstResponse],
-  ]);
+  const responsesByHash = new Map<string, ethers.providers.TransactionResponse>(
+    [[firstResponse.hash, firstResponse]]
+  );
   const knownHashes: string[] = [firstResponse.hash];
   let activeTx = initialTx;
   let activeResponse = firstResponse;
@@ -225,6 +388,10 @@ export async function submitNonceQueuedTransaction({
       ? startedAt + secondsToMs(config.replaceIntervalS)
       : Number.POSITIVE_INFINITY;
 
+  // Single in-flight lifecycle loop:
+  // 1) check mined receipts across known hashes
+  // 2) optional rebroadcast raw tx
+  // 3) optional same-nonce replacement with bumped fee
   while (true) {
     const receipt = await findMinedReceipt(txProvider, knownHashes);
     if (receipt) {
@@ -251,6 +418,16 @@ export async function submitNonceQueuedTransaction({
 
       if (activeRawTx && typeof txProvider.sendTransaction === "function") {
         try {
+          // Re-check cap at rebroadcast time; tx may have been replaced with
+          // a higher fee since the initial submission.
+          enforceRebroadcastGasPriceCap({
+            rawTransaction: activeRawTx,
+            maxGasPriceWei,
+            maxGasPriceEnvKey,
+            signerAddress,
+            chainId,
+            nonce,
+          });
           const rebroadcastResponse = await txProvider.sendTransaction(
             activeRawTx
           );
@@ -286,6 +463,18 @@ export async function submitNonceQueuedTransaction({
         txProvider,
         config.feeBumpPct
       );
+      // Replacement txs are still fresh submissions. Enforce the same chain cap
+      // after fee bumping so retries never exceed operator limits.
+      await enforceSubmissionGasPriceCap({
+        transaction: activeTx,
+        provider: txProvider,
+        maxGasPriceWei,
+        maxGasPriceEnvKey,
+        stage: "replacement",
+        signerAddress,
+        chainId,
+        nonce,
+      });
 
       try {
         const replacementResponse = await sendTransaction(activeTx);
@@ -304,7 +493,9 @@ export async function submitNonceQueuedTransaction({
           throw err;
         }
         log(
-          `Replacement attempt not accepted yet: address=${signerAddress} chain=${chainId} nonce=${nonce} reason="${err?.message ?? String(err)}"`
+          `Replacement attempt not accepted yet: address=${signerAddress} chain=${chainId} nonce=${nonce} reason="${
+            err?.message ?? String(err)
+          }"`
         );
       }
     }

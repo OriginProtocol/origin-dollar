@@ -1,8 +1,10 @@
-import { BigNumber } from "ethers";
+import { BigNumber, Wallet } from "ethers";
 
 import { submitNonceQueuedTransaction } from "./nonceQueueTxLifecycle";
 
 type EnvOverrides = Record<string, string | undefined>;
+const MAINNET_GAS_CAP_ENV = "NONCE_QUEUE_MAX_GAS_PRICE_GWEI_CHAIN_1";
+const BASE_GAS_CAP_ENV = "NONCE_QUEUE_MAX_GAS_PRICE_GWEI_CHAIN_8453";
 
 function makeResponse(hash: string, raw?: string): any {
   return {
@@ -170,7 +172,9 @@ async function testTimeoutPath() {
     throw new Error("Expected timeout error but transaction did not fail");
   }
   if (!timeoutError.message.includes("after 2s")) {
-    throw new Error(`Unexpected timeout error message: ${timeoutError.message}`);
+    throw new Error(
+      `Unexpected timeout error message: ${timeoutError.message}`
+    );
   }
 
   console.log("PASS: confirmation timeout errors as expected\n");
@@ -232,10 +236,310 @@ async function testRebroadcastPath() {
   console.log("PASS: rebroadcast duplicate errors are handled\n");
 }
 
+async function testInitialSubmissionGasCap() {
+  console.log("--- Lifecycle Test 4: Initial submission per-chain gas cap ---");
+
+  let sendCalls = 0;
+  const signerSendTransaction = async () => {
+    sendCalls++;
+    return makeResponse("0xshould-not-send");
+  };
+  const provider: any = {
+    async getFeeData() {
+      return {};
+    },
+  };
+
+  let capError: Error | undefined;
+  await withEnv(
+    {
+      [MAINNET_GAS_CAP_ENV]: "20",
+      [BASE_GAS_CAP_ENV]: undefined,
+      NONCE_QUEUE_MAX_GAS_PRICE_GWEI: undefined,
+      NONCE_QUEUE_TX_CONFIRM_TIMEOUT_S: "10",
+      NONCE_QUEUE_RECEIPT_POLL_S: "1",
+      NONCE_QUEUE_REBROADCAST_INTERVAL_S: "0",
+      NONCE_QUEUE_REPLACE_INTERVAL_S: "0",
+    },
+    async () => {
+      try {
+        await submitNonceQueuedTransaction({
+          sendTransaction: signerSendTransaction as any,
+          provider,
+          transaction: {
+            to: "0x0000000000000000000000000000000000000001",
+            data: "0x",
+            gasPrice: BigNumber.from(25).mul(1_000_000_000),
+          } as any,
+          nonce: 21,
+          signerAddress: "0xdddd",
+          chainId: 1,
+        });
+      } catch (err: any) {
+        capError = err;
+      }
+    }
+  );
+
+  if (!capError) {
+    throw new Error("Expected initial submission gas cap error");
+  }
+  if (!capError.message.includes("initial submission")) {
+    throw new Error(`Unexpected gas cap error message: ${capError.message}`);
+  }
+  if (sendCalls !== 0) {
+    throw new Error(
+      `Expected sendTransaction not to be called, got ${sendCalls}`
+    );
+  }
+
+  console.log("PASS: initial submission over cap fails before sending\n");
+}
+
+async function testMissingChainSpecificCapDisablesEnforcement() {
+  console.log(
+    "--- Lifecycle Test 5: Missing chain-specific cap disables enforcement ---"
+  );
+
+  let sendCalls = 0;
+  const signerSendTransaction = async () => {
+    sendCalls++;
+    return makeResponse("0xno-cap-chain");
+  };
+
+  const result = await withEnv(
+    {
+      [MAINNET_GAS_CAP_ENV]: "20",
+      [BASE_GAS_CAP_ENV]: undefined,
+      NONCE_QUEUE_MAX_GAS_PRICE_GWEI: undefined,
+      NONCE_QUEUE_REBROADCAST_INTERVAL_S: "0",
+      NONCE_QUEUE_REPLACE_INTERVAL_S: "0",
+    },
+    () =>
+      submitNonceQueuedTransaction({
+        sendTransaction: signerSendTransaction as any,
+        transaction: {
+          to: "0x0000000000000000000000000000000000000001",
+          data: "0x",
+          gasPrice: BigNumber.from(25).mul(1_000_000_000),
+        } as any,
+        nonce: 23,
+        signerAddress: "0xffff",
+        chainId: 8453,
+      })
+  );
+
+  if (result.hash !== "0xno-cap-chain") {
+    throw new Error(`Expected successful tx hash, got ${result.hash}`);
+  }
+  if (sendCalls !== 1) {
+    throw new Error(`Expected one send call, got ${sendCalls}`);
+  }
+
+  console.log("PASS: cap is disabled when chain-specific env is missing\n");
+}
+
+async function testReplacementGasCap() {
+  console.log("--- Lifecycle Test 6: Replacement gas cap ---");
+
+  const sentTxs: any[] = [];
+  const signerSendTransaction = async (tx: any) => {
+    sentTxs.push(tx);
+    return makeResponse("0xreplacement-seed", "0xraw-replacement-seed");
+  };
+
+  const provider: any = {
+    async getTransactionReceipt() {
+      return null;
+    },
+    async getFeeData() {
+      return {
+        maxFeePerGas: BigNumber.from(10).mul(1_000_000_000),
+        maxPriorityFeePerGas: BigNumber.from(2).mul(1_000_000_000),
+      };
+    },
+    async sendTransaction() {
+      throw new Error("rebroadcast disabled in replacement cap test");
+    },
+  };
+
+  let capError: Error | undefined;
+  await withEnv(
+    {
+      [MAINNET_GAS_CAP_ENV]: "12",
+      [BASE_GAS_CAP_ENV]: undefined,
+      NONCE_QUEUE_MAX_GAS_PRICE_GWEI: undefined,
+      NONCE_QUEUE_TX_CONFIRM_TIMEOUT_S: "10",
+      NONCE_QUEUE_RECEIPT_POLL_S: "1",
+      NONCE_QUEUE_REBROADCAST_INTERVAL_S: "0",
+      NONCE_QUEUE_REPLACE_INTERVAL_S: "1",
+      NONCE_QUEUE_MAX_REPLACEMENTS: "2",
+      NONCE_QUEUE_FEE_BUMP_PCT: "30",
+    },
+    async () => {
+      try {
+        await submitNonceQueuedTransaction({
+          sendTransaction: signerSendTransaction as any,
+          provider,
+          transaction: {
+            to: "0x0000000000000000000000000000000000000001",
+            data: "0x",
+            maxFeePerGas: BigNumber.from(10).mul(1_000_000_000),
+            maxPriorityFeePerGas: BigNumber.from(2).mul(1_000_000_000),
+            type: 2,
+          } as any,
+          nonce: 24,
+          signerAddress: "0x1111",
+          chainId: 1,
+        });
+      } catch (err: any) {
+        capError = err;
+      }
+    }
+  );
+
+  if (!capError) {
+    throw new Error("Expected replacement gas cap error");
+  }
+  if (!capError.message.includes("replacement")) {
+    throw new Error(`Unexpected replacement cap error: ${capError.message}`);
+  }
+  if (sentTxs.length !== 1) {
+    throw new Error(
+      `Expected only initial send to happen before replacement cap failure, got ${sentTxs.length}`
+    );
+  }
+
+  console.log("PASS: replacement over cap fails before sending replacement\n");
+}
+
+async function testRebroadcastGasCap() {
+  console.log("--- Lifecycle Test 7: Rebroadcast gas cap ---");
+
+  const wallet = new Wallet(
+    "0x59c6995e998f97a5a0044966f0945388cf0f6e44f9c76c9d83f816f94f8f93f4"
+  );
+  const highGasRaw = await wallet.signTransaction({
+    to: "0x0000000000000000000000000000000000000001",
+    nonce: 0,
+    gasLimit: 21_000,
+    gasPrice: BigNumber.from(30).mul(1_000_000_000),
+    value: 0,
+    chainId: 1,
+    data: "0x",
+  });
+
+  let providerSendCalls = 0;
+  const signerSendTransaction = async () => makeResponse("0xseed", highGasRaw);
+  const provider: any = {
+    async getTransactionReceipt() {
+      return null;
+    },
+    async getFeeData() {
+      return {};
+    },
+    async sendTransaction() {
+      providerSendCalls++;
+      return makeResponse("0xrebroadcast-high");
+    },
+  };
+
+  let capError: Error | undefined;
+  await withEnv(
+    {
+      [MAINNET_GAS_CAP_ENV]: "20",
+      [BASE_GAS_CAP_ENV]: undefined,
+      NONCE_QUEUE_MAX_GAS_PRICE_GWEI: undefined,
+      NONCE_QUEUE_TX_CONFIRM_TIMEOUT_S: "10",
+      NONCE_QUEUE_RECEIPT_POLL_S: "1",
+      NONCE_QUEUE_REBROADCAST_INTERVAL_S: "1",
+      NONCE_QUEUE_REPLACE_INTERVAL_S: "0",
+    },
+    async () => {
+      try {
+        await submitNonceQueuedTransaction({
+          sendTransaction: signerSendTransaction as any,
+          provider,
+          transaction: {
+            to: "0x0000000000000000000000000000000000000001",
+            data: "0x",
+            gasPrice: BigNumber.from(10).mul(1_000_000_000),
+          } as any,
+          nonce: 22,
+          signerAddress: "0xeeee",
+          chainId: 1,
+        });
+      } catch (err: any) {
+        capError = err;
+      }
+    }
+  );
+
+  if (!capError) {
+    throw new Error("Expected rebroadcast gas cap error");
+  }
+  if (!capError.message.includes("rebroadcast")) {
+    throw new Error(`Unexpected rebroadcast cap error: ${capError.message}`);
+  }
+  if (providerSendCalls !== 0) {
+    throw new Error(
+      `Expected provider rebroadcast sendTransaction not to be called, got ${providerSendCalls}`
+    );
+  }
+
+  console.log("PASS: rebroadcast over cap fails with clear error\n");
+}
+
+async function testDeprecatedGlobalGasCapIgnored() {
+  console.log("--- Lifecycle Test 8: Deprecated global gas cap is ignored ---");
+
+  let sendCalls = 0;
+  const signerSendTransaction = async () => {
+    sendCalls++;
+    return makeResponse("0xglobal-ignored");
+  };
+
+  const result = await withEnv(
+    {
+      [MAINNET_GAS_CAP_ENV]: undefined,
+      [BASE_GAS_CAP_ENV]: undefined,
+      NONCE_QUEUE_MAX_GAS_PRICE_GWEI: "1",
+      NONCE_QUEUE_REBROADCAST_INTERVAL_S: "0",
+      NONCE_QUEUE_REPLACE_INTERVAL_S: "0",
+    },
+    () =>
+      submitNonceQueuedTransaction({
+        sendTransaction: signerSendTransaction as any,
+        transaction: {
+          to: "0x0000000000000000000000000000000000000001",
+          data: "0x",
+          gasPrice: BigNumber.from(50).mul(1_000_000_000),
+        } as any,
+        nonce: 25,
+        signerAddress: "0x2222",
+        chainId: 1,
+      })
+  );
+
+  if (result.hash !== "0xglobal-ignored") {
+    throw new Error(`Expected tx success when only global cap is set`);
+  }
+  if (sendCalls !== 1) {
+    throw new Error(`Expected one send call, got ${sendCalls}`);
+  }
+
+  console.log("PASS: deprecated global cap does not enforce lifecycle limit\n");
+}
+
 async function test() {
   await testReplacementPath();
   await testTimeoutPath();
   await testRebroadcastPath();
+  await testInitialSubmissionGasCap();
+  await testMissingChainSpecificCapDisablesEnforcement();
+  await testReplacementGasCap();
+  await testRebroadcastGasCap();
+  await testDeprecatedGlobalGasCapIgnored();
   console.log("All nonceQueueTxLifecycle tests passed!");
 }
 
