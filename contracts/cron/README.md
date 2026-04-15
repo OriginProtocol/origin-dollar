@@ -66,10 +66,14 @@ Set `enabled: false` to define a job that can only be triggered via the API.
 | `LOKI_API_KEY` | Loki basic auth key (optional) |
 | `AWS_ACCESS_KEY_ID` | For KMS signer (optional) |
 | `AWS_SECRET_ACCESS_KEY` | For KMS signer (optional) |
-| `AUTOMATON_RUN_ID` | Set automatically by the supervisor when spawning a job; correlates task-side logs with the supervisor's lifecycle events |
-
 ## Observability
 
-Every scheduled invocation produces exactly one `action.start` and exactly one terminal event (`action.success` or `action.failure`) from the supervisor, plus an `action.error` (with stack, chain, network) from the task wrapper if it threw. All four events share a `run_id` for correlation.
+Each action generates its own `run_id` (UUID) and emits structured events via the winston/Loki logger in `tasks/lib/action.ts`:
 
-See [`OBSERVABILITY.md`](./OBSERVABILITY.md) for the field schema, the LogQL cookbook, and the recipe for debugging a single failed run end-to-end.
+- `action.start` — emitted after resolving the signer and chain, before running the action
+- `action.success` — emitted on successful completion, includes `duration_ms`
+- `action.error` — emitted on failure, includes `duration_ms`, `error_name`, `error_message`, `error_stack`
+
+All events for a single run share the same `run_id` for correlation in Grafana.
+
+See [`OBSERVABILITY.md`](./OBSERVABILITY.md) for the field schema and LogQL cookbook.
