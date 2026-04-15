@@ -77,7 +77,7 @@ export const cronJobs: CronJob[] = [
     schedule: "*/5 * * * *", // every 5 minutes
     enabled: true,
     command:
-      "cd /app && pnpm hardhat healthcheck --network ${HARDHAT_NETWORK:-mainnet}",
+      "cd /app && pnpm hardhat healthcheck --network mainnet",
   },
   {
     name: "daily_snap_balances",
