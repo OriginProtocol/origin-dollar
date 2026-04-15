@@ -120,24 +120,6 @@ export const cronJobs: CronJob[] = [
       "cd /app && pnpm hardhat autoValidatorWithdrawals --network mainnet",
   },
   {
-    name: "daily_rebase_mainnet_oeth",
-    schedule: "30 0 * * *", // daily
-    enabled: true,
-    command: "cd /app && pnpm hardhat rebase --network mainnet --symbol OETH",
-  },
-  {
-    name: "daily_rebase_mainnet_ousd",
-    schedule: "35 0 * * *", // daily
-    enabled: true,
-    command: "cd /app && pnpm hardhat rebase --network mainnet --symbol OUSD",
-  },
-  {
-    name: "daily_rebase_base_oeth",
-    schedule: "40 0 * * *", // daily
-    enabled: true,
-    command: "cd /app && pnpm hardhat rebase --network base --symbol OETH",
-  },
-  {
     name: "otoken_os_collectAndRelease",
     schedule: "55 23 * * *", // daily
     enabled: false,
