@@ -26,6 +26,7 @@ interface TxLifecycleConfig {
   replaceIntervalS: number;
   maxReplacements: number;
   feeBumpPct: number;
+  gasLimitBufferPct: number;
 }
 
 function sleep(ms: number) {
@@ -61,6 +62,12 @@ function getTxLifecycleConfig(): TxLifecycleConfig {
     replaceIntervalS: parseIntEnv("NONCE_QUEUE_REPLACE_INTERVAL_S", 90),
     maxReplacements: parseIntEnv("NONCE_QUEUE_MAX_REPLACEMENTS", 3),
     feeBumpPct: parseIntEnv("NONCE_QUEUE_FEE_BUMP_PCT", 15, 0, 500),
+    gasLimitBufferPct: parseIntEnv(
+      "NONCE_QUEUE_GAS_LIMIT_BUFFER_PCT",
+      0,
+      0,
+      500
+    ),
   };
 }
 
@@ -96,6 +103,65 @@ function getTxCapComparableGasPrice(
   return (
     asBigNumber(transaction.maxFeePerGas) ?? asBigNumber(transaction.gasPrice)
   );
+}
+
+async function applyGasLimitBuffer({
+  transaction,
+  provider,
+  gasLimitBufferPct,
+  signerAddress,
+  chainId,
+  nonce,
+  stage,
+}: {
+  transaction: Parameters<ethers.Signer["sendTransaction"]>[0];
+  provider?: ethers.providers.Provider;
+  gasLimitBufferPct: number;
+  signerAddress: string;
+  chainId: number;
+  nonce: number;
+  stage: "initial submission" | "replacement";
+}): Promise<Parameters<ethers.Signer["sendTransaction"]>[0]> {
+  if (gasLimitBufferPct <= 0) return transaction;
+  if (!provider || typeof provider.estimateGas !== "function")
+    return transaction;
+
+  const estimateRequest: Parameters<
+    ethers.providers.Provider["estimateGas"]
+  >[0] = {
+    ...transaction,
+    from: signerAddress,
+  };
+  if (estimateRequest.nonce === undefined) {
+    estimateRequest.nonce = nonce;
+  }
+
+  const estimatedGas = await provider
+    .estimateGas(estimateRequest)
+    .catch((err) => {
+      log(
+        `Failed to estimate gas for ${stage}; skipping NONCE_QUEUE_GAS_LIMIT_BUFFER_PCT: address=${signerAddress} chain=${chainId} nonce=${nonce} error="${
+          err?.message ?? String(err)
+        }"`
+      );
+      return null;
+    });
+  if (!estimatedGas) return transaction;
+
+  const bufferedGasLimit = bumpByPercent(estimatedGas, gasLimitBufferPct);
+  const configuredGasLimit = asBigNumber(transaction.gasLimit);
+  const finalGasLimit = configuredGasLimit
+    ? maxBigNumber(configuredGasLimit, bufferedGasLimit)
+    : bufferedGasLimit;
+
+  if (configuredGasLimit && finalGasLimit.eq(configuredGasLimit)) {
+    return transaction;
+  }
+
+  return {
+    ...transaction,
+    gasLimit: finalGasLimit,
+  };
 }
 
 function getPerChainMaxGasPriceEnvKey(chainId: number): string {
@@ -340,10 +406,22 @@ export async function submitNonceQueuedTransaction({
   // The lifecycle intentionally ignores the legacy global cap and only reads
   // per-chain caps, so operators can tune limits independently per network.
   const maxGasPriceWei = resolveMaxGasPriceWeiForChain(chainId);
-  const initialTx: Parameters<ethers.Signer["sendTransaction"]>[0] = {
+  let initialTx: Parameters<ethers.Signer["sendTransaction"]>[0] = {
     ...transaction,
     nonce,
   };
+
+  // Apply optional global gas-limit headroom over provider estimate to reduce
+  // under-estimation failures during volatile state changes.
+  initialTx = await applyGasLimitBuffer({
+    transaction: initialTx,
+    provider,
+    gasLimitBufferPct: config.gasLimitBufferPct,
+    signerAddress,
+    chainId,
+    nonce,
+    stage: "initial submission",
+  });
 
   // Enforce fee cap before any on-chain submission.
   await enforceSubmissionGasPriceCap({
@@ -463,6 +541,15 @@ export async function submitNonceQueuedTransaction({
         txProvider,
         config.feeBumpPct
       );
+      activeTx = await applyGasLimitBuffer({
+        transaction: activeTx,
+        provider: txProvider,
+        gasLimitBufferPct: config.gasLimitBufferPct,
+        signerAddress,
+        chainId,
+        nonce,
+        stage: "replacement",
+      });
       // Replacement txs are still fresh submissions. Enforce the same chain cap
       // after fee bumping so retries never exceed operator limits.
       await enforceSubmissionGasPriceCap({

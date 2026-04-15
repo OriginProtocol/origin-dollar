@@ -531,6 +531,149 @@ async function testDeprecatedGlobalGasCapIgnored() {
   console.log("PASS: deprecated global cap does not enforce lifecycle limit\n");
 }
 
+async function testInitialSubmissionGasLimitBuffer() {
+  console.log("--- Lifecycle Test 9: Initial submission gas-limit buffer ---");
+
+  const sentTxs: any[] = [];
+  const signerSendTransaction = async (tx: any) => {
+    sentTxs.push(tx);
+    return makeResponse("0xgas-buffer-initial");
+  };
+
+  const provider: any = {
+    async getTransactionReceipt(hash: string) {
+      if (hash === "0xgas-buffer-initial") {
+        return { status: 1, transactionHash: "0xgas-buffer-initial" };
+      }
+      return null;
+    },
+    async getFeeData() {
+      return {};
+    },
+    async estimateGas() {
+      return BigNumber.from(100_000);
+    },
+  };
+
+  await withEnv(
+    {
+      NONCE_QUEUE_GAS_LIMIT_BUFFER_PCT: "25",
+      NONCE_QUEUE_REBROADCAST_INTERVAL_S: "0",
+      NONCE_QUEUE_REPLACE_INTERVAL_S: "0",
+    },
+    () =>
+      submitNonceQueuedTransaction({
+        sendTransaction: signerSendTransaction as any,
+        provider,
+        transaction: {
+          to: "0x0000000000000000000000000000000000000001",
+          data: "0x",
+        } as any,
+        nonce: 26,
+        signerAddress: "0x3333",
+        chainId: 1,
+      })
+  );
+
+  if (sentTxs.length !== 1) {
+    throw new Error(`Expected a single submission, got ${sentTxs.length}`);
+  }
+  if (!BigNumber.from(sentTxs[0].gasLimit).eq(125_000)) {
+    throw new Error(
+      `Expected buffered gasLimit=125000, got ${sentTxs[0].gasLimit}`
+    );
+  }
+
+  console.log("PASS: initial submission gas limit buffered from estimate\n");
+}
+
+async function testReplacementGasLimitBuffer() {
+  console.log("--- Lifecycle Test 10: Replacement gas-limit buffer ---");
+
+  const sentTxs: any[] = [];
+  let sendCount = 0;
+  const signerSendTransaction = async (tx: any) => {
+    sentTxs.push(tx);
+    if (sendCount === 0) {
+      sendCount++;
+      return makeResponse("0xgas-buffer-seed", "0xraw-seed");
+    }
+    sendCount++;
+    return makeResponse("0xgas-buffer-replacement", "0xraw-replacement");
+  };
+
+  let receiptChecks = 0;
+  let estimateCalls = 0;
+  const provider: any = {
+    async getTransactionReceipt(hash: string) {
+      receiptChecks++;
+      if (hash === "0xgas-buffer-replacement" && receiptChecks >= 4) {
+        return { status: 1, transactionHash: "0xgas-buffer-replacement" };
+      }
+      return null;
+    },
+    async getFeeData() {
+      return {
+        maxFeePerGas: BigNumber.from(400),
+        maxPriorityFeePerGas: BigNumber.from(5),
+      };
+    },
+    async estimateGas() {
+      estimateCalls++;
+      return estimateCalls === 1
+        ? BigNumber.from(100_000)
+        : BigNumber.from(150_000);
+    },
+    async sendTransaction() {
+      throw new Error("rebroadcast disabled in this test");
+    },
+  };
+
+  await withEnv(
+    {
+      NONCE_QUEUE_GAS_LIMIT_BUFFER_PCT: "25",
+      NONCE_QUEUE_TX_CONFIRM_TIMEOUT_S: "20",
+      NONCE_QUEUE_RECEIPT_POLL_S: "1",
+      NONCE_QUEUE_REBROADCAST_INTERVAL_S: "0",
+      NONCE_QUEUE_REPLACE_INTERVAL_S: "1",
+      NONCE_QUEUE_MAX_REPLACEMENTS: "2",
+      NONCE_QUEUE_FEE_BUMP_PCT: "20",
+    },
+    () =>
+      submitNonceQueuedTransaction({
+        sendTransaction: signerSendTransaction as any,
+        provider,
+        transaction: {
+          to: "0x0000000000000000000000000000000000000001",
+          data: "0x",
+          maxFeePerGas: BigNumber.from(100),
+          maxPriorityFeePerGas: BigNumber.from(2),
+        } as any,
+        nonce: 27,
+        signerAddress: "0x4444",
+        chainId: 1,
+      })
+  );
+
+  if (sentTxs.length < 2) {
+    throw new Error(`Expected replacement submission, got ${sentTxs.length}`);
+  }
+  if (!BigNumber.from(sentTxs[0].gasLimit).eq(125_000)) {
+    throw new Error(
+      `Expected initial buffered gasLimit=125000, got ${sentTxs[0].gasLimit}`
+    );
+  }
+  if (!BigNumber.from(sentTxs[1].gasLimit).eq(187_500)) {
+    throw new Error(
+      `Expected replacement buffered gasLimit=187500, got ${sentTxs[1].gasLimit}`
+    );
+  }
+
+  console.log(
+    "PASS: replacement submission gas limit buffered from estimate\n"
+  );
+}
+
 async function test() {
   await testReplacementPath();
   await testTimeoutPath();
@@ -540,6 +683,8 @@ async function test() {
   await testReplacementGasCap();
   await testRebroadcastGasCap();
   await testDeprecatedGlobalGasCapIgnored();
+  await testInitialSubmissionGasLimitBuffer();
+  await testReplacementGasLimitBuffer();
   console.log("All nonceQueueTxLifecycle tests passed!");
 }
 
