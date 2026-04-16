@@ -60,16 +60,20 @@ Set `enabled: false` to define a job that can only be triggered via the API.
 
 ## Environment variables
 
-| Variable                  | Description                           |
-| ------------------------- | ------------------------------------- |
-| `ACTION_API_BEARER_TOKEN` | Required. Auth token for the HTTP API |
-| `PROVIDER_URL`            | Mainnet RPC endpoint                  |
-| `HARDHAT_NETWORK`         | Default network for tasks             |
-| `LOKI_URL`                | Grafana Loki push endpoint (optional) |
-| `LOKI_USER`               | Loki basic auth user (optional)       |
-| `LOKI_API_KEY`            | Loki basic auth key (optional)        |
-| `AWS_ACCESS_KEY_ID`       | For KMS signer (optional)             |
-| `AWS_SECRET_ACCESS_KEY`   | For KMS signer (optional)             |
+| Variable                   | Description                                                          |
+| -------------------------- | -------------------------------------------------------------------- |
+| `ACTION_API_BEARER_TOKEN`  | Required. Auth token for the HTTP API                                |
+| `PROVIDER_URL`             | Mainnet RPC endpoint                                                 |
+| `HARDHAT_NETWORK`          | Default network for tasks                                            |
+| `WINSTON_LOG_MODE_ENABLED` | Enable structured winston logging with run/action correlation fields |
+| `LOKI_URL`                 | Grafana Loki push endpoint (optional)                                |
+| `LOKI_USER`                | Loki basic auth user (optional)                                      |
+| `LOKI_API_KEY`             | Loki basic auth key (optional)                                       |
+| `AWS_ACCESS_KEY_ID`        | For KMS signer (optional)                                            |
+| `AWS_SECRET_ACCESS_KEY`    | For KMS signer (optional)                                            |
+
+When `WINSTON_LOG_MODE_ENABLED` is unset/false, task modules continue to use the
+legacy `debug` logger flow (`DEBUG=origin:*` wildcard filtering).
 
 ## Observability
 

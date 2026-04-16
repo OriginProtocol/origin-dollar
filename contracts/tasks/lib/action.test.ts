@@ -13,6 +13,8 @@ import { createActionHandler } from "./action";
 import type { ActionContext } from "./action";
 import logger from "./logger";
 
+process.env.WINSTON_LOG_MODE_ENABLED = "true";
+
 const SNAPSHOT_PATH = path.join(__dirname, "action.snapshot.jsonl");
 const updateSnapshot = process.argv.includes("--update");
 

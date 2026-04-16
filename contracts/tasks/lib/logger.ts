@@ -1,9 +1,56 @@
+import { AsyncLocalStorage } from "node:async_hooks";
+import util from "node:util";
 import { createLogger, format, transports } from "winston";
 import LokiTransport from "winston-loki";
 
 const lokiUrl = process.env.LOKI_URL;
 const lokiUser = process.env.LOKI_USER;
 const lokiApiKey = process.env.LOKI_API_KEY;
+const WINSTON_LOG_MODE_ENABLED_ENV = "WINSTON_LOG_MODE_ENABLED";
+
+const LOG_MODE_ENABLED_VALUES = new Set(["1", "true", "yes", "on"]);
+
+export interface LogContext {
+  action?: string;
+  run_id?: string;
+  [key: string]: unknown;
+}
+
+const logContextStorage = new AsyncLocalStorage<LogContext>();
+
+export function isWinstonLogModeEnabled(): boolean {
+  const rawValue = process.env[WINSTON_LOG_MODE_ENABLED_ENV];
+  if (!rawValue) return false;
+  return LOG_MODE_ENABLED_VALUES.has(rawValue.toLowerCase());
+}
+
+export function withLogContext<T>(
+  context: LogContext,
+  fn: () => Promise<T> | T
+): Promise<T> | T {
+  return logContextStorage.run(context, fn);
+}
+
+export function getLogContext(): LogContext | undefined {
+  return logContextStorage.getStore();
+}
+
+function toMessageString(message: unknown): string {
+  if (typeof message === "string") return message;
+  return util.format("%o", message);
+}
+
+export function logWithContext(
+  level: string,
+  message: unknown,
+  meta: Record<string, unknown> = {}
+): void {
+  const context = getLogContext() ?? {};
+  logger.log(level, toMessageString(message), {
+    ...context,
+    ...meta,
+  });
+}
 
 const consoleFormat = format.combine(
   format.timestamp(),
