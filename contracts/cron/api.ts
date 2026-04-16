@@ -86,12 +86,25 @@ export function createApi(opts: ApiOpts): http.Server {
     run.status = "running";
     run.startedAt = nowIso();
     run.command = action.command;
+    const startedAtMs = Date.now();
+    let terminalEventEmitted = false;
 
-    log.info(`Starting run ${run.runId} for "${action.name}"`);
+    log.info(`Starting run ${run.runId} for "${action.name}"`, {
+      event: "action.start",
+      source: "supervisor",
+      action: action.name,
+      run_id: run.runId,
+      schedule: action.schedule,
+      command: action.command,
+    });
 
     const child = spawn("/bin/sh", ["-lc", action.command], {
       cwd: workdir,
-      env: process.env,
+      env: {
+        ...process.env,
+        ACTION_RUN_ID: run.runId,
+        ACTION_NAME: action.name,
+      },
       stdio: "inherit",
     });
     run.pid = child.pid ?? null;
@@ -102,7 +115,22 @@ export function createApi(opts: ApiOpts): http.Server {
       run.exitCode = null;
       run.signal = null;
       run.error = err.message;
-      log.error(`Run ${run.runId} failed to spawn: ${err.message}`);
+      if (terminalEventEmitted) return;
+      terminalEventEmitted = true;
+      log.error(`Run ${run.runId} failed to spawn: ${err.message}`, {
+        event: "action.failure",
+        source: "supervisor",
+        action: action.name,
+        run_id: run.runId,
+        schedule: action.schedule,
+        command: action.command,
+        duration_ms: Date.now() - startedAtMs,
+        exit_code: null,
+        signal: null,
+        spawn_failed: true,
+        error_name: err?.name ?? "Error",
+        error_message: err?.message ?? String(err),
+      });
     });
 
     child.on("exit", (code, signal) => {
@@ -110,6 +138,28 @@ export function createApi(opts: ApiOpts): http.Server {
       run.exitCode = code;
       run.signal = signal;
       run.status = code === 0 ? "succeeded" : "failed";
+      if (terminalEventEmitted) return;
+      terminalEventEmitted = true;
+      const terminalMeta = {
+        event: code === 0 ? "action.success" : "action.failure",
+        source: "supervisor",
+        action: action.name,
+        run_id: run.runId,
+        schedule: action.schedule,
+        command: action.command,
+        duration_ms: Date.now() - startedAtMs,
+        exit_code: code,
+        signal,
+        spawn_failed: false,
+      };
+      if (code === 0) {
+        log.info(`Run ${run.runId} completed successfully`, terminalMeta);
+      } else {
+        log.error(
+          `Run ${run.runId} failed (exit_code=${code}, signal=${signal})`,
+          terminalMeta
+        );
+      }
     });
   }
 

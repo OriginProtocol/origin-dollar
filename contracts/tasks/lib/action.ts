@@ -53,7 +53,11 @@ export function createActionHandler(
 
   return async (taskArgs: Record<string, any>) => {
     const winstonMode = isWinstonLogModeEnabled();
-    const runId = randomUUID();
+    const propagatedRunId = process.env.ACTION_RUN_ID?.trim();
+    const runId =
+      propagatedRunId && propagatedRunId.length > 0
+        ? propagatedRunId
+        : randomUUID();
     const log: Logger = winstonMode
       ? logger.child({ action: name, run_id: runId })
       : legacyLoggerFactory(`action:${name}`);
