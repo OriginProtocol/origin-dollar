@@ -2,6 +2,8 @@ import { spawn } from "node:child_process";
 import { randomUUID, timingSafeEqual } from "node:crypto";
 import http from "node:http";
 import type { Logger } from "winston";
+import { getNoncePool } from "../tasks/lib/nonceQueue";
+import { listNonceQueueTransactions } from "../tasks/lib/nonceQueueTxHistory";
 import type { CronJob } from "./render-crontab";
 
 // --- Run tracking ---
@@ -34,6 +36,20 @@ export interface ApiOpts {
   historyLimit: number;
   healthCheck: () => { running: boolean; pid: number | null };
   log: Logger;
+}
+
+function parsePositiveIntParam(
+  value: string | null,
+  {
+    fallback,
+    minimum,
+    maximum,
+  }: { fallback: number; minimum: number; maximum: number }
+): number | null {
+  if (value === null || value.trim() === "") return fallback;
+  const parsed = Number(value);
+  if (!Number.isInteger(parsed) || parsed < minimum) return null;
+  return Math.min(parsed, maximum);
 }
 
 export function createApi(opts: ApiOpts): http.Server {
@@ -126,7 +142,7 @@ export function createApi(opts: ApiOpts): http.Server {
     res: http.ServerResponse,
     statusCode: number,
     payload: any,
-    extraHeaders: Record<string, string> = {},
+    extraHeaders: Record<string, string> = {}
   ) {
     res.writeHead(statusCode, {
       "Content-Type": "application/json",
@@ -186,9 +202,65 @@ export function createApi(opts: ApiOpts): http.Server {
       });
     }
 
+    if (method === "GET" && url.pathname === "/api/v1/transactions") {
+      const limit = parsePositiveIntParam(url.searchParams.get("limit"), {
+        fallback: 50,
+        minimum: 1,
+        maximum: 500,
+      });
+      if (limit === null) {
+        return json(res, 400, {
+          error: "Invalid limit (expected integer >= 1)",
+        });
+      }
+
+      const addressParam = url.searchParams.get("address");
+      const normalizedAddress =
+        addressParam && addressParam.trim().length > 0
+          ? addressParam.trim().toLowerCase()
+          : undefined;
+      const chainIdParam = url.searchParams.get("chainId");
+      let parsedChainId: number | undefined;
+      if (chainIdParam !== null && chainIdParam.trim().length > 0) {
+        const candidate = Number(chainIdParam);
+        if (!Number.isInteger(candidate) || candidate < 0) {
+          return json(res, 400, {
+            error: "Invalid chainId (expected integer >= 0)",
+          });
+        }
+        parsedChainId = candidate;
+      }
+
+      const noncePool = getNoncePool();
+      if (!noncePool) {
+        return json(res, 200, { transactions: [] });
+      }
+
+      void listNonceQueueTransactions({
+        pool: noncePool,
+        params: {
+          limit,
+          address: normalizedAddress,
+          chainId: parsedChainId,
+        },
+      })
+        .then((transactions) => {
+          json(res, 200, { transactions });
+        })
+        .catch((err: any) => {
+          log.error(
+            `Failed to list nonce queue transactions: ${
+              err?.message ?? String(err)
+            }`
+          );
+          json(res, 500, { error: "Internal server error" });
+        });
+      return;
+    }
+
     // Trigger action run
     const triggerMatch = url.pathname.match(
-      /^\/api\/v1\/actions\/([^/]+)\/runs$/,
+      /^\/api\/v1\/actions\/([^/]+)\/runs$/
     );
     if (method === "POST" && triggerMatch) {
       const run = triggerAction(decodeURIComponent(triggerMatch[1]));
@@ -196,7 +268,9 @@ export function createApi(opts: ApiOpts): http.Server {
         return json(res, 404, {
           error: `Unknown action "${triggerMatch[1]}"`,
         });
-      const statusUrl = `${origin}/api/v1/runs/${encodeURIComponent(run.runId)}`;
+      const statusUrl = `${origin}/api/v1/runs/${encodeURIComponent(
+        run.runId
+      )}`;
       return json(
         res,
         202,
@@ -207,7 +281,7 @@ export function createApi(opts: ApiOpts): http.Server {
           statusUrl,
           startedAt: run.startedAt,
         },
-        { Location: statusUrl },
+        { Location: statusUrl }
       );
     }
 

@@ -37,6 +37,10 @@ curl -X POST -H 'Authorization: Bearer $ACTION_API_BEARER_TOKEN' \
 # Check run status
 curl -H 'Authorization: Bearer $ACTION_API_BEARER_TOKEN' \
   http://localhost:8080/api/v1/runs/<runId>
+
+# List recent nonce-queue managed transactions (default limit=50, max=500)
+curl -H 'Authorization: Bearer $ACTION_API_BEARER_TOKEN' \
+  'http://localhost:8080/api/v1/transactions?limit=100&address=0xabc...&chainId=1'
 ```
 
 ## Adding a new job
@@ -56,16 +60,17 @@ Set `enabled: false` to define a job that can only be triggered via the API.
 
 ## Environment variables
 
-| Variable | Description |
-|----------|-------------|
+| Variable                  | Description                           |
+| ------------------------- | ------------------------------------- |
 | `ACTION_API_BEARER_TOKEN` | Required. Auth token for the HTTP API |
-| `PROVIDER_URL` | Mainnet RPC endpoint |
-| `HARDHAT_NETWORK` | Default network for tasks |
-| `LOKI_URL` | Grafana Loki push endpoint (optional) |
-| `LOKI_USER` | Loki basic auth user (optional) |
-| `LOKI_API_KEY` | Loki basic auth key (optional) |
-| `AWS_ACCESS_KEY_ID` | For KMS signer (optional) |
-| `AWS_SECRET_ACCESS_KEY` | For KMS signer (optional) |
+| `PROVIDER_URL`            | Mainnet RPC endpoint                  |
+| `HARDHAT_NETWORK`         | Default network for tasks             |
+| `LOKI_URL`                | Grafana Loki push endpoint (optional) |
+| `LOKI_USER`               | Loki basic auth user (optional)       |
+| `LOKI_API_KEY`            | Loki basic auth key (optional)        |
+| `AWS_ACCESS_KEY_ID`       | For KMS signer (optional)             |
+| `AWS_SECRET_ACCESS_KEY`   | For KMS signer (optional)             |
+
 ## Observability
 
 Each action generates its own `run_id` (UUID) and emits structured events via the winston/Loki logger in `tasks/lib/action.ts`:

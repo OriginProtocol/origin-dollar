@@ -26,6 +26,7 @@ import {
   getNoncePool,
   _resetForTesting,
 } from "./nonceQueue";
+import { _resetNonceQueueTxHistoryForTesting } from "./nonceQueueTxHistory";
 
 // Minimal mock signer for testing
 function createMockSigner(
@@ -55,16 +56,31 @@ function createMockSigner(
   return signer;
 }
 
+async function waitFor(
+  predicate: () => Promise<boolean>,
+  timeoutMs = 5_000,
+  pollMs = 50
+) {
+  const started = Date.now();
+  while (Date.now() - started < timeoutMs) {
+    if (await predicate()) return;
+    await new Promise((resolve) => setTimeout(resolve, pollMs));
+  }
+  throw new Error(`Condition not met within ${timeoutMs}ms`);
+}
+
 /** Drop and recreate table, reset module state */
 async function resetAll() {
   // Close any existing pool in the module
   const existing = getNoncePool();
   if (existing) await existing.end();
   _resetForTesting();
+  _resetNonceQueueTxHistoryForTesting();
 
   // Drop table directly
   const tmpPool = new Pool({ connectionString: process.env.DATABASE_URL });
   await tmpPool.query("DROP TABLE IF EXISTS nonce_queue");
+  await tmpPool.query("DROP TABLE IF EXISTS nonce_queue_transactions");
   await tmpPool.end();
 }
 
@@ -144,10 +160,14 @@ async function test() {
   const sorted = [...results].sort((a, b) => a.startMs - b.startMs);
   const gap = sorted[1].startMs - sorted[0].endMs;
   console.log(
-    `  First tx: ${sorted[0].startMs}-${sorted[0].endMs} (${sorted[0].endMs - sorted[0].startMs}ms)`
+    `  First tx: ${sorted[0].startMs}-${sorted[0].endMs} (${
+      sorted[0].endMs - sorted[0].startMs
+    }ms)`
   );
   console.log(
-    `  Second tx: ${sorted[1].startMs}-${sorted[1].endMs} (${sorted[1].endMs - sorted[1].startMs}ms)`
+    `  Second tx: ${sorted[1].startMs}-${sorted[1].endMs} (${
+      sorted[1].endMs - sorted[1].startMs
+    }ms)`
   );
   console.log(`  Gap between first end and second start: ${gap}ms`);
   console.assert(
@@ -217,6 +237,80 @@ async function test() {
     `Expected both nonces to be 0 but got [${results.map((r) => r.nonce)}]`
   );
   console.log("PASS: Nonce preserved after rollback\n");
+
+  // --- Test 5 ---
+  console.log(
+    "--- Test 5: Persisted tx history keeps nonce order under concurrency ---"
+  );
+  results.length = 0;
+  await resetAll();
+
+  const signer5a = createMockSigner("0xaaaa", async (nonce) => {
+    results.push({ id: 1, nonce, startMs: Date.now(), endMs: 0 });
+    await new Promise((r) => setTimeout(r, 200));
+  });
+  const signer5b = createMockSigner("0xaaaa", async (nonce) => {
+    results.push({ id: 2, nonce, startMs: Date.now(), endMs: 0 });
+    await new Promise((r) => setTimeout(r, 150));
+  });
+  const signer5c = createMockSigner("0xaaaa", async (nonce) => {
+    results.push({ id: 3, nonce, startMs: Date.now(), endMs: 0 });
+    await new Promise((r) => setTimeout(r, 100));
+  });
+
+  const wrapped5a = wrapWithNonceQueue(signer5a, 1);
+  const wrapped5b = wrapWithNonceQueue(signer5b, 1);
+  const wrapped5c = wrapWithNonceQueue(signer5c, 1);
+
+  await Promise.all([
+    wrapped5a.sendTransaction({ to: "0xbbbb", data: "0x" }),
+    wrapped5b.sendTransaction({ to: "0xbbbb", data: "0x" }),
+    wrapped5c.sendTransaction({ to: "0xbbbb", data: "0x" }),
+  ]);
+
+  const verifyPool = new Pool({ connectionString: process.env.DATABASE_URL });
+  await waitFor(async () => {
+    const { rows } = await verifyPool.query(
+      `SELECT COUNT(*)::int AS count
+         FROM nonce_queue_transactions
+        WHERE signer_address = $1 AND chain_id = $2`,
+      ["0xaaaa", 1]
+    );
+    return Number(rows[0].count) >= 3;
+  }, 10_000);
+  const persisted = await verifyPool.query(
+    `SELECT nonce, status, tx_hash
+       FROM nonce_queue_transactions
+      WHERE signer_address = $1 AND chain_id = $2
+      ORDER BY nonce ASC, submitted_at ASC`,
+    ["0xaaaa", 1]
+  );
+  await verifyPool.end();
+
+  const persistedNonces = persisted.rows.map((row: any) => Number(row.nonce));
+  const uniqueHashes = new Set(persisted.rows.map((row: any) => row.tx_hash));
+
+  console.log(
+    "Results:",
+    persisted.rows
+      .map((row: any) => `nonce=${row.nonce} status=${row.status}`)
+      .join(", ")
+  );
+  console.assert(
+    persisted.rows.length === 3,
+    `Expected 3 persisted tx rows, got ${persisted.rows.length}`
+  );
+  console.assert(
+    persistedNonces.join(",") === "0,1,2",
+    `Expected persisted nonces [0,1,2], got [${persistedNonces}]`
+  );
+  console.assert(
+    uniqueHashes.size === 3,
+    `Expected 3 unique tx hashes, got ${uniqueHashes.size}`
+  );
+  console.log(
+    "PASS: Concurrent sends persisted with strictly increasing nonces\n"
+  );
 
   // --- Cleanup ---
   const pool = getNoncePool();

@@ -5,6 +5,7 @@ import {
   recoverNonceFromChain,
   submitNonceQueuedTransaction,
 } from "./nonceQueueTxLifecycle";
+import { recordNonceQueueTxLifecycleEvent } from "./nonceQueueTxHistory";
 
 const log = require("../../utils/logger")("utils:nonceQueue");
 
@@ -134,7 +135,9 @@ async function withNonceLock<T>(
       await client.query("COMMIT");
 
       log(
-        `Released nonce lock: address=${signerAddress} chain=${chainId} nonce=${nonce} → ${nonce + 1}`
+        `Released nonce lock: address=${signerAddress} chain=${chainId} nonce=${nonce} → ${
+          nonce + 1
+        }`
       );
 
       return result;
@@ -153,7 +156,9 @@ async function withNonceLock<T>(
 
       if (isNonceMismatchError(err)) {
         log(
-          `Nonce mismatch (attempt ${attempt + 1}/${maxRetries}), recovering from chain…`
+          `Nonce mismatch (attempt ${
+            attempt + 1
+          }/${maxRetries}), recovering from chain…`
         );
         await recoverNonceFromChain({
           pool: p,
@@ -215,6 +220,23 @@ export function wrapWithNonceQueue(
           nonce,
           signerAddress,
           chainId,
+          onLifecycleEvent: (event) => {
+            // Keep lifecycle persistence out-of-band so lock holders never
+            // block on acquiring another DB connection from the same pool.
+            void recordNonceQueueTxLifecycleEvent({
+              pool: p,
+              event,
+            }).catch((err: any) => {
+              // History persistence must not block transaction sending flow.
+              log(
+                `Failed to persist nonce-queue transaction history: type=${
+                  event.type
+                } address=${signerAddress} chain=${chainId} nonce=${nonce} error="${
+                  err?.message ?? String(err)
+                }"`
+              );
+            });
+          },
         });
       }
     );

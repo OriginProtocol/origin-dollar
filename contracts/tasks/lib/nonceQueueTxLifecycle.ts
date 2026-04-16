@@ -1,6 +1,7 @@
 import type { Pool, PoolClient } from "pg";
 import { BigNumber, utils } from "ethers";
 import type { ethers } from "ethers";
+import type { NonceQueueTxLifecycleEvent } from "./nonceQueueTxHistory";
 
 const log = require("../../utils/logger")("utils:nonceQueueTxLifecycle");
 
@@ -17,6 +18,9 @@ export interface SubmitNonceQueuedTxParams {
   nonce: number;
   signerAddress: string;
   chainId: number;
+  onLifecycleEvent?: (
+    event: NonceQueueTxLifecycleEvent
+  ) => void | Promise<void>;
 }
 
 interface TxLifecycleConfig {
@@ -408,194 +412,307 @@ export async function submitNonceQueuedTransaction({
   nonce,
   signerAddress,
   chainId,
+  onLifecycleEvent,
 }: SubmitNonceQueuedTxParams): Promise<ethers.providers.TransactionResponse> {
+  const emitLifecycleEvent = async (event: NonceQueueTxLifecycleEvent) => {
+    if (!onLifecycleEvent) return;
+    try {
+      await onLifecycleEvent(event);
+    } catch (err: any) {
+      log(
+        `Failed to record nonce queue transaction lifecycle event: type=${
+          event.type
+        } address=${event.signerAddress} chain=${event.chainId} nonce=${
+          event.nonce
+        } error="${err?.message ?? String(err)}"`
+      );
+    }
+  };
+
   const config = getTxLifecycleConfig();
   const maxGasPriceEnvKey = getPerChainMaxGasPriceEnvKey(chainId);
   // The lifecycle intentionally ignores the legacy global cap and only reads
   // per-chain caps, so operators can tune limits independently per network.
   const maxGasPriceWei = resolveMaxGasPriceWeiForChain(chainId);
-  let initialTx: Parameters<ethers.Signer["sendTransaction"]>[0] = {
-    ...transaction,
-    nonce,
-  };
+  let activeResponse: ethers.providers.TransactionResponse | undefined;
+  let terminalStateAlreadyRecorded = false;
 
-  // Apply optional global gas-limit headroom over provider estimate to reduce
-  // under-estimation failures during volatile state changes.
-  initialTx = await applyGasLimitBuffer({
-    transaction: initialTx,
-    provider,
-    gasLimitBufferPct: config.gasLimitBufferPct,
-    signerAddress,
-    chainId,
-    nonce,
-    stage: "initial submission",
-  });
+  try {
+    let initialTx: Parameters<ethers.Signer["sendTransaction"]>[0] = {
+      ...transaction,
+      nonce,
+    };
 
-  // Enforce fee cap before any on-chain submission.
-  await enforceSubmissionGasPriceCap({
-    transaction: initialTx,
-    provider,
-    maxGasPriceWei,
-    maxGasPriceEnvKey,
-    stage: "initial submission",
-    signerAddress,
-    chainId,
-    nonce,
-  });
+    // Apply optional global gas-limit headroom over provider estimate to reduce
+    // under-estimation failures during volatile state changes.
+    initialTx = await applyGasLimitBuffer({
+      transaction: initialTx,
+      provider,
+      gasLimitBufferPct: config.gasLimitBufferPct,
+      signerAddress,
+      chainId,
+      nonce,
+      stage: "initial submission",
+    });
 
-  const firstResponse = await sendTransaction(initialTx);
-  const responsesByHash = new Map<string, ethers.providers.TransactionResponse>(
-    [[firstResponse.hash, firstResponse]]
-  );
-  const knownHashes: string[] = [firstResponse.hash];
-  let activeTx = initialTx;
-  let activeResponse = firstResponse;
-  let activeRawTx = extractRawTransaction(firstResponse);
-  let replacementCount = 0;
-  let rebroadcastRawUnavailableLogged = false;
+    // Enforce fee cap before any on-chain submission.
+    await enforceSubmissionGasPriceCap({
+      transaction: initialTx,
+      provider,
+      maxGasPriceWei,
+      maxGasPriceEnvKey,
+      stage: "initial submission",
+      signerAddress,
+      chainId,
+      nonce,
+    });
 
-  log(
-    `Submitted tx: address=${signerAddress} chain=${chainId} nonce=${nonce} hash=${firstResponse.hash}`
-  );
+    const firstResponse = await sendTransaction(initialTx);
+    const responsesByHash = new Map<
+      string,
+      ethers.providers.TransactionResponse
+    >([[firstResponse.hash, firstResponse]]);
+    const knownHashes: string[] = [firstResponse.hash];
+    let activeTx = initialTx;
+    activeResponse = firstResponse;
+    let activeRawTx = extractRawTransaction(firstResponse);
+    let replacementCount = 0;
+    let rebroadcastRawUnavailableLogged = false;
 
-  if (!provider || typeof provider.getTransactionReceipt !== "function") {
-    await firstResponse.wait();
-    return firstResponse;
-  }
-  const txProvider = provider;
+    await emitLifecycleEvent({
+      type: "send_accepted",
+      stage: "initial",
+      txHash: firstResponse.hash,
+      signerAddress,
+      chainId,
+      nonce,
+    });
 
-  const startedAt = Date.now();
-  let nextRebroadcastAt =
-    config.rebroadcastIntervalS > 0
-      ? startedAt + secondsToMs(config.rebroadcastIntervalS)
-      : Number.POSITIVE_INFINITY;
-  let nextReplaceAt =
-    config.replaceIntervalS > 0
-      ? startedAt + secondsToMs(config.replaceIntervalS)
-      : Number.POSITIVE_INFINITY;
+    log(
+      `Submitted tx: address=${signerAddress} chain=${chainId} nonce=${nonce} hash=${firstResponse.hash}`
+    );
 
-  // Single in-flight lifecycle loop:
-  // 1) check mined receipts across known hashes
-  // 2) optional rebroadcast raw tx
-  // 3) optional same-nonce replacement with bumped fee
-  while (true) {
-    const receipt = await findMinedReceipt(txProvider, knownHashes);
-    if (receipt) {
-      if (receipt.status === 0) {
+    if (!provider || typeof provider.getTransactionReceipt !== "function") {
+      const receipt = await firstResponse.wait();
+      if (receipt?.status === 0) {
+        terminalStateAlreadyRecorded = true;
+        await emitLifecycleEvent({
+          type: "mined_revert",
+          txHash: firstResponse.hash,
+          signerAddress,
+          chainId,
+          nonce,
+          blockNumber: receipt?.blockNumber ?? null,
+          errorMessage: `Nonce-queued transaction reverted on-chain: hash=${firstResponse.hash} nonce=${nonce}`,
+        });
         throw new Error(
-          `Nonce-queued transaction reverted on-chain: hash=${receipt.transactionHash} nonce=${nonce}`
+          `Nonce-queued transaction reverted on-chain: hash=${firstResponse.hash} nonce=${nonce}`
         );
       }
-      return responsesByHash.get(receipt.transactionHash) ?? activeResponse;
+
+      await emitLifecycleEvent({
+        type: "mined_success",
+        txHash: firstResponse.hash,
+        signerAddress,
+        chainId,
+        nonce,
+        blockNumber: receipt?.blockNumber ?? null,
+      });
+      return firstResponse;
     }
 
-    const now = Date.now();
-    if (
-      config.txConfirmTimeoutS > 0 &&
-      now - startedAt >= secondsToMs(config.txConfirmTimeoutS)
-    ) {
-      throw new Error(
-        `Timed out waiting for nonce-queued tx confirmation after ${config.txConfirmTimeoutS}s: address=${signerAddress} chain=${chainId} nonce=${nonce} lastHash=${activeResponse.hash}`
-      );
-    }
+    const txProvider = provider;
 
-    if (now >= nextRebroadcastAt) {
-      nextRebroadcastAt = now + secondsToMs(config.rebroadcastIntervalS);
+    const startedAt = Date.now();
+    let nextRebroadcastAt =
+      config.rebroadcastIntervalS > 0
+        ? startedAt + secondsToMs(config.rebroadcastIntervalS)
+        : Number.POSITIVE_INFINITY;
+    let nextReplaceAt =
+      config.replaceIntervalS > 0
+        ? startedAt + secondsToMs(config.replaceIntervalS)
+        : Number.POSITIVE_INFINITY;
 
-      if (activeRawTx && typeof txProvider.sendTransaction === "function") {
+    // Single in-flight lifecycle loop:
+    // 1) check mined receipts across known hashes
+    // 2) optional rebroadcast raw tx
+    // 3) optional same-nonce replacement with bumped fee
+    while (true) {
+      const receipt = await findMinedReceipt(txProvider, knownHashes);
+      if (receipt) {
+        if (receipt.status === 0) {
+          terminalStateAlreadyRecorded = true;
+          await emitLifecycleEvent({
+            type: "mined_revert",
+            txHash: receipt.transactionHash,
+            signerAddress,
+            chainId,
+            nonce,
+            blockNumber: receipt.blockNumber ?? null,
+            errorMessage: `Nonce-queued transaction reverted on-chain: hash=${receipt.transactionHash} nonce=${nonce}`,
+          });
+          throw new Error(
+            `Nonce-queued transaction reverted on-chain: hash=${receipt.transactionHash} nonce=${nonce}`
+          );
+        }
+
+        await emitLifecycleEvent({
+          type: "mined_success",
+          txHash: receipt.transactionHash,
+          signerAddress,
+          chainId,
+          nonce,
+          blockNumber: receipt.blockNumber ?? null,
+        });
+        return responsesByHash.get(receipt.transactionHash) ?? activeResponse;
+      }
+
+      const now = Date.now();
+      if (
+        config.txConfirmTimeoutS > 0 &&
+        now - startedAt >= secondsToMs(config.txConfirmTimeoutS)
+      ) {
+        const timeoutMessage = `Timed out waiting for nonce-queued tx confirmation after ${config.txConfirmTimeoutS}s: address=${signerAddress} chain=${chainId} nonce=${nonce} lastHash=${activeResponse.hash}`;
+        terminalStateAlreadyRecorded = true;
+        await emitLifecycleEvent({
+          type: "timeout",
+          signerAddress,
+          chainId,
+          nonce,
+          errorMessage: timeoutMessage,
+        });
+        throw new Error(timeoutMessage);
+      }
+
+      if (now >= nextRebroadcastAt) {
+        nextRebroadcastAt = now + secondsToMs(config.rebroadcastIntervalS);
+
+        if (activeRawTx && typeof txProvider.sendTransaction === "function") {
+          try {
+            // Re-check cap at rebroadcast time; tx may have been replaced with
+            // a higher fee since the initial submission.
+            enforceRebroadcastGasPriceCap({
+              rawTransaction: activeRawTx,
+              maxGasPriceWei,
+              maxGasPriceEnvKey,
+              signerAddress,
+              chainId,
+              nonce,
+            });
+            const rebroadcastResponse = await txProvider.sendTransaction(
+              activeRawTx
+            );
+            if (!responsesByHash.has(rebroadcastResponse.hash)) {
+              responsesByHash.set(
+                rebroadcastResponse.hash,
+                rebroadcastResponse
+              );
+              knownHashes.push(rebroadcastResponse.hash);
+            }
+            await emitLifecycleEvent({
+              type: "send_accepted",
+              stage: "rebroadcast",
+              txHash: rebroadcastResponse.hash,
+              signerAddress,
+              chainId,
+              nonce,
+            });
+            log(
+              `Rebroadcasted raw tx: address=${signerAddress} chain=${chainId} nonce=${nonce} hash=${rebroadcastResponse.hash}`
+            );
+          } catch (err: any) {
+            if (!isDuplicateBroadcastError(err)) throw err;
+            log(
+              `Rebroadcast ignored duplicate: address=${signerAddress} chain=${chainId} nonce=${nonce} hash=${activeResponse.hash}`
+            );
+          }
+        } else if (!rebroadcastRawUnavailableLogged) {
+          rebroadcastRawUnavailableLogged = true;
+          log(
+            `Rebroadcast skipped: raw transaction payload unavailable for hash=${activeResponse.hash} address=${signerAddress} chain=${chainId}`
+          );
+        }
+      }
+
+      if (
+        now >= nextReplaceAt &&
+        replacementCount < config.maxReplacements &&
+        config.replaceIntervalS > 0
+      ) {
+        nextReplaceAt = now + secondsToMs(config.replaceIntervalS);
+        activeTx = await buildReplacementTransaction(
+          activeTx,
+          txProvider,
+          config.feeBumpPct
+        );
+        activeTx = await applyGasLimitBuffer({
+          transaction: activeTx,
+          provider: txProvider,
+          gasLimitBufferPct: config.gasLimitBufferPct,
+          signerAddress,
+          chainId,
+          nonce,
+          stage: "replacement",
+        });
+        // Replacement txs are still fresh submissions. Enforce the same chain cap
+        // after fee bumping so retries never exceed operator limits.
+        await enforceSubmissionGasPriceCap({
+          transaction: activeTx,
+          provider: txProvider,
+          maxGasPriceWei,
+          maxGasPriceEnvKey,
+          stage: "replacement",
+          signerAddress,
+          chainId,
+          nonce,
+        });
+
         try {
-          // Re-check cap at rebroadcast time; tx may have been replaced with
-          // a higher fee since the initial submission.
-          enforceRebroadcastGasPriceCap({
-            rawTransaction: activeRawTx,
-            maxGasPriceWei,
-            maxGasPriceEnvKey,
+          const replacementResponse = await sendTransaction(activeTx);
+          replacementCount++;
+          activeResponse = replacementResponse;
+          activeRawTx = extractRawTransaction(replacementResponse);
+          if (!responsesByHash.has(replacementResponse.hash)) {
+            responsesByHash.set(replacementResponse.hash, replacementResponse);
+            knownHashes.push(replacementResponse.hash);
+          }
+          await emitLifecycleEvent({
+            type: "send_accepted",
+            stage: "replacement",
+            txHash: replacementResponse.hash,
             signerAddress,
             chainId,
             nonce,
           });
-          const rebroadcastResponse = await txProvider.sendTransaction(
-            activeRawTx
-          );
-          if (!responsesByHash.has(rebroadcastResponse.hash)) {
-            responsesByHash.set(rebroadcastResponse.hash, rebroadcastResponse);
-            knownHashes.push(rebroadcastResponse.hash);
-          }
           log(
-            `Rebroadcasted raw tx: address=${signerAddress} chain=${chainId} nonce=${nonce} hash=${rebroadcastResponse.hash}`
+            `Submitted replacement tx: address=${signerAddress} chain=${chainId} nonce=${nonce} hash=${replacementResponse.hash} replacements=${replacementCount}/${config.maxReplacements}`
           );
         } catch (err: any) {
-          if (!isDuplicateBroadcastError(err)) throw err;
+          if (!isNonceMismatchError(err) && !isDuplicateBroadcastError(err)) {
+            throw err;
+          }
           log(
-            `Rebroadcast ignored duplicate: address=${signerAddress} chain=${chainId} nonce=${nonce} hash=${activeResponse.hash}`
+            `Replacement attempt not accepted yet: address=${signerAddress} chain=${chainId} nonce=${nonce} reason="${
+              err?.message ?? String(err)
+            }"`
           );
         }
-      } else if (!rebroadcastRawUnavailableLogged) {
-        rebroadcastRawUnavailableLogged = true;
-        log(
-          `Rebroadcast skipped: raw transaction payload unavailable for hash=${activeResponse.hash} address=${signerAddress} chain=${chainId}`
-        );
       }
-    }
 
-    if (
-      now >= nextReplaceAt &&
-      replacementCount < config.maxReplacements &&
-      config.replaceIntervalS > 0
-    ) {
-      nextReplaceAt = now + secondsToMs(config.replaceIntervalS);
-      activeTx = await buildReplacementTransaction(
-        activeTx,
-        txProvider,
-        config.feeBumpPct
-      );
-      activeTx = await applyGasLimitBuffer({
-        transaction: activeTx,
-        provider: txProvider,
-        gasLimitBufferPct: config.gasLimitBufferPct,
+      await sleep(secondsToMs(config.receiptPollS));
+    }
+  } catch (err: any) {
+    if (!terminalStateAlreadyRecorded && activeResponse?.hash) {
+      await emitLifecycleEvent({
+        type: "terminal_send_error",
         signerAddress,
         chainId,
         nonce,
-        stage: "replacement",
+        txHash: activeResponse.hash,
+        errorMessage: err?.message ?? String(err),
       });
-      // Replacement txs are still fresh submissions. Enforce the same chain cap
-      // after fee bumping so retries never exceed operator limits.
-      await enforceSubmissionGasPriceCap({
-        transaction: activeTx,
-        provider: txProvider,
-        maxGasPriceWei,
-        maxGasPriceEnvKey,
-        stage: "replacement",
-        signerAddress,
-        chainId,
-        nonce,
-      });
-
-      try {
-        const replacementResponse = await sendTransaction(activeTx);
-        replacementCount++;
-        activeResponse = replacementResponse;
-        activeRawTx = extractRawTransaction(replacementResponse);
-        if (!responsesByHash.has(replacementResponse.hash)) {
-          responsesByHash.set(replacementResponse.hash, replacementResponse);
-          knownHashes.push(replacementResponse.hash);
-        }
-        log(
-          `Submitted replacement tx: address=${signerAddress} chain=${chainId} nonce=${nonce} hash=${replacementResponse.hash} replacements=${replacementCount}/${config.maxReplacements}`
-        );
-      } catch (err: any) {
-        if (!isNonceMismatchError(err) && !isDuplicateBroadcastError(err)) {
-          throw err;
-        }
-        log(
-          `Replacement attempt not accepted yet: address=${signerAddress} chain=${chainId} nonce=${nonce} reason="${
-            err?.message ?? String(err)
-          }"`
-        );
-      }
     }
-
-    await sleep(secondsToMs(config.receiptPollS));
+    throw err;
   }
 }
 
