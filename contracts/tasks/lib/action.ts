@@ -54,12 +54,17 @@ export function createActionHandler(
   return async (taskArgs: Record<string, any>) => {
     const winstonMode = isWinstonLogModeEnabled();
     const propagatedRunId = process.env.ACTION_RUN_ID?.trim();
+    const propagatedActionName = process.env.ACTION_NAME?.trim();
+    const actionLabel =
+      propagatedActionName && propagatedActionName.length > 0
+        ? propagatedActionName
+        : name;
     const runId =
       propagatedRunId && propagatedRunId.length > 0
         ? propagatedRunId
         : randomUUID();
     const log: Logger = winstonMode
-      ? logger.child({ action: name, run_id: runId })
+      ? logger.child({ action: actionLabel, run_id: runId, source: "task" })
       : legacyLoggerFactory(`action:${name}`);
     const startTime = Date.now();
     let chainId: number | undefined;
@@ -137,7 +142,10 @@ export function createActionHandler(
       return execute();
     }
 
-    return withLogContext({ action: name, run_id: runId }, execute);
+    return withLogContext(
+      { action: actionLabel, run_id: runId, source: "task" },
+      execute
+    );
   };
 }
 

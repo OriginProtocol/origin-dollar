@@ -71,7 +71,7 @@ if (lokiUrl) {
   lokiTransport = new LokiTransport({
     host: lokiUrl,
     basicAuth: lokiUrl && lokiApiKey ? `${lokiUser}:${lokiApiKey}` : undefined,
-    labels: { app: "origin-dollar" },
+    labels: { app: "origin-dollar", service_name: "origin-dollar" },
     json: true,
     format: format.combine(
       // Promote select low-cardinality fields from metadata to Loki labels.
