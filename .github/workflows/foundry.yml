@@ -73,11 +73,8 @@ jobs:
 
   # ── Fork Tests ──────────────────────────────────────────────
   fork-tests-mainnet:
-    name: Fork Tests (Mainnet ${{ matrix.chunk_id }})
+    name: Fork Tests (Mainnet)
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        chunk_id: [0, 1]
     env:
       MAINNET_PROVIDER_URL: ${{ secrets.PROVIDER_URL }}
       BEACON_PROVIDER_URL: ${{ secrets.BEACON_PROVIDER_URL }}
@@ -85,29 +82,10 @@ jobs:
       - uses: actions/checkout@v4
         with:
           submodules: recursive
-      - name: Discover tests for chunk
-        id: discover
-        working-directory: contracts
-        run: |
-          DIRS_ARRAY=($(find tests/fork/mainnet -name "Shared.t.sol" -path "*/shared/*" | \
-            sed 's|/shared/Shared.t.sol||' | sort -u))
-          SELECTED=()
-          for i in "${!DIRS_ARRAY[@]}"; do
-            if (( i % 2 == ${{ matrix.chunk_id }} )); then
-              SELECTED+=("${DIRS_ARRAY[$i]}")
-            fi
-          done
-          DIRS=$(IFS=','; echo "${SELECTED[*]}")
-          echo "dirs=$DIRS" >> $GITHUB_OUTPUT
-          if [ -n "$DIRS" ]; then echo "has_tests=true" >> $GITHUB_OUTPUT; else echo "has_tests=false" >> $GITHUB_OUTPUT; fi
       - uses: ./.github/actions/foundry-setup
-        if: steps.discover.outputs.has_tests == 'true'
       - name: Run Mainnet fork tests
-        if: steps.discover.outputs.has_tests == 'true'
         working-directory: contracts
-        run: |
-          forge build contracts/ tests/fork/mainnet/
-          FOUNDRY_MATCH_PATH="{${{ steps.discover.outputs.dirs }}}/**" make test-base
+        run: make test-fork-mainnet
 
   fork-tests-base:
     name: Fork Tests (Base)
