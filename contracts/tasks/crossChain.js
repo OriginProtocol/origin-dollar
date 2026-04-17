@@ -187,11 +187,14 @@ const processCctpBridgeTransactions = async ({
     blockLookback,
   });
   for (const txHash of allTxHashes) {
-    const txStoreKey = `cctp_message_${txHash}`;
+    const txStoreKey = `cctp_message_${txHash}_${cctpDestinationDomainId}`;
+    // TODO: Legacy key can be removed after a few days of code deployment
+    const txStoreKey_Legacy = `cctp_message_${txHash}`;
     const txStoredValue = await store.get(txStoreKey);
-    if (txStoredValue === "processed") {
+    const txStoredValue_Legacy = await store.get(txStoreKey_Legacy);
+    if (txStoredValue === "processed" || txStoredValue_Legacy === "processed") {
       console.log(
-        `Transaction with hash ${txHash} has already been processed via legacy tx-level key ${txStoreKey}. Skipping...`
+        `Transaction with hash ${txHash} has already been processed via tx-level key ${txStoreKey}. Skipping...`
       );
       continue;
     }
