@@ -23,8 +23,8 @@ import { IBeaconProofs } from "../../interfaces/IBeaconProofs.sol";
 abstract contract CompoundingValidatorManager is Governable, Pausable {
     using SafeERC20 for IERC20;
 
-    /// @dev The amount of ETH in wei that is required for a deposit to a new validator.
-    uint256 internal constant DEPOSIT_AMOUNT_WEI = 1 ether;
+    /// @dev The amount of ETH in wei that is required for the first deposit to a new validator.
+    uint256 internal constant DEPOSIT_AMOUNT_WEI = 32.25 ether;
     /// @dev Validator balances over this amount will eventually become active on the beacon chain.
     /// Due to hysteresis, if the effective balance is 31 ETH, the actual balance
     /// must rise to 32.25 ETH to trigger an effective balance update to 32 ETH.
@@ -328,9 +328,9 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
     }
 
     /// @notice Stakes WETH in this strategy to a compounding validator.
-    /// The first deposit to a new validator, the amount must be 1 ETH.
-    /// Another deposit of at least 31 ETH is required for the validator to be activated.
-    /// This second deposit has to be done after the validator has been verified.
+    /// The first deposit to a new validator must be exactly 32.25 ETH.
+    /// Once verified on the beacon chain, rewards can push the validator's balance above
+    /// the activation threshold so it can become active without requiring a second deposit.
     /// Does not convert any ETH sitting in this strategy to WETH.
     /// There can not be two deposits to the same validator in the same block for the same amount.
     /// Function is pausable so in case a run-away Registrator can be prevented from continuing
