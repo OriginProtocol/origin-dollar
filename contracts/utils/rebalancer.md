@@ -152,12 +152,34 @@ Cross-chain amounts are capped at 10 M USDC (CCTP bridge limit).
 | `minMoveAmount` | $5K USDC | Minimum size for any rebalancing move |
 | `crossChainMinAmount` | $25K USDC | Minimum for a cross-chain transfer (bridge overhead) |
 | `minVaultBalance` | $0 USDC | Idle reserve always kept in the vault |
-| `minApySpread` | 0.5% | Minimum APY improvement required to trigger a withdrawal |
+| `minApySpread` | 0.1% | Minimum portfolio APY lift (weighted, before vs after) required to run yield-motivated actions. Shortfall withdrawals and vault-surplus deposits are exempt. |
 | `maxApyThreshold` | 50% | APY above this is treated as suspicious — strategy is frozen in place |
-| `maxApyImpactBps` | 50 bps | Max APY degradation per deposit (used by legacy capacity discovery) |
-| `maxWithdrawalApyImpactBps` | 50 bps | Max APY increase on source per withdrawal |
+| `maxWithdrawalApyImpactBps` | 1000 bps | Max APY increase on source per withdrawal |
 | `maxSpotBelowAvgBps` | 200 bps | Block deposits when spot APY diverges below avg |
+| `withdrawalStepSize` | $100K USDC | Binary-search granularity for withdrawal capacity discovery |
+| `apyAverageWindow` | "1h" | Time window used for the authoritative APY (Subsquid-sourced) |
 | `allocationChunkSize` | $50K USDC | Step-wise allocation granularity |
+
+### Portfolio APY gate (`minApySpread`)
+
+After allocation and per-action impact computation, the rebalancer computes the
+weighted-average portfolio APY before and after the proposed actions:
+
+```
+before = Σ (balance × apy)           / totalCapital
+after  = Σ (targetBalance × expApy)  / totalCapital
+```
+
+where `expApy = expectedApy ?? apy` and `totalCapital = vaultBalance + Σ balance`
+(idle vault counts toward the denominator at 0% yield on both sides).
+
+If `after − before < minApySpread`, all yield-motivated actions are cancelled and a
+warning is emitted. Actions whose `reason` contains `"shortfall"` (from
+`_coverShortfall`) or `"vault surplus"` (from `_deployRemainingSurplus`) are
+preserved regardless — they are operational, not yield-motivated.
+
+The before/after/Δ are shown in the table header and returned from
+`buildRebalancePlan` as `portfolioApy: { before, after, deltaBps, gated }`.
 
 ## Files
 

@@ -672,6 +672,98 @@ function _clearWithdrawalFields(w) {
 }
 
 /**
+ * Weighted-average portfolio APY across strategies + idle vault (at 0%).
+ *
+ * Denominator is `totalCapital` (vault + strategies), passed in so before/after
+ * share the same base — the balance-conservation identity
+ * `vaultTarget + Σ targetBalance = vaultBalance + Σ balance` means this is safe.
+ *
+ * @param {Array}     actions      - allocation rows (with balance, targetBalance, apy, expectedApy)
+ * @param {BigNumber} totalCapital - vault + sum of strategy balances
+ * @param {object}    [opts]
+ * @param {boolean}   [opts.useTarget=false] - if true, weight by targetBalance and use expectedApy ?? apy
+ * @returns {number} weighted APY as a decimal (e.g. 0.0514 for 5.14%)
+ */
+function computePortfolioApy(
+  actions,
+  totalCapital,
+  { useTarget = false } = {}
+) {
+  const total = parseFloat(formatUnits(totalCapital, USDC_DECIMALS));
+  if (!total) return 0;
+  let weighted = 0;
+  for (const a of actions) {
+    const balBn = useTarget ? a.targetBalance : a.balance;
+    const bal = parseFloat(formatUnits(balBn, USDC_DECIMALS));
+    const apy = useTarget
+      ? a.expectedApy != null
+        ? a.expectedApy
+        : a.apy
+      : a.apy;
+    weighted += bal * (apy || 0);
+  }
+  return weighted / total;
+}
+
+/**
+ * Portfolio-level minApySpread gate. If the rebalance lifts weighted portfolio APY
+ * by less than `constraints.minApySpread`, cancel every yield-motivated action.
+ * Actions flagged `isShortfall` (from `_coverShortfall`) or `isVaultSurplus`
+ * (from `_deployRemainingSurplus`) are preserved regardless — they are
+ * operational, not yield-motivated.
+ *
+ * Mutates actions in place. Returns the before/after/delta triple for display.
+ */
+function _applyPortfolioSpreadGate(
+  actions,
+  totalCapital,
+  constraints,
+  warnings
+) {
+  const before = computePortfolioApy(actions, totalCapital, {
+    useTarget: false,
+  });
+  const afterInitial = computePortfolioApy(actions, totalCapital, {
+    useTarget: true,
+  });
+  const deltaBps = Math.round((afterInitial - before) * 10000);
+  const minSpreadBps = Math.round((constraints.minApySpread || 0) * 10000);
+
+  let gated = false;
+  if (constraints.minApySpread != null && deltaBps < minSpreadBps) {
+    const droppedNames = [];
+    for (const a of actions) {
+      if (a.action === ACTION_NONE) continue;
+      if (a.isShortfall || a.isVaultSurplus) continue;
+      droppedNames.push(a.name);
+      a.action = ACTION_NONE;
+      a.delta = BigNumber.from(0);
+      a.targetBalance = a.balance;
+      a.reason = `portfolio APY lift ${deltaBps}bps < minApySpread ${minSpreadBps}bps — dropped`;
+      _clearWithdrawalFields(a);
+    }
+    if (droppedNames.length > 0) {
+      gated = true;
+      warnings.push(
+        `Portfolio APY lift ${deltaBps}bps < minApySpread ${minSpreadBps}bps — ` +
+          `yield-motivated actions dropped: ${droppedNames.join(", ")}`
+      );
+    }
+  }
+
+  const after = gated
+    ? computePortfolioApy(actions, totalCapital, { useTarget: true })
+    : afterInitial;
+
+  return {
+    before,
+    after,
+    deltaBps: Math.round((after - before) * 10000),
+    gated,
+  };
+}
+
+/**
  * Vault surplus above reserves (shortfall + minVaultBalance).
  */
 function _computeVaultSurplus(vaultBalance, shortfall, constraints) {
@@ -783,12 +875,17 @@ function _resolveDeposit(deposit, budget, surplusBudget, constraints) {
 
 /**
  * Deploy remaining vault surplus to the default strategy.
+ *
+ * Sets `isVaultSurplus = true` on the resulting action so the portfolio-APY gate
+ * preserves it (surplus deployment is not yield-motivated).
  */
 function _deployRemainingSurplus(result, surplus) {
   const defaultStrategy = result.find(
     (a) => a.isDefault && a.reason !== "APY exceeds threshold"
   );
   if (!defaultStrategy) return;
+
+  defaultStrategy.isVaultSurplus = true;
 
   if (defaultStrategy.action === ACTION_DEPOSIT) {
     defaultStrategy.delta = defaultStrategy.delta.add(surplus);
@@ -941,6 +1038,7 @@ function _coverShortfall(result, shortfall, constraints) {
       defaultStrategy.targetBalance = defaultStrategy.balance.sub(amt);
       defaultStrategy.action = ACTION_WITHDRAW;
       defaultStrategy.reason = "shortfall fallback";
+      defaultStrategy.isShortfall = true;
       return result;
     }
   }
@@ -962,6 +1060,7 @@ function _coverShortfall(result, shortfall, constraints) {
     s.targetBalance = s.balance.sub(amt);
     s.action = ACTION_WITHDRAW;
     s.reason = "shortfall fallback (cross-chain)";
+    s.isShortfall = true;
   }
 
   return result;
@@ -1183,8 +1282,7 @@ async function buildExecutableActions(
  */
 function sortActions(allocations) {
   const priority = (a) => {
-    if (a.action === ACTION_WITHDRAW && a.reason?.includes("shortfall"))
-      return 0;
+    if (a.action === ACTION_WITHDRAW && a.isShortfall) return 0;
     if (a.action === ACTION_WITHDRAW) return 1;
     if (a.action === ACTION_DEPOSIT) return 2;
     return 3;
@@ -1240,6 +1338,7 @@ function formatAllocationTable({
   warnings = [],
   compact = false,
   baselineMarkets = [],
+  portfolioApy = null,
 }) {
   const COL_SEP = "  ";
   const constraints = { ...ousdConstraints, ...overrides };
@@ -1260,6 +1359,20 @@ function formatAllocationTable({
   lines.push("");
   lines.push(`Total rebalancable capital : ${fmtUsd(totalCapital)} USDC`);
   lines.push(`Withdrawal shortfall       : ${fmtUsd(shortfall)} USDC`);
+  if (portfolioApy) {
+    const pctStr = (v) => `${(v * 100).toFixed(2)}%`;
+    const hasAction = actions.some((a) => a.action !== ACTION_NONE);
+    if (hasAction) {
+      const delta = portfolioApy.deltaBps;
+      const deltaSign = delta >= 0 ? "+" : "";
+      lines.push(
+        `Portfolio APY (before→after): ${pctStr(portfolioApy.before)} → ` +
+          `${pctStr(portfolioApy.after)}  (${deltaSign}${delta} bps)`
+      );
+    } else {
+      lines.push(`Portfolio APY              : ${pctStr(portfolioApy.before)}`);
+    }
+  }
 
   // ── Allocations table ────────────────────────────────────────────────────
   lines.push("");
@@ -1732,6 +1845,19 @@ async function buildRebalancePlan(simulation) {
     await _computeActualImpacts(actions);
   }
 
+  // Portfolio-level APY spread gate: if the rebalance doesn't lift weighted
+  // portfolio APY by at least minApySpread, drop yield-motivated actions.
+  const totalCapital = actions.reduce(
+    (sum, a) => sum.add(a.balance),
+    state.vaultBalance
+  );
+  const portfolioApy = _applyPortfolioSpreadGate(
+    actions,
+    totalCapital,
+    ousdConstraints,
+    warnings
+  );
+
   console.log(
     formatAllocationTable({
       actions,
@@ -1740,6 +1866,7 @@ async function buildRebalancePlan(simulation) {
       shortfall: state.shortfall,
       warnings,
       baselineMarkets,
+      portfolioApy,
     })
   );
 
@@ -1752,6 +1879,7 @@ async function buildRebalancePlan(simulation) {
     warnings,
     withdrawalCapacities,
     baselineMarkets,
+    portfolioApy,
   };
 }
 
@@ -1764,6 +1892,8 @@ module.exports = {
   fmtUsd,
   formatAllocationTable,
   buildRebalancePlan,
+  computePortfolioApy,
+  _applyPortfolioSpreadGate,
   ousdMorphoStrategiesConfig,
   ousdConstraints,
   ACTION_DEPOSIT,

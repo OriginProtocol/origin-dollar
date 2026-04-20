@@ -60,11 +60,9 @@ const ousdConstraints = {
   minMoveAmount: 5000000000, // $5K in USDC (6 decimals)
   crossChainMinAmount: 25000000000, // $25K in USDC (6 decimals)
   minVaultBalance: 0, // no minimum vault reserve
-  minApySpread: 0.005, // 0.5% — post-deposit spread check (destination vs source)
+  minApySpread: 0.001, // 0.1% — minimum portfolio APY lift required to run yield-motivated actions
   maxApyThreshold: 0.5, // 50% — APY above this is treated as suspicious
-  maxApyImpactBps: 1000, // Max APY degradation per deposit (0.5%)
   maxWithdrawalApyImpactBps: 1000, // Max APY increase on source per withdrawal (0.5%)
-  depositStepSize: 100000000000, // $100K USDC — binary search granularity
   withdrawalStepSize: 100000000000, // $100K USDC — binary search granularity
   maxSpotBelowAvgBps: 200, // Block deposits if spot APY is significantly below the average
   apyAverageWindow: "1h", // Time window for the average APY used in allocation decisions
