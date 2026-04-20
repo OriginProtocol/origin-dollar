@@ -62,8 +62,8 @@ const ousdConstraints = {
   minVaultBalance: 0, // no minimum vault reserve
   minApySpread: 0.005, // 0.5% — post-deposit spread check (destination vs source)
   maxApyThreshold: 0.5, // 50% — APY above this is treated as suspicious
-  maxApyImpactBps: 50, // Max APY degradation per deposit (0.5%)
-  maxWithdrawalApyImpactBps: 50, // Max APY increase on source per withdrawal (0.5%)
+  maxApyImpactBps: 1000, // Max APY degradation per deposit (0.5%)
+  maxWithdrawalApyImpactBps: 1000, // Max APY increase on source per withdrawal (0.5%)
   depositStepSize: 100000000000, // $100K USDC — binary search granularity
   withdrawalStepSize: 100000000000, // $100K USDC — binary search granularity
   maxSpotBelowAvgBps: 200, // Block deposits if spot APY is significantly below the average
