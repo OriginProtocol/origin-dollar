@@ -320,7 +320,7 @@ module.exports = {
       tags: getDeployTags(),
     },
     mainnet: {
-      url: `${process.env.PROVIDER_URL}`,
+      url: `${process.env.MAINNET_PROVIDER_URL || process.env.PROVIDER_URL}`,
       accounts: defaultAccounts,
     },
     holesky: {

@@ -1,4 +1,4 @@
-FROM node:20
+FROM oven/bun:1
 
 ENV DEBIAN_FRONTEND=noninteractive \
   DEBUG=origin* \
@@ -13,6 +13,8 @@ RUN apt-get update \
   build-essential \
   python3 \
   bsdutils \
+  nodejs \
+  npm \
   && rm -rf /var/lib/apt/lists/*
 
 # Preload GitHub host key for SSH-based dependencies.
@@ -20,22 +22,6 @@ RUN mkdir -p /root/.ssh \
   && ssh-keyscan -t rsa github.com >> /root/.ssh/known_hosts
 
 RUN git config --global url."https://github.com/".insteadOf "git@github.com:"
-
-ARG TARGETARCH
-ENV SUPERCRONIC_URL=https://github.com/aptible/supercronic/releases/download/v0.2.39/supercronic-linux-${TARGETARCH} \
-  SUPERCRONIC=supercronic-linux-${TARGETARCH}
-
-# sha1sums from https://github.com/aptible/supercronic/releases/tag/v0.2.39
-COPY <<'EOF' /tmp/supercronic-checksums.txt
-c98bbf82c5f648aaac8708c182cc83046fe48423  supercronic-linux-amd64
-5ef4ccc3d43f12d0f6c3763758bc37cc4e5af76e  supercronic-linux-arm64
-EOF
-
-RUN curl -fsSLO "$SUPERCRONIC_URL" \
-  && grep "$SUPERCRONIC" /tmp/supercronic-checksums.txt | sha1sum -c - \
-  && chmod +x "$SUPERCRONIC" \
-  && mv "$SUPERCRONIC" /usr/local/bin/supercronic \
-  && rm /tmp/supercronic-checksums.txt
 
 WORKDIR /app
 
@@ -48,17 +34,14 @@ RUN corepack enable \
 COPY . .
 
 # Compile contracts on amd64 (production). Skip on arm64 (Mac) where solcjs WASM crashes.
+ARG TARGETARCH
 RUN if [ "$TARGETARCH" = "amd64" ]; then pnpm hardhat compile; else echo "Skipping compile on $TARGETARCH"; fi
 
-ENV PROVIDER_URL="" \
+ENV MAINNET_PROVIDER_URL="" \
   SONIC_PROVIDER_URL="" \
   PLUME_PROVIDER_URL="" \
   HOODI_PROVIDER_URL="" \
   BEACON_PROVIDER_URL="" \
-  DEFENDER_API_KEY="" \
-  DEFENDER_API_SECRET="" \
   HARDHAT_NETWORK=""
 
-RUN chmod +x /app/cron/cron-entrypoint.sh
-
-ENTRYPOINT ["/app/cron/cron-entrypoint.sh"]
+CMD ["bun", "run", "runner.ts"]
