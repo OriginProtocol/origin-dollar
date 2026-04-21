@@ -295,6 +295,25 @@ When finished, you can stop impersonating by unsetting the `IMPERSONATE` environ
 unset IMPERSONATE
 ```
 
+### Automated Actions (Automaton)
+
+The hardhat action tasks under `contracts/tasks/actions/` are driven in production by a container that imports [`@automaton/client`](https://github.com/OriginProtocol/automaton):
+
+- **`contracts/runner.ts`** calls `runContainer({ product: "origin-dollar", workdir: "/app" })`. The library reads enabled rows from the shared automaton Postgres, fires them via croner, and spawns each schedule's command as `pnpm hardhat <name> --network <chain>`.
+- **`contracts/migrations/seed_schedules.sql`** seeds the `schedules` table, mirroring the old `contracts/cron/cron-jobs.ts`.
+- **`contracts/tasks/lib/action.ts`** wraps the hardhat signer with `wrapSignerWithNonceQueueV5` from the library when `DATABASE_URL` is set. That routes `signer.sendTransaction` through Postgres row-locked nonce coordination across concurrent runs.
+
+Every action remains directly executable as a hardhat task on your dev machine — nothing about the local workflow changed:
+
+```
+pnpm hardhat harvest --network mainnet
+pnpm hardhat healthcheck --network mainnet
+```
+
+**No Postgres required for local runs.** The library's nonce queue is gated by `process.env.DATABASE_URL`: if unset, the action uses a raw ethers signer with ethers' own nonce handling. The gate is a single `if (!process.env.DATABASE_URL) return null` check at the top of the handler — no DB connection is opened. If you want to opt in locally (e.g., via `docker compose up`), set `DATABASE_URL` and the queue engages; `unset DATABASE_URL` to go back.
+
+Signer construction (KMS via `utils/signersNoHardhat.js`, `DEPLOYER_PK` / `GOVERNOR_PK` fallbacks, `IMPERSONATE`, Defender) stays exactly as described in the sections above. The library only handles the nonce wrap; it does not construct signers here.
+
 ### Defender Relayer
 
 Open Zeppelin's [Defender](https://defender.openzeppelin.com/) product has a [Relayer](https://docs.openzeppelin.com/defender/v2/manage/relayers) service that is a managed wallet. It handles the nonce, gas, signing and sending of transactions.
