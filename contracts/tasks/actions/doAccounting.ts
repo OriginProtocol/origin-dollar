@@ -1,6 +1,6 @@
 import { ethers } from "ethers";
 import { types } from "hardhat/config";
-import type { Logger } from "winston";
+import type { Logger } from "../lib/action";
 import { address as hoodiConsolidationControllerAddress } from "../../deployments/hoodi/ConsolidationController.json";
 import {
   abi as consolidationControllerAbi,

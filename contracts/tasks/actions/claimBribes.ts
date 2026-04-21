@@ -1,5 +1,5 @@
 import { ethers } from "ethers";
-import type { Logger } from "winston";
+import type { Logger } from "../lib/action";
 import { logTxDetails } from "../../utils/txLogger";
 import { action } from "../lib/action";
 

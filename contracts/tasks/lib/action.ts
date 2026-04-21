@@ -1,8 +1,6 @@
-import { randomUUID } from "node:crypto";
 import type { ethers } from "ethers";
 import { subtask, task } from "hardhat/config";
 import type { ConfigurableTaskDefinition } from "hardhat/types";
-import type { Logger } from "winston";
 import {
   createDb,
   createPool,
@@ -11,11 +9,12 @@ import {
 } from "@automaton/client";
 
 import { getSigner as defaultGetSigner } from "../../utils/signers";
-import logger, {
-  flushLogger,
-  isWinstonLogModeEnabled,
-  withLogContext,
-} from "./logger";
+
+export interface Logger {
+  info(msg: unknown, ...rest: unknown[]): void;
+  warn(msg: unknown, ...rest: unknown[]): void;
+  error(msg: unknown, ...rest: unknown[]): void;
+}
 
 let dbInstance: Db | null = null;
 function getNonceDb(): Db | null {
@@ -57,113 +56,58 @@ const CHAIN_NAMES: Record<number, string> = {
   42161: "arbitrum",
 };
 
+function makeLog(name: string): Logger {
+  const prefix = `[${name}]`;
+  return {
+    info: (msg, ...rest) => console.log(prefix, msg, ...rest),
+    warn: (msg, ...rest) => console.warn(prefix, msg, ...rest),
+    error: (msg, ...rest) => console.error(prefix, msg, ...rest),
+  };
+}
+
 export function createActionHandler(
   config: ActionConfig,
   deps: ActionDeps = {}
 ) {
   const { name, chains, run } = config;
   const getSigner = deps.getSigner ?? defaultGetSigner;
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
-  const legacyLoggerFactory = require("../../utils/logger");
 
   return async (taskArgs: Record<string, any>) => {
-    const winstonMode = isWinstonLogModeEnabled();
-    const propagatedRunId = process.env.ACTION_RUN_ID?.trim();
-    const propagatedActionName = process.env.ACTION_NAME?.trim();
-    const actionLabel =
-      propagatedActionName && propagatedActionName.length > 0
-        ? propagatedActionName
-        : name;
-    const runId =
-      propagatedRunId && propagatedRunId.length > 0
-        ? propagatedRunId
-        : randomUUID();
-    const log: Logger = winstonMode
-      ? logger.child({ action: actionLabel, run_id: runId, source: "task" })
-      : legacyLoggerFactory(`action:${name}`);
+    const log = makeLog(name);
     const startTime = Date.now();
     let chainId: number | undefined;
     let networkName: string | undefined;
 
-    const execute = async () => {
-      try {
-        const rawSigner = await getSigner();
-        const network = await rawSigner.provider!.getNetwork();
-        chainId = Number(network.chainId);
-        const db = getNonceDb();
-        const signer = db
-          ? wrapSignerWithNonceQueueV5(rawSigner, { db, log })
-          : rawSigner;
-        networkName = CHAIN_NAMES[chainId] ?? `unknown-${chainId}`;
+    try {
+      const rawSigner = await getSigner();
+      const network = await rawSigner.provider!.getNetwork();
+      chainId = Number(network.chainId);
+      const db = getNonceDb();
+      const signer = db
+        ? wrapSignerWithNonceQueueV5(rawSigner, { db, log })
+        : rawSigner;
+      networkName = CHAIN_NAMES[chainId] ?? `unknown-${chainId}`;
 
-        if (winstonMode) {
-          log.info(`Running on ${networkName} (${chainId})`, {
-            event: "action.start",
-            source: "task",
-            chain_id: chainId,
-            network: networkName,
-          });
-        } else {
-          log.info(`Running on ${networkName} (${chainId})`);
-        }
+      log.info(`Running on ${networkName} (${chainId})`);
 
-        if (chains && !chains.includes(chainId)) {
-          const valid = chains
-            .map((id) => `${CHAIN_NAMES[id] ?? id} (${id})`)
-            .join(", ");
-          throw new Error(
-            `${name} only supports ${valid}, not ${networkName} (${chainId})`
-          );
-        }
-
-        await run({ signer, chainId, networkName, log, args: taskArgs });
-        if (winstonMode) {
-          log.info(
-            `Completed in ${((Date.now() - startTime) / 1000).toFixed(1)}s`,
-            {
-              event: "action.success",
-              source: "task",
-              chain_id: chainId,
-              network: networkName,
-              duration_ms: Date.now() - startTime,
-            }
-          );
-        } else {
-          log.info(
-            `Completed in ${((Date.now() - startTime) / 1000).toFixed(1)}s`
-          );
-        }
-      } catch (err: any) {
-        if (winstonMode) {
-          log.error(`${err?.name ?? "Error"}: ${err?.message ?? String(err)}`, {
-            event: "action.error",
-            source: "task",
-            chain_id: chainId,
-            network: networkName,
-            duration_ms: Date.now() - startTime,
-            error_name: err?.name ?? "Error",
-            error_message: err?.message ?? String(err),
-            error_stack: err?.stack,
-          });
-        } else {
-          log.error(`${err?.name ?? "Error"}: ${err?.message ?? String(err)}`);
-        }
-        throw err;
-      } finally {
-        if (winstonMode) {
-          await flushLogger();
-        }
+      if (chains && !chains.includes(chainId)) {
+        const valid = chains
+          .map((id) => `${CHAIN_NAMES[id] ?? id} (${id})`)
+          .join(", ");
+        throw new Error(
+          `${name} only supports ${valid}, not ${networkName} (${chainId})`
+        );
       }
-    };
 
-    if (!winstonMode) {
-      return execute();
+      await run({ signer, chainId, networkName, log, args: taskArgs });
+      log.info(
+        `Completed in ${((Date.now() - startTime) / 1000).toFixed(1)}s`
+      );
+    } catch (err: any) {
+      log.error(`${err?.name ?? "Error"}: ${err?.message ?? String(err)}`);
+      if (err?.stack) log.error(err.stack);
+      throw err;
     }
-
-    return withLogContext(
-      { action: actionLabel, run_id: runId, source: "task" },
-      execute
-    );
   };
 }
 
