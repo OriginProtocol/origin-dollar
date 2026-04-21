@@ -79,6 +79,7 @@ const handler = async (event) => {
         warnings: plan.warnings,
         compact: true,
         baselineMarkets: plan.baselineMarkets,
+        portfolioApy: plan.portfolioApy,
       });
       await postToDiscord(webhookUrl, `${header}\n\`\`\`\n${table}\n\`\`\``);
     } catch (err) {
