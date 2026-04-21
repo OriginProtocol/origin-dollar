@@ -1,13 +1,13 @@
 const ethers = require("ethers");
-const { DirectKmsTransactionSigner } = require("@lastdotnet/purrikey");
 const { Defender } = require("@openzeppelin/defender-sdk");
+const { resolveEthersV5Signer } = require("@automaton/client");
 const log = require("./logger")("utils:signers");
 
 // origin-relayer-production-evm
 const DEFAULT_KMS_RELAYER_ID = "mrk-248128595151466bb7f7b9a56501a98f";
-const AWS_KMS_REGION = "us-east-1";
 
-// Task specific relayer overrides.
+// Task-specific relayer overrides. Picked up by resolveKmsRelayerId and
+// forwarded to @automaton/client via the { keyId } option.
 const TASK_KMS_RELAYER_ID_OVERRIDES = {};
 
 let signerContext = {
@@ -45,13 +45,16 @@ const withTaskSignerContext = async (context, fn) => {
   }
 };
 
+/**
+ * KMS-backed ethers v5 Signer. Delegates to @automaton/client's
+ * resolveEthersV5Signer, which wraps the library's AWS KMS SignerCore
+ * (DER → (r,s) → EIP-2 low-s → parity search) in an ethers v5 adapter.
+ * The contextual relayerId (from withTaskSignerContext / --relayerId) is
+ * passed through as the explicit `keyId` option.
+ */
 const getKmsSigner = async (hre) => {
-  const relayerId = resolveKmsRelayerId();
-  return new DirectKmsTransactionSigner(
-    relayerId,
-    hre.ethers.provider,
-    AWS_KMS_REGION
-  );
+  const keyId = resolveKmsRelayerId();
+  return await resolveEthersV5Signer(hre.ethers.provider, { keyId });
 };
 
 /**
@@ -69,13 +72,11 @@ const getKmsAddress = async ({ relayerId, taskName, provider } = {}) => {
     relayerId,
     taskName,
   });
-  const signer = new DirectKmsTransactionSigner(
-    keyId,
+  const signer = await resolveEthersV5Signer(
     provider || ethers.getDefaultProvider(),
-    AWS_KMS_REGION
+    { keyId }
   );
   const address = await signer.getAddress();
-
   log(`Resolved KMS Ethereum address ${address} from relayer-id "${keyId}"`);
   return address;
 };
