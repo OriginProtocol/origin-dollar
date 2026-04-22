@@ -11,9 +11,6 @@ importers:
 
   .:
     dependencies:
-      '@automaton/client':
-        specifier: github:OriginProtocol/automaton#path:packages/client
-        version: https://codeload.github.com/OriginProtocol/automaton/tar.gz/21415b9e15c3f21bffcbac63c54407f93a8abaeb#path:packages/client(@types/pg@8.20.0)(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@5.0.10)(zod@3.25.76)
       '@chainlink/contracts-ccip':
         specifier: 1.2.1
         version: 1.2.1(bufferutil@4.1.0)(ethers@5.7.2(bufferutil@4.1.0)(utf-8-validate@5.0.10))(utf-8-validate@5.0.10)
@@ -53,6 +50,9 @@ importers:
       '@lodestar/utils':
         specifier: ^1.41.0
         version: 1.41.0
+      '@talos/client':
+        specifier: github:oplabs/talos#path:packages/client
+        version: git+https://git@github.com:oplabs/talos.git#de368268930f62604ecc47e8a8486cb5c6ba22e9&path:packages/client(@types/pg@8.20.0)(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@5.0.10)(zod@3.25.76)
       '@types/pg':
         specifier: ^8.20.0
         version: 8.20.0
@@ -233,10 +233,6 @@ packages:
 
   '@adraffy/ens-normalize@1.11.1':
     resolution: {integrity: sha512-nhCBV3quEgesuf7c7KYfperqSS14T8bYuvJ8PcLJp6znkZpFc0AuW4qBtr8eKVyPPe/8RSr7sglCWPU5eaxwKQ==}
-
-  '@automaton/client@https://codeload.github.com/OriginProtocol/automaton/tar.gz/21415b9e15c3f21bffcbac63c54407f93a8abaeb#path:packages/client':
-    resolution: {path: packages/client, tarball: https://codeload.github.com/OriginProtocol/automaton/tar.gz/21415b9e15c3f21bffcbac63c54407f93a8abaeb}
-    version: 0.0.1
 
   '@aws-crypto/crc32@5.2.0':
     resolution: {integrity: sha512-nLbCWqQNgUiwwtFsen1AdzAtvuLRsQS8rYgMuxCrdKf9kOssamGLuPwyTY9wyYblNr9+1XM8v6zoDTPPSIeANg==}
@@ -2396,6 +2392,10 @@ packages:
   '@szmarczak/http-timer@5.0.1':
     resolution: {integrity: sha512-+PmQX0PiAYPMeVYe237LJAYvOMYW1j2rH5YROyS3b4CTVJum34HfRvKvAzozHAQG0TnHNdUfY9nCeUyRAs//cw==}
     engines: {node: '>=14.16'}
+
+  '@talos/client@git+https://git@github.com:oplabs/talos.git#de368268930f62604ecc47e8a8486cb5c6ba22e9&path:packages/client':
+    resolution: {commit: de368268930f62604ecc47e8a8486cb5c6ba22e9, path: packages/client, repo: git@github.com:oplabs/talos.git, type: git}
+    version: 0.0.1
 
   '@trufflesuite/bigint-buffer@1.1.9':
     resolution: {integrity: sha512-bdM5cEGCOhDSwminryHJbRmXc1x7dPKg6Pqns3qyTwFlxsqUgxE29lsERS3PlIW1HTjoIGMUqsk1zQQwST1Yxw==}
@@ -6842,51 +6842,6 @@ snapshots:
 
   '@adraffy/ens-normalize@1.11.1': {}
 
-  '@automaton/client@https://codeload.github.com/OriginProtocol/automaton/tar.gz/21415b9e15c3f21bffcbac63c54407f93a8abaeb#path:packages/client(@types/pg@8.20.0)(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@5.0.10)(zod@3.25.76)':
-    dependencies:
-      '@hono/node-server': 1.19.14(hono@4.12.12)
-      croner: 9.1.0
-      drizzle-orm: 0.36.4(@types/pg@8.20.0)(pg@8.20.0)
-      ethers-v5: ethers@5.7.2(bufferutil@4.1.0)(utf-8-validate@5.0.10)
-      ethers-v6: ethers@6.16.0(bufferutil@4.1.0)(utf-8-validate@5.0.10)
-      hono: 4.12.12
-      pg: 8.20.0
-      viem: 2.43.3(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@5.0.10)(zod@3.25.76)
-    transitivePeerDependencies:
-      - '@aws-sdk/client-rds-data'
-      - '@cloudflare/workers-types'
-      - '@electric-sql/pglite'
-      - '@libsql/client'
-      - '@libsql/client-wasm'
-      - '@neondatabase/serverless'
-      - '@op-engineering/op-sqlite'
-      - '@opentelemetry/api'
-      - '@planetscale/database'
-      - '@prisma/client'
-      - '@tidbcloud/serverless'
-      - '@types/better-sqlite3'
-      - '@types/pg'
-      - '@types/react'
-      - '@types/sql.js'
-      - '@vercel/postgres'
-      - '@xata.io/client'
-      - better-sqlite3
-      - bufferutil
-      - bun-types
-      - expo-sqlite
-      - knex
-      - kysely
-      - mysql2
-      - pg-native
-      - postgres
-      - prisma
-      - react
-      - sql.js
-      - sqlite3
-      - typescript
-      - utf-8-validate
-      - zod
-
   '@aws-crypto/crc32@5.2.0':
     dependencies:
       '@aws-crypto/util': 5.2.0
@@ -10751,6 +10706,51 @@ snapshots:
     dependencies:
       defer-to-connect: 2.0.1
 
+  '@talos/client@git+https://git@github.com:oplabs/talos.git#de368268930f62604ecc47e8a8486cb5c6ba22e9&path:packages/client(@types/pg@8.20.0)(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@5.0.10)(zod@3.25.76)':
+    dependencies:
+      '@hono/node-server': 1.19.14(hono@4.12.12)
+      croner: 9.1.0
+      drizzle-orm: 0.36.4(@types/pg@8.20.0)(pg@8.20.0)
+      ethers-v5: ethers@5.7.2(bufferutil@4.1.0)(utf-8-validate@5.0.10)
+      ethers-v6: ethers@6.16.0(bufferutil@4.1.0)(utf-8-validate@5.0.10)
+      hono: 4.12.12
+      pg: 8.20.0
+      viem: 2.43.3(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@5.0.10)(zod@3.25.76)
+    transitivePeerDependencies:
+      - '@aws-sdk/client-rds-data'
+      - '@cloudflare/workers-types'
+      - '@electric-sql/pglite'
+      - '@libsql/client'
+      - '@libsql/client-wasm'
+      - '@neondatabase/serverless'
+      - '@op-engineering/op-sqlite'
+      - '@opentelemetry/api'
+      - '@planetscale/database'
+      - '@prisma/client'
+      - '@tidbcloud/serverless'
+      - '@types/better-sqlite3'
+      - '@types/pg'
+      - '@types/react'
+      - '@types/sql.js'
+      - '@vercel/postgres'
+      - '@xata.io/client'
+      - better-sqlite3
+      - bufferutil
+      - bun-types
+      - expo-sqlite
+      - knex
+      - kysely
+      - mysql2
+      - pg-native
+      - postgres
+      - prisma
+      - react
+      - sql.js
+      - sqlite3
+      - typescript
+      - utf-8-validate
+      - zod
+
   '@trufflesuite/bigint-buffer@1.1.9':
     dependencies:
       node-gyp-build: 4.3.0
@@ -10788,7 +10788,7 @@ snapshots:
     dependencies:
       '@types/http-cache-semantics': 4.0.4
       '@types/keyv': 3.1.4
-      '@types/node': 12.20.55
+      '@types/node': 25.6.0
       '@types/responselike': 1.0.3
 
   '@types/chai@5.2.3':
@@ -10811,7 +10811,7 @@ snapshots:
 
   '@types/keyv@3.1.4':
     dependencies:
-      '@types/node': 12.20.55
+      '@types/node': 25.6.0
 
   '@types/level-errors@3.0.2': {}
 
@@ -10870,7 +10870,7 @@ snapshots:
 
   '@types/responselike@1.0.3':
     dependencies:
-      '@types/node': 12.20.55
+      '@types/node': 25.6.0
 
   '@types/secp256k1@4.0.7':
     dependencies:
