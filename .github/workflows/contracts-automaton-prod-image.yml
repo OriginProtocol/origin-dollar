@@ -49,3 +49,9 @@ jobs:
           tags: |
             ${{ steps.prep.outputs.image_name }}:latest
             ${{ steps.prep.outputs.image_name }}:${{ github.sha }}
+
+      - name: Trigger Railway redeploy
+        if: success() && env.RAILWAY_DEPLOY_WEBHOOK != ''
+        env:
+          RAILWAY_DEPLOY_WEBHOOK: ${{ secrets.RAILWAY_DEPLOY_WEBHOOK }}
+        run: curl -fsS -X POST "$RAILWAY_DEPLOY_WEBHOOK"
