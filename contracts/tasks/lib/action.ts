@@ -1,12 +1,6 @@
 import type { ethers } from "ethers";
 import { subtask, task } from "hardhat/config";
 import type { ConfigurableTaskDefinition } from "hardhat/types";
-import {
-  createDb,
-  createPool,
-  type Db,
-  wrapSignerWithNonceQueueV5,
-} from "@talos/client";
 
 import { getSigner as defaultGetSigner } from "../../utils/signers";
 
@@ -14,16 +8,6 @@ export interface Logger {
   info(msg: unknown, ...rest: unknown[]): void;
   warn(msg: unknown, ...rest: unknown[]): void;
   error(msg: unknown, ...rest: unknown[]): void;
-}
-
-let dbInstance: Db | null = null;
-function getNonceDb(): Db | null {
-  if (!process.env.DATABASE_URL) return null;
-  if (!dbInstance) {
-    const pool = createPool({ connectionString: process.env.DATABASE_URL });
-    dbInstance = createDb(pool);
-  }
-  return dbInstance;
 }
 
 export interface ActionContext {
@@ -79,13 +63,12 @@ export function createActionHandler(
     let networkName: string | undefined;
 
     try {
-      const rawSigner = await getSigner();
-      const network = await rawSigner.provider!.getNetwork();
+      // Signer already wraps sendTransaction with the nonce queue when
+      // DATABASE_URL is set — see utils/signers.js. Helper modules that
+      // call getSigner() directly get the same wrapped signer.
+      const signer = await getSigner();
+      const network = await signer.provider!.getNetwork();
       chainId = Number(network.chainId);
-      const db = getNonceDb();
-      const signer = db
-        ? wrapSignerWithNonceQueueV5(rawSigner, { db, log })
-        : rawSigner;
       networkName = CHAIN_NAMES[chainId] ?? `unknown-${chainId}`;
 
       log.info(`Running on ${networkName} (${chainId})`);

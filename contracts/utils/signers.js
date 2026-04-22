@@ -2,6 +2,11 @@ const { Wallet } = require("ethers");
 const { parseEther } = require("ethers/lib/utils");
 const hhHelpers = require("@nomicfoundation/hardhat-network-helpers");
 const {
+  wrapSignerWithNonceQueueV5,
+  createDb,
+  createPool,
+} = require("@talos/client");
+const {
   getDefenderSigner,
   getKmsAddress,
   getKmsSigner,
@@ -11,6 +16,25 @@ const { ethereumAddress, privateKey } = require("./regex");
 
 const log = require("./logger")("utils:signers");
 
+let dbInstance = null;
+function getNonceDb() {
+  if (!process.env.DATABASE_URL) return null;
+  if (!dbInstance) {
+    const pool = createPool({ connectionString: process.env.DATABASE_URL });
+    dbInstance = createDb(pool);
+  }
+  return dbInstance;
+}
+
+// Wrap a raw signer with the nonce-queue Proxy when DATABASE_URL is set.
+// Returning the raw signer unchanged in dev / fork flows preserves the
+// DATABASE_URL gate invariant: no queue engagement without explicit opt-in.
+function maybeWrap(rawSigner) {
+  const db = getNonceDb();
+  if (!db) return rawSigner;
+  return wrapSignerWithNonceQueueV5(rawSigner, { db });
+}
+
 /**
  * Signer factory that gets a signer for a hardhat test or task
  * If address is passed, use that address as signer.
@@ -18,6 +42,11 @@ const log = require("./logger")("utils:signers");
  * If DEPLOYER_PK or GOVERNOR_PK is set, use that private key as signer.
  * If a fork and IMPERSONATE is set, impersonate that account.
  * else get the first signer from the hardhat node.
+ *
+ * Returned signer is wrapped with `wrapSignerWithNonceQueueV5` when
+ * DATABASE_URL is set so every sendTransaction routes through the
+ * shared Postgres nonce queue / lifecycle recording. The `address`
+ * branch (an explicit impersonation for tooling) is not wrapped.
  * @param {*} address optional address of the signer
  * @returns
  */
@@ -32,7 +61,7 @@ async function getSigner(address = undefined) {
   if (hasAwsKmsCredentials()) {
     const address = await getKmsAddress({ provider: hre.ethers.provider });
     log(`Using KMS signer ${address}`);
-    return await getKmsSigner(hre);
+    return maybeWrap(await getKmsSigner(hre));
   }
 
   const pk = process.env.DEPLOYER_PK || process.env.GOVERNOR_PK;
@@ -42,7 +71,7 @@ async function getSigner(address = undefined) {
     }
     const wallet = new Wallet(pk, hre.ethers.provider);
     log(`Using signer ${await wallet.getAddress()} from private key`);
-    return wallet;
+    return maybeWrap(wallet);
   }
 
   if (process.env.FORK === "true" && process.env.IMPERSONATE) {
@@ -60,7 +89,7 @@ async function getSigner(address = undefined) {
 
   // If using Defender Relayer
   if (process.env.DEFENDER_API_KEY && process.env.DEFENDER_API_SECRET) {
-    return await getDefenderSigner();
+    return maybeWrap(await getDefenderSigner());
   }
 
   const signers = await hre.ethers.getSigners();
