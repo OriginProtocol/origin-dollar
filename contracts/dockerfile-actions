@@ -4,6 +4,7 @@ FROM oven/bun:1
 ENV DEBIAN_FRONTEND=noninteractive \
   DEBUG=origin* \
   DEBUG_HIDE_DATE=true \
+  NODE_OPTIONS=--max-old-space-size=8096 \
   PNPM_STORE_DIR=/root/.local/share/pnpm/store
 
 RUN apt-get update \
