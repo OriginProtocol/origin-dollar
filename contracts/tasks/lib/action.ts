@@ -6,7 +6,7 @@ import {
   createPool,
   type Db,
   wrapSignerWithNonceQueueV5,
-} from "@automaton/client";
+} from "@talos/client";
 
 import { getSigner as defaultGetSigner } from "../../utils/signers";
 

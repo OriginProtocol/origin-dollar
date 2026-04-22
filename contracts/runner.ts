@@ -1,4 +1,4 @@
-import { runContainer } from "@automaton/client";
+import { runContainer } from "@talos/client";
 
 await runContainer({
   product: "origin-dollar",

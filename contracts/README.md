@@ -295,11 +295,11 @@ When finished, you can stop impersonating by unsetting the `IMPERSONATE` environ
 unset IMPERSONATE
 ```
 
-### Automated Actions (Automaton)
+### Automated Actions (Talos)
 
-The hardhat action tasks under `contracts/tasks/actions/` are driven in production by a container that imports [`@automaton/client`](https://github.com/OriginProtocol/automaton):
+The hardhat action tasks under `contracts/tasks/actions/` are driven in production by a container that imports [`@talos/client`](https://github.com/oplabs/talos):
 
-- **`contracts/runner.ts`** calls `runContainer({ product: "origin-dollar", workdir: "/app" })`. The library reads enabled rows from the shared automaton Postgres, fires them via croner, and spawns each schedule's command as `pnpm hardhat <name> --network <chain>`.
+- **`contracts/runner.ts`** calls `runContainer({ product: "origin-dollar", workdir: "/app" })`. The library reads enabled rows from the shared Talos Postgres, fires them via croner, and spawns each schedule's command as `pnpm hardhat <name> --network <chain>`.
 - **`contracts/migrations/seed_schedules.sql`** seeds the `schedules` table, mirroring the old `contracts/cron/cron-jobs.ts`.
 - **`contracts/tasks/lib/action.ts`** wraps the hardhat signer with `wrapSignerWithNonceQueueV5` from the library when `DATABASE_URL` is set. That routes `signer.sendTransaction` through Postgres row-locked nonce coordination across concurrent runs.
 
