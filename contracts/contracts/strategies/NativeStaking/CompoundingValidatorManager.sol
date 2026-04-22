@@ -23,8 +23,6 @@ import { IBeaconProofs } from "../../interfaces/IBeaconProofs.sol";
 abstract contract CompoundingValidatorManager is Governable, Pausable {
     using SafeERC20 for IERC20;
 
-    /// @dev The amount of ETH in wei that is required for the first deposit to a new validator.
-    uint256 internal constant DEPOSIT_AMOUNT_WEI = 32.25 ether;
     /// @dev Validator balances over this amount will eventually become active on the beacon chain.
     /// Due to hysteresis, if the effective balance is 31 ETH, the actual balance
     /// must rise to 32.25 ETH to trigger an effective balance update to 32 ETH.
@@ -168,11 +166,14 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
     /// withdrawal of the validators. It is strictly concerned with WETH that has been deposited and is waiting to
     /// be staked.
     uint256 public depositedWethAccountedFor;
+    /// @notice The amount of ETH in wei that is required for the first deposit to a new validator.
+    uint256 public initialDepositAmountWei;
 
     // For future use
-    uint256[41] private __gap;
+    uint256[40] private __gap;
 
     event RegistratorChanged(address indexed newAddress);
+    event InitialDepositAmountChanged(uint256 amountWei);
     event FirstDepositReset();
     event SSVValidatorRegistered(
         bytes32 indexed pubKeyHash,
@@ -262,6 +263,14 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
         emit RegistratorChanged(_address);
     }
 
+    /// @notice Set the amount of ETH required for the first deposit to a new validator.
+    function setInitialDepositAmount(uint256 _initialDepositAmountWei)
+        external
+        onlyGovernor
+    {
+        _setInitialDepositAmountWei(_initialDepositAmountWei);
+    }
+
     /// @notice Reset the `firstDeposit` flag to false so deposits to unverified validators can be made again.
     function resetFirstDeposit() external onlyGovernor {
         require(firstDeposit, "No first deposit");
@@ -328,7 +337,7 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
     }
 
     /// @notice Stakes WETH in this strategy to a compounding validator.
-    /// The first deposit to a new validator must be exactly 32.25 ETH.
+    /// The first deposit to a new validator must be exactly `initialDepositAmountWei`.
     /// Once verified on the beacon chain, rewards can push the validator's balance above
     /// the activation threshold so it can become active without requiring a second deposit.
     /// Does not convert any ETH sitting in this strategy to WETH.
@@ -378,7 +387,7 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
             require(!firstDeposit, "Existing first deposit");
             // Limits the amount of ETH that can be at risk from a front-running deposit attack.
             require(
-                depositAmountWei == DEPOSIT_AMOUNT_WEI,
+                depositAmountWei == initialDepositAmountWei,
                 "Invalid first deposit amount"
             );
             // Limits the number of validator balance proofs to verifyBalances
@@ -1200,6 +1209,15 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
         for (uint256 i = 0; i < depositsCount; i++) {
             validatorHashes[i] = deposits[depositList[i]].pubKeyHash;
         }
+    }
+
+    function _setInitialDepositAmountWei(uint256 _initialDepositAmountWei)
+        internal
+    {
+        require(_initialDepositAmountWei >= 1 ether, "Deposit too small");
+
+        initialDepositAmountWei = _initialDepositAmountWei;
+        emit InitialDepositAmountChanged(_initialDepositAmountWei);
     }
 
     /// @notice Hash a validator public key using the Beacon Chain's format

@@ -52,16 +52,19 @@ contract CompoundingStakingSSVStrategy is
     /// @param _rewardTokenAddresses Not used so empty array
     /// @param _assets Not used so empty array
     /// @param _pTokens Not used so empty array
+    /// @param _initialDepositAmountWei The amount of ETH required for the first deposit to a new validator.
     function initialize(
         address[] memory _rewardTokenAddresses,
         address[] memory _assets,
-        address[] memory _pTokens
+        address[] memory _pTokens,
+        uint256 _initialDepositAmountWei
     ) external onlyGovernor initializer {
         InitializableAbstractStrategy._initialize(
             _rewardTokenAddresses,
             _assets,
             _pTokens
         );
+        _setInitialDepositAmountWei(_initialDepositAmountWei);
     }
 
     /// @notice Unlike other strategies, this does not deposit assets into the underlying platform.

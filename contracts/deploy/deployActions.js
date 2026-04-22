@@ -458,7 +458,7 @@ const deployCompoundingStakingSSVStrategy = async () => {
 
   log("Deploy encode initialize function of the strategy contract");
   const initData = cStrategyImpl.interface.encodeFunctionData(
-    "initialize(address[],address[],address[])",
+    "initialize(address[],address[],address[],uint256)",
     [
       [], // reward token addresses
       /* no need to specify WETH as an asset, since we have that overridden in the "supportsAsset"
@@ -466,6 +466,7 @@ const deployCompoundingStakingSSVStrategy = async () => {
        */
       [], // asset token addresses
       [], // platform tokens addresses
+      ethers.utils.parseEther("32.25"), // initial deposit amount
     ]
   );
 

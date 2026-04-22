@@ -175,6 +175,46 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
       );
       expect(assets).to.equal(true);
     });
+    it("Should initialize the first deposit amount to 32.25 ETH", async () => {
+      const { compoundingStakingSSVStrategy } = fixture;
+
+      expect(
+        await compoundingStakingSSVStrategy.initialDepositAmountWei()
+      ).to.equal(parseEther(INITIAL_DEPOSIT_AMOUNT));
+    });
+    it("Governor should be able to change the first deposit amount", async () => {
+      const { compoundingStakingSSVStrategy } = fixture;
+
+      const updatedAmount = parseEther("33");
+      const tx = await compoundingStakingSSVStrategy
+        .connect(sGov)
+        .setInitialDepositAmount(updatedAmount);
+
+      await expect(tx)
+        .to.emit(compoundingStakingSSVStrategy, "InitialDepositAmountChanged")
+        .withArgs(updatedAmount);
+      expect(
+        await compoundingStakingSSVStrategy.initialDepositAmountWei()
+      ).to.equal(updatedAmount);
+    });
+    it("Non governor should not be able to change the first deposit amount", async () => {
+      const { compoundingStakingSSVStrategy, strategist } = fixture;
+
+      await expect(
+        compoundingStakingSSVStrategy
+          .connect(strategist)
+          .setInitialDepositAmount(parseEther("33"))
+      ).to.be.revertedWith("Caller is not the Governor");
+    });
+    it("Should revert when setting the first deposit amount below 1 ETH", async () => {
+      const { compoundingStakingSSVStrategy } = fixture;
+
+      await expect(
+        compoundingStakingSSVStrategy
+          .connect(sGov)
+          .setInitialDepositAmount(parseUnits("0.5", 18))
+      ).to.be.revertedWith("Deposit too small");
+    });
     it("Should not collect rewards", async () => {
       const { compoundingStakingSSVStrategy, governor } = fixture;
 
