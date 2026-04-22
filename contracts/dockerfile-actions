@@ -1,8 +1,10 @@
+# syntax=docker/dockerfile:1.7
 FROM oven/bun:1
 
 ENV DEBIAN_FRONTEND=noninteractive \
   DEBUG=origin* \
-  DEBUG_HIDE_DATE=true
+  DEBUG_HIDE_DATE=true \
+  PNPM_STORE_DIR=/root/.local/share/pnpm/store
 
 RUN apt-get update \
   && apt-get install -y --no-install-recommends \
@@ -19,16 +21,16 @@ RUN apt-get update \
 
 # Preload GitHub host key for SSH-based dependencies.
 RUN mkdir -p /root/.ssh \
-  && ssh-keyscan -t rsa github.com >> /root/.ssh/known_hosts
-
-RUN git config --global url."https://github.com/".insteadOf "git@github.com:"
+  && ssh-keyscan -t ed25519,rsa github.com >> /root/.ssh/known_hosts
 
 WORKDIR /app
 
-# Enable pnpm via corepack and install dependencies first for better caching.
+# Install dependencies first for better caching. Requires BuildKit SSH
+# forwarding (e.g. Railway deploy key) to resolve @automaton/client.
 COPY pnpm-lock.yaml package.json pnpm-workspace.yaml ./
-RUN corepack enable \
-  && pnpm install --frozen-lockfile
+RUN --mount=type=ssh \
+    --mount=type=cache,id=origin-dollar-contracts-pnpm-store,target=/root/.local/share/pnpm/store \
+    corepack enable && pnpm install --frozen-lockfile
 
 # Copy the rest of the contracts workspace.
 COPY . .

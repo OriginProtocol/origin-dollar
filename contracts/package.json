@@ -137,7 +137,7 @@
     }
   },
   "dependencies": {
-    "@talos/client": "github:oplabs/talos#path:packages/client",
+    "@talos/client": "git+ssh://git@github.com/oplabs/talos.git#path:packages/client",
     "@chainlink/contracts-ccip": "1.2.1",
     "@chainsafe/bls": "^8.2.0",
     "@layerzerolabs/devtools": "^0.4.10",
