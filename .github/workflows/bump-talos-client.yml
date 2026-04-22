@@ -1,0 +1,77 @@
+name: Bump @talos/client
+
+on:
+  schedule:
+    # Every 6 hours
+    - cron: '0 */6 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  bump:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: contracts
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: origin-automaton-production
+
+      - name: Set up SSH agent for talos fetch
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.TALOS_DEPLOY_KEY }}
+
+      - name: Trust github.com SSH host key
+        run: |
+          mkdir -p ~/.ssh
+          ssh-keyscan -t rsa,ecdsa,ed25519 github.com >> ~/.ssh/known_hosts
+        working-directory: .
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.24.0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+          cache-dependency-path: contracts/pnpm-lock.yaml
+
+      - name: Update @talos/client and reconcile lockfile
+        run: |
+          pnpm update @talos/client
+          # pnpm update rewrites the package.json spec from git+ssh://... to
+          # github:... (HTTPS), which breaks Railway builds that rely on SSH
+          # forwarding. Revert the spec and reconcile the lockfile's specifier.
+          git checkout -- package.json
+          pnpm install
+
+      - name: Resolve pinned talos commit
+        id: talos
+        working-directory: .
+        run: |
+          commit=$(grep -oE "oplabs/talos\.git#[a-f0-9]{40}" contracts/pnpm-lock.yaml | head -1 | sed 's/.*#//')
+          echo "commit=$commit" >> "$GITHUB_OUTPUT"
+
+      - name: Create or update pull request
+        uses: peter-evans/create-pull-request@v7
+        with:
+          branch: auto/bump-talos-client
+          base: origin-automaton-production
+          title: "Bump @talos/client"
+          commit-message: "Bump @talos/client to ${{ steps.talos.outputs.commit }}"
+          body: |
+            Automated bump of `@talos/client` to the latest commit on `oplabs/talos` `main`.
+
+            Pinned commit: [`${{ steps.talos.outputs.commit }}`](https://github.com/oplabs/talos/commit/${{ steps.talos.outputs.commit }})
+
+            Merging this PR triggers the contracts-automaton-prod image build + Railway redeploy for this runner.
+          delete-branch: true
