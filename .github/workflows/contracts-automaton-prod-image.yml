@@ -51,7 +51,10 @@ jobs:
             ${{ steps.prep.outputs.image_name }}:${{ github.sha }}
 
       - name: Trigger Railway redeploy
-        if: success() && env.RAILWAY_DEPLOY_WEBHOOK != ''
+        if: success() && env.RAILWAY_TOKEN != ''
         env:
-          RAILWAY_DEPLOY_WEBHOOK: ${{ secrets.RAILWAY_DEPLOY_WEBHOOK }}
-        run: curl -fsS -X POST "$RAILWAY_DEPLOY_WEBHOOK"
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+          RAILWAY_SERVICE_ID: ${{ secrets.RAILWAY_SERVICE_ID }}
+        run: |
+          npm i -g @railway/cli
+          railway redeploy --service "$RAILWAY_SERVICE_ID" --yes
