@@ -1019,6 +1019,49 @@ function _computeShortfallWithdrawAmount(
 }
 
 /**
+ * Mark approved withdrawals funding the vault deficit as `isShortfall = true`
+ * so the portfolio spread gate preserves them. Walks withdrawals in priority
+ * order — default (same-chain) first, then cross-chain sorted by lowest APY —
+ * flagging each until the deficit is covered.
+ *
+ * Whole-withdrawal flagging (no splitting): if a withdrawal only partially
+ * covers the remaining deficit, the full withdrawal is flagged. Any excess
+ * lands in the vault and is redeployed on the next rebalance as vault surplus.
+ * Splitting would require re-checking minMoveAmount / crossChainMinAmount /
+ * liquidity invariants mid-plan; the worst case here is one extra rebalance
+ * cycle to redeploy the leftover.
+ */
+function _markShortfallWithdrawals(
+  result,
+  vaultBalance,
+  shortfall,
+  constraints
+) {
+  const vaultTarget = shortfall.add(
+    BigNumber.from(constraints.minVaultBalance)
+  );
+  let deficit = vaultTarget.gt(vaultBalance)
+    ? vaultTarget.sub(vaultBalance)
+    : BigNumber.from(0);
+  if (deficit.lte(0)) return result;
+
+  const withdrawals = result.filter((a) => a.action === ACTION_WITHDRAW);
+  const defaults = withdrawals.filter((w) => w.isDefault);
+  const crossChain = withdrawals
+    .filter((w) => !w.isDefault)
+    .sort((a, b) => a.apy - b.apy);
+  const ordered = [...defaults, ...crossChain];
+
+  for (const w of ordered) {
+    if (deficit.lte(0)) break;
+    w.isShortfall = true;
+    deficit = deficit.sub(w.delta.abs());
+  }
+
+  return result;
+}
+
+/**
  * Cover a withdrawal shortfall when no rebalancing withdrawals were approved.
  * Tries the default (same-chain) strategy first, then lowest-APY cross-chain.
  */
@@ -1262,7 +1305,16 @@ async function buildExecutableActions(
   // 3. Cancel/trim withdrawals that exceed what approved deposits + vault deficit need
   result = _trimExcessWithdrawals(result, vaultBalance, shortfall, constraints);
 
-  // 4. Fallback: cover shortfall if no withdrawals were approved
+  // 4. Mark approved withdrawals funding the vault deficit as isShortfall so
+  //    the portfolio spread gate preserves them.
+  result = _markShortfallWithdrawals(
+    result,
+    vaultBalance,
+    shortfall,
+    constraints
+  );
+
+  // 5. Fallback: cover shortfall if no withdrawals were approved
   const hasApprovedWithdrawals = result.some(
     (a) => a.action === ACTION_WITHDRAW
   );
@@ -1894,6 +1946,7 @@ module.exports = {
   buildRebalancePlan,
   computePortfolioApy,
   _applyPortfolioSpreadGate,
+  _markShortfallWithdrawals,
   ousdMorphoStrategiesConfig,
   ousdConstraints,
   ACTION_DEPOSIT,

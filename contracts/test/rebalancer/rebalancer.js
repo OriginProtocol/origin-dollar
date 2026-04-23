@@ -10,6 +10,7 @@ const {
   formatAllocationTable,
   computePortfolioApy,
   _applyPortfolioSpreadGate,
+  _markShortfallWithdrawals,
   ACTION_DEPOSIT,
   ACTION_WITHDRAW,
   ACTION_NONE,
@@ -1525,6 +1526,27 @@ describe("Rebalancer: buildExecutableActions", () => {
     const baseRow = result.find((a) => a.isCrossChain);
     expect(baseRow.action).to.equal(ACTION_DEPOSIT);
   });
+
+  // ── Shortfall marking on normal-path withdrawals ────────
+
+  it("marks normal-path default withdrawal as isShortfall when it covers the vault deficit", async () => {
+    // Default overallocated → withdrawal is approved via the normal path.
+    // Shortfall > 0, vaultBalance = 0 → deficit = shortfall.
+    // Gate preservation depends on isShortfall; the normal-path withdrawal
+    // must be flagged even though _coverShortfall was not invoked.
+    const allocs = [
+      makeAllocation("Ethereum Morpho", 700000, 500000, 0.05, {
+        isDefault: true,
+      }),
+      makeAllocation("Base Morpho", 300000, 500000, 0.04, {
+        isCrossChain: true,
+      }),
+    ];
+    const result = await buildExecutableActions(allocs, usdc(100000), usdc(0));
+    const ethRow = result.find((a) => a.isDefault);
+    expect(ethRow.action).to.equal(ACTION_WITHDRAW);
+    expect(ethRow.isShortfall).to.be.true;
+  });
 });
 
 // ─────────────────────────────────────────────────────────
@@ -2216,5 +2238,135 @@ describe("Rebalancer: _applyPortfolioSpreadGate", () => {
     const res = _applyPortfolioSpreadGate(actions, totalCapital, {}, warnings);
     expect(res.gated).to.be.false;
     expect(actions[0].action).to.equal(ACTION_WITHDRAW);
+  });
+});
+
+// ─────────────────────────────────────────────────────────
+// _markShortfallWithdrawals
+// ─────────────────────────────────────────────────────────
+
+function makeWithdrawAction(name, balance, withdrawAmount, apy, flags = {}) {
+  const balBn = usdc(balance);
+  const amtBn = usdc(withdrawAmount);
+  return {
+    name,
+    address: `0x${name.replace(/\s/g, "").toLowerCase()}`,
+    balance: balBn,
+    targetBalance: balBn.sub(amtBn),
+    delta: amtBn.mul(-1),
+    apy,
+    action: ACTION_WITHDRAW,
+    isDefault: !!flags.isDefault,
+    isCrossChain: !!flags.isCrossChain,
+    isShortfall: false,
+    isVaultSurplus: false,
+  };
+}
+
+describe("Rebalancer: _markShortfallWithdrawals", () => {
+  const constraints = { minVaultBalance: 0 };
+
+  it("flags the default-strategy withdrawal when it fully covers the deficit", () => {
+    const actions = [
+      makeWithdrawAction("Default", 500000, 100000, 0.05, { isDefault: true }),
+      makeWithdrawAction("CrossChain", 500000, 100000, 0.03, {
+        isCrossChain: true,
+      }),
+    ];
+    // vaultBalance=0, shortfall=50K → deficit=50K, default withdrawal=100K covers it
+    _markShortfallWithdrawals(actions, ZERO, usdc(50000), constraints);
+    expect(actions[0].isShortfall).to.be.true;
+    expect(actions[1].isShortfall).to.be.false;
+  });
+
+  it("walks cross-chain by lowest APY after default", () => {
+    const actions = [
+      makeWithdrawAction("Default", 100000, 20000, 0.05, { isDefault: true }),
+      makeWithdrawAction("HighApyCC", 300000, 120000, 0.08, {
+        isCrossChain: true,
+      }),
+      makeWithdrawAction("LowApyCC", 300000, 120000, 0.03, {
+        isCrossChain: true,
+      }),
+    ];
+    // deficit=130K: default covers 20K, lowest-APY cross-chain covers the rest
+    _markShortfallWithdrawals(actions, ZERO, usdc(130000), constraints);
+    expect(actions[0].isShortfall).to.be.true;
+    expect(actions[2].isShortfall).to.be.true;
+    expect(actions[1].isShortfall).to.be.false;
+  });
+
+  it("does nothing when vault balance already covers the target", () => {
+    const actions = [
+      makeWithdrawAction("Default", 500000, 100000, 0.05, { isDefault: true }),
+    ];
+    // vaultBalance=200K >= shortfall=50K → deficit=0
+    _markShortfallWithdrawals(actions, usdc(200000), usdc(50000), constraints);
+    expect(actions[0].isShortfall).to.be.false;
+  });
+
+  it("is a no-op when no approved withdrawals exist", () => {
+    const actions = [
+      {
+        ...makeWithdrawAction("Default", 500000, 100000, 0.05, {
+          isDefault: true,
+        }),
+        action: ACTION_NONE,
+      },
+    ];
+    _markShortfallWithdrawals(actions, ZERO, usdc(50000), constraints);
+    expect(actions[0].isShortfall).to.be.false;
+  });
+
+  it("respects minVaultBalance when computing the deficit", () => {
+    const actions = [
+      makeWithdrawAction("Default", 500000, 30000, 0.05, { isDefault: true }),
+    ];
+    // vaultBalance=100K, shortfall=50K, minVaultBalance=60K → target=110K, deficit=10K
+    _markShortfallWithdrawals(actions, usdc(100000), usdc(50000), {
+      minVaultBalance: usdc(60000),
+    });
+    expect(actions[0].isShortfall).to.be.true;
+  });
+});
+
+// ─────────────────────────────────────────────────────────
+// End-to-end gate regression (mirrors the production failure)
+// ─────────────────────────────────────────────────────────
+
+describe("Rebalancer: shortfall funding survives the spread gate", () => {
+  it("preserves normal-path withdrawals that cover the vault deficit", async () => {
+    // Ethereum Morpho overallocated at 14% APY; Base/HyperEVM underfunded at
+    // lower APY. Rebalance withdraws from ETH → APY lift turns negative. With
+    // shortfall > 0, the withdrawal must survive the spread gate.
+    const allocs = [
+      makeAllocation("Ethereum Morpho", 500000, 400000, 0.14, {
+        isDefault: true,
+      }),
+      makeAllocation("Base Morpho", 500000, 600000, 0.04, {
+        isCrossChain: true,
+      }),
+    ];
+    const actions = await buildExecutableActions(allocs, usdc(100000), usdc(0));
+
+    const totalCapital = actions.reduce((sum, a) => sum.add(a.balance), ZERO);
+    const warnings = [];
+    const res = _applyPortfolioSpreadGate(
+      actions,
+      totalCapital,
+      { minApySpread: 0.001 },
+      warnings
+    );
+
+    const ethRow = actions.find((a) => a.isDefault);
+    const baseRow = actions.find((a) => a.isCrossChain);
+
+    // Gate fires because APY lift is negative.
+    expect(res.gated).to.be.true;
+    // ETH withdrawal covers the shortfall → flagged and preserved.
+    expect(ethRow.action).to.equal(ACTION_WITHDRAW);
+    expect(ethRow.isShortfall).to.be.true;
+    // Base deposit is yield-motivated → dropped.
+    expect(baseRow.action).to.equal(ACTION_NONE);
   });
 });
