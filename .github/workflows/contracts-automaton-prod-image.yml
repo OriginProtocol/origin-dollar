@@ -98,4 +98,16 @@ jobs:
             exit 1
           fi
 
-          echo "✓ Set service image to $IMAGE — Railway will pull and deploy."
+          echo "✓ Pinned service image to $IMAGE."
+
+      - name: Trigger Railway redeploy
+        if: success() && env.RAILWAY_TOKEN != ''
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+          RAILWAY_SERVICE_ID: ${{ secrets.RAILWAY_SERVICE_ID }}
+        run: |
+          # Fires the actual deploy. The previous step changed the source
+          # to the SHA-tagged image but `serviceInstanceUpdate` alone does
+          # not trigger a deployment — Railway needs an explicit poke.
+          npm i -g @railway/cli
+          railway redeploy --service "$RAILWAY_SERVICE_ID" --yes
