@@ -3,7 +3,7 @@ name: Contracts Actions Image
 on:
   push:
     branches:
-      - origin-automaton-production
+      - talos
   workflow_dispatch:
 
 permissions:
