@@ -7,6 +7,7 @@ const { impersonateAndFund } = require("../../utils/signers");
 const fixture = createFixtureLoader(async () => {
   const { ethers } = hre;
   const mockSafeFactory = await ethers.getContractFactory("MockSafeContract");
+  // TODO(oz-v5): Ownable v5 requires constructor(address initialOwner). Add the initial owner address.
   const mockSafe = await mockSafeFactory.deploy();
   const safeSigner = await impersonateAndFund(mockSafe.address);
   const stranger = await impersonateAndFund(
@@ -16,6 +17,7 @@ const fixture = createFixtureLoader(async () => {
   const poolBoosterFactoryFactory = await ethers.getContractFactory(
     "MockPoolBoosterFactory"
   );
+  // TODO(oz-v5): Ownable v5 requires constructor(address initialOwner). Add the initial owner address.
   const mockFactory = await poolBoosterFactoryFactory.deploy();
 
   const moduleFactory = await ethers.getContractFactory(
@@ -82,6 +84,7 @@ describe("Unit Test: Merkl Pool Booster Bribes Module", function () {
   it("Should revert on construction with zero factory address", async () => {
     const { ethers } = hre;
     const mockSafeFactory = await ethers.getContractFactory("MockSafeContract");
+    // TODO(oz-v5): Ownable v5 requires constructor(address initialOwner). Add the initial owner address.
     const mockSafe = await mockSafeFactory.deploy();
 
     const moduleFactory = await ethers.getContractFactory(

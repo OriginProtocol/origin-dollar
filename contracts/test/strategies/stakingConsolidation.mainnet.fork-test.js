@@ -634,7 +634,7 @@ describe.skip("ForkTest: Consolidation of Staking Strategies", function () {
             { value: consolidationFee }
           );
 
-        await expect(tx).to.be.revertedWith("Ownable: caller is not the owner");
+        await expect(tx).to.be.revertedWithCustomError(tx, "OwnableUnauthorizedAccount");
       }
     });
     it("Fail to request consolidation on native staking strategy if not Consolidation Controller", async () => {
@@ -1118,7 +1118,7 @@ describe.skip("ForkTest: Consolidation of Staking Strategies", function () {
           .connect(user)
           .failConsolidation([sourceValidators[0]]);
 
-        await expect(tx).to.be.revertedWith("Ownable: caller is not the owner");
+        await expect(tx).to.be.revertedWithCustomError(tx, "OwnableUnauthorizedAccount");
       }
     });
     it("Fail to call fail consolidation to invalid source public key", async () => {
@@ -1380,7 +1380,7 @@ describe.skip("ForkTest: Consolidation of Staking Strategies", function () {
           .connect(user)
           .confirmConsolidation(balanceProofs, pendingDepositProofs);
 
-        await expect(tx).to.be.revertedWith("Ownable: caller is not the owner");
+        await expect(tx).to.be.revertedWithCustomError(tx, "OwnableUnauthorizedAccount");
       }
     });
     it("Fail confirm consolidation with invalid balance proofs", async () => {

@@ -591,7 +591,7 @@ describe("Unit test: Native SSV Staking Strategy", function () {
           parseEther("2"), //_consensusRewardsDelta
           parseEther("2") //_ethToVault
         )
-      ).to.be.revertedWith("Pausable: not paused");
+      ).to.be.revertedWithCustomError(nativeStakingSSVStrategy, "ExpectedPause");
     });
 
     it("Validators delta should not be <-4 or >4 for fix accounting function", async () => {

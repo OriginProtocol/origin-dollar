@@ -270,7 +270,7 @@ describe("ForkTest: Merkl Pool Booster", function () {
       const newImpl = await deployWithConfirmation("PoolBoosterMerklV2", []);
       await expect(
         beacon.connect(anna).upgradeTo(newImpl.address)
-      ).to.be.revertedWith("Ownable: caller is not the owner");
+      ).to.be.revertedWithCustomError(beacon, "OwnableUnauthorizedAccount");
     });
   });
 

@@ -7,6 +7,7 @@ const { impersonateAndFund } = require("../../utils/signers");
 const fixture = createFixtureLoader(async () => {
   const { ethers } = hre;
   const mockSafeFactory = await ethers.getContractFactory("MockSafeContract");
+  // TODO(oz-v5): Ownable v5 requires constructor(address initialOwner). Add the initial owner address.
   const mockSafe = await mockSafeFactory.deploy();
   const safeSigner = await impersonateAndFund(mockSafe.address);
   const stranger = await impersonateAndFund(
@@ -16,8 +17,11 @@ const fixture = createFixtureLoader(async () => {
   const poolBoosterFactory = await ethers.getContractFactory(
     "MockCurvePoolBooster"
   );
+  // TODO(oz-v5): Ownable v5 requires constructor(address initialOwner). Add the initial owner address.
   const poolBoosterA = await poolBoosterFactory.deploy();
+  // TODO(oz-v5): Ownable v5 requires constructor(address initialOwner). Add the initial owner address.
   const poolBoosterB = await poolBoosterFactory.deploy();
+  // TODO(oz-v5): Ownable v5 requires constructor(address initialOwner). Add the initial owner address.
   const poolBoosterC = await poolBoosterFactory.deploy();
 
   const moduleFactory = await ethers.getContractFactory(
@@ -120,6 +124,7 @@ describe("Unit Test: Curve Pool Booster Bribes Module", function () {
     const poolBoosterFactory = await hre.ethers.getContractFactory(
       "MockCurvePoolBooster"
     );
+    // TODO(oz-v5): Ownable v5 requires constructor(address initialOwner). Add the initial owner address.
     const unknownPoolBooster = await poolBoosterFactory.deploy();
 
     await expect(

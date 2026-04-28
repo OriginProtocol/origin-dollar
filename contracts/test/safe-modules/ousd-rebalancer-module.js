@@ -151,6 +151,7 @@ describe("Unit Test: OUSD Rebalancer Safe Module", function () {
       const { rebalancerModule, mockVault, mockStrategy, safeSigner } = f;
 
       const MockStrategy = await ethers.getContractFactory("MockStrategy");
+      // TODO(oz-v5): Ownable v5 requires constructor(address initialOwner). Add the initial owner address.
       const mockStrategy2 = await MockStrategy.deploy();
       await mockStrategy2.deployed();
       await rebalancerModule
@@ -259,6 +260,7 @@ describe("Unit Test: OUSD Rebalancer Safe Module", function () {
       const { rebalancerModule, mockVault, mockStrategy, safeSigner } = f;
 
       const MockStrategy = await ethers.getContractFactory("MockStrategy");
+      // TODO(oz-v5): Ownable v5 requires constructor(address initialOwner). Add the initial owner address.
       const mockStrategy2 = await MockStrategy.deploy();
       await mockStrategy2.deployed();
       await rebalancerModule

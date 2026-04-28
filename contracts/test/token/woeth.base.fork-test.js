@@ -46,6 +46,7 @@ describe("ForkTest: Bridged wOETH (Base)", function () {
     for (const signer of [governor, rafael, nick, burner]) {
       await expect(
         woeth.connect(signer).mint(signer.address, oethUnits("1"))
+      // TODO(oz-v5): replace with revertedWithCustomError(<contract>, "AccessControlUnauthorizedAccount").withArgs(<account>, <role>);
       ).to.be.revertedWith(
         `AccessControl: account ${signer.address.toLowerCase()} is missing role 0x9f2df0fed2c77648de5860a4cc508cd0818c85b8b8a1ab4ceeef8d981c8956a6`
       );
@@ -97,6 +98,7 @@ describe("ForkTest: Bridged wOETH (Base)", function () {
       await expect(
         woeth
           .connect(signer)["burn(address,uint256)"](signer.address, oethUnits("1"))
+      // TODO(oz-v5): replace with revertedWithCustomError(<contract>, "AccessControlUnauthorizedAccount").withArgs(<account>, <role>);
       ).to.be.revertedWith(
         `AccessControl: account ${signer.address.toLowerCase()} is missing role 0x3c11d16cbaffd01df69ce1c404f6340ee057498f5f00246190ea54220576a848`
       );
@@ -121,6 +123,7 @@ describe("ForkTest: Bridged wOETH (Base)", function () {
     for (const signer of [rafael, nick, minter, burner]) {
       await expect(
         woeth.connect(signer).grantRole(MINTER_ROLE, rafael.address)
+      // TODO(oz-v5): replace with revertedWithCustomError(<contract>, "AccessControlUnauthorizedAccount").withArgs(<account>, <role>);
       ).to.be.revertedWith(
         `AccessControl: account ${signer.address.toLowerCase()} is missing role 0x0000000000000000000000000000000000000000000000000000000000000000`
       );
@@ -143,6 +146,7 @@ describe("ForkTest: Bridged wOETH (Base)", function () {
     for (const signer of [rafael, nick, minter, burner]) {
       await expect(
         woeth.connect(signer).revokeRole(BURNER_ROLE, burner.address)
+      // TODO(oz-v5): replace with revertedWithCustomError(<contract>, "AccessControlUnauthorizedAccount").withArgs(<account>, <role>);
       ).to.be.revertedWith(
         `AccessControl: account ${signer.address.toLowerCase()} is missing role 0x0000000000000000000000000000000000000000000000000000000000000000`
       );

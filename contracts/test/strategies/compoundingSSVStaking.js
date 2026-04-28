@@ -957,7 +957,7 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
           { value: ethUnits("2") }
         );
 
-      await expect(tx).to.be.revertedWith("Pausable: paused");
+      await expect(tx).to.be.revertedWithCustomError(tx, "EnforcedPause");
     });
 
     it("Should revert stakeEth when contract paused", async () => {
@@ -989,7 +989,7 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
           GweiInWei
         );
 
-      await expect(tx).to.be.revertedWith("Pausable: paused");
+      await expect(tx).to.be.revertedWithCustomError(tx, "EnforcedPause");
     });
 
     it("Should revert when registering a validator that is already registered", async () => {

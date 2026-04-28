@@ -8,8 +8,14 @@ const addresses = require("../utils/addresses");
 const hhHelpers = require("@nomicfoundation/hardhat-network-helpers");
 const log = require("../utils/logger")("test:fixtures-plume");
 
+// TODO(oz-v5): verify role hash. Precomputed hex; ensure preimage matches the role
+// string used in the v5 contract (keccak256("MINTER_ROLE")). Consider replacing with
+// ethers.utils.id("MINTER_ROLE") for self-documentation.
 const MINTER_ROLE =
   "0x9f2df0fed2c77648de5860a4cc508cd0818c85b8b8a1ab4ceeef8d981c8956a6";
+// TODO(oz-v5): verify role hash. Precomputed hex; ensure preimage matches the role
+// string used in the v5 contract (keccak256("MINTER_ROLE")). Consider replacing with
+// ethers.utils.id("MINTER_ROLE") for self-documentation.
 const BURNER_ROLE =
   "0x3c11d16cbaffd01df69ce1c404f6340ee057498f5f00246190ea54220576a848";
 
