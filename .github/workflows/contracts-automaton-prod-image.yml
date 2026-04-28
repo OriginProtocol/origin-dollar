@@ -84,8 +84,11 @@ jobs:
               }
             }')
 
+          # Project tokens authenticate via `Project-Access-Token`, not
+          # `Authorization: Bearer` (which is for account / workspace
+          # tokens). See https://docs.railway.com/integrations/api.
           response=$(curl -fsSL -X POST https://backboard.railway.com/graphql/v2 \
-            -H "Authorization: Bearer $RAILWAY_TOKEN" \
+            -H "Project-Access-Token: $RAILWAY_TOKEN" \
             -H "Content-Type: application/json" \
             -d "$payload")
 
