@@ -50,11 +50,49 @@ jobs:
             ${{ steps.prep.outputs.image_name }}:latest
             ${{ steps.prep.outputs.image_name }}:${{ github.sha }}
 
-      - name: Trigger Railway redeploy
+      # `railway redeploy` re-runs the last deployment using the digest
+      # Railway already had — it does NOT pull a fresh `:latest` from GHCR,
+      # which is why pushed images sometimes never went live. Instead, pin
+      # the service to the SHA-tagged image we just pushed; Railway treats
+      # a source-image change as a deploy trigger and pulls + runs it.
+      - name: Deploy pinned image to Railway
         if: success() && env.RAILWAY_TOKEN != ''
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
           RAILWAY_SERVICE_ID: ${{ secrets.RAILWAY_SERVICE_ID }}
+          RAILWAY_ENVIRONMENT_ID: ${{ secrets.RAILWAY_ENVIRONMENT_ID }}
+          IMAGE: ${{ steps.prep.outputs.image_name }}:${{ github.sha }}
         run: |
-          npm i -g @railway/cli
-          railway redeploy --service "$RAILWAY_SERVICE_ID" --yes
+          set -euo pipefail
+          if [ -z "${RAILWAY_ENVIRONMENT_ID:-}" ]; then
+            echo "::error::RAILWAY_ENVIRONMENT_ID secret is required for image-pinned deploys." >&2
+            echo "::error::Find it in Railway: open the service, the URL contains /environment/<id>." >&2
+            echo "::error::Add it under Settings → Secrets and variables → Actions." >&2
+            exit 1
+          fi
+
+          payload=$(jq -n \
+            --arg serviceId "$RAILWAY_SERVICE_ID" \
+            --arg environmentId "$RAILWAY_ENVIRONMENT_ID" \
+            --arg image "$IMAGE" \
+            '{
+              query: "mutation($serviceId: String!, $environmentId: String!, $input: ServiceInstanceUpdateInput!) { serviceInstanceUpdate(serviceId: $serviceId, environmentId: $environmentId, input: $input) }",
+              variables: {
+                serviceId: $serviceId,
+                environmentId: $environmentId,
+                input: { source: { image: $image } }
+              }
+            }')
+
+          response=$(curl -fsSL -X POST https://backboard.railway.com/graphql/v2 \
+            -H "Authorization: Bearer $RAILWAY_TOKEN" \
+            -H "Content-Type: application/json" \
+            -d "$payload")
+
+          echo "$response"
+          if echo "$response" | jq -e '.errors' > /dev/null; then
+            echo "::error::Railway API returned errors — see response above" >&2
+            exit 1
+          fi
+
+          echo "✓ Set service image to $IMAGE — Railway will pull and deploy."
