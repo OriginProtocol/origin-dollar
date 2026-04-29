@@ -58,6 +58,22 @@ async function getSigner(address = undefined) {
     return await hre.ethers.provider.getSigner(address);
   }
 
+  // Per-action override set by talos dispatch when the operator checked
+  // the "Use Defender Relayer signer" box on this action. Skip KMS and
+  // route through Defender for this run only. Throw a structured error
+  // if the env vars aren't actually present so the failure surfaces
+  // cleanly in run_logs instead of as an SDK 401.
+  if (process.env.USE_DEFENDER_SIGNER === "1") {
+    if (!process.env.DEFENDER_API_KEY || !process.env.DEFENDER_API_SECRET) {
+      throw new Error(
+        "USE_DEFENDER_SIGNER=1 was requested but DEFENDER_API_KEY / " +
+          "DEFENDER_API_SECRET are not configured on this runner. " +
+          "Either uncheck the Defender option on this action or configure the env vars."
+      );
+    }
+    return maybeWrap(await getDefenderSigner());
+  }
+
   if (hasAwsKmsCredentials()) {
     const address = await getKmsAddress({ provider: hre.ethers.provider });
     log(`Using KMS signer ${address}`);
