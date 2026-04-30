@@ -208,7 +208,7 @@ importers:
         specifier: 1.1.0
         version: 1.1.0(bufferutil@4.1.0)(utf-8-validate@5.0.10)
       ssv-scanner:
-        specifier: github:ssvlabs/ssv-scanner#v1.0.5
+        specifier: github:ssvlabs/ssv-scanner#45068c93b3de84495f6cfad2767787c91d98aa8f
         version: https://codeload.github.com/ssvlabs/ssv-scanner/tar.gz/45068c93b3de84495f6cfad2767787c91d98aa8f(bufferutil@4.1.0)(utf-8-validate@5.0.10)
       sync-fetch:
         specifier: 0.5.2

@@ -124,7 +124,7 @@
     "solidity-bytes-utils": "0.8.4",
     "solidity-coverage": "0.8.14",
     "ssv-keys": "1.1.0",
-    "ssv-scanner": "github:ssvlabs/ssv-scanner#v1.0.5",
+    "ssv-scanner": "github:ssvlabs/ssv-scanner#45068c93b3de84495f6cfad2767787c91d98aa8f",
     "sync-fetch": "0.5.2",
     "ts-node": "^10.9.2",
     "typescript": "^5.7.0",
