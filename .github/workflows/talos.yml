@@ -13,6 +13,10 @@ permissions:
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
+    # Job-level env so step-level `if: env.RAILWAY_TOKEN != ''` can see it.
+    # Step-level env is not visible in that step's own `if:` expression.
+    env:
+      RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
@@ -56,7 +60,6 @@ jobs:
       - name: Deploy pinned image to Railway
         if: success() && env.RAILWAY_TOKEN != ''
         env:
-          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
           RAILWAY_SERVICE_ID: ${{ secrets.RAILWAY_SERVICE_ID }}
           RAILWAY_ENVIRONMENT_ID: ${{ secrets.RAILWAY_ENVIRONMENT_ID }}
           IMAGE: ${{ steps.prep.outputs.image_name }}:${{ github.sha }}
@@ -101,7 +104,6 @@ jobs:
       - name: Trigger Railway redeploy
         if: success() && env.RAILWAY_TOKEN != ''
         env:
-          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
           RAILWAY_PROJECT_ID: ${{ secrets.RAILWAY_PROJECT_ID }}
           RAILWAY_SERVICE_ID: ${{ secrets.RAILWAY_SERVICE_ID }}
           RAILWAY_ENVIRONMENT_ID: ${{ secrets.RAILWAY_ENVIRONMENT_ID }}
