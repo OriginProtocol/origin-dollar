@@ -51,8 +51,8 @@ importers:
         specifier: ^1.41.0
         version: 1.41.0
       '@talos/client':
-        specifier: github:oplabs/talos#6267c7a87c446e1931e94c0cd01035813e36d80f&path:packages/client
-        version: git+https://git@github.com:oplabs/talos.git#6267c7a87c446e1931e94c0cd01035813e36d80f&path:packages/client(@types/pg@8.20.0)(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@5.0.10)(zod@3.25.76)
+        specifier: github:oplabs/talos#4a28ec6af8e1439250e4efde14f0c51328e0c10b&path:packages/client
+        version: git+https://git@github.com:oplabs/talos.git#4a28ec6af8e1439250e4efde14f0c51328e0c10b&path:packages/client(@types/pg@8.20.0)(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@5.0.10)(zod@3.25.76)
       '@types/pg':
         specifier: ^8.20.0
         version: 8.20.0
@@ -2393,9 +2393,9 @@ packages:
     resolution: {integrity: sha512-+PmQX0PiAYPMeVYe237LJAYvOMYW1j2rH5YROyS3b4CTVJum34HfRvKvAzozHAQG0TnHNdUfY9nCeUyRAs//cw==}
     engines: {node: '>=14.16'}
 
-  '@talos/client@git+https://git@github.com:oplabs/talos.git#6267c7a87c446e1931e94c0cd01035813e36d80f&path:packages/client':
-    resolution: {commit: 6267c7a87c446e1931e94c0cd01035813e36d80f, path: packages/client, repo: git@github.com:oplabs/talos.git, type: git}
-    version: 0.0.6
+  '@talos/client@git+https://git@github.com:oplabs/talos.git#4a28ec6af8e1439250e4efde14f0c51328e0c10b&path:packages/client':
+    resolution: {commit: 4a28ec6af8e1439250e4efde14f0c51328e0c10b, path: packages/client, repo: git@github.com:oplabs/talos.git, type: git}
+    version: 0.0.8
 
   '@trufflesuite/bigint-buffer@1.1.9':
     resolution: {integrity: sha512-bdM5cEGCOhDSwminryHJbRmXc1x7dPKg6Pqns3qyTwFlxsqUgxE29lsERS3PlIW1HTjoIGMUqsk1zQQwST1Yxw==}
@@ -3353,8 +3353,8 @@ packages:
   create-require@1.1.1:
     resolution: {integrity: sha512-dcKFX3jn0MpIaXjisoRvexIJVEKzaq7z2rZKxf+MSr9TkdmHmsU4m2lcLojrj/FHl8mk5VxMmYA+ftRkP/3oKQ==}
 
-  croner@9.1.0:
-    resolution: {integrity: sha512-p9nwwR4qyT5W996vBZhdvBCnMhicY5ytZkR4D1Xj0wuTDEiMnjwR57Q3RXYY/s0EpX6Ay3vgIcfaR+ewGHsi+g==}
+  croner@10.0.1:
+    resolution: {integrity: sha512-ixNtAJndqh173VQ4KodSdJEI6nuioBWI0V1ITNKhZZsO0pEMoDxz539T4FTTbSZ/xIOSuDnzxLVRqBVSvPNE2g==}
     engines: {node: '>=18.0'}
 
   cross-fetch@4.1.0:
@@ -3533,36 +3533,36 @@ packages:
     resolution: {integrity: sha512-uBq4egWHTcTt33a72vpSG0z3HnPuIl6NqYcTrKEg2azoEyl2hpW0zqlxysq2pK9HlDIHyHyakeYaYnSAwd8bow==}
     engines: {node: '>=12'}
 
-  drizzle-orm@0.36.4:
-    resolution: {integrity: sha512-1OZY3PXD7BR00Gl61UUOFihslDldfH4NFRH2MbP54Yxi0G/PKn4HfO65JYZ7c16DeP3SpM3Aw+VXVG9j6CRSXA==}
+  drizzle-orm@0.45.2:
+    resolution: {integrity: sha512-kY0BSaTNYWnoDMVoyY8uxmyHjpJW1geOmBMdSSicKo9CIIWkSxMIj2rkeSR51b8KAPB7m+qysjuHme5nKP+E5Q==}
     peerDependencies:
       '@aws-sdk/client-rds-data': '>=3'
-      '@cloudflare/workers-types': '>=3'
+      '@cloudflare/workers-types': '>=4'
       '@electric-sql/pglite': '>=0.2.0'
       '@libsql/client': '>=0.10.0'
       '@libsql/client-wasm': '>=0.10.0'
       '@neondatabase/serverless': '>=0.10.0'
       '@op-engineering/op-sqlite': '>=2'
       '@opentelemetry/api': ^1.4.1
-      '@planetscale/database': '>=1'
+      '@planetscale/database': '>=1.13'
       '@prisma/client': '*'
       '@tidbcloud/serverless': '*'
       '@types/better-sqlite3': '*'
       '@types/pg': '*'
-      '@types/react': '>=18'
       '@types/sql.js': '*'
+      '@upstash/redis': '>=1.34.7'
       '@vercel/postgres': '>=0.8.0'
       '@xata.io/client': '*'
       better-sqlite3: '>=7'
       bun-types: '*'
       expo-sqlite: '>=14.0.0'
+      gel: '>=2'
       knex: '*'
       kysely: '*'
       mysql2: '>=2'
       pg: '>=8'
       postgres: '>=3'
       prisma: '*'
-      react: '>=18'
       sql.js: '>=1'
       sqlite3: '>=5'
     peerDependenciesMeta:
@@ -3592,9 +3592,9 @@ packages:
         optional: true
       '@types/pg':
         optional: true
-      '@types/react':
-        optional: true
       '@types/sql.js':
+        optional: true
+      '@upstash/redis':
         optional: true
       '@vercel/postgres':
         optional: true
@@ -3605,6 +3605,8 @@ packages:
       bun-types:
         optional: true
       expo-sqlite:
+        optional: true
+      gel:
         optional: true
       knex:
         optional: true
@@ -3617,8 +3619,6 @@ packages:
       postgres:
         optional: true
       prisma:
-        optional: true
-      react:
         optional: true
       sql.js:
         optional: true
@@ -10706,11 +10706,11 @@ snapshots:
     dependencies:
       defer-to-connect: 2.0.1
 
-  '@talos/client@git+https://git@github.com:oplabs/talos.git#6267c7a87c446e1931e94c0cd01035813e36d80f&path:packages/client(@types/pg@8.20.0)(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@5.0.10)(zod@3.25.76)':
+  '@talos/client@git+https://git@github.com:oplabs/talos.git#4a28ec6af8e1439250e4efde14f0c51328e0c10b&path:packages/client(@types/pg@8.20.0)(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@5.0.10)(zod@3.25.76)':
     dependencies:
       '@hono/node-server': 1.19.14(hono@4.12.14)
-      croner: 9.1.0
-      drizzle-orm: 0.36.4(@types/pg@8.20.0)(pg@8.20.0)
+      croner: 10.0.1
+      drizzle-orm: 0.45.2(@types/pg@8.20.0)(pg@8.20.0)
       ethers-v5: ethers@5.7.2(bufferutil@4.1.0)(utf-8-validate@5.0.10)
       ethers-v6: ethers@6.16.0(bufferutil@4.1.0)(utf-8-validate@5.0.10)
       hono: 4.12.14
@@ -10730,21 +10730,21 @@ snapshots:
       - '@tidbcloud/serverless'
       - '@types/better-sqlite3'
       - '@types/pg'
-      - '@types/react'
       - '@types/sql.js'
+      - '@upstash/redis'
       - '@vercel/postgres'
       - '@xata.io/client'
       - better-sqlite3
       - bufferutil
       - bun-types
       - expo-sqlite
+      - gel
       - knex
       - kysely
       - mysql2
       - pg-native
       - postgres
       - prisma
-      - react
       - sql.js
       - sqlite3
       - typescript
@@ -11785,7 +11785,7 @@ snapshots:
 
   create-require@1.1.1: {}
 
-  croner@9.1.0: {}
+  croner@10.0.1: {}
 
   cross-fetch@4.1.0:
     dependencies:
@@ -11951,7 +11951,7 @@ snapshots:
 
   dotenv@16.6.1: {}
 
-  drizzle-orm@0.36.4(@types/pg@8.20.0)(pg@8.20.0):
+  drizzle-orm@0.45.2(@types/pg@8.20.0)(pg@8.20.0):
     optionalDependencies:
       '@types/pg': 8.20.0
       pg: 8.20.0
