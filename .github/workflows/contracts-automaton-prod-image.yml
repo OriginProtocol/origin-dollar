@@ -46,9 +46,7 @@ jobs:
           file: ./contracts/dockerfile-actions
           push: true
           ssh: default
-          tags: |
-            ${{ steps.prep.outputs.image_name }}:latest
-            ${{ steps.prep.outputs.image_name }}:${{ github.sha }}
+          tags: ${{ steps.prep.outputs.image_name }}:${{ github.sha }}
 
       # `railway redeploy` re-runs the last deployment using the digest
       # Railway already had — it does NOT pull a fresh `:latest` from GHCR,
