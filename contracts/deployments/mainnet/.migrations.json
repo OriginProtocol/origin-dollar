@@ -74,5 +74,8 @@
   "183_harvesting_eip1271": 1773933870,
   "184_crosschain_strategy_hyperevm_proxies": 1773760661,
   "185_crosschain_strategy_hyperevm": 1773764941,
-  "186_merkl_pb_bribes_module": 1773930008
+  "186_merkl_pb_bribes_module": 1773930008,
+  "188_harvesting_eip1271_oeth": 1774552963,
+  "189_harvesting_eip1271_ogn": 1774552993,
+  "190_remove_3rd_native_staking_strategy": 1775468903
 }

@@ -547,7 +547,7 @@ contract BaseCurveAMOStrategy is InitializableAbstractStrategy {
     function collectRewardTokens()
         external
         override
-        onlyHarvester
+        onlyHarvesterOrStrategist
         nonReentrant
     {
         // CRV rewards flow.

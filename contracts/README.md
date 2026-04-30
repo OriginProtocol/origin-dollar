@@ -360,8 +360,12 @@ pnpm hardhat setActionVars --id b1d831f1-29d4-4943-bb2e-8e625b76e82c
 pnpm hardhat setActionVars --id 6567d7c6-7ec7-44bd-b95b-470dd1ff780b
 pnpm hardhat setActionVars --id 6a633bb0-aff8-4b37-aaae-b4c6f244ed87
 pnpm hardhat setActionVars --id 076c59e4-4150-42c7-9ba0-9962069ac353
+pnpm hardhat setActionVars --id ca80b55c-f3f7-4e03-a2f5-ea444645f8d9
+pnpm hardhat setActionVars --id f74f24b4-d98b-4181-89cc-6608369b6f91
 pnpm hardhat setActionVars --id aa194c13-0dbf-49d2-8e87-70e61f3d71a8
 pnpm hardhat setActionVars --id 65b53496-e426-4850-8349-059e63eb2120
+pnpm hardhat setActionVars --id a4f8ca5f-7144-469b-b84a-58b30fed72ce
+pnpm hardhat setActionVars --id cbddb98e-a0f6-4aa8-bd73-20aa8e81d704
 
 # Mainnet
 pnpm hardhat updateAction --id e2929f53-db56-49b2-b054-35f7df7fc4fb --file doAccounting
@@ -372,8 +376,11 @@ pnpm hardhat updateAction --id b1d831f1-29d4-4943-bb2e-8e625b76e82c --file claim
 pnpm hardhat updateAction --id 6567d7c6-7ec7-44bd-b95b-470dd1ff780b --file manageBribeOnSonic
 pnpm hardhat updateAction --id 6a633bb0-aff8-4b37-aaae-b4c6f244ed87 --file managePassThrough
 pnpm hardhat updateAction --id 076c59e4-4150-42c7-9ba0-9962069ac353 --file manageBribes
+pnpm hardhat updateAction --id ca80b55c-f3f7-4e03-a2f5-ea444645f8d9 --file ousdRebalancer
+pnpm hardhat updateAction --id f74f24b4-d98b-4181-89cc-6608369b6f91 --file updateVotemarketEpochs
 pnpm hardhat updateAction --id aa194c13-0dbf-49d2-8e87-70e61f3d71a8 --file manageMerklBribes # Mainnet
 pnpm hardhat updateAction --id 65b53496-e426-4850-8349-059e63eb2120 --file manageMerklBribes # Base
+pnpm hardhat updateAction --id a4f8ca5f-7144-469b-b84a-58b30fed72ce --file claimSSVRewards
 
 # These are Base -> Mainnet & Mainnet -> Base actions
 # they share the codebase. The direction of relaying attestations is defined by the
@@ -381,11 +388,28 @@ pnpm hardhat updateAction --id 65b53496-e426-4850-8349-059e63eb2120 --file manag
 pnpm hardhat updateAction --id bb43e5da-f936-4185-84da-253394583665 --file crossChainRelay
 pnpm hardhat updateAction --id e571409b-5399-48e4-bfb2-50b7af9903aa --file crossChainRelay
 
+# One-off action for backfilling a missing tx-level key in Defender KV store
+pnpm hardhat updateAction --id cbddb98e-a0f6-4aa8-bd73-20aa8e81d704 --file crossChainRelayBackfillTx
+
 # OUSD Ethereum -> HyperEVM actions
 pnpm hardhat updateAction --id 0b852456-96a0-4f1d-9d6c-39e1c6ae9dfc --file crossChainRelayHyperEVM
 pnpm hardhat updateAction --id 65f04f74-8da7-4fc5-94b3-96be31bac03b --file crossChainRelayHyperEVM
 
 ```
+
+To backfill a missing tx-level cross-chain relay key, set
+`HARDCODED_TRANSACTION_ID` and `HARDCODED_DESTINATION_CHAIN_ID` in
+`scripts/defender-actions/crossChainRelayBackfillTx.js`, then bundle/upload and
+run the `crossChainRelayBackfillTx` Action manually in Defender.
+
+This stores both tx-level keys with value `processed` in Defender's key-value
+store:
+
+- `cctp_message_<HARDCODED_TRANSACTION_ID>` (legacy format)
+- `cctp_message_<HARDCODED_TRANSACTION_ID>_<cctpDestinationDomainId>` (current
+  format from `tasks/crossChain.js`, where domain id is derived from the
+  hardcoded destination chain id: mainnet `1 -> 0`, base `8453 -> 6`, hyperevm
+  `999 -> 19`)
 
 `rollup` can be installed globally to avoid the `npx` prefix.
 

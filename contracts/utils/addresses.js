@@ -227,6 +227,12 @@ addresses.mainnet.MorphoOUSDv2Adapter =
 addresses.mainnet.MorphoOUSDv2Vault =
   "0xFB154c729A16802c4ad1E8f7FF539a8b9f49c960";
 
+// Morpho Blue singleton (same address on mainnet and Base)
+addresses.mainnet.MorphoBlue = "0xBBBBBbbBBb9cC5e90e3b3Af64bdAF62C37EEFFCb";
+// Morpho Adaptive Curve IRM
+addresses.mainnet.MorphoAdaptiveCurveIRM =
+  "0x870aC11D48B15DB9a138Cf899d20F13F79Ba00BC";
+
 addresses.mainnet.UniswapOracle = "0xc15169Bad17e676b3BaDb699DEe327423cE6178e";
 addresses.mainnet.CompensationClaims =
   "0x9C94df9d594BA1eb94430C006c269C314B1A8281";
@@ -305,6 +311,8 @@ addresses.mainnet.MerklPoolBoosterBribesModule =
 // SSV network
 addresses.mainnet.SSV = "0x9D65fF81a3c488d585bBfb0Bfe3c7707c7917f54";
 addresses.mainnet.SSVNetwork = "0xDD9BC35aE942eF0cFa76930954a156B3fF30a4E1";
+addresses.mainnet.SSVRewardsDistributor =
+  "0xe16d6138B1D2aD4fD6603ACdb329ad1A6cD26D9f";
 
 // Beacon chain contracts
 addresses.mainnet.beaconChainDepositContract =
@@ -335,9 +343,11 @@ addresses.mainnet.LidoWithdrawalQueue =
 addresses.mainnet.DaiUsdsMigrationContract =
   "0x3225737a9bbb6473cb4a45b7244aca2befdb276a";
 
-// Safe Module
+// Safe Modules
 addresses.mainnet.ClaimStrategyRewardsSafeModule =
   "0x1b84E64279D63f48DdD88B9B2A7871e817152A44";
+addresses.mainnet.OUSDRebalancerModule =
+  "0x0000000000000000000000000000000000000000"; // TODO: populate after deployment
 
 // LayerZero
 addresses.mainnet.LayerZeroEndpointV2 =
@@ -388,12 +398,18 @@ addresses.mainnet.CampaignCreator =
 addresses.mainnet.MorphoOethUsdcMarket =
   "0xb8fef900b383db2dbbf4458c7f46acf5b140f26d603a6d1829963f241b82510e";
 
+addresses.mainnet.CoWHarvester = "0xD400341aEfED0BC75176714cFdE82e8BDAA2D3b8";
+
 // Arbitrum One
 addresses.arbitrumOne = {};
 addresses.arbitrumOne.WOETHProxy = "0xD8724322f44E5c58D7A815F542036fb17DbbF839";
 addresses.arbitrumOne.admin = "0xfD1383fb4eE74ED9D83F2cbC67507bA6Eac2896a";
 
 // Base
+addresses.base.MorphoBlue = "0xBBBBBbbBBb9cC5e90e3b3Af64bdAF62C37EEFFCb";
+addresses.base.MorphoAdaptiveCurveIRM =
+  "0x46415998764C29aB2a25CbeA6254146D50D22687";
+
 addresses.base.HarvesterProxy = "0x247872f58f2fF11f9E8f89C1C48e460CfF0c6b29";
 addresses.base.BridgedWOETH = "0xD8724322f44E5c58D7A815F542036fb17DbbF839";
 addresses.base.AERO = "0x940181a94A35A4569E4529A3CDfB74e38FD98631";
@@ -458,6 +474,10 @@ addresses.base.MerklDistributor = "0x8BB4C975Ff3c250e0ceEA271728547f3802B36Fd";
 addresses.base.USDC = "0x833589fcd6edb6e08f4c7c32d4f71b54bda02913";
 
 addresses.base.MorphoOusdV2Vault = "0x2Ba14b2e1E7D2189D3550b708DFCA01f899f33c1";
+// Derived via: VaultV2(MorphoOusdV2Vault).adapters(0) → adapter; adapter.morphoVaultV1()
+addresses.base.MorphoOusdV2Adapter =
+  "0xFE4ccb1f0d9634F3191cA45B7f3413c4ca85086E";
+addresses.base.MorphoOusdV1Vault = "0x581Cc9a73Ec7431723A4a80699B8f801205841F1";
 
 // Sonic
 addresses.sonic.wS = "0x039e2fB66102314Ce7b64Ce5Ce3E5183bc94aD38";
@@ -706,9 +726,15 @@ addresses.CCTPMessageTransmitterV2 =
 
 // HyperEVM contracts
 addresses.hyperevm.USDC = "0xb88339CB7199b77E23DB6E890353E22632Ba630f";
-// Morpho V2 vault address on HyperEVM once deployed
+// HyperEVM deploys MorphoBlue at a different address than the canonical 0xBBBBBbbBBb9cC5e90e3b3Af64bdAF62C37EEFFCb
+addresses.hyperevm.MorphoBlue = "0x68e37dE8d93d3496ae143F2E900490f6280C57cD";
 addresses.hyperevm.MorphoOusdV2Vault =
   "0xE90959cbE7E56b5eBFF9AD12de611A4976F2d2B1";
+// Derived via: VaultV2(MorphoOusdV2Vault).adapters(0) → adapter; adapter.morphoVaultV1()
+addresses.hyperevm.MorphoOusdV2Adapter =
+  "0xF912d9489DEc1593D888eb680a4074f84c44413c";
+addresses.hyperevm.MorphoOusdV1Vault =
+  "0x0fb7e41A0A85Eb0BcA55172b73942cc6685e2B2E";
 addresses.hyperevm.strategist = addresses.multichainStrategist;
 addresses.hyperevm.admin = "0x92A19381444A001d62cE67BaFF066fA1111d7202";
 addresses.hyperevm.timelock = "0x77121911A387c9e4Eae46345E0f831A6da8a1364";
