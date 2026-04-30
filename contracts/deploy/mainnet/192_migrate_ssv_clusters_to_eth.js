@@ -21,7 +21,7 @@ const strategyConfigs = [
 
 module.exports = deploymentWithGovernanceProposal(
   {
-    deployName: "183_migrate_ssv_clusters_to_eth",
+    deployName: "192_migrate_ssv_clusters_to_eth",
     forceDeploy: false,
     // forceSkip: true,
     reduceQueueTime: true,
