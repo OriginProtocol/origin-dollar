@@ -20,6 +20,11 @@ RUN apt-get update \
   npm \
   && rm -rf /var/lib/apt/lists/*
 
+# security/M-012: create a non-root runtime user. Build/install steps
+# stay as root so the apt+pnpm caches and SSH-keyed deps work; we
+# chown /app and switch USER just before CMD.
+RUN groupadd -r runner && useradd -r -g runner -m -d /home/runner runner
+
 # Preload GitHub host key for SSH-based dependencies.
 RUN mkdir -p /root/.ssh \
   && ssh-keyscan -t ed25519,rsa github.com >> /root/.ssh/known_hosts
@@ -40,6 +45,10 @@ COPY . .
 ARG TARGETARCH
 RUN if [ "$TARGETARCH" = "amd64" ]; then pnpm hardhat compile; else echo "Skipping compile on $TARGETARCH"; fi
 
+# Hand /app over to the runtime user. After this, all reads/writes by
+# the runner process are as `runner`, not root. Closes security/M-012.
+RUN chown -R runner:runner /app
+
 ENV MAINNET_PROVIDER_URL="" \
   SONIC_PROVIDER_URL="" \
   PLUME_PROVIDER_URL="" \
@@ -47,4 +56,5 @@ ENV MAINNET_PROVIDER_URL="" \
   BEACON_PROVIDER_URL="" \
   HARDHAT_NETWORK=""
 
+USER runner
 CMD ["bun", "run", "runner.ts"]
