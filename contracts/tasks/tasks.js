@@ -89,6 +89,7 @@ const {
   setRewardTokenAddresses,
   checkBalance,
   transferToken,
+  updateWOETHOraclePrice,
 } = require("./strategy");
 const {
   validatorOperationsConfig,
@@ -1102,6 +1103,12 @@ task("setRewardTokenAddresses", "Sets the reward token of a strategy")
     types.string
   )
   .setAction(setRewardTokenAddresses);
+
+task(
+  "updateWOETHPrice",
+  "Update the wOETH oracle price on the Base BridgedWOETHStrategy"
+)
+  .setAction(updateWOETHOraclePrice);
 
 // Harvester
 
