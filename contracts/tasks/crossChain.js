@@ -35,7 +35,7 @@ const cctpOperationsConfig = async ({
   };
 };
 
-const fetchAttestation = async ({ transactionHash, cctpChainId }) => {
+const fetchAttestations = async ({ transactionHash, cctpChainId }) => {
   log(
     `Fetching attestation for transaction hash: ${transactionHash} on cctp chain id: ${cctpChainId}`
   );
@@ -50,30 +50,58 @@ const fetchAttestation = async ({ transactionHash, cctpChainId }) => {
     );
   }
   const resultJson = await response.json();
-
-  log("resultJson", resultJson);
-
-  if (resultJson.messages.length !== 1) {
+  const fetchedMessages = resultJson.messages;
+  if (!Array.isArray(fetchedMessages)) {
     throw new Error(
-      `Expected 1 attestation, got ${resultJson.messages.length}`
+      `Invalid attestation payload for tx ${transactionHash}: messages is not an array`
     );
   }
 
-  const message = resultJson.messages[0];
-  const status = message.status;
-  if (status !== "complete") {
-    throw new Error(`Attestation is not complete, status: ${status}`);
-  }
-
-  return {
+  return fetchedMessages.map((message, index) => ({
     attestation: message.attestation,
     message: message.message,
-    status: "ok",
-  };
+    status: message.status,
+    eventNonce: message.eventNonce,
+    decodedMessage: message.decodedMessage,
+    index,
+  }));
 };
 
-// TokensBridged & MessageTransmitted are the 2 events that are emitted when a transaction is published to the CCTP contract
-// One transaction containing such message can at most only contain one of these events
+const normalizeAddress = (address) => {
+  try {
+    return ethers.utils.getAddress(address);
+  } catch (error) {
+    return null;
+  }
+};
+
+const isMessageForDestination = ({
+  decodedMessage,
+  destinationCaller,
+  destinationDomainId,
+}) => {
+  if (!decodedMessage) {
+    return false;
+  }
+
+  const decodedDestinationCaller = normalizeAddress(
+    decodedMessage.destinationCaller
+  );
+  const normalizedDestinationCaller = normalizeAddress(destinationCaller);
+  const decodedDestinationDomain = String(decodedMessage.destinationDomain);
+
+  if (!decodedDestinationCaller || !normalizedDestinationCaller) {
+    return false;
+  }
+
+  return (
+    decodedDestinationCaller === normalizedDestinationCaller &&
+    decodedDestinationDomain === String(destinationDomainId)
+  );
+};
+
+// TokensBridged & MessageTransmitted are emitted when a CCTP message is posted.
+// A single source transaction can emit multiple CCTP messages.
 const fetchTxHashesFromCctpTransactions = async ({
   config,
   blockLookback,
@@ -160,54 +188,117 @@ const processCctpBridgeTransactions = async ({
     blockLookback,
   });
   for (const txHash of allTxHashes) {
-    const storeKey = `cctp_message_${txHash}`;
-    const storedValue = await store.get(storeKey);
-
-    if (storedValue === "processed") {
+    const txStoreKey = `cctp_message_${txHash}_${cctpDestinationDomainId}`;
+    // TODO: Legacy key can be removed after a few days of code deployment
+    const txStoreKey_Legacy = `cctp_message_${txHash}`;
+    const txStoredValue = await store.get(txStoreKey);
+    const txStoredValue_Legacy = await store.get(txStoreKey_Legacy);
+    if (txStoredValue === "processed" || txStoredValue_Legacy === "processed") {
       log(
-        `Transaction with hash: ${txHash} has already been processed. Skipping...`
+        `Transaction with hash ${txHash} has already been processed via tx-level key ${txStoreKey}. Skipping...`
       );
       continue;
     }
 
-    const { attestation, message, status } = await fetchAttestation({
+    const cctpMessages = await fetchAttestations({
       transactionHash: txHash,
       cctpChainId: cctpSourceDomainId,
     });
-    if (status !== "ok") {
-      log(
-        `Attestation from tx hash: ${txHash} on cctp chain id: ${config.cctpSourceDomainId} is not attested yet, status: ${status}. Skipping...`
-      );
-    }
 
     log(
-      `Attempting to relay attestation with tx hash: ${txHash} and message: ${message} to cctp chain id: ${cctpDestinationDomainId}`
+      `Found ${cctpMessages.length} CCTP messages for transaction hash: ${txHash}`
     );
 
-    if (dryrun) {
+    const destinationAddress =
+      config.cctpIntegrationContractDestination.address || "";
+    let hasEligibleMessage = false;
+    let hasUnprocessedEligibleMessages = false;
+
+    for (const cctpMessage of cctpMessages) {
+      const messageId =
+        cctpMessage.eventNonce || `${txHash}_index_${cctpMessage.index}`;
+      const storeKey = `cctp_message_${messageId}`;
+      const storedValue = await store.get(storeKey);
+
+      if (cctpMessage.status !== "complete") {
+        log(
+          `Message ${messageId} from tx ${txHash} is not attested yet (status: ${cctpMessage.status}). Skipping...`
+        );
+        hasEligibleMessage = true;
+        hasUnprocessedEligibleMessages = true;
+        continue;
+      }
+
+      const messageTargetsDestination = isMessageForDestination({
+        decodedMessage: cctpMessage.decodedMessage,
+        destinationCaller: destinationAddress,
+        destinationDomainId: cctpDestinationDomainId,
+      });
+      if (!messageTargetsDestination) {
+        log(
+          `Skipping message ${messageId} from tx ${txHash} because it does not target destination caller ${destinationAddress} on domain ${cctpDestinationDomainId}`
+        );
+        continue;
+      }
+      hasEligibleMessage = true;
+
+      if (storedValue === "processed") {
+        log(
+          `Message with key ${storeKey} has already been processed. Skipping...`
+        );
+        continue;
+      }
+
+      if (!cctpMessage.message || !cctpMessage.attestation) {
+        log(
+          `Message ${messageId} from tx ${txHash} is missing message payload or attestation. Skipping...`
+        );
+        hasUnprocessedEligibleMessages = true;
+        continue;
+      }
+
       log(
-        `Dryrun: Would have relayed attestation with tx hash: ${txHash} to cctp chain id: ${cctpDestinationDomainId}`
+        `Attempting to relay message ${messageId} from tx hash: ${txHash} to cctp chain id: ${cctpDestinationDomainId}`
       );
-      continue;
+
+      if (dryrun) {
+        log(
+          `Dryrun: Would have relayed message ${messageId} from tx hash: ${txHash} to cctp chain id: ${cctpDestinationDomainId}`
+        );
+        continue;
+      }
+
+      const relayTx = await config.cctpIntegrationContractDestination.relay(
+        cctpMessage.message,
+        cctpMessage.attestation,
+        { gasLimit: 2000000 }
+      );
+      log(
+        `Relay transaction with hash ${relayTx.hash} sent to cctp chain id: ${cctpDestinationDomainId}`
+      );
+      const receipt = await logTxDetails(relayTx, "CCTP relay");
+
+      // Final verification
+      if (receipt.status === 1) {
+        log("SUCCESS: Transaction executed successfully!");
+        await store.put(storeKey, "processed");
+      } else {
+        log("FAILURE: Transaction reverted!");
+        throw new Error(`Transaction reverted - status: ${receipt.status}`);
+      }
     }
 
-    const relayTx = await config.cctpIntegrationContractDestination.relay(
-      message,
-      attestation,
-      { gasLimit: 4000000 }
-    );
-    log(
-      `Relay transaction with hash ${relayTx.hash} sent to cctp chain id: ${cctpDestinationDomainId}`
-    );
-    const receipt = await logTxDetails(relayTx, "CCTP relay");
-
-    // Final verification
-    if (receipt.status === 1) {
-      log("SUCCESS: Transaction executed successfully!");
-      await store.put(storeKey, "processed");
+    const shouldMarkTxProcessed =
+      !hasEligibleMessage || !hasUnprocessedEligibleMessages;
+    if (shouldMarkTxProcessed) {
+      await store.put(txStoreKey, "processed");
+      log(
+        `Marked tx ${txHash} as processed using tx-level key ${txStoreKey}`
+      );
     } else {
-      log("FAILURE: Transaction reverted!");
-      throw new Error(`Transaction reverted - status: ${receipt.status}`);
+      log(
+        `Did not mark tx-level key ${txStoreKey} because eligible messages exist but none were fully processed for tx ${txHash}`
+      );
     }
   }
 };

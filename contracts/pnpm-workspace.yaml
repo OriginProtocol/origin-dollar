@@ -1,4 +1,6 @@
 minimumReleaseAge: 10080
+minimumReleaseAgeExclude:
+- "origin-morpho-utils"
 
 ignoredBuiltDependencies:
   - "@arbitrum/nitro-contracts"
@@ -15,3 +17,13 @@ onlyBuiltDependencies:
   - bigint-buffer
   - bufferutil
   - keccak
+
+packageExtensions:
+  "@lodestar/spec-test-util@*":
+    peerDependenciesMeta:
+      vitest:
+        optional: true
+  origin-morpho-utils:
+    peerDependenciesMeta:
+      vitest:
+        optional: true

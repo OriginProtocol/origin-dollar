@@ -152,6 +152,7 @@
     "@lodestar/utils": "^1.41.0",
     "@talos/client": "github:oplabs/talos#e1a12c7bdbcc55b84e988a56464e1d09b804efce&path:packages/client",
     "@types/pg": "^8.20.0",
+    "origin-morpho-utils": "^0.1.1",
     "pg": "^8.20.0"
   },
   "resolutions": {
