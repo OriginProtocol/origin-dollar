@@ -52,12 +52,15 @@ jobs:
           ssh: default
           tags: ${{ steps.prep.outputs.image_name }}:${{ github.sha }}
 
-      # `railway redeploy` re-runs the last deployment using the digest
-      # Railway already had — it does NOT pull a fresh `:latest` from GHCR,
-      # which is why pushed images sometimes never went live. Instead, pin
-      # the service to the SHA-tagged image we just pushed; Railway treats
-      # a source-image change as a deploy trigger and pulls + runs it.
-      - name: Deploy pinned image to Railway
+      # Two-step deploy: pin the service to the SHA-tagged image we just
+      # pushed, then create a fresh deployment from that updated config.
+      # `serviceInstanceUpdate` alone changes settings but does not deploy;
+      # any "redeploy" mutation (`environmentTriggersDeploy`,
+      # `serviceInstanceRedeploy`) re-runs the *previous* deployment object,
+      # which still references the old image tag. `serviceInstanceDeployV2`
+      # creates a new deployment from current config — the API equivalent
+      # of clicking "Deploy" in the Railway UI.
+      - name: Pin Railway service to new image
         if: success() && env.RAILWAY_TOKEN != ''
         env:
           RAILWAY_SERVICE_ID: ${{ secrets.RAILWAY_SERVICE_ID }}
@@ -101,31 +104,21 @@ jobs:
 
           echo "✓ Pinned service image to $IMAGE."
 
-      - name: Trigger Railway redeploy
+      - name: Deploy updated image on Railway
         if: success() && env.RAILWAY_TOKEN != ''
         env:
-          RAILWAY_PROJECT_ID: ${{ secrets.RAILWAY_PROJECT_ID }}
           RAILWAY_SERVICE_ID: ${{ secrets.RAILWAY_SERVICE_ID }}
           RAILWAY_ENVIRONMENT_ID: ${{ secrets.RAILWAY_ENVIRONMENT_ID }}
         run: |
           set -euo pipefail
-          # Fires the actual deploy. The previous step changed the source
-          # to the SHA-tagged image but `serviceInstanceUpdate` alone does
-          # not trigger a deployment — Railway needs an explicit poke.
-          # Using GraphQL directly (same Bearer auth that worked above)
-          # rather than @railway/cli, which rejects personal access tokens.
           payload=$(jq -n \
-            --arg projectId "$RAILWAY_PROJECT_ID" \
-            --arg environmentId "$RAILWAY_ENVIRONMENT_ID" \
             --arg serviceId "$RAILWAY_SERVICE_ID" \
+            --arg environmentId "$RAILWAY_ENVIRONMENT_ID" \
             '{
-              query: "mutation($input: EnvironmentTriggersDeployInput!) { environmentTriggersDeploy(input: $input) }",
+              query: "mutation($serviceId: String!, $environmentId: String!) { serviceInstanceDeployV2(serviceId: $serviceId, environmentId: $environmentId) }",
               variables: {
-                input: {
-                  projectId: $projectId,
-                  environmentId: $environmentId,
-                  serviceId: $serviceId
-                }
+                serviceId: $serviceId,
+                environmentId: $environmentId
               }
             }')
 
@@ -140,4 +133,4 @@ jobs:
             exit 1
           fi
 
-          echo "✓ Triggered redeploy."
+          echo "✓ Triggered deploy."
