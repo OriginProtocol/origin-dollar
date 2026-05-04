@@ -168,10 +168,16 @@ async function stakeValidator({
     withdrawalCredentials = calcWithdrawalCredential("0x02", strategy.address);
   }
 
-  if (amount == 1) {
+  const amountWei = parseUnits(amount.toString(), 18);
+  const initialDepositAmountWei = await strategy.initialDepositAmountWei();
+
+  if (amountWei.eq(initialDepositAmountWei)) {
     if (!sig) {
       throw new Error(
-        "The signature is required for the first deposit of 1 ETH"
+        `The signature is required for the first deposit of ${formatUnits(
+          initialDepositAmountWei,
+          18
+        )} ETH`
       );
     }
     await verifyDepositSignatureAndMessageRoot({
