@@ -1467,6 +1467,12 @@ subtask("exitValidators", "Starts the exit process from a list of validators")
     30,
     types.int
   )
+  .addOptionalParam(
+    "consol",
+    "Call the consolidation controller instead of the strategy",
+    false,
+    types.boolean
+  )
   .setAction(async (taskArgs) => {
     const signer = await getSigner();
 
@@ -2501,8 +2507,19 @@ subtask(
     false,
     types.boolean
   )
+  .addOptionalParam(
+    "consol",
+    "Call the consolidation controller instead of the strategy",
+    false,
+    types.boolean
+  )
   .setAction(async (taskArgs) => {
     const signer = await getSigner();
+    if (taskArgs.direct && taskArgs.consol) {
+      throw new Error(
+        "The consol option can not be used with direct withdrawals"
+      );
+    }
     if (taskArgs.direct) {
       await requestValidatorWithdraw({ ...taskArgs, signer });
     } else {
@@ -2621,6 +2638,12 @@ subtask(
     "Fork version of the beacon chain. Required for validating the BLS signature",
     "10000910",
     types.string
+  )
+  .addOptionalParam(
+    "consol",
+    "Call the consolidation controller instead of the strategy",
+    false,
+    types.boolean
   )
   .addOptionalParam(
     "dryrun",
