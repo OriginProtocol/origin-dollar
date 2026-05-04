@@ -50,17 +50,28 @@ async function snapBalances({ consol = false }) {
   await logTxDetails(tx, "snapBalances");
 
   const receipt = await tx.wait();
-  const event = receipt.events.find(
-    (event) => event.event === "BalancesSnapped"
+
+  // When called via ConsolidationController the BalancesSnapped event is emitted
+  // by the target strategy, so decode logs against the strategy's interface.
+  const strategy = await resolveContract(
+    "CompoundingStakingSSVStrategyProxy",
+    "CompoundingStakingSSVStrategy"
   );
-  if (!event) {
+  const eventTopic = strategy.interface.getEventTopic("BalancesSnapped");
+  const rawLog = receipt.logs.find(
+    (l) =>
+      l.address.toLowerCase() === strategy.address.toLowerCase() &&
+      l.topics[0] === eventTopic
+  );
+  if (!rawLog) {
     throw new Error("BalancesSnapped event not found in transaction receipt");
   }
+  const parsed = strategy.interface.parseLog(rawLog);
   console.log(
     `Balances snapped successfully. Beacon block root ${
-      event.args.blockRoot
+      parsed.args.blockRoot
     }, block ${receipt.blockNumber}, ETH balance ${formatUnits(
-      event.args.ethBalance
+      parsed.args.ethBalance
     )}`
   );
 }

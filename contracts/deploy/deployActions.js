@@ -1235,6 +1235,11 @@ const deploySafeModulesForUnitTests = async () => {
     mockAutoWithdrawalVault.address,
     addresses.dead,
   ]);
+  await deployWithConfirmation("RebalancerModule", [
+    cSafeContract.address,
+    cSafeContract.address,
+    mockAutoWithdrawalVault.address,
+  ]);
 
   await deployWithConfirmation("ClaimStrategyRewardsSafeModule", [
     cSafeContract.address, // safe

@@ -89,6 +89,7 @@ const {
   setRewardTokenAddresses,
   checkBalance,
   transferToken,
+  updateWOETHOraclePrice,
 } = require("./strategy");
 const {
   validatorOperationsConfig,
@@ -127,6 +128,7 @@ const { harvestAndSwap } = require("./harvest");
 const { deployForceEtherSender, forceSend } = require("./simulation");
 const { sleep } = require("../utils/time");
 const { lzBridgeToken, lzSetConfig } = require("./layerzero");
+const { fundWithdrawals } = require("./autoWithdrawal");
 const {
   requestValidatorWithdraw,
   beaconRoot,
@@ -154,6 +156,7 @@ const {
 const { processCctpBridgeTransactions } = require("./crossChain");
 const { keyValueStoreLocalClient } = require("../utils/defender");
 const { configuration } = require("../utils/cctp");
+const { rebalancerTask } = require("./rebalancer");
 
 const log = require("../utils/logger")("tasks");
 
@@ -313,6 +316,24 @@ task(
   )
   .setAction(addWithdrawalQueueLiquidity);
 task("queueLiquidity").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+task("fundWithdrawals", "Fund OUSD withdrawals using the AutoWithdrawalModule")
+  .addOptionalParam(
+    "gasLimit",
+    "Gas limit to use when calling fundWithdrawals",
+    undefined,
+    types.int
+  )
+  .addOptionalParam(
+    "module",
+    "Address of the AutoWithdrawalModule. Defaults to the deployed AutoWithdrawalModule",
+    undefined,
+    types.string
+  )
+  .setAction(fundWithdrawals);
+task("fundWithdrawals").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
 
@@ -1082,6 +1103,12 @@ task("setRewardTokenAddresses", "Sets the reward token of a strategy")
     types.string
   )
   .setAction(setRewardTokenAddresses);
+
+task(
+  "updateWOETHPrice",
+  "Update the wOETH oracle price on the Base BridgedWOETHStrategy"
+)
+  .setAction(updateWOETHOraclePrice);
 
 // Harvester
 
@@ -2677,6 +2704,46 @@ subtask("snapMorpho", "Get a snapshot of the Morpho OUSD v2 strategy.")
   .setAction(snapMorpho);
 task("snapMorpho").setAction(async (_, __, runSuper) => {
   return runSuper();
+});
+
+// Rebalancer tasks
+subtask(
+  "planRebalance",
+  "Show current vs recommended OUSD strategy allocations"
+)
+  .addOptionalParam(
+    "simVault",
+    "Simulate additional USDC in vault (whole dollars, negative to remove)",
+    undefined,
+    types.int
+  )
+  .addOptionalParam(
+    "simEth",
+    "Simulate additional USDC in Ethereum Morpho (whole dollars)",
+    undefined,
+    types.int
+  )
+  .addOptionalParam(
+    "simBase",
+    "Simulate additional USDC in Base Morpho (whole dollars)",
+    undefined,
+    types.int
+  )
+  .addOptionalParam(
+    "simHyper",
+    "Simulate additional USDC in HyperEVM Morpho (whole dollars)",
+    undefined,
+    types.int
+  )
+  .addOptionalParam(
+    "json",
+    "Write structured JSON output to this file path",
+    undefined,
+    types.string
+  )
+  .setAction(rebalancerTask);
+task("planRebalance").setAction(async (taskArgs, _, runSuper) => {
+  return runSuper(taskArgs);
 });
 
 // Consolidation Tasks

@@ -73,9 +73,27 @@ async function transferToken({ proxy, symbol, amount }) {
   await logTxDetails(tx, "transferToken");
 }
 
+async function updateWOETHOraclePrice({ proxy = "BridgedWOETHStrategyProxy" }) {
+  const signer = await getSigner();
+  const strategy = await resolveContract(proxy, "BridgedWOETHStrategy");
+  const lastOraclePrice = await strategy.lastOraclePrice();
+  const newOraclePrice = await strategy
+    .connect(signer)
+    .callStatic.updateWOETHOraclePrice();
+
+  console.log(`Strategy            : ${strategy.address}`);
+  console.log(`Previous wOETH price: ${formatUnits(lastOraclePrice)} WETH`);
+  console.log(`New wOETH price     : ${formatUnits(newOraclePrice)} WETH`);
+
+  log(`About to call updateWOETHOraclePrice() on ${strategy.address}`);
+  const tx = await strategy.connect(signer).updateWOETHOraclePrice();
+  await logTxDetails(tx, "updateWOETHOraclePrice");
+}
+
 module.exports = {
   getRewardTokenAddresses,
   setRewardTokenAddresses,
   checkBalance,
   transferToken,
+  updateWOETHOraclePrice,
 };

@@ -41,10 +41,12 @@ const actions = [
   "sonicClaimWithdrawals",
   "claimBribes",
   "crossChainRelay",
+  "crossChainRelayBackfillTx",
   "updateVotemarketEpochs",
   "crossChainRelayHyperEVM",
   "manageBribes",
   "manageMerklBribes",
+  "ousdRebalancer",
   "claimSSVRewards"
 ];
 
