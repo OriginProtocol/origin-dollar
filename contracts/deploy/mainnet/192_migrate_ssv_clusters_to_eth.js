@@ -38,7 +38,8 @@ module.exports = deploymentWithGovernanceProposal(
     // forceSkip: true,
     reduceQueueTime: true,
     deployerIsProposer: false,
-    proposalId: "",
+    proposalId:
+      "27498848419509230881029695021341446610667421341841354940740078670919629788465",
   },
   async ({ ethers }) => {
     const { chainId } = await ethers.provider.getNetwork();
