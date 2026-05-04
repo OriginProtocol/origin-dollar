@@ -122,7 +122,7 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
         REGISTERED, // validator is registered on the SSV network
         STAKED, // validator has funds staked
         VERIFIED, // validator has been verified to exist on the beacon chain
-        ACTIVE, // The validator balance is at least 32 ETH. The validator may not yet be active on the beacon chain.
+        ACTIVE, // The validator balance is at least 32.25 ETH. The validator may not yet be active on the beacon chain.
         EXITING, // The validator has been requested to exit
         EXITED, // The validator has been verified to have a zero balance
         REMOVED, // validator has funds withdrawn to this strategy contract and is removed from the SSV
