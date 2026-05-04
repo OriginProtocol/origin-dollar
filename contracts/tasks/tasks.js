@@ -89,6 +89,7 @@ const {
   setRewardTokenAddresses,
   checkBalance,
   transferToken,
+  updateWOETHOraclePrice,
 } = require("./strategy");
 const {
   validatorOperationsConfig,
@@ -127,6 +128,7 @@ const { harvestAndSwap } = require("./harvest");
 const { deployForceEtherSender, forceSend } = require("./simulation");
 const { sleep } = require("../utils/time");
 const { lzBridgeToken, lzSetConfig } = require("./layerzero");
+const { fundWithdrawals } = require("./autoWithdrawal");
 const {
   requestValidatorWithdraw,
   beaconRoot,
@@ -314,6 +316,24 @@ task(
   )
   .setAction(addWithdrawalQueueLiquidity);
 task("queueLiquidity").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+task("fundWithdrawals", "Fund OUSD withdrawals using the AutoWithdrawalModule")
+  .addOptionalParam(
+    "gasLimit",
+    "Gas limit to use when calling fundWithdrawals",
+    undefined,
+    types.int
+  )
+  .addOptionalParam(
+    "module",
+    "Address of the AutoWithdrawalModule. Defaults to the deployed AutoWithdrawalModule",
+    undefined,
+    types.string
+  )
+  .setAction(fundWithdrawals);
+task("fundWithdrawals").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
 
@@ -1083,6 +1103,12 @@ task("setRewardTokenAddresses", "Sets the reward token of a strategy")
     types.string
   )
   .setAction(setRewardTokenAddresses);
+
+task(
+  "updateWOETHPrice",
+  "Update the wOETH oracle price on the Base BridgedWOETHStrategy"
+)
+  .setAction(updateWOETHOraclePrice);
 
 // Harvester
 
