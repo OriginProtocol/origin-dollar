@@ -1215,6 +1215,10 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
         internal
     {
         require(_initialDepositAmountWei >= 1 ether, "Deposit too small");
+        require(
+            _initialDepositAmountWei <= MIN_ACTIVATION_BALANCE_GWEI * 1e9,
+            "Deposit too large"
+        );
 
         initialDepositAmountWei = _initialDepositAmountWei;
         emit InitialDepositAmountChanged(_initialDepositAmountWei);

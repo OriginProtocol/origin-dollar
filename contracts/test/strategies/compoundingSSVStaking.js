@@ -215,6 +215,15 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
           .setInitialDepositAmount(parseUnits("0.5", 18))
       ).to.be.revertedWith("Deposit too small");
     });
+    it("Should revert when setting the first deposit amount above 32.25 ETH", async () => {
+      const { compoundingStakingSSVStrategy } = fixture;
+
+      await expect(
+        compoundingStakingSSVStrategy
+          .connect(sGov)
+          .setInitialDepositAmount(parseEther(INITIAL_DEPOSIT_AMOUNT).add(1))
+      ).to.be.revertedWith("Deposit too large");
+    });
     it("Should not collect rewards", async () => {
       const { compoundingStakingSSVStrategy, governor } = fixture;
 
