@@ -87,7 +87,7 @@ const getWithdrawalCredentials = (type, address) => {
 
 const ETHInGwei = BigNumber.from("1000000000"); // 1 ETH in Gwei
 const GweiInWei = BigNumber.from("1000000000"); // 1 Gwei in Wei
-const INITIAL_DEPOSIT_AMOUNT = "32.25";
+const INITIAL_DEPOSIT_AMOUNT = "1";
 const INITIAL_DEPOSIT_AMOUNT_GWEI = parseUnits(INITIAL_DEPOSIT_AMOUNT, 9);
 
 describe("Unit test: Compounding SSV Staking Strategy", function () {
@@ -175,7 +175,7 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
       );
       expect(assets).to.equal(true);
     });
-    it("Should initialize the first deposit amount to 32.25 ETH", async () => {
+    it("Should initialize the first deposit amount to 1 ETH", async () => {
       const { compoundingStakingSSVStrategy } = fixture;
 
       expect(
@@ -185,7 +185,7 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
     it("Governor should be able to change the first deposit amount", async () => {
       const { compoundingStakingSSVStrategy } = fixture;
 
-      const updatedAmount = parseEther("33");
+      const updatedAmount = parseEther("32.25");
       const tx = await compoundingStakingSSVStrategy
         .connect(sGov)
         .setInitialDepositAmount(updatedAmount);
@@ -221,7 +221,7 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
       await expect(
         compoundingStakingSSVStrategy
           .connect(sGov)
-          .setInitialDepositAmount(parseEther(INITIAL_DEPOSIT_AMOUNT).add(1))
+          .setInitialDepositAmount(parseEther("32.25").add(1))
       ).to.be.revertedWith("Deposit too large");
     });
     it("Should not collect rewards", async () => {

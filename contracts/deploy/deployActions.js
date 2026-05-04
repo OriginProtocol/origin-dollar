@@ -466,7 +466,7 @@ const deployCompoundingStakingSSVStrategy = async () => {
        */
       [], // asset token addresses
       [], // platform tokens addresses
-      ethers.utils.parseEther("32.25"), // initial deposit amount
+      ethers.utils.parseEther("1"), // initial validator deposit amount
     ]
   );
 
