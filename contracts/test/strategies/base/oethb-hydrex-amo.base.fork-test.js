@@ -1,10 +1,57 @@
+const { expect } = require("chai");
+
+const addresses = require("../../../utils/addresses");
 const { createFixtureLoader } = require("../../_fixture");
 const { oethbHydrexAMOFixture } = require("../../_fixture-base");
 const {
   shouldBehaveLikeAlgebraAmoStrategy,
 } = require("../../behaviour/algebraAmoStrategy");
 
+const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000";
+
 describe("Base Fork Test: OETHb Hydrex AMO Strategy", function () {
+  // Verify the bring-up that 048_oethb_hydrex_amo performs. If the deploy
+  // script regresses, these fail loudly with a clear message rather than
+  // surfacing as some downstream behavior-suite assertion.
+  describe("deploy script wires the strategy correctly", function () {
+    let fixture;
+    before(async () => {
+      const fixtureLoader = await createFixtureLoader(oethbHydrexAMOFixture);
+      fixture = await fixtureLoader();
+    });
+
+    it("Strategy.pool() matches addresses.base.HydrexOETHb_WETH.pool", async () => {
+      expect(fixture.hydrexPool.address.toLowerCase()).to.equal(
+        addresses.base.HydrexOETHb_WETH.pool.toLowerCase()
+      );
+    });
+
+    it("Strategy.gauge() is non-zero", async () => {
+      expect(fixture.hydrexGauge.address).to.not.equal(ZERO_ADDRESS);
+    });
+
+    it("Strategy.harvesterAddress() is the multichain strategist", async () => {
+      expect(await fixture.hydrexAMOStrategy.harvesterAddress()).to.equal(
+        addresses.base.multichainStrategist
+      );
+    });
+
+    it("OETHBase Vault has approved the strategy", async () => {
+      const strategyConfig = await fixture.oethbVault.strategies(
+        fixture.hydrexAMOStrategy.address
+      );
+      expect(strategyConfig.isSupported).to.equal(true);
+    });
+
+    it("OETHBase Vault has the strategy on the mint whitelist", async () => {
+      expect(
+        await fixture.oethbVault.isMintWhitelistedStrategy(
+          fixture.hydrexAMOStrategy.address
+        )
+      ).to.equal(true);
+    });
+  });
+
   shouldBehaveLikeAlgebraAmoStrategy(async () => {
     // Magnitudes are tuned ~5–10× smaller than the mainnet Supernova test
     // because the superOETHb/WETH pool starts with a much smaller bootstrap.

@@ -6,14 +6,11 @@ const { isFork, isBaseFork, oethUnits, usdcUnits } = require("./helpers");
 const { impersonateAndFund, impersonateAccount } = require("../utils/signers");
 const { nodeRevert, nodeSnapshot } = require("./_fixture");
 const { deployWithConfirmation } = require("../utils/deploy");
-const { expect } = require("chai");
 const addresses = require("../utils/addresses");
 const erc20Abi = require("./abi/erc20.json");
 const hhHelpers = require("@nomicfoundation/hardhat-network-helpers");
 
 const log = require("../utils/logger")("test:fixtures-base");
-
-const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000";
 
 const aeroSwapRouterAbi = require("./abi/aerodromeSwapRouter.json");
 const aeroNonfungiblePositionManagerAbi = require("./abi/aerodromeNonfungiblePositionManager.json");
@@ -399,8 +396,9 @@ async function oethbHydrexAMOFixture(
     poolAddOethAmount: config?.poolAddOethAmount || 0,
   };
 
-  // Connect to what 048_oethb_hydrex_amo deployed. If any of these resolve
-  // unexpectedly the deploy script regressed — bail with a clear message.
+  // Connect to what 048_oethb_hydrex_amo deployed. The fork test in
+  // test/strategies/base/oethb-hydrex-amo.base.fork-test.js asserts that the
+  // deploy script wired things correctly; here we just consume the result.
   const cOETHbHydrexAMOProxy = await ethers.getContract("OETHbHydrexAMOProxy");
   const cOETHbHydrexAMOStrategy = await ethers.getContractAt(
     "OETHbHydrexAMOStrategy",
@@ -417,31 +415,6 @@ async function oethbHydrexAMOFixture(
   const hydrexRewardToken = await ethers.getContractAt(
     erc20Abi,
     addresses.base.HYDX
-  );
-
-  // Sanity-check that 048_oethb_hydrex_amo wired the strategy correctly. If
-  // the deploy script regresses we want this to fail loudly here rather than
-  // through some downstream behavior-suite assertion.
-  expect(hydrexPool.address.toLowerCase()).to.equal(
-    addresses.base.HydrexOETHb_WETH.pool.toLowerCase(),
-    "Strategy.pool() does not match addresses.base.HydrexOETHb_WETH.pool"
-  );
-  expect(hydrexGauge.address).to.not.equal(
-    ZERO_ADDRESS,
-    "Strategy was deployed with a zero gauge address"
-  );
-  expect(await cOETHbHydrexAMOStrategy.harvesterAddress()).to.equal(
-    addresses.base.multichainStrategist,
-    "Strategy.harvesterAddress is not the multichain strategist"
-  );
-  expect(
-    (await oethbVault.strategies(cOETHbHydrexAMOProxy.address)).isSupported
-  ).to.equal(true, "Strategy was not approved on the OETHBase Vault by 048");
-  expect(
-    await oethbVault.isMintWhitelistedStrategy(cOETHbHydrexAMOProxy.address)
-  ).to.equal(
-    true,
-    "Strategy was not added to OETHBase Vault mint whitelist by 048"
   );
 
   // Detect whether 048 deployed a MockHydrexGauge. The mock only exists in
