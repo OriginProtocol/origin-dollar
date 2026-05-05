@@ -412,29 +412,11 @@ async function oethbHydrexAMOFixture(
     "IGauge",
     await cOETHbHydrexAMOStrategy.gauge()
   );
+  // Hydrex gauge emits oHYDX (call option on HYDX), not HYDX directly.
   const hydrexRewardToken = await ethers.getContractAt(
     erc20Abi,
-    addresses.base.HYDX
+    addresses.base.oHYDX
   );
-
-  // Detect whether 048 deployed a MockHydrexGauge. The mock only exists in
-  // Base fork tests; live deploys use the real gauge.
-  const mockDeployment = await deployments.getOrNull("MockHydrexGauge");
-  const hydrexGaugeIsMock =
-    !!mockDeployment &&
-    mockDeployment.address.toLowerCase() === hydrexGauge.address.toLowerCase();
-
-  // The behavior suite calls `gauge.notifyRewardAmount(token, amount)` from
-  // the impersonated DISTRIBUTION address, which uses `transferFrom`. On a
-  // real Hydrex Voter→Gauge wiring this allowance is pre-set during gauge
-  // creation. The mock has no such pre-set allowance, so set it here.
-  if (hydrexGaugeIsMock) {
-    const distributionAddr = await hydrexGauge.DISTRIBUTION();
-    const distributionSigner = await impersonateAndFund(distributionAddr);
-    await hydrexRewardToken
-      .connect(distributionSigner)
-      .approve(hydrexGauge.address, ethers.constants.MaxUint256);
-  }
 
   // Impersonate the OETHBase Vault so tests can call deposit/withdraw on the
   // strategy directly.
@@ -549,7 +531,6 @@ async function oethbHydrexAMOFixture(
     hydrexPool,
     hydrexGauge,
     hydrexAMOStrategy: cOETHbHydrexAMOStrategy,
-    hydrexGaugeIsMock,
   };
 }
 

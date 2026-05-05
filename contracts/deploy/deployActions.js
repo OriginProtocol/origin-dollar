@@ -927,11 +927,13 @@ const deployOETHbHydrexAMOStrategyImplementation = async (gaugeAddress) => {
     cOETHbHydrexAMOStrategyProxy.address
   );
 
-  // Initialize OETHb Hydrex AMO Strategy via the proxy
+  // Initialize OETHb Hydrex AMO Strategy via the proxy.
+  // Reward token is oHYDX (call option on HYDX). The Hydrex gauge emits oHYDX
+  // from getReward(); off-chain plumbing exercises/sells it.
   const depositPriceRange = parseUnits("0.01", 18); // 1% or 100 basis points
   const initData = cOETHbHydrexAMOStrategy.interface.encodeFunctionData(
     "initialize(address[],uint256)",
-    [[addresses.base.HYDX], depositPriceRange]
+    [[addresses.base.oHYDX], depositPriceRange]
   );
   await withConfirmation(
     // prettier-ignore

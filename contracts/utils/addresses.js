@@ -469,14 +469,17 @@ addresses.base.childLiquidityGaugeFactory =
 
 // Base Hydrex
 addresses.base.HYDX = "0x00000e7efa313F4E11Bfff432471eD9423AC6B30";
+// Hydrex gauges emit oHYDX (a call option on HYDX, redeemable for HYDX with
+// USDC), not HYDX directly. The strategy receives oHYDX from gauge.getReward()
+// and forwards it to the multichain strategist multisig, which exercises /
+// sells it off-chain.
+addresses.base.oHYDX = "0xa1136031150e50b015b41f1ca6b2e99e49d8cb78";
 addresses.base.hydrexVoter = "0xc69E3eF39E3fFBcE2A1c570f8d3ADF76909ef17b";
 addresses.base.HydrexOETHb_WETH = {};
 addresses.base.HydrexOETHb_WETH.pool =
   "0xEB9ebc2dEF5aa715C0CED10749cbdC15Ac27f632";
-// TODO: replace with the live Hydrex gauge once it has been deployed for the
-// superOETHb/WETH pool. Re-verify that gauge.rewardToken() == HYDX before deploy.
 addresses.base.HydrexOETHb_WETH.gauge =
-  "0x0000000000000000000000000000000000000000";
+  "0x762aEFD13Ec33eb916f124E26336a148177eB093";
 
 addresses.base.CCIPRouter = "0x881e3A65B4d4a04dD529061dd0071cf975F58bCD";
 
