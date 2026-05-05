@@ -899,6 +899,48 @@ const deployOETHSupernovaAMOStrategyImplementation = async () => {
   return cOETHSupernovaAMOStrategy;
 };
 
+const deployOETHbHydrexAMOStrategyImplementation = async () => {
+  const { deployerAddr } = await getNamedAccounts();
+  const sDeployer = await ethers.provider.getSigner(deployerAddr);
+
+  const cOETHbHydrexAMOStrategyProxy = await ethers.getContract(
+    "OETHbHydrexAMOProxy"
+  );
+  const cOETHBaseVaultProxy = await ethers.getContract("OETHBaseVaultProxy");
+
+  // Deploy OETHb Hydrex AMO Strategy implementation
+  const dHydrexAMOStrategy = await deployWithConfirmation(
+    "OETHbHydrexAMOStrategy",
+    [
+      [addresses.base.HydrexOETHb_WETH.pool, cOETHBaseVaultProxy.address],
+      addresses.base.HydrexOETHb_WETH.gauge,
+    ]
+  );
+
+  const cOETHbHydrexAMOStrategy = await ethers.getContractAt(
+    "OETHbHydrexAMOStrategy",
+    cOETHbHydrexAMOStrategyProxy.address
+  );
+
+  // Initialize OETHb Hydrex AMO Strategy via the proxy
+  const depositPriceRange = parseUnits("0.01", 18); // 1% or 100 basis points
+  const initData = cOETHbHydrexAMOStrategy.interface.encodeFunctionData(
+    "initialize(address[],uint256)",
+    [[addresses.base.HYDX], depositPriceRange]
+  );
+  await withConfirmation(
+    // prettier-ignore
+    cOETHbHydrexAMOStrategyProxy
+      .connect(sDeployer)["initialize(address,address,bytes)"](
+        dHydrexAMOStrategy.address,
+        addresses.base.timelock,
+        initData
+      )
+  );
+
+  return cOETHbHydrexAMOStrategy;
+};
+
 const getCreate2ProxiesFilePath = async () => {
   const networkName =
     isFork || isForkTest || isCI ? "localhost" : await getNetworkName();
@@ -1270,6 +1312,7 @@ module.exports = {
   deploySonicSwapXAMOStrategyImplementation,
   deploySonicSwapXAMOStrategyImplementationAndInitialize,
   deployOETHSupernovaAMOStrategyImplementation,
+  deployOETHbHydrexAMOStrategyImplementation,
   deployProxyWithCreateX,
   deployCrossChainMasterStrategyImpl,
   deployCrossChainRemoteStrategyImpl,

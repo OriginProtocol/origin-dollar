@@ -467,6 +467,17 @@ addresses.base.OETHb_WETH.gauge = "0x9da8420dbEEBDFc4902B356017610259ef7eeDD8";
 addresses.base.childLiquidityGaugeFactory =
   "0xe35A879E5EfB4F1Bb7F70dCF3250f2e19f096bd8";
 
+// Base Hydrex
+addresses.base.HYDX = "0x00000e7efa313F4E11Bfff432471eD9423AC6B30";
+addresses.base.hydrexVoter = "0xc69E3eF39E3fFBcE2A1c570f8d3ADF76909ef17b";
+addresses.base.HydrexOETHb_WETH = {};
+addresses.base.HydrexOETHb_WETH.pool =
+  "0xEB9ebc2dEF5aa715C0CED10749cbdC15Ac27f632";
+// TODO: replace with the live Hydrex gauge once it has been deployed for the
+// superOETHb/WETH pool. Re-verify that gauge.rewardToken() == HYDX before deploy.
+addresses.base.HydrexOETHb_WETH.gauge =
+  "0x0000000000000000000000000000000000000000";
+
 addresses.base.CCIPRouter = "0x881e3A65B4d4a04dD529061dd0071cf975F58bCD";
 
 addresses.base.MerklDistributor = "0x8BB4C975Ff3c250e0ceEA271728547f3802B36Fd";
