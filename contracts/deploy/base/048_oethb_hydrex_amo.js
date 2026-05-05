@@ -29,6 +29,16 @@ module.exports = deployOnBase(
       cOETHBaseVaultProxy.address
     );
 
+    // 4. Connect to the OETHBase harvester proxy. Use the same harvester
+    //    that AerodromeAMOStrategy uses (OETHHarvesterSimple via the
+    //    OETHBaseHarvesterProxy) so reward token flows go through the
+    //    standard Origin harvester pipeline.
+    const cHarvesterProxy = await ethers.getContract("OETHBaseHarvesterProxy");
+    const cHarvester = await ethers.getContractAt(
+      "OETHHarvesterSimple",
+      cHarvesterProxy.address
+    );
+
     return {
       name: "Deploy OETHb Hydrex AMO Strategy on Base",
       actions: [
@@ -44,11 +54,20 @@ module.exports = deployOnBase(
           signature: "addStrategyToMintWhitelist(address)",
           args: [cOETHbHydrexAMOProxy.address],
         },
-        // Set the harvester address on the strategy
+        // Set the harvester address on the strategy. Rewards (oHYDX) flow
+        // strategy → harvester → strategist via OETHHarvesterSimple's
+        // harvestAndTransfer.
         {
           contract: cOETHbHydrexAMOStrategy,
           signature: "setHarvesterAddress(address)",
-          args: [addresses.base.multichainStrategist],
+          args: [cHarvesterProxy.address],
+        },
+        // Mark the strategy as supported on the harvester so
+        // harvestAndTransfer(strategy) doesn't revert.
+        {
+          contract: cHarvester,
+          signature: "setSupportedStrategy(address,bool)",
+          args: [cOETHbHydrexAMOProxy.address, true],
         },
       ],
     };

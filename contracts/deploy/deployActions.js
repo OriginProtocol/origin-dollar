@@ -904,8 +904,8 @@ const deployOETHbHydrexAMOStrategyImplementation = async (gaugeAddress) => {
   const sDeployer = await ethers.provider.getSigner(deployerAddr);
 
   // Default to the addresses entry so any other caller still works; the
-  // 048_oethb_hydrex_amo deploy script always passes the resolved address
-  // (live gauge or, in fork tests only, a freshly-deployed MockHydrexGauge).
+  // 048_oethb_hydrex_amo deploy script always passes the live Hydrex gauge
+  // address explicitly.
   const _gauge = gaugeAddress || addresses.base.HydrexOETHb_WETH.gauge;
 
   const cOETHbHydrexAMOStrategyProxy = await ethers.getContract(

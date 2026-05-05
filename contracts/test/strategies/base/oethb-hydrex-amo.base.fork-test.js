@@ -30,9 +30,9 @@ describe("Base Fork Test: OETHb Hydrex AMO Strategy", function () {
       expect(fixture.hydrexGauge.address).to.not.equal(ZERO_ADDRESS);
     });
 
-    it("Strategy.harvesterAddress() is the multichain strategist", async () => {
+    it("Strategy.harvesterAddress() is the OETHBase harvester", async () => {
       expect(await fixture.hydrexAMOStrategy.harvesterAddress()).to.equal(
-        addresses.base.multichainStrategist
+        fixture.harvester.address
       );
     });
 
@@ -46,6 +46,14 @@ describe("Base Fork Test: OETHb Hydrex AMO Strategy", function () {
     it("OETHBase Vault has the strategy on the mint whitelist", async () => {
       expect(
         await fixture.oethbVault.isMintWhitelistedStrategy(
+          fixture.hydrexAMOStrategy.address
+        )
+      ).to.equal(true);
+    });
+
+    it("Harvester has the strategy marked as supported", async () => {
+      expect(
+        await fixture.harvester.supportedStrategies(
           fixture.hydrexAMOStrategy.address
         )
       ).to.equal(true);
@@ -132,7 +140,7 @@ describe("Base Fork Test: OETHb Hydrex AMO Strategy", function () {
         swapOTokensToPool: "0.1",
       },
       harvest: {
-        collectedBy: "strategist",
+        collectedBy: "harvester",
       },
     };
 
