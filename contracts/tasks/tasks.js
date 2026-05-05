@@ -1107,8 +1107,7 @@ task("setRewardTokenAddresses", "Sets the reward token of a strategy")
 task(
   "updateWOETHPrice",
   "Update the wOETH oracle price on the Base BridgedWOETHStrategy"
-)
-  .setAction(updateWOETHOraclePrice);
+).setAction(updateWOETHOraclePrice);
 
 // Harvester
 
