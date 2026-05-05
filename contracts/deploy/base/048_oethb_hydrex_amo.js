@@ -1,26 +1,49 @@
 const { deployOnBase } = require("../../utils/deploy-l2");
 const addresses = require("../../utils/addresses");
+const { isBaseForkTest } = require("../../utils/hardhat-helpers");
 const {
   deployOETHbHydrexAMOStrategyImplementation,
 } = require("../deployActions");
 
 const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000";
 
-// BLOCKED: this script is a no-op until `addresses.base.HydrexOETHb_WETH.gauge`
-// is set to the live Hydrex GaugeV2 for the superOETHb/WETH pool. Before
-// unblocking, also re-verify that `gauge.rewardToken() == addresses.base.HYDX`.
 module.exports = deployOnBase(
   {
     deployName: "048_oethb_hydrex_amo",
   },
   async ({ deployWithConfirmation, ethers }) => {
-    if (addresses.base.HydrexOETHb_WETH.gauge === ZERO_ADDRESS) {
-      console.log(
-        "Skipping 048_oethb_hydrex_amo: Hydrex gauge for superOETHb/WETH " +
-          "is not yet deployed. Set addresses.base.HydrexOETHb_WETH.gauge " +
-          "to the live gauge address before re-running this deploy."
+    let gaugeAddress = addresses.base.HydrexOETHb_WETH.gauge;
+
+    // Mock gauge fallback path. ONLY allowed in Base fork tests. Any other
+    // Base context (live mainnet deploy, local fork node, anything where
+    // IS_TEST !== "true") must hard-fail so a strategy backed by a mock or
+    // zero gauge can never escape into production.
+    if (gaugeAddress === ZERO_ADDRESS) {
+      if (!isBaseForkTest) {
+        throw new Error(
+          "Hydrex gauge for superOETHb/WETH is not deployed yet. Refusing " +
+            "to deploy the strategy with a placeholder/mock gauge outside of " +
+            "Base fork tests. Set addresses.base.HydrexOETHb_WETH.gauge to " +
+            "the live Hydrex GaugeV2 (and confirm gauge.rewardToken() == " +
+            "addresses.base.HYDX) before running this deploy."
+        );
+      }
+
+      console.warn(
+        "USING MOCK HYDREX GAUGE — replace addresses.base.HydrexOETHb_WETH.gauge " +
+          "with the live Hydrex GaugeV2 once it has been deployed for the " +
+          "superOETHb/WETH pool."
       );
-      return { actions: [] };
+
+      const { timelockAddr } = await getNamedAccounts();
+      await deployWithConfirmation("MockHydrexGauge", [
+        addresses.base.HydrexOETHb_WETH.pool,
+        addresses.base.HYDX,
+        timelockAddr, // owner
+        timelockAddr, // distribution
+      ]);
+      const cMockGauge = await ethers.getContract("MockHydrexGauge");
+      gaugeAddress = cMockGauge.address;
     }
 
     // 1. Deploy the OETHb Hydrex AMO proxy
@@ -29,9 +52,10 @@ module.exports = deployOnBase(
       "OETHbHydrexAMOProxy"
     );
 
-    // 2. Deploy & initialize the OETHb Hydrex AMO strategy implementation
+    // 2. Deploy & initialize the strategy implementation against the resolved
+    //    gauge address (live or mock).
     const cOETHbHydrexAMOStrategy =
-      await deployOETHbHydrexAMOStrategyImplementation();
+      await deployOETHbHydrexAMOStrategyImplementation(gaugeAddress);
 
     // 3. Connect to the OETHBase Vault as IVault
     const cOETHBaseVaultProxy = await ethers.getContract("OETHBaseVaultProxy");

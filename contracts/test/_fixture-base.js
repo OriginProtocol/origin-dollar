@@ -5,7 +5,8 @@ const { parseUnits, formatUnits } = require("ethers/lib/utils");
 const { isFork, isBaseFork, oethUnits, usdcUnits } = require("./helpers");
 const { impersonateAndFund, impersonateAccount } = require("../utils/signers");
 const { nodeRevert, nodeSnapshot } = require("./_fixture");
-const { deployWithConfirmation, withConfirmation } = require("../utils/deploy");
+const { deployWithConfirmation } = require("../utils/deploy");
+const { expect } = require("chai");
 const addresses = require("../utils/addresses");
 const erc20Abi = require("./abi/erc20.json");
 const hhHelpers = require("@nomicfoundation/hardhat-network-helpers");
@@ -366,47 +367,6 @@ mocha.after(async () => {
   }
 });
 
-/**
- * Resolve the Hydrex gauge contract for the OETHb/WETH pool. Returns the live
- * gauge if `addresses.base.HydrexOETHb_WETH.gauge` is set and has code on the
- * fork; otherwise deploys a `MockHydrexGauge`. Until Hydrex deploys the real
- * gauge for this pool the fork test always lands on the mock branch.
- */
-async function _mockHydrexGaugeIfNeeded(poolAddress, rewardTokenAddress) {
-  const configured = addresses.base.HydrexOETHb_WETH.gauge;
-
-  if (configured !== ZERO_ADDRESS) {
-    const code = await ethers.provider.getCode(configured);
-    if (code && code !== "0x") {
-      return {
-        gauge: await ethers.getContractAt("IGauge", configured),
-        isMock: false,
-      };
-    }
-  }
-
-  console.warn(
-    "USING MOCK HYDREX GAUGE — replace addresses.base.HydrexOETHb_WETH.gauge " +
-      "with the live Hydrex GaugeV2 once it has been deployed for the " +
-      "superOETHb/WETH pool."
-  );
-
-  // Use the timelock as both owner and distribution — both are easy to
-  // impersonate in tests, and the behavior suite reads them via the gauge.
-  const { timelockAddr } = await getNamedAccounts();
-  await deployWithConfirmation("MockHydrexGauge", [
-    poolAddress,
-    rewardTokenAddress,
-    timelockAddr,
-    timelockAddr,
-  ]);
-  const cMockGauge = await ethers.getContract("MockHydrexGauge");
-  return {
-    gauge: await ethers.getContractAt("IGauge", cMockGauge.address),
-    isMock: true,
-  };
-}
-
 async function oethbHydrexAMOFixture(
   config = {
     assetMintAmount: 0,
@@ -422,8 +382,14 @@ async function oethbHydrexAMOFixture(
     );
   }
 
+  // `defaultFixture()` runs all `deploy/base/*` scripts, including
+  // 048_oethb_hydrex_amo, which deploys the proxy + implementation, runs
+  // proxy.initialize, and (via its returned `actions[]`) approves the strategy
+  // on the vault, adds it to the mint whitelist, and sets the harvester
+  // address. Anything below this line in the fixture must be a *consumer* of
+  // that deployment — no additional deploys, no init, no governance calls.
   const fixture = await defaultFixture();
-  const { oethb, oethbVault, weth, governor, strategist, nick } = fixture;
+  const { oethb, oethbVault, weth, nick, strategist } = fixture;
 
   const cfg = {
     assetMintAmount: config?.assetMintAmount || 0,
@@ -433,84 +399,62 @@ async function oethbHydrexAMOFixture(
     poolAddOethAmount: config?.poolAddOethAmount || 0,
   };
 
-  // Pool already exists on Base. Connect to it.
-  const hydrexPool = await ethers.getContractAt(
-    "IPair",
-    addresses.base.HydrexOETHb_WETH.pool
-  );
-
-  // Resolve / mock the gauge.
-  const { gauge: hydrexGauge, isMock: hydrexGaugeIsMock } =
-    await _mockHydrexGaugeIfNeeded(hydrexPool.address, addresses.base.HYDX);
-
-  const { deployerAddr } = await getNamedAccounts();
-  const sDeployer = await ethers.provider.getSigner(deployerAddr);
-  await impersonateAndFund(deployerAddr);
-
-  // Deploy proxy + implementation against the (possibly mocked) gauge address.
-  await deployWithConfirmation("OETHbHydrexAMOProxy");
+  // Connect to what 048_oethb_hydrex_amo deployed. If any of these resolve
+  // unexpectedly the deploy script regressed — bail with a clear message.
   const cOETHbHydrexAMOProxy = await ethers.getContract("OETHbHydrexAMOProxy");
-
-  const dHydrexAMOStrategy = await deployWithConfirmation(
-    "OETHbHydrexAMOStrategy",
-    [[hydrexPool.address, oethbVault.address], hydrexGauge.address]
-  );
-
   const cOETHbHydrexAMOStrategy = await ethers.getContractAt(
     "OETHbHydrexAMOStrategy",
     cOETHbHydrexAMOProxy.address
   );
-
-  // Initialize the proxy (only if not already initialized in a previous run).
-  const currentImpl = await cOETHbHydrexAMOProxy.implementation();
-  if (currentImpl === ZERO_ADDRESS) {
-    const depositPriceRange = parseUnits("0.01", 18); // 1% / 100 bp
-    const initData = cOETHbHydrexAMOStrategy.interface.encodeFunctionData(
-      "initialize(address[],uint256)",
-      [[addresses.base.HYDX], depositPriceRange]
-    );
-    await withConfirmation(
-      // prettier-ignore
-      cOETHbHydrexAMOProxy
-        .connect(sDeployer)["initialize(address,address,bytes)"](
-          dHydrexAMOStrategy.address,
-          addresses.base.timelock,
-          initData
-        )
-    );
-  }
-
-  // Wire the strategy into the OETHBase Vault.
-  await withConfirmation(
-    oethbVault.connect(governor).approveStrategy(cOETHbHydrexAMOProxy.address)
+  const hydrexPool = await ethers.getContractAt(
+    "IPair",
+    await cOETHbHydrexAMOStrategy.pool()
   );
-  await withConfirmation(
-    oethbVault
-      .connect(governor)
-      .addStrategyToMintWhitelist(cOETHbHydrexAMOProxy.address)
+  const hydrexGauge = await ethers.getContractAt(
+    "IGauge",
+    await cOETHbHydrexAMOStrategy.gauge()
   );
-
-  // Match the deploy script (048_oethb_hydrex_amo): the harvester address on
-  // the strategy is the multichain strategist multisig, not the SuperOETH
-  // Harvester proxy. The behavior suite's harvest config also expects the
-  // strategist to be both the caller and the recipient of reward tokens.
-  const sStrategyGovernor = await impersonateAndFund(addresses.base.timelock);
-  await withConfirmation(
-    cOETHbHydrexAMOStrategy
-      .connect(sStrategyGovernor)
-      .setHarvesterAddress(addresses.base.multichainStrategist)
-  );
-
-  // Reward token handle (HYDX).
   const hydrexRewardToken = await ethers.getContractAt(
     erc20Abi,
     addresses.base.HYDX
   );
 
+  // Sanity-check that 048_oethb_hydrex_amo wired the strategy correctly. If
+  // the deploy script regresses we want this to fail loudly here rather than
+  // through some downstream behavior-suite assertion.
+  expect(hydrexPool.address.toLowerCase()).to.equal(
+    addresses.base.HydrexOETHb_WETH.pool.toLowerCase(),
+    "Strategy.pool() does not match addresses.base.HydrexOETHb_WETH.pool"
+  );
+  expect(hydrexGauge.address).to.not.equal(
+    ZERO_ADDRESS,
+    "Strategy was deployed with a zero gauge address"
+  );
+  expect(await cOETHbHydrexAMOStrategy.harvesterAddress()).to.equal(
+    addresses.base.multichainStrategist,
+    "Strategy.harvesterAddress is not the multichain strategist"
+  );
+  expect(
+    (await oethbVault.strategies(cOETHbHydrexAMOProxy.address)).isSupported
+  ).to.equal(true, "Strategy was not approved on the OETHBase Vault by 048");
+  expect(
+    await oethbVault.isMintWhitelistedStrategy(cOETHbHydrexAMOProxy.address)
+  ).to.equal(
+    true,
+    "Strategy was not added to OETHBase Vault mint whitelist by 048"
+  );
+
+  // Detect whether 048 deployed a MockHydrexGauge. The mock only exists in
+  // Base fork tests; live deploys use the real gauge.
+  const mockDeployment = await deployments.getOrNull("MockHydrexGauge");
+  const hydrexGaugeIsMock =
+    !!mockDeployment &&
+    mockDeployment.address.toLowerCase() === hydrexGauge.address.toLowerCase();
+
   // The behavior suite calls `gauge.notifyRewardAmount(token, amount)` from
   // the impersonated DISTRIBUTION address, which uses `transferFrom`. On a
   // real Hydrex Voter→Gauge wiring this allowance is pre-set during gauge
-  // creation. With our mock we have to set it explicitly.
+  // creation. The mock has no such pre-set allowance, so set it here.
   if (hydrexGaugeIsMock) {
     const distributionAddr = await hydrexGauge.DISTRIBUTION();
     const distributionSigner = await impersonateAndFund(distributionAddr);

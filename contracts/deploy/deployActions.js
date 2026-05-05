@@ -899,9 +899,14 @@ const deployOETHSupernovaAMOStrategyImplementation = async () => {
   return cOETHSupernovaAMOStrategy;
 };
 
-const deployOETHbHydrexAMOStrategyImplementation = async () => {
+const deployOETHbHydrexAMOStrategyImplementation = async (gaugeAddress) => {
   const { deployerAddr } = await getNamedAccounts();
   const sDeployer = await ethers.provider.getSigner(deployerAddr);
+
+  // Default to the addresses entry so any other caller still works; the
+  // 048_oethb_hydrex_amo deploy script always passes the resolved address
+  // (live gauge or, in fork tests only, a freshly-deployed MockHydrexGauge).
+  const _gauge = gaugeAddress || addresses.base.HydrexOETHb_WETH.gauge;
 
   const cOETHbHydrexAMOStrategyProxy = await ethers.getContract(
     "OETHbHydrexAMOProxy"
@@ -913,7 +918,7 @@ const deployOETHbHydrexAMOStrategyImplementation = async () => {
     "OETHbHydrexAMOStrategy",
     [
       [addresses.base.HydrexOETHb_WETH.pool, cOETHBaseVaultProxy.address],
-      addresses.base.HydrexOETHb_WETH.gauge,
+      _gauge,
     ]
   );
 
