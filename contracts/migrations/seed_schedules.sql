@@ -14,7 +14,7 @@ INSERT INTO schedules (product, name, command, cron_expr, timezone, enabled, not
 ('origin-dollar', 'manage_bribes_base',                       'cd /app && pnpm hardhat manageMerklBribes --network base',               '35 13 * * 3',           'UTC', false, 'permissioned'),
 ('origin-dollar', 'sonic_staking_request_withdraw',           'cd /app && pnpm hardhat sonicUndelegate --network sonic',                '35 3,9,15,21 * * *',    'UTC', false, 'permissioned'),
 ('origin-dollar', 'sonic_staking_claim_withdraw',             'cd /app && pnpm hardhat sonicClaimWithdrawals --network sonic',          '58 */2 * * *',          'UTC', false, 'permissioned'),
-('origin-dollar', 'healthcheck',                              'cd /app && pnpm hardhat healthcheck --network mainnet',                  '*/5 * * * *',           'UTC', true,  NULL),
+('origin-dollar', 'healthcheck',                              'cd /app && pnpm hardhat healthcheck --network mainnet',                  '*/5 * * * *',           'UTC', false, NULL),
 ('origin-dollar', 'daily_snap_balances',                      'cd /app && pnpm hardhat snapBalances --network mainnet --consol true',   '2 0 * * *',             'UTC', false, 'Remove --consol true once consolidation is finished'),
 ('origin-dollar', 'daily_verify_balances',                    'cd /app && pnpm hardhat verifyBalances --network mainnet --consol true', '6 0 * * *',             'UTC', false, 'Remove --consol true once consolidation is finished'),
 ('origin-dollar', 'daily_verify_deposits',                    'cd /app && pnpm hardhat verifyDeposits --network mainnet',               '11 */4 * * *',          'UTC', false, 'Disabled until consolidations done'),
