@@ -9,7 +9,7 @@ addresses.multichainStrategist = "0x4FF1b9D9ba8558F5EAfCec096318eA0d8b541971";
 addresses.multichainBuybackOperator =
   "0xBB077E716A5f1F1B63ed5244eBFf5214E50fec8c";
 addresses.permissionedRebaseRelayer =
-  "0x0abcDA6Fa7d500CF69b0EA5DE9A607CD9941221C";
+  "0x0aBCDa6Fa7d500cf69B0eA5de9a607Cd9941221C";
 addresses.votemarket = "0x8c2c5A295450DDFf4CB360cA73FCCC12243D14D9";
 
 // CCTP contracts (uses same addresses on all chains)
