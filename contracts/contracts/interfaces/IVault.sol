@@ -66,6 +66,16 @@ interface IVault {
 
     function strategistAddr() external view returns (address);
 
+    function setOperatorAddr(address _operator) external;
+
+    function operatorAddr() external view returns (address);
+
+    function setMinRebaseInterval(uint256 _interval) external;
+
+    function minRebaseInterval() external view returns (uint256);
+
+    function lastRebaseTime() external view returns (uint64);
+
     function setMaxSupplyDiff(uint256 _maxSupplyDiff) external;
 
     function maxSupplyDiff() external view returns (uint256);

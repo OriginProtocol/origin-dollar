@@ -43,6 +43,8 @@ abstract contract VaultStorage is Initializable, Governable {
     event StrategyRemovedFromMintWhitelist(address indexed strategy);
     event RebasePerSecondMaxChanged(uint256 rebaseRatePerSecond);
     event DripDurationChanged(uint256 dripDuration);
+    event OperatorUpdated(address newOperator);
+    event MinRebaseIntervalChanged(uint256 newInterval);
     event WithdrawalRequested(
         address indexed _withdrawer,
         uint256 indexed _requestId,
@@ -202,8 +204,24 @@ abstract contract VaultStorage is Initializable, Governable {
     /// @notice Default strategy for asset
     address public defaultStrategy;
 
+    /// @notice Address authorized to call `rebase()` directly. Other callers
+    ///         silently no-op. The Governor and Strategist are always allowed
+    ///         in addition to this address.
+    address public operatorAddr;
+
+    /// @notice Time in seconds of the last `_rebase` call that passed the
+    ///         throttle and pause checks (yield-producing or not). Used to
+    ///         enforce `rebaseInterval`. Packs with `operatorAddr`.
+    uint64 public lastRebaseTime;
+
+    /// @notice Minimum number of seconds between rebases triggered by
+    ///         non-authorized callers (the public `rebase()` and the
+    ///         internal mint/redeem rebase). The Operator, Strategist, and
+    ///         Governor bypass this throttle. Set to 0 to disable.
+    uint256 public minRebaseInterval;
+
     // For future use
-    uint256[42] private __gap;
+    uint256[40] private __gap;
 
     /// @notice Index of WETH asset in allAssets array
     /// Legacy OETHVaultCore code, relocated here for vault consistency.

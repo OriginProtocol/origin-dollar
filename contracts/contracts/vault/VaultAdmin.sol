@@ -83,6 +83,33 @@ abstract contract VaultAdmin is VaultCore {
     }
 
     /**
+     * @notice Set the address authorized to call `rebase()`.
+     * @param _operator New operator address. May be set to the zero address
+     *                  to disable operator-initiated rebases.
+     */
+    function setOperatorAddr(address _operator) external onlyGovernor {
+        operatorAddr = _operator;
+        emit OperatorUpdated(_operator);
+    }
+
+    /**
+     * @notice Set the minimum time (seconds) that must elapse between rebases
+     *         triggered by non-authorized callers (public `rebase()` and the
+     *         mint/redeem auto-rebase). The Operator, Strategist, and
+     *         Governor bypass this throttle. Capped at 1 day; lengthening past
+     *         that requires a governor-led contract upgrade.
+     * @param _interval Minimum seconds between rebases. 0 disables the throttle.
+     */
+    function setMinRebaseInterval(uint256 _interval)
+        external
+        onlyGovernorOrStrategist
+    {
+        require(_interval <= 1 days, "Interval too long");
+        minRebaseInterval = _interval;
+        emit MinRebaseIntervalChanged(_interval);
+    }
+
+    /**
      * @notice Set the default Strategy for asset, i.e. the one which
      * the asset will be automatically allocated to and withdrawn from
      * @param _strategy Address of the Strategy
