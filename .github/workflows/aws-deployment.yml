@@ -1,0 +1,84 @@
+name: AWS — build runner image
+
+# Builds the origin-dollar runner image and pushes to talos ECR. Does NOT
+# propose or sign a release manifest — that step is human-initiated via
+# `bun run release:propose` in the talos repo so a deliberate human
+# approves what deploys.
+#
+# Triggered only on the `aws-deployment-plan` branch while the AWS path is
+# being proven alongside the live Railway deploy. Once Railway is
+# decommissioned, swap the trigger branch (and the OIDC trust in
+# talos/infra/envs/prod/main.tf) to `talos`.
+#
+# Requires the TALOS_DEPLOY_KEY secret to already be configured (same
+# secret the existing `talos.yml` workflow uses for @talos/client install).
+#
+# Build context is `contracts/` because the dockerfile and runner code
+# live there.
+
+on:
+  push:
+    branches: [aws-deployment-plan]
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  AWS_REGION: us-east-1
+  ECR_REGISTRY: 412463071885.dkr.ecr.us-east-1.amazonaws.com
+  IMAGE_NAME: talos/origin-dollar
+  AWS_ROLE_ARN: arn:aws:iam::412463071885:role/talos-gha-OriginProtocol-origin-dollar
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
+        with:
+          persist-credentials: false
+
+      - name: Set up SSH agent for @talos/client deploy key
+        uses: webfactory/ssh-agent@a6f90b1f127823b31d4d4a8d96047790581349bd  # v0.9.1
+        with:
+          ssh-private-key: ${{ secrets.TALOS_DEPLOY_KEY }}
+
+      - name: Configure AWS credentials via OIDC
+        uses: aws-actions/configure-aws-credentials@b47578312673ae6fa5b5096b330d9fbac3d116df  # v4.2.1
+        with:
+          role-to-assume: ${{ env.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to ECR
+        uses: aws-actions/amazon-ecr-login@4625ce35226a7557230889aae2f52eb50ec3dcda  # v2.0.1
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@f7ce87c1d6bead3e36075b2ce75da1f6cc28aaca  # v3.9.0
+
+      - name: Build and push runner image
+        uses: docker/build-push-action@ca052bb54ab0790a636c9b5f226502c73d547a25  # v5.4.0
+        with:
+          context: ./contracts
+          file: ./contracts/dockerfile-actions
+          push: true
+          ssh: default
+          tags: ${{ env.ECR_REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+
+      - name: Print image reference + digest
+        run: |
+          set -euo pipefail
+          DIGEST=$(aws ecr describe-images \
+            --repository-name "${IMAGE_NAME}" \
+            --image-ids imageTag="${{ github.sha }}" \
+            --query 'imageDetails[0].imageDigest' --output text)
+          IMAGE_REF="${ECR_REGISTRY}/${IMAGE_NAME}@${DIGEST}"
+          echo "Image: ${ECR_REGISTRY}/${IMAGE_NAME}:${{ github.sha }}"
+          echo "Digest: ${DIGEST}"
+          echo
+          echo "To deploy this image, run locally in the talos repo:"
+          echo "  bun run release:propose \\"
+          echo "    --service talos-prod-origin-dollar \\"
+          echo "    --container runner \\"
+          echo "    --image \"${IMAGE_REF}\" \\"
+          echo "    --version <semver>"
