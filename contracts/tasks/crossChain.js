@@ -292,9 +292,7 @@ const processCctpBridgeTransactions = async ({
       !hasEligibleMessage || !hasUnprocessedEligibleMessages;
     if (shouldMarkTxProcessed) {
       await store.put(txStoreKey, "processed");
-      log(
-        `Marked tx ${txHash} as processed using tx-level key ${txStoreKey}`
-      );
+      log(`Marked tx ${txHash} as processed using tx-level key ${txStoreKey}`);
     } else {
       log(
         `Did not mark tx-level key ${txStoreKey} because eligible messages exist but none were fully processed for tx ${txHash}`
