@@ -5,8 +5,7 @@ const GAS_MULTIPLIER = 1.1;
 
 action({
   name: "otokenOusdOethRebase",
-  description:
-    "Rebase both OETH (collectAndRebase) and OUSD (rebase) on mainnet",
+  description: "Collect OETH and rebase OUSD on mainnet",
   chains: [1],
   run: async ({ signer, log }) => {
     const ethers = hre.ethers;
@@ -23,16 +22,16 @@ action({
     const oethDripperWithSigner = oethDripper.connect(signer);
     const ousdVaultWithSigner = ousdVault.connect(signer);
 
-    // OETH collectAndRebase with gas estimation + 10% buffer
-    log.info("Estimating gas for OETH collectAndRebase");
-    const oethGas = await oethDripperWithSigner.estimateGas.collectAndRebase();
+    // OETH collect with gas estimation + 10% buffer
+    log.info("Estimating gas for OETH collect");
+    const oethGas = await oethDripperWithSigner.estimateGas.collect();
     const oethGasLimit = oethGas.mul(Math.floor(GAS_MULTIPLIER * 100)).div(100);
-    const oethTx = await oethDripperWithSigner.collectAndRebase({
+    const oethTx = await oethDripperWithSigner.collect({
       gasLimit: oethGasLimit,
     });
     await logTxDetails(
       oethTx,
-      `collectAndRebase (gasLimit: ${oethGasLimit.toString()})`
+      `collect (gasLimit: ${oethGasLimit.toString()})`
     );
 
     // OUSD rebase with gas estimation + 10% buffer

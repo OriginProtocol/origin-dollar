@@ -83,9 +83,7 @@ export function createActionHandler(
       }
 
       await run({ signer, chainId, networkName, log, args: taskArgs });
-      log.info(
-        `Completed in ${((Date.now() - startTime) / 1000).toFixed(1)}s`
-      );
+      log.info(`Completed in ${((Date.now() - startTime) / 1000).toFixed(1)}s`);
     } catch (err: any) {
       log.error(`${err?.name ?? "Error"}: ${err?.message ?? String(err)}`);
       if (err?.stack) log.error(err.stack);
