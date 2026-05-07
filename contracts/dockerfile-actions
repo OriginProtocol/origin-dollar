@@ -36,8 +36,7 @@ WORKDIR /app
 COPY pnpm-lock.yaml package.json pnpm-workspace.yaml ./
 RUN --mount=type=ssh \
     --mount=type=cache,id=origin-dollar-contracts-pnpm-store,target=/root/.local/share/pnpm/store \
-    corepack enable \
-    && corepack prepare pnpm@9.15.0 --activate \
+    npm install -g pnpm@9.15.0 \
     && pnpm install --frozen-lockfile
 
 # Copy the rest of the contracts workspace.
