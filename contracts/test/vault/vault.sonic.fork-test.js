@@ -88,8 +88,8 @@ describe("ForkTest: Sonic Vault", function () {
     });
 
     it(`Should rebase`, async () => {
-      const { oSonicVault } = fixture;
-      await oSonicVault.rebase();
+      const { oSonicVault, strategist } = fixture;
+      await oSonicVault.connect(strategist).rebase();
     });
   });
 

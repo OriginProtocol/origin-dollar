@@ -79,15 +79,6 @@ abstract contract VaultCore is VaultInitializer {
 
         emit Mint(msg.sender, scaledAmount);
 
-        // Rebase must happen before any transfers occur.
-        if (
-            !rebasePaused &&
-            scaledAmount >= rebaseThreshold &&
-            !_isWithinRebaseThrottle()
-        ) {
-            _rebase();
-        }
-
         // Mint oTokens
         oToken.mint(msg.sender, scaledAmount);
 
@@ -222,7 +213,7 @@ abstract contract VaultCore is VaultInitializer {
         oToken.burn(msg.sender, _amount);
 
         // Prevent withdrawal if the vault is solvent by more than the allowed percentage
-        _postRedeem(_amount);
+        _postRedeem();
 
         emit WithdrawalRequested(msg.sender, requestId, _amount, queued);
     }
@@ -266,7 +257,7 @@ abstract contract VaultCore is VaultInitializer {
         IERC20(asset).safeTransfer(msg.sender, amount);
 
         // Prevent insolvency
-        _postRedeem(amount.scaleBy(18, assetDecimals));
+        _postRedeem();
     }
 
     // slither-disable-end reentrancy-no-eth
@@ -307,7 +298,7 @@ abstract contract VaultCore is VaultInitializer {
         IERC20(asset).safeTransfer(msg.sender, totalAmount);
 
         // Prevent insolvency
-        _postRedeem(totalAmount.scaleBy(18, assetDecimals));
+        _postRedeem();
 
         return (amounts, totalAmount);
     }
@@ -345,21 +336,12 @@ abstract contract VaultCore is VaultInitializer {
         return StableMath.scaleBy(request.amount, assetDecimals, 18);
     }
 
-    function _postRedeem(uint256 _amount) internal {
+    function _postRedeem() internal view {
         // Until we can prove that we won't affect the prices of our asset
         // by withdrawing them, this should be here.
         // It's possible that a strategy was off on its asset total, perhaps
         // a reward token sold for more or for less than anticipated.
-        uint256 totalUnits = 0;
-        if (
-            _amount >= rebaseThreshold &&
-            !rebasePaused &&
-            !_isWithinRebaseThrottle()
-        ) {
-            totalUnits = _rebase();
-        } else {
-            totalUnits = _totalValue();
-        }
+        uint256 totalUnits = _totalValue();
 
         // Check that the OTokens are backed by enough asset
         if (maxSupplyDiff > 0) {
@@ -428,27 +410,16 @@ abstract contract VaultCore is VaultInitializer {
     /**
      * @notice Calculate the total value of asset held by the Vault and all
      *      strategies and update the supply of OTokens.
+     * @dev Restricted to the Operator, Strategist or Governor.
      */
     function rebase() external virtual nonReentrant {
-        bool authorized = msg.sender == operatorAddr ||
-            msg.sender == strategistAddr ||
-            isGovernor();
-        // Authorized callers bypass the throttle. Public callers silently
-        // no-op when called within the throttle window.
-        if (!authorized && _isWithinRebaseThrottle()) {
-            return;
-        }
+        require(
+            msg.sender == operatorAddr ||
+                msg.sender == strategistAddr ||
+                isGovernor(),
+            "Caller not authorized"
+        );
         _rebase();
-    }
-
-    /**
-     * @dev Returns true if the most recent successful rebase is within the
-     *      `minRebaseInterval` window and the throttle should block a new
-     *      non-authorized rebase. Authorized callers (Operator, Strategist,
-     *      Governor) bypass this check.
-     */
-    function _isWithinRebaseThrottle() internal view returns (bool) {
-        return block.timestamp < uint256(lastRebaseTime) + minRebaseInterval;
     }
 
     /**
@@ -458,7 +429,6 @@ abstract contract VaultCore is VaultInitializer {
      * @return totalUnits Total balance of Vault in units
      */
     function _rebase() internal whenNotRebasePaused returns (uint256) {
-        lastRebaseTime = uint64(block.timestamp);
         uint256 supply = oToken.totalSupply();
         uint256 vaultValue = _totalValue();
         // If no supply yet, do not rebase

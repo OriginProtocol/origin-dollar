@@ -233,7 +233,7 @@ describe("ForkTest: wOETH", function () {
       );
     });
     it("should redeem at the correct ratio after rebase", async () => {
-      const { weth, oeth, oethVault, woeth, domen, josh } = fixture;
+      const { weth, oeth, oethVault, woeth, domen, josh, strategist } = fixture;
 
       // Mint some WOETH
       const initialDeposit = oethUnits("50");
@@ -245,7 +245,7 @@ describe("ForkTest: wOETH", function () {
       await hardhatSetBalance(josh.address, "250");
       await weth.connect(josh).deposit({ value: oethUnits("200") });
       await weth.connect(josh).transfer(oethVault.address, oethUnits("200"));
-      await oethVault.rebase();
+      await oethVault.connect(strategist).rebase();
 
       const totalAssetsAfter = await woeth.totalAssets();
       const oethBalanceAfter = await oeth.balanceOf(domen.address);

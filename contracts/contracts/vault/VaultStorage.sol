@@ -33,7 +33,6 @@ abstract contract VaultStorage is Initializable, Governable {
     event RebaseUnpaused();
     event VaultBufferUpdated(uint256 _vaultBuffer);
     event AllocateThresholdUpdated(uint256 _threshold);
-    event RebaseThresholdUpdated(uint256 _threshold);
     event StrategistUpdated(address _address);
     event MaxSupplyDiffChanged(uint256 maxSupplyDiff);
     event YieldDistribution(address _to, uint256 _yield, uint256 _fee);
@@ -44,7 +43,6 @@ abstract contract VaultStorage is Initializable, Governable {
     event RebasePerSecondMaxChanged(uint256 rebaseRatePerSecond);
     event DripDurationChanged(uint256 dripDuration);
     event OperatorUpdated(address newOperator);
-    event MinRebaseIntervalChanged(uint256 newInterval);
     event WithdrawalRequested(
         address indexed _withdrawer,
         uint256 indexed _requestId,
@@ -93,8 +91,9 @@ abstract contract VaultStorage is Initializable, Governable {
     uint256 public vaultBuffer;
     /// @notice OToken mints over this amount automatically allocate funds. 18 decimals.
     uint256 public autoAllocateThreshold;
-    /// @notice OToken mints over this amount automatically rebase. 18 decimals.
-    uint256 public rebaseThreshold;
+    /// @dev Deprecated. Was the auto-rebase trigger threshold for mint/redeem.
+    ///      Storage slot retained for proxy compatibility; no longer read or written.
+    uint256 internal __deprecatedRebaseThreshold;
 
     /// @dev Address of the OToken token. eg OUSD or OETH.
     OUSD public oToken;
@@ -204,24 +203,12 @@ abstract contract VaultStorage is Initializable, Governable {
     /// @notice Default strategy for asset
     address public defaultStrategy;
 
-    /// @notice Address authorized to call `rebase()` directly. Other callers
-    ///         silently no-op. The Governor and Strategist are always allowed
-    ///         in addition to this address.
+    /// @notice Address authorized to call `rebase()` directly. The Governor
+    ///         and Strategist are always allowed in addition to this address.
     address public operatorAddr;
 
-    /// @notice Time in seconds of the last `_rebase` call that passed the
-    ///         throttle and pause checks (yield-producing or not). Used to
-    ///         enforce `rebaseInterval`. Packs with `operatorAddr`.
-    uint64 public lastRebaseTime;
-
-    /// @notice Minimum number of seconds between rebases triggered by
-    ///         non-authorized callers (the public `rebase()` and the
-    ///         internal mint/redeem rebase). The Operator, Strategist, and
-    ///         Governor bypass this throttle. Set to 0 to disable.
-    uint256 public minRebaseInterval;
-
     // For future use
-    uint256[40] private __gap;
+    uint256[41] private __gap;
 
     /// @notice Index of WETH asset in allAssets array
     /// Legacy OETHVaultCore code, relocated here for vault consistency.

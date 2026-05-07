@@ -64,16 +64,6 @@ abstract contract VaultAdmin is VaultCore {
     }
 
     /**
-     * @notice Set a minimum amount of OTokens in a mint or redeem that triggers a
-     * rebase
-     * @param _threshold OToken amount with 18 fixed decimals.
-     */
-    function setRebaseThreshold(uint256 _threshold) external onlyGovernor {
-        rebaseThreshold = _threshold;
-        emit RebaseThresholdUpdated(_threshold);
-    }
-
-    /**
      * @notice Set address of Strategist
      * @param _address Address of Strategist
      */
@@ -90,23 +80,6 @@ abstract contract VaultAdmin is VaultCore {
     function setOperatorAddr(address _operator) external onlyGovernor {
         operatorAddr = _operator;
         emit OperatorUpdated(_operator);
-    }
-
-    /**
-     * @notice Set the minimum time (seconds) that must elapse between rebases
-     *         triggered by non-authorized callers (public `rebase()` and the
-     *         mint/redeem auto-rebase). The Operator, Strategist, and
-     *         Governor bypass this throttle. Capped at 1 day; lengthening past
-     *         that requires a governor-led contract upgrade.
-     * @param _interval Minimum seconds between rebases. 0 disables the throttle.
-     */
-    function setMinRebaseInterval(uint256 _interval)
-        external
-        onlyGovernorOrStrategist
-    {
-        require(_interval <= 1 days, "Interval too long");
-        minRebaseInterval = _interval;
-        emit MinRebaseIntervalChanged(_interval);
     }
 
     /**

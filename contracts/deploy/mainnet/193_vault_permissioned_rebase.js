@@ -1,8 +1,6 @@
 const addresses = require("../../utils/addresses");
 const { deploymentWithGovernanceProposal } = require("../../utils/deploy");
 
-const ONE_DAY = 24 * 60 * 60;
-
 module.exports = deploymentWithGovernanceProposal(
   {
     deployName: "193_vault_permissioned_rebase",
@@ -35,7 +33,7 @@ module.exports = deploymentWithGovernanceProposal(
     );
 
     return {
-      name: "Upgrade OUSD and OETH vaults with permissioned + throttled rebase",
+      name: "Upgrade OUSD and OETH vaults: permissioned rebase, drop auto-rebase triggers",
       actions: [
         {
           contract: cVaultProxy,
@@ -48,11 +46,6 @@ module.exports = deploymentWithGovernanceProposal(
           args: [addresses.multichainStrategist],
         },
         {
-          contract: cOUSDVault,
-          signature: "setMinRebaseInterval(uint256)",
-          args: [ONE_DAY],
-        },
-        {
           contract: cOETHVaultProxy,
           signature: "upgradeTo(address)",
           args: [dOETHVault.address],
@@ -61,11 +54,6 @@ module.exports = deploymentWithGovernanceProposal(
           contract: cOETHVault,
           signature: "setOperatorAddr(address)",
           args: [addresses.multichainStrategist],
-        },
-        {
-          contract: cOETHVault,
-          signature: "setMinRebaseInterval(uint256)",
-          args: [ONE_DAY],
         },
       ],
     };

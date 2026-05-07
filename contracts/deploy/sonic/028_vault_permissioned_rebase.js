@@ -2,8 +2,6 @@ const { deployOnSonic } = require("../../utils/deploy-l2");
 const { deployWithConfirmation } = require("../../utils/deploy");
 const addresses = require("../../utils/addresses");
 
-const ONE_DAY = 24 * 60 * 60;
-
 module.exports = deployOnSonic(
   {
     deployName: "028_vault_permissioned_rebase",
@@ -24,7 +22,7 @@ module.exports = deployOnSonic(
     );
 
     return {
-      name: "Upgrade OSonicVault for permissioned + throttled rebase",
+      name: "Upgrade OSonicVault: permissioned rebase, drop auto-rebase triggers",
       actions: [
         {
           contract: cOSonicVaultProxy,
@@ -35,11 +33,6 @@ module.exports = deployOnSonic(
           contract: cOSonicVault,
           signature: "setOperatorAddr(address)",
           args: [addresses.sonic.guardian],
-        },
-        {
-          contract: cOSonicVault,
-          signature: "setMinRebaseInterval(uint256)",
-          args: [ONE_DAY],
         },
       ],
     };
