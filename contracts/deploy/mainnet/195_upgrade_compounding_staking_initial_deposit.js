@@ -4,7 +4,7 @@ const { deploymentWithGovernanceProposal } = require("../../utils/deploy");
 
 module.exports = deploymentWithGovernanceProposal(
   {
-    deployName: "194_upgrade_compounding_staking_initial_deposit",
+    deployName: "195_upgrade_compounding_staking_initial_deposit",
     forceDeploy: false,
     reduceQueueTime: true,
     deployerIsProposer: false,
