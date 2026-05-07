@@ -8,6 +8,8 @@ addresses.createX = "0xba5Ed099633D3B313e4D5F7bdc1305d3c28ba5Ed";
 addresses.multichainStrategist = "0x4FF1b9D9ba8558F5EAfCec096318eA0d8b541971";
 addresses.multichainBuybackOperator =
   "0xBB077E716A5f1F1B63ed5244eBFf5214E50fec8c";
+addresses.permissionedRebaseRelayer =
+  "0x0aBCDa6Fa7d500cf69B0eA5de9a607Cd9941221C";
 addresses.votemarket = "0x8c2c5A295450DDFf4CB360cA73FCCC12243D14D9";
 
 // CCTP contracts (uses same addresses on all chains)
@@ -466,6 +468,20 @@ addresses.base.OETHb_WETH.pool = "0x302A94E3C28c290EAF2a4605FC52e11Eb915f378";
 addresses.base.OETHb_WETH.gauge = "0x9da8420dbEEBDFc4902B356017610259ef7eeDD8";
 addresses.base.childLiquidityGaugeFactory =
   "0xe35A879E5EfB4F1Bb7F70dCF3250f2e19f096bd8";
+
+// Base Hydrex
+addresses.base.HYDX = "0x00000e7efa313F4E11Bfff432471eD9423AC6B30";
+// Hydrex gauges emit oHYDX (a call option on HYDX, redeemable for HYDX with
+// USDC), not HYDX directly. The strategy receives oHYDX from gauge.getReward()
+// and forwards it to the multichain strategist multisig, which exercises /
+// sells it off-chain.
+addresses.base.oHYDX = "0xa1136031150e50b015b41f1ca6b2e99e49d8cb78";
+addresses.base.hydrexVoter = "0xc69E3eF39E3fFBcE2A1c570f8d3ADF76909ef17b";
+addresses.base.HydrexOETHb_WETH = {};
+addresses.base.HydrexOETHb_WETH.pool =
+  "0xEB9ebc2dEF5aa715C0CED10749cbdC15Ac27f632";
+addresses.base.HydrexOETHb_WETH.gauge =
+  "0x762aEFD13Ec33eb916f124E26336a148177eB093";
 
 addresses.base.CCIPRouter = "0x881e3A65B4d4a04dD529061dd0071cf975F58bCD";
 

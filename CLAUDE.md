@@ -107,6 +107,7 @@ Located in `contracts/strategies/`. Each strategy:
 - Is registered with a vault and allocated collateral
 
 Key strategies: Aave, Compound, Convex/Curve, Balancer, Morpho, Native Staking (SSV validators).
+- For SSV Cluster migrations to ETH billing, use the SSV ETH payment calculator: https://ssv-eth-forecasting.vercel.app/
 
 ### OTokens
 `contracts/token/OUSD.sol` and `contracts/token/OETH.sol` - rebasing ERC-20 tokens. OUSD rebases to all holders; OETH uses a similar mechanism for ETH-denominated yield.

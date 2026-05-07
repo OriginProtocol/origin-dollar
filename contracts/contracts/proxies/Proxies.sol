@@ -249,3 +249,10 @@ contract OUSDMorphoV2StrategyProxy is InitializeGovernedUpgradeabilityProxy {
 contract OETHSupernovaAMOProxy is InitializeGovernedUpgradeabilityProxy {
 
 }
+
+/**
+ * @notice OETHbHydrexAMOProxy delegates calls to an OETHbHydrexAMOStrategy implementation
+ */
+contract OETHbHydrexAMOProxy is InitializeGovernedUpgradeabilityProxy {
+
+}

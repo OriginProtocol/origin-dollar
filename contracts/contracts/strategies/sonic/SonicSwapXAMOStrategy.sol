@@ -7,6 +7,7 @@ pragma solidity ^0.8.0;
  * @author Origin Protocol Inc
  */
 import { StableSwapAMMStrategy } from "../algebra/StableSwapAMMStrategy.sol";
+import { IGauge } from "../../interfaces/algebra/IAlgebraGauge.sol";
 
 contract SonicSwapXAMOStrategy is StableSwapAMMStrategy {
     /**
@@ -15,6 +16,6 @@ contract SonicSwapXAMOStrategy is StableSwapAMMStrategy {
      * @param _gauge Address of the SwapX gauge for the pool.
      */
     constructor(BaseStrategyConfig memory _baseConfig, address _gauge)
-        StableSwapAMMStrategy(_baseConfig, _gauge)
+        StableSwapAMMStrategy(_baseConfig, _gauge, IGauge(_gauge).TOKEN())
     {}
 }
