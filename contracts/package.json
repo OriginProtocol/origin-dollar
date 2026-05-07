@@ -150,7 +150,7 @@
     "@lodestar/state-transition": "^1.41.0",
     "@lodestar/types": "^1.41.0",
     "@lodestar/utils": "^1.41.0",
-    "@talos/client": "github:oplabs/talos#ae01f7e4c0d343db87f701f2fde1527ec94bea37&path:packages/client",
+    "@talos/client": "github:oplabs/talos#c87b238ba8b52c45b2f0635a85c27361087eaf2f&path:packages/client",
     "@types/pg": "^8.20.0",
     "origin-morpho-utils": "^0.1.1",
     "pg": "^8.20.0"
