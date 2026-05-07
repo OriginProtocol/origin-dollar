@@ -36,4 +36,4 @@ INSERT INTO schedules (product, name, command, cron_expr, timezone, enabled, not
 ('origin-dollar', 'otoken_ousd_oeth_rebase',                  'cd /app && pnpm hardhat otokenOusdOethRebase --network mainnet',         '45 11,23 * * *',        'UTC', false, NULL),
 ('origin-dollar', 'ogn_claimAndForwardRewards',               'cd /app && pnpm hardhat ognClaimAndForwardRewards --network mainnet',    '50 0 * * 2',            'UTC', false, NULL),
 ('origin-dollar', 'otoken_oethb_harvest',                     'cd /app && pnpm hardhat otokenOethbHarvest --network base',              '55 11 * * *',           'UTC', false, NULL)
-ON CONFLICT DO NOTHING;
+ON CONFLICT (product, name) DO NOTHING;
