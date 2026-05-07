@@ -856,49 +856,6 @@ const deploySonicSwapXAMOStrategyImplementationAndInitialize = async () => {
   return cSonicSwapXAMOStrategy;
 };
 
-const deployOETHSupernovaAMOStrategyImplementation = async () => {
-  const { deployerAddr } = await getNamedAccounts();
-  const sDeployer = await ethers.provider.getSigner(deployerAddr);
-
-  const cOETHSupernovaAMOStrategyProxy = await ethers.getContract(
-    "OETHSupernovaAMOProxy"
-  );
-  const cOETHVaultProxy = await ethers.getContract("OETHVaultProxy");
-
-  // Deploy OETH Supernova AMO Strategy implementation that will serve
-  // OETH Supernova AMO
-  const dSupernovaAMOStrategy = await deployWithConfirmation(
-    "OETHSupernovaAMOStrategy",
-    [
-      [addresses.mainnet.SupernovaOETHWETH.pool, cOETHVaultProxy.address],
-      addresses.mainnet.SupernovaOETHWETH.gauge,
-    ]
-  );
-
-  const cOETHSupernovaAMOStrategy = await ethers.getContractAt(
-    "OETHSupernovaAMOStrategy",
-    cOETHSupernovaAMOStrategyProxy.address
-  );
-
-  // Initialize OETH Supernova AMO Strategy implementation
-  const depositPriceRange = parseUnits("0.01", 18); // 1% or 100 basis points
-  const initData = cOETHSupernovaAMOStrategy.interface.encodeFunctionData(
-    "initialize(address[],uint256)",
-    [[addresses.mainnet.supernovaToken], depositPriceRange]
-  );
-  await withConfirmation(
-    // prettier-ignore
-    cOETHSupernovaAMOStrategyProxy
-      .connect(sDeployer)["initialize(address,address,bytes)"](
-        dSupernovaAMOStrategy.address,
-        addresses.mainnet.Timelock,
-        initData
-      )
-  );
-
-  return cOETHSupernovaAMOStrategy;
-};
-
 const deployOETHbHydrexAMOStrategyImplementation = async (gaugeAddress) => {
   const { deployerAddr } = await getNamedAccounts();
   const sDeployer = await ethers.provider.getSigner(deployerAddr);
@@ -1318,7 +1275,6 @@ module.exports = {
   getPlumeContracts,
   deploySonicSwapXAMOStrategyImplementation,
   deploySonicSwapXAMOStrategyImplementationAndInitialize,
-  deployOETHSupernovaAMOStrategyImplementation,
   deployOETHbHydrexAMOStrategyImplementation,
   deployProxyWithCreateX,
   deployCrossChainMasterStrategyImpl,
