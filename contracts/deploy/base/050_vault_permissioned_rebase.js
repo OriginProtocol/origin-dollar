@@ -4,7 +4,7 @@ const addresses = require("../../utils/addresses");
 
 module.exports = deployOnBase(
   {
-    deployName: "049_vault_permissioned_rebase",
+    deployName: "050_vault_permissioned_rebase",
   },
   async ({ ethers }) => {
     // 1. Deploy new OETHBaseVault implementation
@@ -32,7 +32,7 @@ module.exports = deployOnBase(
         {
           contract: cOETHbVault,
           signature: "setOperatorAddr(address)",
-          args: [addresses.multichainStrategist],
+          args: [addresses.talosRelayer],
         },
       ],
     };

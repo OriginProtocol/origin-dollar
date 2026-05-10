@@ -14,9 +14,9 @@ module.exports = deployOnBase(
 
     await deployWithConfirmation("PermissionedRebaseModule", [
       safeAddress,
-      addresses.permissionedRebaseRelayer,
+      addresses.talosRelayer,
       [cOETHBaseVaultProxy.address],
-    ]);
+    ], undefined, true);
     const cPermissionedRebaseModule = await ethers.getContract(
       "PermissionedRebaseModule"
     );

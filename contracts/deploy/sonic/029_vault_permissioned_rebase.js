@@ -4,7 +4,7 @@ const addresses = require("../../utils/addresses");
 
 module.exports = deployOnSonic(
   {
-    deployName: "028_vault_permissioned_rebase",
+    deployName: "029_vault_permissioned_rebase",
   },
   async ({ ethers }) => {
     // 1. Deploy new OSVault implementation
@@ -32,7 +32,7 @@ module.exports = deployOnSonic(
         {
           contract: cOSonicVault,
           signature: "setOperatorAddr(address)",
-          args: [addresses.sonic.guardian],
+          args: [addresses.talosRelayer],
         },
       ],
     };
