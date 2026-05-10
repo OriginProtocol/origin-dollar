@@ -53,7 +53,7 @@ describe("ForkTest: OETH", function () {
       ).to.not.be.revertedWith("Caller is not the Strategist or Governor");
     });
     it("Should earn yield even if EIP7702 user", async () => {
-      const { oeth, oethVault, weth, usdc, josh } = fixture;
+      const { oeth, oethVault, weth, usdc, josh, strategist } = fixture;
       const eip770UserAddress = josh.address;
       await hre.network.provider.send("hardhat_setCode", [
         eip770UserAddress,
@@ -81,7 +81,7 @@ describe("ForkTest: OETH", function () {
       // Simulate time jump
       await advanceTime(24 * 60 * 60); // 1 day
       // Rebase the OETH vault
-      await oethVault.rebase();
+      await oethVault.connect(strategist).rebase();
       const eip7702UserBalanceAfter = await oeth.balanceOf(eip770UserAddress);
       const scBalanceAfter = await oeth.balanceOf(usdc.address);
       const joshBalanceAfter = await oeth.balanceOf(josh.address);

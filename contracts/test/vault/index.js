@@ -148,20 +148,6 @@ describe("Vault", function () {
     ).to.be.revertedWith("Caller is not the Governor");
   });
 
-  it("Should allow governor to change rebase threshold", async () => {
-    const { vault, governor } = fixture;
-
-    await vault.connect(governor).setRebaseThreshold(ousdUnits("400"));
-  });
-
-  it("Should not allow non-governor to change rebase threshold", async () => {
-    const { vault } = fixture;
-
-    expect(vault.setRebaseThreshold(ousdUnits("400"))).to.be.revertedWith(
-      "Caller is not the Governor"
-    );
-  });
-
   it("Should allow governor to change Strategist address", async () => {
     const { vault, governor, josh } = fixture;
 

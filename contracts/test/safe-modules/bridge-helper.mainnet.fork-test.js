@@ -70,11 +70,12 @@ describe("ForkTest: Bridge Helper Safe Module (Ethereum)", function () {
       weth,
       oeth,
       safeSigner,
+      strategist,
 
       bridgeHelperModule,
     } = fixture;
 
-    await oethVault.connect(josh).rebase();
+    await oethVault.connect(strategist).rebase();
 
     await weth.connect(josh).transfer(safeSigner.address, oethUnits("1.1"));
 

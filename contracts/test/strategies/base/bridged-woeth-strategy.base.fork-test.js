@@ -17,7 +17,7 @@ describe("Base Fork Test: Bridged WOETH Strategy", function () {
   it("Should allow governor/strategist to mint with bridged WOETH", async () => {
     const { woeth, oethb, oethbVault, weth, woethStrategy, governor } = fixture;
 
-    await oethbVault.rebase();
+    await oethbVault.connect(governor).rebase();
     await woethStrategy.updateWOETHOraclePrice();
 
     const supplyBefore = await oethb.totalSupply();
@@ -84,7 +84,7 @@ describe("Base Fork Test: Bridged WOETH Strategy", function () {
   it("Should allow governor/strategist to get back bridged WOETH", async () => {
     const { woeth, oethb, oethbVault, weth, woethStrategy, governor } = fixture;
 
-    await oethbVault.rebase();
+    await oethbVault.connect(governor).rebase();
     await woethStrategy.updateWOETHOraclePrice();
 
     const depositWOETHAmount = oethUnits("1");
@@ -166,7 +166,7 @@ describe("Base Fork Test: Bridged WOETH Strategy", function () {
   it("Should handle yields from appreciation of WOETH value", async () => {
     const { woeth, oethb, oethbVault, weth, woethStrategy, governor } = fixture;
 
-    await oethbVault.rebase();
+    await oethbVault.connect(governor).rebase();
 
     const depositAmount = oethUnits("1");
     const oracleFeed = await ethers.getContractAt(
@@ -228,7 +228,7 @@ describe("Base Fork Test: Bridged WOETH Strategy", function () {
     );
 
     // Should increase supply on rebase
-    await oethbVault.rebase();
+    await oethbVault.connect(governor).rebase();
 
     // Should've increased supply
     expect(await oethb.totalSupply()).to.be.approxEqualTolerance(

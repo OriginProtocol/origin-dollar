@@ -185,9 +185,9 @@ describe("ForkTest: OETH Vault", function () {
 
   describe("operations", () => {
     it("should rebase", async function () {
-      const { oethVault } = fixture;
+      const { oethVault, strategist } = fixture;
 
-      const tx = await oethVault.rebase();
+      const tx = await oethVault.connect(strategist).rebase();
 
       await logTxDetails(tx, "rebase");
     });
