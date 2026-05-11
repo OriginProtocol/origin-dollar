@@ -822,11 +822,11 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
       ).to.equal(2, "Validator state not 2 (STAKED)");
     };
 
-    it("Should stake to a validator: 32.25 ETH", async () => {
+    it("Should stake the initial deposit amount to a validator", async () => {
       await stakeValidators(0, INITIAL_DEPOSIT_AMOUNT);
     });
 
-    it("Should stake 32.25 ETH then 2047 ETH to a validator", async () => {
+    it("Should stake the initial deposit amount then 2047 ETH to a validator", async () => {
       const {
         compoundingStakingSSVStrategy,
         validatorRegistrator,
@@ -858,7 +858,7 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
         INITIAL_DEPOSIT_AMOUNT
       );
 
-      // Stake 32.25 ETH to the new validator
+      // Stake the initial deposit amount to the new validator
       let stakeTx = await compoundingStakingSSVStrategy
         .connect(validatorRegistrator)
         .stakeEth(
@@ -963,7 +963,7 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
       ).to.equal(stratBalanceBefore);
     });
 
-    it("Should revert when first stake amount is not exactly 32.25 ETH", async () => {
+    it("Should revert when first stake amount is not exactly the initial deposit amount", async () => {
       const { compoundingStakingSSVStrategy, validatorRegistrator } = fixture;
 
       const testValidator = testValidators[0];
@@ -2925,7 +2925,7 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
       );
       expect(depositData.status).to.equal(2); // VERIFIED
 
-      // The last verified ETH balance is reduced by the initial 32.25 ETH deposit
+      // The last verified ETH balance is reduced by the initial deposit amount
       expect(
         await compoundingStakingSSVStrategy.lastVerifiedEthBalance()
       ).to.equal(
@@ -3115,7 +3115,7 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
         .connect(validatorRegistrator)
         .snapBalances();
 
-      // Set validator balance to 32.25 Gwei
+      // Set validator balance to 32.25 ETH in gwei
       await mockBeaconProof.setValidatorBalance(
         testValidator.index,
         parseUnits("32.25", 9)
