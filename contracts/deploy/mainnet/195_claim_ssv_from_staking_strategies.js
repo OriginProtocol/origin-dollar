@@ -18,7 +18,7 @@ const strategyConfigs = [
 
 module.exports = deploymentWithGovernanceProposal(
   {
-    deployName: "194_claim_ssv_from_staking_strategies",
+    deployName: "195_claim_ssv_from_staking_strategies",
     forceDeploy: false,
     reduceQueueTime: true,
     deployerIsProposer: false,
