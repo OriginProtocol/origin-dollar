@@ -112,9 +112,9 @@ describe("OETHb Vault", function () {
     });
 
     it("Should allow a whitelisted strategy to mint and burn", async () => {
-      const { oethbVault, oethb } = fixture;
+      const { oethbVault, oethb, governor } = fixture;
 
-      await oethbVault.rebase();
+      await oethbVault.connect(governor).rebase();
 
       const amount = oethUnits("1");
 

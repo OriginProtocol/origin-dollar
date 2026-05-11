@@ -178,13 +178,10 @@ module.exports = deployOnPlume(
           signature: "setWithdrawalClaimDelay(uint256)",
           args: [24 * 60 * 60],
         },
-        {
-          // Set rebase threshold
-          contract: cOETHpVault,
-          signature: "setRebaseThreshold(uint256)",
-          // TODO: Change this after Vault is fixed
-          args: [parseUnits("10000", 18)], // 10000 OETHp
-        },
+        // setRebaseThreshold removed: rebaseThreshold is deprecated and the
+        // setter no longer exists on the vault. This script has already run
+        // on Plume mainnet so the action is preserved here as a comment for
+        // historical context only.
         {
           // Set strategist
           contract: cOETHpVault,

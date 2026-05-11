@@ -1030,7 +1030,7 @@ async function morphoOUSDv2Fixture(
     // mint some OUSD using USDC if configured
     if (config?.usdcMintAmount > 0) {
       const usdcMintAmount = parseUnits(config.usdcMintAmount.toString(), 6);
-      await vault.connect(josh).rebase();
+      await vault.connect(strategist).rebase();
       await vault.connect(josh).allocate();
 
       // Approve the Vault to transfer USDC

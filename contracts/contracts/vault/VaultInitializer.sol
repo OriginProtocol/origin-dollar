@@ -24,8 +24,6 @@ abstract contract VaultInitializer is VaultStorage {
         vaultBuffer = 0;
         // Initial allocate threshold of 25,000 OUSD
         autoAllocateThreshold = 25000e18;
-        // Threshold for rebasing
-        rebaseThreshold = 1000e18;
         // Initialize all strategies
         allStrategies = new address[](0);
         // Start with drip duration: 7 days
