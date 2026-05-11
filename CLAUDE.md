@@ -130,7 +130,6 @@ Bundle with: `pnpm rollup -c ./scripts/defender-actions/rollup.config.cjs`
 ### Cross-Chain
 - CCTP (Circle) for USDC bridging
 - Network-specific bridge contracts in `contracts/bridges/`
-- LayerZero OApp was planned to be used for Plume but is no longer going to be used.
 
 ### Pool Boosters
 `contracts/poolBooster/` - Merkl distribution contracts for incentivizing liquidity pools. `PoolBoostCentralRegistry` tracks all boosters.

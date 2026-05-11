@@ -125,7 +125,6 @@ const {
 const { harvestAndSwap } = require("./harvest");
 const { deployForceEtherSender, forceSend } = require("./simulation");
 const { sleep } = require("../utils/time");
-const { lzBridgeToken, lzSetConfig } = require("./layerzero");
 const { fundWithdrawals } = require("./autoWithdrawal");
 const {
   requestValidatorWithdraw,
@@ -2025,25 +2024,6 @@ subtask("sonicStaking", "Snap of the Sonic Staking Strategy")
 task("sonicStaking").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
-
-task("lzBridgeToken")
-  .addParam("amount", "Amount to bridge")
-  .addParam("destnetwork", "Destination network")
-  .addOptionalParam("recipient", "Recipient address")
-  .addOptionalParam("gaslimit", "Gas limit")
-  .addOptionalParam("dryrun", "Print tx data without sending")
-  .setAction(async (taskArgs) => {
-    await lzBridgeToken(taskArgs, hre);
-  });
-
-task("lzSetConfig")
-  .addParam("destnetwork", "Destination network")
-  .addParam("dvns", "Comma separated list of DVN addresses")
-  .addParam("confirmations", "Number of confirmations")
-  .addParam("dvncount", "Number of required DVNs")
-  .setAction(async (taskArgs) => {
-    await lzSetConfig(taskArgs, hre);
-  });
 
 // Beacon Chain Operations
 subtask("depositValidator", "Deposits ETH to a validator on the Beacon chain")
