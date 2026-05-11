@@ -96,8 +96,8 @@ describe("ForkTest: Vault", function () {
     });
 
     it(`Should rebase`, async () => {
-      const { vault } = fixture;
-      await vault.rebase();
+      const { vault, strategist } = fixture;
+      await vault.connect(strategist).rebase();
     });
   });
 

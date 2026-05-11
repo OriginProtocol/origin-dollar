@@ -33,7 +33,6 @@ abstract contract VaultStorage is Initializable, Governable {
     event RebaseUnpaused();
     event VaultBufferUpdated(uint256 _vaultBuffer);
     event AllocateThresholdUpdated(uint256 _threshold);
-    event RebaseThresholdUpdated(uint256 _threshold);
     event StrategistUpdated(address _address);
     event MaxSupplyDiffChanged(uint256 maxSupplyDiff);
     event YieldDistribution(address _to, uint256 _yield, uint256 _fee);
@@ -43,6 +42,7 @@ abstract contract VaultStorage is Initializable, Governable {
     event StrategyRemovedFromMintWhitelist(address indexed strategy);
     event RebasePerSecondMaxChanged(uint256 rebaseRatePerSecond);
     event DripDurationChanged(uint256 dripDuration);
+    event OperatorUpdated(address newOperator);
     event WithdrawalRequested(
         address indexed _withdrawer,
         uint256 indexed _requestId,
@@ -91,8 +91,9 @@ abstract contract VaultStorage is Initializable, Governable {
     uint256 public vaultBuffer;
     /// @notice OToken mints over this amount automatically allocate funds. 18 decimals.
     uint256 public autoAllocateThreshold;
-    /// @notice OToken mints over this amount automatically rebase. 18 decimals.
-    uint256 public rebaseThreshold;
+    /// @dev Deprecated. Was the auto-rebase trigger threshold for mint/redeem.
+    ///      Storage slot retained for proxy compatibility; no longer read or written.
+    uint256 internal __deprecatedRebaseThreshold;
 
     /// @dev Address of the OToken token. eg OUSD or OETH.
     OUSD public oToken;
@@ -202,8 +203,12 @@ abstract contract VaultStorage is Initializable, Governable {
     /// @notice Default strategy for asset
     address public defaultStrategy;
 
+    /// @notice Address authorized to call `rebase()` directly. The Governor
+    ///         and Strategist are always allowed in addition to this address.
+    address public operatorAddr;
+
     // For future use
-    uint256[42] private __gap;
+    uint256[41] private __gap;
 
     /// @notice Index of WETH asset in allAssets array
     /// Legacy OETHVaultCore code, relocated here for vault consistency.

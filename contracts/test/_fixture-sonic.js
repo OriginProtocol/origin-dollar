@@ -267,7 +267,7 @@ async function swapXAMOFixture(
   // mint some OS using wS if configured
   if (config?.wsMintAmount > 0) {
     const wsAmount = parseUnits(config.wsMintAmount.toString());
-    await oSonicVault.connect(nick).rebase();
+    await oSonicVault.connect(strategist).rebase();
     await oSonicVault.connect(nick).allocate();
 
     // Calculate how much to mint based on the wS in the vault,

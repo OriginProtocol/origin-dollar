@@ -1,5 +1,4 @@
 const { deployOnPlume } = require("../../utils/deploy-l2");
-const { parseUnits } = require("ethers/lib/utils.js");
 
 module.exports = deployOnPlume(
   {
@@ -28,12 +27,8 @@ module.exports = deployOnPlume(
           signature: "setTrusteeFeeBps(uint256)",
           args: [2000], // 20%
         },
-        {
-          // Set rebase threshold
-          contract: cOETHpVault,
-          signature: "setRebaseThreshold(uint256)",
-          args: [parseUnits("1", 18)], // 1 OETHp
-        },
+        // setRebaseThreshold removed: rebaseThreshold deprecated and the
+        // setter no longer exists on the vault. OETP is winding down.
       ],
     };
   }

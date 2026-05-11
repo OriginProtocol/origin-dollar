@@ -445,7 +445,7 @@ async function oethbHydrexAMOFixture(
     // exactly 1:1 backing before the test mint. The "with an insolvent vault"
     // suite assumes a fresh-peg starting state; without rebase first, the
     // pre-existing yield buffer absorbs the 21bp loss the suite simulates.
-    await oethbVault.connect(nick).rebase();
+    await oethbVault.connect(strategist).rebase();
 
     let wethBalance = await weth.balanceOf(oethbVault.address);
     const queue = await oethbVault.withdrawalQueueMetadata();
