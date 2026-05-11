@@ -8,8 +8,7 @@ addresses.createX = "0xba5Ed099633D3B313e4D5F7bdc1305d3c28ba5Ed";
 addresses.multichainStrategist = "0x4FF1b9D9ba8558F5EAfCec096318eA0d8b541971";
 addresses.multichainBuybackOperator =
   "0xBB077E716A5f1F1B63ed5244eBFf5214E50fec8c";
-addresses.talosRelayer =
-  "0x0aBCDa6Fa7d500cf69B0eA5de9a607Cd9941221C";
+addresses.talosRelayer = "0x0aBCDa6Fa7d500cf69B0eA5de9a607Cd9941221C";
 addresses.votemarket = "0x8c2c5A295450DDFf4CB360cA73FCCC12243D14D9";
 
 // CCTP contracts (uses same addresses on all chains)

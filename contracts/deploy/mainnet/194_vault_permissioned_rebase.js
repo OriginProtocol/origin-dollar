@@ -7,18 +7,25 @@ module.exports = deploymentWithGovernanceProposal(
     forceDeploy: false,
     reduceQueueTime: true,
     deployerIsProposer: false,
-    proposalId: "",
+    proposalId:
+      "9948092462276445509780797495205471799644905864792185620552351889756709358003",
   },
   async ({ deployWithConfirmation }) => {
     // 1. Deploy new OUSD Vault implementation
-    const dOUSDVault = await deployWithConfirmation("OUSDVault", [
-      addresses.mainnet.USDC,
-    ], undefined, true);
+    const dOUSDVault = await deployWithConfirmation(
+      "OUSDVault",
+      [addresses.mainnet.USDC],
+      undefined,
+      true
+    );
 
     // 2. Deploy new OETH Vault implementation
-    const dOETHVault = await deployWithConfirmation("OETHVault", [
-      addresses.mainnet.WETH,
-    ], undefined, true);
+    const dOETHVault = await deployWithConfirmation(
+      "OETHVault",
+      [addresses.mainnet.WETH],
+      undefined,
+      true
+    );
 
     const cVaultProxy = await ethers.getContract("VaultProxy");
     const cOUSDVault = await ethers.getContractAt(
