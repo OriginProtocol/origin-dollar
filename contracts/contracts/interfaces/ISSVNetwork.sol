@@ -159,9 +159,8 @@ interface ISSVNetwork {
     function deposit(
         address clusterOwner,
         uint64[] memory operatorIds,
-        uint256 amount,
         Cluster memory cluster
-    ) external;
+    ) external payable;
 
     function executeOperatorFee(uint64 operatorId) external;
 
@@ -201,11 +200,9 @@ interface ISSVNetwork {
 
     function proxiableUUID() external view returns (bytes32);
 
-    function reactivate(
-        uint64[] memory operatorIds,
-        uint256 amount,
-        Cluster memory cluster
-    ) external;
+    function reactivate(uint64[] memory operatorIds, Cluster memory cluster)
+        external
+        payable;
 
     function reduceOperatorFee(uint64 operatorId, uint256 fee) external;
 

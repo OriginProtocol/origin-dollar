@@ -32,9 +32,8 @@ contract MockSSVNetwork {
     function deposit(
         address clusterOwner,
         uint64[] calldata operatorIds,
-        uint256 amount,
         Cluster memory cluster
-    ) external {}
+    ) external payable {}
 
     function setFeeRecipientAddress(address recipient) external {}
 }
