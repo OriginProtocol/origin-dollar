@@ -1031,7 +1031,7 @@ async function morphoOUSDv2Fixture(
     // mint some OUSD using USDC if configured
     if (config?.usdcMintAmount > 0) {
       const usdcMintAmount = parseUnits(config.usdcMintAmount.toString(), 6);
-      await vault.connect(josh).rebase();
+      await vault.connect(strategist).rebase();
       await vault.connect(josh).allocate();
 
       // Approve the Vault to transfer USDC
@@ -1373,7 +1373,7 @@ async function supernovaOETHAMOFixture(
   // Mint some OETH using WETH if configured.
   if (cfg.assetMintAmount > 0) {
     const wethAmount = parseUnits(cfg.assetMintAmount.toString());
-    await oethVault.connect(josh).rebase();
+    await oethVault.connect(oethVaultGovernor).rebase();
     await oethVault.connect(josh).allocate();
 
     let wethBalance = await weth.balanceOf(oethVault.address);
