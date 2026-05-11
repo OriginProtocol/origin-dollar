@@ -223,7 +223,7 @@ describe("Fork Test: Curve AMO OUSD strategy", function () {
     it("Should protect against attacker front-running a deposit by adding a lot of usdc to the pool", async () => {
       await balancePool();
       await mintAndDepositToStrategy();
-      await ousdVault.rebase();
+      await ousdVault.connect(impersonatedStrategist).rebase();
 
       const user = defaultDepositor;
       const attackerusdcBalanceBefore = await usdc.balanceOf(user.address);
@@ -308,7 +308,7 @@ describe("Fork Test: Curve AMO OUSD strategy", function () {
       );
 
       // Rebase to lock in the profits
-      await ousdVault.rebase();
+      await ousdVault.connect(impersonatedStrategist).rebase();
 
       const dataAfterRebase = await snapData();
       logSnapData(dataAfterRebase, "\nAfter rebase to lock in profits");
@@ -405,7 +405,7 @@ describe("Fork Test: Curve AMO OUSD strategy", function () {
       );
 
       // Rebase to lock in the profits
-      await ousdVault.rebase();
+      await ousdVault.connect(impersonatedStrategist).rebase();
       const dataAfterRebase = await snapData();
       logSnapData(dataAfterRebase, "\nAfter rebase to lock in profits");
       await logProfit(dataBeforeAttack);

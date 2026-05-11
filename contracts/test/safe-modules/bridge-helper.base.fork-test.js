@@ -69,7 +69,7 @@ describe("ForkTest: Bridge Helper Safe Module (Base)", function () {
 
     // Update oracle price
     await woethStrategy.updateWOETHOraclePrice();
-    await oethbVault.rebase();
+    await oethbVault.connect(governor).rebase();
 
     const woethAmount = oethUnits("1");
     const expectedWETH = await woethStrategy.getBridgedWOETHValue(woethAmount);
@@ -132,6 +132,7 @@ describe("ForkTest: Bridge Helper Safe Module (Base)", function () {
       weth,
       oethb,
       safeSigner,
+      governor,
       woethStrategy,
       bridgeHelperModule,
     } = fixture;
@@ -142,7 +143,7 @@ describe("ForkTest: Bridge Helper Safe Module (Base)", function () {
 
     // Update oracle price
     await woethStrategy.updateWOETHOraclePrice();
-    await oethbVault.rebase();
+    await oethbVault.connect(governor).rebase();
 
     const wethPerUnitWOETH = await woethStrategy.getBridgedWOETHValue(
       oethUnits("1")
