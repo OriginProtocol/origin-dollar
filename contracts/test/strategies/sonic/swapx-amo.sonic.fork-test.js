@@ -29,13 +29,17 @@ describe("Sonic Fork Test: SwapX AMO Strategy", function () {
         lotMoreAsset: { addAsset: 2000000 },
         littleMoreAsset: { addAsset: 20000 },
       },
+      // Sized for the current SwapX wS/OS pool reserves (~760k each).
+      // The previous millions-scale values were written when the pool
+      // was much deeper; at today's depth a 10M wS swap can't yield
+      // 1.8M OS out, which breaks the setup's `oTokenToPool > 0` check.
       smallPoolShare: {
-        bootstrapAssetSwapIn: "10000000",
-        bigLiquidityAsset: "1000000",
-        oTokenBuffer: "1800000",
-        stressSwapOToken: "1005000",
-        stressSwapAsset: "2000000",
-        stressSwapAssetAlt: "1006000",
+        bootstrapAssetSwapIn: "500000",
+        bigLiquidityAsset: "100000",
+        oTokenBuffer: "100000",
+        stressSwapOToken: "50000",
+        stressSwapAsset: "100000",
+        stressSwapAssetAlt: "50000",
       },
       rebalanceProbe: {
         frontRun: {

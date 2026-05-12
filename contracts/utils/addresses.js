@@ -8,8 +8,7 @@ addresses.createX = "0xba5Ed099633D3B313e4D5F7bdc1305d3c28ba5Ed";
 addresses.multichainStrategist = "0x4FF1b9D9ba8558F5EAfCec096318eA0d8b541971";
 addresses.multichainBuybackOperator =
   "0xBB077E716A5f1F1B63ed5244eBFf5214E50fec8c";
-addresses.permissionedRebaseRelayer =
-  "0x0aBCDa6Fa7d500cf69B0eA5de9a607Cd9941221C";
+addresses.talosRelayer = "0x0aBCDa6Fa7d500cf69B0eA5de9a607Cd9941221C";
 addresses.votemarket = "0x8c2c5A295450DDFf4CB360cA73FCCC12243D14D9";
 
 // CCTP contracts (uses same addresses on all chains)
@@ -351,14 +350,6 @@ addresses.mainnet.ClaimStrategyRewardsSafeModule =
 addresses.mainnet.OUSDRebalancerModule =
   "0x0000000000000000000000000000000000000000"; // TODO: populate after deployment
 
-// LayerZero
-addresses.mainnet.LayerZeroEndpointV2 =
-  "0x1a44076050125825900e736c501f859c50fE728c";
-addresses.mainnet.WOETHOmnichainAdapter =
-  "0x7d1bea5807e6af125826d56ff477745bb89972b8";
-addresses.mainnet.ETHOmnichainAdapter =
-  "0x77b2043768d28E9C9aB44E1aBfC95944bcE57931";
-
 addresses.mainnet.passthrough = {};
 addresses.mainnet.passthrough.curve = {};
 addresses.mainnet.passthrough.curve.OUSD_3POOL =
@@ -690,12 +681,6 @@ addresses.holesky.Guardian = "0x3C6B0c7835a2E2E0A45889F64DcE4ee14c1D5CB4";
 
 addresses.plume.WETH = "0xca59cA09E5602fAe8B629DeE83FfA819741f14be";
 addresses.plume.BridgedWOETH = "0xD8724322f44E5c58D7A815F542036fb17DbbF839";
-addresses.plume.LayerZeroEndpointV2 =
-  "0xC1b15d3B262bEeC0e3565C11C9e0F6134BdaCB36";
-addresses.plume.WOETHOmnichainAdapter =
-  "0x592CB6A596E7919930bF49a27AdAeCA7C055e4DB";
-addresses.plume.WETHOmnichainAdapter =
-  "0x4683CE822272CD66CEa73F5F1f9f5cBcaEF4F066";
 
 addresses.plume.timelock = "0x6C6f8F839A7648949873D3D2beEa936FC2932e5c";
 addresses.plume.WPLUME = "0xEa237441c92CAe6FC17Caaf9a7acB3f953be4bd1";

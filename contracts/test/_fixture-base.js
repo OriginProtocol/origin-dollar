@@ -163,6 +163,11 @@ const defaultFixture = async () => {
 
     // configure Vault to not automatically deposit to strategy
     await oethbVault.connect(governor).setVaultBuffer(oethUnits("1"));
+
+    // Production vault sits paused-for-rebase between strategist runs.
+    // Lift the pause once per fork fixture so tests can exercise rebase
+    // without each call site having to unpause/rebase/pause itself.
+    await oethbVault.connect(strategist).unpauseRebase();
   }
 
   // Make sure we can print bridged WOETH for tests
@@ -445,7 +450,7 @@ async function oethbHydrexAMOFixture(
     // exactly 1:1 backing before the test mint. The "with an insolvent vault"
     // suite assumes a fresh-peg starting state; without rebase first, the
     // pre-existing yield buffer absorbs the 21bp loss the suite simulates.
-    await oethbVault.connect(nick).rebase();
+    await oethbVault.connect(strategist).rebase();
 
     let wethBalance = await weth.balanceOf(oethbVault.address);
     const queue = await oethbVault.withdrawalQueueMetadata();

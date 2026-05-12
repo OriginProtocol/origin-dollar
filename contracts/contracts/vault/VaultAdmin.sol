@@ -64,22 +64,22 @@ abstract contract VaultAdmin is VaultCore {
     }
 
     /**
-     * @notice Set a minimum amount of OTokens in a mint or redeem that triggers a
-     * rebase
-     * @param _threshold OToken amount with 18 fixed decimals.
-     */
-    function setRebaseThreshold(uint256 _threshold) external onlyGovernor {
-        rebaseThreshold = _threshold;
-        emit RebaseThresholdUpdated(_threshold);
-    }
-
-    /**
      * @notice Set address of Strategist
      * @param _address Address of Strategist
      */
     function setStrategistAddr(address _address) external onlyGovernor {
         strategistAddr = _address;
         emit StrategistUpdated(_address);
+    }
+
+    /**
+     * @notice Set the address authorized to call `rebase()`.
+     * @param _operator New operator address. May be set to the zero address
+     *                  to disable operator-initiated rebases.
+     */
+    function setOperatorAddr(address _operator) external onlyGovernor {
+        operatorAddr = _operator;
+        emit OperatorUpdated(_operator);
     }
 
     /**

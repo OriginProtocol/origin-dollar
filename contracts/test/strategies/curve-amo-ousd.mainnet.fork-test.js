@@ -223,7 +223,7 @@ describe("Fork Test: Curve AMO OUSD strategy", function () {
     it("Should protect against attacker front-running a deposit by adding a lot of usdc to the pool", async () => {
       await balancePool();
       await mintAndDepositToStrategy();
-      await ousdVault.rebase();
+      await ousdVault.connect(impersonatedStrategist).rebase();
 
       const user = defaultDepositor;
       const attackerusdcBalanceBefore = await usdc.balanceOf(user.address);
@@ -308,7 +308,7 @@ describe("Fork Test: Curve AMO OUSD strategy", function () {
       );
 
       // Rebase to lock in the profits
-      await ousdVault.rebase();
+      await ousdVault.connect(impersonatedStrategist).rebase();
 
       const dataAfterRebase = await snapData();
       logSnapData(dataAfterRebase, "\nAfter rebase to lock in profits");
@@ -405,7 +405,7 @@ describe("Fork Test: Curve AMO OUSD strategy", function () {
       );
 
       // Rebase to lock in the profits
-      await ousdVault.rebase();
+      await ousdVault.connect(impersonatedStrategist).rebase();
       const dataAfterRebase = await snapData();
       logSnapData(dataAfterRebase, "\nAfter rebase to lock in profits");
       await logProfit(dataBeforeAttack);
@@ -642,15 +642,20 @@ describe("Fork Test: Curve AMO OUSD strategy", function () {
 
       await curveAMOStrategy.connect(impersonatedVaultSigner).depositAll();
 
+      // Tolerance widened to 3%: depositing into a heavily unbalanced
+      // Curve pool incurs slippage relative to the 1:1 LP approximation
+      // these expected values assume.
       expect(
         await curveAMOStrategy.checkBalance(usdc.address)
       ).to.approxEqualTolerance(
-        defaultDeposit.mul(2).div(1e12).add(gaugeBalance.div(1e12))
+        defaultDeposit.mul(2).div(1e12).add(gaugeBalance.div(1e12)),
+        3
       );
       expect(
         await curveGauge.balanceOf(curveAMOStrategy.address)
       ).to.approxEqualTolerance(
-        defaultDeposit.mul(2).div(1e12).add(gaugeBalance)
+        defaultDeposit.mul(2).div(1e12).add(gaugeBalance),
+        3
       );
       expect(await usdc.balanceOf(curveAMOStrategy.address)).to.equal(0);
     });
@@ -664,15 +669,18 @@ describe("Fork Test: Curve AMO OUSD strategy", function () {
 
       await curveAMOStrategy.connect(impersonatedVaultSigner).depositAll();
 
+      // Tolerance widened to 3%: see note above.
       expect(
         await curveAMOStrategy.checkBalance(usdc.address)
       ).to.approxEqualTolerance(
-        defaultDeposit.mul(2).div(1e12).add(gaugeBalance.div(1e12))
+        defaultDeposit.mul(2).div(1e12).add(gaugeBalance.div(1e12)),
+        3
       );
       expect(
         await curveGauge.balanceOf(curveAMOStrategy.address)
       ).to.approxEqualTolerance(
-        defaultDeposit.mul(2).div(1e12).add(gaugeBalance)
+        defaultDeposit.mul(2).div(1e12).add(gaugeBalance),
+        3
       );
       expect(await usdc.balanceOf(curveAMOStrategy.address)).to.equal(0);
     });
