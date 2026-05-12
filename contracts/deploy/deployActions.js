@@ -24,6 +24,7 @@ const { replaceContractAt } = require("../utils/hardhat");
 const { resolveContract } = require("../utils/resolvers");
 const { impersonateAccount, getSigner } = require("../utils/signers");
 const { getDefenderSigner } = require("../utils/signersNoHardhat");
+const { sleep } = require("../utils/time");
 const { getTxOpts } = require("../utils/tx");
 const createxAbi = require("../abi/createx.json");
 
@@ -899,6 +900,24 @@ const deployOETHSupernovaAMOStrategyImplementation = async () => {
   return cOETHSupernovaAMOStrategy;
 };
 
+// Poll eth_getCode until bytecode appears at `addr`. Base's read replicas can
+// lag the sequencer by several seconds, so a fresh deploy receipt does not
+// guarantee that the next call's RPC node sees the contract yet.
+const waitForBytecode = async (
+  addr,
+  { timeoutMs = 60000, pollMs = 2000 } = {}
+) => {
+  const start = Date.now();
+  while (Date.now() - start < timeoutMs) {
+    const code = await ethers.provider.getCode(addr);
+    if (code && code !== "0x") return;
+    await sleep(pollMs);
+  }
+  throw new Error(
+    `waitForBytecode: no code at ${addr} after ${timeoutMs}ms; RPC may still be lagging`
+  );
+};
+
 const deployOETHbHydrexAMOStrategyImplementation = async (gaugeAddress) => {
   const { deployerAddr } = await getNamedAccounts();
   const sDeployer = await ethers.provider.getSigner(deployerAddr);
@@ -926,6 +945,12 @@ const deployOETHbHydrexAMOStrategyImplementation = async (gaugeAddress) => {
     "OETHbHydrexAMOStrategy",
     cOETHbHydrexAMOStrategyProxy.address
   );
+
+  // Wait for the Base RPC read replicas to surface the freshly deployed
+  // implementation bytecode before the proxy initialize() runs. Without this,
+  // estimateGas on the proxy can hit a stale node and revert with
+  // "Cannot set a proxy implementation to a non-contract address".
+  await waitForBytecode(dHydrexAMOStrategy.address);
 
   // Initialize OETHb Hydrex AMO Strategy via the proxy.
   // Reward token is oHYDX (call option on HYDX). The Hydrex gauge emits oHYDX

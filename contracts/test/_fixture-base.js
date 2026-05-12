@@ -163,6 +163,11 @@ const defaultFixture = async () => {
 
     // configure Vault to not automatically deposit to strategy
     await oethbVault.connect(governor).setVaultBuffer(oethUnits("1"));
+
+    // Production vault sits paused-for-rebase between strategist runs.
+    // Lift the pause once per fork fixture so tests can exercise rebase
+    // without each call site having to unpause/rebase/pause itself.
+    await oethbVault.connect(strategist).unpauseRebase();
   }
 
   // Make sure we can print bridged WOETH for tests
