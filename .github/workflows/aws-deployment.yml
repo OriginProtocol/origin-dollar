@@ -5,9 +5,7 @@ name: AWS — build runner image
 # `bun run release:propose` in the talos repo so a deliberate human
 # approves what deploys.
 #
-# Triggers on the canonical `talos` branch (post-cutover from Railway).
-# `aws-deployment-plan` is also accepted during the transition window;
-# drop it once that branch is retired.
+# Triggers on `talos`.
 #
 # Requires the TALOS_DEPLOY_KEY secret to already be configured (same
 # secret the existing `talos.yml` workflow uses for @talos/client install).
@@ -17,7 +15,7 @@ name: AWS — build runner image
 
 on:
   push:
-    branches: [talos, aws-deployment-plan]
+    branches: [talos]
   workflow_dispatch:
 
 permissions:
