@@ -12,11 +12,12 @@ module.exports = deployOnBase(
 
     const cOETHBaseVaultProxy = await ethers.getContract("OETHBaseVaultProxy");
 
-    await deployWithConfirmation("PermissionedRebaseModule", [
-      safeAddress,
-      addresses.permissionedRebaseRelayer,
-      [cOETHBaseVaultProxy.address],
-    ]);
+    await deployWithConfirmation(
+      "PermissionedRebaseModule",
+      [safeAddress, addresses.talosRelayer, [cOETHBaseVaultProxy.address]],
+      undefined,
+      true
+    );
     const cPermissionedRebaseModule = await ethers.getContract(
       "PermissionedRebaseModule"
     );

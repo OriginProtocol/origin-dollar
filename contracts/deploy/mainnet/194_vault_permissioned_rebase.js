@@ -3,22 +3,29 @@ const { deploymentWithGovernanceProposal } = require("../../utils/deploy");
 
 module.exports = deploymentWithGovernanceProposal(
   {
-    deployName: "193_vault_permissioned_rebase",
+    deployName: "194_vault_permissioned_rebase",
     forceDeploy: false,
     reduceQueueTime: true,
     deployerIsProposer: false,
-    proposalId: "",
+    proposalId:
+      "9948092462276445509780797495205471799644905864792185620552351889756709358003",
   },
   async ({ deployWithConfirmation }) => {
     // 1. Deploy new OUSD Vault implementation
-    const dOUSDVault = await deployWithConfirmation("OUSDVault", [
-      addresses.mainnet.USDC,
-    ]);
+    const dOUSDVault = await deployWithConfirmation(
+      "OUSDVault",
+      [addresses.mainnet.USDC],
+      undefined,
+      true
+    );
 
     // 2. Deploy new OETH Vault implementation
-    const dOETHVault = await deployWithConfirmation("OETHVault", [
-      addresses.mainnet.WETH,
-    ]);
+    const dOETHVault = await deployWithConfirmation(
+      "OETHVault",
+      [addresses.mainnet.WETH],
+      undefined,
+      true
+    );
 
     const cVaultProxy = await ethers.getContract("VaultProxy");
     const cOUSDVault = await ethers.getContractAt(
@@ -43,7 +50,7 @@ module.exports = deploymentWithGovernanceProposal(
         {
           contract: cOUSDVault,
           signature: "setOperatorAddr(address)",
-          args: [addresses.multichainStrategist],
+          args: [addresses.talosRelayer],
         },
         {
           contract: cOETHVaultProxy,
@@ -53,7 +60,7 @@ module.exports = deploymentWithGovernanceProposal(
         {
           contract: cOETHVault,
           signature: "setOperatorAddr(address)",
-          args: [addresses.multichainStrategist],
+          args: [addresses.talosRelayer],
         },
       ],
     };

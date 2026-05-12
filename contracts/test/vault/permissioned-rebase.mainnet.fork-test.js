@@ -25,9 +25,9 @@ describe("ForkTest: permissioned rebase", function () {
         const vault = await ethers.getContractAt("IVault", proxy.address);
 
         const operatorAddr = await vault.operatorAddr();
-        // The deploy proposal sets the operator to the multichain strategist Safe.
+        // The deploy proposal sets the operator to the Talos relayer.
         expect(operatorAddr.toLowerCase()).to.equal(
-          addresses.multichainStrategist.toLowerCase()
+          addresses.talosRelayer.toLowerCase()
         );
 
         const operator = await impersonateAndFund(operatorAddr);
