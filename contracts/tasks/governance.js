@@ -2,7 +2,11 @@ const { sleep } = require("../utils/time.js");
 
 async function execute(taskArguments, hre) {
   const { isMainnet, isFork } = require("../test/helpers");
-  const { withConfirmation, impersonateGuardian } = require("../utils/deploy");
+  const {
+    withConfirmation,
+    impersonateGuardian,
+    getProposalExecutionValue,
+  } = require("../utils/deploy");
 
   if (isMainnet) {
     throw new Error("The execute task can not be used on mainnet");
@@ -54,7 +58,12 @@ async function execute(taskArguments, hre) {
   if (isFork) {
     // On the fork, impersonate the guardian and execute the proposal.
     await impersonateGuardian();
-    await withConfirmation(governor.connect(sGuardian).execute(propId));
+    const executionValue = await getProposalExecutionValue(governor, propId);
+    await withConfirmation(
+      governor.connect(sGuardian).execute(propId, {
+        ...(executionValue.gt(0) ? { value: executionValue } : {}),
+      })
+    );
   } else {
     // Localhost network. Execute as the governor account.
     await governor.connect(sGovernor).execute(propId);

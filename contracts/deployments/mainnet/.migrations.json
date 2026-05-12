@@ -29,7 +29,6 @@
   "129_oeth_vault_upgrade": 1743660383,
   "130_update_votemarket_addresses": 1744018070,
   "131_ousd_usdc_curve_amo": 1744236000,
-  "133_omnichain_adapter": 1744785062,
   "134_vault_woeth_upgrade": 1745347199,
   "135_vault_wousd_upgrade": 1745403755,
   "136_upgrade_morpho_strategies": 1746506903,
@@ -77,5 +76,7 @@
   "186_merkl_pb_bribes_module": 1773930008,
   "188_harvesting_eip1271_oeth": 1774552963,
   "189_harvesting_eip1271_ogn": 1774552993,
-  "190_remove_3rd_native_staking_strategy": 1775468903
+  "190_remove_3rd_native_staking_strategy": 1775468903,
+  "192_migrate_ssv_clusters_to_eth": 1777859891,
+  "193_permissioned_rebase_module": 1778095857
 }

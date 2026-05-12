@@ -227,7 +227,7 @@ describe("Curve AMO OETH strategy", function () {
     it("Should protect against attacker front-running a deposit by adding a lot of weth to the pool", async () => {
       await balancePool();
       await mintAndDepositToStrategy();
-      await oethVault.rebase();
+      await oethVault.connect(impersonatedStrategist).rebase();
 
       const user = defaultDepositor;
       const attackerwethBalanceBefore = await weth.balanceOf(user.address);
@@ -311,7 +311,7 @@ describe("Curve AMO OETH strategy", function () {
       );
 
       // Rebase to lock in the profits
-      await oethVault.rebase();
+      await oethVault.connect(impersonatedStrategist).rebase();
 
       const dataAfterRebase = await snapData();
       logSnapData(dataAfterRebase, "\nAfter rebase to lock in profits");
@@ -410,7 +410,7 @@ describe("Curve AMO OETH strategy", function () {
       );
 
       // Rebase to lock in the profits
-      await oethVault.rebase();
+      await oethVault.connect(impersonatedStrategist).rebase();
       const dataAfterRebase = await snapData();
       logSnapData(dataAfterRebase, "\nAfter rebase to lock in profits");
       await logProfit(dataBeforeAttack);

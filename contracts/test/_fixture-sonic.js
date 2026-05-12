@@ -80,6 +80,13 @@ const defaultSonicFixture = deployments.createFixture(async () => {
 
   const oSonicVaultSigner = await impersonateAndFund(oSonicVault.address);
 
+  if (isFork) {
+    // Production vault sits paused-for-rebase between strategist runs.
+    // Lift the pause once per fork fixture so tests can exercise rebase
+    // without each call site having to unpause/rebase/pause itself.
+    await oSonicVault.connect(strategist).unpauseRebase();
+  }
+
   // Sonic staking strategy
   const sonicStakingStrategyProxy = await ethers.getContract(
     "SonicStakingStrategyProxy"
@@ -267,7 +274,7 @@ async function swapXAMOFixture(
   // mint some OS using wS if configured
   if (config?.wsMintAmount > 0) {
     const wsAmount = parseUnits(config.wsMintAmount.toString());
-    await oSonicVault.connect(nick).rebase();
+    await oSonicVault.connect(strategist).rebase();
     await oSonicVault.connect(nick).allocate();
 
     // Calculate how much to mint based on the wS in the vault,

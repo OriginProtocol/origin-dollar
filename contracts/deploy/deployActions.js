@@ -24,6 +24,7 @@ const { replaceContractAt } = require("../utils/hardhat");
 const { resolveContract } = require("../utils/resolvers");
 const { impersonateAccount, getSigner } = require("../utils/signers");
 const { getDefenderSigner } = require("../utils/signersNoHardhat");
+const { sleep } = require("../utils/time");
 const { getTxOpts } = require("../utils/tx");
 const createxAbi = require("../abi/createx.json");
 
@@ -899,6 +900,79 @@ const deployOETHSupernovaAMOStrategyImplementation = async () => {
   return cOETHSupernovaAMOStrategy;
 };
 
+// Poll eth_getCode until bytecode appears at `addr`. Base's read replicas can
+// lag the sequencer by several seconds, so a fresh deploy receipt does not
+// guarantee that the next call's RPC node sees the contract yet.
+const waitForBytecode = async (
+  addr,
+  { timeoutMs = 60000, pollMs = 2000 } = {}
+) => {
+  const start = Date.now();
+  while (Date.now() - start < timeoutMs) {
+    const code = await ethers.provider.getCode(addr);
+    if (code && code !== "0x") return;
+    await sleep(pollMs);
+  }
+  throw new Error(
+    `waitForBytecode: no code at ${addr} after ${timeoutMs}ms; RPC may still be lagging`
+  );
+};
+
+const deployOETHbHydrexAMOStrategyImplementation = async (gaugeAddress) => {
+  const { deployerAddr } = await getNamedAccounts();
+  const sDeployer = await ethers.provider.getSigner(deployerAddr);
+
+  // Default to the addresses entry so any other caller still works; the
+  // 048_oethb_hydrex_amo deploy script always passes the live Hydrex gauge
+  // address explicitly.
+  const _gauge = gaugeAddress || addresses.base.HydrexOETHb_WETH.gauge;
+
+  const cOETHbHydrexAMOStrategyProxy = await ethers.getContract(
+    "OETHbHydrexAMOProxy"
+  );
+  const cOETHBaseVaultProxy = await ethers.getContract("OETHBaseVaultProxy");
+
+  // Deploy OETHb Hydrex AMO Strategy implementation
+  const dHydrexAMOStrategy = await deployWithConfirmation(
+    "OETHbHydrexAMOStrategy",
+    [
+      [addresses.base.HydrexOETHb_WETH.pool, cOETHBaseVaultProxy.address],
+      _gauge,
+    ]
+  );
+
+  const cOETHbHydrexAMOStrategy = await ethers.getContractAt(
+    "OETHbHydrexAMOStrategy",
+    cOETHbHydrexAMOStrategyProxy.address
+  );
+
+  // Wait for the Base RPC read replicas to surface the freshly deployed
+  // implementation bytecode before the proxy initialize() runs. Without this,
+  // estimateGas on the proxy can hit a stale node and revert with
+  // "Cannot set a proxy implementation to a non-contract address".
+  await waitForBytecode(dHydrexAMOStrategy.address);
+
+  // Initialize OETHb Hydrex AMO Strategy via the proxy.
+  // Reward token is oHYDX (call option on HYDX). The Hydrex gauge emits oHYDX
+  // from getReward(); off-chain plumbing exercises/sells it.
+  const depositPriceRange = parseUnits("0.01", 18); // 1% or 100 basis points
+  const initData = cOETHbHydrexAMOStrategy.interface.encodeFunctionData(
+    "initialize(address[],uint256)",
+    [[addresses.base.oHYDX], depositPriceRange]
+  );
+  await withConfirmation(
+    // prettier-ignore
+    cOETHbHydrexAMOStrategyProxy
+      .connect(sDeployer)["initialize(address,address,bytes)"](
+        dHydrexAMOStrategy.address,
+        addresses.base.timelock,
+        initData
+      )
+  );
+
+  return cOETHbHydrexAMOStrategy;
+};
+
 const getCreate2ProxiesFilePath = async () => {
   const networkName =
     isFork || isForkTest || isCI ? "localhost" : await getNetworkName();
@@ -1270,6 +1344,7 @@ module.exports = {
   deploySonicSwapXAMOStrategyImplementation,
   deploySonicSwapXAMOStrategyImplementationAndInitialize,
   deployOETHSupernovaAMOStrategyImplementation,
+  deployOETHbHydrexAMOStrategyImplementation,
   deployProxyWithCreateX,
   deployCrossChainMasterStrategyImpl,
   deployCrossChainRemoteStrategyImpl,

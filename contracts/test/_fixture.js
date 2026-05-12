@@ -146,6 +146,11 @@ const simpleOETHFixture = deployments.createFixture(async () => {
     governor = await impersonateAndFund(governorAddr);
     strategist = await impersonateAndFund(multichainStrategistAddr);
 
+    // Production vault sits paused-for-rebase between strategist runs.
+    // Lift the pause once per fork fixture so tests can exercise rebase
+    // without each call site having to unpause/rebase/pause itself.
+    await oethVault.connect(strategist).unpauseRebase();
+
     for (const user of [matt, josh, anna, domen, daniel, franck]) {
       // Everyone gets free weth
       await setERC20TokenBalance(user.address, weth, "1000000", hre);
@@ -711,6 +716,12 @@ const defaultFixture = deployments.createFixture(async () => {
     strategist.address = multichainStrategistAddr;
     timelock.address = timelockAddr;
     oldTimelock.address = addresses.mainnet.OldTimelock;
+
+    // Production vaults sit paused-for-rebase between strategist runs.
+    // Lift the pause once per fork fixture so tests can exercise rebase
+    // without each call site having to unpause/rebase/pause itself.
+    await vaultAndTokenContracts.vault.connect(strategist).unpauseRebase();
+    await vaultAndTokenContracts.oethVault.connect(strategist).unpauseRebase();
   } else {
     timelock = governor;
   }
@@ -1031,7 +1042,7 @@ async function morphoOUSDv2Fixture(
     // mint some OUSD using USDC if configured
     if (config?.usdcMintAmount > 0) {
       const usdcMintAmount = parseUnits(config.usdcMintAmount.toString(), 6);
-      await vault.connect(josh).rebase();
+      await vault.connect(strategist).rebase();
       await vault.connect(josh).allocate();
 
       // Approve the Vault to transfer USDC
@@ -1373,7 +1384,7 @@ async function supernovaOETHAMOFixture(
   // Mint some OETH using WETH if configured.
   if (cfg.assetMintAmount > 0) {
     const wethAmount = parseUnits(cfg.assetMintAmount.toString());
-    await oethVault.connect(josh).rebase();
+    await oethVault.connect(oethVaultGovernor).rebase();
     await oethVault.connect(josh).allocate();
 
     let wethBalance = await weth.balanceOf(oethVault.address);

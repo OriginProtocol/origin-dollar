@@ -159,10 +159,18 @@ contract StableSwapAMMStrategy is InitializableAbstractStrategy {
      * @param _baseConfig The `platformAddress` is the address of the Algebra pool.
      * The `vaultAddress` is the address of the Origin Vault.
      * @param _gauge Address of the Algebra gauge for the pool.
+     * @param _gaugeStakeToken The pool LP token address as reported by the
+     *        gauge. The inheriting contract is expected to resolve this via
+     *        whichever getter its gauge exposes (e.g. `IGauge.TOKEN()` for
+     *        legacy GaugeV2 ≤ v2.4 or `IHydrexGauge.stakeToken()` for
+     *        Hydrex GaugeV2 ≥ v2.5) and pass the result here. The constructor
+     *        verifies it matches `_baseConfig.platformAddress`.
      */
-    constructor(BaseStrategyConfig memory _baseConfig, address _gauge)
-        InitializableAbstractStrategy(_baseConfig)
-    {
+    constructor(
+        BaseStrategyConfig memory _baseConfig,
+        address _gauge,
+        address _gaugeStakeToken
+    ) InitializableAbstractStrategy(_baseConfig) {
         // Read the oToken address from the Vault
         address oTokenMem = IVault(_baseConfig.vaultAddress).oToken();
         address assetMem = IVault(_baseConfig.vaultAddress).asset();
@@ -178,9 +186,11 @@ contract StableSwapAMMStrategy is InitializableAbstractStrategy {
             IPair(_baseConfig.platformAddress).isStable() == true,
             "Pool not stable"
         );
-        // Check the gauge is for the pool
+        // Check the gauge is wired to the expected pool LP token. The
+        // inheriting contract is responsible for fetching `_gaugeStakeToken`
+        // from whichever getter the underlying gauge variant exposes.
         require(
-            IGauge(_gauge).TOKEN() == _baseConfig.platformAddress,
+            _gaugeStakeToken == _baseConfig.platformAddress,
             "Incorrect gauge"
         );
         oTokenPoolIndex = IPair(_baseConfig.platformAddress).token0() ==

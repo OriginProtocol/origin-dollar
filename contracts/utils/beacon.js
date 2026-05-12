@@ -227,7 +227,7 @@ const getValidatorsIndividually = async (client, validatorIds, stateId) => {
   return validators;
 };
 
-const getValidatorsByPost = async (
+const getValidatorsByGet = async (
   client,
   validatorIds,
   stateId,
@@ -237,23 +237,23 @@ const getValidatorsByPost = async (
 
   for (let attempt = 1; attempt <= attempts; attempt++) {
     try {
-      const postValidatorsRes = await client.beacon.postStateValidators({
+      const getValidatorsRes = await client.beacon.getStateValidators({
         stateId,
         validatorIds,
       });
 
-      if (postValidatorsRes.ok) {
-        return postValidatorsRes.value();
+      if (getValidatorsRes.ok) {
+        return getValidatorsRes.value();
       }
 
       lastError = new Error(
-        `Bulk validator POST failed with status ${postValidatorsRes.status} ${postValidatorsRes.statusText}`
+        `Bulk validator GET failed with status ${getValidatorsRes.status} ${getValidatorsRes.statusText}`
       );
       log(`${lastError.message}. Attempt ${attempt} of ${attempts}.`);
     } catch (err) {
       lastError = err;
       log(
-        `Bulk validator POST threw ${err.name || "Error"}: ${
+        `Bulk validator GET threw ${err.name || "Error"}: ${
           err.message
         }. Attempt ${attempt} of ${attempts}.`
       );
@@ -261,7 +261,7 @@ const getValidatorsByPost = async (
   }
 
   if (lastError) {
-    log(`Bulk validator POST failed after ${attempts} attempts.`);
+    log(`Bulk validator GET failed after ${attempts} attempts.`);
   }
 
   return null;
@@ -274,7 +274,7 @@ const getValidators = async (pubkeys, stateId = "head") => {
   log(
     `Fetching ${validatorIds.length} validator details at state ${stateId} from the beacon node`
   );
-  let validators = await getValidatorsByPost(client, validatorIds, stateId);
+  let validators = await getValidatorsByGet(client, validatorIds, stateId);
 
   if (!validators) {
     validators = await getValidatorsIndividually(client, validatorIds, stateId);

@@ -107,6 +107,7 @@ Located in `contracts/strategies/`. Each strategy:
 - Is registered with a vault and allocated collateral
 
 Key strategies: Aave, Compound, Convex/Curve, Balancer, Morpho, Native Staking (SSV validators).
+- For SSV Cluster migrations to ETH billing, use the SSV ETH payment calculator: https://ssv-eth-forecasting.vercel.app/
 
 ### OTokens
 `contracts/token/OUSD.sol` and `contracts/token/OETH.sol` - rebasing ERC-20 tokens. OUSD rebases to all holders; OETH uses a similar mechanism for ETH-denominated yield.
@@ -129,7 +130,6 @@ Bundle with: `pnpm rollup -c ./scripts/defender-actions/rollup.config.cjs`
 ### Cross-Chain
 - CCTP (Circle) for USDC bridging
 - Network-specific bridge contracts in `contracts/bridges/`
-- LayerZero OApp was planned to be used for Plume but is no longer going to be used.
 
 ### Pool Boosters
 `contracts/poolBooster/` - Merkl distribution contracts for incentivizing liquidity pools. `PoolBoostCentralRegistry` tracks all boosters.
