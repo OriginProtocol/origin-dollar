@@ -145,6 +145,11 @@ const simpleOETHFixture = deployments.createFixture(async () => {
     governor = await impersonateAndFund(governorAddr);
     strategist = await impersonateAndFund(multichainStrategistAddr);
 
+    // Production vault sits paused-for-rebase between strategist runs.
+    // Lift the pause once per fork fixture so tests can exercise rebase
+    // without each call site having to unpause/rebase/pause itself.
+    await oethVault.connect(strategist).unpauseRebase();
+
     for (const user of [matt, josh, anna, domen, daniel, franck]) {
       // Everyone gets free weth
       await setERC20TokenBalance(user.address, weth, "1000000", hre);
@@ -710,6 +715,12 @@ const defaultFixture = deployments.createFixture(async () => {
     strategist.address = multichainStrategistAddr;
     timelock.address = timelockAddr;
     oldTimelock.address = addresses.mainnet.OldTimelock;
+
+    // Production vaults sit paused-for-rebase between strategist runs.
+    // Lift the pause once per fork fixture so tests can exercise rebase
+    // without each call site having to unpause/rebase/pause itself.
+    await vaultAndTokenContracts.vault.connect(strategist).unpauseRebase();
+    await vaultAndTokenContracts.oethVault.connect(strategist).unpauseRebase();
   } else {
     timelock = governor;
   }

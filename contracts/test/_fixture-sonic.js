@@ -80,6 +80,13 @@ const defaultSonicFixture = deployments.createFixture(async () => {
 
   const oSonicVaultSigner = await impersonateAndFund(oSonicVault.address);
 
+  if (isFork) {
+    // Production vault sits paused-for-rebase between strategist runs.
+    // Lift the pause once per fork fixture so tests can exercise rebase
+    // without each call site having to unpause/rebase/pause itself.
+    await oSonicVault.connect(strategist).unpauseRebase();
+  }
+
   // Sonic staking strategy
   const sonicStakingStrategyProxy = await ethers.getContract(
     "SonicStakingStrategyProxy"

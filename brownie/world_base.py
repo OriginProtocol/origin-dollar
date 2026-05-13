@@ -23,6 +23,7 @@ aero_quoter = load_contract('aerodrome_quoter', AERODROME_QUOTER_BASE)
 aero_helper = load_contract('aerodrome_slipstream_sugar_helper', AERODROME_SUGAR_HELPER_BASE)
 amo_pool = load_contract('aerodrome_slipstream_pool', AERODROME_WETH_OETHB_POOL_BASE)
 curve_pool = load_contract('curve_pool_base', CURVE_POOL_BASE)
+base_curve_amo_strat = load_contract('ousd_curve_amo_strat', OETHB_CURVE_AMO_STRATEGY)
 
 aerodrome_voter = load_contract('aerodrome_voter', AERO_VOTER_BASE)
 
