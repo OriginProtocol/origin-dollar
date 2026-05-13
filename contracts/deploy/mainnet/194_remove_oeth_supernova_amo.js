@@ -6,7 +6,8 @@ module.exports = deploymentWithGovernanceProposal(
     forceDeploy: false,
     reduceQueueTime: true,
     deployerIsProposer: false,
-    proposalId: "35609681461618052145387081603214161093035331291961687423754678012941529359332",
+    proposalId:
+      "35609681461618052145387081603214161093035331291961687423754678012941529359332",
   },
   async ({ ethers }) => {
     // Current OETH Vault contracts
