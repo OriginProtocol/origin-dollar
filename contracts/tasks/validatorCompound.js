@@ -50,17 +50,28 @@ async function snapBalances({ consol = false }) {
   await logTxDetails(tx, "snapBalances");
 
   const receipt = await tx.wait();
-  const event = receipt.events.find(
-    (event) => event.event === "BalancesSnapped"
+
+  // When called via ConsolidationController the BalancesSnapped event is emitted
+  // by the target strategy, so decode logs against the strategy's interface.
+  const strategy = await resolveContract(
+    "CompoundingStakingSSVStrategyProxy",
+    "CompoundingStakingSSVStrategy"
   );
-  if (!event) {
+  const eventTopic = strategy.interface.getEventTopic("BalancesSnapped");
+  const rawLog = receipt.logs.find(
+    (l) =>
+      l.address.toLowerCase() === strategy.address.toLowerCase() &&
+      l.topics[0] === eventTopic
+  );
+  if (!rawLog) {
     throw new Error("BalancesSnapped event not found in transaction receipt");
   }
+  const parsed = strategy.interface.parseLog(rawLog);
   console.log(
     `Balances snapped successfully. Beacon block root ${
-      event.args.blockRoot
+      parsed.args.blockRoot
     }, block ${receipt.blockNumber}, ETH balance ${formatUnits(
-      event.args.ethBalance
+      parsed.args.ethBalance
     )}`
   );
 }
@@ -128,6 +139,7 @@ async function stakeValidator({
   depositMessageRoot,
   forkVersion,
   uuid,
+  consol = false,
 }) {
   const signer = await getSigner();
 
@@ -152,6 +164,9 @@ async function stakeValidator({
     "CompoundingStakingSSVStrategyProxy",
     "CompoundingStakingSSVStrategy"
   );
+  const contract = consol
+    ? await resolveContract("ConsolidationController")
+    : strategy;
 
   if (!withdrawalCredentials) {
     withdrawalCredentials = calcWithdrawalCredential("0x02", strategy.address);
@@ -196,9 +211,11 @@ async function stakeValidator({
   }
 
   log(
-    `About to stake ${amount} ETH to validator with pubkey ${pubkey}, deposit root ${depositDataRoot} and signature ${sig}`
+    `About to stake ${amount} ETH to validator with pubkey ${pubkey}, deposit root ${depositDataRoot} and signature ${sig} via ${
+      consol ? "ConsolidationController" : "strategy"
+    }`
   );
-  const tx = await strategy
+  const tx = await contract
     .connect(signer)
     .stakeEth({ pubkey, signature: sig, depositDataRoot }, amountGwei);
   const receipt = await logTxDetails(tx, "stakeETH");
@@ -410,16 +427,23 @@ async function autoValidatorDeposits({
   }
 }
 
-async function withdrawValidator({ pubkey, amount, signer }) {
-  const strategy = await resolveContract(
-    "CompoundingStakingSSVStrategyProxy",
-    "CompoundingStakingSSVStrategy"
-  );
+async function withdrawValidator({ pubkey, amount, signer, consol = false }) {
+  const strategy = consol
+    ? await resolveContract("ConsolidationController")
+    : await resolveContract(
+        "CompoundingStakingSSVStrategyProxy",
+        "CompoundingStakingSSVStrategy"
+      );
 
   /// Get the validator's balance
   const balance = await getValidatorBalance(pubkey);
 
   const isFullExit = amount === undefined || amount === 0;
+  if (consol && isFullExit) {
+    throw new Error(
+      "The ConsolidationController only supports partial withdrawals. Set a non-zero amount."
+    );
+  }
   const amountGwei = isFullExit ? 0 : parseUnits(amount.toString(), 9);
   if (isFullExit) {
     log(
@@ -430,13 +454,9 @@ async function withdrawValidator({ pubkey, amount, signer }) {
     );
   } else {
     log(
-      `About to partially withdraw ${formatUnits(
-        amountGwei,
-        9
-      )} ETH from validator with balance ${formatUnits(
-        balance,
-        9
-      )} ETH and pubkey ${pubkey}`
+      `About to partially withdraw ${formatUnits(amountGwei, 9)} ETH from ${
+        consol ? "ConsolidationController" : "validator"
+      } with balance ${formatUnits(balance, 9)} ETH and pubkey ${pubkey}`
     );
   }
   // Send 1 wei of value to cover the request withdrawal fee

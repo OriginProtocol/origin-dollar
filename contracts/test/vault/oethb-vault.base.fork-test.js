@@ -23,12 +23,12 @@ describe("ForkTest: OETHb Vault", function () {
 
   describe("Mint & Permissioned redeems", function () {
     it("Should allow anyone to mint", async () => {
-      const { nick, weth, oethb, oethbVault } = fixture;
+      const { nick, weth, oethb, oethbVault, strategist } = fixture;
 
       // issue a pre-mint so that Dripper collect gets called so next mint
       // doesn't include dripper funds
       await _mint(nick);
-      await oethbVault.rebase();
+      await oethbVault.connect(strategist).rebase();
 
       const vaultBalanceBefore = await weth.balanceOf(oethbVault.address);
       const userBalanceBefore = await oethb.balanceOf(nick.address);
@@ -261,9 +261,9 @@ describe("ForkTest: OETHb Vault", function () {
     });
 
     it("Should allow a whitelisted strategy to mint and burn", async () => {
-      const { oethbVault, oethb } = fixture;
+      const { oethbVault, oethb, strategist } = fixture;
 
-      await oethbVault.rebase();
+      await oethbVault.connect(strategist).rebase();
 
       const amount = oethUnits("1");
 

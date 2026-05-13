@@ -89,6 +89,7 @@ const {
   setRewardTokenAddresses,
   checkBalance,
   transferToken,
+  updateWOETHOraclePrice,
 } = require("./strategy");
 const {
   validatorOperationsConfig,
@@ -126,7 +127,7 @@ const { registerValidators, stakeValidators } = require("../utils/validator");
 const { harvestAndSwap } = require("./harvest");
 const { deployForceEtherSender, forceSend } = require("./simulation");
 const { sleep } = require("../utils/time");
-const { lzBridgeToken, lzSetConfig } = require("./layerzero");
+const { fundWithdrawals } = require("./autoWithdrawal");
 const {
   requestValidatorWithdraw,
   beaconRoot,
@@ -314,6 +315,24 @@ task(
   )
   .setAction(addWithdrawalQueueLiquidity);
 task("queueLiquidity").setAction(async (_, __, runSuper) => {
+  return runSuper();
+});
+
+task("fundWithdrawals", "Fund OUSD withdrawals using the AutoWithdrawalModule")
+  .addOptionalParam(
+    "gasLimit",
+    "Gas limit to use when calling fundWithdrawals",
+    undefined,
+    types.int
+  )
+  .addOptionalParam(
+    "module",
+    "Address of the AutoWithdrawalModule. Defaults to the deployed AutoWithdrawalModule",
+    undefined,
+    types.string
+  )
+  .setAction(fundWithdrawals);
+task("fundWithdrawals").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
 
@@ -1084,6 +1103,11 @@ task("setRewardTokenAddresses", "Sets the reward token of a strategy")
   )
   .setAction(setRewardTokenAddresses);
 
+task(
+  "updateWOETHPrice",
+  "Update the wOETH oracle price on the Base BridgedWOETHStrategy"
+).setAction(updateWOETHOraclePrice);
+
 // Harvester
 
 task("harvest", "Harvest and swap rewards for a strategy")
@@ -1440,6 +1464,12 @@ subtask("exitValidators", "Starts the exit process from a list of validators")
     "Seconds between each tx so the SSV API can be updated before getting the cluster data.",
     30,
     types.int
+  )
+  .addOptionalParam(
+    "consol",
+    "Call the consolidation controller instead of the strategy",
+    false,
+    types.boolean
   )
   .setAction(async (taskArgs) => {
     const signer = await getSigner();
@@ -2068,25 +2098,6 @@ task("sonicStaking").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
 
-task("lzBridgeToken")
-  .addParam("amount", "Amount to bridge")
-  .addParam("destnetwork", "Destination network")
-  .addOptionalParam("recipient", "Recipient address")
-  .addOptionalParam("gaslimit", "Gas limit")
-  .addOptionalParam("dryrun", "Print tx data without sending")
-  .setAction(async (taskArgs) => {
-    await lzBridgeToken(taskArgs, hre);
-  });
-
-task("lzSetConfig")
-  .addParam("destnetwork", "Destination network")
-  .addParam("dvns", "Comma separated list of DVN addresses")
-  .addParam("confirmations", "Number of confirmations")
-  .addParam("dvncount", "Number of required DVNs")
-  .setAction(async (taskArgs) => {
-    await lzSetConfig(taskArgs, hre);
-  });
-
 // Beacon Chain Operations
 subtask("depositValidator", "Deposits ETH to a validator on the Beacon chain")
   .addParam("pubkey", "Validator public key in hex format with a 0x prefix")
@@ -2475,8 +2486,19 @@ subtask(
     false,
     types.boolean
   )
+  .addOptionalParam(
+    "consol",
+    "Call the consolidation controller instead of the strategy",
+    false,
+    types.boolean
+  )
   .setAction(async (taskArgs) => {
     const signer = await getSigner();
+    if (taskArgs.direct && taskArgs.consol) {
+      throw new Error(
+        "The consol option can not be used with direct withdrawals"
+      );
+    }
     if (taskArgs.direct) {
       await requestValidatorWithdraw({ ...taskArgs, signer });
     } else {
@@ -2595,6 +2617,12 @@ subtask(
     "Fork version of the beacon chain. Required for validating the BLS signature",
     "10000910",
     types.string
+  )
+  .addOptionalParam(
+    "consol",
+    "Call the consolidation controller instead of the strategy",
+    false,
+    types.boolean
   )
   .addOptionalParam(
     "dryrun",
