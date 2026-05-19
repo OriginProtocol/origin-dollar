@@ -13,26 +13,36 @@ action({
       "OETHFixedRateDripperProxy"
     );
     const vaultProxy = await ethers.getContract("VaultProxy");
+    const oethVaultProxy = await ethers.getContract("OETHVaultProxy");
     const oethDripper = await ethers.getContractAt(
       "IDripper",
       oethDripperProxy.address
     );
     const ousdVault = await ethers.getContractAt("IVault", vaultProxy.address);
+    const oethVault = await ethers.getContractAt("IVault", oethVaultProxy.address);
 
     const oethDripperWithSigner = oethDripper.connect(signer);
     const ousdVaultWithSigner = ousdVault.connect(signer);
+    const oethVaultWithSigner = oethVault.connect(signer);
 
     // OETH collect with gas estimation + 10% buffer
     log.info("Estimating gas for OETH collect");
-    const oethGas = await oethDripperWithSigner.estimateGas.collect();
-    const oethGasLimit = oethGas.mul(Math.floor(GAS_MULTIPLIER * 100)).div(100);
-    const oethTx = await oethDripperWithSigner.collect({
-      gasLimit: oethGasLimit,
+    const oethCollectGas = await oethDripperWithSigner.estimateGas.collect();
+    const oethCollectGasLimit = oethCollectGas.mul(Math.floor(GAS_MULTIPLIER * 100)).div(100);
+    const oethCollectTx = await oethDripperWithSigner.collect({
+      gasLimit: oethCollectGasLimit,
     });
     await logTxDetails(
-      oethTx,
-      `collect (gasLimit: ${oethGasLimit.toString()})`
+      oethCollectTx,
+      `collect (gasLimit: ${oethCollectGasLimit.toString()})`
     );
+
+    // OETH rebase with gas estimation + 10% buffer
+    log.info("Estimating gas for OETH rebase");
+    const oethRebaseGas = await oethVaultWithSigner.estimateGas.rebase();
+    const oethRebaseGasLimit = oethRebaseGas.mul(Math.floor(GAS_MULTIPLIER * 100)).div(100);
+    const oethRebaseTx = await oethVaultWithSigner.rebase({ gasLimit: oethRebaseGasLimit });
+    await logTxDetails(oethRebaseTx, `rebase (gasLimit: ${oethRebaseGasLimit.toString()})`);
 
     // OUSD rebase with gas estimation + 10% buffer
     log.info("Estimating gas for OUSD rebase");
