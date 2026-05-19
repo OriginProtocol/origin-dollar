@@ -38,8 +38,8 @@ importers:
         specifier: ^1.41.0
         version: 1.41.0
       '@talos/client':
-        specifier: github:oplabs/talos#788f5c0eb0ba8cbb873c46316830c5ff57597de4&path:packages/client
-        version: git+https://git@github.com:oplabs/talos.git#788f5c0eb0ba8cbb873c46316830c5ff57597de4&path:packages/client(@types/pg@8.20.0)(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@5.0.10)(zod@3.25.76)
+        specifier: github:oplabs/talos#6c85a276299379314df89492f67d9f50acc6bcb2&path:packages/client
+        version: git+https://git@github.com:oplabs/talos.git#6c85a276299379314df89492f67d9f50acc6bcb2&path:packages/client(@types/pg@8.20.0)(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@5.0.10)(zod@3.25.76)
       '@types/pg':
         specifier: ^8.20.0
         version: 8.20.0
@@ -2294,9 +2294,9 @@ packages:
     resolution: {integrity: sha512-+PmQX0PiAYPMeVYe237LJAYvOMYW1j2rH5YROyS3b4CTVJum34HfRvKvAzozHAQG0TnHNdUfY9nCeUyRAs//cw==}
     engines: {node: '>=14.16'}
 
-  '@talos/client@git+https://git@github.com:oplabs/talos.git#788f5c0eb0ba8cbb873c46316830c5ff57597de4&path:packages/client':
-    resolution: {commit: 788f5c0eb0ba8cbb873c46316830c5ff57597de4, path: packages/client, repo: git@github.com:oplabs/talos.git, type: git}
-    version: 0.0.17
+  '@talos/client@git+https://git@github.com:oplabs/talos.git#6c85a276299379314df89492f67d9f50acc6bcb2&path:packages/client':
+    resolution: {commit: 6c85a276299379314df89492f67d9f50acc6bcb2, path: packages/client, repo: git@github.com:oplabs/talos.git, type: git}
+    version: 0.0.18
 
   '@trufflesuite/bigint-buffer@1.1.9':
     resolution: {integrity: sha512-bdM5cEGCOhDSwminryHJbRmXc1x7dPKg6Pqns3qyTwFlxsqUgxE29lsERS3PlIW1HTjoIGMUqsk1zQQwST1Yxw==}
@@ -10476,7 +10476,7 @@ snapshots:
     dependencies:
       defer-to-connect: 2.0.1
 
-  '@talos/client@git+https://git@github.com:oplabs/talos.git#788f5c0eb0ba8cbb873c46316830c5ff57597de4&path:packages/client(@types/pg@8.20.0)(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@5.0.10)(zod@3.25.76)':
+  '@talos/client@git+https://git@github.com:oplabs/talos.git#6c85a276299379314df89492f67d9f50acc6bcb2&path:packages/client(@types/pg@8.20.0)(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@5.0.10)(zod@3.25.76)':
     dependencies:
       '@hono/node-server': 1.19.14(hono@4.12.14)
       croner: 10.0.1
