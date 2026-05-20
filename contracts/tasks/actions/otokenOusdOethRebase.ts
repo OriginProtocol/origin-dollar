@@ -19,7 +19,10 @@ action({
       oethDripperProxy.address
     );
     const ousdVault = await ethers.getContractAt("IVault", vaultProxy.address);
-    const oethVault = await ethers.getContractAt("IVault", oethVaultProxy.address);
+    const oethVault = await ethers.getContractAt(
+      "IVault",
+      oethVaultProxy.address
+    );
 
     const oethDripperWithSigner = oethDripper.connect(signer);
     const ousdVaultWithSigner = ousdVault.connect(signer);
@@ -28,7 +31,9 @@ action({
     // OETH collect with gas estimation + 10% buffer
     log.info("Estimating gas for OETH collect");
     const oethCollectGas = await oethDripperWithSigner.estimateGas.collect();
-    const oethCollectGasLimit = oethCollectGas.mul(Math.floor(GAS_MULTIPLIER * 100)).div(100);
+    const oethCollectGasLimit = oethCollectGas
+      .mul(Math.floor(GAS_MULTIPLIER * 100))
+      .div(100);
     const oethCollectTx = await oethDripperWithSigner.collect({
       gasLimit: oethCollectGasLimit,
     });
@@ -40,9 +45,16 @@ action({
     // OETH rebase with gas estimation + 10% buffer
     log.info("Estimating gas for OETH rebase");
     const oethRebaseGas = await oethVaultWithSigner.estimateGas.rebase();
-    const oethRebaseGasLimit = oethRebaseGas.mul(Math.floor(GAS_MULTIPLIER * 100)).div(100);
-    const oethRebaseTx = await oethVaultWithSigner.rebase({ gasLimit: oethRebaseGasLimit });
-    await logTxDetails(oethRebaseTx, `rebase (gasLimit: ${oethRebaseGasLimit.toString()})`);
+    const oethRebaseGasLimit = oethRebaseGas
+      .mul(Math.floor(GAS_MULTIPLIER * 100))
+      .div(100);
+    const oethRebaseTx = await oethVaultWithSigner.rebase({
+      gasLimit: oethRebaseGasLimit,
+    });
+    await logTxDetails(
+      oethRebaseTx,
+      `rebase (gasLimit: ${oethRebaseGasLimit.toString()})`
+    );
 
     // OUSD rebase with gas estimation + 10% buffer
     log.info("Estimating gas for OUSD rebase");
