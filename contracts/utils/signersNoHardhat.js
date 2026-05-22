@@ -43,7 +43,10 @@ const resolveKmsRelayerId = (context = signerContext) => {
   ) {
     return TASK_KMS_RELAYER_ID_OVERRIDES[context.taskName];
   }
-  return DEFAULT_KMS_RELAYER_ID;
+  // Transition shim: prefer the env-injected key id. The hardcoded default
+  // is the old-org key, kept only until the new-org cutover completes
+  // (see talos Claude.Cleanup.md).
+  return process.env.KMS_RELAYER_ID || DEFAULT_KMS_RELAYER_ID;
 };
 
 const withTaskSignerContext = async (context, fn) => {
