@@ -86,7 +86,13 @@ async function registerValidatorCreateRequest({ days }) {
  * If the UUID is passed to this function then pubkey, shares, operatorIds are
  * ignored and fetched from the P2P
  */
-async function registerValidator({ pubkey, shares, operatorids, ssv, uuid }) {
+async function registerValidator({
+  pubkey,
+  shares,
+  operatorids,
+  eth = 0,
+  uuid,
+}) {
   const signer = await getSigner();
 
   if (uuid) {
@@ -104,7 +110,7 @@ async function registerValidator({ pubkey, shares, operatorids, ssv, uuid }) {
   log(`Splitting operator IDs ${operatorids}`);
   const operatorIds = splitOperatorIds(operatorids);
 
-  const ssvAmount = parseUnits(ssv.toString(), 18);
+  const ethAmount = parseUnits(eth.toString(), 18);
 
   const strategy = await resolveContract(
     "CompoundingStakingSSVStrategyProxy",
@@ -122,7 +128,9 @@ async function registerValidator({ pubkey, shares, operatorids, ssv, uuid }) {
   log(`About to register compounding validator with pubkey ${pubkey}`);
   const tx = await strategy
     .connect(signer)
-    .registerSsvValidator(pubkey, operatorIds, shares, ssvAmount, cluster);
+    .registerSsvValidator(pubkey, operatorIds, shares, cluster, {
+      value: ethAmount,
+    });
   await logTxDetails(tx, "registerValidator");
 }
 

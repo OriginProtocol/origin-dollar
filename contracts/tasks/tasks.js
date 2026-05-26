@@ -66,7 +66,7 @@ const { calculateMaxPricePerVoteTask, manageBribes } = require("./poolBooster");
 const { updateVotemarketEpochsTask } = require("./votemarket");
 const { manageMerklBribesTask } = require("./merklPoolBooster");
 const {
-  depositSSV,
+  depositCluster,
   migrateClusterToETH,
   printClusterInfo,
   removeValidator: removeOldValidator,
@@ -92,7 +92,6 @@ const {
   updateWOETHOraclePrice,
 } = require("./strategy");
 const {
-  validatorOperationsConfig,
   exitValidator,
   doAccounting,
   manuallyFixAccounting,
@@ -123,7 +122,6 @@ const {
   undelegateValidator,
   withdrawFromSFC,
 } = require("../utils/sonicActions");
-const { registerValidators, stakeValidators } = require("../utils/validator");
 const { harvestAndSwap } = require("./harvest");
 const { deployForceEtherSender, forceSend } = require("./simulation");
 const { sleep } = require("../utils/time");
@@ -1160,10 +1158,10 @@ task("getClusterInfo").setAction(async (_, __, runSuper) => {
 });
 
 subtask(
-  "depositSSV",
-  "Deposit SSV tokens from the native staking strategy into an SSV Cluster"
+  "depositCluster",
+  "Deposit ETH into an SSV cluster for a native staking strategy"
 )
-  .addParam("amount", "Amount of SSV tokens to deposit", undefined, types.float)
+  .addParam("amount", "Amount of ETH to deposit", undefined, types.float)
   .addOptionalParam(
     "index",
     "The number of the Native Staking Contract deployed.",
@@ -1176,8 +1174,8 @@ subtask(
     undefined,
     types.string
   )
-  .setAction(depositSSV);
-task("depositSSV").setAction(async (_, __, runSuper) => {
+  .setAction(depositCluster);
+task("depositCluster").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
 
@@ -1270,77 +1268,6 @@ subtask(
   log(`Address of deployed staking contract is: ${contract.address}`);
 });
 task("deployStakingProxy").setAction(async (_, __, runSuper) => {
-  return runSuper();
-});
-
-// Validator Operations
-
-subtask(
-  "registerValidators",
-  "Creates the required amount of new SSV validators and stakes ETH"
-)
-  .addOptionalParam(
-    "days",
-    "SSV Cluster operational time in days",
-    2,
-    types.int
-  )
-  .addOptionalParam(
-    "validators",
-    "The number of validators to register. defaults to the max that can be registered",
-    undefined,
-    types.int
-  )
-  .addOptionalParam("clear", "Clear storage", false, types.boolean)
-  .addOptionalParam(
-    "eth",
-    "Override the days option and set the amount of ETH to deposit to the cluster.",
-    undefined,
-    types.float
-  )
-  .addOptionalParam(
-    "uuid",
-    "uuid of P2P's request SSV validator API call. Used to reprocess a registration that failed to get the SSV request status.",
-    undefined,
-    types.string
-  )
-  .addOptionalParam(
-    "index",
-    "The number of the Native Staking Contract deployed.",
-    undefined,
-    types.int
-  )
-  .setAction(async (taskArgs) => {
-    const config = await validatorOperationsConfig(taskArgs);
-    const signer = await getSigner();
-    await registerValidators({ ...config, signer });
-  });
-task("registerValidators").setAction(async (_, __, runSuper) => {
-  return runSuper();
-});
-
-subtask(
-  "stakeValidators",
-  "Creates the required amount of new SSV validators and stakes ETH"
-)
-  .addOptionalParam(
-    "uuid",
-    "uuid of P2P's request SSV validator API call",
-    undefined,
-    types.string
-  )
-  .addOptionalParam(
-    "index",
-    "The number of the Native Staking Contract deployed.",
-    undefined,
-    types.int
-  )
-  .setAction(async (taskArgs) => {
-    const config = await validatorOperationsConfig(taskArgs);
-    const signer = await getSigner();
-    await stakeValidators({ ...config, signer });
-  });
-task("stakeValidators").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
 
@@ -2434,10 +2361,10 @@ subtask(
     types.string
   )
   .addOptionalParam(
-    "ssv",
-    "Amount of SSV to deposit to the cluster.",
+    "eth",
+    "Amount of ETH to deposit to the cluster.",
     0,
-    types.int
+    types.float
   )
   .setAction(async (taskArgs) => {
     await registerValidator(taskArgs);
