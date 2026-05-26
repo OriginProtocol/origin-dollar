@@ -46,6 +46,18 @@ COPY . .
 ARG TARGETARCH
 RUN if [ "$TARGETARCH" = "amd64" ]; then pnpm hardhat compile; else echo "Skipping compile on $TARGETARCH"; fi
 
+# Dump the hardhat task catalog to /app/actions-catalog.json at build time.
+# Runs under Node (where hardhat works) — the bun parent can't load hardhat
+# itself (keccak native module crashes; bun#18546). The runner reads this
+# file at boot and passes it to runContainer's `actionsCatalog`. A dump
+# failure is non-fatal: empty catalog ⇒ admin UI shows zero editable flags
+# per action (fail-closed), the rest of the runner is unaffected.
+RUN cd /app \
+    && NODE_PATH=/app/node_modules/.pnpm/node_modules \
+       node dump-actions-catalog.cjs > /app/actions-catalog.json \
+    || (echo "[build] hardhat catalog dump failed; shipping empty catalog" \
+        && echo "{}" > /app/actions-catalog.json)
+
 # Hand /app over to the runtime user. After this, all reads/writes by
 # the runner process are as `runner`, not root. Closes security/M-012.
 RUN chown -R runner:runner /app
