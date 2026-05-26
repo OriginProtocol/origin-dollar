@@ -2,7 +2,8 @@ import { readFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { createPool, runContainer } from "@talos/client";
+import { buildActionsCatalog, createPool, runContainer } from "@talos/client";
+import hre from "hardhat";
 
 const databaseUrl = process.env.DATABASE_URL;
 if (!databaseUrl) {
@@ -24,8 +25,11 @@ try {
   await pool.end();
 }
 
+const actionsCatalog = buildActionsCatalog(hre);
+
 await runContainer({
   product: "origin-dollar",
   baseUrl: process.env.RUNNER_BASE_URL ?? "http://origin-dollar:8080",
   workdir: "/app",
+  actionsCatalog,
 });
