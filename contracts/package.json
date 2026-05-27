@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "description": "Origin DeFi Contracts",
   "main": "index.js",
+  "packageManager": "pnpm@10.18.3",
   "scripts": {
     "deploy": "rm -rf deployments/hardhat && npx hardhat deploy",
     "deploy:mainnet": "VERIFY_CONTRACTS=true npx hardhat deploy --network mainnet --verbose",

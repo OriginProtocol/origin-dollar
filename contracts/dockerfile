@@ -33,9 +33,9 @@ RUN curl -fsSLO "$SUPERCRONIC_URL" \
 
 WORKDIR /app
 
-# Enable pnpm via corepack and install dependencies first for better caching.
+# Install pinned pnpm and install dependencies first for better caching.
 COPY pnpm-lock.yaml package.json pnpm-workspace.yaml ./
-RUN corepack enable \
+RUN npm install -g pnpm@10.18.3 \
   && pnpm install --frozen-lockfile  
 
 # Copy the rest of the contracts workspace.
