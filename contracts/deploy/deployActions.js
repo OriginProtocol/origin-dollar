@@ -24,6 +24,7 @@ const { replaceContractAt } = require("../utils/hardhat");
 const { resolveContract } = require("../utils/resolvers");
 const { impersonateAccount, getSigner } = require("../utils/signers");
 const { getDefenderSigner } = require("../utils/signersNoHardhat");
+const { sleep } = require("../utils/time");
 const { getTxOpts } = require("../utils/tx");
 const createxAbi = require("../abi/createx.json");
 
@@ -857,47 +858,22 @@ const deploySonicSwapXAMOStrategyImplementationAndInitialize = async () => {
   return cSonicSwapXAMOStrategy;
 };
 
-const deployOETHSupernovaAMOStrategyImplementation = async () => {
-  const { deployerAddr } = await getNamedAccounts();
-  const sDeployer = await ethers.provider.getSigner(deployerAddr);
-
-  const cOETHSupernovaAMOStrategyProxy = await ethers.getContract(
-    "OETHSupernovaAMOProxy"
+// Poll eth_getCode until bytecode appears at `addr`. Base's read replicas can
+// lag the sequencer by several seconds, so a fresh deploy receipt does not
+// guarantee that the next call's RPC node sees the contract yet.
+const waitForBytecode = async (
+  addr,
+  { timeoutMs = 60000, pollMs = 2000 } = {}
+) => {
+  const start = Date.now();
+  while (Date.now() - start < timeoutMs) {
+    const code = await ethers.provider.getCode(addr);
+    if (code && code !== "0x") return;
+    await sleep(pollMs);
+  }
+  throw new Error(
+    `waitForBytecode: no code at ${addr} after ${timeoutMs}ms; RPC may still be lagging`
   );
-  const cOETHVaultProxy = await ethers.getContract("OETHVaultProxy");
-
-  // Deploy OETH Supernova AMO Strategy implementation that will serve
-  // OETH Supernova AMO
-  const dSupernovaAMOStrategy = await deployWithConfirmation(
-    "OETHSupernovaAMOStrategy",
-    [
-      [addresses.mainnet.SupernovaOETHWETH.pool, cOETHVaultProxy.address],
-      addresses.mainnet.SupernovaOETHWETH.gauge,
-    ]
-  );
-
-  const cOETHSupernovaAMOStrategy = await ethers.getContractAt(
-    "OETHSupernovaAMOStrategy",
-    cOETHSupernovaAMOStrategyProxy.address
-  );
-
-  // Initialize OETH Supernova AMO Strategy implementation
-  const depositPriceRange = parseUnits("0.01", 18); // 1% or 100 basis points
-  const initData = cOETHSupernovaAMOStrategy.interface.encodeFunctionData(
-    "initialize(address[],uint256)",
-    [[addresses.mainnet.supernovaToken], depositPriceRange]
-  );
-  await withConfirmation(
-    // prettier-ignore
-    cOETHSupernovaAMOStrategyProxy
-      .connect(sDeployer)["initialize(address,address,bytes)"](
-        dSupernovaAMOStrategy.address,
-        addresses.mainnet.Timelock,
-        initData
-      )
-  );
-
-  return cOETHSupernovaAMOStrategy;
 };
 
 const deployOETHbHydrexAMOStrategyImplementation = async (gaugeAddress) => {
@@ -927,6 +903,12 @@ const deployOETHbHydrexAMOStrategyImplementation = async (gaugeAddress) => {
     "OETHbHydrexAMOStrategy",
     cOETHbHydrexAMOStrategyProxy.address
   );
+
+  // Wait for the Base RPC read replicas to surface the freshly deployed
+  // implementation bytecode before the proxy initialize() runs. Without this,
+  // estimateGas on the proxy can hit a stale node and revert with
+  // "Cannot set a proxy implementation to a non-contract address".
+  await waitForBytecode(dHydrexAMOStrategy.address);
 
   // Initialize OETHb Hydrex AMO Strategy via the proxy.
   // Reward token is oHYDX (call option on HYDX). The Hydrex gauge emits oHYDX
@@ -1319,7 +1301,6 @@ module.exports = {
   getPlumeContracts,
   deploySonicSwapXAMOStrategyImplementation,
   deploySonicSwapXAMOStrategyImplementationAndInitialize,
-  deployOETHSupernovaAMOStrategyImplementation,
   deployOETHbHydrexAMOStrategyImplementation,
   deployProxyWithCreateX,
   deployCrossChainMasterStrategyImpl,

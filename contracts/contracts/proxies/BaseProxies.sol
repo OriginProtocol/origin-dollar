@@ -65,3 +65,10 @@ contract OETHBaseHarvesterProxy is InitializeGovernedUpgradeabilityProxy {
 contract OETHBaseCurveAMOProxy is InitializeGovernedUpgradeabilityProxy {
 
 }
+
+/**
+ * @notice OETHbHydrexAMOProxy delegates calls to an OETHbHydrexAMOStrategy implementation
+ */
+contract OETHbHydrexAMOProxy is InitializeGovernedUpgradeabilityProxy {
+
+}

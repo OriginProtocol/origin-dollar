@@ -20,7 +20,7 @@ module.exports = deploymentWithGovernanceProposal(
 
     await deployWithConfirmation("PermissionedRebaseModule", [
       safeAddress,
-      addresses.permissionedRebaseRelayer,
+      addresses.talosRelayer,
       [cVaultProxy.address, cOETHVaultProxy.address],
     ]);
     const cPermissionedRebaseModule = await ethers.getContract(

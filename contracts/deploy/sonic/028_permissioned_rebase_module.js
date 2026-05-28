@@ -14,7 +14,7 @@ module.exports = deployOnSonic(
 
     await deployWithConfirmation("PermissionedRebaseModule", [
       safeAddress,
-      addresses.permissionedRebaseRelayer,
+      addresses.talosRelayer,
       [cOSonicVaultProxy.address],
     ]);
     const cPermissionedRebaseModule = await ethers.getContract(
