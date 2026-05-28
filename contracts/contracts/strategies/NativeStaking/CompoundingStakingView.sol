@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import { CompoundingValidatorManager } from "./CompoundingValidatorManager.sol";
+import { CompoundingStakingStrategy } from "./CompoundingStakingStrategy.sol";
 
 /**
  * @title Viewing contract for the Compounding Staking Strategy.
@@ -9,16 +9,16 @@ import { CompoundingValidatorManager } from "./CompoundingValidatorManager.sol";
  */
 contract CompoundingStakingStrategyView {
     /// @notice The address of the Compounding Staking Strategy contract
-    CompoundingValidatorManager public immutable stakingStrategy;
+    CompoundingStakingStrategy public immutable stakingStrategy;
 
     constructor(address _stakingStrategy) {
-        stakingStrategy = CompoundingValidatorManager(_stakingStrategy);
+        stakingStrategy = CompoundingStakingStrategy(payable(_stakingStrategy));
     }
 
     struct ValidatorView {
         bytes32 pubKeyHash;
         uint64 index;
-        CompoundingValidatorManager.ValidatorState state;
+        CompoundingStakingStrategy.ValidatorState state;
     }
 
     struct DepositView {
@@ -41,7 +41,7 @@ contract CompoundingStakingStrategyView {
         for (uint256 i = 0; i < validatorCount; ++i) {
             bytes32 pubKeyHash = stakingStrategy.verifiedValidators(i);
             (
-                CompoundingValidatorManager.ValidatorState state,
+                CompoundingStakingStrategy.ValidatorState state,
                 uint64 index
             ) = stakingStrategy.validator(pubKeyHash);
             validators[i] = ValidatorView({
