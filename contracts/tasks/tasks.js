@@ -69,7 +69,7 @@ const {
 const { calculateMaxPricePerVoteTask } = require("./poolBooster");
 const { manageMerklBribesTask } = require("./merklPoolBooster");
 const {
-  depositSSV,
+  depositCluster,
   migrateClusterToETH,
   printClusterInfo,
   removeValidator: removeOldValidator,
@@ -1137,10 +1137,10 @@ task("getClusterInfo").setAction(async (_, __, runSuper) => {
 });
 
 subtask(
-  "depositSSV",
-  "Deposit SSV tokens from the native staking strategy into an SSV Cluster"
+  "depositCluster",
+  "Deposit ETH into an SSV cluster for a native staking strategy"
 )
-  .addParam("amount", "Amount of SSV tokens to deposit", undefined, types.float)
+  .addParam("amount", "Amount of ETH to deposit", undefined, types.float)
   .addOptionalParam(
     "index",
     "The number of the Native Staking Contract deployed.",
@@ -1153,8 +1153,8 @@ subtask(
     undefined,
     types.string
   )
-  .setAction(depositSSV);
-task("depositSSV").setAction(async (_, __, runSuper) => {
+  .setAction(depositCluster);
+task("depositCluster").setAction(async (_, __, runSuper) => {
   return runSuper();
 });
 
@@ -2118,10 +2118,10 @@ subtask(
     types.string
   )
   .addOptionalParam(
-    "ssv",
-    "Amount of SSV to deposit to the cluster.",
+    "eth",
+    "Amount of ETH to deposit to the cluster.",
     0,
-    types.int
+    types.float
   )
   .setAction(async (taskArgs) => {
     await registerValidator(taskArgs);
