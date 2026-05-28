@@ -1,23 +1,31 @@
 /// <reference types="hardhat/types/runtime" />
 
-import { action } from "../lib/action";
-import { logTxDetails } from "../../utils/txLogger";
+import { types } from "hardhat/config";
 
-const MODULE_DEPLOYMENT = "AutoWithdrawalModule";
+import { action } from "../lib/action";
+
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const { fundWithdrawals } = require("../autoWithdrawal");
 
 action({
   name: "otokenOusdAutoWithdrawal",
-  description: "Auto-process OUSD withdrawals",
+  description: "Auto-process OUSD withdrawals via the AutoWithdrawalModule",
   chains: [1],
-  run: async ({ signer, log }) => {
-    const ethers = hre.ethers;
-    const autoWithdrawalModule = await ethers.getContract(MODULE_DEPLOYMENT);
-    log.info(
-      `Calling fundWithdrawals on ${MODULE_DEPLOYMENT} at ${autoWithdrawalModule.address}`
+  params: (t) => {
+    t.addOptionalParam(
+      "gasLimit",
+      "Gas limit to use when calling fundWithdrawals",
+      4000000,
+      types.int
     );
-    const tx = await autoWithdrawalModule.connect(signer).fundWithdrawals({
-      gasLimit: 4000000,
-    });
-    await logTxDetails(tx, `fundWithdrawals on ${MODULE_DEPLOYMENT}`);
+    t.addOptionalParam(
+      "module",
+      "Address of the AutoWithdrawalModule. Defaults to the deployed AutoWithdrawalModule",
+      undefined,
+      types.string
+    );
+  },
+  run: async ({ args }) => {
+    await fundWithdrawals(args, hre);
   },
 });
