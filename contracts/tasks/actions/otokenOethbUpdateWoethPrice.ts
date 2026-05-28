@@ -1,28 +1,25 @@
 /// <reference types="hardhat/types/runtime" />
 
-import { action } from "../lib/action";
-import { logTxDetails } from "../../utils/txLogger";
+import { types } from "hardhat/config";
 
-const STRATEGY_PROXY_DEPLOYMENT = "BridgedWOETHStrategyProxy";
+import { action } from "../lib/action";
+
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const { updateWOETHOraclePrice } = require("../strategy");
 
 action({
   name: "otokenOethbUpdateWoethPrice",
-  description: "Update WOETH price on Base",
+  description: "Update the wOETH oracle price on the Base BridgedWOETHStrategy",
   chains: [8453],
-  run: async ({ signer, log }) => {
-    const ethers = hre.ethers;
-    const strategyProxy = await ethers.getContract(STRATEGY_PROXY_DEPLOYMENT);
-    const strategy = await ethers.getContractAt(
-      "BridgedWOETHStrategy",
-      strategyProxy.address
+  params: (t) => {
+    t.addOptionalParam(
+      "proxy",
+      "Deployment name (or address) of the BridgedWOETHStrategy proxy",
+      "BridgedWOETHStrategyProxy",
+      types.string
     );
-
-    log.info(
-      `Calling updateWOETHOraclePrice on ${STRATEGY_PROXY_DEPLOYMENT} at ${strategy.address}`
-    );
-    const tx = await strategy.connect(signer).updateWOETHOraclePrice({
-      gasLimit: 200000,
-    });
-    await logTxDetails(tx, "updateWOETHOraclePrice");
+  },
+  run: async ({ args }) => {
+    await updateWOETHOraclePrice(args);
   },
 });
