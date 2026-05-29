@@ -6,7 +6,8 @@ module.exports = deploymentWithGovernanceProposal(
     forceDeploy: false,
     reduceQueueTime: true,
     deployerIsProposer: false,
-    // proposalId: "", // Add once the proposal has been created on-chain
+    proposalId:
+      "103423371549941850803617056393955997738077624682599514660888481101539457353886", // Add once the proposal has been created on-chain
   },
   async ({ ethers }) => {
     // Current OETH Vault contracts
