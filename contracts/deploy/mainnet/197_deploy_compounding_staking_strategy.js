@@ -59,7 +59,7 @@ module.exports = deploymentWithGovernanceProposal(
         [], // reward token addresses
         [], // asset token addresses
         [], // platform token addresses
-        ethers.utils.parseEther("32.25"), // initial validator deposit amount
+        ethers.utils.parseEther("2030"), // initial validator deposit amount
       ]
     );
 
