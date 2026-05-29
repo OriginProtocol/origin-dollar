@@ -92,7 +92,7 @@ module.exports = deploymentWithGovernanceProposal(
       "ConsolidationController",
       [
         addresses.mainnet.Guardian, // Admin 5/8 multisig
-        addresses.mainnet.validatorRegistrator, // TODO needs to be new Talos Relayer
+        addresses.mainnet.talosRelayer, // New Talos Relayer
         cNativeStakingStrategy2.address, // Old Native Staking Strategy 2
         cStrategy.address, // New Compounding Staking Strategy
       ]
