@@ -19,6 +19,13 @@ module.exports = deploymentWithGovernanceProposal(
       cOETHVaultProxy.address
     );
     const cBeaconProofs = await ethers.getContract("BeaconProofs");
+    const cNativeStakingStrategy2Proxy = await ethers.getContract(
+      "NativeStakingSSVStrategy2Proxy"
+    );
+    const cNativeStakingStrategy2 = await ethers.getContractAt(
+      "NativeStakingSSVStrategy",
+      cNativeStakingStrategy2Proxy.address
+    );
 
     console.log("Deploy CompoundingStakingStrategyProxy");
     const dCompoundingStakingStrategyProxy = await deployWithConfirmation(
@@ -80,8 +87,19 @@ module.exports = deploymentWithGovernanceProposal(
       "CompoundingStakingStrategyView"
     );
 
+    console.log("Deploy ConsolidationController");
+    const dConsolidationController = await deployWithConfirmation(
+      "ConsolidationController",
+      [
+        addresses.mainnet.Guardian, // Admin 5/8 multisig
+        addresses.mainnet.validatorRegistrator, // TODO needs to be new Talos Relayer
+        cNativeStakingStrategy2.address, // Old Native Staking Strategy 2
+        cStrategy.address, // New Compounding Staking Strategy
+      ]
+    );
+
     return {
-      name: "Deploy new vanilla compounding staking strategy",
+      name: "Deploy new vanilla compounding staking strategy and consolidation controller",
       actions: [
         {
           contract: cOETHVault,
@@ -91,7 +109,12 @@ module.exports = deploymentWithGovernanceProposal(
         {
           contract: cStrategy,
           signature: "setRegistrator(address)",
-          args: [addresses.mainnet.validatorRegistrator],
+          args: [dConsolidationController.address],
+        },
+        {
+          contract: cNativeStakingStrategy2,
+          signature: "setRegistrator(address)",
+          args: [dConsolidationController.address],
         },
       ],
     };

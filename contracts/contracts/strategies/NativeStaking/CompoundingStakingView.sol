@@ -18,7 +18,7 @@ contract CompoundingStakingStrategyView {
     struct ValidatorView {
         bytes32 pubKeyHash;
         uint64 index;
-        CompoundingStakingStrategy.ValidatorState state;
+        uint8 state;
     }
 
     struct DepositView {
@@ -40,10 +40,7 @@ contract CompoundingStakingStrategyView {
         validators = new ValidatorView[](validatorCount);
         for (uint256 i = 0; i < validatorCount; ++i) {
             bytes32 pubKeyHash = stakingStrategy.verifiedValidators(i);
-            (
-                CompoundingStakingStrategy.ValidatorState state,
-                uint64 index
-            ) = stakingStrategy.validator(pubKeyHash);
+            (uint8 state, uint64 index) = _validator(pubKeyHash);
             validators[i] = ValidatorView({
                 pubKeyHash: pubKeyHash,
                 index: index,
@@ -78,5 +75,20 @@ contract CompoundingStakingStrategyView {
                 slot: slot
             });
         }
+    }
+
+    function _validator(bytes32 pubKeyHash)
+        internal
+        view
+        returns (uint8 state, uint64 index)
+    {
+        (bool success, bytes memory data) = address(stakingStrategy).staticcall(
+            abi.encodeWithSelector(
+                stakingStrategy.validator.selector,
+                pubKeyHash
+            )
+        );
+        require(success, "validator call failed");
+        return abi.decode(data, (uint8, uint64));
     }
 }
