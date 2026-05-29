@@ -185,7 +185,7 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
     it("Governor should be able to change the first deposit amount", async () => {
       const { compoundingStakingSSVStrategy } = fixture;
 
-      const updatedAmount = parseEther("32.25");
+      const updatedAmount = parseEther("2048");
       const tx = await compoundingStakingSSVStrategy
         .connect(sGov)
         .setInitialDepositAmount(updatedAmount);
@@ -215,13 +215,13 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
           .setInitialDepositAmount(parseUnits("0.5", 18))
       ).to.be.revertedWith("Deposit too small");
     });
-    it("Should revert when setting the first deposit amount above 32.25 ETH", async () => {
+    it("Should revert when setting the first deposit amount above 2048 ETH", async () => {
       const { compoundingStakingSSVStrategy } = fixture;
 
       await expect(
         compoundingStakingSSVStrategy
           .connect(sGov)
-          .setInitialDepositAmount(parseEther("32.25").add(1))
+          .setInitialDepositAmount(parseEther("2048").add(1))
       ).to.be.revertedWith("Deposit too large");
     });
     it("Should not collect rewards", async () => {

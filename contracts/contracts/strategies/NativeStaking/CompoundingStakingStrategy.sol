@@ -30,6 +30,8 @@ abstract contract CompoundingValidatorStorage is Governable, Pausable {
     uint256 internal constant MAX_DEPOSITS = 32;
     /// @dev The maximum number of validators that can be verified.
     uint256 internal constant MAX_VERIFIED_VALIDATORS = 48;
+    /// @dev The maximum amount of ETH that can be used for the initial deposit to a new validator.
+    uint256 internal constant MAX_INITIAL_DEPOSIT_AMOUNT_WEI = 2048 ether;
     /// @dev The default withdrawable epoch value on the Beacon chain.
     /// A value in the far future means the validator is not exiting.
     uint64 internal constant FAR_FUTURE_EPOCH = type(uint64).max;
@@ -1181,7 +1183,7 @@ contract CompoundingStakingStrategy is
     {
         require(_initialDepositAmountWei >= 1 ether, "Deposit too small");
         require(
-            _initialDepositAmountWei <= MIN_ACTIVATION_BALANCE_GWEI * 1e9,
+            _initialDepositAmountWei <= MAX_INITIAL_DEPOSIT_AMOUNT_WEI,
             "Deposit too large"
         );
 
