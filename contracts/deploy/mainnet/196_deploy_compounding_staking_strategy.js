@@ -19,6 +19,9 @@ module.exports = deploymentWithGovernanceProposal(
       cOETHVaultProxy.address
     );
     const cBeaconProofs = await ethers.getContract("BeaconProofs");
+    const cCompoundingStakingSSVStrategyProxy = await ethers.getContract(
+      "CompoundingStakingSSVStrategyProxy"
+    );
     const cNativeStakingStrategy2Proxy = await ethers.getContract(
       "NativeStakingSSVStrategy2Proxy"
     );
@@ -110,6 +113,11 @@ module.exports = deploymentWithGovernanceProposal(
           contract: cOETHVault,
           signature: "setDefaultStrategy(address)",
           args: [cCompoundingStakingStrategyProxy.address],
+        },
+        {
+          contract: cOETHVault,
+          signature: "removeStrategy(address)",
+          args: [cCompoundingStakingSSVStrategyProxy.address],
         },
         {
           contract: cStrategy,
