@@ -337,7 +337,7 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
     }
 
     /// @notice Stakes WETH in this strategy to a compounding validator.
-    /// The first deposit to a new validator must be exactly `initialDepositAmountWei`.
+    /// The first deposit to a new validator must be less than or equal to `initialDepositAmountWei`.
     /// Once verified on the beacon chain, rewards can push the validator's balance above
     /// the activation threshold so it can become active without requiring a second deposit.
     /// Does not convert any ETH sitting in this strategy to WETH.
@@ -387,7 +387,7 @@ abstract contract CompoundingValidatorManager is Governable, Pausable {
             require(!firstDeposit, "Existing first deposit");
             // Limits the amount of ETH that can be at risk from a front-running deposit attack.
             require(
-                depositAmountWei == initialDepositAmountWei,
+                depositAmountWei <= initialDepositAmountWei,
                 "Invalid first deposit amount"
             );
             // Limits the number of validator balance proofs to verifyBalances

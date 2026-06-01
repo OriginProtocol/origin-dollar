@@ -826,6 +826,16 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
       await stakeValidators(0, INITIAL_DEPOSIT_AMOUNT);
     });
 
+    it("Should stake less than the initial deposit amount to a validator", async () => {
+      const { compoundingStakingSSVStrategy } = fixture;
+
+      await compoundingStakingSSVStrategy
+        .connect(sGov)
+        .setInitialDepositAmount(parseEther("2"));
+
+      await stakeValidators(0, INITIAL_DEPOSIT_AMOUNT);
+    });
+
     it("Should stake the initial deposit amount then 2047 ETH to a validator", async () => {
       const {
         compoundingStakingSSVStrategy,
@@ -963,7 +973,7 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
       ).to.equal(stratBalanceBefore);
     });
 
-    it("Should revert when first stake amount is not exactly the initial deposit amount", async () => {
+    it("Should revert when first stake amount is above the initial deposit amount", async () => {
       const { compoundingStakingSSVStrategy, validatorRegistrator } = fixture;
 
       const testValidator = testValidators[0];
