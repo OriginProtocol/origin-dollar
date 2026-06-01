@@ -107,6 +107,11 @@ module.exports = deploymentWithGovernanceProposal(
           args: [cCompoundingStakingStrategyProxy.address],
         },
         {
+          contract: cOETHVault,
+          signature: "setDefaultStrategy(address)",
+          args: [cCompoundingStakingStrategyProxy.address],
+        },
+        {
           contract: cStrategy,
           signature: "setRegistrator(address)",
           args: [dConsolidationController.address],
