@@ -9,7 +9,7 @@ import { InitializableAbstractStrategy } from "../../utils/InitializableAbstract
 import { IWETH9 } from "../../interfaces/IWETH9.sol";
 import { FeeAccumulator } from "./FeeAccumulator.sol";
 import { ValidatorAccountant } from "./ValidatorAccountant.sol";
-import { ISSVNetwork } from "../../interfaces/ISSVNetwork.sol";
+import { ISSVNetwork, Cluster } from "../../interfaces/ISSVNetwork.sol";
 
 struct ValidatorStakeData {
     bytes pubkey;
@@ -122,6 +122,25 @@ contract NativeStakingSSVStrategy is
         ISSVNetwork(SSV_NETWORK).setFeeRecipientAddress(
             FEE_ACCUMULATOR_ADDRESS
         );
+    }
+
+    /// @notice Withdraw ETH funding from this strategy's SSV cluster.
+    /// @param operatorIds The operator IDs of the SSV Cluster
+    /// @param amount The amount of ETH to withdraw from the SSV cluster
+    /// @param cluster The SSV cluster details including the validator count and ETH balance
+    function withdrawSsvClusterEth(
+        uint64[] calldata operatorIds,
+        uint256 amount,
+        Cluster calldata cluster
+    ) external onlyGovernor nonReentrant {
+        ISSVNetwork(SSV_NETWORK).withdraw(operatorIds, amount, cluster);
+
+        uint256 ethBalance = address(this).balance;
+        if (ethBalance > 0) {
+            IWETH9(WETH).deposit{ value: ethBalance }();
+            IERC20(WETH).safeTransfer(vaultAddress, ethBalance);
+            emit Withdrawal(WETH, address(0), ethBalance);
+        }
     }
 
     /// @notice Unlike other strategies, this does not deposit assets into the underlying platform.
@@ -282,7 +301,9 @@ contract NativeStakingSSVStrategy is
      */
     receive() external payable {
         require(
-            msg.sender == FEE_ACCUMULATOR_ADDRESS || msg.sender == WETH,
+            msg.sender == FEE_ACCUMULATOR_ADDRESS ||
+                msg.sender == WETH ||
+                msg.sender == SSV_NETWORK,
             "Eth not from allowed contracts"
         );
     }

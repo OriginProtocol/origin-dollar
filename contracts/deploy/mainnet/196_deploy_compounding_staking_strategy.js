@@ -1,6 +1,9 @@
 const addresses = require("../../utils/addresses");
 const { beaconChainGenesisTimeMainnet } = require("../../utils/constants");
 const { deploymentWithGovernanceProposal } = require("../../utils/deploy");
+const { getClusterInfo, splitOperatorIds } = require("../../utils/ssv");
+
+const compoundingSsvClusterOperatorIds = "2070,2071,2072,2073";
 
 module.exports = deploymentWithGovernanceProposal(
   {
@@ -11,6 +14,7 @@ module.exports = deploymentWithGovernanceProposal(
   },
   async ({ deployWithConfirmation, ethers, withConfirmation }) => {
     const { deployerAddr } = await getNamedAccounts();
+    const { chainId } = await ethers.provider.getNetwork();
     const sDeployer = await ethers.provider.getSigner(deployerAddr);
 
     const cOETHVaultProxy = await ethers.getContract("OETHVaultProxy");
@@ -25,9 +29,57 @@ module.exports = deploymentWithGovernanceProposal(
     const cNativeStakingStrategy2Proxy = await ethers.getContract(
       "NativeStakingSSVStrategy2Proxy"
     );
+    const cNativeStakingFeeAccumulator2Proxy = await ethers.getContract(
+      "NativeStakingFeeAccumulator2Proxy"
+    );
     const cNativeStakingStrategy2 = await ethers.getContractAt(
       "NativeStakingSSVStrategy",
       cNativeStakingStrategy2Proxy.address
+    );
+    const compoundingOperatorIds = splitOperatorIds(
+      compoundingSsvClusterOperatorIds
+    );
+    const { cluster: compoundingSsvCluster } = await getClusterInfo({
+      chainId,
+      operatorids: compoundingOperatorIds.join(","),
+      ownerAddress: cCompoundingStakingSSVStrategyProxy.address,
+    });
+    const compoundingSsvClusterEthBalance = ethers.BigNumber.from(
+      compoundingSsvCluster.ethBalance || 0
+    );
+    const compoundingSsvClusterForWithdraw = {
+      validatorCount: compoundingSsvCluster.validatorCount,
+      networkFeeIndex: compoundingSsvCluster.networkFeeIndex,
+      index: compoundingSsvCluster.index,
+      active: compoundingSsvCluster.active,
+      balance: compoundingSsvClusterEthBalance,
+    };
+
+    console.log("Deploy CompoundingStakingSSVStrategy implementation");
+    const dCompoundingStakingSSVStrategy = await deployWithConfirmation(
+      "CompoundingStakingSSVStrategy",
+      [
+        [addresses.zero, cOETHVaultProxy.address], //_baseConfig
+        addresses.mainnet.WETH, // wethAddress
+        addresses.mainnet.SSVNetwork, // ssvNetwork
+        addresses.mainnet.beaconChainDepositContract, // beaconChainDepositContract
+        cBeaconProofs.address, // beaconProofs
+        beaconChainGenesisTimeMainnet,
+      ]
+    );
+
+    console.log("Deploy NativeStakingSSVStrategy2 implementation");
+    const dNativeStakingStrategy2 = await deployWithConfirmation(
+      "NativeStakingSSVStrategy",
+      [
+        [addresses.zero, cOETHVaultProxy.address], //_baseConfig
+        addresses.mainnet.WETH, // wethAddress
+        addresses.mainnet.SSV, // ssvToken
+        addresses.mainnet.SSVNetwork, // ssvNetwork
+        500, // maxValidators
+        cNativeStakingFeeAccumulator2Proxy.address, // feeAccumulator
+        addresses.mainnet.beaconChainDepositContract, // beaconChainDepositContract
+      ]
     );
 
     console.log("Deploy CompoundingStakingStrategyProxy");
@@ -102,8 +154,28 @@ module.exports = deploymentWithGovernanceProposal(
     );
 
     return {
-      name: "Deploy new vanilla compounding staking strategy and consolidation controller",
+      name: "Deploy new vanilla compounding staking strategy, upgrade SSV strategies and deploy consolidation controller",
       actions: [
+        {
+          contract: cCompoundingStakingSSVStrategyProxy,
+          signature: "upgradeTo(address)",
+          args: [dCompoundingStakingSSVStrategy.address],
+        },
+        {
+          contract: cCompoundingStakingSSVStrategyProxy,
+          signature:
+            "withdrawSsvClusterEth(uint64[],uint256,(uint32,uint64,uint64,bool,uint256))",
+          args: [
+            compoundingOperatorIds,
+            compoundingSsvClusterEthBalance,
+            compoundingSsvClusterForWithdraw,
+          ],
+        },
+        {
+          contract: cNativeStakingStrategy2Proxy,
+          signature: "upgradeTo(address)",
+          args: [dNativeStakingStrategy2.address],
+        },
         {
           contract: cOETHVault,
           signature: "approveStrategy(address)",

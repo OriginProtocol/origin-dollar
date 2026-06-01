@@ -4,12 +4,20 @@ pragma solidity ^0.8.0;
 import { Cluster } from "./../interfaces/ISSVNetwork.sol";
 
 contract MockSSVNetwork {
+    error ValidatorAlreadyExists();
+
+    mapping(bytes32 => bool) public validatorExists;
+
     function registerValidator(
         bytes calldata publicKey,
         uint64[] calldata operatorIds,
         bytes calldata sharesData,
         Cluster memory cluster
-    ) external payable {}
+    ) external payable {
+        bytes32 pubKeyHash = keccak256(publicKey);
+        if (validatorExists[pubKeyHash]) revert ValidatorAlreadyExists();
+        validatorExists[pubKeyHash] = true;
+    }
 
     function bulkRegisterValidator(
         bytes[] calldata publicKeys,

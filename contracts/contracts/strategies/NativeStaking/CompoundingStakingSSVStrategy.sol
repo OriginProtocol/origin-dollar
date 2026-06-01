@@ -14,10 +14,9 @@ contract CompoundingStakingSSVStrategy is CompoundingStakingStrategy {
     // For future use
     uint256[50] private __gap;
 
-    event SSVValidatorRegistered(
-        bytes32 indexed pubKeyHash,
-        uint64[] operatorIds
-    );
+    error CannotRemoveSsvValidator();
+    error NotRegisteredOrVerified();
+
     event SSVValidatorRemoved(bytes32 indexed pubKeyHash, uint64[] operatorIds);
 
     /// @param _baseConfig Base strategy config with
@@ -53,13 +52,13 @@ contract CompoundingStakingSSVStrategy is CompoundingStakingStrategy {
      *
      */
 
+    // slither-disable-start reentrancy-no-eth
     /// @notice Registers a single validator in a SSV Cluster.
     /// Only the Registrator can call this function.
     /// @param publicKey The public key of the validator
     /// @param operatorIds The operator IDs of the SSV Cluster
     /// @param sharesData The shares data for the validator
     /// @param cluster The SSV cluster details including the validator count and SSV balance
-    // slither-disable-start reentrancy-no-eth
     function registerSsvValidator(
         bytes calldata publicKey,
         uint64[] calldata operatorIds,
@@ -68,11 +67,6 @@ contract CompoundingStakingSSVStrategy is CompoundingStakingStrategy {
     ) external payable onlyRegistrator whenNotPaused {
         // Hash the public key using the Beacon Chain's format
         bytes32 pubKeyHash = _hashPubKey(publicKey);
-        // Check each public key has not already been used
-        require(
-            validator[pubKeyHash].state == ValidatorState.NON_REGISTERED,
-            "Validator already registered"
-        );
 
         // Store the validator state as registered
         validator[pubKeyHash].state = ValidatorState.REGISTERED;
@@ -83,8 +77,6 @@ contract CompoundingStakingSSVStrategy is CompoundingStakingStrategy {
             sharesData,
             cluster
         );
-
-        emit SSVValidatorRegistered(pubKeyHash, operatorIds);
     }
 
     /// @notice Remove the validator from the SSV Cluster after:
@@ -106,12 +98,13 @@ contract CompoundingStakingSSVStrategy is CompoundingStakingStrategy {
         bytes32 pubKeyHash = _hashPubKey(publicKey);
         ValidatorState currentState = validator[pubKeyHash].state;
         // Can remove SSV validators that were incorrectly registered and can not be deposited to.
-        require(
-            currentState == ValidatorState.REGISTERED ||
-                currentState == ValidatorState.EXITED ||
-                currentState == ValidatorState.INVALID,
-            "Validator not regd or exited"
-        );
+        if (
+            currentState != ValidatorState.REGISTERED &&
+            currentState != ValidatorState.EXITED &&
+            currentState != ValidatorState.INVALID
+        ) {
+            revert CannotRemoveSsvValidator();
+        }
 
         validator[pubKeyHash].state = ValidatorState.REMOVED;
 
@@ -124,6 +117,23 @@ contract CompoundingStakingSSVStrategy is CompoundingStakingStrategy {
         emit SSVValidatorRemoved(pubKeyHash, operatorIds);
     }
 
+    /// @notice Withdraw ETH funding from this strategy's SSV cluster.
+    /// @param operatorIds The operator IDs of the SSV Cluster
+    /// @param amount The amount of ETH to withdraw from the SSV cluster
+    /// @param cluster The SSV cluster details including the validator count and ETH balance
+    function withdrawSsvClusterEth(
+        uint64[] calldata operatorIds,
+        uint256 amount,
+        Cluster calldata cluster
+    ) external onlyGovernor {
+        ISSVNetwork(SSV_NETWORK).withdraw(operatorIds, amount, cluster);
+
+        uint256 ethBalance = address(this).balance;
+        if (ethBalance > 0) {
+            _withdraw(vaultAddress, ethBalance, ethBalance);
+        }
+    }
+
     // slither-disable-end reentrancy-no-eth
 
     function _admitStake(bytes32 pubKeyHash, uint256 depositAmountWei)
@@ -131,12 +141,13 @@ contract CompoundingStakingSSVStrategy is CompoundingStakingStrategy {
         override
     {
         ValidatorState currentState = validator[pubKeyHash].state;
-        require(
-            currentState == ValidatorState.REGISTERED ||
-                currentState == ValidatorState.VERIFIED ||
-                currentState == ValidatorState.ACTIVE,
-            "Not registered or verified"
-        );
+        if (
+            currentState != ValidatorState.REGISTERED &&
+            currentState != ValidatorState.VERIFIED &&
+            currentState != ValidatorState.ACTIVE
+        ) {
+            revert NotRegisteredOrVerified();
+        }
 
         if (currentState == ValidatorState.REGISTERED) {
             _recordFirstDeposit(pubKeyHash, depositAmountWei);
