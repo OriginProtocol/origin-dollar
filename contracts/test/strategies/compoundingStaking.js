@@ -93,6 +93,32 @@ describe("Unit test: Compounding Staking Strategy", function () {
     expect(await compoundingStakingStrategy.firstDeposit()).to.equal(true);
   });
 
+  it("allows the first deposit to be less than the initial deposit amount", async () => {
+    const { compoundingStakingStrategy, governor } = fixture;
+    const validator = testValidators[0];
+    const pubKeyHash = hashPubKey(validator.publicKey);
+
+    await compoundingStakingStrategy
+      .connect(governor)
+      .setInitialDepositAmount(parseEther("2"));
+    await depositToStrategy("1");
+
+    const stakeTx = await stakeValidator({ validator, amount: "1" });
+    const receipt = await stakeTx.wait();
+    const event = receipt.events.find((event) => event.event === "ETHStaked");
+
+    await expect(stakeTx)
+      .to.emit(compoundingStakingStrategy, "ETHStaked")
+      .withArgs(
+        pubKeyHash,
+        event.args.pendingDepositRoot,
+        validator.publicKey,
+        parseEther("1")
+      );
+
+    expect(await compoundingStakingStrategy.firstDeposit()).to.equal(true);
+  });
+
   it("does not allow a follow-up deposit before the validator is verified or active", async () => {
     const validator = testValidators[0];
 

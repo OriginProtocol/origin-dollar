@@ -963,7 +963,7 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
       ).to.equal(stratBalanceBefore);
     });
 
-    it("Should revert when first stake amount is not exactly the initial deposit amount", async () => {
+    it("Should revert when first stake amount is above the initial deposit amount", async () => {
       const { compoundingStakingSSVStrategy, validatorRegistrator } = fixture;
 
       const testValidator = testValidators[0];
