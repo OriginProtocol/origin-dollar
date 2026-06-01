@@ -1,4 +1,3 @@
 #!/bin/sh
-
 cd contracts
-yarn run lint:js
+pnpm run lint:js

@@ -1,0 +1,198 @@
+// SPDX-License-Identifier: BUSL-1.1
+pragma solidity ^0.8.0;
+
+import { CrossChainV3Helper } from "../../strategies/crosschainV3/CrossChainV3Helper.sol";
+
+/**
+ * @title MockCrossChainV3HelperHarness
+ * @notice TEST-ONLY harness exposing CrossChainV3Helper's internal functions externally
+ *         so the JS test suite can validate the codec.
+ */
+contract MockCrossChainV3HelperHarness {
+    function version() external pure returns (uint32) {
+        return CrossChainV3Helper.ORIGIN_V3_MESSAGE_VERSION;
+    }
+
+    function headerLength() external pure returns (uint256) {
+        return CrossChainV3Helper.HEADER_LENGTH;
+    }
+
+    function wrap(
+        uint32 msgType,
+        uint64 nonce,
+        bytes calldata payload
+    ) external pure returns (bytes memory) {
+        return CrossChainV3Helper.wrap(msgType, nonce, payload);
+    }
+
+    function unwrap(bytes calldata message)
+        external
+        pure
+        returns (
+            uint32,
+            uint32,
+            uint64,
+            bytes memory
+        )
+    {
+        return CrossChainV3Helper.unwrap(message);
+    }
+
+    function getVersion(bytes calldata message) external pure returns (uint32) {
+        return CrossChainV3Helper.getVersion(message);
+    }
+
+    function getMessageType(bytes calldata message)
+        external
+        pure
+        returns (uint32)
+    {
+        return CrossChainV3Helper.getMessageType(message);
+    }
+
+    function getNonce(bytes calldata message) external pure returns (uint64) {
+        return CrossChainV3Helper.getNonce(message);
+    }
+
+    function getPayload(bytes calldata message)
+        external
+        pure
+        returns (bytes memory)
+    {
+        return CrossChainV3Helper.getPayload(message);
+    }
+
+    function encodeNewBalancePayload(uint256 newBalance)
+        external
+        pure
+        returns (bytes memory)
+    {
+        return CrossChainV3Helper.encodeNewBalancePayload(newBalance);
+    }
+
+    function decodeNewBalancePayload(bytes calldata payload)
+        external
+        pure
+        returns (uint256)
+    {
+        return CrossChainV3Helper.decodeNewBalancePayload(payload);
+    }
+
+    function encodeAmountPayload(uint256 amount)
+        external
+        pure
+        returns (bytes memory)
+    {
+        return CrossChainV3Helper.encodeAmountPayload(amount);
+    }
+
+    function decodeAmountPayload(bytes calldata payload)
+        external
+        pure
+        returns (uint256)
+    {
+        return CrossChainV3Helper.decodeAmountPayload(payload);
+    }
+
+    function encodeWithdrawClaimAckPayload(
+        uint256 newBalance,
+        bool success,
+        uint256 amount
+    ) external pure returns (bytes memory) {
+        return
+            CrossChainV3Helper.encodeWithdrawClaimAckPayload(
+                newBalance,
+                success,
+                amount
+            );
+    }
+
+    function decodeWithdrawClaimAckPayload(bytes calldata payload)
+        external
+        pure
+        returns (
+            uint256,
+            bool,
+            uint256
+        )
+    {
+        return CrossChainV3Helper.decodeWithdrawClaimAckPayload(payload);
+    }
+
+    function encodeBalanceCheckRequestPayload(uint256 timestamp)
+        external
+        pure
+        returns (bytes memory)
+    {
+        return CrossChainV3Helper.encodeBalanceCheckRequestPayload(timestamp);
+    }
+
+    function decodeBalanceCheckRequestPayload(bytes calldata payload)
+        external
+        pure
+        returns (uint256)
+    {
+        return CrossChainV3Helper.decodeBalanceCheckRequestPayload(payload);
+    }
+
+    function encodeBalanceCheckResponsePayload(
+        uint256 balance,
+        uint256 timestamp
+    ) external pure returns (bytes memory) {
+        return
+            CrossChainV3Helper.encodeBalanceCheckResponsePayload(
+                balance,
+                timestamp
+            );
+    }
+
+    function decodeBalanceCheckResponsePayload(bytes calldata payload)
+        external
+        pure
+        returns (uint256, uint256)
+    {
+        return CrossChainV3Helper.decodeBalanceCheckResponsePayload(payload);
+    }
+
+    function encodeBridgeUserPayload(
+        bytes32 bridgeId,
+        uint256 amount,
+        address recipient,
+        bytes calldata callData,
+        uint32 callGasLimit
+    ) external pure returns (bytes memory) {
+        CrossChainV3Helper.BridgeUserPayload memory p = CrossChainV3Helper
+            .BridgeUserPayload({
+                bridgeId: bridgeId,
+                amount: amount,
+                recipient: recipient,
+                callData: callData,
+                callGasLimit: callGasLimit
+            });
+        return CrossChainV3Helper.encodeBridgeUserPayload(p);
+    }
+
+    function decodeBridgeUserPayload(bytes calldata payload)
+        external
+        pure
+        returns (
+            bytes32,
+            uint256,
+            address,
+            bytes memory,
+            uint32
+        )
+    {
+        CrossChainV3Helper.BridgeUserPayload memory p = CrossChainV3Helper
+            .decodeBridgeUserPayload(payload);
+        return (p.bridgeId, p.amount, p.recipient, p.callData, p.callGasLimit);
+    }
+
+    function extractUint64(bytes calldata data, uint256 start)
+        external
+        pure
+        returns (uint64)
+    {
+        return CrossChainV3Helper.extractUint64(data, start);
+    }
+}
