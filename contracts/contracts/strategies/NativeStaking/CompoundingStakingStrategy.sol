@@ -315,7 +315,7 @@ contract CompoundingStakingStrategy is
     }
 
     /// @notice Reset the `firstDeposit` flag to false so deposits to unverified validators can be made again.
-    function resetFirstDeposit() external onlyGovernor {
+    function resetFirstDeposit() external onlyGovernorOrStrategist {
         require(firstDeposit, "No first deposit");
 
         firstDeposit = false;

@@ -206,4 +206,44 @@ describe("Unit test: Compounding Staking Strategy", function () {
       stakeValidator({ validator: testValidators[1] })
     ).to.be.revertedWith("Existing first deposit");
   });
+
+  it("allows the governor to reset the first deposit flag", async () => {
+    const { compoundingStakingStrategy, governor } = fixture;
+
+    await depositToStrategy("1");
+    await stakeValidator({ validator: testValidators[0] });
+
+    await expect(
+      compoundingStakingStrategy.connect(governor).resetFirstDeposit()
+    ).to.emit(compoundingStakingStrategy, "FirstDepositReset");
+
+    expect(await compoundingStakingStrategy.firstDeposit()).to.equal(false);
+  });
+
+  it("allows the strategist to reset the first deposit flag", async () => {
+    const { compoundingStakingStrategy, oethVault } = fixture;
+    const strategist = await impersonateAndFund(
+      await oethVault.strategistAddr()
+    );
+
+    await depositToStrategy("1");
+    await stakeValidator({ validator: testValidators[0] });
+
+    await expect(
+      compoundingStakingStrategy.connect(strategist).resetFirstDeposit()
+    ).to.emit(compoundingStakingStrategy, "FirstDepositReset");
+
+    expect(await compoundingStakingStrategy.firstDeposit()).to.equal(false);
+  });
+
+  it("does not allow a regular user to reset the first deposit flag", async () => {
+    const { compoundingStakingStrategy, josh } = fixture;
+
+    await depositToStrategy("1");
+    await stakeValidator({ validator: testValidators[0] });
+
+    await expect(
+      compoundingStakingStrategy.connect(josh).resetFirstDeposit()
+    ).to.be.revertedWith("Caller is not the Strategist or Governor");
+  });
 });
