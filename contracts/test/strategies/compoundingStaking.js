@@ -119,6 +119,74 @@ describe("Unit test: Compounding Staking Strategy", function () {
     expect(await compoundingStakingStrategy.firstDeposit()).to.equal(true);
   });
 
+  it("allows a large 2030 ETH initial deposit to a compounding validator", async () => {
+    const { compoundingStakingStrategy, governor } = fixture;
+    const validator = testValidators[0];
+    const pubKeyHash = hashPubKey(validator.publicKey);
+
+    expect(
+      (await compoundingStakingStrategy.validator(pubKeyHash)).state
+    ).to.equal(0);
+
+    await compoundingStakingStrategy
+      .connect(governor)
+      .setInitialDepositAmount(parseEther("2030"));
+    await depositToStrategy("2030");
+
+    const stakeTx = await stakeValidator({ validator, amount: "2030" });
+    const receipt = await stakeTx.wait();
+    const event = receipt.events.find((event) => event.event === "ETHStaked");
+
+    await expect(stakeTx)
+      .to.emit(compoundingStakingStrategy, "ETHStaked")
+      .withArgs(
+        pubKeyHash,
+        event.args.pendingDepositRoot,
+        validator.publicKey,
+        parseEther("2030")
+      );
+
+    const validatorData = await compoundingStakingStrategy.validator(
+      pubKeyHash
+    );
+    expect(validatorData.state).to.equal(2);
+    expect(await compoundingStakingStrategy.firstDeposit()).to.equal(true);
+  });
+
+  it("allows a 32.25 ETH initial deposit when initialDepositAmount is set to 2040 ETH", async () => {
+    const { compoundingStakingStrategy, governor } = fixture;
+    const validator = testValidators[0];
+    const pubKeyHash = hashPubKey(validator.publicKey);
+
+    expect(
+      (await compoundingStakingStrategy.validator(pubKeyHash)).state
+    ).to.equal(0);
+
+    await compoundingStakingStrategy
+      .connect(governor)
+      .setInitialDepositAmount(parseEther("2040"));
+    await depositToStrategy("32.25");
+
+    const stakeTx = await stakeValidator({ validator, amount: "32.25" });
+    const receipt = await stakeTx.wait();
+    const event = receipt.events.find((event) => event.event === "ETHStaked");
+
+    await expect(stakeTx)
+      .to.emit(compoundingStakingStrategy, "ETHStaked")
+      .withArgs(
+        pubKeyHash,
+        event.args.pendingDepositRoot,
+        validator.publicKey,
+        parseEther("32.25")
+      );
+
+    const validatorData = await compoundingStakingStrategy.validator(
+      pubKeyHash
+    );
+    expect(validatorData.state).to.equal(2);
+    expect(await compoundingStakingStrategy.firstDeposit()).to.equal(true);
+  });
+
   it("does not allow a follow-up deposit before the validator is verified or active", async () => {
     const validator = testValidators[0];
 
