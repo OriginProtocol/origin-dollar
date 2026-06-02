@@ -3,8 +3,9 @@ const { DirectKmsTransactionSigner } = require("@lastdotnet/purrikey");
 const { Defender } = require("@openzeppelin/defender-sdk");
 const log = require("./logger")("utils:signers");
 
-// origin-relayer-production-evm
-const DEFAULT_KMS_RELAYER_ID = "mrk-248128595151466bb7f7b9a56501a98f";
+// New-org production EVM signing key (account 114563866192,
+// alias talos-prod-evm-signer). Overridden by KMS_RELAYER_ID in prod.
+const DEFAULT_KMS_RELAYER_ID = "f153abb3-12be-4fa4-be0d-bceeb796ff3e";
 const AWS_KMS_REGION = "us-east-1";
 
 // Task specific relayer overrides.
@@ -43,9 +44,7 @@ const resolveKmsRelayerId = (context = signerContext) => {
   ) {
     return TASK_KMS_RELAYER_ID_OVERRIDES[context.taskName];
   }
-  // Transition shim: prefer the env-injected key id. The hardcoded default
-  // is the old-org key, kept only until the new-org cutover completes
-  // (see talos Claude.Cleanup.md).
+  // Prefer the env-injected key id; the default is the new-org production key.
   return process.env.KMS_RELAYER_ID || DEFAULT_KMS_RELAYER_ID;
 };
 
