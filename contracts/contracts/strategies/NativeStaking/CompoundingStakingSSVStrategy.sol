@@ -14,8 +14,8 @@ contract CompoundingStakingSSVStrategy is CompoundingStakingStrategy {
     // For future use
     uint256[50] private __gap;
 
-    error CannotRemoveSsvValidator();
-    error NotRegisteredOrVerified();
+    error CannotRemoveSsvValidator(); // 0x2c45bd75
+    error NotRegisteredOrVerified(); // 0x99088a6b
 
     event SSVValidatorRemoved(bytes32 indexed pubKeyHash, uint64[] operatorIds);
 

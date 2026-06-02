@@ -255,6 +255,13 @@ contract CompoundingStakingStrategy is
         uint256 ethBalance
     );
 
+    error NotRegistratorOrGovernor(); // 0xbf454a2d
+    error NotRegistrator(); // 0x929df920
+    error NoFirstDeposit(); // 0x30e60c37
+    error InvalidFirstDepositAmount(); // 0x29829bdd
+    error UnsupportedAsset(); // 0x24a01144
+    error UnsupportedFunction(); // 0xea1c702e
+
     /// @dev Throws if called by any account other than the Registrator
     modifier onlyRegistrator() {
         _onlyRegistrator();
@@ -263,15 +270,16 @@ contract CompoundingStakingStrategy is
 
     /// @dev internal function used to reduce contract size
     function _onlyRegistrator() internal view {
-        require(msg.sender == validatorRegistrator, "Not Registrator");
+        if (msg.sender != validatorRegistrator) {
+            revert NotRegistrator();
+        }
     }
 
     /// @dev Throws if called by any account other than the Registrator or Governor
     modifier onlyRegistratorOrGovernor() {
-        require(
-            msg.sender == validatorRegistrator || isGovernor(),
-            "Not Registrator or Governor"
-        );
+        if (msg.sender != validatorRegistrator && !isGovernor()) {
+            revert NotRegistratorOrGovernor();
+        }
         _;
     }
 
@@ -316,7 +324,9 @@ contract CompoundingStakingStrategy is
 
     /// @notice Reset the `firstDeposit` flag to false so deposits to unverified validators can be made again.
     function resetFirstDeposit() external onlyGovernorOrStrategist {
-        require(firstDeposit, "No first deposit");
+        if (!firstDeposit) {
+            revert NoFirstDeposit();
+        }
 
         firstDeposit = false;
 
@@ -472,10 +482,9 @@ contract CompoundingStakingStrategy is
         // and the Governor calls `resetFirstDeposit` to set `firstDeposit` to false.
         require(!firstDeposit, "Existing first deposit");
         // Limits the amount of ETH that can be at risk from a front-running deposit attack.
-        require(
-            depositAmountWei <= initialDepositAmountWei,
-            "Invalid first deposit amount"
-        );
+        if (depositAmountWei > initialDepositAmountWei) {
+            revert InvalidFirstDepositAmount();
+        }
         // Limits the number of validator balance proofs to verifyBalances
         require(
             verifiedValidators.length + 1 <= MAX_VERIFIED_VALIDATORS,
@@ -1279,7 +1288,9 @@ contract CompoundingStakingStrategy is
         onlyVault
         nonReentrant
     {
-        require(_asset == WETH, "Unsupported asset");
+        if (_asset != WETH) {
+            revert UnsupportedAsset();
+        }
         require(_amount > 0, "Must deposit something");
 
         // Account for the new WETH
@@ -1312,7 +1323,9 @@ contract CompoundingStakingStrategy is
         address _asset,
         uint256 _amount
     ) external override nonReentrant {
-        require(_asset == WETH, "Unsupported asset");
+        if (_asset != WETH) {
+            revert UnsupportedAsset();
+        }
         require(
             msg.sender == vaultAddress || msg.sender == validatorRegistrator,
             "Caller not Vault or Registrator"
@@ -1364,7 +1377,9 @@ contract CompoundingStakingStrategy is
         override
         returns (uint256 balance)
     {
-        require(_asset == WETH, "Unsupported asset");
+        if (_asset != WETH) {
+            revert UnsupportedAsset();
+        }
 
         // Load the last verified balance from the storage
         // and add to the latest WETH balance of this strategy.
@@ -1391,12 +1406,12 @@ contract CompoundingStakingStrategy is
 
     /// @notice is not supported for this strategy as there is no platform token.
     function setPTokenAddress(address, address) external pure override {
-        revert("Unsupported function");
+        revert UnsupportedFunction();
     }
 
     /// @notice is not supported for this strategy as there is no platform token.
     function removePToken(uint256) external pure override {
-        revert("Unsupported function");
+        revert UnsupportedFunction();
     }
 
     /// @dev This strategy does not use a platform token like the old Aave and Compound strategies.
@@ -1410,6 +1425,6 @@ contract CompoundingStakingStrategy is
     /// Besides, ETH rewards are not sent to the Dripper any more. The Vault can now regulate
     /// the increase in assets.
     function _collectRewardTokens() internal pure override {
-        revert("Unsupported function");
+        revert UnsupportedFunction();
     }
 }

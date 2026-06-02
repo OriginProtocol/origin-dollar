@@ -234,7 +234,9 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
       const collectRewards = compoundingStakingSSVStrategy
         .connect(governor)
         .collectRewardTokens();
-      await expect(collectRewards).to.revertedWith("Unsupported function");
+      await expect(collectRewards).to.be.revertedWithCustomError(
+        "UnsupportedFunction()"
+      );
     });
     it("Should not set platform token", async () => {
       const { compoundingStakingSSVStrategy, governor, weth } = fixture;
@@ -243,7 +245,7 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
         .connect(governor)
         .setPTokenAddress(weth.address, weth.address);
 
-      await expect(tx).to.revertedWith("Unsupported function");
+      await expect(tx).to.be.revertedWithCustomError("UnsupportedFunction()");
     });
     it("Should not remove platform token", async () => {
       const { compoundingStakingSSVStrategy, governor } = fixture;
@@ -252,24 +254,21 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
         .connect(governor)
         .removePToken(0);
 
-      await expect(tx).to.revertedWith("Unsupported function");
+      await expect(tx).to.be.revertedWithCustomError("UnsupportedFunction()");
     });
-    it("Non governor should not be able to reset the first deposit flag", async () => {
-      const { compoundingStakingSSVStrategy, strategist, josh } = fixture;
+    it("Regular user should not be able to reset the first deposit flag", async () => {
+      const { compoundingStakingSSVStrategy, josh } = fixture;
 
-      const signers = [strategist, josh];
-      for (const signer of signers) {
-        await expect(
-          compoundingStakingSSVStrategy.connect(signer).resetFirstDeposit()
-        ).to.be.revertedWith("Caller is not the Governor");
-      }
+      await expect(
+        compoundingStakingSSVStrategy.connect(josh).resetFirstDeposit()
+      ).to.be.revertedWith("Caller is not the Strategist or Governor");
     });
     it("Should revert reset of first deposit if there is no first deposit", async () => {
       const { compoundingStakingSSVStrategy, governor } = fixture;
 
       await expect(
         compoundingStakingSSVStrategy.connect(governor).resetFirstDeposit()
-      ).to.be.revertedWith("No first deposit");
+      ).to.be.revertedWithCustomError("NoFirstDeposit()");
     });
     it("Registrator or governor should be the only ones to pause the strategy", async () => {
       const {
@@ -286,7 +285,7 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
 
       await expect(
         compoundingStakingSSVStrategy.connect(josh).pause()
-      ).to.be.revertedWith("Not Registrator or Governor");
+      ).to.be.revertedWithCustomError("NotRegistratorOrGovernor()");
     });
   });
 
@@ -999,7 +998,9 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
           parseUnits("32", 9)
         );
 
-      await expect(stakeTx).to.be.revertedWith("Invalid first deposit amount");
+      await expect(stakeTx).to.be.revertedWithCustomError(
+        "InvalidFirstDepositAmount()"
+      );
     });
 
     it("Should revert registerSsvValidator when contract paused", async () => {
@@ -2028,7 +2029,7 @@ describe("Unit test: Compounding SSV Staking Strategy", function () {
         compoundingStakingSSVStrategy
           .connect(sVault)
           .withdraw(josh.address, josh.address, parseEther("10"))
-      ).to.be.revertedWith("Unsupported asset");
+      ).to.be.revertedWithCustomError("UnsupportedAsset()");
     });
 
     it("Should revert when withdrawing 0 ETH from the strategy", async () => {
