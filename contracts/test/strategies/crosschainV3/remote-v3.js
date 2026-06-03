@@ -39,7 +39,7 @@ const encodeBridgeUserPayload = ({
 describe("Unit: RemoteV3Strategy", function () {
   let deployer, governor, alice;
   let bridgeAsset, oToken, woToken, ethVault, remote;
-  let outboundAdapter, receiverAdapter;
+  let outboundAdapter, inboundAdapter;
 
   beforeEach(async () => {
     [deployer, governor, alice] = await ethers.getSigners();
@@ -113,12 +113,12 @@ describe("Unit: RemoteV3Strategy", function () {
     // Adapters
     const AdapterFactory = await ethers.getContractFactory("MockBridgeAdapter");
     outboundAdapter = await AdapterFactory.deploy();
-    receiverAdapter = await AdapterFactory.deploy();
+    inboundAdapter = await AdapterFactory.deploy();
     await outboundAdapter.setSender(remote.address);
-    await receiverAdapter.setPeer(remote.address);
+    await inboundAdapter.setPeer(remote.address);
 
     await remote.connect(governor).setOutboundAdapter(outboundAdapter.address);
-    await remote.connect(governor).setReceiverAdapter(receiverAdapter.address);
+    await remote.connect(governor).setInboundAdapter(inboundAdapter.address);
   });
 
   describe("initialisation", () => {
@@ -188,10 +188,10 @@ describe("Unit: RemoteV3Strategy", function () {
       // bridgeAsset and approves the adapter to pull it as if it had arrived from
       // the source chain.
       await bridgeAsset.mintTo(deployer.address, ONE_K);
-      await bridgeAsset.approve(receiverAdapter.address, ONE_K);
+      await bridgeAsset.approve(inboundAdapter.address, ONE_K);
 
       const envelope = encodePackedEnvelope(MSG.YIELD_DEPOSIT, 7, "0x");
-      await receiverAdapter.sendTokensAndMessage(
+      await inboundAdapter.sendTokensAndMessage(
         bridgeAsset.address,
         ONE_K,
         envelope
@@ -217,9 +217,9 @@ describe("Unit: RemoteV3Strategy", function () {
 
     it("rejects a non-monotonic yield nonce on a second inbound deposit", async () => {
       await bridgeAsset.mintTo(deployer.address, ONE_K.mul(2));
-      await bridgeAsset.approve(receiverAdapter.address, ONE_K.mul(2));
+      await bridgeAsset.approve(inboundAdapter.address, ONE_K.mul(2));
 
-      await receiverAdapter.sendTokensAndMessage(
+      await inboundAdapter.sendTokensAndMessage(
         bridgeAsset.address,
         ONE_K,
         encodePackedEnvelope(MSG.YIELD_DEPOSIT, 5, "0x")
@@ -227,7 +227,7 @@ describe("Unit: RemoteV3Strategy", function () {
 
       // Reusing nonce 5 or going backward must be rejected.
       await expect(
-        receiverAdapter.sendTokensAndMessage(
+        inboundAdapter.sendTokensAndMessage(
           bridgeAsset.address,
           ONE_K,
           encodePackedEnvelope(MSG.YIELD_DEPOSIT, 5, "0x")
@@ -235,7 +235,7 @@ describe("Unit: RemoteV3Strategy", function () {
       ).to.be.revertedWith("V3: nonce not monotonic");
 
       await expect(
-        receiverAdapter.sendTokensAndMessage(
+        inboundAdapter.sendTokensAndMessage(
           bridgeAsset.address,
           ONE_K,
           encodePackedEnvelope(MSG.YIELD_DEPOSIT, 4, "0x")
@@ -305,7 +305,7 @@ describe("Unit: RemoteV3Strategy", function () {
       });
       const envelope = encodePackedEnvelope(MSG.BRIDGE_OUT, 0, payload);
 
-      await expect(receiverAdapter.sendMessage(envelope))
+      await expect(inboundAdapter.sendMessage(envelope))
         .to.emit(remote, "BridgeOutDelivered")
         .withArgs(bridgeId, alice.address, AMT);
 
@@ -326,8 +326,8 @@ describe("Unit: RemoteV3Strategy", function () {
         recipient: alice.address,
       });
       const envelope = encodePackedEnvelope(MSG.BRIDGE_OUT, 0, payload);
-      await receiverAdapter.sendMessage(envelope);
-      await expect(receiverAdapter.sendMessage(envelope)).to.be.revertedWith(
+      await inboundAdapter.sendMessage(envelope);
+      await expect(inboundAdapter.sendMessage(envelope)).to.be.revertedWith(
         "Remote: bridgeId replayed"
       );
     });
@@ -341,7 +341,7 @@ describe("Unit: RemoteV3Strategy", function () {
         recipient: alice.address,
       });
       const envelope = encodePackedEnvelope(MSG.BRIDGE_OUT, 0, payload);
-      await expect(receiverAdapter.sendMessage(envelope)).to.be.revertedWith(
+      await expect(inboundAdapter.sendMessage(envelope)).to.be.revertedWith(
         "Remote: insufficient remote wOToken"
       );
     });
@@ -370,7 +370,7 @@ describe("Unit: RemoteV3Strategy", function () {
       });
       const envelope = encodePackedEnvelope(MSG.BRIDGE_OUT, 0, payload);
 
-      await expect(receiverAdapter.sendMessage(envelope)).to.emit(
+      await expect(inboundAdapter.sendMessage(envelope)).to.emit(
         remote,
         "BridgeOutDeliveredWithCall"
       );
@@ -401,7 +401,7 @@ describe("Unit: RemoteV3Strategy", function () {
         callGasLimit: 200_000,
       });
       const envelope = encodePackedEnvelope(MSG.BRIDGE_OUT, 0, payload);
-      await expect(receiverAdapter.sendMessage(envelope)).to.emit(
+      await expect(inboundAdapter.sendMessage(envelope)).to.emit(
         remote,
         "BridgeOutCallFailed"
       );

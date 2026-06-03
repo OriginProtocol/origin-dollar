@@ -8,10 +8,10 @@ const { ethers } = require("hardhat");
  *   - adapterME ("Master → Remote") : sender = master, peer = remote
  *   - adapterRM ("Remote → Master") : sender = remote, peer = master
  *
- * remote.outboundAdapter = adapterRM ; remote.receiverAdapter = adapterME
- * master.outboundAdapter = adapterME ; master.receiverAdapter = adapterRM
+ * remote.outboundAdapter = adapterRM ; remote.inboundAdapter = adapterME
+ * master.outboundAdapter = adapterME ; master.inboundAdapter = adapterRM
  *
- * That way, when Master sends, adapterME forwards to Remote, and Remote's onlyReceiverAdapter
+ * That way, when Master sends, adapterME forwards to Remote, and Remote's onlyInboundAdapter
  * gate accepts the call. When Remote replies, adapterRM forwards to Master, and Master's gate
  * accepts.
  */
@@ -132,9 +132,9 @@ describe("Unit: V3 Master+Remote loopback", function () {
     await adapterRM.setPeer(master.address);
 
     await master.connect(governor).setOutboundAdapter(adapterME.address);
-    await master.connect(governor).setReceiverAdapter(adapterRM.address);
+    await master.connect(governor).setInboundAdapter(adapterRM.address);
     await remote.connect(governor).setOutboundAdapter(adapterRM.address);
-    await remote.connect(governor).setReceiverAdapter(adapterME.address);
+    await remote.connect(governor).setInboundAdapter(adapterME.address);
   });
 
   it("deposit flows Master → Remote and the ack updates Master in one round-trip", async () => {

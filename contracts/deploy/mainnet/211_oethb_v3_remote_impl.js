@@ -94,12 +94,12 @@ module.exports = deploymentWithGovernanceProposal(
     );
     console.log(`SuperbridgeCanonicalOutboundAdapter: ${dSuperOut.address}`);
 
-    // Inbound (B→E, atomic): CCIPReceiverAdapter
-    await deployWithConfirmation("CCIPReceiverAdapter", [
+    // Inbound (B→E, atomic): CCIPInboundAdapter
+    await deployWithConfirmation("CCIPInboundAdapter", [
       addresses.mainnet.ccipRouterMainnet,
     ]);
-    const dCCIPRx = await ethers.getContract("CCIPReceiverAdapter");
-    console.log(`CCIPReceiverAdapter: ${dCCIPRx.address}`);
+    const dCCIPRx = await ethers.getContract("CCIPInboundAdapter");
+    console.log(`CCIPInboundAdapter: ${dCCIPRx.address}`);
 
     // --- 4. Adapter configuration ---
     // Remote is the only authorised sender on the outbound adapter for the Base leg.
@@ -130,9 +130,8 @@ module.exports = deploymentWithGovernanceProposal(
         .mapRemoteToken(addresses.mainnet.WETH, addresses.base.WETH)
     );
 
-    await withConfirmation(
-      dCCIPRx.connect(sDeployer).setStrategy(remoteProxyAddress)
-    );
+    // Peer route is registered below in the cross-chain peer wiring block once the
+    // Base artifact is available.
 
     // --- 5. Transfer adapter governance to mainnet Timelock ---
     await withConfirmation(
@@ -152,7 +151,7 @@ module.exports = deploymentWithGovernanceProposal(
     // Cross-chain peer wiring (if Base-side deploys have already run).
     const baseSuperRx = readDeploymentAddress(
       "base",
-      "SuperbridgeCCIPReceiverAdapter"
+      "SuperbridgeCCIPInboundAdapter"
     );
     const baseCCIPOut = readDeploymentAddress("base", "CCIPOutboundAdapter");
 
@@ -168,8 +167,8 @@ module.exports = deploymentWithGovernanceProposal(
       });
       peerWiringActions.push({
         contract: dCCIPRx,
-        signature: "setPeer(address,uint64)",
-        args: [baseCCIPOut, CCIP_CHAIN_SELECTOR_BASE],
+        signature: "registerPeer(uint64,address,address)",
+        args: [CCIP_CHAIN_SELECTOR_BASE, baseCCIPOut, remoteProxyAddress],
       });
     } else {
       console.log(
@@ -199,7 +198,7 @@ module.exports = deploymentWithGovernanceProposal(
         },
         {
           contract: cRemote,
-          signature: "setReceiverAdapter(address)",
+          signature: "setInboundAdapter(address)",
           args: [dCCIPRx.address],
         },
         // safeApproveAllTokens primes bridgeAsset→oTokenVault + oToken→woToken approvals.

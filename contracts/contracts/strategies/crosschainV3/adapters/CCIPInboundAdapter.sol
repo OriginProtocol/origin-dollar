@@ -8,19 +8,20 @@ import { Client } from "@chainlink/contracts-ccip/src/v0.8/ccip/libraries/Client
 import { IAny2EVMMessageReceiver } from "@chainlink/contracts-ccip/src/v0.8/ccip/interfaces/IAny2EVMMessageReceiver.sol";
 import { IERC165 } from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 
-import { AbstractReceiverAdapter } from "./AbstractReceiverAdapter.sol";
+import { AbstractInboundAdapter } from "./AbstractInboundAdapter.sol";
 import { CrossChainV3Helper } from "../CrossChainV3Helper.sol";
 
 /**
- * @title CCIPReceiverAdapter
+ * @title CCIPInboundAdapter
  * @author Origin Protocol Inc
  *
  * @notice Atomic inbound adapter over Chainlink CCIP. Implements
  *         `IAny2EVMMessageReceiver`; CCIP Router calls into `ccipReceive` after delivery.
- *         We verify source + sender, unwrap the envelope, and forward to the strategy.
+ *         We resolve the destination strategy from the (sourceChainSelector, sender) pair,
+ *         unwrap the envelope, and forward.
  */
-contract CCIPReceiverAdapter is
-    AbstractReceiverAdapter,
+contract CCIPInboundAdapter is
+    AbstractInboundAdapter,
     IAny2EVMMessageReceiver,
     IERC165
 {
@@ -28,12 +29,12 @@ contract CCIPReceiverAdapter is
     address public immutable ccipRouter;
 
     constructor(address _ccipRouter) {
-        require(_ccipRouter != address(0), "CCIPRx: zero router");
+        require(_ccipRouter != address(0), "CCIPIn: zero router");
         ccipRouter = _ccipRouter;
     }
 
     modifier onlyRouter() {
-        require(msg.sender == ccipRouter, "CCIPRx: not router");
+        require(msg.sender == ccipRouter, "CCIPIn: not router");
         _;
     }
 
@@ -55,12 +56,9 @@ contract CCIPReceiverAdapter is
         override
         onlyRouter
     {
-        require(
-            message.sourceChainSelector == peerChainSelector,
-            "CCIPRx: bad source chain"
-        );
         address sender = abi.decode(message.sender, (address));
-        require(sender == peerOutbound, "CCIPRx: bad sender");
+        address strategy = strategyFor[message.sourceChainSelector][sender];
+        require(strategy != address(0), "CCIPIn: unknown peer");
 
         (
             uint32 version,
@@ -70,7 +68,7 @@ contract CCIPReceiverAdapter is
         ) = CrossChainV3Helper.unwrap(message.data);
         require(
             version == CrossChainV3Helper.ORIGIN_V3_MESSAGE_VERSION,
-            "CCIPRx: bad version"
+            "CCIPIn: bad version"
         );
 
         // CCIP delivers any token transfers to this adapter alongside `ccipReceive`.
@@ -82,6 +80,6 @@ contract CCIPReceiverAdapter is
             amount = message.destTokenAmounts[0].amount;
         }
 
-        _deliverAtomic(nonce, amount, uint8(msgType), payload, token);
+        _deliverAtomic(strategy, nonce, amount, uint8(msgType), payload, token);
     }
 }

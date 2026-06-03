@@ -41,7 +41,7 @@ describe("ForkTest: MasterV3Strategy on Base (real OETHb vault wiring)", functio
   let fixture;
   let master;
   let oethb;
-  let receiverAdapter;
+  let inboundAdapter;
   let woethStrategyV2;
 
   beforeEach(async () => {
@@ -55,9 +55,9 @@ describe("ForkTest: MasterV3Strategy on Base (real OETHb vault wiring)", functio
     master = await ethers.getContractAt("MasterV3Strategy", masterAddr);
     oethb = fixture.oethb;
 
-    receiverAdapter = await ethers.getContractAt(
-      "SuperbridgeCCIPReceiverAdapter",
-      await master.receiverAdapter()
+    inboundAdapter = await ethers.getContractAt(
+      "SuperbridgeCCIPInboundAdapter",
+      await master.inboundAdapter()
     );
   });
 
@@ -69,8 +69,8 @@ describe("ForkTest: MasterV3Strategy on Base (real OETHb vault wiring)", functio
     expect((await master.outboundAdapter()).toLowerCase()).to.match(
       /^0x[0-9a-f]+$/
     );
-    expect((await master.receiverAdapter()).toLowerCase()).to.equal(
-      receiverAdapter.address.toLowerCase()
+    expect((await master.inboundAdapter()).toLowerCase()).to.equal(
+      inboundAdapter.address.toLowerCase()
     );
   });
 
@@ -82,7 +82,7 @@ describe("ForkTest: MasterV3Strategy on Base (real OETHb vault wiring)", functio
     const totalSupplyBefore = await oethb.totalSupply();
 
     // Impersonate the receiver adapter (only address allowed to call receiveFromBridge).
-    const sAdapter = await impersonateAndFund(receiverAdapter.address);
+    const sAdapter = await impersonateAndFund(inboundAdapter.address);
 
     const bridgeId = ethers.utils.id("master-fork-1");
     const payload = encodeBridgeUserPayload({
@@ -115,7 +115,7 @@ describe("ForkTest: MasterV3Strategy on Base (real OETHb vault wiring)", functio
     await master.connect(sTimelock).setOutboundAdapter(mockOut.address);
 
     // First seed Master's remoteStrategyBalance + alice's OETHb via a BRIDGE_IN.
-    const sAdapter = await impersonateAndFund(receiverAdapter.address);
+    const sAdapter = await impersonateAndFund(inboundAdapter.address);
     const seedAmount = ethers.utils.parseEther("500");
     const aliceAddr = fixture.governor.address;
 
@@ -148,7 +148,7 @@ describe("ForkTest: MasterV3Strategy on Base (real OETHb vault wiring)", functio
   });
 
   it("rejects BRIDGE_IN replay using the same bridgeId", async () => {
-    const sAdapter = await impersonateAndFund(receiverAdapter.address);
+    const sAdapter = await impersonateAndFund(inboundAdapter.address);
     const bridgeId = ethers.utils.id("master-fork-replay");
     const payload = encodeBridgeUserPayload({
       bridgeId,

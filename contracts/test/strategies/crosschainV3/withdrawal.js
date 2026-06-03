@@ -3,7 +3,7 @@ const { ethers } = require("hardhat");
 const { time } = require("@nomicfoundation/hardhat-network-helpers");
 
 /**
- * End-to-end exercise of the Option 1 withdrawal flow with idempotent claim, run on the
+ * End-to-end exercise of the cross-chain withdrawal flow with idempotent claim, run on the
  * paired Master+Remote loopback.
  *
  * Flow under test:
@@ -23,7 +23,7 @@ const { time } = require("@nomicfoundation/hardhat-network-helpers");
  *              double-claim idempotency.
  */
 
-describe("Unit: V3 Withdrawal Option 1 + idempotent claim", function () {
+describe("Unit: V3 Withdrawal", function () {
   let deployer, governor, alice;
   let bridgeAsset, oTokenL2, mockL2Vault;
   let oTokenEth, woTokenEth, ethVault;
@@ -142,9 +142,9 @@ describe("Unit: V3 Withdrawal Option 1 + idempotent claim", function () {
     await adapterRM.setPeer(master.address);
 
     await master.connect(governor).setOutboundAdapter(adapterME.address);
-    await master.connect(governor).setReceiverAdapter(adapterRM.address);
+    await master.connect(governor).setInboundAdapter(adapterRM.address);
     await remote.connect(governor).setOutboundAdapter(adapterRM.address);
-    await remote.connect(governor).setReceiverAdapter(adapterME.address);
+    await remote.connect(governor).setInboundAdapter(adapterME.address);
 
     // Seed Remote with SEED via a deposit round-trip so withdrawals have something to draw on.
     await bridgeAsset.mintTo(master.address, SEED);

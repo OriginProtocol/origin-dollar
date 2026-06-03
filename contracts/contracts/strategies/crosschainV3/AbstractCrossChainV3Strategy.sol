@@ -27,7 +27,7 @@ abstract contract AbstractCrossChainV3Strategy is Governable, IBridgeReceiver {
     // --- Events -------------------------------------------------------------
 
     event OutboundAdapterUpdated(address oldAdapter, address newAdapter);
-    event ReceiverAdapterUpdated(address oldAdapter, address newAdapter);
+    event InboundAdapterUpdated(address oldAdapter, address newAdapter);
     event OperatorUpdated(address oldOperator, address newOperator);
     event YieldNonceAdvanced(uint64 nonce);
     event YieldNonceProcessed(uint64 nonce);
@@ -38,10 +38,10 @@ abstract contract AbstractCrossChainV3Strategy is Governable, IBridgeReceiver {
     address public outboundAdapter;
 
     /// @notice Adapter authorised to call `receiveFromBridge` on this strategy.
-    ///         For atomic bridges the outbound and receiver adapters can be the same address.
-    ///         For split-delivery bridges this is the receiver adapter that runs
+    ///         For atomic bridges the outbound and inbound adapters can be the same address.
+    ///         For split-delivery bridges this is the inbound adapter that runs
     ///         store-and-process.
-    address public receiverAdapter;
+    address public inboundAdapter;
 
     /// @notice Account allowed to drive periodic, permissioned operations
     ///         (balance check, settlement, claim trigger). Set by governor.
@@ -59,10 +59,10 @@ abstract contract AbstractCrossChainV3Strategy is Governable, IBridgeReceiver {
 
     // --- Modifiers ----------------------------------------------------------
 
-    modifier onlyReceiverAdapter() {
+    modifier onlyInboundAdapter() {
         require(
-            receiverAdapter != address(0) && msg.sender == receiverAdapter,
-            "V3: only receiver adapter"
+            inboundAdapter != address(0) && msg.sender == inboundAdapter,
+            "V3: only inbound adapter"
         );
         _;
     }
@@ -85,12 +85,9 @@ abstract contract AbstractCrossChainV3Strategy is Governable, IBridgeReceiver {
         outboundAdapter = _outboundAdapter;
     }
 
-    function setReceiverAdapter(address _receiverAdapter)
-        external
-        onlyGovernor
-    {
-        emit ReceiverAdapterUpdated(receiverAdapter, _receiverAdapter);
-        receiverAdapter = _receiverAdapter;
+    function setInboundAdapter(address _inboundAdapter) external onlyGovernor {
+        emit InboundAdapterUpdated(inboundAdapter, _inboundAdapter);
+        inboundAdapter = _inboundAdapter;
     }
 
     function setOperator(address _operator) external onlyGovernor {
@@ -156,7 +153,7 @@ abstract contract AbstractCrossChainV3Strategy is Governable, IBridgeReceiver {
         uint256 amount,
         uint8 messageType,
         bytes calldata payload
-    ) external override onlyReceiverAdapter {
+    ) external override onlyInboundAdapter {
         _handleBridgeMessage(nonce, amount, messageType, payload);
     }
 

@@ -45,7 +45,7 @@ const encodeNewBalancePayload = (newBalance) =>
 describe("Unit: MasterV3Strategy", function () {
   let deployer, governor, vaultSigner, alice, bob;
   let bridgeAsset, oToken, mockVault, master;
-  let outboundAdapter, receiverAdapter;
+  let outboundAdapter, inboundAdapter;
 
   beforeEach(async () => {
     [deployer, governor, vaultSigner, alice, bob] = await ethers.getSigners();
@@ -98,18 +98,18 @@ describe("Unit: MasterV3Strategy", function () {
     // --- Adapters ---
     const AdapterFactory = await ethers.getContractFactory("MockBridgeAdapter");
     outboundAdapter = await AdapterFactory.deploy();
-    receiverAdapter = await AdapterFactory.deploy();
+    inboundAdapter = await AdapterFactory.deploy();
 
     // Master is the sole authorised sender on its outbound adapter.
     await outboundAdapter.setSender(master.address);
     // Outbound has no peer in PR 2 tests — Master sends, we inspect lastMessageSent.
 
     // Receiver adapter forwards inbound messages to Master.
-    await receiverAdapter.setPeer(master.address);
+    await inboundAdapter.setPeer(master.address);
     // sender == 0 means anyone can drive the receiver in tests.
 
     await master.connect(governor).setOutboundAdapter(outboundAdapter.address);
-    await master.connect(governor).setReceiverAdapter(receiverAdapter.address);
+    await master.connect(governor).setInboundAdapter(inboundAdapter.address);
   });
 
   describe("initialisation & roles", () => {
@@ -129,19 +129,19 @@ describe("Unit: MasterV3Strategy", function () {
         master.connect(alice).setOutboundAdapter(alice.address)
       ).to.be.revertedWith("Caller is not the Governor");
       await expect(
-        master.connect(alice).setReceiverAdapter(alice.address)
+        master.connect(alice).setInboundAdapter(alice.address)
       ).to.be.revertedWith("Caller is not the Governor");
       await expect(
         master.connect(alice).setOperator(alice.address)
       ).to.be.revertedWith("Caller is not the Governor");
     });
 
-    it("only receiverAdapter can call receiveFromBridge", async () => {
+    it("only inboundAdapter can call receiveFromBridge", async () => {
       await expect(
         master
           .connect(alice)
           .receiveFromBridge(1, 0, MSG.YIELD_DEPOSIT_ACK, "0x")
-      ).to.be.revertedWith("V3: only receiver adapter");
+      ).to.be.revertedWith("V3: only inbound adapter");
     });
   });
 
@@ -203,14 +203,14 @@ describe("Unit: MasterV3Strategy", function () {
         1,
         encodeNewBalancePayload(newBalance)
       );
-      await receiverAdapter.sendMessage(ackEnvelope);
+      await inboundAdapter.sendMessage(ackEnvelope);
 
       expect(await master.pendingAmount()).to.equal(0);
       expect(await master.remoteStrategyBalance()).to.equal(newBalance);
       expect(await master.isYieldOpInFlight()).to.equal(false);
 
       // Replaying the same ack must fail (nonce already processed).
-      await expect(receiverAdapter.sendMessage(ackEnvelope)).to.be.revertedWith(
+      await expect(inboundAdapter.sendMessage(ackEnvelope)).to.be.revertedWith(
         "V3: nonce already processed"
       );
     });
@@ -224,7 +224,7 @@ describe("Unit: MasterV3Strategy", function () {
         99,
         encodeNewBalancePayload(0)
       );
-      await expect(receiverAdapter.sendMessage(bogus)).to.be.revertedWith(
+      await expect(inboundAdapter.sendMessage(bogus)).to.be.revertedWith(
         "V3: stale or unknown nonce"
       );
     });
@@ -244,7 +244,7 @@ describe("Unit: MasterV3Strategy", function () {
         1,
         encodeNewBalancePayload(seed)
       );
-      await receiverAdapter.sendMessage(ack);
+      await inboundAdapter.sendMessage(ack);
     });
 
     const mintAndApprove = async (signer, amount) => {
@@ -256,7 +256,7 @@ describe("Unit: MasterV3Strategy", function () {
         recipient: signer.address,
       });
       const envelope = encodePackedEnvelope(MSG.BRIDGE_IN, 0, payload);
-      await receiverAdapter.sendMessage(envelope);
+      await inboundAdapter.sendMessage(envelope);
       await oToken.connect(signer).approve(master.address, amount);
     };
 
@@ -344,7 +344,7 @@ describe("Unit: MasterV3Strategy", function () {
       });
       const envelope = encodePackedEnvelope(MSG.BRIDGE_IN, 0, payload);
 
-      await expect(receiverAdapter.sendMessage(envelope))
+      await expect(inboundAdapter.sendMessage(envelope))
         .to.emit(master, "BridgeInDelivered")
         .withArgs(bridgeId, alice.address, AMT);
 
@@ -361,8 +361,8 @@ describe("Unit: MasterV3Strategy", function () {
         recipient: alice.address,
       });
       const envelope = encodePackedEnvelope(MSG.BRIDGE_IN, 0, payload);
-      await receiverAdapter.sendMessage(envelope);
-      await expect(receiverAdapter.sendMessage(envelope)).to.be.revertedWith(
+      await inboundAdapter.sendMessage(envelope);
+      await expect(inboundAdapter.sendMessage(envelope)).to.be.revertedWith(
         "Master: bridgeId replayed"
       );
     });
@@ -390,7 +390,7 @@ describe("Unit: MasterV3Strategy", function () {
       });
       const envelope = encodePackedEnvelope(MSG.BRIDGE_IN, 0, payload);
 
-      await expect(receiverAdapter.sendMessage(envelope)).to.emit(
+      await expect(inboundAdapter.sendMessage(envelope)).to.emit(
         master,
         "BridgeInDeliveredWithCall"
       );
@@ -424,7 +424,7 @@ describe("Unit: MasterV3Strategy", function () {
       });
       const envelope = encodePackedEnvelope(MSG.BRIDGE_IN, 0, payload);
 
-      await expect(receiverAdapter.sendMessage(envelope)).to.emit(
+      await expect(inboundAdapter.sendMessage(envelope)).to.emit(
         master,
         "BridgeInCallFailed"
       );
@@ -445,7 +445,7 @@ describe("Unit: MasterV3Strategy", function () {
       });
       const envelope = encodePackedEnvelope(MSG.BRIDGE_IN, 0, payload);
 
-      await expect(receiverAdapter.sendMessage(envelope)).to.be.revertedWith(
+      await expect(inboundAdapter.sendMessage(envelope)).to.be.revertedWith(
         "Master: callGasLimit too high"
       );
     });

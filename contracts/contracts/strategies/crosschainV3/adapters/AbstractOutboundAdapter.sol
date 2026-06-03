@@ -119,22 +119,26 @@ abstract contract AbstractOutboundAdapter is IOutboundAdapter, Governable {
     }
 
     /**
-     * @notice Sweep stuck native to the governor. Intended only for recovery after a botched
-     *         fee estimation; happy-path operations consume the full msg.value.
+     * @notice Transfer token (or native) to governor. Recovery only — used to rescue
+     *         stuck tokens (mistaken sends, leftover approvals) or to drain a stale
+     *         pre-funded fee reserve.
+     *
+     *         `_asset == address(0)` is treated as the native-token sentinel.
+     *
+     * @param _asset  Asset to transfer, or `address(0)` for native
+     * @param _amount Amount to transfer
      */
-    function sweepNative(address payable _to) external onlyGovernor {
-        require(_to != address(0), "Adapter: zero to");
-        // slither-disable-next-line low-level-calls
-        (bool ok, ) = _to.call{ value: address(this).balance }("");
-        require(ok, "Adapter: sweep failed");
-    }
-
-    /**
-     * @notice Sweep stuck ERC20 to the governor. Recovery only.
-     */
-    function sweepToken(IERC20 _token, address _to) external onlyGovernor {
-        require(_to != address(0), "Adapter: zero to");
-        _token.safeTransfer(_to, _token.balanceOf(address(this)));
+    function transferToken(address _asset, uint256 _amount)
+        external
+        onlyGovernor
+    {
+        if (_asset == address(0)) {
+            // slither-disable-next-line low-level-calls
+            (bool ok, ) = governor().call{ value: _amount }("");
+            require(ok, "Adapter: native transfer failed");
+        } else {
+            IERC20(_asset).safeTransfer(governor(), _amount);
+        }
     }
 
     // --- IOutboundAdapter wiring -------------------------------------------

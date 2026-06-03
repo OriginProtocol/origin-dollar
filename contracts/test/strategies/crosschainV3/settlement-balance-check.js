@@ -127,9 +127,9 @@ describe("Unit: V3 settlement + balance check", function () {
     await adapterRM.setPeer(master.address);
 
     await master.connect(governor).setOutboundAdapter(adapterME.address);
-    await master.connect(governor).setReceiverAdapter(adapterRM.address);
+    await master.connect(governor).setInboundAdapter(adapterRM.address);
     await remote.connect(governor).setOutboundAdapter(adapterRM.address);
-    await remote.connect(governor).setReceiverAdapter(adapterME.address);
+    await remote.connect(governor).setInboundAdapter(adapterME.address);
 
     // Seed Remote with SEED via a deposit round-trip.
     await bridgeAsset.mintTo(master.address, SEED);

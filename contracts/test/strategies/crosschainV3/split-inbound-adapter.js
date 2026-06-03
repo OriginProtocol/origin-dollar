@@ -8,17 +8,21 @@ const MSG = {
 };
 
 /**
- * Unit coverage for SuperbridgeCCIPReceiverAdapter exact-amount delivery semantics.
+ * Unit coverage for SuperbridgeCCIPInboundAdapter exact-amount delivery semantics
+ * and multi-tenant per-peer routing.
  *
  * Split delivery means the CCIP message and the canonical-bridge tokens arrive in
  * separate transactions. The adapter must:
- *   1. Match the right message type as token-carrying (WITHDRAW_CLAIM_ACK, not YIELD_DEPOSIT).
- *   2. Decode the exact expected amount from the payload (no sentinel "use balance" shortcut).
- *   3. Hold the message in the pending slot until tokens land.
- *   4. processStoredMessage delivers exactly `amount` to the strategy.
+ *   1. Resolve the destination strategy from (sourceChainSelector, sender) and reject
+ *      messages from unknown peers.
+ *   2. Match the right message type as token-carrying (WITHDRAW_CLAIM_ACK).
+ *   3. Decode the exact expected amount from the payload.
+ *   4. Hold the message in the right strategy's pending slot until tokens land.
+ *   5. processStoredMessage(strategy) delivers exactly `amount` to that strategy.
+ *   6. Two strategies served by the same adapter don't interfere with each other.
  */
-describe("Unit: SuperbridgeCCIPReceiverAdapter split delivery", function () {
-  let governor, peerOutbound;
+describe("Unit: SuperbridgeCCIPInboundAdapter split delivery", function () {
+  let governor, peerOutbound, otherPeer;
   let receiver, strategy, expectedToken;
 
   // Ethereum CCIP selector — `BigNumber.from(string)` avoids the BigInt literal
@@ -56,7 +60,7 @@ describe("Unit: SuperbridgeCCIPReceiverAdapter split delivery", function () {
   }
 
   beforeEach(async () => {
-    [governor, peerOutbound] = await ethers.getSigners();
+    [governor, peerOutbound, otherPeer] = await ethers.getSigners();
 
     // Mock CCIP router (we'll impersonate it to call ccipReceive directly).
     const RouterFactory = await ethers.getContractFactory("MockCCIPRouter");
@@ -67,7 +71,7 @@ describe("Unit: SuperbridgeCCIPReceiverAdapter split delivery", function () {
     expectedToken = await ERC20Factory.connect(governor).deploy();
 
     const ReceiverFactory = await ethers.getContractFactory(
-      "SuperbridgeCCIPReceiverAdapter"
+      "SuperbridgeCCIPInboundAdapter"
     );
     receiver = await ReceiverFactory.connect(governor).deploy(
       router.address,
@@ -79,8 +83,9 @@ describe("Unit: SuperbridgeCCIPReceiverAdapter split delivery", function () {
     );
     strategy = await StrategyFactory.connect(governor).deploy();
 
-    await receiver.connect(governor).setStrategy(strategy.address);
-    await receiver.connect(governor).setPeer(peerOutbound.address, PEER_CHAIN);
+    await receiver
+      .connect(governor)
+      .registerPeer(PEER_CHAIN, peerOutbound.address, strategy.address);
   });
 
   it("WITHDRAW_CLAIM_ACK with tokens already on adapter delivers atomically", async () => {
@@ -102,7 +107,7 @@ describe("Unit: SuperbridgeCCIPReceiverAdapter split delivery", function () {
       .connect(sRouter)
       .ccipReceive(buildAny2EvmMessage({ sender: peerOutbound.address, data }));
 
-    expect(await receiver.hasPendingMessage()).to.equal(false);
+    expect(await receiver.hasPendingMessage(strategy.address)).to.equal(false);
     expect(await strategy.callCount()).to.equal(1);
     expect(await strategy.lastAmount()).to.equal(amount);
     expect(await strategy.lastMessageType()).to.equal(MSG.WITHDRAW_CLAIM_ACK);
@@ -123,21 +128,21 @@ describe("Unit: SuperbridgeCCIPReceiverAdapter split delivery", function () {
       .connect(sRouter)
       .ccipReceive(buildAny2EvmMessage({ sender: peerOutbound.address, data }));
 
-    expect(await receiver.hasPendingMessage()).to.equal(true);
+    expect(await receiver.hasPendingMessage(strategy.address)).to.equal(true);
     expect(await strategy.callCount()).to.equal(0);
 
     // Process before tokens — must revert.
-    await expect(receiver.processStoredMessage()).to.be.revertedWith(
-      "Adapter: tokens not yet landed"
-    );
+    await expect(
+      receiver.processStoredMessage(strategy.address)
+    ).to.be.revertedWith("Adapter: tokens not yet landed");
 
     // Tokens arrive (canonical bridge mint to receiver). Then donate one extra wei to
     // confirm the receiver delivers exactly `amount` rather than the full balance.
     await expectedToken.mintTo(receiver.address, amount.add(1));
 
-    await receiver.processStoredMessage();
+    await receiver.processStoredMessage(strategy.address);
 
-    expect(await receiver.hasPendingMessage()).to.equal(false);
+    expect(await receiver.hasPendingMessage(strategy.address)).to.equal(false);
     expect(await strategy.callCount()).to.equal(1);
     expect(await strategy.lastAmount()).to.equal(amount);
     expect(await expectedToken.balanceOf(strategy.address)).to.equal(amount);
@@ -157,7 +162,7 @@ describe("Unit: SuperbridgeCCIPReceiverAdapter split delivery", function () {
       .connect(sRouter)
       .ccipReceive(buildAny2EvmMessage({ sender: peerOutbound.address, data }));
 
-    expect(await receiver.hasPendingMessage()).to.equal(false);
+    expect(await receiver.hasPendingMessage(strategy.address)).to.equal(false);
     expect(await strategy.callCount()).to.equal(1);
     expect(await strategy.lastAmount()).to.equal(0);
   });
@@ -174,7 +179,7 @@ describe("Unit: SuperbridgeCCIPReceiverAdapter split delivery", function () {
       .connect(sRouter)
       .ccipReceive(buildAny2EvmMessage({ sender: peerOutbound.address, data }));
 
-    expect(await receiver.hasPendingMessage()).to.equal(false);
+    expect(await receiver.hasPendingMessage(strategy.address)).to.equal(false);
     expect(await strategy.lastAmount()).to.equal(0);
     expect(await strategy.lastMessageType()).to.equal(MSG.YIELD_DEPOSIT_ACK);
   });
@@ -187,12 +192,12 @@ describe("Unit: SuperbridgeCCIPReceiverAdapter split delivery", function () {
     );
 
     const sRouter = await impersonateAndFund(await receiver.ccipRouter());
-    // Sender from a wrong address.
+    // Sender that's not a registered peer.
     await expect(
       receiver
         .connect(sRouter)
         .ccipReceive(buildAny2EvmMessage({ sender: governor.address, data }))
-    ).to.be.revertedWith("SuperRx: bad sender");
+    ).to.be.revertedWith("SuperIn: unknown peer");
 
     // Direct call from a non-router caller.
     await expect(
@@ -201,6 +206,64 @@ describe("Unit: SuperbridgeCCIPReceiverAdapter split delivery", function () {
         .ccipReceive(
           buildAny2EvmMessage({ sender: peerOutbound.address, data })
         )
-    ).to.be.revertedWith("SuperRx: not router");
+    ).to.be.revertedWith("SuperIn: not router");
+  });
+
+  it("multi-tenant: one adapter routes messages to distinct strategies by peer", async () => {
+    // Register a second peer → a second strategy on the same adapter.
+    const StrategyFactory = await ethers.getContractFactory(
+      "MockBridgeReceiver"
+    );
+    const strategy2 = await StrategyFactory.connect(governor).deploy();
+    await receiver
+      .connect(governor)
+      .registerPeer(PEER_CHAIN, otherPeer.address, strategy2.address);
+
+    const amount1 = ethers.utils.parseUnits("100", 6);
+    const amount2 = ethers.utils.parseUnits("250", 6);
+    const sRouter = await impersonateAndFund(await receiver.ccipRouter());
+
+    // Send claim-ack messages for both tenants without prepositioning tokens — both end
+    // up in their respective pending slots simultaneously.
+    await receiver.connect(sRouter).ccipReceive(
+      buildAny2EvmMessage({
+        sender: peerOutbound.address,
+        data: wrapEnvelope(
+          MSG.WITHDRAW_CLAIM_ACK,
+          11,
+          encodeClaimAckPayload(0, true, amount1)
+        ),
+      })
+    );
+    await receiver.connect(sRouter).ccipReceive(
+      buildAny2EvmMessage({
+        sender: otherPeer.address,
+        data: wrapEnvelope(
+          MSG.WITHDRAW_CLAIM_ACK,
+          22,
+          encodeClaimAckPayload(0, true, amount2)
+        ),
+      })
+    );
+
+    expect(await receiver.hasPendingMessage(strategy.address)).to.equal(true);
+    expect(await receiver.hasPendingMessage(strategy2.address)).to.equal(true);
+
+    // Fund tokens for the SECOND tenant first and process it — confirms slots don't
+    // collide and tokens credit the right strategy.
+    await expectedToken.mintTo(receiver.address, amount2);
+    await receiver.processStoredMessage(strategy2.address);
+    expect(await receiver.hasPendingMessage(strategy2.address)).to.equal(false);
+    expect(await receiver.hasPendingMessage(strategy.address)).to.equal(true);
+    expect(await strategy2.lastAmount()).to.equal(amount2);
+    expect(await expectedToken.balanceOf(strategy2.address)).to.equal(amount2);
+    expect(await strategy.callCount()).to.equal(0);
+
+    // Now fund and process the first tenant.
+    await expectedToken.mintTo(receiver.address, amount1);
+    await receiver.processStoredMessage(strategy.address);
+    expect(await receiver.hasPendingMessage(strategy.address)).to.equal(false);
+    expect(await strategy.lastAmount()).to.equal(amount1);
+    expect(await expectedToken.balanceOf(strategy.address)).to.equal(amount1);
   });
 });

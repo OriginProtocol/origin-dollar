@@ -28,7 +28,7 @@ interface IL1StandardBridge {
  * @notice Split-delivery outbound adapter for Ethereum → OP-Stack-L2 token bridging.
  *         Tokens travel via the canonical OP Stack L1StandardBridge (free, but
  *         token-only; no calldata can ride along). The message envelope travels
- *         separately via Chainlink CCIP and lands at the peer SuperbridgeCCIPReceiverAdapter
+ *         separately via Chainlink CCIP and lands at the peer SuperbridgeCCIPInboundAdapter
  *         on the L2, which holds it in its pending slot until the canonical-bridge tokens
  *         arrive.
  *

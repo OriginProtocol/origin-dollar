@@ -16,7 +16,7 @@ const encodeAmountPayload = (amount) =>
   ethers.utils.defaultAbiCoder.encode(["uint256"], [amount]);
 
 /**
- * Mainnet fork test for the Option-1 withdrawal flow.
+ * Mainnet fork test for the cross-chain withdrawal flow.
  *
  * Seeds Remote with wOETH shares by routing WETH → OETH (via the OETH vault `mint`) → wOETH
  * (via the 4626 deposit). Then drives leg 1 (WITHDRAW_REQUEST), advances past the OETH
@@ -26,7 +26,7 @@ const encodeAmountPayload = (amount) =>
  * Leg 2 (`triggerClaim` → outbound CCIP) is exercised against a mock outbound adapter so
  * the test doesn't try to bridge to Base.
  */
-describe("ForkTest: Withdrawal Option 1 against mainnet OETH vault queue", function () {
+describe("ForkTest: Withdrawal against mainnet OETH vault queue", function () {
   this.timeout(0);
   this.retries(isCI ? 3 : 0);
 
@@ -79,7 +79,7 @@ describe("ForkTest: Withdrawal Option 1 against mainnet OETH vault queue", funct
   });
 
   it("leg 1 unwraps shares, queues a withdrawal, and acks with new balance", async () => {
-    const receiverAddr = await remote.receiverAdapter();
+    const receiverAddr = await remote.inboundAdapter();
     const sAdapter = await impersonateAndFund(receiverAddr);
 
     // Master-side mock outbound: install a MockBridgeAdapter so Remote's reply to leg 1 lands
@@ -130,7 +130,7 @@ describe("ForkTest: Withdrawal Option 1 against mainnet OETH vault queue", funct
   // requires `addWithdrawalQueueLiquidity` or background activity from other holders. The
   // unit-test loopback fully exercises the claim path; this fork test focuses on leg 1.
   it.skip("claimRemoteWithdrawal succeeds after the OETH vault delay elapses", async () => {
-    const receiverAddr = await remote.receiverAdapter();
+    const receiverAddr = await remote.inboundAdapter();
     const sAdapter = await impersonateAndFund(receiverAddr);
 
     const MockAdapterF = await ethers.getContractFactory("MockBridgeAdapter");
@@ -182,7 +182,7 @@ describe("ForkTest: Withdrawal Option 1 against mainnet OETH vault queue", funct
   });
 
   it("claimRemoteWithdrawal is idempotent — calling twice doesn't revert", async () => {
-    const receiverAddr = await remote.receiverAdapter();
+    const receiverAddr = await remote.inboundAdapter();
     const sAdapter = await impersonateAndFund(receiverAddr);
 
     const MockAdapterF = await ethers.getContractFactory("MockBridgeAdapter");

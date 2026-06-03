@@ -8,24 +8,24 @@ import { Client } from "@chainlink/contracts-ccip/src/v0.8/ccip/libraries/Client
 import { IAny2EVMMessageReceiver } from "@chainlink/contracts-ccip/src/v0.8/ccip/interfaces/IAny2EVMMessageReceiver.sol";
 import { IERC165 } from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 
-import { AbstractReceiverAdapter } from "./AbstractReceiverAdapter.sol";
+import { AbstractSplitInboundAdapter } from "./AbstractSplitInboundAdapter.sol";
 import { CrossChainV3Helper } from "../CrossChainV3Helper.sol";
 
 /**
- * @title SuperbridgeCCIPReceiverAdapter
+ * @title SuperbridgeCCIPInboundAdapter
  * @author Origin Protocol Inc
  *
  * @notice Split-delivery inbound adapter for OP-Stack-L2 leg of the Ethereum → L2 flow.
- *         Receives the CCIP message and stores it in the pending slot; tokens arrive
- *         separately via the OP Stack canonical bridge (which simply transfers them
- *         to this adapter address with no callback). Off-chain automation calls
- *         `processStoredMessage()` once both legs have landed.
+ *         Receives the CCIP message and stores it in the destination strategy's pending slot;
+ *         tokens arrive separately via the OP Stack canonical bridge (which simply transfers
+ *         them to this adapter address with no callback). Off-chain automation calls
+ *         `processStoredMessage(strategy)` once both legs have landed.
  *
- *         Designed to live behind a transparent proxy so its implementation can be
- *         upgraded without losing the pending slot during a security patch.
+ *         Upgrade path is deploy-and-sweep + `adoptPendingMessage` (see
+ *         `AbstractSplitInboundAdapter.adoptPendingMessage`) — no proxy needed.
  */
-contract SuperbridgeCCIPReceiverAdapter is
-    AbstractReceiverAdapter,
+contract SuperbridgeCCIPInboundAdapter is
+    AbstractSplitInboundAdapter,
     IAny2EVMMessageReceiver,
     IERC165
 {
@@ -34,14 +34,14 @@ contract SuperbridgeCCIPReceiverAdapter is
     address public immutable expectedToken;
 
     constructor(address _ccipRouter, address _expectedToken) {
-        require(_ccipRouter != address(0), "SuperRx: zero CCIP");
-        require(_expectedToken != address(0), "SuperRx: zero token");
+        require(_ccipRouter != address(0), "SuperIn: zero CCIP");
+        require(_expectedToken != address(0), "SuperIn: zero token");
         ccipRouter = _ccipRouter;
         expectedToken = _expectedToken;
     }
 
     modifier onlyRouter() {
-        require(msg.sender == ccipRouter, "SuperRx: not router");
+        require(msg.sender == ccipRouter, "SuperIn: not router");
         _;
     }
 
@@ -62,12 +62,9 @@ contract SuperbridgeCCIPReceiverAdapter is
         override
         onlyRouter
     {
-        require(
-            message.sourceChainSelector == peerChainSelector,
-            "SuperRx: bad source chain"
-        );
         address sender = abi.decode(message.sender, (address));
-        require(sender == peerOutbound, "SuperRx: bad sender");
+        address strategy = strategyFor[message.sourceChainSelector][sender];
+        require(strategy != address(0), "SuperIn: unknown peer");
 
         (
             uint32 version,
@@ -77,7 +74,7 @@ contract SuperbridgeCCIPReceiverAdapter is
         ) = CrossChainV3Helper.unwrap(message.data);
         require(
             version == CrossChainV3Helper.ORIGIN_V3_MESSAGE_VERSION,
-            "SuperRx: bad version"
+            "SuperIn: bad version"
         );
 
         // Determine the token amount the message expects to find on this adapter once the
@@ -90,6 +87,7 @@ contract SuperbridgeCCIPReceiverAdapter is
         ) {
             // Tokens already here (or none required). Deliver immediately.
             _deliverAtomic(
+                strategy,
                 nonce,
                 expectedAmount,
                 uint8(msgType),
@@ -98,6 +96,7 @@ contract SuperbridgeCCIPReceiverAdapter is
             );
         } else {
             _storePending(
+                strategy,
                 nonce,
                 expectedAmount,
                 uint8(msgType),
@@ -117,7 +116,7 @@ contract SuperbridgeCCIPReceiverAdapter is
      *      The exact delivered amount is encoded inside the `WITHDRAW_CLAIM_ACK` payload
      *      (`abi.encode(newBalance, success, amount)`), so the receiver pins `expectedAmount`
      *      to it. Tokens arrive separately via the OP Stack canonical bridge and are matched
-     *      by `processStoredMessage` (inherited from `AbstractReceiverAdapter`) before
+     *      by `processStoredMessage` (inherited from `AbstractSplitInboundAdapter`) before
      *      delivery.
      */
     function _expectedAmountFor(uint8 msgType, bytes memory payload)

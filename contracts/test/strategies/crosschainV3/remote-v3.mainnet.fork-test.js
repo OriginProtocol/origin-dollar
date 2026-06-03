@@ -33,7 +33,7 @@ const encodeBridgeUserPayload = ({
 /**
  * Mainnet fork test covering:
  *  - Remote against real wOETH (ERC-4626) and the real OETH vault async queue.
- *  - Full Option-1 withdrawal flow: leg 1 → time.increase past claim delay → leg 2.
+ *  - Full withdrawal flow: leg 1 → time.increase past claim delay → leg 2.
  *  - SuperbridgeCanonicalOutboundAdapter exercising the real L1StandardBridge encoding.
  *
  * Remote is deployed by deploy/mainnet/210+211 against the mainnet fork.
@@ -49,7 +49,7 @@ describe("ForkTest: RemoteV3Strategy on mainnet (real wOETH + OETH vault queue)"
   let weth;
   let oethVault;
   let outboundAdapter;
-  let receiverAdapter;
+  let inboundAdapter;
 
   beforeEach(async () => {
     fixture = await mainnetFixture();
@@ -78,9 +78,9 @@ describe("ForkTest: RemoteV3Strategy on mainnet (real wOETH + OETH vault queue)"
       "SuperbridgeCanonicalOutboundAdapter",
       await remote.outboundAdapter()
     );
-    receiverAdapter = await ethers.getContractAt(
-      "CCIPReceiverAdapter",
-      await remote.receiverAdapter()
+    inboundAdapter = await ethers.getContractAt(
+      "CCIPInboundAdapter",
+      await remote.inboundAdapter()
     );
   });
 
@@ -128,18 +128,18 @@ describe("ForkTest: RemoteV3Strategy on mainnet (real wOETH + OETH vault queue)"
     });
   });
 
-  describe("CCIPReceiverAdapter", () => {
+  describe("CCIPInboundAdapter", () => {
     it("only the CCIP router can drive ccipReceive", async () => {
       const [a] = await ethers.getSigners();
       await expect(
-        receiverAdapter.connect(a).ccipReceive({
+        inboundAdapter.connect(a).ccipReceive({
           messageId: ethers.utils.hexZeroPad("0x0", 32),
           sourceChainSelector: 0,
           sender: "0x",
           data: "0x",
           destTokenAmounts: [],
         })
-      ).to.be.revertedWith("CCIPRx: not router");
+      ).to.be.revertedWith("CCIPIn: not router");
     });
   });
 });
