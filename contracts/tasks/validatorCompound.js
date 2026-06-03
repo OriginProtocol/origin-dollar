@@ -11,6 +11,7 @@ const {
   calcSlot,
   getValidatorBalance,
   getBeaconBlock,
+  hashPubKey,
 } = require("../utils/beacon");
 const { getNetworkName } = require("../utils/hardhat-helpers");
 const { getSigner } = require("../utils/signers");
@@ -32,6 +33,8 @@ const {
 } = require("../utils/vault");
 
 const log = require("../utils/logger")("task:validator:compounding");
+
+const VALIDATOR_STATE_REGISTERED = 1;
 
 async function snapBalances({ consol = false }) {
   const signer = await getSigner();
@@ -182,11 +185,18 @@ async function stakeValidator({
 
   const amountWei = parseUnits(amount.toString(), 18);
   const initialDepositAmountWei = await strategy.initialDepositAmountWei();
+  const validator = await strategy.validator(hashPubKey(pubkey));
+  const isCreatingDeposit = BigNumber.from(validator.state).eq(
+    VALIDATOR_STATE_REGISTERED
+  );
 
-  if (amountWei.eq(initialDepositAmountWei)) {
+  if (isCreatingDeposit) {
     if (!sig) {
       throw new Error(
-        `The signature is required for the first deposit of ${formatUnits(
+        `The signature is required for the first deposit to a registered validator. Deposit amount: ${formatUnits(
+          amountWei,
+          18
+        )} ETH, initial deposit cap: ${formatUnits(
           initialDepositAmountWei,
           18
         )} ETH`
