@@ -48,6 +48,8 @@ const {
   getStorageAt,
 } = require("@nomicfoundation/hardhat-network-helpers");
 const { keccak256, defaultAbiCoder } = require("ethers/lib/utils.js");
+const fs = require("fs");
+const path = require("path");
 
 // Wait for 3 blocks confirmation on Mainnet.
 let NUM_CONFIRMATIONS = isMainnet ? 3 : 0;
@@ -993,6 +995,47 @@ async function buildGnosisSafeJson(
   });
 }
 
+// Inlined to avoid a circular import: deploy-l2.js already requires deploy.js,
+// so its getNetworkName() can't be imported here.
+function safeOpsNetworkName() {
+  if (isForkTest) return "hardhat";
+  if (isFork) return "localhost";
+  return process.env.NETWORK_NAME || "mainnet";
+}
+
+function safeValueToString(value) {
+  if (BigNumber.isBigNumber(value)) return value.toString();
+  if (Array.isArray(value)) return JSON.stringify(value.map(safeValueToString));
+  if (typeof value === "number" || typeof value === "boolean") {
+    return String(value);
+  }
+  // address / bytes32 / bytes / string pass through unchanged
+  return String(value);
+}
+
+// (contract, signature, args) -> { paramName: stringValue } for the Gnosis Safe
+// Transaction Builder. Param names come from the ABI fragment. Tuple/struct
+// params are unsupported (not used by the Safe migrations) and throw loudly.
+function buildContractInputsValues(contract, signature, args) {
+  const inputs = contract.interface.getFunction(signature).inputs;
+  if (inputs.length !== args.length) {
+    throw new Error(
+      `${signature}: expected ${inputs.length} args, got ${args.length}`
+    );
+  }
+  const out = {};
+  inputs.forEach((input, i) => {
+    if (input.baseType === "tuple" || input.components) {
+      throw new Error(
+        `${signature}: tuple/struct param "${input.name}" is not supported`
+      );
+    }
+    const name = input.name && input.name.length ? input.name : `arg${i}`;
+    out[name] = safeValueToString(args[i]);
+  });
+  return out;
+}
+
 async function getProposalExecutionValue(governor, proposalId) {
   const actions = await governor.getActions(proposalId);
   const rawValues =
@@ -1311,6 +1354,122 @@ function deploymentWithGuardianGovernor(opts, fn) {
   return main;
 }
 
+/**
+ * Shortcut to create a deployment executed by a plain Gnosis Safe (NOT GovernorSix
+ * governance, NOT the Guardian-via-timelock path). The deploy fn returns a single
+ * list of actions ({ contract, signature, args, value }). The helper always builds
+ * the Gnosis Safe Transaction Builder JSON and writes it to
+ * deployments/<network>/operations/<deployName>.json (mainnet -> committed
+ * artifact, fork -> gitignored). On fork it additionally executes the actions by
+ * impersonating the Safe, so fork tests pass and downstream deploys see the state.
+ *
+ * @param {Object} opts deployment options. `safe` is the executing Safe address.
+ * @param {Function} fn async (tools) => { name?, safe?, actions: [...] }
+ * @returns {Function} main object used by hardhat
+ */
+function deploymentWithGnosisSafe(opts, fn) {
+  const { deployName, dependencies, forceDeploy, onlyOnFork, forceSkip } = opts;
+  const optsSafe = opts.safe;
+
+  const runDeployment = async (hre) => {
+    const assetAddresses = await getAssetAddresses(hre.deployments);
+    const proposal = await fn({
+      assetAddresses,
+      deployWithConfirmation,
+      ethers,
+      getTxOpts,
+      withConfirmation,
+    });
+
+    if (!proposal?.actions?.length) {
+      log("No Safe proposal actions.");
+      return;
+    }
+
+    const safeAddress = proposal.safe || optsSafe;
+    if (!safeAddress) {
+      throw new Error(
+        `deploymentWithGnosisSafe (${deployName}): no Safe address. ` +
+          `Set opts.safe or return { safe } from the deploy fn.`
+      );
+    }
+
+    const { actions } = proposal;
+
+    // Build + write the Safe Transaction Builder JSON (every environment).
+    const safeJson = await buildGnosisSafeJson(
+      safeAddress,
+      actions.map((a) => a.contract.address),
+      actions.map((a) => constructContractMethod(a.contract, a.signature)),
+      actions.map((a) =>
+        buildContractInputsValues(a.contract, a.signature, a.args)
+      ),
+      actions.map((a) => BigNumber.from(a.value ?? 0).toString())
+    );
+    const filePath = path.resolve(
+      __dirname,
+      `./../deployments/${safeOpsNetworkName()}/operations/${deployName}.json`
+    );
+    fs.mkdirSync(path.dirname(filePath), { recursive: true });
+    fs.writeFileSync(filePath, JSON.stringify(safeJson, null, 2));
+    console.log(`Safe batch JSON written to ${filePath}`);
+
+    if (isMainnet) {
+      // Mainnet: JSON only. The operator imports it into the Safe Transaction
+      // Builder for the Safe to execute.
+      console.log(
+        `Import ${deployName}.json into the Gnosis Safe (${safeAddress}) Transaction Builder to execute.`
+      );
+      return;
+    }
+
+    // Fork: execute the batch by impersonating the Safe.
+    const safeSigner = await impersonateAndFund(safeAddress);
+    console.log(`Impersonating Safe ${safeAddress} to execute actions on fork`);
+    for (const action of actions) {
+      const { contract, signature, args, value } = action;
+      const txOpts = {
+        ...(await getTxOpts()),
+        ...(value ? { value } : {}),
+      };
+      log(`Sending Safe action ${signature} to ${contract.address}`);
+      await withConfirmation(
+        contract.connect(safeSigner)[signature](...args, txOpts)
+      );
+      console.log(`... ${signature} completed`);
+    }
+  };
+
+  const main = async (hre) => {
+    console.log(`Running ${deployName} deployment...`);
+    if (!hre) {
+      hre = require("hardhat");
+    }
+    await runDeployment(hre);
+    console.log(`${deployName} deploy done.`);
+    return true;
+  };
+
+  main.id = deployName;
+  main.dependencies = dependencies;
+  if (forceSkip) {
+    main.skip = () => true;
+  } else if (forceDeploy) {
+    main.skip = () => false;
+  } else {
+    main.skip = async () => {
+      if (isFork) {
+        const networkName = isForkTest ? "hardhat" : "localhost";
+        const migrations = require(`./../deployments/${networkName}/.migrations.json`);
+        return Boolean(migrations[deployName]);
+      } else {
+        return onlyOnFork ? true : !isMainnet || isSmokeTest;
+      }
+    };
+  }
+  return main;
+}
+
 function encodeSaltForCreateX(deployer, crosschainProtectionFlag, salt) {
   // Generate encoded salt (deployer address || crosschainProtectionFlag || bytes11(keccak256(rewardToken, gauge)))
 
@@ -1471,6 +1630,7 @@ module.exports = {
   executeProposalOnFork,
   deploymentWithGovernanceProposal,
   deploymentWithGuardianGovernor,
+  deploymentWithGnosisSafe,
 
   constructContractMethod,
   buildGnosisSafeJson,
