@@ -287,7 +287,7 @@ export DEFENDER_API_KEY=
 export DEFENDER_API_SECRET=
 ```
 
-Once you have finished sending your transactions, the API key for hte Relayer account should be deleted in Defender and the environment variables unset.
+Once you have finished sending your transactions, the API key for the Relayer account should be deleted in Defender and the environment variables unset.
 
 ```
 unset DEFENDER_API_KEY
@@ -512,7 +512,7 @@ yarn hardhat etherscan-verify --network mainnet --api-url https://api.etherscan.
 
 #### Addressing verification slowdowns
 
-Profiling the `hardhat-verify` prooved that when the `hardhat verify` is ran without --contract parameter
+Profiling the `hardhat-verify` proved that when the `hardhat verify` is ran without --contract parameter
 it can take up to 4-5 minutes to gather the necessary contract information.
 Use `--contract` e.g. `--contract contracts/vault/VaultAdmin.sol:VaultAdmin` to mitigate the issue.
 
