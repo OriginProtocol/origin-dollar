@@ -1,10 +1,7 @@
 const addresses = require("../../utils/addresses");
 const { deploymentWithGnosisSafe } = require("../../utils/deploy");
 
-// CollectXOGNRewardsModule6 is admined by the mainnet Guardian 5/8 Safe (its
-// DEFAULT_ADMIN_ROLE holder), so the operator migration is executed by that Safe
-// directly — a different signing entity than the GovernorSix -> Timelock used in
-// deploy 196, hence a separate deploy file.
+// the governor to execute this proposal is Gnosis 5/8 Multisig
 module.exports = deploymentWithGnosisSafe(
   {
     deployName: "197_migrate_xogn_module6_to_talos",

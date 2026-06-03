@@ -1,10 +1,7 @@
 const addresses = require("../../utils/addresses");
 const { deploymentWithGnosisSafe } = require("../../utils/deploy");
 
-// All four safe modules are admined by the multichainStrategist 2/8 Safe (their
-// DEFAULT_ADMIN_ROLE holder), so granting OPERATOR_ROLE to the new Talos signer
-// is a plain Safe transaction batch — a different signing entity than the
-// GovernorSix->Timelock (deploy 196) and the Guardian 5/8 Safe (deploy 197).
+// the governor to execute this proposal is 2/8 Cross chain strategist
 module.exports = deploymentWithGnosisSafe(
   {
     deployName: "198_migrate_strategist_modules_to_talos",

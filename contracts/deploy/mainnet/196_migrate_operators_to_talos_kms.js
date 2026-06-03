@@ -1,6 +1,7 @@
 const addresses = require("../../utils/addresses");
 const { deploymentWithGovernanceProposal } = require("../../utils/deploy");
 
+// the governor to execute this proposal is OGN governance
 module.exports = deploymentWithGovernanceProposal(
   {
     deployName: "196_migrate_operators_to_talos",
