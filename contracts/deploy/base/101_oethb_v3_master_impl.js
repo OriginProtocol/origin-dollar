@@ -9,7 +9,7 @@ const { getCreate2ProxyAddress } = require("../deployActions");
 const CCIP_CHAIN_SELECTOR_MAINNET = "5009297550715157269";
 
 // Default per-receive destination gas limit for cross-chain message handling.
-const DEFAULT_DEST_GAS_LIMIT = 500_000;
+const DEFAULT_DEST_GAS_LIMIT = 500000;
 
 // Best-effort read of a deployed contract's address from another network's
 // hardhat-deploy artifacts. Returns `null` if the artifact isn't present yet
@@ -49,7 +49,7 @@ module.exports = deployOnBase(
     const cOETHb = await ethers.getContract("OETHBaseProxy");
 
     // --- 1. Deploy Master impl ---
-    await deployWithConfirmation("MasterV3Strategy", [
+    await deployWithConfirmation("MasterWOTokenStrategy", [
       {
         platformAddress: addresses.zero,
         vaultAddress: cOETHBaseVaultProxy.address,
@@ -57,8 +57,8 @@ module.exports = deployOnBase(
       addresses.base.WETH,
       cOETHb.address,
     ]);
-    const dMasterImpl = await ethers.getContract("MasterV3Strategy");
-    console.log(`MasterV3Strategy impl: ${dMasterImpl.address}`);
+    const dMasterImpl = await ethers.getContract("MasterWOTokenStrategy");
+    console.log(`MasterWOTokenStrategy impl: ${dMasterImpl.address}`);
 
     // --- 2. Initialise the proxy: set impl, set governor=timelock, call initialize(operator) ---
     const cMasterProxy = await ethers.getContractAt(
@@ -69,37 +69,38 @@ module.exports = deployOnBase(
       "initialize(address)",
       [addresses.talosRelayer]
     );
+    const proxyInitCalldata = cMasterProxy.interface.encodeFunctionData(
+      "initialize(address,address,bytes)",
+      [dMasterImpl.address, addresses.base.timelock, initData]
+    );
     await withConfirmation(
-      cMasterProxy
-        .connect(sDeployer)
-        ["initialize(address,address,bytes)"](
-          dMasterImpl.address,
-          addresses.base.timelock,
-          initData
-        )
+      sDeployer.sendTransaction({
+        to: cMasterProxy.address,
+        data: proxyInitCalldata,
+      })
     );
 
     // --- 3. Deploy adapters (deployer is initial governor; transferred to timelock at end) ---
-    // Outbound (B→E): CCIPOutboundAdapter
-    await deployWithConfirmation("CCIPOutboundAdapter", [
-      addresses.base.CCIPRouter,
-    ]);
-    const dCCIPOutbound = await ethers.getContract("CCIPOutboundAdapter");
-    console.log(`CCIPOutboundAdapter: ${dCCIPOutbound.address}`);
+    // Outbound (B→E): CCIPAdapter
+    await deployWithConfirmation("CCIPAdapter", [addresses.base.CCIPRouter]);
+    const dCCIPOutbound = await ethers.getContract("CCIPAdapter");
+    console.log(`CCIPAdapter: ${dCCIPOutbound.address}`);
 
-    // Inbound (E→B): SuperbridgeCCIPInboundAdapter (split delivery, behind its own proxy)
-    // The receiver impl is deployed bare for V1; in a follow-up we can wrap it in a proxy
-    // to allow in-place implementation upgrades while preserving the pending-message slot.
-    await deployWithConfirmation("SuperbridgeCCIPInboundAdapter", [
+    // Inbound (E→B): SuperbridgeAdapter — split delivery (canonical bridge for tokens,
+    // CCIP for message). Base side never sends outbound via this adapter, so the
+    // L1StandardBridge constructor slot is passed as address(0); outbound entry points
+    // revert if invoked.
+    await deployWithConfirmation("SuperbridgeAdapter", [
+      addresses.zero,
       addresses.base.CCIPRouter,
       addresses.base.WETH, // expected token via the OP Stack canonical bridge leg
     ]);
-    const dSuperRx = await ethers.getContract("SuperbridgeCCIPInboundAdapter");
-    console.log(`SuperbridgeCCIPInboundAdapter: ${dSuperRx.address}`);
+    const dSuperRx = await ethers.getContract("SuperbridgeAdapter");
+    console.log(`SuperbridgeAdapter: ${dSuperRx.address}`);
 
     // --- 4. Adapter configuration (deployer is governor here, so do it now) ---
     // Master is the only authorised sender on this outbound adapter for the Ethereum leg.
-    // The peer (Remote-side CCIPInboundAdapter address) is left as placeholder; final wiring
+    // The peer (Remote-side CCIPAdapter address) is left as placeholder; final wiring
     // happens after the Ethereum-side deploy when both adapter addresses are known.
     await withConfirmation(
       dCCIPOutbound
@@ -116,7 +117,7 @@ module.exports = deployOnBase(
         .setDestGasLimit(masterProxyAddress, DEFAULT_DEST_GAS_LIMIT)
     );
 
-    // Peer route (Remote-side SuperbridgeCanonicalOutboundAdapter) registered below in the
+    // Peer route (Remote-side SuperbridgeAdapter) registered below in the
     // cross-chain peer wiring block once the mainnet artifact is available.
 
     // --- 5. Transfer adapter governance to Base timelock ---
@@ -131,7 +132,7 @@ module.exports = deployOnBase(
 
     // --- 6. Resolve Master as IStrategy / IGovernable for the governance actions ---
     const cMaster = await ethers.getContractAt(
-      "MasterV3Strategy",
+      "MasterWOTokenStrategy",
       masterProxyAddress
     );
 
@@ -139,19 +140,16 @@ module.exports = deployOnBase(
     // Read mainnet adapter addresses from the cross-chain deployment artifacts. If
     // mainnet hasn't been deployed yet, the wiring is left as a follow-up and the
     // operator must run `105_oethb_v3_peer_wiring` after mainnet 211 completes.
-    const mainnetCCIPReceiver = readDeploymentAddress(
-      "mainnet",
-      "CCIPInboundAdapter"
-    );
+    const mainnetCCIPReceiver = readDeploymentAddress("mainnet", "CCIPAdapter");
     const mainnetSuperOut = readDeploymentAddress(
       "mainnet",
-      "SuperbridgeCanonicalOutboundAdapter"
+      "SuperbridgeAdapter"
     );
 
     const peerWiringActions = [];
     if (mainnetCCIPReceiver && mainnetSuperOut) {
       console.log(
-        `Wiring Base peers: outbound→${mainnetCCIPReceiver}, receiver←${mainnetSuperOut}`
+        `Wiring Base peers: outbound→${mainnetCCIPReceiver}, inbound authorises Master`
       );
       // Outbound: Master's messages headed to Ethereum land at the mainnet CCIP
       // receiver, so set that as the peer.
@@ -160,13 +158,13 @@ module.exports = deployOnBase(
         signature: "setPeerReceiver(address,address)",
         args: [masterProxyAddress, mainnetCCIPReceiver],
       });
-      // Inbound: messages arriving on Base originate from Ethereum's outbound adapter,
-      // gated by (sourceChainSelector, peerOutbound) → strategy. CCIP_CHAIN_SELECTOR_MAINNET
-      // is reused as the source-chain ID on the inbound side.
+      // Inbound: with CREATE2 parity, the source strategy on Ethereum (Remote) has the
+      // same address as the destination strategy here (Master). Whitelist that single
+      // address; the adapter forwards inbound messages to it on this chain.
       peerWiringActions.push({
         contract: dSuperRx,
-        signature: "registerPeer(uint64,address,address)",
-        args: [CCIP_CHAIN_SELECTOR_MAINNET, mainnetSuperOut, masterProxyAddress],
+        signature: "authorise(address)",
+        args: [masterProxyAddress],
       });
     } else {
       console.log(

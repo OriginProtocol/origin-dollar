@@ -2,6 +2,7 @@
 pragma solidity ^0.8.0;
 
 import { CrossChainV3Helper } from "../../strategies/crosschainV3/CrossChainV3Helper.sol";
+import { BytesHelper } from "../../utils/BytesHelper.sol";
 
 /**
  * @title MockCrossChainV3HelperHarness
@@ -20,9 +21,10 @@ contract MockCrossChainV3HelperHarness {
     function wrap(
         uint32 msgType,
         uint64 nonce,
+        address sender,
         bytes calldata payload
     ) external pure returns (bytes memory) {
-        return CrossChainV3Helper.wrap(msgType, nonce, payload);
+        return CrossChainV3Helper.wrap(msgType, nonce, sender, payload);
     }
 
     function unwrap(bytes calldata message)
@@ -32,10 +34,15 @@ contract MockCrossChainV3HelperHarness {
             uint32,
             uint32,
             uint64,
+            address,
             bytes memory
         )
     {
         return CrossChainV3Helper.unwrap(message);
+    }
+
+    function getSender(bytes calldata message) external pure returns (address) {
+        return CrossChainV3Helper.getSender(message);
     }
 
     function getVersion(bytes calldata message) external pure returns (uint32) {
@@ -188,11 +195,11 @@ contract MockCrossChainV3HelperHarness {
         return (p.bridgeId, p.amount, p.recipient, p.callData, p.callGasLimit);
     }
 
-    function extractUint64(bytes calldata data, uint256 start)
+    function extractUint64(bytes memory data, uint256 start)
         external
         pure
         returns (uint64)
     {
-        return CrossChainV3Helper.extractUint64(data, start);
+        return BytesHelper.extractUint64(data, start);
     }
 }

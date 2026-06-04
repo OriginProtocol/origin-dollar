@@ -26,12 +26,17 @@ interface IStrategyForMock {
 contract MockOTokenVault {
     MockMintableBurnableOToken public oToken;
     mapping(address => bool) public isMintWhitelistedStrategy;
+    address public strategistAddr;
 
     event StrategyWhitelisted(address strategy);
     event StrategyDelisted(address strategy);
 
     function setOToken(MockMintableBurnableOToken _oToken) external {
         oToken = _oToken;
+    }
+
+    function setStrategistAddr(address _strategist) external {
+        strategistAddr = _strategist;
     }
 
     function whitelistStrategy(address _strategy) external {

@@ -11,22 +11,22 @@ pragma solidity ^0.8.0;
  *      Atomic adapters (CCIP, CCTP V2 with combined token + message) do NOT implement this
  *      interface — they deliver in a single transaction and have no pending-slot lifecycle.
  *
- *      Split-delivery adapters are multi-tenant: each (sourceChainSelector, peerOutbound)
- *      route maps to a destination strategy, and each strategy has its own pending slot, so
- *      callers pass the strategy address when querying or finalising.
+ *      Split-delivery adapters are multi-tenant: each pending slot is keyed by the destination
+ *      strategy's address on this chain (which equals the source sender by CREATE2 parity),
+ *      so callers pass that address when querying or finalising.
  */
 interface ISplitInboundAdapter {
     /**
-     * @notice Whether the adapter currently has a stored message for `_strategy` waiting for
+     * @notice Whether the adapter currently has a stored message for `_target` waiting for
      *         its companion token leg.
      */
-    function hasPendingMessage(address _strategy) external view returns (bool);
+    function hasPendingMessage(address _target) external view returns (bool);
 
     /**
      * @notice Permissionless finaliser: if both message and tokens have arrived for
-     *         `_strategy`, forward to it and clear that strategy's pending slot. Reverts when
+     *         `_target`, forward to it and clear that target's pending slot. Reverts when
      *         nothing is pending or the token leg hasn't landed yet, so off-chain automation
      *         can retry.
      */
-    function processStoredMessage(address _strategy) external;
+    function processStoredMessage(address _target) external;
 }

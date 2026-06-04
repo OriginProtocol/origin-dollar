@@ -7,11 +7,10 @@ const addresses = require("../../../utils/addresses");
 
 const baseFixture = createFixtureLoader(defaultBaseFixture);
 
-const ORIGIN_V3_MESSAGE_VERSION = 2010;
 const MSG = {
   BRIDGE_IN: 11,
   BRIDGE_OUT: 12,
-  YIELD_DEPOSIT_ACK: 2,
+  DEPOSIT_ACK: 2,
 };
 
 const encodeBridgeUserPayload = ({
@@ -27,14 +26,14 @@ const encodeBridgeUserPayload = ({
   );
 
 /**
- * Master fork test: drives MasterV3Strategy against the real Base OETHb vault.
+ * Master fork test: drives MasterWOTokenStrategy against the real Base OETHb vault.
  *
  * Master is already deployed and wired by deploy/base/101 (master proxy + adapters).
  * We impersonate the configured receiver adapter to push synthetic BRIDGE_IN messages
  * into Master, exercising the real `mintForStrategy` / `burnForStrategy` plumbing on
  * the OETHb vault.
  */
-describe("ForkTest: MasterV3Strategy on Base (real OETHb vault wiring)", function () {
+describe("ForkTest: MasterWOTokenStrategy on Base (real OETHb vault wiring)", function () {
   this.timeout(0);
   this.retries(isCI ? 3 : 0);
 
@@ -42,21 +41,21 @@ describe("ForkTest: MasterV3Strategy on Base (real OETHb vault wiring)", functio
   let master;
   let oethb;
   let inboundAdapter;
-  let woethStrategyV2;
+  let woethMigration;
 
   beforeEach(async () => {
     fixture = await baseFixture();
 
-    woethStrategyV2 = await ethers.getContractAt(
-      "BridgedWOETHStrategyV2",
+    woethMigration = await ethers.getContractAt(
+      "BridgedWOETHMigrationStrategy",
       fixture.woethStrategy.address
     );
-    const masterAddr = await woethStrategyV2.master();
-    master = await ethers.getContractAt("MasterV3Strategy", masterAddr);
+    const masterAddr = await woethMigration.master();
+    master = await ethers.getContractAt("MasterWOTokenStrategy", masterAddr);
     oethb = fixture.oethb;
 
     inboundAdapter = await ethers.getContractAt(
-      "SuperbridgeCCIPInboundAdapter",
+      "SuperbridgeAdapter",
       await master.inboundAdapter()
     );
   });
@@ -103,7 +102,7 @@ describe("ForkTest: MasterV3Strategy on Base (real OETHb vault wiring)", functio
     expect(await master.bridgeAdjustment()).to.equal(amount);
   });
 
-  it("user bridgeOTokenToPeer burns OETHb via the real vault and emits BridgeOutRequested", async () => {
+  it("user bridgeOTokenToPeer burns OETHb via the real vault and emits BridgeRequested", async () => {
     // Swap the production CCIP outbound for a mock so the test doesn't hit the real CCIP router
     // (the peer adapter on Ethereum hasn't been wired in this single-chain fork).
     const MockAdapterF = await ethers.getContractFactory("MockBridgeAdapter");
@@ -139,7 +138,7 @@ describe("ForkTest: MasterV3Strategy on Base (real OETHb vault wiring)", functio
       master
         .connect(fixture.governor)
         .bridgeOTokenToPeer(bridgeAmount, aliceAddr, "0x", 0)
-    ).to.emit(master, "BridgeOutRequested");
+    ).to.emit(master, "BridgeRequested");
 
     expect(await oethb.totalSupply()).to.equal(supplyBefore.sub(bridgeAmount));
     expect(await master.bridgeAdjustment()).to.equal(
@@ -160,6 +159,6 @@ describe("ForkTest: MasterV3Strategy on Base (real OETHb vault wiring)", functio
       .receiveFromBridge(0, 0, MSG.BRIDGE_IN, payload);
     await expect(
       master.connect(sAdapter).receiveFromBridge(0, 0, MSG.BRIDGE_IN, payload)
-    ).to.be.revertedWith("Master: bridgeId replayed");
+    ).to.be.revertedWith("WOT: bridgeId replayed");
   });
 });

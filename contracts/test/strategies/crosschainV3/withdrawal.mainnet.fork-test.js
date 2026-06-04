@@ -30,7 +30,6 @@ describe("ForkTest: Withdrawal against mainnet OETH vault queue", function () {
   this.timeout(0);
   this.retries(isCI ? 3 : 0);
 
-  let fixture;
   let remote;
   let woeth;
   let oeth;
@@ -41,10 +40,10 @@ describe("ForkTest: Withdrawal against mainnet OETH vault queue", function () {
   const WITHDRAW_AMOUNT = ethers.utils.parseEther("1");
 
   beforeEach(async () => {
-    fixture = await mainnetFixture();
+    await mainnetFixture();
 
     const proxyAddr = await getCreate2ProxyAddress("OETHbV3RemoteProxy");
-    remote = await ethers.getContractAt("RemoteV3Strategy", proxyAddr);
+    remote = await ethers.getContractAt("RemoteWOTokenStrategy", proxyAddr);
 
     woeth = await ethers.getContractAt(
       "IERC4626",
@@ -93,11 +92,9 @@ describe("ForkTest: Withdrawal against mainnet OETH vault queue", function () {
     const sTimelock = await impersonateAndFund(addresses.mainnet.Timelock);
     await remote.connect(sTimelock).setOutboundAdapter(mockOut.address);
 
-    // Synthetic WITHDRAW_REQUEST.
-    const envelope = ethers.utils.solidityPack(
-      ["uint32", "uint32", "uint64", "bytes"],
-      [2010, MSG.WITHDRAW_REQUEST, 1, encodeAmountPayload(WITHDRAW_AMOUNT)]
-    );
+    // The fork test bypasses the inbound adapter — it calls receiveFromBridge
+    // directly via the impersonated adapter signer below, so we don't need to
+    // construct a wire envelope here.
 
     const totalBefore = await remote.checkBalance(addresses.mainnet.WETH);
     const sharesBefore = await woeth.balanceOf(remote.address);

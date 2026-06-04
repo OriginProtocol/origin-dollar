@@ -1,27 +1,32 @@
 const { expect } = require("chai");
 const { ethers } = require("hardhat");
 
-const ORIGIN_V3_MESSAGE_VERSION = 2010;
+const ORIGIN_V3_MESSAGE_VERSION = 1020;
 
 const MSG = {
-  YIELD_DEPOSIT: 1,
-  YIELD_DEPOSIT_ACK: 2,
+  DEPOSIT: 1,
+  DEPOSIT_ACK: 2,
   WITHDRAW_REQUEST: 3,
   WITHDRAW_REQUEST_ACK: 4,
   WITHDRAW_CLAIM: 5,
   WITHDRAW_CLAIM_ACK: 6,
   BALANCE_CHECK_REQUEST: 7,
   BALANCE_CHECK_RESPONSE: 8,
-  SETTLE_BRIDGE: 9,
-  SETTLE_BRIDGE_ACK: 10,
+  SETTLE_BRIDGE_ACCOUNTING: 9,
+  SETTLE_BRIDGE_ACCOUNTING_ACK: 10,
   BRIDGE_IN: 11,
   BRIDGE_OUT: 12,
 };
 
-const encodePackedEnvelope = (msgType, nonce, payloadHex) =>
+const encodePackedEnvelope = (
+  msgType,
+  nonce,
+  payloadHex,
+  sender = ethers.constants.AddressZero
+) =>
   ethers.utils.solidityPack(
-    ["uint32", "uint32", "uint64", "bytes"],
-    [ORIGIN_V3_MESSAGE_VERSION, msgType, nonce, payloadHex]
+    ["uint32", "uint32", "uint64", "address", "bytes"],
+    [ORIGIN_V3_MESSAGE_VERSION, msgType, nonce, sender, payloadHex]
   );
 
 const encodeBridgeUserPayload = ({
@@ -36,7 +41,7 @@ const encodeBridgeUserPayload = ({
     [bridgeId, amount, recipient, callData, callGasLimit]
   );
 
-describe("Unit: RemoteV3Strategy", function () {
+describe("Unit: RemoteWOTokenStrategy", function () {
   let deployer, governor, alice;
   let bridgeAsset, oToken, woToken, ethVault, remote;
   let outboundAdapter, inboundAdapter;
@@ -84,8 +89,10 @@ describe("Unit: RemoteV3Strategy", function () {
     const WoFactory = await ethers.getContractFactory("MockERC4626Vault");
     woToken = await WoFactory.deploy(oToken.address);
 
-    // RemoteV3Strategy behind proxy
-    const ImplFactory = await ethers.getContractFactory("RemoteV3Strategy");
+    // RemoteWOTokenStrategy behind proxy
+    const ImplFactory = await ethers.getContractFactory(
+      "RemoteWOTokenStrategy"
+    );
     const impl = await ImplFactory.connect(deployer).deploy(
       {
         platformAddress: woToken.address,
@@ -108,7 +115,7 @@ describe("Unit: RemoteV3Strategy", function () {
       .connect(deployer)
       .initialize(impl.address, governor.address, initData);
 
-    remote = await ethers.getContractAt("RemoteV3Strategy", proxy.address);
+    remote = await ethers.getContractAt("RemoteWOTokenStrategy", proxy.address);
 
     // Adapters
     const AdapterFactory = await ethers.getContractFactory("MockBridgeAdapter");
@@ -119,6 +126,9 @@ describe("Unit: RemoteV3Strategy", function () {
 
     await remote.connect(governor).setOutboundAdapter(outboundAdapter.address);
     await remote.connect(governor).setInboundAdapter(inboundAdapter.address);
+    // safeApproveAllTokens primes the static (token, spender) pairs Remote transfers
+    // through (replaces the per-call _ensureApproval).
+    await remote.connect(governor).safeApproveAllTokens();
   });
 
   describe("initialisation", () => {
@@ -179,10 +189,10 @@ describe("Unit: RemoteV3Strategy", function () {
     });
   });
 
-  describe("YIELD_DEPOSIT inbound handling", () => {
+  describe("DEPOSIT inbound handling", () => {
     const ONE_K = ethers.utils.parseUnits("1000", 6);
 
-    it("mints OToken, wraps to wOToken, sends YIELD_DEPOSIT_ACK with new balance", async () => {
+    it("mints OToken, wraps to wOToken, sends DEPOSIT_ACK with new balance", async () => {
       // Drive an atomic tokens-with-message delivery through the receiver adapter.
       // The test EOA plays the role of the bridge transport: pre-funded with
       // bridgeAsset and approves the adapter to pull it as if it had arrived from
@@ -190,7 +200,7 @@ describe("Unit: RemoteV3Strategy", function () {
       await bridgeAsset.mintTo(deployer.address, ONE_K);
       await bridgeAsset.approve(inboundAdapter.address, ONE_K);
 
-      const envelope = encodePackedEnvelope(MSG.YIELD_DEPOSIT, 7, "0x");
+      const envelope = encodePackedEnvelope(MSG.DEPOSIT, 7, "0x");
       await inboundAdapter.sendTokensAndMessage(
         bridgeAsset.address,
         ONE_K,
@@ -205,10 +215,8 @@ describe("Unit: RemoteV3Strategy", function () {
       // Master would have received the ack with the new balance.
       const sent = await outboundAdapter.lastMessageSent();
       const decoded = sent.toLowerCase();
-      expect(decoded.slice(0, 10)).to.equal("0x000007da");
-      expect(parseInt(decoded.slice(10, 18), 16)).to.equal(
-        MSG.YIELD_DEPOSIT_ACK
-      );
+      expect(decoded.slice(0, 10)).to.equal("0x000003fc");
+      expect(parseInt(decoded.slice(10, 18), 16)).to.equal(MSG.DEPOSIT_ACK);
       expect(parseInt(decoded.slice(18, 34), 16)).to.equal(7); // nonce
 
       expect(await remote.nonceProcessed(7)).to.equal(true);
@@ -222,7 +230,7 @@ describe("Unit: RemoteV3Strategy", function () {
       await inboundAdapter.sendTokensAndMessage(
         bridgeAsset.address,
         ONE_K,
-        encodePackedEnvelope(MSG.YIELD_DEPOSIT, 5, "0x")
+        encodePackedEnvelope(MSG.DEPOSIT, 5, "0x")
       );
 
       // Reusing nonce 5 or going backward must be rejected.
@@ -230,7 +238,7 @@ describe("Unit: RemoteV3Strategy", function () {
         inboundAdapter.sendTokensAndMessage(
           bridgeAsset.address,
           ONE_K,
-          encodePackedEnvelope(MSG.YIELD_DEPOSIT, 5, "0x")
+          encodePackedEnvelope(MSG.DEPOSIT, 5, "0x")
         )
       ).to.be.revertedWith("V3: nonce not monotonic");
 
@@ -238,7 +246,7 @@ describe("Unit: RemoteV3Strategy", function () {
         inboundAdapter.sendTokensAndMessage(
           bridgeAsset.address,
           ONE_K,
-          encodePackedEnvelope(MSG.YIELD_DEPOSIT, 4, "0x")
+          encodePackedEnvelope(MSG.DEPOSIT, 4, "0x")
         )
       ).to.be.revertedWith("V3: nonce not monotonic");
     });
@@ -253,7 +261,7 @@ describe("Unit: RemoteV3Strategy", function () {
       await ethVault.connect(alice).mint(amount);
     };
 
-    it("wraps OToken, emits BridgeInRequested, sends BRIDGE_IN message", async () => {
+    it("wraps OToken, emits BridgeRequested, sends BRIDGE_IN message", async () => {
       await mintOTokenToAlice(AMT);
       await oToken.connect(alice).approve(remote.address, AMT);
 
@@ -261,7 +269,7 @@ describe("Unit: RemoteV3Strategy", function () {
         remote
           .connect(alice)
           .bridgeOTokenToPeer(AMT, ethers.constants.AddressZero, "0x", 0)
-      ).to.emit(remote, "BridgeInRequested");
+      ).to.emit(remote, "BridgeRequested");
 
       expect(await woToken.balanceOf(remote.address)).to.equal(AMT);
       expect(await remote.bridgeAdjustment()).to.equal(AMT);
@@ -278,8 +286,8 @@ describe("Unit: RemoteV3Strategy", function () {
       await expect(
         remote
           .connect(alice)
-          .bridgeOTokenToPeer(AMT, alice.address, "0xdeadbeef", 600_000)
-      ).to.be.revertedWith("Remote: callGasLimit too high");
+          .bridgeOTokenToPeer(AMT, alice.address, "0xdeadbeef", 600000)
+      ).to.be.revertedWith("WOT: callGasLimit too high");
     });
   });
 
@@ -306,7 +314,7 @@ describe("Unit: RemoteV3Strategy", function () {
       const envelope = encodePackedEnvelope(MSG.BRIDGE_OUT, 0, payload);
 
       await expect(inboundAdapter.sendMessage(envelope))
-        .to.emit(remote, "BridgeOutDelivered")
+        .to.emit(remote, "BridgeDelivered")
         .withArgs(bridgeId, alice.address, AMT);
 
       expect(await oToken.balanceOf(alice.address)).to.equal(AMT);
@@ -328,7 +336,7 @@ describe("Unit: RemoteV3Strategy", function () {
       const envelope = encodePackedEnvelope(MSG.BRIDGE_OUT, 0, payload);
       await inboundAdapter.sendMessage(envelope);
       await expect(inboundAdapter.sendMessage(envelope)).to.be.revertedWith(
-        "Remote: bridgeId replayed"
+        "WOT: bridgeId replayed"
       );
     });
 
@@ -366,13 +374,13 @@ describe("Unit: RemoteV3Strategy", function () {
         amount: AMT,
         recipient: target.address,
         callData,
-        callGasLimit: 200_000,
+        callGasLimit: 200000,
       });
       const envelope = encodePackedEnvelope(MSG.BRIDGE_OUT, 0, payload);
 
       await expect(inboundAdapter.sendMessage(envelope)).to.emit(
         remote,
-        "BridgeOutDeliveredWithCall"
+        "BridgeCallSucceeded"
       );
       expect(await target.callCount()).to.equal(1);
     });
@@ -398,12 +406,12 @@ describe("Unit: RemoteV3Strategy", function () {
         amount: AMT,
         recipient: target.address,
         callData,
-        callGasLimit: 200_000,
+        callGasLimit: 200000,
       });
       const envelope = encodePackedEnvelope(MSG.BRIDGE_OUT, 0, payload);
       await expect(inboundAdapter.sendMessage(envelope)).to.emit(
         remote,
-        "BridgeOutCallFailed"
+        "BridgeCallFailed"
       );
       expect(await oToken.balanceOf(target.address)).to.equal(AMT);
     });

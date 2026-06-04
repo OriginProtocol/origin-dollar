@@ -76,7 +76,9 @@ describe("Unit: V3 Withdrawal", function () {
     const WoFactory = await ethers.getContractFactory("MockERC4626Vault");
     woTokenEth = await WoFactory.deploy(oTokenEth.address);
 
-    const MasterFactory = await ethers.getContractFactory("MasterV3Strategy");
+    const MasterFactory = await ethers.getContractFactory(
+      "MasterWOTokenStrategy"
+    );
     const masterImpl = await MasterFactory.connect(deployer).deploy(
       {
         platformAddress: ethers.constants.AddressZero,
@@ -86,7 +88,9 @@ describe("Unit: V3 Withdrawal", function () {
       oTokenL2.address
     );
 
-    const RemoteFactory = await ethers.getContractFactory("RemoteV3Strategy");
+    const RemoteFactory = await ethers.getContractFactory(
+      "RemoteWOTokenStrategy"
+    );
     const remoteImpl = await RemoteFactory.connect(deployer).deploy(
       {
         platformAddress: woTokenEth.address,
@@ -112,7 +116,7 @@ describe("Unit: V3 Withdrawal", function () {
         ])
       );
     master = await ethers.getContractAt(
-      "MasterV3Strategy",
+      "MasterWOTokenStrategy",
       masterProxy.address
     );
 
@@ -127,7 +131,7 @@ describe("Unit: V3 Withdrawal", function () {
         ])
       );
     remote = await ethers.getContractAt(
-      "RemoteV3Strategy",
+      "RemoteWOTokenStrategy",
       remoteProxy.address
     );
 
@@ -145,6 +149,7 @@ describe("Unit: V3 Withdrawal", function () {
     await master.connect(governor).setInboundAdapter(adapterRM.address);
     await remote.connect(governor).setOutboundAdapter(adapterRM.address);
     await remote.connect(governor).setInboundAdapter(adapterME.address);
+    await remote.connect(governor).safeApproveAllTokens();
 
     // Seed Remote with SEED via a deposit round-trip so withdrawals have something to draw on.
     await bridgeAsset.mintTo(master.address, SEED);

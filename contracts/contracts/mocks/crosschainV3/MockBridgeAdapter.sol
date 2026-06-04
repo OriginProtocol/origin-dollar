@@ -129,7 +129,7 @@ contract MockBridgeAdapter is IOutboundAdapter {
     }
 
     function _dispatch(uint256 amount, bytes memory message) internal {
-        (uint32 version, uint32 msgType, uint64 nonce, ) = CrossChainV3Helper
+        (uint32 version, uint32 msgType, uint64 nonce, , ) = CrossChainV3Helper
             .unwrap(message);
         require(
             version == CrossChainV3Helper.ORIGIN_V3_MESSAGE_VERSION,

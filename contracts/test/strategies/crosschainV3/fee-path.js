@@ -13,11 +13,11 @@ const { ethers } = require("hardhat");
  *
  * Both paths revert when the relevant source can't cover the fee.
  */
-describe("Unit: CCIPOutboundAdapter fee path", function () {
+describe("Unit: CCIPAdapter fee path", function () {
   let governor, sender, refundReceiver;
   let adapter, router;
   const DESTINATION = 1234567890;
-  const GAS_LIMIT = 200_000;
+  const GAS_LIMIT = 200000;
 
   beforeEach(async () => {
     [governor, sender, refundReceiver] = await ethers.getSigners();
@@ -25,9 +25,7 @@ describe("Unit: CCIPOutboundAdapter fee path", function () {
     const RouterFactory = await ethers.getContractFactory("MockCCIPRouter");
     router = await RouterFactory.connect(governor).deploy();
 
-    const AdapterFactory = await ethers.getContractFactory(
-      "CCIPOutboundAdapter"
-    );
+    const AdapterFactory = await ethers.getContractFactory("CCIPAdapter");
     adapter = await AdapterFactory.connect(governor).deploy(router.address);
 
     // Authorise the sender EOA so it can call sendMessage directly.
@@ -64,7 +62,7 @@ describe("Unit: CCIPOutboundAdapter fee path", function () {
 
     await expect(
       adapter.connect(sender).sendMessage("0xdeadbeef")
-    ).to.be.revertedWith("Adapter: unfunded");
+    ).to.be.revertedWith("Fee: unfunded");
   });
 
   it("user-paid path: msg.value exactly covers fee", async () => {
@@ -83,7 +81,7 @@ describe("Unit: CCIPOutboundAdapter fee path", function () {
 
     await expect(
       adapter.connect(sender).sendMessage("0xabcd", { value: fee.sub(1) })
-    ).to.be.revertedWith("Adapter: insufficient native fee");
+    ).to.be.revertedWith("Fee: insufficient");
   });
 
   it("yield-channel uses pre-funded path even if adapter has both kinds of capital", async () => {

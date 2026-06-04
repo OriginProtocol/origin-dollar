@@ -1,19 +1,19 @@
 const { expect } = require("chai");
 const { ethers } = require("hardhat");
 
-const ORIGIN_V3_MESSAGE_VERSION = 2010;
+const ORIGIN_V3_MESSAGE_VERSION = 1020;
 
 const MSG = {
-  YIELD_DEPOSIT: 1,
-  YIELD_DEPOSIT_ACK: 2,
+  DEPOSIT: 1,
+  DEPOSIT_ACK: 2,
   WITHDRAW_REQUEST: 3,
   WITHDRAW_REQUEST_ACK: 4,
   WITHDRAW_CLAIM: 5,
   WITHDRAW_CLAIM_ACK: 6,
   BALANCE_CHECK_REQUEST: 7,
   BALANCE_CHECK_RESPONSE: 8,
-  SETTLE_BRIDGE: 9,
-  SETTLE_BRIDGE_ACK: 10,
+  SETTLE_BRIDGE_ACCOUNTING: 9,
+  SETTLE_BRIDGE_ACCOUNTING_ACK: 10,
   BRIDGE_IN: 11,
   BRIDGE_OUT: 12,
 };
@@ -34,17 +34,20 @@ describe("Unit: CrossChainV3Helper", function () {
       expect(await harness.version()).to.equal(ORIGIN_V3_MESSAGE_VERSION);
     });
 
-    it("uses a 16-byte header (4 version + 4 type + 8 nonce)", async () => {
-      expect(await harness.headerLength()).to.equal(16);
+    it("uses a 36-byte header (4 version + 4 type + 8 nonce + 20 sender)", async () => {
+      expect(await harness.headerLength()).to.equal(36);
     });
   });
+
+  const ZERO_SENDER = ethers.constants.AddressZero;
+  const TEST_SENDER = "0x000000000000000000000000000000000000abcd";
 
   describe("wrap / unwrap envelope", () => {
     it("round-trips every yield-channel message type with a nonzero nonce", async () => {
       const cases = [
-        { type: MSG.YIELD_DEPOSIT, payload: "0x" },
+        { type: MSG.DEPOSIT, payload: "0x" },
         {
-          type: MSG.YIELD_DEPOSIT_ACK,
+          type: MSG.DEPOSIT_ACK,
           payload: ethers.utils.defaultAbiCoder.encode(["uint256"], [12345]),
         },
         {
@@ -77,22 +80,27 @@ describe("Unit: CrossChainV3Helper", function () {
             [99, 1700000001]
           ),
         },
-        { type: MSG.SETTLE_BRIDGE, payload: "0x" },
+        { type: MSG.SETTLE_BRIDGE_ACCOUNTING, payload: "0x" },
         {
-          type: MSG.SETTLE_BRIDGE_ACK,
+          type: MSG.SETTLE_BRIDGE_ACCOUNTING_ACK,
           payload: ethers.utils.defaultAbiCoder.encode(["uint256"], [555]),
         },
       ];
 
       const nonce = ethers.BigNumber.from("123456789012345678");
       for (const c of cases) {
-        const wrapped = await harness.wrap(c.type, nonce, c.payload);
-        const [version, msgType, gotNonce, gotPayload] = await harness.unwrap(
-          wrapped
+        const wrapped = await harness.wrap(
+          c.type,
+          nonce,
+          TEST_SENDER,
+          c.payload
         );
+        const [version, msgType, gotNonce, gotSender, gotPayload] =
+          await harness.unwrap(wrapped);
         expect(version).to.equal(ORIGIN_V3_MESSAGE_VERSION);
         expect(msgType).to.equal(c.type);
         expect(gotNonce).to.equal(nonce);
+        expect(gotSender.toLowerCase()).to.equal(TEST_SENDER);
         expect(gotPayload).to.equal(c.payload === "0x" ? "0x" : c.payload);
 
         // Direct getters match unwrap
@@ -101,6 +109,9 @@ describe("Unit: CrossChainV3Helper", function () {
         );
         expect(await harness.getMessageType(wrapped)).to.equal(c.type);
         expect(await harness.getNonce(wrapped)).to.equal(nonce);
+        expect((await harness.getSender(wrapped)).toLowerCase()).to.equal(
+          TEST_SENDER
+        );
         expect(await harness.getPayload(wrapped)).to.equal(
           c.payload === "0x" ? "0x" : c.payload
         );
@@ -117,19 +128,24 @@ describe("Unit: CrossChainV3Helper", function () {
         300000
       );
 
-      const wrapped = await harness.wrap(MSG.BRIDGE_IN, 0, payload);
-      const [version, msgType, gotNonce, gotPayload] = await harness.unwrap(
-        wrapped
+      const wrapped = await harness.wrap(
+        MSG.BRIDGE_IN,
+        0,
+        ZERO_SENDER,
+        payload
       );
+      const [version, msgType, gotNonce, gotSender, gotPayload] =
+        await harness.unwrap(wrapped);
       expect(version).to.equal(ORIGIN_V3_MESSAGE_VERSION);
       expect(msgType).to.equal(MSG.BRIDGE_IN);
       expect(gotNonce).to.equal(0);
+      expect(gotSender).to.equal(ZERO_SENDER);
       expect(gotPayload).to.equal(payload);
     });
 
     it("rejects a message that is too short to contain a header", async () => {
-      // 15-byte buffer can't carry the 16-byte header.
-      const tooShort = "0x" + "ab".repeat(15);
+      // 35-byte buffer can't carry the 36-byte header.
+      const tooShort = "0x" + "ab".repeat(35);
       await expect(harness.unwrap(tooShort)).to.be.revertedWith(
         "V3: message too short"
       );
@@ -138,17 +154,25 @@ describe("Unit: CrossChainV3Helper", function () {
     it("the wire layout is exactly the documented packing", async () => {
       const nonce = ethers.BigNumber.from("0x0807060504030201");
       const payload = "0xdeadbeef";
-      const wrapped = await harness.wrap(MSG.WITHDRAW_REQUEST, nonce, payload);
+      const sender = "0x0000000000000000000000000000000000000abc";
+      const wrapped = await harness.wrap(
+        MSG.WITHDRAW_REQUEST,
+        nonce,
+        sender,
+        payload
+      );
 
       // Expected wire bytes:
-      //   00000007da    -- version 2010 (0x7DA) as uint32 big-endian -> "000007da"
-      //   00000003      -- msgType 3 as uint32 -> "00000003"
-      //   0807060504030201 -- nonce as uint64 big-endian
-      //   deadbeef      -- payload
+      //   000003fc                -- version 1020 (0x3FC) as uint32 big-endian
+      //   00000003                -- msgType 3 as uint32
+      //   0807060504030201        -- nonce as uint64 big-endian
+      //   00..0abc (20 bytes)     -- sender as packed address
+      //   deadbeef                -- payload
       const expected =
-        "0x000007da" + // version 2010
-        "00000003" + // type 3
-        "0807060504030201" + // nonce
+        "0x000003fc" +
+        "00000003" +
+        "0807060504030201" +
+        "0000000000000000000000000000000000000abc" +
         "deadbeef";
       expect(wrapped.toLowerCase()).to.equal(expected.toLowerCase());
     });
@@ -252,15 +276,15 @@ describe("Unit: CrossChainV3Helper", function () {
   describe("extractUint64", () => {
     it("reads the nonce slot at offset 8 of an envelope", async () => {
       const nonce = ethers.BigNumber.from("0xfedcba9876543210");
-      const wrapped = await harness.wrap(MSG.YIELD_DEPOSIT, nonce, "0x");
+      const wrapped = await harness.wrap(MSG.DEPOSIT, nonce, ZERO_SENDER, "0x");
       expect(await harness.extractUint64(wrapped, 8)).to.equal(nonce);
     });
 
     it("reverts when reading beyond the buffer", async () => {
-      const wrapped = await harness.wrap(MSG.YIELD_DEPOSIT, 1, "0x");
-      // header is exactly 16 bytes; reading at offset 16 with 8 bytes overflows
-      await expect(harness.extractUint64(wrapped, 16)).to.be.revertedWith(
-        "V3: uint64 out of range"
+      const wrapped = await harness.wrap(MSG.DEPOSIT, 1, ZERO_SENDER, "0x");
+      // header is exactly 36 bytes (no payload here); reading 8 bytes at offset 36 overflows
+      await expect(harness.extractUint64(wrapped, 36)).to.be.revertedWith(
+        "Slice end exceeds data length"
       );
     });
 

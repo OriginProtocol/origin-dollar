@@ -8,7 +8,7 @@ import { MockMintableBurnableOToken } from "./MockMintableBurnableOToken.sol";
 
 /**
  * @title MockEthOTokenVault
- * @notice TEST-ONLY Ethereum-side OToken vault stand-in for the V3 RemoteV3Strategy tests.
+ * @notice TEST-ONLY Ethereum-side OToken vault stand-in for the V3 RemoteWOTokenStrategy tests.
  *
  *         Mirrors the OUSD VaultCore surface that Remote actually uses:
  *           - mint(amount): pulls bridgeAsset, mints OToken to caller (instant, 1:1).

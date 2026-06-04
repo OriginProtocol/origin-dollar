@@ -1,28 +1,35 @@
 const { expect } = require("chai");
 const { ethers } = require("hardhat");
 
-const ORIGIN_V3_MESSAGE_VERSION = 2010;
+const ORIGIN_V3_MESSAGE_VERSION = 1020;
 
 const MSG = {
-  YIELD_DEPOSIT: 1,
-  YIELD_DEPOSIT_ACK: 2,
+  DEPOSIT: 1,
+  DEPOSIT_ACK: 2,
   WITHDRAW_REQUEST: 3,
   WITHDRAW_REQUEST_ACK: 4,
   WITHDRAW_CLAIM: 5,
   WITHDRAW_CLAIM_ACK: 6,
   BALANCE_CHECK_REQUEST: 7,
   BALANCE_CHECK_RESPONSE: 8,
-  SETTLE_BRIDGE: 9,
-  SETTLE_BRIDGE_ACK: 10,
+  SETTLE_BRIDGE_ACCOUNTING: 9,
+  SETTLE_BRIDGE_ACCOUNTING_ACK: 10,
   BRIDGE_IN: 11,
   BRIDGE_OUT: 12,
 };
 
 // Helpers matching CrossChainV3Helper.wrap on-the-wire layout.
-const encodePackedEnvelope = (msgType, nonce, payloadHex) => {
+// `sender` is included in the 36-byte header; MockBridgeAdapter ignores it so any
+// well-formed address works for unit tests that don't exercise the inbound whitelist.
+const encodePackedEnvelope = (
+  msgType,
+  nonce,
+  payloadHex,
+  sender = ethers.constants.AddressZero
+) => {
   return ethers.utils.solidityPack(
-    ["uint32", "uint32", "uint64", "bytes"],
-    [ORIGIN_V3_MESSAGE_VERSION, msgType, nonce, payloadHex]
+    ["uint32", "uint32", "uint64", "address", "bytes"],
+    [ORIGIN_V3_MESSAGE_VERSION, msgType, nonce, sender, payloadHex]
   );
 };
 
@@ -42,13 +49,13 @@ const encodeBridgeUserPayload = ({
 const encodeNewBalancePayload = (newBalance) =>
   ethers.utils.defaultAbiCoder.encode(["uint256"], [newBalance]);
 
-describe("Unit: MasterV3Strategy", function () {
-  let deployer, governor, vaultSigner, alice, bob;
+describe("Unit: MasterWOTokenStrategy", function () {
+  let deployer, governor, alice, bob;
   let bridgeAsset, oToken, mockVault, master;
   let outboundAdapter, inboundAdapter;
 
   beforeEach(async () => {
-    [deployer, governor, vaultSigner, alice, bob] = await ethers.getSigners();
+    [deployer, governor, , alice, bob] = await ethers.getSigners();
 
     // --- Tokens & mock vault ---
     const ERC20Factory = await ethers.getContractFactory("MockUSDC");
@@ -69,7 +76,9 @@ describe("Unit: MasterV3Strategy", function () {
     await mockVault.setOToken(oToken.address);
 
     // --- Master strategy: deploy impl behind the standard proxy ---
-    const ImplFactory = await ethers.getContractFactory("MasterV3Strategy");
+    const ImplFactory = await ethers.getContractFactory(
+      "MasterWOTokenStrategy"
+    );
     const impl = await ImplFactory.connect(deployer).deploy(
       {
         platformAddress: ethers.constants.AddressZero,
@@ -91,7 +100,7 @@ describe("Unit: MasterV3Strategy", function () {
       .connect(deployer)
       .initialize(impl.address, governor.address, initData);
 
-    master = await ethers.getContractAt("MasterV3Strategy", proxy.address);
+    master = await ethers.getContractAt("MasterWOTokenStrategy", proxy.address);
 
     await mockVault.whitelistStrategy(master.address);
 
@@ -138,17 +147,15 @@ describe("Unit: MasterV3Strategy", function () {
 
     it("only inboundAdapter can call receiveFromBridge", async () => {
       await expect(
-        master
-          .connect(alice)
-          .receiveFromBridge(1, 0, MSG.YIELD_DEPOSIT_ACK, "0x")
+        master.connect(alice).receiveFromBridge(1, 0, MSG.DEPOSIT_ACK, "0x")
       ).to.be.revertedWith("V3: only inbound adapter");
     });
   });
 
-  describe("deposit flow (YIELD_DEPOSIT)", () => {
+  describe("deposit flow (DEPOSIT)", () => {
     const ONE_K = ethers.utils.parseUnits("1000", 6);
 
-    it("vault.deposit assigns a yield nonce, sets pendingAmount, sends YIELD_DEPOSIT", async () => {
+    it("vault.deposit assigns a yield nonce, sets pendingAmount, sends DEPOSIT", async () => {
       await bridgeAsset.mintTo(master.address, ONE_K);
 
       await mockVault.callDeposit(master.address, bridgeAsset.address, ONE_K);
@@ -166,9 +173,15 @@ describe("Unit: MasterV3Strategy", function () {
         bridgeAsset.address
       );
 
-      // Stored message decodes as YIELD_DEPOSIT with nonce 1 and empty payload.
+      // Stored message decodes as DEPOSIT with nonce 1 and empty payload.
+      // Master tags the envelope with its own address as the source strategy.
       const stored = await outboundAdapter.lastMessageSent();
-      const expected = encodePackedEnvelope(MSG.YIELD_DEPOSIT, 1, "0x");
+      const expected = encodePackedEnvelope(
+        MSG.DEPOSIT,
+        1,
+        "0x",
+        master.address
+      );
       expect(stored.toLowerCase()).to.equal(expected.toLowerCase());
 
       // checkBalance counts the in-flight amount.
@@ -191,7 +204,7 @@ describe("Unit: MasterV3Strategy", function () {
       ).to.be.revertedWith("Caller is not the Vault");
     });
 
-    it("YIELD_DEPOSIT_ACK clears pendingAmount and updates remoteStrategyBalance", async () => {
+    it("DEPOSIT_ACK clears pendingAmount and updates remoteStrategyBalance", async () => {
       await bridgeAsset.mintTo(master.address, ONE_K);
       await mockVault.callDeposit(master.address, bridgeAsset.address, ONE_K);
 
@@ -199,7 +212,7 @@ describe("Unit: MasterV3Strategy", function () {
       // adapter forward it to Master.
       const newBalance = ONE_K.mul(1).add(ethers.BigNumber.from("12345")); // arbitrary
       const ackEnvelope = encodePackedEnvelope(
-        MSG.YIELD_DEPOSIT_ACK,
+        MSG.DEPOSIT_ACK,
         1,
         encodeNewBalancePayload(newBalance)
       );
@@ -215,12 +228,12 @@ describe("Unit: MasterV3Strategy", function () {
       );
     });
 
-    it("rejects a YIELD_DEPOSIT_ACK with a stale nonce", async () => {
+    it("rejects a DEPOSIT_ACK with a stale nonce", async () => {
       await bridgeAsset.mintTo(master.address, ONE_K);
       await mockVault.callDeposit(master.address, bridgeAsset.address, ONE_K);
 
       const bogus = encodePackedEnvelope(
-        MSG.YIELD_DEPOSIT_ACK,
+        MSG.DEPOSIT_ACK,
         99,
         encodeNewBalancePayload(0)
       );
@@ -231,8 +244,6 @@ describe("Unit: MasterV3Strategy", function () {
   });
 
   describe("bridge-out (user-facing)", () => {
-    const ONE = ethers.utils.parseUnits("1", 6); // OToken uses 6 decimals via MockUSDC stand-in? No — see note below.
-
     beforeEach(async () => {
       // Seed Remote balance so the liquidity check passes via a synthetic deposit round-trip.
       const seed = ethers.utils.parseUnits("10000", 6);
@@ -240,7 +251,7 @@ describe("Unit: MasterV3Strategy", function () {
       await mockVault.callDeposit(master.address, bridgeAsset.address, seed);
 
       const ack = encodePackedEnvelope(
-        MSG.YIELD_DEPOSIT_ACK,
+        MSG.DEPOSIT_ACK,
         1,
         encodeNewBalancePayload(seed)
       );
@@ -260,7 +271,7 @@ describe("Unit: MasterV3Strategy", function () {
       await oToken.connect(signer).approve(master.address, amount);
     };
 
-    it("burns OToken, decreases bridgeAdjustment, emits BridgeOutRequested", async () => {
+    it("burns OToken, decreases bridgeAdjustment, emits BridgeRequested", async () => {
       const amount = ethers.utils.parseUnits("100", 6);
       await mintAndApprove(alice, amount);
 
@@ -269,7 +280,7 @@ describe("Unit: MasterV3Strategy", function () {
         master
           .connect(alice)
           .bridgeOTokenToPeer(amount, ethers.constants.AddressZero, "0x", 0)
-      ).to.emit(master, "BridgeOutRequested");
+      ).to.emit(master, "BridgeRequested");
 
       // OToken was burned.
       expect(await oToken.totalSupply()).to.equal(
@@ -283,7 +294,7 @@ describe("Unit: MasterV3Strategy", function () {
       const stored = await outboundAdapter.lastMessageSent();
       const decoded = stored.toLowerCase();
       // First 4 bytes are version, next 4 are type=12, next 8 are nonce=0.
-      expect(decoded.slice(0, 10)).to.equal("0x000007da");
+      expect(decoded.slice(0, 10)).to.equal("0x000003fc");
       expect(decoded.slice(10, 18)).to.equal("0000000c"); // 12 in hex
       expect(decoded.slice(18, 34)).to.equal("0000000000000000"); // nonce 0
     });
@@ -317,8 +328,8 @@ describe("Unit: MasterV3Strategy", function () {
       await expect(
         master
           .connect(alice)
-          .bridgeOTokenToPeer(amount, alice.address, "0xdeadbeef", 600_000)
-      ).to.be.revertedWith("Master: callGasLimit too high");
+          .bridgeOTokenToPeer(amount, alice.address, "0xdeadbeef", 600000)
+      ).to.be.revertedWith("WOT: callGasLimit too high");
     });
 
     it("rejects non-empty callData with zero gas", async () => {
@@ -328,7 +339,7 @@ describe("Unit: MasterV3Strategy", function () {
         master
           .connect(alice)
           .bridgeOTokenToPeer(amount, alice.address, "0xdeadbeef", 0)
-      ).to.be.revertedWith("Master: callData needs gas");
+      ).to.be.revertedWith("WOT: callData needs gas");
     });
   });
 
@@ -345,7 +356,7 @@ describe("Unit: MasterV3Strategy", function () {
       const envelope = encodePackedEnvelope(MSG.BRIDGE_IN, 0, payload);
 
       await expect(inboundAdapter.sendMessage(envelope))
-        .to.emit(master, "BridgeInDelivered")
+        .to.emit(master, "BridgeDelivered")
         .withArgs(bridgeId, alice.address, AMT);
 
       expect(await oToken.balanceOf(alice.address)).to.equal(AMT);
@@ -363,7 +374,7 @@ describe("Unit: MasterV3Strategy", function () {
       const envelope = encodePackedEnvelope(MSG.BRIDGE_IN, 0, payload);
       await inboundAdapter.sendMessage(envelope);
       await expect(inboundAdapter.sendMessage(envelope)).to.be.revertedWith(
-        "Master: bridgeId replayed"
+        "WOT: bridgeId replayed"
       );
     });
 
@@ -386,13 +397,13 @@ describe("Unit: MasterV3Strategy", function () {
         amount: AMT,
         recipient: target.address,
         callData,
-        callGasLimit: 200_000,
+        callGasLimit: 200000,
       });
       const envelope = encodePackedEnvelope(MSG.BRIDGE_IN, 0, payload);
 
       await expect(inboundAdapter.sendMessage(envelope)).to.emit(
         master,
-        "BridgeInDeliveredWithCall"
+        "BridgeCallSucceeded"
       );
 
       expect(await target.callCount()).to.equal(1);
@@ -420,13 +431,13 @@ describe("Unit: MasterV3Strategy", function () {
         amount: AMT,
         recipient: target.address,
         callData,
-        callGasLimit: 200_000,
+        callGasLimit: 200000,
       });
       const envelope = encodePackedEnvelope(MSG.BRIDGE_IN, 0, payload);
 
       await expect(inboundAdapter.sendMessage(envelope)).to.emit(
         master,
-        "BridgeInCallFailed"
+        "BridgeCallFailed"
       );
 
       // Tokens were still delivered.
@@ -441,12 +452,12 @@ describe("Unit: MasterV3Strategy", function () {
         amount: AMT,
         recipient: alice.address,
         callData: "0xdeadbeef",
-        callGasLimit: 600_000,
+        callGasLimit: 600000,
       });
       const envelope = encodePackedEnvelope(MSG.BRIDGE_IN, 0, payload);
 
       await expect(inboundAdapter.sendMessage(envelope)).to.be.revertedWith(
-        "Master: callGasLimit too high"
+        "WOT: callGasLimit too high"
       );
     });
   });
@@ -455,13 +466,13 @@ describe("Unit: MasterV3Strategy", function () {
     it("rejects requestBalanceCheck from non-operator non-governor", async () => {
       await expect(
         master.connect(alice).requestBalanceCheck()
-      ).to.be.revertedWith("Master: only operator or governor");
+      ).to.be.revertedWith("WOT: not authorised");
     });
 
     it("rejects requestSettlement from non-operator non-governor", async () => {
       await expect(
         master.connect(alice).requestSettlement()
-      ).to.be.revertedWith("Master: only operator or governor");
+      ).to.be.revertedWith("WOT: not authorised");
     });
   });
 });

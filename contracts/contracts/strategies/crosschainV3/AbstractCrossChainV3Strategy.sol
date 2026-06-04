@@ -4,6 +4,7 @@ pragma solidity ^0.8.0;
 import { Governable } from "../../governance/Governable.sol";
 import { IBridgeReceiver } from "../../interfaces/crosschainV3/IBridgeReceiver.sol";
 import { IOutboundAdapter } from "../../interfaces/crosschainV3/IOutboundAdapter.sol";
+import { CrossChainV3Helper } from "./CrossChainV3Helper.sol";
 
 /**
  * @title AbstractCrossChainV3Strategy
@@ -67,20 +68,22 @@ abstract contract AbstractCrossChainV3Strategy is Governable, IBridgeReceiver {
         _;
     }
 
-    modifier onlyOperatorOrGovernor() {
-        require(
-            msg.sender == operator || isGovernor(),
-            "V3: only operator or governor"
-        );
-        _;
-    }
-
     // --- Adapter / operator configuration (governor) ------------------------
 
     function setOutboundAdapter(address _outboundAdapter)
         external
         onlyGovernor
     {
+        _setOutboundAdapter(_outboundAdapter);
+    }
+
+    /**
+     * @dev Hook for concrete strategies that need to perform token-allowance swaps when
+     *      the outbound adapter changes (e.g., revoke an old adapter's bridgeAsset
+     *      allowance, grant the new one max). Default implementation just rotates the
+     *      stored address; override to add side effects.
+     */
+    function _setOutboundAdapter(address _outboundAdapter) internal virtual {
         emit OutboundAdapterUpdated(outboundAdapter, _outboundAdapter);
         outboundAdapter = _outboundAdapter;
     }
@@ -170,19 +173,46 @@ abstract contract AbstractCrossChainV3Strategy is Governable, IBridgeReceiver {
 
     // --- Outbound convenience wrappers --------------------------------------
 
-    function _sendMessage(bytes memory message) internal {
+    /**
+     * @dev Wrap the envelope (with `address(this)` as the source sender) and forward to the
+     *      configured outbound adapter as a message-only send.
+     */
+    function _sendYieldMessage(
+        uint32 msgType,
+        uint64 nonce,
+        bytes memory payload
+    ) internal {
         IOutboundAdapter(outboundAdapter).sendMessage{ value: msg.value }(
-            message
+            CrossChainV3Helper.wrap(msgType, nonce, address(this), payload)
         );
     }
 
-    function _sendTokensAndMessage(
+    /**
+     * @dev Wrap the envelope and forward via the outbound adapter together with `amount` of
+     *      `token`. Used by yield-channel messages that carry tokens (DEPOSIT,
+     *      WITHDRAW_CLAIM_ACK).
+     */
+    function _sendYieldTokensAndMessage(
         address token,
         uint256 amount,
-        bytes memory message
+        uint32 msgType,
+        uint64 nonce,
+        bytes memory payload
     ) internal {
         IOutboundAdapter(outboundAdapter).sendTokensAndMessage{
             value: msg.value
-        }(token, amount, message);
+        }(
+            token,
+            amount,
+            CrossChainV3Helper.wrap(msgType, nonce, address(this), payload)
+        );
+    }
+
+    /// @dev Low-level message-only send for callers that already wrapped the envelope
+    ///      (e.g., the bridge-channel layer in `AbstractWOTokenStrategy`).
+    function _sendRawMessage(bytes memory message) internal {
+        IOutboundAdapter(outboundAdapter).sendMessage{ value: msg.value }(
+            message
+        );
     }
 }

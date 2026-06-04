@@ -43,7 +43,9 @@ describe("Unit: V3 Master+Remote loopback", function () {
     );
     await mockL2Vault.setOToken(oTokenL2.address);
 
-    const MasterFactory = await ethers.getContractFactory("MasterV3Strategy");
+    const MasterFactory = await ethers.getContractFactory(
+      "MasterWOTokenStrategy"
+    );
     const masterImpl = await MasterFactory.connect(deployer).deploy(
       {
         platformAddress: ethers.constants.AddressZero,
@@ -77,7 +79,9 @@ describe("Unit: V3 Master+Remote loopback", function () {
     const WoFactory = await ethers.getContractFactory("MockERC4626Vault");
     woTokenEth = await WoFactory.deploy(oTokenEth.address);
 
-    const RemoteFactory = await ethers.getContractFactory("RemoteV3Strategy");
+    const RemoteFactory = await ethers.getContractFactory(
+      "RemoteWOTokenStrategy"
+    );
     const remoteImpl = await RemoteFactory.connect(deployer).deploy(
       {
         platformAddress: woTokenEth.address,
@@ -102,7 +106,7 @@ describe("Unit: V3 Master+Remote loopback", function () {
       .connect(deployer)
       .initialize(masterImpl.address, governor.address, masterInitData);
     master = await ethers.getContractAt(
-      "MasterV3Strategy",
+      "MasterWOTokenStrategy",
       masterProxy.address
     );
 
@@ -115,7 +119,7 @@ describe("Unit: V3 Master+Remote loopback", function () {
       .connect(deployer)
       .initialize(remoteImpl.address, governor.address, remoteInitData);
     remote = await ethers.getContractAt(
-      "RemoteV3Strategy",
+      "RemoteWOTokenStrategy",
       remoteProxy.address
     );
 
@@ -135,6 +139,7 @@ describe("Unit: V3 Master+Remote loopback", function () {
     await master.connect(governor).setInboundAdapter(adapterRM.address);
     await remote.connect(governor).setOutboundAdapter(adapterRM.address);
     await remote.connect(governor).setInboundAdapter(adapterME.address);
+    await remote.connect(governor).safeApproveAllTokens();
   });
 
   it("deposit flows Master → Remote and the ack updates Master in one round-trip", async () => {
@@ -147,7 +152,7 @@ describe("Unit: V3 Master+Remote loopback", function () {
     // After the deposit:
     //   - Master's tokens flowed: master → adapterME → remote
     //   - Remote minted OToken via ethVault, wrapped to wOToken
-    //   - Remote sent YIELD_DEPOSIT_ACK back via adapterRM
+    //   - Remote sent DEPOSIT_ACK back via adapterRM
     //   - adapterRM called master.receiveFromBridge with the ack
     //   - Master cleared pendingAmount and set remoteStrategyBalance = newBalance
 

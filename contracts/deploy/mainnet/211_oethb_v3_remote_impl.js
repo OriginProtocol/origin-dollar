@@ -26,10 +26,10 @@ function readDeploymentAddress(networkName, contractName) {
 const BASE_L1_STANDARD_BRIDGE = "0x3154Cf16ccdb4C6d922629664174b904d80F2C35";
 
 // Per-receive destination gas limit for cross-chain message handling.
-const DEFAULT_DEST_GAS_LIMIT = 500_000;
+const DEFAULT_DEST_GAS_LIMIT = 500000;
 
 // Canonical bridge minGasLimit hint for the ERC20 deposit (OP Stack default).
-const CANONICAL_MIN_GAS = 200_000;
+const CANONICAL_MIN_GAS = 200000;
 
 module.exports = deploymentWithGovernanceProposal(
   {
@@ -51,7 +51,7 @@ module.exports = deploymentWithGovernanceProposal(
     console.log(`OETHbV3RemoteProxy resolved at: ${remoteProxyAddress}`);
 
     // --- 1. Deploy Remote impl ---
-    await deployWithConfirmation("RemoteV3Strategy", [
+    await deployWithConfirmation("RemoteWOTokenStrategy", [
       {
         platformAddress: addresses.mainnet.WOETHProxy,
         vaultAddress: addresses.zero,
@@ -61,8 +61,8 @@ module.exports = deploymentWithGovernanceProposal(
       addresses.mainnet.WOETHProxy,
       addresses.mainnet.OETHVaultProxy,
     ]);
-    const dRemoteImpl = await ethers.getContract("RemoteV3Strategy");
-    console.log(`RemoteV3Strategy impl: ${dRemoteImpl.address}`);
+    const dRemoteImpl = await ethers.getContract("RemoteWOTokenStrategy");
+    console.log(`RemoteWOTokenStrategy impl: ${dRemoteImpl.address}`);
 
     // --- 2. Initialise the proxy: impl + governor=Timelock + initialize(operator) ---
     const cRemoteProxy = await ethers.getContractAt(
@@ -73,33 +73,35 @@ module.exports = deploymentWithGovernanceProposal(
       "initialize(address)",
       [addresses.talosRelayer]
     );
+    const proxyInitCalldata = cRemoteProxy.interface.encodeFunctionData(
+      "initialize(address,address,bytes)",
+      [dRemoteImpl.address, addresses.mainnet.Timelock, initData]
+    );
     await withConfirmation(
-      cRemoteProxy
-        .connect(sDeployer)
-        ["initialize(address,address,bytes)"](
-          dRemoteImpl.address,
-          addresses.mainnet.Timelock,
-          initData
-        )
+      sDeployer.sendTransaction({
+        to: cRemoteProxy.address,
+        data: proxyInitCalldata,
+      })
     );
 
     // --- 3. Deploy adapters (deployer = initial governor) ---
-    // Outbound (E→B, split delivery): SuperbridgeCanonicalOutboundAdapter
-    await deployWithConfirmation("SuperbridgeCanonicalOutboundAdapter", [
+    // Outbound (E→B, split delivery): SuperbridgeAdapter. Mainnet side never receives
+    // inbound on this adapter, so `_expectedToken` is passed as address(0); the inbound
+    // entry points revert if invoked.
+    await deployWithConfirmation("SuperbridgeAdapter", [
       BASE_L1_STANDARD_BRIDGE,
       addresses.mainnet.ccipRouterMainnet,
+      addresses.zero,
     ]);
-    const dSuperOut = await ethers.getContract(
-      "SuperbridgeCanonicalOutboundAdapter"
-    );
-    console.log(`SuperbridgeCanonicalOutboundAdapter: ${dSuperOut.address}`);
+    const dSuperOut = await ethers.getContract("SuperbridgeAdapter");
+    console.log(`SuperbridgeAdapter: ${dSuperOut.address}`);
 
-    // Inbound (B→E, atomic): CCIPInboundAdapter
-    await deployWithConfirmation("CCIPInboundAdapter", [
+    // Inbound (B→E, atomic): CCIPAdapter
+    await deployWithConfirmation("CCIPAdapter", [
       addresses.mainnet.ccipRouterMainnet,
     ]);
-    const dCCIPRx = await ethers.getContract("CCIPInboundAdapter");
-    console.log(`CCIPInboundAdapter: ${dCCIPRx.address}`);
+    const dCCIPRx = await ethers.getContract("CCIPAdapter");
+    console.log(`CCIPAdapter: ${dCCIPRx.address}`);
 
     // --- 4. Adapter configuration ---
     // Remote is the only authorised sender on the outbound adapter for the Base leg.
@@ -144,16 +146,13 @@ module.exports = deploymentWithGovernanceProposal(
     );
 
     const cRemote = await ethers.getContractAt(
-      "RemoteV3Strategy",
+      "RemoteWOTokenStrategy",
       remoteProxyAddress
     );
 
     // Cross-chain peer wiring (if Base-side deploys have already run).
-    const baseSuperRx = readDeploymentAddress(
-      "base",
-      "SuperbridgeCCIPInboundAdapter"
-    );
-    const baseCCIPOut = readDeploymentAddress("base", "CCIPOutboundAdapter");
+    const baseSuperRx = readDeploymentAddress("base", "SuperbridgeAdapter");
+    const baseCCIPOut = readDeploymentAddress("base", "CCIPAdapter");
 
     const peerWiringActions = [];
     if (baseSuperRx && baseCCIPOut) {
@@ -165,10 +164,13 @@ module.exports = deploymentWithGovernanceProposal(
         signature: "setPeerReceiver(address,address)",
         args: [remoteProxyAddress, baseSuperRx],
       });
+      // CREATE2 parity: the source strategy on Base (Master) is at the same address
+      // as the destination strategy here (Remote). Whitelist that address on the
+      // inbound CCIP adapter.
       peerWiringActions.push({
         contract: dCCIPRx,
-        signature: "registerPeer(uint64,address,address)",
-        args: [CCIP_CHAIN_SELECTOR_BASE, baseCCIPOut, remoteProxyAddress],
+        signature: "authorise(address)",
+        args: [remoteProxyAddress],
       });
     } else {
       console.log(
@@ -201,7 +203,9 @@ module.exports = deploymentWithGovernanceProposal(
           signature: "setInboundAdapter(address)",
           args: [dCCIPRx.address],
         },
-        // safeApproveAllTokens primes bridgeAsset→oTokenVault + oToken→woToken approvals.
+        // safeApproveAllTokens primes the static (token, spender) pairs Remote uses:
+        //   bridgeAsset→oTokenVault, oToken→oTokenVault, oToken→woToken.
+        // The dynamic bridgeAsset→outboundAdapter approval is set by setOutboundAdapter above.
         {
           contract: cRemote,
           signature: "safeApproveAllTokens()",

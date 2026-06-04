@@ -11,21 +11,22 @@ const baseFixture = createFixtureLoader(defaultBaseFixture);
  * OETHb Phase 1 migration fork test.
  *
  * Validates:
- *   1. The V1→V2 upgrade on BridgedWOETHStrategyProxy preserves V1 state.
+ *   1. The V1→Migration upgrade on BridgedWOETHStrategyProxy preserves V1 state.
  *   2. `bridgeToRemote(amount)` enforces the per-call cap and increments `totalBridged`.
  *   3. The migration invariant: `oldStrategy.checkBalance + master.checkBalance` is
- *      conserved across the 4-row state table.
+ *      conserved across the state table.
  *
- * The real CCIP router is swapped out with `MockCCIPRouter` via the V2 strategy's
- * governor-callable `setCCIPConfig` so `bridgeToRemote` doesn't actually attempt CCIP
- * delivery (we only care about strategy-side accounting on this fork).
+ * The CCIP router on the deployed impl is an immutable, so we replicate the same
+ * impl with `MockCCIPRouter` and upgrade the proxy to the replica for the test —
+ * `bridgeToRemote` then doesn't attempt real CCIP delivery (we only care about
+ * strategy-side accounting on this fork).
  */
 describe("ForkTest: OETHb Phase 1 wOETH migration", function () {
   this.timeout(0);
   this.retries(isCI ? 3 : 0);
 
   let fixture;
-  let woethStrategyV2;
+  let woethMigration;
   let masterStrategy;
   let mockRouter;
   let woeth;
@@ -35,59 +36,76 @@ describe("ForkTest: OETHb Phase 1 wOETH migration", function () {
   beforeEach(async () => {
     fixture = await baseFixture();
 
-    // Rebind the V1 strategy address as V2 ABI now that the upgrade ran.
-    woethStrategyV2 = await ethers.getContractAt(
-      "BridgedWOETHStrategyV2",
+    // Rebind the V1 strategy address as the migration impl now that the upgrade ran.
+    woethMigration = await ethers.getContractAt(
+      "BridgedWOETHMigrationStrategy",
       fixture.woethStrategy.address
     );
     woeth = fixture.woeth;
     weth = fixture.weth;
 
     // Resolve the new V3 Master deployed by the PR 12 Base scripts.
-    const masterProxyAddr = await woethStrategyV2.master();
+    const masterProxyAddr = await woethMigration.master();
     expect(masterProxyAddr).to.not.equal(addresses.zero);
     masterStrategy = await ethers.getContractAt(
-      "MasterV3Strategy",
+      "MasterWOTokenStrategy",
       masterProxyAddr
     );
 
-    // Deploy and install the mock CCIP router so bridgeToRemote doesn't hit real CCIP.
+    // CCIP router is immutable on the migration impl. To avoid hitting real CCIP in
+    // this fork, redeploy the impl with a mock router and upgrade the proxy to it.
     const MockRouterF = await ethers.getContractFactory("MockCCIPRouter");
     mockRouter = await MockRouterF.deploy();
     await mockRouter.deployed();
 
-    // Swap CCIP router via the V2 strategy's governor-only setter.
+    const MigrationF = await ethers.getContractFactory(
+      "BridgedWOETHMigrationStrategy"
+    );
+    const vaultAddr = await woethMigration.vaultAddress();
+    const oethbAddr = await woethMigration.oethb();
+    const oracleAddr = await woethMigration.oracle();
+    const chainSelector = await woethMigration.ccipChainSelectorMainnet();
+    const replicaImpl = await MigrationF.deploy(
+      [addresses.zero, vaultAddr],
+      addresses.base.WETH,
+      addresses.base.BridgedWOETH,
+      oethbAddr,
+      oracleAddr,
+      masterProxyAddr,
+      mockRouter.address,
+      chainSelector
+    );
+    await replicaImpl.deployed();
+
     baseTimelock = await impersonateAndFund(addresses.base.timelock);
-    await woethStrategyV2
-      .connect(baseTimelock)
-      .setCCIPConfig(
-        mockRouter.address,
-        await woethStrategyV2.ccipChainSelectorMainnet(),
-        await woethStrategyV2.bridgeRecipient()
-      );
+    const proxy = await ethers.getContractAt(
+      "InitializeGovernedUpgradeabilityProxy",
+      woethMigration.address
+    );
+    await proxy.connect(baseTimelock).upgradeTo(replicaImpl.address);
 
     // Make sure the strategy has native to pay the (zero) fee in the mock.
     await fixture.governor.sendTransaction({
-      to: woethStrategyV2.address,
+      to: woethMigration.address,
       value: ethers.utils.parseEther("1"),
     });
   });
 
-  it("preserves V1 state across the V1→V2 upgrade", async () => {
-    // V1 storage variables must be readable through V2 at the same slot offsets.
-    const lastOraclePrice = await woethStrategyV2.lastOraclePrice();
-    const maxPriceDiffBps = await woethStrategyV2.maxPriceDiffBps();
+  it("preserves V1 state across the V1→Migration upgrade", async () => {
+    // V1 storage variables must remain readable through the migration impl at the same slots.
+    const lastOraclePrice = await woethMigration.lastOraclePrice();
+    const maxPriceDiffBps = await woethMigration.maxPriceDiffBps();
     expect(lastOraclePrice).to.be.gt(0);
     expect(maxPriceDiffBps).to.be.gt(0);
 
-    // V2 immutables resolve to the same Base-side token addresses.
-    expect(await woethStrategyV2.weth()).to.equal(addresses.base.WETH);
-    expect(await woethStrategyV2.bridgedWOETH()).to.equal(woeth.address);
+    // Inherited immutables resolve to the same Base-side token addresses.
+    expect(await woethMigration.weth()).to.equal(addresses.base.WETH);
+    expect(await woethMigration.bridgedWOETH()).to.equal(woeth.address);
 
-    // V2 post-upgrade config wired by the deploy: master + ccipRouter + maxPerBridge.
-    expect(await woethStrategyV2.master()).to.equal(masterStrategy.address);
-    expect(await woethStrategyV2.maxPerBridge()).to.equal(oethUnits("1000"));
-    expect(await woethStrategyV2.totalBridged()).to.equal(0);
+    // Migration-impl immutables: master + ccipChainSelectorMainnet.
+    expect(await woethMigration.master()).to.equal(masterStrategy.address);
+    expect(await woethMigration.maxPerBridge()).to.equal(oethUnits("1000"));
+    expect(await woethMigration.totalBridged()).to.equal(0);
   });
 
   it("rejects bridgeToRemote above MAX_PER_BRIDGE", async () => {
@@ -95,8 +113,8 @@ describe("ForkTest: OETHb Phase 1 wOETH migration", function () {
       addresses.multichainStrategist
     );
     await expect(
-      woethStrategyV2.connect(sStrategist).bridgeToRemote(oethUnits("1001"))
-    ).to.be.revertedWith("BWV2: bad amount");
+      woethMigration.connect(sStrategist).bridgeToRemote(oethUnits("1001"))
+    ).to.be.revertedWith("BWM: bad amount");
   });
 
   it("walks the migration state-table invariant across multiple batches", async () => {
@@ -105,12 +123,12 @@ describe("ForkTest: OETHb Phase 1 wOETH migration", function () {
     );
 
     // Total expected to bridge (in wOETH units).
-    const startingLocal = await woeth.balanceOf(woethStrategyV2.address);
+    const startingLocal = await woeth.balanceOf(woethMigration.address);
     expect(startingLocal).to.be.gt(0);
-    const oraclePrice = await woethStrategyV2.lastOraclePrice();
+    const oraclePrice = await woethMigration.lastOraclePrice();
 
     // Initial state: Row 1 — local = X, totalBridged = 0, master.checkBalance = 0.
-    const totalBefore = await woethStrategyV2.checkBalance(weth.address);
+    const totalBefore = await woethMigration.checkBalance(weth.address);
     const masterBefore = await masterStrategy.checkBalance(weth.address);
     expect(masterBefore).to.equal(0);
 
@@ -119,15 +137,15 @@ describe("ForkTest: OETHb Phase 1 wOETH migration", function () {
     const batchCount = startingLocal.gte(batchSize.mul(3)) ? 3 : 1;
     let bridgedSoFar = ethers.BigNumber.from(0);
     for (let i = 0; i < batchCount; i++) {
-      await woethStrategyV2.connect(sStrategist).bridgeToRemote(batchSize);
+      await woethMigration.connect(sStrategist).bridgeToRemote(batchSize);
       bridgedSoFar = bridgedSoFar.add(batchSize);
 
       // After each batch the wOETH leaves the strategy but `totalBridged` rises.
       // Master hasn't received any balance updates yet (CCIP delivery is mocked),
       // so it still reports zero. The in-transit slot covers the bridged value.
-      const local = await woeth.balanceOf(woethStrategyV2.address);
-      const totalBridged = await woethStrategyV2.totalBridged();
-      const checkBal = await woethStrategyV2.checkBalance(weth.address);
+      const local = await woeth.balanceOf(woethMigration.address);
+      const totalBridged = await woethMigration.totalBridged();
+      const checkBal = await woethMigration.checkBalance(weth.address);
       const masterBal = await masterStrategy.checkBalance(weth.address);
 
       expect(totalBridged).to.equal(bridgedSoFar);
@@ -158,12 +176,12 @@ describe("ForkTest: OETHb Phase 1 wOETH migration", function () {
       addresses.multichainStrategist
     );
     const batchSize = oethUnits("1000");
-    const stratBefore = await woeth.balanceOf(woethStrategyV2.address);
+    const stratBefore = await woeth.balanceOf(woethMigration.address);
     expect(stratBefore).to.be.gte(batchSize);
 
-    await woethStrategyV2.connect(sStrategist).bridgeToRemote(batchSize);
+    await woethMigration.connect(sStrategist).bridgeToRemote(batchSize);
 
-    expect(await woeth.balanceOf(woethStrategyV2.address)).to.equal(
+    expect(await woeth.balanceOf(woethMigration.address)).to.equal(
       stratBefore.sub(batchSize)
     );
     expect(await woeth.balanceOf(mockRouter.address)).to.equal(batchSize);
