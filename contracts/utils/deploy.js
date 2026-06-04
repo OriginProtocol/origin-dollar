@@ -1370,9 +1370,21 @@ function deploymentWithGuardianGovernor(opts, fn) {
 function deploymentWithGnosisSafe(opts, fn) {
   const { deployName, dependencies, forceDeploy, onlyOnFork, forceSkip } = opts;
   const optsSafe = opts.safe;
+  // Target network the Safe lives on; gates the real-deploy run + skip. Defaults
+  // to mainnet so existing mainnet deploys are unaffected.
+  const targetNetwork = opts.network || "mainnet";
 
   const runDeployment = async (hre) => {
-    const assetAddresses = await getAssetAddresses(hre.deployments);
+    // getAssetAddresses is mainnet-centric (resolves mock assets); on L2s it can
+    // throw. Safe-batch deploys don't need it, so tolerate failure.
+    let assetAddresses = {};
+    try {
+      assetAddresses = await getAssetAddresses(hre.deployments);
+    } catch (e) {
+      log(
+        `getAssetAddresses unavailable (${e.message}); continuing without it.`
+      );
+    }
     const proposal = await fn({
       assetAddresses,
       deployWithConfirmation,
@@ -1414,9 +1426,9 @@ function deploymentWithGnosisSafe(opts, fn) {
     fs.writeFileSync(filePath, JSON.stringify(safeJson, null, 2));
     console.log(`Safe batch JSON written to ${filePath}`);
 
-    if (isMainnet) {
-      // Mainnet: JSON only. The operator imports it into the Safe Transaction
-      // Builder for the Safe to execute.
+    if (!isFork) {
+      // Real deploy: JSON only. The operator imports it into the Safe
+      // Transaction Builder for the Safe to execute.
       console.log(
         `Import ${deployName}.json into the Gnosis Safe (${safeAddress}) Transaction Builder to execute.`
       );
@@ -1452,6 +1464,11 @@ function deploymentWithGnosisSafe(opts, fn) {
 
   main.id = deployName;
   main.dependencies = dependencies;
+  // L2 fixtures filter deploys by network tag (deployments.fixture(["base"]));
+  // mainnet's fixture runs all deploys untagged, so only tag for non-mainnet.
+  if (targetNetwork !== "mainnet") {
+    main.tags = [targetNetwork];
+  }
   if (forceSkip) {
     main.skip = () => true;
   } else if (forceDeploy) {
@@ -1463,7 +1480,13 @@ function deploymentWithGnosisSafe(opts, fn) {
         const migrations = require(`./../deployments/${networkName}/.migrations.json`);
         return Boolean(migrations[deployName]);
       } else {
-        return onlyOnFork ? true : !isMainnet || isSmokeTest;
+        const onTarget =
+          targetNetwork === "base"
+            ? isBase
+            : targetNetwork === "sonic"
+            ? isSonic
+            : isMainnet;
+        return onlyOnFork ? true : isSmokeTest || !onTarget;
       }
     };
   }
