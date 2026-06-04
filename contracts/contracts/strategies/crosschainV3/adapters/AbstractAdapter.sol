@@ -236,5 +236,5 @@ abstract contract AbstractAdapter is IOutboundAdapter, Governable {
         emit MessageDelivered(target, nonce, messageType);
     }
 
-    receive() external payable {}
+    receive() external payable virtual {}
 }

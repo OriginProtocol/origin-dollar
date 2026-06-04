@@ -86,14 +86,15 @@ module.exports = deployOnBase(
     const dCCIPOutbound = await ethers.getContract("CCIPAdapter");
     console.log(`CCIPAdapter: ${dCCIPOutbound.address}`);
 
-    // Inbound (E→B): SuperbridgeAdapter — split delivery (canonical bridge for tokens,
-    // CCIP for message). Base side never sends outbound via this adapter, so the
+    // Inbound (E→B): SuperbridgeAdapter — split delivery, ETH-only. Tokens arrive as
+    // native ETH via the canonical bridge; `receive()` auto-wraps to WETH so Master sees
+    // its `bridgeAsset = WETH`. Base side never sends outbound via this adapter, so the
     // L1StandardBridge constructor slot is passed as address(0); outbound entry points
     // revert if invoked.
     await deployWithConfirmation("SuperbridgeAdapter", [
       addresses.zero,
       addresses.base.CCIPRouter,
-      addresses.base.WETH, // expected token via the OP Stack canonical bridge leg
+      addresses.base.WETH, // local WETH (wraps incoming bridge ETH)
     ]);
     const dSuperRx = await ethers.getContract("SuperbridgeAdapter");
     console.log(`SuperbridgeAdapter: ${dSuperRx.address}`);

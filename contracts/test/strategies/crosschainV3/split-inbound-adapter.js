@@ -24,7 +24,7 @@ const MSG = {
  */
 describe("Unit: SuperbridgeAdapter split delivery", function () {
   let governor, routerSigner, otherSigner;
-  let receiver, strategy, strategy2, expectedToken;
+  let receiver, strategy, strategy2, wethMock;
 
   // Ethereum CCIP selector — `BigNumber.from(string)` avoids the BigInt literal
   // syntax (`n` suffix) that eslint refuses to parse in this repo.
@@ -72,19 +72,21 @@ describe("Unit: SuperbridgeAdapter split delivery", function () {
     const RouterFactory = await ethers.getContractFactory("MockCCIPRouter");
     const router = await RouterFactory.connect(governor).deploy();
 
-    // The "expected token" arriving via the canonical bridge. Use a basic ERC20.
-    const ERC20Factory = await ethers.getContractFactory("MockUSDC");
-    expectedToken = await ERC20Factory.connect(governor).deploy();
+    // The Superbridge adapter is ETH-only. The "expected token" arriving via the
+    // canonical bridge is native ETH on the L2 side, wrapped to WETH by `receive()`.
+    const WETHFactory = await ethers.getContractFactory("MockWETH");
+    wethMock = await WETHFactory.connect(governor).deploy();
 
     const ReceiverFactory = await ethers.getContractFactory(
       "SuperbridgeAdapter"
     );
     // Inbound-only deployment: pass address(0) for the L1StandardBridge (unused on
-    // the L2 side; outbound entrypoints revert when invoked).
+    // the L2 side; outbound entrypoints revert when invoked). The L2-side `receive()`
+    // wraps incoming native ETH to WETH (the adapter's `weth` immutable).
     receiver = await ReceiverFactory.connect(governor).deploy(
       ethers.constants.AddressZero,
       router.address,
-      expectedToken.address
+      wethMock.address
     );
 
     const StrategyFactory = await ethers.getContractFactory(
@@ -98,11 +100,17 @@ describe("Unit: SuperbridgeAdapter split delivery", function () {
     await receiver.connect(governor).authorise(strategy.address);
   });
 
+  // Simulate the OP Stack canonical bridge delivering native ETH to the adapter.
+  // The adapter's `receive()` wraps the ETH into the local WETH automatically.
+  const deliverBridgeEth = async (amount) => {
+    await governor.sendTransaction({ to: receiver.address, value: amount });
+  };
+
   it("WITHDRAW_CLAIM_ACK with tokens already on adapter delivers atomically", async () => {
     const amount = ethers.utils.parseUnits("100", 6);
     const newBalance = ethers.utils.parseUnits("900", 6);
 
-    await expectedToken.mintTo(receiver.address, amount);
+    await deliverBridgeEth(amount);
 
     const data = wrapEnvelope(
       MSG.WITHDRAW_CLAIM_ACK,
@@ -118,8 +126,8 @@ describe("Unit: SuperbridgeAdapter split delivery", function () {
     expect(await strategy.callCount()).to.equal(1);
     expect(await strategy.lastAmount()).to.equal(amount);
     expect(await strategy.lastMessageType()).to.equal(MSG.WITHDRAW_CLAIM_ACK);
-    expect(await expectedToken.balanceOf(strategy.address)).to.equal(amount);
-    expect(await expectedToken.balanceOf(receiver.address)).to.equal(0);
+    expect(await wethMock.balanceOf(strategy.address)).to.equal(amount);
+    expect(await wethMock.balanceOf(receiver.address)).to.equal(0);
   });
 
   it("WITHDRAW_CLAIM_ACK message-first: stores until tokens land, then exact delivery", async () => {
@@ -141,17 +149,18 @@ describe("Unit: SuperbridgeAdapter split delivery", function () {
       receiver.processStoredMessage(strategy.address)
     ).to.be.revertedWith("Super: tokens not yet landed");
 
-    // Tokens arrive (canonical bridge mint to receiver). Donate one extra wei to
-    // confirm the receiver delivers exactly `amount` rather than the full balance.
-    await expectedToken.mintTo(receiver.address, amount.add(1));
+    // Tokens arrive (canonical bridge credits native ETH to the adapter; `receive()`
+    // wraps to WETH). Donate one extra wei to confirm the receiver delivers exactly
+    // `amount` rather than the full balance.
+    await deliverBridgeEth(amount.add(1));
 
     await receiver.processStoredMessage(strategy.address);
 
     expect(await receiver.hasPendingMessage(strategy.address)).to.equal(false);
     expect(await strategy.callCount()).to.equal(1);
     expect(await strategy.lastAmount()).to.equal(amount);
-    expect(await expectedToken.balanceOf(strategy.address)).to.equal(amount);
-    expect(await expectedToken.balanceOf(receiver.address)).to.equal(1);
+    expect(await wethMock.balanceOf(strategy.address)).to.equal(amount);
+    expect(await wethMock.balanceOf(receiver.address)).to.equal(1);
   });
 
   it("NACK (success=false) is message-only — no token leg expected", async () => {
@@ -245,21 +254,21 @@ describe("Unit: SuperbridgeAdapter split delivery", function () {
     expect(await receiver.hasPendingMessage(strategy.address)).to.equal(true);
     expect(await receiver.hasPendingMessage(strategy2.address)).to.equal(true);
 
-    // Fund tokens for the SECOND tenant first and process it — confirms slots don't
-    // collide and tokens credit the right target.
-    await expectedToken.mintTo(receiver.address, amount2);
+    // Fund the bridge-ETH leg for the SECOND tenant first and process — confirms slots
+    // don't collide and tokens credit the right target.
+    await deliverBridgeEth(amount2);
     await receiver.processStoredMessage(strategy2.address);
     expect(await receiver.hasPendingMessage(strategy2.address)).to.equal(false);
     expect(await receiver.hasPendingMessage(strategy.address)).to.equal(true);
     expect(await strategy2.lastAmount()).to.equal(amount2);
-    expect(await expectedToken.balanceOf(strategy2.address)).to.equal(amount2);
+    expect(await wethMock.balanceOf(strategy2.address)).to.equal(amount2);
     expect(await strategy.callCount()).to.equal(0);
 
-    // Now fund and process the first tenant.
-    await expectedToken.mintTo(receiver.address, amount1);
+    // Now fund the bridge-ETH leg for the first tenant and process.
+    await deliverBridgeEth(amount1);
     await receiver.processStoredMessage(strategy.address);
     expect(await receiver.hasPendingMessage(strategy.address)).to.equal(false);
     expect(await strategy.lastAmount()).to.equal(amount1);
-    expect(await expectedToken.balanceOf(strategy.address)).to.equal(amount1);
+    expect(await wethMock.balanceOf(strategy.address)).to.equal(amount1);
   });
 });

@@ -10,6 +10,7 @@ import { Client } from "@chainlink/contracts-ccip/src/v0.8/ccip/libraries/Client
 // solhint-disable-next-line max-line-length
 import { IAny2EVMMessageReceiver } from "@chainlink/contracts-ccip/src/v0.8/ccip/interfaces/IAny2EVMMessageReceiver.sol";
 
+import { IWETH9 } from "../../../interfaces/IWETH9.sol";
 import { ISplitInboundAdapter } from "../../../interfaces/crosschainV3/ISplitInboundAdapter.sol";
 import { AbstractAdapter } from "./AbstractAdapter.sol";
 import { CrossChainV3Helper } from "../CrossChainV3Helper.sol";
@@ -17,35 +18,37 @@ import { CCIPMessageBuilder } from "../libraries/CCIPMessageBuilder.sol";
 import { NativeFeeHelper } from "../libraries/NativeFeeHelper.sol";
 
 interface IL1StandardBridge {
-    /// @notice OP Stack canonical bridge ERC20 deposit. Tokens arrive at `_to` on the L2.
-    function bridgeERC20To(
-        address _localToken,
-        address _remoteToken,
+    /// @notice OP Stack canonical bridge ETH deposit. Native ETH arrives at `_to` on the L2.
+    function bridgeETHTo(
         address _to,
-        uint256 _amount,
         uint32 _minGasLimit,
         bytes calldata _extraData
-    ) external;
+    ) external payable;
 }
 
 /**
  * @title SuperbridgeAdapter
  * @author Origin Protocol Inc
  *
- * @notice Split-delivery bidirectional adapter for Ethereum ↔ OP-Stack-L2.
+ * @notice Split-delivery bidirectional adapter for Ethereum ↔ OP-Stack-L2, specialised to
+ *         ETH only.
  *
- *           - Outbound (Ethereum → L2): tokens travel via the OP Stack canonical
- *             `L1StandardBridge` (free, but token-only), the message envelope travels
- *             separately via Chainlink CCIP. Both arrive on the L2 at this adapter's peer.
- *           - Inbound (L2 receiving from Ethereum): the CCIP `ccipReceive` lands here with
- *             the envelope; canonical bridge transfers tokens directly to this adapter
- *             address with no callback. We hold the message in a per-target pending slot
- *             until tokens arrive; off-chain automation calls `processStoredMessage(target)`
- *             to finalise once both legs have landed.
+ *           - Outbound (Ethereum → L2): take WETH from the calling strategy, unwrap to
+ *             native ETH, send it via `L1StandardBridge.bridgeETHTo{value: amount}(...)`.
+ *             A separate CCIP message-only send carries the V3 envelope.
+ *           - Inbound (L2 receives from Ethereum): the canonical bridge credits native ETH
+ *             to this adapter's address. `receive()` wraps it back to WETH so the destination
+ *             strategy (which uses `bridgeAsset = WETH`) gets the asset shape it expects.
+ *             The CCIP message lands via `ccipReceive`; if the WETH balance hasn't yet
+ *             reached `expectedAmount`, the message is held in a pending slot until
+ *             `processStoredMessage(target)` finalises.
  *
- *         Standalone — does NOT extend `CCIPAdapter` because the outbound token path
- *         (canonical bridge, not CCIP) and inbound delivery (split, not atomic) diverge
- *         enough that the inherited code would be entirely overridden.
+ *         Same contract code on both chains; deployment role is determined by `_l1`:
+ *           - `_l1 != address(0)` (Ethereum, outbound-only): `receive()` keeps incoming ETH
+ *             raw so it can fund CCIP fees via `_consumeNativeFee`. Inbound entry points
+ *             aren't expected to be exercised.
+ *           - `_l1 == address(0)` (L2, inbound-only): `receive()` wraps incoming ETH to WETH.
+ *             Outbound entry points revert at call time.
  */
 contract SuperbridgeAdapter is
     AbstractAdapter,
@@ -58,18 +61,15 @@ contract SuperbridgeAdapter is
     IL1StandardBridge public immutable l1StandardBridge;
     IRouterClient public immutable ccipRouter;
 
-    /// @notice L2 token address corresponding to `localToken`. OP Stack canonical bridge
-    ///         needs this to mint on the destination chain.
-    mapping(address => address) public remoteTokenOf;
+    /// @notice Local WETH on this chain. Required on both deployment roles: the L1 side
+    ///         unwraps before calling `bridgeETHTo`, the L2 side wraps incoming bridge ETH.
+    address public immutable weth;
 
     /// @notice Per-sender CCIP message destination gas limit.
     mapping(address => uint256) public destGasLimitFor;
 
     /// @notice Per-sender canonical bridge minimum gas hint (typically 200k for OP Stack).
     mapping(address => uint32) public canonicalMinGasFor;
-
-    /// @notice Token expected to land via the canonical bridge for inbound split delivery.
-    address public immutable expectedToken;
 
     struct PendingMessage {
         bool exists;
@@ -84,7 +84,6 @@ contract SuperbridgeAdapter is
     /// @notice Per-target pending split-delivery slot.
     mapping(address => PendingMessage) internal pendingFor;
 
-    event RemoteTokenMapped(address localToken, address remoteToken);
     event DestGasLimitConfigured(address sender, uint256 destGasLimit);
     event CanonicalMinGasConfigured(address sender, uint32 canonicalMinGas);
     event MessageStored(
@@ -98,34 +97,21 @@ contract SuperbridgeAdapter is
         address indexed target
     );
 
-    /**
-     * @dev `_l1` is required only on the Ethereum-side deploy (outbound). `_expectedToken`
-     *      is required only on the L2-side deploy (inbound). Each side can pass
-     *      `address(0)` for the field it doesn't use; the corresponding entry points
-     *      revert at call time when the field is missing.
-     */
     constructor(
         IL1StandardBridge _l1,
         IRouterClient _ccip,
-        address _expectedToken
+        address _weth
     ) {
         require(address(_ccip) != address(0), "Super: zero CCIP");
+        require(_weth != address(0), "Super: zero WETH");
         l1StandardBridge = _l1;
         ccipRouter = _ccip;
-        expectedToken = _expectedToken;
+        weth = _weth;
     }
 
     modifier onlyRouter() {
         require(msg.sender == address(ccipRouter), "Super: not router");
         _;
-    }
-
-    function mapRemoteToken(address _localToken, address _remoteToken)
-        external
-        onlyGovernor
-    {
-        remoteTokenOf[_localToken] = _remoteToken;
-        emit RemoteTokenMapped(_localToken, _remoteToken);
     }
 
     function setDestGasLimit(address _sender, uint256 _gasLimit)
@@ -142,6 +128,17 @@ contract SuperbridgeAdapter is
     {
         canonicalMinGasFor[_sender] = _g;
         emit CanonicalMinGasConfigured(_sender, _g);
+    }
+
+    /**
+     * @notice Auto-wrap incoming ETH on the L2-side deployment so bridge ETH becomes WETH
+     *         immediately (the destination strategy expects WETH). On the L1-side deployment
+     *         keep ETH raw — it's CCIP fee top-up budget consumed by `_consumeNativeFee`.
+     */
+    receive() external payable override {
+        if (msg.value > 0 && address(l1StandardBridge) == address(0)) {
+            IWETH9(weth).deposit{ value: msg.value }();
+        }
     }
 
     // --- IOutboundAdapter ---------------------------------------------------
@@ -174,19 +171,16 @@ contract SuperbridgeAdapter is
             address(l1StandardBridge) != address(0),
             "Super: outbound unsupported"
         );
+        require(token == weth, "Super: token must be WETH");
         require(amount > 0, "Super: zero amount");
-        address remoteToken = remoteTokenOf[token];
-        require(remoteToken != address(0), "Super: remote token unmapped");
 
-        // Leg 1: canonical bridge — pull tokens from the sender and bridge to the peer
-        // adapter on the L2.
-        IERC20(token).safeTransferFrom(msg.sender, address(this), amount);
-        IERC20(token).safeApprove(address(l1StandardBridge), amount);
-        l1StandardBridge.bridgeERC20To(
-            token,
-            remoteToken,
+        // Pull WETH from the sender and unwrap to native ETH for the canonical bridge.
+        IERC20(weth).safeTransferFrom(msg.sender, address(this), amount);
+        IWETH9(weth).withdraw(amount);
+
+        // Leg 1: canonical bridge — carry native ETH to the peer adapter on the L2.
+        l1StandardBridge.bridgeETHTo{ value: amount }(
             peerReceiver,
-            amount,
             canonicalMinGasFor[msg.sender],
             ""
         );
@@ -246,7 +240,6 @@ contract SuperbridgeAdapter is
             address envelopeSender,
             bytes memory payload
         ) = _unwrapAndValidate(message.data);
-        require(expectedToken != address(0), "Super: inbound unsupported");
 
         // Determine the token amount the message expects to find on this adapter once the
         // canonical bridge tokens land. For message-only types, expectedAmount = 0.
@@ -255,7 +248,7 @@ contract SuperbridgeAdapter is
         // CREATE2 parity: destination strategy on this chain == envelope sender.
         if (
             expectedAmount == 0 ||
-            IERC20(expectedToken).balanceOf(address(this)) >= expectedAmount
+            IERC20(weth).balanceOf(address(this)) >= expectedAmount
         ) {
             _deliverAtomic(
                 envelopeSender,
@@ -263,7 +256,7 @@ contract SuperbridgeAdapter is
                 expectedAmount,
                 uint8(msgType),
                 payload,
-                expectedAmount > 0 ? expectedToken : address(0)
+                expectedAmount > 0 ? weth : address(0)
             );
         } else {
             _storePending(
@@ -272,7 +265,7 @@ contract SuperbridgeAdapter is
                 expectedAmount,
                 uint8(msgType),
                 payload,
-                expectedToken
+                weth
             );
         }
     }

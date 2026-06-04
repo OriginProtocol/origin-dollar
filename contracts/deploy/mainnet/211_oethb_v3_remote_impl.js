@@ -85,13 +85,13 @@ module.exports = deploymentWithGovernanceProposal(
     );
 
     // --- 3. Deploy adapters (deployer = initial governor) ---
-    // Outbound (E→B, split delivery): SuperbridgeAdapter. Mainnet side never receives
-    // inbound on this adapter, so `_expectedToken` is passed as address(0); the inbound
-    // entry points revert if invoked.
+    // Outbound (E→B, split delivery): SuperbridgeAdapter — ETH-only. Takes WETH from
+    // Remote, unwraps to native ETH, sends via the canonical bridge. `_weth` is required
+    // (mainnet WETH); mainnet-side `receive()` keeps incoming ETH raw for CCIP fee budget.
     await deployWithConfirmation("SuperbridgeAdapter", [
       BASE_L1_STANDARD_BRIDGE,
       addresses.mainnet.ccipRouterMainnet,
-      addresses.zero,
+      addresses.mainnet.WETH,
     ]);
     const dSuperOut = await ethers.getContract("SuperbridgeAdapter");
     console.log(`SuperbridgeAdapter: ${dSuperOut.address}`);
@@ -124,12 +124,6 @@ module.exports = deploymentWithGovernanceProposal(
       dSuperOut
         .connect(sDeployer)
         .setCanonicalMinGas(remoteProxyAddress, CANONICAL_MIN_GAS)
-    );
-    // Map WETH L1 → WETH L2 for the canonical bridge.
-    await withConfirmation(
-      dSuperOut
-        .connect(sDeployer)
-        .mapRemoteToken(addresses.mainnet.WETH, addresses.base.WETH)
     );
 
     // Peer route is registered below in the cross-chain peer wiring block once the

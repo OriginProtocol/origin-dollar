@@ -215,10 +215,8 @@ describe("ForkTest: RemoteWOTokenStrategy on mainnet (real wOETH + OETH vault)",
   });
 
   describe("SuperbridgeAdapter (outbound, real deployment)", () => {
-    it("has WETH mapped to Base WETH for the canonical bridge", async () => {
-      expect(
-        await outboundAdapter.remoteTokenOf(addresses.mainnet.WETH)
-      ).to.equal(addresses.base.WETH);
+    it("knows the local WETH (ETH-only adapter)", async () => {
+      expect(await outboundAdapter.weth()).to.equal(addresses.mainnet.WETH);
     });
 
     it("is governed by the mainnet Timelock", async () => {
