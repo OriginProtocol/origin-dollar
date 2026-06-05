@@ -22,12 +22,18 @@ module.exports = deploymentWithGnosisSafe(
     );
 
     return {
-      name: "Grant the OPERATOR_ROLE of the Base MerklPoolBoosterBribesModule to the new Talos signer.",
+      name: "Grant the OPERATOR_ROLE of the Base MerklPoolBoosterBribesModule to the new Talos signer, and revoke it from the old relayer.",
       actions: [
         {
           contract: cMerklModule,
           signature: "grantRole(bytes32,address)",
           args: [OPERATOR_ROLE, addresses.talosRelayer],
+        },
+        // grantRole is additive — the old relayer keeps OPERATOR_ROLE, so revoke it.
+        {
+          contract: cMerklModule,
+          signature: "revokeRole(bytes32,address)",
+          args: [OPERATOR_ROLE, addresses.base.OZRelayerAddress],
         },
       ],
     };

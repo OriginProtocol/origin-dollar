@@ -25,12 +25,21 @@ module.exports = deploymentWithGnosisSafe(
     );
 
     return {
-      name: "Grant the OPERATOR_ROLE of all strategist safe modules to the new Talos signer.",
-      actions: modules.map((cModule) => ({
-        contract: cModule,
-        signature: "grantRole(bytes32,address)",
-        args: [OPERATOR_ROLE, addresses.talosRelayer],
-      })),
+      name: "Grant the OPERATOR_ROLE of all strategist safe modules to the new Talos signer, and revoke it from the old relayer.",
+      // grantRole is additive — the old relayer keeps OPERATOR_ROLE, so for each
+      // module grant the new signer AND revoke the old relayer.
+      actions: modules.flatMap((cModule) => [
+        {
+          contract: cModule,
+          signature: "grantRole(bytes32,address)",
+          args: [OPERATOR_ROLE, addresses.talosRelayer],
+        },
+        {
+          contract: cModule,
+          signature: "revokeRole(bytes32,address)",
+          args: [OPERATOR_ROLE, addresses.mainnet.validatorRegistrator],
+        },
+      ]),
     };
   }
 );

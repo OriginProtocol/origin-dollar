@@ -18,12 +18,18 @@ module.exports = deploymentWithGnosisSafe(
     );
 
     return {
-      name: "Grant the OPERATOR_ROLE of CollectXOGNRewardsModule6 to the new Talos signer.",
+      name: "Grant the OPERATOR_ROLE of CollectXOGNRewardsModule6 to the new Talos signer, and revoke it from the old relayer.",
       actions: [
         {
           contract: cCollectXOGNRewardsModule6,
           signature: "grantRole(bytes32,address)",
           args: [OPERATOR_ROLE, addresses.talosRelayer],
+        },
+        // grantRole is additive — the old relayer keeps OPERATOR_ROLE, so revoke it.
+        {
+          contract: cCollectXOGNRewardsModule6,
+          signature: "revokeRole(bytes32,address)",
+          args: [OPERATOR_ROLE, addresses.mainnet.validatorRegistrator],
         },
       ],
     };

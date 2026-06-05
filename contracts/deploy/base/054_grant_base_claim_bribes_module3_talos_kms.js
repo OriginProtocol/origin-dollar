@@ -20,12 +20,18 @@ module.exports = deploymentWithGnosisSafe(
 
     return {
       safe,
-      name: "Grant the OPERATOR_ROLE of the Base ClaimBribesSafeModule3 to the new Talos signer.",
+      name: "Grant the OPERATOR_ROLE of the Base ClaimBribesSafeModule3 to the new Talos signer, and revoke it from the old relayer.",
       actions: [
         {
           contract: cModule,
           signature: "grantRole(bytes32,address)",
           args: [OPERATOR_ROLE, addresses.talosRelayer],
+        },
+        // grantRole is additive — the old relayer keeps OPERATOR_ROLE, so revoke it.
+        {
+          contract: cModule,
+          signature: "revokeRole(bytes32,address)",
+          args: [OPERATOR_ROLE, addresses.base.OZRelayerAddress],
         },
       ],
     };
