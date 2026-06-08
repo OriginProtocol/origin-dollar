@@ -289,12 +289,16 @@ contract SuperbridgeAdapter is
         require(_pending.target != address(0), "Super: zero target");
         require(!pendingFor[_pending.target].exists, "Super: already pending");
         if (_pending.intendedAmount > 0) {
+            // `_oldAdapter` is governor-supplied (this function is onlyGovernor); the
+            // arbitrary-from disclaimer doesn't apply.
+            // slither-disable-next-line arbitrary-send-erc20
             IERC20(weth).safeTransferFrom(
                 _oldAdapter,
                 address(this),
                 _pending.intendedAmount
             );
         }
+        // slither-disable-next-line reentrancy-no-eth
         pendingFor[_pending.target] = _pending;
         pendingFor[_pending.target].exists = true;
         emit MessageStored(_pending.target, _pending.intendedAmount);

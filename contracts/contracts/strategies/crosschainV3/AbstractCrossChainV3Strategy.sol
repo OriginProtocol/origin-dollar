@@ -63,6 +63,7 @@ abstract contract AbstractCrossChainV3Strategy is Governable, IBridgeReceiver {
     ///         Used by `_processBalanceCheckResponse` to enforce strict monotonic ordering
     ///         when multiple balance checks are in flight at the same yield-nonce window
     ///         and responses can arrive out of order (CCIP delivery isn't FIFO).
+    // slither-disable-next-line constable-states
     uint256 public lastBalanceCheckTimestamp;
 
     /// @dev Reserved for future expansion of this abstract layer.
@@ -269,6 +270,7 @@ abstract contract AbstractCrossChainV3Strategy is Governable, IBridgeReceiver {
             // future fee-token addition to be an explicit override.
             require(feeToken == address(0), "V3: only native fee supported");
             require(msg.value >= fee, "V3: insufficient user fee");
+            // slither-disable-next-line arbitrary-send-eth
             IBridgeAdapter(adapter).sendMessage{ value: fee }(payload);
         } else {
             // CCTP-style: protocol auto-deducts from bridged amount; no caller action.
@@ -298,6 +300,7 @@ abstract contract AbstractCrossChainV3Strategy is Governable, IBridgeReceiver {
         if (requiresExternalPayment) {
             require(feeToken == address(0), "V3: only native fee supported");
             require(address(this).balance >= fee, "V3: pool unfunded");
+            // slither-disable-next-line arbitrary-send-eth
             IBridgeAdapter(adapter).sendMessage{ value: fee }(payload);
         } else {
             IBridgeAdapter(adapter).sendMessage(payload);
@@ -327,6 +330,7 @@ abstract contract AbstractCrossChainV3Strategy is Governable, IBridgeReceiver {
         if (requiresExternalPayment) {
             require(feeToken == address(0), "V3: only native fee supported");
             require(msg.value >= fee, "V3: insufficient user fee");
+            // slither-disable-next-line arbitrary-send-eth
             IBridgeAdapter(adapter).sendMessageAndTokens{ value: fee }(
                 token,
                 amount,
@@ -364,6 +368,7 @@ abstract contract AbstractCrossChainV3Strategy is Governable, IBridgeReceiver {
         if (requiresExternalPayment) {
             require(feeToken == address(0), "V3: only native fee supported");
             require(address(this).balance >= fee, "V3: pool unfunded");
+            // slither-disable-next-line arbitrary-send-eth
             IBridgeAdapter(adapter).sendMessageAndTokens{ value: fee }(
                 token,
                 amount,

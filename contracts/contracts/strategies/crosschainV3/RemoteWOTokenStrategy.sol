@@ -162,6 +162,7 @@ contract RemoteWOTokenStrategy is AbstractWOTokenStrategy {
         if (old != address(0) && old != _outboundAdapter) {
             IERC20(bridgeAsset).safeApprove(old, 0);
         }
+        // slither-disable-next-line reentrancy-no-eth
         super._setOutboundAdapter(_outboundAdapter);
         if (_outboundAdapter != address(0) && old != _outboundAdapter) {
             IERC20(bridgeAsset).safeApprove(
@@ -315,6 +316,7 @@ contract RemoteWOTokenStrategy is AbstractWOTokenStrategy {
         // Queue the withdrawal on the OToken vault. Allowance pre-granted by
         // `safeApproveAllTokens`.
         (uint256 requestId, ) = IVault(oTokenVault).requestWithdrawal(amount);
+        // slither-disable-next-line reentrancy-no-eth
         outstandingRequestId = requestId;
         queuedAmount = amount;
         outstandingRequestAmount = amount;
@@ -369,6 +371,7 @@ contract RemoteWOTokenStrategy is AbstractWOTokenStrategy {
 
         // Clear queue-side state (will be re-set if a fresh leg 1 starts) and bridge back.
         queuedAmount = 0;
+        // slither-disable-next-line reentrancy-no-eth
         outstandingRequestId = 0;
         outstandingRequestAmount = 0;
 
@@ -408,6 +411,7 @@ contract RemoteWOTokenStrategy is AbstractWOTokenStrategy {
         // Use try/catch so a not-yet-claimable queue delay doesn't bubble up as a revert.
         try IVault(oTokenVault).claimWithdrawal(id) returns (uint256 _claimed) {
             claimed = _claimed;
+            // slither-disable-next-line reentrancy-no-eth
             outstandingRequestId = 0;
             queuedAmount = 0;
             // Refine `outstandingRequestAmount` to what the vault actually paid out so
