@@ -8,7 +8,7 @@ module.exports = deploymentWithGovernanceProposal(
     forceDeploy: false,
     reduceQueueTime: true,
     deployerIsProposer: false,
-    proposalId: "", // fill in after the proposal is submitted on-chain
+    proposalId: "22961702059927464053626280658057526947925126482574006865526656537485409437624",
   },
   async () => {
     // OUSD Vault (proxy "VaultProxy") + OETH Vault — IVault exposes both setters
