@@ -79,5 +79,6 @@
   "190_remove_3rd_native_staking_strategy": 1775468903,
   "192_migrate_ssv_clusters_to_eth": 1777859891,
   "193_permissioned_rebase_module": 1778095857,
-  "195_claim_ssv_from_staking_strategies": 1778480807
+  "195_claim_ssv_from_staking_strategies": 1778480807,
+  "197_migrate_xogn_module6_to_talos": 1780929095
 }
