@@ -18,7 +18,9 @@ describe("Unit: SuperbridgeAdapter split delivery", function () {
   let governor, routerSigner, otherSigner;
   let receiver, strategy, strategy2, wethMock;
 
-  // Ethereum CCIP selector — `BigNumber.from(string)` avoids the BigInt literal
+  // Ethereum CCIP selector (mirrors `addresses.mainnet.CCIPChainSelector`).
+  // Inlined as a literal because this test only needs the value, not the
+  // address resolution; `BigNumber.from(string)` avoids the BigInt literal
   // syntax (`n` suffix) that eslint refuses to parse in this repo.
   const PEER_CHAIN = ethers.BigNumber.from("5009297550715157269");
   const DEST_GAS_LIMIT = 500000;

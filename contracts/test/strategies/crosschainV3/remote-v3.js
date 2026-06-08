@@ -1,38 +1,11 @@
 const { expect } = require("chai");
 const { ethers } = require("hardhat");
 
-const MSG = {
-  DEPOSIT: 1,
-  DEPOSIT_ACK: 2,
-  WITHDRAW_REQUEST: 3,
-  WITHDRAW_REQUEST_ACK: 4,
-  WITHDRAW_CLAIM: 5,
-  WITHDRAW_CLAIM_ACK: 6,
-  BALANCE_CHECK_REQUEST: 7,
-  BALANCE_CHECK_RESPONSE: 8,
-  SETTLE_BRIDGE_ACCOUNTING: 9,
-  SETTLE_BRIDGE_ACCOUNTING_ACK: 10,
-  BRIDGE_IN: 11,
-  BRIDGE_OUT: 12,
-};
-
-const encodePackedEnvelope = (msgType, nonce, payloadHex) =>
-  ethers.utils.defaultAbiCoder.encode(
-    ["uint32", "uint64", "bytes"],
-    [msgType, nonce, payloadHex]
-  );
-
-const encodeBridgeUserPayload = ({
-  bridgeId,
-  amount,
-  recipient,
-  callData = "0x",
-  callGasLimit = 0,
-}) =>
-  ethers.utils.defaultAbiCoder.encode(
-    ["bytes32", "uint256", "address", "bytes", "uint32"],
-    [bridgeId, amount, recipient, callData, callGasLimit]
-  );
+const {
+  MSG,
+  encodePackedEnvelope,
+  encodeBridgeUserPayload,
+} = require("./_helpers");
 
 describe("Unit: RemoteWOTokenStrategy", function () {
   let deployer, governor, alice;

@@ -1,46 +1,13 @@
 const { expect } = require("chai");
 const { ethers } = require("hardhat");
+const { impersonateAndFund } = require("../../../utils/signers");
 
-const MSG = {
-  DEPOSIT: 1,
-  DEPOSIT_ACK: 2,
-  WITHDRAW_REQUEST: 3,
-  WITHDRAW_REQUEST_ACK: 4,
-  WITHDRAW_CLAIM: 5,
-  WITHDRAW_CLAIM_ACK: 6,
-  BALANCE_CHECK_REQUEST: 7,
-  BALANCE_CHECK_RESPONSE: 8,
-  SETTLE_BRIDGE_ACCOUNTING: 9,
-  SETTLE_BRIDGE_ACCOUNTING_ACK: 10,
-  BRIDGE_IN: 11,
-  BRIDGE_OUT: 12,
-};
-
-// Helpers matching CrossChainV3Helper.wrap on-the-wire layout.
-// `sender` is included in the 36-byte header; MockBridgeAdapter ignores it so any
-// well-formed address works for unit tests that don't exercise the inbound whitelist.
-const encodePackedEnvelope = (msgType, nonce, payloadHex) => {
-  return ethers.utils.defaultAbiCoder.encode(
-    ["uint32", "uint64", "bytes"],
-    [msgType, nonce, payloadHex]
-  );
-};
-
-const encodeBridgeUserPayload = ({
-  bridgeId,
-  amount,
-  recipient,
-  callData = "0x",
-  callGasLimit = 0,
-}) => {
-  return ethers.utils.defaultAbiCoder.encode(
-    ["bytes32", "uint256", "address", "bytes", "uint32"],
-    [bridgeId, amount, recipient, callData, callGasLimit]
-  );
-};
-
-const encodeNewBalancePayload = (newBalance) =>
-  ethers.utils.defaultAbiCoder.encode(["uint256"], [newBalance]);
+const {
+  MSG,
+  encodePackedEnvelope,
+  encodeBridgeUserPayload,
+  encodeNewBalancePayload,
+} = require("./_helpers");
 
 describe("Unit: MasterWOTokenStrategy", function () {
   let deployer, governor, alice, bob;
@@ -303,26 +270,35 @@ describe("Unit: MasterWOTokenStrategy", function () {
     });
 
     it("reverts when bridge-out exceeds available liquidity", async () => {
+      // Mint Alice OToken DIRECTLY via the mock vault (skipping BRIDGE_IN, which would
+      // inflate bridgeAdjustment by the minted amount and defeat the test). The mock
+      // vault is permissionless on `oToken.mint(addr, amount)` once it's set as the
+      // OToken's `vaultAddress`.
       const tooBig = ethers.utils.parseUnits("999999999", 6);
-      // Mint enough OToken so the user has the tokens, but exceed remote liquidity.
-      await mintAndApprove(alice, tooBig);
-      // After mintAndApprove the BRIDGE_IN added +tooBig to bridgeAdjustment, which
-      // would make available = remoteStrategyBalance + tooBig >= tooBig. So mintAndApprove
-      // doesn't help us test under-liquidity. Instead, do not mint via BRIDGE_IN —
-      // mint directly by hijacking the vault impersonation.
-      // Reset by burning that OToken back:
-      await oToken
-        .connect(alice)
-        .approve(master.address, await oToken.balanceOf(alice.address));
-      // Use a fresh recipient with synthetic OToken via vault mint to avoid bridge accounting.
-      const stash = await oToken.balanceOf(alice.address);
-      // Easier path: use a fresh signer who has no OToken.
+      const sVault = await impersonateAndFund(mockVault.address);
+      await oToken.connect(sVault).mint(alice.address, tooBig);
+      await oToken.connect(alice).approve(master.address, tooBig);
+
+      // Available = remoteStrategyBalance + bridgeAdjustment. Seed-only flow above
+      // left remoteStrategyBalance ≈ `seed` (a small number) and bridgeAdjustment = 0.
+      // Bridging `tooBig` exceeds available → preflight reverts.
+      await expect(
+        master
+          .connect(alice)
+          .bridgeOTokenToPeer(tooBig, ethers.constants.AddressZero, "0x", 0)
+      ).to.be.revertedWith("Master: insufficient remote liquidity");
+    });
+
+    it("rejects bridge-out when caller has no OToken", async () => {
+      // bob never received any OToken, so `bridgeOTokenToPeer` reverts on the
+      // burn (transferFrom-style) regardless of liquidity. Separate concern from
+      // the liquidity check above.
+      const amount = ethers.utils.parseUnits("100", 6);
       await expect(
         master
           .connect(bob)
-          .bridgeOTokenToPeer(tooBig, ethers.constants.AddressZero, "0x", 0)
-      ).to.be.reverted; // either liquidity-check or transferFrom revert — both acceptable here
-      stash; // silence linter for unused var
+          .bridgeOTokenToPeer(amount, ethers.constants.AddressZero, "0x", 0)
+      ).to.be.reverted;
     });
 
     it("rejects callGasLimit above MAX_BRIDGE_CALL_GAS", async () => {
@@ -462,6 +438,39 @@ describe("Unit: MasterWOTokenStrategy", function () {
       await expect(inboundAdapter.sendMessage(envelope)).to.be.revertedWith(
         "WOT: callGasLimit too high"
       );
+    });
+
+    it("emits BridgeCallFailed when callback runs out of gas, still delivers tokens", async () => {
+      // Exercises the real-world failure mode the bounded-gas guard exists for:
+      // callee with an infinite-loop function runs out of gas inside the cap,
+      // callback fails, but tokens were delivered first (CEI).
+      const TargetFactory = await ethers.getContractFactory(
+        "MockBridgeCallTarget"
+      );
+      const target = await TargetFactory.deploy();
+
+      const iface = new ethers.utils.Interface(["function burnGas()"]);
+      const bridgeId = ethers.utils.id("bridge-in-call-oom");
+      const callData = iface.encodeFunctionData("burnGas");
+      const payload = encodeBridgeUserPayload({
+        bridgeId,
+        amount: AMT,
+        recipient: target.address,
+        callData,
+        callGasLimit: 50000, // low enough that burnGas can't possibly complete
+      });
+      const envelope = encodePackedEnvelope(MSG.BRIDGE_IN, 0, payload);
+
+      await expect(inboundAdapter.sendMessage(envelope)).to.emit(
+        master,
+        "BridgeCallFailed"
+      );
+
+      // Tokens still delivered (CEI verified): target holds AMT OToken.
+      expect(await oToken.balanceOf(target.address)).to.equal(AMT);
+      expect(await master.consumedBridgeIds(bridgeId)).to.equal(true);
+      // Callback never ran to completion (no Pinged event, callCount stays 0).
+      expect(await target.callCount()).to.equal(0);
     });
   });
 

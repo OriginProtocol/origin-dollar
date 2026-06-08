@@ -2,11 +2,11 @@ const { deployOnBase } = require("../../utils/deploy-l2");
 const addresses = require("../../utils/addresses");
 const { getCreate2ProxyAddress } = require("../deployActions");
 
-// CCIP chain selector for Ethereum mainnet (Chainlink CCIP docs).
-const CCIP_CHAIN_SELECTOR_MAINNET = "5009297550715157269";
-
-// Per-call wOETH bridge cap. Mirrors the CCIP rate-limit budget.
-const MAX_PER_BRIDGE = ethers.utils.parseEther("1000");
+// Per-call wOETH bridge cap as a decimal string. Mirrors the CCIP rate-limit
+// budget. Parsed to a BigNumber inside the deploy function — defining it at
+// module scope would require `ethers` to be globally available at module
+// load, which is not guaranteed by hardhat-deploy.
+const MAX_PER_BRIDGE_ETH = "1000";
 
 module.exports = deployOnBase(
   {
@@ -14,6 +14,7 @@ module.exports = deployOnBase(
     dependencies: ["101_oethb_v3_master_impl"],
   },
   async ({ deployWithConfirmation, ethers }) => {
+    const MAX_PER_BRIDGE = ethers.utils.parseEther(MAX_PER_BRIDGE_ETH);
     const cOETHBaseVaultProxy = await ethers.getContract("OETHBaseVaultProxy");
     const cOETHb = await ethers.getContract("OETHBaseProxy");
     const cOracleRouter = await ethers.getContract("OETHBaseOracleRouter");
@@ -42,7 +43,7 @@ module.exports = deployOnBase(
       cOracleRouter.address,
       masterProxyAddress,
       addresses.base.CCIPRouter,
-      CCIP_CHAIN_SELECTOR_MAINNET,
+      addresses.mainnet.CCIPChainSelector,
     ]);
     const dMigrationImpl = await ethers.getContract(
       "BridgedWOETHMigrationStrategy"

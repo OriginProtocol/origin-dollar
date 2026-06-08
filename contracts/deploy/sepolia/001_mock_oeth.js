@@ -56,6 +56,11 @@ module.exports = async (hre) => {
   // ethers `getContractAddress({ from, nonce })` and pass that into the
   // vault constructor. Both are deployer-deploys so nonce is sequential.
   const startNonce = await ethers.provider.getTransactionCount(deployerAddr);
+  // PRECONDITION: deployer must not have any other transactions broadcast
+  // between this point and the OToken deploy in step 2 (else `startNonce + 1`
+  // won't match the actual deploy nonce). hardhat-deploy is single-threaded
+  // per script so this holds in practice; the address assertion below catches
+  // any drift.
   // Step 1 will deploy the vault at nonce `startNonce`.
   // Step 2 will deploy the OToken at nonce `startNonce + 1`.
   const predictedOTokenAddr = ethers.utils.getContractAddress({

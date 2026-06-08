@@ -6,11 +6,9 @@ const { time } = require("@nomicfoundation/hardhat-network-helpers");
 const addresses = require("../../../utils/addresses");
 const { getCreate2ProxyAddress } = require("../../../deploy/deployActions");
 
-const mainnetFixture = createFixtureLoader(defaultFixture);
+const { MSG } = require("./_helpers");
 
-const MSG = {
-  WITHDRAW_REQUEST: 3,
-};
+const mainnetFixture = createFixtureLoader(defaultFixture);
 
 const encodeAmountPayload = (amount) =>
   ethers.utils.defaultAbiCoder.encode(["uint256"], [amount]);

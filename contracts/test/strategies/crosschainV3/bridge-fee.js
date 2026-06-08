@@ -1,9 +1,7 @@
 const { expect } = require("chai");
 const { ethers } = require("hardhat");
 
-const MSG = {
-  BRIDGE_OUT: 12,
-};
+const { MSG } = require("./_helpers");
 
 /**
  * Covers bridgeFeeBps on the bridge channel:

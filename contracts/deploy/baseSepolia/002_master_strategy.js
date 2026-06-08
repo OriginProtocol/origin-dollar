@@ -14,6 +14,9 @@ const addresses = require("../../utils/addresses");
 const { encodeSaltForCreateX } = require("../../utils/deploy");
 const createxAbi = require("../../abi/createx.json");
 
+// Salt for the OETHb wOETH V3 testnet strategy pair. See
+// `deploy/base/100_oethb_v3_master_proxy.js` for the salt-naming convention
+// (same salt on paired chains, different between testnet and production).
 const SALT = "OETHb V3 Testnet wOETH Strategy 1";
 
 module.exports = async (hre) => {

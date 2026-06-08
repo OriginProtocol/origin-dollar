@@ -1,12 +1,19 @@
 const { deployOnBase } = require("../../utils/deploy-l2");
 const addresses = require("../../utils/addresses");
-const { getCreate2ProxyAddress } = require("../deployActions");
-
-// CCIP chain selector for Ethereum mainnet (Chainlink CCIP docs).
-const CCIP_CHAIN_SELECTOR_MAINNET = "5009297550715157269";
+const {
+  getCreate2ProxyAddress,
+  deployProxyWithCreateX,
+} = require("../deployActions");
 
 // Default per-receive destination gas limit for cross-chain message handling.
 const DEFAULT_DEST_GAS_LIMIT = 500000;
+
+// CREATE3 salts for the adapter proxies. MUST match the Ethereum-side salts used
+// in `deploy/mainnet/211_oethb_v3_remote_impl.js` so the proxy addresses are
+// identical across chains (peer-parity requirement on the
+// `transportSender == address(this)` check).
+const CCIP_ADAPTER_PROXY_SALT = "OETHb V3 CCIPAdapter Proxy 1";
+const SUPERBRIDGE_ADAPTER_PROXY_SALT = "OETHb V3 SuperbridgeAdapter Proxy 1";
 
 module.exports = deployOnBase(
   {
@@ -58,11 +65,17 @@ module.exports = deployOnBase(
       })
     );
 
-    // --- 3. Deploy adapters (deployer is initial governor; transferred to timelock at end) ---
+    // --- 3. Deploy adapter impls (plain; chain-specific args baked into bytecode) ---
+    //
+    // Adapters live behind `BridgeAdapterProxy` (CREATE3 → identical address on both
+    // chains, mandatory for the `transportSender == address(this)` peer-parity check).
+    // The impls are deployed plain — their addresses differ across chains but only the
+    // proxy is part of the parity check.
+    //
     // Outbound (B→E): CCIPAdapter
     await deployWithConfirmation("CCIPAdapter", [addresses.base.CCIPRouter]);
-    const dCCIPOutbound = await ethers.getContract("CCIPAdapter");
-    console.log(`CCIPAdapter: ${dCCIPOutbound.address}`);
+    const dCCIPImpl = await ethers.getContract("CCIPAdapter");
+    console.log(`CCIPAdapter impl: ${dCCIPImpl.address}`);
 
     // Inbound (E→B): SuperbridgeAdapter — split delivery, ETH-only. Tokens arrive as
     // native ETH via the canonical bridge; `receive()` auto-wraps to WETH so Master sees
@@ -74,17 +87,70 @@ module.exports = deployOnBase(
       addresses.base.CCIPRouter,
       addresses.base.WETH, // local WETH (wraps incoming bridge ETH)
     ]);
-    const dSuperRx = await ethers.getContract("SuperbridgeAdapter");
-    console.log(`SuperbridgeAdapter: ${dSuperRx.address}`);
+    const dSuperImpl = await ethers.getContract("SuperbridgeAdapter");
+    console.log(`SuperbridgeAdapter impl: ${dSuperImpl.address}`);
 
-    // --- 4. Adapter configuration (deployer is governor here, so do it now) ---
-    // Under CREATE3 parity, the peer adapter address on Ethereum equals these adapters'
-    // own addresses. No peer-receiver field — adapters hard-code `address(this)`.
+    // --- 4. Deploy adapter proxies via CREATE3 ---
+    const ccipProxyAddr = await deployProxyWithCreateX(
+      CCIP_ADAPTER_PROXY_SALT,
+      "BridgeAdapterProxy",
+      false,
+      null,
+      "OETHbV3CCIPAdapterProxy"
+    );
+    console.log(`CCIPAdapter proxy: ${ccipProxyAddr}`);
+    const superProxyAddr = await deployProxyWithCreateX(
+      SUPERBRIDGE_ADAPTER_PROXY_SALT,
+      "BridgeAdapterProxy",
+      false,
+      null,
+      "OETHbV3SuperbridgeAdapterProxy"
+    );
+    console.log(`SuperbridgeAdapter proxy: ${superProxyAddr}`);
+
+    // --- 5. Initialise adapter proxies to point at impls. Proxy constructor set
+    //         governor = deployer; `initialize` is onlyGovernor and re-asserts governor.
+    const cCCIPProxyRaw = await ethers.getContractAt(
+      "InitializeGovernedUpgradeabilityProxy",
+      ccipProxyAddr,
+      sDeployer
+    );
+    await withConfirmation(
+      cCCIPProxyRaw["initialize(address,address,bytes)"](
+        dCCIPImpl.address,
+        deployerAddr,
+        "0x"
+      )
+    );
+    const cSuperProxyRaw = await ethers.getContractAt(
+      "InitializeGovernedUpgradeabilityProxy",
+      superProxyAddr,
+      sDeployer
+    );
+    await withConfirmation(
+      cSuperProxyRaw["initialize(address,address,bytes)"](
+        dSuperImpl.address,
+        deployerAddr,
+        "0x"
+      )
+    );
+
+    // After this, the proxy address is the "real" adapter — configure it as such.
+    const dCCIPOutbound = await ethers.getContractAt(
+      "CCIPAdapter",
+      ccipProxyAddr
+    );
+    const dSuperRx = await ethers.getContractAt(
+      "SuperbridgeAdapter",
+      superProxyAddr
+    );
+
+    // --- 6. Adapter configuration (deployer is governor here, so do it now) ---
     //
     // ChainConfig fields: { paused, chainSelector, destGasLimit }
     const masterChainCfg = {
       paused: false,
-      chainSelector: CCIP_CHAIN_SELECTOR_MAINNET,
+      chainSelector: addresses.mainnet.CCIPChainSelector,
       destGasLimit: DEFAULT_DEST_GAS_LIMIT,
     };
     await withConfirmation(
@@ -105,7 +171,7 @@ module.exports = deployOnBase(
       dSuperRx.connect(sDeployer).addStrategist(addresses.multichainStrategist)
     );
 
-    // --- 5. Transfer adapter governance to Base timelock ---
+    // --- 7. Transfer adapter proxy governance to Base timelock ---
     await withConfirmation(
       dCCIPOutbound
         .connect(sDeployer)
@@ -115,7 +181,7 @@ module.exports = deployOnBase(
       dSuperRx.connect(sDeployer).transferGovernance(addresses.base.timelock)
     );
 
-    // --- 6. Resolve Master as IStrategy / IGovernable for the governance actions ---
+    // --- 8. Resolve Master as IStrategy / IGovernable for the governance actions ---
     const cMaster = await ethers.getContractAt(
       "MasterWOTokenStrategy",
       masterProxyAddress
@@ -124,7 +190,7 @@ module.exports = deployOnBase(
     return {
       name: "Deploy OETHb V3 Master strategy + adapters on Base",
       actions: [
-        // Timelock claims governance on the two adapters.
+        // Timelock claims governance on the two adapter proxies.
         {
           contract: dCCIPOutbound,
           signature: "claimGovernance()",
@@ -135,16 +201,16 @@ module.exports = deployOnBase(
           signature: "claimGovernance()",
           args: [],
         },
-        // Wire the adapters into Master (governor-gated on Master).
+        // Wire the adapter PROXY addresses into Master (governor-gated on Master).
         {
           contract: cMaster,
           signature: "setOutboundAdapter(address)",
-          args: [dCCIPOutbound.address],
+          args: [ccipProxyAddr],
         },
         {
           contract: cMaster,
           signature: "setInboundAdapter(address)",
-          args: [dSuperRx.address],
+          args: [superProxyAddr],
         },
       ],
     };

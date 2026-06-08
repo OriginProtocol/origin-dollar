@@ -1,6 +1,8 @@
 const { expect } = require("chai");
 const { ethers } = require("hardhat");
 
+const { wrapAppEnvelope } = require("./_helpers");
+
 /**
  * Covers CCTPAdapter.relay — the operator-driven entry point that finalises an inbound
  * CCTP message by handing it (with attestation) to the local MessageTransmitter, which then
@@ -52,22 +54,14 @@ describe("Unit: CCTPAdapter relay", function () {
         version,
         sourceDomain,
         0,
-        ethers.constants.HashZero,
+        ethers.constants.HashZero, // 32-byte nonce — zero is fine for these unit tests
         ethers.utils.hexZeroPad(sender, 32),
         ethers.utils.hexZeroPad(recipient, 32),
-        ethers.constants.HashZero,
+        ethers.constants.HashZero, // destinationCaller — zero means "any caller can finalise" in CCTP V2; production sets this to the peer adapter under CREATE3 parity, but tests use the unrestricted form for simplicity
         0,
         0,
         body,
       ]
-    );
-  }
-
-  // V3 app envelope: 20-byte sender + 32-byte intendedAmount + payload.
-  function wrapAppEnvelope(envelopeSender, intendedAmount, payload) {
-    return ethers.utils.solidityPack(
-      ["address", "uint256", "bytes"],
-      [envelopeSender, intendedAmount, payload]
     );
   }
 

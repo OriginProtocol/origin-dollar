@@ -401,9 +401,13 @@ contract RemoteWOTokenStrategy is AbstractWOTokenStrategy {
         if (id == 0) {
             return;
         }
+        // Hoist `claimed` outside the try so its scope is unambiguous to static
+        // analysers (avoids the slither uninitialized-local false-positive that
+        // fired when `claimed` was named only in the try-returns clause).
+        uint256 claimed;
         // Use try/catch so a not-yet-claimable queue delay doesn't bubble up as a revert.
-        // slither-disable-next-line uninitialized-local
-        try IVault(oTokenVault).claimWithdrawal(id) returns (uint256 claimed) {
+        try IVault(oTokenVault).claimWithdrawal(id) returns (uint256 _claimed) {
+            claimed = _claimed;
             outstandingRequestId = 0;
             queuedAmount = 0;
             // Refine `outstandingRequestAmount` to what the vault actually paid out so

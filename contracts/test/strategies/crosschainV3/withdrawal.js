@@ -362,7 +362,13 @@ describe("Unit: V3 Withdrawal", function () {
     const FEE = 1;
     await adapterRM.setUnderdeliveryForNextMessage(FEE);
 
-    await master.connect(governor).triggerClaim();
+    // The relaxed `amount <= ackAmount` check accepts the shortfall; Master emits
+    // WithdrawClaimAcked with `success = true` even though delivered < ackAmount.
+    // (The shortfall is yield drag, refreshed on the next BALANCE_CHECK.)
+    await expect(master.connect(governor).triggerClaim()).to.emit(
+      master,
+      "WithdrawClaimAcked"
+    );
 
     expect(await master.pendingWithdrawalAmount()).to.equal(0);
     // Vault received `WITHDRAW - FEE` because that's what landed on Master.

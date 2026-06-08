@@ -1,6 +1,8 @@
 const { expect } = require("chai");
 const { ethers } = require("hardhat");
 
+const { wrapAppEnvelope } = require("./_helpers");
+
 /**
  * Coverage for `CCTPAdapter.relay()`'s burn-message path: the operator passes a CCTP V2
  * wire message whose transport `sender` is the source-side `TokenMessenger`. The adapter
@@ -96,14 +98,6 @@ describe("Unit: CCTPAdapter burn relay", function () {
         0, // expirationBlock
         hookData,
       ]
-    );
-  }
-
-  // V3 application envelope: 20-byte sender + 32-byte intendedAmount + payload.
-  function wrapAppEnvelope(envelopeSender, intendedAmount, payload) {
-    return ethers.utils.solidityPack(
-      ["address", "uint256", "bytes"],
-      [envelopeSender, intendedAmount, payload]
     );
   }
 

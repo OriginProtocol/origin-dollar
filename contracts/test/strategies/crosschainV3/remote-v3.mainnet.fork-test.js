@@ -5,26 +5,9 @@ const { impersonateAndFund } = require("../../../utils/signers");
 const addresses = require("../../../utils/addresses");
 const { getCreate2ProxyAddress } = require("../../../deploy/deployActions");
 
+const { MSG, encodeBridgeUserPayload } = require("./_helpers");
+
 const mainnetFixture = createFixtureLoader(defaultFixture);
-
-const MSG = {
-  DEPOSIT: 1,
-  DEPOSIT_ACK: 2,
-  BRIDGE_IN: 11,
-  BRIDGE_OUT: 12,
-};
-
-const encodeBridgeUserPayload = ({
-  bridgeId,
-  amount,
-  recipient,
-  callData = "0x",
-  callGasLimit = 0,
-}) =>
-  ethers.utils.defaultAbiCoder.encode(
-    ["bytes32", "uint256", "address", "bytes", "uint32"],
-    [bridgeId, amount, recipient, callData, callGasLimit]
-  );
 
 /**
  * Mainnet fork test covering RemoteWOTokenStrategy against the real wOETH (ERC-4626) and

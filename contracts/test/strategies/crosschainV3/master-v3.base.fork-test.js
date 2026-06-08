@@ -5,25 +5,9 @@ const { isCI } = require("../../helpers");
 const { impersonateAndFund } = require("../../../utils/signers");
 const addresses = require("../../../utils/addresses");
 
+const { MSG, encodeBridgeUserPayload } = require("./_helpers");
+
 const baseFixture = createFixtureLoader(defaultBaseFixture);
-
-const MSG = {
-  BRIDGE_IN: 11,
-  BRIDGE_OUT: 12,
-  DEPOSIT_ACK: 2,
-};
-
-const encodeBridgeUserPayload = ({
-  bridgeId,
-  amount,
-  recipient,
-  callData = "0x",
-  callGasLimit = 0,
-}) =>
-  ethers.utils.defaultAbiCoder.encode(
-    ["bytes32", "uint256", "address", "bytes", "uint32"],
-    [bridgeId, amount, recipient, callData, callGasLimit]
-  );
 
 /**
  * Master fork test: drives MasterWOTokenStrategy against the real Base OETHb vault.

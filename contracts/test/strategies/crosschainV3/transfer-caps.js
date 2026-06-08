@@ -82,6 +82,48 @@ describe("Unit: Adapter transfer caps", function () {
         .withArgs(0, 123);
       expect(await adapter.maxTransferAmount()).to.equal(123);
     });
+
+    it("transferToken sweep — native ETH path, governor-only", async () => {
+      // Donate 1 ETH directly to the adapter.
+      const donation = ethers.utils.parseEther("1");
+      await governor.sendTransaction({ to: adapter.address, value: donation });
+      expect(await ethers.provider.getBalance(adapter.address)).to.equal(
+        donation
+      );
+
+      // Non-governor cannot sweep.
+      await expect(
+        adapter
+          .connect(alice)
+          .transferToken(ethers.constants.AddressZero, donation)
+      ).to.be.revertedWith("Caller is not the Governor");
+
+      // Governor sweep — ETH lands at governor's address.
+      const balanceBefore = await ethers.provider.getBalance(governor.address);
+      const tx = await adapter
+        .connect(governor)
+        .transferToken(ethers.constants.AddressZero, donation);
+      const receipt = await tx.wait();
+      const gas = receipt.gasUsed.mul(receipt.effectiveGasPrice);
+      const balanceAfter = await ethers.provider.getBalance(governor.address);
+      // Net change = +donation - gas.
+      expect(balanceAfter.sub(balanceBefore).add(gas)).to.equal(donation);
+      expect(await ethers.provider.getBalance(adapter.address)).to.equal(0);
+    });
+
+    it("transferToken sweep — ERC20 path", async () => {
+      const donation = ethers.utils.parseEther("5");
+      await weth.mintTo(adapter.address, donation);
+      expect(await weth.balanceOf(adapter.address)).to.equal(donation);
+
+      await expect(
+        adapter.connect(alice).transferToken(weth.address, donation)
+      ).to.be.revertedWith("Caller is not the Governor");
+
+      await adapter.connect(governor).transferToken(weth.address, donation);
+      expect(await weth.balanceOf(adapter.address)).to.equal(0);
+      expect(await weth.balanceOf(governor.address)).to.equal(donation);
+    });
   });
 
   describe("CCTPAdapter — constant cap + min + threshold + fast finality", function () {
@@ -435,6 +477,38 @@ describe("Unit: Adapter transfer caps", function () {
       const [amount] = ethers.utils.defaultAbiCoder.decode(["uint256"], body);
       expect(amount).to.equal(ONE_K.mul(2));
       expect(await master.pendingWithdrawalAmount()).to.equal(ONE_K.mul(2));
+    });
+
+    it("withdrawAll sends the full remoteStrategyBalance when inbound cap is 0", async () => {
+      // Same setup as the clamp test, but with the inbound cap left at 0 (unlimited).
+      await bridgeAsset.mintTo(master.address, ONE_K.mul(5));
+      await mockL2Vault.callDeposit(
+        master.address,
+        bridgeAsset.address,
+        ONE_K.mul(5)
+      );
+      const ackBody = ethers.utils.defaultAbiCoder.encode(
+        ["uint256"],
+        [ONE_K.mul(5)]
+      );
+      const ackEnvelope = ethers.utils.defaultAbiCoder.encode(
+        ["uint32", "uint64", "bytes"],
+        [2, 1, ackBody]
+      );
+      await inbound.sendMessage(ackEnvelope);
+
+      // Inbound cap = 0 (default override). withdrawAll ships the full 5000.
+      await inbound.setMaxTransferAmountOverride(0);
+      await mockL2Vault.callWithdrawAll(master.address);
+
+      const sentEnvelope = await outbound.lastMessageSent();
+      const [, , body] = ethers.utils.defaultAbiCoder.decode(
+        ["uint32", "uint64", "bytes"],
+        sentEnvelope
+      );
+      const [amount] = ethers.utils.defaultAbiCoder.decode(["uint256"], body);
+      expect(amount).to.equal(ONE_K.mul(5));
+      expect(await master.pendingWithdrawalAmount()).to.equal(ONE_K.mul(5));
     });
   });
 });
